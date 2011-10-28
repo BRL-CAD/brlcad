@@ -117,9 +117,7 @@
 	n $mN \
 	e $mE
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
 }
 
 ::itcl::body SuperellEditFrame::createGeometry {obj} {

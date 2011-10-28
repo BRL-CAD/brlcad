@@ -23,35 +23,47 @@
 # some given region ID number.
 #
 
-set extern_commands [list db get_regions attr]
-foreach cmd $extern_commands {
-    catch {auto_load $cmd} val
-    if {[expr [string compare [info command $cmd] $cmd] != 0]} {
-	puts stderr "[info script]: Application fails to provide command '$cmd'"
-	return
-    }
-}
-
 
 proc  reid { args } {
-    if { [llength $args] != 2 } {
-	puts "Usage: reid assembly regionID"
+
+    set extern_commands [list db get_regions attr]
+
+    foreach cmd $extern_commands {
+	catch {auto_load $cmd} val
+	if {[expr [string compare [info command $cmd] $cmd] != 0]} {
+	    puts stderr "[info script]: Application fails to provide command '$cmd'"
+	    return
+	}
+    }
+
+    set argc [llength $args]
+    if { ($argc != 2 && $argc != 4) || ($argc == 4 && [lindex $args 0] != "-n") } {
+	puts "Usage: reid \[-n <num>\] assembly regionID"
 	return
     }
 
-    set name [lindex $args 0]
-    set regionid [lindex $args 1]
+    if { [llength $args] == 4} {
+	set incrval [lindex $args 1]
+	set name [lindex $args 2]
+	set regionid [lindex $args 3]
+    } elseif { [llength $args] == 2} {
+	set incrval 1
+	set name [lindex $args 0]
+	set regionid [lindex $args 1]
+    }
 
     set objData [db get $name]
     if { [lindex $objData 0] != "comb" } {
+	puts "Not a combination."
 	return
     }
 
     set regions [get_regions $name]
     foreach region $regions {
 	attr set $region region_id $regionid
-	incr regionid
+	incr regionid $incrval
     }
+    return [expr $regionid - $incrval ]
 }
 
 # Local Variables:

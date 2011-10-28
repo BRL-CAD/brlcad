@@ -31,7 +31,7 @@
 
 #include <string>
 #include <iostream>
-#include <boost/spirit.hpp>	/* deprecated header */
+#include <boost/spirit/include/classic.hpp>	/* deprecated header */
 
 #include "pcVCSet.h"
 #include "pcGenerator.h"
@@ -45,35 +45,36 @@
  * Grammar for the expression used for representing the constraint
  *
  */
-class Variable_grammar : public boost::spirit::grammar<Variable_grammar>
+class Variable_grammar : public boost::spirit::classic::grammar<Variable_grammar>
 {
 private:
     VCSet &vcset;
 public:
     Variable_grammar(VCSet &vcset);
     virtual ~Variable_grammar();
+
     template<typename ScannerT>
     struct definition
     {
-        boost::spirit::rule<ScannerT> variable;
+        boost::spirit::classic::rule<ScannerT> variable;
 	/*boost::spirit::rule<ScannerT> expression;*/
 	definition(Variable_grammar const &self) {
 	    /*expression
 	      =    boost::spirit::real_p[varvalue(self.pcparser)]
 	      ;*/
 	    variable
-	        =    *(boost::spirit::alnum_p)[Generators::varname(self.vcset)]
+	        =    *(boost::spirit::classic::alnum_p)[Generators::varname(self.vcset)]
 		    >> '='
-		    >>boost::spirit::real_p[Generators::varvalue(self.vcset)]
+		    >>boost::spirit::classic::real_p[Generators::varvalue(self.vcset)]
 		/* expression*/
 		;
 	}
-	boost::spirit::rule<ScannerT> const& start() { return variable;}
+	boost::spirit::classic::rule<ScannerT> const& start() { return variable;}
     };
 };
 
 
-class Constraint_grammar : public boost::spirit::grammar<Constraint_grammar>
+class Constraint_grammar : public boost::spirit::classic::grammar<Constraint_grammar>
 {
 private:
     VCSet &vcset;
@@ -83,18 +84,18 @@ public:
     template<typename ScannerT>
     struct definition
     {
-        boost::spirit::rule<ScannerT> variable;
-	boost::spirit::rule<ScannerT> term;
-	boost::spirit::rule<ScannerT> operat;
-	boost::spirit::rule<ScannerT> expression;
-	boost::spirit::rule<ScannerT> eq;
-	boost::spirit::rule<ScannerT> constraint;
+        boost::spirit::classic::rule<ScannerT> variable;
+	boost::spirit::classic::rule<ScannerT> term;
+	boost::spirit::classic::rule<ScannerT> operat;
+	boost::spirit::classic::rule<ScannerT> expression;
+	boost::spirit::classic::rule<ScannerT> eq;
+	boost::spirit::classic::rule<ScannerT> constraint;
 	definition(Constraint_grammar const &self) {
 	    variable
-	        =    boost::spirit::alnum_p
+	        =    boost::spirit::classic::alnum_p
 		;
 	    term
-	        =    boost::spirit::real_p
+	        =    boost::spirit::classic::real_p
 		|    variable
 		;
 	    eq
@@ -114,7 +115,7 @@ public:
 		    >> ')'
 		;
 	}
-	boost::spirit::rule<ScannerT> const& start() { return constraint;}
+	boost::spirit::classic::rule<ScannerT> const& start() { return constraint;}
     };
 };
 

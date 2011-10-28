@@ -131,9 +131,7 @@
 	B [list $mBx $mBy $mBz] \
 	S $mS
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
 }
 
 ::itcl::body ExtrudeEditFrame::createGeometry {obj} {

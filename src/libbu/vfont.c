@@ -56,7 +56,7 @@ vfont_get(char *font)
     char fname[FONTNAMESZ];
     unsigned char header[2*5];		/* 5 16-bit vax shorts */
     unsigned char dispatch[10*256];	/* 256 10-byte structs */
-    int magic;
+    uint16_t magic;
     int size;
 
     if (font == NULL)

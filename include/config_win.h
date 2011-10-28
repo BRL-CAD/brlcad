@@ -219,6 +219,9 @@ typedef unsigned int uid_t;
 #ifndef S_IXUSR
 #  define S_IXUSR      S_IEXEC
 #endif
+#ifndef S_IRWXU
+#  define S_IRWXU      ((S_IRUSR)|(S_IWUSR)|(S_IXUSR))
+#endif
 
 #ifndef S_IRGRP
 #  define S_IRGRP      ((S_IRUSR)>>3)
@@ -237,6 +240,16 @@ typedef unsigned int uid_t;
 #endif
 #ifndef S_IXOTH
 #  define S_IXOTH      ((S_IXUSR)>>6)
+#endif
+
+#ifndef S_ISDIR
+#  define S_ISDIR(x)   ((x) & S_IFDIR)
+#endif
+#ifndef S_ISREG
+#  define S_ISREG(x)   ((x) & S_IFREG)
+#endif
+#ifndef S_ISLNK
+#  define S_ISLNK(x)   (0)
 #endif
 
 /*

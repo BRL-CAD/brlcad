@@ -103,11 +103,7 @@ SCLP23(Application_instance)::Replicate()
     }
     else
     {
-#ifdef __OSTORE__
-	SCLP23(Application_instance) *seNew = eDesc->NewSTEPentity(os_database::of(this));
-#else
 	SCLP23(Application_instance) *seNew = eDesc->NewSTEPentity();
-#endif
 	seNew -> CopyAs (this);
 	return seNew;
     }
@@ -122,44 +118,35 @@ void SCLP23(Application_instance)::AddP21Comment(const char *s, int replace)
     }
     if(s)
     {
-	if(!p21Comment) 
-	{
-#ifdef __OSTORE__
-	    p21Comment = new (os_segment::of(this), SCLstring::get_os_typespec()) 
-	      SCLstring;
-#else
-	    p21Comment = new SCLstring;
-#endif
-	}
-	else
-	    p21Comment->set_null();
-	p21Comment->Append( s );
+      if(!p21Comment) 
+      {
+        p21Comment = new std::string("");
+      }
+      else
+      {
+        p21Comment->clear();
+      }
+    p21Comment->append(s);
     }
 }
 
 void 
-SCLP23(Application_instance)::AddP21Comment(SCLstring &s, int replace) 
+SCLP23(Application_instance)::AddP21Comment(std::string &s, int replace) 
 {
     if(replace)
     {
 	delete p21Comment;
 	p21Comment = 0;
     }
-    if(!s.is_null())
+    if(!s.empty())
     {
 	if(!p21Comment) 
 	{
-#ifdef __OSTORE__
-	    p21Comment = new (os_segment::of(this),
-			      SCLstring::get_os_typespec()) 
-	      SCLstring;
-#else
-	    p21Comment = new SCLstring;
-#endif
+          p21Comment = new std::string("");
 	}
 	else
-	    p21Comment->set_null();
-	p21Comment->Append( s.chars() );
+	    p21Comment->clear();
+	p21Comment->append(const_cast<char *>(s.c_str()));
     }
 }
 
@@ -170,12 +157,12 @@ SCLP23(Application_instance)::STEPwrite_reference (ostream& out)
 }
 
 const char * 
-SCLP23(Application_instance)::STEPwrite_reference (SCLstring &buf)
+SCLP23(Application_instance)::STEPwrite_reference (std::string& buf)
 {  
     char tmp[64];
     sprintf ( tmp,"#%d", STEPfile_id);
     buf = tmp;
-    return buf.chars();
+    return const_cast<char *>(buf.c_str());
 }
 
 void 
@@ -201,7 +188,7 @@ SCLP23(Application_instance)::AppendMultInstance(SCLP23(Application_instance) *s
 SCLP23(Application_instance) *
 SCLP23(Application_instance)::GetMiEntity(char *EntityName)
 {
-    SCLstring s1, s2;
+  std::string s1, s2;
 
     const EntityDescLinkNode *edln = 0;
     const EntityDescriptor *ed = eDesc;
@@ -224,32 +211,6 @@ SCLP23(Application_instance)::GetMiEntity(char *EntityName)
 }
 
 
-#ifdef __OSTORE__
-void Application_instance_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range)
-{
-    cout << "ObjectStore called non-member function Application_instance Access_hook" 
-      << endl;
-    SCLP23(Application_instance) *ent = (SCLP23(Application_instance) *)object;
-    cout << "STEPfile_id: " << ent->STEPfile_id << endl;
-    ent->Access_hook_in(object, reason, user_data, start_range, end_range);
-
-//    SdaiEb_person *ent = (SdaiEb_person *)object;
-//    SdaiEb_person_access_hook_in(object, reason, user_data, 
-//				 start_range, end_range);
-}
-
-void 
-SCLP23(Application_instance)::Access_hook_in(void *object, 
-			   enum os_access_reason reason, void *user_data, 
-			   void *start_range, void *end_range)
-{
-    SCLP23(Application_instance) *ent = (SCLP23(Application_instance) *)object;
-    cout << "****WARNING: virtual SCLP23(Application_instance)::Access_hook_in() called" << endl;
-    ent->Access_hook_in(object, reason, user_data, start_range, end_range);
-}
-#endif
 
 STEPattribute * 
 SCLP23(Application_instance)::GetSTEPattribute (const char * nm)
@@ -328,7 +289,7 @@ Severity SCLP23(Application_instance)::ValidLevel(ErrorDescriptor *error, InstMg
     if(clearError)
 	ClearError();
     int n = attributes.list_length();
-    SCLstring tmp;
+    std::string tmp;
     for (int i = 0 ; i < n; i++) {
 	if( !(attributes[i].aDesc->AttrType() == AttrType_Redefining) )
 	  error->GreaterSeverity(attributes[i].ValidLevel(
@@ -411,9 +372,9 @@ void
 SCLP23(Application_instance)::STEPwrite(ostream& out, const char *currSch, 
 					int writeComments)
 {
-    SCLstring tmp;
-    if(writeComments && p21Comment && !p21Comment->is_null() )
-	out << p21Comment->chars();
+  std::string tmp;
+    if(writeComments && p21Comment && !p21Comment->empty() )
+	out << p21Comment->c_str();
     out << "#" << STEPfile_id << "=" << StrToUpper(EntityName( currSch ), tmp)
         << "(";
     int n = attributes.list_length();
@@ -477,12 +438,12 @@ SCLP23(Application_instance)::WriteValuePairs(ostream& out,
     out << "finished writing attribute names." << endl;
     edi.ResetItr();
 */
-    SCLstring s;
+  std::string s;
 //    out << eDesc->QualifiedName(s) << endl;
 
-    SCLstring tmp, tmp2;
-    if(writeComments && p21Comment && !p21Comment->is_null() )
-	out << p21Comment->chars();
+  std::string tmp, tmp2;
+    if(writeComments && p21Comment && !p21Comment->empty() )
+	out << p21Comment->c_str();
     if(mixedCase)
     {
 	out << "#" << STEPfile_id << " " 
@@ -502,13 +463,13 @@ SCLP23(Application_instance)::WriteValuePairs(ostream& out,
 	    if(mixedCase)
 	    {
 		out << "\t" 
-		 << attributes[i].aDesc->Owner().Name(s)
+		 << attributes[i].aDesc->Owner().Name(s.c_str())
 		 << "." << attributes[i].aDesc->Name() << " ";
 	    }
 	    else
 	    {
 		out << "\t" 
-		 << StrToUpper(attributes[i].aDesc->Owner().Name(s),tmp)
+		 << StrToUpper(attributes[i].aDesc->Owner().Name(s.c_str()),tmp)
 		 << "." << StrToUpper(attributes[i].aDesc->Name(),tmp2) << " ";
 	    }
 	    (attributes[i]).STEPwrite( out, currSch );
@@ -526,29 +487,29 @@ SCLP23(Application_instance)::WriteValuePairs(ostream& out,
  ******************************************************************/
 
 const char * 
-SCLP23(Application_instance)::STEPwrite(SCLstring &buf, const char *currSch)
+SCLP23(Application_instance)::STEPwrite(std::string& buf, const char *currSch)
 {
-    buf.set_null();
+    buf.clear();
 
     char instanceInfo[BUFSIZ];
     
-    SCLstring tmp;
+    std::string tmp;
     sprintf(instanceInfo, "#%d=%s(", STEPfile_id, 
 	    (char *)StrToUpper( EntityName( currSch ), tmp ) );
-    buf.Append(instanceInfo);
+    buf.append(instanceInfo);
 
     int n = attributes.list_length();
 
     for (int i = 0 ; i < n; i++) {
 	if( !(attributes[i].aDesc->AttrType() == AttrType_Redefining) )
 	{
-	    if (i > 0) buf.Append( ',' );
+	    if (i > 0) buf.append(",");
 	    attributes[i].asStr( tmp, currSch ) ;
-	    buf.Append (tmp);
+	    buf.append (tmp);
 	}
     }    
-    buf.Append( ");" );
-    return buf.chars();
+    buf.append( ");" );
+    return const_cast<char *>(buf.c_str());
 }
 
 void 
@@ -604,11 +565,11 @@ SCLP23(Application_instance)::STEPread_error(char c, int i, istream& in)
 	_error.AppendToDetailMsg("  No more attributes were expected.\n");
     }
 
-    SCLstring tmp;
+    std::string tmp;
     STEPwrite (tmp);  // STEPwrite writes to a static buffer inside function
     sprintf(errStr, 
 	    "  The invalid instance to this point looks like :\n%s\n", 
-	    tmp.chars() );
+	    tmp.c_str() );
     _error.AppendToDetailMsg(errStr);
     
 //    _error.AppendToDetailMsg("  data lost looking for end of entity:");
@@ -678,7 +639,7 @@ SCLP23(Application_instance)::STEPread(int id,  int idIncr,
 				       const char *currSch, int useTechCor)
 {
     STEPfile_id = id;
-    char c ='\0';
+    char c = '\0';
     char errStr[BUFSIZ];
     errStr[0] = '\0';
     Severity severe;
@@ -844,7 +805,7 @@ SCLP23(Application_instance)::STEPread(int id,  int idIncr,
     errStr[0] = '\0';
     in.clear();
     int foundEnd = 0;
-    SCLstring tmp;
+    std::string tmp;
     tmp = "";
 
     // Search until a close paren is found followed by (skipping optional 
@@ -854,14 +815,14 @@ SCLP23(Application_instance)::STEPread(int id,  int idIncr,
 	while ( in.good() && (c != ')') )  
 	{
 	    in.get(c);
-	    tmp.Append(c);
+	    tmp += c;
 //	    cerr << c;
 	}
 	if(in.good() && (c == ')') )
 	{
 	    in >> ws; // skip whitespace
 	    in.get(c);
-	    tmp.Append(c);
+	    tmp += c;
 //	    cerr << c;
 //	    cerr << "\n";
 	    if(c == ';')
@@ -870,7 +831,7 @@ SCLP23(Application_instance)::STEPread(int id,  int idIncr,
 	    }
 	}
     }
-    _error.AppendToDetailMsg( tmp.chars() );
+    _error.AppendToDetailMsg( tmp.c_str() );
     sprintf (errStr, "\nfinished reading #%d\n", STEPfile_id);
     _error.AppendToDetailMsg(errStr);
 // end of imported code

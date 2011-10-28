@@ -87,7 +87,7 @@ rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 
 	rdist = rt_nurb_crv_flat(crv, srf->s_size[1],
 				 srf->pt_type);
-	max_row_dist = MAX(max_row_dist, rdist);
+	max_row_dist = FMAX(max_row_dist, rdist);
     }
 
     bu_free((char *)crv, "rt_nurb_s_flat: crv");
@@ -111,12 +111,12 @@ rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 	rdist = rt_nurb_crv_flat(crv,
 				 srf->s_size[0], srf->pt_type);
 
-	max_col_dist = MAX(max_col_dist, rdist);
+	max_col_dist = FMAX(max_col_dist, rdist);
     }
 
     bu_free((char *)crv, "rt_nurb_s_flat: crv");
 
-    max_dist = MAX(max_row_dist, max_col_dist);
+    max_dist = FMAX(max_row_dist, max_col_dist);
 
     if (max_dist > epsilon) {
 	if (max_row_dist > max_col_dist)
@@ -254,7 +254,7 @@ rt_nurb_crv_flat(fastf_t *crv, int size, int pt_type)
 
 	    VCROSS(xp, testv, ln);
 	    dist = MAGNITUDE(xp);
-	    max_dist = MAX(max_dist, dist);
+	    max_dist = FMAX(max_dist, dist);
 	    c_ptr += coords;
 	}
     }

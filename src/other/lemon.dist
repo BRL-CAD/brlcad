@@ -1,0 +1,4 @@
+SET(lemon_ignore_files
+README
+lempar.c
+)

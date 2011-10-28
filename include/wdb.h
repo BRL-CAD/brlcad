@@ -296,9 +296,9 @@ mk_bot_w_normals(
     unsigned char	flags,		/**< additional bot flags */
     size_t		num_vertices,	/**< number of bot vertices */
     size_t		num_faces,	/**< number of bot faces */
-    fastf_t		*vertices,	/**< array of floats for vertices [num_vertices*3] */
-    int			*faces,		/**< array of ints for faces [num_faces*3] */
-    fastf_t		*thickness,	/**< array of plate mode
+    const fastf_t		*vertices,	/**< array of floats for vertices [num_vertices*3] */
+    const int			*faces,		/**< array of ints for faces [num_faces*3] */
+    const fastf_t		*thickness,	/**< array of plate mode
 					 * thicknesses (corresponds to
 					 * array of faces) NULL for
 					 * modes RT_BOT_SURFACE and
@@ -333,7 +333,7 @@ WDB_EXPORT int mk_bot_from_nmg( struct rt_wdb *ofp, const char *name, struct she
 WDB_EXPORT int mk_sketch(
     struct rt_wdb *fp,
     const char *name,
-    struct rt_sketch_internal *skt );
+    const struct rt_sketch_internal *skt );
 
 /* extr.c */
 WDB_EXPORT int mk_extrusion(

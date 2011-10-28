@@ -33,8 +33,8 @@ extern long time(time_t *);
 static long time0;
 
 
-/*
- * P R E P _ T I M E R
+/**
+ *
  */
 void
 rt_prep_timer(void)
@@ -44,8 +44,7 @@ rt_prep_timer(void)
 }
 
 
-/*
- * R E A D _ T I M E R
+/**
  *
  */
 double

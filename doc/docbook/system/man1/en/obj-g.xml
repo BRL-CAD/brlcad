@@ -20,21 +20,21 @@
 <refsynopsisdiv xml:id="objg_synopsis">
   <cmdsynopsis sepchar=" ">
     <command>obj-g</command>    
-    <arg choice="plain" rep="norepeat">-u <replaceable>units_str</replaceable></arg>
-    <arg choice="plain" rep="norepeat">-o <replaceable>open_bot_type</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-h <replaceable>plate_thickness</replaceable></arg>
     <arg choice="opt" rep="norepeat">-c</arg>
-    <arg choice="opt" rep="norepeat">-i</arg>
-    <arg choice="opt" rep="norepeat">-p</arg>
     <arg choice="opt" rep="norepeat">-d</arg>
+    <arg choice="opt" rep="norepeat">-g<replaceable>grouping</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-h<replaceable>plate_thickness</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-i</arg>
+    <arg choice="opt" rep="norepeat">-m<replaceable>mode</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-o<replaceable>open_bot_type</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-p</arg>
+    <arg choice="opt" rep="norepeat">-t<replaceable>distance_tolerance</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-u<replaceable>units_str</replaceable></arg>
     <arg choice="opt" rep="repeat">-v</arg>
-    <arg choice="opt" rep="norepeat">-g <replaceable>grouping_option</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-m <replaceable>mode_option</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-t <replaceable>distance_tolerance</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-x <replaceable>rt_debug_flag</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-X <replaceable>NMG_debug_flag</replaceable></arg>
-    <arg choice="plain" rep="norepeat"><replaceable>obj_filename</replaceable></arg>
-    <arg choice="plain" rep="norepeat"><replaceable>BRL-CAD_g_filename</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-x<replaceable>rt_debug_flag</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-X<replaceable>NMG_debug_flag</replaceable></arg>
+    <arg choice="plain" rep="norepeat"><replaceable>input.obj</replaceable></arg>
+    <arg choice="plain" rep="norepeat"><replaceable>output.g</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -54,9 +54,9 @@
    each group in the resulting model. Primitives are named based on
    the grouping names and have appended to each name a string which
    guarantees uniqueness. This unique string includes the obj file
-   grouping index number, face type number {1-4}, internal conversion
-   mode {b='native-bot'|n='nmg'|v='bot-via-nmg'} and surface closure
-   status {o='open'|c='closed'|u='untested'}. Characters in the
+   grouping index number, face type number (1-4), internal conversion
+   mode (b=native-bot|n=nmg|v=bot-via-nmg) and surface closure
+   status (o=open|c=closed|u=untested). Characters in the
    original grouping name which may cause problems are replaced with
    the underscore character.   
   </para>
@@ -67,29 +67,52 @@
   <variablelist remap="TP">
 
     <varlistentry>
-      <term><option>-u <replaceable>units_str</replaceable></option></term>
+      <term><option>-c</option></term>
       <listitem>
 	<para>
-         Units of obj file where units_str can be any valid BRL-CAD
-         unit such as one of the following {m|cm|mm|ft|in} or specify
-         a conversion factor from obj file units to mm.
+         Continue processing on nmg-bomb. If this option is set and an
+         nmg-bomb occurs (i.e., fatal error during processing nmg or
+         bot-via-nmg) conversion will fall back to outputting the
+         grouping to 'native-bot' and then continue processing the
+         next grouping. If this option is not set and an nmg-bomb
+         occurs then all processing will stop and the converter will
+         exit.
 	</para>
       </listitem>
     </varlistentry>
 
     <varlistentry>
-      <term><option>-o <replaceable>open_bot_type</replaceable></option></term>
+      <term><option>-d</option></term>
       <listitem>
 	<para>
-         Type of bot to create when the primitive is not a closed
-         volume. open_bot_type can be {s|p|n} where ...
-         s = surface bot, p = plate bot, n = plate-nocos bot.
-         Generally use 'surface bot' if open surface thickness is
-         irrelevant or the purpose of the resulting model is strictly
-         visualization. Use 'plate bot' or 'plate-nocos bot' when open
-         surfaces must have a defined thickness. Note: An incorrect
-         plate thickness can create geometry overlaps. Use the '-h' 
-         option to define plate thickness.
+         Output debug information to stderr stream. An extremely large
+         amount of information will be output. It is strongly
+         suggested stderr be redirected to a file.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>-g <replaceable>grouping_option</replaceable></option></term>
+      <listitem>
+	<para>
+         Choose which face grouping, as defined in the obj file, to
+         use to create the BRL-CAD primitives. The grouping_option may
+         be one of (g|o|m|t|n) where g = group (default),
+         o = object, m = material, t = texture, n = none. Choose a
+         grouping option which will produce the appropriate primitives
+         for the intended use of the resulting model. Typically not
+         all groupings exist in every obj file. Do not choose 'none'
+         as the grouping option unless you have a specific need for no
+         grouping. Choosing 'none' for a large conversion will
+         significantly increase the time and system memory required
+         for a conversion to complete. Choosing a grouping which does
+         not exist in the obj file has the same effect as choosing
+         'none'. Note: It is possible for a single grouping to produce up to
+	 four primitives due to the four possible face types that can exist
+         in an obj file. The values of the index numbers appended to
+         the end of the primitive names will give an indication if
+         this has occurred.
 	</para>
       </listitem>
     </varlistentry>
@@ -100,22 +123,8 @@
 	<para>
          Plate thickness in mm units of plate or plate-nocos bots
          created when the bot is not a closed volume. This option is
-         ignored if the open_bot_type is 'surface bot'.
-	</para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry>
-      <term><option>-c</option></term>
-      <listitem>
-	<para>
-         Continue processing on nmg-bomb. If this option is set and an
-         nmg-bomb occurs (i.e. fatal error during processing nmg or
-         bot-via-nmg) conversion will fall-back to outputing the
-         grouping to 'native-bot' and then continue processing the
-         next grouping. If this option is not set and an nmg-bomb
-         occurs then all processing will stop and the converter will
-         exit.
+         ignored unless the open_bot_type is set to 'plate' or 'plate nocos'
+	 (see -o option).
 	</para>
       </listitem>
     </varlistentry>
@@ -126,8 +135,40 @@
 	<para>
          Ignore normals defined in the obj file when the conversion
          mode is 'native-bots'. This option has no effect when the
-         conversion mode is 'nmg' or 'bot-via-nmg' since in these
-         modes provided normals are always ignored.
+         conversion mode is set to 'nmg' or 'bot-via-nmg', where provided normals
+	 are always ignored (see -m option).
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>-m <replaceable>mode_option</replaceable></option></term>
+      <listitem>
+	<para>
+         Choose the conversion mode. The mode_option may be one of
+         (b|n|v) where b = native-bot (default), n = nmg,
+         v = bot-via-nmg. The 'native-bot' mode is best for a relatively quick
+         conversion where creating solids is not the highest priority. It attempts
+	 to identify surface closure (solids) but is not as robust as 'bot-via-nmg'.
+	 It is the only mode that supports use of the obj file normals.
+         The 'bot-via-nmg' mode is the best option for creating solids (i.e. volume-mode-bots).
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>-o <replaceable>open_bot_type</replaceable></option></term>
+      <listitem>
+	<para>
+         Type of bot to create when the primitive is not a closed
+         volume. open_bot_type can be (s|p|n) where
+         s = surface bot (default), p = plate bot, n = plate-nocos bot.
+         Generally use 'surface bot' if open surface thickness is
+         irrelevant or the purpose of the resulting model is strictly
+         visualization. Use 'plate bot' or 'plate-nocos bot' when open
+         surfaces must have a defined thickness. Note: An incorrect
+         plate thickness can create geometry overlaps. Use the '-h' 
+         option to define plate thickness.
 	</para>
       </listitem>
     </varlistentry>
@@ -148,12 +189,25 @@
     </varlistentry>
 
     <varlistentry>
-      <term><option>-d</option></term>
+      <term><option>-t <replaceable>distance_tolerance</replaceable></option></term>
       <listitem>
 	<para>
-         Output debug information to stderr stream. An extremely large
-         amount of information will be output. It is strongly
-         suggested strerr be piped to a file.
+         Maximum distance, in mm units, where two vertices are
+         considered the same. The default is 0.0005mm which matches
+         the default raytracer distance tolerance. Do not change this
+         value unless you also change the raytracer distance
+         tolerance.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>-u <replaceable>units_str</replaceable></option></term>
+      <listitem>
+	<para>
+         Units of obj file, where units_str can be any valid BRL-CAD
+         unit such as (m|cm|mm|ft|in) or a custom conversion factor
+	 from obj file units to mm.
 	</para>
       </listitem>
     </varlistentry>
@@ -165,77 +219,12 @@
          Output verbose user information to stderr stream. There are
          different levels of verbose output where higher levels
          increase the amount of output information. Each occurrence of
-         this option in the parameter list increases the level. A
-         large amount of information will be output so piping stderr
+         this option in the parameter list increases the verbosity level. A
+         large amount of information will be output so redirecting stderr
          to a file is highly recommended. Verbose messages add warning
          and detailed conversion status messages to the default status
          and error messages. Verbose must be enabled for warning
          messages to be reported.
-	</para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry>
-      <term><option>-g <replaceable>grouping_option</replaceable></option></term>
-      <listitem>
-	<para>
-         Choose which face grouping, as defined in the obj file, to
-         use to create the BRL-CAD primitives. The grouping_option may
-         be one of {g|o|m|t|n} where ... g = group (default),
-         o = object, m = material, t = texture, n = none. Choose a
-         grouping option which will produce the appropriate primitives
-         for the intended use of the resulting model. Typically not
-         all groupings exist in every obj file. Do not choose 'none'
-         as the grouping option unless you have a specific need for no
-         grouping. Choosing 'none' for a large conversion will
-         significantly increase the time and system memory required
-         for a conversion to complete. Choosing a grouping which does
-         not exist in the obj file has the same effect as choosing
-         'none'. If you are unsure of which grouping to choose,
-         perform some trial conversions in the 'native-bot' conversion
-         mode using each of the grouping options. I may also be
-         helpful to enable level two verbose messages and pipe stderr
-         to a log file. At the beginning of the log file will be a
-         section called 'OBJ FILE CONTENTS' which lists how many and
-         the names of the groupings in the obj file. Note: It is
-         possible for a single grouping to produce up to four
-         primitives due to the four possible face types that can exist
-         in an obj file. The values of the index numbers appended to
-         the end of the primitive names will give an indication if
-         this has occurred.
-	</para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry>
-      <term><option>-m <replaceable>mode_option</replaceable></option></term>
-      <listitem>
-	<para>
-         Choose the conversion mode. The mode_option may be one of
-         {b|n|v} where ... b = bot 'native-bot', n = nmg,
-         v = bot-via-nmg (default). The 'bot-via-nmg' mode is the best
-         option for creating solids (i.e. volume-mode-bots). The
-         'native-bot' mode is best for a comparatively quick
-         conversion where creating solids is not the highest priority
-         and the faces provided in the obj file are known to be simple
-         and convex. The 'native-bot' mode will attempt to identify
-         surface closure (i.e. solids) but is not as robust as
-         'bot-via-nmg'. The 'native-bot' mode is the only choice if it
-         is desired to use normals from the obj file such as in cases
-         where the normals are smoothing normals.
-	</para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry>
-      <term><option>-t <replaceable>distance_tolerance</replaceable></option></term>
-      <listitem>
-	<para>
-         Maximum distance, in mm units, where two vertices are
-         considered the same. The default is 0.0005mm which matches
-         the raytracer default distance tolerance. Do not change this
-         value unless you also change the raytracer distance
-         tolerance.
 	</para>
       </listitem>
     </varlistentry>
@@ -259,7 +248,7 @@
     </varlistentry>
 
     <varlistentry>
-      <term><option><replaceable>obj_filename</replaceable></option></term>
+      <term><option><replaceable>input.obj</replaceable></option></term>
       <listitem>
 	<para>
          The path and file name of the input WaveFront Object file.
@@ -268,7 +257,7 @@
     </varlistentry>
 
     <varlistentry>
-      <term><option><replaceable>BRL-CAD_g_filename</replaceable></option></term>
+      <term><option><replaceable>output.g</replaceable></option></term>
       <listitem>
 	<para>
          The path and file name of the output BRL-CAD database file.
@@ -286,35 +275,35 @@
     The following will convert the obj file <emphasis remap="I">input.obj</emphasis>
     to the BRL-CAD database <emphasis remap="I">output.g</emphasis>.
   </para>
-  <example><info><title>Conversion</title></info>
+  <example><info><title>BOT Conversion</title></info>
     
     <para>
-      <userinput>obj-g -u m -o s input.obj output.g</userinput>
+      <userinput>obj-g -u mm -i input.obj output.g</userinput>
     </para>
     <para>
-     Convert obj file 'input.obj' to BRL-CAD dot-G file 'output.g'.
-     All messages will be sent to the display. The obj file units are
-     set to meters, non-closed surfaces will be output as
-     surface-mode-bots. Closed surfaces will be output as
-     volume-mode-bots. BRL-CAD primitives will be created based on the
-     obj file 'group' grouping. The conversion mode is bot-via-nmg. 
+     Convert obj file 'input.obj' to BRL-CAD database file 'output.g' using
+     native-bot conversion mode. Non-closed surfaces will be output as
+     surface-mode bots; closed surfaces will be output as volume-mode bots.
+     BRL-CAD primitives will be created based on the obj file 'group'
+     grouping. The obj file units are set to millimeters (implies conversion
+     factor of 1.0). Any normals specified in the obj file are ignored. All
+     messages will be sent to the display. 
     </para>
   </example>
 
-  <example><info><title>Conversion</title></info>
+  <example><info><title>BOT via NMG Conversion</title></info>
     
     <para>
-      <userinput>obj-g -u m -o s -i -v -v -g o -m b input.obj output.g 2&gt; output.log</userinput>
+      <userinput>obj-g -m v -o p -h 5 -g o -v -v input.obj output.g 2&gt; output.log</userinput>
     </para>
     <para>
-     Convert obj file 'input.obj' to BRL-CAD dot-G file 'output.g'.
-     All stderr messages will be sent to the log file 'output.log'.
-     The obj file units are set to meters, non-closed surfaces will be
-     output as surface-mode-bots. Closed surfaces will be output as
-     volume-mode-bots. BRL-CAD primitives will be created based on the
-     obj file 'object' grouping. The conversion mode is 'native-bot'.
-     Any normals provided in the obj file are ignored. Verbose
-     messages are enabled and set to level two.
+     Convert obj file 'input.obj' to BRL-CAD database file 'output.g' using
+     bot-via-nmg conversion mode. Non-closed surfaces will be output as
+     plate-mode bots, with plate thickness of 5mm. Closed surfaces will be
+     output as volume-mode bots.  BRL-CAD primitives will be created based on
+     the obj file 'object' grouping. The obj file units are assumed to be
+     meters (implies conversion factor of 1000.0). Level two verbose messages
+     are enabled. All stderr messages are sent to the log file 'output.log'.
     </para>
   </example>
 

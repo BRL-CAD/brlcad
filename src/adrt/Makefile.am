@@ -78,21 +78,22 @@ pkglibdir = $(libdir)/isst
 #endif
 
 EXTRA_DIST = \
-	isst.h \
 	isst \
+	isst.bat \
+	isst.h \
 	isst_tcltk.c \
+	master/compnet.c \
 	master/compnet.h \
+	master/dispatcher.c \
+	master/dispatcher.h \
+	master/master.c \
 	master/master.h \
 	master/tienet_master.c \
-	master/dispatcher.c \
-	master/master.c \
-	master/dispatcher.h \
 	master/tienet_master.h \
-	master/compnet.c \
-	slave/tienet_slave.h \
-	slave/slave.h \
 	slave/slave.c \
+	slave/slave.h \
 	slave/tienet_slave.c \
+	slave/tienet_slave.h \
 	CMakeLists.txt
 
 LINT=splint $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)

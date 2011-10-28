@@ -48,8 +48,8 @@
 #define FABS(a)		((a) > 0 ? (a) : -(a))
 #define AproxEq(a, b, e)	(FABS((a)-(b)) < (e))
 #define AproxEqVec(A, B, e) (AproxEq((A)[X], (B)[X], (e)) && \
-			    AproxEq((A)[Y], (B)[Y], (e)) &&	\
-			    AproxEq((A)[Z], (B)[Z], (e)))
+			     AproxEq((A)[Y], (B)[Y], (e)) &&	\
+			     AproxEq((A)[Z], (B)[Z], (e)))
 
 /* local communication with multitasking process */
 static int currshot;	/* current shot index */
@@ -69,8 +69,6 @@ static int doBursts();
 static int burstPoint();
 static int burstRay();
 static int gridShot();
-static fastf_t	max();
-static fastf_t	min();
 static int f_BurstHit();
 static int f_BurstMiss();
 static int f_HushOverlap();
@@ -518,7 +516,6 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 	/* Check for possible phantom armor before internal air,
 	   that is if it is the first thing hit. */
 	if (pp->pt_back == pt_headp && InsideAir(regp)) {
-	    fastf_t	slos;
 	    /* If adjacent partitions are the same air, extend
 	       the first on to include them. */
 #if DEBUG_GRID
@@ -537,7 +534,6 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 
 	    }
 
-	    slos = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 	    prntPhantom(pp->pt_inhit, (int) regp->reg_aircode);
 	} else
 	    if (! Air(regp)) {
@@ -872,9 +868,9 @@ f_ShotMiss(struct application *ap)
 		return	1;
 	}
     }
-    missed_ground :
-	if (fbfile[0] != NUL)
-	    paintCellFb(ap, pixmiss, zoom == 1 ? pixblack : pixbkgr);
+missed_ground :
+    if (fbfile[0] != NUL)
+	paintCellFb(ap, pixmiss, zoom == 1 ? pixblack : pixbkgr);
     VSETALL(ap->a_color, 0.0); /* All misses black. */
     return	0;
 }
@@ -1053,79 +1049,79 @@ gridInit()
 	    VMOVE(modelmax, rtip->mdl_max);
 	}
 	/* Calculate extent of grid. */
-	gridrt = max(gridhor[X] * modelmax[X],
-		     gridhor[X] * modelmin[X]
+	gridrt = FMAX(gridhor[X] * modelmax[X],
+		      gridhor[X] * modelmin[X]
 	    ) +
-	    max(gridhor[Y] * modelmax[Y],
-		gridhor[Y] * modelmin[Y]
+	    FMAX(gridhor[Y] * modelmax[Y],
+		 gridhor[Y] * modelmin[Y]
 		) +
-	    max(gridhor[Z] * modelmax[Z],
-		gridhor[Z] * modelmin[Z]
+	    FMAX(gridhor[Z] * modelmax[Z],
+		 gridhor[Z] * modelmin[Z]
 		);
-	gridlf = min(gridhor[X] * modelmax[X],
-		     gridhor[X] * modelmin[X]
+	gridlf = FMIN(gridhor[X] * modelmax[X],
+		      gridhor[X] * modelmin[X]
 	    ) +
-	    min(gridhor[Y] * modelmax[Y],
-		gridhor[Y] * modelmin[Y]
+	    FMIN(gridhor[Y] * modelmax[Y],
+		 gridhor[Y] * modelmin[Y]
 		) +
-	    min(gridhor[Z] * modelmax[Z],
-		gridhor[Z] * modelmin[Z]
+	    FMIN(gridhor[Z] * modelmax[Z],
+		 gridhor[Z] * modelmin[Z]
 		);
-	gridup = max(gridver[X] * modelmax[X],
-		     gridver[X] * modelmin[X]
+	gridup = FMAX(gridver[X] * modelmax[X],
+		      gridver[X] * modelmin[X]
 	    ) +
-	    max(gridver[Y] * modelmax[Y],
-		gridver[Y] * modelmin[Y]
+	    FMAX(gridver[Y] * modelmax[Y],
+		 gridver[Y] * modelmin[Y]
 		) +
-	    max(gridver[Z] * modelmax[Z],
-		gridver[Z] * modelmin[Z]
+	    FMAX(gridver[Z] * modelmax[Z],
+		 gridver[Z] * modelmin[Z]
 		);
-	griddn = min(gridver[X] * modelmax[X],
-		     gridver[X] * modelmin[X]
+	griddn = FMIN(gridver[X] * modelmax[X],
+		      gridver[X] * modelmin[X]
 	    ) +
-	    min(gridver[Y] * modelmax[Y],
-		gridver[Y] * modelmin[Y]
+	    FMIN(gridver[Y] * modelmax[Y],
+		 gridver[Y] * modelmin[Y]
 		) +
-	    min(gridver[Z] * modelmax[Z],
-		gridver[Z] * modelmin[Z]
+	    FMIN(gridver[Z] * modelmax[Z],
+		 gridver[Z] * modelmin[Z]
 		);
 	/* Calculate extent of model in plane of grid. */
 	if (groundburst) {
-	    modlrt = max(gridhor[X] * rtip->mdl_max[X],
-			 gridhor[X] * rtip->mdl_min[X]
+	    modlrt = FMAX(gridhor[X] * rtip->mdl_max[X],
+			  gridhor[X] * rtip->mdl_min[X]
 		) +
-		max(gridhor[Y] * rtip->mdl_max[Y],
-		    gridhor[Y] * rtip->mdl_min[Y]
+		FMAX(gridhor[Y] * rtip->mdl_max[Y],
+		     gridhor[Y] * rtip->mdl_min[Y]
 		    ) +
-		max(gridhor[Z] * rtip->mdl_max[Z],
-		    gridhor[Z] * rtip->mdl_min[Z]
+		FMAX(gridhor[Z] * rtip->mdl_max[Z],
+		     gridhor[Z] * rtip->mdl_min[Z]
 		    );
-	    modllf = min(gridhor[X] * rtip->mdl_max[X],
-			 gridhor[X] * rtip->mdl_min[X]
+	    modllf = FMIN(gridhor[X] * rtip->mdl_max[X],
+			  gridhor[X] * rtip->mdl_min[X]
 		) +
-		min(gridhor[Y] * rtip->mdl_max[Y],
-		    gridhor[Y] * rtip->mdl_min[Y]
+		FMIN(gridhor[Y] * rtip->mdl_max[Y],
+		     gridhor[Y] * rtip->mdl_min[Y]
 		    ) +
-		min(gridhor[Z] * rtip->mdl_max[Z],
-		    gridhor[Z] * rtip->mdl_min[Z]
+		FMIN(gridhor[Z] * rtip->mdl_max[Z],
+		     gridhor[Z] * rtip->mdl_min[Z]
 		    );
-	    modlup = max(gridver[X] * rtip->mdl_max[X],
-			 gridver[X] * rtip->mdl_min[X]
+	    modlup = FMAX(gridver[X] * rtip->mdl_max[X],
+			  gridver[X] * rtip->mdl_min[X]
 		) +
-		max(gridver[Y] * rtip->mdl_max[Y],
-		    gridver[Y] * rtip->mdl_min[Y]
+		FMAX(gridver[Y] * rtip->mdl_max[Y],
+		     gridver[Y] * rtip->mdl_min[Y]
 		    ) +
-		max(gridver[Z] * rtip->mdl_max[Z],
-		    gridver[Z] * rtip->mdl_min[Z]
+		FMAX(gridver[Z] * rtip->mdl_max[Z],
+		     gridver[Z] * rtip->mdl_min[Z]
 		    );
-	    modldn = min(gridver[X] * rtip->mdl_max[X],
-			 gridver[X] * rtip->mdl_min[X]
+	    modldn = FMIN(gridver[X] * rtip->mdl_max[X],
+			  gridver[X] * rtip->mdl_min[X]
 		) +
-		min(gridver[Y] * rtip->mdl_max[Y],
-		    gridver[Y] * rtip->mdl_min[Y]
+		FMIN(gridver[Y] * rtip->mdl_max[Y],
+		     gridver[Y] * rtip->mdl_min[Y]
 		    ) +
-		min(gridver[Z] * rtip->mdl_max[Z],
-		    gridver[Z] * rtip->mdl_min[Z]
+		FMIN(gridver[Z] * rtip->mdl_max[Z],
+		     gridver[Z] * rtip->mdl_min[Z]
 		    );
 	} else {
 	    modlrt = gridrt;
@@ -1154,14 +1150,14 @@ gridInit()
 #endif
 
     /* compute stand-off distance */
-    standoff = max(viewdir[X] * rtip->mdl_max[X],
-		   viewdir[X] * rtip->mdl_min[X]
+    standoff = FMAX(viewdir[X] * rtip->mdl_max[X],
+		    viewdir[X] * rtip->mdl_min[X]
 	) +
-	max(viewdir[Y] * rtip->mdl_max[Y],
-	    viewdir[Y] * rtip->mdl_min[Y]
+	FMAX(viewdir[Y] * rtip->mdl_max[Y],
+	     viewdir[Y] * rtip->mdl_min[Y]
 	    ) +
-	max(viewdir[Z] * rtip->mdl_max[Z],
-	    viewdir[Z] * rtip->mdl_min[Z]
+	FMAX(viewdir[Z] * rtip->mdl_max[Z],
+	     viewdir[Z] * rtip->mdl_min[Z]
 	    );
 
     /* determine largest grid dimension for frame buffer display */
@@ -1316,32 +1312,6 @@ lgtModel(struct application *ap, struct partition *pp, struct hit *hitp, struct 
 	    ap->a_color[BLU] = 1.0;
     VSCALE(ap->a_color, ap->a_color, intensity);
     ap->a_cumlen = hitp->hit_dist;
-}
-
-
-/*
-  fastf_t max(fastf_t a, fastf_t b)
-
-  Returns the maximum of a and b.  Useful when a macro would
-  cause side-effects or redundant computation.
-*/
-static fastf_t
-max(fastf_t a, fastf_t b)
-{
-    return	FMAX(a, b);
-}
-
-
-/*
-  fastf_t min(fastf_t a, fastf_t b)
-
-  Returns the minimum of a and b.  Useful when a macro would
-  cause side-effects or redundant computation.
-*/
-static fastf_t
-min(fastf_t a, fastf_t b)
-{
-    return	FMIN(a, b);
 }
 
 

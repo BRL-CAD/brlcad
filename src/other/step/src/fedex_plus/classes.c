@@ -30,6 +30,17 @@ static char rcsid[] ="$Id: classes.c,v 3.0.1.11 1997/09/18 21:14:46 sauderd Exp 
 
 char *FundamentalType(const Type t,int report_reftypes);
 
+static inline
+Boolean
+LISTempty(Linked_List list)
+{
+    if (!list) return True;
+    if ( list->mark->next == list->mark ) {
+	return True;
+    }
+    return False;
+}
+
 int multiple_inheritance = 1;
 int print_logging = 0;
 int corba_binding = 0;
@@ -58,8 +69,6 @@ static void printEnumCreateHdr ( FILE *, const Type );
 static void printEnumCreateBody( FILE *, const Type );
 static void printEnumAggrCrHdr ( FILE *, const Type );
 static void printEnumAggrCrBody( FILE *, const Type );
-void printAccessHookFriend( FILE *, const char * );
-void printAccessHookHdr( FILE *, const char * );
 
 /*
 Turn the string into a new string that will be printed the same as the 
@@ -2285,12 +2294,6 @@ DataMemberPrint(Entity entity, FILE* file,Schema schema)
 
     /*	print list of attributes in the protected access area 	*/
 
-    printAccessHookFriend( file, entnm );
-/*
-    fprintf(file,"\n#ifdef __OSTORE__\n");
-    fprintf (file, "  friend void %s_access_hook_in(void *, \n\tenum os_access_reason, void *, void *, void *);\n", entnm);
-    fprintf(file,"#endif\n");
-*/
     fprintf (file, "  protected:\n");
 
     attr_list = ENTITYget_attributes (entity);
@@ -2437,30 +2440,14 @@ MemberFunctionSign (Entity entity, FILE* file)
 		ENTITYget_CORBAname(entity));
 */
     }
-    fprintf(file,"\n#ifdef __OSTORE__\n");
-    fprintf (file, "\tstatic os_typespec* get_os_typespec();\n");
-    fprintf (file, "\tvirtual void Access_hook_in(void *object, \n");
-    fprintf (file, "\t\tenum os_access_reason reason, void *user_data, \n");
-    fprintf (file, "\t\tvoid *start_range, void *end_range);\n");
-    fprintf(file,"#endif\n\n");
-    
     fprintf (file, "};\n");
     if(corba_binding)
     {
 	fprintf (file, "\n// Associate IDL interface generated code with implementation object\nDEF_TIE_%s(%s)\n", ENTITYget_CORBAname(entity), entnm);
     }
 
-    /*  Print ObjectStore Access Hook function  */
-    printAccessHookHdr( file, entnm );
-/*
-    fprintf(file,"\n#ifdef __OSTORE__\n");
-    fprintf (file, "void %s_access_hook_in(void *object, \n\tenum os_access_reason reason, void *user_data, \n\tvoid *start_range, void *end_range);\n", entnm);
-    fprintf(file,"#endif\n");
-*/
     /*  print creation function for class	*/
-    fprintf(file,"\n#ifdef __OSTORE__\n");
-    fprintf (file, "SCLP23(Application_instance_ptr) \ncreate_%s(os_database *db);\n", entnm);
-    fprintf(file,"\n#elif defined(__O3DB__)\n");
+    fprintf(file,"\n#if defined(__O3DB__)\n");
     fprintf (file, "inline SCLP23(Application_instance_ptr) \ncreate_%s () {  return (SCLP23(Application_instance_ptr)) new %s ;  }\n",
 	 entnm, entnm);
     fprintf (file, "#else\n");
@@ -2891,17 +2878,6 @@ LIBstructor_print (Entity entity, FILE* file, Schema schema)
 	    if  (( ! VARget_inverse (a)) && ( ! VARis_derived (a)) )  {
 	      /*  1. create a new STEPattribute	*/
 
-	      fprintf (file,"\n#ifdef __OSTORE__\n");
-	      fprintf (file,"    "
-		       "%sa = new (os_segment::of(this), \n\t\t\t    STEPattribute::get_os_typespec()) \n\t\t\t\tSTEPattribute(*%s%d%s%s, %s &_%s);\n", 
-		       (first ? "STEPattribute *" : ""),
-		       /*  first time through declare a */
-		       ATTR_PREFIX,count, 
-		       (VARis_type_shifter(a) ? "R" : ""),
-		       attrnm, 
-		       (TYPEis_entity (t) ? "(SCLP23(Application_instance_ptr) *)" : ""),
-		       attrnm);
-	      fprintf (file,"#else\n");
 	      fprintf (file,"    "
 		       "%sa = new STEPattribute(*%s%d%s%s, %s &_%s);\n", 
 		       (first ? "STEPattribute *" : ""),
@@ -2911,7 +2887,6 @@ LIBstructor_print (Entity entity, FILE* file, Schema schema)
 		       attrnm, 
 		       (TYPEis_entity (t) ? "(SCLP23(Application_instance_ptr) *)" : ""),
 		       attrnm);
-	      fprintf (file,"#endif\n");
 	      if (first)  first = 0 ;
 	      /*  2. initialize everything to NULL (even if not optional)  */
 
@@ -2955,115 +2930,6 @@ LIBstructor_print (Entity entity, FILE* file, Schema schema)
 
     entnm = ENTITYget_classname (entity);
     fprintf (file, "%s::~%s () {  }\n", entnm, entnm);
-
-    /*  print ObjectStore Access Hook function  */
-    fprintf(file,"\n#ifdef __OSTORE__\n\n");
-
-    fprintf (file, "void \n%s::Access_hook_in(void *object, \n", entnm);
-    fprintf (file, "\t\t\t\tenum os_access_reason reason, void *user_data, \n");
-    fprintf (file, "\t\t\t\tvoid *start_range, void *end_range)\n{\n");
-    fprintf (file, "    if(debug_access_hooks)\n");
-    fprintf (file, 
-	     "        std::cout << \"%s: virtual access function.\" << std::endl;\n",
-	     entnm);
-    fprintf (file, "    %s_access_hook_in(object, reason, user_data, start_range, end_range);\n", entnm);
-    fprintf (file, "}\n\n");
-
-    fprintf (file, "void \n%s_access_hook_in(void *object, \n\tenum os_access_reason reason, void *user_data, \n\tvoid *start_range, void *end_range)\n{\n", entnm);
-
-    fprintf (file, "    if(debug_access_hooks)\n");
-    fprintf (file, "        std::cout << \"%s: non-virtual access function.\" << std::endl;\n",
-	     entnm);
-    fprintf(file, "    SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;\n");
-    fprintf (file, "    if(debug_access_hooks)\n");
-    fprintf (file, "        std::cout << \"STEPfile_id: \" << sent->STEPfile_id << std::endl;\n");
-    fprintf(file, "    %s *ent = (%s *)sent;\n", entnm, entnm);
-    fprintf(file, "//    %s *ent = (%s *)object;\n", entnm, entnm);
-    fprintf(file, "    if(ent->eDesc == 0)\n");
-    fprintf(file, "        ent->eDesc = %s%s%s;\n",
-	    SCHEMAget_name(schema),ENT_PREFIX,ENTITYget_name(entity));
-
-    count = attr_count;
-    attr_list = ENTITYget_attributes (entity);
-    index = get_attribute_number (entity);
-
-    LISTdo (attr_list, a, Variable)
-      /*  if the attribute is Explicit, assign the Descriptor  */
-      generate_attribute_name( a, attrnm );
-      if  (( ! VARget_inverse (a)) && ( ! VARis_derived (a)) )  {
-	/*  1. assign the Descriptor for the STEPattributes	*/
-	fprintf (file,"    ent->attributes[%d].aDesc = %s%d%s%s;\n",
-		 index,
-		 ATTR_PREFIX,count, 
-		 (VARis_type_shifter(a) ? "R" : ""),
-		 attrnm);
-      }
-      if (VARget_initializer (a) == EXPRESSION_NULL) 
-      {
-	  if (TYPEis_entity (VARget_type (a)))
-	    fprintf(file, "    if(ent->_%s == 0) \n        ent->_%s = S_ENTITY_NULL;\n", attrnm, attrnm);
-      }
-      index++,
-      count++;
-    LISTod;
-    if(print_logging)
-    {
-	fprintf(file, "#ifdef SCL_LOGGING\n");
-	fprintf(file,"    if( *logStream )\n    {\n");
-	    fprintf (file, "\tlogStream->open(SCLLOGFILE,ios::app);\n");
-	fprintf(file, "\t*logStream << time(NULL) << \" SDAI %s #\" << ent->STEPfile_id \n\t    << \" accessed.\" << std::endl;\n",
-		entnm);
-	fprintf (file, "\tlogStream->close();\n");
-	fprintf(file,"    }\n");
-
-	fprintf(file, "#endif\n");
-    }
-
-    fprintf(file,"}\n");
-
-    if(corba_binding)
-    {
-
-      fprintf (file, 
-	       "\n//%s_ptr \nIDL_Application_instance_ptr \n%s::create_TIE()\n{\n", 
-	       ENTITYget_CORBAname(entity), entnm);
-/*
-      fprintf (file, 
-	       "\n//%s_ptr \nP26::Application_instance_ptr \n%s::create_TIE()\n{\n", 
-	       ENTITYget_CORBAname(entity), entnm);
-*/
-      fprintf (file, "    char markerName[16];\n");
-      fprintf (file, "    sprintf(markerName, \"%%d\", StepFileId());\n");
-      fprintf (file,
-	       "    std::cout << \"Server creating entity: \" << markerName ");
-      fprintf (file,
-	       "<< \" TIE object.\" << std::endl;\n");
-      fprintf (file, "    return new TIE_%s(%s) (this, markerName);\n",
-	       ENTITYget_CORBAname(entity), entnm);
-      fprintf (file, "}\n");
-
-    }
-
-    fprintf (file, "\nSCLP23(Application_instance_ptr) \ncreate_%s(os_database *db) \n{\n", 
-	     entnm);
-    fprintf (file, "    if(db)\n    {\n");
-    fprintf (file, 
-	     "        SCLP23(DAObject_ptr) ap = new (db, %s::get_os_typespec()) \n", 
-	     entnm);
-    fprintf (file, 
-	     "                                   %s;\n", entnm);
-    fprintf (file, "        return (SCLP23(Application_instance_ptr)) ap;\n");
-    fprintf (file, 
-	     "//        return (SCLP23(Application_instance_ptr)) new (db, %s::get_os_typespec()) \n", 
-	     entnm);
-    fprintf (file, 
-	     "//                                   %s;\n", entnm);
-    fprintf (file, "    }\n");
-    fprintf (file, "    else\n");
-    fprintf (file, 
-	     "        return (SCLP23(Application_instance_ptr)) new %s; \n}\n", 
-	     entnm);
-    fprintf(file,"#endif\n");
 
     /*  Open OODB reInit function  */
     fprintf(file,"\n#ifdef __O3DB__\n");
@@ -3240,18 +3106,6 @@ LIBstructor_print_w_args (Entity entity, FILE* file, Schema schema)
 	    if  (( ! VARget_inverse (a)) && ( ! VARis_derived (a)) )  {
 	      /*  1. create a new STEPattribute	*/
 
-	      fprintf (file,"\n#ifdef __OSTORE__\n");
-	      fprintf (file,"    "
-		       "%sa = new (os_segment::of(this), \n\t\t\t    STEPattribute::get_os_typespec()) \n\t\t\t\tSTEPattribute(*%s%d%s%s, %s &_%s);\n", 
-		       (first ? "STEPattribute *" : ""),
-		       /*  first time through declare a */
-		       ATTR_PREFIX,count, 
-		       (VARis_type_shifter(a) ? "R" : ""),
-		       attrnm, 
-		       (TYPEis_entity (t) ? "(SCLP23(Application_instance_ptr) *)" : ""),
-		       attrnm);
-	      fprintf (file,"#else\n");
-	     
 	      fprintf (file,"    "
 		       "%sa = new STEPattribute(*%s%d%s%s, %s &_%s);\n", 
 		       (first ? "STEPattribute *" : ""),
@@ -3261,7 +3115,6 @@ LIBstructor_print_w_args (Entity entity, FILE* file, Schema schema)
 		       attrnm, 
 		       (TYPEis_entity (t) ? "(SCLP23(Application_instance_ptr) *)" : ""),
 		       attrnm);
-	      fprintf (file,"#endif\n");
 
 	      if (first)  first = 0 ;
 	      /*  2. initialize everything to NULL (even if not optional)  */
@@ -3878,15 +3731,7 @@ MODELPrintConstructorBody(Entity entity, FILES* files,Schema schema
 
   n = ENTITYget_classname (entity);
 
-  fprintf (files->lib,"#ifdef __OSTORE__\n");
-  fprintf (files->lib, "    if(db)\n");
-  fprintf (files->lib, "        eep = new (db, \n");
-  fprintf (files->lib, "              SCLP23(Entity_extent)::get_os_typespec()) SCLP23(Entity_extent);\n");
-  fprintf (files->lib, "    else\n");
   fprintf (files->lib, "        eep = new SCLP23(Entity_extent);\n");
-  fprintf (files->lib,"#else\n");
-  fprintf (files->lib, "        eep = new SCLP23(Entity_extent);\n");
-  fprintf (files->lib,"#endif\n");
 
 
   fprintf (files->lib, "    eep->definition_(%s%s%s);\n", 
@@ -4263,12 +4108,6 @@ TYPEenum_inc_print (const Type type, FILE* inc)
 	n = TYPEget_ctype (type);
 	fprintf (inc, "\nclass %s  :  public SCLP23(Enum)  {\n", n);
 
-	printAccessHookFriend( inc, n );
-/*
-    fprintf(inc,"\n#ifdef __OSTORE__\n");
-    fprintf (inc, "  friend void %s_access_hook_in(void *, \n\tenum os_access_reason, void *, void *, void *);\n", n);
-    fprintf(inc,"#endif\n");
-*/
 	fprintf (inc, "  protected:\n\tEnumTypeDescriptor *type;\n\n");
 
 	/*	constructors	*/
@@ -4301,13 +4140,6 @@ TYPEenum_inc_print (const Type type, FILE* inc)
 /*	fprintf (inc, "  private:\n\tvoid Init ();\n");*/
 	fprintf (inc, "\tvirtual const char * element_at (int n) const;\n"); 
 
-	fprintf (inc,"\n#ifdef __OSTORE__\n");
-	fprintf (inc,"\tstatic os_typespec* get_os_typespec();\n");
-	fprintf (inc, "\tvirtual void Access_hook_in(void *object, \n");
-	fprintf (inc, "\t\tenum os_access_reason reason, void *user_data, \n");
-	fprintf (inc, "\t\tvoid *start_range, void *end_range);\n");
-	fprintf (inc,"#endif\n");
-
 	/*  end class definition  */
 	fprintf (inc, "};\n");
 
@@ -4316,12 +4148,6 @@ TYPEenum_inc_print (const Type type, FILE* inc)
 
 
     /*  Print ObjectStore Access Hook function  */
-	printAccessHookHdr( inc, n );
-/*
-    fprintf(inc,"\n#ifdef __OSTORE__\n");
-    fprintf (inc, "void %s_access_hook_in(void *object, \n\tenum os_access_reason reason, void *user_data, \n\tvoid *start_range, void *end_range);\n", n);
-    fprintf(inc,"#endif\n");
-*/
 	printEnumCreateHdr( inc, type );
 
 	/* DAS brandnew above */
@@ -4331,7 +4157,6 @@ TYPEenum_inc_print (const Type type, FILE* inc)
 	
 	fprintf (inc, "\nclass %ss  :  public EnumAggregate  {\n", n);
 
-	printAccessHookFriend( inc, enumAggrNm );
 /*      fprintf (inc, "  public:\n\tvirtual EnumNode * NewNode ()  {\n");*/
 	fprintf (inc, "  protected:\n    EnumTypeDescriptor *enum_type;\n\n");
 	fprintf (inc, "  public:\n");
@@ -4341,13 +4166,8 @@ TYPEenum_inc_print (const Type type, FILE* inc)
 	fprintf (inc, "\t{ return new EnumNode (new %s( \"\", enum_type )); }"
 		      "\n", n);
 
-	fprintf(inc,"\n#ifdef __OSTORE__\n");
-	fprintf(inc, "    static os_typespec* get_os_typespec();\n");
-	fprintf(inc,"#endif\n");
-
 	fprintf (inc, "};\n");
 
-	printAccessHookHdr( inc, enumAggrNm );
 	fprintf (inc, "\ntypedef %ss * %ss_ptr;\n", n, n);
 /*
 	fprintf (inc, "typedef %ss_ptr %ss_var;\n", n, n);
@@ -4404,30 +4224,6 @@ TYPEenum_lib_print (const Type type, FILE* f)
   /*    copy constructor  */
 /*  fprintf (f, "%s::%s (%s& n )  {\n", n, n, n);*/
 /*  fprintf (f, "   (l);\n");*/
-  
-/*NEWENUM */
-    /*  print ObjectStore Access Hook function  */
-    fprintf(f,"\n#ifdef __OSTORE__\n");
-/* ////////////// */
-
-    fprintf (f, "void \n%s::Access_hook_in(void *object, \n", n);
-    fprintf (f, "\t\t\t\tenum os_access_reason reason, void *user_data, \n");
-    fprintf (f, "\t\t\t\tvoid *start_range, void *end_range)\n{\n");
-    fprintf (f, "    if(debug_access_hooks)\n");
-    fprintf (f, 
-	     "        std::cout << \"%s: virtual access function.\" << std::endl;\n",
-	     n);
-    fprintf (f, "    %s_access_hook_in(object, reason, user_data, start_range, end_range);\n", n);
-    fprintf (f, "}\n\n");
-/* ///////////// */
-    fprintf (f, "void \n%s_access_hook_in(void *object, \n\tenum os_access_reason reason, void *user_data, \n\tvoid *start_range, void *end_range)\n{\n", n);
-
-    fprintf(f, "    %s *e = (%s *)object;\n", n, n);
-    fprintf(f, "    if(e->type == 0)\n");
-    fprintf(f, "        e->type = %s;\n", TYPEtd_name(type));
-    fprintf(f, "}\n");
-    fprintf(f,"\n#endif\n");
-/*NEWENUM */
 
   /*      operator =      */
 /*  fprintf (f, "%s& \t%s::operator= (%s& x)", n, n, n);*/
@@ -4466,16 +4262,6 @@ TYPEenum_lib_print (const Type type, FILE* f)
   fprintf (f, "\n%ss::%ss( EnumTypeDescriptor *et )\n", n, n);
   fprintf (f, "    : enum_type(et)\n{\n}\n\n");
   fprintf (f, "%ss::~%ss()\n{\n}\n", n, n);
-
-    /*  print ObjectStore Access Hook function  */
-    fprintf(f,"\n#ifdef __OSTORE__\n");
-    fprintf (f, "void \n%ss_access_hook_in(void *object, \n\tenum os_access_reason reason, void *user_data, \n\tvoid *start_range, void *end_range)\n{\n", n);
-
-    fprintf(f, "    %ss *e = (%ss *)object;\n", n, n);
-    fprintf(f, "    if(e->enum_type == 0)\n");
-    fprintf(f, "        e->enum_type = %s;\n", TYPEtd_name(type));
-    fprintf(f, "}\n");
-    fprintf(f,"\n#endif\n");
 
   printEnumAggrCrBody( f, type );
 
@@ -4884,24 +4670,12 @@ TYPEprint_descriptions (const Type type, FILES* files, Schema schema)
     if(isAggregateType(type)) {
       const char * ctype = TYPEget_ctype (type);
 
-      fprintf(files->inc, "\n#ifdef __OSTORE__\n");
-      fprintf(files->inc, "STEPaggregate * create_%s (os_database *db);\n\n", 
-	      ClassName(TYPEget_name(type)));
-      fprintf(files->inc, "#else\n");
       fprintf(files->inc, "STEPaggregate * create_%s ();\n\n", 
 	      ClassName(TYPEget_name(type)));
-      fprintf(files->inc, "#endif\n");
 
-      fprintf(files->lib, "\n#ifdef __OSTORE__\n");
-      fprintf(files->lib, 
-	      "STEPaggregate *\ncreate_%s (os_database *db) { "
-	      "return create_%s(db);  }\n",
-	      ClassName(TYPEget_name(type)), ctype);
-      fprintf(files->lib, "#else\n");
       fprintf(files->lib, 
 	      "STEPaggregate *\ncreate_%s () {  return create_%s();  }\n",
 	      ClassName(TYPEget_name(type)), ctype);
-      fprintf(files->lib, "#endif\n");
 
       /* this function is assigned to the aggrCreator var in TYPEprint_new */
     }
@@ -4945,23 +4719,6 @@ TYPEprint_descriptions (const Type type, FILES* files, Schema schema)
     }
 }
 
-    /*  Print ObjectStore Access Hook function friend definition  */
-void
-printAccessHookFriend( FILE *f, const char *nm )
-{
-    fprintf(f,"\n#ifdef __OSTORE__\n");
-    fprintf (f, "  friend void %s_access_hook_in(void *, \n\tenum os_access_reason, void *, void *, void *);\n", nm);
-    fprintf(f,"#endif\n");
-}
-
-    /*  Print ObjectStore Access Hook function  */
-void
-printAccessHookHdr( FILE *f, const char *nm )
-{
-    fprintf(f,"\n#ifdef __OSTORE__\n");
-    fprintf (f, "void %s_access_hook_in(void *object, \n\tenum os_access_reason reason, void *user_data, \n\tvoid *start_range, void *end_range);\n", nm);
-    fprintf(f,"#endif\n");
-}
 
 static void
 printEnumCreateHdr( FILE *inc, const Type type )
@@ -4973,11 +4730,7 @@ printEnumCreateHdr( FILE *inc, const Type type )
 {
     const char *nm = TYPEget_ctype (type);
 
-    fprintf (inc, "\n#ifdef __OSTORE__\n");
-    fprintf (inc, "  SCLP23(Enum) * create_%s (os_database *db);\n", nm);
-    fprintf (inc, "#else\n");
     fprintf (inc, "  SCLP23(Enum) * create_%s ();\n", nm);
-    fprintf (inc, "#endif\n");
 }
 
 static void
@@ -4991,16 +4744,8 @@ printEnumCreateBody( FILE *lib, const Type type )
 
     strncpy (tdnm, TYPEtd_name(type), BUFSIZ);
 
-    fprintf (lib, "\n#ifdef __OSTORE__\n");
-    fprintf (lib, "\nSCLP23(Enum) * \ncreate_%s (os_database *db)\n{\n", nm);
-    fprintf (lib, "    if(db)\n");
-    fprintf (lib, "        return new (db, \n");
-    fprintf (lib, "                    %s::get_os_typespec()) %s;\n", nm, nm);
-    fprintf (lib, "    else\n");
-    fprintf (lib, "        return new %s( \"\", %s );\n}\n\n", nm, tdnm);
-    fprintf (lib, "#else\n");
     fprintf (lib, "\nSCLP23(Enum) * \ncreate_%s () \n{\n", nm );
-    fprintf (lib, "    return new %s( \"\", %s );\n}\n#endif\n\n", nm, tdnm );
+    fprintf (lib, "    return new %s( \"\", %s );\n}\n\n", nm, tdnm );
 }
 
 static void
@@ -5012,11 +4757,7 @@ printEnumAggrCrHdr( FILE *inc, const Type type )
     const char *n = TYPEget_ctype (type);
 /*    const char *n = ClassName( TYPEget_name(type) ));*/
 
-    fprintf (inc, "\n#ifdef __OSTORE__\n");
-    fprintf (inc, "  STEPaggregate * create_%ss (os_database *db);\n", n);
-    fprintf (inc, "#else\n");
     fprintf (inc, "  STEPaggregate * create_%ss ();\n", n);
-    fprintf (inc, "#endif\n");
 }
 
 static void
@@ -5027,16 +4768,8 @@ printEnumAggrCrBody( FILE *lib, const Type type )
 
     strncpy (tdnm, TYPEtd_name(type), BUFSIZ);
 
-    fprintf (lib,"\n#ifdef __OSTORE__\n");
-    fprintf (lib, "\nSTEPaggregate * \ncreate_%ss (os_database *db) \n{\n", n);
-    fprintf (lib, "    if(db)\n");
-    fprintf (lib, "        return new (db, \n");
-    fprintf (lib, "                    %ss::get_os_typespec()) %ss;\n", n, n);
-    fprintf (lib, "    else\n");
-    fprintf (lib, "        return new %ss( %s );\n}\n\n", n, tdnm);
-    fprintf (lib,"#else\n");
     fprintf (lib, "\nSTEPaggregate * \ncreate_%ss ()\n{\n", n);
-    fprintf (lib, "    return new %ss( %s );\n}\n#endif\n", n, tdnm);
+    fprintf (lib, "    return new %ss( %s );\n}\n", n, tdnm);
 }
 
 void
@@ -5147,24 +4880,12 @@ TYPEprint_nm_ft_desc (Schema schema, const Type type, FILE* f, char *endChars)
 		case bag_:
 		case set_:
 		case list_:
-		    fprintf(files->inc, "\n#ifdef __OSTORE__\n");
-		    fprintf(files->inc, "STEPaggregate * create_%s (os_database *db);\n\n", 
-			    ClassName(TYPEget_name(type)));
-		    fprintf(files->inc, "#else\n");
 		    fprintf(files->inc, "STEPaggregate * create_%s ();\n\n", 
 			    ClassName(TYPEget_name(type)));
-		    fprintf(files->inc, "#endif\n");
-		    fprintf(files->lib, "\n#ifdef __OSTORE__\n");
-		    fprintf(files->lib, 
-		   "STEPaggregate *\ncreate_%s (os_database *db) {  return create_%s(db);  }\n",
-			ClassName(TYPEget_name(type)), 
-			TYPEget_ctype(TYPEget_head(type)));
-		    fprintf(files->lib, "#else\n");
 		    fprintf(files->lib, 
 		   "STEPaggregate *\ncreate_%s () {  return create_%s();  }\n",
 			ClassName(TYPEget_name(type)), 
 			TYPEget_ctype(TYPEget_head(type)));
-		    fprintf(files->lib, "#endif\n");
 		    break;
 	    }
 	} else if (streq("",TYPEget_name(type))) {

@@ -165,6 +165,83 @@ struct ell_specific {
 
 #define ELL_NULL ((struct ell_specific *)0)
 
+/**
+ * R T _ E L L _ B B O X
+ *
+ * Compute the bounding RPP for an ellipsoid
+ */
+int
+rt_ell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    vect_t w1, w2, P;
+    vect_t Au, Bu, Cu;	/* A, B, C with unit length */
+    fastf_t magsq_a, magsq_b, magsq_c, f;
+    mat_t R;
+    struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+
+    magsq_a = MAGSQ(eip->a);
+    magsq_b = MAGSQ(eip->b);
+    magsq_c = MAGSQ(eip->c);
+
+    /* Try a shortcut - if this is a sphere, the calculation simpifies */
+    /* Check whether |A|, |B|, and |C| are nearly equal */
+    if (!(fabs(magsq_a - magsq_b) > 0.0001
+		|| fabs(magsq_a - magsq_c) > 0.0001)) {
+	fastf_t sph_rad = sqrt(magsq_a);
+	(*min)[X] = eip->v[X] - sph_rad;
+	(*max)[X] = eip->v[X] + sph_rad;
+	(*min)[Y] = eip->v[Y] - sph_rad;
+	(*max)[Y] = eip->v[Y] + sph_rad;
+	(*min)[Z] = eip->v[Z] - sph_rad;
+	(*max)[Z] = eip->v[Z] + sph_rad;
+	return 0;
+    }
+
+    /* Create unit length versions of A, B, C */
+    f = 1.0/sqrt(magsq_a);
+    VSCALE(Au, eip->a, f);
+    f = 1.0/sqrt(magsq_b);
+    VSCALE(Bu, eip->b, f);
+    f = 1.0/sqrt(magsq_c);
+    VSCALE(Cu, eip->c, f);
+
+    MAT_IDN(R);
+    VMOVE(&R[0], Au);
+    VMOVE(&R[4], Bu);
+    VMOVE(&R[8], Cu);
+
+    /* Compute bounding RPP */
+    VSET(w1, magsq_a, magsq_b, magsq_c);
+
+    /* X */
+    VSET(P, 1.0, 0, 0);		/* bounding plane normal */
+    MAT3X3VEC(w2, R, P);	/* map plane to local coord syst */
+    VELMUL(w2, w2, w2);		/* square each term */
+    f = VDOT(w1, w2);
+    f = sqrt(f);
+    (*min)[X] = eip->v[X] - f;	/* V.P +/- f */
+    (*max)[X] = eip->v[X] + f;
+
+    /* Y */
+    VSET(P, 0, 1.0, 0);		/* bounding plane normal */
+    MAT3X3VEC(w2, R, P);	/* map plane to local coord syst */
+    VELMUL(w2, w2, w2);		/* square each term */
+    f = VDOT(w1, w2);
+    f = sqrt(f);
+    (*min)[Y] = eip->v[Y] - f;	/* V.P +/- f */
+    (*max)[Y] = eip->v[Y] + f;
+
+    /* Z */
+    VSET(P, 0, 0, 1.0);		/* bounding plane normal */
+    MAT3X3VEC(w2, R, P);	/* map plane to local coord syst */
+    VELMUL(w2, w2, w2);		/* square each term */
+    f = VDOT(w1, w2);
+    f = sqrt(f);
+    (*min)[Z] = eip->v[Z] - f;	/* V.P +/- f */
+    (*max)[Z] = eip->v[Z] + f;
+    return 0;
+}
+
 
 /**
  * R T _ E L L _ P R E P
@@ -192,7 +269,6 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     mat_t SS;
     mat_t mtemp;
     vect_t Au, Bu, Cu;	/* A, B, C with unit length */
-    vect_t w1, w2, P;	/* used for bounding RPP */
     fastf_t f;
 
     eip = (struct rt_ell_internal *)ip->idb_ptr;
@@ -288,35 +364,7 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_aradius = stp->st_bradius = sqrt(f);
 
     /* Compute bounding RPP */
-    VSET(w1, magsq_a, magsq_b, magsq_c);
-
-    /* X */
-    VSET(P, 1.0, 0, 0);		/* bounding plane normal */
-    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
-    VELMUL(w2, w2, w2);		/* square each term */
-    f = VDOT(w1, w2);
-    f = sqrt(f);
-    stp->st_min[X] = ell->ell_V[X] - f;	/* V.P +/- f */
-    stp->st_max[X] = ell->ell_V[X] + f;
-
-    /* Y */
-    VSET(P, 0, 1.0, 0);		/* bounding plane normal */
-    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
-    VELMUL(w2, w2, w2);		/* square each term */
-    f = VDOT(w1, w2);
-    f = sqrt(f);
-    stp->st_min[Y] = ell->ell_V[Y] - f;	/* V.P +/- f */
-    stp->st_max[Y] = ell->ell_V[Y] + f;
-
-    /* Z */
-    VSET(P, 0, 0, 1.0);		/* bounding plane normal */
-    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
-    VELMUL(w2, w2, w2);		/* square each term */
-    f = VDOT(w1, w2);
-    f = sqrt(f);
-    stp->st_min[Z] = ell->ell_V[Z] - f;	/* V.P +/- f */
-    stp->st_max[Z] = ell->ell_V[Z] + f;
-
+    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
     return 0;			/* OK */
 }
 
@@ -627,7 +675,7 @@ rt_ell_16pts(fastf_t *ov,
  * R T _ E L L _ P L O T
  */
 int
-rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     register int i;
     struct rt_ell_internal *eip;
@@ -1645,14 +1693,14 @@ nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
  * @return -1 on failure
  */
 int
-rt_ell_params(struct pc_pc_set *pcs, const struct rt_db_internal *ip)
+rt_ell_params(struct pc_pc_set *UNUSED(pcs), const struct rt_db_internal *UNUSED(ip))
 {
+#if 0
     struct rt_ell_internal *eip;
     eip = (struct rt_ell_internal *)ip->idb_ptr;
 
     if (!pcs) return 0;
 
-#if 0
     pcs->ps = bu_calloc(pcs->n_params, sizeof (struct pc_param), "pc_param");
     pcs->cs = bu_calloc(pcs->n_constraints, sizeof (struct pc_constrnt), "pc_constrnt");
 
@@ -1672,6 +1720,7 @@ rt_ell_params(struct pc_pc_set *pcs, const struct rt_db_internal *ip)
     pcs->ps[3].ptype = pc_value;
     pcs->ps[3].pval.vectorp = (vectp_t) &(eip->c);
 #endif
+
     return 0;			/* OK */
 }
 

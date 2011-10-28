@@ -51,12 +51,7 @@ SCLP23(Entity_extent)::definition_(const Entity_ptr& ep)
 void 
 SCLP23(Entity_extent)::definition_name_(const SCLP23(Entity_name)& en)
 {
-#ifdef __OSTORE__
-  _definition_name = new (os_database::of(this), os_typespec::get_char(), 
-		     strlen(en)+1) char[strlen(en)+1];
-#else
   _definition_name = new char[strlen(en)+1];
-#endif
   strncpy (_definition_name, en, strlen(en)+1);
 }
 
@@ -126,12 +121,10 @@ SCLP23(Entity_extent)::AddInstance(const SCLP23(DAObject_ptr)& appInst)
 */
 
 
-#ifndef __OSTORE__
 void 
 SCLP23(Entity_extent)::RemoveInstance(const SCLP23(DAObject_ptr)& appInst)
 {
     _instances.Remove( _instances.Index(appInst) );
 }
-#endif
 
 /////////	 END_ENTITY SCLP23(Entity_extent) 

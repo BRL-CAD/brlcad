@@ -204,7 +204,6 @@ EXTRA_DIST = \
 	dm-wgl.c \
 	dm-X.c \
 	dm-tk.c \
-	fbserv_win32.c \
 	mged.bat \
 	red.c \
 	CMakeLists.txt
@@ -218,4 +217,3 @@ FAST_OBJECTS = \
 	$(cad_parea_OBJECTS) \
 	$(mged_OBJECTS) \
 	$(bin_PROGRAMS)
-

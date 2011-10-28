@@ -1,0 +1,153 @@
+
+
+<HTML>
+  <HEAD>
+   <STYLE>
+     body {
+       max-width: 750;
+       margin: auto;
+       background: #DDDDDD;
+     }
+     .block {
+       border: 2px solid purple;
+       background: white;
+       padding: 5px;
+       margin: 10px 5px;
+     }
+     h1      { text-align: center; }
+     a[href]       { color: purple ; font-style: italic ; font-weight: bold }
+     a[href]:hover { background: purple ; color: white }
+
+   </STYLE>
+   <SCRIPT>
+     function onload_handler (e) {
+       document.forms.quickreport.t.focus()
+       document.getElementById("formcontainer").style.display="block"
+
+       var uri = decodeURIComponent(document.location.pathname)
+       document.getElementById('uritext').value = uri.substring(1, uri.length-1)
+
+       document.getElementById("version").value = navigator.hv3_version
+     }
+
+     function submit_handler(e) {
+       var caption = document.forms.quickreport.t.value
+       if (caption.length < 1 || caption.length > 60) {
+         alert("Caption field must be between 1 and 60 characters in length")
+         return false
+       }
+
+       var uri = document.getElementById("uritext").value
+       var desc = document.forms.quickreport.d
+       desc.value = "   URI: " + uri + "\n\n" + desc.value
+
+       var email = document.forms.quickreport.c
+       if (email.value=="") {
+           email.value = "Anonymous Hv3 User"
+       }
+
+       return true
+     }
+   </SCRIPT>
+  </HEAD> <BODY onload="onload_handler()">
+    <DIV class=block>
+      <H1>Report a bug in Hv3</H1>
+      <CENTER><A href=#guidelines>View bug report guidelines</A></CENTER>
+    </DIV>
+
+    <DIV class=block>
+      <H2>Quick Bug Report</H2>
+      <DIV id="formcontainer" style="display:none">
+        <FORM 
+          name=quickreport 
+          action="http://tkhtml.tcl.tk/cvstrac/tktnew" 
+          method=POST
+          onsubmit="return submit_handler()"
+        >
+          <TABLE>
+            <TR><TD>Caption:  <TD><INPUT name=t size=60>
+            <TR><TD>Uri:      <TD><INPUT id=uritext size=60>
+            <TR><TD>E-mail <B>(optional)</B>: <TD><INPUT size=60 name=c>
+            <TR><TD>Description:<TD><TEXTAREA name=d cols=70 rows=15></TEXTAREA>
+          </TABLE>
+          <CENTER>
+            <INPUT type=submit name=submit value="Submit Report!">
+            <INPUT type=submit name=preview value="Online preview...">
+          </CENTER>
+            <INPUT type=hidden name=f value="">
+            <INPUT type=hidden name=s value="">
+            <INPUT type=hidden name=w value="danielk1977">
+            <INPUT type=hidden name=r value="1">
+            <INPUT type=hidden name=p value="1">
+            <INPUT type=hidden name=y value="Hv3">
+            <INPUT type=hidden id=version name=v value="">
+        </FORM>
+      </DIV>
+      <NOSCRIPT>
+	<P>
+          The Quick Bug Report form is unavailable because javascript is not
+	  installed. Please submit the bug 
+   <A href="http://tkhtml.tcl.tk/cvstrac/tktnew">via the web interface</A>.
+          Thanks.
+        </P>
+      </NOSCRIPT>
+    </DIV>
+
+    <DIV class=block>
+      <A name=guidelines></A>
+      <H2>Bug Report Guidelines</H2>
+      <P>
+        Please report the bugs you observe in Hv3. If a web-page is rendered
+        incorrectly or some javascript features doesn't function correctly,
+        that's a bug. If an irritating error dialog pops up, that's a bug.
+        If Hv3 crashes, that's definitely a bug.
+      </P>
+      <P>
+        At this stage in the project, obtaining bug reports is very important.
+	Don't worry about submitting duplicates or accidentally reporting a
+	non-bug. Such reports take mere seconds to close and cause nobody any
+	inconveniance. Be as brief as you like - typing something like "the
+	page is busted because the menu is rendered wrong" is often all that 
+        is required.
+      </P>
+      <P>
+	If you include a contact e-mail address, nobody but the Hv3 developers
+	will see it. And we'll (probably) send you an e-mail when the bug is
+        fixed. Or if the bug is complex we might mail you for clarification.
+	Whether or not you include an e-mail address, your help in bringing Hv3
+        bugs to our attention will be greatly appreciated.
+      </P>
+      <P>
+        <CENTER><B><I>If in doubt, report it!</I></B></CENTER>
+      </P>
+    </DIV>
+    <DIV class=block>
+      <H2>Details</H2>
+      <P>
+        The Hv3/Tkhtml3 project uses cvstrac to manage source code,
+        bug-reports and user contributed wiki pages. Access the cvstrac
+        system here:
+      </P>
+      <P>
+        <A href="http://tkhtml.tcl.tk/cvstrac/">
+          http://tkhtml.tcl.tk/cvstrac/
+        </A>
+      </P>
+  
+      <P>
+        There are two ways to submit a bug into the system. The first is to
+        add the bug directly into cvstrac via the web-interface by visiting 
+        the following link:
+      </P>
+      <P>
+        <A href="http://tkhtml.tcl.tk/cvstrac/tktnew">
+          http://tkhtml.tcl.tk/cvstrac/tktnew
+        </A>
+      </P>
+      <P>
+        The second method is to submit the "Quick Bug Report" form above.
+      <P>
+    </DIV>
+  </BODY>
+</HTML>
+

@@ -49,7 +49,7 @@ static struct mater *material_head = MATER_NULL;
 
 
 /**
- * R T _ P R _ M A T E R
+ *
  */
 void
 rt_pr_mater(register const struct mater *mp)
@@ -91,8 +91,6 @@ _rt_check_overlap(struct mater *newp)
 
 
 /**
- * R T _ I N S E R T _ C O L O R
- *
  * While any additional database records are created and written here,
  * it is the responsibility of the caller to color_putrec(newp) if
  * needed.
@@ -176,8 +174,6 @@ rt_insert_color(struct mater *newp)
 
 
 /**
- * R T _ C O L O R _ A D D R E C
- *
  * Called from db_scan() when initially scanning database.
  */
 void
@@ -197,8 +193,6 @@ rt_color_addrec(int low, int hi, int r, int g, int b, off_t addr)
 
 
 /**
- * R T _ R E G I O N _ C O L O R _ M A P
- *
  * If the GIFT regionid of this region falls into a mapped area of
  * regionid-driven color override.
  */
@@ -228,7 +222,7 @@ rt_region_color_map(register struct region *regp)
 
 
 /**
- * r t _ v l s _ c o l o r _ m a p
+ *
  */
 void
 rt_vls_color_map(struct bu_vls *str)
@@ -250,8 +244,6 @@ rt_vls_color_map(struct bu_vls *str)
 
 
 /**
- * r t _ m a t e r i a l _ h e a d
- *
  * returns the material linked list head node
  */
 struct mater *
@@ -262,8 +254,6 @@ rt_material_head()
 
 
 /**
- * r t _ n e w _ m a t e r i a l _ h e a d
- *
  * set the material linked list head node
  */
 void
@@ -274,8 +264,6 @@ rt_new_material_head(struct mater *newmat)
 
 
 /**
- * r t _ d u p _ m a t e r i a l _ h e a d
- *
  * returns a copy of the material linked list head node
  */
 struct mater *
@@ -307,8 +295,6 @@ rt_dup_material_head()
 
 
 /**
- * R T _ C O L O R _ F R E E
- *
  * Really should be db_color_free().  Called from db_close().
  */
 void

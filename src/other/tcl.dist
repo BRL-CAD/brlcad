@@ -1,3 +1,5 @@
+SET(tcl_ignore_files
+Makefile.am
 CMake
 ChangeLog
 ChangeLog.1999
@@ -10,6 +12,7 @@ ChangeLog.2005
 README
 changes
 compat
+doc
 generic/README
 generic/regc_color.c
 generic/regc_cvec.c
@@ -47,6 +50,7 @@ generic/tclTomMath.h
 generic/tclTomMathDecls.h
 generic/tclTomMathInt.h
 generic/tommath.h
+library
 libtommath/tommath.h
 libtommath/tommath_class.h
 libtommath/tommath_superclass.h
@@ -92,4 +96,4 @@ unix/tclUnixThrd.h
 unix/tclXtNotify.c
 unix/tclXtTest.c
 win
-
+)

@@ -40,7 +40,7 @@ tcl_SCRIPTS = \
 	$(BUILT_SOURCES) \
 	$(scripties)
 
-EXTRA_DIST = $(tcl_SCRIPTS) CMakeLists.txt
+EXTRA_DIST = $(tcl_SCRIPTS) hv3_man_browser_test.tcl CMakeLists.txt
 
 # CLEANFILES = $(BUILT_SOURCES)
 

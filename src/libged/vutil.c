@@ -210,20 +210,6 @@ _ged_do_tra(struct ged *gedp,
 }
 
 
-int
-_ged_do_zoom(struct ged *gedp, fastf_t sf)
-{
-    gedp->ged_gvp->gv_scale /= sf;
-    if (gedp->ged_gvp->gv_scale < RT_MINVIEWSCALE)
-	gedp->ged_gvp->gv_scale = RT_MINVIEWSCALE;
-    gedp->ged_gvp->gv_size = 2.0 * gedp->ged_gvp->gv_scale;
-    gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
-    ged_view_update(gedp->ged_gvp);
-
-    return GED_OK;
-}
-
-
 /**
  * P E R S P _ M A T
  *

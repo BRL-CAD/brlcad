@@ -869,6 +869,29 @@ rt_ebm_ifree(struct rt_db_internal *ip)
 
 
 /**
+ * R T _ E B M _ B B O X
+ *
+ * Calculate bounding RPP for ebm
+ */
+int
+rt_ebm_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
+{
+    register struct rt_ebm_internal *eip;
+    vect_t v1, localspace;
+
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ebm_internal *)ip->idb_ptr;
+    RT_EBM_CK_MAGIC(eip);
+
+    /* Find bounding RPP of rotated local RPP */
+    VSETALL(v1, 0);
+    VSET(localspace, eip->xdim, eip->ydim, eip->tallness);
+    bn_rotate_bbox((*min), (*max), eip->mat, v1, localspace);
+    return 0;
+}
+
+
+/**
  * R T _ E B M _ P R E P
  *
  * Returns -
@@ -887,7 +910,6 @@ rt_ebm_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     vect_t norm;
     vect_t radvec;
     vect_t diam;
-    vect_t small1;
 
     if (rtip) RT_CK_RTI(rtip);
 
@@ -914,10 +936,8 @@ rt_ebm_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_specific = (genptr_t)ebmp;
 
     /* Find bounding RPP of rotated local RPP */
-    VSETALL(small1, 0);
+    rt_ebm_bbox(ip, &(stp->st_min), &(stp->st_max));
     VSET(ebmp->ebm_large, ebmp->ebm_i.xdim, ebmp->ebm_i.ydim, ebmp->ebm_i.tallness);
-    bn_rotate_bbox(stp->st_min, stp->st_max, eip->mat,
-		   small1, ebmp->ebm_large);
 
     /* for now, EBM origin in ideal coordinates is at origin */
     VSETALL(ebmp->ebm_origin, 0);
@@ -1127,7 +1147,7 @@ rt_ebm_plate(int x_1, int y_1, int x_2, int y_2, double t, register fastf_t *mat
  * R T _ E B M _ P L O T
  */
 int
-rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     register struct rt_ebm_internal *eip;
     size_t x, y;

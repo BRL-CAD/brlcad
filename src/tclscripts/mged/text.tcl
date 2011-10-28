@@ -1774,8 +1774,7 @@ proc tab_expansion { line } {
 	    }
 	    for { set index 0 } { $index < $pathLength } { incr index } {
 		set element [lindex $path $index]
-		# "db get_type" does not blather on error
-		if [catch {db get_type $element} type] {
+		if { ! [ exists $element ] } {
 		    # the current path element is invalid, just return
 		    return [list $line {}]
 		}

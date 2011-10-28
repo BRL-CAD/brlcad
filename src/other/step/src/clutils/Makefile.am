@@ -11,7 +11,6 @@ libsteputils_nil_la_SOURCES = \
 	gennodearray.cc \
 	scl_hash.cc \
 	errordesc.cc \
-	scl_string.cc \
 	scl_char_str_list.cc
 
 libsteputils_nil_la_LDFLAGS = -avoid-version -no-undefined -Wc,${FEXCEPTIONS}
@@ -32,7 +31,6 @@ noinst_HEADERS = \
 	scl_char_str_list.h \
 	scldir.h \
 	scl_hash.h \
-	scl_string.h \
 	stat.h \
 	Str.h \
 	str_list.h

@@ -33,15 +33,11 @@
 
 #include "common.h"
 
-#ifndef VMATH_H
-# include "vmath.h"
-#endif
-
+#include "vmath.h"
+#include "magic.h"
 #include "nmg.h"
+#include "raytrace.h"
 
-#ifndef RAYTRACE_H
-# include "raytrace.h"
-#endif
 
 /* Define parametric directions for splitting. */
 
@@ -82,8 +78,8 @@
 /* macros to check/validate a structure pointer
  */
 #define NMG_CK_KNOT(_p)		BU_CKMAG(_p, RT_KNOT_VECTOR_MAGIC, "knot_vector")
-#define NMG_CK_CNURB(_p)	BU_CKMAG(_p, RT_CNURB_MAGIC, "cnurb")
-#define NMG_CK_SNURB(_p)	BU_CKMAG(_p, RT_SNURB_MAGIC, "snurb")
+#define NMG_CK_CNURB(_p)	BU_CKMAG(_p, NMG_EDGE_G_CNURB_MAGIC, "cnurb")
+#define NMG_CK_SNURB(_p)	BU_CKMAG(_p, NMG_FACE_G_SNURB_MAGIC, "snurb")
 
 #define GET_CNURB(p/*, m*/) 		{BU_GETSTRUCT(p, edge_g_cnurb); \
 	/* NMG_INCR_INDEX(p, m); */ \
@@ -115,13 +111,6 @@ struct oslo_mat {
     int		osize;
     fastf_t		* o_vec;
 };
-
-#if !defined(MAX)
-# define MAX(i, j)    ( (i) > (j) ? (i) : (j) )
-#endif
-#if !defined(MIN)
-# define MIN(i, j)    ( (i) < (j) ? (i) : (j) )
-#endif
 
 /* --- new way */
 

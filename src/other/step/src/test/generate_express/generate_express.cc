@@ -67,7 +67,7 @@ main()
     registry->ResetSchemas();
     schema = registry->NextSchema();
     ofstream *efile;
-    SCLstring str, tmp;
+    std::string str, tmp;
 
     while(schema != 0)
     {

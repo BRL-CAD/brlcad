@@ -24,7 +24,7 @@
 
 
 const char *
-bu_identify_magic(register unsigned long magic)
+bu_identify_magic(register uint32_t magic)
 {
     switch (magic) {
 	case 0:

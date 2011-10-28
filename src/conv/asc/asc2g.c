@@ -283,7 +283,7 @@ sktbld(void)
     point2d_t *verts;
     char name[NAME_LEN+1];
     struct rt_sketch_internal *skt;
-    struct curve *crv;
+    struct rt_curve *crv;
     struct line_seg *lsg;
     struct carc_seg *csg;
     struct nurb_seg *nsg;
@@ -332,12 +332,12 @@ sktbld(void)
     VMOVE(skt->v_vec, v);
     skt->vert_count = vert_count;
     skt->verts = verts;
-    crv = &skt->skt_curve;
-    crv->seg_count = seg_count;
+    crv = &skt->curve;
+    crv->count = seg_count;
 
-    crv->segments = (genptr_t *)bu_calloc(crv->seg_count, sizeof(genptr_t), "segments");
-    crv->reverse = (int *)bu_calloc(crv->seg_count, sizeof(int), "reverse");
-    for (j=0; j<crv->seg_count; j++) {
+    crv->segment = (genptr_t *)bu_calloc(crv->count, sizeof(genptr_t), "segments");
+    crv->reverse = (int *)bu_calloc(crv->count, sizeof(int), "reverse");
+    for (j=0; j<crv->count; j++) {
 	double radius;
 	int k;
 
@@ -350,7 +350,7 @@ sktbld(void)
 		lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "line segment");
 		sscanf(cp+1, "%d %d %d", &crv->reverse[j], &lsg->start, &lsg->end);
 		lsg->magic = CURVE_LSEG_MAGIC;
-		crv->segments[j] = lsg;
+		crv->segment[j] = lsg;
 		break;
 	    case CARC:
 		csg = (struct carc_seg *)bu_malloc(sizeof(struct carc_seg), "arc segment");
@@ -358,7 +358,7 @@ sktbld(void)
 		       &radius, &csg->center_is_left, &csg->orientation);
 		csg->radius = radius;
 		csg->magic = CURVE_CARC_MAGIC;
-		crv->segments[j] = csg;
+		crv->segment[j] = csg;
 		break;
 	    case NURB:
 		nsg = (struct nurb_seg *)bu_malloc(sizeof(struct nurb_seg), "nurb segment");
@@ -391,7 +391,7 @@ sktbld(void)
 			bu_exit(1, "ERROR: not enough control points for nurb segment in sketch (%s)\n", name);
 		}
 		nsg->magic = CURVE_NURB_MAGIC;
-		crv->segments[j] = nsg;
+		crv->segment[j] = nsg;
 		break;
 	    default:
 		bu_exit(1, "Unrecognized segment type (%c) in sketch (%s)\n", *cp, name);

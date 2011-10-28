@@ -1,5 +1,5 @@
 #                     C M A K E L I S T S . T X T
-# ITK 
+# ITK
 #
 # Copyright (c) 2010 United States Government as represented by
 # the U.S. Army Research Laboratory.
@@ -45,378 +45,155 @@ ENDIF(COMMAND CMAKE_POLICY)
 # set CMake project name
 PROJECT(ITK)
 
-# set local CFLAGS name
-SET(CFLAGS_NAME ITK)
-SET(ITK_CFLAGS "")
-MARK_AS_ADVANCED(ITK_CFLAGS)
-SET(CONFIG_CFLAGS ITK_CFLAGS)
+# Without Tcl, Tk and Itcl sources, we can't build Itk.  Use TCL_SRC_PREFIX
+# and TCL_BIN_PREFIX to identify the location of the Tcl we are to use.
+IF(TCL_SRC_PREFIX AND TCL_BIN_PREFIX AND ITCL_SRC_PREFIX AND ITCL_BIN_PREFIX AND TK_SRC_PREFIX AND TK_BIN_PREFIX)
+   SET(TCL_INCLUDE_DIRS ${TCL_SRC_PREFIX}/generic ${TCL_SRC_PREFIX}/libtommath)
+   SET(ITCL_INCLUDE_DIRS ${ITCL_SRC_PREFIX}/generic)
+   SET(TK_INCLUDE_PATH ${TK_SRC_PREFIX}/generic ${TK_SRC_PREFIX}/bitmaps)
+   IF(WIN32)
+      SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TCL_SRC_PREFIX}/win)
+      SET(TK_INCLUDE_PATH ${TK_INCLUDE_PATH} ${TK_SRC_PREFIX}/xlib ${TK_SRC_PREFIX}/win)
+   ELSE(WIN32)
+      SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TCL_SRC_PREFIX}/unix)
+   ENDIF(WIN32)
+   # Locate the TCL libraries.  We allow these to be overridden so that a parent
+   # build can use a CMake target instead of an actual library path.
+   IF(NOT TCL_LIBRARY)
+      find_library(TCL_LIBRARY tcl PATHS ${TCL_BIN_PREFIX}/lib)
+   ENDIF(NOT TCL_LIBRARY)
+   IF(NOT TCL_STUB_LIBRARY)
+      find_library(TCL_STUB_LIBRARY tclstub PATHS ${TCL_BIN_PREFIX}/lib)
+   ENDIF(NOT TCL_STUB_LIBRARY)
+   IF(NOT ITCL_LIBRARY)
+      find_library(ITCL_LIBRARY itcl PATHS ${ITCL_BIN_PREFIX}/lib)
+   ENDIF(NOT ITCL_LIBRARY)
+   IF(NOT ITCL_STUB_LIBRARY)
+      find_library(ITCL_STUB_LIBRARY itclstub PATHS ${ITCL_BIN_PREFIX}/lib)
+   ENDIF(NOT ITCL_STUB_LIBRARY)
+   IF(NOT TK_LIBRARY)
+      find_library(TK_LIBRARY tcl PATHS ${TK_BIN_PREFIX}/lib)
+   ENDIF(NOT TK_LIBRARY)
+   IF(NOT TK_STUB_LIBRARY)
+      find_library(TK_STUB_LIBRARY tclstub PATHS ${TK_BIN_PREFIX}/lib)
+   ENDIF(NOT TK_STUB_LIBRARY)
+   IF(NOT TCL_LIBRARY OR NOT TCL_STUB_LIBRARY OR NOT TK_LIBRARY OR NOT TK_STUB_LIBRARY OR NOT ITCL_LIBRARY OR NOT ITCL_STUB_LIBRARY)
+      MESSAGE(FATAL_ERROR "Could not find at least one of Tcl, Itcl or Tk libraries in ${TCL_BIN_PREFIX}, ${ITCL_BIN_PREFIX}, and ${TK_BIN_PREFIX} - please specify the parent directory for the libraries in the TCL_BIN_PREFIX variable (e.g. \${TCL_BIN_PREFIX}/lib)")
+   ENDIF(NOT TCL_LIBRARY OR NOT TCL_STUB_LIBRARY OR NOT TK_LIBRARY OR NOT TK_STUB_LIBRARY OR NOT ITCL_LIBRARY OR NOT ITCL_STUB_LIBRARY)
+ELSE(TCL_SRC_PREFIX AND TCL_BIN_PREFIX AND ITCL_SRC_PREFIX AND ITCL_BIN_PREFIX AND TK_SRC_PREFIX AND TK_BIN_PREFIX)
+   MESSAGE(FATAL_ERROR "Please specify the source and library locations of Tcl, Tk and Itcl using the TCL_SRC_PREFIX, TCL_BIN_PREFIX, TK_SRC_PREFIX, TK_BIN_PREFIX, ITCL_SRC_PREFIX and ITCL_BIN_PREFIX variables.")
+ENDIF(TCL_SRC_PREFIX AND TCL_BIN_PREFIX AND ITCL_SRC_PREFIX AND ITCL_BIN_PREFIX AND TK_SRC_PREFIX AND TK_BIN_PREFIX)
 
 # build shared libs by default
-OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
+SET(BUILD_SHARED_LIBS ON)
 
 # build static libs by default
-OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
+SET(BUILD_STATIC_LIBS ON)
 
 # version numbers
-SET(ITK_MAJOR_VERSION 3)
-SET(ITK_MINOR_VERSION 4)
+SET(ITK_VERSION_MAJOR 3)
+SET(ITK_VERSION_MINOR 4)
+SET(ITK_PATCH_LEVEL "0")
 
-SET(ITK_VERSION "${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION}")
+SET(ITK_VERSION "${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR}")
+
+#---------------------------------------------------------------------
+# The following logic is what allows binaries to run successfully in
+# the build directory AND install directory.  Thanks to plplot for
+# identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
+
+# use, i.e. don't skip the full RPATH for the build tree
+SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+
+# when building, don't use the install RPATH already
+# (but later on when installing)
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+
+# the RPATH/INSTALL_NAME_DIR to be used when installing
+if (NOT APPLE)
+   SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:\$ORIGIN/../lib")
+endif(NOT APPLE)
+SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+
+# add the automatically determined parts of the RPATH which point to
+# directories outside the build tree to the install RPATH
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+
+#----------------------------------------------------------------------------
+# The location in which to install Tcl.  Only do this if CMAKE_INSTALL_PREFIX
+# hasn't been set already, to try and allow parent builds (if any) some control.
+IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+   IF(NOT WIN32)
+      IF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+    SET(CMAKE_INSTALL_PREFIX "/usr/local/tcldev-${TCL_VERSION}")
+      ELSE ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+    SET(CMAKE_INSTALL_PREFIX "/usr")
+      ENDIF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+   ENDIF(NOT WIN32)
+   SET(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "TCL install prefix" FORCE)
+   SET(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT 0)
+ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 #-----------------------------------------------------------------------------
 # Output directories.
-IF(NOT LIBRARY_OUTPUT_PATH)
-  SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
-ENDIF(NOT LIBRARY_OUTPUT_PATH)
-IF(NOT EXECUTABLE_OUTPUT_PATH)
-  SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
-ENDIF(NOT EXECUTABLE_OUTPUT_PATH)
 
-#-----------------------------------------------------------------------------
-# Configure install locations. 
-
-IF(NOT CMAKE_INSTALL_PREFIX)
-	IF(WIN32)
-		SET(CMAKE_INSTALL_PREFIX "/usr/local")
-	ELSE(WIN32) 
-		SET(CMAKE_INSTALL_PREFIX "C:/Tcl")
-	ENDIF(WIN32) 
-ENDIF(NOT CMAKE_INSTALL_PREFIX)
-
-
-#-----------------------------------------------------------------------------
-# Check if the compiler supports pipe - if so, use it
-INCLUDE(CheckCCompilerFlag)
-CHECK_C_COMPILER_FLAG(-pipe PIPE_COMPILER_FLAG)
-IF(PIPE_COMPILER_FLAG)
-	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pipe")
-ENDIF(PIPE_COMPILER_FLAG)
-
-#-----------------------------------------------------------------------------
-# Set CMake module path
-SET(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake;${CMAKE_MODULE_PATH}")
-
-#-----------------------------------------------------------------------------
-# Tcl/Tk's normal build system uses autotools macros, referred to as the
-# TEA system.  An attempt to duplicate the required functionality from
-# TEA is found in tcl.cmake
-INCLUDE(${ITK_SOURCE_DIR}/CMake/CheckSystemFunctionality.cmake)
-INCLUDE(${ITK_SOURCE_DIR}/CMake/tcl.cmake)
+IF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+   IF(WIN32)
+      SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all libraries.")
+   ELSE(WIN32)
+      SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
+   ENDIF(WIN32)
+ENDIF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+IF(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+   SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
+ENDIF(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+IF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+   SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
+ENDIF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 
 #----------------------------------------------------------------------------
 # First, get some standard options out of the way - things that are constant
 # between various platforms or pertain to specific OS definitions
-SET(ITK_CFLAGS "${ITK_CFLAGS} -DPACKAGE_NAME=\\\"itk\\\"")
-SET(ITK_CFLAGS "${ITK_CFLAGS} -DPACKAGE_TARNAME=\\\"itk\\\"")
-SET(ITK_CFLAGS "${ITK_CFLAGS} -DPACKAGE_VERSION=\\\"${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION}\\\"")
-SET(ITK_CFLAGS "${ITK_CFLAGS} -DPACKAGE_BUGREPORT=\\\"\\\"")
-SET(ITK_CFLAGS "${ITK_CFLAGS} -DSTDC_HEADERS=1")
+add_definitions(-DPACKAGE_NAME="itk")
+add_definitions(-DPACKAGE_TARNAME="itk")
+add_definitions(-DPACKAGE_VERSION="${ITK_PATCH_LEVEL}")
+add_definitions(-DPACKAGE_BUGREPORT="")
+add_definitions(-DSTDC_HEADERS=1)
 
-#----------------------------------------------------------------------------
-
-IF(WIN32)
-	SET(ITK_CFLAGS "${ITK_CFLAGS} -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD")
-	SET(ITK_CFLAGS "${ITK_CFLAGS} -Dinline=__inline -DBUILD_itk")
-ENDIF(WIN32)
-
-SET(TCL_CFLAGS "")
-
-SC_MISSING_POSIX_HEADERS()
-
-SC_ENABLE_THREADS()
-
-
-SC_TCL_CFG_ENCODING()
-
-SC_TCL_LINK_LIBS()
-
-# TODO - look over SC_ENABLE_SHARED, SC_CONFIG_CFLAGS and SC_ENABLE_SYMBOLS
-# need to decide how much of that logic is needed
-
-SC_TCL_64BIT_FLAGS()
-
-# Test endianness
-IF(NOT MSVC)
-	INCLUDE(TestBigEndian)
-	TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
-	IF(WORDS_BIGENDIAN)
-		SET(TCL_CFLAGS "${TCL_CFLAGS} -DWORDS_BIGENDIAN=1")
-	ENDIF(WORDS_BIGENDIAN)
-ENDIF(NOT MSVC)
-
-# POSIX substitutes
-CONFIG_CHECK_FUNCTION_EXISTS(getcwd HAVE_GETCWD)
-IF(NOT HAVE_GETCWD)
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -DUSEGETWD=1") 
-ENDIF(NOT HAVE_GETCWD)
-IF(NOT HAVE_GETCWD)
-	CONFIG_CHECK_FUNCTION_EXISTS(getwd HAVE_GETWD)
-	IF(NOT HAVE_GETWD)
-		SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_GETWD=1") 
-	ENDIF(NOT HAVE_GETWD)
-ENDIF(NOT HAVE_GETCWD)
-CONFIG_CHECK_FUNCTION_EXISTS(opendir HAVE_OPENDIR)
-IF(NOT HAVE_OPENDIR)
-	SET(COMPAT_SRCS ${COMPAT_SRCS} compat/opendir.c)
-	ADD_TCL_CFLAG(USE_DIRENT2_H)
-ENDIF(NOT HAVE_OPENDIR)
-CONFIG_CHECK_FUNCTION_EXISTS(strtol HAVE_STRTOL)
-IF(NOT HAVE_STRTOL)
-	SET(COMPAT_SRCS ${COMPAT_SRCS} compat/strtol.c)
-ENDIF(NOT HAVE_STRTOL)
-CONFIG_CHECK_FUNCTION_EXISTS(waitpid HAVE_WAITPID)
-IF(NOT HAVE_WAITPID)
-	SET(COMPAT_SRCS ${COMPAT_SRCS} compat/waitpid.c)
-ENDIF(NOT HAVE_WAITPID)
-CONFIG_CHECK_FUNCTION_EXISTS(strerror HAVE_STRERROR)
-IF(NOT HAVE_STRERROR)
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_STRERROR=1") 
-ENDIF(NOT HAVE_STRERROR)
-CHECK_FUNCTION_EXISTS(wait3 HAVE_WAIT3)
-IF(NOT HAVE_WAIT3)
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_WAIT3=1") 
-ENDIF(NOT HAVE_WAIT3)
-CONFIG_CHECK_FUNCTION_EXISTS(uname HAVE_UNAME)
-IF(NOT HAVE_UNAME)
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_UNAME=1") 
-ENDIF(NOT HAVE_UNAME)
-# Should be checking for early Darwin version here - realpath
-# is not threadsafe prior to Darwin 7
-CHECK_FUNCTION_EXISTS(realpath HAVE_REALPATH)
-IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$" AND TCL_THREADS AND HAVE_REALPATH)
-	STRING(REGEX REPLACE "\\..*" "" CMAKE_SYSTEM_MAJOR_VERSION ${CMAKE_SYSTEM_VERSION})
-	IF (${CMAKE_SYSTEM_MAJOR_VERSION} LESS 7)
-		MESSAGE("realpath is not threadsafe in Darwin versions prior to 7, disabling")
-		SET(HAVE_REALPATH)
-	ENDIF (${CMAKE_SYSTEM_MAJOR_VERSION} LESS 7)
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$" AND TCL_THREADS AND HAVE_REALPATH)
-IF(NOT HAVE_REALPATH)
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_REALPATH=1") 
-ENDIF(NOT HAVE_REALPATH)
-
-SC_TCL_GETADDRINFO()
-
-# Thread safe tests - need to go over macros and
-# get the right logic going here
-IF(TCL_THREADS)
-
-	SC_TCL_GETPWUID_R()
-
-	SC_TCL_GETPWNAM_R()
-
-	SC_TCL_GETGRGID_R()
-
-	SC_TCL_GETGRNAM_R()
-
-	IF(NOT HAVE_GETHOSTBYNAME)
-		CHECK_LIBRARY(GHBN lnsl gethostbyname)
-		SET(HAVE_GETHOSTBYNAME ${GHBN})
-	ENDIF(NOT HAVE_GETHOSTBYNAME)
-
-	SC_TCL_GETHOSTBYADDR_R()
-	SC_TCL_GETHOSTBYNAME_R()
-
-	IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
-		STRING(REGEX REPLACE "\\..*" "" CMAKE_SYSTEM_MAJOR_VERSION ${CMAKE_SYSTEM_VERSION})
-		IF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 5)
-			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_MTSAFE_GETHOSTBYNAME=1")
-			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_MTSAFE_GETHOSTBYADDR=1")
-		ENDIF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 5)
-	ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
-
-	IF(${CMAKE_SYSTEM_NAME} MATCHES "^HP-UX$")
-		STRING(REGEX REPLACE "\\..*" "" CMAKE_SYSTEM_MAJOR_VERSION ${CMAKE_SYSTEM_VERSION})
-		IF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 10)
-			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_MTSAFE_GETHOSTBYNAME=1")
-			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_MTSAFE_GETHOSTBYADDR=1")
-		ENDIF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 10)
-	ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^HP-UX$")
-
-ENDIF(TCL_THREADS)
-
-# Determine which interface to use to talk to the serial port.
-SC_SERIAL_PORT()
-
-# Do we need the sys/select.h check these days?
-
-
-# Handle time
-SC_TIME_HANDLER()
-
-# memove check - need to revisit this, not finding memmove
-# on OSX
-#CHECK_FUNCTION_EXISTS(memmove, HAVE_MEMMOVE)
-#IF(NOT HAVE_MEMMOVE)
-#	SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_MEMMOVE=1") 
-#	SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_STRING_H=1") 
-#ENDIF(NOT HAVE_MEMMOVE)
-
-
-# Test for bad functions
-SC_TCL_CHECK_BROKEN_FUNC(
-	strstr "
-	extern int strstr();
-	exit(strstr(\"\\\0test\", \"test\") ? 1 : 0);"
-)
-
-
-SC_TCL_CHECK_BROKEN_FUNC(
-	strtoul "
-	extern int strtoul();
-	char *term, *string = \"0\";
-	exit(strtoul(string,&term,0) != 0 || term != string+1);"
-)
-
-
-# Check for types - TODO: still need to define substitutes if these
-# are not found
-CONFIG_CHECK_TYPE_SIZE(mode_t MODE)
-CONFIG_CHECK_TYPE_SIZE(pid_t PID)
-CONFIG_CHECK_TYPE_SIZE(size_t SIZE)
-CONFIG_CHECK_TYPE_SIZE(uid_t UID)
-CONFIG_CHECK_TYPE_SIZE(blkcnt_t BLKCNT)
-CONFIG_CHECK_TYPE_SIZE(intptr_t INTPTR)
-CONFIG_CHECK_TYPE_SIZE(uintptr_t UINTPTR)
-
-
-SC_ENABLE_LANGINFO()
-
-IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
-	CONFIG_CHECK_FUNCTION_EXISTS(getattrlist HAVE_GETATTRLIST)
-	CONFIG_CHECK_INCLUDE_FILE(copyfile.h HAVE_COPYFILE_H)
-	CONFIG_CHECK_FUNCTION_EXISTS(copyfile HAVE_COPYFILE)
-	IF(${COREFOUNDATION_FRAMEWORK})
-		CONFIG_CHECK_INCLUDE_FILE(libkern/OSAtomic.h HAVE_LIBKERN_OSATOMIC_H)
-		CONFIG_CHECK_FUNCTION_EXISTS(OSSpinLockLock HAVE_OSSPINLOCKLOCK)
-		CONFIG_CHECK_FUNCTION_EXISTS(pthread_atfork HAVE_PTHREAD_ATFORK)
-	ENDIF(${COREFOUNDATION_FRAMEWORK})
-	ADD_TCL_CFLAG(USE_VFORK)
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -DTCL_DEFAULT_ENCODING=\\\"utf-8\\\"")
-	ADD_TCL_CFLAG(TCL_LOAD_FROM_MEMORY)
-	ADD_TCL_CFLAG(TCL_WIDE_CLICKS)
-	CONFIG_CHECK_INCLUDE_FILE_USABILITY(AvailabilityMacros.h HAVE_AVAILABILITYMACROS_H)
-	IF(HAVE_AVAILABILITYMACROS_H)
-		SET(WEAK_IMPORT_SRCS "
-#ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
-#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1020
-#error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1020
-#endif
-#elif MAC_OS_X_VERSION_MIN_REQUIRED < 1020
-#error MAC_OS_X_VERSION_MIN_REQUIRED < 1020
-#endif
-int rand(void) __attribute__((weak_import));
-int main() {
-rand();
-return 0;
-}
-		")
-		CHECK_C_SOURCE_COMPILES("${WEAK_IMPORT_SRCS}" WEAK_IMPORT_WORKING)
-		IF(WEAK_IMPORT_WORKING)
-			ADD_TCL_CFLAG(HAVE_WEAK_IMPORT)
-		ENDIF(WEAK_IMPORT_WORKING)
-		SET(SUSV3_SRCS "
-#ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
-#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
-#error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
-#endif
-#elif MAC_OS_X_VERSION_MIN_REQUIRED < 1050
-#error MAC_OS_X_VERSION_MIN_REQUIRED < 1050
-#endif
-#define _DARWIN_C_SOURCE 1
-#include <sys/cdefs.h>
-
-int main ()	{return 0;}
-		")
-		CHECK_C_SOURCE_COMPILES("${SUSV3_SRCS}" SUSV3_WORKING)
-		IF(SUSV3_WORKING)
-			ADD_TCL_CFLAG(_DARWIN_C_SOURCE)
-		ENDIF(SUSV3_WORKING)
-
-	ENDIF(HAVE_AVAILABILITYMACROS_H)
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
-
-# Check for support of fts functions (readdir replacement)
-SET(FTS_SRCS "
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <fts.h>
-
-int main () {
-char*const p[2] = {\"/\", NULL};
-FTS *f = fts_open(p, FTS_PHYSICAL|FTS_NOCHDIR|FTS_NOSTAT, NULL);
-FTSENT *e = fts_read(f); fts_close(f);
-return 0;
-}
-")
-CHECK_C_SOURCE_COMPILES("${FTS_SRCS}" FTS_WORKING)
-IF(FTS_WORKING)
-	ADD_TCL_CFLAG(HAVE_FTS)
-ENDIF(FTS_WORKING)
-
-OPTION(TCL_UNLOAD_DLLS "Allow unloading of shared libraries?" ON)
-IF(TCL_UNLOAD_DLLS)
-	ADD_TCL_CFLAG(TCL_UNLOAD_DLLS)
-ENDIF(TCL_UNLOAD_DLLS)
-
-# TODO - Need to set up check for timezone info
-
-# TODO - Dtrace
+# We're building Itk
+add_definitions(-DBUILD_itk)
 
 #--------------------------------------------------------------------
-#  Does the C stack grow upwards or downwards? Or cross-compiling?
+# We need to enable the threading macros found in tcl.h and tclInt.h.
+# The use of the threading features is determined by the core the
+# extension is loaded into, but we need to compile with these macros
+# turned on.
 #--------------------------------------------------------------------
-SET(C_STACK_SRC "
-int StackGrowsUp(int *parent) {
-int here;
-return (&here < parent);
-}
-int main (int argc, char *argv[]) {
-int foo;
-return StackGrowsUp(&foo);
-}
-")
-CHECK_C_SOURCE_RUNS("${C_STACK_SRC}" STACK_GROWS_UP)
-IF(STACK_GROWS_UP)
-	ADD_TCL_CFLAG(TCL_STACK_GROWS_UP)
-ENDIF(STACK_GROWS_UP)
+add_definitions(-DTCL_THREADS=1)
 
-CONFIG_CHECK_INCLUDE_FILE(sys/types.h HAVE_SYS_TYPES_H)
-CONFIG_CHECK_INCLUDE_FILE(sys/stat.h HAVE_SYS_STAT_H)
-CONFIG_CHECK_INCLUDE_FILE(sys/fstatfs.h HAVE_SYS_FSTATFS_H)
+MACRO(TCL_CHECK_INCLUDE_FILE filename var)
+   CHECK_INCLUDE_FILE(${filename} ${var})
+   IF(${var})
+      add_definitions(-D${var}=1)
+   ENDIF(${var})
+ENDMACRO(TCL_CHECK_INCLUDE_FILE)
+
+TCL_CHECK_INCLUDE_FILE(sys/types.h HAVE_SYS_TYPES_H)
+TCL_CHECK_INCLUDE_FILE(sys/stat.h HAVE_SYS_STAT_H)
+TCL_CHECK_INCLUDE_FILE(sys/fstatfs.h HAVE_SYS_FSTATFS_H)
 IF(NOT HAVE_SYS_FSTATFS_H)
-   SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_FSTATFS=1")
+   add_definitions(-DNO_FSTATFS=1)
 ENDIF(NOT HAVE_SYS_FSTATFS_H)
-CONFIG_CHECK_INCLUDE_FILE(memory.h HAVE_MEMORY_H)
-CONFIG_CHECK_INCLUDE_FILE(strings.h HAVE_STRINGS_H)
-CONFIG_CHECK_INCLUDE_FILE(inttypes.h HAVE_INTTYPES_H)
-CONFIG_CHECK_INCLUDE_FILE(stdint.h HAVE_STDINT_H)
-CONFIG_CHECK_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
+TCL_CHECK_INCLUDE_FILE(memory.h HAVE_MEMORY_H)
+TCL_CHECK_INCLUDE_FILE(strings.h HAVE_STRINGS_H)
+TCL_CHECK_INCLUDE_FILE(inttypes.h HAVE_INTTYPES_H)
+TCL_CHECK_INCLUDE_FILE(stdint.h HAVE_STDINT_H)
+TCL_CHECK_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
 
-
-
-
-CHECK_COMPILER_SUPPORTS_HIDDEN_D()
-
-CONFIG_CHECK_LIBRARY(DL dl dlopen)
-
-
-
-CONFIG_CHECK_INCLUDE_FILE_USABILITY(sys/modem.h SYS_MODEM_H)
-
-
-CHECK_FD_SET_IN_TYPES_D()
-
-CONFIG_CHECK_FUNCTION_EXISTS(chflags HAVE_CHFLAGS)
-
-IF(COMPAT_SRCS)
-	ADD_TCL_CFLAG(USE_COMPAT)
-ENDIF(COMPAT_SRCS)
-
-find_package(X11)
-
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ITK_CFLAGS} ${TCL_CFLAGS}")
-
-
+IF(TK_GRAPHICS_SYSTEM STREQUAL "x11")
+   find_package(X11)
+ENDIF(TK_GRAPHICS_SYSTEM STREQUAL "x11")
 
 SET(ITK_GENERIC_SRCS
 	generic/itkStubInit.c
@@ -435,95 +212,47 @@ SET(ITK_STUB_SRCS
 	generic/itkStubLib.c
 )
 
-# When it comes to identification of the location of the Tcl
-# sources, the convention is as follows:
-#
-# 1.  If TCL_INCLUDE_DIRS is defined, use it
-# 2.  Else, if TCL_PREFIX is defined build include paths from it
-# 3.  If TCL_INCLUDE_DIRS is not defined and TCL_BIN_PREFIX is,
-#     add include directories based on the presumption of the
-#     binary build dir (and hence tclConfig.h) being in a non-src
-#     location.
-#
-# It's still possible, depending on how Tcl was built, to 
-# have a situation where TCL_INCLUDE_DIRS has to be augmented
-# manually.  However, the logic below should cover the most common cases.
 
-IF(NOT TCL_INCLUDE_DIRS)
-	IF(TCL_PREFIX)
-		SET(TCL_INCLUDE_DIRS ${TCL_PREFIX}/generic ${TCL_PREFIX}/libtommath)
-		IF(WIN32)
-			SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TCL_PREFIX}/win)
-		ELSE(WIN32)
-			SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TCL_PREFIX}/unix)
-		ENDIF(WIN32)
-	ENDIF(TCL_PREFIX)
-	IF(TCL_BIN_PREFIX)
-		SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TCL_BIN_PREFIX}/include)
-	ENDIF(TCL_BIN_PREFIX)
-ENDIF(NOT TCL_INCLUDE_DIRS)
-
-IF(NOT ITCL_INCLUDE_DIRS)
-	IF(ITCL_PREFIX)
-		SET(ITCL_INCLUDE_DIRS ${ITCL_PREFIX}/generic ${ITCL_PREFIX}/libtommath)
-		IF(WIN32)
-			SET(ITCL_INCLUDE_DIRS ${ITCL_INCLUDE_DIRS} ${ITCL_PREFIX}/win)
-		ELSE(WIN32)
-			SET(ITCL_INCLUDE_DIRS ${ITCL_INCLUDE_DIRS} ${ITCL_PREFIX}/unix)
-		ENDIF(WIN32)
-	ENDIF(ITCL_PREFIX)
-	IF(ITCL_BIN_PREFIX)
-		SET(ITCL_INCLUDE_DIRS ${ITCL_INCLUDE_DIRS} ${ITCL_BIN_PREFIX}/include)
-	ENDIF(ITCL_BIN_PREFIX)
-ENDIF(NOT ITCL_INCLUDE_DIRS)
-
-IF(NOT TK_INCLUDE_PATH)
-	IF(TK_PREFIX)
-		SET(TK_INCLUDE_PATH ${TK_PREFIX}/generic ${TK_PREFIX}/libtommath)
-		IF(WIN32)
-			SET(TK_INCLUDE_PATH ${TK_INCLUDE_PATH} ${TK_PREFIX}/win)
-		ELSE(WIN32)
-			SET(TK_INCLUDE_PATH ${TK_INCLUDE_PATH} ${TK_PREFIX}/unix)
-		ENDIF(WIN32)
-	ENDIF(TK_PREFIX)
-	IF(TK_BIN_PREFIX)
-		SET(TK_INCLUDE_PATH ${TK_INCLUDE_PATH} ${TK_BIN_PREFIX}/include)
-	ENDIF(TK_BIN_PREFIX)
-ENDIF(NOT TK_INCLUDE_PATH)
-
-
-SET(ITK_INCLUDE_PATH ${ITK_SOURCE_DIR}/generic ${ITK_BINARY_DIR}/include)
+SET(ITK_INCLUDE_DIRS ${ITK_SOURCE_DIR}/generic ${ITK_BINARY_DIR}/include)
+MARK_AS_ADVANCED(ITK_INCLUDE_DIRS)
 
 include_directories(
 	${TCL_INCLUDE_DIRS}
 	${TK_INCLUDE_PATH}
 	${ITCL_INCLUDE_DIRS}
-	${ITK_INCLUDE_PATH}
-	${X11_INCLUDE_DIR}
+	${ITK_INCLUDE_DIRS}
+	${TK_X11_INCLUDE_DIRS}
 	${CMAKE_BINARY_DIR}/include
 	${CMAKE_SOURCE_DIR}/include
 )
 
 IF(WIN32)
 	add_library(itk ${ITK_GENERIC_SRCS} ${ITK_WIN_SRCS})
+	target_link_libraries(itk ${M_LIBRARY} ${TCL_STUB_LIBRARY} ${TK_STUB_LIBRARY} ${ITCL_STUB_LIBRARY})
+	SET_PROPERTY(TARGET itk APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
+	SET_PROPERTY(TARGET itk APPEND PROPERTY COMPILE_DEFINITIONS USE_ITCL_STUBS)
+	SET_PROPERTY(TARGET itk APPEND PROPERTY COMPILE_DEFINITIONS USE_TK_STUBS)
 ELSE(WIN32)
 	add_library(itk ${ITK_GENERIC_SRCS})
+	target_link_libraries(itk ${TCL_LIBRARIES} ${ITCL_LIBRARY})
 ENDIF(WIN32)
-target_link_libraries(itk ${M_LIBRARY} ${TCL_LIBRARIES} ${ITCL_LIBRARY})
-SET_TARGET_PROPERTIES(itk PROPERTIES VERSION ${ITK_VERSION} SOVERSION ${ITK_MAJOR_VERSION})
+SET_TARGET_PROPERTIES(itk PROPERTIES VERSION ${ITK_VERSION} SOVERSION ${ITK_VERSION_MAJOR})
 SET_TARGET_PROPERTIES(itk PROPERTIES PREFIX "lib")
 install(TARGETS itk DESTINATION ${LIB_DIR})
 
 add_library(itkstub STATIC ${ITK_STUB_SRCS})
 target_link_libraries(itkstub ${ITCL_STUB_LIBRARY} ${TCL_STUB_LIBRARIES})
+SET_PROPERTY(TARGET itkstub APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
+SET_PROPERTY(TARGET itkstub APPEND PROPERTY COMPILE_DEFINITIONS USE_ITCL_STUBS)
+SET_PROPERTY(TARGET itkstub APPEND PROPERTY COMPILE_DEFINITIONS USE_TK_STUBS)
 install(TARGETS itkstub DESTINATION ${LIB_DIR})
 
 GET_TARGET_PROPERTY(ITK_LIBLOCATION itk LOCATION_${CMAKE_BUILD_TYPE})
 GET_FILENAME_COMPONENT(ITK_LIBNAME ${ITK_LIBLOCATION} NAME)
-FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded Itk ${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION} [list load [file join $dir .. .. ${LIB_DIR} ${ITK_LIBNAME}] Itk]")
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
+FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded Itk ${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR} [list load [file join $dir .. .. ${LIB_DIR} ${ITK_LIBNAME}] Itk]")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/itk${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR})
 
-FILE(WRITE ${CMAKE_BINARY_DIR}/lib/itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION}/pkgIndex.tcl "package ifneeded Itk ${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION} [list load [file join $dir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} ${ITK_LIBNAME}] Itk]")
+FILE(WRITE ${CMAKE_BINARY_DIR}/lib/itk${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR}/pkgIndex.tcl "package ifneeded Itk ${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR} [list load [file join $dir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} ${ITK_LIBNAME}] Itk]")
 
 
 SET(ITK_LIBRARY_FILES
@@ -533,11 +262,11 @@ SET(ITK_LIBRARY_FILES
 	library/itk.tcl
 	library/tclIndex
 )
-install(FILES ${ITK_LIBRARY_FILES} DESTINATION lib/itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
+install(FILES ${ITK_LIBRARY_FILES} DESTINATION lib/itk${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR})
 
 FOREACH(file ${ITK_LIBRARY_FILES})
    get_filename_component(filename ${file} NAME)
-	configure_file(${file} ${CMAKE_BINARY_DIR}/lib/itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION}/${filename} COPYONLY)
+	configure_file(${file} ${CMAKE_BINARY_DIR}/lib/itk${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR}/${filename} COPYONLY)
 ENDFOREACH(file ${ITK_LIBRARY_FILES})
 
 SET(ITK_HDRS

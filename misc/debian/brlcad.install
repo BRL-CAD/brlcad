@@ -1,7 +1,7 @@
 usr/brlcad/
-debian/application-x-brlcad-v4.png usr/share/icons/hicolor/48x48/mimetypes
-debian/application-x-brlcad-v5.png usr/share/icons/hicolor/48x48/mimetypes
-debian/application-x-brlcad.xml usr/share/mime/packages
+debian/brlcad-v4.png usr/share/icons/hicolor/48x48/mimetypes
+debian/brlcad-v5.png usr/share/icons/hicolor/48x48/mimetypes
+debian/brlcad.xml usr/share/mime/packages
 debian/brlcad-archer.desktop usr/share/applications
 debian/brlcad-archer.png usr/share/icons/hicolor/48x48/apps
 debian/brlcad-db.desktop usr/share/applications

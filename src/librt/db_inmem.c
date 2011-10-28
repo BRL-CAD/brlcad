@@ -46,8 +46,6 @@
 #define DEFAULT_DB_TITLE "Untitled BRL-CAD Database"
 
 /**
- * d b _ o p e n _ i n m e m
- *
  * "open" an in-memory-only database instance.  this initializes a
  * dbip for use, creating an inmem dbi_wdbp as the means to add
  * geometry to the directory (use wdb_export_external()).
@@ -98,8 +96,6 @@ db_open_inmem(void)
 
 
 /**
- * d b _ c r e a t e _ i n m e m
- *
  * creates an in-memory-only database.  this is very similar to
  * db_open_inmem() with the exception that the this routine adds a
  * default _GLOBAL object.
@@ -144,8 +140,6 @@ db_create_inmem(void) {
 
 
 /**
- * d b _ i n m e m
- *
  * Transmogrify an existing directory entry to be an in-memory-only
  * one, stealing the external representation from 'ext'.
  */

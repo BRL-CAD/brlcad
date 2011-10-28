@@ -199,6 +199,60 @@ const struct bu_structparse rt_rhc_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+/**
+ * R T _ R H C _ B B O X
+ *
+ * Calculate the bounding RPP for an RHC
+ */
+int
+rt_rhc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+
+    struct rt_rhc_internal *xip;
+    vect_t rinv, rvect, rv2, working;
+
+    RT_CK_DB_INTERNAL(ip);
+    xip = (struct rt_rhc_internal *)ip->idb_ptr;
+    RT_RHC_CK_MAGIC(xip);
+
+    VSETALL((*min), MAX_FASTF);
+    VSETALL((*max), -MAX_FASTF);
+
+    VCROSS(rvect, xip->rhc_H, xip->rhc_B);
+    VREVERSE(rinv, rvect);
+    VUNITIZE(rvect);
+    VUNITIZE(rinv);
+    VSCALE(rvect, rvect, xip->rhc_r);
+    VSCALE(rinv, rinv, xip->rhc_r);
+
+    VADD2(working, xip->rhc_V, rvect);
+    VMINMAX((*min), (*max), working);
+
+    VADD2(working, xip->rhc_V, rinv);
+    VMINMAX((*min), (*max), working);
+
+    VADD3(working, xip->rhc_V, rvect, xip->rhc_H);
+    VMINMAX((*min), (*max), working);
+
+    VADD3(working, xip->rhc_V, rinv, xip->rhc_H);
+    VMINMAX((*min), (*max), working);
+
+    VADD2(rv2, xip->rhc_V, xip->rhc_B);
+
+    VADD2(working, rv2, rvect);
+    VMINMAX((*min), (*max), working);
+
+    VADD2(working, rv2, rinv);
+    VMINMAX((*min), (*max), working);
+
+    VADD3(working, rv2, rvect, xip->rhc_H);
+    VMINMAX((*min), (*max), working);
+
+    VADD3(working, rv2, rinv, xip->rhc_H);
+    VMINMAX((*min), (*max), working);
+
+    return 0;
+}
+
 
 /**
  * R T _ R H C _ P R E P
@@ -301,13 +355,7 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* approximate bounding radius */
     stp->st_aradius = stp->st_bradius;
 
-    /* cheat, make bounding RPP by enclosing bounding sphere */
-    stp->st_min[X] = stp->st_center[X] - stp->st_bradius;
-    stp->st_max[X] = stp->st_center[X] + stp->st_bradius;
-    stp->st_min[Y] = stp->st_center[Y] - stp->st_bradius;
-    stp->st_max[Y] = stp->st_center[Y] + stp->st_bradius;
-    stp->st_min[Z] = stp->st_center[Z] - stp->st_bradius;
-    stp->st_max[Z] = stp->st_center[Z] + stp->st_bradius;
+    if (rt_rhc_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
 
     return 0;			/* OK */
 }
@@ -669,7 +717,7 @@ rt_rhc_class(void)
  * R T _ R H C _ P L O T
  */
 int
-rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
+rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     int i, n;
     fastf_t b, c, *back, f, *front, h, rh;

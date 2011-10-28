@@ -22,7 +22,7 @@
  *
  */
 
-#include "common.h"  
+#include "common.h"
 
 /* common interface headers */
 #include "raytrace.h"
@@ -48,7 +48,7 @@
  * @brief analogous to ON_X_EVENT but between ON_BrepFaces
  */
 class Face_X_Event{
- public:
+public:
     ON_BrepFace *face1;
     ON_BrepFace *face2;
     ON_Curve *curve1;

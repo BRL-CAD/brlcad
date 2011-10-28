@@ -21,9 +21,9 @@
 /** @{ */
 /** @file librt/fortray.c
  *
- *  A general-purpose set of FORTRAN-callable interface routines to
- *  permit any FORTRAN program to use LIBRT, the ray-tracing library
- *  of the BRL-CAD Package.
+ * A general-purpose set of FORTRAN-callable interface routines to
+ * permit any FORTRAN program to use LIBRT, the ray-tracing library of
+ * the BRL-CAD Package.
  *
  */
 
@@ -47,7 +47,7 @@ fr_hit(struct application *ap, struct partition *headp, struct seg *segp)
     RT_CK_PT_HD(headp);
     if (segp) RT_CK_SEG(segp);
 
-    if ( headp->pt_forw == headp )  return 0;
+    if (headp->pt_forw == headp) return 0;
 
     /* Steal the linked list, hang it off a global header */
     fr_global_head.pt_forw = headp->pt_forw;
@@ -58,6 +58,7 @@ fr_hit(struct application *ap, struct partition *headp, struct seg *segp)
     headp->pt_forw = headp->pt_back = headp;
     return 1;
 }
+
 
 HIDDEN int
 fr_miss(struct application *ap)
@@ -70,46 +71,42 @@ fr_miss(struct application *ap)
 
 
 /**
- * F R _ S T R I N G _ C 2 F
- *
  * Take a null-terminated C string, and place it with space padding on
  * the right into a FORTRAN string of given length.
  */
 void
 fr_string_c2f(register char *fstr, register char *cstr, register int flen)
 {
-    register int	i;
+    register int i;
 
-    for ( i=0; i < flen; i++ )  {
-	if ( (fstr[i] = cstr[i]) == '\0' )  break;
+    for (i=0; i < flen; i++) {
+	if ((fstr[i] = cstr[i]) == '\0') break;
     }
-    for (; i < flen; i++ )
+    for (; i < flen; i++)
 	fstr[i] = ' ';
 }
 
 
 /**
- * F R _ S T R I N G _ F 2 C
- *
  * Take a FORTRAN string with a length, and return a pointer to null
  * terminated copy of that string in a STATIC buffer.
  */
 static char *
 fr_string_f2c(char *str, int maxlen)
 {
-    static char	buf[512];
-    int	len;
-    int	i;
+    static char buf[512];
+    int len;
+    int i;
 
     len = sizeof(buf);
     if (maxlen < len)
 	len = maxlen;
 
-    bu_strlcpy( buf, str, len );
+    bu_strlcpy(buf, str, len);
 
     /* Remove any trailing blanks */
-    for ( i=(int)strlen(buf)-1; i >= 0; i-- )  {
-	if ( buf[i] != ' ' && buf[i] != '\n' )  break;
+    for (i=(int)strlen(buf)-1; i >= 0; i--) {
+	if (buf[i] != ' ' && buf[i] != '\n') break;
 	buf[i] = '\0';
     }
     return buf;
@@ -117,8 +114,6 @@ fr_string_f2c(char *str, int maxlen)
 
 
 /**
- * F R D I R
- *
  * FORTRAN to RT interface for rt_dirbuild()
  *
  * XXX NOTE Apollo FORTRAN passes string length as extra (invisible)
@@ -130,76 +125,73 @@ fr_string_f2c(char *str, int maxlen)
 void
 BU_FORTRAN(frdir, FRDIR)(struct rt_i **rtip, char *filename, int *filelen)
 {
-    char	*file;
+    char *file;
 
-    file = fr_string_f2c( filename, *filelen );
-    *rtip = rt_dirbuild( file, (char *)0, 0 );
+    file = fr_string_f2c(filename, *filelen);
+    *rtip = rt_dirbuild(file, (char *)0, 0);
 }
 
 
 /**
- * F R T R E E
- *
  * Add another top-level tree to the in-core geometry.
  */
 void
-BU_FORTRAN(frtree, FRTREE)(int		*fail,
-			   struct rt_i	**rtip,
-			   char		*objname,
-			   int		*objlen)
+BU_FORTRAN(frtree, FRTREE)(int *fail,
+			   struct rt_i **rtip,
+			   char *objname,
+			   int *objlen)
 {
-    char	*obj;
+    char *obj;
 
     RT_CHECK_RTI(*rtip);
 
-    obj = fr_string_f2c( objname, *objlen );
-    *fail = rt_gettree( *rtip, obj );
+    obj = fr_string_f2c(objname, *objlen);
+    *fail = rt_gettree(*rtip, obj);
 }
 
 
 /**
- * F R P R E P
+ *
  */
 void
-BU_FORTRAN(frprep, FRPREP)(struct rt_i	**rtip)
+BU_FORTRAN(frprep, FRPREP)(struct rt_i **rtip)
 {
     RT_CHECK_RTI(*rtip);
     rt_prep(*rtip);
 }
 
 
-#define CONTEXT_LEN	6	/* Reserve this many FORTRAN Doubles for each */
+#define CONTEXT_LEN 6 /* Reserve this many FORTRAN Doubles for each */
 struct context {
-    double		co_vpriv[3];
-    struct soltab	*co_stp;
-    char		*co_priv;
-    int		co_inflip;
+    double co_vpriv[3];
+    struct soltab *co_stp;
+    char *co_priv;
+    int co_inflip;
 };
 
 
 /**
- * F R S H O T
- *
- * NOTE that the [0] element here corresponds with the caller's (1) element.
+ * NOTE that the [0] element here corresponds with the caller's (1)
+ * element.
  */
 void
-BU_FORTRAN(frshot, FRSHOT)(int			*nloc,		/* input & output */
-			   double		*indist,	/* output only */
-			   double		*outdist,
-			   int			*region_ids,
-			   struct context	*context,
-			   struct rt_i		**rtip,		/* input only */
-			   double		*pt,
-			   double		*dir)
+BU_FORTRAN(frshot, FRSHOT)(int *nloc,			/* input & output */
+			   double *indist,		/* output only */
+			   double *outdist,
+			   int *region_ids,
+			   struct context *context,
+			   struct rt_i **rtip,		/* input only */
+			   double *pt,
+			   double *dir)
 {
-    struct application	ap;
+    struct application ap;
     register struct partition *pp;
-    int		ret;
-    register int	i;
+    int ret;
+    register int i;
 
     RT_CHECK_RTI(*rtip);
 
-    if ( *nloc <= 0 )  {
+    if (*nloc <= 0) {
 	bu_log("ERROR frshot: nloc=%d\n", *nloc);
 	*nloc = 0;
 	return;
@@ -212,7 +204,7 @@ BU_FORTRAN(frshot, FRSHOT)(int			*nloc,		/* input & output */
     ap.a_ray.r_dir[X] = dir[0];
     ap.a_ray.r_dir[Y] = dir[1];
     ap.a_ray.r_dir[Z] = dir[2];
-    VUNITIZE( ap.a_ray.r_dir );
+    VUNITIZE(ap.a_ray.r_dir);
     ap.a_hit = fr_hit;
     ap.a_miss = fr_miss;
     ap.a_level = 0;
@@ -232,9 +224,9 @@ BU_FORTRAN(frshot, FRSHOT)(int			*nloc,		/* input & output */
      * they will remain unchanged until the next call to
      * rt_shootray(), so copying out the data here will work fine.
      */
-    ret = rt_shootray( &ap );
+    ret = rt_shootray(&ap);
 
-    if ( ret <= 0 )  {
+    if (ret <= 0) {
 	/* Signal no hits */
 	*nloc = 0;
 	return;
@@ -242,28 +234,28 @@ BU_FORTRAN(frshot, FRSHOT)(int			*nloc,		/* input & output */
 
     /* Copy hit information from linked list to argument arrays */
     pp = fr_global_head.pt_forw;
-    if ( pp == &fr_global_head )  {
+    if (pp == &fr_global_head) {
 	*nloc = 0;
 	return;
     }
-    for ( i=0; i < *nloc; i++, pp=pp->pt_forw )  {
-	register struct context	*ctp;
+    for (i=0; i < *nloc; i++, pp=pp->pt_forw) {
+	register struct context *ctp;
 
-	if ( pp == &fr_global_head )  break;
+	if (pp == &fr_global_head) break;
 	indist[i] = pp->pt_inhit->hit_dist;
 	outdist[i] = pp->pt_outhit->hit_dist;
 	/* This might instead be reg_regionid ?? */
 	region_ids[i] = pp->pt_regionp->reg_bit+1;
 	ctp = &context[i];
 	ctp->co_stp = pp->pt_inseg->seg_stp;
-	VMOVE( ctp->co_vpriv, pp->pt_inhit->hit_vpriv);
+	VMOVE(ctp->co_vpriv, pp->pt_inhit->hit_vpriv);
 	ctp->co_priv = pp->pt_inhit->hit_private;
 	ctp->co_inflip = pp->pt_inflip;
     }
     *nloc = i;	/* Will have been incremented above, if successful */
 
     /* Free linked list storage */
-    for ( pp = fr_global_head.pt_forw; pp != &fr_global_head;  )  {
+    for (pp = fr_global_head.pt_forw; pp != &fr_global_head;) {
 	register struct partition *newpp;
 
 	newpp = pp;
@@ -274,8 +266,6 @@ BU_FORTRAN(frshot, FRSHOT)(int			*nloc,		/* input & output */
 
 
 /**
- * F R N O R M
- *
  * Given the data returned by a previous call to frshot(), compute the
  * surface normal at the entry point to the indicated solid.
  *
@@ -284,17 +274,17 @@ BU_FORTRAN(frshot, FRSHOT)(int			*nloc,		/* input & output */
  * are reconstructed, suitable for passing to RT_HIT_NORMAL.
  */
 void
-BU_FORTRAN(frnorm, FRNORM)(double		*normal,	/* output only */
-			   int			*idx,		/* input only */
-			   double		*indist,
-			   struct context	*context,
-			   double		*UNUSED(pt),
-			   double		*UNUSED(dir))
+BU_FORTRAN(frnorm, FRNORM)(double *normal,	/* output only */
+			   int *idx,		/* input only */
+			   double *indist,
+			   struct context *context,
+			   double *UNUSED(pt),
+			   double *UNUSED(dir))
 {
-    register struct context	*ctp;
-    struct hit	hit;
-    struct soltab	*stp;
-    register int	i;
+    register struct context *ctp;
+    struct hit hit;
+    struct soltab *stp;
+    register int i;
 
     i = *idx - 1; /* Selects which inhit is used */
 
@@ -302,17 +292,15 @@ BU_FORTRAN(frnorm, FRNORM)(double		*normal,	/* output only */
     hit.hit_dist = indist[i];
     ctp = &context[i];
     stp = ctp->co_stp;
-    VMOVE( hit.hit_vpriv, ctp->co_vpriv );
+    VMOVE(hit.hit_vpriv, ctp->co_vpriv);
     hit.hit_private = ctp->co_priv;
 
     /* The new macro doesn't use ray argument */
-    RT_HIT_NORMAL( normal, &hit, stp, NULL, ctp->co_inflip );
+    RT_HIT_NORMAL(normal, &hit, stp, NULL, ctp->co_inflip);
 }
 
 
 /**
- * F R N R E G
- *
  * Return the number of regions that exist in the model
  */
 void
@@ -323,50 +311,49 @@ BU_FORTRAN(frnreg, FRNREG)(int *nreg, struct rt_i **rtip)
 
 
 /**
- * F R N A M E
- *
  * Given a region number (range 1..nregions), return the right-hand
  * portion of the name in the provided buffer.
  *
  * XXX buflen is provided "automaticly" on the Apollo.
  */
 void
-BU_FORTRAN(frname, FRNAME)(char		*fbuf,
-			   int		*region_num,
-			   struct rt_i	**rtip,
-			   int		fbuflen)
+BU_FORTRAN(frname, FRNAME)(char *fbuf,
+			   int *region_num,
+			   struct rt_i **rtip,
+			   int fbuflen)
 {
     register struct region *rp;
-    int	i;
-    int	len;
-    int	offset;
+    int i;
+    int len;
+    int offset;
     size_t rnum;
     char buf[512];
 
     rnum = *region_num-1;
-    if ( rnum > (*rtip)->nregions )  {
-	sprintf( buf, "Region id %d out of range, max=%ld",
-		 *region_num, (long)((*rtip)->nregions) );
-	fr_string_c2f( fbuf, buf, fbuflen );
+    if (rnum > (*rtip)->nregions) {
+	sprintf(buf, "Region id %d out of range, max=%ld",
+		*region_num, (long)((*rtip)->nregions));
+	fr_string_c2f(fbuf, buf, fbuflen);
 	return;
     }
-    for ( BU_LIST_FOR( rp, region, &((*rtip)->HeadRegion) ) )  {
-	if ( (size_t)rp->reg_bit != rnum )  continue;
-	len = (int)strlen( rp->reg_name );
+    for (BU_LIST_FOR(rp, region, &((*rtip)->HeadRegion))) {
+	if ((size_t)rp->reg_bit != rnum) continue;
+	len = (int)strlen(rp->reg_name);
 	offset = 0;
-	if ( len >= fbuflen )  {
+	if (len >= fbuflen) {
 	    offset = len-(fbuflen+1);
 	    len -= (fbuflen+1);
 	}
-	bu_strlcpy( fbuf, rp->reg_name+offset, len );
+	bu_strlcpy(fbuf, rp->reg_name+offset, len);
 	fbuf[len] = ' '; /* replace null with space, needs testing */
-	for ( i=offset+len; i < fbuflen; i++ )
+	for (i=offset+len; i < fbuflen; i++)
 	    fbuf[i] = ' ';
 	return;
     }
-    sprintf(fbuf, "Unable to find region %d", *region_num );
-    fr_string_c2f( fbuf, buf, fbuflen );
+    sprintf(fbuf, "Unable to find region %d", *region_num);
+    fr_string_c2f(fbuf, buf, fbuflen);
 }
+
 
 /** @} */
 /*

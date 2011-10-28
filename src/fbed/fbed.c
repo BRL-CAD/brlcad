@@ -456,31 +456,14 @@ fillRect2D(Rect2D *rectp, RGBpixel (*pixelp))
     int top = rectp->r_corner.p_y;
     int rgt = rectp->r_corner.p_x;
     int lft = rectp->r_origin.p_x;
-    if ( isSGI )
-    {
-	/* More efficient on IRIS. */
-	if ( top - btm < 10 || rgt - lft < 10 )
-	{
-	    for (; btm <= top; btm++ )
-	    {
-		int x;
-		for ( x = lft; x <= rgt; x++ )
-		    (void) fb_write( fbp, x, btm,
-				     (unsigned char *)pixelp, 1 );
-	    }
-	}
+    for (; btm <= top; btm++ )
+    {	
+	int x = lft;
+	(void) fb_seek( fbp, x, btm );
+	for (; x <= rgt; x++ )
+	    fb_wpixel( fbp, *pixelp );
     }
-    else
-    {
-	for (; btm <= top; btm++ )
-	{	
-	    int x = lft;
-	    (void) fb_seek( fbp, x, btm );
-	    for (; x <= rgt; x++ )
-		fb_wpixel( fbp, *pixelp );
-	}
-	(void) fb_flush( fbp );
-    }
+    (void) fb_flush( fbp );
 }
 
 HIDDEN int
@@ -1870,13 +1853,8 @@ f_Put_Pixel() /* Put pixel. */
     if ( rectwid == 0 )
     {
 	/* Avoid overhead if only writing one pixel. */
-	if ( isSGI )
-	    (void) fb_write( fbp, cursor_pos.p_x, cursor_pos.p_y,
-			     paint, 1 );
-	else {
-	    (void) fb_seek( fbp, cursor_pos.p_x, cursor_pos.p_y );
-	    fb_wpixel( fbp, paint );
-	}
+	(void) fb_seek( fbp, cursor_pos.p_x, cursor_pos.p_y );
+	fb_wpixel( fbp, paint );
     } else {
 	fb_Paint( cursor_pos.p_x - rectwid, cursor_pos.p_y - rectwid,
 		  cursor_pos.p_x + rectwid, cursor_pos.p_y + rectwid,
@@ -1979,10 +1957,7 @@ fb_Setup(void)
 	fb_log( "Could not open default frame buffer.\n" );
 	return -1;
     }
-    /* Set global flag to indicate whether we are running on an
-       SGI with graphics. */
-    isSGI = strncmp( fbp->if_name, "/dev/sgi", 8 ) == 0;
-    
+
     fb_ioinit( fbp );
     if ( fb_setcursor( fbp, cursor.bits, cursor.xbits, cursor.ybits,
 		       cursor.xorig, cursor.yorig ) == -1 )
@@ -2092,7 +2067,7 @@ general_Handler(int sig)
 #endif
 #if defined(SIGTSTP)
 	case SIGTSTP :
-	    (void) f_Stop( (char *) NULL );
+	    (void) f_Stop();
 	    break;
 #endif
 #if defined(SIGCONT)
@@ -2121,10 +2096,7 @@ init_Tty(void)
     clr_Tabs( tty_fd );
     clr_Echo( tty_fd );
     clr_CRNL( tty_fd );
-#if defined(HAS_SGIGL)
-    if ( isSGI )
-	sgi_Init();
-#endif
+
     return;
 }
 
@@ -2144,12 +2116,8 @@ restore_Tty(void)
 void
 fb_Get_Pixel(unsigned char *pixel)
 {
-    if ( isSGI )
-	(void) fb_read( fbp, cursor_pos.p_x, cursor_pos.p_y, pixel, 1 );
-    else {
-	(void) fb_seek( fbp, cursor_pos.p_x, cursor_pos.p_y );
-	(void) fb_rpixel( fbp, (unsigned char *) pixel );
-    }
+    (void) fb_seek( fbp, cursor_pos.p_x, cursor_pos.p_y );
+    (void) fb_rpixel( fbp, (unsigned char *) pixel );
     return;
 }
 
@@ -2350,12 +2318,7 @@ get_Mouse_Pos(Point *pointp)
     if ( pad_flag )
 	return do_Bitpad( pointp );
     else
-#if defined(HAS_SGIGL)
-	if ( isSGI )
-	    return sgi_Mouse_Pos( &cursor_pos );
-	else
-#endif
-	    return -1;
+	return -1;
 }
 
 /*	d o _ B i t p a d ( ) */

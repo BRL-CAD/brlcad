@@ -62,6 +62,8 @@ main(int argc, char **argv)
     int get_flags;
     int scan_bytes;
 
+    bu_log("DEPRECATED: orle-pix is no longer being maintained.  Use rle-pix instead.\n");
+
     fp = stdin;
     if (! pars_Argv(argc, argv) || isatty(fileno(stdout))) {
 	prnt_Usage();

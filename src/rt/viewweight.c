@@ -57,7 +57,7 @@ const char title[] = "RT Weight";
 void
 usage(const char *argv0)
 {
-    bu_log("Usage:  rtweight [options] model.g objects...\n", argv0);
+    bu_log("Usage: %s [options] model.g objects...\n", argv0);
     bu_log("Options:\n");
     bu_log(" -s #		Grid size in pixels, default 512\n");
     bu_log(" -g #		Grid cell width [and height] in mm\n");

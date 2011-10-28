@@ -166,28 +166,20 @@ struct Return_Statement_ {
 /* global variables */
 /********************/
 
-#ifdef STATEMENT_C
-#include "defstart.h"
-#else
-#include "decstart.h"
-#endif /*STATEMENT_C*/
+extern struct freelist_head STMT_fl;
 
-GLOBAL struct freelist_head STMT_fl;
+extern struct freelist_head ALIAS_fl;
+extern struct freelist_head ASSIGN_fl;
+extern struct freelist_head CASE_fl;
+extern struct freelist_head COMP_STMT_fl;
+extern struct freelist_head COND_fl;
+extern struct freelist_head LOOP_fl;
+extern struct freelist_head PCALL_fl;
+extern struct freelist_head RET_fl;
+extern struct freelist_head INCR_fl;
 
-GLOBAL struct freelist_head ALIAS_fl;
-GLOBAL struct freelist_head ASSIGN_fl;
-GLOBAL struct freelist_head CASE_fl;
-GLOBAL struct freelist_head COMP_STMT_fl;
-GLOBAL struct freelist_head COND_fl;
-GLOBAL struct freelist_head LOOP_fl;
-GLOBAL struct freelist_head PCALL_fl;
-GLOBAL struct freelist_head RET_fl;
-GLOBAL struct freelist_head INCR_fl;
-
-GLOBAL Statement	STATEMENT_ESCAPE	INITIALLY(STATEMENT_NULL);
-GLOBAL Statement	STATEMENT_SKIP		INITIALLY(STATEMENT_NULL);
-
-#include "de_end.h"
+extern Statement STATEMENT_ESCAPE;
+extern Statement STATEMENT_SKIP;
 
 /******************************/
 /* macro function definitions */
@@ -247,12 +239,5 @@ extern Statement	RETcreate PROTO((Expression ));
 extern void		STMTinitialize PROTO((void));
 extern struct Scope_ *INCR_CTLcreate PROTO((Symbol *, Expression start,
 	       Expression end, Expression increment));
-
-/********************/
-/* inline functions */
-/********************/
-
-#if supports_inline_functions || defined(STATEMENT_C)
-#endif /* supports_inline_functions || defined(STATEMENT_C) */
 
 #endif /*STATEMENT_H*/

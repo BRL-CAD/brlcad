@@ -3,32 +3,24 @@
 bin_PROGRAMS = \
 	parse
 
-#libobj_la_LDFLAGS = 
-#libobj_la_LIBADD = ${BU}
-#libobj_la_SOURCES = \
-#	obj_grammar.y \
-#	obj_rules.l \
-#	obj_parser.c
-
 parse_LDADD = ${BU}
 parse_SOURCES = \
-	obj_grammar.y \
-	obj_rules.l \
-	obj_parser.c
+	obj_grammar.yy \
+	obj_rules.ll \
+	obj_parser.cpp
 
 noinst_HEADERS = \
 	obj_grammar.h \
 	obj_parser.h
 
-obj_grammar.h : obj_grammar.y
+obj_grammar.h : obj_grammar.yy
 obj_parser.lo : obj_grammar.h
 
 BUILT_SOURCES = \
-	obj_rules.c \
+	obj_rules.cpp \
+	obj_rules.h \
 	obj_grammar.h \
-	obj_grammar.c
-
-EXTRA_DIST = obj_parser.h.orig
+	obj_grammar.cpp
 
 DISTCLEANFILES = $(BUILT_SOURCES)
 

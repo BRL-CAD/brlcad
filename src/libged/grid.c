@@ -336,7 +336,7 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    bu_vls_printf(gedp->ged_result_str, "%s: unrecognized command '%s'\n", command);
+    bu_vls_printf(gedp->ged_result_str, "%s: unrecognized command '%s'\n", argv[0], command);
     grid_usage(gedp, argv[0]);
 
     return GED_ERROR;

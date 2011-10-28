@@ -335,8 +335,8 @@ get_layer()
     if ( verbose && curr_layer != old_layer ) {
 	bu_log( "changed to layer #%d, (m = %p, s=%p)\n",
 		curr_layer,
-		layers[curr_layer]->m,
-		layers[curr_layer]->s );
+		(void *)layers[curr_layer]->m,
+		(void *)layers[curr_layer]->s );
     }
 }
 
@@ -1315,7 +1315,6 @@ static int
 process_lwpolyline_entities_code( int code )
 {
     point_t tmp_pt;
-    static int num_verts = 0;
     static int vert_no = 0;
     static fastf_t x, y;
 
@@ -1330,7 +1329,7 @@ process_lwpolyline_entities_code( int code )
 	    }
 	    break;
 	case 90:
-	    num_verts = code;
+	    /* oops */
 	    break;
 	case 10:
 	    x = atof( line ) * units_conv[units] * scale_factor;
@@ -1955,7 +1954,6 @@ drawMtext( char *text, int attachPoint, int UNUSED(drawingDirection), double tex
     char *cp;
     int lineCount;
     double lineSpace;
-    double totalHeight;
     vect_t xdir, ydir;
     double startx, starty;
     int maxLineLen=0;
@@ -1979,7 +1977,6 @@ drawMtext( char *text, int attachPoint, int UNUSED(drawingDirection), double tex
     }
 
     lineSpace = 1.25 * scale;
-    totalHeight = (double)lineCount * lineSpace;
 
     VSET( xdir, cos( radians ), sin( radians ), 0.0 );
     VSET( ydir, -sin( radians ), cos( radians ), 0.0 );
@@ -2056,23 +2053,12 @@ static int
 process_leader_entities_code( int code )
 {
     static int arrowHeadFlag=0;
-    static int pathType=0;
-    static int creationFlag=3;
-    static int hooklineDirection;
-    static int hooklineFlag=0;
-    static double textHeight=0.0;
-    static double textWidth=0.0;
-    static int numVerts=0;
     static int vertNo=0;
-    static vect_t normal={0, 0, 0};
-    static vect_t horizDir={1, 0, 0};
-    static point_t offset={0, 0, 0};
-    static point_t offsetB={0, 0, 0};
     static point_t pt;
     point_t tmp_pt;
     int i;
     struct edgeuse *eu;
-    struct vertex *v0=NULL, *v1=NULL, *v2=NULL;
+    struct vertex *v1=NULL, *v2=NULL;
 
     switch ( code ) {
 	case 8:
@@ -2091,61 +2077,61 @@ process_leader_entities_code( int code )
 	    arrowHeadFlag = atoi( line );
 	    break;
 	case 72:
-	    pathType = atoi( line );
+	    /* path type, unimplemented */
 	    break;
 	case 73:
-	    creationFlag = atoi( line );
+	    /* creation, unimplemented */
 	    break;
 	case 74:
-	    hooklineDirection = atoi( line );
+	    /* hookline direction, unimplemented */
 	    break;
 	case 75:
-	    hooklineFlag = atoi( line );
+	    /* hookline, unimplemented */
 	    break;
 	case 40:
-	    textHeight = atof( line );
+	    /* text height, unimplemented */
 	    break;
 	case 41:
-	    textWidth = atof( line );
+	    /* text width, unimplemented */
 	    break;
 	case 76:
-	    numVerts = atoi( line );
+	    /* num vertices, unimplemented */
 	    break;
 	case 210:
-	    normal[X] = atof( line );
+	    /* normal, unimplemented */
 	    break;
 	case 220:
-	    normal[Y] = atof( line );
+	    /* normal, unimplemented */
 	    break;
 	case 230:
-	    normal[Z] = atof( line );
+	    /* normal, unimplemented */
 	    break;
 	case 211:
-	    horizDir[X] = atof( line );
+	    /* horizontal direction, unimplemented */
 	    break;
 	case 221:
-	    horizDir[Y] = atof( line );
+	    /* horizontal direction, unimplemented */
 	    break;
 	case 231:
-	    horizDir[Z] = atof( line );
+	    /* horizontal direction, unimplemented */
 	    break;
 	case 212:
-	    offsetB[X] = atof( line );
+	    /* offsetB, unimplemented */
 	    break;
 	case 222:
-	    offsetB[Y] = atof( line );
+	    /* offsetB, unimplemented */
 	    break;
 	case 232:
-	    offsetB[Z] = atof( line );
+	    /* offsetB, unimplemented */
 	    break;
 	case 213:
-	    offset[X] = atof( line );
+	    /* offset, unimplemented */
 	    break;
 	case 223:
-	    offset[Y] = atof( line );
+	    /* offset, unimplemented */
 	    break;
 	case 233:
-	    offset[Z] = atof( line );
+	    /* offset, unimplemented */
 	    break;
 	case 10:
 	    pt[X] = atof( line );
@@ -2180,7 +2166,6 @@ process_leader_entities_code( int code )
 		    if ( i == 0 ) {
 			v1 = eu->vu_p->v_p;
 			nmg_vertex_gv( v1, polyline_verts );
-			v0 = v1;
 		    }
 		    v2 = eu->eumate_p->vu_p->v_p;
 		    nmg_vertex_gv( v2, &polyline_verts[(i+1)*3] );
@@ -2196,17 +2181,7 @@ process_leader_entities_code( int code )
 	    polyline_vert_indices_count=0;
 	    polyline_vertex_count = 0;
 	    arrowHeadFlag = 0;
-	    pathType = 0;
-	    creationFlag = 3;
-	    hooklineFlag = 0;
-	    textHeight = 0.0;
-	    textWidth = 0.0;
-	    numVerts = 0;
 	    vertNo = 0;
-	    VSET( normal, 0, 0, 0);
-	    VSET( horizDir, 1, 0, 0);
-	    VSET( offset, 0, 0, 0);
-	    VSET( offsetB, 0, 0, 0);
 
 	    curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 	    process_entities_code[curr_state->sub_state]( code );
@@ -2441,18 +2416,18 @@ process_text_attrib_entities_code( int code )
 static int
 process_dimension_entities_code( int code )
 {
-    static point_t def_pt={0.0, 0.0, 0.0};
+    /* static point_t def_pt={0.0, 0.0, 0.0}; */
     static char *block_name=NULL;
     static struct state_data *new_state=NULL;
     struct block_list *blk;
-    int coord;
+    /* int coord; */
 
     switch ( code ) {
 	case 10:
 	case 20:
 	case 30:
-	    coord = (code / 10) - 1;
-	    def_pt[coord] = atof( line ) * units_conv[units] * scale_factor;
+	    /* coord = (code / 10) - 1; */
+	    /* def_pt[coord] = atof( line ) * units_conv[units] * scale_factor; */
 	    break;
 	case 8:		/* layer name */
 	    if ( curr_layer_name ) {
@@ -2671,17 +2646,11 @@ process_arc_entities_code( int code )
 static int
 process_spline_entities_code( int code )
 {
-    static vect_t normal;
-    static vect_t startTangent;
-    static vect_t endTangent;
     static int flag=0;
     static int degree=0;
     static int numKnots=0;
     static int numCtlPts=0;
     static int numFitPts=0;
-    static fastf_t knotTol=0.0000001;
-    static fastf_t ctlPtTol=0.0000001;
-    static fastf_t fitPtTol=0.0000000001;
     static fastf_t *knots=NULL;
     static fastf_t *weights=NULL;
     static fastf_t *ctlPts=NULL;
@@ -2716,7 +2685,8 @@ process_spline_entities_code( int code )
 	case 220:
 	case 230:
 	    coord = code / 10 - 21;
-	    normal[coord] = atof( line ) * units_conv[units] * scale_factor;
+	    /* normal, unhandled */
+	    /* normal[coord] = atof( line ) * units_conv[units] * scale_factor; */
 	    break;
 	case 70:
 	    flag = atoi( line );
@@ -2751,25 +2721,28 @@ process_spline_entities_code( int code )
 	    }
 	    break;
 	case 42:
-	    knotTol = atof( line ) * units_conv[units] * scale_factor;
+	    /* unhandled */
+	    /* knotTol = atof( line ) * units_conv[units] * scale_factor; */
 	    break;
 	case 43:
-	    ctlPtTol = atof( line ) * units_conv[units] * scale_factor;
+	    /* unhandled */
+	    /* ctlPtTol = atof( line ) * units_conv[units] * scale_factor; */
 	    break;
 	case 44:
-	    fitPtTol = atof( line ) * units_conv[units] * scale_factor;
+	    /* unhandled */
+	    /* fitPtTol = atof( line ) * units_conv[units] * scale_factor; */
 	    break;
 	case 12:
 	case 22:
 	case 32:
 	    coord = code / 10 - 1;
-	    startTangent[coord] = atof( line );
+	    /* start tangent, unimplemented */
 	    break;
 	case 13:
 	case 23:
 	case 33:
 	    coord = code / 10 - 1;
-	    endTangent[coord] = atof( line );
+	    /* end tangent, unimplemented */
 	    break;
 	case 40:
 	    knots[knotCount++] = atof( line );
@@ -2860,9 +2833,6 @@ process_spline_entities_code( int code )
 	    numKnots = 0;
 	    numCtlPts = 0;
 	    numFitPts = 0;
-	    knotTol = 0.0000001;
-	    ctlPtTol = 0.0000001;
-	    fitPtTol = 0.0000000001;
 	    knotCount = 0;
 	    weightCount = 0;
 	    ctlPtCount = 0;
@@ -3063,13 +3033,13 @@ nmg_wire_edges_to_sketch( struct model *m )
         skt->verts[idx][0] = vr->the_array[idx*3];
         skt->verts[idx][1] = vr->the_array[idx*3 + 1];
     }
-    skt->skt_curve.seg_count = BU_PTBL_LEN(&segs);
-    skt->skt_curve.reverse = bu_realloc(skt->skt_curve.reverse, skt->skt_curve.seg_count * sizeof (int), "curve segment reverse");
-    memset(skt->skt_curve.reverse, 0, skt->skt_curve.seg_count * sizeof (int));
-    skt->skt_curve.segments = bu_realloc(skt->skt_curve.segments, skt->skt_curve.seg_count * sizeof ( genptr_t), "curve segments");
+    skt->curve.count = BU_PTBL_LEN(&segs);
+    skt->curve.reverse = bu_realloc(skt->curve.reverse, skt->curve.count * sizeof (int), "curve segment reverse");
+    memset(skt->curve.reverse, 0, skt->curve.count * sizeof (int));
+    skt->curve.segment = bu_realloc(skt->curve.segment, skt->curve.count * sizeof ( genptr_t), "curve segments");
     for (idx = 0; idx < BU_PTBL_LEN(&segs); idx++) {
         genptr_t ptr = BU_PTBL_GET(&segs, idx);
-        skt->skt_curve.segments[idx] = ptr;
+        skt->curve.segment[idx] = ptr;
     }
 
     free_vert_tree(vr);
@@ -3313,6 +3283,10 @@ main( int argc, char *argv[] )
             if( skt != NULL ) {
                 mk_sketch(out_fp, name, skt);
                 (void) mk_addmember(name, &head, NULL, WMOP_UNION);
+		rt_curve_free(&skt->curve);
+		if (skt->verts)
+		    bu_free(skt->verts, "free verts");
+		bu_free(skt, "free sketch");
             }
 	}
 

@@ -42,11 +42,6 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     eip = (struct rt_rpc_internal *)ip->idb_ptr;
     RT_RPC_CK_MAGIC(eip);
 
-    *b = ON_Brep::New();
-
-    ON_TextLog dump_to_stdout;
-    ON_TextLog* dump = &dump_to_stdout;
-
     point_t p1_origin;
     ON_3dPoint plane1_origin, plane2_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
@@ -77,7 +72,6 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     VADD2(ep2, p1_origin, tmppt);
     VADD2(ep3, p1_origin, x_dir);
     ON_3dPoint onp1 = ON_3dPoint(ep1);
-    ON_3dPoint onp2 = ON_3dPoint(ep2);
     ON_3dPoint onp3 = ON_3dPoint(ep3);
 
 
@@ -89,15 +83,11 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     parabnurbscurve->SetCV(0, ON_3dPoint(ep1));
     parabnurbscurve->SetCV(1, ON_3dPoint(ep2));
     parabnurbscurve->SetCV(2, ON_3dPoint(ep3));
-    bu_log("Valid nurbs curve: %d\n", parabnurbscurve->IsValid(dump));
-    parabnurbscurve->Dump(*dump);
 
     // Also need a staight line from the beginning to the end to
     // complete the loop.
 
     ON_LineCurve* straightedge = new ON_LineCurve(onp3, onp1);
-    bu_log("Valid curve: %d\n", straightedge->IsValid(dump));
-    straightedge->Dump(*dump);
 
     // Generate the bottom cap
     ON_SimpleArray<ON_Curve*> boundary;

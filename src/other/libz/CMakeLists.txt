@@ -51,6 +51,15 @@ endif()
 # Check for unistd.h
 #
 check_include_file(unistd.h Z_HAVE_UNISTD_H)
+IF(Z_HAVE_UNISTD_H)
+	add_definitions(-DZ_HAVE_UNISTD_H)
+ENDIF(Z_HAVE_UNISTD_H)
+
+OPTION(ENABLE_Z_PREFIX "Add z_ prefix to all library functions." OFF)
+MARK_AS_ADVANCED(ENABLE_Z_PREFIX)
+IF(ENABLE_Z_PREFIX)
+	add_definitions(-DZ_PREFIX)
+ENDIF(ENABLE_Z_PREFIX)
 
 if(MSVC)
     set(CMAKE_DEBUG_POSTFIX "d")
@@ -58,20 +67,8 @@ if(MSVC)
     add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
 endif()
 
-if(NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
-    # If we're doing an out of source build and the user has a zconf.h
-    # in their source tree...
-    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/zconf.h)
-        message(FATAL_ERROR
-            "You must remove ${CMAKE_CURRENT_SOURCE_DIR}/zconf.h "
-            "from the source tree.  This file is included with zlib "
-            "but CMake generates this file for you automatically "
-            "in the build directory.")
-  endif()
-endif()
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/zconf.h.cmakein
-               ${CMAKE_CURRENT_BINARY_DIR}/zconf.h @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/zconf.h.in
+	       ${CMAKE_CURRENT_BINARY_DIR}/zconf.h @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 
@@ -121,12 +118,12 @@ string(REGEX REPLACE ".*#define[ \t]+ZLIB_VERSION[ \t]+\"([0-9A-Za-z.]+)\".*"
 if(MINGW)
     # This gets us DLL resource information when compiling on MinGW.
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/zlib1rc.obj
-                       COMMAND windres.exe
-                            -D GCC_WINDRES
-                            -I ${CMAKE_CURRENT_SOURCE_DIR}
-                            -I ${CMAKE_CURRENT_BINARY_DIR}
-                            -o ${CMAKE_CURRENT_BINARY_DIR}/zlib1rc.obj
-                            -i ${CMAKE_CURRENT_SOURCE_DIR}/win32/zlib1.rc)
+		       COMMAND windres.exe
+			    -D GCC_WINDRES
+			    -I ${CMAKE_CURRENT_SOURCE_DIR}
+			    -I ${CMAKE_CURRENT_BINARY_DIR}
+			    -o ${CMAKE_CURRENT_BINARY_DIR}/zlib1rc.obj
+			    -i ${CMAKE_CURRENT_SOURCE_DIR}/win32/zlib1.rc)
     set(ZLIB_SRCS ${ZLIB_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/zlib1rc.obj)
 endif(MINGW)
 
@@ -161,9 +158,9 @@ endif()
 
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
     install(TARGETS zlib
-        RUNTIME DESTINATION bin
-        ARCHIVE DESTINATION lib
-        LIBRARY DESTINATION lib )
+	RUNTIME DESTINATION bin
+	ARCHIVE DESTINATION lib
+	LIBRARY DESTINATION lib )
 endif()
 if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL )
     install(FILES ${ZLIB_PUBLIC_HDRS} DESTINATION include)

@@ -35,13 +35,11 @@
 #include "raytrace.h"
 
 
-/*
- * R T _ D I R B U I L D
- *
+/**
  * Builds a directory of the object names.
  *
- * Allocate and initialize information for this
- * instance of an RT model database.
+ * Allocate and initialize information for this instance of an RT
+ * model database.
  *
  * Returns -
  * (struct rt_i *) Success
@@ -78,9 +76,7 @@ rt_dirbuild(const char *filename, char *buf, int len)
 }
 
 
-/*
- * R T _ D B _ G E T _ I N T E R N A L
- *
+/**
  * Get an object from the database, and convert it into its internal
  * representation.
  *
@@ -141,12 +137,10 @@ rt_db_get_internal(
 }
 
 
-/*
- * R T _ D B _ P U T _ I N T E R N A L
- *
+/**
  * Convert the internal representation of a solid to the external one,
- * and write it into the database.
- * On success only, the internal representation is freed.
+ * and write it into the database.  On success only, the internal
+ * representation is freed.
  *
  * Returns -
  * <0 error
@@ -194,13 +188,13 @@ rt_db_put_internal(
 }
 
 
-/*
- * R T _ F W R I T E _ I N T E R N A L
- *
- * Put an object in internal format out onto a file in external format.
- * Used by LIBWDB.
+/**
+ * Put an object in internal format out onto a file in external
+ * format.  Used by LIBWDB.
  *
  * Can't really require a dbip parameter, as many callers won't have one.
+ *
+ * THIS ROUTINE ONLY SUPPORTS WRITING V4 GEOMETRY.
  *
  * Returns -
  * 0 OK
@@ -217,8 +211,9 @@ rt_fwrite_internal(
     int ret;
 
     RT_CK_DB_INTERNAL(ip);
-    BU_EXTERNAL_INIT(&ext);
     RT_CK_FUNCTAB(ip->idb_meth);
+
+    BU_EXTERNAL_INIT(&ext);
 
     ret = -1;
     if (ip->idb_meth->ft_export4) {
@@ -244,8 +239,8 @@ rt_fwrite_internal(
 }
 
 
-/*
- * R T _ D B _ F R E E _ I N T E R N A L
+/**
+ *
  */
 void
 rt_db_free_internal(struct rt_db_internal *ip)
@@ -272,9 +267,7 @@ rt_db_free_internal(struct rt_db_internal *ip)
 }
 
 
-/*
- * R T _ D B _ L O O K U P _ I N T E R N A L
- *
+/**
  * Convert an object name to a rt_db_internal pointer
  *
  * Looks up the named object in the directory of the specified model,

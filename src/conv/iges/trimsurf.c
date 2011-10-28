@@ -962,7 +962,7 @@ trim_surf(entityno, s)
     Readrec(dir[entityno]->param);
     Readint(&entity_type, "");
     if (entity_type != 144) {
-	bu_log("Expected Trimmed Surface Entity found type %d\n");
+	bu_log("Expected Trimmed Surface Entity found type %d\n", entity_type);
 	return (struct faceuse *)NULL;
     }
     Readint(&surf_de, "");
@@ -1447,7 +1447,7 @@ Convtrimsurfs()
 
 	BU_LIST_INIT(&hit_list);
 	if (Find_pt_in_fu(fu, mid_pt, ray_dir)) {
-	    bu_log("Convtrimsurfs: Cannot find a point in fu (x%x)\n", fu);
+	    bu_log("Convtrimsurfs: Cannot find a point in fu (%p)\n", fu);
 	    nmg_pr_fu(fu, " ");
 	    bu_exit(1, "Convtrimsurfs: Cannot find a point in fu\n");
 	}

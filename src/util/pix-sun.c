@@ -44,7 +44,7 @@ int dither = 0;
 #define MAPSIZE 256   /* Number of unique color values in Sun Colormap */
 /* Description of header for files containing raster images */
 struct rasterfile {
-    long ras_magic;	/* magic number */
+    uint32_t ras_magic;	/* magic number */
     size_t ras_width;	/* width (pixels) of image */
     size_t ras_height;	/* height (pixels) of image */
     size_t ras_depth;	/* depth (1, 8, or 24 bits) of pixel */
@@ -236,7 +236,7 @@ doit(void)
      */
     for (i=(long)ras.ras_height-1; i >= 0; i--)
 	if (fread(&pix[i*ras.ras_width*3], ras.ras_width*3, 1, stdin) != 1) {
-	    bu_exit(1, "%s: error reading %zu x %zu pix file scanline %d\n",
+	    bu_exit(1, "%s: error reading %zu x %zu pix file scanline %ld\n",
 		    progname, ras.ras_width, ras.ras_height, i);
 	}
 

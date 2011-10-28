@@ -36,7 +36,7 @@
 # ***                 BRL-CAD's CMakeLists.txt                    ***
 # *******************************************************************
 
-# This file contains the top level CMakeLists.txt logic for the 
+# This file contains the top level CMakeLists.txt logic for the
 # BRL-CAD software package.
 
 # Minimum required version of CMake
@@ -49,10 +49,10 @@ ENDIF(COMMAND CMAKE_POLICY)
 PROJECT(SCL)
 
 # build shared libs by default
-OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
+set(BUILD_SHARED_LIBS ON)
 
 # build static libs by default
-OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
+set(BUILD_STATIC_LIBS ON)
 
 # Set version
 SET(SCL_VERSION_MAJOR "3")
@@ -92,8 +92,8 @@ IF(NOT WIN32)
 ENDIF(NOT WIN32)
 
 #---------------------------------------------------------------------
-# The following logic is what allows binaries to run successfully in 
-# the build directory AND install directory.  Thanks to plplot for 
+# The following logic is what allows binaries to run successfully in
+# the build directory AND install directory.  Thanks to plplot for
 # identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
 
 # use, i.e. don't skip the full RPATH for the build tree
@@ -109,7 +109,7 @@ if (NOT APPLE)
 endif(NOT APPLE)
 SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 
-# add the automatically determined parts of the RPATH which point to 
+# add the automatically determined parts of the RPATH which point to
 # directories outside the build tree to the install RPATH
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
@@ -149,9 +149,9 @@ ENDFOREACH()
 
 
 #-----------------------------------------------------------------------------
-# Configure install locations. 
+# Configure install locations.
 
-# The location in which to install BRLCAD. Need a good Debug location 
+# The location in which to install BRLCAD. Need a good Debug location
 # for Windows.  Only do this if CMAKE_INSTALL_PREFIX hasn't been set
 # already, to try and allow parent builds (if any) some control.
 IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)

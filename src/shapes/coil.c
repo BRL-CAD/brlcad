@@ -17,7 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @file shapes/coil.c
  *
  * Coil Generator
@@ -58,12 +57,12 @@ cap_squared(struct bu_list *head, fastf_t mean_outer_diameter, fastf_t wire_diam
 {
     fastf_t pipe_bend, coil_radius;
     point_t pnt1, pnt2, pnt4, pnt6, pnt8;
-     
+
     coil_radius = mean_outer_diameter/2 - wire_diameter/2;
-    pipe_bend = coil_radius; 
-    
+    pipe_bend = coil_radius;
+
     *need_subtraction += 0;
-    
+
     if (is_start == 1) {
 	VSET(pnt1, 0, -coil_radius, starting_pitch - sin(D2R(helix_angle))*coil_radius);
 	VSET(pnt2, lhf*coil_radius , -coil_radius, starting_pitch - sin(D2R(helix_angle))*coil_radius);
@@ -90,7 +89,7 @@ cap_squared(struct bu_list *head, fastf_t mean_outer_diameter, fastf_t wire_diam
 	return starting_pitch + pitch + sin(D2R(helix_angle))*coil_radius;
     }
 
-    return 0;  
+    return 0;
 }
 
 
@@ -100,14 +99,14 @@ cap_squared_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, stru
     fastf_t pipe_bend, coil_radius;
     point_t origin, height, pnt1, pnt2, pnt4, pnt6, pnt8;
     struct bu_vls str1;
-  
+
     coil_radius = mean_outer_diameter/2 - wire_diameter/2;
-    pipe_bend = coil_radius; 
+    pipe_bend = coil_radius;
 
-    bu_vls_init(&str1); 
+    bu_vls_init(&str1);
 
-    *need_subtraction += 1; 
-       
+    *need_subtraction += 1;
+
     if (is_start == 1) {
 	VSET(pnt1, 0, -coil_radius, starting_pitch);
 	VSET(pnt2, lhf*coil_radius , -coil_radius, starting_pitch);
@@ -146,7 +145,7 @@ cap_squared_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, stru
 	return starting_pitch + pitch + sin(D2R(helix_angle))*coil_radius;
     }
     bu_vls_free(&str1);
-    return 0;  
+    return 0;
 }
 
 
@@ -161,12 +160,12 @@ cap_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, struct wmemb
     pipe_bend = coil_radius;
 
     bu_vls_init(&str1);
-   
+
     *need_subtraction += 1;
 
     center_height = sqrt(((coil_radius/cos(D2R(helix_angle)))*(coil_radius/cos(D2R(helix_angle))))-coil_radius*coil_radius) + 0.25*pitch*cos(D2R(helix_angle));
     bu_log("Center_height:  %f\n", center_height);
-    
+
     if (is_start == 1) {
 	VSET(pnt1, 0, -coil_radius, starting_pitch);
 	VSET(pnt2, lhf*coil_radius , -coil_radius, pitch/8 + starting_pitch + sin(D2R(helix_angle))*coil_radius);
@@ -185,8 +184,8 @@ cap_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, struct wmemb
     	mk_rcc(file, bu_vls_addr(&str1), origin, height, coil_radius*(1+sin(D2R(helix_angle)))+wire_diameter+.1*wire_diameter);
         (void)mk_addmember(bu_vls_addr(&str1), &(*coil_subtractions).l, NULL, WMOP_UNION);
 	bu_vls_free(&str1);
-        return pitch + starting_pitch;	
-    } else { 
+        return pitch + starting_pitch;
+    } else {
     	VSET(pnt2, lhf*coil_radius , -coil_radius, pitch/8 + starting_pitch + sin(D2R(helix_angle))*coil_radius);
     	VSET(pnt4, lhf*coil_radius , coil_radius,  pitch*3/8 + starting_pitch + sin(D2R(helix_angle))*coil_radius);
     	VSET(pnt6, lhf*-coil_radius , coil_radius, pitch*5/8 + starting_pitch - sin(D2R(helix_angle))*coil_radius);
@@ -207,7 +206,7 @@ cap_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, struct wmemb
 	return pitch+starting_pitch;
     }
     bu_vls_free(&str1);
-    return 0; 
+    return 0;
 }
 
 
@@ -249,18 +248,18 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
     struct coil_data_t *e_data;
     struct coil_data_t *cd;
     struct bu_vls str;
-	
+
     BU_LIST_INIT(&coil.l);
     BU_LIST_INIT(&coil_subtractions.l);
     mk_pipe_init(&head);
-   
+
     s_data = BU_LIST_FIRST(coil_data_t, &(*sections));
     e_data = BU_LIST_LAST(coil_data_t, &(*sections));
-   
+
     bu_vls_init(&str);
-   
-    last_pitch_pt = 0; 
-    
+
+    last_pitch_pt = 0;
+
     switch (start_cap_type) {
 	case 0:
 	    VSET(pnt1, 0, -1*(s_data->od/2-s_data->wd/2), last_pitch_pt);
@@ -278,7 +277,7 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
 	default:
 	    break;
     }
-   
+
     for (BU_LIST_FOR(cd, coil_data_t, &(*sections))) {
         last_pitch_pt = helical_coil_plain(&head, cd->od, cd->wd, cd->ha, cd->p, last_pitch_pt, cd->nt, cd->lhf);
     }
@@ -300,28 +299,28 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
 	default:
 	    break;
     }
-   
+
     bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "%s_core.s", prefix); 
+    bu_vls_printf(&str, "%s_core.s", prefix);
     mk_pipe(file, bu_vls_addr(&str), &head);
 
     (void)mk_addmember(bu_vls_addr(&str), &coil.l, NULL, WMOP_UNION);
-  
-    if (need_subtractions > 0) { 
+
+    if (need_subtractions > 0) {
 	bu_vls_trunc(&str, 0);
 	bu_vls_printf(&str, "%s_subtractions.c", prefix);
 	mk_lcomb(file, bu_vls_addr(&str), &coil_subtractions, 0, NULL, NULL, NULL, 0);
 	(void)mk_addmember(bu_vls_addr(&str), &coil.l, NULL, WMOP_SUBTRACT);
     }
 
-    mk_lcomb(file, prefix, &coil, 0, NULL, NULL, NULL, 0); 
-   
+    mk_lcomb(file, prefix, &coil, 0, NULL, NULL, NULL, 0);
+
     bu_vls_free(&str);
     mk_pipe_free(&head);
 }
 
 
-/* Process command line arguments */ 
+/* Process command line arguments */
 int
 ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_diameter, fastf_t *wire_diameter, fastf_t *helix_angle, fastf_t *pitch, int *nt, int *start_cap_type, int *end_cap_type, fastf_t *overall_length, int *lhf)
 {
@@ -332,9 +331,9 @@ ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_di
     int d1, d6;
     float d2, d3, d4, d5;
     char s1, s2, s3, s4, s5;
-   
+
     struct coil_data_t *coil_data;
-    
+
     bu_opterr = 0;
 
     while ((c=bu_getopt(argc, argv, options)) != -1) {
@@ -389,7 +388,7 @@ ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_di
 		} else {
 		    coil_data->lhf = -1;
 		}
-		BU_LIST_INSERT(&(*sections), &((*coil_data).l));	
+		BU_LIST_INSERT(&(*sections), &((*coil_data).l));
 		break;
 	    default:
 		bu_log("%s: illegal option -- %c\n", bu_getprogname(), c);
@@ -412,9 +411,8 @@ main(int ac, char *av[])
 
     struct coil_data_t *coil_data = NULL;
     struct bu_list sections;
-    
+
     int nt; /* Number of turns */
-    int nt_user_set = 1;
     int start_cap_type, end_cap_type;
     int lhf; /* Winding flag */
 
@@ -425,7 +423,7 @@ main(int ac, char *av[])
     bu_vls_trunc(&name, 0);
 
     BU_LIST_INIT(&sections);
-    
+
     mean_outer_diameter = 0;
     wire_diameter = 0;
     helix_angle = 0;
@@ -435,22 +433,22 @@ main(int ac, char *av[])
     end_cap_type = 0;
     overall_length = 0;
     lhf = 1;
-   
-    /* Process arguments */  
+
+    /* Process arguments */
     ReadArgs(ac, av, &sections, &mean_outer_diameter, &wire_diameter, &helix_angle, &pitch, &nt, &start_cap_type, &end_cap_type, &overall_length, &lhf);
 
     /* Handle various potential errors in args and set defaults if nothing supplied */
-  
+
     if (BU_LIST_IS_EMPTY(&sections)) {
-       
+
 	if (mean_outer_diameter < 0 || wire_diameter < 0 || helix_angle < 0 || pitch < 0 || nt < 0 || start_cap_type < 0 || end_cap_type < 0) 
 	    bu_exit(-1, " Error - negative value in one or more arguments supplied to coil");
-    
+
         if (ZERO(wire_diameter) && ZERO(mean_outer_diameter)) {
             mean_outer_diameter = 1000;
-            wire_diameter = 100;       
+            wire_diameter = 100;
         }
-   
+
         if (ZERO(wire_diameter) && mean_outer_diameter > 0) {
 	    wire_diameter = mean_outer_diameter/10;
         }
@@ -467,9 +465,8 @@ main(int ac, char *av[])
 	    bu_log("Warning - pitch less than wire diameter.  Setting pitch to wire diameter: %f mm\n", wire_diameter);
 	    pitch = wire_diameter;
         }
-    
+
         if (nt == 0) {
-	    nt_user_set = 0;
 	    nt = 30;
 	}
 
@@ -480,8 +477,8 @@ main(int ac, char *av[])
 	coil_data->ha = helix_angle;
 	coil_data->p = pitch;
 	coil_data->lhf = lhf;
-	
-        BU_LIST_APPEND(&(sections), &((*coil_data).l));	
+
+        BU_LIST_APPEND(&(sections), &((*coil_data).l));
 
     	coil_data = BU_LIST_FIRST(coil_data_t, &sections);
     }
@@ -529,7 +526,7 @@ main(int ac, char *av[])
 	    }
 	}
     }	
-    
+
     /* Generate Name - this needs some thought for multiple section coils*/
     bu_vls_printf(&name, "coil");
 
@@ -549,13 +546,13 @@ main(int ac, char *av[])
 	    bu_exit(-1, "Error - no filename supplied and coil.g exists.");
 	}
     }
- 
+
     bu_log("Making coil...\n");
     make_coil(db_fp, bu_vls_addr(&name), &sections, start_cap_type, end_cap_type);
 
     bu_vls_free(&str);
     bu_vls_free(&name);
-    
+
     /* Close database */
     wdb_close(db_fp);
 

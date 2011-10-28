@@ -1,3 +1,4 @@
+						 -*- coding: utf-8 -*-
 BRL-CAD To Do List
 ==================
 
@@ -17,10 +18,21 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* ship it!
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* test illuminate (e.g. oed) + Z, report of crash (on Windows)
+
+* fix 64b detection across platforms. Fix rhel 32/64 confusion
+
+* test for -msse3 requirement for __SSE.*__ definition
+
+* test new edit command
+
+* hook marching cubes into libged facetize
 
 * fix osX link line to stop mixing X libs (causes segfault on GL stuff)
   Assuming this is CMake - this will involve making FindX11 "smarter"
@@ -39,16 +51,102 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * fix bottie crash on 32b builds
 
-* upgrade source repository back-end to the latest SVN 1.5 so we can
-  benefit from proper merge tracking.
-
-* implement support for the other file entity types to libbu
-
 * resolve bot bin sort optimization crash, disabled during release
 
-* implement new makesegs for tie
+* include deprecation output when creating bspline/poly/hf primitives
 
-* png support in rtwizard
+* include deprecation statements in the autotools build system output
+
+
+THESE ARE UNSCHEDULED BACKLOG TASKS
+-----------------------------------
+
+* struct rt_bot_internal should be using "size_t *" instead of "int *"
+  for the faces and face_normals members
+
+* fix the "(type)(size_t)val" hacks (using ints like ptrs, etc)
+
+* Mac OS X mouse input binding problem seems to be back with rotations
+  stalling during interactive use.
+
+* group public library headers into subdirs, e.g. include/bu/bu.h, so
+  it's clear when you're using headers from another library and
+  breaking encapsulation.
+
+* add an increment option to reid to increment with something other
+  than 1 at a time.
+
+* add a conflict-detection option to reid in case there are
+  already-used region numbers being numbered.
+
+* rerun conversion.sh and compare to previous run
+
+* killall command reports db_lookup failures if the target object
+  doesn't exist (maybe we only care about refs).  should keep quiet.
+
+* DocBook pdf covers: Modify the process to allow parallel builds
+  (requires some unique intermediate xsl files named per the DB xml
+  source file).
+
+* DocBook pdf: ensure pdf output has suitable fonts embedded; create
+  pretty covers for books (cannot be done as a single pdf product for
+  other doc types).
+
+* DocBook: create a DB index.xml to generate a doc listing (with
+  hot links) for the html and pdf collection
+
+* DocBook source: add xsl customizations for figure and table title
+  positions, float centering, etc.; add automatic figure, table, and
+  other similar references; add separate html and fo image sizing and
+  placement; remove unnecessary image markup; lift child namespaces to
+  each document's root element.
+
+* pixdiff reports bytes, but reports incorrect (off-by-one) bytes for
+  .bw input files.  cause is due to tool assuming input is rgb triplets
+  (even though output is bytes, wtf?).  should probably report pixels
+  and/or have a -b option for handling byte/bw input.
+
+* remove old tclscripts MGED objects in favor of the new 'Ged' widget
+  interface being used by Archer's core.
+
+* the new "exists" command is a beautiful corollary to the unix 'test'
+  command.  make the usage match, remove options that make no sense
+  after you've replaced instances of 'file' with 'object', and add
+  options specific to testing geometry (like whether two objects
+  overlap, whether an object's volume is greater than some value or
+  equal to zero, whether two objects are actually the same object
+  (geometrically), etc).
+
+* rewrite nmg->brep conversion routine
+  (src/librt/primitives/brep/brep_brep.cpp) to use a simple 2d
+  bounding box in the plane of each nmg face.  even better would be to
+  calculate the convex hull and align the maximal edge to one of the
+  UV edges.  the csgbrep routine provides a simple box test case.
+
+* investigate off-by-one AND off-by-many errors from identical rt
+  invocations.  running with -P1 results in no errors, parallel (on
+  64-bit Linux RHEL) is giving many floating-point related errors.
+  running with -B also results in no errors indicating maybe something
+  related to libbn random numbers.
+
+* investigate why epa primitive is so sensitive to coarse absolute
+  value changes (run csgbrep, tol abs=1, facetize and get 321k poly)
+
+* implement a new "simulate" command for applying physics deformations
+  to geometry.  Each timestep (default steps==1) would get recorded as
+  new geometry unless updating the existing is requested.  Usage might
+  be something like this:
+
+     simulate [-k] [-g|-G] [-f x y z N] <time> [steps]
+
+  Examples:
+     simulate 10.5  # simulate 10.5s of time (default gravity)
+     simulate 3 10  # simulate 30s of time, 10s per timestep
+     simulate -f 0 0 -1.0 9.807 3.0  # earth's gravity for 3s
+     simulate -k 1.0  # simulate 1s of gravity, overwriting original
+     simulate -G -f 1 2 3 .4 5  # no gravity, custom force, 5s
+
+* implement new makesegs for tie
 
 * annotation primitive.  specifically a means to create an object in
   the database that can optionally be associated with an object and/or
@@ -66,15 +164,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * rtwizard enhancement to allow color overrides to be specified for
   selected objects.
 
-* the 'cp' command no longer draws the object that was copied --
-  undoubtedly a libged change -- so restore previous functionality.
-  as that behavior was not intentional and is undesirable for large
-  objects, have some means to determine that something is "large and
-  complex" or at a minimum, provide an option to not draw on copy.
+* upgrade source repository back-end to the latest SVN 1.5 so we can
+  benefit from proper merge tracking.
 
-
-THESE ARE UNSCHEDULED BACKLOG TASKS
------------------------------------
+* implement support for the other file entity types to libbu
 
 * implement http network transfer tool for crash reports and benchmark
   analyses (via libfetch)
@@ -100,12 +193,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * migrate / update screengrab command in libged (libfb/libdm dep)
 
-* group public library headers into subdirs, e.g. include/bu/bu.h, so
-  it's clear when you're using headers from another library and
-  breaking encapsulation.  this should wait until after cmake merge.
-
 * add code regression that makes sure none of our code cheats by
-  including bu/bu.h -- e.g., make sure BU_CPPFLAGS et al are used so
+  including bu/bu.h -- e.g., make sure BU_CPPFLAGS et al. are used so
   new dependencies are obvious and intentional.
 
 * offset surfaces.  provide feature edit operation to create a solid
@@ -279,6 +368,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * document the saveview/loadview options.  migrate them to libged if
   they're not already.
 
+* make loadview still load the view if the database doesn't match the
+  currently open database, only load geometry as an option (and then
+  just ignore the db).
+
 * improve rtedge documentation, explain how it computes its "centroid"
   (as it's not exactly the center of bounding box of all objects -- it
   depends on the booleans).
@@ -384,9 +477,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * make the 'tables' ged command not call system() on the "sort" unix
   command.  It should perform all sorting on the data directly in
   memory, at least without creating another process.
-
-* make libwdb routines not free user-allocated memory.  notably
-  mk_nmg() and mk_sketch() but probably others as well.
 
 * libbn's tri_specific structure requires user-provided memory for
   normals.. this certainly saves memory if the triangles don't have
@@ -534,7 +624,14 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * material objects (non-geometric attribute-only objects) for v5
   geometry files.  instead of material attribute value becomes
   material object name.  material object encompasses hierarchical
-  material traits.
+  material traits.  some traits potentially of interest:
+    - density
+    - young modulus
+    - yield strength (in different dirs, e.g., rolling & transversal)
+    - ultimate tensile strength (also in different dirs)
+    - Poisson's ratio
+    - cost per ton?
+    - ...
 
 * parametric material properties.  support the ability to define
   material properties based on parametric values such as distance from
@@ -624,8 +721,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * extend analyze output formatting to user-specified formats ala nirt
 
-* implement tessellation support for the new BREP primitive.
-
 * implement make, ted, edsol, mirror, and analyze for revolve
   primitive.  implement tess() too.
 
@@ -671,8 +766,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   objects, allow deletion/undeletion/hiding/unhiding, provide some
   general means to manipulate the packed and unpacked .g file data for
   performing low-level modifications
-
-* fix the "(type)(size_t)val" hacks (using ints like ptrs, etc)
 
 * fix rt parallel crash
   (true ; while [ $? -eq 0 ] ; do rt -o /dev/null moss.g all.g ; done)
@@ -915,8 +1008,6 @@ STEP
 
 * add hierarchy preservation support to step-g
 
-* replace SCLstring with std::string
-
 * document step-g
 
 * implement g-step exporter (see above)
@@ -924,6 +1015,18 @@ STEP
 
 BREP/NURBS
 ----------
+
+* create a BC_Brep class that inherits from ON_Brep so we can cleanly
+  extend and implement functions that were intentionally removed from
+  openNURBS.
+
+* implement tessellation support.
+
+* profile and optimize prep.  crazy slow.
+
+* tighten up the bounding boxes around nurbs geometry.  seems to be
+  bounding the untrimmed surfaces instead of the trimmed edges
+  resulting in boxes (hopefully) larger than they need to be.
 
 * update to openNURBS 5.0 (2011-02-02)
 
@@ -1097,6 +1200,24 @@ ARCHER
   file).
 
 
+CMAKE
+-----
+
+* remove all of the MSVC sections in the CMakeLists.txt files.
+  perform proper library/function/flag tests where necessary.
+
+* write/update INSTALL with ALL cmake options documented (make sure
+  there are equivalent cmake options for all configure options or
+  document the ones not included (e.g., proe options))
+
+* ensure primary cmake option parity with summary option listing
+
+* move cmake documentation files into place
+
+* investigate ignoring .hidden directories/files from dist packing so
+  that internal build directories can be used instead of external ones
+
+
 ODDITIES
 --------
 
@@ -1108,7 +1229,23 @@ ODDITIES
 THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 --------------------------------------------------
 
-* remove the hf primitive (fully)
+* change convention of using 'u', '+', and '-' for unions,
+  intersections, and subtractions respectively to symbols that
+  unambiguously describe the underlying CSG operation.
+
+  '+', 'x', and '-' are the dominant ASCII option or (better) using
+  unicode logic symbols for U and upside-down U.
+
+  Union/Disjunction: + ∨ v u (logical OR)
+  Intersection/Conjunction: x ∧ ^ . & n (logical AND)
+  Subtraction/Difference: - (logical AND NOT)
+  Negation/Complement: ! ¬ (logical NOT)
+
+* remove the bspline primitive
+
+* remove the poly primitive
+
+* remove the hf primitive
 
 * support for features either as primitives or operations or both
   e.g. chamfer, fillet, round, cut, etc

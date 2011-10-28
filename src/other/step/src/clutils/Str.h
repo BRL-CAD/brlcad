@@ -28,15 +28,14 @@
 #include <stdio.h> // added to have the definition for BUFSIZE
 #include <stdlib.h> 
 #include <string.h>
-#include <scl_string.h>
 #include <errordesc.h>
 
 char         ToLower (const char c);
 char         ToUpper  (const char c);
 char *       StrToLower (const char *, char *);
-const char * StrToLower (const char * word, SCLstring &s);
-const char * StrToUpper (const char * word, SCLstring &s);
-const char * StrToConstant (const char * word, SCLstring &s);
+const char * StrToLower (const char * word, std::string &s);
+const char * StrToUpper (const char * word, std::string &s);
+const char * StrToConstant (const char * word, std::string &s);
 const char * PrettyTmpName (const char * oldname);
 char *       PrettyNewName (const char * oldname);
 int          StrCmpIns (const char *, const char *);

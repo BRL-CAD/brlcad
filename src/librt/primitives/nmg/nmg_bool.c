@@ -57,7 +57,7 @@ struct dangling_faceuse_state {
 int debug_file_count=0;
 
 static void
-nmg_dangling_handler(long int *longp, genptr_t state, int UNUSED(unused))
+nmg_dangling_handler(uint32_t *longp, genptr_t state, int UNUSED(unused))
 {
     register struct faceuse *fu = (struct faceuse *)longp;
     register struct dangling_faceuse_state *sp =
@@ -85,7 +85,7 @@ nmg_dangling_handler(long int *longp, genptr_t state, int UNUSED(unused))
  * !0 Has dangling faces
  */
 int
-nmg_has_dangling_faces(unsigned long *magic_p, const char *manifolds)
+nmg_has_dangling_faces(uint32_t *magic_p, const char *manifolds)
 {
     struct model *m;
     struct dangling_faceuse_state st;
@@ -579,16 +579,33 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
         switch (oper) {
             case NMG_BOOL_ADD: {
                 struct faceuse *fu;
+                vect_t s_min_pt;
+                vect_t s_max_pt;
+
+                /* find new sA shell bounding box which combines the
+                 * bounding boxes of shells sA and sB.
+                 */
+                VSETALL(s_min_pt, MAX_FASTF);
+                VSETALL(s_max_pt, -MAX_FASTF);
+                VMIN(s_min_pt, sA->sa_p->min_pt);
+                VMIN(s_min_pt, sB->sa_p->min_pt);
+                VMIN(s_min_pt, sB->sa_p->max_pt);
+                VMAX(s_max_pt, sA->sa_p->max_pt);
+                VMAX(s_max_pt, sB->sa_p->min_pt);
+                VMAX(s_max_pt, sB->sa_p->max_pt);
+
                 /* move all the faceuse from shell sB to shell sA */
                 for (BU_LIST_FOR(fu, faceuse, &sB->fu_hd)) {
                     fu->s_p = sA;
                 }
                 BU_LIST_APPEND_LIST(&(sA->fu_hd), &(sB->fu_hd));
+
+                /* assign new bounding box to sA */
+                VMOVE(sA->sa_p->min_pt, s_min_pt);
+                VMOVE(sA->sa_p->max_pt, s_max_pt);
+
                 /* kill shell sB */
                 nmg_ks(sB);
-                nmg_shell_coplanar_face_merge(sA, tol, 1);
-                (void)nmg_model_edge_g_fuse(m, tol);
-                nmg_shell_a(sA, tol);
                 break;
             }
             case NMG_BOOL_SUB:
@@ -761,11 +778,11 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     }
 
     /* Temporary search */
-    if (nmg_has_dangling_faces((unsigned long *)rA, (char *)NULL))
+    if (nmg_has_dangling_faces((uint32_t *)rA, (char *)NULL))
 	bu_log("Dangling faces detected in rA before classification\n");
-    if (nmg_has_dangling_faces((unsigned long *)rB, (char *)NULL))
+    if (nmg_has_dangling_faces((uint32_t *)rB, (char *)NULL))
 	bu_log("Dangling faces detected in rB before classification\n");
-    if (nmg_has_dangling_faces((unsigned long *)m, (char *)NULL))
+    if (nmg_has_dangling_faces((uint32_t *)m, (char *)NULL))
 	bu_log("Dangling faces detected in model before classification\n");
 
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
@@ -842,8 +859,8 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
     nmg_class_nothing_broken = 1;
     if (rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
-	nmg_show_broken_classifier_stuff((unsigned long *)sA, &classlist[0], nmg_class_nothing_broken, 1, "unclassed sA");
-	nmg_show_broken_classifier_stuff((unsigned long *)sB, &classlist[4], 1, 1, "unclassed sB");
+	nmg_show_broken_classifier_stuff((uint32_t *)sA, &classlist[0], nmg_class_nothing_broken, 1, "unclassed sA");
+	nmg_show_broken_classifier_stuff((uint32_t *)sB, &classlist[4], 1, 1, "unclassed sB");
     }
 
     /*
@@ -873,8 +890,8 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	nmg_show_each_loop(sB, &classlist[4], 1, 0, "sB lu");
 
 	/* Show each shell as a whole */
-	nmg_show_broken_classifier_stuff((unsigned long *)sA, &classlist[0], 1, 0, "sA classed");
-	nmg_show_broken_classifier_stuff((unsigned long *)sB, &classlist[4], 1, 0, "sB classed");
+	nmg_show_broken_classifier_stuff((uint32_t *)sA, &classlist[0], 1, 0, "sA classed");
+	nmg_show_broken_classifier_stuff((uint32_t *)sB, &classlist[4], 1, 0, "sB classed");
     }
 
     if (rt_g.NMG_debug & DEBUG_BOOL) {
@@ -912,11 +929,11 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     if (!nmg_shell_is_empty(sA)) {
 	nmg_s_radial_check(sA, tol);
 	/* Temporary search */
-	if (nmg_has_dangling_faces((unsigned long *)rA, (char *)NULL))
+	if (nmg_has_dangling_faces((uint32_t *)rA, (char *)NULL))
 	    bu_log("Dangling faces detected in rA after boolean\n");
-	if (nmg_has_dangling_faces((unsigned long *)rB, (char *)NULL))
+	if (nmg_has_dangling_faces((uint32_t *)rB, (char *)NULL))
 	    bu_log("Dangling faces detected in rB after boolean\n");
-	if (nmg_has_dangling_faces((unsigned long *)m, (char *)NULL)) {
+	if (nmg_has_dangling_faces((uint32_t *)m, (char *)NULL)) {
 	    if (rt_g.NMG_debug)
 		nmg_stash_model_to_file("dangle.g", m, "After Boolean");
 	    bu_bomb("nmg_bool() Dangling faces detected after boolean\n");
@@ -927,7 +944,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	    nmg_class_nothing_broken = 1;
 
 	    /* Show final result of the boolean */
-	    nmg_show_broken_classifier_stuff((unsigned long *)sA, &classlist[0], 1, 0, "sA result");
+	    nmg_show_broken_classifier_stuff((uint32_t *)sA, &classlist[0], 1, 0, "sA result");
 	}
 
 	/* Go back and combine loops of faces together wherever
@@ -1067,8 +1084,7 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pat
 
     m = nmg_mm();
 
-    if (ip->idb_meth->ft_tessellate(
-	    &r1, m, ip, tsp->ts_ttol, tsp->ts_tol) < 0) {
+    if (ip->idb_meth && ip->idb_meth->ft_tessellate && ip->idb_meth->ft_tessellate(&r1, m, ip, tsp->ts_ttol, tsp->ts_tol) < 0) {
 	bu_log("nmg_booltree_leaf_tess(%s): tessellation failure\n", dp->d_namep);
 	return TREE_NULL;
     }

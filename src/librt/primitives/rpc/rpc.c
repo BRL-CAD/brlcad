@@ -194,6 +194,58 @@ const struct bu_structparse rt_rpc_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+/**
+ * R T _ R P C _ B B O X
+ *
+ * Calculate the RPP for an RPC
+ */
+int
+rt_rpc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    struct rt_rpc_internal *xip;
+    vect_t rinv, rvect, rv2, working;
+    RT_CK_DB_INTERNAL(ip);
+    xip = (struct rt_rpc_internal *)ip->idb_ptr;
+    RT_RPC_CK_MAGIC(xip);
+    
+    VSETALL((*min), MAX_FASTF);
+    VSETALL((*max), -MAX_FASTF);
+
+    VCROSS(rvect, xip->rpc_H, xip->rpc_B);
+    VREVERSE(rinv, rvect);
+    VUNITIZE(rvect);
+    VUNITIZE(rinv);
+    VSCALE(rvect, rvect, xip->rpc_r);
+    VSCALE(rinv, rinv, xip->rpc_r);
+
+    VADD2(working, xip->rpc_V, rvect);
+    VMINMAX((*min), (*max), working);
+
+    VADD2(working, xip->rpc_V, rinv);
+    VMINMAX((*min), (*max), working);
+
+    VADD3(working, xip->rpc_V, rvect, xip->rpc_H);
+    VMINMAX((*min), (*max), working);
+
+    VADD3(working, xip->rpc_V, rinv, xip->rpc_H);
+    VMINMAX((*min), (*max), working);
+
+    VADD2(rv2, xip->rpc_V, xip->rpc_B);
+
+    VADD2(working, rv2, rvect);
+    VMINMAX((*min), (*max), working);
+
+    VADD2(working, rv2, rinv);
+    VMINMAX((*min), (*max), working);
+
+    VADD3(working, rv2, rvect, xip->rpc_H);
+    VMINMAX((*min), (*max), working);
+
+    VADD3(working, rv2, rinv, xip->rpc_H);
+    VMINMAX((*min), (*max), working);
+
+    return 0;
+}
+
 
 /**
  * R T _ R P C _ P R E P
@@ -211,13 +263,11 @@ const struct bu_structparse rt_rpc_parse[] = {
  * stp->st_specific for use by rpc_shot().
  */
 int
-rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(rtip))
 {
     struct rt_rpc_internal *xip;
     struct rpc_specific *rpc;
-#ifndef NO_BOMBING_MACROS
-    const struct bn_tol *tol = &rtip->rti_tol;  /* only used to check a if tolerance is valid */
-#endif
+
     fastf_t magsq_b, magsq_h, magsq_r;
     fastf_t mag_b, mag_h, mag_r;
     fastf_t f;
@@ -227,7 +277,7 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     vect_t invsq;	/* [ 1/(|H|**2), 1/(|R|**2), 1/(|B|**2) ] */
 
     RT_CK_DB_INTERNAL(ip);
-    BN_CK_TOL(tol);
+
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
     RT_RPC_CK_MAGIC(xip);
 
@@ -296,15 +346,8 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_bradius = 0.5 * sqrt(magsq_h + 4.0*magsq_r + magsq_b);
     /* approximate bounding radius */
     stp->st_aradius = stp->st_bradius;
-
-    /* cheat, make bounding RPP by enclosing bounding sphere */
-    stp->st_min[X] = stp->st_center[X] - stp->st_bradius;
-    stp->st_max[X] = stp->st_center[X] + stp->st_bradius;
-    stp->st_min[Y] = stp->st_center[Y] - stp->st_bradius;
-    stp->st_max[Y] = stp->st_center[Y] + stp->st_bradius;
-    stp->st_min[Z] = stp->st_center[Z] - stp->st_bradius;
-    stp->st_max[Z] = stp->st_center[Z] + stp->st_bradius;
-
+    /* bounding RPP */
+    if (rt_rpc_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
     return 0;			/* OK */
 }
 
@@ -355,7 +398,6 @@ rt_rpc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     vect_t xlated;		/* translated vector */
     struct hit hits[3];	/* 2 potential hit points */
     struct hit *hitp;	/* pointer to hit point */
-/*?????	const struct bn_tol *tol = &rtip->rti_tol; ?????*/
 
     hitp = &hits[0];
 
@@ -633,7 +675,7 @@ rt_rpc_class(void)
  * R T _ R P C _ P L O T
  */
 int
-rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
+rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_rpc_internal *xip;
     fastf_t *front;

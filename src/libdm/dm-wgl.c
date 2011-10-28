@@ -83,7 +83,8 @@ static float wireColor[4];
 static float ambientColor[4];
 static float specularColor[4];
 static float diffuseColor[4];
-static float backColor[] = {1.0f, 1.0f, 0.0f, 1.0f}; /* yellow */
+static float backDiffuseColorDark[4];
+static float backDiffuseColorLight[4];
 
 void
 wgl_fogHint(struct dm *dmp, int fastfog)
@@ -135,6 +136,11 @@ wgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
 	    diffuseColor[1] = wireColor[1] * 0.6;
 	    diffuseColor[2] = wireColor[2] * 0.6;
 	    diffuseColor[3] = wireColor[3];
+
+	    backDiffuseColorDark[0] = wireColor[0] * 0.9;
+	    backDiffuseColorDark[1] = wireColor[1] * 0.9;
+	    backDiffuseColorDark[2] = wireColor[2] * 0.9;
+	    backDiffuseColorDark[3] = wireColor[3];
 
 #if 1
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
@@ -463,10 +469,12 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     glPushMatrix();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(0.0, 0.0, -1.0);
     glPushMatrix();
     glLoadIdentity();
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->face_flag = 1;	/* faceplate matrix is on top of stack */
+
+    wgl_setZBuffer(dmp, dmp->dm_zbuffer);
+    wgl_setLight(dmp, dmp->dm_light);
 
     if (!wglMakeCurrent((HDC)NULL, (HGLRC)NULL)) {
 	LPVOID buf;
@@ -573,7 +581,6 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0.0, 0.0, -1.0);
 	glPushMatrix();
 	glLoadIdentity();
 	((struct wgl_vars *)dmp1->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
@@ -640,7 +647,6 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0.0, 0.0, -1.0);
 	glPushMatrix();
 	glLoadIdentity();
 	((struct wgl_vars *)dmp2->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
@@ -847,7 +853,6 @@ wgl_loadMatrix(struct dm *dmp, mat_t mat, int which_eye)
 {
     fastf_t *mptr;
     GLfloat gtmat[16];
-    mat_t	newm;
 
     if (dmp->dm_debugLevel) {
 	struct bu_vls tmp_vls;
@@ -885,21 +890,7 @@ wgl_loadMatrix(struct dm *dmp, mat_t mat, int which_eye)
 	    break;
     }
 
-    if (!dmp->dm_zclip) {
-	mat_t       nozclip;
-
-	MAT_IDN(nozclip);
-	nozclip[10] = 1.0e-20;
-	bn_mat_mul(newm, nozclip, mat);
-	mptr = newm;
-    } else {
-	mat_t       nozclip;
-
-	MAT_IDN(nozclip);
-	nozclip[10] = dmp->dm_bound;
-	bn_mat_mul(newm, nozclip, mat);
-	mptr = newm;
-    }
+    mptr = mat;
 
     gtmat[0] = *(mptr++);
     gtmat[4] = *(mptr++);
@@ -923,8 +914,7 @@ wgl_loadMatrix(struct dm *dmp, mat_t mat, int which_eye)
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(0.0, 0.0, -1.0);
-    glMultMatrixf(gtmat);
+    glLoadMatrixf(gtmat);
 
     return TCL_OK;
 }
@@ -1148,12 +1138,21 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
+			glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseColor);
 
-			if (1 < dmp->dm_light) {
-			    glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseColor);
-			    glMaterialfv(GL_BACK, GL_DIFFUSE, backColor);
-			} else
-			    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
+			switch (dmp->dm_light) {
+			case 1:
+			    break;
+			case 2:
+			    glMaterialfv(GL_BACK, GL_DIFFUSE, diffuseColor);
+			    break;
+			case 3:
+			    glMaterialfv(GL_BACK, GL_DIFFUSE, backDiffuseColorDark);
+			    break;
+			default:
+			    glMaterialfv(GL_BACK, GL_DIFFUSE, backDiffuseColorLight);
+			    break;
+			}
 
 			if (dmp->dm_transparency)
 			    glEnable(GL_BLEND);
@@ -1457,10 +1456,18 @@ wgl_debug(struct dm *dmp, int lvl)
 
 
 HIDDEN int
-wgl_setWinBounds(struct dm *dmp, int w[6])
+wgl_setWinBounds(struct dm *dmp, fastf_t w[6])
 {
+    GLint mm;
+
     if (dmp->dm_debugLevel)
 	bu_log("wgl_setWinBounds()\n");
+
+    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
+			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+	bu_log("ogl_setWinBounds: Couldn't make context current\n");
+	return TCL_ERROR;
+    }
 
     dmp->dm_clipmin[0] = w[0];
     dmp->dm_clipmin[1] = w[2];
@@ -1469,10 +1476,13 @@ wgl_setWinBounds(struct dm *dmp, int w[6])
     dmp->dm_clipmax[1] = w[3];
     dmp->dm_clipmax[2] = w[5];
 
-    if (dmp->dm_clipmax[2] <= GED_MAX)
-	dmp->dm_bound = 1.0;
-    else
-	dmp->dm_bound = GED_MAX / dmp->dm_clipmax[2];
+    glGetIntegerv(GL_MATRIX_MODE, &mm);
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glLoadIdentity();
+    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+    glPushMatrix();
+    glMatrixMode(mm);
 
     return TCL_OK;
 }
@@ -1895,11 +1905,10 @@ wgl_reshape(struct dm *dmp, int width, int height)
 		 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    /*CJXX this might cause problems in perspective mode? */
     glGetIntegerv(GL_MATRIX_MODE, &mm);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
+    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
     glMatrixMode(mm);
 }
 
@@ -1931,6 +1940,11 @@ wgl_setLight(struct dm *dmp, int lighting_on)
 	glDisable(GL_LIGHTING);
     } else {
 	/* Turn it on */
+
+	if (1 < dmp->dm_light)
+	    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+	else
+	    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, amb_three);
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);

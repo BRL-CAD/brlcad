@@ -324,9 +324,9 @@ fbs_rfbclose(struct pkg_conn *pcp, char *buf)
     (void)fb_flush(curr_fbp);
     (void)pkg_plong(&rbuf[0], 0);		/* return success */
 
-    /* Don't check for errors, SGI linger mode or other events may
-     * have already closed down all the file descriptors.  If
-     * communication has broken, other end will know we are gone.
+    /* Don't check for errors, linger mode or other events may have
+     * already closed down all the file descriptors.  If communication
+     * has broken, other end will know we are gone.
      */
     (void)pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
 

@@ -1,10 +1,13 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 
-<book xmlns="http://docbook.org/ns/docbook" version="5.0">
+<book xmlns="http://docbook.org/ns/docbook" version="5.0"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+>
+
   <info><title><application>BRL-CAD</application> Tutorial Series: Volume II - Introduction to MGED</title>
     
 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="./tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+    <xi:include href="./tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <publishername>Army Research Laboratory</publishername>
     <biblioid class="pubsnumber">ARL-SR-102</biblioid>
@@ -96,26 +99,26 @@
 
   <chapter xml:id="Lesson-1"><info><title>Creating Primitive Shapes</title></info>
     
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="creating_primitive_shapes_overviewlist"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="launching_mged"/> 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="entering_commands"/> 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="using_gui"/> 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="open_new_database"/> 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="create_new_database"/> 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="assign_title"/> 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="set_units"/> 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="select_primitive"/> 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="create_sphere_cmd_line"/> 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="clear_window"/> 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="draw_object"/> 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="erase_from_window"/> 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="create_sphere_gui"/> 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="view_params"/> 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="list_db_contents"/> 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="kill_object"/> 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="editing_commands"/> 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="quitting"/> 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="creating_primitive_shapes_review"/> 
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="creating_primitive_shapes_overviewlist"/>
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="launching_mged"/>
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="entering_commands"/>
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="using_gui"/>
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="open_new_database"/>
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="create_new_database"/>
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="assign_title"/>
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="set_units"/>
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="select_primitive"/>
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="create_sphere_cmd_line"/>
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="clear_window"/>
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="draw_object"/>
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="erase_from_window"/>
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="create_sphere_gui"/>
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="view_params"/>
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="list_db_contents"/>
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="kill_object"/>
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="editing_commands"/>
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="quitting"/>
+    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="creating_primitive_shapes_review"/>
   </chapter> 
 
   <chapter xml:id="Lesson-2"><info><title>Learning the Viewing Options</title></info>

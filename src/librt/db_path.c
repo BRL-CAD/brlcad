@@ -18,7 +18,7 @@
  * information.
  */
 
-#include "common.h" 
+#include "common.h"
 #include <string.h>
 
 #ifdef HAVE_SYS_PARAM_H
@@ -61,7 +61,7 @@
  * SUCH DAMAGE.
  */
 const char *
-db_normalize(const char  *path) 
+db_normalize(const char *path)
 {
     static char resolved[MAXPATHLEN] = {0};
     const char *q;
@@ -77,55 +77,65 @@ db_normalize(const char  *path)
     if (*path == 0) return (NULL);
 
 loop:
-	/* Skip any slash. */
-	while (*path == '/')
-		path++;
+    /* Skip any slash. */
+    while (*path == '/')
+	path++;
 
-	if (*path == 0) {
-		if (p == resolved)
-			*p++ = '/';
-		*p = 0;
-		return (resolved);
+    if (*path == 0) {
+	if (p == resolved)
+	    *p++ = '/';
+	*p = 0;
+	return (resolved);
+    }
+
+    /* Find the end of this component. */
+    q = path;
+    do
+	q++;
+    while (*q != '/' && *q != 0);
+
+    /* Test . or .. */
+    if (path[0] == '.') {
+	if (q - path == 1) {
+	    path = q;
+	    goto loop;
 	}
-
-	/* Find the end of this component. */
-	q = path;
-	do
-		q++;
-	while (*q != '/' && *q != 0);
-
-	/* Test . or .. */
-	if (path[0] == '.') {
-		if (q - path == 1) {
-			path = q;
-			goto loop;
-		}
-		if (path[1] == '.' && q - path == 2) {
-			/* Trim the last component. */
-			if (p != resolved)
-				while (*--p != '/')
-					;
-			path = q;
-			goto loop;
-		}
+	if (path[1] == '.' && q - path == 2) {
+	    /* Trim the last component. */
+	    if (p != resolved)
+		while (*--p != '/')
+		    ;
+	    path = q;
+	    goto loop;
 	}
+    }
 
-	/* Append this component. */
-	if (p - resolved + 1 + q - path + 1 > MAXPATHLEN) {
-		if (p == resolved)
-			*p++ = '/';
-		*p = 0;
-		return (NULL);
-	}
-	p[0] = '/';
-	memcpy(&p[1], path,
-	    /* LINTED We know q > path. */
-	    q - path);
-	p[1 + q - path] = 0;
+    /* Append this component. */
+    if (p - resolved + 1 + q - path + 1 > MAXPATHLEN) {
+	if (p == resolved)
+	    *p++ = '/';
+	*p = 0;
+	return (NULL);
+    }
+    p[0] = '/';
+    memcpy(&p[1], path,
+	   /* LINTED We know q > path. */
+	   q - path);
+    p[1 + q - path] = 0;
 
-	/* Advance both resolved and unresolved path. */
-	p += 1 + q - path;
-	path = q;
-	goto loop;
+    /* Advance both resolved and unresolved path. */
+    p += 1 + q - path;
+    path = q;
+    goto loop;
 }
 
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

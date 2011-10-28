@@ -22,11 +22,6 @@
 //	start a new undo list and delete the old undo list. 
 /////////////////////
 
-/*
-#ifdef __OSTORE__
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#endif
-*/
 
 #ifdef __O3DB__
 #include <OpenOODB.h>
@@ -114,12 +109,6 @@ public:
     void *GetSEE(MgrNode *node) { return node->SEE(); };
 
     void PrintSortedFileIds();
-
-/*
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-#endif
-*/
 
     // OBSOLETE
     SCLP23(Application_instance) *GetSTEPentity(int index);

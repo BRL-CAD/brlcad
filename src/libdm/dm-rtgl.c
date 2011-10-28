@@ -42,8 +42,6 @@
 #  undef X_NOT_POSIX
 #endif
 
-#define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
-
 #include <X11/extensions/XInput.h>
 #include <GL/glx.h>
 #include <GL/gl.h>
@@ -474,7 +472,6 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 	olist = list = (XDeviceInfoPtr)XListInputDevices(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, &ndevices);
     }
 
-    /* IRIX 4.0.5 bug workaround */
     if (list == (XDeviceInfoPtr)NULL ||
 	list == (XDeviceInfoPtr)1) goto Done;
 
@@ -2232,7 +2229,7 @@ rtgl_debug(struct dm *dmp, int lvl)
 
 
 HIDDEN int
-rtgl_setWinBounds(struct dm *dmp, int *w)
+rtgl_setWinBounds(struct dm *dmp, fastf_t *w)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setWinBounds()\n");

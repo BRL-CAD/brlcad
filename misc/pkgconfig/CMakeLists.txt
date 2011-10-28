@@ -11,7 +11,7 @@ SET(LIBTCL "-ltcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}")
 SET(LIBM "${M_LINKOPT}")
 #The CMake system relies on the C++ compiler to find
 #this, so we set it manually for pkgconfig
-SET(LIBSTDCXX "-lstdc++") 
+SET(LIBSTDCXX "-lstdc++")
 #Also provide the X11 and PNG link strings - generally
 #speaking CMake tends to use full paths, so this is a
 #bit hackish - need to investigate best practices for later
@@ -22,21 +22,21 @@ SET(X_LIBS "-lX11 -lXext -lXi")
 SET(LIBPNG "-lpng")
 
 SET(pkgconfig_DATA
-  libanalyze.pc.in 
-  libbn.pc.in 
-  libbrlcad.pc.in 
-  libbu.pc.in 
-  libdm.pc.in 
-  libfb.pc.in 
-  libfft.pc.in 
-  libgcv.pc.in 
-  libged.pc.in 
-  libicv.pc.in 
-  libmultispectral.pc.in 
-  liboptical.pc.in 
-  libpc.pc.in 
-  libpkg.pc.in 
-  librt.pc.in 
+  libanalyze.pc.in
+  libbn.pc.in
+  libbrlcad.pc.in
+  libbu.pc.in
+  libdm.pc.in
+  libfb.pc.in
+  libfft.pc.in
+  libgcv.pc.in
+  libged.pc.in
+  libicv.pc.in
+  libmultispectral.pc.in
+  liboptical.pc.in
+  libpc.pc.in
+  libpkg.pc.in
+  librt.pc.in
   libwdb.pc.in
 )
 
@@ -45,3 +45,6 @@ FOREACH(pkgfile ${pkgconfig_DATA})
   configure_file(${pkgfile} ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.pc @ONLY)
   INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.pc DESTINATION ${LIB_DIR}/pkgconfig)
 ENDFOREACH(pkgfile ${pkgconfig_DATA})
+
+CMAKEFILES(${pkgconfig_DATA})
+CMAKEFILES(Makefile.am)

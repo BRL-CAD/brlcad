@@ -1,3 +1,4 @@
+SET(libpng_ignore_files
 ANNOUNCE
 CHANGES
 INSTALL
@@ -8,7 +9,6 @@ autogen.sh
 configure.ac
 contrib
 example.c
-libpng-1.4.5.txt
 libpng-config.in
 libpng.3
 libpng.pc.in
@@ -21,3 +21,9 @@ pngtest.png
 projects
 scripts
 test-pngtest.sh
+libpng-manual.txt
+pngvalid.c
+test-pngvalid-full.sh
+test-pngvalid-simple.sh
+Makefile.am
+)

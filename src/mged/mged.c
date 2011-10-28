@@ -276,7 +276,6 @@ void _set_invalid_parameter_handler(void (*callback)()) { if (callback) return; 
 static void
 attach_display_manager(Tcl_Interp *interpreter, const char *manager, const char *display)
 {
-    int ret;
     int argc = 1;
     const char *attach_cmd[5] = {NULL, NULL, NULL, NULL, NULL};
 
@@ -289,7 +288,7 @@ attach_display_manager(Tcl_Interp *interpreter, const char *manager, const char 
 	attach_cmd[argc++] = display;
     }
     attach_cmd[argc++] = manager;
-    ret = f_attach((ClientData)NULL, interpreter, argc, attach_cmd);
+    (void)f_attach((ClientData)NULL, interpreter, argc, attach_cmd);
     bu_log("%s\n", Tcl_GetStringResult(interpreter));
 }
 
@@ -1338,7 +1337,7 @@ main(int argc, char *argv[])
 
     /* These values match old GED.  Use 'tol' command to change them. */
     mged_tol.magic = BN_TOL_MAGIC;
-    mged_tol.dist = 0.005;
+    mged_tol.dist = 0.0005;
     mged_tol.dist_sq = mged_tol.dist * mged_tol.dist;
     mged_tol.perp = 1e-6;
     mged_tol.para = 1 - mged_tol.perp;
@@ -2310,6 +2309,14 @@ refresh(void)
 	 */
 	curr_dm_list = p;
 	if (mapped && dirty) {
+	    int restore_zbuffer = 0;
+
+	    if (mged_variables->mv_fb &&
+		dmp->dm_zbuffer) {
+		restore_zbuffer = 1;
+		DM_SET_ZBUFFER(dmp, 0);
+	    }
+
 	    dirty = 0;
 	    do_time = 1;
 	    VMOVE(geometry_default_color, color_scheme->cs_geo_def);
@@ -2414,6 +2421,9 @@ refresh(void)
 	    }
 
 	    DM_DRAW_END(dmp);
+
+	    if (restore_zbuffer)
+		DM_SET_ZBUFFER(dmp, 1);
 	}
     }
 

@@ -434,13 +434,11 @@ main(int argc, char **argv)
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-5;
+    tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
     /* For visualization purposes, in the debug plot files */
     {
-	extern fastf_t	nmg_eue_dist;	/* librt/nmg_plot.c */
-
 	/* WTF: This value is specific to the Bradley */
 	/* Set it here, before the bu_getopt() */
 	nmg_eue_dist = 2.0;

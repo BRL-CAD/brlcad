@@ -14,27 +14,6 @@
 
 /* $Id: sdaiSelect.h,v 1.5 1997/11/05 21:59:15 sauderd DP3.1 $ */
 
-/*
-
-#ifdef __OSTORE__
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#endif
-
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
-
-#include <baseType.h>
-#include <scl_string.h>
-#include <sdai.h>
-#include <errordesc.h>
-#include <read_func.h>
-
-class TypeDescriptor;
-class SelectTypeDescriptor;
-class InstMgr;
-*/
-
 /**********
 	class definition for the select superclass SCLP23_NAME(Select).
 **********/
@@ -43,15 +22,6 @@ class SCLP23_NAME(Select) {
         const SelectTypeDescriptor *_type;
         const TypeDescriptor *      underlying_type;
 	BASE_TYPE 		    base_type; // used by the subtypes
-
-#ifdef __OSTORE__
-	// This member is used in the access_hook function generated for 
-	// SCLP23_NAME(Select) subtypes. It can be saved by ObjectStore where 
-	// underlying_type cannot be since it is pointing to a transient 
-	// TypeDescriptor. This is used to reinitialize underlying_type 
-	// in the access hook function.
-	SCLP23_NAME(String) underlying_type_name;
-#endif
 
 	// it looks like this member, val, is not used anywhere 9/27/96 - DAS
 	SCLP23_NAME(String) val;
@@ -94,7 +64,7 @@ class SCLP23_NAME(Select) {
 				  InstMgr *im, int clearError);
 
   // reading and writing
-        const char * STEPwrite (SCLstring& s, const char *currSch =0) const;
+        const char * STEPwrite (std::string& s, const char *currSch =0) const;
         void STEPwrite (ostream& out =cout, const char *currSch =0) const;
 
   // IMS 8/2/95: added as part of new select implementation
@@ -126,9 +96,6 @@ class SCLP23_NAME(Select) {
 	int set_null();
 	int is_null();
 
-#ifdef __OSTORE__
-	static os_typespec* get_os_typespec();
-#endif
 };	/** end class  **/
 
 typedef SCLP23_NAME(Select) * SCLP23_NAME(Select_ptr) ;

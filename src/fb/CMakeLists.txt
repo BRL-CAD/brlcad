@@ -1,11 +1,19 @@
+SET(FBBIN_INCLUDE_DIRS
+	${BU_INCLUDE_DIRS}
+	${BN_INCLUDE_DIRS}
+	${PKG_INCLUDE_DIRS}
+	${FB_INCLUDE_DIRS}
+	${ORLE_INCLUDE_DIRS}
+	${TERMINFO_INCLUDE_DIRS}
+	)
+LIST(REMOVE_DUPLICATES FBBIN_INCLUDE_DIRS)
+include_directories(${FBBIN_INCLUDE_DIRS})
+
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${ZLIB_INCLUDE_DIR}
-  ${PNG_INCLUDE_DIR}
-  ${TCL_INCLUDE_DIRS}
-  ${TK_INCLUDE_PATH}
   ${UTAHRLE_INCLUDE_DIR}
-  ${X11_INCLUDE_DIR}
+  ${PNG_INCLUDE_DIR}
+  ${ZLIB_INCLUDE_DIR}
 )
 IF(MSVC)
 		  add_definitions(
@@ -34,8 +42,8 @@ ENDIF(HAVE_TERMLIB)
 BRLCAD_ADDEXEC(fbfade "fbfade.c ioutil.c" libfb)
 BRLCAD_ADDEXEC(fbframe fbframe.c libfb)
 BRLCAD_ADDEXEC(fbfree fbfree.c libfb)
-BRLCAD_ADDEXEC(fbgamma fbgamma.c libfb)
-BRLCAD_ADDEXEC(fbgammamod fbgammamod.c libfb)
+BRLCAD_ADDEXEC(fbgamma fbgamma.c "libfb ${M_LIBRARY}")
+BRLCAD_ADDEXEC(fbgammamod fbgammamod.c "libfb ${M_LIBRARY}")
 BRLCAD_ADDEXEC(fbgrid fbgrid.c libfb)
 BRLCAD_ADDEXEC(fbhelp fbhelp.c libfb)
 BRLCAD_ADDEXEC(fblabel fblabel.c libfb)
@@ -46,7 +54,7 @@ ENDIF(HAVE_TERMLIB)
 BRLCAD_ADDEXEC(fbscanplot fbscanplot.c libfb)
 BRLCAD_ADDEXEC(fbstretch "fbstretch.c ioutil.c" libfb)
 IF(BRLCAD-ENABLE_TK)
-	BRLCAD_ADDEXEC(fbthreadtest fbthreadtest "libfb ${TCL_TK_LIBRARY}")
+	BRLCAD_ADDEXEC(fbthreadtest fbthreadtest.c "libfb ${TCL_TK_LIBRARY}")
 	SET_TARGET_PROPERTIES(fbthreadtest PROPERTIES COMPILE_DEFINITIONS "IF_TK")
 	SET_TARGET_PROPERTIES(fbthreadtest PROPERTIES LINKER_LANGUAGE C)
 ENDIF(BRLCAD-ENABLE_TK)
@@ -61,7 +69,7 @@ BRLCAD_ADDEXEC(pixautosize pixautosize.c libfb)
 BRLCAD_ADDEXEC(pixflip-fb pixflip-fb.c libfb)
 BRLCAD_ADDEXEC(pl-fb pl-fb.c libfb)
 BRLCAD_ADDEXEC(png-fb png-fb.c libfb)
-BRLCAD_ADDEXEC(polar-fb polar-fb.c libfb)
+BRLCAD_ADDEXEC(polar-fb polar-fb.c "libfb ${M_LIBRARY}")
 IF(HAVE_TERMLIB)
 	BRLCAD_ADDEXEC(pp-fb pp-fb.c "libfb libtermio")
 ENDIF(HAVE_TERMLIB)
@@ -69,44 +77,45 @@ BRLCAD_ADDEXEC(rle-fb rle-fb.c "libfb ${UTAHRLE_LIBRARY}")
 BRLCAD_ADDEXEC(spm-fb spm-fb.c "libfb libbn")
 
 SET(fb_MANS
-  bw-fb.1 
-  cell-fb.1 
-  cmap-fb.1 
-  fb-bw.1 
-  fb-cmap.1 
-  fb-fb.1 
-  fb-orle.1 
-  fb-pix.1 
-  fb-png.1 
-  fb-rle.1 
-  fbanim.1 
-  fbcbars.1 
-  fbclear.1 
-  fbcmap.1 
-  fbcmrot.1 
-  fbcolor.1 
-  fbfade.1 
-  fbframe.1 
-  fbfree.1 
-  fbgamma.1 
-  fbgrid.1 
-  fbhelp.1 
-  fblabel.1 
-  fbline.1 
-  fbpoint.1 
-  fbscanplot.1 
-  fbstretch.1 
-  fbzoom.1 
-  gif-fb.1 
-  gif2fb.1 
-  orle-fb.1 
-  pix-fb.1 
-  pixautosize.1 
-  pl-fb.1 
-  png-fb.1 
-  polar-fb.1 
-  pp-fb.1 
+  bw-fb.1
+  cell-fb.1
+  cmap-fb.1
+  fb-bw.1
+  fb-cmap.1
+  fb-fb.1
+  fb-orle.1
+  fb-pix.1
+  fb-png.1
+  fb-rle.1
+  fbanim.1
+  fbcbars.1
+  fbclear.1
+  fbcmap.1
+  fbcmrot.1
+  fbcolor.1
+  fbfade.1
+  fbframe.1
+  fbfree.1
+  fbgamma.1
+  fbgrid.1
+  fbhelp.1
+  fblabel.1
+  fbline.1
+  fbpoint.1
+  fbscanplot.1
+  fbstretch.1
+  fbzoom.1
+  gif-fb.1
+  gif2fb.1
+  orle-fb.1
+  pix-fb.1
+  pixautosize.1
+  pl-fb.1
+  png-fb.1
+  polar-fb.1
+  pp-fb.1
   rle-fb.1
 )
 ADD_MAN_PAGES(1 fb_MANS)
 CMAKEFILES(fbthreadtest.c)
+CMAKEFILES(Makefile.am)

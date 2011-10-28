@@ -126,7 +126,6 @@ EXTRA_DIST = \
 	copytree.c \
 	ge6.igs \
 	get_outer_shell.cpp \
-	spl.c \
 	treecheck.c \
 	wing128.igs \
 	woodie.igs

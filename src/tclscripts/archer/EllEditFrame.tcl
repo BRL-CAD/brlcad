@@ -129,9 +129,7 @@
 	B [list $mBx $mBy $mBz] \
 	C [list $mCx $mCy $mCz]
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
 }
 
 ::itcl::body EllEditFrame::createGeometry {obj} {

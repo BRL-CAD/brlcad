@@ -39,7 +39,7 @@
 #define SSET(_fp, _srf, _col, _row, _val) { \
 	_fp = &_srf->ctl_points[((_col*_srf->s_size[1])+_row)*3]; \
 	VMOVE(_fp, _val); \
-}
+    }
 
 
 void
@@ -86,7 +86,7 @@ make_face(struct rt_nurb_internal *s, fastf_t *a, fastf_t *b, fastf_t *c, fastf_
     SSET(fp, srf, 0, 1, b);
     SSET(fp, srf, 1, 0, d);
     SSET(fp, srf, 1, 1, c);
-    
+
     s->srfs[s->nsrf++] = srf;
 }
 
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
     } else {
 	filename = "spltest.g";
     }
-	
+
     if ((fp = wdb_fopen(filename)) == NULL) {
 	perror("unable to open geometry database for writing");
 	bu_exit(1, "unable to open new database [%s]\n", filename);
@@ -127,7 +127,7 @@ main(int argc, char *argv[])
     si->srfs = (struct face_g_snurb **)bu_malloc(sizeof(struct face_g_snurb *)*100, "allocate snurb ptrs");
 
     make_face(si, a, b, c, d, 2);
-    
+
     /* wdb_export */
     mk_export_fwrite(fp, "spltest", (genptr_t)si, ID_BSPLINE);
 

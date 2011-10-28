@@ -58,7 +58,7 @@
 #define PLANT_MAGIC 1022
 
 struct leaf_segment {
-    long magic;
+    uint32_t magic;
     double len;	/* length of blade segment */
     vect_t blade;	/* direction of blade growth */
     vect_t N;	/* surface normal of blade segment */
@@ -66,7 +66,7 @@ struct leaf_segment {
 
 
 struct blade {
-    long magic;
+    uint32_t magic;
     double width;
     double tot_len;	/* total length of blade */
     int segs;		/* # of segments in blade */
@@ -79,7 +79,7 @@ struct blade {
 #define BLADE_MAX 6
 #define BLADE_LAST (BLADE_MAX-1)
 struct plant {
-    long magic;
+    uint32_t magic;
     point_t root;		/* location of base of blade */
     int blades;		/* # of blades from same root */
     struct blade b[BLADE_MAX];	/* blades */
@@ -90,7 +90,7 @@ struct plant {
 
 #define GRASSRAY_MAGIC 2048
 struct grass_ray {
-    long magic;
+    uint32_t magic;
     double occlusion;
     struct xray r;
     double d_max;
@@ -110,7 +110,7 @@ struct grass_ray {
  * to any particular use of the shader.
  */
 struct grass_specific {
-    long magic;	/* magic # for memory validity check, must come 1st */
+    uint32_t magic;	/* magic # for memory validity check, must come 1st */
     int debug;
     FILE *fd;
     double cell[2];	/* size of a cell in Region coordinates */

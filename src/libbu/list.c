@@ -106,11 +106,6 @@ bu_list_parallel_dequeue(struct bu_list *headp)
 	    return p;
 	}
 	bu_semaphore_release(BU_SEM_LISTS);
-
-	/* List is empty, wait a moment and peek again */
-#if (defined(sgi) && defined(mips)) || (defined(__sgi) && defined(__mips))
-	sginap(1);
-#endif
     }
     /* NOTREACHED */
 }
@@ -157,7 +152,7 @@ bu_ck_list(const struct bu_list *hd, const char *str)
 }
 
 void
-bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long magic)
+bu_ck_list_magic(const struct bu_list *hd, const char *str, const uint32_t magic)
 {
     register const struct bu_list *cur;
     int head_count = 0;

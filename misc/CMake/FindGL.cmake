@@ -52,6 +52,59 @@ IF (WIN32)
 
 ELSE (WIN32)
 
+		# The first line below is to make sure that the proper headers
+		# are used on a Linux machine with the NVidia drivers installed.
+		# They replace Mesa with NVidia's own library but normally do not
+		# install headers and that causes the linking to
+		# fail since the compiler finds the Mesa headers but NVidia's library.
+		# Make sure the NVIDIA directory comes BEFORE the others.
+		#  - Atanas Georgiev <atanas@cs.columbia.edu>
+
+
+		SET(OPENGL_INC_SEARCH_PATH
+			/usr/share/doc/NVIDIA_GLX-1.0/include
+			/usr/pkg/xorg/include
+			/usr/X11/include
+			/usr/X11R6/include
+			/usr/X11R7/include
+			/usr/include/X11
+			/usr/local/include
+			/usr/local/include/X11
+			/usr/openwin/include
+			/usr/openwin/share/include
+			/opt/graphics/OpenGL/include
+			/usr/include
+			)
+		# Handle HP-UX cases where we only want to find OpenGL in either hpux64
+		# or hpux32 depending on if we're doing a 64 bit build.
+		IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
+			SET(HPUX_IA_OPENGL_LIB_PATH /opt/graphics/OpenGL/lib/hpux32/)
+		ELSE(CMAKE_SIZEOF_VOID_P EQUAL 4)
+			SET(HPUX_IA_OPENGL_LIB_PATH 
+				/opt/graphics/OpenGL/lib/hpux64/
+				/opt/graphics/OpenGL/lib/pa20_64)
+		ENDIF(CMAKE_SIZEOF_VOID_P EQUAL 4)
+
+		GET_PROPERTY(SEARCH_64BIT GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
+		IF(SEARCH_64BIT)
+			SET(64BIT_DIRS "/usr/lib64/X11;/usr/lib64")
+		ELSE(SEARCH_64BIT)
+			SET(32BIT_DIRS "/usr/lib/X11;/usr/lib")
+		ENDIF(SEARCH_64BIT)
+
+		SET(OPENGL_LIB_SEARCH_PATH
+			/usr/X11/lib
+			/usr/X11R6/lib
+			/usr/X11R7/lib
+			${64BIT_DIRS}
+			${32BIT_DIRS}
+			/usr/pkg/xorg/lib
+			/usr/openwin/lib
+			/opt/graphics/OpenGL/lib
+			/usr/shlib
+			${HPUX_IA_OPENGL_LIB_PATH}
+			)
+
 	IF (APPLE)
 		OPTION(OPENGL_USE_AQUA "Require native OSX Framework version of OpenGL." ON)
 	ENDIF(APPLE)
@@ -64,50 +117,11 @@ ELSE (WIN32)
 		# If we're on Apple and not using Aqua, we don't want frameworks
 		SET(CMAKE_FIND_FRAMEWORK "NEVER")
 
-		# Handle HP-UX cases where we only want to find OpenGL in either hpux64
-		# or hpux32 depending on if we're doing a 64 bit build.
-		IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
-			SET(HPUX_IA_OPENGL_LIB_PATH /opt/graphics/OpenGL/lib/hpux32/)
-		ELSE(CMAKE_SIZEOF_VOID_P EQUAL 4)
-			SET(HPUX_IA_OPENGL_LIB_PATH 
-				/opt/graphics/OpenGL/lib/hpux64/
-				/opt/graphics/OpenGL/lib/pa20_64)
-		ENDIF(CMAKE_SIZEOF_VOID_P EQUAL 4)
-
-		# The first line below is to make sure that the proper headers
-		# are used on a Linux machine with the NVidia drivers installed.
-		# They replace Mesa with NVidia's own library but normally do not
-		# install headers and that causes the linking to
-		# fail since the compiler finds the Mesa headers but NVidia's library.
-		# Make sure the NVIDIA directory comes BEFORE the others.
-		#  - Atanas Georgiev <atanas@cs.columbia.edu>
-
-		FIND_PATH(OPENGL_INCLUDE_DIR_GL GL/gl.h
-			/usr/share/doc/NVIDIA_GLX-1.0/include
-			/usr/openwin/share/include
-			/opt/graphics/OpenGL/include /usr/X11R6/include
-			)
-
-		FIND_PATH(OPENGL_INCLUDE_DIR_GLX GL/glx.h
-			/usr/share/doc/NVIDIA_GLX-1.0/include
-			/usr/openwin/share/include
-			/opt/graphics/OpenGL/include /usr/X11R6/include
-			)
-
-		FIND_PATH(OPENGL_xmesa_INCLUDE_DIR GL/xmesa.h
-			/usr/share/doc/NVIDIA_GLX-1.0/include
-			/usr/openwin/share/include
-			/opt/graphics/OpenGL/include /usr/X11R6/include
-			)
-
-		FIND_LIBRARY(OPENGL_gl_LIBRARY
-			NAMES GL MesaGL
-			PATHS /opt/graphics/OpenGL/lib
-			/usr/openwin/lib
-			/usr/shlib /usr/X11R6/lib
-			${HPUX_IA_OPENGL_LIB_PATH}
-			)
-
+		FIND_PATH(OPENGL_INCLUDE_DIR_GL GL/gl.h        ${OPENGL_INC_SEARCH_PATH})
+		FIND_PATH(OPENGL_INCLUDE_DIR_GLX GL/glx.h      ${OPENGL_INC_SEARCH_PATH})
+		FIND_PATH(OPENGL_xmesa_INCLUDE_DIR GL/xmesa.h  ${OPENGL_INC_SEARCH_PATH})
+		FIND_LIBRARY(OPENGL_gl_LIBRARY NAMES GL MesaGL PATHS ${OPENGL_LIB_SEARCH_PATH})
+		
 		# On Unix OpenGL most certainly always requires X11.
 		# Feel free to tighten up these conditions if you don't 
 		# think this is always true.
@@ -122,13 +136,7 @@ ELSE (WIN32)
 			ENDIF (X11_FOUND)
 		ENDIF (OPENGL_gl_LIBRARY)
 
-		FIND_LIBRARY(OPENGL_glu_LIBRARY
-			NAMES GLU MesaGLU
-			PATHS ${OPENGL_gl_LIBRARY}
-			/opt/graphics/OpenGL/lib
-			/usr/openwin/lib
-			/usr/shlib /usr/X11R6/lib
-			)
+		FIND_LIBRARY(OPENGL_glu_LIBRARY NAMES GLU MesaGLU PATHS ${OPENGL_LIB_SEARCH_PATH})
 	ENDIF(OPENGL_USE_AQUA)
 
 ENDIF (WIN32)

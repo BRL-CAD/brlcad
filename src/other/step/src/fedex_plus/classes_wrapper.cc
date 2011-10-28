@@ -105,10 +105,6 @@ print_file_header(Express express, FILES* files)
     fprintf (files->incall, "#include <sys/time.h>\n");
     fprintf (files->incall, "#endif\n");
 
-    fprintf(files->incall,"\n#ifdef __OSTORE__\n");
-    fprintf(files->incall,"#include <ostore/ostore.hh>    // Required"
-	                  " to access ObjectStore Class Library\n");
-    fprintf(files->incall,"#endif\n\n");
     fprintf (files->incall,"#ifdef __O3DB__\n");
     fprintf (files->incall,"#include <OpenOODB.h>\n");
     fprintf (files->incall,"#endif\n\n");
@@ -343,42 +339,17 @@ SCOPEPrint( Scope scope, FILES *files, Schema schema, Express model,
 	           "\nclass SdaiModel_contents_%s : public SCLP23(Model_contents) {\n", 
 	           SCHEMAget_name(schema));
         fprintf (files -> inc, "\n  public:\n");
-	fprintf (files->inc,"\n#ifdef __OSTORE__\n");
-        fprintf (files -> inc, "    SdaiModel_contents_%s(os_database *db=0);\n", 
-	           SCHEMAget_name(schema));
-	fprintf (files->inc,"#else\n");
         fprintf (files -> inc, "    SdaiModel_contents_%s();\n", 
 	           SCHEMAget_name(schema));
-	fprintf (files->inc,"#endif\n");
         LISTdo (list, e, Entity);
 	    MODELprint_new(e, files, schema);
         LISTod;
-
-	fprintf (files->inc,"\n#ifdef __OSTORE__\n");
-	fprintf (files->inc,"\tstatic os_typespec* get_os_typespec();\n");
-	fprintf (files->inc,"#endif\n");
 
         fprintf (files->inc, "\n};\n"); 
 
         fprintf (files->inc, "\n\ntypedef SdaiModel_contents_%s * SdaiModel_contents_%s_ptr;\n", SCHEMAget_name(schema), SCHEMAget_name(schema)); 
         fprintf (files->inc, "typedef SdaiModel_contents_%s_ptr SdaiModel_contents_%s_var;\n", SCHEMAget_name(schema), SCHEMAget_name(schema)); 
 
-	fprintf (files->inc,"\n#ifdef __OSTORE__\n");
-	fprintf (files->lib,"\n#ifdef __OSTORE__\n");
-        fprintf (files -> inc,
-		 "SCLP23(Model_contents_ptr) create_SdaiModel_contents_%s(os_database *db);\n", 
-		 SCHEMAget_name(schema));
-	fprintf (files -> lib,
-		 "SCLP23(Model_contents_ptr) create_SdaiModel_contents_%s(os_database *db)\n",
-		 SCHEMAget_name(schema));
-        fprintf (files -> lib, "{\n    if(db)\n\treturn (SCLP23(Model_contents_ptr)) new (db, SdaiModel_contents_%s::get_os_typespec()) \n\t\t\tSdaiModel_contents_%s(db);\n",
-		 SCHEMAget_name(schema),
-		 SCHEMAget_name(schema));
-        fprintf (files -> lib, 
-		 "    else{\n\treturn (SCLP23(Model_contents_ptr)) new SdaiModel_contents_%s(0);\n    }\n}\n",
-		 SCHEMAget_name(schema));
-	fprintf (files->inc,"#else\n");
-	fprintf (files->lib,"#else\n");
         fprintf (files -> inc,
 		 "SCLP23(Model_contents_ptr) create_SdaiModel_contents_%s();\n", 
 		 SCHEMAget_name(schema));
@@ -387,16 +358,9 @@ SCOPEPrint( Scope scope, FILES *files, Schema schema, Express model,
 		 SCHEMAget_name(schema));
         fprintf (files -> lib, "{ return new SdaiModel_contents_%s ; }\n",
 		 SCHEMAget_name(schema));
-	fprintf (files->inc,"#endif\n\n");
-	fprintf (files->lib,"#endif\n\n");
 
-	fprintf (files->lib,"\n#ifdef __OSTORE__");
-	fprintf (files -> lib, "\nSdaiModel_contents_%s::SdaiModel_contents_%s(os_database *db)\n", 
-		 SCHEMAget_name(schema), SCHEMAget_name(schema) );
-	fprintf (files->lib,"#else");
 	fprintf (files -> lib, "\nSdaiModel_contents_%s::SdaiModel_contents_%s()\n", 
 		 SCHEMAget_name(schema), SCHEMAget_name(schema) );
-	fprintf (files->lib,"#endif\n");
 	fprintf (files -> lib, 
 		 "{\n    SCLP23(Entity_extent_ptr) eep = (SCLP23(Entity_extent_ptr))0;\n\n");
 	LISTdo (list, e, Entity);
@@ -609,12 +573,6 @@ SCHEMAprint( Schema schema, FILES *files, Express model, void *complexCol,
     if (! (incfile = (files -> inc) = FILEcreate (fnm)))  return;
     fprintf (incfile, "/* %cId$  */\n",'\044');
 
-    fprintf (incfile,"\n#ifdef __OSTORE__\n");
-    fprintf (incfile,"#include <ostore/ostore.hh>    // Required"
-	             " to access ObjectStore Class Library\n");
-/*    fprintf (incfile,"#include <osdb_%s>\n", fnm);*/
-    fprintf (incfile,"#endif\n\n");
-
     fprintf (incfile,"#ifdef __O3DB__\n");
     fprintf (incfile,"#include <OpenOODB.h>\n");
     fprintf (incfile,"#endif\n\n");
@@ -800,9 +758,6 @@ SCHEMAprint( Schema schema, FILES *files, Express model, void *complexCol,
     fprintf (schemafile, "#include <%s.h> \n",sufnm);
     if ( schema->search_id == PROCESSED ) {
 	fprintf (schemafile, "extern void %sInit (Registry & r);\n", schnm);
-	fprintf (schemafile,"\n#ifdef __OSTORE__\n");
-	fprintf (schemafile, "#include <osdb_%s.h> \n",schnm);
-	fprintf (schemafile,"#endif\n\n");
 	fprintf (schemainit, "\t extern void %sInit (Registry & r);\n", schnm);
 	fprintf (schemainit, "\t %sInit (reg); \n",schnm);
     }
@@ -925,11 +880,6 @@ EXPRESSPrint(Express express, ComplexCollect &col, FILES* files)
     if (! (incfile = (files -> inc) = FILEcreate (fnm)))  return;
     fprintf (incfile, "/* %cId$ */\n",'$');
 
-    fprintf (incfile,"\n#ifdef __OSTORE__\n");
-    fprintf (incfile,"#include <ostore/ostore.hh>    // Required"
-	             " to access ObjectStore Class Library\n");
-    fprintf (incfile,"#endif\n\n");
-
     fprintf (incfile,"#ifdef __O3DB__\n");
     fprintf (incfile,"#include <OpenOODB.h>\n");
     fprintf (incfile,"#endif\n\n");
@@ -963,10 +913,6 @@ EXPRESSPrint(Express express, ComplexCollect &col, FILES* files)
     /*  add to schema's include and initialization file	*/
     fprintf (schemafile, "#include <%s.h>\n\n", schnm);
     fprintf (schemafile, "extern void %sInit (Registry & r);\n", schnm);
-    fprintf (schemafile,"\n#ifdef __OSTORE__\n");
-    fprintf (schemafile, "#include <osdb_%s.h> \n",schnm);
-    fprintf (schemafile,"#endif\n\n");
-
     fprintf (schemainit, "\t extern void %sInit (Registry & r);\n", schnm);
     fprintf (schemainit, "\t %sInit (reg);\n", schnm);
 

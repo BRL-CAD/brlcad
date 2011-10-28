@@ -10,6 +10,62 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
+--- 2011-XX-XX  Release 7.21.X                                     ---
+----------------------------------------------------------------------
+
+* improved performance of boolean evaluations - Richard Weiss
+* improved boolean evaluation converting to polygons - Richard Weiss
+* ported the obj-g geometry importer to Windows - Nicholas Reed
+* improved import robustness and parsing of OBJ geometry files
+	- Nicholas Reed, Richard Weiss, Mike Tegtmeyer
+* added new physics 'simulate' command to mged/archer - Abhijit Nandy
+
+
+----------------------------------------------------------------------
+--- 2011-10-27  Release 7.20.4                                     ---
+----------------------------------------------------------------------
+
+* added lighting model visualization options for archer - Bob Parker
+* reid command now takes optional -n "incr by" value - Erik Greenwald
+* reid command now returns the last region ID set - Erik Greenwald
+* improved nirt support for non-UNIX-style text files - Sean Morrison
+* added new relos thickness reassignment command to mged - Carl Moore
+* support for loading archer plugins with spaces in name - Bob Parker
+* added 'exists' object detection command to mged/archer - Cliff Yapp
+* added archer BoT split/flip/sync surface cleanup panel - Bob Parker
+* added new g-dot exporter for hierarchy visualization - Sean Morrison
+* improved g-vrml successful exporting and reporting - Richard Weiss
+* added -b BoT dump and -e evaluation option to g-vrml - Richard Weiss
+* improved obj-g polygonal import - Nicholas Reed, Richard Weiss
+* fixed mged crash after killing an illuminated object - Abhijit Nandy
+* tightened default polygonal mesh export tolerance - Sean Morrison
+* converted introductory Tcl/Tk presentation to Docbook - Tom Browder
+* initial support in archer for editing pipe primitives - Bob Parker
+* fixed NURBS raytracing crash due to invalid geometry - Sean Morrison
+* fixed memory leak when saving BoT geometry - Nicholas Reed
+* improved mged object name globbing support - Sean Morrison
+* improved bounding box for rpc, epa, ehy, hyp primitives - Cliff Yapp
+* improved handling of degenerate face facetization - Richard Weiss
+* add support for .png file output in rtwizard - Cliff Yapp
+* improved rtwizard's invocation of rt - Cliff Yapp
+* added object path and keep options to conversion.sh - Tom Browder
+* 'keep' command includes sketch when keeping revolve - Sean Morrison
+* fixed mged 'mater' command inheritance setting bug - Richard Weiss
+* fixed mged crash removing comb members during edit - Richard Weiss
+* modified archer startup to not require html documentation files
+        - Cliff Yapp, Brandon Hinesley
+* improved mged/archer/bwish run-time path behavior on Windows
+	- Cliff Yapp, Bob Parker
+* upgraded libpng to version 1.5.4 - Cliff Yapp
+* improved performance of step-g importer - Zach Easterbrook
+* fixed browsing mged html help pages on Windows - Bob Parker
+* restored mged 'rt' command output to console window - Sean Morrison
+* fixed infinite loop bug plotting NURBS wireframes - Sean Morrison
+* added new 'ringworld' procedural geometry generator - Erik Greenwald
+* fixed mged Manual page item in help menu - Brandon Hinesley
+
+
+----------------------------------------------------------------------
 --- 2011-07-01  Release 7.20.2                                     ---
 ----------------------------------------------------------------------
 
@@ -35,22 +91,26 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 This release marks the introduction of a new CMake build system for
-BRL-CAD.  CMake is a cross-platform build system infrastructure
-capable of generating native build system logic for a wide variety of
+BRL-CAD.  CMake is cross-platform build system infrastructure capable
+of generating native build system logic for a wide variety of
 operating systems and compilation environments.  Cliff Yapp has been
 diligently working on this adaptation for a number of months in order
 to simplify the task of maintaining BRL-CAD on multiple platforms.
 
-Previously, there were two build sytems being maintained in BRL-CAD.
-One system was based on the GNU Autotools suite for Unix/Linux/BSD
-platforms (including Mac OSX); the other was Microsoft Visual Studio
-files for Windows.  The new build system handles all supported
-platforms including Windows from the same build logic.  This
-eliminates the need to manually update multiple build systems and
-improves BRL-CAD cross-platform maintainability.
+Previously, two separate build systems were being maintained: one
+system (GNU Autotools) for Linux, UNIX, and BSD platforms (including
+Mac OS X); and another separate system (Microsoft Visual Studio) for
+Windows.  The new build system supports all platforms (including
+Windows) from the same build logic.  This eliminates the need to
+manually update multiple build systems and improves BRL-CAD
+cross-platform maintainability.
 
+* fixed mged/archer graphics window glitches on Windows - Bob Parker
+* improved 'attr' command to work with read-only .g files - Cliff Yapp
 * cross-platform 64-bit ISST (cmake-only) - Cliff Yapp, Erik Greenwald
 * fixed mged zoom out mouse binding on Linux/*BSD - Cliff Yapp
+* fixed step-g importer bug interpolating cubic curves - Keith Bowman
+* improved step-g importer ellipse and conic support - Keith Bowman
 * improved multiple path handling for search command - Cliff Yapp
 * fixed segment splitting tessellation conversion bug - Richard Weiss
 * fixed crash during facetization of large models - Richard Weiss

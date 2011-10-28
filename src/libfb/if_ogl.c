@@ -24,8 +24,8 @@
  * Frame Buffer Library interface for OpenGL.
  *
  * There are several different Frame Buffer modes supported.  Set your
- * environment FB_FILE to the appropriate type.  Note that some of the
- * /dev/sgi modes are not supported, and there are some new modes.
+ * environment FB_FILE to the appropriate type.
+ *
  * (see the modeflag definitions below).  /dev/ogl[options]
  *
  * This code is basically a port of the 4d Framebuffer interface from
@@ -564,10 +564,9 @@ ogl_getmem(FBIO *ifp)
     SGI(ifp)->mi_memwidth = ifp->if_max_width;
 
     /*
-     * On Irix 5 with Indigo EXPRESS graphics,
-     * lrectwrite() runs off the end!
-     * So, provide a pad area of 2 scanlines.
-     * (1 line is enough, but this avoids risk of damage to colormap table.)
+     * On some platforms lrectwrite() runs off the end!  So, provide a
+     * pad area of 2 scanlines.  (1 line is enough, but this avoids
+     * risk of damage to colormap table.)
      */
     pixsize = (ifp->if_max_height+2) * ifp->if_max_width *
 	sizeof(struct ogl_pixel);
@@ -588,7 +587,7 @@ ogl_getmem(FBIO *ifp)
 
     /* WWW this is unnecessary in this version? */
     /* Open the segment Read/Write */
-    /* On Irix 5, this gets mapped in at a high address, no problem. */
+    /* This gets mapped to a high address on some platforms, so no problem. */
     if ((sp = shmat(SGI(ifp)->mi_shmid, 0, 0)) == (char *)(-1L)) {
 	fb_log("ogl_getmem: shmat returned x%x, errno=%d\n", sp, errno);
 	goto fail;

@@ -13,6 +13,6 @@ EXTRA_DIST = \
 sfilesdir = $(BRLCAD_DATA)/nirt
 
 sfiles_DATA = \
-	$(SFILES) 
+	$(SFILES)
 
 include $(top_srcdir)/misc/Makefile.defs

@@ -57,7 +57,7 @@ const struct bu_structparse rt_submodel_parse[] = {
 
 /* ray tracing form of solid, including precomputed terms */
 struct submodel_specific {
-    long magic;
+    uint32_t magic;
     mat_t subm2m;		/* To transform normals back out to model coords */
     mat_t m2subm;		/* To transform rays into local coord sys */
     struct rt_i *rtip;		/* sub model */
@@ -686,7 +686,7 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
 
     ret = -1;
     if (ip->idb_meth->ft_plot) {
-	ret = ip->idb_meth->ft_plot(gp->vheadp, ip, tsp->ts_ttol, tsp->ts_tol);
+	ret = ip->idb_meth->ft_plot(gp->vheadp, ip, tsp->ts_ttol, tsp->ts_tol, NULL);
     }
     if (ret < 0) {
 	bu_log("rt_submodel_wireframe_leaf(%s): %s plot failure\n",
@@ -714,7 +714,7 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
  * which by definition, is all one color.
  */
 int
-rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
 {
     struct rt_submodel_internal *sip;
     struct db_tree_state state;
@@ -863,7 +863,7 @@ rt_submodel_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
  * The name is added by the caller, in the usual place.
  */
 int
-rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     struct rt_submodel_internal *sip;
     union record *rec;
@@ -875,9 +875,6 @@ rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     if (ip->idb_type != ID_SUBMODEL) return -1;
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     RT_SUBMODEL_CK_MAGIC(sip);
-
-    /* Ignores scale factor */
-    BU_ASSERT(ZERO(local2mm - 1.0));
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
@@ -954,7 +951,7 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
  * The name is added by the caller, in the usual place.
  */
 int
-rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     struct rt_submodel_internal *sip;
     struct bu_vls str;
@@ -966,10 +963,7 @@ rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     RT_SUBMODEL_CK_MAGIC(sip);
 
-    /* Ignores scale factor */
-    BU_ASSERT(ZERO(local2mm - 1.0));
     BU_CK_EXTERNAL(ep);
-
     bu_vls_init(&str);
     bu_vls_struct_print(&str, rt_submodel_parse, (char *)sip);
     ep->ext_nbytes = bu_vls_strlen(&str);

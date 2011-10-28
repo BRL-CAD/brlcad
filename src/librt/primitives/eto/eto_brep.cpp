@@ -38,8 +38,6 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
     struct rt_eto_internal *eip;
 
-    *b = NULL;
-
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(eip);
@@ -96,7 +94,6 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     eto_surf->m_axis = revaxis;
 
     /* Create brep with one face*/
-    *b = ON_Brep::New();
     ON_BrepFace *newface = (*b)->NewFace(*eto_surf);
     (*b)->FlipFace(*newface);
 //    (*b)->Standardize();

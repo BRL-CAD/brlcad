@@ -86,7 +86,7 @@ struct command_tab rt_cmdtab[] = {
 struct frame {
     struct frame	*fr_forw;
     struct frame	*fr_back;
-    unsigned long	fr_magic;	/* magic number */
+    uint32_t		fr_magic;	/* magic number */
     long		fr_number;	/* frame number */
     long		fr_server;	/* server number assigned. */
     char		*fr_filename;	/* name of output file */
@@ -300,8 +300,8 @@ struct frame *FreeFrame;
 		bu_log("NULL %s in %s line %d\n", _str, __FILE__, __LINE__ ); \
 		abort(); \
 	} else if ( (_q)->_el != _magic )  { \
-		bu_log("ERROR %s=x%x magic was=x%x s/b=x%x in %s line %d\n", \
-			_str, (_q), (_q)->_el, _magic, __FILE__, __LINE__ ); \
+		bu_log("ERROR %s=%p magic was=%lx s/b=%lx in %s line %d\n", \
+		       _str, (void *)(_q), (unsigned long)((_q)->_el), (unsigned long)(_magic), __FILE__, __LINE__ ); \
 		abort(); \
 	}
 
@@ -869,7 +869,7 @@ drop_server(struct servers *sp, char *why)
     int	oldstate;
 
     if ( sp == SERVERS_NULL || sp->sr_host == IHOST_NULL )  {
-	bu_log("drop_server(x%x), sr_host=0\n", sp);
+	bu_log("drop_server(%p), sr_host=0\n", (void *)sp);
 	return;
     }
     oldstate = sp->sr_state;
@@ -886,7 +886,7 @@ drop_server(struct servers *sp, char *why)
 
     pc = sp->sr_pc;
     if ( pc == PKC_NULL )  {
-	bu_log("drop_server(x%x), sr_pc=0\n", sp);
+	bu_log("drop_server(%p), sr_pc=0\n", (void *)sp);
 	return;
     }
 
@@ -905,7 +905,7 @@ drop_server(struct servers *sp, char *why)
 	fr = lp->li_frame;
 	CHECK_FRAME(fr);
 	BU_LIST_DEQUEUE( &lp->l );
-	bu_log("%s requeueing fr%d %d..%d\n",
+	bu_log("%s requeueing fr%ld %d..%d\n",
 	       stamp(),
 	       fr->fr_number,
 	       lp->li_start, lp->li_stop);
@@ -1512,7 +1512,7 @@ frame_is_done(struct frame *fr)
     (void)gettimeofday( &fr->fr_end, (struct timezone *)0 );
     delta = tvdiff( &fr->fr_end, &fr->fr_start);
     if ( delta < 0.0001 )  delta=0.0001;
-    bu_log("%s Frame %ld DONE: %g elapsed sec, %d rays/%g cpu sec\n",
+    bu_log("%s Frame %ld DONE: %g elapsed sec, %ld rays/%g cpu sec\n",
 	   stamp(),
 	   fr->fr_number,
 	   delta,
@@ -1899,7 +1899,7 @@ task_server( struct servers *sp, struct frame *fr, struct timeval *nowp )
     /* Sanity check */
     if ( fr->fr_filename == (char *)0 ||
 	 fr->fr_filename[0] == '\0' )  {
-	bu_log("task_server: fr %d: null filename!\n",
+	bu_log("task_server: fr %ld: null filename!\n",
 	       fr->fr_number);
 	destroy_frame( fr );	/* will dequeue */
 	return -1;		/* restart scan */
@@ -2317,7 +2317,7 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     CHECK_FRAME(fr);
 
     if ( info.li_frame != fr->fr_number )  {
-	bu_log("%s: frame number mismatch, got=%d, assigned=%d\n",
+	bu_log("%s: frame number mismatch, got=%d, assigned=%ld\n",
 	       sp->sr_host->ht_name,
 	       info.li_frame, fr->fr_number );
 	drop_server( sp, "frame number mismatch" );
@@ -2787,7 +2787,7 @@ pr_list(struct bu_list *lhp)
 	    bu_log("\t%d..%d frame *NULL*??\n",
 		   lp->li_start, lp->li_stop );
 	} else {
-	    bu_log("\t%d..%d frame %d\n",
+	    bu_log("\t%d..%d frame %ld\n",
 		   lp->li_start, lp->li_stop,
 		   lp->li_frame->fr_number );
 	}
@@ -2841,9 +2841,6 @@ add_host(struct ihost *ihp)
     check_input(1);
 }
 
-#ifdef sgi
-#	define RSH	"/usr/bsd/rsh"
-#endif
 #ifndef RSH
 #	define RSH	"/usr/ucb/rsh"
 #endif
@@ -3492,14 +3489,14 @@ cd_release(int UNUSED(argc), char **UNUSED(argv))
  *	Usage: frames [-v]
  */
 int
-cd_frames( int UNUSED(argc), char **UNUSED(argv) )
+cd_frames( int argc, char **UNUSED(argv) )
 {
     struct frame *fr;
 
     bu_log("%s Frames waiting:\n", stamp() );
     for (fr=FrameHead.fr_forw; fr != &FrameHead; fr=fr->fr_forw) {
 	CHECK_FRAME(fr);
-	bu_log("%5d\twidth=%d, height=%d\n",
+	bu_log("%5ld\twidth=%d, height=%d\n",
 	       fr->fr_number,
 	       fr->fr_width, fr->fr_height );
 
@@ -3509,7 +3506,7 @@ cd_frames( int UNUSED(argc), char **UNUSED(argv) )
 		   fr->fr_filename,
 		   fr->fr_tempfile ? " **TEMPORARY**" : "" );
 	}
-	bu_log("\tnrays = %d, cpu sec=%g\n", fr->fr_nrays, fr->fr_cpu);
+	bu_log("\tnrays = %ld, cpu sec=%g\n", fr->fr_nrays, fr->fr_cpu);
 	pr_list( &(fr->fr_todo) );
 	bu_log("\tcmd=%s\n", bu_vls_addr(&fr->fr_cmd) );
 	bu_log("\tafter_cmd=%s\n", bu_vls_addr(&fr->fr_after_cmd) );
@@ -3632,7 +3629,7 @@ cd_status(int UNUSED(argc), char **UNUSED(argv))
 	       state_to_string(sp->sr_state) );
 	if ( sp->sr_curframe != FRAME_NULL )  {
 	    CHECK_FRAME(sp->sr_curframe);
-	    bu_log(" frame %d, assignments=%d\n",
+	    bu_log(" frame %ld, assignments=%d\n",
 		   sp->sr_curframe->fr_number,
 		   server_q_len(sp) );
 	}  else  {

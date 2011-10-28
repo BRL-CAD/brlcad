@@ -45,7 +45,7 @@
 // aesthetically for compound aggregates (i.e., a list of lists).
 void PrintAttrTypeWithAnchor(const TypeDescriptor *typeDesc, ofstream &outhtml)
 {
-    SCLstring buf;
+  std::string buf;
 
     // The type.  See src/clstepcore/baseType.h for info
     PrimitiveType base = typeDesc->Type();
@@ -227,7 +227,7 @@ main()
     root << "<UL>" << endl;
     
     const TypeDescriptor *type;
-    SCLstring tmp;
+    std::string tmp;
     type = registry->NextType();
     root << "<! -- The following is a list of types, which are>\n";
     root << "<! --  cross-referenced from the entities.>\n";

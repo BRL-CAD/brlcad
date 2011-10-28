@@ -216,7 +216,7 @@ main(int argc, char *argv[])
 
     fprintf( fp_out, "end_object\n" );
 
-    bu_log( "\t%d polygons\n", polygons );
+    bu_log( "\t%ld polygons\n", polygons );
 
     return 0;
 }

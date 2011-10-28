@@ -69,31 +69,19 @@ typedef struct Scan_Buffer {
 /* global variables */
 /********************/
 
-#ifdef LEX_ACTIONS_C
-# define GLOBAL
-# define INITIALLY(value) = value
-#else
-# define GLOBAL extern
-# define INITIALLY(value)
-#endif /* LEX_ACTIONS_C */
+extern Scan_Buffer	SCAN_buffers[SCAN_NESTING_DEPTH];
+extern int		SCAN_current_buffer;
+extern char*		SCANcurrent;
 
-GLOBAL Scan_Buffer	SCAN_buffers[SCAN_NESTING_DEPTH];
-GLOBAL int		SCAN_current_buffer	INITIALLY(0);
-GLOBAL char*		SCANcurrent;
-
-GLOBAL Error		ERROR_include_file		INITIALLY(ERROR_none);
-GLOBAL Error		ERROR_unmatched_close_comment	INITIALLY(ERROR_none);
-GLOBAL Error		ERROR_unmatched_open_comment	INITIALLY(ERROR_none);
-GLOBAL Error		ERROR_unterminated_string	INITIALLY(ERROR_none);
-GLOBAL Error		ERROR_encoded_string_bad_digit	INITIALLY(ERROR_none);
-GLOBAL Error		ERROR_encoded_string_bad_count	INITIALLY(ERROR_none);
-GLOBAL Error		ERROR_bad_identifier		INITIALLY(ERROR_none);
-GLOBAL Error		ERROR_unexpected_character	INITIALLY(ERROR_none);
-GLOBAL Error		ERROR_nonascii_char;
-
-
-#undef GLOBAL
-#undef INITIALLY
+extern Error		ERROR_include_file;
+extern Error		ERROR_unmatched_close_comment;
+extern Error		ERROR_unmatched_open_comment;
+extern Error		ERROR_unterminated_string;
+extern Error		ERROR_encoded_string_bad_digit;
+extern Error		ERROR_encoded_string_bad_count;
+extern Error		ERROR_bad_identifier;
+extern Error		ERROR_unexpected_character;
+extern Error		ERROR_nonascii_char;
 
 /******************************/
 /* macro function definitions */
@@ -133,46 +121,5 @@ void		SCANlowerize PROTO((char *));
 void		SCANupperize PROTO((char *));
 extern char *	SCANstrdup PROTO((char *));
 extern long	SCANtell PROTO((void));
-
-/*******************************/
-/* inline function definitions */
-/*******************************/
-
-#if supports_inline_functions || defined(LEX_ACTIONS_C)
-
-static_inline
-int
-SCANnextchar(char* buffer)
-{
-    extern Boolean SCANread(void);
-#ifdef keep_nul
-    static int escaped = 0;
-#endif
-
-    if (SCANtext_ready || SCANread()) {
-#ifdef keep_nul
-	if (!*SCANcurrent) {
-	    buffer[0] = SCAN_ESCAPE;
-	    *SCANcurrent = '0';
-	    return 1;
-	} else if ((*SCANcurrent == SCAN_ESCAPE) && !escaped) {
-	    escaped = 1;
-	    buffer[0] = SCAN_ESCAPE;
-	    return 1;
-	}
-	SCANbuffer.numRead--;
-#endif
-	buffer[0] = *(SCANcurrent++);
-	if (!isascii(buffer[0])) {
-	    ERRORreport_with_line(ERROR_nonascii_char,yylineno,
-				  0xff & buffer[0]);
-	    buffer[0] = ' ';	/* substitute space */
-	}
-	return 1;
-    } else
-	return 0;
-}
-
-#endif /* supports_inline_functions || defined(LEX_ACTIONS_C) */
 
 #endif /* LEX_ACTIONS_H */

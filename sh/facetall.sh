@@ -36,10 +36,18 @@
 ###
 #
 # This script iterates over all regions in a geometry file and
-# attempts to facetize them all.
+# attempts to facetize them all.  The following scripts can then
 #
-# Author -
-#   Lee Butler
+# Replaces facetall.sh conversions assuming file didn't already
+# contain bot objects:
+#
+# file=file.g ; for i in `mged -c $file search . -type bot 2>&1` ; do base=`echo $i|sed 's/.bot//g'` ; mged -c $file killtree $base \; mv $i $base ; done
+#
+# Great for calculating number of polygons in file:
+#
+# file=file.g ; total=0 ; for i in `mged -c $file search . -type bot 2>&1` ; do cnt=`mged -c $file l $i 2>&1 | tail -1 | awk '{print $2}' | tr -d :` ; total="`expr $cnt + $total`" ; echo "$total (+ $cnt)" ; done
+#
+# This script could use some TLC.
 #
 ###
 

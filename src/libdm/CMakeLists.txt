@@ -1,10 +1,30 @@
+# Include directories needed by libdm users
+SET(DM_INCLUDE_DIRS
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	${RT_INCLUDE_DIRS}
+	${GED_INCLUDE_DIRS}
+	${FB_INCLUDE_DIRS}
+	${X11_INCLUDE_DIR}
+	${OPENGL_INCLUDE_DIR_GL}
+	${OPENGL_INCLUDE_DIR_GLX}
+	${TCL_INCLUDE_DIRS}
+	${TK_INCLUDE_PATH}
+	)
+BRLCAD_INCLUDE_DIRS(DM_INCLUDE_DIRS)
+
+# local includes
+include_directories(
+	${PNG_INCLUDE_DIR}
+	)
+
 IF(WIN32 AND BRLCAD-ENABLE_OPENGL)
 	SET(DM_DEFINES "${DM_DEFINES} -DDM_WGL -DIF_WGL")
 	SET(dmw32_srcs dm-wgl.c)
 ENDIF(WIN32 AND BRLCAD-ENABLE_OPENGL)
 
 IF(BRLCAD-ENABLE_X11)
-	SET(DM_DEFINES  "${DM_DEFINES} -DDM_X -DIF_X") 
+	SET(DM_DEFINES  "${DM_DEFINES} -DDM_X -DIF_X")
 	SET(dmx11_srcs dm-X.c)
 ENDIF(BRLCAD-ENABLE_X11)
 
@@ -30,39 +50,27 @@ SET(LIBDM_SRCS
 	${dmogl_srcs}
 	${dmrtgl_srcs}
 	${dmtk_srcs}
-	adc.c 
-	axes.c 
-	clip.c 
-	color.c 
-	dm-Null.c 
-	dm-generic.c 
-	dm-plot.c 
-	dm-ps.c 
-	dm_obj.c 
-	focus.c 
-	grid.c 
-	knob.c 
-	labels.c 
-	options.c 
-	query.c 
-	rect.c 
-	scale.c 
-	tcl.c 
+	adc.c
+	axes.c
+	clip.c
+	color.c
+	dm-Null.c
+	dm-generic.c
+	dm-plot.c
+	dm-ps.c
+	dm_obj.c
+	focus.c
+	grid.c
+	knob.c
+	labels.c
+	options.c
+	query.c
+	rect.c
+	scale.c
+	tcl.c
 	vers.c
 )
-IF(HAVE_TERMLIB)
-	include_directories(${TERMLIB_INCLUDE_DIR})
-ENDIF(HAVE_TERMLIB)
 
-include_directories(
-	${ZLIB_INCLUDE_DIR}
-	${PNG_INCLUDE_DIR}
-	${X11_INCLUDE_DIR}
-	${OPENGL_INCLUDE_DIR_GL}
-	${OPENGL_INCLUDE_DIR_GLX}
-	${TCL_INCLUDE_DIRS}
-	${TK_INCLUDE_PATH}
-)
 
 add_definitions(
 	${DM_DEFINES}
@@ -87,3 +95,4 @@ SET(libdm_ignore_files
 	TODO
 	)
 CMAKEFILES(${libdm_ignore_files})
+CMAKEFILES(Makefile.am)

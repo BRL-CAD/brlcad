@@ -200,7 +200,7 @@ nmg_pr_lg(const struct loop_g *lg, char *h)
  * N M G _ P R _ F G
  */
 void
-nmg_pr_fg(const unsigned long *magic, char *h)
+nmg_pr_fg(const uint32_t *magic, char *h)
 {
     const struct face_g_snurb *fgs;
     int ncoords;
@@ -447,7 +447,7 @@ nmg_pr_lu(const struct loopuse *lu, char *h)
 {
     const struct edgeuse *eu;
     const struct vertexuse *vu;
-    unsigned long magic1;
+    uint32_t magic1;
 
     MKPAD(h);
     NMG_CK_LOOPUSE(lu);
@@ -500,7 +500,7 @@ nmg_pr_lu_briefly(const struct loopuse *lu, char *h)
 {
     const struct edgeuse *eu;
     const struct vertexuse *vu;
-    unsigned long magic1;
+    uint32_t magic1;
 
     MKPAD(h);
     NMG_CK_LOOPUSE(lu);
@@ -531,7 +531,7 @@ nmg_pr_lu_briefly(const struct loopuse *lu, char *h)
  * either edge_g_lseg or edge_g_cnurb structures.
  */
 void
-nmg_pr_eg(const unsigned long *eg_magic_p, char *h)
+nmg_pr_eg(const uint32_t *eg_magic_p, char *h)
 {
     MKPAD(h);
     NMG_CK_EDGE_G_EITHER(eg_magic_p);
@@ -792,7 +792,7 @@ nmg_pr_vu_briefly(const struct vertexuse *vu, char *h)
  * N M G _ P R _ V U A
  */
 void
-nmg_pr_vua(const unsigned long *magic_p, char *h)
+nmg_pr_vua(const uint32_t *magic_p, char *h)
 {
     MKPAD(h);
 
@@ -1078,7 +1078,7 @@ nmg_pl_lu_around_eu(const struct edgeuse *eu)
 	return;
     }
 
-    b = (long *)bu_calloc(nmg_find_model((unsigned long *)eu)->maxindex, sizeof(long),
+    b = (long *)bu_calloc(nmg_find_model((uint32_t *)eu)->maxindex, sizeof(long),
 			  "nmg_pl_lu_around_eu flag[]");
 
     /* To go correct way around, start with arg's mate,
@@ -1114,7 +1114,7 @@ nmg_pl_lu_around_eu(const struct edgeuse *eu)
  * that share this geometry.
  */
 void
-nmg_pr_fus_in_fg(const unsigned long *fg_magic)
+nmg_pr_fus_in_fg(const uint32_t *fg_magic)
 {
     struct face *f;
 

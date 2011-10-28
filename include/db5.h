@@ -185,7 +185,7 @@ DB5_EXPORT extern const char *binu_types[];
  *  Magic number1 has already been checked, and is not stored.
  */
 struct db5_raw_internal {
-    long		magic;
+    uint32_t		magic;
     unsigned char	h_object_width;		/* DB5HDR_WIDTHCODE_x */
     unsigned char	h_name_hidden;
     unsigned char	h_name_present;

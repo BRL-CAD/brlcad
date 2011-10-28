@@ -86,6 +86,7 @@
 	variable mYmax 0
 	variable mZmin 0
 	variable mZmax 0
+	variable mPrevGeometryObject ""
 
 	method buildUpperPanel {}
 	method buildLowerPanel {}
@@ -286,7 +287,9 @@
 }
 
 ::itcl::body GeometryEditFrame::updateGeometry {} {
-    catch {eval $itk_option(-geometryChangedCallback)}
+    if {$itk_option(-geometryChangedCallback) != ""} {
+	catch {eval $itk_option(-geometryChangedCallback)}
+    }
 }
 
 ::itcl::body GeometryEditFrame::createGeometry {obj} {

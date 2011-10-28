@@ -124,12 +124,12 @@ static double RTable[MAXSIZE];
  * results for indicies into RTable.
  */
 struct str_ht {
-    long magic;
+    uint32_t magic;
     char hashTableValid;
     long *hashTableMagic1;
     short *hashTable;
     long *hashTableMagic2;
-    long magic_end;
+    uint32_t magic_end;
 };
 
 static struct str_ht ht;
@@ -426,7 +426,7 @@ bn_noise_vec(fastf_t *point, fastf_t *result)
 		*
 		*************************************************************/
 struct fbm_spec {
-    long magic;
+    uint32_t magic;
     double octaves;
     double lacunarity;
     double h_val;

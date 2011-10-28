@@ -38,24 +38,34 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-
+#include "light.h"
 
 #define OSL_MAGIC 0x1837    /* make this a unique number for each shader */
 #define CK_OSL_SP(_p) BU_CKMAG(_p, OSL_MAGIC, "osl_specific")
 
 /* Oslrenderer system */
 OSLRenderer *oslr = NULL;
-/* Save default a_hit */
 
+/* Every time a thread reaches osl_render for the first time,
+   we save the address of their own buffers, which is an ugly way to
+   identify them */
+std::vector<struct resource *> visited_addrs;
+/* Holds information about the context necessary to correctly execute a
+   shader */
+std::vector<void *> thread_infos;
+
+/* Save default a_hit */
 int (*default_a_hit)(struct application *, struct partition *, struct seg *);	
+/* Save default a_miss */
+int (*default_a_miss)(struct application *);	
 
 /*
  * The shader specific structure contains all variables which are unique
  * to any particular use of the shader.
  */
 struct osl_specific {
-    long magic;              	 /* magic # for memory validity check */
-    struct bu_vls shadername;
+    uint32_t magic;           /* magic # for memory validity check */
+    ShadingAttribStateRef shader_ref;  /* Reference to this shader in OSLRender system */
 };
 
 /* The default values for the variables in the shader specific structure */
@@ -71,13 +81,6 @@ struct osl_specific osl_defaults = {
 /* description of how to parse/print the arguments to the shader */
 struct bu_structparse osl_print_tab[] = {
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
-};
-
-/* Parse rule to arguments */
-struct bu_structparse osl_parse_tab[] = {
-    {"%V", 1, "shadername", SHDR_O(shadername), BU_STRUCTPARSE_FUNC_NULL, 
-     NULL, NULL},
-    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
 extern "C" {
@@ -106,10 +109,252 @@ struct mfuncs osl_mfuncs[] = {
     {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
 
-/* 
- * The remaining code should be hidden from C callers
- * 
- */
+int 
+osl_parse_edge(char *edge, ShaderEdge &sh_edge)
+{
+    /* Split string arount # */
+    const char *item;
+    
+    ShaderParam sh_param1, sh_param2;
+
+    /* Name of the first shader */
+    if((item = strtok(edge, "#")) == NULL){
+	fprintf(stderr, "[Error] Expecting the first shader name, found NULL.\n");
+	return -1;
+    }
+    sh_param1.layername = item;
+
+    /* Parameter of the first shader */
+    if((item = strtok(NULL, "#")) == NULL){
+	fprintf(stderr, "[Error] Expecting the parameter of the first shader, found NULL.\n");
+	return -1;
+    }
+    sh_param1.paramname = item;
+
+    /* Name of the first shader */
+    if((item = strtok(NULL, "#")) == NULL){
+	fprintf(stderr, "[Error] Expecting the second shader name, found NULL.\n");
+	return -1;
+    }
+    sh_param2.layername = item;
+
+    /* Name of the first shader */
+    if((item = strtok(NULL, "#")) == NULL){
+	fprintf(stderr, "[Error] Expecting the parameter of the second shader, found NULL.\n");
+	return -1;
+    }
+    sh_param2.paramname = item;
+
+    sh_edge = std::make_pair(sh_param1, sh_param2);
+}
+
+int 
+osl_parse_shader(char *shadername, ShaderInfo &sh_info)
+{
+
+    /* Split string arount # */
+    const char *item;
+    item = strtok(shadername, "#");
+    /* We are going to look for shader in ../shaders/ */
+    sh_info.shadername = "../shaders/" + std::string(item);  
+
+    /* Check for parameters */
+    while((item = strtok(NULL, "#")) != NULL){
+
+	/* Setting layer name, in case we're doing a shader group */
+	if(strcmp(item, "layername") == 0){
+
+	    /* Get the name of the layer being set */
+	    item = strtok(NULL, "#");
+	    if(item == NULL){
+		fprintf(stderr, "[Error] Missing layer name\n");
+		return -1;
+	    }
+	    sh_info.layername = std::string(item);
+	}
+	else {
+	    /* Name of the parameter */
+	    std::string param_name = item;
+
+	    /* Get the type of parameter being set */
+	    item = strtok(NULL, "#");
+	    if(item == NULL){
+		fprintf(stderr, "[Error] Missing parameter type\n");
+		return -1;
+	    }
+	    else if(strcmp(item, "int") == 0){
+		item = strtok(NULL, "#");
+		if(item == NULL){
+		    fprintf(stderr, "[Error] Missing float value\n");
+		    return -1;
+		}
+		int value = atoi(item);
+		sh_info.iparam.push_back(std::make_pair(param_name, value));
+	    }
+	    else if(strcmp(item, "float") == 0){
+		item = strtok(NULL, "#");
+		if(item == NULL){
+		    fprintf(stderr, "[Error] Missing float value\n");
+		    return -1;
+		}
+		float value = atof(item);
+		sh_info.fparam.push_back(std::make_pair(param_name, value));
+	    }
+	    else if(strcmp(item, "color") == 0){
+		Color3 color_value;
+		for(int i=0; i<3; i++){
+		    item = strtok(NULL, "#");
+		    if(item == NULL){
+			fprintf(stderr, "[Error] Missing %d-th component of color value\n", i);
+			return -1;
+		    }
+		    color_value[i] = atof(item);
+		}
+		sh_info.cparam.push_back(std::make_pair(param_name, color_value));
+	    }
+	    else if(strcmp(item, "normal") == 0 || strcmp(item, "point") == 0 || strcmp(item, "vector") == 0){
+
+		TypeDesc type;	
+		std::string type_name(item);
+		if(strcmp(item, "normal") == 0) type = TypeDesc::TypeNormal;
+		else if(strcmp(item, "point") == 0) type = TypeDesc::TypePoint;
+		else if(strcmp(item, "vector") == 0) type = TypeDesc::TypeVector;
+
+		Vec3 vec_value;
+		for(int i=0; i<3; i++){
+		    item = strtok(NULL, "#");
+		    if(item == NULL){
+			fprintf(stderr, "[Error] Missing %d-th component of %s value\n", i, type_name.c_str());
+			return -1;
+		    }
+		    vec_value[i] = atof(item);
+		}
+		ShaderInfo::TypeVec type_vec(type, vec_value);
+		sh_info.vparam.push_back(std::make_pair(param_name, type_vec));
+	    }
+	    else if(strcmp(item, "matrix") == 0){
+		fprintf(stderr, "matrix\n");
+		Matrix44 mat_value;
+		for(int i=0; i<4; i++)
+		    for(int j=0; j<4; j++){
+			item = strtok(NULL, "#");
+			if(item == NULL){
+			    fprintf(stderr, "[Error] Missing %d-th component of matrix value\n", i*4 + j);
+			    return -1;
+			}
+			mat_value[i][j] = atof(item); 
+			fprintf(stderr, "%.2lf ", mat_value[i][j]);
+		    }
+		fprintf(stderr, "\n");
+		sh_info.mparam.push_back(std::make_pair(param_name, mat_value));
+	    }
+	    else if(strcmp(item, "string") == 0){
+		item = strtok(NULL, "#");
+		if(item == NULL){
+		    fprintf(stderr, "[Error] Missing string\n");
+		    return -1;
+		}
+		std::string string_value = item;
+		sh_info.sparam.push_back(std::make_pair(param_name, string_value));
+	    }
+	    else {
+		/* FIXME: add support to TypePoint, TypeVector, TypeNormal parameters */
+		fprintf(stderr, "[Error] Unknown parameter type\n");
+		return -1;			
+	    }
+	}
+    }
+}
+
+/**
+ * This function parses the input shaders
+ * Example:
+ * shadername=color#Cin#point#0.0#0.0#1.0
+ * shadername=glass
+ * shadername=checker#K#float#4.0
+ * join=color#Cout#shader#Cin1
+ * join=glass#Cout#shader#Cin1
+ **/
+int
+osl_parse(const struct bu_vls *in_vls, ShaderGroupInfo &group_info)
+{
+    struct bu_vls vls;
+    register char *cp;
+    char *name;
+    char *value;
+    int retval;
+
+    BU_CK_VLS(in_vls);
+
+    /* Duplicate the input string.  This algorithm is destructive. */
+    bu_vls_init(&vls);
+    bu_vls_vlscat(&vls, in_vls);
+    cp = bu_vls_addr(&vls);
+
+    while (*cp) {
+	/* NAME = VALUE white-space-separator */
+
+	/* skip any leading whitespace */
+	while (*cp != '\0' && isspace(*cp))
+	    cp++;
+
+	/* Find equal sign */
+	name = cp;
+	while (*cp != '\0' && *cp != '=')
+	    cp++;
+
+	if (*cp == '\0') {
+	    if (name == cp) break;
+
+	    /* end of string in middle of arg */
+	    bu_log("bu_structparse: input keyword '%s' is not followed by '=' in '%s'\nInput must be in keyword=value format.\n",
+		   name, bu_vls_addr(in_vls));
+	    bu_vls_free(&vls);
+	    return -2;
+	}
+
+	*cp++ = '\0';
+
+	/* Find end of value. */
+	if (*cp == '"') {
+	    /* strings are double-quote (") delimited skip leading " &
+	     * find terminating " while skipping escaped quotes (\")
+	     */
+	    for (value = ++cp; *cp != '\0'; ++cp)
+		if (*cp == '"' &&
+		    (cp == value || *(cp-1) != '\\'))
+		    break;
+
+	    if (*cp != '"') {
+		bu_log("bu_structparse: keyword '%s'=\" without closing \"\n",
+		       name);
+		bu_vls_free(&vls);
+		return -3;
+	    }
+	} else {
+	    /* non-strings are white-space delimited */
+	    value = cp;
+	    while (*cp != '\0' && !isspace(*cp))
+		cp++;
+	}
+
+	if (*cp != '\0')
+	    *cp++ = '\0';
+
+	if(strcmp(name, "shadername") == 0){
+	    ShaderInfo sh_info;
+	    osl_parse_shader(value, sh_info);
+	    group_info.shader_layers.push_back(sh_info);
+	}
+	else if (strcmp(name, "join") == 0){
+	    ShaderEdge sh_edge;
+	    osl_parse_edge(value, sh_edge);
+	    group_info.shader_edges.push_back(sh_edge);
+	}
+    }
+    bu_vls_free(&vls);
+    return 0;
+}
 
 /* O S L _ S E T U P
  *
@@ -148,22 +393,11 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
      * -----------------------------------
      */
 
-    bu_vls_init(&osl_sp->shadername);
     osl_sp->magic = OSL_MAGIC;
 
     /* Parse the user's arguments to fill osl specifics */
-    if (bu_struct_parse(matparm, osl_parse_tab, (char *)osl_sp) < 0){
-	bu_free((genptr_t)osl_sp, "osl_specific");
-	return -1;
-    }
-
-    /* -----------------------------------
-     * Check for errors
-     * -----------------------------------
-     */
-    if (bu_vls_strlen(&osl_sp->shadername) <= 0){
-	/* FIXME shadername was not set. Use the default value */
-	fprintf(stderr, "[Error] shadername was not set");
+    ShaderGroupInfo group_info;
+    if (osl_parse(matparm, group_info) < 0){
 	return -1;
     }
 
@@ -172,12 +406,11 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
      * -----------------------------------
      */
     /* If OSL system was not initialized yet, do it */
-    /* FIXME: take care of multi-thread issues */
     if (oslr == NULL){
 	oslr = new OSLRenderer();
     }
     /* Add this shader to OSL system */
-    oslr->AddShader(osl_sp->shadername.vls_str);
+    osl_sp->shader_ref = oslr->AddShader(group_info); 
 
     if (rdebug&RDEBUG_SHADE) {
 	bu_struct_print(" Parameters:", osl_print_tab, (char *)osl_sp);
@@ -204,11 +437,14 @@ HIDDEN void osl_free(genptr_t cp)
 	(struct osl_specific *)cp;
     bu_free(cp, "osl_specific");
 
-    /* FIXME: take care of multi-thread issues */
+#if 0
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
     if(oslr != NULL){
 	delete oslr;
 	oslr = NULL;
     }
+    bu_semaphore_release(BU_SEM_SYSCALL);
+#endif
 }
 
 /*
@@ -258,8 +494,6 @@ osl_refraction_hit(struct application *ap, struct partition *PartHeadp, struct s
 	sw.sw_extinction = 0;
 	sw.sw_xmitonly = 0;		/* want full data */
 	sw.sw_inputs = 0;		/* no fields filled yet */
-	//sw.sw_frame = curframe;
-	//sw.sw_pixeltime = sw.sw_frametime = curframe * frame_delta_t;
 	sw.sw_segs = finished_segs;
 	VSETALL(sw.sw_color, 1);
 	VSETALL(sw.sw_basecolor, 1);
@@ -270,13 +504,6 @@ osl_refraction_hit(struct application *ap, struct partition *PartHeadp, struct s
 	/* Determine the hit point */
 	sw.sw_hit = *(pp->pt_outhit);		/* struct copy */
     	VJOIN1(sw.sw_hit.hit_point, ap->a_ray.r_pt, sw.sw_hit.hit_dist, ap->a_ray.r_dir);
-
-#if 0
-	point_t pt;
-    	VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
-	VPRINT("output point: ", sw.sw_hit.hit_point);
-	VPRINT(" input point: ", pt);
-#endif
 
 	/* Determine the normal point */
 	stp = pp->pt_outseg->seg_stp;
@@ -290,6 +517,7 @@ osl_refraction_hit(struct application *ap, struct partition *PartHeadp, struct s
     }
     return 1;
 }
+
 
 /*
  * O S L _ R E N D E R
@@ -305,131 +533,197 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 {
     register struct osl_specific *osl_sp =
 	(struct osl_specific *)dp;
-    point_t pt;
-  
-    VSETALL(pt, 0);
+    
+    void * thread_info;
+
+    int nsamples; /* Number of samples */
 
     /* check the validity of the arguments we got */
     RT_AP_CHECK(ap);
     RT_CHECK_PT(pp);
     CK_OSL_SP(osl_sp);
-
+    
     if (rdebug&RDEBUG_SHADE)
 	bu_struct_print("osl_render Parameters:", osl_print_tab,
 			(char *)osl_sp);
 
-    point_t scolor;
-    VSETALL(scolor, 0.0f);
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    
+    /* Check if it is the first time this thread is calling this function */
+    bool visited = false;
+    for(size_t i = 0; i < visited_addrs.size(); i++){
+	if(ap->a_resource == visited_addrs[i]){
+	    visited = true;
+	    thread_info = thread_infos[i];
+	    break;
+	}
+    } 
+    if(!visited){
+	visited_addrs.push_back(ap->a_resource);
+	/* Get thread specific information from OSLRender system */
+	thread_info = oslr->CreateThreadInfo();
+	thread_infos.push_back(thread_info);
+    }
 
-    /* Just shoot several rays if we are rendering the first pixel */
-    int nsamples;
     if(ap->a_level == 0){
-	nsamples = 25;
 	default_a_hit = ap->a_hit; /* save the default hit callback (colorview @ rt) */
+	default_a_miss = ap->a_miss;
     }
-    else
-	nsamples = 1;
+    bu_semaphore_release(BU_SEM_SYSCALL);
 
-    for(int s=0; s<nsamples; s++){
+    Color3 acc_color(0.0f);
 
-	/* -----------------------------------
-	 * Fill in all necessary information for the OSL renderer
-	 * -----------------------------------
-	 */
-	RenderInfo info;
-
-	/* Set hit point */
-	VMOVE(info.P, swp->sw_hit.hit_point);
+    /* -----------------------------------
+     * Fill in all necessary information for the OSL renderer
+     * -----------------------------------
+     */
+    RenderInfo info;
+    /* Set hit point */
+    VMOVE(info.P, swp->sw_hit.hit_point);
     
-	/* Set normal at the poit */
-	VMOVE(info.N, swp->sw_hit.hit_normal);
+    /* Set normal at the poit */
+    VMOVE(info.N, swp->sw_hit.hit_normal);
     
-	/* Set incidence ray direction */
-	//VMOVE(info.I, ap->a_inv_dir);
-	VMOVE(info.I, ap->a_ray.r_dir);
+    /* Set incidence ray direction */
+    VMOVE(info.I, ap->a_ray.r_dir);
+    
+    /* U-V mapping stuff */
+    info.u = swp->sw_uv.uv_u;
+    info.v = swp->sw_uv.uv_v;
+    VSETALL(info.dPdu, 0.0f);
+    VSETALL(info.dPdv, 0.0f);
+    
+    /* x and y pixel coordinates */
+    info.screen_x = ap->a_x;
+    info.screen_y = ap->a_y;
+    
+    info.depth = ap->a_level;
+    info.surfacearea = 1.0f;
+    
+    info.shader_ref = osl_sp->shader_ref;
+
+    /* We assume that the only information that will be written is thread_info,
+       so that oslr->QueryColor is thread safe */
+    info.thread_info = thread_info;
+
+
+// Ray-tracing (local illumination)
+#if 0
+
+    /* -----------------------------------
+     * Get a list of all visible lights from this point
+     * -----------------------------------
+     */
+    light_obs(ap, swp, MFI_NORMAL|MFI_HIT|MFI_UV);
+    
+    for (int i = ap->a_rt_i->rti_nlights-1; i >= 0; i--) {
+
+	struct light_specific *lp;
+
+	/* Light is not visible */
+	if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL)
+	    continue;
+	/* Get the direction of this light */
+	Vec3 to_light;
+	VMOVE(to_light, swp->sw_tolight+3*i);
+	info.light_dirs.push_back(to_light);
+    }
+
+    info.reflect_weight = Color3(0.0);
+    info.transmit_weight = Color3(0.0);
+    Color3 weight = oslr->QueryColor(&info);
+    
+    /* If the weight of reflection is greater than zero, we shoot another ray */
+    fastf_t reflect_W = 0;
+    for(size_t i = 0; i < 3; i++)
+	reflect_W += info.reflect_weight[i];
+
+    // Do reflection
+    if(reflect_W > 0.0f){
+
+	/* Find the direction of the reflected ray */
+	Vec3 I, N;
+	VMOVE(I, info.I); // incidence ray
+	VMOVE(N, info.N); // normal
+
+	float proj = N.dot(I);
+	Vec3 R = (2 * proj) * N - I;
+
+	struct application new_ap;
+	RT_APPLICATION_INIT(&new_ap);
 	
-	/* U-V mapping stuff */
-	info.u = swp->sw_uv.uv_u;
-	info.v = swp->sw_uv.uv_v;
-	VSETALL(info.dPdu, 0.0f);
-	VSETALL(info.dPdv, 0.0f);
-    
-	/* x and y pixel coordinates */
-	info.screen_x = ap->a_x;
-	info.screen_y = ap->a_y;
-
-	info.depth = ap->a_level;
-	info.surfacearea = 1.0f;
-    
-	info.shadername = osl_sp->shadername.vls_str;
-
-	/* We only perform reflection if application decides to */
-	info.doreflection = 0;
-    
-	Color3 weight = oslr->QueryColor(&info);
-
-	if(info.doreflection == 1){
+	new_ap = *ap;                     /* struct copy */
+	new_ap.a_onehit = 1;
+	new_ap.a_hit = default_a_hit;
+	new_ap.a_level = info.depth + 1;
+	new_ap.a_flag = 0;
 	
-	    /* Fire another ray */
-	    struct application new_ap;
-	    RT_APPLICATION_INIT(&new_ap);
+	VMOVE(new_ap.a_ray.r_dir, R);
+	VMOVE(new_ap.a_ray.r_pt, info.P);
+	VMOVE(swp->sw_color, info.reflect_weight);
+    }
+    else {
+	VMOVE(swp->sw_color, weight);
+    }
+    
 
-	    new_ap.a_rt_i = ap->a_rt_i;
+// Path-tracing (global illumination)
+#else    
+
+    /* We only perform reflection if application decides to */
+    info.doreflection = 0;
+    info.out_ray_type = 0;
+
+    Color3 weight = oslr->QueryColor(&info);
+
+    /* Fire another ray */
+    if((info.out_ray_type & RAY_REFLECT) || (info.out_ray_type & RAY_TRANSMIT)){
+	
+	struct application new_ap;
+	RT_APPLICATION_INIT(&new_ap);
+	
+	new_ap = *ap;                     /* struct copy */
+	new_ap.a_onehit = 1;
+	new_ap.a_hit = default_a_hit;
+	new_ap.a_level = info.depth + 1;
+	new_ap.a_flag = 0;
+
+	VMOVE(new_ap.a_ray.r_dir, info.out_ray.dir);
+	VMOVE(new_ap.a_ray.r_pt, info.out_ray.origin);
+	
+	/* This next ray represents refraction */
+	if (info.out_ray_type & RAY_TRANSMIT){
+	    
+	    /* Displace the hit point a little bit in the direction
+	       of the next ray */
+	    Vec3 tmp;
+	    VSCALE(tmp, info.out_ray.dir, 1e-4);
+	    VADD2(new_ap.a_ray.r_pt, new_ap.a_ray.r_pt, tmp);
+
 	    new_ap.a_onehit = 1;
-	    new_ap.a_hit = default_a_hit;
-	    new_ap.a_miss = ap->a_miss;
-	    new_ap.a_level = ap->a_level + 1;
-	    new_ap.a_flag = 0;
+	    new_ap.a_refrac_index = 1.5;
+	    new_ap.a_flag = 2; /* mark as refraction */
+	    new_ap.a_hit = osl_refraction_hit;
+	}	
 
-	    VMOVE(new_ap.a_ray.r_dir, info.out_ray.dir);
-	    VMOVE(new_ap.a_ray.r_pt, info.out_ray.origin);
+	(void)rt_shootray(&new_ap);
 
-	    /* This ray is from refraction */
-	    	    /* This next ray is from refraction */
-	    if (VDOT(info.N, info.out_ray.dir) < 0.0f){
+	Color3 rec;
+	VMOVE(rec, new_ap.a_color);
+ 
+	Color3 res = rec*weight;
 
-#if 1     
-		/* Displace the hit point a little bit in the direction
-		   of the next ray */
-	     	Vec3 tmp;
-	     	VSCALE(tmp, info.out_ray.dir, 1e-4);
-	     	VADD2(new_ap.a_ray.r_pt, new_ap.a_ray.r_pt, tmp);
-#endif
-		new_ap.a_onehit = 1;
-		new_ap.a_refrac_index = 1.5;
-		new_ap.a_flag = 2; /* mark as refraction */
-		new_ap.a_hit = osl_refraction_hit;
-	    }
-
-	    (void)rt_shootray(&new_ap);
-
-	    Color3 rec;
-	    VMOVE(rec, new_ap.a_color);
-
-	    Color3 res = rec*weight;
-	    VADD2(scolor, scolor, res);
-	}
-	else {
-	    /* Final color */
-	    VADD2(scolor, scolor, weight);
-	}
+	VMOVE(swp->sw_color, res);
     }
-    /* Gamma correction */
-    /*
-    scolor[0] = pow(scolor[0], 1.0/2.2);
-    scolor[1] = pow(scolor[1], 1.0/2.2);
-    scolor[2] = pow(scolor[2], 1.0/2.2);
-    */
-
-    /* The resulting color is always on ap_color, but
-       we need to update it through sw_color */
-    VSCALE(swp->sw_color, scolor, 2.0/nsamples);
-    
+    else {
+	/* Final color */
+	VMOVE(swp->sw_color, weight);
+    }
+#endif
 
     return 1;
 }
 }
-
 
 /*
  * Local Variables:

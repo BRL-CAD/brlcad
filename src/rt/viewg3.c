@@ -607,10 +607,10 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 
 	/* A color rtg3.pl UnixPlot file of output commands is
 	 * generated.  This is processed by plot(1) plotting filters
-	 * such as pl-fb or pl-sgi.  Portions of a ray passing through
-	 * air within the model are represented in blue, while
-	 * portions passing through a solid are assigned green.  This
-	 * will always be done single CPU, to prevent output garbling.
+	 * such as pl-fb.  Portions of a ray passing through air
+	 * within the model are represented in blue, while portions
+	 * passing through a solid are assigned green.  This will
+	 * always be done single CPU, to prevent output garbling.
 	 * (See view_init).
 	 */
 	if (R_DEBUG & RDEBUG_RAYPLOT) {

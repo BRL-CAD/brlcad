@@ -371,7 +371,7 @@ noinst_HEADERS = \
 	VolumeContextDependentUnit.h \
 	VolumeConversionBasedUnit.h \
 	VolumeSiUnit.h \
-	VolumeUnit.h 
+	VolumeUnit.h
 
 # FIXME: these declarations are required for proper distchecking if
 # the files do not exist before configure is run.

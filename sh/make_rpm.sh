@@ -82,6 +82,7 @@ if test "$DNAME" = "fedora" ;then
     fcheck fakeroot
     fcheck gcc-c++
     fcheck make
+    fcheck cmake
     fcheck libtool
     fcheck bc
     fcheck sed
@@ -89,7 +90,7 @@ if test "$DNAME" = "fedora" ;then
     fcheck flex
     fcheck libXi-devel
     fcheck libxslt
-    fcheck mesa-libGL-devel
+    fcheck mesa-libGLU-devel
     fcheck pango-devel
 fi
 
@@ -98,6 +99,7 @@ if test "$DNAME" = "openSUSE" ;then
     fcheck fakeroot
     fcheck gcc-c++
     fcheck make
+    fcheck cmake
     fcheck libtool
     fcheck bc
     fcheck sed
@@ -140,30 +142,15 @@ rm -Rf $TMPDIR
 mkdir -p $TMPDIR/tmp
 cp -Rf misc/debian/* $TMPDIR
 
-# modify doc menu desktop files
-fdoc(){
-    L=`sed -n '/Exec=/=' $2`
-    A=`sed -n $L'p' $2`
-    if test ! "Exec=$1" = "$A" ;then
-	sed -i "s:$A:Exec=$1:" $2
-	echo "\"$2\" has been modified!"
-    fi
-}
-
-fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/toc.html" \
- "$TMPDIR/brlcad-doc.desktop"
-
-fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/db" \
- "$TMPDIR/brlcad-db.desktop"
-
-fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/mged/index.html" \
- "$TMPDIR/brlcad-doc-mged.desktop"
-
-fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/Anim_Tutorial/index.html" \
- "$TMPDIR/brlcad-doc-animation.desktop"
-
 # compile and install in tmp dir
-./configure --enable-optimized --enable-almost-everything --with-ogl --disable-debug
+cmake -DBRLCAD-ENABLE_OPTIMIZED_BUILD=ON \
+      -DBRLCAD-ENABLE_ALL_LOCAL_LIBS=ON \
+      -DBRLCAD-ENABLE_STRICT=OFF \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=/usr/brlcad \
+      -DDATA_DIR=share \
+      -DMAN_DIR=share/man \
+      -DBRLCAD_BUNDLED_LIBS=BUNDLED
 make -j$NJOBS
 fakeroot make install DESTDIR=`pwd`"/$TMPDIR/tmp"
 
@@ -194,11 +181,11 @@ cp -f $TMPDIR/brlcad-db.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
 cp -f $TMPDIR/brlcad-doc.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
 
 mkdir -p $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
-cp -f $TMPDIR/application-x-brlcad-v4.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
-cp -f $TMPDIR/application-x-brlcad-v5.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
+cp -f $TMPDIR/brlcad-v4.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
+cp -f $TMPDIR/brlcad-v5.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
 
 mkdir -p $TMPDIR/tmp/usr/share/mime/packages
-cp -f $TMPDIR/application-x-brlcad.xml $TMPDIR/tmp/usr/share/mime/packages
+cp -f $TMPDIR/brlcad.xml $TMPDIR/tmp/usr/share/mime/packages
 
 #Create brlcad.spec file
 echo -e 'Name: brlcad
@@ -212,8 +199,13 @@ URL: http://brlcad.org
 Packager: Jordi Sayol <g.sayol@yahoo.es>
 
 ExclusiveArch: '$ARCH'
-Provides: brlcad = '$BVERSION'-'$RELEASE', brlcad('$FARCH') = '$BVERSION'-'$RELEASE'
+Provides: brlcad = '$BVERSION'-'$RELEASE', brlcad('$FARCH') = '$BVERSION'-'$RELEASE > $TMPDIR/brlcad.spec
 
+if test "$DNAME" = "fedora" ;then
+    echo -e 'Requires: xorg-x11-fonts-ISO8859-1-75dpi' >> $TMPDIR/brlcad.spec
+fi
+
+echo -e '
 %description
 BRL-CAD is a powerful cross-platform Open Source combinatorial
 Constructive Solid Geometry (CSG) solid modeling system that
@@ -235,11 +227,11 @@ F="/usr/share/applications/defaults.list"
 if [ ! -f $F ]; then
 	echo "[Default Applications]" > $F
 else
-	sed -i "/application\/x-brlcad-/d" $F
+	sed -i "/application\/brlcad-/d" $F
 fi
 
-echo "application/x-brlcad-v4=brlcad-mged.desktop" >> $F
-echo "application/x-brlcad-v5=brlcad-mged.desktop" >> $F
+echo "application/brlcad-v4=brlcad-mged.desktop" >> $F
+echo "application/brlcad-v5=brlcad-mged.desktop" >> $F
 
 source /etc/profile.d/brlcad.sh
 
@@ -266,7 +258,7 @@ gtk-update-icon-cache /usr/share/icons/hicolor &>/dev/null || :
 
 SuSEconfig &>/dev/null || :
 
-%files' > $TMPDIR/brlcad.spec
+%files' >> $TMPDIR/brlcad.spec
 
 find $TMPDIR/tmp/ -type d | sed 's:'$TMPDIR'/tmp:%dir ":' | sed 's:$:":' >> $TMPDIR/brlcad.spec
 find $TMPDIR/tmp/ -type f | sed 's:'$TMPDIR'/tmp:":' | sed 's:$:":' >> $TMPDIR/brlcad.spec

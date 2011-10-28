@@ -1,6 +1,10 @@
-include_directories(
-    ${TCL_INCLUDE_DIRS}
-)
+# Include directories needed by libbn users
+SET(BN_INCLUDE_DIRS
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	${BU_INCLUDE_DIRS}
+	)
+BRLCAD_INCLUDE_DIRS(BN_INCLUDE_DIRS)
 
 set(LIBBN_SOURCES
     anim.c
@@ -46,3 +50,4 @@ IF(MSVC)
 	SET_TARGET_PROPERTIES(bntester PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
 ENDIF(MSVC)
 CMAKEFILES(bntester.dat ulp.c)
+CMAKEFILES(Makefile.am)

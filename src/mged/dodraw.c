@@ -177,7 +177,7 @@ hack_for_lee(void)
  * Also finds s_vlen;
  * XXX Should split out a separate bn_vlist_rpp() routine, for librt/vlist.c
  */
-void
+static void
 mged_bound_solid(struct solid *sp)
 {
     struct bn_vlist *vp;
@@ -192,7 +192,7 @@ mged_bound_solid(struct solid *sp)
 	int nused = vp->nused;
 	int *cmd = vp->cmd;
 	point_t *pt = vp->pt;
-	for (j = 0; j < nused; j++, cmd++, pt++) {
+	for (j = 0; cmd && j < nused; j++, cmd++, pt++) {
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_POLY_VERTNORM:
@@ -263,7 +263,6 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	sp = existing_sp;
     }
 
-
     /*
      * Compute the min, max, and center points.
      */
@@ -331,7 +330,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
  * This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *
-mged_wireframe_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *UNUSED(curtree), genptr_t UNUSED(client_data))
+mged_wireframe_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *curtree, genptr_t UNUSED(client_data))
 {
     return curtree;
 }
@@ -371,7 +370,7 @@ mged_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp,
 
     if (ip->idb_meth->ft_plot(
 	    &vhead, ip,
-	    tsp->ts_ttol, tsp->ts_tol) < 0) {
+	    tsp->ts_ttol, tsp->ts_tol, NULL) < 0) {
 	Tcl_AppendResult(INTERP, DB_FULL_PATH_CUR_DIR(pathp)->d_namep,
 			 ": plot failure\n", (char *)NULL);
 	return TREE_NULL;		/* ERROR */
@@ -484,7 +483,7 @@ mged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 		    bu_log("fastpath draw ID_POLY %s\n", dp->d_namep);
 		}
 		if (mged_draw_wireframes) {
-		    (void)rt_pg_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
+		    (void)rt_pg_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
 		} else {
 		    (void)rt_pg_plot_poly(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
 		}
@@ -496,7 +495,7 @@ mged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 		    bu_log("fastpath draw ID_BOT %s\n", dp->d_namep);
 		}
 		if (mged_draw_wireframes) {
-		    (void)rt_bot_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
+		    (void)rt_bot_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
 		} else {
 		    (void)rt_bot_plot_poly(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
 		}
@@ -1012,7 +1011,7 @@ replot_modified_solid(
 
     transform_editing_solid(&intern, mat, ip, 0);
 
-    if (rt_functab[ip->idb_type].ft_plot(&vhead, &intern, &mged_ttol, &mged_tol) < 0) {
+    if (rt_functab[ip->idb_type].ft_plot(&vhead, &intern, &mged_ttol, &mged_tol, NULL) < 0) {
 	Tcl_AppendResult(INTERP, LAST_SOLID(sp)->d_namep,
 			 ": re-plot failure\n", (char *)NULL);
 	return -1;

@@ -181,7 +181,7 @@ proc build_region { args } {
 	while { $reg_exists } {
 	    incr regnum
 	    set regname ${tag}.r$regnum
-	    if { [catch {db get $regname} ret] } {
+	    if { ! [ exists $regname ] } {
 		set reg_exists 0
 	    }
 	}

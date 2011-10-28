@@ -40,8 +40,6 @@
 
 
 /**
- *  D B _ F L A G S _ I N T E R N A L
- *
  * Given the internal form of a database object, return the
  * appropriate 'flags' word for stashing in the in-memory directory of
  * objects.
@@ -49,17 +47,17 @@
 int
 db_flags_internal(const struct rt_db_internal *intern)
 {
-    const struct rt_comb_internal	*comb;
+    const struct rt_comb_internal *comb;
 
     RT_CK_DB_INTERNAL(intern);
 
-    if ( intern->idb_type != ID_COMBINATION )
+    if (intern->idb_type != ID_COMBINATION)
 	return RT_DIR_SOLID;
 
     comb = (struct rt_comb_internal *)intern->idb_ptr;
     RT_CK_COMB(comb);
 
-    if ( comb->region_flag )
+    if (comb->region_flag)
 	return RT_DIR_COMB | RT_DIR_REGION;
     return RT_DIR_COMB;
 }
@@ -67,8 +65,6 @@ db_flags_internal(const struct rt_db_internal *intern)
 
 /* XXX - should use in db5_diradd() */
 /**
- * d b _ f l a g s _ r a w _ i n t e r n a l
- *
  * Given a database object in "raw" internal form, return the
  * appropriate 'flags' word for stashing in the in-memory directory of
  * objects.
@@ -91,7 +87,7 @@ db_flags_raw_internal(const struct db5_raw_internal *raw)
 	    if (avs.count == 0) {
 		return RT_DIR_COMB;
 	    }
-	    if (bu_avs_get( &avs, "region" ) != NULL) {
+	    if (bu_avs_get(&avs, "region") != NULL) {
 		return RT_DIR_COMB|RT_DIR_REGION;
 	    }
 	}
@@ -101,6 +97,7 @@ db_flags_raw_internal(const struct db5_raw_internal *raw)
     /* anything else is a solid? */
     return RT_DIR_SOLID;
 }
+
 
 /** @} */
 /*

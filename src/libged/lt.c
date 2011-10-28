@@ -55,7 +55,7 @@ list_children(struct ged *gedp, struct directory *dp)
 	size_t actual_count;
 	struct rt_tree_array *rt_tree_array;
 
-	if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
+	if (db_ck_v4gift_tree(comb->tree) < 0) {
 	    db_non_union_push(comb->tree, &rt_uniresource);
 	    if (db_ck_v4gift_tree(comb->tree) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for listing");
@@ -98,6 +98,7 @@ list_children(struct ged *gedp, struct directory *dp)
 	    bu_vls_printf(gedp->ged_result_str, "{%c %s} ", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
 	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
 	}
+	bu_vls_free(&vls);
 
 	if (rt_tree_array)
 	    bu_free((char *)rt_tree_array, "printnode: rt_tree_array");

@@ -271,9 +271,9 @@ nmg_to_winged_edge(r)
 
 		    /* move the other edgeuse to the same edge */
 		    if (eu2 == eu1 || eu2 == eu1->eumate_p)
-			bu_log("nmg_to_winged_edge: couldn't find second radial face for eu x%x in shell x%x\n", eu1, s);
+			bu_log("nmg_to_winged_edge: couldn't find second radial face for eu %p in shell %p\n", eu1, s);
 		    else
-			nmg_moveeu(eu1, eu2);
+			nmg_je(eu1, eu2);
 		}
 	    }
 	}
@@ -754,14 +754,14 @@ w_start_global(
     bu_vls_free(&str);
 
     /* Write Global Section */
-    bu_vls_printf(&str, ",, %ldH%s", strlen(db_name), db_name);
+    bu_vls_printf(&str, ",, %zH%s", strlen(db_name), db_name);
 
     if (output_file == NULL)
 	bu_vls_printf(&str, ", 7Hstd_out");
     else
-	bu_vls_printf(&str, ", %ldH%s", strlen(output_file), output_file);
+	bu_vls_printf(&str, ", %zH%s", strlen(output_file), output_file);
 
-    bu_vls_printf(&str, ", %ldH%s, %ldH%s, 32, 38, 6, 308, 15, %ldH%s, 1.0, 2, 2HMM,, 1.0" ,
+    bu_vls_printf(&str, ", %zH%s, %zH%s, 32, 38, 6, 308, 15, %zH%s, 1.0, 2, 2HMM,, 1.0" ,
 		  strlen(version), version ,
 		  strlen(id), id,
 		  strlen(db_name), db_name);
@@ -1199,7 +1199,7 @@ write_vertex_list(r, vtab, fp_dir, fp_param)
     nmg_vertex_tabulate(vtab, &r->l.magic);
 
     /* write parameter data for vertex list entity */
-    bu_vls_printf(&str, "502, %d", BU_PTBL_END(vtab));
+    bu_vls_printf(&str, "502, %ld", (long int)BU_PTBL_END(vtab));
 
     for (i=0; i<BU_PTBL_END(vtab); i++) {
 	struct vertex *v;
@@ -1209,7 +1209,7 @@ write_vertex_list(r, vtab, fp_dir, fp_param)
 	NMG_CK_VERTEX(v);
 	vg = v->vg_p;
 	if (!vg)
-	    bu_log("No geometry for vertex x%x #%d in table\n", v, i);
+	    bu_log("No geometry for vertex %p #%d in table\n", v, i);
 	NMG_CK_VERTEX_G(vg);
 	bu_vls_printf(&str, ", %g, %g, %g",
 		      vg->coord[X],
@@ -1355,7 +1355,7 @@ write_edge_list(r, vert_de, etab, vtab, fp_dir, fp_param)
     /* Build list of edge structures */
     nmg_edge_tabulate(etab, &r->l.magic);
 
-    bu_vls_printf(&str, "504, %d", BU_PTBL_END(etab));
+    bu_vls_printf(&str, "504, %ld", (long int)BU_PTBL_END(etab));
 
     /* write parameter data for edge list entity */
     for (i=0; i<BU_PTBL_END(etab); i++) {
@@ -2025,7 +2025,7 @@ write_name_entity(name, fp_dir, fp_param)
     if (name_len >= NAMESIZE)
 	bu_vls_printf(&str, "406, 1, 16H%16.16s;", name);
     else
-	bu_vls_printf(&str, "406, 1, %ldH%s;", strlen(name), name);
+	bu_vls_printf(&str, "406, 1, %zH%s;", strlen(name), name);
 
     /* remember where parameter data is going */
     dir_entry[2] = param_seq + 1;
@@ -2688,9 +2688,6 @@ sketch_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_par
 {
     struct rt_sketch_internal *sketch;
     struct bu_vls str;
-    int dir_entry[21];
-    int name_de;
-    int i;
 
     if (ip->idb_type != ID_SKETCH)
 	bu_log("sketch_to_iges called for non-sketch (type=%d)\n", ip->idb_type);
@@ -2700,13 +2697,9 @@ sketch_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_par
     RT_SKETCH_CK_MAGIC(sketch);
 
     /* write name entity */
-    name_de = write_name_entity(name, fp_dir, fp_param);
+    (void)write_name_entity(name, fp_dir, fp_param);
 
     bu_vls_init(&str);
-
-    /* initialize directory entry */
-    for (i=0; i<21; i++)
-	dir_entry[i] = DEFAULT;
 
     bu_log("The 'sketch' primitive is not yet supported for IGES export.\n");
     bu_log("Unable to export %s\n", name);

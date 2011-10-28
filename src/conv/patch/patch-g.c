@@ -305,7 +305,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 	       && face1_no < *face_count);
 	if (p_faces[face1_no].fu != fu1 &&
 	    p_faces[face1_no].fu != fu1) {
-	    bu_log("nmg_patch_coplanar_face_merge: Can't find entry for faceuse 0x%p in p_faces\n", fu1);
+	    bu_log("nmg_patch_coplanar_face_merge: Can't find entry for faceuse %p in p_faces\n", (void *)fu1);
 	    continue;
 	}
 
@@ -352,7 +352,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 		   && face2_no < *face_count);
 	    if (p_faces[face2_no].fu != fu2 &&
 		p_faces[face2_no].fu != fu2) {
-		bu_log("nmg_patch_coplanar_face_merge: Couldn`t find entry for faceuse 0x%p in p_faces\n", fu2);
+		bu_log("nmg_patch_coplanar_face_merge: Couldn`t find entry for faceuse %p in p_faces\n", (void *)fu2);
 		continue;
 	    }
 
@@ -400,8 +400,8 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
     bu_free((char *)flags2, "nmg_shell_coplanar_face_merge flags2[]");
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_shell_coplanar_face_merge(s=0x%p, tol=0x%p, simplify=%d)\n",
-	       s, tol, simplify);
+	bu_log("nmg_shell_coplanar_face_merge(s=%p, tol=%p, simplify=%d)\n",
+	       (void *)s, (void *)tol, simplify);
     }
 }
 
@@ -593,7 +593,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	    NMG_CK_FACEUSE(fu);
 
 	    if (debug > 2)
-		bu_log("\tMade faceuse 0x%p\n", fu);
+		bu_log("\tMade faceuse %p\n", (void *)fu);
 
 	    /* add it to the list */
 	    bu_ptbl_ins(&faces, (long *)fu);
@@ -630,7 +630,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	    NMG_CK_FACEUSE(fu);
 	    if (fu->orientation == OT_SAME) {
 		if (nmg_fu_planeeqn(fu, tol)) {
-		    bu_log("Build_solid: Failed to calculate plane eqn for outside fu 0x%p:\n", fu);
+		    bu_log("Build_solid: Failed to calculate plane eqn for outside fu %p:\n", (void *)fu);
 		    nmg_pr_fu_briefly(fu, (char *)NULL);
 		}
 	    }
@@ -831,7 +831,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 
 	fu = NMG_INDEX_GETP(faceuse, copy_tbl, p_faces[i].fu);
 	if (!fu) {
-	    bu_exit(1, "No fu in duplicate shell corresponding to fu #%d (0x%p) in original\n", i, p_faces[i].fu);
+	    bu_exit(1, "No fu in duplicate shell corresponding to fu #%d (%p) in original\n", i, (void *)p_faces[i].fu);
 	}
 
 	NMG_CK_FACEUSE(fu);
@@ -899,11 +899,11 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		NMG_CK_EDGEUSE(eu);
 		vu = eu->vu_p;
 		NMG_CK_VERTEXUSE(vu);
-		NMG_CK_VERTEX(vu->v_p)
-		    if (NMG_INDEX_TEST_AND_SET(flags, vu->v_p)) {
-			/* move this vertex */
-			bu_ptbl_ins(&verts_to_move, (long *)vu->v_p);
-		    }
+		NMG_CK_VERTEX(vu->v_p);
+		if (NMG_INDEX_TEST_AND_SET(flags, vu->v_p)) {
+		    /* move this vertex */
+		    bu_ptbl_ins(&verts_to_move, (long *)vu->v_p);
+		}
 	    }
 	}
     }
@@ -989,7 +989,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 
     /* Calculate bounding boxes */
     if (debug)
-	bu_log("nmg_region_a(r = 0x%p)\n", r);
+	bu_log("nmg_region_a(r = %p)\n", (void *)r);
     nmg_region_a(r, tol);
 
     if (debug)

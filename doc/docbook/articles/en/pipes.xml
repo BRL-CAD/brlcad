@@ -191,9 +191,13 @@
       The key to properly and precisely positioning points to build a coil
       section is to use half of the coil diameter as an offset. The first and
       the last points in the coil must lie on the pipe's path. These points are
-      easily determined at 90° intervals from the center of the pipe (or, with
+      easily determined at
+        90&#x00B0; <!-- degree symbol -->
+        intervals from the center of the pipe (or, with
       a bit of trigonometry, at any interval). The rest of the points for the
-      pipe are located at ± offsets in whichever plane is perpendicular to the
+      pipe are located at
+        &#x00B1; <!-- plus/minus symbol -->
+      offsets in whichever plane is perpendicular to the
       pipe height vector from the center of the pipe with the proper height
       delta (which will generally be 1/4 of the height per coil section).
     </para>

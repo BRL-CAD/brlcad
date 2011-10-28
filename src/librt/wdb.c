@@ -44,13 +44,11 @@
 
 
 /**
- * W D B _ F O P E N
- *
- * Create a libwdb output stream destined for a disk file.
- * This will destroy any existing file by this name, and start fresh.
- * The file is then opened in the normal "update" mode and
- * an in-memory directory is built along the way,
- * allowing retrievals and object replacements as needed.
+ * Create a libwdb output stream destined for a disk file.  This will
+ * destroy any existing file by this name, and start fresh.  The file
+ * is then opened in the normal "update" mode and an in-memory
+ * directory is built along the way, allowing retrievals and object
+ * replacements as needed.
  *
  * Users can change the database title by calling: ???
  */
@@ -78,10 +76,9 @@ wdb_fopen(const char *filename)
 
 
 /**
- * W D B _ D B O P E N
+ * Create a libwdb output stream destined for an existing BRL-CAD
+ * database, already opened via a db_open() call.
  *
- * Create a libwdb output stream destined for an existing BRL-CAD database,
- * already opened via a db_open() call.
  * RT_WDB_TYPE_DB_DISK Add to on-disk database
  * RT_WDB_TYPE_DB_DISK_APPEND_ONLY Add to on-disk database, don't clobber existing names, use prefix
  * RT_WDB_TYPE_DB_INMEM Add to in-memory database only
@@ -116,8 +113,6 @@ wdb_dbopen(struct db_i *dbip, int mode)
 
 
 /**
- * W D B _ I M P O R T
- *
  * Returns -
  *  0 and modified *internp;
  * -1 ft_import failure (from rt_db_get_internal)
@@ -140,8 +135,6 @@ wdb_import(struct rt_wdb *wdbp,	struct rt_db_internal *internp,	const char *name
 
 
 /**
- * W D B _ E X P O R T _ E X T E R N A L
- *
  * The caller must free "ep".
  *
  * Returns -
@@ -258,15 +251,14 @@ wdb_export_external(
 
 
 /**
- * W D B _ P U T _ I N T E R N A L
- *
  * Convert the internal representation of a solid to the external one,
  * and write it into the database.
- * The internal representation is always freed.
- * This is the analog of rt_db_put_internal() for rt_wdb objects.
  *
- * Use this routine in preference to wdb_export() whenever the
- * caller already has an rt_db_internal structure handy.
+ * The internal representation is always freed.  This is the analog of
+ * rt_db_put_internal() for rt_wdb objects.
+ *
+ * Use this routine in preference to wdb_export() whenever the caller
+ * already has an rt_db_internal structure handy.
  *
  * NON-PARALLEL because of rt_uniresource
  *
@@ -292,7 +284,7 @@ wdb_put_internal(
 	BU_EXTERNAL_INIT(&ext);
 
 	ret = -1;
-	if (ip->idb_meth->ft_export4) {
+	if (ip->idb_meth && ip->idb_meth->ft_export4) {
 	    ret = ip->idb_meth->ft_export4(&ext, ip, local2mm, wdbp->dbip, &rt_uniresource);
 	}
 	if (ret < 0) {
@@ -322,20 +314,18 @@ out:
 
 
 /**
- * W D B _ E X P O R T
- *
- * Export an in-memory representation of an object,
- * as described in the file h/rtgeom.h, into the indicated database.
+ * Export an in-memory representation of an object, as described in
+ * the file h/rtgeom.h, into the indicated database.
  *
  * The internal representation (gp) is always freed.
  *
  * WARNING: The caller must be careful not to double-free gp,
- * particularly if it's been extracted from an rt_db_internal,
- * e.g. by passing intern.idb_ptr for gp.
+ * particularly if it's been extracted from an rt_db_internal, e.g. by
+ * passing intern.idb_ptr for gp.
  *
- * If the caller has an rt_db_internal structure handy already,
- * they should call wdb_put_internal() directly -- this is a
- * convenience routine intended primarily for internal use in LIBWDB.
+ * If the caller has an rt_db_internal structure handy already, they
+ * should call wdb_put_internal() directly -- this is a convenience
+ * routine intended primarily for internal use in LIBWDB.
  *
  * Returns -
  *  0 OK
@@ -372,15 +362,15 @@ wdb_export(
 void
 wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
 {
-    BU_LIST_INIT(&wdbp->l);
-    BU_LIST_MAGIC_SET(&wdbp->l, RT_WDB_MAGIC);
+    BU_LIST_INIT_MAGIC(&wdbp->l, RT_WDB_MAGIC);
+
     wdbp->type = mode;
     wdbp->dbip = dbip;
     wdbp->dbip->dbi_wdbp = wdbp;
 
     /* Provide the same default tolerance that librt/prep.c does */
     wdbp->wdb_tol.magic = BN_TOL_MAGIC;
-    wdbp->wdb_tol.dist = 0.005;
+    wdbp->wdb_tol.dist = 0.0005;
     wdbp->wdb_tol.dist_sq = wdbp->wdb_tol.dist * wdbp->wdb_tol.dist;
     wdbp->wdb_tol.perp = 1e-6;
     wdbp->wdb_tol.para = 1 - wdbp->wdb_tol.perp;
@@ -410,8 +400,6 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
 
 
 /**
- * W D B _ C L O S E
- *
  * Release from associated database "file", destroy dynamic data
  * structure.
  */
@@ -447,8 +435,6 @@ wdb_close(struct rt_wdb *wdbp)
 
 
 /**
- * W D B _ I M P O R T _ F R O M _ P A T H 2
- *
  * Given the name of a database object or a full path to a leaf
  * object, obtain the internal form of that leaf.  Packaged separately
  * mainly to make available nice Tcl error handling. Additionally,
@@ -493,7 +479,7 @@ wdb_import_from_path2(struct bu_vls *logstr, struct rt_db_internal *ip, const ch
 
 	MAT_COPY(matp, ts.ts_mat);
 
-	if (ret < 0) {
+	if (dp_curr || ret < 0) {
 	    bu_vls_printf(logstr, "wdb_import_from_path: '%s' is a bad path\n", path);
 	    return BRLCAD_ERROR;
 	}
@@ -526,8 +512,6 @@ wdb_import_from_path2(struct bu_vls *logstr, struct rt_db_internal *ip, const ch
 
 
 /**
- * W D B _ I M P O R T _ F R O M _ P A T H
- *
  * Given the name of a database object or a full path to a leaf
  * object, obtain the internal form of that leaf.  Packaged separately
  * mainly to make available nice Tcl error handling.

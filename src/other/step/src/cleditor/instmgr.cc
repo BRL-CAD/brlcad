@@ -53,19 +53,8 @@ InstMgr::PrintSortedFileIds()
 InstMgr::InstMgr(int ownsInstances)
  : maxFileId(-1), _ownsInstances(ownsInstances)
 {
-
-/*
-#ifdef __OSTORE__
-    master = new (os_segment::of(this), MgrNodeArray::get_os_typespec()) 
-		MgrNodeArray();
-    sortedMaster = new (os_segment::of(this), 
-			MgrNodeArraySorted::get_os_typespec())
-		MgrNodeArraySorted();
-#else
-*/
     master = new MgrNodeArray();
     sortedMaster = new MgrNodeArraySorted();
-//#endif
 }
 
 InstMgr::~InstMgr()
@@ -74,6 +63,8 @@ InstMgr::~InstMgr()
     {
 	master->DeleteEntries();
     }
+    delete master;
+    delete sortedMaster;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -249,16 +240,8 @@ MgrNode *InstMgr::Append(SCLP23(Application_instance) *se, stateEnum listState)
     // update the maxFileId if needed
     if (se->StepFileId() > MaxFileId()) maxFileId = se->StepFileId();
 
-/*
-#ifdef __OSTORE__
-    mn = new (os_segment::of(this), MgrNode::get_os_typespec()) 
-	MgrNode(se, listState);
-    cout << "Appended entity: " << flush;
-    cout << se->EntityName() << endl << flush;
-#else
-*/
     mn = new MgrNode(se, listState);
-//#endif
+
     if (debug_level > 3)
       cerr << "new MgrNode for " << mn->GetFileId() << " with state " 
 	   << mn->CurrState () << endl;

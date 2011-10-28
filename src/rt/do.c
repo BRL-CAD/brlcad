@@ -586,7 +586,7 @@ do_frame(int framenumber)
     int lim = 0;
     vect_t work, temp;
     quat_t quat;
-
+    
     if (rt_verbosity & VERBOSE_FRAMENUMBER)
 	bu_log("\n...................Frame %5d...................\n",
 	       framenumber);
@@ -778,6 +778,9 @@ do_frame(int framenumber)
 
 	/* Ordinary case for creating output file */
 	if (outfp == NULL) {
+	    /* FIXME: in the case of rtxray, this is wrong.  it writes
+	     * out a bw image so depth should be just 1, not 3.
+	     */
 	    bif = bu_image_save_open(framename, BU_IMAGE_AUTO_NO_PIX, width, height, 3);
 	    if (bif == NULL && (outfp = fopen(framename, "w+b")) == NULL) {
 		perror(framename);
@@ -824,7 +827,17 @@ do_frame(int framenumber)
 
 	    do_run(0, (1<<incr_level)*(1<<incr_level)-1);
 	}
-    } else {
+    } 
+    else if (full_incr_mode){
+	/* Multiple frame buffer mode */
+	for(full_incr_sample = 1; full_incr_sample <= full_incr_nsamples; 
+	    full_incr_sample++){
+	    if(full_incr_sample > 1) /* first sample was already initialized */
+		view_2init(&APP, framename);
+	    do_run(pix_start, pix_end);
+	}
+    }
+    else {
 	do_run(pix_start, pix_end);
 
 	/* Reset values to full size, for next frame (if any) */
@@ -886,9 +899,9 @@ do_frame(int framenumber)
     bu_vls_free(&times);
     memory_summary();
     if (rt_verbosity & VERBOSE_STATS) {
-	bu_log("%ld solid/ray intersections: %ld hits + %ld miss\n",
+	bu_log("%zu solid/ray intersections: %zu hits + %zu miss\n",
 	       rtip->nshots, rtip->nhits, rtip->nmiss);
-	bu_log("pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
+	bu_log("pruned %.1f%%:  %zu model RPP, %zu dups skipped, %zu solid RPP\n",
 	       rtip->nshots>0?((double)rtip->nhits*100.0)/rtip->nshots:100.0,
 	       rtip->nmiss_model, rtip->ndup, rtip->nmiss_solid);
 	bu_log("Frame %2d: %10zu pixels in %9.2f sec = %12.2f pixels/sec\n",
@@ -1023,20 +1036,17 @@ res_pr(void)
     register struct resource *res;
     register int i;
 
-    fprintf(stderr, "\nResource use summary, by processor:\n");
+    bu_log("\nResource use summary, by processor:\n");
     res = &resource[0];
     for (i=0; i<npsw; i++, res++) {
-	fprintf(stderr, "---CPU %d:\n", i);
+	bu_log("---CPU %d:\n", i);
 	if (res->re_magic != RESOURCE_MAGIC) {
-	    fprintf(stderr, "Bad magic number!!\n");
+	    bu_log("Bad magic number!\n");
 	    continue;
 	}
-	fprintf(stderr, "seg       len=%10ld get=%10ld free=%10ld\n",
-		res->re_seglen, res->re_segget, res->re_segfree);
-	fprintf(stderr, "partition len=%10ld get=%10ld free=%10ld\n",
-		res->re_partlen, res->re_partget, res->re_partfree);
-	fprintf(stderr, "boolstack len=%10ld\n",
-		res->re_boolslen);
+	bu_log("seg       len=%10ld get=%10ld free=%10ld\n", res->re_seglen, res->re_segget, res->re_segfree);
+	bu_log("partition len=%10ld get=%10ld free=%10ld\n", res->re_partlen, res->re_partget, res->re_partfree);
+	bu_log("boolstack len=%10ld\n", res->re_boolslen);
     }
 }
 

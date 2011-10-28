@@ -61,7 +61,6 @@ _brlcad_data()
 }
 
 
-
 /**
  * b u _ r o o t _ m i s s i n g
  *

@@ -134,9 +134,9 @@ main(int argc, char **argv)
 
     if (png_get_oFFs(png_p, info_p, &xoff, &yoff, &unit_type)) {
 	if (unit_type == PNG_OFFSET_PIXEL)
-	    bu_log("X Offset: %d pixels\nY Offset: %d pixels\n", xoff, yoff);
+	    bu_log("X Offset: %d pixels\nY Offset: %d pixels\n", (int)xoff, (int)yoff);
 	else if (unit_type == PNG_OFFSET_MICROMETER)
-	    bu_log("X Offset: %d um\nY Offset: %d um\n", xoff, yoff);
+	    bu_log("X Offset: %d um\nY Offset: %d um\n", (int)xoff, (int)yoff);
     }
 
     if (png_get_pHYs(png_p, info_p, &xres, &yres, &unit_type)) {
@@ -144,7 +144,7 @@ main(int argc, char **argv)
 	    bu_log("Aspect ratio: %g (width/height)\n", (double)xres/(double)yres);
 	else if (unit_type == PNG_RESOLUTION_METER)
 	    bu_log("pixel density:\n\t%d pixels/m hroizontal\n\t%d pixels/m vertical\n",
-		   xres, yres);
+		   (int)xres, (int)yres);
     }
 
     if (png_get_interlace_type(png_p, info_p) == PNG_INTERLACE_NONE)

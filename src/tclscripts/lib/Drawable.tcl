@@ -18,6 +18,12 @@
 # information.
 #
 ###
+
+#####################################################################
+# DEPRECATED: This widget is deprecated and should no longer be used.
+# Use the Ged widget instead.
+#####################################################################
+
 #
 # Description -
 #	The Drawable class wraps LIBRT's drawable geometry object.
@@ -77,6 +83,8 @@
 
 ::itcl::body Drawable::constructor {db} {
     global tcl_platform
+
+    puts "DEPRECATION WARNING: The Drawable widget should no longer be used.  Use the Ged widget instead."
 
     set dg [subst $this]_dg
     dg_open $dg $db

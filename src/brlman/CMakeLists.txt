@@ -19,3 +19,6 @@ SET(mandir "\${datarootdir}/man")
 configure_file(brlman.sh.in ${CMAKE_BINARY_DIR}/src/brlman/brlman @ONLY)
 INSTALL(PROGRAMS ${CMAKE_BINARY_DIR}/src/brlman/brlman DESTINATION ${BIN_DIR})
 install(FILES brlman.1 DESTINATION ${MAN_DIR}/man1)
+
+CMAKEFILES(brlman.1 brlman.sh.in)
+CMAKEFILES(Makefile.am)

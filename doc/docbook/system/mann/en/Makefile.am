@@ -69,12 +69,15 @@ mannDOCBOOK_EN = \
 	system/mann/en/edcolor.xml \
 	system/mann/en/edcomb.xml \
 	system/mann/en/edgedir.xml \
+	system/mann/en/edit.xml \
+	system/mann/en/edit_translate.xml \
 	system/mann/en/edmater.xml \
 	system/mann/en/em.xml \
 	system/mann/en/eqn.xml \
 	system/mann/en/erase.xml \
 	system/mann/en/erase_all.xml \
 	system/mann/en/ev.xml \
+	system/mann/en/exists.xml \
 	system/mann/en/exit.xml \
 	system/mann/en/expand.xml \
 	system/mann/en/export_body.xml \

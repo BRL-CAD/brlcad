@@ -33,7 +33,7 @@
 
 
 struct pixel {
-    long p_magic;
+    uint32_t p_magic;
     unsigned char *p_color;
     int p_count;
 };

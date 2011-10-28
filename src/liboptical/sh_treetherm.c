@@ -101,7 +101,7 @@ struct branch_seg {
 #define THRM_SEG_MAGIC 246127
 #define CK_THRM_SEG(_p) BU_CKMAG(_p, THRM_SEG_MAGIC, "thrm_seg")
 struct thrm_seg {
-    long magic;
+    uint32_t magic;
     float pt[3];			/* center point of nodes */
     float dir[3];
     float node[NUM_NODES][3];	/* vectors from center to each node */
@@ -115,7 +115,7 @@ struct thrm_seg {
  * to any particular use of the shader.
  */
 struct tthrm_specific {
-    long magic;
+    uint32_t magic;
     char tt_name[64];
     long tt_max_seg;
     fastf_t tt_min_temp;

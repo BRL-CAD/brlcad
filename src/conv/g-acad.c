@@ -153,14 +153,14 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
 		    if (i < 0) {
 			bu_ptbl_free(&verts);
 			bu_free(region_name, "region name");
-			bu_log("Vertex from eu x%x is not in nmgregion x%x\n", eu, r);
+			bu_log("Vertex from eu %p is not in nmgregion %p\n", (void *)eu, (void *)r);
 			bu_exit(1, "ERROR: Triangle vertex was not located\n");
 		    }
 		}
 		if (vert_count > 3) {
 		    bu_ptbl_free(&verts);
 		    bu_free(region_name, "region name");
-		    bu_log("lu x%x has too many (%d) vertices!\n", lu, vert_count);
+		    bu_log("lu %p has too many (%d) vertices!\n", (void *)lu, vert_count);
 		    bu_exit(1, "ERROR: LU is not a triangle\n");
 		} else if (vert_count < 3)
 		    continue;
@@ -231,7 +231,7 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
 		    i = bu_ptbl_locate(&verts, (long *)v);
 		    if (i < 0) {
 			bu_ptbl_free(&verts);
-			bu_log("Vertex from eu x%x is not in nmgregion x%x\n", eu, r);
+			bu_log("Vertex from eu %p is not in nmgregion %p\n", (void *)eu, (void *)r);
 			bu_free(region_name, "region name");
 			bu_exit(1, "ERROR: Can't find vertex in list!\n");
 		    }
@@ -248,7 +248,7 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
 		if (vert_count > 3) {
 		    bu_ptbl_free(&verts);
 		    bu_free(region_name, "region name");
-		    bu_log("lu x%x has %d vertices!\n", lu, vert_count);
+		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
 		    bu_exit(1, "ERROR: LU is not a triangle\n");
 		} else if (vert_count < 3)
 		    continue;
@@ -500,7 +500,7 @@ main(int argc, char **argv)
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-5;
+    tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
     rt_init_resource(&rt_uniresource, 0, NULL);

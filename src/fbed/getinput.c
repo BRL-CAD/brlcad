@@ -272,7 +272,6 @@ get_Input(char* inbuf, size_t bufsz, const char* msg)
 Func_Tab *
 get_Func_Name(char* inbuf, size_t bufsz, const char* msg)
 {
-    extern Try	*try_rootp;
     extern Func_Tab	*get_Try(char *name, Try *tryp);
     static char buffer[BUFSIZ];
     char *p = buffer;

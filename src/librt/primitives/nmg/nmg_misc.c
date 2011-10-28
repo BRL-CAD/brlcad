@@ -873,7 +873,7 @@ nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, co
  * passed. Returns the number of flags set.
  */
 int
-nmg_mark_edges_real(const unsigned long *magic_p)
+nmg_mark_edges_real(const uint32_t *magic_p)
 {
     struct bu_ptbl edges;
     int i, count;
@@ -1843,7 +1843,7 @@ rt_dist_line3_line3(fastf_t *dist, const fastf_t *p1, const fastf_t *d1, const f
     if (tol->dist > 0.0)
 	tol_dist = tol->dist;
     else
-	tol_dist = 0.005;
+	tol_dist = 0.0005;
 
     if (tol->dist_sq > 0.0)
 	tol_dist_sq = tol->dist_sq;
@@ -2121,11 +2121,11 @@ nmg_in_or_ref(struct vertexuse *vu, struct bu_ptbl *b)
 {
     union {
 	struct vertexuse **vu;
-	long **magic_p;
+	uint32_t **magic_p;
     } p;
     int i;
 
-    p.magic_p = b->buffer;
+    p.magic_p = (uint32_t **)b->buffer;
     for (i=0; i < b->end; ++i) {
 	if (p.vu[i] && *p.magic_p[i] == NMG_VERTEXUSE_MAGIC &&
 	    (p.vu[i] == vu || p.vu[i]->v_p == vu->v_p))
@@ -2220,7 +2220,7 @@ nmg_rebound(struct model *m, const struct bn_tol *tol)
  * N M G _ C O U N T _ S H E L L _ K I D S
  */
 void
-nmg_count_shell_kids(const struct model *m, long unsigned int *total_faces, long unsigned int *total_wires, long unsigned int *total_points)
+nmg_count_shell_kids(const struct model *m, size_t *total_faces, size_t *total_wires, size_t *total_points)
 {
     short *tbl;
 
@@ -2780,7 +2780,7 @@ nmg_dup_shell(struct shell *s, long int ***trans_tbl, const struct bn_tol *tol)
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
 
-    m = nmg_find_model((unsigned long *)s);
+    m = nmg_find_model((uint32_t *)s);
 
     /* create translation table double size to accomodate both copies */
     tbl_size = m->maxindex * 3;
@@ -3956,7 +3956,7 @@ struct nmg_split_loops_state
 
 
 void
-nmg_split_loops_handler(long int *fu_p, genptr_t sl_state, int UNUSED(unused))
+nmg_split_loops_handler(uint32_t *fu_p, genptr_t sl_state, int UNUSED(unused))
 {
     struct faceuse *fu;
     struct nmg_split_loops_state *state;
@@ -4130,7 +4130,7 @@ nmg_split_loops_handler(long int *fu_p, genptr_t sl_state, int UNUSED(unused))
  * Returns the number of faces modified.
  */
 int
-nmg_split_loops_into_faces(unsigned long int *magic_p, const struct bn_tol *tol)
+nmg_split_loops_into_faces(uint32_t *magic_p, const struct bn_tol *tol)
 {
     struct model *m;
     struct nmg_split_loops_state sl_state;
@@ -4675,7 +4675,7 @@ struct nmg_unbreak_state
  * first edgeuse mate to the vu of the killed edgeuse mate.
  */
 void
-nmg_unbreak_handler(long int *eup, genptr_t state, int UNUSED(unused))
+nmg_unbreak_handler(uint32_t *eup, genptr_t state, int UNUSED(unused))
 {
     struct edgeuse *eu1, *eu2;
     struct edge *e;
@@ -4753,7 +4753,7 @@ nmg_unbreak_handler(long int *eup, genptr_t state, int UNUSED(unused))
  * returns the number of edges mended
  */
 int
-nmg_unbreak_region_edges(unsigned long *magic_p)
+nmg_unbreak_region_edges(uint32_t *magic_p)
 {
     struct model *m;
     struct nmg_unbreak_state ub_state;
@@ -5113,40 +5113,44 @@ nmg_simple_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const
 int
 nmg_ck_vert_on_fus(const struct vertex *v, const struct bn_tol *tol)
 {
+    struct faceuse *fu;
     struct vertexuse *vu;
-    fastf_t max_dist=0.0;
-    int ret_val=0;
+    fastf_t max_dist = 0.0;
+    fastf_t dist = 0.0;
+    int ret_val = 0;
+    plane_t pl;
 
     NMG_CK_VERTEX(v);
     BN_CK_TOL(tol);
-
     NMG_CK_VERTEX_G(v->vg_p);
 
     for (BU_LIST_FOR (vu, vertexuse, &v->vu_hd)) {
-	struct faceuse *fu;
-	fastf_t dist;
-
+        /* nmg_ck_vertexuse called within nmg_find_fu_of_vu,
+         * so do not need to call here
+         */
 	fu = nmg_find_fu_of_vu(vu);
-	if (!fu)
+	if (!fu) {
 	    continue;
-
-	NMG_CK_FACEUSE(fu);
-	NMG_CK_FACE(fu->f_p);
-	NMG_CK_FACE_G_PLANE(fu->f_p->g.plane_p);
-	dist = DIST_PT_PLANE(v->vg_p->coord, fu->f_p->g.plane_p->N);
-	dist = (dist < 0.0 ? (-dist) : dist);
+	}
+	/* nmg_ck_faceuse, nmg_ck_face and nmg_ck_face_g_plane
+	 * are called within the nmg_get_fu_plane macro so
+	 * do not need to call them here
+	 */
+	NMG_GET_FU_PLANE(pl, fu);
+	dist = fabs(DIST_PT_PLANE(v->vg_p->coord, pl));
 	if (dist > tol->dist) {
 	    ret_val = 1;
-
-	    if (dist > max_dist)
+	    if (dist > max_dist) {
 		max_dist = dist;
-
-	    bu_log("nmg_ck_vert_on_fus: v=x%x vu=x%x (%f %f %f) is %g from\n\tfaceuse x%x f x%x\n", v, vu, V3ARGS(v->vg_p->coord), dist, fu, fu->f_p);
+	    }
+	    bu_log("nmg_ck_vert_on_fus: v=x%x vu=x%x (%f %f %f) is %g from\n\tfaceuse x%x f x%x\n", 
+		    v, vu, V3ARGS(v->vg_p->coord), dist, fu, fu->f_p);
 	}
     }
 
     if (ret_val)
-	bu_log("nmg_ck_vert_on_fus: v=x%x (%f %f %f) max distance of %g from faceuses\n", v, V3ARGS(v->vg_p->coord), max_dist);
+	bu_log("nmg_ck_vert_on_fus: v=x%x (%f %f %f) max distance of %g from faceuses\n", 
+		v, V3ARGS(v->vg_p->coord), max_dist);
 
     return ret_val;
 }
@@ -5185,7 +5189,7 @@ nmg_pr_inter(const struct vertex *new_v, const struct bu_ptbl *int_faces)
     BU_CK_PTBL(int_faces);
 
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
@@ -9338,7 +9342,7 @@ nmg_break_edge_at_verts(struct edge *e, struct bu_ptbl *verts, const struct bn_t
 
 
 int
-nmg_break_edges(unsigned long *magic_p, const struct bn_tol *tol)
+nmg_break_edges(uint32_t *magic_p, const struct bn_tol *tol)
 {
     struct bu_ptbl edges;
     struct bu_ptbl verts;

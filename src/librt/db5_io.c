@@ -724,7 +724,13 @@ rt_db_cvt_to_external5(
     }
     RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);	/* may be null */
-    RT_CK_RESOURCE(resp);
+
+    if (resp) {
+	RT_CK_RESOURCE(resp);
+    } else {
+	/* needed for call into functab */
+	resp = &rt_uniresource;
+    }
     
     /* prepare output */
     BU_EXTERNAL_INIT(ext);
@@ -735,7 +741,7 @@ rt_db_cvt_to_external5(
 
     /* Scale change on export is 1.0 -- no change */
     ret = -1;
-    if (ip->idb_meth->ft_export5) {
+    if (ip->idb_meth && ip->idb_meth->ft_export5) {
 	ret = ip->idb_meth->ft_export5(&body, ip, conv2mm, dbip, resp);
     }
     if (ret < 0) {
@@ -914,8 +920,10 @@ rt_db_put_internal5(
     RT_CK_DIR(dp);
     RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(resp);
     BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
+
+    if (resp)
+	RT_CK_RESOURCE(resp);
 
     BU_EXTERNAL_INIT(&ext);
     if (rt_db_cvt_to_external5(&ext, dp->d_namep, ip, 1.0, dbip, resp, major) < 0) {
@@ -982,6 +990,13 @@ rt_db_external5_to_internal5(
     BU_CK_EXTERNAL(ep);
     RT_CK_DB_INTERNAL(ip);
     RT_CK_DBI(dbip);
+
+    if (resp) {
+	RT_CK_RESOURCE(resp);
+    } else {
+	/* needed for call into functab */
+	resp = &rt_uniresource;
+    }
 
     BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
 
@@ -1093,6 +1108,9 @@ rt_db_get_internal5(
 
     BU_EXTERNAL_INIT(&ext);
     RT_DB_INTERNAL_INIT(ip);
+    if (resp) {
+	RT_CK_RESOURCE(resp);
+    }
 
     BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
 

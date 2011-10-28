@@ -70,7 +70,7 @@ extern "C" {
 
 /* Prevent enum conflict with vmath.h */
 namespace {
-    
+
     enum {
 	A, B, C, D, E, F, G, H
     };
@@ -289,13 +289,13 @@ namespace {
 	// edge data should be inverted from its default orientation for
 	// the purposes of loop assembly.
 
-        MakeTwistedCubeFace(brep,
+	MakeTwistedCubeFace(brep,
 			    ABCD, // index of surface geometry
 			    +1,   // orientation of surface w.r.t. brep
 			    A, B, C, D, // indices of vertices listed in order
 			    AB, +1, // south edge, orientation w.r.t. trimming curve
-			    BC, +1, // east edge, orientation w.r.t. trimming curve 
-			    CD, +1, // west edge, orientation w.r.t. trimming curve 
+			    BC, +1, // east edge, orientation w.r.t. trimming curve
+			    CD, +1, // west edge, orientation w.r.t. trimming curve
 			    DA, +1);// north edge, orientation w.r.t. trimming curve
 
 	MakeTwistedCubeFace(brep,
@@ -303,8 +303,8 @@ namespace {
 			    +1,   // orientation of surface w.r.t. brep
 			    B, E, H, C, // indices of vertices listed in order
 			    BE, +1, // south edge, orientation w.r.t. trimming curve
-			    EH, +1, // east edge, orientation w.r.t. trimming curve 
-			    HC, +1, // west edge, orientation w.r.t. trimming curve 
+			    EH, +1, // east edge, orientation w.r.t. trimming curve
+			    HC, +1, // west edge, orientation w.r.t. trimming curve
 			    BC, -1);// north edge, orientation w.r.t. trimming curve
 
 	MakeTwistedCubeFace(brep,
@@ -312,8 +312,8 @@ namespace {
 			    +1,   // orientation of surface w.r.t. brep
 			    E, F, G, H, // indices of vertices listed in order
 			    EF, +1, // south edge, orientation w.r.t. trimming curve
-			    FG, +1, // east edge, orientation w.r.t. trimming curve 
-			    GH, +1, // west edge, orientation w.r.t. trimming curve 
+			    FG, +1, // east edge, orientation w.r.t. trimming curve
+			    GH, +1, // west edge, orientation w.r.t. trimming curve
 			    EH, -1);// north edge, orientation w.r.t. trimming curve
 
 	MakeTwistedCubeFace(brep,
@@ -321,8 +321,8 @@ namespace {
 			    +1,   // orientation of surface w.r.t. brep
 			    F, A, D, G, // indices of vertices listed in order
 			    FA, +1, // south edge, orientation w.r.t. trimming curve
-			    DA, -1, // east edge, orientation w.r.t. trimming curve 
-			    DG, +1, // west edge, orientation w.r.t. trimming curve 
+			    DA, -1, // east edge, orientation w.r.t. trimming curve
+			    DG, +1, // west edge, orientation w.r.t. trimming curve
 			    FG, -1);// north edge, orientation w.r.t. trimming curve
 
 	MakeTwistedCubeFace(brep,
@@ -330,8 +330,8 @@ namespace {
 			    +1,   // orientation of surface w.r.t. brep
 			    F, E, B, A, // indices of vertices listed in order
 			    EF, -1, // south edge, orientation w.r.t. trimming curve
-			    BE, -1, // east edge, orientation w.r.t. trimming curve 
-			    AB, -1, // west edge, orientation w.r.t. trimming curve 
+			    BE, -1, // east edge, orientation w.r.t. trimming curve
+			    AB, -1, // west edge, orientation w.r.t. trimming curve
 			    FA, -1);// north edge, orientation w.r.t. trimming curve
 
 	MakeTwistedCubeFace(brep,
@@ -339,8 +339,8 @@ namespace {
 			    +1,   // orientation of surface w.r.t. brep
 			    D, C, H, G, // indices of vertices listed in order
 			    CD, -1, // south edge, orientation w.r.t. trimming curve
-			    HC, -1, // east edge, orientation w.r.t. trimming curve 
-			    GH, -1, // west edge, orientation w.r.t. trimming curve 
+			    HC, -1, // east edge, orientation w.r.t. trimming curve
+			    GH, -1, // west edge, orientation w.r.t. trimming curve
 			    DG, -1);// north edge, orientation w.r.t. trimming curve
 
     }
@@ -451,10 +451,10 @@ main(int argc, char** argv)
 	bu_exit(1, "ERROR: unable to make the twisted cube\n");
     }
     mk_brep(outfp, geom_name, brep);
-    
+
     unsigned char rgb[] = {255, 255, 255};
     mk_region1(outfp, "cube.r", geom_name, "plastic", "", rgb);
-    
+
     wdb_close(outfp);
     delete brep;
 

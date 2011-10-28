@@ -138,7 +138,7 @@ main(int argc, char **argv)
     debug = 0;
 
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
@@ -587,7 +587,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	bu_prmem( "After fixing normals:\n" );
 
     if ( debug )
-	bu_log( "nmg_s_join_touchingloops( %x )\n", s );
+	bu_log( "nmg_s_join_touchingloops( %p )\n", (void *)s );
     nmg_s_join_touchingloops( s, &tol );
 
     /* kill cracks */
@@ -606,7 +606,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	return cur_id;
 
     if ( debug )
-	bu_log( "nmg_s_split_touchingloops( %x )\n", s );
+	bu_log( "nmg_s_split_touchingloops( %p )\n", (void *)s );
     nmg_s_split_touchingloops( s, &tol);
 
     /* kill cracks */
@@ -658,7 +658,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	    NMG_GET_FU_PLANE( pl, fu );
 
 	    if ( debug )
-		bu_log( "faceuse x%x ( %g %g %g %g )\n", fu, V4ARGS( pl ) );
+		bu_log( "faceuse %p ( %g %g %g %g )\n", (void *)fu, V4ARGS( pl ) );
 
 	    /* check if all the vertices for this face lie on the plane */
 	    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
@@ -670,8 +670,8 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 		    vu = BU_LIST_FIRST( vertexuse, &lu->down_hd );
 		    dist_to_plane = DIST_PT_PLANE( vu->v_p->vg_p->coord, pl );
 		    if ( dist_to_plane > tol.dist || dist_to_plane < -tol.dist )
-			bu_log( "\tvertex x%x ( %g %g %g ) is %g off plane\n",
-				vu->v_p, V3ARGS( vu->v_p->vg_p->coord ), dist_to_plane );
+			bu_log( "\tvertex %p ( %g %g %g ) is %g off plane\n",
+				(void *)vu->v_p, V3ARGS( vu->v_p->vg_p->coord ), dist_to_plane );
 		}
 		else
 		{
@@ -681,8 +681,8 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 			vu = eu->vu_p;
 			dist_to_plane = DIST_PT_PLANE( vu->v_p->vg_p->coord, pl );
 			if ( dist_to_plane > tol.dist || dist_to_plane < -tol.dist )
-			    bu_log( "\tvertex x%x ( %g %g %g ) is %g off plane\n",
-				    vu->v_p, V3ARGS( vu->v_p->vg_p->coord ), dist_to_plane );
+			    bu_log( "\tvertex %p ( %g %g %g ) is %g off plane\n",
+				    (void *)vu->v_p, V3ARGS( vu->v_p->vg_p->coord ), dist_to_plane );
 		    }
 		}
 	    }

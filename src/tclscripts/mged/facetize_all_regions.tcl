@@ -29,9 +29,9 @@ proc attempt_facetize {reg reg_fail fail} {
 
     # check to see if the bot already exists
     # or previously failed to facetize
-    if { ! [catch {db get_type $reg.bot} dbtype]} {
+    if { [ exists $reg.bot ] } {
 	# already exists
-	puts " ---- $reg.bot exists $dbtype"
+	puts " ---- $reg.bot already exists"
 	return 3
     }
 

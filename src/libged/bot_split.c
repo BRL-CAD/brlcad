@@ -41,6 +41,9 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
+    struct bu_vls bot_result_list;
+    struct bu_vls new_bots;
+    struct bu_vls error_str;
     static const char *usage = "bot [bot2 bot3 ...]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -50,6 +53,11 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    /* initialize bot lists */
+    bu_vls_init(&bot_result_list);
+    bu_vls_init(&new_bots);
+    bu_vls_init(&error_str);
+
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
@@ -57,10 +65,19 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (i=1; i < argc; ++i) {
-	struct rt_bot_list *headRblp;
+	/* Skip past any path elements */
+	char *obj = bu_basename(argv[i]);
+	struct rt_bot_list *headRblp = NULL;
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET)) == RT_DIR_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: db_lookup(%s) error\n", argv[0], argv[i]);
+	if (BU_STR_EQUAL(obj, ".")) {
+	    /* malformed path, lookup using exactly what was provided */
+	    bu_free(obj, "free bu_basename");
+	    obj = bu_strdup(argv[i]);
+	}
+
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, obj, LOOKUP_QUIET)) == RT_DIR_NULL) {
+	    bu_vls_printf(&error_str, "%s: db_lookup(%s) error\n", argv[0], obj);
+	    bu_free(obj, "free obj");
 	    continue;
 	}
 
@@ -68,7 +85,8 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 
 	if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	    rt_db_free_internal(&intern);
-	    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT solid!\n", argv[0], argv[i]);
+	    bu_vls_printf(&error_str, "%s: %s is not a BOT solid!\n", argv[0], obj);
+	    bu_free(obj, "free obj");
 	    continue;
 	}
 
@@ -76,17 +94,26 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 	headRblp = rt_bot_split(bot);
 
 	{
-	    int ac = 2;
-	    const char *av[3];
+	    int ac = 3;
+	    const char *av[4];
 	    struct rt_db_internal bot_intern;
 	    struct rt_bot_list *rblp;
 
 	    av[0] = "make_name";
+	    av[1] = "-s";
+	    av[2] = "0";
+	    av[3] = (char *)0;
+
+	    /* Set make_name's count to 0 */
+	    ged_make_name(gedp, ac, av);
+
+	    ac = 2;
 	    av[2] = (char *)0;
 
+	    bu_vls_init(&new_bots);
 	    for (BU_LIST_FOR(rblp, rt_bot_list, &headRblp->l)) {
 		/* Get a unique name based on the original name */
-		av[1] = argv[i];
+		av[1] = obj;
 		ged_make_name(gedp, ac, av);
 
 		/* Create the bot */
@@ -96,26 +123,41 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 		bot_intern.idb_meth = &rt_functab[ID_BOT];
 		bot_intern.idb_ptr = (genptr_t)rblp->bot;
 
+		/* Save new bot name for later use */
+		bu_vls_printf(&new_bots, "%V ", gedp->ged_result_str);
+
 		dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(gedp->ged_result_str), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&bot_intern.idb_type);
 		if (dp == RT_DIR_NULL) {
-		    bu_vls_printf(gedp->ged_result_str, " failed to be added to the database.");
+		    bu_vls_printf(&error_str, " failed to be added to the database.\n");
 		    rt_bot_list_free(headRblp, 0);
 		    rt_db_free_internal(&intern);
 		}
 
 		if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &bot_intern, &rt_uniresource) < 0) {
-		    bu_vls_printf(gedp->ged_result_str, " failed to be added to the database.");
+		    bu_vls_printf(&error_str, " failed to be added to the database.\n");
 		    rt_bot_list_free(headRblp, 0);
 		    rt_db_free_internal(&intern);
 		}
 	    }
 
+	    /* Save the name of the original bot and the new bots as a sublist */
+	    bu_vls_printf(&bot_result_list, "{%s {%V}} ", obj, &new_bots);
+
 	    bu_vls_trunc(gedp->ged_result_str, 0);
+	    bu_vls_trunc(&new_bots, 0);
 	}
 
 	rt_bot_list_free(headRblp, 0);
 	rt_db_free_internal(&intern);
+	bu_free(obj, "free obj");
     }
+
+    bu_vls_trunc(gedp->ged_result_str, 0);
+    bu_vls_printf(gedp->ged_result_str, "%V {%V}", &bot_result_list, &error_str);
+
+    bu_vls_free(&bot_result_list);
+    bu_vls_free(&new_bots);
+    bu_vls_free(&error_str);
 
     return GED_OK;
 }

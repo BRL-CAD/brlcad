@@ -20,37 +20,40 @@ EXTRA_DIST = \
 	${DATAFILES} \
 	CMake/BRLCAD_CPackOptions.cmake.in \
 	CMake/BRLCAD_CheckFunctions.cmake \
+	CMake/BRLCAD_CompilerFlags.cmake \
 	CMake/BRLCAD_Dependent_Options.cmake \
 	CMake/BRLCAD_Util.cmake \
 	CMake/CheckCFileRuns.cmake \
 	CMake/CheckPrototypeExists.cmake \
 	CMake/CompilerFlags.cmake \
-	CMake/FindFOP.cmake \
+	CMake/DiffCache.cmake \
 	CMake/FindGL.cmake \
+	CMake/FindLEMON.cmake \
 	CMake/FindLEX.cmake \
 	CMake/FindOIIO.cmake \
 	CMake/FindOPENNURBS.cmake \
 	CMake/FindOSL.cmake \
 	CMake/FindOpenEXR.cmake \
 	CMake/FindPkgMacros.cmake \
+	CMake/FindRE2C.cmake \
 	CMake/FindREGEX.cmake \
 	CMake/FindSCL.cmake \
 	CMake/FindShellDeps.cmake \
 	CMake/FindTBB.cmake \
 	CMake/FindTCL.cmake \
 	CMake/FindTERMLIB.cmake \
-	CMake/FindTclPackage.cmake \
 	CMake/FindUTAHRLE.cmake \
 	CMake/FindX11.cmake \
-	CMake/FindXSLT.cmake \
 	CMake/FindYACC.cmake \
 	CMake/FindZLIB.cmake \
+	CMake/Fink_MacPorts.cmake \
 	CMake/NSIS.template.in \
+	CMake/ResetCache.cmake \
 	CMake/ResolveCompilerPaths.cmake \
 	CMake/ThirdParty.cmake \
+	CMake/ThirdParty_TCL.cmake \
 	CMake/distcheck_buildsys.cmake.in \
-	CMake/distcheck_success_message.cmake.in \
-	CMake/svncheck.cmake.in \
+	CMake/distcheck_message.in \
 	CMake/test_srcs/alloca_header_test.c \
 	CMake/test_srcs/alloca_test.c \
 	CMake/test_srcs/builddelta_end.c.in \
@@ -79,9 +82,6 @@ EXTRA_DIST = \
 	brlcad-config.in \
 	brlcad.spec \
 	brlcad.spec.in \
-	debian/application-x-brlcad-v4.png \
-	debian/application-x-brlcad-v5.png \
-	debian/application-x-brlcad.xml \
 	debian/brlcad-archer.desktop \
 	debian/brlcad-archer.png \
 	debian/brlcad-db.desktop \
@@ -94,6 +94,8 @@ EXTRA_DIST = \
 	debian/brlcad-mged.desktop \
 	debian/brlcad-mged.png \
 	debian/brlcad-rtwizard.desktop \
+	debian/brlcad-v4.png \
+	debian/brlcad-v5.png \
 	debian/brlcad.directory \
 	debian/brlcad.docs \
 	debian/brlcad.install \
@@ -101,6 +103,7 @@ EXTRA_DIST = \
 	debian/brlcad.postinst \
 	debian/brlcad.postrm \
 	debian/brlcad.sh \
+	debian/brlcad.xml \
 	debian/changelog \
 	debian/compat \
 	debian/control \

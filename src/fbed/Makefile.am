@@ -11,7 +11,6 @@ fbed_SOURCES = \
 	glob.c \
 	pos_pad.c \
 	prnt.c \
-	sgi_dep.c \
 	squash.c \
 	try.c
 
@@ -34,8 +33,7 @@ fbed_LDADD = \
 	${FB} \
 	${TERMIO} \
 	${CURSOR} \
-	${TERMLIB} \
-	${LIBSGIGL}
+	${TERMLIB}
 
 man_MANS = fbed.1
 

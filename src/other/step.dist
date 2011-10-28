@@ -1,3 +1,5 @@
+SET(step_ignore_files
+Makefile.am
 AUTHORS
 CMake
 COPYING
@@ -8,6 +10,9 @@ README
 TODO
 config
 configure.ac
+data
+doc
+include
 m4
 misc
 src
@@ -15,9 +20,10 @@ src/express/Changes
 src/express/README
 src/express/conf.h
 src/express/expparse.y
-src/express/expscan.l
+src/express/expscan.re
 src/express/exptoks.h
 src/express/stack.h
+src/express/token_type.h
 src/express/y.tok.h
 src/exppp/README
 src/fedex_plus/classes.h
@@ -84,7 +90,6 @@ src/clutils/gennodearray.h
 src/clutils/gennodelist.h
 src/clutils/scl_char_str_list.h
 src/clutils/scl_hash.h
-src/clutils/scl_string.h
 src/clutils/scldir.h
 src/clutils/stat.h
 src/clutils/str_list.h
@@ -92,3 +97,4 @@ src/clSchemas
 src/clivfasd
 src/clprobe-ui
 src/test
+)

@@ -126,9 +126,7 @@
 	r $mR \
 	c $mC
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
 }
 
 ::itcl::body RhcEditFrame::createGeometry {obj} {

@@ -61,7 +61,7 @@ class SCLP23_NAME(PID) : public SCLP23_NAME(sdaiObject)
        The Datestore_type attribute shall identify the type of the underlying 
        datastore.
      */
-    char* Datastore_type() const  { return (char*) _datastore_type.chars(); }
+    char* Datastore_type() const  { return const_cast<char *>(_datastore_type.c_str()); }
     void Datastore_type(char *x) { _datastore_type = x; }
 
     /*
@@ -77,10 +77,6 @@ class SCLP23_NAME(PID) : public SCLP23_NAME(sdaiObject)
 
         virtual char * get_PIDString (CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException)
 	{ return CORBA::string_dupl(_pidstring); }
-#endif
-
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
 #endif
 
 };
@@ -139,7 +135,7 @@ class SCLP23_NAME(PID_DA): public SCLP23_NAME(PID)
 #ifndef PART26
     virtual void oid (const SCLP23_NAME(DAObjectID) x) { _oid = x; }
     virtual SCLP23_NAME(DAObjectID) oid () const 
-					    { return (char*) _oid.chars(); }
+					    { return const_cast<char *>(_oid.c_str()); }
 #else
 //    virtual void oid (const SCLP26(DAObjectID) x, CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException)
     virtual void oid (const DAObjectID x, CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException)
@@ -147,10 +143,6 @@ class SCLP23_NAME(PID_DA): public SCLP23_NAME(PID)
 //    virtual SCLP26(DAObjectID) oid (CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException)
     virtual DAObjectID oid (CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException)
 	{ return CORBA::string_dupl(_oid); }
-#endif
-
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
 #endif
 
 };
@@ -188,17 +180,13 @@ class SCLP23_NAME(PID_SDAI) : public SCLP23_NAME(PID)
         //
 #ifndef PART26
     virtual void Modelid (const char * x) { _modelid = x; }
-    virtual char * Modelid () const	  { return (char*) _modelid.chars(); }
+    virtual char * Modelid () const	  { return const_cast<char *>(_modelid.c_str()); }
 #else
     virtual void Modelid (const char * x, CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException)
 	{ _modelid = x; }
 
     virtual char * Modelid (CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException)
 	{ return CORBA::string_dupl(_modelid); }
-#endif
-
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
 #endif
 
 };
@@ -297,7 +285,7 @@ class SCLP23_NAME(DAObject) : public SCLP23_NAME(sdaiObject)
          */
 #ifndef PART26
     SCLP23_NAME(DAObjectID) dado_oid()
-	{ return (char*) _dado_oid.chars(); }
+	{ return const_cast<char *>(_dado_oid.c_str()); }
 #else
 //    virtual SCLP26(DAObjectID) dado_oid (CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException)
     virtual DAObjectID dado_oid (CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException)
@@ -356,13 +344,6 @@ class SCLP23_NAME(DAObject) : public SCLP23_NAME(sdaiObject)
 #else
         virtual void dado_free (CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException)
 	{ }
-#endif
-
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-    virtual void Access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range);
 #endif
 
 };
@@ -595,13 +576,6 @@ class SCLP23_NAME(DAObject_SDAI) : public SCLP23_NAME(DAObject) {
        Origin: Convenience function
      */
 
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-    virtual void Access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range);
-#endif
-
 };
 
 typedef SCLP23_NAME(DAObject_SDAI)* SCLP23_NAME(DAObject_SDAI_ptr);
@@ -609,38 +583,22 @@ typedef SCLP23_NAME(DAObject_SDAI_ptr) SCLP23_NAME(DAObject_SDAI_var);
 
 class SCLP23_NAME(DAObject__set) {
 public:
-#ifdef __OSTORE__
-    os_Collection<SCLP23_NAME(DAObject_ptr)> &_rep;
-    os_Cursor<SCLP23_NAME(DAObject_ptr)> _cursor;
-    Boolean _first;
-#endif
-
     SCLP23_NAME(DAObject__set)(int = 16);
     ~SCLP23_NAME(DAObject__set)();
 
     SCLP23_NAME(DAObject_ptr) retrieve(int index);
     int is_empty();
 
-#ifndef __OSTORE__
     SCLP23_NAME(DAObject_ptr)& operator[](int index);
-#endif
 
     void Insert(SCLP23_NAME(DAObject_ptr), int index);
     void Append(SCLP23_NAME(DAObject_ptr));
     void Remove(int index);
-#ifndef __OSTORE__
+
     int Index(SCLP23_NAME(DAObject_ptr));
 
     void Clear();
-#endif
     int Count();
-
-#ifdef __OSTORE__
-// cursor stuff
-    SCLP23_NAME(DAObject_ptr) first();
-    SCLP23_NAME(DAObject_ptr) next();
-    SCLP23_NAME(Integer) more();
-#endif
 
 private:
     void Check(int index);
@@ -651,9 +609,6 @@ private:
 
   public:
 
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-#endif
 };
 
 typedef SCLP23_NAME(DAObject__set)* SCLP23_NAME(DAObject__set_ptr);

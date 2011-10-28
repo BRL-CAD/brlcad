@@ -151,21 +151,6 @@ proc ia_changestate { args } {
     }
 }
 
-proc ::tk::TextInsert {w s} {
-    if {$s == ""} {
-	return
-    }
-    catch {
-	if {[$w compare sel.first <= insert] && \
-		[$w compare sel.last >= insert]} {
-	    $w tag remove sel sel.first promptEnd
-	    $w delete sel.first sel.last
-	}
-    }
-    $w insert insert $s
-    $w see insert
-}
-
 proc get_player_id_t { w } {
     global mged_players
 

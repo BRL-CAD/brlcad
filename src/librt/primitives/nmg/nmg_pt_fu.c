@@ -46,7 +46,7 @@
  */
 struct ve_dist {
     struct bu_list l;
-    unsigned long *magic_p;/* pointer to edge/vertex structure */
+    uint32_t *magic_p;/* pointer to edge/vertex structure */
     double dist;	/* distance squared from point to edge */
     struct vertex *v1;
     struct vertex *v2;
@@ -69,7 +69,7 @@ struct edge_info {
 #define NMG_CK_EI(_p) NMG_CKMAG(_p, NMG_EDGE_INFO_MAGIC, "edge_info")
 
 struct fpi {
-    unsigned long magic;
+    uint32_t magic;
     const struct bn_tol *tol;
     const struct faceuse *fu_p;
     struct bu_list ve_dh;		/* ve_dist list head */
@@ -667,7 +667,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	     * if pt is inside/left of edge
 	     */
 	    VSUB2(v_to_pt, fpi->pt, eu_pt);
-	    if (VDOT(v_to_pt, left) >= 0.0)
+	    if (VDOT(v_to_pt, left) > -SMALL_FASTF)
 		ei->class = NMG_CLASS_AinB;
 	    else
 		ei->class = NMG_CLASS_AoutB;
@@ -839,7 +839,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
     nmg_pl_lu(fp, lu, b, 255, 255, 255);
 
     tmp_tol.magic = BN_TOL_MAGIC;
-    tmp_tol.dist = 0.005;
+    tmp_tol.dist = 0.0005;
     tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
     tmp_tol.perp = 1e-6;
     tmp_tol.para = 1 - tmp_tol.perp;

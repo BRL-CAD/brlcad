@@ -1,0 +1,9 @@
+<!--
+PUBLIC "-//OFFO//DTD LANGUAGES INFO 1.0//EN" "languages-info.dtd">
+-->
+<!ELEMENT languages-info (language+) >
+<!ELEMENT language (name, tex-code, code, message?) >
+<!ELEMENT name (#PCDATA) >
+<!ELEMENT tex-code (#PCDATA) >
+<!ELEMENT code (#PCDATA) >
+<!ELEMENT message (#PCDATA) >

@@ -436,7 +436,7 @@ namespace eval RtWizard {
 	if { [string match $mode "toFile"] && \
 		 [string length $fbFile] > 0 && \
 		 [string match $screenOnly "false"] } {
-	    return $fbFile
+	    return "-o $fbFile"
 	}
 	set binpath [bu_brlcad_root "bin"]
 	#
@@ -468,7 +468,7 @@ namespace eval RtWizard {
 	exec "$binpath/fbclear" -F $port 0 0 0
 	set lastPort $port
 
-	return $port
+	return "-F $port"
     }
 
     #--------------------#

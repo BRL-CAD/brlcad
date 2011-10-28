@@ -298,7 +298,7 @@ nmg_to_dxf( struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(re
 		}
 		if ( vert_count > 3 ) {
 		    bu_free( region_name, "region name" );
-		    bu_log( "lu %p has %d vertices!\n", lu, vert_count );
+		    bu_log( "lu %p has %d vertices!\n", (void *)lu, vert_count );
 		    bu_exit(1, "ERROR: LU is not a triangle\n");
 		} else if ( vert_count < 3 ) {
 		    continue;
@@ -409,7 +409,7 @@ main(int argc, char *argv[])
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-5;
+    tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
     /* init resources we might need */

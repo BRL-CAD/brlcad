@@ -128,23 +128,23 @@ interact(int input_source, void *sPtr, struct rt_i *rtip)
 	    if (nirt_debug & DEBUG_INTERACT)
 		bu_log("Skipping '%c'\n", Ch);
 	}
-	if (Ch == '\n')
+	if (Ch == '\n' || Ch == '\r')
 	    continue;
 
-	for (i = 0; (Ch != '\n') && (i < 255); ++i) {
+	for (i = 0; (Ch != '\n') && (Ch != '\r') && (i < 255); ++i) {
 	    if (Ch == CMT_CHAR) {
 		if ( Prev_ch == '\\' ) {
 		    i--;
 		} else {
 		    in_cmt = 1;
-		    while (((Ch = next_char(sPtr)) != EOF) && (Ch != '\n'))
+		    while (((Ch = next_char(sPtr)) != EOF) && (Ch != '\n') && (Ch != '\r'))
 			;
 		}
 	    }
 	    if (Ch == SEP_CHAR) {
 		more_on_line = 1;
 		break;
-	    } else if (Ch == '\n') {
+	    } else if ((Ch == '\n') || (Ch == '\r')) {
 		break;
 	    }
 

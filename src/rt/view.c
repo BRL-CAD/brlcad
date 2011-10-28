@@ -123,8 +123,12 @@ static int buf_mode=0;
 #define BUFMODE_RTSRV     4	/* output buffering into scanbuf */
 #define BUFMODE_FULLFLOAT 5	/* buffer entire frame as floats */
 #define BUFMODE_SCANLINE  6	/* Like _DYNAMIC, one scanline/cpu */
+#define BUFMODE_ACC       7     /* Cumulative buffer - The buffer
+				   always have the average of the
+				   colors sampled for each pixel */
 
 static struct scanline* scanline;
+static fastf_t* psum_buffer;              /* Buffer that keeps partial sums for multi-samples modes */
 
 static size_t pwidth;		/* Width of each pixel (in bytes) */
 struct mfuncs *mfHead = MF_NULL;	/* Head of list of shaders */
@@ -182,6 +186,15 @@ view_pixel(struct application *ap)
     struct scanline *slp;
     int do_eol = 0;
     unsigned char dist[8];	/* pixel distance (in IEEE format) */
+
+#if 0
+    RGBpixel white = {255, 255, 255};
+
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    (void)fb_write(fbp, ap->a_x, ap->a_y, (unsigned char *)white, 1);
+    bu_semaphore_release(BU_SEM_SYSCALL);
+#endif
+
 
     if (rpt_dist)
 	htond(dist, (unsigned char *)&(ap->a_dist), 1);
@@ -442,8 +455,48 @@ view_pixel(struct application *ap)
 	    }
 	    break;
 
-	default:
-	    bu_exit(EXIT_FAILURE, "bad buf_mode");
+    case BUFMODE_ACC:
+    {
+	unsigned int i;
+	fastf_t *psum_p;
+	fastf_t *tmp_pixel;
+	int tmp_color;
+
+	/* Scanline buffered mode */
+	bu_semaphore_acquire(RT_SEM_RESULTS);
+	
+	tmp_pixel = bu_calloc(pwidth, sizeof(fastf_t), "tmp_pixel");
+	VMOVE(tmp_pixel, ap->a_color);
+	if (rpt_dist) {
+	    for(i = 0; i < 8; i++)
+		tmp_pixel[i + 3] = dist[i];
+	}
+
+	psum_p = &psum_buffer[ap->a_y*width*pwidth + ap->a_x*pwidth];
+	slp = &scanline[ap->a_y];
+	if (slp->sl_buf == (unsigned char *)0) {
+	    slp->sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
+	}
+	pixelp = slp->sl_buf+(ap->a_x*pwidth);
+	/* Update the partial sums and the scanline */
+	for(i = 0; i < pwidth; i++){
+	    psum_p[i] += tmp_pixel[i];
+	    /* change the float interval to [0,255] and round to
+	       the nearest integer */
+	    tmp_color = psum_p[i]*255.0/full_incr_sample + 0.5;
+	    /* clamp */
+	    pixelp[i] = tmp_color < 0 ? 0 : tmp_color > 255 ? 255 : tmp_color; 
+	}
+	bu_free(tmp_pixel, "tmp_pixel");
+
+	bu_semaphore_release(RT_SEM_RESULTS);
+	if (--(slp->sl_left) <= 0)
+	    do_eol = 1;
+    }		    
+    break;
+    
+    default:
+	bu_exit(EXIT_FAILURE, "bad buf_mode: %d", buf_mode);
     }
 
 
@@ -482,6 +535,7 @@ view_pixel(struct application *ap)
 	    }
 	    break;
 
+        case BUFMODE_ACC:
 	case BUFMODE_SCANLINE:
 	case BUFMODE_DYNAMIC:
 	    if (fbp != FBIO_NULL) {
@@ -578,6 +632,11 @@ view_end(struct application *ap)
     if (scanline) {
     	free_scanlines(height, scanline);
     	scanline = NULL;
+    }
+
+    if(psum_buffer){
+	bu_free(psum_buffer, "psum_buffer");
+	psum_buffer = 0;
     }
 }
 
@@ -1428,11 +1487,15 @@ view_2init(struct application *ap, char *UNUSED(framename))
     /* Always allocate the scanline[] array (unless we already have
      * one in incremental mode)
      */
-    if ((!incr_mode || !scanline) && !fullfloat_mode) {
+    if (((!incr_mode && !full_incr_mode) || !scanline) && !fullfloat_mode) {
         if (scanline)
             free_scanlines(height, scanline);
         scanline = alloc_scanlines(height);
     }
+    /* On fully incremental mode, allocate the scanline as the total
+       size of the image */
+    if(full_incr_mode && !psum_buffer)
+	psum_buffer = bu_calloc(height*width*pwidth, sizeof(fastf_t), "partial sums buffer");
 
 #ifdef RTSRV
     buf_mode = BUFMODE_RTSRV;		/* multi-pixel buffering */
@@ -1441,7 +1504,10 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	buf_mode = BUFMODE_FULLFLOAT;
     } else if (incr_mode) {
 	buf_mode = BUFMODE_INCR;
-    } else if (width <= 96) {
+    } else if (full_incr_mode){
+	buf_mode = BUFMODE_ACC;
+    }
+    else if (width <= 96 || random_mode) {
 	buf_mode = BUFMODE_UNBUF;
     } else if ((size_t)npsw <= (size_t)height/4) {
 	/* Have each CPU do a whole scanline.  Saves lots of semaphore
@@ -1450,7 +1516,8 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	 */
 	per_processor_chunk = width;
 	buf_mode = BUFMODE_SCANLINE;
-    } else {
+    } 
+    else {
 	buf_mode = BUFMODE_DYNAMIC;
     }
 #endif
@@ -1543,8 +1610,13 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	    }
 	    
 	    break;
+        case BUFMODE_ACC:
+	    for (i=0; i<height; i++)
+		scanline[i].sl_left = width;
+	    bu_log("Multiple-sample, average buffering\n");
+	    break;
 	default:
-	    bu_exit(EXIT_FAILURE, "bad buf_mode");
+	    bu_exit(EXIT_FAILURE, "bad buf_mode: %d", buf_mode);
     }
 
     /* This is where we do Preperations for each Lighting Model if it

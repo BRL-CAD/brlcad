@@ -257,9 +257,7 @@
 	N [list $mNx $mNy $mNz] \
 	L $mL
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
 }
 
 ::itcl::body GripEditFrame::createGeometry {obj} {

@@ -1,0 +1,553 @@
+
+<HTML>
+  <HEAD>
+    <STYLE>
+      h1 {
+        font-size: 1.4em;
+        font-weight: normal;
+      }
+      h2 {
+        float: left;
+        width: 45%;
+        border: solid 1px purple;
+        border-right: none;
+        border-bottom: none;
+        color: purple;
+        margin: 2px;
+        background: #CCCCCC;
+        cursor: pointer;
+        font-size: 1.4em;
+      }
+      li {
+        float: left;
+        width: 50%;
+        min-width: 180px;
+      }
+      form {
+        margin: 0;
+      }
+  
+      .bookmark[active="true"]:hover {
+         background-color: #DDDDDD;
+       }
+      .bookmark[clickable="0"]:hover {
+         background-color: #EEEEEE;
+       }
+      .bookmark {
+        cursor:pointer;
+        margin: 1px;
+        padding: 2px 0 2px 15px;
+        background: #EEEEEE;
+
+        border-top: solid 2px purple;
+        border-left: solid 2px purple;
+
+        display: block;
+        position: relative;
+  
+        float: left;
+        width: 45%;
+        min-width: 180px;
+      }
+      .bookmark a {
+        text-decoration: none;
+        color: black;
+        display: block;
+      }
+  
+      ul {
+        padding: 0;
+        margin: auto auto auto 15px;
+      }
+      .folder {
+        padding: 0px 5px;
+        margin: 0 0 10px 0;
+        width: 100%;
+        display: table;
+        position: relative;
+      }
+  
+      #controls {
+        border-bottom: solid black 2px;
+        background: white;
+        position: fixed;
+        top: 0px;
+        left: 0px;
+        right: 0px;
+        z-index: 5;
+      }
+      .edit {
+        display: block;
+        float: right;
+        font-size: small;
+        color: darkblue;
+        text-decoration: underline;
+        font-weight: normal;
+        padding-right: 5px;
+      }
+  
+      body {
+        margin-top: 3em;
+      }
+  
+      #searchbox {
+        width:100%;
+      }
+      #searchbox[active="1"] {
+        border-color: red;
+      }
+  
+      #undelete {
+        display:block;
+        float:right;
+        font-size:medium;
+      }
+    </STYLE>
+    <SCRIPT>
+
+var drag = new Object()
+drag.element = undefined
+drag.interval = undefined
+drag.x = undefined
+drag.y = undefined
+drag.original_x = undefined
+drag.original_y = undefined
+drag.isDelete = false
+
+var app = new Object()
+app.zFilter = ""
+
+function mouseup_handler (event) {
+  drag.element.style.top = '0px'
+  drag.element.style.left = '0px'
+  drag.element.style.zIndex = 'auto'
+  drag.element.style.backgroundColor = ""
+  clearInterval(drag.interval)
+  document.onmouseup = undefined
+  document.onmousemove = undefined
+
+  if (drag.isDelete) {
+    drag.element.parentNode.removeChild(drag.element)
+    app.version = hv3_bookmarks.remove(drag.element)
+
+    var u = document.getElementById("undelete")
+    u.innerHTML = hv3_bookmarks.get_undelete()
+
+  } else if (drag.element.onclick == ignore_click) {
+    if (drag.element.className == 'bookmark') {
+      app.version = hv3_bookmarks.bookmark_move(drag.element)
+    }
+    if (drag.element.className == 'folder') {
+      app.version = hv3_bookmarks.folder_move(drag.element)
+    }
+  }
+  drag.isDelete = false
+  drag.element = undefined
+  return 0
+}
+function mousemove_handler (event) {
+  drag.x = event.clientX
+  drag.y = event.clientY
+  return 0
+}
+
+function ignore_click () {
+  this.onclick = undefined
+  this.setAttribute("clickable", "1")
+  return 0
+}
+
+function drag_cache_position(d) {
+  d.drag_x1 = 0
+  d.drag_y1 = 0
+  for (var p = d; p != null; p = p.offsetParent) {
+    d.drag_x1 += p.offsetLeft
+    d.drag_y1 += p.offsetTop
+  }
+  d.drag_x2 = d.drag_x1 + d.offsetWidth
+  d.drag_y2 = d.drag_y1 + d.offsetHeight
+}
+
+function drag_makedropmap(elem) {
+  drag.drag_targets = new Array()
+
+  var dlist = document.getElementsByTagName('div');
+  for ( var i = 0; i < dlist.length; i++) {
+    var d = dlist[i]
+    if (d != elem && d.className == elem.className) {
+      if (d.className == "folder" && d.id == "0") {
+        continue
+      }
+      if (d.parentNode.style.display == "none") {
+        continue
+      }
+      drag_cache_position(d)
+      drag.drag_targets.push(d)
+    }
+  }
+
+  if (elem.className == "bookmark") {
+    var hlist = document.getElementsByTagName('h2')
+    for ( var i = 0; i < hlist.length; i++) {
+      var h = hlist[i]
+      if (h.nextSibling.style.display != "none") {
+        drag_cache_position(h)
+        drag.drag_targets.push(h)
+      }
+    }
+
+    hlist = document.getElementsByTagName('h1')
+    for ( var i = 0; i < hlist.length; i++) {
+      var h = hlist[i]
+      drag_cache_position(h)
+      h.drag_y2 += 15
+      drag.drag_targets.push(h)
+    }
+  }
+
+  drag_cache_position(drag.controls)
+}
+
+// This function is called periodically while an object is being
+// dragged (once every 20 ms or so).
+//
+function drag_update() {
+  if (
+     Math.abs(drag.x - drag.original_x) > 10 ||
+     Math.abs(drag.y - drag.original_y) > 10
+  ) {
+    drag.element.onclick = ignore_click
+    drag.element.setAttribute("clickable", "0")
+  }
+  drag.element.style.left = (drag.x - drag.original_x) + 'px'
+  drag.element.style.top  = (drag.y - drag.original_y) + 'px'
+
+  if (!drag.drag_targets) {
+    drag_makedropmap(drag.element)
+  }
+
+  drag_cache_position(drag.element)
+  var cx = (drag.element.drag_x1 + drag.element.drag_x2) / 2
+  var cy = (drag.element.drag_y1 + drag.element.drag_y2) / 2
+
+  var isDelete = ((drag.element.drag_y1+5) < drag.controls.drag_y2)
+  if (isDelete && !drag.isDelete) {
+    drag.element.style.backgroundColor = "black"
+    drag.isDelete = isDelete
+  } else if (!isDelete && drag.isDelete) {
+    drag.element.style.backgroundColor = ""
+    drag.isDelete = isDelete
+  }
+
+  for (var i = 0; i < drag.drag_targets.length; i++) {
+    var a = drag.drag_targets[i]
+    if (a.drag_x1 < cx && a.drag_x2 > cx &&
+        a.drag_y1 < cy && a.drag_y2 > cy
+    ) {
+
+      var x = drag.element.drag_x1
+      var y = drag.element.drag_y1
+
+      var p = a.parentNode
+      if (a.nodeName == "H2") {
+        p = a.nextSibling
+        a = p.firstChild
+      } else if (a.nodeName == "H1") {
+        p = app.nofolder.childNodes[1]
+        a = p.firstChild
+      }
+
+      if (drag.element.parentNode == p) {
+        for (var j = 0; j < p.childNodes.length; j++) {
+          var child = p.childNodes[j]
+          if (child == a) {
+            break
+          } else if (child == drag.element) {
+            a = a.nextSibling
+            break
+          }
+        }
+      }
+
+      if (drag.element == a) return
+      p.insertBefore(drag.element, a)
+
+      drag_cache_position(drag.element)
+      var sx = drag.element.drag_x1 - x
+      var sy = drag.element.drag_y1 - y
+
+      drag.original_x += sx
+      drag.original_y += sy
+
+      drag.element.style.left = (drag.x - drag.original_x) + 'px'
+      drag.element.style.top  = (drag.y - drag.original_y) + 'px'
+
+      drag_makedropmap(drag.element)
+      break
+    }
+  }
+}
+
+function mousedown_handler (elem, event) {
+  clearInterval(drag.interval)
+  drag.isDelete = false
+  drag.element = elem
+
+  drag.original_x = event.clientX
+  drag.original_y = event.clientY
+  drag.x = event.clientX
+  drag.y = event.clientY
+  drag.element.style.zIndex = 10
+  drag.interval = setInterval(drag_update, 20)
+  document.onmouseup = mouseup_handler
+  document.onmousemove = mousemove_handler
+
+  drag_makedropmap(drag.element)
+  return 0
+}
+
+// Toggle visibility of folder contents.
+//
+function folder_toggle (folder, event, toggle) {
+  var h2 = folder.childNodes[0]
+  var ul = folder.childNodes[1]
+
+  if (folder.onclick == ignore_click) return
+
+  var isHidden = (1 * folder.getAttribute('folder_hidden'))
+  if (toggle) {
+    isHidden = (isHidden ? 0 : 1)
+    folder.setAttribute('folder_hidden', isHidden)
+    app.version = hv3_bookmarks.folder_hidden(folder)
+  }
+
+  if (isHidden) {
+    /* Hide the folder contents */
+    ul.style.display = 'none'
+    ul.style.clear = 'none'
+
+    h2.childNodes[1].innerHTML = '+ '
+    h2.style.width = 'auto'
+    h2.style.cssFloat = 'none'
+
+    folder.style.cssFloat = 'left'
+    folder.style.width = '45%'
+    folder.style.clear = 'none'
+    folder.style.marginBottom = '0'
+  } else {
+    /* Expand the folder contents */
+    ul.style.display = 'table'
+    ul.style.clear = 'both'
+
+    h2.childNodes[1].innerHTML = '- '
+    h2.style.width = '45%'
+    h2.style.cssFloat = 'left'
+
+    folder.style.clear = 'both'
+    folder.style.cssFloat = 'none'
+    folder.style.width = '100%'
+    folder.style.marginBottom = '10px'
+  }
+
+  return 0
+}
+
+function bookmark_mousedown(elem, event) {
+  mousedown_handler(elem, event)
+  return 0
+}
+function folder_mousedown(elem, event) {
+  mousedown_handler(elem.parentNode, event)
+  return 0
+}
+
+function bookmark_submit(form) {
+  var elem = form.parentNode.parentNode
+  
+  var new_name = form.n.value
+  var new_uri =  form.u.value
+  var new_tags = form.t.value
+
+  elem.setAttribute('bookmark_name', new_name)
+  elem.setAttribute('bookmark_uri',  new_uri)
+  elem.setAttribute('bookmark_tags', new_tags)
+
+  var a = elem.childNodes[1]
+  a.firstChild.data = new_name
+  a.href = new_uri
+
+  app.version = hv3_bookmarks.bookmark_edit(elem)
+ 
+  bookmark_edit(elem)
+  return 0
+}
+
+function bookmark_edit(elem) {
+  var div = elem.childNodes[2]
+  if (div.isExpanded) {
+    div.innerHTML = ""
+    elem.firstChild.firstChild.data = "(edit)"
+    elem.setAttribute("active", "true")
+    div.isExpanded = 0
+  } else {
+    var str = ""
+    str += '<FORM onsubmit="return bookmark_submit(this)">'
+    str += '<TABLE width=100%>'
+    str += '<TR><TD>Name: <TD width=100%><INPUT width=90% name=n></INPUT>'
+    str += '<TR><TD>URI:  <TD><INPUT width=90% name=u></INPUT>'
+    str += '<TR><TD>Tags: <TD><INPUT width=90% name=t></INPUT>'
+    str += '</TABLE></FORM>'
+
+    div.innerHTML = str
+    var f = div.firstChild;
+    f.n.value = elem.getAttribute('bookmark_name')
+    f.u.value = elem.getAttribute('bookmark_uri')
+    f.t.value = elem.getAttribute('bookmark_tags')
+    f.n.select()
+    f.n.focus()
+    elem.firstChild.firstChild.data = "(cancel)"
+    elem.setAttribute("active", "false")
+
+    div.isExpanded = 1
+  }
+  return 0
+}
+
+function folder_submit(form) {
+  var elem = form.parentNode.parentNode.parentNode
+  var t = elem.firstChild.childNodes[2]
+  var new_name = form.n.value
+  elem.setAttribute('folder_name', new_name)
+  t.data = new_name
+
+  app.version = hv3_bookmarks.folder_edit(elem)
+  folder_edit(elem)
+  return 0
+}
+
+function folder_edit(elem) {
+  var ed = elem.firstChild.firstChild
+  var div = elem.firstChild.childNodes[3]
+
+  if (div.isExpanded) {
+    ed.firstChild.data = "(edit)"
+    div.innerHTML = ""
+    div.isExpanded = 0
+  } else {
+    ed.firstChild.data = "(cancel)"
+
+    var str = "";
+    str += '<FORM onsubmit="return folder_submit(this)">'
+    str += '<TABLE width=100% style="color:black;margin-left:15px">'
+    str += '<TR><TD>Name: <TD width=100%><INPUT name=n></INPUT>'
+    str += '</TABLE></FORM>'
+    div.innerHTML = str
+
+    f = div.firstChild
+    f.n.value = elem.getAttribute('folder_name')
+    f.n.select()
+    f.n.focus()
+
+    div.isExpanded = 1
+  }
+  return 0
+}
+
+// The following are "onclick" handlers for the "New Bookmark"
+// and "New Folder" buttons respectively.
+//
+function bookmark_new() {
+  var id = hv3_bookmarks.bookmark_new(app.zFilter)
+  refresh_content()
+  bookmark_edit(document.getElementById(id))
+}
+function folder_new() {
+  var id = hv3_bookmarks.folder_new()
+  refresh_content()
+  folder_edit(document.getElementById(id))
+}
+
+function refresh_content() {
+  drag.content.innerHTML = hv3_bookmarks.get_html_content(app.zFilter)
+  app.version = hv3_bookmarks.get_version()
+  app.nofolder = document.getElementById("0")
+
+  var u = document.getElementById("undelete")
+  u.innerHTML = hv3_bookmarks.get_undelete()
+
+  var dlist = document.getElementsByTagName('div');
+  for ( var i = 0; i < dlist.length; i++) {
+    var d = dlist[i]
+    if (d.className == "folder") {
+      folder_toggle(d, 0, 0)
+    }
+  }
+}
+function check_refresh_content() {
+  if (app.version != hv3_bookmarks.get_version()) {
+    refresh_content()
+  }
+}
+
+function filter_bookmarks () {
+  var s = document.getElementById("searchbox")
+  app.zFilter = s.value
+  refresh_content()
+  if (app.zFilter != "") {
+    s.setAttribute("active", "1")
+  } else {
+    s.setAttribute("active", "0")
+  }
+  return 0
+}
+
+function clear_filter () {
+  var s = document.getElementById("searchbox")
+  s.value = ""
+  return filter_bookmarks()
+}
+
+function bookmark_undelete () {
+  hv3_bookmarks.undelete()
+  refresh_content()
+  return 0
+}
+
+window.onload = function () {
+  document.getElementById("searchbox").focus()
+  drag.controls = document.getElementById("controls")
+  drag.content = document.getElementById("content")
+  refresh_content()
+  setInterval(check_refresh_content, 2000)
+}
+
+    </SCRIPT>
+  </HEAD>
+  <BODY>
+    <TABLE id="controls"><TR>
+      <TD align="center">
+        <INPUT type="button" value="New Folder" onclick="folder_new()">
+      <TD align="center">
+        <INPUT type="button" value="New Bookmark" onclick="bookmark_new()">
+        </INPUT>
+      <TD align="left" style="padding-left:15px">
+        Filter:
+      <TD align="left" width=100% style="padding-right:2px">
+         <FORM onsubmit="return filter_bookmarks()">
+         <INPUT type="text" id="searchbox"></INPUT>
+         </FORM>
+      <TD align="center">
+        <INPUT type="button" value="View All" onclick="clear_filter()"></INPUT>
+    </TABLE>
+
+    <H1>BOOKMARKS:<span id="undelete"></H1>
+    <DIV id=content></DIV>
+    <P style="clear:both;padding-top:1cm">
+      <I>To delete individual bookmarks or entire folders, drag to the top
+         of the page (i.e. over the "Filter:" or "New Bookmark" controls).
+         A single level of undelete is available.
+      </I>
+    </P>
+  </BODY>
+</HTML>
+

@@ -179,7 +179,7 @@ main(int argc, char **argv)
 double
 crystal_stack(char *cname, double xc, double yc, double size)
 
-    /* center coordinates, z=0+ */
+/* center coordinates, z=0+ */
 
 {
     int i;
@@ -243,13 +243,13 @@ crystal_stack(char *cname, double xc, double yc, double size)
 double
 crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_t *min, double var, double ratio, int nsolids)
 
-    /* center coordinates, (min Z) */
-    /* cell radius */
-    /* main axis of growth */
-    /* minor axis of growth */
-    /* max degrees of variation off axis (0..90) */
-    /* len/width ratio */
-    /* number of solids for this layer */
+/* center coordinates, (min Z) */
+/* cell radius */
+/* main axis of growth */
+/* minor axis of growth */
+/* max degrees of variation off axis (0..90) */
+/* len/width ratio */
+/* number of solids for this layer */
 {
     int todo;
     double height = center[Z];
@@ -329,7 +329,7 @@ crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_
 void
 do_plate(char *name, double xc, double yc, double size)
 
-    /* center coordinates, z=0+ */
+/* center coordinates, z=0+ */
 
 {
     double esz;
@@ -355,7 +355,7 @@ do_plate(char *name, double xc, double yc, double size)
 double
 ball_stack(char *bname, double xc, double yc, double size)
 
-    /* center coordinates, z=0+ */
+/* center coordinates, z=0+ */
 
 {
     point_t center;
@@ -388,7 +388,7 @@ ball_stack(char *bname, double xc, double yc, double size)
 double
 prim_stack(char *pname, double xc, double yc, double size)
 
-    /* center coordinates, z=0+ */
+/* center coordinates, z=0+ */
 
 {
     point_t pt[8];

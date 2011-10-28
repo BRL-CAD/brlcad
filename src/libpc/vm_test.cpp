@@ -32,7 +32,6 @@
 
 
 typedef boost::shared_ptr<MathFunction> ct;
-using boost::spirit::find;
 
 /* Test functions */
 
@@ -67,7 +66,7 @@ boost::shared_ptr<MathFunction> make_function(char const *name, function1_ptr f1
    }
 */
 void findfunction(ct **ap, const char *s, MathVM & vm) {
-    *ap = find<ct>(vm.functions, s);
+    *ap = boost::spirit::classic::find<ct>(vm.functions, s);
     if (! *ap) {
 	std::cout << "Function not found" << std::endl;
     } else {
@@ -102,36 +101,34 @@ void eval()
 	std::cout << (*a)->eval(args) <<std::endl;
 	args.clear();
     }
-    
-    using boost::spirit::find;
-    
+
     vm.stack.push_back(new ConstantNode(100));
     vm.stack.push_back(new ConstantNode(2));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "sqrt")));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "add")));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "sqrt")));
+    vm.stack.push_back(new sysFunctionNode(*boost::spirit::classic::find(vm.functions, "sqrt")));
+    vm.stack.push_back(new sysFunctionNode(*boost::spirit::classic::find(vm.functions, "add")));
+    vm.stack.push_back(new sysFunctionNode(*boost::spirit::classic::find(vm.functions, "sqrt")));
 
     std::cout << " sqrt(100 + sqrt(2)) = " << evaluate(vm.stack) << std::endl;
     vm.stack.clear();
-    
+
     vm.stack.push_back(new ConstantNode(3.14));
     vm.stack.push_back(new ConstantNode(2));
     vm.stack.push_back(new ConstantNode(4));
     vm.stack.push_back(new ConstantNode(4));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "multiply")));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "sqrt")));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "add")));
+    vm.stack.push_back(new sysFunctionNode(*boost::spirit::classic::find(vm.functions, "multiply")));
+    vm.stack.push_back(new sysFunctionNode(*boost::spirit::classic::find(vm.functions, "sqrt")));
+    vm.stack.push_back(new sysFunctionNode(*boost::spirit::classic::find(vm.functions, "add")));
     vm.stack.push_back(new ConstantNode(12));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "divide")));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "multiply")));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "sin")));
+    vm.stack.push_back(new sysFunctionNode(*boost::spirit::classic::find(vm.functions, "divide")));
+    vm.stack.push_back(new sysFunctionNode(*boost::spirit::classic::find(vm.functions, "multiply")));
+    vm.stack.push_back(new sysFunctionNode(*boost::spirit::classic::find(vm.functions, "sin")));
 
     std::cout << " sin(pi * (2 + sqrt(4*4)) / 12) = " << evaluate(vm.stack) << std::endl;
     vm.stack.clear();
-    
+
     vm.stack.push_back(new ConstantNode(3.14));
     vm.stack.push_back(new ConstantNode(2));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "divide")));
+    vm.stack.push_back(new sysFunctionNode(*boost::spirit::classic::find(vm.functions, "divide")));
 
     std::cout << "  pi / 2 = " << evaluate(vm.stack) << std::endl;
 }

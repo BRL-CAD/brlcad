@@ -183,6 +183,59 @@ const struct bu_structparse rt_epa_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+/**
+ * R T _ E P A _ B B O X
+ *
+ * Create a bounding RPP for an epa
+ */
+int
+rt_epa_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    struct rt_epa_internal *xip;
+    vect_t epa_A, epa_B, epa_An, epa_Bn, epa_H;
+    vect_t pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8;
+    RT_CK_DB_INTERNAL(ip);
+    xip = (struct rt_epa_internal *)ip->idb_ptr;
+    RT_EPA_CK_MAGIC(xip);
+
+    VMOVE(epa_H, xip->epa_H);
+    VUNITIZE(epa_H);
+    VMOVE(epa_A, xip->epa_Au);
+    VCROSS(epa_B, epa_A, epa_H);
+
+    VSETALL((*min), MAX_FASTF);
+    VSETALL((*max), -MAX_FASTF);
+
+    VSCALE(epa_A, epa_A, xip->epa_r1);
+    VSCALE(epa_B, epa_B, xip->epa_r2);
+    VREVERSE(epa_An, epa_A);
+    VREVERSE(epa_Bn, epa_B);
+
+    VADD3(pt1, xip->epa_V, epa_A, epa_B);
+    VADD3(pt2, xip->epa_V, epa_A, epa_Bn);
+    VADD3(pt3, xip->epa_V, epa_An, epa_B);
+    VADD3(pt4, xip->epa_V, epa_An, epa_Bn);
+    VADD4(pt5, xip->epa_V, epa_A, epa_B, xip->epa_H);
+    VADD4(pt6, xip->epa_V, epa_A, epa_Bn, xip->epa_H);
+    VADD4(pt7, xip->epa_V, epa_An, epa_B, xip->epa_H);
+    VADD4(pt8, xip->epa_V, epa_An, epa_Bn, xip->epa_H);
+
+    /* Find the RPP of the rotated axis-aligned epa bbox - that is,
+     * the bounding box the given epa would have if its height
+     * vector were in the positive Z direction. This does not give 
+     * us an optimal bbox except in the case where the epa is 
+     * actually axis aligned to start with, but it's usually 
+     * at least a bit better than the bounding sphere RPP. */
+    VMINMAX((*min), (*max), pt1);
+    VMINMAX((*min), (*max), pt2);
+    VMINMAX((*min), (*max), pt3);
+    VMINMAX((*min), (*max), pt4);
+    VMINMAX((*min), (*max), pt5);
+    VMINMAX((*min), (*max), pt6);
+    VMINMAX((*min), (*max), pt7);
+    VMINMAX((*min), (*max), pt8);
+    return 0;
+}
+
 
 /**
  * R T _ E P A _ P R E P
@@ -200,13 +253,11 @@ const struct bu_structparse rt_epa_parse[] = {
  * stp->st_specific for use by epa_shot().
  */
 int
-rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(rtip))
 {
     struct rt_epa_internal *xip;
     struct epa_specific *epa;
-#ifndef NO_MAGIC_CHECKING
-    const struct bn_tol *tol = &rtip->rti_tol;
-#endif
+
     fastf_t magsq_h;
     fastf_t mag_a, mag_h;
     fastf_t f, r1, r2;
@@ -214,10 +265,8 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     mat_t Rinv;
     mat_t S;
 
-#ifndef NO_MAGIC_CHECKING
     RT_CK_DB_INTERNAL(ip);
-    BN_CK_TOL(tol);
-#endif
+
     xip = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(xip);
 
@@ -277,7 +326,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bn_mat_mul(epa->epa_SoR, S, R);
     bn_mat_mul(epa->epa_invRoS, Rinv, S);
 
-    /* Compute bounding sphere and RPP */
+    /* Compute bounding sphere */
     /* bounding sphere center */
     VJOIN1(stp->st_center, epa->epa_V, mag_h / 2.0, epa->epa_Hunit);
     /* bounding radius */
@@ -285,13 +334,8 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* approximate bounding radius */
     stp->st_aradius = stp->st_bradius;
 
-    /* cheat, make bounding RPP by enclosing bounding sphere */
-    stp->st_min[X] = stp->st_center[X] - stp->st_bradius;
-    stp->st_max[X] = stp->st_center[X] + stp->st_bradius;
-    stp->st_min[Y] = stp->st_center[Y] - stp->st_bradius;
-    stp->st_max[Y] = stp->st_center[Y] + stp->st_bradius;
-    stp->st_min[Z] = stp->st_center[Z] - stp->st_bradius;
-    stp->st_max[Z] = stp->st_center[Z] + stp->st_bradius;
+    /* Calcuate bounding box (RPP) */
+    if (rt_epa_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
 
     return 0;			/* OK */
 }
@@ -617,7 +661,7 @@ rt_epa_class(void)
  * R T _ E P A _ P L O T
  */
 int
-rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
+rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     fastf_t dtol, f, mag_a, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_new, theta_prev;

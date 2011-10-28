@@ -42,9 +42,6 @@ STEPfile::STEPfile(Registry& r, InstMgr& i, const char *filename)
 #else
 : _reg(r), _instances(i), 
 #endif
-#ifdef __OSTORE__
-  db (0),
-#endif
   _headerId(0), _maxErrorCount(5000), 
   _fileName (0), _entsNotCreated(0), _entsInvalid(0), 
   _entsIncomplete(0), _entsWarning(0), 
@@ -61,16 +58,15 @@ STEPfile::STEPfile(Registry& r, InstMgr& i, const char *filename)
     if (filename) ReadExchangeFile(filename);
 }
 
-STEPfile::~STEPfile() 
+STEPfile::~STEPfile()
 {
     delete _currentDir;
 
-//  remove everything from the Registry before deleting it
-    _headerRegistry -> DeleteContents ();
+    // remove everything from the Registry before deleting it
+    _headerRegistry->DeleteContents();
     delete _headerRegistry;
 
-//DAS    delete _headerRegistryOld;
-    _headerInstances -> ClearInstances ();
+    _headerInstances->DeleteInstances();
     delete _headerInstances;
 }
 
@@ -212,35 +208,38 @@ istream*
 STEPfile::OpenInputFile (const char* filename)
 {
     //  if there's no filename to use, fail
-    if (! (strcmp (filename, "") || strcmp (FileName (), "")) ) 
-      {
-	  _error.AppendToUserMsg("Unable to open file for input. No current file name.\n");
-	  _error.GreaterSeverity(SEVERITY_INPUT_ERROR);
-	  return (0);
-      }		
-    else  {
-	if (!SetFileName (filename)) 
-	  {
-	      char msg[BUFSIZ];
-	      sprintf(msg,"Unable to find file for input: \'%s\'. File not read.\n",filename);
-	      _error.AppendToUserMsg(msg);
-	      _error.GreaterSeverity(SEVERITY_INPUT_ERROR);
-	      return (0);
-	  }
-    }
-    //  istream* in = new istream(FileName(), io_readonly, a_useonly);
-    // port 29-Mar-1994 kcm
-    istream* in = new ifstream(FileName());
-    // default for ostream is readonly and protections are set to 644 
-//    if ( !in || !(in -> readable ()) )
-    if ( !in || !(in -> good ()) )
-      {
-	      char msg[BUFSIZ];
-	      sprintf(msg,"Unable to open file for input: \'%s\'. File not read.\n",filename);
-	      _error.AppendToUserMsg(msg);
-	      _error.GreaterSeverity(SEVERITY_INPUT_ERROR);
-	      return (0);
+    if (! (strcmp (filename, "") || strcmp (FileName (), "")) ) {
+      _error.AppendToUserMsg("Unable to open file for input. No current file name.\n");
+      _error.GreaterSeverity(SEVERITY_INPUT_ERROR);
+      return (0);
+    } else {
+      if (!SetFileName (filename) && (strcmp(filename, "-") != 0)) {
+        char msg[BUFSIZ];
+        sprintf(msg,"Unable to find file for input: \'%s\'. File not read.\n",filename);
+        _error.AppendToUserMsg(msg);
+        _error.GreaterSeverity(SEVERITY_INPUT_ERROR);
+        return (0);
       }
+    }
+
+    std::istream* in;
+
+    if (strcmp(filename, "-") == 0) {
+      in = &std::cin;
+    } else {
+      //  istream* in = new istream(FileName(), io_readonly, a_useonly);
+      // port 29-Mar-1994 kcm
+      in = new ifstream(FileName());
+    }
+
+    if ( !in || !(in -> good ()) ) {
+      char msg[BUFSIZ];
+      sprintf(msg,"Unable to open file for input: \'%s\'. File not read.\n",filename);
+      _error.AppendToUserMsg(msg);
+      _error.GreaterSeverity(SEVERITY_INPUT_ERROR);
+      return (0);
+    }
+
     return in;
 }
 
@@ -248,10 +247,11 @@ STEPfile::OpenInputFile (const char* filename)
 void
 STEPfile::CloseInputFile(istream* in)
 {
+  if (in && *in != std::cin)
     delete in;
 }
 
-    
+
 /******************************************************/
 
 /*
@@ -282,7 +282,7 @@ STEPfile::OpenOutputFile(const char* filename)
       }
     else 
       {
-	  if (!SetFileName (filename)) 
+        if (!SetFileName (filename)) 
 	    {
 		char msg[BUFSIZ];
 		sprintf(msg,"can't find file: %s\nFile not written.\n",filename);
@@ -339,7 +339,7 @@ char *STEPfile::schemaName( char *schName )
      */
 {
     p21DIS_File_schema *fs;
-    SCLstring tmp;
+    std::string tmp;
     STEPnode *n;
 
     if ( _headerInstances == NULL ) return NULL;
@@ -350,10 +350,10 @@ char *STEPfile::schemaName( char *schName )
     // (take the first one)
     if ( n == NULL ) return NULL;
     n->STEPwrite(tmp);
-    if ( *tmp.chars() == '\0' || *tmp.chars() == '$' ) return NULL;
+    if ( *tmp.c_str() == '\0' || *tmp.c_str() == '$' ) return NULL;
     // tmp.chars() returns the string we want plus a beginning and ending
     // quote mark (').  We remove these below.
-    strncpy( schName, tmp.chars()+1, BUFSIZ-1 );
+    strncpy( schName, tmp.c_str()+1, BUFSIZ-1 );
     // "+1" to remove beginning '.
     if ( *(schName + strlen( schName ) - 1) == '\'' ) {
 	// Remove trailing '.  This condition checks that it wasn't removed

@@ -1,3 +1,4 @@
+SET(tktable_ignore_files
 ChangeLog
 Makefile.in
 README.blt
@@ -20,3 +21,4 @@ tclconfig
 tests
 win
 CMake
+)

@@ -52,7 +52,6 @@
 #  undef X_NOT_STDC_ENV
 #  undef X_NOT_POSIX
 #endif
-#define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 
 #include "bu.h"
 #include "vmath.h"
@@ -694,7 +693,7 @@ tk_debug(struct dm *dmp, int lvl)
 
 
 HIDDEN int
-tk_setWinBounds(struct dm *dmp, int *w)
+tk_setWinBounds(struct dm *dmp, fastf_t *w)
 {
     if (dmp->dm_debugLevel)
 	bu_log("tk_setWinBounds()\n");

@@ -1,10 +1,12 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 
-<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+<article xmlns="http://docbook.org/ns/docbook" version="5.0"
+  xmlns:xi="http://www.w3.org/2001/XInclude"
+>
   <info><title>Creating Primitive Shapes in <application>MGED</application></title>
     
 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
@@ -138,9 +140,26 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align="center" fileref="../../lessons/en/images/mged01_terminal.png" format="PNG"/>
+	  <imageobject role="html">
+	    <imagedata
+               align="center"
+               contentwidth="3.9in"
+               scalefit="1"
+               fileref="../../lessons/en/images/mged01_terminal.png"
+               format="PNG"
+             />
 	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata
+               align="center"
+               width="3.9in"
+               scalefit="1"
+               fileref="../../lessons/en/images/mged01_terminal.png"
+               format="PNG"
+             />
+	  </imageobject>
+
+
 	  <caption>
 	    <para>
 	      Terminal Window

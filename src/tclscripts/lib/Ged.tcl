@@ -174,15 +174,18 @@ package provide cadwidgets::Ged 1.0
 	method edcodes {args}
 	method edcolor {args}
 	method edcomb {args}
+	method edit {args}
 	method edmater {args}
 	method erase {args}
 	method ev {args}
 	method expand {args}
 	method eye {args}
 	method eye_pos {args}
+	method exists {args}
 	method faceplate {args}
 	method facetize {args}
 	method fb2pix {args}
+	method find_pipept {args}
 	method fontsize {args}
 	method form {args}
 	method fracture {args}
@@ -238,13 +241,17 @@ package provide cadwidgets::Ged 1.0
 	method model2view {args}
 	method model_axes {args}
 	method more_args_callback {args}
+	method mouse_append_pipept {args}
 	method mouse_constrain_rot {args}
 	method mouse_constrain_trans {args}
+	method mouse_find_pipept {args}
 	method mouse_move_arb_edge {args}
 	method mouse_move_arb_face {args}
+	method mouse_move_pipept {args}
 	method mouse_orotate {args}
 	method mouse_oscale {args}
 	method mouse_otranslate {args}
+	method mouse_prepend_pipept {args}
 	method mouse_rect {args}
 	method mouse_rot {args}
 	method mouse_rotate_arb_face {args}
@@ -257,6 +264,8 @@ package provide cadwidgets::Ged 1.0
 	method move_arb_edge_mode {args}
 	method move_arb_face {args}
 	method move_arb_face_mode {args}
+	method move_pipept {args}
+	method move_pipept_mode {args}
 	method mv {args}
 	method mvall {args}
 	method nirt {args}
@@ -285,6 +294,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_eye {_pane args}
 	method pane_eye_pos {_pane args}
 	method pane_fb2pix {_pane args}
+	method pane_find_pipept {args}
 	method pane_fontsize {_pane args}
 	method pane_get_eyemodel {_pane args}
 	method pane_grid {_pane args}
@@ -299,13 +309,18 @@ package provide cadwidgets::Ged 1.0
 	method pane_model2view {_pane args}
 	method pane_move_arb_edge_mode {_pane args}
 	method pane_move_arb_face_mode {_pane args}
+	method pane_move_pipept_mode {_pane args}
+	method pane_mouse_append_pipept {_pane args}
 	method pane_mouse_constrain_rot {_pane args}
 	method pane_mouse_constrain_trans {_pane args}
+	method pane_mouse_find_pipept {_pane args}
 	method pane_mouse_move_arb_edge {_pane args}
 	method pane_mouse_move_arb_face {_pane args}
+	method pane_mouse_move_pipept {_pane args}
 	method pane_mouse_orotate {_pane args}
 	method pane_mouse_oscale {_pane args}
 	method pane_mouse_otranslate {_pane args}
+	method pane_mouse_prepend_pipept {_pane args}
 	method pane_mouse_rect {_pane args}
 	method pane_mouse_rot {_pane args}
 	method pane_mouse_rotate_arb_face {_pane args}
@@ -405,6 +420,7 @@ package provide cadwidgets::Ged 1.0
 	method rect {args}
 	method rect_mode {args}
 	method red {args}
+	method redraw {args}
 	method refresh {args}
 	method refresh_all {args}
 	method refresh_off {}
@@ -420,6 +436,7 @@ package provide cadwidgets::Ged 1.0
 	method rot {args}
 	method rot_about {args}
 	method rot_point {args}
+	method rotate {args}
 	method rotate_arb_face {args}
 	method rotate_arb_face_mode {args}
 	method rotate_mode {args}
@@ -443,6 +460,7 @@ package provide cadwidgets::Ged 1.0
 	method pscale_mode {args}
 	method ptranslate {args}
 	method ptranslate_mode {args}
+	method scale {args}
 	method scale_mode {args}
 	method screen2view {args}
 	method sdata_arrows {args}
@@ -519,6 +537,7 @@ package provide cadwidgets::Ged 1.0
 	method begin_view_measure {_pane _part1_button _part1_button _x _y}
 	method begin_view_measure_part2 {_pane _button _x _y}
 	method default_views {}
+	method delete_pipept {args}
 	method end_data_arrow {_pane}
 	method end_data_line {_pane}
 	method end_data_move {_pane}
@@ -534,6 +553,7 @@ package provide cadwidgets::Ged 1.0
 	method handle_view_measure_part2 {_pane _x _y}
 	method help {args}
 	method history_callback {args}
+	method init_append_pipept {_obj {_button 1} {_callback {}}}
 	method init_button_no_op {{_button 1}}
 	method init_comp_pick {{_button 1}}
 	method init_data_arrow {{_button 1}}
@@ -541,6 +561,8 @@ package provide cadwidgets::Ged 1.0
 	method init_data_line {{_button 1}}
 	method init_data_move {{_button 1}}
 	method init_data_pick {{_button 1}}
+	method init_find_pipept {_obj {_button 1} {_callback {}}}
+	method init_prepend_pipept {_obj {_button 1} {_callback {}}}
 	method init_view_bindings {{_type default}}
 	method init_view_center {{_button 1}}
 	method init_view_measure {{_button 1} {_part2_button 2}}
@@ -623,6 +645,7 @@ package provide cadwidgets::Ged 1.0
 	variable mGed ""
 	variable mSharedGed 0
 	variable mHistoryCallback ""
+	variable mPipePointCallback ""
 	variable mMeasuringStickColorVDraw2D ff00ff
 	variable mMeasuringStickColorVDraw3D ffff00
 	variable mMeasuringStick3D 1
@@ -652,6 +675,11 @@ package provide cadwidgets::Ged 1.0
 	variable mMouseRayCallbacks ""
 	variable mViewMeasureCallbacks ""
 	variable mViewRectCallbacks ""
+
+	variable mRay "ray"
+	variable mRayCurrWho ""
+	variable mRayLastWho ""
+	variable mRayNeedGettrees 1
 
 	method init_button_no_op_prot {{_button 1}}
 	method measure_line_erase {}
@@ -751,6 +779,7 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::destructor {} {
     if {!$mSharedGed} {
+	catch {rename $mRay ""}
 	rename $mGed ""
     }
 }
@@ -979,6 +1008,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::blast {args} {
+    set mRayNeedGettrees 1
     eval $mGed blast $args
 }
 
@@ -1023,6 +1053,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::bot_split {args} {
+    set mRayNeedGettrees 1
     eval $mGed bot_split $args
 }
 
@@ -1189,6 +1220,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::draw {args} {
+    set mRayNeedGettrees 1
     eval $mGed draw $args
 }
 
@@ -1201,6 +1233,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::E {args} {
+    set mRayNeedGettrees 1
     eval $mGed E $args
 }
 
@@ -1221,7 +1254,12 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::edcomb {args} {
+    set mRayNeedGettrees 1
     eval $mGed edcomb $args
+}
+
+::itcl::body cadwidgets::Ged::edit {args} {
+    eval $mGed edit $args
 }
 
 ::itcl::body cadwidgets::Ged::edmater {args} {
@@ -1229,10 +1267,12 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::erase {args} {
+    set mRayNeedGettrees 1
     eval $mGed erase $args
 }
 
 ::itcl::body cadwidgets::Ged::ev {args} {
+    set mRayNeedGettrees 1
     eval $mGed ev $args
 }
 
@@ -1246,6 +1286,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::eye_pos {args} {
     eval $mGed eye_pos $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::exists {args} {
+    eval $mGed exists $args
 }
 
 ::itcl::body cadwidgets::Ged::faceplate {args} {
@@ -1264,6 +1308,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed fb2pix $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::find_pipept {args} {
+    eval $mGed find_pipept $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::fontsize {args} {
     eval $mGed fontsize $itk_component($itk_option(-pane)) $args
 }
@@ -1277,6 +1325,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::g {args} {
+    set mRayNeedGettrees 1
     eval $mGed g $args
 }
 
@@ -1379,18 +1428,22 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::kill {args} {
+    set mRayNeedGettrees 1
     eval $mGed kill $args
 }
 
 ::itcl::body cadwidgets::Ged::killall {args} {
+    set mRayNeedGettrees 1
     eval $mGed killall $args
 }
 
 ::itcl::body cadwidgets::Ged::killrefs {args} {
+    set mRayNeedGettrees 1
     eval $mGed killrefs $args
 }
 
 ::itcl::body cadwidgets::Ged::killtree {args} {
+    set mRayNeedGettrees 1
     eval $mGed killtree $args
 }
 
@@ -1449,6 +1502,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::make {args} {
+    set mRayNeedGettrees 1
     eval $mGed make $args
 }
 
@@ -1492,6 +1546,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed more_args_callback $args
 }
 
+::itcl::body cadwidgets::Ged::mouse_append_pipept {args} {
+    eval $mGed mouse_append_pipept $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::mouse_constrain_rot {args} {
     eval $mGed mouse_constrain_rot $itk_component($itk_option(-pane)) $args
 }
@@ -1500,12 +1558,21 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_constrain_trans $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::mouse_find_pipept {args} {
+    set i [eval $mGed mouse_find_pipept $itk_component($itk_option(-pane)) $args]
+}
+
 ::itcl::body cadwidgets::Ged::mouse_move_arb_edge {args} {
     eval $mGed mouse_move_arb_edge $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::mouse_move_arb_face {args} {
     eval $mGed mouse_move_arb_face $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::mouse_move_pipept {args} {
+    puts "cadwidgets::Ged::pane_mouse_move_pipept $_pane $args"
+    eval $mGed mouse_move_pipept $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::mouse_orotate {args} {
@@ -1518,6 +1585,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::mouse_otranslate {args} {
     eval $mGed mouse_otranslate $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::mouse_prepend_pipept {args} {
+    eval $mGed mouse_prepend_pipept $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::mouse_rect {args} {
@@ -1568,11 +1639,21 @@ package provide cadwidgets::Ged 1.0
     eval $mGed move_arb_face_mode $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::move_pipept {args} {
+    eval $mGed move_pipept $args
+}
+
+::itcl::body cadwidgets::Ged::move_pipept_mode {args} {
+    eval $mGed move_pipept_mode $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::mv {args} {
+    set mRayNeedGettrees 1
     eval $mGed mv $args
 }
 
 ::itcl::body cadwidgets::Ged::mvall {args} {
+    set mRayNeedGettrees 1
     eval $mGed mvall $args
 }
 
@@ -1593,11 +1674,13 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::open {args} {
+    catch {rename $mRay ""}
+    set mRayNeedGettrees 1
     set $mGedFile [eval $mGed open $args]
 }
 
 ::itcl::body cadwidgets::Ged::opendb {args} {
-    set $mGedFile [eval $mGed open $args]
+    eval open $args
 }
 
 ::itcl::body cadwidgets::Ged::orient {args} {
@@ -1680,6 +1763,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed fb2pix $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_find_pipept {_pane args} {
+    eval $mGed find_pipept $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_fontsize {_pane args} {
     eval $mGed fontsize $itk_component($_pane) $args
 }
@@ -1736,6 +1823,18 @@ package provide cadwidgets::Ged 1.0
     eval $mGed move_arb_face_mode $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_move_pipept_mode {_pane args} {
+    eval $mGed move_pipept_mode $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_mouse_append_pipept {_pane args} {
+    eval $mGed mouse_append_pipept $itk_component($_pane) $args
+
+    if {$mPipePointCallback != ""} {
+	catch {$mPipePointCallback}
+    }
+}
+
 ::itcl::body cadwidgets::Ged::pane_mouse_constrain_rot {_pane args} {
     eval $mGed mouse_constrain_rot $itk_component($_pane) $args
 }
@@ -1744,12 +1843,25 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_constrain_trans $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_mouse_find_pipept {_pane args} {
+    set i [eval $mGed mouse_find_pipept $itk_component($_pane) $args]
+
+    if {$mPipePointCallback != ""} {
+	catch {$mPipePointCallback $i}
+    }
+}
+
 ::itcl::body cadwidgets::Ged::pane_mouse_move_arb_edge {_pane args} {
     eval $mGed mouse_move_arb_edge $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_mouse_move_arb_face {_pane args} {
     eval $mGed mouse_move_arb_face $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_mouse_move_pipept {_pane args} {
+    puts "cadwidgets::Ged::pane_mouse_move_pipept $_pane $args"
+    eval $mGed mouse_move_pipept $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_mouse_orotate {_pane args} {
@@ -1762,6 +1874,14 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_mouse_otranslate {_pane args} {
     eval $mGed mouse_otranslate $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_mouse_prepend_pipept {_pane args} {
+    eval $mGed mouse_prepend_pipept $itk_component($_pane) $args
+
+    if {$mPipePointCallback != ""} {
+	catch {$mPipePointCallback}
+    }
 }
 
 ::itcl::body cadwidgets::Ged::pane_mouse_rect {_pane args} {
@@ -2185,6 +2305,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::red {args} {
     eval $mGed red $args
+}
+
+::itcl::body cadwidgets::Ged::redraw {args} {
+    eval $mGed redraw $args
 }
 
 ::itcl::body cadwidgets::Ged::refresh {args} {
@@ -2789,6 +2913,10 @@ package provide cadwidgets::Ged 1.0
     $mGed aet $itk_component(lr) 90 0 0
 }
 
+::itcl::body cadwidgets::Ged::delete_pipept {args} {
+    eval $mGed delete_pipept $args
+}
+
 ::itcl::body cadwidgets::Ged::end_data_arrow {_pane} {
     $mGed idle_mode $itk_component($_pane)
 
@@ -3120,6 +3248,17 @@ package provide cadwidgets::Ged 1.0
     return $mHistoryCallback
 }
 
+::itcl::body cadwidgets::Ged::init_append_pipept {_obj {_button 1} {_callback {}}} {
+    measure_line_erase
+
+    set mPipePointCallback $_callback
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_append_pipept $dm $_obj %x %y]; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
+}
+
 ::itcl::body cadwidgets::Ged::init_button_no_op {{_button 1}} {
     measure_line_erase
     init_button_no_op_prot $_button
@@ -3175,6 +3314,28 @@ package provide cadwidgets::Ged 1.0
 
     foreach dm {ur ul ll lr} {
 	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_data_pick $dm %x %y]; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
+}
+
+::itcl::body cadwidgets::Ged::init_find_pipept {_obj {_button 1} {_callback {}}} {
+    measure_line_erase
+
+    set mPipePointCallback $_callback
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_find_pipept $dm $_obj %x %y]; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
+}
+
+::itcl::body cadwidgets::Ged::init_prepend_pipept {_obj {_button 1} {_callback {}}} {
+    measure_line_erase
+
+    set mPipePointCallback $_callback
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_prepend_pipept $dm $_obj %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> ""
     }
 }
@@ -3376,8 +3537,10 @@ package provide cadwidgets::Ged 1.0
     set view [$mGed screen2view $itk_component($_pane) $_x $_y]
     set view [$mGed snap_view $itk_component($_pane) [lindex $view 0] [lindex $view 1]]
 
+    set mRayCurrWho [$mGed who]
+
     set bounds [$mGed bounds $itk_component($_pane)]
-    set vZ [expr {[lindex $bounds 4] / -2048.0}]
+    set vZ [lindex $bounds 5]
     set mLastMouseRayStart [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] $vZ]
     set mLastMouseRayTarget [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] 0]
 
@@ -3539,12 +3702,17 @@ package provide cadwidgets::Ged 1.0
 
     set result ""
     catch {
-	eval $mGed rt_gettrees ray -i -u [$mGed who]
-	ray prep $_prep
-	ray no_bool $_no_bool
-	ray onehit $_onehit
+	if {$mRayCurrWho != $mRayLastWho || $mRayNeedGettrees} {
+	    set mRayCurrWho [$mGed who]
+	    eval $mGed rt_gettrees $mRay -i -u $mRayCurrWho
+	    $mRay prep $_prep
+	    $mRay no_bool $_no_bool
+	    $mRay onehit $_onehit
+	    set mRayLastWho $mRayCurrWho
+	    set mRayNeedGettrees 0
+	}
 
-	set result [ray shootray $_start $_op $_target]
+	set result [$mRay shootray $_start $_op $_target]
     }
 
     SetNormalCursor $this
@@ -4108,12 +4276,14 @@ package provide cadwidgets::Ged 1.0
     $help add edcodes		{{object(s)} {edit the various codes for the specified objects}}
     $help add edcolor		{{} {edit the color table}}
     $help add edcomb		{{comb rflag rid air los mid} {modify combination record information}}
+    $help add edit		{{[help] subcmd args} {edit objects via subcommands}}
     $help add edmater		{{comb1 [comb2 ...]} {edit combination materials}}
     $help add erase		{{<objects>} {remove objects from the screen}}
     $help add ev		{{"[-dfnqstuvwT] [-P #] <objects>"} {evaluate objects via NMG tessellation}}
     $help add expand		{{expression} {globs expression against database objects}}
     $help add eye		{{mx my mz} {set eye point to given model coordinates}}
     $help add eye_pos		{{mx my mz} {set eye position to given model coordinates}}
+    $help add exists		{{object} {check for the existence of object}}
     $help add facetize		{{[-m] [-n] [-t] [-T] new_obj old_obj [old_obj2 old_obj3 ...]} {create a new bot object by facetizing the specified objects}}
     $help add form		{{objType} {returns form of objType}}
     $help add fracture		{{} {}}
@@ -4241,7 +4411,6 @@ package provide cadwidgets::Ged 1.0
     $help add tops		{{} {find all top level objects}}
     $help add tra		{{[-v|-m] "x y z"} {translate the view}}
     $help add track		{{args} {create a track}}
-    $help add translate		{{x [y [z]] object(s)} {translate object(s)}}
     $help add tree		{{[-c] [-i n] [-d n] [-o outfile] object(s)} {print out a tree of all members of an object, or all members to depth n in the tree if n -d option is supplied}}
     $help add unhide		{{[objects]} {unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output}}
     $help add units		{{[mm|cm|m|in|ft|...]}	{change units}}

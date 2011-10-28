@@ -30,10 +30,9 @@ void
 bu_ptbl_init(struct bu_ptbl *b, size_t len, const char *str)
 {
     if (UNLIKELY(bu_debug & BU_DEBUG_PTBL))
-	bu_log("bu_ptbl_init(%p, len=%z, %s)\n", (void *)b, len, str);
+	bu_log("bu_ptbl_init(%p, len=%zu, %s)\n", (void *)b, len, str);
 
-    BU_LIST_INIT(&b->l);
-    b->l.magic = BU_PTBL_MAGIC;
+    BU_LIST_INIT_MAGIC(&b->l, BU_PTBL_MAGIC);
 
     if (UNLIKELY(len <= (size_t)0))
 	len = 64;
@@ -48,6 +47,7 @@ void
 bu_ptbl_reset(struct bu_ptbl *b)
 {
     BU_CK_PTBL(b);
+
     if (UNLIKELY(bu_debug & BU_DEBUG_PTBL))
 	bu_log("bu_ptbl_reset(%p)\n", (void *)b);
     b->end = 0;
@@ -87,6 +87,7 @@ bu_ptbl_locate(const struct bu_ptbl *b, const long int *p)
     register const long **pp;
 
     BU_CK_PTBL(b);
+
     pp = (const long **)b->buffer;
     for (k = b->end-1; k >= 0; k--)
 	if (pp[k] == p) return k;
@@ -102,6 +103,7 @@ bu_ptbl_zero(struct bu_ptbl *b, const long int *p)
     register const long **pp;
 
     BU_CK_PTBL(b);
+
     pp = (const long **)b->buffer;
     for (k = b->end-1; k >= 0; k--) {
 	if (pp[k] == p) {
@@ -115,9 +117,11 @@ int
 bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
 {
     register int k;
-    register long **pp = b->buffer;
+    register long **pp;
 
     BU_CK_PTBL(b);
+
+    pp = b->buffer;
 
     /* search for existing */
     for (k = b->end-1; k >= 0; k--) {
@@ -143,11 +147,15 @@ bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
 int
 bu_ptbl_rm(struct bu_ptbl *b, const long int *p)
 {
-    register int end = b->end, j, k, l;
-    register long **pp = b->buffer;
+    register int end, j, k, l;
+    register long **pp;
     int ndel = 0;
 
     BU_CK_PTBL(b);
+
+    end = b->end;
+    pp = b->buffer;
+
     for (l = b->end-1; l >= 0; --l) {
 	if (pp[l] == p) {
 	    /* delete consecutive occurrence(s) of p */
@@ -174,6 +182,7 @@ bu_ptbl_cat(struct bu_ptbl *dest, const struct bu_ptbl *src)
 {
     BU_CK_PTBL(dest);
     BU_CK_PTBL(src);
+
     if (UNLIKELY(bu_debug & BU_DEBUG_PTBL))
 	bu_log("bu_ptbl_cat(%p, %p)\n", (void *)dest, (void *)src);
 
@@ -195,6 +204,7 @@ bu_ptbl_cat_uniq(struct bu_ptbl *dest, const struct bu_ptbl *src)
 
     BU_CK_PTBL(dest);
     BU_CK_PTBL(src);
+
     if (UNLIKELY(bu_debug & BU_DEBUG_PTBL))
 	bu_log("bu_ptbl_cat_uniq(%p, %p)\n", (void *)dest, (void *)src);
 
@@ -215,7 +225,9 @@ bu_ptbl_free(struct bu_ptbl *b)
 {
     BU_CK_PTBL(b);
 
-    bu_free((genptr_t)b->buffer, "bu_ptbl.buffer[]");
+    if (b->buffer) {
+	bu_free((genptr_t)b->buffer, "bu_ptbl.buffer[]");
+    }
     memset((char *)b, 0, sizeof(struct bu_ptbl));	/* sanity */
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PTBL))
@@ -229,6 +241,7 @@ bu_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
     register long **lp;
 
     BU_CK_PTBL(tbl);
+
     bu_log("%s: bu_ptbl array with %d entries\n",
 	   title, tbl->end);
 

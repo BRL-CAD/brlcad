@@ -18,7 +18,7 @@ struct revolve_specific {
     vect_t		rEnd;
     fastf_t		ang;	/**< @brief angle to revolve */
     char		*sketch_name;	/**< @brief name of sketch */
-    struct rt_sketch_internal *sk;	/**< @brief pointer to sketch */
+    struct rt_sketch_internal *skt;	/**< @brief pointer to sketch */
     int			*ends;	/**< @brief indices of points at end of continuous path */
     fastf_t		bounds[4];	/**< @brief 2D sketch bounds  */
 };

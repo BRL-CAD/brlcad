@@ -85,11 +85,6 @@ typedef SCLP23_NAME(Application_instance__set_ptr)
 				SCLP23_NAME(Application_instance__set_var);
 
 /*
-#ifdef __OSTORE__
-// set is defined - DAS
-   typedef os_List<SCLP23_NAME(Application_instance_ptr)> 
-                                SCLP23_NAME(Application_instance__list);
-#endif
    typedef SCLP23_NAME(Application_instance__list) * 
                                 SCLP23_NAME(Application_instance__list_var);
 */

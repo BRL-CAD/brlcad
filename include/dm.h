@@ -336,6 +336,13 @@ struct dm_obj {
 #define DM_GET_DISPLAY_IMAGE(_dmp, _image) _dmp->dm_getDisplayImage(_dmp, _image)
 
 DM_EXPORT extern struct dm dm_Null;
+DM_EXPORT extern struct dm dm_ogl;
+DM_EXPORT extern struct dm dm_plot;
+DM_EXPORT extern struct dm dm_ps;
+DM_EXPORT extern struct dm dm_rtgl;
+DM_EXPORT extern struct dm dm_tk;
+DM_EXPORT extern struct dm dm_wgl;
+DM_EXPORT extern struct dm dm_X;
 
 DM_EXPORT extern int Dm_Init();
 DM_EXPORT extern struct dm *dm_open(Tcl_Interp *interp,
@@ -446,7 +453,7 @@ DM_EXPORT extern const char *dm_version(void);
     HIDDEN int _dmtype##_setTransparency(struct dm *dmp, int transparency_on); \
     HIDDEN int _dmtype##_setDepthMask(struct dm *dmp, int depthMask_on); \
     HIDDEN int _dmtype##_setZBuffer(struct dm *dmp, int zbuffer_on); \
-    HIDDEN int _dmtype##_setWinBounds(struct dm *dmp, int *w); \
+    HIDDEN int _dmtype##_setWinBounds(struct dm *dmp, fastf_t *w); \
     HIDDEN int _dmtype##_debug(struct dm *dmp, int lvl); \
     HIDDEN int _dmtype##_beginDList(struct dm *dmp, unsigned int list); \
     HIDDEN int _dmtype##_endDList(struct dm *dmp); \

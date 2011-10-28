@@ -84,7 +84,7 @@ main(int argc, char **argv)
 void
 do_cell(struct val *vp, double xc, double yc)
 
-    /* center coordinates, z=0+ */
+/* center coordinates, z=0+ */
 {
     bn_poly_t polynom;
     bn_complex_t roots[4];	/* roots of final equation */
@@ -130,7 +130,7 @@ void
 pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *out, int npts)
 
 
-    /* hopefully points outwards */
+/* hopefully points outwards */
 
 {
     int i;
@@ -157,9 +157,9 @@ void
 do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsigned char *rgb)
 
 
-    /* direction or aim point */
-    /* 0 = direction, !0 = aim point */
-    /* radius of light */
+/* direction or aim point */
+/* 0 = direction, !0 = aim point */
+/* radius of light */
 
 {
     char nbuf[64];

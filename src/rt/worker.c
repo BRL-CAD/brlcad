@@ -516,6 +516,17 @@ pat_found:
 		do_pixel(cpu, pat_num, pixelnum);
 	    }
 	}
+    } else if (random_mode) {
+	
+	while (1) { 
+	    /* Generate a random pixel id between 0 and last_pixel
+	       inclusive - TODO: check if there is any issue related
+	       with multi-threaded RNG */
+	    pixelnum = rand()*1.0/RAND_MAX*(last_pixel + 1);
+	    if (pixelnum >= last_pixel) pixelnum = last_pixel;
+	    do_pixel(cpu, pat_num, pixelnum);
+	}
+
     } else {
 	while (1) {
 	    if (stop_worker)

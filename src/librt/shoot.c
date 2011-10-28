@@ -97,7 +97,7 @@ rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
 	  }
 
 /**
- * R T _ R E S _ P I E C E S _ C L E A N
+ *
  */
 void
 rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
@@ -128,13 +128,17 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 
 	    /*
 	     * Skip uninitialized structures.
-	     * Doing this until we figure out why all "struct rt_piecestate" array
-	     * members are NOT getting initialized in rt_res_pieces_init() above.
-	     * Initial glance looks like tree.c/rt_gettrees_muves() can be called
-	     * in such a way as to assign stp->st_piecestate_num multiple times,
-	     * each time with a different value. This value is an index into the
-	     * resp->re_pieces array. When this happens, it causes all but the
-	     * last referenced "struct rt_piecestate" member to be initialized.
+	     *
+	     * Doing this until we figure out why all "struct
+	     * rt_piecestate" array members are NOT getting
+	     * initialized in rt_res_pieces_init() above.  Initial
+	     * glance looks like tree.c/rt_gettrees_muves() can be
+	     * called in such a way as to assign
+	     * stp->st_piecestate_num multiple times, each time with a
+	     * different value. This value is an index into the
+	     * resp->re_pieces array. When this happens, it causes all
+	     * but the last referenced "struct rt_piecestate" member
+	     * to be initialized.
 	     */
 	    if (psp->magic == 0)
 		continue;
@@ -145,17 +149,15 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 	    psp->shot = NULL;	/* sanity */
 	    psp->magic = 0;
 	}
+
+	rtip->rti_nsolids_with_pieces = 0;
     }
     bu_free((char *)resp->re_pieces, "re_pieces[]");
     resp->re_pieces = NULL;
-
-    rtip->rti_nsolids_with_pieces = 0;
 }
 
 
 /**
- * R T _ F I N D _ N U G R I D
- *
  * Along the given axis, find which NUgrid cell this value lies in.
  * Use method of binary subdivision.
  */
@@ -195,7 +197,7 @@ again:
 
 
 /**
- * R T _ A D V A N C E _ T O _ N E X T _ C E L L
+ *
  */
 const union cutter *
 rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
@@ -657,8 +659,6 @@ escaped_from_model:
 
 
 /**
- * R T _ F I N D _ B A C K I N G _ D I S T
- *
  * This routine traces a ray from its start point to model exit
  * through the space partitioning tree.  The objective is to find all
  * primitives that use "pieces" and also have a bounding box that
@@ -868,8 +868,6 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
 
 
 /**
- * R T _ S H O O T R A Y
- *
  * Note that the direction vector r_dir must have unit length; this is
  * mandatory, and is not ordinarily checked, in the name of
  * efficiency.
@@ -927,6 +925,15 @@ rt_shootray(register struct application *ap)
     } else {
 	ap->a_ray.magic = RT_RAY_MAGIC;
     }
+#if 0
+    /* FIXME: resolve the rt_uniresource initialization dilemma, wrap
+     * in a function so we can call rt_init_resource().
+     */
+    if (!ap->a_resource) {
+	ap->a_resource = &rt_uniresource;
+    }
+    RT_CK_RESOURCE(ap->a_resource);
+#endif
     if (ap->a_resource == RESOURCE_NULL) {
 	ap->a_resource = &rt_uniresource;
 	if (RT_G_DEBUG)bu_log("rt_shootray:  defaulting a_resource to &rt_uniresource\n");
@@ -1014,8 +1021,10 @@ rt_shootray(register struct application *ap)
 	/* Initialize this processors 'solid pieces' state */
 	rt_res_pieces_init(resp, rtip);
     }
-    if (BU_LIST_MAGIC_WRONG(&resp->re_pieces_pending.l, BU_PTBL_MAGIC))
+    if (UNLIKELY(!BU_LIST_MAGIC_EQUAL(&resp->re_pieces_pending.l, BU_PTBL_MAGIC))) {
+	/* only happens first time through */
 	bu_ptbl_init(&resp->re_pieces_pending, 100, "re_pieces_pending");
+    }
     bu_ptbl_reset(&resp->re_pieces_pending);
 
     /* Verify that direction vector has unit length */
@@ -1604,8 +1613,6 @@ out:
 
 
 /**
- * R T _ C E L L _ N _ O N _ R A Y
- *
  * Return pointer to cell 'n' along a given ray.  Used for debugging
  * of how space partitioning interacts with shootray.  Intended to
  * mirror the operation of rt_shootray().  The first cell is 0.
@@ -1846,8 +1853,6 @@ rt_zero_res_stats(struct resource *resp)
 
 
 /**
- * R T _ A D D _ R E S _ S T A T S
- *
  * To be called only in non-parallel mode, to tally up the statistics
  * from the resource structure(s) into the rt instance structure.
  *
@@ -1860,7 +1865,9 @@ rt_add_res_stats(register struct rt_i *rtip, register struct resource *resp)
 {
     RT_CK_RTI(rtip);
 
-    if (resp == RESOURCE_NULL) resp = &rt_uniresource;
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
     RT_CK_RESOURCE(resp);
 
     rtip->rti_nrays += resp->re_nshootray;

@@ -21,12 +21,6 @@
  * Copyright (c) 1990 Stanford University
  */
 
-/*
-#ifdef __OSTORE__
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#endif
-*/
-
 #ifdef __O3DB__
 #include <OpenOODB.h>
 #endif
@@ -51,11 +45,7 @@ class GenNodeArray
 {
 public:
 
-//#ifdef __OSTORE__
-//    GenNodeArray (os_database *db, int defaultSize = ARRAY_DEFAULT_SIZE);
-//#else
     GenNodeArray(int defaultSize = ARRAY_DEFAULT_SIZE);
-//#endif
     virtual ~GenNodeArray();
 
     GenericNode*& operator[](int index);
@@ -71,11 +61,6 @@ public:
     virtual void ClearEntries();
     virtual void DeleteEntries();
 
-/*
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-#endif
-*/
 protected:
     virtual void Check(int index);
 

@@ -270,7 +270,7 @@ void updateStack(Stack & s,
 		 UserFunction::symboltable const & dlocalvariables,
 		 std::vector<std::string> argn)
 {
-    using boost::spirit::find;
+    using boost::spirit::classic::find;
     if (s.empty())
 	return;
     /** create a map between data adresses in destination Variable table
@@ -337,7 +337,7 @@ UserFunction *UserFunction::asUserFunction()
 }
 
 
-boost::spirit::symbols<double> const & UserFunction::localvariables() const
+boost::spirit::classic::symbols<double> const & UserFunction::localvariables() const
 {
     return localvariables_;
 }
@@ -355,7 +355,7 @@ double UserFunction::evalp(std::vector<double> const & args) const
     /** store data from args into the copy */
     std::size_t const size = argnames.size();
     for (std::size_t i =0; i != size ; ++i) {
-	double *const p = boost::spirit::find(temp, argnames[i].c_str());
+	double *const p = boost::spirit::classic::find(temp, argnames[i].c_str());
 	assert(p);
 	*p = args[i];
     }

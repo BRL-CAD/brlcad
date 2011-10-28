@@ -176,7 +176,7 @@ main(int argc, char **argv)
 	}
 	if (msgchar == STOP) {
 	    bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
-	    bu_log("Got STOP WRITE with %u left\n", nread);
+	    bu_log("Got STOP WRITE with %ld left\n", nread);
 	    break;
 	} else if (msgchar != GO) {
 	    bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
@@ -193,7 +193,7 @@ main(int argc, char **argv)
 	}
 	if (verbose>1) {
 	    bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
-	    bu_log("wrote %d\n", nread);
+	    bu_log("wrote %ld\n", nread);
 	}
 	if ((size_t)nread != size) {
 	    break;

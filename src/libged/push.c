@@ -41,7 +41,7 @@
 
 /** structure to hold all solids that have been pushed. */
 struct push_id {
-    long magic;
+    uint32_t magic;
     struct push_id *forw, *back;
     struct directory *pi_dir;
     mat_t pi_mat;
@@ -173,7 +173,7 @@ push_leaf(struct db_tree_state *tsp,
  * A null routine that does nothing.
  */
 static union tree *
-push_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *UNUSED(curtree), genptr_t UNUSED(client_data))
+push_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *curtree, genptr_t UNUSED(client_data))
 {
     return curtree;
 }

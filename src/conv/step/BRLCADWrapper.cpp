@@ -42,6 +42,7 @@ BRLCADWrapper::BRLCADWrapper() {
 
 
 BRLCADWrapper::~BRLCADWrapper() {
+    Close();
 }
 
 
@@ -109,7 +110,10 @@ BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep) {
 bool
 BRLCADWrapper::Close() {
 
-    wdb_close(outfp);
+    if (outfp) {
+	wdb_close(outfp);
+	outfp = NULL;
+    }
 
     return true;
 }

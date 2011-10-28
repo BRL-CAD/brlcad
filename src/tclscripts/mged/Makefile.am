@@ -33,7 +33,7 @@ scripties = \
 	cycle.tcl \
 	dbfindtree.tcl \
 	dbupgrade.tcl \
-        dmtype.tcl \
+	dmtype.tcl \
 	e_id.tcl \
 	edit_menu.tcl \
 	edit_solid.tcl \
@@ -75,6 +75,7 @@ scripties = \
 	ray.tcl \
 	raypick.tcl \
 	reid.tcl \
+	relos.tcl \
 	remap_mater.tcl \
 	remat.tcl \
 	rt.tcl \

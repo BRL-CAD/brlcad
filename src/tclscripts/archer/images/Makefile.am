@@ -171,7 +171,7 @@ dist_tcl_DATA = \
 	open.png \
 	openf.gif \
 	option_text.png \
-	option_tree.png \
+	option_edit.png \
 	other.png \
 	other_intersect.png \
 	other_subtract.png \
@@ -248,6 +248,7 @@ dist_tcl_DATA = \
 	tgc_labeled.png \
 	tgc_subtract.png \
 	tgc_union.png \
+	tools.png \
 	tor.png \
 	tor_intersect.png \
 	tor_labeled.png \

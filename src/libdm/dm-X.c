@@ -48,7 +48,6 @@
 #  undef X_NOT_STDC_ENV
 #  undef X_NOT_POSIX
 #endif
-#define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 
 #ifdef HAVE_TK
 #  include "tk.h"
@@ -409,8 +408,6 @@ X_close(struct dm *dmp)
 struct dm *
 X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 {
-    extern struct dm dm_X;
-
     static int count = 0;
     int make_square = -1;
     XGCValues gcv;
@@ -1364,7 +1361,7 @@ X_debug(struct dm *dmp, int lvl)
 
 
 HIDDEN int
-X_setWinBounds(struct dm *dmp, int *w)
+X_setWinBounds(struct dm *dmp, fastf_t *w)
 {
     if (dmp->dm_debugLevel)
 	bu_log("X_setWinBounds()\n");

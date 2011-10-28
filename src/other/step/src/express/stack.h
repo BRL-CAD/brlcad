@@ -66,7 +66,6 @@ typedef Linked_List	Stack;
 /* function aliases */
 #define STACKinitialize()
 #define STACKcreate()		LISTcreate()
-#define STACKempty(stack)	LISTempty(stack)
 #define	STACKpush(stack, item)	LISTadd_first((stack), (item))
 #define STACKpop(stack)		LISTremove_first(stack)
 #define STACKpeek(stack)	LISTpeek_first(stack)

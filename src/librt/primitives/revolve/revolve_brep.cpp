@@ -110,19 +110,13 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis) {
 	VSET(minpt, lbbox->m_min[0], lbbox->m_min[1], lbbox->m_min[2]);
 	VSET(maxpt, lbbox->m_max[0], lbbox->m_max[1], lbbox->m_max[2]);
 	currdist = DIST_PT_PT(minpt, maxpt);
-	bu_log("currdist: %f\n", currdist);
 	if (currdist > maxdist) {
 	    maxdist = currdist;
 	    largest_loop_index = i;
 	}
     }
-    bu_log("largest_loop_index = %d\n", largest_loop_index);
-
-    bu_log("curve_array[%d, %d, %d, %d, %d, %d]\n", curvearray[0], curvearray[1], curvearray[2], curvearray[3], curvearray[4], curvearray[5]);
-
 
     for (int i = 0; i < loopcount ; i++) {
-	bu_log("loopcount: %d\n", i);
 	ON_PolyCurve* poly_curve = NULL;
 	for (int j = 0; j < allsegments.Count(); j++) {
 	    if (curvearray[j] == i) {
@@ -160,16 +154,11 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
-    eip = rip->sk;
+    eip = rip->skt;
     RT_SKETCH_CK_MAGIC(eip);
-
-    *b = ON_Brep::New();
 
     ON_3dPoint plane_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
-
-    ON_TextLog dump_to_stdout;
-    ON_TextLog* dump = &dump_to_stdout;
 
     //  Find plane in 3 space corresponding to the sketch.
 
@@ -183,8 +172,6 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
     //  points for the vertices.
     for (size_t i = 0; i < eip->vert_count; i++) {
 	(*b)->NewVertex(sketch_plane->PointAt(eip->verts[i][0], eip->verts[i][1]), 0.0);
-	int vertind = (*b)->m_V.Count() - 1;
-	(*b)->m_V[vertind].Dump(*dump);
     }
 
     // Create the brep elements corresponding to the sketch lines, curves
@@ -195,9 +182,9 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
     struct line_seg *lsg;
     struct carc_seg *csg;
     struct bezier_seg *bsg;
-    long *lng;
-    for (size_t i = 0; i < (&eip->skt_curve)->seg_count; i++) {
-	lng = (long *)(&eip->skt_curve)->segments[i];
+    uint32_t *lng;
+    for (size_t i = 0; i < (&eip->curve)->count; i++) {
+	lng = (uint32_t *)(&eip->curve)->segment[i];
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC: {
 		lsg = (struct line_seg *)lng;

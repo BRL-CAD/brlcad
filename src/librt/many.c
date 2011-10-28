@@ -41,21 +41,19 @@
 
 /* For communication between interface routine and each of the threads */
 struct rt_many_internal {
-    long			magic;
-    long			cur_index;		/* semaphored */
-    long			max_index;
+    uint32_t magic;
+    long cur_index;		/* semaphored */
+    long max_index;
     const struct application *proto_ap;
-    struct resource		*resources;
-    int			(*callback)(struct application *, int index);
-    int			stop_worker;
-    int			sem_chunk;
+    struct resource *resources;
+    int (*callback)(struct application *, int index);
+    int stop_worker;
+    int sem_chunk;
 };
-#define RT_MANY_INTERNAL_MAGIC	0x526d6970	/* Rmip */
+#define RT_MANY_INTERNAL_MAGIC 0x526d6970	/* Rmip */
 #define RT_CK_RMI(_p) BU_CKMAG(_p, RT_MANY_INTERNAL_MAGIC, "rt_many_internal")
 
 /**
- * R T _ S H O O T _ M A N Y _ R A Y S _ W O R K E R
- *
  * Internal helper routine for rt_shoot_many_rays().
  *
  * Runs in PARALLEL, one instance per thread.
@@ -82,8 +80,8 @@ rt_shoot_many_rays_worker(int cpu, genptr_t arg)
     app.a_resource = &rmip->resources[cpu];
 
     while (1) {
-	register long	index;
-	register long	lim;
+	register long index;
+	register long lim;
 
 	if (rmip->stop_worker) break;
 
@@ -116,8 +114,6 @@ rt_shoot_many_rays_worker(int cpu, genptr_t arg)
 
 
 /**
- * R T _ S H O O T _ M A N Y _ R A Y S
- *
  * A convenience routine for application developers who wish to fire a
  * large but fixed number of rays in parallel, without wanting to
  * create a parallel "self dispatcher" routine of their own.
@@ -134,15 +130,16 @@ rt_shoot_many_rays_worker(int cpu, genptr_t arg)
  * formal return codes, and the return code from rt_shootray(), are
  * ignored.
  *
- * a_x is changed by this wrapper, and may be overridden by the callback.
+ * a_x is changed by this wrapper, and may be overridden by the
+ * callback.
  *
  * Note that the cost of spawning threads is sufficiently expensive
  * that 'nrays' should be at least dozens or hundreds to get a real
  * benefit from parallelism.
  *
  * Return codes expected from the callback() -
- *	-1	End processing before all nrays have been fired.
- *	 0	Normal return, proceed with firing the ray.
+ * -1 End processing before all nrays have been fired.
+ * 0 Normal return, proceed with firing the ray.
  *
  * Note that bu_parallel() is not re-entrant, so you can't have an
  * a_hit() routine which is already running in parallel call into this
@@ -154,8 +151,8 @@ rt_shoot_many_rays_worker(int cpu, genptr_t arg)
 void
 rt_shoot_many_rays(const struct application *proto_ap, int (*callback) (struct application *, int), int ncpus, long int nrays, struct resource *resources)
 {
-    struct rt_many_internal	rmi;
-    int	i;
+    struct rt_many_internal rmi;
+    int i;
 
     RT_CK_APPLICATION(proto_ap);
     for (i=0; i < ncpus; i++) {

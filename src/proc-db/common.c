@@ -77,9 +77,9 @@ void
 do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsigned char *rgb, struct wmember *headp)
 
 
-    /* direction or aim point */
-    /* 0 = direction, !0 = aim point */
-    /* radius of light */
+/* direction or aim point */
+/* 0 = direction, !0 = aim point */
+/* radius of light */
 
 
 {

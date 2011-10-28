@@ -69,6 +69,7 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
     if (!ifp || !ofp || !angle)
 	bu_exit(1, "internal error processing arguments\n");
 
+    bu_optind = bu_opterr = 1; /* skip the command name */
     while ((c = bu_getopt(argc, argv, "fbrih#:a:s:o:w:n:S:W:N:")) != -1) {
 	switch (c) {
 	    case 'f':
@@ -110,13 +111,13 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 		out_file_name = bu_optarg;
 		*ofp = fopen(out_file_name, "wb+");
 		if (*ofp == NULL) {
-		    bu_log("ERROR: %s cannot open \"%s\" for writing\n", bu_getprogname(), out_file_name);
+		    bu_log("ERROR: %s cannot open \"%s\" for writing\n", argv[0], out_file_name);
 		    return 0;
 		}
 		break;
 
 	    default:		/* '?' */
-		bu_log("ERROR: %s encountered unrecognized '-%c' option\n", bu_getprogname(), c);
+		bu_log("ERROR: %s encountered unrecognized '-%c' option\n", argv[0], c);
 		return 0;
 	}
     }
@@ -138,18 +139,18 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
     } else {
 	*ifp = fopen(in_file_name, "rb");
 	if (*ifp == NULL) {
-	    bu_log("ERROR: %s cannot open \"%s\" for reading\n", bu_getprogname(), in_file_name);
+	    bu_log("ERROR: %s cannot open \"%s\" for reading\n", argv[0], in_file_name);
 	    return 0;
 	}
     }
 
     /* sanity */
     if (isatty(fileno(*ifp))) {
-	bu_log("ERROR: %s will not read data from a tty\nRedirect input or specify an input file.\n", bu_getprogname());
+	bu_log("ERROR: %s will not read data from a tty\nRedirect input or specify an input file.\n", argv[0]);
 	return 0;
     }
     if (isatty(fileno(*ofp))) {
-	bu_log("ERROR: %s will not write data to a tty\nRedirect output or use the -o output option.\n", bu_getprogname());
+	bu_log("ERROR: %s will not write data to a tty\nRedirect output or use the -o output option.\n", argv[0]);
 	return 0;
     }
 
@@ -298,13 +299,13 @@ icv_rot(int argc, char **argv)
     bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv, &ifp, &ofp, &angle)) {
-	bu_exit(1, "Usage: %s [-rifb | -a angle] [-# bytes] [-s squaresize] [-w width] [-n height] [-o outputfile] inputfile [> outputfile]\n", bu_getprogname());
+	bu_exit(1, "Usage: %s [-rifb | -a angle] [-# bytes] [-s squaresize] [-w width] [-n height] [-o outputfile] inputfile [> outputfile]\n", argv[0]);
     }
 
     scanbytes = nxin * pixbytes;
     buflines = MAXPIXELS / nxin;
     if (buflines <= 0) {
-	bu_exit(1, "ERROR: %s is not compiled to handle a scanline that long!\n");
+	bu_exit(1, "ERROR: %s is not compiled to handle a scanline that long!\n", argv[0]);
     }
     if (buflines > nyin) buflines = nyin;
     buffer = (unsigned char *)bu_malloc(buflines * scanbytes, "buffer");
@@ -350,7 +351,7 @@ icv_rot(int argc, char **argv)
 		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", argv[0], (void *)ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
@@ -359,7 +360,7 @@ icv_rot(int argc, char **argv)
 		if (wrote != buflines) {
 		    ret = 4;
 		    perror("fwrite");
-		    bu_log("ERROR: %s can't out write image data (wrote %zu of %d)\n", wrote, buflines);
+		    bu_log("ERROR: %s can't out write image data (wrote %zu of %d)\n", argv[0], wrote, buflines);
 		    goto done;
 		}
 		outplace += buflines*pixbytes;
@@ -380,7 +381,7 @@ icv_rot(int argc, char **argv)
 		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", argv[0], (void *)ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
@@ -389,7 +390,7 @@ icv_rot(int argc, char **argv)
 		if (wrote != buflines) {
 		    ret = 4;
 		    perror("fwrite");
-		    bu_log("ERROR: %s can't out write image data (wrote %zu of %d)\n", wrote, buflines);
+		    bu_log("ERROR: %s can't out write image data (wrote %zu of %d)\n", argv[0], wrote, buflines);
 		    goto done;
 		}
 		outplace += buflines*pixbytes;
@@ -402,7 +403,7 @@ icv_rot(int argc, char **argv)
 		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", argv[0], (void *)ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
@@ -411,7 +412,7 @@ icv_rot(int argc, char **argv)
 		if (wrote != scanbytes) {
 		    ret = 4;
 		    perror("fwrite");
-		    bu_log("ERROR: %s can't out write image data (wrote %zu of %d)\n", wrote, scanbytes);
+		    bu_log("ERROR: %s can't out write image data (wrote %zu of %d)\n", argv[0], wrote, scanbytes);
 		    goto done;
 		}
 		outplace += scanbytes;
@@ -423,7 +424,7 @@ icv_rot(int argc, char **argv)
 		if (wrote != scanbytes) {
 		    ret = 4;
 		    perror("fwrite");
-		    bu_log("ERROR: %s can't out write image data (wrote %zu of %d)\n", wrote, scanbytes);
+		    bu_log("ERROR: %s can't out write image data (wrote %zu of %d)\n", argv[0], wrote, scanbytes);
 		    goto done;
 		}
 	    }

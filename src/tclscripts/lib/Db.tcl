@@ -18,6 +18,12 @@
 # information.
 #
 ###
+
+#####################################################################
+# DEPRECATED: This widget is deprecated and should no longer be used.
+# Use the Ged widget instead.
+#####################################################################
+
 #
 # Description -
 #	The Db class wraps LIBRT's database object.
@@ -45,6 +51,7 @@
 	method dump {args}
 	method dup {args}
 	method edcomb {args}
+	method edit {args}
 	method edmater {args}
 	method expand {args}
 	method facetize {args}
@@ -138,6 +145,9 @@
 }
 
 ::itcl::body Db::constructor {dbOrFile} {
+
+    puts "DEPRECATION WARNING: The Db widget should no longer be used.  Use the Ged widget instead."
+
     if {[catch {$dbOrFile ls}]} {
 	set dbfile $dbOrFile
 	set db [subst $this]_db
@@ -322,6 +332,10 @@
 
 ::itcl::body Db::edcomb {args} {
     eval $db edcomb $args
+}
+
+::itcl::body Db::edit {args} {
+    eval $db edit $args
 }
 
 ::itcl::body Db::edmater {args} {
@@ -561,6 +575,7 @@
     $help add dump	{{file} {write current state of database object to file}}
     $help add dup	{{file [prefix]} {check for dup names in 'file'}}
     $help add edcomb	{{comb rflag rid air los mid} {modify combination record information}}
+    $help add edit      {{[help] subcmd args} {edit objects via subcommands}}
     $help add edmater	{{comb1 [comb2 ...]} {edit combination materials}}
     $help add expand	{{expression} {globs expression against database objects}}
     $help add find	{{[-s] <objects>} {find all references to objects}}

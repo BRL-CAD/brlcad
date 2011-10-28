@@ -149,6 +149,60 @@ const struct bu_structparse rt_eto_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+/**
+ * R T _ E T O _ B B O X
+ *
+ * Calculate bounding RPP of elliptical torus
+ */
+int
+rt_eto_bbox(struct rt_db_internal *ip, point_t *min, point_t *max){
+    vect_t P, Nu, w1;	/* for RPP calculation */
+    fastf_t f, eto_rc;
+    struct rt_eto_internal *tip;
+    tip = (struct rt_eto_internal *)ip->idb_ptr;
+    RT_ETO_CK_MAGIC(tip);
+
+    /*
+     * Compute the bounding RPP planes for a circular eto.
+     *
+     * Given a circular eto with vertex V, vector N, and radii r and
+     * |C|.  A bounding plane with direction vector P will touch the
+     * surface of the eto at the points: V +/- [|C| + r * |N x P|] P
+     */
+    VMOVE(Nu, tip->eto_N);
+    VUNITIZE(Nu);		/* z axis of coord sys */
+    eto_rc = MAGNITUDE(tip->eto_C);
+ 
+    /* X */
+    VSET(P, 1.0, 0, 0);	/* bounding plane normal */
+    VCROSS(w1, Nu, P);	/* for sin(angle N P) */
+    f = eto_rc + tip->eto_r * MAGNITUDE(w1);
+    VSCALE(w1, P, f);
+    f = fabs(w1[X]);
+    (*min)[X] = tip->eto_V[X] - f;
+    (*max)[X] = tip->eto_V[X] + f;
+
+    /* Y */
+    VSET(P, 0, 1.0, 0);	/* bounding plane normal */
+    VCROSS(w1, Nu, P);	/* for sin(angle N P) */
+    f = eto_rc + tip->eto_r * MAGNITUDE(w1);
+    VSCALE(w1, P, f);
+    f = fabs(w1[Y]);
+    (*min)[Y] = tip->eto_V[Y] - f;
+    (*max)[Y] = tip->eto_V[Y] + f;
+
+    /* Z */
+    VSET(P, 0, 0, 1.0);	/* bounding plane normal */
+    VCROSS(w1, Nu, P);	/* for sin(angle N P) */
+    f = eto_rc + tip->eto_r * MAGNITUDE(w1);
+    VSCALE(w1, P, f);
+    f = fabs(w1[Z]);
+    (*min)[Z] = tip->eto_V[Z] - f;
+    (*max)[Z] = tip->eto_V[Z] + f;
+
+    return 0;
+}
+
 
 /**
  * R T _ E T O _ P R E P
@@ -170,9 +224,8 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct eto_specific *eto;
 
-    vect_t P, w1;	/* for RPP calculation */
     vect_t Au, Bu, Cu, Nu;
-    fastf_t ch, cv, dh, f, phi;
+    fastf_t ch, cv, dh, phi;
     struct rt_eto_internal *tip;
 
     if (rtip) RT_CK_RTI(rtip);
@@ -231,40 +284,7 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     stp->st_aradius = stp->st_bradius = eto->eto_r + eto->eto_rc;
 
-    /*
-     * Compute the bounding RPP planes for a circular eto.
-     *
-     * Given a circular eto with vertex V, vector N, and radii r and
-     * |C|.  A bounding plane with direction vector P will touch the
-     * surface of the eto at the points: V +/- [|C| + r * |N x P|] P
-     */
-
-    /* X */
-    VSET(P, 1.0, 0, 0);	/* bounding plane normal */
-    VCROSS(w1, Nu, P);	/* for sin(angle N P) */
-    f = eto->eto_rc + eto->eto_r * MAGNITUDE(w1);
-    VSCALE(w1, P, f);
-    f = fabs(w1[X]);
-    stp->st_min[X] = eto->eto_V[X] - f;
-    stp->st_max[X] = eto->eto_V[X] + f;
-
-    /* Y */
-    VSET(P, 0, 1.0, 0);	/* bounding plane normal */
-    VCROSS(w1, Nu, P);	/* for sin(angle N P) */
-    f = eto->eto_rc + eto->eto_r * MAGNITUDE(w1);
-    VSCALE(w1, P, f);
-    f = fabs(w1[Y]);
-    stp->st_min[Y] = eto->eto_V[Y] - f;
-    stp->st_max[Y] = eto->eto_V[Y] + f;
-
-    /* Z */
-    VSET(P, 0, 0, 1.0);	/* bounding plane normal */
-    VCROSS(w1, Nu, P);	/* for sin(angle N P) */
-    f = eto->eto_rc + eto->eto_r * MAGNITUDE(w1);
-    VSCALE(w1, P, f);
-    f = fabs(w1[Z]);
-    stp->st_min[Z] = eto->eto_V[Z] - f;
-    stp->st_max[Z] = eto->eto_V[Z] + f;
+    if (rt_eto_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
 
     return 0;			/* OK */
 }
@@ -849,7 +869,7 @@ make_ellipse(int *n, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
  * eto_rd Semiminor axis length (scalar) of eto cross section
  */
 int
-rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
+rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     fastf_t a, b;	/* axis lengths of ellipse */
     fastf_t ang, ch, cv, dh, dv, ntol, dtol, phi, theta;

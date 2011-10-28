@@ -41,20 +41,20 @@
 #include "./ext.h"
 
 
-extern int	npsw;			/* number of worker PSWs to run */
+extern int npsw;			/* number of worker PSWs to run */
 
-extern int 	 rpt_overlap;
+extern int rpt_overlap;
 
 /* from opt.c */
 extern double units;
 extern int default_units;
 extern int model_units;
 
-static long hit_count=0;
+static size_t hit_count=0;
 static fastf_t cell_area=0.0;
 
 /* holds total exposed values */
-static unsigned long int exposed_hit_sum=0;
+static size_t exposed_hit_sum=0;
 static fastf_t exposed_hit_x_sum=0.0;
 static fastf_t exposed_hit_y_sum=0.0;
 static fastf_t exposed_hit_z_sum=0.0;
@@ -99,34 +99,37 @@ usage(const char *argv0)
 
 
 struct point_list {
-    struct point_list *   next;
-    point_t               pt_cell;
+    struct point_list * next;
+    point_t pt_cell;
 };
+
 
 struct area {
-    struct bu_list        l;                           /**< @brief magic # and doubly linked list */
-    struct area *         assembly;                    /* pointer to a bu_list of assemblies */
-    long                  hits;	                       /* presented hits count */
-    long                  exposures;                   /* exposed hits count */
-    int                   seen;	                       /* book-keeping for exposure */
-    int                   depth;                       /* assembly depth */
-    const char *          name;	                       /* assembly name */
-    struct point_list *   hit_points;                  /* list of points that define the presented area */
-    struct point_list *   exp_points;                  /* list of points that define the exposed area */
-    int                   num_hit_points;              /* number of points present in hit_points */
-    int                   num_exp_points;              /* number of points present in exp_points */
-    fastf_t               group_exposed_hit_x_sum;     /* running x total of exposed hit points on group */
-    fastf_t               group_exposed_hit_y_sum;     /* running y total of exposed hit points on group */
-    fastf_t               group_exposed_hit_z_sum;     /* running z total of exposed hit points on group */
-    fastf_t               group_presented_hit_x_sum;   /* running x total of presented hit points on group */
-    fastf_t               group_presented_hit_y_sum;   /* running y total of presented hit points on group */
-    fastf_t               group_presented_hit_z_sum;   /* running z total of presented hit points on group */
+    struct bu_list l;			/* magic # and doubly linked list */
+    struct area * assembly;		/* pointer to a bu_list of assemblies */
+    size_t hits;			/* presented hits count */
+    size_t exposures;			/* exposed hits count */
+    size_t seen;			/* book-keeping for exposure */
+    size_t depth;			/* assembly depth */
+    const char * name;			/* assembly name */
+    struct point_list * hit_points;	/* list of points that define the presented area */
+    struct point_list * exp_points;	/* list of points that define the exposed area */
+    size_t num_hit_points;              /* number of points present in hit_points */
+    size_t num_exp_points;		/* number of points present in exp_points */
+    fastf_t group_exposed_hit_x_sum;	/* running x total of exposed hit points on group */
+    fastf_t group_exposed_hit_y_sum;	/* running y total of exposed hit points on group */
+    fastf_t group_exposed_hit_z_sum;	/* running z total of exposed hit points on group */
+    fastf_t group_presented_hit_x_sum;	/* running x total of presented hit points on group */
+    fastf_t group_presented_hit_y_sum;	/* running y total of presented hit points on group */
+    fastf_t group_presented_hit_z_sum;	/* running z total of presented hit points on group */
 };
 
+
 struct area_list {
-    struct area *         cell;
-    struct area_list *    next;
+    struct area * cell;
+    struct area_list * next;
 };
+
 
 typedef enum area_type {
     PRESENTED_AREA,
@@ -134,132 +137,46 @@ typedef enum area_type {
 } area_type_t;
 
 
-int rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp);
-int raymiss(register struct application *ap);
-int area_center(struct point_list *ptlist, int number, point_t *center);
-
 /*
- *  			V I E W _ I N I T
+ * A R E A _ C E N T E R
+ *
+ * This function receives a pointer to a point_list
+ * structure, the number of points to calculate, and
+ * the point address of where to record the information.
  */
 int
-view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNUSED(minus_o), int UNUSED(minus_F))
+area_center(struct point_list * ptlist, size_t number, point_t *center)
 {
-    ap->a_hit = rayhit;
-    ap->a_miss = raymiss;
-    ap->a_onehit = 0;
+    struct point_list *point_it;
+    point_t temp_point;
 
-    use_air = 1;
+    if (!ptlist || number == 0) {
+        return 0;
+    }
+    temp_point[X] = 0;
+    temp_point[Y] = 0;
+    temp_point[Z] = 0;
 
-    if ( !rpt_overlap )
-	ap->a_logoverlap = rt_silent_logoverlap;
-
-    output_is_binary = 0;		/* output is printable ascii */
-
-    hit_count = 0;
-
-    return 0;		/* No framebuffer needed */
-}
-
-/*
- *			V I E W _ 2 I N I T
- *
- *  View_2init is called by do_frame(), which in turn is called by
- *  main().
- */
-void
-view_2init( struct application *ap, char *UNUSED(framename) )
-{
-    register struct region *rp;
-    register struct rt_i *rtip = ap->a_rt_i;
-
-    /* initial empty parent assembly */
-    struct area *assembly;
-
-    /* cell_width and cell_height are global variables */
-    cell_area = cell_width * cell_height;
-
-    /* create first parent-area record */
-    BU_GETSTRUCT(assembly, area);
-
-    /* initialize linked-list pointers for first parent-area record */
-    BU_LIST_INIT(&(assembly->l));
-
-    /* initialize first parent-area record */
-    assembly->assembly = (struct area *) NULL;
-    assembly->hits = 0;
-    assembly->exposures = 0;
-    assembly->seen = 0;
-    assembly->depth = 0;
-    assembly->name = (char *) NULL;
-    assembly->hit_points = (struct point_list *) NULL;
-    assembly->exp_points = (struct point_list *) NULL;
-    assembly->num_hit_points = 0;
-    assembly->num_exp_points = 0;
-    assembly->group_exposed_hit_x_sum = 0.0;
-    assembly->group_exposed_hit_y_sum = 0.0;
-    assembly->group_exposed_hit_z_sum = 0.0;
-    assembly->group_presented_hit_x_sum = 0.0;
-    assembly->group_presented_hit_y_sum = 0.0;
-    assembly->group_presented_hit_z_sum = 0.0;
-
-    bu_semaphore_acquire( RT_SEM_RESULTS );
-
-    /* traverse the regions linked-list, create and assign an empty area record
-     * to each region record.
-     */
-    for ( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
-	struct area *cell;
-
-        /* create region-area record */
-        BU_GETSTRUCT(cell, area);
-
-        /* initialize linked-list pointers for region-area record */
-        BU_LIST_INIT(&(cell->l));
-
-        /* initialize region-area record */
-	cell->assembly = assembly;
-        cell->hits = 0;
-        cell->exposures = 0;
-        cell->seen = 0;
-        cell->depth = 0;
-        cell->name = (char *) NULL;
-        cell->hit_points = (struct point_list *) NULL;
-        cell->exp_points = (struct point_list *) NULL;
-        cell->num_hit_points = 0;
-        cell->num_exp_points = 0;
-        cell->group_exposed_hit_x_sum = 0.0;
-        cell->group_exposed_hit_y_sum = 0.0;
-        cell->group_exposed_hit_z_sum = 0.0;
-        cell->group_presented_hit_x_sum = 0.0;
-        cell->group_presented_hit_y_sum = 0.0;
-        cell->group_presented_hit_z_sum = 0.0;
-
-        /* place new region-area record into current region record */
-	rp->reg_udata = (genptr_t)cell;
+    point_it = ptlist;
+    while (point_it) {
+        temp_point[X] += point_it->pt_cell[X];
+        temp_point[Y] += point_it->pt_cell[Y];
+        temp_point[Z] += point_it->pt_cell[Z];
+        point_it = point_it->next;
     }
 
-    bu_semaphore_release( RT_SEM_RESULTS );
+    (*center)[X] = temp_point[X] / number;
+    (*center)[Y] = temp_point[Y] / number;
+    (*center)[Z] = temp_point[Z] / number;
 
-    return;
+    return 1;
 }
 
-/*
- *			R A Y M I S S
- *
- *  Null function -- handle a miss
- *  This function is called by rt_shootray(), which is called by
- *  do_frame().
- */
-int
-raymiss(struct application *UNUSED(ap))
-{
-    return 0;
-}
 
 /*
- *			V I E W _ P I X E L
+ * V I E W _ P I X E L
  *
- *  This routine is called from do_run(), and in this case does nothing.
+ * This routine is called from do_run(), and in this case does nothing.
  */
 void
 view_pixel(struct application *UNUSED(ap))
@@ -277,7 +194,7 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
 {
     size_t l = 0;
     char *buffer = (char *) NULL;
-    int depth = 0;
+    size_t depth = 0;
     int parent_found = 0;
     register struct area *assembly_head_ptr = cell->assembly;
     register struct area *area_record_ptr = (struct area *) NULL;
@@ -317,28 +234,28 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
             parent_found=0;
 
             /* traverse the assembly linked-list */
-            for (BU_LIST_FOR(area_record_ptr, area, &(assembly_head_ptr->l)))  {
+            for (BU_LIST_FOR(area_record_ptr, area, &(assembly_head_ptr->l))) {
                 /* if the 'name' of the current parent/group of the
                  * current region matches the current 'name' in the area
                  * structure, then within the current linked-list area
                  * structure, increment number of exposures & hits and
                  * increment seen, then exit for-loop.
                  */
-		if ( (BU_STR_EQUAL(area_record_ptr->name, &buffer[l])) ) {
+		if ((BU_STR_EQUAL(area_record_ptr->name, &buffer[l]))) {
 		    if (type == EXPOSED_AREA) {
 			if (!area_record_ptr->seen) {
 			    area_record_ptr->exposures++;
 			    area_record_ptr->seen++;
 			    area_record_ptr->hits++;
 
-                            /* total x,y,z for exposed & presented hits */
+                            /* total x, y, z for exposed & presented hits */
                             if (rtarea_compute_centers) {
                                 area_record_ptr->group_exposed_hit_x_sum += (fastf_t)((*hit_point)[X]);
-                                area_record_ptr->group_exposed_hit_y_sum += (fastf_t)((*hit_point)[Y]); 
+                                area_record_ptr->group_exposed_hit_y_sum += (fastf_t)((*hit_point)[Y]);
                                 area_record_ptr->group_exposed_hit_z_sum += (fastf_t)((*hit_point)[Z]);
                                 area_record_ptr->group_presented_hit_x_sum += (fastf_t)((*hit_point)[X]);
                                 area_record_ptr->group_presented_hit_y_sum += (fastf_t)((*hit_point)[Y]);
-                                area_record_ptr->group_presented_hit_z_sum += (fastf_t)((*hit_point)[Z]); 
+                                area_record_ptr->group_presented_hit_z_sum += (fastf_t)((*hit_point)[Z]);
                             }
 
 			    if (depth > area_record_ptr->depth) {
@@ -351,11 +268,11 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
 			    area_record_ptr->hits++;
 			    area_record_ptr->seen++;
 
-                            /* total x,y,z for presented hits */
+                            /* total x, y, z for presented hits */
                             if (rtarea_compute_centers) {
                                 area_record_ptr->group_presented_hit_x_sum += (fastf_t)((*hit_point)[X]);
                                 area_record_ptr->group_presented_hit_y_sum += (fastf_t)((*hit_point)[Y]);
-                                area_record_ptr->group_presented_hit_z_sum += (fastf_t)((*hit_point)[Z]); 
+                                area_record_ptr->group_presented_hit_z_sum += (fastf_t)((*hit_point)[Z]);
                             }
 
 			    if (depth > area_record_ptr->depth) {
@@ -369,7 +286,7 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
             }
 
 	    /* if a parent of the current region does not already exist in the
-             * assembly linked-list then create, populate, insert new area record 
+             * assembly linked-list then create, populate, insert new area record
              * into the assembly linked-list.
              */
 	    if (!parent_found) {
@@ -410,23 +327,23 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
 		if (type == EXPOSED_AREA) {
 		    area_record_ptr->exposures++;
 		    area_record_ptr->hits++;
-                    /* total x,y,z for exposed & presented hits */
+                    /* total x, y, z for exposed & presented hits */
                     if (rtarea_compute_centers) {
                         area_record_ptr->group_exposed_hit_x_sum += (fastf_t)((*hit_point)[X]);
-                        area_record_ptr->group_exposed_hit_y_sum += (fastf_t)((*hit_point)[Y]); 
+                        area_record_ptr->group_exposed_hit_y_sum += (fastf_t)((*hit_point)[Y]);
                         area_record_ptr->group_exposed_hit_z_sum += (fastf_t)((*hit_point)[Z]);
                         area_record_ptr->group_presented_hit_x_sum += (fastf_t)((*hit_point)[X]);
                         area_record_ptr->group_presented_hit_y_sum += (fastf_t)((*hit_point)[Y]);
-                        area_record_ptr->group_presented_hit_z_sum += (fastf_t)((*hit_point)[Z]); 
+                        area_record_ptr->group_presented_hit_z_sum += (fastf_t)((*hit_point)[Z]);
                     }
 		}
 		if (type == PRESENTED_AREA) {
 		    area_record_ptr->hits++;
-                    /* total x,y,z for presented hits */
+                    /* total x, y, z for presented hits */
                     if (rtarea_compute_centers) {
                         area_record_ptr->group_presented_hit_x_sum += (fastf_t)((*hit_point)[X]);
                         area_record_ptr->group_presented_hit_y_sum += (fastf_t)((*hit_point)[Y]);
-                        area_record_ptr->group_presented_hit_z_sum += (fastf_t)((*hit_point)[Z]); 
+                        area_record_ptr->group_presented_hit_z_sum += (fastf_t)((*hit_point)[Z]);
                     }
 		}
 
@@ -452,7 +369,21 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
 
 
 /*
- *			R A Y H I T
+ * R A Y M I S S
+ *
+ * Null function -- handle a miss
+ * This function is called by rt_shootray(), which is called by
+ * do_frame().
+ */
+int
+raymiss(struct application *UNUSED(ap))
+{
+    return 0;
+}
+
+
+/*
+ * R A Y H I T
  *
  */
 int
@@ -466,24 +397,18 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     register struct area *cell;
     struct area *cellp;
 
-/* exposed hit sums */
-    extern unsigned long int exposed_hit_sum;
-    extern fastf_t exposed_hit_x_sum;
-    extern fastf_t exposed_hit_y_sum;
-    extern fastf_t exposed_hit_z_sum;
-
-    if ( pp == PartHeadp )
+    if (pp == PartHeadp)
 	return 0;		/* nothing was actually hit?? */
 
     /* ugh, horrible block */
-    bu_semaphore_acquire( RT_SEM_RESULTS );
+    bu_semaphore_acquire(RT_SEM_RESULTS);
 
     hit_count++;
 
     /* traverse all regions in the model, clear seen in the 'area' record
      * associated with each region.
      */
-    for ( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
+    for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
 	cell = (struct area *)rp->reg_udata;
 	cell->seen = 0;
     }
@@ -491,15 +416,15 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     /* clear seen for all 'area' records associated with groups */
     rp = BU_LIST_FIRST(region, &(rtip->HeadRegion));
     cell = (struct area *)rp->reg_udata;
-    for ( BU_LIST_FOR(cellp, area, &(cell->assembly->l) ) )  {
+    for (BU_LIST_FOR(cellp, area, &(cell->assembly->l))) {
         cellp->seen = 0;
     }
 
     /* get the exposed areas (i.e. first hits), traverse linked-list of
      * partition records.
      */
-    for ( BU_LIST_FOR( pp, partition, (struct bu_list *)PartHeadp ) )  {
-	struct region  *reg = pp->pt_regionp;
+    for (BU_LIST_FOR(pp, partition, (struct bu_list *)PartHeadp)) {
+	struct region *reg = pp->pt_regionp;
 
         /* obtain the pointer to the area record associated with the current
          * region being processed.
@@ -552,7 +477,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
                 (temp_presented_point_list->pt_cell)[Y] = (pp->pt_inhit->hit_point)[Y];
                 (temp_presented_point_list->pt_cell)[Z] = (pp->pt_inhit->hit_point)[Z];
 
-                /* for computing exposed area center, count hits and sum x,y,z
+                /* for computing exposed area center, count hits and sum x, y, z
                  * values of hits on exposed regions
                  */
                 exposed_hit_sum++;
@@ -634,8 +559,8 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     } /* end of for-loop to 'get the exposed areas (i.e. first hits)' */
 
     /* get the presented areas */
-    for ( BU_LIST_FOR( pp, partition, (struct bu_list *)PartHeadp ) )  {
-	struct region  *reg = pp->pt_regionp;
+    for (BU_LIST_FOR(pp, partition, (struct bu_list *)PartHeadp)) {
+	struct region *reg = pp->pt_regionp;
 	cell = (struct area *)reg->reg_udata;
 
 	/* ignore air */
@@ -677,10 +602,10 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
                 temp_point_list->next = (struct point_list *) NULL;
 
 	        if (!cell->hit_points) {
-		        cell->hit_points = temp_point_list;
+		    cell->hit_points = temp_point_list;
 	        } else {
-                temp_point_list->next = cell->hit_points;
-                cell->hit_points = temp_point_list;
+		    temp_point_list->next = cell->hit_points;
+		    cell->hit_points = temp_point_list;
 	        }
             }
 
@@ -700,36 +625,36 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
 	    increment_assembly_counter(cell, reg->reg_name, PRESENTED_AREA, &(pp->pt_inhit->hit_point));
         }
     }
-    bu_semaphore_release( RT_SEM_RESULTS );
+    bu_semaphore_release(RT_SEM_RESULTS);
 
     return 0;
 }
 
 
 /*
- *			V I E W _ E O L
+ * V I E W _ E O L
  *
- *  View_eol() is called by rt_shootray() in do_run().  In this case,
- *  it does nothing.
+ * View_eol() is called by rt_shootray() in do_run().  In this case,
+ * it does nothing.
  */
 void view_eol(struct application *UNUSED(ap))
 {
 }
 
 
-/*  p r i n t _ r e g i o n _ a r e a _ l i s t
+/* p r i n t _ r e g i o n _ a r e a _ l i s t
  *
  * Prints a list of region areas sorted alphabetically reporting
  * either the presented or exposed area 'type' and keeping track of
  * the 'count' of regions printed.  this routine returns the number of
  * ray hits across all regions.
  */
-static long int
-print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
+static size_t
+print_region_area_list(size_t *count, struct rt_i *rtip, area_type_t type)
 {
     struct region *rp;
     register struct area *cell = (struct area *)NULL;
-    long int cumulative = 0;
+    size_t cumulative = 0;
 
     struct area_list *listHead = (struct area_list *)bu_malloc(sizeof(struct area_list), "print_area_list area list node allocation");
     struct area_list *listp;
@@ -737,7 +662,7 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
     listHead->next = (struct area_list *)NULL;
 
     /* sort the cell entries alphabetically */
-    for ( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
+    for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
 	cell = (struct area *)rp->reg_udata;
 	listp = listHead;
 
@@ -798,7 +723,7 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
 	} else if (ZERO(units - 304.8)) {
 	    factor = bu_units_conversion("yd");
 	} else {
-		factor = bu_units_conversion("mm");
+	    factor = bu_units_conversion("mm");
 	}
 	cell = listp->cell;
 
@@ -815,11 +740,11 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
                 point_t temp;
                 if (area_center((cell->hit_points), (cell->num_hit_points), &temp)) {
 		    bu_log("\tcenter at (%.4lf, %.4lf, %.4lf) %s",
-			temp[X]/units,
-			temp[Y]/units,
-			temp[Z]/units,
-			bu_units_string(units)
-		    );
+			   temp[X]/units,
+			   temp[Y]/units,
+			   temp[Z]/units,
+			   bu_units_string(units)
+			);
                 }
             }
 	}
@@ -831,16 +756,16 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
 		   bu_units_string(units),
 		   cell_area * (fastf_t)cell->exposures / (factor*factor),
 		   bu_units_string(factor)
-		   );
+		);
             if (rtarea_compute_centers) {
                 point_t temp;
                 if (area_center((cell->exp_points), (cell->num_exp_points), &temp)) {
 		    bu_log("\tcenter at (%.4lf, %.4lf, %.4lf) %s",
-			temp[X]/units,
-			temp[Y]/units,
-			temp[Z]/units,
-			bu_units_string(units)
-		    );
+			   temp[X]/units,
+			   temp[Y]/units,
+			   temp[Z]/units,
+			   bu_units_string(units)
+			);
                 }
             }
 	}
@@ -857,20 +782,20 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
 }
 
 
-/*  p r i n t _ a s s e m b l y _ a r e a _ l i s t
+/* p r i n t _ a s s e m b l y _ a r e a _ l i s t
  *
  * Prints a list of region areas sorted alphabetically reporting
  * either the presented or exposed area 'type' and keeping track of
  * the 'count' of regions printed.  this routine returns the number of
  * ray hits across all regions.
  */
-static long int
-print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type)
+static size_t
+print_assembly_area_list(struct rt_i *rtip, size_t max_depth, area_type_t type)
 {
     struct region *rp;
     struct area *cellp;
     register struct area *cell = (struct area *)NULL;
-    long int count = 0;
+    size_t count = 0;
 
     struct area_list *listHead = (struct area_list *)bu_malloc(sizeof(struct area_list), "print_area_list area list node allocation");
     struct area_list *listp;
@@ -881,12 +806,12 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
     rp = BU_LIST_FIRST(region, &(rtip->HeadRegion));
     cell = (struct area *)rp->reg_udata;
 
-    for (BU_LIST_FOR(cellp, area, &(cell->assembly->l)))  {
+    for (BU_LIST_FOR(cellp, area, &(cell->assembly->l))) {
 	int counted_items = 0;
 	listp = listHead;
 
 	if (type == PRESENTED_AREA) {
-        counted_items = cellp->hits;
+	    counted_items = cellp->hits;
 	}
 	if (type == EXPOSED_AREA) {
 	    counted_items = cellp->exposures;
@@ -931,7 +856,7 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 	bu_log("\nExposed Assembly Areas\n======================\n");
     }
     for (listp = listHead; listp->cell != NULL;) {
-	int indents = max_depth - listp->cell->depth;
+	size_t indents = max_depth - listp->cell->depth;
 	struct area_list *prev = listp;
 	double factor = 1.0; /* show mm in parens by default */
 
@@ -949,7 +874,7 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 	} else if (ZERO(units - 304.8)) {
 	    factor = bu_units_conversion("yd");
 	} else {
-		factor = bu_units_conversion("mm");
+	    factor = bu_units_conversion("mm");
 	}
 	cell = listp->cell;
 
@@ -960,7 +885,7 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 		bu_log("--");
 	    }
 	}
-    
+
 	if (type == PRESENTED_AREA) {
 	    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf %s^2)",
 		   cell->name,
@@ -973,11 +898,11 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
             if (rtarea_compute_centers) {
                 if (cell->hits) {
                     bu_log("\tcenter at (%.4lf, %.4lf, %.4lf) %s",
-                	cell->group_presented_hit_x_sum / (fastf_t)cell->hits / units,
-                	cell->group_presented_hit_y_sum / (fastf_t)cell->hits / units,
-                	cell->group_presented_hit_z_sum / (fastf_t)cell->hits / units,
-			bu_units_string(units)
-                    );
+			   cell->group_presented_hit_x_sum / (fastf_t)cell->hits / units,
+			   cell->group_presented_hit_y_sum / (fastf_t)cell->hits / units,
+			   cell->group_presented_hit_z_sum / (fastf_t)cell->hits / units,
+			   bu_units_string(units)
+			);
                 }
             }
 	}
@@ -993,11 +918,11 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
             if (rtarea_compute_centers) {
                 if (cell->exposures) {
                     bu_log("\tcenter at (%.4lf, %.4lf, %.4lf) %s",
-                    cell->group_exposed_hit_x_sum / (fastf_t)cell->exposures / units,
-                    cell->group_exposed_hit_y_sum / (fastf_t)cell->exposures / units,
-                    cell->group_exposed_hit_z_sum / (fastf_t)cell->exposures / units,
-		    bu_units_string(units)
-                    );
+			   cell->group_exposed_hit_x_sum / (fastf_t)cell->exposures / units,
+			   cell->group_exposed_hit_y_sum / (fastf_t)cell->exposures / units,
+			   cell->group_exposed_hit_z_sum / (fastf_t)cell->exposures / units,
+			   bu_units_string(units)
+			);
                 }
             }
 	}
@@ -1014,7 +939,7 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 
 
 /*
- *			V I E W _ E N D
+ * V I E W _ E N D
  *
  */
 void
@@ -1026,13 +951,13 @@ view_end(struct application *ap)
     long cumulative = 0;
     register struct area *cell = (struct area *)NULL;
 
-    int max_depth = 0;
+    size_t max_depth = 0;
     struct area *cellp;
 
-    long int presented_region_count = 0;
-    long int presented_assembly_count = 0;
-    long int exposed_region_count = 0;
-    long int exposed_assembly_count = 0;
+    size_t presented_region_count = 0;
+    size_t presented_assembly_count = 0;
+    size_t exposed_region_count = 0;
+    size_t exposed_assembly_count = 0;
 
     double factor = 1.0; /* show local database units in parens by default */
 
@@ -1072,7 +997,6 @@ view_end(struct application *ap)
 	       bu_units_string(units),
 	       bu_units_string(ap->a_rt_i->rti_dbip->dbi_local2base)
 	    );
-	    
     }
 
     cumulative = print_region_area_list(&presented_region_count, rtip, PRESENTED_AREA);
@@ -1082,7 +1006,7 @@ view_end(struct application *ap)
     rp = BU_LIST_FIRST(region, &(rtip->HeadRegion));
     cell = (struct area *)rp->reg_udata;
 
-    for (BU_LIST_FOR(cellp, area, &(cell->assembly->l)))  {
+    for (BU_LIST_FOR(cellp, area, &(cell->assembly->l))) {
 	if (cellp->depth > max_depth) {
 	    max_depth = cellp->depth;
 	}
@@ -1101,7 +1025,7 @@ view_end(struct application *ap)
 	   cell_area * (fastf_t)cumulative / (factor*factor),
 	   bu_units_string(factor)
 	);
-    bu_log("Total Exposed Area         (%ld hits) = %18.4lf square %s\t(%.4lf %s^2)\n",
+    bu_log("Total Exposed Area         (%zu hits) = %18.4lf square %s\t(%.4lf %s^2)\n",
 	   hit_count,
 	   total_area / (units*units),
 	   bu_units_string(units),
@@ -1110,13 +1034,13 @@ view_end(struct application *ap)
 	);
     /* output of center of exposed area */
     if (rtarea_compute_centers) {
-        bu_log("Center of Exposed Area     (%lu hits) = (%.4lf, %.4lf, %.4lf) %s\n",
-	       (long unsigned)exposed_hit_sum,
+        bu_log("Center of Exposed Area     (%zu hits) = (%.4lf, %.4lf, %.4lf) %s\n",
+	       exposed_hit_sum,
 	       exposed_hit_x_sum / (fastf_t)exposed_hit_sum / units,
 	       exposed_hit_y_sum / (fastf_t)exposed_hit_sum / units,
 	       exposed_hit_z_sum / (fastf_t)exposed_hit_sum / units,
 	       bu_units_string(units)
-	);
+	    );
     }
     bu_log("Number of Presented Regions:    %8d\n", presented_region_count);
     bu_log("Number of Presented Assemblies: %8d\n", presented_assembly_count);
@@ -1148,8 +1072,8 @@ view_end(struct application *ap)
                     }
                 }
                 if (cellp->hit_points) {
-                struct point_list * point, * next_point;
-                point = cellp->hit_points;
+		    struct point_list * point, * next_point;
+		    point = cellp->hit_points;
                     while (point) {
                         /*next_point = BU_LIST_NEXT(point_list, &(point->l));*/
                         next_point = point->next;
@@ -1160,12 +1084,12 @@ view_end(struct application *ap)
             }
             BU_LIST_DEQUEUE(&(cellp->l));
             bu_free(cellp, "free assembly-area entry");
-	}  
+	}
         bu_free(cell->assembly, "free assembly list head");
     }
 
     /* free the region areas */
-    for ( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
+    for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
 	cell = (struct area *)rp->reg_udata;
 	if (cell) {
             if (rtarea_compute_centers) {
@@ -1180,8 +1104,8 @@ view_end(struct application *ap)
                     }
                 }
                 if (cell->hit_points) {
-                struct point_list * point, * next_point;
-                point = cell->hit_points;
+		    struct point_list * point, * next_point;
+		    point = cell->hit_points;
                     while (point) {
                         /*next_point = BU_LIST_NEXT(point_list, &(point->l));*/
                         next_point = point->next;
@@ -1200,45 +1124,119 @@ view_end(struct application *ap)
     return;
 }
 
+
+/*
+ * V I E W _ 2 I N I T
+ *
+ * View_2init is called by do_frame(), which in turn is called by
+ * main().
+ */
+void
+view_2init(struct application *ap, char *UNUSED(framename))
+{
+    register struct region *rp;
+    register struct rt_i *rtip = ap->a_rt_i;
+
+    /* initial empty parent assembly */
+    struct area *assembly;
+
+    /* cell_width and cell_height are global variables */
+    cell_area = cell_width * cell_height;
+
+    /* create first parent-area record */
+    BU_GETSTRUCT(assembly, area);
+
+    /* initialize linked-list pointers for first parent-area record */
+    BU_LIST_INIT(&(assembly->l));
+
+    /* initialize first parent-area record */
+    assembly->assembly = (struct area *) NULL;
+    assembly->hits = 0;
+    assembly->exposures = 0;
+    assembly->seen = 0;
+    assembly->depth = 0;
+    assembly->name = (char *) NULL;
+    assembly->hit_points = (struct point_list *) NULL;
+    assembly->exp_points = (struct point_list *) NULL;
+    assembly->num_hit_points = 0;
+    assembly->num_exp_points = 0;
+    assembly->group_exposed_hit_x_sum = 0.0;
+    assembly->group_exposed_hit_y_sum = 0.0;
+    assembly->group_exposed_hit_z_sum = 0.0;
+    assembly->group_presented_hit_x_sum = 0.0;
+    assembly->group_presented_hit_y_sum = 0.0;
+    assembly->group_presented_hit_z_sum = 0.0;
+
+    bu_semaphore_acquire(RT_SEM_RESULTS);
+
+    /* traverse the regions linked-list, create and assign an empty area record
+     * to each region record.
+     */
+    for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
+	struct area *cell;
+
+        /* create region-area record */
+        BU_GETSTRUCT(cell, area);
+
+        /* initialize linked-list pointers for region-area record */
+        BU_LIST_INIT(&(cell->l));
+
+        /* initialize region-area record */
+	cell->assembly = assembly;
+        cell->hits = 0;
+        cell->exposures = 0;
+        cell->seen = 0;
+        cell->depth = 0;
+        cell->name = (char *) NULL;
+        cell->hit_points = (struct point_list *) NULL;
+        cell->exp_points = (struct point_list *) NULL;
+        cell->num_hit_points = 0;
+        cell->num_exp_points = 0;
+        cell->group_exposed_hit_x_sum = 0.0;
+        cell->group_exposed_hit_y_sum = 0.0;
+        cell->group_exposed_hit_z_sum = 0.0;
+        cell->group_presented_hit_x_sum = 0.0;
+        cell->group_presented_hit_y_sum = 0.0;
+        cell->group_presented_hit_z_sum = 0.0;
+
+        /* place new region-area record into current region record */
+	rp->reg_udata = (genptr_t)cell;
+    }
+
+    bu_semaphore_release(RT_SEM_RESULTS);
+
+    return;
+}
+
+
+/*
+ * V I E W _ I N I T
+ */
+int
+view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNUSED(minus_o), int UNUSED(minus_F))
+{
+    ap->a_hit = rayhit;
+    ap->a_miss = raymiss;
+    ap->a_onehit = 0;
+
+    use_air = 1;
+
+    if (!rpt_overlap)
+	ap->a_logoverlap = rt_silent_logoverlap;
+
+    output_is_binary = 0;		/* output is printable ascii */
+
+    hit_count = 0;
+
+    return 0;		/* No framebuffer needed */
+}
+
+
+/* stubs */
 void view_setup(struct rt_i *UNUSED(rtip)) {}
 void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 void application_init () {}
 
-/*
- *		 A R E A _ C E N T E R
- *
- *	This function receives a pointer to a point_list
- *	structure, the number of points to calculate, and
- *  the point address of where to record the information.
- */
-
-int
-area_center(struct point_list * ptlist, int number, point_t *center)
-{
-	struct point_list *point_it;
-    point_t temp_point;
-
-    if (!ptlist) {
-        return 0;
-    }
-    temp_point[X] = 0;
-    temp_point[Y] = 0;
-    temp_point[Z] = 0;
-
-    point_it = ptlist;
-    while (point_it) {
-        temp_point[X] += point_it->pt_cell[X];
-        temp_point[Y] += point_it->pt_cell[Y];
-        temp_point[Z] += point_it->pt_cell[Z];
-        point_it = point_it->next;
-    }
-
-    (*center)[X] = temp_point[X] / number;
-	(*center)[Y] = temp_point[Y] / number;
-	(*center)[Z] = temp_point[Z] / number;
-
-    return 1;
-}
 
 /*
  * Local Variables:

@@ -255,7 +255,7 @@ TypeDescriptor::TypeDescriptor
 }
 
 const char *
-TypeDescriptor::Name( const char *schnm ) const
+TypeDescriptor::Name(const char *schnm) const
     /*
      * Determines the current name of this.  Normally, this is simply _name.
      * If "schnm" is set to a value, however, then this function becomes a
@@ -267,7 +267,7 @@ TypeDescriptor::Name( const char *schnm ) const
      * SchRename::rename().)
      */
 {
-    if ( !schnm ) {
+    if (schnm == NULL) {
 	return _name;
     }
     if ( altNames && altNames->rename( schnm, (char *)_altname ) ) {
@@ -391,7 +391,7 @@ SchRename::choice( const char *nm ) const
 }
 
 char *
-SchRename::rename( const char *schnm, char *newnm ) const
+SchRename::rename(const char *schnm, char *newnm ) const
     /*
      * Check if this SchRename represents the rename of its owning TypeDesc for
      * schema schnm.  (This will be the case if schnm = schName.)  If so, the
@@ -400,7 +400,7 @@ SchRename::rename( const char *schnm, char *newnm ) const
      * name in this list provide a new name for TypeDesc for schema schnm.
      */
 {
-    if ( !StrCmpIns( schnm, schName ) ) {
+    if ( !StrCmpIns(schnm, schName ) ) {
 	strcpy( newnm, newName );
 	return newnm;
     }

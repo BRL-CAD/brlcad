@@ -21,6 +21,7 @@
  *  of ISST.
  *
  */
+#include "common.h"
 
 #include <stdio.h>
 
@@ -300,7 +301,6 @@ set_resolution(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_
 static int
 idle(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
-    struct isst_s *isst;
     Togl   *togl;
 
     if (objc != 2) {
@@ -312,7 +312,7 @@ idle(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *const
         return TCL_ERROR;
     }
 
-    isst = (struct isst_s *) Togl_GetClientData(togl);
+    (void)Togl_GetClientData(togl);
     Togl_PostRedisplay(togl);
 
     return TCL_OK;

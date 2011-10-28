@@ -39,8 +39,6 @@
 
 
 /**
- * D B _ R E A D
- *
  * Reads 'count' bytes at file offset 'offset' into buffer at 'addr'.
  * A wrapper for the UNIX read() sys-call that takes into account
  * syscall semaphores, stdio-only machines, and in-memory buffering.
@@ -95,8 +93,6 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
 
 
 /**
- * D B _ G E T M R E C
- *
  * Retrieve all records in the database pertaining to an object, and
  * place them in malloc()'ed storage, which the caller is responsible
  * for free()'ing.
@@ -146,8 +142,6 @@ db_getmrec(const struct db_i *dbip, const struct directory *dp)
 
 
 /**
- * D B _ G E T
- *
  * Retrieve 'len' records from the database, "offset" granules into
  * this entry.
  *
@@ -192,8 +186,6 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
 
 
 /**
- * D B _ W R I T E
- *
  * Writes 'count' bytes into at file offset 'offset' from buffer at
  * 'addr'.  A wrapper for the UNIX write() sys-call that takes into
  * account syscall semaphores, stdio-only machines, and in-memory
@@ -247,8 +239,6 @@ db_write(struct db_i *dbip, const genptr_t addr, size_t count, off_t offset)
 
 
 /**
- * D B _ P U T
- *
  * Store 'len' records to the database, "offset" granules into this
  * entry.
  *
@@ -293,8 +283,6 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, off_t
 
 
 /**
- * D B _ G E T _ E X T E R N A L
- *
  * Obtains a object from the database, leaving it in external (on-disk)
  * format.
  *
@@ -342,8 +330,6 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 
 
 /**
- * D B _ P U T _ E X T E R N A L
- *
  * Given that caller already has an external representation of the
  * database object, update it to have a new name (taken from
  * dp->d_namep) in that external representation, and write the new
@@ -418,8 +404,6 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 
 
 /**
- * D B _ F W R I T E _ E X T E R N A L
- *
  * Add name from dp->d_namep to external representation of solid, and
  * write it into a file.
  *
@@ -428,6 +412,8 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
  *
  * The 'name' field of the external representation is modified to
  * contain the desired name.  The 'ep' parameter cannot be const.
+ *
+ * THIS ROUTINE ONLY SUPPORTS WRITING V4 GEOMETRY.
  *
  * Returns -
  * <0 error

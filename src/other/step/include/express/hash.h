@@ -101,10 +101,6 @@
 /* packages used */
 /*****************/
 
-#ifdef HASH_C
-#include <assert.h>
-#endif /*HASH_C*/
-
 #include "memory.h"
 
 /************/
@@ -163,19 +159,8 @@ typedef struct {
 /* global variables */
 /********************/
 
-#ifdef HASH_C
-# define GLOBAL
-# define INITIALLY(value) = value
-#else
-# define GLOBAL extern
-# define INITIALLY(value)
-#endif /*HASH_C*/
-
-GLOBAL struct freelist_head HASH_Table_fl;
-GLOBAL struct freelist_head HASH_Element_fl;
-
-#undef GLOBAL
-#undef INITIALLY
+extern struct freelist_head HASH_Table_fl;
+extern struct freelist_head HASH_Element_fl;
 
 /******************************/
 /* macro function definitions */

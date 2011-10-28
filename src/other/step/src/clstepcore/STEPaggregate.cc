@@ -68,7 +68,7 @@ STEPaggregate::AggrValidLevel(const char *value, ErrorDescriptor *err,
 			      int optional, char *tokenList, int addFileId, 
 			      int clearError)
 {
-    SCLstring buf;
+    std::string buf;
     if(clearError)
 	err->ClearErrorMsg();
 
@@ -88,7 +88,7 @@ STEPaggregate::AggrValidLevel(istream &in, ErrorDescriptor *err,
 			      int optional, char *tokenList, int addFileId, 
 			      int clearError)
 {
-    SCLstring buf;
+    std::string buf;
     if(clearError)
 	err->ClearErrorMsg();
 
@@ -110,7 +110,7 @@ STEPaggregate::ReadValue(istream &in, ErrorDescriptor *err,
     ErrorDescriptor errdesc;
     char errmsg[BUFSIZ];
     int value_cnt = 0;
-    SCLstring buf;
+    std::string buf;
 
     if(assignVal)
 	Empty ();  // read new values and discard existing ones
@@ -201,7 +201,7 @@ STEPaggregate::ReadValue(istream &in, ErrorDescriptor *err,
 	    return SEVERITY_INPUT_ERROR;
 /*
 	    // error read until you find a delimiter
-	    SCLstring tmp;
+	    std::string tmp;
 	    while(in.good() && !strchr(",)", c) )
 	    {
 		in.get(c);
@@ -252,24 +252,24 @@ STEPaggregate::STEPread(istream& in, ErrorDescriptor *err,
 }
 
 const char *
-STEPaggregate::asStr(SCLstring & s) const
+STEPaggregate::asStr(std::string & s) const
 {
-    s.set_null();
+    s.clear();
 
     if(!_null)
     {
 	s = "(";
 	STEPnode * n = (STEPnode *) head;
-	SCLstring tmp;
+	std::string tmp;
 	while (n)
 	{
-	    s.Append( n->STEPwrite(tmp) );
+	    s.append( n->STEPwrite(tmp) );
 	    if (n = (STEPnode *) n -> NextNode ())
-		s.Append(',');
+		s.append(",");
 	}
-	s.Append(')');
+	s.append(")");
     }
-    return s.chars();
+    return const_cast<char *>(s.c_str());
 }
 
 void
@@ -279,7 +279,7 @@ STEPaggregate::STEPwrite(ostream& out, const char *currSch) const
     {
 	out << '(';
 	STEPnode * n = (STEPnode *)head;
-	SCLstring s;
+	std::string s;
 	while (n)  
 	{
 	    out << n->STEPwrite (s, currSch);
@@ -382,7 +382,7 @@ STEPnode::STEPread(istream &in, ErrorDescriptor *err)
 }
 
 const char *
-STEPnode::asStr(SCLstring &s)
+STEPnode::asStr(std::string &s)
 {
     //  defined in subclasses
   cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
@@ -393,7 +393,7 @@ STEPnode::asStr(SCLstring &s)
 }
 
 const char *
-STEPnode::STEPwrite (SCLstring &s, const char *currSch)
+STEPnode::STEPwrite (std::string &s, const char *currSch)
     /*
      * NOTE - second argument will contain name of current schema.  We may need
      * this if STEPnode belongs to an aggregate of selects.  If so, each node
@@ -404,7 +404,7 @@ STEPnode::STEPwrite (SCLstring &s, const char *currSch)
      * B and renamed to Y (i.e., "USE from A (X as Y)").  Thus, if currSch = B,
      * Y will have to be written out rather than X.  Actually, this concern
      * only applies for SelectNode.  To accomodate those cases, all the signa-
-     * tures of STEPwrite(SCLstring) contain currSch.  (As an additional note,
+     * tures of STEPwrite(std::string) contain currSch.  (As an additional note,
      * 2D aggregates should make use of currSch in case they are 2D aggrs of
      * selects.  But since currently (3/27/97) the SCL handles 2D+ aggrs using
      * SCLundefined's, this is not implemented.)
@@ -440,12 +440,7 @@ GenericAggregate::~GenericAggregate()
 SingleLinkNode *
 GenericAggregate::NewNode () 
 {
-#ifdef __OSTORE__
-    return new (os_segment::of(this),
-		GenericAggrNode::get_os_typespec()) GenericAggrNode();
-#else
     return new GenericAggrNode();
-#endif
 }
 
 STEPaggregate& 
@@ -458,13 +453,7 @@ GenericAggregate::ShallowCopy (const STEPaggregate& a)
 
     while (next) 
     {
-#ifdef __OSTORE__
-	copy = new (os_segment::of(this), 
-		    GenericAggrNode::get_os_typespec()) 
-				GenericAggrNode (*(GenericAggrNode*)next);
-#else
 	copy = new GenericAggrNode (*(GenericAggrNode*)next);
-#endif
 	AddNode(copy);
 	next = next->NextNode();
     }
@@ -501,12 +490,7 @@ GenericAggrNode::~GenericAggrNode()
 SingleLinkNode *
 GenericAggrNode::NewNode () 
 {
-#ifdef __OSTORE__
-    return new (os_segment::of(this), 
-		GenericAggrNode::get_os_typespec()) GenericAggrNode();
-#else
     return new GenericAggrNode();
-#endif
 }
 
 Severity 
@@ -536,15 +520,15 @@ GenericAggrNode::STEPread(istream &in, ErrorDescriptor *err)
 }
 
 const char *
-GenericAggrNode::asStr(SCLstring &s)  
+GenericAggrNode::asStr(std::string &s)  
 {
-    s.set_null();
+    s.clear();
     value.asStr(s);
-    return s.chars();
+    return const_cast<char *>(s.c_str());
 }
 
 const char *
-GenericAggrNode::STEPwrite(SCLstring &s, const char *currSch)
+GenericAggrNode::STEPwrite(std::string &s, const char *currSch)
 {
     return value.STEPwrite(s);
 /*
@@ -587,7 +571,7 @@ EntityAggregate::ReadValue(istream &in, ErrorDescriptor *err,
     ErrorDescriptor errdesc;
     char errmsg[BUFSIZ];
     int value_cnt = 0;
-    SCLstring buf;
+    std::string buf;
 
     if(assignVal)
 	Empty ();  // read new values and discard existing ones
@@ -636,20 +620,13 @@ EntityAggregate::ReadValue(istream &in, ErrorDescriptor *err,
     // if not assigning values only need one node. So only one node is created.
     // It is used to read the values
     else if(!assignVal) 
-      // OSTORE note - since this is temporary and deleted anyway don't worry
-      // about persistent new
 	item = new EntityNode();
 
     while (in.good() && (c != ')') )
     {
 	value_cnt++;
 	if(assignVal) // create a new node each time through the loop
-#ifdef __OSTORE__
-	    item = new (os_segment::of(this), 
-			EntityNode::get_os_typespec()) EntityNode();
-#else
 	    item = new EntityNode();
-#endif
 
 	errdesc.ClearErrorMsg();
 
@@ -684,7 +661,7 @@ EntityAggregate::ReadValue(istream &in, ErrorDescriptor *err,
 	    return SEVERITY_INPUT_ERROR;
 /*
 	    // error read until you find a delimiter
-	    SCLstring tmp;
+	    std::string tmp;
 	    while(in.good() && !strchr(",)", c) )
 	    {
 		in.get(c);
@@ -722,12 +699,7 @@ EntityAggregate::ShallowCopy (const STEPaggregate& a)
     const EntityNode * tmp = (const EntityNode*) a.GetHead ();
     while (tmp) 
     {
-#ifdef __OSTORE__
-	AddNode (new (os_segment::of(this), 
-		      EntityNode::get_os_typespec()) EntityNode (tmp -> node));
-#else
 	AddNode (new EntityNode (tmp -> node));
-#endif
 	tmp = (const EntityNode*) tmp -> NextNode ();
     }
     if(head)
@@ -742,12 +714,7 @@ EntityAggregate::ShallowCopy (const STEPaggregate& a)
 SingleLinkNode *	
 EntityAggregate::NewNode ()  
 {
-#ifdef __OSTORE__
-    return new (os_segment::of(this), 
-		EntityNode::get_os_typespec()) EntityNode();
-#else
     return new EntityNode();
-#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -769,12 +736,7 @@ EntityNode::EntityNode  (SCLP23(Application_instance) * e) : node (e)
 SingleLinkNode *	
 EntityNode::NewNode ()  
 {
-#ifdef __OSTORE__
-    return new (os_segment::of(this), 
-		EntityNode::get_os_typespec()) EntityNode();
-#else
     return new EntityNode();
-#endif
 }
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -849,9 +811,9 @@ EntityNode::STEPread(istream &in, ErrorDescriptor *err,
 }
 
 const char *
-EntityNode::asStr (SCLstring &s)  
+EntityNode::asStr (std::string &s)  
 {
-    s.set_null();
+    s.clear();
     if (!node || (node == S_ENTITY_NULL))     //  nothing
 	return "";
     else // otherwise return entity id
@@ -860,19 +822,19 @@ EntityNode::asStr (SCLstring &s)
 	sprintf(tmp, "#%d", node->STEPfile_id);
 	s = tmp;
     }
-    return s.chars();
+    return const_cast<char *>(s.c_str());
 }    
 
 const char *
-EntityNode::STEPwrite(SCLstring &s, const char *)
+EntityNode::STEPwrite(std::string &s, const char *)
 {
     if (!node || (node == S_ENTITY_NULL) )     //  nothing
     {
 	s = "$";
-	return s.chars();
+	return const_cast<char *>(s.c_str());
     }
     asStr(s);
-    return s.chars();
+    return const_cast<char *>(s.c_str());
 }
 
 void 
@@ -880,7 +842,7 @@ EntityNode::STEPwrite(ostream& out)
 {
     if (!node || (node == S_ENTITY_NULL))     //  nothing
       out << "$";
-    SCLstring s;
+    std::string s;
     out << asStr(s);
 }
 
@@ -910,7 +872,7 @@ SelectAggregate::ReadValue(istream &in, ErrorDescriptor *err,
     ErrorDescriptor errdesc;
     char errmsg[BUFSIZ];
     int value_cnt = 0;
-    SCLstring buf;
+    std::string buf;
 
     if(assignVal)
 	Empty ();  // read new values and discard existing ones
@@ -1023,12 +985,7 @@ SelectAggregate::ShallowCopy (const STEPaggregate& a)
     const SelectNode * tmp = (const SelectNode*) a.GetHead ();
     while (tmp) 
     {
-#ifdef __OSTORE__
-	AddNode (new (os_segment::of(this), 
-		      SelectNode::get_os_typespec()) SelectNode (tmp -> node));
-#else
 	AddNode (new SelectNode (tmp -> node));
-#endif
 
 	tmp = (const SelectNode*) tmp -> NextNode ();
     }
@@ -1044,12 +1001,7 @@ SelectAggregate::ShallowCopy (const STEPaggregate& a)
 SingleLinkNode *	
 SelectAggregate::NewNode ()  
 {
-#ifdef __OSTORE__
-    return new (os_segment::of(this), 
-		SelectNode::get_os_typespec()) SelectNode();
-#else
     return new SelectNode();
-#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1071,12 +1023,7 @@ SelectNode::~SelectNode()
 SingleLinkNode *	
 SelectNode::NewNode ()  
 {
-#ifdef __OSTORE__
-    return new (os_segment::of(this), 
-		SelectNode::get_os_typespec()) SelectNode();
-#else
     return new SelectNode();
-#endif
 }
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -1145,29 +1092,29 @@ SelectNode::STEPread(istream &in, ErrorDescriptor *err,
 }
 
 const char *
-SelectNode::asStr (SCLstring &s)  
+SelectNode::asStr (std::string &s)  
 {
-    s.set_null();
+    s.clear();
     if ( !node || (node->is_null()) )     //  nothing
 	return "";
     else // otherwise return entity id
     {
       node -> STEPwrite (s);
-      return s.chars ();
+      return const_cast<char *>(s.c_str());
     }
 }    
 
 const char *
-SelectNode::STEPwrite(SCLstring &s, const char *currSch)
+SelectNode::STEPwrite(std::string &s, const char *currSch)
 {
-    s.set_null();
+    s.clear();
     if ( !node || (node->is_null()) )     //  nothing
     {
 	s = "$";
 	return "$";
     }
     node -> STEPwrite (s, currSch);
-    return s.chars();
+    return const_cast<char *>(s.c_str());
 }
 
 void 
@@ -1175,7 +1122,7 @@ SelectNode::STEPwrite(ostream& out)
 {
     if ( !node || (node->is_null()) )     //  nothing
       out << "$";
-    SCLstring s;
+    std::string s;
     out << asStr(s);
 }
 
@@ -1206,13 +1153,7 @@ StringAggregate::ShallowCopy (const STEPaggregate& a)
 
     while (next) 
     {
-#ifdef __OSTORE__
-	copy = new (os_segment::of(this), 
-		    StringNode::get_os_typespec()) 
-				StringNode (*(StringNode*)next);
-#else
 	copy = new StringNode (*(StringNode*)next);
-#endif
 	AddNode(copy);
 	next = next->NextNode();
     }
@@ -1227,12 +1168,7 @@ StringAggregate::ShallowCopy (const STEPaggregate& a)
 SingleLinkNode *
 StringAggregate::NewNode () 
 {
-#ifdef __OSTORE__
-    return new (os_segment::of(this), 
-		StringNode::get_os_typespec()) StringNode();
-#else
     return new StringNode();
-#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1241,7 +1177,7 @@ StringAggregate::NewNode ()
 
 StringNode::StringNode() 
 {
-    value = 0;
+    value = "";
 }
 
 StringNode::~StringNode() 
@@ -1250,7 +1186,7 @@ StringNode::~StringNode()
 
 StringNode::StringNode(StringNode& sn)
 {
-    value = sn.value.chars();
+    value = sn.value.c_str();
 }
 
 StringNode::StringNode(const char * sStr)
@@ -1269,12 +1205,7 @@ StringNode::StringNode(const char * sStr)
 SingleLinkNode *
 StringNode::NewNode () 
 {
-#ifdef __OSTORE__
-    return new (os_segment::of(this), 
-		StringNode::get_os_typespec()) StringNode();
-#else
     return new StringNode();
-#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1317,19 +1248,19 @@ StringNode::STEPread(istream &in, ErrorDescriptor *err)
 }
 
 const char *
-StringNode::asStr(SCLstring &s)
+StringNode::asStr(std::string &s)
 {
 //    return value.asStr(); // this does not put quotes around the value
 
     value.asStr(s);
-    return s.chars();
+    return const_cast<char *>(s.c_str());
 }
 
 const char *
-StringNode::STEPwrite (SCLstring &s, const char *)
+StringNode::STEPwrite (std::string &s, const char *)
 {
     value.STEPwrite(s);
-    return s.chars();
+    return const_cast<char *>(s.c_str());
 }
 
 void
@@ -1364,13 +1295,7 @@ BinaryAggregate::ShallowCopy (const STEPaggregate& a)
 
     while (next) 
     {
-#ifdef __OSTORE__
-	copy = new (os_segment::of(this), 
-		    BinaryNode::get_os_typespec()) 
-				BinaryNode (*(BinaryNode*)next);
-#else
 	copy = new BinaryNode (*(BinaryNode*)next);
-#endif
 	AddNode(copy);
 	next = next->NextNode();
     }
@@ -1385,12 +1310,7 @@ BinaryAggregate::ShallowCopy (const STEPaggregate& a)
 SingleLinkNode *
 BinaryAggregate::NewNode () 
 {
-#ifdef __OSTORE__
-    return new (os_segment::of(this), 
-		BinaryNode::get_os_typespec()) BinaryNode();
-#else
     return new BinaryNode();
-#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1408,7 +1328,7 @@ BinaryNode::~BinaryNode()
 
 BinaryNode::BinaryNode(BinaryNode& bn)
 {
-    value = bn.value.chars();
+    value = bn.value.c_str();
 }
 
 BinaryNode::BinaryNode(const char *sStr)
@@ -1420,12 +1340,7 @@ BinaryNode::BinaryNode(const char *sStr)
 SingleLinkNode *
 BinaryNode::NewNode () 
 {
-#ifdef __OSTORE__
-    return new (os_segment::of(this), 
-		BinaryNode::get_os_typespec()) BinaryNode();
-#else
     return new BinaryNode();
-#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1469,17 +1384,17 @@ BinaryNode::STEPread(istream &in, ErrorDescriptor *err)
 }
 
 const char *
-BinaryNode::asStr(SCLstring &s)
+BinaryNode::asStr(std::string &s)
 {
-    s = value.chars();
-    return s.chars();
+    s = value.c_str();
+    return const_cast<char *>(s.c_str());
 }
 
 const char *
-BinaryNode::STEPwrite (SCLstring &s, const char *)
+BinaryNode::STEPwrite (std::string &s, const char *)
 {
     value.STEPwrite(s);
-    return s.chars();
+    return const_cast<char *>(s.c_str());
 }
 
 void
@@ -1689,17 +1604,17 @@ EnumNode::STEPread(istream &in, ErrorDescriptor *err)
 }
 
 const char *
-EnumNode::asStr (SCLstring &s)  
+EnumNode::asStr (std::string &s)  
 {
     node -> asStr(s);
-    return s.chars();
+    return const_cast<char *>(s.c_str());
 }
 
 const char *
-EnumNode::STEPwrite (SCLstring &s, const char *)
+EnumNode::STEPwrite (std::string &s, const char *)
 {
     node->STEPwrite(s);
-    return s.chars();
+    return const_cast<char *>(s.c_str());
 
 /*
     static char buf[BUFSIZ];
@@ -1743,28 +1658,14 @@ LOGICALS::~LOGICALS()
 SingleLinkNode *
 LOGICALS::NewNode ()  
 {
-#ifdef __OSTORE__
-    return new (os_segment::of(this), EnumNode::get_os_typespec()) 
-			EnumNode( new (os_segment::of(this), 
-				       SCLP23(LOGICAL)::get_os_typespec()) SCLP23(LOGICAL) );
-#else
     return new EnumNode (new SCLP23(LOGICAL));
-#endif
 }	
 
-#ifdef __OSTORE__
-LOGICALS * 
-create_LOGICALS(os_database *db)
-{
-    return new (db, LOGICALS::get_os_typespec()) LOGICALS;
-}
-#else
 LOGICALS * 
 create_LOGICALS()
 {
     return new LOGICALS;
 }
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // BOOLEANS
@@ -1782,28 +1683,14 @@ BOOLEANS::~BOOLEANS()
 SingleLinkNode *
 BOOLEANS::NewNode ()  
 {
-#ifdef __OSTORE__
-    return new (os_segment::of(this), EnumNode::get_os_typespec()) 
-			EnumNode( new (os_segment::of(this), 
-				       SCLP23(BOOLEAN)::get_os_typespec()) SCLP23(BOOLEAN) );
-#else
     return new EnumNode (new SCLP23(BOOLEAN));
-#endif
 }	
 
-#ifdef __OSTORE__
-BOOLEANS * 
-create_BOOLEANS(os_database *db)
-{
-    return new (db, BOOLEANS::get_os_typespec()) BOOLEANS;
-}
-#else
 BOOLEANS * 
 create_BOOLEANS()
 {
     return new BOOLEANS ; 
 }
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // RealAggregate
@@ -1820,12 +1707,7 @@ RealAggregate::~RealAggregate()
 SingleLinkNode *
 RealAggregate::NewNode ()  
 {
-#ifdef __OSTORE__
-    return new (os_segment::of(this), 
-		RealNode::get_os_typespec()) RealNode();
-#else
     return new RealNode();
-#endif
 }	
 
 // COPY
@@ -1864,12 +1746,7 @@ IntAggregate::~IntAggregate()
 SingleLinkNode *
 IntAggregate::NewNode ()  
 {
-#ifdef __OSTORE__
-    return new (os_segment::of(this), 
-		IntNode::get_os_typespec()) IntNode();
-#else
     return new IntNode();
-#endif
 }	
 
 // COPY
@@ -1909,12 +1786,7 @@ RealNode::~RealNode()
 SingleLinkNode *
 RealNode::NewNode ()  
 {
-#ifdef __OSTORE__
-    return new (os_segment::of(this), 
-		RealNode::get_os_typespec()) RealNode();
-#else
     return new RealNode();
-#endif
 }	
 
 Severity 
@@ -1971,14 +1843,14 @@ RealNode::STEPread(istream &in, ErrorDescriptor *err)
 }
 
 const char *
-RealNode::asStr(SCLstring &s)
+RealNode::asStr(std::string &s)
 {
     STEPwrite(s);
-    return s.chars();
+    return const_cast<char *>(s.c_str());
 }
 
 const char *
-RealNode::STEPwrite(SCLstring &s, const char *)
+RealNode::STEPwrite(std::string &s, const char *)
 {
     char tmp[BUFSIZ];
     if(value != S_REAL_NULL)
@@ -1989,14 +1861,14 @@ RealNode::STEPwrite(SCLstring &s, const char *)
 	WriteReal(value,s);
     }
     else
-	s.set_null();
-    return s.chars();
+	s.clear();
+    return const_cast<char *>(s.c_str());
 }
 
 void 
 RealNode::STEPwrite(ostream& out)
 {
-    SCLstring s;
+    std::string s;
     out << STEPwrite(s);
 }
 
@@ -2016,12 +1888,7 @@ IntNode::~IntNode()
 SingleLinkNode *
 IntNode::NewNode ()  
 {
-#ifdef __OSTORE__
-    return new (os_segment::of(this), 
-		IntNode::get_os_typespec()) IntNode();
-#else
     return new IntNode();
-#endif
 }	
 
 Severity 
@@ -2077,14 +1944,14 @@ IntNode::STEPread(istream &in, ErrorDescriptor *err)
 }
 
 const char *
-IntNode::asStr(SCLstring &s)
+IntNode::asStr(std::string &s)
 {
     STEPwrite(s);
-    return s.chars();
+    return const_cast<char *>(s.c_str());
 }
 
 const char *
-IntNode::STEPwrite(SCLstring &s, const char *)
+IntNode::STEPwrite(std::string &s, const char *)
 {
     char tmp[BUFSIZ];
     if(value != S_INT_NULL)
@@ -2093,13 +1960,13 @@ IntNode::STEPwrite(SCLstring &s, const char *)
 	s = tmp;
     }
     else
-	s.set_null();
-    return s.chars();
+	s.clear();
+    return const_cast<char *>(s.c_str());
 }
 
 void 
 IntNode::STEPwrite(ostream& out)
 {
-    SCLstring s;
+    std::string s;
     out << STEPwrite(s);
 }

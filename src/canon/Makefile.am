@@ -12,7 +12,7 @@ noinst_HEADERS = \
 man_MANS = canonize.1
 
 canonize_SOURCES = canonize.c canonlib.c
-canonize_LDADD = ${FB} ${LIBDS}
+canonize_LDADD = ${FB}
 
 EXTRA_DIST = $(man_MANS) CMakeLists.txt
 

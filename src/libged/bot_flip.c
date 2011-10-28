@@ -58,22 +58,30 @@ ged_bot_flip(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (i=1; i < argc; ++i) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET)) == RT_DIR_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: db_lookup(%s) error\n", argv[0], argv[i]);
-	    continue;
+	/* Skip past any path elements */
+	char *obj = bu_basename(argv[i]);
+
+	if (BU_STR_EQUAL(obj, ".")) {
+	    /* malformed path, lookup using exactly what was provided */
+	    bu_free(obj, "free bu_basename");
+	    obj = bu_strdup(argv[i]);
 	}
 
-	GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, obj, LOOKUP_QUIET)) == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: db_lookup(%s) error\n", argv[0], obj);
+	} else {
+	    GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
-	if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT solid!\n", argv[0], argv[i]);
-	    continue;
+	    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+		bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT solid!\n", argv[0], obj);
+	    } else {
+		bot = (struct rt_bot_internal *)intern.idb_ptr;
+		rt_bot_flip(bot);
+
+		GED_DB_PUT_INTERNAL(gedp, dp, &intern, gedp->ged_wdbp->wdb_resp, GED_ERROR);
+	    }
 	}
-
-	bot = (struct rt_bot_internal *)intern.idb_ptr;
-	rt_bot_flip(bot);
-
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, gedp->ged_wdbp->wdb_resp, GED_ERROR);
+	bu_free(obj, "free obj");
     }
 
     return GED_OK;

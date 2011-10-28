@@ -56,7 +56,7 @@ StrToLower (const char *strOld, char *strNew)
 }
 
 const char *
-StrToLower (const char * word, SCLstring &s)
+StrToLower (const char * word, std::string &s)
 {
     char newword [BUFSIZ];
     int i =0;
@@ -68,11 +68,11 @@ StrToLower (const char * word, SCLstring &s)
     }
     newword [i] = '\0';
     s = newword;
-    return s.chars();
+    return const_cast<char *>(s.c_str());
 }
 
 const char * 
-StrToUpper (const char * word, SCLstring &s)
+StrToUpper (const char * word, std::string &s)
 {
     char newword [BUFSIZ];
     int i =0;
@@ -85,11 +85,11 @@ StrToUpper (const char * word, SCLstring &s)
     }
     newword [i] = '\0';
     s = newword;
-    return s.chars();
+    return const_cast<char *>(s.c_str());
 }
 
 const char * 
-StrToConstant (const char * word, SCLstring &s)
+StrToConstant (const char * word, std::string &s)
 {
     char newword [BUFSIZ];
     int i =0;
@@ -103,7 +103,7 @@ StrToConstant (const char * word, SCLstring &s)
     }
     newword [i] = '\0';
     s = newword;
-    return s.chars();
+    return const_cast<char *>(s.c_str());
 }
 
 /******************************************************************
@@ -203,7 +203,7 @@ CheckRemainingInput(istream &in, ErrorDescriptor *err,
 		    const char *typeName, // used in error message
 		    const char *tokenList) // e.g. ",)"
 {
-    SCLstring skipBuf;
+  std::string skipBuf;
     char name[64];
     name[0] = 0;
 
@@ -240,7 +240,7 @@ CheckRemainingInput(istream &in, ErrorDescriptor *err,
 		{   // this could chew up the remainder of the input unless you
 		    // give it the delim to end an entity value and it knows 
 		    // about strings
-		    skipBuf.Append(c);
+		    skipBuf += c;
 		    in.get(c);
 		}
 		// ENHANCEMENT may want to add the bad data to the err msg.
@@ -255,7 +255,7 @@ CheckRemainingInput(istream &in, ErrorDescriptor *err,
 		    err->AppendToDetailMsg(name);
 		    err->AppendToDetailMsg(
 				"\tdata lost looking for end of attribute: ");
-		    err->AppendToDetailMsg( skipBuf.chars() );
+		    err->AppendToDetailMsg( skipBuf.c_str() );
 		    err->AppendToDetailMsg( "\n" );
 		    in.putback(c);
 			// invalid input 

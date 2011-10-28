@@ -14,9 +14,6 @@
  */
 
 #include "tclWinInt.h"
-#ifdef CMAKE_HEADERS
-#  include "tcl_cfg.h"
-#endif
 #include <winnt.h>
 #include <winbase.h>
 #include <lmcons.h>

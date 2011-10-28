@@ -80,7 +80,7 @@
  * to any particular use of the shader.
  */
 struct xxx_specific {
-    long magic;	/* magic # for memory validity check, must come 1st */
+    uint32_t magic;	/* magic # for memory validity check, must come 1st */
     double xxx_val;	/* variables for shader ... */
     double xxx_dist;
     vect_t xxx_delta;

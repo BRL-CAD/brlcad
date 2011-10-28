@@ -47,27 +47,36 @@ ferror(){
 
 # show help
 if test -z $1 ;then
-    echo "Script to create binary deb package, and debian source packages."
+    echo "Script to create Debian binary and source packages."
     echo
     echo "Usage:"
-    echo "  sh/make_deb.sh -b | -s"
+    echo "  sh/make_deb.sh -b | -s [-t]"
     echo
     echo "Options:"
-    echo "  -b       build the binary deb package"
-    echo "  -s *     build the debian source packages"
+    echo "  -b       build the Debian binary package (deb file)"
+    echo "  -s *     build the Debian source package"
+    echo "  -t       as second argument: test for all prerequisites"
     echo
     echo "           * (use with a clean brlcad tree)"
     exit 1
 fi
 
 # too many parameters
-if test $# -gt 1 ;then
+if test $# -gt 2 ;then
     ferror "Too many arguments" "Exiting..."
 fi
 
 # unknown parameter
-if test "$1" != "-s" && test "$1" != "-b" ;then
-    ferror "Unknown argument" "Exiting..."
+if test "$1" != "-s" && test "$1" != "-b" ; then
+    ferror "Unknown first argument '$!'." "Exiting..."
+fi
+
+# check for test
+TEST=0
+if test $# -eq 2 && test "$2" != "-t" ; then
+    ferror "Unknown second argument '$2'." "Exiting..."
+elif test $# -eq 2 && test "$2" = "-t" ; then
+   TEST=1
 fi
 
 # test if in project root
@@ -75,46 +84,69 @@ if test ! -f misc/debian/control ; then
     ferror "\"make_deb.sh\" should be run from project root directory." "Exiting..."
 fi
 
-# test if in debian like system
+# test if in debian-like system
 if test ! -e /etc/debian_version ; then
     ferror "Refusing to build on a non-debian system." "Exiting..."
 fi
 
-# test if configure script exist
-if test ! -f configure ;then
-    ferror "Missing \"configure\" script. Execute \"./autogen.sh\" first." "Exiting..."
-fi
-
 # check needed packages
 E=0
-fcheck(){
+fcheck() {
     T="install ok installed"
-    if test `dpkg -s $1 2>/dev/null | grep "$T" | wc -l` -eq 0 ; then
-	LLIST=$LLIST" "$1
-	E=1
+    if test ! `dpkg -s $1 2>/dev/null | grep "$T" | wc -l` -eq 0 ; then
+        # success
+        echo "Found package $1..."
+        return
     fi
+
+    # need to check for local, non-package versions
+    # check for binaries
+    if test "$2" = "x" ; then
+        if [ -f /usr/bin/$1 ]; then
+            # success
+            echo "Found /usr/bin/$1..."
+            return
+        elif [ -f /usr/local/bin/$1 ]; then
+            # success
+            echo "Found /usr/local/bin/$1..."
+            return
+        fi
+    fi
+
+    echo "* Missing $1..."
+    LLIST=$LLIST" "$1
+    E=1
 }
 
 fcheck debhelper
-fcheck fakeroot
+fcheck fakeroot x
 
 if test "$1" = "-b" ;then
     fcheck build-essential
-    fcheck make
-    fcheck libtool
-    fcheck bc
-    fcheck sed
-    fcheck bison
-    fcheck flex
+    fcheck make 
+    fcheck cmake x
+    fcheck libtool x
+    fcheck bc x
+    fcheck sed x
+    fcheck bison x
+    fcheck flex x
     fcheck libxi-dev
-    fcheck xsltproc
-    fcheck libgl1-mesa-dev
+    fcheck xsltproc x
+    fcheck libglu1-mesa-dev
     fcheck libpango1.0-dev
     #fcheck fop # allows pdf creation
 fi
 
 if [ $E -eq 1 ]; then
     ferror "Mandatory to install these packages first:" "$LLIST"
+fi
+
+if [ $TEST -eq 1 ]; then
+    echo "=========================================================="
+    echo "Testing complete"
+    echo "Ready to create a Debian package"
+    echo "=========================================================="
+    exit
 fi
 
 # set variables
@@ -138,29 +170,7 @@ fi
 # #
 cp -Rf misc/debian/ .
 
-# modify doc menu desktop files
-fdoc(){
-    L=`sed -n '/Exec=/=' $2`
-    A=`sed -n $L'p' $2`
-    if test ! "Exec=$1" = "$A" ;then
-	sed -i "s:$A:Exec=$1:" $2
-	echo "\"$2\" has been modified!"
-    fi
-}
-
-fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/toc.html" \
- "debian/brlcad-doc.desktop"
-
-fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/db" \
- "debian/brlcad-db.desktop"
-
-fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/mged/index.html" \
- "debian/brlcad-doc-mged.desktop"
-
-fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/Anim_Tutorial/index.html" \
- "debian/brlcad-doc-animation.desktop"
-
-# update debian/chagelog if needed
+# update debian/changelog if needed
 if test -s $CFILE && test `sed -n '1p' $CFILE | grep "brlcad ($BVERSION-$RELEASE" | wc -l` -eq 0 ; then
     L1="brlcad ($BVERSION-$RELEASE) unstable; urgency=low\n\n"
     L2="  **** VERSION ENTRY AUTOMATICALLY ADDED BY \"sh\/make_deb.sh\" SCRIPT ****\n\n"

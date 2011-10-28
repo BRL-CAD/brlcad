@@ -87,7 +87,6 @@ void MapRegion(ONX_Model &model, std::string &region_name, int layer_index) {
 
     const ON_Layer& layer = model.m_layer_table[layer_index];
 
-    ON_UUID current_uuid = layer.m_layer_id;
     parent_uuid = ON_UuidToString( layer.m_layer_id, uuidstr );
 
     MEMBER_MAP::iterator miter = member_map.find(parent_uuid);
@@ -444,8 +443,10 @@ int main(int argc, char** argv) {
     }
 
     /* use accumulated layer information to build mged hierarchy */
+    char *toplevel = bu_basename(outFileName);
     BuildHierarchy(outfp, dump);
-    mk_lcomb(outfp, outFileName, &all_regions, 0, NULL, NULL, NULL, 0);
+    mk_lcomb(outfp, toplevel, &all_regions, 0, NULL, NULL, NULL, 0);
+    bu_free(toplevel, "bu_basename toplevel");
     wdb_close(outfp);
 
     model.Destroy();

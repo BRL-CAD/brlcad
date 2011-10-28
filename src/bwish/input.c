@@ -31,9 +31,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
-#if defined(IRIX) && IRIX == 5
-#  define _BSD_COMPAT
-#endif
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
@@ -274,7 +271,7 @@ processChar(char ch)
 	    if (input_str_index == bu_vls_strlen(&input_str))
 		break;
 	    insert_prompt();
-	    bu_log("%*S", input_str_index, &input_str);
+	    bu_log("%*V", input_str_index, &input_str);
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_B:                   /* Back one character */

@@ -287,6 +287,7 @@ static struct bu_cmdtab wdb_newcmds[] = {
     {"color",		ged_color},
     {"comb_color",	ged_comb_color},
     {"edcomb",		ged_edcomb},
+    {"edit",		ged_edit},
     {"edmater",		ged_edmater},
     {"item",		ged_item},
     {"log",		ged_log},
@@ -325,6 +326,7 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"dump",		wdb_dump_tcl},
     {"dup",		wdb_dup_tcl},
     {"edcomb",		wdb_newcmds_tcl},
+    {"edit",		wdb_newcmds_tcl},
     {"edmater",		wdb_newcmds_tcl},
     {"expand",		wdb_expand_tcl},
     {"facetize",	wdb_facetize_tcl},
@@ -2535,7 +2537,7 @@ wdb_expand_cmd(struct rt_wdb *wdbp,
 	thismatch = 0;
 	for (i = 0; i < RT_DBNHASH; i++) {
 	    for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (!db_regexp_match(pattern, dp->d_namep))
+		if (bu_fnmatch(pattern, dp->d_namep, 0) != 0)
 		    continue;
 		/* Successful match */
 		if (nummatch == 0)
@@ -5831,7 +5833,7 @@ wdb_tol_tcl(ClientData clientData,
 
 /** structure to hold all solids that have been pushed. */
 struct wdb_push_id {
-    long magic;
+    uint32_t magic;
     struct wdb_push_id *forw, *back;
     struct directory *pi_dir;
     mat_t pi_mat;
@@ -8043,7 +8045,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	    nmg_shell_coplanar_face_merge(s, &wdbp->wdb_tol, 1);
 	    if (!nmg_kill_cracks(s)) {
 		(void) nmg_model_edge_fuse(m, &wdbp->wdb_tol);
-		(void) nmg_model_edge_g_fuse(m, &wdbp->wdb_tol);
+		(void) nmg_edge_g_fuse(&m->magic, &wdbp->wdb_tol);
 		(void) nmg_unbreak_region_edges(&r->l.magic);
 		if (nmg_to_arb(m, arb_int)) {
 		    new_intern.idb_ptr = (genptr_t)(arb_int);
@@ -8092,7 +8094,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	nmg_shell_coplanar_face_merge(s, &wdbp->wdb_tol, 1);
 	if (!nmg_kill_cracks(s)) {
 	    (void) nmg_model_edge_fuse(m, &wdbp->wdb_tol);
-	    (void) nmg_model_edge_g_fuse(m, &wdbp->wdb_tol);
+	    (void) nmg_edge_g_fuse(&m->magic, &wdbp->wdb_tol);
 	    (void) nmg_unbreak_region_edges(&r->l.magic);
 	    if (nmg_to_arb(m, arb_int)) {
 		new_intern.idb_ptr = (genptr_t)(arb_int);

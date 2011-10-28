@@ -37,7 +37,7 @@
 
 /* Program constants */
 #define High_Size 1024
-#define GRID_RHO_EPS 0.005
+#define GRID_RHO_EPS 0.0005
 #define GRID_THETA_EPS 0.2
 
 /* Color[] indices */

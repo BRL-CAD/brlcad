@@ -54,6 +54,8 @@ main(int argc, char **argv)
     int i, bit;
     int line;
 
+    const char *argv0 = argv[0];
+
     if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {
 	verbose++;
 	argc--;
@@ -61,12 +63,12 @@ main(int argc, char **argv)
     }
 
     if (argc != 2) {
-	bu_exit(1, "usage: ap-pix [-v] file.ap > file.pix (3456 x ?)\n");
+	bu_exit(1, "usage: %s [-v] file.ap > file.pix (3456 x ?)\n", argv0);
     }
 
     magfp = fopen(argv[1], "r");
     if (magfp == NULL) {
-	bu_exit(2, "ap-pix: can't open \"%s\"\n", argv[1]);
+	bu_exit(2, "%s: can't open \"%s\"\n", argv0, argv[1]);
     }
     yelfp = fopen(argv[1], "r");
     fseek(yelfp, (long)(50*sizeof(yelline)), 0);
@@ -79,7 +81,7 @@ main(int argc, char **argv)
 	ret += fread(&yelline, sizeof(yelline), 1, yelfp);
 	if (ret == 0) {
 	    perror("fread");
-	    bu_exit(1, "%s: read failure\n");
+	    bu_exit(1, "%s: read failure\n", argv0);
 	}
 
 	line++;
@@ -92,7 +94,7 @@ main(int argc, char **argv)
 		ret = fwrite(&out, sizeof(out), 1, stdout);
 		if (ret == 0) {
 		    perror("fwrite");
-		    bu_exit(1, "%s: read failure\n");
+		    bu_exit(1, "%s: read failure\n", argv0);
 		}
 	    }
 	}

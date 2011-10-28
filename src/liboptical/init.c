@@ -48,7 +48,11 @@ vect_t background = VINIT_ZERO; /* Black */
 #endif
 
 #define MFUNCS(_name)							\
+    { mlib_add_shader(headp, _name); }
+
+#define DMFUNCS(_name)							\
     { extern struct mfuncs _name[]; mlib_add_shader(headp, _name); }
+
 
 
 void
@@ -59,35 +63,35 @@ optical_shader_init(struct mfuncs **headp)
      * Note that sh_plastic.c defines the required "default" entry.
      */
     MFUNCS(phg_mfuncs);
-    MFUNCS(null_mfuncs); /* null test shader */
+    DMFUNCS(null_mfuncs); /* null test shader */
     MFUNCS(light_mfuncs);
-    MFUNCS(cloud_mfuncs);
-    MFUNCS(spm_mfuncs);
-    MFUNCS(txt_mfuncs);
+    DMFUNCS(cloud_mfuncs);
+    DMFUNCS(spm_mfuncs);
+    DMFUNCS(txt_mfuncs);
     MFUNCS(stk_mfuncs);
-    MFUNCS(cook_mfuncs);
-    MFUNCS(stxt_mfuncs);
-    MFUNCS(points_mfuncs);
-    MFUNCS(toyota_mfuncs);
-    MFUNCS(wood_mfuncs);
+    DMFUNCS(cook_mfuncs);
+    DMFUNCS(stxt_mfuncs);
+    DMFUNCS(points_mfuncs);
+    DMFUNCS(toyota_mfuncs);
+    DMFUNCS(wood_mfuncs);
     MFUNCS(camo_mfuncs);
-    MFUNCS(scloud_mfuncs);
-    MFUNCS(air_mfuncs);
-    MFUNCS(rtrans_mfuncs);
-    MFUNCS(fire_mfuncs);
-    MFUNCS(brdf_mfuncs);
-    MFUNCS(gauss_mfuncs);
+    DMFUNCS(scloud_mfuncs);
+    DMFUNCS(air_mfuncs);
+    DMFUNCS(rtrans_mfuncs);
+    DMFUNCS(fire_mfuncs);
+    DMFUNCS(brdf_mfuncs);
+    DMFUNCS(gauss_mfuncs);
     MFUNCS(noise_mfuncs);
-    MFUNCS(prj_mfuncs);
-    MFUNCS(grass_mfuncs);
-    MFUNCS(tthrm_mfuncs);
-    MFUNCS(flat_mfuncs);
-    MFUNCS(bbd_mfuncs);
-    MFUNCS(toon_mfuncs);
+    DMFUNCS(prj_mfuncs);
+    DMFUNCS(grass_mfuncs);
+    DMFUNCS(tthrm_mfuncs);
+    DMFUNCS(flat_mfuncs);
+    DMFUNCS(bbd_mfuncs);
+    DMFUNCS(toon_mfuncs);
 
 #ifdef OSL_ENABLED
     /* This shader requires OSL, so it won't be compiled if this library was not enabled */
-    MFUNCS(osl_mfuncs);
+    DMFUNCS(osl_mfuncs);
 #endif
 }
 

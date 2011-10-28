@@ -42,6 +42,56 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
+/**
+ * R T _ A R B N _ B B O X
+ *
+ * Calculate a bounding RPP for an ARBN
+ */
+int
+rt_arbn_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    size_t i,j,k;
+    struct rt_arbn_internal *aip;
+    RT_CK_DB_INTERNAL(ip);
+    aip = (struct rt_arbn_internal *)ip->idb_ptr;
+    RT_ARBN_CK_MAGIC(aip);
+  
+    /* Discover all vertices, use to calculate RPP */ 
+    for (i=0; i<aip->neqn-2; i++) {
+	for (j=i+1; j<aip->neqn-1; j++) {
+	    double dot;
+
+	    /* If normals are parallel, no intersection */
+	    dot = VDOT(aip->eqn[i], aip->eqn[j]);
+	    if (((dot) <= -SMALL_FASTF) ? (NEAR_EQUAL((dot), -1.0,  RT_DOT_TOL)) : (NEAR_EQUAL((dot), 1.0, RT_DOT_TOL))) continue;
+
+	    /* Have an edge line, isect with higher numbered planes */
+	    for (k=j+1; k<aip->neqn; k++) {
+		size_t m;
+		size_t next_k;
+		point_t pt;
+
+		next_k = 0;
+
+		if (bn_mkpoint_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) continue;
+
+		/* See if point is outside arb */
+		for (m=0; m<aip->neqn; m++) {
+		    if (i==m || j==m || k==m)
+			continue;
+		    if (VDOT(pt, aip->eqn[m])-aip->eqn[m][3] > RT_LEN_TOL) {
+			next_k = 1;
+			break;
+		    }
+		}
+		if (next_k != 0) continue;
+
+		VMINMAX((*min), (*max), pt);
+	    }
+	}
+    }
+
+    return 0;
+}
 
 /**
  * R T _ A R B N _ P R E P
@@ -71,7 +121,9 @@ rt_arbn_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /*
      * ARBN must be convex.  Test for concavity.
      * Byproduct is an enumeration of all the verticies,
-     * which are used to make the bounding RPP.
+     * which are used to make the bounding RPP.  No need
+     * to call the bbox routine, as the work must be duplicated
+     * here to count faces.
      */
 
     /* Zero face use counts
@@ -347,7 +399,7 @@ rt_arbn_free(struct soltab *stp)
  * Note that the vectors will be drawn in no special order.
  */
 int
-rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
+rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
 {
     struct rt_arbn_internal *aip;
     size_t i;

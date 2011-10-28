@@ -173,21 +173,41 @@ endif
 
 EXTRA_DIST = \
 	boost \
-	byacc \
-	flex \
-	m4 \
 	togl \
+	hv3 \
 	CMakeLists.txt \
 	itcl.dist \
 	itk.dist \
 	iwidgets.dist \
 	jove.dist \
+	lemon \
+	lemon.dist \
+	libpng \
 	libpng.dist \
 	libregex.dist \
 	libtermlib.dist \
 	libutahrle.dist \
 	libz.dist \
 	openNURBS.dist \
+	osl/CMakeLists.txt \
+	osl/shaders/matte.osl \
+	osl/shaders/cornell_wall.osl \
+	osl/shaders/cloud.osl \
+	osl/shaders/CMakeLists.txt \
+	osl/shaders/blue.osl \
+	osl/shaders/checker.osl \
+	osl/shaders/emitter.osl \
+	osl/shaders/mirror.osl \
+	osl/shaders/converter.osl \
+	osl/shaders/sh_texture.osl \
+	osl/shaders/red.osl \
+	osl/shaders/stdosl.h \
+	osl/shaders/image.osl \
+	osl/shaders/glass.osl \
+	osl/shaders/gen_color.osl \
+	re2c \
+	re2c.dist \
+	step \
 	step.dist \
 	tcl.dist \
 	tk.dist \
@@ -195,8 +215,8 @@ EXTRA_DIST = \
 	tkpng.dist \
 	tktable.dist \
 	togl.dist \
-	URToolkit.dist
-
+	URToolkit.dist \
+	uce-dirent/uce-dirent.h
 
 # FIXME: need to only traverse tcl/tk if configured
 DIST_SUBDIRS = \
@@ -204,13 +224,11 @@ DIST_SUBDIRS = \
 	incrTcl \
 	iwidgets \
 	jove \
-	libpng \
 	libregex \
 	libtermlib \
 	libutahrle \
 	libz \
 	openNURBS \
-	step \
 	tcl \
 	tk \
 	tkpng \

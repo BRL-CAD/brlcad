@@ -49,7 +49,7 @@ HIDDEN void stxt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, 
 struct stxt_specific {
     int stx_transp[3];	/* RGB for transparency */
     char stx_file[STX_NAME_LEN];	/* Filename */
-    unsigned long stx_magic;
+    uint32_t stx_magic;
     int stx_w;		/* Width of texture in pixels */
     int stx_fw;		/* File width of texture in pixels */
     int stx_n;		/* Number of scanlines */

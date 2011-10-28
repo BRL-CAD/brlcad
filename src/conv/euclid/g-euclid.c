@@ -184,8 +184,8 @@ Write_euclid_face(const struct loopuse *lu, const int facet_type, const int regi
     NMG_CK_LOOPUSE(lu);
 
     if (verbose)
-	bu_log("Write_euclid_face: lu=x%x, facet_type=%d, regionid=%d, face_number=%d\n",
-	       lu, facet_type, regionid, face_number);
+	bu_log("Write_euclid_face: lu=%p, facet_type=%d, regionid=%d, face_number=%d\n",
+	       (void *)lu, facet_type, regionid, face_number);
 
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 	return;
@@ -233,7 +233,7 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp)
     NMG_CK_REGION(r);
 
     if (verbose)
-	bu_log("Write_euclid_region: r=x%x\n", r);
+	bu_log("Write_euclid_region: r=%p\n", (void *)r);
 
     /* if bounds haven't been calculated, do it now */
     if (r->ra_p == NULL)
@@ -497,7 +497,7 @@ main(int argc, char **argv)
 
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
@@ -512,7 +512,6 @@ main(int argc, char **argv)
 
     /* For visualization purposes, in the debug plot files */
     {
-	extern fastf_t	nmg_eue_dist;	/* librt/nmg_plot.c */
 	/* WTF: This value is specific to the Bradley */
 	nmg_eue_dist = 2.0;
     }

@@ -745,6 +745,28 @@ rt_vol_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
+/**
+ * R T _ V O L _ B B O X
+ *
+ * Calculate bounding RPP for vol
+ */
+int
+rt_vol_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
+{
+    register struct rt_vol_internal *vip;
+    vect_t v1, localspace;
+
+    RT_CK_DB_INTERNAL(ip);
+    vip = (struct rt_vol_internal *)ip->idb_ptr;
+    RT_EBM_CK_MAGIC(vip);
+
+    /* Find bounding RPP of rotated local RPP */
+    VSETALL(v1, 0);
+    VSET(localspace, vip->xdim*vip->cellsize[0], vip->ydim*vip->cellsize[1], vip->zdim*vip->cellsize[2]);/* type conversion */
+    bn_rotate_bbox((*min), (*max), vip->mat, v1, localspace);
+    return 0;
+}
+
 
 /**
  * R T _ V O L _ P R E P
@@ -765,7 +787,6 @@ rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     vect_t norm;
     vect_t radvec;
     vect_t diam;
-    vect_t small1;
 
     RT_CK_SOLTAB(stp);
     RT_CK_DB_INTERNAL(ip);
@@ -792,11 +813,9 @@ rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_specific = (genptr_t)volp;
 
     /* Find bounding RPP of rotated local RPP */
-    VSETALL(small1, 0);
+    if (rt_vol_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
     VSET(volp->vol_large,
 	 volp->vol_i.xdim*vip->cellsize[0], volp->vol_i.ydim*vip->cellsize[1], volp->vol_i.zdim*vip->cellsize[2]);/* type conversion */
-    bn_rotate_bbox(stp->st_min, stp->st_max, vip->mat,
-		   small1, volp->vol_large);
 
     /* for now, VOL origin in ideal coordinates is at origin */
     VSETALL(volp->vol_origin, 0);
@@ -938,7 +957,7 @@ rt_vol_class(void)
  * R T _ V O L _ P L O T
  */
 int
-rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     register struct rt_vol_internal *vip;
     size_t x, y, z;
@@ -1294,9 +1313,9 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    (void)nmg_kill_snakes(lu);
     }
 
-    (void)nmg_unbreak_region_edges((unsigned long *)(&s->l));
+    (void)nmg_unbreak_region_edges((uint32_t *)(&s->l));
 
-    (void)nmg_mark_edges_real((unsigned long *)&s->l);
+    (void)nmg_mark_edges_real((uint32_t *)&s->l);
 
     nmg_merge_models(m, m_tmp);
     *r = r_tmp;

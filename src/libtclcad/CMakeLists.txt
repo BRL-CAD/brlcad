@@ -1,3 +1,21 @@
+# Include directories needed by libtclcad users
+SET(TCLCAD_INCLUDE_DIRS
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	${DM_INCLUDE_DIRS}
+	${GED_INCLUDE_DIRS}
+	)
+BRLCAD_INCLUDE_DIRS(TCLCAD_INCLUDE_DIRS)
+
+# We need to guarantee internal Tcl headers
+include_directories(
+  ${CMAKE_SOURCE_DIR}/src/other/tcl/generic
+  ${CMAKE_SOURCE_DIR}/src/other/tcl/unix
+  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
+  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
+  ${PNG_INCLUDE_DIR}
+)
+
 IF(WIN32 AND BRLCAD-ENABLE_OPENGL)
   SET(TCLCAD_DEFINES "${TCLCAD_DEFINES} -DDM_WGL -DIF_WGL")
 ENDIF(WIN32 AND BRLCAD-ENABLE_OPENGL)
@@ -13,20 +31,6 @@ ENDIF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
 IF(BRLCAD-ENABLE_TK)
   SET(TCLCAD_DEFINES "${TCLCAD_DEFINES} -DDM_TK -DIF_TK")
 ENDIF(BRLCAD-ENABLE_TK)
-
-include_directories(
-  ${ZLIB_INCLUDE_DIR}
-  ${PNG_INCLUDE_DIR}
-  ${X11_INCLUDE_DIR}
-  ${OPENGL_INCLUDE_DIR_GL}
-  ${OPENGL_INCLUDE_DIR_GLX}
-  ${TCL_INCLUDE_DIRS}
-  ${CMAKE_SOURCE_DIR}/src/other/tcl/generic
-  ${CMAKE_SOURCE_DIR}/src/other/tcl/unix
-  ${TK_INCLUDE_PATH}
-  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
-  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
-)
 
 add_definitions(
 	${TCLCAD_DEFINES}
@@ -45,3 +49,4 @@ SET(LIBTCLCAD_SRCS
 	)
 BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "libged libdm ${TCLCAD_XLIBS} ${X11_Xi_LIB}")
 SET_TARGET_PROPERTIES(libtclcad PROPERTIES VERSION 19.0.1 SOVERSION 19)
+CMAKEFILES(Makefile.am)

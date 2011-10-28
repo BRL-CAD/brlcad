@@ -1,0 +1,257 @@
+Notes on converting a Bison app to a Lemon app.
+
+=========
+ Running
+=========
+Bison is typically run like this:
+$ bison -d foo.y
+
+This outputs foo.tab.c and foo.tab.h
+
+Lemon is typically run like this:
+$ lemon -q foo.y
+
+This outputs foo.c and foo.h. The '-q' suppresses output of the report file.
+
+Lemon's foo.h is not equivalent to Bison's foo.tab.h; it only contains token definitions. Instead of using foo.h, you'll probably use a wrapper header that includes foo.h, plus the extra stuff you need (like stuff you would find in foo.tab.h).
+
+===============
+ Trivial Stuff
+===============
+- Lemon doesn't have an equivalent to "%%" because it doesn't have sections.
+- %include { ... } instead of %{ ... %} for text to be pasted at the top of
+  the output.
+- Lemon requires 'assert' to be defined (e.g. by including assert.h), thus
+  the first thing in a lemon input file might be:
+
+    %include {
+    #include <assert.h>
+    /* ... */
+    }
+
+- Lemon doesn't provide a default action. Bison's default is { $$ = $1; }.
+
+    /* bison */
+    a : b;
+
+    /* lemon */
+    a(A) ::= b(B). { A = B; }
+
+- Lemon calls the code in %syntax_error instead of yyerror() on a syntax error.
+- Lemon has different syntax for changing precedence:
+    /* bison */
+    expr : MINUS expr %prec NOT { ... };
+
+    /* lemon */
+    expr ::= MINUS expr. [NOT] { ... }
+
+- Lemon has different syntax for specifying the type of non-terminals.
+  Assuming a union type is used for non-terminals, and it has a member
+  'sym' of type 'struct symbol':
+
+    /* bison allows multiple declarations using the MEMBER name */
+    %type <sym> function_id procedure_id
+
+    /* lemon requires one-at-a-time declaration using the TYPE name */
+    %type function_id { struct symbol }
+    %type procedure_id { struct symbol }
+
+ Lemon has Slightly Stricter Rules on Grammar Definition
+---------------------------------------------------------
+The most obvious restriction is that Lemon doesn't allow the start symbol to be recursive, so when converting from bison grammar, you'll probably have to make the start symbol the production of a new (non-recursive) start symbol.
+
+    /* bison */
+    statement_list
+	: /* empty */
+	| statement_list statement
+    ;
+
+    /* lemon */
+    start_symbol ::= statement_list.
+
+    statement_list ::= /* empty */
+    statement_list ::= statement_list statement.
+
+===================
+ Non-Trivial Stuff
+===================
+
+ Lemon Handles Errors Differently
+----------------------------------
+- Error Recovery -
+
+Lemon's error recovery behavior depends on whether or not the preprocessing symbols YYNOERRORECOVERY or YYERRORSYMBOL are defined. YYERRORSYMBOL is defined by lemon when you include the special non-terminal 'error' on the RHS of a grammar rule. YYNOERRORRECOVERY must be defined manually (e.g. in a %include directive in the input file).
+
+If YYERRORSYMBOL is defined, then YYNOERRORRECOVER MUST NOT be defined. The different possible behaviors are summarized in the following table:
+
+		      | YYNOERRORRECOVERY | Normal       | YYERRORSYMBOL
+		      +--------------------------------------------------
+	     Strategy | ignore input	  | ignore input | pop tokens
+  %syntax_error called| every error	  | first error  | first error
+%parse_failure on Fail| no		  | yes		 | yes
+ Parser Resets on Fail| no		  | yes		 | yes
+
+Strategy:
+	The normal strategy is to ignore input tokens util valid input is
+	found and parsing can continue. However, if YYERRORSYMBOL is defined,
+	the parser pops tokens from the stack until the special non-terminal
+	'error' can be shifted onto the stack and parsing can continue.
+
+%syntax_error called:
+	Normally, the code defined using the %syntax_error directive is called
+	on the first syntax error encountered in the normal state. It is not
+	called for subsequent syntax errors encountered during recovery, but
+	may be called again for a syntax error encountered after recovery.
+	However, if YYNOERRORRECOVERY is defined, the %syntax_error code is
+	called for every syntax error.
+
+%parse_failure on Fail:
+	Code defined using the %parse_failure directive is called when recovery
+	fails, unless YYNOERRORRECOVERY is defined.
+
+Parser Resets on Fail:
+	When parsing fails the parser resets itself for new input unless
+	YYNOERRORRECOVERY is defined.
+
+Unlike Bison, Lemon does not allow the use of macros (such as yyerrok) to further control the recovery process.
+
+- Entering the Error State -
+In Bison you can manually signal a context-sensitive syntax error with the YYERROR macro, and Bison will behave as if it had detected a syntax error!
+
+There is no way to make Lemon think it detected a syntax error without a significant hack. The only thing you can do is record the error and wait until Lemon finishes parsing or faults on an error that it /can/ detect.
+
+- Returning Error Status -
+When parsing fails, Bison returns an error number less than zero. The Lemon Parse() function returns void, so if you want to tell the caller about an error, you have to store an error code somewhere in the optional fourth argument to Lemon's Parse() function.
+
+ Lemon and Bison Assign IDs to Tokens Differently
+--------------------------------------------------
+Both Bison and Lemon use 0 as their EOF token.
+
+Bison enumerates non-character literal tokens starting at 258 so that the ID of character literal tokens (like '\n') can simply be their ASCII value.
+
+Lemon enumerates tokens starting at 1, and doesn't allow the use of character literals as tokens.
+
+    /* bison (lexer returns '\n') */
+    statement
+	: '\n'
+	| expression '\n'
+    ;
+
+    /* lemon (lexer returns EOL) */
+    statement ::= EOL.
+    statement ::= expression EOL.
+
+ The Lemon Parser Doesn't Reduce Immediately
+---------------------------------------------
+When the lemon parser receives a new token, it reduces the tokens currently on the stack as much as possible, and then pushes the new token. Bison pushes the new token, then reduces.
+
+"The Bison paradigm is to parse tokens first, then group them into larger syntactic units" (Bison manual).
+
+You may have to perform certain actions sooner (i.e. in a lower-level rule) in lemon than you would with Bison in order to get the correct behavior.
+
+The lemon ParseTrace function is useful if you want to examine lemon's behavior.
+
+ Lemon Uses Symbolic Names to Reference Grammar Symbols
+--------------------------------------------------------
+    /* bison */
+    expression : expression '+' expression { $$ = $1 + $3; }
+
+    /* lemon */
+    expression(A) ::= expression(B) PLUS expression(C). { A = B + C; }
+
+WARNING: Converting from bison to lemon syntax is tedious and error-prone.
+
+ Lemon Makes All Terminals the Same Type
+-----------------------------------------
+In Bison, you typically create a union that specifies the possible types of tokens, and then you declare the types for individual tokens:
+
+    /* Bison uses this to generate a C union called YYSTYPE */
+    %union {
+	float real;
+	int integer;
+	bool toggle;
+    }
+
+    %token <real> coord
+    ...
+
+    /* parser already knows types for $2, $3 and $4 because the type of all
+     * coord tokens was declared as <real> (float).
+     */
+    vertex : VERTEX coord coord coord
+    {
+	vert_t v = {$2, $3, $4};
+	...
+    }
+    ...
+
+Lemon considers all tokens to be of the same type which is typically a struct/union or a pointer to a struct/union. You specify the types of tokens explicitly within actions. WARNING: The default token type appears to be (void*), but the Lemon documentation claims that it's (int)!
+
+    /* included from custom header file - this is basically what Bison would
+     * generate from its %union directive
+     */
+    typedef union YYSTYPE {
+	float real;
+	int integer;
+	bool toggle;
+    } YYSTYPE;
+
+    #define COORD(c) c.real
+
+    /* actual grammar file */
+    ...
+    %token_type {YYSTYPE}
+    ...
+
+    /* We have to explicitly identify the type of each token referenced in
+     * each action.
+     */
+    vertex : VERTEX coord(A) coord(B) coord(C)
+    {
+	vert_t v = {COORD(A), COORD(B), COORD(C)};
+	...
+    }
+
+Lemon Doesn't Support Mid-Rule Actions
+---------------------------------------
+Bison allows you to put actions anywhere in the rhs component list, where they become unnamed components. Lemon does not support this feature.
+
+    /* bison */
+    alias_statement
+    : TOK_ALIAS TOK_IDENTIFIER TOK_FOR general_ref SEMICOLON
+    {
+	/* this action is unnamed component $6 */
+	struct Scope_ *s = SCOPEcreate_tiny(OBJ_ALIAS);
+	PUSH_SCOPE(s,(Symbol*)0, OBJ_ALIAS);
+    }
+    statement_rep TOK_END_ALIAS SEMICOLON
+    {
+	Expression e = EXPcreate_from_symbol(Type_Attribute, $2);
+	Variable v = VARcreate(e, Type_Unknown);
+	v->initializer = $4;
+	DICTdefine(CURRENT_SCOPE->symbol_table, $2->name, (Generic)v, $2,
+	OBJ_VARIABLE);
+	$$ = ALIAScreate(CURRENT_SCOPE, v, $7);
+	POP_SCOPE();
+    }
+    ;
+
+    /* lemon */
+    alias_statement(A) ::= TOK_ALIAS TOK_IDENTIFIER(B) TOK_FOR general_ref(C)
+			   SEMICOLON alias_push_scope statement_rep(D)
+			   TOK_END_ALIAS SEMICOLON.
+    {
+	Expression e = EXPcreate_from_symbol(Type_Attribute, B);
+	Variable v = VARcreate(e, Type_Unknown);
+	v->initializer = C;
+	DICTdefine(CURRENT_SCOPE->symbol_table, B->name, (Generic)v, B,
+	OBJ_VARIABLE);
+	A = ALIAScreate(CURRENT_SCOPE, v, D);
+	POP_SCOPE();
+    }
+
+    alias_push_scope ::= /* subroutine */.
+    {
+	struct Scope_ *s = SCOPEcreate_tiny(OBJ_ALIAS);
+	PUSH_SCOPE(s,(Symbol*)0, OBJ_ALIAS);
+    }

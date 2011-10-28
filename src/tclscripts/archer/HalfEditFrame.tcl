@@ -211,9 +211,7 @@
 	N [list $mNx $mNy $mNz] \
 	d $mD
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
 }
 
 ::itcl::body HalfEditFrame::createGeometry {obj} {

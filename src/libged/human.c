@@ -271,8 +271,6 @@ boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *lengt
      * followed by naming it by taking name, and cat-ing BOX to the end of it.
      */
     vect_t vects[8];
-    vect_t newVects[8];
-    point_t finalPoints[8];
     vect_t distance;
     vect_t JVEC;
     char newName[MAXLENGTH] = "a";
@@ -325,15 +323,6 @@ boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *lengt
     }
 /*	bu_log("-------------------------------+\n");
  */
-    /* MAT4X3VEC, rotate a vector about a center point, by a rotmatrix, MAT4X3VEC(new, rotmatrix, old) */
-    for (i = 0; i < 8; i++) {
-	MAT4X3VEC(newVects[i], rotMatrix, vects[i]);
-    }
-
-    /* Set points to be at end of each vector */
-    for (i = 0; i < 8; i++) {
-	VMOVE(finalPoints[i], newVects[i]);
-    }
 
     MAT3X3VEC(JVEC, rotMatrix, lengthVector);
     mk_trc_h(file, debug, startPoint, JVEC, 4, 1);
@@ -2239,7 +2228,6 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     fastf_t percentile = (fastf_t)50.0;
     char suffix[MAXLENGTH]="";
     point_t location;
-    int ret;
     int is_region = 0;
     unsigned char rgb[3], rgb2[3], rgb3[3];
     char topLevel[MAXLENGTH]="";
@@ -2256,7 +2244,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
     /* Process command line arguments */
-    ret = read_args(ac, av, topLevel, &human_data, &percentile, location, &stance, &troops, &showBoxes);
+    read_args(ac, av, topLevel, &human_data, &percentile, location, &stance, &troops, &showBoxes);
 
     GED_CHECK_EXISTS(gedp, bu_vls_addr(&name), LOOKUP_QUIET, GED_ERROR);
 

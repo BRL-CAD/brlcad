@@ -36,7 +36,7 @@ uint32_t slave_load_mesh_num;
 adrt_mesh_t *slave_load_mesh_list;
 
 void
-slave_load_free ()
+slave_load_free()
 {
 #if 0
     int i;
@@ -57,10 +57,8 @@ slave_load_free ()
 }
 
 int
-slave_load_region (struct tie_s *tie, char *data)
+slave_load_region(struct tie_s *UNUSED(tie), char *UNUSED(data))
 {
-    tie = NULL;
-    data = NULL;
     /*
      * data contains a region name and the triangle soup.
      * Meant to be called several times, with slave_load_kdtree called at the
@@ -70,10 +68,8 @@ slave_load_region (struct tie_s *tie, char *data)
 }
 
 int
-slave_load_kdtree (struct tie_s *tie, char *data)
+slave_load_kdtree(struct tie_s *UNUSED(tie), char *UNUSED(data))
 {
-    tie = NULL;
-    data = NULL;
     /* after slave_load_region calls have filled in all the geometry, this loads
      * a tree or requests a tree generation if data is NULL
      */

@@ -48,6 +48,41 @@ HIDDEN int rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, 
 
 /* Describe algorithm here */
 
+/**
+ * R T _ P G _ P L O T
+ *
+ * Calculate the bounding RPP for a poly
+ */
+int
+rt_pg_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
+{
+    struct rt_pg_internal *pgp;
+    size_t i;
+    size_t p;
+
+    pgp = (struct rt_pg_internal *)ip->idb_ptr;
+    RT_PG_CK_MAGIC(pgp);
+
+    for (p = 0; p < pgp->npoly; p++) {
+	vect_t work[3];
+
+	VMOVE(work[0], &pgp->poly[p].verts[0*3]);
+	VMINMAX((*min), (*max), work[0]);
+	VMOVE(work[1], &pgp->poly[p].verts[1*3]);
+	VMINMAX((*min), (*max), work[1]);
+
+	for (i=2; i < pgp->poly[p].npts; i++) {
+	    VMOVE(work[2], &pgp->poly[p].verts[i*3]);
+	    VMINMAX((*min), (*max), work[2]);
+
+	    /* Chop off a triangle, and continue */
+	    VMOVE(work[1], work[2]);
+	}
+    }
+
+    return 0;		/* OK */
+}
+
 
 /**
  * R T _ P G _ P R E P
@@ -70,17 +105,16 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);
 
+    if (rt_pg_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+
     for (p = 0; p < pgp->npoly; p++) {
 	vect_t work[3];
 
 	VMOVE(work[0], &pgp->poly[p].verts[0*3]);
-	VMINMAX(stp->st_min, stp->st_max, work[0]);
 	VMOVE(work[1], &pgp->poly[p].verts[1*3]);
-	VMINMAX(stp->st_min, stp->st_max, work[1]);
 
 	for (i=2; i < pgp->poly[p].npts; i++) {
 	    VMOVE(work[2], &pgp->poly[p].verts[i*3]);
-	    VMINMAX(stp->st_min, stp->st_max, work[2]);
 
 	    /* output a face */
 	    (void)rt_pgface(stp,
@@ -483,7 +517,7 @@ rt_pg_class(void)
  * R T _ P G _ P L O T
  */
 int
-rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     size_t i;
     size_t p;	/* current polygon number */
@@ -942,7 +976,7 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 
     RT_PG_CK_MAGIC(ip_pg);
 
-    ip_bot = (struct rt_bot_internal *)bu_malloc(sizeof(struct rt_bot_internal), "BOT internal");
+    BU_GETSTRUCT(ip_bot, rt_bot_internal);
     ip_bot->magic = RT_BOT_INTERNAL_MAGIC;
     ip_bot->mode = RT_BOT_SOLID;
     ip_bot->orientation = RT_BOT_CCW;

@@ -111,8 +111,6 @@ _rt_tree_region_assign(union tree *tp, const struct region *regionp)
 
 
 /**
- * _ R T _ G E T T R E E _ R E G I O N _ S T A R T
- *
  * This routine must be prepared to run in parallel.
  */
 HIDDEN int
@@ -135,8 +133,6 @@ _rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *p
 
 
 /**
- * _ R T _ G E T T R E E _ R E G I O N _ E N D
- *
  * This routine will be called by db_walk_tree() once all the solids
  * in this region have been visited.
  *
@@ -181,6 +177,9 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     rp->reg_los = tsp->ts_los;
 
     dp = (struct directory *)DB_FULL_PATH_CUR_DIR(pathp);
+    if (!dp)
+	return TREE_NULL;
+
     bu_avs_init_empty(&avs); 
     if (!db5_get_attributes(tsp->ts_dbip, &avs, dp)) {
 	bu_avs_init_empty(&(rp->attr_values));
@@ -260,8 +259,6 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 
 
 /**
- * R T _ F I N D _ I D E N T I C A L _ S O L I D
- *
  * See if solid "dp" as transformed by "mat" already exists in the
  * soltab list.  If it does, return the matching stp, otherwise,
  * create a new soltab structure, enrole it in the list, and return a
@@ -444,8 +441,6 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
 
 
 /**
- * R T _ G E T T R E E _ L E A F
- *
  * This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *
@@ -467,6 +462,8 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
     RT_CK_RTI(rtip);
     RT_CK_RESOURCE(tsp->ts_resp);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
+    if (!dp)
+	return TREE_NULL;
 
     /* Determine if this matrix is an identity matrix */
 
@@ -613,8 +610,6 @@ found_it:
 
 
 /**
- * R T _ F R E E _ S O L T A B
- *
  * Decrement use count on soltab structure.  If no longer needed,
  * release associated storage, and free the structure.
  *
@@ -673,8 +668,6 @@ rt_free_soltab(struct soltab *stp)
 
 
 /**
- * R T _ T R E E _ K I L L _ D E A D _ S O L I D _ R E F S
- *
  * Convert any references to "dead" solids into NOP nodes.
  */
 void
@@ -729,8 +722,6 @@ _rt_tree_kill_dead_solid_refs(union tree *tp)
 
 
 /**
- * R T _ G E T T R E E S _ M U V E S
- *
  * User-called function to add a set of tree hierarchies to the active
  * set. Includes getting the indicated list of attributes and a
  * Tcl_HashTable for use with the ORCA man regions. (stashed in the
@@ -750,7 +741,7 @@ _rt_tree_kill_dead_solid_refs(union tree *tp)
  * rtip - RT instance pointer
  *
  * attrs - attribute value set
- * 
+ *
  * argc - number of trees to get
  *
  * argv - array of char pointers to the names of the tree tops
@@ -921,8 +912,6 @@ again:
 
 
 /**
- * R T _ G E T T R E E S _ A N D _ A T T R S
- *
  * User-called function to add a set of tree hierarchies to the active
  * set.
  *
@@ -948,8 +937,6 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
 
 
 /**
- * R T _ G E T T R E E
- *
  * User-called function to add a tree hierarchy to the displayed set.
  *
  * This function is not multiply re-entrant.
@@ -994,8 +981,6 @@ rt_gettrees(struct rt_i *rtip, int argc, const char **argv, int ncpus)
 
 
 /**
- * R T _ T R E E _ E L I M _ N O P S
- *
  * Eliminate any references to NOP nodes from the tree.  It is safe to
  * use db_free_tree() here, because there will not be any dead solids.
  * They will all have been converted to OP_NOP nodes by
@@ -1093,9 +1078,8 @@ top:
     return 0;
 }
 
+
 /**
- * R T _ F I N D _ S O L I D
- *
  * Given the (leaf) name of a solid, find the first occurance of it in
  * the solid list.  Used mostly to find the light source.  Returns
  * soltab pointer, or RT_SOLTAB_NULL.
@@ -1120,7 +1104,7 @@ rt_find_solid(const struct rt_i *rtip, const char *name)
 
 
 /**
- * R T _ O P T I M _ T R E E
+ *
  */
 void
 rt_optim_tree(union tree *tp, struct resource *resp)

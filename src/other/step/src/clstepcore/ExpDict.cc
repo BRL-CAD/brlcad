@@ -410,7 +410,7 @@ Schema::AddProcedure(const char * p)
 void 
 Schema::GenerateExpress(ostream& out) const
 {
-    SCLstring tmp;
+  std::string tmp;
     out << endl << "(* Generating: " << Name() << " *)" << endl;
     out << endl << "SCHEMA " << StrToLower(Name(),tmp) << ";" << endl;
     GenerateUseRefExpress(out);
@@ -462,7 +462,7 @@ Schema::GenerateUseRefExpress(ostream& out) const
     int count;
     Interface_spec_ptr is;
     int first_time;
-    SCLstring tmp;
+    std::string tmp;
 
     /////////////////////// print USE statements
 
@@ -481,7 +481,7 @@ Schema::GenerateUseRefExpress(ostream& out) const
 	    if(count > 0)
 	    {
 		out << endl << "    USE FROM " 
-		   << StrToLower(is->foreign_schema_id_().chars(),tmp) << endl;
+		   << StrToLower(is->foreign_schema_id_().c_str(),tmp) << endl;
 		out << "       (";
 
 		first_time = 1;
@@ -489,18 +489,18 @@ Schema::GenerateUseRefExpress(ostream& out) const
 		{
 		    if(first_time) first_time = 0;
 		    else out << "," << endl << "\t";
-		    if( (*(is->explicit_items_()))[k]->original_id_().is_null() )
+		    if( !((*(is->explicit_items_()))[k]->original_id_().size()) )
 		    { // not renamed
-			out << (*(is->explicit_items_()))[k]->new_id_().chars();
+			out << (*(is->explicit_items_()))[k]->new_id_().c_str();
 		    } else { // renamed
-			out << (*(is->explicit_items_()))[k]->original_id_().chars();
-			out << " AS " << (*(is->explicit_items_()))[k]->new_id_().chars();
+			out << (*(is->explicit_items_()))[k]->original_id_().c_str();
+			out << " AS " << (*(is->explicit_items_()))[k]->new_id_().c_str();
 		    }
 		}
 		out << ");" << endl;
 	    } else if (is->all_objects_()) {
 		out << endl << "    USE FROM " 
-		    << StrToLower(is->foreign_schema_id_().chars(),tmp) << ";" 
+		    << StrToLower(is->foreign_schema_id_().c_str(),tmp) << ";" 
 		    << endl;
 	    }
 	}
@@ -524,7 +524,7 @@ Schema::GenerateUseRefExpress(ostream& out) const
 		
 //		out << "    REFERENCE FROM " << (*(is->explicit_items_()))[0]->foreign_schema_().chars() << endl;
 		out << endl << "    REFERENCE FROM " 
-		   << StrToLower(is->foreign_schema_id_().chars(),tmp) << endl;
+		   << StrToLower(is->foreign_schema_id_().c_str(),tmp) << endl;
 		out << "       (";
 
 		first_time = 1;
@@ -532,19 +532,19 @@ Schema::GenerateUseRefExpress(ostream& out) const
 		{
 		    if(first_time) first_time = 0;
 		    else out << "," << endl << "\t";
-		    if( (*(is->explicit_items_()))[k]->original_id_().is_null() )
+		    if( (!(*(is->explicit_items_()))[k]->original_id_().size()) )
 		    { // not renamed
-			out << (*(is->explicit_items_()))[k]->new_id_().chars();
+			out << (*(is->explicit_items_()))[k]->new_id_().c_str();
 		    } else { // renamed
-			out << (*(is->explicit_items_()))[k]->original_id_().chars();
+			out << (*(is->explicit_items_()))[k]->original_id_().c_str();
 			out << " AS " 
-			  << (*(is->explicit_items_()))[k]->new_id_().chars();
+			  << (*(is->explicit_items_()))[k]->new_id_().c_str();
 		    }
 		}
 		out << ");" << endl;
 	    } else if (is->all_objects_()) {
 		out << endl << "    REFERENCE FROM " 
-		    << StrToLower(is->foreign_schema_id_().chars(),tmp) << ";" 
+		    << StrToLower(is->foreign_schema_id_().c_str(),tmp) << ";" 
 		    << endl;
 	    }
 	}
@@ -557,7 +557,7 @@ Schema::GenerateTypesExpress(ostream& out) const
 {
     TypeDescItr tdi(_typeList);
     tdi.ResetItr();
-    SCLstring tmp;
+    std::string tmp;
 
     const TypeDescriptor *td = tdi.NextTypeDesc();
     while (td)
@@ -573,7 +573,7 @@ Schema::GenerateEntitiesExpress(ostream& out) const
 {
     EntityDescItr edi(_entList);
     edi.ResetItr();
-    SCLstring tmp;
+    std::string tmp;
 
     const EntityDescriptor *ed = edi.NextEntityDesc();
     while (ed)
@@ -585,101 +585,45 @@ Schema::GenerateEntitiesExpress(ostream& out) const
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifdef __OSTORE__
-EnumAggregate * create_EnumAggregate(os_database *db)
-{
-    return new (db, EnumAggregate::get_os_typespec()) EnumAggregate; 
-}
-#else
 EnumAggregate * create_EnumAggregate()
 {
     return new EnumAggregate; 
 }
-#endif
 
-#ifdef __OSTORE__
-GenericAggregate * create_GenericAggregate(os_database *db)
-{ 
-    return new (db, GenericAggregate::get_os_typespec()) GenericAggregate; 
-}
-#else
 GenericAggregate * create_GenericAggregate()
 { 
     return new GenericAggregate; 
 }
-#endif
 
-#ifdef __OSTORE__
-EntityAggregate * create_EntityAggregate(os_database *db)
-{
-    return new (db, EntityAggregate::get_os_typespec()) EntityAggregate; 
-}
-#else
 EntityAggregate * create_EntityAggregate()
 {
     return new EntityAggregate; 
 }
-#endif
 
-#ifdef __OSTORE__
-SelectAggregate * create_SelectAggregate(os_database *db)
-{
-    return new (db, SelectAggregate::get_os_typespec()) SelectAggregate;
-}
-#else
 SelectAggregate * create_SelectAggregate()
 {
     return new SelectAggregate; 
 }
-#endif
 
-#ifdef __OSTORE__
-StringAggregate * create_StringAggregate(os_database *db)
-{
-    return new (db, StringAggregate::get_os_typespec()) StringAggregate;
-}
-#else
 StringAggregate * create_StringAggregate()
 {
     return new StringAggregate; 
 }
-#endif
 
-#ifdef __OSTORE__
-BinaryAggregate * create_BinaryAggregate(os_database *db)
-{
-    return new (db, BinaryAggregate::get_os_typespec()) BinaryAggregate;
-}
-#else
 BinaryAggregate * create_BinaryAggregate()
 {
     return new BinaryAggregate; 
 }
-#endif
 
-#ifdef __OSTORE__
-RealAggregate * create_RealAggregate(os_database *db)
-{
-    return new (db, RealAggregate::get_os_typespec()) RealAggregate;
-}
-#else
 RealAggregate * create_RealAggregate()
 {
     return new RealAggregate; 
 }
-#endif
 
-#ifdef __OSTORE__
-IntAggregate * create_IntAggregate(os_database *db)
-{
-    return new (db, IntAggregate::get_os_typespec()) IntAggregate;
-}
-#else
 IntAggregate * create_IntAggregate()
 {
     return new IntAggregate; 
 }
-#endif
 
 const EntityDescriptor * 
 EntityDescItr::NextEntityDesc()
@@ -734,17 +678,17 @@ TypeDescItr::NextTypeDesc()
 ///////////////////////////////////////////////////////////////////////////////
 
 const char *
-AttrDescriptor::AttrExprDefStr(SCLstring & s) const
+AttrDescriptor::AttrExprDefStr(std::string & s) const
 {
-  SCLstring buf;
+  std::string buf;
 
   s = Name ();
-  s.Append (" : ");
+  s.append (" : ");
   if(_optional.asInt() == LTrue)
-    s.Append( "OPTIONAL ");
+    s.append( "OPTIONAL ");
   if(DomainType())
-	s.Append (DomainType()->AttrTypeName(buf));
-  return s.chars();
+	s.append (DomainType()->AttrTypeName(buf));
+  return const_cast<char *>(s.c_str());
 }    
 
 const PrimitiveType 
@@ -806,11 +750,11 @@ AttrDescriptor::Type() const
 }
 
 	// right side of attr def
-// NOTE this returns a \'const char * \' instead of an SCLstring
+// NOTE this returns a \'const char * \' instead of an std::string
 const char *
 AttrDescriptor::TypeName() const
 {
-    SCLstring buf;
+  std::string buf;
 
     if(_domainType)
 	return _domainType->AttrTypeName(buf);
@@ -820,26 +764,26 @@ AttrDescriptor::TypeName() const
 
 	// an expanded right side of attr def
 const char *
-AttrDescriptor::ExpandedTypeName(SCLstring & s) const
+AttrDescriptor::ExpandedTypeName(std::string & s) const
 {
-    s.set_null();
+    s.clear();
     if (Derived() == LTrue) s = "DERIVE  ";
     if(_domainType)
     {
-	SCLstring tmp;
-	return s.Append (_domainType->TypeString(tmp));
+      std::string tmp;
+	return const_cast<char *>((s.append (_domainType->TypeString(tmp)).c_str()));
     }
     else
 	return 0;
 }
 
 const char * 
-AttrDescriptor::GenerateExpress (SCLstring &buf) const
+AttrDescriptor::GenerateExpress (std::string &buf) const
 {
     char tmp[BUFSIZ];
-    SCLstring sstr;
+    std::string sstr;
     buf = AttrExprDefStr(sstr);
-    buf.Append(";\n");
+    buf.append(";\n");
 
 /*
 //    buf = "";
@@ -851,7 +795,7 @@ AttrDescriptor::GenerateExpress (SCLstring &buf) const
     buf.Append(TypeName());
     buf.Append(";\n");
 */
-    return buf.chars();
+    return const_cast<char *>(buf.c_str());
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -859,29 +803,29 @@ AttrDescriptor::GenerateExpress (SCLstring &buf) const
 ///////////////////////////////////////////////////////////////////////////////
 
 const char *
-Derived_attribute::AttrExprDefStr(SCLstring & s) const
+Derived_attribute::AttrExprDefStr(std::string & s) const
 {
-  SCLstring buf;
+  std::string buf;
 
-  s.set_null();
+  s.clear();
   if(Name() && strchr(Name(),'.'))
   {
       s = "SELF\\";
   }
-  s.Append(Name ());
-  s.Append (" : ");
+  s.append(Name ());
+  s.append (" : ");
 /*
   if(_optional.asInt() == LTrue)
-    s.Append( "OPTIONAL ");
+    s.append( "OPTIONAL ");
 */
   if(DomainType())
-	s.Append (DomainType()->AttrTypeName(buf));
+	s.append (DomainType()->AttrTypeName(buf));
   if(_initializer) // this is supposed to exist for a derived attribute.
   {
-      s.Append(" \n\t\t:= ");
-      s.Append(_initializer);
+      s.append(" \n\t\t:= ");
+      s.append(_initializer);
   }
-  return s.chars();
+  return const_cast<char *>(s.c_str());
 }    
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -889,32 +833,20 @@ Derived_attribute::AttrExprDefStr(SCLstring & s) const
 ///////////////////////////////////////////////////////////////////////////////
 
 const char *
-Inverse_attribute::AttrExprDefStr(SCLstring & s) const
+Inverse_attribute::AttrExprDefStr(std::string & s) const
 {
-  SCLstring buf;
+  std::string buf;
 
   s = Name ();
-  s.Append (" : ");
+  s.append (" : ");
   if(_optional.asInt() == LTrue)
-    s.Append( "OPTIONAL ");
+    s.append( "OPTIONAL ");
   if(DomainType())
-	s.Append (DomainType()->AttrTypeName(buf));
-  s.Append(" FOR ");
-  s.Append(_inverted_attr_id);
-  return s.chars();
+	s.append (DomainType()->AttrTypeName(buf));
+  s.append(" FOR ");
+  s.append(_inverted_attr_id);
+  return const_cast<char *>(s.c_str());
 }    
-/*
-const char * 
-Inverse_attribute::GenerateExpress (SCLstring &buf) const
-{
-    char tmp[BUFSIZ];
-    SCLstring sstr;
-    buf = AttrExprDefStr(sstr);
-    buf.Append(";\n");
-
-    return buf.chars();
-}
-*/
 
 ///////////////////////////////////////////////////////////////////////////////
 // EnumDescriptor functions
@@ -927,16 +859,6 @@ EnumTypeDescriptor::EnumTypeDescriptor (const char * nm, PrimitiveType ft,
 {
 }
 
-#ifdef __OSTORE__
-SCLP23(Enum) *
-EnumTypeDescriptor::CreateEnum(os_database *db)
-{
-    if(CreateNewEnum)
-      return CreateNewEnum(db);
-    else
-      return 0;
-}
-#else
 SCLP23(Enum) *
 EnumTypeDescriptor::CreateEnum()
 {
@@ -945,15 +867,14 @@ EnumTypeDescriptor::CreateEnum()
     else
       return 0;
 }
-#endif
 
 const char * 
-EnumTypeDescriptor::GenerateExpress (SCLstring &buf) const
+EnumTypeDescriptor::GenerateExpress (std::string &buf) const
 {
     char tmp[BUFSIZ];
     buf = "TYPE ";
-    buf.Append(StrToLower(Name(),tmp));
-    buf.Append(" = ENUMERATION OF \n  (");
+    buf.append(StrToLower(Name(),tmp));
+    buf.append(" = ENUMERATION OF \n  (");
     const char *desc = Description();
     const char *ptr = &(desc[16]);
     int count;
@@ -965,15 +886,15 @@ EnumTypeDescriptor::GenerateExpress (SCLstring &buf) const
     {
 	if( *ptr == ',')
 	{
-	    buf.Append(",\n  ");
+	    buf.append(",\n  ");
 	} else if (isupper(*ptr)){
-	    buf.Append((char)tolower(*ptr));
+	    buf += (char)tolower(*ptr);
 	} else {
-	    buf.Append(*ptr);
+	    buf += *ptr;
 	}
 	ptr++;
     }
-    buf.Append(";\n");
+    buf.append(";\n");
 ///////////////
     // count is # of WHERE rules
     if(_where_rules != 0)
@@ -981,32 +902,32 @@ EnumTypeDescriptor::GenerateExpress (SCLstring &buf) const
 	count = _where_rules->Count(); 
 	for(i = 0; i < count; i++) // print out each UNIQUE rule
 	{
-	    if( !(*(_where_rules))[i]->_label.is_undefined() )
+	    if( !(*(_where_rules))[i]->_label.size() )
 	      all_comments = 0;
 	}
 
 	if(all_comments)
-	    buf.Append("  (* WHERE *)\n");
+	    buf.append("  (* WHERE *)\n");
 	else
-	    buf.Append("  WHERE\n");
+	    buf.append("  WHERE\n");
 
 	for(i = 0; i < count; i++) // print out each WHERE rule
 	{
-	    if( !(*(_where_rules))[i]->_comment.is_null() )
+	    if( !(*(_where_rules))[i]->_comment.empty() )
 	    {
-		buf.Append("    ");
-		buf.Append( (*(_where_rules))[i]->comment_() );
+		buf.append("    ");
+		buf.append( (*(_where_rules))[i]->comment_() );
 	    }
-	    if( !(*(_where_rules))[i]->_label.is_null() )
+	    if( (*(_where_rules))[i]->_label.size() )
 	    {
-		buf.Append("    ");
-		buf.Append( (*(_where_rules))[i]->label_() );
+		buf.append("    ");
+		buf.append( (*(_where_rules))[i]->label_() );
 	    }
 	}
     }
 
-    buf.Append("END_TYPE;\n");
-    return buf.chars();
+    buf.append("END_TYPE;\n");
+    return const_cast<char *>(buf.c_str());
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1058,21 +979,21 @@ EntityDescriptor::~EntityDescriptor ()
 }
 
 const char * 
-EntityDescriptor::GenerateExpress (SCLstring &buf) const
+EntityDescriptor::GenerateExpress (std::string &buf) const
 {
     char tmp[BUFSIZ];
-    SCLstring sstr;
+    std::string sstr;
     int count;
     Where_rule_ptr wr;
     int i;
     int all_comments = 1;
 
     buf = "ENTITY ";
-    buf.Append(StrToLower(Name(),sstr));
+    buf.append(StrToLower(Name(),sstr));
 
-    if(strlen(_supertype_stmt.chars()) > 0)
-      buf.Append("\n  ");
-    buf.Append(_supertype_stmt.chars());
+    if(strlen(_supertype_stmt.c_str()) > 0)
+      buf.append("\n  ");
+    buf.append(_supertype_stmt.c_str());
 
     const EntityDescriptor * ed = 0;
 /*
@@ -1101,21 +1022,21 @@ EntityDescriptor::GenerateExpress (SCLstring &buf) const
     ed = edi_super.NextEntityDesc();
     int supertypes = 0;
     if(ed) {
-	buf.Append("\n  SUBTYPE OF (");
-	buf.Append(StrToLower(ed->Name(),sstr));
+	buf.append("\n  SUBTYPE OF (");
+	buf.append(StrToLower(ed->Name(),sstr));
 	supertypes = 1;
     }
     ed = edi_super.NextEntityDesc();
     while (ed) {
-	buf.Append(",\n\t\t");
-	buf.Append(StrToLower(ed->Name(),sstr));
+	buf.append(",\n\t\t");
+	buf.append(StrToLower(ed->Name(),sstr));
 	ed = edi_super.NextEntityDesc();
     }
     if(supertypes) {
-	buf.Append(")");
+	buf.append(")");
     }
 
-    buf.Append(";\n");
+    buf.append(";\n");
 
     AttrDescItr adi(_explicitAttr);
 
@@ -1125,8 +1046,8 @@ EntityDescriptor::GenerateExpress (SCLstring &buf) const
     while (ad) {
 	if(ad->AttrType() == AttrType_Explicit)
 	{
-	    buf.Append("    ");
-	    buf.Append(ad->GenerateExpress(sstr));
+	    buf.append("    ");
+	    buf.append(ad->GenerateExpress(sstr));
 	}
 	ad = adi.NextAttrDesc();
     }
@@ -1139,9 +1060,9 @@ EntityDescriptor::GenerateExpress (SCLstring &buf) const
 	if(ad->AttrType() == AttrType_Deriving)
 	{
 	    if(count == 1)
-	      buf.Append("  DERIVE\n");
-	    buf.Append("    ");
-	    buf.Append(ad->GenerateExpress(sstr));
+	      buf.append("  DERIVE\n");
+	    buf.append("    ");
+	    buf.append(ad->GenerateExpress(sstr));
 	    count++;
 	}
 	ad = adi.NextAttrDesc();
@@ -1149,17 +1070,16 @@ EntityDescriptor::GenerateExpress (SCLstring &buf) const
 /////////
 
     InverseAItr iai(_inverseAttr);
-//	const char * AttrTypeName( SCLstring &buf, const char *schnm =NULL ) const;
 
     iai.ResetItr();
     const Inverse_attribute *ia = iai.NextInverse_attribute();
 
     if(ia)
-      buf.Append("  INVERSE\n");
+      buf.append("  INVERSE\n");
 
     while (ia) {
-	buf.Append("    ");
-	buf.Append(ia->GenerateExpress(sstr));
+	buf.append("    ");
+	buf.append(ia->GenerateExpress(sstr));
 	ia = iai.NextInverse_attribute();
     }
 ///////////////
@@ -1169,27 +1089,27 @@ EntityDescriptor::GenerateExpress (SCLstring &buf) const
 	count = _uniqueness_rules->Count(); 
 	for(i = 0; i < count; i++) // print out each UNIQUE rule
 	{
-	    if( !(*(_uniqueness_rules))[i]->_label.is_undefined() )
+	    if( !(*(_uniqueness_rules))[i]->_label.size() )
 	      all_comments = 0;
 	}
 
 	if(all_comments)
-	    buf.Append("  (* UNIQUE *)\n");
+	    buf.append("  (* UNIQUE *)\n");
 	else
-	    buf.Append("  UNIQUE\n");
+	    buf.append("  UNIQUE\n");
 	for(i = 0; i < count; i++) // print out each UNIQUE rule
 	{
-	    if( !(*(_uniqueness_rules))[i]->_comment.is_null() )
+	    if( !(*(_uniqueness_rules))[i]->_comment.empty() )
 	    {
-		buf.Append("    ");
-		buf.Append( (*(_uniqueness_rules))[i]->comment_() );
-		buf.Append("\n");
+		buf.append("    ");
+		buf.append( (*(_uniqueness_rules))[i]->comment_() );
+		buf.append("\n");
 	    }
-	    if( !(*(_uniqueness_rules))[i]->_label.is_null() )
+	    if( (*(_uniqueness_rules))[i]->_label.size() )
 	    {
-		buf.Append("    ");
-		buf.Append( (*(_uniqueness_rules))[i]->label_() );
-		buf.Append("\n");
+		buf.append("    ");
+		buf.append( (*(_uniqueness_rules))[i]->label_() );
+		buf.append("\n");
 	    }
 	}
     }
@@ -1202,40 +1122,40 @@ EntityDescriptor::GenerateExpress (SCLstring &buf) const
 	count = _where_rules->Count(); 
 	for(i = 0; i < count; i++) // print out each UNIQUE rule
 	{
-	    if( !(*(_where_rules))[i]->_label.is_undefined() )
+	    if( !(*(_where_rules))[i]->_label.size() )
 	      all_comments = 0;
 	}
 
 	if(!all_comments)
-	  buf.Append("  WHERE\n");
+	  buf.append("  WHERE\n");
 	else
-	  buf.Append("  (* WHERE *)\n");
+	  buf.append("  (* WHERE *)\n");
 	for(i = 0; i < count; i++) // print out each WHERE rule
 	{
-	    if( !(*(_where_rules))[i]->_comment.is_null() )
+	    if( !(*(_where_rules))[i]->_comment.empty() )
 	    {
-		buf.Append("    ");
-		buf.Append( (*(_where_rules))[i]->comment_() );
-		buf.Append("\n");
+		buf.append("    ");
+		buf.append( (*(_where_rules))[i]->comment_() );
+		buf.append("\n");
 	    }
-	    if( !(*(_where_rules))[i]->_label.is_null() )
+	    if( (*(_where_rules))[i]->_label.size() )
 	    {
-		buf.Append("    ");
-		buf.Append( (*(_where_rules))[i]->label_() );
-		buf.Append("\n");
+		buf.append("    ");
+		buf.append( (*(_where_rules))[i]->label_() );
+		buf.append("\n");
 	    }
 	}
     }
 
-    buf.Append("END_ENTITY;\n");
+    buf.append("END_ENTITY;\n");
    
-    return buf.chars();
+    return const_cast<char *>(buf.c_str());
 }
 
 const char *
-EntityDescriptor::QualifiedName(SCLstring &s) const
+EntityDescriptor::QualifiedName(std::string &s) const
 {
-    s.set_null();
+    s.clear();
     EntityDescItr edi(_supertypes);
 
     int count = 1;
@@ -1244,14 +1164,14 @@ EntityDescriptor::QualifiedName(SCLstring &s) const
     {
 	if(count > 1)
 	{
-	    s.Append("&");
+	    s.append("&");
 	}
-	s.Append(ed->Name());
+	s.append(ed->Name());
 	count++;
     }
-    if(count > 1) s.Append("&");
-    s.Append(Name());
-    return s.chars();
+    if(count > 1) s.append("&");
+    s.append(Name());
+    return const_cast<char *>(s.c_str());
 }
 
 const TypeDescriptor * 
@@ -1666,20 +1586,20 @@ Global_rule__set::Clear()
 ///////////////////////////////////////////////////////////////////////////////
 
 const char * 
-TypeDescriptor::AttrTypeName(SCLstring &buf, const char *schnm ) const 
+TypeDescriptor::AttrTypeName(std::string &buf, const char *schnm ) const 
 {
-    SCLstring sstr;
+  std::string sstr;
     buf = Name(schnm) ? StrToLower(Name(schnm),sstr) : _description;
-    return buf.chars();
+    return const_cast<char *>(buf.c_str());
 }	    
 
 const char * 
-TypeDescriptor::GenerateExpress (SCLstring &buf) const
+TypeDescriptor::GenerateExpress (std::string &buf) const
 {
     char tmp[BUFSIZ];
     buf = "TYPE ";
-    buf.Append(StrToLower(Name(),tmp));
-    buf.Append(" = ");
+    buf.append(StrToLower(Name(),tmp));
+    buf.append(" = ");
     const char *desc = Description();
     const char *ptr = desc;
     int count;
@@ -1691,17 +1611,17 @@ TypeDescriptor::GenerateExpress (SCLstring &buf) const
     {
 	if( *ptr == ',')
 	{
-	    buf.Append(",\n  ");
+	    buf.append(",\n  ");
 	} else if( *ptr == '(') {
-	    buf.Append("\n  (");
+	    buf.append("\n  (");
 	} else if (isupper(*ptr)){
-	    buf.Append((char)tolower(*ptr));
+	    buf += (char)tolower(*ptr);
 	} else {
-	    buf.Append(*ptr);
+	    buf += *ptr;
 	}
 	ptr++;
     }
-    buf.Append(";\n");
+    buf.append(";\n");
 ///////////////
     // count is # of WHERE rules
     if(_where_rules != 0)
@@ -1709,35 +1629,35 @@ TypeDescriptor::GenerateExpress (SCLstring &buf) const
 	count = _where_rules->Count(); 
 	for(i = 0; i < count; i++) // print out each UNIQUE rule
 	{
-	    if( !(*(_where_rules))[i]->_label.is_undefined() )
+	    if( !(*(_where_rules))[i]->_label.size() )
 	      all_comments = 0;
 	}
 
 	if(all_comments)
-	    buf.Append("  (* WHERE *)\n");
+	    buf.append("  (* WHERE *)\n");
 	else
-	    buf.Append("    WHERE\n");
+	    buf.append("    WHERE\n");
 
 	for(i = 0; i < count; i++) // print out each WHERE rule
 	{
-	    if( !(*(_where_rules))[i]->_comment.is_null() )
+	    if( !(*(_where_rules))[i]->_comment.empty() )
 	    {
-		buf.Append("    ");
-		buf.Append( (*(_where_rules))[i]->comment_() );
+		buf.append("    ");
+		buf.append( (*(_where_rules))[i]->comment_() );
 	    }
-	    if( !(*(_where_rules))[i]->_label.is_null() )
+	    if( (*(_where_rules))[i]->_label.size() )
 	    {
-		buf.Append("      ");
-		buf.Append( (*(_where_rules))[i]->label_() );
+		buf.append("      ");
+		buf.append( (*(_where_rules))[i]->label_() );
 	    }
 	}
     }
 
-    buf.Append("END_TYPE;\n");
-    return buf.chars();
+    buf.append("END_TYPE;\n");
+    return const_cast<char *>(buf.c_str());
 
-//    buf.Append(Description());
-//    buf.Append("\nEND_TYPE;\n");
+//    buf.append(Description());
+//    buf.append("\nEND_TYPE;\n");
 }
 
 	///////////////////////////////////////////////////////////////////////
@@ -1748,116 +1668,116 @@ TypeDescriptor::GenerateExpress (SCLstring &buf) const
 	// be explained.
 	///////////////////////////////////////////////////////////////////////
 const char *
-TypeDescriptor::TypeString(SCLstring & s) const
+TypeDescriptor::TypeString(std::string & s) const
 {
     switch(Type())
     {
 	  case REFERENCE_TYPE:
 		if(Name())
 		{
-		  s.Append ( "TYPE ");
-		  s.Append (Name());
-		  s.Append ( " = ");
+		  s.append ( "TYPE ");
+		  s.append (Name());
+		  s.append ( " = ");
 		}
 		if(Description())
-		  s.Append ( Description ());
+		  s.append ( Description ());
 		if(ReferentType())
 		{
-		  s.Append ( " -- ");
-		  SCLstring tmp;
-		  s.Append ( ReferentType()->TypeString(tmp));
+		  s.append ( " -- ");
+      std::string tmp;
+		  s.append ( ReferentType()->TypeString(tmp));
 		}
-		return s;
+		return const_cast<char *>(s.c_str());
 
 	  case INTEGER_TYPE:
-		s.set_null();
+		s.clear();
 		if(_referentType != 0)
 		{
 		    s = "TYPE ";
-		    s.Append (Name());
-		    s.Append ( " = ");
+		    s.append (Name());
+		    s.append ( " = ");
 		}
-		s.Append("Integer");
+		s.append("Integer");
 		break;
 
 	  case STRING_TYPE:
-		s.set_null();
+		s.clear();
 		if(_referentType != 0)
 		{
 		    s = "TYPE ";
-		    s.Append (Name());
-		    s.Append ( " = ");
+		    s.append (Name());
+		    s.append ( " = ");
 		}
-		s.Append("String");
+		s.append("String");
 		break;
 
 	  case REAL_TYPE:
-		s.set_null();
+		s.clear();
 		if(_referentType != 0)
 		{
 		    s = "TYPE ";
-		    s.Append (Name());
-		    s.Append ( " = ");
+		    s.append (Name());
+		    s.append ( " = ");
 		}
-		s.Append("Real");
+		s.append("Real");
 		break;
 
 	  case ENUM_TYPE:
 		s = "Enumeration: ";
 		if(Name())
 		{
-		  s.Append ( "TYPE ");
-		  s.Append (Name());
-		  s.Append ( " = ");
+		  s.append ( "TYPE ");
+		  s.append (Name());
+		  s.append ( " = ");
 		}
 		if(Description())
-		  s.Append ( Description ());
+		  s.append ( Description ());
 		break;
 
 	  case BOOLEAN_TYPE:
-		s.set_null();
+		s.clear();
 		if(_referentType != 0)
 		{
 		    s = "TYPE ";
-		    s.Append (Name());
-		    s.Append ( " = ");
+		    s.append (Name());
+		    s.append ( " = ");
 		}
-		s.Append("Boolean: F, T");
+		s.append("Boolean: F, T");
 		break;
 	  case LOGICAL_TYPE:
-		s.set_null();
+		s.clear();
 		if(_referentType != 0)
 		{
 		    s = "TYPE ";
-		    s.Append (Name());
-		    s.Append ( " = ");
+		    s.append (Name());
+		    s.append ( " = ");
 		}
-		s.Append("Logical: F, T, U");
+		s.append("Logical: F, T, U");
 		break;
 	  case NUMBER_TYPE:
-		s.set_null();
+		s.clear();
 		if(_referentType != 0)
 		{
 		    s = "TYPE ";
-		    s.Append (Name());
-		    s.Append ( " = ");
+		    s.append (Name());
+		    s.append ( " = ");
 		}
-		s.Append("Number");
+		s.append("Number");
 		break;
 	  case BINARY_TYPE:
-		s.set_null();
+		s.clear();
 		if(_referentType != 0)
 		{
 		    s = "TYPE ";
-		    s.Append (Name());
-		    s.Append ( " = ");
+		    s.append (Name());
+		    s.append ( " = ");
 		}
-		s.Append("Binary");
+		s.append("Binary");
 		break;
 	  case ENTITY_TYPE:
 		s = "Entity: ";
 		if(Name())
-		  s.Append (Name());
+		  s.append (Name());
 		break;
 	  case AGGREGATE_TYPE:
 	  case ARRAY_TYPE:		// DAS
@@ -1867,46 +1787,22 @@ TypeDescriptor::TypeString(SCLstring & s) const
 		s = Description();
 		if(ReferentType())
 		{
-		  s.Append ( " -- ");
-		  SCLstring tmp;
-		  s.Append ( ReferentType()->TypeString(tmp));
+		  s.append ( " -- ");
+      std::string tmp;
+		  s.append ( ReferentType()->TypeString(tmp));
 		}
 		break;
 	  case SELECT_TYPE:
-		  s.Append ( Description ());
+		  s.append ( Description ());
 		break;
 	  case GENERIC_TYPE:
 	  case UNKNOWN_TYPE:
 		s = "Unknown";
 		break;
     } // end switch
-  return s;
+  return const_cast<char *>(s.c_str());
 
 }
-/* this works
-    if( ( (ReferentType() != 0) || (ReferentEntity() != 0) ) && Name())
-    {
-	strcat(tStr, "TYPE ");
-	strcat(tStr, Name());
-	strcat(tStr, " = ");
-    }
-    if(Description())
-	strcat(tStr, Description());
-    if(ReferentType())
-    {
-	strcat(tStr, " -- ");
-	SCLstring tmp;
-	strcat(tStr, ReferentType()->TypeString(tmp));
-    }
-    else if(ReferentEntity())
-    {
-	strcat(tStr, " -- ");
-	strcat(tStr, "Entity: ");
-	strcat(tStr, ReferentEntity()->Name());
-    }
-    return tStr;
-}
-*/
 
 const TypeDescriptor * 
 TypeDescriptor::IsA (const TypeDescriptor * other)  const {
@@ -2043,16 +1939,6 @@ EnumerationTypeDescriptor::EnumerationTypeDescriptor( )
 // SelectTypeDescriptor functions
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifdef __OSTORE__
-SCLP23(Select) *
-SelectTypeDescriptor::CreateSelect(os_database *db)
-{
-    if(CreateNewSelect)
-      return CreateNewSelect(db);
-    else
-      return 0;
-}
-#else
 SCLP23(Select) *
 SelectTypeDescriptor::CreateSelect()
 {
@@ -2061,7 +1947,6 @@ SelectTypeDescriptor::CreateSelect()
     else
       return 0;
 }
-#endif
 
 const TypeDescriptor *
 SelectTypeDescriptor::IsA (const TypeDescriptor * other) const
@@ -2150,16 +2035,6 @@ SelectTypeDescriptor::CanBeSet (const char * other, const char *schNm) const
 // AggrTypeDescriptor functions
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifdef __OSTORE__
-STEPaggregate *
-AggrTypeDescriptor::CreateAggregate(os_database *db)
-{
-    if(CreateNewAggr)
-      return CreateNewAggr(db);
-    else
-      return 0;
-}
-#else
 STEPaggregate *
 AggrTypeDescriptor::CreateAggregate()
 {
@@ -2168,7 +2043,6 @@ AggrTypeDescriptor::CreateAggregate()
     else
       return 0;
 }
-#endif
 
 
 AggrTypeDescriptor::AggrTypeDescriptor( ) : 

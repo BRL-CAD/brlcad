@@ -6,16 +6,16 @@ SET(LIBTERMLIB_PRIVATE_HDRS
 
 
 SET(LIBTERM_SOURCES
-	termcap.c 
-	tgoto.c 
+	termcap.c
+	tgoto.c
 	tputs.c
 )
 
 add_definitions(
-   -DCM_N 
-	-DCM_GT 
-	-DCM_B 
-	-DCM_D 
+   -DCM_N
+	-DCM_GT
+	-DCM_B
+	-DCM_D
 	-DB_TERMCAP=\"${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/etc/termcap\"
 )
 

@@ -115,7 +115,6 @@ int main(int argc, char *argv[]) {
     int i, g; /* generation and parent counters */
     int parent1, parent2;
     int gop;
-    int best, worst;
     fastf_t total_fitness = 0.0f;
     struct fitness_state fstate;
     struct population pop = {NULL, NULL, NULL, NULL, NULL, 0};
@@ -153,7 +152,6 @@ int main(int argc, char *argv[]) {
 #endif
 
 	total_fitness = 0.0f;
-	best = worst = 0;
 
 	snprintf(dbname, 256, "gen%.3d", g);
 	pop.db_c = db_create(dbname, 5);

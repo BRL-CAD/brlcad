@@ -181,12 +181,6 @@ fi
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
-# am_init_automake performs a ac_prog_install check so need to handle
-# problematic /usr/brl/bin/install on irix
-if test "x$build_vendor" = "xsgi" ; then
-   PATH="`echo $PATH | sed 's/\/brl\/bin/bin/g'`"
-fi
-
 # sanity check, make sure we have sources where we expect them
 AC_CONFIG_SRCDIR([src/librt/bool.c])
 
@@ -228,7 +222,7 @@ fi
 
 # init the venerable automake only _once_ or incur the wrath of
 # several automake bugs (like "aclocal-" and install detection)
-AM_INIT_AUTOMAKE([1.6 dist-zip dist-bzip2])
+AM_INIT_AUTOMAKE([1.8 dist-zip dist-bzip2 tar-ustar])
 
 # disables the build system dependency tracking by default for the
 # automake and autoconf template files.
@@ -278,7 +272,7 @@ BC_ARG_ENABLE([build_64bit], [64bit-build], [Enable 64-bit compilation mode], [a
 BC_ARG_ENABLE([build_regex], [regex-build], [Build the included regular expression library], [auto])
 
 # force enable/disable building of libpng
-BC_ARG_ENABLE([build_png], [png-build], [Build the included Portable Network Graphics library], [auto])
+BC_ARG_ENABLE([build_png], [png-build], [Build the included Portable Network Graphics library], [no])
 
 # force enable/disable building of zlib
 BC_ARG_ENABLE([build_zlib], [zlib-build], [Build the included zlib compression library], [auto])
@@ -290,7 +284,7 @@ BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit]
 BC_ARG_ENABLE([build_opennurbs], [opennurbs-build], [Build the included openNURBS library], [auto])
 
 # force enable/disable building of NIST STEP Class Libraries
-BC_ARG_ENABLE([build_step], [step-build], [Build the included STEP Class Libraries], [auto])
+BC_ARG_ENABLE([build_step], [step-build], [Build the included STEP Class Libraries], [no])
 
 # force enable/disable building of termlib
 BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib library], [auto])
@@ -657,9 +651,6 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_regex_set" = "xno" ; then
 		bc_build_regex="$set_everything"
 	fi
-	if test "x$bc_build_png_set" = "xno" ; then
-		bc_build_png="$set_everything"
-	fi
 	if test "x$bc_build_zlib_set" = "xno" ; then
 		bc_build_zlib="$set_everything"
 	fi
@@ -668,9 +659,6 @@ if test "x$set_everything" != "x" ; then
 	fi
 	if test "x$bc_build_opennurbs_set" = "xno" ; then
 		bc_build_opennurbs="$set_everything"
-	fi
-	if test "x$bc_build_step" = "xno" ; then
-		bc_build_step="$set_everything"
 	fi
 	if test "x$bc_build_termlib_set" = "xno" ; then
 		bc_build_termlib="$set_everything"
@@ -961,9 +949,6 @@ if test "x$bc_build_docs" != "xno" ; then
     AC_PATH_PROG(APACHEFOP, fop)
 fi
 
-# XXX tests for ranlib may be required.  "ar ts" was used in cake for
-# sgi and aix so more compensation may be required still.
-
 dnl Libtool may need AR so try to find it
 AC_PATH_PROG(AR, ar, [], $PATH:/usr/bin:/usr/local/bin:/usr/ccs/bin)
 AC_SUBST(AR)
@@ -987,21 +972,6 @@ compiler=unknown
 dnl Determine whether we are using GCC
 if test "x$GCC" = "xyes" ; then
     compiler=gnu
-fi
-
-dnl Determine whether we are using the MIPSpro compiler on SGI systems
-if test "x$build_vendor" = "xsgi" ; then
-    AC_MSG_CHECKING([whether we are using the MIPSpro compiler])
-    using_mipspro=no
-    AC_LINK_IFELSE([AC_LANG_SOURCE([#if defined(sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__)
-If we get here, we are using the MIPSPro compiler (and the link should fail).
-#endif
-int main() { return 0; }
-    ])], [using_mipspro=no], [using_mipspro=yes])
-    AC_MSG_RESULT($using_mipspro)
-    if test "x$using_mipspro" = "xyes" ; then
-	compiler=sgi
-    fi
 fi
 
 dnl Determine whether we are using the SUNWspro Sun Workshop compiler
@@ -1408,11 +1378,6 @@ dl_link_works=no
 LIBDL=""
 AC_CHECK_LIB(dl, dlopen, dl_link_works=yes ; LIBDL="-ldl")
 
-dnl check if the SGI generic SCSI library links
-ds_link_works=no
-LIBDS=""
-AC_CHECK_LIB(ds, dsopen, ds_link_works=yes ; LIBDS="-lds")
-
 dnl check if an OpenGL graphics library links
 gl_link_works=no
 LIBGL=""
@@ -1489,11 +1454,6 @@ LIBWGL=""
 if test "xbc_with_wgl" != "xno" ; then
     AC_CHECK_LIB(opengl32, glEnable, wgl_link_works=yes ; LIBWGL="-lopengl32")
 fi
-
-dnl check if the SGI graphics library links
-sgigl_link_works=no
-LIBSGIGL=""
-AC_CHECK_LIB(gl, gconfig, sgigl_link_works=yes ; LIBSGIGL="-lgl")
 
 dnl check if the Solaris lexer library links
 l_link_works=no
@@ -1923,7 +1883,7 @@ if test "xyes" = "xyes" ; then
     dnl needs to be increased from the default ANSI minimum of 17.
     BC_COMPILER_RECOGNIZES([-ftemplate-depth-50], [template_depth], [nokeep])
     if test "x$bc_template_depth_works" = "xyes" ; then
-	TEMPLATE_DEPTH="-ftemplate-depth-50"
+	TEMPLATE_DEPTH="-ftemplate-depth-128"
 	AC_SUBST(TEMPLATE_DEPTH)
     fi
 
@@ -2235,6 +2195,8 @@ if test "x$bc_compliant_float" = "xno" || test "x$bc_compliant_double" = "xno" ;
     sleep 5
 fi
 
+AC_DEFINE(HAVE_C99_FORMAT_SPECIFIERS, 1, [Define to 1 if you have the '%zu' printf format specifier.])
+
 AC_C_CONST
 AC_C_INLINE
 AC_C_VOLATILE
@@ -2483,8 +2445,8 @@ AC_MSG_CHECKING(whether to build the included portable network graphics library)
 PNG=""
 PNG_CPPFLAGS=""
 if test "x$build_brlcad_png" = "xyes" ; then
-    PNG='${top_builddir}/src/other/libpng/libpng14.la'
-    PNG_CPPFLAGS='-I${top_srcdir}/src/other/libpng'
+    PNG='${top_builddir}/src/other/libpng/libpng15.la'
+    PNG_CPPFLAGS='-I${top_srcdir}/src/other/libpng -I${top_builddir}/src/other/libpng'
     AC_MSG_RESULT(yes)
 else
     PNG="$LIBPNG"
@@ -3442,7 +3404,7 @@ AC_SUBST(TERMLIB_CPPFLAGS)
 
 dnl *** Boost ***
 dnl Header only Library requiring no build
-BOOST_CPPFLAGS='-I${top_srcdir}/src/other'
+BOOST_CPPFLAGS='-I${top_srcdir}/src/other/boost'
 AC_SUBST(BOOST_CPPFLAGS)
 
 dnl *** libm ***
@@ -3480,11 +3442,6 @@ AC_MSG_CHECKING(for system dynamic linker library availability)
 AC_MSG_RESULT([$dl_link_works])
 AC_SUBST(LIBDL)
 
-dnl *** libds ***
-AC_MSG_CHECKING(for SGI /dev/scsi library availability)
-AC_MSG_RESULT([$ds_link_works])
-AC_SUBST(LIBDS)
-
 dnl *** libgl ***
 AC_MSG_CHECKING(for OpenGL library availability)
 AC_MSG_RESULT($gl_link_works)
@@ -3499,14 +3456,6 @@ dnl *** libopengl32 ***
 AC_MSG_CHECKING(for WindowsGL library availability)
 AC_MSG_RESULT($wgl_link_works)
 AC_SUBST(LIBWGL)
-
-dnl *** sgigl ***
-AC_MSG_CHECKING(for SGI graphics library availability)
-AC_MSG_RESULT($sgigl_link_works)
-AC_SUBST(LIBSGIGL)
-if test "x$sgigl_link_works" = "xyes" ; then
-    AC_DEFINE(HAS_SGIGL, 1, Irix GL is present.)
-fi
 
 dnl *** libl Solaris lexer library ***
 AC_MSG_CHECKING(for Solaris lexer library availability)
@@ -4142,11 +4091,6 @@ AC_SUBST(WDB_LIBS)
 AC_SUBST(BRLCAD_LIBS)
 
 
-# if compiling with the MIPSpro 7.3 compiler, there is a bug when
-# trying to link using an rpath longer than 256 that causes the linker
-# to core dump.
-AM_CONDITIONAL(LINK_STATIC_REQUIRED, [test "x$build_vendor" = "xsgi" -a "x$compiler" = "xsgi" ])
-
 AM_CONDITIONAL(HAVE_DOXYGEN, false)
 
 dnl sample applications
@@ -4236,6 +4180,7 @@ AC_CONFIG_FILES([
 	db/Makefile
 	db/include/Makefile
 	doc/Makefile
+	doc/docbook/DBPATH.pm
 	doc/docbook/Makefile
 	doc/docbook/fop.xconf
 	doc/html/Makefile

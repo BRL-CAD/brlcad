@@ -61,6 +61,42 @@ const struct bu_structparse rt_cline_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+/**
+ * R T _ C L I N E _ B B O X
+ *
+ * Calculate bounding RPP for cline
+ */
+int
+rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    struct rt_cline_internal *cline_ip;
+    vect_t rad, work;
+    point_t top;
+    fastf_t max_tr;
+    
+    RT_CK_DB_INTERNAL(ip);
+    cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
+    RT_CLINE_CK_MAGIC(cline_ip);
+
+    if (rt_cline_radius > 0.0)
+	max_tr = rt_cline_radius;
+    else
+	max_tr = 0.0;
+
+    VSETALL((*min), MAX_FASTF);
+    VSETALL((*max), -MAX_FASTF);
+
+    VSETALL(rad, cline_ip->radius + max_tr);
+    VADD2(work, cline_ip->v, rad);
+    VMINMAX((*min), (*max), work);
+    VSUB2(work, cline_ip->v, rad);
+    VMINMAX((*min), (*max), work);
+    VADD2(top, cline_ip->v, cline_ip->h);
+    VADD2(work, top, rad);
+    VMINMAX((*min), (*max), work);
+    VSUB2(work, top, rad);
+    VMINMAX((*min), (*max), work);
+    return 0;
+}
 
 /**
  * R T _ C L I N E _ P R E P
@@ -82,9 +118,6 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_cline_internal *cline_ip;
     register struct cline_specific *cline;
-    vect_t work;
-    vect_t rad;
-    point_t top;
     fastf_t tmp;
     fastf_t max_tr;
 
@@ -109,19 +142,8 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     tmp = MAGNITUDE(cline_ip->h) * 0.5;
     stp->st_aradius = sqrt(tmp*tmp + cline_ip->radius*cline_ip->radius);
     stp->st_bradius = stp->st_aradius + max_tr;
-    VSETALL(stp->st_min, MAX_FASTF);
-    VREVERSE(stp->st_max, stp->st_min);
 
-    VSETALL(rad, cline_ip->radius + max_tr);
-    VADD2(work, cline_ip->v, rad);
-    VMINMAX(stp->st_min, stp->st_max, work);
-    VSUB2(work, cline_ip->v, rad);
-    VMINMAX(stp->st_min, stp->st_max, work);
-    VADD2(top, cline_ip->v, cline_ip->h);
-    VADD2(work, top, rad);
-    VMINMAX(stp->st_min, stp->st_max, work);
-    VSUB2(work, top, rad);
-    VMINMAX(stp->st_min, stp->st_max, work);
+    if (rt_cline_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
 
     return 0;
 }
@@ -441,7 +463,7 @@ rt_cline_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max,
  * R T _ C L I N E _ P L O T
  */
 int
-rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_cline_internal *cline_ip;
     fastf_t top[16*3];

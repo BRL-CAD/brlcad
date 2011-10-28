@@ -5,10 +5,6 @@
 // regenerate it.
 /* $Id$  */
 
-#ifdef __OSTORE__
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#endif
-
 #ifdef __O3DB__
 #include <OpenOODB.h>
 #endif
@@ -41,10 +37,6 @@ enum Color {
 
 class SdaiColor_var  :  public SCLP23(Enum)  {
 
-#ifdef __OSTORE__
-  friend void SdaiColor_var_access_hook_in(void *, 
-	enum os_access_reason, void *, void *, void *);
-#endif
   protected:
 	EnumTypeDescriptor *type;
 
@@ -62,34 +54,14 @@ class SdaiColor_var  :  public SCLP23(Enum)  {
 	inline virtual int no_elements () const  {  return 8;  }
 	virtual const char * element_at (int n) const;
 
-#ifdef __OSTORE__
-	static os_typespec* get_os_typespec();
-	virtual void Access_hook_in(void *object, 
-		enum os_access_reason reason, void *user_data, 
-		void *start_range, void *end_range);
-#endif
 };
 
 typedef SdaiColor_var * SdaiColor_var_ptr;
 
-#ifdef __OSTORE__
-void SdaiColor_var_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range);
-#endif
-
-#if __OSTORE__
-  SCLP23(Enum) * create_SdaiColor_var (os_database *db);
-#else
   SCLP23(Enum) * create_SdaiColor_var ();
-#endif
 
 class SdaiColor_vars  :  public EnumAggregate  {
 
-#ifdef __OSTORE__
-  friend void SdaiColor_vars_access_hook_in(void *, 
-	enum os_access_reason, void *, void *, void *);
-#endif
   protected:
     EnumTypeDescriptor *enum_type;
 
@@ -99,24 +71,11 @@ class SdaiColor_vars  :  public EnumAggregate  {
     virtual SingleLinkNode * NewNode()
 	{ return new EnumNode (new SdaiColor_var( "", enum_type )); }
 
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-#endif
 };
-
-#ifdef __OSTORE__
-void SdaiColor_vars_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range);
-#endif
 
 typedef SdaiColor_vars * SdaiColor_vars_ptr;
 
-#if __OSTORE__
-  STEPaggregate * create_SdaiColor_vars (os_database *db);
-#else
   STEPaggregate * create_SdaiColor_vars ();
-#endif
 
 //////////  END ENUMERATION color
 
@@ -133,10 +92,6 @@ extern AttrDescriptor *a_0points;
 
 class SdaiPoly_line  :    public SCLP23(Application_instance) {
 
-#ifdef __OSTORE__
-  friend void SdaiPoly_line_access_hook_in(void *, 
-	enum os_access_reason, void *, void *, void *);
-#endif
   protected:
 	EntityAggregate _points ;	  //  of  line
 
@@ -156,26 +111,9 @@ class SdaiPoly_line  :    public SCLP23(Application_instance) {
 	void points_ (const EntityAggregate_ptr x);
 
 
-#ifdef __OSTORE__
-	static os_typespec* get_os_typespec();
-	virtual void Access_hook_in(void *object, 
-		enum os_access_reason reason, void *user_data, 
-		void *start_range, void *end_range);
-#endif
-
 };
 
-#ifdef __OSTORE__
-void SdaiPoly_line_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range);
-#endif
-
-#ifdef __OSTORE__
-SCLP23(Application_instance_ptr) 
-create_SdaiPoly_line(os_database *db);
-
-#elif __O3DB__
+#ifdef __O3DB__
 inline SCLP23(Application_instance_ptr) 
 create_SdaiPoly_line () {  return (SCLP23(Application_instance_ptr)) new SdaiPoly_line ;  }
 #else
@@ -194,10 +132,6 @@ extern AttrDescriptor *a_3number_of_sides;
 
 class SdaiShape  :    public SCLP23(Application_instance) {
 
-#ifdef __OSTORE__
-  friend void SdaiShape_access_hook_in(void *, 
-	enum os_access_reason, void *, void *, void *);
-#endif
   protected:
 	SCLP23(String) _item_name ;
 	SdaiColor_var _item_color ;    //  OPTIONAL
@@ -224,26 +158,9 @@ class SdaiShape  :    public SCLP23(Application_instance) {
 	void number_of_sides_ (const SCLP23(Integer) x);
 
 
-#ifdef __OSTORE__
-	static os_typespec* get_os_typespec();
-	virtual void Access_hook_in(void *object, 
-		enum os_access_reason reason, void *user_data, 
-		void *start_range, void *end_range);
-#endif
-
 };
 
-#ifdef __OSTORE__
-void SdaiShape_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range);
-#endif
-
-#ifdef __OSTORE__
-SCLP23(Application_instance_ptr) 
-create_SdaiShape(os_database *db);
-
-#elif __O3DB__
+#ifdef __O3DB__
 inline SCLP23(Application_instance_ptr) 
 create_SdaiShape () {  return (SCLP23(Application_instance_ptr)) new SdaiShape ;  }
 #else
@@ -261,10 +178,6 @@ extern AttrDescriptor *a_5width;
 
 class SdaiRectangle  :    public SdaiShape  {
  
-#ifdef __OSTORE__
-  friend void SdaiRectangle_access_hook_in(void *, 
-	enum os_access_reason, void *, void *, void *);
-#endif
   protected:
 	SCLP23(Real) _height ;
 	SCLP23(Real) _width ;
@@ -289,26 +202,9 @@ class SdaiRectangle  :    public SdaiShape  {
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
 
-#ifdef __OSTORE__
-	static os_typespec* get_os_typespec();
-	virtual void Access_hook_in(void *object, 
-		enum os_access_reason reason, void *user_data, 
-		void *start_range, void *end_range);
-#endif
-
 };
 
-#ifdef __OSTORE__
-void SdaiRectangle_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range);
-#endif
-
-#ifdef __OSTORE__
-SCLP23(Application_instance_ptr) 
-create_SdaiRectangle(os_database *db);
-
-#elif __O3DB__
+#ifdef __O3DB__
 inline SCLP23(Application_instance_ptr) 
 create_SdaiRectangle () {  return (SCLP23(Application_instance_ptr)) new SdaiRectangle ;  }
 #else
@@ -324,10 +220,6 @@ create_SdaiRectangle () {  return  new SdaiRectangle ;  }
 
 class SdaiSquare  :    public SdaiRectangle  {
  
-#ifdef __OSTORE__
-  friend void SdaiSquare_access_hook_in(void *, 
-	enum os_access_reason, void *, void *, void *);
-#endif
   protected:
   public:  
 
@@ -344,26 +236,9 @@ class SdaiSquare  :    public SdaiRectangle  {
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
 
-#ifdef __OSTORE__
-	static os_typespec* get_os_typespec();
-	virtual void Access_hook_in(void *object, 
-		enum os_access_reason reason, void *user_data, 
-		void *start_range, void *end_range);
-#endif
-
 };
 
-#ifdef __OSTORE__
-void SdaiSquare_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range);
-#endif
-
-#ifdef __OSTORE__
-SCLP23(Application_instance_ptr) 
-create_SdaiSquare(os_database *db);
-
-#elif __O3DB__
+#ifdef __O3DB__
 inline SCLP23(Application_instance_ptr) 
 create_SdaiSquare () {  return (SCLP23(Application_instance_ptr)) new SdaiSquare ;  }
 #else
@@ -382,10 +257,6 @@ extern AttrDescriptor *a_8side3_length;
 
 class SdaiTriangle  :    public SdaiShape  {
  
-#ifdef __OSTORE__
-  friend void SdaiTriangle_access_hook_in(void *, 
-	enum os_access_reason, void *, void *, void *);
-#endif
   protected:
 	SCLP23(Real) _side1_length ;
 	SCLP23(Real) _side2_length ;
@@ -414,26 +285,9 @@ class SdaiTriangle  :    public SdaiShape  {
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
 
-#ifdef __OSTORE__
-	static os_typespec* get_os_typespec();
-	virtual void Access_hook_in(void *object, 
-		enum os_access_reason reason, void *user_data, 
-		void *start_range, void *end_range);
-#endif
-
 };
 
-#ifdef __OSTORE__
-void SdaiTriangle_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range);
-#endif
-
-#ifdef __OSTORE__
-SCLP23(Application_instance_ptr) 
-create_SdaiTriangle(os_database *db);
-
-#elif __O3DB__
+#ifdef __O3DB__
 inline SCLP23(Application_instance_ptr) 
 create_SdaiTriangle () {  return (SCLP23(Application_instance_ptr)) new SdaiTriangle ;  }
 #else
@@ -450,10 +304,6 @@ extern AttrDescriptor *a_9radius;
 
 class SdaiCircle  :    public SdaiShape  {
  
-#ifdef __OSTORE__
-  friend void SdaiCircle_access_hook_in(void *, 
-	enum os_access_reason, void *, void *, void *);
-#endif
   protected:
 	SCLP23(Real) _radius ;
   public:  
@@ -474,26 +324,9 @@ class SdaiCircle  :    public SdaiShape  {
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
 
-#ifdef __OSTORE__
-	static os_typespec* get_os_typespec();
-	virtual void Access_hook_in(void *object, 
-		enum os_access_reason reason, void *user_data, 
-		void *start_range, void *end_range);
-#endif
-
 };
 
-#ifdef __OSTORE__
-void SdaiCircle_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range);
-#endif
-
-#ifdef __OSTORE__
-SCLP23(Application_instance_ptr) 
-create_SdaiCircle(os_database *db);
-
-#elif __O3DB__
+#ifdef __O3DB__
 inline SCLP23(Application_instance_ptr) 
 create_SdaiCircle () {  return (SCLP23(Application_instance_ptr)) new SdaiCircle ;  }
 #else
@@ -511,10 +344,6 @@ extern AttrDescriptor *a_11end_point_two;
 
 class SdaiLine  :    public SCLP23(Application_instance) {
 
-#ifdef __OSTORE__
-  friend void SdaiLine_access_hook_in(void *, 
-	enum os_access_reason, void *, void *, void *);
-#endif
   protected:
 	SCLP23(Application_instance_ptr) _end_point_one ;
 	SCLP23(Application_instance_ptr) _end_point_two ;
@@ -537,26 +366,9 @@ class SdaiLine  :    public SCLP23(Application_instance) {
 	void end_point_two_ (const SdaiCartesian_point_ptr x);
 
 
-#ifdef __OSTORE__
-	static os_typespec* get_os_typespec();
-	virtual void Access_hook_in(void *object, 
-		enum os_access_reason reason, void *user_data, 
-		void *start_range, void *end_range);
-#endif
-
 };
 
-#ifdef __OSTORE__
-void SdaiLine_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range);
-#endif
-
-#ifdef __OSTORE__
-SCLP23(Application_instance_ptr) 
-create_SdaiLine(os_database *db);
-
-#elif __O3DB__
+#ifdef __O3DB__
 inline SCLP23(Application_instance_ptr) 
 create_SdaiLine () {  return (SCLP23(Application_instance_ptr)) new SdaiLine ;  }
 #else
@@ -575,10 +387,6 @@ extern AttrDescriptor *a_14z;
 
 class SdaiCartesian_point  :    public SCLP23(Application_instance) {
 
-#ifdef __OSTORE__
-  friend void SdaiCartesian_point_access_hook_in(void *, 
-	enum os_access_reason, void *, void *, void *);
-#endif
   protected:
 	SCLP23(Real) _x ;
 	SCLP23(Real) _y ;
@@ -605,26 +413,9 @@ class SdaiCartesian_point  :    public SCLP23(Application_instance) {
 	void z_ (const SdaiPoint x);
 
 
-#ifdef __OSTORE__
-	static os_typespec* get_os_typespec();
-	virtual void Access_hook_in(void *object, 
-		enum os_access_reason reason, void *user_data, 
-		void *start_range, void *end_range);
-#endif
-
 };
 
-#ifdef __OSTORE__
-void SdaiCartesian_point_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range);
-#endif
-
-#ifdef __OSTORE__
-SCLP23(Application_instance_ptr) 
-create_SdaiCartesian_point(os_database *db);
-
-#elif __O3DB__
+#ifdef __O3DB__
 inline SCLP23(Application_instance_ptr) 
 create_SdaiCartesian_point () {  return (SCLP23(Application_instance_ptr)) new SdaiCartesian_point ;  }
 #else
@@ -641,11 +432,7 @@ class SdaiModel_contents_example_schema : public SCLP23(Model_contents) {
 
   public:
 
-#ifdef __OSTORE__
-    SdaiModel_contents_example_schema(os_database *db=0);
-#else
     SdaiModel_contents_example_schema();
-#endif
 
     SdaiPoly_line__set_var SdaiPoly_line_get_extents();
 
@@ -663,20 +450,12 @@ class SdaiModel_contents_example_schema : public SCLP23(Model_contents) {
 
     SdaiCartesian_point__set_var SdaiCartesian_point_get_extents();
 
-#ifdef __OSTORE__
-	static os_typespec* get_os_typespec();
-#endif
-
 };
 
 
 typedef SdaiModel_contents_example_schema * SdaiModel_contents_example_schema_ptr;
 typedef SdaiModel_contents_example_schema_ptr SdaiModel_contents_example_schema_var;
 
-#ifdef __OSTORE__
-SCLP23(Model_contents_ptr) create_SdaiModel_contents_example_schema(os_database *db);
-#else
 SCLP23(Model_contents_ptr) create_SdaiModel_contents_example_schema();
-#endif
 
 #endif

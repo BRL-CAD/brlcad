@@ -48,6 +48,17 @@ new names should be listed for reference.
 7.20
 ----
 
+liborle 
+        remove liborle and the tools using it, fb-orle, orle-fb, orle-pix and
+	pix-orle [deprecated 7.20]
+
+tclscripts/lib
+        Mged, Database, Db, Dm, Drawable, Display, QuadDisplay, View -> Ged [deprecated 7.20]
+
+librt
+        bspline primitive [deprecated 7.20]
+        poly primitive [deprecated 7.20]
+        hf primitive [deprecated 7.20]
 bu.h
         bu_vls_init_if_uninit() -> bu_vls_init() [deprecated 7.20]
 autogen.sh && configure
@@ -55,6 +66,7 @@ autogen.sh && configure
         ./configure -> cmake . [deprecated 7.20]
 raytrace.h
 	rt_load_attrs() -> rt_gettrees_and_attrs() or db5_import_attributs() [deprecated 7.20]
+        db_regexp_match() -> !bu_fnmatch() [deprecated 7.20]
 
 7.18
 ----
@@ -778,3 +790,10 @@ s/RT_DBTR_MAGIC/RT_DB_TRAVERSE_MAGIC/g
 
 s/RT_INIT_([A-Z_]*)/RT_\1_INIT/g
         renamed all RT_INIT_[type] macros to RT_[type]_INIT for API consistency [7.20]
+
+s/BU_LIST_MAGIC_OK/BU_LIST_MAGIC_EQUAL/g
+s/BU_LIST_MAGIC_WRONG/!BU_LIST_MAGIC_EQUAL/g
+        renamed and consolidated to be consistent with libbn [7.20]
+
+s/nmg_moveeu/nmg_je/g
+	function has been renamed

@@ -10,7 +10,7 @@ SET(datarootdir "\${prefix}/share")
 SET(datadir "\${datarootdir}")
 
 ADD_SUBDIRECTORY(pkgconfig)
-# FIXME - need to finish porting enigma to Windows - 
+# FIXME - need to finish porting enigma to Windows -
 # tried adding postgresql crypt function but it doesn't
 # seem to be working.
 IF(NOT WIN32)
@@ -35,12 +35,11 @@ BRLCAD_ADDFILE(nsis/archer.ico icons)
 
 find_package(Doxygen)
 IF(DOXYGEN_FOUND)
-	configure_file(Doxyfile.in ${CMAKE_BINARY_DIR}/misc/Doxyfile)
 	IF(BRLCAD-BUILD_DOXYGEN_DOCS)
 		ADD_CUSTOM_COMMAND(
-			OUTPUT ${CMAKE_BINARY_DIR}/misc/doxygen_output/html/index.html
-			COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/misc/Doxyfile
-			WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+			OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html
+			COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/misc/Doxyfile
+			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
 			)
 		ADD_CUSTOM_TARGET(dox DEPENDS ${CMAKE_BINARY_DIR}/misc/doxygen_output/html/index.html)
 	ENDIF(BRLCAD-BUILD_DOXYGEN_DOCS)
@@ -68,5 +67,6 @@ SET(misc_ignore_files
 	macosx
 	nsis
 	win32-msvc
+	Makefile.am
 	)
 CMAKEFILES(${misc_ignore_files})

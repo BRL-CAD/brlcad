@@ -45,8 +45,8 @@ libbn_la_LIBADD = \
 
 bntester_SOURCES = bntester.c
 bntester_LDADD = \
-        libbn.la \
-        ${BN_LIBS}
+	libbn.la \
+	${BN_LIBS}
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
@@ -63,10 +63,9 @@ DEPENDS = src/libbu
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
-        $(libbn_nil_la_OBJECTS) \
-        $(libbn_la_OBJECTS) \
-        $(lib_LTLIBRARIES) \
-        $(noinst_LTLIBRARIES) \
-        $(bntester_OBJECTS) \
-        $(noinst_PROGRAMS)
-
+	$(libbn_nil_la_OBJECTS) \
+	$(libbn_la_OBJECTS) \
+	$(lib_LTLIBRARIES) \
+	$(noinst_LTLIBRARIES) \
+	$(bntester_OBJECTS) \
+	$(noinst_PROGRAMS)

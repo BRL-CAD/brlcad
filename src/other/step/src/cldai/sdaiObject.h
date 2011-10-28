@@ -24,12 +24,6 @@ class SCLP23_NAME(sdaiObject)
     virtual IDL_Application_instance_ptr create_TIE();
 #endif
 
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-    virtual void Access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range);
-#endif
 };
 
 typedef SCLP23_NAME(sdaiObject)* SCLP23_NAME(sdaiObject_ptr);

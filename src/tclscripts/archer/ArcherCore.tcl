@@ -61,17 +61,29 @@ namespace eval ArcherCore {
 	common VIEW_SCALE_MODE 2
 	common VIEW_CENTER_MODE 3
 	common COMP_PICK_MODE 4
-	common COMP_ERASE_MODE 5
-	common COMP_SELECT_MODE 6
-	common MEASURE_MODE 7
-	common OBJECT_ROTATE_MODE 8
-	common OBJECT_TRANSLATE_MODE 9
-	common OBJECT_SCALE_MODE 10
-	common OBJECT_CENTER_MODE 11
-	common FIRST_FREE_BINDING_MODE 12
+	common COMP_SELECT_MODE 5
+	common MEASURE_MODE 6
+	common OBJECT_ROTATE_MODE 7
+	common OBJECT_TRANSLATE_MODE 8
+	common OBJECT_SCALE_MODE 9
+	common OBJECT_CENTER_MODE 10
+	common FIRST_FREE_BINDING_MODE 11
 
 	common OBJ_EDIT_VIEW_MODE 0
 	common OBJ_ATTR_VIEW_MODE 1
+	common OBJ_TOOL_VIEW_MODE 2
+
+	common COMP_PICK_TREE_SELECT_MODE 0
+	common COMP_PICK_NAME_MODE 1
+	common COMP_PICK_ERASE_MODE 2
+	common COMP_PICK_BOT_SPLIT_MODE 3
+	common COMP_PICK_BOT_SYNC_MODE 4
+	common COMP_PICK_BOT_FLIP_MODE 5
+
+	common LIGHT_MODE_FRONT 1
+	common LIGHT_MODE_FRONT_AND_BACK 2
+	common LIGHT_MODE_FRONT_AND_BACK_DARK 3
+	common LIGHT_MODE_FRONT_AND_BACK_LIGHT 4
 
 	common SystemWindowFont
 	common SystemWindowText
@@ -102,8 +114,7 @@ namespace eval ArcherCore {
 	method rebuildTree {}
 	method rsyncTree {_pnode}
 	method syncTree {}
-	method mouseRay {_dm _x _y}
-	method shootRay {_start _op _target _prep _no_bool _onehit}
+	method shootRay {_start _op _target _prep _no_bool _onehit _bot_dflag}
 	method addMouseRayCallback {_callback}
 	method deleteMouseRayCallback {_callback}
 	method setDefaultBindingMode {_mode}
@@ -130,6 +141,7 @@ namespace eval ArcherCore {
 	# More to be added later...
 	method 3ptarb              {args}
 	method adjust              {args}
+	method edit                {args}
 	method arced               {args}
 	method attr                {args}
 	method bb                  {args}
@@ -226,7 +238,9 @@ namespace eval ArcherCore {
 	method rfarb               {args}
 	method rm                  {args}
 	method rmater              {args}
+	method rotate              {args}
 	method rotate_arb_face     {args}
+	method scale		   {args}
 	method search		   {args}
 	method sed		   {_prim}
 	method shader              {args}
@@ -281,7 +295,9 @@ namespace eval ArcherCore {
 	variable mTargetCopy ""
 	variable mTargetOldCopy ""
 	variable mDisplayType
-	variable mLighting 2
+	variable mLightingMode 1
+	variable mLightingModePref ""
+	variable mLighting 1
 	variable mRenderMode -1
 	variable mActivePane
 	variable mActivePaneName
@@ -342,13 +358,21 @@ namespace eval ArcherCore {
 	variable mSeparateCommandWindowPref ""
 	variable mSepCmdPrefix "sepcmd_"
 
-	variable mZClipMode 0
-	variable mZClipModePref ""
+	variable mCompPickMode $COMP_PICK_TREE_SELECT_MODE
+
+	variable mZClipBack 100.0
+	variable mZClipBackPref 100.0
+	variable mZClipFront 100.0
+	variable mZClipFrontPref 100.0
+	variable mZClipBackMax 1000
+	variable mZClipBackMaxPref 1000
+	variable mZClipFrontMax 1000
+	variable mZClipFrontMaxPref 1000
 
 	variable mBindingMode Default
 	variable mBindingModePref ""
 	variable mBackground "0 0 0"
-	variable mBackgroundColor Black
+	variable mBackgroundColor Navy
 	variable mBackgroundColorPref ""
 	variable mFBBackgroundColor Black
 	variable mFBBackgroundColorPref ""
@@ -441,18 +465,20 @@ namespace eval ArcherCore {
 	# a few commands that are implemented here in ArcherCore.
 	variable mArcherCoreCommands { \
 	    3ptarb adjust arced attr bb bev blast bo bot bot_condense \
-	    bot_decimate bot_face_fuse bot_face_sort bot_flip bot_merge \
-	    bot_smooth bot_split bot_sync bot_vertex_fuse c cd clear clone \
-	    closedb color comb comb_color combmem copy copyeval copymat cp \
-	    cpi dbconcat dbExpand decompose delete draw E edcodes edcolor \
-	    edcomb edmater erase ev exit facetize fracture g group \
-	    hide human i importFg4Section in inside item kill killall \
-	    killrefs killtree ls make make_bb make_pnts man mater mirror move \
-	    move_arb_edge move_arb_face mv mvall nmg_collapse nmg_simplify \
-	    ocenter opendb orotate oscale otranslate p q quit packTree prefix \
-	    protate pscale ptranslate push put put_comb putmat pwd r rcodes \
-	    red rfarb rm rmater rotate_arb_face search sed shader shells tire \
-	    title track translate unhide units unpackTree vmake wmater xpush \
+	    bot_decimate bot_face_fuse bot_face_sort bot_flip \
+	    bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
+	    c cd clear clone closedb color comb comb_color combmem \
+	    copy copyeval copymat cp cpi dbconcat dbExpand decompose \
+	    delete draw E edcodes edcolor edcomb edit edmater erase ev \
+	    exit facetize fracture g group hide human i \
+	    importFg4Section in inside item kill killall killrefs \
+	    killtree ls make make_bb make_pnts man mater mirror move \
+	    move_arb_edge move_arb_face mv mvall nmg_collapse \
+	    nmg_simplify ocenter opendb orotate oscale otranslate p q \
+	    quit packTree prefix protate pscale ptranslate push put \
+	    put_comb putmat pwd r rcodes red rfarb rm rmater rotate \
+	    rotate_arb_face scale search sed shader shells tire title \
+	    track translate unhide units unpackTree vmake wmater xpush \
 	    Z zap
 	}
 
@@ -490,6 +516,7 @@ namespace eval ArcherCore {
 	method buildCanvasMenubar {}
 
 	method redrawObj {_obj {_wflag 1}}
+	method redrawWho {}
 
 	method colorMenuStatusCB {_w}
 	method menuStatusCB {_w}
@@ -511,6 +538,13 @@ namespace eval ArcherCore {
 	method launchRtApp {_app _size}
 
 	method updateDisplaySettings {}
+	method updateZClipPlanes {_unused}
+	method calculateZClipMax {}
+	method calculateZClipBackMax {}
+	method calculateZClipFrontMax {}
+	method pushZClipSettings {}
+
+	method shootRay_doit {_start _op _target _prep _no_bool _onehit _bot_dflag _objects}
 
 	variable mImgDir ""
 	variable mCenterX ""
@@ -691,6 +725,8 @@ namespace eval ArcherCore {
 	method primaryToolbarAdd        {_type _name {args ""}}
 	method primaryToolbarRemove     {_index}
 
+	method bot_split2 {_bot}
+
 	# tree commands
 	method updateTreeDrawLists        {{_cflag 0}}
 	method fillTree          {_pnode _ctext _flat {_allow_multiple 0}}
@@ -766,15 +802,11 @@ namespace eval ArcherCore {
 	method endViewTranslate {_pane}
 
 	method initViewCenterMode {}
-
-	method initCompErase {}
 	method initCompPick {}
-
 	method initCompSelect {}
 	method compSelectCallback {_mstring}
 
 	method mrayCallback_cvo {_pane _start _target _partitions}
-	method mrayCallback_erase {_pane _start _target _partitions}
 	method mrayCallback_pick {_pane _start _target _partitions}
 
 	method initViewMeasure {}
@@ -1387,26 +1419,22 @@ namespace eval ArcherCore {
 	return
     }
 
-    set dlist [gedCmd who]
-    foreach pelement [split $obj /] {
-	set new_dlist {}
-	set dlen [llength $dlist]
-	foreach ditem $dlist {
-	    if {[lsearch [split $ditem /] $pelement] != -1} {
-		set renderData [gedCmd how -b $ditem]
-		set renderMode [lindex $renderData 0]
-		set renderTrans [lindex $renderData 1]
-		render $ditem $renderMode $renderTrans 0 $wflag
-	    } else {
-		lappend new_dlist $ditem
-	    }
-	}
+    set rdata [gedCmd how -b $obj]
+    if {$rdata == -1} {
+	return
+    }
 
-	if {$new_dlist == {}} {
-	    break
-	}
+    set rmode [lindex $rdata 0]
+    set rtrans [lindex $rdata 1]
+    gedCmd draw -m$rmode -x$rtrans $obj
+}
 
-	set dlist $new_dlist
+::itcl::body ArcherCore::redrawWho {} {
+    foreach obj [gedCmd who] {
+	set rdata [gedCmd how -b $obj]
+	set rmode [lindex $rdata 0]
+	set rtrans [lindex $rdata 1]
+	gedCmd draw -m$rmode -x$rtrans $obj
     }
 }
 
@@ -1450,9 +1478,6 @@ namespace eval ArcherCore {
 	$itk_component(primaryToolbar) itemconfigure cpick \
 	    -image [image create photo \
 			-file [file join $dir component_pick.png]]
-	$itk_component(primaryToolbar) itemconfigure cerase \
-	    -image [image create photo \
-			-file [file join $dir component_erase.png]]
 	$itk_component(primaryToolbar) itemconfigure cselect \
 	    -image [image create photo \
 			-file [file join $dir component_select.png]]
@@ -1968,6 +1993,34 @@ namespace eval ArcherCore {
     eval $itk_component(primaryToolbar) delete $index
 }
 
+##
+# This method operates on one bot. It splits the bot if
+# necessary and puts the pieces in a new group.
+#
+::itcl::body ArcherCore::bot_split2 {_bot} {
+    set new_bots [gedCmd bot_split $_bot]
+
+    set blist [lindex $new_bots 0]
+    set bname [lindex $blist 0]
+    set bots [lindex $blist 1]
+    if {[llength $bots] == 0} {
+	return ""
+    }
+
+    set backup "$bname.bak"
+    if {[gedCmd exists $backup]} {
+	gedCmd make_name -s 0
+	set backup [gedCmd make_name $backup]
+    }
+
+    gedCmd mv $bname $backup
+    eval gedCmd g $bname $bots
+    gedCmd erase $bname
+
+    return [list $bname $backup]
+}
+
+
 # ------------------------------------------------------------
 #                    WINDOW COMMANDS
 # ------------------------------------------------------------
@@ -2224,7 +2277,7 @@ namespace eval ArcherCore {
 	    set ctext [lindex $clist 0]
 
 	    # Checking for the existence of ctext
-	    if {[catch {$itk_component(ged) attr show $ctext} adata]} {
+	    if {![$itk_component(ged) exists $ctext]} {
 		# ctext doesn't exist
 		set cnode [lindex $clist 1]
 		purgeNodeData $cnode
@@ -2258,39 +2311,11 @@ namespace eval ArcherCore {
     updateTreeDrawLists
 }
 
-::itcl::body ArcherCore::mouseRay {_dm _x _y} {
-    set target [$_dm screen2model $_x $_y]
-    set view [$_dm screen2view $_x $_y]
-
-    set bounds [$_dm bounds]
-    set vZ [expr {[lindex $bounds 4] / -2048.0}]
-    set start [$_dm v2mPoint [lindex $view 0] [lindex $view 1] $vZ]
-
-    set partitions [shootRay $start "at" $target 1 1 0]
-    set partition [lindex $partitions 0]
-
-    if {[llength $mMouseRayCallbacks] == 0} {
-	if {$partition == {}} {
-	    tk_messageBox -message "Nothing hit"
-	} else {
-	    set region [bu_get_value_by_keyword "region" $partition]
-	    tk_messageBox -message [gedCmd l $region]
-	}
-    } else {
-	foreach callback $mMouseRayCallbacks {
-	    catch {$callback $start $target $partitions}
-	}
-    }
+::itcl::body ArcherCore::shootRay {_start _op _target _prep _no_bool _onehit _bot_dflag} {
+    objects [gedCmd who]
+    shootRay_doit $_start $_op $_target $_prep $_no_bool $_onehit $_bot_dflag $objects
 }
 
-::itcl::body ArcherCore::shootRay {_start _op _target _prep _no_bool _onehit} {
-    eval $itk_component(ged) rt_gettrees ray -i -u [gedCmd who]
-    ray prep $_prep
-    ray no_bool $_no_bool
-    ray onehit $_onehit
-
-    return [ray shootray $_start $_op $_target]
-}
 
 ::itcl::body ArcherCore::addMouseRayCallback {_callback} {
     lappend mMouseRayCallbacks $_callback
@@ -2322,10 +2347,6 @@ namespace eval ArcherCore {
 	} \
 	$VIEW_CENTER_MODE { \
 		initViewCenterMode \
-		set ret 1
-	} \
-	$COMP_ERASE_MODE { \
-		initCompErase \
 		set ret 1
 	} \
 	$COMP_PICK_MODE { \
@@ -2498,13 +2519,6 @@ namespace eval ArcherCore {
 	-value $COMP_PICK_MODE \
 	-command [::itcl::code $this initCompPick] \
 	-state disabled
-    $itk_component(primaryToolbar) add radiobutton cerase \
-	-balloonstr "Component Erase" \
-	-helpstr "Component Erase" \
-	-variable [::itcl::scope mDefaultBindingMode] \
-	-value $COMP_ERASE_MODE \
-	-command [::itcl::code $this initCompErase] \
-	-state disabled
     $itk_component(primaryToolbar) add radiobutton cselect \
 	-balloonstr "Component Select Mode" \
 	-helpstr "Component Select Mode" \
@@ -2525,7 +2539,6 @@ namespace eval ArcherCore {
     $itk_component(primaryToolbar) itemconfigure scale -state disabled
     $itk_component(primaryToolbar) itemconfigure center -state disabled
     $itk_component(primaryToolbar) itemconfigure cpick -state disabled
-    $itk_component(primaryToolbar) itemconfigure cerase -state disabled
     $itk_component(primaryToolbar) itemconfigure cselect -state disabled
     $itk_component(primaryToolbar) itemconfigure measure -state disabled
 
@@ -2549,6 +2562,8 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::beginViewRotate {} {
     $itk_component(ged) init_view_rotate 1
     $itk_component(ged) init_button_no_op 2
+
+    $itk_component(ged) rect lwidth 0
 }
 
 ::itcl::body ArcherCore::endViewRotate {_pane} {
@@ -2561,6 +2576,8 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::beginViewScale {} {
     $itk_component(ged) init_view_scale 1
     $itk_component(ged) init_button_no_op 2
+
+    $itk_component(ged) rect lwidth 0
 }
 
 ::itcl::body ArcherCore::endViewScale {_pane} {
@@ -2573,6 +2590,8 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::beginViewTranslate {} {
     $itk_component(ged) init_view_translate 1
     $itk_component(ged) init_button_no_op 2
+
+    $itk_component(ged) rect lwidth 0
 }
 
 ::itcl::body ArcherCore::endViewTranslate {_pane} {
@@ -2589,20 +2608,19 @@ namespace eval ArcherCore {
     $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_cvo]
     $itk_component(ged) init_comp_pick 2
-}
 
-::itcl::body ArcherCore::initCompErase {} {
-    $itk_component(ged) clear_mouse_ray_callback_list
-    $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_erase]
-    $itk_component(ged) init_comp_pick 1
-    $itk_component(ged) init_button_no_op 2
+    $itk_component(ged) rect lwidth 0
 }
 
 ::itcl::body ArcherCore::initCompPick {} {
+    set mDefaultBindingMode $COMP_PICK_MODE
+
     $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_pick]
     $itk_component(ged) init_comp_pick 1
     $itk_component(ged) init_button_no_op 2
+
+    $itk_component(ged) rect lwidth 0
 }
 
 ::itcl::body ArcherCore::initCompSelect {} {
@@ -2610,6 +2628,9 @@ namespace eval ArcherCore {
     $itk_component(ged) add_view_rect_callback [::itcl::code $this compSelectCallback]
     $itk_component(ged) init_view_rect 1
     $itk_component(ged) init_button_no_op 2
+
+    # The rect lwidth should be a preference
+    $itk_component(ged) rect lwidth 1
 }
 
 ::itcl::body ArcherCore::compSelectCallback {_mstring} {
@@ -2641,34 +2662,6 @@ namespace eval ArcherCore {
     $itk_component(ged) pane_center $_pane $point
 }
 
-::itcl::body ArcherCore::mrayCallback_erase {_pane _start _target _partitions} {
-    if {$_partitions == ""} {
-	return
-    }
-
-    set partition [lindex $_partitions 0]
-
-    if {[catch {bu_get_value_by_keyword in $partition} in]} {
-	putString "Partition does not contain an \"in\""
-	putString "$in"
-	return
-    }
-
-    if {[catch {bu_get_value_by_keyword path $in} path]} {
-	putString "Partition does not contain an \"in\" path"
-	putString "[subst $[subst pt_$i]]"
-	return
-    }
-
-    gedCmd erase $path
-    if {!$mEnableListView} {
-	getTreeNode $path 1
-    }
-    updateTreeDrawLists
-    putString "erase $path"
-    set mStatusStr "erase $path"
-}
-
 ::itcl::body ArcherCore::mrayCallback_pick {_pane _start _target _partitions} {
     set partition [lindex $_partitions 0]
     if {$partition == {}} {
@@ -2678,7 +2671,44 @@ namespace eval ArcherCore {
 	set in [bu_get_value_by_keyword "in" $partition]
 	set path [bu_get_value_by_keyword "path" $in]
 	set path [regsub {^/} $path {}]
-	selectTreePath $path
+	set pathlist [split $path /]
+	set last [lindex $pathlist end]
+	switch -- $mCompPickMode \
+	    $COMP_PICK_TREE_SELECT_MODE { \
+		selectTreePath $path
+	    } \
+	    $COMP_PICK_NAME_MODE { \
+		putString "Hit $path, last - $last"
+	    } \
+	    $COMP_PICK_ERASE_MODE { \
+		gedCmd erase $path
+		updateTreeDrawLists
+		putString "erase $path"
+		set mStatusStr "erase $path"
+	    } \
+	    $COMP_PICK_BOT_FLIP_MODE { \
+		catch {bot_flip $path}
+		redrawObj $path
+	    } \
+	    $COMP_PICK_BOT_SPLIT_MODE { \
+		set how [gedCmd how $path]
+		if {![catch {bot_split2 $last} bgroup]} {
+		    set dirname [file dirname $path]
+		    if {$dirname != "."} {
+			set drawitem $dirname
+		    } else {
+			set drawitem $bgroup
+		    }
+		    gedCmd draw -m$how $drawitem
+
+		    syncTree
+		    setSave
+		}
+	    } \
+	    $COMP_PICK_BOT_SYNC_MODE { \
+		catch {bot_sync $path}
+		redrawObj $path
+	    }
     }
 }
 
@@ -2687,6 +2717,8 @@ namespace eval ArcherCore {
     $itk_component(ged) add_view_measure_callback [::itcl::code $this endViewMeasure]
     $itk_component(ged) init_view_measure
     $itk_component(ged) init_button_no_op 2
+
+    $itk_component(ged) rect lwidth 0
 }
 
 ::itcl::body ArcherCore::endViewMeasure {_mstring} {
@@ -2701,7 +2733,6 @@ namespace eval ArcherCore {
 	$itk_component(primaryToolbar) itemconfigure scale -state normal
 	$itk_component(primaryToolbar) itemconfigure center -state normal
 	$itk_component(primaryToolbar) itemconfigure cpick -state normal
-	$itk_component(primaryToolbar) itemconfigure cerase -state normal
 	$itk_component(primaryToolbar) itemconfigure cselect -state normal
 	$itk_component(primaryToolbar) itemconfigure measure -state normal
     }
@@ -2720,7 +2751,6 @@ namespace eval ArcherCore {
 	$itk_component(primaryToolbar) itemconfigure scale -state disabled
 	$itk_component(primaryToolbar) itemconfigure center -state disabled
 	$itk_component(primaryToolbar) itemconfigure cpick -state disabled
-	$itk_component(primaryToolbar) itemconfigure cerase -state disabled
 	$itk_component(primaryToolbar) itemconfigure cselect -state disabled
 	$itk_component(primaryToolbar) itemconfigure measure -state disabled
     }
@@ -2781,11 +2811,7 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::backgroundColor {_color} {
     set mCurrentPaneName ""
     set mBackgroundColor $_color
-
-    if {[catch {getRgbColor $mBackgroundColor} mBackground]} {
-	set mBackgroundColor black
-	set mBackground {0 0 0}
-    }
+    set mBackground [::cadwidgets::Ged::get_rgb_color $mBackgroundColor]
 
     if {[info exists itk_component(ged)]} {
 	eval $itk_component(ged) bg_all $mBackground
@@ -3254,12 +3280,16 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::doLighting {} {
     SetWaitCursor $this
 
-    if {$mZClipMode != $ZCLIP_NONE} {
-	gedCmd zclip_all $mLighting
-    }
+    # Leave this off for now.
+    gedCmd zclip_all 0
 
     gedCmd zbuffer_all $mLighting
-    gedCmd light_all $mLighting
+
+    if {$mLighting} {
+	gedCmd light_all $mLightingMode
+    } else {
+	gedCmd light_all $mLighting
+    }
 
     SetNormalCursor $this
 }
@@ -3510,8 +3540,8 @@ namespace eval ArcherCore {
 
     set mRenderMode [gedCmd how $_node]
     # do this in case "ev" was used from the command line
-    if {2 < $mRenderMode} {
-	set mRenderMode 2
+    if {!$mEnableBigE && 2 < $mRenderMode} {
+	set mRenderMode 0
     }
 
     if {$_nodeType == "leaf"} {
@@ -3977,7 +4007,6 @@ namespace eval ArcherCore {
 	if {$mEnableListViewAllAffected} {
 	    foreach path [string trim [gedCmd search / -name $mSelectedObj]] {
 		set path [regsub {^/} $path {}]
-		puts $path
 		foreach obj [split $path /] {
 		    if {$obj == $mSelectedObj} {
 			continue
@@ -3999,11 +4028,12 @@ namespace eval ArcherCore {
 	foreach path [string trim [gedCmd search / -name $mSelectedObj]] {
 	    set path [regsub {^/} $path {}]
 	    set pathNodes [getTreeNodes $path]
-	    set pnodes [lreverse [lindex $pathNodes 0]]
+#	    set pnodes [lreverse [lindex $pathNodes 0]]
+	    set pnodes [lindex $pathNodes 0]
 	    set cnodes [lindex $pathNodes 1]
 	    set found 0
 	    foreach pnode $pnodes {
-		if {![$itk_component(newtree) item $pnode -open]} {
+		if {[$itk_component(newtree) item $pnode -open]} {
 		    lappend mAffectedNodeList $pnode
 		    set found 1
 		    addTreeNodeTag $pnode $TREE_AFFECTED_TAG
@@ -4063,6 +4093,7 @@ namespace eval ArcherCore {
 	set mSelectedObj $obj
 	set mSelectObjPath $obj
 	$itk_component(newtree) selection set [lindex [lindex $mText2Node($obj) 0] 0]
+	$itk_component(newtree) see [lindex [lindex $mText2Node($obj) 0] 0]
     } else {
 	getTreeNode $_path 1
 	set snode [$itk_component(newtree) focus]
@@ -4074,6 +4105,7 @@ namespace eval ArcherCore {
 	} else {
 	    set mSelectedObj $obj
 	    $itk_component(newtree) selection set $snode
+	    $itk_component(newtree) see $snode
 	    foreach pnode [lreverse [findTreeParentNodes $snode]] {
 		append mSelectedObjPath $mNode2Text($pnode) "/"
 	    }
@@ -4376,6 +4408,51 @@ namespace eval ArcherCore {
     }
 
     return 0
+}
+
+::itcl::body ArcherCore::getTkColor {r g b} {
+    return [format \#%.2x%.2x%.2x $r $g $b]
+}
+
+::itcl::body ArcherCore::getRgbColor {tkColor} {
+    set rgb [winfo rgb $itk_interior $tkColor]
+    return [list \
+		[expr {[lindex $rgb 0] / 256}] \
+		[expr {[lindex $rgb 1] / 256}] \
+		[expr {[lindex $rgb 2] / 256}]]
+}
+
+::itcl::body ArcherCore::setSave {} {
+    if {$mDbNoCopy || $mDbReadOnly} {
+	return
+    }
+
+    set mNeedSave 1
+    updateSaveMode
+}
+
+::itcl::body ArcherCore::getLastSelectedDir {} {
+    return $mLastSelectedDir
+}
+
+::itcl::body ArcherCore::refreshDisplay {} {
+    if {$mCurrentPaneName == ""} {
+	set pane $mActivePaneName
+    } else {
+	set pane $mCurrentPaneName
+    }
+    set mCurrentPaneName ""
+
+#    $itk_component(ged) pane_refresh $pane
+    $itk_component(ged) refresh_all
+}
+
+::itcl::body ArcherCore::putString {_str} {
+    $itk_component(cmd) putstring $_str
+}
+
+::itcl::body ArcherCore::setStatusString {_str} {
+    set mStatusStr $_str
 }
 
 ::itcl::body ArcherCore::colorMenuStatusCB {_w} {
@@ -4789,50 +4866,57 @@ namespace eval ArcherCore {
     }
 }
 
-::itcl::body ArcherCore::refreshDisplay {} {
-    if {$mCurrentPaneName == ""} {
-	set pane $mActivePaneName
-    } else {
-	set pane $mCurrentPaneName
-    }
-    set mCurrentPaneName ""
+::itcl::body ArcherCore::updateDisplaySettings {} {
+    updateZClipPlanes 0
+}
 
-#    $itk_component(ged) pane_refresh $pane
+::itcl::body ArcherCore::updateZClipPlanes {_unused} {
+    set near [expr {0.01 * $mZClipFrontPref * $mZClipFrontMaxPref}]
+    set far [expr {0.01 * $mZClipBackPref * $mZClipBackMaxPref}]
+    $itk_component(ged) bounds_all "-1.0 1.0 -1.0 1.0 -$near $far"
     $itk_component(ged) refresh_all
 }
 
-::itcl::body ArcherCore::putString {_str} {
-    $itk_component(cmd) putstring $_str
+::itcl::body ArcherCore::calculateZClipMax {} {
+    set size [$itk_component(ged) size]
+    set autoview_l [$itk_component(ged) get_autoview]
+    set asize [lindex $autoview_l end]
+
+    set max [expr {($asize / $size) * 0.5}]
+    set maxSq [expr {$max * $max}]
+
+    # return the length of the diagonal
+    return [expr {sqrt($maxSq + $maxSq)}]
 }
 
-::itcl::body ArcherCore::setStatusString {_str} {
-    set mStatusStr $_str
+::itcl::body ArcherCore::calculateZClipBackMax {} {
+    set mZClipBackMaxPref [calculateZClipMax]
+    updateZClipPlanes 0
 }
 
-::itcl::body ArcherCore::getTkColor {r g b} {
-    return [format \#%.2x%.2x%.2x $r $g $b]
+::itcl::body ArcherCore::calculateZClipFrontMax {} {
+    set mZClipFrontMaxPref [calculateZClipMax]
+    updateZClipPlanes 0
 }
 
-::itcl::body ArcherCore::getRgbColor {tkColor} {
-    set rgb [winfo rgb $itk_interior $tkColor]
-    return [list \
-		[expr {[lindex $rgb 0] / 256}] \
-		[expr {[lindex $rgb 1] / 256}] \
-		[expr {[lindex $rgb 2] / 256}]]
+::itcl::body ArcherCore::pushZClipSettings {} {
+    set mZClipMaxBackPref $mZClipBackMax
+    set mZClipMaxFrontPref $mZClipFrontMax
+    set mZClipBackPref $mZClipBack
+    set mZClipFrontPref $mZClipFront
+    updateDisplaySettings
 }
 
-::itcl::body ArcherCore::setSave {} {
-    if {$mDbNoCopy || $mDbReadOnly} {
-	return
-    }
+::itcl::body ArcherCore::shootRay_doit {_start _op _target _prep _no_bool _onehit _bot_dflag _objects} {
+    eval $itk_component(ged) rt_gettrees ray -i -u $_objects
+    ray prep $_prep
+    ray set no_bool $_no_bool
+    ray set onehit $_onehit
+    ray set bot_reverse_normal_disabled $_bot_dflag
 
-    set mNeedSave 1
-    updateSaveMode
+    return [ray shootray $_start $_op $_target]
 }
 
-::itcl::body ArcherCore::getLastSelectedDir {} {
-    return $mLastSelectedDir
-}
 
 ##################################### ArcherCore Commands #####################################
 ::itcl::body ArcherCore::3ptarb {args} {
@@ -4852,7 +4936,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::bb {args} {
-    eval gedWrapper bb 0 0 1 1 $args
+    eval gedWrapper bb 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::bev {args} {
@@ -4912,7 +4996,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::c {args} {
-    eval gedWrapper c 0 1 1 1 $args
+    eval gedWrapper c 0 1 1 2 $args
 }
 
 ::itcl::body ArcherCore::cd {args} {
@@ -4924,7 +5008,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::clone {args} {
-    eval gedWrapper clone 0 0 1 1 $args
+    eval gedWrapper clone 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::closedb {args} {
@@ -4940,7 +5024,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::comb {args} {
-    eval gedWrapper comb 0 1 1 1 $args
+    eval gedWrapper comb 0 1 1 2 $args
 }
 
 ::itcl::body ArcherCore::comb_color {args} {
@@ -4952,11 +5036,11 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::copy {args} {
-    eval gedWrapper cp 0 0 1 1 $args
+    eval gedWrapper cp 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::copyeval {args} {
-    eval gedWrapper copyeval 0 0 1 1 $args
+    eval gedWrapper copyeval 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::copymat {args} {
@@ -4964,15 +5048,15 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::cp {args} {
-    eval gedWrapper cp 0 0 1 1 $args
+    eval gedWrapper cp 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::cpi {args} {
-    eval gedWrapper cpi 0 0 1 1 $args
+    eval gedWrapper cpi 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::dbconcat {args} {
-    eval gedWrapper dbconcat 0 0 1 1 $args
+    eval gedWrapper dbconcat 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::dbExpand {args} {
@@ -5054,7 +5138,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::delete {args} {
-    eval gedWrapper kill 1 0 1 1 $args
+    eval gedWrapper kill 1 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::draw {args} {
@@ -5114,7 +5198,17 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::edcomb {args} {
-    eval gedWrapper edcomb 0 0 1 1 $args
+    eval gedWrapper edcomb 0 0 1 2 $args
+}
+
+::itcl::body ArcherCore::edit {args} {
+    eval gedWrapper edit 0 0 1 0 $args
+
+    #FIXME: not right at all; we need to redraw all edited objects
+    #set len [llength $args]
+    #if {$len > 2} {
+	#redrawObj [lindex $args end] 0
+    #}
 }
 
 ::itcl::body ArcherCore::edmater {args} {
@@ -5160,11 +5254,11 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::facetize {args} {
-    eval gedWrapper facetize 0 0 1 1 $args
+    eval gedWrapper facetize 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::fracture {args} {
-    eval gedWrapper fracture 0 1 1 1 $args
+    eval gedWrapper fracture 0 1 1 2 $args
 }
 
 ::itcl::body ArcherCore::g {args} {
@@ -5172,15 +5266,15 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::group {args} {
-    eval gedWrapper g 0 1 1 1 $args
+    eval gedWrapper g 0 1 1 2 $args
 }
 
 ::itcl::body ArcherCore::hide {args} {
-    eval gedWrapper hide 0 0 1 1 $args
+    eval gedWrapper hide 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::human {args} {
-    eval gedWrapper human 0 0 1 1 $args
+    eval gedWrapper human 0 0 1 2 $args
 }
 
 
@@ -5193,11 +5287,11 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::in {args} {
-    eval gedWrapper in 0 0 1 1 $args
+    eval gedWrapper in 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::inside {args} {
-    eval gedWrapper inside 0 0 1 1 $args
+    eval gedWrapper inside 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::item {args} {
@@ -5205,19 +5299,19 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::kill {args} {
-    eval gedWrapper kill 1 0 1 1 $args
+    eval gedWrapper kill 1 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::killall {args} {
-    eval gedWrapper killall 1 0 1 1 $args
+    eval gedWrapper killall 1 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::killrefs {args} {
-    eval gedWrapper killrefs 1 0 1 1 $args
+    eval gedWrapper killrefs 1 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::killtree {args} {
-    eval gedWrapper killtree 1 0 1 1 $args
+    eval gedWrapper killtree 1 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::ls {args} {
@@ -5225,7 +5319,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::make {args} {
-    eval gedWrapper make 0 0 1 1 $args
+    eval gedWrapper make 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::make_bb {args} {
@@ -5258,7 +5352,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::mirror {args} {
-    eval gedWrapper mirror 0 0 1 1 $args
+    eval gedWrapper mirror 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::move {args} {
@@ -5274,19 +5368,19 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::mv {args} {
-    eval gedWrapper mv 0 0 1 1 $args
+    eval gedWrapper mv 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::mvall {args} {
-    eval gedWrapper mvall 0 0 1 1 $args
+    eval gedWrapper mvall 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::nmg_collapse {args} {
-    eval gedWrapper nmg_collapse 0 0 1 1 $args
+    eval gedWrapper nmg_collapse 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::nmg_simplify {args} {
-    eval gedWrapper nmg_simplify 0 0 1 1 $args
+    eval gedWrapper nmg_simplify 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::ocenter {args} {
@@ -5424,7 +5518,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::put {args} {
-    eval gedWrapper put 0 0 1 1 $args
+    eval gedWrapper put 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::put_comb {args} {
@@ -5448,7 +5542,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::r {args} {
-    eval gedWrapper r 0 1 1 1 $args
+    eval gedWrapper r 0 1 1 2 $args
 }
 
 ::itcl::body ArcherCore::rcodes {args} {
@@ -5456,7 +5550,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::red {args} {
-    eval gedWrapper red 0 0 1 1 $args
+    eval gedWrapper red 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::rfarb {args} {
@@ -5464,15 +5558,25 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::rm {args} {
-    eval gedWrapper rm 0 0 1 1 $args
+    eval gedWrapper rm 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::rmater {args} {
     eval gedWrapper rmater 0 0 1 1 $args
 }
 
+::itcl::body ArcherCore::rotate {args} {
+    set args [linsert $args 0 "rotate"]
+    eval gedWrapper edit 0 0 1 0 $args
+}
+
 ::itcl::body ArcherCore::rotate_arb_face {args} {
     eval gedWrapper rotate_arb_face 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::scale {args} {
+    set args [linsert $args 0 "scale"]
+    eval gedWrapper edit 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::search {args} {
@@ -5503,7 +5607,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::tire {args} {
-    eval gedWrapper tire 0 0 1 1 $args
+    eval gedWrapper tire 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::title {args} {
@@ -5519,17 +5623,12 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::translate {args} {
-    set result [eval gedWrapper translate 0 0 1 0 $args]
-
-    if {[llength $args] > 1} {
-	redrawObj [lindex $args end] 0
-    }
-
-    return $result
+    set args [linsert $args 0 "translate"]
+    eval gedWrapper edit 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::unhide {args} {
-    eval gedWrapper unhide 0 0 1 1 $args
+    eval gedWrapper unhide 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::units {args} {
@@ -5580,7 +5679,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::vmake {args} {
-    eval gedWrapper vmake 0 0 1 1 $args
+    eval gedWrapper vmake 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::wmater {args} {
@@ -5597,25 +5696,6 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::zap {args} {
     eval gedWrapper clear 0 0 0 1 $args
-}
-
-::itcl::body ArcherCore::updateDisplaySettings {} {
-    switch -- $mZClipMode \
-	$ZCLIP_SMALL_CUBE { \
-				$itk_component(ged) zclip_all 1; \
-				$itk_component(ged) bounds_all {-4096 4095 -4096 4095 -4096 4095}; \
-			    } \
-	$ZCLIP_MEDIUM_CUBE { \
-				 $itk_component(ged) zclip_all 1; \
-				 $itk_component(ged) bounds_all {-8192 8191 -8192 8191 -8192 8191}; \
-			     } \
-	$ZCLIP_LARGE_CUBE { \
-				$itk_component(ged) zclip_all 1; \
-				$itk_component(ged) bounds_all {-16384 16363 -16384 16363 -16384 16363}; \
-			    } \
-	$ZCLIP_NONE { \
-			  $itk_component(ged) zclip_all 0; \
-		      }
 }
 
 

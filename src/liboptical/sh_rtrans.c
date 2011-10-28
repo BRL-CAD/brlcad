@@ -39,7 +39,7 @@
 
 #define RTRANS_MAGIC 0x4a6f686e
 struct rtrans_specific {
-    long magic;
+    uint32_t magic;
     double threshold;
     int next_rand;
 };

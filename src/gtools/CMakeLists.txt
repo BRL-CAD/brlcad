@@ -1,7 +1,14 @@
-include_directories(
-  ${TCL_INCLUDE_DIRS}
-  ${BRLCAD_SOURCE_DIR}/src/gtools/beset
-)
+SET(GTOOLS_INCLUDE_DIRS
+	${BU_INCLUDE_DIRS}
+	${RT_INCLUDE_DIRS}
+	${WDB_INCLUDE_DIRS}
+	${TCLCAD_INCLUDE_DIRS}
+	${GED_INCLUDE_DIRS}
+	${PKG_INCLUDE_DIRS}
+	${BRLCAD_SOURCE_DIR}/src/gtools/beset
+	)
+LIST(REMOVE_DUPLICATES GTOOLS_INCLUDE_DIRS)
+include_directories(${GTOOLS_INCLUDE_DIRS})
 
 SET(beset_SRCS
   beset/beset.c
@@ -16,7 +23,7 @@ IF(MSVC)
 ENDIF(MSVC)
 
 BRLCAD_ADDEXEC(g_diff g_diff.c "libtclcad libged librt")
-BRLCAD_ADDEXEC(g_lint g_lint.c librt)
+BRLCAD_ADDEXEC(g_lint g_lint.c "librt ${M_LIBRARY}")
 BRLCAD_ADDEXEC(g_qa g_qa.c "libged librt")
 BRLCAD_ADDEXEC(remapid remapid.c "librt libbu")
 
@@ -41,3 +48,4 @@ SET(gtools_ignore_files
 	beset/population.h
 	)
 CMAKEFILES(${gtools_ignore_files})
+CMAKEFILES(Makefile.am beset/Makefile.am)

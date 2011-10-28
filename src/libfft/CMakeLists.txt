@@ -1,3 +1,11 @@
+# Include directories needed by libfft users
+SET(FFT_INCLUDE_DIRS
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	)
+BRLCAD_INCLUDE_DIRS(FFT_INCLUDE_DIRS)
+
+# local directories
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 )
@@ -16,17 +24,17 @@ SET(FFT_GEN_SRCS "")
 
 FOREACH(filenum ${FFT_NUMLIST})
   ADD_CUSTOM_COMMAND(
-    OUTPUT rfft${filenum}.c
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/rfft${filenum}.c
     COMMAND fftc ${filenum} > ${CMAKE_CURRENT_BINARY_DIR}/rfft${filenum}.c
     DEPENDS fftc
   )
-  SET(FFT_GEN_SRCS "${FFT_GEN_SRCS};rfft${filenum}.c")
+  SET(FFT_GEN_SRCS "${FFT_GEN_SRCS};${CMAKE_CURRENT_BINARY_DIR}/rfft${filenum}.c")
   ADD_CUSTOM_COMMAND(
-    OUTPUT irfft${filenum}.c
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/irfft${filenum}.c
     COMMAND ifftc ${filenum} > ${CMAKE_CURRENT_BINARY_DIR}/irfft${filenum}.c
     DEPENDS ifftc
   )
-  SET(FFT_GEN_SRCS "${FFT_GEN_SRCS};irfft${filenum}.c")
+  SET(FFT_GEN_SRCS "${FFT_GEN_SRCS};${CMAKE_CURRENT_BINARY_DIR}/irfft${filenum}.c")
 ENDFOREACH(filenum ${FFT_NUMLIST})
 
 SET(LIBFFT_SRCS
@@ -42,3 +50,4 @@ SET_TARGET_PROPERTIES(libfft PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 add_executable(fftest fftest.c)
 target_link_libraries(fftest libfft ${M_LIBRARY})
+CMAKEFILES(Makefile.am)

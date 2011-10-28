@@ -45,11 +45,16 @@ static char rcsid[] = "$Id: schema.c,v 1.13 1997/01/21 19:19:51 dar Exp $";
  * prettied up interface to print_objects_when_running
  */
 
-#define SCHEMA_C
 #include "express/expbasic.h"
 #include "express/schema.h"
 #include "express/object.h"
 #include "express/resolve.h"
+
+struct freelist_head REN_fl;
+struct freelist_head SCOPE_fl;
+struct freelist_head SCHEMA_fl;
+
+int __SCOPE_search_id = 0;
 
 Symbol *
 RENAME_get_symbol(Generic r)

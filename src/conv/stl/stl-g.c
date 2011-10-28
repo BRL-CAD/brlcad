@@ -432,7 +432,7 @@ Convert_part_binary()
     /* now use our network to native host format conversion tools */
     num_facets = ntohl(*(uint32_t *)buf);
 
-    bu_log("\t%d facets\n", num_facets);
+    bu_log("\t%ld facets\n", num_facets);
     while (fread(buf, 48, 1, fd_in)) {
 	int i;
 	double pt[3];
@@ -584,7 +584,7 @@ main(int argc, char *argv[])
     /* this value selected as a resaonable compromise between eliminating
      * needed faces and keeping degenerate faces
      */
-    tol.dist = 0.005;	/* default, same as MGED, RT, ... */
+    tol.dist = 0.0005;	/* default, same as MGED, RT, ... */
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;

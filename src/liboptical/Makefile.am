@@ -63,8 +63,7 @@ librtms_la_SOURCES = \
 osl_srcs = \
 	liboslrend.cpp \
 	render_svc.cpp \
-	sh_osl.cpp \
-	osl_rt.cpp
+	sh_osl.cpp
 
 noinst_HEADERS = \
 	constantpool.h \

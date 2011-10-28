@@ -90,15 +90,11 @@ nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
 	for (BU_LIST_FOR (fu, faceuse, &s->fu_hd))
 	{
 	    struct loopuse *lu;
-	    vect_t facet_normal;
 
 	    NMG_CK_FACEUSE(fu);
 
 	    if (fu->orientation != OT_SAME)
 		continue;
-
-	    /* Grab the face normal and save it for all the vertex loops */
-	    NMG_GET_FU_NORMAL(facet_normal, fu);
 
 	    for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd))
 	    {
@@ -126,7 +122,7 @@ nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
 		}
 		if (vert_count > 3)
 		{
-		    bu_log("lu x%p has %d vertices!\n", lu, vert_count);
+		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
 		    bu_exit(1, "ERROR: LU is not a triangle");
 		}
 		else if (vert_count < 3)
@@ -206,7 +202,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
 	return -1;
     }
 
-    bu_log("Strange, %d is not %d or %d\n", ID_BOT, ID_NMG);
+    bu_log("Strange, %d is not %d or %d\n", intern.idb_minor_type, ID_BOT, ID_NMG);
     return 0;
 }
 
@@ -268,7 +264,7 @@ load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct a
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-5;
+    tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
     tie_check_degenerate = 0;

@@ -137,7 +137,7 @@ __BEGIN_DECLS
 #	undef INFINITY
 #endif
 
-#if defined(vax) || (defined(sgi) && !defined(mips))
+#if defined(vax)
 #	define INFINITY	(1.0e20)	/* VAX limit is 10**37 */
 #else
 #	define INFINITY	(1.0e40)	/* IBM limit is 10**75 */
@@ -186,7 +186,7 @@ __BEGIN_DECLS
  * calcuation tolerance in bn_tol.
  */
 struct rt_tess_tol {
-    unsigned long	magic;
+    uint32_t magic;
     double		abs;			/**< @brief absolute dist tol */
     double		rel;			/**< @brief rel dist tol */
     double		norm;			/**< @brief normal tol */
@@ -200,7 +200,7 @@ struct rt_tess_tol {
  * A handle on the internal format of an MGED database object.
  */
 struct rt_db_internal {
-    unsigned long	idb_magic;
+    uint32_t		idb_magic;
     int			idb_major_type;
     int			idb_minor_type;		/**< @brief ID_xxx */
     const struct rt_functab *idb_meth;	/**< @brief for ft_ifree(), etc. */
@@ -224,7 +224,7 @@ struct rt_db_internal {
  * For collecting paths through the database tree
  */
 struct db_full_path {
-    unsigned long	magic;
+    uint32_t		magic;
     size_t		fp_len;
     size_t		fp_maxlen;
     struct directory **	fp_names;	/**< @brief array of dir pointers */
@@ -244,7 +244,7 @@ struct db_full_path {
  * Not called just "ray" to prevent conflicts with VLD stuff.
  */
 struct xray {
-    unsigned long	magic;
+    uint32_t		magic;
     int			index;		/**< @brief Which ray of a bundle */
     point_t		r_pt;		/**< @brief Point at which ray starts */
     vect_t		r_dir;		/**< @brief Direction of ray (UNIT Length) */
@@ -282,7 +282,7 @@ struct xrays
  * point.
  */
 struct hit {
-    unsigned long	hit_magic;
+    uint32_t		hit_magic;
     fastf_t		hit_dist;	/**< @brief dist from r_pt to hit_point */
     point_t		hit_point;	/**< @brief DEPRECATED: Intersection point, use VJOIN1 hit_dist */
     vect_t		hit_normal;	/**< @brief DEPRECATED: Surface Normal at hit_point, use RT_HIT_NORMAL */
@@ -608,7 +608,7 @@ struct region {
 
 struct partition {
     /* This can be thought of and operated on as a struct bu_list */
-    unsigned long	pt_magic;	/**< @brief sanity check */
+    uint32_t		pt_magic;	/**< @brief sanity check */
     struct partition *	pt_forw;	/**< @brief forwards link */
     struct partition *	pt_back;	/**< @brief backwards link */
     struct seg *	pt_inseg;	/**< @brief IN seg ptr (gives stp) */
@@ -807,7 +807,7 @@ struct mem_map {
  * allocated.
  */
 struct db_i {
-    unsigned long dbi_magic;		/**< @brief magic number */
+    uint32_t dbi_magic;		/**< @brief magic number */
 
     /* THESE ELEMENTS ARE AVAILABLE FOR APPLICATIONS TO READ */
 
@@ -868,7 +868,7 @@ struct db_i {
  * on the object to modify the on-disk name.
  */
 struct directory {
-    unsigned long d_magic;	/**< @brief Magic number */
+    uint32_t d_magic;	/**< @brief Magic number */
     char * d_namep;		/**< @brief pointer to name string */
     union {
 	off_t file_offset;	/**< @brief disk address in obj file */
@@ -959,7 +959,7 @@ struct directory {
  * to wdb.h or rtgeom.h?
  */
 struct rt_comb_internal {
-    unsigned long	magic;
+    uint32_t		magic;
     union tree *	tree;		/**< @brief Leading to tree_db_leaf leaves */
     char		region_flag;	/**< @brief !0 ==> this COMB is a REGION */
     char		is_fastgen;	/**< @brief REGION_NON_FASTGEN/_PLATE/_VOLUME */
@@ -1025,7 +1025,7 @@ struct rt_comb_internal {
  * Perhaps move to wdb.h or rtgeom.h?
  */
 struct rt_binunif_internal {
-    unsigned long	magic;
+    uint32_t		magic;
     int			type;
     size_t		count;
     union {
@@ -1053,7 +1053,7 @@ struct rt_binunif_internal {
  * In-memory format for database "constraint" record
  */
 struct rt_constraint_internal {
-    unsigned long magic;
+    uint32_t magic;
     int id;
     int type;
     struct bu_vls expression;
@@ -1071,7 +1071,7 @@ struct rt_constraint_internal {
  * user-provided handler routines.
  */
 struct db_tree_state {
-    unsigned long	magic;
+    uint32_t		magic;
     struct db_i	*	ts_dbip;
     int			ts_sofar;		/**< @brief Flag bits */
 
@@ -1121,7 +1121,7 @@ struct db_tree_state {
  */
 struct db_traverse
 {
-    unsigned long magic;
+    uint32_t magic;
     struct db_i *dbip;
     void (*comb_enter_func) (
 	struct db_i *,
@@ -1148,7 +1148,7 @@ struct db_traverse
  * C O M B I N E D _ T R E E _ S T A T E
  */
 struct combined_tree_state {
-    unsigned long		magic;
+    uint32_t magic;
     struct db_tree_state	cts_s;
     struct db_full_path		cts_p;
 };
@@ -1178,35 +1178,35 @@ struct combined_tree_state {
 #define OP_FREE		MKOP(13)	/**< @brief  Unary:  L has free chain */
 
 union tree {
-    unsigned long magic;		/**< @brief  First word: magic number */
+    uint32_t magic;		/**< @brief  First word: magic number */
     /* Second word is always OP code */
     struct tree_node {
-	unsigned long magic;
+	uint32_t magic;
 	int tb_op;			/**< @brief  non-leaf */
 	struct region *tb_regionp;	/**< @brief  ptr to containing region */
 	union tree *tb_left;
 	union tree *tb_right;
     } tr_b;
     struct tree_leaf {
-	unsigned long magic;
+	uint32_t magic;
 	int tu_op;			/**< @brief  leaf, OP_SOLID */
 	struct region *tu_regionp;	/**< @brief  ptr to containing region */
 	struct soltab *tu_stp;
     } tr_a;
     struct tree_cts {
-	unsigned long magic;
+	uint32_t magic;
 	int tc_op;			/**< @brief  leaf, OP_REGION */
 	struct region *tc_pad;		/**< @brief  unused */
 	struct combined_tree_state *tc_ctsp;
     } tr_c;
     struct tree_nmgregion {
-	unsigned long magic;
+	uint32_t magic;
 	int td_op;			/**< @brief  leaf, OP_NMG_TESS */
 	const char *td_name;		/**< @brief  If non-null, dynamic string describing heritage of this region */
 	struct nmgregion *td_r;		/**< @brief  ptr to NMG region */
     } tr_d;
     struct tree_db_leaf {
-	unsigned long magic;
+	uint32_t magic;
 	int tl_op;			/**< @brief  leaf, OP_DB_LEAF */
 	matp_t tl_mat;			/**< @brief  xform matp, NULL ==> identity */
 	char *tl_name;			/**< @brief  Name of this leaf (bu_strdup'ed) */
@@ -1360,7 +1360,7 @@ struct anim_mat {
 #define ANM_RBOTH	5		/**< @brief  Replace stack, arc=Idn */
 
 struct rt_anim_property {
-    unsigned long	magic;
+    uint32_t magic;
     int			anp_op;		/**< @brief  RT_ANP_REPLACE, etc */
     struct bu_vls	anp_shader;	/**< @brief  Update string */
 };
@@ -1374,7 +1374,7 @@ struct rt_anim_color {
 
 
 struct animate {
-    unsigned long	magic;		/**< @brief  magic number */
+    uint32_t		magic;		/**< @brief  magic number */
     struct animate *	an_forw;	/**< @brief  forward link */
     struct db_full_path an_path;	/**< @brief  (sub)-path pattern */
     int			an_type;	/**< @brief  AN_MATRIX, AN_COLOR... */
@@ -1402,8 +1402,8 @@ struct animate {
  */
 struct rt_htbl {
     struct bu_list	l;	/**< @brief  linked list for caller's use */
-    int			end;	/**< @brief  index of first available location */
-    int			blen;	/**< @brief  # of struct's of storage at *hits */
+    size_t		end;	/**< @brief  index of first available location */
+    size_t		blen;	/**< @brief  # of struct's of storage at *hits */
     struct hit *	hits;	/**< @brief  hits[blen] data storage area */
 };
 #define RT_CK_HTBL(_p) BU_CKMAG(_p, RT_HTBL_MAGIC, "rt_htbl")
@@ -1419,7 +1419,7 @@ struct rt_htbl {
  * The bit vector is subscripted by values found in rt_piecelist pieces[].
  */
 struct rt_piecestate {
-    unsigned long	magic;
+    uint32_t		magic;
     long		ray_seqno;	/**< @brief  res_nshootray */
     struct soltab *	stp;
     struct bu_bitv *	shot;
@@ -1448,7 +1448,7 @@ struct rt_piecestate {
  * (stp).
  */
 struct rt_piecelist {
-    unsigned long	magic;
+    uint32_t		magic;
     size_t		npieces;	/**< @brief  number of pieces in pieces[] array */
     long		*pieces;	/**< @brief  pieces[npieces], piece indices */
     struct soltab	*stp;		/**< @brief  ref back to solid */
@@ -1485,7 +1485,7 @@ struct rt_piecelist {
  * posted to rt_i by rt_add_res_stats().
  */
 struct resource {
-    unsigned long	re_magic;	/**< @brief  Magic number */
+    uint32_t		re_magic;	/**< @brief  Magic number */
     int			re_cpu;		/**< @brief  processor number, for ID */
     struct bu_list 	re_seg;		/**< @brief  Head of segment freelist */
     struct bu_ptbl	re_seg_blocks;	/**< @brief  Table of malloc'ed blocks of segs */
@@ -1570,7 +1570,7 @@ struct rt_reprep_obj_list {
  */
 #define CORNER_PTS 4
 struct pixel_ext {
-    unsigned long	magic;
+    uint32_t magic;
     struct xray	corner[CORNER_PTS];
 };
 /* This should have had an RT_ prefix */
@@ -1630,7 +1630,7 @@ struct pixel_ext {
  *  moot issue.
  */
 struct application {
-    unsigned long	a_magic;
+    uint32_t a_magic;
     /* THESE ELEMENTS ARE MANDATORY */
     struct xray		a_ray;		/**< @brief  Actual ray to be shot */
     int			(*a_hit)(struct application *, struct partition *, struct seg *);	/**< @brief  called when shot hits model */
@@ -1655,6 +1655,7 @@ struct application {
     char **		attrs;		/**< @brief  null terminated list of attributes
 					 * This list should be the same as passed to
 					 * rt_gettrees_and_attrs() */
+    int			a_bot_reverse_normal_disabled;	/**< @brief  1= no bot normals get reversed in BOT_UNORIENTED_NORM */
     /* THESE ELEMENTS ARE USED BY THE PROGRAM "rt" AND MAY BE USED BY */
     /* THE LIBRARY AT SOME FUTURE DATE */
     /* AT THIS TIME THEY MAY BE LEFT ZERO */
@@ -1709,7 +1710,7 @@ struct application {
  */
 struct application_bundle
 {
-    unsigned long b_magic;
+    uint32_t b_magic;
     /* THESE ELEMENTS ARE MANDATORY */
     struct xrays b_rays; /**< @brief  Actual bundle of rays to be shot */
     struct application b_ap; /**< @brief  application setting to be applied to each ray */
@@ -1733,7 +1734,7 @@ struct application_bundle
 
 
 #ifdef NO_BOMBING_MACROS
-#  define RT_AP_CHECK(_ap)
+#  define RT_AP_CHECK(_ap) IGNORE((_ap))
 #else
 #  define RT_AP_CHECK(_ap)	\
     {if ((_ap)->a_zero1||(_ap)->a_zero2) \
@@ -1805,7 +1806,7 @@ RT_EXPORT extern struct rt_g rt_g;
  * value is computed by db_dirhash().
  */
 struct rt_i {
-    unsigned long	rti_magic;	/**< @brief  magic # for integrity check */
+    uint32_t		rti_magic;	/**< @brief  magic # for integrity check */
     /* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ & MODIFY */
     int			useair;		/**< @brief  1="air" regions are retained while prepping */
     int			rti_save_overlaps; /**< @brief  1=fill in pt_overlap_reg, change boolweave behavior */
@@ -1967,52 +1968,21 @@ struct rt_pt_node {
     struct rt_pt_node *next;	/**< @brief  ptr to next pt */
 };
 
-
 /**
- * L I N E _ S E G,  C A R C _ S E G,  N U R B _ S E G
+ * R T _ V I E W _ I N F O
  *
- * used by the sketch and solid of extrusion
+ * Normally, librt doesn't have a concept of a "display"
+ * of the geometry.  However for at least the plotting routines,
+ * view information is sometimes needed to produce more intelligent
+ * output.  In those situations, the application should
+ * populate and pass an rt_view_info struct.
+ *
+ * **TODO** this structure is NOT in final form and should not
+ * be relied upon.
  */
-struct line_seg		/**< @brief  line segment */
-{
-    unsigned long	magic;
-    int			start, end;	/**< @brief  indices into sketch's array of vertices */
+struct rt_view_info {
+    fastf_t scale;		/**< *brief view scale */
 };
-
-
-struct carc_seg		/**< @brief  circular arc segment */
-{
-    unsigned long	magic;
-    int			start, end;	/**< @brief  indices */
-    fastf_t		radius;		/**< @brief  radius < 0.0 -> full circle with start point on
-					 * circle and "end" at center */
-    int			center_is_left;	/**< @brief  flag indicating where center of curvature is.
-					 * If non-zero, then center is to left of vector
-					 * from start to end */
-    int			orientation;	/**< @brief  0 -> ccw, !0 -> cw */
-    int			center;		/**< @brief  index of vertex at center of arc (only used by rt_extrude_prep and rt_extrude_shot) */
-};
-
-
-struct nurb_seg		/**< @brief  NURB curve segment */
-{
-    unsigned long	magic;
-    int			order;		/**< @brief  order of NURB curve (degree - 1) */
-    int			pt_type;	/**< @brief  type of NURB curve */
-    struct knot_vector	k;		/**< @brief  knot vector for NURB curve */
-    int			c_size;		/**< @brief  number of control points */
-    int			*ctl_points;	/**< @brief  array of indicies for control points */
-    fastf_t		*weights;	/**< @brief  array of weights for control points (NULL if non_rational) */
-};
-
-
-struct bezier_seg	/**< @brief  Bezier curve segment */
-{
-    unsigned long	magic;
-    int			degree;		/**< @brief  degree of curve (number of control points - 1) */
-    int			*ctl_points;	/**< @brief  array of indices for control points */
-};
-
 
 /**
  * R T _ F U N C T A B
@@ -2033,7 +2003,7 @@ struct bezier_seg	/**< @brief  Bezier curve segment */
  * size for ft_label and new object callbacks.
  */
 struct rt_functab {
-    unsigned long magic;
+    uint32_t magic;
     char ft_name[16];
     char ft_label[8];
     int ft_use_rpp;
@@ -2069,7 +2039,8 @@ struct rt_functab {
     int (*ft_plot)(struct bu_list * /*vhead*/,
 		   struct rt_db_internal * /*ip*/,
 		   const struct rt_tess_tol * /*ttol*/,
-		   const struct bn_tol * /*tol*/);
+		   const struct bn_tol * /*tol*/,
+		   const struct rt_view_info * /*view info*/);
     void (*ft_vshot)(struct soltab * /*stp*/[],
 		     struct xray *[] /*rp*/,
 		     struct seg * /*segp*/,
@@ -2120,13 +2091,17 @@ struct rt_functab {
 		    struct resource * /*resp*/);
     const struct bu_structparse *ft_parsetab;	/**< @brief  rt_xxx_parse */
     size_t ft_internal_size;	/**< @brief  sizeof(struct rt_xxx_internal) */
-    unsigned long ft_internal_magic;	/**< @brief  RT_XXX_INTERNAL_MAGIC */
+    uint32_t ft_internal_magic;	/**< @brief  RT_XXX_INTERNAL_MAGIC */
     int	(*ft_get)(struct bu_vls *, const struct rt_db_internal *, const char *item);
     int	(*ft_adjust)(struct bu_vls *, struct rt_db_internal *, int /*argc*/, const char ** /*argv*/);
     int	(*ft_form)(struct bu_vls *, const struct rt_functab *);
 
     void (*ft_make)(const struct rt_functab *, struct rt_db_internal * /*ip*/);
     int (*ft_params)(struct pc_pc_set *, const struct rt_db_internal * /*ip*/);
+    /* Axis aligned bounding box */
+    int (*ft_bbox)(struct rt_db_internal * /*ip*/,
+		   point_t * /*min X, Y, Z of bounding RPP*/,
+		   point_t * /*max X, Y, Z of bounding RPP*/);
 };
 
 
@@ -2246,7 +2221,7 @@ struct hitmiss {
 
 
 #ifdef NO_BOMBING_MACROS
-#  define NMG_CK_HITMISS(hm)
+#  define NMG_CK_HITMISS(hm) IGNORE((hm))
 #else
 #  define NMG_CK_HITMISS(hm) \
     {\
@@ -2274,7 +2249,7 @@ struct hitmiss {
 #endif
 
 #ifdef NO_BOMBING_MACROS
-#  define NMG_CK_HITMISS_LISTS(rd)
+#  define NMG_CK_HITMISS_LISTS(rd) IGNORE((rd))
 #else
 #  define NMG_CK_HITMISS_LISTS(rd) \
     { \
@@ -2305,7 +2280,7 @@ struct hitmiss {
  * edge is closer to the intercept than the previous closest object.
  */
 struct ray_data {
-    unsigned long	magic;
+    uint32_t		magic;
     struct model	*rd_m;
     char		*manifolds; /**< @brief   structure 1-3manifold table */
     vect_t		rd_invdir;
@@ -2377,7 +2352,7 @@ struct ray_data {
 
 
 #ifdef NO_BOMBING_MACROS
-#  define nmg_bu_bomb(rd, str)
+#  define nmg_bu_bomb(rd, str) IGNORE((rd))
 #else
 #  define nmg_bu_bomb(rd, str) { \
 	bu_log("%s", str); \
@@ -2406,7 +2381,7 @@ struct nmg_radial {
 #define NMG_CK_RADIAL(_p) NMG_CKMAG(_p, NMG_RADIAL_MAGIC, "nmg_radial")
 
 struct nmg_inter_struct {
-    unsigned long	magic;
+    uint32_t		magic;
     struct bu_ptbl	*l1;		/**< @brief  vertexuses on the line of */
     struct bu_ptbl	*l2;		/**< @brief  intersection between planes */
     fastf_t		*mag1;		/**< @brief  Distances along intersection line */
@@ -2426,7 +2401,7 @@ struct nmg_inter_struct {
     fastf_t		*vert2d;	/**< @brief  Array of 2d vertex projections [index] */
     int			maxindex;	/**< @brief  size of vert2d[] */
     mat_t		proj;		/**< @brief  Matrix to project onto XY plane */
-    const long 		*twod;		/**< @brief  ptr to face/edge of 2d projection */
+    const uint32_t	*twod;		/**< @brief  ptr to face/edge of 2d projection */
 };
 #define NMG_CK_INTER_STRUCT(_p) NMG_CKMAG(_p, NMG_INTER_STRUCT_MAGIC, "nmg_inter_struct")
 
@@ -2630,6 +2605,12 @@ RT_EXPORT extern const union cutter *rt_cell_n_on_ray(struct application *ap,
 						      int n);
 RT_EXPORT extern void rt_cut_clean(struct rt_i *rtip);
 
+/* Find the bounding box given a struct rt_db_internal : bbox.c */
+RT_EXPORT extern int rt_bound_internal(struct db_i *dbip,
+				       struct directory *dp,
+                                       point_t rpp_min, 
+                                       point_t rpp_max);
+
 /* cmd.c */
 /* Read semi-colon terminated line */
 RT_EXPORT extern char *rt_read_cmd(FILE *fp);
@@ -2807,6 +2788,10 @@ struct db_full_path_list {
 
 RT_EXPORT extern void db_free_full_path_list(struct db_full_path_list *path_list);
 
+/**
+ * process the command line and create a "plan" corresponding to the
+ * command arguments.
+ */
 RT_EXPORT extern void *db_search_formplan(char **argv,
 					  struct db_i *dbip,
 					  struct rt_wdb *wdbp);
@@ -3173,8 +3158,8 @@ RT_EXPORT extern int db_rename(struct db_i *,
 RT_EXPORT extern void db_update_nref(struct db_i *dbip,
 				     struct resource *resp);
 
-RT_EXPORT extern int db_regexp_match(const char *pattern,
-				     const char *string);
+DEPRECATED RT_EXPORT extern int db_regexp_match(const char *pattern,
+						const char *string);
 RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
 					 struct db_i *dbip,
 					 const char *pattern);
@@ -3513,7 +3498,8 @@ RT_EXPORT extern int rt_pg_to_bot(struct rt_db_internal *ip,
 RT_EXPORT extern int rt_pg_plot(struct bu_list		*vhead,
 				struct rt_db_internal	*ip,
 				const struct rt_tess_tol *ttol,
-				const struct bn_tol	*tol);
+				const struct bn_tol	*tol,
+				const struct rt_view_info *info);
 RT_EXPORT extern int rt_pg_plot_poly(struct bu_list		*vhead,
 				     struct rt_db_internal	*ip,
 				     const struct rt_tess_tol	*ttol,
@@ -3687,29 +3673,27 @@ RT_EXPORT extern int curve_to_vlist(struct bu_list		*vhead,
 				    vect_t			u_vec,
 				    vect_t			v_vec,
 				    struct rt_sketch_internal *sketch_ip,
-				    struct curve		*crv);
+				    struct rt_curve		*crv);
 
-RT_EXPORT extern int rt_check_curve(const struct curve *crv,
+RT_EXPORT extern int rt_check_curve(const struct rt_curve *crv,
 				    const struct rt_sketch_internal *skt,
 				    int noisy);
 
-RT_EXPORT extern void rt_curve_reverse_segment(long *lng);
-RT_EXPORT extern void rt_curve_order_segments(struct curve *crv);
+RT_EXPORT extern void rt_curve_reverse_segment(uint32_t *lng);
+RT_EXPORT extern void rt_curve_order_segments(struct rt_curve *crv);
 
-RT_EXPORT extern void rt_copy_curve(struct curve *crv_out,
-				    const struct curve *crv_in);
+RT_EXPORT extern void rt_copy_curve(struct rt_curve *crv_out,
+				    const struct rt_curve *crv_in);
 
-RT_EXPORT extern void rt_curve_free(struct curve *crv);
-RT_EXPORT extern void rt_copy_curve(struct curve *crv_out,
-				    const struct curve *crv_in);
+RT_EXPORT extern void rt_curve_free(struct rt_curve *crv);
+RT_EXPORT extern void rt_copy_curve(struct rt_curve *crv_out,
+				    const struct rt_curve *crv_in);
 RT_EXPORT extern struct rt_sketch_internal *rt_copy_sketch(const struct rt_sketch_internal *sketch_ip);
 RT_EXPORT extern int curve_to_tcl_list(struct bu_vls *vls,
-				       struct curve *crv);
+				       struct rt_curve *crv);
 
 /* htbl.c */
-RT_EXPORT extern void rt_htbl_init(struct rt_htbl *b,
-				   int len,
-				   const char *str);
+RT_EXPORT extern void rt_htbl_init(struct rt_htbl *b, size_t len, const char *str);
 RT_EXPORT extern void rt_htbl_reset(struct rt_htbl *b);
 RT_EXPORT extern void rt_htbl_free(struct rt_htbl *b);
 RT_EXPORT extern struct hit *rt_htbl_get(struct rt_htbl *b);
@@ -3728,7 +3712,7 @@ RT_EXPORT extern struct model *nmg_mmr();
 RT_EXPORT extern struct nmgregion *nmg_mrsv(struct model *m);
 RT_EXPORT extern struct shell *nmg_msv(struct nmgregion *r_p);
 RT_EXPORT extern struct faceuse *nmg_mf(struct loopuse *lu1);
-RT_EXPORT extern struct loopuse *nmg_mlv(unsigned long *magic,
+RT_EXPORT extern struct loopuse *nmg_mlv(uint32_t *magic,
 					 struct vertex *v,
 					 int orientation);
 RT_EXPORT extern struct edgeuse *nmg_me(struct vertex *v1,
@@ -3742,6 +3726,8 @@ RT_EXPORT extern int nmg_kvu(struct vertexuse *vu);
 RT_EXPORT extern int nmg_kfu(struct faceuse *fu1);
 RT_EXPORT extern int nmg_klu(struct loopuse *lu1);
 RT_EXPORT extern int nmg_keu(struct edgeuse *eu);
+RT_EXPORT extern int nmg_keu_zl(struct shell *s,
+				const struct bn_tol *tol);
 RT_EXPORT extern int nmg_ks(struct shell *s);
 RT_EXPORT extern int nmg_kr(struct nmgregion *r);
 RT_EXPORT extern void nmg_km(struct model *m);
@@ -3766,7 +3752,7 @@ RT_EXPORT extern void nmg_edge_g_cnurb(struct edgeuse *eu,
 				       fastf_t *points);
 RT_EXPORT extern void nmg_edge_g_cnurb_plinear(struct edgeuse *eu);
 RT_EXPORT extern int nmg_use_edge_g(struct edgeuse *eu,
-				    unsigned long *eg);
+				    uint32_t *eg);
 RT_EXPORT extern void nmg_loop_g(struct loop *l,
 				 const struct bn_tol *tol);
 RT_EXPORT extern void nmg_face_g(struct faceuse *fu,
@@ -3796,7 +3782,6 @@ RT_EXPORT extern int nmg_demote_eu(struct edgeuse *eu);
 /*	MODIFY routines */
 RT_EXPORT extern void nmg_movevu(struct vertexuse *vu,
 				 struct vertex *v);
-#define nmg_moveeu(a, b) nmg_je(a, b)
 RT_EXPORT extern void nmg_je(struct edgeuse *eudst,
 			     struct edgeuse *eusrc);
 RT_EXPORT extern void nmg_unglueedge(struct edgeuse *eu);
@@ -3888,7 +3873,7 @@ RT_EXPORT extern void nmg_mv_lu_between_shells(struct shell *dest,
 RT_EXPORT extern void nmg_moveltof(struct faceuse *fu,
 				   struct shell *s);
 RT_EXPORT extern struct loopuse *nmg_dup_loop(struct loopuse *lu,
-					      unsigned long *parent,
+					      uint32_t *parent,
 					      long **trans_tbl);
 RT_EXPORT extern void nmg_set_lu_orientation(struct loopuse *lu,
 					     int is_opposite);
@@ -3920,7 +3905,7 @@ RT_EXPORT extern void nmg_mv_vu_between_shells(struct shell *dest,
 
 /* From nmg_info.c */
 /* Model routines */
-RT_EXPORT extern struct model *nmg_find_model(const unsigned long *magic_p);
+RT_EXPORT extern struct model *nmg_find_model(const uint32_t *magic_p);
 RT_EXPORT extern void nmg_model_bb(point_t min_pt,
 				   point_t max_pt,
 				   const struct model *m);
@@ -3978,7 +3963,7 @@ RT_EXPORT extern const struct edgeuse *nmg_radial_face_edge_in_shell(const struc
 RT_EXPORT extern const struct edgeuse *nmg_find_edge_between_2fu(const struct faceuse *fu1,
 								 const struct faceuse *fu2,
 								 const struct bn_tol *tol);
-RT_EXPORT extern struct edge *nmg_find_e_nearest_pt2(unsigned long *magic_p,
+RT_EXPORT extern struct edge *nmg_find_e_nearest_pt2(uint32_t *magic_p,
 						     const point_t pt2,
 						     const mat_t mat,
 						     const struct bn_tol *tol);
@@ -4035,27 +4020,27 @@ RT_EXPORT extern int nmg_is_loop_in_facelist(const struct loop *l,
 
 /* Tabulation routines */
 RT_EXPORT extern void nmg_vertex_tabulate(struct bu_ptbl *tab,
-					  const unsigned long *magic_p);
+					  const uint32_t *magic_p);
 RT_EXPORT extern void nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab,
-						    const unsigned long *magic_p);
+						    const uint32_t *magic_p);
 RT_EXPORT extern void nmg_edgeuse_tabulate(struct bu_ptbl *tab,
-					   const unsigned long *magic_p);
+					   const uint32_t *magic_p);
 RT_EXPORT extern void nmg_edge_tabulate(struct bu_ptbl *tab,
-					const unsigned long *magic_p);
+					const uint32_t *magic_p);
 RT_EXPORT extern void nmg_edge_g_tabulate(struct bu_ptbl *tab,
-					  const unsigned long *magic_p);
+					  const uint32_t *magic_p);
 RT_EXPORT extern void nmg_face_tabulate(struct bu_ptbl *tab,
-					const unsigned long *magic_p);
+					const uint32_t *magic_p);
 RT_EXPORT extern void nmg_edgeuse_with_eg_tabulate(struct bu_ptbl *tab,
 						   const struct edge_g_lseg *eg);
-RT_EXPORT extern void nmg_edgeuse_on_line_tabulate(struct bu_ptbl		*tab,
-						   const unsigned long	*magic_p,
-						   const point_t		pt,
-						   const vect_t		dir,
-						   const struct bn_tol	*tol);
-RT_EXPORT extern void nmg_e_and_v_tabulate(struct bu_ptbl		*eutab,
-					   struct bu_ptbl		*vtab,
-					   const unsigned long	*magic_p);
+RT_EXPORT extern void nmg_edgeuse_on_line_tabulate(struct bu_ptbl *tab,
+						   const uint32_t *magic_p,
+						   const point_t pt,
+						   const vect_t dir,
+						   const struct bn_tol *tol);
+RT_EXPORT extern void nmg_e_and_v_tabulate(struct bu_ptbl *eutab,
+					   struct bu_ptbl *vtab,
+					   const uint32_t *magic_p);
 RT_EXPORT extern int nmg_2edgeuse_g_coincident(const struct edgeuse	*eu1,
 					       const struct edgeuse	*eu2,
 					       const struct bn_tol	*tol);
@@ -4081,7 +4066,7 @@ RT_EXPORT extern void nmg_pr_sa(const struct shell_a *sa,
 				char *h);
 RT_EXPORT extern void nmg_pr_lg(const struct loop_g *lg,
 				char *h);
-RT_EXPORT extern void nmg_pr_fg(const unsigned long *magic,
+RT_EXPORT extern void nmg_pr_fg(const uint32_t *magic,
 				char *h);
 RT_EXPORT extern void nmg_pr_s(const struct shell *s,
 			       char *h);
@@ -4099,7 +4084,7 @@ RT_EXPORT extern void nmg_pr_lu(const struct loopuse *lu,
 				char *h);
 RT_EXPORT extern void nmg_pr_lu_briefly(const struct loopuse *lu,
 					char *h);
-RT_EXPORT extern void nmg_pr_eg(const unsigned long *eg,
+RT_EXPORT extern void nmg_pr_eg(const uint32_t *eg,
 				char *h);
 RT_EXPORT extern void nmg_pr_e(const struct edge *e,
 			       char *h);
@@ -4117,7 +4102,7 @@ RT_EXPORT extern void nmg_pr_vu(const struct vertexuse *vu,
 				char *h);
 RT_EXPORT extern void nmg_pr_vu_briefly(const struct vertexuse *vu,
 					char *h);
-RT_EXPORT extern void nmg_pr_vua(const unsigned long *magic_p,
+RT_EXPORT extern void nmg_pr_vua(const uint32_t *magic_p,
 				 char *h);
 RT_EXPORT extern void nmg_euprint(const char *str,
 				  const struct edgeuse *eu);
@@ -4140,7 +4125,7 @@ RT_EXPORT extern void nmg_pr_fu_around_eu_vecs(const struct edgeuse *eu,
 RT_EXPORT extern void nmg_pr_fu_around_eu(const struct edgeuse *eu,
 					  const struct bn_tol *tol);
 RT_EXPORT extern void nmg_pl_lu_around_eu(const struct edgeuse *eu);
-RT_EXPORT extern void nmg_pr_fus_in_fg(const unsigned long *fg_magic);
+RT_EXPORT extern void nmg_pr_fus_in_fg(const uint32_t *fg_magic);
 
 /* From nmg_misc.c */
 RT_EXPORT extern int rt_dist_pt3_line3(fastf_t		*dist,
@@ -4178,7 +4163,7 @@ RT_EXPORT extern struct face *nmg_find_top_face(const struct shell *s,
 RT_EXPORT extern int nmg_find_outer_and_void_shells(struct nmgregion *r,
 						    struct bu_ptbl ***shells,
 						    const struct bn_tol *tol);
-RT_EXPORT extern int nmg_mark_edges_real(const unsigned long *magic_p);
+RT_EXPORT extern int nmg_mark_edges_real(const uint32_t *magic_p);
 RT_EXPORT extern void nmg_tabulate_face_g_verts(struct bu_ptbl *tab,
 						const struct face_g_plane *fg);
 RT_EXPORT extern void nmg_isect_shell_self(struct shell *s,
@@ -4217,9 +4202,9 @@ RT_EXPORT extern int nmg_in_or_ref(struct vertexuse *vu,
 RT_EXPORT extern void nmg_rebound(struct model *m,
 				  const struct bn_tol *tol);
 RT_EXPORT extern void nmg_count_shell_kids(const struct model *m,
-					   unsigned long *total_wires,
-					   unsigned long *total_faces,
-					   unsigned long *total_points);
+					   size_t *total_wires,
+					   size_t *total_faces,
+					   size_t *total_points);
 RT_EXPORT extern void nmg_close_shell(struct shell *s,
 				      const struct bn_tol *tol);
 RT_EXPORT extern struct shell *nmg_dup_shell(struct shell *s,
@@ -4244,14 +4229,14 @@ RT_EXPORT extern void nmg_fix_normals(struct shell *s_orig,
 RT_EXPORT extern int nmg_break_long_edges(struct shell *s,
 					  const struct bn_tol *tol);
 RT_EXPORT extern struct faceuse *nmg_mk_new_face_from_loop(struct loopuse *lu);
-RT_EXPORT extern int nmg_split_loops_into_faces(unsigned long *magic_p,
+RT_EXPORT extern int nmg_split_loops_into_faces(uint32_t *magic_p,
 						const struct bn_tol *tol);
 RT_EXPORT extern int nmg_decompose_shell(struct shell *s,
 					 const struct bn_tol *tol);
 RT_EXPORT extern void nmg_stash_model_to_file(const char *filename,
 					      const struct model *m,
 					      const char *title);
-RT_EXPORT extern int nmg_unbreak_region_edges(unsigned long *magic_p);
+RT_EXPORT extern int nmg_unbreak_region_edges(uint32_t *magic_p);
 RT_EXPORT extern void nmg_vlist_to_eu(struct bu_list *vlist,
 				      struct shell *s);
 /* rt_dist_pt3_line3 */
@@ -4321,7 +4306,7 @@ RT_EXPORT extern void nmg_isect_shell_self(struct shell *s,
 					   const struct bn_tol *tol);
 RT_EXPORT extern fastf_t nmg_loop_plane_area(const struct loopuse *lu,
 					     plane_t pl);
-RT_EXPORT extern int nmg_break_edges(unsigned long *magic_p,
+RT_EXPORT extern int nmg_break_edges(uint32_t *magic_p,
 				     const struct bn_tol *tol);
 RT_EXPORT extern int nmg_lu_is_convex(struct loopuse *lu,
 				      const struct bn_tol *tol);
@@ -4351,7 +4336,8 @@ RT_EXPORT extern int rt_bot_edge_in_list(const int v1,
 RT_EXPORT extern int rt_bot_plot(struct bu_list		*vhead,
 				 struct rt_db_internal	*ip,
 				 const struct rt_tess_tol *ttol,
-				 const struct bn_tol	*tol);
+				 const struct bn_tol	*tol,
+				 const struct rt_view_info *info);
 RT_EXPORT extern int rt_bot_plot_poly(struct bu_list		*vhead,
 				      struct rt_db_internal	*ip,
 				      const struct rt_tess_tol *ttol,
@@ -4387,9 +4373,7 @@ RT_EXPORT extern void nmg_triangulate_model(struct model *m,
 					    const struct bn_tol *tol);
 RT_EXPORT extern void nmg_triangulate_fu(struct faceuse *fu,
 					 const struct bn_tol *tol);
-#ifdef TRI_PROTOTYPE
 RT_EXPORT extern void nmg_dump_model(struct model *m);
-#endif
 
 /*  nmg_tri_mc.c */
 RT_EXPORT extern void nmg_triangulate_model_mc(struct model *m,
@@ -4644,7 +4628,7 @@ RT_EXPORT extern void nmg_pl_2fu(const char *str,
 				 const struct faceuse *fu2,
 				 int show_mates);
 /* graphical display of classifier results */
-RT_EXPORT extern void nmg_show_broken_classifier_stuff(unsigned long	*p,
+RT_EXPORT extern void nmg_show_broken_classifier_stuff(uint32_t	*p,
 						       char	**classlist,
 						       int	all_new,
 						       int	fancy,
@@ -4808,24 +4792,26 @@ RT_EXPORT extern void nmg_isect_ray_model(struct ray_data *rd);
 RT_EXPORT extern void nmg_vvg(const struct vertex_g *vg);
 RT_EXPORT extern void nmg_vvertex(const struct vertex *v,
 				  const struct vertexuse *vup);
-RT_EXPORT extern void nmg_vvua(const unsigned long *vua);
+RT_EXPORT extern void nmg_vvua(const uint32_t *vua);
 RT_EXPORT extern void nmg_vvu(const struct vertexuse *vu,
-			      const unsigned long *up_magic_p);
-RT_EXPORT extern void nmg_veg(const unsigned long *eg);
+			      const uint32_t *up_magic_p);
+RT_EXPORT extern void nmg_veg(const uint32_t *eg);
 RT_EXPORT extern void nmg_vedge(const struct edge *e,
 				const struct edgeuse *eup);
 RT_EXPORT extern void nmg_veu(const struct bu_list	*hp,
-			      const unsigned long *up_magic_p);
+			      const uint32_t *up_magic_p);
 RT_EXPORT extern void nmg_vlg(const struct loop_g *lg);
 RT_EXPORT extern void nmg_vloop(const struct loop *l,
 				const struct loopuse *lup);
 RT_EXPORT extern void nmg_vlu(const struct bu_list	*hp,
-			      const unsigned long *up);
+			      const uint32_t *up);
 RT_EXPORT extern void nmg_vfg(const struct face_g_plane *fg);
 RT_EXPORT extern void nmg_vface(const struct face *f,
 				const struct faceuse *fup);
 RT_EXPORT extern void nmg_vfu(const struct bu_list	*hp,
 			      const struct shell *s);
+RT_EXPORT extern void nmg_vsshell(const struct shell *s,
+				 const struct nmgregion *r);
 RT_EXPORT extern void nmg_vshell(const struct bu_list *hp,
 				 const struct nmgregion *r);
 RT_EXPORT extern void nmg_vregion(const struct bu_list *hp,
@@ -4836,10 +4822,10 @@ RT_EXPORT extern void nmg_vmodel(const struct model *m);
 RT_EXPORT extern void nmg_ck_e(const struct edgeuse *eu,
 			       const struct edge *e,
 			       const char *str);
-RT_EXPORT extern void nmg_ck_vu(const unsigned long *parent,
+RT_EXPORT extern void nmg_ck_vu(const uint32_t *parent,
 				const struct vertexuse *vu,
 				const char *str);
-RT_EXPORT extern void nmg_ck_eu(const unsigned long *parent,
+RT_EXPORT extern void nmg_ck_eu(const uint32_t *parent,
 				const struct edgeuse *eu,
 				const char *str);
 RT_EXPORT extern void nmg_ck_lg(const struct loop *l,
@@ -4848,7 +4834,7 @@ RT_EXPORT extern void nmg_ck_lg(const struct loop *l,
 RT_EXPORT extern void nmg_ck_l(const struct loopuse *lu,
 			       const struct loop *l,
 			       const char *str);
-RT_EXPORT extern void nmg_ck_lu(const unsigned long *parent,
+RT_EXPORT extern void nmg_ck_lu(const uint32_t *parent,
 				const struct loopuse *lu,
 				const char *str);
 RT_EXPORT extern void nmg_ck_fg(const struct face *f,
@@ -4892,9 +4878,14 @@ RT_EXPORT extern struct vertexuse *nmg_enlist_vu(struct nmg_inter_struct	*is,
 						 struct vertexuse *dualvu,
 						 fastf_t dist);
 RT_EXPORT extern void nmg_isect2d_prep(struct nmg_inter_struct *is,
-				       const unsigned long *assoc_use);
+				       const uint32_t *assoc_use);
 RT_EXPORT extern void nmg_isect2d_cleanup(struct nmg_inter_struct *is);
 RT_EXPORT extern void nmg_isect2d_final_cleanup();
+RT_EXPORT extern int nmg_isect_2faceuse(point_t pt,
+					vect_t dir,
+					struct faceuse *fu1,
+					struct faceuse *fu2,
+					const struct bn_tol *tol);
 RT_EXPORT extern void nmg_isect_vert2p_face2p(struct nmg_inter_struct *is,
 					      struct vertexuse *vu1,
 					      struct faceuse *fu2);
@@ -4932,7 +4923,7 @@ RT_EXPORT extern void nmg_isect_line2_vertex2(struct nmg_inter_struct	*is,
 RT_EXPORT extern int nmg_isect_two_ptbls(struct nmg_inter_struct	*is,
 					 const struct bu_ptbl	*t1,
 					 const struct bu_ptbl	*t2);
-RT_EXPORT extern struct edge_g_lseg	*nmg_find_eg_on_line(const unsigned long	*magic_p,
+RT_EXPORT extern struct edge_g_lseg	*nmg_find_eg_on_line(const uint32_t *magic_p,
 							     const point_t		pt,
 							     const vect_t		dir,
 							     const struct bn_tol	*tol);
@@ -4991,7 +4982,7 @@ RT_EXPORT extern struct edge_g_lseg	*nmg_find_eg_between_2fg(const struct faceus
 								 const struct faceuse	*fu2,
 								 const struct bn_tol	*tol);
 RT_EXPORT extern struct edgeuse *nmg_does_fu_use_eg(const struct faceuse	*fu1,
-						    const unsigned long	*eg);
+						    const uint32_t	*eg);
 RT_EXPORT extern int rt_line_on_plane(const point_t	pt,
 				      const vect_t	dir,
 				      const plane_t	plane,
@@ -5016,14 +5007,14 @@ RT_EXPORT extern int nmg_fu_touchingloops(const struct faceuse *fu);
 
 
 /* From nmg_index.c */
-RT_EXPORT extern int nmg_index_of_struct(const unsigned long *p);
+RT_EXPORT extern int nmg_index_of_struct(const uint32_t *p);
 RT_EXPORT extern void nmg_m_set_high_bit(struct model *m);
 RT_EXPORT extern void nmg_m_reindex(struct model *m, long newindex);
 RT_EXPORT extern void nmg_vls_struct_counts(struct bu_vls *str,
 					    const struct nmg_struct_counts *ctr);
 RT_EXPORT extern void nmg_pr_struct_counts(const struct nmg_struct_counts *ctr,
 					   const char *str);
-RT_EXPORT extern unsigned long **nmg_m_struct_count(struct nmg_struct_counts *ctr,
+RT_EXPORT extern uint32_t **nmg_m_struct_count(struct nmg_struct_counts *ctr,
 						    const struct model *m);
 RT_EXPORT extern void nmg_pr_m_struct_counts(const struct model	*m,
 					     const char		*str);
@@ -5107,7 +5098,7 @@ RT_EXPORT extern int	nmg_cnurb_is_on_crv(const struct edgeuse *eu,
 					    const struct bn_tol *tol);
 RT_EXPORT extern int nmg_model_edge_fuse(struct model *m,
 					 const struct bn_tol *tol);
-RT_EXPORT extern int nmg_model_edge_g_fuse(struct model		*m,
+RT_EXPORT extern int nmg_edge_g_fuse(const uint32_t *magic_p,
 					   const struct bn_tol	*tol);
 RT_EXPORT extern int nmg_ck_fu_verts(struct faceuse *fu1,
 				     struct face *f2,
@@ -5120,7 +5111,7 @@ RT_EXPORT extern int	nmg_two_face_fuse(struct face	*f1,
 					  const struct bn_tol *tol);
 RT_EXPORT extern int nmg_model_face_fuse(struct model *m,
 					 const struct bn_tol *tol);
-RT_EXPORT extern int nmg_break_all_es_on_v(unsigned long *magic_p,
+RT_EXPORT extern int nmg_break_all_es_on_v(uint32_t *magic_p,
 					   struct vertex *v,
 					   const struct bn_tol *tol);
 RT_EXPORT extern int nmg_model_break_e_on_v(struct model *m,
@@ -5234,7 +5225,7 @@ RT_EXPORT extern void nmg_visit_region(struct nmgregion		*r,
 RT_EXPORT extern void nmg_visit_model(struct model			*model,
 				      const struct nmg_visit_handlers	*htab,
 				      genptr_t			state);
-RT_EXPORT extern void nmg_visit(const unsigned long		*magicp,
+RT_EXPORT extern void nmg_visit(const uint32_t		*magicp,
 				const struct nmg_visit_handlers	*htab,
 				genptr_t			state);
 

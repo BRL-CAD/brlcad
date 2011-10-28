@@ -219,6 +219,44 @@ const struct bu_structparse rt_part_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+/**
+ * R T _ P A R T _ B B O X
+ *
+ * Compute the bounding RPP for a particle
+ */
+int
+rt_part_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    struct rt_part_internal *pip;
+    vect_t tip_pt, tmp_min, tmp_max;
+    RT_CK_DB_INTERNAL(ip);
+    pip = (struct rt_part_internal *)ip->idb_ptr;
+    RT_PART_CK_MAGIC(pip);
+
+    (*min)[X] = pip->part_V[X] - pip->part_vrad;
+    (*max)[X] = pip->part_V[X] + pip->part_vrad;
+    (*min)[Y] = pip->part_V[Y] - pip->part_vrad;
+    (*max)[Y] = pip->part_V[Y] + pip->part_vrad;
+    (*min)[Z] = pip->part_V[Z] - pip->part_vrad;
+    (*max)[Z] = pip->part_V[Z] + pip->part_vrad;
+
+    /* If we've got a sphere, we're done */
+    if (pip->part_type == RT_PARTICLE_TYPE_SPHERE) {
+	return 0;		/* OK */
+    }
+
+    VADD2(tip_pt, pip->part_V, pip->part_H);
+    tmp_min[X] = tip_pt[X] - pip->part_hrad;
+    tmp_max[X] = tip_pt[X] + pip->part_hrad;
+    tmp_min[Y] = tip_pt[Y] - pip->part_hrad;
+    tmp_max[Y] = tip_pt[Y] + pip->part_hrad;
+    tmp_min[Z] = tip_pt[Z] - pip->part_hrad;
+    tmp_max[Z] = tip_pt[Z] + pip->part_hrad;
+    VMINMAX((*min), (*max), tmp_min);
+    VMINMAX((*min), (*max), tmp_max);
+
+    return 0;
+}
+
 
 /**
  * R T _ P A R T _ P R E P
@@ -244,8 +282,6 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     vect_t a, b;
     mat_t R, Rinv;
     mat_t S;
-    vect_t max, min;
-    vect_t tip;
     fastf_t inv_hlen;
     fastf_t hlen;
     fastf_t hlen_sq;
@@ -264,17 +300,12 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     part->part_int = *pip;			/* struct copy */
     pip = &part->part_int;
 
+    if(rt_part_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+
     if (pip->part_type == RT_PARTICLE_TYPE_SPHERE) {
-	/* XXX Ought to hand off to rt_sph_prep() here */
-	/* Compute bounding sphere and RPP */
+	/* Compute bounding sphere*/
 	VMOVE(stp->st_center, pip->part_V);
 	stp->st_aradius = stp->st_bradius = pip->part_vrad;
-	stp->st_min[X] = pip->part_V[X] - pip->part_vrad;
-	stp->st_max[X] = pip->part_V[X] + pip->part_vrad;
-	stp->st_min[Y] = pip->part_V[Y] - pip->part_vrad;
-	stp->st_max[Y] = pip->part_V[Y] + pip->part_vrad;
-	stp->st_min[Z] = pip->part_V[Z] - pip->part_vrad;
-	stp->st_max[Z] = pip->part_V[Z] + pip->part_vrad;
 	return 0;		/* OK */
     }
 
@@ -360,23 +391,6 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     VJOIN1(stp->st_center, pip->part_V, 0.5, pip->part_H);
 
     stp->st_aradius = stp->st_bradius = pip->part_vrad;
-
-    stp->st_min[X] = pip->part_V[X] - pip->part_vrad;
-    stp->st_max[X] = pip->part_V[X] + pip->part_vrad;
-    stp->st_min[Y] = pip->part_V[Y] - pip->part_vrad;
-    stp->st_max[Y] = pip->part_V[Y] + pip->part_vrad;
-    stp->st_min[Z] = pip->part_V[Z] - pip->part_vrad;
-    stp->st_max[Z] = pip->part_V[Z] + pip->part_vrad;
-
-    VADD2(tip, pip->part_V, pip->part_H);
-    min[X] = tip[X] - pip->part_hrad;
-    max[X] = tip[X] + pip->part_hrad;
-    min[Y] = tip[Y] - pip->part_hrad;
-    max[Y] = tip[Y] + pip->part_hrad;
-    min[Z] = tip[Z] - pip->part_hrad;
-    max[Z] = tip[Z] + pip->part_hrad;
-    VMINMAX(stp->st_min, stp->st_max, min);
-    VMINMAX(stp->st_min, stp->st_max, max);
 
     /* Determine bounding sphere from the RPP */
     {
@@ -936,7 +950,7 @@ rt_part_hemisphere(register point_t (*ov), register fastf_t *v, fastf_t *a, fast
  * R T _ P A R T _ P L O T
  */
 int
-rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_part_internal *pip;
     point_t tail;

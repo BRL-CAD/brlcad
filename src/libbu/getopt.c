@@ -31,7 +31,7 @@
 
 #define BADCH (int)'?'
 #define EMSG ""
-#define tell(s)	if (bu_opterr) {		\
+#define tell(s) if (bu_opterr) {		\
 	fputs(*nargv, stderr);			\
 	fputs(s, stderr);			\
 	fputc(bu_optopt, stderr);		\
@@ -47,8 +47,10 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
 
     if (*place=='\0') {
 	/* update scanning pointer */
-	if (bu_optind >= nargc || *(place = nargv[bu_optind]) != '-' ||
-	    !*++place) {
+	if (bu_optind >= nargc
+	    || *(place = nargv[bu_optind]) != '-'
+	    || !*++place)
+	{
 	    place = EMSG;
 	    return -1;
 	}
@@ -74,21 +76,25 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
 	    ++bu_optind;
 	    place = EMSG;
 	}
-    }
-    else {
+    } else {
 	/* need an argument */
-	if (*place) bu_optarg = place;	/* no white space */
-	else if (nargc <= ++bu_optind) {
+	if (*place) {
+	    /* no white space */
+	    bu_optarg = place;
+	} else if (nargc <= ++bu_optind) {
 	    /* no arg */
 	    place = EMSG;
 	    tell(": option requires an argument -- ");
+	} else {
+	    /* white space */
+	    bu_optarg = nargv[bu_optind];
 	}
-	else bu_optarg = nargv[bu_optind];	/* white space */
 	place = EMSG;
 	++bu_optind;
     }
     return bu_optopt;			/* dump back option letter */
 }
+
 
 /*
  * Local Variables:

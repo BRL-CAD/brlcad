@@ -280,7 +280,7 @@ static int nmg_eval_count = 0;	/* debug -- plot file numbering */
  * action code for an item of that classification.
  */
 HIDDEN int
-nmg_eval_action(unsigned long *ptr, register struct nmg_bool_state *bs)
+nmg_eval_action(uint32_t *ptr, register struct nmg_bool_state *bs)
 {
     register int ret;
     register int class;
@@ -311,7 +311,7 @@ nmg_eval_action(unsigned long *ptr, register struct nmg_bool_state *bs)
 	    goto out;
 	}
 	bu_log("nmg_eval_action(ptr=x%x) %s has no A classification, retaining\n",
-	       ptr, bu_identify_magic(*((long *)ptr)));
+	       ptr, bu_identify_magic(*((uint32_t *)ptr)));
 	class = NMG_CLASS_BAD;
 	ret = BACTION_RETAIN;
 	goto out;
@@ -339,7 +339,7 @@ nmg_eval_action(unsigned long *ptr, register struct nmg_bool_state *bs)
 	goto out;
     }
     bu_log("nmg_eval_action(ptr=x%x) %s has no B classification, retaining\n",
-	   ptr, bu_identify_magic(*((long *)ptr)));
+	   ptr, bu_identify_magic(*((uint32_t *)ptr)));
     class = NMG_CLASS_BAD;
     ret = BACTION_RETAIN;
 out:
@@ -347,7 +347,7 @@ out:
 	bu_log("nmg_eval_action(ptr=x%x) index=%d %s %s %s %s\n",
 	       ptr, index,
 	       bs->bs_isA ? "A" : "B",
-	       bu_identify_magic(*((long *)ptr)),
+	       bu_identify_magic(*((uint32_t *)ptr)),
 	       nmg_class_name(class),
 	       nmg_baction_names[ret]);
     }

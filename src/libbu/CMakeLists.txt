@@ -1,8 +1,17 @@
+# Include directories needed by libbu users
+SET(BU_INCLUDE_DIRS
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	${TCL_INCLUDE_DIRS}
+	)
+BRLCAD_INCLUDE_DIRS(BU_INCLUDE_DIRS)
+
+# locally used but not needed by users of the library
 include_directories(
-    ${PNG_INCLUDE_DIR}
-    ${ZLIB_INCLUDE_DIR}
-    ${TCL_INCLUDE_DIRS}
-)
+	${CMAKE_SOURCE_DIR}/src/other/uce-dirent
+	${PNG_INCLUDE_DIR}
+	${ZLIB_INCLUDE_DIR}
+	)
 
 set(LIBBU_SOURCES
     argv.c
@@ -26,6 +35,7 @@ set(LIBBU_SOURCES
     endian.c
     fchmod.c
     fgets.c
+    file.c
     fnmatch.c
     fopen_uniq.c
     getcwd.c
@@ -68,7 +78,6 @@ set(LIBBU_SOURCES
     rb_walk.c
     semaphore.c
     simd.c
-    stat.c
     str.c
     tcl.c
     temp.c
@@ -83,30 +92,39 @@ set(LIBBU_SOURCES
     xdr.c
 )
 
-IF(MSVC)
-	 SET(WIN32LIBS ${WINSOCK_LIB})
-ENDIF(MSVC)
-
-BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT} ${PNG_LIBRARY} ${TCL_LIBRARY} ${WIN32LIBS}")
+BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT} ${PNG_LIBRARY} ${TCL_LIBRARY} ${WINSOCK_LIB} ${PSAPI_LIB}")
 SET_TARGET_PROPERTIES(libbu PROPERTIES VERSION 19.0.1 SOVERSION 19)
 IF(BRLCAD_BUILD_LOCAL_TCL)
 	ADD_DEPENDENCIES(libbu tcl)
 ENDIF(BRLCAD_BUILD_LOCAL_TCL)
 
-add_executable(htester htester.c)
-target_link_libraries(htester ${CMAKE_THREAD_LIBS_INIT} ${PNG_LIBRARY} libbu)
+#add_executable(test_file test_file.c)
+#target_link_libraries(test_file libbu)
 
-add_executable(timetester timetester.c)
-target_link_libraries(timetester libbu)
+add_executable(test_htond test_htond.c)
+target_link_libraries(test_htond libbu)
 
-add_executable(basenametester  basenametester.c)
-target_link_libraries(basenametester libbu)
+add_executable(test_timer test_timer.c)
+target_link_libraries(test_timer libbu)
+
+add_executable(test_dirname test_dirname.c)
+target_link_libraries(test_dirname libbu)
+
+add_executable(test_basename test_basename.c)
+target_link_libraries(test_basename libbu)
+# FIXME: shouldn't need MSVC-specific logic in here
 IF(MSVC)
-	SET_TARGET_PROPERTIES(basenametester PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
+	SET_TARGET_PROPERTIES(test_basename PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
 ENDIF(MSVC)
 
-add_executable(prognametester  prognametester.c)
-target_link_libraries(prognametester libbu)
+add_executable(test_progname test_progname.c)
+target_link_libraries(test_progname libbu)
+
+add_executable(test_quote test_quote.c)
+target_link_libraries(test_quote libbu)
+
+add_executable(test_vls test_vls.c)
+target_link_libraries(test_vls libbu)
 
 set(bu_MAN3
   htond.3
@@ -117,6 +135,6 @@ ADD_MAN_PAGES(3 bu_MAN3)
 
 set(bu_ignore_files
 	rb_internals.h
-	uce-dirent.h
 	)
 CMAKEFILES(${bu_ignore_files})
+CMAKEFILES(Makefile.am)

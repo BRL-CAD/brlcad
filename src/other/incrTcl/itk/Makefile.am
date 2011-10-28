@@ -24,6 +24,7 @@ EXTRA_DIST = \
 	CMake/CheckSystemFunctionality.cmake \
 	CMake/FindX11.cmake \
 	CMake/ResolveCompilerPaths.cmake \
+	CMake/ac_std_funcs.cmake \
 	CMake/tcl.cmake
 
 DISTCLEANFILES = pkgIndex.tcl

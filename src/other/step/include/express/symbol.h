@@ -45,9 +45,6 @@
 /* packages used */
 /*****************/
 
-#ifdef SYMBOL_C
-#endif    /*  SYMBOL_C  */
-
 #include "basic.h"	/* get basic definitions */
 #include "memory.h"
 
@@ -76,15 +73,7 @@ struct Symbol_ {
 /* global variables */
 /********************/
 
-#ifdef SYMBOL_C
-#include "defstart.h"
-#else
-#include "decstart.h"
-#endif    /*  SYMBOL_C  */
-
-GLOBAL struct freelist_head SYMBOL_fl;
-
-#include "de_end.h"
+extern struct freelist_head SYMBOL_fl;
 
 /******************************/
 /* macro function definitions */
@@ -104,12 +93,5 @@ GLOBAL struct freelist_head SYMBOL_fl;
 
 extern void	SYMBOLinitialize PROTO((void));
 Symbol *SYMBOLcreate PROTO((char *, int, char *));
-
-/********************/
-/* inline functions */
-/********************/
-
-#if supports_inline_functions || defined(SYMBOL_C)
-#endif /* supports_inline_functions || defined(SYMBOL_C) */
 
 #endif    /*  SYMBOL_H  */

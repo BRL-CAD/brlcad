@@ -58,6 +58,7 @@ static int rt_tcl_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc
 static int rt_tcl_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
 static int rt_tcl_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
 static int rt_tcl_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char *const*argv);
+static int rt_tcl_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *const*argv);
 
 
 /************************************************************************
@@ -79,13 +80,12 @@ static struct dbcmdstruct rt_tcl_rt_cmds[] = {
     {"check",		rt_tcl_rt_check},
     {"prep",		rt_tcl_rt_prep},
     {"cutter",		rt_tcl_rt_cutter},
+    {"set",		rt_tcl_rt_set},
     {(char *)0,		(int (*)())0}
 };
 
 
 /**
- * R T _ T C L _ P A R S E _ R A Y
- *
  * Allow specification of a ray to trace, in two convenient formats.
  *
  * Examples -
@@ -126,8 +126,6 @@ rt_tcl_parse_ray(Tcl_Interp *interp, struct xray *rp, const char *const*argv)
 
 
 /**
- * R T _ T C L _ P R _ C U T T E R
- *
  * Format a "union cutter" structure in a TCL-friendly format.  Useful
  * for debugging space partitioning
  *
@@ -202,8 +200,6 @@ rt_tcl_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 
 
 /**
- * R T _ T C L _ C U T T E R
- *
  * Obtain the 'n'th space partitioning cell along the given ray, and
  * return that to the user.
  *
@@ -245,8 +241,6 @@ rt_tcl_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char
 
 
 /**
- * R T _ T C L _ P R _ H I T
- *
  * Format a hit in a TCL-friendly format.
  *
  * It is possible that a solid may have been removed from the
@@ -298,7 +292,7 @@ rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int 
 
 
 /**
- * R T _ T C L _ A _ H I T
+ *
  */
 int
 rt_tcl_a_hit(struct application *ap,
@@ -328,7 +322,7 @@ rt_tcl_a_hit(struct application *ap,
 
 
 /**
- * R T _ T C L _ A _ M I S S
+ *
  */
 int
 rt_tcl_a_miss(struct application *ap)
@@ -339,8 +333,6 @@ rt_tcl_a_miss(struct application *ap)
 
 
 /**
- * R T _ T C L _ S H O O T R A Y
- *
  * Usage -
  * procname shootray [-R] {P} dir|at {V}
  * -R option specifries no overlap reporting
@@ -402,8 +394,6 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
 
 
 /**
- * R T _ T C L _ R T _ O N E H I T
- *
  * Usage -
  * procname onehit
  * procname onehit #
@@ -437,8 +427,6 @@ rt_tcl_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char
 
 
 /**
- * R T _ T C L _ R T _ N O _ B O O L
- *
  * Usage -
  * procname no_bool
  * procname no_bool #
@@ -472,8 +460,6 @@ rt_tcl_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc, const cha
 
 
 /**
- * R T _ T C L _ R T _ C H E C K
- *
  * Run some of the internal consistency checkers over the data
  * structures.
  *
@@ -505,8 +491,6 @@ rt_tcl_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char 
 
 
 /**
- * R T _ T C L _ R T _ P R E P
- *
  * When run with no args, just prints current status of prepping.
  *
  * Usage -
@@ -576,8 +560,89 @@ rt_tcl_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 
 
 /**
- * R T _ T C L _ R T
+ * Set/get the rt object's settable variables.
  *
+ * This replaces onehit and no_bool.
+ *
+ * Usage -
+ * procname set
+ * procname set vname
+ * procname set vname val
+ */
+int
+rt_tcl_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+{
+    struct application *ap = (struct application *)clientData;
+    struct rt_i *rtip;
+    struct bu_vls str;
+    int val;
+    const char *usage = "[vname [val]]";
+
+    bu_vls_init(&str);
+
+    if (argc < 2 || argc > 4) {
+	bu_vls_printf(&str, "%s %s: %s", argv[0], argv[1], usage);
+	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+	bu_vls_free(&str);
+
+	return TCL_ERROR;
+    }
+
+    RT_CK_AP_TCL(interp, ap);
+    rtip = ap->a_rt_i;
+    RT_CK_RTI_TCL(interp, rtip);
+
+    /* Return a list of the settable variables and their values */
+    if (argc == 2) {
+	bu_vls_printf(&str, "{onehit %d} ", ap->a_onehit);
+	bu_vls_printf(&str, "{no_bool %d} ", ap->a_no_booleans);
+	bu_vls_printf(&str, "{bot_reverse_normal_disabled %d}", ap->a_bot_reverse_normal_disabled);
+	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+	bu_vls_free(&str);
+
+	return TCL_OK;
+    }
+
+    if (argc == 4 && sscanf(argv[3], "%d", &val) != 1) {
+	bu_vls_printf(&str, "%s %s: bad val - %s, must be an integer", argv[0], argv[1], argv[3]);
+	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+	bu_vls_free(&str);
+
+	return TCL_ERROR;
+    }
+
+    if (argv[2][0] == 'o' && !strncmp(argv[2], "onehit", 6)) {
+	if (argc == 3)
+	    val = ap->a_onehit;
+	else
+	    ap->a_onehit = val;
+    } else if (argv[2][0] == 'n' && !strncmp(argv[2], "no_bool", 7)) {
+	if (argc == 3)
+	    val = ap->a_no_booleans;
+	else
+	    ap->a_no_booleans = val;
+    } else if (argv[2][0] == 'b' && !strncmp(argv[2], "bot_reverse_normal_disabled", 27)) {
+	if (argc == 3)
+	    val = ap->a_bot_reverse_normal_disabled;
+	else
+	    ap->a_bot_reverse_normal_disabled = val;
+    } else {
+	bu_vls_printf(&str, "%s %s: bad val - %s, must be one of the following: onehit, no_bool, or bot_reverse_normal_disabled",
+		      argv[0], argv[1], argv[2]);
+	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+	bu_vls_free(&str);
+
+	return TCL_ERROR;
+    }
+
+    bu_vls_printf(&str, "%d", val);
+    Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+    bu_vls_free(&str);
+    return TCL_OK;
+}
+
+
+/**
  * Generic interface for the LIBRT_class manipulation routines.
  *
  * Usage:
@@ -629,8 +694,6 @@ rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
  ************************************************************************/
 
 /**
- * D B _ T C L _ T R E E _ P A R S E
- *
  * Take a TCL-style string description of a binary tree, as produced
  * by db_tree_list(), and reconstruct the in-memory form of
  * that tree.
@@ -662,8 +725,6 @@ db_tcl_tree_parse(Tcl_Interp *interp, const char *str, struct resource *resp)
  ************************************************************************************************/
 
 /**
- * R T _ T C L _ I M P O R T _ F R O M _ P A T H
- *
  * Given the name of a database object or a full path to a leaf
  * object, obtain the internal form of that leaf.  Packaged separately
  * mainly to make available nice Tcl error handling.
@@ -702,6 +763,9 @@ rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const cha
 	}
 
 	dp_curr = DB_FULL_PATH_CUR_DIR(&new_path);
+	if (!dp_curr)
+	    return TCL_ERROR;
+
 	ret = db_follow_path(&ts, &old_path, &new_path, LOOKUP_NOISY, 0);
 	db_free_full_path(&old_path);
 	db_free_full_path(&new_path);
@@ -742,8 +806,6 @@ rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const cha
 
 
 /**
- * R T _ T C L _ S E T U P
- *
  * Add all the supported Tcl interfaces to LIBRT routines to the list
  * of commands known by the given interpreter.
  *
@@ -761,10 +823,6 @@ rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const cha
 void
 rt_tcl_setup(Tcl_Interp *interp)
 {
-    extern size_t rt_bot_minpieces;	/* from globals.c */
-    extern size_t rt_bot_tri_per_piece;	/* from globals.c */
-    extern size_t rt_bot_mintie;	/* from globals.c */
-
     Tcl_LinkVar(interp, "rt_bot_minpieces", (char *)&rt_bot_minpieces, TCL_LINK_WIDE_INT);
 
     Tcl_LinkVar(interp, "rt_bot_tri_per_piece",
@@ -775,8 +833,6 @@ rt_tcl_setup(Tcl_Interp *interp)
 
 
 /**
- * R T _ I N I T
- *
  * Allows LIBRT to be dynamically loade to a vanilla tclsh/wish with
  * "load /usr/brlcad/lib/libbu.so"
  * "load /usr/brlcad/lib/libbn.so"
@@ -812,8 +868,6 @@ Rt_Init(Tcl_Interp *interp)
 
 
 /**
- * D B _ F U L L _ P A T H _ A P P E N D R E S U L T
- *
  * Take a db_full_path and append it to the TCL result string.
  */
 void
@@ -830,8 +884,6 @@ db_full_path_appendresult(Tcl_Interp *interp, const struct db_full_path *pp)
 
 
 /**
- * T C L _ O B J _ T O _ I N T _ A R R A Y
- *
  * Expects the Tcl_obj argument (list) to be a Tcl list and extracts
  * list elements, converts them to int, and stores them in the passed
  * in array. If the array_len argument is zero, a new array of
@@ -865,8 +917,6 @@ tcl_obj_to_int_array(Tcl_Interp *interp, Tcl_Obj *list, int **array, int *array_
 
 
 /**
- * T C L _ L I S T _ T O _ I N T _ A R R A Y
- *
  * interface to above tcl_obj_to_int_array() routine. This routine
  * expects a character string instead of a Tcl_Obj.
  *
@@ -887,8 +937,6 @@ tcl_list_to_int_array(Tcl_Interp *interp, char *char_list, int **array, int *arr
 
 
 /**
- * T C L _ O B J _ T O _ F A S T F _ A R R A Y
- *
  * Expects the Tcl_obj argument (list) to be a Tcl list and extracts
  * list elements, converts them to fastf_t, and stores them in the
  * passed in array. If the array_len argument is zero, a new array of
@@ -923,8 +971,6 @@ tcl_obj_to_fastf_array(Tcl_Interp *interp, Tcl_Obj *list, fastf_t **array, int *
 
 
 /**
- * T C L _ L I S T _ T O _ F A S T F _ A R R A Y
- *
  * interface to above tcl_obj_to_fastf_array() routine. This routine
  * expects a character string instead of a Tcl_Obj.
  *

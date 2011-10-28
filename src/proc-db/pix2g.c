@@ -200,13 +200,13 @@ main(int ac, char *av[])
 
     bu_log("Loading image %s from file...", imageFileName);
     if (image->buflen < (size_t)width * (size_t)height * 3) {
-	bu_log("\nWARNING: %s needs %d bytes, file only contains %ld bytes\n", imageFileName, width*height*3, image->buflen);
+	bu_log("\nWARNING: %s needs %d bytes, file only contains %zu bytes\n", imageFileName, width*height*3, image->buflen);
     } else if (image->buflen > (size_t)width* (size_t)height * 3) {
 	bu_log("\nWarning: Image file size is larger than specified texture size\n");
     }
     bu_log("...done loading image\n");
 
-    bu_log("Image size is %dx%d (%ld bytes)\n", width, height, image->buflen);
+    bu_log("Image size is %dx%d (%zu bytes)\n", width, height, image->buflen);
     bu_log("Objects are %f with %f spacing\n", objectSize, cellSize);
 
 

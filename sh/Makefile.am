@@ -3,6 +3,7 @@ bin_SCRIPTS = \
 	elapsed.sh \
 	any-png.sh \
 	cadbug.sh \
+	cmp.sh \
 	conversion.sh \
 	cray.sh \
 	facetall.sh \

@@ -312,9 +312,7 @@
 	r_a $mR_a \
 	r_h $mR_h
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
 }
 
 ::itcl::body TorusEditFrame::createGeometry {obj} {

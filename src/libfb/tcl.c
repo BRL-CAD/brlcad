@@ -57,10 +57,10 @@
 	    bu_vls_free(&_fb_vls);					\
 									\
 	    return TCL_ERROR;						\
-	} else if (*((long *)(_ptr)) != (_magic)) {			\
+	} else if (*((uint32_t *)(_ptr)) != (_magic)) {			\
 	    bu_vls_init(&_fb_vls);					\
 	    bu_vls_printf(&_fb_vls, "ERROR: bad %s ptr %p, s/b x%x, was x%lx, file %s, line %d\n", \
-			  _str, (void *)_ptr, _magic, (long)*((long *)(_ptr)), __FILE__, __LINE__); \
+			  _str, (void *)_ptr, _magic, (unsigned long)*((uint32_t *)(_ptr)), __FILE__, __LINE__); \
 	    Tcl_AppendResult(interp, bu_vls_addr(&_fb_vls), (char *)NULL); \
 	    bu_vls_free(&_fb_vls);					\
 									\

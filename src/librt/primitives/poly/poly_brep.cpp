@@ -50,9 +50,6 @@ rt_pg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *to
     ttmptol.norm = 0;
     const struct rt_tess_tol *ttol = &ttmptol;
 
-    *b = NULL;
-    *b = ON_Brep::New();
-
     struct model *polym = nmg_mm();
     struct nmgregion *polyr;
     tmp_internal->idb_ptr = (genptr_t)ip->idb_ptr;

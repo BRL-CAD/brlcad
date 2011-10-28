@@ -72,7 +72,7 @@ static ProBool get_normals;	/* flag to indicate surface normals should be extrac
 static ProBool do_elims;	/* flag to indicate that small features are to be eliminated */
 static double max_error=1.5;	/* (mm) maximimum allowable error in facetized approximation */
 static double min_error=1.5;	/* (mm) maximimum allowable error in facetized approximation */
-static double tol_dist=0.005;	/* (mm) minimum distance between two distinct vertices */
+static double tol_dist=0.0005;	/* (mm) minimum distance between two distinct vertices */
 static double max_angle_cntrl=0.5;	/* max angle control for tessellation ( 0.0 - 1.0 ) */
 static double min_angle_cntrl=0.5;	/* min angle control for tessellation ( 0.0 - 1.0 ) */
 static int max_to_min_steps = 1;	/* number of steps between max and min */

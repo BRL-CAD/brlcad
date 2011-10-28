@@ -113,11 +113,11 @@ ManifoldSolidBrep::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 bool
 ManifoldSolidBrep::LoadONBrep(ON_Brep *brep)
 {
-	if ( !outer->LoadONBrep(brep) ) {
-		std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-		return false;
-	}
-	return true;
+    if (!brep || !outer->LoadONBrep(brep)) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	return false;
+    }
+    return true;
 }
 
 

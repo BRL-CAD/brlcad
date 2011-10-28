@@ -61,11 +61,13 @@
 #include "db.h"
 #include "plot3.h"
 
+/* private header */
+#include "./dsp.h"
+
 
 #define FULL_DSP_DEBUGGING 1
 
 #define ORDERED_ISECT 1
-/* #define FULL_DSP_DEBUGGING 1 */
 
 #define DIM_BB_CHILDREN 4
 #define NUM_BB_CHILDREN (DIM_BB_CHILDREN*DIM_BB_CHILDREN)
@@ -82,7 +84,7 @@ struct dsp_rpp {
  * (resolution) of the DSP this box bounds
  */
 struct dsp_bb {
-    long magic;
+    uint32_t magic;
     struct dsp_rpp dspb_rpp;	/* our bounding box */
     /*
      * the next two elements indicate the number and locations of
@@ -109,10 +111,17 @@ struct dsp_bb_layer {
     struct dsp_bb *p; /* array of dsp_bb's for this level */
 };
 
+# define XCNT(_p) (((struct rt_dsp_internal *)_p)->dsp_xcnt)
+# define YCNT(_p) (((struct rt_dsp_internal *)_p)->dsp_ycnt)
+# define XSIZ(_p) (_p->dsp_i.dsp_xcnt - 1)
+# define YSIZ(_p) (_p->dsp_i.dsp_ycnt - 1)
 
-extern int rt_retrieve_binunif (struct rt_db_internal *intern,
-				const struct db_i *dbip,
-				const char *name);
+
+
+/* FIXME: rename? */
+extern int rt_retrieve_binunif(struct rt_db_internal *intern,
+			       const struct db_i *dbip,
+			       const char *name);
 
 
 #define dlog if (RT_G_DEBUG & DEBUG_HF) bu_log
@@ -144,39 +153,6 @@ struct dsp_specific {
     struct dsp_bb_layer *layer;
     struct dsp_bb *bb_array;
 };
-
-
-/* access to the array */
-#ifdef FULL_DSP_DEBUGGING
-#define DSP(_p, _x, _y) dsp_val(_p, _x, _y, __FILE__, __LINE__)
-unsigned short
-dsp_val(struct rt_dsp_internal *dsp_i, unsigned x, unsigned y, char *file, int line)
-{
-    RT_DSP_CK_MAGIC(dsp_i);
-
-    if (x >= dsp_i->dsp_xcnt || y >= dsp_i->dsp_ycnt) {
-	bu_log("%s:%d xy: %u, %u cnt: %zu, %zu\n",
-	       file, line, x, y, dsp_i->dsp_xcnt, dsp_i->dsp_ycnt);
-	bu_bomb("");
-    }
-
-    return dsp_i->dsp_buf[ y * dsp_i->dsp_xcnt + x ];
-}
-
-
-#else
-# define DSP(_p, _x, _y) (\
-	(\
-	 (unsigned short *) \
-	  ((_p)->dsp_buf) \
-)[ \
-	     (_y) * ((struct rt_dsp_internal *)_p)->dsp_xcnt + (_x) ])
-#endif
-
-# define XCNT(_p) (((struct rt_dsp_internal *)_p)->dsp_xcnt)
-# define YCNT(_p) (((struct rt_dsp_internal *)_p)->dsp_ycnt)
-# define XSIZ(_p) (_p->dsp_i.dsp_xcnt - 1)
-# define YSIZ(_p) (_p->dsp_i.dsp_ycnt - 1)
 
 
 struct bbox_isect {
@@ -887,6 +863,115 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 #endif
 }
 
+/**
+ * R T _ D S P _ B B O X
+ *
+ * Calculate the bounding box for a dsp.
+ */
+int
+rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    struct rt_dsp_internal *dsp_ip;
+    register struct dsp_specific *dsp;
+    unsigned short dsp_min, dsp_max;
+    point_t pt, bbpt;
+
+    RT_CK_DB_INTERNAL(ip);
+    dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
+    RT_DSP_CK_MAGIC(dsp_ip);
+    BU_CK_VLS(&dsp_ip->dsp_name);
+
+    switch (dsp_ip->dsp_datasrc) {
+	case RT_DSP_SRC_V4_FILE:
+	case RT_DSP_SRC_FILE:
+	    if (!dsp_ip->dsp_mp) {
+		bu_log("dsp(%s): no data file or data file empty\n", bu_vls_addr(&dsp_ip->dsp_name));
+		return 1; /* BAD */
+	    }
+	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
+
+	    /* we do this here and now because we will need it for the
+	     * dsp_specific structure in a few lines
+	     */
+	    bu_semaphore_acquire(RT_SEM_MODEL);
+	    ++dsp_ip->dsp_mp->uses;
+	    bu_semaphore_release(RT_SEM_MODEL);
+	    break;
+	case RT_DSP_SRC_OBJ:
+	    if (!dsp_ip->dsp_bip) {
+		bu_log("dsp(%s): no data\n", bu_vls_addr(&dsp_ip->dsp_name));
+		return 1; /* BAD */
+	    }
+	    RT_CK_DB_INTERNAL(dsp_ip->dsp_bip);
+	    RT_CK_BINUNIF(dsp_ip->dsp_bip->idb_ptr);
+	    break;
+    }
+
+
+    BU_GETSTRUCT(dsp, dsp_specific);
+
+    /* this works ok, because the mapped file keeps track of the
+     * number of uses.  However, the binunif interface does not.
+     * We'll have to copy the data for that one.
+     */
+    dsp->dsp_i = *dsp_ip;		/* struct copy */
+
+    /* this keeps the binary internal object from being freed */
+    dsp_ip->dsp_bip = (struct rt_db_internal *)NULL;
+
+
+    dsp->xsiz = dsp_ip->dsp_xcnt-1;	/* size is # cells or values-1 */
+    dsp->ysiz = dsp_ip->dsp_ycnt-1;	/* size is # cells or values-1 */
+
+
+    /* compute the multi-resolution bounding boxes */
+    dsp_layers(dsp, &dsp_min, &dsp_max);
+
+
+    /* record the distance to each of the bounding planes */
+    dsp->dsp_pl_dist[XMIN] = 0.0;
+    dsp->dsp_pl_dist[XMAX] = (fastf_t)dsp->xsiz;
+    dsp->dsp_pl_dist[YMIN] = 0.0;
+    dsp->dsp_pl_dist[YMAX] = (fastf_t)dsp->ysiz;
+    dsp->dsp_pl_dist[ZMIN] = 0.0;
+    dsp->dsp_pl_dist[ZMAX] = (fastf_t)dsp_max;
+    dsp->dsp_pl_dist[ZMID] = (fastf_t)dsp_min;
+
+    /* compute enlarged bounding box and spere */
+
+#define BBOX_PT(_x, _y, _z) \
+	VSET(pt, (fastf_t)_x, (fastf_t)_y, (fastf_t)_z); \
+	MAT4X3PNT(bbpt, dsp_ip->dsp_stom, pt); \
+	VMINMAX((*min), (*max), bbpt)
+
+    BBOX_PT(-.1,		 -.1,		      -.1);
+    BBOX_PT(dsp_ip->dsp_xcnt+.1, -.1,		      -.1);
+    BBOX_PT(dsp_ip->dsp_xcnt+.1, dsp_ip->dsp_ycnt+.1, -1);
+    BBOX_PT(-.1,		 dsp_ip->dsp_ycnt+.1, -1);
+    BBOX_PT(-.1,		 -.1,		      dsp_max+.1);
+    BBOX_PT(dsp_ip->dsp_xcnt+.1, -.1,		      dsp_max+.1);
+    BBOX_PT(dsp_ip->dsp_xcnt+.1, dsp_ip->dsp_ycnt+.1, dsp_max+.1);
+    BBOX_PT(-.1,		 dsp_ip->dsp_ycnt+.1, dsp_max+.1);
+
+#undef BBOX_PT
+
+    switch (dsp->dsp_i.dsp_datasrc) {
+	case RT_DSP_SRC_V4_FILE:
+	case RT_DSP_SRC_FILE:
+	    if (dsp->dsp_i.dsp_mp) {
+		BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
+		bu_close_mapped_file(dsp->dsp_i.dsp_mp);
+	    } else if (dsp->dsp_i.dsp_buf) {
+		bu_free(dsp->dsp_i.dsp_buf, "dsp fake data");
+	    }
+	    break;
+	case RT_DSP_SRC_OBJ:
+	    break;
+    }
+
+    bu_free((char *)dsp, "bbox dsp");
+
+    return 0;
+}
 
 /**
  * R T _ D S P _ P R E P
@@ -902,6 +987,10 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
  * Implicit return -
  * A struct dsp_specific is created, and its address is stored in
  * stp->st_specific for use by dsp_shot().
+ *
+ * Note:  because the stand-along bbox calculation requires much
+ * of the prep logic, the in-prep bbox calculations are left
+ * in to avoid dupliation rather than calling rt_dsp_bbox.
  */
 int
 rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
@@ -1715,7 +1804,8 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 {
     point_t A, B, C, D, P;
     int x, y;
-    double ab_first[2], ab_second[2];
+    vect2d_t ab_first = V2INIT_ZERO;
+    vect2d_t ab_second = V2INIT_ZERO;
     struct hit hits[4];	/* list of hits that are valid */
     struct hit *hitp;
     int hitf = 0;	/* bit flags for valid hits in hits */
@@ -3096,7 +3186,7 @@ rt_dsp_class(void)
  * R T _ D S P _ P L O T
  */
 int
-rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
+rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_dsp_internal *dsp_ip =
 	(struct rt_dsp_internal *)ip->idb_ptr;
@@ -4978,8 +5068,6 @@ dsp_pos(point_t out, /* return value */
     unsigned int x, y;
     int A[3], B[3], C[3], D[3];
 
-    struct dsp_rpp dsp_rpp;
-
     /* init points */
     VSET(pt, 0, 0, 0);
     VSET(tri_pt, 0, 0, 0);
@@ -5005,9 +5093,6 @@ dsp_pos(point_t out, /* return value */
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("x:%d y:%d\n", x, y);
-
-    VSET(dsp_rpp.dsp_min, x, y, 0);
-    VSET(dsp_rpp.dsp_max, x+1, y+1, 0);
 
     VSET(A, x, y, DSP(&dsp->dsp_i, x, y));
     x += 1;

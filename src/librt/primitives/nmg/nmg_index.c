@@ -49,7 +49,7 @@
  * -2 error:  unknown magic number
  */
 int
-nmg_index_of_struct(register const unsigned long *p)
+nmg_index_of_struct(register const uint32_t *p)
 {
     switch (*p) {
 	case NMG_MODEL_MAGIC:
@@ -121,7 +121,7 @@ nmg_index_of_struct(register const unsigned long *p)
  * Helper routine
  */
 static void
-nmg_mark_edge_g(unsigned long *magic_p)
+nmg_mark_edge_g(uint32_t *magic_p)
 {
     if (!magic_p) bu_bomb("nmg_mark_edge_g bad magic\n");
     switch (*magic_p) {
@@ -538,7 +538,7 @@ nmg_pr_struct_counts(const struct nmg_struct_counts *ctr, const char *str)
  * indexed by nmg structure index.
  * Caller is responsible for freeing it.
  */
-unsigned long **
+uint32_t **
 nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m)
 {
     struct nmgregion *r;
@@ -551,16 +551,16 @@ nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m
     struct edge *e;
     struct vertexuse *vu;
     struct vertex *v;
-    register unsigned long **ptrs;
+    register uint32_t **ptrs;
 
 #define NMG_UNIQ_INDEX(_p, _type)	\
 	if ((_p)->index > m->maxindex) { \
 		bu_log("x%x (%s) has index %d, m->maxindex=%d\n", (_p), \
-			bu_identify_magic(*((unsigned long *)(_p))), (_p)->index, m->maxindex); \
+			bu_identify_magic(*((uint32_t *)(_p))), (_p)->index, m->maxindex); \
 		bu_bomb("nmg_m_struct_count index overflow\n"); \
 	} \
-	if (ptrs[(_p)->index] == (unsigned long *)0) { \
-		ptrs[(_p)->index] = (unsigned long *)(_p); \
+	if (ptrs[(_p)->index] == NULL) { \
+		ptrs[(_p)->index] = (uint32_t *)(_p); \
 		ctr->_type++; \
 	}
 
@@ -587,7 +587,7 @@ nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m
     NMG_CK_MODEL(m);
     memset((char *)ctr, 0, sizeof(*ctr));
 
-    ptrs = (unsigned long **)bu_calloc(m->maxindex+1, sizeof(unsigned long *), "nmg_m_count ptrs[]");
+    ptrs = (uint32_t **)bu_calloc(m->maxindex+1, sizeof(uint32_t *), "nmg_m_count ptrs[]");
 
     NMG_UNIQ_INDEX(m, model);
     ctr->max_structs = m->maxindex;
@@ -738,7 +738,7 @@ void
 nmg_pr_m_struct_counts(const struct model *m, const char *str)
 {
     struct nmg_struct_counts cnts;
-    unsigned long **tab;
+    uint32_t **tab;
 
     NMG_CK_MODEL(m);
 

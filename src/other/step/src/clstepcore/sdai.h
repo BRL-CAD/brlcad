@@ -29,8 +29,8 @@ extern const char *SCLversion;
 #include <ctype.h>
 //#include <stdio.h>
 //#include <strstream.h>
+#include <string>
 
-#include <string.h>
 
 #ifdef PART26
 // Change the name of the include file defining the defs for Bool and Logical
@@ -38,25 +38,15 @@ extern const char *SCLversion;
 #include <corbaIncludes.h>
 #endif
 
-#ifdef __OSTORE__
-
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#include <ostore/coll.hh>
-void Application_instance_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range);
-
-#endif
 
 #include <sclprefixes.h>
 #include <dictdefs.h>
 
 #include <baseType.h>
 #include <Str.h>
-#include <scl_string.h>
 #include <errordesc.h>
 
-typedef String_var Express_id;
+typedef std::string Express_id;
 
 #ifdef __O3DB__
 /*  OpenOODB.h must be the first include file.  */
@@ -397,17 +387,9 @@ AGGREGATE TYPES
 
 ******************************************************************************/
 
-#ifdef __OSTORE__
-SCLP23(BOOLEAN) *create_BOOLEAN(os_database *db);
-#else
 inline SCLP23(BOOLEAN) *create_BOOLEAN() { return new SCLP23(BOOLEAN) ; }
-#endif
 
-#ifdef __OSTORE__
-SCLP23(LOGICAL) *create_LOGICAL(os_database *db);
-#else
 inline SCLP23(LOGICAL) *create_LOGICAL() { return new SCLP23(LOGICAL) ; }
-#endif
 
 // below is outdated
 typedef SCLP23(Select) * SdaiSelectH;

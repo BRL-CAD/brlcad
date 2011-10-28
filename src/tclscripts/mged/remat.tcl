@@ -23,18 +23,17 @@
 # material ID number.
 #
 
-# make sure the mged commands we need actually exist
-set extern_commands [list db get_regions attr]
-foreach cmd $extern_commands {
-    catch {auto_load $cmd} val
-    if {[expr [string compare [info command $cmd] $cmd] != 0]} {
-	puts stderr "[info script]: Application fails to provide command '$cmd'"
-	return
-    }
-}
-
-
 proc remat { args } {
+    # make sure the mged commands we need actually exist
+    set extern_commands [list db get_regions attr]
+    foreach cmd $extern_commands {
+	catch {auto_load $cmd} val
+	if {[expr [string compare [info command $cmd] $cmd] != 0]} {
+	    puts stderr "[info script]: Application fails to provide command '$cmd'"
+	    return
+	}
+    }
+
     if { [llength $args] != 2 } {
 	puts "Usage: remat assembly materialID"
 	return
@@ -45,6 +44,7 @@ proc remat { args } {
 
     set objData [db get $name]
     if { [lindex $objData 0] != "comb" } {
+	puts "Not a combination."
 	return
     }
 

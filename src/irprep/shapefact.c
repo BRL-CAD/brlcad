@@ -108,7 +108,6 @@ double drand48() {
 int main(int argc, char **argv)
 {
     struct application ap;	/*  Structure passed between functions.  */
-    extern struct table info[];	/*  Structure is external.  */
     struct rt_i *rtip;
     int idx;		/*  Index for rt_dirbuild & rt_gettree.  */
     char idbuf[32];	/*  Contains database name.  */
@@ -769,7 +768,6 @@ int
 hit(struct application *UNUSED(ap_p), struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     /*  START # 0H  */
-    extern struct table info[];	/*  Structure is external.  */
     struct partition *pp;
     struct hit *hitp;
     struct soltab *stp;

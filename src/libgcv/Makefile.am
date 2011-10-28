@@ -4,8 +4,8 @@ wfobj_dir = wfobj
 #WFOBJ = ${wfobj_dir}
 #WFOBJLIB=wvobj/libwfobj_nil.la
 #else
-WFOBJ = 
-WFOBJLIB = 
+WFOBJ =
+WFOBJLIB =
 #endif
 
 SUBDIRS = \
@@ -29,22 +29,25 @@ libgcv_nil_la_SOURCES = \
 EXTRA_DIST = \
 	CMakeLists.txt \
 	NOTES \
+	wfobj/CMakeLists.txt \
 	wfobj/Makefile.am \
 	wfobj/Makefile.in \
-	wfobj/obj_grammar.y \
+	wfobj/Makefile.sample \
+	wfobj/obj_grammar_decls.h.in \
 	wfobj/obj_grammar.yy \
-	wfobj/obj_parser.c \
-	wfobj/obj_parser.cc \
+	wfobj/obj_parser.cpp \
 	wfobj/obj_parser.h \
-	wfobj/obj_parser.h.orig \
 	wfobj/obj_parser_state.h \
-	wfobj/obj_rules.l \
-	wfobj/obj_rules.ll
+	wfobj/obj_rules.h \
+	wfobj/obj_rules.re \
+	wfobj/obj_token_type.h \
+	wfobj/re2c_utils.c \
+	wfobj/re2c_utils.h
 
 CLEANFILES = wfobj/Makefile
 
 libgcv_la_SOURCES =
-libgcv_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS} 
+libgcv_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
 libgcv_la_LIBADD = \
 	libgcv_nil.la \
 	${WFOBJLIB} \

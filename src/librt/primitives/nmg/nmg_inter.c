@@ -390,7 +390,7 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
  * 'assoc_use' is either a pointer to a faceuse, or an edgeuse.
  */
 static void
-nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, const unsigned long *assoc_use)
+nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, const uint32_t *assoc_use)
 /* a 3-tuple */
 
 
@@ -399,7 +399,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
     register fastf_t *pt2d;
     point_t pt;
     struct vertex_g *vg;
-    unsigned long *this;
+    uint32_t *this;
 
     NMG_CK_INTER_STRUCT(is);
     NMG_CK_VERTEX(v);
@@ -411,19 +411,19 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 
     if (*assoc_use == NMG_FACEUSE_MAGIC) {
 	this = &((struct faceuse *)assoc_use)->f_p->l.magic;
-	if (this != (unsigned long *)is->twod)
+	if (this != is->twod)
 	    goto bad;
     } else if (*assoc_use == NMG_EDGEUSE_MAGIC) {
 	this = &((struct edgeuse *)assoc_use)->e_p->magic;
-	if (this != (unsigned long *)is->twod)
+	if (this != is->twod)
 	    goto bad;
     } else {
-	this = (unsigned long *)NULL;
+	this = NULL;
     bad:
 	bu_log("nmg_get_2d_vertex(, assoc_use=%x %s) this=x%x %s, is->twod=%x %s\n",
 	       assoc_use, bu_identify_magic(*assoc_use),
 	       this, bu_identify_magic(*this),
-	       is->twod, bu_identify_magic(*(is->twod)));
+	       (unsigned long *)is->twod, bu_identify_magic(*(is->twod)));
 	bu_bomb("nmg_get_2d_vertex:  2d association mis-match\n");
     }
 
@@ -489,7 +489,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 	if (!NEAR_ZERO(dist, is->tol.dist) &&
 	    !NEAR_ZERO(pt[2], 10*is->tol.dist)) {
 	    bu_log("nmg_get_2d_vertex(, assoc_use=%x) f=x%x, is->twod=%x\n",
-		   assoc_use, fu->f_p, is->twod);
+		   assoc_use, fu->f_p, (unsigned long *)is->twod);
 	    PLPRINT("fu->f_p N", n);
 	    bu_bomb("3D->2D point projection error\n");
 	}
@@ -523,7 +523,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
  * This will allow the 2D routines to operate on wires.
  */
 void
-nmg_isect2d_prep(struct nmg_inter_struct *is, const unsigned long *assoc_use)
+nmg_isect2d_prep(struct nmg_inter_struct *is, const uint32_t *assoc_use)
 {
     struct model *m;
     struct face_g_plane *fg;
@@ -536,10 +536,10 @@ nmg_isect2d_prep(struct nmg_inter_struct *is, const unsigned long *assoc_use)
     NMG_CK_INTER_STRUCT(is);
 
     if (*assoc_use == NMG_FACEUSE_MAGIC) {
-	if (&((struct faceuse *)assoc_use)->f_p->l.magic == (unsigned long *)is->twod)
+	if (&((struct faceuse *)assoc_use)->f_p->l.magic == is->twod)
 	    return;		/* Already prepped */
     } else if (*assoc_use == NMG_EDGEUSE_MAGIC) {
-	if (&((struct edgeuse *)assoc_use)->e_p->magic == (unsigned long *)is->twod)
+	if (&((struct edgeuse *)assoc_use)->e_p->magic == is->twod)
 	    return;		/* Already prepped */
     } else {
 	bu_bomb("nmg_isect2d_prep() bad assoc_use magic\n");
@@ -560,7 +560,7 @@ nmg_isect2d_prep(struct nmg_inter_struct *is, const unsigned long *assoc_use)
 	f1 = fu1->f_p;
 	fg = f1->g.plane_p;
 	NMG_CK_FACE_G_PLANE(fg);
-	is->twod = (long *)&f1->l.magic;
+	is->twod = &f1->l.magic;
 	if (f1->flip) {
 	    VREVERSE(n, fg->N);
 	    n[W] = -fg->N[W];
@@ -597,7 +597,7 @@ nmg_isect2d_prep(struct nmg_inter_struct *is, const unsigned long *assoc_use)
 	NMG_CK_EDGE(e1);
 	eg = eu1->g.lseg_p;
 	NMG_CK_EDGE_G_LSEG(eg);
-	is->twod = (long *)&e1->magic;
+	is->twod = &e1->magic;
 
 	/*
 	 * Rotate so that eg's eg_dir vector points up +X.
@@ -633,8 +633,8 @@ nmg_isect2d_cleanup(struct nmg_inter_struct *is)
 
     if (!is->vert2d) return;
     bu_free((char *)is->vert2d, "vert2d");
-    is->vert2d = (fastf_t *)NULL;
-    is->twod = (long *)NULL;
+    is->vert2d = NULL;
+    is->twod = NULL;
 }
 
 
@@ -1959,7 +1959,7 @@ static int
 nmg_isect_wireloop3p_face3p(struct nmg_inter_struct *bs, struct loopuse *lu, struct faceuse *fu)
 {
     struct edgeuse *eu;
-    unsigned long magic1;
+    uint32_t magic1;
     int discards = 0;
 
     if (rt_g.NMG_debug & DEBUG_POLYSECT) {
@@ -2425,6 +2425,8 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
     struct bu_ptbl vert_list1, vert_list2;
     fastf_t *mag1, *mag2;
     int i, j;
+    const fastf_t opsff = (1.0 + SMALL_FASTF); 
+    const fastf_t omsff = (1.0 - SMALL_FASTF); 
 
     NMG_CK_FACEUSE(fu1);
     NMG_CK_FACEUSE(fu2);
@@ -2475,14 +2477,15 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 	VSUB2(vt1_3d, vg1b->coord, vg1a->coord);
 
 	for (j=0; j<BU_PTBL_END(&eu2_list); j++) {
-	    struct edgeuse *eu2;
-	    struct vertex_g *vg2a, *vg2b;
-	    int code;
-	    vect_t vt2_3d;
-	    fastf_t dist[2];
-	    point_t hit_pt;
-	    int hit_no;
-	    int hit_count;
+	    struct edgeuse *eu2 = NULL;
+	    struct vertex_g *vg2a = NULL;
+	    struct vertex_g *vg2b = NULL;
+	    int code = 0;
+	    vect_t vt2_3d = VINIT_ZERO;
+	    fastf_t dist[2] = V2INIT_ZERO;
+	    point_t hit_pt = VINIT_ZERO;
+	    int hit_no = 0;
+	    int hit_count = 0;
 
 	    eu2 = (struct edgeuse *)BU_PTBL_GET(&eu2_list, j);
 	    NMG_CK_EDGEUSE(eu2);
@@ -2498,23 +2501,114 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		continue;
 
 	    if (code == 0) {
-		hit_count = 2;
-		if (dist[0] < dist[1]) {
-		    fastf_t tmp;
-
-		    tmp = dist[0];
+		/* When there is only one hit, place the distance in
+		 * dist[0] otherwise use both dist[0] and dist[1].
+		 * In the description below the line p0->p1 is eu1 where
+		 * p0 is the start of eu1 and p1 is the end of eu1.
+		 * The same is done for eu2 with line q0->q1. 
+		 * When eu1 and eu2 are colinear, the value of dist[0]
+		 * returned from function 'bn_isect_lseg3_lseg3' is the
+		 * scaled distance from p0->q0 and dist[1] is the scaled
+		 * distance from p0->q1.
+		 */
+		if ((dist[0] < -SMALL_FASTF && ((dist[1] > SMALL_FASTF) &&
+		   (dist[1] < omsff))) ||
+		   ((dist[1] > SMALL_FASTF) && (dist[1] < omsff) 
+		   && (dist[0] > opsff))) {
+		    /* true when q1 is within p0->p1 */
+		    hit_count = 1;
 		    dist[0] = dist[1];
-		    dist[1] = tmp;
+		    dist[1] = MAX_FASTF; /* sanity */
+		} else if ((dist[0] > SMALL_FASTF) && (dist[0] < omsff) &&
+			   (dist[1] > SMALL_FASTF) && (dist[1] < omsff)) {
+		    /* true when both q0 and q1 is within p0->p1 */
+		    hit_count = 2;
+		    /* dist[0] and dist[1] are already the correct values */
+		} else if (((dist[0] > 0) && (dist[0] < 1) && (dist[1] < 0)) ||
+			   ((dist[0] > 0) && (dist[0] < 1) && (dist[1] > 1))) {
+		    /* true when q0 is within p0->p1 */
+		    hit_count = 1;
+		    dist[1] = MAX_FASTF; /* sanity */
+		    /* dist[0] is already the correct value */
+		} else if (((dist[0] < -SMALL_FASTF) && (dist[1] > opsff)) || 
+			   ((dist[0] > opsff) && (dist[1] < -SMALL_FASTF))) {
+		    /* true when both p0 and p1 is within q0->q1 */
+		    /* eu1 is not cut */
+		    hit_count = 0; /* sanity */
+		    dist[0] = dist[1] = MAX_FASTF; /* sanity */
+		    continue;
+
+		} else if ((ZERO(dist[0]) && ZERO(dist[1] - 1.0)) ||
+			   (ZERO(dist[1]) && ZERO(dist[0] - 1.0))) {
+		    /* true when eu1 and eu2 shared the same vertices */
+		    /* eu1 is not cut */
+		    hit_count = 0; /* sanity */
+		    dist[0] = dist[1] = MAX_FASTF; /* sanity */
+		    continue;
+		} else if (((dist[0] < -SMALL_FASTF) && ZERO(dist[1])) ||
+			   (ZERO(dist[0]) && (dist[1] < -SMALL_FASTF)) ||
+			   (ZERO(dist[0] - 1.0) && (dist[1] > opsff)) ||
+			   (ZERO(dist[1] - 1.0) && (dist[0] > opsff))) {
+		    /* true when eu2 shares one of eu1 vertices and the
+		     * other eu2 vertex is outside p0->p1 (i.e. eu1)
+		     */
+		    /* eu1 is not cut */
+		    hit_count = 0; /* sanity */
+		    dist[0] = dist[1] = MAX_FASTF; /* sanity */
+		    continue;
+		} else if ((ZERO(dist[0]) && (dist[1] > SMALL_FASTF) && 
+			    (dist[1] < omsff)) || 
+			   ((dist[1] > SMALL_FASTF) && 
+			    (dist[1] < omsff) && 
+			    ZERO(dist[0] - 1.0))) {
+		    /* true when q1 is within p0->p1 and q0 = p0 or q0 = p1 */
+		    hit_count = 1;
+		    dist[0] = dist[1];
+		    dist[1] = MAX_FASTF; /* sanity */
+		} else if ((ZERO(dist[1]) && (dist[0] > SMALL_FASTF) && 
+			   (dist[0] < omsff)) || 
+			  ((dist[0] > SMALL_FASTF) && 
+			   (dist[0] < omsff) && 
+			   ZERO(dist[1] - 1.0))) {
+		    /* true when q0 is within p0->p1 and q1 = p0 or q1 = p1 */
+		    hit_count = 1;
+		    dist[1] = MAX_FASTF; /* sanity */
+		    /* dist[0] is already the correct value */
+		} else if ((ZERO(dist[0]) && (dist[1] > opsff)) ||
+			   (ZERO(dist[1]) && (dist[0] > opsff)) ||
+			   (ZERO(dist[0] - 1.0) && (dist[1] < -SMALL_FASTF)) ||
+			  ((dist[0] < -SMALL_FASTF) && ZERO(dist[1] - 1.0))) {
+		    /* true when eu2 shares one of the vertices of eu1 and
+		     * the other vertex in eu2 is on the far side of eu1 
+		     * outside eu1 (i.e. p0->p1).
+		     */
+		    /* eu1 is not cut */
+		    hit_count = 0; /* sanity */
+		    dist[0] = dist[1] = MAX_FASTF; /* sanity */
+		    continue;
+		} else {
+		    /* should never get here */
+		    bu_log("nmg_isect_two_face2p_jra(): dist[0] = %f dist[1] = %f\n", 
+			    dist[0], dist[1]);
+		    bu_bomb("nmg_isect_two_face2p_jra(): unexpected condition\n");
 		}
-	    } else
-		hit_count = 1;
+	    } else {
+		if (ZERO(dist[0]) || ZERO(dist[0] - 1.0)) {
+		    /* eu1 was hit on a vertex, nothing to cut */
+		    continue;
+	        } else if ((dist[0] < -SMALL_FASTF) || (dist[0] > opsff)) {
+		    bu_bomb("nmg_isect_two_face2p_jra(): dist[0] not within 0-1\n");
+		} else {
+		    hit_count = 1;
+		}
+	    }
 
 	    for (hit_no=0; hit_no < hit_count; hit_no++) {
 		struct edgeuse *new_eu;
 		struct vertex *hitv;
 		struct vertexuse *hit_vu = NULL;
 
-		if (dist[hit_no] < 0.0 || dist[hit_no] > 1.0)
+		if (dist[hit_no] < -SMALL_FASTF || dist[hit_no] > opsff)
 		    continue;
 
 		hitv = (struct vertex *)NULL;
@@ -2539,7 +2633,12 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 
 		if (!hit_vu)
 		    hitv = nmg_find_pt_in_model(nmg_find_model(&fu1->l.magic), hit_pt, &is->tol);
-
+#if 1
+		if (!hit_vu && (code == 0)) {
+		    bu_log("dist[0] = %f dist[1] = %f hit_no = %d\n", dist[0], dist[1], hit_no);
+		    bu_bomb("nmg_isect_two_face2p_jra(): why can we not find a vertexuse\n");
+		}
+#endif
 		if (rt_g.NMG_debug & DEBUG_POLYSECT && hitv)
 		    bu_log("Found vertex (x%x) at hit_pt\n", hitv);
 
@@ -3200,7 +3299,7 @@ enlist:
  * If the fuser did its job, there should be only one.
  */
 struct edge_g_lseg *
-nmg_find_eg_on_line(const unsigned long *magic_p, const fastf_t *pt, const fastf_t *dir, const struct bn_tol *tol)
+nmg_find_eg_on_line(const uint32_t *magic_p, const fastf_t *pt, const fastf_t *dir, const struct bn_tol *tol)
 {
     struct bu_ptbl eutab;
     struct edgeuse **eup;
@@ -3922,13 +4021,9 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	NMG_CK_VERTEX_G(vg);
 
 	VSUB2(diff, vg->coord, vg1->coord);
-#ifdef TRI_PROTOTYPE
-	if (VDOT(diff, dir) < -SMALL_FASTF)
-#else
-	    if (VDOT(diff, dir) < 0.0)
-#endif
-		bu_bomb("nmg_isect_eu_fu: intersection point not on eu\n");
-
+	if (VDOT(diff, dir) < -SMALL_FASTF) {
+	    bu_bomb("nmg_isect_eu_fu: intersection point not on eu\n");
+	}
 	inter_dist[i] = MAGSQ(diff);
     }
 
@@ -4930,7 +5025,7 @@ nmg_find_eg_between_2fg(const struct faceuse *ofu1, const struct faceuse *fu2, c
  * eu Yes, here is one edgeuse that does.  There may be more.
  */
 struct edgeuse *
-nmg_does_fu_use_eg(const struct faceuse *fu1, const unsigned long *eg)
+nmg_does_fu_use_eg(const struct faceuse *fu1, const uint32_t *eg)
 {
     const struct loopuse *lu1;
     register struct edgeuse *eu1;
@@ -5560,6 +5655,11 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
 }
 
 
+/* nmg_isect_coplanar_edges is disabled because it is unused since
+ * it was only called by nmg_isect_nearly_coplanar_faces which has
+ * been disabled due to it no longer being used.
+ */
+#if 0
 static void
 nmg_isect_coplanar_edges(struct nmg_inter_struct *is, struct bu_ptbl *eu1_list, struct bu_ptbl *eu2_list)
 {
@@ -5610,17 +5710,19 @@ nmg_isect_coplanar_edges(struct nmg_inter_struct *is, struct bu_ptbl *eu1_list, 
 	VSCALE(vt1, vt1, 1.0/len_vt1);
 
 	for (j=0; j<BU_PTBL_END(eu2_list); j++) {
-	    struct edgeuse *eu2;
-	    struct vertex_g *vg2a, *vg2b;
-	    int code;
-	    vect_t vt2;
-	    double len_vt2;
-	    fastf_t dist[2];
-	    point_t hit_pt;
-	    int hit_no;
-	    int hit_count;
-	    struct vertex *hitv;
-	    struct vertexuse *hit_vu;
+	    struct edgeuse *eu2 = NULL;
+	    struct vertex_g *vg2a = NULL;
+	    struct vertex_g *vg2b = NULL;
+	    int code = 0;
+	    vect_t vt2 = VINIT_ZERO;
+	    double len_vt2 = 0.0;
+	    fastf_t dist[2] = V2INIT_ZERO;
+	    point_t hit_pt = VINIT_ZERO;
+	    int hit_no = 0;
+	    int hit_count = 0;
+
+	    struct vertex *hitv = NULL;
+	    struct vertexuse *hit_vu = NULL;
 
 	    eu2 = (struct edgeuse *)BU_PTBL_GET(eu2_list, j);
 	    NMG_CK_EDGEUSE(eu2);
@@ -5956,6 +6058,7 @@ nmg_isect_coplanar_edges(struct nmg_inter_struct *is, struct bu_ptbl *eu1_list, 
 	}
     }
 }
+#endif
 
 
 #define MAX_FACES 200
@@ -6061,6 +6164,8 @@ nmg_check_radial_angles(char *str, struct shell *s, const struct bn_tol *tol)
 }
 
 
+#if 0
+/* unused due to change to function 'nmg_isect_two_generic_faces' */
 /** N M G _ I S E C T _ N E A R L Y _ C O P L A N A R _ F A C E S
  *
  * The two faceuses passed are expected to be parallel and distinct or coplanar
@@ -6582,6 +6687,7 @@ nmg_isect_nearly_coplanar_faces(struct nmg_inter_struct *is, struct faceuse *fu1
     }
 
 }
+#endif
 
 
 /** N M G _ F A C E S _ C A N _ B E _ I N T E R S E C T E D
@@ -6766,11 +6872,11 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
 {
     struct nmg_inter_struct bs;
     plane_t pl1, pl2;
-    struct face *f1;
-    struct face *f2;
-    point_t min_pt;
+    struct face *f1, *f2;
     int status;
-    int i;
+
+    /* sanity */
+    memset(&bs, 0, sizeof(struct nmg_inter_struct));
 
     BN_CK_TOL(tol);
     bs.magic = NMG_INTER_STRUCT_MAGIC;
@@ -6792,7 +6898,6 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
 
     if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 	bu_log("\nnmg_isect_two_generic_faces(fu1=x%x, fu2=x%x)\n", fu1, fu2);
-
 	bu_log("Planes\t%gx + %gy + %gz = %g\n\t%gx + %gy + %gz = %g\n",
 	       pl1[X], pl1[Y], pl1[Z], pl1[W],
 	       pl2[X], pl2[Y], pl2[Z], pl2[W]);
@@ -6813,8 +6918,10 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
 	status = (-1);
     }
 
-    if (!V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt,
-			   f1->min_pt, f1->max_pt, &bs.tol)) return;
+    if (!V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt, 
+			   f1->min_pt, f1->max_pt, &bs.tol)) {
+	return;
+    }
 
     /*
      * The extents of face1 overlap the extents of face2.
@@ -6835,155 +6942,33 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
      *
      * NOTE:  These conditions must be enforced in the 2D code, also.
      */
-    VMOVE(min_pt, f1->min_pt);
-    VMIN(min_pt, f2->min_pt);
     if (status == 10) {
-	status = bn_isect_2planes(bs.pt, bs.dir, pl1, pl2,
-				  min_pt, tol);
+	status = nmg_isect_2faceuse(bs.pt, bs.dir, fu1, fu2, tol);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 	    bu_log("\tnmg_isect_two_generic_faces: intersect ray start (%f, %f, %f)\n\t\tin direction (%f, %f, %f)\n",
-		   bs.pt[X],
-		   bs.pt[Y],
-		   bs.pt[Z],
-		   bs.dir[X],
-		   bs.dir[Y],
-		   bs.dir[Z]);
+		   bs.pt[X], bs.pt[Y], bs.pt[Z], bs.dir[X], bs.dir[Y], bs.dir[Z]);
 	}
     }
 
     switch (status) {
 	case 0:
-	    if (fu1->f_p->g.plane_p == fu2->f_p->g.plane_p) {
-		bu_bomb("nmg_isect_two_generic_faces: co-planar faces not detected\n");
-	    }
-	    /* All is well */
 	    bs.coplanar = 0;
 	    nmg_isect_two_face3p(&bs, fu1, fu2);
 	    break;
 	case -1:
-	case -2:
 	    /* co-planar faces */
-	    {
-		int coplanar1=0;
-		int coplanar2=0;
-		int coplanar=0;
-		int parallel=0;
-		fastf_t max_dist1;
-		fastf_t min_dist1;
-		fastf_t max_dist2;
-		fastf_t min_dist2;
-		fastf_t dist;
-		struct bu_ptbl verts;
-
-		if (f1->g.plane_p == f2->g.plane_p)
-		    goto cplanar;
-
-		/* are these face really coplanar??? */
-
-		min_dist1 = MAX_FASTF;
-		max_dist1 = (-MAX_FASTF);
-		min_dist2 = MAX_FASTF;
-		max_dist2 = (-MAX_FASTF);
-		nmg_vertex_tabulate(&verts, &fu1->l.magic);
-		for (i=0; i<BU_PTBL_END(&verts); i++) {
-		    struct vertex *v;
-
-		    v = (struct vertex *)BU_PTBL_GET(&verts, i);
-		    dist = DIST_PT_PLANE(v->vg_p->coord, pl2);
-		    if (dist > max_dist1)
-			max_dist1 = dist;
-		    if (dist < min_dist1)
-			min_dist1 = dist;
-		}
-		bu_ptbl_free(&verts);
-
-		if (min_dist1 > tol->dist) {
-		    if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			bu_log("nmg_isect_two_generic_faces: bn_isect_2planes() says faces are coplanar.\n");
-			bu_log("\tbut all vertices of fu1 (x%x) are at least %gmm above plane of fu2 (x%x)\n",
-			       fu1, min_dist1, fu2);
-		    }
-		    parallel = 1;
-		} else if (max_dist1 < (-tol->dist)) {
-		    if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			bu_log("nmg_isect_two_generic_faces: bn_isect_2planes() says faces are coplanar.\n");
-			bu_log("\tbut all vertices of fu1 (x%x) are at least %gmm below plane of fu2 (x%x)\n",
-			       fu1, -max_dist1, fu2);
-		    }
-		    parallel =  1;
-		} else if (max_dist1 <= tol->dist && min_dist1 >= (-tol->dist)) {
-		    if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			bu_log("nmg_isect_two_generic_faces: coplanar faces don't share face geometry, intersecting anyway\n");
-		    coplanar1 = 1;
-		}
-
-		if (!parallel) {
-		    /* Nothing determined so far, try looking at vertices in the other face */
-		    nmg_vertex_tabulate(&verts, &fu2->l.magic);
-		    for (i=0; i<BU_PTBL_END(&verts); i++) {
-			struct vertex *v;
-
-			v = (struct vertex *)BU_PTBL_GET(&verts, i);
-			dist = DIST_PT_PLANE(v->vg_p->coord, pl1);
-			if (dist > max_dist2)
-			    max_dist2 = dist;
-			if (dist < min_dist2)
-			    min_dist2 = dist;
-		    }
-		    bu_ptbl_free(&verts);
-
-		    if (min_dist2 > tol->dist) {
-			if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			    bu_log("nmg_isect_two_generic_faces: bn_isect_2planes() says faces are coplanar.\n");
-			    bu_log("\tbut all vertices of fu2 (x%x) are at least %gmm above plane of fu1 (x%x)\n",
-				   fu2, min_dist2, fu1);
-			}
-			parallel = 1;
-		    } else if (max_dist2 < (-tol->dist)) {
-			if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			    bu_log("nmg_isect_two_generic_faces: bn_isect_2planes() says faces are coplanar.\n");
-			    bu_log("\tbut all vertices of fu2 (x%x) are at least %gmm below plane of fu1 (x%x)\n",
-				   fu2, -max_dist2, fu1);
-			}
-			parallel = 1;
-		    } else if (max_dist2 <= tol->dist && min_dist2 >= (-tol->dist)) {
-			if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			    bu_log("nmg_isect_two_generic_faces: coplanar faces don't share face geometry, intersecting anyway\n");
-			coplanar2 = 1;
-		    }
-		}
-
-		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-		    bu_log("nmg_isect_two_generic_faces: FUs x%x and x%x do not share face geometry\n", fu1, fu2);
-		    bu_log("\tbut bn_isect_2planes() says they are coplanar or parallel\n");
-		    bu_log("max_dist1 = %g, min_dist1 = %g\n", max_dist1, min_dist1);
-		    bu_log("max_dist2 = %g, min_dist2 = %g\n", max_dist2, min_dist2);
-		}
-
-		if (coplanar1 && coplanar2)
-		    coplanar = 1;
-
-		if (coplanar) {
-		cplanar:
-		    bs.coplanar = 1;
-		    nmg_isect_two_face2p_jra(&bs, fu1, fu2);
-		    break;
-		} else if (parallel)
-		    break;
-		else {
-		    if (nmg_faces_can_be_intersected(&bs, fu1, fu2, tol)) {
-			bs.coplanar = 0;
-			nmg_isect_two_face3p(&bs, fu1, fu2);
-		    } else
-			nmg_isect_nearly_coplanar_faces(&bs, fu1, fu2);
-		}
-	    }
+	    bs.coplanar = 1;
+	    nmg_isect_two_face2p_jra(&bs, fu1, fu2);
 	    break;
+	case -2:
+	    /* no intersection, faceuse are parallel but not coplanar */
+	    return;
+	case -3:
+	    bu_bomb("nmg_isect_two_generic_faces(): faceuse should have intersection but could not find it\n");
 	default:
 	    /* internal error */
-	    bu_log("ERROR nmg_isect_two_generic_faces() unable to find plane intersection\n");
-	    break;
+	    bu_bomb("nmg_isect_two_generic_faces(): invalid return code from function nmg_isect_2faceuse\n");
     }
 
     nmg_isect2d_cleanup(&bs);
@@ -6997,7 +6982,6 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
 	static int nshell = 1;
 	char name[32];
 	FILE *fp;
-
 
 	/* Both at once */
 	nmg_pl_2fu("Iface%d.pl", fu2, fu1, 0);
@@ -7615,6 +7599,260 @@ nmg_fu_touchingloops(const struct faceuse *fu)
 }
 
 
+/**
+ * B N _ I S E C T _ 2 F A C E U S E
+ *@brief
+ * Given two faceuse, find the line of intersection between them, if
+ * one exists.  The line of intersection is returned in parametric
+ * line (point & direction vector) form.
+ *
+ * @return 0	OK, line of intersection stored in `pt' and `dir'.
+ * @return -1	FAIL, faceuse are coplanar
+ * @return -2	FAIL, faceuse are parallel but not coplanar
+ * @return -3	FAIL, unable to find line of intersection
+ *
+ * @param[out]	pt	Starting point of line of intersection
+ * @param[out]	dir	Direction vector of line of intersection (unit length)
+ * @param[in]	fu1	faceuse 1
+ * @param[in]	fu2	faceuse 2
+ * @param[in]	tol	tolerance values
+ */
+int
+nmg_isect_2faceuse(point_t pt,
+		   vect_t dir,
+		   struct faceuse *fu1,
+		   struct faceuse *fu2,
+		   const struct bn_tol *tol)
+{
+    vect_t abs_dir;
+    plane_t pl;
+    point_t rpp_min;
+    struct loopuse *lu;
+    struct edgeuse *eu;
+    struct face *f1, *f2;
+    plane_t f1_pl, f2_pl;
+    int parallel = 0;
+    int coplanar = 0;
+    int cnt = 0;
+    fastf_t avg_dist = 0.0;
+    fastf_t tot_dist = 0.0;
+    fastf_t dist = 0.0;
+
+    VSETALL(pt, 0.0);  /* sanity */
+    VSETALL(dir, 0.0); /* sanity */
+
+    if (fu1->orientation != OT_SAME && fu1->orientation != OT_OPPOSITE) {
+        bu_bomb("nmg_isect_2faceuse(): invalid fu1 orientation\n");
+    }
+    if (fu2->orientation != OT_SAME && fu2->orientation != OT_OPPOSITE) {
+        bu_bomb("nmg_isect_2faceuse(): invalid fu2 orientation\n");
+    }
+
+    NMG_CK_FACEUSE(fu1);
+    f1 = fu1->f_p;
+    NMG_CK_FACE(f1);
+    NMG_CK_FACE_G_PLANE(f1->g.plane_p);
+
+    NMG_CK_FACEUSE(fu2);
+    f2 = fu2->f_p;
+    NMG_CK_FACE(f2);
+    NMG_CK_FACE_G_PLANE(f2->g.plane_p);
+
+    if (f1->g.plane_p == f2->g.plane_p) {
+	/* intersection is not possible */
+	return -1; /* FAIL, faceuse are coplanar */
+    }
+
+    /* need to use this macro to retrieve the planes
+     * since this macro takes into account the flip
+     * normal flag
+     */
+    NMG_GET_FU_PLANE(f1_pl, fu1);
+    NMG_GET_FU_PLANE(f2_pl, fu2);
+
+    /* test for parallel using distance from the plane of
+     * the other faceuse
+     */
+
+    /* test fu1 against f2 */
+    parallel = 1;
+    cnt = 0;
+    avg_dist = 0.0;
+    tot_dist = 0.0;
+    dist = 0.0;
+    for (BU_LIST_FOR(lu, loopuse, &fu1->lu_hd)) {
+
+	if (parallel == 0) {
+	    break;
+	}
+
+	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+	    continue;
+	}
+	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	    NMG_CK_EDGEUSE(eu);
+	    cnt++;
+	    dist = DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, f2_pl);
+	    tot_dist += dist;
+	    /* the current distance is included in the average
+             * that the current distance is compared against
+             */
+	    avg_dist = tot_dist / cnt;
+	    if (NEAR_ZERO(dist - avg_dist, tol->dist)) {
+	    } else {
+		/* not parallel */
+		parallel = 0;
+		break;
+	    }
+	}
+    }
+
+    /* test fu2 against f1 */
+    if (parallel == 1) {
+	cnt = 0;
+	avg_dist = 0.0;
+	tot_dist = 0.0;
+	dist = 0.0;
+	for (BU_LIST_FOR(lu, loopuse, &fu2->lu_hd)) {
+	    if (parallel == 0) {
+		break;
+	    }
+	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+		continue;
+	    }
+	    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		NMG_CK_EDGEUSE(eu);
+		cnt++;
+		dist = DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, f1_pl);
+		tot_dist += dist;
+	        /* the current distance is included in the average
+                 * that the current distance is compared against
+                 */
+		avg_dist = tot_dist / cnt;
+		if (!NEAR_ZERO(dist - avg_dist, tol->dist)) {
+		    /* not parallel */
+		    parallel = 0;
+		    break;
+		}
+	    }
+	}
+    }
+
+    coplanar = 0;
+    if (!nmg_ck_fu_verts(fu2, f1, tol) && !nmg_ck_fu_verts(fu1, f2, tol) &&
+	NEAR_ZERO(fabs(f1_pl[W] - f2_pl[W]), tol->dist)) {
+	/* true when fu1 and fu2 are coplanar, i.e. all vertices 
+	 * of faceuse (fu1) are within distance tolarance of 
+	 * face (f2) and vice-versa. 
+	 */
+	coplanar = 1;
+    } 
+ 
+    if (coplanar && !parallel) {
+	bu_bomb("nmg_isect_2faceuse(): logic error, coplanar but not parallel\n");
+    }
+
+    if (!coplanar && parallel) {
+	/* intersection is not possible */
+	return -2; /* FAIL, faceuse are parallel and distinct */
+    }
+
+    if (coplanar) {
+	/* intersection is not possible */
+	return -1; /* FAIL, planes are identical (co-planar) */
+    }
+
+    /* at this point it should be possible to find an intersection */
+
+    /* loopuse have their bounding boxes padded, we need to
+     * have a more precise minimum point.
+     */
+    VSETALL(rpp_min, MAX_FASTF);
+
+    for (BU_LIST_FOR(lu, loopuse, &fu1->lu_hd)) {
+        NMG_CK_LOOPUSE(lu);
+        if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+            continue;
+        }
+        for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+            NMG_CK_EDGEUSE(eu);
+            VMIN(rpp_min, eu->vu_p->v_p->vg_p->coord);
+        }
+    }
+    for (BU_LIST_FOR(lu, loopuse, &fu2->lu_hd)) {
+        NMG_CK_LOOPUSE(lu);
+        if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+            continue;
+        }
+        for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+            NMG_CK_EDGEUSE(eu);
+            VMIN(rpp_min, eu->vu_p->v_p->vg_p->coord);
+        }
+    }
+
+    /* Direction vector for ray is perpendicular to both plane
+     * normals.
+     */
+    VCROSS(dir, f1_pl, f2_pl);
+
+    /* Select an axis-aligned plane which has its normal pointing
+     * along the same axis as the largest magnitude component of the
+     * direction vector.  If the largest magnitude component is
+     * negative, reverse the direction vector, so that model is "in
+     * front" of start point.
+     */
+    abs_dir[X] = fabs(dir[X]);
+    abs_dir[Y] = fabs(dir[Y]);
+    abs_dir[Z] = fabs(dir[Z]);
+
+    if (ZERO(abs_dir[X])) {
+        abs_dir[X] = 0.0;
+    }
+    if (ZERO(abs_dir[Y])) {
+        abs_dir[Y] = 0.0;
+    }
+    if (ZERO(abs_dir[Z])) {
+        abs_dir[Z] = 0.0;
+    }
+
+    if (abs_dir[X] >= abs_dir[Y]) {
+	if (abs_dir[X] >= abs_dir[Z]) {
+	    VSET(pl, 1, 0, 0);	/* X */
+	    pl[W] = rpp_min[X];
+	    if (dir[X] < -SMALL_FASTF) {
+		VREVERSE(dir, dir);
+	    }
+	} else {
+	    VSET(pl, 0, 0, 1);	/* Z */
+	    pl[W] = rpp_min[Z];
+	    if (dir[Z] < -SMALL_FASTF) {
+		VREVERSE(dir, dir);
+	    }
+	}
+    } else {
+	if (abs_dir[Y] >= abs_dir[Z]) {
+	    VSET(pl, 0, 1, 0);	/* Y */
+	    pl[W] = rpp_min[Y];
+	    if (dir[Y] < -SMALL_FASTF) {
+		VREVERSE(dir, dir);
+	    }
+	} else {
+	    VSET(pl, 0, 0, 1);	/* Z */
+	    pl[W] = rpp_min[Z];
+	    if (dir[Z] < -SMALL_FASTF) {
+		VREVERSE(dir, dir);
+	    }
+	}
+    }
+
+    /* Intersection of the 3 planes defines ray start point */
+    if (bn_mkpoint_3planes(pt, pl, f1_pl, f2_pl) < 0) {
+	return -3;	/* FAIL -- no intersection */
+    }
+
+    return 0;		/* OK */
+}
+
 /*
  * Local Variables:
  * mode: C
@@ -7624,3 +7862,4 @@ nmg_fu_touchingloops(const struct faceuse *fu)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

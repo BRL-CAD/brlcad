@@ -171,7 +171,7 @@ rt_nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int ym
     srf->dir = 0;
     srf->s_size[0] = xmax;
     srf->s_size[1] = ymax;
-    srf->l.magic = RT_SNURB_MAGIC;
+    srf->l.magic = NMG_FACE_G_SNURB_MAGIC;
     srf->pt_type = RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT);
 
     /* the U knot vector replates to the points in a row therefore you
@@ -195,7 +195,7 @@ rt_nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int ym
 
     /* Interpolate the data across the rows, fitting a curve to each. */
     for (y = 0; y < ymax; y++) {
-	crv[y].l.magic = RT_CNURB_MAGIC;
+	crv[y].l.magic = NMG_EDGE_G_CNURB_MAGIC;
 	/* Build curve from from (0, y) to (xmax-1, y) */
 	rt_nurb_cinterp(&crv[y], order, &NVAL(0, y), xmax);
     }
@@ -212,7 +212,7 @@ rt_nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int ym
 	}
 
 	/* Interpolate the curve interpolates, giving rows of a surface */
-	ncrv.l.magic = RT_CNURB_MAGIC;
+	ncrv.l.magic = NMG_EDGE_G_CNURB_MAGIC;
 	rt_nurb_cinterp(&ncrv, order, tmp, ymax);
 
 	/* Move new curve interpolations into snurb ctl_points[] */

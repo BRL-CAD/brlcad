@@ -1,3 +1,5 @@
+SET(libz_ignore_files
+Makefile.am
 ChangeLog
 FAQ
 INDEX
@@ -15,8 +17,8 @@ qnx
 treebuild.xml
 watcom
 win32
-zconf.h.cmakein
 zconf.h.in
+zconf.h
 zlib.3
 zlib.3.pdf
 zlib.map
@@ -31,3 +33,4 @@ win32/README-WIN32.txt
 win32/VisualC.txt
 win32/zlib.def
 win32/zlib1.rc
+)

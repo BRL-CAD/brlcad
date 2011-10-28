@@ -117,7 +117,7 @@ db5_scan(
     dbip->dbi_nrec = nrec;		/* # obj in db, not inc. header */
     return 0;			/* success */
 
- fatal:
+fatal:
     dbip->dbi_read_only = 1;	/* Writing could corrupt it worse */
     return -1;			/* fatal error */
 }
@@ -167,7 +167,7 @@ db_diradd5(
 		dp->d_flags = RT_DIR_COMB;
 		if (!avs || avs->count == 0) break;
 		/*
-		 *  check for the "region=" attribute.
+		 * check for the "region=" attribute.
 		 */
 		if (bu_avs_get(avs, "region") != NULL)
 		    dp->d_flags = RT_DIR_COMB|RT_DIR_REGION;
@@ -242,8 +242,8 @@ db5_diradd(struct db_i *dbip,
 		dp->d_flags = RT_DIR_COMB;
 		if (rip->attributes.ext_nbytes == 0) break;
 		/*
-		 *  Crack open the attributes to
-		 *  check for the "region=" attribute.
+		 * Crack open the attributes to
+		 * check for the "region=" attribute.
 		 */
 		if (db5_import_attributes(&avs, &rip->attributes) < 0) {
 		    bu_log("db5_diradd_handler: Bad attributes on combination '%s'\n",

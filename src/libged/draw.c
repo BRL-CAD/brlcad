@@ -349,7 +349,7 @@ wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, stru
 	dashflag = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER));
 
     if (!ip->idb_meth->ft_plot
-	|| ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol, tsp->ts_tol) < 0)
+	|| ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol, tsp->ts_tol, NULL) < 0)
     {
 	bu_vls_printf(dgcdp->gedp->ged_result_str, "%s: plot failure\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
 	return TREE_NULL;		/* ERROR */
@@ -461,7 +461,7 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 		    bu_log("fastpath draw ID_POLY %s\n", dp->d_namep);
 		}
 		if (dgcdp->draw_wireframes) {
-		    (void)rt_pg_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
+		    (void)rt_pg_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
 		} else {
 		    (void)rt_pg_plot_poly(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
 		}
@@ -473,7 +473,7 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 		    bu_log("fastpath draw ID_BOT %s\n", dp->d_namep);
 		}
 		if (dgcdp->draw_wireframes) {
-		    (void)rt_bot_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
+		    (void)rt_bot_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
 		} else {
 		    (void)rt_bot_plot_poly(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
 		}

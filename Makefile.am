@@ -34,7 +34,7 @@
 #
 ###
 
-AUTOMAKE_OPTIONS = 1.6 dist-zip dist-bzip2
+AUTOMAKE_OPTIONS = 1.8 dist-zip dist-bzip2
 ACLOCAL_AMFLAGS = -I m4
 DISTCHECK_CONFIGURE_FLAGS = --enable-all
 
@@ -104,6 +104,7 @@ EXTRA_DIST = \
 	TODO \
 	TODO.cmake \
 	autogen.sh \
+	configure.cmake.sh \
 	libtool
 
 DISTCLEANFILES = \
@@ -328,18 +329,17 @@ dist-hook:
 	find $(distdir) -type f \( -name '.cvsignore' -or -name 'brlcad_config.h' \) -exec rm -f {} \;
 	find $(distdir) -type d \( -name 'CVS' -or -name '.svn' \) -prune -exec rm -rf {} \;
 	dir="`pwd`" ; cd $(top_srcdir) ; \
-        ${SH} sh/cmakecheck.sh ; \
+	${SH} sh/cmakecheck.sh ; \
 	ret=$$? ; \
 	if test "x$$ret" != "x0" ; then \
 		echo "NEED TO SYNC CMAKELISTS.TXT" ; \
 		exit 1 ; \
 	fi ; \
-        cd "$$dir"
+	cd "$$dir"
 
 # don't complain about the benchmark 'summary', we don't want to delete it
 distcleancheck_listfiles = \
 	find . -type f -not -name summary -print
-
 
 
 ##########################

@@ -4,6 +4,6 @@ Encoding=UTF-8
 Type=Application
 Name=MGED Manual
 Comment=MGED geometry editor manual
-Exec=xdg-open /usr/brlcad/share/brlcad/7.18.4/html/manuals/mged/index.html
+Exec=xdg-open /usr/brlcad/share/html/manuals/mged/index.html
 Icon=brlcad-doc
 Categories=BRL-CAD-doc;

@@ -15,12 +15,6 @@
 
 /* $Id: mgrnodearray.h,v 3.0.1.3 1997/11/05 22:11:38 sauderd DP3.1 $ */ 
 
-/*
-#ifdef __OSTORE__
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#endif
-*/
-
 #ifdef __O3DB__
 #include <OpenOODB.h>
 #endif
@@ -49,11 +43,7 @@
 class MgrNodeArray : public GenNodeArray
 {
 public:
-//#ifdef __OSTORE__
-//    MgrNodeArray(os_database *db, int defaultSize = ARRAY_DEFAULT_SIZE);
-//#else
     MgrNodeArray(int defaultSize = ARRAY_DEFAULT_SIZE);
-//#endif
     ~MgrNodeArray();
 
 // REDEFINED functions
@@ -69,11 +59,6 @@ public:
 // ADDED functions
     virtual int MgrNodeIndex(int fileId);
     void AssignIndexAddress(int index);
-/*
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-#endif
-*/
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -86,11 +71,7 @@ public:
 
 class MgrNodeArraySorted : public GenNodeArray {
 public:
-//#ifdef __OSTORE__
-//    MgrNodeArraySorted(os_database *db, int defaultSize = ARRAY_DEFAULT_SIZE);
-//#else
     MgrNodeArraySorted(int defaultSize = ARRAY_DEFAULT_SIZE);
-//#endif
     ~MgrNodeArraySorted() { }
 
 // REDEFINED functions
@@ -110,11 +91,6 @@ public:
 // ADDED functions
     virtual int MgrNodeIndex(int fileId);
     int FindInsertPosition (const int fileId);
-/*
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-#endif
-*/
 };
 
 

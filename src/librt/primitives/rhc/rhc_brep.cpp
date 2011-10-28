@@ -42,11 +42,6 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     eip = (struct rt_rhc_internal *)ip->idb_ptr;
     RT_RHC_CK_MAGIC(eip);
 
-    *b = ON_Brep::New();
-
-    ON_TextLog dump_to_stdout;
-    ON_TextLog* dump = &dump_to_stdout;
-
     point_t p1_origin;
     ON_3dPoint plane1_origin, plane2_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
@@ -78,12 +73,10 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     double intercept_calc = (eip->rhc_c)*(eip->rhc_c)/(MAGNITUDE(eip->rhc_B) + eip->rhc_c);
     double intercept_dist = MAGNITUDE(eip->rhc_B) + eip->rhc_c - intercept_calc;
     double intercept_length = intercept_dist - MAGNITUDE(eip->rhc_B);
-    bu_log("intercept_dist: %f\n", intercept_dist);
-    bu_log("intercept_length: %f\n", intercept_length);
+
     double MX = MAGNITUDE(eip->rhc_B);
     double MP = MX + intercept_length;
     double w1 = (MX/MP)/(1-MX/MP);
-    bu_log("weight: %f\n", w1);
 
     VMOVE(tmppt, eip->rhc_B);
     VUNITIZE(tmppt);
@@ -105,9 +98,6 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     ON_NurbsCurve* hypnurbscurve = ON_NurbsCurve::New();
 
     bcurve->GetNurbForm(*hypnurbscurve);
-
-    bu_log("Valid nurbs curve: %d\n", hypnurbscurve->IsValid(dump));
-    hypnurbscurve->Dump(*dump);
 
     // Also need a staight line from the beginning to the end to
     // complete the loop.

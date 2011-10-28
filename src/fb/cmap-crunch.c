@@ -20,10 +20,7 @@
  */
 /** @file cmap-crunch.c
  *
- *  Utility subroutine to apply a colormap to a buffer of pixels
- *
- *  Author -
- *	Gary S. Moss
+ * Utility subroutine to apply a colormap to a buffer of pixels
  *
  */
 
@@ -37,17 +34,18 @@
 void
 cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *cmap)
 {
-    unsigned short	*rp = cmap->cm_red;
-    unsigned short	*gp = cmap->cm_green;
-    unsigned short	*bp = cmap->cm_blue;
+    unsigned short *rp = cmap->cm_red;
+    unsigned short *gp = cmap->cm_green;
+    unsigned short *bp = cmap->cm_blue;
 
     /* noalias ? */
-    for (; pixel_ct > 0; pixel_ct--, scan_buf++ )  {
+    for (; pixel_ct > 0; pixel_ct--, scan_buf++) {
 	(*scan_buf)[RED] = rp[(*scan_buf)[RED]] >> 8;
 	(*scan_buf)[GRN] = gp[(*scan_buf)[GRN]] >> 8;
 	(*scan_buf)[BLU] = bp[(*scan_buf)[BLU]] >> 8;
     }
 }
+
 
 /*
  * Local Variables:

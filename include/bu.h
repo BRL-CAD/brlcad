@@ -96,11 +96,6 @@ __BEGIN_DECLS
 #define BRLCAD_OK 0
 #define BRLCAD_ERROR 1
 
-/**
- * Flag for non-case-sensitive searching
- */
-#define BU_CASEFOLD 0x10
-
 
 /**
  * @def BU_DIR_SEPARATOR
@@ -273,7 +268,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
  * Example: BU_ASSERT_LONG(j+7, <, 42);
  */
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT(_equation)
+#  define BU_ASSERT(_equation) IGNORE((_equation))
 #else
 #  define BU_ASSERT(_equation)	\
     if (UNLIKELY(!(_equation))) { \
@@ -284,7 +279,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #endif
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_PTR(_lhs, _relation, _rhs)
+#  define BU_ASSERT_PTR(_lhs, _relation, _rhs) IGNORE((_lhs)); IGNORE((_rhs))
 #else
 #  define BU_ASSERT_PTR(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -297,7 +292,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_LONG(_lhs, _relation, _rhs)
+#  define BU_ASSERT_LONG(_lhs, _relation, _rhs) IGNORE((_lhs)); IGNORE((_rhs))
 #else
 #  define BU_ASSERT_LONG(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -310,7 +305,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs)
+#  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs) IGNORE((_lhs)); IGNORE((_rhs))
 #else
 #  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -323,7 +318,20 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)
+#  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs) IGNORE((_lhs)); IGNORE((_rhs))
+#else
+#  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs)	\
+    if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
+	bu_log("BU_ASSERT_SSIZE_T(" #_lhs #_relation #_rhs ") failed, lhs=%zd, rhs=%zd, file %s, line %d\n", \
+	       (ssize_t)(_lhs), (ssize_t)(_rhs), \
+	       __FILE__, __LINE__); \
+	bu_bomb("BU_ASSERT_SSIZE_T failure\n"); \
+    }
+#endif
+
+
+#ifdef NO_BOMBING_MACROS
+#  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs) IGNORE((_lhs)); IGNORE((_rhs))
 #else
 #  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -753,12 +761,23 @@ BU_EXPORT extern bu_endian_t bu_byteorder(void);
  */
 
 struct bu_list {
-    unsigned long magic;		/**< @brief Magic # for mem id/check */
+    uint32_t magic;		/**< @brief Magic # for mem id/check */
     struct bu_list *forw;		/**< @brief "forward", "next" */
     struct bu_list *back;		/**< @brief "back", "last" */
 };
 typedef struct bu_list bu_list_t;
 #define BU_LIST_NULL ((struct bu_list *)0)
+
+/**
+ * macro for setting the magic number of a non-head list node
+ */
+#define BU_LIST_MAGIC_SET(_l, _magic) {(_l)->magic = (_magic);}
+
+/**
+ * macro for testing whether a list node's magic number is equal to a
+ * specific magic number
+ */
+#define BU_LIST_MAGIC_EQUAL(_l, _magic) ((_l)->magic == (_magic))
 
 /**
  * there is no reliable way to assert the integrity of an arbitrary
@@ -776,33 +795,29 @@ typedef struct bu_list bu_list_t;
 	(_hp)->magic = BU_LIST_HEAD_MAGIC;	/* used by circ. macros */ }
 
 /**
+ * initializes a bu_list struct node with a particular non-head node
+ * magic number without allocating any memory.
+ */
+#define BU_LIST_INIT_MAGIC(_hp, _magic) { \
+	BU_LIST_INIT((_hp)); \
+	BU_LIST_MAGIC_SET((_hp), (_magic)); \
+    }
+
+/**
  * macro suitable for declaration statement zero-initialization of a
  * bu_list struct, but not suitably for validation with
  * BU_CK_LIST_HEAD() as the list pointers are NULL.  does not allocate
- * memory
+ * memory.
  */
 #define BU_LIST_INIT_ZERO { 0, BU_LIST_NULL, BU_LIST_NULL }
 
 /**
  * returns truthfully whether a bu_list has been initialized via
- * BU_LIST_INIT().  lists initialized with BU_LIST_INIT_ZERO will not
- * return true as their forward/backward pointers reference nothing.
+ * BU_LIST_INIT().  lists initialized with BU_LIST_INIT_ZERO or
+ * zero-allocated will not return true as their forward/backward
+ * pointers reference nothing.
  */
 #define BU_LIST_IS_INITIALIZED(_hp) (((struct bu_list *)(_hp) != BU_LIST_NULL) && LIKELY((_hp)->forw != BU_LIST_NULL))
-
-#define BU_LIST_MAGIC_SET(_hp, val) {(_hp)->magic = (val);}
-#define BU_LIST_MAGIC_OK(_hp, val) ((_hp)->magic == (val))
-#define BU_LIST_MAGIC_WRONG(_hp, val) ((_hp)->magic != (val))
-
-
-#define BU_LIST_CLOSE(_hp) { \
-	BU_ASSERT((_hp) != NULL); \
-	if ((_hp) == NULL) \
-	    return; \
-	BU_ASSERT(BU_LIST_IS_EMPTY((_hp))); \
-	bu_list_free((_hp)); \
-	bu_free((char *)(_hp), "bu_list head"); \
-    }
 
 
 /**
@@ -811,12 +826,12 @@ typedef struct bu_list bu_list_t;
  * the head, e.g.  * BU_LIST_INSERT(&(head.l), &((p)->l));
  */
 #define BU_LIST_INSERT(old, new) { \
-	BU_ASSERT((old) != NULL); \
-	BU_ASSERT((new) != NULL); \
+	BU_ASSERT((void *)(old) != (void *)NULL); \
+	BU_ASSERT((void *)(new) != (void *)NULL); \
 	(new)->back = (old)->back; \
 	(old)->back = (new); \
 	(new)->forw = (old); \
-	BU_ASSERT((new)->back != NULL); \
+	BU_ASSERT((void *)((new)->back) != (void *)NULL); \
 	(new)->back->forw = (new);  }
 
 /**
@@ -825,19 +840,19 @@ typedef struct bu_list bu_list_t;
  * e.g.  * BU_LIST_APPEND(&(head.l), &((p)->l));
  */
 #define BU_LIST_APPEND(old, new) { \
-	BU_ASSERT((old) != NULL); \
-	BU_ASSERT((new) != NULL); \
+	BU_ASSERT((void *)(old) != (void *)NULL); \
+	BU_ASSERT((void *)(new) != (void *)NULL); \
 	(new)->forw = (old)->forw; \
 	(new)->back = (old); \
 	(old)->forw = (new); \
-	BU_ASSERT((old)->forw != NULL); \
+	BU_ASSERT((void *)((old)->forw) != (void *)NULL); \
 	(new)->forw->back = (new);  }
 
 /**
  * Dequeue "cur" item from anywhere in doubly-linked list
  */
 #define BU_LIST_DEQUEUE(cur) { \
-	BU_ASSERT((cur) != NULL); \
+	BU_ASSERT((void *)(cur) != (void *)NULL); \
 	if (LIKELY((cur)->forw != NULL)) (cur)->forw->back = (cur)->back; \
 	if (LIKELY((cur)->back != NULL)) (cur)->back->forw = (cur)->forw; \
 	(cur)->forw = (cur)->back = BU_LIST_NULL;  /* sanity */ }
@@ -846,7 +861,7 @@ typedef struct bu_list bu_list_t;
  * Dequeue "cur" but do not fix its links
  */
 #define BU_LIST_DQ(cur) {\
-	BU_ASSERT((cur) != NULL); \
+	BU_ASSERT((void *)(cur) != (void *)NULL); \
 	if (LIKELY((cur)->forw != NULL)) (cur)->forw->back = (cur)->back; \
 	if (LIKELY((cur)->back != NULL)) (cur)->back->forw = (cur)->forw; }
 
@@ -1146,7 +1161,7 @@ typedef double fastf_t;
  * (DEPRECATED)
  *
  */
-#if defined(vax) || (defined(sgi) && !defined(mips))
+#if defined(vax)
 /* DEC VAX "D" format, the most restrictive */
 #  define MAX_FASTF		1.0e37	/* Very close to the largest number */
 #  define SQRT_MAX_FASTF	1.0e18	/* This squared just avoids overflow */
@@ -1259,8 +1274,7 @@ typedef struct bu_bitv bu_bitv_t;
  * macro is not suitable for initializing a head list node.
  */
 #define BU_BITV_INIT(_bp) { \
-	BU_LIST_INIT(&(_bp)->l); \
-	BU_LIST_MAGIC_SET(&(_bp)->l, BU_BITV_MAGIC); \
+	BU_LIST_INIT_MAGIC(&(_bp)->l, BU_BITV_MAGIC); \
 	(_bp)->nbits = 0; \
 	(_bp)->bits[0] = 0; \
 	(_bp)->bits[1] = 0; \
@@ -1332,7 +1346,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 
 /* This is not done by default for performance reasons */
 #ifdef NO_BOMBING_MACROS
-#  define BU_BITV_BITNUM_CHECK(_bv, _bit)
+#  define BU_BITV_BITNUM_CHECK(_bv, _bit) IGNORE((_bv))
 #else
 #  define BU_BITV_BITNUM_CHECK(_bv, _bit)	/* Validate bit number */ \
     if (UNLIKELY(((unsigned)(_bit)) >= (_bv)->nbits)) {\
@@ -1343,7 +1357,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 #endif
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_BITV_NBITS_CHECK(_bv, _nbits)
+#  define BU_BITV_NBITS_CHECK(_bv, _nbits) IGNORE((_bv))
 #else
 #  define BU_BITV_NBITS_CHECK(_bv, _nbits)	/* Validate number of bits */ \
     if (UNLIKELY(((unsigned)(_nbits)) > (_bv)->nbits)) {\
@@ -1414,7 +1428,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
  * histogram support
  */
 struct bu_hist  {
-    unsigned long magic;	/**< magic # for id/check */
+    uint32_t magic;		/**< magic # for id/check */
     fastf_t hg_min;		/**< minimum value */
     fastf_t hg_max;		/**< maximum value */
     fastf_t hg_clumpsize;	/**< (max-min+1)/nbins+1 */
@@ -1516,8 +1530,7 @@ typedef struct bu_ptbl bu_ptbl_t;
  * macro is not suitable for initializing a list head node.
  */
 #define BU_PTBL_INIT(_p) { \
-	BU_LIST_INIT(&(_p)->l); \
-	BU_LIST_MAGIC_SET(&(_p)->l, BU_PTBL_MAGIC); \
+	BU_LIST_INIT_MAGIC(&(_p)->l, BU_PTBL_MAGIC); \
 	(_p)->end = 0; \
 	(_p)->blen = 0; \
 	(_p)->buffer = NULL; \
@@ -1639,8 +1652,7 @@ typedef struct bu_mapped_file bu_mapped_file_t;
  * initialize a bu_mapped_file struct without allocating any memory.
  */
 #define BU_MAPPED_FILE_INIT(_mf) { \
-	BU_LIST_INIT(&(_mf)->l); \
-	BU_LIST_MAGIC_SET(&(_mf)->l, BU_MAPPED_FILE_MAGIC); \
+	BU_LIST_INIT_MAGIC(&(_mf)->l, BU_MAPPED_FILE_MAGIC); \
 	(_mf)->name = (_mf)->buf = NULL; \
 	(_mf)->buflen = (_mf)->is_mapped = 0; \
 	(_mf)->appl = (_mf)->apbuf = NULL; \
@@ -1684,8 +1696,7 @@ typedef struct bu_hook_list bu_hook_list_t;
  * this macro is not suitable for initialization of a list head node.
  */
 #define BU_HOOK_LIST_INIT(_hl) { \
-	BU_LIST_INIT(&(_hl)->l); \
-	BU_LIST_MAGIC_SET(&(_hl)->l, BU_HOOK_LIST_MAGIC); \
+	BU_LIST_INIT_MAGIC(&(_hl)->l, BU_HOOK_LIST_MAGIC); \
 	(_hl)->hookfunc = (_hl)->clientdata = NULL; \
     }
 
@@ -1738,7 +1749,7 @@ struct bu_attribute_value_pair {
  * freed by the caller, and should not be individually freed.
  */
 struct bu_attribute_value_set {
-    unsigned long magic;
+    uint32_t magic;
     unsigned int count;	/**< # valid entries in avp */
     unsigned int max;	/**< # allocated slots in avp */
     genptr_t readonly_min;
@@ -1796,7 +1807,7 @@ typedef struct bu_attribute_value_set bu_avs_t;
  *
  */
 #define BU_AVS_FOR(_pp, _avp) \
-    (_pp) = ((_avp) != NULL) ? ((_avp)->count > 0 ? &(_avp)->avp[(_avp)->count-1] : NULL) : NULL; ((_pp) != NULL) && ((_avp) != NULL) && (_avp)->avp && (_pp) >= (_avp)->avp; (_pp)--
+    (_pp) = ((void *)(_avp) != (void *)NULL) ? ((_avp)->count > 0 ? &(_avp)->avp[(_avp)->count-1] : NULL) : NULL; ((void *)(_pp) != (void *)NULL) && ((void *)(_avp) != (void *)NULL) && (_avp)->avp && (_pp) >= (_avp)->avp; (_pp)--
 
 /**
  * Some (but not all) attribute name and value string pointers are
@@ -1827,7 +1838,7 @@ typedef struct bu_attribute_value_set bu_avs_t;
  *
  */
 struct bu_vls  {
-    unsigned long vls_magic;
+    uint32_t vls_magic;
     char *vls_str;	/**< Dynamic memory for buffer */
     size_t vls_offset;	/**< Offset into vls_str where data is good */
     size_t vls_len;	/**< Length, not counting the null */
@@ -1883,7 +1894,7 @@ typedef struct bu_vls bu_vls_t;
  * Variable Length Buffer: bu_vlb support
  */
 struct bu_vlb {
-    unsigned long magic;
+    uint32_t magic;
     unsigned char *buf;     /**< Dynamic memory for the buffer */
     size_t bufCapacity;     /**< Current capacity of the buffer */
     size_t nextByte;        /**< Number of bytes currently used in the buffer */
@@ -2143,7 +2154,7 @@ typedef struct bu_structparse bu_structparse_t;
  * of a structure or other block of arbitrary data.
  */
 struct bu_external  {
-    unsigned long ext_magic;
+    uint32_t ext_magic;
     size_t ext_nbytes;
     uint8_t *ext_buf;
 };
@@ -2181,14 +2192,20 @@ typedef struct bu_external bu_external_t;
 /** @} */
 /*----------------------------------------------------------------------*/
 /* color.c */
+
+#define RED 0
+#define GRN 1
+#define BLU 2
+
 #define HUE 0
 #define SAT 1
 #define VAL 2
+
 #define ACHROMATIC	-1.0
 
 struct bu_color
 {
-    unsigned long buc_magic;
+    uint32_t buc_magic;
     fastf_t buc_rgb[3];
 };
 typedef struct bu_color bu_color_t;
@@ -2274,7 +2291,7 @@ struct bu_rb_list
  */
 struct bu_rb_tree {
     /***** CLASS I - Applications may read directly. ****************/
-    unsigned long rbt_magic;           /**< Magic no. for integrity check */
+    uint32_t rbt_magic;           /**< Magic no. for integrity check */
     int rbt_nm_nodes;                  /**< Number of nodes */
 
     /**** CLASS II - Applications may read/write directly. **********/
@@ -2353,7 +2370,7 @@ typedef struct bu_rb_tree bu_rb_tree_t;
  */
 struct bu_rb_package
 {
-    unsigned long rbp_magic;	/**< Magic no. for integrity check */
+    uint32_t rbp_magic;	/**< Magic no. for integrity check */
     struct bu_rb_node **rbp_node;	/**< Containing nodes */
     struct bu_rb_list *rbp_list_pos;	/**< Place in the list of all pkgs.  */
     void *rbp_data;	/**< Application data */
@@ -2369,7 +2386,7 @@ struct bu_rb_package
  */
 struct bu_rb_node
 {
-    unsigned long rbn_magic;		/**< Magic no. for integrity check */
+    uint32_t rbn_magic;		/**< Magic no. for integrity check */
     struct bu_rb_tree *rbn_tree;	/**< Tree containing this node */
     struct bu_rb_node **rbn_parent;	/**< Parents */
     struct bu_rb_node **rbn_left;	/**< Left subtrees */
@@ -2413,16 +2430,14 @@ typedef struct bu_observer bu_observer_t;
 
 /**
  * asserts the integrity of a non-head node bu_observer struct.
- * FIXME: observer implementation doesn't actually set a magic number.
  */
-#define BU_CK_OBSERVER(_op) BU_CKMAG(_op, 0, "bu_observer zero magic")
+#define BU_CK_OBSERVER(_op) BU_CKMAG(_op, BU_OBSERVER_MAGIC, "bu_observer magic")
 
 /**
  * initializes a bu_observer struct without allocating any memory.
  */
 #define BU_OBSERVER_INIT(_op) { \
-	BU_LIST_INIT(&(_op)->l); \
-	BU_LIST_MAGIC_SET(&(_op)->l, 0); \
+	BU_LIST_INIT_MAGIC(&(_op)->l, BU_OBSERVER_MAGIC); \
 	BU_VLS_INIT(&(_op)->observer); \
 	BU_VLS_INIT(&(_op)->cmd); \
     }
@@ -2431,12 +2446,12 @@ typedef struct bu_observer bu_observer_t;
  * macro suitable for declaration statement initialization of a bu_observer
  * struct.  does not allocate memory.  not suitable for a head node.
  */
-#define BU_OBSERVER_INIT_ZERO { {0, BU_LIST_NULL, BU_LIST_NULL}, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO }
+#define BU_OBSERVER_INIT_ZERO { {BU_OBSERVER_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO }
 
 /**
  * returns truthfully whether a bu_observer has been initialized.
  */
-#define BU_OBSERVER_IS_INITIALIZED(_op) (((struct bu_observer *)(_op) != BU_OBSERVER_NULL))
+#define BU_OBSERVER_IS_INITIALIZED(_op) (((struct bu_observer *)(_op) != BU_OBSERVER_NULL) && LIKELY((_op)->magic == BU_OBSERVER_MAGIC))
 
 
 /**
@@ -2774,7 +2789,7 @@ BU_EXPORT extern int bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb);
 /** @ingroup io */
 /** @{ */
 
-/** @file libbu/stat.c
+/** @file libbu/file.c
  *
  * Support routines for identifying properties of files and
  * directories such as whether they exist or are the same as another
@@ -2825,16 +2840,86 @@ BU_EXPORT extern int bu_file_writable(const char *path);
  */
 BU_EXPORT extern int bu_file_executable(const char *path);
 
+/**
+ * Returns truthfully whether the given file path is a directory.  An
+ * empty or NULL path name is treated as a non-existent directory and,
+ * as such, will return false.
+ *
+ * @return >0 The given filename is a directory
+ * @return 0 The given filename is not a directory.
+ */
+BU_EXPORT extern int bu_file_directory(const char *path);
+
+/**
+ * Returns truthfully whether the given file path is a symbolic link.
+ * An empty or NULL path name is treated as a non-existent link and,
+ * as such, will return false.
+ *
+ * @return >0 The given filename is a symbolic link
+ * @return 0 The given filename is not a symbolic link.
+ */
+BU_EXPORT extern int bu_file_symbolic(const char *path);
+
+/**
+ * forcibly attempts to delete a specified file.  if the file can be
+ * deleted by relaxing file permissions, they will be changed in order
+ * to delete the file.
+ *
+ * returns truthfully if the specified file was deleted.
+ */
+BU_EXPORT extern int bu_file_delete(const char *path);
+
+/**
+ * matches a filepath pattern to directory entries.  if non-NULL,
+ * matching paths are dynamically allocated, stored into the provided
+ * 'matches' array, and followed by a terminating NULL entry.
+ *
+ * If '*matches' is NULL, the caller is expected to free the matches
+ * array with bu_free_argv() If '*matches' is non-NULL (i.e., string
+ * array is already allocated or on the stack), the caller is expected
+ * to ensure adequate entries are allocated and call bu_free_array()
+ * to clean up.  If 'matches' is NULL, no entries will be allocated or
+ * stored, but the number of matches will still be returned.
+ *
+ * Example:
+ *
+ * char **my_matches = NULL;
+ * bu_file_glob("src/libbu/[a-e]*.c", &my_matches);
+ *
+ * This will allocate an array for storing glob matches, filling in
+ * the array with all of the directory entries starting with 'a'
+ * through 'e' and ending with a '.c' suffix in the src/libbu
+ * directory.
+ *
+ * returns the number of matches
+ */
+BU_EXPORT extern size_t bu_file_glob(const char *pattern, char ***matches);
+
+
 /** @file libbu/fnmatch.c
  *
  */
+
+#define BU_FNMATCH_NOESCAPE    0x01 /**< bu_fnmatch() flag.  Backslash escaping. */
+#define BU_FNMATCH_PATHNAME    0x02 /**< bu_fnmatch() flag.  Slash must be matched by slash. */
+#define BU_FNMATCH_PERIOD      0x04 /**< bu_fnmatch() flag.  Period must be matched by period. */
+#define BU_FNMATCH_LEADING_DIR 0x08 /**< bu_fnmatch() flag.  Ignore /<tail> after Imatch. */
+#define BU_FNMATCH_CASEFOLD    0x10 /**< bu_fnmatch() flag.  Case-insensitive searching. */
+
+/**
+ * bu_fnmatch() return value when no match is found (0 if found)
+ */
+#define BU_FNMATCH_NOMATCH 1       /* Match failed. */
 
 /**
  * Function fnmatch() as specified in POSIX 1003.2-1992, section B.6.
  * Compares a filename or pathname to a pattern.
  *
+ * Returns 0 if a match is found or BU_FNMATCH_NOMATCH otherwise.
+ *
  */
-BU_EXPORT extern int bu_fnmatch(const char *, const char *, int);
+BU_EXPORT extern int bu_fnmatch(const char *pattern, const char *pathname, int flags);
+
 
 /** @file libbu/dirent.c
  *
@@ -3063,7 +3148,7 @@ BU_EXPORT extern FILE *bu_temp_file(char *filepath, size_t len);
  * getopt routines found in libc.
  *
  * Important note -
- * If bu_getopt() it going to be used more than once, it is necessary
+ * If bu_getopt() is going to be used more than once, it is necessary
  * to reinitialize bu_optind=1 before beginning on the next argument
  * list.
  */
@@ -3317,7 +3402,7 @@ BU_EXPORT extern void bu_ck_list(const struct bu_list *hd,
  */
 BU_EXPORT extern void bu_ck_list_magic(const struct bu_list *hd,
 				       const char *str,
-				       const unsigned long magic);
+				       const uint32_t magic);
 
 /** @} */
 
@@ -3548,11 +3633,22 @@ BU_EXPORT extern int bu_mem_barriercheck();
  */
 
 /**
- * Given a filesystem pathname, return a pointer to a dynamic string
- * which is the parent directory of that file/directory.
+ * Given a string containing a hierarchical path, return a dynamic
+ * string to the parent path.
+ *
+ * This function is similar if not identical to most dirname() BSD
+ * system function implementations; but that system function cannot be
+ * used due to significantly inconsistent behavior across platforms.
+ *
+ * This function always recognizes paths separated by a '/' (i.e.,
+ * geometry paths) as well as whatever the native platform directory
+ * separator may be.  It is assumed that all file and directory names
+ * in the path will not contain a path separator, even if escaped.
  *
  * It is the caller's responsibility to bu_free() the pointer returned
- * from this routine.  Examples of strings returned:
+ * from this routine.
+ *
+ * Examples of strings returned:
  *
  *	/usr/dir/file	/usr/dir
  * @n	/usr/dir/	/usr
@@ -3570,14 +3666,25 @@ BU_EXPORT extern int bu_mem_barriercheck();
  * This routine will return "." if other valid results are not available
  * but should never return NULL.
  */
-BU_EXPORT extern char *bu_dirname(const char *cp);
+BU_EXPORT extern char *bu_dirname(const char *path);
 
 /**
- * Given a string containing slashes such as a pathname, return a
- * pointer to the first character after the last slash.
+ * Given a string containing a hierarchical path, return a dynamic
+ * string to the portion after the last path separator.
+ *
+ * This function is similar if not identical to most basename() BSD
+ * system function implementations; but that system function cannot be
+ * used due to significantly inconsistent behavior across platforms.
+ *
+ * This function always recognizes paths separated by a '/' (i.e.,
+ * geometry paths) as well as whatever the native platform directory
+ * separator may be.  It is assumed that all file and directory names
+ * in the path will not contain a path separator, even if escaped.
  *
  * It is the caller's responsibility to bu_free() the pointer returned
- * from this routine. Examples of strings returned:
+ * from this routine.
+ *
+ * Examples of strings returned:
  *
  *	/usr/dir/file	file
  * @n	/usr/dir/	dir
@@ -3591,7 +3698,7 @@ BU_EXPORT extern char *bu_dirname(const char *cp);
  * @n	a/		a
  * @n	///		/
  */
-BU_EXPORT extern char *bu_basename(const char *cp);
+BU_EXPORT extern char *bu_basename(const char *path);
 
 /** @} */
 
@@ -4716,27 +4823,6 @@ BU_EXPORT extern void bu_vls_from_argv(struct bu_vls *vp,
 				       const char *argv[]);
 
 /**
- * Build argv[] array from input buffer, by splitting whitespace
- * separated "words" into null terminated strings.
- *
- * 'lim' indicates the maximum number of elements that can be stored
- * in the argv[] array not including a terminating NULL.
- *
- * The input buffer is altered by this process.  The argv[] array
- * points into the input buffer.  The argv[] array needs to have at
- * least lim+1 pointers allocated for lim items plus a terminating
- * pointer to NULL.  The input buffer should not be freed until argv
- * has been freed or passes out of scope.
- *
- * Returns -
- * 0	no words in input
- * argc	number of words of input, now in argv[]
- */
-BU_EXPORT extern int bu_argv_from_string(char *argv[],
-					 int lim,
-					 char *lp);
-
-/**
  * Write the VLS to the provided file pointer.
  */
 BU_EXPORT extern void bu_vls_fwrite(FILE *fp,
@@ -4855,7 +4941,8 @@ BU_EXPORT extern void bu_vls_prepend(struct bu_vls *vp,
 
 /**
  * given an input string, wrap the string in double quotes if there is
- * a space.  escape any existing double quotes.
+ * a space and append it to the provided bu_vls.  escape any existing
+ * double quotes.
  *
  * TODO: consider a specifiable quote character and octal encoding
  * instead of double quote wrapping.  perhaps specifiable encode type:
@@ -4866,8 +4953,11 @@ BU_EXPORT extern void bu_vls_prepend(struct bu_vls *vp,
  * the behavior of this routine is subject to change but should remain
  * a reversible operation when used in conjunction with
  * bu_vls_decode().
+ *
+ * returns a pointer to the encoded string (i.e., the substring held
+ * within the bu_vls)
  */
-BU_EXPORT extern void bu_vls_encode(struct bu_vls *vp, const char *str);
+BU_EXPORT extern const char *bu_vls_encode(struct bu_vls *vp, const char *str);
 
 
 /**
@@ -4876,8 +4966,11 @@ BU_EXPORT extern void bu_vls_encode(struct bu_vls *vp, const char *str);
  *
  * the behavior of this routine is subject to change but should remain
  * the reverse operation of bu_vls_encode().
+ *
+ * returns a pointer to the decoded string (i.e., the substring held
+ * within the bu_vls)
  */
-BU_EXPORT extern void bu_vls_decode(struct bu_vls *vp, const char *str);
+BU_EXPORT extern const char *bu_vls_decode(struct bu_vls *vp, const char *str);
 
 
 /** @} */
@@ -5663,7 +5756,7 @@ BU_EXPORT extern long int bu_mread(int fd, void *bufp, long int n);
  * A hash entry
  */
 struct bu_hash_entry {
-    unsigned long magic;
+    uint32_t magic;
     unsigned char *key;
     unsigned char *value;
     int key_len;
@@ -5703,7 +5796,7 @@ typedef struct bu_hash_entry bu_hash_entry_t;
  * A table of hash entries
  */
 struct bu_hash_tbl {
-    unsigned long magic;
+    uint32_t magic;
     unsigned long mask;
     unsigned long num_lists;
     unsigned long num_entries;
@@ -5742,7 +5835,7 @@ typedef struct bu_hash_tbl bu_hash_tbl_t;
  * A hash table entry record
  */
 struct bu_hash_record {
-    unsigned long magic;
+    uint32_t magic;
     struct bu_hash_tbl *tbl;
     unsigned long index;
     struct bu_hash_entry *hsh_entry;
@@ -5928,7 +6021,7 @@ enum {
 
 
 struct bu_image_file {
-    unsigned long magic;
+    uint32_t magic;
     char *filename;
     int fd;
     int format;			/* BU_IMAGE_* */
@@ -6012,6 +6105,29 @@ BU_EXPORT extern int bu_fchmod(FILE *fp, unsigned long pmode);
  * Functions related to argv processing.
  *
  */
+
+/**
+ * Build argv[] array from input buffer, by splitting whitespace
+ * separated "words" into null terminated strings.
+ *
+ * 'lim' indicates the maximum number of elements that can be stored
+ * in the argv[] array not including a terminating NULL.
+ *
+ * The 'lp' input buffer is altered by this process.  The argv[] array
+ * points into the input buffer.
+ *
+ * The argv[] array needs to have at least lim+1 pointers allocated
+ * for lim items plus a terminating pointer to NULL.  The input buffer
+ * should not be freed until argv has been freed or passes out of
+ * scope.
+ *
+ * Returns -
+ * 0	no words in input
+ * argc	number of words of input, now in argv[]
+ */
+BU_EXPORT extern size_t bu_argv_from_string(char *argv[],
+					    size_t lim,
+					    char *lp);
 
 /**
  * Deallocate all strings in a given argv array and the array itself
@@ -6105,12 +6221,24 @@ BU_EXPORT extern int bu_restore_interrupts();
  * Detect SIMD type at runtime.
  */
 
+#define BU_SIMD_SSE4_2 7
+#define BU_SIMD_SSE4_1 6
+#define BU_SIMD_SSE3 5
 #define BU_SIMD_ALTIVEC 4
 #define BU_SIMD_SSE2 3
 #define BU_SIMD_SSE 2
 #define BU_SIMD_MMX 1
 #define BU_SIMD_NONE 0
+/**
+ * Detect SIMD capabilities at runtime.
+ */
 BU_EXPORT extern int bu_simd_level();
+
+/**
+ * Detect if requested SIMD capabilities are available at runtime.
+ * Returns 1 if they are, 0 if they are not.
+ */
+BU_EXPORT extern int bu_simd_supported(int level);
 
 /** @} */
 

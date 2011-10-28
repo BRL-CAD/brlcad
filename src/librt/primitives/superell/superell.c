@@ -171,6 +171,76 @@ struct superell_specific {
 #define SUPERELL_NULL ((struct superell_specific *)0)
 
 /**
+ * R T _ S U P E R E L L _ B B O X
+ *
+ * Calculate a bounding RPP for a superell
+ */
+int
+rt_superell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+
+    struct rt_superell_internal *eip;
+    fastf_t magsq_a, magsq_b, magsq_c;
+    vect_t Au, Bu, Cu;	
+    mat_t R;
+    vect_t w1, w2, P;	/* used for bounding RPP */
+    fastf_t f;
+
+    eip = (struct rt_superell_internal *)ip->idb_ptr;
+    RT_SUPERELL_CK_MAGIC(eip);
+
+    magsq_a = MAGSQ(eip->a);
+    magsq_b = MAGSQ(eip->b);
+    magsq_c = MAGSQ(eip->c);
+
+
+    /* Create unit length versions of A, B, C */
+    f = 1.0/sqrt(magsq_a);
+    VSCALE(Au, eip->a, f);
+    f = 1.0/sqrt(magsq_b);
+    VSCALE(Bu, eip->b, f);
+    f = 1.0/sqrt(magsq_c);
+    VSCALE(Cu, eip->c, f);
+
+    MAT_IDN(R);
+    VMOVE(&R[0], Au);
+    VMOVE(&R[4], Bu);
+    VMOVE(&R[8], Cu);
+
+    /* Compute bounding RPP */
+    VSET(w1, magsq_a, magsq_b, magsq_c);
+
+    /* X */
+    VSET(P, 1.0, 0, 0);		/* bounding plane normal */
+    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
+    VELMUL(w2, w2, w2);		/* square each term */
+    f = VDOT(w1, w2);
+    f = sqrt(f);
+    (*min)[X] = eip->v[X] - f;	/* V.P +/- f */
+    (*max)[X] = eip->v[X] + f;
+
+    /* Y */
+    VSET(P, 0, 1.0, 0);		/* bounding plane normal */
+    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
+    VELMUL(w2, w2, w2);		/* square each term */
+    f = VDOT(w1, w2);
+    f = sqrt(f);
+    (*min)[Y] = eip->v[Y] - f;	/* V.P +/- f */
+    (*max)[Y] = eip->v[Y] + f;
+
+    /* Z */
+    VSET(P, 0, 0, 1.0);		/* bounding plane normal */
+    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
+    VELMUL(w2, w2, w2);		/* square each term */
+    f = VDOT(w1, w2);
+    f = sqrt(f);
+    (*min)[Z] = eip->v[Z] - f;	/* V.P +/- f */
+    (*max)[Z] = eip->v[Z] + f;
+    
+    return 0;
+}
+
+
+/**
  * R T _ S U P E R E L L _ P R E P
  *
  * Given a pointer to a GED database record, and a transformation
@@ -193,7 +263,6 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     fastf_t magsq_a, magsq_b, magsq_c;
     mat_t R, TEMP;
     vect_t Au, Bu, Cu;	/* A, B, C with unit length */
-    vect_t w1, w2, P;	/* used for bounding RPP */
     fastf_t f;
 
     eip = (struct rt_superell_internal *)ip->idb_ptr;
@@ -297,34 +366,7 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     stp->st_aradius = stp->st_bradius = sqrt(f);
 
     /* Compute bounding RPP */
-    VSET(w1, magsq_a, magsq_b, magsq_c);
-
-    /* X */
-    VSET(P, 1.0, 0, 0);		/* bounding plane normal */
-    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
-    VELMUL(w2, w2, w2);		/* square each term */
-    f = VDOT(w1, w2);
-    f = sqrt(f);
-    stp->st_min[X] = superell->superell_V[X] - f;	/* V.P +/- f */
-    stp->st_max[X] = superell->superell_V[X] + f;
-
-    /* Y */
-    VSET(P, 0, 1.0, 0);		/* bounding plane normal */
-    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
-    VELMUL(w2, w2, w2);		/* square each term */
-    f = VDOT(w1, w2);
-    f = sqrt(f);
-    stp->st_min[Y] = superell->superell_V[Y] - f;	/* V.P +/- f */
-    stp->st_max[Y] = superell->superell_V[Y] + f;
-
-    /* Z */
-    VSET(P, 0, 0, 1.0);		/* bounding plane normal */
-    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
-    VELMUL(w2, w2, w2);		/* square each term */
-    f = VDOT(w1, w2);
-    f = sqrt(f);
-    stp->st_min[Z] = superell->superell_V[Z] - f;	/* V.P +/- f */
-    stp->st_max[Z] = superell->superell_V[Z] + f;
+    if (rt_superell_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
 
     return 0;			/* OK */
 }
@@ -659,7 +701,7 @@ rt_superell_16pts(fastf_t *ov,
  * R T _ S U P E R E L L _ P L O T
  */
 int
-rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     int i;
     struct rt_superell_internal *eip;

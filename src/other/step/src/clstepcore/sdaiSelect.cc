@@ -16,7 +16,7 @@
 #include <ExpDict.h>
 #include <sstream>
 //#include <STEPentity.h>
-#include <scl_string.h>
+#include <string>
 #include <sdai.h>
 #include <STEPattribute.h>
 
@@ -32,12 +32,6 @@ SCLP23(Select)::SCLP23_NAME(Select) (const SelectTypeDescriptor *s,
 			const TypeDescriptor *td) 
 	: _type (s), underlying_type (td)
 {
-#ifdef __OSTORE__
-    if(td)
-      underlying_type_name = td->Name();
-    else
-      underlying_type_name.set_null();
-#endif
 #ifdef SCL_LOGGING
     *logStream << "Exiting SCLP23(Select) constructor." << endl;
 #endif
@@ -76,25 +70,6 @@ const TypeDescriptor *
 SCLP23(Select)::CanBe (const char * n) const  
 {
   return _type -> CanBe (n);
-/*
-    const TypeDescLinkNode * tdn = 
-		(const TypeDescLinkNode *) _type -> GetElements ().GetHead ();
-    const TypeDescriptor *td = tdn -> TypeDesc ();
-
-    SCLstring tmp1;
-    SCLstring tmp2;
-  
-    while (tdn)  {
-	td = tdn -> TypeDesc ();
-	if (strcmp( (char *)StrToUpper( n, tmp1 ), 
-		    (char *)StrToUpper( td->Name(), tmp2 ) ))
-	    ;
-	else 
-	    return td;  // they are the same 
-	tdn = (TypeDescLinkNode *) (tdn -> NextNode ());
-    }
-    return 0;
-*/
 }
 
 
@@ -146,11 +121,7 @@ SCLP23(Select)::IsUnique (const BASE_TYPE bt) const
 
 SCLP23(String) SCLP23(Select)::UnderlyingTypeName () const  
 {
-#ifdef __OSTORE__
-  return underlying_type_name.chars();
-#else
   return underlying_type -> Name ();
-#endif
 }
 
 const TypeDescriptor *  SCLP23(Select)::CurrentUnderlyingType() const 
@@ -165,9 +136,6 @@ SCLP23(Select)::SetUnderlyingType (const TypeDescriptor * td)
   if (!td || !(_type -> CanBe (td))) return 0;
 
   base_type = td -> NonRefType ();
-#ifdef __OSTORE__
-  underlying_type_name = td->Name();
-#endif
 
   return underlying_type = td;
 }
@@ -182,9 +150,6 @@ bool SCLP23(Select)::exists() const
 void SCLP23(Select)::nullify() 
 {
   underlying_type = 0;
-#ifdef __OSTORE__
-  underlying_type_name.set_null();
-#endif
 }
 
 Severity 
@@ -278,7 +243,7 @@ SCLP23(Select)::STEPread (istream& in, ErrorDescriptor *err,
 			  int addFileId, const char *currSch)
 {
     char c ='\0';
-    SCLstring tmp;
+    std::string tmp;
 
 #ifdef SCL_LOGGING
 //    *logStream << "DAVE ERR Entering SCLP23(Select)::STEPread." << endl;
@@ -336,12 +301,12 @@ SCLP23(Select)::STEPread (istream& in, ErrorDescriptor *err,
 	{
 	    if (!eot && ! (eot = isspace (c)) ) 
 	      // as long as eot hasn\'t been reached keep appending
-		tmp.Append(c);
+		tmp += c;
 	    in >> c; 
 	}
 
 	//  check for valid type and set the underlying type
-	if( SetUnderlyingType( CanBeSet( tmp.chars(), currSch ) ) )
+	if( SetUnderlyingType( CanBeSet( tmp.c_str(), currSch ) ) )
 	{   // Assign the value to the underlying type.  CanBeSet() is a
 	    // slightly modified CanBe().  It ensures that a renamed select
 	    // type (see big comment below) "CantBe" one of its member items.
@@ -373,7 +338,7 @@ SCLP23(Select)::STEPread (istream& in, ErrorDescriptor *err,
 		// we're interested in.
 		// This also handles all other cases? other than the if part
 		// above and elements of type entity ref?
-		STEPread_content (in, instances, tmp.chars(), addFileId,
+		STEPread_content (in, instances, tmp.c_str(), addFileId,
 				  currSch);
 		// STEPread_content uses the ErrorDesc data member from the
 		// SCLP23(Select) class
@@ -616,7 +581,7 @@ SCLP23(Select)::STEPwrite(ostream& out, const char *currSch)  const
 	    if(underlying_type->Type() == REFERENCE_TYPE)
 	    {
 //		if(underlying_type->NonRefType() == sdaiSELECT)
-		    SCLstring s;
+        std::string s;
 		    out << StrToUpper(underlying_type->Name(currSch),s) << "(";
 		    STEPwrite_content( out, currSch );
 		    out << ")";
@@ -647,33 +612,19 @@ SCLP23(Select)::STEPwrite(ostream& out, const char *currSch)  const
 	  out << "ERROR Should not have gone here in SCLP23(Select)::STEPwrite()"
 	      << endl;
       }
-/*
-    if (IsUnique(ValueType()) || (ValueType() == ENTITY_TYPE))
-	STEPwrite_content( out ); 
-    else
-        STEPwrite_verbose(out);
-*/
-/*    
-    {
-	SCLstring tmp;
-	out << StrToUpper( CurrentUnderlyingType()->Name(), tmp ) << "(";
-	STEPwrite_content (out); 
-	out << ")";
-    }
-*/
 }
 
 void
 SCLP23(Select)::STEPwrite_verbose(ostream& out, const char *currSch) const
 {
-    SCLstring tmp;
+  std::string tmp;
     out << StrToUpper( CurrentUnderlyingType()->Name(currSch), tmp) << "(";
     STEPwrite_content (out);
     out << ")";
 }
 
 const char *
-SCLP23(Select)::STEPwrite(SCLstring& s, const char *currSch)  const
+SCLP23(Select)::STEPwrite(std::string& s, const char *currSch)  const
 {
   ostringstream buf;
   STEPwrite (buf, currSch);
@@ -682,7 +633,7 @@ SCLP23(Select)::STEPwrite(SCLstring& s, const char *currSch)  const
   /*** tmp = buf.str (); ***/ tmp = &(buf.str()[0]);
   s = tmp;
   delete tmp;
-  return s;
+  return const_cast<char *>(s.c_str());
 }
 
 

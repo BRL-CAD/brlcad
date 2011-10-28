@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
     cout << "\n### Here is a list of entities now in the registry:" << endl;
     registry->ResetEntities();
     const EntityDescriptor *ent = registry->NextEntity();
-    SCLstring tmpstr;
+    std::string tmpstr;
     while (ent)
     {
 	cout << ent->Name() << ": " << ent->TypeString(tmpstr) << endl;

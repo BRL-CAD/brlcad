@@ -14,7 +14,6 @@ bin_PROGRAMS = \
 	showtherm \
 	firpass \
 	${IR_X_BIN} \
-	ir-sgi \
 	${IRDISP_BIN} \
 	secpass \
 	shapefact
@@ -40,9 +39,6 @@ irdisp_LDADD = \
 	${X_LIBS}
 endif
 
-ir_sgi_SOURCES = ir-sgi.c
-ir_sgi_LDADD = ${BU}
-
 if WITH_X11
 ir_X_SOURCES = ir-X.c
 ir_X_CFLAGS = ${X_CFLAGS}
@@ -61,7 +57,6 @@ man_MANS = \
 	showtherm.1 \
 	firpass.1 \
 	${IRDISP_MAN} \
-	ir-sgi.1 \
 	${IR_X_MAN} \
 	secpass.1 \
 	shapefact.1
@@ -70,9 +65,6 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	${IRDISP_EXTRA} \
 	${IR_X_EXTRA} \
-	Compile.sgi \
-	pictsgi.1 \
-	pictsgi.c \
 	pictx.1 \
 	pictx.c \
 	CMakeLists.txt
@@ -86,7 +78,6 @@ FAST_OBJECTS = \
 	$(showtherm_OBJECTS) \
 	$(firpass_OBJECTS) \
 	$(ir_X_OBJECTS) \
-	$(ir_sgi_OBJECTS) \
 	$(irdisp_OBJECTS) \
 	$(secpass_OBJECTS) \
 	$(shapefact_OBJECTS) \

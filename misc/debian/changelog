@@ -1,3 +1,10 @@
+brlcad (7.20.4-0) unstable; urgency=low
+
+  * moved to CMAKE building
+  * changed mime-types names and mime-types icons names
+
+ -- Jordi Sayol <g.sayol@yahoo.es>  Wed, 24 Aug 2011 12:12:44 +0200
+
 brlcad (7.18.6-0) unstable; urgency=low
 
   - new BRL-CAD release

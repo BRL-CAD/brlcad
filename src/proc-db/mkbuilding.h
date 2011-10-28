@@ -30,7 +30,6 @@
 #define USE2X6   2
 
 
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -41,7 +40,6 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "wdb.h"
-
 
 
 void mkbldg_makeWallSegment(char *name, struct rt_wdb *db_filepointer, point_t p1, point_t p2);

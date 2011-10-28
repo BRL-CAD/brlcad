@@ -1,0 +1,251 @@
+DOCBOOK CHARACTERS AND SYMBOLS
+------------------------------
+
+Some special characters for DB inline equations:
+
+ LE  &#x2264;   less than or equal to
+ GE  &#x2265;   greater than or equal to
+ x   &#x00D7;   multiply                   
+ div &#x00F7;   divide
+ add &#x002B;   add
+ pm  &#x00B1;   plus or minus              
+ ne  &#x2260;   not equal to
+ dot &#x2219;   dot operator (multiply)
+ pi  &#x03C0;   small Greek letter pi
+ Pi  &#x03A0;   capital Greek letter Pi
+
+Dashes:
+
+  figure dash     &#x2012; 
+  en dash         &#x2013;       
+  em dash         &#x2014; 
+  quotation dash  &#x2015;
+  swung dash      &#x2053;
+
+Some unicode characters for spaces (see p. 330 in Bob Stayton's book):
+
+ &#x00A0; &nbsp;    no-break space
+ &#x2002; &ensp;    en space, half the width of an em space
+ &#x2003; &emsp;    em space, usually equal to the type size of the font
+ &#x2004; &emsp13;  1/3 em
+ &#x2005; &emsp14;  1/4 em
+ &#x2006;           1/6 em
+ &#x2007; &numsp;   width of a digit
+ &#x2008; &puncsp;  width of narrow punctuation
+ &#x2009; &thinsp;  1/5 em
+ &#x200A; &hairsp;  thinner than thin space
+
+Other symbols:
+ 
+ &#x00A9;           copyright
+ &#x00AE;           registered sign
+ &#x00B0;           degree symbol
+ &#x2120;           service mark
+ &#x2122;           trade mark
+
+Note that the space character should butt against the adjacent
+characters.
+
+SVG EQUATIONS
+-------------
+
+To include fancier equations, do the following:
+
+Use LibreOffice Math to write the equation.  Save the file as X.mml
+where X is a suitable name.
+
+Example mml file:
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+ <semantics>
+  <mrow>
+   <mrow>
+    <msub>
+     <mi>P</mi>
+     <mi>k</mi>
+    </msub>
+   </mrow>
+  </mrow>
+  <annotation encoding="StarMath 5.0">P_{k} = P_{{k}_{MAX}} left lbrace 1 -e^{[-k_{1}(x - x_{0})^{k_{2}}]} right rbrace </annotation>
+ </semantics>
+</math>
+
+Edit the file to remove the "semantics" element. Ensure you add the
+mml file to version control.
+
+Use SVGMath to convert the file to a graphic:
+
+  math2svg -s -o X.svg X.mml
+
+Or you can use the bash script "make-svg.sh" (requires editing to suit
+user preferences and paths) which creates the svg file in a
+user-defined subdirectory and uses xmllint to format it ready for
+further editing either with Inkscape or by hand.
+
+Use Inkscape to view the svg file and edit it if necessary.  Be sure
+to add the new file to version control in the text subdirectory.
+
+Include the svg file in the desired place in DocBook source like this:
+
+<equation id="X">
+<title>General closed-form damage function formula</title>
+<informalfigure>
+<mediaobject>
+  <imageobject role='xhtml'>
+    <!-- centering title taken care of in css --> 
+    <imagedata
+       width='3in' scalefit='1'
+       fileref="./X.svg"
+    />
+  </imageobject>
+  <imageobject role='fo'>
+    <imagedata
+       align='center'
+       format="SVG"
+       fileref="./X.svg"
+    />
+  </imageobject>
+</mediaobject>
+</informalfigure>
+</equation>
+
+
+SVG AND PDF FONT PROBLEMS
+-------------------------
+
+Note there can be font problems for pdf with complex equations.  Querying the
+fop mailing list sheds light on the situation:
+
+<quote>
+from: Vincent Hennebert vhennebert@gmail.com via xmlgraphics.apache.org 
+sender-time: Sent at 05:07 (GMT+01:00). Current time there: 2:23 PM.
+reply-to: fop-users@xmlgraphics.apache.org
+to: fop-users@xmlgraphics.apache.org
+date: Tue, Apr 19, 2011 at 05:07
+subject: Re: Missing Font for SVG to PDF Output
+mailing list: <fop-users.xmlgraphics.apache.org>; mailed by xmlgraphics.apache.org
+...
+
+Make sure that the family name you declare in fop.xconf matches the
+name under which the font is known on the system.
+
+Let's take the font "Linux Libertine" an example. Java would know this
+font under that name. Since Batik uses the Java font system, it will
+also use that name and pass it on to FOP. So you must have a
+font-triplet in your fop.xconf that matches that name:
+
+   <font embed-url="libertine.ttf">
+     <font-triplet name="Linux Libertine" style="normal" weight="normal"/>
+   </font>
+
+If you use something else, FOP will find no match for "LinuxLibertine"
+and will fall back to a default font.
+
+You can use the
+java.awt.GraphicsEnvironment.getAvailableFontFamilyNames method to
+know under which names Java registers the fonts on your system. Of
+course, be sure to also use those names in the SVG file.
+</quote>
+
+
+MARKS FOR ITEMIZED LIST
+-----------------------
+
+For better looking list markers use the 'override' attribute for the
+<listitem>,
+e.g.,
+
+  <listitem override='disc'>        <!-- a small black dot    -->
+  ...
+  <listitem override='smallcircle'> <!-- a small white circle -->
+
+Other list symbols defined in the brlcad stylesheets:
+
+  <xsl:choose>
+    <xsl:when test="$itemsymbol='none'"></xsl:when>
+    <xsl:when test="$itemsymbol='disc'">&#x2022;</xsl:when>
+    <xsl:when test="$itemsymbol='bullet'">&#x25CF;</xsl:when>
+    <xsl:when test="$itemsymbol='endash'">&#x2013;</xsl:when>
+    <xsl:when test="$itemsymbol='emdash'">&#x2014;</xsl:when>
+    <!-- Some of these may work in your XSL-FO processor and fonts -->
+
+    <xsl:when test="$itemsymbol='square'">&#x25A0;</xsl:when>
+    <xsl:when test="$itemsymbol='box'">&#x25A0;</xsl:when>
+    <xsl:when test="$itemsymbol='circle'">&#x25CB;</xsl:when>
+    <xsl:when test="$itemsymbol='opencircle'">&#x25CB;</xsl:when>
+    <xsl:when test="$itemsymbol='whitesquare'">&#x25A1;</xsl:when>
+
+    <!-- these two are not in Linux Libertine: -->
+    <xsl:when test="$itemsymbol='smallwhitesquare'">&#x25AB;</xsl:when>
+    <xsl:when test="$itemsymbol='smallblacksquare'">&#x25AA;</xsl:when>
+
+    <xsl:when test="$itemsymbol='round'">&#x25CF;</xsl:when>
+    <xsl:when test="$itemsymbol='blackcircle'">&#x25CF;</xsl:when>
+    <xsl:when test="$itemsymbol='smallcircle'">&#x25E6;</xsl:when>
+    <xsl:when test="$itemsymbol='triangle'">&#x2023;</xsl:when>
+    <xsl:when test="$itemsymbol='point'">&#x203A;</xsl:when>
+    <!--    
+    <xsl:when test="$itemsymbol='hand'"><fo:inline
+                         font-family="Wingdings 2">A</fo:inline></xsl:when>
+    -->
+    <xsl:otherwise>&#x25CF;</xsl:otherwise><!-- bullet -->
+
+
+EPS AND OTHER GRAPHICS
+----------------------
+
+eps and pdf are not handled well in fop currently.
+
+Use png or tiff for html and svg for fop.
+
+Use scribus (http://www.scribus.net) to convert eps to svg.
+
+Use gimp (http://www.gimp.org) to scale or edit png images.
+
+
+A TEMPLATE FOR A FORMAL FIGURE AND INCLUDED IMAGES
+--------------------------------------------------
+
+To better control images for html and pdf, use different attributes
+according to role in the DB source.  Following is a template that
+gives the basic attributes to do that.  Note the filerefs are the
+same, but, in this case, the image widths are specified differently.
+It sometimes it takes a bit of trial and error to get the right
+attributes and values.  See Reference 2, p. 290, for much more detail.
+
+  <!-- ************************************ -->
+  <figure>
+    <title>???</title>
+    <mediaobject>
+      <imageobject role='html'>
+        <imagedata
+           align="center"
+           contwidthwidth='4.5in' scalefit='1'
+           fileref="./images/vbox/"
+         />
+      </imageobject>
+      <imageobject role='fo'>
+        <imagedata
+           align="center"
+           width='4.5in' scalefit='1'
+           fileref="./images/vbox/"
+         />
+      </imageobject>
+      <textobject>
+        <phrase>a picture</phrase>
+      </textobject>
+    </mediaobject>
+  </figure>
+
+
+REFERENCES
+----------
+
+1. Norman Walsh, "DocBook 5: The Definitive Guide," May 2010, O'Reilly
+   Media, Inc., Sebastopol, CA, ISBN: 978-0-596-80502-9.
+
+2. Bob Stayton, "DocBook XSL: The Complete Guide," Fourth Edition,
+   September 2007, Sagehill Enterprises, Santa Cruz, CA, ISBN:
+   978-0-9741521-3-4.

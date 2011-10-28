@@ -2264,17 +2264,17 @@ revolve_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
     if ((dp=db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&rip->sketch_name), LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot find sketch (%s) for revolve (%s)\n",
 		      bu_vls_addr(&rip->sketch_name), cmd_argvs[1]);
-	rip->sk = (struct rt_sketch_internal *)NULL;
+	rip->skt = (struct rt_sketch_internal *)NULL;
 	return GED_ERROR;
     }
 
     if (rt_db_get_internal(&tmp_ip, dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot import sketch (%s) for revolve (%s)\n",
 		      bu_vls_addr(&rip->sketch_name), cmd_argvs[1]);
-	rip->sk = (struct rt_sketch_internal *)NULL;
+	rip->skt = (struct rt_sketch_internal *)NULL;
 	return GED_ERROR;
     } else
-	rip->sk = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
+	rip->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
 
     return GED_OK;
 }

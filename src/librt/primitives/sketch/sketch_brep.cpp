@@ -144,8 +144,6 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     eip = (struct rt_sketch_internal *)ip->idb_ptr;
     RT_SKETCH_CK_MAGIC(eip);
 
-    *b = ON_Brep::New();
-
     ON_3dPoint plane_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
 
@@ -171,9 +169,9 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     struct line_seg *lsg;
     struct carc_seg *csg;
     struct bezier_seg *bsg;
-    long *lng;
-    for (size_t i = 0; i < (&eip->skt_curve)->seg_count; i++) {
-	lng = (long *)(&eip->skt_curve)->segments[i];
+    uint32_t *lng;
+    for (size_t i = 0; i < (&eip->curve)->count; i++) {
+	lng = (uint32_t *)(&eip->curve)->segment[i];
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
 		{

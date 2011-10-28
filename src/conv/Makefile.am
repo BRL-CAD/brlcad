@@ -16,7 +16,7 @@ EXTRA_DIST = \
 	g-xxx_facets.c \
 	g4-g5.c \
 	g5-g4.c \
-	obj-g_new.c \
+	obj-g.c \
 	patch/pull_comp.sh \
 	patch/pull_solidsub.sh \
 	patch/rpatch.f \
@@ -67,6 +67,7 @@ bin_PROGRAMS = \
 	euclid_unformat \
 	fast4-g \
 	g-acad \
+	g-dot \
 	g-dxf \
 	g-egg \
 	g-euclid \
@@ -88,7 +89,6 @@ bin_PROGRAMS = \
 	nmg-bot \
 	nmg-rib \
 	nmg-sgp \
-	obj-g \
 	off-g \
 	patch-g \
 	pix2asc \
@@ -126,12 +126,6 @@ endif
 asc2g_SOURCES = asc/asc2g.c
 asc2g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
 asc2g_LDADD = ${WDB} ${TCLCAD} ${GED}
-# static is required to avoid MIPSpro 7.3 long rpath linker bug
-if LINK_STATIC_REQUIRED
-asc2g_LDFLAGS = -static
-else
-asc2g_LDFLAGS =
-endif
 
 asc2pix_SOURCES = asc/asc2pix.c
 asc2pix_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
@@ -221,6 +215,10 @@ g5_g4_LDADD = ${WDB}
 g_acad_SOURCES = g-acad.c
 g_acad_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
 g_acad_LDADD = ${WDB}
+
+g_dot_SOURCES = g-dot.c
+g_dot_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
+g_dot_LDADD = ${GED}
 
 g_dxf_SOURCES = dxf/g-dxf.c
 g_dxf_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
@@ -321,10 +319,6 @@ off_g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
 off_g_LDADD = \
 	${WDB} \
 	${WDB_LIBS}
-
-obj_g_SOURCES = obj-g.c
-obj_g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
-obj_g_LDADD = ${WDB}
 
 patch_g_SOURCES = patch/patch-g.c
 patch_g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}

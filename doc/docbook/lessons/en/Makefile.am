@@ -14,7 +14,7 @@ lessonsDOCBOOK_EN = \
 	lessons/en/mged13_placing_shapes_in_3d.xml \
 	lessons/en/mged14_placing_shapes_in_3d_2.xml \
 	lessons/en/mged15_creating_a_toy_truck.xml \
-	lessons/en/mged16_mod_tech_struct.xml 
+	lessons/en/mged16_mod_tech_struct.xml
 
 lessonsDOCBOOK_EN_IMAGES = \
 	lessons/en/images/mged01_commandwindow.png \

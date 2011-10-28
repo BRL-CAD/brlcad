@@ -23,7 +23,15 @@ build: build-stamp
 build-stamp:
 	dh_testdir
 
-	./configure --enable-optimized --enable-almost-everything --with-ogl --disable-debug
+	cmake -DBRLCAD-ENABLE_OPTIMIZED_BUILD=ON \
+		  -DBRLCAD-ENABLE_ALL_LOCAL_LIBS=ON \
+		  -DBRLCAD-ENABLE_STRICT=OFF \
+		  -DCMAKE_BUILD_TYPE=Release \
+		  -DCMAKE_INSTALL_PREFIX=/usr/brlcad \
+		  -DDATA_DIR=share \
+		  -DMAN_DIR=share/man \
+		  -DBRLCAD_BUNDLED_LIBS=BUNDLED
+
 	$(MAKE) $(PARALLEL_OPTIONS)
 
 	touch build-stamp

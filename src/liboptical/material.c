@@ -89,21 +89,22 @@ try_load(const char *path, const char *material, const char *shader_name)
     /* Find the {shader}_mfuncs symbol in the library */
     snprintf(sym, MAXPATHLEN, "%s_mfuncs", shader_name);
     shader_mfuncs = bu_dlsym(handle, sym);
-    if ((dl_error_str=bu_dlerror()) == (char *)NULL) goto found;
 
+    dl_error_str=bu_dlerror();
+    if (dl_error_str == (char *)NULL) {
 
-    /* We didn't find a {shader}_mfuncs symbol, so
-     * try the generic "shader_mfuncs" symbol.
-     */
-    shader_mfuncs = bu_dlsym(handle, "shader_mfuncs");
-    if ((dl_error_str=bu_dlerror()) != (char *)NULL) {
-	/* didn't find anything appropriate, give up */
-	if (R_DEBUG&RDEBUG_MATERIAL) bu_log("%s has no %s table, %s\n", material, sym, dl_error_str);
-	bu_dlclose(handle);
-	return (struct mfuncs *)NULL;
+	/* We didn't find a {shader}_mfuncs symbol, so try the generic
+	 * "shader_mfuncs" symbol.
+	 */
+	shader_mfuncs = bu_dlsym(handle, "shader_mfuncs");
+	if ((dl_error_str=bu_dlerror()) != (char *)NULL) {
+	    /* didn't find anything appropriate, give up */
+	    if (R_DEBUG&RDEBUG_MATERIAL) bu_log("%s has no %s table, %s\n", material, sym, dl_error_str);
+	    bu_dlclose(handle);
+	    return (struct mfuncs *)NULL;
+	}
     }
 
-found:
     if (R_DEBUG&RDEBUG_MATERIAL)
 	bu_log("%s_mfuncs table found\n", shader_name);
 
@@ -112,7 +113,7 @@ found:
 	RT_CK_MF(mfp);
 
 	if (BU_STR_EQUAL(mfp->mf_name, shader_name))
-	    return shader_mfuncs; /* found ! */
+	    return shader_mfuncs; /* found it! */
     }
 
     if (R_DEBUG&RDEBUG_MATERIAL) bu_log("shader '%s' not found in library\n", shader_name);
@@ -220,8 +221,10 @@ mlib_setup(struct mfuncs **headp,
 	bu_log("mlib_setup:  region %s already setup\n", rp->reg_name);
 	return -1;
     }
+
     bu_vls_init(&name);
     bu_vls_init(&params);
+
     material = rp->reg_mater.ma_shader;
     if (material == NULL || material[0] == '\0') {
 	material = mdefault;

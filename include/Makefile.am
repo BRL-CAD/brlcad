@@ -67,6 +67,7 @@ brlcadinclude_wanted = \
 	solid.h \
 	spectrum.h \
 	spm.h \
+	tol.h \
 	vectfont.h \
 	vector_fpu.h \
 	vector_x86.h \
@@ -85,7 +86,7 @@ noinst_HEADERS = \
 	sysv.h
 
 EXTRA_DIST = \
-	config_win_cmake.h \
+	config_win_cmake.h.in \
 	CMakeLists.txt
 
 if ONLY_BENCHMARK

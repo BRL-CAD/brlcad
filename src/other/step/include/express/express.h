@@ -90,161 +90,150 @@ struct Express_ {
 /* global variables */
 /********************/
 
-#ifdef EXPRESS_C
-# define GLOBAL
-# define INITIALLY(value) = value
-#else
-# define GLOBAL extern
-# define INITIALLY(value)
-#endif /*EXPRESS_C*/
+extern Linked_List EXPRESS_path;
+extern int EXPRESSpass;
 
-GLOBAL Linked_List EXPRESS_path;
-GLOBAL int EXPRESSpass;
-
-GLOBAL void (*EXPRESSinit_args) PROTO((int, char**))	INITIALLY(0);
-GLOBAL void (*EXPRESSinit_parse) PROTO((void))		INITIALLY(0);
-GLOBAL int  (*EXPRESSfail) PROTO((Express))		INITIALLY(0);
-GLOBAL int  (*EXPRESSsucceed) PROTO((Express))		INITIALLY(0);
-GLOBAL void (*EXPRESSbackend) PROTO((Express))		INITIALLY(0);
-GLOBAL char  *EXPRESSprogram_name;
+extern void (*EXPRESSinit_args) PROTO((int, char**));
+extern void (*EXPRESSinit_parse) PROTO((void));
+extern int  (*EXPRESSfail) PROTO((Express));
+extern int  (*EXPRESSsucceed) PROTO((Express));
+extern void (*EXPRESSbackend) PROTO((Express));
+extern char  *EXPRESSprogram_name;
 extern char   EXPRESSgetopt_options[];	/* initialized elsewhere */
-GLOBAL int  (*EXPRESSgetopt) PROTO((int,char *))	INITIALLY(0);
-GLOBAL int    EXPRESSignore_duplicate_schemas		INITIALLY(False);
+extern int  (*EXPRESSgetopt) PROTO((int,char *));
+extern int    EXPRESSignore_duplicate_schemas;
 
-GLOBAL Dictionary EXPRESSbuiltins;	/* procedures/functions */
+extern Dictionary EXPRESSbuiltins;	/* procedures/functions */
 
-GLOBAL Error ERROR_bail_out		INITIALLY(ERROR_none);
-GLOBAL Error ERROR_syntax		INITIALLY(ERROR_none);
-GLOBAL Error ERROR_unlabelled_param_type INITIALLY(ERROR_none);
-GLOBAL Error ERROR_file_unreadable;
-GLOBAL Error ERROR_file_unwriteable;
+extern Error ERROR_bail_out;
+extern Error ERROR_syntax;
+extern Error ERROR_unlabelled_param_type;
+extern Error ERROR_file_unreadable;
+extern Error ERROR_file_unwriteable;
 
-GLOBAL struct Scope_ *FUNC_NVL;
-GLOBAL struct Scope_ *FUNC_USEDIN;
+extern struct Scope_ *FUNC_NVL;
+extern struct Scope_ *FUNC_USEDIN;
 
-GLOBAL char *KW_ABS		INITIALLY("ABS");
-GLOBAL char *KW_ABSTRACT	INITIALLY("ABSTRACT");
-GLOBAL char *KW_ACOS		INITIALLY("ACOS");
-GLOBAL char *KW_AGGREGATE	INITIALLY("AGGREGATE");
-GLOBAL char *KW_ALIAS		INITIALLY("ALIAS");
-GLOBAL char *KW_AND		INITIALLY("AND");
-GLOBAL char *KW_ANDOR		INITIALLY("ANDOR");
-GLOBAL char *KW_ARRAY		INITIALLY("ARRAY");
-GLOBAL char *KW_AS		INITIALLY("AS");
-GLOBAL char *KW_ASIN		INITIALLY("ASIN");
-GLOBAL char *KW_ATAN		INITIALLY("ATAN");
-GLOBAL char *KW_BAG		INITIALLY("BAG");
-GLOBAL char *KW_BEGIN		INITIALLY("BEGIN");
-GLOBAL char *KW_BINARY		INITIALLY("BINARY");
-GLOBAL char *KW_BLENGTH		INITIALLY("BLENGTH");
-GLOBAL char *KW_BOOLEAN		INITIALLY("BOOLEAN");
-GLOBAL char *KW_BY		INITIALLY("BY");
-GLOBAL char *KW_CASE		INITIALLY("CASE");
-GLOBAL char *KW_CONST_E		INITIALLY("CONST_E");
-GLOBAL char *KW_CONSTANT	INITIALLY("CONSTANT");
-GLOBAL char *KW_CONTEXT		INITIALLY("CONTEXT");
-GLOBAL char *KW_COS		INITIALLY("COS");
-GLOBAL char *KW_DERIVE		INITIALLY("DERIVE");
-GLOBAL char *KW_DIV		INITIALLY("DIV");
-GLOBAL char *KW_ELSE		INITIALLY("ELSE");
-GLOBAL char *KW_END		INITIALLY("END");
-GLOBAL char *KW_END_ALIAS	INITIALLY("END_ALIAS");
-GLOBAL char *KW_END_CASE	INITIALLY("END_CASE");
-GLOBAL char *KW_END_CONSTANT	INITIALLY("END_CONSTANT");
-GLOBAL char *KW_END_CONTEXT	INITIALLY("END_CONTEXT");
-GLOBAL char *KW_END_ENTITY	INITIALLY("END_ENTITY");
-GLOBAL char *KW_END_FUNCTION	INITIALLY("END_FUNCTION");
-GLOBAL char *KW_END_IF		INITIALLY("END_IF");
-GLOBAL char *KW_END_LOCAL	INITIALLY("END_LOCAL");
-GLOBAL char *KW_END_MODEL	INITIALLY("END_MODEL");
-GLOBAL char *KW_END_PROCEDURE	INITIALLY("END_PROCEDURE");
-GLOBAL char *KW_END_REPEAT	INITIALLY("END_REPEAT");
-GLOBAL char *KW_END_RULE	INITIALLY("END_RULE");
-GLOBAL char *KW_END_SCHEMA	INITIALLY("END_SCHEMA");
-GLOBAL char *KW_END_TYPE	INITIALLY("END_TYPE");
-GLOBAL char *KW_ENTITY		INITIALLY("ENTITY");
-GLOBAL char *KW_ENUMERATION	INITIALLY("ENUMERATION");
-GLOBAL char *KW_ESCAPE		INITIALLY("ESCAPE");
-GLOBAL char *KW_EXISTS		INITIALLY("EXISTS");
-GLOBAL char *KW_EXP		INITIALLY("EXP");
-GLOBAL char *KW_FALSE		INITIALLY("FALSE");
-GLOBAL char *KW_FIXED		INITIALLY("FIXED");
-GLOBAL char *KW_FOR		INITIALLY("FOR");
-GLOBAL char *KW_FORMAT		INITIALLY("FORMAT");
-GLOBAL char *KW_FROM		INITIALLY("FROM");
-GLOBAL char *KW_FUNCTION	INITIALLY("FUNCTION");
-GLOBAL char *KW_GENERIC		INITIALLY("GENERIC");
-GLOBAL char *KW_HIBOUND		INITIALLY("HIBOUND");
-GLOBAL char *KW_HIINDEX		INITIALLY("HIINDEX");
-GLOBAL char *KW_IF		INITIALLY("IF");
-GLOBAL char *KW_IN		INITIALLY("IN");
-GLOBAL char *KW_INCLUDE		INITIALLY("INCLUDE");
-GLOBAL char *KW_INSERT		INITIALLY("INSERT");
-GLOBAL char *KW_INTEGER		INITIALLY("INTEGER");
-GLOBAL char *KW_INVERSE		INITIALLY("INVERSE");
-GLOBAL char *KW_LENGTH		INITIALLY("LENGTH");
-GLOBAL char *KW_LIKE		INITIALLY("LIKE");
-GLOBAL char *KW_LIST		INITIALLY("LIST");
-GLOBAL char *KW_LOBOUND		INITIALLY("LOBOUND");
-GLOBAL char *KW_LOCAL		INITIALLY("LOCAL");
-GLOBAL char *KW_LOG		INITIALLY("LOG");
-GLOBAL char *KW_LOG10		INITIALLY("LOG10");
-GLOBAL char *KW_LOG2		INITIALLY("LOG2");
-GLOBAL char *KW_LOGICAL		INITIALLY("LOGICAL");
-GLOBAL char *KW_LOINDEX		INITIALLY("LOINDEX");
-GLOBAL char *KW_MOD		INITIALLY("MOD");
-GLOBAL char *KW_MODEL		INITIALLY("MODEL");
-GLOBAL char *KW_NOT		INITIALLY("NOT");
-GLOBAL char *KW_NUMBER		INITIALLY("NUMBER");
-GLOBAL char *KW_NVL		INITIALLY("NVL");
-GLOBAL char *KW_ODD		INITIALLY("ODD");
-GLOBAL char *KW_OF		INITIALLY("OF");
-GLOBAL char *KW_ONEOF		INITIALLY("ONEOF");
-GLOBAL char *KW_OPTIONAL	INITIALLY("OPTIONAL");
-GLOBAL char *KW_OR		INITIALLY("OR");
-GLOBAL char *KW_OTHERWISE	INITIALLY("OTHERWISE");
-GLOBAL char *KW_PI		INITIALLY("PI");
-GLOBAL char *KW_PROCEDURE	INITIALLY("PROCEDURE");
-GLOBAL char *KW_QUERY		INITIALLY("QUERY");
-GLOBAL char *KW_REAL		INITIALLY("REAL");
-GLOBAL char *KW_REFERENCE	INITIALLY("REFERENCE");
-GLOBAL char *KW_REMOVE		INITIALLY("REMOVE");
-GLOBAL char *KW_REPEAT		INITIALLY("REPEAT");
-GLOBAL char *KW_RETURN		INITIALLY("RETURN");
-GLOBAL char *KW_ROLESOF		INITIALLY("ROLESOF");
-GLOBAL char *KW_RULE		INITIALLY("RULE");
-GLOBAL char *KW_SCHEMA		INITIALLY("SCHEMA");
-GLOBAL char *KW_SELECT		INITIALLY("SELECT");
-GLOBAL char *KW_SELF		INITIALLY("SELF");
-GLOBAL char *KW_SET		INITIALLY("SET");
-GLOBAL char *KW_SIN		INITIALLY("SIN");
-GLOBAL char *KW_SIZEOF		INITIALLY("SIZEOF");
-GLOBAL char *KW_SKIP		INITIALLY("SKIP");
-GLOBAL char *KW_SQRT		INITIALLY("SQRT");
-GLOBAL char *KW_STRING		INITIALLY("STRING");
-GLOBAL char *KW_SUBTYPE		INITIALLY("SUBTYPE");
-GLOBAL char *KW_SUPERTYPE	INITIALLY("SUPERTYPE");
-GLOBAL char *KW_TAN		INITIALLY("TAN");
-GLOBAL char *KW_THEN		INITIALLY("THEN");
-GLOBAL char *KW_TO		INITIALLY("TO");
-GLOBAL char *KW_TRUE		INITIALLY("TRUE");
-GLOBAL char *KW_TYPE		INITIALLY("TYPE");
-GLOBAL char *KW_TYPEOF		INITIALLY("TYPEOF");
-GLOBAL char *KW_UNIQUE		INITIALLY("UNIQUE");
-GLOBAL char *KW_UNKNOWN		INITIALLY("UNKNOWN");
-GLOBAL char *KW_UNTIL		INITIALLY("UNTIL");
-GLOBAL char *KW_USE		INITIALLY("USE");
-GLOBAL char *KW_USEDIN		INITIALLY("USEDIN");
-GLOBAL char *KW_VALUE		INITIALLY("VALUE");
-GLOBAL char *KW_VALUE_IN	INITIALLY("VALUE_IN");
-GLOBAL char *KW_VALUE_UNIQUE	INITIALLY("VALUE_UNIQUE");
-GLOBAL char *KW_VAR		INITIALLY("VAR");
-GLOBAL char *KW_WHERE		INITIALLY("WHERE");
-GLOBAL char *KW_WHILE		INITIALLY("WHILE");
-GLOBAL char *KW_XOR		INITIALLY("XOR");
-
-#undef GLOBAL
-#undef INITIALLY
+extern char *KW_ABS;
+extern char *KW_ABSTRACT;
+extern char *KW_ACOS;
+extern char *KW_AGGREGATE;
+extern char *KW_ALIAS;
+extern char *KW_AND;
+extern char *KW_ANDOR;
+extern char *KW_ARRAY;
+extern char *KW_AS;
+extern char *KW_ASIN;
+extern char *KW_ATAN;
+extern char *KW_BAG;
+extern char *KW_BEGIN;
+extern char *KW_BINARY;
+extern char *KW_BLENGTH;
+extern char *KW_BOOLEAN;
+extern char *KW_BY;
+extern char *KW_CASE;
+extern char *KW_CONST_E;
+extern char *KW_CONSTANT;
+extern char *KW_CONTEXT;
+extern char *KW_COS;
+extern char *KW_DERIVE;
+extern char *KW_DIV;
+extern char *KW_ELSE;
+extern char *KW_END;
+extern char *KW_END_ALIAS;
+extern char *KW_END_CASE;
+extern char *KW_END_CONSTANT;
+extern char *KW_END_CONTEXT;
+extern char *KW_END_ENTITY;
+extern char *KW_END_FUNCTION;
+extern char *KW_END_IF;
+extern char *KW_END_LOCAL;
+extern char *KW_END_MODEL;
+extern char *KW_END_PROCEDURE;
+extern char *KW_END_REPEAT;
+extern char *KW_END_RULE;
+extern char *KW_END_SCHEMA;
+extern char *KW_END_TYPE;
+extern char *KW_ENTITY;
+extern char *KW_ENUMERATION;
+extern char *KW_ESCAPE;
+extern char *KW_EXISTS;
+extern char *KW_EXP;
+extern char *KW_FALSE;
+extern char *KW_FIXED;
+extern char *KW_FOR;
+extern char *KW_FORMAT;
+extern char *KW_FROM;
+extern char *KW_FUNCTION;
+extern char *KW_GENERIC;
+extern char *KW_HIBOUND;
+extern char *KW_HIINDEX;
+extern char *KW_IF;
+extern char *KW_IN;
+extern char *KW_INCLUDE;
+extern char *KW_INSERT;
+extern char *KW_INTEGER;
+extern char *KW_INVERSE;
+extern char *KW_LENGTH;
+extern char *KW_LIKE;
+extern char *KW_LIST;
+extern char *KW_LOBOUND;
+extern char *KW_LOCAL;
+extern char *KW_LOG;
+extern char *KW_LOG10;
+extern char *KW_LOG2;
+extern char *KW_LOGICAL;
+extern char *KW_LOINDEX;
+extern char *KW_MOD;
+extern char *KW_MODEL;
+extern char *KW_NOT;
+extern char *KW_NUMBER;
+extern char *KW_NVL;
+extern char *KW_ODD;
+extern char *KW_OF;
+extern char *KW_ONEOF;
+extern char *KW_OPTIONAL;
+extern char *KW_OR;
+extern char *KW_OTHERWISE;
+extern char *KW_PI;
+extern char *KW_PROCEDURE;
+extern char *KW_QUERY;
+extern char *KW_REAL;
+extern char *KW_REFERENCE;
+extern char *KW_REMOVE;
+extern char *KW_REPEAT;
+extern char *KW_RETURN;
+extern char *KW_ROLESOF;
+extern char *KW_RULE;
+extern char *KW_SCHEMA;
+extern char *KW_SELECT;
+extern char *KW_SELF;
+extern char *KW_SET;
+extern char *KW_SIN;
+extern char *KW_SIZEOF;
+extern char *KW_SKIP;
+extern char *KW_SQRT;
+extern char *KW_STRING;
+extern char *KW_SUBTYPE;
+extern char *KW_SUPERTYPE;
+extern char *KW_TAN;
+extern char *KW_THEN;
+extern char *KW_TO;
+extern char *KW_TRUE;
+extern char *KW_TYPE;
+extern char *KW_TYPEOF;
+extern char *KW_UNIQUE;
+extern char *KW_UNKNOWN;
+extern char *KW_UNTIL;
+extern char *KW_USE;
+extern char *KW_USEDIN;
+extern char *KW_VALUE;
+extern char *KW_VALUE_IN;
+extern char *KW_VALUE_UNIQUE;
+extern char *KW_VAR;
+extern char *KW_WHERE;
+extern char *KW_WHILE;
+extern char *KW_XOR;
 
 /******************************/
 /* macro function definitions */
@@ -254,14 +243,6 @@ GLOBAL char *KW_XOR		INITIALLY("XOR");
 #define EXPRESSget_filename(e)		((e)->u.express->filename)
 #define EXPRESSput_basename(e,n)	((e)->u.express->basename = (n))
 #define EXPRESSput_filename(e,n)	((e)->u.express->filename = (n))
-
-/********************/
-/* Inline functions */
-/********************/
-
-#if supports_inline_functions || defined(EXPRESS_C)
-
-#endif /*supports_inline_functions || defined(EXPRESS_C)*/
 
 /***********************/
 /* function prototypes */
@@ -275,9 +256,6 @@ extern char *		EXPRESSversion PROTO((void));
 extern int		EXPRESS_fail PROTO((Express));
 extern int		EXPRESS_succeed PROTO((Express));
 extern void		EXPRESSinit_init PROTO((void));
-#if 0
-extern void		EXPRESSdump_model PROTO((Express));
-#endif /*0*/
 extern void             build_complex(Express);
 
 #endif /*EXPRESS_H*/

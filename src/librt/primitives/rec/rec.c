@@ -156,6 +156,110 @@ struct rec_specific {
     fastf_t rec_iBsq;	/* 1/MAGSQ(B) */
 };
 
+/**
+ * R E C _ B B O X
+ *
+ * Calculate the RPP for an REC
+ */
+int
+rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    mat_t R;
+    vect_t P, w1;
+    fastf_t f, tmp, z;
+    double magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
+    double mag_h, mag_a, mag_b;
+    struct rt_tgc_internal *tip;
+
+    RT_CK_DB_INTERNAL(ip);
+
+    tip = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(tip);
+
+    mag_h = sqrt(magsq_h = MAGSQ(tip->h));
+    mag_a = sqrt(magsq_a = MAGSQ(tip->a));
+    mag_b = sqrt(magsq_b = MAGSQ(tip->b));
+    magsq_c = MAGSQ(tip->c);
+    magsq_d = MAGSQ(tip->d);
+
+    MAT_IDN(R);
+    f = 1.0/mag_a;
+    VSCALE(&R[0], tip->a, f);
+    f = 1.0/mag_b;
+    VSCALE(&R[4], tip->b, f);
+    f = 1.0/mag_h;
+    VSCALE(&R[8], tip->h, f);
+
+    /* X */
+    VSET(P, 1.0, 0, 0);		/* bounding plane normal */
+    MAT3X3VEC(w1, R, P);		/* map plane into local coord syst */
+    /* 1st end ellipse (no Z part) */
+    tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
+    if (tmp > SMALL)
+	f = sqrt(tmp);		/* XY part */
+    else
+	f = 0;
+    (*min)[X] = tip->v[X] - f;	/* V.P +/- f */
+    (*max)[X] = tip->v[X] + f;
+    /* 2nd end ellipse */
+    z = w1[Z] * mag_h;		/* Z part */
+    tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
+    if (tmp > SMALL)
+	f = sqrt(tmp);		/* XY part */
+    else
+	f = 0;
+    if (tip->v[X] - f + z < (*min)[X])
+	(*min)[X] = tip->v[X] - f + z;
+    if (tip->v[X] + f + z > (*max)[X])
+	(*max)[X] = tip->v[X] + f + z;
+
+    /* Y */
+    VSET(P, 0, 1.0, 0);		/* bounding plane normal */
+    MAT3X3VEC(w1, R, P);		/* map plane into local coord syst */
+    /* 1st end ellipse (no Z part) */
+    tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
+    if (tmp > SMALL)
+	f = sqrt(tmp);		/* XY part */
+    else
+	f = 0;
+    (*min)[Y] = tip->v[Y] - f;	/* V.P +/- f */
+    (*max)[Y] = tip->v[Y] + f;
+    /* 2nd end ellipse */
+    z = w1[Z] * mag_h;		/* Z part */
+    tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
+    if (tmp > SMALL)
+	f = sqrt(tmp);		/* XY part */
+    else
+	f = 0;
+    if (tip->v[Y] - f + z < (*min)[Y])
+	(*min)[Y] = tip->v[Y] - f + z;
+    if (tip->v[Y] + f + z > (*max)[Y])
+	(*max)[Y] = tip->v[Y] + f + z;
+
+    /* Z */
+    VSET(P, 0, 0, 1.0);		/* bounding plane normal */
+    MAT3X3VEC(w1, R, P);		/* map plane into local coord syst */
+    /* 1st end ellipse (no Z part) */
+    tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
+    if (tmp > SMALL)
+	f = sqrt(tmp);		/* XY part */
+    else
+	f = 0;
+    (*min)[Z] = tip->v[Z] - f;	/* V.P +/- f */
+    (*max)[Z] = tip->v[Z] + f;
+    /* 2nd end ellipse */
+    z = w1[Z] * mag_h;		/* Z part */
+    tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
+    if (tmp > SMALL)
+	f = sqrt(tmp);		/* XY part */
+    else
+	f = 0;
+    if (tip->v[Z] - f + z < (*min)[Z])
+	(*min)[Z] = tip->v[Z] - f + z;
+    if (tip->v[Z] + f + z > (*max)[Z])
+	(*max)[Z] = tip->v[Z] + f + z;
+
+    return 0;
+}
 
 /**
  * R E C _ P R E P
@@ -177,7 +281,7 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_tgc_internal *tip;
     struct rec_specific *rec;
-    double magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
+    double magsq_h, magsq_a, magsq_b;
     double mag_h, mag_a, mag_b;
     mat_t R;
     mat_t Rinv;
@@ -199,8 +303,6 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     mag_h = sqrt(magsq_h = MAGSQ(tip->h));
     mag_a = sqrt(magsq_a = MAGSQ(tip->a));
     mag_b = sqrt(magsq_b = MAGSQ(tip->b));
-    magsq_c = MAGSQ(tip->c);
-    magsq_d = MAGSQ(tip->d);
 
     /* Check for |H| > 0, |A| > 0, |B| > 0 */
     if (NEAR_ZERO(mag_h, RT_LEN_TOL) || NEAR_ZERO(mag_a, RT_LEN_TOL)
@@ -277,77 +379,8 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* Compute bounding sphere and RPP */
     {
 	fastf_t dx, dy, dz;	/* For bounding sphere */
-	vect_t P, w1;
-	fastf_t tmp, z;
-
-	/* X */
-	VSET(P, 1.0, 0, 0);		/* bounding plane normal */
-	MAT3X3VEC(w1, R, P);		/* map plane into local coord syst */
-	/* 1st end ellipse (no Z part) */
-	tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
-	if (tmp > SMALL)
-	    f = sqrt(tmp);		/* XY part */
-	else
-	    f = 0;
-	stp->st_min[X] = rec->rec_V[X] - f;	/* V.P +/- f */
-	stp->st_max[X] = rec->rec_V[X] + f;
-	/* 2nd end ellipse */
-	z = w1[Z] * mag_h;		/* Z part */
-	tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
-	if (tmp > SMALL)
-	    f = sqrt(tmp);		/* XY part */
-	else
-	    f = 0;
-	if (rec->rec_V[X] - f + z < stp->st_min[X])
-	    stp->st_min[X] = rec->rec_V[X] - f + z;
-	if (rec->rec_V[X] + f + z > stp->st_max[X])
-	    stp->st_max[X] = rec->rec_V[X] + f + z;
-
-	/* Y */
-	VSET(P, 0, 1.0, 0);		/* bounding plane normal */
-	MAT3X3VEC(w1, R, P);		/* map plane into local coord syst */
-	/* 1st end ellipse (no Z part) */
-	tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
-	if (tmp > SMALL)
-	    f = sqrt(tmp);		/* XY part */
-	else
-	    f = 0;
-	stp->st_min[Y] = rec->rec_V[Y] - f;	/* V.P +/- f */
-	stp->st_max[Y] = rec->rec_V[Y] + f;
-	/* 2nd end ellipse */
-	z = w1[Z] * mag_h;		/* Z part */
-	tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
-	if (tmp > SMALL)
-	    f = sqrt(tmp);		/* XY part */
-	else
-	    f = 0;
-	if (rec->rec_V[Y] - f + z < stp->st_min[Y])
-	    stp->st_min[Y] = rec->rec_V[Y] - f + z;
-	if (rec->rec_V[Y] + f + z > stp->st_max[Y])
-	    stp->st_max[Y] = rec->rec_V[Y] + f + z;
-
-	/* Z */
-	VSET(P, 0, 0, 1.0);		/* bounding plane normal */
-	MAT3X3VEC(w1, R, P);		/* map plane into local coord syst */
-	/* 1st end ellipse (no Z part) */
-	tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
-	if (tmp > SMALL)
-	    f = sqrt(tmp);		/* XY part */
-	else
-	    f = 0;
-	stp->st_min[Z] = rec->rec_V[Z] - f;	/* V.P +/- f */
-	stp->st_max[Z] = rec->rec_V[Z] + f;
-	/* 2nd end ellipse */
-	z = w1[Z] * mag_h;		/* Z part */
-	tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
-	if (tmp > SMALL)
-	    f = sqrt(tmp);		/* XY part */
-	else
-	    f = 0;
-	if (rec->rec_V[Z] - f + z < stp->st_min[Z])
-	    stp->st_min[Z] = rec->rec_V[Z] - f + z;
-	if (rec->rec_V[Z] + f + z > stp->st_max[Z])
-	    stp->st_max[Z] = rec->rec_V[Z] + f + z;
+	
+	if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
 
 	VSET(stp->st_center,
 	     (stp->st_max[X] + stp->st_min[X])/2,

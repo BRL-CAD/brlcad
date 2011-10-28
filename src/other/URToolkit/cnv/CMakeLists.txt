@@ -50,5 +50,3 @@ URT_EXEC(xbmtorle xbmtorle.c)
 
 URT_EXEC(rletoabA62 "rletoabA62/rle.c rletoabA62/rletoabA62.c")
 URT_EXEC(rletogif "rletogif/compgif.c rletogif/gifencod.c rletogif/rletogif.c")
-
-

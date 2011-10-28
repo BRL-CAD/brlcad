@@ -30,8 +30,6 @@
 
 
 /**
- * r t _ m a t r i x _ t r a n s f o r m
- *
  * apply a matrix transformation to a given input object, setting the
  * resultant transformed object as the output solid.  if freeflag is
  * set, the input object will be released.

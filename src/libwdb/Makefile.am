@@ -19,14 +19,14 @@ libwdb_nil_la_SOURCES = \
 	dynamic_geometry.c \
 	ebm.c \
 	export.c \
-	extr.c \
+	extrude.c \
 	id.c \
 	mater.c \
 	nmg.c \
 	nurb.c \
 	pipe.c \
 	reg.c \
-	skt.c \
+	sketch.c \
 	submodel.c \
 	units.c \
 	vol.c \

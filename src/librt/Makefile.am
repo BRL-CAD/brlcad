@@ -32,7 +32,6 @@ noinst_PROGRAMS = \
 
 # make sure example and temporary code compiles, but don't include it in librt
 librt_xxx_la_SOURCES = \
-	parse.c \
 	primitives/nmg/nmg_junk.c \
 	primitives/xxx/xxx.c
 
@@ -245,6 +244,7 @@ librt_nil_la_SOURCES = \
 	spectrum.c \
 	tcl.c \
 	timer42.c \
+	tol.c \
 	transform.c \
 	tree.c \
 	vers.c \
@@ -287,6 +287,7 @@ noinst_HEADERS = \
 	primitives/bot/btg.h \
 	primitives/bot/tieprivate.h \
 	primitives/brep/brep_debug.h \
+	primitives/dsp/dsp.h \
 	primitives/fixpt.h \
 	primitives/metaball/metaball.h \
 	primitives/revolve/revolve.h \
@@ -313,7 +314,6 @@ EXTRA_DIST = \
 	primitives/bot/tie_kdtree.c \
 	search.h \
 	timer-nt.c \
-	timer52brl.c \
 	timerhep.c \
 	timerunix.c \
 	uvpoints.cpp

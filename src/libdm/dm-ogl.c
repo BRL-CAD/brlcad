@@ -41,8 +41,6 @@
 #  undef X_NOT_POSIX
 #endif
 
-#define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
-
 #include <X11/extensions/XInput.h>
 
 /* glx.h on Mac OS X (and perhaps elsewhere) defines a slew of
@@ -121,7 +119,7 @@ HIDDEN int ogl_setLight(struct dm *dmp, int lighting_on);
 HIDDEN int ogl_setTransparency(struct dm *dmp, int transparency_on);
 HIDDEN int ogl_setDepthMask(struct dm *dmp, int depthMask_on);
 HIDDEN int ogl_setZBuffer(struct dm *dmp, int zbuffer_on);
-HIDDEN int ogl_setWinBounds(struct dm *dmp, int *w);
+HIDDEN int ogl_setWinBounds(struct dm *dmp, fastf_t *w);
 HIDDEN int ogl_debug(struct dm *dmp, int lvl);
 HIDDEN int ogl_beginDList(struct dm *dmp, unsigned int list);
 HIDDEN int ogl_endDList(struct dm *dmp);
@@ -216,7 +214,8 @@ static float wireColor[4];
 static float ambientColor[4];
 static float specularColor[4];
 static float diffuseColor[4];
-static float backColor[] = {1.0, 1.0, 0.0, 1.0}; /* yellow */
+static float backDiffuseColorDark[4];
+static float backDiffuseColorLight[4];
 
 
 void
@@ -436,11 +435,10 @@ ogl_reshape(struct dm *dmp, int width, int height)
 		 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    /*CJXX this might cause problems in perspective mode? */
     glGetIntegerv(GL_MATRIX_MODE, &mm);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
+    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
     glMatrixMode(mm);
 }
 
@@ -473,6 +471,11 @@ ogl_setLight(struct dm *dmp, int lighting_on)
 	glDisable(GL_LIGHTING);
     } else {
 	/* Turn it on */
+
+	if (1 < dmp->dm_light)
+	    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+	else
+	    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, amb_three);
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
@@ -690,8 +693,6 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 
     struct dm_xvars *pubvars = NULL;
     struct ogl_vars *privvars = NULL;
-
-    extern struct dm dm_ogl;
 
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return DM_NULL;
@@ -918,7 +919,6 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 	olist = list = (XDeviceInfoPtr)XListInputDevices(pubvars->dpy, &ndevices);
     }
 
-    /* IRIX 4.0.5 bug workaround */
     if (list == (XDeviceInfoPtr)NULL ||
 	list == (XDeviceInfoPtr)1) goto Done;
 
@@ -1015,10 +1015,12 @@ Done:
     glPushMatrix();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(0.0, 0.0, -1.0);
     glPushMatrix();
     glLoadIdentity();
     privvars->face_flag = 1;	/* faceplate matrix is on top of stack */
+
+    ogl_setZBuffer(dmp, dmp->dm_zbuffer);
+    ogl_setLight(dmp, dmp->dm_light);
 
     return dmp;
 }
@@ -1108,7 +1110,6 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0.0, 0.0, -1.0);
 	glPushMatrix();
 	glLoadIdentity();
 	((struct ogl_vars *)dmp1->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
@@ -1178,7 +1179,6 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0.0, 0.0, -1.0);
 	glPushMatrix();
 	glLoadIdentity();
 	((struct ogl_vars *)dmp2->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
@@ -1319,7 +1319,6 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
     fastf_t *mptr;
     GLfloat gtmat[16];
-    mat_t newm;
 
     if (dmp->dm_debugLevel) {
 	struct bu_vls tmp_vls;
@@ -1357,21 +1356,7 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 	    break;
     }
 
-    if (!dmp->dm_zclip) {
-	mat_t nozclip;
-
-	MAT_IDN(nozclip);
-	nozclip[10] = 1.0e-20;
-	bn_mat_mul(newm, nozclip, mat);
-	mptr = newm;
-    } else {
-	mat_t nozclip;
-
-	MAT_IDN(nozclip);
-	nozclip[10] = dmp->dm_bound;
-	bn_mat_mul(newm, nozclip, mat);
-	mptr = newm;
-    }
+    mptr = mat;
 
     gtmat[0] = *(mptr++);
     gtmat[4] = *(mptr++);
@@ -1395,8 +1380,7 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(0.0, 0.0, -1.0);
-    glMultMatrixf(gtmat);
+    glLoadMatrixf(gtmat);
 
     return TCL_OK;
 }
@@ -1609,12 +1593,21 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
+			glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseColor);
 
-			if (1 < dmp->dm_light) {
-			    glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseColor);
-			    glMaterialfv(GL_BACK, GL_DIFFUSE, backColor);
-			} else
-			    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
+			switch (dmp->dm_light) {
+			case 1:
+			    break;
+			case 2:
+			    glMaterialfv(GL_BACK, GL_DIFFUSE, diffuseColor);
+			    break;
+			case 3:
+			    glMaterialfv(GL_BACK, GL_DIFFUSE, backDiffuseColorDark);
+			    break;
+			default:
+			    glMaterialfv(GL_BACK, GL_DIFFUSE, backDiffuseColorLight);
+			    break;
+			}
 
 			if (dmp->dm_transparency)
 			    glEnable(GL_BLEND);
@@ -1921,6 +1914,16 @@ ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
 	    diffuseColor[2] = wireColor[2] * 0.6;
 	    diffuseColor[3] = wireColor[3];
 
+	    backDiffuseColorDark[0] = wireColor[0] * 0.3;
+	    backDiffuseColorDark[1] = wireColor[1] * 0.3;
+	    backDiffuseColorDark[2] = wireColor[2] * 0.3;
+	    backDiffuseColorDark[3] = wireColor[3];
+
+	    backDiffuseColorLight[0] = wireColor[0] * 0.9;
+	    backDiffuseColorLight[1] = wireColor[1] * 0.9;
+	    backDiffuseColorLight[2] = wireColor[2] * 0.9;
+	    backDiffuseColorLight[3] = wireColor[3];
+
 #if 1
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
@@ -1966,10 +1969,19 @@ ogl_debug(struct dm *dmp, int lvl)
 
 
 HIDDEN int
-ogl_setWinBounds(struct dm *dmp, int *w)
+ogl_setWinBounds(struct dm *dmp, fastf_t *w)
 {
+    GLint mm;
+
     if (dmp->dm_debugLevel)
 	bu_log("ogl_setWinBounds()\n");
+
+    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+	bu_log("ogl_setWinBounds: Couldn't make context current\n");
+	return TCL_ERROR;
+    }
 
     dmp->dm_clipmin[0] = w[0];
     dmp->dm_clipmin[1] = w[2];
@@ -1978,10 +1990,13 @@ ogl_setWinBounds(struct dm *dmp, int *w)
     dmp->dm_clipmax[1] = w[3];
     dmp->dm_clipmax[2] = w[5];
 
-    if (dmp->dm_clipmax[2] <= GED_MAX)
-	dmp->dm_bound = 1.0;
-    else
-	dmp->dm_bound = GED_MAX / dmp->dm_clipmax[2];
+    glGetIntegerv(GL_MATRIX_MODE, &mm);
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glLoadIdentity();
+    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+    glPushMatrix();
+    glMatrixMode(mm);
 
     return TCL_OK;
 }
@@ -2137,44 +2152,40 @@ ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
     unsigned char *idata = NULL;
     int width = 0;
     int height = 0;
-    int found_valid_dm = 0;
     int bytes_per_pixel = 3; /*rgb no alpha for raw pix */
     GLuint *pixels;
     unsigned int pixel;
     unsigned int red_mask = 0xff000000;
     unsigned int green_mask = 0x00ff0000;
     unsigned int blue_mask = 0x0000ff00;
-    unsigned int alpha_mask = 0x000000ff;
     int h, w;
-    int big_endian, swap_bytes;
+#if defined(DM_WGL)
+    unsigned int alpha_mask = 0x000000ff;
+    int big_endian;
+    int swap_bytes;
 
     if ((bu_byteorder() == BU_BIG_ENDIAN))
 	big_endian = 1;
     else
 	big_endian = 0;
 
-#if defined(DM_WGL)
     /* WTF */
     swap_bytes = !big_endian;
-#else
-    swap_bytes = big_endian;
 #endif
 
     if (dmp->dm_type == DM_TYPE_WGL || dmp->dm_type == DM_TYPE_OGL) {
-	int make_ret = 0;
-	found_valid_dm = 1;
 	width = dmp->dm_width;
 	height = dmp->dm_height;
 
 	pixels = bu_calloc(width * height, sizeof(GLuint), "pixels");
 
 #if defined(DM_WGL)
-	make_ret = wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-				  ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc);
+	wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
+		       ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc);
 #else
-	make_ret = glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-				  ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc);
+        glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+		       ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc);
 #endif
 
 	{
@@ -2200,14 +2211,18 @@ ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
 		    int i_h_inv = (height - h - 1)*width + w;
 		    int j = i*bytes_per_pixel;
 		    unsigned char *value = (unsigned char *)(idata + j);
+#if defined(DM_WGL)
 		    unsigned char alpha;
+#endif
+
 		    pixel = pixels[i_h_inv];
 
 		    value[0] = (pixel & red_mask) >> 24;
 		    value[1] = (pixel & green_mask) >> 16;
 		    value[2] = (pixel & blue_mask) >> 8;
-		    alpha = pixel & alpha_mask;
+
 #if defined(DM_WGL)
+		    alpha = pixel & alpha_mask;
 		    if (swap_bytes) {
 			unsigned char tmp_byte;
 

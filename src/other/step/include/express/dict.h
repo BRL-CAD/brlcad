@@ -75,16 +75,8 @@ typedef HashEntry		DictionaryEntry;
 /* global variables */
 /********************/
 
-#ifdef DICTIONARY_C
-#include "defstart.h"
-#else
-#include "decstart.h"
-#endif /*DICTIONARY_C*/
-
-GLOBAL char DICT_type;	/* set as a side-effect of DICT lookup routines */
+extern char DICT_type;	/* set as a side-effect of DICT lookup routines */
 			/* to type of object found */
-
-#include "de_end.h"
 
 /*******************************/
 /* macro function definitions */
@@ -117,12 +109,5 @@ extern Generic		DICTlookup PROTO((Dictionary, char *));
 extern Generic		DICTlookup_symbol PROTO((Dictionary, char *,Symbol **));
 extern Generic		DICTdo PROTO((DictionaryEntry *));
 extern void		DICTprint PROTO((Dictionary));
-
-/********************/
-/* inline functions */
-/********************/
-
-#if supports_inline_functions || defined(DICTIONARY_C)
-#endif /*supports_inline_functions || defined(DICTIONARY_C)*/
 
 #endif /*DICTIONARY_H*/

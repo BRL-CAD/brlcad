@@ -139,6 +139,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"eac", cmd_ged_view_wrapper, ged_eac},
     {"echo", cmd_ged_plain_wrapper, ged_echo},
     {"edcodes", f_edcodes, GED_FUNC_PTR_NULL},
+    {"edit", cmd_ged_plain_wrapper, ged_edit},
     {"color", cmd_ged_plain_wrapper, ged_color},
     {"edcolor", f_edcolor, GED_FUNC_PTR_NULL},
     {"edcomb", cmd_ged_plain_wrapper, ged_edcomb},
@@ -153,6 +154,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"expand", cmd_ged_plain_wrapper, ged_expand},
     {"extrude", f_extrude, GED_FUNC_PTR_NULL},
     {"eye_pt", cmd_ged_view_wrapper, ged_eye},
+    {"exists", cmd_ged_plain_wrapper, ged_exists},
     {"facedef", f_facedef, GED_FUNC_PTR_NULL},
     {"facetize", cmd_ged_plain_wrapper, ged_facetize},
     {"form", cmd_ged_plain_wrapper, ged_form},
@@ -324,6 +326,9 @@ static struct cmdtab mged_cmdtab[] = {
     {"showmats", cmd_ged_plain_wrapper, ged_showmats},
     {"sill", f_be_s_illuminate, GED_FUNC_PTR_NULL},
     {"size", cmd_size, GED_FUNC_PTR_NULL},
+#ifdef HAVE_BULLET
+    {"simulate", cmd_ged_simulate_wrapper, ged_simulate},
+#endif
     {"solid_report", cmd_ged_plain_wrapper, ged_report},
     {"solids", cmd_ged_plain_wrapper, ged_tables},
     {"solids_on_ray", cmd_ged_plain_wrapper, ged_solids_on_ray},
@@ -349,7 +354,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"track", f_amtrack, GED_FUNC_PTR_NULL},
     {"tracker", f_tracker, GED_FUNC_PTR_NULL},
     {"translate", f_tr_obj, GED_FUNC_PTR_NULL},
-    {"translate2", cmd_ged_plain_wrapper, ged_translate},
     {"tree", cmd_ged_plain_wrapper, ged_tree},
     {"unhide", cmd_ged_plain_wrapper, ged_unhide},
     {"units", cmd_units, GED_FUNC_PTR_NULL},

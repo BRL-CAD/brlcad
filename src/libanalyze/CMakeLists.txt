@@ -1,11 +1,16 @@
+# Include directories needed by libanalyze users
+SET(ANALYZE_INCLUDE_DIRS
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	${BU_INCLUDE_DIRS}
+	)
+BRLCAD_INCLUDE_DIRS(ANALYZE_INCLUDE_DIRS)
+
 set(LIBANALYZE_SOURCES
     density.c
     overlaps.c
 )
 
-include_directories(
-    ${TCL_INCLUDE_DIRS}
-)
-
 BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" libbu)
 SET_TARGET_PROPERTIES(libanalyze PROPERTIES VERSION 19.0.1 SOVERSION 19)
+CMAKEFILES(Makefile.am)

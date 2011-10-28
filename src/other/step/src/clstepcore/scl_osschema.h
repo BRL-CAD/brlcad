@@ -5,7 +5,7 @@
 
 /*
 */
-#include <scl_string.h>
+#include <string>
 #include <sdai.h>
 
 #include <errordesc.h>
@@ -28,7 +28,7 @@ void scl_dummy ()
 
 OS_MARK_SCHEMA_TYPE(ErrorDescriptor)
 
-OS_MARK_SCHEMA_TYPE(SCLstring)
+OS_MARK_SCHEMA_TYPE(std::string)
 OS_MARK_SCHEMA_TYPE(SCLP23(String))
 OS_MARK_SCHEMA_TYPE(SCLP23(Binary))
 OS_MARK_SCHEMA_TYPE(SCLP23(Enum))

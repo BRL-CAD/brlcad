@@ -103,21 +103,54 @@ __BEGIN_DECLS
  *@n tol->para = 1 - tol->perp;
  */
 struct bn_tol {
-    unsigned long magic;
+    uint32_t magic;
     double dist;		/**< @brief >= 0 */
     double dist_sq;		/**< @brief dist * dist */
     double perp;		/**< @brief nearly 0 */
     double para;		/**< @brief nearly 1 */
 };
+
+/**
+ * asserts the validity of a bn_tol struct.
+ */
 #define BN_CK_TOL(_p)	BU_CKMAG(_p, BN_TOL_MAGIC, "bn_tol")
 
+/**
+ * initializes a bn_tol struct to zero without allocating any memory.
+ */
+#define BN_TOL_INIT(_p) { \
+	(_p)->magic = BN_TOL_MAGIC; \
+	(_p)->dist = 0.0; \
+	(_p)->dist_sq = 0.0; \
+	(_p)->perp = 0.0; \
+	(_p)->para = 1.0; \
+    }
+
+/**
+ * macro suitable for declaration statement zero-initialization of a
+ * bn_tol struct.
+ */
+#define BN_TOL_INIT_ZERO { BN_TOL_MAGIC, 0.0, 0.0, 0.0, 1.0 }
+
+/**
+ * returns truthfully whether a bn_tol struct has been initialized.
+ */
+#define BN_TOL_IS_INITIALIZED(_p) (((struct bn_tol *)(_p) != (struct bn_tol *)0) && LIKELY((_p)->magic == BN_TOL_MAGIC))
+
+/**
+ * returns truthfully whether a given dot-product of two unspecified
+ * vectors are within a specified parallel tolerance.
+ */
 #define BN_VECT_ARE_PARALLEL(_dot, _tol)				\
     (((_dot) <= -SMALL_FASTF) ? (NEAR_EQUAL((_dot), -1.0, (_tol)->perp)) : (NEAR_EQUAL((_dot), 1.0, (_tol)->perp)))
 
+/**
+ * returns truthfully whether a given dot-product of two unspecified
+ * vectors are within a specified perpendicularity tolerance.
+ */
 #define BN_VECT_ARE_PERP(_dot, _tol)					\
     (((_dot) < 0) ? ((-(_dot))<=(_tol)->perp) : ((_dot) <= (_tol)->perp))
 
-#define BN_APPROXEQUAL(_a, _b, _tol) (fabs((_a) - (_b)) <= _tol->dist)
 
 
 /** @} */
@@ -644,7 +677,7 @@ BN_EXPORT extern void bn_wrt_point_direc(mat_t out,
  */
 
 struct bn_unif {
-    unsigned long magic;
+    uint32_t magic;
     long msr_seed;
     int msr_double_ptr;
     double *msr_doubles;
@@ -662,7 +695,7 @@ struct bn_unif {
  * msr_gauss_fill.
  */
 struct bn_gauss {
-    unsigned long magic;
+    uint32_t magic;
     long msr_gauss_seed;
     int msr_gauss_dbl_ptr;
     double *msr_gauss_doubles;
@@ -776,30 +809,16 @@ BN_EXPORT extern int bn_dist_pt2_lseg2(fastf_t *dist_sq,
 				       const point_t b,
 				       const point_t p,
 				       const struct bn_tol *tol);
-#ifdef TRI_PROTOTYPE
-BN_EXPORT extern int bn_isect_lseg3_lseg3_new(fastf_t *dist,
+BN_EXPORT extern int bn_isect_lseg3_lseg3(fastf_t *dist,
 					      const point_t p, const vect_t pdir,
 					      const point_t q, const vect_t qdir,
 					      const struct bn_tol *tol);
-#endif
-BN_EXPORT extern int bn_isect_lseg3_lseg3(fastf_t *dist,
-					  const point_t p, const vect_t pdir,
-					  const point_t q, const vect_t qdir,
-					  const struct bn_tol *tol);
-#ifdef TRI_PROTOTYPE
-BN_EXPORT extern int bn_isect_line3_line3_new(fastf_t *s, fastf_t *t,
+BN_EXPORT extern int bn_isect_line3_line3(fastf_t *s, fastf_t *t,
 					      const point_t p0,
 					      const vect_t u,
 					      const point_t q0,
 					      const vect_t v,
 					      const struct bn_tol *tol);
-#endif
-BN_EXPORT extern int bn_isect_line3_line3(fastf_t *t, fastf_t *u,
-					  const point_t p,
-					  const vect_t d,
-					  const point_t a,
-					  const vect_t c,
-					  const struct bn_tol *tol);
 BN_EXPORT extern int bn_2line3_colinear(const point_t p1,
 					const vect_t d1,
 					const point_t p2,
@@ -953,7 +972,7 @@ BN_EXPORT extern int bn_isect_planes(point_t pt,
  * bn_poly->cf[n] corresponds to X^n
  */
 typedef struct bn_poly {
-    unsigned long magic;
+    uint32_t magic;
     size_t dgr;
     double cf[BN_MAX_POLY_DEGREE+1];
 }  bn_poly_t;
@@ -1013,7 +1032,7 @@ BN_EXPORT extern void bn_pr_roots(const char *title,
  * Polynomial data type
  */
 typedef struct bn_multipoly {
-    unsigned long magic;
+    uint32_t magic;
     int dgrs;
     int dgrt;
     double **cf;
@@ -1454,7 +1473,7 @@ BN_EXPORT extern const double bn_radtodeg;
  *
  */
 struct bn_table {
-    unsigned long magic;
+    uint32_t magic;
     size_t nx;
     fastf_t x[1];	/**< @brief array of nx+1 wavelengths, dynamically sized */
 };
@@ -1480,7 +1499,7 @@ struct bn_table {
 #endif
 
 struct bn_tabdata {
-    unsigned long magic;
+    uint32_t magic;
     size_t ny;
     const struct bn_table *table;	/**< @brief Up pointer to definition of X axis */
     fastf_t y[1];			/**< @brief array of ny samples, dynamically sized */
@@ -1702,7 +1721,7 @@ struct bn_vlist  {
  * blocks of vlists, each with an associated color.
  */
 struct bn_vlblock {
-    unsigned long magic;
+    uint32_t magic;
     size_t nused;
     size_t max;
     long *rgb;		/**< @brief rgb[max] variable size array */
@@ -1736,7 +1755,7 @@ BN_EXPORT extern void bn_vlist_2string(struct bu_list *vhead,
  * holds all the required info for a single vertex tree
  */
 struct vert_root {
-    unsigned long magic;
+    uint32_t magic;
     int tree_type;		/**< @brief vertices or vertices with normals */
     union vert_tree *the_tree;	/**< @brief the actual vertex tree */
     fastf_t *the_array;		/**< @brief the array of vertices */

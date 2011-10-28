@@ -46,7 +46,7 @@ main(int argc, char *argv[])
 {
     static int verbose;
     static struct bn_tol tol;
-    
+
     static const char usage[] = "Usage: %s [-v] [-xX lvl] < brlcad_db.g > new db.g\n\
 	options:\n\
 		v - verbose\n\
@@ -63,7 +63,7 @@ main(int argc, char *argv[])
 
     /* XXX These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;

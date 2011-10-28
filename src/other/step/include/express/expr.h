@@ -192,31 +192,23 @@ struct EXPop_entry {
 /* global variables */
 /********************/
 
-#ifdef EXPRESSION_C
-#include "defstart.h"
-#else
-#include "decstart.h"
-#endif /*EXPRESSION_C*/
+extern struct EXPop_entry EXPop_table[OP_LAST];
 
-GLOBAL struct EXPop_entry EXPop_table[OP_LAST];
+extern Expression  LITERAL_E;
+extern Expression  LITERAL_INFINITY;
+extern Expression  LITERAL_PI;
+extern Expression  LITERAL_ZERO;
+extern Expression  LITERAL_ONE;
 
-GLOBAL Expression 	LITERAL_E		INITIALLY(EXPRESSION_NULL);
-GLOBAL Expression 	LITERAL_INFINITY	INITIALLY(EXPRESSION_NULL);
-GLOBAL Expression 	LITERAL_PI		INITIALLY(EXPRESSION_NULL);
-GLOBAL Expression 	LITERAL_ZERO		INITIALLY(EXPRESSION_NULL);
-GLOBAL Expression 	LITERAL_ONE;
+extern Error ERROR_bad_qualification;
+extern Error ERROR_integer_expression_expected;
+extern Error ERROR_implicit_downcast;
+extern Error ERROR_ambig_implicit_downcast;
 
-GLOBAL Error	ERROR_bad_qualification			INITIALLY(ERROR_none);
-GLOBAL Error	ERROR_integer_expression_expected	INITIALLY(ERROR_none);
-GLOBAL Error	ERROR_implicit_downcast			INITIALLY(ERROR_none);
-GLOBAL Error	ERROR_ambig_implicit_downcast		INITIALLY(ERROR_none);
-
-GLOBAL struct freelist_head EXP_fl;
-GLOBAL struct freelist_head OP_fl;
-GLOBAL struct freelist_head QUERY_fl;
-GLOBAL struct freelist_head QUAL_ATTR_fl;
-
-#include "de_end.h"
+extern struct freelist_head EXP_fl;
+extern struct freelist_head OP_fl;
+extern struct freelist_head QUERY_fl;
+extern struct freelist_head QUAL_ATTR_fl;
 
 /******************************/
 /* macro function definitions */
@@ -279,22 +271,5 @@ extern Expression 	QUERYcreate PROTO((Symbol *, Expression));
 extern void		EXPinitialize PROTO((void));
 extern Type		EXPtype PROTO((Expression,struct Scope_ *));
 extern int		EXPget_integer_value PROTO((Expression));
-
-/********************/
-/* inline functions */
-/********************/
-
-#if supports_inline_functions || defined(EXPRESSION_C)
-
-static_inline
-int
-OPget_number_of_operands(Op_Code op)
-{
-	if ((op == OP_NEGATE) || (op == OP_NOT)) return 1;
-	else if (op == OP_SUBCOMPONENT) return 3;
-	else return 2;
-}
-
-#endif /* supports_inline_functions || defined(EXPRESSION_C) */
 
 #endif /*EXPRESSION_H*/

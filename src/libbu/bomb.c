@@ -108,9 +108,17 @@ bu_bomb(const char *str)
 	fd = open("/dev/tty", 1);
 	if (LIKELY(fd > 0)) {
 	    if (str && (strlen(str) > 0)) {
-		int ret;
-		ret = write(fd, str, strlen(str));
+		size_t len;
+		ssize_t ret;
+
+		len = strlen(str);
+		ret = write(fd, str, len);
+		if (ret != (ssize_t)len)
+		    perror("write failed");
+
 		ret = write(fd, "\n", 1);
+		if (ret != 1)
+		    perror("write failed");
 	    }
 	    close(fd);
 	}
@@ -155,8 +163,10 @@ bu_bomb(const char *str)
 
 	fd = open("/dev/tty", 1);
 	if (LIKELY(fd > 0)) {
-	    int ret;
+	    ssize_t ret;
 	    ret = write(fd, "Causing intentional core dump due to debug flag\n", 48);
+	    if (ret != 48)
+		perror("write failed");
 	    close(fd);
 	}
 	abort();	/* should dump if ulimit is non-zero */

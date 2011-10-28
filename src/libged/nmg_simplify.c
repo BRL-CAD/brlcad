@@ -158,7 +158,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	    nmg_shell_coplanar_face_merge(s, &gedp->ged_wdbp->wdb_tol, 1);
 	    if (!nmg_kill_cracks(s)) {
 		(void) nmg_model_edge_fuse(m, &gedp->ged_wdbp->wdb_tol);
-		(void) nmg_model_edge_g_fuse(m, &gedp->ged_wdbp->wdb_tol);
+		(void) nmg_edge_g_fuse(&m->magic, &gedp->ged_wdbp->wdb_tol);
 		(void) nmg_unbreak_region_edges(&r->l.magic);
 		if (nmg_to_arb(m, arb_int)) {
 		    new_intern.idb_ptr = (genptr_t)(arb_int);
@@ -205,7 +205,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	nmg_shell_coplanar_face_merge(s, &gedp->ged_wdbp->wdb_tol, 1);
 	if (!nmg_kill_cracks(s)) {
 	    (void) nmg_model_edge_fuse(m, &gedp->ged_wdbp->wdb_tol);
-	    (void) nmg_model_edge_g_fuse(m, &gedp->ged_wdbp->wdb_tol);
+	    (void) nmg_edge_g_fuse(&m->magic, &gedp->ged_wdbp->wdb_tol);
 	    (void) nmg_unbreak_region_edges(&r->l.magic);
 	    if (nmg_to_arb(m, arb_int)) {
 		new_intern.idb_ptr = (genptr_t)(arb_int);

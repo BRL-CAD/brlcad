@@ -72,15 +72,7 @@ struct Case_Item_ {
 /* global variables */
 /********************/
 
-#ifdef CASE_ITEM_C
-#include "defstart.h"
-#else
-#include "decstart.h"
-#endif /*CASE_ITEM_C*/
-
-GLOBAL struct freelist_head CASE_IT_fl;
-
-#include "de_end.h"
+extern struct freelist_head CASE_IT_fl;
 
 /******************************/
 /* macro function definitions */
@@ -98,12 +90,5 @@ GLOBAL struct freelist_head CASE_IT_fl;
 
 extern Case_Item 	CASE_ITcreate PROTO((Linked_List, struct Statement_ *));
 extern void		CASE_ITinitialize PROTO((void));
-
-/********************/
-/* inline functions */
-/********************/
-
-#if supports_inline_functions || defined(CASE_ITEM_C)
-#endif /* supports_inline_functions || defined(CASE_ITEM_C) */
 
 #endif /*CASE_ITEM_H*/

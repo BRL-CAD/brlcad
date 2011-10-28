@@ -14,11 +14,6 @@
 #include <time.h>
 
 
-#ifdef __OSTORE__
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#include <ostore/coll.hh>
-#endif
-
 #include "StrUtil.hh"
 //#include "imppackages.hh"
 #include "ErrorRpt.hh"
@@ -58,62 +53,6 @@ char * strDup(char *destStr, const char *srcStr)
 
   return destStr;
 }
-
-#ifdef __OSTORE__
-char * strDup(char * destStr, const char * srcStr, os_segment * segment) 
-{
-  if (destStr != NULL)
-    {
-      delete [] destStr;
-
-      destStr = NULL;
-    }
-
-  if (srcStr != NULL)
-   {
-     destStr = new (segment, os_typespec::get_char(),
-                        strlen(srcStr)+1) char[strlen(srcStr) + 1];
-
-     if (destStr != NULL)
-       {
-         strcpy(destStr, srcStr);
-       }
-     else
-       {
-         reportServerError(serverNoMemoryError);
-       }
-   }
-
-  return destStr;
-}
-
-char * strDup(char * destStr, const char * srcStr, os_database * database) 
-{
-  if (destStr != NULL)
-    {
-      delete [] destStr;
-
-      destStr = NULL;
-    }
-
-  if (srcStr != NULL)
-   {
-     destStr = new (database, os_typespec::get_char(),
-                        strlen(srcStr)+1) char[strlen(srcStr) + 1];
-
-     if (destStr != NULL)
-       {
-         strcpy(destStr, srcStr);
-       }
-     else
-       {
-         reportServerError(serverNoMemoryError);
-       }
-   }
-
-  return destStr;
-}
-#endif __OSTORE__
 
 //
 //  Free the memory allocated to a string

@@ -47,7 +47,7 @@ SCLundefined::STEPread(istream &in, ErrorDescriptor *err)
 {
     char c = '\0';
     ostringstream ss;
-    SCLstring str;
+    std::string str;
 
     int terminal = 0;
 
@@ -70,14 +70,14 @@ SCLundefined::STEPread(istream &in, ErrorDescriptor *err)
 	    in.putback(c);
 
 	    PushPastImbedAggr(in, str, err);
-	    ss << str.chars();
+	    ss << str.c_str();
 	    break;
 
 	  case '\'':
 	    in.putback(c);
 
 	    PushPastString(in, str, err);
-	    ss << str.chars();
+	    ss << str.c_str();
 	    break;
 
 	  case ',':	
@@ -116,29 +116,29 @@ SCLundefined::STEPread(istream &in, ErrorDescriptor *err)
 }
 
 const char *
-SCLundefined::asStr(SCLstring & s) const
+SCLundefined::asStr(std::string & s) const
 {
-    s = val.chars();
-    return s.chars();
+    s = val.c_str();
+    return const_cast<char *>(s.c_str());
 }
 
 const char *
-SCLundefined::STEPwrite(SCLstring &s)
+SCLundefined::STEPwrite(std::string &s)
 {
-    if(val.rep())
+    if(val.c_str() != "")
     {
-	s = val.chars();
+	s = val.c_str();
     }
     else 
 	s = "$";
-    return s.chars();
+    return const_cast<char *>(s.c_str());
 }
 
 void 
 SCLundefined::	STEPwrite (ostream& out)
 {
-    if(val.rep())
-	out << val.chars();
+    if(val.c_str() != "")
+	out << val.c_str();
     else 
 	out << "$";
 }
@@ -146,7 +146,7 @@ SCLundefined::	STEPwrite (ostream& out)
 SCLundefined& 
 SCLundefined::operator= (const SCLundefined& x)  
 {
-    SCLstring tmp;
+    std::string tmp;
     val = x.asStr(tmp);
     return *this;
 }
@@ -155,7 +155,7 @@ SCLundefined&
 SCLundefined::operator= (const char * str)
 {
     if (!str)
-	val.set_null();
+	val.clear();
     else
 	val = str;
     return *this;
@@ -179,7 +179,7 @@ SCLundefined::set_null ()
 int
 SCLundefined::is_null ()  
 {
-    return (!strcmp (val.chars(), ""));
+    return (!strcmp (val.c_str(), ""));
     
 }
 

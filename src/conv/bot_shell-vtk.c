@@ -386,9 +386,9 @@ main(int argc, char *argv[])
 
     /* These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-5;
+    tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
     /* Get command line arguments. */
@@ -561,7 +561,7 @@ main(int argc, char *argv[])
 
     /* now write out the results */
     if ( debug ) {
-	bu_log( "Writing output (%ld vertices and %d faces)\n", verts->curr_vert, num_faces );
+	bu_log( "Writing output (%zu vertices and %ld faces)\n", verts->curr_vert, num_faces );
     }
     fprintf( fd_out, "# vtk DataFile Version 1.0\n" );
     fprintf( fd_out, "%s", argv[database_index] );

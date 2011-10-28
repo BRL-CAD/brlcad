@@ -1,7 +1,7 @@
 # Something in the standard build flags doesn't interact well with
-# the lex output here, and even -w doesn't avoid the issue (??) 
-# so for this one directory, go vanilla until we can get a lex/yacc 
-# setup that reliably produces code that will work in strict 
+# the lex output here, and even -w doesn't avoid the issue (??)
+# so for this one directory, go vanilla until we can get a lex/yacc
+# setup that reliably produces code that will work in strict
 # environments
 STRING(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
 IF(BUILD_TYPE)
@@ -41,3 +41,4 @@ SET(mged_points_ignore_files
 	process.h
 	)
 CMAKEFILES(${mged_points_ignore_files})
+CMAKEFILES(Makefile.am)

@@ -25,6 +25,7 @@
 #==============================================================================
 
 # This command causes helplib.tcl to get read in.
+source [file join [bu_brlcad_data "tclscripts"] "helplib.tcl"]
 helplib
 
 set mged_help_data(?)		{{}	{summary of available mged commands}}
@@ -253,6 +254,7 @@ set mged_help_data(regdef)	{{ident [air [los [material]]]}	{change next region d
 set mged_help_data(regions)	{{file object(s)}	{make ascii summary of regions}}
 set mged_help_data(reid)	{{assembly regionID}	{incrementally assign region IDs to all regions under a given assembly starting with the given region ID number}}
 set mged_help_data(release)	{{[name]}	{release display processor}}
+set mged_help_data(relos)	{{assembly LOS}	{assign the same LOS to all regions under some given assembly}}
 set mged_help_data(remat)	{{assembly materialID}	{assign the same material ID number to all regions under some given assembly}}
 set mged_help_data(reset)	{{}	{Reset view such that all solids can be seen}}
 set mged_help_data(rfarb)	{{}	{makes arb given point, 2 coord of 3 pts, rot, fb, thickness}}

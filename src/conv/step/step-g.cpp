@@ -57,6 +57,8 @@ usage()
 int
 main(int argc, char *argv[])
 {
+    int ret = 0;
+
     /*
      * You have to initialize the schema before you do anything else.
      * This initializes all of the registry information for the schema
@@ -73,10 +75,8 @@ main(int argc, char *argv[])
     // process command line arguments
     int c;
     char *output_file=(char *)NULL;
-    while ((c=bu_getopt(argc, argv, "o:")) != -1)
-    {
-	switch (c)
-	{
+    while ((c=bu_getopt(argc, argv, "o:")) != -1) {
+	switch (c) {
 	    case 'o':
 		output_file = bu_optarg;
 		break;
@@ -92,12 +92,16 @@ main(int argc, char *argv[])
 	bu_exit(1, NULL);
     }
 
-    if (bu_file_exists(output_file)) {
-	bu_exit(1, "ERROR - refusing to overwrite existing %s.", output_file);
-    }
-    
     argc -= bu_optind;
     argv += bu_optind;
+
+    /* check our inputs/outputs */
+    if (bu_file_exists(output_file)) {
+	bu_exit(1, "ERROR: refusing to overwrite existing \"%s\" file", output_file);
+    }
+    if (!bu_file_exists(argv[0]) && !BU_STR_EQUAL(argv[0], "-")) {
+	bu_exit(2, "ERROR: unable to read input \"%s\" STEP file", argv[0]);
+    }
 
     std::string iflnm = argv[0];
     std::string oflnm = output_file;
@@ -110,21 +114,28 @@ main(int argc, char *argv[])
 	step->printLoadStatistics();
 
 	BRLCADWrapper *dotg  = new BRLCADWrapper();
-
-	if (dotg->OpenFile(oflnm.c_str())) {
-	    step->convert(dotg);
+	if (!dotg) {
+	    std::cerr << "ERROR: unable to create BRL-CAD instance" << std::endl;
+	    ret = 3;
 	} else {
-	    std::cerr << "Error opening BRL-CAD output file -" << oflnm << std::endl;
+
+	    std::cerr << "Writing output file [" << oflnm << "] ...";
+	    if (dotg->OpenFile(oflnm.c_str())) {
+		step->convert(dotg);
+		std::cerr << "done!" << std::endl;
+	    } else {
+		std::cerr << "ERROR: unable to open BRL-CAD output file [" << oflnm << "]" << std::endl;
+		ret = 4;
+	    }
+
+	    dotg->Close();
+	    delete dotg;
 	}
-
-	dotg->Close();
-
-	Factory::DeleteObjects();
-	delete dotg;
     }
     delete step;
+    Factory::DeleteObjects();
 
-    return 0;
+    return ret;
 }
 
 

@@ -185,6 +185,59 @@ const struct bu_structparse rt_ehy_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+/**
+ * R T _ E H Y _ B B O X
+ *
+ * Create a bounding RPP for an ehy
+ */
+int
+rt_ehy_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    struct rt_ehy_internal *xip;
+    vect_t ehy_A, ehy_B, ehy_An, ehy_Bn, ehy_H;
+    vect_t pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8;
+    RT_CK_DB_INTERNAL(ip);
+    xip = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(xip);
+
+    VMOVE(ehy_H, xip->ehy_H);
+    VUNITIZE(ehy_H);
+    VMOVE(ehy_A, xip->ehy_Au);
+    VCROSS(ehy_B, ehy_A, ehy_H);
+
+    VSETALL((*min), MAX_FASTF);
+    VSETALL((*max), -MAX_FASTF);
+
+    VSCALE(ehy_A, ehy_A, xip->ehy_r1);
+    VSCALE(ehy_B, ehy_B, xip->ehy_r2);
+    VREVERSE(ehy_An, ehy_A);
+    VREVERSE(ehy_Bn, ehy_B);
+
+    VADD3(pt1, xip->ehy_V, ehy_A, ehy_B);
+    VADD3(pt2, xip->ehy_V, ehy_A, ehy_Bn);
+    VADD3(pt3, xip->ehy_V, ehy_An, ehy_B);
+    VADD3(pt4, xip->ehy_V, ehy_An, ehy_Bn);
+    VADD4(pt5, xip->ehy_V, ehy_A, ehy_B, xip->ehy_H);
+    VADD4(pt6, xip->ehy_V, ehy_A, ehy_Bn, xip->ehy_H);
+    VADD4(pt7, xip->ehy_V, ehy_An, ehy_B, xip->ehy_H);
+    VADD4(pt8, xip->ehy_V, ehy_An, ehy_Bn, xip->ehy_H);
+
+    /* Find the RPP of the rotated axis-aligned ehy bbox - that is,
+     * the bounding box the given ehy would have if its height
+     * vector were in the positive Z direction. This does not give 
+     * us an optimal bbox except in the case where the ehy is 
+     * actually axis aligned to start with, but it's usually 
+     * at least a bit better than the bounding sphere RPP. */
+    VMINMAX((*min), (*max), pt1);
+    VMINMAX((*min), (*max), pt2);
+    VMINMAX((*min), (*max), pt3);
+    VMINMAX((*min), (*max), pt4);
+    VMINMAX((*min), (*max), pt5);
+    VMINMAX((*min), (*max), pt6);
+    VMINMAX((*min), (*max), pt7);
+    VMINMAX((*min), (*max), pt8);
+    return 0;
+}
+
 
 /**
  * R T _ E H Y _ P R E P
@@ -202,13 +255,11 @@ const struct bu_structparse rt_ehy_parse[] = {
  * stp->st_specific for use by ehy_shot().
  */
 int
-rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(rtip))
 {
     struct rt_ehy_internal *xip;
     struct ehy_specific *ehy;
-#ifndef NO_MAGIC_CHECKING
-    const struct bn_tol *tol = &rtip->rti_tol;
-#endif
+
     fastf_t magsq_h;
     fastf_t mag_a, mag_h;
     fastf_t c, f, r1, r2;
@@ -216,10 +267,8 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     mat_t Rinv;
     mat_t S;
 
-#ifndef NO_MAGIC_CHECKING
     RT_CK_DB_INTERNAL(ip);
-    BN_CK_TOL(tol);
-#endif
+
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(xip);
 
@@ -277,7 +326,7 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bn_mat_mul(ehy->ehy_SoR, S, R);
     bn_mat_mul(ehy->ehy_invRoS, Rinv, S);
 
-    /* Compute bounding sphere and RPP */
+    /* Compute bounding sphere */
     /* bounding sphere center */
     VJOIN1(stp->st_center, ehy->ehy_V, mag_h / 2.0, ehy->ehy_Hunit);
     /* bounding radius */
@@ -285,13 +334,7 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* approximate bounding radius */
     stp->st_aradius = stp->st_bradius;
 
-    /* cheat, make bounding RPP by enclosing bounding sphere */
-    stp->st_min[X] = stp->st_center[X] - stp->st_bradius;
-    stp->st_max[X] = stp->st_center[X] + stp->st_bradius;
-    stp->st_min[Y] = stp->st_center[Y] - stp->st_bradius;
-    stp->st_max[Y] = stp->st_center[Y] + stp->st_bradius;
-    stp->st_min[Z] = stp->st_center[Z] - stp->st_bradius;
-    stp->st_max[Z] = stp->st_center[Z] + stp->st_bradius;
+    if (rt_ehy_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
 
     return 0;			/* OK */
 }
@@ -633,7 +676,7 @@ rt_ehy_class(void)
  * R T _ E H Y _ P L O T
  */
 int
-rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
+rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_prev, theta_new;

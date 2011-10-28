@@ -57,6 +57,7 @@ IF (UNIX)
   SET(CMAKE_FIND_FRAMEWORK NEVER)
   SET(X11_INC_SEARCH_PATH
     /usr/pkg/xorg/include
+    /usr/X11/include
     /usr/X11R6/include 
     /usr/X11R7/include 
     /usr/include/X11
@@ -65,24 +66,28 @@ IF (UNIX)
     /usr/openwin/include 
     /usr/openwin/share/include 
     /opt/graphics/OpenGL/include
+	 /usr/include
   )
+
+  GET_PROPERTY(SEARCH_64BIT GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
+  IF(SEARCH_64BIT)
+	  SET(64BIT_DIRS "/usr/lib64/X11;/usr/lib64")
+  ELSE(SEARCH_64BIT)
+	  SET(32BIT_DIRS "/usr/lib/X11;/usr/lib")
+  ENDIF(SEARCH_64BIT)
 
   SET(X11_LIB_SEARCH_PATH
     /usr/X11/lib
     /usr/X11R6/lib
     /usr/X11R7/lib
-    /usr/lib/X11
-    /usr/lib64/X11
-    /usr/lib32/X11
-    /usr/lib64
-    /usr/lib32
-    /usr/lib
+	 ${64BIT_DIRS}
+	 ${32BIT_DIRS}
     /usr/pkg/xorg/lib
     /usr/openwin/lib 
   )
 
-  FIND_PATH(X11_X11_INCLUDE_PATH X11/X.h                             ${X11_INC_SEARCH_PATH})
-  FIND_PATH(X11_Xlib_INCLUDE_PATH X11/Xlib.h                         ${X11_INC_SEARCH_PATH})
+  FIND_PATH(X11_X11_INCLUDE_PATH X11/X.h                            ${X11_INC_SEARCH_PATH})
+  FIND_PATH(X11_Xlib_INCLUDE_PATH X11/Xlib.h                        ${X11_INC_SEARCH_PATH})
 
   # Look for includes; keep the list sorted by name of the cmake *_INCLUDE_PATH
   # variable (which doesn't need to match the include file name).

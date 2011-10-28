@@ -34,6 +34,7 @@
     itk_option define -validatecommand validatecommand ValidateCommand ""
     itk_option define -vclientdata vclientdata VClientData ""
     itk_option define -entercommand entercommand EnterCommand ""
+    itk_option define -singleSelectCallback singleSelectCallback SingleDataCallback ""
 
     public {
 	method handlePaste {}
@@ -41,6 +42,7 @@
 	method setDataEntry {_index _val}
 	method setTableCol {_col _val}
 	method setTableVal {_index _val}
+	method selectSingleRow {_row}
 	method updateTitleCol {}
 	method width {args}
     }
@@ -55,6 +57,7 @@
 	variable mToggleSelectMode 0
 	variable mInsertMode 0
 	variable mDoBreak 0
+	variable mSingleSelectRow 0
 
 	method doBreak {}
 	method handleCopy {_win}
@@ -284,11 +287,13 @@
 	incr row
     }
 
-    if {$_col == 0} {
-	if {$_val == "*"} {
-	    set mToggleSelectMode 1
-	} else {
-	    set mToggleSelectMode 0
+    if {$itk_option(-singleSelectCallback) == ""} {
+	if {$_col == 0} {
+	    if {$_val == "*"} {
+		set mToggleSelectMode 1
+	    } else {
+		set mToggleSelectMode 0
+	    }
 	}
     }
 }
@@ -297,6 +302,21 @@
     set $mTableDataVar\($_index\) $_val
 }
 
+::itcl::body cadwidgets::TkTable::selectSingleRow {_row} {
+    if {$_row == 0} {
+	return
+    }
+
+    # Turn off previously selected row
+    if {$mSingleSelectRow} {
+	setTableVal $mSingleSelectRow,0 ""
+	$itk_component(table) tag cell {} $mSingleSelectRow,0
+    }
+
+    setTableVal $_row,0 "*"
+    $itk_component(table) tag cell select_col $_row,0
+    set mSingleSelectRow $_row
+}
 
 ::itcl::body cadwidgets::TkTable::updateTitleCol {} {
     set row 1
@@ -564,36 +584,46 @@
 	return
     }
 
-    set mDoBreak 0
     if {![info exists $mTableDataVar\($row,$col\)]} {
+	if {$itk_option(-singleSelectCallback) != ""} {
+	    set mDoBreak 1
+	}
 	return
     }
 
-    if {$row != 0} {
-	# The outer subst doesn't seem to work with Itcl instance variables
-	# from some class other than the current one.
-	# if {[subst $[subst $mTableDataVar\($index\)]] == "*"}
-	# Using "set" instead.
-	if {[set [subst $mTableDataVar\($index\)]] == "*"} {
-	    setTableVal $index ""
-	    $_win tag cell {} $index
-	} else {
-	    setTableVal $index "*"
-	    $_win tag cell select_col $index
-	}
-    } else {
+    if {$itk_option(-singleSelectCallback) != ""} {
 	set mDoBreak 1
-	if {$mToggleSelectMode} {
-	    set mToggleSelectMode 0
-	    setTableCol 0 ""
-	} else {
-	    set mToggleSelectMode 1
-	    setTableCol 0 "*"
-	}
-    }
+	selectSingleRow $row
+	catch {$itk_option(-singleSelectCallback) $row}
+    } else {
+	set mDoBreak 0
 
-    if {$itk_option(-dataCallback) != ""} {
-	catch {$itk_option(-dataCallback)}
+	if {$row != 0} {
+	    # The outer subst doesn't seem to work with Itcl instance variables
+	    # from some class other than the current one.
+	    # if {[subst $[subst $mTableDataVar\($index\)]] == "*"}
+	    # Using "set" instead.
+	    if {[set [subst $mTableDataVar\($index\)]] == "*"} {
+		setTableVal $index ""
+		$_win tag cell {} $index
+	    } else {
+		setTableVal $index "*"
+		$_win tag cell select_col $index
+	    }
+	} else {
+	    set mDoBreak 1
+	    if {$mToggleSelectMode} {
+		set mToggleSelectMode 0
+		setTableCol 0 ""
+	    } else {
+		set mToggleSelectMode 1
+		setTableCol 0 "*"
+	    }
+	}
+
+	if {$itk_option(-dataCallback) != ""} {
+	    catch {$itk_option(-dataCallback)}
+	}
     }
 }
 

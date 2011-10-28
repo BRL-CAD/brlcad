@@ -49,7 +49,7 @@ rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     if (!ft->ft_plot)
 	return -4;
 
-    return ft->ft_plot(vhead, ip, ttol, tol);
+    return ft->ft_plot(vhead, ip, ttol, tol, NULL);
 }
 
 

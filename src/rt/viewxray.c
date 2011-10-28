@@ -70,7 +70,7 @@ const char title[] = "RT X-Ray";
 void
 usage(const char *argv0)
 {
-    bu_log("Usage: rtxray [options] model.g objects... >stuff\n", argv0);
+    bu_log("Usage: %s [options] model.g objects... >stuff\n", argv0);
     bu_log("Options:\n");
     bu_log(" -s #		Grid size in pixels, default 512\n");
     bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
@@ -202,14 +202,18 @@ view_eol(struct application *ap)
 		}
 	    }
 	} else {
-	    if (rt_g.rtg_parallel) {
-		bu_semaphore_acquire( BU_SEM_SYSCALL );
-	    }
-	    fb_write( fbp, 0, ap->a_y, scanbuf, width );
-	    if (rt_g.rtg_parallel) {
-		bu_semaphore_release( BU_SEM_SYSCALL );
+	    if ( fbp != FBIO_NULL ) {
+		if (rt_g.rtg_parallel) {
+		    bu_semaphore_acquire( BU_SEM_SYSCALL );
+		}
+		fb_write( fbp, 0, ap->a_y, scanbuf, width );
+		if (rt_g.rtg_parallel) {
+		    bu_semaphore_release( BU_SEM_SYSCALL );
+		}
 	    }
 	}
+	if (fbp == FBIO_NULL && outfp == NULL)
+	    bu_log("rtxray: strange, no end of line actions taken.\n");
     }
 }
 

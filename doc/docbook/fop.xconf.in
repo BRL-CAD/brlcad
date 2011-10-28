@@ -1,15 +1,251 @@
 <?xml version="1.0"?>
+<!--
+
+This is an example configuration file for FOP.
+This file contains the same settings as the default values
+and will have no effect if used unchanged.
+
+Relative config url's will be resolved relative to
+the location of this file.
+
+-->
 <fop version="1.0">
-  <!-- Base URL for resolving relative URLs -->
-  <!-- It is necessary that this directory be two levels below -->
-  <!-- the doc/docbook level in order to resolve ../../* image -->
-  <!-- links properly.  It is somewhat arbitrarily set to system/man1 -->
-  <!-- but could be set to any valid directory of the correct depth. -->
-  <!-- This also constrains how images may be referenced in docbook -->
-  <!-- xml files - ALL image references must be defined so that -->
-  <!-- the base path below works. This referencing is needed so -->
-  <!-- that xincluded sections of documents referenced across -->
-  <!-- multiple directories can still find their target images. -->
-  <base>@srcdir@/system/man1</base>
+
+  <strict-configuration>true</strict-configuration>
+  <strict-validation>true</strict-validation>
+  <use-cache>0</use-cache>
+
+  <!-- 
+
+      Base URL for resolving relative URLs 
+      use current ./doc/docbook directory
+
+   -->
+  <base>@srcdir@/articles/en</base>
+  
+  <!-- Source resolution in dpi (dots/pixels per inch) for determining the size of pixels in SVG and bitmap images, default: 72dpi -->
+  <source-resolution>72</source-resolution>
+  <!-- Target resolution in dpi (dots/pixels per inch) for specifying the target resolution for generated bitmaps, default: 72dpi -->
+  <target-resolution>72</target-resolution>
+  
+  <!-- Default page-height and page-width, in case
+       value is specified as auto -->
+  <default-page-settings height="11in" width="8.50in"/><!-- TB: width was originally 8.26! -->
+  
+  <!-- SUBSTITUTIONS =========================================== -->
+  <!--
+
+    When a <substitutions/> section is defined in the configuration,
+    FOP will re-map any font-family references found in your FO input
+    to a given substitution font.
+
+    * If a <substitution/> is declared, it is mandatory that both a
+      <from/> and <to/> child element is declared with a font-family
+      attribute.
+
+    * Both font-weight and font-style are optional attributes, if they
+      are provided then a value of 'normal' is assumed.
+
+    For example you could make all FO font-family references to
+    'Arial' with weights between 700 and 900 reference the normal
+    'Arial Black' font.
+
+  -->
+
+  <fonts>
+    <substitutions>
+      <substitution>
+        <from font-family="Times New Roman" font-style="italic" font-weight="normal"/>
+        <to font-family="STIXGeneral" font-style="italic" font-weight="normal"/>
+      </substitution>
+      <substitution>
+        <from font-family="Times New Roman" font-style="italic" font-weight="bold"/>
+        <to font-family="STIXGeneral" font-style="italic" font-weight="bold"/>
+      </substitution>
+      <substitution>
+        <from font-family="Times New Roman" font-style="normal" font-weight="normal"/>
+        <to font-family="STIXGeneral" font-style="normal" font-weight="normal"/>
+      </substitution>
+
+      <substitution>
+        <from font-family="Times New Roman" font-style="normal" font-weight="bold"/>
+        <to font-family="STIXGeneral" font-style="normal" font-weight="bold"/>
+      </substitution>
+
+      <substitution>
+        <from font-family="Times New Roman" font-style="italic" font-weight="400"/>
+        <to font-family="STIXGeneral" font-style="italic" font-weight="normal"/>
+      </substitution>
+
+      <substitution>
+        <from font-family="Times New Roman" font-style="normal" font-weight="400"/>
+        <to font-family="STIXGeneral" font-style="normal" font-weight="normal"/>
+      </substitution>
+
+      <substitution>
+        <from font-family="Serif" font-style="normal" font-weight="400"/>
+        <to font-family="STIXGeneral" font-style="normal" font-weight="normal"/>
+      </substitution>
+
+      <substitution>
+        <from font-family="Mono" font-style="italic" font-weight="700"/>
+        <to font-family="DejaVuLGCSansMono" font-style="oblique" font-weight="bold"/>
+      </substitution>
+
+      <substitution>
+        <from font-family="Mono" font-style="normal" font-weight="400"/>
+        <to font-family="DejaVuLGCSansMono" font-style="normal" font-weight="normal"/>
+      </substitution>
+
+      <substitution>
+        <from font-family="Mono" font-style="italic" font-weight="400"/>
+        <to font-family="DejaVuLGCSansMono" font-style="oblique" font-weight="normal"/>
+      </substitution>
+
+      <!-- these are hacks to get serif for svg equations, must be a bug: -->
+      <substitution>
+        <from font-family="sans-serif"/>
+        <to font-family="DejaVuLGCSans"/>
+      </substitution>
+
+      <substitution>
+        <from font-family="SansSerif"/>
+        <to font-family="DejaVuLGCSans"/>
+      </substitution>
+
+      <substitution>
+        <from font-family="Helvetica"/>
+        <to font-family="DejaVuLGCSans"/>
+      </substitution>
+
+      <substitution>
+        <from font-family="Lucida Sans Unicode"/>
+        <to font-family="DejaVuLGCSans"/>
+      </substitution>
+
+    </substitutions>
+  </fonts>
+
+  <!-- Information for specific renderers -->
+  <!-- Uses renderer mime type for renderers -->
+  <renderers>
+
+    <renderer mime="application/pdf">
+      <filterList>
+        <!-- provides compression using zlib flate (default is on) -->
+        <value>flate</value>
+  
+        <!-- encodes binary data into printable ascii characters (default off)
+             This provides about a 4:5 expansion of data size -->
+        <!-- <value>ascii-85</value> -->
+  
+        <!-- encodes binary data with hex representation (default off)
+             This filter is not recommended as it doubles the data size -->
+        <!-- <value>ascii-hex</value> -->
+      </filterList>
+
+      <fonts>
+
+
+        <!-- free fonts ============================================== -->
+        <font kerning="yes" 
+          embed-url="@srcdir@/resources/other/fonts/stix/STIXGeneral-Regular.ttf">
+          <font-triplet name="STIXGeneral" style="normal" weight="normal"/>
+        </font>
+        <font kerning="yes" 
+          embed-url="@srcdir@/resources/other/fonts/stix/STIXGeneral-Bold.ttf">
+          <font-triplet name="STIXGeneral" style="normal" weight="bold"/>
+        </font>
+        <font kerning="yes" 
+          embed-url="@srcdir@/resources/other/fonts/stix/STIXGeneral-Italic.ttf">
+          <font-triplet name="STIXGeneral" style="italic" weight="normal"/>
+        </font>
+        <font kerning="yes" 
+          embed-url="@srcdir@/resources/other/fonts/stix/STIXGeneral-BoldItalic.ttf">
+          <font-triplet name="STIXGeneral" style="italic" weight="bold"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans.ttf">
+          <font-triplet name="DejaVuLGCSans" style="normal" weight="normal"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans-Bold.ttf">
+          <font-triplet name="DejaVuLGCSans" style="normal" weight="bold"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans-Bold.ttf">
+          <font-triplet name="DejaVuLGCSans" style="normal" weight="700"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans-Oblique.ttf">
+          <font-triplet name="DejaVuLGCSans" style="oblique" weight="normal"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans-BoldOblique.ttf">
+          <font-triplet name="DejaVuLGCSans" style="oblique" weight="bold"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono.ttf">
+          <font-triplet name="DejaVuLGCSansMono" style="normal" weight="normal"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono-Bold.ttf">
+          <font-triplet name="DejaVuLGCSansMono" style="normal" weight="bold"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono-Bold.ttf">
+          <font-triplet name="DejaVuLGCSansMono" style="normal" weight="700"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono-Oblique.ttf">
+          <font-triplet name="DejaVuLGCSansMono" style="oblique" weight="normal"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono-BoldOblique.ttf">
+          <font-triplet name="DejaVuLGCSansMono" style="oblique" weight="bold"/>
+        </font>
+
+        <!-- embedded fonts -->
+        <!--
+
+        This information must exactly match the font specified
+        in the fo file. Otherwise it will use a default font.
+
+        For example,
+        <fo:inline font-family="Arial" font-weight="bold" font-style="normal">
+            Arial-normal-normal font
+        </fo:inline>
+        for the font triplet specified by:
+        <font-triplet name="Arial" style="normal" weight="bold"/>
+
+        If you do not want to embed the font in the pdf document
+        then do not include the "embed-url" attribute.
+        The font will be needed where the document is viewed
+        for it to be displayed properly.
+
+        possible styles: normal | italic | oblique | backslant
+        possible weights: normal | bold | 100 | 200 | 300 | 400
+                          | 500 | 600 | 700 | 800 | 900
+        (normal = 400, bold = 700)
+
+        -->
+
+
+      </fonts>
+
+    </renderer>
+
+  </renderers>
+
 </fop>
 

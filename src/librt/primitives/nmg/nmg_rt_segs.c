@@ -972,9 +972,9 @@ common_topo(struct bu_ptbl *a_tbl, struct bu_ptbl *next_tbl)
 
 
 HIDDEN void
-visitor(long int *l_p, genptr_t tbl, int UNUSED(unused))
+visitor(uint32_t *l_p, genptr_t tbl, int UNUSED(unused))
 {
-    (void)bu_ptbl_ins_unique((struct bu_ptbl *)tbl, l_p);
+    (void)bu_ptbl_ins_unique((struct bu_ptbl *)tbl, (long *)l_p);
 }
 
 
@@ -982,7 +982,7 @@ visitor(long int *l_p, genptr_t tbl, int UNUSED(unused))
  * Add an element provided by nmg_visit to a bu_ptbl struct.
  */
 HIDDEN void
-build_topo_list(unsigned long *l_p, struct bu_ptbl *tbl)
+build_topo_list(uint32_t *l_p, struct bu_ptbl *tbl)
 {
     struct loopuse *lu;
     struct edgeuse *eu;
@@ -1175,11 +1175,11 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
 
 	    bu_ptbl_reset(a_tbl);
 	    NMG_CK_HITMISS(a_hit);
-	    build_topo_list((unsigned long *)a_hit->outbound_use, a_tbl);
+	    build_topo_list((uint32_t *)a_hit->outbound_use, a_tbl);
 
 	    bu_ptbl_reset(next_tbl);
 	    NMG_CK_HITMISS(next_hit);
-	    build_topo_list((unsigned long *)next_hit->outbound_use, next_tbl);
+	    build_topo_list((uint32_t *)next_hit->outbound_use, next_tbl);
 
 
 	    /* If the tables have elements in common,

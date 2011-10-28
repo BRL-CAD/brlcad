@@ -40,7 +40,7 @@
  * D B _ F U L L _ P A T H _ I N I T
  */
 void
-db_full_path_init( struct db_full_path *pathp )
+db_full_path_init(struct db_full_path *pathp)
 {
     pathp->fp_len = 0;
     pathp->fp_maxlen = 0;
@@ -53,16 +53,16 @@ db_full_path_init( struct db_full_path *pathp )
  * D B _ A D D _ N O D E _ T O _ F U L L _ P A T H
  */
 void
-db_add_node_to_full_path( struct db_full_path *pp, struct directory *dp )
+db_add_node_to_full_path(struct db_full_path *pp, struct directory *dp)
 {
-    RT_CK_FULL_PATH( pp );
+    RT_CK_FULL_PATH(pp);
 
-    if ( pp->fp_maxlen <= 0 )  {
+    if (pp->fp_maxlen <= 0) {
 	pp->fp_maxlen = 32;
 	pp->fp_names = (struct directory **)bu_malloc(
 	    pp->fp_maxlen * sizeof(struct directory *),
 	    "db_full_path array");
-    } else if ( pp->fp_len >= pp->fp_maxlen )  {
+    } else if (pp->fp_len >= pp->fp_maxlen) {
 	pp->fp_maxlen *= 4;
 	pp->fp_names = (struct directory **)bu_realloc(
 	    (char *)pp->fp_names,
@@ -84,13 +84,13 @@ db_dup_full_path(struct db_full_path *newp, const struct db_full_path *oldp)
 
     newp->fp_maxlen = oldp->fp_maxlen;
     newp->fp_len = oldp->fp_len;
-    if ( oldp->fp_len <= 0 )  {
+    if (oldp->fp_len <= 0) {
 	newp->fp_names = (struct directory **)0;
 	return;
     }
     newp->fp_names = (struct directory **)bu_malloc(
 	newp->fp_maxlen * sizeof(struct directory *),
-	"db_full_path array (duplicate)" );
+	"db_full_path array (duplicate)");
     memcpy((char *)newp->fp_names, (char *)oldp->fp_names, newp->fp_len * sizeof(struct directory *));
 }
 
@@ -103,28 +103,28 @@ db_dup_full_path(struct db_full_path *newp, const struct db_full_path *oldp)
  * This is intended primarily as an internal method.
  */
 void
-db_extend_full_path( struct db_full_path *pathp, size_t incr )
+db_extend_full_path(struct db_full_path *pathp, size_t incr)
 {
     size_t newlen;
 
     RT_CK_FULL_PATH(pathp);
 
-    if ( pathp->fp_maxlen <= 0 )  {
+    if (pathp->fp_maxlen <= 0) {
 	pathp->fp_len = 0;
 	pathp->fp_maxlen = incr;
 	pathp->fp_names = (struct directory **)bu_malloc(
 	    pathp->fp_maxlen * sizeof(struct directory *),
-	    "empty fp_names extension" );
+	    "empty fp_names extension");
 	return;
     }
 
     newlen = pathp->fp_len + incr;
-    if ( pathp->fp_maxlen < newlen )  {
+    if (pathp->fp_maxlen < newlen) {
 	pathp->fp_maxlen = newlen+1;
 	pathp->fp_names = (struct directory **)bu_realloc(
 	    (char *)pathp->fp_names,
 	    pathp->fp_maxlen * sizeof(struct directory *),
-	    "fp_names extension" );
+	    "fp_names extension");
     }
 }
 
@@ -133,15 +133,15 @@ db_extend_full_path( struct db_full_path *pathp, size_t incr )
  * D B _ A P P E N D _ F U L L _ P A T H
  */
 void
-db_append_full_path( struct db_full_path *dest, const struct db_full_path *src )
+db_append_full_path(struct db_full_path *dest, const struct db_full_path *src)
 {
     RT_CK_FULL_PATH(dest);
     RT_CK_FULL_PATH(src);
 
-    db_extend_full_path( dest, src->fp_len );
+    db_extend_full_path(dest, src->fp_len);
     memcpy((char *)&dest->fp_names[dest->fp_len],
 	   (char *)&src->fp_names[0],
-	   src->fp_len * sizeof(struct directory *) );
+	   src->fp_len * sizeof(struct directory *));
     dest->fp_len += src->fp_len;
 }
 
@@ -161,13 +161,13 @@ db_dup_path_tail(struct db_full_path *newp, const struct db_full_path *oldp, off
 	bu_bomb("db_dup_path_tail: start offset out of range\n");
 
     newp->fp_maxlen = newp->fp_len = oldp->fp_len - start;
-    if ( newp->fp_len <= 0 )  {
+    if (newp->fp_len <= 0) {
 	newp->fp_names = (struct directory **)0;
 	return;
     }
     newp->fp_names = (struct directory **)bu_malloc(
 	newp->fp_maxlen * sizeof(struct directory *),
-	"db_full_path array (duplicate)" );
+	"db_full_path array (duplicate)");
     memcpy((char *)newp->fp_names, (char *)&oldp->fp_names[start], newp->fp_len * sizeof(struct directory *));
 }
 
@@ -179,7 +179,7 @@ db_dup_path_tail(struct db_full_path *newp, const struct db_full_path *oldp, off
  * Caller is responsible for freeing the returned buffer.
  */
 char *
-db_path_to_string( const struct db_full_path *pp )
+db_path_to_string(const struct db_full_path *pp)
 {
     char *cp;
     char *buf;
@@ -188,32 +188,32 @@ db_path_to_string( const struct db_full_path *pp )
     size_t i;
     long j;
 
-    RT_CK_FULL_PATH( pp );
+    RT_CK_FULL_PATH(pp);
     BU_ASSERT_SIZE_T(pp->fp_len, <, LONG_MAX);
 
     len = 3; /* leading slash, trailing null, spare */
-    for ( j=pp->fp_len-1; j >= 0; j-- )  {
-	if ( pp->fp_names[j] )
-	    len += strlen( pp->fp_names[j]->d_namep ) + 1;
+    for (j=pp->fp_len-1; j >= 0; j--) {
+	if (pp->fp_names[j])
+	    len += strlen(pp->fp_names[j]->d_namep) + 1;
 	else
 	    len += 16;
     }
 
-    buf = bu_malloc( len, "pathname string" );
+    buf = bu_malloc(len, "pathname string");
     cp = buf;
     rem = len;
 
-    for ( i=0; i < pp->fp_len; i++ )  {
+    for (i=0; i < pp->fp_len; i++) {
 	*cp++ = '/';
 	rem--;
-	if ( pp->fp_names[i] ) {
-	    bu_strlcpy( cp, pp->fp_names[i]->d_namep, rem );
+	if (pp->fp_names[i]) {
+	    bu_strlcpy(cp, pp->fp_names[i]->d_namep, rem);
 	    rem -= strlen(pp->fp_names[i]->d_namep);
 	} else {
-	    bu_strlcpy( cp, "**NULL**", rem );
+	    bu_strlcpy(cp, "**NULL**", rem);
 	    rem -= 8;
 	}
-	cp += strlen( cp );
+	cp += strlen(cp);
     }
     *cp++ = '\0';
     return buf;
@@ -227,19 +227,19 @@ db_path_to_string( const struct db_full_path *pp )
  * exactly the same formattting conventions as db_path_to_string().
  */
 void
-db_path_to_vls( struct bu_vls *str, const struct db_full_path *pp )
+db_path_to_vls(struct bu_vls *str, const struct db_full_path *pp)
 {
     size_t i;
 
     BU_CK_VLS(str);
-    RT_CK_FULL_PATH( pp );
+    RT_CK_FULL_PATH(pp);
 
-    for ( i=0; i < pp->fp_len; i++ )  {
-	bu_vls_putc( str, '/' );
-	if ( pp->fp_names[i] )
-	    bu_vls_strcat( str, pp->fp_names[i]->d_namep );
+    for (i=0; i < pp->fp_len; i++) {
+	bu_vls_putc(str, '/');
+	if (pp->fp_names[i])
+	    bu_vls_strcat(str, pp->fp_names[i]->d_namep);
 	else
-	    bu_vls_strcat( str, "**NULL**" );
+	    bu_vls_strcat(str, "**NULL**");
     }
 }
 
@@ -248,11 +248,11 @@ db_path_to_vls( struct bu_vls *str, const struct db_full_path *pp )
  * D B _ P R _ F U L L _ P A T H
  */
 void
-db_pr_full_path( const char *msg, const struct db_full_path *pathp )
+db_pr_full_path(const char *msg, const struct db_full_path *pathp)
 {
     char *sofar = db_path_to_string(pathp);
 
-    bu_log("%s %s\n", msg, sofar );
+    bu_log("%s %s\n", msg, sofar);
     bu_free(sofar, "path string");
 }
 
@@ -266,8 +266,8 @@ db_pr_full_path( const char *msg, const struct db_full_path *pathp )
  * in use, user should call db_free_full_path() first.
  *
  * Returns -
- *	-1	One or more components of path did not exist in the directory.
- *	 0	OK
+ * -1 One or more components of path did not exist in the directory.
+ * 0 OK
  */
 int
 db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *str)
@@ -288,23 +288,25 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
 	return 0;
     }
 
-    while ( *str == '/' )  str++; /* strip off leading slashes */
-    if ( *str == '\0' )  {
+    while (*str == '/') str++; /* strip off leading slashes */
+    if (*str == '\0') {
 	/* Path of a lone slash */
-	db_full_path_init( pp );
+	db_full_path_init(pp);
 	return 0;
     }
 
-    copy = bu_strdup( str );
+    copy = bu_strdup(str);
 
-    /* eliminate a a trailing slash */
-    len = strlen( copy );
-    if ( copy[len-1] == '/' )
-	copy[len-1] = '\0';
-
+    /* eliminate all trailing slashes */
+    len = strlen(copy);
+    while (copy[len - 1] == '/') {
+	copy[len - 1] = '\0';
+	--len;
+    }
+	
     cp = copy;
-    while ( *cp )  {
-	if ( (slashp = strchr( cp, '/' )) == NULL )  break;
+    while (*cp) {
+	if ((slashp = strchr(cp, '/')) == NULL) break;
 	nslash++;
 	cp = slashp+1;
     }
@@ -314,22 +316,22 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
     pp->fp_maxlen = pp->fp_len = nslash+1;
     pp->fp_names = (struct directory **)bu_malloc(
 	pp->fp_maxlen * sizeof(struct directory *),
-	"db_string_to_path path array" );
+	"db_string_to_path path array");
 
 
     /* Build up path array */
     cp = copy;
     nslash = 0;
-    while ( *cp )  {
-	if ( (slashp = strchr( cp, '/' )) == NULL )  {
+    while (*cp) {
+	if ((slashp = strchr(cp, '/')) == NULL) {
 	    /* Last element of string, has no trailing slash */
 	    slashp = cp + strlen(cp) - 1;
 	} else {
 	    *slashp = '\0';
 	}
-	if ( (dp = db_lookup( dbip, cp, LOOKUP_NOISY )) == RT_DIR_NULL )  {
+	if ((dp = db_lookup(dbip, cp, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_log("db_string_to_path() of '%s' failed on '%s'\n",
-		   str, cp );
+		   str, cp);
 	    ret = -1; /* FAILED */
 	    /* Fall through, storing null dp in this location */
 	}
@@ -337,7 +339,7 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
 	cp = slashp+1;
     }
     BU_ASSERT_SIZE_T(nslash, ==, pp->fp_len);
-    bu_free( copy, "db_string_to_path() duplicate string");
+    bu_free(copy, "db_string_to_path() duplicate string");
     return ret;
 }
 
@@ -351,8 +353,8 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
  * use, user should call db_free_full_path() first.
  *
  * Returns -
- *	-1	One or more components of path did not exist in the directory.
- *	 0	OK
+ * -1 One or more components of path did not exist in the directory.
+ * 0 OK
  */
 int
 db_argv_to_path(struct db_full_path *pp, struct db_i *dbip, int argc, const char *const *argv)
@@ -368,12 +370,12 @@ db_argv_to_path(struct db_full_path *pp, struct db_i *dbip, int argc, const char
     pp->fp_maxlen = pp->fp_len = argc;
     pp->fp_names = (struct directory **)bu_malloc(
 	pp->fp_maxlen * sizeof(struct directory *),
-	"db_argv_to_path path array" );
+	"db_argv_to_path path array");
 
-    for ( i=0; i<argc; i++ )  {
-	if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == RT_DIR_NULL )  {
+    for (i=0; i<argc; i++) {
+	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_log("db_argv_to_path() failed on element %d='%s'\n",
-		   i, argv[i] );
+		   i, argv[i]);
 	    ret = -1; /* FAILED */
 	    /* Fall through, storing null dp in this location */
 	}
@@ -392,10 +394,10 @@ db_argv_to_path(struct db_full_path *pp, struct db_i *dbip, int argc, const char
 void
 db_free_full_path(struct db_full_path *pp)
 {
-    RT_CK_FULL_PATH( pp );
+    RT_CK_FULL_PATH(pp);
 
-    if ( pp->fp_maxlen > 0 )  {
-	bu_free( (char *)pp->fp_names, "db_full_path array" );
+    if (pp->fp_maxlen > 0) {
+	bu_free((char *)pp->fp_names, "db_full_path array");
 	pp->fp_maxlen = pp->fp_len = 0;
 	pp->fp_names = (struct directory **)0;
     }
@@ -406,8 +408,8 @@ db_free_full_path(struct db_full_path *pp)
  * D B _ I D E N T I C A L _ F U L L _ P A T H S
  *
  * Returns -
- *	1	match
- *	0	different
+ * 1 match
+ * 0 different
  */
 int
 db_identical_full_paths(const struct db_full_path *a, const struct db_full_path *b)
@@ -418,10 +420,10 @@ db_identical_full_paths(const struct db_full_path *a, const struct db_full_path 
     RT_CK_FULL_PATH(b);
     BU_ASSERT_SIZE_T(a->fp_len, <, LONG_MAX);
 
-    if ( a->fp_len != b->fp_len )  return 0;
+    if (a->fp_len != b->fp_len) return 0;
 
-    for ( i = a->fp_len-1; i >= 0; i-- )  {
-	if ( a->fp_names[i] != b->fp_names[i] )  return 0;
+    for (i = a->fp_len-1; i >= 0; i--) {
+	if (a->fp_names[i] != b->fp_names[i]) return 0;
     }
     return 1;
 }
@@ -431,8 +433,8 @@ db_identical_full_paths(const struct db_full_path *a, const struct db_full_path 
  * D B _ F U L L _ P A T H _ S U B S E T
  *
  * Returns -
- *	1	if 'b' is a proper subset of 'a'
- *	0	if not.
+ * 1 if 'b' is a proper subset of 'a'
+ * 0 if not.
  */
 int
 db_full_path_subset(
@@ -445,7 +447,7 @@ db_full_path_subset(
     RT_CK_FULL_PATH(a);
     RT_CK_FULL_PATH(b);
 
-    if ( b->fp_len > a->fp_len )
+    if (b->fp_len > a->fp_len)
 	return 0;
 
     if (skip_first)
@@ -453,17 +455,17 @@ db_full_path_subset(
     else
 	i = 0;
 
-    for (; i < a->fp_len; i++ )  {
+    for (; i < a->fp_len; i++) {
 	size_t j;
 
-	if ( a->fp_names[i] != b->fp_names[0] )  continue;
+	if (a->fp_names[i] != b->fp_names[0]) continue;
 
 	/* First element matches, check remaining length */
-	if ( b->fp_len > a->fp_len - i )  return 0;
+	if (b->fp_len > a->fp_len - i) return 0;
 
 	/* Check remainder of 'b' */
-	for ( j=1; j < b->fp_len; j++ )  {
-	    if ( a->fp_names[i+j] != b->fp_names[j] )  goto step;
+	for (j=1; j < b->fp_len; j++) {
+	    if (a->fp_names[i+j] != b->fp_names[j]) goto step;
 	}
 	/* 'b' is a proper subset */
 	return 1;
@@ -474,12 +476,13 @@ db_full_path_subset(
     return 0;
 }
 
+
 /**
  * D B _ F U L L _ P A T H _ M A T C H _ T O P
  *
  * Returns -
- *	1	if 'a' matches the top part of 'b'
- *	0	if not.
+ * 1 if 'a' matches the top part of 'b'
+ * 0 if not.
  *
  * For example, /a/b matches both the top part of /a/b/c and /a/b.
  */
@@ -493,10 +496,10 @@ db_full_path_match_top(
     RT_CK_FULL_PATH(a);
     RT_CK_FULL_PATH(b);
 
-    if ( a->fp_len > b->fp_len )  return 0;
+    if (a->fp_len > b->fp_len) return 0;
 
-    for ( i=0; i < a->fp_len; i++ )  {
-	if ( a->fp_names[i] != b->fp_names[i] ) return 0;
+    for (i=0; i < a->fp_len; i++) {
+	if (a->fp_names[i] != b->fp_names[i]) return 0;
     }
 
     return 1;
@@ -507,11 +510,11 @@ db_full_path_match_top(
  * D B _ F U L L _ P A T H _ S E A R C H
  *
  * Returns -
- *	1	'dp' is found on this path
- *	0	not found
+ * 1 'dp' is found on this path
+ * 0 not found
  */
 int
-db_full_path_search( const struct db_full_path *a, const struct directory *dp )
+db_full_path_search(const struct db_full_path *a, const struct directory *dp)
 {
     long i;
 
@@ -519,11 +522,12 @@ db_full_path_search( const struct db_full_path *a, const struct directory *dp )
     RT_CK_DIR(dp);
     BU_ASSERT_SIZE_T(a->fp_len, <, LONG_MAX);
 
-    for ( i = a->fp_len-1; i >= 0; i-- )  {
-	if ( a->fp_names[i] == dp )  return 1;
+    for (i = a->fp_len-1; i >= 0; i--) {
+	if (a->fp_names[i] == dp) return 1;
     }
     return 0;
 }
+
 
 /** @} */
 /*

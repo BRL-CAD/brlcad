@@ -8,16 +8,24 @@
 # it until the boost issue is handled
 STRING(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
 IF(BUILD_TYPE)
-	SET(CMAKE_CXX_FLAGS_${BUILD_TYPE} "-w")
+	SET(CMAKE_CXX_FLAGS_${BUILD_TYPE} "${CMAKE_CXX_FLAGS_${BUILD_TYPE}} -w")
 ELSE(BUILD_TYPE)
-	SET(CMAKE_CXX_FLAGS "-w")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 ENDIF(BUILD_TYPE)
 
-include_directories(
-	${CMAKE_SOURCE_DIR}/src/other
+# Include directories needed by libpc users
+SET(PC_INCLUDE_DIRS
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	${BU_INCLUDE_DIRS}
 	${OPENNURBS_INCLUDE_DIR}
-	${TCL_INCLUDE_DIRS}
 	${ZLIB_INCLUDE_DIR}
+	)
+LIST(REMOVE_DUPLICATES PC_INCLUDE_DIRS)
+BRLCAD_INCLUDE_DIRS(PC_INCLUDE_DIRS)
+
+include_directories(
+	${CMAKE_SOURCE_DIR}/src/other/boost
 	)
 
 SET(LIBPC_NOINST_HDRS
@@ -56,11 +64,11 @@ add_definitions(
 BRLCAD_ADDLIB(libpc "${LIBPC_SOURCES}" libbu ${OPENNURBS_LIBRARY})
 SET_TARGET_PROPERTIES(libpc PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
-add_executable(solver_test solver_test.cpp)
-target_link_libraries(solver_test libpc)
+#add_executable(solver_test solver_test.cpp)
+#target_link_libraries(solver_test libpc)
 
-add_executable(vm_test vm_test.cpp)
-target_link_libraries(vm_test libpc)
+#add_executable(vm_test vm_test.cpp)
+#target_link_libraries(vm_test libpc)
 
 SET(pc_ignore_files
 	NOTES
@@ -78,5 +86,8 @@ SET(pc_ignore_files
 	pcSolver.h
 	pcVCSet.h
 	pcVariable.h
+	solver_test.cpp
+	vm_test.cpp
 	)
 CMAKEFILES(${pc_ignore_files})
+CMAKEFILES(Makefile.am)

@@ -1,3 +1,6 @@
+#include "token_type.h"
+extern YYSTYPE yylval;
+
 static char rcsid[] = "$Id: lexact.c,v 1.10 1997/09/24 20:05:38 dar Exp $";
 
 /*
@@ -51,7 +54,6 @@ static char rcsid[] = "$Id: lexact.c,v 1.10 1997/09/24 20:05:38 dar Exp $";
  * prettied up interface to print_objects_when_running
  */
 
-#define LEX_ACTIONS_C
 #include <stdlib.h>
 #include <ctype.h>
 /*#include <strings.h>*/
@@ -65,6 +67,21 @@ static char rcsid[] = "$Id: lexact.c,v 1.10 1997/09/24 20:05:38 dar Exp $";
 #include "expparse.h"
 #include "express/dict.h"
 #include "express/memory.h"
+
+Scan_Buffer	SCAN_buffers[SCAN_NESTING_DEPTH];
+int		SCAN_current_buffer	= 0;
+char*		SCANcurrent;
+
+Error		ERROR_include_file		= ERROR_none;
+Error		ERROR_unmatched_close_comment	= ERROR_none;
+Error		ERROR_unmatched_open_comment	= ERROR_none;
+Error		ERROR_unterminated_string	= ERROR_none;
+Error		ERROR_encoded_string_bad_digit	= ERROR_none;
+Error		ERROR_encoded_string_bad_count	= ERROR_none;
+Error		ERROR_bad_identifier		= ERROR_none;
+Error		ERROR_unexpected_character	= ERROR_none;
+Error		ERROR_nonascii_char;
+
 
 extern int		yylineno;
 extern FILE*		yyin;
@@ -111,7 +128,6 @@ static struct keyword_entry {
 	{ "CASE",		TOK_CASE },
 	{ "CONST_E",		TOK_E },
 	{ "CONSTANT",		TOK_CONSTANT },
-	{ "CONTEXT",		TOK_CONTEXT },
 	{ "COS",		TOK_BUILTIN_FUNCTION },
 	{ "DERIVE",		TOK_DERIVE },
 	{ "DIV",		TOK_DIV },
@@ -120,12 +136,10 @@ static struct keyword_entry {
 	{ "END_ALIAS",		TOK_END_ALIAS },
 	{ "END_CASE",		TOK_END_CASE },
 	{ "END_CONSTANT",	TOK_END_CONSTANT },
-	{ "END_CONTEXT",	TOK_END_CONTEXT },
 	{ "END_ENTITY",		TOK_END_ENTITY },
 	{ "END_FUNCTION",	TOK_END_FUNCTION },
 	{ "END_IF",		TOK_END_IF },
 	{ "END_LOCAL",		TOK_END_LOCAL },
-	{ "END_MODEL",		TOK_END_MODEL },
 	{ "END_PROCEDURE",	TOK_END_PROCEDURE },
 	{ "END_REPEAT",		TOK_END_REPEAT },
 	{ "END_RULE",		TOK_END_RULE },
@@ -162,7 +176,6 @@ static struct keyword_entry {
 	{ "LOGICAL",		TOK_LOGICAL },
 	{ "LOINDEX",		TOK_BUILTIN_FUNCTION },
 	{ "MOD",		TOK_MOD },
-	{ "MODEL",		TOK_MODEL },
 	{ "NOT",		TOK_NOT },
 	{ "NUMBER",		TOK_NUMBER },
 	{ "NVL",		TOK_BUILTIN_FUNCTION },
@@ -400,11 +413,6 @@ SCANprocess_string(void)
 	/* strip off quotes */
 	yylval.string = SCANstrdup(yytext+1); /* remove 1st single quote */
 
-#if 0
-	s = strrchr(yylval.string,'\'');
-	if (s) *s = '\0';			/* remove last single quote */
-#endif
-
 	/* change pairs of quotes to single quotes */
 	for (s = d = yylval.string;*s;) {
 		if (*s != '\'') {
@@ -514,7 +522,8 @@ SCANread(void)
 	if (!(done = SCANtext_ready)) {
 	    if (SCAN_current_buffer == 0) {
 		done = True;
-		fclose(SCANbuffer.file); /* close yyin (I think) */
+		fclose(SCANbuffer.file); /* close yyin */
+		SCANbuffer.file = yyin = NULL;
 	    } else {
 		SCANpop_buffer();
 	    }

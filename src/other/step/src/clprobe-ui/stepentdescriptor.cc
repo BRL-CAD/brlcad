@@ -163,7 +163,7 @@ void EntityDescriptorBlock::Init(const EntityDescriptor *e, ButtonState *typeMes
     int entryCount = max(attrCount, subtypeCount);
 //////////////////
     
-    SCLstring str;
+    std::string str;
     char endchar;
 
     attrListBrowser = new StringBrowser(attrBS, entryCount, maxAttrLen);
@@ -187,7 +187,7 @@ void EntityDescriptorBlock::Init(const EntityDescriptor *e, ButtonState *typeMes
 	    endchar = ')';
 	}
 */
-	SCLstring tmp;
+	std::string tmp;
 	str.Append( ad->AttrExprDefStr(tmp) );
 /* // built by hand
 	str.Append( ad->Name() );
@@ -345,11 +345,11 @@ void EntityDescriptorBlock::Update()
 		index--;
 		attrPtr = (AttrDescLinkNode *)attrPtr->NextNode();
 	    }
-	    SCLstring tmp;
+	    std::string tmp;
 //	    attrStr = attrPtr->AttrDesc()->AttrExprDefStr(tmp);
 
 //	    attrStr = TypeString(attrPtr->AttrDesc());
-	    SCLstring tmp2;
+	    std::string tmp2;
 	    strncpy(attrStr,
 		    attrPtr->AttrDesc()->DomainType()->TypeString(tmp2),
 		    BUFSIZ);
@@ -430,7 +430,7 @@ StepEntityDescriptor::LongestAttrInBlock(const EntityDescriptor *entity)
     {
 	AttrDescLinkNode *attrPtr = 
 	    (AttrDescLinkNode *)( ((EntityDescriptor *)entity)->ExplicitAttr().GetHead());
-	SCLstring tmp;
+	std::string tmp;
 	while( attrPtr != 0)
 	{
 	    attrStr = attrPtr->AttrDesc()->AttrExprDefStr(tmp);

@@ -121,7 +121,8 @@ package provide ManBrowser 1.0
 # Loads a list of enabled commands into ToC, after comparing pages found in
 # 'path' with those listed in 'disabledPages' and 'enabledPages'.
 ::itcl::body ManBrowser::setPageNames {} {
-    set manFiles [glob -directory $path *.html ]
+   if {[file exists $path]} {
+    set manFiles [glob -nocomplain -directory $path *.html ]
 
     set pages($this) [list]
     foreach manFile $manFiles {
@@ -145,6 +146,7 @@ package provide ManBrowser 1.0
 	}
     }
     set pages($this) [lsort $pages($this)]
+  }
 }
 
 ##
@@ -152,16 +154,18 @@ package provide ManBrowser 1.0
 #
 ::itcl::body ManBrowser::loadPage {pageName} {
     # Get page
-    set pathname [file join $path $pageName.html]
-    set htmlFile [open $pathname]
-    set pageData [read $htmlFile]
-    close $htmlFile
-
-    # Display page
-    set htmlview [[$this childsite].browser.htmlview html]
-    $htmlview reset
-    $htmlview configure -parsemode html
-    $htmlview parse $pageData
+    if {[file exists [file join $path $pageName.html]]} {
+       set pathname [file join $path $pageName.html]
+       set htmlFile [open $pathname]
+       set pageData [read $htmlFile]
+       close $htmlFile
+                                                              
+       # Display page
+       set htmlview [[$this childsite].browser.htmlview html]
+       $htmlview reset
+       $htmlview configure -parsemode html
+       $htmlview parse $pageData
+    }
 }
 
 ##
@@ -271,7 +275,7 @@ package provide ManBrowser 1.0
     pack $itk_component(browser) -side left -expand yes -fill both
 
     # Load Introduction.html if it's there, otherwise load first page
-    if {[file exists [file join $path Introduction.html]]} {
+    if {[file exists [file join $path introduction.html]]} {
         loadPage Introduction
     } else {
         loadPage [lindex $pages($this) 0]

@@ -52,7 +52,7 @@ rt_half_mirror(struct rt_db_internal *ip, register const plane_t plane)
     vect_t n1;
     vect_t n2;
 
-    static fastf_t tol_dist_sq = 0.005 * 0.005;
+    static fastf_t tol_dist_sq = 0.0005 * 0.0005;
     static point_t origin = {0.0, 0.0, 0.0};
 
     RT_CK_DB_INTERNAL(ip);

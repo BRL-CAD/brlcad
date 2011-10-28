@@ -48,7 +48,7 @@
  ************************************************************************/
 
 /**
- * B N _ V L B L O C K _ I N I T
+ *
  */
 struct bn_vlblock *
 bn_vlblock_init(struct bu_list *free_vlist_hd, /**< where to get/put free vlists */
@@ -83,7 +83,7 @@ bn_vlblock_init(struct bu_list *free_vlist_hd, /**< where to get/put free vlists
 
 
 /**
- * R T _ V L B L O C K _ I N I T
+ *
  */
 struct bn_vlblock *
 rt_vlblock_init(void)
@@ -93,7 +93,7 @@ rt_vlblock_init(void)
 
 
 /**
- * R T _ V L B L O C K _ F R E E
+ *
  */
 void
 rt_vlblock_free(struct bn_vlblock *vbp)
@@ -116,7 +116,7 @@ rt_vlblock_free(struct bn_vlblock *vbp)
 
 
 /**
- * R T _ V L B L O C K _ F I N D
+ *
  */
 struct bu_list *
 rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
@@ -191,8 +191,6 @@ rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
  ************************************************************************/
 
 /**
- * R T _ C K _ V L I S T
- *
  * Validate an bn_vlist chain for having reasonable values inside.
  * Calls bu_bomb() if not.
  *
@@ -245,8 +243,6 @@ rt_ck_vlist(const struct bu_list *vhead)
 
 
 /**
- * R T _ V L I S T _ C O P Y
- *
  * Duplicate the contents of a vlist.  Note that the copy may be more
  * densely packed than the source.
  */
@@ -268,8 +264,6 @@ rt_vlist_copy(struct bu_list *dest, const struct bu_list *src)
 
 
 /**
- * B N _ V L I S T _ C L E A N U P
- *
  * The macro RT_FREE_VLIST() simply appends to the list
  * &rt_g.rtg_vlfree.  Now, give those structures back to bu_free().
  */
@@ -302,8 +296,6 @@ rt_vlist_cleanup(void)
 
 
 /**
- * B N _ V L I S T _ R P P
- *
  * Given an RPP, draw the outline of it into the vlist.
  */
 void
@@ -364,8 +356,6 @@ bn_vlist_rpp(struct bu_list *hd, const point_t minn, const point_t maxx)
  ************************************************************************/
 
 /**
- * R T _ V L I S T _ E X P O R T
- *
  * Convert a vlist chain into a blob of network-independent binary,
  * for transmission to another machine.
  *
@@ -430,8 +420,6 @@ rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
 
 
 /**
- * R T _ V L I S T _ I M P O R T
- *
  * Convert a blob of network-independent binary prepared by
  * vls_vlist() and received from another machine, into a vlist chain.
  */
@@ -474,8 +462,6 @@ rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char 
  ************************************************************************/
 
 /**
- * R T _ P L O T _ V L B L O C K
- *
  * Output a bn_vlblock object in extended UNIX-plot format, including
  * color.
  */
@@ -499,8 +485,6 @@ rt_plot_vlblock(FILE *fp, const struct bn_vlblock *vbp)
 
 
 /**
- * R T _ V L I S T _ T O _ U P L O T
- *
  * Output a vlist as an extended 3-D floating point UNIX-Plot file.
  * You provide the file.  Uses libplot3 routines to create the
  * UNIX-Plot output.
@@ -861,8 +845,6 @@ rt_process_uplot_value(register struct bu_list **vhead,
 
 
 /**
- * R T _ U P L O T _ T O _ V L I S T
- *
  * Read a BRL-style 3-D UNIX-plot file into a vector list.  For now,
  * discard color information, only extract vectors.  This might be
  * more naturally located in mged/plot.c
@@ -894,8 +876,6 @@ rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size, i
 
 
 /**
- * R T _ L A B E L _ V L I S T _ V E R T S
- *
  * Used by MGED's "labelvert" command.
  */
 void

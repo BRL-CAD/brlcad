@@ -67,7 +67,7 @@ proc create_new_name { leaf sstr rstr increment } {
     # make sure this name doesn't already exist
     set dummy 0
     set base_name $new_name
-    while { [obj_exists $new_name] == 1 } {
+    while { [exists $new_name] == 1 } {
 	incr dummy
 	set max_len [expr 16 - [string length $dummy] - 1]
 	set new_name "[string range $base_name 0 $max_len]_$dummy"
@@ -334,14 +334,6 @@ proc copy_obj { args } {
 	regdef $id
     }
     return $new_name
-}
-
-proc obj_exists { obj_name } {
-    if { [catch {db get $obj_name} ret] } {
-	return 0
-    } else {
-	return 1
-    }
 }
 
 

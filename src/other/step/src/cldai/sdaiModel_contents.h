@@ -40,9 +40,6 @@ class SCLP23_NAME(Model_contents_instances) : public SCLP23_NAME(DAObject)
     const SCLP23_NAME(DAObject__set_var) contents_() const 
 	{ return (const SCLP23_NAME(DAObject__set_var)) &_instances; };
 
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-#endif
 };
 
 typedef SCLP23_NAME(Model_contents_instances) *
@@ -149,9 +146,7 @@ class SCLP23_NAME(Model_contents) : public SCLP23_NAME(Session_instance) {
      */
 
     // until we find out what this should really be in the spec
-#ifndef __OSTORE__
     void RemoveInstance(SCLP23_NAME(DAObject_SDAI_ptr)& appInst);  
-#endif
 //    void RemoveInstance(Entity_instance_ptr& entityHandle);  
     //void RemoveInstance(EntityInstanceH& entityHandle);  
     /* Function
@@ -182,8 +177,8 @@ class SCLP23_NAME(Model_contents) : public SCLP23_NAME(Session_instance) {
      */
 #ifdef SDAI_CPP_LATE_BINDING
 #if 0 // for now
-    Any_var GetEntity_extent(const String_var& entityName);
-    const Any_var GetEntity_extent(const String_var& entityName) const;
+    Any_var GetEntity_extent(const std::string& entityName);
+    const Any_var GetEntity_extent(const std::string& entityName) const;
     Any_var GetEntity_extent(const Entity_ptr& ep);
     const Any_var GetEntity_extent(const Entity_ptr& ep) const;
 #endif
@@ -216,10 +211,6 @@ class SCLP23_NAME(Model_contents) : public SCLP23_NAME(Session_instance) {
 //    void instances (SCLP23_NAME(Model_contents_instances_ptr) x);
 //    void folders (Entity_extent__set x);
 //    void populated_folders (Entity_extent__set x);
-
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-#endif
 
 };
 

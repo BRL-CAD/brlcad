@@ -1378,7 +1378,7 @@ static int
 f_Error(struct application *ap)
 {
     if ( RT_G_DEBUG & DEBUG_RGB )
-	bu_log( "f_Error() ap=%p\n", ap );
+	bu_log( "f_Error() ap=%p\n", (void *)ap );
     return	0;
 }
 

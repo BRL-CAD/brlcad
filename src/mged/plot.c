@@ -127,7 +127,7 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	tol_ptr = argv[1];
     } else {
 	struct bu_vls tmp_vls;
-	double tol = 0.005;
+	double tol = 0.0005;
 
 	bu_vls_init(&tmp_vls);
 	sprintf(tol_str, "%e", tol);

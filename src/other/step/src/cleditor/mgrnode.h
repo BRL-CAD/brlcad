@@ -14,12 +14,6 @@
 
 /* $Id: mgrnode.h,v 3.0.1.4 1997/11/05 22:11:37 sauderd DP3.1 $ */ 
 
-/*
-#ifdef __OSTORE__
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#endif
-*/
-
 #ifdef __O3DB__
 #include <OpenOODB.h>
 #endif
@@ -123,12 +117,6 @@ public:
     DisplayNode *&displayNode() { return di; }
     int ArrayIndex()		{ return arrayIndex; }
     void ArrayIndex(int index)	{ arrayIndex = index; }
-
-/*
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-#endif
-*/
 
     // OBSOLETE
     SCLP23(Application_instance) *GetSTEPentity()	{ return se; }

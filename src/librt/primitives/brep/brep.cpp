@@ -58,6 +58,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+    int rt_brep_bbox(struct rt_db_internal* ip, point_t *min, point_t *max);
     int rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip);
     void rt_brep_print(register const struct soltab *stp);
     int rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead);
@@ -66,7 +67,7 @@ extern "C" {
     int rt_brep_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol);
     void rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp);
     void rt_brep_free(register struct soltab *stp);
-    int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+    int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info));
     int rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
     int rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
     int rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip);
@@ -333,6 +334,26 @@ brep_build_bvh(struct brep_specific* bs)
 /********************************************************************************
  * BRL-CAD Primitive interface
  ********************************************************************************/
+
+/**
+ * R T _ B R E P _ B B O X
+ *
+ * Calculate a bounding RPP around a BREP.  Unlike the prep
+ * routine, which makes use of the full bounding volume hierarchy,
+ * this routine just calls the openNURBS function.
+ */
+int
+rt_brep_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    struct rt_brep_internal* bi;
+
+    RT_CK_DB_INTERNAL(ip);
+    bi = (struct rt_brep_internal*)ip->idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+
+    bi->brep->GetBBox(*min, *max);
+    return 0;
+}
+
 
 /**
  * R T _ B R E P _ P R E P
@@ -1221,7 +1242,7 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 {
     ON_3dVector N;
     bool hit = false;
-    double t;
+    double t = 0.0;
     ON_2dPoint ouv(uv[0], uv[1]);
     int found = BREP_INTERSECT_ROOT_DIVERGED;
     bool converged = false;
@@ -2312,20 +2333,14 @@ find_next_trimming_point(const ON_Curve* crv, const ON_Surface* s, double startd
     }
 }
 
+
 /* a binary predicate for std:list implemented as a function */
 bool near_equal(double first, double second) {
-	struct bn_tol tol;
-	struct bn_tol *ptr_tol;
-
-	tol.magic = BN_TOL_MAGIC;
-	tol.dist = 1e-6;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
-
-	ptr_tol = &tol;
-	return BN_APPROXEQUAL(first, second, ptr_tol);
+    /* FIXME: arbitrary nearness tolerance */
+      return NEAR_EQUAL(first, second, 1e-6);
 }
+
+
 void plot_sum_surface(struct bu_list *vhead, const ON_Surface *surf,
 		int isocurveres, int gridres) {
 	double pt1[3], pt2[3];
@@ -2687,7 +2702,7 @@ void plot_face_trim(struct bu_list *vhead, ON_BrepFace &face, int plotres,
  *
  */
 int
-rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
+rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
 {
     TRACE1("rt_brep_plot");
     struct rt_brep_internal* bi;

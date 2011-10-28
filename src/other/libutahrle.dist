@@ -1,3 +1,4 @@
+SET(libutahrle_ignore_files
 buildmap.3
 bwdithermap.3
 colorquant.3
@@ -48,3 +49,5 @@ rle_row_free.3
 rle_skiprow.3
 scanargs.3
 CMake
+Makefile.am
+)

@@ -65,9 +65,12 @@ libged_nil_la_SOURCES = \
 	echo.c \
 	edcodes.c \
 	edcomb.c \
+	edpipe.c \
+	edit.c \
 	editit.c \
 	edmater.c \
 	erase.c \
+	exists.c \
 	expand.c \
 	eye.c \
 	eye_pos.c \
@@ -83,6 +86,7 @@ libged_nil_la_SOURCES = \
 	get_comb.c \
 	get_eyemodel.c \
 	get_obj_bounds.c \
+	get_solid_kp.c \
 	get_type.c \
 	glob.c \
 	globals.c \
@@ -213,6 +217,8 @@ libged_nil_la_SOURCES = \
 	shader.c \
 	shells.c \
 	showmats.c \
+	simulate/simphysics.cpp \
+	simulate/simulate.c \
 	size.c \
 	slew.c \
 	solids_on_ray.c \
@@ -227,7 +233,6 @@ libged_nil_la_SOURCES = \
 	tra.c \
 	trace.c \
 	track.c \
-	translate.c \
 	translate_extrude.c \
 	translate_tgc.c \
 	tree.c \
@@ -263,7 +268,7 @@ libged_nil_la_SOURCES = \
 	xpush.c \
 	ypr.c \
 	zap.c \
-	zoom.c
+	zoom/zoom.c
 
 AM_CFLAGS = ${STRICT_FLAGS}
 
@@ -276,6 +281,7 @@ AM_CPPFLAGS = \
 noinst_HEADERS = \
 	ged_private.h \
 	qray.h \
+	simulate/simulate.h \
 	wdb_qray.h
 
 libged_la_SOURCES =

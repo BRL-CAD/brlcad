@@ -53,7 +53,7 @@ interpolate_data(fastf_t *grid)
     surfs = (struct face_g_snurb **)bu_calloc(2, sizeof(struct face_g_snurb *), "surfaces");
     surfs[0] = srf;
     surfs[1] = NULL;
-    
+
     return surfs;
 }
 

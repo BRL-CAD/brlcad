@@ -91,11 +91,11 @@ AdvancedFace::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 bool
 AdvancedFace::LoadONBrep(ON_Brep *brep)
 {
-	if (!FaceSurface::LoadONBrep(brep)) {
-		std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-		return false;
-	}
-	return true;
+    if (!brep || !FaceSurface::LoadONBrep(brep)) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	return false;
+    }
+    return true;
 }
 
 // Local Variables:

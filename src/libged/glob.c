@@ -89,7 +89,6 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
     char *start, *end;          /* Start and ends of words */
     int regexp;                 /* Set to TRUE when word is a regexp */
     int backslashed;
-    int firstword;
     struct bu_vls word;         /* Current word being processed */
     struct bu_vls temp;
     struct bu_vls src;
@@ -116,7 +115,6 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
     bu_vls_strcat(&src, argv[1]);
 
     start = end = bu_vls_addr(&src);
-    firstword = 1;
     while (*end != '\0') {
 	/* Run through entire string */
 
@@ -171,8 +169,6 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    debackslash(gedp->ged_result_str, &word);
 	}
-
-	firstword = 0;
     }
 
     bu_vls_free(&temp);

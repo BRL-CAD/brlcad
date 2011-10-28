@@ -52,7 +52,7 @@ ged_dbip(struct ged *gedp, int argc, const char *argv[])
      */
 
     /* oh my gawd, no you didn't.. this code needs to die. */
-    bu_vls_printf(gedp->ged_result_str, "%p", gedp->ged_wdbp->dbip);
+    bu_vls_printf(gedp->ged_result_str, "%p", (void *)gedp->ged_wdbp->dbip);
 
     return GED_OK;
 }

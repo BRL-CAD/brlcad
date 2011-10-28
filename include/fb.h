@@ -50,7 +50,11 @@
 #include "bu.h"
 
 
-/* Library entry points which are macros. */
+/* Library entry points which are macros.
+ *
+ * FIXME: turn these into proper functions so we can appropriately
+ * avoid dereferencing a NULL _ifp or calling an invalid callback.
+ */
 #define fb_gettype(_ifp)		(_ifp->if_type)
 #define fb_getwidth(_ifp)		(_ifp->if_width)
 #define fb_getheight(_ifp)		(_ifp->if_height)
@@ -195,9 +199,9 @@ FB_EXPORT extern int _wgl_open_existing(FBIO *ifp, Display *dpy, Window win, Col
 			_str, __FILE__, __LINE__); \
 		abort(); \
 	} else if ((uint32_t)(*((uintptr_t *)(_ptr))) != (uint32_t)(_magic)) { \
-		fb_log("ERROR: bad %s ptr %p, s/b 0x%x, was 0x%x, file %s, line %d\n", \
-			_str, _ptr, (uint32_t)_magic, \
-			(uint32_t)(*((uintptr_t *)(_ptr))), __FILE__, __LINE__); \
+		fb_log("ERROR: bad %s ptr 0x%x, s/b 0x%x, was %p, file %s, line %d\n", \
+		       _str, (uint32_t)(*((uintptr_t *)(_ptr))), (uint32_t)(_magic), \
+		       (uint32_t)(*((uintptr_t *)(_ptr))), __FILE__, __LINE__); \
 		abort(); \
 	}
 

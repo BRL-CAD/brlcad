@@ -80,7 +80,7 @@ proc make_binunif { id w } {
 	return
     }
 
-    if { [catch {db get $name} ret] == 0 } {
+    if { [exists $name ] } {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "ERROR creating BINUNIF" "An object with that name already exists!!!!" "" 0 OK
 	return
     }

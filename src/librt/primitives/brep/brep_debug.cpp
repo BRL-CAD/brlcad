@@ -122,7 +122,7 @@ plotsurfaceleafs(SurfaceTree* surf) {
 	}
 	/*
 	  if (bb->m_xgrow) {
-	  M_COLOR_PLOT(RED);
+	  M_COLOR_PLOT(PURERED);
 	  } else if (bb->m_ygrow) {
 	  M_COLOR_PLOT(GREEN);
 	  } else if (bb->m_zgrow) {
@@ -159,7 +159,7 @@ plotsurfaceleafs(SurfaceTree* surf, struct bn_vlblock *vbp, bool dim3d)
 
     ON_TextLog tl(stderr);
 
-    vhead = rt_vlblock_find(vbp, RED);
+    vhead = rt_vlblock_find(vbp, PURERED);
     RT_ADD_VLIST(vhead, min, BN_VLIST_LINE_MOVE);
     vhead = rt_vlblock_find(vbp, BLUE);
     RT_ADD_VLIST(vhead, min, BN_VLIST_LINE_MOVE);
@@ -169,7 +169,7 @@ plotsurfaceleafs(SurfaceTree* surf, struct bn_vlblock *vbp, bool dim3d)
     for (std::list<BBNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
 	BBNode* bb = dynamic_cast<BBNode*>(*i);
 	if (bb->m_trimmed) {
-	    vhead = rt_vlblock_find(vbp, RED);
+	    vhead = rt_vlblock_find(vbp, PURERED);
 	} else if (bb->m_checkTrim) {
 	    vhead = rt_vlblock_find(vbp, BLUE);
 	} else {
@@ -200,7 +200,7 @@ plottrimleafs(SurfaceTree* st, struct bn_vlblock *vbp, bool dim3d)
 
     ON_TextLog tl(stderr);
 
-    vhead = rt_vlblock_find(vbp, RED);
+    vhead = rt_vlblock_find(vbp, PURERED);
     RT_ADD_VLIST(vhead, min, BN_VLIST_LINE_MOVE);
     vhead = rt_vlblock_find(vbp, BLUE);
     RT_ADD_VLIST(vhead, min, BN_VLIST_LINE_MOVE);
@@ -410,7 +410,7 @@ plotUVDomain2d(ON_BrepFace &face, struct bn_vlblock *vbp)
 
     ON_TextLog tl(stderr);
 
-    vhead = rt_vlblock_find(vbp, RED);
+    vhead = rt_vlblock_find(vbp, PURERED);
 
     surf->GetDomain(0, &umin, &umax);
     surf->GetDomain(1, &vmin, &vmax);

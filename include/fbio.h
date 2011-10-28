@@ -55,10 +55,6 @@
  */
 typedef unsigned char RGBpixel[3];
 
-#define RED 0
-#define GRN 1
-#define BLU 2
-
 
 /**
  * C o l o r M a p
@@ -92,7 +88,7 @@ typedef struct {
  * routines.
  */
 typedef struct FBIO_ {
-    long if_magic;
+    uint32_t if_magic;
     /* Static information: per device TYPE.	*/
     int (*if_open)FB_ARGS((struct FBIO_ *ifp, char *file, int _width, int _height));			/**< @brief open device */
     int (*if_close)FB_ARGS((struct FBIO_ *ifp));							/**< @brief close device */

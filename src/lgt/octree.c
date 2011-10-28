@@ -319,9 +319,9 @@ prnt_Node_Octree(Octree *parentp, int level)
 	    parentp->o_points->c_point[Z],
 	    parentp->o_bitv,
 	    parentp->o_temp,
-	    parentp->o_triep,
-	    parentp->o_sibling,
-	    parentp->o_child
+	    (void *)parentp->o_triep,
+	    (void *)parentp->o_sibling,
+	    (void *)parentp->o_child
 	);
     for ( ptp = parentp->o_points->c_next; ptp != PTLIST_NULL; ptp = ptp->c_next )
     {

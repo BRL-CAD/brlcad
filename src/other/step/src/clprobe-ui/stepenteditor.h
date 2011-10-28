@@ -71,7 +71,7 @@ public:
     void UndoChanges();
 
     char *StrAttrAssignVal(const char *s);
-    char *StrEditorVal(SCLstring &s);
+    char *StrEditorVal(std::string &s);
 
 	// return private class members
     STEPattribute *StepAttr()	{ return stepAttr; }

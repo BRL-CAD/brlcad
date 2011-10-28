@@ -42,8 +42,6 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     eip = (struct rt_hyp_internal *)ip->idb_ptr;
     RT_HYP_CK_MAGIC(eip);
 
-    *b = ON_Brep::New();
-
     point_t p1_origin, p2_origin;
     ON_3dPoint plane1_origin, plane2_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
@@ -134,10 +132,6 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     VSET(ep1, -eip->hyp_b, 0, 0.5*MAGNITUDE(eip->hyp_Hi));
     VSET(ep2, -MX, 0, 0);
     VSET(ep3, -eip->hyp_b, 0, -0.5*MAGNITUDE(eip->hyp_Hi));
-
-    bu_log("pt1: %f, %f, %f\n", ep1[0], ep1[1], ep1[2]);
-    bu_log("pt2: %f, %f, %f\n", ep2[0], ep2[1], ep2[2]);
-    bu_log("pt3: %f, %f, %f\n", ep3[0], ep3[1], ep3[2]);
 
     ON_3dPoint onp1 = ON_3dPoint(ep1);
     ON_3dPoint onp2 = ON_3dPoint(ep2);

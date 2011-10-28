@@ -29,6 +29,10 @@
 #define LIB_OSL_RENDERER_H
 
 #include <stdio.h>
+
+#include <string>
+#include <vector>
+
 #include "vmath.h"
 
 #  include "oslclosure.h"
@@ -43,12 +47,18 @@ typedef struct Ray {
     point_t origin;
 } Ray;
 
+enum RayType {
+    RAY_REFLECT = 1,
+    RAY_TRANSMIT = 2
+};
+
 /* Shared struct by which the C shader and the C++ render system may
    exchange information
 */
 struct RenderInfo {
 
     /* -- input -- */
+    void *thread_info;      /* Thread specific information */
     fastf_t screen_x;       /* Coordinates of the screen (if applicable) */
     fastf_t screen_y;
     point_t P;              /* Query point */
@@ -58,67 +68,98 @@ struct RenderInfo {
     point_t dPdu, dPdv;     /* uv tangents */
     int depth;              /* How many times the ray hit an object */
     fastf_t surfacearea;    /* FIXME */
-    const char *shadername; /* Name of the shader we are querying */
-
+    ShadingAttribStateRef shader_ref;   /* Reference for the shader we're querying */
+    std::vector< Vec3 > light_dirs;     /* List of directions of lights that are visible from 
+					   this query point */
+    
     /* -- output -- */
-    point_t pc; /* Color of the point (or multiplier) */
+    point_t pc;           /* Color of the point (or multiplier) */
     int doreflection;     /* 1 if there will be reflection 0, otherwise */
-    Ray out_ray;      /* output ray (in case of reflection) */
+    int out_ray_type;     /* bitflag describing output ray type (bit 0: reflection; 1: refraction) */
+    Ray out_ray;          /* output ray (in case of reflection) */
+
+    /* Experimental! Don't use yet */
+    Color3 reflect_weight;            /* Color that will be multiplied by the
+					 color returned by the reflected ray */
+    Color3 transmit_weight;           /* Color that will be multiplied by the 
+					 color returned by the transmited ray */
 };
 
-struct ThreadInfo {
-    void *handle;
-    ShadingContext *ctx;
-    unsigned short Xi[3];
+/* Required structure to initialize an OSL shader */
+struct ShaderInfo {
+
+    typedef std::pair< TypeDesc, Vec3 > TypeVec;
+
+    std::string shadername; // Name of the shader (type of shader)
+    std::string layername;  // Name of the layer  (name of this partilar instance)
+    std::vector< std::pair<std::string, int> > iparam;         // int parameters
+    std::vector< std::pair<std::string, float> > fparam;       // float parameters
+    std::vector< std::pair<std::string, Color3> > cparam;      // color parameters
+    std::vector< std::pair<std::string, TypeVec > > vparam;    // normal/vector/point parameters
+    std::vector< std::pair<std::string, std::string> > sparam; // string parameters
+    std::vector< std::pair<std::string, Matrix44 > > mparam;   // matrix parameters
 };
+/* Represents a parameter a shader */
+struct ShaderParam {
+    std::string layername;
+    std::string paramname;
+};
+/* Represents an edge from first to second  */
+typedef std::pair < ShaderParam, ShaderParam > ShaderEdge;
+
+/* Required structure to initialize an OSL shader group */
+struct ShaderGroupInfo {
+    std::vector< ShaderInfo > shader_layers;
+    std::vector< ShaderEdge > shader_edges;
+};
+
 
 /* Class 'OSLRenderer' holds global information about OSL shader system.
    These information are hidden from the calling C code */
 class OSLRenderer {
 
-    const char *shadername;              /* name of the shader */
     ErrorHandler errhandler;
-    ShaderGlobals globals;
-
+    
     ShadingSystem *shadingsys;
     ShadingSystemImpl *ssi;
     SimpleRenderer rend;
-    ShadingContext *ctx;
     void *handle;
 
-    unsigned short Xi[3];                /* seed for RNG */
-
     /* Information about each shader of the renderer */
+#if 0
     struct OSLShader{
-	const char *name;
+	std::string name;
 	ShadingAttribStateRef state;
     };
     std::vector<OSLShader> shaders;
+#endif
 
     const ClosureColor
-	*ExecuteShaders(ShaderGlobals &globals, RenderInfo *info);
+	*ExecuteShaders(ShaderGlobals &globals, RenderInfo *info) const;
 
     /* Sample a primitive from the shaders group */
     const ClosurePrimitive* SamplePrimitive(Color3& weight,
 					    const ClosureColor *closure,
-					    float r);
+					    float r) const;
 
     /* Helper function for SamplePrimitive */
     void SamplePrimitiveRecurse(const ClosurePrimitive*& r_prim,
 				Color3& r_weight,
 				const ClosureColor *closure,
-				const Color3& weight, float& totw, float& r);
+				const Color3& weight, float& totw, float& r) const;
 
 public:
 
     OSLRenderer();
     ~OSLRenderer();
 
-    /* Add an OSL shader to the system */
-    void AddShader(const char *shadername);
+    ShadingAttribStateRef AddShader(ShaderGroupInfo &group_info);
 
     /* Query a color */
-    Color3 QueryColor(RenderInfo *info);
+    Color3 QueryColor(RenderInfo *info) const;
+
+    /* Return thread specific information */
+    void * CreateThreadInfo();
 
     static void Vec3toPoint_t(Vec3 s, point_t t){
 	t[0] = s[0];
@@ -133,7 +174,7 @@ public:
 /*
  * Local Variables:
  * tab-width: 8
- * mode: C
+ * mode: C++
  * c-basic-offset: 4
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"

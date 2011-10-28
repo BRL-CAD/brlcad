@@ -1,11 +1,21 @@
+SET(UTIL_INCLUDE_DIRS
+	${BU_INCLUDE_DIRS}
+	${BN_INCLUDE_DIRS}
+	${DM_INCLUDE_DIRS}
+	${FB_INCLUDE_DIRS}
+	${RT_INCLUDE_DIRS}
+	${SYSV_INCLUDE_DIRS}
+	${ORLE_INCLUDE_DIRS}
+	${TCLCAD_INCLUDE_DIRS}
+	${WDB_INCLUDE_DIRS}
+	)
+LIST(REMOVE_DUPLICATES UTIL_INCLUDE_DIRS)
+include_directories(${UTIL_INCLUDE_DIRS})
+
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${ZLIB_INCLUDE_DIR}
-  ${PNG_INCLUDE_DIR}
   ${UTAHRLE_INCLUDE_DIR}
-  ${X11_INCLUDE_DIR}
-  ${TCL_INCLUDE_DIRS}
-  ${TK_INCLUDE_PATH}
+  ${PNG_INCLUDE_DIR}
 )
 
 IF(MSVC)
@@ -19,22 +29,22 @@ ENDIF(MSVC)
 IF(BRLCAD-ENABLE_X11)
 	BRLCAD_ADDEXEC(pl-X pl-X.c "libdm libbu")
 	IF(BRLCAD-ENABLE_TK)
-		BRLCAD_ADDEXEC(pl-dm pl-dm.c "libdm libbu")
+		BRLCAD_ADDEXEC(pl-dm pl-dm.c "libdm libbu ${M_LIBRARY}")
 		BRLCAD_ADDEXEC(bombardier bombardier.c "libtclcad libbu")
 	ENDIF(BRLCAD-ENABLE_TK)
 ENDIF(BRLCAD-ENABLE_X11)
 
 BRLCAD_ADDFILE(pl-dm.c sample_applications)
 
-IF(NOT MSVC)
+IF(LIBPC)
 	add_executable(pc_test pc_test.c)
 	target_link_libraries(pc_test libwdb libpc)
-ENDIF(NOT MSVC)
+ENDIF(LIBPC)
 
 BRLCAD_ADDEXEC(alias-pix alias-pix.c libbu)
 BRLCAD_ADDEXEC(ap-pix ap-pix.c libbu)
 BRLCAD_ADDEXEC(asc-pl asc-pl.c "libbn libbu")
-BRLCAD_ADDEXEC(azel azel.c libbu)
+BRLCAD_ADDEXEC(azel azel.c "libbu ${M_LIBRARY}")
 BRLCAD_ADDEXEC(bary bary.c libbu)
 BRLCAD_ADDEXEC(buffer buffer.c libbu)
 BRLCAD_ADDEXEC(bw-a bw-a.c "libfb libbu")
@@ -49,9 +59,9 @@ BRLCAD_ADDEXEC(bwdiff bwdiff.c libbu)
 BRLCAD_ADDEXEC(bwfilter bwfilter.c libbu)
 BRLCAD_ADDEXEC(bwhist bwhist.c libfb)
 BRLCAD_ADDEXEC(bwhisteq bwhisteq.c libbu)
-BRLCAD_ADDEXEC(bwmod bwmod.c libbu)
+BRLCAD_ADDEXEC(bwmod bwmod.c "libbu ${M_LIBRARY}")
 BRLCAD_ADDEXEC(bwrect bwrect.c libbu)
-BRLCAD_ADDEXEC(bwrot bwrot.c libbu)
+BRLCAD_ADDEXEC(bwrot bwrot.c "libbu ${M_LIBRARY}")
 BRLCAD_ADDEXEC(bwscale bwscale.c libbu)
 BRLCAD_ADDEXEC(bwshrink bwshrink.c libbu)
 BRLCAD_ADDEXEC(bwstat bwstat.c "libbu ${M_LIBRARY}")
@@ -95,7 +105,7 @@ BRLCAD_ADDEXEC(pix3filter pix3filter.c libbu)
 BRLCAD_ADDEXEC(pixbackgnd pixbackgnd.c libbu)
 BRLCAD_ADDEXEC(pixbgstrip pixbgstrip.c "libfb libbu")
 BRLCAD_ADDEXEC(pixblend pixblend.c libbu)
-BRLCAD_ADDEXEC(pixborder pixborder.c "libfb libbn libbu")
+BRLCAD_ADDEXEC(pixborder pixborder.c "libfb libbn libbu ${M_LIBRARY}")
 BRLCAD_ADDEXEC(pixbustup pixbustup.c libbu)
 BRLCAD_ADDEXEC(pixclump pixclump.c "libbn libbu")
 BRLCAD_ADDEXEC(pixcolors pixcolors.c libbu)
@@ -116,14 +126,14 @@ BRLCAD_ADDEXEC(pixhist3d-pl pixhist3d-pl.c "libbn libbu")
 BRLCAD_ADDEXEC(pixinterp2x pixinterp2x.c libbu)
 BRLCAD_ADDEXEC(pixmatte pixmatte.c libbu)
 BRLCAD_ADDEXEC(pixmerge pixmerge.c libbu)
-BRLCAD_ADDEXEC(pixmorph pixmorph.c "libfb libbu")
+BRLCAD_ADDEXEC(pixmorph pixmorph.c "libfb libbu ${M_LIBRARY}")
 BRLCAD_ADDEXEC(pixpaste pixpaste.c "libfb libbu")
 BRLCAD_ADDEXEC(pixrect pixrect.c libbu)
-BRLCAD_ADDEXEC(pixrot pixrot.c libbu) 
+BRLCAD_ADDEXEC(pixrot pixrot.c libbu)
 BRLCAD_ADDEXEC(pixsaturate pixsaturate.c libbu)
 BRLCAD_ADDEXEC(pixscale pixscale.c libbu)
 BRLCAD_ADDEXEC(pixshrink pixshrink.c libbu)
-BRLCAD_ADDEXEC(pixstat pixstat.c libbu)
+BRLCAD_ADDEXEC(pixstat pixstat.c "libbu ${M_LIBRARY}")
 BRLCAD_ADDEXEC(pixsubst pixsubst.c libbu)
 BRLCAD_ADDEXEC(pixtile pixtile.c libbu)
 BRLCAD_ADDEXEC(pixuntile pixuntile.c libbu)
@@ -133,19 +143,19 @@ BRLCAD_ADDEXEC(pl-pl pl-pl.c libbu)
 BRLCAD_ADDEXEC(pl-ps pl-ps.c libbu)
 BRLCAD_ADDEXEC(pl-tek pl-tek.c libbu)
 BRLCAD_ADDEXEC(plcolor plcolor.c libbn)
-BRLCAD_ADDEXEC(pldebug pldebug libbu)
+BRLCAD_ADDEXEC(pldebug pldebug.c libbu)
 SET_TARGET_PROPERTIES(pldebug PROPERTIES LINKER_LANGUAGE C)
 BRLCAD_ADDEXEC(plgetframe plgetframe.c libbu)
 BRLCAD_ADDEXEC(plline2 plline2.c "libbn libbu")
-BRLCAD_ADDEXEC(plrot plrot.c "libbn libbu")
+BRLCAD_ADDEXEC(plrot plrot.c "libbn libbu ${M_LIBRARY}")
 BRLCAD_ADDEXEC(plstat plstat.c libbu)
 BRLCAD_ADDEXEC(png-bw png-bw.c "libbn libbu")
 BRLCAD_ADDEXEC(png-pix png-pix.c "libbn libbu")
 BRLCAD_ADDEXEC(png_info png_info.c "libbn libbu")
 BRLCAD_ADDEXEC(rle-pix rle-pix.c "libbu libsysv ${UTAHRLE_LIBRARY}")
 BRLCAD_ADDEXEC(sun-pix sun-pix.c libbu)
-BRLCAD_ADDEXEC(terrain terrain.c "libbn libbu")
-BRLCAD_ADDEXEC(texturescale texturescale.c "libfb libbn libbu")
+BRLCAD_ADDEXEC(terrain terrain.c "libbn libbu ${M_LIBRARY}")
+BRLCAD_ADDEXEC(texturescale texturescale.c "libfb libbn libbu ${M_LIBRARY}")
 #FIXME - Need to look at pcattcp port to Windows - ttcp should be
 #maintained and ported
 IF(NOT WIN32)
@@ -162,99 +172,100 @@ target_link_libraries(roots_example libbu librt)
 BRLCAD_ADDFILE(roots_example.c sample_applications)
 
 set(util_MANS
-  ap-pix.1 
-  asc-pl.1 
-  azel.1 
-  bary.1 
-  brlcad.1 
-  buffer.1 
-  bw-imp.1 
-  bw-pix.1 
-  bw-png.1 
-  bw-ps.1 
-  bw-rle.1 
-  bw3-pix.1 
-  bwcrop.1 
-  bwdiff.1 
-  bwfilter.1 
-  bwhist.1 
-  bwhisteq.1 
-  bwmod.1 
-  bwrect.1 
-  bwrot.1 
-  bwshrink.1 
-  bwstat.1 
-  bwthresh.1 
-  cv.1 
-  dbcp.1 
-  decimate.1 
-  dpix-pix.1 
-  dunncolor.1 
-  dunnsnap.1 
-  gencolor.1 
-  hex.1 
-  imgdims.1 
-  loop.1 
-  mac-pix.1 
-  morphedit.1 
-  orle-pix.1 
-  pix-alias.1 
-  pix-bw.1 
-  pix-bw3.1 
-  pix-orle.1 
-  pix-png.1 
-  pix-ppm.1 
-  pix-ps.1 
-  pix-rle.1 
-  pix-sun.1 
-  pixbackgnd.1 
-  pixbgstrip.1 
-  pixblend.1 
-  pixborder.1 
-  pixbustup.1 
-  pixclump.1 
-  pixcolors.1 
-  pixcut.1 
-  pixdiff.1 
-  pixdsplit.1 
-  pixfade.1 
-  pixfilter.1 
-  pixhalve.1 
-  pixhist.1 
-  pixhist3d-pl.1 
-  pixhist3d.1 
-  pixinterp2x.1 
-  pixmatte.1 
-  pixmerge.1 
-  pixmorph.1 
-  pixrect.1 
-  pixrot.1 
-  pixsaturate.1 
-  pixscale.1 
-  pixshrink.1 
-  pixstat.1 
-  pixsubst.1 
-  pixtile.1 
-  pixuntile.1 
-  pl-X.1 
-  pl-asc.1 
-  pl-hpgl.1 
-  pl-pl.1 
-  pl-ps.1 
-  pl-tek.1 
-  plcolor.1 
-  pldebug.1 
-  plgetframe.1 
-  plline2.1 
-  plrot.1 
-  png-bw.1 
-  png-pix.1 
-  png_info.1 
-  random.1 
-  rle-pix.1 
-  sun-pix.1 
-  terrain.1 
+  ap-pix.1
+  asc-pl.1
+  azel.1
+  bary.1
+  brlcad.1
+  buffer.1
+  bw-imp.1
+  bw-pix.1
+  bw-png.1
+  bw-ps.1
+  bw-rle.1
+  bw3-pix.1
+  bwcrop.1
+  bwdiff.1
+  bwfilter.1
+  bwhist.1
+  bwhisteq.1
+  bwmod.1
+  bwrect.1
+  bwrot.1
+  bwshrink.1
+  bwstat.1
+  bwthresh.1
+  cv.1
+  dbcp.1
+  decimate.1
+  dpix-pix.1
+  dunncolor.1
+  dunnsnap.1
+  gencolor.1
+  hex.1
+  imgdims.1
+  loop.1
+  mac-pix.1
+  morphedit.1
+  orle-pix.1
+  pix-alias.1
+  pix-bw.1
+  pix-bw3.1
+  pix-orle.1
+  pix-png.1
+  pix-ppm.1
+  pix-ps.1
+  pix-rle.1
+  pix-sun.1
+  pixbackgnd.1
+  pixbgstrip.1
+  pixblend.1
+  pixborder.1
+  pixbustup.1
+  pixclump.1
+  pixcolors.1
+  pixcut.1
+  pixdiff.1
+  pixdsplit.1
+  pixfade.1
+  pixfilter.1
+  pixhalve.1
+  pixhist.1
+  pixhist3d-pl.1
+  pixhist3d.1
+  pixinterp2x.1
+  pixmatte.1
+  pixmerge.1
+  pixmorph.1
+  pixrect.1
+  pixrot.1
+  pixsaturate.1
+  pixscale.1
+  pixshrink.1
+  pixstat.1
+  pixsubst.1
+  pixtile.1
+  pixuntile.1
+  pl-X.1
+  pl-asc.1
+  pl-hpgl.1
+  pl-pl.1
+  pl-ps.1
+  pl-tek.1
+  plcolor.1
+  pldebug.1
+  plgetframe.1
+  plline2.1
+  plrot.1
+  png-bw.1
+  png-pix.1
+  png_info.1
+  random.1
+  rle-pix.1
+  sun-pix.1
+  terrain.1
   wavelet.1
 )
 ADD_MAN_PAGES(1 util_MANS)
 CMAKEFILES(bombardier.h morphedit.tcl pldebug.c)
+CMAKEFILES(Makefile.am)

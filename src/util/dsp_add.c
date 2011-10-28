@@ -154,7 +154,7 @@ add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 	s = (unsigned short)int_value;
 
 	if (s != int_value) {
-	    bu_log("overflow (%d+%d) == %d at %d\n",
+	    bu_log("overflow (%d+%d) == %d at %lu\n",
 		   buf1[i], buf2[i], int_value, i);
 	}
 	buf1[i] = s;

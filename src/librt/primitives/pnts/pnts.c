@@ -36,7 +36,7 @@
 #include "vmath.h"
 
 
-extern int rt_ell_plot(struct bu_list *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *);
+extern int rt_ell_plot(struct bu_list *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *, const struct rt_view_info *);
 
 
 HIDDEN unsigned char *
@@ -56,6 +56,49 @@ pnts_unpack_double(unsigned char *buf, unsigned char *data, unsigned int count)
     return buf;
 }
 
+/**
+ * R T _ P N T S _ B B O X
+ *
+ * Calculate a bounding box for a set of points
+ */
+int
+rt_pnts_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    struct rt_pnts_internal *pnts;
+    struct bu_list *head;
+    struct pnt *point;
+    point_t sph_min, sph_max;
+
+    RT_CK_DB_INTERNAL(ip);
+    pnts = (struct rt_pnts_internal *)ip->idb_ptr;
+    RT_PNTS_CK_MAGIC(pnts);
+
+    if (pnts->count > 0) {
+	point = (struct pnt *)pnts->point;
+	head = &point->l;
+    } else {
+	return 0;
+    }
+
+    if (pnts->scale > 0) {
+	/* we're making spheres out of these, so the bbox
+	 * has to take that into account */
+	for (BU_LIST_FOR(point, pnt, head)) {
+	    sph_min[X] = point->v[X] - pnts->scale;
+	    sph_max[X] = point->v[X] + pnts->scale;
+	    sph_min[Y] = point->v[Y] - pnts->scale;
+	    sph_max[Y] = point->v[Y] + pnts->scale;
+	    sph_min[Z] = point->v[Z] - pnts->scale;
+	    sph_max[Z] = point->v[Z] + pnts->scale;
+	    VMINMAX((*min), (*max), sph_min);
+	    VMINMAX((*min), (*max), sph_max);
+	}
+    } else {
+	for (BU_LIST_FOR(point, pnt, head)) {
+	    VMINMAX((*min), (*max), point->v);
+	}
+    }
+    return 0;
+}
 
 /**
  * R T _ P N T S _ E X P O R T 5
@@ -689,7 +732,7 @@ rt_pnts_print(register const struct soltab *stp)
  * Plot pnts collection as axes or spheres.
  */
 int
-rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
 {
     struct rt_pnts_internal *pnts;
     struct bu_list *head;
@@ -729,7 +772,7 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struc
 	/* give rt_ell_plot a sphere representation of each point */
 	for (BU_LIST_FOR(point, pnt, head)) {
 	    VMOVE(ell.v, point->v);
-	    rt_ell_plot(vhead, &db, ttol, tol);
+	    rt_ell_plot(vhead, &db, ttol, tol, NULL);
 	}
     } else {
 	double vCoord, hCoord;
@@ -791,7 +834,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	return 1;
     }
 
-    snprintf(buf, BUF_SZ, "Total number of points: %lu\nDefault scale: %f\n", (long unsigned)pnts->count, pnts->scale);
+    snprintf(buf, BUF_SZ, "Total number of points: %lu\nDefault scale: %f\n", numPoints, defaultSize);
     bu_vls_strcat(str, buf);
 
     loop_counter = 1;

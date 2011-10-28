@@ -40,7 +40,9 @@
 
 #include "./ged_private.h"
 
-int _path_scrub(struct bu_vls *path) {
+HIDDEN int
+_path_scrub(struct bu_vls *path)
+{
     struct bu_vls tmp;
     const char *normalized;
     int islocal = 1;
@@ -58,7 +60,9 @@ int _path_scrub(struct bu_vls *path) {
 }
 
 
-void _add_toplevel(struct db_full_path_list *path_list, int local) {
+HIDDEN void
+_add_toplevel(struct db_full_path_list *path_list, int local)
+{
     struct db_full_path_list *new_entry;
     BU_GETSTRUCT(new_entry, db_full_path_list);
     new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
@@ -69,7 +73,9 @@ void _add_toplevel(struct db_full_path_list *path_list, int local) {
 }
 
 
-void _gen_toplevel(struct db_i *dbip, struct db_full_path_list *path_list, struct db_full_path *dfp, int local) {
+HIDDEN void
+_gen_toplevel(struct db_i *dbip, struct db_full_path_list *path_list, struct db_full_path *dfp, int local)
+{
     int i;
     struct directory *dp;
     struct db_full_path_list *new_entry;

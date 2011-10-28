@@ -492,101 +492,6 @@ bu_vls_from_argv(struct bu_vls *vp, int argc, const char *argv[])
 }
 
 
-int
-bu_argv_from_string(char *argv[], int lim, char *lp)
-{
-    int argc = 0; /* number of words seen */
-    int skip = 0;
-    int quoted = 0;
-
-    if (UNLIKELY(!argv)) {
-	/* do this instead of crashing */
-	bu_bomb("bu_argv_from_string received a null argv\n");
-    }
-    argv[0] = (char *)NULL;
-
-    if (UNLIKELY(lim <= 0 || !lp)) {
-	/* nothing to do, only return NULL */
-	return 0;
-    }
-
-    /* skip leading whitespace */
-    while (*lp != '\0' && isspace(*lp))
-	lp++;
-
-    if (*lp == '\0') {
-	/* no words, only return NULL */
-	return 0;
-    }
-
-    /* some non-space string has been seen, set argv[0] */
-    argc = 0;
-    argv[argc] = lp;
-
-    for (; *lp != '\0'; lp++) {
-
-	if (*lp == '"') {
-	    if (!quoted) {
-		/* start collecting quoted string */
-		quoted = 1;
-
-		/* skip past the quote character */
-		argv[argc] = lp + 1;
-		continue;
-	    }
-
-	    /* end qoute */
-	    quoted = 0;
-	    *lp++ = '\0';
-
-	    /* skip leading whitespace */
-	    while (*lp != '\0' && isspace(*lp)) {
-		/* null out spaces */
-		*lp = '\0';
-		lp++;
-	    }
-
-	    skip = 0;
-	    goto nextword;
-	}
-
-	/* skip over current word */
-	if (quoted || !isspace(*lp))
-	    continue;
-
-	skip = 0;
-
-	/* terminate current word, skip space until we find the start
-	 * of the next word nulling out the spaces as we go along.
-	 */
-	while (*(lp+skip) != '\0' && isspace(*(lp+skip))) {
-	    lp[skip] = '\0';
-	    skip++;
-	}
-
-	if (*(lp + skip) == '\0')
-	    break;
-
-    nextword:
-	/* make sure argv[] isn't full, need room for NULL */
-	if (argc >= lim-1)
-	    break;
-
-	/* start of next word */
-	argc++;
-	argv[argc] = lp + skip;
-
-	/* jump over the spaces, remember the loop's lp++ */
-	lp += skip - 1;
-    }
-
-    /* always NULL-terminate the array */
-    argc++;
-    argv[argc] = (char *)NULL;
-    return argc;
-}
-
-
 void
 bu_vls_fwrite(FILE *fp, const struct bu_vls *vp)
 {
@@ -833,10 +738,57 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 	/* Copy off the format string */
 	len = ep-sp+1;
-	if ((size_t)len > sizeof(fbuf)-1)
-	    len = sizeof(fbuf)-1;
+	if ((size_t)len > sizeof(fbuf))
+	    len = sizeof(fbuf);
+	/* intentionally avoid bu_strlcpy here since the source field
+	 * may be legitimately truncated.  FIXME: verify that claim.
+	 */
 	strncpy(fbuf, sp, (size_t)len);
-	fbuf[len] = '\0'; /* ensure null termination */
+	fbuf[len] = '\0'; /* sanity */
+
+#ifndef HAVE_C99_FORMAT_SPECIFIERS
+	/* if the format string uses the %z width specifier, we need
+	 * to replace it with something more palatable to this busted
+	 * compiler.
+	 */
+
+	if (flags & SIZETINT) {
+	    char *fp = fbuf;
+	    while (*fp) {
+		if (*fp == '%') {
+		    /* found the next format specifier */
+		    while (*fp) {
+			fp++;
+			/* possible characters that can preceed the
+			 * field length character (before the type).
+			 */
+			if (isdigit(*fp)
+			    || *fp == '$'
+			    || *fp == '#'
+			    || *fp == '+'
+			    || *fp == '.'
+			    || *fp == '-'
+			    || *fp == '*') {
+			    continue;
+			}
+			if (*fp == 'z') {
+			    /* assume MSVC replacing instances of %z
+			     * with %I (capital i) until we encounter
+			     * anything different.
+			     */
+			    *fp = 'I';
+			}
+
+			break;
+		    }
+		    if (*fp == '\0') {
+			break;
+		    }
+		}
+		fp++;
+	    }
+	}
+#endif
 
 	/* Grab parameter from arg list, and print it */
 	switch (*ep) {

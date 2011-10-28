@@ -15,12 +15,6 @@
 
 /* $Id: gennode.h,v 3.0.1.3 1997/11/05 22:33:47 sauderd DP3.1 $  */ 
 
-/*
-#ifdef __OSTORE__
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#endif
-*/
-
 #ifdef __O3DB__
 #include <OpenOODB.h>
 #endif
@@ -65,11 +59,6 @@ public:
 	prev = 0;
 
     }
-/*
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-#endif
-*/
 };
 
 //////////////////////////////////////////////////////////////////////////////

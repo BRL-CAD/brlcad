@@ -79,6 +79,7 @@ main(int argc, char **argv)
 	prnt_Usage();
 	return	1;
     }
+    bu_log("DEPRECATED: orle-fb is no longer being maintained.  Use rle-fb instead.\n");
     if ( bgflag )  {
 	/* User has supplied his own background */
 	if ( rle_rhdr( fp, &get_flags, RGBPIXEL_NULL ) == -1 )

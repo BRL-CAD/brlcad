@@ -215,51 +215,43 @@ struct TypeBody_ {
 /* global variables */
 /********************/
 
-#ifdef TYPE_C
-#include "defstart.h"
-#else
-#include "decstart.h"
-#endif    /*  TYPE_C  */
-
 /* Very commonly-used read-only types */
 /* non-constant versions probably aren't necessary? */
-GLOBAL Type Type_Bad;
-GLOBAL Type Type_Unknown;
-GLOBAL Type Type_Dont_Care;
-GLOBAL Type Type_Runtime;	/* indicates that this object can't be */
-				/* calculated now but must be deferred */
-				/* til (the mythical) runtime */
-GLOBAL Type Type_Binary;
-GLOBAL Type Type_Boolean;
-GLOBAL Type Type_Enumeration;
-GLOBAL Type Type_Expression;
-GLOBAL Type Type_Aggregate;
-GLOBAL Type Type_Integer;
-GLOBAL Type Type_Integer;
-GLOBAL Type Type_Number;
-GLOBAL Type Type_Real;
-GLOBAL Type Type_String;
-GLOBAL Type Type_String_Encoded;
-GLOBAL Type Type_Logical;
-GLOBAL Type Type_Set;
-GLOBAL Type Type_Attribute;
-GLOBAL Type Type_Entity;
-GLOBAL Type Type_Funcall;
-GLOBAL Type Type_Generic;
-GLOBAL Type Type_Identifier;
-GLOBAL Type Type_Oneof;
-GLOBAL Type Type_Query;
-GLOBAL Type Type_Self;
-GLOBAL Type Type_Set_Of_String;
-GLOBAL Type Type_Set_Of_Generic;
-GLOBAL Type Type_Bag_Of_Generic;
+extern Type Type_Bad;
+extern Type Type_Unknown;
+extern Type Type_Dont_Care;
+extern Type Type_Runtime; /* indicates that this object can't be */
+    /* calculated now but must be deferred */
+    /* til (the mythical) runtime */
+extern Type Type_Binary;
+extern Type Type_Boolean;
+extern Type Type_Enumeration;
+extern Type Type_Expression;
+extern Type Type_Aggregate;
+extern Type Type_Integer;
+extern Type Type_Integer;
+extern Type Type_Number;
+extern Type Type_Real;
+extern Type Type_String;
+extern Type Type_String_Encoded;
+extern Type Type_Logical;
+extern Type Type_Set;
+extern Type Type_Attribute;
+extern Type Type_Entity;
+extern Type Type_Funcall;
+extern Type Type_Generic;
+extern Type Type_Identifier;
+extern Type Type_Oneof;
+extern Type Type_Query;
+extern Type Type_Self;
+extern Type Type_Set_Of_String;
+extern Type Type_Set_Of_Generic;
+extern Type Type_Bag_Of_Generic;
 
-GLOBAL struct freelist_head TYPEHEAD_fl;
-GLOBAL struct freelist_head TYPEBODY_fl;
+extern struct freelist_head TYPEHEAD_fl;
+extern struct freelist_head TYPEBODY_fl;
 
-GLOBAL Error ERROR_corrupted_type	INITIALLY(ERROR_none);
-
-#include "de_end.h"
+extern Error ERROR_corrupted_type;
 
 /******************************/
 /* macro function definitions */
@@ -350,28 +342,10 @@ extern TypeBody	TYPEBODYcreate PROTO((enum type_enum));
 /*extern Type	TYPEcopy_shallow PROTO((Type));*/
 extern void	TYPEinitialize PROTO((void));
 
-#if 0
-extern Dictionary TYPEget_enum_tags PROTO((Type));
-#endif
 extern Boolean TYPEinherits_from PROTO((Type,enum type_enum));
 extern Type	TYPEget_nonaggregate_base_type PROTO((Type));
 
 extern Type TYPEcreate_user_defined_type PROTO((Type,Scope,struct Symbol_ *));
 extern Type TYPEcreate_user_defined_tag PROTO((Type,Scope,struct Symbol_ *));
-
-#if 0
-extern int		TYPEget_size PROTO((Type));
-extern Boolean		TYPEcompatible PROTO((Type, Type));
-extern Expression 	SZD_TYPEget_precision PROTO((Sized_Type));
-extern Boolean		SZD_TYPEget_varying PROTO((Sized_Type));
-extern Expression 	TYPE_REFget_full_name PROTO((Type_Reference *));
-#endif /*0*/
-
-/********************/
-/* inline functions */
-/********************/
-
-#if supports_inline_functions || defined(TYPE_C)
-#endif /* supports_inline_functions || defined(TYPE_C) */
 
 #endif    /*  TYPE_H  */

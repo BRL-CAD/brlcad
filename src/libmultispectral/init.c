@@ -40,6 +40,9 @@
 
 
 #define MFUNCS(_name)	\
+	{ mlib_add_shader( headp, _name ); }
+
+#define DMFUNCS(_name)	\
 	{ extern struct mfuncs _name[]; mlib_add_shader( headp, _name ); }
 
 /*
@@ -52,7 +55,7 @@ void
 multispectral_shader_init(struct mfuncs **headp)
 {
     /* multi-spectral-specific routines */
-    MFUNCS( temp_mfuncs );
+    DMFUNCS( temp_mfuncs );
 
     /* Compiled from sources in liboptical */
     MFUNCS( phg_mfuncs );
@@ -63,25 +66,25 @@ multispectral_shader_init(struct mfuncs **headp)
 
 #if 0
     /* these are not included yet as they do not have RT_MULTISPECTRAL hooks */
-    MFUNCS( cloud_mfuncs );
-    MFUNCS( spm_mfuncs );
-    MFUNCS( txt_mfuncs );
-    MFUNCS( cook_mfuncs );
-    MFUNCS( marble_mfuncs );
-    MFUNCS( stxt_mfuncs );
-    MFUNCS( points_mfuncs );
-    MFUNCS( toyota_mfuncs );
-    MFUNCS( wood_mfuncs );
-    MFUNCS( camo_mfuncs );
-    MFUNCS( scloud_mfuncs );
-    MFUNCS( air_mfuncs );
-    MFUNCS( rtrans_mfuncs );
-    MFUNCS( fire_mfuncs );
-    MFUNCS( brdf_mfuncs );
-    MFUNCS( gauss_mfuncs );
-    MFUNCS( gravel_mfuncs );
-    MFUNCS( prj_mfuncs );
-    MFUNCS( grass_mfuncs );
+    DMFUNCS( cloud_mfuncs );
+    DMFUNCS( spm_mfuncs );
+    DMFUNCS( txt_mfuncs );
+    DMFUNCS( cook_mfuncs );
+    DMFUNCS( marble_mfuncs );
+    DMFUNCS( stxt_mfuncs );
+    DMFUNCS( points_mfuncs );
+    DMFUNCS( toyota_mfuncs );
+    DMFUNCS( wood_mfuncs );
+    DMFUNCS( camo_mfuncs );
+    DMFUNCS( scloud_mfuncs );
+    DMFUNCS( air_mfuncs );
+    DMFUNCS( rtrans_mfuncs );
+    DMFUNCS( fire_mfuncs );
+    DMFUNCS( brdf_mfuncs );
+    DMFUNCS( gauss_mfuncs );
+    DMFUNCS( gravel_mfuncs );
+    DMFUNCS( prj_mfuncs );
+    DMFUNCS( grass_mfuncs );
 #endif
 }
 

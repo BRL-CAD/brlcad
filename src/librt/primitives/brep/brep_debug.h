@@ -85,7 +85,7 @@ using namespace brlcad;
 #define LIGHTGOLDENROD 238, 221, 130
 #define DARKYELLOW 155, 155, 52
 #define LIGHTYELLOW 255, 255, 224
-#define RED 255, 0, 0
+#define PURERED 255, 0, 0
 #define GREEN 0, 255, 0
 #define BLUE 0, 0, 255
 #define YELLOW 255, 255, 0

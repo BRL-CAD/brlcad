@@ -60,12 +60,7 @@ int STEPattributeList::list_length()
 
 void STEPattributeList::push(STEPattribute *a)
 {
-#ifdef __OSTORE__
-    AttrListNode *saln = new (os_database::of(this), 
-			      AttrListNode::get_os_typespec()) AttrListNode(a);
-#else
     AttrListNode *saln = new AttrListNode(a);
-#endif
     AppendNode (saln);
 }
 

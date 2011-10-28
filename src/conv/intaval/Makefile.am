@@ -9,7 +9,7 @@ tgf_g_SOURCES = \
 	tgf-g.cpp \
 	write_brl.cpp
 
-tgf_g_LDADD = ${WDB}
+tgf_g_LDADD = ${WDB} ${WDB_LIBS}
 
 noinst_HEADERS = glob.h \
 	read_dra.h \

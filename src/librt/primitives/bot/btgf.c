@@ -50,8 +50,6 @@ bottie_allocn_float(unsigned long long ntri)
 void
 bottie_push_float(void *UNUSED(vtie), float **UNUSED(tri), unsigned int UNUSED(ntri), void *UNUSED(usr), unsigned int UNUSED(pstride))
 {
-    struct tie_s *tie = (struct tie_s *)vtie;
-    tie = NULL;
     return;
 }
 

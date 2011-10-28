@@ -168,6 +168,9 @@ while test $# -gt 0 ; do
 	x*[vV][eE][rR][bB][oO][sS][eE])
 	    VERBOSE=1
 	    ;;
+	x*[kK][eE][eE][pP])
+	    KEEP=1
+	    ;;
 	x*=*)
 	    VAR=`echo $arg | sed 's/=.*//g' | sed 's/^[-]*//g'`
 	    if test ! "x$VAR" = "x" ; then
@@ -186,7 +189,7 @@ while test $# -gt 0 ; do
 done
 
 # validate and clean up options (all default to 0)
-booleanize HELP INSTRUCTIONS VERBOSE
+booleanize HELP INSTRUCTIONS VERBOSE KEEP
 
 
 ###
@@ -210,12 +213,14 @@ will convert, what percentage, and how long the conversion will take.
 There are several environment variables that will modify how this
 script behaves:
 
-  GED - path to BRL-CAD geometry editor (i.e., mged) for converting
-  SEARCH - path to BRL-CAD geometry editor to use for searching
-  OBJECTS - parameters for selecting objects to convert
-  MAXTIME - maximum number of seconds allowed for each conversion
-  QUIET - turn off all printing output (writes results to log file)
-  VERBOSE - turn on extra debug output for testing/development
+  GED          - file path to geometry editor to use for converting
+  SEARCH       - file to geometry editor to use for searching
+  OPATH        - geometry path to use for object search (default .)
+  OBJECTS      - parameters for selecting objects to convert
+  KEEP         - retain the converted geometry instead of deleting
+  MAXTIME      - maximum number of seconds allowed for each conversion
+  QUIET        - turn off all output (writes results to log file)
+  VERBOSE      - turn on extra debug output for testing/development
   INSTRUCTIONS - display these more detailed instructions
 
 The GED option allows you to specify a specific pathname for MGED.
@@ -235,6 +240,9 @@ available parameters.  Examples:
 
 OBJECTS="-type region"  # only convert regions
 OBJECTS="-not -type comb"  # only convert primitives
+
+The KEEP option retains the converted geometry file after conversion
+processing has ended.  The default is to delete the working copy.
 
 The MAXTIME option specifies how many seconds are allowed to elapse
 before the conversion is aborted.  Some conversions can take days or
@@ -274,10 +282,20 @@ if test "x$HELP" = "x1" ; then
     else
 	echo "  SEARCH=/path/to/search-enabled/mged (using $SEARCH)"
     fi
+    if test "x$OPATH" = "x" ; then
+	echo "  OPATH=/path/to/objects (default .)"
+    else
+	echo "  OPATH=/path/to/objects (using $OPATH)"
+    fi
     if test "x$OBJECTS" = "x" ; then
 	echo "  OBJECTS=\"search params\" (default \"\" for all objects)"
     else
 	echo "  OBJECTS=\"search params\" (using \"$OBJECTS\")"
+    fi
+    if test "x$KEEP" = "x" ; then
+	echo "  KEEP=boolean (default \"no\")"
+    else
+	echo "  KEEP=boolean (using \"$KEEP\")"
     fi
     if test "x$MAXTIME" = "x" ; then
 	echo "  MAXTIME=#seconds (default 300)"
@@ -320,6 +338,10 @@ else
     fi
 fi
 
+if test "x$KEEP" = "x1" ; then
+    $VERBOSE_ECHO "Converted geometry file will be retained"
+fi
+
 ###
 # ensure variable is set to something
 ###
@@ -355,6 +377,16 @@ if test ! -f "$MGED" ; then
     echo "Aborting."
     exit 1
 fi
+SGED="`which $SEARCH`"
+if test ! -f "$SGED" ; then
+    echo "ERROR: Unable to find $SEARCH"
+    echo ""
+    echo "Configure the SEARCH variable or check your PATH."
+    echo "Run '$0 instructions' for additional information."
+    echo ""
+    echo "Aborting."
+    exit 1
+fi
 
 
 ################
@@ -385,14 +417,14 @@ while test $# -gt 0 ; do
 	continue
     fi
 
-    work="${file}.conversion"
+    work="${file}.conversion.g"
     cmd="cp \"$file\" \"$work\""
     $VERBOSE_ECHO "\$ $cmd"
     eval "$cmd"
 
     # execute in a coprocess
     if test "x$OBJECTS" = "x" ; then OBJECTS='-print' ; fi
-    cmd="$SEARCH -c \"$work\" search . $OBJECTS"
+    cmd="$SGED -c \"$work\" search $OPATH $OBJECTS"
     objects=`eval "$cmd" 2>&1 | grep -v Using`
     $VERBOSE_ECHO "\$ $cmd"
     $VERBOSE_ECHO "$objects"
@@ -409,7 +441,7 @@ EOF
     while read object ; do
 
 	obj="`basename \"$object\"`"
-	found=`$SEARCH -c "$work" search . -name \"${obj}\" 2>&1 | grep -v Using`
+	found=`$SGED -c "$work" search . -name \"${obj}\" 2>&1 | grep -v Using`
 	if test "x$found" != "x$object" ; then
 	    $ECHO "INTERNAL ERROR: Failed to find [$object] with [$obj] (got [$found])"
 	    continue
@@ -449,7 +481,7 @@ EOF
 	real_nmg="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
 	# verify NMG
-	found=`$SEARCH -c "$work" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
+	found=`$SGED -c "$work" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
 	if test "x$found" = "x${object}.nmg" ; then
 	    nmg=pass
 	    nmg_count=`expr $nmg_count + 1`
@@ -483,7 +515,7 @@ EOF
 	real_bot="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
 	# verify BoT
-	found=`$SEARCH -c "$work" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
+	found=`$SGED -c "$work" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
 	if test "x$found" = "x${object}.bot" ; then
 	    bot=pass
 	    bot_count=`expr $bot_count + 1`
@@ -500,14 +532,23 @@ EOF
 	fi
 
 	count=`expr $count + 1`
-	$ECHO "%-4s\tnmg: %s %s\tbot: %s %s %6.0fs %*s%.0f %s:%s" \"$status\" \"$nmg\" \"$real_nmg\" \"$bot\" \"$real_bot\" \"$SECONDS\" \"`expr 7 - $count : '.*'`\" \"#\" $count \"$file\" \"$object\"
+
+	$ECHO "%-4s\tnmg: %s %ss\tbot: %s %ss %6.0fs %*s%.0f %s:%s" \
+               \"$status\" \"$nmg\" \"$real_nmg\" \"$bot\" \"$real_bot\" \"$SECONDS\" \
+               \"`expr 7 - $count : '.*'`\" \"#\" $count \"$file\" \"$object\"
+
     done
 
     # restore stdin
     exec 0<&3
 
     files=`expr $files + 1`
-    rm -f "$work"
+
+    # remove the file if so directed
+    if test "x$KEEP" = "x0" ; then
+	rm -f "$work"
+    fi
+
     shift
 done
 end=`elapsed` # stop elapsed runtime timer

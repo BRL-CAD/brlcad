@@ -19,18 +19,18 @@
  */
 /** @file rt/viewcheck.c
  *
- *  Ray Tracing program RTCHECK bottom half.
+ * Ray Tracing program RTCHECK bottom half.
  *
- *  This module outputs overlapping partitions, no other information.
- *  The partitions are written to the output file (typically stdout)
- *  as BRL-UNIX-plot 3-D floating point lines, so that they can be
- *  processed by any tool that reads UNIX-plot.  Because the BRL UNIX
- *  plot format is defined in a machine independent way, this program
- *  can be run anywhere, and the results piped back for local viewing,
- *  for example, on a workstation.
+ * This module outputs overlapping partitions, no other information.
+ * The partitions are written to the output file (typically stdout) as
+ * BRL-UNIX-plot 3-D floating point lines, so that they can be
+ * processed by any tool that reads UNIX-plot.  Because the BRL UNIX
+ * plot format is defined in a machine independent way, this program
+ * can be run anywhere, and the results piped back for local viewing,
+ * for example, on a workstation.
  *
- *  ToDo: It would be nice if we could pass in (1) an overlap depth
- *  tolerance, (2) choose either region pair or solid pair grouping.
+ * ToDo: It would be nice if we could pass in (1) an overlap depth
+ * tolerance, (2) choose either region pair or solid pair grouping.
  *
  */
 
@@ -43,10 +43,10 @@
 #include "raytrace.h"
 #include "plot3.h"
 
-#define OVLP_TOL	0.1
+#define OVLP_TOL 0.1
 
-extern int	rpt_overlap;		/* report overlapping region names */
-extern int	output_is_binary;
+extern int rpt_overlap;		/* report overlapping region names */
+extern int output_is_binary;
 
 
 /* Viewing module specific "set" variables */
@@ -54,7 +54,8 @@ struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
-extern FILE	*outfp;
+
+extern FILE *outfp;
 
 
 const char title[] = "RT Check";
@@ -81,79 +82,75 @@ usage(const char *argv0)
 }
 
 
-static int	noverlaps;		/* Number of overlaps seen */
-static int	overlap_count;		/* Number of overlap pairs seen */
-static int	unique_overlap_count;	/* Number of unique overlap pairs seen */
+static size_t noverlaps;		/* Number of overlaps seen */
+static size_t overlap_count;		/* Number of overlap pairs seen */
+static size_t unique_overlap_count;	/* Number of unique overlap pairs seen */
 
 /*
- *  For each unique pair of regions that we find an overlap for
- *  we build up one of these structures.
- *  Note that we could also discriminate at the solid pair level.
+ * For each unique pair of regions that we find an overlap for
+ * we build up one of these structures.
+ * Note that we could also discriminate at the solid pair level.
  */
 struct overlap_list {
     struct overlap_list *next;	/* next one */
-    const char 	*reg1;		/* overlapping region 1 */
-    const char	*reg2;		/* overlapping region 2 */
-    long	count;			/* number of time reported */
-    double	maxdepth;		/* maximum overlap depth */
+    const char *reg1;		/* overlapping region 1 */
+    const char *reg2;		/* overlapping region 2 */
+    size_t count;		/* number of time reported */
+    double maxdepth;		/* maximum overlap depth */
 };
 static struct overlap_list *olist=NULL;	/* root of the list */
 
 
 /*
- *			H I T
- *
  * Null function -- handle a hit
  */
 /*ARGSUSED*/
 int
 hit(struct application *UNUSED(ap), register struct partition *UNUSED(PartHeadp), struct seg *UNUSED(segHeadp))
 {
-    return	1;
+    return 1;
 }
 
+
 /*
- *			M I S S
- *
- *  Null function -- handle a miss
+ * Null function -- handle a miss
  */
 /*ARGSUSED*/
 int
 miss(struct application *UNUSED(ap))
 {
-    return	0;
+    return 0;
 }
 
+
 /*
- *			O V E R L A P
- *
- *  Write end points of partition to the standard output.
- *  If this routine return !0, this partition will be dropped
- *  from the boolean evaluation.
+ * Write end points of partition to the standard output.  If this
+ * routine return !0, this partition will be dropped from the boolean
+ * evaluation.
  */
 int
 overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *UNUSED(hp))
 {
-    register struct xray	*rp = &ap->a_ray;
-    register struct hit	*ihitp = pp->pt_inhit;
-    register struct hit	*ohitp = pp->pt_outhit;
-    vect_t	ihit;
-    vect_t	ohit;
+    register struct xray *rp = &ap->a_ray;
+    register struct hit *ihitp = pp->pt_inhit;
+    register struct hit *ohitp = pp->pt_outhit;
+    vect_t ihit;
+    vect_t ohit;
     double depth;
 
-    VJOIN1( ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir );
-    VJOIN1( ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir );
+    VJOIN1(ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir);
+    VJOIN1(ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir);
     depth = ohitp->hit_dist - ihitp->hit_dist;
-    if ( depth < OVLP_TOL )
+    if (depth < OVLP_TOL)
 	return 0;
 
-    bu_semaphore_acquire( BU_SEM_SYSCALL );
-    pdv_3line( outfp, ihit, ohit );
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    pdv_3line(outfp, ihit, ohit);
     noverlaps++;
-    bu_semaphore_release( BU_SEM_SYSCALL );
+    bu_semaphore_release(BU_SEM_SYSCALL);
 
-    if ( !rpt_overlap ) {
-	bu_log("OVERLAP %d: %s\nOVERLAP %d: %s\nOVERLAP %d: depth %gmm\nOVERLAP %d: in_hit_point (%g,%g,%g) mm\nOVERLAP %d: out_hit_point (%g,%g,%g) mm\n------------------------------------------------------------\n",
+    if (!rpt_overlap) {
+	bu_log("OVERLAP %zu: %s\nOVERLAP %zu: %s\nOVERLAP %zu: depth %gmm\nOVERLAP %zu: in_hit_point (%g, %g, %g) mm\nOVERLAP %zu: out_hit_point (%g, %g, %g) mm\n------------------------------------------------------------\n",
 	       noverlaps, reg1->reg_name,
 	       noverlaps, reg2->reg_name,
 	       noverlaps, depth,
@@ -165,31 +162,31 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 	 * againt it.
 	 */
     } else {
-	struct overlap_list	*prev_ol = (struct overlap_list *)0;
-	struct overlap_list	*op;		/* overlap list */
-	struct overlap_list     *new_op;
+	struct overlap_list *prev_ol = (struct overlap_list *)0;
+	struct overlap_list *op;		/* overlap list */
+	struct overlap_list *new_op;
 	new_op =(struct overlap_list *)bu_malloc(sizeof(struct overlap_list), "overlap list");
 
 	/* look for it in our list */
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	for ( op=olist; op; prev_ol=op, op=op->next ) {
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	for (op=olist; op; prev_ol=op, op=op->next) {
 
 	    /* if we already have an entry for this region pair,
 	     * we increase the counter and return
 	     */
-	    if ( (BU_STR_EQUAL(reg1->reg_name, op->reg1)) && (BU_STR_EQUAL(reg2->reg_name, op->reg2)) ) {
+	    if ((BU_STR_EQUAL(reg1->reg_name, op->reg1)) && (BU_STR_EQUAL(reg2->reg_name, op->reg2))) {
 		op->count++;
-		if ( depth > op->maxdepth )
+		if (depth > op->maxdepth)
 		    op->maxdepth = depth;
-		bu_semaphore_release( BU_SEM_SYSCALL );
-		bu_free( (char *) new_op, "overlap list");
-		return	0;	/* already on list */
+		bu_semaphore_release(BU_SEM_SYSCALL);
+		bu_free((char *) new_op, "overlap list");
+		return 0;	/* already on list */
 	    }
 	}
 
-	for ( op=olist; op; prev_ol=op, op=op->next ) {
+	for (op=olist; op; prev_ol=op, op=op->next) {
 	    /* if this pair was seen in reverse, decrease the unique counter */
-	    if ( (BU_STR_EQUAL(reg1->reg_name, op->reg2)) && (BU_STR_EQUAL(reg2->reg_name, op->reg1)) ) {
+	    if ((BU_STR_EQUAL(reg1->reg_name, op->reg2)) && (BU_STR_EQUAL(reg2->reg_name, op->reg1))) {
 		unique_overlap_count--;
 		break;
 	    }
@@ -200,7 +197,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 	unique_overlap_count++;
 
 	op = new_op;
-	if ( olist )		/* previous entry exists */
+	if (olist)		/* previous entry exists */
 	    prev_ol->next = op;
 	else
 	    olist = op;	/* finally initialize root */
@@ -209,25 +206,24 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 	op->maxdepth = depth;
 	op->next = NULL;
 	op->count = 1;
-	bu_semaphore_release( BU_SEM_SYSCALL );
+	bu_semaphore_release(BU_SEM_SYSCALL);
     }
 
     /* useful debugging */
     if (0) {
-	struct overlap_list	*op;		/* overlap list */
+	struct overlap_list *op;		/* overlap list */
 	bu_log("PRINTING LIST::reg1==%s, reg2==%s\n", reg1->reg_name, reg2->reg_name);
 	for (op=olist; op; op=op->next) {
-	    bu_log("\tpair: %s  %s  %d matches\n", op->reg1, op->reg2, op->count);
+	    bu_log("\tpair: %s  %s  %zu matches\n", op->reg1, op->reg2, op->count);
 	}
     }
 
     return 0;	/* No further consideration to this partition */
 }
 
+
 /*
- *  			V I E W _ I N I T
- *
- *  Called once for this run.
+ * Called once for this run.
  */
 int
 view_init(register struct application *ap, char *UNUSED(file), char *UNUSED(obj), int minus_o, int UNUSED(minus_F))
@@ -237,7 +233,7 @@ view_init(register struct application *ap, char *UNUSED(file), char *UNUSED(obj)
     ap->a_overlap = overlap;
     ap->a_logoverlap = rt_silent_logoverlap;
     ap->a_onehit = 0;
-    if ( !minus_o)			/* Needs to be set to  stdout */
+    if (!minus_o)			/* Needs to be set to stdout */
 	outfp = stdout;
 
     if (!output_is_binary) {
@@ -245,20 +241,19 @@ view_init(register struct application *ap, char *UNUSED(file), char *UNUSED(obj)
 	pl_setOutputMode(PL_OUTPUT_MODE_TEXT);
     }
 
-    return	0;		/* No framebuffer needed */
+    return 0;		/* No framebuffer needed */
 }
 
+
 /*
- *			V I E W _ 2 I N I T
- *
- *  Called at the beginning of each frame
+ * Called at the beginning of each frame
  */
 void
 view_2init(register struct application *ap, char *UNUSED(framename))
 {
     register struct rt_i *rtip = ap->a_rt_i;
 
-    pdv_3space( outfp, rtip->rti_pmin, rtip->rti_pmax );
+    pdv_3space(outfp, rtip->rti_pmin, rtip->rti_pmax);
     noverlaps = 0;
     overlap_count = 0;
     unique_overlap_count = 0;
@@ -266,13 +261,11 @@ view_2init(register struct application *ap, char *UNUSED(framename))
 
 
 /*
- *	P R I N T _ O V E R L A P _ S U M M A R Y
- *
- *  Print out a summary of the overlaps found
+ * Print out a summary of the overlaps found
  */
 static void print_overlap_summary(void) {
     register struct overlap_list *op=0, *backop=0;
-    int object_counter=0;
+    size_t object_counter=0;
 
     /* if there are any overlaps, print out a summary report, otherwise just
      * print out that there were zero overlaps
@@ -282,16 +275,16 @@ static void print_overlap_summary(void) {
 	bu_log("==========================================\n");
 	bu_log("SUMMARY\n");
 
-	bu_log("\t%d overlap%s detected\n", noverlaps, (noverlaps==1)?"":"s");
-	bu_log("\t%d unique overlapping pair%s (%d ordered pair%s)\n", unique_overlap_count, (unique_overlap_count==1)?"":"s", overlap_count, (overlap_count==1)?"":"s");
+	bu_log("\t%zu overlap%s detected\n", noverlaps, (noverlaps==1)?"":"s");
+	bu_log("\t%zu unique overlapping pair%s (%zu ordered pair%s)\n", unique_overlap_count, (unique_overlap_count==1)?"":"s", overlap_count, (overlap_count==1)?"":"s");
 
-	if (olist)	{
+	if (olist) {
 	    bu_log("\tOverlapping objects: ");
 
 	    for (op=olist; op; op=op->next) {
 
 		/* iterate over the list and see if we already printed this one */
-		for ( backop=olist; (backop!=op) && (backop); backop=backop->next ) {
+		for (backop=olist; (backop!=op) && (backop); backop=backop->next) {
 		    if ((BU_STR_EQUAL(op->reg1, backop->reg1)) || (BU_STR_EQUAL(op->reg1, backop->reg2))) break;
 		}
 		/* if we got to the end of the list (backop points to the match) */
@@ -305,51 +298,49 @@ static void print_overlap_summary(void) {
 		for (backop=olist; backop; backop=backop->next) {
 		    if ((BU_STR_EQUAL(op->reg2, backop->reg1)) || (BU_STR_EQUAL(op->reg2, backop->reg2))) break;
 		}
-		if ( !backop || (backop==op)) {
+		if (!backop || (backop==op)) {
 		    bu_log("%s  ", op->reg2);
 		    object_counter++;
 		}
 	    }
-	    bu_log("\n\t%d unique overlapping object%s detected\n", object_counter, (object_counter==1)?"":"s");
+	    bu_log("\n\t%zu unique overlapping object%s detected\n", object_counter, (object_counter==1)?"":"s");
 	}
-    }
-    else {
-	bu_log("%d overlap%s detected\n\n", noverlaps, (noverlaps==1)?"":"s");
+    } else {
+	bu_log("%zu overlap%s detected\n\n", noverlaps, (noverlaps==1)?"":"s");
     }
 }
 
+
 /*
- *			V I E W _ E N D
- *
- *  Called at the end of each frame
+ * Called at the end of each frame
  */
 void
 view_end(struct application *UNUSED(ap)) {
     pl_flush(outfp);
     fflush(outfp);
-    /*	bu_log("%d overlap%c detected\n\n", noverlaps, (noverlaps==1)?(char)NULL:'s');*/
+    /* bu_log("%zu overlap%c detected\n\n", noverlaps, (noverlaps==1)?(char)NULL:'s'); */
 
-    /*        bu_log("\nocount==%d, unique_ocount==%d\n\n", overlap_count, unique_overlap_count);*/
+    /* bu_log("\nocount==%zu, unique_ocount==%zu\n\n", overlap_count, unique_overlap_count); */
 
-    if ( rpt_overlap ) {
+    if (rpt_overlap) {
 	/* using counters instead of the actual variables to be able to
 	 * summarize after checking for matching pairs
 	 */
-	int overlap_counter=overlap_count;
-	int unique_overlap_counter=unique_overlap_count;
+	size_t overlap_counter=overlap_count;
+	size_t unique_overlap_counter=unique_overlap_count;
 	register struct overlap_list *op=0, *backop=0, *nextop=0;
 
 	/* iterate over the overlap pairs and output one OVERLAP section
 	 * per unordered pair.  a summary is output at the end.
 	 */
 	bu_log("OVERLAP PAIRS\n------------------------------------------\n");
-	for ( op=olist; op; op=op->next ) {
+	for (op=olist; op; op=op->next) {
 
 	    /* !!! would/should not need to do this..  need a doubly-linked
 	     * list so we can go backwards.  we look through the list and
 	     * see if we hit the reverse previously.
 	     */
-	    for ( backop=olist; (backop!=op) && (backop); backop=backop->next ) {
+	    for (backop=olist; (backop!=op) && (backop); backop=backop->next) {
 		if ((BU_STR_EQUAL(op->reg2, backop->reg1)) && (BU_STR_EQUAL(op->reg1, backop->reg2))) break;
 	    }
 	    if (backop && (backop!=op)) continue;
@@ -363,7 +354,7 @@ view_end(struct application *UNUSED(ap)) {
 		/* iterate until end of pairs or we find a
 		 * reverse matching pair (done inside loop
 		 * explicitly)*/
-		for ( nextop=op; nextop; nextop=nextop->next) {
+		for (nextop=op; nextop; nextop=nextop->next) {
 		    if ((BU_STR_EQUAL(op->reg1, nextop->reg2)) &&
 			(BU_STR_EQUAL(op->reg2, nextop->reg1)))
 			break;
@@ -373,9 +364,9 @@ view_end(struct application *UNUSED(ap)) {
 		 * reverse pair */
 	    }
 
-	    bu_log("\t<%s, %s>: %d overlap%c detected, maximum depth is %gmm\n", op->reg1, op->reg2, op->count, op->count>1 ? 's' : (char) 0, op->maxdepth);
+	    bu_log("\t<%s, %s>: %zu overlap%c detected, maximum depth is %gmm\n", op->reg1, op->reg2, op->count, op->count>1 ? 's' : (char) 0, op->maxdepth);
 	    if (nextop) {
-		bu_log("\t<%s, %s>: %d overlap%c detected, maximum depth is %gmm\n", nextop->reg1, nextop->reg2, nextop->count, nextop->count>1 ? 's' : (char) 0, nextop->maxdepth);
+		bu_log("\t<%s, %s>: %zu overlap%c detected, maximum depth is %gmm\n", nextop->reg1, nextop->reg2, nextop->count, nextop->count>1 ? 's' : (char) 0, nextop->maxdepth);
 		/* counter the decrement below to account for
 		 * the matched reverse pair
 		 */
@@ -392,10 +383,10 @@ view_end(struct application *UNUSED(ap)) {
 
 	/* free our structures */
 	op = olist;
-	while ( op ) {
+	while (op) {
 	    /* free struct */
 	    nextop = op->next;
-	    bu_free( (char *)op, "overlap_list" );
+	    bu_free((char *)op, "overlap_list");
 	    op = nextop;
 	}
 	olist = (struct overlap_list *)NULL;
@@ -403,8 +394,9 @@ view_end(struct application *UNUSED(ap)) {
     bu_log("\n");
 }
 
+
 /*
- *	Stubs
+ * Stubs
  */
 void view_pixel(struct application *UNUSED(ap)) {}
 void view_eol(struct application *UNUSED(ap)) {}

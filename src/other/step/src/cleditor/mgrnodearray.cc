@@ -43,13 +43,6 @@ static int PrintFunctionTrace = 2;
 // class MgrNodeArray member functions
 //////////////////////////////////////////////////////////////////////////////
 
-//#ifdef __OSTORE__
-//MgrNodeArray::MgrNodeArray(os_database *db, int defaultSize)
-//	: GenNodeArray(db, defaultSize) 
-//{
-//}
-//#endif
-
 MgrNodeArray::MgrNodeArray(int defaultSize) 
 	: GenNodeArray(defaultSize) 
 {
@@ -137,13 +130,6 @@ int MgrNodeArray::MgrNodeIndex(int fileId)
 //////////////////////////////////////////////////////////////////////////////
 // class MgrNodeArraySorted member functions
 //////////////////////////////////////////////////////////////////////////////
-
-//#ifdef __OSTORE__
-//MgrNodeArraySorted::MgrNodeArraySorted(os_database *db, int defaultSize)
-//	: GenNodeArray(db, defaultSize) 
-//{
-//}
-//#endif
 
 MgrNodeArraySorted::MgrNodeArraySorted(int defaultSize) 
 	: GenNodeArray(defaultSize) 

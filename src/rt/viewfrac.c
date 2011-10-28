@@ -104,9 +104,6 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
 void
 view_2init(struct application *ap, char *UNUSED(framename))
 {
-    extern double	cell_width;
-    extern size_t width;
-
     ap->a_hit = rayhit;
     ap->a_miss = raymiss;
     ap->a_onehit = 1;

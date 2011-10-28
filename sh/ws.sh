@@ -263,7 +263,7 @@ for file in $files ; do
 	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    printf "e"
 		fi
-		perl -0777 -pi -e 's/\([^\n]\)$/\1\n/' "$file.ws.new"
+		perl -0777 -pi -e 's/([^\n])\z/\1\n/' "$file.ws.new"
 		;;
 	    x[fF])
 		# convert embedded tabs to spaces

@@ -6,7 +6,7 @@
 #include <STEPattribute.h>
 
 extern const char *
-ReadStdKeyword(istream& in, SCLstring &buf, int skipInitWS);
+ReadStdKeyword(istream& in, std::string &buf, int skipInitWS);
 
 
 STEPcomplex::STEPcomplex(Registry *registry, int fileid)
@@ -20,18 +20,18 @@ STEPcomplex::STEPcomplex(Registry *registry, int fileid)
 */
 }
 
-STEPcomplex::STEPcomplex(Registry *registry, const SCLstring **names,
+STEPcomplex::STEPcomplex(Registry *registry, const std::string **names,
 			 int fileid, const char *schnm)
 : SCLP23(Application_instance)(fileid, 1),  sc(0), head(this), _registry(registry), visited(0)
 {
     char *nms[BUFSIZ];
-    SCLstring *name;
+    std::string *name;
     int j, k;
 
     // Create a char ** list of names and call Initialize to build all:
     for ( j=0; names[j]; j++ ) {
-	nms[j] = new char[ (names[j])->Length() + 1 ];
-	strcpy( nms[j], names[j]->chars() );
+	nms[j] = new char[ (names[j])->length() + 1 ];
+	strcpy( nms[j], names[j]->c_str() );
     }
     nms[j] = NULL;
     Initialize( (const char **)nms, schnm );
@@ -246,7 +246,7 @@ STEPcomplex *
 STEPcomplex::EntityPart(const char *name, const char *currSch)
 {
     STEPcomplex *scomp = head;
-    SCLstring s1, s2;
+    std::string s1, s2;
     while(scomp)
     {	
 	if(scomp->eDesc)
@@ -305,7 +305,7 @@ STEPcomplex::STEPread(int id, int addFileId, class InstMgr * instance_set,
 		 istream& in, const char *currSch, int useTechCor)
 {
     char c;
-    SCLstring typeNm;
+    std::string typeNm;
     STEPcomplex *stepc = 0;
 
     ClearError(1);
@@ -326,7 +326,7 @@ STEPcomplex::STEPread(int id, int addFileId, class InstMgr * instance_set,
 	c = in.peek();
 	while(c != ')')
 	{
-	    typeNm.set_null();
+	    typeNm.clear();
 	    in >> ws;
 	    ReadStdKeyword(in, typeNm, 1); // read the type name
 	    in >> ws;
@@ -341,14 +341,14 @@ STEPcomplex::STEPread(int id, int addFileId, class InstMgr * instance_set,
 		return _error.severity();
 	    }
 
-	    stepc = EntityPart(typeNm.chars(), currSch);
+	    stepc = EntityPart(typeNm.c_str(), currSch);
 	    if(stepc)
 		stepc->SCLP23(Application_instance)::STEPread(id, addFileId, 
 							      instance_set, in,
 							      currSch);
 	    else
 	    {
-		cout << "ERROR: complex entity part \"" << typeNm.chars()
+		cout << "ERROR: complex entity part \"" << typeNm.c_str()
                      << "\" does not exist.\n";
 		_error.AppendToDetailMsg(
                          "Complex entity part of instance does not exist.\n");
@@ -389,7 +389,7 @@ STEPcomplex::STEPread(int id, int addFileId, class InstMgr * instance_set,
     in.get(c);
     if(c == '(')
     {
-	SCLstring s;
+      std::string s;
 	in >> ws;
 	in.get(c);
 	while( in && (c != '(') && !isspace(c) ) // get the entity name
@@ -527,22 +527,14 @@ STEPcomplex::BuildAttrs(const char *s )
 		  {
 		    EnumTypeDescriptor * enumD = 
 				(EnumTypeDescriptor *)ad->ReferentType();
-#ifdef __OSTORE__
-		    a = new STEPattribute (*ad,  enumD->CreateEnum(os_database::of(this)) );
-#else
 		    a = new STEPattribute (*ad,  enumD->CreateEnum() );
-#endif
 		    break;
 		  }
 		  case SELECT_TYPE:
 		  {
 		    SelectTypeDescriptor * selectD = 
 				(SelectTypeDescriptor *)ad->ReferentType();
-#ifdef __OSTORE__
-		    a = new STEPattribute (*ad,  selectD->CreateSelect(os_database::of(this)) );
-#else
 		    a = new STEPattribute (*ad,  selectD->CreateSelect() );
-#endif
 		    break;
 		  }
 		  case AGGREGATE_TYPE:
@@ -553,11 +545,7 @@ STEPcomplex::BuildAttrs(const char *s )
 		  {
 		    AggrTypeDescriptor * aggrD = 
 				(AggrTypeDescriptor *)ad->ReferentType();
-#ifdef __OSTORE__
-		    a = new STEPattribute (*ad,  aggrD->CreateAggregate(os_database::of(this)) );
-#else
 		    a = new STEPattribute (*ad,  aggrD->CreateAggregate() );
-#endif
 		    break;
 		  }
 		}
@@ -601,22 +589,22 @@ STEPcomplex::STEPread_error(char c, int index, istream& in)
 void 
 STEPcomplex::STEPwrite(ostream& out, const char *currSch, int writeComment)
 {
-    if(writeComment && p21Comment && !p21Comment->is_null() )
-	out << p21Comment->chars();
+    if(writeComment && p21Comment && !p21Comment->empty() )
+	out << p21Comment->c_str();
     out << "#" << STEPfile_id << "=(";
     WriteExtMapEntities(out, currSch);
     out << ");\n";
 }
 
 const char * 
-STEPcomplex::STEPwrite(SCLstring &buf, const char *currSch)
+STEPcomplex::STEPwrite(std::string &buf, const char *currSch)
 {
-    buf.set_null();
+    buf.clear();
 
-    buf.Append('#');
-    buf.Append(STEPfile_id);
-    buf.Append('=');
-    buf.Append('(');
+    buf.append("#");
+    buf.append((char *)STEPfile_id);
+    buf.append("=");
+    buf.append("(");
 /*
     char instanceInfo[BUFSIZ];
     sprintf(instanceInfo, "#%d=", STEPfile_id );
@@ -633,15 +621,15 @@ STEPcomplex::STEPwrite(SCLstring &buf, const char *currSch)
     delete tmpstr;
 */
     WriteExtMapEntities(buf, currSch);
-    buf.Append(");");
+    buf.append(");");
 
-    return buf.chars();
+    return const_cast<char *>(buf.c_str());
 }
 
 void 
 STEPcomplex::WriteExtMapEntities(ostream& out, const char *currSch)
 {
-    SCLstring tmp;
+  std::string tmp;
     out << StrToUpper (EntityName( currSch ), tmp);
     out << "(";
     int n = attributes.list_length();
@@ -658,34 +646,34 @@ STEPcomplex::WriteExtMapEntities(ostream& out, const char *currSch)
 }
 
 const char * 
-STEPcomplex::WriteExtMapEntities(SCLstring &buf, const char *currSch)
+STEPcomplex::WriteExtMapEntities(std::string &buf, const char *currSch)
 {
     char instanceInfo[BUFSIZ];
     
-    SCLstring tmp;
+    std::string tmp;
 //    sprintf(instanceInfo, "%s(", (char *)StrToUpper( EntityName(), tmp ) );
 //    buf.Append(instanceInfo);
 
-    buf.Append( (char *)StrToUpper(EntityName( currSch ),tmp) );
-    buf.Append( '(' );
+    buf.append( (char *)StrToUpper(EntityName( currSch ),tmp) );
+    buf.append("i");
 
     int n = attributes.list_length();
 
     for (int i = 0 ; i < n; i++) {
 	attributes[i].asStr(tmp, currSch) ;
-	buf.Append (tmp);
+	buf.append (tmp);
 	if (i < n-1) {
-	    buf.Append( ',' );
+	    buf.append( "," );
 	}
     }    
-    buf.Append( ")" );
+    buf.append( ")" );
 
     if(sc)
     {
 	sc->WriteExtMapEntities(buf, currSch);
     }
 
-    return buf.chars();
+    return const_cast<char *>(buf.c_str());
 }
 
 void 
@@ -733,20 +721,17 @@ STEPcomplex::Replicate()
     {
 	int nameCount = 64;
 
-//      Don't use this syntax it makes the sun compiler think it is a cast. DAS
-//	SCLstring **nameList = new (SCLstring *)[nameCount];
-
-	SCLstring **nameList = new SCLstring *[nameCount];
+  std::string **nameList = new std::string *[nameCount];
 	STEPcomplex *scomp = this->head;
 	int i = 0;
 	while( scomp && (i < 63) )
 	{
-	    nameList[i] = new SCLstring;
-	    nameList[i]->Append( scomp->eDesc->Name() );
+	    nameList[i] = new std::string("");
+	    nameList[i]->append( scomp->eDesc->Name() );
 	    i++;
 	    scomp = scomp->sc;
 	}
-	nameList[i] = (SCLstring *)0;
+	nameList[i] = (std::string *)0;
 	if(i == 63)
 	{
 	    char errStr[BUFSIZ];
@@ -762,7 +747,7 @@ STEPcomplex::Replicate()
 	}
 
 	STEPcomplex *seNew = new STEPcomplex(_registry, 
-					     (const SCLstring **)nameList, 
+					     (const std::string **)nameList, 
 					     1111);
 	seNew -> CopyAs (this);
 	return seNew;

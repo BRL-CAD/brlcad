@@ -29,8 +29,9 @@ static char rcsid[] = "$Id: caseitem.c,v 1.3 1997/01/21 19:19:51 dar Exp $";
  * prettied up interface to print_objects_when_running
  */
 
-#define CASE_ITEM_C
 #include "express/caseitem.h"
+
+struct freelist_head CASE_IT_fl;
 
 /*
 ** Procedure:	CASE_ITinitialize

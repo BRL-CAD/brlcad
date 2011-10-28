@@ -209,6 +209,12 @@ extern int _ged_get_obj_bounds2(struct ged *gedp,
 				point_t rpp_min,
 				point_t rpp_max);
 
+/*  defined in get_solid_kp.c */
+extern int _ged_get_solid_keypoint(struct ged *const gedp,
+				   fastf_t *const pt,
+				   const struct rt_db_internal *const ip,
+				   const fastf_t *const mat);
+
 /* defined in how.c */
 extern struct directory **_ged_build_dpp(struct ged *gedp,
 					 const char *path);
@@ -343,6 +349,13 @@ extern int _ged_scale_part(struct ged *gedp,
 			   fastf_t sf,
 			   int rflag);
 
+/* defined in edpipe.c */
+extern int _ged_scale_pipe(struct ged *gedp,
+			   struct rt_pipe_internal *pipe_internal,
+			   const char *attribute,
+			   fastf_t sf,
+			   int rflag);
+
 /* defined in scale_rhc.c */
 extern int _ged_scale_rhc(struct ged *gedp,
 			  struct rt_rhc_internal *rhc,
@@ -415,8 +428,6 @@ extern int _ged_do_tra(struct ged *gedp,
 		       char coord,
 		       vect_t tvec,
 		       int (*func)());
-extern int _ged_do_zoom(struct ged *gedp,
-			fastf_t sf);
 
 /* defined in ged_util.c */
 extern int _ged_results_append_str(struct ged *gedp,

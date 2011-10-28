@@ -22,7 +22,6 @@ bin_PROGRAMS = \
 	rtfrac \
 	rtg3 \
 	rthide \
-	rtmlt \
 	rtpp \
 	rtrad \
 	rtrange \
@@ -70,7 +69,6 @@ ALLSRCS = \
 	viewfrac.c \
 	viewg3.c \
 	viewhide.c \
-	viewmlt.c \
 	viewpp.c \
 	viewrad.c \
 	viewrange.c \
@@ -85,11 +83,6 @@ reshoot_SOURCES = reshoot.c
 rtwalk_SOURCES = rtwalk.c
 rtshot_SOURCES = rtshot.c
 
-rtmlt_SOURCES = \
-	$(COMMON) \
-	scanline.c \
-	viewmlt.c
-
 rtregis_SOURCES = \
 	read-rtlog.c \
 	rtregis.c
@@ -97,7 +90,6 @@ rtregis_SOURCES = \
 rtscale_SOURCES = \
 	read-rtlog.c \
 	rtscale.c
-
 
 
 rt_SOURCES = \

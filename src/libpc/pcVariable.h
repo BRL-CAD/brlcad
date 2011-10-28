@@ -601,7 +601,6 @@ bool Solution<T>::addSolution(VarSet & V)
 	return false;
     }
     VarSet::iterator i = Varset_.begin();
-    typename DomSet::iterator j = Domset_.begin();
 
     Domains D;
 

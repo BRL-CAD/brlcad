@@ -193,8 +193,8 @@ int main(int argc, char **argv)
 
     /* initialize the wmember structs...
        this is for creating the regions */
-    wmemberArray = (struct wmember *)malloc(sizeof(struct wmember)
-					    *(params.maxDepth+1+ADDITIONAL_OBJECTS));
+    wmemberArray = (struct wmember *)bu_malloc(sizeof(struct wmember)
+					       *(params.maxDepth+1+ADDITIONAL_OBJECTS), "alloc wmemberArray");
     for (i = 0; i <= params.maxDepth+ADDITIONAL_OBJECTS; i++) {
 	BU_LIST_INIT(&(wmemberArray[i].l));
     }
@@ -223,7 +223,11 @@ int main(int argc, char **argv)
 
     createScene(&params);
 
+
+    /* clean up */
     wdb_close(fp);
+    bu_free(wmemberArray, "free wmemberArray");
+    bu_free(params.matArray, "free matArray");
 
     return 0;
 }
@@ -258,7 +262,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
     p->pos[Y] = DEFAULT_ORIGIN_Y;
     p->pos[Z] = DEFAULT_ORIGIN_Z;
 
-    p->matArray = (depthMat_t *)malloc(sizeof(depthMat_t) * (p->maxDepth+1));
+    p->matArray = (depthMat_t *)bu_malloc(sizeof(depthMat_t) * (p->maxDepth+1), "alloc matArray");
 
     for (i = 0; i <= p->maxDepth; i++) {
 	bu_strlcpy(p->matArray[i].name, DEFAULT_MAT, sizeof(p->matArray[i].name));

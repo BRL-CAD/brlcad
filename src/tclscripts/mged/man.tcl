@@ -22,13 +22,13 @@ package require ManBrowser 1.0
 
 encoding system utf-8
 
-proc man {cmdname} {
+proc man {{cmdname {}}} {
     if {![winfo exists .mgedMan]} {
 	ManBrowser .mgedMan -parentName MGED
     }
 
-    if {![.mgedMan select $cmdname]} {
-	error "couldn't find manual page \"$page\""
+    if {$cmdname != {} && ![.mgedMan select $cmdname]} {
+	error "couldn't find manual page \"$cmdname\""
     }
     .mgedMan activate
 }

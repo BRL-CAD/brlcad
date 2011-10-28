@@ -47,7 +47,7 @@
  * to any particular use of the shader.
  */
 struct tcl_specific {
-    long magic;	/* magic # for memory validity check, must come 1st */
+    uint32_t magic;	/* magic # for memory validity check, must come 1st */
     mat_t tcl_m_to_r; /* model to shader space matrix */
     Tcl_Interp *tcl_interp[MAX_PSW];
     Tcl_Obj *tcl_objPtr;

@@ -37,8 +37,6 @@
 
 #include "../mged/comb_bool.h"
 
-/* The following is needed to get "gettxt()" correctly on IRIX platforms */
-#undef _POSIX_SOURCE
 
 %}
 

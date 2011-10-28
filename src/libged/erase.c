@@ -424,8 +424,11 @@ _ged_eraseFirstSubpath(struct ged *gedp,
 	nsp = BU_LIST_PNEXT(solid, sp);
 	if (db_full_path_subset(&sp->s_fullpath, subpath, skip_first)) {
 	    int ret;
+	    int full_len = sp->s_fullpath.fp_len;
 
+	    sp->s_fullpath.fp_len = full_len - 1;
 	    db_dup_full_path(&dup_path, &sp->s_fullpath);
+	    sp->s_fullpath.fp_len = full_len;
 	    BU_LIST_DEQUEUE(&sp->l);
 	    FREE_SOLID(sp, &_FreeSolid.l);
 

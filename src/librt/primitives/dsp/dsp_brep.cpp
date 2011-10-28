@@ -29,6 +29,9 @@
 #include "rtgeom.h"
 #include "brep.h"
 
+/* private header */
+#include "./dsp.h"
+
 
 /**
  * R T _ D S P _ B R E P
@@ -37,61 +40,13 @@ extern "C" void
 rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
     struct rt_dsp_internal *dsp_ip;
-    struct bu_mapped_file *mf;
+
+    if (!b)
+	return;
 
     RT_CK_DB_INTERNAL(ip);
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     RT_DSP_CK_MAGIC(dsp_ip);
-
-    int in_cookie = bu_cv_cookie("nus");
-    int out_cookie = bu_cv_cookie("hus");
-    mf = dsp_ip->dsp_mp = bu_open_mapped_file(bu_vls_addr(&dsp_ip->dsp_name), "dsp");
-    int count = dsp_ip->dsp_xcnt * dsp_ip->dsp_ycnt;
-    mf->apbuflen = count * sizeof(unsigned short);
-    mf->apbuf = bu_malloc(mf->apbuflen, "apbuf");
-    bu_cv_w_cookie(mf->apbuf, out_cookie, mf->apbuflen, mf->buf, in_cookie, count);
-    dsp_ip->dsp_buf = (short unsigned int*)mf->apbuf;
-
-    *b = ON_Brep::New();
-
-    switch (dsp_ip->dsp_datasrc) {
-	case RT_DSP_SRC_V4_FILE:
-	case RT_DSP_SRC_FILE:
-	    if (!dsp_ip->dsp_mp) {
-		bu_log("WARNING: Cannot find data file for displacement map (DSP)\n");
-		if (bu_vls_addr(&dsp_ip->dsp_name)) {
-		    bu_log("         DSP data file [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name));
-		} else {
-		    bu_log("         DSP data file not found or not specified\n");
-		}
-		return;
-	    }
-	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
-	    break;
-	case RT_DSP_SRC_OBJ:
-	    if (!dsp_ip->dsp_bip) {
-		bu_log("WARNING: Cannot find data object for displacement map (DSP)\n");
-		if (bu_vls_addr(&dsp_ip->dsp_name)) {
-		    bu_log("         DSP data object [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name));
-		} else {
-		    bu_log("         DSP data object not found or not specified\n");
-		}
-		return;
-	    }
-	    RT_CK_DB_INTERNAL(dsp_ip->dsp_bip);
-	    RT_CK_BINUNIF(dsp_ip->dsp_bip->idb_ptr);
-	    break;
-    }
-
-
-    // dsp.c defines utility functions for pulling dsp data - this seems like a good plan.
-# define DSP(_p, _x, _y) (\
-	(\
-	  (unsigned short *) \
-	  ((_p)->dsp_buf) \
-)[ \
-	(_y) * ((struct rt_dsp_internal *)_p)->dsp_xcnt + (_x) ])
-
 
     /* A DSP brep is broken down into faces as follows:
      *

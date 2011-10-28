@@ -122,14 +122,6 @@ package provide Archer 1.0
 
     public {
 	# Public Class Variables
-	common LEDGER_ENTRY_OUT_OF_SYNC_ATTR "Ledger_Entry_Out_Of_Sync"
-	common LEDGER_ENTRY_TYPE_ATTR "Ledger_Entry_Type"
-	common LEDGER_ENTRY_MOVE_COMMAND "Ledger_Entry_Move_Command"
-	common LEDGER_CREATE "Create"
-	common LEDGER_DESTROY "Destroy"
-	common LEDGER_MODIFY "Modify"
-	common LEDGER_RENAME "Rename"
-
 	common plugins ""
 	common pluginMajorTypeCore "Core"
    	common pluginMajorTypeCommand "Command"
@@ -141,7 +133,6 @@ package provide Archer 1.0
 	# Plugins Section
 	proc initArcher {}
 	proc pluginDialog {_w}
-	proc pluginLoadCWDFiles {}
 	proc pluginLoader {}
 	proc pluginGed {_archer}
 	proc pluginQuery {_name}
@@ -161,58 +152,26 @@ package provide Archer 1.0
 	method pluginUpdateStatusBar {msg}
 
 	method importFg4Sections   {_slist _wlist _delta}
+	method initAppendPipePoint {_obj _button _callback}
+	method initFindPipePoint {_obj _button _callback}
+	method initPrependPipePoint {_obj _button _callback}
 
 	# General
 	method askToRevert {}
+	method bot_fix_all {}
+	method bot_fix_all_wrapper {}
+	method bot_flip_check      {args}
+	method bot_flip_check_all  {}
+	method bot_flip_check_all_wrapper  {}
+	method bot_split_all {}
+	method bot_split_all_wrapper {}
+	method bot_sync_all {}
+	method bot_sync_all_wrapper {}
 	method fbclear {}
 	method raytracePlus {}
 
 	# ArcherCore Override Section
 	method cmd                 {args}
-	method 3ptarb              {args}
-	method attr                {args}
-	method bo                  {args}
-	method bot                 {args}
-	method bot_condense        {args}
-	method bot_decimate        {args}
-	method bot_face_fuse       {args}
-	method bot_merge           {args}
-	method bot_smooth          {args}
-	method bot_split           {args}
-	method bot_vertex_fuse     {args}
-	method c                   {args}
-	method clone               {args}
-	method color               {args}
-	method comb                {args}
-	method combmem             {args}
-	method cp                  {args}
-	method cpi                 {args}
-	method copyeval            {args}
-	method copymat             {args}
-	method dbconcat            {args}
-	method decompose           {args}
-	method edcodes             {args}
-	method edcolor             {args}
-	method edmater             {args}
-	method facetize            {args}
-	method fracture            {args}
-	method g                   {args}
-	method human               {args}
-	method i                   {args}
-	method in                  {args}
-	method inside              {args}
-	method kill                {args}
-	method killall             {args}
-	method killrefs            {args}
-	method killtree            {args}
-	method make                {args}
-	method make_bb             {args}
-	method make_pnts           {args}
-	method mirror              {args}
-	method mv                  {args}
-	method mvall               {args}
-	method nmg_collapse        {args}
-	method nmg_simplify        {args}
 	method p                   {args}
 	method p_protate           {args}
 	method p_pscale            {args}
@@ -220,56 +179,24 @@ package provide Archer 1.0
 	method p_move_arb_edge     {args}
 	method p_move_arb_face     {args}
 	method p_rotate_arb_face   {args}
-	method prefix              {args}
-	method push                {args}
-	method put                 {args}
-	method putmat              {args}
 	method Load                {_target}
-	method r                   {args}
-	method rcodes              {args}
-	method rfarb               {args}
-	method rm                  {args}
-	method rmater              {args}
 	method saveDb              {}
-	method shells              {args}
-	method tire                {args}
-	method title               {args}
-	method track               {args}
 	method units               {args}
-	method vmake               {args}
-	method zap                 {args}
 	method initImages          {}
 	method initFbImages        {}
 	method setDefaultBindingMode {_mode}
 
 	# Object Edit Management
-	method checkpoint {_obj _type}
-	method checkpoint_olist {_olist _type}
-	method clearTargetLedger {}
-	method createTargetLedger {}
-	method global_undo {}
-	method global_undo_callback {_gname}
-	method ledger_cleanup {}
-	method object_checkpoint {}
-	method object_undo {}
-	method object_update {_obj {_rflag 1}}
 	method revert {}
-	method selection_checkpoint {_obj}
-	method updateObjSave {}
     }
 
     protected {
 	variable mPrefFile ""
-	variable mNeedObjSave 0
-	variable mNeedGlobalUndo 0
-	variable mNeedObjUndo 0
-	variable mNeedCheckpoint 0
-	variable mLedger ""
-	variable mLedgerGID 0
 
 	variable mArcherVersion "0.9.2"
 	variable mActiveEditDialogs {}
 	variable wizardXmlCallbacks ""
+	variable mBotFixAllFlag 0
 
 	# plugin list
 	variable mWizardClass ""
@@ -280,24 +207,11 @@ package provide Archer 1.0
 	# ArcherCore Override Section
 	method buildCommandView {}
 	method dblClick {_tags}
-	method addCombMemberWrapper {_cmd _cflag args}
-	method createCombWrapper {_cmd args}
-	method removeCombMemberWrapper {_cmd args}
-	method combWrapper {_cmd _minArgs args}
-	method createWrapper {_cmd args}
-	method gedWrapper {_cmd _eflag _hflag _sflag _tflag args}
-	method gedWrapper2 {_cmd _oindex _pindex _eflag _hflag _sflag _tflag args}
-	method globalWrapper {_cmd args}
-	method killWrapper {_cmd args}
-	method moveWrapper {_cmd args}
 	method handleTreeSelect {}
 	method initDefaultBindings {{_comp ""}}
 	method initGed {}
 	method setActivePane {_pane}
-	method updateCheckpointMode {}
 	method updateSaveMode {}
-	method updateUndoMode {{_oflag 1}}
-	method updateUndoState {}
 
 	# Miscellaneous Section
 	method buildAboutDialog {}
@@ -327,6 +241,7 @@ package provide Archer 1.0
 	method fbModeToggle {}
 	method fbToggle {}
 	method rtEndCallback {_aborted}
+	method getRayBotNormalCos {_start _target _bot}
 
 	#XXX Need to split up menuStatusCB into one method per menu
 	method menuStatusCB {_w}
@@ -387,6 +302,7 @@ package provide Archer 1.0
 	method buildHypEditView {}
 	method buildObjAttrView {}
 	method buildObjEditView {}
+	method buildObjToolView {}
 	method buildObjViewToolbar {}
 	method buildPartEditView {}
 	method buildPipeEditView {}
@@ -418,6 +334,7 @@ package provide Archer 1.0
 	method initNoWizard {_parent _msg}
 	method initObjAttrView {}
 	method initObjEditView {}
+	method initObjToolView {}
 	method initObjWizard {_obj _wizardLoaded}
 	method initPartEditView {_odata}
 	method initPipeEditView {_odata}
@@ -458,6 +375,7 @@ package provide Archer 1.0
 	method applyPreferencesIfDiff {}
 	method applyViewAxesPreferences {}
 	method applyViewAxesPreferencesIfDiff {}
+	method cancelPreferences {}
 	method doPreferences {}
 	method readPreferences {}
 	method readPreferencesInit {}
@@ -510,7 +428,8 @@ package provide Archer 1.0
     if {$Archer::extraMgedCommands != ""} {
 	eval lappend mArcherCoreCommands $Archer::extraMgedCommands
     }
-    lappend mArcherCoreCommands importFg4Sections
+    lappend mArcherCoreCommands importFg4Sections bot_flip_check \
+	bot_flip_check_all bot_split_all bot_sync_all bot_fix_all
 
     if {!$mViewOnly} {
 	updatePrimaryToolbar
@@ -530,6 +449,7 @@ package provide Archer 1.0
 	buildObjViewToolbar
 	buildObjAttrView
 	buildObjEditView
+	buildObjToolView
 
 	# set initial toggle variables
 	set mVPaneToggle3 $mVPaneFraction3
@@ -555,9 +475,7 @@ package provide Archer 1.0
 	setTreeView
 	updateCreationButtons 0
 	updateRaytraceButtons 0
-	updateCheckpointMode
 	updateSaveMode
-	updateUndoMode
     } else {
 	backgroundColor $mBackgroundColor
     }
@@ -578,6 +496,11 @@ package provide Archer 1.0
     ::update
     Load ""
 
+    if {!$mViewOnly} {
+	pushZClipSettings
+    }
+
+
     bind [namespace tail $this] <Configure> [::itcl::code $this handleConfigure]
 }
 
@@ -587,10 +510,6 @@ package provide Archer 1.0
 # ------------------------------------------------------------
 ::itcl::body Archer::destructor {} {
     writePreferences
-
-    if {$mLedger != ""} {
-	catch {rename $mLedger ""}
-    }
 }
 
 
@@ -718,33 +637,6 @@ package provide Archer 1.0
     $dialog activate
 }
 
-
-## - pluginLoadCWDFiles
-#
-# Load the current working directory's (CWD) files.
-#
-::itcl::body Archer::pluginLoadCWDFiles {} {
-    foreach filename [lsort [glob -nocomplain *]] {
-	if [file isfile $filename] {
-	    set ext [file extension $filename]
-	    switch -exact -- $ext {
-		".tcl" -
-		".itk" -
-		".itcl" {
-		    uplevel \#0 source $filename
-		}
-		".sh" {
-		    # silently ignore
-		}
-		default {
-		    # silently ignore
-		}
-	    }
-	}
-    }
-}
-
-
 ::itcl::body Archer::pluginLoader {} {
     global env
 
@@ -765,8 +657,24 @@ package provide Archer 1.0
     }
 
     foreach plugindir [list $pluginPath] {
-	::cd $plugindir
-	pluginLoadCWDFiles
+	set utilities_list [concat [lsort [glob -nocomplain $plugindir/Utility/*]]] 
+	set wizards_list [concat [lsort [glob -nocomplain $plugindir/Wizards/*]]]
+	set plugins_list [concat $utilities_list $wizards_list]
+	foreach filename $plugins_list {
+	    if [file isfile $filename] {
+		set ext [file extension $filename]
+		switch -exact -- $ext {
+		    ".tcl" -
+		    ".itk" -
+		    ".itcl" {
+			uplevel \#0 source \"$filename\"
+	    	    }
+	            default {
+		        # silently ignore
+	            }
+		}
+	    }
+	}
     }
 
     ::cd $pwd
@@ -808,6 +716,54 @@ package provide Archer 1.0
 
     set idx [lsearch -exact $::Archer::plugins $plug]
     set ::Archer::plugins [lreplace $::Archer::plugins $idx $idx ""]
+}
+
+
+::itcl::body Archer::initAppendPipePoint {_obj _button _callback} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    # This deselects the selected mouse mode in the primary toolbar
+    set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+
+    # For the moment, the callback being used here is from PipeEditFrame. At some point,
+    # Archer may want to provide the callback in order to do something before passing
+    # things through to PipeEditFrame.
+
+    $itk_component(ged) init_append_pipept $_obj $_button $_callback
+}
+
+
+::itcl::body Archer::initFindPipePoint {_obj _button _callback} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    # This deselects the selected mouse mode in the primary toolbar
+    set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+
+    # For the moment, the callback being used here is from PipeEditFrame. At some point,
+    # Archer may want to provide the callback in order to do something before passing
+    # things through to PipeEditFrame.
+
+    $itk_component(ged) init_find_pipept $_obj $_button $_callback
+}
+
+
+::itcl::body Archer::initPrependPipePoint {_obj _button _callback} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    # This deselects the selected mouse mode in the primary toolbar
+    set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+
+    # For the moment, the callback being used here is from PipeEditFrame. At some point,
+    # Archer may want to provide the callback in order to do something before passing
+    # things through to PipeEditFrame.
+
+    $itk_component(ged) init_prepend_pipept $_obj $_button $_callback
 }
 
 
@@ -862,7 +818,7 @@ package provide Archer 1.0
 	    set solidName "$lastName\.s"
 	}
 
-	if {![catch {$itk_component(ged) get_type $solidName} ret]} {
+	if { [ $itk_component(ged) exists $solidName ] } {
 	    #$itk_component(ged) attachObservers
 	    $itk_component(ged) units $savedUnits
 	    error "importFg4Sections: $solidName already exists!"
@@ -891,7 +847,7 @@ package provide Archer 1.0
 
 	set gmember $regionName
 	foreach gname $reversedGnames {
-	    if {[catch {$itk_component(ged) get_type $gname} ret]} {
+	    if { ! [ $itk_component(ged) exists $gname ] } {
 		$itk_component(ged) g $gname $gmember
 	    } else {
 		if {[catch {gedCmd get $gname tree} tree]} {
@@ -996,6 +952,374 @@ package provide Archer 1.0
 }
 
 
+::itcl::body Archer::bot_fix_all {} {
+    set mBotFixAllFlag 1
+
+    set ret_string ""
+    append ret_string "[bot_split_all]\n\n"
+    append ret_string "[bot_sync_all]\n\n"
+    append ret_string "[bot_flip_check_all]"
+
+    set mBotFixAllFlag 0
+    redrawWho
+
+    return $ret_string
+}
+
+
+::itcl::body Archer::bot_fix_all_wrapper {} {
+    putString [bot_fix_all]
+}
+
+::itcl::body Archer::bot_flip_check {args} {
+    SetWaitCursor $this
+
+    set skip_count 0
+    set no_flip_count 0
+    set flip_count 0
+    set miss_count 0
+
+    set skip_string ""
+    set not_bot_string ""
+    set no_flip_string ""
+    set flip_string ""
+    set miss_string ""
+
+    set nitems [llength $args]
+    set icount 0
+    set last_percent 0
+
+    putString "Flipping bots ..."
+
+    foreach item $args {
+	incr icount
+
+	if {$item == ""} {
+	    continue
+	}
+
+	if {[catch {$itk_component(ged) get_type $item} gtype]} {
+	    incr skip_count
+	    append skip_string "$gtype\n"
+	    continue
+	}
+
+	if {$gtype != "bot"} {
+	    incr skip_count
+	    append not_bot_string "$item "
+	    continue
+	}
+
+	if {[$itk_component(ged) get $item mode] != "volume"} {
+	    incr skip_count
+	    append not_bot_string "$item "
+	    continue
+	}
+
+	set rpp [$itk_component(ged) bb -q -e $item]
+	set min [lindex $rpp 1]
+	set max [lindex $rpp 3]
+	set target [expr {[vscale [vadd2 $min $max] 0.5]}]
+
+	set diag [vsub2 $max $min]
+	set start [vsub2 $target $diag]
+
+	# Turn off orientation
+	set save_orient [$itk_component(ged) get $item orient]
+	if {$save_orient != "no"} {
+	    $itk_component(ged) adjust $item orient no
+	}
+
+	set cosa [getRayBotNormalCos $start $target $item]
+	if {$cosa == ""} {
+	    # Try firing another ray. This time use points from the first triangle.
+	    
+	    if {[catch {$itk_component(ged) get $item V} bot_vertices]} {
+		incr skip_count
+		append skip_string "$item: unable to get vertices\n"
+
+		# Set orientation back to original setting
+		if {$save_orient != "no"} {
+		    $itk_component(ged) adjust $item orient $save_orient
+		}
+
+		continue
+	    }
+
+	    if {[catch {$itk_component(ged) get $item F} bot_faces] ||
+		[llength $bot_faces] < 1} {
+		incr skip_count
+		append skip_string "$item: unable to get faces\n"
+
+		# Set orientation back to original setting
+		if {$save_orient != "no"} {
+		    $itk_component(ged) adjust $item orient $save_orient
+		}
+
+		continue
+	    }
+
+	    set face [lindex $bot_faces 0]
+	    set v0 [lindex $bot_vertices [lindex $face 0]]
+	    set v1 [lindex $bot_vertices [lindex $face 1]]
+	    set v2 [lindex $bot_vertices [lindex $face 2]]
+
+	    if {$v0 == "" || $v1 == "" || $v2 == ""} {
+		incr skip_count
+		append skip_string "$item: unable to get vertices\n"
+
+		# Set orientation back to original setting
+		if {$save_orient != "no"} {
+		    $itk_component(ged) adjust $item orient $save_orient
+		}
+
+		continue
+	    }
+
+	    set oneThird [expr {1 / 3.0}]
+	    set target [vscale [vadd3 $v0 $v1 $v2] $oneThird]
+
+	    set v1m0 [vsub2 $v1 $v0]
+	    set v2m0 [vsub2 $v2 $v0]
+	    set n [vunitize [vcross $v1m0 $v2m0]]
+	    set diag_len [vmagnitude $diag]
+	    set start [vsub2 $target [vscale $n $diag_len]]
+
+	    set cosa [getRayBotNormalCos $start $target $item]
+	    if {$cosa == ""} {
+		# This should not happen
+
+		incr skip_count
+		append skip_string "$item: unable to get faces\n"
+
+		# Set orientation back to original setting
+		if {$save_orient != "no"} {
+		    $itk_component(ged) adjust $item orient $save_orient
+		}
+
+		continue
+	    }
+	}
+
+	if {$cosa > 0} {
+	    # Set orientation to rh
+	    if {$save_orient != "no"} {
+		$itk_component(ged) adjust $item orient rh
+	    }
+
+	    incr flip_count
+	    append flip_string "$item "
+	    $itk_component(ged) bot_flip $item
+	} else {
+	    # Set orientation back to original setting
+	    if {$save_orient != "no"} {
+		$itk_component(ged) adjust $item orient $save_orient
+	    }
+
+	    incr no_flip_count
+	    append no_flip_string "$item "
+	}
+
+	set percent [format "%.2f" [expr {$icount / double($nitems)}]]
+	if {$percent > $last_percent} {
+	    set last_percent $percent
+	    pluginUpdateProgressBar $percent
+	}
+    }
+
+    set ret_string "************************ ITEMS SKIPPED ************************\n"
+    if {$skip_count} {
+	append ret_string "$skip_string\n"
+	if {$not_bot_string != ""} {
+	    append ret_string "The following are not volume mode bots:\n$not_bot_string\n"
+	}
+    } else {
+	append ret_string "None\n"
+    }
+    append ret_string "\n"
+    append ret_string "\n"
+    append ret_string "************************ ITEMS MISSED ************************\n"
+    if {$miss_count} {
+	append ret_string "$miss_string\n"
+    } else {
+	append ret_string "None\n"
+    }
+    append ret_string "\n"
+    append ret_string "\n"
+    append ret_string "************************ ITEMS NOT FLIPPED ************************\n"
+    if {$no_flip_count} {
+	append ret_string "$no_flip_string\n"
+    } else {
+	append ret_string "None\n"
+    }
+    append ret_string "\n"
+    append ret_string "\n"
+    append ret_string "************************ ITEMS FLIPPED ************************\n"
+    if {$flip_count} {
+	append ret_string "$flip_string\n"
+    } else {
+	append ret_string "None"
+    }
+    append ret_string "\n"
+    append ret_string "\n"
+    append ret_string "\n"
+    append ret_string "************************ SUMMARY ************************\n"
+
+    if {$skip_count == 1} {
+	append ret_string "$skip_count item skipped\n"
+    } else {
+	append ret_string "$skip_count items skipped\n"
+    }
+
+    if {$miss_count == 1} {
+        append ret_string "$miss_count item missed\n"
+    } else {
+	append ret_string "$miss_count items missed\n"
+    }
+
+    if {$no_flip_count == 1} {
+	append ret_string "$no_flip_count item NOT flipped\n"
+    } else {
+	append ret_string "$no_flip_count items NOT flipped\n"
+    }
+
+    if {$flip_count == 1} {
+	append ret_string "$flip_count item flipped\n"
+    } else {
+	append ret_string "$flip_count items flipped\n"
+    }
+
+    SetNormalCursor $this
+    pluginUpdateProgressBar 0
+
+    if {$flip_count} {
+	setSave
+    }
+
+    return $ret_string
+}
+
+
+::itcl::body Archer::bot_flip_check_all {} {
+    set blist [split [search . -type bot] "\n "]
+    set ret [eval bot_flip_check $blist]
+
+    if {!$mBotFixAllFlag} {
+	redrawWho
+    }
+
+    return $ret
+}
+
+
+::itcl::body Archer::bot_flip_check_all_wrapper {} {
+    putString [bot_flip_check_all]
+}
+
+
+::itcl::body Archer::bot_split_all {} {
+    SetWaitCursor $this
+
+    set ret_string "The following bots have been split:\n"
+    set blist [split [search . -type bot] "\n "]
+    set nitems [llength $blist]
+    set icount 0
+    set last_percent 0
+    set split_count 0
+    set split_bots {}
+
+    putString "Splitting bots ..."
+
+    foreach bot $blist {
+	incr icount
+
+	if {$bot == ""} {
+	    continue
+	}
+
+	if {![catch {bot_split2 $bot} bnames] && $bnames != ""} {
+	    incr split_count
+	    append ret_string "[lindex $bnames 0] "
+	    lappend split_bots [lindex $bnames 1]
+	}
+
+	set percent [format "%.2f" [expr {$icount / double($nitems)}]]
+	if {$percent > $last_percent} {
+	    set last_percent $percent
+	    pluginUpdateProgressBar $percent
+	}
+    }
+
+    pluginUpdateProgressBar 0
+    SetNormalCursor $this
+
+    if {$split_count} {
+	gedCmd make_name -s 0
+	set gname [gedCmd make_name bot_split_backup]
+	eval gedCmd g $gname $split_bots
+
+	syncTree
+	setSave
+    }
+
+    if {!$mBotFixAllFlag} {
+	redrawWho
+    }
+
+    return $ret_string
+}
+
+
+::itcl::body Archer::bot_split_all_wrapper {} {
+    putString [bot_split_all]
+}
+
+
+::itcl::body Archer::bot_sync_all {} {
+    SetWaitCursor $this
+
+    set blist [split [search . -type bot] "\n "]
+    set nitems [llength $blist]
+    set icount 0
+    set last_percent 0
+
+    putString "Syncing bots ..."
+    set ret_string "The following bots have been synced:\n"
+
+    foreach bot $blist {
+	incr icount
+
+	if {$bot == ""} {
+	    continue
+	}
+	append ret_string "$bot "
+	catch {gedCmd bot_sync $bot}
+
+	set percent [format "%.2f" [expr {$icount / double($nitems)}]]
+	if {$percent > $last_percent} {
+	    set last_percent $percent
+	    pluginUpdateProgressBar $percent
+	}
+    }
+
+    pluginUpdateProgressBar 0
+    SetNormalCursor $this
+
+    setSave
+    if {!$mBotFixAllFlag} {
+	redrawWho
+    }
+
+
+    return $ret_string
+}
+
+
+::itcl::body Archer::bot_sync_all_wrapper {} {
+    putString [bot_sync_all]
+}
+
+
 ::itcl::body Archer::cmd {args} {
     set mCoreCmdLevel 1
     set ret [eval ArcherCore::cmd $args]
@@ -1005,492 +1329,10 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::3ptarb {args} {
-    eval ArcherCore::gedWrapper 3ptarb 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::attr {args} {
-    set len [llength $args]
-
-    set cmd [lindex $args 0]
-    switch -- $cmd {
-	"append" -
-	"set" {
-	    if {$len < 4} {
-		return [eval gedWrapper2 attr 1 0 0 0 0 0 $args]
-	    }
-
-	    foreach kv [lrange $args 2 end] {
-		set k [lindex $kv 0]
-		set ki [lsearch $mTreeAttrColumns $k]
-		if {$ki != -1} {
-		    # We're affecting an attribute that's being displayed
-		    return [eval gedWrapper2 attr 1 0 0 0 1 2 $args]
-		}
-	    }
-
-	    return [eval gedWrapper2 attr 1 0 0 0 1 0 $args]
-	}
-	"rm" {
-	    if {$len < 3} {
-		return [eval gedWrapper2 attr 1 0 0 0 0 0 $args]
-	    }
-
-	    foreach kv [lrange $args 2 end] {
-		set k [lindex $kv 0]
-		set ki [lsearch $mTreeAttrColumns $k]
-		if {$ki != -1} {
-		    # We're affecting an attribute that's being displayed
-		    return [eval gedWrapper2 attr 1 0 0 0 1 2 $args]
-		}
-	    }
-
-	    return [eval gedWrapper2 attr 1 0 0 0 1 0 $args]
-	}
-	"get" -
-	"show" {
-	    return [eval gedWrapper2 attr 1 0 0 0 0 0 $args]
-	}
-    }
-}
-
-
-::itcl::body Archer::bo {args} {
-    eval ArcherCore::gedWrapper bo 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::bot {args} {
-    eval ArcherCore::gedWrapper bot 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::bot_condense {args} {
-    eval ArcherCore::gedWrapper bot_condense 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::bot_decimate {args} {
-    eval ArcherCore::gedWrapper bot_decimate 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::bot_face_fuse {args} {
-    eval ArcherCore::gedWrapper bot_face_fuse 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::bot_merge {args} {
-    eval ArcherCore::gedWrapper bot_merge 1 0 1 1 $args
-}
-
-
-::itcl::body Archer::bot_smooth {args} {
-    eval ArcherCore::gedWrapper bot_smooth 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::bot_split {args} {
-    eval ArcherCore::gedWrapper bot_split 0 0 1 2 $args
-}
-
-
-::itcl::body Archer::bot_vertex_fuse {args} {
-    eval ArcherCore::gedWrapper bot_vertex_fuse 0 0 1 1 $args
-}
-
-
-#
-# Create a combination.
-#
-::itcl::body Archer::c {args} {
-    #    eval combWrapper c 2 $args
-    putString "Momentarily disabled. Fix me!"
-}
-
-
-::itcl::body Archer::clone {args} {
-    #    eval createWrapper clone $args
-
-    # Returns a help message.
-    if {[llength $args] == 0} {
-	return [gedCmd clone]
-    }
-
-    # Clone will return the clist info. Consequently,
-    # clist is set after invoking clone below.
-    SetWaitCursor $this
-
-    if {[catch {eval gedCmd clone $args} ret]} {
-	SetNormalCursor $this
-	return $ret
-    }
-
-    set clist [lindex $ret 1]
-    set ret [lindex $ret 0]
-
-    # Checkpoint the created object
-    checkpoint_olist $clist $LEDGER_CREATE
-
-    syncTree
-    updateUndoState
-    SetNormalCursor $this
-
-    return $ret
-}
-
-
-::itcl::body Archer::color {args} {
-    eval ArcherCore::gedWrapper color 0 0 1 1 $args
-}
-
-
-#
-# Create a combination or modify an existing one.
-#
-::itcl::body Archer::comb {args} {
-    eval combWrapper comb 3 $args
-}
-
-
-::itcl::body Archer::combmem {args} {
-    SetWaitCursor $this
-
-    set len [llength $args]
-
-    if {[catch {eval gedCmd combmem $args} ret] ||
-	$len < 2} {
-	SetNormalCursor $this
-	return $ret
-    }
-
-    # Checkpoint the created object
-    checkpoint_olist [lindex $args 0] $LEDGER_MODIFY
-
-    syncTree
-    updateUndoState
-    SetNormalCursor $this
-
-    return $ret
-}
-
-
-::itcl::body Archer::cp {args} {
-    eval createWrapper cp $args
-}
-
-
-::itcl::body Archer::cpi {args} {
-    eval createWrapper cpi $args
-}
-
-
-::itcl::body Archer::copyeval {args} {
-    eval createWrapper copyeval $args
-}
-
-
-::itcl::body Archer::copymat {args} {
-    eval gedWrapper2 copymat 1 0 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::dbconcat {args} {
-    eval ArcherCore::gedWrapper dbconcat 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::decompose {args} {
-    eval ArcherCore::gedWrapper decompose 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::edcodes {args} {
-    # Returns a help message
-    if {[llength $args] == 0} {
-	return [gedCmd edcodes]
-    }
-
-    set optionsAndArgs [eval dbExpand $args]
-    set options [lindex $optionsAndArgs 0]
-    set expandedArgs [lindex $optionsAndArgs 1]
-
-    # Returns a help message
-    if {[llength $expandedArgs] == 0} {
-	return [gedCmd edcodes]
-    }
-
-    switch [lindex $options 0] {
-	"-n" {
-	    return [eval gedCmd edcodes $options $expandedArgs]
-	}
-	default {
-	    set olist [gedCmd edcodes -n $expandedArgs]
-	}
-    }
-
-    if {[llength $olist] == 0} {
-	return
-    }
-
-    SetWaitCursor $this
-    set lnames [checkpoint_olist $olist $LEDGER_MODIFY]
-
-    if {[catch {eval gedCmd edcodes $options $expandedArgs} ret]} {
-	ledger_cleanup
-	SetNormalCursor $this
-	return $ret
-    }
-
-    set fflag 0
-    set gflag 0
-    set oflag 0
-    set new_olist {}
-
-    foreach oname $olist lname $lnames {
-	if {$oname == $mSelectedObj} {
-	    # Found selected object
-	    set fflag 1
-	}
-
-	# Compare region ids
-	set o_val [gedCmd get $oname id]
-	set l_val [$mLedger get $lname id]
-	if {$o_val != $l_val} {
-	    set gflag 1
-
-	    if {$oname == $mSelectedObj} {
-		set oflag 1
-	    }
-
-	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-	    lappend new_olist $lname
-	    continue
-	}
-
-	# Compare air
-	set o_val [gedCmd get $oname air]
-	set l_val [$mLedger get $lname air]
-	if {$o_val != $l_val} {
-	    set gflag 1
-
-	    if {$oname == $mSelectedObj} {
-		set oflag 1
-	    }
-
-	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-	    lappend new_olist $lname
-	    continue
-	}
-
-	# Compare gift material
-	set o_val [gedCmd get $oname GIFTmater]
-	set l_val [$mLedger get $lname GIFTmater]
-	if {$o_val != $l_val} {
-	    set gflag 1
-
-	    if {$oname == $mSelectedObj} {
-		set oflag 1
-	    }
-
-	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-	    lappend new_olist $lname
-	    continue
-	}
-
-	# Compare los
-	set o_val [gedCmd get $oname los]
-	set l_val [$mLedger get $lname los]
-	if {$o_val != $l_val} {
-	    set gflag 1
-
-	    if {$oname == $mSelectedObj} {
-		set oflag 1
-	    }
-
-	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-	    lappend new_olist $lname
-	    continue
-	}
-
-	# No mods found
-	$mLedger kill $lname
-    }
-
-    if {$oflag} {
-	# Checkpoint again in case the user starts interacting via the mouse
-	checkpoint $mSelectedObj $LEDGER_MODIFY
-    }
-
-    updateUndoState
-
-    SetNormalCursor $this
-    #    eval ArcherCore::gedWrapper edcodes 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::edcolor {args} {
-    return [eval globalWrapper edcolor $args]
-}
-
-
-# Needs an edWrapper to create checkpoints for each object
-::itcl::body Archer::edmater {args} {
-    eval ArcherCore::gedWrapper edmater 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::facetize {args} {
-    eval createWrapper facetize $args
-}
-
-
-::itcl::body Archer::fracture {args} {
-    eval ArcherCore::gedWrapper fracture 0 0 1 1 $args
-}
-
-
-#
-# Create a group or modify an existing one.
-#
-::itcl::body Archer::g {args} {
-    eval combWrapper g 2 $args
-}
-
-
-::itcl::body Archer::human {args} {
-    eval ArcherCore::gedWrapper human 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::i {args} {
-    eval gedWrapper2 i 1 0 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::in {args} {
-    eval createWrapper in $args
-}
-
-
-::itcl::body Archer::inside {args} {
-    eval createWrapper inside $args
-}
-
-
-::itcl::body Archer::kill {args} {
-    eval killWrapper kill $args
-}
-
-
-::itcl::body Archer::killall {args} {
-    eval killWrapper killall $args
-}
-
-
-::itcl::body Archer::killrefs {args} {
-    #    eval ArcherCore::gedWrapper killrefs 0 0 1 1 $args
-
-    # Returns a help message
-    if {[llength $args] == 0} {
-	return [gedCmd killrefs]
-    }
-
-    set optionsAndArgs [eval dbExpand $args]
-    set options [lindex $optionsAndArgs 0]
-    set expandedArgs [lindex $optionsAndArgs 1]
-
-    # Returns a help message
-    if {[llength $expandedArgs] == 0} {
-	return [gedCmd killrefs]
-    }
-
-    switch [lindex $options 0] {
-	"-n" {
-	    return [eval gedCmd killrefs $options $expandedArgs]
-	}
-	default {
-	    set olist [gedCmd killrefs -n $expandedArgs]
-	}
-    }
-
-    if {[llength $olist] == 0} {
-	return
-    }
-
-    SetWaitCursor $this
-    set lnames [checkpoint_olist $olist $LEDGER_MODIFY]
-
-    if {[catch {eval gedCmd killrefs $options $expandedArgs} ret]} {
-	ledger_cleanup
-	SetNormalCursor $this
-	return $ret
-    }
-
-    foreach lname $lnames {
-	$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-    }
-
-    syncTree
-
-    checkpoint_olist $olist $LEDGER_MODIFY
-    updateUndoState
-    SetNormalCursor $this
-}
-
-
-::itcl::body Archer::killtree {args} {
-    eval killWrapper killtree $args
-}
-
-
-::itcl::body Archer::make {args} {
-    eval createWrapper make $args
-}
-
-
-::itcl::body Archer::make_bb {args} {
-    eval ArcherCore::gedWrapper make_bb 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::make_pnts {args} {
-    eval ArcherCore::gedWrapper make_pnts 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::mirror {args} {
-    eval createWrapper mirror $args
-}
-
-
-::itcl::body Archer::mv {args} {
-    eval moveWrapper mv $args
-}
-
-
-::itcl::body Archer::mvall {args} {
-    eval moveWrapper mvall $args
-}
-
-
-::itcl::body Archer::nmg_collapse {args} {
-    eval ArcherCore::gedWrapper nmg_collapse 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::nmg_simplify {args} {
-    eval ArcherCore::gedWrapper nmg_simplify 0 0 1 1 $args
-}
-
-
 ::itcl::body Archer::p {args} {
     if {$mSelectedObj == ""} {
 	return
     }
-
-    checkpoint $mSelectedObj $LEDGER_MODIFY
 
     set ret ""
 
@@ -1541,12 +1383,10 @@ package provide Archer 1.0
     }
 
     if {!$err} {
-	updateObjSave
+	set mNeedSave 1
+	updateSaveMode
 	redrawObj $mSelectedObjPath
 	initEdit 0
-
-	# Checkpoint again in case the user starts interacting via the mouse
-	checkpoint $mSelectedObj $LEDGER_MODIFY
     }
 
     return $ret
@@ -1589,26 +1429,6 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::prefix {args} {
-    eval ArcherCore::gedWrapper prefix 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::push {args} {
-    eval ArcherCore::gedWrapper push 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::put {args} {
-    eval ArcherCore::gedWrapper put 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::putmat {args} {
-    eval gedWrapper2 putmat 0 0 0 0 1 1 $args
-}
-
-
 ::itcl::body Archer::Load {_target} {
     SetWaitCursor $this
     if {$mNeedSave} {
@@ -1617,14 +1437,6 @@ package provide Archer 1.0
 
     set mNeedSave 0
     updateSaveMode
-
-    set mNeedCheckpoint 0
-    updateCheckpointMode
-
-    set mNeedGlobalUndo 0
-    set mNeedObjSave 0
-    set mNeedObjUndo 0
-    updateUndoMode
 
     # Get rid of any existing edit dialogs
     foreach ed $mActiveEditDialogs {
@@ -1653,10 +1465,6 @@ package provide Archer 1.0
 	set mTargetCopy ""
     } else {
 	createTargetCopy
-    }
-
-    if {!$mViewOnly} {
-	createTargetLedger
     }
 
     # Load MGED database
@@ -1692,7 +1500,6 @@ package provide Archer 1.0
 	updateWizardMenu
 	updateUtilityMenu
 	deleteTargetOldCopy
-	#	createTargetLedger
 
 	updateCreationButtons 1
 	#	updateRaytraceButtons 1
@@ -1726,80 +1533,14 @@ package provide Archer 1.0
 }
 
 
-#
-# Create a region or modify an existing one.
-#
-::itcl::body Archer::r {args} {
-    eval combWrapper r 3 $args
-}
-
-
-# XXX libged's rcodes needs to return the objects affected
-# The affected objects would be added to the ledger.
-::itcl::body Archer::rcodes {args} {
-    eval ArcherCore::gedWrapper rcodes 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::rfarb {args} {
-    eval ArcherCore::gedWrapper rfarb 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::rm {args} {
-    eval removeCombMemberWrapper rm $args
-}
-
-
-# XXX libged's rmater needs to return the objects affected
-# The affected objects would be added to the ledger.
-::itcl::body Archer::rmater {args} {
-    eval ArcherCore::gedWrapper rmater 0 0 1 1 $args
-}
-
-
 ::itcl::body Archer::saveDb {} {
     ArcherCore::saveDb
-    #    clearTargetLedger
-    createTargetLedger
-
-    set mNeedCheckpoint 0
-    updateCheckpointMode
-
-    set mNeedGlobalUndo 0
-    set mNeedObjSave 0
-    set mNeedObjUndo 0
-    updateUndoMode
-
-    checkpoint $mSelectedObj $LEDGER_MODIFY
-}
-
-
-::itcl::body Archer::shells {args} {
-    eval ArcherCore::gedWrapper shells 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::tire {args} {
-    eval ArcherCore::gedWrapper tire 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::title {args} {
-    return [eval globalWrapper title $args]
-}
-
-
-# XXX libged's track needs to return the objects affected
-# The affected objects would be added to the ledger.
-::itcl::body Archer::track {args} {
-    eval ArcherCore::gedWrapper track 0 0 1 0 $args
 }
 
 
 ::itcl::body Archer::units {args} {
     set b2l_1 [gedCmd base2local]
-    set ret [eval globalWrapper units $args]
+    set ret [eval ArcherCore::units $args]
     set mDbUnits [gedCmd units -s]
     set b2l_2 [gedCmd base2local]
 
@@ -1819,16 +1560,6 @@ package provide Archer 1.0
     }
 
     return $ret
-}
-
-
-::itcl::body Archer::vmake {args} {
-    eval createWrapper make $args
-    #    eval ArcherCore::gedWrapper vmake 0 0 1 1 $args
-}
-
-::itcl::body Archer::zap {args} {
-    eval ArcherCore::gedWrapper zap 0 0 0 1 $args
 }
 
 
@@ -1976,7 +1707,10 @@ package provide Archer 1.0
 			-file [file join $mImgDir option_text.png]]
 	$itk_component(objViewToolbar) itemconfigure objEditView \
 	    -image [image create photo \
-			-file [file join $mImgDir option_tree.png]]
+			-file [file join $mImgDir option_edit.png]]
+	$itk_component(objViewToolbar) itemconfigure objToolView \
+	    -image [image create photo \
+			-file [file join $mImgDir tools.png]]
     }
 
     initFbImages
@@ -2122,668 +1856,27 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::addCombMemberWrapper {_cmd _cflag args} {
-    # Returns a help message.
-    set alen [llength $args]
-    if {$alen == 0} {
-	return [gedCmd $_cmd]
-    }
-
-    set cname [lindex $args 0]
-    set mlist {}
-
-    # Set the list of members (i.e. mlist)
-    switch -- $_cmd {
-	"g" {
-	    set mlist [lrange $args 1 end]
-	}
-	"comb" -
-	"r" {
-	    if {$alen < 3 || [expr {$alen % 2}] == 0} {
-		return [gedCmd $_cmd]
-	    }
-
-	    foreach {op oname} [lrange $args 1 end] {
-		lappend mlist $oname
-	    }
-	}
-	default {
-	    return "addCombMemberWrapper: $_cmd not recognized."
-	}
-    }
-
-    SetWaitCursor $this
-    checkpoint $cname $LEDGER_MODIFY
-
-    if {[catch {eval gedCmd $_cmd $args} ret]} {
-	SetNormalCursor $this
-	return $ret
-    }
-
-    # Delete any toplevel nodes of newly added members
-    foreach member $mlist {
-	if {[info exists mText2Node($member)]} {
-	    foreach sublist $mText2Node($member) {
-		set pnode [lindex $sublist 1]
-
-		if {$pnode == {}} {
-		    set cnode [lindex $sublist 0]
-
-		    # Before deleting cnode we need to delete any
-		    # use of cnode and its descendents in the data
-		    # variables that are used to interact with the
-		    # tree viewer.
-		    purgeNodeData $cnode
-
-		    $itk_component(newtree) delete $cnode
-		}
-	    }
-	}
-    }
-
-    if {$_cflag} {
-	SetNormalCursor $this
-	return
-    }
-
-    # Add new members to parent node(s) if the parent nodes have been previously opened.
-    set cnode ""
-    if {[info exists mText2Node($cname)]} {
-	foreach sublist $mText2Node($cname) {
-	    set cnode [lindex $sublist 0]
-
-	    if {[treeNodeHasBeenOpened $cnode]} {
-		foreach member $mlist {
-		    fillTree $cnode $member $mEnableListView
-		}
-	    }
-	}
-    }
-
-    object_update $cname
-
-    if {$cnode != ""} {
-	set path ""
-	foreach pnode [lreverse [findTreeParentNodes $cnode]] {
-	    append path "/" $mNode2Text($pnode)
-	}
-
-	if {$path != ""} {
-	    append path "/"
-	}
-
-	append path $cname
-	selectTreePath $path
-    }
-
-    SetNormalCursor $this
-}
-
-
-::itcl::body Archer::createCombWrapper {_cmd args} {
-
-    eval addCombMemberWrapper $_cmd 1 $args
-
-    SetWaitCursor $this
-    set cname [lindex $args 0]
-
-    updateTreeTopWithName $cname
-
-    $itk_component(ged) draw $cname
-    selectTreePath $cname
-
-    checkpoint $cname $LEDGER_CREATE
-    set mNeedSave 1
-    updateSaveMode
-
-    SetNormalCursor $this
-}
-
-
-::itcl::body Archer::removeCombMemberWrapper {_cmd args} {
-    # Returns a help message.
-    set alen [llength $args]
-    if {$alen == 0} {
-	return [gedCmd $_cmd]
-    }
-
-    set cname [lindex $args 0]
-    set mlist {}
-
-    # Set the list of members (i.e. mlist)
-    switch -- $_cmd {
-	"rm" {
-	    # remove duplicates
-	    set mlist [lsort -unique [lrange $args 1 end]]
-	    set args [eval list $cname $mlist]
-	}
-	default {
-	    return "removeCombMemberWrapper: $_cmd not recognized."
-	}
-    }
-
-    SetWaitCursor $this
-    checkpoint $cname $LEDGER_MODIFY
-
-    if {[catch {eval gedCmd $_cmd $args} ret]} {
-	SetNormalCursor $this
-	return $ret
-    }
-
-    # Delete members from parent nodes
-    set cnode ""
-    if {[info exists mText2Node($cname)]} {
-	foreach sublist $mText2Node($cname) {
-	    set cnode [lindex $sublist 0]
-
-	    if {[info exists mPNode2CList($cnode)]} {
-		foreach clist $mPNode2CList($cnode) {
-		    set mname [lindex $clist 0] 
-
-		    if {$mname == $TREE_PLACEHOLDER_TAG} {
-			foreach member $mlist {
-			    # If member is a top level object, add it to the tree top
-			    if {[gedCmd dbfind $member] == ""} {
-				fillTree {} $member $mEnableListView
-			    }
-			}
-		    } else {
-			foreach member $mlist {
-			    if {$mname == $member} {
-				set mnode [lindex $clist 1]
-
-				# Before deleting mnode we need to delete any
-				# use of mnode and its descendents in the data
-				# variables that are used to interact with the
-				# tree viewer.
-				purgeNodeData $mnode
-
-				$itk_component(newtree) delete $mnode
-
-				# If mname is a top level object, add it to the tree top
-				if {[gedCmd dbfind $member] == ""} {
-				    fillTree {} $member $mEnableListView
-
-				    if {$member == $mSelectedObj} {
-					selectTreePath $member
-				    }
-				} elseif {$member == $mSelectedObj} {
-				    selectTreePath [getTreePath $cnode]
-				}
-			    }
-			}
-		    }
-		}
-	    }
-	}
-    }
-
-    object_update $cname
-
-    if {$cnode != ""} {
-	set path ""
-	foreach pnode [lreverse [findTreeParentNodes $cnode]] {
-	    append path "/" $mNode2Text($pnode)
-	}
-
-	if {$path != ""} {
-	    append path "/"
-	}
-
-	append path $cname
-	selectTreePath $path
-    }
-
-    updateTreeDrawLists
-    SetNormalCursor $this
-}
-
-
-#
-# Create a combination or modify an existing one.
-#
-::itcl::body Archer::combWrapper {_cmd _minArgs args} {
-    set alen [llength $args]
-    if {$alen < $_minArgs} {
-	return [gedCmd $_cmd]
-    }
-
-    set obj [lindex $args 0]
-
-    # Check for the existence of obj
-    if {[catch {gedCmd attr show $obj} adata]} {
-	# Create a new combination
-	eval createCombWrapper $_cmd $args
-    } else {
-	# Modifying an existing combination
-	eval addCombMemberWrapper $_cmd 0 $args
-    }
-}
-
-
-::itcl::body Archer::createWrapper {_cmd args} {
-    # Set the list of created objects (i.e. clist)
-    switch -- $_cmd {
-	"facetize" {
-	    set optionsAndArgs [eval dbExpand $args]
-	    set options [lindex $optionsAndArgs 0]
-	    set expandedArgs [lindex $optionsAndArgs 1]
-
-	    # Returns a help message.
-	    if {[llength $expandedArgs] < 2} {
-		return [gedCmd $_cmd]
-	    }
-
-	    set clist [lindex $expandedArgs 0]
-	}
-	"copyeval" -
-	"cp" -
-	"cpi" -
-	"mirror" {
-	    # Returns a help message.
-	    if {[llength $args] < 2} {
-		return [gedCmd $_cmd]
-	    }
-
-	    set options [lrange $args 0 end-2]
-	    set expandedArgs [lrange $args end-1 end]
-
-	    if {[llength $expandedArgs] != 2} {
-		return [gedCmd $_cmd]
-	    }
-
-	    set old [lindex $expandedArgs 0]
-
-	    # Check for the existence of old
-	    #	    if {[catch {gedCmd attr show $old} adata]} {
-	    #		return [eval gedCmd $_cmd $expandedArgs]
-	    #	    }
-
-	    set clist [lindex $expandedArgs 1]
-	}
-	"in" -
-	"inside" {
-	    set options {}
-	    set expandedArgs $args
-
-	    if {$_cmd == "in"} {
-		set clist [lindex $expandedArgs 0]
-	    } else {
-		set clist [lindex $expandedArgs 1]
-	    }
-	}
-	"make" -
-	"vmake" {
-	    # Returns a help message.
-	    if {[llength $args] < 2} {
-		return [gedCmd $_cmd]
-	    }
-
-	    set options [lrange $args 0 end-2]
-	    set expandedArgs [lrange $args end-1 end]
-
-	    if {[llength $expandedArgs] != 2} {
-		return [gedCmd $_cmd]
-	    }
-
-	    set clist [lindex $expandedArgs 0]
-	}
-	default {
-	    return "createWrapper: $_cmd not recognized."
-	}
-    }
-
-    SetWaitCursor $this
-
-    if {[catch {eval gedCmd $_cmd $options $expandedArgs} ret]} {
-	SetNormalCursor $this
-	return $ret
-    }
-
-    if {$_cmd == "in" || $_cmd == "inside"} {
-	set clist $ret
-    }
-
-    set name $clist
-    updateTreeTopWithName $name
-
-    $itk_component(ged) draw $name
-    selectTreePath $name
-
-    checkpoint $name $LEDGER_CREATE
-    set mNeedSave 1
-    updateSaveMode
-
-    SetNormalCursor $this
-
-    return $ret
-}
-
-
-::itcl::body Archer::gedWrapper {cmd eflag hflag sflag tflag args} {
-    eval gedWrapper2 $cmd 0 -1 $eflag $hflag $sflag $tflag $args
-}
-
-
-::itcl::body Archer::gedWrapper2 {cmd oindex pindex eflag hflag sflag tflag args} {
-    SetWaitCursor $this
-
-    if {$eflag} {
-	set optionsAndArgs [eval dbExpand $args]
-	set options [lindex $optionsAndArgs 0]
-	set expandedArgs [lindex $optionsAndArgs 1]
-    } else {
-	set options {}
-	set expandedArgs $args
-    }
-
-    set obj [lindex $expandedArgs $oindex]
-    if {$pindex >= 0} {
-	set l [split $obj /]
-	set len [llength $l]
-
-	if {$pindex < $len} {
-	    set obj [lindex $l $pindex]
-	}
-    }
-
-    # Must be wanting help
-    if {$obj == ""} {
-	catch {eval gedCmd $cmd $options $expandedArgs} ret
-	SetNormalCursor $this
-
-	return $ret
-    }
-
-    if {$sflag} {
-	checkpoint $obj $LEDGER_MODIFY
-    }
-
-    if {[catch {eval gedCmd $cmd $options $expandedArgs} ret]} {
-	# This will remove the last ledger entry for obj
-	if {$sflag} {
-	    ledger_cleanup
-	}
-
-	SetNormalCursor $this
-	error $ret
-    }
-
-    if {$sflag} {
-	object_update $obj
-    }
-
-    gedCmd configure -primitiveLabels {}
-    switch -- $tflag {
-	0 {
-	    # Do nothing
-	}
-	1 {
-	    catch {updateTreeDrawLists}
-	}
-	default {
-	    catch {syncTree}
-	}
-    }
-    SetNormalCursor $this
-
-    return $ret
-}
-
-
-::itcl::body Archer::globalWrapper {_cmd args} {
-    # Simply return the current value
-    if {$_cmd != "edcolor" && $args == {}} {
-	return [gedCmd $_cmd]
-    }
-
-    if {$_cmd == "units" && [llength $args] == 1} {
-	set arg0 [lindex $args 0]
-	if {$arg0 == "-s" || $arg0 == "-t"} {
-	    return [gedCmd units $arg0]
-	}
-    }
-
-    set old_units [gedCmd units -s]
-    set lname [checkpoint _GLOBAL $LEDGER_MODIFY]
-
-    if {[catch {eval gedCmd $_cmd $args} ret]} {
-	return $ret
-    }
-
-    set new_units [gedCmd units -s]
-
-    # Nothing else to do
-    if {$_cmd == "units" && $old_units == $new_units} {
-	ledger_cleanup
-	return ""
-    }
-
-    if {$lname == ""} {
-	return "No ledger entry found for _GLOBAL."
-    } else {
-	# Assumed to have mods after the command invocation above
-	$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-	$mLedger attr set $lname UNITS $old_units
-    }
-
-    set lname [checkpoint _GLOBAL $LEDGER_MODIFY]
-    if {$lname == ""} {
-	return "No ledger entry found for _GLOBAL."
-    } else {
-	$mLedger attr set $lname UNITS $new_units
-    }
-
-    set mNeedSave 1
-    updateSaveMode
-
-    gedCmd refresh
-    return $ret
-}
-
-
-::itcl::body Archer::killWrapper {_cmd args} {
-    # Returns a help message.
-    if {[llength $args] == 0} {
-	return [gedCmd $_cmd]
-    }
-
-    set optionsAndArgs [eval dbExpand $args]
-    set options [lindex $optionsAndArgs 0]
-    set expandedArgs [lindex $optionsAndArgs 1]
-
-    # Returns a help message.
-    if {[llength $expandedArgs] == 0} {
-	return [gedCmd $_cmd]
-    }
-
-    SetWaitCursor $this
-
-    # Get the list of killed and modified objects.
-    if {[lsearch $options -a] != -1} {
-	set alist [eval gedCmd $_cmd -a -n $expandedArgs]
-    } else {
-	set alist [eval gedCmd $_cmd -n $expandedArgs]
-    }
-
-    # The first sublist is for killed objects. The second is for modified objects.
-    set klist [lindex $alist 0]
-    set mlist [lindex $alist 1]
-
-    # Remove duplicates from both klist and mlist
-    set klist [lsort -unique $klist]
-    set mlist [lsort -unique $mlist]
-
-    # If an item is in both sublists, remove it from mlist.
-    foreach item $klist {
-	set l [lsearch -all -sorted $mlist $item]
-	set l [lsort -decreasing $l]
-	foreach i $l {
-	    # Delete the item (i.e. it no longer exists)
-	    set mlist [lreplace $mlist $i $i]
-	}
-    }
-
-    set nindex [lsearch $options "-n"]
-    if {$nindex == 0 || $nindex == 1} {
-	SetNormalCursor $this
-	return [list $klist $mlist]
-    }
-
-    if {[llength $klist] == 0} {
-	SetNormalCursor $this
-	return
-    }
-
-    # Need to checkpoint before they're gone
-    checkpoint_olist $klist $LEDGER_DESTROY
-
-    set mlen [llength $mlist]
-    if {$mlen} {
-	# Decrement the GID so that the modified
-	# objects below have the same GID.
-	incr mLedgerGID -1
-
-	# Also need to checkpoint the objects that used to reference
-	# the soon-to-be killed objects.
-	set lnames [checkpoint_olist $mlist $LEDGER_MODIFY]
-    }
-
-    if {[catch {eval gedCmd $_cmd $options $expandedArgs} ret]} {
-	ledger_cleanup
-	SetNormalCursor $this
-	return $ret
-    }
-
-    if {$mlen} {
-	foreach lname $lnames {
-	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-	}
-    }
-
-    syncTree
-
-    if {[lsearch $klist $mSelectedObj] != -1} {
-	set mSelectedObj ""
-	set mSelectedObjPath ""
-	set mSelectedObjType ""
-    } elseif {[lsearch $mlist $mSelectedObj] != -1} {
-	checkpoint $mSelectedObj $LEDGER_MODIFY
-    }
-
-    updateUndoState
-    SetNormalCursor $this
-
-    return $ret
-}
-
-
-::itcl::body Archer::moveWrapper {_cmd args} {
-    set alen [llength $args]
-
-    # Returns a help message.
-    if {$alen == 0} {
-	return [gedCmd $_cmd]
-    }
-
-    set fi [lsearch $args "-f"]
-    set ni [lsearch $args "-n"]
-
-    if {$fi != -1 || $ni != -1} {
-	# Must be using the -n option. If not, an error message
-	# containing the usage string will be returned.
-	return [eval gedCmd $_cmd $args]
-    }
-
-    # Get the list of potentially modified objects.
-    if {$_cmd == "mvall"} {
-	set mlist [lsort -dictionary -unique [eval gedCmd $_cmd -n $args]]
-    } else {
-	set mlist {}
-    }
-
-    set mlen [llength $mlist]
-
-    set old_name [lindex $args 0]
-    set new_name [lindex $args 1]
-
-    SetWaitCursor $this
-
-    # Checkpoint the objects that used to reference
-    # the soon-to-be renamed objects.
-    if {$mlen} {
-	set lnames [checkpoint_olist $mlist $LEDGER_MODIFY]
-    } else {
-	set lnames {}
-    }
-
-    if {[catch {eval gedCmd $_cmd $args} ret]} {
-	ledger_cleanup
-	SetNormalCursor $this
-	return $ret
-    }
-
-    # Flag these as having mods
-    foreach lname $lnames {
-	$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-    }
-
-    # Decrement the GID so that the renamed
-    # object below has the same GID as the
-    # modified objects above.
-    if {$mlen} {
-	incr mLedgerGID -1
-    }
-
-    # Checkpoint the renamed object
-    set lnew_name [checkpoint $new_name $LEDGER_RENAME]
-
-    # Flag the renamed object as having mods
-    $mLedger attr set $lnew_name $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-
-    # Save the command for moving things back
-    $mLedger attr set $lnew_name $LEDGER_ENTRY_MOVE_COMMAND "$_cmd $new_name $old_name"
-
-    syncTree
-
-    if {$old_name == $mSelectedObj} {
-	set mSelectedObj $new_name
-	checkpoint $mSelectedObj $LEDGER_MODIFY
-	regsub {([^/]+)$} $mSelectedObjPath $new_name mSelectedObjPath
-    } elseif {[lsearch -sorted $mlist $mSelectedObj] != -1} {
-	checkpoint $mSelectedObj $LEDGER_MODIFY
-    }
-
-    initEdit 0
-    selectTreePath $mSelectedObjPath
-
-    updateUndoState
-    SetNormalCursor $this
-}
-
-
 ::itcl::body Archer::handleTreeSelect {} {
     ::ArcherCore::handleTreeSelect
 
     if {!$mViewOnly} {
 	if {$mObjViewMode == $OBJ_ATTR_VIEW_MODE} {
 	    initObjAttrView
-	} else {
+	} elseif {$mObjViewMode == $OBJ_EDIT_VIEW_MODE} {
 	    if {!$mRestoringTree} {
-		selection_checkpoint $mSelectedObj
 		initObjEditView
 		switch -- $mDefaultBindingMode \
 		    $OBJECT_ROTATE_MODE { \
-					      beginObjRotate
+			beginObjRotate
 		    } \
 		    $OBJECT_SCALE_MODE { \
-					     beginObjScale
+			beginObjScale
 		    } \
 		    $OBJECT_TRANSLATE_MODE { \
-						 beginObjTranslate
+			beginObjTranslate
 		    } \
 		    $OBJECT_CENTER_MODE { \
-					      beginObjCenter
+			beginObjCenter
 		    }
 	    }
 	}
@@ -2841,21 +1934,6 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::updateCheckpointMode {} {
-    if {$mViewOnly} {
-	return
-    }
-
-    if {!$mDbNoCopy && !$mDbReadOnly && $mNeedCheckpoint} {
-	$itk_component(primaryToolbar) itemconfigure checkpoint \
-	    -state normal
-    } else {
-	$itk_component(primaryToolbar) itemconfigure checkpoint \
-	    -state disabled
-    }
-}
-
-
 ::itcl::body Archer::updateSaveMode {} {
     ArcherCore::updateSaveMode
 
@@ -2910,77 +1988,6 @@ package provide Archer 1.0
     }
 }
 
-
-::itcl::body Archer::updateUndoMode {{_oflag 1}} {
-    if {$mViewOnly} {
-	return
-    }
-
-    if {!$mDbNoCopy && !$mDbReadOnly && $mNeedGlobalUndo} {
-	$itk_component(primaryToolbar) itemconfigure global_undo \
-	    -state normal
-
-	if {$_oflag} {
-	    if {$mNeedObjUndo} {
-		$itk_component(primaryToolbar) itemconfigure object_undo \
-		    -state normal
-	    } else {
-		$itk_component(primaryToolbar) itemconfigure object_undo \
-		    -state disabled
-	    }
-	}
-    } else {
-	$itk_component(primaryToolbar) itemconfigure global_undo \
-	    -state disabled
-
-	if {$_oflag} {
-	    $itk_component(primaryToolbar) itemconfigure object_undo \
-		-state disabled
-	}
-    }
-}
-
-
-::itcl::body Archer::updateUndoState {} {
-    if {$mViewOnly} {
-	return
-    }
-
-    set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
-    set len [llength $l]
-    if {$len == 0} {
-	set mNeedSave 0
-	set mNeedGlobalUndo 0
-	set mNeedObjUndo 0
-    } else {
-	set mNeedSave 1
-	set mNeedGlobalUndo 1
-
-	# Get all ledger entries related to mSelectedObj
-	set l [$mLedger expand *_*_$mSelectedObj]
-	set len [llength $l]
-
-	if {$len} {
-	    set l [lsort -dictionary $l]
-	    set le [lindex $l end]
-
-	    if {$len > 1} {
-		set mNeedObjUndo 1
-	    } else {
-		if {[$mLedger attr get $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR]} {
-		    set mNeedObjUndo 1
-		} else {
-		    set mNeedObjUndo 0
-		}
-	    }
-	} else {
-	    set mNeedObjUndo 0
-	}
-    }
-
-    updateUndoMode 1
-    updateSaveMode
-}
 
 
 ################################### Miscellaneous Section ###################################
@@ -3208,7 +2215,8 @@ proc title_node_handler {node} {
     set tlparent [$itk_component(archerHelp) childsite]
 
 
-    if {[file exists [file join [bu_brlcad_data "html"] books en BRL-CAD_Tutorial_Series-VolumeI.html]]} {
+    if {[file exists [file join [bu_brlcad_data "html"] books en BRL-CAD_Tutorial_Series-VolumeI.html]] &&
+        [file exists [file join [bu_brlcad_data "html"] toc.html]] } {
 
 	# Table of Contents
 	itk_component add archerHelpToC {
@@ -3273,53 +2281,147 @@ proc title_node_handler {node} {
 
     set parent $itk_component(displayF)
 
-    itk_component add zclipL {
-	::ttk::label $parent.zclipL \
-	    -text "Viewing Cube:"
+    itk_component add zclipFrontL {
+	::ttk::label $parent.zclipFrontL \
+	    -anchor se \
+	    -text "ZClip Percent (Front):"
     } {}
+    itk_component add zclipFrontS {
+	::scale $parent.zclipFrontS \
+	    -showvalue 1 \
+	    -orient horizontal \
+	    -from 1.0 \
+	    -to 100.0 \
+	    -resolution 0.01 \
+	    -variable [::itcl::scope mZClipFrontPref] \
+	    -command [::itcl::code $this updateZClipPlanes]
+    }
+
+    itk_component add zclipBackL {
+	::ttk::label $parent.zclipBackL \
+	    -anchor se \
+	    -text "ZClip Percent (Back):"
+    } {}
+    itk_component add zclipBackS {
+	::scale $parent.zclipBackS \
+	    -showvalue 1 \
+	    -orient horizontal \
+	    -from 1.0 \
+	    -to 100.0 \
+	    -resolution 0.01 \
+	    -variable [::itcl::scope mZClipBackPref] \
+	    -command [::itcl::code $this updateZClipPlanes]
+    }
+
+    itk_component add zclipBackMaxL {
+	::ttk::label $parent.zclipBackMaxL \
+	    -anchor e \
+	    -text "ZClip Max (Back):"
+    } {}
+    itk_component add zclipBackMaxF {
+	::ttk::frame $parent.zclipBackMaxF
+    } {}
+    itk_component add zclipBackMaxE {
+	::ttk::entry $itk_component(zclipBackMaxF).zclipBackMaxE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mZClipBackMaxPref] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble %P]
+    } {}
+    itk_component add zclipBackMaxB {
+	::ttk::button $itk_component(zclipBackMaxF).zclipBackMaxB \
+	    -width -1 \
+	    -text "Compute" \
+	    -command [::itcl::code $this calculateZClipBackMax]
+    } {}
+    grid $itk_component(zclipBackMaxE) -column 0 -row 0 -sticky nsew
+    grid $itk_component(zclipBackMaxB) -column 1 -row 0 -sticky nse
+    grid columnconfigure $itk_component(zclipBackMaxF) 0 -weight 1
+
+    itk_component add zclipFrontMaxL {
+	::ttk::label $parent.zclipFrontMaxL \
+	    -anchor e \
+	    -text "ZClip Max (Front):"
+    } {}
+    itk_component add zclipFrontMaxF {
+	::ttk::frame $parent.zclipFrontMaxF
+    } {}
+    itk_component add zclipFrontMaxE {
+	::ttk::entry $itk_component(zclipFrontMaxF).zclipFrontMaxE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mZClipFrontMaxPref] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble %P]
+    } {}
+    itk_component add zclipFrontMaxB {
+	::ttk::button $itk_component(zclipFrontMaxF).zclipFrontMaxB \
+	    -width -1 \
+	    -text "Compute" \
+	    -command [::itcl::code $this calculateZClipFrontMax]
+    } {}
+    grid $itk_component(zclipFrontMaxE) -column 0 -row 0 -sticky nsew
+    grid $itk_component(zclipFrontMaxB) -column 1 -row 0 -sticky nse
+    grid columnconfigure $itk_component(zclipFrontMaxF) 0 -weight 1
+
+    itk_component add lightModeL {
+	::ttk::label $parent.lightModeL \
+	    -anchor e \
+	    -text "Light Mode:"
+    } {}
+    itk_component add lightModeF {
+	::ttk::frame $parent.lightModeF \
+	    -relief sunken \
+	    -borderwidth 1
+    } {}
+    itk_component add lightModeFrontRB {
+	::ttk::radiobutton $itk_component(lightModeF).lightModeFrontRB \
+	    -text "Front" \
+	    -value $LIGHT_MODE_FRONT \
+	    -variable [::itcl::scope mLightingModePref]
+    } {}
+    itk_component add lightModeFrontBackRB {
+	::ttk::radiobutton $itk_component(lightModeF).lightModeFrontBackRB \
+	    -text "Front and Back" \
+	    -value $LIGHT_MODE_FRONT_AND_BACK \
+	    -variable [::itcl::scope mLightingModePref]
+    } {}
+    itk_component add lightModeFrontBackDarkRB {
+	::ttk::radiobutton $itk_component(lightModeF).lightModeFrontBackDarkRB \
+	    -text "Front and Back (Dark Back)" \
+	    -value $LIGHT_MODE_FRONT_AND_BACK_DARK \
+	    -variable [::itcl::scope mLightingModePref]
+    } {}
+    itk_component add lightModeFrontBackLightRB {
+	::ttk::radiobutton $itk_component(lightModeF).lightModeFrontBackLightRB \
+	    -text "Front and Back (Light Back)" \
+	    -value $LIGHT_MODE_FRONT_AND_BACK_LIGHT \
+	    -variable [::itcl::scope mLightingModePref]
+    } {}
+    set i 0
+    grid $itk_component(lightModeFrontRB) -row $i -sticky nsew
+    incr i
+    grid $itk_component(lightModeFrontBackRB) -row $i -sticky nsew
+    incr i
+    grid $itk_component(lightModeFrontBackDarkRB) -row $i -sticky nsew
+    incr i
+    grid $itk_component(lightModeFrontBackLightRB) -row $i -sticky nsew
+    grid columnconfigure $itk_component(lightModeF) 0 -weight 1
 
     set i 0
-    set mZClipMode $i
-    itk_component add smallZClipRB {
-	::ttk::radiobutton $parent.smallZClipRB \
-	    -text "Small (Default)" \
-	    -value $i \
-	    -variable [::itcl::scope mZClipModePref]
-    } {}
-
+    grid $itk_component(zclipBackL) -column 0 -row $i -sticky se
+    grid $itk_component(zclipBackS) -column 1 -row $i -sticky ew
     incr i
-    itk_component add mediumZClipRB {
-	::ttk::radiobutton $parent.mediumZClipRB \
-	    -text "Medium" \
-	    -value $i \
-	    -variable [::itcl::scope mZClipModePref]
-    } {}
-
+    grid $itk_component(zclipBackMaxL) -column 0 -row $i -sticky e
+    grid $itk_component(zclipBackMaxF) -column 1 -row $i -sticky ew
     incr i
-    itk_component add largeZClipRB {
-	::ttk::radiobutton $parent.largeZClipRB \
-	    -text "Large" \
-	    -value $i \
-	    -variable [::itcl::scope mZClipModePref]
-    } {}
-
+    grid $itk_component(zclipFrontL) -column 0 -row $i -sticky se
+    grid $itk_component(zclipFrontS) -column 1 -row $i -sticky ew
     incr i
-    itk_component add infiniteZClipRB {
-	::ttk::radiobutton $parent.infiniteZClipRB \
-	    -text "Infinite" \
-	    -value $i \
-	    -variable [::itcl::scope mZClipModePref]
-    } {}
-
-    set i 0
-    grid $itk_component(zclipL) -column 0 -row $i -sticky w
-    grid $itk_component(smallZClipRB) -column 1 -row $i -sticky w
+    grid $itk_component(zclipFrontMaxL) -column 0 -row $i -sticky e
+    grid $itk_component(zclipFrontMaxF) -column 1 -row $i -sticky ew
     incr i
-    grid $itk_component(mediumZClipRB) -column 1 -row $i -sticky w
-    incr i
-    grid $itk_component(largeZClipRB) -column 1 -row $i -sticky w
-    incr i
-    grid $itk_component(infiniteZClipRB) -column 1 -row $i -sticky w
+    grid $itk_component(lightModeL) -column 0 -row $i -sticky ne
+    grid $itk_component(lightModeF) -column 1 -row $i -sticky ew
 
     incr i
     grid rowconfigure $parent $i -weight 1
@@ -4154,9 +3256,11 @@ proc title_node_handler {node} {
 	-borderwidth 1 \
 	-pady 0 \
 	-command [::itcl::code $this applyPreferencesIfDiff]
+    set b2_cmd [$itk_component(preferencesDialog) buttoncget 2 -command]
     $itk_component(preferencesDialog) buttonconfigure 2 \
 	-borderwidth 1 \
-	-pady 0
+	-pady 0 \
+	-command "[::itcl::code $this cancelPreferences]; $b2_cmd"
 
     grid [$itk_component(preferencesDialog) component bbox] -sticky e
 
@@ -4478,6 +3582,7 @@ proc title_node_handler {node} {
     bind $itk_component(${_prefix}stdviewsmenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
     bind $itk_component(${_prefix}modesmenu) <<MenuSelect>> [::itcl::code $this modesMenuStatusCB %W]
     bind $itk_component(${_prefix}activepanemenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
+    bind $itk_component(${_prefix}comppickmenu) <<MenuSelect>> [::itcl::code $this modesMenuStatusCB %W]
     bind $itk_component(${_prefix}helpmenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
 
     bind $itk_component(${_prefix}raytracemenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
@@ -4643,6 +3748,40 @@ proc title_node_handler {node} {
     $itk_component(primaryToolbar) itemconfigure raytrace \
 	-image $mImage_rt \
 	-command [::itcl::code $this raytracePlus]
+}
+
+
+##
+# At this point _bot is expected to be the name of an existing, unoriented
+# volume mode bot. This method fires a ray at the bot and determines if it
+# needs flipping and returns either an empty string that indicates no determination
+# could be made or the cosine of the angle between the ray and the bot's normal.
+#
+::itcl::body Archer::getRayBotNormalCos {_start _target _bot} {
+    set miss_flag 0
+    set partitions [shootRay_doit $_start "at" $_target 1 1 1 1 $_bot]
+
+    if {$partitions == ""} {
+	return ""
+    }
+
+    set partition [lindex $partitions 0]
+    if {[catch {bu_get_value_by_keyword in $partition} in] ||
+	[catch {bu_get_value_by_keyword normal $in} hit_normal]} {
+	return ""
+    }
+
+    set diff [vsub2 $_target $_start]
+    set raydir [vunitize $diff]
+
+    set hit_normal [vunitize $hit_normal]
+    set cosa [vdot $raydir $hit_normal]
+
+    if {[vnear_zero $cosa 0.00001]} {
+	return ""
+    }
+
+    return $cosa
 }
 
 
@@ -4825,6 +3964,24 @@ proc title_node_handler {node} {
 	    }
 	    "Lighting" {
 		set mStatusStr "Toggle lighting on/off "
+	    }
+	    "Tree Select" {
+		set mStatusStr "Select the picked object in the hierarchy tree."
+	    }
+	    "Get Object Name" {
+		set mStatusStr "Get the name of the picked object."
+	    }
+	    "Erase Object" {
+		set mStatusStr "Erase the picked object."
+	    }
+	    "Bot Flip" {
+		set mStatusStr "Flip the picked object if it's a bot."
+	    }
+	    "Bot Split" {
+		set mStatusStr "Split the picked object if it's a bot."
+	    }
+	    "Bot Sync" {
+		set mStatusStr "Sync the picked object if it's a bot."
 	    }
 	    default {
 		set mStatusStr ""
@@ -5684,6 +4841,20 @@ proc title_node_handler {node} {
 		radiobutton lr -label "Lower Right" \
 		    -helpstr "Set active pane to lower right"
 	    }
+	    cascade comppick -label "Comp Pick Mode" -menu {
+		radiobutton tselect -label "Tree Select" \
+		    -helpstr "Select the picked object in the hierarchy tree."
+		radiobutton gname -label "Get Object Name" \
+		    -helpstr "Get the name of the picked object."
+		radiobutton cerase -label "Erase Object" \
+		    -helpstr "Erase the picked object."
+		radiobutton bsplit -label "Bot Split" \
+		    -helpstr "Split the picked object if it's a bot."
+		radiobutton bsync -label "Bot Sync" \
+		    -helpstr "Sync the picked object if it's a bot."
+		radiobutton bflip -label "Bot Flip" \
+		    -helpstr "Flip the picked object if it's a bot."
+	    }
 	    checkbutton quad -label "Quad View" \
 		-helpstr "Toggle between single and quad display."
 	    separator sep1
@@ -5730,6 +4901,32 @@ proc title_node_handler {node} {
 	-value $i \
 	-variable [::itcl::scope mActivePane] \
 	-command [::itcl::code $this setActivePane lr]
+
+    $itk_component(menubar) menuconfigure .modes.comppick.tselect \
+	-command [::itcl::code $this initCompPick] \
+	-value $COMP_PICK_TREE_SELECT_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(menubar) menuconfigure .modes.comppick.gname \
+	-command [::itcl::code $this initCompPick] \
+	-value $COMP_PICK_NAME_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(menubar) menuconfigure .modes.comppick.cerase \
+	-command [::itcl::code $this initCompPick] \
+	-value $COMP_PICK_ERASE_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(menubar) menuconfigure .modes.comppick.bsplit \
+	-command [::itcl::code $this initCompPick] \
+	-value $COMP_PICK_BOT_SPLIT_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(menubar) menuconfigure .modes.comppick.bsync \
+	-command [::itcl::code $this initCompPick] \
+	-value $COMP_PICK_BOT_SYNC_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(menubar) menuconfigure .modes.comppick.bflip \
+	-command [::itcl::code $this initCompPick] \
+	-value $COMP_PICK_BOT_FLIP_MODE \
+	-variable [::itcl::scope mCompPickMode]
+
     $itk_component(menubar) menuconfigure .modes.quad \
 	-command [::itcl::code $this doMultiPane] \
 	-offvalue 0 \
@@ -5774,7 +4971,7 @@ proc title_node_handler {node} {
 	-state disabled
     $itk_component(menubar) menuconfigure .modes.light \
 	-offvalue 0 \
-	-onvalue 2 \
+	-onvalue 1 \
 	-variable [::itcl::scope mLighting] \
 	-command [::itcl::code $this doLighting] \
 	-state disabled
@@ -5912,10 +5109,51 @@ proc title_node_handler {node} {
 	-variable [::itcl::scope mActivePane] \
 	-command [::itcl::code $this setActivePane lr]
 
+    itk_component add ${_prefix}comppickmenu {
+	menu $itk_component(${_prefix}modesmenu).${_prefix}comppickmenu \
+	    -tearoff 0
+    } {
+	keep -background
+    }
+
+    $itk_component(${_prefix}comppickmenu) add radiobutton \
+	-command [::itcl::code $this initCompPick] \
+	-label "Tree Select" \
+	-value $COMP_PICK_TREE_SELECT_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(${_prefix}comppickmenu) add radiobutton \
+	-command [::itcl::code $this initCompPick] \
+	-label "Get Object Name" \
+	-value $COMP_PICK_NAME_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(${_prefix}comppickmenu) add radiobutton \
+	-command [::itcl::code $this initCompPick] \
+	-label "Erase Object" \
+	-value $COMP_PICK_ERASE_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(${_prefix}comppickmenu) add radiobutton \
+	-command [::itcl::code $this initCompPick] \
+	-label "Bot Split" \
+	-value $COMP_PICK_BOT_SPLIT_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(${_prefix}comppickmenu) add radiobutton \
+	-command [::itcl::code $this initCompPick] \
+	-label "Bot Sync" \
+	-value $COMP_PICK_BOT_SYNC_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(${_prefix}comppickmenu) add radiobutton \
+	-command [::itcl::code $this initCompPick] \
+	-label "Bot Flip" \
+	-value $COMP_PICK_BOT_FLIP_MODE \
+	-variable [::itcl::scope mCompPickMode]
+
     $itk_component(${_prefix}modesmenu) add cascade \
 	-label "Active Pane" \
 	-menu $itk_component(${_prefix}activepanemenu) \
 	-state disabled
+    $itk_component(${_prefix}modesmenu) add cascade \
+	-label "Comp Pick Mode" \
+	-menu $itk_component(${_prefix}comppickmenu)
     $itk_component(${_prefix}modesmenu) add checkbutton \
 	-label "Quad View" \
 	-offvalue 0 \
@@ -5969,7 +5207,7 @@ proc title_node_handler {node} {
     $itk_component(${_prefix}modesmenu) add checkbutton \
 	-label "Lighting" \
 	-offvalue 0 \
-	-onvalue 2 \
+	-onvalue 1 \
 	-variable [::itcl::scope mLighting] \
 	-command [::itcl::code $this doLighting] \
 	-state disabled
@@ -6316,6 +5554,8 @@ proc title_node_handler {node} {
 
 	bind $win <ButtonRelease-1> "[::itcl::code $this endObjRotate $dname $obj]; break"
     }
+
+    $itk_component(ged) rect lwidth 0
 }
 
 
@@ -6345,6 +5585,8 @@ proc title_node_handler {node} {
 
 	bind $win <ButtonRelease-1> "[::itcl::code $this endObjScale $dname $obj]; break"
     }
+
+    $itk_component(ged) rect lwidth 0
 }
 
 
@@ -6375,6 +5617,8 @@ proc title_node_handler {node} {
 
 	bind $win <ButtonRelease-1> "[::itcl::code $this endObjTranslate $dname $obj %x %y]; break"
     }
+
+    $itk_component(ged) rect lwidth 0
 }
 
 
@@ -6399,11 +5643,14 @@ proc title_node_handler {node} {
 	bind $win <1> "[::itcl::code $this handleObjCenter $dname $obj %x %y]; break"
 	bind $win <ButtonRelease-1> "[::itcl::code $this endObjCenter $obj]; break"
     }
+
+    $itk_component(ged) rect lwidth 0
 }
 
 
 ::itcl::body Archer::endObjCenter {_obj} {
-    updateObjSave
+    set mNeedSave 1
+    updateSaveMode
     initEdit 0
 
     set center [$itk_component(ged) ocenter $_obj]
@@ -6413,7 +5660,8 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::endObjRotate {dname obj} {
     $itk_component(ged) pane_idle_mode $dname
-    updateObjSave
+    set mNeedSave 1
+    updateSaveMode
     initEdit 0
 
     #XXX Need code to track overall transformation
@@ -6425,7 +5673,8 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::endObjScale {dname obj} {
     $itk_component(ged) pane_idle_mode $dname
-    updateObjSave
+    set mNeedSave 1
+    updateSaveMode
     initEdit 0
 
     #XXX Need code to track overall transformation
@@ -6460,14 +5709,20 @@ proc title_node_handler {node} {
 
     set ocenter [vscale [eval gedCmd pane_v2m_point $_dm $vcenter] [gedCmd base2local]]
 
-    if {$GeometryEditFrame::mEditCommand != ""} {
-	gedCmd $GeometryEditFrame::mEditCommand $_obj $GeometryEditFrame::mEditParam1 $ocenter
-    } else {
-	eval gedCmd ocenter $_obj $ocenter
-    }
+    set ret [catch {
+	if {$GeometryEditFrame::mEditCommand != ""} {
+	    gedCmd $GeometryEditFrame::mEditCommand $_obj $GeometryEditFrame::mEditParam1 $ocenter
+	} else {
+	    eval gedCmd ocenter $_obj $ocenter
+	}
+    } msg]
 
     redrawObj $_obj 0
     initEdit 0
+
+    if {$ret} {
+	putString $msg
+    }
 }
 
 
@@ -6716,6 +5971,127 @@ proc title_node_handler {node} {
 }
 
 
+::itcl::body Archer::buildObjToolView {} {
+    set parent [$itk_component(vpane) childsite attrView]
+    itk_component add objToolView {
+	::ttk::frame $parent.objtoolview \
+	    -borderwidth 1 \
+	    -relief sunken
+    } {}
+
+    set parent $itk_component(objToolView)
+    itk_component add compPickF {
+	::ttk::labelframe $parent.compPickF \
+	    -text "Comp Pick Modes" \
+	    -labelanchor n
+    } {}
+
+    set parent $itk_component(compPickF)
+    itk_component add compPickTreeSelectRB {
+	::ttk::radiobutton $parent.compPickTreeSelectRB \
+	    -command [::itcl::code $this initCompPick] \
+	    -text "Tree Select" \
+	    -value $COMP_PICK_TREE_SELECT_MODE \
+	    -variable [::itcl::scope mCompPickMode]
+    } {}
+
+    itk_component add compPickNameRB {
+	::ttk::radiobutton $parent.compPickNameRB \
+	    -command [::itcl::code $this initCompPick] \
+	    -text "Get Object Name" \
+	    -value $COMP_PICK_NAME_MODE \
+	    -variable [::itcl::scope mCompPickMode]
+    } {}
+
+    itk_component add compPickEraseRB {
+	::ttk::radiobutton $parent.compPickEraseRB \
+	    -command [::itcl::code $this initCompPick] \
+	    -text "Erase Object" \
+	    -value $COMP_PICK_ERASE_MODE \
+	    -variable [::itcl::scope mCompPickMode]
+    } {}
+
+    itk_component add compPickBotSplitRB {
+	::ttk::radiobutton $parent.compPickBotSplitRB \
+	    -command [::itcl::code $this initCompPick] \
+	    -text "Bot Split" \
+	    -value $COMP_PICK_BOT_SPLIT_MODE \
+	    -variable [::itcl::scope mCompPickMode]
+    } {}
+
+    itk_component add compPickBotSyncRB {
+	::ttk::radiobutton $parent.compPickBotSyncRB \
+	    -command [::itcl::code $this initCompPick] \
+	    -text "Bot Sync" \
+	    -value $COMP_PICK_BOT_SYNC_MODE \
+	    -variable [::itcl::scope mCompPickMode]
+    } {}
+
+    itk_component add compPickBotFlipRB {
+	::ttk::radiobutton $parent.compPickBotFlipRB \
+	    -command [::itcl::code $this initCompPick] \
+	    -text "Bot Flip" \
+	    -value $COMP_PICK_BOT_FLIP_MODE \
+	    -variable [::itcl::scope mCompPickMode]
+    } {}
+
+    grid $itk_component(compPickTreeSelectRB) -sticky w
+    grid $itk_component(compPickNameRB) -sticky w
+    grid $itk_component(compPickEraseRB) -sticky w
+    grid $itk_component(compPickBotSplitRB) -sticky w
+    grid $itk_component(compPickBotSyncRB) -sticky w
+    grid $itk_component(compPickBotFlipRB) -sticky w
+
+
+    set parent $itk_component(objToolView)
+    itk_component add botToolsF {
+	::ttk::labelframe $parent.botToolsF \
+	    -text "Bot Tools" \
+	    -labelanchor n
+    } {}
+
+    set parent $itk_component(botToolsF)
+    itk_component add botSplitAllB {
+	::ttk::button $parent.botSplitAllB \
+	    -text "Split All Bots" \
+	    -command [::itcl::code $this bot_split_all_wrapper]
+    } {}
+
+    itk_component add botSyncAllB {
+	::ttk::button $parent.botSyncAllB \
+	    -text "Sync All Bots" \
+	    -command [::itcl::code $this bot_sync_all_wrapper]
+    } {}
+
+    itk_component add botFlipCheckAllB {
+	::ttk::button $parent.botFlipCheckAllB \
+	    -text "Flip Check All Bots" \
+	    -command [::itcl::code $this bot_flip_check_all_wrapper]
+    } {}
+
+    itk_component add botFixAllB {
+	::ttk::button $parent.botFixAllB \
+	    -text "Fix All Bots" \
+	    -command [::itcl::code $this bot_fix_all_wrapper]
+    } {}
+
+    grid $itk_component(botSplitAllB) -sticky ew
+    grid $itk_component(botSyncAllB) -sticky ew
+    grid $itk_component(botFlipCheckAllB) -sticky ew
+    grid $itk_component(botFixAllB) -sticky ew
+    grid columnconfigure $itk_component(botToolsF) 0 -weight 1
+
+
+    set i 0
+    grid $itk_component(compPickF) -row $i -pady 4 -sticky ew
+    incr i
+    grid $itk_component(botToolsF) -row $i -pady 4 -sticky ew
+    incr i
+    grid rowconfigure $itk_component(objToolView) $i -weight 1
+    grid columnconfigure $itk_component(objToolView) 0 -weight 1
+}
+
+
 ::itcl::body Archer::buildObjViewToolbar {} {
     set parent [$itk_component(vpane) childsite attrView]
     itk_component add objViewToolbar {
@@ -6744,6 +6120,13 @@ proc title_node_handler {node} {
 	-variable [::itcl::scope mObjViewMode] \
 	-value $OBJ_ATTR_VIEW_MODE \
 	-command [::itcl::code $this initObjAttrView]
+
+    $itk_component(objViewToolbar) add radiobutton objToolView \
+	-helpstr "Tool view mode" \
+	-balloonstr "Tool view mode" \
+	-variable [::itcl::scope mObjViewMode] \
+	-value $OBJ_TOOL_VIEW_MODE \
+	-command [::itcl::code $this initObjToolView]
 }
 
 
@@ -6757,14 +6140,11 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::buildPipeEditView {} {
-    #XXX Not ready yet
-    return
-
-    #     set parent $itk_component(objEditView)
-    #     itk_component add pipeView {
-    # 	PipeEditFrame $parent.pipeview \
-	# 	    -units "mm"
-    #     } {}
+    set parent $itk_component(objEditView)
+    itk_component add pipeView {
+     	PipeEditFrame $parent.pipeview \
+	    -units "mm"
+    } {}
 }
 
 
@@ -6934,6 +6314,7 @@ proc title_node_handler {node} {
 
     #     $itk_component(botView) configure \
 	# 	-geometryObject $mSelectedObj \
+	#       -geometryObjectPath $mSelectedObjPath \
 	# 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	# 	-mged $itk_component(ged) \
 	# 	-labelFont $mFontText \
@@ -6950,6 +6331,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initCombEditView {odata} {
     $itk_component(combView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateCombEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7003,6 +6385,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initEhyEditView {odata} {
     $itk_component(ehyView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7019,6 +6402,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initEllEditView {odata} {
     $itk_component(ellView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7035,6 +6419,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initEpaEditView {odata} {
     $itk_component(epaView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7051,6 +6436,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initEtoEditView {odata} {
     $itk_component(etoView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7067,6 +6453,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initExtrudeEditView {odata} {
     $itk_component(extrudeView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7083,6 +6470,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initGripEditView {odata} {
     $itk_component(gripView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7099,6 +6487,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initHalfEditView {odata} {
     $itk_component(halfView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7115,6 +6504,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initHypEditView {odata} {
     $itk_component(hypView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7158,6 +6548,7 @@ proc title_node_handler {node} {
     catch {pack forget $itk_component(objViewToolbar)}
     catch {pack forget $itk_component(objAttrView)}
     catch {pack forget $itk_component(objEditView)}
+    catch {pack forget $itk_component(objToolView)}
     catch {pack forget $itk_component(noWizard)}
     set mNoWizardActive 0
 
@@ -7208,6 +6599,7 @@ proc title_node_handler {node} {
     catch {pack forget $itk_component(objViewToolbar)}
     catch {pack forget $itk_component(objAttrView)}
     catch {pack forget $itk_component(objEditView)}
+    catch {pack forget $itk_component(objToolView)}
     catch {pack forget $itk_component(noWizard)}
     set mNoWizardActive 0
 
@@ -7246,6 +6638,35 @@ proc title_node_handler {node} {
 	    initObjWizard $mSelectedObj 1
 	}
     }
+}
+
+
+::itcl::body Archer::initObjToolView {} {
+    if {$mSelectedObj == ""} {
+	return
+    }
+
+    set mPrevObjViewMode $mObjViewMode
+
+    catch {pack forget $itk_component(dbAttrView)}
+    catch {pack forget $itk_component(objViewToolbar)}
+    catch {pack forget $itk_component(objAttrView)}
+    catch {pack forget $itk_component(objEditView)}
+    catch {pack forget $itk_component(objToolView)}
+    catch {pack forget $itk_component(noWizard)}
+    set mNoWizardActive 0
+
+    # delete the previous wizard instance
+    if {$mWizardClass != ""} {
+	::destroy $itk_component($mWizardClass)
+	::destroy $itk_component(wizardUpdate)
+	set mWizardClass ""
+	set mWizardTop ""
+	set mWizardState ""
+    }
+
+    pack $itk_component(objViewToolbar) -expand no -fill both -anchor n
+    pack $itk_component(objToolView) -expand yes -fill both -anchor n
 }
 
 
@@ -7316,6 +6737,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initPartEditView {odata} {
     $itk_component(partView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7330,11 +6752,9 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::initPipeEditView {odata} {
-    #XXX Not ready yet
-    return
-
     $itk_component(pipeView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7351,6 +6771,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initRhcEditView {odata} {
     $itk_component(rhcView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7367,6 +6788,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initRpcEditView {odata} {
     $itk_component(rpcView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7386,6 +6808,7 @@ proc title_node_handler {node} {
 
     $itk_component(sketchView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7402,6 +6825,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initSphereEditView {odata} {
     $itk_component(sphView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7418,6 +6842,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initSuperellEditView {odata} {
     $itk_component(superellView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7434,6 +6859,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initTgcEditView {odata} {
     $itk_component(tgcView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7450,6 +6876,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initTorusEditView {odata} {
     $itk_component(torView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7498,7 +6925,8 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::updateObjEditView {} {
-    updateObjSave
+    set mNeedSave 1
+    updateSaveMode
     redrawObj $mSelectedObjPath
 }
 
@@ -7774,7 +7202,7 @@ proc title_node_handler {node} {
 	    -fill blue
     }
 
-    ::update
+    ::update idletasks
 }
 
 
@@ -7792,7 +7220,7 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::pluginUpdateStatusBar {msg} {
     set mStatusStr $msg
-    ::update
+    ::update idletasks
 }
 
 
@@ -7898,13 +7326,25 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::applyDisplayPreferences {} {
     updateDisplaySettings
+    doLighting
 }
 
 
 ::itcl::body Archer::applyDisplayPreferencesIfDiff {} {
-    if {$mZClipModePref != $mZClipMode} {
-	set mZClipMode $mZClipModePref
+    if {$mZClipBackMaxPref != $mZClipBackMax ||
+	$mZClipFrontMaxPref != $mZClipFrontMax ||
+	$mZClipBackPref != $mZClipBack ||
+	$mZClipFrontPref != $mZClipFront} {
+	set mZClipBackMax $mZClipBackMaxPref
+	set mZClipFrontMax $mZClipFrontMaxPref
+	set mZClipBack $mZClipBackPref
+	set mZClipFront $mZClipFrontPref
 	updateDisplaySettings
+    }
+
+    if {$mLightingModePref != $mLightingMode} {
+	set mLightingMode $mLightingModePref
+	doLighting
     }
 }
 
@@ -8451,10 +7891,23 @@ proc title_node_handler {node} {
 }
 
 
+::itcl::body Archer::cancelPreferences {} {
+
+    # Handling special case for zclip prefences (i.e. put zclip planes back where they were)
+    if {$mZClipBackMaxPref != $mZClipBackMax ||
+	$mZClipFrontMaxPref != $mZClipFrontMax ||
+	$mZClipBackPref != $mZClipBack ||
+	$mZClipFrontPref != $mZClipFront} {
+	set mZClipBackMaxPref $mZClipBackMax
+	set mZClipFrontMaxPref $mZClipFrontMax
+	set mZClipBackPref $mZClipBack
+	set mZClipFrontPref $mZClipFront
+	updateDisplaySettings
+    }
+}
+
 ::itcl::body Archer::doPreferences {} {
     # update preference variables
-    set mZClipModePref $mZClipMode
-
     set mBackgroundColorPref $mBackgroundColor
     set mBindingModePref $mBindingMode
     set mEnableBigEPref $mEnableBigE
@@ -8507,6 +7960,12 @@ proc title_node_handler {node} {
     set mModelAxesTickMajorLengthPref $mModelAxesTickMajorLength
     set mModelAxesTickColorPref $mModelAxesTickColor
     set mModelAxesTickMajorColorPref $mModelAxesTickMajorColor
+
+    set mZClipBackMaxPref $mZClipBackMax
+    set mZClipFrontMaxPref $mZClipFrontMax
+    set mZClipBackPref $mZClipBack
+    set mZClipFrontPref $mZClipFront
+    set mLightingModePref $mLightingMode
 
     $itk_component(preferencesDialog) center [namespace tail $this]
     ::update
@@ -8650,7 +8109,11 @@ proc title_node_handler {node} {
     puts $_pfile "set mModelAxesTickMajorColor \"$mModelAxesTickMajorColor\""
 
     puts $_pfile "set mLastSelectedDir \"$mLastSelectedDir\""
-    puts $_pfile "set mZClipMode $mZClipMode"
+    puts $_pfile "set mZClipBackMax $mZClipBackMax"
+    puts $_pfile "set mZClipFrontMax $mZClipFrontMax"
+    puts $_pfile "set mZClipBack $mZClipBack"
+    puts $_pfile "set mZClipFront $mZClipFront"
+    puts $_pfile "set mLightingMode $mLightingMode"
 
     puts $_pfile "set mHPaneFraction1 $mHPaneFraction1"
     puts $_pfile "set mHPaneFraction2 $mHPaneFraction2"
@@ -8800,13 +8263,8 @@ proc title_node_handler {node} {
 	}
 	"pipe" {
 	    set name [gedCmd make_name "pipe."]
-	    vmake $name pipe
-
-	    #XXX Not ready yet
-	    #	    return
-
-	    #	    set name [gedCmd make_name "pipe."]
-	    #	    createPipe $name
+	    createPipe $name
+	    #vmake $name pipe
 	}
 	"rcc" {
 	    set name [gedCmd make_name "rcc."]
@@ -8867,9 +8325,6 @@ proc title_node_handler {node} {
     $itk_component(ged) draw $name
     selectTreePath $name
     #    updateTreeDrawLists
-
-    # Checkpoint the created object
-    checkpoint $name $LEDGER_CREATE
 
     set mNeedSave 1
     updateSaveMode
@@ -9043,9 +8498,6 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::createPipe {name} {
-    #XXX Not ready yet
-    return
-
     if {![info exists itk_component(pipeView)]} {
 	buildPipeEditView
 	$itk_component(pipeView) configure \
@@ -9127,638 +8579,14 @@ proc title_node_handler {node} {
 
 ################################### Begin Object Edit Management ###################################
 
-::itcl::body Archer::checkpoint {_obj _type} {
-    if {$_obj == "" || $mLedger == ""} {
-	return
-    }
-
-    # Check for the existence of _obj
-    if {[catch {gedCmd attr show $_obj} adata]} {
-	return
-    }
-
-    # Get all ledger entries related to _obj
-    set l [$mLedger expand *_*_$_obj]
-    set len [llength $l]
-
-    # Find next oid (object ID - a counter for object entries) for _obj
-    if {$len == 0} {
-	set oid 0
-    } else {
-	set l [lsort -dictionary $l]
-	set le [lindex $l end]
-	regexp {([0-9]+)_([0-9]+)_(.+)} $le all gid oid gname
-
-	set oosync [$mLedger attr get $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR]
-
-	# No need to checkpoint again (i.e. no mods since last checkpoint)
-	if {!$oosync} {
-	    if {$_obj == $mSelectedObj && $len > 1} {
-		set mNeedGlobalUndo 1
-		set mNeedObjUndo 1
-	    } else {
-		set mNeedObjUndo 0
-
-		# Check for other entries having mods
-		set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
-		set len [llength $l]
-
-		if {$len == 0} {
-		    set mNeedGlobalUndo 0
-		} else {
-		    set mNeedGlobalUndo 1
-		}
-	    }
-
-	    if {$_obj == $mSelectedObj} {
-		set oflag 1
-		set mNeedCheckpoint 0
-		updateCheckpointMode
-	    } else {
-		set oflag 0
-	    }
-
-	    updateUndoMode $oflag
-
-	    if {$gid < $mLedgerGID} {
-		incr mLedgerGID
-		set lname $mLedgerGID\_$oid\_$_obj
-		$mLedger mv $le $lname
-		$mLedger attr set $lname $LEDGER_ENTRY_TYPE_ATTR $_type
-		return $lname
-	    }
-
-	    return $le
-	}
-
-	incr oid
-    }
-
-    incr mLedgerGID
-
-    # Create the ledger entry
-    set lname $mLedgerGID\_$oid\_$_obj
-    gedCmd cp $_obj $mLedger\:$lname
-
-    # Set the attributes
-    $mLedger attr set $lname $LEDGER_ENTRY_TYPE_ATTR $_type
-    switch $_type \
-	$LEDGER_CREATE - \
-	$LEDGER_DESTROY - \
-	$LEDGER_RENAME {
-	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-	} \
-	$LEDGER_MODIFY - \
-	default {
-	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 0
-	}
-
-    set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
-    set len [llength $l]
-    if {$len == 0} {
-	set mNeedGlobalUndo 0
-	set mNeedObjUndo 0
-
-	set mNeedCheckpoint 0
-	updateCheckpointMode
-
-	set oflag 1
-    } else {
-	set mNeedGlobalUndo 1
-
-	if {$_obj == $mSelectedObj} {
-	    if {$oid == 0} {
-		set mNeedObjUndo 0
-	    } else {
-		set mNeedObjUndo 1
-	    }
-
-	    set oflag 1
-
-	    set mNeedCheckpoint 0
-	    updateCheckpointMode
-	} else {
-	    set oflag 0
-	}
-    }
-
-    updateUndoMode $oflag
-
-    return $lname
-}
-
-
-##
-# This method creates ledger entries for each object in _olist
-# using the same global ID and an object ID of zero.
-#
-# Note - this method is not currently being used. Before using this
-#        method the undo methods will need to accomodate multiple
-#        entries having the same global ID.
-#
-::itcl::body Archer::checkpoint_olist {_olist _type} {
-    set olen [llength $_olist]
-    if {$olen == 0 || $mLedger == ""} {
-	return
-    }
-
-    incr mLedgerGID
-    set oid 0
-    set ouflag 0
-    set foundSelectedObj 0
-    set lnames {}
-
-    # Create the ledger entries
-    foreach obj $_olist {
-	if {[catch {gedCmd attr show $obj} adata]} {
-	    continue
-	}
-
-	if {$obj == $mSelectedObj} {
-	    set foundSelectedObj 1
-
-	    # Get all ledger entries related to mSelectedObj
-	    set l [$mLedger expand *_*_$mSelectedObj]
-	    set len [llength $l]
-
-	    if {$len} {
-		set l [lsort -dictionary $l]
-		set le [lindex $l end]
-
-		if {![$mLedger attr get $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR]} {
-		    $mLedger kill $le
-
-		    if {$len > 1} {
-			set ouflag 1
-		    }
-		}
-	    }
-	}
-
-	# Create the ledger entry
-	set lname $mLedgerGID\_$oid\_$obj
-	lappend lnames $lname
-	gedCmd cp $obj $mLedger\:$lname
-
-	# Set the attributes
-	$mLedger attr set $lname $LEDGER_ENTRY_TYPE_ATTR $_type
-	switch $_type \
-	    $LEDGER_CREATE - \
-	    $LEDGER_DESTROY - \
-	    $LEDGER_RENAME {
-		$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-	    } \
-	    $LEDGER_MODIFY - \
-	    default {
-		$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 0
-	    }
-    }
-
-    set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
-    set len [llength $l]
-    if {$len == 0} {
-	set mNeedGlobalUndo 0
-	set mNeedObjUndo 0
-
-	set mNeedCheckpoint 0
-	updateCheckpointMode
-
-	set oflag 1
-    } else {
-	set mNeedGlobalUndo 1
-
-	if {$foundSelectedObj} {
-
-	    if {$ouflag} {
-		set mNeedObjUndo 1
-	    } else {
-		set mNeedObjUndo 0
-	    }
-
-	    set oflag 1
-
-	    set mNeedCheckpoint 0
-	    updateCheckpointMode
-	} else {
-	    set oflag 0
-	}
-    }
-
-    updateUndoMode $oflag
-    return $lnames
-}
-
-
-::itcl::body Archer::clearTargetLedger {} {
-    set mLedgerGID 0
-    set alist [$mLedger expand *]
-    eval $mLedger kill $alist
-}
-
-
-::itcl::body Archer::createTargetLedger {} {
-    # This belongs in the openDb and newDb
-    # Delete previous ledger
-    if {$mLedger != ""} {
-	catch {rename $mLedger ""}
-    }
-
-    set mLedgerGID 0
-    set mLedger "ledger"
-    go_open $mLedger inmem 0
-}
-
-
-::itcl::body Archer::global_undo {} {
-    if {$mLedger == ""} {
-	return
-    }
-
-    # Removes unnecessary entries
-    ledger_cleanup
-
-    # Get last ledger entry
-    set l [$mLedger expand *_*_*]
-    set len [llength $l]
-
-    if {$len == 0} {
-	set mNeedCheckpoint 0
-	set mNeedGlobalUndo 0
-	set mNeedObjUndo 0
-	set mNeedSave 0
-	set mLedgerGID 0
-
-	tk_messageBox -message "global_undo: should not get here. Must be a programming error."
-	
-	updateCheckpointMode
-	updateSaveMode
-	updateUndoMode
-
-	return
-    }
-
-    set l [lsort -dictionary $l]
-    set le [lindex $l end]
-    regexp {([0-9]+)_([0-9]+)_(.+)} $le all gid oid gname
-    set mLedgerGID $gid
-    incr mLedgerGID -1
-
-    set cflag 0
-    set gnames {}
-
-    # Undo each object associated with this transaction
-    foreach lentry [$mLedger expand $gid\_$oid\_*] {
-	regexp {([0-9]+)_([0-9]+)_(.+)} $lentry all gid oid gname
-
-	set type [$mLedger attr get $lentry $LEDGER_ENTRY_TYPE_ATTR]
-	switch $type \
-	    $LEDGER_CREATE {
-		gedCmd kill $gname
-
-		if {$gname == $mSelectedObj} {
-		    initDbAttrView $mTarget
-		}
-
-		set mSelectedObj ""
-		set mSelectedObjPath ""
-		set mSelectedObjType ""
-		set cflag 1
-	    } \
-	    $LEDGER_RENAME {
-		if {![catch {$mLedger attr get $lentry $LEDGER_ENTRY_MOVE_COMMAND} move_cmd]} {
-		    eval gedCmd $move_cmd
-
-		    set curr_name [lindex $move_cmd 1]
-		    set gname [lindex $move_cmd 2]
-		    if {$curr_name == $mSelectedObj} {
-			set mSelectedObj $gname
-			regsub {([^/]+)$} $mSelectedObjPath $gname mSelectedObjPath
-		    }
-		} else {
-		    putString "No old name found for $lentry"
-		    continue
-		}
-	    } \
-	    $LEDGER_DESTROY - \
-	    $LEDGER_MODIFY - \
-	    default {
-		# Adjust the corresponding object according to the ledger entry
-		gedCmd cp -f $mLedger\:$lentry $gname
-		gedCmd attr rm $gname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR
-		gedCmd attr rm $gname $LEDGER_ENTRY_TYPE_ATTR
-	    }
-
-	#	if {$gname == "_GLOBAL"} {
-	#	    global_undo_callback
-	#	}
-	global_undo_callback $gname
-
-	# Remove the ledger entry
-	$mLedger kill $lentry
-
-	lappend gnames $gname
-    }
-
-    if {!$cflag} {
-	foreach gname $gnames {
-	    if {$gname != "_GLOBAL"} {
-		if {$gname == $mSelectedObj} {
-		    set mNeedObjSave 0
-		    redrawObj $mSelectedObjPath
-		    initEdit 0
-
-		    # Make sure the selected object has atleast one checkpoint
-		    checkpoint $mSelectedObj $LEDGER_MODIFY
-		} else {
-		    # Possibly draw the updated object
-		    regsub {[0-9]+_[0-9]+_} $lentry "" stripped_lentry
-		    foreach item [gedCmd report 0] {
-			regexp {/([^/]+$)} $item all last
-
-			if {$last == $stripped_lentry} {
-			    redrawObj $item
-			}
-		    }
-		}
-	    }
-	}
-    }
-
-    syncTree
-
-    set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
-    set len [llength $l]
-    if {$len == 0} {
-	set mNeedCheckpoint 0
-	set mNeedGlobalUndo 0
-	set mNeedObjUndo 0
-	set mNeedSave 0
-
-	updateCheckpointMode
-	updateSaveMode
-	updateUndoMode
-    }
-}
-
-
-::itcl::body Archer::global_undo_callback {_gname} {
-    gedCmd refresh_all
-}
-
-
-::itcl::body Archer::ledger_cleanup {} {
-    if {$mLedger == ""} {
-	return
-    }
-
-    foreach le [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 0] {
-	regsub {/$|/R$} $le "" le
-	$mLedger kill $le
-    }
-}
-
-
-::itcl::body Archer::object_checkpoint {} {
-    checkpoint $mSelectedObj $LEDGER_MODIFY
-}
-
-
-::itcl::body Archer::object_undo {} {
-    if {$mSelectedObj == "" || $mLedger == ""} {
-	return
-    }
-
-    # Removes unnecessary entries
-    ledger_cleanup
-
-    # Get all ledger entries related to mSelectedObj
-    set l [$mLedger expand *_*_$mSelectedObj]
-    set len [llength $l]
-
-    if {$len == 0} {
-	set mNeedCheckpoint 0
-	set mNeedObjUndo 0
-	set mNeedSave 0
-
-	set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
-	set len [llength $l]
-	if {$len == 0} {
-	    set mNeedGlobalUndo 0
-	    set mLedgerGID 0
-	}
-
-	tk_messageBox -message "object_undo: should not get here. Must be a programming error."
-
-	updateCheckpointMode
-	updateSaveMode
-	updateUndoMode
-
-	return
-    }
-
-    # Find last ledger entry corresponding to mSelectedObj
-    set l [lsort -dictionary $l]
-    set le [lindex $l end]
-
-    if {![$mLedger attr get $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR]} {
-	# No mods yet
-	return
-    }
-
-    regexp {([0-9]+)_([0-9]+)_(.+)} $le all gid oid gname
-
-    # Also decrement mLedgerGID if the entry is the last one
-    if {$gid == $mLedgerGID} {
-	incr mLedgerGID -1
-    }
-
-    set cflag 0
-
-    # Undo each object associated with this transaction
-    foreach lentry [$mLedger expand $gid\_$oid\_*] {
-	regexp {([0-9]+)_([0-9]+)_(.+)} $lentry all gid oid gname
-
-	# Undo it (Note - the destroy transaction will never show up here)
-	set type [$mLedger attr get $lentry $LEDGER_ENTRY_TYPE_ATTR]
-	switch $type \
-	    $LEDGER_CREATE {
-		gedCmd kill $gname
-		set mSelectedObj ""
-		set mSelectedObjPath ""
-		set mSelectedObjType ""
-		set cflag 1
-	    } \
-	    $LEDGER_RENAME {
-		if {![catch {$mLedger attr get $lentry $LEDGER_ENTRY_MOVE_COMMAND} move_cmd]} {
-		    eval gedCmd $move_cmd
-
-		    set curr_name [lindex $move_cmd 1]
-		    set gname [lindex $move_cmd 2]
-		    if {$curr_name == $mSelectedObj} {
-			set mSelectedObj $gname
-			regsub {([^/]+)$} $mSelectedObjPath $gname mSelectedObjPath
-		    }
-		} else {
-		    putString "No old name found for $lentry"
-		    continue
-		}
-	    } \
-	    $LEDGER_DESTROY - \
-	    $LEDGER_MODIFY - \
-	    default {
-		# Adjust the corresponding object according to the ledger entry
-		gedCmd cp -f $mLedger\:$lentry $gname
-		gedCmd attr rm $gname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR
-		gedCmd attr rm $gname $LEDGER_ENTRY_TYPE_ATTR
-	    }
-
-
-	# Remove the ledger entry
-	$mLedger kill $lentry
-    }
-
-    set mNeedObjSave 0
-
-    if {!$cflag} {
-	redrawObj $mSelectedObjPath
-	initEdit 0
-    } else {
-	initDbAttrView $mTarget
-    }
-
-    set mNeedCheckpoint 0
-    updateUndoState
-
-    syncTree
-
-    # Make sure the selected object has atleast one checkpoint
-    checkpoint $mSelectedObj $LEDGER_MODIFY
-
-    updateCheckpointMode
-    updateSaveMode
-    updateUndoMode
-}
-
-
-::itcl::body Archer::object_update {_obj {_rflag 1}} {
-    set l [$mLedger expand *_*_$_obj]
-    set l [lsort -dictionary $l]
-    set le [lindex $l end]
-
-    set tflag 0
-
-    if {$le == ""} {
-	putString "No ledger entry found for $_obj."
-    } else {
-	# Assumed to have mods after the command invocation above
-	$mLedger attr set $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-
-	set mNeedSave 1
-	set mNeedGlobalUndo 1
-
-	if {$_obj == $mSelectedObj} {
-	    # Checkpoint again in case the user starts interacting via the mouse
-	    checkpoint $_obj $LEDGER_MODIFY
-	} else {
-	    updateUndoMode 0
-	}
-
-	updateSaveMode
-
-	if {$_rflag} {
-	    # Possibly draw the updated object
-	    set ditem ""
-	    foreach item [gedCmd report 0] {
-		set l [split $item /]
-		set i [lsearch -exact $l $_obj]
-		if {$i != -1} {
-		    for {set j 1} {$j <= $i} {incr j} {
-			if {$j == 1} {
-			    append ditem [lindex $l $j]
-			} else {
-			    append ditem / [lindex $l $j]
-			}
-		    }
-		    break
-		}
-	    }
-
-	    if {$ditem != ""} {
-		set tflag 1
-		redrawObj $ditem
-	    }
-	}
-    }
-
-    if {$tflag} {
-	updateTreeDrawLists
-    }
-}
-
-
 ::itcl::body Archer::revert {} {
     set mNeedSave 0
     Load $mTarget
 
-    set mLedgerGID 0
-
-    set mNeedCheckpoint 0
-    updateCheckpointMode
-
-    set mNeedGlobalUndo 0
-    set mNeedObjSave 0
-    set mNeedObjUndo 0
     set mNeedSave 0
-
     updateSaveMode
-    updateUndoMode
 }
 
-
-::itcl::body Archer::selection_checkpoint {_obj} {
-    if {$_obj == "" || $mLedger == ""} {
-	return
-    }
-
-    # Get all ledger entries related to _obj
-    set l [$mLedger expand *_*_$_obj]
-    set len [llength $l]
-
-    checkpoint $_obj $LEDGER_MODIFY
-}
-
-
-::itcl::body Archer::updateObjSave {} {
-    if {$mSelectedObj == "" || $mLedger == ""} {
-	return
-    }
-
-    # Get all ledger entries related to mSelectedObj
-    set l [$mLedger expand *_*_$mSelectedObj]
-    set len [llength $l]
-
-    if {$len == 0} {
-	# Should never get here
-	tk_messageBox -message "updateObjSave: no ledger entry found for $mSelectedObj"
-	return
-    } else {
-	# Find last ledger entry corresponding to mSelectedObj
-	set l [lsort -dictionary $l]
-	set le [lindex $l end]
-    }
-
-    $mLedger attr set $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-
-    set mNeedCheckpoint 1
-    set mNeedGlobalUndo 1
-    set mNeedObjSave 1
-    set mNeedObjUndo 1
-    set mNeedSave 1
-
-    updateCheckpointMode
-    updateSaveMode
-    updateUndoMode
-}
 
 
 ################################### End Object Edit Management ###################################

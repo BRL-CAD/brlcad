@@ -88,7 +88,7 @@ Put_vertex(v, edge)
 	return 0;
 
     if (v_list->i_verts[vert_index].v) {
-	bu_log("vertex already assigned x%x, trying to assign x%x\n", v_list->i_verts[vert_index].v, v);
+	bu_log("vertex already assigned %p, trying to assign %p\n", v_list->i_verts[vert_index].v, v);
 	bu_exit(1, "Multiple vertex assignments\n");
     }
 

@@ -55,7 +55,6 @@ static char rcsid[] = "$Id: error.c,v 1.13 1997/10/23 21:41:44 sauderd Exp $";
 #include "conf.h"
 #include <setjmp.h>
 
-#define	ERROR_C
 #include "signal.h"
 #include "express/error.h"
 #include "string.h"
@@ -65,6 +64,31 @@ static char rcsid[] = "$Id: error.c,v 1.13 1997/10/23 21:41:44 sauderd Exp $";
 #else
 #include <varargs.h>
 #endif
+
+
+Boolean __ERROR_buffer_errors = False;
+char *current_filename = "stdin";
+
+/* flag to remember whether non-warning errors have occurred */
+Boolean ERRORoccurred = False;
+
+
+Error experrc = ERROR_none;
+Error ERROR_subordinate_failed = ERROR_none;
+Error ERROR_syntax_expecting = ERROR_none;
+
+/* all of these are 1 if true, 0 if false switches */
+/* for debugging fedex */
+int ERRORdebugging = 0;
+/* for debugging malloc during resolution */
+int malloc_debug_resolve = 0;
+/* for debugging yacc/lex */
+int debug = 0;
+
+struct Linked_List_ *ERRORwarnings;
+struct freelist_head ERROR_OPT_fl;
+
+void (*ERRORusage_function)(void);
 
 #include "express/express.h"
 
@@ -108,7 +132,7 @@ ERRORinitialize(void)
     ERROR_syntax_expecting =
 	ERRORcreate("%s, expecting %s in %s %s",SEVERITY_EXIT);
 
-	ERROR_string_base = (char *)malloc(ERROR_MAX_SPACE);
+	ERROR_string_base = (char *)calloc(1, ERROR_MAX_SPACE);
 	ERROR_start_message_buffer();
 
 

@@ -383,7 +383,6 @@ main(int argc, char **argv)
 	vect_t avec, bvec;
 	struct xray center_ray;
 	struct application_bundle b;
-	int numrays;
 	struct xrays *xr;
 
 	b.b_ap = ap;
@@ -406,7 +405,7 @@ main(int argc, char **argv)
 	VUNITIZE(bvec);
 
 	center_ray = ap.a_ray;	/* struct copy */
-	numrays = rt_gen_circular_grid(&b.b_rays, &center_ray, bundle_radius, avec, grid_size);
+	(void)rt_gen_circular_grid(&b.b_rays, &center_ray, bundle_radius, avec, grid_size);
 
 	(void) rt_shootrays(&b);
 

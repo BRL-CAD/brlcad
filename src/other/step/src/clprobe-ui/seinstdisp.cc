@@ -11,10 +11,6 @@
 
 /* $Id: seinstdisp.cc,v 3.0.1.1 1997/11/05 23:01:10 sauderd DP3.1 $ */
 
-#ifdef __OSTORE__
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#endif
-
 #ifdef __O3DB__
 #include <OpenOODB.h>
 #endif

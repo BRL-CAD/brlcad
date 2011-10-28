@@ -23,11 +23,6 @@ bin_PROGRAMS = \
 	btclsh \
 	${BWISH}
 
-# static is required to avoid MIPSpro 7.3 long rpath linker bug
-if LINK_STATIC_REQUIRED
-bwish_LDFLAGS = -static
-endif
-
 bwish_CFLAGS = \
 	${STRICT_FLAGS} \
 	-DBWISH=1 \
@@ -48,11 +43,6 @@ bwish_SOURCES = \
 	tcl.c
 
 bwish_LDADD = ${blib_LIBS}
-
-# static is required to avoid MIPSpro 7.3 long rpath linker bug
-if LINK_STATIC_REQUIRED
-btclsh_LDFLAGS = -static
-endif
 
 btclsh_CFLAGS = \
 	${STRICT_FLAGS} \

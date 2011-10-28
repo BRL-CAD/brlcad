@@ -1,3 +1,22 @@
+# Include directories needed by librt users
+SET(RT_INCLUDE_DIRS
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	${BU_INCLUDE_DIRS}
+	${BN_INCLUDE_DIRS}
+	${OPENNURBS_INCLUDE_DIR}
+	${ZLIB_INCLUDE_DIR}
+	)
+LIST(REMOVE_DUPLICATES RT_INCLUDE_DIRS)
+BRLCAD_INCLUDE_DIRS(RT_INCLUDE_DIRS)
+
+# locally used but not needed by users of the library
+include_directories(
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${REGEX_INCLUDE_DIR}
+	${TNT_INCLUDE_DIR}
+)
+
 set(LIBRT_SOURCES
     attributes.c
     bbox.c
@@ -206,6 +225,7 @@ set(LIBRT_SOURCES
     shoot.c
     spectrum.c
     tcl.c
+    tol.c
     transform.c
     tree.c
     vers.c
@@ -221,7 +241,6 @@ set(librt_ignored_files
     librt_private.h
     namegen.c
     opennurbs_ext.h
-    parse.c
     pmalloc.c
     prcomb.c
     primitives/bot/btg.h
@@ -230,6 +249,7 @@ set(librt_ignored_files
     primitives/bot/tie.c
     primitives/bot/tie_kdtree.c
     primitives/brep/brep_debug.h
+    primitives/dsp/dsp.h
     primitives/fixpt.h
     primitives/metaball/metaball.h
     primitives/nmg/nmg_junk.c
@@ -238,7 +258,6 @@ set(librt_ignored_files
     primitives/xxx/xxx.h
     search.h
     timer-nt.c
-    timer52brl.c
     timerhep.c
     timerunix.c
     uvpoints.cpp
@@ -254,17 +273,7 @@ else(MSVC)
     set(LIBRT_SOURCES ${LIBRT_SOURCES}    timer42.c)
 endif(MSVC)
 
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${REGEX_INCLUDE_DIR}
-    ${ZLIB_INCLUDE_DIR}
-    ${OPENNURBS_INCLUDE_DIR}
-    ${TCL_INCLUDE_DIRS}
-    ${TNT_INCLUDE_DIR}
-)
-
 if(MSVC)
-    SET(WIN32LIBS "${WINSOCK_LIB} Rpcrt4.lib")
     add_definitions(
 	-DON_DLL_IMPORTS
 	-DDB5_EXPORT_DLL
@@ -274,7 +283,7 @@ add_definitions(
     -DOBJ_BREP=1
 )
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "libbn libbu ${OPENNURBS_LIBRARY} ${REGEX_LIBRARY} ${ZLIB_LIBRARY} ${WIN32LIBS}")
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "libbn libbu ${OPENNURBS_LIBRARY} ${REGEX_LIBRARY} ${ZLIB_LIBRARY} ${WINSOCK_LIB} ${RPCRT_LIB}")
 SET_TARGET_PROPERTIES(librt PROPERTIES VERSION 19.0.1 SOVERSION 19)
 IF(MSVC)
 	GET_TARGET_PROPERTY(RT_COMPILE_FLAGS librt COMPILE_FLAGS)
@@ -289,11 +298,7 @@ IF(BRLCAD-ENABLE_STRICT AND BUILD_STATIC_LIBS AND NOERROR_FLAG)
 	ELSE(RT_STATIC_COMPILE_FLAGS)
 		SET_TARGET_PROPERTIES(librt-static PROPERTIES COMPILE_FLAGS "-Wno-error")
 	ENDIF(RT_STATIC_COMPILE_FLAGS)
-	IF(RT_COMPILE_FLAGS)
-		SET_TARGET_PROPERTIES(librt PROPERTIES COMPILE_FLAGS "${RT_COMPILE_FLAGS} -Wno-error")
-	ELSE(RT_COMPILE_FLAGS)
-		SET_TARGET_PROPERTIES(librt PROPERTIES COMPILE_FLAGS "-Wno-error")
-	ENDIF(RT_COMPILE_FLAGS)
 ENDIF(BRLCAD-ENABLE_STRICT AND BUILD_STATIC_LIBS AND NOERROR_FLAG)
 
 install(FILES librt.3 DESTINATION ${MAN_DIR}/man3)
+CMAKEFILES(Makefile.am)

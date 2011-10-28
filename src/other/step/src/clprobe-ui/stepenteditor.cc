@@ -11,10 +11,6 @@
 
 /* $Id: stepenteditor.cc,v 3.0.1.1 1998/02/17 19:42:07 sauderd DP3.1 $ */
 
-#ifdef __OSTORE__
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#endif
-
 #ifdef __O3DB__
 #include <OpenOODB.h>
 #endif
@@ -229,7 +225,7 @@ seeAttrRow::seeAttrRow(STEPattribute * sAttr, InstMgr *im, ButtonState *b,
 
 //    static ButtonState *bs = new ButtonState;
     stepAttr->ClearErrorMsg();
-    SCLstring attrVal;
+    std::string attrVal;
 /*
     // make sure you check redef and derive first!!
     if(stepAttr->_redefAttr)
@@ -299,7 +295,7 @@ seeAttrRow::seeAttrRow(STEPattribute * sAttr, InstMgr *im, ButtonState *b,
 	    break;
 	case STRING_TYPE:
 	    {
-	      SCLstring tmp(attrVal);
+	      std::string tmp(attrVal);
 	      attrVal = StrEditorVal(tmp);
 /*
 	      if(stepAttr->ptr.S->is_undefined())
@@ -402,11 +398,11 @@ seeAttrRow::~seeAttrRow()
 void seeAttrRow::UndoChanges()
 {
 //    char * attrVal = stepAttr->asStr();
-    SCLstring attrVal;
+    std::string attrVal;
     stepAttr->asStr(attrVal);
     if(stepAttr->NonRefType() == STRING_TYPE)
     {
-	SCLstring tmp(attrVal);
+	std::string tmp(attrVal);
 	attrVal = StrEditorVal(tmp);
 /*
 	if(stepAttr->ptr.S->is_undefined())
@@ -470,7 +466,7 @@ Severity seeAttrRow::Validate(InstMgr *instMgr, int setMark,
 }
 
 //used to convert data probe values to string to assign to attr
-char *seeAttrRow::StrEditorVal(SCLstring &s)
+char *seeAttrRow::StrEditorVal(std::string &s)
 {
     if(stepAttr->ptr.S->is_undefined())
 	s = "$";
@@ -1271,7 +1267,7 @@ void StepEntityEditor::CreateInsertAttributeEditors()
 
     if(stepEnt->P21CommentRep())
     {
-	SCLstring ss;
+	std::string ss;
 	const char *s = stepEnt->P21Comment();
 	while(*s) // get rid of newlines since editor can't handle them
 	{
@@ -1567,8 +1563,8 @@ void StepEntityEditor::SetAttrTypeMessage(seeAttrRow *row)
 {
 //    const AttrDescriptor *ad = row->StepAttr()->AttrDescriptor;
 //    NotifyUser((char *)TypeString(ad), 0);
-    SCLstring tmp2;
-    SCLstring tmp(
+    std::string tmp2;
+    std::string tmp(
 	     row->StepAttr()->aDesc->DomainType()->TypeString(tmp2) );
     NotifyUser(tmp, 0);
 }
@@ -1696,7 +1692,7 @@ boolean StepEntityEditor::SaveComplete()
     const char *text = label->Text();
     if(stepEnt && text)
     {
-	SCLstring ss;
+	std::string ss;
 	const char *sTmp = ReadComment(ss, text);
 	while(*sTmp) 
 	{
@@ -1765,7 +1761,7 @@ boolean StepEntityEditor::SaveIncomplete()
     const char *text = label->Text();
     if(stepEnt && text)
     {
-	SCLstring ss;
+	std::string ss;
 	const char *sTmp = ReadComment(ss, text);
 	while(*sTmp) 
 	{

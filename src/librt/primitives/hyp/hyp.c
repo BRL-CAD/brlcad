@@ -113,6 +113,59 @@ const struct bu_structparse rt_hyp_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+/**
+ * R T _ H Y P _ B B O X
+ *
+ * Create a bounding RPP for an hyp
+ */
+int
+rt_hyp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    struct rt_hyp_internal *xip;
+    vect_t hyp_Au, hyp_B, hyp_An, hyp_Bn, hyp_H;
+    vect_t pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8;
+    RT_CK_DB_INTERNAL(ip);
+    xip = (struct rt_hyp_internal *)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(xip);
+
+    VMOVE(hyp_H, xip->hyp_Hi);
+    VUNITIZE(hyp_H);
+    VMOVE(hyp_Au, xip->hyp_A);
+    VUNITIZE(hyp_Au);
+    VCROSS(hyp_B, hyp_Au, hyp_H);
+
+    VSETALL((*min), MAX_FASTF);
+    VSETALL((*max), -MAX_FASTF);
+
+    VSCALE(hyp_B, hyp_B, xip->hyp_b);
+    VREVERSE(hyp_An, xip->hyp_A);
+    VREVERSE(hyp_Bn, hyp_B);
+
+    VADD3(pt1, xip->hyp_Vi, xip->hyp_A, hyp_B);
+    VADD3(pt2, xip->hyp_Vi, xip->hyp_A, hyp_Bn);
+    VADD3(pt3, xip->hyp_Vi, hyp_An, hyp_B);
+    VADD3(pt4, xip->hyp_Vi, hyp_An, hyp_Bn);
+    VADD4(pt5, xip->hyp_Vi, xip->hyp_A, hyp_B, xip->hyp_Hi);
+    VADD4(pt6, xip->hyp_Vi, xip->hyp_A, hyp_Bn, xip->hyp_Hi);
+    VADD4(pt7, xip->hyp_Vi, hyp_An, hyp_B, xip->hyp_Hi);
+    VADD4(pt8, xip->hyp_Vi, hyp_An, hyp_Bn, xip->hyp_Hi);
+
+    /* Find the RPP of the rotated axis-aligned hyp bbox - that is,
+     * the bounding box the given hyp would have if its height
+     * vector were in the positive Z direction. This does not give 
+     * us an optimal bbox except in the case where the hyp is 
+     * actually axis aligned to start with, but it's usually 
+     * at least a bit better than the bounding sphere RPP. */
+    VMINMAX((*min), (*max), pt1);
+    VMINMAX((*min), (*max), pt2);
+    VMINMAX((*min), (*max), pt3);
+    VMINMAX((*min), (*max), pt4);
+    VMINMAX((*min), (*max), pt5);
+    VMINMAX((*min), (*max), pt6);
+    VMINMAX((*min), (*max), pt7);
+    VMINMAX((*min), (*max), pt8);
+
+    return 0;
+}
 
 /**
  * R T _ H Y P _ P R E P
@@ -130,18 +183,13 @@ const struct bu_structparse rt_hyp_parse[] = {
  * stp->st_specific for use by hyp_shot().
  */
 int
-rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(rtip))
 {
     struct rt_hyp_internal *hyp_ip;
     struct hyp_specific *hyp;
-#ifndef NO_MAGIC_CHECKING
-    const struct bn_tol *tol = &rtip->rti_tol;
-#endif
 
-#ifndef NO_MAGIC_CHECKING
     RT_CK_DB_INTERNAL(ip);
-    BN_CK_TOL(tol);
-#endif
+
     hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_ip);
 
@@ -159,17 +207,10 @@ rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_aradius = sqrt((hyp->hyp_c*hyp->hyp_c + 1)*MAGSQ(hyp->hyp_H)
 			   + (hyp->hyp_r1*hyp->hyp_r1));
     stp->st_bradius = stp->st_aradius;
-
-    /* cheat, make bounding RPP by enclosing bounding sphere (copied from g_ehy.c) */
-    stp->st_min[X] = stp->st_center[X] - stp->st_bradius;
-    stp->st_max[X] = stp->st_center[X] + stp->st_bradius;
-    stp->st_min[Y] = stp->st_center[Y] - stp->st_bradius;
-    stp->st_max[Y] = stp->st_center[Y] + stp->st_bradius;
-    stp->st_min[Z] = stp->st_center[Z] - stp->st_bradius;
-    stp->st_max[Z] = stp->st_center[Z] + stp->st_bradius;
-
+  
+    /* calculate bounding RPP */
+    if (rt_hyp_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
     return 0;			/* OK */
-
 }
 
 
@@ -433,7 +474,7 @@ rt_hyp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 	(struct hyp_specific *)stp->st_specific;
     vect_t vert, horiz;
     point_t hp;
-    fastf_t c, h, z, k1, k2, denom;
+    fastf_t c, h, k1, k2, denom;
     fastf_t x, y, ratio;
 
     switch (hitp->hit_surfno) {
@@ -451,7 +492,6 @@ rt_hyp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 	    /* vertical curvature */
 	    c = hyp->hyp_c;
 	    h = sqrt(hp[X]*hp[X] + hp[Y]*hp[Y]);
-	    z = hp[Z];
 
 	    denom = 1 + (c*c*c*c)*(hp[Z]*hp[Z])/(h*h);
 	    denom = sqrt(denom*denom*denom);
@@ -568,7 +608,7 @@ rt_hyp_free(struct soltab *stp)
  * R T _ H Y P _ P L O T
  */
 int
-rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     int i, j;		/* loop indices */
     struct rt_hyp_internal *hyp_in;
@@ -678,7 +718,7 @@ int
 rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2, r3, cprime;
-    fastf_t **ellipses, theta_prev, theta_new;
+    fastf_t **ellipses, theta_new;
     int *pts_dbl, face, i, j, nseg;
     int jj, nell;
     mat_t invRoS;
@@ -872,7 +912,6 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* make ellipses at each z level */
     i = 0;
     nseg = 0;
-    theta_prev = bn_twopi;
     pos_a = pts_a;	/*->next; */	/* skip over apex of hyp */
     pos_b = pts_b;	/*->next; */
     while (pos_a) {
@@ -892,7 +931,6 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    /* array for each triangular face */
 	    outfaceuses = (struct faceuse **)
 		bu_malloc((face+1) * sizeof(struct faceuse *), "hyp: *outfaceuses[]");
-	    theta_prev = theta_new;
 	} else {
 	    pts_dbl[i] = 0;
 	}

@@ -53,7 +53,7 @@
 }
 
 
-static char usage[] = "Usage: %s [-bviM] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.stl | -m directory_name] brlcad_db.g object(s)\n";
+static char usage[] = "Usage: %s [-bviM8] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.stl | -m directory_name] brlcad_db.g object(s)\n";
 
 static int verbose;
 static int NMG_debug;			/* saved arg of -X, for longjmp handling */
@@ -244,7 +244,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		if (vert_count > 3)
 		{
 		    bu_free(region_name, "region name");
-		    bu_log("lu x%x has %d vertices!\n", lu, vert_count);
+		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
 		    bu_exit(1, "ERROR: LU is not a triangle");
 		}
 		else if (vert_count < 3)
@@ -331,7 +331,7 @@ main(int argc, char *argv[])
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-5;
+    tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
     /* init resources we might need */
@@ -499,7 +499,7 @@ main(int argc, char *argv[])
 		   regions_written, percent);
     }
 
-    bu_log("%ld triangles written\n", tot_polygons);
+    bu_log("%lu triangles written\n", tot_polygons);
 
     if (output_file) {
 	if (binary) {

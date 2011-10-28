@@ -1,10 +1,12 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 
-<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+<article xmlns="http://docbook.org/ns/docbook" version="5.0"
+  xmlns:xi="http://www.w3.org/2001/XInclude"
+>
   <info><title>Using the Build Pattern Tool</title>
     
 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
+    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
@@ -91,16 +93,21 @@
       the largest span. For example, to create a pattern to the primitive level with 
       the following primitives (which may or may not be in regions or
       assemblies),
+
       <literallayout class="normal">
 part.s22 part.s22-1 part.s23 part.s24 part.s24+1 part.s24-1 part.s25,
       </literallayout>
-      one needs to determine the span. Note that the leftmost numbers in these 
-      primitives range from 22–25. Thus, as shown in the following expression, the span is 
+
+      one needs to determine the span. Note that the leftmost numbers in these
+      primitives range from
+        22&#x2013;25. <!-- en dash symbol -->
+      Thus, as shown in the following expression, the span is
       four (inclusively).
 
       *******NEED FIGURE HERE*****
 
       If we use an increment of four, we will get the following set of primitives.
+
       <literallayout class="normal">
 part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
       </literallayout>
@@ -124,11 +131,13 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
      Each element of the object must have the source string so the user must be
      thorough and name each primitive, region, and assembly properly. Consider
      the following example: 
+
      <inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/build_pattern_fig07.png"/></imageobject></inlinemediaobject>
     </para>
     <para>
-      Top-level duplications copy the patterned object and reference its entire 
+      Top-level duplications copy the patterned object and reference its entire
       structure with matrices, as follows:
+
       <literallayout class="normal">
 /pattern group
        /COPIED assemblies [MATRICES]

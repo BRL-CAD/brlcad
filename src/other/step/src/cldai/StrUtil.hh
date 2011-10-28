@@ -22,11 +22,6 @@
 //
 char * strDup(char *destStr, const char *srcStr);
 
-#ifdef __OSTORE__
-char * strDup(char *destStr, const char *srcStr, os_segment *);
-char * strDup(char *destStr, const char *srcStr, os_database *);
-#endif    // __OSTORE__
-
 //
 //   Free the memory allocated for the given string
 //

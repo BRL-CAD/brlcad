@@ -85,28 +85,6 @@ __BEGIN_DECLS
 #define GED_FUNC_PTR_NULL ((ged_func_ptr)0)
 #define GED_REFRESH_CALLBACK_PTR_NULL ((ged_refresh_callback_ptr)0)
 
-#define GED_IDLE_MODE 0
-#define GED_ROTATE_MODE 1
-#define GED_TRANSLATE_MODE 2
-#define GED_SCALE_MODE 3
-#define GED_CONSTRAINED_ROTATE_MODE 4
-#define GED_CONSTRAINED_TRANSLATE_MODE 5
-#define GED_OROTATE_MODE 6
-#define GED_OSCALE_MODE 7
-#define GED_OTRANSLATE_MODE 8
-#define GED_MOVE_ARB_EDGE_MODE 9
-#define GED_MOVE_ARB_FACE_MODE 10
-#define GED_ROTATE_ARB_FACE_MODE 11
-#define GED_PROTATE_MODE 12
-#define GED_PSCALE_MODE 13
-#define GED_PTRANSLATE_MODE 14
-#define GED_RECTANGLE_MODE 15
-
-#define GED_OBJ_FB_MODE_OFF 0
-#define GED_OBJ_FB_MODE_UNDERLAY 1
-#define GED_OBJ_FB_MODE_INTERLAY 2
-#define GED_OBJ_FB_MODE_OVERLAY  3
-
 /**
  * S E M A P H O R E S
  *
@@ -507,6 +485,9 @@ struct ged_view {
     struct ged_rect_state 	gv_rect;
 };
 
+
+struct ged_cmd;
+
 struct ged {
     struct bu_list		l;
     struct rt_wdb		*ged_wdbp;
@@ -529,10 +510,33 @@ struct ged {
 
     /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
     int 			ged_internal_call;
+
+    /* FOR LIBGED INTERNAL USE */
+    struct ged_cmd *cmds;
+    int (*add)(const struct ged_cmd *cmd);
+    int (*del)(const char *name);
+    int (*run)(int ac, char *av[]);
 };
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
 typedef void (*ged_refresh_callback_ptr)(void *);
+
+
+/**
+ * describes a command plugin
+ */
+struct ged_cmd {
+    struct bu_list l;
+
+    const char *name;
+    const char description[80];
+    const char *manpage;
+
+    int (*load)(struct ged *);
+    void (*unload)(struct ged *);
+    int (*exec)(struct ged *, int, const char *[]);
+};
+
 
 /**
  * V I E W _ O B J
@@ -1170,6 +1174,11 @@ GED_EXPORT extern int ged_analyze(struct ged *gedp, int argc, const char *argv[]
 GED_EXPORT extern int ged_annotate(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Append a pipe point.
+ */
+GED_EXPORT extern int ged_append_pipept(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Allow editing of the matrix, etc., along an arc.
  */
 GED_EXPORT extern int ged_arced(struct ged *gedp, int argc, const char *argv[]);
@@ -1418,6 +1427,11 @@ GED_EXPORT extern int ged_decompose(struct ged *gedp, int argc, const char *argv
 GED_EXPORT extern int ged_delay(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Delete the specified pipe point.
+ */
+GED_EXPORT extern int ged_delete_pipept(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Convert a direction vector to az/el.
  */
 GED_EXPORT extern int ged_dir2ae(struct ged *gedp, int argc, const char *argv[]);
@@ -1468,6 +1482,11 @@ GED_EXPORT extern int ged_edcodes(struct ged *gedp, int argc, const char *argv[]
 GED_EXPORT extern int ged_edcomb(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Edit objects, by using subcommands.
+ */
+GED_EXPORT extern int ged_edit(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Edit file.
  */
 GED_EXPORT extern int ged_editit(struct ged *gedp, int argc, const char *argv[]);
@@ -1500,6 +1519,11 @@ GED_EXPORT extern int ged_eye(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_eye_pos(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Checks to see if the specified database object exists.
+ */
+GED_EXPORT extern int ged_exists(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Globs expression against database objects
  */
 GED_EXPORT extern int ged_expand(struct ged *gedp, int argc, const char *argv[]);
@@ -1518,6 +1542,11 @@ GED_EXPORT extern int ged_fb2pix(struct ged *gedp, int argc, const char *argv[])
  * Find combinations that reference object
  */
 GED_EXPORT extern int ged_find(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Find the pipe point nearest the specified point in model coordinates.
+ */
+GED_EXPORT extern int ged_find_pipept_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * returns form for objects of type "type"
@@ -1777,6 +1806,11 @@ GED_EXPORT extern int ged_move_all(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_move_arb_face(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Move the specified pipe point.
+ */
+GED_EXPORT extern int ged_move_pipept(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Rotate the view. Note - x, y and z are rotations in model coordinates.
  */
 GED_EXPORT extern int ged_mrot(struct ged *gedp, int argc, const char *argv[]);
@@ -1851,7 +1885,7 @@ GED_EXPORT extern int ged_pathsum(struct ged *gedp, int argc, const char *argv[]
  * Checks that each directory in the supplied path actually has the subdirectories
  * that are implied by the path.
  */
-GED_EXPORT extern int ged_path_validate(struct ged *gedp, struct db_full_path * const path);
+GED_EXPORT extern int ged_path_validate(struct ged *gedp, const struct db_full_path * const path);
 
 /**
  * Set/get the perspective angle.
@@ -1898,6 +1932,11 @@ GED_EXPORT extern int ged_prcolor(struct ged *gedp, int argc, const char *argv[]
  * Prefix the specified objects with the specified prefix
  */
 GED_EXPORT extern int ged_prefix(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Prepend a pipe point.
+ */
+GED_EXPORT extern int ged_prepend_pipept(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Preview a new style RT animation script.
@@ -2136,6 +2175,11 @@ GED_EXPORT extern int ged_showmats(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_size(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Performs simulations.
+ */
+GED_EXPORT extern int ged_simulate(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  *
  */
 GED_EXPORT extern int ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[]);
@@ -2198,11 +2242,6 @@ GED_EXPORT extern int ged_tra(struct ged *gedp, int argc, const char *argv[]);
  * Create a track
  */
 GED_EXPORT extern int ged_track(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Translate object(s)
- */
-GED_EXPORT extern int ged_translate(struct ged *gedp, int argc, const char *argv[]);
 
 #if 0
 /**

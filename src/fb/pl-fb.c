@@ -165,7 +165,7 @@ typedef struct {
 } coords; 			/* Cartesian coordinates */
 
 typedef struct descr {
-    long magic;
+    uint32_t magic;
     struct descr *next;		/* next in list, or NULL */
     coords pixel;		/* starting scan, nib */
     tiny xsign;			/* 0 or +1 */
@@ -185,7 +185,7 @@ typedef struct descr {
 #define CK_STROKE(_sp) { \
 	if ((_sp)->magic != STROKE_MAGIC) {  \
 		fprintf(stderr, "Bad stroke struct, ptr=%p, magic was x%lx, s/b=x%lx, at file %s, line %d\n",  \
-			(void *)(_sp), (long)((_sp)->magic), (long)STROKE_MAGIC,  \
+			(void *)(_sp), (unsigned long)((_sp)->magic), (unsigned long)STROKE_MAGIC,  \
 			__FILE__, __LINE__);  \
 		abort();  \
 	} }
@@ -212,7 +212,7 @@ struct relvect {
 
 #define END -1, -1		/* end of stroke description */
 #define NIL 0, 0
-#define min(a, b)	((a)<(b)?(a):(b))
+
 /*
  * These character sets are taken from the Motorola MC6575 Pattern Generator,
  * page 5-119 of 'The Complete Motorola Microcomputer Data Library'

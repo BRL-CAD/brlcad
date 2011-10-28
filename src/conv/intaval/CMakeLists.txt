@@ -1,9 +1,10 @@
-include_directories(
-	${ZLIB_INCLUDE_DIR}
-	${OPENNURBS_INCLUDE_DIR}
-	${REGEX_INCLUDE_DIR}
-	${TCL_INCLUDE_DIRS}
-)
+SET(INTAVAL_INCLUDE_DIRS
+	${BU_INCLUDE_DIRS}
+	${RT_INCLUDE_DIRS}
+	${WDB_INCLUDE_DIRS}
+	)
+LIST(REMOVE_DUPLICATES INTAVAL_INCLUDE_DIRS)
+include_directories(${INTAVAL_INCLUDE_DIRS})
 
 IF(MSVC)
 add_definitions(
@@ -27,3 +28,4 @@ SET(intaval_ignore_files
 	write_brl.h
 	)
 CMAKEFILES(${intaval_ignore_files})
+CMAKEFILES(Makefile.am)

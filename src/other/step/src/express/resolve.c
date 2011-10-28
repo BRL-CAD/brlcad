@@ -55,12 +55,23 @@ static char rcsid[] = "$Id: resolve.c,v 1.14 1997/01/21 19:19:51 dar Exp $";
  *
  */
 
-#define RESOLVE_C
 #include <stdlib.h>
 #include "express/resolve.h"
 #include "stack.h"
 #include "express/schema.h"
 #include "express/express.h"
+
+int print_objects_while_running = 0;
+
+Error ERROR_undefined_attribute = ERROR_none;
+Error ERROR_undefined_type = ERROR_none;
+Error ERROR_undefined_schema = ERROR_none;
+Error ERROR_unknown_attr_in_entity = ERROR_none;
+Error ERROR_unknown_subtype = ERROR_none;
+Error ERROR_unknown_supertype = ERROR_none;
+Error ERROR_circular_reference = ERROR_none;
+Error ERROR_ambiguous_attribute = ERROR_none;
+Error ERROR_ambiguous_group = ERROR_none;
 
 static void ENTITYresolve_subtypes PROTO((Schema));
 static void ENTITYresolve_supertypes PROTO((Entity));
@@ -1677,87 +1688,4 @@ TAGcreate_tags() {
 
 	return((struct tag *)calloc(tag_count,sizeof(struct tag)));
 }
-
-/* typecheck represents a possible type, such as from */
-/*       known_type = FUNC(?,?,?) */
-
-#if 0
-PARAM_LISTresolve(Linked_List reals, Linked_List formals,
-		Scope real_scope, Type return_type,int tag_count)
-{
-	Link f, r;
-	Expression real;
-	Type formal_type;
-
-	int some_types_unresolved = 0;
-
-	if (tag_count) {
-		/* need to keep track of different mappings of type to */
-		/* tags to each invocation because of the possibility */
-		/* of a call like func(tag1:type1,func(tag1:type2,.):tag1)); */
-		/* Ugh!!!!! */
-
-		tags = TAGcreate_tags(tag_count,formal_scope);
-		/* assert(tags) */
-
-		/* if the return type is usable, use it */
-		if (is_resolved(return_type) && TYPEhas_tag(return_type))
-			TAGset(tags,TYPEtag_name(return_type),TYPEtag_type(return_type));
-	}
-
-	f = formals->mark->next;
-	r =   reals->mark->next;
-	for (;f != formals->mark;f = f->next, r = r->next) {
-		Type formal_tag;
-
-		formal_type = ((Expression) f->data)->type;
-		real   = (Expression) f->data;
-		formal_tag = TYPEget_tag(formal_type);
-		if (!formal_tag) {
-			/* no tag, do normal resolution */
-			EXPresolve(real,real_scope,formal_type);
-		} else {
-			/* note t might be embedded in an aggregate */
-			/* EXPresolve might need to be */
-			/* changed to accomodate this */
-			EXPresolve(real,real_scope,tags[]);
-			if (formal_tag->type == unknown_) {
-				if (is_resolved(real)) {
-					TAGset_type(tags,TYPEget_tag(formal_type),t,real->type);
-				} else some_types_unresolved = 1;
-			}
-		}
-	}
-
-	/* if some types were not resolved, but we got new tag info */
-	/* then retry the whole mess with our new info */
-
-	if (!(some_types_unresolved || 
-	     (return_type->type == unknown_ && TYPEhas_tag(return_type)))) {
-		return;
-	}
-
-	/* force tags that were not resolved to fail next time */
-	/* through EXPresolve... */
-	for (i=0;i<tagcount;i++) {
-		if (tags[i]->type->type == unknown_)
-			tags[i]->type = Type_Bad;
-	}
-
-	/* do return type if necessary */
-	if (return_type && TYPEhas_tag(func->u.function->return_type)) {
-		return_type = TAGsearch(TYPEtag(func->u.function->return_type));
-		if (typecheck->type == unknown && TYPEhas_tag(typecheck)) {
-	}
-
-	/* what is this??? */	
-	for (;;) {
-		if (TYPEhas_tag(f)) && is_resolvable(r)) {
-			t = TAGsearch(tags,TYPEtag(f));
-			EXPresolve(r,alg,t);
-			status |= r->symbol.resolved;
-		}
-	}
-}
-#endif
 

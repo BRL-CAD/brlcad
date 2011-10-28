@@ -425,7 +425,7 @@ rt_hlf_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
  * the plane, with the outward normal drawn shorter.
  */
 int
-rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_half_internal *hip;
     vect_t cent;		/* some point on the plane */
@@ -497,7 +497,7 @@ rt_hlf_xform(
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(resp)
+    RT_CK_RESOURCE(resp);
     hip = (struct rt_half_internal *)ip->idb_ptr;
     RT_HALF_CK_MAGIC(hip);
     RT_CK_DB_INTERNAL(op);

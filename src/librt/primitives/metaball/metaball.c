@@ -157,13 +157,26 @@ rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct rt_me
     return r;
 }
 
-
-void
-rt_metaball_set_bbox(point_t center, fastf_t radius, point_t *min, point_t *max)
+/**
+ * R T _ M E T A B A L L _ B B O X
+ *
+ * Calculate a bounding RPP around a metaball
+ */
+int
+rt_metaball_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
 {
-    VSET(*min, center[X] - radius, center[Y] - radius, center[Z] - radius);
-    VSET(*max, center[X] + radius, center[Y] + radius, center[Z] + radius);
-    return;
+    struct rt_metaball_internal *mb;
+    point_t center;
+    fastf_t radius;
+    mb = (struct rt_metaball_internal *)ip->idb_ptr;
+    RT_METABALL_CK_MAGIC(mb);
+    VSETALL(center, 0);
+
+    radius = rt_metaball_get_bounding_sphere(&center, mb->threshold, mb);
+
+    VSET((*min), center[X] - radius, center[Y] - radius, center[Z] - radius);
+    VSET((*max), center[X] + radius, center[Y] + radius, center[Z] + radius);
+    return 0;
 }
 
 
@@ -217,7 +230,7 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
     /* generate a bounding box around the sphere...
      * XXX this can be optimized greatly to reduce the BSP presense... */
-    rt_metaball_set_bbox(stp->st_center, stp->st_aradius, &stp->st_min, &stp->st_max);
+    if (rt_metaball_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
     stp->st_specific = (void *)nmb;
     return 0;
 }
@@ -367,27 +380,33 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 {
     struct rt_metaball_internal *mb = (struct rt_metaball_internal *)stp->st_specific;
     struct seg *segp = NULL;
-    int retval = 0, fhin = 1;
+    int retval = 0;
     fastf_t step, distleft;
-    point_t p, inc, inco;
+    point_t p, inc;
+
+    /* switching behavior to retain old code for performance and correctness
+     * comparisons. */
+#define SHOOTALGO 3
+
+#if SHOOTALGO == 2
+    int fhin = 1;
+#endif
 
     step = mb->initstep;
     distleft = (rp->r_max-rp->r_min) + step * 3.0;
 
     VMOVE(p, rp->r_pt);
     VSCALE(inc, rp->r_dir, step); /* assume it's normalized and we want to creep at step */
-    VMOVE(inco, inc);
 
     /* walk back out of the solid */
     while(rt_metaball_point_value((const point_t *)&p, mb) >= mb->threshold) {
+#if SHOOTALGO == 2
 	fhin = -1;
+#endif
 	distleft += step;
 	VSUB2(p, p, inc);
     }
 
-    /* switching behavior to retain old code for performance and correctness
-     * comparisons. */
-#define SHOOTALGO 3
 #if SHOOTALGO == 2
     /* we hit, but not as fine-grained as we want. So back up one step,
      * cut the step size in half and start over...
@@ -413,7 +432,6 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 		if ( !in )
 		    if (step<=mb->finalstep) {
 			STEPIN(out)
-			VMOVE(inc, inco);
 			step = mb->initstep;
 			mb_stat = 0;
 			if (ap->a_onehit != 0 || segsleft <= 0)
@@ -431,7 +449,6 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 			/* reset the ray-walk shtuff */
 			mb_stat = 1;
 			VADD2(p, p, inc);	/* set p to a point inside */
-			VMOVE(inc, inco);
 			step = mb->initstep;
 		    } else
 			STEPBACK
@@ -658,7 +675,7 @@ rt_metaball_plot_sph(struct bu_list *vhead, point_t *center, fastf_t radius)
  * R T _ M E T A B A L L _ P L O T
  */
 int
-rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_metaball_internal *mb;
     struct wdb_metaballpt *mbpt;

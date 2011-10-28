@@ -1,15 +1,11 @@
 IF(WIN32)
-	configure_file(archer.bat ${CMAKE_BINARY_DIR}/bin/archer.bat COPYONLY)
+	FILE(COPY archer.bat DESTINATION ${CMAKE_BINARY_DIR}/bin)
+	FILE(COPY archer DESTINATION ${CMAKE_BINARY_DIR}/bin)
 	INSTALL(PROGRAMS archer.bat DESTINATION bin)
+ELSE(WIN32)
+	EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/archer ${CMAKE_BINARY_DIR}/bin/archer)
 ENDIF(WIN32)
-configure_file(archer ${CMAKE_BINARY_DIR}/bin/archer COPYONLY)
 INSTALL(PROGRAMS archer DESTINATION bin)
-
-set(archer_plugins
-  plugins/utility.tcl
-  plugins/wizards.tcl
-)
-BRLCAD_ADDDATA(archer_plugins plugins/archer)
 
 BRLCAD_ADDFILE(plugins/Core/README plugins/archer/Core)
 BRLCAD_ADDFILE(plugins/Commands/README plugins/archer/Command)
@@ -49,3 +45,4 @@ SET(archer_ignore_files
 	plugins/Wizards/tirewizard
 	)
 CMAKEFILES(${archer_ignore_files})
+CMAKEFILES(Makefile.am plugins/Makefile.am plugins/Utility/Makefile.am plugins/Wizards/Makefile.am)

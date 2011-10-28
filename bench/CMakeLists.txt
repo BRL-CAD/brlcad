@@ -1,8 +1,4 @@
-include_directories(
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${TCL_INCLUDE_DIRS}
-)
+include_directories(${BU_INCLUDE_DIRS})
 
 add_definitions(
   -DHAVE_CONFIG_H
@@ -30,7 +26,7 @@ SET(bench_MANS
   pixcmp.1
 )
 ADD_MAN_PAGES(1 bench_MANS)
-CMAKEFILES(lgt.sh run.sh try.sh viewdiff.sh)
+CMAKEFILES(lgt.sh run.sh try.sh viewdiff.sh Makefile.am)
 
 IF(SH_EXEC)
 	ADD_CUSTOM_TARGET(benchmark

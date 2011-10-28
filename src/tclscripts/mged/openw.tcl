@@ -64,7 +64,11 @@ if {[info exists env(MGED_HTML_DIR)]} {
 }
 
 if {![info exists mged_default(web_browser)]} {
-    set mged_default(web_browser) /usr/bin/netscape
+    if { ($::tcl_platform(platform) == "windows") && [file exists "C:/Program Files/Internet Explorer/iexplore.exe"] } {
+	set mged_default(web_browser) "C:/Program Files/Internet Explorer/iexplore.exe"
+    } else {
+	set mged_default(web_browser) /usr/bin/netscape
+    }
 }
 
 if {![info exists mged_color_scheme]} {
@@ -203,7 +207,7 @@ if {![info exists mged_browser]} {
 	set mged_browser $mged_default(web_browser)
     } else {
 	if { ($::tcl_platform(os) == "Windows NT") && [file exists "C:/Program Files/Internet Explorer/iexplore.exe"] } {
-	    set mged_default(web_browser) "C:/Program Files/Internet Explorer/iexplore.exe"
+	    set mged_browser "C:/Program Files/Internet Explorer/iexplore.exe"
 	} elseif {[info exists env(PATH)]} {
 	    set pathlist [split $env(PATH) :]
 	    foreach path $pathlist {
@@ -249,12 +253,14 @@ bind Frame <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 bind Listbox <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 bind Scale <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 
-# This causes cad_dialog to use mged_wait instead of tkwait
-set ::tk::Priv(wait_cmd) mged_wait
+if {[namespace exists ::tk]} {
+    # This causes cad_dialog to use mged_wait instead of tkwait
+    set ::tk::Priv(wait_cmd) mged_wait
 
-# Used throughout the GUI as the dialog window name.
-# This helps prevent window clutter.
-set ::tk::Priv(cad_dialog) .mged_dialog
+    # Used throughout the GUI as the dialog window name.
+    # This helps prevent window clutter.
+    set ::tk::Priv(cad_dialog) .mged_dialog
+}
 
 proc gui { args } {
     global tmp_hoc
@@ -1970,7 +1976,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     hoc_register_menu_data "Help" "About MGED" "About MGED"\
 	{ { summary "Information about MGED" } }
    .$id.menubar.help add command -label "Command Manual Pages" -underline 0\
-	-command "man Introduction"
+	-command "man"
     .$id.menubar.help add command -label "Shift Grips" -underline 0\
 	-command "hoc_dialog .$id.menubar.help \"Help,Shift Grips\""
     hoc_register_menu_data "Help" "Shift Grips" "Shift Grips"\
@@ -2284,6 +2290,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     trace variable mged_display($mged_gui($id,active_dm),fps) w "ia_changestate $id"
     update_mged_vars $id
     set mged_gui($id,qray_effects) [qray effects]
+
+    mged_apply_local $id "dm set zbuffer $mged_default(zbuffer)"
 
     # reset current_cmd_list so that its cur_hist gets updated
     cmd_win set $save_id

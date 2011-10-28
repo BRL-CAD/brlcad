@@ -11,7 +11,7 @@ bin_PROGRAMS = \
 	symlink
 
 SRCS = \
-	expscan.l \
+	expscan.re \
 	expparse.y \
 	symbol.c \
 	type.c \
@@ -33,7 +33,8 @@ SRCS = \
 	object.c \
 	inithook.c \
 	yyvars.c \
-	express.c
+	express.c \
+	expprint.c
 
 fedex_SOURCES = fedex.c 
 fedex_LDADD = libexpress.la

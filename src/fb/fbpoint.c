@@ -22,10 +22,6 @@
  *
  *  Tool to identify X, Y coordinates on the screen.
  *
- *  Authors -
- *	Michael Johns Muuss
- *	Bob Suckling
- *
  */
 
 #include "common.h"

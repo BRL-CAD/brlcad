@@ -45,7 +45,6 @@
 #  undef X_NOT_STDC_ENV
 #  undef X_NOT_POSIX
 #endif
-#define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -688,7 +687,7 @@ X_open_fb(FBIO *ifp, char *file, int width, int height)
 
     /* Make the Display connection available for selecting on */
 
-    ifp->if_selfd = XI(ifp)->dpy->fd;
+    ifp->if_selfd = ConnectionNumber(XI(ifp)->dpy);
 
     return 0;
 }
@@ -1163,8 +1162,11 @@ X_wmap(FBIO *ifp, const ColorMap *cmp)
 	/* save map for later */
 	i=creat(TMP_FILE, 0666);
 	if (i >= 0) {
-	    int ret;
+	    ssize_t ret;
 	    ret = write(i, cmp, sizeof(*cmp));
+	    if (ret != sizeof(*cmp)) {
+		perror("write");
+	    }
 	    close(i);
 	} else {
 	    fprintf(stderr, "if_X: couldn't save color map\n");

@@ -30,6 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "zlib.h"
 #include "png.h"
 #include "bu.h"
 #include "vmath.h"
@@ -159,7 +160,6 @@ draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, matp_t
     fastf_t dist;
     struct bn_vlist *vp = (struct bn_vlist *)&sp->s_vlist;
     fastf_t delta;
-    int useful = 0;
     struct coord coord1;
     struct coord coord2;
 
@@ -261,8 +261,6 @@ draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, matp_t
 	    coord2.x = fin[0] * half_size + half_size;
 	    coord2.y = fin[1] * half_size + half_size;
 	    draw_stroke(image, &coord1, &coord2, sp->s_color);
-
-	    useful = 1;
 	}
     }
 }

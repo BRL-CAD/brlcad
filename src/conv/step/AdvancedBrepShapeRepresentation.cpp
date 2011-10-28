@@ -42,14 +42,18 @@ std::string AdvancedBrepShapeRepresentation::entityname = Factory::RegisterClass
 
 
 AdvancedBrepShapeRepresentation::AdvancedBrepShapeRepresentation() {
+    context_of_items.clear();
+    items.clear();
     step = NULL;
     id = 0;
 }
 
 
 AdvancedBrepShapeRepresentation::AdvancedBrepShapeRepresentation(STEPWrapper *sw, int step_id) {
+    context_of_items.clear();
+    items.clear();
     step = sw;
-	id = step_id;
+    id = step_id;
 }
 
 

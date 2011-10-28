@@ -682,7 +682,7 @@ HtmlImageImage(pImage)
             Tcl_Obj *apObj[4];
             int rc;
 
-printf("TODO: BAD. Have to recreate image to make scaled copy.\n");
+/*printf("TODO: BAD. Have to recreate image to make scaled copy.\n");*/
 
             apObj[0] = pUnscaled->pImageName;
             apObj[1] = Tcl_NewStringObj("configure", -1);

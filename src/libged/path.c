@@ -39,7 +39,7 @@
  */
 HIDDEN int
 path_validate_recurse(struct ged *gedp, struct db_full_path *path,
-			   struct directory *roots_child)
+		      struct directory *roots_child)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -63,6 +63,8 @@ path_validate_recurse(struct ged *gedp, struct db_full_path *path,
 	    ++(path->fp_names);
 	    --(path->fp_len);
 	    path_validate_recurse(gedp, path, DB_FULL_PATH_GET(path, 1));
+	    --(path->fp_names);
+	    ++(path->fp_len);
 	} else
 	    return GED_ERROR; /* non-combinations shouldn't have children */
     } else {
@@ -79,22 +81,28 @@ path_validate_recurse(struct ged *gedp, struct db_full_path *path,
  * true, or GED_ERROR if false.
  */
 int
-ged_path_validate(struct ged *gedp, struct db_full_path * const path)
+ged_path_validate(struct ged *gedp, const struct db_full_path *const path)
 {
     /* Since this is a db_full_path, we already know that each
      * directory exists at root, and just need to check the order */
     struct directory *root;
+    struct db_full_path path_tmp;
+    int ret;
 
-    RT_CK_FULL_PATH(path);
+    db_full_path_init(&path_tmp);
+    db_dup_full_path(&path_tmp, path);
 
-    if (path->fp_len <= 1)
+    if (path_tmp.fp_len <= 1)
 	return GED_OK; /* TRUE; no children */
 
-    root = DB_FULL_PATH_ROOT_DIR(path);
+    root = DB_FULL_PATH_ROOT_DIR(&path_tmp);
     if (!(root->d_flags & RT_DIR_COMB))
 	return GED_ERROR; /* has children, but isn't a combination */
 
-    return path_validate_recurse(gedp, path, DB_FULL_PATH_GET(path, 1));
+    ret = path_validate_recurse(gedp, &path_tmp,
+				DB_FULL_PATH_GET(&path_tmp, 1));
+    db_free_full_path(&path_tmp);
+    return ret;
 }
 
 

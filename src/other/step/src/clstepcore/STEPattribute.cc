@@ -448,15 +448,15 @@ STEPattribute::STEPread (istream& in, InstMgr * instances, int addFileId,
  ** Status:  complete 3/91
  *********************************************************************/
 const char *
-STEPattribute::asStr (SCLstring& str, const char *currSch) const
+STEPattribute::asStr (std::string& str, const char *currSch) const
 {
 //  char attrVal[BUFSIZ];
 //  attrVal[0] = '\0';
 
-    str.set_null();
+    str.clear();
 
     // The attribute has been derived by a subtype's attribute
-    if (IsDerived ())  { str = "*"; return str.chars(); }
+    if (IsDerived ())  { str = "*"; return const_cast<char *>(str.c_str()); }
 
 /*
     // The attribute is redefining the type of a parent's attribute so...
@@ -476,18 +476,18 @@ STEPattribute::asStr (SCLstring& str, const char *currSch) const
 	return _redefAttr->asStr( str, currSch );
     }
 
-    if (is_null ())  { str = ""; return str.chars(); }
+    if (is_null ())  { str = ""; return const_cast<char *>(str.c_str()); }
 
     switch (NonRefType()) {
       case INTEGER_TYPE:
-	str.Append (*(ptr.i));
+	str += (*(ptr.i));
 //	sprintf ( attrVal,"%ld",*(ptr.i));
 	break;
 
       case NUMBER_TYPE:
       case REAL_TYPE:
 
-	str.Append (*(ptr.r), (int) Real_Num_Precision);
+	str.append (*(ptr.r), (int) Real_Num_Precision);
 //	sprintf (attrVal, "%.*G", (int) Real_Num_Precision, *(ptr.r));
 	break;	  
 
@@ -504,13 +504,13 @@ STEPattribute::asStr (SCLstring& str, const char *currSch) const
 	break;	  
 	
       case BINARY_TYPE:
-	if( !( (ptr.b)->is_null() ) )
+	if( !( (ptr.b)->empty() ) )
 	    (ptr.b) -> STEPwrite (str);
 //	    strncpy(attrVal, str.chars(), str.Length()+1);
 	break;
 
       case STRING_TYPE:
-	if( !( (ptr.S)->is_null() ) )
+	if( !( (ptr.S)->empty() ) )
 	    return (ptr.S) -> asStr (str);
 	break;
 	
@@ -529,7 +529,7 @@ STEPattribute::asStr (SCLstring& str, const char *currSch) const
 
       case SELECT_TYPE:
 	  ptr.sh -> STEPwrite ( str, currSch );
-	  return str;
+	  return const_cast<char *>(str.c_str());
 //	  strncpy (attrVal, tmp.chars(), BUFSIZ);
 
       case REFERENCE_TYPE:
@@ -543,7 +543,7 @@ STEPattribute::asStr (SCLstring& str, const char *currSch) const
 	return (ptr.u -> asStr (str));
     }
 //    return (attrVal);
-    return str;
+    return const_cast<char *>(str.c_str());
 }
 
 // The value of the attribute is printed to the output stream specified by out.
@@ -845,11 +845,11 @@ STEPattribute::set_null()
 	break;
 	
       case STRING_TYPE:
-	ptr.S -> set_undefined ();
+	ptr.S->clear();
 	break;
 
       case BINARY_TYPE:
-	ptr.b -> set_null ();
+	ptr.b ->clear();
 	break;
 
       case AGGREGATE_TYPE:
@@ -922,10 +922,12 @@ STEPattribute::is_null ()  const
 	  return  (*(ptr.c) == S_ENTITY_NULL);
 
 	case STRING_TYPE:
-	  return ptr.S -> is_undefined ();
+	  ptr.S->clear();
+    return ptr.S->empty();
 
 	case BINARY_TYPE:
-	  return ptr.b -> is_null ();
+	  ptr.b->clear();
+    return ptr.b->empty();
 
 	case AGGREGATE_TYPE:
 	case ARRAY_TYPE:		// DAS

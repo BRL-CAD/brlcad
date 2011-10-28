@@ -2,13 +2,11 @@ SET(express_HDRS
   express/alg.h
   express/basic.h
   express/caseitem.h
-  express/de_end.h
-  express/decstart.h
-  express/defstart.h 
-  express/dict.h 
-  express/entity.h 
+  express/dict.h
+  express/entity.h
   express/error.h
   express/expbasic.h
+  express/expprint.h
   express/expr.h
   express/express.h
   express/hash.h
@@ -32,5 +30,5 @@ SET(exppp_HDRS
 install(FILES ${exppp_HDRS} DESTINATION include/exppp)
 
 SET(SCL_noinst_HEADERS
-  sclprefixes.h 
+  sclprefixes.h
 )
