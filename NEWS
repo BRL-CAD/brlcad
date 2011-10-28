@@ -10,7 +10,7 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2011-XX-XX  Release 7.XX.X                                     ---
+--- 2011-XX-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
 * improved performance of boolean evaluations - Richard Weiss
@@ -61,7 +61,7 @@ changes made.  See document footer for additional details.
 * fixed browsing mged html help pages on Windows - Bob Parker
 * restored mged 'rt' command output to console window - Sean Morrison
 * fixed infinite loop bug plotting NURBS wireframes - Sean Morrison
-* added ringworld proc-db - Erik Greenwald
+* added new 'ringworld' procedural geometry generator - Erik Greenwald
 * fixed mged Manual page item in help menu - Brandon Hinesley
 
 
