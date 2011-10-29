@@ -56,17 +56,17 @@ IF (UNIX)
   SET(CMAKE_FIND_FRAMEWORK_SAVE ${CMAKE_FIND_FRAMEWORK})
   SET(CMAKE_FIND_FRAMEWORK NEVER)
   SET(X11_INC_SEARCH_PATH
-    /opt/graphics/OpenGL/include
-    /usr/pkg/xorg/include
-    /usr/openwin/include
-    /usr/openwin/share/include
-    /usr/X11R6/include
-    /usr/X11R7/include
-    /usr/include/X11
-    /usr/X11/include
-    /usr/local/include
-    /usr/local/include/X11
     /usr/include
+    /usr/X11/include
+    /usr/include/X11
+    /usr/X11R7/include
+    /usr/X11R6/include
+    /usr/local/include/X11
+    /usr/local/include
+    /usr/openwin/share/include
+    /usr/openwin/include
+    /usr/pkg/xorg/include
+    /opt/graphics/OpenGL/include
   )
 
   GET_PROPERTY(SEARCH_64BIT GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
@@ -77,13 +77,13 @@ IF (UNIX)
   ENDIF(SEARCH_64BIT)
 
   SET(X11_LIB_SEARCH_PATH
-    /usr/pkg/xorg/lib
-    /usr/openwin/lib
-    /usr/X11R6/lib
-    /usr/X11R7/lib
-    /usr/X11/lib
     ${64BIT_DIRS}
     ${32BIT_DIRS}
+    /usr/X11/lib
+    /usr/X11R7/lib
+    /usr/X11R6/lib
+    /usr/openwin/lib
+    /usr/pkg/xorg/lib
   )
 
   FIND_PATH(X11_X11_INCLUDE_PATH X11/X.h                            ${X11_INC_SEARCH_PATH})
