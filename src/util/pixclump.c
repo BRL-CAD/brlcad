@@ -146,14 +146,10 @@ static void print_table (void)
  */
 static int color_diff (unsigned char *pix, int i)
 {
-    unsigned char *cte;	/* The specified entry in the color table */
-
-    cte = color_tbl[i];
-
     return (
-	(pix[RED] - cte[RED]) * (pix[RED] - cte[RED]) +
-	(pix[GRN] - cte[GRN]) * (pix[GRN] - cte[GRN]) +
-	(pix[BLU] - cte[BLU]) * (pix[BLU] - cte[BLU])
+	(pix[RED] - color_tbl[i][RED]) * (pix[RED] - color_tbl[i][RED]) +
+	(pix[GRN] - color_tbl[i][GRN]) * (pix[GRN] - color_tbl[i][GRN]) +
+	(pix[BLU] - color_tbl[i][BLU]) * (pix[BLU] - color_tbl[i][BLU])
 	);
 }
 
