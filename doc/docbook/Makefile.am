@@ -312,6 +312,7 @@ EXTRA_DIST = \
 	BRLCAD_DOC.pm \
 	CMakeLists.txt \
 	DBPATH.pm.in \
+	ElNode.pm \
 	README \
 	README.DB_authors_notes \
 	articles/CMakeLists.txt \
@@ -337,6 +338,7 @@ EXTRA_DIST = \
 	log4j.properties \
 	presentations/CMakeLists.txt \
 	presentations/en/CMakeLists.txt \
+	read-db-xml.pl \
 	resources/README \
 	resources/brlcad/book-covers-fo-template.xsl \
 	resources/brlcad/brlcad-common.xsl \
