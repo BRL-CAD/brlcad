@@ -1,1 +1,6 @@
-/fontconfig
+/Makefile
+/Makefile.in
+/scl_cf.h.in
+/scl_config.h
+/scl_config.h.in
+/stamp-h1
