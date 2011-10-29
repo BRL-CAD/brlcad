@@ -34,6 +34,7 @@
 #include "ged.h"
 #include "./ged_private.h"
 
+
 /*
  * rotate: Proposed operations, and manual page
  *
@@ -81,7 +82,7 @@
  *	By default, AXIS is interpreted as the axis to rotate upon
  *	(but does not specify where), with the rotation angle
  *	ANGLE_TO_POS in relative degrees. The default AXIS is the
- *	x-axis, with AXIS_FROM at the origin and AXIS_TO at 1,0,0.
+ *	x-axis, with AXIS_FROM at the origin and AXIS_TO at 1, 0, 0.
  *
  *	Any *_OBJECT argument may be set to ".", which causes each
  *	individual OBJECT to be used in its place (a batch operation
@@ -125,7 +126,7 @@
  *	    Sets the keypoint for the angle or axis of rotation.
  *
  *	    If the AXIS_FROM keypoint is omitted, it defaults to the
- *	    origin (0,0,0).
+ *	    origin (0, 0, 0).
  *
  *	    The line between the points ANGLE_ORIGIN and ANGLE_FROM
  *	    defines the y-axis of a custom AXIS. Therefore, if AXIS is
@@ -133,7 +134,7 @@
  *	    ANGLE_ORIGIN; the y-axis of the drawing. In essence,
  *	    ANGLE_FROM helps define the y-axis, and AXIS defines the
  *	    x-axis.
- *	   
+ *
  *	    If AXIS is provided, then ANGLE_FROM is aligned to it in
  *	    such a way that the 90 degree angle created by the
  *	    following points is maintained (as illustrated below):
@@ -148,7 +149,7 @@
  *                   +z    ANGLE_ORIGIN     |   AXIS_TO->ANGLE_ORIGIN
  *                    |   / (from OBJECT)   |    \  90
  *          AXIS_FROM |  o                  |     o/  ANGLE_FROM
- *	             \|                     |     ^  /        
+ *	             \|                     |     ^  /
  *	    AXIS_TO   o     o               |   o   o          _______
  *	           \ / \     \              |    \            |compass
  *	            o   \     ANGLE_FROM    |     AXIS_FROM   |  +z
@@ -227,11 +228,11 @@
  *			  +y     cube  sphere1
  *			 ___|___ /    /
  *			|q2 | q1|    o
- *		   -x __|___|___|___________+x             
- *			|q3 | q4|        o        
+ *		   -x __|___|___|___________+x
+ *			|q3 | q4|        o
  *			|___|___|       /
  *			    |    sphere2
- *			   -y     
+ *			   -y
  *
  *	# Rotate the cube 45 degrees counterclockwise around its
  *	# bounding box center, on the z-axis. The corner in q1 will
@@ -371,15 +372,15 @@
  *	SCALE and FACTOR points is irrelevant.
  *
  *	By default, the reference scale SCALE, is from a
- *	SCALE_FROM_POS of (0,0,0) to a SCALE_TO_POS of (1,1,1). Given
+ *	SCALE_FROM_POS of (0, 0, 0) to a SCALE_TO_POS of (1, 1, 1). Given
  *	these default SCALE values, specifying a FACTOR_TO_POS of
- *	(2,2,2) would double the size of OBJECT, while (0.5,0.5,0.5)
+ *	(2, 2, 2) would double the size of OBJECT, while (0.5, 0.5, 0.5)
  *	would halve its size.
  *
- *	If SCALE were from a SCALE_FROM_POS of (0,0,0) to a
- *	SCALE_TO_POS of (5,10,15), doubling the size of OBJECT would
- *	require a FACTOR_TO_POS of (10,20,30), or of (2.5,5,7.5) in
- *	order to halve it. Specifying a FACTOR_TO_POS of (30,30,30)
+ *	If SCALE were from a SCALE_FROM_POS of (0, 0, 0) to a
+ *	SCALE_TO_POS of (5, 10, 15), doubling the size of OBJECT would
+ *	require a FACTOR_TO_POS of (10, 20, 30), or of (2.5, 5, 7.5) in
+ *	order to halve it. Specifying a FACTOR_TO_POS of (30, 30, 30)
  *	would result in the x-axes of all OBJECT's being stretched to
  *	quintuple their original lengths, y-axes tripled in length,
  *	and z-axes double in length.
@@ -432,7 +433,7 @@
  *	scale -k 5 10 15 -a 7 11 -2 -k 0 0 0 -r 4 2 34 cube
  *	scale -k 5 10 15 -a 7 11 -2 -k 3 6 9 -r 7 8 43 cube
  *	scale -k 5 10 15 -a 7 11 -2 -c cube -k 3 6 9 -r 7 8 43 cube
- *                                                         
+ *
  */
 
 /* Max # of global options + max number of options for a single arg */
@@ -450,6 +451,7 @@ struct edit_arg {
     struct db_full_path *object; /* path and obj */
     vect_t *vector; /* abs pos, or offset dist from an obj */
 };
+
 
 /*
  * edit_arg coordinate flags (careful: used in bitshift)
@@ -548,6 +550,7 @@ union edit_cmd{
     } translate;
 };
 
+
 /**
  * Command specific information, for a table of available commands.
  */
@@ -555,7 +558,7 @@ typedef int (*exec_handler)(struct ged *gedp, const union edit_cmd *const cmd);
 typedef int (*add_cl_args_handler)(struct ged *gedp, union edit_cmd *const cmd,
 				   const int flags);
 typedef struct edit_arg ** (*get_arg_head_handler)(
-	const union edit_cmd *const cmd, int idx);
+    const union edit_cmd *const cmd, int idx);
 
 struct edit_cmd_tab {
     char *name;
@@ -590,12 +593,13 @@ edit_arg_init(struct edit_arg *arg)
     arg->vector = (vect_t *)NULL;
 }
 
+
 /**
  * Attach an argument node to the end of the list.
  */
 HIDDEN void
 edit_arg_postfix(struct edit_arg *head,
-		       struct edit_arg *node)
+		 struct edit_arg *node)
 {
     struct edit_arg *pos = head;
 
@@ -603,6 +607,7 @@ edit_arg_postfix(struct edit_arg *head,
 	pos = pos->next;
     pos->next = node;
 }
+
 
 /**
  * Allocate space and attach a new node to the end of the list.
@@ -619,6 +624,7 @@ edit_arg_postfix_new(struct edit_arg *head)
     edit_arg_init(arg);
     return arg;
 }
+
 
 /**
  * Duplicate an argument node on top of an existing node. Prior to
@@ -644,12 +650,13 @@ edit_arg_duplicate_in_place(struct edit_arg *const dest,
     }
     if (src->vector) {
 	dest->vector = (vect_t *)bu_malloc(sizeof(vect_t),
-			  "vect_t block for edit_arg_duplicate_in_place()");
+					   "vect_t block for edit_arg_duplicate_in_place()");
 	(*dest->vector)[0] = (*src->vector)[0];
 	(*dest->vector)[1] = (*src->vector)[1];
 	(*dest->vector)[2] = (*src->vector)[2];
     }
 }
+
 
 /**
  * Duplicate an argument node into a new argument. Caller is
@@ -663,6 +670,7 @@ edit_arg_duplicate(struct edit_arg **dest, const struct edit_arg *src)
     edit_arg_duplicate_in_place(*dest, src);
 }
 
+
 /**
  * Returns GED_OK if arg is empty, otherwise GED_ERROR is returned
  */
@@ -672,12 +680,13 @@ edit_arg_is_empty(struct edit_arg *arg)
     if (!arg->next &&
 	(arg->cl_options[0] == '\0') &&
 	(arg->coords_used & EDIT_COORDS_ALL) &&
-	(!arg->type) && 
+	(!arg->type) &&
 	(!arg->object) &&
 	(!arg->vector))
 	return GED_OK;
     return GED_ERROR;
 }
+
 
 /**
  * Free all objects contained by an argument node.
@@ -696,6 +705,7 @@ edit_arg_free_inner(struct edit_arg *arg)
     }
 }
 
+
 /**
  * Free an argument node, including what it contains.
  */
@@ -705,6 +715,7 @@ edit_arg_free(struct edit_arg *arg)
     edit_arg_free_inner(arg);
     bu_free(arg, "edit_arg");
 }
+
 
 /**
  * Free the last argument node in the list.
@@ -723,6 +734,7 @@ edit_arg_free_last(struct edit_arg *arg)
     edit_arg_free(arg);
 }
 
+
 /**
  * Free an argument node and all nodes down its list.
  */
@@ -733,6 +745,7 @@ edit_arg_free_all(struct edit_arg *arg)
 	edit_arg_free_all(arg->next);
     edit_arg_free(arg);
 }
+
 
 /**
  * Gets the apparent coordinates of an object.
@@ -800,19 +813,19 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
     /* add final combination/primitive natural origin to sum */
     if (d->d_flags & RT_DIR_SOLID) {
 	if (_ged_get_obj_bounds2(gedp, 1, (const char **)&d->d_namep, &gtd,
-	    rpp_min, rpp_max) == GED_ERROR)
+				 rpp_min, rpp_max) == GED_ERROR)
 	    return GED_ERROR;
     } else {
 	BU_ASSERT(d->d_flags & (RT_DIR_REGION | RT_DIR_COMB));
 	if (_ged_get_obj_bounds(gedp, 1, (const char **)&d->d_namep, 1,
-	    rpp_min, rpp_max) == GED_ERROR)
+				rpp_min, rpp_max) == GED_ERROR)
 	    return GED_ERROR;
     }
 
     if (arg->type & EDIT_NATURAL_ORIGIN) {
 	if (d->d_flags & (RT_DIR_COMB | RT_DIR_REGION)) {
 	    bu_vls_printf(gedp->ged_result_str, "combinations do not have a"
-		      " natural origin (%s)", d->d_namep );
+			  " natural origin (%s)", d->d_namep);
 	    return GED_ERROR;
 	}
 
@@ -820,9 +833,9 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 			    &rt_uniresource, GED_ERROR);
 	if (_ged_get_solid_keypoint(gedp, leaf_deltas, &intern,
 	                            (const fastf_t *const)gtd.gtd_xform) ==
-				    GED_ERROR) {
+	    GED_ERROR) {
 	    bu_vls_printf(gedp->ged_result_str, "\nunable to get natural origin"
-		      " of \"%s\"", d->d_namep );
+			  " of \"%s\"", d->d_namep);
 	    return GED_ERROR;
 	}
 	rt_db_free_internal(&intern);
@@ -834,6 +847,7 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
     VADD2(*coord, *coord, leaf_deltas);
     return GED_OK;
 }
+
 
 /**
  * Converts an edit_arg object+offset to coordinates. If *coord is
@@ -876,6 +890,7 @@ edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
     return GED_OK;
 }
 
+
 /**
  * "Expands" object arguments for a batch operation.
  *
@@ -890,7 +905,7 @@ edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
  */
 HIDDEN int
 edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
-		const struct edit_arg *src_objs, const int flags)
+		     const struct edit_arg *src_objs, const int flags)
 {
     struct edit_arg *prototype;
     struct edit_arg **dest; 
@@ -926,7 +941,7 @@ edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
 
 	/* respect certain type flags from the prototype/target obj */
 	(*dest)->type |= EDIT_TARGET_OBJ_BATCH_TYPES & prototype->type &
-			 src->type;
+	    src->type;
 	(*dest)->type |= (EDIT_FROM | EDIT_TO) & prototype->type;
 
 	if (edit_arg_to_coord(gedp, *dest, (vect_t *)NULL) == GED_ERROR)
@@ -957,6 +972,7 @@ edit_cmd_init(union edit_cmd *const subcmd)
 	   &subcmd->common.objects);
 }
 
+
 /**
  * Free any dynamically allocated argument nodes that may exist.
  */
@@ -975,6 +991,7 @@ edit_cmd_free(union edit_cmd *const cmd)
     } while ((arg_head = cmd->cmd->get_arg_head(cmd, ++i)) !=
 	     &cmd->common.objects);
 }
+
 
 /**
  * Perform a shallow copy of a subcommand's argument grouping.
@@ -997,6 +1014,7 @@ edit_cmd_sduplicate(union edit_cmd *const dest,
     } while ((src_head = src->cmd->get_arg_head(src, ++i)) !=
 	     &src->common.objects);
 }
+
 
 /**
  * Sets any skipped vector elements to a reasonable default, sets
@@ -1071,6 +1089,7 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
     return GED_OK;
 }
 
+
 /**
  * Consolidates compatible arguments. If any of the arguments that are
  * being consolidated link to objects, they are converted to
@@ -1096,16 +1115,16 @@ edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
 	i = 1;
 
     while (((arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) != 
-	   &subcmd->common.objects) || !skip_common_objects) {
+	    &subcmd->common.objects) || !skip_common_objects) {
 	skip_common_objects = 1;
 	prev_arg = *arg_head;
 	if (!prev_arg)
 	    continue; /* only one element in list */
 	for (cur_arg = prev_arg->next; cur_arg; cur_arg = cur_arg->next) {
 	    if (((prev_arg->coords_used & EDIT_COORDS_ALL) ^
-		(cur_arg->coords_used & EDIT_COORDS_ALL)) &&
+		 (cur_arg->coords_used & EDIT_COORDS_ALL)) &&
 		(cur_arg->type == 0 || prev_arg->type == cur_arg->type) &&
-		!(cur_arg->type & EDIT_TARGET_OBJ) )  {
+		!(cur_arg->type & EDIT_TARGET_OBJ)) {
 
 		/* It should be impossible to have no coords set. If
 		 * one arg has all coords set, it implies that the
@@ -1118,10 +1137,10 @@ edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
 
 		/* convert objects to coords */
 		if (cur_arg->object && edit_arg_to_coord(gedp, cur_arg,
-		    (vect_t *)NULL) == GED_ERROR)
+							 (vect_t *)NULL) == GED_ERROR)
 		    return GED_ERROR;
 		if (prev_arg->object && edit_arg_to_coord(gedp, prev_arg,
-		    (vect_t *)NULL) == GED_ERROR)
+							  (vect_t *)NULL) == GED_ERROR)
 		    return GED_ERROR;
 
 		/* consolidate */
@@ -1152,7 +1171,7 @@ edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
 }
 
 
-/* 
+/*
  * Command-specific functions.
  *
  * The translate command will be documented well to introduce the
@@ -1176,10 +1195,10 @@ edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
  * Rotate an object by specifying points.
  */
 HIDDEN int
-edit_rotate(struct ged *gedp, const vect_t *const axis_from,
-	    const vect_t *const axis_to, const vect_t *const center,
-	    const vect_t *const angle_origin, const vect_t *const angle_from,
-	    const vect_t *const angle_to, const struct db_full_path *const path)
+edit_rotate(struct ged *gedp, const vect_t * axis_from,
+	    const vect_t *axis_to, const vect_t *center,
+	    const vect_t *angle_origin, const vect_t *angle_from,
+	    const vect_t *angle_to, const struct db_full_path *path)
 {
     (void)gedp;
     (void)axis_from;
@@ -1192,6 +1211,7 @@ edit_rotate(struct ged *gedp, const vect_t *const axis_from,
     return GED_OK;
 }
 
+
 /**
  * Maps edit_arg fields to the subcommand function's arguments and
  * calls it.
@@ -1199,15 +1219,17 @@ edit_rotate(struct ged *gedp, const vect_t *const axis_from,
 HIDDEN int
 edit_rotate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
-    return edit_rotate(gedp,
-	(const vect_t *const)cmd->rotate.ref_axis.from->vector,
-	(const vect_t *const)cmd->rotate.ref_axis.to->vector,
-	(const vect_t *const)cmd->rotate.center->vector,
-	(const vect_t *const)cmd->rotate.ref_angle.origin->vector,
-	(const vect_t *const)cmd->rotate.ref_angle.from->vector,
-	(const vect_t *const)cmd->rotate.ref_angle.to->vector,
-	(const struct db_full_path *const)cmd->rotate.objects->object);
+    const vect_t *from_vp = (const vect_t *)cmd->rotate.ref_axis.from->vector;
+    const vect_t *to_vp = (const vect_t *)cmd->rotate.ref_axis.to->vector;
+    const vect_t *center_vp = (const vect_t *)cmd->rotate.center->vector;
+    const vect_t *ang_origin_vp = (const vect_t *)cmd->rotate.ref_angle.origin->vector;
+    const vect_t *ang_from_vp = (const vect_t *)cmd->rotate.ref_angle.from->vector;
+    const vect_t *ang_to_vp = (const vect_t *)cmd->rotate.ref_angle.to->vector;
+
+    return edit_rotate(gedp, from_vp, to_vp, center_vp, ang_origin_vp, ang_from_vp, ang_to_vp,
+		       cmd->rotate.objects->object);
 }
+
 
 /*
  * Add arguments to the command that were built from the cmd line.
@@ -1221,6 +1243,7 @@ edit_rotate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
     (void)flags;
     return GED_OK;
 }
+
 
 /**
  * Given an pointer to an argument head in the edit_cmd union, this
@@ -1245,14 +1268,15 @@ edit_rotate_get_arg_head(const union edit_cmd *const cmd, int idx)
     return (struct edit_arg **)arg_heads[idx];
 }
 
+
 /**
  * Scale an object by specifying points.
  */
 int
-edit_scale(struct ged *gedp, const vect_t *const scale_from,
-	   const vect_t *const scale_to, const vect_t *const center,
-	   const vect_t *const factor_from, const vect_t *const factor_to,
-	   const struct db_full_path *const path)
+edit_scale(struct ged *gedp, const vect_t *scale_from,
+	   const vect_t *scale_to, const vect_t *center,
+	   const vect_t *factor_from, const vect_t *factor_to,
+	   const struct db_full_path * path)
 {
     (void)gedp;
     (void)scale_from;
@@ -1264,6 +1288,7 @@ edit_scale(struct ged *gedp, const vect_t *const scale_from,
     return GED_OK;
 }
 
+
 /**
  * Maps edit_arg fields to the subcommand function's arguments and
  * calls it.
@@ -1271,14 +1296,16 @@ edit_scale(struct ged *gedp, const vect_t *const scale_from,
 HIDDEN int
 edit_scale_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
-    return edit_scale(gedp,
-	(const vect_t *const)cmd->scale.ref_scale.from->vector,
-	(const vect_t *const)cmd->scale.ref_scale.to->vector,
-	(const vect_t *const)cmd->scale.center->vector,
-	(const vect_t *const)cmd->scale.ref_factor.from->vector,
-	(const vect_t *const)cmd->scale.ref_factor.to->vector,
-	(const struct db_full_path *const)cmd->scale.objects->object);
+    const vect_t *from_vp = (const vect_t *)cmd->scale.ref_scale.from->vector;
+    const vect_t *to_vp = (const vect_t *)cmd->scale.ref_scale.to->vector;
+    const vect_t *center_vp = (const vect_t *)cmd->scale.center->vector;
+    const vect_t *ref_from_vp = (const vect_t *)cmd->scale.ref_factor.from->vector;
+    const vect_t *ref_to_vp = (const vect_t *)cmd->scale.ref_factor.to->vector;
+
+    return edit_scale(gedp, from_vp, to_vp, center_vp, ref_from_vp, ref_to_vp,
+		      (const struct db_full_path *const)cmd->scale.objects->object);
 }
+
 
 /*
  * Add arguments to the command that were built from the cmd line.
@@ -1292,6 +1319,7 @@ edit_scale_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
     (void)flags;
     return GED_OK;
 }
+
 
 /**
  * Given an pointer to an argument head in the edit_cmd union, this
@@ -1314,6 +1342,7 @@ edit_scale_get_arg_head(const union edit_cmd *const cmd, int idx)
 
     return (struct edit_arg **)arg_heads[idx];
 }
+
 
 /**
  * Perform a translation on an object by specifying points.
@@ -1355,7 +1384,7 @@ edit_translate(struct ged *gedp, const vect_t *const from,
 	BU_ASSERT_PTR(leaf_to_modify, !=, TREE_NULL); 
 	if (!leaf_to_modify->tr_l.tl_mat) {
 	    leaf_to_modify->tr_l.tl_mat = (matp_t)bu_malloc(sizeof(mat_t),
-	    				  "mat_t block for edit_translate()");
+							    "mat_t block for edit_translate()");
 	    MAT_IDN(leaf_to_modify->tr_l.tl_mat);
 	}
 	MAT_DELTAS_ADD_VEC(leaf_to_modify->tr_l.tl_mat, delta);
@@ -1398,6 +1427,7 @@ edit_translate(struct ged *gedp, const vect_t *const from,
     return GED_OK;
 }
 
+
 /**
  * Maps edit_arg fields to the subcommand function's arguments and
  * calls it.  Provides an common interface, so that all subcommands
@@ -1409,10 +1439,11 @@ HIDDEN int
 edit_translate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
     return edit_translate(gedp,
-	(const vect_t *const)cmd->translate.ref_vector.from->vector,
-	(const vect_t *const)cmd->translate.ref_vector.to->vector,
-	(const struct db_full_path *const)cmd->translate.objects->object);
+			  (const vect_t *const)cmd->translate.ref_vector.from->vector,
+			  (const vect_t *const)cmd->translate.ref_vector.to->vector,
+			  (const struct db_full_path *const)cmd->translate.objects->object);
 }
+
 
 /**
  * Add arguments to the command that were built from the cmd line.
@@ -1433,7 +1464,7 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 
     if (cur_arg->type & EDIT_FROM) {
 	/* if there isn't an EDIT_TO, this func shouldn't be called */
-	BU_ASSERT_PTR(cur_arg->next, !=, (struct edit_arg *)NULL); 
+	BU_ASSERT_PTR(cur_arg->next, !=, (struct edit_arg *)NULL);
 
 	/* A 'from' position is set; only flags that were possible
 	 * when this function was last updated should be handled.
@@ -1443,8 +1474,8 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 				    EDIT_USE_TARGETS));
 
 	/* disallow non-standard opts */
-	if (cur_arg->cl_options[0] != '\0') 
-	    goto err_option_unknown; 
+	if (cur_arg->cl_options[0] != '\0')
+	    goto err_option_unknown;
 
 	cmd->translate.ref_vector.from = cur_arg;
 	cur_arg = cmd->cmd_line.args = cmd->cmd_line.args->next;
@@ -1467,8 +1498,8 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 				    EDIT_USE_TARGETS));
 
 	/* disallow non-standard opts */
-	if (cur_arg->cl_options[0] != '\0') 
-	    goto err_option_unknown; 
+	if (cur_arg->cl_options[0] != '\0')
+	    goto err_option_unknown;
 
 	if (!(cur_arg->type & EDIT_ABS_POS)) {
 	    /* interpret 'TO' arg as a relative distance by default */
@@ -1535,6 +1566,7 @@ err_option_unknown:
     return GED_ERROR;
 }
 
+
 /**
  * Given an pointer to an argument head in the edit_cmd union, this
  * function will return the next argument head in the union.
@@ -1552,7 +1584,7 @@ edit_translate_get_arg_head(const union edit_cmd *const cmd, int idx)
     const struct edit_arg **arg_heads[EDIT_TRANSLATE_ARG_HEADS_LEN];
 
     idx %= EDIT_TRANSLATE_ARG_HEADS_LEN;
-    
+
     arg_heads[0] = (const struct edit_arg **)&cmd->translate.objects;
     arg_heads[1] = (const struct edit_arg **)&cmd->translate.ref_vector.from;
     arg_heads[2] = (const struct edit_arg **)&cmd->translate.ref_vector.to;
@@ -1560,57 +1592,58 @@ edit_translate_get_arg_head(const union edit_cmd *const cmd, int idx)
     return (struct edit_arg **)arg_heads[idx];
 }
 
-/* 
+
+/*
  * Table of edit command data/functions
  */
 static const struct edit_cmd_tab edit_cmds[] = {
     {"help", (char *)NULL, "[subcommand]", "[subcommand]",
-	EDIT_CMD_ENABLE, NULL, NULL, NULL
+     EDIT_CMD_ENABLE, NULL, NULL, NULL
 #define EDIT_CMD_HELP 0 /* idx of "help" in edit_cmds */
     },
     {"rotate",		"R",
-	"[-R] [AXIS] [CENTER] ANGLE OBJECT ...",
-  	"[-R] [[[-n] -k {AXIS_FROM_OBJECT | AXIS_FROM_POS}]\n"
-	"[[-n] [-a | -r] {AXIS_TO_OBJECT | AXIS_TO_POS}]]\n"
-	    "[[-n] -c {CENTER_OBJECT | CENTER_POS}]\n"
-	    "[[-n] -O {ANGLE_ORIGIN_OBJECT| ANGLE_ORIGIN_POS}]\n"
-	    "[[-n] -k {ANGLE_FROM_OBJECT | ANGLE_FROM_POS}]\n"
-	    "[-n | -o] [-a | -r | -d]"
-		"{ANGLE_TO_OBJECT | ANGLE_TO_POS}} OBJECT ...",
-	EDIT_CMD_DISABLE,
-	&edit_rotate_wrapper,
-	&edit_rotate_add_cl_args,
-	&edit_rotate_get_arg_head
+     "[-R] [AXIS] [CENTER] ANGLE OBJECT ...",
+     "[-R] [[[-n] -k {AXIS_FROM_OBJECT | AXIS_FROM_POS}]\n"
+     "[[-n] [-a | -r] {AXIS_TO_OBJECT | AXIS_TO_POS}]]\n"
+     "[[-n] -c {CENTER_OBJECT | CENTER_POS}]\n"
+     "[[-n] -O {ANGLE_ORIGIN_OBJECT| ANGLE_ORIGIN_POS}]\n"
+     "[[-n] -k {ANGLE_FROM_OBJECT | ANGLE_FROM_POS}]\n"
+     "[-n | -o] [-a | -r | -d]"
+     "{ANGLE_TO_OBJECT | ANGLE_TO_POS}} OBJECT ...",
+     EDIT_CMD_DISABLE,
+     &edit_rotate_wrapper,
+     &edit_rotate_add_cl_args,
+     &edit_rotate_get_arg_head
     },
     {"scale",		(char *)NULL,
-	"[SCALE] [CENTER] FACTOR OBJECT ...",
-	"[[[-n] -k {SCALE_FROM_OBJECT | SCALE_FROM_POS}]\n"
-	    "[-n] [-a | -r] {SCALE_TO_OBJECT | SCALE_TO_POS}]\n"
-	    "[[-n] -c {CENTER_OBJECT | CENTER_POS}]\n"
-	    "[[-n] -k {FACTOR_FROM_OBJECT | FACTOR_FROM_POS}]\n"
-	    "[-n] [-a | -r] {FACTOR_TO_OBJECT | FACTOR_TO_POS}"
-		" OBJECT ...",
-	EDIT_CMD_DISABLE,
-	&edit_scale_wrapper,
-	&edit_scale_add_cl_args,
-	&edit_scale_get_arg_head
+     "[SCALE] [CENTER] FACTOR OBJECT ...",
+     "[[[-n] -k {SCALE_FROM_OBJECT | SCALE_FROM_POS}]\n"
+     "[-n] [-a | -r] {SCALE_TO_OBJECT | SCALE_TO_POS}]\n"
+     "[[-n] -c {CENTER_OBJECT | CENTER_POS}]\n"
+     "[[-n] -k {FACTOR_FROM_OBJECT | FACTOR_FROM_POS}]\n"
+     "[-n] [-a | -r] {FACTOR_TO_OBJECT | FACTOR_TO_POS}"
+     " OBJECT ...",
+     EDIT_CMD_DISABLE,
+     &edit_scale_wrapper,
+     &edit_scale_add_cl_args,
+     &edit_scale_get_arg_head
     },
     {"translate",	(char *)NULL,
-	"[FROM] TO OBJECT ...",
-	"[[-n] -k {FROM_OBJECT | FROM_POS}]\n"
-	    "[-n] [-a | -r] {TO_OBJECT | TO_POS} OBJECT ...",
-	EDIT_CMD_ENABLE,
-	&edit_translate_wrapper,
-	&edit_translate_add_cl_args,
-	&edit_translate_get_arg_head
+     "[FROM] TO OBJECT ...",
+     "[[-n] -k {FROM_OBJECT | FROM_POS}]\n"
+     "[-n] [-a | -r] {TO_OBJECT | TO_POS} OBJECT ...",
+     EDIT_CMD_ENABLE,
+     &edit_translate_wrapper,
+     &edit_translate_add_cl_args,
+     &edit_translate_get_arg_head
     },
     {(char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, EDIT_CMD_DISABLE,
-	NULL, NULL, NULL
+     NULL, NULL, NULL
     }
 };
 
 
-/* 
+/*
  * Command agnostic functions
  */
 
@@ -1645,7 +1678,7 @@ HIDDEN int
 edit(struct ged *gedp, union edit_cmd *const subcmd)
 {
     struct edit_arg **arg_head;
-    struct edit_arg *prev_arg; 
+    struct edit_arg *prev_arg;
     struct edit_arg *cur_arg;
     union edit_cmd subcmd_iter; /* to iterate through subcmd args */
     int i = 0;
@@ -1667,8 +1700,7 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
     }
 
     /* process all other arg nodes */
-    while ((arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) != 
-	   &subcmd->common.objects) {
+    while ((arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) != &subcmd->common.objects) {
 	num_args_set = 0;
 	prev_arg = NULL;
 	for (cur_arg = *arg_head; cur_arg; cur_arg = cur_arg->next) {
@@ -1726,12 +1758,12 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
 	num_args_set = 0;
 	i = 0; /* reinit for get_arg_head() */
 	while (((arg_head =
-		subcmd_iter.cmd->get_arg_head(&subcmd_iter, i)) !=
+		 subcmd_iter.cmd->get_arg_head(&subcmd_iter, i)) !=
 		&subcmd_iter.common.objects) || (i == 0)) {
 	    ++i;
 	    if (*arg_head && (*arg_head)->next) {
-		    *arg_head = (*arg_head)->next;
-		    ++num_args_set;
+		*arg_head = (*arg_head)->next;
+		++num_args_set;
 	    }
 	}
     } while (num_args_set != 0);
@@ -1739,10 +1771,11 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
     return GED_OK;
 }
 
+
 /**
  * Converts a string to an existing edit_arg. See subcommand manuals
  * for examples of acceptable argument strings.
- * 
+ *
  * Set GED_QUIET or GED_ERROR bits in 'flags' to suppress or enable
  * output to ged_result_str, respectively.
  *
@@ -1866,10 +1899,10 @@ convert_obj:
     /* convert string to path/object */
     BU_GETSTRUCT(arg->object, db_full_path);
     if (db_string_to_path(arg->object, gedp->ged_wdbp->dbip,
-			   str)) {
+			  str)) {
 	db_free_full_path(arg->object);
 	bu_free((genptr_t)arg->object, "db_string_to_path");
-	arg->object = (struct db_full_path *)NULL; 
+	arg->object = (struct db_full_path *)NULL;
 	if (noisy)
 	    bu_vls_printf(gedp->ged_result_str, "one of the objects in"
 			  " the path \"%s\" does not exist", str);
@@ -1878,21 +1911,22 @@ convert_obj:
     if (ged_path_validate(gedp, arg->object) == GED_ERROR) {
 	db_free_full_path(arg->object);
 	bu_free((genptr_t)arg->object, "db_string_to_path");
-	arg->object = (struct db_full_path *)NULL; 
+	arg->object = (struct db_full_path *)NULL;
 	if (noisy)
 	    bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in"
-						"the database", str);
+			  "the database", str);
 	return GED_ERROR;
     }
     return GED_OK;
 }
+
 
 /**
  * Converts as much of an array of strings as possible to a single
  * edit_arg. Both argc and argv are modified to be past the matching
  * arguments. See subcommand manuals for examples of acceptable
  * argument strings.
- * 
+ *
  * Set GED_QUIET or GED_ERROR bits in 'flags' to suppress or enable
  * output to ged_result_str, respectively. Note that output is always
  * suppressed after the first string is successfully converted.
@@ -1947,6 +1981,7 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
     return ret;
 }
 
+
 /**
  * A command line interface to the edit commands. Will handle any new
  * commands without modification. Validates as much as possible in a
@@ -1982,7 +2017,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     /*
      * Validate command name
      */
-    
+
     /* FIXME: usage/help messages for subcommands should contain the
      * name of the 'parent' command when necessary: i.e.: 'edit
      * translate' rather than just 'translate'. Also, the help option
@@ -1999,7 +2034,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	    /* match of cmd name takes precedence over match of subcmd
 	     * name
 	     */
-	    break; 
+	    break;
 	}
 	/* interpret first arg as a cmd, and search for it in table */
 	if (!subcmd_name && argc > 1 &&
@@ -2047,7 +2082,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
      */
 
     /* switch on idx of subcmd.cmd in edit_cmds[] */
-    switch (subcmd.cmd - edit_cmds) { 
+    switch (subcmd.cmd - edit_cmds) {
 	case EDIT_CMD_HELP:
 	    if (argc == 0) {
 		/* get generic help */
@@ -2082,7 +2117,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		goto get_full_help;
 	    }
 	default:
-	    if (argc == 0) { 
+	    if (argc == 0) {
 		/* no args to subcommand; must want usage */
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s [help] | %s",
 			      subcmd.cmd->name, subcmd.cmd->usage);
@@ -2098,17 +2133,17 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	     */
 	    if (argc == 1 &&
 		BU_STR_EQUAL(edit_cmds[EDIT_CMD_HELP].name,
-		argv[0])) {
+			     argv[0])) {
 		goto get_full_help;
 	    }
 	    break;
 
-get_full_help:
-    bu_vls_printf(gedp->ged_result_str,
-		  "Usage: %s [help] | %s\n\n%s [help] | %s",
-		  subcmd.cmd->name, subcmd.cmd->usage,
-		  subcmd.cmd->name, subcmd.cmd->help);
-    return GED_HELP;
+    get_full_help:
+	    bu_vls_printf(gedp->ged_result_str,
+			  "Usage: %s [help] | %s\n\n%s [help] | %s",
+			  subcmd.cmd->name, subcmd.cmd->usage,
+			  subcmd.cmd->name, subcmd.cmd->help);
+	    return GED_HELP;
     }
 
     /* Now that the cmd type is known (and wasn't "help"), we can
@@ -2271,7 +2306,7 @@ get_full_help:
 		    goto err_missing_arg;
 		if ((strlen(bu_optarg) > 1) && (bu_optarg[0] == '-')) {
 		    switch (bu_optarg[1]) {
-			case 'x': 
+			case 'x':
 			case 'y':
 			case 'z':
 			    /* the only acceptable sub-options here */
@@ -2287,12 +2322,12 @@ get_full_help:
 		allow_subopts = 1;
 	        c = bu_optopt;
 	    	if (!bu_optarg)
-		if (!isprint(c)) {
-		    bu_vls_printf(gedp->ged_result_str,
-				  "Unknown option character '\\x%x'", c);
-		    edit_cmd_free(&subcmd);
-		    return GED_ERROR;
-		}
+		    if (!isprint(c)) {
+			bu_vls_printf(gedp->ged_result_str,
+				      "Unknown option character '\\x%x'", c);
+			edit_cmd_free(&subcmd);
+			return GED_ERROR;
+		    }
 
 		/* next element may be an arg */
 	    	conv_flags = GED_QUIET;
@@ -2405,7 +2440,7 @@ get_full_help:
 
 err_missing_arg:
     bu_vls_printf(gedp->ged_result_str, "Missing argument for option -%c",
-	bu_optopt);
+		  bu_optopt);
     edit_cmd_free(&subcmd);
     return GED_ERROR;
 }
