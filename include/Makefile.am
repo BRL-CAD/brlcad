@@ -14,6 +14,7 @@ brlcadinclude_required = \
 	magic.h \
 	pstdint.h \
 	raytrace.h \
+	rt/defines.h \
 	rtfunc.h \
 	rtgeom.h \
 	rtserver.h \
