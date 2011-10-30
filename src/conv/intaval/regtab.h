@@ -74,9 +74,8 @@ public:
     };
 
     Region(int   nr,
-           char* description) : compnr(nr), addCreated(false), excludeCreated(false) {
-        desc = description;
-        BU_LIST_INIT(&head.l);
+	   char* description) : compnr(nr), desc(description), addCreated(false), excludeCreated(false) {
+	BU_LIST_INIT(&head.l);
     }
 
     ~Region() {
