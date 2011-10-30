@@ -121,7 +121,6 @@ ManifoldSolidBrep::LoadONBrep(ON_Brep *brep)
 }
 
 
-
 // Local Variables:
 // tab-width: 8
 // mode: C++

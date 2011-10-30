@@ -56,17 +56,17 @@ IF (UNIX)
   SET(CMAKE_FIND_FRAMEWORK_SAVE ${CMAKE_FIND_FRAMEWORK})
   SET(CMAKE_FIND_FRAMEWORK NEVER)
   SET(X11_INC_SEARCH_PATH
-    /usr/pkg/xorg/include
+    /usr/include
     /usr/X11/include
-    /usr/X11R6/include 
-    /usr/X11R7/include 
     /usr/include/X11
-    /usr/local/include
+    /usr/X11R7/include
+    /usr/X11R6/include
     /usr/local/include/X11
-    /usr/openwin/include 
-    /usr/openwin/share/include 
+    /usr/local/include
+    /usr/openwin/share/include
+    /usr/openwin/include
+    /usr/pkg/xorg/include
     /opt/graphics/OpenGL/include
-	 /usr/include
   )
 
   GET_PROPERTY(SEARCH_64BIT GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
@@ -77,13 +77,13 @@ IF (UNIX)
   ENDIF(SEARCH_64BIT)
 
   SET(X11_LIB_SEARCH_PATH
+    ${64BIT_DIRS}
+    ${32BIT_DIRS}
     /usr/X11/lib
-    /usr/X11R6/lib
     /usr/X11R7/lib
-	 ${64BIT_DIRS}
-	 ${32BIT_DIRS}
+    /usr/X11R6/lib
+    /usr/openwin/lib
     /usr/pkg/xorg/lib
-    /usr/openwin/lib 
   )
 
   FIND_PATH(X11_X11_INCLUDE_PATH X11/X.h                            ${X11_INC_SEARCH_PATH})
@@ -91,7 +91,7 @@ IF (UNIX)
 
   # Look for includes; keep the list sorted by name of the cmake *_INCLUDE_PATH
   # variable (which doesn't need to match the include file name).
-  
+
   # Solaris lacks XKBrules.h, so we should skip kxkbd there.
   FIND_PATH(X11_ICE_INCLUDE_PATH X11/ICE/ICE.h                       ${X11_INC_SEARCH_PATH})
   FIND_PATH(X11_Xaccessrules_INCLUDE_PATH X11/extensions/XKBrules.h  ${X11_INC_SEARCH_PATH})
@@ -320,11 +320,11 @@ IF (UNIX)
       CHECK_LIBRARY_EXISTS("${X11_LIBRARIES}" "XOpenDisplay" "${X11_LIBRARY_DIR}" X11_LIB_X11_SOLO)
       IF(NOT X11_LIB_X11_SOLO)
         # Find library needed for dnet_ntoa.
-        CHECK_LIBRARY_EXISTS("dnet" "dnet_ntoa" "" X11_LIB_DNET_HAS_DNET_NTOA) 
+        CHECK_LIBRARY_EXISTS("dnet" "dnet_ntoa" "" X11_LIB_DNET_HAS_DNET_NTOA)
         IF (X11_LIB_DNET_HAS_DNET_NTOA)
           SET (X11_X_EXTRA_LIBS ${X11_X_EXTRA_LIBS} -ldnet)
         ELSE (X11_LIB_DNET_HAS_DNET_NTOA)
-          CHECK_LIBRARY_EXISTS("dnet_stub" "dnet_ntoa" "" X11_LIB_DNET_STUB_HAS_DNET_NTOA) 
+          CHECK_LIBRARY_EXISTS("dnet_stub" "dnet_ntoa" "" X11_LIB_DNET_STUB_HAS_DNET_NTOA)
           IF (X11_LIB_DNET_STUB_HAS_DNET_NTOA)
             SET (X11_X_EXTRA_LIBS ${X11_X_EXTRA_LIBS} -ldnet_stub)
           ENDIF (X11_LIB_DNET_STUB_HAS_DNET_NTOA)
@@ -334,11 +334,11 @@ IF (UNIX)
       # Find library needed for gethostbyname.
       CHECK_FUNCTION_EXISTS("gethostbyname" CMAKE_HAVE_GETHOSTBYNAME)
       IF(NOT CMAKE_HAVE_GETHOSTBYNAME)
-        CHECK_LIBRARY_EXISTS("nsl" "gethostbyname" "" CMAKE_LIB_NSL_HAS_GETHOSTBYNAME) 
+        CHECK_LIBRARY_EXISTS("nsl" "gethostbyname" "" CMAKE_LIB_NSL_HAS_GETHOSTBYNAME)
         IF (CMAKE_LIB_NSL_HAS_GETHOSTBYNAME)
           SET (X11_X_EXTRA_LIBS ${X11_X_EXTRA_LIBS} -lnsl)
         ELSE (CMAKE_LIB_NSL_HAS_GETHOSTBYNAME)
-          CHECK_LIBRARY_EXISTS("bsd" "gethostbyname" "" CMAKE_LIB_BSD_HAS_GETHOSTBYNAME) 
+          CHECK_LIBRARY_EXISTS("bsd" "gethostbyname" "" CMAKE_LIB_BSD_HAS_GETHOSTBYNAME)
           IF (CMAKE_LIB_BSD_HAS_GETHOSTBYNAME)
             SET (X11_X_EXTRA_LIBS ${X11_X_EXTRA_LIBS} -lbsd)
           ENDIF (CMAKE_LIB_BSD_HAS_GETHOSTBYNAME)
@@ -348,7 +348,7 @@ IF (UNIX)
       # Find library needed for connect.
       CHECK_FUNCTION_EXISTS("connect" CMAKE_HAVE_CONNECT)
       IF(NOT CMAKE_HAVE_CONNECT)
-        CHECK_LIBRARY_EXISTS("socket" "connect" "" CMAKE_LIB_SOCKET_HAS_CONNECT) 
+        CHECK_LIBRARY_EXISTS("socket" "connect" "" CMAKE_LIB_SOCKET_HAS_CONNECT)
         IF (CMAKE_LIB_SOCKET_HAS_CONNECT)
           SET (X11_X_EXTRA_LIBS -lsocket ${X11_X_EXTRA_LIBS})
         ENDIF (CMAKE_LIB_SOCKET_HAS_CONNECT)
@@ -357,7 +357,7 @@ IF (UNIX)
       # Find library needed for remove.
       CHECK_FUNCTION_EXISTS("remove" CMAKE_HAVE_REMOVE)
       IF(NOT CMAKE_HAVE_REMOVE)
-        CHECK_LIBRARY_EXISTS("posix" "remove" "" CMAKE_LIB_POSIX_HAS_REMOVE) 
+        CHECK_LIBRARY_EXISTS("posix" "remove" "" CMAKE_LIB_POSIX_HAS_REMOVE)
         IF (CMAKE_LIB_POSIX_HAS_REMOVE)
           SET (X11_X_EXTRA_LIBS ${X11_X_EXTRA_LIBS} -lposix)
         ENDIF (CMAKE_LIB_POSIX_HAS_REMOVE)
@@ -366,7 +366,7 @@ IF (UNIX)
       # Find library needed for shmat.
       CHECK_FUNCTION_EXISTS("shmat" CMAKE_HAVE_SHMAT)
       IF(NOT CMAKE_HAVE_SHMAT)
-        CHECK_LIBRARY_EXISTS("ipc" "shmat" "" CMAKE_LIB_IPS_HAS_SHMAT) 
+        CHECK_LIBRARY_EXISTS("ipc" "shmat" "" CMAKE_LIB_IPS_HAS_SHMAT)
         IF (CMAKE_LIB_IPS_HAS_SHMAT)
           SET (X11_X_EXTRA_LIBS ${X11_X_EXTRA_LIBS} -lipc)
         ENDIF (CMAKE_LIB_IPS_HAS_SHMAT)

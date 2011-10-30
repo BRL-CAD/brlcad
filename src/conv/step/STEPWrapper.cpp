@@ -1149,57 +1149,57 @@ STEPWrapper::getBaseType(int type)
     const char *retValue = NULL;
 
     switch(type) {
-        case sdaiINSTANCE:
-            retValue = "sdaiINSTANCE";
-            break;
-        case sdaiSELECT: // The name of a select is never written DAS 1/31/97
-            retValue = "sdaiSELECT";
-            break;
-        case sdaiNUMBER:
-            retValue = "sdaiNUMBER";
-            break;
-        case sdaiREAL:
-            retValue = "sdaiREAL";
-            break;
-        case sdaiINTEGER:
-            retValue = "sdaiINTEGER";
-            break;
-        case sdaiSTRING:
-            retValue = "sdaiSTRING";
-            break;
-        case sdaiBOOLEAN:
-            retValue = "sdaiBOOLEAN";
-            break;
-        case sdaiLOGICAL:
-            retValue = "sdaiLOGICAL";
-            break;
-        case sdaiBINARY:
-            retValue = "sdaiBINARY";
-            break;
-        case sdaiENUMERATION:
-            retValue = "sdaiENUMERATION";
-            break;
-        case sdaiAGGR:
-            retValue = "sdaiAGGR";
-            break;
-        case ARRAY_TYPE:
-            retValue = "ARRAY_TYPE";
-            break;
-        case BAG_TYPE:
-            retValue = "BAG_TYPE";
-            break;
-        case SET_TYPE:
-            retValue = "SET_TYPE";
-            break;
-        case LIST_TYPE:
-            retValue = "LIST_TYPE";
-            break;
-        case REFERENCE_TYPE: // this should never happen? DAS
-            retValue = "REFERENCE_TYPE";
-            break;
-        default:
-            retValue = "Unknown";
-            break;
+	case sdaiINSTANCE:
+	    retValue = "sdaiINSTANCE";
+	    break;
+	case sdaiSELECT: // The name of a select is never written DAS 1/31/97
+	    retValue = "sdaiSELECT";
+	    break;
+	case sdaiNUMBER:
+	    retValue = "sdaiNUMBER";
+	    break;
+	case sdaiREAL:
+	    retValue = "sdaiREAL";
+	    break;
+	case sdaiINTEGER:
+	    retValue = "sdaiINTEGER";
+	    break;
+	case sdaiSTRING:
+	    retValue = "sdaiSTRING";
+	    break;
+	case sdaiBOOLEAN:
+	    retValue = "sdaiBOOLEAN";
+	    break;
+	case sdaiLOGICAL:
+	    retValue = "sdaiLOGICAL";
+	    break;
+	case sdaiBINARY:
+	    retValue = "sdaiBINARY";
+	    break;
+	case sdaiENUMERATION:
+	    retValue = "sdaiENUMERATION";
+	    break;
+	case sdaiAGGR:
+	    retValue = "sdaiAGGR";
+	    break;
+	case ARRAY_TYPE:
+	    retValue = "ARRAY_TYPE";
+	    break;
+	case BAG_TYPE:
+	    retValue = "BAG_TYPE";
+	    break;
+	case SET_TYPE:
+	    retValue = "SET_TYPE";
+	    break;
+	case LIST_TYPE:
+	    retValue = "LIST_TYPE";
+	    break;
+	case REFERENCE_TYPE: // this should never happen? DAS
+	    retValue = "REFERENCE_TYPE";
+	    break;
+	default:
+	    retValue = "Unknown";
+	    break;
     }
     return retValue;
 }

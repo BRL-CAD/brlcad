@@ -6,7 +6,7 @@
 int yyerrstatus = 0;
 #define yyerrok (yyerrstatus = 0)
 
-int yylval;
+YYSTYPE yylval;
 
     static char rcsid[] = "$Id: expparse.y,v 1.23 1997/11/14 17:09:04 libes Exp $";
 

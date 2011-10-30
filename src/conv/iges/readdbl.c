@@ -24,7 +24,7 @@
  * read and converted to type "double" and returned in "inum".  If
  * "id" is not the null string, then "id" is printed followed by the
  * number.
- *	
+ *
  * "eof" is the "end-of-field" delimiter
  * "eor" is the "end-of-record" delimiter
  *

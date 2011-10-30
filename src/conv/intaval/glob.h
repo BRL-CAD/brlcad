@@ -49,14 +49,14 @@ struct Form {
     size_t npts;
 
     union {
-        I_Point_t pt[MAX_NPTS];
+	I_Point_t pt[MAX_NPTS];
 
-        struct {
-            size_t num_vertices;
-            size_t num_faces;
-            int vertices[MAX_NPTS * 3];   // points[3][num_vertices]
-            int faces[MAX_TRIANGLES * 3]; // faces[3][num_faces]
-        } bot;
+	struct {
+	    size_t num_vertices;
+	    size_t num_faces;
+	    int vertices[MAX_NPTS * 3];   // points[3][num_vertices]
+	    int faces[MAX_TRIANGLES * 3]; // faces[3][num_faces]
+	} bot;
     };
 
     int tr_vec[3];

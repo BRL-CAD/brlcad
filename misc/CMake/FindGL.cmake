@@ -1,18 +1,18 @@
 # - Try to find OpenGL
 # Once done this will define
-#  
+#
 #  OPENGL_FOUND            - system has OpenGL
 #  OPENGL_XMESA_FOUND      - system has XMESA
 #  OPENGL_GLU_FOUND        - system has GLU
 #  OPENGL_INCLUDE_DIR_GL   - the GL include directory
 #  OPENGL_INCLUDE_DIR_GLX  - the GLX include directory
 #  OPENGL_LIBRARIES        - Link these to use OpenGL and GLU
-#   
+#
 # If you want to use just GL you can use these values
 #  OPENGL_gl_LIBRARY   - Path to OpenGL Library
 #  OPENGL_glu_LIBRARY  - Path to GLU Library
 #
-# Define controlling option OPENGL_USE_AQUA if on Apple - 
+# Define controlling option OPENGL_USE_AQUA if on Apple -
 # if this is not true, look for the X11 OpenGL.  Defaults
 # to true.
 
@@ -80,7 +80,7 @@ ELSE (WIN32)
 		IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
 			SET(HPUX_IA_OPENGL_LIB_PATH /opt/graphics/OpenGL/lib/hpux32/)
 		ELSE(CMAKE_SIZEOF_VOID_P EQUAL 4)
-			SET(HPUX_IA_OPENGL_LIB_PATH 
+			SET(HPUX_IA_OPENGL_LIB_PATH
 				/opt/graphics/OpenGL/lib/hpux64/
 				/opt/graphics/OpenGL/lib/pa20_64)
 		ENDIF(CMAKE_SIZEOF_VOID_P EQUAL 4)
@@ -93,15 +93,15 @@ ELSE (WIN32)
 		ENDIF(SEARCH_64BIT)
 
 		SET(OPENGL_LIB_SEARCH_PATH
-			/usr/X11/lib
-			/usr/X11R6/lib
-			/usr/X11R7/lib
 			${64BIT_DIRS}
 			${32BIT_DIRS}
-			/usr/pkg/xorg/lib
+			/usr/X11/lib
+			/usr/X11R7/lib
+			/usr/X11R6/lib
+			/usr/shlib
 			/usr/openwin/lib
 			/opt/graphics/OpenGL/lib
-			/usr/shlib
+			/usr/pkg/xorg/lib
 			${HPUX_IA_OPENGL_LIB_PATH}
 			)
 
@@ -121,9 +121,9 @@ ELSE (WIN32)
 		FIND_PATH(OPENGL_INCLUDE_DIR_GLX GL/glx.h      ${OPENGL_INC_SEARCH_PATH})
 		FIND_PATH(OPENGL_xmesa_INCLUDE_DIR GL/xmesa.h  ${OPENGL_INC_SEARCH_PATH})
 		FIND_LIBRARY(OPENGL_gl_LIBRARY NAMES GL MesaGL PATHS ${OPENGL_LIB_SEARCH_PATH})
-		
+
 		# On Unix OpenGL most certainly always requires X11.
-		# Feel free to tighten up these conditions if you don't 
+		# Feel free to tighten up these conditions if you don't
 		# think this is always true.
 		# It's not true on OSX.
 

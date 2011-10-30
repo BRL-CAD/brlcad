@@ -34,11 +34,11 @@
 #include <Sdaiclasses.h>
 extern void SchemaInit (Registry &);
 extern void InitSchemasAndEnts (Registry &);
-#include <SdaiCONFIG_CONTROL_DESIGN.h> 
+#include <SdaiCONFIG_CONTROL_DESIGN.h>
 extern void SdaiCONFIG_CONTROL_DESIGNInit (Registry & r);
 
 #ifdef __OSTORE__
-#include <osdb_SdaiCONFIG_CONTROL_DESIGN.h> 
+#include <osdb_SdaiCONFIG_CONTROL_DESIGN.h>
 #endif
 
 

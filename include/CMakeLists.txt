@@ -1,13 +1,14 @@
 SET(brlcadinclude_required
+	${CMAKE_CURRENT_BINARY_DIR}/brlcad_config.h
 	RtServerImpl.h
 	bn.h
-	${CMAKE_CURRENT_BINARY_DIR}/brlcad_config.h
 	bu.h
 	common.h
 	ged.h
 	magic.h
 	pstdint.h
 	raytrace.h
+	rt/defines.h
 	rtfunc.h
 	rtgeom.h
 	rtserver.h

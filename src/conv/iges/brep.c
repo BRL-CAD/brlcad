@@ -141,7 +141,7 @@ brep(int entityno)
      * make nmg will have already performed an nmg kill model
      */
     if (!mk_nmg_executed_flag) {
-        nmg_km(m);
+	nmg_km(m);
     }
 
     return 1;
@@ -157,7 +157,7 @@ brep(int entityno)
      * make nmg will have already performed an nmg kill model
      */
     if (!mk_nmg_executed_flag) {
-        nmg_km(m);
+	nmg_km(m);
     }
 
     return 0;

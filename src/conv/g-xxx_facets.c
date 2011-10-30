@@ -178,12 +178,12 @@ main(int argc, char **argv)
 
     /* Walk indicated tree(s).  Each region will be output separately */
     (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-                        1,			/* ncpu */
-                        &tree_state,
-                        0,			/* take all regions */
-                        do_region_end,
-                        nmg_booltree_leaf_tess,
-                        (genptr_t)NULL);	/* in librt/nmg_bool.c */
+			1,			/* ncpu */
+			&tree_state,
+			0,			/* take all regions */
+			do_region_end,
+			nmg_booltree_leaf_tess,
+			(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
     percent = 0;
     if (regions_tried>0) {

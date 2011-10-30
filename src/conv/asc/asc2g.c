@@ -1512,7 +1512,7 @@ bracecnt(char *line)
  * This routine reads the next block of Tcl commands. This block is expected to be a Tcl
  * command script and will be fed to an interpreter using Tcl_Eval(). Any escaped returns
  * or open braces are parsed through and concatenated ensuring Tcl commands are complete.
- * 
+ *
  *  SIZE is used as the approximate blocking size allowing to grow past this to close the
  * command line.
  */
@@ -1527,15 +1527,15 @@ gettclblock(struct bu_vls *line, FILE *fp)
     bu_vls_init(&tmp);
 
     if ((ret=bu_vls_gets(line, fp)) >= 0) {
-        linecnt++;
+	linecnt++;
 	escapedcr = endswith(bu_vls_addr(line),'\\');
-        bcnt = bracecnt(bu_vls_addr(line));
-        while ( (ret >= 0) && ((bu_vls_strlen(line) < SIZE) || (escapedcr) || ( bcnt != 0 )) ) {
+	bcnt = bracecnt(bu_vls_addr(line));
+	while ( (ret >= 0) && ((bu_vls_strlen(line) < SIZE) || (escapedcr) || ( bcnt != 0 )) ) {
 	    linecnt++;
 	    if (escapedcr) {
 		bu_vls_trunc(line, bu_vls_strlen(line)-1);
 	    }
-            if ((ret=bu_vls_gets(&tmp, fp)) > 0) {
+	    if ((ret=bu_vls_gets(&tmp, fp)) > 0) {
 		escapedcr = endswith(bu_vls_addr(&tmp),'\\');
 		bcnt = bcnt + bracecnt(bu_vls_addr(&tmp));
 		bu_vls_putc(line, '\n');
@@ -1544,7 +1544,7 @@ gettclblock(struct bu_vls *line, FILE *fp)
 	    } else {
 		escapedcr = 0;
 	    }
-        }
+	}
 	ret = bu_vls_strlen(line);
     }
     bu_vls_free(&tmp);
@@ -1589,28 +1589,28 @@ main(int argc, char *argv[])
     bu_vls_strcpy( &str_put, "put ");
 
     while (isComment) {
-        char *str;
-        int charIndex;
-        int len;
-        bu_vls_trunc2(&line, 0);
-        if (bu_vls_gets(&line, ifp) < 0) {
-            fclose(ifp); ifp = NULL;
-            wdb_close(ofp); ofp = NULL;
-            bu_exit(1, "Unexpected EOF\n");
-        }
-        str = bu_vls_addr(&line);
-        len = strlen(str);
-        for (charIndex=0 ; charIndex<len ; charIndex++) {
-            if (str[charIndex] == '#') {
-                isComment = 1;
-                break;
-            } else if (isspace(str[charIndex])) {
-                continue;
-            } else {
-                isComment = 0;
-                break;
-            }
-        }
+	char *str;
+	int charIndex;
+	int len;
+	bu_vls_trunc2(&line, 0);
+	if (bu_vls_gets(&line, ifp) < 0) {
+	    fclose(ifp); ifp = NULL;
+	    wdb_close(ofp); ofp = NULL;
+	    bu_exit(1, "Unexpected EOF\n");
+	}
+	str = bu_vls_addr(&line);
+	len = strlen(str);
+	for (charIndex=0 ; charIndex<len ; charIndex++) {
+	    if (str[charIndex] == '#') {
+		isComment = 1;
+		break;
+	    } else if (isspace(str[charIndex])) {
+		continue;
+	    } else {
+		isComment = 0;
+		break;
+	    }
+	}
     }
 
     /* new style ascii database */
@@ -1620,8 +1620,8 @@ main(int argc, char *argv[])
 
 	/* this is a Tcl script */
 
-        rewind(ifp);
-        bu_vls_trunc( &line, 0);
+	rewind(ifp);
+	bu_vls_trunc( &line, 0);
 	BU_LIST_INIT(&rt_g.rtg_headwdb.l);
 
 	interp = Tcl_CreateInterp();
@@ -1668,29 +1668,29 @@ main(int argc, char *argv[])
 	    Tcl_CreateAlias(safe_interp, "dbfind", interp, db_name, ac, av);
 	}
 
-        while ((gettclblock(&line,ifp)) >= 0)
-        {
+	while ((gettclblock(&line,ifp)) >= 0)
+	{
 	    if (Tcl_Eval(safe_interp, (const char *)bu_vls_addr(&line)) != TCL_OK) {
 		fclose(ifp);
-	        bu_log("Failed to process input file (%s)!\n", argv[1]);
-	        bu_log("%s\n", Tcl_GetStringResult(safe_interp));
-	        Tcl_Exit(1);
-	    }            
-            bu_vls_trunc(&line,0);
-        }
+		bu_log("Failed to process input file (%s)!\n", argv[1]);
+		bu_log("%s\n", Tcl_GetStringResult(safe_interp));
+		Tcl_Exit(1);
+	    }
+	    bu_vls_trunc(&line,0);
+	}
 
 	/* free up our resources */
-        bu_vls_free(&line);
-        bu_vls_free(&str_title);
-        bu_vls_free(&str_put);
+	bu_vls_free(&line);
+	bu_vls_free(&str_title);
+	bu_vls_free(&str_put);
 
 	fclose(ifp);
 
 	Tcl_Exit(0);
     } else {
-        bu_vls_free(&line);
-        bu_vls_free(&str_title);
-        bu_vls_free(&str_put);
+	bu_vls_free(&line);
+	bu_vls_free(&str_title);
+	bu_vls_free(&str_put);
 	rewind(ifp);
     }
 

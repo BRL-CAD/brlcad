@@ -81,7 +81,7 @@ spline(int entityno, struct face_g_snurb **b_patch)
     } else {
 	point_size = 3;
     }
-    
+
     (*b_patch) = rt_nurb_new_snurb(
 	m1+1, m2+1,
 	n1+2*m1+1, n2+2*m2+1,

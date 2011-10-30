@@ -125,14 +125,14 @@ clean_pmp(struct plate_mode *pmp)
     for (i = 0; i < pmp->num_bots; i++) {
 	bu_free(pmp->bots[i]->faces, "pmp->bots[i]->faces");
 	bu_free(pmp->bots[i]->vertices, "pmp->bots[i]->vertices");
-	if ((pmp->bots[i]->bot_flags & RT_BOT_PLATE) || 
+	if ((pmp->bots[i]->bot_flags & RT_BOT_PLATE) ||
 	    (pmp->bots[i]->bot_flags & RT_BOT_PLATE_NOCOS)) {
 	    bu_free(pmp->bots[i]->thickness, "pmp->bots[i]->thickness");
 	}
 	if (pmp->bots[i]->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
 	    bu_free(pmp->bots[i]->normals, "pmp->bots[i]->normals");
 	}
-	if ((pmp->bots[i]->bot_flags & RT_BOT_PLATE) || 
+	if ((pmp->bots[i]->bot_flags & RT_BOT_PLATE) ||
 	    (pmp->bots[i]->bot_flags & RT_BOT_PLATE_NOCOS)) {
 	    bu_bomb("about to free pmp->bots[i]->face_mode\n");
 	    bu_bitv_free(pmp->bots[i]->face_mode);
@@ -178,7 +178,7 @@ dup_bot(struct rt_bot_internal *bot_in)
     if ((bot_in->bot_flags & RT_BOT_PLATE) || (bot_in->bot_flags & RT_BOT_PLATE_NOCOS)) {
 	if (bot_in->thickness) {
 	    bot->thickness = (fastf_t *)bu_calloc(bot_in->num_faces, sizeof(fastf_t), "bot thickness");
-            for (i = 0; i < bot_in->num_faces; i++) {
+	    for (i = 0; i < bot_in->num_faces; i++) {
 		bot->thickness[i] = bot_in->thickness[i];
 	    }
 	} else {
@@ -314,7 +314,7 @@ leaf_tess1(struct db_tree_state *tsp, const struct db_full_path *pathp, struct r
 
 /* CSG objects are skipped. BOTs are processed but stored outside
  * tree. This leaf-tess function is used when we want to output
- * BOTs directly to the VRML file without performing a boolean 
+ * BOTs directly to the VRML file without performing a boolean
  * evaluation.
  */
 union tree *
@@ -828,84 +828,6 @@ out:
 }
 
 
-#if 0
-/* disable unused function */
-void
-process_non_light(struct model *m)
-{
-    /* static due to libbu exception handling */
-    struct nmgregion *reg;
-    static struct shell *s;
-    static struct shell *next_s;
-    static struct faceuse *fu;
-    static struct faceuse *next_fu;
-    static struct loopuse *lu;
-
-    /* triangulate any faceuses with holes */
-    for ( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
-    {
-	NMG_CK_REGION( reg );
-	s = BU_LIST_FIRST( shell, &reg->s_hd );
-	while ( BU_LIST_NOT_HEAD( s, &reg->s_hd ) )
-	{
-	    NMG_CK_SHELL( s );
-	    next_s = BU_LIST_PNEXT( shell, &s->l );
-	    fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
-	    while ( BU_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
-	    {
-		int shell_is_dead=0;
-		int face_is_dead=0;
-
-		NMG_CK_FACEUSE( fu );
-
-		next_fu = BU_LIST_PNEXT( faceuse, &fu->l );
-
-		if ( fu->orientation != OT_SAME )
-		{
-		    fu = next_fu;
-		    continue;
-		}
-
-		/* check if this faceuse has any holes */
-		for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
-		{
-		    NMG_CK_LOOPUSE( lu );
-		    if ( lu->orientation == OT_OPPOSITE )
-		    {
-			/* this is a hole, so
-			 * triangulate the faceuse
-			 */
-			if ( BU_SETJUMP )
-			{
-			    BU_UNSETJUMP;
-			    bu_log( "A face has failed triangulation!\n" );
-			    if ( next_fu == fu->fumate_p )
-				next_fu = BU_LIST_PNEXT( faceuse, &next_fu->l );
-			    if ( nmg_kfu( fu ) )
-			    {
-				(void) nmg_ks( s );
-				shell_is_dead = 1;
-			    }
-			    face_is_dead = 1;
-			}
-			if ( !face_is_dead )
-			    nmg_triangulate_fu( fu, &tol );
-			BU_UNSETJUMP;
-			break;
-		    }
-
-		}
-		if ( shell_is_dead )
-		    break;
-		fu = next_fu;
-	    }
-	    s = next_s;
-	}
-    }
-}
-#endif
-
-
 void
 nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct model *m)
 {
@@ -1078,7 +1000,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 			}
 			bytes_read += nbytes;
 			for (i = 0; i < nbytes; i += 3) {
-			    fprintf(fp_out, "\t\t\t0x%02x%02x%02x\n", 
+			    fprintf(fp_out, "\t\t\t0x%02x%02x%02x\n",
 				    tex_buf[i], tex_buf[i+1], tex_buf[i+2]);
 			}
 		    }
@@ -1145,7 +1067,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 	if (first) {
 	    if (!is_light) {
 		fprintf(fp_out, " %10.10e %10.10e %10.10e, # point %d\n", V3ARGS(pt_meters), i);
-	    }	
+	    }
 	    first = 0;
 	} else if (!is_light) {
 	    fprintf(fp_out, "\t\t\t\t\t%10.10e %10.10e %10.10e, # point %d\n", V3ARGS(pt_meters), i);
@@ -1228,7 +1150,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 	    fprintf(fp_out, "\t\t\tdirection \t%g %g %g\n", V3ARGS(mat.lt_dir));
 	    fprintf(fp_out, "\t\t\tcutOffAngle \t%g }\n", mat.lt_angle);
 	} else {
-	    fprintf(fp_out, "\t\tPointLight {\n\t\t\ton TRUE\n\t\t\tintensity 1\n\t\t\tcolor %g %g %g\n\t\t\tlocation %g %g %g\n\t\t}\n", 
+	    fprintf(fp_out, "\t\tPointLight {\n\t\t\ton TRUE\n\t\t\tintensity 1\n\t\t\tcolor %g %g %g\n\t\t\tlocation %g %g %g\n\t\t}\n",
 		    r, g, b, V3ARGS(ave_pt));
 	}
     }
@@ -1495,4 +1417,3 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

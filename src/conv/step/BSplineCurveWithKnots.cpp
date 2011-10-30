@@ -103,9 +103,9 @@ BSplineCurveWithKnots::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 		}
 	}
 
- 	knot_spec = (Knot_type)step->getEnumAttribute(sse,"knot_spec");
- 	if (knot_spec > Knot_type_unset)
- 		knot_spec = Knot_type_unset;
+	knot_spec = (Knot_type)step->getEnumAttribute(sse,"knot_spec");
+	if (knot_spec > Knot_type_unset)
+		knot_spec = Knot_type_unset;
 
 	return true;
 }

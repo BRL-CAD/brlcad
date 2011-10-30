@@ -83,6 +83,10 @@ static char rcsid[] = "";
 #include "token_type.h"
 #include "expparse.h"
 
+void *ParseAlloc(void *(*mallocProc)(size_t));
+void ParseFree(void *parser, void (*freeProc)(void*));
+void Parse(void *parser, int tokenID, YYSTYPE data);
+
 Linked_List EXPRESS_path;
 int EXPRESSpass;
 
@@ -615,7 +619,7 @@ PARSERrun(char *filename,FILE *fp)
 	while ((tokenID = yylex()) > 0) {
 	    Parse(parser, tokenID, yylval);
 	}
-	Parse(parser, 0, NULL);
+	Parse(parser, 0, yylval);
 
 	/* want 0 on success, 1 on invalid input, 2 on memory exhaustion */
 	if (yyerrstatus != 0) {

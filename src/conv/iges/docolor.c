@@ -21,7 +21,7 @@
  *
  * This routine loops through all the directory entries and calls and
  * sets colors according to the directory entry field #13
- * 
+ *
  */
 
 #include "./iges_struct.h"

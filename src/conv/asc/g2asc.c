@@ -216,28 +216,28 @@ main(int argc, char **argv)
 		/* save the associated attributes of
 		 * _GLOBAL (except for title and units
 		 * which were already written out) and
-                 * regionid_colortable (which is written out below)
+		 * regionid_colortable (which is written out below)
 		 */
 		if (g_avs.count) {
-                    int printedHeader = 0;
+		    int printedHeader = 0;
 		    for (i=0; i < g_avs.count; i++) {
 			if (strncmp(g_avs.avp[i].name, "title", 6) == 0) {
 			    continue;
 			} else if (strncmp(g_avs.avp[i].name, "units", 6) == 0) {
 			    continue;
-                        } else if (strncmp(g_avs.avp[i].name, "regionid_colortable", 19) == 0) {
-                            continue;
+			} else if (strncmp(g_avs.avp[i].name, "regionid_colortable", 19) == 0) {
+			    continue;
 			} else if (strlen(g_avs.avp[i].name) <= 0) {
 			    continue;
 			}
-                        if (printedHeader == 0) {
-                            fprintf(ofp, "attr set {_GLOBAL}");
-                            printedHeader = 1;
-                        }
+			if (printedHeader == 0) {
+			    fprintf(ofp, "attr set {_GLOBAL}");
+			    printedHeader = 1;
+			}
 			fprintf(ofp, " {%s} {%s}", g_avs.avp[i].name, g_avs.avp[i].value);
 		    }
-                    if (printedHeader == 1)
-                        fprintf(ofp, "\n");
+		    if (printedHeader == 1)
+			fprintf(ofp, "\n");
 		}
 
 		value = bu_avs_get( &g_avs, "regionid_colortable" );

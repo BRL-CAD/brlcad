@@ -10,7 +10,7 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2011-XX-XX  Release 7.21.X                                     ---
+--- 2011-11-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
 * improved performance of boolean evaluations - Richard Weiss
@@ -22,7 +22,7 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2011-10-27  Release 7.20.4                                     ---
+--- 2011-10-30  Release 7.20.4                                     ---
 ----------------------------------------------------------------------
 
 * added lighting model visualization options for archer - Bob Parker

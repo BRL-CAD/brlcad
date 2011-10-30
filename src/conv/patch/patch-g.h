@@ -107,7 +107,7 @@ char *matfile;
 /* Maximum number of different thicknesses for a single plate mode
  * solid.
  */
-#define MAX_THICKNESSES 500	
+#define MAX_THICKNESSES 500
 
 fastf_t thicks[MAX_THICKNESSES];	/* array of unique plate thicknesses */
 int nthicks;				/* number of unique plate thicknesses

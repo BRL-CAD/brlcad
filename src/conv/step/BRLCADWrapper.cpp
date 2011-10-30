@@ -52,8 +52,8 @@ BRLCADWrapper::OpenFile(const char *flnm) {
 
     /* open brlcad instance */
     if ((outfp = wdb_fopen(flnm)) == NULL) {
-    	bu_log("Cannot open output file (%s)\n", flnm);
-    	return false;
+	bu_log("Cannot open output file (%s)\n", flnm);
+	return false;
     }
 
     // hold on to output filename

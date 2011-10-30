@@ -19,12 +19,12 @@
  */
 /** @file conv/dem-g.c
  *
- * USGS ASCII DEM file to dsp primitive converter 
+ * USGS ASCII DEM file to dsp primitive converter
  *
  * There are several global element arrays that contain information
  * about the structure of the DEM-G file, record types 'A', 'B' and
  * 'C'.  Data is loaded into these arrays during main().
- * 
+ *
  * An 'element' is a 'data element' as defined in the DEM-G file
  * specification.
  *
@@ -34,7 +34,7 @@
  * within these array descriptions can be replaced with 'a', 'b' or
  * 'c' to indicate a specific array which corresponds to a specific
  * record type.
- * 
+ *
  * ARRAY DESCRIPTION: record_?_element_size[index1][index2][index3]
  * index1 = element number
  * index2 = sub-element number within element
@@ -48,7 +48,7 @@
  *
  * when index3=3, value = datatype of sub-element (1=alpha, 2=signed
  * long integer, 3=double precision float).
- * 
+ *
  * ARRAY DESCRIPTION: record_?_sub_elements[index]
  * index = element number
  * value = number of sub-elements per element
@@ -56,7 +56,7 @@
  * This information allows the code to loop through the contents of
  * the array 'record_?_element_size' since each element can contain a
  * different number of sub-elements.
- * 
+ *
  * No values are stored with an index of zero within these arrays,
  * therefore the size of each dimension is increased by one to
  * accommodate this.
@@ -72,12 +72,12 @@
 #include "bio.h"
 
 #include "bu.h"
-#include "bn.h"       
-#include "vmath.h"    
-#include "raytrace.h" 
-#include "rtgeom.h"   
-#include "wdb.h"      
-#include "db.h" 
+#include "bn.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "rtgeom.h"
+#include "wdb.h"
+#include "db.h"
 
 
 const char *progname ="dem-g";
@@ -161,23 +161,23 @@ usage(void)
 int
 flip_high_low_bytes(long int in_value, unsigned char *out_string)
 {
-    /* it is expected the out_string points to */ 
+    /* it is expected the out_string points to */
     /* a string of at least 3 characters */
     unsigned char highbyte = '\0';
     unsigned char lowbyte = '\0';
     int status = BRLCAD_ERROR;
 
     if ((in_value >= 0) && (in_value <= 65535)) {
-        highbyte = (unsigned char)floor(in_value / 256);
-        lowbyte = (unsigned char)(in_value - (highbyte * 256));
-        out_string[0] = highbyte;
-        out_string[1] = lowbyte;
-        out_string[2] = '\0';
-        status = BRLCAD_OK;
+	highbyte = (unsigned char)floor(in_value / 256);
+	lowbyte = (unsigned char)(in_value - (highbyte * 256));
+	out_string[0] = highbyte;
+	out_string[1] = lowbyte;
+	out_string[2] = '\0';
+	status = BRLCAD_OK;
     } else {
-        bu_log("ERROR: function flip_high_low_bytes input value '%ld' not within 0-65535.\n", in_value);
-        out_string[0] = '\0';
-        status = BRLCAD_ERROR;
+	bu_log("ERROR: function flip_high_low_bytes input value '%ld' not within 0-65535.\n", in_value);
+	out_string[0] = '\0';
+	status = BRLCAD_ERROR;
     }
     return status;
 }
@@ -191,16 +191,16 @@ output_elevation(long int in_value, FILE *fp)
 
     /* allow for clipping */
     if (in_value > DSP_MAX_RAW_ELEVATION) {
-        in_value = DSP_MAX_RAW_ELEVATION;
+	in_value = DSP_MAX_RAW_ELEVATION;
     }
 
     if (flip_high_low_bytes(in_value, buf) == BRLCAD_OK) {
-        if (fwrite(buf, 2, 1, fp) == 1) {
-            status = BRLCAD_OK;
-        }
+	if (fwrite(buf, 2, 1, fp) == 1) {
+	    status = BRLCAD_OK;
+	}
     }
     if (status == BRLCAD_ERROR) {
-        bu_log("Within function output_elevation, error writing elevation to temp file.\n");
+	bu_log("Within function output_elevation, error writing elevation to temp file.\n");
     }
     return status;
 }
@@ -208,7 +208,7 @@ output_elevation(long int in_value, FILE *fp)
 
 /*
  * ----------------------------------------------------------------------------
- * removes pre and post whitespace from a string 
+ * removes pre and post whitespace from a string
  * ----------------------------------------------------------------------------
  */
 void remove_whitespace(char *input_string)
@@ -219,7 +219,7 @@ void remove_whitespace(char *input_string)
     char *firstp = '\0';
     char *lastp = '\0';
     int found_start = 0;
-    int found_end = 0; 
+    int found_end = 0;
     int cleaned_string_length = 0;
 
     input_string_length = strlen(input_string);
@@ -307,7 +307,7 @@ int read_element(ResultStruct *io_struct)
     sub_element_datatype datatype;
     int is_b_header = 0;
 
-    /* assign input structure values to local variables */ 
+    /* assign input structure values to local variables */
     buf = (*io_struct).in_buffer;
     record_type = (*io_struct).in_record_type;
     is_b_header = (*io_struct).in_is_b_header;
@@ -322,28 +322,28 @@ int read_element(ResultStruct *io_struct)
     (*io_struct).out_undefined = 0;
 
     if (!((record_type == type_b) && (element == 6))) {
-        /* when the value to be read is not an elevation */
-        /* fyi element 6 in a B record type is an elevation */
-        field_width = element_attributes[record_type][element][sub_element][2];
-        start_character = element_attributes[record_type][element][sub_element][1];
-        datatype = element_attributes[record_type][element][sub_element][3];
-        (*io_struct).out_datatype = datatype;
+	/* when the value to be read is not an elevation */
+	/* fyi element 6 in a B record type is an elevation */
+	field_width = element_attributes[record_type][element][sub_element][2];
+	start_character = element_attributes[record_type][element][sub_element][1];
+	datatype = element_attributes[record_type][element][sub_element][3];
+	(*io_struct).out_datatype = datatype;
     } else {
-        /* when the value to be read is an elevation */
-        /* must compute the start_character of the elevation value within the buffer */
-        field_width = 6;
-        datatype = type_integer;    /* sets datatype to integer */
-        (*io_struct).out_datatype = datatype;
-        if (is_b_header == 1) {
-            /* the buffer contains a B record header and elevation data */
-            start_character = 145 + ((sub_element - 1) * field_width); 
-        } else {
-            /* the buffer contains a B record with only elevation data */
-            start_character = 1 + ((sub_element - 1) * field_width); 
-        }
+	/* when the value to be read is an elevation */
+	/* must compute the start_character of the elevation value within the buffer */
+	field_width = 6;
+	datatype = type_integer;    /* sets datatype to integer */
+	(*io_struct).out_datatype = datatype;
+	if (is_b_header == 1) {
+	    /* the buffer contains a B record header and elevation data */
+	    start_character = 145 + ((sub_element - 1) * field_width);
+	} else {
+	    /* the buffer contains a B record with only elevation data */
+	    start_character = 1 + ((sub_element - 1) * field_width);
+	}
     }
 
-    /* strncpy(tmp_str, &buf[element_attributes[record_type][element][sub_element][1]-1], element_attributes[record_type][element][sub_element][2]); */  
+    /* strncpy(tmp_str, &buf[element_attributes[record_type][element][sub_element][1]-1], element_attributes[record_type][element][sub_element][2]); */
 
     /* in bu_strlcpy must include in the 3rd parameter (i.e. count or
      * size) one extra character to account for string terminator.
@@ -356,11 +356,11 @@ int read_element(ResultStruct *io_struct)
     /* removes pre & post whitespace, if all whitespace then returns
      * empty string
      */
-    remove_whitespace(tmp_str); 
+    remove_whitespace(tmp_str);
 
-    if (strlen(tmp_str) == 0) { 
-        /* data was all whitespace */ 
-        (*io_struct).out_undefined = 1;
+    if (strlen(tmp_str) == 0) {
+	/* data was all whitespace */
+	(*io_struct).out_undefined = 1;
 	return BRLCAD_OK;
     }
 
@@ -373,7 +373,7 @@ int read_element(ResultStruct *io_struct)
      */
     if (datatype == type_alpha) {
 	/* strcpy((*io_struct).out_alpha, tmp_str); */
-	bu_strlcpy((*io_struct).out_alpha, tmp_str, strlen(tmp_str)+1); 
+	bu_strlcpy((*io_struct).out_alpha, tmp_str, strlen(tmp_str)+1);
 	status = BRLCAD_OK;
     }
 
@@ -383,7 +383,7 @@ int read_element(ResultStruct *io_struct)
      * --------------------------------------------------------------------
      */
     if (datatype == type_integer) {
-	/* sub_element was defined as a integer */ 
+	/* sub_element was defined as a integer */
 	tmp_long = strtol(tmp_str, &endp, 10);
 	if ((tmp_str != endp) && (*endp == '\0')) {
 	    /* convert to integer success */
@@ -392,7 +392,7 @@ int read_element(ResultStruct *io_struct)
 	} else {
 	    /* convert to integer failed */
 	    /* copy string which failed to convert to inetger to output structure */
-	    strcpy((*io_struct).out_alpha, tmp_str); 
+	    strcpy((*io_struct).out_alpha, tmp_str);
 	    status = BRLCAD_ERROR;
 	}
     }
@@ -403,7 +403,7 @@ int read_element(ResultStruct *io_struct)
      * --------------------------------------------------------------------
      */
     if (datatype == type_double) {
-	/* sub_element was defined as a double */ 
+	/* sub_element was defined as a double */
 	if ((search_result_uppercase = strchr(tmp_str, 'D')) != NULL) {
 	    /* uppercase 'D' found, replace with 'E' */
 	    search_result_uppercase[0] = 'E';
@@ -416,7 +416,7 @@ int read_element(ResultStruct *io_struct)
 		    /* if no uppercase 'E' and no lowercase 'e' then append 'E+00' */
 		    /* required for function 'strtod' to convert string to double */
 		    /* strcat(tmp_str, "E+00"); */
-		    bu_strlcat(tmp_str, "E+00", sizeof(tmp_str)); 
+		    bu_strlcat(tmp_str, "E+00", sizeof(tmp_str));
 		}
 	    }
 	}
@@ -429,7 +429,7 @@ int read_element(ResultStruct *io_struct)
 	} else {
 	    /* convert to double failed */
 	    /* copy string which failed to convert to double to output structure */
-	    strcpy((*io_struct).out_alpha, tmp_str); 
+	    strcpy((*io_struct).out_alpha, tmp_str);
 	    status = BRLCAD_ERROR;
 	}
     }
@@ -457,20 +457,20 @@ validate_dem_record(char *buf, int create_log, logical_record_type record_type)
      * no errors trying to read any of the data.
      */
     for (element_number = 1; element_number <= element_counts[record_type]; element_number++) {
-        for (sub_element_number = 1; sub_element_number <= sub_element_counts[record_type][element_number]; sub_element_number++) {
-            (*my_out_ptr2).in_buffer = buf;
-            (*my_out_ptr2).in_record_type = record_type;
-            (*my_out_ptr2).in_element_number = element_number;
-            (*my_out_ptr2).in_sub_element_number = sub_element_number;
-            if (read_element(my_out_ptr2) == BRLCAD_ERROR) {
-                if (create_log == 1) {
-                    bu_log("Failed validation of %s element %i sub_element %i, error reading value.\n",
+	for (sub_element_number = 1; sub_element_number <= sub_element_counts[record_type][element_number]; sub_element_number++) {
+	    (*my_out_ptr2).in_buffer = buf;
+	    (*my_out_ptr2).in_record_type = record_type;
+	    (*my_out_ptr2).in_element_number = element_number;
+	    (*my_out_ptr2).in_sub_element_number = sub_element_number;
+	    if (read_element(my_out_ptr2) == BRLCAD_ERROR) {
+		if (create_log == 1) {
+		    bu_log("Failed validation of %s element %i sub_element %i, error reading value.\n",
 			   record_type_names[record_type], (*my_out_ptr2).in_element_number,
-			   (*my_out_ptr2).in_sub_element_number); 
-                }
-                return BRLCAD_ERROR;
-            } 
-        }
+			   (*my_out_ptr2).in_sub_element_number);
+		}
+		return BRLCAD_ERROR;
+	    }
+	}
     }
 
     /* Loop through a list of element sub_elements that must be
@@ -478,283 +478,283 @@ validate_dem_record(char *buf, int create_log, logical_record_type record_type)
      * is expected to already have been tested.
      */
     for (idx = 1; idx <= sub_elements_required_list_counts[record_type]; idx++) {
-        (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type;
-        (*my_out_ptr2).in_element_number = sub_elements_required_list[record_type][idx][1];
-        (*my_out_ptr2).in_sub_element_number = sub_elements_required_list[record_type][idx][2];
-        status = read_element(my_out_ptr2);
-        if ((*my_out_ptr2).out_undefined == 1) {
-            if (create_log == 1) {
-                bu_log("Failed validation of %s element %i sub_element %i, value undefined.\n",
+	(*my_out_ptr2).in_buffer = buf;
+	(*my_out_ptr2).in_record_type = record_type;
+	(*my_out_ptr2).in_element_number = sub_elements_required_list[record_type][idx][1];
+	(*my_out_ptr2).in_sub_element_number = sub_elements_required_list[record_type][idx][2];
+	status = read_element(my_out_ptr2);
+	if ((*my_out_ptr2).out_undefined == 1) {
+	    if (create_log == 1) {
+		bu_log("Failed validation of %s element %i sub_element %i, value undefined.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
-		       (*my_out_ptr2).in_sub_element_number); 
-            }
-            return BRLCAD_ERROR;
-        } 
+		       (*my_out_ptr2).in_sub_element_number);
+	    }
+	    return BRLCAD_ERROR;
+	}
     }
 
     if (record_type == type_a) {
-        /* Test some of the defined sub_elements for expected values */
-        /* Validate record 'A' element 8 sub_element 1 */
-        /* Unit of measure for ground planimetric coordinates 0=radians, 1=feet, 2=meters, 3=arc-seconds */
-        (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type;
-        (*my_out_ptr2).in_element_number = 8;
-        (*my_out_ptr2).in_sub_element_number = 1;
-        status = read_element(my_out_ptr2);
-        if (!(((*my_out_ptr2).out_integer >= 0) && ((*my_out_ptr2).out_integer <= 3))) {
-            if (create_log == 1) {
-                bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '0, 1, 2, 3'.\n",
+	/* Test some of the defined sub_elements for expected values */
+	/* Validate record 'A' element 8 sub_element 1 */
+	/* Unit of measure for ground planimetric coordinates 0=radians, 1=feet, 2=meters, 3=arc-seconds */
+	(*my_out_ptr2).in_buffer = buf;
+	(*my_out_ptr2).in_record_type = record_type;
+	(*my_out_ptr2).in_element_number = 8;
+	(*my_out_ptr2).in_sub_element_number = 1;
+	status = read_element(my_out_ptr2);
+	if (!(((*my_out_ptr2).out_integer >= 0) && ((*my_out_ptr2).out_integer <= 3))) {
+	    if (create_log == 1) {
+		bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '0, 1, 2, 3'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
-		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
-            }
-            return BRLCAD_ERROR;
-        } 
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer);
+	    }
+	    return BRLCAD_ERROR;
+	}
 
-        /* Test some of the defined sub_elements for expected values */
-        /* Validate record 'A' element 9 sub_element 1 */
-        /* Unit of measure for elevation coordinates 1=feet, 2=meters */
-        (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type;
-        (*my_out_ptr2).in_element_number = 9;
-        (*my_out_ptr2).in_sub_element_number = 1;
-        status = read_element(my_out_ptr2);
-        if (!(((*my_out_ptr2).out_integer == 1) || ((*my_out_ptr2).out_integer == 2))) {
-            if (create_log == 1) {
-                bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '1, 2'.\n",
+	/* Test some of the defined sub_elements for expected values */
+	/* Validate record 'A' element 9 sub_element 1 */
+	/* Unit of measure for elevation coordinates 1=feet, 2=meters */
+	(*my_out_ptr2).in_buffer = buf;
+	(*my_out_ptr2).in_record_type = record_type;
+	(*my_out_ptr2).in_element_number = 9;
+	(*my_out_ptr2).in_sub_element_number = 1;
+	status = read_element(my_out_ptr2);
+	if (!(((*my_out_ptr2).out_integer == 1) || ((*my_out_ptr2).out_integer == 2))) {
+	    if (create_log == 1) {
+		bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '1, 2'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
-		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
-            }
-            return BRLCAD_ERROR;
-        } 
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer);
+	    }
+	    return BRLCAD_ERROR;
+	}
 
-        /* Test some of the defined sub_elements for expected values */
-        /* Validate record 'A' element 10 sub_element 1 */
-        /* Number of sides in the polygon which defines the coverage of the DEM file */
-        /* Only a value of '4' is supported by this program */
-        (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type;
-        (*my_out_ptr2).in_element_number = 10;
-        (*my_out_ptr2).in_sub_element_number = 1;
-        status = read_element(my_out_ptr2);
-        if ((*my_out_ptr2).out_integer != 4) {
-            if (create_log == 1) {
-                bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '4'.\n",
+	/* Test some of the defined sub_elements for expected values */
+	/* Validate record 'A' element 10 sub_element 1 */
+	/* Number of sides in the polygon which defines the coverage of the DEM file */
+	/* Only a value of '4' is supported by this program */
+	(*my_out_ptr2).in_buffer = buf;
+	(*my_out_ptr2).in_record_type = record_type;
+	(*my_out_ptr2).in_element_number = 10;
+	(*my_out_ptr2).in_sub_element_number = 1;
+	status = read_element(my_out_ptr2);
+	if ((*my_out_ptr2).out_integer != 4) {
+	    if (create_log == 1) {
+		bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '4'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
-		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
-            }
-            return BRLCAD_ERROR;
-        } 
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer);
+	    }
+	    return BRLCAD_ERROR;
+	}
 
-        /* Test some of the defined sub_elements for expected values */
-        /* Validate record 'A' element 12 sub_element 2 */
-        /* Max elevation for DEM */
-        (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type;
-        (*my_out_ptr2).in_element_number = 12;
-        (*my_out_ptr2).in_sub_element_number = 2;
-        status = read_element(my_out_ptr2);
-        if ((*my_out_ptr2).out_double < 0) {
-            if (create_log == 1) {
-                bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected >= '0'.\n",
+	/* Test some of the defined sub_elements for expected values */
+	/* Validate record 'A' element 12 sub_element 2 */
+	/* Max elevation for DEM */
+	(*my_out_ptr2).in_buffer = buf;
+	(*my_out_ptr2).in_record_type = record_type;
+	(*my_out_ptr2).in_element_number = 12;
+	(*my_out_ptr2).in_sub_element_number = 2;
+	status = read_element(my_out_ptr2);
+	if ((*my_out_ptr2).out_double < 0) {
+	    if (create_log == 1) {
+		bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected >= '0'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
-		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double); 
-            }
-            return BRLCAD_ERROR;
-        } 
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double);
+	    }
+	    return BRLCAD_ERROR;
+	}
 
-        /* test some of the defined sub_elements for expected values */
-        /* Validate record 'A' element 15 sub_element 1 */
-        /* DEM spatial resolution for X */
-        (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type;
-        (*my_out_ptr2).in_element_number = 15;
-        (*my_out_ptr2).in_sub_element_number = 1;
-        status = read_element(my_out_ptr2);
-        if ((*my_out_ptr2).out_double <= 0) {
-            if (create_log == 1) {
-                bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected > '0'.\n",
+	/* test some of the defined sub_elements for expected values */
+	/* Validate record 'A' element 15 sub_element 1 */
+	/* DEM spatial resolution for X */
+	(*my_out_ptr2).in_buffer = buf;
+	(*my_out_ptr2).in_record_type = record_type;
+	(*my_out_ptr2).in_element_number = 15;
+	(*my_out_ptr2).in_sub_element_number = 1;
+	status = read_element(my_out_ptr2);
+	if ((*my_out_ptr2).out_double <= 0) {
+	    if (create_log == 1) {
+		bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected > '0'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
-		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double); 
-            }
-            return BRLCAD_ERROR;
-        } 
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double);
+	    }
+	    return BRLCAD_ERROR;
+	}
 
-        /* test some of the defined sub_elements for expected values */
-        /* Validate record 'A' element 15 sub_element 2 */
-        /* DEM spatial resolution for Y */
-        (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type;
-        (*my_out_ptr2).in_element_number = 15;
-        (*my_out_ptr2).in_sub_element_number = 2;
-        status = read_element(my_out_ptr2);
-        if ((*my_out_ptr2).out_double <= 0) {
-            if (create_log == 1) {
-                bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected > '0'.\n",
+	/* test some of the defined sub_elements for expected values */
+	/* Validate record 'A' element 15 sub_element 2 */
+	/* DEM spatial resolution for Y */
+	(*my_out_ptr2).in_buffer = buf;
+	(*my_out_ptr2).in_record_type = record_type;
+	(*my_out_ptr2).in_element_number = 15;
+	(*my_out_ptr2).in_sub_element_number = 2;
+	status = read_element(my_out_ptr2);
+	if ((*my_out_ptr2).out_double <= 0) {
+	    if (create_log == 1) {
+		bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected > '0'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
-		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double); 
-            }
-            return BRLCAD_ERROR;
-        } 
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double);
+	    }
+	    return BRLCAD_ERROR;
+	}
 
-        /* test some of the defined sub_elements for expected values */
-        /* Validate record 'A' element 15 sub_element 3 */
-        /* DEM spatial resolution for Z */
-        (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type;
-        (*my_out_ptr2).in_element_number = 15;
-        (*my_out_ptr2).in_sub_element_number = 3;
-        status = read_element(my_out_ptr2);
-        if ((*my_out_ptr2).out_double <= 0) {
-            if (create_log == 1) {
-                bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected > '0'.\n",
+	/* test some of the defined sub_elements for expected values */
+	/* Validate record 'A' element 15 sub_element 3 */
+	/* DEM spatial resolution for Z */
+	(*my_out_ptr2).in_buffer = buf;
+	(*my_out_ptr2).in_record_type = record_type;
+	(*my_out_ptr2).in_element_number = 15;
+	(*my_out_ptr2).in_sub_element_number = 3;
+	status = read_element(my_out_ptr2);
+	if ((*my_out_ptr2).out_double <= 0) {
+	    if (create_log == 1) {
+		bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected > '0'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
-		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double); 
-            }
-            return BRLCAD_ERROR;
-        } 
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double);
+	    }
+	    return BRLCAD_ERROR;
+	}
 
-        /* Test some of the defined sub_elements for expected values */
-        /* Validate record 'A' element 16 sub_element 1 */
-        /* Number of rows in DEM file, set to 1 to indicate element 16 */
-        /* sub_element 2 is number of columns in DEM file */
-        /* Only a value of '1' is supported by this program */
-        (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type;
-        (*my_out_ptr2).in_element_number = 16;
-        (*my_out_ptr2).in_sub_element_number = 1;
-        status = read_element(my_out_ptr2);
-        if ((*my_out_ptr2).out_integer != 1) {
-            if (create_log == 1) {
-                bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '1'.\n",
+	/* Test some of the defined sub_elements for expected values */
+	/* Validate record 'A' element 16 sub_element 1 */
+	/* Number of rows in DEM file, set to 1 to indicate element 16 */
+	/* sub_element 2 is number of columns in DEM file */
+	/* Only a value of '1' is supported by this program */
+	(*my_out_ptr2).in_buffer = buf;
+	(*my_out_ptr2).in_record_type = record_type;
+	(*my_out_ptr2).in_element_number = 16;
+	(*my_out_ptr2).in_sub_element_number = 1;
+	status = read_element(my_out_ptr2);
+	if ((*my_out_ptr2).out_integer != 1) {
+	    if (create_log == 1) {
+		bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '1'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
-		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
-            }
-            return BRLCAD_ERROR;
-        } 
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer);
+	    }
+	    return BRLCAD_ERROR;
+	}
 
-        /* Test some of the defined sub_elements for expected values */
-        /* Validate record 'A' element 16 sub_element 2 */
-        /* Number of columns in DEM file */
-        (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type;
-        (*my_out_ptr2).in_element_number = 16;
-        (*my_out_ptr2).in_sub_element_number = 2;
-        status = read_element(my_out_ptr2);
-        if ((*my_out_ptr2).out_integer < 1) {
-            if (create_log == 1) {
-                bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected >= '1'.\n",
+	/* Test some of the defined sub_elements for expected values */
+	/* Validate record 'A' element 16 sub_element 2 */
+	/* Number of columns in DEM file */
+	(*my_out_ptr2).in_buffer = buf;
+	(*my_out_ptr2).in_record_type = record_type;
+	(*my_out_ptr2).in_element_number = 16;
+	(*my_out_ptr2).in_sub_element_number = 2;
+	status = read_element(my_out_ptr2);
+	if ((*my_out_ptr2).out_integer < 1) {
+	    if (create_log == 1) {
+		bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected >= '1'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
-		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
-            }
-            return BRLCAD_ERROR;
-        } 
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer);
+	    }
+	    return BRLCAD_ERROR;
+	}
     } /* endif when record_type == type_a */
 
     if (record_type == type_b) {
-        /* Test some of the defined sub_elements for expected values */
-        /* Validate record 'B' element 1 sub_element 1 */
-        /* Row identification number of the profile, row number is normally set to 1 */
-        /* Only a value of '1' is supported by this program */
-        (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type;
-        (*my_out_ptr2).in_element_number = 1;
-        (*my_out_ptr2).in_sub_element_number = 1;
-        status = read_element(my_out_ptr2);
-        if ((*my_out_ptr2).out_integer != 1) {
-            if (create_log == 1) {
-                bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '1'.\n",
+	/* Test some of the defined sub_elements for expected values */
+	/* Validate record 'B' element 1 sub_element 1 */
+	/* Row identification number of the profile, row number is normally set to 1 */
+	/* Only a value of '1' is supported by this program */
+	(*my_out_ptr2).in_buffer = buf;
+	(*my_out_ptr2).in_record_type = record_type;
+	(*my_out_ptr2).in_element_number = 1;
+	(*my_out_ptr2).in_sub_element_number = 1;
+	status = read_element(my_out_ptr2);
+	if ((*my_out_ptr2).out_integer != 1) {
+	    if (create_log == 1) {
+		bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '1'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
-		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
-            }
-            return BRLCAD_ERROR;
-        } 
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer);
+	    }
+	    return BRLCAD_ERROR;
+	}
 
-        /* Test some of the defined sub_elements for expected values */
-        /* Validate record 'B' element 1 sub_element 2 */
-        /* Column identification number of the profile */
-        (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type;
-        (*my_out_ptr2).in_element_number = 1;
-        (*my_out_ptr2).in_sub_element_number = 2;
-        status = read_element(my_out_ptr2);
-        if ((*my_out_ptr2).out_integer < 1) {
-            if (create_log == 1) {
-                bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected >= '1'.\n",
+	/* Test some of the defined sub_elements for expected values */
+	/* Validate record 'B' element 1 sub_element 2 */
+	/* Column identification number of the profile */
+	(*my_out_ptr2).in_buffer = buf;
+	(*my_out_ptr2).in_record_type = record_type;
+	(*my_out_ptr2).in_element_number = 1;
+	(*my_out_ptr2).in_sub_element_number = 2;
+	status = read_element(my_out_ptr2);
+	if ((*my_out_ptr2).out_integer < 1) {
+	    if (create_log == 1) {
+		bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected >= '1'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
-		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
-            }
-            return BRLCAD_ERROR;
-        } 
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer);
+	    }
+	    return BRLCAD_ERROR;
+	}
 
-        /* Test some of the defined sub_elements for expected values */
-        /* Validate record 'B' element 2 sub_element 1 */
-        /* Number of elevations in profile */
-        (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type;
-        (*my_out_ptr2).in_element_number = 2;
-        (*my_out_ptr2).in_sub_element_number = 1;
-        status = read_element(my_out_ptr2);
-        if ((*my_out_ptr2).out_integer < 1) {
-            if (create_log == 1) {
-                bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected >= '1'.\n",
+	/* Test some of the defined sub_elements for expected values */
+	/* Validate record 'B' element 2 sub_element 1 */
+	/* Number of elevations in profile */
+	(*my_out_ptr2).in_buffer = buf;
+	(*my_out_ptr2).in_record_type = record_type;
+	(*my_out_ptr2).in_element_number = 2;
+	(*my_out_ptr2).in_sub_element_number = 1;
+	status = read_element(my_out_ptr2);
+	if ((*my_out_ptr2).out_integer < 1) {
+	    if (create_log == 1) {
+		bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected >= '1'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
-		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
-            }
-            return BRLCAD_ERROR;
-        } 
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer);
+	    }
+	    return BRLCAD_ERROR;
+	}
 
-        /* Test some of the defined sub_elements for expected values */
-        /* Validate record 'B' element 2 sub_element 2 */
-        /* Number of elevations in profile, 1 indicates 1 column per 'B' record */
-        /* Only a value of '1' is supported by this program */
-        (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type;
-        (*my_out_ptr2).in_element_number = 2;
-        (*my_out_ptr2).in_sub_element_number = 2;
-        status = read_element(my_out_ptr2);
-        if ((*my_out_ptr2).out_integer != 1) {
-            if (create_log == 1) {
-                bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '1'.\n",
+	/* Test some of the defined sub_elements for expected values */
+	/* Validate record 'B' element 2 sub_element 2 */
+	/* Number of elevations in profile, 1 indicates 1 column per 'B' record */
+	/* Only a value of '1' is supported by this program */
+	(*my_out_ptr2).in_buffer = buf;
+	(*my_out_ptr2).in_record_type = record_type;
+	(*my_out_ptr2).in_element_number = 2;
+	(*my_out_ptr2).in_sub_element_number = 2;
+	status = read_element(my_out_ptr2);
+	if ((*my_out_ptr2).out_integer != 1) {
+	    if (create_log == 1) {
+		bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '1'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
-		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
-            }
-            return BRLCAD_ERROR;
-        } 
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer);
+	    }
+	    return BRLCAD_ERROR;
+	}
 
-        /* Test some of the defined sub_elements for expected values */
-        /* Validate record 'B' element 4 sub_element 1 */
-        /* Elevation of local datum for profile */
-        (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type;
-        (*my_out_ptr2).in_element_number = 4;
-        (*my_out_ptr2).in_sub_element_number = 1;
-        status = read_element(my_out_ptr2);
-        if ((*my_out_ptr2).out_double < 0) {
-            if (create_log == 1) {
-                bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected >= '0'.\n",
+	/* Test some of the defined sub_elements for expected values */
+	/* Validate record 'B' element 4 sub_element 1 */
+	/* Elevation of local datum for profile */
+	(*my_out_ptr2).in_buffer = buf;
+	(*my_out_ptr2).in_record_type = record_type;
+	(*my_out_ptr2).in_element_number = 4;
+	(*my_out_ptr2).in_sub_element_number = 1;
+	status = read_element(my_out_ptr2);
+	if ((*my_out_ptr2).out_double < 0) {
+	    if (create_log == 1) {
+		bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected >= '0'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
-		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double); 
-            }
-            return BRLCAD_ERROR;
-        } 
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double);
+	    }
+	    return BRLCAD_ERROR;
+	}
 
-        /* Test some of the defined sub_elements for expected values */
-        /* Validate record 'B' element 5 sub_element 2 */
-        /* Max elevation for profile */
-        (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type;
-        (*my_out_ptr2).in_element_number = 5;
-        (*my_out_ptr2).in_sub_element_number = 2;
-        status = read_element(my_out_ptr2);
-        if ((*my_out_ptr2).out_double < 0) {
-            if (create_log == 1) {
-                bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected >= '0'.\n",
+	/* Test some of the defined sub_elements for expected values */
+	/* Validate record 'B' element 5 sub_element 2 */
+	/* Max elevation for profile */
+	(*my_out_ptr2).in_buffer = buf;
+	(*my_out_ptr2).in_record_type = record_type;
+	(*my_out_ptr2).in_element_number = 5;
+	(*my_out_ptr2).in_sub_element_number = 2;
+	status = read_element(my_out_ptr2);
+	if ((*my_out_ptr2).out_double < 0) {
+	    if (create_log == 1) {
+		bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected >= '0'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
-		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double); 
-            }
-            return BRLCAD_ERROR;
-        } 
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double);
+	    }
+	    return BRLCAD_ERROR;
+	}
     } /* endif when record_type == type_b */
 
     status = BRLCAD_OK;
@@ -785,69 +785,69 @@ int process_manual_scale_factor(
     raw_dem_2_raw_dsp_manual_scale_factor_upperlimit = 65535;
     if (!((*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr >= raw_dem_2_raw_dsp_manual_scale_factor_lowerlimit) &&
 	  (*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr <= raw_dem_2_raw_dsp_manual_scale_factor_upperlimit))) {
-        bu_log("Scale factor '%g' was entered. Scale factor must be between '%g' and '%g' inclusive.\n",
+	bu_log("Scale factor '%g' was entered. Scale factor must be between '%g' and '%g' inclusive.\n",
 	       *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr, raw_dem_2_raw_dsp_manual_scale_factor_lowerlimit,
 	       raw_dem_2_raw_dsp_manual_scale_factor_upperlimit);
-        return BRLCAD_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (EQUAL(*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr, *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr)) {
-        /* manual scale factor = auto scale
+	/* manual scale factor = auto scale
 	 * factor. derived_dem_max_raw_elevation is any value
 	 * 0-999999
 	 */
-        bu_log("Entered scale factor '%g' matches the default computed scale factor.\n", *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr);
+	bu_log("Entered scale factor '%g' matches the default computed scale factor.\n", *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr);
     } else {
-        if (*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr > *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr) {
-            /* clipping.  manual scale factor > auto scale factor
-             * derived_dem_max_raw_elevation is any value 0-999999
+	if (*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr > *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr) {
+	    /* clipping.  manual scale factor > auto scale factor
+	     * derived_dem_max_raw_elevation is any value 0-999999
 	     */
-            dem_max_raw_clipped_elevation = round_closest(65535 / *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr);
-            dem_max_real_clipped_elevation = 
-                (dem_max_raw_clipped_elevation * *in_z_spatial_resolution_ptr) + *in_datum_elevation_in_curr_b_record_ptr;
-            bu_log("Scale factor '%g' was entered. Scale factors above '%g' cause clipping.\n", 
+	    dem_max_raw_clipped_elevation = round_closest(65535 / *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr);
+	    dem_max_real_clipped_elevation =
+		(dem_max_raw_clipped_elevation * *in_z_spatial_resolution_ptr) + *in_datum_elevation_in_curr_b_record_ptr;
+	    bu_log("Scale factor '%g' was entered. Scale factors above '%g' cause clipping.\n",
 		   *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr, *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr);
-            bu_log("Raw DEM elevations above '%ld' are clipped.\n", dem_max_raw_clipped_elevation);
-            /* real elevations are in milimeters, convert to meters before reporting value to user */
-            bu_log("Real DEM elevations above '%g' meters are clipped.\n",
+	    bu_log("Raw DEM elevations above '%ld' are clipped.\n", dem_max_raw_clipped_elevation);
+	    /* real elevations are in milimeters, convert to meters before reporting value to user */
+	    bu_log("Real DEM elevations above '%g' meters are clipped.\n",
 		   (dem_max_real_clipped_elevation / conversion_factor_to_milimeters[2]));
-        } else {
-            /* manual scale factor < auto scale factor */
-            if (*in_derived_dem_max_raw_elevation_ptr > 65535) {
-                /* additional loss of resolution.  dem file contains
-                 * raw elevations requiring more than a 2 byte integer
-                 * to represent therefore an unavoidable amount of
-                 * loss of resolution is required. in this case where
-                 * manual scale factor < auto scale factor, this
-                 * introduces an additional loss of resolution that is
-                 * not necessary.
+	} else {
+	    /* manual scale factor < auto scale factor */
+	    if (*in_derived_dem_max_raw_elevation_ptr > 65535) {
+		/* additional loss of resolution.  dem file contains
+		 * raw elevations requiring more than a 2 byte integer
+		 * to represent therefore an unavoidable amount of
+		 * loss of resolution is required. in this case where
+		 * manual scale factor < auto scale factor, this
+		 * introduces an additional loss of resolution that is
+		 * not necessary.
 		 */
-                bu_log("Scale factor '%g' was entered. Scale factors below '%g' cause additional loss of resolution.\n", 
+		bu_log("Scale factor '%g' was entered. Scale factors below '%g' cause additional loss of resolution.\n",
 		       *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr, *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr);
-            } else {
-                /* derived_dem_max_raw_elevation <= 65535.  dem file
+	    } else {
+		/* derived_dem_max_raw_elevation <= 65535.  dem file
 		 * elevations can fit into a 2 byte integer, therefore
 		 * no minimun loss of resolution is required to
 		 * represent the dem elevations within the dsp format.
 		 */
-                if (*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr < 1) {
-                    /* forced loss of resolution.  manual scale factor
+		if (*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr < 1) {
+		    /* forced loss of resolution.  manual scale factor
 		     * < 1 (and) manual scale factor < auto scale
 		     * factor
 		     */
-                    bu_log("Scale factor '%g' was entered. Scale factors below '1' cause loss of resolution.\n", 
+		    bu_log("Scale factor '%g' was entered. Scale factors below '1' cause loss of resolution.\n",
 			   *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr);
-                } else {
-                    /* no loss of resolution.  manual scale factor >=
-                     * 1 (and) manual scale factor < auto scale factor
-                     * under these conditions no loss of resolution
-                     * will occur.
+		} else {
+		    /* no loss of resolution.  manual scale factor >=
+		     * 1 (and) manual scale factor < auto scale factor
+		     * under these conditions no loss of resolution
+		     * will occur.
 		     */
-                    bu_log("Scale factor '%g' was entered. No loss of resolution will occur.\n", 
+		    bu_log("Scale factor '%g' was entered. No loss of resolution will occur.\n",
 			   *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr);
-                }
-            }
-        }
+		}
+	    }
+	}
     }
     return BRLCAD_OK;
 }
@@ -874,73 +874,73 @@ int process_manual_dem_max_raw_elevation(
     /* dem max raw elevation */
     /* test for zero to avoid divide by 0 math error */
     if (round_closest(*in_manual_dem_max_raw_elevation_ptr) > 0) {
-        *out_raw_dem_2_raw_dsp_scale_factor_ptr = DSP_MAX_RAW_ELEVATION / (double)*in_manual_dem_max_raw_elevation_ptr;
+	*out_raw_dem_2_raw_dsp_scale_factor_ptr = DSP_MAX_RAW_ELEVATION / (double)*in_manual_dem_max_raw_elevation_ptr;
     } else {
-        *out_raw_dem_2_raw_dsp_scale_factor_ptr = 1;
+	*out_raw_dem_2_raw_dsp_scale_factor_ptr = 1;
     }
 
     /* test user input 'dem max raw elevation' if out of valid range */
     if (!((*in_manual_dem_max_raw_elevation_ptr >= manual_dem_max_raw_elevation_lowerlimit) &&
 	  (*in_manual_dem_max_raw_elevation_ptr <= manual_dem_max_raw_elevation_upperlimit))) {
-        bu_log("DEM max raw elevation '%ld' was entered. DEM max raw elevation must be between '%ld' and '%ld' inclusive.\n",
+	bu_log("DEM max raw elevation '%ld' was entered. DEM max raw elevation must be between '%ld' and '%ld' inclusive.\n",
 	       *in_manual_dem_max_raw_elevation_ptr, manual_dem_max_raw_elevation_lowerlimit, manual_dem_max_raw_elevation_upperlimit);
-        return BRLCAD_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (EQUAL(*in_manual_dem_max_raw_elevation_ptr, *in_derived_dem_max_raw_elevation_ptr)) {
-        /* user input 'dem max raw elevation' = 'derived dem max raw
-         * elevation'.  the derived raw dem elevation must be derived
-         * from the real elevation listed in the 'a' record.
-         * derived_dem_max_raw_elevation can be any value 0-999999
+	/* user input 'dem max raw elevation' = 'derived dem max raw
+	 * elevation'.  the derived raw dem elevation must be derived
+	 * from the real elevation listed in the 'a' record.
+	 * derived_dem_max_raw_elevation can be any value 0-999999
 	 */
-        bu_log("Entered DEM max raw elevation '%ld' matches actual DEM max raw elevation.\n", *in_manual_dem_max_raw_elevation_ptr);
+	bu_log("Entered DEM max raw elevation '%ld' matches actual DEM max raw elevation.\n", *in_manual_dem_max_raw_elevation_ptr);
     } else {
-        if (*in_manual_dem_max_raw_elevation_ptr < *in_derived_dem_max_raw_elevation_ptr) {
-            /* clipping.  user input 'dem max raw elevation' <
-             * 'derived dem max raw elevation'
-             * derived_dem_max_raw_elevation is any value 0-999999
+	if (*in_manual_dem_max_raw_elevation_ptr < *in_derived_dem_max_raw_elevation_ptr) {
+	    /* clipping.  user input 'dem max raw elevation' <
+	     * 'derived dem max raw elevation'
+	     * derived_dem_max_raw_elevation is any value 0-999999
 	     */
-            dem_max_real_clipped_elevation = (*in_manual_dem_max_raw_elevation_ptr * *in_z_spatial_resolution_ptr) +
+	    dem_max_real_clipped_elevation = (*in_manual_dem_max_raw_elevation_ptr * *in_z_spatial_resolution_ptr) +
 		*in_datum_elevation_in_curr_b_record_ptr;
-            bu_log("DEM max raw elevation '%ld' was entered. Elevations below '%g' cause clipping.\n", 
+	    bu_log("DEM max raw elevation '%ld' was entered. Elevations below '%g' cause clipping.\n",
 		   *in_manual_dem_max_raw_elevation_ptr, *in_derived_dem_max_raw_elevation_ptr);
-            bu_log("Raw DEM elevations above '%ld' are clipped.\n", *in_manual_dem_max_raw_elevation_ptr);
-            /* real elevations are in milimeters, convert to meters before reporting value to user */
-            bu_log("Real DEM elevations above '%g' meters are clipped.\n",
+	    bu_log("Raw DEM elevations above '%ld' are clipped.\n", *in_manual_dem_max_raw_elevation_ptr);
+	    /* real elevations are in milimeters, convert to meters before reporting value to user */
+	    bu_log("Real DEM elevations above '%g' meters are clipped.\n",
 		   (dem_max_real_clipped_elevation / conversion_factor_to_milimeters[2]));
-        } else {
-            /* user input 'dem max raw elevation' > 'derived dem max raw elevation' */
-            if (*in_derived_dem_max_raw_elevation_ptr > 65535) {
-                /* additional loss of resolution.  dem file contains
-                 * raw elevations requiring more than a 2 byte integer
-                 * to represent therefore an unavoidable amount of
-                 * loss of resolution is required. in this case where
-                 * 'dem max raw elevation' > 'derived dem max raw
-                 * elevation', this introduces an additional loss of
-                 * resolution that is not necessary.
+	} else {
+	    /* user input 'dem max raw elevation' > 'derived dem max raw elevation' */
+	    if (*in_derived_dem_max_raw_elevation_ptr > 65535) {
+		/* additional loss of resolution.  dem file contains
+		 * raw elevations requiring more than a 2 byte integer
+		 * to represent therefore an unavoidable amount of
+		 * loss of resolution is required. in this case where
+		 * 'dem max raw elevation' > 'derived dem max raw
+		 * elevation', this introduces an additional loss of
+		 * resolution that is not necessary.
 		 */
-                bu_log("DEM max raw elevation '%ld' was entered. Elevations above '%g' cause additional loss of resolution.\n", 
+		bu_log("DEM max raw elevation '%ld' was entered. Elevations above '%g' cause additional loss of resolution.\n",
 		       *in_manual_dem_max_raw_elevation_ptr, *in_derived_dem_max_raw_elevation_ptr);
-            } else {
-                /* derived_dem_max_raw_elevation <= 65535 */
-                /* dem file elevations can fit into a 2 byte integer, therefore no minimun loss of resolution */
-                /* is required to represent the dem elevations within the dsp format. */
-                if (*in_manual_dem_max_raw_elevation_ptr > 65535) {
-                    /* forced loss of resolution */
-                    /* user input 'dem max raw elevation' > 65535 (and) */
-                    /* user input 'dem max raw elevation' > 'derived dem max raw elevation' */
-                    bu_log("DEM max raw elevation '%ld' was entered. Raw elevations above 65535 cause loss of resolution.\n", 
+	    } else {
+		/* derived_dem_max_raw_elevation <= 65535 */
+		/* dem file elevations can fit into a 2 byte integer, therefore no minimun loss of resolution */
+		/* is required to represent the dem elevations within the dsp format. */
+		if (*in_manual_dem_max_raw_elevation_ptr > 65535) {
+		    /* forced loss of resolution */
+		    /* user input 'dem max raw elevation' > 65535 (and) */
+		    /* user input 'dem max raw elevation' > 'derived dem max raw elevation' */
+		    bu_log("DEM max raw elevation '%ld' was entered. Raw elevations above 65535 cause loss of resolution.\n",
 			   *in_manual_dem_max_raw_elevation_ptr);
-                } else {
-                    /* no loss of resolution */
-                    /* user input 'dem max raw elevation' <= 65535 (and) */
-                    /* user input 'dem max raw elevation' > 'derived dem max raw elevation' */
-                    /* under these conditions no loss of resolution will occur. */
-                    bu_log("DEM max raw elevation '%ld' was entered. No loss of resolution will occur.\n",
+		} else {
+		    /* no loss of resolution */
+		    /* user input 'dem max raw elevation' <= 65535 (and) */
+		    /* user input 'dem max raw elevation' > 'derived dem max raw elevation' */
+		    /* under these conditions no loss of resolution will occur. */
+		    bu_log("DEM max raw elevation '%ld' was entered. No loss of resolution will occur.\n",
 			   *in_manual_dem_max_raw_elevation_ptr);
-                }
-            }
-        }
+		}
+	    }
+	}
     }
     return BRLCAD_OK;
 }
@@ -963,7 +963,7 @@ int process_manual_dem_max_real_elevation(
     double manual_dem_max_real_elevation_upperlimit = 0;
     double dem_max_raw_elevation = 0;
     double adjusted_manual_dem_max_real_elevation = 0; /* value adjusted to multiple of z_spatial */
-    /* resolution then add datum elevation */ 
+    /* resolution then add datum elevation */
 
     /* makes sure *in_manual_dem_max_real_elevation_ptr >= *in_datum_elevation_in_curr_b_record_ptr */
     manual_dem_max_real_elevation_lowerlimit = *in_z_spatial_resolution_ptr + *in_datum_elevation_in_curr_b_record_ptr;
@@ -972,27 +972,27 @@ int process_manual_dem_max_real_elevation(
     /* test user input 'dem max real elevation' if out of valid range */
     if (!((*in_manual_dem_max_real_elevation_ptr >= manual_dem_max_real_elevation_lowerlimit) &&
 	  (*in_manual_dem_max_real_elevation_ptr <= manual_dem_max_real_elevation_upperlimit))) {
-        /* real elevations are processed in the unit milimeters, convert to meters before reporting to user */
-        bu_log("DEM max real elevation '%g' meters was entered.\n", 
+	/* real elevations are processed in the unit milimeters, convert to meters before reporting to user */
+	bu_log("DEM max real elevation '%g' meters was entered.\n",
 	       (*in_manual_dem_max_real_elevation_ptr / conversion_factor_to_milimeters[2]));
-        bu_log("DEM max real elevation must be between '%g' meters and '%g' meters inclusive.\n",
-	       (manual_dem_max_real_elevation_lowerlimit / conversion_factor_to_milimeters[2]), 
+	bu_log("DEM max real elevation must be between '%g' meters and '%g' meters inclusive.\n",
+	       (manual_dem_max_real_elevation_lowerlimit / conversion_factor_to_milimeters[2]),
 	       (manual_dem_max_real_elevation_upperlimit / conversion_factor_to_milimeters[2]));
-        return BRLCAD_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    /* manual_dem_max_real_elevation value adjusted to multiple of z_spatial resolution then add datum elevation */ 
-    adjusted_manual_dem_max_real_elevation = 
-        (round_closest((*in_manual_dem_max_real_elevation_ptr - *in_datum_elevation_in_curr_b_record_ptr) / *in_z_spatial_resolution_ptr) * 
-	 *in_z_spatial_resolution_ptr) + *in_datum_elevation_in_curr_b_record_ptr;  
+    /* manual_dem_max_real_elevation value adjusted to multiple of z_spatial resolution then add datum elevation */
+    adjusted_manual_dem_max_real_elevation =
+	(round_closest((*in_manual_dem_max_real_elevation_ptr - *in_datum_elevation_in_curr_b_record_ptr) / *in_z_spatial_resolution_ptr) *
+	 *in_z_spatial_resolution_ptr) + *in_datum_elevation_in_curr_b_record_ptr;
 
     /* compute raw elevation that corresponds to the adjusted user input max real elevation */
     dem_max_raw_elevation = (adjusted_manual_dem_max_real_elevation - *in_datum_elevation_in_curr_b_record_ptr) / *in_z_spatial_resolution_ptr;
 
     /* report to user the actual max real elevation used if not the value the user entered */
     if (!EQUAL(adjusted_manual_dem_max_real_elevation, *in_manual_dem_max_real_elevation_ptr)) {
-        /* real elevations are processed in the unit milimeters, convert to meters before reporting to user */
-        bu_log("Using max real elevation '%g' meters instead of '%g' meters to allow correct scaling.\n",
+	/* real elevations are processed in the unit milimeters, convert to meters before reporting to user */
+	bu_log("Using max real elevation '%g' meters instead of '%g' meters to allow correct scaling.\n",
 	       (adjusted_manual_dem_max_real_elevation / conversion_factor_to_milimeters[2]),
 	       (*in_manual_dem_max_real_elevation_ptr / conversion_factor_to_milimeters[2]));
     }
@@ -1000,9 +1000,9 @@ int process_manual_dem_max_real_elevation(
     /* compute raw_dem_2_raw_dsp_scale_factor based on the adjusted, user entered, dem max real elevation */
     /* test for zero to avoid divide by 0 math error */
     if (round_closest(dem_max_raw_elevation) > 0) {
-        *out_raw_dem_2_raw_dsp_scale_factor_ptr = DSP_MAX_RAW_ELEVATION / (double)dem_max_raw_elevation;
+	*out_raw_dem_2_raw_dsp_scale_factor_ptr = DSP_MAX_RAW_ELEVATION / (double)dem_max_raw_elevation;
     } else {
-        *out_raw_dem_2_raw_dsp_scale_factor_ptr = 1;
+	*out_raw_dem_2_raw_dsp_scale_factor_ptr = 1;
     }
     return BRLCAD_OK;
 }
@@ -1064,13 +1064,13 @@ read_dem(
     *out_unit_elevation = 0;
 
     if ((fp=fopen(in_input_filename, "r")) == NULL) {
-        bu_log("Could not open '%s' for read.\n", in_input_filename);
-        return BRLCAD_ERROR;
+	bu_log("Could not open '%s' for read.\n", in_input_filename);
+	return BRLCAD_ERROR;
     }
     if ((fp2=fopen(in_temp_filename, "wb")) == NULL) {
-        bu_log("Could not open '%s' for write.\n", in_temp_filename);
-        fclose(fp);
-        return BRLCAD_ERROR;
+	bu_log("Could not open '%s' for write.\n", in_temp_filename);
+	fclose(fp);
+	return BRLCAD_ERROR;
     }
 
     /* Reads 1st 1024 character block from dem-g file; this block
@@ -1085,10 +1085,10 @@ read_dem(
      * required sub_elements contain values.
      */
     if (validate_dem_record(buf, 1, type_a) == BRLCAD_ERROR) {
-        bu_log("The DEM file did not validate, failed on logical record type 'A'.\n");
-        fclose(fp);
-        fclose(fp2);
-        return BRLCAD_ERROR;
+	bu_log("The DEM file did not validate, failed on logical record type 'A'.\n");
+	fclose(fp);
+	fclose(fp2);
+	return BRLCAD_ERROR;
     }
 
     /* read quantity of b type records from a record */
@@ -1109,10 +1109,10 @@ read_dem(
     status = read_element(my_out_ptr);
     elevation_units = (*my_out_ptr).out_integer;
     if (elevation_units == 1) {
-        bu_log("elevation units in feet\n");
+	bu_log("elevation units in feet\n");
     }
     if (elevation_units == 2) {
-        bu_log("elevation units in meters\n");
+	bu_log("elevation units in meters\n");
     }
 
     /* Read ground units from 'a' record */
@@ -1123,18 +1123,18 @@ read_dem(
     status = read_element(my_out_ptr);
     ground_units = (*my_out_ptr).out_integer;
     if (ground_units == 0) {
-        bu_log("ground units in radians, unit conversion assumes 1 arc-second = 30 meters\n");
+	bu_log("ground units in radians, unit conversion assumes 1 arc-second = 30 meters\n");
     }
     if (ground_units == 1) {
-        bu_log("ground units in feet\n");
+	bu_log("ground units in feet\n");
     }
     if (ground_units == 2) {
-        bu_log("ground units in meters\n");
+	bu_log("ground units in meters\n");
     }
     if (ground_units == 3) {
-        bu_log("ground units in arc-seconds, unit conversion assumes 1 arc-second = 30 meters\n");
+	bu_log("ground units in arc-seconds, unit conversion assumes 1 arc-second = 30 meters\n");
     }
-    
+
     /* Read x spatial resolution from 'a' record. The x spatial
      * resolution is the x cell size of the dsp primative.
      */
@@ -1184,368 +1184,368 @@ read_dem(
     tot_elevations_in_prev_b_records = 0;
     for (curr_b_record = 1; curr_b_record <= *out_xdim; curr_b_record++) {
 
-        /* Reads 1024 character block from dem-g file */
-        /* this block contains the record 'b' header and data. */
-        ret = fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
+	/* Reads 1024 character block from dem-g file */
+	/* this block contains the record 'b' header and data. */
+	ret = fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
 	if (ret < sizeof(buf) / sizeof(buf[0])) {
 	    bu_log("Failed to read the 'B' record\n");
 	}
 
-        /* Validates all 'B' record header sub_elements can be read
-         * and all required sub_elements contain values.
+	/* Validates all 'B' record header sub_elements can be read
+	 * and all required sub_elements contain values.
 	 */
-        if (validate_dem_record(buf, 1, type_b) == BRLCAD_ERROR) {
-            bu_log("The DEM file did not validate, failed on logical record type 'B' number '%ld'.\n", curr_b_record);
-            fclose(fp);
-            fclose(fp2);
-            return BRLCAD_ERROR;
-        }
+	if (validate_dem_record(buf, 1, type_b) == BRLCAD_ERROR) {
+	    bu_log("The DEM file did not validate, failed on logical record type 'B' number '%ld'.\n", curr_b_record);
+	    fclose(fp);
+	    fclose(fp2);
+	    return BRLCAD_ERROR;
+	}
 
-        /* Saves the number of elevations in the previous b record */
-        tot_elevations_in_previous_b_record = tot_elevations_in_curr_b_record;
+	/* Saves the number of elevations in the previous b record */
+	tot_elevations_in_previous_b_record = tot_elevations_in_curr_b_record;
 
-        /* Read total elevations in current 'b' record from the 'b'
-         * record header currently in the buffer.
-	 */
-        (*my_out_ptr).in_buffer = buf;
-        (*my_out_ptr).in_record_type = type_b;
-        (*my_out_ptr).in_element_number = 2;
-        (*my_out_ptr).in_sub_element_number = 1;
-        status = read_element(my_out_ptr);
-        tot_elevations_in_curr_b_record = (*my_out_ptr).out_integer;
-
-        /* Saves the datum elevation from the previous 'b' record */
-        datum_elevation_in_previous_b_record = datum_elevation_in_curr_b_record;
-
-        /* Read datum elevation in current 'b' record from the 'b'
+	/* Read total elevations in current 'b' record from the 'b'
 	 * record header currently in the buffer.
 	 */
-        (*my_out_ptr).in_buffer = buf;
-        (*my_out_ptr).in_record_type = type_b;
-        (*my_out_ptr).in_element_number = 4;
-        (*my_out_ptr).in_sub_element_number = 1;
-        status = read_element(my_out_ptr);
-        datum_elevation_in_curr_b_record = (*my_out_ptr).out_double * conversion_factor_to_milimeters[elevation_units];
+	(*my_out_ptr).in_buffer = buf;
+	(*my_out_ptr).in_record_type = type_b;
+	(*my_out_ptr).in_element_number = 2;
+	(*my_out_ptr).in_sub_element_number = 1;
+	status = read_element(my_out_ptr);
+	tot_elevations_in_curr_b_record = (*my_out_ptr).out_integer;
 
-        /* Enforces all 'b' records have the same datum elevation and
-         * each 'b' record has the same number of elevations.  The dem
-         * standard allows these values to be different in each 'b'
-         * record but this is not supported by this code.
+	/* Saves the datum elevation from the previous 'b' record */
+	datum_elevation_in_previous_b_record = datum_elevation_in_curr_b_record;
+
+	/* Read datum elevation in current 'b' record from the 'b'
+	 * record header currently in the buffer.
 	 */
-        if (curr_b_record > 1) {
-            if (!EQUAL(datum_elevation_in_curr_b_record, datum_elevation_in_previous_b_record)) {
-                bu_log("Datum elevation in 'B' record number '%ld' does not match previous 'B' record datum elevations.\n", 
+	(*my_out_ptr).in_buffer = buf;
+	(*my_out_ptr).in_record_type = type_b;
+	(*my_out_ptr).in_element_number = 4;
+	(*my_out_ptr).in_sub_element_number = 1;
+	status = read_element(my_out_ptr);
+	datum_elevation_in_curr_b_record = (*my_out_ptr).out_double * conversion_factor_to_milimeters[elevation_units];
+
+	/* Enforces all 'b' records have the same datum elevation and
+	 * each 'b' record has the same number of elevations.  The dem
+	 * standard allows these values to be different in each 'b'
+	 * record but this is not supported by this code.
+	 */
+	if (curr_b_record > 1) {
+	    if (!EQUAL(datum_elevation_in_curr_b_record, datum_elevation_in_previous_b_record)) {
+		bu_log("Datum elevation in 'B' record number '%ld' does not match previous 'B' record datum elevations.\n",
 		       curr_b_record);
-                bu_log("Datum elevation in current b record is: %g\n", datum_elevation_in_curr_b_record);
-                bu_log("Datum elevation in previous b record is: %g\n", datum_elevation_in_previous_b_record);
-                bu_log("This condition is unsupported, import can not continue.\n"); 
-                fclose(fp);
-                fclose(fp2);
-                return BRLCAD_ERROR;
-            }
-            if (tot_elevations_in_curr_b_record != tot_elevations_in_previous_b_record) {
-                bu_log("Number of elevations in 'B' record number '%ld' does not match previous 'B' record number of elevations.\n", 
+		bu_log("Datum elevation in current b record is: %g\n", datum_elevation_in_curr_b_record);
+		bu_log("Datum elevation in previous b record is: %g\n", datum_elevation_in_previous_b_record);
+		bu_log("This condition is unsupported, import can not continue.\n");
+		fclose(fp);
+		fclose(fp2);
+		return BRLCAD_ERROR;
+	    }
+	    if (tot_elevations_in_curr_b_record != tot_elevations_in_previous_b_record) {
+		bu_log("Number of elevations in 'B' record number '%ld' does not match previous 'B' record number of elevations.\n",
 		       curr_b_record);
-                bu_log("The number of elevations in the current b record is: %ld\n", tot_elevations_in_curr_b_record);
-                bu_log("The number of elevations in the previous b record is: %ld\n", tot_elevations_in_previous_b_record);
-                bu_log("This condition is unsupported, import can not continue.\n"); 
-                fclose(fp);
-                fclose(fp2);
-                return BRLCAD_ERROR;
-            }
-        }
+		bu_log("The number of elevations in the current b record is: %ld\n", tot_elevations_in_curr_b_record);
+		bu_log("The number of elevations in the previous b record is: %ld\n", tot_elevations_in_previous_b_record);
+		bu_log("This condition is unsupported, import can not continue.\n");
+		fclose(fp);
+		fclose(fp2);
+		return BRLCAD_ERROR;
+	    }
+	}
 
 	/* only perform these computations once for the dem file using
 	 * only the values from header of the 1st b record it is
 	 * assumed the input values will be the same for the remaining
 	 * b records, but this should be verified.
 	 */
-        if (curr_b_record == 1) {
-            /* compute scaling factor to convert raw dem elevation values into raw dsp elevation values */
-            derived_dem_max_raw_elevation = (elevation_max_in_a_record - datum_elevation_in_curr_b_record) / *out_unit_elevation;
-            bu_log("derived_dem_max_raw_elevation: %g\n", derived_dem_max_raw_elevation);
+	if (curr_b_record == 1) {
+	    /* compute scaling factor to convert raw dem elevation values into raw dsp elevation values */
+	    derived_dem_max_raw_elevation = (elevation_max_in_a_record - datum_elevation_in_curr_b_record) / *out_unit_elevation;
+	    bu_log("derived_dem_max_raw_elevation: %g\n", derived_dem_max_raw_elevation);
 
-            /* Test for negative value of
-             * derived_dem_max_raw_elevation if a negative value
-             * occurs, exit import because a fatal inconsistency
-             * exists in the dem data. This test assumes that
-             * *out_unit_elevation is always > 0.
+	    /* Test for negative value of
+	     * derived_dem_max_raw_elevation if a negative value
+	     * occurs, exit import because a fatal inconsistency
+	     * exists in the dem data. This test assumes that
+	     * *out_unit_elevation is always > 0.
 	     */
-            if (derived_dem_max_raw_elevation < 0) {
-                bu_log("A fatal inconsistency occured in DEM data.\n");
-                bu_log("'B' record datum elevation can not be greater than 'A' record max elevation.\n");
-                bu_log("Error occured in 'B' record number '1'.\n");
-                bu_log("'A' record max elevation is: %g\n", elevation_max_in_a_record);
-                bu_log("'B' record datum elevation is: %g\n", datum_elevation_in_curr_b_record);
-                bu_log("Import can not continue.\n"); 
-                fclose(fp);
-                fclose(fp2);
-                return BRLCAD_ERROR;
-            }
+	    if (derived_dem_max_raw_elevation < 0) {
+		bu_log("A fatal inconsistency occured in DEM data.\n");
+		bu_log("'B' record datum elevation can not be greater than 'A' record max elevation.\n");
+		bu_log("Error occured in 'B' record number '1'.\n");
+		bu_log("'A' record max elevation is: %g\n", elevation_max_in_a_record);
+		bu_log("'B' record datum elevation is: %g\n", datum_elevation_in_curr_b_record);
+		bu_log("Import can not continue.\n");
+		fclose(fp);
+		fclose(fp2);
+		return BRLCAD_ERROR;
+	    }
 
-            /* test for zero to avoid divide by 0 math error */
-            if (!ZERO(derived_dem_max_raw_elevation)) {
-                raw_dem_2_raw_dsp_auto_scale_factor = DSP_MAX_RAW_ELEVATION / (double)derived_dem_max_raw_elevation;
-            } else {
-                raw_dem_2_raw_dsp_auto_scale_factor = 1;
-            }
-            /* set the scale factor to use the default auto_scale_factor */
-            /* the auto value should be used if user have not specified */
-            /* any custom values. */
-            raw_dem_2_raw_dsp_scale_factor = raw_dem_2_raw_dsp_auto_scale_factor;
+	    /* test for zero to avoid divide by 0 math error */
+	    if (!ZERO(derived_dem_max_raw_elevation)) {
+		raw_dem_2_raw_dsp_auto_scale_factor = DSP_MAX_RAW_ELEVATION / (double)derived_dem_max_raw_elevation;
+	    } else {
+		raw_dem_2_raw_dsp_auto_scale_factor = 1;
+	    }
+	    /* set the scale factor to use the default auto_scale_factor */
+	    /* the auto value should be used if user have not specified */
+	    /* any custom values. */
+	    raw_dem_2_raw_dsp_scale_factor = raw_dem_2_raw_dsp_auto_scale_factor;
 
-            /* Test to be sure only one user custom value was passed to */
-            /* this function. A non-zero value indicates a value was passed. */  
-            /* More than one value defined will cause this function to abort. */
-            if (*in_raw_dem_2_raw_dsp_manual_scale_factor > 0) {
-                if (*in_manual_dem_max_raw_elevation > 0) {
-                    bu_log("Error occured in function 'read_dem', too many user values passed to this function.\n");
-                    return BRLCAD_ERROR;
-                }
-                if (*in_manual_dem_max_real_elevation > 0) {
-                    bu_log("Error occured in function 'read_dem', too many user values passed to this function.\n");
-                    return BRLCAD_ERROR;
-                }
-            } else {
-                if (*in_manual_dem_max_raw_elevation > 0) {
-                    if (*in_raw_dem_2_raw_dsp_manual_scale_factor > 0) {
-                        bu_log("Error occured in function 'read_dem', too many user values passed to this function.\n");
-                        return BRLCAD_ERROR;
-                    }
-                    if (*in_manual_dem_max_real_elevation > 0) {
-                        bu_log("Error occured in function 'read_dem', too many user values passed to this function.\n");
-                        return BRLCAD_ERROR;
-                    }
-                } else {
-                    if (*in_manual_dem_max_real_elevation > 0) {
-                        if (*in_raw_dem_2_raw_dsp_manual_scale_factor > 0) {
-                            bu_log("Error occured in function 'read_dem', too many user values passed to this function.\n");
-                            return BRLCAD_ERROR;
-                        }
-                        if (*in_manual_dem_max_raw_elevation > 0) {
-                            bu_log("Error occured in function 'read_dem', too many user values passed to this function.\n");
-                            return BRLCAD_ERROR;
-                        }
-                    }
-                }
-            }
+	    /* Test to be sure only one user custom value was passed to */
+	    /* this function. A non-zero value indicates a value was passed. */
+	    /* More than one value defined will cause this function to abort. */
+	    if (*in_raw_dem_2_raw_dsp_manual_scale_factor > 0) {
+		if (*in_manual_dem_max_raw_elevation > 0) {
+		    bu_log("Error occured in function 'read_dem', too many user values passed to this function.\n");
+		    return BRLCAD_ERROR;
+		}
+		if (*in_manual_dem_max_real_elevation > 0) {
+		    bu_log("Error occured in function 'read_dem', too many user values passed to this function.\n");
+		    return BRLCAD_ERROR;
+		}
+	    } else {
+		if (*in_manual_dem_max_raw_elevation > 0) {
+		    if (*in_raw_dem_2_raw_dsp_manual_scale_factor > 0) {
+			bu_log("Error occured in function 'read_dem', too many user values passed to this function.\n");
+			return BRLCAD_ERROR;
+		    }
+		    if (*in_manual_dem_max_real_elevation > 0) {
+			bu_log("Error occured in function 'read_dem', too many user values passed to this function.\n");
+			return BRLCAD_ERROR;
+		    }
+		} else {
+		    if (*in_manual_dem_max_real_elevation > 0) {
+			if (*in_raw_dem_2_raw_dsp_manual_scale_factor > 0) {
+			    bu_log("Error occured in function 'read_dem', too many user values passed to this function.\n");
+			    return BRLCAD_ERROR;
+			}
+			if (*in_manual_dem_max_raw_elevation > 0) {
+			    bu_log("Error occured in function 'read_dem', too many user values passed to this function.\n");
+			    return BRLCAD_ERROR;
+			}
+		    }
+		}
+	    }
 
-            /* Test for user entered raw scale factor, if so, process value. */
-            /* Test if value is within a valid range and warn user if a chosen */
-            /* valid value will produce less than optimal results. */
-            if (*in_raw_dem_2_raw_dsp_manual_scale_factor > 0) {
-                raw_dem_2_raw_dsp_scale_factor = *in_raw_dem_2_raw_dsp_manual_scale_factor;
-                status = process_manual_scale_factor(&raw_dem_2_raw_dsp_auto_scale_factor,
+	    /* Test for user entered raw scale factor, if so, process value. */
+	    /* Test if value is within a valid range and warn user if a chosen */
+	    /* valid value will produce less than optimal results. */
+	    if (*in_raw_dem_2_raw_dsp_manual_scale_factor > 0) {
+		raw_dem_2_raw_dsp_scale_factor = *in_raw_dem_2_raw_dsp_manual_scale_factor;
+		status = process_manual_scale_factor(&raw_dem_2_raw_dsp_auto_scale_factor,
 						     in_raw_dem_2_raw_dsp_manual_scale_factor, &derived_dem_max_raw_elevation, out_unit_elevation,
 						     &datum_elevation_in_curr_b_record);
-                if (status == BRLCAD_ERROR) {
-                    /* problem encountered processing custom value for scale factor, */
-                    /* or value entered was not within the valid range. */
-                    fclose(fp);
-                    fclose(fp2);
-                    return BRLCAD_ERROR;
-                }
-            }
+		if (status == BRLCAD_ERROR) {
+		    /* problem encountered processing custom value for scale factor, */
+		    /* or value entered was not within the valid range. */
+		    fclose(fp);
+		    fclose(fp2);
+		    return BRLCAD_ERROR;
+		}
+	    }
 
-            /* Test for user entered max raw elevation, if so, process value. */
-            /* Test if value is within a valid range and warn user if a chosen */
-            /* valid value will produce less than optimal results. */
-            /* The value 'raw_dem_2_raw_dsp_scale_factor' is output from this function. */
-            if (*in_manual_dem_max_raw_elevation > 0) {
-                status = process_manual_dem_max_raw_elevation(
+	    /* Test for user entered max raw elevation, if so, process value. */
+	    /* Test if value is within a valid range and warn user if a chosen */
+	    /* valid value will produce less than optimal results. */
+	    /* The value 'raw_dem_2_raw_dsp_scale_factor' is output from this function. */
+	    if (*in_manual_dem_max_raw_elevation > 0) {
+		status = process_manual_dem_max_raw_elevation(
 		    &raw_dem_2_raw_dsp_scale_factor,
 		    &raw_dem_2_raw_dsp_auto_scale_factor,
 		    in_manual_dem_max_raw_elevation,
 		    &derived_dem_max_raw_elevation,
 		    out_unit_elevation,
 		    &datum_elevation_in_curr_b_record);
-                if (status == BRLCAD_ERROR) {
-                    /* problem encountered processing custom value for dem max raw elevation, */
-                    /* or value entered was not within the valid range. */
-                    fclose(fp);
-                    fclose(fp2);
-                    return BRLCAD_ERROR;
-                }
-            }
+		if (status == BRLCAD_ERROR) {
+		    /* problem encountered processing custom value for dem max raw elevation, */
+		    /* or value entered was not within the valid range. */
+		    fclose(fp);
+		    fclose(fp2);
+		    return BRLCAD_ERROR;
+		}
+	    }
 
-            /* Test for user entered max real elevation, if so, process value */
-            /* Test if value is within a valid range. */
-            /* The value 'raw_dem_2_raw_dsp_scale_factor' is output from this function */
-            if (*in_manual_dem_max_real_elevation > 0) {
-                /* assumes user input max real elevation in meters, so convert to milimeters */
-                *in_manual_dem_max_real_elevation = *in_manual_dem_max_real_elevation * conversion_factor_to_milimeters[2];
-                status = process_manual_dem_max_real_elevation(
+	    /* Test for user entered max real elevation, if so, process value */
+	    /* Test if value is within a valid range. */
+	    /* The value 'raw_dem_2_raw_dsp_scale_factor' is output from this function */
+	    if (*in_manual_dem_max_real_elevation > 0) {
+		/* assumes user input max real elevation in meters, so convert to milimeters */
+		*in_manual_dem_max_real_elevation = *in_manual_dem_max_real_elevation * conversion_factor_to_milimeters[2];
+		status = process_manual_dem_max_real_elevation(
 		    &raw_dem_2_raw_dsp_scale_factor,
 		    &raw_dem_2_raw_dsp_auto_scale_factor,
 		    in_manual_dem_max_real_elevation,
 		    &derived_dem_max_raw_elevation,
 		    out_unit_elevation,
 		    &datum_elevation_in_curr_b_record);
-                if (status == BRLCAD_ERROR) {
-                    /* problem encountered processing custom value for dem max real elevation, */
-                    /* or value entered was not within the valid range. */
-                    fclose(fp);
-                    fclose(fp2);
-                    return BRLCAD_ERROR;
-                }
-            }
+		if (status == BRLCAD_ERROR) {
+		    /* problem encountered processing custom value for dem max real elevation, */
+		    /* or value entered was not within the valid range. */
+		    fclose(fp);
+		    fclose(fp2);
+		    return BRLCAD_ERROR;
+		}
+	    }
 
 
-            /* compute dsp primative 'unit elevation' value */
-            *out_unit_elevation = *out_unit_elevation / raw_dem_2_raw_dsp_scale_factor;  
-            bu_log("Computed dsp unit elevation, input this into brl-cad (mm): %g\n", *out_unit_elevation);
+	    /* compute dsp primative 'unit elevation' value */
+	    *out_unit_elevation = *out_unit_elevation / raw_dem_2_raw_dsp_scale_factor;
+	    bu_log("Computed dsp unit elevation, input this into brl-cad (mm): %g\n", *out_unit_elevation);
 
-            /* It is assumed all 'b' records will have the same number of elevations. */
-            /* This assumption is enforced elsewhere in this code. Therefore the number */
-            /* of elevations in the 1st 'b' record can be used as the y dimension of the dsp. */
-            *out_ydim = tot_elevations_in_curr_b_record;
-            bu_log("Number of elevations in each 'b' record, also the number of rows in dsp: %ld\n", *out_ydim);
-
-
-            /* It is assumed all 'b' records will have the same datum elevation. */
-            /* This assumption is enforced elsewhere in this code. Therefore the */
-            /* datum elevation in the 1st 'b' record can be used as the dsp elevation. */
-            /* CONVERT TO MM */
-            *out_dsp_elevation = datum_elevation_in_curr_b_record;
+	    /* It is assumed all 'b' records will have the same number of elevations. */
+	    /* This assumption is enforced elsewhere in this code. Therefore the number */
+	    /* of elevations in the 1st 'b' record can be used as the y dimension of the dsp. */
+	    *out_ydim = tot_elevations_in_curr_b_record;
+	    bu_log("Number of elevations in each 'b' record, also the number of rows in dsp: %ld\n", *out_ydim);
 
 
-        } /* endif when curr_b_record == 1 */
+	    /* It is assumed all 'b' records will have the same datum elevation. */
+	    /* This assumption is enforced elsewhere in this code. Therefore the */
+	    /* datum elevation in the 1st 'b' record can be used as the dsp elevation. */
+	    /* CONVERT TO MM */
+	    *out_dsp_elevation = datum_elevation_in_curr_b_record;
 
-        if (tot_elevations_in_curr_b_record > 146) {
-            /* process all 146 b_elevations from current 1024_char chunk */
-            for (indx3 = 1; indx3 <= 146; indx3++) {
-                /* loop thru 146 elevations in b type buffer with b header */ 
-                /* read total elevations in current b record from the */
-                /* b record header currently in the buffer */
-                (*my_out_ptr).in_buffer = buf;
-                (*my_out_ptr).in_record_type = type_b;
-                (*my_out_ptr).in_element_number = 6;
-                (*my_out_ptr).in_sub_element_number = indx3;
-                (*my_out_ptr).in_is_b_header = 1;
-                status = read_element(my_out_ptr);
-                curr_elevation = (*my_out_ptr).out_integer;
 
-                elevation_number_in_curr_b_record = indx3;
-                elevation_number = tot_elevations_in_prev_b_records + elevation_number_in_curr_b_record;
+	} /* endif when curr_b_record == 1 */
 
-                if (curr_elevation < 0) {
-                    bu_log("WARNING: Invalid elevation on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'. Set elevation value to zero to compensate.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
-                    curr_elevation = 0;
-                }
+	if (tot_elevations_in_curr_b_record > 146) {
+	    /* process all 146 b_elevations from current 1024_char chunk */
+	    for (indx3 = 1; indx3 <= 146; indx3++) {
+		/* loop thru 146 elevations in b type buffer with b header */
+		/* read total elevations in current b record from the */
+		/* b record header currently in the buffer */
+		(*my_out_ptr).in_buffer = buf;
+		(*my_out_ptr).in_record_type = type_b;
+		(*my_out_ptr).in_element_number = 6;
+		(*my_out_ptr).in_sub_element_number = indx3;
+		(*my_out_ptr).in_is_b_header = 1;
+		status = read_element(my_out_ptr);
+		curr_elevation = (*my_out_ptr).out_integer;
 
-                if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
-                    bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
-                    fclose(fp);
-                    fclose(fp2);
-                    return BRLCAD_ERROR;
-                }
-            }
-            additional_1024char_chunks = (long int)ceil((tot_elevations_in_curr_b_record - 146.0) / 170.0);
+		elevation_number_in_curr_b_record = indx3;
+		elevation_number = tot_elevations_in_prev_b_records + elevation_number_in_curr_b_record;
 
-            if (additional_1024char_chunks > 0) {
-                for (indx2 = 1; indx2 < additional_1024char_chunks; indx2++) {
-                    /* no equal used in condition here because don't want to process last chunk in */
-                    /* since the last chunk is a partial chunk */
+		if (curr_elevation < 0) {
+		    bu_log("WARNING: Invalid elevation on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'. Set elevation value to zero to compensate.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
+		    curr_elevation = 0;
+		}
 
-                    ret = fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
+		if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+		    bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
+		    fclose(fp);
+		    fclose(fp2);
+		    return BRLCAD_ERROR;
+		}
+	    }
+	    additional_1024char_chunks = (long int)ceil((tot_elevations_in_curr_b_record - 146.0) / 170.0);
+
+	    if (additional_1024char_chunks > 0) {
+		for (indx2 = 1; indx2 < additional_1024char_chunks; indx2++) {
+		    /* no equal used in condition here because don't want to process last chunk in */
+		    /* since the last chunk is a partial chunk */
+
+		    ret = fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
 		    if (ret < sizeof(buf) / sizeof(buf[0])) {
 			bu_log("Failed to read elevation chunk\n");
 		    }
 
-                    for (indx5 = 1; indx5 <= 170; indx5++) {
-                        /* loop thru 170 elevations in b type buffer with no b header */ 
-                        /* read total elevations in current b record from the */
-                        /* b record header currently in the buffer */
-                        (*my_out_ptr).in_buffer = buf;
-                        (*my_out_ptr).in_record_type = type_b;
-                        (*my_out_ptr).in_element_number = 6;
-                        (*my_out_ptr).in_sub_element_number = indx5;
-                        (*my_out_ptr).in_is_b_header = 0;
-                        status = read_element(my_out_ptr);
-                        curr_elevation = (*my_out_ptr).out_integer;
+		    for (indx5 = 1; indx5 <= 170; indx5++) {
+			/* loop thru 170 elevations in b type buffer with no b header */
+			/* read total elevations in current b record from the */
+			/* b record header currently in the buffer */
+			(*my_out_ptr).in_buffer = buf;
+			(*my_out_ptr).in_record_type = type_b;
+			(*my_out_ptr).in_element_number = 6;
+			(*my_out_ptr).in_sub_element_number = indx5;
+			(*my_out_ptr).in_is_b_header = 0;
+			status = read_element(my_out_ptr);
+			curr_elevation = (*my_out_ptr).out_integer;
 
-                        elevation_number_in_curr_b_record = (146 + ((indx2-1)*170)) + indx5;
-                        elevation_number = tot_elevations_in_prev_b_records + elevation_number_in_curr_b_record;
+			elevation_number_in_curr_b_record = (146 + ((indx2-1)*170)) + indx5;
+			elevation_number = tot_elevations_in_prev_b_records + elevation_number_in_curr_b_record;
 
-                        if (curr_elevation < 0) {
-                            bu_log("WARNING: Invalid elevation on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'. Set elevation value to zero to compensate.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
-                            curr_elevation = 0;
-                        }
+			if (curr_elevation < 0) {
+			    bu_log("WARNING: Invalid elevation on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'. Set elevation value to zero to compensate.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
+			    curr_elevation = 0;
+			}
 
-                        if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
-                            bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
-                            fclose(fp);
-                            fclose(fp2);
-                            return BRLCAD_ERROR;
-                        }
-                    }
-                }
-                /* process last elevation chunk of b record */
-                /* determine # elevations in last 1024 char_chunk */
-                number_of_previous_b_elevations = 146 + ((additional_1024char_chunks - 1)*170);
-                number_of_last_elevations = tot_elevations_in_curr_b_record - number_of_previous_b_elevations;
+			if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+			    bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
+			    fclose(fp);
+			    fclose(fp2);
+			    return BRLCAD_ERROR;
+			}
+		    }
+		}
+		/* process last elevation chunk of b record */
+		/* determine # elevations in last 1024 char_chunk */
+		number_of_previous_b_elevations = 146 + ((additional_1024char_chunks - 1)*170);
+		number_of_last_elevations = tot_elevations_in_curr_b_record - number_of_previous_b_elevations;
 
-                ret = fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
+		ret = fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
 		if (ret < sizeof(buf) / sizeof(buf[0])) {
 		    bu_log("Failed to read input chunk\n");
 		}
 
-                for (indx6 = 1; indx6 <= number_of_last_elevations; indx6++) {
-                    /* loop thru remaining elevations in b type buffer with no b header */ 
-                    /* b record header currently in the buffer */
-                    (*my_out_ptr).in_buffer = buf;
-                    (*my_out_ptr).in_record_type = type_b;
-                    (*my_out_ptr).in_element_number = 6;
-                    (*my_out_ptr).in_sub_element_number = indx6;
-                    (*my_out_ptr).in_is_b_header = 0;
-                    status = read_element(my_out_ptr);
-                    curr_elevation = (*my_out_ptr).out_integer;
+		for (indx6 = 1; indx6 <= number_of_last_elevations; indx6++) {
+		    /* loop thru remaining elevations in b type buffer with no b header */
+		    /* b record header currently in the buffer */
+		    (*my_out_ptr).in_buffer = buf;
+		    (*my_out_ptr).in_record_type = type_b;
+		    (*my_out_ptr).in_element_number = 6;
+		    (*my_out_ptr).in_sub_element_number = indx6;
+		    (*my_out_ptr).in_is_b_header = 0;
+		    status = read_element(my_out_ptr);
+		    curr_elevation = (*my_out_ptr).out_integer;
 
-                    elevation_number_in_curr_b_record = number_of_previous_b_elevations + indx6;
-                    elevation_number = tot_elevations_in_prev_b_records + elevation_number_in_curr_b_record;
+		    elevation_number_in_curr_b_record = number_of_previous_b_elevations + indx6;
+		    elevation_number = tot_elevations_in_prev_b_records + elevation_number_in_curr_b_record;
 
-                    if (curr_elevation < 0) {
-                        bu_log("WARNING: Invalid elevation on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'. Set elevation value to zero to compensate.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
-                        curr_elevation = 0;
-                    }
+		    if (curr_elevation < 0) {
+			bu_log("WARNING: Invalid elevation on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'. Set elevation value to zero to compensate.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
+			curr_elevation = 0;
+		    }
 
-                    if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
-                        bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
-                        fclose(fp);
-                        fclose(fp2);
-                        return BRLCAD_ERROR;
-                    }
-                }
-            }
-        } else {
-            /* number of total elevations in the b record was less than 146 */
-            for (indx4 = 1; indx4 <= tot_elevations_in_curr_b_record; indx4++) {
-                /* loop thru elevations in b type buffer with b header */ 
-                /* b record header currently in the buffer */
-                (*my_out_ptr).in_buffer = buf;
-                (*my_out_ptr).in_record_type = type_b;
-                (*my_out_ptr).in_element_number = 6;
-                (*my_out_ptr).in_sub_element_number = indx4;
-                (*my_out_ptr).in_is_b_header = 1;
-                status = read_element(my_out_ptr);
-                curr_elevation = (*my_out_ptr).out_integer;
+		    if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+			bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
+			fclose(fp);
+			fclose(fp2);
+			return BRLCAD_ERROR;
+		    }
+		}
+	    }
+	} else {
+	    /* number of total elevations in the b record was less than 146 */
+	    for (indx4 = 1; indx4 <= tot_elevations_in_curr_b_record; indx4++) {
+		/* loop thru elevations in b type buffer with b header */
+		/* b record header currently in the buffer */
+		(*my_out_ptr).in_buffer = buf;
+		(*my_out_ptr).in_record_type = type_b;
+		(*my_out_ptr).in_element_number = 6;
+		(*my_out_ptr).in_sub_element_number = indx4;
+		(*my_out_ptr).in_is_b_header = 1;
+		status = read_element(my_out_ptr);
+		curr_elevation = (*my_out_ptr).out_integer;
 
-                elevation_number_in_curr_b_record = indx4;
-                elevation_number = tot_elevations_in_prev_b_records + elevation_number_in_curr_b_record;
+		elevation_number_in_curr_b_record = indx4;
+		elevation_number = tot_elevations_in_prev_b_records + elevation_number_in_curr_b_record;
 
-                if (curr_elevation < 0) {
-                    bu_log("WARNING: Invalid elevation on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'. Set elevation value to zero to compensate.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
-                    curr_elevation = 0;
-                }
+		if (curr_elevation < 0) {
+		    bu_log("WARNING: Invalid elevation on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'. Set elevation value to zero to compensate.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
+		    curr_elevation = 0;
+		}
 
-                if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
-                    bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
-                    fclose(fp);
-                    fclose(fp2);
-                    return BRLCAD_ERROR;
-                }
-            }
-        }
+		if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+		    bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
+		    fclose(fp);
+		    fclose(fp2);
+		    return BRLCAD_ERROR;
+		}
+	    }
+	}
 	tot_elevations_in_prev_b_records = tot_elevations_in_prev_b_records + tot_elevations_in_curr_b_record;
     } /* outer for loop using curr_b_record */
 
@@ -1575,29 +1575,29 @@ convert_load_order(
     buf3 = bu_calloc(*in_ydim, sizeof(unsigned short int), "buf3");
 
     if ((fp4=fopen(in_dsp_output_filename, "wb")) == NULL) {
-        bu_log("Could not open '%s' for write.\n", in_dsp_output_filename);
+	bu_log("Could not open '%s' for write.\n", in_dsp_output_filename);
 	bu_free(buf3, "buf3");
-        return BRLCAD_ERROR;
+	return BRLCAD_ERROR;
     }
     for (offset = 0; offset <= *in_ydim-1; offset++) {
-        if ((fp3=fopen(in_temp_filename, "rb")) == NULL) {
-            bu_log("Could not open '%s' for read.\n", in_temp_filename);
-            fclose(fp4);
+	if ((fp3=fopen(in_temp_filename, "rb")) == NULL) {
+	    bu_log("Could not open '%s' for read.\n", in_temp_filename);
+	    fclose(fp4);
 	    bu_free(buf3, "buf3");
 	    return BRLCAD_ERROR;
-        } 
-        for (column = 1; column <= *in_xdim; column++) {
-            ret = fread(buf3, sizeof(unsigned short int), sizeof(unsigned short int) * (*in_ydim)/sizeof(unsigned short int), fp3);
+	}
+	for (column = 1; column <= *in_xdim; column++) {
+	    ret = fread(buf3, sizeof(unsigned short int), sizeof(unsigned short int) * (*in_ydim)/sizeof(unsigned short int), fp3);
 	    if (ret < sizeof(unsigned short int) * (*in_ydim)/sizeof(unsigned short int)) {
 		bu_log("Failed to read input chunk\n");
 	    }
-            buf4 = *(buf3 + offset);
-            ret = fwrite(&buf4, sizeof(buf4), 1, fp4);   
+	    buf4 = *(buf3 + offset);
+	    ret = fwrite(&buf4, sizeof(buf4), 1, fp4);
 	    if (ret < 1) {
 		bu_log("Failed to write to output file\n");
 	    }
-        }
-        fclose(fp3);
+	}
+	fclose(fp3);
     }
     fclose(fp4);
     bu_free(buf3, "buf3");
@@ -1620,8 +1620,8 @@ create_model(
     fastf_t dsp_mat[ELEMENTS_PER_MAT];
 
     if ((db_fp = wdb_fopen(in_model_output_filename)) == NULL) {
-        perror(in_model_output_filename);
-        return BRLCAD_ERROR;
+	perror(in_model_output_filename);
+	return BRLCAD_ERROR;
     }
 
     mk_id(db_fp, "My Database"); /* create the database header record */
@@ -2079,8 +2079,8 @@ main(int ac, char *av[])
     /*
      * conversion_factor_to_milimeters[]
      * 0=radians, 1=feet, 2=meters, 3=arc-seconds
-     * 0, 3 used for ground units, assumes 1 arc-second = 30 meters 
-     * 1, 2 used for ground units and elevation units 
+     * 0, 3 used for ground units, assumes 1 arc-second = 30 meters
+     * 1, 2 used for ground units and elevation units
      */
     conversion_factor_to_milimeters[0] = 6187944187.412890655;
     conversion_factor_to_milimeters[1] = 304.8;
@@ -2090,8 +2090,8 @@ main(int ac, char *av[])
     progname = *av;
 
     if (ac < 2) {
-        usage();
-        bu_exit(BRLCAD_ERROR, "Exiting.\n");
+	usage();
+	bu_exit(BRLCAD_ERROR, "Exiting.\n");
     }
 
     remove_whitespace(av[1]);
@@ -2137,7 +2137,7 @@ main(int ac, char *av[])
 	    bu_free(temp_filename, "temp_filename");
 	    bu_free(dsp_output_filename, "dsp_output_filename");
 	    bu_free(model_output_filename, "model_output_filename");
-        bu_exit(BRLCAD_ERROR, "Error occured within function 'read_dem'. Import can not continue.\n");
+	bu_exit(BRLCAD_ERROR, "Error occured within function 'read_dem'. Import can not continue.\n");
     }
 
     if (convert_load_order(temp_filename, dsp_output_filename, &xdim, &ydim) == BRLCAD_ERROR) {
@@ -2145,7 +2145,7 @@ main(int ac, char *av[])
 	    bu_free(temp_filename, "temp_filename");
 	    bu_free(dsp_output_filename, "dsp_output_filename");
 	    bu_free(model_output_filename, "model_output_filename");
-        bu_exit(BRLCAD_ERROR, "Error occured within function 'convert_load_order'. Import can not continue.\n");
+	bu_exit(BRLCAD_ERROR, "Error occured within function 'convert_load_order'. Import can not continue.\n");
     }
 
     if (create_model(
@@ -2161,7 +2161,7 @@ main(int ac, char *av[])
 	    bu_free(temp_filename, "temp_filename");
 	    bu_free(dsp_output_filename, "dsp_output_filename");
 	    bu_free(model_output_filename, "model_output_filename");
-        bu_exit(BRLCAD_ERROR, "Error occured within function 'create_model'. Model creation can not continue.\n");
+	bu_exit(BRLCAD_ERROR, "Error occured within function 'create_model'. Model creation can not continue.\n");
     }
     bu_free(input_filename, "input_filename");
     bu_free(temp_filename, "temp_filename");

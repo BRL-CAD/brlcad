@@ -56,7 +56,7 @@ Axis2Placement3D::~Axis2Placement3D() {
 /*
  * Replica of STEP function:
  * FUNCTION build_axes() :
-                                         LIST [3:3] OF direction;
+					 LIST [3:3] OF direction;
   LOCAL
     d1, d2 : direction;
   END_LOCAL;
@@ -103,31 +103,31 @@ Axis2Placement3D::FirstProjAxis(double *proj,double *zaxis, double *refdir) {
     double TOL = 1e-9;
 
     if (zaxis == NULL)
-    	return;
+	return;
 
     VMOVE(z,zaxis);
     VUNITIZE(z);
     if (refdir == NULL) {
-    	double xplus[3]=  {1.0,0.0,0.0};
-    	double xminus[3]=  {-1.0,0.0,0.0};
-    	if (!VNEAR_EQUAL(z, xplus, TOL) &&
-    			!VNEAR_EQUAL(z, xminus, TOL))  {
-    		VSET(v,1.0,0.0,0.0);
-    	} else {
-    		VSET(v,0.0,1.0,0.0);
-    	}
+	double xplus[3]=  {1.0,0.0,0.0};
+	double xminus[3]=  {-1.0,0.0,0.0};
+	if (!VNEAR_EQUAL(z, xplus, TOL) &&
+			!VNEAR_EQUAL(z, xminus, TOL))  {
+		VSET(v,1.0,0.0,0.0);
+	} else {
+		VSET(v,0.0,1.0,0.0);
+	}
     } else {
-    	double cross[3];
-    	double mag;
+	double cross[3];
+	double mag;
 
-    	VCROSS(cross, refdir, z);
-    	mag = MAGNITUDE(cross);
-    	if (NEAR_ZERO(mag,TOL)) {
-    		return;
-    	} else {
-    		VMOVE(v,refdir);
-    		VUNITIZE(v);
-    	}
+	VCROSS(cross, refdir, z);
+	mag = MAGNITUDE(cross);
+	if (NEAR_ZERO(mag,TOL)) {
+		return;
+	} else {
+		VMOVE(v,refdir);
+		VUNITIZE(v);
+	}
 
     }
     double x_vec[3];
