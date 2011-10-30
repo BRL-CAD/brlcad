@@ -103,7 +103,7 @@ int parse_args(int ac, char *av[])
 	    case '?':
 	    case 'h':
 	    default:
-                tmp_basename = bu_basename(av[0]);
+		tmp_basename = bu_basename(av[0]);
 		usage(tmp_basename, "Bad or help flag specified\n");
 		bu_free(tmp_basename, "tmp_basename free");
 		break;

@@ -398,7 +398,7 @@ main(int ac, char *av[])
 
     if (out != stdout)
 	fclose(stdout);
-	
+
     return 0;
 }
 

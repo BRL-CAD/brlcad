@@ -166,15 +166,15 @@ enum seam_direction
 seam_direction(ON_2dPoint uv1, ON_2dPoint uv2)
 {
     if (NEAR_EQUAL(uv1.x, 0.0, PBC_TOL) && NEAR_EQUAL(uv2.x, 0.0, PBC_TOL)) {
-    	return WEST_SEAM;
+	return WEST_SEAM;
     } else if (NEAR_EQUAL(uv1.x, 1.0, PBC_TOL) && NEAR_EQUAL(uv2.x, 1.0, PBC_TOL)) {
-       	return EAST_SEAM;
+	return EAST_SEAM;
     } else if (NEAR_EQUAL(uv1.y, 0.0, PBC_TOL) && NEAR_EQUAL(uv2.y, 0.0, PBC_TOL)) {
-       	return SOUTH_SEAM;
+	return SOUTH_SEAM;
     } else if (NEAR_EQUAL(uv1.y, 1.0, PBC_TOL) && NEAR_EQUAL(uv2.y, 1.0, PBC_TOL)) {
-       	return NORTH_SEAM;
+	return NORTH_SEAM;
     } else {
-       	return UNKNOWN_SEAM_DIRECTION;
+	return UNKNOWN_SEAM_DIRECTION;
     }
 }
 
@@ -2068,7 +2068,7 @@ pullback_curve(const brlcad::SurfaceTree* surfacetree,
     ON_3dPoint from = curve->PointAt(tmin+0.0001);
     brlcad::SurfaceTree *st = (brlcad::SurfaceTree *)surfacetree;
     if (!st->getSurfacePoint((const ON_3dPoint&)p, uv, (const ON_3dPoint&)from) > 0) {
-  	std::cerr << "Error: Can not get surface point." << std::endl;
+	std::cerr << "Error: Can not get surface point." << std::endl;
     }
 
     ON_2dPoint p1, p2;

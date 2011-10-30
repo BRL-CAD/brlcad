@@ -34,7 +34,6 @@
 #include "glob.h"
 
 
-
 static std::map<std::string, Region*> regionTable;
 
 
@@ -51,7 +50,7 @@ int readMaterials(FILE *fp)
    while (fscanf(fp, "%s%d%[^\n]", name, &mat, descr) != EOF)
    {
       if (name[0] == '-')
-         continue;
+	 continue;
 
       Region *regionp;
 
@@ -78,7 +77,7 @@ static Region *getRegion(int compnr)
 
    if (regionTable.find(key) == regionTable.end()) {
       std::cout << "WARNING: region " << key
-                << " not in material list" << std::endl;
+		<< " not in material list" << std::endl;
       char unknown[] = "UNKNOWN";
       if (regionTable.find(unknown) == regionTable.end()) {
 	regionp = new Region(atoi(unknown), unknown);
@@ -120,16 +119,16 @@ void createRegions(struct rt_wdb* wdbp)
     BU_LIST_INIT(&tophead.l);
 
     for(std::map<std::string, Region*>::iterator it = regionTable.begin();
-        it != regionTable.end();
-        ++it) {
-        Region* regionp = it->second;
+	it != regionTable.end();
+	++it) {
+	Region* regionp = it->second;
 
-        std::cout << regionp->getDescription() << std::endl;
+	std::cout << regionp->getDescription() << std::endl;
 
-        if ((regionp->getMaterial() != 0) && (regionp->nonEmpty()))
-            regionp->push(wdbp, &tophead);
-        else
-            std::cout << "Empty region: " << regionp->getCompNr() << (regionp->referred() ? " (referred)" : " (unreferred)") << std::endl;
+	if ((regionp->getMaterial() != 0) && (regionp->nonEmpty()))
+	    regionp->push(wdbp, &tophead);
+	else
+	    std::cout << "Empty region: " << regionp->getCompNr() << (regionp->referred() ? " (referred)" : " (unreferred)") << std::endl;
     }
 
     mk_lfcomb(wdbp, "g_all", &tophead, 0);

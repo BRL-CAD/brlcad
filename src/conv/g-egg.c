@@ -147,7 +147,7 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		    continue;
 
-	        fprintf(gcvwriter.fp, "  <Polygon> { \n    <RGBA> { 1 1 1 1 } \n    <VertexRef> { ");
+		fprintf(gcvwriter.fp, "  <Polygon> { \n    <RGBA> { 1 1 1 1 } \n    <VertexRef> { ");
 		/* check vertex numbers for each triangle */
 		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
 		    NMG_CK_EDGEUSE(eu);
@@ -158,7 +158,7 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		    NMG_CK_VERTEX(v);
 		    fprintf(gcvwriter.fp, " %d", vert_count);
 		}
-	        fprintf(gcvwriter.fp, " <Ref> { \"%s\" } }\n  }\n", region_name+1);
+		fprintf(gcvwriter.fp, " <Ref> { \"%s\" } }\n  }\n", region_name+1);
 
 		region_polys++;
 	    }
@@ -168,7 +168,6 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     gcvwriter.tot_polygons += region_polys;
     bu_free(region_name, "region name");
 }
-
 
 
 /*

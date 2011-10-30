@@ -213,7 +213,7 @@ read_psurf_face(FILE *fp, int *lst)
     ret = fscanf(fp, "%*[^\n]");
     if (ret > 0)
 	bu_log("unknown parsing error\n");
-	
+
     return i;
 }
 

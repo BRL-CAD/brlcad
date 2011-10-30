@@ -18,7 +18,7 @@
  * information.
  */
 /** @file iges/readmatrix.c
- * 
+ *
  * Routine to read a transformation matrix from the IGES file.  xform
  * is the pointer to the parameter entry for the matrix, rot is where
  * the matrix is to be placed.

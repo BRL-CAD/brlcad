@@ -1035,9 +1035,9 @@ class SdaiCharacterized_product_definition  :  public SCLP23(Select) {
 	SdaiCharacterized_product_definition( const SelectTypeDescriptor * =config_control_designt_characterized_product_definition );
 	//  part 1
 	SdaiCharacterized_product_definition( const SdaiProduct_definition_ptr&,
-	                                      const SelectTypeDescriptor * =config_control_designt_characterized_product_definition );
+					      const SelectTypeDescriptor * =config_control_designt_characterized_product_definition );
 	SdaiCharacterized_product_definition( const SdaiProduct_definition_relationship_ptr&,
-	                                      const SelectTypeDescriptor * =config_control_designt_characterized_product_definition );
+					      const SelectTypeDescriptor * =config_control_designt_characterized_product_definition );
 	virtual ~SdaiCharacterized_product_definition();
 
 	//  part 2
@@ -1173,11 +1173,11 @@ class SdaiShape_definition  :  public SCLP23(Select) {
 	SdaiShape_definition( const SelectTypeDescriptor * =config_control_designt_shape_definition );
 	//  part 1
 	SdaiShape_definition( const SdaiProduct_definition_shape_ptr&,
-	                      const SelectTypeDescriptor * =config_control_designt_shape_definition );
+			      const SelectTypeDescriptor * =config_control_designt_shape_definition );
 	SdaiShape_definition( const SdaiShape_aspect_ptr&,
-	                      const SelectTypeDescriptor * =config_control_designt_shape_definition );
+			      const SelectTypeDescriptor * =config_control_designt_shape_definition );
 	SdaiShape_definition( const SdaiShape_aspect_relationship_ptr&,
-	                      const SelectTypeDescriptor * =config_control_designt_shape_definition );
+			      const SelectTypeDescriptor * =config_control_designt_shape_definition );
 	virtual ~SdaiShape_definition();
 
 	//  part 2
@@ -1316,9 +1316,9 @@ class SdaiCharacterized_definition  :  public SCLP23(Select) {
 	SdaiCharacterized_definition( const SelectTypeDescriptor * =config_control_designt_characterized_definition );
 	//  part 1
 	SdaiCharacterized_definition( const SdaiCharacterized_product_definition_ptr&,
-	                              const SelectTypeDescriptor * =config_control_designt_characterized_definition );
+				      const SelectTypeDescriptor * =config_control_designt_characterized_definition );
 	SdaiCharacterized_definition( const SdaiShape_definition_ptr&,
-	                              const SelectTypeDescriptor * =config_control_designt_characterized_definition );
+				      const SelectTypeDescriptor * =config_control_designt_characterized_definition );
 	virtual ~SdaiCharacterized_definition();
 
 	//  part 2
@@ -1431,7 +1431,7 @@ class SdaiChange_request_item  :  public SCLP23(Select) {
 	SdaiChange_request_item( const SelectTypeDescriptor * =config_control_designt_change_request_item );
 	//  part 1
 	SdaiChange_request_item( const SdaiProduct_definition_formation_ptr&,
-	                         const SelectTypeDescriptor * =config_control_designt_change_request_item );
+				 const SelectTypeDescriptor * =config_control_designt_change_request_item );
 	virtual ~SdaiChange_request_item();
 
 	//  part 2
@@ -1555,17 +1555,17 @@ class SdaiReversible_topology_item  :  public SCLP23(Select) {
 	SdaiReversible_topology_item( const SelectTypeDescriptor * =config_control_designt_reversible_topology_item );
 	//  part 1
 	SdaiReversible_topology_item( const SdaiEdge_ptr&,
-	                              const SelectTypeDescriptor * =config_control_designt_reversible_topology_item );
+				      const SelectTypeDescriptor * =config_control_designt_reversible_topology_item );
 	SdaiReversible_topology_item( const SdaiPath_ptr&,
-	                              const SelectTypeDescriptor * =config_control_designt_reversible_topology_item );
+				      const SelectTypeDescriptor * =config_control_designt_reversible_topology_item );
 	SdaiReversible_topology_item( const SdaiFace_ptr&,
-	                              const SelectTypeDescriptor * =config_control_designt_reversible_topology_item );
+				      const SelectTypeDescriptor * =config_control_designt_reversible_topology_item );
 	SdaiReversible_topology_item( const SdaiFace_bound_ptr&,
-	                              const SelectTypeDescriptor * =config_control_designt_reversible_topology_item );
+				      const SelectTypeDescriptor * =config_control_designt_reversible_topology_item );
 	SdaiReversible_topology_item( const SdaiClosed_shell_ptr&,
-	                              const SelectTypeDescriptor * =config_control_designt_reversible_topology_item );
+				      const SelectTypeDescriptor * =config_control_designt_reversible_topology_item );
 	SdaiReversible_topology_item( const SdaiOpen_shell_ptr&,
-	                              const SelectTypeDescriptor * =config_control_designt_reversible_topology_item );
+				      const SelectTypeDescriptor * =config_control_designt_reversible_topology_item );
 	virtual ~SdaiReversible_topology_item();
 
 	//  part 2
@@ -1715,9 +1715,9 @@ class SdaiAxis2_placement  :  public SCLP23(Select) {
 	SdaiAxis2_placement( const SelectTypeDescriptor * =config_control_designt_axis2_placement );
 	//  part 1
 	SdaiAxis2_placement( const SdaiAxis2_placement_2d_ptr&,
-	                     const SelectTypeDescriptor * =config_control_designt_axis2_placement );
+			     const SelectTypeDescriptor * =config_control_designt_axis2_placement );
 	SdaiAxis2_placement( const SdaiAxis2_placement_3d_ptr&,
-	                     const SelectTypeDescriptor * =config_control_designt_axis2_placement );
+			     const SelectTypeDescriptor * =config_control_designt_axis2_placement );
 	virtual ~SdaiAxis2_placement();
 
 	//  part 2
@@ -1843,9 +1843,9 @@ class SdaiSpecified_item  :  public SCLP23(Select) {
 	SdaiSpecified_item( const SelectTypeDescriptor * =config_control_designt_specified_item );
 	//  part 1
 	SdaiSpecified_item( const SdaiProduct_definition_ptr&,
-	                    const SelectTypeDescriptor * =config_control_designt_specified_item );
+			    const SelectTypeDescriptor * =config_control_designt_specified_item );
 	SdaiSpecified_item( const SdaiShape_aspect_ptr&,
-	                    const SelectTypeDescriptor * =config_control_designt_specified_item );
+			    const SelectTypeDescriptor * =config_control_designt_specified_item );
 	virtual ~SdaiSpecified_item();
 
 	//  part 2
@@ -1991,9 +1991,9 @@ class SdaiMeasure_value  :  public SCLP23(Select) {
 	SdaiMeasure_value( const SelectTypeDescriptor * =config_control_designt_measure_value );
 	//  part 1
 	SdaiMeasure_value( const SdaiDescriptive_measure&,
-	                   const SelectTypeDescriptor * =config_control_designt_measure_value );
+			   const SelectTypeDescriptor * =config_control_designt_measure_value );
 	SdaiMeasure_value( const SCLP23(Real)&,
-	                   const SelectTypeDescriptor * =config_control_designt_measure_value );
+			   const SelectTypeDescriptor * =config_control_designt_measure_value );
 	virtual ~SdaiMeasure_value();
 
 	//  part 2
@@ -2119,11 +2119,11 @@ class SdaiPerson_organization_select  :  public SCLP23(Select) {
 	SdaiPerson_organization_select( const SelectTypeDescriptor * =config_control_designt_person_organization_select );
 	//  part 1
 	SdaiPerson_organization_select( const SdaiPerson_ptr&,
-	                                const SelectTypeDescriptor * =config_control_designt_person_organization_select );
+					const SelectTypeDescriptor * =config_control_designt_person_organization_select );
 	SdaiPerson_organization_select( const SdaiOrganization_ptr&,
-	                                const SelectTypeDescriptor * =config_control_designt_person_organization_select );
+					const SelectTypeDescriptor * =config_control_designt_person_organization_select );
 	SdaiPerson_organization_select( const SdaiPerson_and_organization_ptr&,
-	                                const SelectTypeDescriptor * =config_control_designt_person_organization_select );
+					const SelectTypeDescriptor * =config_control_designt_person_organization_select );
 	virtual ~SdaiPerson_organization_select();
 
 	//  part 2
@@ -2270,9 +2270,9 @@ class SdaiPcurve_or_surface  :  public SCLP23(Select) {
 	SdaiPcurve_or_surface( const SelectTypeDescriptor * =config_control_designt_pcurve_or_surface );
 	//  part 1
 	SdaiPcurve_or_surface( const SdaiPcurve_ptr&,
-	                       const SelectTypeDescriptor * =config_control_designt_pcurve_or_surface );
+			       const SelectTypeDescriptor * =config_control_designt_pcurve_or_surface );
 	SdaiPcurve_or_surface( const SdaiSurface_ptr&,
-	                       const SelectTypeDescriptor * =config_control_designt_pcurve_or_surface );
+			       const SelectTypeDescriptor * =config_control_designt_pcurve_or_surface );
 	virtual ~SdaiPcurve_or_surface();
 
 	//  part 2
@@ -2395,9 +2395,9 @@ class SdaiClassified_item  :  public SCLP23(Select) {
 	SdaiClassified_item( const SelectTypeDescriptor * =config_control_designt_classified_item );
 	//  part 1
 	SdaiClassified_item( const SdaiProduct_definition_formation_ptr&,
-	                     const SelectTypeDescriptor * =config_control_designt_classified_item );
+			     const SelectTypeDescriptor * =config_control_designt_classified_item );
 	SdaiClassified_item( const SdaiAssembly_component_usage_ptr&,
-	                     const SelectTypeDescriptor * =config_control_designt_classified_item );
+			     const SelectTypeDescriptor * =config_control_designt_classified_item );
 	virtual ~SdaiClassified_item();
 
 	//  part 2
@@ -2532,9 +2532,9 @@ class SdaiFounded_item_select  :  public SCLP23(Select) {
 	SdaiFounded_item_select( const SelectTypeDescriptor * =config_control_designt_founded_item_select );
 	//  part 1
 	SdaiFounded_item_select( const SdaiFounded_item_ptr&,
-	                         const SelectTypeDescriptor * =config_control_designt_founded_item_select );
+				 const SelectTypeDescriptor * =config_control_designt_founded_item_select );
 	SdaiFounded_item_select( const SdaiRepresentation_item_ptr&,
-	                         const SelectTypeDescriptor * =config_control_designt_founded_item_select );
+				 const SelectTypeDescriptor * =config_control_designt_founded_item_select );
 	virtual ~SdaiFounded_item_select();
 
 	//  part 2
@@ -2651,9 +2651,9 @@ class SdaiVector_or_direction  :  public SCLP23(Select) {
 	SdaiVector_or_direction( const SelectTypeDescriptor * =config_control_designt_vector_or_direction );
 	//  part 1
 	SdaiVector_or_direction( const SdaiVector_ptr&,
-	                         const SelectTypeDescriptor * =config_control_designt_vector_or_direction );
+				 const SelectTypeDescriptor * =config_control_designt_vector_or_direction );
 	SdaiVector_or_direction( const SdaiDirection_ptr&,
-	                         const SelectTypeDescriptor * =config_control_designt_vector_or_direction );
+				 const SelectTypeDescriptor * =config_control_designt_vector_or_direction );
 	virtual ~SdaiVector_or_direction();
 
 	//  part 2
@@ -2779,9 +2779,9 @@ class SdaiWireframe_model  :  public SCLP23(Select) {
 	SdaiWireframe_model( const SelectTypeDescriptor * =config_control_designt_wireframe_model );
 	//  part 1
 	SdaiWireframe_model( const SdaiShell_based_wireframe_model_ptr&,
-	                     const SelectTypeDescriptor * =config_control_designt_wireframe_model );
+			     const SelectTypeDescriptor * =config_control_designt_wireframe_model );
 	SdaiWireframe_model( const SdaiEdge_based_wireframe_model_ptr&,
-	                     const SelectTypeDescriptor * =config_control_designt_wireframe_model );
+			     const SelectTypeDescriptor * =config_control_designt_wireframe_model );
 	virtual ~SdaiWireframe_model();
 
 	//  part 2
@@ -2905,11 +2905,11 @@ class SdaiGeometric_set_select  :  public SCLP23(Select) {
 	SdaiGeometric_set_select( const SelectTypeDescriptor * =config_control_designt_geometric_set_select );
 	//  part 1
 	SdaiGeometric_set_select( const SdaiPoint_ptr&,
-	                          const SelectTypeDescriptor * =config_control_designt_geometric_set_select );
+				  const SelectTypeDescriptor * =config_control_designt_geometric_set_select );
 	SdaiGeometric_set_select( const SdaiCurve_ptr&,
-	                          const SelectTypeDescriptor * =config_control_designt_geometric_set_select );
+				  const SelectTypeDescriptor * =config_control_designt_geometric_set_select );
 	SdaiGeometric_set_select( const SdaiSurface_ptr&,
-	                          const SelectTypeDescriptor * =config_control_designt_geometric_set_select );
+				  const SelectTypeDescriptor * =config_control_designt_geometric_set_select );
 	virtual ~SdaiGeometric_set_select();
 
 	//  part 2
@@ -3028,7 +3028,7 @@ class SdaiStart_request_item  :  public SCLP23(Select) {
 	SdaiStart_request_item( const SelectTypeDescriptor * =config_control_designt_start_request_item );
 	//  part 1
 	SdaiStart_request_item( const SdaiProduct_definition_formation_ptr&,
-	                        const SelectTypeDescriptor * =config_control_designt_start_request_item );
+				const SelectTypeDescriptor * =config_control_designt_start_request_item );
 	virtual ~SdaiStart_request_item();
 
 	//  part 2
@@ -3156,25 +3156,25 @@ class SdaiPerson_organization_item  :  public SCLP23(Select) {
 	SdaiPerson_organization_item( const SelectTypeDescriptor * =config_control_designt_person_organization_item );
 	//  part 1
 	SdaiPerson_organization_item( const SdaiChange_ptr&,
-	                              const SelectTypeDescriptor * =config_control_designt_person_organization_item );
+				      const SelectTypeDescriptor * =config_control_designt_person_organization_item );
 	SdaiPerson_organization_item( const SdaiStart_work_ptr&,
-	                              const SelectTypeDescriptor * =config_control_designt_person_organization_item );
+				      const SelectTypeDescriptor * =config_control_designt_person_organization_item );
 	SdaiPerson_organization_item( const SdaiChange_request_ptr&,
-	                              const SelectTypeDescriptor * =config_control_designt_person_organization_item );
+				      const SelectTypeDescriptor * =config_control_designt_person_organization_item );
 	SdaiPerson_organization_item( const SdaiStart_request_ptr&,
-	                              const SelectTypeDescriptor * =config_control_designt_person_organization_item );
+				      const SelectTypeDescriptor * =config_control_designt_person_organization_item );
 	SdaiPerson_organization_item( const SdaiConfiguration_item_ptr&,
-	                              const SelectTypeDescriptor * =config_control_designt_person_organization_item );
+				      const SelectTypeDescriptor * =config_control_designt_person_organization_item );
 	SdaiPerson_organization_item( const SdaiProduct_ptr&,
-	                              const SelectTypeDescriptor * =config_control_designt_person_organization_item );
+				      const SelectTypeDescriptor * =config_control_designt_person_organization_item );
 	SdaiPerson_organization_item( const SdaiProduct_definition_formation_ptr&,
-	                              const SelectTypeDescriptor * =config_control_designt_person_organization_item );
+				      const SelectTypeDescriptor * =config_control_designt_person_organization_item );
 	SdaiPerson_organization_item( const SdaiProduct_definition_ptr&,
-	                              const SelectTypeDescriptor * =config_control_designt_person_organization_item );
+				      const SelectTypeDescriptor * =config_control_designt_person_organization_item );
 	SdaiPerson_organization_item( const SdaiContract_ptr&,
-	                              const SelectTypeDescriptor * =config_control_designt_person_organization_item );
+				      const SelectTypeDescriptor * =config_control_designt_person_organization_item );
 	SdaiPerson_organization_item( const SdaiSecurity_classification_ptr&,
-	                              const SelectTypeDescriptor * =config_control_designt_person_organization_item );
+				      const SelectTypeDescriptor * =config_control_designt_person_organization_item );
 	virtual ~SdaiPerson_organization_item();
 
 	//  part 2
@@ -3358,23 +3358,23 @@ class SdaiDate_time_item  :  public SCLP23(Select) {
 	SdaiDate_time_item( const SelectTypeDescriptor * =config_control_designt_date_time_item );
 	//  part 1
 	SdaiDate_time_item( const SdaiProduct_definition_ptr&,
-	                    const SelectTypeDescriptor * =config_control_designt_date_time_item );
+			    const SelectTypeDescriptor * =config_control_designt_date_time_item );
 	SdaiDate_time_item( const SdaiChange_request_ptr&,
-	                    const SelectTypeDescriptor * =config_control_designt_date_time_item );
+			    const SelectTypeDescriptor * =config_control_designt_date_time_item );
 	SdaiDate_time_item( const SdaiStart_request_ptr&,
-	                    const SelectTypeDescriptor * =config_control_designt_date_time_item );
+			    const SelectTypeDescriptor * =config_control_designt_date_time_item );
 	SdaiDate_time_item( const SdaiChange_ptr&,
-	                    const SelectTypeDescriptor * =config_control_designt_date_time_item );
+			    const SelectTypeDescriptor * =config_control_designt_date_time_item );
 	SdaiDate_time_item( const SdaiStart_work_ptr&,
-	                    const SelectTypeDescriptor * =config_control_designt_date_time_item );
+			    const SelectTypeDescriptor * =config_control_designt_date_time_item );
 	SdaiDate_time_item( const SdaiApproval_person_organization_ptr&,
-	                    const SelectTypeDescriptor * =config_control_designt_date_time_item );
+			    const SelectTypeDescriptor * =config_control_designt_date_time_item );
 	SdaiDate_time_item( const SdaiContract_ptr&,
-	                    const SelectTypeDescriptor * =config_control_designt_date_time_item );
+			    const SelectTypeDescriptor * =config_control_designt_date_time_item );
 	SdaiDate_time_item( const SdaiSecurity_classification_ptr&,
-	                    const SelectTypeDescriptor * =config_control_designt_date_time_item );
+			    const SelectTypeDescriptor * =config_control_designt_date_time_item );
 	SdaiDate_time_item( const SdaiCertification_ptr&,
-	                    const SelectTypeDescriptor * =config_control_designt_date_time_item );
+			    const SelectTypeDescriptor * =config_control_designt_date_time_item );
 	virtual ~SdaiDate_time_item();
 
 	//  part 2
@@ -3553,13 +3553,13 @@ class SdaiShell  :  public SCLP23(Select) {
 	SdaiShell( const SelectTypeDescriptor * =config_control_designt_shell );
 	//  part 1
 	SdaiShell( const SdaiVertex_shell_ptr&,
-	           const SelectTypeDescriptor * =config_control_designt_shell );
+		   const SelectTypeDescriptor * =config_control_designt_shell );
 	SdaiShell( const SdaiWire_shell_ptr&,
-	           const SelectTypeDescriptor * =config_control_designt_shell );
+		   const SelectTypeDescriptor * =config_control_designt_shell );
 	SdaiShell( const SdaiOpen_shell_ptr&,
-	           const SelectTypeDescriptor * =config_control_designt_shell );
+		   const SelectTypeDescriptor * =config_control_designt_shell );
 	SdaiShell( const SdaiClosed_shell_ptr&,
-	           const SelectTypeDescriptor * =config_control_designt_shell );
+		   const SelectTypeDescriptor * =config_control_designt_shell );
 	virtual ~SdaiShell();
 
 	//  part 2
@@ -3691,9 +3691,9 @@ class SdaiTransformation  :  public SCLP23(Select) {
 	SdaiTransformation( const SelectTypeDescriptor * =config_control_designt_transformation );
 	//  part 1
 	SdaiTransformation( const SdaiItem_defined_transformation_ptr&,
-	                    const SelectTypeDescriptor * =config_control_designt_transformation );
+			    const SelectTypeDescriptor * =config_control_designt_transformation );
 	SdaiTransformation( const SdaiFunctionally_defined_transformation_ptr&,
-	                    const SelectTypeDescriptor * =config_control_designt_transformation );
+			    const SelectTypeDescriptor * =config_control_designt_transformation );
 	virtual ~SdaiTransformation();
 
 	//  part 2
@@ -3818,7 +3818,7 @@ class SdaiBoolean_operand  :  public SCLP23(Select) {
 	SdaiBoolean_operand( const SelectTypeDescriptor * =config_control_designt_boolean_operand );
 	//  part 1
 	SdaiBoolean_operand( const SdaiSolid_model_ptr&,
-	                     const SelectTypeDescriptor * =config_control_designt_boolean_operand );
+			     const SelectTypeDescriptor * =config_control_designt_boolean_operand );
 	virtual ~SdaiBoolean_operand();
 
 	//  part 2
@@ -3931,7 +3931,7 @@ class SdaiCertified_item  :  public SCLP23(Select) {
 	SdaiCertified_item( const SelectTypeDescriptor * =config_control_designt_certified_item );
 	//  part 1
 	SdaiCertified_item( const SdaiSupplied_part_relationship_ptr&,
-	                    const SelectTypeDescriptor * =config_control_designt_certified_item );
+			    const SelectTypeDescriptor * =config_control_designt_certified_item );
 	virtual ~SdaiCertified_item();
 
 	//  part 2
@@ -4058,11 +4058,11 @@ class SdaiDate_time_select  :  public SCLP23(Select) {
 	SdaiDate_time_select( const SelectTypeDescriptor * =config_control_designt_date_time_select );
 	//  part 1
 	SdaiDate_time_select( const SdaiDate_ptr&,
-	                      const SelectTypeDescriptor * =config_control_designt_date_time_select );
+			      const SelectTypeDescriptor * =config_control_designt_date_time_select );
 	SdaiDate_time_select( const SdaiLocal_time_ptr&,
-	                      const SelectTypeDescriptor * =config_control_designt_date_time_select );
+			      const SelectTypeDescriptor * =config_control_designt_date_time_select );
 	SdaiDate_time_select( const SdaiDate_and_time_ptr&,
-	                      const SelectTypeDescriptor * =config_control_designt_date_time_select );
+			      const SelectTypeDescriptor * =config_control_designt_date_time_select );
 	virtual ~SdaiDate_time_select();
 
 	//  part 2
@@ -4201,11 +4201,11 @@ class SdaiCurve_on_surface  :  public SCLP23(Select) {
 	SdaiCurve_on_surface( const SelectTypeDescriptor * =config_control_designt_curve_on_surface );
 	//  part 1
 	SdaiCurve_on_surface( const SdaiPcurve_ptr&,
-	                      const SelectTypeDescriptor * =config_control_designt_curve_on_surface );
+			      const SelectTypeDescriptor * =config_control_designt_curve_on_surface );
 	SdaiCurve_on_surface( const SdaiSurface_curve_ptr&,
-	                      const SelectTypeDescriptor * =config_control_designt_curve_on_surface );
+			      const SelectTypeDescriptor * =config_control_designt_curve_on_surface );
 	SdaiCurve_on_surface( const SdaiComposite_curve_on_surface_ptr&,
-	                      const SelectTypeDescriptor * =config_control_designt_curve_on_surface );
+			      const SelectTypeDescriptor * =config_control_designt_curve_on_surface );
 	virtual ~SdaiCurve_on_surface();
 
 	//  part 2
@@ -4347,9 +4347,9 @@ class SdaiTrimming_select  :  public SCLP23(Select) {
 	SdaiTrimming_select( const SelectTypeDescriptor * =config_control_designt_trimming_select );
 	//  part 1
 	SdaiTrimming_select( const SdaiCartesian_point_ptr&,
-	                     const SelectTypeDescriptor * =config_control_designt_trimming_select );
+			     const SelectTypeDescriptor * =config_control_designt_trimming_select );
 	SdaiTrimming_select( const SdaiParameter_value&,
-	                     const SelectTypeDescriptor * =config_control_designt_trimming_select );
+			     const SelectTypeDescriptor * =config_control_designt_trimming_select );
 	virtual ~SdaiTrimming_select();
 
 	//  part 2
@@ -4468,7 +4468,7 @@ class SdaiContracted_item  :  public SCLP23(Select) {
 	SdaiContracted_item( const SelectTypeDescriptor * =config_control_designt_contracted_item );
 	//  part 1
 	SdaiContracted_item( const SdaiProduct_definition_formation_ptr&,
-	                     const SelectTypeDescriptor * =config_control_designt_contracted_item );
+			     const SelectTypeDescriptor * =config_control_designt_contracted_item );
 	virtual ~SdaiContracted_item();
 
 	//  part 2
@@ -4587,7 +4587,7 @@ class SdaiUnit  :  public SCLP23(Select) {
 	SdaiUnit( const SelectTypeDescriptor * =config_control_designt_unit );
 	//  part 1
 	SdaiUnit( const SdaiNamed_unit_ptr&,
-	          const SelectTypeDescriptor * =config_control_designt_unit );
+		  const SelectTypeDescriptor * =config_control_designt_unit );
 	virtual ~SdaiUnit();
 
 	//  part 2
@@ -4703,9 +4703,9 @@ class SdaiReversible_topology  :  public SCLP23(Select) {
 	SdaiReversible_topology( const SelectTypeDescriptor * =config_control_designt_reversible_topology );
 	//  part 1
 	SdaiReversible_topology( const SdaiReversible_topology_item_ptr&,
-	                         const SelectTypeDescriptor * =config_control_designt_reversible_topology );
+				 const SelectTypeDescriptor * =config_control_designt_reversible_topology );
 	SdaiReversible_topology( const SdaiSet_of_reversible_topology_item_ptr&,
-	                         const SelectTypeDescriptor * =config_control_designt_reversible_topology );
+				 const SelectTypeDescriptor * =config_control_designt_reversible_topology );
 	virtual ~SdaiReversible_topology();
 
 	//  part 2
@@ -4820,7 +4820,7 @@ class SdaiWork_item  :  public SCLP23(Select) {
 	SdaiWork_item( const SelectTypeDescriptor * =config_control_designt_work_item );
 	//  part 1
 	SdaiWork_item( const SdaiProduct_definition_formation_ptr&,
-	               const SelectTypeDescriptor * =config_control_designt_work_item );
+		       const SelectTypeDescriptor * =config_control_designt_work_item );
 	virtual ~SdaiWork_item();
 
 	//  part 2
@@ -4941,11 +4941,11 @@ class SdaiSupported_item  :  public SCLP23(Select) {
 	SdaiSupported_item( const SelectTypeDescriptor * =config_control_designt_supported_item );
 	//  part 1
 	SdaiSupported_item( const SdaiAction_directive_ptr&,
-	                    const SelectTypeDescriptor * =config_control_designt_supported_item );
+			    const SelectTypeDescriptor * =config_control_designt_supported_item );
 	SdaiSupported_item( const SdaiAction_ptr&,
-	                    const SelectTypeDescriptor * =config_control_designt_supported_item );
+			    const SelectTypeDescriptor * =config_control_designt_supported_item );
 	SdaiSupported_item( const SdaiAction_method_ptr&,
-	                    const SelectTypeDescriptor * =config_control_designt_supported_item );
+			    const SelectTypeDescriptor * =config_control_designt_supported_item );
 	virtual ~SdaiSupported_item();
 
 	//  part 2
@@ -5095,27 +5095,27 @@ class SdaiApproved_item  :  public SCLP23(Select) {
 	SdaiApproved_item( const SelectTypeDescriptor * =config_control_designt_approved_item );
 	//  part 1
 	SdaiApproved_item( const SdaiProduct_definition_formation_ptr&,
-	                   const SelectTypeDescriptor * =config_control_designt_approved_item );
+			   const SelectTypeDescriptor * =config_control_designt_approved_item );
 	SdaiApproved_item( const SdaiProduct_definition_ptr&,
-	                   const SelectTypeDescriptor * =config_control_designt_approved_item );
+			   const SelectTypeDescriptor * =config_control_designt_approved_item );
 	SdaiApproved_item( const SdaiConfiguration_effectivity_ptr&,
-	                   const SelectTypeDescriptor * =config_control_designt_approved_item );
+			   const SelectTypeDescriptor * =config_control_designt_approved_item );
 	SdaiApproved_item( const SdaiConfiguration_item_ptr&,
-	                   const SelectTypeDescriptor * =config_control_designt_approved_item );
+			   const SelectTypeDescriptor * =config_control_designt_approved_item );
 	SdaiApproved_item( const SdaiSecurity_classification_ptr&,
-	                   const SelectTypeDescriptor * =config_control_designt_approved_item );
+			   const SelectTypeDescriptor * =config_control_designt_approved_item );
 	SdaiApproved_item( const SdaiChange_request_ptr&,
-	                   const SelectTypeDescriptor * =config_control_designt_approved_item );
+			   const SelectTypeDescriptor * =config_control_designt_approved_item );
 	SdaiApproved_item( const SdaiChange_ptr&,
-	                   const SelectTypeDescriptor * =config_control_designt_approved_item );
+			   const SelectTypeDescriptor * =config_control_designt_approved_item );
 	SdaiApproved_item( const SdaiStart_request_ptr&,
-	                   const SelectTypeDescriptor * =config_control_designt_approved_item );
+			   const SelectTypeDescriptor * =config_control_designt_approved_item );
 	SdaiApproved_item( const SdaiStart_work_ptr&,
-	                   const SelectTypeDescriptor * =config_control_designt_approved_item );
+			   const SelectTypeDescriptor * =config_control_designt_approved_item );
 	SdaiApproved_item( const SdaiCertification_ptr&,
-	                   const SelectTypeDescriptor * =config_control_designt_approved_item );
+			   const SelectTypeDescriptor * =config_control_designt_approved_item );
 	SdaiApproved_item( const SdaiContract_ptr&,
-	                   const SelectTypeDescriptor * =config_control_designt_approved_item );
+			   const SelectTypeDescriptor * =config_control_designt_approved_item );
 	virtual ~SdaiApproved_item();
 
 	//  part 2
@@ -5300,7 +5300,7 @@ class SdaiSurface_model  :  public SCLP23(Select) {
 	SdaiSurface_model( const SelectTypeDescriptor * =config_control_designt_surface_model );
 	//  part 1
 	SdaiSurface_model( const SdaiShell_based_surface_model_ptr&,
-	                   const SelectTypeDescriptor * =config_control_designt_surface_model );
+			   const SelectTypeDescriptor * =config_control_designt_surface_model );
 	virtual ~SdaiSurface_model();
 
 	//  part 2

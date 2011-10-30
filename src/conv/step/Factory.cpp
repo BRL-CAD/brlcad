@@ -91,26 +91,26 @@ Factory::CreateObject(STEPWrapper *sw, SCLP23(Application_instance) *sse)
 		} else if (sse->IsA(config_control_designe_surface_curve)) {
 			/*
 			 * ONEOF (
-              INTERSECTION_CURVE,
-              SEAM_CURVE)
-              ANDOR
-              BOUNDED_SURFACE_CURVE
+	      INTERSECTION_CURVE,
+	      SEAM_CURVE)
+	      ANDOR
+	      BOUNDED_SURFACE_CURVE
 			 */
 		} else if (sse->IsA(config_control_designe_topological_representation_item)) {
 			//loop_path;
 			/*
 			 * ONEOF (
-              VERTEX,
-              EDGE,
-              FACE_BOUND,
-              FACE,
-              VERTEX_SHELL,
-              WIRE_SHELL,
-              CONNECTED_EDGE_SET,
-              CONNECTED_FACE_SET,(
-              LOOP
-              ANDOR
-              PATH))
+	      VERTEX,
+	      EDGE,
+	      FACE_BOUND,
+	      FACE,
+	      VERTEX_SHELL,
+	      WIRE_SHELL,
+	      CONNECTED_EDGE_SET,
+	      CONNECTED_FACE_SET,(
+	      LOOP
+	      ANDOR
+	      PATH))
 			 */
 		} else {
 			std::cerr << CLASSNAME << ": Error unknown complex type." << std::endl;

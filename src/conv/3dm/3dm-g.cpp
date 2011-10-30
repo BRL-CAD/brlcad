@@ -278,22 +278,22 @@ int main(int argc, char** argv) {
 	dump->PushIndent();
 
 	dump->Print("\n\nObject %d of %d:\n\n", i + 1, model.m_object_table.Count());
-	
+
 	// object's attibutes
 	ON_3dmObjectAttributes myAttributes = model.m_object_table[i].m_attributes;
 
 	std::string geom_base;
 	myAttributes.Dump(*dump); // On debug print
 	dump->Print("\n");
-	
+
 	if (use_uuidnames == 1) {
-    	    char uuidstring[37];
-    	    ON_UuidToString(myAttributes.m_uuid, uuidstring);
-    	    ON_String constr(uuidstring);
+	    char uuidstring[37];
+	    ON_UuidToString(myAttributes.m_uuid, uuidstring);
+	    ON_String constr(uuidstring);
 	    const char* cstr = constr;
 	    geom_base = cstr;
 	} else {
-    	    ON_String constr(myAttributes.m_name);
+	    ON_String constr(myAttributes.m_name);
 	    if (constr == NULL) {
 		std::string genName = "";
 		char name[256];
@@ -322,31 +322,31 @@ int main(int argc, char** argv) {
 		    geom_base = genName.c_str();
 		}
 		dump->Print("Object has no name - creating one %s.\n", geom_base.c_str());
-    	    } else {
+	    } else {
 		const char* cstr = constr;
 		geom_base = cstr;
-    	    }
+	    }
 	}
 
 	std::string geom_name(geom_base+".s");
 	std::string region_name(geom_base+".r");
 
-        /* add region to hierarchical containers */
+	/* add region to hierarchical containers */
 	MapRegion(model,region_name,myAttributes.m_layer_index);
 
 	dump->Print("primitive is %s.\n", geom_name.c_str());
 	dump->Print("region created is %s.\n", region_name.c_str());
 
 	/* object definition
-        Ah - rather than pulling JUST the geometry from the opennurbs object here, need to
-        also get properties from ON_3dmObjectAttributes:
-        Everything looks like it is in there - m_name, m_layer_index, etc.
-        Will need to parse layers to get info for each object using a parent layer's settings
-        Long term, material objects and render objects should be implemented in BRL-CAD
-        to support conceptually similar breakouts of materials and shaders.  
-        */
+	Ah - rather than pulling JUST the geometry from the opennurbs object here, need to
+	also get properties from ON_3dmObjectAttributes:
+	Everything looks like it is in there - m_name, m_layer_index, etc.
+	Will need to parse layers to get info for each object using a parent layer's settings
+	Long term, material objects and render objects should be implemented in BRL-CAD
+	to support conceptually similar breakouts of materials and shaders.
+	*/
 
-        const ON_Geometry* pGeometry = ON_Geometry::Cast(model.m_object_table[i].m_object);
+	const ON_Geometry* pGeometry = ON_Geometry::Cast(model.m_object_table[i].m_object);
 	if ( pGeometry ) {
 	    ON_Brep *brep;
 	    ON_Curve *curve;
@@ -364,15 +364,15 @@ int main(int argc, char** argv) {
 	    ON_Geometry *geom;
 	    int r,g,b;
 	    if (random_colors) {
-    		r = int(256*drand48() + 1.0);
-    		g = int(256*drand48() + 1.0);
-    		b = int(256*drand48() + 1.0);
+		r = int(256*drand48() + 1.0);
+		g = int(256*drand48() + 1.0);
+		b = int(256*drand48() + 1.0);
 	    } else {
 		r = (model.WireframeColor(myAttributes) & 0xFF);
-    		g = ((model.WireframeColor(myAttributes)>>8) & 0xFF);
-    		b = ((model.WireframeColor(myAttributes)>>16) & 0xFF);
+		g = ((model.WireframeColor(myAttributes)>>8) & 0xFF);
+		b = ((model.WireframeColor(myAttributes)>>16) & 0xFF);
 	    }
-            bu_log("Color: %d,%d,%d\n", r,g,b);
+	    bu_log("Color: %d,%d,%d\n", r,g,b);
 	    if ((brep = const_cast<ON_Brep * >(ON_Brep::Cast(pGeometry)))) {
 		mk_id(outfp, id_name);
 		mk_brep(outfp, geom_name.c_str(), brep);
@@ -381,7 +381,7 @@ int main(int argc, char** argv) {
 		(void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
 		if (verbose_mode > 0) brep->Dump(*dump);
 		dump->PopIndent();
-     	    } else if (pGeometry->HasBrepForm()) {
+	    } else if (pGeometry->HasBrepForm()) {
 		dump->Print("\n\n ***** HasBrepForm. ***** \n\n");
 		dump->PopIndent();
 	    } else if ((curve = const_cast<ON_Curve * >(ON_Curve::Cast(pGeometry)))) {

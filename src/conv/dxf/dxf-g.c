@@ -2995,51 +2995,51 @@ nmg_wire_edges_to_sketch( struct model *m )
     bu_ptbl_init( &segs, 64, "segs for sketch" );
     for ( BU_LIST_FOR( r, nmgregion, &m->r_hd ) ) {
 	for ( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
-            struct edgeuse *eu1;
+	    struct edgeuse *eu1;
 
 	    /* add a line segment for each wire edge */
 	    bu_ptbl_reset( &segs );
-            eu1 = NULL;
+	    eu1 = NULL;
 	    for ( BU_LIST_FOR( eu, edgeuse, &s->eu_hd ) ) {
 		struct line_seg * lseg;
-                if( eu == eu1 ) {
-                    continue;
-                } else {
-                    eu1 = eu->eumate_p;
-                }
+		if( eu == eu1 ) {
+		    continue;
+		} else {
+		    eu1 = eu->eumate_p;
+		}
 		BU_GETSTRUCT( lseg, line_seg );
 		lseg->magic = CURVE_LSEG_MAGIC;
 		v = eu->vu_p->v_p;
-                lseg->start = Add_vert( V3ARGS(v->vg_p->coord), vr, tol_sq );
+		lseg->start = Add_vert( V3ARGS(v->vg_p->coord), vr, tol_sq );
 		v = eu->eumate_p->vu_p->v_p;
-                lseg->end = Add_vert( V3ARGS(v->vg_p->coord), vr, tol_sq );
-                if( verbose ) {
-                    bu_log( "making sketch line seg from #%d (%g %g %g) to #%d (%g %g %g)\n",
-                            lseg->start, V3ARGS( &vr->the_array[lseg->start] ),
-                            lseg->end, V3ARGS( &vr->the_array[lseg->end] ) );
-                }
+		lseg->end = Add_vert( V3ARGS(v->vg_p->coord), vr, tol_sq );
+		if( verbose ) {
+		    bu_log( "making sketch line seg from #%d (%g %g %g) to #%d (%g %g %g)\n",
+			    lseg->start, V3ARGS( &vr->the_array[lseg->start] ),
+			    lseg->end, V3ARGS( &vr->the_array[lseg->end] ) );
+		}
 		bu_ptbl_ins( &segs, (long int *)lseg );
 	    }
 	}
     }
 
     if (BU_PTBL_LEN(&segs) < 1) {
-        bu_free( skt, "rt_sketch_internal" );
-        return NULL;
+	bu_free( skt, "rt_sketch_internal" );
+	return NULL;
     }
     skt->vert_count = vr->curr_vert;
     skt->verts = (point2d_t *)bu_malloc(skt->vert_count * sizeof( point2d_t), "skt->verts");
     for( idx = 0 ; idx < vr->curr_vert ; idx++ ) {
-        skt->verts[idx][0] = vr->the_array[idx*3];
-        skt->verts[idx][1] = vr->the_array[idx*3 + 1];
+	skt->verts[idx][0] = vr->the_array[idx*3];
+	skt->verts[idx][1] = vr->the_array[idx*3 + 1];
     }
     skt->curve.count = BU_PTBL_LEN(&segs);
     skt->curve.reverse = bu_realloc(skt->curve.reverse, skt->curve.count * sizeof (int), "curve segment reverse");
     memset(skt->curve.reverse, 0, skt->curve.count * sizeof (int));
     skt->curve.segment = bu_realloc(skt->curve.segment, skt->curve.count * sizeof ( genptr_t), "curve segments");
     for (idx = 0; idx < BU_PTBL_LEN(&segs); idx++) {
-        genptr_t ptr = BU_PTBL_GET(&segs, idx);
-        skt->curve.segment[idx] = ptr;
+	genptr_t ptr = BU_PTBL_GET(&segs, idx);
+	skt->curve.segment[idx] = ptr;
     }
 
     free_vert_tree(vr);
@@ -3135,13 +3135,13 @@ main( int argc, char *argv[] )
 		verbose = 1;
 		break;
 	    default:
-                bu_exit(1, "%s", usage);
+		bu_exit(1, "%s", usage);
 		break;
 	}
     }
 
     if ( argc - bu_optind < 2 ) {
-        bu_exit(1, "%s", usage);
+	bu_exit(1, "%s", usage);
     }
 
     dxf_file = argv[bu_optind++];
@@ -3280,14 +3280,14 @@ main( int argc, char *argv[] )
 
 	    sprintf( name, "sketch.%d", i );
 	    skt = nmg_wire_edges_to_sketch( layers[i]->m );
-            if( skt != NULL ) {
-                mk_sketch(out_fp, name, skt);
-                (void) mk_addmember(name, &head, NULL, WMOP_UNION);
+	    if( skt != NULL ) {
+		mk_sketch(out_fp, name, skt);
+		(void) mk_addmember(name, &head, NULL, WMOP_UNION);
 		rt_curve_free(&skt->curve);
 		if (skt->verts)
 		    bu_free(skt->verts, "free verts");
 		bu_free(skt, "free sketch");
-            }
+	    }
 	}
 
 	if ( layers[i]->line_count ) {
