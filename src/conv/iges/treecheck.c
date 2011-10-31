@@ -24,7 +24,7 @@
 #define	Intersect	2
 #define	Subtract	3
 
-void
+int
 Treecheck(struct node *root)
 {
     struct node *ptr, *Pop();
@@ -49,6 +49,7 @@ Treecheck(struct node *root)
 	    ptr = NULL;
 
     }
+    return 0;
 }
 
 
