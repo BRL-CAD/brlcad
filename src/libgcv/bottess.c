@@ -135,7 +135,8 @@ fisect2(
     point_t VTX0, point_t VTX1, point_t VTX2,
     fastf_t VV0, fastf_t VV1, fastf_t VV2,
     fastf_t D0, fastf_t D1, fastf_t D2,
-    fastf_t *isect0, fastf_t *isect1, point_t isectpoint0, point_t isectpoint1)
+    fastf_t *isect0, fastf_t *isect1, 
+    point_t *isectpoint0, point_t *isectpoint1)
 {
     fastf_t tmp=D0/(D0-D1);
     fastf_t diff[3];
@@ -143,13 +144,13 @@ fisect2(
     *isect0=VV0+(VV1-VV0)*tmp;
     VSUB2(diff, VTX1, VTX0);
     VSCALE(diff, diff, tmp);
-    VADD2(isectpoint0, diff, VTX0);
+    VADD2(*isectpoint0, diff, VTX0);
 
     tmp=D0/(D0-D2);
     *isect1=VV0+(VV2-VV0)*tmp;
     VSUB2(diff, VTX2, VTX0);
     VSCALE(diff, diff, tmp);
-    VADD2(isectpoint1, VTX0, diff);
+    VADD2(*isectpoint1, VTX0, diff);
 }
 
 
@@ -157,7 +158,7 @@ HIDDEN int
 compute_intervals_isectline(struct face_s *f,
 			    fastf_t VV0, fastf_t VV1, fastf_t VV2, fastf_t D0, fastf_t D1, fastf_t D2,
 			    fastf_t D0D1, fastf_t D0D2, fastf_t *isect0, fastf_t *isect1,
-			    fastf_t isectpoint0[3], fastf_t isectpoint1[3],
+			    point_t *isectpoint0, point_t *isectpoint1,
 			    const struct bn_tol *tol)
 {
     if(D0D1>0.0f)
@@ -345,12 +346,12 @@ tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s *UNU
     up2=rf->vert[2][i];
 
     /* compute interval for triangle 1 */
-    *coplanar=compute_intervals_isectline(lf, vp0, vp1, vp2, dv0, dv1, dv2, dv0dv1, dv0dv2, &isect1[0], &isect1[1], isectpointA1, isectpointA2, tol);
+    *coplanar=compute_intervals_isectline(lf, vp0, vp1, vp2, dv0, dv1, dv2, dv0dv1, dv0dv2, &isect1[0], &isect1[1], &isectpointA1, &isectpointA2, tol);
     if(*coplanar)
 	return coplanar_tri_tri(lf->plane, lf->vert[0], lf->vert[1], lf->vert[2], rf->vert[0], rf->vert[1], rf->vert[2]);
 
     /* compute interval for triangle 2 */
-    compute_intervals_isectline(rf, up0, up1, up2, du0, du1, du2, du0du1, du0du2, &isect2[0], &isect2[1], isectpointB1, isectpointB2, tol);
+    compute_intervals_isectline(rf, up0, up1, up2, du0, du1, du2, du0du1, du0du2, &isect2[0], &isect2[1], &isectpointB1, &isectpointB2, tol);
 
     /* sort so that a<=b */
     smallest1 = smallest2 = 0;
