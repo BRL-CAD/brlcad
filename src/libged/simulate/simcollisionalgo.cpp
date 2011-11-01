@@ -37,76 +37,90 @@
 #include "./simcollisionalgo.h"
 
 
-//#define USE_PERSISTENT_CONTACTS 1
+#define USE_PERSISTENT_CONTACTS 1
+
+#define DEBUG_MF 1
 
 
 btRTCollisionAlgorithm::btRTCollisionAlgorithm(btPersistentManifold* mf,
 					       const btCollisionAlgorithmConstructionInfo& ci,
-					       btCollisionObject* obj0,
-					       btCollisionObject* obj1)
-    : btActivatingCollisionAlgorithm(ci, obj0, obj1),
-      m_ownManifold(false),
-      m_manifoldPtr(mf)
+					       btCollisionObject* col0,
+					       btCollisionObject* col1)
+    : btActivatingCollisionAlgorithm(ci, col0, col1),
+m_ownManifold(false),
+m_manifoldPtr(mf)
 {
-    if (!m_manifoldPtr && m_dispatcher->needsCollision(obj0, obj1)) {
-	m_manifoldPtr = m_dispatcher->getNewManifold(obj0, obj1);
+if (!m_manifoldPtr)
+{
+	m_manifoldPtr = m_dispatcher->getNewManifold(col0,col1);
 	m_ownManifold = true;
-    }
 }
-
+}
 
 btRTCollisionAlgorithm::~btRTCollisionAlgorithm()
 {
-    if (m_ownManifold) {
+if (m_ownManifold)
+{
 	if (m_manifoldPtr)
-	    m_dispatcher->releaseManifold(m_manifoldPtr);
-    }
+		m_dispatcher->releaseManifold(m_manifoldPtr);
+}
 }
 
 
 void
-btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
-					 btCollisionObject* body1,
+btRTCollisionAlgorithm::processCollision(btCollisionObject* col0,
+					 btCollisionObject* col1,
 					 const btDispatcherInfo& dispatchInfo,
 					 btManifoldResult* resultOut)
 {
     if (!m_manifoldPtr)
 	return;
 
-    //btCollisionObject* col0 = body0;
-    //btCollisionObject* col1 = body1;
-
-
     //quellage
-    bu_log("%d", dispatchInfo.m_stepCount);
+    //bu_log("%d", dispatchInfo.m_stepCount);
 
-    //Report a contact. internally this will be kept persistent, and contact reduction is done
+    /// report a contact. internally this will be kept persistent, and contact reduction is done
     resultOut->setPersistentManifold(m_manifoldPtr);
 #ifndef USE_PERSISTENT_CONTACTS
     m_manifoldPtr->clearManifold();
 #endif //USE_PERSISTENT_CONTACTS
 
-    //btDiscreteCollisionDetectorInterface::ClosestPointInput input;
-    //input.m_maximumDistanceSquared = BT_LARGE_FLOAT;
-    //input.m_transformA = body0->getWorldTransform();
-    //input.m_transformB = body1->getWorldTransform();
 
-    //This part will get replaced with a call to rt
-    //btBoxBoxDetector detector(box0, box1);
-    //detector.getClosestPoints(input, *resultOut, dispatchInfo.m_debugDraw);
 
     //------------------- DEBUG ---------------------------
 
+    int i;
 
-    //------------------------------------------------------
+    //Get the user pointers to struct rigid_body, for printing the body name
+    struct rigid_body *rbA = (struct rigid_body *)col0->getUserPointer();
+    struct rigid_body *rbB = (struct rigid_body *)col1->getUserPointer();
 
-#ifdef USE_PERSISTENT_CONTACTS
-    // refreshContactPoints is only necessary when using persistent contact points.
-    // otherwise all points are newly added
-    if (m_ownManifold) {
-	resultOut->refreshContactPoints();
-    }
-#endif //USE_PERSISTENT_CONTACTS
+    if (rbA != NULL && rbB != NULL) {
+
+	   struct sim_manifold *rt_mf = &(rbB->rt_manifold);
+
+	   // Now add the RT contact pairs
+	   for (i=0; i<rt_mf->num_contacts; i++){
+
+		   btVector3 ptA, ptB, normalWorldOnB;
+
+		   VMOVE(ptA, rt_mf->contacts[i].ptA);
+		   VMOVE(ptB, rt_mf->contacts[i].ptB);
+		   VMOVE(normalWorldOnB, rt_mf->contacts[i].normalWorldOnB);
+
+		   //Negative depth for penetration 
+		   resultOut->addContactPoint(normalWorldOnB, ptB, rt_mf->contacts[i].depth);
+
+		   bu_log("processCollision: Added RT contact %d, A(ignore): %s(%f, %f, %f) , \
+				   B: %s(%f, %f, %f), n(%f, %f, %f), depth=%f\n",
+					   i+1,
+					rt_mf->rbA->rb_namep, V3ARGS(ptA),
+					rt_mf->rbB->rb_namep, V3ARGS(ptB),
+					V3ARGS(normalWorldOnB),
+					rt_mf->contacts[i].depth);
+	   }
+
+    } //end- if (rbA != NULL && rbB...
 
 }
 

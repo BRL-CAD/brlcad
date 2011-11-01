@@ -38,11 +38,8 @@
 #include "simrt.h"
 
 
-/* This is kept global because it has to accessed by callbacks, though there may be
- * a way to overcome this by inserting the pointer in the user world-info ptr of Bullet
- */
-struct simulation_params *sim_params;
 
+struct simulation_params *sim_params;
 
 /**
  * Prints the 16 by 16 transform matrices for debugging
@@ -80,44 +77,6 @@ print_matrices(char *rb_namep, mat_t t, btScalar *m)
 
 
 /**
- * This function is called just before the simulation step and is used
- * to apply the resultant force on a body due to contacts
- *
- */
-void
-pre_tick_callback(btDynamicsWorld *dynamicsWorld, btScalar timeStep)
-{
-    bu_log("The world will soon tick by %f seconds\n", (float)timeStep);
-
-    int i;
-
-    for (i=dynamicsWorld->getNumCollisionObjects()-1; i>=0; i--) {
-
-	//btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
-	//btRigidBody* body = btRigidBody::upcast(obj);
-
-	//btVector3 gravity(0,0, 10.0);
-	//body->applyCentralForce(gravity);
-    }
-}
-
-
-/**
- * This is called after the simulation step and will be used to check if
- * the forces were applied correctly and possibly force objects into position
- * before the next step.
- */
-void
-post_tick_callback(btDynamicsWorld *dynamicsWorld, btScalar timeStep)
-{
-    bu_log("The world just ticked by %f seconds\n", (float)timeStep);
-    btVector3 g = dynamicsWorld->getGravity();
-    bu_log("The gravity was %f,%f,%f\n", V3ARGS(g));
-
-}
-
-
-/**
  * Adds rigid bodies to the dynamics world from the BRL-CAD geometry,
  * will add a ground plane if a region by the name of sim_gp.r is detected
  * The plane will be static and have the same dimensions as the region
@@ -125,7 +84,7 @@ post_tick_callback(btDynamicsWorld *dynamicsWorld, btScalar timeStep)
  */
 int
 add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
-		 btAlignedObjectArray<btCollisionShape*> collision_shapes)
+				 btAlignedObjectArray<btCollisionShape*> collision_shapes)
 {
     struct rigid_body *current_node;
     fastf_t volume;
@@ -136,7 +95,7 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 
     for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
 
-	current_node->iter = sim_params->iter;
+    	current_node->iter = sim_params->iter;
 
 	// Check if we should add a ground plane
 	if (strcmp(current_node->rb_namep, sim_params->ground_plane_name) == 0) {
@@ -144,14 +103,15 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 	    btCollisionShape* groundShape = new btBoxShape(btVector3(current_node->bb_dims[0]/2,
 								     current_node->bb_dims[1]/2,
 								     current_node->bb_dims[2]/2));
-	    /*btDefaultMotionState* groundMotionState = new btDefaultMotionState(
-	      btTransform(btQuaternion(0, 0, 0, 1),
-	      btVector3(current_node->bb_center[0],
-	      current_node->bb_center[1],
-	      current_node->bb_center[2])));*/
+		//btCollisionShape* groundShape = new btSphereShape(0.5);
 
-	    btDefaultMotionState* groundMotionState = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1),
-											   btVector3(0, 0, 0)));
+
+	    btDefaultMotionState* groundMotionState = new btDefaultMotionState(
+	    									   btTransform(btQuaternion(0, 0, 0, 1),
+											   btVector3(current_node->bb_dims[0]/2,
+													     current_node->bb_dims[1]/2,
+													     current_node->bb_dims[2]/2)
+													     	 	 	 	   ));
 
 	    //Copy the transform matrix
 	    MAT_COPY(m, current_node->m);
@@ -169,14 +129,18 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 	    dynamicsWorld->addRigidBody(groundRigidBody);
 	    collision_shapes.push_back(groundShape);
 
-	    bu_vls_printf(sim_params->result_str, "Added static ground plane : %s to simulation with mass %f Kg\n",
-			  current_node->rb_namep, 0.f);
+	    bu_log("Added static ground plane : %s to simulation with mass %f Kg at (%f,%f,%f)\n",
+			  current_node->rb_namep, 0.f, current_node->bb_dims[0]/2,
+			     	 	 	 	 	 	   current_node->bb_dims[1]/2,
+			     	 	 	 	 	 	   current_node->bb_dims[2]/2);
 
 	} else{
 	    //Nope, its a rigid body
 	    btCollisionShape* bb_Shape = new btBoxShape(btVector3(current_node->bb_dims[0]/2,
 								  current_node->bb_dims[1]/2,
 								  current_node->bb_dims[2]/2));
+
+		//btCollisionShape* bb_Shape = new btSphereShape(0.5);
 	    collision_shapes.push_back(bb_Shape);
 
 	    volume = current_node->bb_dims[0] * current_node->bb_dims[1] * current_node->bb_dims[2];
@@ -185,12 +149,14 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 	    btVector3 bb_Inertia(0, 0, 0);
 	    bb_Shape->calculateLocalInertia(mass, bb_Inertia);
 
-	    /* btDefaultMotionState* bb_MotionState = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1),
-	       btVector3(current_node->bb_center[0],
-	       current_node->bb_center[1],
-	       current_node->bb_center[2])));*/
 	    btDefaultMotionState* bb_MotionState = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1),
 											btVector3(0, 0, 0)));
+	    /*btDefaultMotionState* bb_MotionState = new btDefaultMotionState(
+	    	    									   btTransform(btQuaternion(0, 0, 0, 1),
+	    											   btVector3(current_node->bb_dims[0]/2,
+	    													     current_node->bb_dims[1]/2,
+	    													     current_node->bb_dims[2]/2)
+	    													     	 	 	 	   ));*/
 
 	    //Copy the transform matrix
 	    MAT_COPY(m, current_node->m);
@@ -210,18 +176,35 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 
 	    dynamicsWorld->addRigidBody(bb_RigidBody);
 
-	    bu_vls_printf(sim_params->result_str, "Added new rigid body : %s to simulation with mass %f Kg\n",
-			  current_node->rb_namep, mass);
+	    bu_log("Added new rigid body : %s to simulation with mass %f Kg \
+	    		 at (%f,%f,%f)\n",
+			  current_node->rb_namep, mass,
+			  current_node->bb_dims[0]/2,
+			  current_node->bb_dims[1]/2,
+	 	 	  current_node->bb_dims[2]/2);
 
 	}
 
     }
 
-    //Setup the tick callbacks where the forces calculated using the contact manifolds
-    //will be actually applied
-    dynamicsWorld->setInternalTickCallback(pre_tick_callback, 0, true);
-    dynamicsWorld->setInternalTickCallback(post_tick_callback);
+    return 0;
+}
 
+
+/**
+ * Steps the dynamics world according to the simulation parameters
+ *
+ */
+int
+step_physics(btDiscreteDynamicsWorld* dynamicsWorld)
+{
+    bu_vls_printf(sim_params->result_str, "Simulation will run for %d steps.\n", sim_params->duration);
+    bu_vls_printf(sim_params->result_str, "----- Starting simulation -----\n");
+
+    //time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
+    dynamicsWorld->stepSimulation(1/60.f, 10);
+
+    bu_vls_printf(sim_params->result_str, "----- Simulation Complete -----\n");
     return 0;
 }
 
@@ -302,48 +285,6 @@ get_transforms(btDiscreteDynamicsWorld* dynamicsWorld)
 
 
 /**
- * Steps the dynamics world according to the simulation parameters
- *
- */
-int
-step_physics(btDiscreteDynamicsWorld* dynamicsWorld)
-{
-    int i;
-
-    bu_vls_printf(sim_params->result_str, "Simulation will run for %d steps.\n", sim_params->duration);
-    bu_vls_printf(sim_params->result_str, "----- Starting simulation -----\n");
-
-    for (i=0 ; i < sim_params->duration ; i++) {
-		bu_log("------------------------- Iteration %d -----------------------\n", i+1);
-
-		//time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
-		dynamicsWorld->stepSimulation(1/60.f, 10);
-
-
-		/*   	for (j=dynamicsWorld->getNumCollisionObjects()-1; j>=0; j--) {
-
-			btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
-			btRigidBody* body = btRigidBody::upcast(obj);
-
-			btVector3 gravity(0,0, 10.1);
-			body->applyCentralForce(gravity);
-
-			//struct rigid_body *rbA = (struct rigid_body *)boxA->getUserPointer();
-			//if( BU_STR_EQUAL(rt_mf->rbA->rb_namep, rbA->rb_namep)
-			}
-
-		*/
-
-		  //Get the world transforms back into the simulation params struct
-		  get_transforms(dynamicsWorld);
-    }
-
-    bu_log("----- Simulation Complete -----\n");
-    return 0;
-}
-
-
-/**
  * Cleanup the physics collision shapes, rigid bodies etc
  *
  */
@@ -392,37 +333,55 @@ struct broadphase_callback : public btOverlapFilterCallback
     virtual bool
     needBroadphaseCollision(btBroadphaseProxy* proxy0, btBroadphaseProxy* proxy1) const
     {
-	bool collides = (proxy0->m_collisionFilterGroup & proxy1->m_collisionFilterMask) != 0;
-	collides = collides && (proxy1->m_collisionFilterGroup & proxy0->m_collisionFilterMask);
+		bool collides = (proxy0->m_collisionFilterGroup & proxy1->m_collisionFilterMask) != 0;
+		collides = collides && (proxy1->m_collisionFilterGroup & proxy0->m_collisionFilterMask);
 
-	btVector3 aabbMin, aabbMax;
+		btVector3 aabbMin, aabbMax;
 
-	//This would prevent collision between proxy0 and proxy1 inspite of
-	//AABB overlap being detected
-	btRigidBody* boxA = (btRigidBody*)proxy0->m_clientObject;
-	btRigidBody* boxB = (btRigidBody*)proxy1->m_clientObject;
+		//This would prevent collision between proxy0 and proxy1 inspite of
+		//AABB overlap being detected
+		//collides = false;
+		btRigidBody* boxA = (btRigidBody*)proxy0->m_clientObject;
+		btRigidBody* boxB = (btRigidBody*)proxy1->m_clientObject;
 
-	if (boxA != NULL && boxB != NULL) {
+		if (boxA != NULL && boxB != NULL) {
 
-	    struct rigid_body *rbA = (struct rigid_body *)boxA->getUserPointer();
-	    struct rigid_body *rbB = (struct rigid_body *)boxB->getUserPointer();
+			struct rigid_body *rbA = (struct rigid_body *)boxA->getUserPointer();
+			struct rigid_body *rbB = (struct rigid_body *)boxB->getUserPointer();
 
-	    bu_log("broadphase_callback: %s & %s has overlapping AABBs",
-		   rbA->rb_namep, rbB->rb_namep);
+			bu_log("broadphase_callback: %s & %s has overlapping AABBs",
+				   rbA->rb_namep, rbB->rb_namep);
 
-	    //Get the AABB for body A : will happen multiple times if there are multiple overlaps
-	    boxA->getAabb(aabbMin, aabbMax);
-	    VMOVE(rbA->btbb_min, aabbMin);
-	    VMOVE(rbA->btbb_max, aabbMax);
+			//Get the AABB for body A : will happen multiple times if there are multiple overlaps
+			boxA->getAabb(aabbMin, aabbMax);
+			VMOVE(rbA->btbb_min, aabbMin);
+			VMOVE(rbA->btbb_max, aabbMax);
 
-	    //Get the AABB for body B : will happen multiple times if there are multiple overlaps
-	    boxB->getAabb(aabbMin, aabbMax);
-	    VMOVE(rbB->btbb_min, aabbMin);
-	    VMOVE(rbB->btbb_max, aabbMax);
-	}
+			bu_log("broadphase_callback: %s (%f,%f,%f):(%f,%f,%f)",
+							   rbA->rb_namep, V3ARGS(rbA->btbb_min),
+							   	   	   	      V3ARGS(rbA->btbb_max));
 
-	//add some additional logic here that modifies 'collides'
-	return collides;
+			//Get BB length, width, height & BB center
+			VSUB2(rbA->btbb_dims, rbA->btbb_max, rbA->btbb_min);
+			VCOMB2(rbA->btbb_center, 1, rbA->btbb_min, 0.5, rbA->btbb_dims);
+
+			//Get the AABB for body B : will happen multiple times if there are multiple overlaps
+			boxB->getAabb(aabbMin, aabbMax);
+			VMOVE(rbB->btbb_min, aabbMin);
+			VMOVE(rbB->btbb_max, aabbMax);
+
+			bu_log("broadphase_callback: %s (%f,%f,%f):(%f,%f,%f)",
+							   rbB->rb_namep, V3ARGS(rbB->btbb_min),
+							   	   	   	   	  V3ARGS(rbB->btbb_max));
+
+			//Get BB length, width, height & BB center
+			VSUB2(rbB->btbb_dims, rbB->btbb_max, rbB->btbb_min);
+			VCOMB2(rbB->btbb_center, 1, rbB->btbb_min, 0.5, rbB->btbb_dims);
+
+		}
+
+		//add some additional logic here that modifies 'collides'
+		return collides;
     }
 };
 
@@ -439,25 +398,24 @@ nearphase_callback(btBroadphasePair& collisionPair,
 
     int rv;
 
-	btRigidBody* boxA = (btRigidBody*)(collisionPair.m_pProxy0->m_clientObject);
-    btRigidBody* boxB = (btRigidBody*)(collisionPair.m_pProxy1->m_clientObject);
+    btRigidBody* box0 = (btRigidBody*)(collisionPair.m_pProxy0->m_clientObject);
+    btRigidBody* box1 = (btRigidBody*)(collisionPair.m_pProxy1->m_clientObject);
+    if (box0 != NULL && box0 != NULL) {
 
+    	struct rigid_body *rbA = (struct rigid_body *)box0->getUserPointer();
+    	struct rigid_body *rbB = (struct rigid_body *)box1->getUserPointer();
 
+		bu_log("nearphase_callback : Creating manifold between %s & %s\n",
+				 rbA->rb_namep, rbB->rb_namep);
 
-
-    struct rigid_body *rbA = (struct rigid_body *)boxA->getUserPointer();
-    struct rigid_body *rbB = (struct rigid_body *)boxB->getUserPointer();
-
-    bu_log("nearphase_callback : Generating force for %s & %s\n",
-	   rbA->rb_namep,
-	   rbB->rb_namep);
-
-    /* Generate manifolds using rt */
-    rv = generate_forces(sim_params, rbA, rbB);
-    if (rv != GED_OK) {
-	bu_log("nearphase_callback: ERROR while creating forces between %s & %s\n",
-	       rbA->rb_namep, rbB->rb_namep);
+		/* Generate manifolds using rt */
+		rv = generate_manifolds(sim_params, rbA, rbB);
+		if (rv != GED_OK) {
+			bu_log("nearphase_callback: ERROR while creating manifold between %s & %s\n",
+					rbA->rb_namep, rbB->rb_namep);
+		}
     }
+
 
     // Only dispatch the Bullet collision information if physics should continue
     dispatcher.defaultNearCallback(collisionPair, dispatcher, dispatchInfo);
@@ -468,26 +426,26 @@ nearphase_callback(btBroadphasePair& collisionPair,
  * Called whenever a contact pair is added to a manifold
  */
 bool contact_added(
-		   btManifoldPoint& pt,
-		   const btCollisionObject* col0,
-		   int partId0,
-		   int index0,
-		   const btCollisionObject* col1,
-		   int partId1,
-		   int index1)
+    btManifoldPoint& pt,
+    const btCollisionObject* col0,
+    int partId0,
+    int index0,
+    const btCollisionObject* col1,
+    int partId1,
+    int index1)
 {
-    //Get the user pointers to struct rigid_body, for printing the body name
-    struct rigid_body *rbA = (struct rigid_body *)col0->getUserPointer();
-    struct rigid_body *rbB = (struct rigid_body *)col1->getUserPointer();
+	//Get the user pointers to struct rigid_body, for printing the body name
+	struct rigid_body *rbA = (struct rigid_body *)col0->getUserPointer();
+	struct rigid_body *rbB = (struct rigid_body *)col1->getUserPointer();
 
-    btVector3 ptA = pt.getPositionWorldOnA();
-    btVector3 ptB = pt.getPositionWorldOnB();
+	btVector3 ptA = pt.getPositionWorldOnA();
+	btVector3 ptB = pt.getPositionWorldOnB();
 
-    bu_log("Contact added between %s(%f, %f, %f):%d,%d  &  %s(%f, %f, %f):%d,%d!",
-	   rbA->rb_namep, V3ARGS(ptA), partId0, index0,
-	   rbB->rb_namep, V3ARGS(ptB), partId1, index1);
+	bu_log("Contact added between %s(%f, %f, %f):%d,%d  &  %s(%f, %f, %f):%d,%d!",
+			rbA->rb_namep, V3ARGS(ptA), partId0, index0,
+			rbB->rb_namep, V3ARGS(ptB), partId1, index1);
 
-    return true;
+	return true;
 }
 
 
@@ -497,19 +455,21 @@ bool contact_added(
  */
 bool contact_processed(btManifoldPoint& pt, void* col0, void* col1)
 {
-    //Get the user pointers to struct rigid_body, for printing the body name
-    struct rigid_body *rbA = (struct rigid_body *)((btCollisionObject*)col0)->getUserPointer();
-    struct rigid_body *rbB = (struct rigid_body *)((btCollisionObject*)col1)->getUserPointer();
+	//Get the user pointers to struct rigid_body, for printing the body name
+	struct rigid_body *rbA = (struct rigid_body *)((btCollisionObject*)col0)->getUserPointer();
+	struct rigid_body *rbB = (struct rigid_body *)((btCollisionObject*)col1)->getUserPointer();
 
-    btVector3 ptA = pt.getPositionWorldOnA();
-    btVector3 ptB = pt.getPositionWorldOnB();
+	btVector3 ptA = pt.getPositionWorldOnA();
+	btVector3 ptB = pt.getPositionWorldOnB();
 
-    bu_log("Contact processed between %s(%f, %f, %f) & %s(%f, %f, %f)!",
-	   rbA->rb_namep, V3ARGS(ptA),
-	   rbB->rb_namep, V3ARGS(ptB));
+	bu_log("Contact processed between %s(%f, %f, %f) & %s(%f, %f, %f), n=(%f, %f, %f), d=%f",
+			rbA->rb_namep, V3ARGS(ptA),
+			rbB->rb_namep, V3ARGS(ptB),
+						   V3ARGS(pt.m_normalWorldOnB),
+						   pt.getDistance());
 
 
-    return true;
+	return true;
 }
 
 
@@ -518,8 +478,8 @@ bool contact_processed(btManifoldPoint& pt, void* col0, void* col1)
  */
 bool contact_destroyed(void* userPersistentData)
 {
-    bu_log("CONTACT DESTROYED! %s", (char*)userPersistentData);
-    return true;
+	bu_log("CONTACT DESTROYED! %s", (char*)userPersistentData);
+	return true;
 }
 
 /**
@@ -531,14 +491,14 @@ run_simulation(struct simulation_params *sp)
 {
     //int i;
 
-    sim_params = sp;
+	sim_params = sp;
 
-    //for (i=0 ; i < sim_params->duration ; i++) {
+	//for (i=0 ; i < sim_params->duration ; i++) {
 
     //Make a new rt_i instance from the existing db_i structure
     if ((sim_params->rtip=rt_new_rti(sim_params->gedp->ged_wdbp->dbip)) == RTI_NULL) {
-	bu_log("run_simulation: rt_new_rti failed while getting new rt instance\n");
-	return 1;
+    	bu_log("run_simulation: rt_new_rti failed while getting new rt instance\n");
+    	return 1;
     }
     sim_params->rtip->useair = 1;
 
@@ -560,9 +520,12 @@ run_simulation(struct simulation_params *sp)
     //arbitrary shapes from brlcad are all represented by the box collision shape
     //in bullet, the movement will not be like a box however, but according to
     //the collisions detected by rt and therefore should follow any arbitrary shape correctly
+    /*dispatcher->registerCollisionCreateFunc(SPHERE_SHAPE_PROXYTYPE,
+    										SPHERE_SHAPE_PROXYTYPE,
+    										new btRTCollisionAlgorithm::CreateFunc);*/
     dispatcher->registerCollisionCreateFunc(BOX_SHAPE_PROXYTYPE,
-					    BOX_SHAPE_PROXYTYPE,
-					    new btRTCollisionAlgorithm::CreateFunc);
+        										BOX_SHAPE_PROXYTYPE,
+        										new btRTCollisionAlgorithm::CreateFunc);
 
     btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
 
@@ -588,6 +551,9 @@ run_simulation(struct simulation_params *sp)
 
     //Step the physics the required number of times
     step_physics(dynamicsWorld);
+
+    //Get the world transforms back into the simulation params struct
+    get_transforms(dynamicsWorld);
 
     //Clean and free memory used by physics objects
     cleanup(dynamicsWorld, collision_shapes);

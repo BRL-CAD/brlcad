@@ -156,7 +156,7 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
 	bu_vls_printf(gedp->ged_result_str, "add_regions: ERROR No objects were added\n");
 	return GED_ERROR;
     }
-
+  
 
     /* Show list of objects to be added to the sim : keep for debugging as of now */
     /* bu_log("add_regions: The following %d regions will participate in the sim : \n", sim_params->num_bodies);
@@ -324,7 +324,7 @@ apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 
 	insert_AABB(gedp, sim_params, current_node);
 
-	/* print_manifold_list(current_node); */
+	print_manifold_list(current_node);
 
 	insert_manifolds(gedp, sim_params, current_node);
 
@@ -369,7 +369,7 @@ int recreate_sim_comb(struct ged *gedp, struct simulation_params *sim_params)
 int
 ged_simulate(struct ged *gedp, int argc, const char *argv[])
 {
-    int rv;
+    int rv, i;
     struct simulation_params sim_params;
     static const char *sim_comb_name = "sim.c";
     static const char *ground_plane_name = "sim_gp.r";
@@ -413,21 +413,28 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    /* Recreate sim.c to clear AABBs and manifold regions from previous iteration */
-    recreate_sim_comb(gedp, &sim_params);
+    for (i=0 ; i < sim_params.duration ; i++) {
 
-    /* Run the physics simulation */
-    rv = run_simulation(&sim_params);
-    if (rv != GED_OK) {
-	bu_vls_printf(gedp->ged_result_str, "%s: ERROR while running the simulation\n", argv[0]);
-	return GED_ERROR;
-    }
+	bu_log("%s: ------------------------- Iteration %d -----------------------\n", argv[0], i+1);
 
-    /* Apply transforms on the participating objects, also shades objects */
-    rv = apply_transforms(gedp, &sim_params);
-    if (rv != GED_OK) {
-	bu_vls_printf(gedp->ged_result_str, "%s: ERROR while applying transforms\n", argv[0]);
-	return GED_ERROR;
+	/* Recreate sim.c to clear AABBs and manifold regions from previous iteration */
+	recreate_sim_comb(gedp, &sim_params);
+
+	/* Run the physics simulation */
+	sim_params.iter = i;
+	rv = run_simulation(&sim_params);
+	if (rv != GED_OK) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: ERROR while running the simulation\n", argv[0]);
+	    return GED_ERROR;
+	}
+
+	/* Apply transforms on the participating objects, also shades objects */
+	rv = apply_transforms(gedp, &sim_params);
+	if (rv != GED_OK) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: ERROR while applying transforms\n", argv[0]);
+	    return GED_ERROR;
+	}
+
     }
 
 

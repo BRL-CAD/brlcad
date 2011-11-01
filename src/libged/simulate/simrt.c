@@ -24,6 +24,8 @@
  *
  */
 
+#include "common.h"
+
 /* Private Header */
 #include "simrt.h"
 
@@ -49,17 +51,17 @@ print_rayshot_results(void)
     bu_log("print_rayshot_results: -------\n");
 
     bu_log("X bounds xr_min_x :%f, %f, %f \n",
-	   V3ARGS(rt_result.xr_min_x));
+    		V3ARGS(rt_result.xr_min_x));
     bu_log("X bounds xr_max_x :%f, %f, %f \n",
-	   V3ARGS(rt_result.xr_max_x));
+    		V3ARGS(rt_result.xr_max_x));
     bu_log("Y bounds xr_min_y :%f, %f, %f  >>> (%f, %f, %f)\n",
-	   V3ARGS(rt_result.xr_min_y_in), V3ARGS(rt_result.xr_min_y_out));
+    		V3ARGS(rt_result.xr_min_y_in), V3ARGS(rt_result.xr_min_y_out));
     bu_log("Y bounds xr_max_y :%f, %f, %f >>> (%f, %f, %f)\n",
-	   V3ARGS(rt_result.xr_max_y_in), V3ARGS(rt_result.xr_max_y_out));
+    		V3ARGS(rt_result.xr_max_y_in), V3ARGS(rt_result.xr_max_y_out));
     bu_log("Z bounds xr_min_z :%f, %f, %f\n",
-	   V3ARGS(rt_result.xr_min_z_in));
+    		V3ARGS(rt_result.xr_min_z_in));
     bu_log("Z bounds xr_max_z :%f, %f, %f\n",
-	   V3ARGS(rt_result.xr_max_z_in));
+    		V3ARGS(rt_result.xr_max_z_in));
 
 
 }
@@ -101,21 +103,6 @@ get_overlap(struct rigid_body *rbA, struct rigid_body *rbB, vect_t overlap_min, 
 
 
     return GED_OK;
-}
-
-
-int
-exists_normal(vect_t n)
-{
-    int i;
-    vect_t a;
-    for(i=0; i<rt_result.num_normals; i++){
-	VMOVE(a, rt_result.normals[i]);
-	if(VEQUAL(a, n))
-	    return 1;
-    }
-
-    return 0;
 }
 
 
@@ -362,7 +349,7 @@ shoot_ray(struct rt_i *rtip, point_t pt, point_t dir)
     VMOVE(ap.a_ray.r_dir, dir);
 
     /* Simple debug printing */
-    VPRINT("Pnt", ap.a_ray.r_pt);
+    bu_log("Pnt (%f,%f,%f)", V3ARGS(ap.a_ray.r_pt));
     VPRINT("Dir", ap.a_ray.r_dir);
 
     /* Shoot the ray. */
@@ -412,9 +399,6 @@ init_rayshot_results(void)
     rt_result.xr_min_y_in[Y] = MAX_FASTF;
     rt_result.xr_max_y_in[Y] = -MAX_FASTF;
 
-    VSETALL(rt_result.force, SMALL_FASTF);
-    rt_result.num_normals = 0;
-
 
     return GED_OK;
 }
@@ -438,7 +422,6 @@ traverse_xray_lists(struct simulation_params *sim_params,
 		    point_t pt, point_t dir)
 {
     int i;
-    vect_t a;
 
     /*struct hit_reg *hrp;*/
     struct bu_vls reg_vls = BU_VLS_INIT_ZERO;
@@ -505,22 +488,8 @@ traverse_xray_lists(struct simulation_params *sim_params,
 	    /* Not need currently, may be removed when z-rays are shot */
 	}
 
-	/* Add force from entry normal */
-	if(!exists_normal(overlap_list[i].in_normal)){
-	    VREVERSE(a, overlap_list[i].in_normal);
-	    VADD2(rt_result.force, rt_result.force, a);
+
 	}
-
-	/* Add force from exit normal */
-	if(!exists_normal(overlap_list[i].out_normal)){
-	    VREVERSE(a, overlap_list[i].out_normal);
-	    VADD2(rt_result.force, rt_result.force, a);
-	}
-
-	bu_log("traverse_lists : force = %f,%f,%f",
-	       V3ARGS(rt_result.force));
-
-    }
 
     /* Draw all the hit regions : not really needed to be visualized */
     /*	if (hit_list.forw != &hit_list) {
@@ -555,7 +524,7 @@ shoot_x_rays(struct sim_manifold *current_manifold,
 	     vect_t overlap_max)
 {
     point_t r_pt, r_dir;
-    fastf_t startz, starty, y, z;
+    fastf_t startz, starty, y, z, incr_y, incr_z;
     vect_t diff;
 
     /* Set direction as straight down X-axis */
@@ -569,34 +538,39 @@ shoot_x_rays(struct sim_manifold *current_manifold,
     /* Determine the width along z axis */
     VSUB2(diff, overlap_max, overlap_min);
 
-    startz = overlap_min[Z] - TOL;
-
-    /* If it's thinner than TOLerance, shoot rays only in a single plane in
-     * the middle of the overlap region, this is done by starting in the middle
-     */
+    /* If it's thinner than TOLerance, reduce TOL, so that only 2 boundary rays shot
+	 */
+    incr_z = TOL;
     if(diff[Z] < TOL){
-		startz += diff[Z]*0.5;
+    	incr_z = diff[Z]*0.5;
     }
+
+    incr_y = TOL;
+    if(diff[Y] < TOL){
+    	incr_y = diff[Y]*0.5;
+    }
+
+    startz = overlap_min[Z] - incr_z;
 
 	/* Shoot rays vertically and across the yz plane */
 	for(z=startz; z<overlap_max[Z]; ){
 
-		z += TOL;
+		z += incr_z;
 		if(z > overlap_max[Z])
 			z = overlap_max[Z];
 
-		starty = overlap_min[Y] - TOL;
+		starty = overlap_min[Y] - incr_y;
 
 		for(y=starty; y<overlap_max[Y]; ){
 
-			y += TOL;
+			y += incr_y;
 			if(y > overlap_max[Y])
 				y = overlap_max[Y];
 
-			/* Shooting towards lower x, so start from max x outside of overlap box */
+			/* Shooting towards higher x, so start from min x outside of overlap box */
 			VSET(r_pt, overlap_min[X], y, z);
 
-			bu_log("*****shoot_x_rays : From : (%f,%f,%f) >>> towards(%f,%f,%f)*******",
+			bu_log("*****shoot_x_rays : From : (%f,%f,%f) , dir:(%f,%f,%f)*******",
 			   V3ARGS(r_pt),  V3ARGS(r_dir));
 
 			shoot_ray(sim_params->rtip, r_pt, r_dir);
@@ -627,27 +601,53 @@ shoot_x_rays(struct sim_manifold *current_manifold,
 int
 create_contact_pairs(struct sim_manifold *mf, vect_t overlap_min, vect_t overlap_max)
 {
-    /* Prepare the overlap prim name */
-    bu_log("create_contact_pairs : between %s & %s (%f,%f,%f), (%f,%f,%f)",
-	   mf->rbA->rb_namep, mf->rbB->rb_namep,
-	   V3ARGS(overlap_min), V3ARGS(overlap_max));
+    /* vect_t diff;*/ 
+    /* int i; */
+
+    mf->num_contacts = 0;
 
 
-    bu_log("create_contact_pairs : force = %f,%f,%f", V3ARGS(rt_result.force));
-    VUNITIZE(rt_result.force);
-    bu_log("create_contact_pairs : force = %f,%f,%f", V3ARGS(rt_result.force));
+	/* Prepare the overlap prim name */
+    bu_log("create_contact pairs : between A : %s(%f,%f,%f) &  B : %s(%f,%f,%f)",
+	   mf->rbA->rb_namep, V3ARGS(mf->rbA->btbb_center),
+	   mf->rbB->rb_namep, V3ARGS(mf->rbB->btbb_center));
+
+    /* Begin making contact */
+
+ /* VSET(mf->contacts[0].normalWorldOnB, 0, 0, 1.0000);
+    VSET(mf->contacts[1].normalWorldOnB, 0, 0, 1.0000);
+    VSET(mf->contacts[2].normalWorldOnB, 0, 0, 1.0000);
+    VSET(mf->contacts[3].normalWorldOnB, 0, 0, 1.0000);
+
+
+
+    VSUB2(diff, overlap_min, overlap_max);
+    mf->contacts[0].depth = diff[Z];
+    mf->contacts[1].depth = diff[Z];
+    mf->contacts[2].depth = diff[Z];
+    mf->contacts[3].depth = diff[Z];
+
+	VSET(mf->contacts[0].ptB, 0.000000, 1.000000, overlap_max[Z]);
+	VSET(mf->contacts[1].ptB, 0.000000, 0.300000, overlap_max[Z]);
+	VSET(mf->contacts[2].ptB, 1.000000, 0.300000, overlap_max[Z]);
+	VSET(mf->contacts[3].ptB, 1.000000, 1.000000, overlap_max[Z]);*/
+
+
+	bu_log("create_contact_pairs : ptB set to (%f,%f,%f)", V3ARGS((mf->contacts[0].ptB)));
+	bu_log("create_contact_pairs : normalWorldOnB set to (%f,%f,%f)", V3ARGS(mf->contacts[0].normalWorldOnB));
+	bu_log("create_contact_pairs : Penetration depth set to %f", mf->contacts[0].depth);
 
     return GED_OK;
 }
 
 
 int
-generate_forces(struct simulation_params *sim_params,
-		struct rigid_body *rbA,
-		struct rigid_body *rbB)
+generate_manifolds(struct simulation_params *sim_params,
+				   struct rigid_body *rbA,
+				   struct rigid_body *rbB)
 {
     /* The manifold between rbA & rbB will be stored in B */
-    struct sim_manifold *rt_mf = &(rbB->rt_manifold);
+	struct sim_manifold *rt_mf = &(rbB->rt_manifold);
 
     vect_t overlap_min, overlap_max;
     char *prefix_overlap = "overlap_";
@@ -657,39 +657,40 @@ generate_forces(struct simulation_params *sim_params,
     rt_mf->rbA = rbA;
     rt_mf->rbB = rbB;
 
-    /* Get the overlap region */
-    get_overlap(rbA, rbB, overlap_min, overlap_max);
+	/* Get the overlap region */
+	get_overlap(rbA, rbB, overlap_min, overlap_max);
 
-    /* Prepare the overlap prim name */
-    bu_vls_sprintf(&overlap_name, "%s%s_%s",
+	/* Prepare the overlap prim name */
+	bu_vls_sprintf(&overlap_name, "%s%s_%s",
 		   prefix_overlap,
 		   rbA->rb_namep,
 		   rbB->rb_namep);
 
-    /* Make the overlap volume RPP */
-    make_rpp(sim_params->gedp, overlap_min, overlap_max, bu_vls_addr(&overlap_name));
+	/* Make the overlap volume RPP */
+	make_rpp(sim_params->gedp, overlap_min, overlap_max, bu_vls_addr(&overlap_name));
 
-    /* Add the region to the result of the sim so it will be drawn too */
-    add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&overlap_name));
+	/* Add the region to the result of the sim so it will be drawn too */
+	add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&overlap_name));
 
-    /* Initialize the rayshot results structure, has to be done for each manifold  */
-    init_rayshot_results();
-
-
-    /* Shoot rays right here as the pair of rigid_body ptrs are known,
-     * TODO: ignore volumes already shot
-     */
-    shoot_x_rays(rt_mf, sim_params, overlap_min, overlap_max);
+	/* Initialize the rayshot results structure, has to be done for each manifold  */
+	/*init_rayshot_results();*/
 
 
-    /* shoot_y_rays(); */
+	/* Shoot rays right here as the pair of rigid_body ptrs are known,
+	 * TODO: ignore volumes already shot
+	 */
+	shoot_x_rays(rt_mf, sim_params, overlap_min, overlap_max);
 
 
-    /* shoot_z_rays(); */
+	/* shoot_y_rays(); */
 
 
-    /* Create the contact pairs and normals */
-    create_contact_pairs(rt_mf, overlap_min, overlap_max);
+	/* shoot_z_rays(); */
+
+
+
+	/* Create the contact pairs and normals */
+	create_contact_pairs(rt_mf, overlap_min, overlap_max);
 
 
     return GED_OK;
