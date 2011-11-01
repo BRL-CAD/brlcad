@@ -5,32 +5,32 @@
   <!-- use local versions of some DTDs -->
   <system
       systemId='http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'
-      uri='file://@BRLCAD_SOURCE_DIR@/doc/docbook/resources/other/standard/svg/svg11-tiny-flat.dtd'
+      uri='file://@CMAKE_SOURCE_DIR@/doc/docbook/resources/other/standard/svg/svg11-tiny-flat.dtd'
   />
 
   <rewriteSystem
       systemIdStartString='http://www.w3.org/Graphics/SVG/1.1/DTD/'
-      rewritePrefix='file://@BRLCAD_SOURCE_DIR@/doc/docbook/resources/other/standard/svg/'
+      rewritePrefix='file://@CMAKE_SOURCE_DIR@/doc/docbook/resources/other/standard/svg/'
   />
 
   <rewriteURI
       uriStartString='http://www.w3.org/Graphics/SVG/1.1/DTD/'
-      rewritePrefix='file://@BRLCAD_SOURCE_DIR@/doc/docbook/resources/other/standard/svg/'
+      rewritePrefix='file://@CMAKE_SOURCE_DIR@/doc/docbook/resources/other/standard/svg/'
   />
 
   <rewriteURI
       uriStartString='/xsl/'
-      rewritePrefix='file://@BRLCAD_SOURCE_DIR@/doc/docbook/resources/other/standard/xsl/'
+      rewritePrefix='file://@CMAKE_SOURCE_DIR@/doc/docbook/resources/other/standard/xsl/'
   />
 
   <rewriteURI
       uriStartString='/brlcad/'
-      rewritePrefix='file://@BRLCAD_SOURCE_DIR@/doc/docbook/resources/brlcad/'
+      rewritePrefix='file://@CMAKE_SOURCE_DIR@/doc/docbook/resources/brlcad/'
   />
 
   <rewriteURI
       uriStartString='/doc/'
-      rewritePrefix='file://@BRLCAD_SOURCE_DIR@/doc/docbook/'
+      rewritePrefix='file://@CMAKE_SOURCE_DIR@/doc/docbook/'
   />
 
 
