@@ -32,6 +32,9 @@
 #define ARROW_BASE_RADIUS 0.02
 #define ARROW_TIP_RADIUS  0.001
 
+#define SOLID_NOT_FOUND 0
+#define SOLID_FOUND     1
+
 
 void
 print_usage(struct bu_vls *str)
@@ -112,6 +115,66 @@ print_command(char* cmd_args[], int argc)
 
     bu_log(buffer);
 }
+
+
+HIDDEN int
+find_solid(struct db_i *dbip,
+	 struct rt_comb_internal *comb,
+	 union tree *comb_leaf,
+	 genptr_t object)
+{
+    char *obj_name;
+
+    if (dbip) RT_CK_DBI(dbip);
+    if (comb) RT_CK_COMB(comb);
+    RT_CK_TREE(comb_leaf);
+
+    obj_name = (char *)object;
+    if (!BU_STR_EQUAL(comb_leaf->tr_l.tl_name, obj_name))
+    	return SOLID_FOUND;
+    else
+    	return SOLID_NOT_FOUND;
+}
+
+
+int
+check_tree_funcleaf(
+    struct db_i *dbip,
+    struct rt_comb_internal *comb,
+    union tree *comb_tree,
+    int (*leaf_func)(),
+    genptr_t user_ptr1)
+{
+	int rv = SOLID_NOT_FOUND;
+
+	RT_CK_DBI(dbip);
+
+    if (!comb_tree)
+	return SOLID_NOT_FOUND;
+
+    RT_CK_TREE(comb_tree);
+
+    switch (comb_tree->tr_op) {
+	case OP_DB_LEAF:
+	    rv = (*leaf_func)(dbip, comb, comb_tree, user_ptr1);
+	    break;
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    rv = check_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_left, leaf_func, user_ptr1);
+	    if(rv == SOLID_NOT_FOUND)
+	    	rv = check_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_right, leaf_func, user_ptr1);
+	    break;
+	default:
+	    bu_log("check_tree_funcleaf: bad op %d\n", comb_tree->tr_op);
+	    bu_bomb("check_tree_funcleaf: bad op\n");
+	    break;
+    }
+
+    return rv;
+}
+
 
 
 int

@@ -85,6 +85,36 @@ print_command(char* cmd_args[], int num_args);
 
 
 /**
+ * This routine is called at the leaf nodes of the comb tree and checks
+ * if the leaf contains a prim of the same name as that passed in 'object'
+ * Returns SOLID_FOUND if the current(the passed) leaf contains a solid with
+ * the same name as that of 'object', otherwise SOLID_NOT_FOUND
+ *
+ */
+HIDDEN int
+find_solid(struct db_i *dbip,
+		   struct rt_comb_internal *comb,
+		   union tree *comb_leaf,
+		   genptr_t object);
+
+
+/**
+ * This routine traverses a combination (union tree) in LNR order and
+ * calls the provided function for each OP_DB_LEAF node.  Note that
+ * this routine does not go outside this one combination!!!!
+ *
+ * similar to db_tree_funcleaf() with just an extra return statement
+ */
+int
+check_tree_funcleaf(
+    struct db_i *dbip,
+    struct rt_comb_internal *comb,
+    union tree *comb_tree,
+    int (*leaf_func)(),
+    genptr_t user_ptr1);
+
+
+/**
  * Deletes a prim/comb if it exists.
  *
  * TODO: lower to librt
