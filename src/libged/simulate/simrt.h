@@ -34,6 +34,8 @@
     extern "C" {
 #endif
 
+#include "common.h"
+
 /* System Headers */
 #include <stdlib.h>
 #include <ctype.h>
@@ -74,6 +76,8 @@ struct overlap {
     point_t in_point;
     point_t out_point;
     vect_t in_normal, out_normal;
+    struct soltab *insol, *outsol;
+    struct curvature incur, outcur;
     struct overlap *forw;
     struct overlap *backw;
 };
@@ -108,7 +112,12 @@ struct hit_reg {
  * regions), through shooting rays
  */
 struct rayshot_results{
-    /* Results of shooting rays towards -ve x-axis : xr means x rays */
+
+	/* The vector sum of the normals over the surface in the overlap region for A & B*/
+	vect_t resultant_normal_A;
+	vect_t resultant_normal_B;
+
+	/* Results of shooting rays towards -ve x-axis : xr means x rays */
 	point_t xr_min_x;  /* the min X found while shooting x rays & rltd y,z*/
 	point_t xr_max_x;  /* the max X found while shooting x rays & rltd y,z*/
 	point_t xr_min_y_in, xr_min_y_out;  /* the min y where overlap was found & the z co-ord for it*/

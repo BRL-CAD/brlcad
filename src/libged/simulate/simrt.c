@@ -296,6 +296,19 @@ if_overlap(struct application *ap, struct partition *pp, struct region *reg1,
 	RT_HIT_NORMAL(overlap_list[i].out_normal, pp->pt_outhit,
 		      pp->pt_outseg->seg_stp, &(ap->a_ray), pp->pt_outflip);
 
+
+	/* Entry solid */
+	overlap_list[i].insol = pp->pt_inseg->seg_stp;
+
+	/* Exit solid */
+	overlap_list[i].outsol = pp->pt_outseg->seg_stp;
+
+	/* Entry curvature */
+	RT_CURVATURE(&overlap_list[i].incur, pp->pt_inhit, pp->pt_inflip, pp->pt_inseg->seg_stp);
+
+	/* Exit curvature */
+	RT_CURVATURE(&overlap_list[i].outcur, pp->pt_outhit, pp->pt_outflip, pp->pt_outseg->seg_stp);
+
 	overlap_list[i].index = i;
 	num_overlaps++;
 

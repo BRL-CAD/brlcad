@@ -28,6 +28,8 @@
 #ifndef SIMULATE_H_
 #define SIMULATE_H_
 
+#include "common.h"
+
 #if defined __cplusplus
 
     /* If the functions in this header have C linkage, this
