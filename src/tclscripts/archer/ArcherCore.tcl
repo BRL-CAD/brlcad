@@ -1948,6 +1948,8 @@ namespace eval ArcherCore {
 
     ::update
     Load $target
+
+    cd $mLastSelectedDir
 }
 
 ::itcl::body ArcherCore::saveDb {} {
