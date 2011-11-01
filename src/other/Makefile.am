@@ -215,8 +215,7 @@ EXTRA_DIST = \
 	tkpng.dist \
 	tktable.dist \
 	togl.dist \
-	URToolkit.dist \
-	uce-dirent/uce-dirent.h
+	URToolkit.dist
 
 # FIXME: need to only traverse tcl/tk if configured
 DIST_SUBDIRS = \

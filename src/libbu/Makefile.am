@@ -146,6 +146,7 @@ man_MANS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
+	uce_dirent.h \
 	CMakeLists.txt
 
 AM_CPPFLAGS = \
