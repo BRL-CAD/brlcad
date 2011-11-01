@@ -312,6 +312,8 @@ if_overlap(struct application *ap, struct partition *pp, struct region *reg1,
 	overlap_list[i].index = i;
 	num_overlaps++;
 
+	/* print_overlap_node(); */
+
 	bu_log("if_overlap: Set overlap %d, in_normal: %f,%f,%f , out_normal: %f,%f,%f",
 	       overlap_list[i].index,
 	       V3ARGS(overlap_list[i].in_normal),
