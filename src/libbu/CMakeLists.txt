@@ -8,7 +8,7 @@ BRLCAD_INCLUDE_DIRS(BU_INCLUDE_DIRS)
 
 # locally used but not needed by users of the library
 include_directories(
-	${CMAKE_SOURCE_DIR}/src/other/uce-dirent
+	${CMAKE_CURRENT_SOURCE_DIR}
 	${PNG_INCLUDE_DIR}
 	${ZLIB_INCLUDE_DIR}
 	)
