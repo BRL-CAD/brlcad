@@ -67,6 +67,38 @@ print_rayshot_results(void)
 }
 
 
+void
+print_overlap_node(int i)
+{
+	bu_log("--------- Index %d -------\n", overlap_list[i].index);
+
+
+
+    bu_log("insol :%s -->> outsol :%s \n", overlap_list[i].insol->st_name,
+    									   overlap_list[i].outsol->st_name);
+
+
+    bu_log("Entering at (%f,%f,%f) at distance of %f",
+	   V3ARGS(overlap_list[i].in_point), overlap_list[i].in_dist);
+	bu_log("Exiting  at (%f,%f,%f) at distance of %f",
+	   V3ARGS(overlap_list[i].out_point), overlap_list[i].out_dist);
+
+	bu_log("in_normal: %f,%f,%f  -->> out_normal: %f,%f,%f",
+	    	       V3ARGS(overlap_list[i].in_normal),
+	    	       V3ARGS(overlap_list[i].out_normal) );
+
+	bu_log("incurve pdir : (%f,%f,%f), curv in dir c1: %f, curv opp dir c2: %f",
+	   V3ARGS(overlap_list[i].incur.crv_pdir), overlap_list[i].incur.crv_c1,
+	   	   	   	   	   	   	   	   	   	   	   overlap_list[i].incur.crv_c2);
+
+	bu_log("outcurve pdir : (%f,%f,%f), curv in dir c1: %f, curv opp dir c2: %f",
+		   V3ARGS(overlap_list[i].outcur.crv_pdir), overlap_list[i].outcur.crv_c1,
+		   	   	   	   	   	   	   	   	   	   	    overlap_list[i].outcur.crv_c2);
+
+
+}
+
+
 int
 cleanup_lists(void)
 {
@@ -82,11 +114,11 @@ get_overlap(struct rigid_body *rbA, struct rigid_body *rbB, vect_t overlap_min, 
 {
     bu_log("Calculating overlap between BB of %s(%f, %f, %f):(%f,%f,%f) \
 			and %s(%f, %f, %f):(%f,%f,%f)",
-	   rbA->rb_namep,
-	   V3ARGS(rbA->btbb_min), V3ARGS(rbA->btbb_max),
-	   rbB->rb_namep,
-	   V3ARGS(rbB->btbb_min), V3ARGS(rbB->btbb_max)
-	   );
+		   rbA->rb_namep,
+		   V3ARGS(rbA->btbb_min), V3ARGS(rbA->btbb_max),
+		   rbB->rb_namep,
+		   V3ARGS(rbB->btbb_min), V3ARGS(rbB->btbb_max)
+		   );
 
     VMOVE(overlap_max, rbA->btbb_max);
     VMIN(overlap_max, rbB->btbb_max);
@@ -155,9 +187,10 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 
 	    /* Insert solid data into list node */
 	    if(pp->pt_regionp->reg_name[0] == '/')
-		hit_list[i].reg_name = (pp->pt_regionp->reg_name) + 1;
+	    	hit_list[i].reg_name = (pp->pt_regionp->reg_name) + 1;
 	    else
-		hit_list[i].reg_name = pp->pt_regionp->reg_name;
+	    	hit_list[i].reg_name = pp->pt_regionp->reg_name;
+
 	    hit_list[i].in_stp   = pp->pt_inseg->seg_stp;
 	    hit_list[i].out_stp  = pp->pt_outseg->seg_stp;
 
@@ -184,68 +217,68 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 
 
 	    if (pp->pt_overlap_reg) {
-		struct region *pp_reg;
-		int j = -1;
+			struct region *pp_reg;
+			int j = -1;
 
-		bu_log("    Claiming regions:\n");
-		while ((pp_reg = pp->pt_overlap_reg[++j]))
-		    bu_log("        %s\n", pp_reg->reg_name);
-	    }
+			bu_log("    Claiming regions:\n");
+			while ((pp_reg = pp->pt_overlap_reg[++j]))
+				bu_log("        %s\n", pp_reg->reg_name);
+			}
 
-	    /* This next macro fills in the curvature information which
-	     * consists of a principle direction vector, and the inverse
-	     * radii of curvature along that direction and perpendicular
-	     * to it.  Positive curvature bends toward the outward
-	     * pointing normal.
-	     */
-	    RT_CURVATURE(&cur, hitp, pp->pt_inflip, stp);
+			/* This next macro fills in the curvature information which
+			 * consists of a principle direction vector, and the inverse
+			 * radii of curvature along that direction and perpendicular
+			 * to it.  Positive curvature bends toward the outward
+			 * pointing normal.
+			 */
+			RT_CURVATURE(&cur, hitp, pp->pt_inflip, stp);
 
-	    /* print the entry curvature information */
-	    /*	VPRINT("PDir", cur.crv_pdir);
-		bu_log(" c1=%g\n", cur.crv_c1);
-		bu_log(" c2=%g\n", cur.crv_c2);*/
+			/* print the entry curvature information */
+			/*	VPRINT("PDir", cur.crv_pdir);
+			bu_log(" c1=%g\n", cur.crv_c1);
+			bu_log(" c2=%g\n", cur.crv_c2);*/
 
-	    /* Insert the data about the input point into the list */
-	    VMOVE(hit_list[i].in_point, in_pt);
-	    VMOVE(hit_list[i].in_normal, inormal);
-	    hit_list[i].in_dist = hitp->hit_dist;
-	    hit_list[i].cur = cur;
+			/* Insert the data about the input point into the list */
+			VMOVE(hit_list[i].in_point, in_pt);
+			VMOVE(hit_list[i].in_normal, inormal);
+			hit_list[i].in_dist = hitp->hit_dist;
+			hit_list[i].cur = cur;
 
-	    /* exit point, so we type less */
-	    hitp = pp->pt_outhit;
+			/* exit point, so we type less */
+			hitp = pp->pt_outhit;
 
-	    /* construct the actual (exit) hit-point from the ray and the
-	     * distance to the intersection point (i.e., the 't' value).
-	     */
-	    VJOIN1(out_pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
+			/* construct the actual (exit) hit-point from the ray and the
+			 * distance to the intersection point (i.e., the 't' value).
+			 */
+			VJOIN1(out_pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
 
-	    /* primitive we exited from */
-	    stp = pp->pt_outseg->seg_stp;
+			/* primitive we exited from */
+			stp = pp->pt_outseg->seg_stp;
 
-	    /* compute the normal vector at the exit point, flipping the
-	     * normal if necessary.
-	     */
-	    RT_HIT_NORMAL(onormal, hitp, stp, &(ap->a_ray), pp->pt_outflip);
+			/* compute the normal vector at the exit point, flipping the
+			 * normal if necessary.
+			 */
+			RT_HIT_NORMAL(onormal, hitp, stp, &(ap->a_ray), pp->pt_outflip);
 
-	    /* print the exit hit point info */
-	    /*	rt_pr_hit("  Out", hitp);
-		VPRINT(   "  Opoint", out_pt);
-		VPRINT(   "  Onormal", onormal);*/
+			/* print the exit hit point info */
+			/*	rt_pr_hit("  Out", hitp);
+			VPRINT(   "  Opoint", out_pt);
+			VPRINT(   "  Onormal", onormal);*/
 
-	    /* Insert the data about the input point into the list */
-	    VMOVE(hit_list[i].out_point, out_pt);
-	    VMOVE(hit_list[i].out_normal, onormal);
-	    hit_list[i].out_dist = hitp->hit_dist;
+			/* Insert the data about the input point into the list */
+			VMOVE(hit_list[i].out_point, out_pt);
+			VMOVE(hit_list[i].out_normal, onormal);
+			hit_list[i].out_dist = hitp->hit_dist;
 
-	    /* Insert the new hit region into the list of hit regions */
-	    hit_list[i].index = i;
+			/* Insert the new hit region into the list of hit regions */
+			hit_list[i].index = i;
 
-	    num_hits++;
+			num_hits++;
 
-	}
-	else{
-	    bu_log("if_hit: WARNING Skipping hit region as maximum hits reached");
-	}
+		}
+		else{
+			bu_log("if_hit: WARNING Skipping hit region as maximum hits reached");
+		}
     }
 
     return HIT;
@@ -270,64 +303,55 @@ if_overlap(struct application *ap, struct partition *pp, struct region *reg1,
 
 
     if(num_overlaps < MAX_OVERLAPS){
-	i = num_overlaps;
-	overlap_list[i].ap = ap;
-	overlap_list[i].pp = pp;
-	overlap_list[i].reg1 = reg1;
-	overlap_list[i].reg2 = reg2;
-	overlap_list[i].in_dist = pp->pt_inhit->hit_dist;
-	overlap_list[i].out_dist = pp->pt_outhit->hit_dist;
-	VJOIN1(overlap_list[i].in_point, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
-	       ap->a_ray.r_dir);
-	VJOIN1(overlap_list[i].out_point, ap->a_ray.r_pt, pp->pt_outhit->hit_dist,
-	       ap->a_ray.r_dir);
+		i = num_overlaps;
+		overlap_list[i].ap = ap;
+		overlap_list[i].pp = pp;
+		overlap_list[i].reg1 = reg1;
+		overlap_list[i].reg2 = reg2;
+		overlap_list[i].in_dist = pp->pt_inhit->hit_dist;
+		overlap_list[i].out_dist = pp->pt_outhit->hit_dist;
+		VJOIN1(overlap_list[i].in_point, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
+			   ap->a_ray.r_dir);
+		VJOIN1(overlap_list[i].out_point, ap->a_ray.r_pt, pp->pt_outhit->hit_dist,
+			   ap->a_ray.r_dir);
 
 
-	/* compute the normal vector at the exit point, flipping the
-	 * normal if necessary.
-	 */
-	RT_HIT_NORMAL(overlap_list[i].in_normal, pp->pt_inhit,
-		      pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
+		/* compute the normal vector at the exit point, flipping the
+		 * normal if necessary.
+		 */
+		RT_HIT_NORMAL(overlap_list[i].in_normal, pp->pt_inhit,
+				  pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
 
 
-	/* compute the normal vector at the exit point, flipping the
-	 * normal if necessary.
-	 */
-	RT_HIT_NORMAL(overlap_list[i].out_normal, pp->pt_outhit,
-		      pp->pt_outseg->seg_stp, &(ap->a_ray), pp->pt_outflip);
+		/* compute the normal vector at the exit point, flipping the
+		 * normal if necessary.
+		 */
+		RT_HIT_NORMAL(overlap_list[i].out_normal, pp->pt_outhit,
+				  pp->pt_outseg->seg_stp, &(ap->a_ray), pp->pt_outflip);
 
 
-	/* Entry solid */
-	overlap_list[i].insol = pp->pt_inseg->seg_stp;
+		/* Entry solid */
+		overlap_list[i].insol = pp->pt_inseg->seg_stp;
 
-	/* Exit solid */
-	overlap_list[i].outsol = pp->pt_outseg->seg_stp;
+		/* Exit solid */
+		overlap_list[i].outsol = pp->pt_outseg->seg_stp;
 
-	/* Entry curvature */
-	RT_CURVATURE(&overlap_list[i].incur, pp->pt_inhit, pp->pt_inflip, pp->pt_inseg->seg_stp);
+		/* Entry curvature */
+		RT_CURVATURE(&overlap_list[i].incur, pp->pt_inhit, pp->pt_inflip, pp->pt_inseg->seg_stp);
 
-	/* Exit curvature */
-	RT_CURVATURE(&overlap_list[i].outcur, pp->pt_outhit, pp->pt_outflip, pp->pt_outseg->seg_stp);
+		/* Exit curvature */
+		RT_CURVATURE(&overlap_list[i].outcur, pp->pt_outhit, pp->pt_outflip, pp->pt_outseg->seg_stp);
 
-	overlap_list[i].index = i;
-	num_overlaps++;
+		overlap_list[i].index = i;
+		num_overlaps++;
 
-	/* print_overlap_node(); */
+		bu_log("Added overlap node : ");
 
-	bu_log("if_overlap: Set overlap %d, in_normal: %f,%f,%f , out_normal: %f,%f,%f",
-	       overlap_list[i].index,
-	       V3ARGS(overlap_list[i].in_normal),
-	       V3ARGS(overlap_list[i].out_normal) );
+		print_overlap_node(i);
     }
-    else{
-	bu_log("if_overlap: WARNING Skipping overlap region as maximum overlaps reached");
-    }
-
-    bu_log("if_overlap: Entering at (%f,%f,%f) at distance of %f",
-	   V3ARGS(overlap_list[i].in_point), overlap_list[i].in_dist);
-    bu_log("if_overlap: Exiting  at (%f,%f,%f) at distance of %f",
-	   V3ARGS(overlap_list[i].out_point), overlap_list[i].out_dist);
-
+	else{
+		bu_log("if_overlap: WARNING Skipping overlap region as maximum overlaps reached");
+	}
 
     return rt_defoverlap (ap, pp, reg1, reg2, InputHdp);
 }
@@ -383,11 +407,11 @@ init_raytrace(struct simulation_params *sim_params)
 
     /* Add all the sim objects to the rt_i */
     for (rb = sim_params->head_node; rb != NULL; rb = rb->next) {
-	if (rt_gettree(sim_params->rtip, rb->rb_namep) < 0)
-	    bu_log("generate_manifolds: Failed to load geometry for [%s]\n",
-		   rb->rb_namep);
-	else
-	    bu_log("generate_manifolds: Added [%s] to raytracer\n", rb->rb_namep);
+		if (rt_gettree(sim_params->rtip, rb->rb_namep) < 0)
+			bu_log("generate_manifolds: Failed to load geometry for [%s]\n",
+			   rb->rb_namep);
+		else
+			bu_log("generate_manifolds: Added [%s] to raytracer\n", rb->rb_namep);
     }
 
     /* This next call causes some values to be pre-computed, sets up space
@@ -449,59 +473,59 @@ traverse_xray_lists(struct simulation_params *sim_params,
      */
     for(i=0; i<num_overlaps; i++){
 
-	bu_vls_sprintf(&reg_vls, "ray_overlap_%s_%s_%d_%f_%f_%f_%f_%f_%f",
-		       overlap_list[i].reg1->reg_name,
-		       overlap_list[i].reg2->reg_name,
-		       overlap_list[i].index,
-		       V3ARGS(pt), V3ARGS(dir));
+		bu_vls_sprintf(&reg_vls, "ray_overlap_%s_%s_%d_%f_%f_%f_%f_%f_%f",
+				   overlap_list[i].reg1->reg_name,
+				   overlap_list[i].reg2->reg_name,
+				   overlap_list[i].index,
+				   V3ARGS(pt), V3ARGS(dir));
 
-	clear_bad_chars(&reg_vls);
+		clear_bad_chars(&reg_vls);
 
-	line(sim_params->gedp, bu_vls_addr(&reg_vls),
-	     overlap_list[i].in_point,
-	     overlap_list[i].out_point,
-	     0, 210, 0);
+		line(sim_params->gedp, bu_vls_addr(&reg_vls),
+			 overlap_list[i].in_point,
+			 overlap_list[i].out_point,
+			 0, 210, 0);
 
-	bu_log("traverse_xray_lists: %s", bu_vls_addr(&reg_vls));
+		bu_log("traverse_xray_lists: %s", bu_vls_addr(&reg_vls));
 
-	add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
+		add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
 
 
-	/* Fill up the result structure */
+		/* Fill up the result structure */
 
-	/* The min x in the direction of the ray where it hit an overlap */
-	if(overlap_list[i].in_point[X] < rt_result.xr_min_x[X]){
-	    VMOVE(rt_result.xr_min_x, overlap_list[i].in_point);
-	}
+		/* The min x in the direction of the ray where it hit an overlap */
+		if(overlap_list[i].in_point[X] < rt_result.xr_min_x[X]){
+			VMOVE(rt_result.xr_min_x, overlap_list[i].in_point);
+		}
 
-	/* The max x in the direction of the ray where it hit an overlap,
-	 * could be on a different ray from above
-	 */
-	if((overlap_list[i].out_point[X] > rt_result.xr_max_x[X])){
-	    VMOVE(rt_result.xr_max_x, overlap_list[i].out_point);
-	}
+		/* The max x in the direction of the ray where it hit an overlap,
+		 * could be on a different ray from above
+		 */
+		if((overlap_list[i].out_point[X] > rt_result.xr_max_x[X])){
+			VMOVE(rt_result.xr_max_x, overlap_list[i].out_point);
+		}
 
-	/* The min y where the x rays encountered overlap */
-	if(overlap_list[i].in_point[Y] < rt_result.xr_min_y_in[Y]){
-	    VMOVE(rt_result.xr_min_y_in, overlap_list[i].in_point);
-	    VMOVE(rt_result.xr_min_y_out, overlap_list[i].out_point);
-	}
+		/* The min y where the x rays encountered overlap */
+		if(overlap_list[i].in_point[Y] < rt_result.xr_min_y_in[Y]){
+			VMOVE(rt_result.xr_min_y_in, overlap_list[i].in_point);
+			VMOVE(rt_result.xr_min_y_out, overlap_list[i].out_point);
+		}
 
-	/* The max y for the same */
-	if(overlap_list[i].in_point[Y] > rt_result.xr_max_y_in[Y]){
-	    VMOVE(rt_result.xr_max_y_in, overlap_list[i].in_point);
-	    VMOVE(rt_result.xr_max_y_out, overlap_list[i].out_point);
-	}
+		/* The max y for the same */
+		if(overlap_list[i].in_point[Y] > rt_result.xr_max_y_in[Y]){
+			VMOVE(rt_result.xr_max_y_in, overlap_list[i].in_point);
+			VMOVE(rt_result.xr_max_y_out, overlap_list[i].out_point);
+		}
 
-	/* The min z where the x rays encountered overlap */
-	if(overlap_list[i].in_point[Y] < rt_result.xr_min_z_in[Z]){
-	    /* Not need currently, may be removed when z-rays are shot */
-	}
+		/* The min z where the x rays encountered overlap */
+		if(overlap_list[i].in_point[Y] < rt_result.xr_min_z_in[Z]){
+			/* Not need currently, may be removed when z-rays are shot */
+		}
 
-	/* The max z for the same */
-	if(overlap_list[i].in_point[Y] > rt_result.xr_max_z_in[Z]){
-	    /* Not need currently, may be removed when z-rays are shot */
-	}
+		/* The max z for the same */
+		if(overlap_list[i].in_point[Y] > rt_result.xr_max_z_in[Z]){
+			/* Not need currently, may be removed when z-rays are shot */
+		}
 
 
 	}
