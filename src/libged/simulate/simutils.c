@@ -32,9 +32,6 @@
 #define ARROW_BASE_RADIUS 0.02
 #define ARROW_TIP_RADIUS  0.001
 
-#define SOLID_NOT_FOUND 0
-#define SOLID_FOUND     1
-
 
 void
 print_usage(struct bu_vls *str)

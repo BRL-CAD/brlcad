@@ -457,13 +457,18 @@ clear_bad_chars(struct bu_vls *vp)
 
 
 int
-traverse_xray_lists(struct simulation_params *sim_params,
-		    point_t pt, point_t dir)
+traverse_xray_lists(
+		struct sim_manifold *current_manifold,
+		struct simulation_params *sim_params,
+		point_t pt, point_t dir)
 {
-    int i;
+    int i, rv;
 
     /*struct hit_reg *hrp;*/
     struct bu_vls reg_vls = BU_VLS_INIT_ZERO;
+    struct directory *dp;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb =(struct rt_comb_internal *)NULL;
 
     /* quellage */
     bu_log("traverse_lists : From : (%f,%f,%f), towards(%f,%f,%f)", V3ARGS(pt),  V3ARGS(dir));
@@ -493,39 +498,39 @@ traverse_xray_lists(struct simulation_params *sim_params,
 
 		/* Fill up the result structure */
 
-		/* The min x in the direction of the ray where it hit an overlap */
-		if(overlap_list[i].in_point[X] < rt_result.xr_min_x[X]){
-			VMOVE(rt_result.xr_min_x, overlap_list[i].in_point);
+		/* Only check with the comb of rigid body B : first get its dp  */
+		if ((dp=db_lookup(sim_params->gedp->ged_wdbp->dbip, current_manifold->rbB->rb_namep, LOOKUP_QUIET)) == RT_DIR_NULL) {
+			bu_log("traverse_xray_lists: ERROR db_lookup(%s) failed", current_manifold->rbB->rb_namep);
+			bu_vls_free(&reg_vls);
+			return GED_ERROR;
 		}
 
-		/* The max x in the direction of the ray where it hit an overlap,
-		 * could be on a different ray from above
-		 */
-		if((overlap_list[i].out_point[X] > rt_result.xr_max_x[X])){
-			VMOVE(rt_result.xr_max_x, overlap_list[i].out_point);
+		/* Now B's internal format */
+		if (!rt_db_lookup_internal(sim_params->gedp->ged_wdbp->dbip, dp->d_namep, &dp, &intern, LOOKUP_NOISY, &rt_uniresource)) {
+			bu_exit(1, "traverse_xray_lists: ERROR rt_db_lookup_internal(%s) failed to get the internal form", dp->d_namep);
+			bu_vls_free(&reg_vls);
+			return GED_ERROR;
 		}
 
-		/* The min y where the x rays encountered overlap */
-		if(overlap_list[i].in_point[Y] < rt_result.xr_min_y_in[Y]){
-			VMOVE(rt_result.xr_min_y_in, overlap_list[i].in_point);
-			VMOVE(rt_result.xr_min_y_out, overlap_list[i].out_point);
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+
+		/* Check if the in solid belongs to rbB */
+		rv = check_tree_funcleaf(sim_params->gedp->ged_wdbp->dbip,
+				 	 	 	comb,
+				 	 	 	comb->tree,
+				 	 	 	find_solid,
+				 	 	 	(genptr_t)(overlap_list[i].insol->st_name));
+		if(rv == SOLID_FOUND){
+			/* It does, so sum the normal */
+			bu_log("traverse_xray_lists: %s is present in %s", overlap_list[i].insol->st_name,
+															   current_manifold->rbB->rb_namep);
+
 		}
 
-		/* The max y for the same */
-		if(overlap_list[i].in_point[Y] > rt_result.xr_max_y_in[Y]){
-			VMOVE(rt_result.xr_max_y_in, overlap_list[i].in_point);
-			VMOVE(rt_result.xr_max_y_out, overlap_list[i].out_point);
-		}
+		/* Check if the out solid belongs to rbB */
 
-		/* The min z where the x rays encountered overlap */
-		if(overlap_list[i].in_point[Y] < rt_result.xr_min_z_in[Z]){
-			/* Not need currently, may be removed when z-rays are shot */
-		}
-
-		/* The max z for the same */
-		if(overlap_list[i].in_point[Y] > rt_result.xr_max_z_in[Z]){
-			/* Not need currently, may be removed when z-rays are shot */
-		}
+		rt_db_free_internal(&intern);
 
 
 	}
@@ -617,7 +622,7 @@ shoot_x_rays(struct sim_manifold *current_manifold,
 			/* Traverse the hit list and overlap list, drawing the ray segments
 			 * for the current ray
 			 */
-			traverse_xray_lists(sim_params, r_pt, r_dir);
+			traverse_xray_lists(current_manifold, sim_params, r_pt, r_dir);
 
 			/* print_rayshot_results(); */
 

@@ -48,6 +48,11 @@
 #include "../ged_private.h"
 #include "simulate.h"
 
+
+#define SOLID_NOT_FOUND 0
+#define SOLID_FOUND     1
+
+
 /**
  * How to use simulate.Blissfully simple interface, more options will be added soon
  */

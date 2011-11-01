@@ -226,8 +226,9 @@ shoot_x_rays(struct sim_manifold *current_manifold,
  * for x-rays
  */
 int
-traverse_xray_lists(struct simulation_params *sim_params,
-	       point_t pt, point_t dir);
+traverse_xray_lists(struct sim_manifold *current_manifold,
+					struct simulation_params *sim_params,
+					point_t pt, point_t dir);
 
 
 /**
