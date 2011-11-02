@@ -60,6 +60,11 @@
  */
 #define TOL 0.04
 
+/*
+ * Maximum normals allowed to be detected by ray shots
+ */
+#define MAX_NORMALS 10
+
 
 /*
  * This structure is a single node of a circularly linked list
@@ -116,6 +121,10 @@ struct rayshot_results{
 	/* The vector sum of the normals over the surface in the overlap region for A & B*/
 	vect_t resultant_normal_A;
 	vect_t resultant_normal_B;
+
+	/* List of normals added to a resultant so far, used to prevent adding a normal again */
+	vect_t normals[MAX_NORMALS];
+	int num_normals;
 
 	/* Results of shooting rays towards -ve x-axis : xr means x rays */
 	point_t xr_min_x;  /* the min X found while shooting x rays & rltd y,z*/
@@ -249,6 +258,28 @@ int
 traverse_xray_lists(struct sim_manifold *current_manifold,
 					struct simulation_params *sim_params,
 					point_t pt, point_t dir);
+
+
+/**
+ * Traverse the hit list and overlap list, drawing the ray segments
+ * for y-rays
+ */
+int
+traverse_yray_lists(
+		struct sim_manifold *current_manifold,
+		struct simulation_params *sim_params,
+		point_t pt, point_t dir);
+
+
+/**
+ * Traverse the hit list and overlap list, drawing the ray segments
+ * for z-rays
+ */
+int
+traverse_zray_lists(
+		struct sim_manifold *current_manifold,
+		struct simulation_params *sim_params,
+		point_t pt, point_t dir);
 
 
 /**

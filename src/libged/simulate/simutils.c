@@ -182,17 +182,17 @@ kill(struct ged *gedp, char *name)
 
     /* Check if the duplicate already exists, and kill it if so */
     if (db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_log("kill: WARNING \"%s\" exists, deleting it\n", name);
-	cmd_args[0] = bu_strdup("kill");
-	cmd_args[1] = bu_strdup(name);
-	cmd_args[2] = (char *)0;
+		/* bu_log("kill: WARNING \"%s\" exists, deleting it\n", name); */
+		cmd_args[0] = bu_strdup("kill");
+		cmd_args[1] = bu_strdup(name);
+		cmd_args[2] = (char *)0;
 
-	if (ged_kill(gedp, argc, (const char **)cmd_args) != GED_OK) {
-	    bu_log("kill: ERROR Could not delete existing \"%s\"\n", name);
-	    return GED_ERROR;
-	}
+		if (ged_kill(gedp, argc, (const char **)cmd_args) != GED_OK) {
+			bu_log("kill: ERROR Could not delete existing \"%s\"\n", name);
+			return GED_ERROR;
+		}
 
-	bu_free_array(argc, cmd_args, "kill: free cmd_args");
+		bu_free_array(argc, cmd_args, "kill: free cmd_args");
     }
 
     return GED_OK;
@@ -303,7 +303,7 @@ line(struct ged *gedp, char* name, point_t from, point_t to,
 
     cmd_args[19] = (char *)0;
 
-    print_command(cmd_args, 19);
+    /* print_command(cmd_args, 19); */
 
     rv = ged_in(gedp, argc, (const char **)cmd_args);
     if (rv != GED_OK) {

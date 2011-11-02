@@ -388,8 +388,8 @@ shoot_ray(struct rt_i *rtip, point_t pt, point_t dir)
     VMOVE(ap.a_ray.r_dir, dir);
 
     /* Simple debug printing */
-    bu_log("Pnt (%f,%f,%f)", V3ARGS(ap.a_ray.r_pt));
-    VPRINT("Dir", ap.a_ray.r_dir);
+    /*bu_log("Pnt (%f,%f,%f)", V3ARGS(ap.a_ray.r_pt));
+    VPRINT("Dir", ap.a_ray.r_dir);*/
 
     /* Shoot the ray. */
     (void)rt_shootray(&ap);
@@ -460,6 +460,21 @@ clear_bad_chars(struct bu_vls *vp)
 
 
 int
+exists_normal(vect_t n)
+{
+    int i;
+    vect_t a;
+    for(i=0; i<rt_result.num_normals; i++){
+	VMOVE(a, rt_result.normals[i]);
+	if(VEQUAL(a, n))
+	    return 1;
+    }
+
+    return 0;
+}
+
+
+int
 traverse_xray_lists(
 		struct sim_manifold *current_manifold,
 		struct simulation_params *sim_params,
@@ -472,9 +487,6 @@ traverse_xray_lists(
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb =(struct rt_comb_internal *)NULL;
-
-    /* quellage */
-    bu_log("traverse_xray_lists : From : (%f,%f,%f), towards(%f,%f,%f)", V3ARGS(pt),  V3ARGS(dir));
 
     /* Draw all the overlap regions : lines are added for overlap segments
      * to help visual debugging
@@ -494,7 +506,7 @@ traverse_xray_lists(
 			 overlap_list[i].out_point,
 			 0, 210, 0);
 
-		bu_log("traverse_xray_lists: %s", bu_vls_addr(&reg_vls));
+		/*bu_log("traverse_xray_lists: %s", bu_vls_addr(&reg_vls));*/
 
 		add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
 
@@ -607,8 +619,7 @@ traverse_yray_lists(
     struct rt_db_internal intern;
     struct rt_comb_internal *comb =(struct rt_comb_internal *)NULL;
 
-    /* quellage */
-    bu_log("traverse_yray_lists : From : (%f,%f,%f), towards(%f,%f,%f)", V3ARGS(pt),  V3ARGS(dir));
+
 
     /* Draw all the overlap regions : lines are added for overlap segments
      * to help visual debugging
@@ -740,8 +751,6 @@ traverse_zray_lists(
     struct rt_db_internal intern;
     struct rt_comb_internal *comb =(struct rt_comb_internal *)NULL;
 
-    /* quellage */
-    bu_log("traverse_zray_lists : From : (%f,%f,%f), towards(%f,%f,%f)", V3ARGS(pt),  V3ARGS(dir));
 
     /* Draw all the overlap regions : lines are added for overlap segments
      * to help visual debugging
@@ -873,7 +882,7 @@ shoot_x_rays(struct sim_manifold *current_manifold,
     VSET(r_dir, 1.0, 0.0, 0.0);
 
 
-    bu_log("Querying overlap between %s & %s",
+    bu_log("Querying overlap between A: %s & B: %s",
 	   current_manifold->rbA->rb_namep,
 	   current_manifold->rbB->rb_namep);
 
@@ -928,11 +937,11 @@ shoot_x_rays(struct sim_manifold *current_manifold,
 			/* Cleanup the overlap and hit lists and free memory */
 			cleanup_lists();
 
-			bu_log("Last y ray fired from y = %f, overlap_max[Y]=%f", y, overlap_max[Y]);
+			/*bu_log("Last y ray fired from y = %f, overlap_max[Y]=%f", y, overlap_max[Y]);*/
 
 		}
 
-		bu_log("Last z ray fired from z = %f, overlap_max[Z]=%f", z, overlap_max[Z]);
+		/*bu_log("Last z ray fired from z = %f, overlap_max[Z]=%f", z, overlap_max[Z]);*/
 
     }
 
@@ -955,7 +964,7 @@ shoot_y_rays(struct sim_manifold *current_manifold,
     VSET(r_dir, 0.0, 1.0, 0.0);
 
 
-    bu_log("Querying overlap between %s & %s",
+    bu_log("Querying overlap between A:%s & B:%s",
 	   current_manifold->rbA->rb_namep,
 	   current_manifold->rbB->rb_namep);
 
@@ -1010,11 +1019,11 @@ shoot_y_rays(struct sim_manifold *current_manifold,
 			/* Cleanup the overlap and hit lists and free memory */
 			cleanup_lists();
 
-			bu_log("Last x ray fired from x = %f, overlap_max[X]=%f", x, overlap_max[X]);
+			/*bu_log("Last x ray fired from x = %f, overlap_max[X]=%f", x, overlap_max[X]);*/
 
 		}
 
-		bu_log("Last z ray fired from z = %f, overlap_max[Z]=%f", z, overlap_max[Z]);
+		/*bu_log("Last z ray fired from z = %f, overlap_max[Z]=%f", z, overlap_max[Z]);*/
 
     }
 
@@ -1037,7 +1046,7 @@ shoot_z_rays(struct sim_manifold *current_manifold,
     VSET(r_dir, 0.0, 0.0, 1.0);
 
 
-    bu_log("Querying overlap between %s & %s",
+    bu_log("Querying overlap between A:%s & B:%s",
 	   current_manifold->rbA->rb_namep,
 	   current_manifold->rbB->rb_namep);
 
@@ -1092,11 +1101,11 @@ shoot_z_rays(struct sim_manifold *current_manifold,
 			/* Cleanup the overlap and hit lists and free memory */
 			cleanup_lists();
 
-			bu_log("Last x ray fired from x = %f, overlap_max[X]=%f", x, overlap_max[X]);
+			/*bu_log("Last x ray fired from x = %f, overlap_max[X]=%f", x, overlap_max[X]);*/
 
 		}
 
-		bu_log("Last y ray fired from y = %f, overlap_max[Y]=%f", y, overlap_max[Y]);
+		/*bu_log("Last y ray fired from y = %f, overlap_max[Y]=%f", y, overlap_max[Y]);*/
 
     }
 
