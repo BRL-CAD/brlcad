@@ -1182,13 +1182,12 @@ previous sync are included and that STABLE matches trunk.
 
     svn checkout https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH brlcad-MAJOR.MINOR.PATCH
 
-9) Perform another "make distcheck" on the exported/updated sources on
-a system with the latest GNU Autotools installed to generate the
-distributable compressed source tarballs.
+9) Perform another "make bench && make test && make distcheck" on the
+exported/updated sources to generate validated source tarballs.
 
-10) Verify that the source distribution tarballs may be expanded; and
-that they build, run, and that the file permissions are correct.
-Minimally check:
+10) Use one of the source distribution tarballs to verify a binary
+build.  Use the NAMING A BINARY RELEASE section above if the binary
+build will be distributed.  Minimally test:
 
     rt        # should report usage with correct library versions
     benchmark run TIMEFRAME=1            # completes without ERROR
@@ -1196,13 +1195,7 @@ Minimally check:
     rtwizard  # displays gui
     mged      # displays gui, run: opendb test2.g ; make sph sph ; rt
 
-11) Use one of the source distribution tarballs to generate
-platform-specific builds.  Use the NAMING A SOURCE RELEASE and the
-NAMING A BINARY RELEASE sections above for naming source and binary
-distribution files respectively.  Test the build: make test && make
-bench
-
-12) Post the source and platform-specific binary distributions to
+11) Post the source and platform-specific binary distributions to
 SourceForge and then select them on the sf.net File Release System:
 
 SFUSERNAME=`ls ~/.subversion/auth/svn.simple/* | xargs -n 1 grep -A4 sourceforge | tail -1`
@@ -1213,15 +1206,42 @@ echo "SFUSERNAME=$SFUSERNAME MAJOR=$MAJOR MINOR=$MINOR PATCH=$PATCH"
 ssh -v $SFUSERNAME,brlcad@shell.sourceforge.net create
 ssh -v $SFUSERNAME,brlcad@shell.sourceforge.net mkdir "/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH"
 scp brlcad-$MAJOR.$MINOR.$PATCH* "$SFUSERNAME,brlcad@shell.sourceforge.net:/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH/."
-ssh -v $SFUSERNAME,brlcad@shell.sourceforge.net shutdown
 
 This can all be done through the sf.net project web interface too.
+Extract and upload the release notes:
 
-13) Increment and commit the next BRL-CAD release numbers to SVN;
+cat NEWS | tr '\n' '$' | perl -pi -e 's/.*(\$--*\$---[[:space:]]*[0-9-]*[[:space:]]*Release[[:space:]]*7.20.4[[:space:]]*---\$-*\$.*?)\$---.*/\1/g' | tr '$' '\n' > README-$MAJOR-$MINOR-$PATCH.txt
+scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sourceforge.net:/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH/."
+ssh -v $SFUSERNAME,brlcad@shell.sourceforge.net shutdown
+
+12) Increment and commit the next BRL-CAD release numbers to SVN;
 update the include/conf/(MAJOR|MINOR|PATCH) version files immediately
 to an odd-numbered minor version or a new patch developer version
 (e.g. 7.11.0 or 7.4.1).  Update README and NEWS version to next
 _expected_ release number (e.g. 7.12.0 or 7.4.2).
+
+13) Notify binary platform maintainers:
+
+      T2 package maintainer
+      http://t2-project.org/packages/brlcad.html
+
+      OpenSUSE package maintainer
+      https://build.opensuse.org/package/users?package=brlcad&project=Education
+
+      FreeBSD ports maintainer
+      http://www.freebsd.org/cgi/cvsweb.cgi/ports/cad/brlcad/
+
+      Gentoo portage maintainer
+      http://packages.gentoo.org/package/sci-misc/brlcad
+
+      Ubuntu/Debian .deb maintaner
+      Jordi Sayol <g.sayol@yahoo.es>
+
+      Debian apt package maintainer
+      http://git.debian.org/?p=debian-science/packages/brlcad.git
+
+      Slackware maintainer
+      http://slackbuilds.org/result/?search=brlcad
 
 14) Announce the new release.
 
@@ -1254,30 +1274,7 @@ audience.  Always notify the following when a release is made:
 If appropriate, notify and/or update the following information outlets
 with the details of the new release:
 
-Source or binary release:
-
-      T2 package maintainer
-      http://t2-project.org/packages/brlcad.html
-
-      OpenSUSE package maintainer
-      https://build.opensuse.org/package/users?package=brlcad&project=Education
-
-      FreeBSD ports maintainer
-      http://www.freebsd.org/cgi/cvsweb.cgi/ports/cad/brlcad/
-
-      Gentoo portage maintainer
-      http://packages.gentoo.org/package/sci-misc/brlcad
-
-      Ubuntu/Debian .deb maintaner
-      Jordi Sayol <g.sayol@yahoo.es>
-
-      Debian apt package maintainer
-      http://git.debian.org/?p=debian-science/packages/brlcad.git
-
-      Slackware maintainer
-      http://slackbuilds.org/result/?search=brlcad
-
-Linux binary release:
+Linux release:
 
       CAD on Linux mailing list
       cad-linux@freelists.org
@@ -1286,7 +1283,7 @@ Linux binary release:
       Linux Softpedia
       http://linux.softpedia.com/get/Multimedia/Graphics/BRL-CAD-105.shtml
 
-Mac OS X binary release:
+Mac OS X release:
 
       Versiontracker  (only 'brlcad' can update)
       http://www.versiontracker.com/dyn/moreinfo/macosx/26289
@@ -1302,7 +1299,7 @@ Mac OS X binary release:
       Fink package maintainer
       jack@krass.com
 
-Multiple platform major binary release:
+Multiple platform major release:
 
       upFront.ezine
       Ralph Grabowski
@@ -1334,7 +1331,7 @@ Multiple platform major binary release:
       http://cadcam-insider.com/index.php/News-submission-guidelines.html
       copyboy@cadcam-insider.com
 
-16) Sit back and enjoy a beverage for a job well done.
+15) Sit back and enjoy a beverage for a job well done.
 
 
 GETTING HELP
