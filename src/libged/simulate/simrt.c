@@ -441,6 +441,7 @@ init_rayshot_results(void)
     VSETALL(rt_result.resultant_normal_A, SMALL_FASTF);
     VSETALL(rt_result.resultant_normal_B, SMALL_FASTF);
 
+    rt_result.num_normals = 0;
 
     return GED_OK;
 }
