@@ -353,10 +353,10 @@ primary(enum token n, struct exists_data *ed)
 static int
 binop(struct exists_data *ed)
 {
-        const char *opnd1, *opnd2;
+        const char /**opnd1, */*opnd2;
         struct t_op const *op;
 
-        opnd1 = *(ed->t_wp);
+        /* opnd1 = *(ed->t_wp); */
         (void) t_lex(*++(ed->t_wp), ed);
         op = ed->t_wp_op;
 

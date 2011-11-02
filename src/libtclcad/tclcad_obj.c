@@ -4807,7 +4807,6 @@ to_mouse_find_pipept(struct ged *gedp,
 		     const char *usage,
 		     int UNUSED(maxargs))
 {
-    int ret;
     char *av[6];
     fastf_t x, y;
     fastf_t inv_width;
@@ -4865,7 +4864,7 @@ to_mouse_find_pipept(struct ged *gedp,
     av[2] = bu_vls_addr(&pt_vls);
     av[3] = (char *)0;
 
-    ret = ged_find_pipept_nearest_pt(gedp, 3, (const char **)av);
+    (void)ged_find_pipept_nearest_pt(gedp, 3, (const char **)av);
     bu_vls_free(&pt_vls);
 
     return GED_OK;

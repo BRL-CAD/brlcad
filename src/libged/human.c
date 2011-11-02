@@ -1609,7 +1609,7 @@ getLocation(fastf_t *location)
 HIDDEN int
 read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude, fastf_t *percentile, fastf_t *location, int *stance, int *troops, int *showBoxes)
 {
-    char c = 'A';
+    int c = 'A';
     char *options="AbH:hLlmn:N:O:o:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:X:";
     float height=0;
     int soldiers=0;

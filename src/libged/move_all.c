@@ -259,7 +259,7 @@ move_all_file(struct ged *gedp, int nflag, const char *file)
 int
 ged_move_all(struct ged *gedp, int argc, const char *argv[])
 {
-    char c;
+    int c;
     int fflag = 0;
     int nflag = 0;
     static const char *usage = "[-n] {-f <mapping_file>|<from> <to>}";

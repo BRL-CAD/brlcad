@@ -3259,7 +3259,6 @@ main(int argc, char **argv)
     fastf_t conv_factor = 0.0;
     fastf_t bot_thickness = 0.0;
     int user_bot_thickness_flag = 0;
-    int user_open_bot_output_mode_flag = 0;
     time_t start_time;
     time_t end_time;
     time_t elapsed_time;
@@ -3380,15 +3379,12 @@ main(int argc, char **argv)
 		switch (bu_optarg[0]) {
 		    case 's': /* surface bot */
 			open_bot_output_mode = RT_BOT_SURFACE;
-			user_open_bot_output_mode_flag = 1;
 			break;
 		    case 'p': /* plate bot */
 			open_bot_output_mode = RT_BOT_PLATE;
-			user_open_bot_output_mode_flag = 1;
 			break;
 		    case 'n': /* plate bot nocos */
 			open_bot_output_mode = RT_BOT_PLATE_NOCOS;
-			user_open_bot_output_mode_flag = 1;
 			break;
 		    default:
 			bu_log("Invalid open surface 'native-bot' output bot "

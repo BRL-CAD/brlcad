@@ -2519,7 +2519,7 @@ nmg_plot_flat_face(struct faceuse *fu, struct bu_list *tbl2d)
 
 
 void
-nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *tol)
+nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *UNUSED(tol))
 {
     struct loopuse *lu;
     struct edgeuse *eu;
@@ -2527,8 +2527,6 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *t
     int edgeuse_vert_count = 0;
     int non_consec_edgeuse_vert_count = 0;
     int faceuse_loopuse_count = 0;
-    fastf_t dist_btw_prev_curr = 0.0;
-    fastf_t temp;
     struct vertex *prev_v_p = (struct vertex *)NULL;
     struct vertex *curr_v_p = (struct vertex *)NULL;
     struct vertex *first_v_p = (struct vertex *)NULL;
@@ -2537,8 +2535,6 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *t
     struct edgeuse *first_eu = (struct edgeuse *)NULL;
     FILE *plotfp;
     struct bu_vls plot_file_name;
-
-    temp = tol->dist;
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 
@@ -2550,7 +2546,6 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *t
         curr_eu = (struct edgeuse *)NULL;
         prev_eu = (struct edgeuse *)NULL;
         first_eu = (struct edgeuse *)NULL;
-        dist_btw_prev_curr = 0.0;
 
         faceuse_loopuse_count++;
 
@@ -2589,7 +2584,7 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *t
                 non_consec_edgeuse_vert_count++;
             }
             if (edgeuse_vert_count > 1) {
-                dist_btw_prev_curr = bn_dist_pt3_pt3(prev_v_p->vg_p->coord,curr_v_p->vg_p->coord);
+                bn_dist_pt3_pt3(prev_v_p->vg_p->coord,curr_v_p->vg_p->coord);
                 pdv_3line(plotfp, prev_v_p->vg_p->coord, curr_v_p->vg_p->coord);
             }
             prev_v_p = curr_v_p;
@@ -2597,7 +2592,7 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *t
         }
 
         if (curr_v_p && first_v_p) {
-            dist_btw_prev_curr = bn_dist_pt3_pt3(first_v_p->vg_p->coord,curr_v_p->vg_p->coord);
+            bn_dist_pt3_pt3(first_v_p->vg_p->coord,curr_v_p->vg_p->coord);
             if (curr_eu->e_p->is_real) {
                 /* set last segment if is_real to cyan */
                 pl_color(plotfp, 0, 255, 255);
@@ -2751,7 +2746,7 @@ nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, const struct
     int hit;
     struct loopuse *lu1, *lu2, *lu_tmp;
     struct edgeuse *eu1, *eu2, *eu_tmp;
-    struct vertexuse *vu1, *vu2;
+    struct vertexuse *vu1;
     struct pt2d *pt2d_cut_to = (struct pt2d *)NULL;
     struct pt2d *pt2d_cut_from = (struct pt2d *)NULL;
     static const int cut_color[3] = { 90, 255, 90};
@@ -2782,7 +2777,7 @@ nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, const struct
             /* Test lu1 to determine if any of the vertex is shared
              * with a outer loopuse.
              */
-            vu2 = NULL;
+
             /* Loop thru each eu of lu1 hole loopuse. */
             for (BU_LIST_FOR(eu1, edgeuse, &lu1->down_hd)) {
                 for (BU_LIST_FOR(vu1, vertexuse, &eu1->vu_p->v_p->vu_hd)) { 
@@ -2812,7 +2807,7 @@ nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, const struct
             }
 
             if (!fast_exit) {
-                /* Loop thru each eu of hole loopuse, vu2 of pot-cut. */
+                /* Loop thru each eu of hole loopuse */
                 for (BU_LIST_FOR(eu1, edgeuse, &lu1->down_hd)) {
 
                     /* Loop thru each non-hole loopuse to create pot-cut. */

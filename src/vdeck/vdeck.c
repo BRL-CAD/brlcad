@@ -152,7 +152,7 @@ extern void		quit();
 char			getarg();
 void			quit(), abort_sig();
 
-char			getcmd();
+int			getcmd();
 void			prompt();
 
 void			addarb();
@@ -1695,7 +1695,7 @@ vls_ftoa( struct bu_vls *v, double f, int w, int d )
  * Return first character read from keyboard, copy command into
  * args[0] and arguments into args[1]...args[n].
  */
-char
+int
 getcmd(char *args[], int ct)
 {
     /* Get arguments.						 */
@@ -1730,6 +1730,8 @@ getcmd(char *args[], int ct)
 char
 getarg( char *str )
 {
+    int prev;
+
     do {
 	*str = getchar();
 	if ( (int)(*str) == ' ' ) {
@@ -1738,7 +1740,10 @@ getarg( char *str )
 	}
 	else
 	    ++str;
-    }	while ( (int)(str[-1]) != EOF && (int)(str[-1]) != '\n' );
+
+	prev = str[-1];
+    }	while (prev != EOF && (int)(str[-1]) != '\n' );
+
     if ( (int)(str[-1]) == '\n' )
 	--str;
     *str = '\0';

@@ -979,7 +979,7 @@ combmem_set_empty(struct ged *gedp, int argc, const char *argv[])
 int
 ged_combmem(struct ged *gedp, int argc, const char *argv[])
 {
-    char c;
+    int c;
     enum etypes iflag = ETYPES_ABS;
     enum etypes rflag = ETYPES_NULL;
     const char *cmd_name = argv[0];

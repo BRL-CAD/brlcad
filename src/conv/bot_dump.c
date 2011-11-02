@@ -41,7 +41,7 @@ main(int argc, char *argv[])
 {
     int i, j;
     int db_index;
-    char c;
+    int c;
     const char **av;
     struct ged *gedp;
 

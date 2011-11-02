@@ -44,7 +44,7 @@ main(int argc, char *argv[])
 {
     int i, j;
     int db_index;
-    char c;
+    int c;
     const char **av;
     struct ged *gedp;
 
@@ -52,7 +52,7 @@ main(int argc, char *argv[])
     bu_optind = 1;
 
     /* Get past command line options. */
-    while ((c=bu_getopt(argc, argv, "A:a:de:f:g:Gn:N:pP:rS:s:t:U:u:vV:W:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "A:a:de:f:g:Gn:N:pP:rS:s:t:U:u:vV:W:")) != -1) {
 	switch (c) {
 	    case 'A':
 	    case 'a':

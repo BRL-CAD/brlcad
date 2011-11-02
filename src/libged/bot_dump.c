@@ -759,7 +759,7 @@ bot_dump_leaf(struct db_tree_state *tsp,
 static int
 bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 {
-    char c;
+    int c;
 
     output_type = OTYPE_STL;
     binary = 0;

@@ -318,15 +318,10 @@ leaf_tess1(struct db_tree_state *tsp, const struct db_full_path *pathp, struct r
  * evaluation.
  */
 union tree *
-leaf_tess2(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+leaf_tess2(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), struct rt_db_internal *ip, genptr_t client_data)
 {
     struct rt_bot_internal *bot;
     struct plate_mode *pmp = (struct plate_mode *)client_data;
-    struct db_tree_state *tsp_tmp;
-    const struct db_full_path *pathp_tmp;
-
-    tsp_tmp = tsp; /* to quiet compiler */
-    pathp_tmp = pathp; /* to quiet compiler */
 
     if (ip->idb_type != ID_BOT) {
 	return (union tree *)NULL;
@@ -1262,13 +1257,10 @@ do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
  *  Only send bots from structure outside tree to vrml file.
  */
 union tree *
-do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *UNUSED(curtree), genptr_t client_data)
 {
     struct plate_mode *pmp = (struct plate_mode *)client_data;
     char *name;
-    union tree *curtree_tmp;
-
-    curtree_tmp = curtree; /* to quiet compiler */
 
     if ((pmp->num_bots > 0) && (RT_G_DEBUG&DEBUG_TREEWALK || verbose)) {
 	bu_log("\nConverted %d%% so far (%d of %d)\n",
