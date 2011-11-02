@@ -1855,7 +1855,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	modify the state of the drawing window) will apply only to the
 	drawing window wherein the user typed. This feature is provided
 	to lessen the need to use the mouse." } }
-    if {$mged_gui($id,dtype) == "ogl"} {
+    if {$mged_gui($id,dtype) == "ogl" || $mged_gui($id,dtype) == "wgl"} {
 	.$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
 	    -variable mged_gui($id,depthcue) -label "Depth Cueing" -underline 0\
 	    -command "mged_apply $id \"dm set depthcue \$mged_gui($id,depthcue)\""
@@ -2291,7 +2291,9 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     update_mged_vars $id
     set mged_gui($id,qray_effects) [qray effects]
 
-    mged_apply_local $id "dm set zbuffer $mged_default(zbuffer)"
+    if {$mged_gui($id,dtype) == "ogl" || $mged_gui($id,dtype) == "wgl"} {
+	mged_apply_local $id "dm set zbuffer $mged_default(zbuffer)"
+    }
 
     # reset current_cmd_list so that its cur_hist gets updated
     cmd_win set $save_id
