@@ -27,18 +27,15 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
-
+#include <zlib.h>
+#include <png.h>
 #include "bio.h"
-#include "png.h"
+#include "bin.h"
+
 #include "bu.h"
 #include "fb.h"
-
 #include "pkg.h"
 
-#ifdef HAVE_WINSOCK_H
-#  include <winsock.h>
-#endif
 
 static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
 static unsigned char **scanline;	/* 1 scanline pixel buffer */

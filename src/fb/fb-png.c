@@ -29,17 +29,11 @@
 
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <zlib.h>
+#include <png.h>
 #include "bio.h"
+#include "bin.h"
 
-#ifdef HAVE_WINSOCK_H
-#  include <winsock.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-
-#include "zlib.h"
-#include "png.h"
 #include "bu.h"
 #include "fb.h"
 
