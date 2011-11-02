@@ -28,10 +28,10 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <zlib.h>
+#include <png.h>
 #include "bio.h"
 
-#include "zlib.h"
-#include "png.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
