@@ -359,6 +359,16 @@ ENDIF(NOT BRLCAD-IS_SUBBUILD)
 FILE(REMOVE ${CMAKE_BINARY_DIR}/cmakefiles.cmake)
 FILE(REMOVE ${CMAKE_BINARY_DIR}/cmakedirs.cmake)
 
+# We wrap the message function to also append ALL messages to CMakeOutput.log,
+# as well as printing them on the console output.
+IF(NOT BRLCAD-IS_SUBBUILD)
+	function(message)
+		_message(${ARGN})
+		STRING(REGEX REPLACE ";" ": " msg "${ARGV}")
+		file(APPEND ${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${msg}\n")
+	endfunction(message)
+ENDIF(NOT BRLCAD-IS_SUBBUILD)
+
 #---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.
@@ -685,6 +695,12 @@ ENDIF(NOT BRLCAD_BUNDLED_LIBS)
 set_property(CACHE BRLCAD_BUNDLED_LIBS PROPERTY STRINGS AUTO BUNDLED SYSTEM)
 STRING(TOUPPER "${BRLCAD_BUNDLED_LIBS}" BRLCAD_BUNDLED_LIBS_UPPER)
 SET(BRLCAD_BUNDLED_LIBS "${BRLCAD_BUNDLED_LIBS_UPPER}" CACHE STRING "Build bundled libraries." FORCE)
+IF(${BRLCAD_BUNDLED_LIBS} STREQUAL "ON")
+	SET(BRLCAD_BUNDLED_LIBS "BUNDLED" CACHE STRING "Build bundled libraries." FORCE)
+ENDIF(${BRLCAD_BUNDLED_LIBS} STREQUAL "ON")
+IF(${BRLCAD_BUNDLED_LIBS} STREQUAL "OFF")
+	SET(BRLCAD_BUNDLED_LIBS "SYSTEM" CACHE STRING "Build bundled libraries." FORCE)
+ENDIF(${BRLCAD_BUNDLED_LIBS} STREQUAL "OFF")
 IF(NOT BRLCAD_BUNDLED_LIBS STREQUAL "AUTO" AND NOT BRLCAD_BUNDLED_LIBS STREQUAL "BUNDLED" AND NOT BRLCAD_BUNDLED_LIBS STREQUAL "SYSTEM")
 	MESSAGE(WARNING "Unknown value BRLCAD_BUNDLED_LIBS supplied for BRLCAD_BUNDLED_LIBS - defaulting to AUTO")
 	MESSAGE(WARNING "Valid options are AUTO, BUNDLED and SYSTEM")
@@ -1381,9 +1397,9 @@ OPTION(BRLCAD_PRINT_VERBOSE_SUMMARY "Print summary" ON)
 MARK_AS_ADVANCED(BRLCAD_PRINT_VERBOSE_SUMMARY)
 
 if(BRLCAD_PRINT_VERBOSE_SUMMARY)
-	MESSAGE("")
+	MESSAGE("\n")
 	MESSAGE("------ BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} - ${CMAKE_BUILD_TYPE} Build  ------")
-	MESSAGE("")
+	MESSAGE("\n")
 
 	# Directory settings
 
@@ -1413,7 +1429,7 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
 			MESSAGE("${CURRENT_LABEL}: ${CMAKE_INSTALL_PREFIX}/${${path_label}}")
 		ENDIF(path_label MATCHES "^CMAKE_INSTALL_PREFIX$")
 	ENDFOREACH()
-	MESSAGE("")
+	MESSAGE("\n")
 
 	STRING(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
 	IF(NOT BUILD_TYPE)
@@ -1451,7 +1467,7 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
 		ENDWHILE(${SETTING_LABEL_LENGTH} GREATER ${CURRENT_LENGTH})
 		MESSAGE("${CURRENT_LABEL} = ${${setting_label}}")
 	ENDFOREACH()
-	MESSAGE("")
+	MESSAGE("\n")
 
 	# The actual build state (as opposed to the AUTO/BUNDLED/SYSTEM setting) is
 	# not present in the global cache and must be explicitly pulled from
@@ -1549,7 +1565,7 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
 			ENDWHILE(${SETTING_LABEL_LENGTH} GREATER ${CURRENT_LENGTH})
 			MESSAGE("${CURRENT_LABEL}..: ${${setting_label}}")
 		ENDFOREACH()
-		MESSAGE("")
+		MESSAGE("\n")
 	ENDFOREACH()
 
 endif(BRLCAD_PRINT_VERBOSE_SUMMARY)
