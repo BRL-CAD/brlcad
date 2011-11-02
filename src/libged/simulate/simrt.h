@@ -222,6 +222,26 @@ shoot_x_rays(struct sim_manifold *current_manifold,
 
 
 /**
+ * Shoots a grid of rays down y axis
+ */
+int
+shoot_y_rays(struct sim_manifold *current_manifold,
+	     struct simulation_params *sim_params,
+	     vect_t overlap_min,
+	     vect_t overlap_max);
+
+
+/**
+ * Shoots a grid of rays down z axis
+ */
+int
+shoot_z_rays(struct sim_manifold *current_manifold,
+	     struct simulation_params *sim_params,
+	     vect_t overlap_min,
+	     vect_t overlap_max);
+
+
+/**
  * Traverse the hit list and overlap list, drawing the ray segments
  * for x-rays
  */
