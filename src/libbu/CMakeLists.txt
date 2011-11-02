@@ -135,7 +135,7 @@ ADD_MAN_PAGES(3 bu_MAN3)
 
 set(bu_ignore_files
 	rb_internals.h
-	uce_dirent.h
+	uce-dirent.h
 	)
 CMAKEFILES(${bu_ignore_files})
 CMAKEFILES(Makefile.am)
