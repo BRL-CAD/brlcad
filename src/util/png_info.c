@@ -25,20 +25,22 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "png.h"
+#include <zlib.h>
+#include <png.h>
+#include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "zlib.h"
 
-static char *usage="Usage:\n\t%s png__file\n";
 
 int
 main(int argc, char **argv)
 {
+    static char *usage="Usage:\n\t%s png__file\n";
+
     int i;
     FILE *fp_in = NULL;
     png_structp png_p;

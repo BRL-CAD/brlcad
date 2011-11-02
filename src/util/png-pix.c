@@ -27,13 +27,13 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <zlib.h>
+#include <png.h>
 #include "bio.h"
 
-#include "png.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "zlib.h"
 
 
 static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
