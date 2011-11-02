@@ -127,7 +127,7 @@ find_solid(struct db_i *dbip,
     RT_CK_TREE(comb_leaf);
 
     obj_name = (char *)object;
-    if (!BU_STR_EQUAL(comb_leaf->tr_l.tl_name, obj_name))
+    if (BU_STR_EQUAL(comb_leaf->tr_l.tl_name, obj_name))
     	return SOLID_FOUND;
     else
     	return SOLID_NOT_FOUND;
