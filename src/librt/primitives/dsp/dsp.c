@@ -72,6 +72,16 @@
 #define DIM_BB_CHILDREN 4
 #define NUM_BB_CHILDREN (DIM_BB_CHILDREN*DIM_BB_CHILDREN)
 
+#define IMPORT_FAIL(_s) \
+    if (dsp_ip) { \
+	bu_log("rt_dsp_import4(%d) '%V' %s\n", __LINE__, &dsp_ip->dsp_name, _s); \
+	bu_free((char *)dsp_ip, "rt_dsp_import4: dsp_ip"); \
+    } \
+    ip->idb_type = ID_NULL; \
+    ip->idb_ptr = (genptr_t)NULL; \
+    return -2
+
+
 struct dsp_rpp {
     unsigned short dsp_min[3];
     unsigned short dsp_max[3];
@@ -4251,18 +4261,8 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     union record *rp;
     struct bu_vls str;
 
-
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_import4_v4()\n");
-
-
-#define IMPORT_FAIL(_s) \
-	bu_log("rt_dsp_import4(%d) '%s' %s\n", __LINE__, \
-	       bu_vls_addr(&dsp_ip->dsp_name), _s);\
-	bu_free((char *)dsp_ip, "rt_dsp_import4: dsp_ip"); \
-	ip->idb_type = ID_NULL; \
-	ip->idb_ptr = (genptr_t)NULL; \
-	return -2
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -4417,16 +4417,16 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
     dsp_ip->dsp_xcnt = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
-    if (dsp_ip->dsp_xcnt < 2) {
-	bu_log("%s:%d DSP X dimension (%zu) < 2 \n",
+    if (dsp_ip->dsp_xcnt < 1) {
+	bu_log("%s:%d DSP X dimension (%zu) < 1 \n",
 	       __FILE__, __LINE__,
 	       dsp_ip->dsp_xcnt);
     }
 
     dsp_ip->dsp_ycnt = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
-    if (dsp_ip->dsp_ycnt < 2) {
-	bu_log("%s:%d DSP X dimension (%zu) < 2 \n",
+    if (dsp_ip->dsp_ycnt < 1) {
+	bu_log("%s:%d DSP Y dimension (%zu) < 1 \n",
 	       __FILE__, __LINE__,
 	       dsp_ip->dsp_ycnt);
     }
