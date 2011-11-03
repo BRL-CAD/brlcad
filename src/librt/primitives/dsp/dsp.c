@@ -4232,9 +4232,7 @@ dsp_get_data(struct rt_dsp_internal *dsp_ip, const mat_t mat, const struct db_i 
 	   bu_vls_addr(&dsp_ip->dsp_name));
 
     dsp_ip->dsp_mp = (struct bu_mapped_file *)NULL;
-    dsp_ip->dsp_buf = bu_calloc(sizeof(short),
-				dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt,
-				"dsp fake data");
+    dsp_ip->dsp_buf = NULL;
 
     return 1;
 }
