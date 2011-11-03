@@ -427,7 +427,7 @@ struct rt_eto_internal {
 struct rt_dsp_internal{
     uint32_t magic;
 #define dsp_file dsp_name 		/**< @brief for backwards compatibility */
-    struct bu_vls dsp_name;	/**< @brief  name of data file */
+    struct bu_vls dsp_name;	/**< TODO: make this a pointer, name of data file */
     size_t dsp_xcnt;	/**< @brief  # samples in row of data */
     size_t dsp_ycnt;	/**< @brief  # of columns in data */
     unsigned short dsp_smooth;	/**< @brief  bool: surf normal interp */
