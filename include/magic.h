@@ -235,7 +235,7 @@
     }
 #  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str) { \
 	uintptr_t _ptrval = (uintptr_t)(_ptr); \
-	if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((uint32_t *)(_ptr)) != (_magic))) { \
+	if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
 	    bu_badmagic_tcl((_interp), (uint32_t *)(_ptr), (uint32_t)_magic, _str, __FILE__, __LINE__); \
 	    return TCL_ERROR; \
 	} \
