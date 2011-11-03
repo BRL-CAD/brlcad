@@ -1065,10 +1065,10 @@ shoot_normal_rays(struct sim_manifold *current_manifold,
 	     	 	 vect_t overlap_min,
 	     	 	 vect_t overlap_max)
 {
-	vect_t diff, up_vec, z_axis;
+	vect_t diff, up_vec, ref_axis;
 	point_t overlap_center;
 	fastf_t d, r;
-	struct xrays *xrayp = NULL;
+	struct xrays xray_1 ;
 	struct xray center_ray;
 
 	/* Setup center ray */
@@ -1089,11 +1089,17 @@ shoot_normal_rays(struct sim_manifold *current_manifold,
 	VSCALE(diff, rt_result.resultant_normal_B, -r);
 	VADD2(center_ray.r_pt, overlap_center, diff);
 
-	/* Generate the up vector */
-	VSET(z_axis, 0, 0, 1);
-	VCROSS(up_vec, rt_result.resultant_normal_B, z_axis);
+	/* Generate the up vector, try cross with x-axis */
+	VSET(ref_axis, 1, 0, 0);
+	VCROSS(up_vec, rt_result.resultant_normal_B, ref_axis);
 
-	rt_gen_circular_grid(xrayp, &center_ray, r, up_vec,r*2);
+	/* Parallel to x-axis ? then try y-axis */
+	if(VZERO(up_vec)){
+		VSET(ref_axis, 0, 1, 0);
+		VCROSS(up_vec, rt_result.resultant_normal_B, ref_axis);
+	}
+
+	rt_gen_circular_grid(&xray_1, &center_ray, r, up_vec,r*2);
 
 	return GED_OK;
 }
@@ -1124,7 +1130,7 @@ create_contact_pairs(
 	VMOVE(v, mf->rbB->linear_velocity);
 	VUNITIZE(v);
 	VADD2(rt_result.resultant_normal_B, rt_result.resultant_normal_B, mf->rbB->linear_velocity);
-	bu_log("create_contact pairs : Final normal from B to A : %s(%f,%f,%f)", V3ARGS(rt_result.resultant_normal_B));
+	bu_log("create_contact pairs : Final normal from B to A : (%f,%f,%f)", V3ARGS(rt_result.resultant_normal_B));
 
     /* Begin making contact */
 
