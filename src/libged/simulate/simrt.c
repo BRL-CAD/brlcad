@@ -1055,22 +1055,81 @@ shoot_z_rays(struct sim_manifold *current_manifold,
 }
 
 
+/*
+ * Shoots a circular bunch of rays from B towards A along resultant_normal_B
+ *
+ */
 int
-create_contact_pairs(struct sim_manifold *mf, vect_t UNUSED(overlap_min), vect_t UNUSED(overlap_max))
+shoot_normal_rays(struct sim_manifold *current_manifold,
+	     	 	 struct simulation_params *sim_params,
+	     	 	 vect_t overlap_min,
+	     	 	 vect_t overlap_max)
 {
-    /* vect_t diff;*/ 
-    /* int i; */
+	vect_t diff, up_vec, z_axis;
+	point_t overlap_center;
+	fastf_t d, r;
+	struct xrays *xrayp = NULL;
+	struct xray center_ray;
+
+	/* Setup center ray */
+	center_ray.index = 0;
+	VMOVE(center_ray.r_dir, rt_result.resultant_normal_B);
 
 
+	VSUB2(diff, overlap_max, overlap_min);
+	d = MAGNITUDE(diff);
+	r = d/2;
+
+	/* Get overlap volume position in 3D space */
+	VCOMB2(overlap_center, 1, overlap_min, 0.5, overlap_max);
+
+	/* Step back from the overlap_center, along the normal by r
+	 * to ensure rays start from outside overlap region
+	 */
+	VSCALE(diff, rt_result.resultant_normal_B, -r);
+	VADD2(center_ray.r_pt, overlap_center, diff);
+
+	/* Generate the up vector */
+	VSET(z_axis, 0, 0, 1);
+	VCROSS(up_vec, rt_result.resultant_normal_B, z_axis);
+
+	rt_gen_circular_grid(xrayp, &center_ray, r, up_vec,r*2);
+
+	return GED_OK;
+}
+
+
+int
+create_contact_pairs(
+		 struct sim_manifold *mf,
+		 struct simulation_params *sim_params,
+		 vect_t UNUSED(overlap_min),
+		 vect_t UNUSED(overlap_max))
+{
+	vect_t v;
     mf->num_contacts = 0;
 
 
-	/* Prepare the overlap prim name */
-    bu_log("create_contact pairs : between A : %s(%f,%f,%f) &  B : %s(%f,%f,%f)",
+	bu_log("create_contact pairs : between A : %s(%f,%f,%f) &  B : %s(%f,%f,%f)",
 	   mf->rbA->rb_namep, V3ARGS(mf->rbA->btbb_center),
 	   mf->rbB->rb_namep, V3ARGS(mf->rbB->btbb_center));
 
+    /* Calculate the normal of the contact points as the resultant of -A & B velocity
+     * NOTE: Currently the sum of normals along overlapping surface , approach is not used
+     */
+	VMOVE(v, mf->rbA->linear_velocity);
+	VUNITIZE(v);
+	VREVERSE(rt_result.resultant_normal_B, v);
+
+	VMOVE(v, mf->rbB->linear_velocity);
+	VUNITIZE(v);
+	VADD2(rt_result.resultant_normal_B, rt_result.resultant_normal_B, mf->rbB->linear_velocity);
+	bu_log("create_contact pairs : Final normal from B to A : %s(%f,%f,%f)", V3ARGS(rt_result.resultant_normal_B));
+
     /* Begin making contact */
+
+	/* Shoot rays along the normal to get points on B and the depth along this direction */
+	shoot_normal_rays(mf, sim_params, overlap_min, overlap_max);
 
  /* VSET(mf->contacts[0].normalWorldOnB, 0, 0, 1.0000);
     VSET(mf->contacts[1].normalWorldOnB, 0, 0, 1.0000);
@@ -1139,18 +1198,14 @@ generate_manifolds(struct simulation_params *sim_params,
 	/* Shoot rays right here as the pair of rigid_body ptrs are known,
 	 * TODO: ignore volumes already shot
 	 */
-	shoot_x_rays(rt_mf, sim_params, overlap_min, overlap_max);
-
-
+	/*shoot_x_rays(rt_mf, sim_params, overlap_min, overlap_max);
 	shoot_y_rays(rt_mf, sim_params, overlap_min, overlap_max);
-
-
-	shoot_z_rays(rt_mf, sim_params, overlap_min, overlap_max);
+	shoot_z_rays(rt_mf, sim_params, overlap_min, overlap_max);*/
 
 
 
 	/* Create the contact pairs and normals */
-	create_contact_pairs(rt_mf, overlap_min, overlap_max);
+	create_contact_pairs(rt_mf, sim_params, overlap_min, overlap_max);
 
 
     return GED_OK;

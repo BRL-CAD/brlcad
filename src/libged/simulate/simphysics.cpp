@@ -397,6 +397,7 @@ nearphase_callback(btBroadphasePair& collisionPair,
 {
 
     int rv;
+    btVector3 va, vb;
 
     btRigidBody* box0 = (btRigidBody*)(collisionPair.m_pProxy0->m_clientObject);
     btRigidBody* box1 = (btRigidBody*)(collisionPair.m_pProxy1->m_clientObject);
@@ -405,8 +406,15 @@ nearphase_callback(btBroadphasePair& collisionPair,
     	struct rigid_body *rbA = (struct rigid_body *)box0->getUserPointer();
     	struct rigid_body *rbB = (struct rigid_body *)box1->getUserPointer();
 
-		bu_log("nearphase_callback : Creating manifold between %s & %s\n",
-				 rbA->rb_namep, rbB->rb_namep);
+
+    	va = box0->getLinearVelocity();
+    	VMOVE(rbA->linear_velocity, va);
+    	vb = box1->getLinearVelocity();
+    	VMOVE(rbB->linear_velocity, vb);
+
+
+		bu_log("nearphase_callback : Creating manifold between A:%s(v=%f,%f,%f) & B:%s(v=%f,%f,%f)\n",
+				 rbA->rb_namep, V3ARGS(va), rbB->rb_namep, V3ARGS(vb));
 
 		/* Generate manifolds using rt */
 		rv = generate_manifolds(sim_params, rbA, rbB);
