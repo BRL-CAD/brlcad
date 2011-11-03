@@ -4304,8 +4304,7 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 	IMPORT_FAIL("parse error");
     }
 
-
-    /* Validate parameters */
+    /* validate size */
     if (dsp_ip->dsp_xcnt == 0 || dsp_ip->dsp_ycnt == 0) {
 	IMPORT_FAIL("zero dimension on map");
     }
@@ -4424,13 +4423,17 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	       dsp_ip->dsp_xcnt);
     }
 
-
     dsp_ip->dsp_ycnt = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
     if (dsp_ip->dsp_ycnt < 2) {
 	bu_log("%s:%d DSP X dimension (%zu) < 2 \n",
 	       __FILE__, __LINE__,
 	       dsp_ip->dsp_ycnt);
+    }
+
+    /* validate size */
+    if (dsp_ip->dsp_xcnt == 0 || dsp_ip->dsp_ycnt == 0) {
+	IMPORT_FAIL("zero dimension on map");
     }
 
     /* convert matrix */
@@ -4456,7 +4459,6 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	    break;
     }
 
-
     dsp_ip->dsp_cuttype = *cp;
     cp++;
     switch (dsp_ip->dsp_cuttype) {
@@ -4470,7 +4472,6 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 		   dsp_ip->dsp_cuttype, dsp_ip->dsp_cuttype);
 	    break;
     }
-
 
     /* convert name of data location */
     bu_vls_init(&dsp_ip->dsp_name);
