@@ -173,6 +173,7 @@ endif
 
 EXTRA_DIST = \
 	boost \
+	clipper \
 	togl \
 	hv3 \
 	CMakeLists.txt \

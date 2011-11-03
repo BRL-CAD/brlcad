@@ -66,6 +66,10 @@ THIRD_PARTY_EXECUTABLE(lemon lemon)
 # compiled
 DISTCHECK_IGNORE_ITEM(boost)
 
+# Ignore clipper until we're ready to tie it in (Bob's doing some work with
+# it, but needs to check in some changes to it).
+DISTCHECK_IGNORE_ITEM(clipper)
+
 # The incrtTcl subdirectory isn't directly referenced, but its subdirectories
 # are used - mark incrTcl as ignored
 DISTCHECK_IGNORE_ITEM(incrTcl)
