@@ -48,7 +48,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-l</option></term>
+      <term><option>-L</option></term>
       <listitem>
 	<para>
 	  Instructs the coil tool to create a "left handed" coil (default
@@ -112,6 +112,17 @@
 	<para>
 	  Specify the capping style for the end of the coil.  Default and options are
 	  the same as for the starting cap.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-l length</option></term>
+      <listitem>
+	<para>
+		Clamp the length of a coil to the specified value.  This option is currently limited - it will
+		work only for uncapped coils and the helix angle must be zero.  To fit length, pitch will be
+		adjusted first.  If pitch adjustments aren't enough, turns will be removed.  If both of those
+		variables can't be adjusted to satisfy the length, wire diameter will be adjusted.
 	</para>
       </listitem>
     </varlistentry>
