@@ -49,8 +49,8 @@
 #include "simulate.h"
 
 
-#define SOLID_NOT_FOUND 0
-#define SOLID_FOUND     1
+#define NOT_FOUND 0
+#define FOUND     1
 
 
 /**

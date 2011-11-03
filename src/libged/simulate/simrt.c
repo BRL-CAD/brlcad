@@ -464,11 +464,28 @@ int
 exists_normal(vect_t n)
 {
     int i;
-    vect_t a;
+
     for(i=0; i<rt_result.num_normals; i++){
-	VMOVE(a, rt_result.normals[i]);
-	if(VEQUAL(a, n))
-	    return 1;
+		if(VEQUAL(rt_result.normals[i], n))
+			return 1;
+    }
+
+    return 0;
+}
+
+
+
+int
+add_normal(vect_t n)
+{
+    if(rt_result.num_normals < MAX_NORMALS){
+    	VMOVE(rt_result.normals[rt_result.num_normals], n);
+    	rt_result.num_normals++;
+    	return 1;
+    }
+    else{
+    	bu_log("add_normal: WARNING Number of normals have been exceeded, only %d allowed, (%f,%f,%f) not added",
+    			MAX_NORMALS, V3ARGS(n));
     }
 
     return 0;
@@ -531,13 +548,13 @@ traverse_xray_lists(
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 
-		/* Check if the in solid belongs to rbB */
+		/* Check if the in solid belongs to rbB and also if the normal has been summed before(do not sum if so) */
 		rv = check_tree_funcleaf(sim_params->gedp->ged_wdbp->dbip,
 				 	 	 	comb,
 				 	 	 	comb->tree,
 				 	 	 	find_solid,
 				 	 	 	(genptr_t)(overlap_list[i].insol->st_name));
-		if(rv == SOLID_FOUND){
+		if(rv == FOUND && !exists_normal(overlap_list[i].in_normal) ){
 			/* It does, so sum the in_normal */
 			bu_log("traverse_xray_lists: %s is present in %s", overlap_list[i].insol->st_name,
 															   current_manifold->rbB->rb_namep);
@@ -546,20 +563,17 @@ traverse_xray_lists(
 			VADD2(rt_result.resultant_normal_B, rt_result.resultant_normal_B, overlap_list[i].in_normal);
 			bu_log("traverse_xray_lists: resultant_normal_B is now (%f,%f,%f) after adding (%f,%f,%f)",
 					V3ARGS(rt_result.resultant_normal_B), V3ARGS(overlap_list[i].in_normal));
-
-			VUNITIZE(rt_result.resultant_normal_B);
-			bu_log("traverse_xray_lists: resultant_normal_B is (%f,%f,%f) after unitizing",
-											V3ARGS(rt_result.resultant_normal_B));
+			add_normal(overlap_list[i].in_normal);
 
 		}
 
-		/* Check if the out solid belongs to rbB */
+		/* Check if the out solid belongs to rbB and also if the normal has been summed before(do not sum if so) */
 		rv = check_tree_funcleaf(sim_params->gedp->ged_wdbp->dbip,
 						 	 	 	comb,
 						 	 	 	comb->tree,
 						 	 	 	find_solid,
 						 	 	 	(genptr_t)(overlap_list[i].outsol->st_name));
-		if(rv == SOLID_FOUND){
+		if(rv == FOUND && !exists_normal(overlap_list[i].out_normal) ){
 			/* It does, so sum the in_normal */
 			bu_log("traverse_xray_lists: %s is present in %s", overlap_list[i].outsol->st_name,
 															   current_manifold->rbB->rb_namep);
@@ -568,10 +582,7 @@ traverse_xray_lists(
 			VADD2(rt_result.resultant_normal_B, rt_result.resultant_normal_B, overlap_list[i].out_normal);
 			bu_log("traverse_xray_lists: resultant_normal_B is now (%f,%f,%f) after adding (%f,%f,%f)",
 					V3ARGS(rt_result.resultant_normal_B), V3ARGS(overlap_list[i].out_normal));
-
-			VUNITIZE(rt_result.resultant_normal_B);
-			bu_log("traverse_xray_lists: resultant_normal_B is (%f,%f,%f) after unitizing",
-											V3ARGS(rt_result.resultant_normal_B));
+			add_normal(overlap_list[i].out_normal);
 
 		}
 
@@ -579,26 +590,6 @@ traverse_xray_lists(
 
 
 	}
-
-    /* Draw all the hit regions : not really needed to be visualized */
-    /*	if (hit_list.forw != &hit_list) {
-
-	hrp = hit_list.forw;
-
-	while (hrp != &hit_list) {
-	bu_vls_sprintf(&reg_vls, "ray_hit_%s_%d_%f_%f_%f_%f_%f_%f",
-	hrp->reg_name,
-	hrp->index,
-	V3ARGS(pt), V3ARGS(dir));
-	line(gedp, bu_vls_addr(&reg_vls),
-	hrp->in_point,
-	hrp->out_point,
-	0, 210, 0);
-
-	add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
-	hrp = hrp->forw;
-	}
-	}*/
 
     bu_vls_free(&reg_vls);
 
@@ -670,7 +661,7 @@ traverse_yray_lists(
 				 	 	 	comb->tree,
 				 	 	 	find_solid,
 				 	 	 	(genptr_t)(overlap_list[i].insol->st_name));
-		if(rv == SOLID_FOUND){
+		if(rv == FOUND && !exists_normal(overlap_list[i].in_normal) ){
 			/* It does, so sum the in_normal */
 			bu_log("traverse_yray_lists: %s is present in %s", overlap_list[i].insol->st_name,
 															   current_manifold->rbB->rb_namep);
@@ -679,10 +670,7 @@ traverse_yray_lists(
 			VADD2(rt_result.resultant_normal_B, rt_result.resultant_normal_B, overlap_list[i].in_normal);
 			bu_log("traverse_yray_lists: resultant_normal_B is now (%f,%f,%f) after adding (%f,%f,%f)",
 					V3ARGS(rt_result.resultant_normal_B), V3ARGS(overlap_list[i].in_normal));
-
-			VUNITIZE(rt_result.resultant_normal_B);
-			bu_log("traverse_yray_lists: resultant_normal_B is (%f,%f,%f) after unitizing",
-											V3ARGS(rt_result.resultant_normal_B));
+			add_normal(overlap_list[i].in_normal);
 
 		}
 
@@ -692,7 +680,7 @@ traverse_yray_lists(
 						 	 	 	comb->tree,
 						 	 	 	find_solid,
 						 	 	 	(genptr_t)(overlap_list[i].outsol->st_name));
-		if(rv == SOLID_FOUND){
+		if(rv == FOUND && !exists_normal(overlap_list[i].out_normal) ){
 			/* It does, so sum the out_normal */
 			bu_log("traverse_yray_lists: %s is present in %s", overlap_list[i].outsol->st_name,
 															   current_manifold->rbB->rb_namep);
@@ -701,10 +689,7 @@ traverse_yray_lists(
 			VADD2(rt_result.resultant_normal_B, rt_result.resultant_normal_B, overlap_list[i].out_normal);
 			bu_log("traverse_yray_lists: resultant_normal_B is now (%f,%f,%f) after adding (%f,%f,%f)",
 					V3ARGS(rt_result.resultant_normal_B), V3ARGS(overlap_list[i].out_normal));
-
-			VUNITIZE(rt_result.resultant_normal_B);
-			bu_log("traverse_yray_lists: resultant_normal_B is (%f,%f,%f) after unitizing",
-											V3ARGS(rt_result.resultant_normal_B));
+			add_normal(overlap_list[i].out_normal);
 		}
 
 		rt_db_free_internal(&intern);
@@ -712,25 +697,6 @@ traverse_yray_lists(
 
 	}
 
-    /* Draw all the hit regions : not really needed to be visualized */
-    /*	if (hit_list.forw != &hit_list) {
-
-	hrp = hit_list.forw;
-
-	while (hrp != &hit_list) {
-	bu_vls_sprintf(&reg_vls, "ray_hit_%s_%d_%f_%f_%f_%f_%f_%f",
-	hrp->reg_name,
-	hrp->index,
-	V3ARGS(pt), V3ARGS(dir));
-	line(gedp, bu_vls_addr(&reg_vls),
-	hrp->in_point,
-	hrp->out_point,
-	0, 210, 0);
-
-	add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
-	hrp = hrp->forw;
-	}
-	}*/
 
     bu_vls_free(&reg_vls);
 
@@ -801,7 +767,7 @@ traverse_zray_lists(
 				 	 	 	comb->tree,
 				 	 	 	find_solid,
 				 	 	 	(genptr_t)(overlap_list[i].insol->st_name));
-		if(rv == SOLID_FOUND){
+		if(rv == FOUND && !exists_normal(overlap_list[i].in_normal) ){
 			/* It does, so sum the in_normal */
 			bu_log("traverse_zray_lists: %s is present in %s", overlap_list[i].insol->st_name,
 															   current_manifold->rbB->rb_namep);
@@ -810,10 +776,7 @@ traverse_zray_lists(
 			VADD2(rt_result.resultant_normal_B, rt_result.resultant_normal_B, overlap_list[i].in_normal);
 			bu_log("traverse_zray_lists: resultant_normal_B is now (%f,%f,%f) after adding (%f,%f,%f)",
 					V3ARGS(rt_result.resultant_normal_B), V3ARGS(overlap_list[i].in_normal));
-
-			VUNITIZE(rt_result.resultant_normal_B);
-			bu_log("traverse_zray_lists: resultant_normal_B is (%f,%f,%f) after unitizing",
-											V3ARGS(rt_result.resultant_normal_B));
+			add_normal(overlap_list[i].in_normal);
 
 		}
 
@@ -823,7 +786,7 @@ traverse_zray_lists(
 						 	 	 	comb->tree,
 						 	 	 	find_solid,
 						 	 	 	(genptr_t)(overlap_list[i].outsol->st_name));
-		if(rv == SOLID_FOUND){
+		if(rv == FOUND && !exists_normal(overlap_list[i].out_normal) ){
 			/* It does, so sum the out_normal */
 			bu_log("traverse_zray_lists: %s is present in %s", overlap_list[i].outsol->st_name,
 															   current_manifold->rbB->rb_namep);
@@ -832,36 +795,13 @@ traverse_zray_lists(
 			VADD2(rt_result.resultant_normal_B, rt_result.resultant_normal_B, overlap_list[i].out_normal);
 			bu_log("traverse_zray_lists: resultant_normal_B is now (%f,%f,%f) after adding (%f,%f,%f)",
 					V3ARGS(rt_result.resultant_normal_B), V3ARGS(overlap_list[i].out_normal));
+			add_normal(overlap_list[i].out_normal);
 
-			VUNITIZE(rt_result.resultant_normal_B);
-			bu_log("traverse_zray_lists: resultant_normal_B is (%f,%f,%f) after unitizing",
-											V3ARGS(rt_result.resultant_normal_B));
 		}
 
 		rt_db_free_internal(&intern);
-
-
 	}
 
-    /* Draw all the hit regions : not really needed to be visualized */
-    /*	if (hit_list.forw != &hit_list) {
-
-	hrp = hit_list.forw;
-
-	while (hrp != &hit_list) {
-	bu_vls_sprintf(&reg_vls, "ray_hit_%s_%d_%f_%f_%f_%f_%f_%f",
-	hrp->reg_name,
-	hrp->index,
-	V3ARGS(pt), V3ARGS(dir));
-	line(gedp, bu_vls_addr(&reg_vls),
-	hrp->in_point,
-	hrp->out_point,
-	0, 210, 0);
-
-	add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
-	hrp = hrp->forw;
-	}
-	}*/
 
     bu_vls_free(&reg_vls);
 
@@ -1120,6 +1060,7 @@ create_contact_pairs(struct sim_manifold *mf, vect_t UNUSED(overlap_min), vect_t
 {
     /* vect_t diff;*/ 
     /* int i; */
+
 
     mf->num_contacts = 0;
 

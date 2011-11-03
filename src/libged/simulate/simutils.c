@@ -128,9 +128,9 @@ find_solid(struct db_i *dbip,
 
     obj_name = (char *)object;
     if (BU_STR_EQUAL(comb_leaf->tr_l.tl_name, obj_name))
-    	return SOLID_FOUND;
+    	return FOUND;
     else
-    	return SOLID_NOT_FOUND;
+    	return NOT_FOUND;
 }
 
 
@@ -142,12 +142,12 @@ check_tree_funcleaf(
     int (*leaf_func)(),
     genptr_t user_ptr1)
 {
-	int rv = SOLID_NOT_FOUND;
+	int rv = NOT_FOUND;
 
 	RT_CK_DBI(dbip);
 
     if (!comb_tree)
-	return SOLID_NOT_FOUND;
+	return NOT_FOUND;
 
     RT_CK_TREE(comb_tree);
 
@@ -160,7 +160,7 @@ check_tree_funcleaf(
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    rv = check_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_left, leaf_func, user_ptr1);
-	    if(rv == SOLID_NOT_FOUND)
+	    if(rv == NOT_FOUND)
 	    	rv = check_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_right, leaf_func, user_ptr1);
 	    break;
 	default:
