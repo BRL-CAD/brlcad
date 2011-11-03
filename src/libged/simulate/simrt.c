@@ -1116,7 +1116,7 @@ shoot_z_rays(struct sim_manifold *current_manifold,
 
 
 int
-create_contact_pairs(struct sim_manifold *mf, vect_t overlap_min, vect_t overlap_max)
+create_contact_pairs(struct sim_manifold *mf, vect_t UNUSED(overlap_min), vect_t UNUSED(overlap_max))
 {
     /* vect_t diff;*/ 
     /* int i; */
