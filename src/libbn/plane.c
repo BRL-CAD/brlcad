@@ -438,7 +438,7 @@ bn_dist_pt3_line3(fastf_t *dist, fastf_t *pca, const fastf_t *a, const fastf_t *
     fastf_t t;		/* distance along ray of projection of P */
     fastf_t dsq;	/* sqaure of distance from p to line */
 
-    if (rt_g.NMG_debug & DEBUG_BASIC)
+    if (bu_debug & BU_DEBUG_MATH)
 	bu_log("bn_dist_pt3_line3(a=(%f %f %f), dir=(%f %f %f), p=(%f %f %f)\n" ,
 	       V3ARGS(a), V3ARGS(dir), V3ARGS(p));
 
