@@ -82,7 +82,7 @@ ADD_DEFINITIONS(
 IF(TOGL_LIBRARIES)
 	add_library(issttcltk isst_tcltk.c)
 	IF(WIN32)
-		target_link_libraries(issttcltk librender ${TCL_LIBRARIES} ${TOGL_STUB_LIBRARIES} ${OPENGL_LIBRARIES})
+		target_link_libraries(issttcltk librender ${TCL_LIBRARIES} ${TOGL_STUB_LIBRARIES} ${OPENGL_LIBRARIES} opengl32.lib)
 	ELSE(WIN32)
 		target_link_libraries(issttcltk librender ${TCL_LIBRARIES} ${TOGL_LIBRARIES})
 	ENDIF(WIN32)
