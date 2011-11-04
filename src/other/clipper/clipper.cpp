@@ -568,10 +568,10 @@ bool IntersectPoint(TEdge &edge1, TEdge &edge2,
 {
   double b1, b2;
   if (SlopesEqual(edge1, edge2, UseFullInt64Range)) return false;
-  else if (edge1.dx == 0)
+  else if (CLIPPER_NEAR_ZERO(edge1.dx, CLIPPER_VDIVIDE_TOL))
   {
     ip.X = edge1.xbot;
-    if (edge2.dx == horizontal)
+    if (CLIPPER_NEAR_EQUAL(edge2.dx, horizontal))
     {
       ip.Y = edge2.ybot;
     } else
@@ -580,10 +580,10 @@ bool IntersectPoint(TEdge &edge1, TEdge &edge2,
       ip.Y = Round(ip.X/edge2.dx + b2);
     }
   }
-  else if (edge2.dx == 0)
+  else if (CLIPPER_NEAR_ZERO(edge2.dx, CLIPPER_VDIVIDE_TOL))
   {
     ip.X = edge2.xbot;
-    if (edge1.dx == horizontal)
+    if (CLIPPER_NEAR_EQUAL(edge1.dx, horizontal))
     {
       ip.Y = edge1.ybot;
     } else
@@ -865,7 +865,7 @@ bool ClipperBase::AddPolygon( const Polygon &pg, PolyType polyType)
 
   //make sure eHighest is positioned so the following loop works safely ...
   if (eHighest->windDelta > 0) eHighest = eHighest->next;
-  if (eHighest->dx == horizontal) eHighest = eHighest->next;
+  if (CLIPPER_NEAR_EQUAL(eHighest->dx, horizontal)) eHighest = eHighest->next;
 
   //finally insert each local minima ...
   e = eHighest;
@@ -907,7 +907,7 @@ TEdge* ClipperBase::AddBoundsToLML(TEdge *e)
   e = e->next;
   for (;;)
   {
-    if ( e->dx == horizontal )
+    if (CLIPPER_NEAR_EQUAL(e->dx, horizontal))
     {
       //nb: proceed through horizontals when approaching from their right,
       //    but break on horizontal minima if approaching from their left.
@@ -926,7 +926,7 @@ TEdge* ClipperBase::AddBoundsToLML(TEdge *e)
   newLm->next = 0;
   newLm->Y = e->prev->ybot;
 
-  if ( e->dx == horizontal ) //horizontal edges never start a left bound
+  if (CLIPPER_NEAR_EQUAL(e->dx, horizontal)) //horizontal edges never start a left bound
   {
     if (e->xbot != e->prev->xbot) SwapX(*e);
     newLm->leftBound = e->prev;
@@ -946,10 +946,10 @@ TEdge* ClipperBase::AddBoundsToLML(TEdge *e)
 
   for (;;)
   {
-    if ( e->next->ytop == e->ytop && e->next->dx != horizontal ) break;
+    if ( e->next->ytop == e->ytop && !CLIPPER_NEAR_EQUAL(e->next->dx, horizontal)) break;
     e->nextInLML = e->next;
     e = e->next;
-    if ( e->dx == horizontal && e->xbot != e->prev->xtop) SwapX(*e);
+    if (CLIPPER_NEAR_EQUAL(e->dx, horizontal) && e->xbot != e->prev->xtop) SwapX(*e);
   }
   return e->next;
 }
@@ -1078,14 +1078,14 @@ Clipper::Clipper() : ClipperBase() //constructor
   m_ExecuteLocked = false;
   m_UseFullRange = false;
   m_ReverseOutput = false;
-};
+}
 //------------------------------------------------------------------------------
 
 Clipper::~Clipper() //destructor
 {
   Clear();
   DisposeScanbeamList();
-};
+}
 //------------------------------------------------------------------------------
 
 void Clipper::Clear()
@@ -1093,7 +1093,7 @@ void Clipper::Clear()
   if (m_edges.size() == 0) return; //avoids problems with ClipperBase destructor
   DisposeAllPolyPts();
   ClipperBase::Clear();
-};
+}
 //------------------------------------------------------------------------------
 
 void Clipper::DisposeScanbeamList()
@@ -1464,14 +1464,17 @@ bool Clipper::IsContributing(const TEdge& edge) const
           default: 
             return (edge.windCnt2 < 0);
         }
+  default:
+    return true;
   }
+
   return true;
 }
 //------------------------------------------------------------------------------
 
 void Clipper::AddLocalMinPoly(TEdge *e1, TEdge *e2, const IntPoint &pt)
 {
-  if( e2->dx == horizontal || ( e1->dx > e2->dx ) )
+  if(CLIPPER_NEAR_EQUAL(e2->dx, horizontal) || ( e1->dx > e2->dx ) )
   {
     AddOutPt( e1, e2, pt );
     e2->outIdx = e1->outIdx;
@@ -1603,7 +1606,7 @@ void Clipper::InsertLocalMinimaIntoAEL( const long64 botY)
     rb->windCnt = lb->windCnt;
     rb->windCnt2 = lb->windCnt2;
 
-    if(  rb->dx == horizontal )
+    if(CLIPPER_NEAR_EQUAL(rb->dx, horizontal))
     {
       //nb: only rightbounds can have a horizontal bottom edge
       AddEdgeToSEL( rb );
@@ -1624,7 +1627,7 @@ void Clipper::InsertLocalMinimaIntoAEL( const long64 botY)
     //if any output polygons share an edge, they'll need joining later ...
     if (rb->outIdx >= 0)
     {
-      if (rb->dx == horizontal)
+      if (CLIPPER_NEAR_EQUAL(rb->dx, horizontal))
       {
         for (HorzJoinList::size_type i = 0; i < m_HorizJoins.size(); ++i)
         {
@@ -2267,7 +2270,7 @@ void Clipper::ProcessHorizontal(TEdge *horzEdge)
         if (eMaxPair->outIdx >= 0) throw clipperException("ProcessHorizontal error");
         return;
       }
-      else if( e->dx == horizontal &&  !IsMinima(e) && !(e->xcurr > e->xtop) )
+      else if(CLIPPER_NEAR_EQUAL(e->dx, horizontal) &&  !IsMinima(e) && !(e->xcurr > e->xtop) )
       {
         //An overlapping horizontal edge. Overlapping horizontal edges are
         //processed as if layered with the current horizontal edge (horizEdge)
@@ -2332,7 +2335,7 @@ void Clipper::UpdateEdgeIntoAEL(TEdge *&e)
   e = e->nextInLML;
   e->prevInAEL = AelPrev;
   e->nextInAEL = AelNext;
-  if( e->dx != horizontal ) InsertScanbeam( e->ytop );
+  if(!CLIPPER_NEAR_EQUAL(e->dx, horizontal)) InsertScanbeam( e->ytop );
 }
 //------------------------------------------------------------------------------
 
@@ -2508,7 +2511,7 @@ void Clipper::ProcessEdgesAtTopOfScanbeam(const long64 topY)
   {
     //1. process maxima, treating them as if they're 'bent' horizontal edges,
     //   but exclude maxima with horizontal edges. nb: e can't be a horizontal.
-    if( IsMaxima(e, topY) && GetMaximaPair(e)->dx != horizontal )
+    if( IsMaxima(e, topY) && !CLIPPER_NEAR_EQUAL(GetMaximaPair(e)->dx, horizontal))
     {
       //'e' might be removed from AEL, as may any following edges so ...
       TEdge* ePrior = e->prevInAEL;
@@ -2519,7 +2522,7 @@ void Clipper::ProcessEdgesAtTopOfScanbeam(const long64 topY)
     else
     {
       //2. promote horizontal edges, otherwise update xcurr and ycurr ...
-      if(  IsIntermediate(e, topY) && e->nextInLML->dx == horizontal )
+      if(  IsIntermediate(e, topY) && CLIPPER_NEAR_EQUAL(e->nextInLML->dx, horizontal))
       {
         if (e->outIdx >= 0)
         {
@@ -2993,14 +2996,14 @@ void Clipper::JoinCommonEdges(bool fixHoleLinkages)
 void ReversePoints(Polygon& p)
 {
   std::reverse(p.begin(), p.end());
-};
+}
 //------------------------------------------------------------------------------
 
 void ReversePoints(Polygons& p)
 {
   for (Polygons::size_type i = 0; i < p.size(); ++i)
     ReversePoints(p[i]);
-};
+}
 
 //------------------------------------------------------------------------------
 // OffsetPolygon functions ...
@@ -3036,7 +3039,7 @@ DoublePoint GetUnitNormal( const IntPoint &pt1, const IntPoint &pt2)
 {
   double dx = (double)(pt2.X - pt1.X);
   double dy = (double)(pt2.Y - pt1.Y);
-  if(  ( dx == 0 ) && ( dy == 0 ) ) return DoublePoint( 0, 0 );
+  if( CLIPPER_NEAR_ZERO(dx, CLIPPER_VDIVIDE_TOL) && CLIPPER_NEAR_ZERO(dy, CLIPPER_VDIVIDE_TOL) ) return DoublePoint( 0, 0 );
 
   double f = 1 *1.0/ std::sqrt( dx*dx + dy*dy );
   dx *= f;
@@ -3064,7 +3067,7 @@ PolyOffsetBuilder(const Polygons& in_polys, Polygons& out_polys,
   double delta, JoinType jointype, double MiterLimit)
 {
     //nb precondition - out_polys != ptsin_polys
-    if (delta == 0)
+    if (CLIPPER_NEAR_ZERO(delta, CLIPPER_VDIVIDE_TOL))
     {
         out_polys = in_polys;
         return;
@@ -3250,7 +3253,7 @@ std::ostream& operator <<(std::ostream &s, IntPoint& p)
 {
   s << p.X << ' ' << p.Y << "\n";
   return s;
-};
+}
 //------------------------------------------------------------------------------
 
 std::ostream& operator <<(std::ostream &s, Polygon &p)
@@ -3271,4 +3274,4 @@ std::ostream& operator <<(std::ostream &s, Polygons &p)
 }
 //------------------------------------------------------------------------------
 
-}; //ClipperLib namespace
+} //ClipperLib namespace
