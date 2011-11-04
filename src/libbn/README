@@ -7,6 +7,7 @@ tests:
 bn_3pts_collinear
 bn_3pts_distinct
 bn_angle_measure
+bn_dist_pt3_line3
 bn_dist_pt3_lseg3
 bn_dist_pt3_pt3
 bn_distsq_line3_pt3
@@ -26,4 +27,3 @@ bn_mkpoint_3planes
 bn_pt3_pt3_equal
 bn_vec_ortho
 bn_vec_perp
-rt_dist_pt3_line3
