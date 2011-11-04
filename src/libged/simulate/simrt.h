@@ -126,18 +126,8 @@ struct rayshot_results{
 	vect_t normals[MAX_NORMALS];
 	int num_normals;
 
-	/* Results of shooting rays towards -ve x-axis : xr means x rays */
-	point_t xr_min_x;  /* the min X found while shooting x rays & rltd y,z*/
-	point_t xr_max_x;  /* the max X found while shooting x rays & rltd y,z*/
-	point_t xr_min_y_in, xr_min_y_out;  /* the min y where overlap was found & the z co-ord for it*/
-	point_t xr_max_y_in, xr_max_y_out;  /* the max y where overlap was still found */
-	point_t xr_min_z_in;  /* the min z where overlap was found & the y co-ord for it*/
-	point_t xr_max_z_in;  /* the max z where overlap was still found */
+	/* The following members are used while shooting rays parallel to the resultant normal */
 
-    /* Results of shooting rays down y axis */
-
-
-    /* Results of shooting rays down z axis */
 
 };
 

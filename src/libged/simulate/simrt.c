@@ -45,29 +45,6 @@ struct rayshot_results rt_result;
 
 
 void
-print_rayshot_results(void)
-{
-
-    bu_log("print_rayshot_results: -------\n");
-
-    bu_log("X bounds xr_min_x :%f, %f, %f \n",
-    		V3ARGS(rt_result.xr_min_x));
-    bu_log("X bounds xr_max_x :%f, %f, %f \n",
-    		V3ARGS(rt_result.xr_max_x));
-    bu_log("Y bounds xr_min_y :%f, %f, %f  >>> (%f, %f, %f)\n",
-    		V3ARGS(rt_result.xr_min_y_in), V3ARGS(rt_result.xr_min_y_out));
-    bu_log("Y bounds xr_max_y :%f, %f, %f >>> (%f, %f, %f)\n",
-    		V3ARGS(rt_result.xr_max_y_in), V3ARGS(rt_result.xr_max_y_out));
-    bu_log("Z bounds xr_min_z :%f, %f, %f\n",
-    		V3ARGS(rt_result.xr_min_z_in));
-    bu_log("Z bounds xr_max_z :%f, %f, %f\n",
-    		V3ARGS(rt_result.xr_max_z_in));
-
-
-}
-
-
-void
 print_overlap_node(int i)
 {
 	bu_log("--------- Index %d -------\n", overlap_list[i].index);
@@ -372,7 +349,7 @@ shoot_ray(struct rt_i *rtip, point_t pt, point_t dir)
     ap.a_overlap = if_overlap;/* branch to if_overlap routine */
     /*ap.a_logoverlap = rt_silent_logoverlap;*/
     ap.a_onehit = 0;          /* continue through shotline after hit */
-    ap.a_purpose = "Manifold ray";
+    ap.a_purpose = "Sim Manifold ray";
     ap.a_rt_i = rtip;         /* rt_i pointer */
     ap.a_zero1 = 0;           /* sanity check, sayth raytrace.h */
     ap.a_zero2 = 0;           /* sanity check, sayth raytrace.h */
@@ -432,12 +409,6 @@ init_raytrace(struct simulation_params *sim_params)
 int
 init_rayshot_results(void)
 {
-    /* Initialize the result structure */
-    rt_result.xr_min_x[X]  = MAX_FASTF;
-    rt_result.xr_max_x[X]  = -MAX_FASTF;
-    rt_result.xr_min_y_in[Y] = MAX_FASTF;
-    rt_result.xr_max_y_in[Y] = -MAX_FASTF;
-
     VSETALL(rt_result.resultant_normal_A, SMALL_FASTF);
     VSETALL(rt_result.resultant_normal_B, SMALL_FASTF);
 
@@ -532,6 +503,7 @@ traverse_xray_lists(
 		/* Fill up the result structure */
 
 		/* Only check with the comb of rigid body B : first get its dp  */
+		/* TODO : move this to generate_manifolds() */
 		if ((dp=db_lookup(sim_params->gedp->ged_wdbp->dbip, current_manifold->rbB->rb_namep, LOOKUP_QUIET)) == RT_DIR_NULL) {
 			bu_log("traverse_xray_lists: ERROR db_lookup(%s) failed", current_manifold->rbB->rb_namep);
 			bu_vls_free(&reg_vls);
@@ -810,6 +782,103 @@ traverse_zray_lists(
 
 
 int
+traverse_normalray_lists(
+		struct sim_manifold *current_manifold,
+		struct simulation_params *sim_params,
+		point_t pt, point_t dir)
+{
+    int i, rv;
+
+    /*struct hit_reg *hrp;*/
+    struct bu_vls reg_vls = BU_VLS_INIT_ZERO;
+    struct directory *dp;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb =(struct rt_comb_internal *)NULL;
+    fastf_t depth;
+
+
+    /* Draw all the overlap regions : lines are added for overlap segments
+     * to help visual debugging
+     */
+    for(i=0; i<num_overlaps; i++){
+
+		bu_vls_sprintf(&reg_vls, "ray_normal_%s_%s_%d_%f_%f_%f_%f_%f_%f",
+				   overlap_list[i].reg1->reg_name,
+				   overlap_list[i].reg2->reg_name,
+				   overlap_list[i].index,
+				   V3ARGS(pt), V3ARGS(dir));
+
+		clear_bad_chars(&reg_vls);
+
+		line(sim_params->gedp, bu_vls_addr(&reg_vls),
+			 overlap_list[i].in_point,
+			 overlap_list[i].out_point,
+			 0, 210, 0);
+
+		/* bu_log("traverse_normalray_lists: %s", bu_vls_addr(&reg_vls)); */
+
+		add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
+
+
+		/* Fill up the result structure */
+
+		/* Only check with the comb of rigid body B : first get its dp
+		 * TODO : move this to generate_manifolds()
+		 * TODO : ignore points outside overlap region
+		 * TODO : Must check if insol belongs to rbA and outsol to rbB  IN THIS ORDER, else results may
+		 * be incorrect if geometry of either has overlap defects within.
+		 */
+		if ((dp=db_lookup(sim_params->gedp->ged_wdbp->dbip, current_manifold->rbA->rb_namep, LOOKUP_QUIET)) == RT_DIR_NULL) {
+			bu_log("traverse_normalray_lists: ERROR db_lookup(%s) failed", current_manifold->rbA->rb_namep);
+			bu_vls_free(&reg_vls);
+			return GED_ERROR;
+		}
+
+		/* Now B's internal format */
+		if (!rt_db_lookup_internal(sim_params->gedp->ged_wdbp->dbip, dp->d_namep, &dp, &intern, LOOKUP_NOISY, &rt_uniresource)) {
+			bu_exit(1, "traverse_normalray_lists: ERROR rt_db_lookup_internal(%s) failed to get the internal form", dp->d_namep);
+			bu_vls_free(&reg_vls);
+			return GED_ERROR;
+		}
+
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+
+		/* Check if the in solid belongs to rbA */
+		rv = check_tree_funcleaf(sim_params->gedp->ged_wdbp->dbip,
+				 	 	 	comb,
+				 	 	 	comb->tree,
+				 	 	 	find_solid,
+				 	 	 	(genptr_t)(overlap_list[i].insol->st_name));
+		if(rv == NOT_FOUND)
+			continue;
+
+		depth = DIST_PT_PT(overlap_list[i].in_point, overlap_list[i].out_point);
+
+		bu_log("traverse_normalray_lists: Candidate contact point for B:%s at (%f,%f,%f) , depth %f \
+				n=(%f,%f,%f), at solid %s", current_manifold->rbB->rb_namep,
+							  V3ARGS(overlap_list[i].in_point),
+							  depth,
+							  V3ARGS(rt_result.resultant_normal_B),
+							  overlap_list[i].insol->st_name);
+
+		/* TODO : Check if the out solid belongs to rbA */
+
+
+		/* TODO : Maximize area of points ? , or just add all the points and let Bullet handle it ? */
+
+
+		rt_db_free_internal(&intern);
+	}
+
+
+    bu_vls_free(&reg_vls);
+
+    return GED_OK;
+}
+
+
+int
 shoot_x_rays(struct sim_manifold *current_manifold,
 	     struct simulation_params *sim_params,
 	     vect_t overlap_min,
@@ -873,7 +942,6 @@ shoot_x_rays(struct sim_manifold *current_manifold,
 			 */
 			traverse_yray_lists(current_manifold, sim_params, r_pt, r_dir);
 
-			/* print_rayshot_results(); */
 
 			/* Cleanup the overlap and hit lists and free memory */
 			cleanup_lists();
@@ -955,8 +1023,6 @@ shoot_y_rays(struct sim_manifold *current_manifold,
 			 */
 			traverse_yray_lists(current_manifold, sim_params, r_pt, r_dir);
 
-			/* print_rayshot_results(); */
-
 			/* Cleanup the overlap and hit lists and free memory */
 			cleanup_lists();
 
@@ -1037,8 +1103,6 @@ shoot_z_rays(struct sim_manifold *current_manifold,
 			 */
 			traverse_zray_lists(current_manifold, sim_params, r_pt, r_dir);
 
-			/* print_rayshot_results(); */
-
 			/* Cleanup the overlap and hit lists and free memory */
 			cleanup_lists();
 
@@ -1075,7 +1139,10 @@ shoot_normal_rays(struct sim_manifold *current_manifold,
 	center_ray.index = 0;
 	VMOVE(center_ray.r_dir, rt_result.resultant_normal_B);
 
-
+	/* The radius of the circular bunch of rays to shoot to get depth and points on B is
+	 * the half of the diagonal of the overlap RPP , so that no matter how the normal is
+	 * oriented, rays are shot to cover the entire volume
+	 */
 	VSUB2(diff, overlap_max, overlap_min);
 	d = MAGNITUDE(diff);
 	r = d/2;
@@ -1114,8 +1181,15 @@ shoot_normal_rays(struct sim_manifold *current_manifold,
 
 	/* Lets check the rays */
 	while (BU_LIST_WHILE(entry, xrays, &(xrayp->l))) {
-	   bu_log("shoot_normal_rays: center_ray pt(%f,%f,%f) dir(%f,%f,%f)",
+	   bu_log("shoot_normal_rays: *****ray pt(%f,%f,%f) dir(%f,%f,%f) ******",
 				V3ARGS(entry->ray.r_pt), V3ARGS(entry->ray.r_dir));
+
+	   shoot_ray(sim_params->rtip, entry->ray.r_pt, entry->ray.r_dir);
+
+	   traverse_normalray_lists(current_manifold, sim_params, entry->ray.r_pt, entry->ray.r_dir);
+
+	   cleanup_lists();
+
 	   BU_LIST_DEQUEUE(&(entry->l));
 	   bu_free(entry, "free xrays entry");
 	}
