@@ -405,6 +405,76 @@ fail:
 
 
 /**
+ * Find the distance from a point P to a line described by the
+ * endpoint A and direction dir, and the point of closest approach
+ * (PCA).
+ *
+ @code
+ 			P
+ 		       *
+ 		      /.
+ 		     / .
+ 		    /  .
+ 		   /   . (dist)
+ 		  /    .
+ 		 /     .
+ 		*------*-------->
+ 		A      PCA    dir
+ @endcode
+ * There are three distinct cases, with these return codes -
+ *   0 => P is within tolerance of point A.  *dist = 0, pca=A.
+ *   1 => P is within tolerance of line.  *dist = 0, pca=computed.
+ *   2 => P is "above/below" line.  *dist=|PCA-P|, pca=computed.
+ *
+ * TODO: For efficiency, a version of this routine that provides the
+ * distance squared would be faster.
+ */
+int
+bn_dist_pt3_line3(fastf_t *dist, fastf_t *pca, const fastf_t *a, const fastf_t *dir, const fastf_t *p, const struct bn_tol *tol)
+{
+    vect_t AtoP;	/* P-A */
+    vect_t unit_dir;	/* unitized dir vector */
+    fastf_t A_P_sq;	/* |P-A|**2 */
+    fastf_t t;		/* distance along ray of projection of P */
+    fastf_t dsq;	/* sqaure of distance from p to line */
+
+    if (rt_g.NMG_debug & DEBUG_BASIC)
+	bu_log("bn_dist_pt3_line3(a=(%f %f %f), dir=(%f %f %f), p=(%f %f %f)\n" ,
+	       V3ARGS(a), V3ARGS(dir), V3ARGS(p));
+
+    BN_CK_TOL(tol);
+
+    /* Check proximity to endpoint A */
+    VSUB2(AtoP, p, a);
+    if ((A_P_sq = MAGSQ(AtoP)) < tol->dist_sq) {
+	/* P is within the tol->dist radius circle around A */
+	VMOVE(pca, a);
+	*dist = 0.0;
+	return 0;
+    }
+
+    VMOVE(unit_dir, dir);
+    VUNITIZE(unit_dir);
+
+    /* compute distance (in actual units) along line to PROJECTION of
+     * point p onto the line: point pca
+     */
+    t = VDOT(AtoP, unit_dir);
+
+    VJOIN1(pca, a, t, unit_dir);
+    if ((dsq = A_P_sq - t*t) < tol->dist_sq) {
+	/* P is within tolerance of the line */
+	*dist = 0.0;
+	return 1;
+    } else {
+	/* P is off line */
+	*dist = sqrt(dsq);
+	return 2;
+    }
+}
+
+
+/**
  * B N _ I S E C T _ L I N E 3 _ P L A N E
  *
  * Intersect an infinite line (specified in point and direction vector

@@ -790,6 +790,13 @@ BN_EXPORT extern int bn_distsq_line3_line3(fastf_t dist[3],
 					   point_t pt1,
 					   point_t pt2);
 
+RT_EXPORT extern int bn_dist_pt3_line3(fastf_t *dist,
+				       point_t pca,
+				       const point_t a,
+				       const point_t p,
+				       const vect_t dir,
+				       const struct bn_tol *tol);
+
 BN_EXPORT extern int bn_dist_pt3_lseg3(fastf_t *dist,
 				       point_t pca,
 				       const point_t a,

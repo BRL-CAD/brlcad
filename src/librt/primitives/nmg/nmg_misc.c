@@ -4785,79 +4785,6 @@ nmg_unbreak_region_edges(uint32_t *magic_p)
 
 
 /**
- * R T _ D I S T _ P T 3 _ L I N E 3
- *
- * Find the distance from a point P to a line described by the
- * endpoint A and direction dir, and the point of closest approach
- * (PCA).
- @code
- 			P
- 		       *
- 		      /.
- 		     / .
- 		    /  .
- 		   /   . (dist)
- 		  /    .
- 		 /     .
- 		*------*-------->
- 		A      PCA    dir
- @endcode
- * There are three distinct cases, with these return codes -
- *   0 => P is within tolerance of point A.  *dist = 0, pca=A.
- *   1 => P is within tolerance of line.  *dist = 0, pca=computed.
- *   2 => P is "above/below" line.  *dist=|PCA-P|, pca=computed.
- *
- * XXX For efficiency, a version of this routine that provides the
- * XXX distance squared would be faster.
- * XXX This should be moved into libbn/plane.c,
- * XXX probably named bn_dist_pt3_line3().
- */
-int
-rt_dist_pt3_line3(fastf_t *dist, fastf_t *pca, const fastf_t *a, const fastf_t *dir, const fastf_t *p, const struct bn_tol *tol)
-{
-    vect_t AtoP;	/* P-A */
-    vect_t unit_dir;	/* unitized dir vector */
-    fastf_t A_P_sq;	/* |P-A|**2 */
-    fastf_t t;		/* distance along ray of projection of P */
-    fastf_t dsq;	/* sqaure of distance from p to line */
-
-    if (rt_g.NMG_debug & DEBUG_BASIC)
-	bu_log("rt_dist_pt3_line3(a=(%f %f %f), dir=(%f %f %f), p=(%f %f %f)\n" ,
-	       V3ARGS(a), V3ARGS(dir), V3ARGS(p));
-
-    BN_CK_TOL(tol);
-
-    /* Check proximity to endpoint A */
-    VSUB2(AtoP, p, a);
-    if ((A_P_sq = MAGSQ(AtoP)) < tol->dist_sq) {
-	/* P is within the tol->dist radius circle around A */
-	VMOVE(pca, a);
-	*dist = 0.0;
-	return 0;
-    }
-
-    VMOVE(unit_dir, dir);
-    VUNITIZE(unit_dir);
-
-    /* compute distance (in actual units) along line to PROJECTION of
-     * point p onto the line: point pca
-     */
-    t = VDOT(AtoP, unit_dir);
-
-    VJOIN1(pca, a, t, unit_dir);
-    if ((dsq = A_P_sq - t*t) < tol->dist_sq) {
-	/* P is within tolerance of the line */
-	*dist = 0.0;
-	return 1;
-    } else {
-	/* P is off line */
-	*dist = sqrt(dsq);
-	return 2;
-    }
-}
-
-
-/**
  * N M G _ M V _ S H E L L _ T O _ R E G I O N
  *
  * Move a shell from one nmgregion to another.  Will bomb if shell and
@@ -5449,7 +5376,7 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
 		bu_bomb("Can't find plane intersection\n");
 	    }
 	    /* Make the start point at closest approach to old vertex */
-	    (void)rt_dist_pt3_line3(&dist, start, start, dir, new_v->vg_p->coord, tol);
+	    (void)bn_dist_pt3_line3(&dist, start, start, dir, new_v->vg_p->coord, tol);
 
 	    /* Make sure the calculated direction is away from the vertex */
 	    if (VDOT(eu_dir, dir) < 0.0)
@@ -6863,7 +6790,7 @@ nmg_calc_new_v(struct vertex *new_v, const struct bu_ptbl *int_faces, const stru
 
 	fus = (struct intersect_fus *)BU_PTBL_GET(int_faces, i);
 
-	(void) rt_dist_pt3_line3(&dist, fus->start, fus->start, fus->dir, new_v->vg_p->coord, tol);
+	(void)bn_dist_pt3_line3(&dist, fus->start, fus->start, fus->dir, new_v->vg_p->coord, tol);
     }
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
@@ -10353,9 +10280,9 @@ nmg_simplify_shell_edges(struct shell *s, const struct bn_tol *tol)
 		VSUB2(dir_next, vg3->coord, vg2->coord);
 
 		skip = 1;
-		if (rt_dist_pt3_line3(&dist, pca, vg1->coord, dir_eu, vg3->coord, tol) < 2)
+		if (bn_dist_pt3_line3(&dist, pca, vg1->coord, dir_eu, vg3->coord, tol) < 2)
 		    skip = 0;
-		else if (rt_dist_pt3_line3(&dist, pca, vg2->coord, dir_next, vg1->coord, tol) < 2)
+		else if (bn_dist_pt3_line3(&dist, pca, vg2->coord, dir_next, vg1->coord, tol) < 2)
 		    skip = 0;
 
 		if (skip) {

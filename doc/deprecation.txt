@@ -797,3 +797,10 @@ s/BU_LIST_MAGIC_WRONG/!BU_LIST_MAGIC_EQUAL/g
 
 s/nmg_moveeu/nmg_je/g
 	function has been renamed
+
+7.22
+----
+
+s/rt_dist_pt3_line3/bn_dist_pt3_line3/g
+        function moved from librt to libbn [7.21]
+

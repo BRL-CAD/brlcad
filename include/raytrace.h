@@ -4128,13 +4128,6 @@ RT_EXPORT extern void nmg_pl_lu_around_eu(const struct edgeuse *eu);
 RT_EXPORT extern void nmg_pr_fus_in_fg(const uint32_t *fg_magic);
 
 /* From nmg_misc.c */
-RT_EXPORT extern int rt_dist_pt3_line3(fastf_t		*dist,
-				       point_t		pca,
-				       const point_t	a,
-				       const point_t	p,
-				       const vect_t	dir,
-				       const struct bn_tol *tol);
-
 RT_EXPORT extern int rt_dist_line3_line3(fastf_t dist[2],
 					 const point_t p1,
 					 const point_t p2,
@@ -4239,7 +4232,6 @@ RT_EXPORT extern void nmg_stash_model_to_file(const char *filename,
 RT_EXPORT extern int nmg_unbreak_region_edges(uint32_t *magic_p);
 RT_EXPORT extern void nmg_vlist_to_eu(struct bu_list *vlist,
 				      struct shell *s);
-/* rt_dist_pt3_line3 */
 RT_EXPORT extern int nmg_mv_shell_to_region(struct shell *s,
 					    struct nmgregion *r);
 RT_EXPORT extern int nmg_find_isect_faces(const struct vertex *new_v,
