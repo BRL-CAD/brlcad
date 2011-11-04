@@ -1109,7 +1109,7 @@ shoot_normal_rays(struct sim_manifold *current_manifold,
 
 	rt_gen_circular_grid(xrayp, &center_ray, r, up_vec,r*2);
 
-
+	bu_free(xrayp, "free struct xrays list head");
 
 
 	return GED_OK;
