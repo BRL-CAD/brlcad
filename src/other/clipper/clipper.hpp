@@ -194,7 +194,9 @@ public:
   ClipperBase();
   virtual ~ClipperBase();
   bool AddPolygon(const Polygon &pg, PolyType polyType);
+  bool AddPolygon(const ExPolygon &pg, PolyType polyType);
   bool AddPolygons( const Polygons &ppg, PolyType polyType);
+  bool AddPolygons( const ExPolygons &ppg, PolyType polyType);
   virtual void Clear();
   IntRect GetBounds();
 protected:

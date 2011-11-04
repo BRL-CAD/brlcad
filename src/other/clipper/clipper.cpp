@@ -877,6 +877,16 @@ bool ClipperBase::AddPolygon( const Polygon &pg, PolyType polyType)
 }
 //------------------------------------------------------------------------------
 
+bool ClipperBase::AddPolygon( const ExPolygon &pg, PolyType polyType)
+{
+    AddPolygon(pg.outer, polyType);
+    for (Polygons::size_type i = 0; i < pg.holes.size(); ++i)
+	AddPolygon(pg.holes[i], polyType);
+
+    return true;
+}
+//------------------------------------------------------------------------------
+
 void ClipperBase::InsertLocalMinima(LocalMinima *newLm)
 {
   if( ! m_MinimaList )
@@ -959,6 +969,15 @@ bool ClipperBase::AddPolygons(const Polygons &ppg, PolyType polyType)
 {
   bool result = true;
   for (Polygons::size_type i = 0; i < ppg.size(); ++i)
+    if (AddPolygon(ppg[i], polyType)) result = false;
+  return result;
+}
+//------------------------------------------------------------------------------
+
+bool ClipperBase::AddPolygons(const ExPolygons &ppg, PolyType polyType)
+{
+  bool result = true;
+  for (ExPolygons::size_type i = 0; i < ppg.size(); ++i)
     if (AddPolygon(ppg[i], polyType)) result = false;
   return result;
 }
