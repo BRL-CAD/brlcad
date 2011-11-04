@@ -4128,13 +4128,6 @@ RT_EXPORT extern void nmg_pl_lu_around_eu(const struct edgeuse *eu);
 RT_EXPORT extern void nmg_pr_fus_in_fg(const uint32_t *fg_magic);
 
 /* From nmg_misc.c */
-RT_EXPORT extern int rt_dist_line3_line3(fastf_t dist[2],
-					 const point_t p1,
-					 const point_t p2,
-					 const vect_t d1,
-					 const vect_t d2,
-					 const struct bn_tol *tol);
-
 RT_EXPORT extern int nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu);
 RT_EXPORT extern void nmg_snurb_fu_eval(const struct faceuse *fu,
 					const fastf_t u,

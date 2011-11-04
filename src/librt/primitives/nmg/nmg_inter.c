@@ -5748,7 +5748,7 @@ nmg_isect_coplanar_edges(struct nmg_inter_struct *is, struct bu_ptbl *eu1_list, 
 	    len_vt2 = MAGNITUDE(vt2);
 	    VSCALE(vt2, vt2, 1.0/len_vt2);
 
-	    code = rt_dist_line3_line3(dist, vg1a->coord, vt1,
+	    code = bn_dist_line3_line3(dist, vg1a->coord, vt1,
 				       vg2a->coord, vt2, &is->tol);
 
 	    if (rt_g.NMG_debug & DEBUG_POLYSECT)

@@ -1807,163 +1807,6 @@ nmg_model_area(const struct model *m)
 
 
 /**
- * R T _ D I S T _ L I N E 3 _ L I N E 3
- *
- * Calculate closest approach of two lines
- *
- * returns:
- *	-2 -> lines are parallel and do not intersect
- *	-1 -> lines are parallel and collinear
- *	 0 -> lines intersect
- *	 1 -> lines do not intersect
- * For return values less than zero, dist is not set.
- * For return valuse of 0 or 1, dist[0] is the distance
- * from p1 in the d1 direction to the point of closest
- * approach for that line.  Similar for the second line.
- * d1 and d2 must be unit direction vectors.
- *
- * XXX How is this different from bn_isect_line3_line3() ?
- * XXX Why are the calling sequences just slightly different?
- * XXX Can we pick the better one, and get rid of the other one?
- * XXX If not, can we document how they differ?
- */
-int
-rt_dist_line3_line3(fastf_t *dist, const fastf_t *p1, const fastf_t *d1, const fastf_t *p2, const fastf_t *d2, const struct bn_tol *tol)
-{
-    fastf_t d1_d2;
-    point_t a1, a2;
-    vect_t a1_to_a2;
-    vect_t p2_to_p1;
-    fastf_t min_dist;
-    fastf_t tol_dist_sq;
-    fastf_t tol_dist;
-
-    BN_CK_TOL(tol);
-
-    if (tol->dist > 0.0)
-	tol_dist = tol->dist;
-    else
-	tol_dist = 0.0005;
-
-    if (tol->dist_sq > 0.0)
-	tol_dist_sq = tol->dist_sq;
-    else
-	tol_dist_sq = tol_dist * tol_dist;
-
-    if (!NEAR_EQUAL(MAGSQ(d1), 1.0, tol_dist_sq)) {
-	bu_log("rt_dist_line3_line3: non-unit length direction vector (%f %f %f)\n", V3ARGS(d1));
-	bu_bomb("rt_dist_line3_line3\n");
-    }
-
-    if (!NEAR_EQUAL(MAGSQ(d2), 1.0, tol_dist_sq)) {
-	bu_log("rt_dist_line3_line3: non-unit length direction vector (%f %f %f)\n", V3ARGS(d2));
-	bu_bomb("rt_dist_line3_line3\n");
-    }
-
-    d1_d2 = VDOT(d1, d2);
-
-    if (BN_VECT_ARE_PARALLEL(d1_d2, tol)) {
-	if (bn_dist_line3_pt3(p1, d1, p2) > tol_dist)
-	    return -2; /* parallel, but not collinear */
-	else
-	    return -1; /* parallel and collinear */
-    }
-
-    VSUB2(p2_to_p1, p1, p2);
-    dist[0] = (d1_d2 * VDOT(p2_to_p1, d2) - VDOT(p2_to_p1, d1))/(1.0 - d1_d2 * d1_d2);
-    dist[1] = dist[0] * d1_d2 + VDOT(p2_to_p1, d2);
-
-    VJOIN1(a1, p1, dist[0], d1);
-    VJOIN1(a2, p2, dist[1], d2);
-
-    VSUB2(a1_to_a2, a2, a1);
-    min_dist = MAGNITUDE(a1_to_a2);
-    if (min_dist < tol_dist)
-	return 0;
-    else
-	return 1;
-}
-
-
-/**
- * R T _ D I S T _ L I N E 3 _ L S E G 3
- *
- * calculate intersection or closest approach of a line and a line
- * segement.
- *
- * returns:
- *	-2 -> line and line segment are parallel and collinear.
- *	-1 -> line and line segment are parallel, not collinear.
- *	 0 -> intersection between points a and b.
- *	 1 -> intersection outside a and b.
- *	 2 -> closest approach is between a and b.
- *	 3 -> closest approach is outside a and b.
- *
- * dist[0] is actual distance from p in d direction to
- * closest portion of segment.
- * dist[1] is ratio of distance from a to b (0.0 at a, and 1.0 at b),
- * dist[1] may be less than 0 or greater than 1.
- * For return values less than 0, closest approach is defined as
- * closest to point p.
- * Direction vector, d, must be unit length.
- *
- * XXX This should be moved to libbn/plane.c
- * XXX probably renamed as bn_dist_line3_line3().
- */
-int
-rt_dist_line3_lseg3(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
-{
-    vect_t a_to_b;
-    vect_t a_dir;
-    fastf_t len_ab;
-    int outside_segment;
-    int ret;
-
-    BN_CK_TOL(tol);
-
-    VSUB2(a_to_b, b, a);
-    len_ab = MAGNITUDE(a_to_b);
-    VSCALE(a_dir, a_to_b, (1.0/len_ab));
-
-    ret = rt_dist_line3_line3(dist, p, d, a, a_dir, tol);
-
-    if (ret < 0) {
-	vect_t to_a, to_b;
-	fastf_t dist_to_a, dist_to_b;
-
-	VSUB2(to_a, a, p);
-	VSUB2(to_b, b, p);
-	dist_to_a = VDOT(to_a, d);
-	dist_to_b = VDOT(to_b, d);
-
-	if (dist_to_a <= dist_to_b) {
-	    dist[0] = dist_to_a;
-	    dist[1] = 0.0;
-	} else {
-	    dist[0] = dist_to_b;
-	    dist[1] = 1.0;
-	}
-	return ret;
-    }
-
-    if (dist[1] >= (-tol->dist) && dist[1] <= len_ab + tol->dist) {
-	/* intersect or closest approach between a and b */
-	outside_segment = 0;
-	dist[1] = dist[1]/len_ab;
-	if (dist[1] < 0.0)
-	    dist[1] = 0.0;
-	if (dist[1] > 1.0)
-	    dist[1] = 1.0;
-    } else {
-	outside_segment = 1;
-	dist[1] = dist[1]/len_ab;
-    }
-
-    return 2*ret + outside_segment;
-}
-
-
-/**
  * N M G _ P U R G E _ U N W A N T E D _ I N T E R S E C T I O N _ P O I N T S
  *
  * Make sure that the list of intersection points doesn't contain any
@@ -5484,7 +5327,7 @@ nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, c
 
 	/* if we found another edge, calculate its intersection with the edge */
 	if (other_fus != edge_fus) {
-	    if (!rt_dist_line3_line3(dist, edge_fus->start, edge_fus->dir, other_fus->start, other_fus->dir, tol)) {
+	    if (!bn_dist_line3_line3(dist, edge_fus->start, edge_fus->dir, other_fus->start, other_fus->dir, tol)) {
 		if (rt_g.NMG_debug & DEBUG_BASIC)
 		    bu_log("Edge #%d intersects edge #%d at dist = %f\n", edge_no, next_edge_no, dist[0]);
 		if (NEAR_ZERO(dist[0], tol->dist))
@@ -5510,7 +5353,7 @@ nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, c
 	}
 
 	if (other_fus != edge_fus) {
-	    if (rt_dist_line3_line3(dist, edge_fus->start, edge_fus->dir, other_fus->start, other_fus->dir, tol) >= 0) {
+	    if (bn_dist_line3_line3(dist, edge_fus->start, edge_fus->dir, other_fus->start, other_fus->dir, tol) >= 0) {
 		if (rt_g.NMG_debug & DEBUG_BASIC)
 		    bu_log("Edge #%d intersects edge #%d at dist = %f\n", edge_no, prev_edge_no, dist[0]);
 		if (NEAR_ZERO(dist[0], tol->dist))
@@ -6438,7 +6281,7 @@ nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus 
 	VSCALE(j_dir, j_dir, (1.0/max_dist1))
 
 	    /* check if these two edges intersect or pass near each other */
-	    if ((ret_val=rt_dist_line3_line3(dist, i_start->vg_p->coord, i_dir ,
+	    if ((ret_val=bn_dist_line3_line3(dist, i_start->vg_p->coord, i_dir ,
 					     j_start->vg_p->coord, j_dir, tol)) >= 0)
 	    {
 		if (rt_g.NMG_debug & DEBUG_BASIC) {
