@@ -1068,7 +1068,7 @@ shoot_normal_rays(struct sim_manifold *current_manifold,
 	vect_t diff, up_vec, ref_axis;
 	point_t overlap_center;
 	fastf_t d, r;
-	struct xrays xray_1 ;
+	struct xrays *xrayp ;
 	struct xray center_ray;
 
 	/* Setup center ray */
@@ -1099,7 +1099,18 @@ shoot_normal_rays(struct sim_manifold *current_manifold,
 		VCROSS(up_vec, rt_result.resultant_normal_B, ref_axis);
 	}
 
-	rt_gen_circular_grid(&xray_1, &center_ray, r, up_vec,r*2);
+	/* Initialize the BU_LIST in preparation for rt_gen_circular_grid() */
+	BU_GETSTRUCT(xrayp, xrays);
+	BU_LIST_INIT(&(xrayp->l));
+	VMOVE(xrayp->ray.r_pt, center_ray.r_pt);
+	VMOVE(xrayp->ray.r_dir, center_ray.r_dir);
+	xrayp->ray.index = 0;
+	xrayp->ray.magic = RT_RAY_MAGIC;
+
+	rt_gen_circular_grid(xrayp, &center_ray, r, up_vec,r*2);
+
+
+
 
 	return GED_OK;
 }
