@@ -1068,7 +1068,7 @@ shoot_normal_rays(struct sim_manifold *current_manifold,
 	vect_t diff, up_vec, ref_axis;
 	point_t overlap_center;
 	fastf_t d, r;
-	struct xrays *xrayp ;
+	struct xrays *xrayp, *entry ;
 	struct xray center_ray;
 
 	/* Setup center ray */
@@ -1099,6 +1099,9 @@ shoot_normal_rays(struct sim_manifold *current_manifold,
 		VCROSS(up_vec, rt_result.resultant_normal_B, ref_axis);
 	}
 
+	bu_log("shoot_normal_rays: center_ray pt(%f,%f,%f) dir(%f,%f,%f), up_vec(%f,%f,%f), r=%f",
+			V3ARGS(center_ray.r_pt), V3ARGS(center_ray.r_dir), V3ARGS(up_vec), r);
+
 	/* Initialize the BU_LIST in preparation for rt_gen_circular_grid() */
 	BU_GETSTRUCT(xrayp, xrays);
 	BU_LIST_INIT(&(xrayp->l));
@@ -1107,10 +1110,18 @@ shoot_normal_rays(struct sim_manifold *current_manifold,
 	xrayp->ray.index = 0;
 	xrayp->ray.magic = RT_RAY_MAGIC;
 
-	rt_gen_circular_grid(xrayp, &center_ray, r, up_vec,r*2);
+	rt_gen_circular_grid(xrayp, &center_ray, r, up_vec, 0.1);
 
-	bu_free(xrayp, "free struct xrays list head");
+	/* Lets check the rays */
+	while (BU_LIST_WHILE(entry, xrays, &(xrayp->l))) {
+	   bu_log("shoot_normal_rays: center_ray pt(%f,%f,%f) dir(%f,%f,%f)",
+				V3ARGS(entry->ray.r_pt), V3ARGS(entry->ray.r_dir));
+	   BU_LIST_DEQUEUE(&(entry->l));
+	   bu_free(entry, "free xrays entry");
+	}
 
+
+	bu_free(xrayp, "free xrays list head");
 
 	return GED_OK;
 }
