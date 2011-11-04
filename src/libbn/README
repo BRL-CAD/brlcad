@@ -1,0 +1,29 @@
+This is BRL-CAD's LIBBN basic numerics library.
+
+The following functions are typically called (heavily) during geometry
+facetization and would make for an excellent starting point for unit
+tests:
+
+bn_3pts_collinear
+bn_3pts_distinct
+bn_angle_measure
+bn_dist_pt3_lseg3
+bn_dist_pt3_pt3
+bn_distsq_line3_pt3
+bn_distsq_pt3_lseg3
+bn_isect_line3_line3
+bn_isect_line3_plane
+bn_isect_line_lseg
+bn_isect_lseg3_lseg3
+bn_isect_pt_lseg
+bn_mat_arb_rot
+bn_mat_determinant
+bn_mat_fromto
+bn_mat_inv
+bn_mat_mul
+bn_mk_plane_3pts
+bn_mkpoint_3planes
+bn_pt3_pt3_equal
+bn_vec_ortho
+bn_vec_perp
+rt_dist_pt3_line3

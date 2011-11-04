@@ -49,5 +49,9 @@ target_link_libraries(bntester libbu libbn)
 IF(MSVC)
 	SET_TARGET_PROPERTIES(bntester PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
 ENDIF(MSVC)
-CMAKEFILES(bntester.dat ulp.c)
-CMAKEFILES(Makefile.am)
+CMAKEFILES(
+        Makefile.am
+        README
+        bntester.dat
+        ulp.c
+)
