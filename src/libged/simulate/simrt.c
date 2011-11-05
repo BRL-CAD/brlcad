@@ -724,14 +724,14 @@ traverse_zray_lists(
 
 int
 traverse_normalray_lists(
-		struct sim_manifold *current_manifold,
+		struct sim_manifold *mf,
 		struct simulation_params *sim_params,
 		point_t pt,
 		point_t dir,
 		vect_t overlap_min,
 		vect_t overlap_max)
 {
-    int i, rv;
+    int i, j, rv;
 
     /*struct hit_reg *hrp;*/
     struct bu_vls reg_vls = BU_VLS_INIT_ZERO;
@@ -773,7 +773,7 @@ traverse_normalray_lists(
 		 */
 
 		/* Check if the in solid belongs to rbA */
-		comb = (struct rt_comb_internal *)current_manifold->rbA->intern.idb_ptr;
+		comb = (struct rt_comb_internal *)mf->rbA->intern.idb_ptr;
 		rv = check_tree_funcleaf(sim_params->gedp->ged_wdbp->dbip,
 				 	 	 		 comb,
 				 	 	 		 comb->tree,
@@ -784,7 +784,7 @@ traverse_normalray_lists(
 			continue;
 
 		/* Check if the out solid belongs to rbB */
-		comb = (struct rt_comb_internal *)current_manifold->rbB->intern.idb_ptr;
+		comb = (struct rt_comb_internal *)mf->rbB->intern.idb_ptr;
 		rv = check_tree_funcleaf(sim_params->gedp->ged_wdbp->dbip,
 						 	 	 comb,
 						 	 	 comb->tree,
@@ -796,17 +796,35 @@ traverse_normalray_lists(
 
 		depth = DIST_PT_PT(overlap_list[i].in_point, overlap_list[i].out_point);
 
-		bu_log("traverse_normalray_lists: Candidate contact point for B:%s at (%f,%f,%f) , depth %f \
-				n=(%f,%f,%f), at solid %s", current_manifold->rbB->rb_namep,
-											V3ARGS(overlap_list[i].in_point),
-											depth,
+		bu_log("traverse_normalray_lists: Contact point %d for B:%s at (%f,%f,%f) , depth %f \
+				n=(%f,%f,%f), at solid %s", mf->num_contacts + 1,
+											mf->rbB->rb_namep,
+											V3ARGS(overlap_list[i].out_point),
+											-depth,
 											V3ARGS(rt_result.resultant_normal_B),
 											overlap_list[i].insol->st_name);
 
 
-		/* TODO : Maximize area of points ? , or just add all the points and let Bullet handle it ? */
+		/* Add the points to the contacts list of the 1st manifold, without maximizing area here
+		 * Bullet should handle contact point minimization and area maximization
+		 */
+		if(mf->num_contacts == MAX_CONTACTS_PER_MANIFOLD){
+			bu_log("Contact point skipped as %d points are the maximum allowed per manifold", mf->num_contacts);
+			continue;
+		}
 
-	}
+		j = mf->num_contacts;
+		VMOVE(mf->contacts[j].ptB, overlap_list[i].out_point);
+		VMOVE(mf->contacts[j].normalWorldOnB, rt_result.resultant_normal_B);
+		mf->contacts[j].depth = -depth;
+		mf->num_contacts++;
+
+		bu_log("traverse_normalray_lists : ptB set to (%f,%f,%f)", V3ARGS((mf->contacts[j].ptB)));
+		bu_log("traverse_normalray_lists : normalWorldOnB set to (%f,%f,%f)", V3ARGS(mf->contacts[j].normalWorldOnB));
+		bu_log("traverse_normalray_lists : Penetration depth set to %f", mf->contacts[j].depth);
+
+
+	} /* end-for overlap */
 
 
     bu_vls_free(&reg_vls);
@@ -1056,10 +1074,6 @@ shoot_z_rays(struct sim_manifold *current_manifold,
 }
 
 
-/*
- * Shoots a circular bunch of rays from B towards A along resultant_normal_B
- *
- */
 int
 shoot_normal_rays(struct sim_manifold *current_manifold,
 	     	 	 struct simulation_params *sim_params,
@@ -1171,31 +1185,6 @@ create_contact_pairs(
 	/* Shoot rays along the normal to get points on B and the depth along this direction */
 	shoot_normal_rays(mf, sim_params, overlap_min, overlap_max);
 
- /* VSET(mf->contacts[0].normalWorldOnB, 0, 0, 1.0000);
-    VSET(mf->contacts[1].normalWorldOnB, 0, 0, 1.0000);
-    VSET(mf->contacts[2].normalWorldOnB, 0, 0, 1.0000);
-    VSET(mf->contacts[3].normalWorldOnB, 0, 0, 1.0000);
-
-
-
-    VSUB2(diff, overlap_min, overlap_max);
-    mf->contacts[0].depth = diff[Z];
-    mf->contacts[1].depth = diff[Z];
-    mf->contacts[2].depth = diff[Z];
-    mf->contacts[3].depth = diff[Z];
-
-	VSET(mf->contacts[0].ptB, 0.000000, 1.000000, overlap_max[Z]);
-	VSET(mf->contacts[1].ptB, 0.000000, 0.300000, overlap_max[Z]);
-	VSET(mf->contacts[2].ptB, 1.000000, 0.300000, overlap_max[Z]);
-	VSET(mf->contacts[3].ptB, 1.000000, 1.000000, overlap_max[Z]);*/
-
-
-
-
-	/*bu_log("create_contact_pairs : ptB set to (%f,%f,%f)", V3ARGS((mf->contacts[0].ptB)));
-	bu_log("create_contact_pairs : normalWorldOnB set to (%f,%f,%f)", V3ARGS(mf->contacts[0].normalWorldOnB));
-	bu_log("create_contact_pairs : Penetration depth set to %f", mf->contacts[0].depth);*/
-
     return GED_OK;
 }
 
@@ -1206,11 +1195,12 @@ generate_manifolds(struct simulation_params *sim_params,
 				   struct rigid_body *rbB)
 {
     /* The manifold between rbA & rbB will be stored in B */
-	struct sim_manifold *rt_mf = &(rbB->rt_manifold);
+	struct sim_manifold *rt_mf;
 
     vect_t overlap_min, overlap_max;
     char *prefix_overlap = "overlap_";
     struct bu_vls overlap_name = BU_VLS_INIT_ZERO;
+    rt_mf = &(rbB->rt_manifold);
 
     /* Setup the manifold participant pointers */
     rt_mf->rbA = rbA;
@@ -1237,6 +1227,8 @@ generate_manifolds(struct simulation_params *sim_params,
 
 	/* Shoot rays right here as the pair of rigid_body ptrs are known,
 	 * TODO: ignore volumes already shot
+	 * UNUSED currently as velocity used to decide normal. Shooting rays in 3D is too time
+	 * consuming, but may be useful in some cases in the future
 	 */
 	/*shoot_x_rays(rt_mf, sim_params, overlap_min, overlap_max);
 	shoot_y_rays(rt_mf, sim_params, overlap_min, overlap_max);
@@ -1244,9 +1236,8 @@ generate_manifolds(struct simulation_params *sim_params,
 
 
 
-	/* Create the contact pairs and normals */
+	/* Create the contact pairs and normals : Currently just 1 manifold is allowed per pair of objects*/
 	create_contact_pairs(rt_mf, sim_params, overlap_min, overlap_max);
-
 
     return GED_OK;
 }

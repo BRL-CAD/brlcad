@@ -244,6 +244,17 @@ shoot_z_rays(struct sim_manifold *current_manifold,
 	     vect_t overlap_max);
 
 
+/*
+ * Shoots a circular bunch of rays from B towards A along resultant_normal_B
+ *
+ */
+int
+shoot_normal_rays(struct sim_manifold *current_manifold,
+	     	 	 struct simulation_params *sim_params,
+	     	 	 vect_t overlap_min,
+	     	 	 vect_t overlap_max);
+
+
 /**
  * Traverse the hit list and overlap list, drawing the ray segments
  * for x-rays
