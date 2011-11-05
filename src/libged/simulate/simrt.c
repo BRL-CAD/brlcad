@@ -473,8 +473,6 @@ traverse_xray_lists(
 
     /*struct hit_reg *hrp;*/
     struct bu_vls reg_vls = BU_VLS_INIT_ZERO;
-    struct directory *dp;
-    struct rt_db_internal intern;
     struct rt_comb_internal *comb =(struct rt_comb_internal *)NULL;
 
     /* Draw all the overlap regions : lines are added for overlap segments
@@ -502,30 +500,15 @@ traverse_xray_lists(
 
 		/* Fill up the result structure */
 
-		/* Only check with the comb of rigid body B : first get its dp  */
-		/* TODO : move this to generate_manifolds() */
-		if ((dp=db_lookup(sim_params->gedp->ged_wdbp->dbip, current_manifold->rbB->rb_namep, LOOKUP_QUIET)) == RT_DIR_NULL) {
-			bu_log("traverse_xray_lists: ERROR db_lookup(%s) failed", current_manifold->rbB->rb_namep);
-			bu_vls_free(&reg_vls);
-			return GED_ERROR;
-		}
-
-		/* Now B's internal format */
-		if (!rt_db_lookup_internal(sim_params->gedp->ged_wdbp->dbip, dp->d_namep, &dp, &intern, LOOKUP_NOISY, &rt_uniresource)) {
-			bu_exit(1, "traverse_xray_lists: ERROR rt_db_lookup_internal(%s) failed to get the internal form", dp->d_namep);
-			bu_vls_free(&reg_vls);
-			return GED_ERROR;
-		}
-
-		comb = (struct rt_comb_internal *)intern.idb_ptr;
-
+		/* Only check with the comb of rigid body B */
+		comb = (struct rt_comb_internal *)(current_manifold->rbB->intern.idb_ptr);
 
 		/* Check if the in solid belongs to rbB and also if the normal has been summed before(do not sum if so) */
 		rv = check_tree_funcleaf(sim_params->gedp->ged_wdbp->dbip,
-				 	 	 	comb,
-				 	 	 	comb->tree,
-				 	 	 	find_solid,
-				 	 	 	(genptr_t)(overlap_list[i].insol->st_name));
+								 comb,
+								 comb->tree,
+								 find_solid,
+								 (genptr_t)(overlap_list[i].insol->st_name));
 		if(rv == FOUND && !exists_normal(overlap_list[i].in_normal) ){
 			/* It does, so sum the in_normal */
 			bu_log("traverse_xray_lists: %s is present in %s", overlap_list[i].insol->st_name,
@@ -541,10 +524,10 @@ traverse_xray_lists(
 
 		/* Check if the out solid belongs to rbB and also if the normal has been summed before(do not sum if so) */
 		rv = check_tree_funcleaf(sim_params->gedp->ged_wdbp->dbip,
-						 	 	 	comb,
-						 	 	 	comb->tree,
-						 	 	 	find_solid,
-						 	 	 	(genptr_t)(overlap_list[i].outsol->st_name));
+								 comb,
+								 comb->tree,
+						 	 	 find_solid,
+						 	 	 (genptr_t)(overlap_list[i].outsol->st_name));
 		if(rv == FOUND && !exists_normal(overlap_list[i].out_normal) ){
 			/* It does, so sum the in_normal */
 			bu_log("traverse_xray_lists: %s is present in %s", overlap_list[i].outsol->st_name,
@@ -557,10 +540,6 @@ traverse_xray_lists(
 			add_normal(overlap_list[i].out_normal);
 
 		}
-
-		rt_db_free_internal(&intern);
-
-
 	}
 
     bu_vls_free(&reg_vls);
@@ -579,8 +558,6 @@ traverse_yray_lists(
 
     /*struct hit_reg *hrp;*/
     struct bu_vls reg_vls = BU_VLS_INIT_ZERO;
-    struct directory *dp;
-    struct rt_db_internal intern;
     struct rt_comb_internal *comb =(struct rt_comb_internal *)NULL;
 
 
@@ -610,29 +587,15 @@ traverse_yray_lists(
 
 		/* Fill up the result structure */
 
-		/* Only check with the comb of rigid body B : first get its dp  */
-		if ((dp=db_lookup(sim_params->gedp->ged_wdbp->dbip, current_manifold->rbB->rb_namep, LOOKUP_QUIET)) == RT_DIR_NULL) {
-			bu_log("traverse_yray_lists: ERROR db_lookup(%s) failed", current_manifold->rbB->rb_namep);
-			bu_vls_free(&reg_vls);
-			return GED_ERROR;
-		}
-
-		/* Now B's internal format */
-		if (!rt_db_lookup_internal(sim_params->gedp->ged_wdbp->dbip, dp->d_namep, &dp, &intern, LOOKUP_NOISY, &rt_uniresource)) {
-			bu_exit(1, "traverse_yray_lists: ERROR rt_db_lookup_internal(%s) failed to get the internal form", dp->d_namep);
-			bu_vls_free(&reg_vls);
-			return GED_ERROR;
-		}
-
-		comb = (struct rt_comb_internal *)intern.idb_ptr;
-
+		/* Only check with the comb of rigid body B */
+		comb = (struct rt_comb_internal *)(current_manifold->rbB->intern.idb_ptr);
 
 		/* Check if the in solid belongs to rbB */
 		rv = check_tree_funcleaf(sim_params->gedp->ged_wdbp->dbip,
-				 	 	 	comb,
-				 	 	 	comb->tree,
-				 	 	 	find_solid,
-				 	 	 	(genptr_t)(overlap_list[i].insol->st_name));
+								 comb,
+								 comb->tree,
+								 find_solid,
+								 (genptr_t)(overlap_list[i].insol->st_name));
 		if(rv == FOUND && !exists_normal(overlap_list[i].in_normal) ){
 			/* It does, so sum the in_normal */
 			bu_log("traverse_yray_lists: %s is present in %s", overlap_list[i].insol->st_name,
@@ -648,10 +611,10 @@ traverse_yray_lists(
 
 		/* Check if the out solid belongs to rbB */
 		rv = check_tree_funcleaf(sim_params->gedp->ged_wdbp->dbip,
-						 	 	 	comb,
-						 	 	 	comb->tree,
-						 	 	 	find_solid,
-						 	 	 	(genptr_t)(overlap_list[i].outsol->st_name));
+								 comb,
+								 comb->tree,
+						 	 	 find_solid,
+						 	 	 (genptr_t)(overlap_list[i].outsol->st_name));
 		if(rv == FOUND && !exists_normal(overlap_list[i].out_normal) ){
 			/* It does, so sum the out_normal */
 			bu_log("traverse_yray_lists: %s is present in %s", overlap_list[i].outsol->st_name,
@@ -663,10 +626,6 @@ traverse_yray_lists(
 					V3ARGS(rt_result.resultant_normal_B), V3ARGS(overlap_list[i].out_normal));
 			add_normal(overlap_list[i].out_normal);
 		}
-
-		rt_db_free_internal(&intern);
-
-
 	}
 
 
@@ -686,8 +645,6 @@ traverse_zray_lists(
 
     /*struct hit_reg *hrp;*/
     struct bu_vls reg_vls = BU_VLS_INIT_ZERO;
-    struct directory *dp;
-    struct rt_db_internal intern;
     struct rt_comb_internal *comb =(struct rt_comb_internal *)NULL;
 
 
@@ -716,29 +673,15 @@ traverse_zray_lists(
 
 		/* Fill up the result structure */
 
-		/* Only check with the comb of rigid body B : first get its dp  */
-		if ((dp=db_lookup(sim_params->gedp->ged_wdbp->dbip, current_manifold->rbB->rb_namep, LOOKUP_QUIET)) == RT_DIR_NULL) {
-			bu_log("traverse_zray_lists: ERROR db_lookup(%s) failed", current_manifold->rbB->rb_namep);
-			bu_vls_free(&reg_vls);
-			return GED_ERROR;
-		}
-
-		/* Now B's internal format */
-		if (!rt_db_lookup_internal(sim_params->gedp->ged_wdbp->dbip, dp->d_namep, &dp, &intern, LOOKUP_NOISY, &rt_uniresource)) {
-			bu_exit(1, "traverse_zray_lists: ERROR rt_db_lookup_internal(%s) failed to get the internal form", dp->d_namep);
-			bu_vls_free(&reg_vls);
-			return GED_ERROR;
-		}
-
-		comb = (struct rt_comb_internal *)intern.idb_ptr;
-
+		/* Only check with the comb of rigid body B */
+		comb = (struct rt_comb_internal *)(current_manifold->rbB->intern.idb_ptr);
 
 		/* Check if the in solid belongs to rbB */
 		rv = check_tree_funcleaf(sim_params->gedp->ged_wdbp->dbip,
-				 	 	 	comb,
-				 	 	 	comb->tree,
-				 	 	 	find_solid,
-				 	 	 	(genptr_t)(overlap_list[i].insol->st_name));
+								 comb,
+								 comb->tree,
+								 find_solid,
+								 (genptr_t)(overlap_list[i].insol->st_name));
 		if(rv == FOUND && !exists_normal(overlap_list[i].in_normal) ){
 			/* It does, so sum the in_normal */
 			bu_log("traverse_zray_lists: %s is present in %s", overlap_list[i].insol->st_name,
@@ -754,10 +697,10 @@ traverse_zray_lists(
 
 		/* Check if the out solid belongs to rbB */
 		rv = check_tree_funcleaf(sim_params->gedp->ged_wdbp->dbip,
-						 	 	 	comb,
-						 	 	 	comb->tree,
-						 	 	 	find_solid,
-						 	 	 	(genptr_t)(overlap_list[i].outsol->st_name));
+								 comb,
+								 comb->tree,
+						 	 	 find_solid,
+						 	 	 (genptr_t)(overlap_list[i].outsol->st_name));
 		if(rv == FOUND && !exists_normal(overlap_list[i].out_normal) ){
 			/* It does, so sum the out_normal */
 			bu_log("traverse_zray_lists: %s is present in %s", overlap_list[i].outsol->st_name,
@@ -770,8 +713,6 @@ traverse_zray_lists(
 			add_normal(overlap_list[i].out_normal);
 
 		}
-
-		rt_db_free_internal(&intern);
 	}
 
 
@@ -785,16 +726,17 @@ int
 traverse_normalray_lists(
 		struct sim_manifold *current_manifold,
 		struct simulation_params *sim_params,
-		point_t pt, point_t dir)
+		point_t pt,
+		point_t dir,
+		vect_t overlap_min,
+		vect_t overlap_max)
 {
     int i, rv;
 
     /*struct hit_reg *hrp;*/
     struct bu_vls reg_vls = BU_VLS_INIT_ZERO;
-    struct directory *dp;
-    struct rt_db_internal intern;
-    struct rt_comb_internal *comb =(struct rt_comb_internal *)NULL;
     fastf_t depth;
+    struct rt_comb_internal *comb =(struct rt_comb_internal *)NULL;
 
 
     /* Draw all the overlap regions : lines are added for overlap segments
@@ -820,36 +762,35 @@ traverse_normalray_lists(
 		add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
 
 
-		/* Fill up the result structure */
+		/* Check of both points are within the overlap RPP */
+		if(!V3PT_IN_RPP(overlap_list[i].in_point,  overlap_min, overlap_max) ||
+		   !V3PT_IN_RPP(overlap_list[i].out_point, overlap_min, overlap_max))
+			continue;
 
-		/* Only check with the comb of rigid body B : first get its dp
-		 * TODO : move this to generate_manifolds()
-		 * TODO : ignore points outside overlap region
-		 * TODO : Must check if insol belongs to rbA and outsol to rbB  IN THIS ORDER, else results may
+
+		/* Must check if insol belongs to rbA and outsol to rbB  IN THIS ORDER, else results may
 		 * be incorrect if geometry of either has overlap defects within.
 		 */
-		if ((dp=db_lookup(sim_params->gedp->ged_wdbp->dbip, current_manifold->rbA->rb_namep, LOOKUP_QUIET)) == RT_DIR_NULL) {
-			bu_log("traverse_normalray_lists: ERROR db_lookup(%s) failed", current_manifold->rbA->rb_namep);
-			bu_vls_free(&reg_vls);
-			return GED_ERROR;
-		}
-
-		/* Now B's internal format */
-		if (!rt_db_lookup_internal(sim_params->gedp->ged_wdbp->dbip, dp->d_namep, &dp, &intern, LOOKUP_NOISY, &rt_uniresource)) {
-			bu_exit(1, "traverse_normalray_lists: ERROR rt_db_lookup_internal(%s) failed to get the internal form", dp->d_namep);
-			bu_vls_free(&reg_vls);
-			return GED_ERROR;
-		}
-
-		comb = (struct rt_comb_internal *)intern.idb_ptr;
-
 
 		/* Check if the in solid belongs to rbA */
+		comb = (struct rt_comb_internal *)current_manifold->rbA->intern.idb_ptr;
 		rv = check_tree_funcleaf(sim_params->gedp->ged_wdbp->dbip,
-				 	 	 	comb,
-				 	 	 	comb->tree,
-				 	 	 	find_solid,
-				 	 	 	(genptr_t)(overlap_list[i].insol->st_name));
+				 	 	 		 comb,
+				 	 	 		 comb->tree,
+				 	 	 		 find_solid,
+				 	 	 		 (genptr_t)(overlap_list[i].insol->st_name));
+
+		if(rv == NOT_FOUND)
+			continue;
+
+		/* Check if the out solid belongs to rbB */
+		comb = (struct rt_comb_internal *)current_manifold->rbB->intern.idb_ptr;
+		rv = check_tree_funcleaf(sim_params->gedp->ged_wdbp->dbip,
+						 	 	 comb,
+						 	 	 comb->tree,
+						 	 	 find_solid,
+						 	 	 (genptr_t)(overlap_list[i].outsol->st_name));
+
 		if(rv == NOT_FOUND)
 			continue;
 
@@ -857,18 +798,14 @@ traverse_normalray_lists(
 
 		bu_log("traverse_normalray_lists: Candidate contact point for B:%s at (%f,%f,%f) , depth %f \
 				n=(%f,%f,%f), at solid %s", current_manifold->rbB->rb_namep,
-							  V3ARGS(overlap_list[i].in_point),
-							  depth,
-							  V3ARGS(rt_result.resultant_normal_B),
-							  overlap_list[i].insol->st_name);
-
-		/* TODO : Check if the out solid belongs to rbA */
+											V3ARGS(overlap_list[i].in_point),
+											depth,
+											V3ARGS(rt_result.resultant_normal_B),
+											overlap_list[i].insol->st_name);
 
 
 		/* TODO : Maximize area of points ? , or just add all the points and let Bullet handle it ? */
 
-
-		rt_db_free_internal(&intern);
 	}
 
 
@@ -1186,7 +1123,8 @@ shoot_normal_rays(struct sim_manifold *current_manifold,
 
 	   shoot_ray(sim_params->rtip, entry->ray.r_pt, entry->ray.r_dir);
 
-	   traverse_normalray_lists(current_manifold, sim_params, entry->ray.r_pt, entry->ray.r_dir);
+	   traverse_normalray_lists(current_manifold, sim_params, entry->ray.r_pt, entry->ray.r_dir,
+			   overlap_min, overlap_max);
 
 	   cleanup_lists();
 

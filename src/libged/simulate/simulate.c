@@ -85,7 +85,6 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
     struct rigid_body *prev_node = NULL, *current_node;
     struct bu_vls dp_name_vls = BU_VLS_INIT_ZERO;
 
-
     /* Kill the existing sim comb */
     kill(gedp, sim_params->sim_comb_name);
     sim_params->num_bodies = 0;
@@ -119,9 +118,10 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
 
 	    /* Get the directory pointer for the object just added */
 	    if ((ndp=db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&dp_name_vls), LOOKUP_QUIET)) == RT_DIR_NULL) {
-		bu_vls_printf(gedp->ged_result_str, "add_regions: db_lookup(%s) failed", bu_vls_addr(&dp_name_vls));
-		return GED_ERROR;
+	    	bu_vls_printf(gedp->ged_result_str, "add_regions: db_lookup(%s) failed", bu_vls_addr(&dp_name_vls));
+	    	return GED_ERROR;
 	    }
+
 
 	    /* Add to simulation list */
 	    current_node = (struct rigid_body *)bu_malloc(sizeof(struct rigid_body), "rigid_body: current_node");
@@ -130,18 +130,26 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
 	    current_node->dp = ndp;
 	    current_node->next = NULL;
 
+	    /* Save the internal format as well */
+		if (!rt_db_lookup_internal(sim_params->gedp->ged_wdbp->dbip, ndp->d_namep, &ndp,
+				&(current_node->intern), LOOKUP_NOISY, &rt_uniresource)) {
+			bu_exit(1, "add_regions: ERROR rt_db_lookup_internal(%s) failed to get the internal form",
+					ndp->d_namep);
+			return GED_ERROR;
+		}
+
 	    /* Add physics attribs : one shot get from user */
 	    add_physics_attribs(current_node);
 
 	    /* Setup the linked list */
 	    if (prev_node == NULL) {
-		/* first node */
-		prev_node = current_node;
-		sim_params->head_node = current_node;
+	    	/* first node */
+	    	prev_node = current_node;
+	    	sim_params->head_node = current_node;
 	    } else {
-		/* past 1st node now */
-		prev_node->next = current_node;
-		prev_node = prev_node->next;
+	    	/* past 1st node now */
+	    	prev_node->next = current_node;
+	    	prev_node = prev_node->next;
 	    }
 
 	    /* Add the new region to the simulation result */
@@ -415,36 +423,37 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 
     for (i=0 ; i < sim_params.duration ; i++) {
 
-	bu_log("%s: ------------------------- Iteration %d -----------------------\n", argv[0], i+1);
+		bu_log("%s: ------------------------- Iteration %d -----------------------\n", argv[0], i+1);
 
-	/* Recreate sim.c to clear AABBs and manifold regions from previous iteration */
-	recreate_sim_comb(gedp, &sim_params);
+		/* Recreate sim.c to clear AABBs and manifold regions from previous iteration */
+		recreate_sim_comb(gedp, &sim_params);
 
-	/* Run the physics simulation */
-	sim_params.iter = i;
-	rv = run_simulation(&sim_params);
-	if (rv != GED_OK) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: ERROR while running the simulation\n", argv[0]);
-	    return GED_ERROR;
-	}
+		/* Run the physics simulation */
+		sim_params.iter = i;
+		rv = run_simulation(&sim_params);
+		if (rv != GED_OK) {
+			bu_vls_printf(gedp->ged_result_str, "%s: ERROR while running the simulation\n", argv[0]);
+			return GED_ERROR;
+		}
 
-	/* Apply transforms on the participating objects, also shades objects */
-	rv = apply_transforms(gedp, &sim_params);
-	if (rv != GED_OK) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: ERROR while applying transforms\n", argv[0]);
-	    return GED_ERROR;
-	}
+		/* Apply transforms on the participating objects, also shades objects */
+		rv = apply_transforms(gedp, &sim_params);
+		if (rv != GED_OK) {
+			bu_vls_printf(gedp->ged_result_str, "%s: ERROR while applying transforms\n", argv[0]);
+			return GED_ERROR;
+		}
 
     }
 
 
     /* Free memory in rigid_body list */
     for (current_node = sim_params.head_node; current_node != NULL;) {
-	next_node = current_node->next;
-	bu_free(current_node->rb_namep, "simulate : free y");
-	bu_free(current_node, "simulate : free current_node");
-	current_node = next_node;
-	sim_params.num_bodies--;
+		next_node = current_node->next;
+		rt_db_free_internal(&(current_node->intern));
+		bu_free(current_node->rb_namep, "simulate : free y");
+		bu_free(current_node, "simulate : free current_node");
+		current_node = next_node;
+		sim_params.num_bodies--;
     }
 
 

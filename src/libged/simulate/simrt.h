@@ -34,7 +34,7 @@
     extern "C" {
 #endif
 
-#include "common.h"
+/*#include "common.h"*/
 
 /* System Headers */
 #include <stdlib.h>
@@ -209,7 +209,9 @@ if_overlap(struct application *ap, struct partition *pp, struct region *reg1,
  * overlap global list
  */
 int
-shoot_ray(struct rt_i *rtip, point_t pt, point_t dir);
+shoot_ray(struct rt_i *rtip,
+		  point_t pt,
+		  point_t dir);
 
 
 /**
@@ -272,6 +274,20 @@ traverse_zray_lists(
 		struct sim_manifold *current_manifold,
 		struct simulation_params *sim_params,
 		point_t pt, point_t dir);
+
+
+/**
+ * Traverse the hit list and overlap list, drawing the ray segments
+ * for normal rays
+ */
+int
+traverse_normalray_lists(
+		struct sim_manifold *current_manifold,
+		struct simulation_params *sim_params,
+		point_t pt,
+		point_t dir,
+		vect_t overlap_min,
+		vect_t overlap_max);
 
 
 /**

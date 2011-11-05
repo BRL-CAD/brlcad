@@ -50,7 +50,7 @@
 #define DISABLE_SIMULATION 5
 
 #define MAX_MANIFOLDS 4
-#define MAX_CONTACTS_PER_MANIFOLD 4
+#define MAX_CONTACTS_PER_MANIFOLD 100
 
 struct sim_contact {
     vect_t ptA;
@@ -89,6 +89,7 @@ struct rigid_body {
     mat_t m_prev;                   /**< @brief previous transformation matrix from Bullet */
     int state;                      /**< @brief rigid body state from Bullet */
     struct directory *dp;           /**< @brief directory pointer to the related region */
+    struct rt_db_internal intern;	/**< @brief internal format of the related region */
     struct rigid_body *next;        /**< @brief link to next body */
 
     /* Can be set by libged or Bullet(checked and inserted into sim) */
