@@ -129,7 +129,11 @@ typedef union YYSTYPE {
 	re2c::CondList	*clist;
 } YYSTYPE;
 
+YYSTYPE yylval;
+
 } /* include */
+
+%token_type { YYSTYPE }
 
 %type CLOSE	{ char }
 %type STAR	{ char }
@@ -165,266 +169,265 @@ spec ::= spec rule.
 spec ::= spec decl.
 
 /* TODO:
- * - replace literal tokens
  * - replace yacc-style NT variable references
  * - insert default rules where needed
  */
-decl ::= ID '=' expr ';'.
+decl ::= ID(V1) EQUALS expr(V3) SEMICOLON.
 {
-    if ($1->re)
+    if (V1->re)
     {
 	in->fatal("sym already defined");
     }
-    $1->re = $3;
+    V1->re = V3;
 }
-decl ::= FID expr.
+decl ::= FID(V1) expr(V2).
 {
-    if ($1->re)
+    if (V1->re)
     {
 	in->fatal("sym already defined");
     }
-    $1->re = $2;
+    V1->re = V2;
 }
-decl ::= ID '=' expr '/'.
+decl ::= ID EQUALS expr SLASH.
 {
     in->fatal("trailing contexts are not allowed in named definitions");
 }
-decl ::= FID expr '/'.
+decl ::= FID expr SLASH.
 {
     in->fatal("trailing contexts are not allowed in named definitions");
 }
-decl ::= CONFIG '=' VALUE ';'.
+decl ::= CONFIG(V1) EQUALS VALUE(V3) SEMICOLON.
 {
-    in->config(*$1, *$3);
-    delete $1;
-    delete $3;
+    in->config(*V1, *V3);
+    delete V1;
+    delete V3;
 }
-decl ::= CONFIG '=' NUMBER ';'.
+decl ::= CONFIG(V1) EQUALS NUMBER(V3) SEMICOLON.
 {
-    in->config(*$1, $3);
-    delete $1;
+    in->config(*V1, V3);
+    delete V1;
 }
 
-rule ::= expr look CODE.
+rule(V0) ::= expr(V1) look(V2) CODE(V3).
 {
     if (cFlag)
     {
 	in->fatal("condition or '<*>' required when using -c switch");
     }
-    $$ = new RuleOp($1, $2, $3, accept++);
-    spec = spec? mkAlt(spec, $$) : $$;
+    V0 = new RuleOp(V1, V2, V3, accept++);
+    spec = spec? mkAlt(spec, V0) : V0;
 }
-rule ::= '<' cond '>' expr look newcond CODE.
+rule ::= LESS_THAN cond(V2) GREATER_THAN expr(V4) look(V5) newcond(V6) CODE(V7).
 {
-    context_rule($2, $4, $5, $6, $7);
+    context_rule(V2, V4, V5, V6, V7);
 }
-rule ::= '<' cond '>' expr look ':' newcond.
+rule ::= LESS_THAN cond(V2) GREATER_THAN expr(V4) look(V5) COLON newcond(V7).
 {
-    assert($7);
-    context_rule($2, $4, $5, $7, NULL);
+    assert(V7);
+    context_rule(V2, V4, V5, V7, NULL);
 }
-rule ::= '<' cond '>' look newcond CODE.
+rule ::= LESS_THAN cond(V2) GREATER_THAN look newcond(V5) CODE.
 {
-    context_none($2);
-    delete $5;
+    context_none(V2);
+    delete V5;
 }
-rule ::= '<' cond '>' look ':' newcond.
+rule ::= LESS_THAN cond(V2) GREATER_THAN look COLON newcond(V6).
 {
-    assert($6);
-    context_none($2);
-    delete $6;
+    assert(V6);
+    context_none(V2);
+    delete V6;
 }
-rule ::= '<' STAR '>' expr look newcond CODE.
+rule ::= LESS_THAN STAR GREATER_THAN expr(V4) look(V5) newcond(V6) CODE(V7).
 {
     context_check(NULL);
-    Token *token = new Token($7, $7->source, $7->line, $6);
-    delete $7;
-    delete $6;
-    specStar.push_back(new RuleOp($4, $5, token, accept++));
+    Token *token = new Token(V7, V7->source, V7->line, V6);
+    delete V7;
+    delete V6;
+    specStar.push_back(new RuleOp(V4, V5, token, accept++));
 }
-rule ::= '<' STAR '>' expr look ':' newcond.
+rule ::= LESS_THAN STAR GREATER_THAN expr(V4) look(V5) COLON newcond(V7).
 {
-    assert($7);
+    assert(V7);
     context_check(NULL);
-    Token *token = new Token(NULL, sourceFileInfo, $7);
-    delete $7;
-    specStar.push_back(new RuleOp($4, $5, token, accept++));
+    Token *token = new Token(NULL, sourceFileInfo, V7);
+    delete V7;
+    specStar.push_back(new RuleOp(V4, V5, token, accept++));
 }
-rule ::= '<' STAR '>' look newcond CODE
+rule ::= LESS_THAN STAR GREATER_THAN look newcond(V5) CODE.
 {
     context_none(NULL);
-    delete $5;
+    delete V5;
 }
-rule ::= '<' STAR '>' look ':' newcond.
+rule ::= LESS_THAN STAR GREATER_THAN look COLON newcond(V6).
 {
-    assert($6);
+    assert(V6);
     context_none(NULL);
-    delete $6;
+    delete V6;
 }
-rule ::= NOCOND newcond CODE.
+rule(V0) ::= NOCOND newcond(V2) CODE(V3).
 {
     context_check(NULL);
     if (specNone)
     {
 	in->fatal("code to handle illegal condition already defined");
     }
-    Token *token = new Token($3, $3->source, $3->line, $2);
-    delete $2;
-    delete $3;
-    $$ = specNone = new RuleOp(new NullOp(), new NullOp(), token, accept++);
+    Token *token = new Token(V3, V3->source, V3->line, V2);
+    delete V2;
+    delete V3;
+    V0 = specNone = new RuleOp(new NullOp(), new NullOp(), token, accept++);
 }
-rule ::= NOCOND ':' newcond.
+rule(V0) ::= NOCOND COLON newcond(V3).
 {
-    assert($3);
+    assert(V3);
     context_check(NULL);
     if (specNone)
     {
 	in->fatal("code to handle illegal condition already defined");
     }
-    Token *token = new Token(NULL, sourceFileInfo, $3);
-    delete $3;
-    $$ = specNone = new RuleOp(new NullOp(), new NullOp(), token, accept++);
+    Token *token = new Token(NULL, sourceFileInfo, V3);
+    delete V3;
+    V0 = specNone = new RuleOp(new NullOp(), new NullOp(), token, accept++);
 }
-rule ::= SETUP STAR '>' CODE.
+rule ::= SETUP STAR GREATER_THAN CODE(V4).
 {
     CondList *clist = new CondList();
     clist->insert("*");
-    setup_rule(clist, $4);
+    setup_rule(clist, V4);
 }
-rule ::= SETUP cond '>' CODE.
+rule ::= SETUP cond(V2) GREATER_THAN CODE(V4).
 {
-    setup_rule($2, $4);
+    setup_rule(V2, V4);
 }
 
 cond ::= /* empty */.
 {
 	in->fatal("unnamed condition not supported");
 }
-cond ::= clist.
+cond(V0) ::= clist(V1).
 {
-	$$ = $1;
+	V0 = V1;
 }
 
-clist ::= ID.
+clist(V0) ::= ID(V1).
 {
-    $$ = new CondList();
-    $$->insert($1->GetName().to_string());
+    V0 = new CondList();
+    V0->insert(V1->GetName().to_string());
 }
-clist ::= clist ',' ID.
+clist(V0) ::= clist(V1) COMMA ID(V3).
 {
-    $1->insert($3->GetName().to_string());
-    $$ = $1;
-}
-
-newcond ::= /* empty */.
-{
-    $$ = NULL;
-}
-newcond ::= '=' '>' ID.
-{
-    $$ = new Str($3->GetName().to_string().c_str());
+    V1->insert(V3->GetName().to_string());
+    V0 = V1;
 }
 
-look ::= /* empty */.
+newcond(V0) ::= /* empty */.
 {
-    $$ = new NullOp;
+    V0 = NULL;
 }
-look ::= '/' expr.
+newcond(V0) ::= EQUALS GREATER_THAN ID(V3).
 {
-    $$ = $2;
-}
-
-expr ::= diff.
-{
-    $$ = $1;
-}
-expr ::= expr '|' diff.
-{
-    $$ = mkAlt($1, $3);
+    V0 = new Str(V3->GetName().to_string().c_str());
 }
 
-diff ::= term.
+look(V0) ::= /* empty */.
 {
-    $$ = $1;
+    V0 = new NullOp;
 }
-diff ::= diff '\\' term.
+look(V0) ::= SLASH expr(V2).
 {
-    $$ = mkDiff($1, $3);
-    if(!$$)
+    V0 = V2;
+}
+
+expr(V0) ::= diff(V1).
+{
+    V0 = V1;
+}
+expr(V0) ::= expr(V1) VERTICAL_BAR diff(V3).
+{
+    V0 = mkAlt(V1, V3);
+}
+
+diff(V0) ::= term(V1).
+{
+    V0 = V1;
+}
+diff(V0) ::= diff(V1) BACKSLASH term(V3).
+{
+    V0 = mkDiff(V1, V3);
+    if(!V0)
     {
 	in->fatal("can only difference char sets");
     }
 }
 
-term ::= factor.
+term(V0) ::= factor(V1).
 {
-    $$ = $1;
+    V0 = V1;
 }
-term ::= term factor.
+term(V0) ::= term(V1) factor(V2).
 {
-    $$ = new CatOp($1, $2);
+    V0 = new CatOp(V1, V2);
 }
 
-factor ::= primary.
+factor(V0) ::= primary(V1).
 {
-    $$ = $1;
+    V0 = V1;
 }
-factor ::= primary close.
+factor(V0) ::= primary(V1) close(V2).
 {
-    switch($2)
+    switch(V2)
     {
     case '*':
-	$$ = mkAlt(new CloseOp($1), new NullOp());
+	V0 = mkAlt(new CloseOp(V1), new NullOp());
 	break;
     case '+':
-	$$ = new CloseOp($1);
+	V0 = new CloseOp(V1);
 	break;
     case '?':
-	$$ = mkAlt($1, new NullOp());
+	V0 = mkAlt(V1, new NullOp());
 	break;
     }
 }
-factor ::= primary CLOSESIZE
+factor(V0) ::= primary(V1) CLOSESIZE(V2).
 {
-    $$ = new CloseVOp($1, $2.minsize, $2.maxsize);
+    V0 = new CloseVOp(V1, V2.minsize, V2.maxsize);
 }
 
-close ::= CLOSE.
+close(V0) ::= CLOSE(V1).
 {
-    $$ = $1;
+    V0 = V1;
 }
-close ::= STAR.
+close(V0) ::= STAR(V1).
 {
-    $$ = $1;
+    V0 = V1;
 }
-close ::= close CLOSE.
+close(V0) ::= close(V1) CLOSE(V2).
 {
-    $$ = ($1 == $2) ? $1 : '*';
+    V0 = (V1 == V2) ? V1 : '*';
 }
-close ::= close STAR.
+close(V0) ::= close(V1) STAR(V2).
 {
-    $$ = ($1 == $2) ? $1 : '*';
+    V0 = (V1 == V2) ? V1 : '*';
 }
 
-primary ::= ID.
+primary(V0) ::= ID(V1).
 {
-    if(!$1->re)
+    if(!V1->re)
     {
 	in->fatal("can't find symbol");
     }
-    $$ = $1->re;
+    V0 = V1->re;
 }
-primary ::= RANGE.
+primary(V0) ::= RANGE(V1).
 {
-    $$ = $1;
+    V0 = V1;
 }
-primary ::= STRING.
+primary(V0) ::= STRING(V1).
 {
-    $$ = $1;
+    V0 = V1;
 }
-primary ::= '(' expr ')'.
+primary(V0) ::= LEFT_PAREN expr(V2) RIGHT_PAREN.
 {
-    $$ = $2;
+    V0 = V2;
 }
 
 %include {
@@ -493,6 +496,8 @@ void parse(Scanner& i, std::ostream& o, std::ostream* h)
 		accept = 0;
 		spec = NULL;
 		in->set_in_parse(true);
+		/* TODO: replace with lemon parse loop */
+		yylex();
 		yyparse();
 		in->set_in_parse(false);
 		if (rFlag && parseMode == Scanner::Reuse)
