@@ -135,6 +135,9 @@ YYSTYPE yylval;
 
 %token_type { YYSTYPE }
 
+%left BACKSLASH.
+%left ID RANGE STRING LEFT_PAREN.
+
 %type CLOSE	{ char }
 %type STAR	{ char }
 %type SETUP	{ char }
@@ -346,7 +349,7 @@ expr(V0) ::= expr(V1) VERTICAL_BAR diff(V3).
     V0 = mkAlt(V1, V3);
 }
 
-diff(V0) ::= term(V1).
+diff(V0) ::= term(V1). [BACKSLASH]
 {
     V0 = V1;
 }
