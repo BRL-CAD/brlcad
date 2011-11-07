@@ -188,7 +188,7 @@ proc createSplashScreen {} {
     $::ArcherCore::splash center
     update idletasks
     $::ArcherCore::splash activate
-    after 3000 destroySplashScreen; # 3 more sec
+    after 1500 destroySplashScreen; # 1.5 more sec
     update
 }
 
