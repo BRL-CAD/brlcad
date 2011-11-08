@@ -142,6 +142,7 @@ set(LIBRT_SOURCES
     primitives/nmg/nmg_brep.cpp
     primitives/nmg/nmg_ck.c
     primitives/nmg/nmg_class.c
+    primitives/nmg/nmg_copy.c
     primitives/nmg/nmg_eval.c
     primitives/nmg/nmg_extrude.c
     primitives/nmg/nmg_fcut.c

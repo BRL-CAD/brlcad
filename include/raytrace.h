@@ -4313,6 +4313,9 @@ RT_EXPORT extern int nmg_edge_collapse(struct model *m,
 				       const fastf_t tol_coll,
 				       const fastf_t min_angle);
 
+/* From nmg_copy.c */
+RT_EXPORT extern struct model *nmg_clone_model(const struct model *original);
+
 /* bot.c */
 RT_EXPORT extern int rt_bot_edge_in_list(const int v1,
 					 const int v2,
