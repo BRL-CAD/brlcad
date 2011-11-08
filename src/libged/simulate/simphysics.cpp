@@ -503,17 +503,6 @@ run_simulation(struct simulation_params *sp)
 
 	//for (i=0 ; i < sim_params->duration ; i++) {
 
-    //Make a new rt_i instance from the existing db_i structure
-    if ((sim_params->rtip=rt_new_rti(sim_params->gedp->ged_wdbp->dbip)) == RTI_NULL) {
-    	bu_log("run_simulation: rt_new_rti failed while getting new rt instance\n");
-    	return 1;
-    }
-    sim_params->rtip->useair = 1;
-
-    //Initialize the raytrace world
-    init_raytrace(sim_params);
-
-
     //Initialize the physics world
     btDiscreteDynamicsWorld* dynamicsWorld;
 
@@ -572,9 +561,6 @@ run_simulation(struct simulation_params *sp)
     delete dispatcher;
     delete collisionConfiguration;
     delete broadphase;
-
-    //Free the raytrace instance
-    rt_free_rti(sim_params->rtip);
 
     //}
 

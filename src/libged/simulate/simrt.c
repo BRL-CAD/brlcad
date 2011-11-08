@@ -376,37 +376,6 @@ shoot_ray(struct rt_i *rtip, point_t pt, point_t dir)
 
 
 int
-init_raytrace(struct simulation_params *sim_params)
-{
-    struct rigid_body *rb;
-
-    /* Add all sim objects to raytrace instance */
-
-    /* Add all the sim objects to the rt_i */
-    for (rb = sim_params->head_node; rb != NULL; rb = rb->next) {
-		if (rt_gettree(sim_params->rtip, rb->rb_namep) < 0)
-			bu_log("generate_manifolds: Failed to load geometry for [%s]\n",
-			   rb->rb_namep);
-		else
-			bu_log("generate_manifolds: Added [%s] to raytracer\n", rb->rb_namep);
-    }
-
-    /* This next call causes some values to be pre-computed, sets up space
-     * partitioning, computes bounding volumes, etc.
-     */
-    rt_prep_parallel(sim_params->rtip, 1);
-
-    bu_log("Simulation objects bounding box (%f, %f, %f):(%f,%f,%f)",
-	   V3ARGS(sim_params->rtip->mdl_min), V3ARGS(sim_params->rtip->mdl_max));
-
-    num_hits = 0;
-    num_overlaps = 0;
-
-    return GED_OK;
-}
-
-
-int
 init_rayshot_results(void)
 {
     VSETALL(rt_result.resultant_normal_A, SMALL_FASTF);
@@ -1220,6 +1189,9 @@ generate_manifolds(struct simulation_params *sim_params,
 
 	/* Add the region to the result of the sim so it will be drawn too */
 	add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&overlap_name));
+
+    /* Clear ray visualization primitives */
+    kill(sim_params->gedp, "ray_*");
 
 	/* Initialize the rayshot results structure, has to be done for each manifold  */
 	init_rayshot_results();

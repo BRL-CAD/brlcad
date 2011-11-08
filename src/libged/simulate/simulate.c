@@ -366,6 +366,38 @@ int recreate_sim_comb(struct ged *gedp, struct simulation_params *sim_params)
 
 
 /**
+ * Initializes the simulation scene for raytracing
+ */
+int
+init_raytrace(struct simulation_params *sim_params)
+{
+    struct rigid_body *rb;
+
+    /* Add all sim objects to raytrace instance */
+
+    /* Add all the sim objects to the rt_i */
+    for (rb = sim_params->head_node; rb != NULL; rb = rb->next) {
+		if (rt_gettree(sim_params->rtip, rb->rb_namep) < 0)
+			bu_log("init_raytrace: Failed to load geometry for [%s]\n",
+			   rb->rb_namep);
+		else
+			bu_log("init_raytrace: Added [%s] to raytracer\n", rb->rb_namep);
+    }
+
+    /* This next call causes some values to be pre-computed, sets up space
+     * partitioning, computes bounding volumes, etc.
+     */
+    rt_prep_parallel(sim_params->rtip, 1);
+
+    bu_log("init_raytrace: Simulation objects bounding box (%f, %f, %f):(%f,%f,%f)",
+	   V3ARGS(sim_params->rtip->mdl_min), V3ARGS(sim_params->rtip->mdl_max));
+
+
+    return GED_OK;
+}
+
+
+/**
  * The libged physics simulation function.
  *
  * Check flags, adds regions to simulation parameters, runs the
@@ -388,13 +420,13 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 
     /* Must be wanting help */
     if (argc == 1) {
-	print_usage(gedp->ged_result_str);
-	return GED_HELP;
+		print_usage(gedp->ged_result_str);
+		return GED_HELP;
     }
 
     if (argc < 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s <steps>", argv[0]);
-	return GED_ERROR;
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s <steps>", argv[0]);
+		return GED_ERROR;
     }
 
     /* Make a list containing the bb and existing transforms of all the objects in the model
@@ -408,19 +440,32 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 
     rv = add_regions(gedp, &sim_params);
     if (rv != GED_OK) {
-	bu_vls_printf(gedp->ged_result_str, "%s: ERROR while adding objects and sim attributes\n", argv[0]);
-	return GED_ERROR;
+		bu_vls_printf(gedp->ged_result_str, "%s: ERROR while adding objects and sim attributes\n", argv[0]);
+		return GED_ERROR;
     }
 
     rv = get_bb(gedp, &sim_params);
     if (rv != GED_OK) {
-	bu_vls_printf(gedp->ged_result_str, "%s: ERROR while getting bounding boxes\n", argv[0]);
-	return GED_ERROR;
+		bu_vls_printf(gedp->ged_result_str, "%s: ERROR while getting bounding boxes\n", argv[0]);
+		return GED_ERROR;
     }
 
     for (i=0 ; i < sim_params.duration ; i++) {
 
 		bu_log("%s: ------------------------- Iteration %d -----------------------\n", argv[0], i+1);
+
+
+		/* Make a new rt_i instance from the existing db_i structure */
+		if ((sim_params.rtip=rt_new_rti(sim_params.gedp->ged_wdbp->dbip)) == RTI_NULL) {
+			bu_log("run_simulation: rt_new_rti failed while getting new rt instance\n");
+			return 1;
+		}
+		sim_params.rtip->useair = 1;
+
+		/* Initialize the raytrace world */
+		init_raytrace(&sim_params);
+
+
 
 		/* Recreate sim.c to clear AABBs and manifold regions from previous iteration */
 		recreate_sim_comb(gedp, &sim_params);
@@ -439,6 +484,9 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 			bu_vls_printf(gedp->ged_result_str, "%s: ERROR while applying transforms\n", argv[0]);
 			return GED_ERROR;
 		}
+
+		//Free the raytrace instance
+		rt_free_rti(sim_params.rtip);
 
     }
 

@@ -302,13 +302,6 @@ traverse_normalray_lists(
 
 
 /**
- * Initializes the simulation scene for raytracing
- */
-int
-init_raytrace(struct simulation_params *sim_params);
-
-
-/**
  * Initializes the rayshot results structure, called before analyzing
  * each manifold through rays shot in x, y & z directions
  */
