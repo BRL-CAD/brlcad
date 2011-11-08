@@ -2709,10 +2709,12 @@ proc sketch_objanim { objorview } {
     upvar #0 mged_sketch_objsource src
     upvar #0 mged_sketch_objncols ncols
 
-    # make sure animated object exists (this will create an error if it doesn't)
-    set tmp 0
-    set tmp [db get $mged_sketch_objname]
-    if { $tmp == 0 } return
+    if { $objorview != "view" } {
+        # make sure animated object exists (this will create an error if it doesn't)
+        set tmp 0
+        set tmp [db get $mged_sketch_objname]
+        if { $tmp == 0 } return
+    }
 
     set anim_fly [file join ${mged_sketch_anim_path} anim_fly]
     set anim_lookat [file join ${mged_sketch_anim_path} anim_lookat]
