@@ -17,17 +17,18 @@
 #include "parser.h"
 #include "basics.h"
 #include "dfa.h"
+#include "re.h"
+#include "scanner.h"
 
 #define YYMALLOC malloc
 #define YYFREE free
 
 using namespace re2c;
 
-extern "C"
-{
 int yylex();
 void yyerror(const char*);
-}
+
+YYSTYPE yylval;
 
 static re2c::uint       accept;
 static re2c::RegExpMap  specMap;
@@ -118,19 +119,6 @@ void setup_rule(CondList *clist, Token *code)
 	delete code;
 }
 
-typedef union YYSTYPE {
-	re2c::Symbol	*symbol;
-	re2c::RegExp	*regexp;
-	re2c::Token 	*token;
-	char        	op;
-	int         	number;
-	re2c::ExtOp 	extop;
-	re2c::Str   	*str;
-	re2c::CondList	*clist;
-} YYSTYPE;
-
-YYSTYPE yylval;
-
 } /* include */
 
 %token_type { YYSTYPE }
@@ -143,23 +131,23 @@ YYSTYPE yylval;
 %type SETUP	{ char }
 %type close	{ char }
 %type CLOSESIZE	{ re2c::ExtOp }
-%type ID	{ re2c::Symbol }
-%type FID	{ re2c::Symbol }
-%type CODE	{ re2c::Token }
-%type RANGE	{ re2c::RegExp }
-%type STRING	{ re2c::RegExp }
-%type rule	{ re2c::RegExp }
-%type look	{ re2c::RegExp }
-%type expr	{ re2c::RegExp }
-%type diff	{ re2c::RegExp }
-%type term	{ re2c::RegExp }
-%type factor	{ re2c::RegExp }
-%type primary	{ re2c::RegExp }
-%type CONFIG	{ re2c::Str }
-%type VALUE	{ re2c::Str }
-%type newcond	{ re2c::Str }
-%type cond	{ re2c::CondList }
-%type clist	{ re2c::CondList }
+%type ID	{ re2c::Symbol* }
+%type FID	{ re2c::Symbol* }
+%type CODE	{ re2c::Token* }
+%type RANGE	{ re2c::RegExp* }
+%type STRING	{ re2c::RegExp* }
+%type rule	{ re2c::RegExp* }
+%type look	{ re2c::RegExp* }
+%type expr	{ re2c::RegExp* }
+%type diff	{ re2c::RegExp* }
+%type term	{ re2c::RegExp* }
+%type factor	{ re2c::RegExp* }
+%type primary	{ re2c::RegExp* }
+%type CONFIG	{ re2c::Str* }
+%type VALUE	{ re2c::Str* }
+%type newcond	{ re2c::Str* }
+%type cond	{ re2c::CondList* }
+%type clist	{ re2c::CondList* }
 %type NUMBER	{ int }
 
 start ::= spec.
@@ -171,25 +159,21 @@ spec ::= spec rule.
 }
 spec ::= spec decl.
 
-/* TODO:
- * - replace yacc-style NT variable references
- * - insert default rules where needed
- */
 decl ::= ID(V1) EQUALS expr(V3) SEMICOLON.
 {
-    if (V1->re)
+    if (V1.symbol->re)
     {
 	in->fatal("sym already defined");
     }
-    V1->re = V3;
+    V1.symbol->re = V3;
 }
 decl ::= FID(V1) expr(V2).
 {
-    if (V1->re)
+    if (V1.symbol->re)
     {
 	in->fatal("sym already defined");
     }
-    V1->re = V2;
+    V1.symbol->re = V2;
 }
 decl ::= ID EQUALS expr SLASH.
 {
@@ -201,14 +185,14 @@ decl ::= FID expr SLASH.
 }
 decl ::= CONFIG(V1) EQUALS VALUE(V3) SEMICOLON.
 {
-    in->config(*V1, *V3);
-    delete V1;
-    delete V3;
+    in->config(*V1.str, *V3.str);
+    delete V1.str;
+    delete V3.str;
 }
 decl ::= CONFIG(V1) EQUALS NUMBER(V3) SEMICOLON.
 {
-    in->config(*V1, V3);
-    delete V1;
+    in->config(*V1.str, V3.number);
+    delete V1.str;
 }
 
 rule(V0) ::= expr(V1) look(V2) CODE(V3).
@@ -217,12 +201,12 @@ rule(V0) ::= expr(V1) look(V2) CODE(V3).
     {
 	in->fatal("condition or '<*>' required when using -c switch");
     }
-    V0 = new RuleOp(V1, V2, V3, accept++);
+    V0 = new RuleOp(V1, V2, V3.token, accept++);
     spec = spec? mkAlt(spec, V0) : V0;
 }
 rule ::= LESS_THAN cond(V2) GREATER_THAN expr(V4) look(V5) newcond(V6) CODE(V7).
 {
-    context_rule(V2, V4, V5, V6, V7);
+    context_rule(V2, V4, V5, V6, V7.token);
 }
 rule ::= LESS_THAN cond(V2) GREATER_THAN expr(V4) look(V5) COLON newcond(V7).
 {
@@ -243,8 +227,8 @@ rule ::= LESS_THAN cond(V2) GREATER_THAN look COLON newcond(V6).
 rule ::= LESS_THAN STAR GREATER_THAN expr(V4) look(V5) newcond(V6) CODE(V7).
 {
     context_check(NULL);
-    Token *token = new Token(V7, V7->source, V7->line, V6);
-    delete V7;
+    Token *token = new Token(V7.token, V7.token->source, V7.token->line, V6);
+    delete V7.token;
     delete V6;
     specStar.push_back(new RuleOp(V4, V5, token, accept++));
 }
@@ -274,9 +258,9 @@ rule(V0) ::= NOCOND newcond(V2) CODE(V3).
     {
 	in->fatal("code to handle illegal condition already defined");
     }
-    Token *token = new Token(V3, V3->source, V3->line, V2);
+    Token *token = new Token(V3.token, V3.token->source, V3.token->line, V2);
     delete V2;
-    delete V3;
+    delete V3.token;
     V0 = specNone = new RuleOp(new NullOp(), new NullOp(), token, accept++);
 }
 rule(V0) ::= NOCOND COLON newcond(V3).
@@ -295,11 +279,11 @@ rule ::= SETUP STAR GREATER_THAN CODE(V4).
 {
     CondList *clist = new CondList();
     clist->insert("*");
-    setup_rule(clist, V4);
+    setup_rule(clist, V4.token);
 }
 rule ::= SETUP cond(V2) GREATER_THAN CODE(V4).
 {
-    setup_rule(V2, V4);
+    setup_rule(V2, V4.token);
 }
 
 cond ::= /* empty */.
@@ -314,11 +298,11 @@ cond(V0) ::= clist(V1).
 clist(V0) ::= ID(V1).
 {
     V0 = new CondList();
-    V0->insert(V1->GetName().to_string());
+    V0->insert(V1.symbol->GetName().to_string());
 }
 clist(V0) ::= clist(V1) COMMA ID(V3).
 {
-    V1->insert(V3->GetName().to_string());
+    V1->insert(V3.symbol->GetName().to_string());
     V0 = V1;
 }
 
@@ -328,7 +312,7 @@ newcond(V0) ::= /* empty */.
 }
 newcond(V0) ::= EQUALS GREATER_THAN ID(V3).
 {
-    V0 = new Str(V3->GetName().to_string().c_str());
+    V0 = new Str(V3.symbol->GetName().to_string().c_str());
 }
 
 look(V0) ::= /* empty */.
@@ -392,41 +376,41 @@ factor(V0) ::= primary(V1) close(V2).
 }
 factor(V0) ::= primary(V1) CLOSESIZE(V2).
 {
-    V0 = new CloseVOp(V1, V2.minsize, V2.maxsize);
+    V0 = new CloseVOp(V1, V2.extop.minsize, V2.extop.maxsize);
 }
 
 close(V0) ::= CLOSE(V1).
 {
-    V0 = V1;
+    V0 = V1.op;
 }
 close(V0) ::= STAR(V1).
 {
-    V0 = V1;
+    V0 = V1.op;
 }
 close(V0) ::= close(V1) CLOSE(V2).
 {
-    V0 = (V1 == V2) ? V1 : '*';
+    V0 = (V1 == V2.op) ? V1 : '*';
 }
 close(V0) ::= close(V1) STAR(V2).
 {
-    V0 = (V1 == V2) ? V1 : '*';
+    V0 = (V1 == V2.op) ? V1 : '*';
 }
 
 primary(V0) ::= ID(V1).
 {
-    if(!V1->re)
+    if(!V1.symbol->re)
     {
 	in->fatal("can't find symbol");
     }
-    V0 = V1->re;
+    V0 = V1.symbol->re;
 }
 primary(V0) ::= RANGE(V1).
 {
-    V0 = V1;
+    V0 = V1.regexp;
 }
 primary(V0) ::= STRING(V1).
 {
-    V0 = V1;
+    V0 = V1.regexp;
 }
 primary(V0) ::= LEFT_PAREN expr(V2) RIGHT_PAREN.
 {
@@ -434,16 +418,29 @@ primary(V0) ::= LEFT_PAREN expr(V2) RIGHT_PAREN.
 }
 
 %include {
-extern "C" {
+
 void yyerror(const char* s)
 {
 	in->fatal(s);
 }
 
-int yylex(){
+int yylex() {
 	return in ? in->scan() : 0;
 }
-} // end extern "C"
+
+void yyparse()
+{
+    void *parser;
+    int tokenID;
+    extern YYSTYPE yylval;
+
+    ParseAlloc(parser, malloc);
+    while ((tokenID = yylex()) != 0) {
+	Parse(parser, tokenID, yylval);
+    }
+    Parse(parser, 0, yylval);
+    ParseFree(parser, free);
+}
 
 namespace re2c
 {
@@ -499,8 +496,6 @@ void parse(Scanner& i, std::ostream& o, std::ostream* h)
 		accept = 0;
 		spec = NULL;
 		in->set_in_parse(true);
-		/* TODO: replace with lemon parse loop */
-		yylex();
 		yyparse();
 		in->set_in_parse(false);
 		if (rFlag && parseMode == Scanner::Reuse)
