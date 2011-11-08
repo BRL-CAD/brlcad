@@ -155,7 +155,7 @@ main(int argc, char *argv[])
     vect_t point, zero;
     quat_t quat;
     mat_t a, m_x;
-    int val, go, frame, last_steer;
+    int val, go, frame, last_steer,needed;
 
     frame=last_steer=go=view=relative_a=relative_c=axes=0;
     VSETALL(centroid, 0);
@@ -177,6 +177,13 @@ main(int argc, char *argv[])
     if (view && (viewsize > 0.0))
 	printf("viewsize %.10g;\n", viewsize);
 
+    if (rotate&&quaternion) {
+    	needed = 4;
+    } else if (rotate || translate) {
+    	needed = 3;
+    } else {
+    	needed = 1;
+    }
 
     while (1) {
 	/* read one line of table */
@@ -187,12 +194,11 @@ main(int argc, char *argv[])
 	    val = scanf("%lf %lf %lf", point, point+1, point+2);
 	if (rotate&&quaternion) {
 	    val = scanf("%lf %lf %lf %lf", quat, quat+1, quat+2, quat+3);
-	    val -= 1;
 	} else if (rotate) {
 	    val = scanf("%lf %lf %lf", &yaw, &pitch, &roll);
 	}
 
-	if (val < 3 && !readview) {
+	if (val < needed) {
 	    /* ie. scanf not completely successful */
 	    /* with steering option, must go extra loop after end of file */
 	    if (steer && !last_steer)
