@@ -201,6 +201,7 @@ namespace eval ArcherCore {
 	method killall             {args}
 	method killrefs            {args}
 	method killtree            {args}
+	method l                   {args}
 	method ls                  {args}
 	method make		   {args}
 	method make_bb             {args}
@@ -472,7 +473,7 @@ namespace eval ArcherCore {
 	    delete draw E edcodes edcolor edcomb edit edmater erase ev \
 	    exit facetize fracture g group hide human i \
 	    importFg4Section in inside item kill killall killrefs \
-	    killtree ls make make_bb make_pnts man mater mirror move \
+	    killtree l ls make make_bb make_pnts man mater mirror move \
 	    move_arb_edge move_arb_face mv mvall nmg_collapse \
 	    nmg_simplify ocenter opendb orotate oscale otranslate p q \
 	    quit packTree prefix protate pscale ptranslate push put \
@@ -5268,7 +5269,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::group {args} {
-    eval gedWrapper g 0 1 1 2 $args
+    eval gedWrapper g 1 1 1 2 $args
 }
 
 ::itcl::body ArcherCore::hide {args} {
@@ -5316,6 +5317,9 @@ namespace eval ArcherCore {
     eval gedWrapper killtree 1 0 1 2 $args
 }
 
+::itcl::body ArcherCore::l {args} {
+    eval gedWrapper l 1 0 0 0 $args
+}
 ::itcl::body ArcherCore::ls {args} {
     eval gedWrapper ls 1 0 0 0 $args
 }
