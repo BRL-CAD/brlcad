@@ -22,21 +22,13 @@ INCLUDE_DIRECTORIES(
 	)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
-find_package(YACC)
-
-IF(YACC_EXECUTABLE)
-	YACC_TARGET(re2cParser parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cc COMPILE_FLAGS "-d")
-	SET(YACC_PARSER_SRCS ${YACC_re2cParser_OUTPUTS})
-ELSE(YACC_EXECUTABLE)
-	SET(YACC_PARSER_SRCS bootstrap/parser.cc)
-	INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/bootstrap)
-ENDIF(YACC_EXECUTABLE)
+find_package(LEMON)
 
 SET(re2c_common_SRCS
 	code.cc
 	dfa.cc
 	main.cc
-	${YACC_PARSER_SRCS}
+	${LEMON_re2cParser_OUTPUT_SOURCE}
 	actions.cc
 	substr.cc
 	translate.cc
@@ -86,6 +78,8 @@ CHECK_TYPE_SIZE(short SIZEOF_SHORT)
 configure_file(config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 add_definitions(-DHAVE_CONFIG_H)
 
+LEMON_TARGET(re2cParse parser.yy parser.cc parser_tokens.h)
+
 SET(re2c_bootstrap_SRCS
 	${re2c_common_SRCS}
 	bootstrap/scanner.cc
@@ -108,12 +102,3 @@ add_executable(re2c ${re2c_SRCS})
 
 configure_file(README.in ${CMAKE_CURRENT_BINARY_DIR}/README)
 configure_file(run_tests.sh.in ${CMAKE_CURRENT_BINARY_DIR}/run_tests.sh @ONLY)
-
-	#	man_MANS     = re2c.1
-
-#CXXFLAGS     = -O2 -Wall -Wno-unused -Wno-parentheses -Wno-deprecated
-#CXXFLAGS     = -ggdb -fno-inline -O2 -Wall -Wextra -pedantic -Wconversion -Wpointer-arith -Wwrite-strings -Wredundant-decls -Werror -Wunused-function -DPEDANTIC
-
-#RE2CFLAGS    = -bi
-
-#CLEANFILES   = parser.cc y.tab.c y.tab.h scanner.cc re2c.1 .version htdocs/manual.html
