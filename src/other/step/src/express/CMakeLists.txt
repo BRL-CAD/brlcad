@@ -4,8 +4,7 @@ include_directories(
 )
 
 find_package(LEMON)
-LEMON_TARGET(ExpParser expparse.y "${CMAKE_CURRENT_BINARY_DIR}/expparse.c"
-	"${CMAKE_CURRENT_BINARY_DIR}/expparse.h")
+LEMON_TARGET(ExpParser expparse.y expparse.c expparse.h)
 LEX_TARGET(ExpScanner expscan.re ${CMAKE_CURRENT_BINARY_DIR}/expscan.c COMPILE_FLAGS "-l")
 
 # replace with ADD_RE2C_LEMON_DEPENDENCY(ExpScanner ExpParser)

@@ -91,28 +91,40 @@ MACRO(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
 	IF(NOT ${ARGC} EQUAL 4 AND NOT ${ARGC} EQUAL 5)
 		MESSAGE(SEND_ERROR "Usage")
 	ELSE()
-		SET(LEMON_${Name}_INPUT         "${LemonInput}")
-		SET(LEMON_${Name}_OUTPUT_SOURCE "${LemonSource}")
-		SET(LEMON_${Name}_OUTPUT_HEADER "${LemonHeader}")
+		GET_FILENAME_COMPONENT(LemonInputFull ${LemonInput}  ABSOLUTE)
+		GET_FILENAME_COMPONENT(LemonSourceFull ${LemonSource} ABSOLUTE)
+		GET_FILENAME_COMPONENT(LemonHeaderFull ${LemonHeader} ABSOLUTE)
+		
+		IF(NOT ${LemonInput} STREQUAL ${LemonInputFull})
+			SET(LEMON_${Name}_INPUT "${CMAKE_CURRENT_BINARY_DIR}/${LemonInput}")
+		ELSE(NOT ${LemonInput} STREQUAL ${LemonInputFull})
+			SET(LEMON_${Name}_INPUT "${LemonInput}")
+		ENDIF(NOT ${LemonInput} STREQUAL ${LemonInputFull})
+
+		IF(NOT ${LemonSource} STREQUAL ${LemonSourceFull})
+			SET(LEMON_${Name}_OUTPUT_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/${LemonSource}")
+		ELSE(NOT ${LemonSource} STREQUAL ${LemonSourceFull})
+			SET(LEMON_${Name}_OUTPUT_SOURCE "${LemonSource}")
+		ENDIF(NOT ${LemonSource} STREQUAL ${LemonSourceFull})
+
+		IF(NOT ${LemonHeader} STREQUAL ${LemonHeaderFull})
+			SET(LEMON_${Name}_OUTPUT_HEADER "${CMAKE_CURRENT_BINARY_DIR}/${LemonHeader}")
+		ELSE(NOT ${LemonHeader} STREQUAL ${LemonHeaderFull})
+			SET(LEMON_${Name}_OUTPUT_HEADER "${LemonHeader}")
+		ENDIF(NOT ${LemonHeader} STREQUAL ${LemonHeaderFull})
+
 		SET(LEMON_${Name}_EXTRA_ARGS    "${ARGV4}")
 
 		# get input name minus path
 		GET_FILENAME_COMPONENT(INPUT_NAME "${LemonInput}" NAME)
+		SET(LEMON_BIN_INPUT ${CMAKE_CURRENT_BINARY_DIR}/${INPUT_NAME})
 
 		# names of lemon output files will be based on the name of the input file
 		STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1.c"   LEMON_GEN_SOURCE "${INPUT_NAME}")
 		STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1.h"   LEMON_GEN_HEADER "${INPUT_NAME}")
 		STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1.out" LEMON_GEN_OUT    "${INPUT_NAME}")
 
-		SET(LEMON_${Name}_OUTPUTS "${LemonSource} ${LemonHeader} ${LEMON_GEN_OUT}")
-
-		# lemon generates files in the same directory as the input file
-		# so we need to copy the input file to the build dir.
-    		SET(LEMON_BIN_INPUT "${CMAKE_CURRENT_BINARY_DIR}/${INPUT_NAME}")
-
-		IF(NOT ${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
-    			SET(LEMON_${Name}_OUTPUTS "${LEMON_${Name}_OUTPUTS} ${LEMON_BIN_INPUT}")
-		ENDIF(NOT ${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
+		SET(LEMON_${Name}_OUTPUTS ${LemonSource} ${LemonHeader} ${LEMON_GEN_OUT})
 
 		# copy input to bin directory, run lemon, and rename generated outputs
 		ADD_CUSTOM_COMMAND(
@@ -121,7 +133,7 @@ MACRO(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
 			COMMAND ${LEMON_EXECUTABLE} ${INPUT_NAME} ${LEMON_${Name}_EXTRA_ARGS}
 			COMMAND ${CMAKE_COMMAND} -E rename ${LEMON_GEN_SOURCE} ${LemonSource}
 			COMMAND ${CMAKE_COMMAND} -E rename ${LEMON_GEN_HEADER} ${LemonHeader}
-			DEPENDS ${LEMON_BIN_INPUT}
+			DEPENDS ${LemonInput}
 			COMMENT "[LEMON][${Name}] Building parser with ${LEMON_EXECUTABLE}"
 		)
 
