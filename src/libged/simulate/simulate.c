@@ -400,7 +400,7 @@ init_raytrace(struct simulation_params *sim_params)
  * The libged physics simulation function.
  *
  * Check flags, adds regions to simulation parameters, runs the
- * simulation applies the transforms, frees memory
+ * simulation, applies the transforms, frees memory
  */
 int
 ged_simulate(struct ged *gedp, int argc, const char *argv[])

@@ -29,6 +29,9 @@
 /* Private Header */
 #include "simrt.h"
 
+
+//#define USE_VELOCITY_FOR_NORMAL 1
+
 /*
  * Global lists filled up while raytracing : remove these as in the forward
  * progression of a ray, the y needs to be increased gradually, no need to
@@ -1128,8 +1131,8 @@ int
 create_contact_pairs(
 		 struct sim_manifold *mf,
 		 struct simulation_params *sim_params,
-		 vect_t UNUSED(overlap_min),
-		 vect_t UNUSED(overlap_max))
+		 vect_t overlap_min,
+		 vect_t overlap_max)
 {
 	vect_t v;
     mf->num_contacts = 0;
@@ -1139,7 +1142,9 @@ create_contact_pairs(
 	   mf->rbA->rb_namep, V3ARGS(mf->rbA->btbb_center),
 	   mf->rbB->rb_namep, V3ARGS(mf->rbB->btbb_center));
 
-    /* Calculate the normal of the contact points as the resultant of -A & B velocity
+
+#ifdef USE_VELOCITY_FOR_NORMAL
+	/* Calculate the normal of the contact points as the resultant of -A & B velocity
      * NOTE: Currently the sum of normals along overlapping surface , approach is not used
      */
 	VMOVE(v, mf->rbA->linear_velocity);
@@ -1149,9 +1154,12 @@ create_contact_pairs(
 	VMOVE(v, mf->rbB->linear_velocity);
 	VUNITIZE(v);
 	VADD2(rt_result.resultant_normal_B, rt_result.resultant_normal_B, mf->rbB->linear_velocity);
+#endif
+
+
 	bu_log("create_contact pairs : Final normal from B to A : (%f,%f,%f)", V3ARGS(rt_result.resultant_normal_B));
 
-    /* Begin making contact */
+    /* Begin making contacts */
 
 	/* Shoot rays along the normal to get points on B and the depth along this direction */
 	shoot_normal_rays(mf, sim_params, overlap_min, overlap_max);
@@ -1199,15 +1207,14 @@ generate_manifolds(struct simulation_params *sim_params,
 	init_rayshot_results();
 
 
+#ifndef USE_VELOCITY_FOR_NORMAL
 	/* Shoot rays right here as the pair of rigid_body ptrs are known,
 	 * TODO: ignore volumes already shot
-	 * UNUSED currently as velocity used to decide normal. Shooting rays in 3D is too time
-	 * consuming, but may be useful in some cases in the future
 	 */
-	/*shoot_x_rays(rt_mf, sim_params, overlap_min, overlap_max);
+	shoot_x_rays(rt_mf, sim_params, overlap_min, overlap_max);
 	shoot_y_rays(rt_mf, sim_params, overlap_min, overlap_max);
-	shoot_z_rays(rt_mf, sim_params, overlap_min, overlap_max);*/
-
+	shoot_z_rays(rt_mf, sim_params, overlap_min, overlap_max);
+#endif
 
 
 	/* Create the contact pairs and normals : Currently just 1 manifold is allowed per pair of objects*/
