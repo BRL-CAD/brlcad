@@ -1756,7 +1756,7 @@ class Sketch_carc {
 	    }
 	    set normalx [expr $ex - $sx]
 	    set normaly [expr $ey - $sy]
-	    set len [Sketch_editor::dist $sx $sy $ex $ey]
+	    set len [dist $sx $sy $ex $ey]
 	    if { [catch {expr 1.0 / $len} one_over_len] } {
 		return "0 0"
 	    }
@@ -1764,13 +1764,13 @@ class Sketch_carc {
 	    set tangenty [expr $normalx * $one_over_len ]
 	} else {
 	    set tmp_radius [expr {$myscale * $radius}]
-	    set center [Sketch_editor::find_arc_center $sx $sy $ex $ey $tmp_radius $center_is_left]
+	    set center [find_arc_center $sx $sy $ex $ey $tmp_radius $center_is_left]
 	    set cx [lindex $center 0]
 	    set cy [lindex $center 1]
 	    if { $vertex == $start_index } {
 		set normalx [expr $sx - $cx]
 		set normaly [expr $sy - $cy]
-		set len [Sketch_editor::dist $sx $sy $cx $cy]
+		set len [dist $sx $sy $cx $cy]
 		if { [catch {expr 1.0 / $len} one_over_len] } {
 		    return "0 0"
 		}
@@ -1784,7 +1784,7 @@ class Sketch_carc {
 	    } else {
 		set normalx [expr $ex - $cx]
 		set normaly [expr $ey - $cy]
-		set len [Sketch_editor::dist $ex $ey $cx $cy]
+		set len [dist $ex $ey $cx $cy]
 		if { [catch {expr 1.0 / $len} one_over_len] } {
 		    return "0 0"
 		}
@@ -1826,7 +1826,7 @@ class Sketch_carc {
 	    set sy [expr {-$myscale * [lindex $start 1]}]
 	    set ex [expr {$myscale * [lindex $end 0]}]
 	    set ey [expr {-$myscale * [lindex $end 1]}]
-	    set tmp_radius [Sketch_editor::dist $sx $sy $ex $ey]
+	    set tmp_radius [dist $sx $sy $ex $ey]
 	    return $tmp_radius
 	}
     }
@@ -1873,7 +1873,7 @@ class Sketch_carc {
 
 	if { $radius < 0.0 } {
 	    # full circle
-	    set tmp_radius [Sketch_editor::dist $sx $sy $ex $ey]
+	    set tmp_radius [dist $sx $sy $ex $ey]
 	    $editor set_radius $tmp_radius
 	    set x1 [expr {$ex - $tmp_radius}]
 	    set y1 [expr {$ey - $tmp_radius}]
@@ -1887,10 +1887,10 @@ class Sketch_carc {
 	} elseif { $radius > 0.0 } {
 	    # arc
 	    set tmp_radius [expr {$myscale * $radius}]
-	    set center [Sketch_editor::find_arc_center $sx $sy $ex $ey $tmp_radius $center_is_left]
+	    set center [find_arc_center $sx $sy $ex $ey $tmp_radius $center_is_left]
 	    set cx [lindex $center 0]
 	    set cy [lindex $center 1]
-	    set min_radius [::Sketch_editor::dist $sx $sy $cx $cy]
+	    set min_radius [::dist $sx $sy $cx $cy]
 	    if { $tmp_radius < $min_radius } {
 		set tmp_radius $min_radius
 		set radius [expr { $tmp_radius / $myscale }]
