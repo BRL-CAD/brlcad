@@ -4,7 +4,7 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-LEMON_TARGET(OBJ_Parser obj_grammar.yy ${CMAKE_CURRENT_BINARY_DIR}/obj_grammar.cpp)
+LEMON_TARGET(OBJ_Parser obj_grammar.yy obj_grammar.cpp obj_grammar.hpp)
 RE2C_TARGET(OBJ_Scanner obj_rules.re ${CMAKE_CURRENT_BINARY_DIR}/obj_rules.cpp COMPILE_FLAGS "-Fc")
 ADD_RE2C_LEMON_DEPENDENCY(OBJ_Scanner OBJ_Parser)
 
