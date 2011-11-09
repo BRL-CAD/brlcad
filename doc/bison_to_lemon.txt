@@ -159,6 +159,8 @@ The lemon ParseTrace function is useful if you want to examine lemon's behavior.
     /* lemon */
     expression(A) ::= expression(B) PLUS expression(C). { A = B + C; }
 
+Lemon accepts aliases of the form: [a-zA-Z][a-zA-Z0-9_]*
+
 WARNING: Converting from bison to lemon syntax is tedious and error-prone.
 
  Lemon Makes All Terminals the Same Type
