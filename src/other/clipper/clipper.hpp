@@ -40,20 +40,6 @@
 #include <cstdlib>
 #include <ostream>
 
-#ifdef DBL_EPSILON
-#  define CLIPPER_VDIVIDE_TOL		(DBL_EPSILON)
-#else
-#  define CLIPPER_VDIVIDE_TOL		(1.0e-20)
-#endif
-#ifdef FLT_EPSILON
-#  define CLIPPER_VUNITIZE_TOL	(FLT_EPSILON)
-#else
-#  define CLIPPER_VUNITIZE_TOL	(1.0e-15)
-#endif
-
-#define CLIPPER_NEAR_ZERO(_val, _epsilon) (((_val) > -_epsilon) && ((_val) < _epsilon))
-#define CLIPPER_NEAR_EQUAL(_a, _b) CLIPPER_NEAR_ZERO((_a) - (_b), (CLIPPER_VDIVIDE_TOL))
-
 namespace ClipperLib {
 
 enum ClipType { ctIntersection, ctUnion, ctDifference, ctXor };
@@ -194,9 +180,7 @@ public:
   ClipperBase();
   virtual ~ClipperBase();
   bool AddPolygon(const Polygon &pg, PolyType polyType);
-  bool AddPolygon(const ExPolygon &pg, PolyType polyType);
   bool AddPolygons( const Polygons &ppg, PolyType polyType);
-  bool AddPolygons( const ExPolygons &ppg, PolyType polyType);
   virtual void Clear();
   IntRect GetBounds();
 protected:
