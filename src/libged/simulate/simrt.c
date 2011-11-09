@@ -1104,6 +1104,8 @@ shoot_normal_rays(struct sim_manifold *current_manifold,
 	   bu_log("shoot_normal_rays: *****ray pt(%f,%f,%f) dir(%f,%f,%f) ******",
 				V3ARGS(entry->ray.r_pt), V3ARGS(entry->ray.r_dir));
 
+
+	   VUNITIZE(entry->ray.r_dir);
 	   shoot_ray(sim_params->rtip, entry->ray.r_pt, entry->ray.r_dir);
 
 	   traverse_normalray_lists(current_manifold, sim_params, entry->ray.r_pt, entry->ray.r_dir,
@@ -1209,7 +1211,7 @@ generate_manifolds(struct simulation_params *sim_params,
 
 
 	/* Create the contact pairs and normals : Currently just 1 manifold is allowed per pair of objects*/
-	create_contact_pairs(rt_mf, sim_params, overlap_min, overlap_max);
+	/* create_contact_pairs(rt_mf, sim_params, overlap_min, overlap_max); */
 
     return GED_OK;
 }

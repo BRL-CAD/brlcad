@@ -45,7 +45,28 @@
 #include "../ged_private.h"
 #include "simulate.h"
 #include "simutils.h"
-/*#include "simrt.h"*/
+
+/*
+ * This structure is a single node of a circularly linked list
+ * of overlap regions: similar to the one in nirt/usrfrmt.h
+ */
+struct overlap1 {
+    int index;
+    struct application *ap;
+    struct partition *pp;
+    struct region *reg1;
+    struct region *reg2;
+    fastf_t in_dist;
+    fastf_t out_dist;
+    point_t in_point;
+    point_t out_point;
+    vect_t in_normal, out_normal;
+    struct soltab *insol, *outsol;
+    struct curvature incur, outcur;
+    struct overlap *forw;
+    struct overlap *backw;
+};
+
 
 
 /* The C++ simulation function */
@@ -397,6 +418,233 @@ init_raytrace(struct simulation_params *sim_params)
 }
 
 
+int
+if_hit1(struct application *ap, struct partition *part_headp, struct seg *UNUSED(segs))
+{
+
+    /* iterating over partitions, this will keep track of the current
+     * partition we're working on.
+     */
+    struct partition *pp;
+
+    /* will serve as a pointer for the entry and exit hitpoints */
+    struct hit *hitp;
+
+    /* will serve as a pointer to the solid primitive we hit */
+    struct soltab *stp;
+
+    /* will contain surface curvature information at the entry */
+    struct curvature cur;
+
+    /* will contain our hit point coordinate */
+    point_t in_pt, out_pt;
+
+    /* will contain normal vector where ray enters geometry */
+    vect_t inormal;
+
+    /* will contain normal vector where ray exits geometry */
+    vect_t onormal;
+
+    int i = 0;
+
+    /* iterate over each partition until we get back to the head.
+     * each partition corresponds to a specific homogeneous region of
+     * material.
+     */
+    for (pp=part_headp->pt_forw; pp != part_headp; pp = pp->pt_forw) {
+
+
+
+		/* print the name of the region we hit as well as the name of
+		 * the primitives encountered on entry and exit.
+		 */
+		bu_log("\n--- Hit region %s (in %s, out %s)\n",
+		pp->pt_regionp->reg_name,
+		pp->pt_inseg->seg_stp->st_name,
+		pp->pt_outseg->seg_stp->st_name );
+
+
+		/* entry hit point, so we type less */
+		hitp = pp->pt_inhit;
+
+		/* construct the actual (entry) hit-point from the ray and the
+		 * distance to the intersection point (i.e., the 't' value).
+		 */
+		VJOIN1(in_pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
+
+		/* primitive we encountered on entry */
+		stp = pp->pt_inseg->seg_stp;
+
+		/* compute the normal vector at the entry point, flipping the
+		 * normal if necessary.
+		 */
+		RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
+
+		/* print the entry hit point info */
+		rt_pr_hit("  In", hitp);
+		VPRINT(   "  Ipoint", in_pt);
+		VPRINT(   "  Inormal", inormal);
+
+
+		if (pp->pt_overlap_reg) {
+			struct region *pp_reg;
+			int j = -1;
+
+			bu_log("    Claiming regions:\n");
+			while ((pp_reg = pp->pt_overlap_reg[++j]))
+				bu_log("        %s\n", pp_reg->reg_name);
+		}
+
+		/* This next macro fills in the curvature information which
+		 * consists of a principle direction vector, and the inverse
+		 * radii of curvature along that direction and perpendicular
+		 * to it.  Positive curvature bends toward the outward
+		 * pointing normal.
+		 */
+		RT_CURVATURE(&cur, hitp, pp->pt_inflip, stp);
+
+		/* print the entry curvature information */
+		VPRINT("PDir", cur.crv_pdir);
+		bu_log(" c1=%g\n", cur.crv_c1);
+		bu_log(" c2=%g\n", cur.crv_c2);
+
+
+		/* exit point, so we type less */
+		hitp = pp->pt_outhit;
+
+		/* construct the actual (exit) hit-point from the ray and the
+		 * distance to the intersection point (i.e., the 't' value).
+		 */
+		VJOIN1(out_pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
+
+		/* primitive we exited from */
+		stp = pp->pt_outseg->seg_stp;
+
+		/* compute the normal vector at the exit point, flipping the
+		 * normal if necessary.
+		 */
+		RT_HIT_NORMAL(onormal, hitp, stp, &(ap->a_ray), pp->pt_outflip);
+
+		/* print the exit hit point info */
+		rt_pr_hit("  Out", hitp);
+		VPRINT(   "  Opoint", out_pt);
+		VPRINT(   "  Onormal", onormal);
+    }
+
+    return HIT;
+}
+
+
+int
+if_miss1(struct application *UNUSED(ap))
+{
+    bu_log("MISS");
+    return MISS;
+}
+
+
+int
+if_overlap1(struct application *ap, struct partition *pp, struct region *reg1,
+	   struct region *reg2, struct partition *InputHdp)
+{
+    int i = 0;
+
+    struct overlap1 ovlp;
+
+    bu_log("if_overlap: OVERLAP between %s and %s", reg1->reg_name, reg2->reg_name);
+
+   	bu_log("\n--- Overlap region (in %s, out %s)\n",			
+			pp->pt_inseg->seg_stp->st_name,
+			pp->pt_outseg->seg_stp->st_name );
+
+
+	/* compute the normal vector at the exit point, flipping the
+	 * normal if necessary.
+	 */
+	RT_HIT_NORMAL(ovlp.in_normal, pp->pt_inhit,
+			  pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
+
+
+	/* compute the normal vector at the exit point, flipping the
+	 * normal if necessary.
+	 */
+	RT_HIT_NORMAL(ovlp.out_normal, pp->pt_outhit,
+			  pp->pt_outseg->seg_stp, &(ap->a_ray), pp->pt_outflip);
+
+
+	/* Entry solid */
+	ovlp.insol = pp->pt_inseg->seg_stp;
+
+	/* Exit solid */
+	ovlp.outsol = pp->pt_outseg->seg_stp;
+
+	/* Entry curvature */
+	RT_CURVATURE(&ovlp.incur, pp->pt_inhit, pp->pt_inflip, pp->pt_inseg->seg_stp);
+
+	/* Exit curvature */
+	RT_CURVATURE(&ovlp.outcur, pp->pt_outhit, pp->pt_outflip, pp->pt_outseg->seg_stp);
+
+	VJOIN1(ovlp.in_point, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
+		   ap->a_ray.r_dir);
+	VJOIN1(ovlp.out_point, ap->a_ray.r_pt, pp->pt_outhit->hit_dist,
+		   ap->a_ray.r_dir);
+
+
+	bu_log("Entering at (%f,%f,%f) at distance of %f",
+	   V3ARGS(ovlp.in_point), pp->pt_inhit->hit_dist);
+	bu_log("Exiting  at (%f,%f,%f) at distance of %f",
+	   V3ARGS(ovlp.out_point), pp->pt_outhit->hit_dist);
+
+	bu_log("insol :%s -->> outsol :%s \n", ovlp.insol->st_name,
+			ovlp.outsol->st_name);
+
+
+    return rt_defoverlap (ap, pp, reg1, reg2, InputHdp);
+}
+
+
+int
+shoot_ray1(struct rt_i *rtip, point_t pt, point_t dir)
+{
+    struct application ap;
+
+    /* Initialize the table of resource structures */
+    /* rt_init_resource(&res_tab, 0, rtip); */
+
+    /* initialization of the application structure */
+    RT_APPLICATION_INIT(&ap);
+    ap.a_hit = if_hit1;        /* branch to if_hit routine */
+    ap.a_miss = if_miss1;      /* branch to if_miss routine */
+    ap.a_overlap = if_overlap1;/* branch to if_overlap routine */
+    /*ap.a_logoverlap = rt_silent_logoverlap;*/
+    ap.a_onehit = 0;          /* continue through shotline after hit */
+    ap.a_purpose = "Sim Manifold ray";
+    ap.a_rt_i = rtip;         /* rt_i pointer */
+    ap.a_zero1 = 0;           /* sanity check, sayth raytrace.h */
+    ap.a_zero2 = 0;           /* sanity check, sayth raytrace.h */
+
+    /* Set the ray start point and direction rt_shootray() uses these
+     * two to determine what ray to fire.
+     * It's worth nothing that librt assumes units of millimeters.
+     * All geometry is stored as millimeters regardless of the units
+     * set during editing.  There are libbu routines for performing
+     * unit conversions if desired.
+     */
+    VMOVE(ap.a_ray.r_pt, pt);
+    VMOVE(ap.a_ray.r_dir, dir);
+
+    /* Simple debug printing */
+    /*bu_log("Pnt (%f,%f,%f)", V3ARGS(ap.a_ray.r_pt));
+    VPRINT("Dir", ap.a_ray.r_dir);*/
+
+    /* Shoot the ray. */
+    (void)rt_shootray(&ap);
+
+    return GED_OK;
+}
+
+
+
 /**
  * The libged physics simulation function.
  *
@@ -411,6 +659,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
     static const char *sim_comb_name = "sim.c";
     static const char *ground_plane_name = "sim_gp.r";
     struct rigid_body *current_node, *next_node;
+    point_t r_pt, r_dir;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -456,7 +705,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 
 
 		/* Make a new rt_i instance from the existing db_i structure */
-		if ((sim_params.rtip=rt_new_rti(sim_params.gedp->ged_wdbp->dbip)) == RTI_NULL) {
+		if ((sim_params.rtip=rt_new_rti(gedp->ged_wdbp->dbip)) == RTI_NULL) {
 			bu_log("run_simulation: rt_new_rti failed while getting new rt instance\n");
 			return 1;
 		}
@@ -465,12 +714,18 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 		/* Initialize the raytrace world */
 		init_raytrace(&sim_params);
 
+		VSET(r_dir, 0.000000,0.000000,-0.6667);
+		VUNITIZE(r_dir);
+		VSET(r_pt, 0.5, 0.3, 1.0);
+		shoot_ray1(sim_params.rtip, r_pt, r_dir);
+
 
 
 		/* Recreate sim.c to clear AABBs and manifold regions from previous iteration */
 		recreate_sim_comb(gedp, &sim_params);
 
 		/* Run the physics simulation */
+		sim_params.gedp = gedp;
 		sim_params.iter = i;
 		rv = run_simulation(&sim_params);
 		if (rv != GED_OK) {
@@ -485,7 +740,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 			return GED_ERROR;
 		}
 
-		//Free the raytrace instance
+		/* free the raytrace instance */
 		rt_free_rti(sim_params.rtip);
 
     }
