@@ -1211,7 +1211,7 @@ generate_manifolds(struct simulation_params *sim_params,
 
 
 	/* Create the contact pairs and normals : Currently just 1 manifold is allowed per pair of objects*/
-	/* create_contact_pairs(rt_mf, sim_params, overlap_min, overlap_max); */
+	create_contact_pairs(rt_mf, sim_params, overlap_min, overlap_max);
 
     return GED_OK;
 }
