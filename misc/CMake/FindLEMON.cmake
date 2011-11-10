@@ -25,7 +25,7 @@
 #  Example:
 #
 #   find_package(LEMON)
-#   LEMON_TARGET(MyParser parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp)
+#   LEMON_TARGET(MyParser parser.y parser.c parser.h)
 #   add_executable(Foo main.cpp ${LEMON_MyParser_OUTPUTS})
 #  ====================================================================
 #
