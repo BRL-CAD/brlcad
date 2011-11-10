@@ -13,7 +13,7 @@
 #include <set>
 
 #include "globals.h"
-#include "parser_symbol.h"
+#include "parser.h"
 #include "basics.h"
 #include "dfa.h"
 #include "re.h"

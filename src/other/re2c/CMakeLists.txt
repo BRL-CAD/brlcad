@@ -24,11 +24,13 @@ INCLUDE_DIRECTORIES(
 SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
 find_package(LEMON)
 
+LEMON_TARGET(re2cParse parser.yy parser.cc parser_tokens.h)
+
 SET(re2c_common_SRCS
 	code.cc
 	dfa.cc
 	main.cc
-	${LEMON_re2cParser_OUTPUT_SOURCE}
+	${LEMON_re2cParse_OUTPUT_SOURCE}
 	actions.cc
 	substr.cc
 	translate.cc
@@ -78,7 +80,6 @@ CHECK_TYPE_SIZE(short SIZEOF_SHORT)
 configure_file(config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 add_definitions(-DHAVE_CONFIG_H)
 
-LEMON_TARGET(re2cParse parser.yy parser.cc parser_tokens.h)
 
 SET(re2c_bootstrap_SRCS
 	${re2c_common_SRCS}
