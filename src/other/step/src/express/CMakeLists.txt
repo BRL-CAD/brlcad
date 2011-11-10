@@ -9,8 +9,8 @@ LEX_TARGET(ExpScanner expscan.re ${CMAKE_CURRENT_BINARY_DIR}/expscan.c COMPILE_F
 
 # replace with ADD_RE2C_LEMON_DEPENDENCY(ExpScanner ExpParser)
 # when expscan.re is really an re2c input and not a lex input
-MESSAGE(STATUS "depends on: ${LEMON_ExpParser_OUTPUT_HEADER}")
-MESSAGE(STATUS "outputs were: ${LEMON_ExpParser_OUTPUTS}")
+#MESSAGE(STATUS "depends on: ${LEMON_ExpParser_OUTPUT_HEADER}")
+#MESSAGE(STATUS "outputs were: ${LEMON_ExpParser_OUTPUTS}")
 
 SET_SOURCE_FILES_PROPERTIES(${LEX_ExpScanner_OUTPUTS} PROPERTIES OBJECT_DEPENDS ${LEMON_ExpParser_OUTPUT_HEADER})
 
