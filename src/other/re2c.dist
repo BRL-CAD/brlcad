@@ -18,7 +18,7 @@ ins.h
 lessons
 mbo_getopt.h
 parser.h
-parser.y
+parser.yy
 re.h
 re2c.1.in
 re2c.spec.in
@@ -29,7 +29,4 @@ stream_lc.h
 substr.h
 test
 token.h
-bootstrap/parser.cc
-bootstrap/parser.hh
-bootstrap/y.tab.h
 )
