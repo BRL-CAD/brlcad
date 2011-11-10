@@ -84,6 +84,7 @@ SET(re2c_bootstrap_SRCS
 	${re2c_common_SRCS}
 	bootstrap/scanner.cc
 	)
+SET_SOURCE_FILES_PROPERTIES(bootstrap/scanner.cc PROPERTIES OBJECT_DEPENDS ${LEMON_re2cParse_OUTPUT_HEADER})
 
 add_executable(re2c_bootstrap ${re2c_bootstrap_SRCS})
 
