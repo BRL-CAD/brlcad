@@ -56,8 +56,8 @@ BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
 #---------------------------------------------------------------------------------
 # Local Copies of Tools
 #---------------------------------------------------------------------------------
-THIRD_PARTY_EXECUTABLE(re2c re2c)
 THIRD_PARTY_EXECUTABLE(lemon lemon)
+THIRD_PARTY_EXECUTABLE(re2c re2c)
 
 #---------------------------------------------------------------------------------
 # Third Party Sources
