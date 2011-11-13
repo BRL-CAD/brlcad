@@ -57,7 +57,7 @@ directory if CMake is installed on your system:
   tar -xvf brlcad-X.Y.Z.tar
   mkdir brlcad-build
   cd brlcad-build
-  cmake ../brlcad-X.Y.Z -DBRLCAD-ENABLE_OPTIMIZED=ON
+  cmake ../brlcad-X.Y.Z -DBRLCAD_BUNDLED_LIBS=ON
   make
   make benchmark
   make regress
@@ -69,7 +69,7 @@ problem or the INSTALLING FROM SOURCE section for more comprehensive
 instructions.
 
 Once installed, add /usr/brlcad/bin to your path, and you should be
-able to run one of the 400+ applications that constitute BRL-CAD.  For
+able to run any of the 400+ applications that constitute BRL-CAD.  For
 example, to run the MGED solid modeler:
 
 PATH=/usr/brlcad/bin:$PATH ; export PATH
@@ -175,12 +175,11 @@ To start the build process, cd into brlcad-build and run the following
 
   cmake ../brlcad-7.2.4
 
-By default, an unoptimized build of BRL-CAD will be configured
-for compilation.  This is a "bare bones" compile that does not
-add debug flags, optimization, or other features that are generally
-useful.  There are several "build profiles" that may be invoked
-to automatically set up several options for particular purposes -
-see the BUILD TYPES section below.
+By default, a "Debug" configuration will be selected when 
+configuring that adds debugging flags and sets a default
+install location suitable for a debug build.  Alternately, 
+the "Release" configuration can be set to automatically add
+optimization flags and release style install settings.
 
 By default, all components and functionality will be built except
 jove.  However, BRL-CAD does require and include several 3rd party
@@ -193,9 +192,9 @@ the next simplest approach is typically to enable ALL the third party
 components - this is typically a well tested configuration, but will
 increase both the build time and final install size of BRL-CAD on 
 the system.  To set this variable on the command line, use -D to
-define BRLCAD-ENABLE_ALL_LOCAL_LIBS for CMake:
+define BRLCAD_BUNDLED_LIBS for CMake:
 
--DBRLCAD-ENABLE_ALL_LOCAL_LIBS=ON
+-DBRLCAD_BUNDLED_LIBS=Bundled
 
 If the graphical interface (cmake-gui) is in use, it will list this
 and other common options by default, allowing the user to check and
@@ -204,17 +203,9 @@ and more convenient than defining options on the command line, but
 both will work.
 
 You can also force on or off any individual 3rd party library by 
-setting either of two variables:
+setting the BRL-CAD variable for that feature to either on or off:
 
--DBRLCAD_BUILD_LOCAL_<FEATURE>_FORCE_ON=ON
--DBRLCAD_BUILD_LOCAL_<FEATURE>_FORCE_OFF=ON
-
-These options are not available by default in the graphical interface,
-but can be accessed by enabling the Advanced view, which will list all
-available options.  This list can be made somewhat more managable by
-also enabling the Grouped option, which organizes variables into
-groups based on name.  In this case, the above two variables would be
-found under the BRLCAD group.
+-DBRLCAD_<FEATURE>=ON
 
 To obtain an optimized build (for example, for BRL-CAD Benchmark 
 performance evaluation), enable BRLCAD-ENABLE_OPTIMIZED_BUILD
@@ -272,12 +263,9 @@ the CMAKE_BUILD_TYPE variable, that are useful for specific purposes:
 * Debug (-DCMAKE_BUILD_TYPE=Debug) - Debug is the configuration that most
   developers will want to use when working on BRL-CAD.  It will add
   debug flags to the compile, and sets the default install directory to
-  be ../brlcad-install instead of /usr/brlcad.  (This avoids the need to
-  constantly enable sudo to do an install, and lets a developer work on
-  their build even when a system install is also present.)  In order to
-  run the resulting install binaries, the developer should ensure that
-  the local install path is first in their PATH environment variable -
-  see INSTALLATION OPTIONS below.
+  be /usr/brlcad/dev-X.Y.Z - in order to run the resulting installed 
+  binaries, the developer should ensure that the dev-X.Y.Z  path is 
+  first in their PATH environment variable.
 
 * Release (-DCMAKE_BUILD_TYPE=Release) - A release build is intended for
   final consumption by end users and as such has optimizations enabled.
