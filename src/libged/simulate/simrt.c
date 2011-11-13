@@ -1134,7 +1134,6 @@ create_contact_pairs(
 		 vect_t overlap_min,
 		 vect_t overlap_max)
 {
-	vect_t v;
     mf->num_contacts = 0;
 
 
