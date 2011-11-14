@@ -73,6 +73,7 @@ set(COREINTERFACE_SOURCES
     ../../../../rt^3/src/coreInterface/HyperbolicCylinder.cpp
     ../../../../rt^3/src/coreInterface/Hyperboloid.cpp
     ../../../../rt^3/src/coreInterface/MemoryDatabase.cpp
+    ../../../../rt^3/src/coreInterface/NonManifoldGeometry.cpp
     ../../../../rt^3/src/coreInterface/Object.cpp
     ../../../../rt^3/src/coreInterface/ParabolicCylinder.cpp
     ../../../../rt^3/src/coreInterface/Paraboloid.cpp
