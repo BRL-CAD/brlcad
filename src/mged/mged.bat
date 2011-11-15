@@ -1,5 +1,3 @@
-@ECHO OFF
-
 REM                      M G E D . B A T
 REM  BRL-CAD
 REM 
@@ -20,8 +18,11 @@ REM  License along with this file; see the file named COPYING for more
 REM  information.
 REM 
 
+@ECHO OFF
+
 SETLOCAL
 
+SET PATH=%~dp0;%PATH%
 SET MGED=%~dp0mged
 
 IF "%1"=="-g" (
@@ -30,5 +31,4 @@ IF "%1"=="-g" (
     START /B "" "%MGED%" %1
 )
 
-CLS
 EXIT

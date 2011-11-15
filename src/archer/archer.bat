@@ -1,5 +1,3 @@
-@ECHO OFF
-
 REM                      A R C H E R . B A T
 REM  BRL-CAD
 REM 
@@ -20,14 +18,16 @@ REM  License along with this file; see the file named COPYING for more
 REM  information.
 REM 
 
+@ECHO OFF
+
 SETLOCAL
 
+SET PATH=%~dp0;%PATH%
 SET BWISH=%~dp0bwish
 SET ARCHER=%~dp0archer
 
 START /B "" "%BWISH%" "%ARCHER%" %1
 
-CLS
 EXIT
 
 REM Local Variables:

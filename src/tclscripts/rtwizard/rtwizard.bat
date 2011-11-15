@@ -18,16 +18,17 @@ REM  License along with this file; see the file named COPYING for more
 REM  information.
 REM 
 REM REM REM 
+
 @ECHO OFF
 
 SETLOCAL
 
+SET PATH=%~dp0;%PATH%
 SET BWISH=%~dp0bwish
 SET RTWIZARD=%~dp0rtwizard
 
 START /B "" "%BWISH%" "%RTWIZARD%" %1
 
-CLS
 EXIT
 
 REM Local Variables:
