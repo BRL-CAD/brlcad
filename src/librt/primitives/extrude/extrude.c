@@ -602,8 +602,11 @@ get_quadrant(fastf_t *v, fastf_t *local_x, fastf_t *local_y, fastf_t *vx, fastf_
 }
 
 
+/*
+ * TODO: seems appropriate to make this into a proper libbn function
+ */
 static int
-isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *center, fastf_t *ra, fastf_t *rb)
+isect_line2_ellipse(vect2d_t dist, const vect_t ray_start, const vect_t ray_dir, const vect_t center, const vect_t ra, const vect_t rb)
 {
     fastf_t a, b, c;
     point2d_t pmc;
@@ -621,7 +624,7 @@ isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t
     rb_sq = V2DOT(rb, rb);
     rb_4 = rb_sq * rb_sq;
     if (ra_4 <= SMALL_FASTF || rb_4 <= SMALL_FASTF) {
-	bu_log("ray (%g %g %g) -> (%g %g %g), semi-axes  = (%g %g %g) and (%g %g %g), center = (%g %g %g)\n",
+	bu_log("ray (%g %g) -> (%g %g), semi-axes  = (%g %g) and (%g %g), center = (%g %g)\n",
 	       V3ARGS(ray_start), V3ARGS(ray_dir), V3ARGS(ra), V3ARGS(rb), V3ARGS(center));
 	bu_bomb("ERROR: isect_line2_ellipse: semi-axis length is too small!\n");
     }
@@ -648,12 +651,16 @@ isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t
 }
 
 
+/*
+ * TODO: seems appropriate to make this into a proper libbn function
+ */
 static int
-isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *center, fastf_t *ra, fastf_t *rb, fastf_t *norm, fastf_t *start, fastf_t *end, int orientation)
+isect_line_earc(vect2d_t dist, const vect_t ray_start, const vect_t ray_dir, const vect_t center, const vect_t ra, const vect_t rb, const vect_t norm, const vect_t start, const vect_t end, int orientation)
 
 
     /* 0 -> ccw, !0 -> cw */
 {
+    int i;
     int dist_count;
     vect_t local_x, local_y, local_z;
     fastf_t vx, vy;
@@ -661,7 +668,6 @@ isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *ce
     fastf_t sx, sy;
     int quad_start, quad_end, quad_pt;
     point2d_t to_pt, pt;
-    int i;
 
     dist_count = isect_line2_ellipse(dist, ray_start, ray_dir, center, ra, rb);
 
@@ -803,10 +809,11 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     size_t i, j, k;
     long counter;
     fastf_t dist_top, dist_bottom, to_bottom=0;
-    fastf_t dist[2];
+    vect2d_t dist = V2INIT_ZERO;
     fastf_t dot_pl1, dir_dot_z;
     point_t tmp, tmp2;
-    point_t ray_start, ray_dir, ray_dir_unit;	/* 2D */
+    point_t ray_start;			/* 2D */
+    vect_t ray_dir, ray_dir_unit;	/* 2D */
     struct rt_curve *crv;
     struct hit hits[MAX_HITS];
     fastf_t dists_before[MAX_HITS];
@@ -824,8 +831,8 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     point2d_t *intercept;
     point2d_t *normal = NULL;
     point2d_t ray_perp;
-    vect_t ra = V2INIT_ZERO;
-    vect_t rb = V2INIT_ZERO;
+    vect_t ra = VINIT_ZERO; /* 2D */
+    vect_t rb = VINIT_ZERO; /* 2D */
 
     crv = &extr->crv;
 
