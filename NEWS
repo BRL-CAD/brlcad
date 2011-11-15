@@ -17,6 +17,7 @@ changes made.  See document footer for additional details.
 * reid command now reports the highest region ID set - Carl Moore
 * batch script shortcuts now set PATH on Windows - Sean Morrison
 * fixed g-obj error when exporting facets - Christopher Pitts
+* added 'l' list command to archer so 'g' expands args - Bob Parker
 * added length parameter documentation for 'coil' command - Cliff Yapp
 * improved performance of boolean evaluations - Richard Weiss
 * improved boolean evaluation converting to polygons - Richard Weiss
