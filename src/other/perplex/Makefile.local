@@ -1,0 +1,16 @@
+CFLAGS = -g
+
+perplex : perplex.o scanner.o
+	$(CC) -o $@ $^
+
+perplex.o : scanner.h
+
+scanner.c : scanner.re scanner.h
+	re2c -c -o $@ $<
+
+scanner.h :
+
+.PHONY : clean
+
+clean :
+	-rm -f perplex *.o scanner.c

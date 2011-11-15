@@ -1,0 +1,8 @@
+SET(perplex_ignore_files
+	input.l
+	Makefile.local
+	perplex.c
+	perplex.h
+	scanner.re
+	template.c
+)
