@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2011-11-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* reid command now reports the highest region ID set - Carl Moore
 * batch script shortcuts now set PATH on Windows - Sean Morrison
 * fixed g-obj error when exporting facets - Christopher Pitts
 * added length parameter documentation for 'coil' command - Cliff Yapp
