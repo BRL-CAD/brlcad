@@ -1,4 +1,4 @@
-/*                     C L I P P E R . C P P
+/*                    P O L Y C L I P . C P P
  * BRL-CAD
  *
  * Copyright (c) 2011 United States Government as represented by
@@ -19,14 +19,17 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file libged/clipper.c
+/** @file libged/polyclip.cpp
  *
  * An interface to src/other/clipper.
  *
  */
 /** @} */
 
-#include "clipper.hpp"
+#include "common.h"
+
+#include <clipper.hpp>
+
 #include "ged.h"
 
 
@@ -38,7 +41,7 @@ typedef struct
 
 
 void
-ged_clipper_load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polygon *gpoly) 
+ged_polyclip_load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polygon *gpoly) 
 {
     register size_t j, k, n;
     ClipperLib::Polygon curr_poly;
@@ -57,12 +60,12 @@ ged_clipper_load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptyp
 }
 
 void
-ged_clipper_load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polygons *subj) 
+ged_polyclip_load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polygons *subj) 
 {
     register size_t i;
 
     for (i = 0; i < subj->gp_num_polygons; ++i)
-	ged_clipper_load_polygon(clipper, ptype, &subj->gp_polygon[i]);
+	ged_polyclip_load_polygon(clipper, ptype, &subj->gp_polygon[i]);
 }
 
 
@@ -70,7 +73,7 @@ ged_clipper_load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType pty
  * Process/extract the clipper_polys into a ged_polygon.
  */
 ged_polygon *
-ged_clipper_extract(ClipperLib::ExPolygons &clipper_polys)
+ged_polyclip_extract(ClipperLib::ExPolygons &clipper_polys)
 {
     register size_t i, j, k, n;
     size_t num_contours = 0;
@@ -138,10 +141,10 @@ ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip)
     /* need the inverse of the matrix above to put things back after clipping */
 
     /* Load subject polygon into clipper */
-    ged_clipper_load_polygon(clipper, ClipperLib::ptSubject, subj);
+    ged_polyclip_load_polygon(clipper, ClipperLib::ptSubject, subj);
 
     /* Load clip polygon into clipper */
-    ged_clipper_load_polygon(clipper, ClipperLib::ptClip, clip);
+    ged_polyclip_load_polygon(clipper, ClipperLib::ptClip, clip);
 
     /* Convert op from BRL-CAD to Clipper */
     switch (op) {
@@ -162,7 +165,7 @@ ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip)
     /* Clip'em */
     clipper.Execute(ctOp, result_clipper_polys, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
 
-    return ged_clipper_extract(result_clipper_polys);
+    return ged_polyclip_extract(result_clipper_polys);
 }
 
 
@@ -179,10 +182,10 @@ ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip)
     /* need the inverse of the matrix above to put things back after clipping */
 
     /* Load subject polygons into clipper */
-    ged_clipper_load_polygons(clipper, ClipperLib::ptSubject, subj);
+    ged_polyclip_load_polygons(clipper, ClipperLib::ptSubject, subj);
 
     /* Load clip polygons into clipper */
-    ged_clipper_load_polygons(clipper, ClipperLib::ptClip, clip);
+    ged_polyclip_load_polygons(clipper, ClipperLib::ptClip, clip);
 
     /* Convert op from BRL-CAD to Clipper */
     switch (op) {
@@ -203,7 +206,7 @@ ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip)
     /* Clip'em */
     clipper.Execute(ctOp, result_clipper_polys, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
 
-    return ged_clipper_extract(result_clipper_polys);
+    return ged_polyclip_extract(result_clipper_polys);
 }
 
 
