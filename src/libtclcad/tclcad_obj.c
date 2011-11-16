@@ -998,7 +998,7 @@ static struct to_cmdtab to_cmds[] = {
     {"v2m_point",	"x y z", 5, to_view_func, ged_v2m_point},
     {"vdraw",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_vdraw},
     {"version",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_version},
-    {"view",	"quat|ypr|aet|center|eye|size [args]", 3, to_view_func_plus, ged_view},
+    {"view",	"quat|ypr|aet|center|eye|size [args]", 3, to_view_func_plus, ged_view_func},
     {"view_axes",	"vname [args]", TO_UNLIMITED, to_view_axes, GED_FUNC_PTR_NULL},
     {"view_callback",	"vname [args]", TO_UNLIMITED, to_view_callback, GED_FUNC_PTR_NULL},
     {"view_win_size",	"[s] | [x y]", 4, to_view_win_size, GED_FUNC_PTR_NULL},
