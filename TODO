@@ -18,31 +18,17 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* ship it!
+* test illuminate (e.g. oed) + Z, report of crash (on Windows)
+
+* fix bottie crash on 32b builds
+
+* include deprecation output when creating bspline/poly/hf primitives
+
+* include deprecation statements in the autotools build system output
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
-
-* implement some means (perhaps glint) to check a .g file for
-  duplicate region IDs and material inconsistencies.  perhaps exposed
-  as a new command, it should take an assembly/comb name as input,
-  walk the tree, and report duplicates.  if no arg, it walks all
-  top-level objects but processes them independently and only reports
-  sub-paths once (so you don't get the same object repeatedly reported
-  for all N top-level copies).  in the output, group together regions
-  with same and different material properties together:
-
-DUPLICATE ID NUMBERS
-comp.r1 ID 1234
-comp.r2 ID 1234
-
-DUPLICATE ID NUMBERS WITH DIFFERENT MATERIAL PROPERTIES
-comp.r3 ID 5678 material code 1 LOS 50
-comp.r4 ID 5678 material code 5 LOS 75
-
-
-* test illuminate (e.g. oed) + Z, report of crash (on Windows)
 
 * fix 64b detection across platforms. Fix rhel 32/64 confusion
 
@@ -67,17 +53,29 @@ comp.r4 ID 5678 material code 5 LOS 75
 * eliminate dbi_filepath (perhaps replace with dbi_filedir) as we
   shouldn't need to search.  we were told where the database was.
 
-* fix bottie crash on 32b builds
-
 * resolve bot bin sort optimization crash, disabled during release
-
-* include deprecation output when creating bspline/poly/hf primitives
-
-* include deprecation statements in the autotools build system output
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* implement some means (perhaps glint) to check a .g file for
+  duplicate region IDs and material inconsistencies.  perhaps exposed
+  as a new command, it should take an assembly/comb name as input,
+  walk the tree, and report duplicates.  if no arg, it walks all
+  top-level objects but processes them independently and only reports
+  sub-paths once (so you don't get the same object repeatedly reported
+  for all N top-level copies).  in the output, group together regions
+  with same and different material properties together:
+
+DUPLICATE ID NUMBERS
+comp.r1 ID 1234
+comp.r2 ID 1234
+
+DUPLICATE ID NUMBERS WITH DIFFERENT MATERIAL PROPERTIES
+comp.r3 ID 5678 material code 1 LOS 50
+comp.r4 ID 5678 material code 5 LOS 75
+
 
 * provide pkgIndex.tcl files for bu, bn, rt, fb, dm so we can properly
   package require the libs without an explicit 'load'
