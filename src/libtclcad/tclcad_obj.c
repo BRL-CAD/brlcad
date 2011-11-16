@@ -6136,13 +6136,23 @@ to_mouse_poly_rect(struct ged *gedp,
     inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
     fx = x * inv_width * 2.0 - 1.0;
     fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
-    VSET(v_pt, fx, fy, 1.0);
-    MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
 
     bu_vls_init(&plist);
-    bu_vls_printf(&plist, "{ {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} }",
-		  V3ARGS(gdpsp->gdps_prev_point), gdpsp->gdps_prev_point[X], m_pt[Y], m_pt[Z], V3ARGS(m_pt),
-		  m_pt[X], gdpsp->gdps_prev_point[Y], gdpsp->gdps_prev_point[Z]);
+
+    MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, gdpsp->gdps_prev_point);
+    bu_vls_printf(&plist, "{ {%lf %lf %lf} ",  V3ARGS(m_pt));
+
+    VSET(v_pt, gdpsp->gdps_prev_point[X], fy, 1.0);
+    MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
+    bu_vls_printf(&plist, "{%lf %lf %lf} ",  V3ARGS(m_pt));
+
+    VSET(v_pt, fx, fy, 1.0);
+    MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
+    bu_vls_printf(&plist, "{%lf %lf %lf} ",  V3ARGS(m_pt));
+
+    VSET(v_pt, fx, gdpsp->gdps_prev_point[Y], 1.0);
+    MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
+    bu_vls_printf(&plist, "{%lf %lf %lf} }",  V3ARGS(m_pt));
 		  
     bu_vls_init(&i_vls);
     bu_vls_printf(&i_vls, "%llu", gdpsp->gdps_curr_polygon);
@@ -7844,7 +7854,7 @@ to_poly_rect_mode(struct ged *gedp,
     fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
     VSET(v_pt, fx, fy, 1.0);
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
-    VMOVE(gdpsp->gdps_prev_point, m_pt);
+    VMOVE(gdpsp->gdps_prev_point, v_pt);
 
     bu_vls_init(&plist);
     bu_vls_printf(&plist, "{ {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} }",
