@@ -402,8 +402,9 @@ nmg_construct_edgeuse(void *parent, const struct edgeuse *original, genptr_t *st
     if (original->eumate_p != NULL) {
         ret->eumate_p = structArray[original->eumate_p->index];
 
-        // because it's tricky to choose the right parent for the mate
-        // wait until it's created and set eumate_p afterwards
+        /* because it's tricky to choose the right parent for the mate
+	 * wait until it's created and set eumate_p afterwards
+	 */
         if (ret->eumate_p != NULL)
             ret->eumate_p->eumate_p = ret;
     }
@@ -411,8 +412,9 @@ nmg_construct_edgeuse(void *parent, const struct edgeuse *original, genptr_t *st
     if (original->radial_p != NULL) {
         ret->radial_p = structArray[original->radial_p->index];
 
-        // because it's tricky to choose the right parent
-        // wait until it's created and set it afterwards
+        /* because it's tricky to choose the right parent wait until
+         * it's created and set it afterwards
+	 */
         if (ret->radial_p != NULL)
             ret->radial_p->radial_p = ret;
     }
@@ -520,8 +522,9 @@ nmg_construct_loopuse(void *parent, const struct loopuse *original, genptr_t *st
     if (original->lumate_p != NULL) {
         ret->lumate_p = structArray[original->lumate_p->index];
 
-        // because it's tricky to choose the right parent for the mate
-        // wait until it's created and set eumate_p afterwards
+        /* because it's tricky to choose the right parent for the mate
+         * wait until it's created and set eumate_p afterwards
+	 */
         if (ret->lumate_p != NULL)
             ret->lumate_p->lumate_p = ret;
     }
