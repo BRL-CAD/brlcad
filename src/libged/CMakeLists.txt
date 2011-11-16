@@ -63,17 +63,16 @@ set(LIBGED_SOURCES
     cc.c
     center.c
     clip.c
-    clipper.cpp
     clone.c
     color.c
     comb.c
-    combmem.c
     comb_color.c
     comb_std.c
+    combmem.c
     concat.c
     copy.c
-    copymat.c
     copyeval.c
+    copymat.c
     cpi.c
     dbip.c
     debugbu.c
@@ -97,10 +96,10 @@ set(LIBGED_SOURCES
     edmater.c
     edpipe.c
     erase.c
+    exists.c
     expand.c
     eye.c
     eye_pos.c
-    exists.c
     facetize.c
     fb2pix.c
     find.c
@@ -180,6 +179,7 @@ set(LIBGED_SOURCES
     pmat.c
     pmodel2view.c
     png.c
+    polyclip.cpp
     pov.c
     prcolor.c
     prefix.c

@@ -3,6 +3,7 @@ lib_LTLIBRARIES = libged.la
 noinst_LTLIBRARIES = libged_nil.la
 
 libged_nil_la_SOURCES = \
+	${top_srcdir}/src/other/clipper/clipper.cpp \
 	3ptarb.c \
 	adc.c \
 	adjust.c \
@@ -37,7 +38,6 @@ libged_nil_la_SOURCES = \
 	cc.c \
 	center.c \
 	clip.c \
-	clipper.cpp \
 	clone.c \
 	color.c \
 	comb.c \
@@ -154,6 +154,7 @@ libged_nil_la_SOURCES = \
 	pmat.c \
 	pmodel2view.c \
 	png.c \
+	polyclip.cpp \
 	pov.c \
 	prcolor.c \
 	prefix.c \
