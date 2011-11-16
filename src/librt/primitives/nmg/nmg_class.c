@@ -734,8 +734,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
     try = 0;
 retry:
     {
-	const point_t *pp = &nmg_good_dirs[try];
-	VMOVE(projection_dir, *pp);
+	VMOVE(projection_dir, nmg_good_dirs[try]);
     }
 
     if (++try > 10) {
