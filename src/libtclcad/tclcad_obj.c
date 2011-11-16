@@ -9152,7 +9152,8 @@ go_dm_draw_arrows(struct dm *dmp, struct ged_data_arrow_state *gdasp)
 
     DM_DRAW_LINES_3D(dmp,
 		     gdasp->gdas_num_points,
-		     gdasp->gdas_points);
+		     gdasp->gdas_points,
+		     0);
 
     for (i = 0; i < gdasp->gdas_num_points; i += 2) {
 	point_t points[16];
@@ -9202,7 +9203,7 @@ go_dm_draw_arrows(struct dm *dmp, struct ged_data_arrow_state *gdasp)
 	VMOVE(points[14], a_pt4);
 	VMOVE(points[15], a_pt1);
 
-	DM_DRAW_LINES_3D(dmp, 16, points);
+	DM_DRAW_LINES_3D(dmp, 16, points, 0);
     }
 
     /* Restore the line attributes */
@@ -9255,7 +9256,8 @@ go_dm_draw_lines(struct dm *dmp, struct ged_data_line_state *gdlsp)
 
     DM_DRAW_LINES_3D(dmp,
 		     gdlsp->gdls_num_points,
-		     gdlsp->gdls_points);
+		     gdlsp->gdls_points,
+		     0);
 
     /* Restore the line attributes */
     DM_SET_LINE_ATTR(dmp, saveLineWidth, saveLineStyle);
