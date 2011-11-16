@@ -5969,7 +5969,6 @@ to_mouse_poly_circ(struct ged *gedp,
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
-    int ret;
     int ac;
     char *av[7];
     int x, y;
@@ -6067,8 +6066,7 @@ to_mouse_poly_circ(struct ged *gedp,
     bu_vls_free(&plist);
     bu_vls_free(&i_vls);
 
-    if (ret == GED_OK)
-	to_refresh_view(gdvp);
+    to_refresh_view(gdvp);
 
     return GED_OK;
 }
@@ -6081,7 +6079,6 @@ to_mouse_poly_rect(struct ged *gedp,
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
-    int ret;
     int ac;
     char *av[7];
     int x, y;
@@ -6158,8 +6155,7 @@ to_mouse_poly_rect(struct ged *gedp,
     bu_vls_free(&plist);
     bu_vls_free(&i_vls);
 
-    if (ret == GED_OK)
-	to_refresh_view(gdvp);
+    to_refresh_view(gdvp);
 
     return GED_OK;
 }
