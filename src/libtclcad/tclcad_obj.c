@@ -3455,7 +3455,12 @@ to_data_polys(struct ged *gedp,
 	    op > gctXor)
 	    goto bad;
 
-	gpp = ged_clip_polygon((GedClipType)op, &gdpsp->gdps_polygons.gp_polygon[i], &gdpsp->gdps_polygons.gp_polygon[j]);
+	gpp = ged_clip_polygon((GedClipType)op,
+			       &gdpsp->gdps_polygons.gp_polygon[i],
+			       &gdpsp->gdps_polygons.gp_polygon[j],
+			       1000000,
+			       gdpsp->gdps_model2view,
+			       gdpsp->gdps_view2model);
 
 #if 0
 	/* Append the newly clipped polygon to the array of polygons. */
@@ -7712,6 +7717,9 @@ to_poly_circ_mode(struct ged *gedp,
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
+    gdpsp->gdps_model2view = gdvp->gdv_view->gv_model2view;
+    gdpsp->gdps_view2model = gdvp->gdv_view->gv_view2model;
+
     gedp->ged_gvp = gdvp->gdv_view;
 
     if (sscanf(argv[2], "%d", &x) != 1 ||
@@ -7722,7 +7730,7 @@ to_poly_circ_mode(struct ged *gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = gdvp->gdv_dmp->dm_height - y;
-    gdvp->gdv_view->gv_mode = TCLCAD_POLY_RECTANGLE_MODE;
+    gdvp->gdv_view->gv_mode = TCLCAD_POLY_CIRCLE_MODE;
 
     inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
     inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
@@ -7813,6 +7821,9 @@ to_poly_rect_mode(struct ged *gedp,
 	gdpsp = &gdvp->gdv_view->gv_sdata_polygons;
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
+
+    gdpsp->gdps_model2view = gdvp->gdv_view->gv_model2view;
+    gdpsp->gdps_view2model = gdvp->gdv_view->gv_view2model;
 
     gedp->ged_gvp = gdvp->gdv_view;
 

@@ -359,6 +359,8 @@ typedef struct {
     size_t		gdps_curr_polygon;
     point_t		gdps_prev_point;
     GedClipType		gdps_clip_type;
+    matp_t		gdps_view2model;
+    matp_t		gdps_model2view;
     ged_polygons	gdps_polygons;
 } ged_data_polygon_state;
 
@@ -2402,8 +2404,8 @@ GED_EXPORT extern int ged_zap(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_zoom(struct ged *gedp, int argc, const char *argv[]);
 
 
-GED_EXPORT extern ged_polygon *ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip);
-GED_EXPORT extern ged_polygon *ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip);
+GED_EXPORT extern ged_polygon *ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model);
+GED_EXPORT extern ged_polygon *ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip, fastf_t sf, matp_t model2view, matp_t view2model);
 
 
 

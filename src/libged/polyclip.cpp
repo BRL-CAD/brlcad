@@ -41,18 +41,22 @@ typedef struct
 
 
 static void
-load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polygon *gpoly) 
+load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polygon *gpoly, fastf_t sf, matp_t mat)
 {
     register size_t j, k, n;
     ClipperLib::Polygon curr_poly;
-    fastf_t sf = 1000;
 
     for (j = 0; j < gpoly->gp_num_contours; ++j) {
 	n = gpoly->gp_contour[j].gpc_num_points;
 	curr_poly.resize(n);
 	for (k = 0; k < n; k++) {
-	    curr_poly[k].X = (ClipperLib::long64)(gpoly->gp_contour[j].gpc_point[k][0] * sf);
-	    curr_poly[k].Y = (ClipperLib::long64)(gpoly->gp_contour[j].gpc_point[k][1] * sf);
+	    point_t vpoint;
+
+ 	    /* Convert to view coordinates */
+ 	    MAT4X3PNT(vpoint, mat, gpoly->gp_contour[j].gpc_point[k]);
+ 
+ 	    curr_poly[k].X = (ClipperLib::long64)(vpoint[X] * sf);
+ 	    curr_poly[k].Y = (ClipperLib::long64)(vpoint[Y] * sf);
 	}
 
 	clipper.AddPolygon(curr_poly, ptype);
@@ -60,12 +64,12 @@ load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polyg
 }
 
 static void
-load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polygons *subj) 
+load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polygons *subj, fastf_t sf, matp_t mat)
 {
     register size_t i;
 
     for (i = 0; i < subj->gp_num_polygons; ++i)
-	load_polygon(clipper, ptype, &subj->gp_polygon[i]);
+	load_polygon(clipper, ptype, &subj->gp_polygon[i], sf, mat);
 }
 
 
@@ -73,12 +77,11 @@ load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_poly
  * Process/extract the clipper_polys into a ged_polygon.
  */
 static ged_polygon *
-extract(ClipperLib::ExPolygons &clipper_polys)
+extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat)
 {
     register size_t i, j, k, n;
     size_t num_contours = 0;
     ged_polygon *result_poly;
-    fastf_t sf = 0.001;
 
     /* Count up the number of contours. */
     for (i = 0; i < clipper_polys.size(); ++i)
@@ -96,6 +99,8 @@ extract(ClipperLib::ExPolygons &clipper_polys)
 
     n = 0;
     for (i = 0; i < clipper_polys.size(); ++i) {
+	point_t vpoint;
+
 	result_poly->gp_hole[n] = 0;
 	result_poly->gp_contour[n].gpc_num_points = clipper_polys[i].outer.size();
 	result_poly->gp_contour[n].gpc_point =
@@ -103,8 +108,10 @@ extract(ClipperLib::ExPolygons &clipper_polys)
 				 sizeof(point_t), "gpc_point");
 
 	for (j = 0; j < result_poly->gp_contour[n].gpc_num_points; ++j) {
-	    result_poly->gp_contour[n].gpc_point[j][0] = (fastf_t)(clipper_polys[i].outer[j].X) * sf;
-	    result_poly->gp_contour[n].gpc_point[j][1] = (fastf_t)(clipper_polys[i].outer[j].Y) * sf;
+	    VSET(vpoint, (fastf_t)(clipper_polys[i].outer[j].X) * sf, (fastf_t)(clipper_polys[i].outer[j].Y) * sf, 1.0);
+
+	    /* Convert to model coordinates */
+	    MAT4X3PNT(result_poly->gp_contour[n].gpc_point[j], mat, vpoint);
 	}
 
 	++n;
@@ -116,8 +123,10 @@ extract(ClipperLib::ExPolygons &clipper_polys)
 				     sizeof(point_t), "gpc_point");
 
 	    for (k = 0; k < result_poly->gp_contour[n].gpc_num_points; ++k) {
-		result_poly->gp_contour[n].gpc_point[k][0] = (fastf_t)(clipper_polys[i].holes[j][k].X) * sf;
-		result_poly->gp_contour[n].gpc_point[k][1] = (fastf_t)(clipper_polys[i].holes[j][k].Y) * sf;
+		VSET(vpoint, (fastf_t)(clipper_polys[i].holes[j][k].X) * sf, (fastf_t)(clipper_polys[i].holes[j][k].Y) * sf, 1.0);
+
+		/* Convert to model coordinates */
+		MAT4X3PNT(result_poly->gp_contour[n].gpc_point[k], mat, vpoint);
 	    }
 
 	    ++n;
@@ -129,8 +138,9 @@ extract(ClipperLib::ExPolygons &clipper_polys)
 
 
 ged_polygon *
-ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip)
+ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model)
 {
+    fastf_t inv_sf;
     ClipperLib::Clipper clipper;
     ClipperLib::Polygon curr_poly;
     ClipperLib::ExPolygons result_clipper_polys;
@@ -141,10 +151,10 @@ ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip)
     /* need the inverse of the matrix above to put things back after clipping */
 
     /* Load subject polygon into clipper */
-    load_polygon(clipper, ClipperLib::ptSubject, subj);
+    load_polygon(clipper, ClipperLib::ptSubject, subj, sf, model2view);
 
     /* Load clip polygon into clipper */
-    load_polygon(clipper, ClipperLib::ptClip, clip);
+    load_polygon(clipper, ClipperLib::ptClip, clip, sf, model2view);
 
     /* Convert op from BRL-CAD to Clipper */
     switch (op) {
@@ -165,13 +175,15 @@ ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip)
     /* Clip'em */
     clipper.Execute(ctOp, result_clipper_polys, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
 
-    return extract(result_clipper_polys);
+    inv_sf = 1.0/sf;
+    return extract(result_clipper_polys, inv_sf, view2model);
 }
 
 
 ged_polygon *
-ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip)
+ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip, fastf_t sf, matp_t model2view, matp_t view2model)
 {
+    fastf_t inv_sf;
     ClipperLib::Clipper clipper;
     ClipperLib::Polygon curr_poly;
     ClipperLib::ExPolygons result_clipper_polys;
@@ -182,10 +194,10 @@ ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip)
     /* need the inverse of the matrix above to put things back after clipping */
 
     /* Load subject polygons into clipper */
-    load_polygons(clipper, ClipperLib::ptSubject, subj);
+    load_polygons(clipper, ClipperLib::ptSubject, subj, sf, model2view);
 
     /* Load clip polygons into clipper */
-    load_polygons(clipper, ClipperLib::ptClip, clip);
+    load_polygons(clipper, ClipperLib::ptClip, clip, sf, model2view);
 
     /* Convert op from BRL-CAD to Clipper */
     switch (op) {
@@ -206,7 +218,8 @@ ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip)
     /* Clip'em */
     clipper.Execute(ctOp, result_clipper_polys, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
 
-    return extract(result_clipper_polys);
+    inv_sf = 1.0/sf;
+    return extract(result_clipper_polys, inv_sf, view2model);
 }
 
 
