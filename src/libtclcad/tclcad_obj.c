@@ -729,10 +729,6 @@ static struct tclcad_obj *current_top = TCLCAD_OBJ_NULL;
 #define TO_MAX_RT_ARGS 64
 #define TO_UNLIMITED -1
 
-/*XXXX remove this crap */
-point_t TMP_M_PT;
-size_t TMP_CURRENT_POLYGON;
-
 struct to_cmdtab {
     char *to_name;
     char *to_usage;
@@ -6037,15 +6033,15 @@ to_mouse_poly_circ(struct ged *gedp,
 	register int nsegs, n;
 
 	VSET(v_pt, fx, fy, 1.0);
-	VSUB2(vdiff, v_pt, TMP_M_PT);
+	VSUB2(vdiff, v_pt, gdpsp->gdps_prev_point);
 	r = MAGNITUDE(vdiff);
 	nsegs = 30;
 	arc = 360.0 / nsegs;
 	for (n = 0; n < nsegs; ++n) {
 	    fastf_t ang = n * arc;
 
-	    curr_fx = cos(ang*bn_degtorad) * r + TMP_M_PT[X];
-	    curr_fy = sin(ang*bn_degtorad) * r + TMP_M_PT[Y];
+	    curr_fx = cos(ang*bn_degtorad) * r + gdpsp->gdps_prev_point[X];
+	    curr_fy = sin(ang*bn_degtorad) * r + gdpsp->gdps_prev_point[Y];
 	    VSET(v_pt, curr_fx, curr_fy, 1.0);
 	    MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
 	    bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
@@ -6056,7 +6052,7 @@ to_mouse_poly_circ(struct ged *gedp,
     
 
     bu_vls_init(&i_vls);
-    bu_vls_printf(&i_vls, "%d", TMP_CURRENT_POLYGON);
+    bu_vls_printf(&i_vls, "%llu", gdpsp->gdps_curr_polygon);
 
     gedp->ged_gvp = gdvp->gdv_view;
     ac = 5;
@@ -6143,11 +6139,11 @@ to_mouse_poly_rect(struct ged *gedp,
 
     bu_vls_init(&plist);
     bu_vls_printf(&plist, "{ {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} }",
-		  V3ARGS(TMP_M_PT), TMP_M_PT[X], m_pt[Y], m_pt[Z], V3ARGS(m_pt),
-		  m_pt[X], TMP_M_PT[Y], TMP_M_PT[Z]);
+		  V3ARGS(gdpsp->gdps_prev_point), gdpsp->gdps_prev_point[X], m_pt[Y], m_pt[Z], V3ARGS(m_pt),
+		  m_pt[X], gdpsp->gdps_prev_point[Y], gdpsp->gdps_prev_point[Z]);
 		  
     bu_vls_init(&i_vls);
-    bu_vls_printf(&i_vls, "%d", TMP_CURRENT_POLYGON);
+    bu_vls_printf(&i_vls, "%llu", gdpsp->gdps_curr_polygon);
 
     gedp->ged_gvp = gdvp->gdv_view;
     ac = 5;
@@ -7739,7 +7735,7 @@ to_poly_circ_mode(struct ged *gedp,
     fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
     VSET(v_pt, fx, fy, 1.0);
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
-    VMOVE(TMP_M_PT, v_pt);
+    VMOVE(gdpsp->gdps_prev_point, v_pt);
 
     bu_vls_init(&plist);
     bu_vls_printf(&plist, "{ {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} }",
@@ -7752,9 +7748,9 @@ to_poly_circ_mode(struct ged *gedp,
     av[4] = (char *)0;
 
     if (gdpsp->gdps_polygons.gp_num_polygons == 0)
-	TMP_CURRENT_POLYGON = 0;
+	gdpsp->gdps_curr_polygon = 0;
     else
-	TMP_CURRENT_POLYGON = 1;
+	gdpsp->gdps_curr_polygon = 1;
 
     (void)to_data_polys(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
     bu_vls_free(&plist);
@@ -7841,7 +7837,7 @@ to_poly_rect_mode(struct ged *gedp,
     fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
     VSET(v_pt, fx, fy, 1.0);
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
-    VMOVE(TMP_M_PT, m_pt);
+    VMOVE(gdpsp->gdps_prev_point, m_pt);
 
     bu_vls_init(&plist);
     bu_vls_printf(&plist, "{ {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} }",
@@ -7854,9 +7850,9 @@ to_poly_rect_mode(struct ged *gedp,
     av[4] = (char *)0;
 
     if (gdpsp->gdps_polygons.gp_num_polygons == 0)
-	TMP_CURRENT_POLYGON = 0;
+	gdpsp->gdps_curr_polygon = 0;
     else
-	TMP_CURRENT_POLYGON = 1;
+	gdpsp->gdps_curr_polygon = 1;
 
     (void)to_data_polys(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
     bu_vls_free(&plist);

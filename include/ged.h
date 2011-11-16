@@ -356,6 +356,8 @@ typedef struct {
     int			gdps_color[3];
     int			gdps_line_width;    	/* in pixels */
     int			gdps_line_style;
+    size_t		gdps_curr_polygon;
+    point_t		gdps_prev_point;
     GedClipType		gdps_clip_type;
     ged_polygons	gdps_polygons;
 } ged_data_polygon_state;
