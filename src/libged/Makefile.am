@@ -37,6 +37,7 @@ libged_nil_la_SOURCES = \
 	cc.c \
 	center.c \
 	clip.c \
+	clipper.cpp \
 	clone.c \
 	color.c \
 	comb.c \
@@ -276,7 +277,8 @@ AM_CFLAGS = ${STRICT_FLAGS}
 AM_CPPFLAGS = \
 	${PNG_CPPFLAGS} \
 	${REGEX_CPPFLAGS} \
-	${TCL_CPPFLAGS}
+	${TCL_CPPFLAGS} \
+	-I${top_srcdir}/src/other/clipper
 
 noinst_HEADERS = \
 	ged_private.h \
