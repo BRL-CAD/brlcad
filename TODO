@@ -79,6 +79,9 @@ comp.r4 ID 5678 material code 5 LOS 75
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* provide pkgIndex.tcl files for bu, bn, rt, fb, dm so we can properly
+  package require the libs without an explicit 'load'
+
 * struct rt_bot_internal should be using "size_t *" instead of "int *"
   for the faces and face_normals members
 
