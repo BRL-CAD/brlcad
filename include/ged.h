@@ -2286,7 +2286,7 @@ GED_EXPORT extern int ged_version(struct ged *gedp, int argc, const char *argv[]
 /**
  * Get/set view attributes
  */
-GED_EXPORT extern int ged_view(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_view_func(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Convert view coordinates to grid coordinates.

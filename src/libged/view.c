@@ -34,7 +34,7 @@
 
 
 int
-ged_view(struct ged *gedp, int argc, const char *argv[])
+ged_view_func(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "quat|ypr|aet|center|eye|size [args]";
 

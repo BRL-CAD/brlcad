@@ -360,7 +360,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"v2m_point", cmd_ged_plain_wrapper, ged_v2m_point},
     {"vars", f_set, GED_FUNC_PTR_NULL},
     {"vdraw", cmd_ged_plain_wrapper, ged_vdraw},
-    {"view", cmd_ged_view_wrapper, ged_view},
+    {"view", cmd_ged_view_wrapper, ged_view_func},
     {"view_ring", f_view_ring, GED_FUNC_PTR_NULL},
 #if 0
     {"viewget", cmd_viewget, GED_FUNC_PTR_NULL},
