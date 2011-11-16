@@ -66,10 +66,6 @@ THIRD_PARTY_EXECUTABLE(re2c re2c)
 # compiled
 DISTCHECK_IGNORE_ITEM(boost)
 
-# Ignore clipper until we're ready to tie it in (Bob's doing some work with
-# it, but needs to check in some changes to it).
-DISTCHECK_IGNORE_ITEM(clipper)
-
 # The incrtTcl subdirectory isn't directly referenced, but its subdirectories
 # are used - mark incrTcl as ignored
 DISTCHECK_IGNORE_ITEM(incrTcl)
@@ -425,6 +421,16 @@ IF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 ELSE(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 	DISTCHECK_IGNORE_ITEM(step)
 ENDIF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
+
+
+# Clipper polygon clipping library - for now, we're going to use our copy
+ADD_SUBDIRECTORY(clipper)
+INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/clipper.dist)
+DISTCHECK_IGNORE(clipper clipper_ignore_files)
+SET(CLIPPER_LIBRARY "clipper" CACHE STRING "Clipper library" FORCE)
+SET(CLIPPER_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/clipper" CACHE STRING "Directory containing clipper header" FORCE)
+MARK_AS_ADVANCED(CLIPPER_LIBRARY)
+MARK_AS_ADVANCED(CLIPPER_INCLUDE_DIR)
 
 # The jama/tnt headers are installed by default - BRL-CAD requires the altered headers
 # to build (I think?)

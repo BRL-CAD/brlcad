@@ -340,7 +340,12 @@ include_directories(
 	${REGEX_INCLUDE_DIR}
 	)
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb librt libfb libbu libanalyze ${LIBGED_CMD_LIBS} ${REGEX_LIBRARY} ${WINSOCK_LIB} ${M_LIBRARY}")
+# local includes
+include_directories(
+	${CLIPPER_INCLUDE_DIR}
+	)
+
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb librt libfb libbu libanalyze ${LIBGED_CMD_LIBS} ${REGEX_LIBRARY} ${WINSOCK_LIB} ${CLIPPER_LIBRARY} ${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 SET(ged_ignore_files
