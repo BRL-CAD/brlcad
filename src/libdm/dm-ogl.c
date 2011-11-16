@@ -105,7 +105,7 @@ HIDDEN int ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
 HIDDEN int ogl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 HIDDEN int ogl_drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2);
 HIDDEN int ogl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
-HIDDEN int ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points);
+HIDDEN int ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag);
 HIDDEN int ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
 HIDDEN int ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp);
 HIDDEN int ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp);
@@ -1812,7 +1812,7 @@ ogl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
  *
  */
 HIDDEN int
-ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points)
+ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag)
 {
     int i;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
@@ -1838,7 +1838,7 @@ ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points)
     }
 
     /* Must be an even number of points */
-    if (npoints%2)
+    if (!sflag && npoints%2)
 	return TCL_OK;
 
     if (dmp->dm_light) {
@@ -1851,9 +1851,14 @@ ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points)
 	    glDisable(GL_BLEND);
     }
 
-    glBegin(GL_LINES);
+    if (sflag)
+	glBegin(GL_LINE_STRIP);
+    else
+	glBegin(GL_LINES);
+
     for (i = 0; i < npoints; ++i)
 	glVertex3dv(points[i]);
+
     glEnd();
 
     return TCL_OK;

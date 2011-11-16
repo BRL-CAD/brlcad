@@ -1361,7 +1361,7 @@ wgl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
  *
  */
 HIDDEN int
-wgl_drawLines3D(struct dm *dmp, int npoints, point_t *points)
+wgl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag)
 {
     register int i;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
@@ -1387,7 +1387,7 @@ wgl_drawLines3D(struct dm *dmp, int npoints, point_t *points)
     }
 
     /* Must be an even number of points */
-    if (npoints%2)
+    if (!sflag && npoints%2)
 	return TCL_OK;
 
     if (dmp->dm_light) {
@@ -1400,9 +1400,14 @@ wgl_drawLines3D(struct dm *dmp, int npoints, point_t *points)
 	    glDisable(GL_BLEND);
     }
 
-    glBegin(GL_LINES);
+    if (sflag)
+	glBegin(GL_LINE_STRIP);
+    else
+	glBegin(GL_LINES);
+
     for (i = 0; i < npoints; ++i)
 	glVertex3dv(points[i]);
+
     glEnd();
 
     return TCL_OK;

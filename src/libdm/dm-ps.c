@@ -415,7 +415,7 @@ ps_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 
 
 HIDDEN int
-ps_drawLines3D(struct dm *dmp, int npoints, point_t *points)
+ps_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
 	return TCL_ERROR;
