@@ -39,7 +39,6 @@
 #include "raytrace.h"
 #include "fbserv_obj.h"
 
-
 __BEGIN_DECLS
 
 #ifndef GED_EXPORT
@@ -334,6 +333,33 @@ struct ged_data_line_state {
     point_t   *gdls_points;		/* in model coordinates */
 };
 
+typedef enum { gctUnion, gctDifference, gctIntersection, gctXor } GedClipType;
+
+typedef struct {
+    size_t    gpc_num_points;
+    point_t   *gpc_point;		/* in model coordinates */
+} ged_poly_contour;
+
+typedef struct {
+    size_t		gp_num_contours;
+    int			*gp_hole;
+    ged_poly_contour	*gp_contour;
+} ged_polygon;
+
+typedef struct {
+    size_t	gp_num_polygons;
+    ged_polygon	*gp_polygon;
+} ged_polygons;
+
+typedef struct {
+    int			gdps_draw;
+    int			gdps_color[3];
+    int			gdps_line_width;    	/* in pixels */
+    int			gdps_line_style;
+    GedClipType		gdps_clip_type;
+    ged_polygons	gdps_polygons;
+} ged_data_polygon_state;
+
 struct ged_grid_state {
     int		ggs_draw;		/* draw grid */
     int		ggs_snap;		/* snap to grid */
@@ -473,10 +499,12 @@ struct ged_view {
     struct ged_data_axes_state 	gv_data_axes;
     struct ged_data_label_state gv_data_labels;
     struct ged_data_line_state  gv_data_lines;
+    ged_data_polygon_state 	gv_data_polygons;
     struct ged_data_arrow_state	gv_sdata_arrows;
     struct ged_data_axes_state 	gv_sdata_axes;
     struct ged_data_label_state gv_sdata_labels;
     struct ged_data_line_state 	gv_sdata_lines;
+    ged_data_polygon_state 	gv_sdata_polygons;
     struct ged_grid_state 	gv_grid;
     struct ged_other_state 	gv_center_dot;
     struct ged_other_state 	gv_prim_labels;
@@ -2370,6 +2398,10 @@ GED_EXPORT extern int ged_zap(struct ged *gedp, int argc, const char *argv[]);
  * Zoom the view in or out.
  */
 GED_EXPORT extern int ged_zoom(struct ged *gedp, int argc, const char *argv[]);
+
+
+GED_EXPORT extern ged_polygon *ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip);
+GED_EXPORT extern ged_polygon *ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip);
 
 
 

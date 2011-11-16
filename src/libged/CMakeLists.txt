@@ -63,6 +63,7 @@ set(LIBGED_SOURCES
     cc.c
     center.c
     clip.c
+    clipper.cpp
     clone.c
     color.c
     comb.c
