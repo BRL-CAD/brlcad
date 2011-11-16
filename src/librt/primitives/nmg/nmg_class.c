@@ -52,12 +52,14 @@
 #include "plot3.h"
 
 
-extern int nmg_class_nothing_broken;
+#define MAX_DIR_TRYS 10
 
 /* XXX These should go the way of the dodo bird. */
 #define INSIDE 32
 #define ON_SURF 64
 #define OUTSIDE 128
+
+extern int nmg_class_nothing_broken;
 
 /* Structure for keeping track of how close a point/vertex is to
  * its potential neighbors.
@@ -589,7 +591,7 @@ again:
 
 
 /* Ray direction vectors for Jordan curve algorithm */
-static const point_t nmg_good_dirs[10] = {
+static const point_t nmg_good_dirs[MAX_DIR_TRYS] = {
 #if 1
     {3, 2, 1},	/* Normally the first dir */
 #else
@@ -637,7 +639,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
     vect_t region_diagonal;
     fastf_t region_diameter;
     int class = 0;
-    vect_t projection_dir;
+    vect_t projection_dir = VINIT_ZERO;
     int try=0;
     struct xray rp;
     fastf_t model_bb_max_width;
@@ -733,12 +735,14 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
     /* Choose an unlikely direction */
     try = 0;
 retry:
-    {
-	VMOVE(projection_dir, nmg_good_dirs[try]);
+    if (try < MAX_DIR_TRYS) {
+	projection_dir[X] = nmg_good_dirs[try][X];
+	projection_dir[Y] = nmg_good_dirs[try][Y];
+	projection_dir[Z] = nmg_good_dirs[try][Z];
     }
 
-    if (++try > 10) {
-	goto out; /* only nmg_good_dirs to try (10) */
+    if (++try >= MAX_DIR_TRYS) {
+	goto out; /* only nmg_good_dirs to try */
     }
 
     VUNITIZE(projection_dir);
