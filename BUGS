@@ -16,7 +16,9 @@ Recent Bugs
 -----------
 
 * TIE seems to be corrupting the application structure during shot().
-  see m1151 with ambient occlusion patch (butler)
+  see m1151 with ambient occlusion patch (butler).  may also be
+  ignoring the onehit flag and returning a hit for segments behind the
+  ray?  return value from shot() seems wrong.
 
 * report that running "attach X" and trying to draw something causes
   mged -c to crash.  verified in quick testing.
