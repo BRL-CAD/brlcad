@@ -156,6 +156,7 @@ package provide cadwidgets::Ged 1.0
 	method data_axes {args}
 	method data_labels {args}
 	method data_lines {args}
+	method data_polys {args}
 	method data_move {args}
 	method data_pick {args}
 	method dbconcat {args}
@@ -467,6 +468,7 @@ package provide cadwidgets::Ged 1.0
 	method sdata_axes {args}
 	method sdata_labels {args}
 	method sdata_lines {args}
+	method sdata_polys {args}
 	method search {args}
 	method select {args}
 	method set_coord {args}
@@ -541,6 +543,7 @@ package provide cadwidgets::Ged 1.0
 	method end_data_arrow {_pane}
 	method end_data_line {_pane}
 	method end_data_move {_pane}
+	method end_poly {_pane {_button 1}}
 	method end_view_measure {_pane _part1_button _part2_button}
 	method end_view_measure_part2 {_pane _button}
 	method end_view_rect {_pane {_button 1}}
@@ -562,6 +565,8 @@ package provide cadwidgets::Ged 1.0
 	method init_data_move {{_button 1}}
 	method init_data_pick {{_button 1}}
 	method init_find_pipept {_obj {_button 1} {_callback {}}}
+	method init_poly_circ {{_button 1}}
+	method init_poly_rect {{_button 1}}
 	method init_prepend_pipept {_obj {_button 1} {_callback {}}}
 	method init_view_bindings {{_type default}}
 	method init_view_center {{_button 1}}
@@ -1180,6 +1185,17 @@ package provide cadwidgets::Ged 1.0
 
     foreach dm {ur ul ll lr} {
 	eval $mGed data_lines $itk_component($dm) $args
+    }
+}
+
+::itcl::body cadwidgets::Ged::data_polys {args} {
+    set len [llength $args]
+    if {$len < 2} {
+	return [eval $mGed data_polys $itk_component($itk_option(-pane)) $args]
+    }
+
+    foreach dm {ur ul ll lr} {
+	eval $mGed data_polys $itk_component($dm) $args
     }
 }
 
@@ -2523,6 +2539,17 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
+::itcl::body cadwidgets::Ged::sdata_polys {args} {
+    set len [llength $args]
+    if {$len < 2} {
+	return [eval $mGed sdata_polys $itk_component($itk_option(-pane)) $args]
+    }
+
+    foreach dm {ur ul ll lr} {
+	eval $mGed sdata_polys $itk_component($dm) $args
+    }
+}
+
 ::itcl::body cadwidgets::Ged::search {args} {
     eval $mGed search $args
 }
@@ -3036,6 +3063,29 @@ package provide cadwidgets::Ged 1.0
     refresh_all
 }
 
+
+::itcl::body cadwidgets::Ged::end_poly {_pane {_button 1}} {
+    $mGed idle_mode $itk_component($_pane)
+
+#    # Add specific bindings to eliminate bleed through from the poly modes
+#    foreach dm {ur ul ll lr} {
+#	bind $itk_component($dm) <Control-ButtonRelease-$_button> "$mGed idle_mode $itk_component($dm); break"
+#	bind $itk_component($dm) <Shift-ButtonRelease-$_button> "$mGed idle_mode $itk_component($dm); break"
+#    }
+
+    if {[llength $mViewRectCallbacks] == 0} {
+	set plist [$mGed data_polys $itk_component($_pane) polygons]
+	if {[llength $plist] > 1} {
+	    $mGed data_polys $itk_component($_pane) clip 0 1
+	}
+    } else {
+	foreach callback $mViewRectCallbacks {
+	    catch {$callback [$mGed rselect $itk_component($_pane)]}
+	}
+    }
+}
+
+
 ::itcl::body cadwidgets::Ged::end_view_measure {_pane _part1_button _part2_button} {
     $mGed idle_mode $itk_component($_pane)
 
@@ -3326,6 +3376,24 @@ package provide cadwidgets::Ged 1.0
     foreach dm {ur ul ll lr} {
 	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_find_pipept $dm $_obj %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
+}
+
+::itcl::body cadwidgets::Ged::init_poly_circ {{_button 1}} {
+    measure_line_erase
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "$mGed poly_circ_mode $itk_component($dm) %x %y; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_poly $dm]; break"
+    }
+}
+
+::itcl::body cadwidgets::Ged::init_poly_rect {{_button 1}} {
+    measure_line_erase
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "$mGed poly_rect_mode $itk_component($dm) %x %y; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_poly $dm]; break"
     }
 }
 
