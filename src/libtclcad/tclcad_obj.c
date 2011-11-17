@@ -3458,7 +3458,7 @@ to_data_polys(struct ged *gedp,
 	gpp = ged_clip_polygon((GedClipType)op,
 			       &gdpsp->gdps_polygons.gp_polygon[i],
 			       &gdpsp->gdps_polygons.gp_polygon[j],
-			       1000000,
+			       LONG_MAX,
 			       gdpsp->gdps_model2view,
 			       gdpsp->gdps_view2model);
 
