@@ -100,7 +100,8 @@ extern struct bu_image_file *bif;
 
 extern struct floatpixel *curr_float_frame;	/* buffer of full frame */
 
-
+int ambSamples = 0;
+double ambRadius = 0.0;
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
 
 int ibackground[3] = {0};		/* integer 0..255 version */
@@ -168,6 +169,8 @@ struct bu_structparse view_parse[] = {
     {"%f", ELEMENTS_PER_VECT, "background", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "overlay", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ov", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "ambSamples", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 1, "ambRadius", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
@@ -840,6 +843,132 @@ static int hit_nothing(struct application *ap)
 }
 
 
+int
+ao_rayhit(register struct application *ap,
+	  struct partition *PartHeadp,
+	  struct seg *UNUSED(segp))
+{
+    struct partition *pp;
+
+    /* if we don't have a radius, then any hit is ambient occlusion */
+    if (NEAR_ZERO(ambRadius, 0.000001) ) {
+	ap->a_user = 1;
+	ap->a_flag = 1;
+	return 1;
+    }
+
+    for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
+
+	if (pp->pt_inhit->hit_dist > 0.0) {
+	    if (pp->pt_inhit->hit_dist < ambRadius) {
+		ap->a_user = 1;
+		ap->a_flag = 1;
+		return 1;
+	    } else {
+		/* first hit outside radius is same as no occlusion */
+		ap->a_user = 0;
+		ap->a_flag = 0;
+		return 0;
+	    }
+	}
+
+    }
+
+    ap->a_user = 0;
+    ap->a_flag = 0;
+    return 0;
+}
+
+int
+ao_raymiss(register struct application *ap)
+{
+    ap->a_user = 0;
+    ap->a_flag = 0;
+    return 0;
+}
+
+void
+ambientOcclusion(struct application *ap, struct partition *pp)
+{
+    struct application amb_ap = *ap;
+    struct soltab *stp;
+    struct hit *hitp;
+    vect_t inormal;
+    vect_t yAxis;
+    vect_t xAxis;
+    int ao_samp;
+    vect_t origin = {0.0, 0.0, 0.0};
+    float occl;
+    int hitCount = 0;
+    int retStatus;
+
+    stp = pp->pt_inseg->seg_stp;
+
+    hitp = pp->pt_inhit;
+    VJOIN1(amb_ap.a_ray.r_pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
+    amb_ap.a_hit = ao_rayhit;
+    amb_ap.a_miss = ao_raymiss;
+    amb_ap.a_onehit = 0;
+
+
+
+    RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
+
+    VJOIN1(amb_ap.a_ray.r_pt, amb_ap.a_ray.r_pt, 0.5, inormal);
+
+
+    VCROSS(yAxis, inormal, ap->a_ray.r_dir);
+    VUNITIZE(yAxis);
+    VCROSS(xAxis, yAxis, inormal);
+
+
+
+    for (ao_samp=0; ao_samp < ambSamples ; ao_samp++ ) {
+	vect_t randScale;
+
+	/* pick a random direction in the unit sphere */
+	do {
+#if 1
+	    randScale[X] = bn_rand_half(ap->a_resource->re_randptr) * 2.0;
+	    randScale[Y] = bn_rand_half(ap->a_resource->re_randptr) * 2.0;
+	    randScale[Z] = bn_rand_half(ap->a_resource->re_randptr) + 0.5;
+#else
+	    randScale[X] = (bn_randmt() - 0.5) * 2.0;
+	    randScale[Y] = (bn_randmt() - 0.5) * 2.0;
+	    randScale[Z] = bn_randmt();
+#endif
+	} while (MAGSQ(randScale) > 1.0);
+
+	VJOIN3(amb_ap.a_ray.r_dir, origin, 
+	       randScale[X], xAxis, 
+	       randScale[Y], yAxis, 
+	       randScale[Z], inormal);
+
+	VUNITIZE(amb_ap.a_ray.r_dir);
+
+	amb_ap.a_user = 0;
+	amb_ap.a_flag = 0;
+
+	retStatus = rt_shootray(&amb_ap);
+	if (retStatus != amb_ap.a_flag || retStatus != amb_ap.a_user || retStatus < 0 || retStatus > 1) {
+	    bu_log("----------------------------------------------------------------------bogus %s:%d\n", __FILE__, __LINE__);
+	}
+	hitCount += amb_ap.a_flag;
+
+
+    }
+    if (hitCount > ambSamples) {
+	bu_log("----------------------------------------------------------------------bogus %s:%d\n", __FILE__, __LINE__);
+    }
+
+    occl = 1.0 - (hitCount / (float)ambSamples);
+    CLAMP(occl, 0.125, 1.0);
+
+    VSCALE(ap->a_color, ap->a_color, occl);
+}
+
+
+
 /**
  * C O L O R V I E W
  *
@@ -1078,6 +1207,11 @@ out:
 	VSCALE(ap->a_color, ap->a_color, f);
 	VJOIN1(ap->a_color, ap->a_color, g, haze);
     }
+
+
+    if (ambSamples > 0) 
+	ambientOcclusion(ap, pp);
+
     RT_CK_REGION(ap->a_uptr);
     if (R_DEBUG&RDEBUG_HITS) {
 	bu_log("colorview: lvl=%d ret a_user=%d %s\n",
@@ -1088,6 +1222,9 @@ out:
     }
     return 1;
 }
+
+
+
 
 
 /**
@@ -1113,6 +1250,8 @@ int viewit(struct application *ap,
 	bu_log("viewit:  no hit out front?\n");
 	return 0;
     }
+
+    bu_log("----------------------------------------------------------------------viewit\n");
 
     if (do_kut_plane) {
 	fastf_t slant_factor;
@@ -1786,6 +1925,8 @@ void application_init (void)
     view_parse[4].sp_offset = bu_byteoffset(background[0]);
     view_parse[5].sp_offset = bu_byteoffset(overlay);
     view_parse[6].sp_offset = bu_byteoffset(overlay);
+    view_parse[7].sp_offset = bu_byteoffset(ambSamples);
+    view_parse[8].sp_offset = bu_byteoffset(ambRadius);
 }
 
 
