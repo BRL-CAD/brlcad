@@ -59,7 +59,11 @@ load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polyg
  	    curr_poly[k].Y = (ClipperLib::long64)(vpoint[Y] * sf);
 	}
 
-	clipper.AddPolygon(curr_poly, ptype);
+	try {
+	    clipper.AddPolygon(curr_poly, ptype);
+	} catch (...) {
+	    bu_log("Exception thrown by clipper\n");
+	}
     }
 }
 
