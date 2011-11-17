@@ -59,7 +59,9 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "perplex.h"
+#include "token_type.h"
 
 /* start-condition support */
 
@@ -75,10 +77,17 @@ getCondition(perplex_t scanner)
     return scanner->condition;
 }
 
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+static void*
+copyString(const char *str)
+{
+    void *copy;
+    size_t numChars = strlen(str) + 1;
+
+    copy = malloc(numChars * sizeof(char));
+    strncpy(copy, str, numChars);
+
+    return copy;
+}
 
 #include <math.h>
 #include <stdio.h>
@@ -491,7 +500,10 @@ NAME = [a-zA-Z_][a-zA-Z0-9_-]*;
 EOL = '\n';
 EOF = '\000';
 ANY = [^\000];
+WHITE = [\n\t ];
 LINE_ANY = [^\000\n];
+LINE_WHITE = [\t ];
+LINE_NOT_WHITE = [^\000\n\t ];
 
 SEPARATOR = "%%"EOL;
 FAUX_SEPARATOR = LINE_ANY"%%"EOL;
@@ -512,6 +524,18 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL;
 <RULES>SEPARATOR {
     setCondition(scanner, CODE);
     RETURN(TOKEN_RULES);
+}
+<RULES>'{'[^}\000]*'}' {
+    char *text = yytext;
+    char *copy = copyString(text);
+    ((YYSTYPE*)scanner->appData)->string = copy;
+    RETURN(TOKEN_ACTION);
+}
+<RULES>LINE_NOT_WHITE+ {
+    char *text = yytext;
+    char *copy = copyString(text);
+    ((YYSTYPE*)scanner->appData)->string = copy;
+    RETURN(TOKEN_PATTERN);
 }
 
 <*>ANY {

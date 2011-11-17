@@ -42,16 +42,13 @@
 #define PERPLEX_H
 
 #include <stdio.h>
+#include "parser.h"
+#include "token_type.h"
 
 /* tokens are typically ints defined starting from 0,
  * thus -1 is least likely to conflict with another token
  */
 #define YYEOF -1
-
-enum {
-    TOKEN_DEFINITIONS,
-    TOKEN_RULES
-};
 
 /* support for start conditions */
 typedef enum YYCONDTYPE {
@@ -79,11 +76,17 @@ typedef struct perplex_data_t {
     char *tokenStart;
     struct Buf *buffer;
     condition_t condition;
+    void *appData;
 } *perplex_t;
 
 perplex_t perplexFileScanner(FILE *input);
 perplex_t perplexStringScanner(char *input);
 void perplexFree(perplex_t scanner);
+
+void *ParseAlloc(void *(*mallocProc)(size_t));
+void ParseFree(void *parser, void (*freeProc)(void*));
+void Parse(void *parser, int tokenID, YYSTYPE data);
+
 
 #endif
 

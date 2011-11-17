@@ -1,14 +1,17 @@
 CFLAGS = -g -ansi -pedantic
 
-perplex : perplex.o scanner.o
+perplex : perplex.o scanner.o parser.o
 	$(CC) -o $@ $^ -lm
 
-scanner.c perplex.o : perplex.h
+scanner.c perplex.o : perplex.h parser.h
 
 scanner.c : scanner.re
 	re2c -c -o $@ $<
 
+parser.c parser.h : parser.y
+	lemon -q $<
+
 .PHONY : clean
 
 clean :
-	-rm -f perplex *.o scanner.c
+	-rm -f perplex *.o scanner.c parser.c parser.h

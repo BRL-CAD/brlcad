@@ -73,6 +73,7 @@ int main(int argc, char *argv[])
     FILE *inFile, *templateFile;
     char c;
     int tokenID;
+    void *parser;
 
     if (argc != 2) {
 	printf("Usage: perplex input.l\n");
@@ -90,6 +91,9 @@ int main(int argc, char *argv[])
     }
 
     scanner = perplexFileScanner(inFile);
+    parser = ParseAlloc(malloc);
+
+    scanner->appData = malloc(sizeof(YYSTYPE));
 
     while ((tokenID = yylex(scanner)) != YYEOF) {
 	switch(tokenID) {
@@ -103,8 +107,12 @@ int main(int argc, char *argv[])
 	case TOKEN_RULES:
 	    printf("*/\n}\n");
 	}
+	Parse(parser, tokenID, *(YYSTYPE*)scanner->appData);
     }
+    Parse(parser, 0, *(YYSTYPE*)scanner->appData);
 
+    free(scanner->appData);
+    ParseFree(parser, free);
     perplexFree(scanner);
     fclose(inFile);
 
