@@ -1,0 +1,259 @@
+/*                       S E R V E R . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2006-2011 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file libpkg/example/server.c
+ *
+ * Relatively simple example file transfer program using libpkg,
+ * written in a ttcp style.
+ *
+ */
+
+#include "common.h"
+
+/* system headers */
+#include <stdlib.h>
+#include <signal.h>
+#include <string.h>
+#include <stdio.h>
+#include "bio.h"
+
+/* interface headers */
+#include "bu.h"
+#include "pkg.h"
+#include "ntp.h"
+
+/**
+ * print a usage statement when invoked with bad, help, or no arguments
+ */
+static void
+usage(const char *msg, const char *argv0)
+{
+    if (msg) {
+	bu_log("%s\n", msg);
+    }
+    bu_log("Server Usage: %s [-p#]\n\t-p#\tport number to listen on (default 2000)\n", argv0 ? argv0 : MAGIC_ID);
+
+    bu_log("\n%s", pkg_version());
+
+    exit(1);
+}
+
+/**
+ * simple "valid" port number check used by client and server
+ */
+static void
+validate_port(int port) {
+    if (port < 0 || port > 0xffff) {
+        bu_bomb("Invalid negative port range\n");
+    }
+}
+
+/**
+ * callback when a HELO message packet is received.
+ *
+ * We should not encounter this packet specifically since we listened
+ * for it before beginning processing of packets as part of a simple
+ * handshake setup.
+ */
+void
+server_helo(struct pkg_conn *connection, char *buf)
+{
+    connection=connection; /* quell */
+    bu_log("Unexpected HELO encountered\n");
+    free(buf);
+}
+
+
+/**
+ * callback when a DATA message packet is received
+ */
+void
+server_data(struct pkg_conn *connection, char *buf)
+{
+    connection=connection; /* quell */
+    bu_log("Received file data\n");
+    free(buf);
+}
+
+
+/**
+ * callback when a CIAO message packet is received
+ */
+void
+server_ciao(struct pkg_conn *connection, char *buf)
+{
+    connection=connection; /* quell */
+    bu_log("CIAO encountered\n");
+    free(buf);
+}
+
+
+/**
+ * start up a server that listens for a single client.
+ */
+void
+run_server(int port) {
+    struct pkg_conn *client;
+    int netfd;
+    char portname[MAX_DIGITS + 1] = {0};
+    int pkg_result  = 0;
+    char *buffer;
+
+    /** our server callbacks for each message type */
+    struct pkg_switch callbacks[] = {
+	{MSG_HELO, server_helo, "HELO", NULL},
+	{MSG_DATA, server_data, "DATA", NULL},
+	{MSG_CIAO, server_ciao, "CIAO", NULL},
+	{0, 0, (char *)0, (void*)0}
+    };
+
+    validate_port(port);
+
+    /* start up the server on the given port */
+    snprintf(portname, MAX_DIGITS, "%d", port);
+    netfd = pkg_permserver(portname, "tcp", 0, 0);
+    if (netfd < 0) {
+	bu_bomb("Unable to start the server");
+    }
+
+    /* listen for a good client indefinitely.  this is a simple
+     * handshake that waits for a HELO message from the client.  if it
+     * doesn't get one, the server continues to wait.
+     */
+    do {
+	client = pkg_getclient(netfd, callbacks, NULL, 0);
+	if (client == PKC_NULL) {
+	    bu_log("Connection seems to be busy, waiting...\n");
+	    sleep(10);
+	    continue;
+	} else if (client == PKC_ERROR) {
+	    bu_log("Fatal error accepting client connection.\n");
+	    pkg_close(client);
+	    client = PKC_NULL;
+	    continue;
+	}
+
+	/* got a connection, process it */
+	buffer = pkg_bwaitfor (MSG_HELO, client);
+	if (buffer == NULL) {
+	    bu_log("Failed to process the client connection, still waiting\n");
+	    pkg_close(client);
+	    client = PKC_NULL;
+	} else {
+	    /* validate magic header that client should have sent */
+	    if (!BU_STR_EQUAL(buffer, MAGIC_ID)) {
+		bu_log("Bizarre corruption, received a HELO without at matching MAGIC ID!\n");
+		pkg_close(client);
+		client = PKC_NULL;
+	    }
+	}
+    } while (client == PKC_NULL);
+
+    /* we got a validated client, process packets from the
+     * connection.  boilerplate triple-call loop.
+     */
+    bu_log("Processing data from client\n");
+    do {
+	/* process packets potentially received in a processing callback */
+	pkg_result = pkg_process(client);
+	if (pkg_result < 0) {
+	    bu_log("Unable to process packets? Weird.\n");
+	} else {
+	    bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
+	}
+
+	/* suck in data from the network */
+	pkg_result = pkg_suckin(client);
+	if (pkg_result < 0) {
+	    bu_log("Seemed to have trouble sucking in packets.\n");
+	    break;
+	} else if (pkg_result == 0) {
+	    bu_log("Client closed the connection.\n");
+	    break;
+	}
+
+	/* process new packets received */
+	pkg_result = pkg_process(client);
+	if (pkg_result < 0) {
+	    bu_log("Unable to process packets? Weird.\n");
+	} else {
+	    bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
+	}
+    } while (client != NULL);
+
+    /* shut down the server, one-time use */
+    pkg_close(client);
+}
+
+/**
+ * main application for both the client and server
+ */
+int
+main(int argc, char *argv[]) {
+    const char * const argv0 = argv[0];
+    int c;
+    int port = 2000;
+
+    if (argc > 2) {
+	usage("ERROR: Incorrect number of arguments\n", argv[0]);
+    }
+
+    /* process the command-line arguments after the application name */
+    while ((c = bu_getopt(argc, argv, "p:P:hH")) != -1) {
+	switch (c) {
+	    case 'p':
+	    case 'P':
+		port = atoi(bu_optarg);
+		break;
+	    case 'h':
+	    case 'H':
+		/* help */
+		usage(NULL, argv0);
+		break;
+	    default:
+		usage("ERROR: Unknown argument\n", argv0);
+	}
+    }
+
+    argc -= bu_optind;
+    argv += bu_optind;
+
+    if (argc > 0) {
+	usage("ERROR: Unexpected extra server arguments\n", argv0);
+    }
+
+    /* ignore broken pipes */
+    (void)signal(SIGPIPE, SIG_IGN);
+
+    /* fire up the server */
+    bu_log("Listening on port %d\n", port);
+    run_server(port);
+
+    return 0;
+}
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
