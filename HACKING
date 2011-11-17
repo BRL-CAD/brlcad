@@ -575,15 +575,16 @@ variables should be utilized instead of the standard C facility:
   bu_optind instead of optind
   bu_optopt instead of optopt
   bu_optarg instead of optarg
-  bu_strlcat instead of strcat(), strncat(), and strlcat()
-  bu_strlcpy instead of strcpy(), strncpy(), and strlcpy()
-  bu_strcmp and BU_STR_EQUAL() instead of strcmp()
+  bu_strlcat() instead of strcat(), strncat(), and strlcat()
+  bu_strlcpy() instead of strcpy(), strncpy(), and strlcpy()
+  bu_strcmp() and BU_STR_EQUAL() instead of strcmp()
+  bu_file_delete() instead of unlink(), rmdir(), and remove()
 
 Similarly, ANSI C functions are preferred over the BSD and POSIX
 interfaces.  The following functions should be used:
 
-  memset instead of bzero
-  memcpy instead of bcopy
+  memset() instead of bzero()
+  memcpy() instead of bcopy()
 
 The code should strive to achieve conformance with the GNU coding
 standard with a few exceptions.  One such exception is NOT utilizing
