@@ -56,7 +56,7 @@ int main(int ac, char *av[])
     wdb_close(db_fp);
 
     if (ret) {
-	unlink(filename);
+	bu_file_delete(filename);
 	bu_log("%s", bu_vls_addr(ged.ged_result_str));
 	ged_free(&ged);
 	return 1;

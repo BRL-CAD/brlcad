@@ -592,7 +592,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	    restore_comb(gedp, dp, saved_name);
 	    bu_vls_printf(gedp->ged_result_str, "%s: \toriginal restored\n", argv[0]);
 	}
-	(void)unlink(_ged_tmpfil);
+	bu_file_delete(_ged_tmpfil);
 	return GED_ERROR;
     } else if (save_comb_flag) {
 	/* eliminate the temporary combination */
@@ -604,7 +604,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	(void)ged_kill(gedp, 2, (const char **)av);
     }
 
-    (void)unlink(_ged_tmpfil);
+    bu_file_delete(_ged_tmpfil);
     return GED_OK;
 }
 

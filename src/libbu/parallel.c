@@ -483,8 +483,8 @@ bu_get_public_cpus(void)
 	return public_cpus;
     }
 
-    (void)unlink(PUBLIC_CPUS1);
-    (void)unlink(PUBLIC_CPUS2);
+    bu_file_delete(PUBLIC_CPUS1);
+    bu_file_delete(PUBLIC_CPUS2);
     if ((fp = fopen(PUBLIC_CPUS1, "wb")) != NULL ||
 	(fp = fopen(PUBLIC_CPUS2, "wb")) != NULL)
     {

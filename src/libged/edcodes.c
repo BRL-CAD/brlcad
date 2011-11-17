@@ -236,7 +236,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     av[i] = NULL;
 
     if (ged_wcodes(gedp, argc + 1, (const char **)av) == GED_ERROR) {
-	(void)unlink(tmpfil);
+	bu_file_delete(tmpfil);
 	bu_free((genptr_t)av, "ged_edcodes av");
 	return GED_ERROR;
     }
@@ -252,7 +252,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 
 	if ((f_srt=fopen(tmpfil, "r+")) == NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: Failed to open temp file for sorting\n", argv[0]);
-	    (void)unlink(tmpfil);
+	    bu_file_delete(tmpfil);
 	    return GED_ERROR;
 	}
 
@@ -296,7 +296,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     } else
 	status = GED_ERROR;
 
-    unlink(tmpfil);
+    bu_file_delete(tmpfil);
     bu_free((genptr_t)av, "ged_edcodes av");
     return status;
 }

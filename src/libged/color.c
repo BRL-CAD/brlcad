@@ -235,7 +235,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     }
 
     (void)fclose(fp);
-    (void)unlink(tmpfil);
+    bu_file_delete(tmpfil);
 
     /* if there are drawables, update their colors */
     if (gedp->ged_gdp)

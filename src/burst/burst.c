@@ -222,7 +222,7 @@ exitCleanly(int code)
     if (tty)
 	closeUi(); /* keep screen straight */
     (void) fclose(tmpfp);
-    if (unlink(tmpfname) == -1)
+    if (!bu_file_delete(tmpfname))
 	locPerror(tmpfname);
     exit(code);
 }

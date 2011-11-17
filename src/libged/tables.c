@@ -409,7 +409,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "Summary written in: %s\n", argv[1]);
 
     if (flag == SOL_TABLE || flag == REG_TABLE) {
-	(void)unlink("/tmp/mged_discr\0");
+	bu_file_delete("/tmp/mged_discr\0");
 	(void)fprintf(tabptr, "\n\nNumber Primitives = %ld  Number Regions = %ld\n",
 		      numsol, numreg);
 
@@ -447,7 +447,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	if (ret != 0)
 	    bu_log("WARNING: cat failure detected\n");
 
-	(void)unlink("/tmp/ord_id\0");
+	bu_file_delete("/tmp/ord_id\0");
     }
 
 end:

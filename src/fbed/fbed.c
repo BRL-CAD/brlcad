@@ -1528,7 +1528,7 @@ f_Save_RLE() /* Save framebuffer image with Run-Length Encoding. */
 	    return 0;
 	if ( answer[0] == 'n' )
 	    return 0;
-	(void) unlink( rle_file_nm );
+	bu_file_delete(rle_file_nm);
     }
     prnt_Event( "Encoding \"%s\".", rle_file_nm );
     if ( fb_close( fbp ) == -1 )

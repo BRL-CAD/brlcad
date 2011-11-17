@@ -2427,7 +2427,7 @@ X24_zapmem()
 #endif
 
 #ifdef HAVE_SYS_MMAN_H
-    unlink(BS_NAME);
+    bu_file_delete(BS_NAME);
 #endif
 #ifdef HAVE_SYS_SHM_H
     if ((shmid = shmget(SHMEM_KEY, 0, 0)) < 0) {

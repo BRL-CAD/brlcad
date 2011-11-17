@@ -109,7 +109,11 @@ HIDDEN int
 dsk_free(FBIO *ifp)
 {
     close(ifp->if_fd);
-    return unlink(ifp->if_name);
+    if (bu_file_delete(ifp->if_name)) {
+	return 0;
+    } else {
+	return 1;
+    }
 }
 
 

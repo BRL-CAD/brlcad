@@ -958,8 +958,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     ret = GED_OK;
 
 cleanup:
-    if (bu_file_exists(_ged_tmpfil))
-	unlink(_ged_tmpfil);
+    bu_file_delete(_ged_tmpfil);
 
     if (final_name) {
 	bu_vls_free(final_name);

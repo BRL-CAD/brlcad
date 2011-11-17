@@ -712,9 +712,9 @@ f_Batch()
 	fclose(fp);
 	fp = NULL;
     }
-    (void) unlink(script);
+    bu_file_delete(script);
 
-    return	1;
+    return 1;
 }
 
 

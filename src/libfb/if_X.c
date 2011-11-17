@@ -1157,7 +1157,7 @@ X_wmap(FBIO *ifp, const ColorMap *cmp)
     /* Hack to save it into a file - this may go away */
     if (is_linear) {
 	/* no file => linear map */
-	(void) unlink(TMP_FILE);
+	bu_file_delete(TMP_FILE);
     } else {
 	/* save map for later */
 	i=creat(TMP_FILE, 0666);

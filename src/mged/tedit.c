@@ -109,7 +109,7 @@ f_tedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	return TCL_ERROR;
 
     if (writesolid()) {
-	(void)unlink(tmpfil);
+	bu_file_delete(tmpfil);
 	return TCL_ERROR;
     }
 
@@ -117,7 +117,7 @@ f_tedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
     if (editit(argv[0], tmpfil) == TCL_OK) {
 	if (readsolid()) {
-	    (void)unlink(tmpfil);
+	    bu_file_delete(tmpfil);
 	    return TCL_ERROR;
 	}
 
@@ -127,7 +127,7 @@ f_tedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	Tcl_AppendResult(interp, "done\n", (char *)NULL);
     }
 
-    unlink(tmpfil);
+    bu_file_delete(tmpfil);
 
     return TCL_OK;
 }

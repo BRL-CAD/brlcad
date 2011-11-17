@@ -42,16 +42,16 @@
 #define SIZE (1024*1024)
 
 
-char template[512] = {0};
-char buf[SIZE] = {0};
-
-
 int
 main(int argc, char *argv[])
 {
-    FILE *fp;
-    long count;
-    int tfd;
+    char template[512] = {0};
+    char buf[SIZE] = {0};
+
+    FILE *fp = NULL;
+    long count = 0;
+    int tfd = 0;
+    int ret = 0;
 
     if (argc > 1)
 	bu_log("%s: unrecognized argument(s)\n", argv[0]);
@@ -109,16 +109,20 @@ main(int argc, char *argv[])
 	perror("buffer: tmp read");
 	goto err;
     }
-    (void)unlink(template);
-    return 0;
 
- err:
+    ret = 0;
+    goto clean;
+err:
+    ret = 1;
+clean:
+    /* clean up */
     if (fp) {
 	fclose(fp);
 	fp = NULL;
     }
-    unlink(template);
-    return 1;
+    bu_file_delete(template);
+
+    return ret;
 }
 
 

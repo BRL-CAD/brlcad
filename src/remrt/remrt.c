@@ -1547,8 +1547,8 @@ frame_is_done(struct frame *fr)
 
     /* Final processing of output file */
     if ( fr->fr_tempfile )  {
-	/* Unlink temp file -- it is in framebuffer */
-	if ( unlink( fr->fr_filename ) < 0 )
+	/* Delete temp file -- it is in framebuffer */
+	if ( !bu_file_delete( fr->fr_filename ) )
 	    perror( fr->fr_filename );
     } else {
 	FILE *fp;

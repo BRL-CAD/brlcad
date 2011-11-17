@@ -69,7 +69,7 @@ _bu_close_files(void)
 		popped->fd = -1;
 	    }
 	    if (BU_VLS_IS_INITIALIZED(&popped->fn) && bu_vls_addr(&popped->fn)) {
-		unlink(bu_vls_addr(&popped->fn));
+		bu_file_delete(bu_vls_addr(&popped->fn));
 		bu_vls_free(&popped->fn);
 	    }
 	    bu_free(popped, "free bu_temp_file node");
@@ -82,7 +82,7 @@ _bu_close_files(void)
 	_bu_tf->fd = -1;
     }
     if (BU_VLS_IS_INITIALIZED(&_bu_tf->fn) && bu_vls_addr(&_bu_tf->fn)) {
-	unlink(bu_vls_addr(&_bu_tf->fn));
+	bu_file_delete(bu_vls_addr(&_bu_tf->fn));
 	bu_vls_free(&_bu_tf->fn);
     }
     bu_free(_bu_tf, "free bu_temp_file head");
