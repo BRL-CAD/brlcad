@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* TIE seems to be corrupting the application structure during shot().
+  see m1151 with ambient occlusion patch (butler)
+
 * report that running "attach X" and trying to draw something causes
   mged -c to crash.  verified in quick testing.
 
