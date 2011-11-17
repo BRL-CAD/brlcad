@@ -100,6 +100,7 @@ extern struct bu_image_file *bif;
 
 extern struct floatpixel *curr_float_frame;	/* buffer of full frame */
 
+int ambSlow = 0;
 int ambSamples = 0;
 double ambRadius = 0.0;
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
@@ -171,6 +172,7 @@ struct bu_structparse view_parse[] = {
     {"%d", 1, "ov", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ambSamples", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", 1, "ambRadius", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "ambSlow", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
@@ -843,6 +845,10 @@ static int hit_nothing(struct application *ap)
 }
 
 
+/* A O _ R A Y H I T
+ *
+ * hit routine for ambient occlusion
+ */
 int
 ao_rayhit(register struct application *ap,
 	  struct partition *PartHeadp,
@@ -851,16 +857,18 @@ ao_rayhit(register struct application *ap,
     struct partition *pp;
 
     /* if we don't have a radius, then any hit is ambient occlusion */
-    if (NEAR_ZERO(ambRadius, 0.000001) ) {
+    if (NEAR_ZERO(ambRadius, ap->a_rt_i->rti_tol.dist) ) {
 	ap->a_user = 1;
 	ap->a_flag = 1;
 	return 1;
     }
 
+    /* find the first hit that is in front */
     for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 
 	if (pp->pt_inhit->hit_dist > 0.0) {
 	    if (pp->pt_inhit->hit_dist < ambRadius) {
+		/* first hit is inside radius, so this is occlusion */
 		ap->a_user = 1;
 		ap->a_flag = 1;
 		return 1;
@@ -871,14 +879,18 @@ ao_rayhit(register struct application *ap,
 		return 0;
 	    }
 	}
-
     }
 
+    /* no hits in front of the ray, so we miss */
     ap->a_user = 0;
     ap->a_flag = 0;
     return 0;
 }
 
+/* A O _ R A Y H I T
+ *
+ * miss routine for ambient occlusion
+ */
 int
 ao_raymiss(register struct application *ap)
 {
@@ -887,6 +899,11 @@ ao_raymiss(register struct application *ap)
     return 0;
 }
 
+/* a m b i e n t O c c l u s i o n
+ *
+ * Compute the ambient term using occlusion rays.
+ * Scale the color based upon the occlusion
+ */
 void
 ambientOcclusion(struct application *ap, struct partition *pp)
 {
@@ -894,11 +911,11 @@ ambientOcclusion(struct application *ap, struct partition *pp)
     struct soltab *stp;
     struct hit *hitp;
     vect_t inormal;
-    vect_t yAxis;
-    vect_t xAxis;
+    vect_t vAxis;
+    vect_t uAxis;
     int ao_samp;
     vect_t origin = {0.0, 0.0, 0.0};
-    float occl;
+    float occlusionFactor;
     int hitCount = 0;
     int retStatus;
 
@@ -910,61 +927,92 @@ ambientOcclusion(struct application *ap, struct partition *pp)
     amb_ap.a_miss = ao_raymiss;
     amb_ap.a_onehit = 0;
 
-
-
     RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
 
-    VJOIN1(amb_ap.a_ray.r_pt, amb_ap.a_ray.r_pt, 0.5, inormal);
+    /* construct the ray origin.  Move it normalward off the surface
+     * to reduce the chances that the AO rays will hit the surface the ray
+     * is departing from.
+     */
+    VJOIN1(amb_ap.a_ray.r_pt, amb_ap.a_ray.r_pt, ap->a_rt_i->rti_tol.dist, inormal);
 
+    /* form a coordinate system at the hit point */
+    VCROSS(vAxis, inormal, ap->a_ray.r_dir);
+    if (MAGSQ(vAxis) < ap->a_rt_i->rti_tol.dist_sq) {
+	/* It appears the ray and the normal are perfectly aligned.
+	 * Time to construct a random vector to use for the cross-product
+	 * to construct the coordinate system
+	 */
+	vect_t arbitraryDir;
 
-    VCROSS(yAxis, inormal, ap->a_ray.r_dir);
-    VUNITIZE(yAxis);
-    VCROSS(xAxis, yAxis, inormal);
+	VSET(arbitraryDir, inormal[Y], inormal[Z], inormal[X]);
+	VCROSS(vAxis, inormal, arbitraryDir);
+    }
 
+    VUNITIZE(vAxis);
+    VCROSS(uAxis, vAxis, inormal);
 
+    if (ambSlow) {
+	/* use bn_randmt() which is slow but not noisy */
 
-    for (ao_samp=0; ao_samp < ambSamples ; ao_samp++ ) {
-	vect_t randScale;
+	for (ao_samp=0; ao_samp < ambSamples ; ao_samp++ ) {
+	    vect_t randScale;
 
-	/* pick a random direction in the unit sphere */
-	do {
-#if 1
-	    randScale[X] = bn_rand_half(ap->a_resource->re_randptr) * 2.0;
-	    randScale[Y] = bn_rand_half(ap->a_resource->re_randptr) * 2.0;
-	    randScale[Z] = bn_rand_half(ap->a_resource->re_randptr) + 0.5;
-#else
-	    randScale[X] = (bn_randmt() - 0.5) * 2.0;
-	    randScale[Y] = (bn_randmt() - 0.5) * 2.0;
-	    randScale[Z] = bn_randmt();
-#endif
-	} while (MAGSQ(randScale) > 1.0);
+	    /* pick a random direction in the unit sphere */
+	    do {
+		/* less noisy but much slower */
+		randScale[X] = (bn_randmt() - 0.5) * 2.0;
+		randScale[Y] = (bn_randmt() - 0.5) * 2.0;
+		randScale[Z] = bn_randmt();
+	    } while (MAGSQ(randScale) > 1.0);
 
-	VJOIN3(amb_ap.a_ray.r_dir, origin, 
-	       randScale[X], xAxis, 
-	       randScale[Y], yAxis, 
-	       randScale[Z], inormal);
+	    VJOIN3(amb_ap.a_ray.r_dir, origin, 
+		   randScale[X], uAxis, 
+		   randScale[Y], vAxis, 
+		   randScale[Z], inormal);
 
-	VUNITIZE(amb_ap.a_ray.r_dir);
+	    VUNITIZE(amb_ap.a_ray.r_dir);
 
-	amb_ap.a_user = 0;
-	amb_ap.a_flag = 0;
+	    amb_ap.a_user = 0;
+	    amb_ap.a_flag = 0;
 
-	retStatus = rt_shootray(&amb_ap);
-	if (retStatus != amb_ap.a_flag || retStatus != amb_ap.a_user || retStatus < 0 || retStatus > 1) {
-	    bu_log("----------------------------------------------------------------------bogus %s:%d\n", __FILE__, __LINE__);
+	    /* shoot in the direction and see what we hit */
+	    retStatus = rt_shootray(&amb_ap);
+	    hitCount += amb_ap.a_flag;
 	}
-	hitCount += amb_ap.a_flag;
+    } else {
+	for (ao_samp=0; ao_samp < ambSamples ; ao_samp++ ) {
+	    vect_t randScale;
 
+	    /* pick a random direction in the unit sphere */
+	    do {
+		/* faster by a factor of 2 but noisy */
+		randScale[X] = bn_rand_half(ap->a_resource->re_randptr) * 2.0;
+		randScale[Y] = bn_rand_half(ap->a_resource->re_randptr) * 2.0;
+		randScale[Z] = bn_rand_half(ap->a_resource->re_randptr) + 0.5;
+	    } while (MAGSQ(randScale) > 1.0);
 
+	    VJOIN3(amb_ap.a_ray.r_dir, origin, 
+		   randScale[X], uAxis, 
+		   randScale[Y], vAxis, 
+		   randScale[Z], inormal);
+
+	    VUNITIZE(amb_ap.a_ray.r_dir);
+
+	    amb_ap.a_user = 0;
+	    amb_ap.a_flag = 0;
+
+	    /* shoot in the direction and see what we hit */
+	    retStatus = rt_shootray(&amb_ap);
+	    hitCount += amb_ap.a_flag;
+	}
     }
-    if (hitCount > ambSamples) {
-	bu_log("----------------------------------------------------------------------bogus %s:%d\n", __FILE__, __LINE__);
-    }
 
-    occl = 1.0 - (hitCount / (float)ambSamples);
-    CLAMP(occl, 0.125, 1.0);
+    occlusionFactor = 1.0 - (hitCount / (float)ambSamples);
 
-    VSCALE(ap->a_color, ap->a_color, occl);
+    /* try not go go completely black */
+    CLAMP(occlusionFactor, 0.0125, 1.0);
+
+    VSCALE(ap->a_color, ap->a_color, occlusionFactor);
 }
 
 
@@ -1927,6 +1975,7 @@ void application_init (void)
     view_parse[6].sp_offset = bu_byteoffset(overlay);
     view_parse[7].sp_offset = bu_byteoffset(ambSamples);
     view_parse[8].sp_offset = bu_byteoffset(ambRadius);
+    view_parse[9].sp_offset = bu_byteoffset(ambSlow);
 }
 
 
