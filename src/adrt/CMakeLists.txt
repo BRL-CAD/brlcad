@@ -76,10 +76,8 @@ INCLUDE_DIRECTORIES(
 	${X11_INCLUDE_DIR}
 	${CMAKE_CURRENT_BINARY_DIR}/../other/togl/src
 	)
-ADD_DEFINITIONS(
-	-DTOGL_USE_EXTERNAL_CONFIG_H=1
-	)
 IF(TOGL_LIBRARIES)
+	ADD_DEFINITIONS(-DTOGL_USE_EXTERNAL_CONFIG_H=1)
 	add_library(issttcltk isst_tcltk.c)
 	IF(WIN32)
 		target_link_libraries(issttcltk librender ${TCL_LIBRARIES} ${TOGL_STUB_LIBRARIES} ${OPENGL_LIBRARIES} opengl32.lib)
