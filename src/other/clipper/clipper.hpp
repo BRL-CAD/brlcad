@@ -186,7 +186,7 @@ typedef std::vector < HorzJoinRec* > HorzJoinList;
 //ClipperBase is the ancestor to the Clipper class. It should not be
 //instantiated directly. This class simply abstracts the conversion of sets of
 //polygon coordinates into edge objects that are stored in a LocalMinima list.
-class ClipperBase
+class CLIPPER_EXPORT ClipperBase
 {
 public:
   ClipperBase();
