@@ -1181,7 +1181,9 @@ BN_EXPORT extern void bn_mathtab_constant();
 /** @{ */
 /**
  * Mersenne Twister random number generation as defined by MT19937.
- * Moved from src/adrt/libutil/rand.c
+ *
+ * Generates one pseudorandom real number (double) which is uniformly
+ * distributed on [0, 1]-interval, for each call.
  *
  * @par Usage:
  @code
