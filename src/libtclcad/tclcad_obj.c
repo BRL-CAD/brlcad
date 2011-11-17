@@ -187,7 +187,7 @@ HIDDEN int to_data_lines(struct ged *gedp,
 			 ged_func_ptr func,
 			 const char *usage,
 			 int maxargs);
-HIDDEN int to_data_polys(struct ged *gedp,
+HIDDEN int to_data_polygons(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
 			 ged_func_ptr func,
@@ -796,7 +796,7 @@ static struct to_cmdtab to_cmds[] = {
     {"data_axes",	"???", TO_UNLIMITED, to_data_axes, GED_FUNC_PTR_NULL},
     {"data_labels",	"???", TO_UNLIMITED, to_data_labels, GED_FUNC_PTR_NULL},
     {"data_lines",	"???", TO_UNLIMITED, to_data_lines, GED_FUNC_PTR_NULL},
-    {"data_polys",	"???", TO_UNLIMITED, to_data_polys, GED_FUNC_PTR_NULL},
+    {"data_polygons",	"???", TO_UNLIMITED, to_data_polygons, GED_FUNC_PTR_NULL},
     {"data_move",	"???", TO_UNLIMITED, to_data_move, GED_FUNC_PTR_NULL},
     {"data_pick",	"???", TO_UNLIMITED, to_data_pick, GED_FUNC_PTR_NULL},
     {"dbconcat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_concat},
@@ -1006,7 +1006,7 @@ static struct to_cmdtab to_cmds[] = {
     {"sdata_axes",	"???", TO_UNLIMITED, to_data_axes, GED_FUNC_PTR_NULL},
     {"sdata_labels",	"???", TO_UNLIMITED, to_data_labels, GED_FUNC_PTR_NULL},
     {"sdata_lines",	"???", TO_UNLIMITED, to_data_lines, GED_FUNC_PTR_NULL},
-    {"sdata_polys",	"???", TO_UNLIMITED, to_data_polys, GED_FUNC_PTR_NULL},
+    {"sdata_polygons",	"???", TO_UNLIMITED, to_data_polygons, GED_FUNC_PTR_NULL},
     {"search",		(char *)0, TO_UNLIMITED, to_pass_through_func, ged_search},
     {"select",		(char *)0, TO_UNLIMITED, to_view_func, ged_select},
     {"set_coord",	"[m|v]", TO_UNLIMITED, to_set_coord, GED_FUNC_PTR_NULL},
@@ -3237,7 +3237,7 @@ to_extract_polygons_av(struct ged *gedp, ged_polygons *gpp, size_t polygon_ac, c
 }
 
 HIDDEN int
-to_data_polys(struct ged *gedp,
+to_data_polygons(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
 	      ged_func_ptr UNUSED(func),
@@ -3649,6 +3649,28 @@ to_data_move(struct ged *gedp,
     vx = (mx - cx) * sf;
     vy = (cy - my) * sf;
 
+    if (BU_STR_EQUAL(argv[2], "data_polygons")) {
+	size_t i, j, k;
+	ged_data_polygon_state *gdpsp = &gdvp->gdv_view->gv_data_polygons;
+
+	if (sscanf(argv[3], "%llu %llu %llu", (long long unsigned *)&i, (long long unsigned *)&j, (long long unsigned *)&k) != 3)
+	    goto bad;
+
+	/* Silently ignore */
+	if (i >= gdpsp->gdps_polygons.gp_num_polygons ||
+	    j >= gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours ||
+	    k >= gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points)
+	    return GED_OK;
+
+	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k]);
+	vpoint[X] = vx;
+	vpoint[Y] = vy;
+	MAT4X3PNT(gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k], gdvp->gdv_view->gv_view2model, vpoint);
+
+	to_refresh_view(gdvp);
+	return GED_OK;
+    }
+
     if (BU_STR_EQUAL(argv[2], "data_arrows")) {
 	struct ged_data_arrow_state *gdasp = &gdvp->gdv_view->gv_data_arrows; 
 
@@ -3848,6 +3870,34 @@ to_data_pick(struct ged *gedp,
     vx = (mx - cx) * sf;
     vy = (cy - my) * sf;
 
+    /* check for polygon points */
+    if (gdvp->gdv_view->gv_data_polygons.gdps_draw &&
+	gdvp->gdv_view->gv_data_polygons.gdps_polygons.gp_num_polygons) {
+	register size_t si, sj, sk;
+
+	ged_data_polygon_state *gdpsp = &gdvp->gdv_view->gv_data_polygons;
+
+	for (si = 0; si < gdpsp->gdps_polygons.gp_num_polygons; ++si)
+	    for (sj = 0; sj < gdpsp->gdps_polygons.gp_polygon[si].gp_num_contours; ++sj)
+		for (sk = 0; sk < gdpsp->gdps_polygons.gp_polygon[si].gp_contour[sj].gpc_num_points; ++sk) {
+		    fastf_t minX, maxX;
+		    fastf_t minY, maxY;
+
+		    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdpsp->gdps_polygons.gp_polygon[si].gp_contour[sj].gpc_point[sk]);
+		    minX = vpoint[X] - 0.015;
+		    maxX = vpoint[X] + 0.015;
+		    minY = vpoint[Y] - 0.015;
+		    maxY = vpoint[Y] + 0.015;
+
+		    if (minX < vx && vx < maxX &&
+			minY < vy && vy < maxY) {
+			bu_vls_printf(gedp->ged_result_str, "data_polygons {%llu %llu %llu} {%lf %lf %lf}",
+				      si, sj, sk, V3ARGS(gdpsp->gdps_polygons.gp_polygon[si].gp_contour[sj].gpc_point[sk]));
+			return GED_OK;
+		    }
+		}
+    }
+
     /* check for label points */
     if (gdvp->gdv_view->gv_data_labels.gdls_draw &&
 	gdvp->gdv_view->gv_data_labels.gdls_num_labels) {
@@ -3903,6 +3953,7 @@ to_data_pick(struct ged *gedp,
 	    minY = vpoint[Y] - 0.015;
 	    maxY = vpoint[Y] + 0.015;
 #endif
+
 	    if (minX < vx && vx < maxX &&
 		minY < vy && vy < maxY) {
 		bu_vls_printf(gedp->ged_result_str, "sdata_labels %d {{%s} {%lf %lf %lf}}",
@@ -6066,14 +6117,14 @@ to_mouse_poly_circ(struct ged *gedp,
 
     gedp->ged_gvp = gdvp->gdv_view;
     ac = 5;
-    av[0] = "data_polys";
+    av[0] = "data_polygons";
     av[1] = bu_vls_addr(&gdvp->gdv_name);
     av[2] = "replace_poly";
     av[3] = bu_vls_addr(&i_vls);
     av[4] = bu_vls_addr(&plist);
     av[5] = (char *)0;
 
-    (void)to_data_polys(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
+    (void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
     bu_vls_free(&plist);
     bu_vls_free(&i_vls);
 
@@ -6165,14 +6216,14 @@ to_mouse_poly_rect(struct ged *gedp,
 
     gedp->ged_gvp = gdvp->gdv_view;
     ac = 5;
-    av[0] = "data_polys";
+    av[0] = "data_polygons";
     av[1] = bu_vls_addr(&gdvp->gdv_name);
     av[2] = "replace_poly";
     av[3] = bu_vls_addr(&i_vls);
     av[4] = bu_vls_addr(&plist);
     av[5] = (char *)0;
 
-    (void)to_data_polys(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
+    (void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
     bu_vls_free(&plist);
     bu_vls_free(&i_vls);
 
@@ -7751,9 +7802,13 @@ to_poly_circ_mode(struct ged *gedp,
     inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
     inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
     inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
+
     fx = x * inv_width * 2.0 - 1.0;
     fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
     VSET(v_pt, fx, fy, 1.0);
+    if (gedp->ged_gvp->gv_grid.ggs_snap)
+	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
+
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
     VMOVE(gdpsp->gdps_prev_point, v_pt);
 
@@ -7761,7 +7816,7 @@ to_poly_circ_mode(struct ged *gedp,
     bu_vls_printf(&plist, "{ {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} }",
 		  V3ARGS(m_pt), V3ARGS(m_pt), V3ARGS(m_pt), V3ARGS(m_pt));
     ac = 4;
-    av[0] = "data_polys";
+    av[0] = "data_polygons";
     av[1] = bu_vls_addr(&gdvp->gdv_name);
     av[2] = "append_poly";
     av[3] = bu_vls_addr(&plist);
@@ -7772,7 +7827,7 @@ to_poly_circ_mode(struct ged *gedp,
     else
 	gdpsp->gdps_curr_polygon = 1;
 
-    (void)to_data_polys(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
+    (void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
     bu_vls_free(&plist);
 
     bu_vls_init(&bindings);
@@ -7856,9 +7911,13 @@ to_poly_rect_mode(struct ged *gedp,
     inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
     inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
     inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
+
     fx = x * inv_width * 2.0 - 1.0;
     fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
     VSET(v_pt, fx, fy, 1.0);
+    if (gedp->ged_gvp->gv_grid.ggs_snap)
+	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
+
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
     VMOVE(gdpsp->gdps_prev_point, v_pt);
 
@@ -7866,7 +7925,7 @@ to_poly_rect_mode(struct ged *gedp,
     bu_vls_printf(&plist, "{ {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} }",
 		  V3ARGS(m_pt), V3ARGS(m_pt), V3ARGS(m_pt), V3ARGS(m_pt));
     ac = 4;
-    av[0] = "data_polys";
+    av[0] = "data_polygons";
     av[1] = bu_vls_addr(&gdvp->gdv_name);
     av[2] = "append_poly";
     av[3] = bu_vls_addr(&plist);
@@ -7877,7 +7936,7 @@ to_poly_rect_mode(struct ged *gedp,
     else
 	gdpsp->gdps_curr_polygon = 1;
 
-    (void)to_data_polys(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
+    (void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
     bu_vls_free(&plist);
 
     bu_vls_init(&bindings);
