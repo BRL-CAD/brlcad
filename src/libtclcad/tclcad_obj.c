@@ -89,6 +89,15 @@
 #endif /* DM_WGL */
 
 
+#define TO_MAX_RT_ARGS 64
+#define TO_UNLIMITED -1
+
+/*
+ * Weird upper limit from clipper ---> sqrt(2^63 -1)/2   
+ * Probably should be sqrt(2^63 -1)
+ */
+#define CLIPPER_MAX 1518500249
+
 GED_EXPORT extern void go_refresh(struct ged_obj *gop,
 				  struct ged_dm_view *gdvp);
 GED_EXPORT extern void go_refresh_draw(struct ged_obj *gop,
@@ -725,9 +734,6 @@ typedef int (*to_wrapper_func_ptr)(struct ged *, int, const char *[], ged_func_p
 
 static struct tclcad_obj HeadTclcadObj;
 static struct tclcad_obj *current_top = TCLCAD_OBJ_NULL;
-
-#define TO_MAX_RT_ARGS 64
-#define TO_UNLIMITED -1
 
 struct to_cmdtab {
     char *to_name;
@@ -3458,7 +3464,7 @@ to_data_polys(struct ged *gedp,
 	gpp = ged_clip_polygon((GedClipType)op,
 			       &gdpsp->gdps_polygons.gp_polygon[i],
 			       &gdpsp->gdps_polygons.gp_polygon[j],
-			       LONG_MAX,
+			       CLIPPER_MAX,
 			       gdpsp->gdps_model2view,
 			       gdpsp->gdps_view2model);
 
