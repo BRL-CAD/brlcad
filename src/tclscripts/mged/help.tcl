@@ -135,7 +135,7 @@ set mged_help_data(e)		$helplib_data(dgo_draw)
 set mged_help_data(e_id)	{{ident[-ident] ...} {Edits object(s) with the specified ident number or within the hyphenated ident ranges.
 
 Example: e_id 1000 2000 3000-4000}}
-set mged_help_data(em)          {{[-C#/#/#] value [value value...]} {display all regions with attribute "MUVES_Component" set to any of the specified values}}
+set mged_help_data(em)          {{[-C#/#/#] value [value value...]} {DEPRECATED: display all regions with attribute "MUVES_Component" set to any of the specified values}}
 set mged_help_data(eac)		{{air_code(s)}	{display all regions with given air code}}
 set mged_help_data(echo)	{{[text]}	{echo arguments back}}
 set mged_help_data(edcodes)	{{[-n] object(s)}	{edit region ident codes.   only reports matches without renaming with the -n option.}}
@@ -149,7 +149,7 @@ set mged_help_data(exit)	{{}	{exit}}
 set mged_help_data(extrude)	{{#### distance}	{extrude dist from face}}
 set mged_help_data(expand)	$helplib_data(wdb_expand)
 set mged_help_data(eye_pt)	$helplib_data(vo_eye)
-set mged_help_data(e_muves)	{{MUVES_component_1 MUVES_component2 ...}	{display listed MUVES components/systems}}
+set mged_help_data(e_muves)	{{MUVES_component_1 MUVES_component2 ...}	{DEPRECATED: display listed MUVES components/systems}}
 set mged_help_data(facedef)	{{####}	{define new face for an arb}}
 set mged_help_data(facetize)	{{[-mntT] [-P#] new_obj old_obj(s)}	{convert objects to faceted BOT objects (or NMG for -n option, with -m for marching cubes) at current tol}}
 set mged_help_data(form)	$helplib_data(wdb_form)
@@ -180,14 +180,14 @@ set mged_help_data(killall)	$helplib_data(wdb_killall)
 set mged_help_data(killtree)	$helplib_data(wdb_killtree)
 set mged_help_data(knob)	{{[-e -i -m -v] [-o v/m/e/k] [zap|zero|(x|y|z|X|Y|Z|S|ax|ay|az|aX|aY|aZ|aS|xadc|yadc|ang1|ang2|distadc [val])]}	{emulate knob twist (e.g. knob x 1)}}
 set mged_help_data(l)		$helplib_data(wdb_list)
-set mged_help_data(l_muves)	{{MUVES_component1 MUVES_component2 ...} {list the MGED components that make up the specified MUVES components/systems}}
+set mged_help_data(l_muves)	{{MUVES_component1 MUVES_component2 ...} {DEPRECATED: list the MGED components that make up the specified MUVES components/systems}}
 set mged_help_data(labelvert)	{{object[s]}	{label vertices of wireframes of objects}}
 set mged_help_data(listeval)	$helplib_data(wdb_listeval)
 set mged_help_data(loadtk)	{{[DISPLAY]}	{initializes the Tk window library}}
 set mged_help_data(loadview)	{{file}	{load view from raytrace script file}}
 set mged_help_data(lookat)	$helplib_data(vo_lookat)
 set mged_help_data(ls)		$helplib_data(wdb_ls)
-set mged_help_data(lm)          {{[-l] value [value value...]} {list all regions that have a MUVES_Component attribute with any of the listed values}}
+set mged_help_data(lm)          {{[-l] value [value value...]} {DEPRECATED: list all regions that have a MUVES_Component attribute with any of the listed values}}
 set mged_help_data(lt)		$helplib_data(wdb_lt)
 set mged_help_data(M)		{{1|0 xpos ypos}	{invoke a traditional MGED mouse event}}
 set mged_help_data(make)	{{-t | name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|ell|ell1|epa|eto|extrude|grip|half|nmg|part|pipe|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>}	{create a primitive}}
@@ -242,7 +242,7 @@ set mged_help_data(rcc-cap)     {{rccname newname [height] [b|t]}      {create a
 set mged_help_data(rcc-tgc)     {{rccname newname x y z [b|t]}     {create a tgc with the specified apex at an end of an rcc}}
 set mged_help_data(rcc-tor)     {{rccname newname}     {create a tor from an rcc}}
 set mged_help_data(rcodes)	{{filename}	{read region ident codes from filename}}
-set mged_help_data(read_muves)	{{MUVES_regionmap_file [sysdef_file]}	{read the MUVES region_map file and optionally the sysdef file}}
+set mged_help_data(read_muves)	{{MUVES_regionmap_file [sysdef_file]}	{DEPRECATED: read the MUVES region_map file and optionally the sysdef file}}
 set mged_help_data(red)		{{object}	{edit a group or region using a text editor}}
 set mged_help_data(redraw_vlist)	{{object(s)}	{given the name(s) of database objects, re-generate the vlist
     associated with every solid in view which references the
@@ -310,7 +310,7 @@ set mged_help_data(tra)		$helplib_data(vo_tra)
 set mged_help_data(track)	{{<parameters>}	{adds tracks to database}}
 set mged_help_data(translate)	{{x y z}	{trans object to x,y, z}}
 set mged_help_data(tree)	{{[-c] [-i n] [-d n] [-o outfile] object(s)}	{print out a tree of all members of an object, or all members to depth n if -d option is supplied}}
-set mged_help_data(t_muves)	{{}	{list all the known MUVES components/systems}}
+set mged_help_data(t_muves)	{{}	{DEPRECATED: list all the known MUVES components/systems}}
 set mged_help_data(unhide)	$helplib_data(wdb_unhide)
 set mged_help_data(units)	$helplib_data(wdb_units)
 set mged_help_data(vars)	{{[var=opt]}	{get/set mged variables}}

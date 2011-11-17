@@ -492,6 +492,8 @@ emuves_com(int argc, const char *argv[])
 
     CHECK_DBI_NULL;
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n");
+
     if (argc < 2) {
 	struct bu_vls vls;
 

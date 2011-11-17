@@ -1895,6 +1895,8 @@ cmd_lm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const c
     int ret;
     char **new_argv;
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n");
+
     bu_vls_init(&vls);
     bu_vls_strcat(&vls, argv[0]);
     for (i=1; i<(size_t)argc; i++) {

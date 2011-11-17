@@ -45,9 +45,14 @@ new names should be listed for reference.
 * DEPRECATED *
 **************
 
+
+7.22
+----
+mged
+	em, e_muves, l_muves, lm, read_muves, and t_muves MUVES-specific commands [deprecated 7.22]
+
 7.20
 ----
-
 liborle 
         remove liborle and the tools using it, fb-orle, orle-fb, orle-pix and
 	pix-orle [deprecated 7.20]
@@ -70,7 +75,6 @@ raytrace.h
 
 7.18
 ----
-
 raytrace.h rt_comb_internal members
         region_id -> region_id attribute [deprecated 7.18]
         aircode -> air attribute [deprecated 7.18]

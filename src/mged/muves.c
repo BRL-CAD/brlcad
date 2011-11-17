@@ -185,6 +185,8 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 
     CHECK_DBI_NULL;
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n");
+
     if (argc < 2 || argc > 3) {
 	struct bu_vls vls;
 
@@ -596,6 +598,8 @@ f_e_muves(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int argc, c
     int e_argv_len=0;
     char *e_comm="e";
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n");
+
     e_argv = (char **)bu_malloc(E_ARGV_BLOCK_LEN * sizeof(char *), "e_argv");
     e_argv_len = E_ARGV_BLOCK_LEN;
     e_argv[0] = e_comm;
@@ -635,6 +639,8 @@ int
 f_l_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int i;
+
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n");
 
     if (BU_LIST_IS_EMPTY(&muves_comp_head.l) && BU_LIST_IS_EMPTY(&muves_sys_head.l)) {
 	Tcl_AppendResult(interp, "No MUVES components known, use 'read_muves' command\n", (char *)NULL);
@@ -710,6 +716,8 @@ f_t_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc), c
 {
     struct muves_comp *comp;
     struct muves_sys *sys;
+
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n");
 
     for (BU_LIST_FOR(comp, muves_comp, &muves_comp_head.l))
 	Tcl_AppendResult(interp, "\t", comp->muves_name, " (component)\n", (char *)NULL);
