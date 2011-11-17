@@ -925,7 +925,7 @@ ambientOcclusion(struct application *ap, struct partition *pp)
     VJOIN1(amb_ap.a_ray.r_pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
     amb_ap.a_hit = ao_rayhit;
     amb_ap.a_miss = ao_raymiss;
-    amb_ap.a_onehit = 0;
+    amb_ap.a_onehit = 4;  /* make sure we get at least two complete partitions.  The first may be "behind" the ray start */
 
     RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
 
