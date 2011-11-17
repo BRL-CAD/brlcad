@@ -40,6 +40,18 @@
 #include <cstdlib>
 #include <ostream>
 
+#ifndef CLIPPER_EXPORT
+#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(CLIPPER_DLL)
+#    ifdef CLIPPER_EXPORT_DLL
+#      define CLIPPER_EXPORT __declspec(dllexport)
+#    else
+#      define CLIPPER_EXPORT __declspec(dllimport)
+#    endif
+#  else
+#    define CLIPPER_EXPORT
+#  endif
+#endif
+
 namespace ClipperLib {
 
 enum ClipType { ctIntersection, ctUnion, ctDifference, ctXor };
@@ -195,7 +207,7 @@ protected:
   EdgeList          m_edges;
 };
 
-class Clipper : public virtual ClipperBase
+class CLIPPER_EXPORT Clipper : public virtual ClipperBase
 {
 public:
   Clipper();
@@ -284,7 +296,7 @@ private:
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 
-class clipperException : public std::exception
+class CLIPPER_EXPORT clipperException : public std::exception
 {
   public:
     clipperException(const char* description): m_descr(description) {}

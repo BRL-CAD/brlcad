@@ -19,7 +19,14 @@ IF(NOT LIB_DIR)
 	ENDIF(NOT WIN32)
 ENDIF(NOT LIB_DIR)
 
+IF(MSVC)
+	add_definitions("-DCLIPPER_EXPORT_DLL")
+ENDIF(MSVC)
+
 add_library(clipper clipper.cpp)
 install(TARGETS clipper DESTINATION ${LIB_DIR})
+IF(MSVC)
+	SET_TARGET_PROPERTIES(clipper PROPERTIES COMPILE_FLAGS "-DCLIPPER_DLL")
+ENDIF(MSVC)
 
 install(FILES clipper.hpp DESTINATION install)
