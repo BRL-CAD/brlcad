@@ -80,16 +80,14 @@ getCondition(perplex_t scanner)
 #include <stdlib.h>
 #include <string.h>
 
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #define YYEOF -1
 
 /* --- from flex's flexdef.h --- */
-struct Buf {
-    void   *elts;	/* elements. */
-    int     nelts;	/* number of elements. */
-    size_t  elt_size;	/* in bytes. */
-    int     nmax;	/* max capacity of elements. */
-};
-
 void buf_init(struct Buf * buf, size_t elem_size);
 void buf_destroy(struct Buf * buf);
 struct Buf *buf_append(struct Buf * buf, const void *ptr, int n_elem);
@@ -330,15 +328,12 @@ buf_append(struct Buf *buf, const void *ptr, int n_elem)
 
 /*!max:re2c*/
 
-/* Estimate of largest number of characters "in use" at once:
- * (<= YYMAXFILL input chars) + (<= YYMAXFILL backtracking chars) + '\0'
- */
-#define MAX_IN_USE ((YYMAXFILL * 2 + 1) * 2)
-
-/* Size of scanner buffer. Should be big enough to comfortably hold
- * everything from backtracking marker to null marker.
- */
-static const int BUF_SIZE = MAX_IN_USE;
+static void
+buf_append_null(struct Buf *buf)
+{
+    char null = '\0';
+    buf_append(buf, &null, sizeof(char));
+}
 
 /* Copy up to n input characters to the end of scanner buffer.
  * If EOF is encountered before n characters are read, '\0'
@@ -347,50 +342,55 @@ static const int BUF_SIZE = MAX_IN_USE;
 static void
 bufferAppend(perplex_t scanner, size_t n)
 {
-    FILE *in = scanner->in.file;
-    char *new, *end;
+    struct Buf *buf;
+    FILE *in;
+    size_t i;
+    char c;
 
-    new = scanner->null;
-    end = new + n;
+    buf = scanner->buffer;
+    in = scanner->in.file;
 
-    while (new < end) {
-	if ((*new = fgetc(in)) != EOF) {
-	    new++;
+    /* remove existing null so it gets overwritten */
+    buf->nelts--;
+
+    for (i = 0; i < n; i++) {
+	if ((c = fgetc(in)) != EOF) {
+	    buf_append(buf, &c, sizeof(char));
 	} else {
-	    *new = '\0'; new++;
+	    buf_append_null(buf);
 	    break;
 	}
     }
-    *new = '\0';
-    scanner->null = new;
+    buf_append_null(buf);
+    scanner->null = (char*)((size_t)buf->elts + buf->nelts - 1);
 }
 
-/* Appends up to n characters of input to scanner buffer.
- *
- * Buffer contents are shifted if there is insufficient room
- * at the end of the buffer.
- */
+/* Appends up to n characters of input to scanner buffer. */
 static void
 bufferFill(perplex_t scanner, size_t n)
 {
-    size_t i, shiftSize;
-    char *new, *old;
+    struct Buf *buf;
+    size_t i, shiftSize, marker, start, used;
 
-    /* If appending will put null past last element,
-     * then shift remaining in-use input to make room.
-     */
-    if ((scanner->null + n) > scanner->bufLast) {
-	new = scanner->buffer;
-	old = scanner->marker;
-	shiftSize = old - new;
+    buf = scanner->buffer;
 
-	for (i = 0; i < shiftSize; i++) {
-	    new[i] = old[i];
-	}
+    start = (size_t)buf->elts;
+    marker = (size_t)scanner->marker;
+
+    used = start + (size_t)buf->nelts - marker;
+
+    /* if not enough room for append, avoid realloc by shifting contents */
+    if (buf->nelts + n > buf->nmax) {
+	memmove((void*)start, (void*)marker, used);
+        buf->nelts = used;
+
 	/* update markers */
-	scanner->marker  = scanner->buffer;
-	scanner->cursor -= shiftSize;
-	scanner->null   -= shiftSize;
+	scanner->marker = (char*)scanner->buffer->elts;
+
+	shiftSize = marker - start;
+	scanner->cursor     -= shiftSize;
+	scanner->null       -= shiftSize;
+	scanner->tokenStart -= shiftSize;
     }
     bufferAppend(scanner, n);
 }
@@ -398,12 +398,11 @@ bufferFill(perplex_t scanner, size_t n)
 static char*
 getTokenText(perplex_t scanner, struct Buf *localBuf)
 {
-    char term = '\0';
     int tokenChars = scanner->cursor - scanner->tokenStart;
 
     localBuf->nelts = 0;
     buf_append(localBuf, scanner->tokenStart, tokenChars);
-    buf_append(localBuf, &term, sizeof(term));
+    buf_append_null(localBuf);
 
     return (char*)localBuf->elts;
 }
@@ -439,10 +438,11 @@ perplexFileScanner(FILE *input)
 
     scanner->in.file = input;
 
-    scanner->buffer = (char*)calloc(BUF_SIZE, sizeof(char));
-    scanner->bufLast = &scanner->buffer[BUF_SIZE - 1];
+    scanner->buffer = (struct Buf*)malloc(sizeof(struct Buf));
+    buf_init(scanner->buffer, sizeof(char));
+    buf_append_null(scanner->buffer);
 
-    scanner->null = scanner->marker = scanner->cursor = scanner->buffer;
+    scanner->null = scanner->marker = scanner->cursor = scanner->buffer->elts;
 
     return scanner;
 }
@@ -451,6 +451,7 @@ void
 perplexFree(perplex_t scanner)
 {
     if (scanner->buffer != NULL) {
+	buf_destroy(scanner->buffer);
 	free(scanner->buffer);
     }
 
@@ -464,7 +465,6 @@ perplexFree(perplex_t scanner)
 #define yytext        getTokenText(scanner, _perplex_token_string)
 #define RETURN(id)    buf_destroy(_perplex_token_string); return id;
 #define CONTINUE      UPDATE_START; continue;
-
 
 int yylex(perplex_t scanner) {
     char yych;

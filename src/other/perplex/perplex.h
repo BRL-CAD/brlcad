@@ -60,6 +60,13 @@ typedef enum YYCONDTYPE {
     CODE
 } condition_t;
 
+struct Buf {
+    void   *elts;	/* elements. */
+    int     nelts;	/* number of elements. */
+    size_t  elt_size;	/* in bytes. */
+    int     nmax;	/* max capacity of elements. */
+};
+
 /* scanner data */
 typedef struct perplex_data_t {
     union {
@@ -70,8 +77,7 @@ typedef struct perplex_data_t {
     char *marker;
     char *null;
     char *tokenStart;
-    char *bufLast;
-    char *buffer;
+    struct Buf *buffer;
     condition_t condition;
 } *perplex_t;
 

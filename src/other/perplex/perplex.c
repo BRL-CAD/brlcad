@@ -48,7 +48,6 @@ Desired Features:
 - indicate end-of-input by returning -1
 - if rule actions don't end with a return,
   ignore the recognized token and continue parsing
-- recognized token text available in yytext buffer
 - character classes (might implement using auto-included named patterns)
 - include C code (re2c passes through by default) 
 - error mechanism ? (reentrancy?)
