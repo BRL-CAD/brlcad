@@ -163,6 +163,15 @@ Lemon accepts aliases of the form: [a-zA-Z][a-zA-Z0-9_]*
 
 WARNING: Converting from bison to lemon syntax is tedious and error-prone.
 
+WARNING: Lemon does a global replacement of the alias within the action.
+         The following doesn't work, because the 's' in "%s" will get
+         substituted as well:
+
+    text ::= STRING(s). {
+	/* will print something like "%yympsp[0].minor.yy0>>Shift 7" */
+	printf("%s", s.string);
+    }
+
  Lemon Makes All Terminals the Same Type
 -----------------------------------------
 In Bison, you typically create a union that specifies the possible types of tokens, and then you declare the types for individual tokens:
