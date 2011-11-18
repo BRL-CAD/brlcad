@@ -95,6 +95,52 @@ MACRO(AUTO_OPTION username varname debug_state release_state)
 	ENDIF("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${${username}} MATCHES "AUTO")
 ENDMACRO(AUTO_OPTION varname release_state debug_state)
 
+# For "top-level" BRL-CAD options, some extra work is in order - descriptions and
+# lists of aliases are supplied, and those are automatically addressed by this
+# macro.  In this context, "aliases" are variables which may be defined on the
+# CMake command line that are intended to set the value of th BRL-CAD option in
+# question, but use some other name.  Aliases may be common typos, different
+# nomenclature, or anything that the developer things should lead to a given
+# option being set.  The documentation is auto-formatted into a text document
+# describing all BRL-CAD options.
+MACRO(BRLCAD_OPTION thisoption)
+	FOREACH(item ${${thisoption}_ALIASES})
+		IF(NOT ${item} STREQUAL "" AND NOT ${thisoption} STREQUAL "")
+			SET(${thisoption} ${${item}} CACHE STRING "setting ${thisoption} via alias ${item}" FORCE)
+			SET(${item} "" CACHE STRING "set ${thisoption} via this variable" FORCE)
+			MARK_AS_ADVANCED(${item})
+		ENDIF(NOT ${item} STREQUAL "" AND NOT ${thisoption} STREQUAL "")
+	ENDFOREACH(item ${${thisoption}_ALIASES})
+	FILE(APPEND ${CMAKE_BINARY_DIR}/OPTIONS "${thisoption}:\n")
+	FILE(APPEND ${CMAKE_BINARY_DIR}/OPTIONS "${${thisoption}_DESCRIPTION}")
+	SET(ALIASES_LIST "\nAliases: ")
+	FOREACH(item ${${thisoption}_ALIASES})
+		SET(ALIASES_LIST_TEST "${ALIASES_LIST}, ${item}")
+		STRING(LENGTH ${ALIASES_LIST_TEST} LL)
+		IF(${LL} GREATER 80)
+			FILE(APPEND ${CMAKE_BINARY_DIR}/OPTIONS "${ALIASES_LIST}\n")
+			SET(ALIASES_LIST "          ${item}")
+		ELSE(${LL} GREATER 80)
+			IF(NOT ${ALIASES_LIST} MATCHES "\nAliases")
+				SET(ALIASES_LIST "${ALIASES_LIST}, ${item}")
+			ELSE(NOT ${ALIASES_LIST} MATCHES "\nAliases")
+				IF(NOT ${ALIASES_LIST} STREQUAL "\nAliases: ")
+					SET(ALIASES_LIST "${ALIASES_LIST}, ${item}")
+				ELSE(NOT ${ALIASES_LIST} STREQUAL "\nAliases: ")
+					SET(ALIASES_LIST "${ALIASES_LIST} ${item}")
+				ENDIF(NOT ${ALIASES_LIST} STREQUAL "\nAliases: ")
+			ENDIF(NOT ${ALIASES_LIST} MATCHES "\nAliases")
+		ENDIF(${LL} GREATER 80)
+	ENDFOREACH(item ${${thisoption}_ALIASES})
+	IF(ALIASES_LIST)	
+		STRING(STRIP ALIASES_LIST ${ALIASES_LIST})
+		IF(ALIASES_LIST)	
+			FILE(APPEND ${CMAKE_BINARY_DIR}/OPTIONS "${ALIASES_LIST}")
+		ENDIF(ALIASES_LIST)	
+	ENDIF(ALIASES_LIST)	
+	FILE(APPEND ${CMAKE_BINARY_DIR}/OPTIONS "\n\n")
+ENDMACRO(BRLCAD_OPTION)
+
 # Windows builds need a DLL variable defined per-library, and BRL-CAD
 # uses a fairly standard convention - try and automate the addition of
 # the definition.
