@@ -12,15 +12,15 @@ do
    in
      --enable-all) 	          options="$options -DBRLCAD_BUNDLED_LIBS=Bundled";
                    	          shift;;
-     --enable-debug) 	          options="$options -DBRLCAD-ENABLE_DEBUG_FLAGS=ON";
+     --enable-debug) 	          options="$options -DBRLCAD_ENABLE_DEBUG_FLAGS=ON";
                    	          shift;;
      --disable-docs)              options="$options -DBRLCAD_EXTRADOCS=OFF";
      			          shift;;
-     --disable-opengl)            options="$options -DBRLCAD-ENABLE_OPENGL=OFF";
+     --disable-opengl)            options="$options -DBRLCAD_ENABLE_OPENGL=OFF";
      			          shift;;
-     --disable-strict)            options="$options -DBRLCAD-ENABLE_STRICT=OFF";
+     --disable-strict)            options="$options -DBRLCAD_ENABLE_STRICT=OFF";
      			          shift;;
-     --disable-warnings)          options="$options -DBRLCAD-ENABLE_WARNINGS=OFF";
+     --disable-warnings)          options="$options -DBRLCAD_ENABLE_WARNINGS=OFF";
      			          shift;;
      --disable-zlib)          	  options="$options -DBRLCAD_ZLIB=System";
      			          shift;;

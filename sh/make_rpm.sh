@@ -143,9 +143,9 @@ mkdir -p $TMPDIR/tmp
 cp -Rf misc/debian/* $TMPDIR
 
 # compile and install in tmp dir
-cmake -DBRLCAD-ENABLE_OPTIMIZED_BUILD=ON \
-      -DBRLCAD-ENABLE_ALL_LOCAL_LIBS=ON \
-      -DBRLCAD-ENABLE_STRICT=OFF \
+cmake -DBRLCAD_ENABLE_OPTIMIZED_BUILD=ON \
+      -DBRLCAD_ENABLE_ALL_LOCAL_LIBS=ON \
+      -DBRLCAD_ENABLE_STRICT=OFF \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=/usr/brlcad \
       -DDATA_DIR=share \

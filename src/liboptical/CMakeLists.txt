@@ -48,7 +48,7 @@ set(LIBOPTICAL_SOURCES
 	wray.c
 )
 
-IF(BRLCAD-ENABLE_OSL)
+IF(BRLCAD_ENABLE_OSL)
 
     ##########################################
     # Build OSL-renderer Library
@@ -110,11 +110,11 @@ IF(BRLCAD-ENABLE_OSL)
     # Link liboptical with osl-renderer library
     BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu liboslrend")
 
-ELSE(BRLCAD-ENABLE_OSL)
+ELSE(BRLCAD_ENABLE_OSL)
 
     BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu")
 
-ENDIF(BRLCAD-ENABLE_OSL)
+ENDIF(BRLCAD_ENABLE_OSL)
 
 CMAKEFILES(
 	liboslrend.cpp

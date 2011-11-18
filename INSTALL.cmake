@@ -208,7 +208,7 @@ setting the BRL-CAD variable for that feature to either on or off:
 -DBRLCAD_<FEATURE>=ON
 
 To obtain an optimized build (for example, for BRL-CAD Benchmark 
-performance evaluation), enable BRLCAD-ENABLE_OPTIMIZED_BUILD
+performance evaluation), enable BRLCAD_ENABLE_OPTIMIZED_BUILD
 
 See the CONFIGURATION OPTIONS below for more details on all of the
 possible settings.

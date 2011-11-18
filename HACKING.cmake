@@ -769,11 +769,11 @@ A debug build may be specified via:
 
 A profile build may be specified via:
 
-   cmake ../brlcad -DBRLCAD-ENABLE_PROFILING=ON
+   cmake ../brlcad -DBRLCAD_ENABLE_PROFILING=ON
 
 Verbose compilation warnings may be enabled (by default these are on):
 
-   cmake ../brlcad -DBRLCAD-ENABLE_COMPILER_WARNINGS=ON
+   cmake ../brlcad -DBRLCAD_ENABLE_COMPILER_WARNINGS=ON
 
 To perform a run of the benchmark suite to validate raytrace behavior:
 
