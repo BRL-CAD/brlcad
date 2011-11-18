@@ -466,8 +466,9 @@ perplexFree(perplex_t scanner)
     free(scanner);
 }
 
-#define YYGETCONDITION  getCondition(scanner)
-#define YYFILL(n)       bufferFill(scanner, n)
+#define YYGETCONDITION     getCondition(scanner)
+#define YYSETCONDITION(c)  setCondition(scanner, c)
+#define YYFILL(n)          bufferFill(scanner, n)
 
 #define UPDATE_START  scanner->tokenStart = scanner->cursor;
 #define yytext        getTokenText(scanner, _perplex_token_string)
@@ -515,8 +516,7 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL;
     scanner->appData->tokenData.string = copyString(yytext);
     RETURN(TOKEN_DEFINITIONS);
 }
-<DEFINITIONS>SEPARATOR {
-    setCondition(scanner, RULES);
+<DEFINITIONS>SEPARATOR => RULES {
     RETURN(TOKEN_SEPARATOR);
 }
 <DEFINITIONS>ANY {
@@ -527,24 +527,21 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL;
 <RULES>FAUX_SEPARATOR {
     CONTINUE;
 }
-<RULES>SEPARATOR {
-    setCondition(scanner, CODE);
+<RULES>SEPARATOR => CODE {
     RETURN(TOKEN_SEPARATOR);
 }
 <RULES>[^\000\n\t {]+ {
     scanner->appData->tokenData.string = copyString(yytext);
     RETURN(TOKEN_PATTERN);
 }
-<RULES>'{' { 
-    setCondition(scanner, ACTION);
+<RULES>'{' => ACTION { 
     RETURN(TOKEN_LBRACE);
 }
 <RULES>ANY {
     CONTINUE;
 }
 
-<ACTION>'}' {
-    setCondition(scanner, RULES);
+<ACTION>'}' => RULES {
     RETURN(TOKEN_RBRACE);
 }
 <ACTION>[^}\000]+ {

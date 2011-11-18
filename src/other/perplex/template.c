@@ -447,8 +447,9 @@ perplexFree(perplex_t scanner)
     free(scanner);
 }
 
-#define YYGETCONDITION  getCondition(scanner)
-#define YYFILL(n)       bufferFill(scanner, n)
+#define YYGETCONDITION     getCondition(scanner)
+#define YYSETCONDITION(c)  setCondition(scanner, c)
+#define YYFILL(n)          bufferFill(scanner, n)
 
 #define UPDATE_START  scanner->tokenStart = scanner->cursor;
 #define yytext        getTokenText(scanner, _perplex_token_string)
