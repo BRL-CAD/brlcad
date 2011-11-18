@@ -6225,7 +6225,12 @@ to_mouse_poly_circ(struct ged *gedp,
 	VSET(v_pt, fx, fy, 1.0);
 	VSUB2(vdiff, v_pt, gdpsp->gdps_prev_point);
 	r = MAGNITUDE(vdiff);
-	nsegs = 30;
+
+	if (gdvp->gdv_dmp->dm_height > gdvp->gdv_dmp->dm_width)
+	    nsegs = (int)(gdvp->gdv_dmp->dm_height * 0.05);
+	else
+	    nsegs = (int)(gdvp->gdv_dmp->dm_width * 0.05);
+
 	arc = 360.0 / nsegs;
 	for (n = 0; n < nsegs; ++n) {
 	    fastf_t ang = n * arc;
@@ -6350,7 +6355,11 @@ to_mouse_poly_ell(struct ged *gedp,
 	VSET(A, a, 0, 0);
 	VSET(B, 0, b, 0);
 
-	nsegs = 30;
+	if (gdvp->gdv_dmp->dm_height > gdvp->gdv_dmp->dm_width)
+	    nsegs = (int)(gdvp->gdv_dmp->dm_height * 0.05);
+	else
+	    nsegs = (int)(gdvp->gdv_dmp->dm_width * 0.05);
+
 	arc = 360.0 / nsegs;
 	for (n = 0; n < nsegs; ++n) {
 	    fastf_t cosa = cos(n * arc * bn_degtorad);
