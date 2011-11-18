@@ -99,7 +99,7 @@ PROJECT(BRLCAD)
 # to always enable all local libs the following line can be added to
 # BRL-CAD_CONFIG.GLOBAL:
 #
-# SET(BRLCAD_BUNDLED_LIBS "Bundled" CACHE String "Enable all local libs")
+# SET(BRLCAD_BUNDLED_LIBS "Bundled" CACHE STRING "Enable all local libs" FORCE)
 
 
 IF(EXISTS ${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL)
