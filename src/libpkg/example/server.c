@@ -19,8 +19,7 @@
  */
 /** @file libpkg/example/server.c
  *
- * Relatively simple example file transfer program using libpkg,
- * written in a ttcp style.
+ * Basic pkg server.
  *
  */
 
@@ -112,7 +111,7 @@ run_server(int port) {
     struct pkg_conn *client;
     int netfd;
     char portname[MAX_DIGITS + 1] = {0};
-    int pkg_result  = 0;
+    //int pkg_result  = 0;
     char *buffer;
     long bytes = 0;
 
@@ -157,6 +156,7 @@ run_server(int port) {
 	    pkg_close(client);
 	    client = PKC_NULL;
 	} else {
+	    bu_log("buffer: %s\n", buffer);
 	    /* validate magic header that client should have sent */
 	    if (!BU_STR_EQUAL(buffer, MAGIC_ID)) {
 		bu_log("Bizarre corruption, received a HELO without at matching MAGIC ID!\n");
@@ -166,40 +166,15 @@ run_server(int port) {
 	}
     } while (client == PKC_NULL);
 
-    /* we got a validated client, process packets from the
-     * connection.  boilerplate triple-call loop.
-     */
-    bu_log("Processing data from client\n");
-    do {
-	/* process packets potentially received in a processing callback */
-	pkg_result = pkg_process(client);
-	if (pkg_result < 0) {
-	    bu_log("Unable to process packets? Weird.\n");
-	} else {
-	    bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
-	}
-
-	/* suck in data from the network */
-	pkg_result = pkg_suckin(client);
-	if (pkg_result < 0) {
-	    bu_log("Seemed to have trouble sucking in packets.\n");
-	    break;
-	} else if (pkg_result == 0) {
-	    bu_log("Client closed the connection.\n");
-	    break;
-	}
-
-	/* process new packets received */
-	pkg_result = pkg_process(client);
-	if (pkg_result < 0) {
-	    bu_log("Unable to process packets? Weird.\n");
-	} else {
-	    bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
-	}
-    } while (client != NULL);
-
     /* Tell the client we're done */
-    bytes = pkg_send(MSG_CIAO, "BYE", 4, client);
+    bytes = pkg_send(MSG_CIAO, "DONE", 5, client);
+    if (bytes < 0) {
+	bu_log("Connection to client seems faulty.\n");
+    }
+
+    /* Confirm the client is done */
+    buffer = pkg_bwaitfor (MSG_CIAO , client);
+    bu_log("buffer: %s\n", buffer);
 
     /* shut down the server, one-time use */
     pkg_close(client);

@@ -109,9 +109,7 @@ run_client(const char *server, int port, const char *file)
     stash.server = server;
     stash.port = port;
 
-    /* let the server know we're cool.  also, send the database title
-     * along with the MAGIC ident just because we can.
-     */
+    /* let the server know we're cool. */
     bytes = pkg_send(MSG_HELO, MAGIC_ID, strlen(MAGIC_ID) + 1, stash.connection);
     if (bytes < 0) {
 	pkg_close(stash.connection);
@@ -119,26 +117,11 @@ run_client(const char *server, int port, const char *file)
 	bu_bomb("ERROR: Unable to communicate with the server\n");
     }
 
-    /* send the file data to the server */
-    while (!feof(fp) && !ferror(fp)) {
-	bytes = fread(buffer, 1, 2048, fp);
-	bu_log("Read %ld bytes from %s\n", bytes, file);
-
-	if (bytes > 0) {
-	    bytes = pkg_send(MSG_DATA, buffer, (size_t)bytes, stash.connection);
-	    if (bytes < 0) {
-		pkg_close(stash.connection);
-		bu_log("Unable to successfully send data to %s, port %d.\n", stash.server, stash.port);
-		bu_free(buffer, "buffer release");
-		return;
-	    }
-	}
-    }
-
     /* Wait for the server to tell us it's done */
     buffer = pkg_bwaitfor (MSG_CIAO, stash.connection);
+    bu_log("buffer: %s\n", buffer);
 
-    /* let the server know we're done.  not necessary, but polite. */
+    /* let the server know we're done. */
     bytes = pkg_send(MSG_CIAO, "BYE", 4, stash.connection);
     if (bytes < 0) {
 	bu_log("Unable to cleanly disconnect from %s, port %d.\n", server, port);
