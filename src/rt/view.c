@@ -917,7 +917,6 @@ ambientOcclusion(struct application *ap, struct partition *pp)
     vect_t origin = {0.0, 0.0, 0.0};
     float occlusionFactor;
     int hitCount = 0;
-    int retStatus;
 
     stp = pp->pt_inseg->seg_stp;
 
@@ -976,7 +975,7 @@ ambientOcclusion(struct application *ap, struct partition *pp)
 	    amb_ap.a_flag = 0;
 
 	    /* shoot in the direction and see what we hit */
-	    retStatus = rt_shootray(&amb_ap);
+	    rt_shootray(&amb_ap);
 	    hitCount += amb_ap.a_flag;
 	}
     } else {
@@ -1002,7 +1001,7 @@ ambientOcclusion(struct application *ap, struct partition *pp)
 	    amb_ap.a_flag = 0;
 
 	    /* shoot in the direction and see what we hit */
-	    retStatus = rt_shootray(&amb_ap);
+	    rt_shootray(&amb_ap);
 	    hitCount += amb_ap.a_flag;
 	}
     }
