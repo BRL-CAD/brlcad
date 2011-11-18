@@ -6331,7 +6331,6 @@ to_mouse_poly_ell(struct ged *gedp,
     bu_vls_printf(&plist, "{ ");
 
     {
-#if 1
 	fastf_t a, b, arc;
 	point_t ellout;
 	point_t A, B;
@@ -6357,108 +6356,10 @@ to_mouse_poly_ell(struct ged *gedp,
 	    fastf_t cosa = cos(n * arc * bn_degtorad);
 	    fastf_t sina = sin(n * arc * bn_degtorad);
 
-#if 1
 	    VJOIN2(ellout, gdpsp->gdps_prev_point, cosa, A, sina, B);
 	    MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
 	    bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
-#else
-	    curr_fx = cos(ang*bn_degtorad) * r + gdpsp->gdps_prev_point[X];
-	    curr_fy = sin(ang*bn_degtorad) * r + gdpsp->gdps_prev_point[Y];
-	    VSET(v_pt, curr_fx, curr_fy, 1.0);
-	    MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
-	    bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
-#endif
 	}
-#else
-	static fastf_t c, d, e, f, g, h;
-
-	fastf_t a, b;
-	point_t ellout;
-	point_t A, B;
-
-	a = fx - gdpsp->gdps_prev_point[X];
-	b = fy - gdpsp->gdps_prev_point[Y];
-
-
-	e = h = .92388;	/* cos(22.5) */
-	c = d = .707107;	/* cos(45) */
-	g = f = .382683;	/* cos(67.5) */
-
-	/*
-	 * For angle theta, compute surface point as
-	 *
-	 * V + cos(theta) * A + sin(theta) * B
-	 *
-	 * note that sin(theta) is cos(90-theta).
-	 */
-
-	VSET(A, a, 0, 0);
-	VSET(B, 0, b, 0);
-
-	VADD2(ellout, gdpsp->gdps_prev_point, A);
-	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
-	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
-
-	VJOIN2(ellout, gdpsp->gdps_prev_point, e, A, f, B);
-	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
-	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
-
-	VJOIN2(ellout, gdpsp->gdps_prev_point, c, A, d, B);
-	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
-	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
-
-	VJOIN2(ellout, gdpsp->gdps_prev_point, g, A, h, B);
-	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
-	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
-
-	VADD2(ellout, gdpsp->gdps_prev_point, B);
-	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
-	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
-
-	VJOIN2(ellout, gdpsp->gdps_prev_point, -g, A, h, B);
-	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
-	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
-
-	VJOIN2(ellout, gdpsp->gdps_prev_point, -c, A, d, B);
-	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
-	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
-
-	VJOIN2(ellout, gdpsp->gdps_prev_point, -e, A, f, B);
-	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
-	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
-
-	VSUB2(ellout, gdpsp->gdps_prev_point, A);
-	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
-	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
-
-	VJOIN2(ellout, gdpsp->gdps_prev_point, -e, A, -f, B);
-	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
-	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
-
-	VJOIN2(ellout, gdpsp->gdps_prev_point, -c, A, -d, B);
-	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
-	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
-
-	VJOIN2(ellout, gdpsp->gdps_prev_point, -g, A, -h, B);
-	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
-	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
-
-	VSUB2(ellout, gdpsp->gdps_prev_point, B);
-	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
-	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
-
-	VJOIN2(ellout, gdpsp->gdps_prev_point, g, A, -h, B);
-	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
-	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
-
-	VJOIN2(ellout, gdpsp->gdps_prev_point, c, A, -d, B);
-	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
-	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
-
-	VJOIN2(ellout, gdpsp->gdps_prev_point, e, A, -f, B);
-	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
-	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
-#endif
     }
 
     bu_vls_printf(&plist, " }");
