@@ -74,3 +74,10 @@ Done (to first order, all this needs testing)
 17. fix wish build on windows - current output exe doesn't run
 
 21. Unbreak Xcode generation - XCode logic is now generated and loads, but it looks like BRL-CAD's multitude of targets may be a bit much for XCode.
+
+
+22.  Auto (B) should be Bundled (Auto) in the CMake reporting
+
+23.  Auto's not reporting anything isn't very good - should be ON (Auto) or OFF(Auto) or 32BIT (Auto)
+
+
