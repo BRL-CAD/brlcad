@@ -57,7 +57,7 @@ struct Buf {
 };
 
 /* scanner data */
-typedef struct perplex_data_t {
+typedef struct perplex_t {
     union {
 	FILE *file;
 	char *string;
@@ -67,6 +67,8 @@ typedef struct perplex_data_t {
     char *null;
     char *tokenStart;
     struct Buf *buffer;
+    char *tokenText;
+    void *appData;
 } *perplex_t;
 
 #include <math.h>
@@ -385,15 +387,16 @@ bufferFill(perplex_t scanner, size_t n)
 }
 
 static char*
-getTokenText(perplex_t scanner, struct Buf *localBuf)
+getTokenText(perplex_t scanner)
 {
     int tokenChars = scanner->cursor - scanner->tokenStart;
 
-    localBuf->nelts = 0;
-    buf_append(localBuf, scanner->tokenStart, tokenChars);
-    buf_append_null(localBuf);
+    scanner->tokenText = (char*)malloc(sizeof(char) * (tokenChars + 1));
 
-    return (char*)localBuf->elts;
+    memcpy(scanner->tokenText, scanner->tokenStart, tokenChars);
+    scanner->tokenText[tokenChars] = '\0';
+
+    return scanner->tokenText;
 }
 
 static perplex_t
@@ -452,21 +455,32 @@ perplexFree(perplex_t scanner)
 #define YYFILL(n)          bufferFill(scanner, n)
 
 #define UPDATE_START  scanner->tokenStart = scanner->cursor;
-#define yytext        getTokenText(scanner, _perplex_token_string)
-#define RETURN(id)    \
-    buf_destroy(_perplex_token_string); \
-    free(_perplex_token_string); \
-    return id;
+#define yytext        getTokenText(scanner)
+#define RETURN(id)    return id;
 #define CONTINUE      UPDATE_START; continue;
 
+static int perplexScan(perplex_t scanner);
+
 int yylex(perplex_t scanner) {
+    int ret;
+
+    scanner->tokenText = NULL;
+
+    ret = perplexScan(scanner);
+
+    if (scanner->tokenText != NULL) {
+	free(scanner->tokenText);
+	scanner->tokenText = NULL;
+    }
+
+    return ret;
+}
+
+static int
+perplexScan(perplex_t scanner) {
     char yych;
-    struct Buf *_perplex_token_string;
 
     UPDATE_START;
-
-    _perplex_token_string = (struct Buf*)malloc(sizeof(struct Buf));
-    buf_init(_perplex_token_string, sizeof(char));
 
     while (1) {
 /*!re2c

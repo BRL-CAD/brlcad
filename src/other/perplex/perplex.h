@@ -81,8 +81,9 @@ typedef struct perplex_t {
     char *null;
     char *tokenStart;
     struct Buf *buffer;
-    condition_t condition;
+    char *tokenText;
     appData_t *appData;
+    condition_t condition;
 } *perplex_t;
 
 perplex_t perplexFileScanner(FILE *input);
