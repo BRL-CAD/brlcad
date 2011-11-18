@@ -12,8 +12,8 @@ include_directories(
 	)
 
 add_executable(pkg_test_server server.c)
-target_link_libraries(pkg_test_server libpkg)
+target_link_libraries(pkg_test_server libpkg libbu)
 add_executable(pkg_test_client client.c)
-target_link_libraries(pkg_test_client libpkg)
+target_link_libraries(pkg_test_client libpkg libbu)
 
 CMAKEFILES(ntp.h)
