@@ -223,7 +223,7 @@ IF(TCL_ENABLE_DLL_UNLOADING)
 	ADD_TCL_CFLAG(TCL_UNLOAD_DLLS)
 ENDIF(TCL_ENABLE_DLL_UNLOADING)
 
-# CoreFoundation check.  TODO - check for 64 bit stuff at some point
+# CoreFoundation check.  TODO - check for 64-bit stuff at some point
 IF(APPLE)
 	OPTION(TCL_ENABLE_COREFOUNDATION "Use CoreFoundation" ON)
 	IF(TCL_ENABLE_COREFOUNDATION)
@@ -244,8 +244,8 @@ IF(TCL_TOMMATH)
 ENDIF(TCL_TOMMATH)
 
 #----------------------------------------------------------------------------
-# 64 Bit support - unlike TEA, we enable by default if the platform looks
-# like it's 64 bit.  Can be overridden by specifying CMAKE_CPU_TYPE=32BIT
+# 64-bit support - unlike TEA, we enable by default if the platform looks
+# like it's 64-bit.  Can be overridden by specifying CMAKE_WORD_SIZE=32BIT
 #----------------------------------------------------------------------------
 SC_TCL_64BIT_FLAGS()
 

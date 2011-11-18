@@ -214,8 +214,8 @@ SC_ENABLE_THREADS()
 SC_TCL_LINK_LIBS()
 
 #----------------------------------------------------------------------------
-# 64 Bit support - unlike TEA, we enable by default if the platform looks
-# like it's 64 bit.  Can be overridden by specifying CMAKE_CPU_TYPE=32BIT
+# 64-bit support - unlike TEA, we enable by default if the platform looks
+# like it's 64-bit.  Can be overridden by specifying CMAKE_WORD_SIZE=32BIT
 #----------------------------------------------------------------------------
 SC_TCL_64BIT_FLAGS()
 
