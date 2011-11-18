@@ -114,6 +114,7 @@ run_server(int port) {
     char portname[MAX_DIGITS + 1] = {0};
     int pkg_result  = 0;
     char *buffer;
+    long bytes = 0;
 
     /** our server callbacks for each message type */
     struct pkg_switch callbacks[] = {
@@ -196,6 +197,9 @@ run_server(int port) {
 	    bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
 	}
     } while (client != NULL);
+
+    /* Tell the client we're done */
+    bytes = pkg_send(MSG_CIAO, "BYE", 4, client);
 
     /* shut down the server, one-time use */
     pkg_close(client);

@@ -135,6 +135,9 @@ run_client(const char *server, int port, const char *file)
 	}
     }
 
+    /* Wait for the server to tell us it's done */
+    buffer = pkg_bwaitfor (MSG_CIAO, stash.connection);
+
     /* let the server know we're done.  not necessary, but polite. */
     bytes = pkg_send(MSG_CIAO, "BYE", 4, stash.connection);
     if (bytes < 0) {
