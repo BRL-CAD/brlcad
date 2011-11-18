@@ -254,6 +254,7 @@ package provide cadwidgets::Ged 1.0
 	method mouse_oscale {args}
 	method mouse_otranslate {args}
 	method mouse_poly_circ {args}
+	method mouse_poly_ell {args}
 	method mouse_poly_rect {args}
 	method mouse_prepend_pipept {args}
 	method mouse_rect {args}
@@ -550,6 +551,7 @@ package provide cadwidgets::Ged 1.0
 	method end_data_move {_pane}
 	method end_poly_move {_pane}
 	method end_poly_circ {_pane {_button 1}}
+	method end_poly_ell {_pane {_button 1}}
 	method end_poly_rect {_pane {_button 1}}
 	method end_view_measure {_pane _part1_button _part2_button}
 	method end_view_measure_part2 {_pane _button}
@@ -573,6 +575,7 @@ package provide cadwidgets::Ged 1.0
 	method init_data_pick {{_button 1}}
 	method init_find_pipept {_obj {_button 1} {_callback {}}}
 	method init_poly_circ {{_button 1}}
+	method init_poly_ell {{_button 1}}
 	method init_poly_rect {{_button 1}}
 	method init_prepend_pipept {_obj {_button 1} {_callback {}}}
 	method init_view_bindings {{_type default}}
@@ -688,8 +691,9 @@ package provide cadwidgets::Ged 1.0
 	variable mViewMeasureCallbacks ""
 	variable mViewRectCallbacks ""
 
-	variable mPolyRectCallbacks ""
 	variable mPolyCircCallbacks ""
+	variable mPolyEllCallbacks ""
+	variable mPolyRectCallbacks ""
 
 	variable mRay "ray"
 	variable mRayCurrWho ""
@@ -1619,6 +1623,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::mouse_poly_circ {args} {
     eval $mGed mouse_poly_circ $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::mouse_poly_ell {args} {
+    eval $mGed mouse_poly_ell $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::mouse_poly_rect {args} {
@@ -3148,6 +3156,34 @@ package provide cadwidgets::Ged 1.0
 }
 
 
+::itcl::body cadwidgets::Ged::end_poly_ell {_pane {_button 1}} {
+    $mGed idle_mode $itk_component($_pane)
+
+    if {$itk_option(-gridSnap)} {
+	set mpos [$mGed get_prev_mouse $itk_component($_pane)]
+	set view [eval $mGed screen2view $itk_component($_pane) $mpos]
+	set view [$mGed snap_view $itk_component($_pane) [lindex $view 0] [lindex $view 1]]
+	set mpos [$mGed view2screen $itk_component($_pane) $view]
+
+	# This will regenerate the circle based on the snapped mouse position
+	eval $mGed mouse_poly_ell $itk_component($_pane) $mpos
+    }
+
+    # For the moment there will never be any callbacks
+
+    if {[llength $mPolyEllCallbacks] == 0} {
+	set plist [$mGed data_polygons $itk_component($_pane) polygons]
+	if {[llength $plist] > 1} {
+	    $mGed data_polygons $itk_component($_pane) clip 0 1
+	}
+    } else {
+	foreach callback $mPolyEllCallbacks {
+	    catch {$callback [$mGed rselect $itk_component($_pane)]}
+	}
+    }
+}
+
+
 ::itcl::body cadwidgets::Ged::end_poly_rect {_pane {_button 1}} {
     $mGed idle_mode $itk_component($_pane)
 
@@ -3471,6 +3507,7 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
+
 ::itcl::body cadwidgets::Ged::init_poly_circ {{_button 1}} {
     measure_line_erase
 
@@ -3480,6 +3517,17 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
+
+::itcl::body cadwidgets::Ged::init_poly_ell {{_button 1}} {
+    measure_line_erase
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "$mGed poly_ell_mode $itk_component($dm) %x %y; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_poly_ell $dm]; break"
+    }
+}
+
+
 ::itcl::body cadwidgets::Ged::init_poly_rect {{_button 1}} {
     measure_line_erase
 
@@ -3488,6 +3536,7 @@ package provide cadwidgets::Ged 1.0
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_poly_rect $dm]; break"
     }
 }
+
 
 ::itcl::body cadwidgets::Ged::init_prepend_pipept {_obj {_button 1} {_callback {}}} {
     measure_line_erase

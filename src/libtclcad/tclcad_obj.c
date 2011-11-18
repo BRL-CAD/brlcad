@@ -363,6 +363,12 @@ HIDDEN int to_mouse_poly_circ(struct ged *gedp,
 			      ged_func_ptr func,
 			      const char *usage,
 			      int maxargs);
+HIDDEN int to_mouse_poly_ell(struct ged *gedp,
+			     int argc,
+			     const char *argv[],
+			     ged_func_ptr func,
+			     const char *usage,
+			     int maxargs);
 HIDDEN int to_mouse_poly_rect(struct ged *gedp,
 			      int argc,
 			      const char *argv[],
@@ -492,6 +498,12 @@ HIDDEN int to_poly_circ_mode(struct ged *gedp,
 			     ged_func_ptr func,
 			     const char *usage,
 			     int maxargs);
+HIDDEN int to_poly_ell_mode(struct ged *gedp,
+			    int argc,
+			    const char *argv[],
+			    ged_func_ptr func,
+			    const char *usage,
+			    int maxargs);
 HIDDEN int to_poly_rect_mode(struct ged *gedp,
 			     int argc,
 			     const char *argv[],
@@ -914,6 +926,7 @@ static struct to_cmdtab to_cmds[] = {
     {"mouse_oscale",	"obj x y", TO_UNLIMITED, to_mouse_oscale, GED_FUNC_PTR_NULL},
     {"mouse_otranslate",	"obj x y", TO_UNLIMITED, to_mouse_otranslate, GED_FUNC_PTR_NULL},
     {"mouse_poly_circ",	"x y", TO_UNLIMITED, to_mouse_poly_circ, GED_FUNC_PTR_NULL},
+    {"mouse_poly_ell",	"x y", TO_UNLIMITED, to_mouse_poly_ell, GED_FUNC_PTR_NULL},
     {"mouse_poly_rect",	"x y", TO_UNLIMITED, to_mouse_poly_rect, GED_FUNC_PTR_NULL},
     {"mouse_prepend_pipept",	"obj x y", TO_UNLIMITED, to_mouse_append_pipept_common, ged_prepend_pipept},
     {"mouse_ray",	"x y", TO_UNLIMITED, to_mouse_ray, GED_FUNC_PTR_NULL},
@@ -954,6 +967,7 @@ static struct to_cmdtab to_cmds[] = {
 #endif
     {"pngwf",	"[options] file.png", 16, to_view_func, ged_png},
     {"poly_circ_mode",	"x y", TO_UNLIMITED, to_poly_circ_mode, GED_FUNC_PTR_NULL},
+    {"poly_ell_mode",	"x y", TO_UNLIMITED, to_poly_ell_mode, GED_FUNC_PTR_NULL},
     {"poly_rect_mode",	"x y", TO_UNLIMITED, to_poly_rect_mode, GED_FUNC_PTR_NULL},
     {"pov",	"center quat scale eye_pos perspective", 7, to_view_func_plus, ged_pmat},
     {"prcolor",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_prcolor},
@@ -6134,6 +6148,7 @@ to_mouse_otranslate(struct ged *gedp,
     return GED_OK;
 }
 
+
 HIDDEN int
 to_mouse_poly_circ(struct ged *gedp,
 		   int argc,
@@ -6246,6 +6261,230 @@ to_mouse_poly_circ(struct ged *gedp,
 
     return GED_OK;
 }
+
+
+HIDDEN int
+to_mouse_poly_ell(struct ged *gedp,
+		  int argc,
+		  const char *argv[],
+		  ged_func_ptr UNUSED(func),
+		  const char *usage,
+		  int UNUSED(maxargs))
+{
+    int ac;
+    char *av[7];
+    int x, y;
+    fastf_t fx, fy;
+    fastf_t inv_width;
+    fastf_t inv_height;
+    fastf_t inv_aspect;
+    point_t m_pt;
+    struct bu_vls plist, i_vls;
+    struct ged_dm_view *gdvp;
+    ged_data_polygon_state *gdpsp;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 4) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
+	return GED_ERROR;
+    }
+
+    if (argv[0][0] == 's')
+	gdpsp = &gdvp->gdv_view->gv_sdata_polygons;
+    else
+	gdpsp = &gdvp->gdv_view->gv_data_polygons;
+
+    if (sscanf(argv[2], "%d", &x) != 1 ||
+	sscanf(argv[3], "%d", &y) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    gdvp->gdv_view->gv_prevMouseX = x;
+    gdvp->gdv_view->gv_prevMouseY = y;
+
+    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
+    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
+    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
+    fx = x * inv_width * 2.0 - 1.0;
+    fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+
+    bu_vls_init(&plist);
+    bu_vls_printf(&plist, "{ ");
+
+    {
+#if 1
+	fastf_t a, b, arc;
+	point_t ellout;
+	point_t A, B;
+	register int nsegs, n;
+
+	a = fx - gdpsp->gdps_prev_point[X];
+	b = fy - gdpsp->gdps_prev_point[Y];
+
+	/*
+	 * For angle alpha, compute surface point as
+	 *
+	 * V + cos(alpha) * A + sin(alpha) * B
+	 *
+	 * note that sin(alpha) is cos(90-alpha).
+	 */
+
+	VSET(A, a, 0, 0);
+	VSET(B, 0, b, 0);
+
+	nsegs = 30;
+	arc = 360.0 / nsegs;
+	for (n = 0; n < nsegs; ++n) {
+	    fastf_t cosa = cos(n * arc * bn_degtorad);
+	    fastf_t sina = sin(n * arc * bn_degtorad);
+
+#if 1
+	    VJOIN2(ellout, gdpsp->gdps_prev_point, cosa, A, sina, B);
+	    MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
+	    bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
+#else
+	    curr_fx = cos(ang*bn_degtorad) * r + gdpsp->gdps_prev_point[X];
+	    curr_fy = sin(ang*bn_degtorad) * r + gdpsp->gdps_prev_point[Y];
+	    VSET(v_pt, curr_fx, curr_fy, 1.0);
+	    MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
+	    bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
+#endif
+	}
+#else
+	static fastf_t c, d, e, f, g, h;
+
+	fastf_t a, b;
+	point_t ellout;
+	point_t A, B;
+
+	a = fx - gdpsp->gdps_prev_point[X];
+	b = fy - gdpsp->gdps_prev_point[Y];
+
+
+	e = h = .92388;	/* cos(22.5) */
+	c = d = .707107;	/* cos(45) */
+	g = f = .382683;	/* cos(67.5) */
+
+	/*
+	 * For angle theta, compute surface point as
+	 *
+	 * V + cos(theta) * A + sin(theta) * B
+	 *
+	 * note that sin(theta) is cos(90-theta).
+	 */
+
+	VSET(A, a, 0, 0);
+	VSET(B, 0, b, 0);
+
+	VADD2(ellout, gdpsp->gdps_prev_point, A);
+	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
+	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
+
+	VJOIN2(ellout, gdpsp->gdps_prev_point, e, A, f, B);
+	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
+	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
+
+	VJOIN2(ellout, gdpsp->gdps_prev_point, c, A, d, B);
+	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
+	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
+
+	VJOIN2(ellout, gdpsp->gdps_prev_point, g, A, h, B);
+	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
+	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
+
+	VADD2(ellout, gdpsp->gdps_prev_point, B);
+	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
+	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
+
+	VJOIN2(ellout, gdpsp->gdps_prev_point, -g, A, h, B);
+	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
+	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
+
+	VJOIN2(ellout, gdpsp->gdps_prev_point, -c, A, d, B);
+	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
+	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
+
+	VJOIN2(ellout, gdpsp->gdps_prev_point, -e, A, f, B);
+	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
+	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
+
+	VSUB2(ellout, gdpsp->gdps_prev_point, A);
+	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
+	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
+
+	VJOIN2(ellout, gdpsp->gdps_prev_point, -e, A, -f, B);
+	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
+	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
+
+	VJOIN2(ellout, gdpsp->gdps_prev_point, -c, A, -d, B);
+	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
+	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
+
+	VJOIN2(ellout, gdpsp->gdps_prev_point, -g, A, -h, B);
+	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
+	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
+
+	VSUB2(ellout, gdpsp->gdps_prev_point, B);
+	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
+	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
+
+	VJOIN2(ellout, gdpsp->gdps_prev_point, g, A, -h, B);
+	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
+	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
+
+	VJOIN2(ellout, gdpsp->gdps_prev_point, c, A, -d, B);
+	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
+	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
+
+	VJOIN2(ellout, gdpsp->gdps_prev_point, e, A, -f, B);
+	MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);
+	bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
+#endif
+    }
+
+    bu_vls_printf(&plist, " }");
+    
+
+    bu_vls_init(&i_vls);
+    bu_vls_printf(&i_vls, "%llu", gdpsp->gdps_curr_polygon);
+
+    gedp->ged_gvp = gdvp->gdv_view;
+    ac = 5;
+    av[0] = "data_polygons";
+    av[1] = bu_vls_addr(&gdvp->gdv_name);
+    av[2] = "replace_poly";
+    av[3] = bu_vls_addr(&i_vls);
+    av[4] = bu_vls_addr(&plist);
+    av[5] = (char *)0;
+
+    (void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
+    bu_vls_free(&plist);
+    bu_vls_free(&i_vls);
+
+    to_refresh_view(gdvp);
+
+    return GED_OK;
+}
+
 
 HIDDEN int
 to_mouse_poly_rect(struct ged *gedp,
@@ -7851,6 +8090,7 @@ to_png(struct ged *gedp,
 }
 #endif
 
+
 HIDDEN int
 to_poly_circ_mode(struct ged *gedp,
 		  int argc,
@@ -7959,6 +8199,117 @@ to_poly_circ_mode(struct ged *gedp,
 
     return GED_OK;
 }
+
+
+HIDDEN int
+to_poly_ell_mode(struct ged *gedp,
+		 int argc,
+		 const char *argv[],
+		 ged_func_ptr UNUSED(func),
+		 const char *usage,
+		 int UNUSED(maxargs))
+{
+    int ac;
+    char *av[5];
+    int x, y;
+    fastf_t fx, fy;
+    fastf_t inv_width;
+    fastf_t inv_height;
+    fastf_t inv_aspect;
+    point_t v_pt, m_pt;
+    struct bu_vls plist;
+    struct bu_vls bindings;
+    struct ged_dm_view *gdvp;
+    ged_data_polygon_state *gdpsp;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 4) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
+	return GED_ERROR;
+    }
+
+    if (argv[0][0] == 's')
+	gdpsp = &gdvp->gdv_view->gv_sdata_polygons;
+    else
+	gdpsp = &gdvp->gdv_view->gv_data_polygons;
+
+    gdpsp->gdps_model2view = gdvp->gdv_view->gv_model2view;
+    gdpsp->gdps_view2model = gdvp->gdv_view->gv_view2model;
+
+    gedp->ged_gvp = gdvp->gdv_view;
+
+    if (sscanf(argv[2], "%d", &x) != 1 ||
+	sscanf(argv[3], "%d", &y) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    gdvp->gdv_view->gv_prevMouseX = x;
+    gdvp->gdv_view->gv_prevMouseY = gdvp->gdv_dmp->dm_height - y;
+    gdvp->gdv_view->gv_mode = TCLCAD_POLY_ELLIPSE_MODE;
+
+    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
+    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
+    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
+
+    fx = x * inv_width * 2.0 - 1.0;
+    fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    VSET(v_pt, fx, fy, 1.0);
+    if (gedp->ged_gvp->gv_grid.ggs_snap)
+	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
+
+    MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
+    VMOVE(gdpsp->gdps_prev_point, v_pt);
+
+    bu_vls_init(&plist);
+    bu_vls_printf(&plist, "{ {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} }",
+		  V3ARGS(m_pt), V3ARGS(m_pt), V3ARGS(m_pt), V3ARGS(m_pt));
+    ac = 4;
+    av[0] = "data_polygons";
+    av[1] = bu_vls_addr(&gdvp->gdv_name);
+    av[2] = "append_poly";
+    av[3] = bu_vls_addr(&plist);
+    av[4] = (char *)0;
+
+    if (gdpsp->gdps_polygons.gp_num_polygons == 0)
+	gdpsp->gdps_curr_polygon = 0;
+    else
+	gdpsp->gdps_curr_polygon = 1;
+
+    (void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
+    bu_vls_free(&plist);
+
+    bu_vls_init(&bindings);
+    bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_poly_ell %V %%x %%y}",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &current_top->to_gop->go_name,
+		  &gdvp->gdv_name);
+    Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+    bu_vls_free(&bindings);
+
+    to_refresh_view(gdvp);
+
+    return GED_OK;
+}
+
 
 HIDDEN int
 to_poly_rect_mode(struct ged *gedp,
