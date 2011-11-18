@@ -400,7 +400,7 @@ static perplex_t
 newScanner()
 {
     perplex_t scanner;
-    scanner = (perplex_t)calloc(1, sizeof(struct perplex_data_t));
+    scanner = (perplex_t)calloc(1, sizeof(struct perplex_t));
 
     setCondition(scanner, DEFINITIONS);
     scanner->buffer = NULL;
@@ -452,12 +452,24 @@ perplexFree(perplex_t scanner)
 
 #define UPDATE_START  scanner->tokenStart = scanner->cursor;
 #define yytext        getTokenText(scanner, _perplex_token_string)
-#define RETURN(id)    buf_destroy(_perplex_token_string); return id;
+#define RETURN(id)    \
+    buf_destroy(_perplex_token_string); \
+    free(_perplex_token_string); \
+    return id;
 #define CONTINUE      UPDATE_START; continue;
 
-int yylex(perplext_t scanner)
-{
+int yylex(perplex_t scanner) {
+    char yych;
+    struct Buf *_perplex_token_string;
+
+    UPDATE_START;
+
+    _perplex_token_string = (struct Buf*)malloc(sizeof(struct Buf));
+    buf_init(_perplex_token_string, sizeof(char));
+
+    while (1) {
 /*!re2c
+re2c:yych:emit = 0;
 re2c:define:YYCTYPE  = char;
 re2c:define:YYCURSOR = scanner->cursor;
 re2c:define:YYLIMIT  = scanner->null;

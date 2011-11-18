@@ -1,32 +1,69 @@
 %include {
 #include <assert.h>
+#include "perplex.h"
 #include "token_type.h"
 }
 
 %token_type {YYSTYPE}
+%extra_argument {appData_t *appData}
 
-file ::= definitions TOKEN_DEFINITIONS rules TOKEN_RULES code.
+file ::= definitions_section rules_section code.
+
+/* definitions section */
+
+definitions_section ::= definitions TOKEN_SEPARATOR.
+{
+    FILE *templateFile = appData->template;
+    char c;
+
+    while ((c = fgetc(templateFile)) != EOF) {
+	printf("%c", c);
+    }
+    printf("\n");
+    fclose(templateFile);
+}
 
 definitions ::= /* empty */.
-definitions ::= definitions TOKEN_ANY(s).
+definitions ::= definitions TOKEN_DEFINITIONS(text).
 {
-    printf("%s", s.string);
+    printf("%s", text.string);
+    free(text);
 }
 
-rules ::= /* empty */.
+/* rules section */
+
+rules_section ::= rules TOKEN_SEPARATOR.
+{
+    /* close re2c comment and scanner routine */
+    printf("*/\n}\n");
+}
+
+rules ::= rule.
 rules ::= rules rule.
 
-rule ::= TOKEN_PATTERN(pattern) TOKEN_ACTION(action).
+rule ::= pattern TOKEN_LBRACE action TOKEN_RBRACE.
 {
-    printf("%s", pattern.string);
-    printf("\n{\n");
-    printf("%s", action.string);
-    printf("\nCONTINUE;\n");
-    printf("\n}\n");
+    /* prevent fall-through to next rule */
+    printf("\n    CONTINUE;\n}\n");
 }
 
-code ::= /* empty */.
-code ::= code TOKEN_ANY(s).
+pattern ::= TOKEN_PATTERN(text).
 {
-    printf("%s", s.string);
+    printf("%s {", text.string);
+    free(text);
+}
+
+action ::= TOKEN_ACTION(text).
+{
+    printf("%s", text.string);
+    free(text);
+}
+
+/* code section */
+
+code ::= /* empty */.
+code ::= code TOKEN_CODE(text).
+{
+    printf("%s", text.string);
+    free(text);
 }

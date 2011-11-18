@@ -88,7 +88,6 @@ copyString(const char *str)
 
     return copy;
 }
-
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -420,7 +419,7 @@ static perplex_t
 newScanner()
 {
     perplex_t scanner;
-    scanner = (perplex_t)calloc(1, sizeof(struct perplex_data_t));
+    scanner = (perplex_t)calloc(1, sizeof(struct perplex_t));
 
     setCondition(scanner, DEFINITIONS);
     scanner->buffer = NULL;
@@ -472,7 +471,10 @@ perplexFree(perplex_t scanner)
 
 #define UPDATE_START  scanner->tokenStart = scanner->cursor;
 #define yytext        getTokenText(scanner, _perplex_token_string)
-#define RETURN(id)    buf_destroy(_perplex_token_string); return id;
+#define RETURN(id)    \
+    buf_destroy(_perplex_token_string); \
+    free(_perplex_token_string); \
+    return id;
 #define CONTINUE      UPDATE_START; continue;
 
 int yylex(perplex_t scanner) {
@@ -486,15 +488,14 @@ int yylex(perplex_t scanner) {
 
     while (1) {
 /*!re2c
-re2c:condenumprefix = "";
-re2c:define:YYCONDTYPE = condition_t;
-re2c:define:YYGETCONDITION:naked = 1;
-
 re2c:yych:emit = 0;
 re2c:define:YYCTYPE  = char;
 re2c:define:YYCURSOR = scanner->cursor;
 re2c:define:YYLIMIT  = scanner->null;
 re2c:define:YYMARKER = scanner->marker;
+re2c:condenumprefix = "";
+re2c:define:YYCONDTYPE = condition_t;
+re2c:define:YYGETCONDITION:naked = 1;
 
 NAME = [a-zA-Z_][a-zA-Z0-9_-]*;
 EOL = '\n';
@@ -510,38 +511,50 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL;
 
 <*>EOF { RETURN(YYEOF); }
 
-<*>FAUX_SEPARATOR {
-    /* just text - echo it */
-    printf("%s\n", yytext);
-    CONTINUE;
+<DEFINITIONS>FAUX_SEPARATOR {
+    scanner->appData->tokenData.string = copyString(yytext);
+    RETURN(TOKEN_DEFINITIONS);
 }
-
 <DEFINITIONS>SEPARATOR {
     setCondition(scanner, RULES);
+    RETURN(TOKEN_SEPARATOR);
+}
+<DEFINITIONS>ANY {
+    scanner->appData->tokenData.string = copyString(yytext);
     RETURN(TOKEN_DEFINITIONS);
 }
 
+<RULES>FAUX_SEPARATOR {
+    CONTINUE;
+}
 <RULES>SEPARATOR {
     setCondition(scanner, CODE);
-    RETURN(TOKEN_RULES);
+    RETURN(TOKEN_SEPARATOR);
 }
-<RULES>'{'[^}\000]*'}' {
-    char *text = yytext;
-    char *copy = copyString(text);
-    ((YYSTYPE*)scanner->appData)->string = copy;
-    RETURN(TOKEN_ACTION);
-}
-<RULES>LINE_NOT_WHITE+ {
-    char *text = yytext;
-    char *copy = copyString(text);
-    ((YYSTYPE*)scanner->appData)->string = copy;
+<RULES>[^\000\n\t {]+ {
+    scanner->appData->tokenData.string = copyString(yytext);
     RETURN(TOKEN_PATTERN);
 }
-
-<*>ANY {
-    /* just text - echo it */
-    printf("%s", yytext);
+<RULES>'{' { 
+    setCondition(scanner, ACTION);
+    RETURN(TOKEN_LBRACE);
+}
+<RULES>ANY {
     CONTINUE;
+}
+
+<ACTION>'}' {
+    setCondition(scanner, RULES);
+    RETURN(TOKEN_RBRACE);
+}
+<ACTION>[^}\000]+ {
+    scanner->appData->tokenData.string = copyString(yytext);
+    RETURN(TOKEN_ACTION);
+}
+
+<CODE>ANY {
+    scanner->appData->tokenData.string = copyString(yytext);
+    RETURN(TOKEN_CODE);
 }
 */
     }

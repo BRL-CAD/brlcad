@@ -54,6 +54,7 @@
 typedef enum YYCONDTYPE {
     DEFINITIONS,
     RULES,
+    ACTION,
     CODE
 } condition_t;
 
@@ -64,8 +65,13 @@ struct Buf {
     int     nmax;	/* max capacity of elements. */
 };
 
+typedef struct appData_t {
+    FILE *in, *template;
+    YYSTYPE tokenData;
+} appData_t;
+
 /* scanner data */
-typedef struct perplex_data_t {
+typedef struct perplex_t {
     union {
 	FILE *file;
 	char *string;
@@ -76,7 +82,7 @@ typedef struct perplex_data_t {
     char *tokenStart;
     struct Buf *buffer;
     condition_t condition;
-    void *appData;
+    appData_t *appData;
 } *perplex_t;
 
 perplex_t perplexFileScanner(FILE *input);
@@ -85,8 +91,8 @@ void perplexFree(perplex_t scanner);
 
 void *ParseAlloc(void *(*mallocProc)(size_t));
 void ParseFree(void *parser, void (*freeProc)(void*));
-void Parse(void *parser, int tokenID, YYSTYPE data);
-
+void Parse(void *parser, int tokenID, YYSTYPE tokenData, appData_t *appData);
+void ParseTrace(FILE *fp, char *s);
 
 #endif
 
