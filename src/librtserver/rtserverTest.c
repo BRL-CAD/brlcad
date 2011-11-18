@@ -99,7 +99,7 @@ countHits(struct bu_vlb *vlb)
             vect_t exitNorm;
             double inObl;
             double outObl;
-            int regionIndex;
+            /* UNUSED: int regionIndex; */
             
             ntohd((unsigned char *)enterPt, c, 3);
             c += SIZEOF_NETWORK_DOUBLE * 3;
@@ -119,7 +119,7 @@ countHits(struct bu_vlb *vlb)
             ntohd((unsigned char*)&outObl, c, 1);
             c += SIZEOF_NETWORK_DOUBLE;
             
-            regionIndex = BU_GLONG(c);
+            /* UNUSED: regionIndex = BU_GLONG(c); */
             c += SIZEOF_NETWORK_LONG;
             
             hitCount++;
@@ -144,7 +144,6 @@ main( int argc, char *argv[] )
     struct bu_ptbl objs;
     int my_session_id;
     int do_plot=0;
-    int use_air=0;
     struct timeval startTime;
     struct timeval endTime;
     double diff;
@@ -159,13 +158,10 @@ main( int argc, char *argv[] )
     bu_ptbl_init( &objs, 64, "objects" );
 
     /* process command line args */
-    while ( (c=bu_getopt( argc, argv, "vps:ao:" ) ) != -1 ) {
+    while ( (c=bu_getopt( argc, argv, "vps:o:" ) ) != -1 ) {
 	switch ( c ) {
 	    case 'p': /* do print plot */
 		do_plot = 1;
-		break;
-	    case 'a':	/* set flag to use air regions in the BRL-CAD model */
-		use_air = 1;
 		break;
 	    case 's':	/* set the grid size (default is 64x64) */
 		grid_size = atoi( bu_optarg );
