@@ -7,13 +7,17 @@ SET(PKG_INCLUDE_DIRS
 BRLCAD_INCLUDE_DIRS(PKG_INCLUDE_DIRS)
 
 # Local includes
-include_directories(
-	${CMAKE_CURRENT_SOURCE_DIR}
-	)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(pkg_test_server server.c)
 target_link_libraries(pkg_test_server libpkg libbu)
+IF(MSVC)
+	SET_TARGET_PROPERTIES(pkg_test_server PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
+ENDIF(MSVC)
 add_executable(pkg_test_client client.c)
 target_link_libraries(pkg_test_client libpkg libbu)
+IF(MSVC)
+	SET_TARGET_PROPERTIES(pkg_test_client PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
+ENDIF(MSVC)
 
 CMAKEFILES(ntp.h)
