@@ -8,6 +8,9 @@ Remaining items:
 
 20. Update README, INSTALL, doc/*, etc.
 
+24.  Set up alias lists for main BRL-CAD options, maybe address #19 at the same time.
+     Probably will need a wrapper macro.
+
 Done (to first order, all this needs testing)
 
 1.  Detect OpenGL properly on Apple - choose X11 vs Aqua, and get the ogl code working
@@ -75,9 +78,8 @@ Done (to first order, all this needs testing)
 
 21. Unbreak Xcode generation - XCode logic is now generated and loads, but it looks like BRL-CAD's multitude of targets may be a bit much for XCode.
 
-
 22.  Auto (B) should be Bundled (Auto) in the CMake reporting
 
-23.  Auto's not reporting anything isn't very good - should be ON (Auto) or OFF(Auto) or 32BIT (Auto)
+23.  Auto's not reporting anything isn't very good - should be ON (Auto) or OFF (Auto) or 32BIT (Auto)
 
 
