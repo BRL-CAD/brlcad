@@ -39,11 +39,15 @@
  */
 #define MAX_OVERLAPS 4
 #define MAX_HITS 4
+#define MAX_AIRGAPS 4
 
 int num_hits = 0;
 int num_overlaps = 0;
+int num_airgaps = 0;
 struct overlap overlap_list[MAX_OVERLAPS];
 struct hit_reg hit_list[MAX_HITS];
+struct hit_reg airgap_list[MAX_AIRGAPS];
+
 struct rayshot_results rt_result;
 
 
@@ -83,8 +87,9 @@ print_overlap_node(int i)
 int
 cleanup_lists(void)
 {
-    num_hits = 0;
+    num_hits     = 0;
     num_overlaps = 0;
+    num_airgaps  = 0;
 
     return GED_OK;
 }
@@ -146,6 +151,9 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
     /* will contain normal vector where ray exits geometry */
     vect_t onormal;
 
+    /* used for calculating the air gap distance */
+    vect_t v;
+
     int i = 0;
 
     /* iterate over each partition until we get back to the head.
@@ -185,7 +193,7 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 	    hit_list[i].in_stp   = pp->pt_inseg->seg_stp;
 	    hit_list[i].out_stp  = pp->pt_outseg->seg_stp;
 
-	    /* entry hit point, so we type less */
+	    /* entry hit pointer, so we type less */
 	    hitp = pp->pt_inhit;
 
 	    /* construct the actual (entry) hit-point from the ray and the
@@ -235,7 +243,7 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 			hit_list[i].in_dist = hitp->hit_dist;
 			hit_list[i].cur = cur;
 
-			/* exit point, so we type less */
+			/* exit pointer, so we type less */
 			hitp = pp->pt_outhit;
 
 			/* construct the actual (exit) hit-point from the ray and the
@@ -267,14 +275,54 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 			num_hits++;
 
 
-			/* Find air gap
-			 * Finding an air region involves, recording the out_point and
-			 * ray dir,pos for the current hit region. If the next hit region
-			 * has same dir & pos, but its in_point is in a different prim &
-			 * != in_point, then the ray must have traveled through air in the
-			 * interim. Put this in the air_list[], then replace the out_point
-			 * with current hit_region's out_point.
+			/* Record air gap
+			 * Finding an air region involves, comparing the out_point of prev hit reg.
+			 * with in_point of current hit reg.
+			 * After every ray shot, the lists are cleared, so no need to chk
+			 * ray dir and pos of subsequent hit regions for equality(they will be same).
+			 * If the current hit region in_point != out_point(of prev hit region),
+			 * then the ray must have traveled through air in the interim. The prim of the
+			 * points WILL BE different(otherwise the hit region would not be reported as different ),
+			 * though they may belong to the same comb(A or B) but
+			 * we do not check that here. We just record the points and prims in the airgap_list[].
 			 */
+			if( (num_hits > 1) &&
+				(!VEQUAL(hit_list[i].in_point, hit_list[i-1].out_point))
+			){
+				/* There has been at least 1 out_point recorded and the
+				 * in_point of current hit reg. does not match out_point of previous hit reg.
+				 */
+
+				if(num_airgaps < MAX_AIRGAPS){
+					i = num_airgaps;
+
+					VMOVE(airgap_list[i].in_point,  hit_list[i].in_point);
+					VMOVE(airgap_list[i].out_point, hit_list[i-1].out_point); /* Note: i-1 */
+					VSUB2(v, airgap_list[i].out_point, airgap_list[i].in_point);
+					airgap_list[i].out_dist = MAGNITUDE(v);
+
+					airgap_list[i].in_stp   = hit_list[i].in_stp;
+					airgap_list[i].out_stp  = hit_list[i-1].out_stp; /* Note: i-1 */
+
+					airgap_list[i].index = i;
+
+					bu_log("\nRecorded AIR GAP in %s(%f,%f,%f), out %s(%f,%f,%f), gap size %f mm\n",
+							 airgap_list[i].in_stp->st_name,
+							 V3ARGS(airgap_list[i].in_point),
+							 airgap_list[i].out_stp->st_name,
+						     V3ARGS(airgap_list[i].out_point),
+						     airgap_list[i].out_dist
+					 );
+
+					num_airgaps++;
+				}
+				else
+					bu_log("if_hit: WARNING Skipping AIR region as maximum AIR regions reached");
+
+			}
+
+
+
 
 		}
 		else{
@@ -837,6 +885,8 @@ traverse_normalray_lists(
 
     	bu_log("traverse_normalray_lists : No overlap found yet, checking hit regions");
 
+
+    	/* Draw the hit regions */
 		for(i=0; i<num_hits; i++){
 
 			bu_vls_sprintf(&reg_vls, "ray_hit_%s_%d_%d_%d_%f_%f_%f_%f_%f_%f_%d",
@@ -852,6 +902,29 @@ traverse_normalray_lists(
 			line(sim_params->gedp, bu_vls_addr(&reg_vls),
 					hit_list[i].in_point,
 					hit_list[i].out_point,
+					0, 210, 0);
+
+
+			add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
+
+		} /* end-for hits */
+
+
+		/* Draw the AIR regions */
+		for(i=0; i<num_airgaps; i++){
+
+			bu_vls_sprintf(&reg_vls, "ray_airgap_%s_%f_%f_%f_%s_%f_%f_%f_%d",
+					 airgap_list[i].in_stp->st_name,
+					 V3ARGS(airgap_list[i].in_point),
+					 airgap_list[i].out_stp->st_name,
+					 V3ARGS(airgap_list[i].out_point),
+					 airgap_list[i].index);
+
+			clear_bad_chars(&reg_vls);
+
+			line(sim_params->gedp, bu_vls_addr(&reg_vls),
+					airgap_list[i].in_point,
+					airgap_list[i].out_point,
 					0, 210, 0);
 
 

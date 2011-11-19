@@ -128,7 +128,6 @@ struct rayshot_results{
      * skipped.
 	 */
 	int overlap_found;
-	point_t out_point, in_point; /* out-in is the order of a ray traversing air region */
 
 	/* The vector sum of the normals over the surface in the overlap region for A & B*/
 	vect_t resultant_normal_A;
