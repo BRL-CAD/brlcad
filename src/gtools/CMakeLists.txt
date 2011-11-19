@@ -18,9 +18,7 @@ SET(beset_SRCS
 
 add_executable(beset ${beset_SRCS})
 target_link_libraries(beset libbu librt libwdb)
-IF(MSVC)
-	SET_TARGET_PROPERTIES(beset PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
-ENDIF(MSVC)
+SET_TARGET_PROPERTIES(beset PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
 
 BRLCAD_ADDEXEC(g_diff g_diff.c "libtclcad libged librt")
 BRLCAD_ADDEXEC(g_lint g_lint.c "librt ${M_LIBRARY}")
@@ -29,9 +27,7 @@ BRLCAD_ADDEXEC(remapid remapid.c "librt libbu")
 
 add_executable(g_transfer g_transfer.c)
 target_link_libraries(g_transfer librt libpkg)
-IF(MSVC)
-	SET_TARGET_PROPERTIES(g_transfer PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
-ENDIF(MSVC)
+SET_TARGET_PROPERTIES(g_transfer PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
 
 BRLCAD_ADDFILE(g_transfer.c sample_applications)
 

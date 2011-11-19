@@ -13,12 +13,10 @@ set(LIBREGEX_SOURCES
     regfree.c
 )
 
-IF(MSVC)
-	add_definitions(
-		-DREGEX_EXPORT_DLL
-		-DBRLCAD_DLL
-	)
-ENDIF(MSVC)
+add_definitions(
+	-DREGEX_EXPORT_DLL
+	-DBRLCAD_DLL
+)
 
 add_library(regex SHARED ${LIBREGEX_SOURCES})
 INSTALL(TARGETS regex DESTINATION ${LIB_DIR})

@@ -112,10 +112,7 @@ target_link_libraries(test_dirname libbu)
 
 add_executable(test_basename test_basename.c)
 target_link_libraries(test_basename libbu)
-# FIXME: shouldn't need MSVC-specific logic in here
-IF(MSVC)
-	SET_TARGET_PROPERTIES(test_basename PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
-ENDIF(MSVC)
+SET_TARGET_PROPERTIES(test_basename PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
 
 add_executable(test_progname test_progname.c)
 target_link_libraries(test_progname libbu)
@@ -136,6 +133,6 @@ ADD_MAN_PAGES(3 bu_MAN3)
 set(bu_ignore_files
 	rb_internals.h
 	uce-dirent.h
-	)
+)
 CMAKEFILES(${bu_ignore_files})
 CMAKEFILES(Makefile.am)
