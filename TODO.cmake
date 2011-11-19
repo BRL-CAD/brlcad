@@ -1,15 +1,22 @@
 Remaining items:
 
-18. 64 bit Windows build - tkhtml3 isn't happy at the moment
+18. 64-bit Windows build - tkhtml3 isn't happy at the moment
 
 19. See if you can auto-generate documentation for configure options by pulling
     doc properties from options not marked as advanced and generating a formatted
 	 text file
 
-20. Update README, INSTALL, doc/*, etc.
+20. Update README, INSTALL, HACKING, doc/*, etc. with up-to-date
+    (matching) and equivalent instructions.
 
 24.  Set up alias lists for main BRL-CAD options, maybe address #19 at the same time.
      Probably will need a wrapper macro.
+
+25. Eliminate MSVC from all non-top-level CMakeLists.txt files
+
+26. Add DEPRECATION WARNING messages to autogen.sh, configure.ac
+    intro and summary, and Makefile.am summary.  Update doc/deprecation.txt.
+
 
 Done (to first order, all this needs testing)
 
@@ -81,5 +88,4 @@ Done (to first order, all this needs testing)
 22.  Auto (B) should be Bundled (Auto) in the CMake reporting
 
 23.  Auto's not reporting anything isn't very good - should be ON (Auto) or OFF (Auto) or 32BIT (Auto)
-
 
