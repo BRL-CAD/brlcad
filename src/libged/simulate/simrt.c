@@ -161,16 +161,17 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 	    /* print the name of the region we hit as well as the name of
 	     * the primitives encountered on entry and exit.
 	     */
+	    bu_log("\n--- Hit region %s (in %s, out %s), RegionID=%d, AIRCode=%d, MaterialCode=%d\n",
+	    			pp->pt_regionp->reg_name,
+	    			pp->pt_inseg->seg_stp->st_name,
+	    			pp->pt_outseg->seg_stp->st_name,
+	    			pp->pt_regionp->reg_regionid,
+	    			pp->pt_regionp->reg_aircode,
+	    			pp->pt_regionp->reg_gmater);
 
-	    if(pp->pt_regionp->reg_aircode != 0){
-			bu_log("\n--- Hit region %s (in %s, out %s), RegionID=%d, AIRCode=%d, MaterialCode=%d\n",
-			pp->pt_regionp->reg_name,
-			pp->pt_inseg->seg_stp->st_name,
-			pp->pt_outseg->seg_stp->st_name,
-			pp->pt_regionp->reg_regionid,
-			pp->pt_regionp->reg_aircode,
-			pp->pt_regionp->reg_gmater);
-	    }
+	    if(pp->pt_regionp->reg_aircode != 0)
+	    	 bu_log("AIR REGION FOUND !!");
+
 
 	    /* Insert partition */
 	    hit_list[i].pp = pp;
@@ -264,6 +265,16 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 			hit_list[i].index = i;
 
 			num_hits++;
+
+
+			/* Find air gap
+			 * Finding an air region involves, recording the out_point and
+			 * ray dir,pos for the current hit region. If the next hit region
+			 * has same dir & pos, but its in_point is in a different prim &
+			 * != in_point, then the ray must have traveled through air in the
+			 * interim. Put this in the air_list[], then replace the out_point
+			 * with current hit_region's out_point.
+			 */
 
 		}
 		else{
@@ -395,6 +406,8 @@ init_rayshot_results(void)
     VSETALL(rt_result.resultant_normal_B, SMALL_FASTF);
 
     rt_result.num_normals = 0;
+
+    rt_result.overlap_found = FALSE;
 
     return GED_OK;
 }
@@ -776,6 +789,10 @@ traverse_normalray_lists(
 		if(rv == NOT_FOUND)
 			continue;
 
+		/* Overlap confirmed, set overlap_found here, because only here its known
+		 * that at least one of detected overlaps was between A & B  */
+		rt_result.overlap_found = TRUE;
+
 		depth = DIST_PT_PT(overlap_list[i].in_point, overlap_list[i].out_point);
 
 		bu_log("traverse_normalray_lists: Contact point %d for B:%s at (%f,%f,%f) , depth %f \
@@ -810,30 +827,40 @@ traverse_normalray_lists(
 
 
 
-    /* Draw all the hit regions : lines are added for hit segments
+    /* Investigate hit regions, only if no overlap was found for the ENTIRE bunch of
+     * rays being shot, thus rt_result.overlap_found is set to FALSE, before a single
+     * ray is fired and its value is valid across all the different ray shots
+     * Draw all the hit regions : lines are added for hit segments
 	 * to help visual debugging
 	 */
-	for(i=0; i<num_hits; i++){
+    if(!rt_result.overlap_found){
 
-		bu_vls_sprintf(&reg_vls, "ray_hit_%s_%d_%d_%d_%f_%f_%f_%f_%f_%f_%d",
-				   hit_list[i].reg_name,
-				   hit_list[i].pp->pt_regionp->reg_regionid,
-				   hit_list[i].pp->pt_regionp->reg_aircode,
-				   hit_list[i].pp->pt_regionp->reg_gmater,
-				   V3ARGS(pt), V3ARGS(dir),
-				   hit_list[i].index);
+    	bu_log("traverse_normalray_lists : No overlap found yet, checking hit regions");
 
-		clear_bad_chars(&reg_vls);
+		for(i=0; i<num_hits; i++){
 
-		line(sim_params->gedp, bu_vls_addr(&reg_vls),
-				hit_list[i].in_point,
-				hit_list[i].out_point,
-			 0, 210, 0);
+			bu_vls_sprintf(&reg_vls, "ray_hit_%s_%d_%d_%d_%f_%f_%f_%f_%f_%f_%d",
+					   hit_list[i].reg_name,
+					   hit_list[i].pp->pt_regionp->reg_regionid,
+					   hit_list[i].pp->pt_regionp->reg_aircode,
+					   hit_list[i].pp->pt_regionp->reg_gmater,
+					   V3ARGS(pt), V3ARGS(dir),
+					   hit_list[i].index);
+
+			clear_bad_chars(&reg_vls);
+
+			line(sim_params->gedp, bu_vls_addr(&reg_vls),
+					hit_list[i].in_point,
+					hit_list[i].out_point,
+					0, 210, 0);
 
 
-		add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
+			add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
 
-	} /* end-for hits */
+
+
+		} /* end-for hits */
+    }
 
 
     bu_vls_free(&reg_vls);
@@ -1196,10 +1223,12 @@ create_contact_pairs(
 	VMOVE(v, mf->rbB->linear_velocity);
 	VUNITIZE(v);
 	VADD2(rt_result.resultant_normal_B, rt_result.resultant_normal_B, v);
+	VUNITIZE(rt_result.resultant_normal_B);
 #endif
 
 
-	bu_log("create_contact pairs : Final normal from B to A : (%f,%f,%f)", V3ARGS(rt_result.resultant_normal_B));
+	bu_log("create_contact pairs : Final normal from B to A : (%f,%f,%f)",
+			V3ARGS(rt_result.resultant_normal_B));
 
     /* Begin making contacts */
 

@@ -67,7 +67,7 @@
 
 
 /*
- * This structure is a single node of a circularly linked list
+ * This structure is a single node of an array
  * of overlap regions: similar to the one in nirt/usrfrmt.h
  */
 struct overlap {
@@ -83,13 +83,11 @@ struct overlap {
     vect_t in_normal, out_normal;
     struct soltab *insol, *outsol;
     struct curvature incur, outcur;
-    struct overlap *forw;
-    struct overlap *backw;
 };
 
 
 /*
- * This structure is a single node of a circularly linked list
+ * This structure is a single node of an array
  * of hit regions, similar to struct hit from raytrace.h
  */
 struct hit_reg {
@@ -120,11 +118,17 @@ struct rayshot_results{
 	 * It may happen that an object is not sufficiently close to the object it
 	 * intends to strike, i.e. the gap between them is not <= TOL, so the air gap
 	 * info can't be used to create contact pairs. In the next iteration the object
-	 * movres so far that it has overlapped(i.e. penetrated) the target,
+	 * moves so far that it has overlapped(i.e. penetrated) the target,
 	 * so air gap still can't be used, thus the below flag detects any overlap and
 	 * enables the logic for creating contact pairs using overlap info.
+	 *
+	 * Also rt_result.overlap_found is set to FALSE, before even a single
+     * ray is shot and its value is valid across all the different ray shots,
+     * so if an overlap has been detected in a ray, all subsequent air gap processing is
+     * skipped.
 	 */
 	int overlap_found;
+	point_t out_point, in_point; /* out-in is the order of a ray traversing air region */
 
 	/* The vector sum of the normals over the surface in the overlap region for A & B*/
 	vect_t resultant_normal_A;
