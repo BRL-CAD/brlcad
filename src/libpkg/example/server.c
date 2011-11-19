@@ -27,7 +27,6 @@
 
 /* system headers */
 #include <stdlib.h>
-#include <signal.h>
 #include <string.h>
 #include <stdio.h>
 #include "bio.h"
@@ -216,9 +215,6 @@ main(int argc, char *argv[]) {
     if (argc > 0) {
 	usage("ERROR: Unexpected extra server arguments\n", argv0);
     }
-
-    /* ignore broken pipes */
-    (void)signal(SIGPIPE, SIG_IGN);
 
     /* fire up the server */
     bu_log("Listening on port %d\n", port);
