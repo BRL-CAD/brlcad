@@ -6226,10 +6226,15 @@ to_mouse_poly_circ(struct ged *gedp,
 	VSUB2(vdiff, v_pt, gdpsp->gdps_prev_point);
 	r = MAGNITUDE(vdiff);
 
-	if (gdvp->gdv_dmp->dm_height > gdvp->gdv_dmp->dm_width)
-	    nsegs = (int)(gdvp->gdv_dmp->dm_height * 0.05);
-	else
-	    nsegs = (int)(gdvp->gdv_dmp->dm_width * 0.05);
+	/* use a variable number of segments based on the size of the
+	 * circle being created so small circles have few segments and
+	 * large ones are nice and smooth.  select a chord length that
+	 * results in segments approximately 4 pixels in length.
+	 *
+	 * circumference / 4 = PI * diameter / 4
+	 * 
+	 */
+	nsegs = M_PI * r * 0.25;
 
 	arc = 360.0 / nsegs;
 	for (n = 0; n < nsegs; ++n) {
