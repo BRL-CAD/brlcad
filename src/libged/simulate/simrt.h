@@ -107,8 +107,6 @@ struct hit_reg {
     vect_t out_normal;
     struct curvature cur;
     int	hit_surfno;			/**< @brief solid-specific surface indicator */
-    struct hit_reg *forw;
-    struct hit_reg *backw;
 };
 
 
@@ -117,6 +115,16 @@ struct hit_reg {
  * regions), through shooting rays
  */
 struct rayshot_results{
+
+	/* Was an overlap detected ? in that case no point in using air gap
+	 * It may happen that an object is not sufficiently close to the object it
+	 * intends to strike, i.e. the gap between them is not <= TOL, so the air gap
+	 * info can't be used to create contact pairs. In the next iteration the object
+	 * movres so far that it has overlapped(i.e. penetrated) the target,
+	 * so air gap still can't be used, thus the below flag detects any overlap and
+	 * enables the logic for creating contact pairs using overlap info.
+	 */
+	int overlap_found;
 
 	/* The vector sum of the normals over the surface in the overlap region for A & B*/
 	vect_t resultant_normal_A;

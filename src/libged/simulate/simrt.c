@@ -30,7 +30,7 @@
 #include "simrt.h"
 
 
-//#define USE_VELOCITY_FOR_NORMAL 1
+#define USE_VELOCITY_FOR_NORMAL 1
 
 /*
  * Global lists filled up while raytracing : remove these as in the forward
@@ -45,6 +45,7 @@ int num_overlaps = 0;
 struct overlap overlap_list[MAX_OVERLAPS];
 struct hit_reg hit_list[MAX_HITS];
 struct rayshot_results rt_result;
+
 
 
 void
@@ -160,10 +161,16 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 	    /* print the name of the region we hit as well as the name of
 	     * the primitives encountered on entry and exit.
 	     */
-	    /*	bu_log("\n--- Hit region %s (in %s, out %s)\n",
+	    bu_log("\n--- Hit region %s (in %s, out %s), RegionID=%d, AIRCode=%d, MaterialCode=%d\n",
 		pp->pt_regionp->reg_name,
 		pp->pt_inseg->seg_stp->st_name,
-		pp->pt_outseg->seg_stp->st_name );*/
+		pp->pt_outseg->seg_stp->st_name,
+		pp->pt_regionp->reg_regionid,
+		pp->pt_regionp->reg_aircode,
+		pp->pt_regionp->reg_gmater);
+
+	    /* Insert partition */
+	    hit_list[i].pp = pp;
 
 	    /* Insert solid data into list node */
 	    if(pp->pt_regionp->reg_name[0] == '/')
@@ -716,7 +723,7 @@ traverse_normalray_lists(
      */
     for(i=0; i<num_overlaps; i++){
 
-		bu_vls_sprintf(&reg_vls, "ray_normal_%s_%s_%d_%f_%f_%f_%f_%f_%f",
+		bu_vls_sprintf(&reg_vls, "ray_ovrlp_%s_%s_%d_%f_%f_%f_%f_%f_%f",
 				   overlap_list[i].reg1->reg_name,
 				   overlap_list[i].reg2->reg_name,
 				   overlap_list[i].index,
@@ -797,6 +804,33 @@ traverse_normalray_lists(
 
 
 	} /* end-for overlap */
+
+
+
+    /* Draw all the hit regions : lines are added for hit segments
+	 * to help visual debugging
+	 */
+	for(i=0; i<num_hits; i++){
+
+		bu_vls_sprintf(&reg_vls, "ray_hit_%s_%d_%d_%d_%f_%f_%f_%f_%f_%f_%d",
+				   hit_list[i].reg_name,
+				   hit_list[i].pp->pt_regionp->reg_regionid,
+				   hit_list[i].pp->pt_regionp->reg_aircode,
+				   hit_list[i].pp->pt_regionp->reg_gmater,
+				   V3ARGS(pt), V3ARGS(dir),
+				   hit_list[i].index);
+
+		clear_bad_chars(&reg_vls);
+
+		line(sim_params->gedp, bu_vls_addr(&reg_vls),
+				hit_list[i].in_point,
+				hit_list[i].out_point,
+			 0, 210, 0);
+
+
+		add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
+
+	} /* end-for hits */
 
 
     bu_vls_free(&reg_vls);
@@ -1134,7 +1168,13 @@ create_contact_pairs(
 		 vect_t overlap_min,
 		 vect_t overlap_max)
 {
-    mf->num_contacts = 0;
+
+#ifdef USE_VELOCITY_FOR_NORMAL
+	 vect_t v;
+#endif
+
+
+	mf->num_contacts = 0;
 
 
 	bu_log("create_contact pairs : between A : %s(%f,%f,%f) &  B : %s(%f,%f,%f)",
@@ -1152,7 +1192,7 @@ create_contact_pairs(
 
 	VMOVE(v, mf->rbB->linear_velocity);
 	VUNITIZE(v);
-	VADD2(rt_result.resultant_normal_B, rt_result.resultant_normal_B, mf->rbB->linear_velocity);
+	VADD2(rt_result.resultant_normal_B, rt_result.resultant_normal_B, v);
 #endif
 
 
