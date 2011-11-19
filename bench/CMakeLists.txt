@@ -3,14 +3,9 @@ include_directories(${BU_INCLUDE_DIRS})
 add_definitions(
   -DHAVE_CONFIG_H
   -DBRLCADBUILD
+  -DCONSOLE
+  -DBRLCAD_DLL
 )
-
-IF(MSVC)
-	add_definitions(
-		-DCONSOLE
-		-DBRLCAD_DLL
-		)
-ENDIF(MSVC)
 
 BRLCAD_ADDEXEC(pixcmp pixcmp.c libbu)
 
