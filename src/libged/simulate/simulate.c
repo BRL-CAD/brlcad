@@ -373,6 +373,7 @@ init_raytrace(struct simulation_params *sim_params)
     struct rigid_body *rb;
 
     /* Add all sim objects to raytrace instance */
+    sim_params->rtip->useair = 1;
 
     /* Add all the sim objects to the rt_i */
     for (rb = sim_params->head_node; rb != NULL; rb = rb->next) {

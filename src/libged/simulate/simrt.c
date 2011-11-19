@@ -161,13 +161,16 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 	    /* print the name of the region we hit as well as the name of
 	     * the primitives encountered on entry and exit.
 	     */
-	    bu_log("\n--- Hit region %s (in %s, out %s), RegionID=%d, AIRCode=%d, MaterialCode=%d\n",
-		pp->pt_regionp->reg_name,
-		pp->pt_inseg->seg_stp->st_name,
-		pp->pt_outseg->seg_stp->st_name,
-		pp->pt_regionp->reg_regionid,
-		pp->pt_regionp->reg_aircode,
-		pp->pt_regionp->reg_gmater);
+
+	    if(pp->pt_regionp->reg_aircode != 0){
+			bu_log("\n--- Hit region %s (in %s, out %s), RegionID=%d, AIRCode=%d, MaterialCode=%d\n",
+			pp->pt_regionp->reg_name,
+			pp->pt_inseg->seg_stp->st_name,
+			pp->pt_outseg->seg_stp->st_name,
+			pp->pt_regionp->reg_regionid,
+			pp->pt_regionp->reg_aircode,
+			pp->pt_regionp->reg_gmater);
+	    }
 
 	    /* Insert partition */
 	    hit_list[i].pp = pp;
