@@ -51,6 +51,7 @@ TABLE OF CONTENTS
   Naming a Source Release
   Naming a Binary Release
   Making a Release
+  Making a Debian Package or a Fedora or openSUSE rpm File
   Getting Help
 
 
@@ -1296,6 +1297,13 @@ two make targets are defined:
 
 make package_source - Builds source archives
 make package        - Builds binary packages
+
+MAKING A DEBIAN PACKAGE OR A FEDORA OR OPENSUSE RPM FILE
+--------------------------------------------------------
+
+See file 'doc/README.Linux' in sections 'Ubuntu/Debian'
+and 'Redhat/Fedora' for details.
+
 
 GETTING HELP
 ------------
