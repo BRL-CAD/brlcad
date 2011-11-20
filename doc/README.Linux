@@ -73,15 +73,41 @@ apt-get install xserver-xorg-dev libx11-dev libxi-dev
 Required: make (>= 3.8.0), bison, flex, xserver-xorg-dev, libx11-dev, libxi-dev
 Optional: libpng-dev, zlib1g-dev, tcl8.5-dev (>= 8.5), tk8.5-dev (>= 8.5), tcl3-dev, itk3-dev, iwidgets4, blt-dev
 
+Note there is a supported Debian package generation script in file
+'sh/make_deb.sh' which can function only on a Debian or Ubuntu system.
+It can be used like so:
+
+  $ cd <BRL-CAD source directory>
+
+  # get help for the script:
+  $ ./sh/make_deb.sh 
+
+  # create a binary package:
+  $ ./sh/make_deb.sh -b 
+
+You can customize the script's cmake build options by modifying the
+file 'misc/debian/rules'.  Note that the BRL-CAD source directory
+should be deleted and recreated for each new attempt at package
+generation.
+
 
 Redhat/Fedora
 -------------
 
-To determine what particular version of Redhat or Fedora you are using, check
-these files:
+To determine what particular version of Redhat or Fedora you are
+using, check these files:
 
 cat /etc/redhat-release
 cat /etc/fedora-release
+
+Note there is a supported rpm package generation script in file
+'sh/make_rpm.sh' which can only function on a Fedora or openSUSE
+system.  It can be used like so:
+
+  $ cd <BRL-CAD source directory>
+
+  # create an rpm file:
+  $ ./sh/make_rpm.sh
 
 
 PPC64 Linux
