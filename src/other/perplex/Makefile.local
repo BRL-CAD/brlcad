@@ -1,4 +1,4 @@
-CFLAGS = -g -ansi -pedantic
+CFLAGS = -g -Wall -ansi -pedantic
 
 perplex : perplex.o scanner.o parser.o
 	$(CC) -o $@ $^ -lm

@@ -49,6 +49,9 @@
  *
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 struct Buf {
     void   *elts;	/* elements. */
     int     nelts;	/* number of elements. */
@@ -62,6 +65,7 @@ typedef struct perplex_t {
 	FILE *file;
 	char *string;
     } in;
+    int atEOI;
     char *cursor;
     char *marker;
     char *null;
@@ -69,6 +73,7 @@ typedef struct perplex_t {
     struct Buf *buffer;
     char *tokenText;
     void *appData;
+    condition_t condition;
 } *perplex_t;
 
 #include <math.h>
@@ -328,7 +333,8 @@ buf_append_null(struct Buf *buf)
 
 /* Copy up to n input characters to the end of scanner buffer.
  * If EOF is encountered before n characters are read, '\0'
- * is appended to the buffer to serve as EOF indicator.
+ * is appended to the buffer to serve as EOF symbol and
+ * scanner->atEOI flag is set.
  */
 static void
 bufferAppend(perplex_t scanner, size_t n)
@@ -349,6 +355,7 @@ bufferAppend(perplex_t scanner, size_t n)
 	    buf_append(buf, &c, sizeof(char));
 	} else {
 	    buf_append_null(buf);
+	    scanner->atEOI = 1;
 	    break;
 	}
     }
@@ -409,8 +416,9 @@ newScanner()
     perplex_t scanner;
     scanner = (perplex_t)calloc(1, sizeof(struct perplex_t));
 
-    setCondition(scanner, DEFINITIONS);
     scanner->buffer = NULL;
+    scanner->condition = 0;
+    scanner->atEOI = 0;
 
     return scanner;
 }
@@ -454,6 +462,20 @@ perplexFree(perplex_t scanner)
     free(scanner);
 }
 
+/* start-condition support */
+
+static void
+setCondition(perplex_t scanner, condition_t cond)
+{
+    scanner->condition = cond;
+}
+
+static condition_t
+getCondition(perplex_t scanner)
+{
+    return scanner->condition;
+}
+
 #define YYGETCONDITION     getCondition(scanner)
 #define YYSETCONDITION(c)  setCondition(scanner, c)
 #define YYFILL(n)          bufferFill(scanner, n)
@@ -487,6 +509,9 @@ perplexScan(perplex_t scanner) {
     UPDATE_START;
 
     while (1) {
+	if (scanner->atEOI) {
+	    return YYEOF;
+	}
 /*!re2c
 re2c:yych:emit = 0;
 re2c:define:YYCTYPE  = char;

@@ -52,6 +52,7 @@
 
 /* support for start conditions */
 typedef enum YYCONDTYPE {
+    INITIAL,
     DEFINITIONS,
     RULES,
     ACTION,
@@ -76,6 +77,7 @@ typedef struct perplex_t {
 	FILE *file;
 	char *string;
     } in;
+    int atEOI;
     char *cursor;
     char *marker;
     char *null;
