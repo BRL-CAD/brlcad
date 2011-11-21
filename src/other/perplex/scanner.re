@@ -408,6 +408,10 @@ getTokenText(perplex_t scanner)
 {
     int tokenChars = scanner->cursor - scanner->tokenStart;
 
+    if (scanner->tokenText != NULL) {
+	free(scanner->tokenText);
+    }
+
     scanner->tokenText = (char*)malloc(sizeof(char) * (tokenChars + 1));
 
     memcpy(scanner->tokenText, scanner->tokenStart, tokenChars);
