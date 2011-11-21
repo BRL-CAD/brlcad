@@ -131,7 +131,14 @@ bu_vls_extend(struct bu_vls *vp, unsigned int extra)
     if (extra < _VLS_ALLOC_MIN)
 	extra = _VLS_ALLOC_MIN;
 
-    /* first time allocation */
+    /* first time allocation.
+     *
+     * performance testing using a static buffer indicated an
+     * approximate 25% gain by avoiding this first allocation but not
+     * worth the complexity involved (e.g., extending the struct or
+     * hijacking vls_str) and it'd be error-prone whenever the vls
+     * implementation changes.
+     */
     if (vp->vls_max <= 0 || vp->vls_str == (char *)0) {
 	vp->vls_str = (char *)bu_malloc((size_t)extra, bu_vls_message);
 	vp->vls_max = extra;
