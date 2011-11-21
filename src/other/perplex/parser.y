@@ -35,7 +35,7 @@ definitions ::= definitions TOKEN_DEFINITIONS(text).
 rules_section ::= rules TOKEN_SEPARATOR.
 {
     /* close re2c comment and scanner routine */
-    printf("*/\n}\n");
+    printf("*/\n    }\n}\n");
 }
 
 rules ::= rule.
