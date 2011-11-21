@@ -125,7 +125,9 @@ When parsing fails, Bison returns an error number less than zero. The Lemon Pars
 
  Lemon and Bison Assign IDs to Tokens Differently
 --------------------------------------------------
-Both Bison and Lemon use 0 as their EOF token.
+Both Bison and Lemon use 0 as their EOF token. The Lemon Parse routine should
+be called with the EOF token (e.g. Parse(parser, 0, data, ...)) to end
+parsing after the last input token.
 
 Bison enumerates non-character literal tokens starting at 258 so that the ID of character literal tokens (like '\n') can simply be their ASCII value.
 
@@ -168,7 +170,7 @@ WARNING: Lemon does a global replacement of the alias within the action.
          substituted as well:
 
     text ::= STRING(s). {
-	/* will print something like "%yympsp[0].minor.yy0>>Shift 7" */
+	/* will print something like "%yympsp[0].minor.yy0" */
 	printf("%s", s.string);
     }
 
@@ -183,20 +185,22 @@ In Bison, you typically create a union that specifies the possible types of toke
 	bool toggle;
     }
 
-    %token <real> coord
+    %token <real> COORD
     ...
 
     /* parser already knows types for $2, $3 and $4 because the type of all
      * coord tokens was declared as <real> (float).
      */
-    vertex : VERTEX coord coord coord
+    vertex : VERTEX COORD COORD COORD
     {
 	vert_t v = {$2, $3, $4};
 	...
     }
     ...
 
-Lemon considers all tokens to be of the same type which is typically a struct/union or a pointer to a struct/union. You specify the types of tokens explicitly within actions. WARNING: The default token type appears to be (void*), but the Lemon documentation claims that it's (int)!
+Lemon considers all tokens to be of the same type which is typically a struct/union or a pointer to a struct/union. WARNING: The default token type appears to be (void*), but the Lemon documentation claims that it's (int)!
+
+You don't declare the types of tokens. In fact you don't declare tokens at all, lemon identifies them automatically by case. However, you must specify the types of tokens explicitly within actions. 
 
     /* included from custom header file - this is basically what Bison would
      * generate from its %union directive
@@ -207,8 +211,6 @@ Lemon considers all tokens to be of the same type which is typically a struct/un
 	bool toggle;
     } YYSTYPE;
 
-    #define COORD(c) c.real
-
     /* actual grammar file */
     ...
     %token_type {YYSTYPE}
@@ -217,9 +219,27 @@ Lemon considers all tokens to be of the same type which is typically a struct/un
     /* We have to explicitly identify the type of each token referenced in
      * each action.
      */
-    vertex : VERTEX coord(A) coord(B) coord(C)
+    vertex ::= VERTEX COORD(A) COORD(B) COORD(C).
     {
-	vert_t v = {COORD(A), COORD(B), COORD(C)};
+	vert_t v = {A.real, B.real, C.real};
+	...
+    }
+
+NOTE: While all terminals have the same type, non-terminals can be associated with a type using the %type directive. Non-terminals with an associated type
+will be cast to their type automatically, so frequenlty used terminals may be
+wrapped in non-terminals to save typing:
+
+    %type coord { double }
+	...
+
+    coord(A) ::= COORD(B).
+    {
+	A = B.real;
+    }
+
+    vertex ::= VERTEX coord(A) coord(B) coord(C).
+    {
+	vert_t v = {A, B, C};
 	...
     }
 
