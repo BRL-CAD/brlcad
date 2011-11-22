@@ -40,16 +40,12 @@
 #include <cstdlib>
 #include <ostream>
 
-#ifndef CLIPPER_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(CLIPPER_DLL)
-#    ifdef CLIPPER_EXPORT_DLL
-#      define CLIPPER_EXPORT __declspec(dllexport)
-#    else
-#      define CLIPPER_EXPORT __declspec(dllimport)
-#    endif
-#  else
-#    define CLIPPER_EXPORT
-#  endif
+#ifdef CLIPPER_DLL_EXPORTS
+#  define CLIPPER_EXPORT __declspec(dllexport)
+#elif CLIPPER_DLL_IMPORTS
+#  define CLIPPER_EXPORT __declspec(dllimport)
+#else
+#  define CLIPPER_EXPORT
 #endif
 
 namespace ClipperLib {
