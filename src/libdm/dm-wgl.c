@@ -1386,8 +1386,7 @@ wgl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag)
 	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
     }
 
-    /* Must be an even number of points */
-    if (!sflag && npoints%2)
+    if (npoints < 2 || (!sflag && npoints%2))
 	return TCL_OK;
 
     if (dmp->dm_light) {
