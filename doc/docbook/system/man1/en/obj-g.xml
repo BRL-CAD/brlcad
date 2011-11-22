@@ -28,6 +28,7 @@
     <arg choice="opt" rep="norepeat">-m<replaceable>mode</replaceable></arg>
     <arg choice="opt" rep="norepeat">-o<replaceable>open_bot_type</replaceable></arg>
     <arg choice="opt" rep="norepeat">-p</arg>
+    <arg choice="opt" rep="norepeat">-r<replaceable>bot_orientation</replaceable></arg>
     <arg choice="opt" rep="norepeat">-t<replaceable>distance_tolerance</replaceable></arg>
     <arg choice="opt" rep="norepeat">-u<replaceable>units_str</replaceable></arg>
     <arg choice="opt" rep="repeat">-v</arg>
@@ -184,6 +185,16 @@
          overwritten. Closed edges are closed but open edges are not
          necessarily open. This is due to limitations of the
          algorithm for identifying open edges.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>-l <replaceable>bot_orientation</replaceable></option></term>
+      <listitem>
+	<para>
+         Orientation type to use for bot primitives. bot_orientation
+         can be (1|2|3) where 1 = unoriented, 2 = ccw, and 3 = cw.
 	</para>
       </listitem>
     </varlistentry>

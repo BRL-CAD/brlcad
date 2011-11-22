@@ -92,6 +92,10 @@ static char *usage =
     "\t\taren't closed volumes. <bot_name>.pl will be created in the\n"
     "\t\tcurrent directory and will overwrite any exisiting file with the\n"
     "\t\tsame name.\n"
+    "  -r orient\tSelect the bot orientation mode:\n"
+    "\t\t\t1 = unoriented (default)\n"
+    "\t\t\t2 = ccw\n"
+    "\t\t\t3 = cw\n"
     "  -t mm\t\tDistance tolerance. Two vertices are considered to be the same\n"
     "\t\tif they are within this distance of one another. Default is\n"
     "\t\t.0005mm. You should not change this value without setting the\n"
@@ -2604,6 +2608,7 @@ output_to_bot(struct ga_t *ga,
 	      int texture_mode,              /* PROC_TEX, IGNR_TEX */
 	      int normal_mode,               /* PROC_NORM, IGNR_NORM */
 	      unsigned char bot_output_mode, /* RT_BOT_PLATE, RT_BOT_PLATE_NOCOS, RT_BOT_SOLID, RT_BOT_SURFACE */
+	      char bot_orientation,
 	      int face_test_type)
 {
     struct ti_t ti;              /* triangle indices structure */
@@ -2712,14 +2717,14 @@ output_to_bot(struct ga_t *ga,
     /* write bot to ".g" file */
     if (ti.tri_type == FACE_NV || ti.tri_type == FACE_TNV) {
 	ret = mk_bot_w_normals(outfp, bu_vls_addr(gfi->primitive_name),
-			       ti.bot_mode, RT_BOT_UNORIENTED,
+			       ti.bot_mode, bot_orientation,
 			       RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS,
 			       ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
 			       ti.bot_faces, ti.bot_thickness, ti.bot_face_mode,
 			       ti.bot_num_normals, ti.bot_normals, ti.bot_face_normals);
     } else {
 	ret = mk_bot(outfp, bu_vls_addr(gfi->primitive_name), ti.bot_mode,
-		     RT_BOT_UNORIENTED, 0, ti.bot_num_vertices, ti.bot_num_faces,
+		     bot_orientation, 0, ti.bot_num_vertices, ti.bot_num_faces,
 		     ti.bot_vertices, ti.bot_faces, ti.bot_thickness,
 		     ti.bot_face_mode);
     }
@@ -3142,16 +3147,19 @@ process_b_mode_option(struct ga_t *ga,
 		      int plot_mode,         /* PLOT_OFF, PLOT_ON */
 		      /* RT_BOT_SURFACE, RT_BOT_PLATE, RT_BOT_PLATE_NOCOS */
 		      unsigned char open_bot_output_mode,
+		      char bot_orientation,
 		      int face_test_type)    /* TEST_ALL, TEST_NUM_VERT */
 {
     (void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_EQUAL);
     (void)retest_grouping_faces(ga, gfi, conv_factor, face_test_type, tol);
     if (!test_closure(ga, gfi, conv_factor, plot_mode, face_test_type, tol)) {
 	(void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness,
-			    IGNR_TEX, normal_mode, RT_BOT_SOLID, face_test_type);
+			    IGNR_TEX, normal_mode, RT_BOT_SOLID,
+			    bot_orientation, face_test_type);
     } else {
 	(void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness,
-			    IGNR_TEX, normal_mode, open_bot_output_mode, face_test_type);
+			    IGNR_TEX, normal_mode, open_bot_output_mode,
+			    bot_orientation, face_test_type);
     }
 }
 
@@ -3185,6 +3193,7 @@ process_nv_mode_option(struct ga_t *ga,
 		       /* output_to_nmg (nmg or bot-via-nmg) face_test_type
 			* TEST_ALL, TEST_NUM_VERT
 			*/
+		       char bot_orientation,
 		       int nmg_face_test_type,
 		       /* output_to_bot (i.e. native) face_test_type
 			* TEST_ALL, TEST_NUM_VERT
@@ -3204,10 +3213,12 @@ process_nv_mode_option(struct ga_t *ga,
 			  native_face_test_type, tol))
 	{
 	    (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness,
-				IGNR_TEX, IGNR_NORM, RT_BOT_SOLID, native_face_test_type);
+				IGNR_TEX, IGNR_NORM, RT_BOT_SOLID, bot_orientation,
+				native_face_test_type);
 	} else {
 	    (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness,
 				IGNR_TEX, IGNR_NORM, open_bot_output_mode,
+				bot_orientation,
 				native_face_test_type);
 	}
     }
@@ -3266,6 +3277,7 @@ main(int argc, char **argv)
     time_t overall_end_time;
     time_t overall_elapsed_time;
     struct tm *timep;
+    char bot_orientation = RT_BOT_UNORIENTED;
 
     /* set default conv factor */
     str2mm("m", &conv_factor);
@@ -3289,7 +3301,7 @@ main(int argc, char **argv)
 	bu_exit(1, usage, argv[0]);
     }
 
-    while ((c = bu_getopt(argc, argv, "cpidx:X:vt:h:m:u:g:o:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "cpidx:X:vt:h:m:u:g:o:r:")) != -1) {
 	switch (c) {
 	    case 'c': /* continue processing on nmg bomb */
 		cont_on_nmg_bomb_flag = 1;
@@ -3392,6 +3404,24 @@ main(int argc, char **argv)
 			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
 				argv[0]);
 			break;
+		}
+		break;
+	    case 'r':
+		switch(bu_optarg[0]) {
+		    case '1':
+			bot_orientation = RT_BOT_UNORIENTED;
+			break;
+		    case '2':
+			bot_orientation = RT_BOT_CCW;
+			break;
+		    case '3':
+			bot_orientation = RT_BOT_CW;
+			break;
+		    default:
+			bu_log("Invalid bot orientation type '%c'.\n",
+				bu_optarg[0]);
+			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
+				argv[0]);
 		}
 		break;
 	    default:
@@ -3599,7 +3629,7 @@ main(int argc, char **argv)
 			case 'b':
 			    process_b_mode_option(&ga, gfi, fd_out, conv_factor,
 						  tol, bot_thickness, normal_mode, plot_mode,
-						  open_bot_output_mode,
+						  open_bot_output_mode, bot_orientation,
 						  native_face_test_type);
 			    break;
 			case 'n':
@@ -3607,7 +3637,8 @@ main(int argc, char **argv)
 			    stop_processing_flag = process_nv_mode_option(&ga,
 									  gfi, fd_out, conv_factor, tol,
 									  bot_thickness, nmg_output_mode, plot_mode,
-									  open_bot_output_mode, nmg_face_test_type,
+									  open_bot_output_mode, bot_orientation,
+									  nmg_face_test_type,
 									  native_face_test_type,
 									  cont_on_nmg_bomb_flag);
 			    break;
@@ -3655,13 +3686,15 @@ main(int argc, char **argv)
 			switch (mode_option) {
 			    case 'b':
 				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-						      normal_mode, plot_mode, open_bot_output_mode, native_face_test_type);
+						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
+						      native_face_test_type);
 				break;
 			    case 'n':
 			    case 'v':
 				stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
 									      tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
-									      nmg_face_test_type, native_face_test_type, cont_on_nmg_bomb_flag);
+									      bot_orientation, nmg_face_test_type, native_face_test_type,
+									      cont_on_nmg_bomb_flag);
 				break;
 			}
 
@@ -3700,13 +3733,15 @@ main(int argc, char **argv)
 			switch (mode_option) {
 			    case 'b':
 				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-						      normal_mode, plot_mode, open_bot_output_mode, native_face_test_type);
+						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
+						      native_face_test_type);
 				break;
 			    case 'n':
 			    case 'v':
 				stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
 									      tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
-									      nmg_face_test_type, native_face_test_type, cont_on_nmg_bomb_flag);
+									      bot_orientation, nmg_face_test_type, native_face_test_type,
+									      cont_on_nmg_bomb_flag);
 				break;
 			}
 
@@ -3745,12 +3780,14 @@ main(int argc, char **argv)
 			switch (mode_option) {
 			    case 'b':
 				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-						      normal_mode, plot_mode, open_bot_output_mode, native_face_test_type);
+						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation, 
+						      native_face_test_type);
 				break;
 			    case 'n':
 			    case 'v':
 				stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
 									      tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
+									      bot_orientation,
 									      nmg_face_test_type, native_face_test_type, cont_on_nmg_bomb_flag);
 				break;
 			}
@@ -3790,12 +3827,14 @@ main(int argc, char **argv)
 			switch (mode_option) {
 			    case 'b':
 				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-						      normal_mode, plot_mode, open_bot_output_mode, native_face_test_type);
+						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
+						      native_face_test_type);
 				break;
 			    case 'n':
 			    case 'v':
 				stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
 									      tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
+									      bot_orientation,
 									      nmg_face_test_type, native_face_test_type, cont_on_nmg_bomb_flag);
 				break;
 			}
