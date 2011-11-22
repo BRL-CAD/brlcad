@@ -691,7 +691,7 @@ MARK_AS_ADVANCED(BRLCAD_ENABLE_BRLCAD_LIBRARY)
 # build packages for a distribution.  If both of these options are
 # on the enabling of local packages is the "senior" option and will
 # force the system libs option to off.
-SET(BRLCAD_BUNDLED_LIBS_ALIASES "BRLCAD_BUNDLED_LIBS"  "ENABLE_ALL")
+SET(BRLCAD_BUNDLED_LIBS_ALIASES "ENABLE_ALL")
 SET(BRLCAD_BUNDLED_LIBS_DESCRIPTION "
 Enables compilation of all 3rd party sources that are provided within a BRL-CAD
 source distribution.  If used this option sets all other 3rd party library 
