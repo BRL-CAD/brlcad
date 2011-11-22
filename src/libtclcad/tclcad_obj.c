@@ -3485,6 +3485,7 @@ to_data_polygons(struct ged *gedp,
 	}
     }
 
+
     /* Usage: clip i j [op]
      *
      * Clip polygon i using polygon j and op.
@@ -6293,7 +6294,10 @@ to_mouse_poly_circ(struct ged *gedp,
 	 * circumference / 4 = PI * diameter / 4
 	 * 
 	 */
-	nsegs = M_PI * r * 0.5;
+	nsegs = M_PI * r * 0.5 * gdvp->gdv_view->gv_scale;
+
+	if (nsegs < 32)
+	    nsegs = 32;
 
 	arc = 360.0 / nsegs;
 	for (n = 0; n < nsegs; ++n) {
@@ -6530,7 +6534,10 @@ to_mouse_poly_ell(struct ged *gedp,
 	 * circumference / 4 = PI * diameter / 4
 	 * 
 	 */
-	nsegs = M_PI * FMAX(a, b) * 0.5;
+	nsegs = M_PI * FMAX(a, b) * 0.5 * gdvp->gdv_view->gv_scale;
+
+	if (nsegs < 32)
+	    nsegs = 32;
 
 	arc = 360.0 / nsegs;
 	for (n = 0; n < nsegs; ++n) {
