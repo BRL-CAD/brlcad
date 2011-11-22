@@ -1360,6 +1360,10 @@ IF(WIN32)
 	ENDIF(NOT HAVE_HYPOT)
 ENDIF(WIN32)
 
+# Check whether we need to add import/export lines to libraries
+IF(MSVC)
+	SET(CPP_DLL_DEFINES 1)
+ENDIF(MSVC)
 
 # *******************************************************************
 # ***          Check for System Services - Stage 8 of 9           ***
