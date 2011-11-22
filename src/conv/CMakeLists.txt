@@ -19,8 +19,13 @@ SET(CONV_INCLUDE_DIRS
 LIST(REMOVE_DUPLICATES CONV_INCLUDE_DIRS)
 include_directories(${CONV_INCLUDE_DIRS})
 
+if(MSVC)
+    add_definitions(
+		-DON_DLL_IMPORTS
+    )
+endif(MSVC)
+
 add_definitions(
-        -DON_DLL_IMPORTS
 	-D_CONSOLE
         -DBRLCAD_DLL
 )
