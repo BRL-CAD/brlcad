@@ -59,6 +59,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* implement uv-mapping callback so we can texture-map BoT, NMG, and
+  NURBS geometry
+
 * add support for a zoom/viewsize and twist options to rt so you can
   adjust the image without having to feed a view script.
 
