@@ -361,8 +361,10 @@ typedef struct {
     size_t		gdps_curr_point_i;
     point_t		gdps_prev_point;
     GedClipType		gdps_clip_type;
-    matp_t		gdps_view2model;
-    matp_t		gdps_model2view;
+    point_t		gdps_origin;
+    mat_t		gdps_rotation;
+    mat_t		gdps_view2model;
+    mat_t		gdps_model2view;
     ged_polygons	gdps_polygons;
 } ged_data_polygon_state;
 

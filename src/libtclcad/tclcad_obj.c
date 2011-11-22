@@ -8223,8 +8223,8 @@ to_poly_circ_mode(struct ged *gedp,
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
-    gdpsp->gdps_model2view = gdvp->gdv_view->gv_model2view;
-    gdpsp->gdps_view2model = gdvp->gdv_view->gv_view2model;
+    MAT_COPY(gdpsp->gdps_model2view, gdvp->gdv_view->gv_model2view);
+    MAT_COPY(gdpsp->gdps_view2model, gdvp->gdv_view->gv_view2model);
 
     gedp->ged_gvp = gdvp->gdv_view;
 
@@ -8331,8 +8331,8 @@ to_poly_cont_build(struct ged *gedp,
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
-    gdpsp->gdps_model2view = gdvp->gdv_view->gv_model2view;
-    gdpsp->gdps_view2model = gdvp->gdv_view->gv_view2model;
+    MAT_COPY(gdpsp->gdps_model2view, gdvp->gdv_view->gv_model2view);
+    MAT_COPY(gdpsp->gdps_view2model, gdvp->gdv_view->gv_view2model);
 
     gedp->ged_gvp = gdvp->gdv_view;
 
@@ -8526,8 +8526,8 @@ to_poly_ell_mode(struct ged *gedp,
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
-    gdpsp->gdps_model2view = gdvp->gdv_view->gv_model2view;
-    gdpsp->gdps_view2model = gdvp->gdv_view->gv_view2model;
+    MAT_COPY(gdpsp->gdps_model2view, gdvp->gdv_view->gv_model2view);
+    MAT_COPY(gdpsp->gdps_view2model, gdvp->gdv_view->gv_view2model);
 
     gedp->ged_gvp = gdvp->gdv_view;
 
@@ -8636,8 +8636,8 @@ to_poly_rect_mode(struct ged *gedp,
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
-    gdpsp->gdps_model2view = gdvp->gdv_view->gv_model2view;
-    gdpsp->gdps_view2model = gdvp->gdv_view->gv_view2model;
+    MAT_COPY(gdpsp->gdps_model2view, gdvp->gdv_view->gv_model2view);
+    MAT_COPY(gdpsp->gdps_view2model, gdvp->gdv_view->gv_view2model);
 
     gedp->ged_gvp = gdvp->gdv_view;
 
