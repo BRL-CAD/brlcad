@@ -4438,19 +4438,19 @@ to_init_default_bindings(struct ged_dm_view *gdvp)
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
 		  &gdvp->gdv_name);
-    bu_vls_printf(&bindings, "bind %V t {%V aet %V 0 90; break}; ",
+    bu_vls_printf(&bindings, "bind %V t {%V aet %V 270 90; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
 		  &gdvp->gdv_name);
-    bu_vls_printf(&bindings, "bind %V T {%V aet %V 0 90; break}; ",
+    bu_vls_printf(&bindings, "bind %V T {%V aet %V 270 90; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
 		  &gdvp->gdv_name);
-    bu_vls_printf(&bindings, "bind %V b {%V aet %V 0 270; break}; ",
+    bu_vls_printf(&bindings, "bind %V b {%V aet %V 270 -90; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
 		  &gdvp->gdv_name);
-    bu_vls_printf(&bindings, "bind %V B {%V aet %V 0 270; break}; ",
+    bu_vls_printf(&bindings, "bind %V B {%V aet %V 270 -90; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
 		  &gdvp->gdv_name);
