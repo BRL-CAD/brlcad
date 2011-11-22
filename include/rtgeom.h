@@ -226,11 +226,12 @@ struct rt_nurb_internal {
 /* ID_BREP */
 struct rt_brep_internal {
     uint32_t magic;
+
     ON_Brep* brep; /**< @brief  An openNURBS brep object containing the solid */
 };
 
 #define RT_BREP_CK_MAGIC( _p) BU_CKMAG(_p, RT_BREP_INTERNAL_MAGIC, "rt_brep_internal");
-#define RT_BREP_TEST_MAGIC( _p) ((_p) && (*((unsigned long *)(_p)) == (unsigned long)(RT_BREP_INTERNAL_MAGIC)))
+#define RT_BREP_TEST_MAGIC( _p) ((_p) && (*((uint32_t *)(_p)) == (uint32_t)(RT_BREP_INTERNAL_MAGIC)))
 
 
 /*
