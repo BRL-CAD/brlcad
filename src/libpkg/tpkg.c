@@ -359,7 +359,9 @@ main(int argc, char *argv[]) {
 	}
 
 	/* ignore broken pipes */
+#ifdef SIGPIPE
 	(void)signal(SIGPIPE, SIG_IGN);
+#endif
 
 	/* fire up the server */
 	bu_log("Listening on port %d\n", port);
