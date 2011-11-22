@@ -59,6 +59,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* add support for a zoom/viewsize and twist options to rt so you can
+  adjust the image without having to feed a view script.
+
 * implement some means (perhaps glint) to check a .g file for
   duplicate region IDs and material inconsistencies.  perhaps exposed
   as a new command, it should take an assembly/comb name as input,
@@ -577,9 +580,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   checked such that a libbu interface would be warranted (e.g.,
   instead of checking HOME, having a bu_find_directory(BU_USER_HOME)
   routine or similar facility) for finding common resource locations.
-
-* add support for a zoom/viewsize option to rt so you can adjust the
-  image scale without having to feed a view script.
 
 * make db_open modes behave the same as the fopen() modes (i.e.,
   create the .g if one doesn't exist when write mode)
