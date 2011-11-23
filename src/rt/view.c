@@ -103,6 +103,7 @@ extern struct floatpixel *curr_float_frame;	/* buffer of full frame */
 int ambSlow = 0;
 int ambSamples = 0;
 double ambRadius = 0.0;
+double ambOffset = 0.0;
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
 
 int ibackground[3] = {0};		/* integer 0..255 version */
@@ -172,6 +173,7 @@ struct bu_structparse view_parse[] = {
     {"%d", 1, "ov", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ambSamples", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", 1, "ambRadius", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 1, "ambOffset", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ambSlow", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
@@ -932,7 +934,11 @@ ambientOcclusion(struct application *ap, struct partition *pp)
      * to reduce the chances that the AO rays will hit the surface the ray
      * is departing from.
      */
-    VJOIN1(amb_ap.a_ray.r_pt, amb_ap.a_ray.r_pt, ap->a_rt_i->rti_tol.dist, inormal);
+    if (ZERO(ambOffset)) {
+	VJOIN1(amb_ap.a_ray.r_pt, amb_ap.a_ray.r_pt, ap->a_rt_i->rti_tol.dist, inormal);
+    } else {
+	VJOIN1(amb_ap.a_ray.r_pt, amb_ap.a_ray.r_pt, ambOffset, inormal);
+    }
 
     /* form a coordinate system at the hit point */
     VCROSS(vAxis, inormal, ap->a_ray.r_dir);
@@ -1974,6 +1980,7 @@ void application_init (void)
     view_parse[6].sp_offset = bu_byteoffset(overlay);
     view_parse[7].sp_offset = bu_byteoffset(ambSamples);
     view_parse[8].sp_offset = bu_byteoffset(ambRadius);
+    view_parse[8].sp_offset = bu_byteoffset(ambOffset);
     view_parse[9].sp_offset = bu_byteoffset(ambSlow);
 }
 
