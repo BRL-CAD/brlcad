@@ -1233,7 +1233,7 @@ _expected_ release number (e.g. 7.12.0 or 7.4.2).
       http://www.freebsd.org/cgi/cvsweb.cgi/ports/cad/brlcad/
 
       Gentoo portage maintainer
-      http://packages.gentoo.org/package/sci-misc/brlcad
+      http://packages.gentoo.org/package/media-gfx/brlcad
 
       Ubuntu/Debian .deb maintaner
       Jordi Sayol <g.sayol@yahoo.es>
