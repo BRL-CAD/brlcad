@@ -78,33 +78,6 @@
 #
 ######################################################################
 
-echo "
-*************************************************************
-* WARNING * WARNING * WARNING * WARNING * WARNING * WARNING *
-*************************************************************
-
-DEPRECATION NOTICE:
-
-  BRL-CAD's build system is being migrated from the GNU Autotools
-  Autoconf+Automake+Libtool trio to CMake.  As such, running this
-  bootstrap script is no longer necessary.
-
-  This script along with the rest of the GNU Autotools build system is
-  a deprecated interface (see doc/deprecation.txt for details) subject
-  to removal in a future release of BRL-CAD and may not result in a
-  complete a build.
-
-  Please read INSTALL for new build instructions.
-"
-i=0
-while [ $i -lt 10 ] ; do
-    sleep 1
-    echo -n "."
-    i=`expr $i + 1`
-done
-echo "done.  You've been duly warned.  Proceeding with old build."
-echo
-
 # set to minimum acceptable version of autoconf
 if [ "x$AUTOCONF_VERSION" = "x" ] ; then
     AUTOCONF_VERSION=2.52
@@ -407,6 +380,35 @@ case "x`echo 'tail' | tail -n 1 2>&1`" in
     *xtail*) TAIL_N="n " ;;
     *) TAIL_N="" ;;
 esac
+
+
+echo "
+*************************************************************
+* WARNING * WARNING * WARNING * WARNING * WARNING * WARNING *
+*************************************************************
+
+DEPRECATION NOTICE:
+
+  BRL-CAD's build system is being migrated from the GNU Autotools
+  Autoconf+Automake+Libtool trio to CMake.  As such, running this
+  bootstrap script is no longer necessary.
+
+  This script along with the rest of the GNU Autotools build system is
+  a deprecated interface (see doc/deprecation.txt for details) subject
+  to removal in a future release of BRL-CAD and may not result in a
+  complete a build.
+
+  Please read INSTALL for new build instructions.
+"
+i=0
+while [ $i -lt 10 ] ; do
+    sleep 1
+    echo $ECHO_N "." $ECHO_C
+    i=`expr $i + 1`
+done
+echo "done.  You've been duly warned.  Proceeding with old build."
+echo
+
 
 VERBOSE_ECHO=:
 ECHO=:
