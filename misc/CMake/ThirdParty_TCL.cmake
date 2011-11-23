@@ -1,66 +1,68 @@
+#-----------------------------------------------------------------------------
 # Macro for three-way options that optionally check whether a system
 # resource is available.
 MACRO(TCL_BUNDLE_OPTION optname default_raw)
 	STRING(TOUPPER "${default_raw}" default)
 	IF(NOT ${optname})
 		IF(default)
-			SET(${optname} "${default}" CACHE STRING "Build bundled ${optname} libraries.")
+			SET(${optname} "${default}" CACHE STRING "Using bundled ${optname}")
 		ELSE(default)
-			IF(${${CMAKE_PROJECT_NAME}_TCL} STREQUAL "BUNDLED" OR ${${CMAKE_PROJECT_NAME}_TCL} STREQUAL "BUNDLED (AUTO)")
-				SET(${optname} "BUNDLED (AUTO)" CACHE STRING "Build bundled ${optname} libraries.")
-			ENDIF(${${CMAKE_PROJECT_NAME}_TCL} STREQUAL "BUNDLED" OR ${${CMAKE_PROJECT_NAME}_TCL} STREQUAL "BUNDLED (AUTO)")
+			IF(${${CMAKE_PROJECT_NAME}_TCL} MATCHES "BUNDLED")
+				SET(${optname} "BUNDLED (AUTO)" CACHE STRING "Using bundled ${optname}")
+			ENDIF(${${CMAKE_PROJECT_NAME}_TCL} MATCHES "BUNDLED")
 
-			IF(${${CMAKE_PROJECT_NAME}_TCL} STREQUAL "SYSTEM" OR ${${CMAKE_PROJECT_NAME}_TCL} STREQUAL "SYSTEM (AUTO)")
-				SET(${optname} "SYSTEM (AUTO)" CACHE STRING "Build bundled ${optname} libraries.")
-			ENDIF(${${CMAKE_PROJECT_NAME}_TCL} STREQUAL "SYSTEM" OR ${${CMAKE_PROJECT_NAME}_TCL} STREQUAL "SYSTEM (AUTO)")
+			IF(${${CMAKE_PROJECT_NAME}_TCL} MATCHES "SYSTEM")
+				SET(${optname} "SYSTEM (AUTO)" CACHE STRING "Using system ${optname}")
+			ENDIF(${${CMAKE_PROJECT_NAME}_TCL} MATCHES "SYSTEM")
 
-			IF(${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS} STREQUAL "AUTO")
-				SET(${optname} "AUTO" CACHE STRING "Build bundled ${optname} libraries.")
-			ENDIF(${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS} STREQUAL "AUTO")
+			IF(${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS} MATCHES "AUTO")
+				SET(${optname} "AUTO" CACHE STRING "Using bundled ${optname}")
+			ENDIF(${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS} MATCHES "AUTO")
 		ENDIF(default)
 	ENDIF(NOT ${optname})
 
         # convert ON/OFF value to BUNDLED/SYSTEM
 	STRING(TOUPPER "${${optname}}" optname_upper)
-	IF(${optname_upper} STREQUAL "ON")
+	IF(${optname_upper} MATCHES "ON")
 		SET(optname_upper "BUNDLED")
-	ENDIF(${optname_upper} STREQUAL "ON")
-	IF(${optname_upper} STREQUAL "OFF")
+	ENDIF(${optname_upper} MATCHES "ON")
+	IF(${optname_upper} MATCHES "OFF")
 		SET(optname_upper "SYSTEM")
-	ENDIF(${optname_upper} STREQUAL "OFF")
+	ENDIF(${optname_upper} MATCHES "OFF")
 	SET(${optname} ${optname_upper})
 
         # convert AUTO value to indicate whether we're BUNDLED/SYSTEM
 	IF(${optname} MATCHES "AUTO")
 		IF(${CMAKE_PROJECT_NAME}_TCL_BUILD)
-			SET(${optname} "BUNDLED (AUTO)" CACHE STRING "Build bundled ${optname} libraries." FORCE)
+			SET(${optname} "BUNDLED (AUTO)" CACHE STRING "Using bundled ${optname}" FORCE)
 		ENDIF(${CMAKE_PROJECT_NAME}_TCL_BUILD)
 
-		IF(${${CMAKE_PROJECT_NAME}_TCL} STREQUAL "SYSTEM" OR ${${CMAKE_PROJECT_NAME}_TCL} STREQUAL "SYSTEM (AUTO)")
-			SET(${optname} "SYSTEM (AUTO)" CACHE STRING "Build bundled ${optname} libraries." FORCE)
-		ENDIF(${${CMAKE_PROJECT_NAME}_TCL} STREQUAL "SYSTEM" OR ${${CMAKE_PROJECT_NAME}_TCL} STREQUAL "SYSTEM (AUTO)")
+		IF(${${CMAKE_PROJECT_NAME}_TCL} MATCHES "SYSTEM")
+			SET(${optname} "SYSTEM (AUTO)" CACHE STRING "Using system ${optname}" FORCE)
+		ENDIF(${${CMAKE_PROJECT_NAME}_TCL} MATCHES "SYSTEM")
 	ENDIF(${optname} MATCHES "AUTO")
 
 	set_property(CACHE ${optname} PROPERTY STRINGS AUTO BUNDLED SYSTEM)
 
-        # make sure we have a valid string
+        # make sure we have a valid value
 	IF(NOT ${${optname}} MATCHES "AUTO" AND NOT ${${optname}} MATCHES "BUNDLED" AND NOT ${${optname}} MATCHES "SYSTEM")
 		MESSAGE(WARNING "Unknown value ${${optname}} supplied for ${optname} - defaulting to AUTO")
 		MESSAGE(WARNING "Valid options are AUTO, BUNDLED and SYSTEM")
-		SET(${optname} "AUTO" CACHE STRING "Build bundled libraries." FORCE)
+		SET(${optname} "AUTO" CACHE STRING "Using bundled ${optname}" FORCE)
 	ENDIF(NOT ${${optname}} MATCHES "AUTO" AND NOT ${${optname}} MATCHES "BUNDLED" AND NOT ${${optname}} MATCHES "SYSTEM")
 ENDMACRO()
 
 
+#-----------------------------------------------------------------------------
 MACRO(THIRD_PARTY_TCL_PACKAGE packagename dir wishcmd depends)
 	STRING(TOUPPER ${packagename} PKGNAME_UPPER)
 
 	# If we are doing a local Tcl build, default to bundled.
 	TCL_BUNDLE_OPTION(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "") 
 
-	IF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} STREQUAL "BUNDLED" OR ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} STREQUAL "BUNDLED (AUTO)")
+	IF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} MATCHES "BUNDLED")
 		SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD ON)
-	ELSE(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} STREQUAL "BUNDLED" OR ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} STREQUAL "BUNDLED (AUTO)")
+	ELSE(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} MATCHES "BUNDLED")
 		SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
 
 		# Stash the previous results (if any) so we don't repeatedly call out the tests - only report
@@ -70,14 +72,14 @@ MACRO(THIRD_PARTY_TCL_PACKAGE packagename dir wishcmd depends)
 		IF(${wishcmd} STREQUAL "")
 			SET(${PKGNAME_UPPER}_FOUND "${PKGNAME_UPPER}-NOTFOUND" CACHE STRING "${PKGNAME_UPPER}_FOUND" FORCE)
 
-			IF(NOT ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} STREQUAL "SYSTEM" AND NOT ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} STREQUAL "SYSTEM (AUTO)")
+			IF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} MATCHES "SYSTEM")
+				IF("${${PKGNAME_UPPER}_FOUND_STATUS}" MATCHES "NOTFOUND" AND NOT ${PKGNAME_UPPER}_FOUND)
+					MESSAGE(WARNING "No tclsh/wish command available for testing, but system version of ${packagename} is requested - assuming availability of package.")
+				ENDIF("${${PKGNAME_UPPER}_FOUND_STATUS}" MATCHES "NOTFOUND" AND NOT ${PKGNAME_UPPER}_FOUND)
+			ELSE(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} MATCHES "SYSTEM")
 				# Can't test and we're not forced to system by either local settings or the toplevel - turn it on 
 				SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD ON)
-			ELSE(NOT ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} STREQUAL "SYSTEM" AND NOT ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} STREQUAL "SYSTEM (AUTO)")
-				IF("${${PKGNAME_UPPER}_FOUND_STATUS}" MATCHES "${PKGNAME_UPPER}-NOTFOUND" AND NOT ${PKGNAME_UPPER}_FOUND)
-					MESSAGE(WARNING "No tclsh/wish command available for testing, but system version of ${packagename} is requested - assuming availability of package.")
-				ENDIF("${${PKGNAME_UPPER}_FOUND_STATUS}" MATCHES "${PKGNAME_UPPER}-NOTFOUND" AND NOT ${PKGNAME_UPPER}_FOUND)
-			ENDIF(NOT ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} STREQUAL "SYSTEM" AND NOT ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} STREQUAL "SYSTEM (AUTO)")
+			ENDIF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} MATCHES "SYSTEM")
 		ELSE(${wishcmd} STREQUAL "")
 			SET(packagefind_script "
 catch {package require ${packagename}}
@@ -110,7 +112,7 @@ exit
 
 			FIND_PACKAGE_HANDLE_STANDARD_ARGS(${PKGNAME_UPPER} DEFAULT_MSG ${PKGNAME_UPPER}_PACKAGE_VERSION)
 		ENDIF(${wishcmd} STREQUAL "")
-	ENDIF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} STREQUAL "BUNDLED" OR ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} STREQUAL "BUNDLED (AUTO)")
+	ENDIF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} MATCHES "BUNDLED")
 
 	IF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
 		STRING(TOLOWER ${packagename} PKGNAME_LOWER)
