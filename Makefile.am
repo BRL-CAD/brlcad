@@ -451,6 +451,9 @@ install-data-local:
 all-local:
 	@echo "Done."
 	@echo
+	@echo "DEPRECATION NOTICE: This build system is going away soon..."
+	@echo "                    See INSTALL for new build instructions."
+	@echo
 	@echo "BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE}"
 	@echo
 	@if test "x$(MAKECMDGOALS)" = "xall-am" -o "x$(.TARGETS)" = "xall-am" -o "x$(MAKECMDGOALS)" = "xfast" -o "x$(.TARGETS)" = "xfast" ; then \
