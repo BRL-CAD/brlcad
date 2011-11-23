@@ -4521,6 +4521,10 @@ if test "x$time_elapsed" != "xunknown" ; then
 AC_MSG_RESULT([Elapsed configuration time ...........: $time_elapsed])
 fi
 AC_MSG_RESULT([---])
+AC_MSG_RESULT([DEPRECATION WARNING:  If you didn't see any of our previous warnings,])
+AC_MSG_RESULT([                      this build system is deprecated and scheduled])
+AC_MSG_RESULT([                      for removal.  See INSTALL for new instructions.])
+AC_MSG_RESULT([---])
 AC_MSG_RESULT([$0 complete, type 'make' to begin building])
 AC_MSG_RESULT([])
 
