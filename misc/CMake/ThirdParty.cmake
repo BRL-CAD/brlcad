@@ -158,7 +158,6 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir)
 		ENDIF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
 
 		# If we didn't find it, and options allow it, enable the bundled copy
-		# If we didn't find it, and options allow it, enable the bundled copy
 		IF(${upper}_FOUND)
         		SET(${upper}_FOUND "TRUE" CACHE STRING "${upper}_FOUND" FORCE)
 
