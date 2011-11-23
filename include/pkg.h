@@ -33,12 +33,12 @@
 #include <stddef.h>
 
 #ifndef PKG_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef PKG_EXPORT_DLL
-#      define PKG_EXPORT __declspec(dllexport)
-#    else
-#      define PKG_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(PKG_DLL_EXPORTS) && defined(PKG_DLL_IMPORTS)
+#    error "Only PKG_DLL_EXPORTS or PKG_DLL_IMPORTS can be defined, not both."
+#  elif defined(PKG_DLL_EXPORTS)
+#    define PKG_EXPORT __declspec(dllexport)
+#  elif defined(PKG_DLL_IMPORTS)
+#    define PKG_EXPORT __declspec(dllimport)
 #  else
 #    define PKG_EXPORT
 #  endif

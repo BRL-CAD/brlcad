@@ -41,14 +41,13 @@ __BEGIN_DECLS
 #include "bu.h"		/* required for BU_CKMAG */
 #include "vmath.h"	/* required for mat_t, vect_t */
 
-
 #ifndef BN_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef BN_EXPORT_DLL
-#      define BN_EXPORT __declspec(dllexport)
-#    else
-#      define BN_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(BN_DLL_EXPORTS) && defined(BN_DLL_IMPORTS)
+#    error "Only BN_DLL_EXPORTS or BN_DLL_IMPORTS can be defined, not both."
+#  elif defined(BN_DLL_EXPORTS)
+#    define BN_EXPORT __declspec(dllexport)
+#  elif defined(BN_DLL_IMPORTS)
+#    define BN_EXPORT __declspec(dllimport)
 #  else
 #    define BN_EXPORT
 #  endif

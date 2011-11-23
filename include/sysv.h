@@ -42,12 +42,12 @@
 __BEGIN_DECLS
 
 #ifndef SYSV_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef SYSV_EXPORT_DLL
-#      define SYSV_EXPORT __declspec(dllexport)
-#    else
-#      define SYSV_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(SYSV_DLL_EXPORTS) && defined(SYSV_DLL_IMPORTS)
+#    error "Only SYSV_DLL_EXPORTS or SYSV_DLL_IMPORTS can be defined, not both."
+#  elif defined(SYSV_DLL_EXPORTS)
+#    define SYSV_EXPORT __declspec(dllexport)
+#  elif defined(SYSV_DLL_IMPORTS)
+#    define SYSV_EXPORT __declspec(dllimport)
 #  else
 #    define SYSV_EXPORT
 #  endif

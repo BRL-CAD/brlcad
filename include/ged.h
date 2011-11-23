@@ -42,12 +42,12 @@
 __BEGIN_DECLS
 
 #ifndef GED_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef GED_EXPORT_DLL
-#      define GED_EXPORT __declspec(dllexport)
-#    else
-#      define GED_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(GED_DLL_EXPORTS) && defined(GED_DLL_IMPORTS)
+#    error "Only GED_DLL_EXPORTS or GED_DLL_IMPORTS can be defined, not both."
+#  elif defined(GED_DLL_EXPORTS)
+#    define GED_EXPORT __declspec(dllexport)
+#  elif defined(GED_DLL_IMPORTS)
+#    define GED_EXPORT __declspec(dllimport)
 #  else
 #    define GED_EXPORT
 #  endif

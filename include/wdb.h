@@ -44,12 +44,12 @@
 __BEGIN_DECLS
 
 #ifndef WDB_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef WDB_EXPORT_DLL
-#      define WDB_EXPORT __declspec(dllexport)
-#    else
-#      define WDB_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(WDB_DLL_EXPORTS) && defined(WDB_DLL_IMPORTS)
+#    error "Only WDB_DLL_EXPORTS or WDB_DLL_IMPORTS can be defined, not both."
+#  elif defined(WDB_DLL_EXPORTS)
+#    define WDB_EXPORT __declspec(dllexport)
+#  elif defined(WDB_DLL_IMPORTS)
+#    define WDB_EXPORT __declspec(dllimport)
 #  else
 #    define WDB_EXPORT
 #  endif

@@ -31,12 +31,12 @@
 __BEGIN_DECLS
 
 #ifndef ANALYZE_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef ANALYZE_EXPORT_DLL
-#      define ANALYZE_EXPORT __declspec(dllexport)
-#    else
-#      define ANALYZE_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(ANALYZE_DLL_EXPORTS) && defined(ANALYZE_DLL_IMPORTS)
+#    error "Only ANALYZE_DLL_EXPORTS or ANALYZE_DLL_IMPORTS can be defined, not both."
+#  elif defined(ANALYZE_DLL_EXPORTS)
+#    define ANALYZE_EXPORT __declspec(dllexport)
+#  elif defined(ANALYZE_DLL_IMPORTS)
+#    define ANALYZE_EXPORT __declspec(dllimport)
 #  else
 #    define ANALYZE_EXPORT
 #  endif

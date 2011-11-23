@@ -41,12 +41,12 @@
 __BEGIN_DECLS
 
 #ifndef TCLCAD_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef TCLCAD_EXPORT_DLL
-#      define TCLCAD_EXPORT __declspec(dllexport)
-#    else
-#      define TCLCAD_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(TCLCAD_DLL_EXPORTS) && defined(TCLCAD_DLL_IMPORTS)
+#    error "Only TCLCAD_DLL_EXPORTS or TCLCAD_DLL_IMPORTS can be defined, not both."
+#  elif defined(TCLCAD_DLL_EXPORTS)
+#    define TCLCAD_EXPORT __declspec(dllexport)
+#  elif defined(TCLCAD_DLL_IMPORTS)
+#    define TCLCAD_EXPORT __declspec(dllimport)
 #  else
 #    define TCLCAD_EXPORT
 #  endif

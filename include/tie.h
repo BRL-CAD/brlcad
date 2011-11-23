@@ -37,17 +37,16 @@ extern "C" {
 #define TIE_DOUBLE_PRECISION 1
 
 #ifndef TIE_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef TIE_EXPORT_DLL
-#      define TIE_EXPORT __declspec(dllexport)
-#    else
-#      define TIE_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(TIE_DLL_EXPORTS) && defined(TIE_DLL_IMPORTS)
+#    error "Only TIE_DLL_EXPORTS or TIE_DLL_IMPORTS can be defined, not both."
+#  elif defined(TIE_DLL_EXPORTS)
+#    define TIE_EXPORT __declspec(dllexport)
+#  elif defined(TIE_DLL_IMPORTS)
+#    define TIE_EXPORT __declspec(dllimport)
 #  else
 #    define TIE_EXPORT
 #  endif
 #endif
-
 
 /*
  * define which precision to use, 0 is 'float' and 1 is 'double'.

@@ -31,17 +31,16 @@
 #define FB_ARGS(args) args
 
 #ifndef FB_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef FB_EXPORT_DLL
-#      define FB_EXPORT __declspec(dllexport)
-#    else
-#      define FB_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(FB_DLL_EXPORTS) && defined(FB_DLL_IMPORTS)
+#    error "Only FB_DLL_EXPORTS or FB_DLL_IMPORTS can be defined, not both."
+#  elif defined(FB_DLL_EXPORTS)
+#    define FB_EXPORT __declspec(dllexport)
+#  elif defined(FB_DLL_IMPORTS)
+#    define FB_EXPORT __declspec(dllimport)
 #  else
 #    define FB_EXPORT
 #  endif
 #endif
-
 
 /**
  * R G B p i x e l

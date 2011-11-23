@@ -33,12 +33,12 @@
 __BEGIN_DECLS
 
 #ifndef PC_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef PC_EXPORT_DLL
-#      define PC_EXPORT __declspec(dllexport)
-#    else
-#      define PC_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(PC_DLL_EXPORTS) && defined(PC_DLL_IMPORTS)
+#    error "Only PC_DLL_EXPORTS or PC_DLL_IMPORTS can be defined, not both."
+#  elif defined(PC_DLL_EXPORTS)
+#    define PC_EXPORT __declspec(dllexport)
+#  elif defined(PC_DLL_IMPORTS)
+#    define PC_EXPORT __declspec(dllimport)
 #  else
 #    define PC_EXPORT
 #  endif

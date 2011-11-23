@@ -38,17 +38,16 @@
 __BEGIN_DECLS
 
 #ifndef OPTICAL_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef OPTICAL_EXPORT_DLL
-#      define OPTICAL_EXPORT __declspec(dllexport)
-#    else
-#      define OPTICAL_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(OPTICAL_DLL_EXPORTS) && defined(OPTICAL_DLL_IMPORTS)
+#    error "Only OPTICAL_DLL_EXPORTS or OPTICAL_DLL_IMPORTS can be defined, not both."
+#  elif defined(OPTICAL_DLL_EXPORTS)
+#    define OPTICAL_EXPORT __declspec(dllexport)
+#  elif defined(OPTICAL_DLL_IMPORTS)
+#    define OPTICAL_EXPORT __declspec(dllimport)
 #  else
 #    define OPTICAL_EXPORT
 #  endif
 #endif
-
 
 /**
  * this function sets the provided mfuncs head pointer to the list of

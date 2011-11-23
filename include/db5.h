@@ -32,12 +32,12 @@
 __BEGIN_DECLS
 
 #ifndef DB5_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef DB5_EXPORT_DLL
-#      define DB5_EXPORT __declspec(dllexport)
-#    else
-#      define DB5_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(DB5_DLL_EXPORTS) && defined(DB5_DLL_IMPORTS)
+#    error "Only DB5_DLL_EXPORTS or DB5_DLL_IMPORTS can be defined, not both."
+#  elif defined(DB5_DLL_EXPORTS)
+#    define DB5_EXPORT __declspec(dllexport)
+#  elif defined(DB5_DLL_IMPORTS)
+#    define DB5_EXPORT __declspec(dllimport)
 #  else
 #    define DB5_EXPORT
 #  endif

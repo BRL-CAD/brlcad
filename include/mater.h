@@ -35,12 +35,12 @@
 __BEGIN_DECLS
 
 #ifndef RT_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef RT_EXPORT_DLL
-#      define RT_EXPORT __declspec(dllexport)
-#    else
-#      define RT_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(RT_DLL_EXPORTS) && defined(RT_DLL_IMPORTS)
+#    error "Only RT_DLL_EXPORTS or RT_DLL_IMPORTS can be defined, not both."
+#  elif defined(RT_DLL_EXPORTS)
+#    define RT_EXPORT __declspec(dllexport)
+#  elif defined(RT_DLL_IMPORTS)
+#    define RT_EXPORT __declspec(dllimport)
 #  else
 #    define RT_EXPORT
 #  endif
