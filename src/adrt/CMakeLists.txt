@@ -38,18 +38,7 @@ SET(LIBRENDER_SRCS
   librender/texture_perlin.c
   librender/texture_stack.c
 )
-IF(BUILD_SHARED_LIBS)
-	add_library(librender SHARED ${LIBRENDER_SRCS})
-	target_link_libraries(librender libgcv)
-	INSTALL(TARGETS librender DESTINATION ${LIB_DIR})
-        SET_TARGET_PROPERTIES(librender PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL -DRENDER_EXPORT_DLL")
-ENDIF(BUILD_SHARED_LIBS)
-IF(BUILD_STATIC_LIBS)
-	add_library(librender-static STATIC ${LIBRENDER_SRCS})
-	target_link_libraries(librender-static libgcv)
-	SET_TARGET_PROPERTIES(librender-static PROPERTIES OUTPUT_NAME "librender")
-	INSTALL(TARGETS librender-static DESTINATION ${LIB_DIR})
-ENDIF(BUILD_STATIC_LIBS)
+BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" libgcv)
 
 SET(tie_HDRS
 	adrt.h

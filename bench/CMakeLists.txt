@@ -4,7 +4,6 @@ add_definitions(
   -DHAVE_CONFIG_H
   -DBRLCADBUILD
   -DCONSOLE
-  -DBRLCAD_DLL
 )
 
 BRLCAD_ADDEXEC(pixcmp pixcmp.c libbu)

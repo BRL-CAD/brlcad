@@ -112,7 +112,9 @@ target_link_libraries(test_dirname libbu)
 
 add_executable(test_basename test_basename.c)
 target_link_libraries(test_basename libbu)
-SET_TARGET_PROPERTIES(test_basename PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
+IF(CPP_DLL_DEFINES)
+	SET_PROPERTY(TARGET test_basename APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
+ENDIF(CPP_DLL_DEFINES)
 
 add_executable(test_progname test_progname.c)
 target_link_libraries(test_progname libbu)

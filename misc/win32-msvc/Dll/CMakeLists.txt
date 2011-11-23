@@ -25,9 +25,6 @@ include_directories(
     ${TCL_INCLUDE_DIRS}
 )
 
-remove_definitions(-DBRLCAD_DLL)
-
-
 # build the BrlcadCore.dll
 set(BRLCADCORE_SOURCES
     BrlcadCore.def

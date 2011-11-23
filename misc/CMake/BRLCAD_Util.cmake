@@ -240,10 +240,12 @@ ENDMACRO(CPP_WARNINGS)
 # levels - the latter is not needed for BRLCAD_* targets under normal 
 # circumstances and is intended for cases where basic non-installed 
 # add_executable calls are made.
+# TODO - these should be assembling lists and removing dupliates before
+# doing the actual add_definitions
 MACRO(BRLCAD_ADD_DEFS)
     FOREACH(deflist ${ARGN})
 	FOREACH(defitem ${deflist})
-	    add_definitions(${defitem)
+	    add_definitions(${defitem})
 	ENDFOREACH(defitem ${deflist})
     ENDFOREACH(deflist ${ARGN})
 ENDMACRO(BRLCAD_ADD_DEFS)
@@ -320,7 +322,9 @@ MACRO(BRLCAD_ADDLIB libname srcs libs)
 	# In case of re-running cmake, make sure the DLL_IMPORTS define
 	# for this specific library is removed, since for the actual target 
 	# we need to export, not import.
-	LIST(REMOVE_ITEM ${UPPER_CORE}_DEFINES ${UPPER_CORE}_DLL_IMPORTS)
+	IF(${UPPER_CORE}_DEFINES)
+	    LIST(REMOVE_ITEM ${UPPER_CORE}_DEFINES ${UPPER_CORE}_DLL_IMPORTS)
+	ENDIF(${UPPER_CORE}_DEFINES)
 	FOREACH(libitem ${libslist})
 		LIST(FIND BRLCAD_LIBS ${libitem} FOUNDIT)
 
