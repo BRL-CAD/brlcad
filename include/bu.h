@@ -91,6 +91,7 @@ __BEGIN_DECLS
 #    define BU_EXPORT __declspec(dllimport)
 #  else
 #    define BU_EXPORT
+#  endif
 #endif
 
 #endif
