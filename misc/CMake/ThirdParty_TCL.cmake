@@ -20,17 +20,18 @@ MACRO(TCL_BUNDLE_OPTION optname default_raw)
 		ENDIF(default)
 	ENDIF(NOT ${optname})
 
+        # convert ON/OFF value to BUNDLED/SYSTEM
 	STRING(TOUPPER "${${optname}}" optname_upper)
 	IF(${optname_upper} STREQUAL "ON")
 		SET(optname_upper "BUNDLED")
 	ENDIF(${optname_upper} STREQUAL "ON")
-
 	IF(${optname_upper} STREQUAL "OFF")
 		SET(optname_upper "SYSTEM")
 	ENDIF(${optname_upper} STREQUAL "OFF")
-
 	SET(${optname} ${optname_upper})
-	IF(${optname} STREQUAL "BUNDLED (AUTO)" OR ${optname} STREQUAL "SYSTEM (AUTO)" OR ${optname} STREQUAL "AUTO")
+
+        # convert AUTO value to indicate whether we're BUNDLED/SYSTEM
+	IF(${optname} MATCHES "AUTO")
 		IF(${CMAKE_PROJECT_NAME}_TCL_BUILD)
 			SET(${optname} "BUNDLED (AUTO)" CACHE STRING "Build bundled ${optname} libraries." FORCE)
 		ENDIF(${CMAKE_PROJECT_NAME}_TCL_BUILD)
@@ -38,14 +39,16 @@ MACRO(TCL_BUNDLE_OPTION optname default_raw)
 		IF(${${CMAKE_PROJECT_NAME}_TCL} STREQUAL "SYSTEM" OR ${${CMAKE_PROJECT_NAME}_TCL} STREQUAL "SYSTEM (AUTO)")
 			SET(${optname} "SYSTEM (AUTO)" CACHE STRING "Build bundled ${optname} libraries." FORCE)
 		ENDIF(${${CMAKE_PROJECT_NAME}_TCL} STREQUAL "SYSTEM" OR ${${CMAKE_PROJECT_NAME}_TCL} STREQUAL "SYSTEM (AUTO)")
-	ENDIF(${optname} STREQUAL "BUNDLED (AUTO)" OR ${optname} STREQUAL "SYSTEM (AUTO)" OR ${optname} STREQUAL "AUTO")
+	ENDIF(${optname} MATCHES "AUTO")
 
 	set_property(CACHE ${optname} PROPERTY STRINGS AUTO BUNDLED SYSTEM)
-	IF(NOT ${${optname}} STREQUAL "AUTO" AND NOT ${${optname}} STREQUAL "BUNDLED" AND NOT ${${optname}} STREQUAL "SYSTEM" AND NOT ${${optname}} STREQUAL "BUNDLED (AUTO)" AND NOT ${${optname}} STREQUAL "SYSTEM (AUTO)")
+
+        # make sure we have a valid string
+	IF(NOT ${${optname}} MATCHES "AUTO" AND NOT ${${optname}} MATCHES "BUNDLED" AND NOT ${${optname}} MATCHES "SYSTEM")
 		MESSAGE(WARNING "Unknown value ${${optname}} supplied for ${optname} - defaulting to AUTO")
 		MESSAGE(WARNING "Valid options are AUTO, BUNDLED and SYSTEM")
 		SET(${optname} "AUTO" CACHE STRING "Build bundled libraries." FORCE)
-	ENDIF(NOT ${${optname}} STREQUAL "AUTO" AND NOT ${${optname}} STREQUAL "BUNDLED" AND NOT ${${optname}} STREQUAL "SYSTEM" AND NOT ${${optname}} STREQUAL "BUNDLED (AUTO)" AND NOT ${${optname}} STREQUAL "SYSTEM (AUTO)")
+	ENDIF(NOT ${${optname}} MATCHES "AUTO" AND NOT ${${optname}} MATCHES "BUNDLED" AND NOT ${${optname}} MATCHES "SYSTEM")
 ENDMACRO()
 
 
