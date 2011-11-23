@@ -5,7 +5,7 @@
 # of other optimizations that cause substantial error in ray tracing
 # and tessellation (and probably more).
 
-IF(${BRLCAD_OPTIMIZED_BUILD} STREQUAL "ON")
+IF(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 	CHECK_C_FLAG_GATHER(O3 OPTIMIZE_FLAGS)
 	CHECK_C_FLAG_GATHER(fstrength-reduce OPTIMIZE_FLAGS)
 	CHECK_C_FLAG_GATHER(fexpensive-optimizations OPTIMIZE_FLAGS)
@@ -18,7 +18,7 @@ IF(${BRLCAD_OPTIMIZED_BUILD} STREQUAL "ON")
 	ENDIF(NOT ${CMAKE_BUILD_TYPE} MATCHES "^Debug$" AND NOT BRLCAD_ENABLE_DEBUG AND NOT BRLCAD_ENABLE_PROFILING)
 	ADD_NEW_FLAG(C OPTIMIZE_FLAGS)
 	ADD_NEW_FLAG(CXX OPTIMIZE_FLAGS)
-ENDIF(${BRLCAD_OPTIMIZED_BUILD} STREQUAL "ON")
+ENDIF(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 MARK_AS_ADVANCED(OPTIMIZE_FLAGS)
 #need to strip out non-debug-compat flags after the fact based on build type, or do something else
 #that will restore them if build type changes
