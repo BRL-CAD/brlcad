@@ -1,3 +1,4 @@
+#
 # - Find lemon executable and provides macros to generate custom build rules
 # The module defines the following variables
 #
@@ -25,11 +26,15 @@
 #  Example:
 #
 #   find_package(LEMON)
-#   LEMON_TARGET(MyParser parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp)
+#   LEMON_TARGET(MyParser parser.y parser.c parser.h)
 #   add_executable(Foo main.cpp ${LEMON_MyParser_OUTPUTS})
 #  ====================================================================
 #
 #=============================================================================
+#                 F I N D L E M O N . C M A K E
+#
+# Originally based off of FindBISON.cmake from Kitware's CMake distribution
+#
 # Copyright 2010 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
@@ -144,3 +149,10 @@ ENDMACRO(LEMON_TARGET)
 #
 #============================================================
 # FindLEMON.cmake ends here
+
+# Local Variables:
+# tab-width: 8
+# mode: sh
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8
