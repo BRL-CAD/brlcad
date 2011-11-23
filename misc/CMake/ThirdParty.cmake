@@ -91,6 +91,10 @@ MACRO(THIRD_PARTY lower dir)
 		# going to use system or bundled versions of deps
 		IF(${upper}_FOUND)
 
+			# turn it off, found it
+			SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
+        		SET(${upper}_FOUND "TRUE" CACHE STRING "${upper}_FOUND" FORCE)
+
 			# found system-installed 3rd-party dep
 			IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
 				SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "Automatically using system, ${lower} found" FORCE)
@@ -99,27 +103,28 @@ MACRO(THIRD_PARTY lower dir)
 				SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM" CACHE STRING "Using system, ${lower} found" FORCE)
 			ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
 
-			# turn it off
-			SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
-        		SET(${upper}_FOUND "TRUE" CACHE STRING "${upper}_FOUND" FORCE)
-
 		ELSE(${upper}_FOUND)
+
+			# turn it on, didn't find it
+        		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
+			SET(${upper}_LIBRARY "${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
 
 			# did NOT find system-installed 3rd-party dep
                         IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
 				IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
-					SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "System version of ${lower} NOT found, allowing bundled" FORCE)
+					SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "Automatically attempting to use system even though ${lower} was NOT found" FORCE)
+				        MESSAGE(WARNING "Configuring to use system ${lower} even though it was NOT found")
+
+					# turn it off even though we didn't find it
+					SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
+
 				ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
-					SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "System version of ${lower} NOT found, automatically using bundled" FORCE)
+					SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "Automatically using bundled, ${lower} NOT found" FORCE)
 				ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
                         ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
 				# not auto, must be SYSTEM
 				MESSAGE(FATAL_ERROR "System version of ${lower} NOT found, halting due to setting")
                         ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-
-			# turn it on, didn't find it
-        		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
-			SET(${upper}_LIBRARY "${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
 
 		ENDIF(${upper}_FOUND)
 
@@ -229,6 +234,10 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir)
 		# going to use system or bundled versions of deps
 		IF(${upper}_FOUND)
 
+			# turn it off, found it
+			SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
+        		SET(${upper}_FOUND "TRUE" CACHE STRING "${upper}_FOUND" FORCE)
+
 			# found system-installed 3rd-party dep
 			IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
 				SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "Automatically using system, ${lower} found" FORCE)
@@ -237,27 +246,28 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir)
 				SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM" CACHE STRING "Using system, ${lower} found" FORCE)
 			ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
 
-			# turn it off
-			SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
-        		SET(${upper}_FOUND "TRUE" CACHE STRING "${upper}_FOUND" FORCE)
-
 		ELSE(${upper}_FOUND)
+
+			# turn it on, didn't find it
+        		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
+			SET(${upper}_LIBRARY "${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
 
 			# did NOT find system-installed 3rd-party dep
                         IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
 				IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
-					SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "System version of ${lower} NOT found, allowing bundled" FORCE)
+					SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "Automatically attempting to use system even though ${lower} was NOT found" FORCE)
+				        MESSAGE(WARNING "Configuring to use system ${lower} even though it was NOT found")
+
+					# turn it off even though we didn't find it
+					SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
+
 				ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
-					SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "System version of ${lower} NOT found, automatically using bundled" FORCE)
+					SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "Automatically using bundled, ${lower} NOT found" FORCE)
 				ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
                         ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
 				# not auto, must be SYSTEM
 				MESSAGE(FATAL_ERROR "System version of ${lower} NOT found, halting due to setting")
                         ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-
-			# turn it on, didn't find it
-        		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
-			SET(${upper}_LIBRARY "${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
 
 		ENDIF(${upper}_FOUND)
 
