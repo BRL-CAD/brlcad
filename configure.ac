@@ -100,6 +100,37 @@ AC_REVISION($Revision$)
 AC_CONFIG_AUX_DIR([misc])
 AC_CONFIG_MACRO_DIR([m4])
 
+echo "
+*************************************************************
+* WARNING * WARNING * WARNING * WARNING * WARNING * WARNING *
+*************************************************************
+
+DEPRECATION NOTICE:
+
+  BRL-CAD's build system is being migrated from the GNU Autotools
+  Autoconf+Automake+Libtool trio to CMake.  As such, running configure
+  is no longer necessary.
+
+  This script along with the rest of the GNU Autotools build system is
+  a deprecated interface (see doc/deprecation.txt for details) subject
+  to removal in a future release of BRL-CAD and may not result in a
+  complete a build.
+
+  That said, we plan to maintain a configure script wrapper around the
+  CMake build for compatibility so your existing options still work as
+  expected.  (The autogen.sh script is still going away.)
+
+  Please read INSTALL for new build instructions.
+"
+i=0
+while test $i -lt 10 ; do
+    sleep 1
+    echo -n "."
+    i=`expr $i + 1`
+done
+echo "done.  You've been duly warned.  Proceeding with old build."
+echo
+
 # keep track of cmd-line options for later
 BC_ARG0="$0"
 AC_SUBST(BC_ARG0)
