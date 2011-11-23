@@ -40,12 +40,16 @@
 #include <cstdlib>
 #include <ostream>
 
-#ifdef CLIPPER_DLL_EXPORTS
-#  define CLIPPER_EXPORT __declspec(dllexport)
-#elif CLIPPER_DLL_IMPORTS
-#  define CLIPPER_EXPORT __declspec(dllimport)
-#else
-#  define CLIPPER_EXPORT
+#ifndef CLIPPER_EXPORT
+#  if defined(CLIPPER_DLL_EXPORTS) && defined(CLIPPER_DLL_IMPORTS)
+#    error "Only CLIPPER_DLL_EXPORTS or CLIPPER_DLL_IMPORTS can be defined, not both."
+#  elif defined(CLIPPER_DLL_EXPORTS)
+#    define CLIPPER_EXPORT __declspec(dllexport)
+#  elif defined(CLIPPER_DLL_IMPORTS)
+#    define CLIPPER_EXPORT __declspec(dllimport)
+#  else
+#    define CLIPPER_EXPORT
+#  endif
 #endif
 
 namespace ClipperLib {
