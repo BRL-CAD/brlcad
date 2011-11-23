@@ -81,13 +81,17 @@
 __BEGIN_DECLS
 
 #if 0
-#ifdef BU_DLL_EXPORTS
-#  define BU_EXPORT __declspec(dllexport)
-#elif defined(BU_DLL_IMPORTS)
-#  define BU_EXPORT __declspec(dllimport)
-#else
-#  define BU_EXPORT
+
+#ifndef BU_EXPORT
+#  if defined(BU_DLL_EXPORTS)
+#    define BU_EXPORT __declspec(dllexport)
+#  elif defined(BU_DLL_IMPORTS)
+#    define BU_EXPORT __declspec(dllimport)
+#  elif defined(BU_DLL_EXPORTS) && defined(BU_DLL_IMPORTS)
+#    error "Only BU_DLL_EXPORTS or BU_DLL_IMPORTS can be defined, not both."
+#  endif
 #endif
+
 #endif
 
 #ifndef BU_EXPORT
