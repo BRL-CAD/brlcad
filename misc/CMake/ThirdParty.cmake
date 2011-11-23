@@ -75,13 +75,21 @@ MACRO(THIRD_PARTY lower dir)
 			INCLUDE(${CMAKE_ROOT}/Modules/Find${upper}.cmake)
 		ENDIF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
 
-		# If we didn't find it, and options allow it, enable the bundled copy
+		# handle conversion of *AUTO to indicate whether it's
+		# going to use system or bundled versions of deps
 		IF(${upper}_FOUND)
+			# found system-installed 3rd-party dep
         		SET(${upper}_FOUND "TRUE" CACHE STRING "${upper}_FOUND" FORCE)
 
 			IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-	        		SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "System version of ${lower} found, automatically using system" FORCE)
+				# auto might be from BUNDLE_OPTION, so check which one
+				IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
+					SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "System version of ${lower} found, automatically using system" FORCE)
+				ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
+					SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "System version of ${lower} found, automatically using bundled" FORCE)
+				ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
 			ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+				# not auto
 				IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
 					SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM" CACHE STRING "System version of ${lower} found, using system due to setting" FORCE)
 				ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
@@ -89,12 +97,19 @@ MACRO(THIRD_PARTY lower dir)
 				ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
 			ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
 		ELSE(${upper}_FOUND)
+			# did NOT find system-installed 3rd-party dep
         		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
 			SET(${upper}_LIBRARY "${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
 
                         IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-				SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "System version of ${lower} NOT found, automatically using bundled" FORCE)
+				# auto might be from BUNDLE_OPTION, so check which one
+				IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
+					SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "System version of ${lower} NOT found, allowing bundled" FORCE)
+				ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
+					SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "System version of ${lower} NOT found, automatically using bundled" FORCE)
+				ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
                         ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+				# not auto
 				IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
 					MESSAGE(FATAL_ERROR "System version of ${lower} NOT found, halting due to setting")
 				ELSE(${CMAKE_PROFILE_NAME}_${upper} MATCHES "SYSTEM")
@@ -192,13 +207,21 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir)
 			INCLUDE(${CMAKE_ROOT}/Modules/Find${upper}.cmake)
 		ENDIF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
 
-		# If we didn't find it, and options allow it, enable the bundled copy
+		# handle conversion of *AUTO to indicate whether it's
+		# going to use system or bundled versions of deps
 		IF(${upper}_FOUND)
+			# found system-installed 3rd-party dep
         		SET(${upper}_FOUND "TRUE" CACHE STRING "${upper}_FOUND" FORCE)
 
 			IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-	        		SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "System version of ${lower} found, automatically using system" FORCE)
+				# auto might be from BUNDLE_OPTION, so check which one
+				IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
+					SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "System version of ${lower} found, automatically using system" FORCE)
+				ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
+					SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "System version of ${lower} found, automatically using bundled" FORCE)
+				ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
 			ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+				# not auto
 				IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
 					SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM" CACHE STRING "System version of ${lower} found, using system due to setting" FORCE)
 				ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
@@ -206,12 +229,19 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir)
 				ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
 			ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
 		ELSE(${upper}_FOUND)
+			# did NOT find system-installed 3rd-party dep
         		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
 			SET(${upper}_LIBRARY "${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
 
                         IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-				SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "System version of ${lower} NOT found, automatically using bundled" FORCE)
+				# auto might be from BUNDLE_OPTION, so check which one
+				IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
+					SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "System version of ${lower} NOT found, allowing bundled" FORCE)
+				ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
+					SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "System version of ${lower} NOT found, automatically using bundled" FORCE)
+				ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
                         ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+				# not auto
 				IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
 					MESSAGE(FATAL_ERROR "System version of ${lower} NOT found, halting due to setting")
 				ELSE(${CMAKE_PROFILE_NAME}_${upper} MATCHES "SYSTEM")
