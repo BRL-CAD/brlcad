@@ -235,6 +235,26 @@ MACRO(CPP_WARNINGS srcslist)
 	ENDIF(BRLCAD_ENABLE_STRICT AND NOT BRLCAD_ENABLE_CXX_STRICT)
 ENDMACRO(CPP_WARNINGS)
 
+#-----------------------------------------------------------------------------
+# Convenience macros for handling lists of defines at the directory and target
+# levels - the latter is not needed for BRLCAD_* targets under normal 
+# circumstances and is intended for cases where basic non-installed 
+# add_executable calls are made.
+MACRO(BRLCAD_ADD_DEFS)
+    FOREACH(deflist ${ARGN})
+	FOREACH(defitem ${deflist})
+	    add_definitions(${defitem)
+	ENDFOREACH(defitem ${deflist})
+    ENDFOREACH(deflist ${ARGN})
+ENDMACRO(BRLCAD_ADD_DEFS)
+
+MACRO(BRLCAD_TARGET_ADD_DEFS target)
+    FOREACH(deflist ${ARGN})
+	FOREACH(defitem ${deflist})
+	    SET_PROPERTY(TARGET ${target} APPEND PROPERTY COMPILE_DEFINITIONS "${defitem}")
+	ENDFOREACH(defitem ${deflist})
+    ENDFOREACH(deflist ${ARGN})
+ENDMACRO(BRLCAD_TARGET_ADD_DEFS)
 
 #-----------------------------------------------------------------------------
 # Core routines for adding executables and libraries to the build and
@@ -255,7 +275,9 @@ MACRO(BRLCAD_ADDEXEC execname srcs libs)
 			STRING(REGEX REPLACE "lib" "" ITEMCORE "${libitem}")
 			STRING(TOUPPER ${ITEMCORE} ITEM_UPPER_CORE)
 			LIST(APPEND ${execname}_DEFINES ${${ITEM_UPPER_CORE}_DEFINES})
-			LIST(REMOVE_DUPLICATES ${execname}_DEFINES)
+			IF(${execname}_DEFINES)
+			    LIST(REMOVE_DUPLICATES ${execname}_DEFINES)
+			ENDIF(${execname}_DEFINES)
 		ENDIF(NOT ${FOUNDIT} STREQUAL "-1")
 	ENDFOREACH(libitem ${libslist})
 
@@ -306,7 +328,9 @@ MACRO(BRLCAD_ADDLIB libname srcs libs)
 			STRING(REGEX REPLACE "lib" "" ITEMCORE "${libitem}")
 			STRING(TOUPPER ${ITEMCORE} ITEM_UPPER_CORE)
 			LIST(APPEND ${UPPER_CORE}_DEFINES ${${ITEM_UPPER_CORE}_DEFINES})
-			LIST(REMOVE_DUPLICATES ${UPPER_CORE}_DEFINES)
+			IF(${UPPER_CORE}_DEFINES)
+			    LIST(REMOVE_DUPLICATES ${UPPER_CORE}_DEFINES)
+			ENDIF(${UPPER_CORE}_DEFINES)
 		ENDIF(NOT ${FOUNDIT} STREQUAL "-1")
 	ENDFOREACH(libitem ${libslist})
 
