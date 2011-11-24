@@ -252,7 +252,6 @@ ENDMACRO(BRLCAD_ADD_DEFS)
 
 MACRO(BRLCAD_TARGET_ADD_DEFS target)
     FOREACH(deflist ${ARGN})
-	MESSAGE("deflist: ${deflist}")
 	FOREACH(defitem ${${deflist}})
 	    MESSAGE("defitem: ${defitem}")
 	    SET_PROPERTY(TARGET ${target} APPEND PROPERTY COMPILE_DEFINITIONS "${defitem}")
@@ -355,7 +354,7 @@ MACRO(BRLCAD_ADDLIB libname srcs libs)
 		INSTALL(TARGETS ${libname} DESTINATION ${LIB_DIR})
 
 		FOREACH(lib_define ${${UPPER_CORE}_DEFINES})
-			SET_PROPERTY(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${lib_define}")
+		    SET_PROPERTY(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${lib_define}")
 		ENDFOREACH(lib_define ${${UPPER_CORE}_DEFINES})
 
 		FOREACH(extraarg ${ARGN})

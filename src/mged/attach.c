@@ -68,10 +68,13 @@ extern int X_dm_init();
 extern void X_fb_open();
 #endif /* DM_X */
 
+#if 0
+/* Turn this off until we get it working properly... */
 #ifdef DM_TK
 extern int tk_dm_init();
 extern void tk_fb_open();
 #endif /* DM_TK */
+#endif
 
 #ifdef DM_WGL
 extern int Wgl_dm_init();
@@ -112,9 +115,12 @@ struct w_dm which_dm[] = {
 #ifdef DM_X
     { DM_TYPE_X, "X", X_dm_init },
 #endif /* DM_X */
+#if 0
+/* turn off until working */
 #ifdef DM_TK
     { DM_TYPE_TK, "tk", tk_dm_init },
 #endif /* DM_TK */
+#endif
 #ifdef DM_WGL
     { DM_TYPE_WGL, "wgl", Wgl_dm_init },
 #endif /* DM_WGL */
@@ -141,10 +147,12 @@ mged_fb_open(void)
     if (dmp->dm_type == DM_TYPE_X)
 	X_fb_open();
 #endif /* DM_X */
+#if 0
 #ifdef DM_TK
     if (dmp->dm_type == DM_TYPE_TK)
 	tk_fb_open();
 #endif /* DM_TK */
+#endif
 #ifdef DM_WGL
     if (dmp->dm_type == DM_TYPE_WGL)
 	Wgl_fb_open();
@@ -303,10 +311,12 @@ print_valid_dm(Tcl_Interp *interpreter)
     Tcl_AppendResult(interpreter, "X  ", (char *)NULL);
     i++;
 #endif /* DM_X */
+#if 0
 #ifdef DM_TK
     Tcl_AppendResult(interpreter, "tk  ", (char *)NULL);
     i++;
 #endif /* DM_TK */
+#endif
 #ifdef DM_WGL
     Tcl_AppendResult(interpreter, "wgl  ", (char *)NULL);
     i++;
@@ -645,11 +655,13 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
     	    Tcl_AppendResult(interpreter, "X", (char *)NULL);
     	}
 #endif /* DM_X */
+#if 0
 #ifdef DM_TK
     	if (BU_STR_EQUAL(argv[argc-1], "tk")) {
     	    Tcl_AppendResult(interpreter, "tk", (char *)NULL);
     	}
 #endif /* DM_TK */
+#endif
 #ifdef DM_WGL
     	if (BU_STR_EQUAL(argv[argc-1], "wgl")) {
 	    Tcl_AppendResult(interpreter, "wgl", (char *)NULL);
