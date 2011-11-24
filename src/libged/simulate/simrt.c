@@ -455,7 +455,7 @@ init_rayshot_results(void)
 
     rt_result.num_normals = 0;
 
-    rt_result.overlap_found = FALSE;
+    rt_result.overlap_found = 0;
 
     return GED_OK;
 }
@@ -839,7 +839,7 @@ traverse_normalray_lists(
 
 		/* Overlap confirmed, set overlap_found here, because only here its known
 		 * that at least one of detected overlaps was between A & B  */
-		rt_result.overlap_found = TRUE;
+		rt_result.overlap_found = 1;
 
 		depth = DIST_PT_PT(overlap_list[i].in_point, overlap_list[i].out_point);
 
