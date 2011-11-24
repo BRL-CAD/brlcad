@@ -240,7 +240,7 @@ ENDMACRO(CPP_WARNINGS)
 # levels - the latter is not needed for BRLCAD_* targets under normal 
 # circumstances and is intended for cases where basic non-installed 
 # add_executable calls are made.
-MACRO(BRLCAD_ADD_DEFS)
+MACRO(BRLCAD_ADD_DEF_LISTS)
     FOREACH(deflist ${ARGN})
 	SET(target_def_list ${target_def_list} ${${deflist}})
     ENDFOREACH(deflist ${ARGN})
@@ -250,9 +250,22 @@ MACRO(BRLCAD_ADD_DEFS)
     FOREACH(defitem ${${deflist}})
 	add_definitions(${defitem})
     ENDFOREACH(defitem ${${deflist}})
-ENDMACRO(BRLCAD_ADD_DEFS)
+ENDMACRO(BRLCAD_ADD_DEF_LISTS)
 
 MACRO(BRLCAD_TARGET_ADD_DEFS target)
+    GET_TARGET_PROPERTY(TARGET_EXISTING_DEFS ${target} COMPILE_DEFINITIONS)
+    FOREACH(defitem ${ARGN})
+	SET(DEF_EXISTS "-1")
+	IF(TARGET_EXISTING_DEFS)
+	    LIST(FIND TARGET_EXISTING_DEFS ${defitem} DEF_EXISTS)
+	ENDIF(TARGET_EXISTING_DEFS)
+	IF("${DEF_EXISTS}" STREQUAL "-1")
+	    SET_PROPERTY(TARGET ${target} APPEND PROPERTY COMPILE_DEFINITIONS "${defitem}")
+	ENDIF("${DEF_EXISTS}" STREQUAL "-1")
+    ENDFOREACH(defitem ${ARGN})
+ENDMACRO(BRLCAD_TARGET_ADD_DEFS)
+
+MACRO(BRLCAD_TARGET_ADD_DEF_LISTS target)
     GET_TARGET_PROPERTY(TARGET_EXISTING_DEFS ${target} COMPILE_DEFINITIONS)
     FOREACH(deflist ${ARGN})
 	SET(target_def_list ${target_def_list} ${${deflist}})
@@ -269,7 +282,7 @@ MACRO(BRLCAD_TARGET_ADD_DEFS target)
 	    SET_PROPERTY(TARGET ${target} APPEND PROPERTY COMPILE_DEFINITIONS "${defitem}")
 	ENDIF("${DEF_EXISTS}" STREQUAL "-1")
     ENDFOREACH(defitem ${${deflist}})
-ENDMACRO(BRLCAD_TARGET_ADD_DEFS)
+ENDMACRO(BRLCAD_TARGET_ADD_DEF_LISTS)
 
 #-----------------------------------------------------------------------------
 # Core routines for adding executables and libraries to the build and
