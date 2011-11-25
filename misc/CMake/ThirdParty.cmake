@@ -36,7 +36,7 @@
 #-----------------------------------------------------------------------------
 MACRO(THIRD_PARTY lower dir)
 	STRING(TOUPPER ${lower} upper)
-	BUNDLE_OPTION(${CMAKE_PROJECT_NAME}_${upper} "")
+	BUNDLE_OPTION(${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${CMAKE_PROJECT_NAME}_${upper} "")
 
 	FOREACH(extraarg ${ARGN})
 		IF(extraarg STREQUAL "NOSYS")
@@ -173,7 +173,7 @@ ENDMACRO(THIRD_PARTY)
 #-----------------------------------------------------------------------------
 MACRO(THIRD_PARTY_EXECUTABLE lower dir)
 	STRING(TOUPPER ${lower} upper)
-	BUNDLE_OPTION(${CMAKE_PROJECT_NAME}_${upper} "")
+	BUNDLE_OPTION(${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${CMAKE_PROJECT_NAME}_${upper} "")
 
 	FOREACH(extraarg ${ARGN})
 		IF(extraarg STREQUAL "NOSYS")
