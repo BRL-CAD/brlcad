@@ -1691,19 +1691,6 @@ EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/
 # the internal CMake variable list is too noisy so at the moment this looks
 # like the best alternative we have.
 
-# CMAKE_PROPERTY VARIABLES looks even more comprehensive than the Cache file,
-# but it looks like it captures too much for what we want/need.  Some interesting
-# possibilities for debugging though, so leave it in even though we
-# aren't currently trigging COUNT off of it.  TODO - investigate whether we
-# can do something similar to generate a "current" cache file.
-MACRO(WRITE_VARIABLE_LIST)
-	FILE(WRITE ${CMAKE_BINARY_DIR}/CMakeFiles/AllVariables.txt "")
-	GET_CMAKE_PROPERTY(res VARIABLES)
-	FOREACH(var ${res})
-		FILE(APPEND ${CMAKE_BINARY_DIR}/CMakeFiles/AllVariables.txt "${var} \"${${var}}\"\n")
-	ENDFOREACH(var ${res})
-ENDMACRO()
-
 include(${CMAKE_SOURCE_DIR}/misc/CMake/DiffCache.cmake)
 #force CMake to look every time in case of manual removal of COUNT file.
 set(countFile "countFile-NOTFOUND" CACHE STRING "Is there a count file?" FORCE)
@@ -1713,10 +1700,6 @@ if(countFile MATCHES "^countFile-NOTFOUND$")
 else()
 	file(READ ${countFile} buildCounter_raw)
 	STRING(STRIP ${buildCounter_raw} buildCounter)
-	IF(EXISTS ${CMAKE_BINARY_DIR}/CMakeFiles/AllVariables.txt)
-		execute_process(COMMAND ${CMAKE_COMMAND} -E rename	${CMAKE_BINARY_DIR}/CMakeFiles/AllVariables.txt	${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/AllVariables.txt.old)
-	ENDIF(EXISTS ${CMAKE_BINARY_DIR}/CMakeFiles/AllVariables.txt)
-	WRITE_VARIABLE_LIST()
 	DIFF_CACHE_FILE()
 	IF(INCREMENT_COUNT_FILE)
 		math(EXPR buildCounter "${buildCounter} + 1")
@@ -1729,10 +1712,6 @@ EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/
 # make sure the cache reports this found, to avoid spurious config difference
 find_file(countFile COUNT PATHS ${BRLCAD_BINARY_DIR}/include/conf)
 MARK_AS_ADVANCED(countFile)
-IF(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeFiles/AllVariables.txt)
-	WRITE_VARIABLE_LIST()
-ENDIF(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeFiles/AllVariables.txt)
-
 
 # DATE - Increment this when we increment the COUNT, to avoid triggering
 # excessive relinking (an RFC2822 timestamp changes every second).
