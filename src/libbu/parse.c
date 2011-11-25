@@ -1676,7 +1676,6 @@ int
 bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 {
     size_t len;
-    int is_stack=0;
     int shader_name_len=0;
     char *iptr;
     const char *shader;
@@ -1689,16 +1688,16 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
     while (next) {
 	iptr = next;
 
-	/* skip over white space */
+	/* find start of shader name */
 	while (isspace(*iptr))
 	    iptr++;
 
-	/* this is start of shader name */
 	shader = iptr;
 
 	/* find end of shader name */
 	while (*iptr && !isspace(*iptr) && *iptr != ';')
 	    iptr++;
+
 	shader_name_len = iptr - shader;
 
 	if (shader_name_len == 5 && !strncmp(shader, "stack", 5)) {
@@ -1711,15 +1710,22 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 	    while (!done) {
 		const char *shade1;
 
+		/* find start of shader */
 		while (isspace(*iptr))
 		    iptr++;
+
 		if (*iptr == '\0')
 		    break;
+
 		shade1 = iptr;
+
+		/* find end of shader */
 		while (*iptr && *iptr != ';')
 		    iptr++;
+
 		if (*iptr == '\0')
 		    done = 1;
+
 		*iptr = '\0';
 
 		bu_vls_putc(vls, '{');
@@ -1737,7 +1743,9 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 	    bu_vls_putc(vls, '}');
 	    bu_free(copy, BU_FLSTR);
 	    return 0;
-	} else if (shader_name_len == 6 && !strncmp(shader, "envmap", 6)) {
+	}
+	
+	if (shader_name_len == 6 && !strncmp(shader, "envmap", 6)) {
 	    bu_vls_strcat(vls, "envmap {");
 	    if (bu_shader_to_tcl_list(iptr, vls)) {
 		bu_free(copy, BU_FLSTR);
@@ -1747,9 +1755,6 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 	    bu_free(copy, BU_FLSTR);
 	    return 0;
 	}
-
-	if (is_stack)
-	    bu_vls_strcat(vls, " {");
 
 	bu_vls_strncat(vls, shader, shader_name_len);
 
@@ -1774,13 +1779,7 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 	} else {
 	    next = (char *)NULL;
 	}
-
-	if (is_stack)
-	    bu_vls_putc(vls, '}');
     }
-
-    if (is_stack)
-	bu_vls_putc(vls, '}');
 
     bu_free(copy, BU_FLSTR);
     return 0;
