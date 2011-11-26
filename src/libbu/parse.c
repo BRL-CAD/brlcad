@@ -1676,12 +1676,11 @@ int
 bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 {
     size_t len;
-    int shader_name_len=0;
+    int shader_name_len = 0;
     char *iptr;
     const char *shader;
     char *copy = bu_strdup(in);
     char *next = copy;
-
 
     BU_CK_VLS(vls);
 
@@ -1764,16 +1763,38 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 
 	/* iptr now points at start of parameters, if any */
 	if (*iptr && *iptr != ';') {
+	    int needClosingBrace = 0;
+
 	    bu_vls_strcat(vls, " {");
+
+	    if (*iptr == '{') {
+	       /* if parameter set begins with open brace then
+		* it should already have a closing brace
+		*/
+		iptr++;
+	    } else {
+		/* otherwise we'll need to add it */
+		needClosingBrace = 1;
+	    }
+
+	    /* append next set of parameters (if any) to vls */
 	    len = bu_vls_strlen(vls);
 	    if (bu_key_eq_to_key_val(iptr, (const char **)&next, vls)) {
 		bu_free(copy, BU_FLSTR);
 		return 1;
 	    }
-	    if (bu_vls_strlen(vls) > len)
-		bu_vls_putc(vls, '}');
-	    else
-		bu_vls_trunc(vls, len-2);
+
+	    if (needClosingBrace) {
+		/* Add closing brace unless we didn't actually append any
+		 * parameters, in which case we need to delete the " {"
+		 * appended earlier.
+		 */
+		if (bu_vls_strlen(vls) > len) {
+		    bu_vls_putc(vls, '}');
+		} else {
+		    bu_vls_trunc(vls, len - 2);
+		}
+	    }
 	} else if (*iptr && *iptr == ';') {
 	    next = ++iptr;
 	} else {
