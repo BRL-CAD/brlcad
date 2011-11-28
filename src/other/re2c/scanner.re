@@ -3,7 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include "scanner.h"
-#include "parser.h"
+#include "re2c_parser.h"
 #include "parser_tokens.h"
 #include "globals.h"
 #include "dfa.h"

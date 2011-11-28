@@ -42,7 +42,7 @@ SET(re2c_HDRS
 	dfa.h
 	globals.h
 	ins.h
-	parser.h
+	re2c_parser.h
 	re.h
 	scanner.h
 	substr.h

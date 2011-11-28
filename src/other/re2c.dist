@@ -17,7 +17,7 @@ htdocs
 ins.h
 lessons
 mbo_getopt.h
-parser.h
+re2c_parser.h
 parser.yy
 re.h
 re2c.1.in

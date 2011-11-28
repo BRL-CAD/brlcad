@@ -13,7 +13,7 @@
 #include <set>
 
 #include "globals.h"
-#include "parser.h"
+#include "re2c_parser.h"
 #include "basics.h"
 #include "dfa.h"
 #include "re.h"
