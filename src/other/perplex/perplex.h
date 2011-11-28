@@ -73,7 +73,7 @@ typedef struct appData_t {
 
 /* scanner data */
 typedef struct perplex_t {
-    union {
+    struct {
 	FILE *file;
 	char *string;
     } in;

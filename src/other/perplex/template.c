@@ -61,7 +61,7 @@ struct Buf {
 
 /* scanner data */
 typedef struct perplex_t {
-    union {
+    struct {
 	FILE *file;
 	char *string;
     } in;
@@ -322,8 +322,6 @@ buf_append(struct Buf *buf, const void *ptr, int n_elem)
 /* --- */
 /* input buffering support */
 
-/*!max:re2c*/
-
 static void
 buf_append_null(struct Buf *buf)
 {
@@ -369,6 +367,12 @@ bufferFill(perplex_t scanner, size_t n)
 {
     struct Buf *buf;
     size_t shiftSize, marker, start, used;
+
+    if (scanner->in.string != NULL) {
+	/* Can't get any more input for a string. */
+        scanner->atEOI = 1;
+	return;
+    }
 
     buf = scanner->buffer;
 
@@ -416,9 +420,19 @@ newScanner()
     perplex_t scanner;
     scanner = (perplex_t)calloc(1, sizeof(struct perplex_t));
 
-    scanner->buffer = NULL;
-    scanner->condition = 0;
+    scanner->in.file = NULL;
+    scanner->in.string = NULL;
+
     scanner->atEOI = 0;
+
+    scanner->cursor = scanner->marker = scanner->null = NULL;
+
+    scanner->tokenStart = NULL;
+    scanner->buffer = NULL;
+    scanner->tokenText = NULL;
+    scanner->appData = NULL;
+
+    scanner->condition = 0;
 
     return scanner;
 }
@@ -431,6 +445,15 @@ perplexStringScanner(char *input)
     perplex_t scanner = newScanner();
 
     scanner->in.string = input;
+    scanner->in.file = NULL;
+
+    scanner->marker = scanner->cursor = input;
+
+    /* scanner->null actually points one past
+     * '\0', so that '\0' is actually part of the
+     * input, used as EOI indicator
+     */
+    scanner->null = input + strlen(input) + 1;
 
     return scanner;
 }
@@ -441,6 +464,7 @@ perplexFileScanner(FILE *input)
     perplex_t scanner = newScanner();
 
     scanner->in.file = input;
+    scanner->in.string = NULL;
 
     scanner->buffer = (struct Buf*)malloc(sizeof(struct Buf));
     buf_init(scanner->buffer, sizeof(char));
