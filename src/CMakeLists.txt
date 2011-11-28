@@ -12,6 +12,7 @@ IF(MSVC)
    add_definitions(
 	   -D_CRT_SECURE_NO_WARNINGS
 	   -DCMAKE_HEADERS
+		-D__WIN32__
    )
    # FIXME: these should be proper library checks, not based on MSVC "platform"
    SET(WINSOCK_LIB ws2_32.lib)
