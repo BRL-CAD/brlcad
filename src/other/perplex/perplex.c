@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
 	return 0;
     }
 
-    if ((templateFile = fopen("template.c", "r")) == NULL) {
+    if ((templateFile = fopen("scanner_template.c", "r")) == NULL) {
 	fprintf(stderr, "Error: couldn't open template.c for reading\n");
 	exit(1);
     }

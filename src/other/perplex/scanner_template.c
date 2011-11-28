@@ -1,4 +1,4 @@
-/*                        T E M P L A T E . C
+/*              S C A N N E R _ T E M P L A T E . C
  * BRL-CAD
  *
  * Copyright (c) 1990-2011 United States Government as represented by
@@ -43,7 +43,7 @@
  *  to contract no. DE-AC03-76SF00098 between the United States
  *  Department of Energy and the University of California.
  */
-/** @file template.c
+/** @file scanner_template.c
  *
  * template for generated scanners
  *
