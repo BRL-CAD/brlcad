@@ -75,6 +75,46 @@ validate_port(int port) {
 }
 
 /**
+ * callback when a HELO message packet is received.
+ *
+ * We should not encounter this packet specifically since we listened
+ * for it before beginning processing of packets as part of a simple
+ * handshake setup.
+ */
+void
+server_helo(struct pkg_conn *connection, char *buf)
+{
+    connection=connection; /* quell */
+    bu_log("Unexpected HELO encountered\n");
+    free(buf);
+}
+
+
+/**
+ * callback when a DATA message packet is received
+ */
+void
+server_data(struct pkg_conn *connection, char *buf)
+{
+    connection=connection; /* quell */
+    bu_log("Received file data\n");
+    free(buf);
+}
+
+
+/**
+ * callback when a CIAO message packet is received
+ */
+void
+server_ciao(struct pkg_conn *connection, char *buf)
+{
+    connection=connection; /* quell */
+    bu_log("CIAO encountered\n");
+    free(buf);
+}
+
+
+/**
  * start up a client that connects to the given server, and sends
  * serialized file data.
  */
@@ -85,10 +125,19 @@ run_client(const char *server, int port, const char *file)
     char s_port[MAX_DIGITS + 1] = {0};
     long bytes = 0;
     FILE *fp = (FILE *)NULL;
+    int pkg_result = 0;
     static const unsigned int TPKG_BUFSIZE = 2048;
     char *buffer;
 
     buffer = (char *)bu_calloc(TPKG_BUFSIZE, 1, "buffer allocation");
+
+    /** our callbacks for each message type */
+    struct pkg_switch callbacks[] = {
+        {MSG_HELO, server_helo, "HELO", NULL},
+        {MSG_DATA, server_data, "DATA", NULL},
+        {MSG_CIAO, server_ciao, "CIAO", NULL},
+        {0, 0, (char *)0, (void*)0}
+    };
 
     /* make sure the file can be opened */
     fp = fopen(file, "rb");
@@ -108,6 +157,8 @@ run_client(const char *server, int port, const char *file)
     }
     stash.server = server;
     stash.port = port;
+    stash.connection->pkc_switch = callbacks;
+   
 
     /* let the server know we're cool. */
     bytes = pkg_send(MSG_HELO, MAGIC_ID, strlen(MAGIC_ID) + 1, stash.connection);
@@ -117,9 +168,41 @@ run_client(const char *server, int port, const char *file)
 	bu_bomb("ERROR: Unable to communicate with the server\n");
     }
 
-    /* Wait for the server to tell us it's done */
-    buffer = pkg_bwaitfor (MSG_CIAO, stash.connection);
-    bu_log("buffer: %s\n", buffer);
+
+    /* Server should have a file to send us.
+     */
+    bu_log("Processing data from server\n");
+    do {
+        /* process packets potentially received in a processing callback */
+        pkg_result = pkg_process(stash.connection);
+        if (pkg_result < 0) {
+            bu_log("Unable to process packets? Weird.\n");
+        } else {
+            bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
+        }
+
+        /* suck in data from the network */
+        pkg_result = pkg_suckin(stash.connection);
+        if (pkg_result < 0) {
+            bu_log("Seemed to have trouble sucking in packets.\n");
+            break;
+        } else if (pkg_result == 0) {
+            bu_log("Client closed the connection.\n");
+            break;
+        }
+
+        /* process new packets received */
+        pkg_result = pkg_process(stash.connection);
+        if (pkg_result < 0) {
+            bu_log("Unable to process packets? Weird.\n");
+        } else {
+            bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
+        }
+	bu_log("buffer: %s\n", stash.connection->pkc_inbuf);
+    } while (stash.connection->pkc_type != MSG_CIAO);
+
+    /* print the CIAO message */
+    bu_log("buffer: %s\n", stash.connection->pkc_inbuf);
 
     /* let the server know we're done. */
     bytes = pkg_send(MSG_CIAO, "BYE", 4, stash.connection);

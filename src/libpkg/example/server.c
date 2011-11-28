@@ -112,8 +112,9 @@ run_server(int port) {
     int netfd;
     char portname[MAX_DIGITS + 1] = {0};
     //int pkg_result  = 0;
-    char *buffer;
+    char *buffer, *msgbuffer;
     long bytes = 0;
+    FILE *fp;
 
     /** our server callbacks for each message type */
     struct pkg_switch callbacks[] = {
@@ -150,21 +151,46 @@ run_server(int port) {
 	}
 
 	/* got a connection, process it */
-	buffer = pkg_bwaitfor (MSG_HELO, client);
-	if (buffer == NULL) {
+	msgbuffer = pkg_bwaitfor (MSG_HELO, client);
+	if (msgbuffer == NULL) {
 	    bu_log("Failed to process the client connection, still waiting\n");
 	    pkg_close(client);
 	    client = PKC_NULL;
 	} else {
-	    bu_log("buffer: %s\n", buffer);
+	    bu_log("msgbuffer: %s\n", msgbuffer);
 	    /* validate magic header that client should have sent */
-	    if (!BU_STR_EQUAL(buffer, MAGIC_ID)) {
+	    if (!BU_STR_EQUAL(msgbuffer, MAGIC_ID)) {
 		bu_log("Bizarre corruption, received a HELO without at matching MAGIC ID!\n");
 		pkg_close(client);
 		client = PKC_NULL;
 	    }
 	}
     } while (client == PKC_NULL);
+
+    /* have client, will send file */
+    fp = fopen("lempar.c", "rb");
+    buffer = (char *)bu_calloc(2048, 1, "buffer allocation");
+
+    if (fp == NULL) {
+	bu_log("Unable to open lempar.c\n");
+	bu_bomb("Unable to read file\n");
+    }
+
+    /* send the file data to the server */
+    while (!feof(fp) && !ferror(fp)) {
+	bytes = fread(buffer, 1, 2048, fp);
+	bu_log("Read %ld bytes from lempar.c\n", bytes);
+
+	if (bytes > 0) {
+	    bytes = pkg_send(MSG_DATA, buffer, (size_t)bytes, client);
+	    if (bytes < 0) {
+		pkg_close(client);
+		bu_log("Unable to successfully send data");
+		bu_free(buffer, "buffer release");
+		return;
+	    }
+	}
+    }
 
     /* Tell the client we're done */
     bytes = pkg_send(MSG_CIAO, "DONE", 5, client);
