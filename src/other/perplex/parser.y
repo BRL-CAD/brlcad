@@ -9,11 +9,12 @@
 %token_type {YYSTYPE}
 %extra_argument {appData_t *appData}
 
-file ::= definitions_section rules_section code.
+file ::= definitions_section TOKEN_SEPARATOR rules_section.
+file ::= definitions_section TOKEN_SEPARATOR rules_section TOKEN_SEPARATOR code_section.
 
 /* definitions section */
 
-definitions_section ::= definitions TOKEN_SEPARATOR.
+definitions_section ::= definitions.
 {
     FILE *templateFile = appData->template;
     char c;
@@ -34,7 +35,7 @@ definitions ::= definitions TOKEN_DEFINITIONS(text).
 
 /* rules section */
 
-rules_section ::= rules TOKEN_SEPARATOR.
+rules_section ::= rules.
 {
     /* close re2c comment and scanner routine */
     printf("*/\n    }\n}\n");
@@ -62,6 +63,8 @@ action ::= TOKEN_ACTION(text).
 }
 
 /* code section */
+
+code_section ::= code.
 
 code ::= /* empty */.
 code ::= code TOKEN_CODE(text).

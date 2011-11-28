@@ -48,10 +48,11 @@ Desired Features:
 - indicate end-of-input by returning -1
 - if rule actions don't end with a return,
   ignore the recognized token and continue parsing
+
 - character classes (might implement using auto-included named patterns)
 - include C code (re2c passes through by default) 
 - error mechanism ? (reentrancy?)
-- start conditions
+- start conditions, and condition blocks in particular
 - unquoted literal characters
 - echo unmatched text?
 - yylineno? (reentrancy?)
@@ -63,6 +64,7 @@ Possible Options (borrowed from flex usage message):
 -L,  --noline		suppress #line directives in scanner
 -o,  --outfile=FILE	specify output filename (stdout by default?)
 -P,  --prefix=STRING	use STRING as prefix instead of "yy"
+-t,  --template=FILE    specify path to scanner template file
 -V,  --version		report perplex version
      --yylineno		track line count in yylineno
 #endif
