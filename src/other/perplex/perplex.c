@@ -67,11 +67,12 @@ Possible Options (borrowed from flex usage message):
      --yylineno		track line count in yylineno
 #endif
 
+int yylex(perplex_t scanner);
+
 int main(int argc, char *argv[])
 {
     perplex_t scanner;
     FILE *inFile, *templateFile;
-    char c;
     int tokenID;
     void *parser;
     appData_t *appData;

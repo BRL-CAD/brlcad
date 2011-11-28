@@ -368,7 +368,7 @@ static void
 bufferFill(perplex_t scanner, size_t n)
 {
     struct Buf *buf;
-    size_t i, shiftSize, marker, start, used;
+    size_t shiftSize, marker, start, used;
 
     buf = scanner->buffer;
 

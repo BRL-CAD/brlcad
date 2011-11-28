@@ -1,5 +1,7 @@
 %include {
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "perplex.h"
 #include "token_type.h"
 }
@@ -27,7 +29,7 @@ definitions ::= /* empty */.
 definitions ::= definitions TOKEN_DEFINITIONS(text).
 {
     printf("%s", text.string);
-    free(text);
+    free(text.string);
 }
 
 /* rules section */
@@ -50,13 +52,13 @@ rule ::= pattern TOKEN_LBRACE action TOKEN_RBRACE.
 pattern ::= TOKEN_PATTERN(text).
 {
     printf("%s {", text.string);
-    free(text);
+    free(text.string);
 }
 
 action ::= TOKEN_ACTION(text).
 {
     printf("%s", text.string);
-    free(text);
+    free(text.string);
 }
 
 /* code section */
@@ -65,5 +67,5 @@ code ::= /* empty */.
 code ::= code TOKEN_CODE(text).
 {
     printf("%s", text.string);
-    free(text);
+    free(text.string);
 }
