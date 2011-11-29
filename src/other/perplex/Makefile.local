@@ -1,9 +1,11 @@
 CFLAGS = -g -Wall -ansi -pedantic
+CXXFLAGS = $(CFLAGS)
 
-perplex : perplex.o scanner.o parser.o
-	$(CC) -o $@ $^ -lm
+perplex : perplex.o scanner.o parser.o mbo_getopt.o
+	$(CXX) -o $@ $^ -lm
 
-scanner.c perplex.o : perplex.h parser.h
+perplex.o scanner.c : perplex.h parser.h
+perplex.o mbo_getopt.o : mbo_getopt.h
 
 scanner.c : scanner.re
 	re2c -c -o $@ $<

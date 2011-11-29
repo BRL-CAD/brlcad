@@ -16,7 +16,7 @@ file ::= definitions_section TOKEN_SEPARATOR rules_section TOKEN_SEPARATOR code_
 
 definitions_section ::= definitions.
 {
-    FILE *templateFile = appData->template;
+    FILE *templateFile = appData->scanner_template;
     char c;
 
     while ((c = fgetc(templateFile)) != EOF) {

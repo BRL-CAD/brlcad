@@ -67,12 +67,13 @@ struct Buf {
 };
 
 typedef struct appData_t {
-    FILE *in, *template;
+    FILE *in;
+    FILE *scanner_template;
     YYSTYPE tokenData;
 } appData_t;
 
 /* scanner data */
-typedef struct perplex_t {
+typedef struct perplex {
     struct {
 	FILE *file;
 	char *string;
@@ -88,6 +89,11 @@ typedef struct perplex_t {
     condition_t condition;
 } *perplex_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+int yylex(perplex_t scanner);
+
 perplex_t perplexFileScanner(FILE *input);
 perplex_t perplexStringScanner(char *input);
 void perplexFree(perplex_t scanner);
@@ -96,6 +102,9 @@ void *ParseAlloc(void *(*mallocProc)(size_t));
 void ParseFree(void *parser, void (*freeProc)(void*));
 void Parse(void *parser, int tokenID, YYSTYPE tokenData, appData_t *appData);
 void ParseTrace(FILE *fp, char *s);
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

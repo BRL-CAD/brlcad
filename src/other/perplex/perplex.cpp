@@ -41,6 +41,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "perplex.h"
+#include "mbo_getopt.h"
+
 #if 0
 Desired Features:
 - string and file inputs w/ autobuffering
@@ -68,41 +70,87 @@ Possible Options (borrowed from flex usage message):
 -V,  --version		report perplex version
      --yylineno		track line count in yylineno
 #endif
+using namespace re2c;
 
-int yylex(perplex_t scanner);
+static const mbo_opt_struct options[] =
+{
+    mbo_opt_struct('?', 0, "help"),
+    mbo_opt_struct('h', 0, "help"),
+    mbo_opt_struct('t', 1, "template"),
+    mbo_opt_struct('-', 0, NULL)
+};
+
+static const char usage[] =
+"Usage: perplex [options] input\n"
+"  -?\n"
+"  -h, --help\t\tprints this message\n"
+"  -t, --template PATH\tspecify path to scanner template file\n"
+;
 
 int main(int argc, char *argv[])
 {
     perplex_t scanner;
-    FILE *inFile, *templateFile;
+    FILE *inFile, *templateFile = NULL;
     int tokenID;
     void *parser;
     appData_t *appData;
+    char defaultTemplate[] = "scanner_template.c";
+    char c;
+    char *opt_arg = NULL;
+    int opt_ind = 1;
 
-    if (argc != 2) {
-	printf("Usage: perplex input.l\n");
+    if (argc < 2) {
+	puts(usage);
 	return 0;
     }
 
-    if ((templateFile = fopen("scanner_template.c", "r")) == NULL) {
-	fprintf(stderr, "Error: couldn't open template.c for reading\n");
+    while ((c = mbo_getopt(argc, argv, options, &opt_arg, &opt_ind, 0)) != -1) {
+	switch (c) {
+	    case '?':
+	    case 'h':
+		puts(usage);
+		return 0;
+	    case 't':
+		if (opt_arg == NULL) {
+		    fprintf(stderr, "Error: Template option requires path argument.\n");
+		    exit(1);
+		}
+		if ((templateFile = fopen(opt_arg, "r")) == NULL) {
+		    fprintf(stderr, "Error: couldn't open \"%s\" for reading.\n", opt_arg);
+		    exit(1);
+		}
+		opt_arg = NULL;
+		break;
+	    default:
+		fprintf(stderr, "Error: Unrecognized option.\n");
+		exit(1);
+	}
+    }
+
+    if (templateFile == NULL) {
+	if ((templateFile = fopen(defaultTemplate, "r")) == NULL) {
+	    fprintf(stderr, "Error: couldn't open \"%s\" for reading.\n", defaultTemplate);
+	    exit(1);
+	}
+    }
+
+    if ((inFile = fopen(argv[opt_ind], "r")) == NULL) {
+	fprintf(stderr, "Error: couldn't open \"%s\" for reading\n", argv[opt_ind]);
 	exit(1);
     }
 
-    if ((inFile = fopen(argv[1], "r")) == NULL) {
-	fprintf(stderr, "Error: couldn't open \"%s\" for reading\n", argv[1]);
-	exit(1);
-    }
-
+    /* create scanner and parser */
     scanner = perplexFileScanner(inFile);
     parser = ParseAlloc(malloc);
 
-    scanner->appData = malloc(sizeof(appData_t));
+    scanner->appData = static_cast<appData_t*>(malloc(sizeof(appData_t)));
+
     appData = scanner->appData;
 
     appData->in = inFile;
-    appData->template = templateFile;
+    appData->scanner_template = templateFile;
 
+    /* parse */
     while ((tokenID = yylex(scanner)) != YYEOF) {
 	Parse(parser, tokenID, appData->tokenData, appData);
     }

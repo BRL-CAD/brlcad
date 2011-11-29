@@ -416,7 +416,7 @@ static perplex_t
 newScanner()
 {
     perplex_t scanner;
-    scanner = (perplex_t)calloc(1, sizeof(struct perplex_t));
+    scanner = (perplex_t)calloc(1, sizeof(struct perplex));
 
     scanner->in.file = NULL;
     scanner->in.string = NULL;
