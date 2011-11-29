@@ -3566,7 +3566,6 @@ to_data_polygons(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "import")) {
 	ged_polygon *gpp;
 	size_t i;
-	int ret;
 
 	if (argc != 4)
 	    goto bad;
@@ -3583,7 +3582,7 @@ to_data_polygons(struct ged *gedp,
 						     "realloc gp_polygon");
 	gdpsp->gdps_polygons.gp_polygon[i] = *gpp;  /* struct copy */
 
-	return ret;
+	return GED_OK;
     }
 
     if (BU_STR_EQUAL(argv[2], "polygons")) {
