@@ -2755,6 +2755,9 @@ rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 	argv += 2;
     }
 
+    if (extr->sketch_name == NULL)
+	return BRLCAD_ERROR;
+
     return BRLCAD_OK;
 }
 
