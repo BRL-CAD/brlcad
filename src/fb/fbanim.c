@@ -29,6 +29,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "bselect.h"
 #include "bio.h"
 
 #ifdef HAVE_SYS_TIME_H

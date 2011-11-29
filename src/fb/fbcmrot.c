@@ -32,6 +32,7 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* For struct timeval */
 #endif
+#include "bselect.h"
 #include "bio.h"
 
 #include "bu.h"

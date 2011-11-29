@@ -45,6 +45,7 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
+#include "bselect.h"
 #include "bio.h"
 
 #ifdef VMIN

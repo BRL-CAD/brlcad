@@ -39,6 +39,7 @@
 #  include <sys/ioctl_compat.h>
 #  define OCRNL 0000010
 #endif
+#include "bselect.h"
 #include "bio.h"
 
 /*
