@@ -128,9 +128,6 @@ run_client(const char *server, int port, const char *file)
     int pkg_result = 0;
     static const unsigned int TPKG_BUFSIZE = 2048;
     char *buffer;
-
-    buffer = (char *)bu_calloc(TPKG_BUFSIZE, 1, "buffer allocation");
-
     /** our callbacks for each message type */
     struct pkg_switch callbacks[] = {
         {MSG_HELO, server_helo, "HELO", NULL},
@@ -138,6 +135,8 @@ run_client(const char *server, int port, const char *file)
         {MSG_CIAO, server_ciao, "CIAO", NULL},
         {0, 0, (char *)0, (void*)0}
     };
+
+    buffer = (char *)bu_calloc(TPKG_BUFSIZE, 1, "buffer allocation");
 
     /* make sure the file can be opened */
     fp = fopen(file, "rb");

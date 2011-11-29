@@ -13,8 +13,16 @@ BRLCAD_ADD_DEF_LISTS(BU_DEFINES PKG_DEFINES)
 
 add_executable(pkg_test_server server.c)
 target_link_libraries(pkg_test_server libpkg libbu)
+IF(CPP_DLL_DEFINES)
+	SET_PROPERTY(TARGET pkg_test_server APPEND PROPERTY COMPILE_DEFINITIONS	"BU_DLL_IMPORTS")
+	SET_PROPERTY(TARGET pkg_test_server APPEND PROPERTY COMPILE_DEFINITIONS	"PKG_DLL_IMPORTS")
+ENDIF(CPP_DLL_DEFINES)
 
 add_executable(pkg_test_client client.c)
 target_link_libraries(pkg_test_client libpkg libbu)
+IF(CPP_DLL_DEFINES)
+	SET_PROPERTY(TARGET pkg_test_client APPEND PROPERTY COMPILE_DEFINITIONS	"BU_DLL_IMPORTS")
+	SET_PROPERTY(TARGET pkg_test_client APPEND PROPERTY COMPILE_DEFINITIONS	"PKG_DLL_IMPORTS")
+ENDIF(CPP_DLL_DEFINES)
 
 CMAKEFILES(ntp.h)
