@@ -46,10 +46,6 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
-#ifdef HAVE_SYS_SELECT_H
-/* for select */
-#  include <sys/select.h>
-#endif
 #ifdef HAVE_SYS_SOCKET_H
 /* for recv */
 #  include <sys/socket.h>
@@ -59,6 +55,7 @@
 #  include <poll.h>
 #endif
 
+#include "bselect.h"
 #include "bio.h"
 
 #include "tcl.h"

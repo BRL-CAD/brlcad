@@ -29,10 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#ifdef HAVE_SYS_SELECT_H
-#  include <sys/select.h>
-#endif
-
+#include "bselect.h"
 #include "bio.h"
 
 #include "./ged_private.h"

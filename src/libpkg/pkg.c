@@ -67,7 +67,6 @@
 #endif
 
 
-
 /* Not all systems with "BSD Networking" include UNIX Domain sockets */
 #ifdef HAVE_SYS_UN_H
 #  include <sys/un.h>		/* UNIX Domain sockets */
@@ -88,6 +87,22 @@
 
 #include <errno.h>
 #include "pkg.h"
+
+
+/* compatibility for pedantic bug/limitation in gcc 4.6.2, need to
+ * mark macros as extensions else they may emit "ISO C forbids
+ * braced-groups within expressions" warnings.
+ */
+
+#if defined(FD_SET) && defined(__FD_SET)
+#  undef FD_SET
+#  define FD_SET(x, y) __extension__ __FD_SET((x), (y))
+#endif
+
+#if defined(FD_ISSET) && defined(__FD_ISSET)
+#  undef FD_ISSET
+#  define FD_ISSET(x, y) __extension__ __FD_ISSET((x), (y))
+#endif
 
 
 /* XXX is this really necessary?  the _read() and _write()

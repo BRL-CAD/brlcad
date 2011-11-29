@@ -39,9 +39,7 @@
 #ifdef HAVE_PROCESS_H
 #  include <process.h>
 #endif
-#ifdef HAVE_SYS_SELECT_H
-#  include <sys/select.h>
-#endif
+#include "bselect.h"
 #include "bio.h"
 
 /* common headers */

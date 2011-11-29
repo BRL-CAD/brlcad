@@ -70,20 +70,15 @@
 #ifdef HAVE_SYS_SOCKET_H
 #  include <sys/socket.h>
 #endif
-#ifdef HAVE_NETINET_IN_H
-#  include <netinet/in.h>		/* For htonl(), etc */
-#endif
-#ifdef HAVE_WINSOCK_H
-#  include <process.h>
-#  include <winsock.h>
-#endif
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* For struct timeval */
 #endif
+#include "bselect.h"
 #include "bio.h"
+#include "bin.h"
 
 #include "fb.h"
 #include "pkg.h"

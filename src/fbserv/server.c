@@ -28,16 +28,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#if defined (HAVE_SYS_SELECT_H)
-#  include <sys/select.h>
-#else
-#  if defined(HAVE_SYS_TYPES_H)
-#    include <sys/types.h>
-#  endif
-#  if defined(HAVE_SYS_TIME_H)
-#    include <sys/time.h>
-#  endif
+#if defined(HAVE_SYS_TYPES_H)
+#  include <sys/types.h>
 #endif
+#if defined(HAVE_SYS_TIME_H)
+#  include <sys/time.h>
+#endif
+#include "bselect.h"
 #include "bio.h"
 
 #include "fb.h"
