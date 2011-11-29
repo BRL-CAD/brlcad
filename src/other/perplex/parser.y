@@ -4,6 +4,23 @@
 #include <stdlib.h>
 #include "perplex.h"
 #include "token_type.h"
+
+static void
+writeHeader(FILE *templateFile, FILE *headerFile)
+{
+    char c;
+    while ((c = fgetc(templateFile)) != EOF) {
+	if (c == '%') {
+	    if ((c = fgetc(templateFile)) == '%') {
+		/* found %%, end of header section */
+		return;
+	    } else {
+		fprintf(headerFile, "%c", '%');
+	    }
+	}
+	fprintf(headerFile, "%c", c);
+    }
+}
 }
 
 %token_type {YYSTYPE}
@@ -17,12 +34,31 @@ file ::= definitions_section TOKEN_SEPARATOR rules_section TOKEN_SEPARATOR code_
 definitions_section ::= definitions.
 {
     FILE *templateFile = appData->scanner_template;
+    FILE *headerFile = appData->header;
+    FILE *outFile = appData->out;
     char c;
 
-    while ((c = fgetc(templateFile)) != EOF) {
-	fprintf(appData->out, "%c", c);
+    /* write header file from template */
+    if (headerFile != NULL) {
+	fprintf(headerFile, "#ifndef PERPLEX_H\n");
+	fprintf(headerFile, "#define PERPLEX_H\n");
+	writeHeader(templateFile, headerFile);
+	fprintf(headerFile, "#endif\n");
     }
-    fprintf(appData->out, "\n");
+
+    /* write implementation file from template */
+    while ((c = fgetc(templateFile)) != EOF) {
+	if (c == '%') {
+	    if ((c = fgetc(templateFile)) == '%') {
+		/* found %%, ignore */
+		continue;
+	    } else {
+		fprintf(outFile, "%c", '%');
+	    }
+	}
+	fprintf(outFile, "%c", c);
+    }
+    fprintf(outFile, "\n");
     fclose(templateFile);
 }
 

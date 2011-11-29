@@ -79,8 +79,6 @@ copyString(const char *str)
 #include <stdlib.h>
 #include <string.h>
 
-#define YYEOF -1
-
 /* --- from flex's flexdef.h --- */
 void buf_init(struct Buf * buf, size_t elem_size);
 void buf_destroy(struct Buf * buf);

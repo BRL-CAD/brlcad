@@ -76,6 +76,7 @@ static const mbo_opt_struct options[] =
 {
     mbo_opt_struct('?', 0, "help"),
     mbo_opt_struct('h', 0, "help"),
+    mbo_opt_struct('i', 1, "header"),
     mbo_opt_struct('o', 1, "output"),
     mbo_opt_struct('t', 1, "template"),
     mbo_opt_struct('-', 0, NULL)
@@ -85,6 +86,7 @@ static const char usage[] =
 "Usage: perplex [options] input\n"
 "  -?\n"
 "  -h, --help\t\tprints this message\n"
+"  -i, --header PATH\tspecify path of header file\n"
 "  -o, --output\t\tspecify path of output file\n"
 "  -t, --template PATH\tspecify path to scanner template file\n"
 ;
@@ -99,7 +101,10 @@ int main(int argc, char *argv[])
     perplex_t scanner;
     appData_t *appData;
     char defaultTemplate[] = "scanner_template.c";
-    FILE *inFile, *outFile = NULL, *templateFile = NULL;
+    FILE *inFile;
+    FILE *outFile = NULL;
+    FILE *templateFile = NULL;
+    FILE *headerFile = NULL;
 
     if (argc < 2) {
 	puts(usage);
@@ -112,6 +117,16 @@ int main(int argc, char *argv[])
 	    case 'h':
 		puts(usage);
 		return 0;
+	    case 'i':
+		if (opt_arg == NULL) {
+		    fprintf(stderr, "Error: Header option requires path argument.\n");
+		    exit(1);
+		}
+		if ((headerFile = fopen(opt_arg, "w")) == NULL) {
+		    fprintf(stderr, "Error: Couldn't open \"%s\" for writing.\n", opt_arg);
+		    exit(1);
+		}
+		break;
 	    case 'o':
 		if (opt_arg == NULL) {
 		    fprintf(stderr, "Error: Output option requires path argument.\n");
@@ -164,6 +179,7 @@ int main(int argc, char *argv[])
     appData = scanner->appData;
     appData->in = inFile;
     appData->out = outFile;
+    appData->header = headerFile;
     appData->scanner_template = templateFile;
 
     /* parse */

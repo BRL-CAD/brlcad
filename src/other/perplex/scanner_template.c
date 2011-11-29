@@ -48,9 +48,13 @@
  * template for generated scanners
  *
  */
-
 #include <stdio.h>
 #include <stdlib.h>
+
+#define YYEOF -1
+
+#define PERPLEX_APPDATA_TYPE void*
+#define PERPLEX_CONDITION_TYPE int
 
 struct Buf {
     void   *elts;	/* elements. */
@@ -72,16 +76,66 @@ typedef struct perplex {
     char *tokenStart;
     struct Buf *buffer;
     char *tokenText;
-    void *appData;
-    condition_t condition;
+    PERPLEX_APPDATA_TYPE appData;
+    PERPLEX_CONDITION_TYPE condition;
 } *perplex_t;
 
+perplex_t perplexFileScanner(FILE *input);
+perplex_t perplexStringScanner(char *input);
+void perplexFree(perplex_t scanner);
+
+int yylex(perplex_t scanner);
+
+%%
+/*              S C A N N E R _ T E M P L A T E . C
+ * BRL-CAD
+ *
+ * Copyright (c) 1990-2011 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * Copyright (c) 1990 The Regents of the University of California.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following
+ * disclaimer in the documentation and/or other materials provided
+ * with the distribution.
+ *
+ * 3. The name of the author may not be used to endorse or promote
+ * products derived from this software without specific prior written
+ * permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/*  Parts of this file are based on sources from the flex project.
+ *
+ *  This code is derived from software contributed to Berkeley by
+ *  Vern Paxson.
+ *
+ *  The United States Government has rights in this work pursuant
+ *  to contract no. DE-AC03-76SF00098 between the United States
+ *  Department of Energy and the University of California.
+ */
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define YYEOF -1
 
 /* --- from flex's flexdef.h --- */
 void buf_init(struct Buf * buf, size_t elem_size);
