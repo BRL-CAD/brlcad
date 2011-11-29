@@ -26,6 +26,9 @@ writeHeader(FILE *templateFile, FILE *headerFile)
 %token_type {YYSTYPE}
 %extra_argument {appData_t *appData}
 
+/* suppress compiler warning about unused variable */
+%destructor file {ParseARG_STORE;}
+
 file ::= definitions_section TOKEN_SEPARATOR rules_section.
 file ::= definitions_section TOKEN_SEPARATOR rules_section TOKEN_SEPARATOR code_section.
 
