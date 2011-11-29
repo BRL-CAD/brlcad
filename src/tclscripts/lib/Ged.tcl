@@ -1212,6 +1212,11 @@ package provide cadwidgets::Ged 1.0
 	return [eval $mGed data_polygons $itk_component($itk_option(-pane)) $args]
     }
 
+    set scmd [lindex $args 0]
+    if {$scmd == "export" || $scmd == "import"} {
+	return [eval $mGed data_polygons $itk_component($itk_option(-pane)) $args]
+    }
+
     foreach dm {ur ul ll lr} {
 	eval $mGed data_polygons $itk_component($dm) $args
     }
@@ -4695,12 +4700,14 @@ package provide cadwidgets::Ged 1.0
     $help add data_axes		{{} {}}
     $help add data_labels	{{} {}}
     $help add data_lines	{{} {}}
-    $help add data_move 	{{} {}}
-    $help add data_pick 	{{} {}}
+    $help add data_polygons 	{{} {}}
     $help add sdata_arrows	{{} {}}
     $help add sdata_axes	{{} {}}
     $help add sdata_labels	{{} {}}
     $help add sdata_lines	{{} {}}
+    $help add sdata_polygons 	{{} {}}
+    $help add data_move 	{{} {}}
+    $help add data_pick 	{{} {}}
 }
 
 # Local Variables:

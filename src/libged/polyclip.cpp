@@ -33,11 +33,22 @@
 #include "ged.h"
 
 
-typedef struct
-{
+typedef struct {
     ClipperLib::long64 x;
     ClipperLib::long64 y;
 } clipper_vertex;
+
+struct segment_node {
+    struct bu_list l;
+    int reverse;
+    int used;
+    genptr_t segment;
+};
+
+struct contour_node {
+    struct bu_list l;
+    struct bu_list head;
+};
 
 
 static void
@@ -224,6 +235,233 @@ ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip, fastf_
 
     inv_sf = 1.0/sf;
     return extract(result_clipper_polys, inv_sf, view2model);
+}
+
+int
+ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polygon_i, const char *sname)
+{
+    register size_t j, k, n;
+    register size_t num_verts = 0;
+    struct rt_db_internal internal;
+    struct rt_sketch_internal *sketch_ip;
+    struct line_seg *lsg;
+    struct directory *dp;
+    vect_t view;
+    point_t vorigin;
+    mat_t invRot;
+
+    GED_CHECK_EXISTS(gedp, sname, LOOKUP_QUIET, GED_ERROR);
+    RT_DB_INTERNAL_INIT(&internal);
+
+    if (polygon_i >= gdpsp->gdps_polygons.gp_num_polygons ||
+	gdpsp->gdps_polygons.gp_polygon[polygon_i].gp_num_contours < 1)
+	return GED_ERROR;
+
+    for (j = 0; j < gdpsp->gdps_polygons.gp_polygon[polygon_i].gp_num_contours; ++j)
+	num_verts += gdpsp->gdps_polygons.gp_polygon[polygon_i].gp_contour[j].gpc_num_points;
+
+    if (num_verts < 3)
+	return GED_ERROR;
+
+    internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    internal.idb_type = ID_SKETCH;
+    internal.idb_meth = &rt_functab[ID_SKETCH];
+    internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_sketch_internal), "rt_sketch_internal");
+    sketch_ip = (struct rt_sketch_internal *)internal.idb_ptr;
+    sketch_ip->magic = RT_SKETCH_INTERNAL_MAGIC;
+    sketch_ip->vert_count = num_verts;
+    sketch_ip->verts = (point2d_t *)bu_calloc(sketch_ip->vert_count, sizeof(point2d_t), "sketch_ip->verts");
+    sketch_ip->curve.count = num_verts;
+    sketch_ip->curve.reverse = (int *)bu_calloc(sketch_ip->curve.count, sizeof(int), "sketch_ip->curve.reverse");
+    sketch_ip->curve.segment = (genptr_t *)bu_calloc(sketch_ip->curve.count, sizeof(genptr_t), "sketch_ip->curve.segment");
+
+    bn_mat_inv(invRot, gdpsp->gdps_rotation);
+    VSET(view, 1.0, 0.0, 0.0);
+    MAT4X3PNT(sketch_ip->u_vec, invRot, view);
+
+    VSET(view, 0.0, 1.0, 0.0);
+    MAT4X3PNT(sketch_ip->v_vec, invRot, view);
+
+#if 0
+    /* should already be unit vectors */
+    VUNITIZE(sketch_ip->u_vec);
+    VUNITIZE(sketch_ip->V_vec);
+#endif
+
+    /* Project the origin onto the front of the viewing cube */
+    MAT4X3PNT(vorigin, gdpsp->gdps_model2view, gdpsp->gdps_origin);
+    vorigin[Z] = 1.0;
+
+    /* Convert back to model coordinates for storage */
+    MAT4X3PNT(sketch_ip->V, gdpsp->gdps_view2model, vorigin);
+
+    n = 0;
+    for (j = 0; j < gdpsp->gdps_polygons.gp_polygon[polygon_i].gp_num_contours; ++j)
+	for (k = 0; k < gdpsp->gdps_polygons.gp_polygon[polygon_i].gp_contour[j].gpc_num_points; ++k) {
+	    point_t vpt;
+	    vect_t vdiff;
+
+	    MAT4X3PNT(vpt, gdpsp->gdps_model2view, gdpsp->gdps_polygons.gp_polygon[polygon_i].gp_contour[j].gpc_point[k]);
+	    VSUB2(vdiff, vpt, vorigin);
+	    VSCALE(vdiff, vdiff, gdpsp->gdps_scale);
+	    V2MOVE(sketch_ip->verts[n], vdiff);
+
+	    if (n) {
+		lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "segment");
+		sketch_ip->curve.segment[n-1] = (genptr_t)lsg;
+		lsg->magic = CURVE_LSEG_MAGIC;
+		lsg->start = n-1;
+		lsg->end = n;
+	    }
+
+	    ++n;
+	}
+
+
+    if (n) {
+	lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "segment");
+	sketch_ip->curve.segment[n-1] = (genptr_t)lsg;
+	lsg->magic = CURVE_LSEG_MAGIC;
+	lsg->start = n-1;
+	lsg->end = 0;
+    }
+
+    GED_DB_DIRADD(gedp, dp, sname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
+
+    return GED_OK;
+}
+
+
+ged_polygon *
+ged_import_polygon(struct ged *gedp, const char *sname)
+{
+    register size_t j, n;
+    register size_t ncontours = 0;
+    struct rt_db_internal intern;
+    struct rt_sketch_internal *sketch_ip;
+    struct bu_list HeadSegmentNodes;
+    struct bu_list HeadContourNodes;
+    struct segment_node *all_segment_nodes;
+    struct segment_node *curr_snode;
+    struct contour_node *curr_cnode;
+    ged_polygon *gpp;
+
+    if (wdb_import_from_path(gedp->ged_result_str, &intern, sname, gedp->ged_wdbp) == GED_ERROR)
+	return (ged_polygon *)0;
+
+    sketch_ip = (rt_sketch_internal *)intern.idb_ptr;
+    if (sketch_ip->vert_count < 3 || sketch_ip->curve.count < 1) {
+	rt_db_free_internal(&intern);
+	return (ged_polygon *)0;
+    }
+
+    all_segment_nodes = (struct segment_node *)bu_calloc(sketch_ip->curve.count, sizeof(struct segment_node), "all_segment_nodes");
+
+    BU_LIST_INIT(&HeadSegmentNodes);
+    BU_LIST_INIT(&HeadContourNodes);
+    for (n = 0; n < sketch_ip->curve.count; ++n) {
+	all_segment_nodes[n].segment = sketch_ip->curve.segment[n];
+	all_segment_nodes[n].reverse = sketch_ip->curve.reverse[n];
+	BU_LIST_INSERT(&HeadSegmentNodes, &all_segment_nodes[n].l);
+    }
+
+    curr_cnode = (struct contour_node *)0;
+    while (BU_LIST_NON_EMPTY(&HeadSegmentNodes)) {
+	struct segment_node *unused_snode = BU_LIST_FIRST(segment_node, &HeadSegmentNodes);
+	uint32_t *magic = (uint32_t *)unused_snode->segment;
+	struct line_seg *unused_lsg;
+
+	BU_LIST_DEQUEUE(&unused_snode->l);
+
+	/* For the moment, skipping everything except line segments */
+	if (*magic != CURVE_LSEG_MAGIC)
+	    continue;
+
+	unused_lsg = (struct line_seg *)unused_snode->segment;
+	if (unused_snode->reverse) {
+	    int tmp = unused_lsg->start;
+	    unused_lsg->start = unused_lsg->end;
+	    unused_lsg->end = tmp;
+	}
+
+	/* Find a contour to add the unused segment to. */
+	for (BU_LIST_FOR(curr_cnode, contour_node, &HeadContourNodes)) {
+	    for (BU_LIST_FOR(curr_snode, segment_node, &curr_cnode->head)) {
+		struct line_seg *curr_lsg = (struct line_seg *)curr_snode->segment;
+
+		if (unused_lsg->start == curr_lsg->end) {
+		    unused_snode->used = 1;
+		    BU_LIST_APPEND(&curr_snode->l, &unused_snode->l);
+		    goto end;
+		}
+
+		if (unused_lsg->end == curr_lsg->start) {
+		    unused_snode->used = 1;
+		    BU_LIST_INSERT(&curr_snode->l, &unused_snode->l);
+		    goto end;
+		}
+	    }
+	}
+
+    end:
+
+	if (!unused_snode->used) {
+	    ++ncontours;
+	    curr_cnode = (struct contour_node *)bu_calloc(1, sizeof(struct contour_node), "curr_cnode");
+	    BU_LIST_INSERT(&HeadContourNodes, &curr_cnode->l);
+	    BU_LIST_INIT(&curr_cnode->head);
+	    BU_LIST_INSERT(&curr_cnode->head, &unused_snode->l);
+	}
+    }
+
+    gpp = (ged_polygon *)bu_calloc(1, sizeof(ged_polygon), "poly");
+    gpp->gp_num_contours = ncontours;
+    gpp->gp_hole = (int *)bu_calloc(ncontours, sizeof(int), "gp_hole");
+    gpp->gp_contour = (ged_poly_contour *)bu_calloc(ncontours, sizeof(ged_poly_contour), "gp_contour");
+
+    j = 0;
+    while (BU_LIST_NON_EMPTY(&HeadContourNodes)) {
+	register size_t k = 0;
+	size_t npoints = 1;
+	struct line_seg *curr_lsg;
+
+	curr_cnode = BU_LIST_FIRST(contour_node, &HeadContourNodes);
+	BU_LIST_DEQUEUE(&curr_cnode->l);
+
+	/* Count the number of segments in this contour */
+	for (BU_LIST_FOR(curr_snode, segment_node, &curr_cnode->head))
+	    ++npoints;
+
+	gpp->gp_contour[j].gpc_num_points = npoints;
+	gpp->gp_contour[j].gpc_point = (point_t *)bu_calloc(npoints, sizeof(point_t), "gpc_point");
+
+	while (BU_LIST_NON_EMPTY(&curr_cnode->head)) {
+	    curr_snode = BU_LIST_FIRST(segment_node, &curr_cnode->head);
+	    BU_LIST_DEQUEUE(&curr_snode->l);
+
+	    curr_lsg = (struct line_seg *)curr_snode->segment;
+
+	    /* Convert from UV space to model space */
+	    VJOIN2(gpp->gp_contour[j].gpc_point[k], sketch_ip->V,
+		   sketch_ip->verts[curr_lsg->start][0], sketch_ip->u_vec,
+		   sketch_ip->verts[curr_lsg->start][1], sketch_ip->v_vec);
+	    ++k;
+	}
+
+	VJOIN2(gpp->gp_contour[j].gpc_point[k], sketch_ip->V,
+	       sketch_ip->verts[curr_lsg->end][0], sketch_ip->u_vec,
+	       sketch_ip->verts[curr_lsg->end][1], sketch_ip->v_vec);
+
+	/* free contour node */
+	bu_free((genptr_t)curr_cnode, "curr_cnode");
+    }
+
+    /* Clean up */
+    bu_free((genptr_t)all_segment_nodes, "all_segment_nodes");
+    rt_db_free_internal(&intern);
+
+    return gpp;
 }
 
 

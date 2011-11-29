@@ -3538,6 +3538,54 @@ to_data_polygons(struct ged *gedp,
 	return GED_OK;
     }
 
+    /* Usage: export i sketch_name
+     *
+     * Export polygon i to sketch_name
+     */
+    if (BU_STR_EQUAL(argv[2], "export")) {
+	size_t i;
+	int ret;
+
+	if (argc != 5)
+	    goto bad;
+
+	if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+	    i >= gdpsp->gdps_polygons.gp_num_polygons)
+	    goto bad;
+
+	if ((ret = ged_export_polygon(gedp, gdpsp, i, argv[4])) != GED_OK)
+	    bu_vls_printf(gedp->ged_result_str, "%s: failed to export polygon %llu to %s", argv[0], i, argv[4]);
+
+	return ret;
+    }
+
+    /* Usage: import sketch_name
+     *
+     * Import sketch_name and append 
+     */
+    if (BU_STR_EQUAL(argv[2], "import")) {
+	ged_polygon *gpp;
+	size_t i;
+	int ret;
+
+	if (argc != 4)
+	    goto bad;
+
+	if ((gpp = ged_import_polygon(gedp, argv[3])) == (ged_polygon *)0) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: failed to import sketch %s", argv[0], argv[3]);
+	    return GED_ERROR;
+	}
+
+	i = gdpsp->gdps_polygons.gp_num_polygons;
+	++gdpsp->gdps_polygons.gp_num_polygons;
+	gdpsp->gdps_polygons.gp_polygon = bu_realloc(gdpsp->gdps_polygons.gp_polygon,
+						     gdpsp->gdps_polygons.gp_num_polygons * sizeof(ged_polygon),
+						     "realloc gp_polygon");
+	gdpsp->gdps_polygons.gp_polygon[i] = *gpp;  /* struct copy */
+
+	return ret;
+    }
+
     if (BU_STR_EQUAL(argv[2], "polygons")) {
 	register size_t i, j, k;
 	int ac;
@@ -8230,6 +8278,9 @@ to_poly_circ_mode(struct ged *gedp,
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
+    gdpsp->gdps_scale = gdvp->gdv_view->gv_scale;
+    VMOVE(gdpsp->gdps_origin, gdvp->gdv_view->gv_center);
+    MAT_COPY(gdpsp->gdps_rotation, gdvp->gdv_view->gv_rotation);
     MAT_COPY(gdpsp->gdps_model2view, gdvp->gdv_view->gv_model2view);
     MAT_COPY(gdpsp->gdps_view2model, gdvp->gdv_view->gv_view2model);
 
@@ -8338,6 +8389,9 @@ to_poly_cont_build(struct ged *gedp,
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
+    gdpsp->gdps_scale = gdvp->gdv_view->gv_scale;
+    VMOVE(gdpsp->gdps_origin, gdvp->gdv_view->gv_center);
+    MAT_COPY(gdpsp->gdps_rotation, gdvp->gdv_view->gv_rotation);
     MAT_COPY(gdpsp->gdps_model2view, gdvp->gdv_view->gv_model2view);
     MAT_COPY(gdpsp->gdps_view2model, gdvp->gdv_view->gv_view2model);
 
@@ -8533,6 +8587,9 @@ to_poly_ell_mode(struct ged *gedp,
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
+    gdpsp->gdps_scale = gdvp->gdv_view->gv_scale;
+    VMOVE(gdpsp->gdps_origin, gdvp->gdv_view->gv_center);
+    MAT_COPY(gdpsp->gdps_rotation, gdvp->gdv_view->gv_rotation);
     MAT_COPY(gdpsp->gdps_model2view, gdvp->gdv_view->gv_model2view);
     MAT_COPY(gdpsp->gdps_view2model, gdvp->gdv_view->gv_view2model);
 
@@ -8643,6 +8700,9 @@ to_poly_rect_mode(struct ged *gedp,
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
+    gdpsp->gdps_scale = gdvp->gdv_view->gv_scale;
+    VMOVE(gdpsp->gdps_origin, gdvp->gdv_view->gv_center);
+    MAT_COPY(gdpsp->gdps_rotation, gdvp->gdv_view->gv_rotation);
     MAT_COPY(gdpsp->gdps_model2view, gdvp->gdv_view->gv_model2view);
     MAT_COPY(gdpsp->gdps_view2model, gdvp->gdv_view->gv_view2model);
 
