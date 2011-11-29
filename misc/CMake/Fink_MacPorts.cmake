@@ -134,6 +134,7 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 				get_filename_component(fink_path ${fink_binpath} PATH)
 				get_filename_component(fink_path_normalized ${fink_path} ABSOLUTE)
 				SET(CMAKE_SYSTEM_IGNORE_PATH ${CMAKE_SYSTEM_IGNORE_PATH} ${fink_path_normalized}/lib)
+				SET(CMAKE_SYSTEM_IGNORE_PATH ${CMAKE_SYSTEM_IGNORE_PATH} ${fink_path_normalized}/include)
 				IF(CMAKE_LIBRARY_PATH)
 					LIST(REMOVE_ITEM CMAKE_LIBRARY_PATH "${fink_path_normalized}/lib")
 				ENDIF(CMAKE_LIBRARY_PATH)
@@ -146,6 +147,7 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 				get_filename_component(port_path ${port_binpath} PATH)
 				get_filename_component(port_path_normalized ${port_path} ABSOLUTE)
 				SET(CMAKE_SYSTEM_IGNORE_PATH ${CMAKE_SYSTEM_IGNORE_PATH} ${port_path_normalized}/lib)
+				SET(CMAKE_SYSTEM_IGNORE_PATH ${CMAKE_SYSTEM_IGNORE_PATH} ${port_path_normalized}/include)
 				IF(CMAKE_LIBRARY_PATH)
 					LIST(REMOVE_ITEM CMAKE_LIBRARY_PATH "${port_path_normalized}/lib")
 				ENDIF(CMAKE_LIBRARY_PATH)
@@ -156,9 +158,6 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 		ENDIF(${CMAKE_SEARCH_OSX_PATHS} STREQUAL "SYSTEM")
 	ENDIF(PORT_EXEC OR FINK_EXEC)
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-
-
-
 
 # Local Variables:
 # tab-width: 8
