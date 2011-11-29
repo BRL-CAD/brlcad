@@ -442,8 +442,8 @@ Part_import( int id_start )
 	    /* get vertex list for this triangle */
 	} else if ( !strncmp( line, "Vertex", 6 ) ) {
 	    /* get a vertex */
-	    char *ptr;
-	    double v[3];
+	    char *ptr = NULL;
+	    vect_t v = VINIT_ZERO;
 
 	    i = 7;
 	    while ( !isspace( line[i] ) && line[i] != '\0' )
