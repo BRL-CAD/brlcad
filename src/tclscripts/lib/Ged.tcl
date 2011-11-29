@@ -971,7 +971,8 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::ae2dir {args} {
-    eval $mGed ae2dir $itk_component($itk_option(-pane)) $args
+#    eval $mGed ae2dir $itk_component($itk_option(-pane)) $args
+    eval $mGed ae2dir $args
 }
 
 ::itcl::body cadwidgets::Ged::aet {args} {
