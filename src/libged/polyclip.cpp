@@ -424,7 +424,7 @@ ged_import_polygon(struct ged *gedp, const char *sname)
     while (BU_LIST_NON_EMPTY(&HeadContourNodes)) {
 	register size_t k = 0;
 	size_t npoints = 1;
-	struct line_seg *curr_lsg;
+	struct line_seg *curr_lsg = NULL;
 
 	curr_cnode = BU_LIST_FIRST(contour_node, &HeadContourNodes);
 	BU_LIST_DEQUEUE(&curr_cnode->l);
@@ -449,9 +449,11 @@ ged_import_polygon(struct ged *gedp, const char *sname)
 	    ++k;
 	}
 
-	VJOIN2(gpp->gp_contour[j].gpc_point[k], sketch_ip->V,
-	       sketch_ip->verts[curr_lsg->end][0], sketch_ip->u_vec,
-	       sketch_ip->verts[curr_lsg->end][1], sketch_ip->v_vec);
+	if (curr_lsg) {
+	    VJOIN2(gpp->gp_contour[j].gpc_point[k], sketch_ip->V,
+		   sketch_ip->verts[curr_lsg->end][0], sketch_ip->u_vec,
+		   sketch_ip->verts[curr_lsg->end][1], sketch_ip->v_vec);
+	}
 
 	/* free contour node */
 	bu_free((genptr_t)curr_cnode, "curr_cnode");
