@@ -36,15 +36,15 @@ extern "C" {
 #define TIE_SINGLE_PRECISION 0
 #define TIE_DOUBLE_PRECISION 1
 
-#ifndef TIE_EXPORT
-#  if defined(TIE_DLL_EXPORTS) && defined(TIE_DLL_IMPORTS)
-#    error "Only TIE_DLL_EXPORTS or TIE_DLL_IMPORTS can be defined, not both."
-#  elif defined(TIE_DLL_EXPORTS)
-#    define TIE_EXPORT __declspec(dllexport)
-#  elif defined(TIE_DLL_IMPORTS)
-#    define TIE_EXPORT __declspec(dllimport)
+#ifndef RT_EXPORT
+#  if defined(RT_DLL_EXPORTS) && defined(RT_DLL_IMPORTS)
+#    error "Only RT_DLL_EXPORTS or RT_DLL_IMPORTS can be defined, not both."
+#  elif defined(RT_DLL_EXPORTS)
+#    define RT_EXPORT __declspec(dllexport)
+#  elif defined(RT_DLL_IMPORTS)
+#    define RT_EXPORT __declspec(dllimport)
 #  else
-#    define TIE_EXPORT
+#    define RT_EXPORT
 #  endif
 #endif
 
@@ -124,21 +124,21 @@ struct tie_s {
     fastf_t radius;
 };
 
-TIE_EXPORT extern void TIE_VAL(tie_kdtree_free)(struct tie_s *tie);
-TIE_EXPORT extern void TIE_VAL(tie_kdtree_prep)(struct tie_s *tie);
-TIE_EXPORT extern fastf_t TIE_PREC;
+RT_EXPORT extern void TIE_VAL(tie_kdtree_free)(struct tie_s *tie);
+RT_EXPORT extern void TIE_VAL(tie_kdtree_prep)(struct tie_s *tie);
+RT_EXPORT extern fastf_t TIE_PREC;
 
 /* compatability macros */
 #define tie_kdtree_free TIE_VAL(tie_kdtree_free)
 #define tie_kdtree_prep TIE_VAL(tie_kdtree_prep)
 
-TIE_EXPORT extern int tie_check_degenerate;
+RT_EXPORT extern int tie_check_degenerate;
 
-TIE_EXPORT extern void TIE_VAL(tie_init)(struct tie_s *tie, unsigned int tri_num, unsigned int kdmethod);
-TIE_EXPORT extern void TIE_VAL(tie_free)(struct tie_s *tie);
-TIE_EXPORT extern void TIE_VAL(tie_prep)(struct tie_s *tie);
-TIE_EXPORT extern void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_s *id, void *(*hitfunc)(struct tie_ray_s*, struct tie_id_s*, struct tie_tri_s*, void *ptr), void *ptr);
-TIE_EXPORT extern void TIE_VAL(tie_push)(struct tie_s *tie, TIE_3 **tlist, unsigned int tnum, void *plist, unsigned int pstride);
+RT_EXPORT extern void TIE_VAL(tie_init)(struct tie_s *tie, unsigned int tri_num, unsigned int kdmethod);
+RT_EXPORT extern void TIE_VAL(tie_free)(struct tie_s *tie);
+RT_EXPORT extern void TIE_VAL(tie_prep)(struct tie_s *tie);
+RT_EXPORT extern void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_s *id, void *(*hitfunc)(struct tie_ray_s*, struct tie_id_s*, struct tie_tri_s*, void *ptr), void *ptr);
+RT_EXPORT extern void TIE_VAL(tie_push)(struct tie_s *tie, TIE_3 **tlist, unsigned int tnum, void *plist, unsigned int pstride);
 
 /* backwards compatible macros */
 #define tie_init TIE_VAL(tie_init)
