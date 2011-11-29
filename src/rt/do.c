@@ -481,7 +481,6 @@ int cm_ae(int argc, char **argv)
 
     azimuth = atof(argv[1]);	/* set elevation and azimuth */
     elevation = atof(argv[2]);
-    do_ae(azimuth, elevation);
 
     return 0;
 }
