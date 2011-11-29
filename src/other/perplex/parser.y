@@ -20,16 +20,16 @@ definitions_section ::= definitions.
     char c;
 
     while ((c = fgetc(templateFile)) != EOF) {
-	printf("%c", c);
+	fprintf(appData->out, "%c", c);
     }
-    printf("\n");
+    fprintf(appData->out, "\n");
     fclose(templateFile);
 }
 
 definitions ::= /* empty */.
 definitions ::= definitions TOKEN_DEFINITIONS(text).
 {
-    printf("%s", text.string);
+    fprintf(appData->out, "%s", text.string);
     free(text.string);
 }
 
@@ -38,7 +38,7 @@ definitions ::= definitions TOKEN_DEFINITIONS(text).
 rules_section ::= rules.
 {
     /* close re2c comment and scanner routine */
-    printf("*/\n    }\n}\n");
+    fprintf(appData->out, "*/\n    }\n}\n");
 }
 
 rules ::= rule.
@@ -47,18 +47,18 @@ rules ::= rules rule.
 rule ::= pattern TOKEN_LBRACE action TOKEN_RBRACE.
 {
     /* prevent fall-through to next rule */
-    printf("\n    CONTINUE;\n}\n");
+    fprintf(appData->out, "\n    CONTINUE;\n}\n");
 }
 
 pattern ::= TOKEN_PATTERN(text).
 {
-    printf("%s {", text.string);
+    fprintf(appData->out, "%s {", text.string);
     free(text.string);
 }
 
 action ::= TOKEN_ACTION(text).
 {
-    printf("%s", text.string);
+    fprintf(appData->out, "%s", text.string);
     free(text.string);
 }
 
@@ -69,6 +69,6 @@ code_section ::= code.
 code ::= /* empty */.
 code ::= code TOKEN_CODE(text).
 {
-    printf("%s", text.string);
+    fprintf(appData->out, "%s", text.string);
     free(text.string);
 }

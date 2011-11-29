@@ -60,7 +60,7 @@ struct Buf {
 };
 
 /* scanner data */
-typedef struct perplex_t {
+typedef struct perplex {
     struct {
 	FILE *file;
 	char *string;

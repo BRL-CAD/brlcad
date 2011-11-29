@@ -76,6 +76,7 @@ static const mbo_opt_struct options[] =
 {
     mbo_opt_struct('?', 0, "help"),
     mbo_opt_struct('h', 0, "help"),
+    mbo_opt_struct('o', 1, "output"),
     mbo_opt_struct('t', 1, "template"),
     mbo_opt_struct('-', 0, NULL)
 };
@@ -84,20 +85,21 @@ static const char usage[] =
 "Usage: perplex [options] input\n"
 "  -?\n"
 "  -h, --help\t\tprints this message\n"
+"  -o, --output\t\tspecify path of output file\n"
 "  -t, --template PATH\tspecify path to scanner template file\n"
 ;
 
 int main(int argc, char *argv[])
 {
-    perplex_t scanner;
-    FILE *inFile, *templateFile = NULL;
+    char c;
     int tokenID;
+    int opt_ind = 1;
+    char *opt_arg = NULL;
     void *parser;
+    perplex_t scanner;
     appData_t *appData;
     char defaultTemplate[] = "scanner_template.c";
-    char c;
-    char *opt_arg = NULL;
-    int opt_ind = 1;
+    FILE *inFile, *outFile = NULL, *templateFile = NULL;
 
     if (argc < 2) {
 	puts(usage);
@@ -110,16 +112,25 @@ int main(int argc, char *argv[])
 	    case 'h':
 		puts(usage);
 		return 0;
+	    case 'o':
+		if (opt_arg == NULL) {
+		    fprintf(stderr, "Error: Output option requires path argument.\n");
+		    exit(1);
+		}
+		if ((outFile = fopen(opt_arg, "w")) == NULL) {
+		    fprintf(stderr, "Error: Couldn't open \"%s\" for reading.\n", opt_arg);
+		    exit(1);
+		}
+		break;
 	    case 't':
 		if (opt_arg == NULL) {
 		    fprintf(stderr, "Error: Template option requires path argument.\n");
 		    exit(1);
 		}
 		if ((templateFile = fopen(opt_arg, "r")) == NULL) {
-		    fprintf(stderr, "Error: couldn't open \"%s\" for reading.\n", opt_arg);
+		    fprintf(stderr, "Error: Couldn't open \"%s\" for reading.\n", opt_arg);
 		    exit(1);
 		}
-		opt_arg = NULL;
 		break;
 	    default:
 		fprintf(stderr, "Error: Unrecognized option.\n");
@@ -127,11 +138,17 @@ int main(int argc, char *argv[])
 	}
     }
 
+    /* look for default if scanner template not specified */
     if (templateFile == NULL) {
 	if ((templateFile = fopen(defaultTemplate, "r")) == NULL) {
 	    fprintf(stderr, "Error: couldn't open \"%s\" for reading.\n", defaultTemplate);
 	    exit(1);
 	}
+    }
+
+    /* use stdout if output file not specified */
+    if (outFile == NULL) {
+	outFile = stdout;
     }
 
     if ((inFile = fopen(argv[opt_ind], "r")) == NULL) {
@@ -144,10 +161,9 @@ int main(int argc, char *argv[])
     parser = ParseAlloc(malloc);
 
     scanner->appData = static_cast<appData_t*>(malloc(sizeof(appData_t)));
-
     appData = scanner->appData;
-
     appData->in = inFile;
+    appData->out = outFile;
     appData->scanner_template = templateFile;
 
     /* parse */

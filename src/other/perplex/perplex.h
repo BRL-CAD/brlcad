@@ -68,6 +68,7 @@ struct Buf {
 
 typedef struct appData_t {
     FILE *in;
+    FILE *out;
     FILE *scanner_template;
     YYSTYPE tokenData;
 } appData_t;
