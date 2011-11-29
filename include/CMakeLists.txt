@@ -78,9 +78,10 @@ SET(brlcadinclude_wanted
 # headers used by multiple packages but still considered private.
 # public headers should NOT include these headers.
 SET(brlcadnoinst_HEADERS
-	brlcad_version.h
 	bin.h
 	bio.h
+	brlcad_version.h
+	bselect.h
 	conf.h
 	fbmsg.h
 	sysv.h
