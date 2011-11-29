@@ -50,7 +50,7 @@
 #endif
 
 /* ISST functions */
-TIE_EXPORT extern int (Issttcltk_Init)(Tcl_Interp *interp);
+RT_EXPORT extern int (Issttcltk_Init)(Tcl_Interp *interp);
 
 void resize_isst(struct isst_s *);
 
