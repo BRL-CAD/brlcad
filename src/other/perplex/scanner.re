@@ -549,6 +549,8 @@ LINE_NOT_WHITE = [^\000\n\t ];
 
 DQUOTE = '"';
 LITERAL_DQUOTE = [^\\']DQUOTE|[^\\]DQUOTE[^']|"\\\\"DQUOTE;
+QUOTE = '\'';
+LITERAL_QUOTE = [^\\]QUOTE|"\\\\"QUOTE;
 
 SEPARATOR = "%%"EOL;
 FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
@@ -589,9 +591,19 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
 }
 
 
-<ACTION>LITERAL_DQUOTE => <ACTION_STRING> {
+<ACTION>"/*" => ACTION_COMMENT {
     continue;
 }
+<ACTION>"//" => ACTION_LINE_COMMENT {
+    continue;
+}
+<ACTION>LITERAL_QUOTE => ACTION_CHAR {
+    continue;
+}
+<ACTION>LITERAL_DQUOTE => ACTION_STRING {
+    continue;
+}
+
 <ACTION>'{' {
     /* found code brace */
     scanner->braceCount++;
@@ -614,17 +626,23 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
 
     continue;
 }
-<ACTION>ANY {
+
+<ACTION_COMMENT>"*/" => ACTION {
+    continue;
+}
+<ACTION_LINE_COMMENT>EOL => ACTION {
+    continue;
+}
+<ACTION_CHAR>LITERAL_QUOTE => ACTION {
+    continue;
+}
+<ACTION_STRING>LITERAL_DQUOTE => ACTION {
+    continue;
+}
+<ACTION,ACTION_COMMENT,ACTION_LINE_COMMENT,ACTION_CHAR,ACTION_STRING>ANY {
     continue;
 }
 
-
-<ACTION_STRING>LITERAL_DQUOTE => <ACTION> {
-    continue;
-}
-<ACTION_STRING>ANY {
-    continue;
-}
 
 <CODE>ANY {
     scanner->appData->tokenData.string = copyString(yytext);

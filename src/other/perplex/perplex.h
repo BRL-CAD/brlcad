@@ -56,7 +56,10 @@ typedef enum YYCONDTYPE {
     DEFINITIONS,
     RULES,
     ACTION,
+    ACTION_CHAR,
     ACTION_STRING,
+    ACTION_COMMENT,
+    ACTION_LINE_COMMENT,
     CODE
 } condition_t;
 
