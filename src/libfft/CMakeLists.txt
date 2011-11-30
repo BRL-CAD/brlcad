@@ -3,12 +3,13 @@ SET(FFT_INCLUDE_DIRS
 	${BRLCAD_BINARY_DIR}/include
 	${BRLCAD_SOURCE_DIR}/include
 	)
-BRLCAD_INCLUDE_DIRS(FFT_INCLUDE_DIRS)
 
 # local directories
-include_directories(
+SET(FFT_LOCAL_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+BRLCAD_INCLUDE_DIRS(FFT_INCLUDE_DIRS)
 
 ADD_EXECUTABLE(fftc fftc.c splitditc.c)
 target_link_libraries(fftc ${M_LIBRARY})

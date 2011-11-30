@@ -5,16 +5,17 @@ SET(TCLCAD_INCLUDE_DIRS
 	${DM_INCLUDE_DIRS}
 	${GED_INCLUDE_DIRS}
 	)
-BRLCAD_INCLUDE_DIRS(TCLCAD_INCLUDE_DIRS)
 
 # We need to guarantee internal Tcl headers
-include_directories(
+SET(TCLCAD_LOCAL_INCLUDE_DIRS
   ${CMAKE_SOURCE_DIR}/src/other/tcl/generic
   ${CMAKE_SOURCE_DIR}/src/other/tcl/unix
   ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
   ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
   ${PNG_INCLUDE_DIR}
 )
+
+BRLCAD_INCLUDE_DIRS(TCLCAD_INCLUDE_DIRS)
 
 add_definitions(
 	${C99_FLAG}

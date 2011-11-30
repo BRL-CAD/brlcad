@@ -433,6 +433,74 @@ MACRO(BRLCAD_ADDLIB libname srcs libs)
 	CPP_WARNINGS(srcslist)
 ENDMACRO(BRLCAD_ADDLIB libname srcs libs)
 
+#-----------------------------------------------------------------------------
+# For situations when a local 3rd party library (say, zlib) has been chosen in 
+# preference to a system version of that library, it is important to ensure 
+# that the local header(s) get included before the system headers.  Normally 
+# this is handled by explicitly specifying the local include paths (which, 
+# being explicitly specified and non-standard, are checked prior to default 
+# system locations) but there are some situations (macports being a classic 
+# example) where *other* "non-standard" installed copies of libraries may 
+# exist and be found if those directories are included ahead of the desired 
+# local copy.  An observed case:
+#
+# 1.  macports is installed on OSX
+# 2.  X11 is found in macports, X11 directories are set to /usr/macports based paths
+# 3.  These paths are mixed into the general include path lists for some BRL-CAD libs.
+# 4.  Because these paths are a) non-standard and b) contain zlib.h they result
+#     in "system" versions of zlib present in macports being found first even when
+#     the local zlib is enabled, if the macports paths happen to appear in the
+#     include directory list before the local zlib include paths.
+#
+# To mitigate this problem, BRL-CAD library include directories are sorted
+# according to the following hierarchy (using gcc's left-to-right search
+# order as a basis: http://gcc.gnu.org/onlinedocs/cpp/Search-Path.html):
+#
+# 1.  If CMAKE_CURRENT_BINARY_DIR or CMAKE_CURRENT_SOURCE_DIR are in the
+#     include list, they come first.
+# 2.  If BRLCAD_BINARY_DIR/include or BRLCAD_SOURCE_DIR/include are present,
+#     they come second.
+# 3.  For remaining paths, if the "root" path matches the BRLCAD_SOURCE_DIR
+#     or BRLCAD_BINARY_DIR paths, they are appended.
+# 4.  Any remaining paths are appended.
+MACRO(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
+    IF(${DIR_LIST})
+	SET(ORDERED_ELEMENTS ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${BRLCAD_BINARY_DIR}/include ${BRLCAD_SOURCE_DIR}/include)
+	SET(NEW_DIR_LIST "")
+	LIST(REMOVE_DUPLICATES ${DIR_LIST})
+	FOREACH(element ${ORDERED_ELEMENTS})
+	    SET(DEF_EXISTS "-1")
+	    LIST(FIND ${DIR_LIST} ${element} DEF_EXISTS)
+	    IF(NOT "${DEF_EXISTS}" STREQUAL "-1")
+		SET(NEW_DIR_LIST ${NEW_DIR_LIST} ${element})
+		LIST(REMOVE_ITEM ${DIR_LIST} ${element})
+	    ENDIF(NOT "${DEF_EXISTS}" STREQUAL "-1")
+	ENDFOREACH(element ${ORDERED_ELEMENTS})
+
+	# paths in BRL-CAD build dir
+	FOREACH(inc_path ${${DIR_LIST}})
+	    IF(${inc_path} MATCHES "^${BRLCAD_BINARY_DIR}")
+		SET(NEW_DIR_LIST ${NEW_DIR_LIST} ${inc_path})
+		LIST(REMOVE_ITEM ${DIR_LIST} ${inc_path})
+	    ENDIF(${inc_path} MATCHES "^${BRLCAD_BINARY_DIR}")
+	ENDFOREACH(inc_path ${${DIR_LIST}})
+
+	# paths in BRL-CAD source dir
+	FOREACH(inc_path ${${DIR_LIST}})
+	    IF(${inc_path} MATCHES "^${BRLCAD_SOURCE_DIR}")
+		SET(NEW_DIR_LIST ${NEW_DIR_LIST} ${inc_path})
+		LIST(REMOVE_ITEM ${DIR_LIST} ${inc_path})
+	    ENDIF(${inc_path} MATCHES "^${BRLCAD_SOURCE_DIR}")
+	ENDFOREACH(inc_path ${${DIR_LIST}})
+
+	# add anything that might be left
+	SET(NEW_DIR_LIST ${NEW_DIR_LIST} ${${DIR_LIST}})
+
+	# put the results into DIR_LIST
+	SET(${DIR_LIST} ${NEW_DIR_LIST})
+    ENDIF(${DIR_LIST})
+ENDMACRO(BRLCAD_SORT_INCLUDE_DIRS)
+
 
 #-----------------------------------------------------------------------------
 # Wrapper to handle include directories specific to libraries.  Removes
@@ -444,11 +512,12 @@ MACRO(BRLCAD_INCLUDE_DIRS DIR_LIST)
 	STRING(TOLOWER ${LIB_UPPER} LIB_LOWER)
 
 	LIST(REMOVE_DUPLICATES ${DIR_LIST})
-	SET(${DIR_LIST} ${${DIR_LIST}} CACHE STRING "Include directories for lib${LIBLOWER}" FORCE)
-
+	SET(${DIR_LIST} ${${DIR_LIST}} CACHE STRING "Include directories for lib${LIB_LOWER}" FORCE)
 	MARK_AS_ADVANCED(${DIR_LIST})
 
-	include_directories(${${DIR_LIST}})
+	SET(UPPER_INCLUDES ${${DIR_LIST}} ${${LIB_UPPER}_LOCAL_INCLUDE_DIRS})
+        BRLCAD_SORT_INCLUDE_DIRS(UPPER_INCLUDES)	
+	include_directories(${UPPER_INCLUDES})
 ENDMACRO(BRLCAD_INCLUDE_DIRS)
 
 

@@ -4,14 +4,15 @@ SET(BU_INCLUDE_DIRS
 	${BRLCAD_SOURCE_DIR}/include
 	${TCL_INCLUDE_DIRS}
 	)
-BRLCAD_INCLUDE_DIRS(BU_INCLUDE_DIRS)
 
 # locally used but not needed by users of the library
-include_directories(
+SET(BU_LOCAL_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${PNG_INCLUDE_DIR}
 	${ZLIB_INCLUDE_DIR}
 	)
+
+BRLCAD_INCLUDE_DIRS(BU_INCLUDE_DIRS)
 
 set(LIBBU_SOURCES
     argv.c

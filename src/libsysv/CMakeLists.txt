@@ -6,12 +6,6 @@ SET(SYSV_INCLUDE_DIRS
 	)
 BRLCAD_INCLUDE_DIRS(SYSV_INCLUDE_DIRS)
 
-include_directories(
-	${BRLCAD_BINARY_DIR}/include
-	${BRLCAD_SOURCE_DIR}/include
-	${TCL_INCLUDE_DIRS}
-)
-
 set(LIBSYSV_SOURCES
     memset.c
     strchr.c
