@@ -445,6 +445,7 @@ IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
 	SET(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT 0)
 ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
 SET(BRLCAD_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "BRL-CAD install prefix")
+MARK_AS_ADVANCED(BRLCAD_PREFIX) 
 
 # If we've got a Release build with a Debug path or vice versa, change it - that
 # is probably the most "expected" behavior.
@@ -1583,20 +1584,6 @@ IF(NOT BRLCAD_IS_SUBBUILD)
 		)
 ENDIF(NOT BRLCAD_IS_SUBBUILD)
 
-# Some of the BRL-CAD targets need to depend on the local
-# tcl/tk targets if they are present
-SET(TCL_DEPLIBS "libbu;libsysv;librt")
-if(BRLCAD_BUILD_TCL)
-	FOREACH(target ${TCL_DEPLIBS})
-		ADD_DEPENDENCIES(${target} tcl)
-	ENDFOREACH(target ${TCL_DEPLIBS})
-endif(BRLCAD_BUILD_TCL)
-if(BRLCAD_BUILD_TK)
-	FOREACH(target ${TCL_DEPLIBS})
-		ADD_DEPENDENCIES(${target} tk)
-	ENDFOREACH(target ${TCL_DEPLIBS})
-endif(BRLCAD_BUILD_TK)
-
 # We want the timestamp to come first, so make ALL library,
 # exec and external targets depend on timestamp (except for
 # the exec target printtimestamp, which is needed by timestamp)
@@ -1961,10 +1948,6 @@ ENDIF(NOT BRLCAD_IS_SUBBUILD)
 
 # Mark various miscellaneous things as advanced that we don't want in our
 # default view
-MARK_AS_ADVANCED(BRLCAD_PREFIX)
-MARK_AS_ADVANCED(IEEE_QUIET)
-MARK_AS_ADVANCED(INET_QUIET)
-MARK_AS_ADVANCED(64BIT_FLAG)
 MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 MARK_AS_ADVANCED(EXECUTABLE_OUTPUT_PATH)
 MARK_AS_ADVANCED(LIBRARY_OUTPUT_PATH)
