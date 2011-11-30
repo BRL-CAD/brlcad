@@ -979,13 +979,13 @@ verts_to_copious_data(pts, vert_count, pt_size, fp_dir, fp_param)
 
 
 int
-nmg_loop_to_tcurve(lu, surf_de, u_dir, v_dir, u_max, v_max, base_pt, fp_dir, fp_param)
-    struct loopuse *lu;
-    int surf_de;
-    vect_t u_dir, v_dir;
-    fastf_t u_max, v_max;
-    point_t base_pt;
-    FILE *fp_dir, *fp_param;
+nmg_loop_to_tcurve(
+    struct loopuse *lu,
+    int surf_de,
+    vect_t u_dir, vect_t v_dir,
+    fastf_t u_max, fastf_t v_max,
+    point_t base_pt,
+    FILE *fp_dir, FILE *fp_param)
 {
     struct bu_vls str;
     int dir_entry[21];
@@ -1084,9 +1084,11 @@ nmg_fu_to_tsurf(fu, fp_dir, fp_param)
     int dir_entry[21];
     struct loopuse *lu;
     int surf_de;
-    vect_t u_dir, v_dir;
-    fastf_t u_max, v_max;
-    point_t base_pt;
+    vect_t u_dir = VINIT_ZERO;
+    vect_t v_dir = VINIT_ZERO;
+    point_t base_pt = VINIT_ZERO;
+    fastf_t u_max = 0.0;
+    fastf_t v_max = 0.0;
     int loop_count=0;
     int *curve_de;
     int i;

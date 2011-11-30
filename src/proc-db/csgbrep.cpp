@@ -25,7 +25,6 @@
 #include "wdb.h"
 
 
-#define OBJ_BREP
 /* without OBJ_BREP, this entire procedural example is disabled */
 #ifdef OBJ_BREP
 

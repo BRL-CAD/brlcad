@@ -749,7 +749,7 @@ f_Batch()
 void
 pt_Select(int x, int y, int *xp, int *yp, int *originp)
 {
-    char		*args[3];
+    char		*args[5] = {NULL, NULL, NULL, NULL, NULL};
     char		buf1[5], buf2[5];
 
     args[1] = buf1;
@@ -1091,7 +1091,7 @@ f_Cursor_Module()
 				    fastf_t		scale;
 				    fastf_t		x_translate, y_translate;
 				    static char	buf[5];
-				    static char	*ar[3];
+				    static char	*ar[5] = {NULL, NULL, NULL, NULL, NULL};
 				    dx = mx - xx0;
 				    dx = abs(dx);
 				    dy = my - yy0;
@@ -1709,7 +1709,7 @@ f_Movie()
 {
     int		ret = TRUE;
     char		buf[10];
-    char		*locargs[3];
+    char		*locargs[5] = {NULL, NULL, NULL, NULL, NULL};
     /* Will use 'grid_sz' to control resolution. */
     force_cellsz = FALSE;
     (void) sprintf(prompt,
