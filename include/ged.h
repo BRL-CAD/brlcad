@@ -357,6 +357,7 @@ typedef struct {
     int			gdps_line_width;    	/* in pixels */
     int			gdps_line_style;
     int			gdps_cflag;             /* contour flag */
+    size_t		gdps_target_polygon_i;
     size_t		gdps_curr_polygon_i;
     size_t		gdps_curr_point_i;
     point_t		gdps_prev_point;

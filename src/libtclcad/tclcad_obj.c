@@ -3183,6 +3183,7 @@ to_polygon_free(ged_polygon *gpp)
 
     bu_free((genptr_t)gpp->gp_contour, "gp_contour");
     bu_free((genptr_t)gpp->gp_hole, "gp_hole");
+    gpp->gp_num_contours = 0;
 }
 
 HIDDEN void
@@ -3325,6 +3326,26 @@ to_data_polygons(struct ged *gedp,
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
+    if (BU_STR_EQUAL(argv[2], "target_poly")) {
+	if (argc == 3) {
+	    bu_vls_printf(gedp->ged_result_str, "%llu", gdpsp->gdps_target_polygon_i);
+	    return GED_OK;
+	}
+
+	if (argc == 4) {
+	    size_t i;
+
+	    if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 || i > gdpsp->gdps_polygons.gp_num_polygons)
+		goto bad;
+
+	    gdpsp->gdps_target_polygon_i = i;
+
+	    return GED_OK;
+	}
+
+	goto bad;
+    }
+
     if (BU_STR_EQUAL(argv[2], "clip_type")) {
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdpsp->gdps_clip_type);
@@ -3334,13 +3355,11 @@ to_data_polygons(struct ged *gedp,
 	if (argc == 4) {
 	    int op;
 
-	    if (sscanf(argv[3], "%d", &op) != 1 ||
-		op > gctXor)
+	    if (sscanf(argv[3], "%d", &op) != 1 || op > gctXor)
 		goto bad;
 
 	    gdpsp->gdps_clip_type = op;
 
-	    to_refresh_view(gdvp);
 	    return GED_OK;
 	}
 
@@ -3468,9 +3487,9 @@ to_data_polygons(struct ged *gedp,
 
 	    i = gdpsp->gdps_polygons.gp_num_polygons;
 	    ++gdpsp->gdps_polygons.gp_num_polygons;
-	    gdpsp->gdps_polygons.gp_polygon = bu_realloc(gdpsp->gdps_polygons.gp_polygon,
-							 gdpsp->gdps_polygons.gp_num_polygons * sizeof(ged_polygon),
-							 "realloc gp_polygon");
+	    gdpsp->gdps_polygons.gp_polygon = (ged_polygon *)bu_realloc(gdpsp->gdps_polygons.gp_polygon,
+									gdpsp->gdps_polygons.gp_num_polygons * sizeof(ged_polygon),
+									"realloc gp_polygon");
 
 	    if (to_extract_contours_av(gedp, &gdpsp->gdps_polygons.gp_polygon[i],
 				       contour_ac, contour_av, gdvp->gdv_view->gv_mode) != GED_OK) {
@@ -3495,21 +3514,26 @@ to_data_polygons(struct ged *gedp,
 	int op;
 	ged_polygon *gpp;
 
-	if (argc < 5 || 6 < argc)
+	if (argc > 6)
 	    goto bad;
 
-	if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
-	    i >= gdpsp->gdps_polygons.gp_num_polygons)
-	    goto bad;
+	if (argc > 3) {
+	    if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+		i >= gdpsp->gdps_polygons.gp_num_polygons)
+		goto bad;
+	} else
+	    i = gdpsp->gdps_target_polygon_i;
 
-	if (sscanf(argv[4], "%llu", (long long unsigned *)&j) != 1 ||
-	    j >= gdpsp->gdps_polygons.gp_num_polygons)
-	    goto bad;
+	if (argc > 4) {
+	    if (sscanf(argv[4], "%llu", (long long unsigned *)&j) != 1 ||
+		j >= gdpsp->gdps_polygons.gp_num_polygons)
+		goto bad;
+	} else
+	    j = gdpsp->gdps_polygons.gp_num_polygons - 1; /* Default - use last polygon as the clip polygon */
 
-	if (argc == 5)
+	if (argc != 6)
 	    op = gdpsp->gdps_clip_type;
-	else if (sscanf(argv[5], "%d", &op) != 1 ||
-	    op > gctXor)
+	else if (sscanf(argv[5], "%d", &op) != 1 || op > gctXor)
 	    goto bad;
 
 	gpp = ged_clip_polygon((GedClipType)op,
@@ -3519,20 +3543,26 @@ to_data_polygons(struct ged *gedp,
 			       gdpsp->gdps_model2view,
 			       gdpsp->gdps_view2model);
 
-#if 0
-	/* Append the newly clipped polygon to the array of polygons. */
-	++gdpsp->gdps_polygons.gp_num_polygons;
-	gdpsp->gdps_polygons.gp_polygon = bu_realloc(gdpsp->gdps_polygons.gp_polygon,
-						     gdpsp->gdps_polygons.gp_num_polygons * sizeof(ged_polygon),
-						     "realloc gp_polygon");
-	gdpsp->gdps_polygons.gp_polygon[gdpsp->gdps_polygons.gp_num_polygons-1] = *gpp; /* struct copy */
-	bu_free((genptr_t)gpp, "results of ged_clip_polygon");
-#else
-	/* Replace all polygons with the newly clipped polygon. */
-	to_polygons_free(&gdpsp->gdps_polygons);
-	gdpsp->gdps_polygons.gp_polygon = gpp;
-	gdpsp->gdps_polygons.gp_num_polygons = 1;
-#endif
+	/* Free the target polygon */
+	to_polygon_free(&gdpsp->gdps_polygons.gp_polygon[i]);
+
+	/* When using defaults, the clip polygon is assumed to be temporary and is removed after clipping */
+	if (argc == 3) {
+	    /* Free the clip polygon */
+	    to_polygon_free(&gdpsp->gdps_polygons.gp_polygon[j]);
+
+	    /* No longer need space for the clip polygon */
+	    --gdpsp->gdps_polygons.gp_num_polygons;
+	    gdpsp->gdps_polygons.gp_polygon = (ged_polygon *)bu_realloc(gdpsp->gdps_polygons.gp_polygon,
+									gdpsp->gdps_polygons.gp_num_polygons * sizeof(ged_polygon),
+									"realloc gp_polygon");
+	}
+
+	/* Replace the target polygon with the newly clipped polygon. */
+	gdpsp->gdps_polygons.gp_polygon[i] = *gpp;   /* struct copy */
+
+	/* Free the clipped polygon container */
+	bu_free((genptr_t)gpp, "clip gpp");
 
 	to_refresh_view(gdvp);
 	return GED_OK;
@@ -3577,9 +3607,9 @@ to_data_polygons(struct ged *gedp,
 
 	i = gdpsp->gdps_polygons.gp_num_polygons;
 	++gdpsp->gdps_polygons.gp_num_polygons;
-	gdpsp->gdps_polygons.gp_polygon = bu_realloc(gdpsp->gdps_polygons.gp_polygon,
-						     gdpsp->gdps_polygons.gp_num_polygons * sizeof(ged_polygon),
-						     "realloc gp_polygon");
+	gdpsp->gdps_polygons.gp_polygon = (ged_polygon *)bu_realloc(gdpsp->gdps_polygons.gp_polygon,
+								    gdpsp->gdps_polygons.gp_num_polygons * sizeof(ged_polygon),
+								    "realloc gp_polygon");
 	gdpsp->gdps_polygons.gp_polygon[i] = *gpp;  /* struct copy */
 
 	return GED_OK;
@@ -3622,8 +3652,8 @@ to_data_polygons(struct ged *gedp,
 	    polygon_ac = ac;
 
 	    to_polygons_free(&gdpsp->gdps_polygons);
+	    gdpsp->gdps_target_polygon_i = 0;
 
-	    /* Clear out data points */
 	    if (polygon_ac < 1) {
 		to_refresh_view(gdvp);
 		Tcl_Free((char *)polygon_av);
@@ -3703,9 +3733,9 @@ to_data_polygons(struct ged *gedp,
 
 	k = gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points;
 	++gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points;
-	gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point = bu_realloc(gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point,
-										gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points * sizeof(point_t),
-										"realloc gpc_point");
+	gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point = (point_t *)bu_realloc(gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point,
+											   gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points * sizeof(point_t),
+											   "realloc gpc_point");
 	VMOVE(gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k], pt);
 	to_refresh_view(gdvp);
 	return GED_OK;
@@ -8318,10 +8348,10 @@ to_poly_circ_mode(struct ged *gedp,
     av[3] = bu_vls_addr(&plist);
     av[4] = (char *)0;
 
-    if (gdpsp->gdps_polygons.gp_num_polygons == 0)
-	gdpsp->gdps_curr_polygon_i = 0;
+    if (gdpsp->gdps_polygons.gp_num_polygons == gdpsp->gdps_target_polygon_i)
+	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_target_polygon_i;
     else
-	gdpsp->gdps_curr_polygon_i = 1;
+	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_polygons.gp_num_polygons;
 
     (void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
     bu_vls_free(&plist);
@@ -8424,10 +8454,10 @@ to_poly_cont_build(struct ged *gedp,
 	struct bu_vls plist;
 	struct bu_vls bindings;
 
-	if (gdpsp->gdps_polygons.gp_num_polygons == 0)
-	    gdpsp->gdps_curr_polygon_i = 0;
+	if (gdpsp->gdps_polygons.gp_num_polygons == gdpsp->gdps_target_polygon_i)
+	    gdpsp->gdps_curr_polygon_i = gdpsp->gdps_target_polygon_i;
 	else
-	    gdpsp->gdps_curr_polygon_i = 1;
+	    gdpsp->gdps_curr_polygon_i = gdpsp->gdps_polygons.gp_num_polygons;
 
 	gdpsp->gdps_cflag = 1;
 	gdpsp->gdps_curr_point_i = 1;
@@ -8627,10 +8657,10 @@ to_poly_ell_mode(struct ged *gedp,
     av[3] = bu_vls_addr(&plist);
     av[4] = (char *)0;
 
-    if (gdpsp->gdps_polygons.gp_num_polygons == 0)
-	gdpsp->gdps_curr_polygon_i = 0;
+    if (gdpsp->gdps_polygons.gp_num_polygons == gdpsp->gdps_target_polygon_i)
+	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_target_polygon_i;
     else
-	gdpsp->gdps_curr_polygon_i = 1;
+	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_polygons.gp_num_polygons;
 
     (void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
     bu_vls_free(&plist);
@@ -8740,10 +8770,10 @@ to_poly_rect_mode(struct ged *gedp,
     av[3] = bu_vls_addr(&plist);
     av[4] = (char *)0;
 
-    if (gdpsp->gdps_polygons.gp_num_polygons == 0)
-	gdpsp->gdps_curr_polygon_i = 0;
+    if (gdpsp->gdps_polygons.gp_num_polygons == gdpsp->gdps_target_polygon_i)
+	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_target_polygon_i;
     else
-	gdpsp->gdps_curr_polygon_i = 1;
+	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_polygons.gp_num_polygons;
 
     (void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
     bu_vls_free(&plist);
