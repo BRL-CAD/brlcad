@@ -83,7 +83,7 @@ rules_section ::= rules.
 rules ::= rule.
 rules ::= rules rule.
 
-rule ::= pattern TOKEN_LBRACE action TOKEN_RBRACE.
+rule ::= pattern action.
 {
     /* prevent fall-through to next rule */
     fprintf(appData->out, "\n    CONTINUE;\n}\n");
@@ -91,7 +91,7 @@ rule ::= pattern TOKEN_LBRACE action TOKEN_RBRACE.
 
 pattern ::= TOKEN_PATTERN(text).
 {
-    fprintf(appData->out, "%s {", text.string);
+    fprintf(appData->out, "%s ", text.string);
     free(text.string);
 }
 

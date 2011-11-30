@@ -56,6 +56,7 @@ typedef enum YYCONDTYPE {
     DEFINITIONS,
     RULES,
     ACTION,
+    ACTION_STRING,
     CODE
 } condition_t;
 
@@ -81,6 +82,7 @@ typedef struct perplex {
 	char *string;
     } in;
     int atEOI;
+    int braceCount;
     char *cursor;
     char *marker;
     char *null;

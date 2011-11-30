@@ -538,18 +538,24 @@ re2c:condenumprefix = "";
 re2c:define:YYCONDTYPE = condition_t;
 re2c:define:YYGETCONDITION:naked = 1;
 
-NAME = [a-zA-Z_][a-zA-Z0-9_-]*;
 EOL = '\n';
 ANY = [^\000];
+NAME = [a-zA-Z_][a-zA-Z0-9_-]*;
+
 WHITE = [\n\t ];
 LINE_ANY = [^\000\n];
 LINE_WHITE = [\t ];
 LINE_NOT_WHITE = [^\000\n\t ];
 
+DQUOTE = '"';
+LITERAL_DQUOTE = [^\\']DQUOTE|[^\\]DQUOTE[^']|"\\\\"DQUOTE;
+
 SEPARATOR = "%%"EOL;
 FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
 
+
 <> :=> DEFINITIONS
+
 
 <DEFINITIONS>FAUX_SEPARATOR {
     scanner->appData->tokenData.string = copyString(yytext);
@@ -563,6 +569,7 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
     RETURN(TOKEN_DEFINITIONS);
 }
 
+
 <RULES>FAUX_SEPARATOR {
     CONTINUE;
 }
@@ -574,18 +581,49 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
     RETURN(TOKEN_PATTERN);
 }
 <RULES>'{' => ACTION { 
-    RETURN(TOKEN_LBRACE);
+    scanner->braceCount = 1;
+    continue;
 }
 <RULES>ANY {
     CONTINUE;
 }
 
-<ACTION>'}' => RULES {
-    RETURN(TOKEN_RBRACE);
+
+<ACTION>LITERAL_DQUOTE => <ACTION_STRING> {
+    continue;
 }
-<ACTION>[^}\000]+ {
-    scanner->appData->tokenData.string = copyString(yytext);
-    RETURN(TOKEN_ACTION);
+<ACTION>'{' {
+    /* found code brace */
+    scanner->braceCount++;
+    continue;
+}
+<ACTION>'}' {
+    scanner->braceCount--;
+
+    if (scanner->braceCount == 0) {
+        /* this brace ends the action */
+	char **str = &scanner->appData->tokenData.string;
+
+	/* get action string, but don't include the closing action brace */
+	*str = copyString(yytext);
+	*strrchr(*str, '}') = '\0';
+
+	YYSETCONDITION(RULES);
+	RETURN(TOKEN_ACTION);
+    }
+
+    continue;
+}
+<ACTION>ANY {
+    continue;
+}
+
+
+<ACTION_STRING>LITERAL_DQUOTE => <ACTION> {
+    continue;
+}
+<ACTION_STRING>ANY {
+    continue;
 }
 
 <CODE>ANY {
