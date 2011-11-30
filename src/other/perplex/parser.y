@@ -74,24 +74,59 @@ definitions ::= definitions TOKEN_DEFINITIONS(text).
 
 /* rules section */
 
-rules_section ::= rules.
+rules_section ::= rule_list.
 {
     /* close re2c comment and scanner routine */
     fprintf(appData->out, "*/\n    }\n}\n");
 }
 
-rules ::= rule.
-rules ::= rules rule.
+rule_list ::= rule.
+rule_list ::= rule_list rule.
+rule_list ::= start_scope scoped_rules end_scope.
+rule_list ::= rule_list start_scope scoped_rules end_scope.
 
-rule ::= pattern action.
+scoped_rules ::= scoped_rule.
+scoped_rules ::= scoped_rules scoped_rule.
+
+rule ::= conditions pattern action.
 {
     /* prevent fall-through to next rule */
     fprintf(appData->out, "\n    CONTINUE;\n}\n");
 }
 
+scoped_rule ::= scoped_pattern action.
+{
+    /* prevent fall-through to next rule */
+    fprintf(appData->out, "\n    CONTINUE;\n}\n");
+}
+
+conditions ::= /* null */.
+conditions ::= TOKEN_CONDITION(conds).
+{
+    fprintf(appData->out, "%s", conds.string);
+    free(conds.string);
+}
+
+start_scope ::= TOKEN_START_CONDITION_SCOPE(conds).
+{
+    appData->conditions = conds.string;
+}
+
+end_scope ::= TOKEN_END_CONDITION_SCOPE.
+{
+    free(appData->conditions);
+    appData->conditions = NULL;
+}
+
 pattern ::= TOKEN_PATTERN(text).
 {
     fprintf(appData->out, "%s ", text.string);
+    free(text.string);
+}
+
+scoped_pattern ::= TOKEN_SCOPED_PATTERN(text).
+{
+    fprintf(appData->out, "%s%s ", appData->conditions, text.string);
     free(text.string);
 }
 

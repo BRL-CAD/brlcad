@@ -55,6 +55,8 @@ typedef enum YYCONDTYPE {
     INITIAL,
     DEFINITIONS,
     RULES,
+    RULES_START_CONDITION,
+    RULES_PATTERN,
     ACTION,
     ACTION_CHAR,
     ACTION_STRING,
@@ -76,6 +78,7 @@ typedef struct appData_t {
     FILE *header;
     FILE *scanner_template;
     YYSTYPE tokenData;
+    char *conditions;
 } appData_t;
 
 /* scanner data */
@@ -86,6 +89,7 @@ typedef struct perplex {
     } in;
     int atEOI;
     int braceCount;
+    int conditionScope;
     char *cursor;
     char *marker;
     char *null;

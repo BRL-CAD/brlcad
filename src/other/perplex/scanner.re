@@ -571,22 +571,66 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
     RETURN(TOKEN_DEFINITIONS);
 }
 
-
-<RULES>FAUX_SEPARATOR {
-    CONTINUE;
+<RULES>'<' => RULES_START_CONDITION {
+    continue;
 }
 <RULES>SEPARATOR => CODE {
     RETURN(TOKEN_SEPARATOR);
 }
-<RULES>[^\000\n\t {]+ {
-    scanner->appData->tokenData.string = copyString(yytext);
-    RETURN(TOKEN_PATTERN);
+<RULES>WHITE+ {
+    CONTINUE;
 }
-<RULES>'{' => ACTION { 
+<RULES>'}' {
+    if (scanner->conditionScope) {
+	scanner->conditionScope = 0;
+	RETURN(TOKEN_END_CONDITION_SCOPE);
+    }
+    continue;
+}
+<RULES>ANY => RULES_PATTERN {
+    continue;
+}
+
+<RULES_START_CONDITION>'>'WHITE*'{' {
+    char **str = &scanner->appData->tokenData.string;
+
+    /* start condition scope */
+    scanner->conditionScope = 1;
+
+    /* get action string, but don't include the opening brace */
+    *str = copyString(yytext);
+    *strrchr(*str, '{') = '\0';
+
+    YYSETCONDITION(RULES);
+    RETURN(TOKEN_START_CONDITION_SCOPE);
+}
+<RULES_START_CONDITION>'>' {
+    /* end condition, start pattern */
+    YYSETCONDITION(RULES_PATTERN);
+
+    scanner->appData->tokenData.string = copyString(yytext);
+
+    RETURN(TOKEN_CONDITION);
+}
+<RULES_START_CONDITION>ANY {
+    /* part of the condition */
+    continue;
+}
+
+
+<RULES_PATTERN>[^\000\n\t {]+ {
+    scanner->appData->tokenData.string = copyString(yytext);
+    if (scanner->conditionScope) {
+	RETURN(TOKEN_SCOPED_PATTERN);
+    } else {
+	RETURN(TOKEN_PATTERN);
+    }
+}
+<RULES_PATTERN>'{' => ACTION { 
     scanner->braceCount = 1;
     continue;
 }
-<RULES>ANY {
+<RULES_PATTERN>ANY {
     CONTINUE;
 }
 
