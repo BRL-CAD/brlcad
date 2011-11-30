@@ -35,6 +35,10 @@
 #include "nmg.h"
 #include "gcv.h"
 
+#ifdef HIDDEN
+# undef HIDDEN
+#endif
+#define HIDDEN /**/
 
 struct gcv_data {
     void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
@@ -75,7 +79,7 @@ HIDDEN int
 soup_rm_face(struct soup_s *s, unsigned long int i)
 {
     if(i>=s->nfaces) {
-	bu_log("trying to remove a nonexisant face? %d/%d\n", i, s->nfaces);
+	bu_log("trying to remove a nonexisant face? %lu/%lu\n", i, s->nfaces);
 	bu_bomb("Asploding\n");
     }
     memcpy(&s->faces[i], &s->faces[s->nfaces-1], sizeof(struct face_s));
@@ -90,7 +94,7 @@ soup_add_face_precomputed(struct soup_s *s, point_t a, point_t b , point_t c, pl
 
     /* grow face array if needed */
     if(s->nfaces >= s->maxfaces) {
-	bu_log("Resizing, %d aint' enough\n", s->nfaces);
+	bu_log("Resizing, %lu aint' enough\n", s->nfaces);
 	s->faces = bu_realloc(s->faces, (s->maxfaces += faces_per_page) * sizeof(struct face_s), "bot soup faces");
     }
     f = s->faces + s->nfaces;
