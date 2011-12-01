@@ -809,3 +809,5 @@ s/rt_dist_pt3_line3/bn_dist_pt3_line3/g
 s/rt_dist_line3_line3/bn_dist_line3_line3/g
 s/rt_dist_line3_lseg3/bn_dist_line3_lseg3/g
         functions moved from librt to libbn [7.21]
+s/bu_tcl_\([^(]*\)([^,]*?[[:space:]]*,[^,]*?[[:space:]]*,\(.*\)/bu_tcl_units_conversion(\1/g
+        removed all bu_tcl_*() functions, use native bu function [7.21]
