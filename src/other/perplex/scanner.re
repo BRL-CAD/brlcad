@@ -534,6 +534,7 @@ re2c:define:YYCURSOR = scanner->cursor;
 re2c:define:YYLIMIT  = scanner->null;
 re2c:define:YYMARKER = scanner->marker;
 re2c:condenumprefix = "";
+re2c:cond:goto = "continue;";
 re2c:define:YYCONDTYPE = condition_t;
 re2c:define:YYGETCONDITION:naked = 1;
 
@@ -550,6 +551,8 @@ DQUOTE = '"';
 LITERAL_DQUOTE = [^\\']DQUOTE|[^\\]DQUOTE[^']|"\\\\"DQUOTE;
 QUOTE = '\'';
 LITERAL_QUOTE = [^\\]QUOTE|"\\\\"QUOTE;
+
+LITERAL_RSBRACKET = [^\\]']'|"\\]";
 
 SEPARATOR = "%%"EOL;
 FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
@@ -570,9 +573,8 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
     return TOKEN_DEFINITIONS;
 }
 
-<RULES>'<' => RULES_START_CONDITION {
-    continue;
-}
+
+<RULES>'<' :=> RULES_START_CONDITION
 <RULES>SEPARATOR => CODE {
     return TOKEN_SEPARATOR;
 }
@@ -587,10 +589,13 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
     continue;
 }
 <RULES>ANY => RULES_PATTERN {
+    /* roll back cursor to first char of pattern */
+    scanner->cursor--;
     continue;
 }
 
-<RULES_START_CONDITION>'>'WHITE*'{' {
+
+<RULES_START_CONDITION>'>'WHITE*'{' => RULES {
     char **str = &scanner->appData->tokenData.string;
 
     /* start condition scope */
@@ -600,13 +605,10 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
     *str = copyString(yytext);
     *strrchr(*str, '{') = '\0';
 
-    YYSETCONDITION(RULES);
     return TOKEN_START_CONDITION_SCOPE;
 }
-<RULES_START_CONDITION>'>' {
+<RULES_START_CONDITION>'>' => RULES_PATTERN {
     /* end condition, start pattern */
-    YYSETCONDITION(RULES_PATTERN);
-
     scanner->appData->tokenData.string = copyString(yytext);
 
     return TOKEN_CONDITION;
@@ -617,36 +619,41 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
 }
 
 
-<RULES_PATTERN>[^\000\n\t {]+ {
+<RULES_PATTERN>DQUOTE :=> PATTERN_STRING
+<RULES_PATTERN>QUOTE :=> PATTERN_CHAR
+<RULES_PATTERN>'[' :=> PATTERN_CLASS
+<RULES_PATTERN>[^\000\n{] {
+    /* part of the pattern */
+    continue;
+}
+<RULES_PATTERN>'{' => ACTION { 
+    /* end of pattern, start of action */
+    scanner->braceCount = 1;
     scanner->appData->tokenData.string = copyString(yytext);
+
     if (scanner->conditionScope) {
 	return TOKEN_SCOPED_PATTERN;
     } else {
 	return TOKEN_PATTERN;
     }
 }
-<RULES_PATTERN>'{' => ACTION { 
-    scanner->braceCount = 1;
-    continue;
-}
 <RULES_PATTERN>ANY {
     IGNORE_TOKEN;
 }
 
-
-<ACTION>"/*" => ACTION_COMMENT {
-    continue;
-}
-<ACTION>"//" => ACTION_LINE_COMMENT {
-    continue;
-}
-<ACTION>LITERAL_QUOTE => ACTION_CHAR {
-    continue;
-}
-<ACTION>LITERAL_DQUOTE => ACTION_STRING {
+<PATTERN_CHAR>LITERAL_QUOTE :=> RULES_PATTERN
+<PATTERN_CLASS>LITERAL_RSBRACKET :=> RULES_PATTERN
+<PATTERN_STRING>LITERAL_DQUOTE :=> RULES_PATTERN
+<PATTERN_CHAR,PATTERN_CLASS,PATTERN_STRING>ANY {
+    /* part of the pattern */
     continue;
 }
 
+
+<ACTION>LITERAL_DQUOTE :=> ACTION_STRING
+<ACTION>LITERAL_QUOTE :=> ACTION_CHAR
+<ACTION>"/*" :=> ACTION_COMMENT
+<ACTION>"//" :=> ACTION_LINE_COMMENT
 <ACTION>'{' {
     /* found code brace */
     scanner->braceCount++;
@@ -670,19 +677,12 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
     continue;
 }
 
-<ACTION_COMMENT>"*/" => ACTION {
-    continue;
-}
-<ACTION_LINE_COMMENT>EOL => ACTION {
-    continue;
-}
-<ACTION_CHAR>LITERAL_QUOTE => ACTION {
-    continue;
-}
-<ACTION_STRING>LITERAL_DQUOTE => ACTION {
-    continue;
-}
+<ACTION_COMMENT>"*/" :=> ACTION
+<ACTION_LINE_COMMENT>EOL :=> ACTION
+<ACTION_CHAR>LITERAL_QUOTE :=> ACTION
+<ACTION_STRING>LITERAL_DQUOTE :=> ACTION
 <ACTION,ACTION_COMMENT,ACTION_LINE_COMMENT,ACTION_CHAR,ACTION_STRING>ANY {
+    /* part of the action/comment/string */
     continue;
 }
 
