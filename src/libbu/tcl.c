@@ -188,67 +188,6 @@ tcl_bu_mem_barriercheck(ClientData UNUSED(clientData),
 
 
 /**
- * A tcl wrapper for bu_ck_malloc_ptr.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-HIDDEN int
-tcl_bu_ck_malloc_ptr(ClientData UNUSED(clientData),
-		     Tcl_Interp *interp,
-		     int argc,
-		     const char **argv)
-{
-    void *voidp;
-
-    if (argc != 3) {
-	Tcl_AppendResult(interp, "Usage: bu_ck_malloc_ptr ascii-ptr description\n");
-	return TCL_ERROR;
-    }
-
-    if (sscanf(argv[1], "%p", &voidp) != 1) {
-	Tcl_AppendResult(interp, "bu_ck_malloc_ptr: failed to convert %s to a pointer\n", argv[1]);
-	return TCL_ERROR;
-    }
-
-    bu_ck_malloc_ptr(voidp, argv[2]);
-    return TCL_OK;
-}
-
-
-/**
- * A tcl wrapper for bu_malloc_len_roundup.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-HIDDEN int
-tcl_bu_malloc_len_roundup(ClientData UNUSED(clientData),
-			  Tcl_Interp *interp,
-			  int argc,
-			  const char **argv)
-{
-    int val;
-
-    if (argc != 2) {
-	Tcl_AppendResult(interp, "Usage: bu_malloc_len_roundup nbytes\n", NULL);
-	return TCL_ERROR;
-    }
-    val = bu_malloc_len_roundup(atoi(argv[1]));
-    Tcl_SetObjResult(interp, Tcl_NewIntObj(val));
-    return TCL_OK;
-}
-
-
-/**
  * A tcl wrapper for bu_prmem. Prints map of
  * memory currently in use, to stderr.
  *
@@ -271,36 +210,6 @@ tcl_bu_prmem(ClientData UNUSED(clientData),
     }
 
     bu_prmem(argv[1]);
-    return TCL_OK;
-}
-
-
-/**
- * A tcl wrapper for bu_vls_printb.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-HIDDEN int
-tcl_bu_printb(ClientData UNUSED(clientData),
-	      Tcl_Interp *interp,
-	      int argc,
-	      const char **argv)
-{
-    struct bu_vls str;
-
-    if (argc != 4) {
-	Tcl_AppendResult(interp, "Usage: bu_printb title integer-to-format bit-format-string\n", NULL);
-	return TCL_ERROR;
-    }
-    bu_vls_init(&str);
-    bu_vls_printb(&str, argv[1], (unsigned)atoi(argv[2]), argv[3]);
-    Tcl_SetResult(interp, bu_vls_addr(&str), TCL_VOLATILE);
-    bu_vls_free(&str);
     return TCL_OK;
 }
 
@@ -622,155 +531,6 @@ tcl_bu_hsv_to_rgb(ClientData UNUSED(clientData),
 
 
 /**
- * Converts key=val to "key val" pairs.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-HIDDEN int
-tcl_bu_key_eq_to_key_val(ClientData UNUSED(clientData),
-			 Tcl_Interp *interp,
-			 int argc,
-			 const char **argv)
-{
-    struct bu_vls vls;
-    char *next;
-    int i=0;
-
-    bu_vls_init(&vls);
-
-    while (++i < argc) {
-	if (bu_key_eq_to_key_val(argv[i], (const char **)&next, &vls)) {
-	    bu_vls_free(&vls);
-	    return TCL_ERROR;
-	}
-
-	if (i < argc - 1)
-	    Tcl_AppendResult(interp, bu_vls_addr(&vls), " ", NULL);
-	else
-	    Tcl_AppendResult(interp, bu_vls_addr(&vls), NULL);
-
-	bu_vls_trunc(&vls, 0);
-    }
-
-    bu_vls_free(&vls);
-    return TCL_OK;
-
-}
-
-
-/**
- * Converts a shader string to a tcl list.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-HIDDEN int
-tcl_bu_shader_to_key_val(ClientData UNUSED(clientData),
-			 Tcl_Interp *interp,
-			 int argc,
-			 const char **argv)
-{
-    struct bu_vls vls;
-
-    if (argc < 2) {
-	Tcl_AppendResult(interp, "Usage: ", argv[0], " shader [key1=value ...]\n", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    bu_vls_init(&vls);
-
-    if (bu_shader_to_tcl_list(argv[1], &vls)) {
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), NULL);
-
-    bu_vls_free(&vls);
-
-    return TCL_OK;
-
-}
-
-
-/**
- * Converts "key value" pairs to key=value.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-HIDDEN int
-tcl_bu_key_val_to_key_eq(ClientData UNUSED(clientData),
-			 Tcl_Interp *interp,
-			 int argc,
-			 const char **argv)
-{
-    int i=0;
-
-    for (i=1; i<argc; i += 2) {
-	if (i+1 < argc-1)
-	    Tcl_AppendResult(interp, argv[i], "=", argv[i+1], " ", NULL);
-	else
-	    Tcl_AppendResult(interp, argv[i], "=", argv[i+1], NULL);
-
-    }
-    return TCL_OK;
-
-}
-
-
-/**
- * Converts a shader tcl list into a shader string.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-HIDDEN int
-tcl_bu_shader_to_key_eq(ClientData UNUSED(clientData),
-			Tcl_Interp *interp,
-			int argc,
-			const char **argv)
-{
-    struct bu_vls vls;
-
-    if (argc < 2) {
-	Tcl_AppendResult(interp, "Usage: ", argv[0], " shader { tcl list }\n", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    bu_vls_init(&vls);
-
-    if (bu_shader_to_key_eq(argv[1], &vls)) {
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), NULL);
-
-    bu_vls_free(&vls);
-
-    return TCL_OK;
-}
-
-
-/**
  * tcl_bu_brlcad_root
  *
  * A tcl wrapper for bu_brlcad_root.
@@ -876,18 +636,11 @@ bu_tcl_setup(Tcl_Interp *interp)
 	{"bu_brlcad_data",		tcl_bu_brlcad_data},
 	{"bu_brlcad_root",		tcl_bu_brlcad_root},
 	{"bu_mem_barriercheck",		tcl_bu_mem_barriercheck},
-	{"bu_ck_malloc_ptr",		tcl_bu_ck_malloc_ptr},
-	{"bu_malloc_len_roundup",	tcl_bu_malloc_len_roundup},
 	{"bu_prmem",			tcl_bu_prmem},
-	{"bu_printb",			tcl_bu_printb},
 	{"bu_get_all_keyword_values",	tcl_bu_get_all_keyword_values},
 	{"bu_get_value_by_keyword",	tcl_bu_get_value_by_keyword},
 	{"bu_rgb_to_hsv",		tcl_bu_rgb_to_hsv},
 	{"bu_hsv_to_rgb",		tcl_bu_hsv_to_rgb},
-	{"bu_key_eq_to_key_val",	tcl_bu_key_eq_to_key_val},
-	{"bu_shader_to_tcl_list",	tcl_bu_shader_to_key_val},
-	{"bu_key_val_to_key_eq",	tcl_bu_key_val_to_key_eq},
-	{"bu_shader_to_key_eq",		tcl_bu_shader_to_key_eq},
 	{(char *)NULL,			NULL }
     };
 
