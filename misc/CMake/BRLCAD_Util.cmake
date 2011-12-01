@@ -202,7 +202,7 @@ MACRO(BRLCAD_OPTION opt opt_ALIASES opt_DESCRIPTION)
 	ENDFOREACH(item ${inverse_aliases})
     ENDIF(${opt_ALIASES})
 
-    FILE(APPEND ${CMAKE_BINARY_DIR}/OPTIONS "${opt}:\n")
+    FILE(APPEND ${CMAKE_BINARY_DIR}/OPTIONS "\n--- ${opt} ---\n")
     FILE(APPEND ${CMAKE_BINARY_DIR}/OPTIONS "${${opt_DESCRIPTION}}")
 
     SET(ALIASES_LIST "\nAliases: ")
