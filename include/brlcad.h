@@ -24,7 +24,7 @@
  *  Convenience header for the core BRL-CAD libraries
  *
  *  This header includes the headers provided by libbu, libbn, libwdb,
- *  and librt.  It may be used in leu of including all of the
+ *  and librt.  It may be used in lieu of including all of the
  *  individual headers.
  *
  */
