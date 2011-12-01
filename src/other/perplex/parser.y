@@ -97,13 +97,13 @@ scoped_rules ::= scoped_rules scoped_rule.
 rule ::= conditions pattern action.
 {
     /* prevent fall-through to next rule */
-    fprintf(appData->out, "\n    CONTINUE;\n}\n");
+    fprintf(appData->out, "\n    IGNORE_TOKEN;\n}\n");
 }
 
 scoped_rule ::= scoped_pattern action.
 {
     /* prevent fall-through to next rule */
-    fprintf(appData->out, "\n    CONTINUE;\n}\n");
+    fprintf(appData->out, "\n    IGNORE_TOKEN;\n}\n");
 }
 
 conditions ::= /* null */.

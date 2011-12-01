@@ -536,7 +536,7 @@ perplexFree(perplex_t scanner)
     free(scanner);
 }
 
-#if PERPLEX_USING_CONDITIONS
+#ifdef PERPLEX_USING_CONDITIONS
 /* start-condition support */
 
 static void
@@ -558,9 +558,8 @@ getCondition(perplex_t scanner)
 #define YYFILL(n)          bufferFill(scanner, n)
 
 #define UPDATE_START  scanner->tokenStart = scanner->cursor;
-#define yytext        getTokenText(scanner)
-#define RETURN(id)    return id;
-#define CONTINUE      UPDATE_START; continue;
+#define IGNORE_TOKEN  UPDATE_START; continue;
+#define       yytext  getTokenText(scanner)
 
 static int perplexScan(perplex_t scanner);
 

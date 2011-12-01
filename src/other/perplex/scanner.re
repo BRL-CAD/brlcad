@@ -497,9 +497,8 @@ getCondition(perplex_t scanner)
 #define YYFILL(n)          bufferFill(scanner, n)
 
 #define UPDATE_START  scanner->tokenStart = scanner->cursor;
+#define IGNORE_TOKEN  UPDATE_START; continue;
 #define yytext        getTokenText(scanner)
-#define RETURN(id)    return id;
-#define CONTINUE      UPDATE_START; continue;
 
 static int perplexScan(perplex_t scanner);
 
@@ -561,29 +560,29 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
 
 <DEFINITIONS>FAUX_SEPARATOR {
     scanner->appData->tokenData.string = copyString(yytext);
-    RETURN(TOKEN_DEFINITIONS);
+    return TOKEN_DEFINITIONS;
 }
 <DEFINITIONS>SEPARATOR => RULES {
-    RETURN(TOKEN_SEPARATOR);
+    return TOKEN_SEPARATOR;
 }
 <DEFINITIONS>ANY {
     scanner->appData->tokenData.string = copyString(yytext);
-    RETURN(TOKEN_DEFINITIONS);
+    return TOKEN_DEFINITIONS;
 }
 
 <RULES>'<' => RULES_START_CONDITION {
     continue;
 }
 <RULES>SEPARATOR => CODE {
-    RETURN(TOKEN_SEPARATOR);
+    return TOKEN_SEPARATOR;
 }
 <RULES>WHITE+ {
-    CONTINUE;
+    IGNORE_TOKEN;
 }
 <RULES>'}' {
     if (scanner->conditionScope) {
 	scanner->conditionScope = 0;
-	RETURN(TOKEN_END_CONDITION_SCOPE);
+	return TOKEN_END_CONDITION_SCOPE;
     }
     continue;
 }
@@ -602,7 +601,7 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
     *strrchr(*str, '{') = '\0';
 
     YYSETCONDITION(RULES);
-    RETURN(TOKEN_START_CONDITION_SCOPE);
+    return TOKEN_START_CONDITION_SCOPE;
 }
 <RULES_START_CONDITION>'>' {
     /* end condition, start pattern */
@@ -610,7 +609,7 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
 
     scanner->appData->tokenData.string = copyString(yytext);
 
-    RETURN(TOKEN_CONDITION);
+    return TOKEN_CONDITION;
 }
 <RULES_START_CONDITION>ANY {
     /* part of the condition */
@@ -621,9 +620,9 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
 <RULES_PATTERN>[^\000\n\t {]+ {
     scanner->appData->tokenData.string = copyString(yytext);
     if (scanner->conditionScope) {
-	RETURN(TOKEN_SCOPED_PATTERN);
+	return TOKEN_SCOPED_PATTERN;
     } else {
-	RETURN(TOKEN_PATTERN);
+	return TOKEN_PATTERN;
     }
 }
 <RULES_PATTERN>'{' => ACTION { 
@@ -631,7 +630,7 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
     continue;
 }
 <RULES_PATTERN>ANY {
-    CONTINUE;
+    IGNORE_TOKEN;
 }
 
 
@@ -665,7 +664,7 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
 	*strrchr(*str, '}') = '\0';
 
 	YYSETCONDITION(RULES);
-	RETURN(TOKEN_ACTION);
+	return TOKEN_ACTION;
     }
 
     continue;
@@ -690,7 +689,7 @@ FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
 
 <CODE>ANY {
     scanner->appData->tokenData.string = copyString(yytext);
-    RETURN(TOKEN_CODE);
+    return TOKEN_CODE;
 }
 */
     }
