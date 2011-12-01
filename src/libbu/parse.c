@@ -517,15 +517,13 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
 
 
 /**
- * _ B U _ P A R S E _ D O U B L E
- *
  * Parse an array of one or more doubles.
  *
  * Returns: 0 when successful
  *         <0 upon failure
  */
 HIDDEN int
-_bu_parse_double(const char *str, size_t count, double *loc)
+parse_double(const char *str, size_t count, double *loc)
 {
     size_t i;
     int dot_seen;
@@ -593,14 +591,13 @@ _bu_parse_double(const char *str, size_t count, double *loc)
 
 
 /**
- * _ B U _ S T R U C T _ L O O K U P
  *
  * @return -2 parse error
  * @return -1 not found
  * @return  0 entry found and processed
  */
 HIDDEN int
-_bu_struct_lookup(register const struct bu_structparse *sdp, register const char *name, const char *base, const char *const value)
+parse_struct_lookup(register const struct bu_structparse *sdp, register const char *name, const char *base, const char *const value)
 /* structure description */
 /* struct member name */
 /* begining of structure */
@@ -631,13 +628,13 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 		warned++;
 	    }
 	    /* Indirect to another structure */
-	    if (_bu_struct_lookup((struct bu_structparse *)sdp->sp_count, name, base, value) == 0)
+	    if (parse_struct_lookup((struct bu_structparse *)sdp->sp_count, name, base, value) == 0)
 		return 0;	/* found */
 	    else
 		continue;
 	}
 	if (sdp->sp_fmt[0] != '%') {
-	    bu_log("_bu_struct_lookup(%s): unknown format '%s'\n",
+	    bu_log("parse_struct_lookup(%s): unknown format '%s'\n",
 		   name, sdp->sp_fmt);
 	    return -1;
 	}
@@ -773,16 +770,16 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 		}
 		break;
 	    case 'f':
-		retval = _bu_parse_double(value, sdp->sp_count, (double *)loc);
+		retval = parse_double(value, sdp->sp_count, (double *)loc);
 		break;
 	    case 'p':
-		retval = _bu_struct_lookup((struct bu_structparse *)sdp->sp_count, name, base, value);
+		retval = parse_struct_lookup((struct bu_structparse *)sdp->sp_count, name, base, value);
 		if (retval == 0) {
 		    return 0; /* found */
 		}
 		continue;
 	    default:
-		bu_log("_bu_struct_lookup(%s): unknown format '%s'\n",
+		bu_log("parse_struct_lookup(%s): unknown format '%s'\n",
 		       name, sdp->sp_fmt);
 		return -1;
 	}
@@ -869,7 +866,7 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 	    *cp++ = '\0';
 
 	/* Lookup name in desc table and modify */
-	retval = _bu_struct_lookup(desc, name, base, value);
+	retval = parse_struct_lookup(desc, name, base, value);
 	if (retval == -1) {
 	    bu_log("bu_structparse:  '%s=%s', keyword not found in:\n",
 		   name, value);
@@ -886,13 +883,12 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 
 
 /**
- * _ B U _ M A T P R I N T
  *
  * XXX Should this be here, or could it be with the matrix support?
  * pretty-print a matrix
  */
 HIDDEN void
-_bu_matprint(const char *name, register const double *mat)
+parse_matprint(const char *name, register const double *mat)
 {
     int delta = (int)strlen(name)+2;
 
@@ -916,7 +912,7 @@ _bu_matprint(const char *name, register const double *mat)
 
 
 HIDDEN void
-_bu_vls_matprint(struct bu_vls *vls,
+parse_vls_matprint(struct bu_vls *vls,
 		 const char *name,
 		 register const double *mat)
 {
@@ -1154,7 +1150,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		    register double *dp = (double *)loc;
 
 		    if (sdp->sp_count == 16) {
-			_bu_matprint(sdp->sp_name, dp);
+			parse_matprint(sdp->sp_name, dp);
 		    } else if (sdp->sp_count <= 3) {
 			bu_log(" %s=%.25G", sdp->sp_name, *dp++);
 
@@ -1202,7 +1198,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 
 
 HIDDEN void
-_bu_vls_print_double(struct bu_vls *vls, const char *name, register size_t count, register const double *dp)
+parse_vls_print_double(struct bu_vls *vls, const char *name, register size_t count, register const double *dp)
 {
     register int tmpi;
     register char *cp;
@@ -1365,7 +1361,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		}
 		break;
 	    case 'f':
-		_bu_vls_print_double(vls, sdp->sp_name, sdp->sp_count,
+		parse_vls_print_double(vls, sdp->sp_name, sdp->sp_count,
 				     (double *)loc);
 		break;
 	    case 'p':
@@ -1491,7 +1487,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		    register double *dp = (double *)loc;
 
 		    if (sdp->sp_count == 16) {
-			_bu_vls_matprint(vls_out, sdp->sp_name, dp);
+			parse_vls_matprint(vls_out, sdp->sp_name, dp);
 		    } else if (sdp->sp_count <= 3) {
 			bu_vls_printf(vls_out, " %s=%.25G", sdp->sp_name, *dp++);
 
@@ -1808,15 +1804,13 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 
 
 /**
- * _ B U _ L I S T _ E L E M
- *
  * Given a Tcl list, return a copy of the 'index'th entry,
  * which may itself be a list.
  *
  * Note: caller is responsible for freeing the returned string.
  */
 HIDDEN char *
-_bu_list_elem(const char *in, int idx)
+parse_list_elem(const char *in, int idx)
 {
     int depth=0;
     int count=0;
@@ -1896,7 +1890,7 @@ _bu_list_elem(const char *in, int idx)
     }
 
     len = end - start + 1;
-    out = (char *)bu_malloc(len+1, "_bu_list_elem:out");
+    out = (char *)bu_malloc(len+1, "parse_list_elem:out");
     strncpy(out, start, len);
     *(out + len) = '\0';
 
@@ -1905,12 +1899,10 @@ _bu_list_elem(const char *in, int idx)
 
 
 /**
- * _ B U _ T C L _ L I S T _ L E N G T H
- *
  * Return number of items in a string, interpreted as a Tcl list.
  */
 int
-_bu_tcl_list_length(const char *in)
+parse_tcl_list_length(const char *in)
 {
     int count=0;
     int depth=0;
@@ -1957,12 +1949,12 @@ _bu_tcl_list_length(const char *in)
 
 
 HIDDEN int
-_bu_key_val_to_vls(struct bu_vls *vls, char *params)
+parse_key_val_to_vls(struct bu_vls *vls, char *params)
 {
     int len;
     int j;
 
-    len = _bu_tcl_list_length(params);
+    len = parse_tcl_list_length(params);
 
     if (len == 1) {
 	bu_vls_putc(vls, ' ');
@@ -1971,7 +1963,7 @@ _bu_key_val_to_vls(struct bu_vls *vls, char *params)
     }
 
     if (len%2) {
-	bu_log("_bu_key_val_to_vls: Error: shader parameters must be even numbered!!\n\t%s\n", params);
+	bu_log("parse_key_val_to_vls: Error: shader parameters must be even numbered!!\n\t%s\n", params);
 	return 1;
     }
 
@@ -1979,13 +1971,13 @@ _bu_key_val_to_vls(struct bu_vls *vls, char *params)
 	char *keyword;
 	char *value;
 
-	keyword = _bu_list_elem(params, j);
-	value = _bu_list_elem(params, j+1);
+	keyword = parse_list_elem(params, j);
+	value = parse_list_elem(params, j+1);
 
 	bu_vls_putc(vls, ' ');
 	bu_vls_strcat(vls, keyword);
 	bu_vls_putc(vls, '=');
-	if (_bu_tcl_list_length(value) > 1) {
+	if (parse_tcl_list_length(value) > 1) {
 	    bu_vls_putc(vls, '"');
 	    bu_vls_strcat(vls, value);
 	    bu_vls_putc(vls, '"');
@@ -1993,8 +1985,8 @@ _bu_key_val_to_vls(struct bu_vls *vls, char *params)
 	    bu_vls_strcat(vls, value);
 	}
 
-	bu_free(keyword, "_bu_key_val_to_vls() keyword");
-	bu_free(value, "_bu_key_val_to_vls() value");
+	bu_free(keyword, "parse_key_val_to_vls() keyword");
+	bu_free(value, "parse_key_val_to_vls() value");
 
     }
     return 0;
@@ -2011,7 +2003,7 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
 
     BU_CK_VLS(vls);
 
-    len = _bu_tcl_list_length(in);
+    len = parse_tcl_list_length(in);
 
     if (len == 0)
 	return 0;
@@ -2029,8 +2021,8 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
 	return 1;
     }
 
-    shader = _bu_list_elem(in, 0);
-    params = _bu_list_elem(in, 1);
+    shader = parse_list_elem(in, 0);
+    params = parse_list_elem(in, 1);
 
     if (BU_STR_EQUAL(shader, "envmap")) {
 	/* environment map */
@@ -2050,14 +2042,14 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
 	bu_vls_strcat(vls, "stack");
 
 	/* get number of shaders in the stack */
-	len = _bu_tcl_list_length(params);
+	len = parse_tcl_list_length(params);
 
 	/* process each shader in the stack */
 	for (i=0; i<len; i++) {
 	    char *shader1;
 
 	    /* each parameter must be a shader specification in itself */
-	    shader1 = _bu_list_elem(params, i);
+	    shader1 = parse_list_elem(params, i);
 
 	    if (i > 0)
 		bu_vls_putc(vls, ';');
@@ -2068,7 +2060,7 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
 	if (bu_vls_strlen(vls))
 	    bu_vls_putc(vls, ' ');
 	bu_vls_strcat(vls, shader);
-	ret = _bu_key_val_to_vls(vls, params);
+	ret = parse_key_val_to_vls(vls, params);
     }
 
     bu_free(shader, "shader");
