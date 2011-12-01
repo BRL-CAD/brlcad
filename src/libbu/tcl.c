@@ -39,26 +39,6 @@ Tcl_Interp *brlcad_interp = (Tcl_Interp *)0;
 /* defined in libbu/cmdhist_obj.c */
 extern int Cho_Init(Tcl_Interp *interp);
 
-static struct bu_cmdtab bu_cmds[] = {
-    {"bu_units_conversion",		bu_tcl_units_conversion},
-    {"bu_brlcad_data",			bu_tcl_brlcad_data},
-    {"bu_brlcad_root",			bu_tcl_brlcad_root},
-    {"bu_mem_barriercheck",		bu_tcl_mem_barriercheck},
-    {"bu_ck_malloc_ptr",		bu_tcl_ck_malloc_ptr},
-    {"bu_malloc_len_roundup",		bu_tcl_malloc_len_roundup},
-    {"bu_prmem",			bu_tcl_prmem},
-    {"bu_printb",			bu_tcl_printb},
-    {"bu_get_all_keyword_values",	bu_tcl_get_all_keyword_values},
-    {"bu_get_value_by_keyword",		bu_tcl_get_value_by_keyword},
-    {"bu_rgb_to_hsv",			bu_tcl_rgb_to_hsv},
-    {"bu_hsv_to_rgb",			bu_tcl_hsv_to_rgb},
-    {"bu_key_eq_to_key_val",		bu_tcl_key_eq_to_key_val},
-    {"bu_shader_to_tcl_list",		bu_tcl_shader_to_key_val},
-    {"bu_key_val_to_key_eq",		bu_tcl_key_val_to_key_eq},
-    {"bu_shader_to_key_eq",		bu_tcl_shader_to_key_eq},
-    {(char *)NULL,			NULL }
-};
-
 
 void
 bu_badmagic_tcl(Tcl_Interp *interp,
@@ -89,6 +69,23 @@ bu_badmagic_tcl(Tcl_Interp *interp,
 }
 
 
+/**
+ * Convert the "form" of a bu_structparse table into a TCL result
+ * string, with parameter-name data-type pairs:
+ *
+ * V {%f %f %f} A {%f %f %f}
+ *
+ * A different routine should build a more general 'form', along the
+ * lines of:
+ *
+ * {V {%f %f %f} default {help}} {A {%f %f %f} default# {help}}
+ *
+ * @param interp tcl interpreter
+ * @param sp structparse table
+ *
+ * 	@return
+ * 	void
+ */
 void
 bu_tcl_structparse_get_terse_form(Tcl_Interp *interp,
 				  const struct bu_structparse *sp)
@@ -158,6 +155,16 @@ bu_tcl_structparse_argv(Tcl_Interp *interp,
 }
 
 
+/**
+ * A tcl wrapper for bu_mem_barriercheck.
+ *
+ * @param clientData	- associated data/state
+ * @param interp	- tcl interpreter in which this command was registered.
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
 bu_tcl_mem_barriercheck(ClientData UNUSED(clientData),
 			Tcl_Interp *interp,
@@ -180,6 +187,16 @@ bu_tcl_mem_barriercheck(ClientData UNUSED(clientData),
 }
 
 
+/**
+ * A tcl wrapper for bu_ck_malloc_ptr.
+ *
+ * @param clientData	- associated data/state
+ * @param interp	- tcl interpreter in which this command was registered.
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
 bu_tcl_ck_malloc_ptr(ClientData UNUSED(clientData),
 		     Tcl_Interp *interp,
@@ -203,6 +220,16 @@ bu_tcl_ck_malloc_ptr(ClientData UNUSED(clientData),
 }
 
 
+/**
+ * A tcl wrapper for bu_malloc_len_roundup.
+ *
+ * @param clientData	- associated data/state
+ * @param interp	- tcl interpreter in which this command was registered.
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
 bu_tcl_malloc_len_roundup(ClientData UNUSED(clientData),
 			  Tcl_Interp *interp,
@@ -221,6 +248,17 @@ bu_tcl_malloc_len_roundup(ClientData UNUSED(clientData),
 }
 
 
+/**
+ * A tcl wrapper for bu_prmem. Prints map of
+ * memory currently in use, to stderr.
+ *
+ * @param clientData	- associated data/state
+ * @param interp	- tcl interpreter in which this command was registered.
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
 bu_tcl_prmem(ClientData UNUSED(clientData),
 	     Tcl_Interp *interp,
@@ -237,6 +275,16 @@ bu_tcl_prmem(ClientData UNUSED(clientData),
 }
 
 
+/**
+ * A tcl wrapper for bu_vls_printb.
+ *
+ * @param clientData	- associated data/state
+ * @param interp	- tcl interpreter in which this command was registered.
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
 bu_tcl_printb(ClientData UNUSED(clientData),
 	      Tcl_Interp *interp,
@@ -257,6 +305,29 @@ bu_tcl_printb(ClientData UNUSED(clientData),
 }
 
 
+/**
+ * Given arguments of alternating keywords and values and a specific
+ * keyword ("Iwant"), return the value associated with that keyword.
+ *
+ * example: bu_get_value_by_keyword Iwant az 35 elev 25 temp 9.6
+ *
+ * If only one argument is given after the search keyword, it is
+ * interpreted as a list in the same format.
+ *
+ * example: bu_get_value_by_keyword Iwant {az 35 elev 25 temp 9.6}
+ *
+ * Search order is left-to-right, only first match is returned.
+ *
+ * Sample use:
+ * bu_get_value_by_keyword V8 [concat type [.inmem get box.s]]
+ *
+ * @param clientData	- associated data/state
+ * @param interp	- tcl interpreter in which this command was registered.
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
 bu_tcl_get_value_by_keyword(ClientData UNUSED(clientData),
 			    Tcl_Interp *interp,
@@ -332,6 +403,46 @@ bu_tcl_get_value_by_keyword(ClientData UNUSED(clientData),
 }
 
 
+/**
+ * Given arguments of alternating keywords and values, establish local
+ * variables named after the keywords, with the indicated
+ * values. Returns in interp a list of the variable names that were
+ * assigned to. This lets you detect at runtime what assignments were
+ * actually performed.
+ *
+ * example: bu_get_all_keyword_values az 35 elev 25 temp 9.6
+ *
+ * This is much faster than writing this in raw Tcl 8 as:
+ *
+ * foreach {keyword value} $list {
+ * 	set $keyword $value
+ * 	lappend retval $keyword
+ * }
+ *
+ * If only one argument is given it is interpreted as a list in the
+ * same format.
+ *
+ * example:  bu_get_all_keyword_values {az 35 elev 25 temp 9.6}
+ *
+ * For security reasons, the name of the local variable assigned to is
+ * that of the input keyword with "key_" prepended.  This prevents a
+ * playful user from overriding variables inside the function,
+ * e.g. loop iterator "i", etc.  This could be even worse when called
+ * in global context.
+ *
+ * Processing order is left-to-right, rightmost value for a repeated
+ * keyword will be the one used.
+ *
+ * Sample use:
+ * bu_get_all_keyword_values [concat type [.inmem get box.s]]
+ *
+ * @param clientData	- associated data/state
+ * @param interp	- tcl interpreter in which this command was registered.
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
 bu_tcl_get_all_keyword_values(ClientData UNUSED(clientData),
 			      Tcl_Interp *interp,
@@ -413,6 +524,16 @@ bu_tcl_get_all_keyword_values(ClientData UNUSED(clientData),
 }
 
 
+/**
+ * A tcl wrapper for bu_rgb_to_hsv.
+ *
+ * @param clientData	- associated data/state
+ * @param interp	- tcl interpreter in which this command was registered.
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
 bu_tcl_rgb_to_hsv(ClientData UNUSED(clientData),
 		  Tcl_Interp *interp,
@@ -455,6 +576,16 @@ bu_tcl_rgb_to_hsv(ClientData UNUSED(clientData),
 }
 
 
+/**
+ * A tcl wrapper for bu_hsv_to_rgb.
+ *
+ * @param clientData	- associated data/state
+ * @param interp	- tcl interpreter in which this command was registered.
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
 bu_tcl_hsv_to_rgb(ClientData UNUSED(clientData),
 		  Tcl_Interp *interp,
@@ -490,6 +621,16 @@ bu_tcl_hsv_to_rgb(ClientData UNUSED(clientData),
 }
 
 
+/**
+ * Converts key=val to "key val" pairs.
+ *
+ * @param clientData	- associated data/state
+ * @param interp	- tcl interpreter in which this command was registered.
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
 bu_tcl_key_eq_to_key_val(ClientData UNUSED(clientData),
 			 Tcl_Interp *interp,
@@ -522,6 +663,16 @@ bu_tcl_key_eq_to_key_val(ClientData UNUSED(clientData),
 }
 
 
+/**
+ * Converts a shader string to a tcl list.
+ *
+ * @param clientData	- associated data/state
+ * @param interp	- tcl interpreter in which this command was registered.
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
 bu_tcl_shader_to_key_val(ClientData UNUSED(clientData),
 			 Tcl_Interp *interp,
@@ -551,6 +702,16 @@ bu_tcl_shader_to_key_val(ClientData UNUSED(clientData),
 }
 
 
+/**
+ * Converts "key value" pairs to key=value.
+ *
+ * @param clientData	- associated data/state
+ * @param interp	- tcl interpreter in which this command was registered.
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
 bu_tcl_key_val_to_key_eq(ClientData UNUSED(clientData),
 			 Tcl_Interp *interp,
@@ -571,6 +732,16 @@ bu_tcl_key_val_to_key_eq(ClientData UNUSED(clientData),
 }
 
 
+/**
+ * Converts a shader tcl list into a shader string.
+ *
+ * @param clientData	- associated data/state
+ * @param interp	- tcl interpreter in which this command was registered.
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
 bu_tcl_shader_to_key_eq(ClientData UNUSED(clientData),
 			Tcl_Interp *interp,
@@ -599,6 +770,18 @@ bu_tcl_shader_to_key_eq(ClientData UNUSED(clientData),
 }
 
 
+/**
+ * bu_tcl_brlcad_root
+ *
+ * A tcl wrapper for bu_brlcad_root.
+ *
+ * @param clientData	- associated data/state
+ * @param interp	- tcl interpreter in which this command was registered.
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
 bu_tcl_brlcad_root(ClientData UNUSED(clientData),
 		   Tcl_Interp *interp,
@@ -615,6 +798,18 @@ bu_tcl_brlcad_root(ClientData UNUSED(clientData),
 }
 
 
+/**
+ * bu_tcl_brlcad_data
+ *
+ * A tcl wrapper for bu_brlcad_data.
+ *
+ * @param clientData	- associated data/state
+ * @param interp	- tcl interpreter in which this command was registered.
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
 bu_tcl_brlcad_data(ClientData UNUSED(clientData),
 		   Tcl_Interp *interp,
@@ -631,6 +826,18 @@ bu_tcl_brlcad_data(ClientData UNUSED(clientData),
 }
 
 
+/**
+ * bu_tcl_units_conversion
+ *
+ * A tcl wrapper for bu_units_conversion.
+ *
+ * @param clientData	- associated data/state
+ * @param interp	- tcl interpreter in which this command was registered.
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
 bu_tcl_units_conversion(ClientData UNUSED(clientData),
 			Tcl_Interp *interp,
@@ -664,9 +871,29 @@ bu_tcl_units_conversion(ClientData UNUSED(clientData),
 void
 bu_tcl_setup(Tcl_Interp *interp)
 {
+    static struct bu_cmdtab cmds[] = {
+	{"bu_units_conversion",		bu_tcl_units_conversion},
+	{"bu_brlcad_data",		bu_tcl_brlcad_data},
+	{"bu_brlcad_root",		bu_tcl_brlcad_root},
+	{"bu_mem_barriercheck",		bu_tcl_mem_barriercheck},
+	{"bu_ck_malloc_ptr",		bu_tcl_ck_malloc_ptr},
+	{"bu_malloc_len_roundup",	bu_tcl_malloc_len_roundup},
+	{"bu_prmem",			bu_tcl_prmem},
+	{"bu_printb",			bu_tcl_printb},
+	{"bu_get_all_keyword_values",	bu_tcl_get_all_keyword_values},
+	{"bu_get_value_by_keyword",	bu_tcl_get_value_by_keyword},
+	{"bu_rgb_to_hsv",		bu_tcl_rgb_to_hsv},
+	{"bu_hsv_to_rgb",		bu_tcl_hsv_to_rgb},
+	{"bu_key_eq_to_key_val",	bu_tcl_key_eq_to_key_val},
+	{"bu_shader_to_tcl_list",	bu_tcl_shader_to_key_val},
+	{"bu_key_val_to_key_eq",	bu_tcl_key_val_to_key_eq},
+	{"bu_shader_to_key_eq",		bu_tcl_shader_to_key_eq},
+	{(char *)NULL,			NULL }
+    };
+
     /*XXX Use of brlcad_interp is temporary */
     brlcad_interp = interp;
-    bu_register_cmds(interp, bu_cmds);
+    bu_register_cmds(interp, cmds);
 
     Tcl_SetVar(interp, "BU_DEBUG_FORMAT", BU_DEBUG_FORMAT, TCL_GLOBAL_ONLY);
     Tcl_LinkVar(interp, "bu_debug", (char *)&bu_debug, TCL_LINK_INT);
