@@ -54,7 +54,6 @@
 #define YYEOF -1
 
 #define PERPLEX_APPDATA_TYPE void*
-#define PERPLEX_CONDITION_TYPE int
 
 struct Buf {
     void   *elts;	/* elements. */
@@ -70,6 +69,7 @@ typedef struct perplex {
 	char *string;
     } in;
     int atEOI;
+    int condition;
     char *cursor;
     char *marker;
     char *null;
@@ -77,7 +77,6 @@ typedef struct perplex {
     struct Buf *buffer;
     char *tokenText;
     PERPLEX_APPDATA_TYPE appData;
-    PERPLEX_CONDITION_TYPE condition;
 } *perplex_t;
 
 perplex_t perplexFileScanner(FILE *input);
@@ -540,12 +539,12 @@ perplexFree(perplex_t scanner)
 /* start-condition support */
 
 static void
-setCondition(perplex_t scanner, condition_t cond)
+setCondition(perplex_t scanner, int cond)
 {
     scanner->condition = cond;
 }
 
-static condition_t
+static int
 getCondition(perplex_t scanner)
 {
     return scanner->condition;

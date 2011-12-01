@@ -67,6 +67,12 @@ definitions_section ::= definitions.
 	}
 	fprintf(outFile, "%c", c);
     }
+    if (appData->usingConditions) {
+	fprintf(outFile, "re2c:condenumprefix = \"\";\n");
+	fprintf(outFile, "re2c:cond:goto = \"continue;\";\n");
+	fprintf(outFile, "re2c:define:YYCONDTYPE = int;\n");
+	fprintf(outFile, "re2c:define:YYGETCONDITION:naked = 1;\n");
+    }
     fprintf(outFile, "\n");
     fclose(templateFile);
 }
