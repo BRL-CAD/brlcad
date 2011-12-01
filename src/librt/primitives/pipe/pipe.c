@@ -2678,10 +2678,10 @@ HIDDEN void
 tesselate_pipe_bend(fastf_t *bend_start, fastf_t *bend_end, fastf_t *bend_center, fastf_t or, fastf_t ir, int arc_segs, double sin_del, double cos_del, struct vertex ***outer_loop, struct vertex ***inner_loop, fastf_t *start_r1, fastf_t *start_r2, struct
 		    shell *s, const struct bn_tol *tol, const struct rt_tess_tol *ttol)
 {
-    struct vertex **new_outer_loop;
-    struct vertex **new_inner_loop;
-    struct vert_root *vertex_tree;
-    struct vertex **vertex_array;
+    struct vertex **new_outer_loop = NULL;
+    struct vertex **new_inner_loop = NULL;
+    struct vert_root *vertex_tree = NULL;
+    struct vertex **vertex_array = NULL;
     fastf_t bend_radius;
     fastf_t bend_angle;
     fastf_t x, y, xnew, ynew;
@@ -2924,9 +2924,11 @@ tesselate_pipe_bend(fastf_t *bend_start, fastf_t *bend_end, fastf_t *bend_center
 	*outer_loop = new_outer_loop;
 	VMOVE(old_center, center);
     }
+
+    /* release resources, sanity */
     free_vert_tree(vertex_tree);
-    bu_free((char *)vertex_tree, "vertex tree root");
     bu_free((char *)vertex_array, "vertex array in pipe.c");
+    vertex_tree = vertex_array = NULL;
     
     if (ir <= tol->dist) {
         VMOVE(start_r1, r1);
