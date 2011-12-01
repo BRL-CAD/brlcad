@@ -86,8 +86,8 @@ bu_badmagic_tcl(Tcl_Interp *interp,
  * 	@return
  * 	void
  */
-void
-bu_tcl_structparse_get_terse_form(Tcl_Interp *interp,
+HIDDEN void
+tcl_bu_structparse_get_terse_form(Tcl_Interp *interp,
 				  const struct bu_structparse *sp)
 {
 #if 1
@@ -165,8 +165,8 @@ bu_tcl_structparse_argv(Tcl_Interp *interp,
  *
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
-int
-bu_tcl_mem_barriercheck(ClientData UNUSED(clientData),
+HIDDEN int
+tcl_bu_mem_barriercheck(ClientData UNUSED(clientData),
 			Tcl_Interp *interp,
 			int argc,
 			const char **argv)
@@ -197,8 +197,8 @@ bu_tcl_mem_barriercheck(ClientData UNUSED(clientData),
  *
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
-int
-bu_tcl_ck_malloc_ptr(ClientData UNUSED(clientData),
+HIDDEN int
+tcl_bu_ck_malloc_ptr(ClientData UNUSED(clientData),
 		     Tcl_Interp *interp,
 		     int argc,
 		     const char **argv)
@@ -230,8 +230,8 @@ bu_tcl_ck_malloc_ptr(ClientData UNUSED(clientData),
  *
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
-int
-bu_tcl_malloc_len_roundup(ClientData UNUSED(clientData),
+HIDDEN int
+tcl_bu_malloc_len_roundup(ClientData UNUSED(clientData),
 			  Tcl_Interp *interp,
 			  int argc,
 			  const char **argv)
@@ -259,8 +259,8 @@ bu_tcl_malloc_len_roundup(ClientData UNUSED(clientData),
  *
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
-int
-bu_tcl_prmem(ClientData UNUSED(clientData),
+HIDDEN int
+tcl_bu_prmem(ClientData UNUSED(clientData),
 	     Tcl_Interp *interp,
 	     int argc,
 	     const char **argv)
@@ -285,8 +285,8 @@ bu_tcl_prmem(ClientData UNUSED(clientData),
  *
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
-int
-bu_tcl_printb(ClientData UNUSED(clientData),
+HIDDEN int
+tcl_bu_printb(ClientData UNUSED(clientData),
 	      Tcl_Interp *interp,
 	      int argc,
 	      const char **argv)
@@ -328,8 +328,8 @@ bu_tcl_printb(ClientData UNUSED(clientData),
  *
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
-int
-bu_tcl_get_value_by_keyword(ClientData UNUSED(clientData),
+HIDDEN int
+tcl_bu_get_value_by_keyword(ClientData UNUSED(clientData),
 			    Tcl_Interp *interp,
 			    int argc,
 			    const char **argv)
@@ -443,8 +443,8 @@ bu_tcl_get_value_by_keyword(ClientData UNUSED(clientData),
  *
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
-int
-bu_tcl_get_all_keyword_values(ClientData UNUSED(clientData),
+HIDDEN int
+tcl_bu_get_all_keyword_values(ClientData UNUSED(clientData),
 			      Tcl_Interp *interp,
 			      int argc,
 			      const char **argv)
@@ -534,8 +534,8 @@ bu_tcl_get_all_keyword_values(ClientData UNUSED(clientData),
  *
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
-int
-bu_tcl_rgb_to_hsv(ClientData UNUSED(clientData),
+HIDDEN int
+tcl_bu_rgb_to_hsv(ClientData UNUSED(clientData),
 		  Tcl_Interp *interp,
 		  int argc,
 		  const char **argv)
@@ -586,8 +586,8 @@ bu_tcl_rgb_to_hsv(ClientData UNUSED(clientData),
  *
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
-int
-bu_tcl_hsv_to_rgb(ClientData UNUSED(clientData),
+HIDDEN int
+tcl_bu_hsv_to_rgb(ClientData UNUSED(clientData),
 		  Tcl_Interp *interp,
 		  int argc,
 		  const char **argv)
@@ -631,8 +631,8 @@ bu_tcl_hsv_to_rgb(ClientData UNUSED(clientData),
  *
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
-int
-bu_tcl_key_eq_to_key_val(ClientData UNUSED(clientData),
+HIDDEN int
+tcl_bu_key_eq_to_key_val(ClientData UNUSED(clientData),
 			 Tcl_Interp *interp,
 			 int argc,
 			 const char **argv)
@@ -673,8 +673,8 @@ bu_tcl_key_eq_to_key_val(ClientData UNUSED(clientData),
  *
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
-int
-bu_tcl_shader_to_key_val(ClientData UNUSED(clientData),
+HIDDEN int
+tcl_bu_shader_to_key_val(ClientData UNUSED(clientData),
 			 Tcl_Interp *interp,
 			 int argc,
 			 const char **argv)
@@ -712,8 +712,8 @@ bu_tcl_shader_to_key_val(ClientData UNUSED(clientData),
  *
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
-int
-bu_tcl_key_val_to_key_eq(ClientData UNUSED(clientData),
+HIDDEN int
+tcl_bu_key_val_to_key_eq(ClientData UNUSED(clientData),
 			 Tcl_Interp *interp,
 			 int argc,
 			 const char **argv)
@@ -742,8 +742,8 @@ bu_tcl_key_val_to_key_eq(ClientData UNUSED(clientData),
  *
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
-int
-bu_tcl_shader_to_key_eq(ClientData UNUSED(clientData),
+HIDDEN int
+tcl_bu_shader_to_key_eq(ClientData UNUSED(clientData),
 			Tcl_Interp *interp,
 			int argc,
 			const char **argv)
@@ -771,7 +771,7 @@ bu_tcl_shader_to_key_eq(ClientData UNUSED(clientData),
 
 
 /**
- * bu_tcl_brlcad_root
+ * tcl_bu_brlcad_root
  *
  * A tcl wrapper for bu_brlcad_root.
  *
@@ -782,8 +782,8 @@ bu_tcl_shader_to_key_eq(ClientData UNUSED(clientData),
  *
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
-int
-bu_tcl_brlcad_root(ClientData UNUSED(clientData),
+HIDDEN int
+tcl_bu_brlcad_root(ClientData UNUSED(clientData),
 		   Tcl_Interp *interp,
 		   int argc,
 		   const char **argv)
@@ -799,7 +799,7 @@ bu_tcl_brlcad_root(ClientData UNUSED(clientData),
 
 
 /**
- * bu_tcl_brlcad_data
+ * tcl_bu_brlcad_data
  *
  * A tcl wrapper for bu_brlcad_data.
  *
@@ -810,8 +810,8 @@ bu_tcl_brlcad_root(ClientData UNUSED(clientData),
  *
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
-int
-bu_tcl_brlcad_data(ClientData UNUSED(clientData),
+HIDDEN int
+tcl_bu_brlcad_data(ClientData UNUSED(clientData),
 		   Tcl_Interp *interp,
 		   int argc,
 		   const char **argv)
@@ -827,7 +827,7 @@ bu_tcl_brlcad_data(ClientData UNUSED(clientData),
 
 
 /**
- * bu_tcl_units_conversion
+ * tcl_bu_units_conversion
  *
  * A tcl wrapper for bu_units_conversion.
  *
@@ -838,8 +838,8 @@ bu_tcl_brlcad_data(ClientData UNUSED(clientData),
  *
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
-int
-bu_tcl_units_conversion(ClientData UNUSED(clientData),
+HIDDEN int
+tcl_bu_units_conversion(ClientData UNUSED(clientData),
 			Tcl_Interp *interp,
 			int argc,
 			const char **argv)
@@ -872,22 +872,22 @@ void
 bu_tcl_setup(Tcl_Interp *interp)
 {
     static struct bu_cmdtab cmds[] = {
-	{"bu_units_conversion",		bu_tcl_units_conversion},
-	{"bu_brlcad_data",		bu_tcl_brlcad_data},
-	{"bu_brlcad_root",		bu_tcl_brlcad_root},
-	{"bu_mem_barriercheck",		bu_tcl_mem_barriercheck},
-	{"bu_ck_malloc_ptr",		bu_tcl_ck_malloc_ptr},
-	{"bu_malloc_len_roundup",	bu_tcl_malloc_len_roundup},
-	{"bu_prmem",			bu_tcl_prmem},
-	{"bu_printb",			bu_tcl_printb},
-	{"bu_get_all_keyword_values",	bu_tcl_get_all_keyword_values},
-	{"bu_get_value_by_keyword",	bu_tcl_get_value_by_keyword},
-	{"bu_rgb_to_hsv",		bu_tcl_rgb_to_hsv},
-	{"bu_hsv_to_rgb",		bu_tcl_hsv_to_rgb},
-	{"bu_key_eq_to_key_val",	bu_tcl_key_eq_to_key_val},
-	{"bu_shader_to_tcl_list",	bu_tcl_shader_to_key_val},
-	{"bu_key_val_to_key_eq",	bu_tcl_key_val_to_key_eq},
-	{"bu_shader_to_key_eq",		bu_tcl_shader_to_key_eq},
+	{"bu_units_conversion",		tcl_bu_units_conversion},
+	{"bu_brlcad_data",		tcl_bu_brlcad_data},
+	{"bu_brlcad_root",		tcl_bu_brlcad_root},
+	{"bu_mem_barriercheck",		tcl_bu_mem_barriercheck},
+	{"bu_ck_malloc_ptr",		tcl_bu_ck_malloc_ptr},
+	{"bu_malloc_len_roundup",	tcl_bu_malloc_len_roundup},
+	{"bu_prmem",			tcl_bu_prmem},
+	{"bu_printb",			tcl_bu_printb},
+	{"bu_get_all_keyword_values",	tcl_bu_get_all_keyword_values},
+	{"bu_get_value_by_keyword",	tcl_bu_get_value_by_keyword},
+	{"bu_rgb_to_hsv",		tcl_bu_rgb_to_hsv},
+	{"bu_hsv_to_rgb",		tcl_bu_hsv_to_rgb},
+	{"bu_key_eq_to_key_val",	tcl_bu_key_eq_to_key_val},
+	{"bu_shader_to_tcl_list",	tcl_bu_shader_to_key_val},
+	{"bu_key_val_to_key_eq",	tcl_bu_key_val_to_key_eq},
+	{"bu_shader_to_key_eq",		tcl_bu_shader_to_key_eq},
 	{(char *)NULL,			NULL }
     };
 
