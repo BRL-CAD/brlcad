@@ -90,7 +90,7 @@
 	}								\
 	_len = (((unsigned char *)(_p->ext_buf))[2] << 24) |		\
 	    (((unsigned char *)(_p->ext_buf))[3] << 16) |		\
-	    (((unsigned char *)(_p->ext_buf))[4] <<  8) |		\
+	    (((unsigned char *)(_p->ext_buf))[4] << 8) |		\
 	    ((unsigned char *)(_p->ext_buf))[5];			\
 	if (UNLIKELY(_len > _p->ext_nbytes)) {				\
 	    bu_log("ERROR: BU_CK_GETPUT buffer %p, expected len=%zu, ext_nbytes=%zu, file %s, line %d\n", \
@@ -317,7 +317,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		    for (i = ip->sp_count; i > 0; i--) {
 			l =	(cp[0] << 24) |
 			    (cp[1] << 16) |
-			    (cp[2] <<  8) |
+			    (cp[2] << 8) |
 			    cp[3];
 			*(int *)loc = l;
 			loc += sizeof(int); /* XXX */
@@ -329,7 +329,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 	    case 'i':
 		/* 16-bit integer, from "int" */
 		for (i = ip->sp_count; i > 0; i--) {
-		    *(int *)loc =	(cp[0] <<  8) |
+		    *(int *)loc =	(cp[0] << 8) |
 			cp[1];
 		    loc += sizeof(int); /* XXX */
 		    cp += 2;
@@ -348,7 +348,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 
 		    lenstr = (cp[0] << 24) |
 			(cp[1] << 16) |
-			(cp[2] <<  8) |
+			(cp[2] << 8) |
 			cp[3];
 
 		    cp += 4;
@@ -372,7 +372,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 
 		    lenarray = (cp[0] << 24) |
 			(cp[1] << 16) |
-			(cp[2] <<  8) |
+			(cp[2] << 8) |
 			cp[3];
 		    cp += 4;
 
@@ -443,7 +443,7 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
 
     len = (((unsigned char *)(ext->ext_buf))[2] << 24)
 	| (((unsigned char *)(ext->ext_buf))[3] << 16)
-	| (((unsigned char *)(ext->ext_buf))[4] <<  8)
+	| (((unsigned char *)(ext->ext_buf))[4] << 8)
 	| ((unsigned char *)(ext->ext_buf))[5];
 
     if (UNLIKELY(i != BU_GETPUT_MAGIC_1)) {
@@ -496,7 +496,7 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
 	((unsigned char *)(ext->ext_buf))[1];
     len = (((unsigned char *)(ext->ext_buf))[2] << 24) |
 	(((unsigned char *)(ext->ext_buf))[3] << 16) |
-	(((unsigned char *)(ext->ext_buf))[4] <<  8) |
+	(((unsigned char *)(ext->ext_buf))[4] << 8) |
 	((unsigned char *)(ext->ext_buf))[5];
     if (UNLIKELY(i != BU_GETPUT_MAGIC_1)) {
 	bu_log("ERROR: bad getput buffer header %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
@@ -1298,12 +1298,12 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		    bu_vls_init(&tmpstr);
 
 		    /* quote the quote characters */
-		    while(*loc) {
-			    if (*loc == '"') {
-				    bu_vls_putc(&tmpstr, '\\');
-			    }
-			    bu_vls_putc(&tmpstr, *loc);
-			    loc++;
+		    while (*loc) {
+			if (*loc == '"') {
+			    bu_vls_putc(&tmpstr, '\\');
+			}
+			bu_vls_putc(&tmpstr, *loc);
+			loc++;
 		    }
 		    bu_vls_printf(vls, "%s=\"%s\"", sdp->sp_name, bu_vls_addr(&tmpstr));
 		    bu_vls_free(&tmpstr);
@@ -1768,9 +1768,9 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 	    bu_vls_strcat(vls, " {");
 
 	    if (*iptr == '{') {
-	       /* if parameter set begins with open brace then
-		* it should already have a closing brace
-		*/
+		/* if parameter set begins with open brace then
+		 * it should already have a closing brace
+		 */
 		iptr++;
 	    } else {
 		/* otherwise we'll need to add it */
