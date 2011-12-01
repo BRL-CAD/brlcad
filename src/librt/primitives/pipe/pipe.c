@@ -2929,7 +2929,8 @@ tesselate_pipe_bend(fastf_t *bend_start, fastf_t *bend_end, fastf_t *bend_center
     /* release resources, sanity */
     free_vert_tree(vertex_tree);
     bu_free((char *)vertex_array, "vertex array in pipe.c");
-    vertex_tree = vertex_array = NULL;
+    vertex_tree = NULL;
+    vertex_array = NULL;
     
     if (ir <= tol->dist) {
         VMOVE(start_r1, r1);
