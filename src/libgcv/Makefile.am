@@ -29,6 +29,7 @@ libgcv_nil_la_SOURCES = \
 EXTRA_DIST = \
 	CMakeLists.txt \
 	NOTES \
+	test_bottess.c \
 	wfobj/CMakeLists.txt \
 	wfobj/Makefile.am \
 	wfobj/Makefile.in \
