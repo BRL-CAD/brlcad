@@ -305,6 +305,7 @@ rt_linear_pipe_prep(struct bu_list *head, fastf_t *pt1, fastf_t id1, fastf_t od1
     }
 }
 
+
 /**
  * R T _ P I P E _ B B O X
  *
@@ -403,7 +404,7 @@ rt_pipe_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
             pp3 = (struct wdb_pipept *)NULL;
     }
 
-   return 0;
+    return 0;
 }
 
 
@@ -955,7 +956,7 @@ bend_pipe_shot(struct soltab *stp, struct xray *rp, struct bend_pipe *bp, struct
     }
 
 
- check_discont_radii:
+check_discont_radii:
     /* check for surfaces created by discontinuous changes in radii */
     prev = BU_LIST_BACK(id_pipe, &bp->l);
     if (prev->l.magic != BU_LIST_HEAD_MAGIC) {
@@ -2748,7 +2749,7 @@ tesselate_pipe_bend(fastf_t *bend_start, fastf_t *bend_end, fastf_t *bend_center
     }
 
     /* add starting loops to the vertex tree */
-    vertex_array = bu_calloc((bend_segs+1) * arc_segs , sizeof( struct vertex *), "vertex array in pipe.c");
+    vertex_array = bu_calloc((bend_segs+1) * arc_segs, sizeof(struct vertex *), "vertex array in pipe.c");
     for (i=0 ; i<arc_segs ; i++) {
         struct vertex *v = (*outer_loop)[i];
         struct vertex_g *vg = v->vg_p;
@@ -3748,8 +3749,8 @@ rt_pipe_ck(const struct bu_list *headp)
 	    bu_log("failed test: %g + %g > %g\n", new_bend_dist, old_bend_dist, v1_len);
 	    vdot = VDOT(v1, v2);
 	    bu_log("angle(%g) = bn_pi(%g) - acos(VDOT(v1, v2)(%g))(%g)\n", angle, bn_pi, vdot, acos(vdot));
-	    bu_log("v1: %g,%g,%g\n", v1[0], v1[1], v1[2]);
-	    bu_log("v2: %g,%g,%g\n", v2[0], v2[1], v2[2]);
+	    bu_log("v1: (%g %g %g)\n", V3ARGS(v1));
+	    bu_log("v2: (%g %g %g)\n", V3ARGS(v2));
         } 
     next_pt:
 	old_bend_dist = new_bend_dist;
