@@ -404,8 +404,18 @@ tcl_appinit(Tcl_Interp *interp)
     if (Tk_Init(interp) == TCL_ERROR) return TCL_ERROR;
 
     /* Add commands offered by the libraries */
-    bu_tcl_setup(interp);
-    rt_tcl_setup(interp);
+
+    /* Initialize libbu */
+    if (Bu_Init(interp) == TCL_ERROR) {
+	bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    /* Initialize librt */
+    if (Rt_Init(interp) == TCL_ERROR) {
+	bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
 
     /* Add commands offered by this program */
     Tcl_CreateCommand(interp, "fb_cursor", (Tcl_CmdProc *)tcl_fb_cursor, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
