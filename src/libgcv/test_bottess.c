@@ -1,7 +1,7 @@
-/*                B O T T E S S _ T E S T E R . C
+/*                  T E S T _ B O T T E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @file libgcv/bottess_tester.c
  *
  * Test things in the bottess routines...
