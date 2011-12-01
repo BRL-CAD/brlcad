@@ -3390,10 +3390,65 @@ to_data_polygons(struct ged *gedp,
 	goto bad;
     }
 
+    /* Usage: poly_color i [r g b]
+     *
+     * Set/get the color of polygon i.
+     */
+    if (BU_STR_EQUAL(argv[2], "poly_color")) {
+	size_t i;
+
+	if (argc == 4) {
+	    /* Get the color for polygon i */
+	    if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+		i >= gdpsp->gdps_polygons.gp_num_polygons)
+		goto bad;
+
+	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
+			  V3ARGS(gdpsp->gdps_polygons.gp_polygon[i].gp_color));
+
+	    return GED_OK;
+	}
+
+	if (argc == 7) {
+	    int r, g, b;
+
+	    if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+		i >= gdpsp->gdps_polygons.gp_num_polygons)
+		goto bad;
+
+	    /* set background color */
+	    if (sscanf(argv[4], "%d", &r) != 1 ||
+		sscanf(argv[5], "%d", &g) != 1 ||
+		sscanf(argv[6], "%d", &b) != 1)
+		goto bad;
+
+	    /* validate color */
+	    if (r < 0 || 255 < r ||
+		g < 0 || 255 < g ||
+		b < 0 || 255 < b)
+		goto bad;
+
+	    /* Set the color for polygon i */
+	    VSET(gdpsp->gdps_polygons.gp_polygon[i].gp_color, r, g, b);
+
+	    to_refresh_view(gdvp);
+	    return GED_OK;
+	}
+
+	goto bad;
+    }
+
+    /* Usage: color [r g b]
+     *
+     * Set the color of all polygons, or get the default polygon color.
+     */
     if (BU_STR_EQUAL(argv[2], "color")) {
+	size_t i;
+
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gdpsp->gdps_color));
+
 	    return GED_OK;
 	}
 
@@ -3412,6 +3467,12 @@ to_data_polygons(struct ged *gedp,
 		b < 0 || 255 < b)
 		goto bad;
 
+	    /* Set the color for all polygons */
+	    for (i = 0; i < gdpsp->gdps_polygons.gp_num_polygons; ++i) {
+		VSET(gdpsp->gdps_polygons.gp_polygon[i].gp_color, r, g, b);
+	    }
+
+	    /* Set the default polygon color */
 	    VSET(gdpsp->gdps_color, r, g, b);
 
 	    to_refresh_view(gdvp);
@@ -3421,7 +3482,53 @@ to_data_polygons(struct ged *gedp,
 	goto bad;
     }
 
+    /* Usage: poly_line_width i [w]
+     *
+     * Set/get the line width of polygon i.
+     */
+    if (BU_STR_EQUAL(argv[2], "poly_line_width")) {
+	size_t i;
+
+	if (argc == 4) {
+	    /* Get the line width for polygon i */
+	    if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+		i >= gdpsp->gdps_polygons.gp_num_polygons)
+		goto bad;
+
+	    bu_vls_printf(gedp->ged_result_str, "%d", gdpsp->gdps_polygons.gp_polygon[i].gp_line_width);
+
+	    return GED_OK;
+	}
+
+	if (argc == 5) {
+	    int line_width;
+
+	    if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+		i >= gdpsp->gdps_polygons.gp_num_polygons)
+		goto bad;
+
+	    if (sscanf(argv[4], "%d", &line_width) != 1)
+		goto bad;
+
+	    if (line_width < 0)
+		line_width = 0;
+
+	    gdpsp->gdps_polygons.gp_polygon[i].gp_line_width = line_width;
+
+	    to_refresh_view(gdvp);
+	    return GED_OK;
+	}
+
+	goto bad;
+    }
+
+    /* Usage: line_width [w]
+     *
+     * Set the line width of all polygons, or get the default polygon line width.
+     */
     if (BU_STR_EQUAL(argv[2], "line_width")) {
+	size_t i;
+
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdpsp->gdps_line_width);
 	    return GED_OK;
@@ -3433,6 +3540,15 @@ to_data_polygons(struct ged *gedp,
 	    if (sscanf(argv[3], "%d", &line_width) != 1)
 		goto bad;
 
+	    if (line_width < 0)
+		line_width = 0;
+
+	    /* Set the line width for all polygons */
+	    for (i = 0; i < gdpsp->gdps_polygons.gp_num_polygons; ++i) {
+		gdpsp->gdps_polygons.gp_polygon[i].gp_line_width = line_width;
+	    }
+
+	    /* Set the default line width */
 	    gdpsp->gdps_line_width = line_width;
 
 	    to_refresh_view(gdvp);
@@ -3442,7 +3558,54 @@ to_data_polygons(struct ged *gedp,
 	goto bad;
     }
 
+    /* Usage: poly_line_style i [w]
+     *
+     * Set/get the line style of polygon i.
+     */
+    if (BU_STR_EQUAL(argv[2], "poly_line_style")) {
+	size_t i;
+
+	if (argc == 4) {
+	    /* Get the line style for polygon i */
+	    if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+		i >= gdpsp->gdps_polygons.gp_num_polygons)
+		goto bad;
+
+	    bu_vls_printf(gedp->ged_result_str, "%d", gdpsp->gdps_polygons.gp_polygon[i].gp_line_style);
+
+	    return GED_OK;
+	}
+
+	if (argc == 5) {
+	    int line_style;
+
+	    if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+		i >= gdpsp->gdps_polygons.gp_num_polygons)
+		goto bad;
+
+	    if (sscanf(argv[4], "%d", &line_style) != 1)
+		goto bad;
+
+
+	    if (line_style <= 0)
+		gdpsp->gdps_polygons.gp_polygon[i].gp_line_style = 0;
+	    else
+		gdpsp->gdps_polygons.gp_polygon[i].gp_line_style = 1;
+
+	    to_refresh_view(gdvp);
+	    return GED_OK;
+	}
+
+	goto bad;
+    }
+
+    /* Usage: line_style [w]
+     *
+     * Set the line style of all polygons, or get the default polygon line style.
+     */
     if (BU_STR_EQUAL(argv[2], "line_style")) {
+	size_t i;
+
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdpsp->gdps_line_style);
 	    return GED_OK;
@@ -3455,9 +3618,17 @@ to_data_polygons(struct ged *gedp,
 		goto bad;
 
 	    if (line_style <= 0)
-		gdpsp->gdps_line_style = 0;
+		line_style = 0;
 	    else
-		gdpsp->gdps_line_style = 1;
+		line_style = 1;
+
+	    /* Set the line width for all polygons */
+	    for (i = 0; i < gdpsp->gdps_polygons.gp_num_polygons; ++i) {
+		gdpsp->gdps_polygons.gp_polygon[i].gp_line_style = line_style;
+	    }
+
+	    /* Set the default line style */
+	    gdpsp->gdps_line_style = line_style;
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -3466,7 +3637,10 @@ to_data_polygons(struct ged *gedp,
 	goto bad;
     }
 
-    /* Append a polygon */
+    /* Usage: append_poly plist
+     *
+     * Append the polygon specified by plist.
+     */
     if (BU_STR_EQUAL(argv[2], "append_poly")) {
 	if (argc != 4)
 	    goto bad;
@@ -3497,6 +3671,10 @@ to_data_polygons(struct ged *gedp,
 		return GED_ERROR;
 	    }
 
+	    VMOVE(gdpsp->gdps_polygons.gp_polygon[i].gp_color, gdpsp->gdps_color);
+	    gdpsp->gdps_polygons.gp_polygon[i].gp_line_style = gdpsp->gdps_line_style;
+	    gdpsp->gdps_polygons.gp_polygon[i].gp_line_width = gdpsp->gdps_line_width;
+
 	    Tcl_Free((char *)contour_av);
 
 	    to_refresh_view(gdvp);
@@ -3505,7 +3683,7 @@ to_data_polygons(struct ged *gedp,
     }
 
 
-    /* Usage: clip i j [op]
+    /* Usage: clip [i j [op]]
      *
      * Clip polygon i using polygon j and op.
      */
@@ -3559,7 +3737,10 @@ to_data_polygons(struct ged *gedp,
 	}
 
 	/* Replace the target polygon with the newly clipped polygon. */
-	gdpsp->gdps_polygons.gp_polygon[i] = *gpp;   /* struct copy */
+	/* Not doing a struct copy to avoid overwriting the color, line width and line style. */
+	gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours = gpp->gp_num_contours;
+	gdpsp->gdps_polygons.gp_polygon[i].gp_hole = gpp->gp_hole;
+	gdpsp->gdps_polygons.gp_polygon[i].gp_contour = gpp->gp_contour;
 
 	/* Free the clipped polygon container */
 	bu_free((genptr_t)gpp, "clip gpp");
@@ -3615,6 +3796,10 @@ to_data_polygons(struct ged *gedp,
 	return GED_OK;
     }
 
+    /* Usage: polygons [poly_list]
+     *
+     * Set/get the polygon list.
+     */
     if (BU_STR_EQUAL(argv[2], "polygons")) {
 	register size_t i, j, k;
 	int ac;
@@ -3703,7 +3888,11 @@ to_data_polygons(struct ged *gedp,
 	}
 
 	to_polygon_free(&gdpsp->gdps_polygons.gp_polygon[i]);
-	gdpsp->gdps_polygons.gp_polygon[i] = gp;    /* struct copy */
+
+	/* Not doing a struct copy to avoid overwriting the color, line width and line style. */
+	gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours = gp.gp_num_contours;
+	gdpsp->gdps_polygons.gp_polygon[i].gp_hole = gp.gp_hole;
+	gdpsp->gdps_polygons.gp_polygon[i].gp_contour = gp.gp_contour;
 
 	to_refresh_view(gdvp);
 	return GED_OK;
@@ -11155,17 +11344,20 @@ go_dm_draw_polys(struct dm *dmp, ged_data_polygon_state *gdpsp, int mode)
     saveLineWidth = dmp->dm_lineWidth;
     saveLineStyle = dmp->dm_lineStyle;
 
-    /* set color */
-    DM_SET_FGCOLOR(dmp,
-		   gdpsp->gdps_color[0],
-		   gdpsp->gdps_color[1],
-		   gdpsp->gdps_color[2], 1, 1.0);
-
-    /* set linewidth */
-    DM_SET_LINE_ATTR(dmp, gdpsp->gdps_line_width, gdpsp->gdps_line_style);  /* solid lines */
-
     last_poly = gdpsp->gdps_polygons.gp_num_polygons - 1;
     for (i = 0; i < gdpsp->gdps_polygons.gp_num_polygons; ++i) {
+	/* set color */
+	DM_SET_FGCOLOR(dmp,
+		       gdpsp->gdps_polygons.gp_polygon[i].gp_color[0],
+		       gdpsp->gdps_polygons.gp_polygon[i].gp_color[1],
+		       gdpsp->gdps_polygons.gp_polygon[i].gp_color[2],
+		       1, 1.0);
+
+	/* set the linewidth and linestyle for polygon i */
+	DM_SET_LINE_ATTR(dmp, 
+			 gdpsp->gdps_polygons.gp_polygon[i].gp_line_width,
+			 gdpsp->gdps_polygons.gp_polygon[i].gp_line_style);
+
 	for (j = 0; j < gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours; ++j) {
 	    size_t last = gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points-1;
 

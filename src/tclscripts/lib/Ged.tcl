@@ -1214,7 +1214,12 @@ package provide cadwidgets::Ged 1.0
     }
 
     set scmd [lindex $args 0]
-    if {$scmd == "export" || $scmd == "import"} {
+
+    if {$scmd == "poly_color" ||
+	$scmd == "poly_line_width" ||
+	$scmd == "poly_line_style" ||
+	$scmd == "export" ||
+	$scmd == "import"} {
 	return [eval $mGed data_polygons $itk_component($itk_option(-pane)) $args]
     }
 

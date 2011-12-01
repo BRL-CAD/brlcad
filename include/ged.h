@@ -342,6 +342,9 @@ typedef struct {
 
 typedef struct {
     size_t		gp_num_contours;
+    int			gp_color[3];
+    int			gp_line_width;    	/* in pixels */
+    int			gp_line_style;
     int			*gp_hole;
     ged_poly_contour	*gp_contour;
 } ged_polygon;
