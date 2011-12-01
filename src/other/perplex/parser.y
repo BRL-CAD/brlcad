@@ -45,11 +45,17 @@ definitions_section ::= definitions.
     if (headerFile != NULL) {
 	fprintf(headerFile, "#ifndef PERPLEX_H\n");
 	fprintf(headerFile, "#define PERPLEX_H\n");
+
 	writeHeader(templateFile, headerFile);
 	fprintf(headerFile, "#endif\n");
+	fclose(headerFile);
     }
 
     /* write implementation file from template */
+    if (appData->usingConditions) {
+	fprintf(outFile, "#define PERPLEX_USING_CONDITIONS\n");
+    }
+
     while ((c = fgetc(templateFile)) != EOF) {
 	if (c == '%') {
 	    if ((c = fgetc(templateFile)) == '%') {

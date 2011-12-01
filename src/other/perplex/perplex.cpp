@@ -76,6 +76,7 @@ static const mbo_opt_struct options[] =
 {
     mbo_opt_struct('?', 0, "help"),
     mbo_opt_struct('h', 0, "help"),
+    mbo_opt_struct('c', 0, "conditions"),
     mbo_opt_struct('i', 1, "header"),
     mbo_opt_struct('o', 1, "output"),
     mbo_opt_struct('t', 1, "template"),
@@ -86,6 +87,7 @@ static const char usage[] =
 "Usage: perplex [options] input\n"
 "  -?\n"
 "  -h, --help\t\tprints this message\n"
+"  -c, --conditions\t\tenable support for start conditions\n"
 "  -i, --header PATH\tspecify path of header file\n"
 "  -o, --output\t\tspecify path of output file\n"
 "  -t, --template PATH\tspecify path to scanner template file\n"
@@ -102,9 +104,10 @@ int main(int argc, char *argv[])
     appData_t *appData;
     char defaultTemplate[] = "scanner_template.c";
     FILE *inFile;
-    FILE *outFile = NULL;
+    FILE *outFile = stdout;
     FILE *templateFile = NULL;
     FILE *headerFile = NULL;
+    int usingConditions = 0;
 
     if (argc < 2) {
 	puts(usage);
@@ -117,9 +120,12 @@ int main(int argc, char *argv[])
 	    case 'h':
 		puts(usage);
 		return 0;
+	    case 'c':
+		usingConditions = 1;
+		break;
 	    case 'i':
 		if (opt_arg == NULL) {
-		    fprintf(stderr, "Error: Header option requires path argument.\n");
+		    fprintf(stderr, "Error: Header option requires file-path argument.\n");
 		    exit(1);
 		}
 		if ((headerFile = fopen(opt_arg, "w")) == NULL) {
@@ -129,17 +135,17 @@ int main(int argc, char *argv[])
 		break;
 	    case 'o':
 		if (opt_arg == NULL) {
-		    fprintf(stderr, "Error: Output option requires path argument.\n");
+		    fprintf(stderr, "Error: Output option requires file-path argument.\n");
 		    exit(1);
 		}
 		if ((outFile = fopen(opt_arg, "w")) == NULL) {
-		    fprintf(stderr, "Error: Couldn't open \"%s\" for reading.\n", opt_arg);
+		    fprintf(stderr, "Error: Couldn't open \"%s\" for writing.\n", opt_arg);
 		    exit(1);
 		}
 		break;
 	    case 't':
 		if (opt_arg == NULL) {
-		    fprintf(stderr, "Error: Template option requires path argument.\n");
+		    fprintf(stderr, "Error: Template option requires file-path argument.\n");
 		    exit(1);
 		}
 		if ((templateFile = fopen(opt_arg, "r")) == NULL) {
@@ -148,7 +154,8 @@ int main(int argc, char *argv[])
 		}
 		break;
 	    default:
-		fprintf(stderr, "Error: Unrecognized option.\n");
+		fprintf(stderr, "Error: Error in option string.\n");
+		puts(usage);
 		exit(1);
 	}
     }
@@ -156,18 +163,15 @@ int main(int argc, char *argv[])
     /* look for default if scanner template not specified */
     if (templateFile == NULL) {
 	if ((templateFile = fopen(defaultTemplate, "r")) == NULL) {
-	    fprintf(stderr, "Error: couldn't open \"%s\" for reading.\n", defaultTemplate);
+	    fprintf(stderr, "Error: couldn't open default template \"%s\" "
+		    "for reading. Specify template file using \"-t PATH\" "
+		    "option.\n", defaultTemplate);
 	    exit(1);
 	}
     }
 
-    /* use stdout if output file not specified */
-    if (outFile == NULL) {
-	outFile = stdout;
-    }
-
     if ((inFile = fopen(argv[opt_ind], "r")) == NULL) {
-	fprintf(stderr, "Error: couldn't open \"%s\" for reading\n", argv[opt_ind]);
+	fprintf(stderr, "Error: couldn't open input \"%s\" for reading\n", argv[opt_ind]);
 	exit(1);
     }
 
@@ -181,6 +185,7 @@ int main(int argc, char *argv[])
     appData->out = outFile;
     appData->header = headerFile;
     appData->scanner_template = templateFile;
+    appData->usingConditions = usingConditions;
 
     /* parse */
     while ((tokenID = yylex(scanner)) != YYEOF) {
