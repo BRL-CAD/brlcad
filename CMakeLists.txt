@@ -777,9 +777,10 @@ CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF_MAN "Build PDF output from Docbook d
 # minimizing the possibility of corrupted data files.  Generally
 # speaking these should be left on.
 SET(BRLCAD_ENABLE_RUNTIME_DEBUG_ALIASES 
-	BRLCAD_ENABLE_RUN_TIME_DEBUG
-	BRLCAD_ENABLE_RUNTIME_DEBUGGING
-	BRLCAD_ENABLE_RUN_TIME_DEBUGGING)
+	ENABLE_RUNTIME_DEBUG
+	ENABLE_RUN_TIME_DEBUG
+	ENABLE_RUNTIME_DEBUGGING
+	ENABLE_RUN_TIME_DEBUGGING)
 SET(BRLCAD_ENABLE_RUNTIME_DEBUG_DESCRIPTION "
 Enables support for application and library debugging facilities.  
 Disabling the run-time debugging facilities can provide a significant 
