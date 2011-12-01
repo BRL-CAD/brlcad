@@ -654,7 +654,7 @@ manually setting individual variables. Default is \"AUTO\" - 3rd party sources
 are compiled only if they are not detected as being available and functioning 
 as expected.
 ")
-BRLCAD_OPTION(BRLCAD_BUNDLED_LIBS)
+BRLCAD_OPTION(BRLCAD_BUNDLED_LIBS BRLCAD_BUNDLED_LIBS_ALIASES BRLCAD_BUNDLED_LIBS_DESCRIPTION)
 IF(NOT DEFINED BRLCAD_BUNDLED_LIBS)
 	SET(BRLCAD_BUNDLED_LIBS "AUTO" CACHE STRING "Build bundled libraries." FORCE)
 ENDIF(NOT DEFINED BRLCAD_BUNDLED_LIBS)
