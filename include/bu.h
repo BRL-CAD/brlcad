@@ -5332,18 +5332,6 @@ BU_EXPORT extern int bu_tcl_structparse_argv(Tcl_Interp *interp,
 					     char *base);
 
 /**
- * bu_tcl_setup
- *
- * Add all the supported Tcl interfaces to LIBBU routines to the list
- * of commands known by the given interpreter.
- *
- * @param interp	- tcl interpreter in which this command was registered.
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-BU_EXPORT extern void bu_tcl_setup(Tcl_Interp *interp);
-
-/**
  * Bu_Init
  *
  * Allows LIBBU to be dynamically loaded to a vanilla tclsh/wish with

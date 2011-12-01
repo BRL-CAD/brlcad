@@ -507,8 +507,8 @@ tcl_bu_units_conversion(ClientData UNUSED(clientData),
 }
 
 
-void
-bu_tcl_setup(Tcl_Interp *interp)
+int
+Bu_Init(Tcl_Interp *interp)
 {
     static struct bu_cmdtab cmds[] = {
 	{"bu_units_conversion",		tcl_bu_units_conversion},
@@ -531,13 +531,7 @@ bu_tcl_setup(Tcl_Interp *interp)
 
     /* initialize command history objects */
     Cho_Init(interp);
-}
 
-
-int
-Bu_Init(Tcl_Interp *interp)
-{
-    bu_tcl_setup(interp);
     return TCL_OK;
 }
 
