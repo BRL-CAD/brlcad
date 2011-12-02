@@ -35,7 +35,7 @@
  *
  */
 HIDDEN int
-_bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_observer *headp = (struct bu_observer *)clientData;
     struct bu_observer *op;
@@ -89,7 +89,7 @@ _bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, con
  *
  */
 HIDDEN int
-_bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_observer *headp = (struct bu_observer *)clientData;
     struct bu_observer *op;
@@ -110,7 +110,7 @@ _bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, con
 	    BU_LIST_DEQUEUE(&op->l);
 	    bu_vls_free(&op->observer);
 	    bu_vls_free(&op->cmd);
-	    bu_free((genptr_t)op, "_bu_observer_detach_tcl: op");
+	    bu_free((genptr_t)op, "observer_detach_tcl: op");
 
 	    return TCL_OK;
 	}
@@ -128,7 +128,7 @@ _bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, con
  *
  */
 HIDDEN int
-_bu_observer_show_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+observer_show_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_observer *headp = (struct bu_observer *)clientData;
     struct bu_observer *op;
@@ -198,9 +198,9 @@ bu_observer_free(struct bu_observer *headp)
  * wdb_obj interfaces.
  */
 static struct bu_cmdtab bu_observer_cmds[] = {
-    {"attach",	_bu_observer_attach_tcl},
-    {"detach",	_bu_observer_detach_tcl},
-    {"show",	_bu_observer_show_tcl},
+    {"attach",	observer_attach_tcl},
+    {"detach",	observer_detach_tcl},
+    {"show",	observer_show_tcl},
     {(char *)0,	CMD_NULL}
 };
 
