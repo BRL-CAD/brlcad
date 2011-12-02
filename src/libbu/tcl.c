@@ -456,8 +456,10 @@ tcl_bu_units_conversion(ClientData UNUSED(clientData),
 
 
 int
-Bu_Init(Tcl_Interp *interp)
+Bu_Init(void *p)
 {
+    Tcl_Interp *interp = (Tcl_Interp *)p;
+
     static struct bu_cmdtab cmds[] = {
 	{"bu_units_conversion",		tcl_bu_units_conversion},
 	{"bu_brlcad_data",		tcl_bu_brlcad_data},

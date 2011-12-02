@@ -4084,8 +4084,8 @@ BU_EXPORT extern void bu_structparse_get_terse_form(struct bu_vls *logstr,
  * @param desc - structure description
  * @param base - base addr of users struct
  *
- * @retval TCL_OK if successful,
- * @retval TCL_ERROR on failure
+ * @retval BRLCAD_OK if successful,
+ * @retval BRLCAD_ERROR on failure
  */
 BU_EXPORT extern int bu_structparse_argv(struct bu_vls *str,
 					 int argc,
@@ -5298,15 +5298,6 @@ BU_EXPORT extern void bu_observer_notify(Tcl_Interp *interp, struct bu_observer 
  */
 BU_EXPORT extern void bu_observer_free(struct bu_observer *);
 
-/** @file libbu/tcl.c
- *
- * Tcl interfaces to all the LIBBU Basic BRL-CAD Utility routines.
- *
- * Remember that in MGED you need to say "set glob_compat_mode 0" to
- * get [] to work with TCL semantics rather than MGED glob semantics.
- *
- */
-
 /**
  * Bu_Init
  *
@@ -5315,9 +5306,9 @@ BU_EXPORT extern void bu_observer_free(struct bu_observer *);
  *
  * @param interp	- tcl interpreter in which this command was registered.
  *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
-BU_EXPORT extern int Bu_Init(Tcl_Interp *interp);
+BU_EXPORT extern int Bu_Init(void *interp);
 
 
 /** @} */
