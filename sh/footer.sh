@@ -273,6 +273,12 @@ case $FILE in
 	wrap=0
 	commentchar=";;"
 	;;
+    *.cmake )
+	echo "$FILE is a CMake build file"
+	mode="sh"
+	wrap=0
+	commentchar="#"
+	;;
     *.[0-9] )
 	echo "$FILE is a manual page"
 	mode="nroff"

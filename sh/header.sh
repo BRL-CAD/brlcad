@@ -255,6 +255,11 @@ case $FILE in
 	wrap=0
 	commentprefix=";;"
 	;;
+    *.cmake )
+	echo "$FILE is a CMake build file"
+	wrap=0
+	commentprefix="#"
+	;;
     *.[0-9] )
 	echo "$FILE is a manual page"
 	wrap=0
