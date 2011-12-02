@@ -28,6 +28,14 @@
 #include "cmd.h"
 
 
+/* FIXME: this is apparently used by src/tclscripts/lib/Command.tcl so
+ * it needs to migrate elsewhere if mged/archer is to continue using
+ * it as it doesn't belong in libbu.  if it can be fully decoupled
+ * from tcl (ideal), it would belong in libged.  otherwise, it belongs
+ * in libtclcad.
+ */
+
+
 static struct bu_cmdhist_obj HeadCmdHistObj;		/* head of command history object list */
 
 
@@ -152,6 +160,7 @@ cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
+
 
 /*
  * Local Variables:
