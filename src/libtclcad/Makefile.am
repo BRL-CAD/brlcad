@@ -29,10 +29,11 @@ DM_TK_CFLAGS =
 endif
 
 libtclcad_la_SOURCES = \
+	cmdhist_obj.c \
 	tclcad.c \
 	tclcadAutoPath.c \
-	tkImgFmtPIX.c \
-	tclcad_obj.c
+	tclcad_obj.c \
+	tkImgFmtPIX.c
 
 libtclcad_la_CFLAGS = \
 	${STD_C99_FLAGS} \

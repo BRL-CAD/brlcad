@@ -36,9 +36,6 @@ Tcl_Interp *brlcad_interp = (Tcl_Interp *)0;
 #define TINYBUFSIZ 32
 #define SMALLBUFSIZ 256
 
-/* defined in libbu/cmdhist_obj.c */
-extern int Cho_Init(Tcl_Interp *interp);
-
 
 /**
  * Convert the "form" of a bu_structparse table into a TCL result
@@ -478,9 +475,6 @@ Bu_Init(void *p)
 
     Tcl_SetVar(interp, "BU_DEBUG_FORMAT", BU_DEBUG_FORMAT, TCL_GLOBAL_ONLY);
     Tcl_LinkVar(interp, "bu_debug", (char *)&bu_debug, TCL_LINK_INT);
-
-    /* initialize command history objects */
-    Cho_Init(interp);
 
     return TCL_OK;
 }

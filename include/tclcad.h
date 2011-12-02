@@ -102,6 +102,13 @@ TCLCAD_EXPORT extern struct application *to_rt_gettrees_application(struct ged *
 								    int argc,
 								    const char *argv[]);
 
+/**
+ * Open a command history object.
+ *
+ * USAGE:
+ * ch_open name
+ */
+TCLCAD_EXPORT extern int cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 
 __END_DECLS

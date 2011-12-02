@@ -45,6 +45,11 @@
 /* Private headers */
 #include "brlcad_version.h"
 
+
+/* defined in cmdhist_obj.c */
+extern int Cho_Init(Tcl_Interp *interp);
+
+
 int
 Tclcad_Init(Tcl_Interp *interp)
 {
@@ -116,6 +121,9 @@ Tclcad_Init(Tcl_Interp *interp)
 	bu_log("Go_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
+
+    /* initialize command history objects */
+    Cho_Init(interp);
 
     Tcl_PkgProvide(interp,  "Tclcad", (ClientData)brlcad_version());
 

@@ -26,7 +26,6 @@ set(LIBBU_SOURCES
     brlcad_path.c
     cmd.c
     cmdhist.c
-    cmdhist_obj.c
     color.c
     convert.c
     crashreport.c
