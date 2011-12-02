@@ -36,7 +36,7 @@
  * history vls'es. 'status' is either TCL_OK or TCL_ERROR.
  */
 HIDDEN void
-_bu_history_record(struct bu_cmdhist_obj *chop, struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status)
+cmdhist_record(struct bu_cmdhist_obj *chop, struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status)
 {
     struct bu_cmdhist *new_hist;
     const char *eol = "\n";
@@ -58,7 +58,7 @@ _bu_history_record(struct bu_cmdhist_obj *chop, struct bu_vls *cmdp, struct time
 
 
 HIDDEN int
-_bu_timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
+cmdhist_timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
 {
     if (UNLIKELY(finish->tv_sec == 0 && finish->tv_usec == 0))
 	return -1;
@@ -133,7 +133,7 @@ bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, const ch
 	bu_vls_trunc(&str, 0);
 	hp_prev = BU_LIST_PREV(bu_cmdhist, &hp->l);
 	if (with_delays && BU_LIST_NOT_HEAD(hp_prev, &chop->cho_head.l)) {
-	    if (_bu_timediff(&tvdiff, &(hp_prev->h_finish), &(hp->h_start)) >= 0)
+	    if (cmdhist_timediff(&tvdiff, &(hp_prev->h_finish), &(hp->h_start)) >= 0)
 		bu_vls_printf(&str, "delay %ld %ld\n", (long)tvdiff.tv_sec,
 			      (long)tvdiff.tv_usec);
 
@@ -180,7 +180,7 @@ bu_cmdhist_add(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 	bu_vls_putc(&vls, '\n');
 
     zero.tv_sec = zero.tv_usec = 0L;
-    _bu_history_record(chop, &vls, &zero, &zero, TCL_OK);
+    cmdhist_record(chop, &vls, &zero, &zero, TCL_OK);
 
     bu_vls_free(&vls);
     return TCL_OK;
