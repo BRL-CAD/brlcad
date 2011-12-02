@@ -131,13 +131,13 @@ fi
 # apply the header
 output="`/bin/sh \"$header_sh\" \"$LICE\" \"$FILE\" \"$PROJ\" \"$COPY\" 2>&1`"
 if [ $? -ne 0 ] ; then
-    rm -f "$FILE"
+    cp "$FILE.backup" "$FILE"
     echo "$output"
     echo "ERROR: the header failed to apply, aborting"
     exit 1
 fi
 
-# get rid of the backup
+# get rid of the header backup
 rm -f "$FILE.backup"
 
 # find the footer script
@@ -148,7 +148,7 @@ for dir in `dirname $0` . .. sh ../sh ; do
     fi
 done
 if [ ! -f "$footer_sh" ] ; then
-    rm -f "$FILE"
+    cp "$FILE.backup" "$FILE"
     echo "ERROR: Unable to find the footer.sh script"
     echo "       Searched for footer.sh in:"
     echo "         `dirname $0`:.:..:sh:../sh"
@@ -158,13 +158,13 @@ fi
 # apply the footer
 output="`/bin/sh \"$footer_sh\" \"$FILE\" 2>&1`"
 if [ $? -ne 0 ] ; then
-    rm -f "$FILE"
+    cp "$FILE.backup" "$FILE"
     echo "$output"
     echo "ERROR: the header failed to apply, aborting"
     exit 1
 fi
 
-# get rid of the backup
+# get rid of the footer backup
 rm -f "$FILE.backup"
 
 echo "$FILE successfully created with $LICE license"
