@@ -296,7 +296,9 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
     MAT4X3PNT(sketch_ip->V, gdpsp->gdps_view2model, vorigin);
 
     n = 0;
-    for (j = 0; j < gdpsp->gdps_polygons.gp_polygon[polygon_i].gp_num_contours; ++j)
+    for (j = 0; j < gdpsp->gdps_polygons.gp_polygon[polygon_i].gp_num_contours; ++j) {
+	size_t cstart = n;
+
 	for (k = 0; k < gdpsp->gdps_polygons.gp_polygon[polygon_i].gp_contour[j].gpc_num_points; ++k) {
 	    point_t vpt;
 	    vect_t vdiff;
@@ -306,7 +308,7 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
 	    VSCALE(vdiff, vdiff, gdpsp->gdps_scale);
 	    V2MOVE(sketch_ip->verts[n], vdiff);
 
-	    if (n) {
+	    if (k) {
 		lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "segment");
 		sketch_ip->curve.segment[n-1] = (genptr_t)lsg;
 		lsg->magic = CURVE_LSEG_MAGIC;
@@ -317,14 +319,16 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
 	    ++n;
 	}
 
-
-    if (n) {
-	lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "segment");
-	sketch_ip->curve.segment[n-1] = (genptr_t)lsg;
-	lsg->magic = CURVE_LSEG_MAGIC;
-	lsg->start = n-1;
-	lsg->end = 0;
+	if (k) {
+	    lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "segment");
+	    sketch_ip->curve.segment[n-1] = (genptr_t)lsg;
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = n-1;
+	    lsg->end = cstart;
+	}
     }
+
+
 
     GED_DB_DIRADD(gedp, dp, sname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
@@ -423,7 +427,7 @@ ged_import_polygon(struct ged *gedp, const char *sname)
     j = 0;
     while (BU_LIST_NON_EMPTY(&HeadContourNodes)) {
 	register size_t k = 0;
-	size_t npoints = 1;
+	size_t npoints = 0;
 	struct line_seg *curr_lsg = NULL;
 
 	curr_cnode = BU_LIST_FIRST(contour_node, &HeadContourNodes);
@@ -449,14 +453,18 @@ ged_import_polygon(struct ged *gedp, const char *sname)
 	    ++k;
 	}
 
+#if 0
 	if (curr_lsg) {
 	    VJOIN2(gpp->gp_contour[j].gpc_point[k], sketch_ip->V,
 		   sketch_ip->verts[curr_lsg->end][0], sketch_ip->u_vec,
 		   sketch_ip->verts[curr_lsg->end][1], sketch_ip->v_vec);
 	}
+#endif
 
 	/* free contour node */
 	bu_free((genptr_t)curr_cnode, "curr_cnode");
+
+	++j;
     }
 
     /* Clean up */
