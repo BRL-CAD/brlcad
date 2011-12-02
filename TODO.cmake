@@ -14,9 +14,6 @@ Remaining items:
 
 25. Eliminate MSVC from all non-top-level CMakeLists.txt files
 
-26. Add DEPRECATION WARNING messages to autogen.sh, configure.ac
-    intro and summary, and Makefile.am summary.  Update doc/deprecation.txt.
-
 
 Done (to first order, all this needs testing)
 
@@ -89,3 +86,5 @@ Done (to first order, all this needs testing)
 
 23.  Auto's not reporting anything isn't very good - should be ON (Auto) or OFF (Auto) or 32BIT (Auto)
 
+26. Add DEPRECATION WARNING messages to autogen.sh, configure.ac
+    intro and summary, and Makefile.am summary.  Update doc/deprecation.txt.
