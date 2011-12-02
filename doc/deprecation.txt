@@ -17,7 +17,7 @@ a) during a major release (e.g. going from 7.*.* to 8.*.*)
 b) during a minor release provided the change was publicly announced
    as deprecated beforehand AND sufficient deprecation warning was
    given via either i) three minor releases included the deprecation
-   notice, or ii) three months passed since deprecation
+   notice, and ii) at least three months passed since deprecation
 
 c) during a minor release provided there still exists an equivalent
    alternative interface that will not impose an undue burden on users
@@ -53,13 +53,11 @@ mged
 
 7.20
 ----
-liborle 
+liborle
         remove liborle and the tools using it, fb-orle, orle-fb, orle-pix and
 	pix-orle [deprecated 7.20]
-
 tclscripts/lib
         Mged, Database, Db, Dm, Drawable, Display, QuadDisplay, View -> Ged [deprecated 7.20]
-
 librt
         bspline primitive [deprecated 7.20]
         poly primitive [deprecated 7.20]
