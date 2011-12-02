@@ -3791,8 +3791,13 @@ to_data_polygons(struct ged *gedp,
 	gdpsp->gdps_polygons.gp_polygon = (ged_polygon *)bu_realloc(gdpsp->gdps_polygons.gp_polygon,
 								    gdpsp->gdps_polygons.gp_num_polygons * sizeof(ged_polygon),
 								    "realloc gp_polygon");
-	gdpsp->gdps_polygons.gp_polygon[i] = *gpp;  /* struct copy */
 
+	gdpsp->gdps_polygons.gp_polygon[i] = *gpp;  /* struct copy */
+	VMOVE(gdpsp->gdps_polygons.gp_polygon[i].gp_color, gdpsp->gdps_color);
+	gdpsp->gdps_polygons.gp_polygon[i].gp_line_style = gdpsp->gdps_line_style;
+	gdpsp->gdps_polygons.gp_polygon[i].gp_line_width = gdpsp->gdps_line_width;
+
+	to_refresh_view(gdvp);
 	return GED_OK;
     }
 
