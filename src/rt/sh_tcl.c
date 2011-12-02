@@ -73,7 +73,7 @@ sh_directchange_rgb(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
     b = atoi(argv[3+2]) / 255.;
 
     rtip = (struct rt_i *)atol(argv[1]);
-    RT_CK_RTI_TCL(interp, rtip);
+    RT_CK_RTI(rtip);
 
     if ( rtip->needprep )  {
 	Tcl_AppendResult(interp, "rt_prep() hasn't been called yet, error.\n", NULL);
@@ -133,7 +133,7 @@ sh_directchange_shader(ClientData UNUSED(clientData), Tcl_Interp *interp, int ar
     }
 
     rtip = (struct rt_i *)atol(argv[1]);
-    RT_CK_RTI_TCL(interp, rtip);
+    RT_CK_RTI(rtip);
 
     if ( rtip->needprep )  {
 	Tcl_AppendResult(interp, "rt_prep() hasn't been called yet, error.\n", NULL);

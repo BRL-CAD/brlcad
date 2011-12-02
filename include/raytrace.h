@@ -834,9 +834,7 @@ struct db_i {
 };
 #define DBI_NULL ((struct db_i *)0)
 #define RT_CHECK_DBI(_p) BU_CKMAG(_p, DBI_MAGIC, "struct db_i")
-#define RT_CHECK_DBI_TCL(_interp, _p) BU_CKMAG_TCL(_interp, _p, DBI_MAGIC, "struct db_i")
 #define RT_CK_DBI(_p) RT_CHECK_DBI(_p)
-#define RT_CK_DBI_TCL(_interp, _p) RT_CHECK_DBI_TCL(_interp, _p)
 
 
 /**
@@ -977,8 +975,6 @@ struct rt_comb_internal {
 };
 #define RT_CHECK_COMB(_p) BU_CKMAG(_p, RT_COMB_MAGIC, "rt_comb_internal")
 #define RT_CK_COMB(_p) RT_CHECK_COMB(_p)
-#define RT_CHECK_COMB_TCL(_interp, _p) BU_CKMAG_TCL(interp, _p, RT_COMB_MAGIC, "rt_comb_internal")
-#define RT_CK_COMB_TCL(_interp, _p) RT_CHECK_COMB_TCL(_interp, _p)
 
 /**
  * initialize an rt_comb_internal to empty.
@@ -1042,8 +1038,6 @@ struct rt_binunif_internal {
 };
 #define RT_CHECK_BINUNIF(_p) BU_CKMAG(_p, RT_BINUNIF_INTERNAL_MAGIC, "rt_binunif_internal")
 #define RT_CK_BINUNIF(_p) RT_CHECK_BINUNIF(_p)
-#define RT_CHECK_BINUNIF_TCL(_interp, _p) BU_CKMAG_TCL(interp, _p, RT_BINUNIF_MAGIC, "rt_binunif_internal")
-#define RT_CK_BINUNIF_TCL(_interp, _p) RT_CHECK_BINUNIF_TCL(_interp, _p)
 
 
 /**
@@ -1325,9 +1319,7 @@ struct rt_wdb {
 
 
 #define RT_CHECK_WDB(_p) BU_CKMAG(_p, RT_WDB_MAGIC, "rt_wdb")
-#define RT_CHECK_WDB_TCL(_interp, _p) BU_CKMAG_TCL(_interp, _p, RT_WDB_MAGIC, "rt_wdb")
 #define RT_CK_WDB(_p) RT_CHECK_WDB(_p)
-#define RT_CK_WDB_TCL(_interp, _p) RT_CHECK_WDB_TCL(_interp, _p)
 #define RT_WDB_NULL		((struct rt_wdb *)NULL)
 #define RT_WDB_TYPE_DB_DISK			2
 #define RT_WDB_TYPE_DB_DISK_APPEND_ONLY		3
@@ -1725,7 +1717,6 @@ struct application_bundle
 #define RT_AFN_NULL	((int (*)(struct application *, struct partition *, struct region *, struct region *, struct partition *))NULL)
 #define RT_CK_AP(_p) BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 #define RT_CK_APPLICATION(_p) BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
-#define RT_CK_AP_TCL(_interp, _p) BU_CKMAG_TCL(_interp, _p, RT_AP_MAGIC, "struct application")
 #define RT_APPLICATION_INIT(_p) { \
 	memset((char *)(_p), 0, sizeof(struct application)); \
 	(_p)->a_magic = RT_AP_MAGIC; \
@@ -1883,9 +1874,7 @@ struct rt_i {
 #define RTI_NULL	((struct rt_i *)0)
 
 #define RT_CHECK_RTI(_p) BU_CKMAG(_p, RTI_MAGIC, "struct rt_i")
-#define RT_CHECK_RTI_TCL(_interp, _p) BU_CKMAG_TCL(_interp, _p, RTI_MAGIC, "struct rt_i")
 #define RT_CK_RTI(_p) RT_CHECK_RTI(_p)
-#define RT_CK_RTI_TCL(_interp, _p) RT_CHECK_RTI_TCL(_interp, _p)
 
 #define	RT_PART_NUBSPT	0
 #define RT_PART_NUGRID	1

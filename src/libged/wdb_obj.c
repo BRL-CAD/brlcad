@@ -601,7 +601,7 @@ Usage: wdb_open\n\
 
 	if ((dbip = wdb_prep_dbip(interp, argv[i])) == DBI_NULL)
 	    return TCL_ERROR;
-	RT_CK_DBI_TCL(interp, dbip);
+	RT_CK_DBI(dbip);
 
 	wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
     } else if (BU_STR_EQUAL(argv[2], "file")) {
@@ -639,14 +639,14 @@ Usage: wdb_open\n\
  *
  */
 int
-wdb_decode_dbip(Tcl_Interp *interp, const char *dbip_string, struct db_i **dbipp)
+wdb_decode_dbip(Tcl_Interp *UNUSED(interp), const char *dbip_string, struct db_i **dbipp)
 {
     if (sscanf(dbip_string, "%p", (void **)dbipp) != 1) {
 	return GED_ERROR;
     }
 
     /* Could core dump */
-    RT_CK_DBI_TCL(interp, *dbipp);
+    RT_CK_DBI(*dbipp);
 
     return TCL_OK;
 }
@@ -774,7 +774,7 @@ wdb_match_cmd(struct rt_wdb *wdbp,
 {
     struct bu_vls matches;
 
-    RT_CK_WDB_TCL(interp, wdbp);
+    RT_CK_WDB(wdbp);
 
     /* Verify that this wdb supports lookup operations
        (non-null dbip) */
@@ -1217,7 +1217,7 @@ wdb_adjust_cmd(struct rt_wdb *wdbp,
     name = argv[1];
 
     /* Verify that this wdb supports lookup operations (non-null dbip) */
-    RT_CK_DBI_TCL(interp, wdbp->dbip);
+    RT_CK_DBI(wdbp->dbip);
 
     dp = db_lookup(wdbp->dbip, name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
@@ -1378,8 +1378,8 @@ wdb_tops_cmd(struct rt_wdb *wdbp,
 
     int no_decorate = 0;
 
-    RT_CK_WDB_TCL(interp, wdbp);
-    RT_CK_DBI_TCL(interp, wdbp->dbip);
+    RT_CK_WDB(wdbp);
+    RT_CK_DBI(wdbp->dbip);
 
     /* process any options */
     bu_optind = 1;	/* re-init bu_getopt() */
@@ -1505,8 +1505,8 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
     struct resource *resp;
     const char *newprocname;
 
-    RT_CK_WDB_TCL(interp, wdbp);
-    RT_CK_DBI_TCL(interp, wdbp->dbip);
+    RT_CK_WDB(wdbp);
+    RT_CK_DBI(wdbp->dbip);
 
     if (argc < 3) {
 	struct bu_vls vls;
@@ -1885,8 +1885,8 @@ wdb_dump_cmd(struct rt_wdb *wdbp,
     struct rt_wdb *op;
     int ret;
 
-    RT_CK_WDB_TCL(interp, wdbp);
-    RT_CK_DBI_TCL(interp, wdbp->dbip);
+    RT_CK_WDB(wdbp);
+    RT_CK_DBI(wdbp->dbip);
 
     if (argc != 2) {
 	struct bu_vls vls;
@@ -3418,7 +3418,7 @@ copy_object(
 	switch (ip.idb_minor_type) {
 	    case DB5_MINORTYPE_BRLCAD_COMBINATION:
 		comb = (struct rt_comb_internal *)ip.idb_ptr;
-		RT_CK_COMB_TCL(interp, comb);
+		RT_CK_COMB(comb);
 		adjust_names(interp, comb->tree, curr_dbip, name_tbl, used_names_tbl, cc_data);
 		break;
 	    case DB5_MINORTYPE_BRLCAD_EXTRUDE:

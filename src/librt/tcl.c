@@ -222,9 +222,9 @@ rt_tcl_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char
 	return TCL_ERROR;
     }
 
-    RT_CK_AP_TCL(interp, ap);
+    RT_CK_APPLICATION(ap);
     rtip = ap->a_rt_i;
-    RT_CK_RTI_TCL(interp, rtip);
+    RT_CK_RTI(rtip);
 
     n = atoi(argv[2]);
     if (rt_tcl_parse_ray(interp, &ap->a_ray, &argv[3]) == TCL_ERROR)
@@ -377,9 +377,9 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
 	idx = 2;
     }
 
-    RT_CK_AP_TCL(interp, ap);
+    RT_CK_APPLICATION(ap);
     rtip = ap->a_rt_i;
-    RT_CK_RTI_TCL(interp, rtip);
+    RT_CK_RTI(rtip);
 
     if (rt_tcl_parse_ray(interp, &ap->a_ray, &argv[idx]) == TCL_ERROR)
 	return TCL_ERROR;
@@ -413,9 +413,9 @@ rt_tcl_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char
 	return TCL_ERROR;
     }
 
-    RT_CK_AP_TCL(interp, ap);
+    RT_CK_APPLICATION(ap);
     rtip = ap->a_rt_i;
-    RT_CK_RTI_TCL(interp, rtip);
+    RT_CK_RTI(rtip);
 
     if (argc == 3) {
 	ap->a_onehit = atoi(argv[2]);
@@ -446,9 +446,9 @@ rt_tcl_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc, const cha
 	return TCL_ERROR;
     }
 
-    RT_CK_AP_TCL(interp, ap);
+    RT_CK_APPLICATION(ap);
     rtip = ap->a_rt_i;
-    RT_CK_RTI_TCL(interp, rtip);
+    RT_CK_RTI(rtip);
 
     if (argc == 3) {
 	ap->a_no_booleans = atoi(argv[2]);
@@ -480,9 +480,9 @@ rt_tcl_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char 
 	return TCL_ERROR;
     }
 
-    RT_CK_AP_TCL(interp, ap);
+    RT_CK_APPLICATION(ap);
     rtip = ap->a_rt_i;
-    RT_CK_RTI_TCL(interp, rtip);
+    RT_CK_RTI(rtip);
 
     rt_ck(rtip);
 
@@ -513,9 +513,9 @@ rt_tcl_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 	return TCL_ERROR;
     }
 
-    RT_CK_AP_TCL(interp, ap);
+    RT_CK_APPLICATION(ap);
     rtip = ap->a_rt_i;
-    RT_CK_RTI_TCL(interp, rtip);
+    RT_CK_RTI(rtip);
 
     if (argc >= 3 && !rtip->needprep) {
 	Tcl_AppendResult(interp,
@@ -588,9 +588,9 @@ rt_tcl_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *c
 	return TCL_ERROR;
     }
 
-    RT_CK_AP_TCL(interp, ap);
+    RT_CK_APPLICATION(ap);
     rtip = ap->a_rt_i;
-    RT_CK_RTI_TCL(interp, rtip);
+    RT_CK_RTI(rtip);
 
     /* Return a list of the settable variables and their values */
     if (argc == 2) {

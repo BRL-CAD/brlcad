@@ -813,3 +813,7 @@ s/bu_tcl_setup/Bu_Init/g
         removed bu_tcl_setup() in favor of Bu_Init() [7.21]
 s/bu_tcl_\([^(]*\)([^,]*?[[:space:]]*,[^,]*?[[:space:]]*,\(.*\)/bu_\1(\2/g
         removed all bu_tcl_*() functions, use native bu function [7.21]
+s/bu_badmagic_tcl\([^(]*\)([^,]*?[[:space:]]*,\(.*\)/bu_badmagic(\1/g
+        removed bu_badmagic_tcl() in favor of bu_badmagic() [7.21]
+s/\(.*\)_CK\(.*\)_TCL\([^(]*\)([^,]*?[[:space:]]*,\(.*\)/\1_CK\2(\3/g
+        removed all *_CK*_TCL() macros (e.g., BU_CKMAG_TCL, RT_CK_DBI_TCL, etc) in favor of non-TCL macros [7.21]

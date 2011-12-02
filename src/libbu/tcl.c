@@ -40,35 +40,6 @@ Tcl_Interp *brlcad_interp = (Tcl_Interp *)0;
 extern int Cho_Init(Tcl_Interp *interp);
 
 
-void
-bu_badmagic_tcl(Tcl_Interp *interp,
-		const uint32_t *ptr,
-		uint32_t magic,
-		const char *str,
-		const char *file,
-		int line)
-{
-    char buf[SMALLBUFSIZ];
-
-    if (UNLIKELY(!(ptr))) {
-	snprintf(buf, SMALLBUFSIZ, "ERROR: NULL %s pointer in TCL interface, file %s, line %d\n",
-		 str, file, line);
-	Tcl_AppendResult(interp, buf, NULL);
-	return;
-    }
-    if (UNLIKELY(*((uint32_t *)(ptr)) != (magic))) {
-	snprintf(buf, SMALLBUFSIZ, "ERROR: bad pointer in TCL interface %p: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
-		 (void *)ptr,
-		 str, (unsigned long)magic,
-		 bu_identify_magic(*(ptr)), (unsigned long)*(ptr),
-		 file, line);
-	Tcl_AppendResult(interp, buf, NULL);
-	return;
-    }
-    Tcl_AppendResult(interp, "bu_badmagic_tcl() mysterious error condition, ", str, " pointer, ", file, "\n", NULL);
-}
-
-
 /**
  * Convert the "form" of a bu_structparse table into a TCL result
  * string, with parameter-name data-type pairs:

@@ -1687,7 +1687,6 @@ struct bn_vlist  {
 };
 #define BN_VLIST_NULL	((struct bn_vlist *)0)
 #define BN_CK_VLIST(_p) BU_CKMAG((_p), BN_VLIST_MAGIC, "bn_vlist")
-#define BN_CK_VLIST_TCL(_interp, _p) BU_CKMAG_TCL(_interp, (_p), BN_VLIST_MAGIC, "bn_vlist")
 
 /* should these be enum? -Erik */
 /* Values for cmd[] */

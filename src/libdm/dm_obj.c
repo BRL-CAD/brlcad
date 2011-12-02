@@ -1299,8 +1299,7 @@ dmo_drawVList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 	return TCL_ERROR;
     }
 
-    /* XXX this causes a core dump if vp is bogus */
-    BN_CK_VLIST_TCL(interp, vp);
+    BN_CK_VLIST(vp);
 
     return DM_DRAW_VLIST(dmop->dmo_dmp, vp);
 }
