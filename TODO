@@ -59,6 +59,14 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* break cyclic dependency between libdm and libged.  libged should not
+  be aware of libdm (screengrab command).  to implement a ged command
+  that updates the display, the gedp could provide a means to
+  register a callback so (for example) mged could register a function
+  that gets passed a dmp, and libged would call back into that
+  front-end client function instead of a direct call so library
+  encapsulation is maintained.
+
 * implement uv-mapping callback so we can texture-map BoT, NMG, and
   NURBS geometry
 
