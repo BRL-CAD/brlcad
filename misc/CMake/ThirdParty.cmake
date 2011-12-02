@@ -116,7 +116,7 @@ MACRO(THIRD_PARTY lower dir)
 				        MESSAGE(WARNING "Configuring to use system ${lower} even though it was NOT found")
 
 					# turn it off even though we didn't find it
-					SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
+					SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
 
 				ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
 					SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "Automatically using bundled, ${lower} NOT found" FORCE)
