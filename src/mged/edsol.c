@@ -9012,9 +9012,15 @@ f_put_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     save_magic = *((uint32_t *)es_int.idb_ptr);
     *((uint32_t *)es_int.idb_ptr) = ftp->ft_internal_magic;
-    if (bu_tcl_structparse_argv(interp, argc-2, argv+2, ftp->ft_parsetab,
-				(char *)es_int.idb_ptr)==TCL_ERROR) {
-	return TCL_ERROR;
+    {
+	int ret;
+	struct bu_vls vlog;
+	bu_vls_init(&vlog);
+	ret = bu_structparse_argv(&vlog, argc-2, argv+2, ftp->ft_parsetab, (char *)es_int.idb_ptr);
+	Tcl_AppendResult(interp, bu_vls_addr(&vlog), (char *)NULL);
+	bu_vls_free(&vlog);
+	if (ret != BRLCAD_OK)
+	    return TCL_ERROR;
     }
     *((uint32_t *)es_int.idb_ptr) = save_magic;
 

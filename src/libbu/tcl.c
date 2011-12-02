@@ -132,29 +132,6 @@ tcl_bu_structparse_get_terse_form(Tcl_Interp *interp,
 }
 
 
-int
-bu_tcl_structparse_argv(Tcl_Interp *interp,
-			int argc,
-			const char **argv,
-			const struct bu_structparse *desc,
-			char *base)
-{
-    struct bu_vls vlog;
-    int ret;
-
-    bu_vls_init(&vlog);
-    ret = bu_structparse_argv(&vlog, argc, argv, desc, base);
-    Tcl_AppendResult(interp, bu_vls_addr(&vlog), (char *)NULL);
-    bu_vls_free(&vlog);
-
-    /* Convert to a Tcl return code */
-    if (ret != BRLCAD_OK)
-	return TCL_ERROR;
-
-    return TCL_OK;
-}
-
-
 /**
  * A tcl wrapper for bu_mem_barriercheck.
  *

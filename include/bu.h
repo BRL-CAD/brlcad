@@ -5308,30 +5308,6 @@ BU_EXPORT extern void bu_observer_free(struct bu_observer *);
  */
 
 /**
- * Support routine for db adjust and db put.  Much like the bu_struct_parse routine
- * which takes its input as a bu_vls. This routine, however, takes the arguments
- * as lists, a more Tcl-friendly method. Also knows about the Tcl result string,
- * so it can make more informative error messages.
- *
- * Operates on argv[0] and argv[1], then on argv[2] and argv[3], ...
- *
- *
- * @param interp	- tcl interpreter
- * @param argc	- number of elements in argv
- * @param argv	- contains the keyword-value pairs
- * @param desc	- structure description
- * @param base	- base addr of users struct
- *
- * 	@retval TCL_OK if successful,
- * @retval TCL_ERROR on failure
- */
-BU_EXPORT extern int bu_tcl_structparse_argv(Tcl_Interp *interp,
-					     int argc,
-					     const char **argv,
-					     const struct bu_structparse *desc,
-					     char *base);
-
-/**
  * Bu_Init
  *
  * Allows LIBBU to be dynamically loaded to a vanilla tclsh/wish with
