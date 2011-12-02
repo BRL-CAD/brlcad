@@ -172,7 +172,14 @@ ENDMACRO(AUTO_OPTION varname release_state debug_state)
 # nomenclature, or anything that the developer things should lead to a given
 # option being set.  The documentation is auto-formatted into a text document
 # describing all BRL-CAD options.
-MACRO(BRLCAD_OPTION opt opt_ALIASES opt_DESCRIPTION)
+MACRO(BRLCAD_OPTION default opt opt_ALIASES opt_DESCRIPTION)
+    IF(NOT DEFINED ${opt})
+	SET(${opt} ${default} CACHE STRING "define ${opt}" FORCE)
+    ENDIF(NOT DEFINED ${opt})
+    IF("${${opt}}" STREQUAL "")
+	SET(${opt} ${default} CACHE STRING "define ${opt}" FORCE)
+    ENDIF("${${opt}}" STREQUAL "")
+    MARK_AS_ADVANCED(${opt})
     IF(${opt_ALIASES})
 	STRING(REPLACE "ENABLE_" "DISABLE_" inverse_aliases ${${opt_ALIASES}})
 	FOREACH(item ${${opt_ALIASES}})
