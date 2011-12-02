@@ -57,17 +57,6 @@ cho_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 }
 
 
-int
-Cho_Init(Tcl_Interp *interp)
-{
-    BU_LIST_INIT(&HeadCmdHistObj.l);
-    (void)Tcl_CreateCommand(interp, "ch_open", (Tcl_CmdProc *)cho_open_tcl,
-			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-
-    return TCL_OK;
-}
-
-
 HIDDEN void
 cho_deleteProc(ClientData clientData)
 {
@@ -161,6 +150,16 @@ cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
 }
 
+
+int
+Cho_Init(Tcl_Interp *interp)
+{
+    BU_LIST_INIT(&HeadCmdHistObj.l);
+    (void)Tcl_CreateCommand(interp, "ch_open", (Tcl_CmdProc *)cho_open_tcl,
+			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+
+    return TCL_OK;
+}
 
 /*
  * Local Variables:
