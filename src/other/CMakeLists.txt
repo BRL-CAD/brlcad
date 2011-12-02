@@ -58,6 +58,7 @@ BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
 #---------------------------------------------------------------------------------
 THIRD_PARTY_EXECUTABLE(lemon lemon)
 THIRD_PARTY_EXECUTABLE(re2c re2c)
+THIRD_PARTY_EXECUTABLE(perplex perplex)
 
 #---------------------------------------------------------------------------------
 # Third Party Sources

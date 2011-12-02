@@ -87,7 +87,7 @@ static const char usage[] =
 "Usage: perplex [options] input\n"
 "  -?\n"
 "  -h, --help\t\tprints this message\n"
-"  -c, --conditions\t\tenable support for start conditions\n"
+"  -c, --conditions\tenable support for start conditions\n"
 "  -i, --header PATH\tspecify path of header file\n"
 "  -o, --output\t\tspecify path of output file\n"
 "  -t, --template PATH\tspecify path to scanner template file\n"
