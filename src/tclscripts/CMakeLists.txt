@@ -30,6 +30,9 @@ MACRO(tclIndex_BUILD name targetdir)
 	SET(tclIndex_target_list "${tclIndex_target_list}" CACHE STRING "tclIndex target list" FORCE)
 ENDMACRO(tclIndex_BUILD name targetdir)
 
+MARK_AS_ADVANCED(pkgIndex_target_list)
+MARK_AS_ADVANCED(tclIndex_target_list)
+
 
 # Now that the macros are defined, we can add tclscript subdirs
 ADD_SUBDIRECTORY(archer)
