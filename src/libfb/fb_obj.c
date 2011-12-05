@@ -37,30 +37,14 @@
 
 #include "bio.h"
 #include "tcl.h"
-#include "cmd.h"                  /* includes bu.h */
+#include "cmd.h"
 #include "fb.h"
 #include "fbserv_obj.h"
+
 
 /* defined in libfb/tcl.c */
 extern int fb_refresh(FBIO *ifp, int x, int y, int w, int h);
 
-static int fbo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int fbo_cell_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int fbo_clear_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int fbo_close_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int fbo_cursor_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int fbo_getcursor_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int fbo_getheight_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int fbo_getsize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int fbo_getwidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int fbo_pixel_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int fbo_flush_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int fbo_listen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int fbo_refresh_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int fbo_rect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int fbo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int fbo_coords_ok(Tcl_Interp *interp, FBIO *fbp, int x, int y);
-static int fbo_tcllist2color(Tcl_Interp *interp, char *string, unsigned char *pixel);
 
 #define FBO_CONSTRAIN(_v, _a, _b)		\
     ((_v > _a) ? (_v < _b ? _v : _b) : _a)
@@ -74,49 +58,47 @@ struct fb_obj {
 
 static struct fb_obj HeadFBObj;			/* head of display manager object list */
 
-static struct bu_cmdtab fbo_cmds[] = {
-    {"cell",		fbo_cell_tcl},
-    {"clear",	fbo_clear_tcl},
-    {"close",	fbo_close_tcl},
-    {"configure",	fbo_configure_tcl},
-    {"cursor",	fbo_cursor_tcl},
-    {"pixel",	fbo_pixel_tcl},
-    {"flush",	fbo_flush_tcl},
-    {"getcursor",	fbo_getcursor_tcl},
-    {"getheight",	fbo_getheight_tcl},
-    {"getsize",	fbo_getsize_tcl},
-    {"getwidth",	fbo_getwidth_tcl},
-    {"listen",	fbo_listen_tcl},
-    {"rect",		fbo_rect_tcl},
-    {"refresh",	fbo_refresh_tcl},
-    {(char *)0,	(int (*)())0}
-};
 
-
-/*
- * F B O _ C M D
- *
- * Generic interface for framebuffer object routines.
- * Usage:
- * procname cmd ?args?
- *
- * Returns: result of FB command.
- */
 HIDDEN int
-fbo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+fbo_coords_ok(Tcl_Interp *interp, FBIO *fbp, int x, int y)
 {
-    return bu_cmd(clientData, interp, argc, argv, fbo_cmds, 1);
-}
+    int width;
+    int height;
+    int errors;
+    width = fb_getwidth(fbp);
+    height = fb_getheight(fbp);
 
+    errors = 0;
 
-int
-Fbo_Init(Tcl_Interp *interp)
-{
-    BU_LIST_INIT(&HeadFBObj.l);
-    (void)Tcl_CreateCommand(interp, "fb_open", (Tcl_CmdProc *)fbo_open_tcl,
-			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+    if (x < 0) {
+	Tcl_AppendResult(interp, "fbo_coords_ok: Error!: X value < 0\n",
+			 (char *)NULL);
+	++errors;
+    }
 
-    return TCL_OK;
+    if (y < 0) {
+	Tcl_AppendResult(interp, "fbo_coords_ok: Error!: Y value < 0\n",
+			 (char *)NULL);
+	++errors;
+    }
+
+    if (x > width - 1) {
+	Tcl_AppendResult(interp, "fbo_coords_ok: Error!: X value too large\n",
+			 (char *)NULL);
+	++errors;
+    }
+
+    if (y > height - 1) {
+	Tcl_AppendResult(interp, "fbo_coords_ok: Error!: Y value too large\n",
+			 (char *)NULL);
+	++errors;
+    }
+
+    if (errors) {
+	return 0;
+    } else {
+	return 1;
+    }
 }
 
 
@@ -164,94 +146,22 @@ fbo_close_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **UNUSED
 }
 
 
-/*
- * Open/create a framebuffer object.
- *
- * Usage:
- * fb_open [name device [args]]
- */
 HIDDEN int
-fbo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+fbo_tcllist2color(Tcl_Interp *interp, char *string, unsigned char *pixel)
 {
-    struct fb_obj *fbop;
-    FBIO *ifp;
-    int width = 512;
-    int height = 512;
-    register int c;
-    struct bu_vls vls;
+    int r, g, b;
 
-    if (argc == 1) {
-	/* get list of framebuffer objects */
-	for (BU_LIST_FOR(fbop, fb_obj, &HeadFBObj.l))
-	    Tcl_AppendResult(interp, bu_vls_addr(&fbop->fbo_name), " ", (char *)NULL);
-
-	return TCL_OK;
-    }
-
-    if (argc < 3) {
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib fb_open");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
+    if (sscanf(string, "%d %d %d", &r, &g, &b) != 3) {
+	Tcl_AppendResult(interp,
+			 "fb_clear: bad color spec - ",
+			 string, (char *)NULL);
 	return TCL_ERROR;
     }
 
-    /* process args */
-    bu_optind = 3;
-    bu_opterr = 0;
-    while ((c = bu_getopt(argc, argv, "w:W:s:S:n:N:")) != -1) {
-	switch (c) {
-	    case 'W':
-	    case 'w':
-		width = atoi(bu_optarg);
-		break;
-	    case 'N':
-	    case 'n':
-		height = atoi(bu_optarg);
-		break;
-	    case 'S':
-	    case 's':
-		width = atoi(bu_optarg);
-		height = width;
-		break;
-	    case '?':
-	    default:
-		Tcl_AppendResult(interp, "fb_open: bad option - ",
-				 bu_optarg, (char *)NULL);
-		return TCL_ERROR;
-	}
-    }
+    pixel[RED] = FBO_CONSTRAIN (r, 0, 255);
+    pixel[GRN] = FBO_CONSTRAIN (g, 0, 255);
+    pixel[BLU] = FBO_CONSTRAIN (b, 0, 255);
 
-    if ((ifp = fb_open(argv[2], width, height)) == FBIO_NULL) {
-	Tcl_AppendResult(interp, "fb_open: bad device - ",
-			 argv[2], (char *)NULL);
-    }
-
-    if (fb_ioinit(ifp) != 0) {
-	Tcl_AppendResult(interp, "fb_open: fb_ioinit() failed.", (char *) NULL);
-	return TCL_ERROR;
-    }
-
-    BU_GETSTRUCT(fbop, fb_obj);
-    bu_vls_init(&fbop->fbo_name);
-    bu_vls_strcpy(&fbop->fbo_name, argv[1]);
-    fbop->fbo_fbs.fbs_fbp = ifp;
-    fbop->fbo_fbs.fbs_listener.fbsl_fbsp = &fbop->fbo_fbs;
-    fbop->fbo_fbs.fbs_listener.fbsl_fd = -1;
-    fbop->fbo_fbs.fbs_listener.fbsl_port = -1;
-
-    /* append to list of fb_obj's */
-    BU_LIST_APPEND(&HeadFBObj.l, &fbop->l);
-
-    (void)Tcl_CreateCommand(interp,
-			    bu_vls_addr(&fbop->fbo_name),
-			    (Tcl_CmdProc *)fbo_cmd,
-			    (ClientData)fbop,
-			    fbo_deleteProc);
-
-    /* Return new function name as result */
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, bu_vls_addr(&fbop->fbo_name), (char *)NULL);
     return TCL_OK;
 }
 
@@ -921,65 +831,138 @@ fbo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 }
 
 
-/****************** utility routines ********************/
+/*
+ * F B O _ C M D
+ *
+ * Generic interface for framebuffer object routines.
+ * Usage:
+ * procname cmd ?args?
+ *
+ * Returns: result of FB command.
+ */
 HIDDEN int
-fbo_coords_ok(Tcl_Interp *interp, FBIO *fbp, int x, int y)
+fbo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
-    int width;
-    int height;
-    int errors;
-    width = fb_getwidth(fbp);
-    height = fb_getheight(fbp);
+    static struct bu_cmdtab fbo_cmds[] = {
+	{"cell",	fbo_cell_tcl},
+	{"clear",	fbo_clear_tcl},
+	{"close",	fbo_close_tcl},
+	{"configure",	fbo_configure_tcl},
+	{"cursor",	fbo_cursor_tcl},
+	{"pixel",	fbo_pixel_tcl},
+	{"flush",	fbo_flush_tcl},
+	{"getcursor",	fbo_getcursor_tcl},
+	{"getheight",	fbo_getheight_tcl},
+	{"getsize",	fbo_getsize_tcl},
+	{"getwidth",	fbo_getwidth_tcl},
+	{"listen",	fbo_listen_tcl},
+	{"rect",	fbo_rect_tcl},
+	{"refresh",	fbo_refresh_tcl},
+	{(char *)0,	(int (*)())0}
+    };
 
-    errors = 0;
-
-    if (x < 0) {
-	Tcl_AppendResult(interp, "fbo_coords_ok: Error!: X value < 0\n",
-			 (char *)NULL);
-	++errors;
-    }
-
-    if (y < 0) {
-	Tcl_AppendResult(interp, "fbo_coords_ok: Error!: Y value < 0\n",
-			 (char *)NULL);
-	++errors;
-    }
-
-    if (x > width - 1) {
-	Tcl_AppendResult(interp, "fbo_coords_ok: Error!: X value too large\n",
-			 (char *)NULL);
-	++errors;
-    }
-
-    if (y > height - 1) {
-	Tcl_AppendResult(interp, "fbo_coords_ok: Error!: Y value too large\n",
-			 (char *)NULL);
-	++errors;
-    }
-
-    if (errors) {
-	return 0;
-    } else {
-	return 1;
-    }
+    return bu_cmd(clientData, interp, argc, argv, fbo_cmds, 1);
 }
 
 
+/*
+ * Open/create a framebuffer object.
+ *
+ * Usage:
+ * fb_open [name device [args]]
+ */
 HIDDEN int
-fbo_tcllist2color(Tcl_Interp *interp, char *string, unsigned char *pixel)
+fbo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
-    int r, g, b;
+    struct fb_obj *fbop;
+    FBIO *ifp;
+    int width = 512;
+    int height = 512;
+    register int c;
+    struct bu_vls vls;
 
-    if (sscanf(string, "%d %d %d", &r, &g, &b) != 3) {
-	Tcl_AppendResult(interp,
-			 "fb_clear: bad color spec - ",
-			 string, (char *)NULL);
+    if (argc == 1) {
+	/* get list of framebuffer objects */
+	for (BU_LIST_FOR(fbop, fb_obj, &HeadFBObj.l))
+	    Tcl_AppendResult(interp, bu_vls_addr(&fbop->fbo_name), " ", (char *)NULL);
+
+	return TCL_OK;
+    }
+
+    if (argc < 3) {
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib fb_open");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
 
-    pixel[RED] = FBO_CONSTRAIN (r, 0, 255);
-    pixel[GRN] = FBO_CONSTRAIN (g, 0, 255);
-    pixel[BLU] = FBO_CONSTRAIN (b, 0, 255);
+    /* process args */
+    bu_optind = 3;
+    bu_opterr = 0;
+    while ((c = bu_getopt(argc, argv, "w:W:s:S:n:N:")) != -1) {
+	switch (c) {
+	    case 'W':
+	    case 'w':
+		width = atoi(bu_optarg);
+		break;
+	    case 'N':
+	    case 'n':
+		height = atoi(bu_optarg);
+		break;
+	    case 'S':
+	    case 's':
+		width = atoi(bu_optarg);
+		height = width;
+		break;
+	    case '?':
+	    default:
+		Tcl_AppendResult(interp, "fb_open: bad option - ",
+				 bu_optarg, (char *)NULL);
+		return TCL_ERROR;
+	}
+    }
+
+    if ((ifp = fb_open(argv[2], width, height)) == FBIO_NULL) {
+	Tcl_AppendResult(interp, "fb_open: bad device - ",
+			 argv[2], (char *)NULL);
+    }
+
+    if (fb_ioinit(ifp) != 0) {
+	Tcl_AppendResult(interp, "fb_open: fb_ioinit() failed.", (char *) NULL);
+	return TCL_ERROR;
+    }
+
+    BU_GETSTRUCT(fbop, fb_obj);
+    bu_vls_init(&fbop->fbo_name);
+    bu_vls_strcpy(&fbop->fbo_name, argv[1]);
+    fbop->fbo_fbs.fbs_fbp = ifp;
+    fbop->fbo_fbs.fbs_listener.fbsl_fbsp = &fbop->fbo_fbs;
+    fbop->fbo_fbs.fbs_listener.fbsl_fd = -1;
+    fbop->fbo_fbs.fbs_listener.fbsl_port = -1;
+
+    /* append to list of fb_obj's */
+    BU_LIST_APPEND(&HeadFBObj.l, &fbop->l);
+
+    (void)Tcl_CreateCommand(interp,
+			    bu_vls_addr(&fbop->fbo_name),
+			    (Tcl_CmdProc *)fbo_cmd,
+			    (ClientData)fbop,
+			    fbo_deleteProc);
+
+    /* Return new function name as result */
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, bu_vls_addr(&fbop->fbo_name), (char *)NULL);
+    return TCL_OK;
+}
+
+
+int
+Fbo_Init(Tcl_Interp *interp)
+{
+    BU_LIST_INIT(&HeadFBObj.l);
+    (void)Tcl_CreateCommand(interp, "fb_open", (Tcl_CmdProc *)fbo_open_tcl,
+			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
     return TCL_OK;
 }
