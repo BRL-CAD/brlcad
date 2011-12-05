@@ -9,6 +9,10 @@ MACRO(pkgIndex_BUILD name targetdir)
 		)
 	ADD_CUSTOM_TARGET(${name}_pkgIndex.tcl ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl)
 	INSTALL(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl DESTINATION ${DATA_DIR}/${targetdir})
+	# Maintain a list of all pkgIndex targets for dependency purposes
+	SET(pkgIndex_target_list ${pkgIndex_target_list} ${name}_pkgIndex.tcl)
+	LIST(REMOVE_DUPLICATES pkgIndex_target_list)
+	SET(pkgIndex_target_list "${pkgIndex_target_list}" CACHE STRING "pkgIndex target list" FORCE)
 ENDMACRO(pkgIndex_BUILD name targetdir)
 
 MACRO(tclIndex_BUILD name targetdir)
@@ -20,6 +24,10 @@ MACRO(tclIndex_BUILD name targetdir)
 		)
 	ADD_CUSTOM_TARGET(${name}_tclIndex ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex)
 	INSTALL(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex DESTINATION ${DATA_DIR}/${targetdir})
+	# Maintain a list of all tclIndex targets for dependency purposes
+	SET(tclIndex_target_list ${tclIndex_target_list} ${name}_tclIndex)
+	LIST(REMOVE_DUPLICATES tclIndex_target_list)
+	SET(tclIndex_target_list "${tclIndex_target_list}" CACHE STRING "tclIndex target list" FORCE)
 ENDMACRO(tclIndex_BUILD name targetdir)
 
 

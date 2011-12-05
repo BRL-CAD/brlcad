@@ -134,9 +134,14 @@ IF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 	SET_TARGET_PROPERTIES(mged PROPERTIES COMPILE_FLAGS "-DBC_WITH_PARSER")
 ENDIF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 
-# FIXME: mged needs to depend on the creation/installation of all the
-# tclscripts but for some reason, this isn't doing the trick.
-ADD_DEPENDENCIES(mged tclscripts_tclindex tclscripts_pkgindex.tcl)
+# mged depends on the creation/installation of all the
+# tclscripts.
+FOREACH(item ${pkgIndex_target_list})
+	ADD_DEPENDENCIES(mged ${item})
+ENDFOREACH(item ${pkgIndex_target_list})
+FOREACH(item ${tclIndex_target_list})
+	ADD_DEPENDENCIES(mged ${item})
+ENDFOREACH(item ${tclIndex_target_list})
 
 BRLCAD_ADDEXEC(cad_boundp cad_boundp.c "libbu ${M_LIBRARY}")
 
