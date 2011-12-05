@@ -64,7 +64,6 @@ SET(remaining_dirs
 	libtermio
 	adrt
 	anim
-	archer
 	brlman
 	burst
 	bwish
@@ -76,15 +75,19 @@ SET(remaining_dirs
 	halftone
 	irprep
 	lgt
-	mged
 	nirt
 	proc-db
 	shapes
 	sig
 	tab
-	tclscripts
 	util
 	vdeck
+	# tclscripts must come before mged and archer, so the
+	# target lists are defined when the archer and mged
+	# targets are defined
+	tclscripts
+	archer
+	mged
 )
 
 # FIXME: Ideally these should all be in the above list,
