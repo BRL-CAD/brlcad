@@ -813,7 +813,22 @@ MARK_AS_ADVANCED(BRLCAD_ENABLE_COMPILER_WARNINGS)
 
 # Enable/disable strict compiler settings - these are limited to libraries that
 # specifically inform the BRLCAD_ADDLIB macro they can be built with STRICT flags.
-OPTION(BRLCAD_ENABLE_STRICT "Use strict compiler settings on libraries that support them" ON)
+
+SET(BRLCAD_ENABLE_STRICT_ALIASES 
+	ENABLE_STRICT
+	ENABLE_STRICT_COMPILE
+	ENABLE_STRICT_COMPILE_FLAGS)
+SET(BRLCAD_ENABLE_STRICT_DESCRIPTION "
+Causes all compilation warnings for C code to be treated as errors.  This is now
+the default for BRL-CAD source code, and developers should address issues
+discovered by these flags whenever possible rather than disabling strict
+mode.
+")
+BRLCAD_OPTION(ON BRLCAD_ENABLE_STRICT BRLCAD_ENABLE_STRICT_ALIASES BRLCAD_ENABLE_STRICT_DESCRIPTION)
+
+# The full BRL-CAD strict flags are too much for a variety of system
+# C++ headers presently (Dec. 2011) so we don't default to erroring out
+# on warnings for C++
 OPTION(BRLCAD_ENABLE_CXX_STRICT "Use strict compiler settings on cxx files in libraries that build with strict" OFF)
 IF(BRLCAD_ENABLE_STRICT)
 	MARK_AS_ADVANCED(BRLCAD_ENABLE_STRICT)
