@@ -883,6 +883,35 @@ SET(WORD_SIZE_LABEL "Compile as 32BIT or 64BIT?")
 IF(NOT BRLCAD_WORD_SIZE)
 	SET(BRLCAD_WORD_SIZE "AUTO" CACHE STRING WORD_SIZE_LABEL)
 ENDIF(NOT BRLCAD_WORD_SIZE)
+
+SET(BRLCAD_WORD_SIZE_ALIASES 
+	ENABLE_64
+	ENABLE_64_BUILD
+	ENABLE_64BIT
+	ENABLE_64BIT_BUILD
+	ENABLE_64_BIT
+	ENABLE_64_BIT_BUILD)
+SET(BRLCAD_WORD_SIZE_DESCRIPTION "
+Attempts to force compilation to produce 32-bit or 64-bit
+binaries and libraries.  Note that it merely *ATTEMPTS* to force
+32-bit or 64-bit compilation - it will fail if the compiler does
+not support the requested mode.  Default is "auto", where the 
+default compilation mode as set by the compiler will be utilized.
+")
+BRLCAD_OPTION(AUTO BRLCAD_WORD_SIZE BRLCAD_WORD_SIZE_ALIASES BRLCAD_WORD_SIZE_DESCRIPTION)
+
+# The following allows enable/disable aliases to work for
+# word size, although if this ever needs to work as more than
+# a 32/64 bit switch in practice enable/disable will become
+# impractical for word size.
+IF(${BRLCAD_WORD_SIZE} STREQUAL "ON")
+	SET(BRLCAD_WORD_SIZE "64BIT" CACHE STRING WORD_SIZE_LABEL FORCE)
+ENDIF(${BRLCAD_WORD_SIZE} STREQUAL "ON")
+IF(${BRLCAD_WORD_SIZE} STREQUAL "OFF")
+	SET(BRLCAD_WORD_SIZE "32BIT" CACHE STRING WORD_SIZE_LABEL FORCE)
+ENDIF(${BRLCAD_WORD_SIZE} STREQUAL "OFF")
+
+# Make the option fault tolerant, and set the allowed types for cmake-gui
 set_property(CACHE BRLCAD_WORD_SIZE PROPERTY STRINGS AUTO 32BIT 64BIT)
 STRING(TOUPPER "${BRLCAD_WORD_SIZE}" BRLCAD_WORD_SIZE_UPPER)
 SET(BRLCAD_WORD_SIZE "${BRLCAD_WORD_SIZE_UPPER}" CACHE STRING WORD_SIZE_LABEL FORCE)
