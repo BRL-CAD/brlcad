@@ -17,7 +17,16 @@ ELSE(WIN32)
 ENDIF(WIN32)
 INSTALL(PROGRAMS archer DESTINATION bin)
 
-
+# archer depends on the creation/installation of all the
+# tclscripts (and other things as well, but first see if
+# requiring the tclscripts is enough without other explicit
+# add_dependencies calls).
+FOREACH(item ${pkgIndex_target_list})
+	ADD_DEPENDENCIES(archer ${item})
+ENDFOREACH(item ${pkgIndex_target_list})
+FOREACH(item ${tclIndex_target_list})
+	ADD_DEPENDENCIES(archer ${item})
+ENDFOREACH(item ${tclIndex_target_list})
 
 BRLCAD_ADDFILE(plugins/Core/README plugins/archer/Core)
 BRLCAD_ADDFILE(plugins/Commands/README plugins/archer/Command)
