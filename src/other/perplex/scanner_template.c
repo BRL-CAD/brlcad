@@ -53,7 +53,9 @@
 
 #define YYEOF -1
 
-#define PERPLEX_APPDATA_TYPE void*
+#ifndef PERPLEX_LEXER
+#define PERPLEX_LEXER yylex
+#endif
 
 struct Buf {
     void   *elts;	/* elements. */
@@ -76,14 +78,32 @@ typedef struct perplex {
     char *tokenStart;
     struct Buf *buffer;
     char *tokenText;
-    PERPLEX_APPDATA_TYPE appData;
 } *perplex_t;
 
 perplex_t perplexFileScanner(FILE *input);
 perplex_t perplexStringScanner(char *input);
 void perplexFree(perplex_t scanner);
 
-int yylex(perplex_t scanner);
+#ifndef PERPLEX_APPDATA_TYPE
+#define PERPLEX_PUBLIC_LEXER \
+	int PERPLEX_LEXER(perplex_t scanner)
+#define PERPLEX_PRIVATE_LEXER \
+	static int PERPLEX_LEXER_private(perplex_t scanner)
+#define PERPLEX_PARAMETERS scanner
+#else /* PERPLEX_APPDATA_TYPE */
+#ifndef PERPLEX_APPDATA_PARAM
+#define PERPLEX_APPDATA_PARAM appData
+#endif
+#define PERPLEX_PUBLIC_LEXER \
+	int PERPLEX_LEXER(perplex_t scanner, \
+	    PERPLEX_APPDATA_TYPE PERPLEX_APPDATA_PARAM)
+#define PERPLEX_PRIVATE_LEXER \
+	static int PERPLEX_LEXER_private(perplex_t scanner, \
+	    PERPLEX_APPDATA_TYPE PERPLEX_APPDATA_PARAM)
+#define PERPLEX_PARAMETERS scanner, PERPLEX_APPDATA_PARAM
+#endif /* PERPLEX_APPDATA_TYPE */
+
+PERPLEX_PUBLIC_LEXER;
 
 %%
 /*              S C A N N E R _ T E M P L A T E . C
@@ -479,7 +499,6 @@ newScanner()
     scanner->tokenStart = NULL;
     scanner->buffer = NULL;
     scanner->tokenText = NULL;
-    scanner->appData = NULL;
 
     scanner->condition = 0;
 
@@ -560,14 +579,14 @@ getCondition(perplex_t scanner)
 #define IGNORE_TOKEN  UPDATE_START; continue;
 #define       yytext  getTokenText(scanner)
 
-static int perplexScan(perplex_t scanner);
+PERPLEX_PRIVATE_LEXER;
 
-int yylex(perplex_t scanner) {
+PERPLEX_PUBLIC_LEXER {
     int ret;
 
     scanner->tokenText = NULL;
 
-    ret = perplexScan(scanner);
+    ret = PERPLEX_LEXER_private(PERPLEX_PARAMETERS);
 
     if (scanner->tokenText != NULL) {
 	free(scanner->tokenText);
@@ -577,8 +596,7 @@ int yylex(perplex_t scanner) {
     return ret;
 }
 
-static int
-perplexScan(perplex_t scanner) {
+PERPLEX_PRIVATE_LEXER {
     char yych;
 
     UPDATE_START;
