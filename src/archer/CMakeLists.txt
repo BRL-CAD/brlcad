@@ -18,15 +18,34 @@ ENDIF(WIN32)
 INSTALL(PROGRAMS archer DESTINATION bin)
 
 # archer depends on the creation/installation of all the
-# tclscripts (and other things as well, but first see if
-# requiring the tclscripts is enough without other explicit
-# add_dependencies calls).
+# tclscripts.
 FOREACH(item ${pkgIndex_target_list})
 	ADD_DEPENDENCIES(archer ${item})
 ENDFOREACH(item ${pkgIndex_target_list})
 FOREACH(item ${tclIndex_target_list})
 	ADD_DEPENDENCIES(archer ${item})
 ENDFOREACH(item ${tclIndex_target_list})
+
+# other archer dependencies
+IF(BRLCAD_ENABLE_TK)
+	ADD_DEPENDENCIES(archer bwish ${ITCL_LIBRARY} ${ITK_LIBRARY})
+	get_directory_property(BRLCAD_BUILD_TKHTML DIRECTORY ${CMAKE_SOURCE_DIR}/src/other DEFINITION BRLCAD_TKHTML_BUILD)
+	IF(BRLCAD_BUILD_TKHTML)
+		ADD_DEPENDENCIES(archer Tkhtml)
+	ENDIF(BRLCAD_BUILD_TKHTML)
+	get_directory_property(BRLCAD_BUILD_TKPNG DIRECTORY ${CMAKE_SOURCE_DIR}/src/other DEFINITION BRLCAD_TKPNG_BUILD)
+	IF(BRLCAD_BUILD_TKPNG)
+		ADD_DEPENDENCIES(archer tkpng)
+	ENDIF(BRLCAD_BUILD_TKPNG)
+	get_directory_property(BRLCAD_BUILD_TKTABLE DIRECTORY ${CMAKE_SOURCE_DIR}/src/other	DEFINITION BRLCAD_TKTABLE_BUILD)
+	IF(BRLCAD_BUILD_TKTABLE)
+		ADD_DEPENDENCIES(archer Tktable)
+	ENDIF(BRLCAD_BUILD_TKTABLE)
+	get_directory_property(BRLCAD_BUILD_IWIDGETS DIRECTORY ${CMAKE_SOURCE_DIR}/src/other DEFINITION BRLCAD_IWIDGETS_BUILD)
+	IF(BRLCAD_BUILD_IWIDGETS)
+		ADD_DEPENDENCIES(archer iwidgets)
+	ENDIF(BRLCAD_BUILD_IWIDGETS)
+ENDIF(BRLCAD_ENABLE_TK)
 
 BRLCAD_ADDFILE(plugins/Core/README plugins/archer/Core)
 BRLCAD_ADDFILE(plugins/Commands/README plugins/archer/Command)
