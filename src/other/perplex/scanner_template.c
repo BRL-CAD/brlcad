@@ -413,13 +413,11 @@ bufferAppend(perplex_t scanner, size_t n)
     buf->nelts--;
 
     for (i = 0; i < n; i++) {
-	if ((c = fgetc(in)) != EOF) {
-	    buf_append(buf, &c, sizeof(char));
-	} else {
-	    buf_append_null(buf);
+	if ((c = fgetc(in)) == EOF) {
 	    scanner->atEOI = 1;
 	    break;
 	}
+	buf_append(buf, &c, sizeof(char));
     }
     buf_append_null(buf);
     scanner->null = (char*)((size_t)buf->elts + buf->nelts - 1);
@@ -432,9 +430,8 @@ bufferFill(perplex_t scanner, size_t n)
     struct Buf *buf;
     size_t shiftSize, marker, start, used;
 
-    if (scanner->in.string != NULL) {
-	/* Can't get any more input for a string. */
-        scanner->atEOI = 1;
+    if (scanner->atEOI) {
+	/* nothing to add to buffer */
 	return;
     }
 
@@ -512,6 +509,7 @@ perplexStringScanner(char *firstChar, char *lastChar)
 
     scanner->marker = scanner->cursor = firstChar;
     scanner->null = lastChar + 1;
+    scanner->atEOI = 1;
 
     return scanner;
 }
@@ -592,7 +590,7 @@ PERPLEX_PRIVATE_LEXER {
     UPDATE_START;
 
     while (1) {
-	if (scanner->atEOI) {
+	if (scanner->atEOI && scanner->cursor >= scanner->null) {
 	    return YYEOF;
 	}
 /*!re2c
