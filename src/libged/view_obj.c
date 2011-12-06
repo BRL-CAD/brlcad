@@ -42,124 +42,10 @@
 #include "ged.h"
 
 
-int Vo_Init(Tcl_Interp *interp);
-
-static int vo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]);
-static int vo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_invSize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_aet_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_rmat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_center_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_model2view_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_pmodel2view_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_view2model_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_pmat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_rot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_tra_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_sca_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_slew_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-
-static int vo_eye_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_eye_pos_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_lookat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_orientation_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_pov_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_units_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_zoom_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_local2base_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_base2local_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_coord_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_rotate_about_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_keypoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_setview_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_arot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_vrot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_mrot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_mrotPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_m2vPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_v2mPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_viewDir_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_ae2dir_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_dir2ae_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-
-static int vo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-void vo_update(struct view_obj *vop, Tcl_Interp *interp, int oflag);
-void vo_mat_aet(struct view_obj *vop);
-static void vo_persp_mat(fastf_t *m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fastf_t backoff);
-static void vo_mike_persp_mat(fastf_t *pmat, const fastf_t *eye);
-
+/* FIXME: this should not exist.  pass from application code, not
+ * library global.
+ */
 struct view_obj HeadViewObj;		/* head of view object list */
-
-static int
-vo_cmd(ClientData clientData,
-       Tcl_Interp *interp,
-       int argc,
-       char *argv[])
-{
-    static struct bu_cmdtab vo_cmds[] =
-	{
-	    {"ae",		vo_aet_tcl},
-	    {"ae2dir",		vo_ae2dir_tcl},
-	    {"arot",		vo_arot_tcl},
-	    {"base2local",	vo_base2local_tcl},
-	    {"center",		vo_center_tcl},
-	    {"coord",		vo_coord_tcl},
-	    {"dir2ae",		vo_dir2ae_tcl},
-	    {"eye",		vo_eye_tcl},
-	    {"eye_pos",		vo_eye_pos_tcl},
-	    {"invSize",		vo_invSize_tcl},
-	    {"keypoint",	vo_keypoint_tcl},
-	    {"local2base",	vo_local2base_tcl},
-	    {"lookat",		vo_lookat_tcl},
-	    {"m2vPoint",	vo_m2vPoint_tcl},
-	    {"model2view",	vo_model2view_tcl},
-	    {"mrot",		vo_mrot_tcl},
-	    {"mrotPoint",	vo_mrotPoint_tcl},
-	    {"observer",	vo_observer_tcl},
-	    {"orientation",	vo_orientation_tcl},
-	    {"perspective",	vo_perspective_tcl},
-	    {"pmat",		vo_pmat_tcl},
-	    {"pmodel2view",	vo_pmodel2view_tcl},
-	    {"pov",		vo_pov_tcl},
-	    {"rmat",		vo_rmat_tcl},
-	    {"rot",		vo_rot_tcl},
-	    {"rotate_about",	vo_rotate_about_tcl},
-	    {"sca",		vo_sca_tcl},
-	    {"setview",		vo_setview_tcl},
-	    {"size",		vo_size_tcl},
-	    {"slew",		vo_slew_tcl},
-	    {"tra",		vo_tra_tcl},
-	    {"units",		vo_units_tcl},
-	    {"v2mPoint",	vo_v2mPoint_tcl},
-	    {"view2model",	vo_view2model_tcl},
-	    {"viewDir",		vo_viewDir_tcl},
-	    {"vrot",		vo_vrot_tcl},
-	    {"zoom",		vo_zoom_tcl},
-#if 0
-	    {"knob",		vo_knob_tcl},
-	    {"qorot",		vo_qorot_tcl},
-	    {"qvrot",		vo_qvrot_tcl},
-	    {"status",		vo_status_tcl},
-	    {"",		vo__tcl},
-#endif
-	    {(char *)0,		(int (*)())0}
-	};
-
-    return bu_cmd(clientData, interp, argc, (const char **)argv, vo_cmds, 1);
-}
-
-
-int
-Vo_Init(Tcl_Interp *interp)
-{
-    BU_LIST_INIT(&HeadViewObj.l);
-    (void)Tcl_CreateCommand(interp, "v_open", vo_open_tcl,
-			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-
-    return TCL_OK;
-}
 
 
 static void
@@ -209,45 +95,6 @@ vo_open_cmd(const char *oname)
     BU_LIST_APPEND(&HeadViewObj.l, &vop->l);
 
     return vop;
-}
-
-
-/*
- * Open a view object.
- *
- * USAGE: v_open [name]
- */
-static int
-vo_open_tcl(ClientData UNUSED(clientData),
-	    Tcl_Interp *interp,
-	    int argc,
-	    const char *argv[])
-{
-    struct view_obj *vop;
-
-    if (argc == 1) {
-	/* get list of view objects */
-	for (BU_LIST_FOR(vop, view_obj, &HeadViewObj.l))
-	    Tcl_AppendResult(interp, bu_vls_addr(&vop->vo_name), " ", (char *)NULL);
-
-	return TCL_OK;
-    }
-
-    /* first, delete any commands by this name */
-    (void)Tcl_DeleteCommand(interp, argv[1]);
-
-    vop = vo_open_cmd(argv[1]);
-    (void)Tcl_CreateCommand(interp,
-			    bu_vls_addr(&vop->vo_name),
-			    (Tcl_CmdProc *)vo_cmd,
-			    (ClientData)vop,
-			    vo_deleteProc);
-
-    /* Return new function name as result */
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, bu_vls_addr(&vop->vo_name), (char *)NULL);
-
-    return TCL_OK;
 }
 
 
@@ -753,6 +600,105 @@ vo_view2model_tcl(ClientData clientData,
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_view2model_cmd(vop, interp, argc-1, argv+1);
+}
+
+
+/**
+ * P E R S P _ M A T
+ *
+ * Compute a perspective matrix for a right-handed coordinate system.
+ * Reference: SGI Graphics Reference Appendix f
+ *
+ * (Note: SGI is left-handed, but the fix is done in the Display
+ * Manager).
+ */
+static void
+vo_persp_mat(mat_t m,
+	     fastf_t fovy,
+	     fastf_t aspect,
+	     fastf_t near1,
+	     fastf_t far1,
+	     fastf_t backoff)
+{
+    mat_t m2, tran;
+
+    fovy *= 3.1415926535/180.0;
+
+    MAT_IDN(m2);
+    m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
+    m2[0] = m2[5]/aspect;
+    m2[10] = (far1+near1) / (far1-near1);
+    m2[11] = 2*far1*near1 / (far1-near1);	/* This should be negative */
+
+    m2[14] = -1;		/* XXX This should be positive */
+    m2[15] = 0;
+
+    /* Move eye to origin, then apply perspective */
+    MAT_IDN(tran);
+    tran[11] = -backoff;
+    bn_mat_mul(m, m2, tran);
+}
+
+
+/**
+ * Create a perspective matrix that transforms the +/1 viewing cube,
+ * with the acutal eye position (not at Z=+1) specified in viewing
+ * coords, into a related space where the eye has been sheared onto
+ * the Z axis and repositioned at Z=(0, 0, 1), with the same
+ * perspective field of view as before.
+ *
+ * The Zbuffer clips off stuff with negative Z values.
+ *
+ * pmat = persp * xlate * shear
+ */
+static void
+vo_mike_persp_mat(mat_t pmat,
+		  const point_t eye)
+{
+    mat_t shear;
+    mat_t persp;
+    mat_t xlate;
+    mat_t t1, t2;
+    point_t sheared_eye;
+
+    if (eye[Z] <= SMALL) {
+	VPRINT("mike_persp_mat(): ERROR, z<0, eye", eye);
+	return;
+    }
+
+    /* Shear "eye" to +Z axis */
+    MAT_IDN(shear);
+    shear[2] = -eye[X]/eye[Z];
+    shear[6] = -eye[Y]/eye[Z];
+
+    MAT4X3VEC(sheared_eye, shear, eye);
+    if (!NEAR_ZERO(sheared_eye[X], .01) || !NEAR_ZERO(sheared_eye[Y], .01)) {
+	VPRINT("ERROR sheared_eye", sheared_eye);
+	return;
+    }
+
+    /* Translate along +Z axis to put sheared_eye at (0, 0, 1). */
+    MAT_IDN(xlate);
+    /* XXX should I use MAT_DELTAS_VEC_NEG()?  X and Y should be 0 now */
+    MAT_DELTAS(xlate, 0, 0, 1-sheared_eye[Z]);
+
+    /* Build perspective matrix inline, substituting fov=2*atan(1, Z) */
+    MAT_IDN(persp);
+    /* From page 492 of Graphics Gems */
+    persp[0] = sheared_eye[Z];	/* scaling: fov aspect term */
+    persp[5] = sheared_eye[Z];	/* scaling: determines fov */
+
+    /* From page 158 of Rogers Mathematical Elements */
+    /* Z center of projection at Z=+1, r=-1/1 */
+    persp[14] = -1;
+
+    bn_mat_mul(t1, xlate, shear);
+    bn_mat_mul(t2, persp, t1);
+
+    /* Now, move eye from Z=1 to Z=0, for clipping purposes */
+    MAT_DELTAS(xlate, 0, 0, -1);
+
+    bn_mat_mul(pmat, xlate, t2);
 }
 
 
@@ -2918,102 +2864,112 @@ vo_mat_aet(struct view_obj *vop)
 }
 
 
-/**
- * P E R S P _ M A T
- *
- * Compute a perspective matrix for a right-handed coordinate system.
- * Reference: SGI Graphics Reference Appendix f
- *
- * (Note: SGI is left-handed, but the fix is done in the Display
- * Manager).
- */
-static void
-vo_persp_mat(mat_t m,
-	     fastf_t fovy,
-	     fastf_t aspect,
-	     fastf_t near1,
-	     fastf_t far1,
-	     fastf_t backoff)
+static int
+vo_cmd(ClientData clientData,
+       Tcl_Interp *interp,
+       int argc,
+       char *argv[])
 {
-    mat_t m2, tran;
+    static struct bu_cmdtab vo_cmds[] =
+	{
+	    {"ae",		vo_aet_tcl},
+	    {"ae2dir",		vo_ae2dir_tcl},
+	    {"arot",		vo_arot_tcl},
+	    {"base2local",	vo_base2local_tcl},
+	    {"center",		vo_center_tcl},
+	    {"coord",		vo_coord_tcl},
+	    {"dir2ae",		vo_dir2ae_tcl},
+	    {"eye",		vo_eye_tcl},
+	    {"eye_pos",		vo_eye_pos_tcl},
+	    {"invSize",		vo_invSize_tcl},
+	    {"keypoint",	vo_keypoint_tcl},
+	    {"local2base",	vo_local2base_tcl},
+	    {"lookat",		vo_lookat_tcl},
+	    {"m2vPoint",	vo_m2vPoint_tcl},
+	    {"model2view",	vo_model2view_tcl},
+	    {"mrot",		vo_mrot_tcl},
+	    {"mrotPoint",	vo_mrotPoint_tcl},
+	    {"observer",	vo_observer_tcl},
+	    {"orientation",	vo_orientation_tcl},
+	    {"perspective",	vo_perspective_tcl},
+	    {"pmat",		vo_pmat_tcl},
+	    {"pmodel2view",	vo_pmodel2view_tcl},
+	    {"pov",		vo_pov_tcl},
+	    {"rmat",		vo_rmat_tcl},
+	    {"rot",		vo_rot_tcl},
+	    {"rotate_about",	vo_rotate_about_tcl},
+	    {"sca",		vo_sca_tcl},
+	    {"setview",		vo_setview_tcl},
+	    {"size",		vo_size_tcl},
+	    {"slew",		vo_slew_tcl},
+	    {"tra",		vo_tra_tcl},
+	    {"units",		vo_units_tcl},
+	    {"v2mPoint",	vo_v2mPoint_tcl},
+	    {"view2model",	vo_view2model_tcl},
+	    {"viewDir",		vo_viewDir_tcl},
+	    {"vrot",		vo_vrot_tcl},
+	    {"zoom",		vo_zoom_tcl},
+#if 0
+	    {"knob",		vo_knob_tcl},
+	    {"qorot",		vo_qorot_tcl},
+	    {"qvrot",		vo_qvrot_tcl},
+	    {"status",		vo_status_tcl},
+	    {"",		vo__tcl},
+#endif
+	    {(char *)0,		(int (*)())0}
+	};
 
-    fovy *= 3.1415926535/180.0;
-
-    MAT_IDN(m2);
-    m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
-    m2[0] = m2[5]/aspect;
-    m2[10] = (far1+near1) / (far1-near1);
-    m2[11] = 2*far1*near1 / (far1-near1);	/* This should be negative */
-
-    m2[14] = -1;		/* XXX This should be positive */
-    m2[15] = 0;
-
-    /* Move eye to origin, then apply perspective */
-    MAT_IDN(tran);
-    tran[11] = -backoff;
-    bn_mat_mul(m, m2, tran);
+    return bu_cmd(clientData, interp, argc, (const char **)argv, vo_cmds, 1);
 }
 
 
-/**
- * Create a perspective matrix that transforms the +/1 viewing cube,
- * with the acutal eye position (not at Z=+1) specified in viewing
- * coords, into a related space where the eye has been sheared onto
- * the Z axis and repositioned at Z=(0, 0, 1), with the same
- * perspective field of view as before.
+/*
+ * Open a view object.
  *
- * The Zbuffer clips off stuff with negative Z values.
- *
- * pmat = persp * xlate * shear
+ * USAGE: v_open [name]
  */
-static void
-vo_mike_persp_mat(mat_t pmat,
-		  const point_t eye)
+static int
+vo_open_tcl(ClientData UNUSED(clientData),
+	    Tcl_Interp *interp,
+	    int argc,
+	    const char *argv[])
 {
-    mat_t shear;
-    mat_t persp;
-    mat_t xlate;
-    mat_t t1, t2;
-    point_t sheared_eye;
+    struct view_obj *vop;
 
-    if (eye[Z] <= SMALL) {
-	VPRINT("mike_persp_mat(): ERROR, z<0, eye", eye);
-	return;
+    if (argc == 1) {
+	/* get list of view objects */
+	for (BU_LIST_FOR(vop, view_obj, &HeadViewObj.l))
+	    Tcl_AppendResult(interp, bu_vls_addr(&vop->vo_name), " ", (char *)NULL);
+
+	return TCL_OK;
     }
 
-    /* Shear "eye" to +Z axis */
-    MAT_IDN(shear);
-    shear[2] = -eye[X]/eye[Z];
-    shear[6] = -eye[Y]/eye[Z];
+    /* first, delete any commands by this name */
+    (void)Tcl_DeleteCommand(interp, argv[1]);
 
-    MAT4X3VEC(sheared_eye, shear, eye);
-    if (!NEAR_ZERO(sheared_eye[X], .01) || !NEAR_ZERO(sheared_eye[Y], .01)) {
-	VPRINT("ERROR sheared_eye", sheared_eye);
-	return;
-    }
+    vop = vo_open_cmd(argv[1]);
+    (void)Tcl_CreateCommand(interp,
+			    bu_vls_addr(&vop->vo_name),
+			    (Tcl_CmdProc *)vo_cmd,
+			    (ClientData)vop,
+			    vo_deleteProc);
 
-    /* Translate along +Z axis to put sheared_eye at (0, 0, 1). */
-    MAT_IDN(xlate);
-    /* XXX should I use MAT_DELTAS_VEC_NEG()?  X and Y should be 0 now */
-    MAT_DELTAS(xlate, 0, 0, 1-sheared_eye[Z]);
+    /* Return new function name as result */
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, bu_vls_addr(&vop->vo_name), (char *)NULL);
 
-    /* Build perspective matrix inline, substituting fov=2*atan(1, Z) */
-    MAT_IDN(persp);
-    /* From page 492 of Graphics Gems */
-    persp[0] = sheared_eye[Z];	/* scaling: fov aspect term */
-    persp[5] = sheared_eye[Z];	/* scaling: determines fov */
+    return TCL_OK;
+}
 
-    /* From page 158 of Rogers Mathematical Elements */
-    /* Z center of projection at Z=+1, r=-1/1 */
-    persp[14] = -1;
 
-    bn_mat_mul(t1, xlate, shear);
-    bn_mat_mul(t2, persp, t1);
+int
+Vo_Init(Tcl_Interp *interp)
+{
+    BU_LIST_INIT(&HeadViewObj.l);
+    (void)Tcl_CreateCommand(interp, "v_open", vo_open_tcl,
+			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
-    /* Now, move eye from Z=1 to Z=0, for clipping purposes */
-    MAT_DELTAS(xlate, 0, 0, -1);
-
-    bn_mat_mul(pmat, xlate, t2);
+    return TCL_OK;
 }
 
 
