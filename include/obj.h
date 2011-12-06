@@ -65,6 +65,7 @@ struct view_obj {
     void 		(*vo_callback)();	/**< @brief  called in vo_update with vo_clientData and vop */
     genptr_t		vo_clientData;		/**< @brief  passed to vo_callback */
     int			vo_zclip;
+    Tcl_Interp		*interp;
 };
 #define GED_VIEW_OBJ_NULL ((struct view_obj *)0)
 
@@ -78,6 +79,7 @@ struct ged_obj {
     struct bu_vls	*go_prim_label_list;
     int			go_prim_label_list_size;
     int			go_refresh_on;
+    Tcl_Interp		*interp;
 };
 #define GED_OBJ_NULL ((struct ged_obj *)0)
 
