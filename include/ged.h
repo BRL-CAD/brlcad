@@ -37,6 +37,7 @@
 #endif
 
 #include "raytrace.h"
+#include "fbserv_obj.h"
 
 
 __BEGIN_DECLS
