@@ -510,6 +510,7 @@ STEPattribute::asStr (std::string& str, const char *currSch) const
 	break;
 
       case STRING_TYPE:
+
 	if( !( (ptr.S)->empty() ) )
 	    return (ptr.S) -> asStr (str);
 	break;
@@ -922,11 +923,11 @@ STEPattribute::is_null ()  const
 	  return  (*(ptr.c) == S_ENTITY_NULL);
 
 	case STRING_TYPE:
-	  ptr.S->clear();
+	  //ptr.S->clear();
     return ptr.S->empty();
 
 	case BINARY_TYPE:
-	  ptr.b->clear();
+	  //ptr.b->clear();
     return ptr.b->empty();
 
 	case AGGREGATE_TYPE:
