@@ -69,9 +69,9 @@ END_FUNCTION;
  */
 void
 Axis2Placement3D::BuildAxis() {
-	double d1[3];
-	double d2[3];
-	double d1Xd2[3];
+	double d1[3] = VINIT_ZERO;
+	double d2[3] = VINIT_ZERO;
+	double d1Xd2[3] = VINIT_ZERO;
 
 	if (axis == NULL) {
 		VSET(d1,0.0,0.0,1.0);
@@ -98,8 +98,8 @@ Axis2Placement3D::BuildAxis() {
  */
 void
 Axis2Placement3D::FirstProjAxis(double *proj,double *zaxis, double *refdir) {
-    double z[3];
-    double v[3];
+    double z[3] = VINIT_ZERO;
+    double v[3] = VINIT_ZERO;
     double TOL = 1e-9;
 
     if (zaxis == NULL)
