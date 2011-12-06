@@ -111,6 +111,21 @@ TCLCAD_EXPORT extern struct application *to_rt_gettrees_application(struct ged *
 TCLCAD_EXPORT extern int cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 
+/**
+ * This is a convenience routine for registering an array of commands
+ * with a Tcl interpreter. Note - this is not intended for use by
+ * commands with associated state (i.e. ClientData).  The interp is
+ * passed to the bu_cmdtab function as clientdata instead of the
+ * bu_cmdtab entry.
+ *
+ * @param interp - Tcl interpreter wherein to register the commands
+ * @param cmds	 - commands and related function pointers
+ *
+ * @return
+ * void
+ */
+BU_EXPORT extern void tclcad_register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds);
+
 __END_DECLS
 
 #endif /* __TCLCAD_H__ */
