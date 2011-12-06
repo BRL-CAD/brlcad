@@ -141,7 +141,7 @@ conditions ::= TOKEN_CONDITION(conds).
     writeString(appData, conds.string);
 }
 
-start_scope ::= TOKEN_START_CONDITION_SCOPE(conds).
+start_scope ::= TOKEN_CONDITION_SCOPE(conds).
 {
     appData->conditions = conds.string;
 }

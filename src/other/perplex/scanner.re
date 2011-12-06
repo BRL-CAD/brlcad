@@ -570,7 +570,13 @@ SEPARATOR = "%%"EOL;
 }
 
 
-<RULES_START_CONDITION>'>'WHITE*'{' => RULES {
+<RULES_START_CONDITION>'>' :=> CONDITION_END
+<RULES_START_CONDITION>ANY {
+    /* part of the condition */
+    continue;
+}
+
+<CONDITION_END>'{' => RULES {
     char **str = &scanner->appData->tokenData.string;
 
     /* start condition scope */
@@ -580,17 +586,15 @@ SEPARATOR = "%%"EOL;
     *str = copyString(yytext);
     *strrchr(*str, '{') = '\0';
 
-    return TOKEN_START_CONDITION_SCOPE;
+    return TOKEN_CONDITION_SCOPE;
 }
-<RULES_START_CONDITION>'>' => RULES_PATTERN {
-    /* end condition, start pattern */
-    scanner->appData->tokenData.string = copyString(yytext);
-
-    return TOKEN_CONDITION;
-}
-<RULES_START_CONDITION>ANY {
-    /* part of the condition */
+<CONDITION_END>WHITE {
     continue;
+}
+<CONDITION_END>ANY => RULES_PATTERN {
+    scanner->cursor--; /* last char is part of pattern */
+    scanner->appData->tokenData.string = copyString(yytext);
+    return TOKEN_CONDITION;
 }
 
 <RULES_COMMENT>"*/" :=> RULES
@@ -603,6 +607,9 @@ SEPARATOR = "%%"EOL;
 <RULES_PATTERN>DQUOTE :=> PATTERN_STRING
 <RULES_PATTERN>QUOTE :=> PATTERN_CHAR
 <RULES_PATTERN>'[' :=> PATTERN_CLASS
+<RULES_PATTERN>'=>' {
+    continue;
+}
 <RULES_PATTERN>'=' :=> PATTERN_DEF
 <RULES_PATTERN>'{' => ACTION { 
     /* end of pattern, start of action */
