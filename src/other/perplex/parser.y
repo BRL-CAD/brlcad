@@ -86,10 +86,19 @@ definitions ::= definitions TOKEN_DEFINITIONS(text).
 
 /* rules section */
 
-rules_section ::= rule_list.
+rules_section ::= named_definitions rule_list.
 {
     /* close re2c comment and scanner routine */
     fprintf(appData->out, "*/\n    }\n}\n");
+}
+
+named_definitions ::= /* empty */.
+named_definitions ::= named_definitions named_def.
+
+named_def ::= TOKEN_NAMED_DEF(definition).
+{
+    fprintf(appData->out, "%s", definition.string);
+    free(definition.string);
 }
 
 rule_list ::= rule.
