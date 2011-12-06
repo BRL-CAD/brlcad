@@ -64,7 +64,45 @@ extern void dgo_qray_data_to_vlist(struct dg_obj *dgop, struct bn_vlblock *vbp, 
 extern int dgo_count_tops(struct solid *headsp);
 extern int dgo_build_tops(Tcl_Interp *interp, struct solid *hsp, char **start, char **end);
 extern void dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, Tcl_Interp *interp, struct bn_vlblock *vbp, char *name, int copy);
-extern void dgo_pr_wait_status(Tcl_Interp *interp, int status);
+
+
+/*
+ * P R _ W A I T _ S T A T U S
+ *
+ * Interpret the status return of a wait() system call,
+ * for the edification of the watching luser.
+ * Warning:  This may be somewhat system specific, most especially
+ * on non-UNIX machines.
+ */
+static void
+pr_wait_status(Tcl_Interp *interp,
+		   int status)
+{
+    int sig = status & 0x7f;
+    int core = status & 0x80;
+    int ret = status >> 8;
+    struct bu_vls tmp_vls;
+
+    if (status == 0) {
+	Tcl_AppendResult(interp, "Normal exit\n", (char *)NULL);
+	return;
+    }
+
+    bu_vls_init(&tmp_vls);
+    bu_vls_printf(&tmp_vls, "Abnormal exit x%x", status);
+
+    if (core)
+	bu_vls_printf(&tmp_vls, ", core dumped");
+
+    if (sig)
+	bu_vls_printf(&tmp_vls, ", terminating signal = %d", sig);
+    else
+	bu_vls_printf(&tmp_vls, ", return (exit) code = %d", ret);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), "\n", (char *)NULL);
+    bu_vls_free(&tmp_vls);
+}
+
 
 /*
  * F _ N I R T
@@ -518,7 +556,7 @@ dgo_nirt_cmd(struct dg_obj *dgop,
 	;	/* NULL */
 
     if (retcode != 0)
-	dgo_pr_wait_status(interp, retcode);
+	pr_wait_status(interp, retcode);
 #else
     /* Wait for program to finish */
     WaitForSingleObject(pi.hProcess, INFINITE);
