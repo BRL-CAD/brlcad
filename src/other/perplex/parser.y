@@ -154,7 +154,6 @@ end_scope ::= TOKEN_END_CONDITION_SCOPE.
 
 pattern ::= TOKEN_PATTERN(text).
 {
-    fprintf(stderr, ">>>> TOKEN_PATTERN: \"%s\"\n", text.string);
     writeString(appData, text.string);
 }
 
