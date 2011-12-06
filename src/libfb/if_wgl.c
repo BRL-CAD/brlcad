@@ -834,7 +834,7 @@ _wgl_open_existing(FBIO *ifp,
 
 
 int
-wgl_open_existing(FBIO *ifp, int argc, char **argv)
+wgl_open_existing(FBIO *ifp, int argc, const char **argv)
 {
     Display *dpy;
     Window win;

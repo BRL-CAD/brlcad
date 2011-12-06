@@ -2917,7 +2917,7 @@ _X24_open_existing(FBIO *ifp, Display *dpy, Window win, Window cwinp, Colormap c
 
 
 int
-X24_open_existing(FBIO *ifp, int argc, char **argv)
+X24_open_existing(FBIO *ifp, int argc, const char **argv)
 {
     Display *dpy;
     Window win;

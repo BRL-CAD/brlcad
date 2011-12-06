@@ -1460,7 +1460,7 @@ _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
 
 
 int
-ogl_open_existing(FBIO *ifp, int argc, char **argv)
+ogl_open_existing(FBIO *ifp, int argc, const char **argv)
 {
     Display *dpy;
     Window win;
