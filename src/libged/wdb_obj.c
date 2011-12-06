@@ -49,6 +49,7 @@
 #include "rtgeom.h"
 #include "wdb.h"
 #include "mater.h"
+#include "obj.h"
 
 #include "./ged_private.h"
 

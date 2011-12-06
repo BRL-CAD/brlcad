@@ -40,6 +40,7 @@
 #include "cmd.h"
 #include "vmath.h"
 #include "ged.h"
+#include "obj.h"
 
 
 /* FIXME: this should not exist.  pass from application code, not

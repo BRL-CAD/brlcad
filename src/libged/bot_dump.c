@@ -42,6 +42,7 @@
 
 #include "mater.h"
 #include "solid.h"
+#include "obj.h"
 
 #include "./ged_private.h"
 

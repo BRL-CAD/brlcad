@@ -35,6 +35,8 @@
 #define __DG_H__
 
 #include "ged.h"
+#include "obj.h"
+
 
 __BEGIN_DECLS
 
