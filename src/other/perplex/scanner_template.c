@@ -53,10 +53,6 @@
 
 #define YYEOF -1
 
-#ifndef PERPLEX_LEXER
-#define PERPLEX_LEXER yylex
-#endif
-
 struct Buf {
     void   *elts;	/* elements. */
     int     nelts;	/* number of elements. */
@@ -84,24 +80,23 @@ perplex_t perplexFileScanner(FILE *input);
 perplex_t perplexStringScanner(char *input);
 void perplexFree(perplex_t scanner);
 
-#ifndef PERPLEX_APPDATA_TYPE
-#define PERPLEX_PUBLIC_LEXER \
-	int PERPLEX_LEXER(perplex_t scanner)
-#define PERPLEX_PRIVATE_LEXER \
-	static int PERPLEX_LEXER_private(perplex_t scanner)
-#define PERPLEX_PARAMETERS scanner
-#else /* PERPLEX_APPDATA_TYPE */
+#ifndef PERPLEX_LEXER
+#define PERPLEX_LEXER yylex
+#endif
+
 #ifndef PERPLEX_APPDATA_PARAM
 #define PERPLEX_APPDATA_PARAM appData
 #endif
-#define PERPLEX_PUBLIC_LEXER \
-	int PERPLEX_LEXER(perplex_t scanner, \
-	    PERPLEX_APPDATA_TYPE PERPLEX_APPDATA_PARAM)
-#define PERPLEX_PRIVATE_LEXER \
-	static int PERPLEX_LEXER_private(perplex_t scanner, \
-	    PERPLEX_APPDATA_TYPE PERPLEX_APPDATA_PARAM)
-#define PERPLEX_PARAMETERS scanner, PERPLEX_APPDATA_PARAM
-#endif /* PERPLEX_APPDATA_TYPE */
+
+#ifndef PERPLEX_APPDATA_TYPE
+#  define PERPLEX_PUBLIC_LEXER         int PERPLEX_LEXER(perplex_t scanner)
+#  define PERPLEX_PRIVATE_LEXER static int PERPLEX_LEXER_private(perplex_t scanner)
+#  define PERPLEX_PARAMETERS    scanner
+#else
+#  define PERPLEX_PUBLIC_LEXER         int PERPLEX_LEXER(perplex_t scanner, PERPLEX_APPDATA_TYPE PERPLEX_APPDATA_PARAM)
+#  define PERPLEX_PRIVATE_LEXER static int PERPLEX_LEXER_private(perplex_t scanner, PERPLEX_APPDATA_TYPE PERPLEX_APPDATA_PARAM)
+#  define PERPLEX_PARAMETERS    scanner, PERPLEX_APPDATA_PARAM
+#endif
 
 PERPLEX_PUBLIC_LEXER;
 
