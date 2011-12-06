@@ -110,17 +110,6 @@ extern int tk_refresh(FBIO *ifp, int x, int y, int w, int h);
 #endif
 #endif
 
-int fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int fb_cmd_common_file_size(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-
-static struct bu_cmdtab cmdtab[] = {
-    {"fb_open_existing",	 fb_cmd_open_existing},
-    {"fb_close_existing",	 fb_cmd_close_existing},
-    {"fb_common_file_size",	 fb_cmd_common_file_size},
-    {(char *)0, (int (*)())0}
-};
-
 
 int
 fb_cmd_open_existing(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
@@ -415,6 +404,13 @@ fb_cmd_common_file_size(ClientData UNUSED(clientData), Tcl_Interp *interp, int a
 int
 Fb_Init(Tcl_Interp *interp)
 {
+    static struct bu_cmdtab cmdtab[] = {
+	{"fb_open_existing",	 fb_cmd_open_existing},
+	{"fb_close_existing",	 fb_cmd_close_existing},
+	{"fb_common_file_size",	 fb_cmd_common_file_size},
+	{(char *)0, (int (*)())0}
+    };
+
     /* register commands */
     bu_register_cmds(interp, cmdtab);
 
