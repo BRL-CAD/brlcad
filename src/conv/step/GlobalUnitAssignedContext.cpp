@@ -54,185 +54,185 @@ string GlobalUnitAssignedContext::entityname = Factory::RegisterClass(ENTITYNAME
 
 
 GlobalUnitAssignedContext::GlobalUnitAssignedContext() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
 }
 
 GlobalUnitAssignedContext::GlobalUnitAssignedContext(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
+    step = sw;
+    id = step_id;
 }
 
 GlobalUnitAssignedContext::~GlobalUnitAssignedContext() {
-	/*
-	LIST_OF_UNITS::iterator i = units.begin();
+    /*
+      LIST_OF_UNITS::iterator i = units.begin();
 
-	while(i!=units.end()) {
-		delete (*i);
-		i = units.erase(i);
-	}
-	*/
-	units.clear();
+      while(i!=units.end()) {
+      delete (*i);
+      i = units.erase(i);
+      }
+    */
+    units.clear();
 }
 
 double
 GlobalUnitAssignedContext::GetLengthConversionFactor() {
-	LIST_OF_UNITS::iterator i = units.begin();
+    LIST_OF_UNITS::iterator i = units.begin();
 
-	while(i != units.end()) {
-		LengthSiUnit *si = dynamic_cast<LengthSiUnit *>(*i);
-		if (si != NULL) {
-			//found SI length unit
-			return  si->GetLengthConversionFactor();
-		}
-		LengthConversionBasedUnit *cb = dynamic_cast<LengthConversionBasedUnit *>(*i);
-		if (cb != NULL) {
-			//found conversion based length unit
-			return cb->GetLengthConversionFactor();
-		}
-		LengthContextDependentUnit *cd = dynamic_cast<LengthContextDependentUnit *>(*i);
-		if (cd != NULL) {
-			//found conversion based length unit
-			std::cerr << "found context dependent length unit" << std::endl;
-			return 1.0;
-		}
-		i++;
+    while(i != units.end()) {
+	LengthSiUnit *si = dynamic_cast<LengthSiUnit *>(*i);
+	if (si != NULL) {
+	    //found SI length unit
+	    return  si->GetLengthConversionFactor();
 	}
-	return 1.0; //assume no conversion factor
+	LengthConversionBasedUnit *cb = dynamic_cast<LengthConversionBasedUnit *>(*i);
+	if (cb != NULL) {
+	    //found conversion based length unit
+	    return cb->GetLengthConversionFactor();
+	}
+	LengthContextDependentUnit *cd = dynamic_cast<LengthContextDependentUnit *>(*i);
+	if (cd != NULL) {
+	    //found conversion based length unit
+	    std::cerr << "found context dependent length unit" << std::endl;
+	    return 1.0;
+	}
+	i++;
+    }
+    return 1.0; //assume no conversion factor
 }
 
 double
 GlobalUnitAssignedContext::GetPlaneAngleConversionFactor() {
-	LIST_OF_UNITS::iterator i = units.begin();
+    LIST_OF_UNITS::iterator i = units.begin();
 
-	while(i != units.end()) {
-		PlaneAngleSiUnit *si = dynamic_cast<PlaneAngleSiUnit *>(*i);
-		if (si != NULL) {
-			//found SI length unit
-			return  si->GetPlaneAngleConversionFactor();
-		}
-		PlaneAngleConversionBasedUnit *cb = dynamic_cast<PlaneAngleConversionBasedUnit *>(*i);
-		if (cb != NULL) {
-			//found conversion based length unit
-			return cb->GetPlaneAngleConversionFactor();
-		}
-		PlaneAngleContextDependentUnit *cd = dynamic_cast<PlaneAngleContextDependentUnit *>(*i);
-		if (cd != NULL) {
-			//found conversion based length unit
-			std::cerr << "found context dependent length unit" << std::endl;
-			return 1.0;
-		}
-		i++;
+    while(i != units.end()) {
+	PlaneAngleSiUnit *si = dynamic_cast<PlaneAngleSiUnit *>(*i);
+	if (si != NULL) {
+	    //found SI length unit
+	    return  si->GetPlaneAngleConversionFactor();
 	}
-	return 1.0; //assume no conversion factor
+	PlaneAngleConversionBasedUnit *cb = dynamic_cast<PlaneAngleConversionBasedUnit *>(*i);
+	if (cb != NULL) {
+	    //found conversion based length unit
+	    return cb->GetPlaneAngleConversionFactor();
+	}
+	PlaneAngleContextDependentUnit *cd = dynamic_cast<PlaneAngleContextDependentUnit *>(*i);
+	if (cd != NULL) {
+	    //found conversion based length unit
+	    std::cerr << "found context dependent length unit" << std::endl;
+	    return 1.0;
+	}
+	i++;
+    }
+    return 1.0; //assume no conversion factor
 }
 
 double
 GlobalUnitAssignedContext::GetSolidAngleConversionFactor() {
-	LIST_OF_UNITS::iterator i = units.begin();
+    LIST_OF_UNITS::iterator i = units.begin();
 
-	while(i != units.end()) {
-		SolidAngleSiUnit *si = dynamic_cast<SolidAngleSiUnit *>(*i);
-		if (si != NULL) {
-			//found SI length unit
-			return  si->GetSolidAngleConversionFactor();
-		}
-		SolidAngleConversionBasedUnit *cb = dynamic_cast<SolidAngleConversionBasedUnit *>(*i);
-		if (cb != NULL) {
-			//found conversion based length unit
-			std::cerr << "found SI length unit" << std::endl;
-			return 1.0;
-		}
-		SolidAngleContextDependentUnit *cd = dynamic_cast<SolidAngleContextDependentUnit *>(*i);
-		if (cd != NULL) {
-			//found conversion based length unit
-			std::cerr << "found context dependent length unit" << std::endl;
-			return 1.0;
-		}
-		i++;
+    while(i != units.end()) {
+	SolidAngleSiUnit *si = dynamic_cast<SolidAngleSiUnit *>(*i);
+	if (si != NULL) {
+	    //found SI length unit
+	    return  si->GetSolidAngleConversionFactor();
 	}
-	return 1.0; //assume no conversion factor
+	SolidAngleConversionBasedUnit *cb = dynamic_cast<SolidAngleConversionBasedUnit *>(*i);
+	if (cb != NULL) {
+	    //found conversion based length unit
+	    std::cerr << "found SI length unit" << std::endl;
+	    return 1.0;
+	}
+	SolidAngleContextDependentUnit *cd = dynamic_cast<SolidAngleContextDependentUnit *>(*i);
+	if (cd != NULL) {
+	    //found conversion based length unit
+	    std::cerr << "found context dependent length unit" << std::endl;
+	    return 1.0;
+	}
+	i++;
+    }
+    return 1.0; //assume no conversion factor
 }
 
 bool
 GlobalUnitAssignedContext::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	// load base class attributes
-	if ( !RepresentationContext::Load(sw,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::RepresentationContext." << std::endl;
-		return false;
-	}
+    // load base class attributes
+    if ( !RepresentationContext::Load(sw,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::RepresentationContext." << std::endl;
+	return false;
+    }
 
-	// need to do this for local attributes to makes sure we have
-	// the actual entity and not a complex/supertype parent
-	sse = step->getEntity(sse,ENTITYNAME);
+    // need to do this for local attributes to makes sure we have
+    // the actual entity and not a complex/supertype parent
+    sse = step->getEntity(sse,ENTITYNAME);
 
-	if (units.empty()) {
-		SdaiUnit *unit;
-		LIST_OF_SELECTS *l = step->getListOfSelects(sse,"units");
-		LIST_OF_SELECTS::iterator i;
-		for(i=l->begin();i!=l->end();i++) {
-			unit=(SdaiUnit *)(*i);
-			if (unit->IsNamed_unit()){
-				SdaiNamed_unit *snu = *unit;
-				NamedUnit *nu = (NamedUnit*)Factory::CreateObject(sw,(SCLP23(Application_instance) *)snu);
-				units.push_back(nu);
-	#ifdef AP203e2
-			} else if (unit->IsDerived_unit()) { 		//TODO: derived_unit
-				SdaiDerived_unit *sdu = *unit;
-				NamedUnit *nu = (NamedUnit*)
-				Unit *du = (Unit *)Factory::CreateObject(sw,(SCLP23(Application_instance) *)sdu);
-				units.push_back(du);
-	#endif
-			} else {
-				l->clear();
-				delete l;
-				std::cout << CLASSNAME << ":Error unhandled unit type in units list." << std::endl;
-				return false;
-			}
-		}
-
+    if (units.empty()) {
+	SdaiUnit *unit;
+	LIST_OF_SELECTS *l = step->getListOfSelects(sse,"units");
+	LIST_OF_SELECTS::iterator i;
+	for(i=l->begin();i!=l->end();i++) {
+	    unit=(SdaiUnit *)(*i);
+	    if (unit->IsNamed_unit()){
+		SdaiNamed_unit *snu = *unit;
+		NamedUnit *nu = (NamedUnit*)Factory::CreateObject(sw,(SCLP23(Application_instance) *)snu);
+		units.push_back(nu);
+#ifdef AP203e2
+	    } else if (unit->IsDerived_unit()) { 		//TODO: derived_unit
+		SdaiDerived_unit *sdu = *unit;
+		NamedUnit *nu = (NamedUnit*)
+		    Unit *du = (Unit *)Factory::CreateObject(sw,(SCLP23(Application_instance) *)sdu);
+		units.push_back(du);
+#endif
+	    } else {
 		l->clear();
 		delete l;
+		std::cout << CLASSNAME << ":Error unhandled unit type in units list." << std::endl;
+		return false;
+	    }
 	}
-	return true;
+
+	l->clear();
+	delete l;
+    }
+    return true;
 }
 
 void
 GlobalUnitAssignedContext::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Attributes:" << std::endl;
-	TAB(level+1); std::cout << "units(list):" << std::endl;
-	LIST_OF_UNITS::iterator i;
-	for(i=units.begin();i!=units.end();i++) {
-		(*i)->Print(level+1);
-		std::cout << std::endl;
-	}
+    TAB(level); std::cout << "Attributes:" << std::endl;
+    TAB(level+1); std::cout << "units(list):" << std::endl;
+    LIST_OF_UNITS::iterator i;
+    for(i=units.begin();i!=units.end();i++) {
+	(*i)->Print(level+1);
+	std::cout << std::endl;
+    }
 
-	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-	RepresentationContext::Print(level+1);
+    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
+    RepresentationContext::Print(level+1);
 }
 STEPEntity *
 GlobalUnitAssignedContext::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		GlobalUnitAssignedContext *object = new GlobalUnitAssignedContext(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	GlobalUnitAssignedContext *object = new GlobalUnitAssignedContext(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 // Local Variables:

@@ -1882,7 +1882,7 @@ Circle::LoadONBrep(ON_Brep *brep) {
 	}
     } else {
 	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep
-		<< ">) not endpoints for specified for curve " << entityname << std::endl;
+		  << ">) not endpoints for specified for curve " << entityname << std::endl;
 	return false;
     }
 
@@ -2119,7 +2119,7 @@ Ellipse::LoadONBrep(ON_Brep *brep) {
 	}
     } else {
 	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep
-		<< ">) not endpoints for specified for curve " << entityname << std::endl;
+		  << ">) not endpoints for specified for curve " << entityname << std::endl;
 	return false;
     }
 

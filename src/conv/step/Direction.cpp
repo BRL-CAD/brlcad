@@ -35,13 +35,13 @@
 string Direction::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Direction::Create);
 
 Direction::Direction() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
 }
 
 Direction::Direction(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
+    step = sw;
+    id = step_id;
 }
 
 Direction::~Direction() {
@@ -49,73 +49,73 @@ Direction::~Direction() {
 
 bool
 Direction::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	if ( !GeometricRepresentationItem::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
-		return false;
+    if ( !GeometricRepresentationItem::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
+	return false;
+    }
+
+    // need to do this for local attributes to makes sure we have
+    // the actual entity and not a complex/supertype parent
+    sse = step->getEntity(sse,ENTITYNAME);
+
+    STEPattribute *attr = step->getAttribute(sse,"direction_ratios");
+    if (attr != NULL) {
+	STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
+	RealNode *rn = (RealNode *)sa->GetHead();
+	int index = 0;
+	while ( rn != NULL) {
+	    direction_ratios[index++] = rn->value;
+	    rn = (RealNode *)rn->NextNode();
 	}
+    } else {
+	std::cout << CLASSNAME << ": error loading 'coordinate' attribute." << std::endl;
+    }
 
-	// need to do this for local attributes to makes sure we have
-	// the actual entity and not a complex/supertype parent
-	sse = step->getEntity(sse,ENTITYNAME);
-
-	STEPattribute *attr = step->getAttribute(sse,"direction_ratios");
-	if (attr != NULL) {
-		STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
-		RealNode *rn = (RealNode *)sa->GetHead();
-		int index = 0;
-		while ( rn != NULL) {
-			direction_ratios[index++] = rn->value;
-			rn = (RealNode *)rn->NextNode();
-		}
-	} else {
-		std::cout << CLASSNAME << ": error loading 'coordinate' attribute." << std::endl;
-	}
-
-	return true;
+    return true;
 }
 
 void
 Direction::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Local Attributes:" << std::endl;
-	TAB(level+1); std::cout << "direction_ratios:";
-	std::cout << "(" << direction_ratios[0] << ",";
-	std::cout << direction_ratios[1] << ",";
-	std::cout << direction_ratios[2] << ")" << std::endl;
+    TAB(level); std::cout << "Local Attributes:" << std::endl;
+    TAB(level+1); std::cout << "direction_ratios:";
+    std::cout << "(" << direction_ratios[0] << ",";
+    std::cout << direction_ratios[1] << ",";
+    std::cout << direction_ratios[2] << ")" << std::endl;
 
-	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-	GeometricRepresentationItem::Print(level+1);
+    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
+    GeometricRepresentationItem::Print(level+1);
 }
 
 STEPEntity *
 Direction::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		Direction *object = new Direction(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	Direction *object = new Direction(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 bool
 Direction::LoadONBrep(ON_Brep *brep)
 {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
-	return false;
+    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
+    return false;
 }
 
 // Local Variables:

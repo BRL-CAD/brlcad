@@ -34,13 +34,13 @@
 string GeometricRepresentationItem::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)GeometricRepresentationItem::Create);
 
 GeometricRepresentationItem::GeometricRepresentationItem() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
 }
 
 GeometricRepresentationItem::GeometricRepresentationItem(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
+    step = sw;
+    id = step_id;
 }
 
 GeometricRepresentationItem::~GeometricRepresentationItem() {
@@ -49,51 +49,51 @@ GeometricRepresentationItem::~GeometricRepresentationItem() {
 bool
 GeometricRepresentationItem::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	// load base class attributes
-	if ( !RepresentationItem::Load(sw,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::RepresentationItem." << std::endl;
-		return false;
-	}
+    // load base class attributes
+    if ( !RepresentationItem::Load(sw,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::RepresentationItem." << std::endl;
+	return false;
+    }
 
-	return true;
+    return true;
 }
 
 void
 GeometricRepresentationItem::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-	RepresentationItem::Print(level+1);
+    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
+    RepresentationItem::Print(level+1);
 }
 
 STEPEntity *
 GeometricRepresentationItem::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		GeometricRepresentationItem *object = new GeometricRepresentationItem(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	GeometricRepresentationItem *object = new GeometricRepresentationItem(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 bool
 GeometricRepresentationItem::LoadONBrep(ON_Brep *brep)
 {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
-	return false;
+    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
+    return false;
 }
 
 // Local Variables:

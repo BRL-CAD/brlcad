@@ -42,14 +42,14 @@ std::string ShapeRepresentation::entityname = Factory::RegisterClass(ENTITYNAME,
 
 
 ShapeRepresentation::ShapeRepresentation() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
 }
 
 
 ShapeRepresentation::ShapeRepresentation(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
+    step = sw;
+    id = step_id;
 }
 
 
@@ -59,15 +59,15 @@ ShapeRepresentation::~ShapeRepresentation() {
 
 bool
 ShapeRepresentation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	if ( !Representation::Load(sw,sse) ) {
+    if ( !Representation::Load(sw,sse) ) {
 	std::cout << CLASSNAME << ":Error loading baseclass Representation." << std::endl;
-		return false;
-	}
+	return false;
+    }
 
-	return true;
+    return true;
 }
 
 
@@ -77,27 +77,27 @@ ShapeRepresentation::Print(int level) {
     std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	Representation::Print(level);
+    Representation::Print(level);
 }
 
 
 STEPEntity *
 ShapeRepresentation::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		ShapeRepresentation *object = new ShapeRepresentation(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	ShapeRepresentation *object = new ShapeRepresentation(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
+	if (!object->Load(sw, sse)) {
 	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 

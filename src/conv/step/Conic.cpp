@@ -35,115 +35,115 @@
 string Conic::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Conic::Create);
 
 Conic::Conic() {
-	step = NULL;
-	id = 0;
-	position = NULL;
+    step = NULL;
+    id = 0;
+    position = NULL;
 }
 
 Conic::Conic(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
-	position = NULL;
+    step = sw;
+    id = step_id;
+    position = NULL;
 }
 
 Conic::~Conic() {
-	delete position;
+    delete position;
 }
 
 const double *
 Conic::GetOrigin() {
-	return position->GetOrigin();
+    return position->GetOrigin();
 }
 
 const double *
 Conic::GetNormal() {
-	return position->GetNormal();
+    return position->GetNormal();
 }
 
 const double *
 Conic::GetXAxis() {
-	return position->GetXAxis();
+    return position->GetXAxis();
 }
 
 const double *
 Conic::GetYAxis() {
-	return position->GetYAxis();
+    return position->GetYAxis();
 }
 
 bool
 Conic::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	if ( !GeometricRepresentationItem::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
+    if ( !GeometricRepresentationItem::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
+	return false;
+    }
+
+    // need to do this for local attributes to makes sure we have
+    // the actual entity and not a complex/supertype parent
+    sse = step->getEntity(sse,ENTITYNAME);
+
+    if (position == NULL) {
+	SCLP23(Select) *select = step->getSelectAttribute(sse,"position");
+	if (select) {
+	    //if (select->CurrentUnderlyingType() == config_control_designt_axis2_placement) {
+	    Axis2Placement *aA2P = new Axis2Placement();
+
+	    position = aA2P;
+	    if (!aA2P->Load(step,select)) {
+		std::cout << CLASSNAME << ":Error loading select Axis2Placement from Conic." << std::endl;
 		return false;
+	    }
+
+	    //} else {
+	    //	std::cout << CLASSNAME << ":Unexpected select type for 'position' : " << select->UnderlyingTypeName() << std::endl;
+	    //	return false;
+	    //}
 	}
+    }
 
-	// need to do this for local attributes to makes sure we have
-	// the actual entity and not a complex/supertype parent
-	sse = step->getEntity(sse,ENTITYNAME);
-
-	if (position == NULL) {
-		SCLP23(Select) *select = step->getSelectAttribute(sse,"position");
-		if (select) {
-			//if (select->CurrentUnderlyingType() == config_control_designt_axis2_placement) {
-				Axis2Placement *aA2P = new Axis2Placement();
-
-				position = aA2P;
-				if (!aA2P->Load(step,select)) {
-					std::cout << CLASSNAME << ":Error loading select Axis2Placement from Conic." << std::endl;
-					return false;
-				}
-
-			//} else {
-			//	std::cout << CLASSNAME << ":Unexpected select type for 'position' : " << select->UnderlyingTypeName() << std::endl;
-			//	return false;
-			//}
-		}
-	}
-
-	return true;
+    return true;
 }
 
 void
 Conic::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Attributes:" << std::endl;
-	TAB(level+1); std::cout << "position:" << std::endl;
-	position->Print(level+1);
+    TAB(level); std::cout << "Attributes:" << std::endl;
+    TAB(level+1); std::cout << "position:" << std::endl;
+    position->Print(level+1);
 
-	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-	GeometricRepresentationItem::Print(level+1);
+    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
+    GeometricRepresentationItem::Print(level+1);
 
 }
 
 STEPEntity *
 Conic::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		Conic *object = new Conic(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	Conic *object = new Conic(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 bool
 Conic::LoadONBrep(ON_Brep *brep)
 {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
-	return false;
+    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
+    return false;
 }
 
 // Local Variables:

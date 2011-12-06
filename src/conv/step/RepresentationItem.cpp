@@ -34,15 +34,15 @@
 string RepresentationItem::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RepresentationItem::Create);
 
 RepresentationItem::RepresentationItem() {
-	step = NULL;
-	id = 0;
-	name="";
+    step = NULL;
+    id = 0;
+    name="";
 }
 
 RepresentationItem::RepresentationItem(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
-	name="";
+    step = sw;
+    id = step_id;
+    name="";
 }
 
 RepresentationItem::~RepresentationItem() {
@@ -50,65 +50,65 @@ RepresentationItem::~RepresentationItem() {
 
 string
 RepresentationItem::ClassName() {
-	return entityname;
+    return entityname;
 }
 
 string
 RepresentationItem::Name() {
-	return name;
+    return name;
 }
 
 
 bool
 RepresentationItem::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
 
-	// need to do this for local attributes to makes sure we have
-	// the actual entity and not a complex/supertype parent
-	sse = step->getEntity(sse,ENTITYNAME);
+    // need to do this for local attributes to makes sure we have
+    // the actual entity and not a complex/supertype parent
+    sse = step->getEntity(sse,ENTITYNAME);
 
-	name = step->getStringAttribute(sse,"name");
+    name = step->getStringAttribute(sse,"name");
 
-	//std::cout << "name:" << name << std::endl;
+    //std::cout << "name:" << name << std::endl;
 
-	return true;
+    return true;
 }
 
 void
 RepresentationItem::Print(int level) {
-	TAB(level); std::cout << "RepresentationItem:" << name << std::endl;
-	TAB(level); std::cout << "ID:" << STEPid() << std::endl;
+    TAB(level); std::cout << "RepresentationItem:" << name << std::endl;
+    TAB(level); std::cout << "ID:" << STEPid() << std::endl;
 
-	TAB(level); std::cout << "Attributes:" << std::endl;
-	TAB(level+1); std::cout << "name:" << name << std::endl;
+    TAB(level); std::cout << "Attributes:" << std::endl;
+    TAB(level+1); std::cout << "name:" << name << std::endl;
 }
 
 STEPEntity *
 RepresentationItem::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		RepresentationItem *object = new RepresentationItem(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	RepresentationItem *object = new RepresentationItem(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 bool
 RepresentationItem::LoadONBrep(ON_Brep *brep)
 {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
-	return false;
+    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
+    return false;
 }
 
 

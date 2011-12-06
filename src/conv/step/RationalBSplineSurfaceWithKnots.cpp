@@ -34,13 +34,13 @@
 string RationalBSplineSurfaceWithKnots::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RationalBSplineSurfaceWithKnots::Create);
 
 RationalBSplineSurfaceWithKnots::RationalBSplineSurfaceWithKnots() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
 }
 
 RationalBSplineSurfaceWithKnots::RationalBSplineSurfaceWithKnots(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
+    step = sw;
+    id = step_id;
 }
 
 RationalBSplineSurfaceWithKnots::~RationalBSplineSurfaceWithKnots() {
@@ -48,47 +48,47 @@ RationalBSplineSurfaceWithKnots::~RationalBSplineSurfaceWithKnots() {
 
 bool
 RationalBSplineSurfaceWithKnots::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	// load base class attributes
-	if ( !RationalBSplineSurface::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineSurface." << std::endl;
-		return false;
-	}
-	if ( !BSplineSurfaceWithKnots::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::BSplineSurfaceWithKnots." << std::endl;
-		return false;
-	}
+    // load base class attributes
+    if ( !RationalBSplineSurface::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineSurface." << std::endl;
+	return false;
+    }
+    if ( !BSplineSurfaceWithKnots::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::BSplineSurfaceWithKnots." << std::endl;
+	return false;
+    }
 
-	return true;
+    return true;
 }
 
 void
 RationalBSplineSurfaceWithKnots::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	RationalBSplineSurface::Print(level);
-	BSplineSurfaceWithKnots::Print(level);
+    RationalBSplineSurface::Print(level);
+    BSplineSurfaceWithKnots::Print(level);
 }
 STEPEntity *
 RationalBSplineSurfaceWithKnots::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		RationalBSplineSurfaceWithKnots *object = new RationalBSplineSurfaceWithKnots(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	RationalBSplineSurfaceWithKnots *object = new RationalBSplineSurfaceWithKnots(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw,sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw,sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 // Local Variables:

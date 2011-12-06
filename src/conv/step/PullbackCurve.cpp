@@ -322,10 +322,10 @@ getCoefficients(BSpline& bspline, TNT::Array1D<double>& N, double u)
     // evaluate the b-spline basis function for the given parameter u
     // place the results in N[]
     N = 0.0;
-  if (NEAR_EQUAL(u,bspline.knots[0],PBC_TOL)) {
+    if (NEAR_EQUAL(u,bspline.knots[0],PBC_TOL)) {
 	N[0] = 1.0;
 	return 0;
-  } else if (NEAR_EQUAL(u,bspline.knots[bspline.m],PBC_TOL)) {
+    } else if (NEAR_EQUAL(u,bspline.knots[bspline.m],PBC_TOL)) {
 	N[bspline.n] = 1.0;
 	return bspline.n;
     }
@@ -638,7 +638,7 @@ newNURBSCurve(BSpline& spline, int dimension=3)
 					  spline.p+1,
 					  spline.n+1);
     c->ReserveKnotCapacity(spline.knots.size()-2);
-  for (unsigned int i = 1; i < spline.knots.size()-1; i++) {
+    for (unsigned int i = 1; i < spline.knots.size()-1; i++) {
 	c->m_knot[i-1] = spline.knots[i];
     }
 

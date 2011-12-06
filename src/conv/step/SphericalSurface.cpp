@@ -34,13 +34,13 @@
 string SphericalSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)SphericalSurface::Create);
 
 SphericalSurface::SphericalSurface() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
 }
 
 SphericalSurface::SphericalSurface(STEPWrapper *sw,int step_id) {
-	step=sw;
-	id = step_id;
+    step=sw;
+    id = step_id;
 }
 
 SphericalSurface::~SphericalSurface() {
@@ -48,71 +48,71 @@ SphericalSurface::~SphericalSurface() {
 
 const double *
 SphericalSurface::GetOrigin() {
-	return position->GetOrigin();
+    return position->GetOrigin();
 }
 
 const double *
 SphericalSurface::GetNormal() {
-	return position->GetAxis(2);
+    return position->GetAxis(2);
 }
 
 const double *
 SphericalSurface::GetXAxis() {
-	return position->GetXAxis();
+    return position->GetXAxis();
 }
 
 const double *
 SphericalSurface::GetYAxis() {
-	return position->GetYAxis();
+    return position->GetYAxis();
 }
 
 
 bool
 SphericalSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	if ( !ElementarySurface::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
-		return false;
-	}
+    if ( !ElementarySurface::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
+	return false;
+    }
 
-	// need to do this for local attributes to makes sure we have
-	// the actual entity and not a complex/supertype parent
-	sse = step->getEntity(sse,ENTITYNAME);
+    // need to do this for local attributes to makes sure we have
+    // the actual entity and not a complex/supertype parent
+    sse = step->getEntity(sse,ENTITYNAME);
 
-	radius = step->getRealAttribute(sse,"radius");
+    radius = step->getRealAttribute(sse,"radius");
 
-	return true;
+    return true;
 }
 
 void
 SphericalSurface::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level+1); std::cout << "radius: " << radius << std::endl;
+    TAB(level+1); std::cout << "radius: " << radius << std::endl;
 
-	ElementarySurface::Print(level+1);
+    ElementarySurface::Print(level+1);
 }
 
 STEPEntity *
 SphericalSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		SphericalSurface *object = new SphericalSurface(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	SphericalSurface *object = new SphericalSurface(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 // Local Variables:
 // tab-width: 8

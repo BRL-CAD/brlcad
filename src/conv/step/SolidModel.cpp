@@ -34,13 +34,13 @@
 string SolidModel::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)SolidModel::Create);
 
 SolidModel::SolidModel() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
 }
 
 SolidModel::SolidModel(STEPWrapper *sw,int step_id) {
-	step=sw;
-	id = step_id;
+    step=sw;
+    id = step_id;
 }
 
 SolidModel::~SolidModel() {
@@ -48,49 +48,49 @@ SolidModel::~SolidModel() {
 
 bool
 SolidModel::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	if ( !GeometricRepresentationItem::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
-		return false;
-	}
-	return true;
+    if ( !GeometricRepresentationItem::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
+	return false;
+    }
+    return true;
 }
 
 void
 SolidModel::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	GeometricRepresentationItem::Print(level);
+    GeometricRepresentationItem::Print(level);
 }
 
 STEPEntity *
 SolidModel::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		SolidModel *object = new SolidModel(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	SolidModel *object = new SolidModel(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 /*
-void
-SolidModel::LoadONBrep(ON_Brep *brep)
-{
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implememnted for " << entityname << std::endl;
-	return; // false;
-}
+  void
+  SolidModel::LoadONBrep(ON_Brep *brep)
+  {
+  std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implememnted for " << entityname << std::endl;
+  return; // false;
+  }
 */
 
 // Local Variables:

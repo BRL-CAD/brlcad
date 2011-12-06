@@ -35,15 +35,15 @@
 string VertexLoop::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)VertexLoop::Create);
 
 VertexLoop::VertexLoop() {
-	step = NULL;
-	id = 0;
-	loop_vertex = NULL;
+    step = NULL;
+    id = 0;
+    loop_vertex = NULL;
 }
 
 VertexLoop::VertexLoop(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
-	loop_vertex = NULL;
+    step = sw;
+    id = step_id;
+    loop_vertex = NULL;
 }
 
 VertexLoop::~VertexLoop() {
@@ -51,60 +51,60 @@ VertexLoop::~VertexLoop() {
 
 bool
 VertexLoop::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	if ( !Loop::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::Path." << std::endl;
-		return false;
+    if ( !Loop::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::Path." << std::endl;
+	return false;
+    }
+
+    // need to do this for local attributes to makes sure we have
+    // the actual entity and not a complex/supertype parent
+    sse = step->getEntity(sse,ENTITYNAME);
+
+    if (loop_vertex == NULL) {
+	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"loop_vertex");
+	if (entity) {
+	    loop_vertex = dynamic_cast<Vertex *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
+	} else {
+	    std::cerr << CLASSNAME << ": Error loading entity attribute 'loop_vertex'." << std::endl;
+	    return false;
 	}
+    }
 
-	// need to do this for local attributes to makes sure we have
-	// the actual entity and not a complex/supertype parent
-	sse = step->getEntity(sse,ENTITYNAME);
-
-	if (loop_vertex == NULL) {
-		SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"loop_vertex");
-		if (entity) {
-			loop_vertex = dynamic_cast<Vertex *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
-		} else {
-			std::cerr << CLASSNAME << ": Error loading entity attribute 'loop_vertex'." << std::endl;
-			return false;
-		}
-	}
-
-	return true;
+    return true;
 }
 
 void
 VertexLoop::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Local Attributes:" << std::endl;
-	loop_vertex->Print(level+1);
+    TAB(level); std::cout << "Local Attributes:" << std::endl;
+    loop_vertex->Print(level+1);
 
-	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-	Loop::Print(level+1);
+    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
+    Loop::Print(level+1);
 }
 
 STEPEntity *
 VertexLoop::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		VertexLoop *object = new VertexLoop(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	VertexLoop *object = new VertexLoop(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 // Local Variables:

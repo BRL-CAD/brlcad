@@ -35,91 +35,91 @@
 string Placement::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Placement::Create);
 
 Placement::Placement() {
-	step = NULL;
-	id = 0;
-	location = NULL;
+    step = NULL;
+    id = 0;
+    location = NULL;
 }
 
 Placement::Placement(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
-	location = NULL;
+    step = sw;
+    id = step_id;
+    location = NULL;
 }
 
 Placement::~Placement() {
-	location = NULL;
+    location = NULL;
 }
 
 const double *
 Placement::GetOrigin() {
-	return NULL;
+    return NULL;
 }
 
 const double *
 Placement::GetNormal() {
-	return NULL;
+    return NULL;
 }
 
 const double *
 Placement::GetXAxis() {
-	return NULL;
+    return NULL;
 }
 
 const double *
 Placement::GetYAxis() {
-	return NULL;
+    return NULL;
 }
 
 bool
 Placement::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	if ( !GeometricRepresentationItem::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
-		return false;
+    if ( !GeometricRepresentationItem::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
+	return false;
+    }
+
+    // need to do this for local attributes to makes sure we have
+    // the actual entity and not a complex/supertype parent
+    sse = step->getEntity(sse,ENTITYNAME);
+
+    if (location == NULL) {
+	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"location");
+	if (entity) {
+	    location = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,entity));
+	} else {
+	    std::cout << CLASSNAME << ":Error loading attribute 'location'." << std::endl;
+	    return false;
 	}
+    }
 
-	// need to do this for local attributes to makes sure we have
-	// the actual entity and not a complex/supertype parent
-	sse = step->getEntity(sse,ENTITYNAME);
-
-	if (location == NULL) {
-		SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"location");
-		if (entity) {
-			location = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,entity));
-		} else {
-			std::cout << CLASSNAME << ":Error loading attribute 'location'." << std::endl;
-			return false;
-		}
-	}
-
-	return true;
+    return true;
 }
 
 void
 Placement::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << std::endl;
-	location->Print(level+1);
+    TAB(level); std::cout << CLASSNAME << ":" << std::endl;
+    location->Print(level+1);
 }
 
 STEPEntity *
 Placement::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		Placement *object = new Placement(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	Placement *object = new Placement(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 // Local Variables:

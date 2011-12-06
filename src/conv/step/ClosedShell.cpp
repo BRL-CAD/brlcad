@@ -34,13 +34,13 @@
 string ClosedShell::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)ClosedShell::Create);
 
 ClosedShell::ClosedShell() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
 }
 
 ClosedShell::ClosedShell(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
+    step = sw;
+    id = step_id;
 }
 
 ClosedShell::~ClosedShell() {
@@ -48,41 +48,41 @@ ClosedShell::~ClosedShell() {
 
 bool
 ClosedShell::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	if ( !ConnectedFaceSet::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::ConnectedFaceSet." << std::endl;
-		return false;
-	}
-	return true;
+    if ( !ConnectedFaceSet::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::ConnectedFaceSet." << std::endl;
+	return false;
+    }
+    return true;
 }
 
 void
 ClosedShell::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-	ConnectedFaceSet::Print(level+1);
+    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
+    ConnectedFaceSet::Print(level+1);
 }
 STEPEntity *
 ClosedShell::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		ClosedShell *object = new ClosedShell(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	ClosedShell *object = new ClosedShell(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 bool

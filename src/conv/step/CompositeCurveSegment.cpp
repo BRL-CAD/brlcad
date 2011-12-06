@@ -36,23 +36,23 @@
 string CompositeCurveSegment::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)CompositeCurveSegment::Create);
 
 static const char *Transition_code_string[] = {
-		"discontinuous",
-		"continuous",
-		"cont_same_gradient",
-		"cont_same_gradient_same_curvature",
-		"unset"
+    "discontinuous",
+    "continuous",
+    "cont_same_gradient",
+    "cont_same_gradient_same_curvature",
+    "unset"
 };
 
 CompositeCurveSegment::CompositeCurveSegment() {
-	step = NULL;
-	id = 0;
-	parent_curve = NULL;
+    step = NULL;
+    id = 0;
+    parent_curve = NULL;
 }
 
 CompositeCurveSegment::CompositeCurveSegment(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
-	parent_curve = NULL;
+    step = sw;
+    id = step_id;
+    parent_curve = NULL;
 }
 
 CompositeCurveSegment::~CompositeCurveSegment() {
@@ -60,63 +60,63 @@ CompositeCurveSegment::~CompositeCurveSegment() {
 
 bool
 CompositeCurveSegment::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	if ( !FoundedItem::Load(sw,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
-		return false;
-	}
+    if ( !FoundedItem::Load(sw,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
+	return false;
+    }
 
-	// need to do this for local attributes to makes sure we have
-	// the actual entity and not a complex/supertype parent
-	sse = step->getEntity(sse,ENTITYNAME);
+    // need to do this for local attributes to makes sure we have
+    // the actual entity and not a complex/supertype parent
+    sse = step->getEntity(sse,ENTITYNAME);
 
-	if (parent_curve == NULL) {
-		SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"parent_curve");
-		parent_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
-	}
+    if (parent_curve == NULL) {
+	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"parent_curve");
+	parent_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
+    }
 
-	transition = (Transition_code)step->getEnumAttribute(sse,"transition");
-	if (transition > Transition_code_unset)
-		transition = Transition_code_unset;
+    transition = (Transition_code)step->getEnumAttribute(sse,"transition");
+    if (transition > Transition_code_unset)
+	transition = Transition_code_unset;
 
-	same_sense = step->getBooleanAttribute(sse,"same_sense");
+    same_sense = step->getBooleanAttribute(sse,"same_sense");
 
-	return true;
+    return true;
 }
 
 void
 CompositeCurveSegment::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Attributes:" << std::endl;
-	TAB(level+1); std::cout << "parent_curve:" << std::endl;
-	parent_curve->Print(level+1);
-	TAB(level+1); std::cout << "transition:" << Transition_code_string[transition] << std::endl;
-	TAB(level+1); std::cout << "same_sense:" << step->getBooleanString(same_sense) << std::endl;
+    TAB(level); std::cout << "Attributes:" << std::endl;
+    TAB(level+1); std::cout << "parent_curve:" << std::endl;
+    parent_curve->Print(level+1);
+    TAB(level+1); std::cout << "transition:" << Transition_code_string[transition] << std::endl;
+    TAB(level+1); std::cout << "same_sense:" << step->getBooleanString(same_sense) << std::endl;
 
-	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-	FoundedItem::Print(level+1);
+    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
+    FoundedItem::Print(level+1);
 }
 STEPEntity *
 CompositeCurveSegment::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		CompositeCurveSegment *object = new CompositeCurveSegment(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	CompositeCurveSegment *object = new CompositeCurveSegment(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 // Local Variables:

@@ -34,13 +34,13 @@
 string CartesianTransformationOperator2D::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)CartesianTransformationOperator2D::Create);
 
 CartesianTransformationOperator2D::CartesianTransformationOperator2D() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
 }
 
 CartesianTransformationOperator2D::CartesianTransformationOperator2D(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
+    step = sw;
+    id = step_id;
 }
 
 CartesianTransformationOperator2D::~CartesianTransformationOperator2D() {
@@ -48,50 +48,50 @@ CartesianTransformationOperator2D::~CartesianTransformationOperator2D() {
 
 bool
 CartesianTransformationOperator2D::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	if ( !CartesianTransformationOperator::Load(sw,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::CartesianTransformationOperator." << std::endl;
-		return false;
-	}
+    if ( !CartesianTransformationOperator::Load(sw,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::CartesianTransformationOperator." << std::endl;
+	return false;
+    }
 
-	return true;
+    return true;
 }
 
 void
 CartesianTransformationOperator2D::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << GeometricRepresentationItem::name << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << GeometricRepresentationItem::name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-	CartesianTransformationOperator::Print(level+1);
+    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
+    CartesianTransformationOperator::Print(level+1);
 }
 
 STEPEntity *
 CartesianTransformationOperator2D::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		CartesianTransformationOperator2D *object = new CartesianTransformationOperator2D(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	CartesianTransformationOperator2D *object = new CartesianTransformationOperator2D(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 bool
 CartesianTransformationOperator2D::LoadONBrep(ON_Brep *brep)
 {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
-	return false;
+    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
+    return false;
 }
 
 // Local Variables:

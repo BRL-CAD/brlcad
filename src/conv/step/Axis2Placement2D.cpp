@@ -37,15 +37,15 @@
 string Axis2Placement2D::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Axis2Placement2D::Create);
 
 Axis2Placement2D::Axis2Placement2D() {
-	step = NULL;
-	id = 0;
-	ref_direction = NULL;
+    step = NULL;
+    id = 0;
+    ref_direction = NULL;
 }
 
 Axis2Placement2D::Axis2Placement2D(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
-	ref_direction = NULL;
+    step = sw;
+    id = step_id;
+    ref_direction = NULL;
 }
 
 Axis2Placement2D::~Axis2Placement2D() {
@@ -57,22 +57,22 @@ Axis2Placement2D::~Axis2Placement2D() {
  */
 void
 Axis2Placement2D::BuildAxis() {
-	double d[3];
-	double ortho_comp[3] = {0.0, 0.0, 0.0};
+    double d[3];
+    double ortho_comp[3] = {0.0, 0.0, 0.0};
 
-	if (ref_direction == NULL) {
-		VSET(d,1.0,0.0,0.0);
-	} else {
-		VMOVE(d,ref_direction->DirectionRatios());
-		VUNITIZE(d);
-	}
-	OrthogonalComplement(ortho_comp,d);
+    if (ref_direction == NULL) {
+	VSET(d,1.0,0.0,0.0);
+    } else {
+	VMOVE(d,ref_direction->DirectionRatios());
+	VUNITIZE(d);
+    }
+    OrthogonalComplement(ortho_comp,d);
 
-	VMOVE(p[0],d);
-	VMOVE(p[1],ortho_comp);
-	VSETALL(p[2],0.0);
+    VMOVE(p[0],d);
+    VMOVE(p[1],ortho_comp);
+    VSETALL(p[2],0.0);
 
-	return;
+    return;
 }
 
 /*
@@ -81,101 +81,101 @@ Axis2Placement2D::BuildAxis() {
  */
 void
 Axis2Placement2D::OrthogonalComplement(double *ortho, double *vec) {
-	ortho[0] = -vec[1];
-	ortho[1] = vec[0];
+    ortho[0] = -vec[1];
+    ortho[1] = vec[0];
 }
 
 const double *
 Axis2Placement2D::GetAxis(int i) {
-	return p[i];
+    return p[i];
 }
 
 const double *
 Axis2Placement2D::GetOrigin() {
-	return location->Coordinates();
+    return location->Coordinates();
 }
 
 const double *
 Axis2Placement2D::GetNormal() {
-	return p[0];
+    return p[0];
 }
 
 const double *
 Axis2Placement2D::GetXAxis() {
-	return p[0];
+    return p[0];
 }
 
 const double *
 Axis2Placement2D::GetYAxis() {
-	return p[1];
+    return p[1];
 }
 
 bool
 Axis2Placement2D::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	if ( !Placement::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::Placement." << std::endl;
-		return false;
+    if ( !Placement::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::Placement." << std::endl;
+	return false;
+    }
+
+    // need to do this for local attributes to makes sure we have
+    // the actual entity and not a complex/supertype parent
+    sse = step->getEntity(sse,ENTITYNAME);
+
+    if (ref_direction == NULL) {
+	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"ref_direction");
+	if (entity) {
+	    ref_direction = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
+	} else { // optional so no problem if not here
+	    ref_direction = NULL;
 	}
+    }
 
-	// need to do this for local attributes to makes sure we have
-	// the actual entity and not a complex/supertype parent
-	sse = step->getEntity(sse,ENTITYNAME);
+    BuildAxis();
 
-	if (ref_direction == NULL) {
-		SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"ref_direction");
-		if (entity) {
-			ref_direction = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
-		} else { // optional so no problem if not here
-			ref_direction = NULL;
-		}
-	}
-
-	BuildAxis();
-
-	return true;
+    return true;
 }
 
 void
 Axis2Placement2D::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << std::endl;
 
-	TAB(level); std::cout << "Attributes:" << std::endl;
-	TAB(level+1); std::cout << "ref_direction:" << std::endl;
-	if (ref_direction)
-		ref_direction->Print(level+1);
+    TAB(level); std::cout << "Attributes:" << std::endl;
+    TAB(level+1); std::cout << "ref_direction:" << std::endl;
+    if (ref_direction)
+	ref_direction->Print(level+1);
 
-	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-	Placement::Print(level+1);
+    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
+    Placement::Print(level+1);
 
 }
 
 STEPEntity *
 Axis2Placement2D::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		Axis2Placement2D *object = new Axis2Placement2D(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	Axis2Placement2D *object = new Axis2Placement2D(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 bool
 Axis2Placement2D::LoadONBrep(ON_Brep *brep)
 {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
-	return false;
+    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
+    return false;
 }
 
 // Local Variables:

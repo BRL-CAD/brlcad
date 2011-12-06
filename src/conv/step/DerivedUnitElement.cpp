@@ -35,15 +35,15 @@
 string DerivedUnitElement::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)DerivedUnitElement::Create);
 
 DerivedUnitElement::DerivedUnitElement() {
-	step = NULL;
-	id = 0;
-	unit = NULL;
+    step = NULL;
+    id = 0;
+    unit = NULL;
 }
 
 DerivedUnitElement::DerivedUnitElement(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
-	unit = NULL;
+    step = sw;
+    id = step_id;
+    unit = NULL;
 }
 
 DerivedUnitElement::~DerivedUnitElement() {
@@ -51,51 +51,51 @@ DerivedUnitElement::~DerivedUnitElement() {
 
 bool
 DerivedUnitElement::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	// need to do this for local attributes to makes sure we have
-	// the actual entity and not a complex/supertype parent
-	sse = step->getEntity(sse,ENTITYNAME);
+    // need to do this for local attributes to makes sure we have
+    // the actual entity and not a complex/supertype parent
+    sse = step->getEntity(sse,ENTITYNAME);
 
-	if (unit == NULL) {
-		SCLP23(Application_instance) *se = step->getEntityAttribute(sse,"unit");
+    if (unit == NULL) {
+	SCLP23(Application_instance) *se = step->getEntityAttribute(sse,"unit");
 
-		//unit = dynamic_cast<NamedUnit*>(Factory::CreateNamedUnitObject(sw,se));
-		unit = (NamedUnit*)Factory::CreateObject(sw,se);
-	}
-	exponent = step->getRealAttribute(sse,"exponent");
+	//unit = dynamic_cast<NamedUnit*>(Factory::CreateNamedUnitObject(sw,se));
+	unit = (NamedUnit*)Factory::CreateObject(sw,se);
+    }
+    exponent = step->getRealAttribute(sse,"exponent");
 
-	return true;
+    return true;
 }
 
 void
 DerivedUnitElement::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Attributes:" << std::endl;
-	TAB(level+1); std::cout << "unit:" << std::endl;
-	unit->Print(level+1);
-	TAB(level+1); std::cout << "exponent:" << exponent << std::endl;
+    TAB(level); std::cout << "Attributes:" << std::endl;
+    TAB(level+1); std::cout << "unit:" << std::endl;
+    unit->Print(level+1);
+    TAB(level+1); std::cout << "exponent:" << exponent << std::endl;
 }
 STEPEntity *
 DerivedUnitElement::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		DerivedUnitElement *object = new DerivedUnitElement(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	DerivedUnitElement *object = new DerivedUnitElement(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 // Local Variables:

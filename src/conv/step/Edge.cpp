@@ -35,98 +35,98 @@
 string Edge::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Edge::Create);
 
 Edge::Edge() {
-	step = NULL;
-	id = 0;
-	edge_start = NULL;
-	edge_end = NULL;
+    step = NULL;
+    id = 0;
+    edge_start = NULL;
+    edge_end = NULL;
 }
 
 Edge::Edge(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
-	edge_start = NULL;
-	edge_end = NULL;
+    step = sw;
+    id = step_id;
+    edge_start = NULL;
+    edge_end = NULL;
 }
 
 Edge::~Edge() {
-	edge_start = NULL;
-	edge_end = NULL;
+    edge_start = NULL;
+    edge_end = NULL;
 }
 
 bool
 Edge::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	if ( !TopologicalRepresentationItem::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
-		return false;
-	}
+    if ( !TopologicalRepresentationItem::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
+	return false;
+    }
 
-	// need to do this for local attributes to makes sure we have
-	// the actual entity and not a complex/supertype parent
-	sse = step->getEntity(sse,ENTITYNAME);
+    // need to do this for local attributes to makes sure we have
+    // the actual entity and not a complex/supertype parent
+    sse = step->getEntity(sse,ENTITYNAME);
 
-	if (edge_start == NULL) {
-		SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"edge_start");
-		if (entity) {
-			if (entity->STEPfile_id > 0)
-				edge_start = dynamic_cast<Vertex *>(Factory::CreateObject(sw,entity));
-		} else {
-			std::cout << CLASSNAME << ":Error loading attribute edge_start" << std::endl;
-			return false;
-		}
+    if (edge_start == NULL) {
+	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"edge_start");
+	if (entity) {
+	    if (entity->STEPfile_id > 0)
+		edge_start = dynamic_cast<Vertex *>(Factory::CreateObject(sw,entity));
+	} else {
+	    std::cout << CLASSNAME << ":Error loading attribute edge_start" << std::endl;
+	    return false;
 	}
-	if (edge_end == NULL) {
-		SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"edge_end");
-		if (entity) {
-			if (entity->STEPfile_id > 0)
-				edge_end = dynamic_cast<Vertex *>(Factory::CreateObject(sw,entity));
-		} else {
-			std::cout << CLASSNAME << ":Error loading attribute edge_end" << std::endl;
-			return false;
-		}
+    }
+    if (edge_end == NULL) {
+	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"edge_end");
+	if (entity) {
+	    if (entity->STEPfile_id > 0)
+		edge_end = dynamic_cast<Vertex *>(Factory::CreateObject(sw,entity));
+	} else {
+	    std::cout << CLASSNAME << ":Error loading attribute edge_end" << std::endl;
+	    return false;
 	}
-	return true;
+    }
+    return true;
 }
 
 void
 Edge::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Attributes:" << std::endl;
-	TAB(level+1); std::cout << "edge_start:" << std::endl;
-	if (edge_start) edge_start->Print(level+1);
+    TAB(level); std::cout << "Attributes:" << std::endl;
+    TAB(level+1); std::cout << "edge_start:" << std::endl;
+    if (edge_start) edge_start->Print(level+1);
 
-	TAB(level+1); std::cout << "edge_end:" << std::endl;
-	if (edge_end) edge_end->Print(level+1);
+    TAB(level+1); std::cout << "edge_end:" << std::endl;
+    if (edge_end) edge_end->Print(level+1);
 }
 
 STEPEntity *
 Edge::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		Edge *object = new Edge(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	Edge *object = new Edge(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 bool
 Edge::LoadONBrep(ON_Brep *brep)
 {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
-	return false;
+    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
+    return false;
 }
 
 // Local Variables:

@@ -36,105 +36,105 @@
 string PCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)PCurve::Create);
 
 PCurve::PCurve() {
-	step = NULL;
-	id = 0;
-	basis_surface = NULL;
-	reference_to_curve = NULL;
+    step = NULL;
+    id = 0;
+    basis_surface = NULL;
+    reference_to_curve = NULL;
 }
 
 PCurve::PCurve(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
-	basis_surface = NULL;
-	reference_to_curve = NULL;
+    step = sw;
+    id = step_id;
+    basis_surface = NULL;
+    reference_to_curve = NULL;
 }
 
 PCurve::~PCurve() {
-	basis_surface = NULL;
-	reference_to_curve = NULL;
+    basis_surface = NULL;
+    reference_to_curve = NULL;
 }
 
 bool
 PCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	if ( !Curve::Load(sw,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
-		return false;
+    if ( !Curve::Load(sw,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
+	return false;
+    }
+
+    // need to do this for local attributes to makes sure we have
+    // the actual entity and not a complex/supertype parent
+    sse = step->getEntity(sse,ENTITYNAME);
+
+    if (basis_surface == NULL) {
+	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,
+									"basis_surface");
+	if (entity) {
+	    basis_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw, entity)); // CreateSurfaceObject(sw, entity));
+	} else {
+	    std::cerr << CLASSNAME
+		      << ": Error loading entity attribute 'basis_curve'" << std::endl;
+	    return false;
 	}
+    }
 
-	// need to do this for local attributes to makes sure we have
-	// the actual entity and not a complex/supertype parent
-	sse = step->getEntity(sse,ENTITYNAME);
-
-	if (basis_surface == NULL) {
-		SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,
-				"basis_surface");
-		if (entity) {
-			basis_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw, entity)); // CreateSurfaceObject(sw, entity));
-		} else {
-			std::cerr << CLASSNAME
-					<< ": Error loading entity attribute 'basis_curve'" << std::endl;
-			return false;
-		}
+    if (reference_to_curve == NULL) {
+	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"reference_to_curve");
+	if (entity) {
+	    reference_to_curve = (DefinitionalRepresentation*) Factory::CreateObject(sw, entity);
+	} else {
+	    std::cerr << CLASSNAME << ": Error loading entity attribute 'reference_to_curve'" << std::endl;
+	    return false;
 	}
+    }
 
-	if (reference_to_curve == NULL) {
-		SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"reference_to_curve");
-		if (entity) {
-			reference_to_curve = (DefinitionalRepresentation*) Factory::CreateObject(sw, entity);
-		} else {
-			std::cerr << CLASSNAME << ": Error loading entity attribute 'reference_to_curve'" << std::endl;
-			return false;
-		}
-	}
-
-	return true;
+    return true;
 }
 
 const double *
 PCurve::PointAtEnd() {
-	//TODO: complete pcurve support
-	std::cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
-	return NULL;
+    //TODO: complete pcurve support
+    std::cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
+    return NULL;
 }
 
 const double *
 PCurve::PointAtStart() {
-	//TODO: complete pcurve support
-	std::cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
-	return NULL;
+    //TODO: complete pcurve support
+    std::cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
+    return NULL;
 }
 
 void
 PCurve::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Attributes:" << std::endl;
-	TAB(level+1); std::cout << "basis_surface:" << std::endl;
-	basis_surface->Print(level+1);
-	TAB(level+1); std::cout << "reference_to_curve:" << std::endl;
-	reference_to_curve->Print(level+1);
+    TAB(level); std::cout << "Attributes:" << std::endl;
+    TAB(level+1); std::cout << "basis_surface:" << std::endl;
+    basis_surface->Print(level+1);
+    TAB(level+1); std::cout << "reference_to_curve:" << std::endl;
+    reference_to_curve->Print(level+1);
 }
 STEPEntity *
 PCurve::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		PCurve *object = new PCurve(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	PCurve *object = new PCurve(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw,sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw,sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 // Local Variables:

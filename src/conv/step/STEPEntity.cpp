@@ -29,9 +29,9 @@
 
 STEPEntity::STEPEntity()
 {
-	step=NULL;
-	id=0;
-	ON_id = -1;
+    step=NULL;
+    id=0;
+    ON_id = -1;
 }
 
 
@@ -43,13 +43,13 @@ STEPEntity::~STEPEntity()
 int
 STEPEntity::STEPid()
 {
-	return id;
+    return id;
 }
 
 
 STEPWrapper *STEPEntity::Step()
 {
-	return step;
+    return step;
 }
 
 

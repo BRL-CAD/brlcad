@@ -34,13 +34,13 @@
 string RationalQuasiUniformSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RationalQuasiUniformSurface::Create);
 
 RationalQuasiUniformSurface::RationalQuasiUniformSurface() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
 }
 
 RationalQuasiUniformSurface::RationalQuasiUniformSurface(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
+    step = sw;
+    id = step_id;
 }
 
 RationalQuasiUniformSurface::~RationalQuasiUniformSurface() {
@@ -48,42 +48,42 @@ RationalQuasiUniformSurface::~RationalQuasiUniformSurface() {
 
 bool
 RationalQuasiUniformSurface::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	// load base class attributes (no need to add quasi here has no additional attributes)
-	if ( !RationalBSplineSurface::Load(sw,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineSurface." << std::endl;
-		return false;
-	}
+    // load base class attributes (no need to add quasi here has no additional attributes)
+    if ( !RationalBSplineSurface::Load(sw,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineSurface." << std::endl;
+	return false;
+    }
 
-	return true;
+    return true;
 }
 
 void
 RationalQuasiUniformSurface::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	RationalBSplineSurface::Print(level);
+    RationalBSplineSurface::Print(level);
 }
 STEPEntity *
 RationalQuasiUniformSurface::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		RationalQuasiUniformSurface *object = new RationalQuasiUniformSurface(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	RationalQuasiUniformSurface *object = new RationalQuasiUniformSurface(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw,sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw,sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 // Local Variables:

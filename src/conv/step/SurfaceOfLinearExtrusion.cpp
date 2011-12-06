@@ -34,15 +34,15 @@
 string SurfaceOfLinearExtrusion::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)SurfaceOfLinearExtrusion::Create);
 
 SurfaceOfLinearExtrusion::SurfaceOfLinearExtrusion() {
-	step = NULL;
-	id = 0;
-	extrusion_axis = NULL;
+    step = NULL;
+    id = 0;
+    extrusion_axis = NULL;
 }
 
 SurfaceOfLinearExtrusion::SurfaceOfLinearExtrusion(STEPWrapper *sw,int step_id) {
-	step=sw;
-	id = step_id;
-	extrusion_axis = NULL;
+    step=sw;
+    id = step_id;
+    extrusion_axis = NULL;
 }
 
 SurfaceOfLinearExtrusion::~SurfaceOfLinearExtrusion() {
@@ -50,59 +50,59 @@ SurfaceOfLinearExtrusion::~SurfaceOfLinearExtrusion() {
 
 bool
 SurfaceOfLinearExtrusion::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	if ( !SweptSurface::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
-		return false;
+    if ( !SweptSurface::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
+	return false;
+    }
+
+    // need to do this for local attributes to makes sure we have
+    // the actual entity and not a complex/supertype parent
+    sse = step->getEntity(sse,ENTITYNAME);
+
+    if (extrusion_axis == NULL) {
+	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"extrusion_axis");
+	if (entity) {
+	    extrusion_axis = dynamic_cast<Vector *>(Factory::CreateObject(sw,entity));
+	} else {
+	    std::cerr << CLASSNAME << ": error loading 'extrusion_axis' attribute." << std::endl;
+	    return false;
 	}
+    }
 
-	// need to do this for local attributes to makes sure we have
-	// the actual entity and not a complex/supertype parent
-	sse = step->getEntity(sse,ENTITYNAME);
-
-	if (extrusion_axis == NULL) {
-		SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"extrusion_axis");
-		if (entity) {
-			extrusion_axis = dynamic_cast<Vector *>(Factory::CreateObject(sw,entity));
-		} else {
-			std::cerr << CLASSNAME << ": error loading 'extrusion_axis' attribute." << std::endl;
-			return false;
-		}
-	}
-
-	return true;
+    return true;
 }
 
 void
 SurfaceOfLinearExtrusion::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	if (extrusion_axis != NULL)
-		extrusion_axis->Print(level+1);
+    if (extrusion_axis != NULL)
+	extrusion_axis->Print(level+1);
 
-	SweptSurface::Print(level+1);
+    SweptSurface::Print(level+1);
 }
 
 STEPEntity *
 SurfaceOfLinearExtrusion::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		SurfaceOfLinearExtrusion *object = new SurfaceOfLinearExtrusion(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	SurfaceOfLinearExtrusion *object = new SurfaceOfLinearExtrusion(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 

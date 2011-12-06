@@ -34,13 +34,13 @@
 string QuasiUniformSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)QuasiUniformSurface::Create);
 
 QuasiUniformSurface::QuasiUniformSurface() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
 }
 
 QuasiUniformSurface::QuasiUniformSurface(STEPWrapper *sw,int step_id) {
-	step=sw;
-	id = step_id;
+    step=sw;
+    id = step_id;
 }
 
 QuasiUniformSurface::~QuasiUniformSurface() {
@@ -49,41 +49,41 @@ QuasiUniformSurface::~QuasiUniformSurface() {
 bool
 QuasiUniformSurface::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	if (!BSplineSurface::Load(sw,sse)) {
-		std::cout << "Error loading QuasiUniformSurface." << std::endl;
-		return false;
-	}
-	return true;
+    if (!BSplineSurface::Load(sw,sse)) {
+	std::cout << "Error loading QuasiUniformSurface." << std::endl;
+	return false;
+    }
+    return true;
 }
 
 void
 QuasiUniformSurface::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Inherited:" << std::endl;
-	BSplineSurface::Print(level+1);
+    TAB(level); std::cout << "Inherited:" << std::endl;
+    BSplineSurface::Print(level+1);
 }
 STEPEntity *
 QuasiUniformSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		QuasiUniformSurface *object = new QuasiUniformSurface(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	QuasiUniformSurface *object = new QuasiUniformSurface(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 

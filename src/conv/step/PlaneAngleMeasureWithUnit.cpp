@@ -38,13 +38,13 @@
 string PlaneAngleMeasureWithUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)PlaneAngleMeasureWithUnit::Create);
 
 PlaneAngleMeasureWithUnit::PlaneAngleMeasureWithUnit() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
 }
 
 PlaneAngleMeasureWithUnit::PlaneAngleMeasureWithUnit(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
+    step = sw;
+    id = step_id;
 }
 
 PlaneAngleMeasureWithUnit::~PlaneAngleMeasureWithUnit() {
@@ -52,45 +52,45 @@ PlaneAngleMeasureWithUnit::~PlaneAngleMeasureWithUnit() {
 
 bool
 PlaneAngleMeasureWithUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
 
-	// load base class attributes
-	if ( !MeasureWithUnit::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::" << CLASSNAME << std::endl;
-		return false;
-	}
-	return true;
+    // load base class attributes
+    if ( !MeasureWithUnit::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::" << CLASSNAME << std::endl;
+	return false;
+    }
+    return true;
 }
 
 void
 PlaneAngleMeasureWithUnit::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
 
-	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-	MeasureWithUnit::Print(level+1);
+    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
+    MeasureWithUnit::Print(level+1);
 }
 
 STEPEntity *
 PlaneAngleMeasureWithUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		PlaneAngleMeasureWithUnit *object = new PlaneAngleMeasureWithUnit(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	PlaneAngleMeasureWithUnit *object = new PlaneAngleMeasureWithUnit(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 // Local Variables:

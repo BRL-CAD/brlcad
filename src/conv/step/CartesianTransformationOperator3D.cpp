@@ -36,15 +36,15 @@
 string CartesianTransformationOperator3D::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)CartesianTransformationOperator3D::Create);
 
 CartesianTransformationOperator3D::CartesianTransformationOperator3D() {
-	step = NULL;
-	id = 0;
-	axis3 = NULL;
+    step = NULL;
+    id = 0;
+    axis3 = NULL;
 }
 
 CartesianTransformationOperator3D::CartesianTransformationOperator3D(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
-	axis3 = NULL;
+    step = sw;
+    id = step_id;
+    axis3 = NULL;
 }
 
 CartesianTransformationOperator3D::~CartesianTransformationOperator3D() {
@@ -52,67 +52,67 @@ CartesianTransformationOperator3D::~CartesianTransformationOperator3D() {
 
 bool
 CartesianTransformationOperator3D::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	if ( !CartesianTransformationOperator::Load(sw,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::CartesianTransformationOperator." << std::endl;
-		return false;
+    if ( !CartesianTransformationOperator::Load(sw,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::CartesianTransformationOperator." << std::endl;
+	return false;
+    }
+
+    // need to do this for local attributes to makes sure we have
+    // the actual entity and not a complex/supertype parent
+    sse = step->getEntity(sse,ENTITYNAME);
+
+    if (axis3 == NULL) {
+	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"axis3");
+	if (entity) { //this attribute is optional
+	    axis3 = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
 	}
+    }
 
-	// need to do this for local attributes to makes sure we have
-	// the actual entity and not a complex/supertype parent
-	sse = step->getEntity(sse,ENTITYNAME);
-
-	if (axis3 == NULL) {
-		SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"axis3");
-		if (entity) { //this attribute is optional
-			axis3 = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
-		}
-	}
-
-	return true;
+    return true;
 }
 
 void
 CartesianTransformationOperator3D::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << GeometricRepresentationItem::name << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << GeometricRepresentationItem::name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Attributes:" << std::endl;
-	if (axis3) {
-		TAB(level+1); std::cout << "axis3:" << std::endl;
-		axis3->Print(level+1);
-	}
+    TAB(level); std::cout << "Attributes:" << std::endl;
+    if (axis3) {
+	TAB(level+1); std::cout << "axis3:" << std::endl;
+	axis3->Print(level+1);
+    }
 
-	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-	CartesianTransformationOperator::Print(level+1);
+    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
+    CartesianTransformationOperator::Print(level+1);
 }
 
 STEPEntity *
 CartesianTransformationOperator3D::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		CartesianTransformationOperator3D *object = new CartesianTransformationOperator3D(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	CartesianTransformationOperator3D *object = new CartesianTransformationOperator3D(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 bool
 CartesianTransformationOperator3D::LoadONBrep(ON_Brep *brep)
 {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
-	return false;
+    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
+    return false;
 }
 
 // Local Variables:

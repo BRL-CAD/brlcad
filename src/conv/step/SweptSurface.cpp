@@ -34,15 +34,15 @@
 string SweptSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)SweptSurface::Create);
 
 SweptSurface::SweptSurface() {
-	step = NULL;
-	id = 0;
-	swept_curve = NULL;
+    step = NULL;
+    id = 0;
+    swept_curve = NULL;
 }
 
 SweptSurface::SweptSurface(STEPWrapper *sw,int step_id) {
-	step=sw;
-	id = step_id;
-	swept_curve = NULL;
+    step=sw;
+    id = step_id;
+    swept_curve = NULL;
 }
 
 SweptSurface::~SweptSurface() {
@@ -50,72 +50,72 @@ SweptSurface::~SweptSurface() {
 
 bool
 SweptSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step=sw;
+    id = sse->STEPfile_id;
 
-	if ( !Surface::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
-		return false;
+    if ( !Surface::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
+	return false;
+    }
+
+    // need to do this for local attributes to makes sure we have
+    // the actual entity and not a complex/supertype parent
+    sse = step->getEntity(sse,ENTITYNAME);
+
+    if (swept_curve == NULL) {
+	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"swept_curve");
+	if (entity) {
+	    swept_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity));
+	} else {
+	    std::cerr << CLASSNAME << ": error loading 'swept_curve' attribute." << std::endl;
+	    return false;
 	}
+    }
 
-	// need to do this for local attributes to makes sure we have
-	// the actual entity and not a complex/supertype parent
-	sse = step->getEntity(sse,ENTITYNAME);
-
-	if (swept_curve == NULL) {
-		SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"swept_curve");
-		if (entity) {
-			swept_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity));
-		} else {
-			std::cerr << CLASSNAME << ": error loading 'swept_curve' attribute." << std::endl;
-			return false;
-		}
-	}
-
-	return true;
+    return true;
 }
 
 void
 SweptSurface::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	if (swept_curve != NULL) {
-		swept_curve->Print(level+1);
-	}
+    if (swept_curve != NULL) {
+	swept_curve->Print(level+1);
+    }
 }
 
 STEPEntity *
 SweptSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		SweptSurface *object = new SweptSurface(sw,sse->STEPfile_id);
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	SweptSurface *object = new SweptSurface(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 bool
 SweptSurface::LoadONBrep(ON_Brep *brep)
 {
-	if (ON_id >= 0)
-		return true; // already loaded
+    if (ON_id >= 0)
+	return true; // already loaded
 
-	if (!swept_curve->LoadONBrep(brep)) {
-		std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-		return false;
-	}
+    if (!swept_curve->LoadONBrep(brep)) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	return false;
+    }
 
-	return true;
+    return true;
 }
 
 // Local Variables:
