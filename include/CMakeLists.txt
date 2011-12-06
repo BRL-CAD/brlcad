@@ -52,6 +52,7 @@ SET(brlcadinclude_wanted
 	mater.h
 	nmg.h
 	nurb.h
+        obj.h
 	optical.h
 	orle.h
 	photonmap.h
