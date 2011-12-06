@@ -27,7 +27,7 @@ public:
   SCLP23_NAME(String)& operator= (const char* s);
 
   // format for STEP
-  const char* asStr(std::string& s) const { return s.c_str();  }
+  const char* asStr(std::string& s) const { s = c_str(); return s.c_str();  }
   void STEPwrite (ostream& out =cout)  const;
   void STEPwrite (std::string &s) const;
 
