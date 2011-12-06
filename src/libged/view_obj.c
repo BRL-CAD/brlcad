@@ -92,62 +92,61 @@ static void vo_mike_persp_mat(fastf_t *pmat, const fastf_t *eye);
 
 struct view_obj HeadViewObj;		/* head of view object list */
 
-static struct bu_cmdtab vo_cmds[] =
-{
-    {"ae",			vo_aet_tcl},
-    {"ae2dir",		vo_ae2dir_tcl},
-    {"arot",		vo_arot_tcl},
-    {"base2local",		vo_base2local_tcl},
-    {"center",		vo_center_tcl},
-    {"coord",		vo_coord_tcl},
-    {"dir2ae",		vo_dir2ae_tcl},
-    {"eye",			vo_eye_tcl},
-    {"eye_pos",		vo_eye_pos_tcl},
-    {"invSize",		vo_invSize_tcl},
-    {"keypoint",		vo_keypoint_tcl},
-    {"local2base",		vo_local2base_tcl},
-    {"lookat",		vo_lookat_tcl},
-    {"m2vPoint",		vo_m2vPoint_tcl},
-    {"model2view",		vo_model2view_tcl},
-    {"mrot",		vo_mrot_tcl},
-    {"mrotPoint",		vo_mrotPoint_tcl},
-    {"observer",		vo_observer_tcl},
-    {"orientation",		vo_orientation_tcl},
-    {"perspective",		vo_perspective_tcl},
-    {"pmat",		vo_pmat_tcl},
-    {"pmodel2view",		vo_pmodel2view_tcl},
-    {"pov",			vo_pov_tcl},
-    {"rmat",		vo_rmat_tcl},
-    {"rot",			vo_rot_tcl},
-    {"rotate_about",	vo_rotate_about_tcl},
-    {"sca",			vo_sca_tcl},
-    {"setview",		vo_setview_tcl},
-    {"size",		vo_size_tcl},
-    {"slew",		vo_slew_tcl},
-    {"tra",			vo_tra_tcl},
-    {"units",		vo_units_tcl},
-    {"v2mPoint",		vo_v2mPoint_tcl},
-    {"view2model",		vo_view2model_tcl},
-    {"viewDir",		vo_viewDir_tcl},
-    {"vrot",		vo_vrot_tcl},
-    {"zoom",		vo_zoom_tcl},
-#if 0
-    {"knob",		vo_knob_tcl},
-    {"qorot",		vo_qorot_tcl},
-    {"qvrot",		vo_qvrot_tcl},
-    {"status",		vo_status_tcl},
-    {"",		vo__tcl},
-#endif
-    {(char *)0,		(int (*)())0}
-};
-
-
 static int
 vo_cmd(ClientData clientData,
        Tcl_Interp *interp,
        int argc,
        char *argv[])
 {
+    static struct bu_cmdtab vo_cmds[] =
+	{
+	    {"ae",		vo_aet_tcl},
+	    {"ae2dir",		vo_ae2dir_tcl},
+	    {"arot",		vo_arot_tcl},
+	    {"base2local",	vo_base2local_tcl},
+	    {"center",		vo_center_tcl},
+	    {"coord",		vo_coord_tcl},
+	    {"dir2ae",		vo_dir2ae_tcl},
+	    {"eye",		vo_eye_tcl},
+	    {"eye_pos",		vo_eye_pos_tcl},
+	    {"invSize",		vo_invSize_tcl},
+	    {"keypoint",	vo_keypoint_tcl},
+	    {"local2base",	vo_local2base_tcl},
+	    {"lookat",		vo_lookat_tcl},
+	    {"m2vPoint",	vo_m2vPoint_tcl},
+	    {"model2view",	vo_model2view_tcl},
+	    {"mrot",		vo_mrot_tcl},
+	    {"mrotPoint",	vo_mrotPoint_tcl},
+	    {"observer",	vo_observer_tcl},
+	    {"orientation",	vo_orientation_tcl},
+	    {"perspective",	vo_perspective_tcl},
+	    {"pmat",		vo_pmat_tcl},
+	    {"pmodel2view",	vo_pmodel2view_tcl},
+	    {"pov",		vo_pov_tcl},
+	    {"rmat",		vo_rmat_tcl},
+	    {"rot",		vo_rot_tcl},
+	    {"rotate_about",	vo_rotate_about_tcl},
+	    {"sca",		vo_sca_tcl},
+	    {"setview",		vo_setview_tcl},
+	    {"size",		vo_size_tcl},
+	    {"slew",		vo_slew_tcl},
+	    {"tra",		vo_tra_tcl},
+	    {"units",		vo_units_tcl},
+	    {"v2mPoint",	vo_v2mPoint_tcl},
+	    {"view2model",	vo_view2model_tcl},
+	    {"viewDir",		vo_viewDir_tcl},
+	    {"vrot",		vo_vrot_tcl},
+	    {"zoom",		vo_zoom_tcl},
+#if 0
+	    {"knob",		vo_knob_tcl},
+	    {"qorot",		vo_qorot_tcl},
+	    {"qvrot",		vo_qvrot_tcl},
+	    {"status",		vo_status_tcl},
+	    {"",		vo__tcl},
+#endif
+	    {(char *)0,		(int (*)())0}
+	};
+
     return bu_cmd(clientData, interp, argc, (const char **)argv, vo_cmds, 1);
 }
 

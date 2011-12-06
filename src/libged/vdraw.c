@@ -719,25 +719,24 @@ vdraw_vlist(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-/**
- * view draw command table
- */
-static struct bu_cmdtab vdraw_cmds[] = {
-    {"write",		vdraw_write},
-    {"insert",		vdraw_insert},
-    {"delete",		vdraw_delete},
-    {"read",		vdraw_read},
-    {"send",		vdraw_send},
-    {"params",		vdraw_params},
-    {"open",		vdraw_open},
-    {"vlist",		vdraw_vlist},
-    {(char *)0,		(int (*)())0 }
-};
-
-
 static int
 vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 {
+    /**
+     * view draw command table
+     */
+    static struct bu_cmdtab vdraw_cmds[] = {
+	{"write",		vdraw_write},
+	{"insert",		vdraw_insert},
+	{"delete",		vdraw_delete},
+	{"read",		vdraw_read},
+	{"send",		vdraw_send},
+	{"params",		vdraw_params},
+	{"open",		vdraw_open},
+	{"vlist",		vdraw_vlist},
+	{(char *)0,		(int (*)())0 }
+    };
+
     struct bu_cmdtab *ctp;
     static const char *usage = "write|insert|delete|read|send|params|open|vlist [args]";
 
@@ -754,9 +753,12 @@ vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
+    /* FIXME: should be using bu_cmd() but unable to distinguish
+     * between command not found and command found but returning
+     * error.  both return BRLCAD_ERROR.
+     */
     for (ctp = vdraw_cmds; ctp->ct_name != (char *)0; ctp++) {
-	if (ctp->ct_name[0] == argv[1][0] &&
-	    BU_STR_EQUAL(ctp->ct_name, argv[1])) {
+	if (BU_STR_EQUAL(ctp->ct_name, argv[1])) {
 	    return (*ctp->ct_func)(gedp, argc, argv);
 	}
     }
