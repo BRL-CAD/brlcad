@@ -393,7 +393,11 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     }
 
     /* Now that we finally know how large the object is, get it all */
+#if 1
+    rip->buf = (unsigned char *)bu_get_elem_from_pool((size_t)rip->object_length);
+#else
     rip->buf = (unsigned char *)bu_malloc(rip->object_length, "raw v5 object");
+#endif
 
     *((struct db5_ondisk_header *)rip->buf) = header;	/* struct copy */
     memcpy(rip->buf+sizeof(header), lenbuf, count);
