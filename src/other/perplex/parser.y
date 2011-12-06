@@ -21,6 +21,20 @@ writeHeader(FILE *templateFile, FILE *headerFile)
 	fprintf(headerFile, "%c", c);
     }
 }
+
+static void
+writeRuleClose(appData_t *appData)
+{
+    /* prevent fall-through to next rule */
+    fprintf(appData->out, "\n    IGNORE_TOKEN;\n}\n");
+}
+
+static void
+writeString(appData_t *appData, char *string)
+{
+    fprintf(appData->out, "%s", string);
+    free(string);
+}
 }
 
 %token_type {YYSTYPE}
@@ -80,8 +94,7 @@ definitions_section ::= definitions.
 definitions ::= /* empty */.
 definitions ::= definitions TOKEN_DEFINITIONS(text).
 {
-    fprintf(appData->out, "%s", text.string);
-    free(text.string);
+    writeString(appData, text.string);
 }
 
 /* rules section */
@@ -97,8 +110,7 @@ named_definitions ::= named_definitions named_def.
 
 named_def ::= TOKEN_NAMED_DEF(definition).
 {
-    fprintf(appData->out, "%s", definition.string);
-    free(definition.string);
+    writeString(appData, definition.string);
 }
 
 rule_list ::= rule.
@@ -109,23 +121,24 @@ rule_list ::= rule_list start_scope scoped_rules end_scope.
 scoped_rules ::= scoped_rule.
 scoped_rules ::= scoped_rules scoped_rule.
 
+rule ::= pattern action.
+{
+    writeRuleClose(appData);
+}
+
 rule ::= conditions pattern action.
 {
-    /* prevent fall-through to next rule */
-    fprintf(appData->out, "\n    IGNORE_TOKEN;\n}\n");
+    writeRuleClose(appData);
 }
 
 scoped_rule ::= scoped_pattern action.
 {
-    /* prevent fall-through to next rule */
-    fprintf(appData->out, "\n    IGNORE_TOKEN;\n}\n");
+    writeRuleClose(appData);
 }
 
-conditions ::= /* null */.
 conditions ::= TOKEN_CONDITION(conds).
 {
-    fprintf(appData->out, "%s", conds.string);
-    free(conds.string);
+    writeString(appData, conds.string);
 }
 
 start_scope ::= TOKEN_START_CONDITION_SCOPE(conds).
@@ -141,8 +154,8 @@ end_scope ::= TOKEN_END_CONDITION_SCOPE.
 
 pattern ::= TOKEN_PATTERN(text).
 {
-    fprintf(appData->out, "%s ", text.string);
-    free(text.string);
+    fprintf(stderr, ">>>> TOKEN_PATTERN: \"%s\"\n", text.string);
+    writeString(appData, text.string);
 }
 
 scoped_pattern ::= TOKEN_SCOPED_PATTERN(text).
@@ -153,8 +166,7 @@ scoped_pattern ::= TOKEN_SCOPED_PATTERN(text).
 
 action ::= TOKEN_ACTION(text).
 {
-    fprintf(appData->out, "%s", text.string);
-    free(text.string);
+    writeString(appData, text.string);
 }
 
 /* code section */
@@ -164,6 +176,5 @@ code_section ::= code.
 code ::= /* empty */.
 code ::= code TOKEN_CODE(text).
 {
-    fprintf(appData->out, "%s", text.string);
-    free(text.string);
+    writeString(appData, text.string);
 }
