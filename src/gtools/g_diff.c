@@ -51,6 +51,10 @@
 #include "mater.h"
 #include "tclcad.h"
 
+/* FIXME: should decouple from wdb object interface */
+#include "obj.h"
+
+
 static struct mater *mater_hd1 = MATER_NULL;
 static struct mater *mater_hd2 = MATER_NULL;
 
