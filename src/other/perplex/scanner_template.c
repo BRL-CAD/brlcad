@@ -77,7 +77,7 @@ typedef struct perplex {
 } *perplex_t;
 
 perplex_t perplexFileScanner(FILE *input);
-perplex_t perplexStringScanner(char *input);
+perplex_t perplexStringScanner(char *firstChar, char *lastChar);
 void perplexFree(perplex_t scanner);
 
 #ifndef PERPLEX_LEXER
@@ -503,20 +503,15 @@ newScanner()
 /* public functions */
 
 perplex_t
-perplexStringScanner(char *input)
+perplexStringScanner(char *firstChar, char *lastChar)
 {
     perplex_t scanner = newScanner();
 
-    scanner->in.string = input;
+    scanner->in.string = firstChar;
     scanner->in.file = NULL;
 
-    scanner->marker = scanner->cursor = input;
-
-    /* scanner->null actually points one past
-     * '\0', so that '\0' is actually part of the
-     * input, used as EOI indicator
-     */
-    scanner->null = input + strlen(input) + 1;
+    scanner->marker = scanner->cursor = firstChar;
+    scanner->null = lastChar + 1;
 
     return scanner;
 }

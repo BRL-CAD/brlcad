@@ -429,27 +429,6 @@ newScanner()
 /* public functions */
 
 perplex_t
-perplexStringScanner(char *input)
-{
-    perplex_t scanner = newScanner();
-
-    scanner->in.string = input;
-    scanner->in.file = NULL;
-
-    scanner->marker = scanner->cursor = input;
-
-    /* scanner->null actually points one past
-     * '\0', so that '\0' is actually part of the
-     * input, used as EOI indicator
-     */
-    scanner->null = input + strlen(input) + 1;
-
-    scanner->atEOI = 1;
-
-    return scanner;
-}
-
-perplex_t
 perplexFileScanner(FILE *input)
 {
     perplex_t scanner = newScanner();

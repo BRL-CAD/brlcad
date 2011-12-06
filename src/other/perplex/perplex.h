@@ -113,7 +113,6 @@ extern "C" {
 int yylex(perplex_t scanner);
 
 perplex_t perplexFileScanner(FILE *input);
-perplex_t perplexStringScanner(char *input);
 void perplexFree(perplex_t scanner);
 
 void *ParseAlloc(void *(*mallocProc)(size_t));
