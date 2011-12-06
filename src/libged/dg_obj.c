@@ -169,43 +169,6 @@ void dgo_pr_wait_status(Tcl_Interp *interp, int status);
 static void dgo_print_schain(struct dg_obj *dgop, Tcl_Interp *interp, int lvl);
 static void dgo_print_schain_vlcmds(struct dg_obj *dgop, Tcl_Interp *interp);
 
-static struct bu_cmdtab dgo_cmds[] = {
-    {"assoc",			dgo_assoc_tcl},
-    {"autoview",		dgo_autoview_tcl},
-    {"blast",			dgo_blast_tcl},
-    {"clear",			dgo_zap_tcl},
-    {"draw",			dgo_draw_tcl},
-    {"E",			dgo_E_tcl},
-    {"erase",			dgo_erase_tcl},
-    {"erase_all",		dgo_erase_all_tcl},
-    {"ev",			dgo_ev_tcl},
-    {"get_autoview",		dgo_get_autoview_tcl},
-    {"get_eyemodel",		dgo_get_eyemodel_tcl},
-    {"headSolid",		dgo_headSolid_tcl},
-    {"how",			dgo_how_tcl},
-    {"illum",			dgo_illum_tcl},
-    {"label",			dgo_label_tcl},
-    {"nirt",			dgo_nirt_tcl},
-    {"observer",		dgo_observer_tcl},
-    {"overlay",			dgo_overlay_tcl},
-    {"qray",			dgo_qray_tcl},
-    {"report",			dgo_report_tcl},
-    {"rt",			dgo_rt_tcl},
-    {"rtabort",			dgo_rtabort_tcl},
-    {"rtcheck",			dgo_rtcheck_tcl},
-    {"rtedge",			dgo_rt_tcl},
-    {"set_outputHandler",	dgo_set_outputHandler_tcl},
-    {"set_uplotOutputMode",	dgo_set_uplotOutputMode_tcl},
-    {"set_transparency",	dgo_set_transparency_tcl},
-    {"shaded_mode",		dgo_shaded_mode_tcl},
-    {"tree",			dgo_tree_tcl},
-    {"vdraw",			dgo_vdraw_tcl},
-    {"vnirt",			dgo_vnirt_tcl},
-    {"who",			dgo_who_tcl},
-    {"zap",			dgo_zap_tcl},
-    {(char *)0,			(int (*)())0}
-};
-
 
 /*
  * D G O _ C M D
@@ -219,6 +182,44 @@ static struct bu_cmdtab dgo_cmds[] = {
 int
 dgo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
+    static struct bu_cmdtab dgo_cmds[] = {
+	{"assoc",		dgo_assoc_tcl},
+	{"autoview",		dgo_autoview_tcl},
+	{"blast",		dgo_blast_tcl},
+	{"clear",		dgo_zap_tcl},
+	{"draw",		dgo_draw_tcl},
+	{"E",			dgo_E_tcl},
+	{"erase",		dgo_erase_tcl},
+	{"erase_all",		dgo_erase_all_tcl},
+	{"ev",			dgo_ev_tcl},
+	{"get_autoview",	dgo_get_autoview_tcl},
+	{"get_eyemodel",	dgo_get_eyemodel_tcl},
+	{"headSolid",		dgo_headSolid_tcl},
+	{"how",			dgo_how_tcl},
+	{"illum",		dgo_illum_tcl},
+	{"label",		dgo_label_tcl},
+	{"nirt",		dgo_nirt_tcl},
+	{"observer",		dgo_observer_tcl},
+	{"overlay",		dgo_overlay_tcl},
+	{"qray",		dgo_qray_tcl},
+	{"report",		dgo_report_tcl},
+	{"rt",			dgo_rt_tcl},
+	{"rtabort",		dgo_rtabort_tcl},
+	{"rtcheck",		dgo_rtcheck_tcl},
+	{"rtedge",		dgo_rt_tcl},
+	{"set_outputHandler",	dgo_set_outputHandler_tcl},
+	{"set_uplotOutputMode",	dgo_set_uplotOutputMode_tcl},
+	{"set_transparency",	dgo_set_transparency_tcl},
+	{"shaded_mode",		dgo_shaded_mode_tcl},
+	{"tree",		dgo_tree_tcl},
+	{"vdraw",		dgo_vdraw_tcl},
+	{"vnirt",		dgo_vnirt_tcl},
+	{"who",			dgo_who_tcl},
+	{"zap",			dgo_zap_tcl},
+	{(char *)0,		(int (*)())0}
+    };
+
+
     return bu_cmd(clientData, interp, argc, (const char **)argv, dgo_cmds, 1);
 }
 
