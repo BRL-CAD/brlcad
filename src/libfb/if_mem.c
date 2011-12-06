@@ -71,10 +71,10 @@ static struct modeflags {
 
 
 HIDDEN int
-mem_open(FBIO *ifp, char *file, int width, int height)
+mem_open(FBIO *ifp, const char *file, int width, int height)
 {
     int mode;
-    char *cp;
+    const char *cp;
     FBIO *fbp;
 
     FB_CK_FBIO(ifp);

@@ -42,7 +42,7 @@
 
 
 HIDDEN int
-dsk_open(FBIO *ifp, char *file, int width, int height)
+dsk_open(FBIO *ifp, const char *file, int width, int height)
 {
     static char zero = 0;
 

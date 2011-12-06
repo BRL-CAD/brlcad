@@ -56,7 +56,7 @@
 
 
 HIDDEN int
-DEVNAME_open(FBIO *ifp, char *file, int width, int height)
+DEVNAME_open(FBIO *ifp, const char *file, int width, int height)
 {
     FB_CK_FBIO(ifp);
     return 0;

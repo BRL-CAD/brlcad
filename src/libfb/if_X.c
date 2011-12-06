@@ -525,7 +525,7 @@ x_setup(FBIO *ifp, int width, int height)
 
 
 HIDDEN int
-X_open_fb(FBIO *ifp, char *file, int width, int height)
+X_open_fb(FBIO *ifp, const char *file, int width, int height)
 {
     int fd;
     int mode;
@@ -543,7 +543,7 @@ X_open_fb(FBIO *ifp, char *file, int width, int height)
     mode = MODE_1LINGERING;
 
     if (file != NULL) {
-	register char *cp;
+	const char *cp;
 	char modebuf[80];
 	char *mp;
 	int alpha;

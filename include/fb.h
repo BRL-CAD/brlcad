@@ -78,7 +78,7 @@
 
 /* Library entry points which are true functions. */
 FB_EXPORT extern void fb_configureWindow(FBIO *, int, int);
-FB_EXPORT extern FBIO *fb_open(char *file, int _width, int _height);
+FB_EXPORT extern FBIO *fb_open(const char *file, int _width, int _height);
 FB_EXPORT extern int fb_close(FBIO *ifp);
 FB_EXPORT extern int fb_close_existing(FBIO *ifp);
 FB_EXPORT extern int fb_genhelp(void);

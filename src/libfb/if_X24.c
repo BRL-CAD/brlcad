@@ -2498,7 +2498,7 @@ X24_destroy(struct xinfo *xi)
  * X 2 4 _ O P E N
  */
 HIDDEN int
-X24_open(FBIO *ifp, char *file, int width, int height)
+X24_open(FBIO *ifp, const char *file, int width, int height)
 {
     struct xinfo *xi;
 
@@ -2520,7 +2520,7 @@ X24_open(FBIO *ifp, char *file, int width, int height)
     mode = MODE1_LINGERING;
 
     if (file != NULL) {
-	register char *cp;
+	const char *cp;
 	char modebuf[80];
 	char *mp;
 	int alpha;

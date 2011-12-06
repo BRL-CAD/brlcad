@@ -1091,7 +1091,7 @@ is_linear_cmap(register FBIO *ifp)
 
 
 HIDDEN int
-fb_ogl_open(FBIO *ifp, char *file, int width, int height)
+fb_ogl_open(FBIO *ifp, const char *file, int width, int height)
 {
     static char title[128];
     int mode, i, direct;
@@ -1108,7 +1108,7 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
     mode = MODE_2LINGERING;
 
     if (file != NULL) {
-	register char *cp;
+	const char *cp;
 	char modebuf[80];
 	char *mp;
 	int alpha;

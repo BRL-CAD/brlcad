@@ -89,7 +89,7 @@ typedef struct {
 typedef struct FBIO_ {
     uint32_t if_magic;
     /* Static information: per device TYPE.	*/
-    int (*if_open)FB_ARGS((struct FBIO_ *ifp, char *file, int _width, int _height));			/**< @brief open device */
+    int (*if_open)FB_ARGS((struct FBIO_ *ifp, const char *file, int _width, int _height));		/**< @brief open device */
     int (*if_close)FB_ARGS((struct FBIO_ *ifp));							/**< @brief close device */
     int (*if_clear)FB_ARGS((struct FBIO_ *ifp, unsigned char *pp));					/**< @brief clear device */
     int (*if_read)FB_ARGS((struct FBIO_ *ifp, int x, int y, unsigned char *pp, size_t count));		/**< @brief read pixels */

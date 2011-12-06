@@ -56,7 +56,23 @@ extern int wgl_close_existing(FBIO *ifp);
 	   __FILE__, __LINE__, _bytes_)
 
 
-static int fb_totally_numeric(register char *s);
+/**
+ * True if the non-null string s is all digits
+ */
+static int
+fb_totally_numeric(const char *s)
+{
+    if (s == (char *)0 || *s == 0)
+	return 0;
+
+    while (*s) {
+	if (*s < '0' || *s > '9')
+	    return 0;
+	s++;
+    }
+
+    return 1;
+}
 
 
 /**
@@ -128,7 +144,7 @@ FBIO *_if_list[] = {
  * F B _ O P E N
  */
 FBIO *
-fb_open(char *file, int width, int height)
+fb_open(const char *file, int width, int height)
 {
     register FBIO *ifp;
     int i;
@@ -143,7 +159,7 @@ fb_open(char *file, int width, int height)
     }
     if (file == NULL || *file == '\0') {
 	/* No name given, check environment variable first.	*/
-	if ((file = (char *)getenv("FB_FILE")) == NULL || *file == '\0') {
+	if ((file = (const char *)getenv("FB_FILE")) == NULL || *file == '\0') {
 	    /* None set, use first device as default */
 	    *ifp = *(_if_list[0]);	/* struct copy */
 	    file = ifp->if_name;
@@ -371,25 +387,6 @@ fb_genhelp(void)
     }
 
     return 0;
-}
-
-
-/**
- * True if the non-null string s is all digits
- */
-static int
-fb_totally_numeric(register char *s)
-{
-    if (s == (char *)0 || *s == 0)
-	return 0;
-
-    while (*s) {
-	if (*s < '0' || *s > '9')
-	    return 0;
-	s++;
-    }
-
-    return 1;
 }
 
 

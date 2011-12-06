@@ -560,7 +560,7 @@ MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 HIDDEN int
-wgl_open(FBIO *ifp, char *file, int width, int height)
+wgl_open(FBIO *ifp, const char *file, int width, int height)
 {
     static char title[128];
     int mode,  ret;
@@ -583,7 +583,7 @@ wgl_open(FBIO *ifp, char *file, int width, int height)
     mode = MODE_2LINGERING;
 
     if (file != NULL) {
-	char *cp;
+	const char *cp;
 	char modebuf[80];
 	char *mp;
 	int alpha;

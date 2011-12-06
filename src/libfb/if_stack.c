@@ -44,10 +44,10 @@ struct stkinfo {
 #define SIL(ptr) ((ptr)->u1.p)		/* left hand side version */
 
 HIDDEN int
-stk_open(FBIO *ifp, char *file, int width, int height)
+stk_open(FBIO *ifp, const char *file, int width, int height)
 {
     int i;
-    char *cp;
+    const char *cp;
     char devbuf[80];
 
     FB_CK_FBIO(ifp);

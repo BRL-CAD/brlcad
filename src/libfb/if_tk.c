@@ -78,7 +78,7 @@ Tk_PhotoImageBlock block = {
 char *tkwrite_buffer;
 
 
-HIDDEN int fb_tk_open(FBIO *ifp, char *file, int width, int height),
+HIDDEN int fb_tk_open(FBIO *ifp, const char *file, int width, int height),
     fb_tk_close(FBIO *ifp),
     tk_clear(FBIO *ifp, unsigned char *pp),
     tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count),
@@ -151,7 +151,7 @@ FBIO tk_interface = {
 
 
 HIDDEN int
-fb_tk_open(FBIO *ifp, char *file, int width, int height)
+fb_tk_open(FBIO *ifp, const char *file, int width, int height)
 {
     int pid = -1;
     const char *cmd = "package require Tk";
@@ -184,7 +184,7 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 
     /* set debug bit vector */
     if (file != NULL) {
-	char *cp;
+	const char *cp;
 	for (cp = file; *cp != '\0' && !isdigit(*cp); cp++)
 	    ;
 	sscanf(cp, "%d", &ifp->if_debug);
