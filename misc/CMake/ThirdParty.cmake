@@ -203,7 +203,7 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir)
 
 		# turn it on
 		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
-		SET(${upper}_EXECUTABLE "${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
+		SET(${upper}_EXECUTABLE "${CMAKE_BINARY_DIR}/${BIN_DIR}/${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
 
 	ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "BUNDLED")
 
@@ -250,7 +250,7 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir)
 
 			# turn it on, didn't find it
         		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
-			SET(${upper}_EXECUTABLE "${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
+			SET(${upper}_EXECUTABLE "${CMAKE_BINARY_DIR}/${BIN_DIR}/${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
 
 			# did NOT find system-installed 3rd-party dep
                         IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
