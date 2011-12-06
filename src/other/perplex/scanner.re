@@ -341,13 +341,11 @@ bufferAppend(perplex_t scanner, size_t n)
     buf->nelts--;
 
     for (i = 0; i < n; i++) {
-	if ((c = fgetc(in)) != EOF) {
-	    buf_append(buf, &c, sizeof(char));
-	} else {
-	    buf_append_null(buf);
+	if ((c = fgetc(in)) == EOF) {
 	    scanner->atEOI = 1;
 	    break;
 	}
+	buf_append(buf, &c, sizeof(char));
     }
     buf_append_null(buf);
     scanner->null = (char*)((size_t)buf->elts + buf->nelts - 1);
@@ -360,9 +358,8 @@ bufferFill(perplex_t scanner, size_t n)
     struct Buf *buf;
     size_t shiftSize, marker, start, used;
 
-    if (scanner->in.string != NULL) {
-	/* Can't get any more input for a string. */
-        scanner->atEOI = 1;
+    if (scanner->atEOI) {
+	/* nothing to add to buffer */
 	return;
     }
 
@@ -447,6 +444,8 @@ perplexStringScanner(char *input)
      */
     scanner->null = input + strlen(input) + 1;
 
+    scanner->atEOI = 1;
+
     return scanner;
 }
 
@@ -524,7 +523,7 @@ perplexScan(perplex_t scanner) {
     UPDATE_START;
 
     while (1) {
-	if (scanner->atEOI) {
+	if (scanner->atEOI && scanner->cursor >= scanner->null) {
 	    return YYEOF;
 	}
 /*!re2c
@@ -538,28 +537,19 @@ re2c:cond:goto = "continue;";
 re2c:define:YYCONDTYPE = condition_t;
 re2c:define:YYGETCONDITION:naked = 1;
 
+ANY = [^];
+LINE_ANY = [^\n];
 EOL = '\n';
-ANY = [^\000];
-NAME = [a-zA-Z_][a-zA-Z0-9_-]*;
-
 WHITE = [\n\t ];
-LINE_ANY = [^\000\n];
-LINE_WHITE = [\t ];
-LINE_NOT_WHITE = [^\000\n\t ];
-
-DQUOTE = '"';
-LITERAL_DQUOTE = [^\\']DQUOTE|[^\\]DQUOTE[^']|"\\\\"DQUOTE;
 QUOTE = '\'';
+DQUOTE = '"';
 LITERAL_QUOTE = [^\\]QUOTE|"\\\\"QUOTE;
-
+LITERAL_DQUOTE = [^\\']DQUOTE|[^\\]DQUOTE[^']|"\\\\"DQUOTE;
 LITERAL_RSBRACKET = [^\\]']'|"\\]";
-
-SEPARATOR = "%%"EOL;
 FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
-
+SEPARATOR = "%%"EOL;
 
 <> :=> DEFINITIONS
-
 
 <DEFINITIONS>FAUX_SEPARATOR {
     scanner->appData->tokenData.string = copyString(yytext);
