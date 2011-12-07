@@ -10,7 +10,7 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2011-11-XX  Release 7.21.X                                     ---
+--- 2011-12-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
 * fixed mged bug setting color via Combination Editor - Nicholas Reed
