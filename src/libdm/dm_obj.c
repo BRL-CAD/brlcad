@@ -75,328 +75,247 @@
 #  include "fb.h"
 #endif
 
-HIDDEN int dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_drawBegin_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_drawEnd_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_clear_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_normal_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_loadmat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_drawDataAxes_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_drawModelAxes_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_drawViewAxes_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_drawCenterDot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_drawString_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_drawPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_drawLine_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_drawVList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_drawSList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_drawGeom_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_drawLabels_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_drawScale_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_fg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_bg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_lineWidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_lineStyle_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_zclip_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_zbuffer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_light_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_transparency_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_depthMask_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_bounds_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_debug_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+
+static struct dm_obj HeadDMObj;	/* head of display manager object list */
+
+
 #ifdef USE_FBSERV
-HIDDEN int dmo_openFb(struct dm_obj *dmop, Tcl_Interp *interp);
-HIDDEN int dmo_closeFb(struct dm_obj *dmop);
-HIDDEN int dmo_listen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_refreshFb_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN void dmo_fbs_callback(genptr_t clientData);
-#endif
-HIDDEN int dmo_flush_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_sync_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_get_aspect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-
-HIDDEN int dmo_png_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-
-HIDDEN int dmo_clearBufferAfter_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_getDrawLabelsHook_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int dmo_setDrawLabelsHook_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-
-
-HIDDEN struct dm_obj HeadDMObj;	/* head of display manager object list */
-
-HIDDEN struct bu_cmdtab dmo_cmds[] = {
-    {"bg",			dmo_bg_tcl},
-    {"bounds",		dmo_bounds_tcl},
-    {"clear",		dmo_clear_tcl},
-    {"configure",		dmo_configure_tcl},
-    {"debug",		dmo_debug_tcl},
-    {"depthMask",		dmo_depthMask_tcl},
-    {"drawBegin",		dmo_drawBegin_tcl},
-    {"drawEnd",		dmo_drawEnd_tcl},
-    {"drawGeom",		dmo_drawGeom_tcl},
-    {"drawLabels",		dmo_drawLabels_tcl},
-    {"drawLine",		dmo_drawLine_tcl},
-    {"drawPoint",		dmo_drawPoint_tcl},
-    {"drawScale",		dmo_drawScale_tcl},
-    {"drawSList",		dmo_drawSList_tcl},
-    {"drawString",		dmo_drawString_tcl},
-    {"drawVList",		dmo_drawVList_tcl},
-    {"drawDataAxes",	dmo_drawDataAxes_tcl},
-    {"drawModelAxes",	dmo_drawModelAxes_tcl},
-    {"drawViewAxes",	dmo_drawViewAxes_tcl},
-    {"drawCenterDot",	dmo_drawCenterDot_tcl},
-    {"fg",			dmo_fg_tcl},
-    {"flush",		dmo_flush_tcl},
-    {"get_aspect",		dmo_get_aspect_tcl},
-    {"getDrawLabelsHook",	dmo_getDrawLabelsHook_tcl},
-    {"light",		dmo_light_tcl},
-    {"linestyle",		dmo_lineStyle_tcl},
-    {"linewidth",		dmo_lineWidth_tcl},
-#ifdef USE_FBSERV
-    {"listen",		dmo_listen_tcl},
-#endif
-    {"loadmat",		dmo_loadmat_tcl},
-    {"normal",		dmo_normal_tcl},
-    {"observer",		dmo_observer_tcl},
-    {"perspective",		dmo_perspective_tcl},
-    {"png",		        dmo_png_tcl},
-#ifdef USE_FBSERV
-    {"refreshfb",		dmo_refreshFb_tcl},
-#endif
-    {"clearBufferAfter",    dmo_clearBufferAfter_tcl},
-    {"setDrawLabelsHook",	dmo_setDrawLabelsHook_tcl},
-    {"size",		dmo_size_tcl},
-    {"sync",		dmo_sync_tcl},
-    {"transparency",	dmo_transparency_tcl},
-    {"zbuffer",		dmo_zbuffer_tcl},
-    {"zclip",		dmo_zclip_tcl},
-    {(char *)0,		(int (*)())0}
-};
-
-
 /*
- * D M _ C M D
- *
- * Generic interface for display manager object routines.
- * Usage:
- * objname cmd ?args?
- *
- * Returns: result of DM command.
+ * Open/activate the display managers framebuffer.
  */
 HIDDEN int
-dmo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_openFb(struct dm_obj *dmop, Tcl_Interp *interp)
 {
-    return bu_cmd(clientData, interp, argc, (const char **)argv, dmo_cmds, 1);
-}
+    if (!dmop || !interp)
+	return TCL_ERROR;
 
+    /* already open */
+    if (dmop->dmo_fbs.fbs_fbp != FBIO_NULL)
+	return TCL_OK;
 
-int
-Dmo_Init(Tcl_Interp *interp)
-{
-    BU_LIST_INIT(&HeadDMObj.l);
-    (void)Tcl_CreateCommand(interp, "dm_open", (Tcl_CmdProc *)dmo_open_tcl, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+    /* don't use bu_calloc so we can fail slightly more gradefully */
+    if ((dmop->dmo_fbs.fbs_fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
+	Tcl_Obj *obj;
+
+	obj = Tcl_GetObjResult(interp);
+	if (Tcl_IsShared(obj))
+	    obj = Tcl_DuplicateObj(obj);
+
+	Tcl_AppendStringsToObj(obj, "openfb: failed to allocate framebuffer memory\n",
+			       (char *)NULL);
+
+	Tcl_SetObjResult(interp, obj);
+	return TCL_ERROR;
+    }
+
+    switch (dmop->dmo_dmp->dm_type) {
+#ifdef DM_X
+	case DM_TYPE_X:
+	    *dmop->dmo_fbs.fbs_fbp = X24_interface; /* struct copy */
+
+	    dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/X")+1, "if_name");
+	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/X", strlen("/dev/X")+1);
+
+	    /* Mark OK by filling in magic number */
+	    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
+
+	    _X24_open_existing(dmop->dmo_fbs.fbs_fbp,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
+			       ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->pix,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
+			       dmop->dmo_dmp->dm_width,
+			       dmop->dmo_dmp->dm_height,
+			       ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->gc);
+	    break;
+#endif
+
+#ifdef DM_OGL
+	case DM_TYPE_OGL:
+	    *dmop->dmo_fbs.fbs_fbp = ogl_interface; /* struct copy */
+
+	    dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/ogl")+1, "if_name");
+	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/ogl", strlen("/dev/ogl")+1);
+
+	    /* Mark OK by filling in magic number */
+	    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
+
+	    _ogl_open_existing(dmop->dmo_fbs.fbs_fbp,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
+			       dmop->dmo_dmp->dm_width,
+			       dmop->dmo_dmp->dm_height,
+			       ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc,
+			       ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer,
+			       0);
+	    break;
+#endif
+#ifdef DM_WGL
+	case DM_TYPE_WGL:
+	    *dmop->dmo_fbs.fbs_fbp = wgl_interface; /* struct copy */
+
+	    dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/wgl")+1, "if_name");
+	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/wgl", strlen("/dev/wgl")+1);
+
+	    /* Mark OK by filling in magic number */
+	    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
+
+	    _wgl_open_existing(dmop->dmo_fbs.fbs_fbp,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->hdc,
+			       dmop->dmo_dmp->dm_width,
+			       dmop->dmo_dmp->dm_height,
+			       ((struct wgl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc,
+			       ((struct wgl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer,
+			       0);
+	    break;
+#endif
+    }
 
     return TCL_OK;
 }
 
 
 /*
- * Called by Tcl when the object is destroyed.
+ * Draw the point.
+ *
+ * Usage:
+ * objname drawPoint x y
+ *
  */
-HIDDEN void
-dmo_deleteProc(ClientData clientData)
+HIDDEN int
+dmo_closeFb(struct dm_obj *dmop)
 {
-    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL)
+	return TCL_OK;
 
-    /* free observers */
-    bu_observer_free(&dmop->dmo_observers);
+    fb_flush(dmop->dmo_fbs.fbs_fbp);
+    fb_close_existing(dmop->dmo_fbs.fbs_fbp);
 
-#ifdef USE_FBSERV
-    /* close framebuffer */
-    dmo_closeFb(dmop);
-#endif
+    dmop->dmo_fbs.fbs_fbp = FBIO_NULL;
 
-    bu_vls_free(&dmop->dmo_name);
-    DM_CLOSE(dmop->dmo_dmp);
-    BU_LIST_DEQUEUE(&dmop->l);
-    bu_free((genptr_t)dmop, "dmo_deleteProc: dmop");
-
+    return TCL_OK;
 }
 
 
 /*
- * Open/create a display manager object.
+ * Set/get the port used to listen for framebuffer clients.
  *
  * Usage:
- * dm_open [name type [args]]
+ * objname listen [port]
+ *
+ * Returns the port number actually used.
+ *
  */
 HIDDEN int
-dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+dmo_listen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    struct dm_obj *dmop;
-    struct dm *dmp;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
-    int name_index = 1;
-    int type = DM_TYPE_BAD;
     Tcl_Obj *obj;
+
+    if (!dmop || !interp)
+	return TCL_ERROR;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
-    if (argc == 1) {
-	/* get list of display manager objects */
-	for (BU_LIST_FOR(dmop, dm_obj, &HeadDMObj.l))
-	    Tcl_AppendStringsToObj(obj, bu_vls_addr(&dmop->dmo_name), " ", (char *)NULL);
+    bu_vls_init(&vls);
+
+    if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL) {
+	bu_vls_printf(&vls, "%s listen: framebuffer not open!\n", argv[0]);
+	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+
+	Tcl_SetObjResult(interp, obj);
+	return TCL_ERROR;
+    }
+
+    /* return the port number */
+    if (argc == 2) {
+	bu_vls_printf(&vls, "%d", dmop->dmo_fbs.fbs_listener.fbsl_port);
+	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(interp, obj);
 	return TCL_OK;
     }
 
-    if (argc < 3) {
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias dm_open %s", argv[1]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
+    if (argc == 3) {
+	int port;
 
-    /* check to see if display manager object exists */
-    for (BU_LIST_FOR(dmop, dm_obj, &HeadDMObj.l)) {
-	if (BU_STR_EQUAL(argv[name_index], bu_vls_addr(&dmop->dmo_name))) {
-	    Tcl_AppendStringsToObj(obj, "dmo_open: ", argv[name_index],
-				   " exists.", (char *)NULL);
+	if (sscanf(argv[2], "%d", &port) != 1) {
+	    Tcl_AppendStringsToObj(obj, "listen: bad value - ", argv[2], "\n", (char *)NULL);
 	    Tcl_SetObjResult(interp, obj);
 	    return TCL_ERROR;
 	}
+
+	if (port >= 0)
+	    fbs_open(&dmop->dmo_fbs, port);
+	else {
+	    fbs_close(&dmop->dmo_fbs);
+	}
+	bu_vls_printf(&vls, "%d", dmop->dmo_fbs.fbs_listener.fbsl_port);
+	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+
+	Tcl_SetObjResult(interp, obj);
+	return TCL_OK;
     }
 
-    /* find display manager type */
-#ifdef DM_X
-    if (argv[2][0] == 'X' || argv[2][0] == 'x')
-	type = DM_TYPE_X;
-#endif /* DM_X */
+    bu_vls_printf(&vls, "helplib_alias dm_listen %s", argv[1]);
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
 
-#ifdef DM_TK
-    if (BU_STR_EQUAL(argv[2], "tk"))
-	type = DM_TYPE_TK;
-#endif /* DM_TK */
+    return TCL_ERROR;
+}
 
-#ifdef DM_OGL
-    if (BU_STR_EQUAL(argv[2], "ogl"))
-	type = DM_TYPE_OGL;
-#endif /* DM_OGL */
 
-#ifdef DM_WGL
-    if (BU_STR_EQUAL(argv[2], "wgl"))
-	type = DM_TYPE_WGL;
-#endif /* DM_WGL */
+/*
+ * Refresh the display managers framebuffer.
+ *
+ * Usage:
+ * objname refresh
+ *
+ */
+HIDDEN int
+dmo_refreshFb_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls;
 
-    if (type == DM_TYPE_BAD) {
-	Tcl_AppendStringsToObj(obj,
-			       "Unsupported display manager type - ",
-			       argv[2], "\n",
-			       "The supported types are: X, ogl, wgl, and nu",
-			       (char *)NULL);
+    if (!dmop || !interp || argc < 1 ||  !argv)
+	return TCL_ERROR;
+
+    if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL) {
+	Tcl_Obj *obj;
+
+	obj = Tcl_GetObjResult(interp);
+	if (Tcl_IsShared(obj))
+	    obj = Tcl_DuplicateObj(obj);
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "%s refresh: framebuffer not open!\n", argv[0]);
+	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+
 	Tcl_SetObjResult(interp, obj);
 	return TCL_ERROR;
     }
 
-    {
-	int i;
-	int arg_start = 3;
-	int newargs = 2;
-	int ac;
-	const char **av;
+    fb_refresh(dmop->dmo_fbs.fbs_fbp, 0, 0,
+	       dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height);
 
-	ac = argc + newargs;
-	av = (const char **)bu_malloc(sizeof(char *) * (ac+1), "dmo_open_tcl: av");
-	av[0] = argv[0];
-
-	/* Insert new args (i.e. arrange to call init_dm_obj from dm_open()) */
-	av[1] = "-i";
-	av[2] = "init_dm_obj";
-
-	/*
-	 * Stuff name into argument list.
-	 */
-	av[3] = "-n";
-	av[4] = argv[name_index];
-
-	/* copy the rest */
-	for (i = arg_start; i < argc; ++i)
-	    av[i+newargs] = argv[i];
-	av[i+newargs] = (const char *)NULL;
-
-	if ((dmp = dm_open(interp, type, ac, av)) == DM_NULL) {
-	    if (Tcl_IsShared(obj))
-		obj = Tcl_DuplicateObj(obj);
-
-	    Tcl_AppendStringsToObj(obj,
-				   "dmo_open_tcl: Failed to open - ",
-				   argv[name_index],
-				   "\n",
-				   (char *)NULL);
-	    bu_free((genptr_t)av, "dmo_open_tcl: av");
-
-	    Tcl_SetObjResult(interp, obj);
-	    return TCL_ERROR;
-	}
-
-	bu_free((genptr_t)av, "dmo_open_tcl: av");
-    }
-
-    /* acquire dm_obj struct */
-    BU_GETSTRUCT(dmop, dm_obj);
-
-    /* initialize dm_obj */
-    bu_vls_init(&dmop->dmo_name);
-    bu_vls_strcpy(&dmop->dmo_name, argv[name_index]);
-    dmop->dmo_dmp = dmp;
-    VSETALL(dmop->dmo_dmp->dm_clipmin, -2048.0);
-    VSETALL(dmop->dmo_dmp->dm_clipmax, 2047.0);
-    dmop->dmo_drawLabelsHook = (int (*)())0;
-
-#ifdef USE_FBSERV
-    dmop->dmo_fbs.fbs_listener.fbsl_fbsp = &dmop->dmo_fbs;
-    dmop->dmo_fbs.fbs_listener.fbsl_fd = -1;
-    dmop->dmo_fbs.fbs_listener.fbsl_port = -1;
-    dmop->dmo_fbs.fbs_fbp = FBIO_NULL;
-    dmop->dmo_fbs.fbs_callback = dmo_fbs_callback;
-    dmop->dmo_fbs.fbs_clientData = dmop;
-    dmop->dmo_fbs.fbs_interp = interp;
-#endif
-
-    BU_LIST_INIT(&dmop->dmo_observers.l);
-
-    /* append to list of dm_obj's */
-    BU_LIST_APPEND(&HeadDMObj.l, &dmop->l);
-
-    (void)Tcl_CreateCommand(interp,
-			    bu_vls_addr(&dmop->dmo_name),
-			    (Tcl_CmdProc *)dmo_cmd,
-			    (ClientData)dmop,
-			    dmo_deleteProc);
-
-    /* send Configure event */
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "event generate %s <Configure>; update", bu_vls_addr(&dmop->dmo_name));
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-#ifdef USE_FBSERV
-    /* open the framebuffer */
-    dmo_openFb(dmop, interp);
-#endif
-
-    /* Return new function name as result */
-    Tcl_SetResult(interp, bu_vls_addr(&dmop->dmo_name), TCL_VOLATILE);
     return TCL_OK;
 }
+#endif
 
 
 HIDDEN int
@@ -1677,7 +1596,7 @@ dmo_fg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     bu_vls_free(&vls);
     return TCL_ERROR;
 
- bad_color:
+bad_color:
     bu_vls_printf(&vls, "bad rgb color - %s\n", argv[2]);
     Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
@@ -1747,7 +1666,7 @@ dmo_bg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     bu_vls_free(&vls);
     return TCL_ERROR;
 
- bad_color:
+bad_color:
     bu_vls_printf(&vls, "bad rgb color - %s\n", argv[2]);
     Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
@@ -1809,7 +1728,7 @@ dmo_lineWidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     bu_vls_free(&vls);
     return TCL_ERROR;
 
- bad_lineWidth:
+bad_lineWidth:
     bu_vls_printf(&vls, "bad linewidth - %s\n", argv[2]);
     Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
@@ -1871,7 +1790,7 @@ dmo_lineStyle_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     bu_vls_free(&vls);
     return TCL_ERROR;
 
- bad_linestyle:
+bad_linestyle:
     bu_vls_printf(&vls, "bad linestyle - %s\n", argv[2]);
     Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
@@ -2743,244 +2662,6 @@ dmo_debug_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-#ifdef USE_FBSERV
-/*
- * Open/activate the display managers framebuffer.
- */
-HIDDEN int
-dmo_openFb(struct dm_obj *dmop, Tcl_Interp *interp)
-{
-    if (!dmop || !interp)
-	return TCL_ERROR;
-
-    /* already open */
-    if (dmop->dmo_fbs.fbs_fbp != FBIO_NULL)
-	return TCL_OK;
-
-    /* don't use bu_calloc so we can fail slightly more gradefully */
-    if ((dmop->dmo_fbs.fbs_fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
-	Tcl_Obj *obj;
-
-	obj = Tcl_GetObjResult(interp);
-	if (Tcl_IsShared(obj))
-	    obj = Tcl_DuplicateObj(obj);
-
-	Tcl_AppendStringsToObj(obj, "openfb: failed to allocate framebuffer memory\n",
-			       (char *)NULL);
-
-	Tcl_SetObjResult(interp, obj);
-	return TCL_ERROR;
-    }
-
-    switch (dmop->dmo_dmp->dm_type) {
-#ifdef DM_X
-	case DM_TYPE_X:
-	    *dmop->dmo_fbs.fbs_fbp = X24_interface; /* struct copy */
-
-	    dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/X")+1, "if_name");
-	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/X", strlen("/dev/X")+1);
-
-	    /* Mark OK by filling in magic number */
-	    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
-
-	    _X24_open_existing(dmop->dmo_fbs.fbs_fbp,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
-			       ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->pix,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
-			       dmop->dmo_dmp->dm_width,
-			       dmop->dmo_dmp->dm_height,
-			       ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->gc);
-	    break;
-#endif
-
-#ifdef DM_OGL
-	case DM_TYPE_OGL:
-	    *dmop->dmo_fbs.fbs_fbp = ogl_interface; /* struct copy */
-
-	    dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/ogl")+1, "if_name");
-	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/ogl", strlen("/dev/ogl")+1);
-
-	    /* Mark OK by filling in magic number */
-	    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
-
-	    _ogl_open_existing(dmop->dmo_fbs.fbs_fbp,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
-			       dmop->dmo_dmp->dm_width,
-			       dmop->dmo_dmp->dm_height,
-			       ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc,
-			       ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer,
-			       0);
-	    break;
-#endif
-#ifdef DM_WGL
-	case DM_TYPE_WGL:
-	    *dmop->dmo_fbs.fbs_fbp = wgl_interface; /* struct copy */
-
-	    dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/wgl")+1, "if_name");
-	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/wgl", strlen("/dev/wgl")+1);
-
-	    /* Mark OK by filling in magic number */
-	    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
-
-	    _wgl_open_existing(dmop->dmo_fbs.fbs_fbp,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->hdc,
-			       dmop->dmo_dmp->dm_width,
-			       dmop->dmo_dmp->dm_height,
-			       ((struct wgl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc,
-			       ((struct wgl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer,
-			       0);
-	    break;
-#endif
-    }
-
-    return TCL_OK;
-}
-
-
-/*
- * Draw the point.
- *
- * Usage:
- * objname drawPoint x y
- *
- */
-HIDDEN int
-dmo_closeFb(struct dm_obj *dmop)
-{
-    if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL)
-	return TCL_OK;
-
-    fb_flush(dmop->dmo_fbs.fbs_fbp);
-    fb_close_existing(dmop->dmo_fbs.fbs_fbp);
-
-    dmop->dmo_fbs.fbs_fbp = FBIO_NULL;
-
-    return TCL_OK;
-}
-
-
-/*
- * Set/get the port used to listen for framebuffer clients.
- *
- * Usage:
- * objname listen [port]
- *
- * Returns the port number actually used.
- *
- */
-HIDDEN int
-dmo_listen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
-{
-    struct dm_obj *dmop = (struct dm_obj *)clientData;
-    struct bu_vls vls;
-    Tcl_Obj *obj;
-
-    if (!dmop || !interp)
-	return TCL_ERROR;
-
-    obj = Tcl_GetObjResult(interp);
-    if (Tcl_IsShared(obj))
-	obj = Tcl_DuplicateObj(obj);
-
-    bu_vls_init(&vls);
-
-    if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL) {
-	bu_vls_printf(&vls, "%s listen: framebuffer not open!\n", argv[0]);
-	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
-	bu_vls_free(&vls);
-
-	Tcl_SetObjResult(interp, obj);
-	return TCL_ERROR;
-    }
-
-    /* return the port number */
-    if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_fbs.fbs_listener.fbsl_port);
-	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
-	bu_vls_free(&vls);
-
-	Tcl_SetObjResult(interp, obj);
-	return TCL_OK;
-    }
-
-    if (argc == 3) {
-	int port;
-
-	if (sscanf(argv[2], "%d", &port) != 1) {
-	    Tcl_AppendStringsToObj(obj, "listen: bad value - ", argv[2], "\n", (char *)NULL);
-	    Tcl_SetObjResult(interp, obj);
-	    return TCL_ERROR;
-	}
-
-	if (port >= 0)
-	    fbs_open(&dmop->dmo_fbs, port);
-	else {
-	    fbs_close(&dmop->dmo_fbs);
-	}
-	bu_vls_printf(&vls, "%d", dmop->dmo_fbs.fbs_listener.fbsl_port);
-	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
-	bu_vls_free(&vls);
-
-	Tcl_SetObjResult(interp, obj);
-	return TCL_OK;
-    }
-
-    bu_vls_printf(&vls, "helplib_alias dm_listen %s", argv[1]);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-}
-
-
-/*
- * Refresh the display managers framebuffer.
- *
- * Usage:
- * objname refresh
- *
- */
-HIDDEN int
-dmo_refreshFb_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
-{
-    struct dm_obj *dmop = (struct dm_obj *)clientData;
-    struct bu_vls vls;
-
-    if (!dmop || !interp || argc < 1 ||  !argv)
-	return TCL_ERROR;
-
-    if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL) {
-	Tcl_Obj *obj;
-
-	obj = Tcl_GetObjResult(interp);
-	if (Tcl_IsShared(obj))
-	    obj = Tcl_DuplicateObj(obj);
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "%s refresh: framebuffer not open!\n", argv[0]);
-	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
-	bu_vls_free(&vls);
-
-	Tcl_SetObjResult(interp, obj);
-	return TCL_ERROR;
-    }
-
-    fb_refresh(dmop->dmo_fbs.fbs_fbp, 0, 0,
-	       dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height);
-
-    return TCL_OK;
-}
-#endif
-
 /*
  * Flush the output buffer.
  *
@@ -3293,6 +2974,276 @@ dmo_setDrawLabelsHook_tcl(ClientData clientData,
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
     return dmo_setDrawLabelsHook_cmd(dmop, interp, argc-1, argv+1);
+}
+
+
+/*
+ * Called by Tcl when the object is destroyed.
+ */
+HIDDEN void
+dmo_deleteProc(ClientData clientData)
+{
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+
+    /* free observers */
+    bu_observer_free(&dmop->dmo_observers);
+
+#ifdef USE_FBSERV
+    /* close framebuffer */
+    dmo_closeFb(dmop);
+#endif
+
+    bu_vls_free(&dmop->dmo_name);
+    DM_CLOSE(dmop->dmo_dmp);
+    BU_LIST_DEQUEUE(&dmop->l);
+    bu_free((genptr_t)dmop, "dmo_deleteProc: dmop");
+
+}
+
+
+/*
+ * D M _ C M D
+ *
+ * Generic interface for display manager object routines.
+ * Usage:
+ * objname cmd ?args?
+ *
+ * Returns: result of DM command.
+ */
+HIDDEN int
+dmo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+    static struct bu_cmdtab dmo_cmds[] = {
+	{"bg",			dmo_bg_tcl},
+	{"bounds",		dmo_bounds_tcl},
+	{"clear",		dmo_clear_tcl},
+	{"configure",		dmo_configure_tcl},
+	{"debug",		dmo_debug_tcl},
+	{"depthMask",		dmo_depthMask_tcl},
+	{"drawBegin",		dmo_drawBegin_tcl},
+	{"drawEnd",		dmo_drawEnd_tcl},
+	{"drawGeom",		dmo_drawGeom_tcl},
+	{"drawLabels",		dmo_drawLabels_tcl},
+	{"drawLine",		dmo_drawLine_tcl},
+	{"drawPoint",		dmo_drawPoint_tcl},
+	{"drawScale",		dmo_drawScale_tcl},
+	{"drawSList",		dmo_drawSList_tcl},
+	{"drawString",		dmo_drawString_tcl},
+	{"drawVList",		dmo_drawVList_tcl},
+	{"drawDataAxes",	dmo_drawDataAxes_tcl},
+	{"drawModelAxes",	dmo_drawModelAxes_tcl},
+	{"drawViewAxes",	dmo_drawViewAxes_tcl},
+	{"drawCenterDot",	dmo_drawCenterDot_tcl},
+	{"fg",			dmo_fg_tcl},
+	{"flush",		dmo_flush_tcl},
+	{"get_aspect",		dmo_get_aspect_tcl},
+	{"getDrawLabelsHook",	dmo_getDrawLabelsHook_tcl},
+	{"light",		dmo_light_tcl},
+	{"linestyle",		dmo_lineStyle_tcl},
+	{"linewidth",		dmo_lineWidth_tcl},
+#ifdef USE_FBSERV
+	{"listen",		dmo_listen_tcl},
+#endif
+	{"loadmat",		dmo_loadmat_tcl},
+	{"normal",		dmo_normal_tcl},
+	{"observer",		dmo_observer_tcl},
+	{"perspective",		dmo_perspective_tcl},
+	{"png",		        dmo_png_tcl},
+#ifdef USE_FBSERV
+	{"refreshfb",		dmo_refreshFb_tcl},
+#endif
+	{"clearBufferAfter",    dmo_clearBufferAfter_tcl},
+	{"setDrawLabelsHook",	dmo_setDrawLabelsHook_tcl},
+	{"size",		dmo_size_tcl},
+	{"sync",		dmo_sync_tcl},
+	{"transparency",	dmo_transparency_tcl},
+	{"zbuffer",		dmo_zbuffer_tcl},
+	{"zclip",		dmo_zclip_tcl},
+	{(char *)0,		(int (*)())0}
+    };
+
+    return bu_cmd(clientData, interp, argc, (const char **)argv, dmo_cmds, 1);
+}
+
+
+/*
+ * Open/create a display manager object.
+ *
+ * Usage:
+ * dm_open [name type [args]]
+ */
+HIDDEN int
+dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct dm_obj *dmop;
+    struct dm *dmp;
+    struct bu_vls vls;
+    int name_index = 1;
+    int type = DM_TYPE_BAD;
+    Tcl_Obj *obj;
+
+    obj = Tcl_GetObjResult(interp);
+    if (Tcl_IsShared(obj))
+	obj = Tcl_DuplicateObj(obj);
+
+    if (argc == 1) {
+	/* get list of display manager objects */
+	for (BU_LIST_FOR(dmop, dm_obj, &HeadDMObj.l))
+	    Tcl_AppendStringsToObj(obj, bu_vls_addr(&dmop->dmo_name), " ", (char *)NULL);
+
+	Tcl_SetObjResult(interp, obj);
+	return TCL_OK;
+    }
+
+    if (argc < 3) {
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib_alias dm_open %s", argv[1]);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    /* check to see if display manager object exists */
+    for (BU_LIST_FOR(dmop, dm_obj, &HeadDMObj.l)) {
+	if (BU_STR_EQUAL(argv[name_index], bu_vls_addr(&dmop->dmo_name))) {
+	    Tcl_AppendStringsToObj(obj, "dmo_open: ", argv[name_index],
+				   " exists.", (char *)NULL);
+	    Tcl_SetObjResult(interp, obj);
+	    return TCL_ERROR;
+	}
+    }
+
+    /* find display manager type */
+#ifdef DM_X
+    if (argv[2][0] == 'X' || argv[2][0] == 'x')
+	type = DM_TYPE_X;
+#endif /* DM_X */
+
+#ifdef DM_TK
+    if (BU_STR_EQUAL(argv[2], "tk"))
+	type = DM_TYPE_TK;
+#endif /* DM_TK */
+
+#ifdef DM_OGL
+    if (BU_STR_EQUAL(argv[2], "ogl"))
+	type = DM_TYPE_OGL;
+#endif /* DM_OGL */
+
+#ifdef DM_WGL
+    if (BU_STR_EQUAL(argv[2], "wgl"))
+	type = DM_TYPE_WGL;
+#endif /* DM_WGL */
+
+    if (type == DM_TYPE_BAD) {
+	Tcl_AppendStringsToObj(obj,
+			       "Unsupported display manager type - ",
+			       argv[2], "\n",
+			       "The supported types are: X, ogl, wgl, and nu",
+			       (char *)NULL);
+	Tcl_SetObjResult(interp, obj);
+	return TCL_ERROR;
+    }
+
+    {
+	int i;
+	int arg_start = 3;
+	int newargs = 2;
+	int ac;
+	const char **av;
+
+	ac = argc + newargs;
+	av = (const char **)bu_malloc(sizeof(char *) * (ac+1), "dmo_open_tcl: av");
+	av[0] = argv[0];
+
+	/* Insert new args (i.e. arrange to call init_dm_obj from dm_open()) */
+	av[1] = "-i";
+	av[2] = "init_dm_obj";
+
+	/*
+	 * Stuff name into argument list.
+	 */
+	av[3] = "-n";
+	av[4] = argv[name_index];
+
+	/* copy the rest */
+	for (i = arg_start; i < argc; ++i)
+	    av[i+newargs] = argv[i];
+	av[i+newargs] = (const char *)NULL;
+
+	if ((dmp = dm_open(interp, type, ac, av)) == DM_NULL) {
+	    if (Tcl_IsShared(obj))
+		obj = Tcl_DuplicateObj(obj);
+
+	    Tcl_AppendStringsToObj(obj,
+				   "dmo_open_tcl: Failed to open - ",
+				   argv[name_index],
+				   "\n",
+				   (char *)NULL);
+	    bu_free((genptr_t)av, "dmo_open_tcl: av");
+
+	    Tcl_SetObjResult(interp, obj);
+	    return TCL_ERROR;
+	}
+
+	bu_free((genptr_t)av, "dmo_open_tcl: av");
+    }
+
+    /* acquire dm_obj struct */
+    BU_GETSTRUCT(dmop, dm_obj);
+
+    /* initialize dm_obj */
+    bu_vls_init(&dmop->dmo_name);
+    bu_vls_strcpy(&dmop->dmo_name, argv[name_index]);
+    dmop->dmo_dmp = dmp;
+    VSETALL(dmop->dmo_dmp->dm_clipmin, -2048.0);
+    VSETALL(dmop->dmo_dmp->dm_clipmax, 2047.0);
+    dmop->dmo_drawLabelsHook = (int (*)())0;
+
+#ifdef USE_FBSERV
+    dmop->dmo_fbs.fbs_listener.fbsl_fbsp = &dmop->dmo_fbs;
+    dmop->dmo_fbs.fbs_listener.fbsl_fd = -1;
+    dmop->dmo_fbs.fbs_listener.fbsl_port = -1;
+    dmop->dmo_fbs.fbs_fbp = FBIO_NULL;
+    dmop->dmo_fbs.fbs_callback = dmo_fbs_callback;
+    dmop->dmo_fbs.fbs_clientData = dmop;
+    dmop->dmo_fbs.fbs_interp = interp;
+#endif
+
+    BU_LIST_INIT(&dmop->dmo_observers.l);
+
+    /* append to list of dm_obj's */
+    BU_LIST_APPEND(&HeadDMObj.l, &dmop->l);
+
+    (void)Tcl_CreateCommand(interp,
+			    bu_vls_addr(&dmop->dmo_name),
+			    (Tcl_CmdProc *)dmo_cmd,
+			    (ClientData)dmop,
+			    dmo_deleteProc);
+
+    /* send Configure event */
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "event generate %s <Configure>; update", bu_vls_addr(&dmop->dmo_name));
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+
+#ifdef USE_FBSERV
+    /* open the framebuffer */
+    dmo_openFb(dmop, interp);
+#endif
+
+    /* Return new function name as result */
+    Tcl_SetResult(interp, bu_vls_addr(&dmop->dmo_name), TCL_VOLATILE);
+    return TCL_OK;
+}
+
+
+int
+Dmo_Init(Tcl_Interp *interp)
+{
+    BU_LIST_INIT(&HeadDMObj.l);
+    (void)Tcl_CreateCommand(interp, "dm_open", (Tcl_CmdProc *)dmo_open_tcl, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+
+    return TCL_OK;
 }
 
 
