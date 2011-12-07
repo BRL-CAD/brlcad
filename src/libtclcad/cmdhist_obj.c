@@ -41,6 +41,8 @@ static struct bu_cmdhist_obj HeadCmdHistObj;		/* head of command history object 
 HIDDEN int
 cho_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char **argv)
 {
+    int ret;
+
     static struct bu_cmdtab cho_cmds[] = {
 	{"add",		bu_cmdhist_add},
 	{"curr",	bu_cmdhist_curr},
@@ -50,7 +52,11 @@ cho_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char 
 	{(char *)NULL,	CMD_NULL}
     };
 
-    return bu_cmd(clientData, argc, argv, cho_cmds, 1);
+    if (bu_cmd(cho_cmds, argc, argv, 1, clientData, &ret) == BRLCAD_OK)
+	return ret;
+
+    bu_log("ERROR: '%s' command not found\n", argv[1]);
+    return BRLCAD_ERROR;
 }
 
 

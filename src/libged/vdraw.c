@@ -730,6 +730,8 @@ vdraw_vlist(void *data, int argc, const char *argv[])
 static int
 vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 {
+    int ret;
+
     /**
      * view draw command table
      */
@@ -745,7 +747,6 @@ vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 	{(char *)0,		(int (*)())0 }
     };
 
-    struct bu_cmdtab *ctp;
     static const char *usage = "write|insert|delete|read|send|params|open|vlist [args]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -761,15 +762,9 @@ vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    /* FIXME: should be using bu_cmd() but unable to distinguish
-     * between command not found and command found but returning
-     * error.  both return BRLCAD_ERROR.
-     */
-    for (ctp = vdraw_cmds; ctp->ct_name != (char *)0; ctp++) {
-	if (BU_STR_EQUAL(ctp->ct_name, argv[1])) {
-	    return (*ctp->ct_func)(gedp, argc, argv);
-	}
-    }
+
+    if (bu_cmd(vdraw_cmds, argc, argv, 1, gedp, &ret) == BRLCAD_OK)
+	return ret;
 
     bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 

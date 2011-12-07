@@ -4475,6 +4475,8 @@ dgo_tree_tcl(void *clientData, int argc, const char **argv)
 int
 dgo_cmd(void *clientData, Tcl_Interp *UNUSED(interp), int argc, const char **argv)
 {
+    int ret;
+
     static struct bu_cmdtab dgo_cmds[] = {
 	{"assoc",		dgo_assoc_tcl},
 	{"autoview",		dgo_autoview_tcl},
@@ -4512,7 +4514,11 @@ dgo_cmd(void *clientData, Tcl_Interp *UNUSED(interp), int argc, const char **arg
 	{(char *)0,		(int (*)())0}
     };
 
-    return bu_cmd((void *)clientData, argc, (const char **)argv, dgo_cmds, 1);
+    if (bu_cmd(dgo_cmds, argc, argv, 1, clientData, &ret) == BRLCAD_OK)
+	return ret;
+
+    bu_log("ERROR: '%s' command not found\n", argv[1]);
+    return BRLCAD_ERROR;
 }
 
 

@@ -29,9 +29,9 @@
 
 
 int
-bu_cmd(void *data, int argc, const char **argv, struct bu_cmdtab *cmds, int cmd_index /*, const int *retval */)
+bu_cmd(const struct bu_cmdtab *cmds, int argc, const char **argv, int cmd_index, void *data, int *retval)
 {
-    struct bu_cmdtab *ctp = NULL;
+    const struct bu_cmdtab *ctp = NULL;
 
     /* sanity */
     if (UNLIKELY(cmd_index >= argc)) {
@@ -40,12 +40,15 @@ bu_cmd(void *data, int argc, const char **argv, struct bu_cmdtab *cmds, int cmd_
     }
 
     for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	if (ctp->ct_name[0] == argv[cmd_index][0] &&
-	    BU_STR_EQUAL(ctp->ct_name, argv[cmd_index])) {
-	    /* retval = (*ctp->ct_func(data, argc, argv);
-	     * return BRLCAD_OK;
-	     */
-	    return (*ctp->ct_func)(data, argc, argv);
+	if (ctp->ct_name[0] == argv[cmd_index][0]
+	    && BU_STR_EQUAL(ctp->ct_name, argv[cmd_index]))
+	{
+	    if (retval) {
+		*retval = (*ctp->ct_func)(data, argc, argv);
+	    } else {
+		(void)(*ctp->ct_func)(data, argc, argv);
+	    }
+	    return BRLCAD_OK;
 	}
     }
 

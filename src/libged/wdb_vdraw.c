@@ -722,6 +722,8 @@ vdraw_cmd_tcl(struct dg_obj *dgop,
 	      int argc,
 	      const char *argv[])
 {
+    int ret;
+
     /**
      * view draw command table
      */
@@ -737,7 +739,11 @@ vdraw_cmd_tcl(struct dg_obj *dgop,
 	{(char *)0,		(int (*)())0 }
     };
 
-    return bu_cmd((ClientData)dgop, argc-1, (const char **)argv+1, vdraw_cmds, 0);
+    if (bu_cmd(vdraw_cmds, argc-1, argv+1, 0, (ClientData)dgop, &ret) == BRLCAD_OK)
+	return ret;
+
+    bu_log("ERROR: '%s' command not found\n", argv[1]);
+    return BRLCAD_ERROR;
 }
 
 

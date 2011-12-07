@@ -9531,7 +9531,6 @@ wdb_newcmds_tcl(void *clientData,
 		int argc,
 		const char *argv[])
 {
-    struct bu_cmdtab *ctp;
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
     struct ged ged;
     struct bu_vls vls;
@@ -9542,16 +9541,8 @@ wdb_newcmds_tcl(void *clientData,
      */
     GED_INIT(&ged, wdbp);
 
-    for (ctp = wdb_newcmds; ctp->ct_name != (char *)0; ctp++) {
-	if (ctp->ct_name[0] == argv[1][0] &&
-	    BU_STR_EQUAL(ctp->ct_name, argv[1])) {
-	    ret = (*ctp->ct_func)(&ged, argc-1, argv+1);
-	    break;
-	}
-    }
-
-    /* Command not found. */
-    if (ctp->ct_name == (char *)0) {
+    if (bu_cmd(wdb_newcmds, argc-1, argv+1, 0, &ged, &ret) == BRLCAD_ERROR) {
+	/* Command not found. */
 	bu_vls_trunc(ged.ged_result_str, 0);
 	bu_vls_printf(ged.ged_result_str, "%s not found", argv[1]);
 
@@ -9688,35 +9679,24 @@ static struct bu_cmdtab wdb_cmds[] = {
 static int
 wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct bu_cmdtab *ctp = NULL;
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
     struct ged ged;
     int ret;
 
-    /* look for the new libged commands too, but don't call bu_cmd()
-     * or wdb_newcmds_tcl() as there's no way to distinguish between
-     * TCL_ERROR from a found command and an unfound command.
-     */
+    /* look for the new libged commands before trying one of the old ones */
     GED_INIT(&ged, wdbp);
-    for (ctp = wdb_newcmds; ctp->ct_name != (char *)0; ctp++) {
-	if (BU_STR_EQUAL(ctp->ct_name, argv[1])) {
-	    ret = (*ctp->ct_func)(&ged, argc-1, argv+1);
-	    Tcl_SetResult(interp, bu_vls_addr(ged.ged_result_str), TCL_VOLATILE);
 
-	    /* release any allocated memory */
-	    ged_free(&ged);
-
-	    if (ret == GED_OK)
-		return TCL_OK;
-	    return TCL_ERROR;
-	}
+    if (bu_cmd(wdb_newcmds, argc-1, argv+1, 0, (ClientData)&ged, &ret) == BRLCAD_OK) {
+	Tcl_SetResult(interp, bu_vls_addr(ged.ged_result_str), TCL_VOLATILE);
+	ged_free(&ged);
+	return ret;
     }
 
     /* release any allocated memory */
     ged_free(&ged);
 
     /* not a new command -- look for the command in the old command table */
-    return bu_cmd(clientData, argc, (const char **)argv, wdb_cmds, 1);
+    return bu_cmd(wdb_cmds, argc, (const char **)argv, 1, clientData, NULL);
 }
 
 

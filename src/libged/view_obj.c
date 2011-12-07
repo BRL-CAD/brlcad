@@ -2782,6 +2782,8 @@ vo_cmd(ClientData clientData,
        int argc,
        const char *argv[])
 {
+    int ret;
+
     static struct bu_cmdtab vo_cmds[] = {
 	{"ae",			vo_aet_tcl},
 	{"ae2dir",		vo_ae2dir_tcl},
@@ -2830,7 +2832,11 @@ vo_cmd(ClientData clientData,
 	{(char *)0,		(int (*)())0}
     };
 
-    return bu_cmd((void *)clientData, argc, argv, vo_cmds, 1);
+    if (bu_cmd(vo_cmds, argc, argv, 1, clientData, &ret) == BRLCAD_OK)
+	return ret;
+
+    bu_log("ERROR: '%s' command not found\n", argv[1]);
+    return BRLCAD_ERROR;
 }
 
 

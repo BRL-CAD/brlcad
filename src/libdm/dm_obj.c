@@ -2987,6 +2987,8 @@ dmo_deleteProc(ClientData clientData)
 HIDDEN int
 dmo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char **argv)
 {
+    int ret;
+
     static struct bu_cmdtab dmo_cmds[] = {
 	{"bg",			dmo_bg_tcl},
 	{"bounds",		dmo_bounds_tcl},
@@ -3036,7 +3038,11 @@ dmo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char 
 	{(char *)0,		(int (*)())0}
     };
 
-    return bu_cmd(clientData, argc, (const char **)argv, dmo_cmds, 1);
+    if (bu_cmd(dmo_cmds, argc, argv, 1, clientData, &ret) == BRLCAD_OK)
+	return ret;
+
+    bu_log("ERROR: '%s' command not found\n", argv[1]);
+    return BRLCAD_ERROR;
 }
 
 

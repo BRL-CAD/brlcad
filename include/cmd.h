@@ -81,16 +81,16 @@ struct bu_cmdhist_obj {
  * function is called. Otherwise, an error message is created and
  * added to interp.
  *
- * @param clientData	- data/state associated with the command
- * (Note - the result of the command is also stored here)
+ * @param cmds		- commands and related function pointers
  * @param argc		- number of arguments in argv
  * @param argv		- command to execute and its arguments
- * @param cmds		- commands and related function pointers
  * @param cmd_index	- indicates which argv element holds the subcommand
+ * @param data		- data/state associated with the command
+ * @param result	- if non-NULL, return value from the command
  *
- * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
+ * @return BRLCAD_OK if command was found, otherwise, BRLCAD_ERROR.
  */
-BU_EXPORT extern int bu_cmd(void *data, int argc, const char *argv[], struct bu_cmdtab *cmds, int cmd_index);
+BU_EXPORT extern int bu_cmd(const struct bu_cmdtab *cmds, int argc, const char *argv[], int cmd_index, void *data, int *result);
 
 /**
  * @brief
@@ -99,7 +99,7 @@ BU_EXPORT extern int bu_cmd(void *data, int argc, const char *argv[], struct bu_
  * USAGE:
  * history [-delays] [-outfile filename]
  */
-BU_EXPORT extern int bu_cmdhist_history(void *clientData, int argc, const char **argv);
+BU_EXPORT extern int bu_cmdhist_history(void *data, int argc, const char **argv);
 
 /**
  * @brief
@@ -108,7 +108,7 @@ BU_EXPORT extern int bu_cmdhist_history(void *clientData, int argc, const char *
  * USAGE:
  * procname add cmd
  */
-BU_EXPORT extern int bu_cmdhist_add(void *clientData, int argc, const char **argv);
+BU_EXPORT extern int bu_cmdhist_add(void *data, int argc, const char **argv);
 
 /**
  * Return the current command.
@@ -116,7 +116,7 @@ BU_EXPORT extern int bu_cmdhist_add(void *clientData, int argc, const char **arg
  * USAGE:
  * procname curr
  */
-BU_EXPORT extern int bu_cmdhist_curr(void *clientData, int argc, const char **argv);
+BU_EXPORT extern int bu_cmdhist_curr(void *data, int argc, const char **argv);
 
 /**
  * Set the current command to the next command.
@@ -124,7 +124,7 @@ BU_EXPORT extern int bu_cmdhist_curr(void *clientData, int argc, const char **ar
  * USAGE:
  * procname next
  */
-BU_EXPORT extern int bu_cmdhist_next(void *clientData, int argc, const char **argv);
+BU_EXPORT extern int bu_cmdhist_next(void *data, int argc, const char **argv);
 
 /**
  * Set the current command to the previous command.
@@ -132,7 +132,7 @@ BU_EXPORT extern int bu_cmdhist_next(void *clientData, int argc, const char **ar
  * USAGE:
  * procname prev
  */
-BU_EXPORT extern int bu_cmdhist_prev(void *clientData, int argc, const char **argv);
+BU_EXPORT extern int bu_cmdhist_prev(void *data, int argc, const char **argv);
 
 #endif  /* __CMD_H__ */
 /** @} */

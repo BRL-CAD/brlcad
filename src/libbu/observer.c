@@ -192,7 +192,12 @@ static struct bu_cmdtab bu_observer_cmds[] = {
 int
 bu_observer_cmd(void *clientData, int argc, const char **argv)
 {
-    return bu_cmd(clientData, argc, argv, bu_observer_cmds, 0);
+    int ret;
+    if (bu_cmd(bu_observer_cmds, argc, argv, 0, clientData, &ret) == BRLCAD_OK)
+	return ret;
+
+    bu_log("ERROR: '%s' command not found\n", argv[0]);
+    return BRLCAD_ERROR;
 }
 
 
