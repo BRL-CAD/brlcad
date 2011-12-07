@@ -47,6 +47,7 @@ SET(brlcadinclude_wanted
 	fbserv_obj.h
 	fft.h
 	gcv.h
+	icv.h
 	libtermio.h
 	light.h
 	mater.h
