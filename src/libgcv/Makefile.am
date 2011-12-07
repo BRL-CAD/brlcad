@@ -24,7 +24,8 @@ AM_CPPFLAGS = \
 libgcv_nil_la_SOURCES = \
 	region_end.c \
 	region_end_mc.c \
-	bottess.c
+	bottess.c \
+	tri_intersect.c
 
 EXTRA_DIST = \
 	CMakeLists.txt \
@@ -53,6 +54,8 @@ libgcv_la_LIBADD = \
 	libgcv_nil.la \
 	${WFOBJLIB} \
 	${GCV_LIBS}
+
+noinst_HEADERS = soup.h tri_intersect.h
 
 AM_CFLAGS = ${STRICT_FLAGS}
 
