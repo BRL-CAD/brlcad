@@ -50,6 +50,103 @@ __BEGIN_DECLS
 ICV_EXPORT extern int icv_rot(int argv, char **argc);
 
 
+/** @addtogroup image */
+/** @ingroup data */
+/** @{ */
+/** @file libicv/fileformat.c
+ *
+ * image save/load routines
+ *
+ * save or load images in a variety of formats.
+ *
+ */
+
+enum {
+    ICV_IMAGE_AUTO,
+    ICV_IMAGE_AUTO_NO_PIX,
+    ICV_IMAGE_PIX,
+    ICV_IMAGE_BW,
+    ICV_IMAGE_ALIAS,
+    ICV_IMAGE_BMP,
+    ICV_IMAGE_CI,
+    ICV_IMAGE_ORLE,
+    ICV_IMAGE_PNG,
+    ICV_IMAGE_PPM,
+    ICV_IMAGE_PS,
+    ICV_IMAGE_RLE,
+    ICV_IMAGE_SPM,
+    ICV_IMAGE_SUN,
+    ICV_IMAGE_YUV
+};
+
+
+struct icv_image_file {
+    uint32_t magic;
+    char *filename;
+    int fd;
+    int format;			/* ICV_IMAGE_* */
+    int width, height, depth;	/* pixel, pixel, byte */
+    unsigned char *data;
+    unsigned long flags;
+};
+typedef struct icv_image_file icv_image_file_t;
+#define ICV_IMAGE_FILE_NULL ((struct icv_image_file *)0)
+
+/**
+ * asserts the integrity of a icv_image_file struct.
+ */
+#define ICV_CK_IMAGE_FILE(_i) ICV_CKMAG(_i, ICV_IMAGE_FILE_MAGIC, "icv_image_file")
+
+/**
+ * initializes a icv_image_file struct without allocating any memory.
+ */
+#define ICV_IMAGE_FILE_INIT(_i) { \
+	(_i)->magic = ICV_IMAGE_FILE_MAGIC; \
+	(_i)->filename = NULL; \
+	(_i)->fd = (_i)->format = (_i)->width = (_i)->height = (_i)->depth = 0; \
+	(_i)->data = NULL; \
+	(_i)->flags = 0; \
+    }
+
+/**
+ * macro suitable for declaration statement initialization of a
+ * icv_image_file struct.  does not allocate mmeory.
+ */
+#define ICV_IMAGE_FILE_INIT_ZERO { ICV_IMAGE_FILE_MAGIC, NULL, 0, 0, 0, 0, 0, NULL, 0 }
+
+/**
+ * returns truthfully whether a icv_image_file has been initialized.
+ */
+#define ICV_IMAGE_FILE_IS_INITIALIZED(_i) (((struct icv_image_file *)(_i) != ICV_IMAGE_FILE_NULL) && LIKELY((_i)->magic == ICV_IMAGE_FILE_MAGIC))
+
+
+ICV_EXPORT extern struct icv_image_file *icv_image_save_open(const char *filename,
+							  int format,
+							  int width,
+							  int height,
+							  int depth);
+
+ICV_EXPORT extern int icv_image_save_writeline(struct icv_image_file *bif,
+					     int y,
+					     unsigned char *data);
+
+ICV_EXPORT extern int icv_image_save_writepixel(struct icv_image_file *bif,
+					      int x,
+					      int y,
+					      unsigned char *data);
+
+ICV_EXPORT extern int icv_image_save_close(struct icv_image_file *bif);
+
+ICV_EXPORT extern int icv_image_save(unsigned char *data,
+				   int width,
+				   int height,
+				   int depth,
+				   char *filename,
+				   int filetype);
+
+/** @} */
+/* end image utilities */
+
 __END_DECLS
 
 #endif /* __ICV_H__ */

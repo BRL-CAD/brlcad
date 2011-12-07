@@ -30,7 +30,6 @@
 
 #include "bu.h"
 #include "vmath.h"
-#include "icv.h"
 
 
 /* c99 doesn't declare these */
@@ -88,7 +87,7 @@ HIDDEN int
 guess_file_format(const char *filename, char *trimmedname)
 {
     /* look for the FMT: header */
-#define CMP(name) if (!strncmp(filename, #name":", strlen(#name))) {bu_strlcpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return ICV_IMAGE_##name; }
+#define CMP(name) if (!strncmp(filename, #name":", strlen(#name))) {bu_strlcpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return BU_IMAGE_##name; }
     CMP(PIX);
     CMP(PNG);
     CMP(PPM);
@@ -100,14 +99,14 @@ guess_file_format(const char *filename, char *trimmedname)
     bu_strlcpy(trimmedname, filename, BUFSIZ);
 
     /* and guess based on extension */
-#define CMP(name, ext) if (!strncmp(filename+strlen(filename)-strlen(#name)-1, "."#ext, strlen(#name)+1)) return ICV_IMAGE_##name;
+#define CMP(name, ext) if (!strncmp(filename+strlen(filename)-strlen(#name)-1, "."#ext, strlen(#name)+1)) return BU_IMAGE_##name;
     CMP(PNG, png);
     CMP(PPM, ppm);
     CMP(BMP, bmp);
     CMP(BW, bw);
 #undef CMP
     /* defaulting to PIX */
-    return ICV_IMAGE_PIX;
+    return BU_IMAGE_PIX;
 }
 
 HIDDEN int
@@ -234,41 +233,41 @@ ppm_save(int fd, unsigned char *rgb, int width, int height)
 /* begin public functions */
 
 int
-icv_image_load()
+bu_image_load()
 {
-    bu_log("icv_image_load not implemented\n");
+    bu_log("bu_image_load not implemented\n");
     return 0;
 }
 
 int
-icv_image_save(unsigned char *data, int width, int height, int depth, char *filename, int filetype)
+bu_image_save(unsigned char *data, int width, int height, int depth, char *filename, int filetype)
 {
     int i;
-    struct icv_image_file *bif = NULL;
+    struct bu_image_file *bif = NULL;
 
-    bif = icv_image_save_open(filename, filetype, width, height, depth);
+    bif = bu_image_save_open(filename, filetype, width, height, depth);
     if (bif==NULL)
 	return -1;
 
     for (i=0;i<height;++i) {
-	int ret = icv_image_save_writeline(bif, i, (unsigned char*)(data+i*width*depth));
+	int ret = bu_image_save_writeline(bif, i, (unsigned char*)(data+i*width*depth));
 	if (UNLIKELY(ret == -1)) {
 	    bu_log("Unexpected error saving image scanline\n");
 	}
     }
 
-    return icv_image_save_close(bif);
+    return bu_image_save_close(bif);
 }
 
-struct icv_image_file *
-icv_image_save_open(const char *filename, int format, int width, int height, int depth)
+struct bu_image_file *
+bu_image_save_open(const char *filename, int format, int width, int height, int depth)
 {
-    struct icv_image_file *bif = (struct icv_image_file *)bu_malloc(sizeof(struct icv_image_file), "icv_image_save_open");
-    bif->magic = ICV_IMAGE_FILE_MAGIC;
-    if (format == ICV_IMAGE_AUTO || ICV_IMAGE_AUTO_NO_PIX) {
+    struct bu_image_file *bif = (struct bu_image_file *)bu_malloc(sizeof(struct bu_image_file), "bu_image_save_open");
+    bif->magic = BU_IMAGE_FILE_MAGIC;
+    if (format == BU_IMAGE_AUTO || BU_IMAGE_AUTO_NO_PIX) {
 	char buf[BUFSIZ];
 	bif->format = guess_file_format(filename, buf);
-	if(format == ICV_IMAGE_AUTO_NO_PIX && bif->format == ICV_IMAGE_PIX)
+	if(format == BU_IMAGE_AUTO_NO_PIX && bif->format == BU_IMAGE_PIX)
 	    return NULL;
 	bif->filename = bu_strdup(buf);
     } else {
@@ -288,12 +287,12 @@ icv_image_save_open(const char *filename, int format, int width, int height, int
     bif->width = width;
     bif->height = height;
     bif->depth = depth;
-    bif->data = (unsigned char *)bu_malloc((size_t)(width*height*depth), "icv_image_file data");
+    bif->data = (unsigned char *)bu_malloc((size_t)(width*height*depth), "bu_image_file data");
     return bif;
 }
 
 int
-icv_image_save_writeline(struct icv_image_file *bif, int y, unsigned char *data)
+bu_image_save_writeline(struct bu_image_file *bif, int y, unsigned char *data)
 {
     if (UNLIKELY(bif==NULL)) {
 	bu_log("ERROR: trying to write a line with a null bif\n");
@@ -304,7 +303,7 @@ icv_image_save_writeline(struct icv_image_file *bif, int y, unsigned char *data)
 }
 
 int
-icv_image_save_writepixel(struct icv_image_file *bif, int x, int y, unsigned char *data)
+bu_image_save_writepixel(struct bu_image_file *bif, int x, int y, unsigned char *data)
 {
     unsigned char *dst;
 
@@ -318,23 +317,23 @@ icv_image_save_writepixel(struct icv_image_file *bif, int x, int y, unsigned cha
 }
 
 int
-icv_image_save_close(struct icv_image_file *bif)
+bu_image_save_close(struct bu_image_file *bif)
 {
     int r = 0;
     switch (bif->format) {
-	case ICV_IMAGE_BMP:
+	case BU_IMAGE_BMP:
 	    r = bmp_save(bif->fd, bif->data, bif->width, bif->height);
 	    break;
-	case ICV_IMAGE_PNG:
+	case BU_IMAGE_PNG:
 	    r = png_save(bif->fd, bif->data, bif->width, bif->height, bif->depth);
 	    break;
-	case ICV_IMAGE_PPM:
+	case BU_IMAGE_PPM:
 	    r = ppm_save(bif->fd, bif->data, bif->width, bif->height);
 	    break;
-	case ICV_IMAGE_PIX:
+	case BU_IMAGE_PIX:
 	    r = pix_save(bif->fd, bif->data, bif->width*bif->height*bif->depth);
 	    break;
-	case ICV_IMAGE_BW:
+	case BU_IMAGE_BW:
 	    r = bw_save(bif->fd, bif->data, bif->width*bif->height*bif->depth);
 	    break;
     }
@@ -348,9 +347,9 @@ icv_image_save_close(struct icv_image_file *bif)
 	    break;
     }
 
-    bu_free(bif->filename, "icv_image_file filename");
-    bu_free(bif->data, "icv_image_file data");
-    bu_free(bif, "icv_image_file");
+    bu_free(bif->filename, "bu_image_file filename");
+    bu_free(bif->data, "bu_image_file data");
+    bu_free(bif, "bu_image_file");
 
     return 0;
 }
