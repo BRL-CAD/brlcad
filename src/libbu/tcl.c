@@ -47,7 +47,7 @@ Tcl_Interp *brlcad_interp = (Tcl_Interp *)0;
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 HIDDEN int
-tcl_bu_mem_barriercheck(ClientData UNUSED(clientData),
+tcl_bu_mem_barriercheck(void *UNUSED(clientData),
 			int argc,
 			const char **argv)
 {
@@ -78,7 +78,7 @@ tcl_bu_mem_barriercheck(ClientData UNUSED(clientData),
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 HIDDEN int
-tcl_bu_prmem(ClientData UNUSED(clientData),
+tcl_bu_prmem(void *UNUSED(clientData),
 	     int argc,
 	     const char **argv)
 {
@@ -115,7 +115,7 @@ tcl_bu_prmem(ClientData UNUSED(clientData),
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 HIDDEN int
-tcl_bu_get_value_by_keyword(ClientData UNUSED(clientData),
+tcl_bu_get_value_by_keyword(void *UNUSED(clientData),
 			    int argc,
 			    const char **argv)
 {
@@ -201,7 +201,7 @@ tcl_bu_get_value_by_keyword(ClientData UNUSED(clientData),
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 HIDDEN int
-tcl_bu_rgb_to_hsv(ClientData UNUSED(clientData),
+tcl_bu_rgb_to_hsv(void *UNUSED(clientData),
 		  int argc,
 		  const char **argv)
 {
@@ -250,7 +250,7 @@ tcl_bu_rgb_to_hsv(ClientData UNUSED(clientData),
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 HIDDEN int
-tcl_bu_hsv_to_rgb(ClientData UNUSED(clientData),
+tcl_bu_hsv_to_rgb(void *UNUSED(clientData),
 		  int argc,
 		  const char **argv)
 {
@@ -292,7 +292,7 @@ tcl_bu_hsv_to_rgb(ClientData UNUSED(clientData),
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 HIDDEN int
-tcl_bu_brlcad_root(ClientData UNUSED(clientData),
+tcl_bu_brlcad_root(void *UNUSED(clientData),
 		   int argc,
 		   const char **argv)
 {
@@ -315,7 +315,7 @@ tcl_bu_brlcad_root(ClientData UNUSED(clientData),
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 HIDDEN int
-tcl_bu_brlcad_data(ClientData UNUSED(clientData),
+tcl_bu_brlcad_data(void *UNUSED(clientData),
 		   int argc,
 		   const char **argv)
 {
@@ -338,7 +338,7 @@ tcl_bu_brlcad_data(ClientData UNUSED(clientData),
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 HIDDEN int
-tcl_bu_units_conversion(ClientData UNUSED(clientData),
+tcl_bu_units_conversion(void *UNUSED(clientData),
 			int argc,
 			const char **argv)
 {
