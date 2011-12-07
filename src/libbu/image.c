@@ -235,7 +235,7 @@ ppm_save(int fd, unsigned char *rgb, int width, int height)
 int
 bu_image_load()
 {
-    bu_log("bu_image_load not implemented\n");
+    bu_log("%s is deprecated\n", __FUNCTION__);
     return 0;
 }
 
@@ -245,6 +245,7 @@ bu_image_save(unsigned char *data, int width, int height, int depth, char *filen
     int i;
     struct bu_image_file *bif = NULL;
 
+    bu_log("%s is deprecated\n", __FUNCTION__);
     bif = bu_image_save_open(filename, filetype, width, height, depth);
     if (bif==NULL)
 	return -1;
@@ -263,6 +264,7 @@ struct bu_image_file *
 bu_image_save_open(const char *filename, int format, int width, int height, int depth)
 {
     struct bu_image_file *bif = (struct bu_image_file *)bu_malloc(sizeof(struct bu_image_file), "bu_image_save_open");
+    bu_log("%s is deprecated\n", __FUNCTION__);
     bif->magic = BU_IMAGE_FILE_MAGIC;
     if (format == BU_IMAGE_AUTO || BU_IMAGE_AUTO_NO_PIX) {
 	char buf[BUFSIZ];
@@ -294,6 +296,7 @@ bu_image_save_open(const char *filename, int format, int width, int height, int 
 int
 bu_image_save_writeline(struct bu_image_file *bif, int y, unsigned char *data)
 {
+    bu_log("%s is deprecated\n", __FUNCTION__);
     if (UNLIKELY(bif==NULL)) {
 	bu_log("ERROR: trying to write a line with a null bif\n");
 	return -1;
@@ -307,6 +310,7 @@ bu_image_save_writepixel(struct bu_image_file *bif, int x, int y, unsigned char 
 {
     unsigned char *dst;
 
+    bu_log("%s is deprecated\n", __FUNCTION__);
     if( bif == NULL ) {
 	bu_log("ERROR: trying to write a line with a null bif\n");
 	return -1;
@@ -320,6 +324,7 @@ int
 bu_image_save_close(struct bu_image_file *bif)
 {
     int r = 0;
+    bu_log("%s is deprecated\n", __FUNCTION__);
     switch (bif->format) {
 	case BU_IMAGE_BMP:
 	    r = bmp_save(bif->fd, bif->data, bif->width, bif->height);

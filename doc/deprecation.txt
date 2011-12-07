@@ -50,6 +50,7 @@ new names should be listed for reference.
 ----
 mged
 	em, e_muves, l_muves, lm, read_muves, and t_muves MUVES-specific commands [deprecated 7.22]
+	bu_image functions [deprecated 7.22]
 
 7.20
 ----
