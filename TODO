@@ -185,15 +185,95 @@ comp.r4 ID 5678 material code 5 LOS 75
 * implement new makesegs for tie
 
 * annotation primitive.  specifically a means to create an object in
-  the database that can optionally be associated with an object and/or
-  location that a label refers to.  there are various styles such as
-  a single line from a point to text and two lines (e.g., indicating
-  measurement) to text.  the object should allow for different line
-  styles including having no lines.  there should also be support for
-  view-fixed or view-independent annotation placement (which requires
-  a change to plot()'s and possibly prep()'s signature).  it would
-  also be useful to allow an optional "thickness" so that the
+  the database that can optionally be associated with another object
+  and/or position(s) that a label refers to.  there are various styles
+  such as a single line from a point to text and two lines (e.g.,
+  indicating measurement) to text.
+
+  the object should allow for different line styles including having
+  no lines.  there should also be support for view-fixed or
+  view-independent annotation placement (which requires a change to
+  plot()'s and possibly prep()'s signature).  it would also be useful
+  to allow an optional _annotation_ "thickness" so that the
   annotations can represent physical geometry (so they raytrace).
+
+  the concept is nearly equivalent to a combined sketch+extrude object
+  but with options specific to annotations.  the underlying export
+  form should be fully generalized as much as possible with a
+  higher-level "in" command constraining available options into a
+  user-friendly form.  a new "annotate" command will similarly be
+  needed to support modification of existing annotations (as well as
+  creation ala the 'in' command).  see the web for tons of examples.
+
+  References:
+  http://en.wikipedia.org/wiki/Geometric_dimensioning_and_tolerancing
+  ASME Y14.5 2009
+  http://www.draftingzone.com/shoppingzone/6-1.pdf
+  http://www.wikistep.org/index.php/Recommended_Practices_for_the_Representation_of_GD%26T
+  http://www.wikistep.org/index.php/Recommended_Practices_for_the_Presentation_of_Dimensions,_Dimensional_and_Geometric_Tolerances
+  http://www.wikistep.org/index.php/Associative_Text_in_3D_recommended_practices
+  http://www.wikistep.org/index.php/Model_viewing,_basic_drawing_structure_and_dimensions_recommended_practices
+  http://www.iigdt.com/Products/Images/0f390980.jpg
+  src/other/openNURBS/opennurbs_annotation*
+
+  Types of annotations:
+	text:                   text.
+                                                   text --,
+        leader:                 text ---->.                \
+                                      .            .        \           .        .         .  .
+        linear dimension:             |            |         .          |        |         |  |
+                            .         |<-- text -->|                --->|  text  |<--   -->|  |<---- text
+	angular dimension:   \  text
+                              \_____.
+
+  Annotation placement:
+        xyz position:             (1.0, 3.5, 2.1)
+        named reference(s):        hull.r
+        above/below/left/right:    below
+        offset:                    33.4
+                (e.g., "at 1.0,3.5,2.1" or "below hull.r offset 33.4" or "at hull.r", etc)        
+
+  Text:
+        user-defined string:     my awesome component -----> .
+
+        named/point reference:        hull.r1 -----> .
+                                                  .               .
+        automatic dimension (two points):         |_______________|
+                                   .        .           5.4 mm
+        custom dimension label:    |<------>|<--.
+                                                 \ Length of hull.r1: 5.4mm
+
+              (custom label specified via format specifier: "Length of %target: %size")
+
+  Text properties:
+       font name
+       font size (height)
+       font style: bold/italic/regular
+       font color
+       justification: left, center, right, bottom, middle, top  (combinable options, e.g., "top left")
+       placement: default, above, below, inline, interior, exterior
+
+  Line properties:
+       head style (point o-, arrow_to >-, arrow_from, <-, square #-)
+       tail style (point o-, arrow_to >-, arrow_from, <-, square #-)
+       line weight (thickness)                    .___.                     target        .---- text
+       2d points:               text  ._____.     |    \                    .     .      /
+                                             \    |     .---> target        |     |     /
+                                              .___.                      -->|     |<---.
+  Symbol type:
+       degree:   (superscript circle)
+       radius:   ('R', e.g., '10.5R')
+       diameter: (circle with slash, null symbol)
+       ... several others
+       http://www.tec-ease.com/gdt-terms.php
+
+  Annotation properties:
+       scale: fixed size or proportional to view
+       alignment: to datum (plane or axis) or to view
+       draw bounding plane
+       draw target axes at uv offset position
+       draw feature control frame  (characteristic tolerances in symbolic form: www.draftingzone.com/shoppingzone/6-1.pdf)
+       3d thickness
 
 * rt/rtedge command-line options for overriding object colors
 
