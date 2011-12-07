@@ -41,7 +41,6 @@
 /** @defgroup data Data Management */
 /**   @defgroup cmd Command History */
 /**   @defgroup conv Data Conversion */
-/**   @defgroup image Image Management */
 /**   @defgroup getopt Command-line Option Parsing*/
 /**   @defgroup hton Network Byte-order Conversion */
 /**   @defgroup hist Histogram Handling */
@@ -5634,103 +5633,6 @@ BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_next(struct bu_hash_record *r
 
 
 /** @} */
-
-/** @addtogroup image */
-/** @ingroup data */
-/** @{ */
-/** @file libbu/image.c
- *
- * image save/load routines
- *
- * save or load images in a variety of formats.
- *
- */
-
-enum {
-    BU_IMAGE_AUTO,
-    BU_IMAGE_AUTO_NO_PIX,
-    BU_IMAGE_PIX,
-    BU_IMAGE_BW,
-    BU_IMAGE_ALIAS,
-    BU_IMAGE_BMP,
-    BU_IMAGE_CI,
-    BU_IMAGE_ORLE,
-    BU_IMAGE_PNG,
-    BU_IMAGE_PPM,
-    BU_IMAGE_PS,
-    BU_IMAGE_RLE,
-    BU_IMAGE_SPM,
-    BU_IMAGE_SUN,
-    BU_IMAGE_YUV
-};
-
-
-struct bu_image_file {
-    uint32_t magic;
-    char *filename;
-    int fd;
-    int format;			/* BU_IMAGE_* */
-    int width, height, depth;	/* pixel, pixel, byte */
-    unsigned char *data;
-    unsigned long flags;
-};
-typedef struct bu_image_file bu_image_file_t;
-#define BU_IMAGE_FILE_NULL ((struct bu_image_file *)0)
-
-/**
- * asserts the integrity of a bu_image_file struct.
- */
-#define BU_CK_IMAGE_FILE(_i) BU_CKMAG(_i, BU_IMAGE_FILE_MAGIC, "bu_image_file")
-
-/**
- * initializes a bu_image_file struct without allocating any memory.
- */
-#define BU_IMAGE_FILE_INIT(_i) { \
-	(_i)->magic = BU_IMAGE_FILE_MAGIC; \
-	(_i)->filename = NULL; \
-	(_i)->fd = (_i)->format = (_i)->width = (_i)->height = (_i)->depth = 0; \
-	(_i)->data = NULL; \
-	(_i)->flags = 0; \
-    }
-
-/**
- * macro suitable for declaration statement initialization of a
- * bu_image_file struct.  does not allocate mmeory.
- */
-#define BU_IMAGE_FILE_INIT_ZERO { BU_IMAGE_FILE_MAGIC, NULL, 0, 0, 0, 0, 0, NULL, 0 }
-
-/**
- * returns truthfully whether a bu_image_file has been initialized.
- */
-#define BU_IMAGE_FILE_IS_INITIALIZED(_i) (((struct bu_image_file *)(_i) != BU_IMAGE_FILE_NULL) && LIKELY((_i)->magic == BU_IMAGE_FILE_MAGIC))
-
-
-BU_EXPORT extern struct bu_image_file *bu_image_save_open(const char *filename,
-							  int format,
-							  int width,
-							  int height,
-							  int depth);
-
-BU_EXPORT extern int bu_image_save_writeline(struct bu_image_file *bif,
-					     int y,
-					     unsigned char *data);
-
-BU_EXPORT extern int bu_image_save_writepixel(struct bu_image_file *bif,
-					      int x,
-					      int y,
-					      unsigned char *data);
-
-BU_EXPORT extern int bu_image_save_close(struct bu_image_file *bif);
-
-BU_EXPORT extern int bu_image_save(unsigned char *data,
-				   int width,
-				   int height,
-				   int depth,
-				   char *filename,
-				   int filetype);
-
-/** @} */
-/* end image utilities */
 
 /** @addtogroup file */
 /** @ingroup io */
