@@ -35,19 +35,14 @@
  *
  */
 HIDDEN int
-observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+observer_attach(void *clientData, int argc, const char **argv)
 {
     struct bu_observer *headp = (struct bu_observer *)clientData;
     struct bu_observer *op;
 
     if (argc < 2 || 3 < argc) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib bu_observer_attach");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
+	bu_log("ERROR: expecting only three arguments\n");
+	return BRLCAD_ERROR;
     }
 
     /* see if it already exists, if so, modify it */
@@ -60,7 +55,7 @@ observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const c
 		/* overwrite cmd */
 		bu_vls_strcpy(&op->cmd, argv[2]);
 
-	    return TCL_OK;
+	    return BRLCAD_OK;
 	}
 
     /* acquire bu_observer struct */
@@ -77,7 +72,7 @@ observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const c
     /* append to list of bu_observer's */
     BU_LIST_APPEND(&headp->l, &op->l);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -89,19 +84,14 @@ observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const c
  *
  */
 HIDDEN int
-observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+observer_detach(void *clientData, int argc, const char **argv)
 {
     struct bu_observer *headp = (struct bu_observer *)clientData;
     struct bu_observer *op;
 
     if (argc != 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib bu_observer_attach");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
+	bu_log("ERROR: expecting two arguments\n");
+	return BRLCAD_ERROR;
     }
 
     /* search for observer and remove from list */
@@ -110,13 +100,13 @@ observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const c
 	    BU_LIST_DEQUEUE(&op->l);
 	    bu_vls_free(&op->observer);
 	    bu_vls_free(&op->cmd);
-	    bu_free((genptr_t)op, "observer_detach_tcl: op");
+	    bu_free((genptr_t)op, "observer_detach: op");
 
-	    return TCL_OK;
+	    return BRLCAD_OK;
 	}
 
-    Tcl_AppendResult(interp, "detach: ", argv[1], " not found", (char *)NULL);
-    return TCL_ERROR;
+    bu_log("detach: %s not found", argv[1]);
+    return BRLCAD_ERROR;
 }
 
 
@@ -128,27 +118,21 @@ observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const c
  *
  */
 HIDDEN int
-observer_show_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+observer_show(void *clientData, int argc, const char **UNUSED(argv))
 {
     struct bu_observer *headp = (struct bu_observer *)clientData;
     struct bu_observer *op;
 
     if (argc != 1) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib %s", argv[0]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
+	bu_log("ERROR: expecting only one argument\n");
+	return BRLCAD_ERROR;
     }
 
     for (BU_LIST_FOR(op, bu_observer, &headp->l)) {
-	Tcl_AppendResult(interp, bu_vls_addr(&op->observer), " - ",
-			 bu_vls_addr(&op->cmd), "\n", (char *)NULL);
+	bu_log("%s - %s\n", bu_vls_addr(&op->observer), bu_vls_addr(&op->cmd));
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -198,17 +182,17 @@ bu_observer_free(struct bu_observer *headp)
  * wdb_obj interfaces.
  */
 static struct bu_cmdtab bu_observer_cmds[] = {
-    {"attach",	observer_attach_tcl},
-    {"detach",	observer_detach_tcl},
-    {"show",	observer_show_tcl},
+    {"attach",	observer_attach},
+    {"detach",	observer_detach},
+    {"show",	observer_show},
     {(char *)0,	CMD_NULL}
 };
 
 
 int
-bu_observer_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+bu_observer_cmd(void *clientData, int argc, const char **argv)
 {
-    return bu_cmd(clientData, interp, argc, argv, bu_observer_cmds, 0);
+    return bu_cmd(clientData, argc, argv, bu_observer_cmds, 0);
 }
 
 

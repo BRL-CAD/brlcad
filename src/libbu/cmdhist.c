@@ -23,8 +23,6 @@
 #include <string.h>
 #include "bio.h"
 
-#include "tcl.h"
-
 #include "bu.h"
 #include "cmd.h"
 
@@ -33,7 +31,7 @@
  * H I S T O R Y _ R E C O R D
  *
  * Stores the given command with start and finish times in the
- * history vls'es. 'status' is either TCL_OK or TCL_ERROR.
+ * history vls'es. 'status' is either BRLCAD_OK or BRLCAD_ERROR.
  */
 HIDDEN void
 cmdhist_record(struct bu_cmdhist_obj *chop, struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status)
@@ -77,23 +75,18 @@ cmdhist_timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *
 
 
 int
-bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+bu_cmdhist_history(void *data, int argc, const char *argv[])
 {
-    struct bu_cmdhist_obj *chop = (struct bu_cmdhist_obj *)clientData;
     FILE *fp;
     int with_delays = 0;
     struct bu_cmdhist *hp, *hp_prev;
     struct bu_vls str;
     struct timeval tvdiff;
+    struct bu_cmdhist_obj *chop = (struct bu_cmdhist_obj *)data;
 
     if (argc < 2 || 5 < argc) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help history");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
+	bu_log("Usage: %s -delays\nList command history.\n", argv[0]);
+	return BRLCAD_ERROR;
     }
 
     fp = NULL;
@@ -106,23 +99,22 @@ bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, const ch
 	else if (BU_STR_EQUAL(argv[2], outfile)) {
 	    if (fp != NULL) {
 		fclose(fp);
-		Tcl_AppendResult(interp, "history: -outfile option given more than once\n",
-				 (char *)NULL);
-		return TCL_ERROR;
+		bu_log("%s: -outfile option given more than once\n", argv[0]);
+		return BRLCAD_ERROR;
 	    } else if (argc < 4 || BU_STR_EQUAL(argv[3], delays)) {
-		Tcl_AppendResult(interp, "history: I need a file name\n", (char *)NULL);
-		return TCL_ERROR;
+		bu_log("%s: I need a file name\n", argv[0]);
+		return BRLCAD_ERROR;
 	    } else {
 		fp = fopen(argv[3], "ab+");
 		if (UNLIKELY(fp == NULL)) {
-		    Tcl_AppendResult(interp, "history: error opening file", (char *)NULL);
-		    return TCL_ERROR;
+		    bu_log("%s: error opening file", argv[0]);
+		    return BRLCAD_ERROR;
 		}
 		--argc;
 		++argv;
 	    }
 	} else {
-	    Tcl_AppendResult(interp, "Invalid option ", argv[2], "\n", (char *)NULL);
+	    bu_log("Invalid option %s\n", argv[2]);
 	}
 	--argc;
 	++argv;
@@ -139,40 +131,37 @@ bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, const ch
 
 	}
 
-	if (hp->h_status == TCL_ERROR)
+	if (hp->h_status == BRLCAD_ERROR)
 	    bu_vls_printf(&str, "# ");
 	bu_vls_vlscat(&str, &(hp->h_command));
 
 	if (fp != NULL)
 	    bu_vls_fwrite(fp, &str);
 	else
-	    Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+	    bu_log("%s\n", bu_vls_addr(&str));
     }
 
     if (fp != NULL)
 	fclose(fp);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 int
-bu_cmdhist_add(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+bu_cmdhist_add(void *clientData, int argc, const char **argv)
 {
     struct bu_cmdhist_obj *chop = (struct bu_cmdhist_obj *)clientData;
     struct bu_vls vls;
     struct timeval zero;
 
     if (argc != 3) {
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib cmdhist_add");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
+	bu_log("ERROR: expecting only three arguments\n");
+	return BRLCAD_ERROR;
     }
 
     if (UNLIKELY(argv[2][0] == '\n' || argv[2][0] == '\0'))
-	return TCL_OK;
+	return BRLCAD_OK;
 
     bu_vls_init(&vls);
     bu_vls_strcpy(&vls, argv[2]);
@@ -180,84 +169,69 @@ bu_cmdhist_add(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 	bu_vls_putc(&vls, '\n');
 
     zero.tv_sec = zero.tv_usec = 0L;
-    cmdhist_record(chop, &vls, &zero, &zero, TCL_OK);
+    cmdhist_record(chop, &vls, &zero, &zero, BRLCAD_OK);
 
     bu_vls_free(&vls);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 int
-bu_cmdhist_prev(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+bu_cmdhist_prev(void *clientData, int argc, const char **UNUSED(argv))
 {
     struct bu_cmdhist_obj *chop = (struct bu_cmdhist_obj *)clientData;
     struct bu_cmdhist *hp;
 
     if (argc != 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib %s", argv[0]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
+	bu_log("ERROR: expecting only two arguments\n");
+	return BRLCAD_ERROR;
     }
 
     hp = BU_LIST_PLAST(bu_cmdhist, chop->cho_curr);
     if (BU_LIST_NOT_HEAD(hp, &chop->cho_head.l))
 	chop->cho_curr = hp;
 
-    Tcl_AppendResult(interp, bu_vls_addr(&chop->cho_curr->h_command), (char *)NULL);
-    return TCL_OK;
+    bu_log("%s", bu_vls_addr(&chop->cho_curr->h_command));
+    return BRLCAD_OK;
 }
 
 
 int
-bu_cmdhist_curr(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+bu_cmdhist_curr(void *clientData, int argc, const char **UNUSED(argv))
 {
     struct bu_cmdhist_obj *chop = (struct bu_cmdhist_obj *)clientData;
 
     if (argc != 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib %s", argv[0]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
+	bu_log("ERROR: expecting only two arguments\n");
+	return BRLCAD_ERROR;
     }
 
     if (BU_LIST_NOT_HEAD(chop->cho_curr, &chop->cho_head.l))
-	Tcl_AppendResult(interp, bu_vls_addr(&chop->cho_curr->h_command), (char *)NULL);
+	bu_log("%s", bu_vls_addr(&chop->cho_curr->h_command));
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 int
-bu_cmdhist_next(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+bu_cmdhist_next(void *clientData, int argc, const char **UNUSED(argv))
 {
     struct bu_cmdhist_obj *chop = (struct bu_cmdhist_obj *)clientData;
 
     if (argc != 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib %s", argv[0]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
+	bu_log("ERROR: expecting only two arguments\n");
+	return BRLCAD_ERROR;
     }
 
     if (BU_LIST_IS_HEAD(chop->cho_curr, &chop->cho_head.l))
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     chop->cho_curr = BU_LIST_PNEXT(bu_cmdhist, chop->cho_curr);
     if (BU_LIST_IS_HEAD(chop->cho_curr, &chop->cho_head.l))
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
-    Tcl_AppendResult(interp, bu_vls_addr(&chop->cho_curr->h_command), (char *)NULL);
-    return TCL_OK;
+    bu_log("%s", bu_vls_addr(&chop->cho_curr->h_command));
+    return BRLCAD_OK;
 }
 
 

@@ -540,7 +540,7 @@ struct ged {
 
     struct ged_drawable		*ged_gdp;
     struct ged_view		*ged_gvp;
-    struct fbserv_obj		*ged_fbsp;
+    struct fbserv_obj		*ged_fbsp; /* FIXME: this shouldn't be here */
 
     void			*ged_dmp;
     void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
@@ -578,14 +578,17 @@ struct ged_cmd {
 };
 
 
+/* FIXME: this shouldn't be part of libged API (libged shouldn't know
+ * about libdm or libfb types, should be managed through callbacks).
+ */
 struct ged_dm_view {
     struct bu_list		l;
     struct bu_vls		gdv_callback;
     struct bu_vls		gdv_name;
     struct ged_view		*gdv_view;
     struct dm			*gdv_dmp;
-    struct fbserv_obj		gdv_fbs;
-    struct ged_obj		*gdv_gop; /* Pointer back to its ged object */
+    struct fbserv_obj		gdv_fbs; /* FIXME: this shouldn't be here */
+    struct ged_obj		*gdv_gop; /* FIXME: this shouldn't be here */
 };
 
 /* defined in adc.c */
@@ -748,7 +751,7 @@ GED_EXPORT extern int ged_bb(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Tesselates each operand object, then performs the
- * boolean evaluation, storing result in new_obj
+ * boolean evaluation, storing result in 'new_obj'
  */
 GED_EXPORT extern int ged_bev(struct ged *gedp, int argc, const char *argv[]);
 

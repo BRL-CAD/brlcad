@@ -124,8 +124,9 @@
  *        vdraw write i|next c x y z
  */
 static int
-vdraw_write(struct ged *gedp, int argc, const char *argv[])
+vdraw_write(void *data, int argc, const char *argv[])
 {
+    struct ged *gedp = (struct ged *)data;
     size_t idx;
     unsigned long uind = 0;
     struct bn_vlist *vp, *cp;
@@ -231,8 +232,9 @@ vdraw_write(struct ged *gedp, int argc, const char *argv[])
  *        vdraw insert i c x y z
  */
 int
-vdraw_insert(struct ged *gedp, int argc, const char *argv[])
+vdraw_insert(void *data, int argc, const char *argv[])
 {
+    struct ged *gedp = (struct ged *)data;
     struct bn_vlist *vp, *cp, *wp;
     size_t i;
     size_t idx;
@@ -322,8 +324,9 @@ vdraw_insert(struct ged *gedp, int argc, const char *argv[])
  *        vdraw delete i|last|all
  */
 int
-vdraw_delete(struct ged *gedp, int argc, const char *argv[])
+vdraw_delete(void *data, int argc, const char *argv[])
 {
+    struct ged *gedp = (struct ged *)data;
     struct bn_vlist *vp, *wp;
     size_t i;
     unsigned long uind = 0;
@@ -420,8 +423,9 @@ vdraw_delete(struct ged *gedp, int argc, const char *argv[])
  *        vdraw read i|color|length|name
  */
 static int
-vdraw_read(struct ged *gedp, int argc, const char *argv[])
+vdraw_read(void *data, int argc, const char *argv[])
 {
+    struct ged *gedp = (struct ged *)data;
     struct bn_vlist *vp;
     unsigned long uind = 0;
     int length;
@@ -497,8 +501,9 @@ vdraw_read(struct ged *gedp, int argc, const char *argv[])
  *        vdraw send
  */
 static int
-vdraw_send(struct ged *gedp, int argc, const char *argv[])
+vdraw_send(void *data, int argc, const char *argv[])
 {
+    struct ged *gedp = (struct ged *)data;
     struct directory *dp;
     char solid_name [RT_VDRW_MAXNAME+RT_VDRW_PREFIX_LEN+1];
     int idx;
@@ -545,8 +550,9 @@ vdraw_send(struct ged *gedp, int argc, const char *argv[])
  *        vdraw params color|name
  */
 static int
-vdraw_params(struct ged *gedp, int argc, const char *argv[])
+vdraw_params(void *data, int argc, const char *argv[])
 {
+    struct ged *gedp = (struct ged *)data;
     struct vd_curve *rcp;
     unsigned long rgb;
     static const char *usage = "color|name args";
@@ -594,8 +600,9 @@ vdraw_params(struct ged *gedp, int argc, const char *argv[])
  *        vdraw open [name]
  */
 static int
-vdraw_open(struct ged *gedp, int argc, const char *argv[])
+vdraw_open(void *data, int argc, const char *argv[])
 {
+    struct ged *gedp = (struct ged *)data;
     struct vd_curve *rcp;
     struct bn_vlist *vp;
     char temp_name[RT_VDRW_MAXNAME+1];
@@ -661,8 +668,9 @@ vdraw_open(struct ged *gedp, int argc, const char *argv[])
  *        vdraw vlist delete name
  */
 static int
-vdraw_vlist(struct ged *gedp, int argc, const char *argv[])
+vdraw_vlist(void *data, int argc, const char *argv[])
 {
+    struct ged *gedp = (struct ged *)data;
     struct vd_curve *rcp, *rcp2;
     static const char *usage = "list\n\tdelete name";
 

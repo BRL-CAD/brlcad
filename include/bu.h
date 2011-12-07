@@ -2462,7 +2462,7 @@ typedef struct bu_observer bu_observer_t;
  */
 struct bu_cmdtab {
     char *ct_name;
-    int (*ct_func)();
+    int (*ct_func)(void *data, int argc, const char *argv[]);
 };
 
 
@@ -5286,7 +5286,7 @@ DEPRECATED BU_EXPORT extern unsigned char *bu_plonglong(unsigned char *msgp, uin
  * runs a given command, calling the corresponding observer callback
  * if it matches.
  */
-BU_EXPORT extern int bu_observer_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]);
+BU_EXPORT extern int bu_observer_cmd(void *clientData, int argc, const char *argv[]);
 
 /**
  * Notify observers.

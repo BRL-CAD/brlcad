@@ -59,6 +59,7 @@
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
+#include "obj.h"
 
 #include "./mged.h"
 #include "./cmd.h"
@@ -418,7 +419,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	/* actually copy the primitive to the new name */
 	argv[1] = proto->d_namep;
 	argv[2] = bu_vls_addr(name);
-	ret = wdb_copy_cmd(_dbip->dbi_wdbp, state->interp, 3, argv);
+	ret = wdb_copy_cmd(_dbip->dbi_wdbp, 3, (const char **)argv);
 	if (ret != TCL_OK)
 	    bu_log("WARNING: failure cloning \"%s\" to \"%s\"\n", proto->d_namep, bu_vls_addr(name));
 

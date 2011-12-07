@@ -48,20 +48,16 @@
 #include "wdb.h"
 
 /*XXX The following WDB_ defines need to go inside of a header file */
-#define WDB_TCL_CHECK_READ_ONLY \
-    if (interp) { \
-	if (wdbp->dbip->dbi_read_only) { \
-	    Tcl_AppendResult(interp, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
-	    return TCL_ERROR; \
-	} \
-    } else { \
-	bu_log("Sorry, this database is READ-ONLY\n"); \
+#define WDB_TCL_CHECK_READ_ONLY		 \
+    if (wdbp->dbip->dbi_read_only) {				\
+	bu_log("Sorry, this database is READ-ONLY\n");		\
+	return TCL_ERROR;					\
     }
-#define WDB_TCL_ERROR_RECOVERY_SUGGESTION\
-    Tcl_AppendResult(interp, "\
+#define WDB_TCL_ERROR_RECOVERY_SUGGESTION	\
+    bu_log("\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety, \n\
-you should exit now, and resolve the I/O problem, before continuing.\n", (char *)NULL)
+you should exit now, and resolve the I/O problem, before continuing.\n")
 
 
 static int Trackpos = 0;
@@ -79,537 +75,12 @@ static struct track_solid {
     fastf_t s_values[24];
 } sol;
 
-static int wrobj();
-static void slope(), crdummy(), trcurve();
-static void bottom(), top();
-
-static void track_mk_tree_pure();
-static int track_mk_tree_gift();
-static struct wmember *track_mk_addmember();
-static void track_mk_freemembers();
-static int track_mk_comb();
-
-
-/*	==== I T O A ()
- * convert integer to ascii wd format
- */
-static void
-itoa(Tcl_Interp *interp,
-     int n,
-     char s[],
-     int w) {
-    int c, i, j, sign;
-
-    if ((sign = n) < 0) n = -n;
-    i = 0;
-    do s[i++] = n % 10 + '0';	while ((n /= 10) > 0);
-    if (sign < 0) s[i++] = '-';
-
-    /* blank fill array
-     */
-    for (j = i; j < w; j++) s[j] = ' ';
-    if (i > w)
-	Tcl_AppendResult(interp, "itoa: field length too small\n", (char *)NULL);
-    s[w] = '\0';
-    /* reverse the array
-     */
-    for (i = 0, j = w - 1; i < j; i++, j--) {
-	c    = s[i];
-	s[i] = s[j];
-	s[j] =    c;
-    }
-}
-
-
-static void
-crname(Tcl_Interp *interp,
-       char name[],
-       int pos,
-       int maxlen)
-{
-    char temp[4];
-
-    itoa(interp, pos, temp, 1);
-    bu_strlcat(name, temp, maxlen);
-
-    return;
-}
-
-
-static void
-crregion(struct rt_wdb *wdbp,
-	 Tcl_Interp *interp,
-	 char region[],
-	 char op[],
-	 int members[],
-	 int number,
-	 char solidname[],
-	 int maxlen)
-{
-    int i;
-    struct bu_list head;
-
-    if (wdbp->dbip == DBI_NULL)
-	return;
-
-    BU_LIST_INIT(&head);
-
-    for (i=0; i<number; i++) {
-	solidname[grpname_len + extraTypeChars] = '\0';
-	crname(interp, solidname, members[i], maxlen);
-	if (db_lookup(wdbp->dbip, solidname, LOOKUP_QUIET) == RT_DIR_NULL) {
-	    Tcl_AppendResult(interp, "region: ", region, " will skip member: ",
-			     solidname, "\n", (char *)NULL);
-	    continue;
-	}
-	track_mk_addmember(solidname, &head, NULL, op[i]);
-    }
-    (void)track_mk_comb(wdbp, region, &head,
-			1, NULL, NULL, NULL,
-			500+Trackpos+i, 0, mat_default, los_default,
-			0, 1, 1);
-}
-
-
-/*
- *
- * Adds track given "wheel" info
- *
- */
-int
-wdb_track_cmd(struct rt_wdb *wdbp,
-	      Tcl_Interp *interp,
-	      int argc,
-	      char *argv[]) {
-    fastf_t fw[3], lw[3], iw[3], dw[3], tr[3];
-    char *solname = NULL;
-    char *regname = NULL;
-    char *grpname = NULL;
-    char oper[3];
-    int i, memb[4];
-    vect_t temp1, temp2;
-    int item, mat, los;
-    int arg;
-    int edit_result = TCL_OK;
-    struct bu_list head;
-    int len;
-
-    WDB_TCL_CHECK_READ_ONLY;
-
-    BU_LIST_INIT(&head);
-
-    if (argc != 15) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias wdb_track %s", argv[0]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    oper[0] = oper[2] = WMOP_INTERSECT;
-    oper[1] = WMOP_SUBTRACT;
-
-    /* base name */
-    arg = 1;
-    grpname = bu_strdup(argv[arg]);
-    grpname_len = (int)strlen(grpname);
-    len = grpname_len + 1 + extraChars;
-    solname = bu_malloc(len, "solid name");
-    regname = bu_malloc(len, "region name");
-    sol.s_name = bu_malloc(len, "sol.s_name");
-
-    /* first road wheel X */
-    ++arg;
-    fw[0] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
-
-    /* last road wheel X */
-    ++arg;
-    lw[0] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
-
-    if (fw[0] <= lw[0]) {
-	Tcl_AppendResult(interp, "First wheel after last wheel - STOP\n", (char *)NULL);
-	edit_result = TCL_ERROR;
-	goto end;
-    }
-
-    /* road wheel Z */
-    ++arg;
-    fw[1] = lw[1] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
-
-    /* roadwheel radius */
-    ++arg;
-    fw[2] = lw[2] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
-
-    if (fw[2] <= 0) {
-	Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
-	edit_result = TCL_ERROR;
-	goto end;
-    }
-
-    /* drive sprocket X */
-    ++arg;
-    dw[0] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
-
-    if (dw[0] >= lw[0]) {
-	Tcl_AppendResult(interp, "DRIVE wheel not in the rear - STOP \n", (char *)NULL);
-	edit_result = TCL_ERROR;
-	goto end;
-    }
-
-    /* drive sprocket Z */
-    ++arg;
-    dw[1] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
-
-    /* drive sprocket radius */
-    ++arg;
-    dw[2] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
-
-    if (dw[2] <= 0) {
-	Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
-	edit_result = TCL_ERROR;
-	goto end;
-    }
-
-    /* idler wheel X */
-    ++arg;
-    iw[0] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
-
-    if (iw[0] <= fw[0]) {
-	Tcl_AppendResult(interp, "IDLER wheel not in the front - STOP \n", (char *)NULL);
-	edit_result = TCL_ERROR;
-	goto end;
-    }
-
-    /* idler wheel Z */
-    ++arg;
-    iw[1] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
-
-    /* idler wheel radius */
-    ++arg;
-    iw[2] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
-
-    if (iw[2] <= 0) {
-	Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
-	edit_result = TCL_ERROR;
-	goto end;
-    }
-
-    /* track MIN Y */
-    ++arg;
-    tr[2] = tr[0] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
-
-    /* track MAX Y */
-    ++arg;
-    tr[1] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
-
-    if (EQUAL(tr[0], tr[1])) {
-	Tcl_AppendResult(interp, "MIN == MAX ... STOP\n", (char *)NULL);
-	edit_result = TCL_ERROR;
-	goto end;
-    }
-    if (tr[0] > tr[1]) {
-	Tcl_AppendResult(interp, "MIN > MAX .... will switch\n", (char *)NULL);
-	tr[1] = tr[0];
-	tr[0] = tr[2];
-    }
-
-    /* track thickness */
-    ++arg;
-    tr[2] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
-
-    if (tr[2] <= 0) {
-	Tcl_AppendResult(interp, "Track thickness <= 0 - STOP\n", (char *)NULL);
-	edit_result = TCL_ERROR;
-	goto end;
-    }
-
-    for (i = 0; i < grpname_len; ++i) {
-	solname[i] = grpname[i];
-	regname[i] = grpname[i];
-    }
-
-    solname[i] = regname[i] = '.';
-    ++i;
-    solname[i] = 's';
-    regname[i] = 'r';
-    ++i;
-    solname[i] = regname[i] = '.';
-    ++i;
-    solname[i] = regname[i] = '\0';
-/*
-  bu_log("\nX of first road wheel  %10.4f\n", fw[0]);
-  bu_log("X of last road wheel   %10.4f\n", lw[0]);
-  bu_log("Z of road wheels       %10.4f\n", fw[1]);
-  bu_log("radius of road wheels  %10.4f\n", fw[2]);
-  bu_log("\nX of drive wheel       %10.4f\n", dw[0]);
-  bu_log("Z of drive wheel       %10.4f\n", dw[1]);
-  bu_log("radius of drive wheel  %10.4f\n", dw[2]);
-  bu_log("\nX of idler wheel       %10.4f\n", iw[0]);
-  bu_log("Z of idler wheel       %10.4f\n", iw[1]);
-  bu_log("radius of idler wheel  %10.4f\n", iw[2]);
-  bu_log("\nY MIN of track         %10.4f\n", tr[0]);
-  bu_log("Y MAX of track         %10.4f\n", tr[1]);
-  bu_log("thickness of track     %10.4f\n", tr[2]);
-*/
-
-/* Check for names to use:
- * grpname.s.0->9 and grpname.r.0->9
- */
-
-    for (i=0; i<10; i++) {
-	crname(interp, solname, i, len);
-	crname(interp, regname, i, len);
-	if ((db_lookup(wdbp->dbip, solname, LOOKUP_QUIET) != RT_DIR_NULL) ||
-	    (db_lookup(wdbp->dbip, regname, LOOKUP_QUIET) != RT_DIR_NULL)) {
-	    /* name already exists */
-	    Tcl_AppendResult(interp, "Track: naming error -- STOP\n",
-			     (char *)NULL);
-	    edit_result = TCL_ERROR;
-	    goto end;
-	}
-
-	solname[grpname_len + extraTypeChars] = '\0';
-	regname[grpname_len + extraTypeChars] = '\0';
-    }
-
-    /* find the front track slope to the idler */
-    for (i=0; i<24; i++)
-	sol.s_values[i] = 0.0;
-
-    /* add the solids */
-    /* solid 0 */
-    slope(interp, fw, iw, tr);
-    VMOVE(temp2, &sol.s_values[0]);
-    crname(interp, solname, 0, len);
-    bu_strlcpy(sol.s_name, solname, len);
-
-    sol.s_type = ID_ARB8;
-    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
-	return TCL_ERROR;
-
-    solname[grpname_len + extraTypeChars] = '\0';
-
-    /* solid 1 */
-    /* find track around idler */
-    for (i=0; i<24; i++)
-	sol.s_values[i] = 0.0;
-    sol.s_type = ID_TGC;
-    trcurve(iw, tr);
-    crname(interp, solname, 1, len);
-    bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
-	return TCL_ERROR;
-    solname[grpname_len + extraTypeChars] = '\0';
-    /* idler dummy rcc */
-    sol.s_values[6] = iw[2];
-    sol.s_values[11] = iw[2];
-    VMOVE(&sol.s_values[12], &sol.s_values[6]);
-    VMOVE(&sol.s_values[15], &sol.s_values[9]);
-    /* solid 2 */
-    crname(interp, solname, 2, len);
-    bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
-	return TCL_ERROR;
-    solname[grpname_len + extraTypeChars] = '\0';
-
-    /* solid 3 */
-    /* find idler track dummy arb8 */
-    for (i=0; i<24; i++)
-	sol.s_values[i] = 0.0;
-    crname(interp, solname, 3, len);
-    bu_strlcpy(sol.s_name, solname, len);
-    sol.s_type = ID_ARB8;
-    crdummy(iw, tr, 1);
-    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
-	return TCL_ERROR;
-    solname[grpname_len + extraTypeChars] = '\0';
-
-    /* solid 4 */
-    /* track slope to drive */
-    for (i=0; i<24; i++)
-	sol.s_values[i] = 0.0;
-    slope(interp, lw, dw, tr);
-    VMOVE(temp1, &sol.s_values[0]);
-    crname(interp, solname, 4, len);
-    bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
-	return TCL_ERROR;
-    solname[grpname_len + extraTypeChars] = '\0';
-
-    /* solid 5 */
-    /* track around drive */
-    for (i=0; i<24; i++)
-	sol.s_values[i] = 0.0;
-    sol.s_type = ID_TGC;
-    trcurve(dw, tr);
-    crname(interp, solname, 5, len);
-    bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
-	return TCL_ERROR;
-    solname[grpname_len + extraTypeChars] = '\0';
-
-    /* solid 6 */
-    /* drive dummy rcc */
-    sol.s_values[6] = dw[2];
-    sol.s_values[11] = dw[2];
-    VMOVE(&sol.s_values[12], &sol.s_values[6]);
-    VMOVE(&sol.s_values[15], &sol.s_values[9]);
-    crname(interp, solname, 6, len);
-    bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
-	return TCL_ERROR;
-    solname[grpname_len + extraTypeChars] = '\0';
-
-    /* solid 7 */
-    /* drive dummy arb8 */
-    for (i=0; i<24; i++)
-	sol.s_values[i] = 0.0;
-    crname(interp, solname, 7, len);
-    bu_strlcpy(sol.s_name, solname, len);
-    sol.s_type = ID_ARB8;
-    crdummy(dw, tr, 2);
-    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
-	return TCL_ERROR;
-    solname[grpname_len + extraTypeChars] = '\0';
-
-    /* solid 8 */
-    /* track bottom */
-    temp1[1] = temp2[1] = tr[0];
-    bottom(temp1, temp2, tr);
-    crname(interp, solname, 8, len);
-    bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
-	return TCL_ERROR;
-    solname[grpname_len + extraTypeChars] = '\0';
-
-    /* solid 9 */
-    /* track top */
-    temp1[0] = dw[0];
-    temp1[1] = temp2[1] = tr[0];
-    temp1[2] = dw[1] + dw[2];
-    temp2[0] = iw[0];
-    temp2[2] = iw[1] + iw[2];
-    top(temp1, temp2, tr);
-    crname(interp, solname, 9, len);
-    bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
-	return TCL_ERROR;
-    solname[grpname_len + extraTypeChars] = '\0';
-
-    /* add the regions */
-    /* region 0 */
-    item = item_default;
-    mat = mat_default;
-    los = los_default;
-    item_default = 500;
-    mat_default = 1;
-    los_default = 50;
-    /* region 1 */
-    memb[0] = 0;
-    memb[1] = 3;
-    crname(interp, regname, 0, len);
-    crregion(wdbp, interp, regname, oper, memb, 2, solname, len);
-    solname[grpname_len + extraTypeChars] = '\0';
-    regname[grpname_len + extraTypeChars] = '\0';
-
-    /* region 1 */
-    crname(interp, regname, 1, len);
-    memb[0] = 1;
-    memb[1] = 2;
-    memb[2] = 3;
-    crregion(wdbp, interp, regname, oper, memb, 3, solname, len);
-    solname[grpname_len + extraTypeChars] = '\0';
-    regname[grpname_len + extraTypeChars] = '\0';
-
-    /* region 4 */
-    crname(interp, regname, 4, len);
-    memb[0] = 4;
-    memb[1] = 7;
-    crregion(wdbp, interp, regname, oper, memb, 2, solname, len);
-    solname[grpname_len + extraTypeChars] = '\0';
-    regname[grpname_len + extraTypeChars] = '\0';
-
-    /* region 5 */
-    crname(interp, regname, 5, len);
-    memb[0] = 5;
-    memb[1] = 6;
-    memb[2] = 7;
-    crregion(wdbp, interp, regname, oper, memb, 3, solname, len);
-    solname[grpname_len + extraTypeChars] = '\0';
-    regname[grpname_len + extraTypeChars] = '\0';
-
-    /* region 8 */
-    crname(interp, regname, 8, len);
-    memb[0] = 8;
-    memb[1] = 0;
-    memb[2] = 4;
-    oper[2] = WMOP_SUBTRACT;
-    crregion(wdbp, interp, regname, oper, memb, 3, solname, len);
-    solname[grpname_len + extraTypeChars] = '\0';
-    regname[grpname_len + extraTypeChars] = '\0';
-
-    /* region 9 */
-    crname(interp, regname, 9, len);
-    memb[0] = 9;
-    memb[1] = 3;
-    memb[2] = 7;
-    crregion(wdbp, interp, regname, oper, memb, 3, solname, len);
-    solname[grpname_len + extraTypeChars] = '\0';
-    regname[grpname_len + extraTypeChars] = '\0';
-
-    /* group all the track regions */
-    for (i=0; i<10; i++) {
-	if (i == 2 || i == 3 || i == 6 || i == 7)
-	    continue;
-	regname[grpname_len + extraTypeChars] = '\0';
-	crname(interp, regname, i, len);
-	if (db_lookup(wdbp->dbip, regname, LOOKUP_QUIET) == RT_DIR_NULL) {
-	    Tcl_AppendResult(interp, "group: ", grpname, " will skip member: ",
-			     regname, "\n", (char *)NULL);
-	    continue;
-	}
-	track_mk_addmember(regname, &head, NULL, WMOP_UNION);
-    }
-
-    /* Add them all at once */
-    if (track_mk_comb(wdbp, grpname, &head,
-		      0, NULL, NULL, NULL,
-		      0, 0, 0, 0,
-		      0, 1, 1) < 0) {
-	Tcl_AppendResult(interp,
-			 "An error has occured while adding '",
-			 grpname, "' to the database.\n", (char *)NULL);
-    }
-
-    Trackpos += 10;
-    item_default = item;
-    mat_default = mat;
-    los_default = los;
-
-    bu_free((genptr_t)solname, "solid name");
-    bu_free((genptr_t)regname, "region name");
-    bu_free((genptr_t)grpname, "group name");
-    bu_free((genptr_t)sol.s_name, "sol.s_name");
-
-    return edit_result;
-
-end:
-    bu_free((genptr_t)solname, "solid name");
-    bu_free((genptr_t)regname, "region name");
-    bu_free((genptr_t)grpname, "group name");
-    bu_free((genptr_t)sol.s_name, "sol.s_name");
-
-    return edit_result;
-}
-
 
 static int
 wrobj(struct rt_wdb *wdbp,
-      Tcl_Interp *interp,
-      char name[],
-      int flags) {
+      const char name[],
+      int flags)
+{
     struct directory *tdp;
     struct rt_db_internal intern;
     int i;
@@ -618,13 +89,12 @@ wrobj(struct rt_wdb *wdbp,
 	return 0;
 
     if (db_lookup(wdbp->dbip, name, LOOKUP_QUIET) != RT_DIR_NULL) {
-	Tcl_AppendResult(interp, "track naming error: ", name,
-			 " already exists\n", (char *)NULL);
+	bu_log("track naming error: %s already exists\n", name);
 	return -1;
     }
 
     if (flags != RT_DIR_SOLID) {
-	Tcl_AppendResult(interp, "wrobj can only write solids, aborting\n");
+	bu_log("wrobj can only write solids, aborting\n");
 	return -1;
     }
 
@@ -668,19 +138,19 @@ wrobj(struct rt_wdb *wdbp,
 	}
 	    break;
 	default:
-	    Tcl_AppendResult(interp, "Unrecognized solid type in 'wrobj', aborting\n", (char *)NULL);
+	    bu_log("Unrecognized solid type in 'wrobj', aborting\n");
 	    return -1;
     }
 
     if ((tdp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
 	rt_db_free_internal(&intern);
-	Tcl_AppendResult(interp, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL);
+	bu_log("Cannot add '%s' to directory, aborting\n", name);
 	return -1;
     }
 
     if (rt_db_put_internal(tdp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&intern);
-	Tcl_AppendResult(interp, "wrobj(wdbp, interp, ", name, "):  write error\n", (char *)NULL);
+	bu_log("write error\n");
 	WDB_TCL_ERROR_RECOVERY_SUGGESTION;
 	return -1;
     }
@@ -689,8 +159,7 @@ wrobj(struct rt_wdb *wdbp,
 
 
 static void
-tancir(Tcl_Interp *interp,
-       fastf_t cir1[],
+tancir(fastf_t cir1[],
        fastf_t cir2[]) {
     static fastf_t mag;
     vect_t work;
@@ -704,7 +173,7 @@ tancir(Tcl_Interp *interp,
     if (mag > 1.0e-20 || mag < -1.0e-20) {
 	f = 1.0/mag;
     } else {
-	Tcl_AppendResult(interp, "tancir():  0-length vector!\n", (char *)NULL);
+	bu_log("tancir():  0-length vector!\n");
 	return;
     }
     VSCALE(work, work, f);
@@ -727,8 +196,7 @@ tancir(Tcl_Interp *interp,
 
 
 static void
-slope(Tcl_Interp *interp,
-      fastf_t wh1[],
+slope(fastf_t wh1[],
       fastf_t wh2[],
       fastf_t t[]) {
     int i, j, switchs;
@@ -746,7 +214,7 @@ slope(Tcl_Interp *interp,
 	    wh2[i] = temp;
 	}
     }
-    tancir(interp, wh1, wh2);
+    tancir(wh1, wh2);
     if (switchs) {
 	for (i=0; i<3; i++) {
 	    temp = wh1[i];
@@ -912,61 +380,47 @@ top(vect_t vec1, vect_t vec2, fastf_t t[])
 }
 
 
-/*
- * The following functions were pulled in from libwdb
- * to prevent creating a new dependency.
- */
-
-/*
- * M K _ T R E E _ P U R E
- *
- * Given a list of wmember structures, build a tree that performs
- * the boolean operations in the given sequence.
- * No GIFT semantics or precedence is provided.
- * For that, use mk_tree_gift().
+/*	==== I T O A ()
+ * convert integer to ascii wd format
  */
 static void
-track_mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
-{
-    struct wmember *wp;
+itoa(int n,
+     char s[],
+     int w) {
+    int c, i, j, sign;
 
-    for (BU_LIST_FOR(wp, wmember, member_hd)) {
-	union tree *leafp, *nodep;
+    if ((sign = n) < 0) n = -n;
+    i = 0;
+    do s[i++] = n % 10 + '0';	while ((n /= 10) > 0);
+    if (sign < 0) s[i++] = '-';
 
-	WDB_CK_WMEMBER(wp);
-
-	BU_GETUNION(leafp, tree);
-	RT_TREE_INIT(leafp);
-	leafp->tr_l.tl_op = OP_DB_LEAF;
-	leafp->tr_l.tl_name = bu_strdup(wp->wm_name);
-	if (!bn_mat_is_identity(wp->wm_mat)) {
-	    leafp->tr_l.tl_mat = bn_mat_dup(wp->wm_mat);
-	}
-
-	if (!comb->tree) {
-	    comb->tree = leafp;
-	    continue;
-	}
-	/* Build a left-heavy tree */
-	BU_GETUNION(nodep, tree);
-	RT_TREE_INIT(nodep);
-	switch (wp->wm_op) {
-	    case WMOP_UNION:
-		nodep->tr_b.tb_op = OP_UNION;
-		break;
-	    case WMOP_INTERSECT:
-		nodep->tr_b.tb_op = OP_INTERSECT;
-		break;
-	    case WMOP_SUBTRACT:
-		nodep->tr_b.tb_op = OP_SUBTRACT;
-		break;
-	    default:
-		bu_bomb("track_mk_tree_pure() bad wm_op");
-	}
-	nodep->tr_b.tb_left = comb->tree;
-	nodep->tr_b.tb_right = leafp;
-	comb->tree = nodep;
+    /* blank fill array
+     */
+    for (j = i; j < w; j++) s[j] = ' ';
+    if (i > w)
+	bu_log("itoa: field length too small\n");
+    s[w] = '\0';
+    /* reverse the array
+     */
+    for (i = 0, j = w - 1; i < j; i++, j--) {
+	c    = s[i];
+	s[i] = s[j];
+	s[j] =    c;
     }
+}
+
+
+static void
+crname(char name[],
+       int pos,
+       int maxlen)
+{
+    char temp[4];
+
+    itoa(pos, temp, 1);
+    bu_strlcat(name, temp, maxlen);
+
+    return;
 }
 
 
@@ -1061,54 +515,6 @@ track_mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 
 
 /*
- * M K _ A D D M E M B E R
- *
- * Obtain dynamic storage for a new wmember structure, fill in the
- * name, default the operation and matrix, and add to doubly linked
- * list.  In typical use, a one-line call is sufficient.  To change
- * the defaults, catch the pointer that is returned, and adjust the
- * structure to taste.
- *
- * The caller is responsible for initializing the header structures
- * forward and backward links.
- */
-static struct wmember *
-track_mk_addmember(
-    const char *name,
-    struct bu_list *headp,
-    mat_t mat,
-    int op)
-{
-    struct wmember *wp;
-
-    BU_GETSTRUCT(wp, wmember);
-    wp->l.magic = WMEMBER_MAGIC;
-    wp->wm_name = bu_strdup(name);
-    switch (op) {
-	case WMOP_UNION:
-	case WMOP_INTERSECT:
-	case WMOP_SUBTRACT:
-	    wp->wm_op = op;
-	    break;
-	default:
-	    bu_log("mk_addmember() op=x%x is bad\n", op);
-	    return WMEMBER_NULL;
-    }
-
-    /* if the user gave a matrix, use it.  otherwise use identity matrix*/
-    if (mat) {
-	MAT_COPY(wp->wm_mat, mat);
-    } else {
-	MAT_IDN(wp->wm_mat);
-    }
-
-    /* Append to end of doubly linked list */
-    BU_LIST_INSERT(headp, &wp->l);
-    return wp;
-}
-
-
-/*
  * M K _ F R E E M E M B E R S
  */
 static void
@@ -1121,6 +527,59 @@ track_mk_freemembers(struct bu_list *headp)
 	BU_LIST_DEQUEUE(&wp->l);
 	bu_free((char *)wp->wm_name, "wm_name");
 	bu_free((char *)wp, "wmember");
+    }
+}
+
+
+/*
+ * M K _ T R E E _ P U R E
+ *
+ * Given a list of wmember structures, build a tree that performs
+ * the boolean operations in the given sequence.
+ * No GIFT semantics or precedence is provided.
+ * For that, use mk_tree_gift().
+ */
+static void
+track_mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
+{
+    struct wmember *wp;
+
+    for (BU_LIST_FOR(wp, wmember, member_hd)) {
+	union tree *leafp, *nodep;
+
+	WDB_CK_WMEMBER(wp);
+
+	BU_GETUNION(leafp, tree);
+	RT_TREE_INIT(leafp);
+	leafp->tr_l.tl_op = OP_DB_LEAF;
+	leafp->tr_l.tl_name = bu_strdup(wp->wm_name);
+	if (!bn_mat_is_identity(wp->wm_mat)) {
+	    leafp->tr_l.tl_mat = bn_mat_dup(wp->wm_mat);
+	}
+
+	if (!comb->tree) {
+	    comb->tree = leafp;
+	    continue;
+	}
+	/* Build a left-heavy tree */
+	BU_GETUNION(nodep, tree);
+	RT_TREE_INIT(nodep);
+	switch (wp->wm_op) {
+	    case WMOP_UNION:
+		nodep->tr_b.tb_op = OP_UNION;
+		break;
+	    case WMOP_INTERSECT:
+		nodep->tr_b.tb_op = OP_INTERSECT;
+		break;
+	    case WMOP_SUBTRACT:
+		nodep->tr_b.tb_op = OP_SUBTRACT;
+		break;
+	    default:
+		bu_bomb("track_mk_tree_pure() bad wm_op");
+	}
+	nodep->tr_b.tb_left = comb->tree;
+	nodep->tr_b.tb_right = leafp;
+	comb->tree = nodep;
     }
 }
 
@@ -1244,6 +703,511 @@ track_mk_comb(
 
     /* The internal representation will be freed */
     return wdb_put_internal(wdbp, combname, &intern, 1.0);
+}
+
+
+/*
+ * M K _ A D D M E M B E R
+ *
+ * Obtain dynamic storage for a new wmember structure, fill in the
+ * name, default the operation and matrix, and add to doubly linked
+ * list.  In typical use, a one-line call is sufficient.  To change
+ * the defaults, catch the pointer that is returned, and adjust the
+ * structure to taste.
+ *
+ * The caller is responsible for initializing the header structures
+ * forward and backward links.
+ */
+static struct wmember *
+track_mk_addmember(
+    const char *name,
+    struct bu_list *headp,
+    mat_t mat,
+    int op)
+{
+    struct wmember *wp;
+
+    BU_GETSTRUCT(wp, wmember);
+    wp->l.magic = WMEMBER_MAGIC;
+    wp->wm_name = bu_strdup(name);
+    switch (op) {
+	case WMOP_UNION:
+	case WMOP_INTERSECT:
+	case WMOP_SUBTRACT:
+	    wp->wm_op = op;
+	    break;
+	default:
+	    bu_log("mk_addmember() op=x%x is bad\n", op);
+	    return WMEMBER_NULL;
+    }
+
+    /* if the user gave a matrix, use it.  otherwise use identity matrix*/
+    if (mat) {
+	MAT_COPY(wp->wm_mat, mat);
+    } else {
+	MAT_IDN(wp->wm_mat);
+    }
+
+    /* Append to end of doubly linked list */
+    BU_LIST_INSERT(headp, &wp->l);
+    return wp;
+}
+
+
+static void
+crregion(struct rt_wdb *wdbp,
+	 char region[],
+	 char op[],
+	 int members[],
+	 int number,
+	 char solidname[],
+	 int maxlen)
+{
+    int i;
+    struct bu_list head;
+
+    if (wdbp->dbip == DBI_NULL)
+	return;
+
+    BU_LIST_INIT(&head);
+
+    for (i=0; i<number; i++) {
+	solidname[grpname_len + extraTypeChars] = '\0';
+	crname(solidname, members[i], maxlen);
+	if (db_lookup(wdbp->dbip, solidname, LOOKUP_QUIET) == RT_DIR_NULL) {
+	    bu_log("region: %s will skip member: %s\n", region, solidname);
+	    continue;
+	}
+	track_mk_addmember(solidname, &head, NULL, op[i]);
+    }
+    (void)track_mk_comb(wdbp, region, &head,
+			1, NULL, NULL, NULL,
+			500+Trackpos+i, 0, mat_default, los_default,
+			0, 1, 1);
+}
+
+
+/*
+ *
+ * Adds track given "wheel" info
+ *
+ */
+int
+wdb_track_cmd(void *data,
+	      int argc,
+	      const char *argv[])
+{
+    struct rt_wdb *wdbp = (struct rt_wdb *)data;
+    fastf_t fw[3], lw[3], iw[3], dw[3], tr[3];
+    char *solname = NULL;
+    char *regname = NULL;
+    char *grpname = NULL;
+    char oper[3];
+    int i, memb[4];
+    vect_t temp1, temp2;
+    int item, mat, los;
+    int arg;
+    int edit_result = TCL_OK;
+    struct bu_list head;
+    int len;
+
+    BU_LIST_INIT(&head);
+
+    if (argc != 15) {
+	bu_log("ERROR: expecting 15 arguments\n");
+	return TCL_ERROR;
+    }
+
+    oper[0] = oper[2] = WMOP_INTERSECT;
+    oper[1] = WMOP_SUBTRACT;
+
+    /* base name */
+    arg = 1;
+    grpname = bu_strdup(argv[arg]);
+    grpname_len = (int)strlen(grpname);
+    len = grpname_len + 1 + extraChars;
+    solname = bu_malloc(len, "solid name");
+    regname = bu_malloc(len, "region name");
+    sol.s_name = bu_malloc(len, "sol.s_name");
+
+    /* first road wheel X */
+    ++arg;
+    fw[0] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
+
+    /* last road wheel X */
+    ++arg;
+    lw[0] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
+
+    if (fw[0] <= lw[0]) {
+	bu_log("First wheel after last wheel - STOP\n");
+	edit_result = TCL_ERROR;
+	goto end;
+    }
+
+    /* road wheel Z */
+    ++arg;
+    fw[1] = lw[1] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
+
+    /* roadwheel radius */
+    ++arg;
+    fw[2] = lw[2] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
+
+    if (fw[2] <= 0) {
+	bu_log("Radius <= 0 - STOP\n");
+	edit_result = TCL_ERROR;
+	goto end;
+    }
+
+    /* drive sprocket X */
+    ++arg;
+    dw[0] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
+
+    if (dw[0] >= lw[0]) {
+	bu_log("DRIVE wheel not in the rear - STOP \n");
+	edit_result = TCL_ERROR;
+	goto end;
+    }
+
+    /* drive sprocket Z */
+    ++arg;
+    dw[1] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
+
+    /* drive sprocket radius */
+    ++arg;
+    dw[2] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
+
+    if (dw[2] <= 0) {
+	bu_log("Radius <= 0 - STOP\n");
+	edit_result = TCL_ERROR;
+	goto end;
+    }
+
+    /* idler wheel X */
+    ++arg;
+    iw[0] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
+
+    if (iw[0] <= fw[0]) {
+	bu_log("IDLER wheel not in the front - STOP \n");
+	edit_result = TCL_ERROR;
+	goto end;
+    }
+
+    /* idler wheel Z */
+    ++arg;
+    iw[1] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
+
+    /* idler wheel radius */
+    ++arg;
+    iw[2] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
+
+    if (iw[2] <= 0) {
+	bu_log("Radius <= 0 - STOP\n");
+	edit_result = TCL_ERROR;
+	goto end;
+    }
+
+    /* track MIN Y */
+    ++arg;
+    tr[2] = tr[0] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
+
+    /* track MAX Y */
+    ++arg;
+    tr[1] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
+
+    if (EQUAL(tr[0], tr[1])) {
+	bu_log("MIN == MAX ... STOP\n");
+	edit_result = TCL_ERROR;
+	goto end;
+    }
+    if (tr[0] > tr[1]) {
+	bu_log("MIN > MAX .... will switch\n");
+	tr[1] = tr[0];
+	tr[0] = tr[2];
+    }
+
+    /* track thickness */
+    ++arg;
+    tr[2] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
+
+    if (tr[2] <= 0) {
+	bu_log("Track thickness <= 0 - STOP\n");
+	edit_result = TCL_ERROR;
+	goto end;
+    }
+
+    for (i = 0; i < grpname_len; ++i) {
+	solname[i] = grpname[i];
+	regname[i] = grpname[i];
+    }
+
+    solname[i] = regname[i] = '.';
+    ++i;
+    solname[i] = 's';
+    regname[i] = 'r';
+    ++i;
+    solname[i] = regname[i] = '.';
+    ++i;
+    solname[i] = regname[i] = '\0';
+/*
+  bu_log("\nX of first road wheel  %10.4f\n", fw[0]);
+  bu_log("X of last road wheel   %10.4f\n", lw[0]);
+  bu_log("Z of road wheels       %10.4f\n", fw[1]);
+  bu_log("radius of road wheels  %10.4f\n", fw[2]);
+  bu_log("\nX of drive wheel       %10.4f\n", dw[0]);
+  bu_log("Z of drive wheel       %10.4f\n", dw[1]);
+  bu_log("radius of drive wheel  %10.4f\n", dw[2]);
+  bu_log("\nX of idler wheel       %10.4f\n", iw[0]);
+  bu_log("Z of idler wheel       %10.4f\n", iw[1]);
+  bu_log("radius of idler wheel  %10.4f\n", iw[2]);
+  bu_log("\nY MIN of track         %10.4f\n", tr[0]);
+  bu_log("Y MAX of track         %10.4f\n", tr[1]);
+  bu_log("thickness of track     %10.4f\n", tr[2]);
+*/
+
+/* Check for names to use:
+ * grpname.s.0->9 and grpname.r.0->9
+ */
+
+    for (i=0; i<10; i++) {
+	crname(solname, i, len);
+	crname(regname, i, len);
+	if ((db_lookup(wdbp->dbip, solname, LOOKUP_QUIET) != RT_DIR_NULL) ||
+	    (db_lookup(wdbp->dbip, regname, LOOKUP_QUIET) != RT_DIR_NULL)) {
+	    /* name already exists */
+	    bu_log("Track: naming error -- STOP\n");
+	    edit_result = TCL_ERROR;
+	    goto end;
+	}
+
+	solname[grpname_len + extraTypeChars] = '\0';
+	regname[grpname_len + extraTypeChars] = '\0';
+    }
+
+    /* find the front track slope to the idler */
+    for (i=0; i<24; i++)
+	sol.s_values[i] = 0.0;
+
+    /* add the solids */
+    /* solid 0 */
+    slope(fw, iw, tr);
+    VMOVE(temp2, &sol.s_values[0]);
+    crname(solname, 0, len);
+    bu_strlcpy(sol.s_name, solname, len);
+
+    sol.s_type = ID_ARB8;
+    if (wrobj(wdbp, solname, RT_DIR_SOLID))
+	return TCL_ERROR;
+
+    solname[grpname_len + extraTypeChars] = '\0';
+
+    /* solid 1 */
+    /* find track around idler */
+    for (i=0; i<24; i++)
+	sol.s_values[i] = 0.0;
+    sol.s_type = ID_TGC;
+    trcurve(iw, tr);
+    crname(solname, 1, len);
+    bu_strlcpy(sol.s_name, solname, len);
+    if (wrobj(wdbp, solname, RT_DIR_SOLID))
+	return TCL_ERROR;
+    solname[grpname_len + extraTypeChars] = '\0';
+    /* idler dummy rcc */
+    sol.s_values[6] = iw[2];
+    sol.s_values[11] = iw[2];
+    VMOVE(&sol.s_values[12], &sol.s_values[6]);
+    VMOVE(&sol.s_values[15], &sol.s_values[9]);
+    /* solid 2 */
+    crname(solname, 2, len);
+    bu_strlcpy(sol.s_name, solname, len);
+    if (wrobj(wdbp, solname, RT_DIR_SOLID))
+	return TCL_ERROR;
+    solname[grpname_len + extraTypeChars] = '\0';
+
+    /* solid 3 */
+    /* find idler track dummy arb8 */
+    for (i=0; i<24; i++)
+	sol.s_values[i] = 0.0;
+    crname(solname, 3, len);
+    bu_strlcpy(sol.s_name, solname, len);
+    sol.s_type = ID_ARB8;
+    crdummy(iw, tr, 1);
+    if (wrobj(wdbp, solname, RT_DIR_SOLID))
+	return TCL_ERROR;
+    solname[grpname_len + extraTypeChars] = '\0';
+
+    /* solid 4 */
+    /* track slope to drive */
+    for (i=0; i<24; i++)
+	sol.s_values[i] = 0.0;
+    slope(lw, dw, tr);
+    VMOVE(temp1, &sol.s_values[0]);
+    crname(solname, 4, len);
+    bu_strlcpy(sol.s_name, solname, len);
+    if (wrobj(wdbp, solname, RT_DIR_SOLID))
+	return TCL_ERROR;
+    solname[grpname_len + extraTypeChars] = '\0';
+
+    /* solid 5 */
+    /* track around drive */
+    for (i=0; i<24; i++)
+	sol.s_values[i] = 0.0;
+    sol.s_type = ID_TGC;
+    trcurve(dw, tr);
+    crname(solname, 5, len);
+    bu_strlcpy(sol.s_name, solname, len);
+    if (wrobj(wdbp, solname, RT_DIR_SOLID))
+	return TCL_ERROR;
+    solname[grpname_len + extraTypeChars] = '\0';
+
+    /* solid 6 */
+    /* drive dummy rcc */
+    sol.s_values[6] = dw[2];
+    sol.s_values[11] = dw[2];
+    VMOVE(&sol.s_values[12], &sol.s_values[6]);
+    VMOVE(&sol.s_values[15], &sol.s_values[9]);
+    crname(solname, 6, len);
+    bu_strlcpy(sol.s_name, solname, len);
+    if (wrobj(wdbp, solname, RT_DIR_SOLID))
+	return TCL_ERROR;
+    solname[grpname_len + extraTypeChars] = '\0';
+
+    /* solid 7 */
+    /* drive dummy arb8 */
+    for (i=0; i<24; i++)
+	sol.s_values[i] = 0.0;
+    crname(solname, 7, len);
+    bu_strlcpy(sol.s_name, solname, len);
+    sol.s_type = ID_ARB8;
+    crdummy(dw, tr, 2);
+    if (wrobj(wdbp, solname, RT_DIR_SOLID))
+	return TCL_ERROR;
+    solname[grpname_len + extraTypeChars] = '\0';
+
+    /* solid 8 */
+    /* track bottom */
+    temp1[1] = temp2[1] = tr[0];
+    bottom(temp1, temp2, tr);
+    crname(solname, 8, len);
+    bu_strlcpy(sol.s_name, solname, len);
+    if (wrobj(wdbp, solname, RT_DIR_SOLID))
+	return TCL_ERROR;
+    solname[grpname_len + extraTypeChars] = '\0';
+
+    /* solid 9 */
+    /* track top */
+    temp1[0] = dw[0];
+    temp1[1] = temp2[1] = tr[0];
+    temp1[2] = dw[1] + dw[2];
+    temp2[0] = iw[0];
+    temp2[2] = iw[1] + iw[2];
+    top(temp1, temp2, tr);
+    crname(solname, 9, len);
+    bu_strlcpy(sol.s_name, solname, len);
+    if (wrobj(wdbp, solname, RT_DIR_SOLID))
+	return TCL_ERROR;
+    solname[grpname_len + extraTypeChars] = '\0';
+
+    /* add the regions */
+    /* region 0 */
+    item = item_default;
+    mat = mat_default;
+    los = los_default;
+    item_default = 500;
+    mat_default = 1;
+    los_default = 50;
+    /* region 1 */
+    memb[0] = 0;
+    memb[1] = 3;
+    crname(regname, 0, len);
+    crregion(wdbp, regname, oper, memb, 2, solname, len);
+    solname[grpname_len + extraTypeChars] = '\0';
+    regname[grpname_len + extraTypeChars] = '\0';
+
+    /* region 1 */
+    crname(regname, 1, len);
+    memb[0] = 1;
+    memb[1] = 2;
+    memb[2] = 3;
+    crregion(wdbp, regname, oper, memb, 3, solname, len);
+    solname[grpname_len + extraTypeChars] = '\0';
+    regname[grpname_len + extraTypeChars] = '\0';
+
+    /* region 4 */
+    crname(regname, 4, len);
+    memb[0] = 4;
+    memb[1] = 7;
+    crregion(wdbp, regname, oper, memb, 2, solname, len);
+    solname[grpname_len + extraTypeChars] = '\0';
+    regname[grpname_len + extraTypeChars] = '\0';
+
+    /* region 5 */
+    crname(regname, 5, len);
+    memb[0] = 5;
+    memb[1] = 6;
+    memb[2] = 7;
+    crregion(wdbp, regname, oper, memb, 3, solname, len);
+    solname[grpname_len + extraTypeChars] = '\0';
+    regname[grpname_len + extraTypeChars] = '\0';
+
+    /* region 8 */
+    crname(regname, 8, len);
+    memb[0] = 8;
+    memb[1] = 0;
+    memb[2] = 4;
+    oper[2] = WMOP_SUBTRACT;
+    crregion(wdbp, regname, oper, memb, 3, solname, len);
+    solname[grpname_len + extraTypeChars] = '\0';
+    regname[grpname_len + extraTypeChars] = '\0';
+
+    /* region 9 */
+    crname(regname, 9, len);
+    memb[0] = 9;
+    memb[1] = 3;
+    memb[2] = 7;
+    crregion(wdbp, regname, oper, memb, 3, solname, len);
+    solname[grpname_len + extraTypeChars] = '\0';
+    regname[grpname_len + extraTypeChars] = '\0';
+
+    /* group all the track regions */
+    for (i=0; i<10; i++) {
+	if (i == 2 || i == 3 || i == 6 || i == 7)
+	    continue;
+	regname[grpname_len + extraTypeChars] = '\0';
+	crname(regname, i, len);
+	if (db_lookup(wdbp->dbip, regname, LOOKUP_QUIET) == RT_DIR_NULL) {
+	    bu_log("group: %s will skip member: %s\n", grpname, regname);
+	    continue;
+	}
+	track_mk_addmember(regname, &head, NULL, WMOP_UNION);
+    }
+
+    /* Add them all at once */
+    if (track_mk_comb(wdbp, grpname, &head,
+		      0, NULL, NULL, NULL,
+		      0, 0, 0, 0,
+		      0, 1, 1) < 0) {
+	bu_log("An error has occured while adding '%s' to the database.\n", grpname);
+    }
+
+    Trackpos += 10;
+    item_default = item;
+    mat_default = mat;
+    los_default = los;
+
+    bu_free((genptr_t)solname, "solid name");
+    bu_free((genptr_t)regname, "region name");
+    bu_free((genptr_t)grpname, "group name");
+    bu_free((genptr_t)sol.s_name, "sol.s_name");
+
+    return edit_result;
+
+end:
+    bu_free((genptr_t)solname, "solid name");
+    bu_free((genptr_t)regname, "region name");
+    bu_free((genptr_t)grpname, "group name");
+    bu_free((genptr_t)sol.s_name, "sol.s_name");
+
+    return edit_result;
 }
 
 

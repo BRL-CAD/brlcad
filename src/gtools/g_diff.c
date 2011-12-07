@@ -873,7 +873,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	    /* need to add this object */
 	    has_diff += 1;
 	    argv[2] = dp2->d_namep;
-	    if (wdb_get_tcl((ClientData)(wdb2), interp, 3, argv) == TCL_ERROR ||
+	    if (wdb_get_tcl((void *)wdb2, 3, (const char **)argv) == TCL_ERROR ||
 		!strncmp(Tcl_GetStringResult(interp), "invalid", 7)) {
 		/* could not get TCL version */
 		if (mode == HUMAN)
@@ -982,7 +982,7 @@ main(int argc, char **argv)
 	bu_exit(1, "wdb_init_obj failed on %s\n", file1);
     }
 
-    if (wdb_create_cmd(interp, wdb1, "_db1") != TCL_OK) {
+    if (wdb_create_cmd(wdb1, "_db1") != TCL_OK) {
 	wdb_close(wdb1);
 	bu_exit(1, "wdb_create_cmd failed on %s\n", file1);
     }
@@ -1020,7 +1020,7 @@ main(int argc, char **argv)
 	bu_exit(1, "wdb_init_obj failed on %s\n", file2);
     }
 
-    if (wdb_create_cmd(interp, wdb2, "_db2") != TCL_OK) {
+    if (wdb_create_cmd(wdb2, "_db2") != TCL_OK) {
 	wdb_close(wdb1);
 	bu_exit(1, "wdb_create_cmd failed on %s\n", file2);
     }

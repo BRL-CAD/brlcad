@@ -88,11 +88,6 @@ static int face_count=0;	/* number of faces in above arrays */
 
 static point_t *grid_pts;
 
-void do_grid(char *line);
-void do_tri(char *line);
-void do_quad(char *line);
-void make_bot_object(char *name,
-		     struct rt_wdb *wdbp);
 
 /*************************** code from libwdb/bot.c ***************************/
 
@@ -349,7 +344,7 @@ do_tri(char *line)
 
 
 void
-do_quad(char *line)
+do_quad(const char *line)
 {
     int element_id;
     int pt1, pt2, pt3, pt4;
@@ -408,7 +403,7 @@ do_quad(char *line)
 
 
 void
-make_bot_object(char *name,
+make_bot_object(const char *name,
 		struct rt_wdb *wdbp)
 {
     int i;
@@ -493,23 +488,18 @@ make_bot_object(char *name,
 	*(_cp) = '\0';
 
 int
-wdb_importFg4Section_cmd(struct rt_wdb *wdbp,
-			 Tcl_Interp *interp,
+wdb_importFg4Section_cmd(void *data,
 			 int argc,
-			 char *argv[])
+			 const char *argv[])
 {
+    struct rt_wdb *wdbp = (struct rt_wdb *)data;
     char *cp;
     char *line;
     char *lines;
     int eosFlag = 0;
 
     if (argc != 3) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias wdb_importFg4Section %s", argv[0]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
+	bu_log("ERROR: expecting three arguments\n");
 	return TCL_ERROR;
     }
 

@@ -76,6 +76,26 @@
 #endif
 
 
+/**
+ * D M _ O B J
+ *@brief
+ * A display manager object is used for interacting with a display manager.
+ */
+struct dm_obj {
+    struct bu_list l;
+    struct bu_vls dmo_name;		/**< @brief display manager object name/cmd */
+    struct dm *dmo_dmp;		/**< @brief display manager pointer */
+#ifdef USE_FBSERV
+    struct fbserv_obj dmo_fbs;		/**< @brief fbserv object */
+#endif
+    struct bu_observer dmo_observers;		/**< @brief fbserv observers */
+    mat_t viewMat;
+    int (*dmo_drawLabelsHook)();
+    void *dmo_drawLabelsHookClientData;
+    Tcl_Interp *interp;
+};
+
+
 static struct dm_obj HeadDMObj;	/* head of display manager object list */
 
 
@@ -84,9 +104,9 @@ static struct dm_obj HeadDMObj;	/* head of display manager object list */
  * Open/activate the display managers framebuffer.
  */
 HIDDEN int
-dmo_openFb(struct dm_obj *dmop, Tcl_Interp *interp)
+dmo_openFb(struct dm_obj *dmop)
 {
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     /* already open */
@@ -97,14 +117,14 @@ dmo_openFb(struct dm_obj *dmop, Tcl_Interp *interp)
     if ((dmop->dmo_fbs.fbs_fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
 	Tcl_Obj *obj;
 
-	obj = Tcl_GetObjResult(interp);
+	obj = Tcl_GetObjResult(dmop->interp);
 	if (Tcl_IsShared(obj))
 	    obj = Tcl_DuplicateObj(obj);
 
 	Tcl_AppendStringsToObj(obj, "openfb: failed to allocate framebuffer memory\n",
 			       (char *)NULL);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_ERROR;
     }
 
@@ -214,16 +234,16 @@ dmo_closeFb(struct dm_obj *dmop)
  *
  */
 HIDDEN int
-dmo_listen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_listen_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
     Tcl_Obj *obj;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    obj = Tcl_GetObjResult(interp);
+    obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
@@ -234,7 +254,7 @@ dmo_listen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_ERROR;
     }
 
@@ -244,7 +264,7 @@ dmo_listen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_OK;
     }
 
@@ -253,7 +273,7 @@ dmo_listen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	if (sscanf(argv[2], "%d", &port) != 1) {
 	    Tcl_AppendStringsToObj(obj, "listen: bad value - ", argv[2], "\n", (char *)NULL);
-	    Tcl_SetObjResult(interp, obj);
+	    Tcl_SetObjResult(dmop->interp, obj);
 	    return TCL_ERROR;
 	}
 
@@ -266,12 +286,12 @@ dmo_listen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_OK;
     }
 
     bu_vls_printf(&vls, "helplib_alias dm_listen %s", argv[1]);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_ERROR;
@@ -286,18 +306,18 @@ dmo_listen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *
  */
 HIDDEN int
-dmo_refreshFb_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_refreshFb_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
 
-    if (!dmop || !interp || argc < 1 ||  !argv)
+    if (!dmop || !dmop->interp || argc < 1 ||  !argv)
 	return TCL_ERROR;
 
     if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL) {
 	Tcl_Obj *obj;
 
-	obj = Tcl_GetObjResult(interp);
+	obj = Tcl_GetObjResult(dmop->interp);
 	if (Tcl_IsShared(obj))
 	    obj = Tcl_DuplicateObj(obj);
 
@@ -306,7 +326,7 @@ dmo_refreshFb_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_ERROR;
     }
 
@@ -320,7 +340,7 @@ dmo_refreshFb_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 
 HIDDEN int
 dmo_parseAxesArgs(int argc,
-		  char **argv,
+		  const char **argv,
 		  fastf_t *viewSize,
 		  mat_t rmat,
 		  point_t axesPos,
@@ -435,10 +455,7 @@ dmo_parseAxesArgs(int argc,
  *
  */
 HIDDEN int
-dmo_drawViewAxes_tcl(ClientData clientData,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv)
+dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
 {
     point_t axesPos;
     fastf_t viewSize;
@@ -453,7 +470,7 @@ dmo_drawViewAxes_tcl(ClientData clientData,
     struct bu_vls vls;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     bu_vls_init(&vls);
@@ -461,7 +478,7 @@ dmo_drawViewAxes_tcl(ClientData clientData,
     if (argc != 11) {
 	/* return help message */
 	bu_vls_printf(&vls, "helplib_alias dm_drawViewAxes %s", argv[1]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -471,7 +488,7 @@ dmo_drawViewAxes_tcl(ClientData clientData,
     if (dmo_parseAxesArgs(argc, argv, &viewSize, rmat, axesPos, &axesSize,
 			  axesColor, labelColor, &lineWidth,
 			  &posOnly, &tripleColor, &vls) == TCL_ERROR) {
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -500,13 +517,12 @@ dmo_drawViewAxes_tcl(ClientData clientData,
  */
 HIDDEN int
 dmo_drawCenterDot_cmd(struct dm_obj *dmop,
-		      Tcl_Interp *interp,
 		      int argc,
-		      char **argv)
+		      const char **argv)
 {
     int color[3];
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     if (argc != 2) {
@@ -514,7 +530,7 @@ dmo_drawCenterDot_cmd(struct dm_obj *dmop,
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dm_drawCenterDot %s", argv[1]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -527,7 +543,7 @@ dmo_drawCenterDot_cmd(struct dm_obj *dmop,
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "drawCenterDot: bad color - %s\n", argv[1]);
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_ERROR;
@@ -541,7 +557,7 @@ dmo_drawCenterDot_cmd(struct dm_obj *dmop,
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "drawCenterDot: bad color - %s\n", argv[1]);
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_ERROR;
@@ -566,23 +582,20 @@ dmo_drawCenterDot_cmd(struct dm_obj *dmop,
  *
  */
 HIDDEN int
-dmo_drawCenterDot_tcl(ClientData clientData,
-		      Tcl_Interp *interp,
-		      int argc,
-		      char **argv)
+dmo_drawCenterDot_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    return dmo_drawCenterDot_cmd(dmop, interp, argc-1, argv+1);
+    return dmo_drawCenterDot_cmd(dmop, argc-1, argv+1);
 }
 
 
 HIDDEN int
 dmo_parseDataAxesArgs(int argc,
-		      char **argv,
+		      const char **argv,
 		      fastf_t *viewSize,
 		      mat_t rmat,
 		      mat_t model2view,
@@ -659,10 +672,7 @@ dmo_parseDataAxesArgs(int argc,
  *XXX This needs to be modified to handle an array/list of data points
  */
 HIDDEN int
-dmo_drawDataAxes_tcl(ClientData clientData,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv)
+dmo_drawDataAxes_tcl(void *clientData, int argc, const char **argv)
 {
     point_t modelAxesPos;
     fastf_t viewSize;
@@ -675,7 +685,7 @@ dmo_drawDataAxes_tcl(ClientData clientData,
     struct bu_vls vls;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     bu_vls_init(&vls);
@@ -683,7 +693,7 @@ dmo_drawDataAxes_tcl(ClientData clientData,
     if (argc != 9) {
 	/* return help message */
 	bu_vls_printf(&vls, "helplib_alias dm_drawDataAxes %s", argv[1]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -698,7 +708,7 @@ dmo_drawDataAxes_tcl(ClientData clientData,
 			      axesColor,
 			      &lineWidth,
 			      &vls) == TCL_ERROR) {
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -722,7 +732,7 @@ dmo_drawDataAxes_tcl(ClientData clientData,
 
 HIDDEN int
 dmo_parseModelAxesArgs(int argc,
-		       char **argv,
+		       const char **argv,
 		       fastf_t *viewSize,
 		       mat_t rmat,
 		       point_t axesPos,
@@ -876,10 +886,7 @@ dmo_parseModelAxesArgs(int argc,
  *
  */
 HIDDEN int
-dmo_drawModelAxes_tcl(ClientData clientData,
-		      Tcl_Interp *interp,
-		      int argc,
-		      char **argv)
+dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
 {
     point_t modelAxesPos;
     point_t viewAxesPos;
@@ -904,7 +911,7 @@ dmo_drawModelAxes_tcl(ClientData clientData,
     struct bu_vls vls;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     bu_vls_init(&vls);
@@ -912,7 +919,7 @@ dmo_drawModelAxes_tcl(ClientData clientData,
     if (argc != 20) {
 	/* return help message */
 	bu_vls_printf(&vls, "helplib_alias dm_drawModelAxes %s", argv[1]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -927,7 +934,7 @@ dmo_drawModelAxes_tcl(ClientData clientData,
 			       &tickInterval, &ticksPerMajor,
 			       tickColor, majorTickColor,
 			       &tickThreshold, &vls) == TCL_ERROR) {
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -966,11 +973,11 @@ dmo_drawModelAxes_tcl(ClientData clientData,
  *
  */
 HIDDEN int
-dmo_drawBegin_tcl(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), char **UNUSED(argv))
+dmo_drawBegin_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     return DM_DRAW_BEGIN(dmop->dmo_dmp);
@@ -978,11 +985,11 @@ dmo_drawBegin_tcl(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
 
 
 HIDDEN int
-dmo_drawEnd_tcl(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), char **UNUSED(argv))
+dmo_drawEnd_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     return DM_DRAW_END(dmop->dmo_dmp);
@@ -997,12 +1004,12 @@ dmo_drawEnd_tcl(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), cha
  *
  */
 HIDDEN int
-dmo_clear_tcl(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), char **UNUSED(argv))
+dmo_clear_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     int status;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     if ((status = DM_DRAW_BEGIN(dmop->dmo_dmp)) != TCL_OK)
@@ -1020,11 +1027,11 @@ dmo_clear_tcl(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), char 
  *
  */
 HIDDEN int
-dmo_normal_tcl(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), char **UNUSED(argv))
+dmo_normal_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     return DM_NORMAL(dmop->dmo_dmp);
@@ -1039,13 +1046,13 @@ dmo_normal_tcl(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), char
  *
  */
 HIDDEN int
-dmo_loadmat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_loadmat_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     mat_t mat;
     int which_eye;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     if (argc != 4) {
@@ -1053,7 +1060,7 @@ dmo_loadmat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dm_loadmat %s", argv[1]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -1065,12 +1072,12 @@ dmo_loadmat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     if (sscanf(argv[3], "%d", &which_eye) != 1) {
 	Tcl_Obj *obj;
 
-	obj = Tcl_GetObjResult(interp);
+	obj = Tcl_GetObjResult(dmop->interp);
 	if (Tcl_IsShared(obj))
 	    obj = Tcl_DuplicateObj(obj);
 
 	Tcl_AppendStringsToObj(obj, "bad eye value - ", argv[3], (char *)NULL);
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_ERROR;
     }
 
@@ -1088,14 +1095,14 @@ dmo_loadmat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
  *
  */
 HIDDEN int
-dmo_drawString_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_drawString_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     fastf_t x, y;
     int size;
     int use_aspect;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     if (argc != 7) {
@@ -1103,7 +1110,7 @@ dmo_drawString_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **a
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dm_drawString %s", argv[1]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -1119,12 +1126,12 @@ dmo_drawString_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **a
 
 
 HIDDEN int
-dmo_drawPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_drawPoint_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     fastf_t x, y;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     if (argc != 4) {
@@ -1132,7 +1139,7 @@ dmo_drawPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dm_drawPoint %s", argv[1]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -1153,12 +1160,12 @@ dmo_drawPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
  *
  */
 HIDDEN int
-dmo_drawLine_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_drawLine_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     fastf_t xpos1, ypos1, xpos2, ypos2;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     if (argc != 6) {
@@ -1166,7 +1173,7 @@ dmo_drawLine_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dm_drawLine %s", argv[1]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -1188,12 +1195,12 @@ dmo_drawLine_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
  * objname drawVList vid
  */
 HIDDEN int
-dmo_drawVList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_drawVList_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bn_vlist *vp;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     if (argc != 3) {
@@ -1201,7 +1208,7 @@ dmo_drawVList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dm_drawVList %s", argv[1]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -1209,12 +1216,12 @@ dmo_drawVList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     if (sscanf(argv[2], "%lu", (unsigned long *)&vp) != 1) {
 	Tcl_Obj *obj;
 
-	obj = Tcl_GetObjResult(interp);
+	obj = Tcl_GetObjResult(dmop->interp);
 	if (Tcl_IsShared(obj))
 	    obj = Tcl_DuplicateObj(obj);
 
 	Tcl_AppendStringsToObj(obj, "invalid vlist pointer - ", argv[2], (char *)NULL);
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_ERROR;
     }
 
@@ -1248,9 +1255,8 @@ dmo_drawSolid(struct dm_obj *dmop,
  */
 int
 dmo_drawScale_cmd(struct dm_obj *dmop,
-		  Tcl_Interp *interp,
 		  int argc,
-		  char **argv)
+		  const char **argv)
 {
     int color[3];
     fastf_t viewSize;
@@ -1259,7 +1265,7 @@ dmo_drawScale_cmd(struct dm_obj *dmop,
     if (argc != 3) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dm_drawScale %s", argv[0]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -1267,7 +1273,7 @@ dmo_drawScale_cmd(struct dm_obj *dmop,
     if (sscanf(argv[1], "%lf", &viewSize) != 1) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "drawScale: bad view size - %s\n", argv[1]);
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_ERROR;
@@ -1279,7 +1285,7 @@ dmo_drawScale_cmd(struct dm_obj *dmop,
 	       &color[2]) != 3) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "drawScale: bad color - %s\n", argv[2]);
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_ERROR;
@@ -1293,7 +1299,7 @@ dmo_drawScale_cmd(struct dm_obj *dmop,
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "drawScale: bad color - %s\n", argv[2]);
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_ERROR;
@@ -1310,17 +1316,14 @@ dmo_drawScale_cmd(struct dm_obj *dmop,
  * objname drawScale vsize color
  */
 HIDDEN int
-dmo_drawScale_tcl(ClientData clientData,
-		  Tcl_Interp *interp,
-		  int argc,
-		  char **argv)
+dmo_drawScale_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    return dmo_drawScale_cmd(dmop, interp, argc-1, argv+1);
+    return dmo_drawScale_cmd(dmop, argc-1, argv+1);
 }
 
 
@@ -1392,12 +1395,12 @@ dmo_drawSList(struct dm_obj *dmop,
  * objname drawSList sid
  */
 HIDDEN int
-dmo_drawSList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_drawSList_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_list *hsp;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     if (argc != 3) {
@@ -1405,7 +1408,7 @@ dmo_drawSList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dm_drawSList %s", argv[1]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -1413,14 +1416,14 @@ dmo_drawSList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     if (sscanf(argv[2], "%lu", (unsigned long *)&hsp) != 1) {
 	Tcl_Obj *obj;
 
-	obj = Tcl_GetObjResult(interp);
+	obj = Tcl_GetObjResult(dmop->interp);
 	if (Tcl_IsShared(obj))
 	    obj = Tcl_DuplicateObj(obj);
 
 	Tcl_AppendStringsToObj(obj, "invalid solid list pointer - ",
 			       argv[2], "\n", (char *)NULL);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_ERROR;
     }
     dmo_drawSList(dmop, hsp);
@@ -1436,20 +1439,20 @@ dmo_drawSList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
  * objname drawGeom dg_obj(s)
  */
 HIDDEN int
-dmo_drawGeom_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_drawGeom_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct dg_obj *dgop;
     struct bu_vls vls;
     int i;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     if (argc < 3) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dm_drawGeom %s", argv[1]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -1476,10 +1479,7 @@ dmo_drawGeom_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
  * objname drawLabels dg_obj color primitive(s)
  */
 HIDDEN int
-dmo_drawLabels_tcl(ClientData clientData,
-		   Tcl_Interp *interp,
-		   int argc,
-		   char **argv)
+dmo_drawLabels_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct dg_obj *dgop;
@@ -1487,13 +1487,13 @@ dmo_drawLabels_tcl(ClientData clientData,
     int i;
     int labelColor[3];
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     if (argc < 5) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dm_drawLabels %s", argv[1]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -1503,7 +1503,7 @@ dmo_drawLabels_tcl(ClientData clientData,
 	       &labelColor[1],
 	       &labelColor[2]) != 3) {
 	bu_vls_printf(&vls, "drawLabels: bad label color - %s\n", argv[3]);
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 
 	return TCL_ERROR;
     }
@@ -1514,7 +1514,7 @@ dmo_drawLabels_tcl(ClientData clientData,
 	labelColor[2] < 0 || 255 < labelColor[2]) {
 
 	bu_vls_printf(&vls, "drawLabels: bad label color - %s\n", argv[3]);
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 
 	return TCL_ERROR;
     }
@@ -1542,17 +1542,17 @@ dmo_drawLabels_tcl(ClientData clientData,
  * objname fg [rgb]
  */
 HIDDEN int
-dmo_fg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_fg_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
     int r, g, b;
     Tcl_Obj *obj;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    obj = Tcl_GetObjResult(interp);
+    obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
@@ -1567,7 +1567,7 @@ dmo_fg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_OK;
     }
 
@@ -1592,7 +1592,7 @@ dmo_fg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /* wrong number of arguments */
     bu_vls_printf(&vls, "helplib_alias dm_fg %s", argv[1]);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 
@@ -1601,7 +1601,7 @@ bad_color:
     Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
-    Tcl_SetObjResult(interp, obj);
+    Tcl_SetObjResult(dmop->interp, obj);
     return TCL_ERROR;
 }
 
@@ -1613,17 +1613,17 @@ bad_color:
  * objname bg [rgb]
  */
 HIDDEN int
-dmo_bg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_bg_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
     int r, g, b;
     Tcl_Obj *obj;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    obj = Tcl_GetObjResult(interp);
+    obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
@@ -1638,7 +1638,7 @@ dmo_bg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_OK;
     }
 
@@ -1662,7 +1662,7 @@ dmo_bg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /* wrong number of arguments */
     bu_vls_printf(&vls, "helplib_alias dm_bg %s", argv[1]);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 
@@ -1671,7 +1671,7 @@ bad_color:
     Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
-    Tcl_SetObjResult(interp, obj);
+    Tcl_SetObjResult(dmop->interp, obj);
     return TCL_ERROR;
 }
 
@@ -1683,17 +1683,17 @@ bad_color:
  * objname linewidth [n]
  */
 HIDDEN int
-dmo_lineWidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_lineWidth_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
     int lineWidth;
     Tcl_Obj *obj;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    obj = Tcl_GetObjResult(interp);
+    obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
@@ -1705,7 +1705,7 @@ dmo_lineWidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_OK;
     }
 
@@ -1724,7 +1724,7 @@ dmo_lineWidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 
     /* wrong number of arguments */
     bu_vls_printf(&vls, "helplib_alias dm_linewidth %s", argv[1]);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 
@@ -1733,7 +1733,7 @@ bad_lineWidth:
     Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
-    Tcl_SetObjResult(interp, obj);
+    Tcl_SetObjResult(dmop->interp, obj);
     return TCL_ERROR;
 }
 
@@ -1745,17 +1745,17 @@ bad_lineWidth:
  * objname linestyle [0|1]
  */
 HIDDEN int
-dmo_lineStyle_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_lineStyle_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
     int linestyle;
     Tcl_Obj *obj;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    obj = Tcl_GetObjResult(interp);
+    obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
@@ -1767,7 +1767,7 @@ dmo_lineStyle_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_OK;
     }
 
@@ -1786,7 +1786,7 @@ dmo_lineStyle_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 
     /* wrong number of arguments */
     bu_vls_printf(&vls, "helplib_alias dm_linestyle %1", argv[1]);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 
@@ -1795,7 +1795,7 @@ bad_linestyle:
     Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
-    Tcl_SetObjResult(interp, obj);
+    Tcl_SetObjResult(dmop->interp, obj);
     return TCL_ERROR;
 }
 
@@ -1808,12 +1808,12 @@ bad_linestyle:
  * objname configure
  */
 HIDDEN int
-dmo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_configure_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     int status;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     if (argc != 2) {
@@ -1821,7 +1821,7 @@ dmo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dm_configure %s", argv[1]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -1848,17 +1848,17 @@ dmo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
  * objname zclip [0|1]
  */
 HIDDEN int
-dmo_zclip_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_zclip_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
     int zclip;
     Tcl_Obj *obj;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    obj = Tcl_GetObjResult(interp);
+    obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
@@ -1869,7 +1869,7 @@ dmo_zclip_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_OK;
     }
 
@@ -1878,7 +1878,7 @@ dmo_zclip_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if (sscanf(argv[2], "%d", &zclip) != 1) {
 	    Tcl_AppendStringsToObj(obj, "dmo_zclip: invalid zclip value - ",
 				   argv[2], "\n", (char *)NULL);
-	    Tcl_SetObjResult(interp, obj);
+	    Tcl_SetObjResult(dmop->interp, obj);
 	    return TCL_ERROR;
 	}
 
@@ -1888,7 +1888,7 @@ dmo_zclip_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias dm_zclip %s", argv[1]);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
@@ -1901,17 +1901,17 @@ dmo_zclip_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * objname zbuffer [0|1]
  */
 HIDDEN int
-dmo_zbuffer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_zbuffer_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
     int zbuffer;
     Tcl_Obj *obj;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    obj = Tcl_GetObjResult(interp);
+    obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
@@ -1922,7 +1922,7 @@ dmo_zbuffer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_OK;
     }
 
@@ -1931,7 +1931,7 @@ dmo_zbuffer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	if (sscanf(argv[2], "%d", &zbuffer) != 1) {
 	    Tcl_AppendStringsToObj(obj, "dmo_zbuffer: invalid zbuffer value - ",
 				   argv[2], "\n", (char *)NULL);
-	    Tcl_SetObjResult(interp, obj);
+	    Tcl_SetObjResult(dmop->interp, obj);
 	    return TCL_ERROR;
 	}
 
@@ -1941,7 +1941,7 @@ dmo_zbuffer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias dm_zbuffer %s", argv[1]);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
@@ -1954,17 +1954,17 @@ dmo_zbuffer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
  * objname light [0|1]
  */
 HIDDEN int
-dmo_light_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_light_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
     int light;
     Tcl_Obj *obj;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    obj = Tcl_GetObjResult(interp);
+    obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
@@ -1975,7 +1975,7 @@ dmo_light_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_OK;
     }
 
@@ -1985,7 +1985,7 @@ dmo_light_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    Tcl_AppendStringsToObj(obj, "dmo_light: invalid light value - ",
 				   argv[2], "\n", (char *)NULL);
 
-	    Tcl_SetObjResult(interp, obj);
+	    Tcl_SetObjResult(dmop->interp, obj);
 	    return TCL_ERROR;
 	}
 
@@ -1995,7 +1995,7 @@ dmo_light_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias dm_light %s", argv[1]);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
@@ -2008,20 +2008,17 @@ dmo_light_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * objname transparency [0|1]
  */
 HIDDEN int
-dmo_transparency_tcl(ClientData clientData,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv)
+dmo_transparency_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
     int transparency;
     Tcl_Obj *obj;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    obj = Tcl_GetObjResult(interp);
+    obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
@@ -2032,7 +2029,7 @@ dmo_transparency_tcl(ClientData clientData,
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_OK;
     }
 
@@ -2042,7 +2039,7 @@ dmo_transparency_tcl(ClientData clientData,
 	    Tcl_AppendStringsToObj(obj, "dmo_transparency: invalid transparency value - ",
 				   argv[2], "\n", (char *)NULL);
 
-	    Tcl_SetObjResult(interp, obj);
+	    Tcl_SetObjResult(dmop->interp, obj);
 	    return TCL_ERROR;
 	}
 
@@ -2052,7 +2049,7 @@ dmo_transparency_tcl(ClientData clientData,
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias dm_transparency %s", argv[1]);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
@@ -2065,20 +2062,17 @@ dmo_transparency_tcl(ClientData clientData,
  * objname depthMask [0|1]
  */
 HIDDEN int
-dmo_depthMask_tcl(ClientData clientData,
-		  Tcl_Interp *interp,
-		  int argc,
-		  char **argv)
+dmo_depthMask_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
     int depthMask;
     Tcl_Obj *obj;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    obj = Tcl_GetObjResult(interp);
+    obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
@@ -2089,7 +2083,7 @@ dmo_depthMask_tcl(ClientData clientData,
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_OK;
     }
 
@@ -2099,7 +2093,7 @@ dmo_depthMask_tcl(ClientData clientData,
 	    Tcl_AppendStringsToObj(obj, "dmo_depthMask: invalid depthMask value - ",
 				   argv[2], "\n", (char *)NULL);
 
-	    Tcl_SetObjResult(interp, obj);
+	    Tcl_SetObjResult(dmop->interp, obj);
 	    return TCL_ERROR;
 	}
 
@@ -2109,7 +2103,7 @@ dmo_depthMask_tcl(ClientData clientData,
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias dm_depthMask %s", argv[1]);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
@@ -2122,17 +2116,17 @@ dmo_depthMask_tcl(ClientData clientData,
  * objname bounds ["xmin xmax ymin ymax zmin zmax"]
  */
 HIDDEN int
-dmo_bounds_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_bounds_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
     vect_t clipmin, clipmax;
     Tcl_Obj *obj;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    obj = Tcl_GetObjResult(interp);
+    obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
@@ -2149,7 +2143,7 @@ dmo_bounds_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_OK;
     }
 
@@ -2162,7 +2156,7 @@ dmo_bounds_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    Tcl_AppendStringsToObj(obj, "dmo_bounds: invalid bounds - ",
 				   argv[2], "\n", (char *)NULL);
 
-	    Tcl_SetObjResult(interp, obj);
+	    Tcl_SetObjResult(dmop->interp, obj);
 	    return TCL_ERROR;
 	}
 
@@ -2185,7 +2179,7 @@ dmo_bounds_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias dm_bounds %s", argv[1]);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_ERROR;
@@ -2199,17 +2193,17 @@ dmo_bounds_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * objname perspective [n]
  */
 HIDDEN int
-dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_perspective_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
     int perspective;
     Tcl_Obj *obj;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    obj = Tcl_GetObjResult(interp);
+    obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
@@ -2220,7 +2214,7 @@ dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_OK;
     }
 
@@ -2231,7 +2225,7 @@ dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **
 				   "dmo_perspective: invalid perspective mode - ",
 				   argv[2], "\n", (char *)NULL);
 
-	    Tcl_SetObjResult(interp, obj);
+	    Tcl_SetObjResult(dmop->interp, obj);
 	    return TCL_ERROR;
 	}
 
@@ -2241,7 +2235,7 @@ dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias dm_perspective %s", argv[1]);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
@@ -2251,9 +2245,8 @@ dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **
 
 HIDDEN int
 dmo_png_cmd(struct dm_obj *dmop,
-	    Tcl_Interp *interp,
 	    int argc,
-	    char **argv)
+	    const char **argv)
 {
     FILE *fp;
     png_structp png_p;
@@ -2278,26 +2271,26 @@ dmo_png_cmd(struct dm_obj *dmop,
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dm_png %s", argv[0]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
 
     if ((fp = fopen(argv[1], "wb")) == NULL) {
-	Tcl_AppendResult(interp, "png: cannot open \"", argv[1], " for writing\n", (char *)NULL);
+	Tcl_AppendResult(dmop->interp, "png: cannot open \"", argv[1], " for writing\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
     png_p = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (!png_p) {
-	Tcl_AppendResult(interp, "png: could not create PNG write structure\n", (char *)NULL);
+	Tcl_AppendResult(dmop->interp, "png: could not create PNG write structure\n", (char *)NULL);
 	fclose(fp);
 	return TCL_ERROR;
     }
 
     info_p = png_create_info_struct(png_p);
     if (!info_p) {
-	Tcl_AppendResult(interp, "png: could not create PNG info structure\n", (char *)NULL);
+	Tcl_AppendResult(dmop->interp, "png: could not create PNG info structure\n", (char *)NULL);
 	fclose(fp);
 	return TCL_ERROR;
     }
@@ -2309,7 +2302,7 @@ dmo_png_cmd(struct dm_obj *dmop,
 			 dmop->dmo_dmp->dm_height,
 			 ~0, ZPixmap);
     if (!ximage_p) {
-	Tcl_AppendResult(interp, "png: could not get XImage\n", (char *)NULL);
+	Tcl_AppendResult(dmop->interp, "png: could not get XImage\n", (char *)NULL);
 	fclose(fp);
 	return TCL_ERROR;
     }
@@ -2427,7 +2420,7 @@ dmo_png_cmd(struct dm_obj *dmop,
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "png: %d bytes per pixel is not yet supported\n", bytes_per_pixel);
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 	fclose(fp);
 	bu_vls_free(&vls);
 
@@ -2498,7 +2491,7 @@ dmo_png_cmd(struct dm_obj *dmop,
 	    bu_free(idata, "image data");
 	    fclose(fp);
 
-	    Tcl_AppendResult(interp, "png: not supported for this platform\n", (char *)NULL);
+	    Tcl_AppendResult(dmop->interp, "png: not supported for this platform\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
     }
@@ -2533,18 +2526,15 @@ dmo_png_cmd(struct dm_obj *dmop,
  *
  */
 HIDDEN int
-dmo_png_tcl(ClientData clientData,
-	    Tcl_Interp *interp,
-	    int argc,
-	    char **argv)
+dmo_png_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
 #if defined(DM_X) || defined(DM_OGL)
-    return dmo_png_cmd(dmop, interp, argc-1, argv+1);
+    return dmo_png_cmd(dmop, argc-1, argv+1);
 #else
     bu_log("Sorry, support for the 'png' command is unavailable.\n");
     return 0;
@@ -2560,20 +2550,17 @@ dmo_png_tcl(ClientData clientData,
  *
  */
 HIDDEN int
-dmo_clearBufferAfter_tcl(ClientData clientData,
-			 Tcl_Interp *interp,
-			 int argc,
-			 char **argv)
+dmo_clearBufferAfter_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
     int clearBufferAfter;
     Tcl_Obj *obj;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    obj = Tcl_GetObjResult(interp);
+    obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
@@ -2584,7 +2571,7 @@ dmo_clearBufferAfter_tcl(ClientData clientData,
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_OK;
     }
 
@@ -2593,7 +2580,7 @@ dmo_clearBufferAfter_tcl(ClientData clientData,
 	if (sscanf(argv[2], "%d", &clearBufferAfter) != 1) {
 	    Tcl_AppendStringsToObj(obj, "dmo_clearBufferAfter: invalid clearBufferAfter value - ",
 				   argv[2], "\n", (char *)NULL);
-	    Tcl_SetObjResult(interp, obj);
+	    Tcl_SetObjResult(dmop->interp, obj);
 	    return TCL_ERROR;
 	}
 
@@ -2603,7 +2590,7 @@ dmo_clearBufferAfter_tcl(ClientData clientData,
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias dm_clearBufferAfter %s", argv[1]);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
@@ -2616,17 +2603,17 @@ dmo_clearBufferAfter_tcl(ClientData clientData,
  * objname debug [n]
  */
 HIDDEN int
-dmo_debug_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_debug_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
     int level;
     Tcl_Obj *obj;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    obj = Tcl_GetObjResult(interp);
+    obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
@@ -2637,7 +2624,7 @@ dmo_debug_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_OK;
     }
 
@@ -2647,7 +2634,7 @@ dmo_debug_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    Tcl_AppendStringsToObj(obj, "dmo_debug: invalid debug level - ",
 				   argv[2], "\n", (char *)NULL);
 
-	    Tcl_SetObjResult(interp, obj);
+	    Tcl_SetObjResult(dmop->interp, obj);
 	    return TCL_ERROR;
 	}
 
@@ -2656,7 +2643,7 @@ dmo_debug_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias dm_debug %s", argv[1]);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
@@ -2670,7 +2657,7 @@ dmo_debug_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *
  */
 HIDDEN int
-dmo_flush_tcl(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char **UNUSED(argv))
+dmo_flush_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 {
 #ifdef DM_X
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2693,7 +2680,7 @@ dmo_flush_tcl(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc
  *
  */
 HIDDEN int
-dmo_sync_tcl(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char **UNUSED(argv))
+dmo_sync_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 {
 #ifdef DM_X
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2716,16 +2703,16 @@ dmo_sync_tcl(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc)
  *
  */
 HIDDEN int
-dmo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_size_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
     Tcl_Obj *obj;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    obj = Tcl_GetObjResult(interp);
+    obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
@@ -2735,7 +2722,7 @@ dmo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_OK;
     }
 
@@ -2745,7 +2732,7 @@ dmo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if (sscanf(argv[2], "%d", &width) != 1) {
 	    Tcl_AppendStringsToObj(obj, "size: bad width - ", argv[2], "\n", (char *)NULL);
 
-	    Tcl_SetObjResult(interp, obj);
+	    Tcl_SetObjResult(dmop->interp, obj);
 	    return TCL_ERROR;
 	}
 
@@ -2754,7 +2741,7 @@ dmo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	else {
 	    if (sscanf(argv[3], "%d", &height) != 1) {
 		Tcl_AppendStringsToObj(obj, "size: bad height - ", argv[3], "\n", (char *)NULL);
-		Tcl_SetObjResult(interp, obj);
+		Tcl_SetObjResult(dmop->interp, obj);
 		return TCL_ERROR;
 	    }
 	}
@@ -2771,7 +2758,7 @@ dmo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias dm_size %s", argv[1]);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
@@ -2785,24 +2772,24 @@ dmo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *
  */
 HIDDEN int
-dmo_get_aspect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_get_aspect_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
     Tcl_Obj *obj;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     if (argc != 2) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dm_getaspect %s", argv[1]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
 
-    obj = Tcl_GetObjResult(interp);
+    obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
@@ -2811,7 +2798,7 @@ dmo_get_aspect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **a
     Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
-    Tcl_SetObjResult(interp, obj);
+    Tcl_SetObjResult(dmop->interp, obj);
     return TCL_OK;
 }
 
@@ -2824,11 +2811,11 @@ dmo_get_aspect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **a
  *
  */
 HIDDEN int
-dmo_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_observer_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     if (argc < 3) {
@@ -2837,12 +2824,12 @@ dmo_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	/* return help message */
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dm_observer %s", argv[1]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
 
-    return bu_observer_cmd((ClientData)&dmop->dmo_observers, interp, argc-2, (const char **)argv+2);
+    return bu_observer_cmd((ClientData)&dmop->dmo_observers, argc-2, (const char **)argv+2);
 }
 
 
@@ -2855,22 +2842,18 @@ dmo_fbs_callback(genptr_t clientData)
     if (!dmop)
 	return;
 
-    bu_observer_notify(dmop->dmo_dmp->dm_interp, &dmop->dmo_observers,
-		       bu_vls_addr(&dmop->dmo_name));
+    bu_observer_notify(dmop->interp, &dmop->dmo_observers, bu_vls_addr(&dmop->dmo_name));
 }
 #endif
 
 
 HIDDEN int
-dmo_getDrawLabelsHook_cmd(struct dm_obj *dmop,
-			  Tcl_Interp *interp,
-			  int argc,
-			  char **argv)
+dmo_getDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 {
     char buf[64];
     Tcl_DString ds;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     if (argc != 1) {
@@ -2878,7 +2861,7 @@ dmo_getDrawLabelsHook_cmd(struct dm_obj *dmop,
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dm_getDrawLabelsHook %s", argv[0]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -2889,34 +2872,28 @@ dmo_getDrawLabelsHook_cmd(struct dm_obj *dmop,
 	    (void *)(uintptr_t)dmop->dmo_drawLabelsHookClientData);
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, buf, -1);
-    Tcl_DStringResult(interp, &ds);
+    Tcl_DStringResult(dmop->interp, &ds);
 
     return TCL_OK;
 }
 
 
 HIDDEN int
-dmo_getDrawLabelsHook_tcl(ClientData clientData,
-			  Tcl_Interp *interp,
-			  int argc,
-			  char **argv)
+dmo_getDrawLabelsHook_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
-    return dmo_getDrawLabelsHook_cmd(dmop, interp, argc-1, argv+1);
+    return dmo_getDrawLabelsHook_cmd(dmop, argc-1, argv+1);
 }
 
 
 HIDDEN int
-dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop,
-			  Tcl_Interp *interp,
-			  int argc,
-			  char **argv)
+dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 {
     void *hook;
     void *clientData;
 
-    if (!dmop || !interp)
+    if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     if (argc != 3) {
@@ -2924,7 +2901,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop,
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dm_setDrawLabelsHook %s", argv[0]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -2935,7 +2912,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop,
 	Tcl_DStringInit(&ds);
 	Tcl_DStringAppend(&ds, argv[0], -1);
 	Tcl_DStringAppend(&ds, ": failed to set the drawLabels hook", -1);
-	Tcl_DStringResult(interp, &ds);
+	Tcl_DStringResult(dmop->interp, &ds);
 
 	dmop->dmo_drawLabelsHook = (int (*)())0;
 
@@ -2948,7 +2925,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop,
 	Tcl_DStringInit(&ds);
 	Tcl_DStringAppend(&ds, argv[0], -1);
 	Tcl_DStringAppend(&ds, ": failed to set the drawLabels hook", -1);
-	Tcl_DStringResult(interp, &ds);
+	Tcl_DStringResult(dmop->interp, &ds);
 
 	dmop->dmo_drawLabelsHook = (int (*)())0;
 
@@ -2966,14 +2943,11 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop,
 
 
 HIDDEN int
-dmo_setDrawLabelsHook_tcl(ClientData clientData,
-			  Tcl_Interp *interp,
-			  int argc,
-			  char **argv)
+dmo_setDrawLabelsHook_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
-    return dmo_setDrawLabelsHook_cmd(dmop, interp, argc-1, argv+1);
+    return dmo_setDrawLabelsHook_cmd(dmop, argc-1, argv+1);
 }
 
 
@@ -3011,7 +2985,7 @@ dmo_deleteProc(ClientData clientData)
  * Returns: result of DM command.
  */
 HIDDEN int
-dmo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dmo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char **argv)
 {
     static struct bu_cmdtab dmo_cmds[] = {
 	{"bg",			dmo_bg_tcl},
@@ -3062,7 +3036,7 @@ dmo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	{(char *)0,		(int (*)())0}
     };
 
-    return bu_cmd(clientData, interp, argc, (const char **)argv, dmo_cmds, 1);
+    return bu_cmd(clientData, argc, (const char **)argv, dmo_cmds, 1);
 }
 
 
@@ -3208,6 +3182,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
     dmop->dmo_fbs.fbs_clientData = dmop;
     dmop->dmo_fbs.fbs_interp = interp;
 #endif
+    dmop->interp = interp;
 
     BU_LIST_INIT(&dmop->dmo_observers.l);
 
@@ -3228,7 +3203,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 
 #ifdef USE_FBSERV
     /* open the framebuffer */
-    dmo_openFb(dmop, interp);
+    dmo_openFb(dmop);
 #endif
 
     /* Return new function name as result */

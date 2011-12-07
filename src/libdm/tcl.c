@@ -49,8 +49,9 @@ int vectorThreshold = 100000;
 
 
 HIDDEN int
-dm_validXType_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+dm_validXType_tcl(void *clientData, int argc, const char **argv)
 {
+    Tcl_Interp *interp = (Tcl_Interp *)clientData;
     struct bu_vls vls;
     Tcl_Obj *obj;
 
@@ -76,8 +77,9 @@ dm_validXType_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, c
 
 
 HIDDEN int
-dm_bestXType_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+dm_bestXType_tcl(void *clientData, int argc, const char **argv)
 {
+    Tcl_Interp *interp = (Tcl_Interp *)clientData;
     Tcl_Obj *obj;
     const char *best_dm;
     char buffer[256] = {0};
@@ -106,21 +108,40 @@ dm_bestXType_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, ch
 }
 
 
-static struct bu_cmdtab cmdtab[] = {
-    {"dm_validXType",	dm_validXType_tcl},
-    {"dm_bestXType",	dm_bestXType_tcl},
-    {(char *)0,		(int (*)())0}
-};
+static int
+wrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
+{
+    struct bu_cmdtab *ctp = (struct bu_cmdtab *)data;;
+
+    return ctp->ct_func(interp, argc, argv);
+}
+
+
+static void
+register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
+{
+    struct bu_cmdtab *ctp = NULL;
+
+    for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	(void)Tcl_CreateCommand(interp, ctp->ct_name, wrapper_func, (ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
+    }
+}
+
 
 int
-Dm_Init(Tcl_Interp *interp)
+Dm_Init(void *interp)
 {
-    struct bu_vls vls;
+    static struct bu_cmdtab cmdtab[] = {
+	{"dm_validXType",	dm_validXType_tcl},
+	{"dm_bestXType",	dm_bestXType_tcl},
+	{(char *)0,		(int (*)())0}
+    };
+
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     /* register commands */
-    bu_register_cmds(interp, cmdtab);
+    register_cmds(interp, cmdtab);
 
-    bu_vls_init(&vls);
     bu_vls_strcpy(&vls, "vectorThreshold");
     Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&vectorThreshold,
 		TCL_LINK_INT);

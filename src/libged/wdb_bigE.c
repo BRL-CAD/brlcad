@@ -2025,9 +2025,8 @@ wdb_fix_halfs(struct dg_client_data *dgcdp)
 
 int
 dgo_E_cmd(struct dg_obj *dgop,
-	  Tcl_Interp *interp,
 	  int argc,
-	  char **argv)
+	  const char **argv)
 {
     int c;
     char perf_message[128];
@@ -2038,7 +2037,7 @@ dgo_E_cmd(struct dg_obj *dgop,
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help E");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dgop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -2048,13 +2047,13 @@ dgo_E_cmd(struct dg_obj *dgop,
 
     BU_GETSTRUCT(dgcdp, dg_client_data);
     dgcdp->dgop = dgop;
-    dgcdp->interp = interp;
+    dgcdp->interp = dgop->interp;
     dgcdp->do_polysolids = 0;
     dgcdp->wireframe_color_override = 0;
 
     /* Parse options. */
     bu_optind = 1;          /* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, argv, "sC:")) != -1) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "sC:")) != -1) {
 	switch (c) {
 	    case 'C': {
 		int r, g, b;
@@ -2086,7 +2085,7 @@ dgo_E_cmd(struct dg_obj *dgop,
 
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "help %s", argv[0]);
-		Tcl_Eval(interp, bu_vls_addr(&vls));
+		Tcl_Eval(dgop->interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 
 		return TCL_ERROR;
@@ -2096,7 +2095,7 @@ dgo_E_cmd(struct dg_obj *dgop,
     argc -= bu_optind;
     argv += bu_optind;
 
-    dgo_eraseobjpath(dgop, interp, argc, argv, LOOKUP_QUIET, 0);
+    dgo_eraseobjpath(dgop, argc, argv, LOOKUP_QUIET, 0);
 
     dgcdp->ap = (struct application *)bu_malloc(sizeof(struct application), "Big E app");
     RT_APPLICATION_INIT(dgcdp->ap);
@@ -2124,7 +2123,7 @@ dgo_E_cmd(struct dg_obj *dgop,
 	bu_free((char *)dgcdp->rtip, "rt_i structure for 'E'");
 	bu_free(dgcdp, "dgcdp");
 
-	Tcl_AppendResult(interp, "Failed to get objects\n", (char *)NULL);
+	bu_log("Failed to get objects\n");
 	return TCL_ERROR;
     }
     {
@@ -2164,7 +2163,7 @@ dgo_E_cmd(struct dg_obj *dgop,
     bu_ptbl_free(&dgcdp->leaf_list);
 
     sprintf(perf_message, "E: %ld vectors in %ld sec\n", dgcdp->nvectors, (long)(dgcdp->etime - dgcdp->start_time));
-    Tcl_AppendResult(interp, perf_message, (char *)NULL);
+    Tcl_AppendResult(dgop->interp, perf_message, (char *)NULL);
 
     return TCL_OK;
 }

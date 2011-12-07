@@ -24,7 +24,6 @@
 #include "bio.h"
 
 #include "tcl.h"
-
 #include "cmd.h"
 
 
@@ -39,21 +38,19 @@
 static struct bu_cmdhist_obj HeadCmdHistObj;		/* head of command history object list */
 
 
-static struct bu_cmdtab cho_cmds[] =
-{
-    {"add",	bu_cmdhist_add},
-    {"curr",	bu_cmdhist_curr},
-    {"history",	bu_cmdhist_history},
-    {"next",	bu_cmdhist_next},
-    {"prev",	bu_cmdhist_prev},
-    {(char *)NULL,	CMD_NULL}
-};
-
-
 HIDDEN int
-cho_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+cho_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char **argv)
 {
-    return bu_cmd(clientData, interp, argc, argv, cho_cmds, 1);
+    static struct bu_cmdtab cho_cmds[] = {
+	{"add",		bu_cmdhist_add},
+	{"curr",	bu_cmdhist_curr},
+	{"history",	bu_cmdhist_history},
+	{"next",	bu_cmdhist_next},
+	{"prev",	bu_cmdhist_prev},
+	{(char *)NULL,	CMD_NULL}
+    };
+
+    return bu_cmd(clientData, argc, argv, cho_cmds, 1);
 }
 
 
@@ -85,7 +82,7 @@ cho_deleteProc(ClientData clientData)
 
 
 HIDDEN struct bu_cmdhist_obj *
-cho_open(ClientData UNUSED(clientData), Tcl_Interp *interp, char *name)
+cho_open(ClientData UNUSED(clientData), Tcl_Interp *interp, const char *name)
 {
     struct bu_cmdhist_obj *chop;
 
@@ -114,7 +111,7 @@ cho_open(ClientData UNUSED(clientData), Tcl_Interp *interp, char *name)
 
 
 int
-cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_cmdhist_obj *chop;
     struct bu_vls vls;
@@ -160,6 +157,7 @@ Cho_Init(Tcl_Interp *interp)
 
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:

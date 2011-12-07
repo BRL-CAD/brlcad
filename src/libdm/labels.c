@@ -559,7 +559,7 @@ dm_label_primitive(struct rt_wdb *wdbp,
 int
 dm_draw_labels(struct dm *dmp,
 	       struct rt_wdb *wdbp,
-	       char *name,
+	       const char *name,
 	       mat_t viewmat,
 	       int *labelsColor,
 	       int (*labelsHook)(),

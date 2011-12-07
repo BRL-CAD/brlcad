@@ -285,25 +285,6 @@ struct dm {
 };
 
 
-/**
- * D M _ O B J
- *@brief
- * A display manager object is used for interacting with a display manager.
- */
-struct dm_obj {
-    struct bu_list l;
-    struct bu_vls dmo_name;		/**< @brief display manager object name/cmd */
-    struct dm *dmo_dmp;		/**< @brief display manager pointer */
-#ifdef USE_FBSERV
-    struct fbserv_obj dmo_fbs;		/**< @brief fbserv object */
-#endif
-    struct bu_observer dmo_observers;		/**< @brief fbserv observers */
-    mat_t viewMat;
-    int (*dmo_drawLabelsHook)();
-    void *dmo_drawLabelsHookClientData;
-};
-
-
 #define DM_OPEN(_interp, _type, _argc, _argv) dm_open(_interp, _type, _argc, _argv)
 #define DM_CLOSE(_dmp) _dmp->dm_close(_dmp)
 #define DM_DRAW_BEGIN(_dmp) _dmp->dm_drawBegin(_dmp)
@@ -406,7 +387,7 @@ DM_EXPORT extern void dm_draw_grid(struct dm *dmp,
 /* labels.c */
 DM_EXPORT extern int dm_draw_labels(struct dm *dmp,
 				    struct rt_wdb *wdbp,
-				    char *name,
+				    const char *name,
 				    mat_t viewmat,
 				    int *labelsColor,
 				    int (*labelsHook)(),

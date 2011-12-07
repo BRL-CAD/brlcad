@@ -79,7 +79,7 @@ extern int Fbo_Init(Tcl_Interp *interp);
 extern FBIO wgl_interface;
 static const char *wgl_device_name = "/dev/wgl";
 extern void wgl_configureWindow(FBIO *ifp, int width, int height);
-extern int wgl_open_existing(FBIO *ifp, int argc, char **argv);
+extern int wgl_open_existing(FBIO *ifp, int argc, const char **argv);
 extern int wgl_refresh(FBIO *ifp, int x, int y, int w, int h);
 #endif
 
@@ -87,7 +87,7 @@ extern int wgl_refresh(FBIO *ifp, int x, int y, int w, int h);
 extern FBIO ogl_interface;
 static const char *ogl_device_name = "/dev/ogl";
 extern void ogl_configureWindow(FBIO *ifp, int width, int height);
-extern int ogl_open_existing(FBIO *ifp, int argc, char **argv);
+extern int ogl_open_existing(FBIO *ifp, int argc, const char **argv);
 extern int ogl_refresh(FBIO *ifp, int x, int y, int w, int h);
 #endif
 
@@ -95,7 +95,7 @@ extern int ogl_refresh(FBIO *ifp, int x, int y, int w, int h);
 extern FBIO X24_interface;
 static const char *X_device_name = "/dev/X";
 extern void X24_configureWindow(FBIO *ifp, int width, int height);
-extern int X24_open_existing(FBIO *ifp, int argc, char **argv);
+extern int X24_open_existing(FBIO *ifp, int argc, const char **argv);
 extern int X24_refresh(FBIO *ifp, int x, int y, int w, int h);
 #endif
 
@@ -105,26 +105,27 @@ static const char *tk_device_name = "/dev/tk";
 #if 0
 /*XXX TJM implement this interface */
 extern void tk_configureWindow(FBIO *ifp, int width, int height);
-extern int tk_open_existing(FBIO *ifp, int argc, char **argv);
+extern int tk_open_existing(FBIO *ifp, int argc, const char **argv);
 extern int tk_refresh(FBIO *ifp, int x, int y, int w, int h);
 #endif
 #endif
 
 
 int
-fb_cmd_open_existing(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+fb_cmd_open_existing(void *clientData, int argc, const char **argv)
 {
+    Tcl_Interp *interp = (Tcl_Interp *)clientData;
     register FBIO *ifp;
     struct bu_vls vls;
     int found = 0;
 
     if (argc < 2) {
-	Tcl_AppendResult(interp, "XXXfb_open_existing: wrong number of args\n", (char *)NULL);
+	bu_log("fb_open_existing: wrong number of args\n");
 	return TCL_ERROR;
     }
 
     if ((ifp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
-	Tcl_AppendResult(interp, "fb_open_existing: failed to allocate ifp memory\n", (char *)NULL);
+	bu_log("fb_open_existing: failed to allocate ifp memory\n");
 	return TCL_ERROR;
     }
 
@@ -143,7 +144,7 @@ fb_cmd_open_existing(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc
 	    ifp->if_magic = 0; /* sanity */
 	    free((void *) ifp->if_name);
 	    free((void *) ifp);
-	    Tcl_AppendResult(interp, "fb_open_existing: failed to open X framebuffer\n", (char *)NULL);
+	    bu_log("fb_open_existing: failed to open X framebuffer\n");
 	    return TCL_ERROR;
 	}
     }
@@ -166,7 +167,7 @@ fb_cmd_open_existing(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc
 	    ifp->if_magic = 0; /* sanity */
 	    free((void *) ifp->if_name);
 	    free((void *) ifp);
-	    Tcl_AppendResult(interp, "fb_open_existing: failed to open tk framebuffer\n", (char *)NULL);
+	    bu_log("fb_open_existing: failed to open tk framebuffer\n");
 	    return TCL_ERROR;
 	}
     }
@@ -188,7 +189,7 @@ fb_cmd_open_existing(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc
 	    ifp->if_magic = 0; /* sanity */
 	    free((void *) ifp->if_name);
 	    free((void *) ifp);
-	    Tcl_AppendResult(interp, "fb_open_existing: failed to open wgl framebuffer\n", (char *)NULL);
+	    bu_log("fb_open_existing: failed to open wgl framebuffer\n");
 	    return TCL_ERROR;
 	}
     }
@@ -209,12 +210,16 @@ fb_cmd_open_existing(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc
 	    ifp->if_magic = 0; /* sanity */
 	    free((void *) ifp->if_name);
 	    free((void *) ifp);
-	    Tcl_AppendResult(interp, "fb_open_existing: failed to open ogl framebuffer\n", (char *)NULL);
+	    bu_log("fb_open_existing: failed to open ogl framebuffer\n");
 	    return TCL_ERROR;
 	}
     }
 #endif  /* IF_OGL */
 
+    /* FIXME: a printed pointer address string is a blatent security
+     * and integrity violation worst practice.  do not use, do not
+     * pass go, find a better data-based approach.
+     */
     if (found) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%p", (void *)ifp);
@@ -254,7 +259,7 @@ fb_cmd_open_existing(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc
 
 
 int
-fb_cmd_close_existing(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+fb_cmd_close_existing(ClientData UNUSED(clientData), int argc, const char **argv)
 {
     FBIO *ifp;
 
@@ -264,7 +269,7 @@ fb_cmd_close_existing(ClientData UNUSED(clientData), Tcl_Interp *interp, int arg
     }
 
     if (sscanf(argv[1], "%lu", (unsigned long *)&ifp) != 1) {
-	Tcl_AppendResult(interp, "fb_close_existing: failed to provide ifp\n", (char *)NULL);
+	bu_log("fb_close_existing: failed to provide ifp\n");
 	return TCL_ERROR;
     }
 
@@ -358,18 +363,18 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 }
 
 
-/** fb_cmd_common_file_size
- *
+/**
  * Hook function wrapper to the fb_common_file_size Tcl command
  */
 int
-fb_cmd_common_file_size(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+fb_cmd_common_file_size(ClientData clientData, int argc, const char **argv)
 {
+    Tcl_Interp *interp = (Tcl_Interp *)clientData;
     size_t width, height;
     int pixel_size = 3;
 
     if (argc != 2 && argc != 3) {
-	Tcl_AppendResult(interp, "wrong #args: should be \"", argv[0], " fileName [#bytes/pixel]\"", NULL);
+	bu_log("wrong #args: should be \"", argv[0], " fileName [#bytes/pixel]\"");
 	return TCL_ERROR;
     }
 
@@ -393,6 +398,26 @@ fb_cmd_common_file_size(ClientData UNUSED(clientData), Tcl_Interp *interp, int a
 }
 
 
+static int
+wrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
+{
+    struct bu_cmdtab *ctp = (struct bu_cmdtab *)data;;
+
+    return ctp->ct_func(interp, argc, argv);
+}
+
+
+static void
+register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
+{
+    struct bu_cmdtab *ctp = NULL;
+
+    for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	(void)Tcl_CreateCommand(interp, ctp->ct_name, wrapper_func, (ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
+    }
+}
+
+
 /*
  * F B _ I N I T
  *
@@ -412,7 +437,7 @@ Fb_Init(Tcl_Interp *interp)
     };
 
     /* register commands */
-    bu_register_cmds(interp, cmdtab);
+    register_cmds(interp, cmdtab);
 
     /* initialize framebuffer object code */
     Fbo_Init(interp);

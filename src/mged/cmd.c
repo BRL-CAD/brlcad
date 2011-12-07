@@ -1783,11 +1783,11 @@ f_bomb(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc,
 
 
 int
-cmd_rt_gettrees(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
+cmd_rt_gettrees(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
     CHECK_DBI_NULL;
 
-    return wdb_rt_gettrees_cmd(wdbp, interpreter, argc, argv);
+    return wdb_rt_gettrees_cmd(wdbp, argc, argv);
 }
 
 
@@ -2159,11 +2159,11 @@ cmd_has_embedded_fb(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int 
 
 
 int
-cmd_stub(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
+cmd_stub(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
     CHECK_DBI_NULL;
 
-    return wdb_stub_cmd(wdbp, interpreter, argc, argv);
+    return wdb_stub_cmd(wdbp, argc, argv);
 }
 
 /*

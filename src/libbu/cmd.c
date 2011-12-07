@@ -29,44 +29,35 @@
 
 
 int
-bu_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv, struct bu_cmdtab *cmds, int cmd_index)
+bu_cmd(void *data, int argc, const char **argv, struct bu_cmdtab *cmds, int cmd_index /*, const int *retval */)
 {
     struct bu_cmdtab *ctp = NULL;
 
     /* sanity */
     if (UNLIKELY(cmd_index >= argc)) {
-	Tcl_AppendResult(interp, "missing command; must be one of:", (char *)NULL);
+	bu_log("missing command; must be one of:");
 	goto missing_cmd;
     }
 
     for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
 	if (ctp->ct_name[0] == argv[cmd_index][0] &&
 	    BU_STR_EQUAL(ctp->ct_name, argv[cmd_index])) {
-	    return (*ctp->ct_func)(clientData, interp, argc, argv);
+	    /* retval = (*ctp->ct_func(data, argc, argv);
+	     * return BRLCAD_OK;
+	     */
+	    return (*ctp->ct_func)(data, argc, argv);
 	}
     }
 
-    Tcl_AppendResult(interp, "unknown command: ", argv[cmd_index], ";", " must be one of: ", (char *)NULL);
+    bu_log("unknown command: %s; must be one of: ", argv[cmd_index]);
 
 missing_cmd:
     for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	Tcl_AppendResult(interp, " ", ctp->ct_name, (char *)NULL);
+	bu_log(" %s", ctp->ct_name);
     }
-    Tcl_AppendResult(interp, "\n", (char *)NULL);
+    bu_log("\n");
 
-    return TCL_ERROR;
-}
-
-
-void
-bu_register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
-{
-    struct bu_cmdtab *ctp = NULL;
-
-    for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	Tcl_CmdProc *func = (Tcl_CmdProc *)ctp->ct_func;
-	(void)Tcl_CreateCommand(interp, ctp->ct_name, func, (ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
-    }
+    return BRLCAD_ERROR;
 }
 
 

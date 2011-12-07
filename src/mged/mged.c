@@ -2878,7 +2878,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     }
 
     /* This creates a "db" command object */
-    if (wdb_create_cmd(interpreter, wdbp, MGED_DB_NAME) != TCL_OK) {
+    if (wdb_create_cmd(wdbp, MGED_DB_NAME) != TCL_OK) {
 	bu_vls_printf(&msg, "%s\n%s\n", Tcl_GetStringResult(interpreter), Tcl_GetVar(interpreter, "errorInfo", TCL_GLOBAL_ONLY));
 	Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
 	bu_vls_free(&msg);

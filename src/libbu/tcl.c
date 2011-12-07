@@ -38,124 +38,57 @@ Tcl_Interp *brlcad_interp = (Tcl_Interp *)0;
 
 
 /**
- * Convert the "form" of a bu_structparse table into a TCL result
- * string, with parameter-name data-type pairs:
- *
- * V {%f %f %f} A {%f %f %f}
- *
- * A different routine should build a more general 'form', along the
- * lines of:
- *
- * {V {%f %f %f} default {help}} {A {%f %f %f} default# {help}}
- *
- * @param interp tcl interpreter
- * @param sp structparse table
- *
- * 	@return
- * 	void
- */
-HIDDEN void
-tcl_bu_structparse_get_terse_form(Tcl_Interp *interp,
-				  const struct bu_structparse *sp)
-{
-#if 1
-    struct bu_vls vlog;
-
-    bu_vls_init(&vlog);
-    bu_structparse_get_terse_form(&vlog, sp);
-    Tcl_AppendResult(interp, bu_vls_addr(&vlog), (char *)NULL);
-    bu_vls_free(&vlog);
-#else
-    struct bu_vls str;
-    int i;
-
-    bu_vls_init(&str);
-
-    while (sp->sp_name != NULL) {
-	Tcl_AppendElement(interp, sp->sp_name);
-	bu_vls_trunc(&str, 0);
-	/* These types are specified by lengths, e.g. %80s */
-	if (BU_STR_EQUAL(sp->sp_fmt, "%c") ||
-	    BU_STR_EQUAL(sp->sp_fmt, "%s") ||
-	    BU_STR_EQUAL(sp->sp_fmt, "%S") || /* XXX - DEPRECATED [7.14] */
-	    BU_STR_EQUAL(sp->sp_fmt, "%V")) {
-	    if (sp->sp_count > 1) {
-		/* Make them all look like %###s */
-		bu_vls_printf(&str, "%%%lds", sp->sp_count);
-	    } else {
-		/* Singletons are specified by their actual character */
-		bu_vls_printf(&str, "%%c");
-	    }
-	} else {
-	    /* Vectors are specified by repetition, e.g. {%f %f %f} */
-	    bu_vls_printf(&str, "%s", sp->sp_fmt);
-	    for (i = 1; i < sp->sp_count; i++)
-		bu_vls_printf(&str, " %s", sp->sp_fmt);
-	}
-	Tcl_AppendElement(interp, bu_vls_addr(&str));
-	++sp;
-    }
-    bu_vls_free(&str);
-#endif
-}
-
-
-/**
- * A tcl wrapper for bu_mem_barriercheck.
+ * A wrapper for bu_mem_barriercheck.
  *
  * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
  * @param argc		- number of elements in argv
  * @param argv		- command name and arguments
  *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 HIDDEN int
 tcl_bu_mem_barriercheck(ClientData UNUSED(clientData),
-			Tcl_Interp *interp,
 			int argc,
 			const char **argv)
 {
     int ret;
 
     if (argc > 1) {
-	Tcl_AppendResult(interp, "Usage: ", argv[0], "\n", (char *)NULL);
-	return TCL_ERROR;
+	bu_log("Usage: %s\n", argv[0]);
+	return BRLCAD_ERROR;
     }
 
     ret = bu_mem_barriercheck();
     if (UNLIKELY(ret < 0)) {
-	Tcl_AppendResult(interp, "bu_mem_barriercheck() failed\n", NULL);
-	return TCL_ERROR;
+	bu_log("bu_mem_barriercheck() failed\n");
+	return BRLCAD_ERROR;
     }
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 /**
- * A tcl wrapper for bu_prmem. Prints map of
- * memory currently in use, to stderr.
+ * A wrapper for bu_prmem. Prints map of memory currently in use, to
+ * stderr.
  *
  * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
  * @param argc		- number of elements in argv
  * @param argv		- command name and arguments
  *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 HIDDEN int
 tcl_bu_prmem(ClientData UNUSED(clientData),
-	     Tcl_Interp *interp,
 	     int argc,
 	     const char **argv)
 {
     if (argc != 2) {
-	Tcl_AppendResult(interp, "Usage: bu_prmem title\n");
-	return TCL_ERROR;
+	bu_log("Usage: bu_prmem title\n");
+	return BRLCAD_ERROR;
     }
 
     bu_prmem(argv[1]);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -176,15 +109,13 @@ tcl_bu_prmem(ClientData UNUSED(clientData),
  * bu_get_value_by_keyword V8 [concat type [.inmem get box.s]]
  *
  * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
  * @param argc		- number of elements in argv
  * @param argv		- command name and arguments
  *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 HIDDEN int
 tcl_bu_get_value_by_keyword(ClientData UNUSED(clientData),
-			    Tcl_Interp *interp,
 			    int argc,
 			    const char **argv)
 {
@@ -197,21 +128,21 @@ tcl_bu_get_value_by_keyword(ClientData UNUSED(clientData),
     if (argc < 3) {
 	char buf[TINYBUFSIZ];
 	snprintf(buf, TINYBUFSIZ, "%d", argc);
-	Tcl_AppendResult(interp,
-			 "bu_get_value_by_keyword: wrong # of args (", buf, ").\n",
-			 "Usage: bu_get_value_by_keyword iwant {list}\n",
-			 "Usage: bu_get_value_by_keyword iwant key1 val1 key2 val2 ... keyN valN\n",
-			 (char *)NULL);
-	return TCL_ERROR;
+	bu_log("bu_get_value_by_keyword: wrong # of args (%s).\n"
+	       "Usage: bu_get_value_by_keyword iwant {list}\n"
+	       "Usage: bu_get_value_by_keyword iwant key1 val1 key2 val2 ... keyN valN\n", buf);
+	return BRLCAD_ERROR;
     }
 
     iwant = argv[1];
 
     if (argc == 3) {
-	if (Tcl_SplitList(interp, argv[2], &listc, (const char ***)&listv) != TCL_OK) {
+/* FIXME: convert to pure C
+	if (Tcl_SplitList(interp, argv[2], &listc, (const char ***)&listv) != BRLCAD_OK) {
 	    Tcl_AppendResult(interp, "bu_get_value_by_keyword: iwant='", iwant, "', unable to split '", argv[2], "'\n", (char *)NULL);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
+*/
 	tofree = listv;
     } else {
 	/* Take search list from remaining arguments */
@@ -222,10 +153,11 @@ tcl_bu_get_value_by_keyword(ClientData UNUSED(clientData),
     if ((listc & 1) != 0) {
 	char buf[TINYBUFSIZ];
 	snprintf(buf, TINYBUFSIZ, "%d", listc);
-	Tcl_AppendResult(interp, "bu_get_value_by_keyword: odd # of items in list (", buf, ").\n", (char *)NULL);
+	bu_log("bu_get_value_by_keyword: odd # of items in list (%s).\n", buf);
+/* FIXME: convert */
 	if (tofree)
-	    Tcl_Free((char *)tofree); /* not bu_free() */
-	return TCL_ERROR;
+	    free((char *)tofree); /* not bu_free() */
+	return BRLCAD_ERROR;
     }
 
     for (i=0; i < listc; i += 2) {
@@ -238,38 +170,38 @@ tcl_bu_get_value_by_keyword(ClientData UNUSED(clientData),
 		bu_vls_strcat(&str, &listv[i+1][1]);
 		/* Trim trailing } */
 		bu_vls_trunc(&str, -1);
-		Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+		bu_log("%s", bu_vls_addr(&str));
 		bu_vls_free(&str);
 	    } else {
-		Tcl_AppendResult(interp, listv[i+1], (char *)NULL);
+		bu_log("%s", listv[i+1]);
 	    }
+/* FIXME: convert */
 	    if (tofree)
-		Tcl_Free((char *)tofree); /* not bu_free() */
-	    return TCL_OK;
+		free((char *)tofree); /* not bu_free() */
+	    return BRLCAD_OK;
 	}
     }
 
     /* Not found */
-    Tcl_AppendResult(interp, "bu_get_value_by_keyword: keyword '", iwant, "' not found in list\n", (char *)NULL);
+    bu_log("bu_get_value_by_keyword: keyword '%s' not found in list\n", iwant);
+/* FIXME: convert */
     if (tofree)
-	Tcl_Free((char *)tofree); /* not bu_free() */
-    return TCL_ERROR;
+	free((char *)tofree); /* not bu_free() */
+    return BRLCAD_ERROR;
 }
 
 
 /**
- * A tcl wrapper for bu_rgb_to_hsv.
+ * A wrapper for bu_rgb_to_hsv.
  *
  * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
  * @param argc		- number of elements in argv
  * @param argv		- command name and arguments
  *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 HIDDEN int
 tcl_bu_rgb_to_hsv(ClientData UNUSED(clientData),
-		  Tcl_Interp *interp,
 		  int argc,
 		  const char **argv)
 {
@@ -280,21 +212,20 @@ tcl_bu_rgb_to_hsv(ClientData UNUSED(clientData),
 
     bu_vls_init(&result);
     if (argc != 4) {
-	Tcl_AppendResult(interp, "Usage: bu_rgb_to_hsv R G B\n",
-			 (char *)NULL);
-	return TCL_ERROR;
+	bu_log("Usage: bu_rgb_to_hsv R G B\n");
+	return BRLCAD_ERROR;
     }
-    if ((Tcl_GetInt(interp, argv[1], &rgb_int[0]) != TCL_OK)
-	|| (Tcl_GetInt(interp, argv[2], &rgb_int[1]) != TCL_OK)
-	|| (Tcl_GetInt(interp, argv[3], &rgb_int[2]) != TCL_OK)
+    if (sscanf(argv[1], "%d", &rgb_int[0]) != 1
+	|| sscanf(argv[2], "%d", &rgb_int[1]) != 1
+	|| sscanf(argv[3], "%d", &rgb_int[2]) != 1
 	|| (rgb_int[0] < 0) || (rgb_int[0] > 255)
 	|| (rgb_int[1] < 0) || (rgb_int[1] > 255)
 	|| (rgb_int[2] < 0) || (rgb_int[2] > 255)) {
 	bu_vls_printf(&result, "bu_rgb_to_hsv: Bad RGB (%s, %s, %s)\n",
 		      argv[1], argv[2], argv[3]);
-	Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+	bu_log("ERROR: %s", bu_vls_addr(&result));
 	bu_vls_free(&result);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
     rgb[0] = rgb_int[0];
     rgb[1] = rgb_int[1];
@@ -302,26 +233,24 @@ tcl_bu_rgb_to_hsv(ClientData UNUSED(clientData),
 
     bu_rgb_to_hsv(rgb, hsv);
     bu_vls_printf(&result, "%g %g %g", hsv[0], hsv[1], hsv[2]);
-    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_log("%s", bu_vls_addr(&result));
     bu_vls_free(&result);
-    return TCL_OK;
+    return BRLCAD_OK;
 
 }
 
 
 /**
- * A tcl wrapper for bu_hsv_to_rgb.
+ * A wrapper for bu_hsv_to_rgb.
  *
  * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
  * @param argc		- number of elements in argv
  * @param argv		- command name and arguments
  *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 HIDDEN int
 tcl_bu_hsv_to_rgb(ClientData UNUSED(clientData),
-		  Tcl_Interp *interp,
 		  int argc,
 		  const char **argv)
 {
@@ -330,101 +259,86 @@ tcl_bu_hsv_to_rgb(ClientData UNUSED(clientData),
     struct bu_vls result;
 
     if (argc != 4) {
-	Tcl_AppendResult(interp, "Usage: bu_hsv_to_rgb H S V\n",
-			 (char *)NULL);
-	return TCL_ERROR;
+	bu_log("Usage: bu_hsv_to_rgb H S V\n");
+	return BRLCAD_ERROR;
     }
     bu_vls_init(&result);
-    if ((Tcl_GetDouble(interp, argv[1], &hsv[0]) != TCL_OK)
-	|| (Tcl_GetDouble(interp, argv[2], &hsv[1]) != TCL_OK)
-	|| (Tcl_GetDouble(interp, argv[3], &hsv[2]) != TCL_OK)
+    if (sscanf(argv[1], "%lf", &hsv[0]) != 1
+	|| sscanf(argv[2], "%lf", &hsv[1]) != 1
+	|| sscanf(argv[3], "%lf", &hsv[2]) != 1
 	|| (bu_hsv_to_rgb(hsv, rgb) == 0)) {
 	bu_vls_printf(&result, "bu_hsv_to_rgb: Bad HSV (%s, %s, %s)\n",
 		      argv[1], argv[2], argv[3]);
-	Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+	bu_log("%s", bu_vls_addr(&result));
 	bu_vls_free(&result);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_printf(&result, "%d %d %d", rgb[0], rgb[1], rgb[2]);
-    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_log("%s", bu_vls_addr(&result));
     bu_vls_free(&result);
-    return TCL_OK;
+    return BRLCAD_OK;
 
 }
 
 
 /**
- * tcl_bu_brlcad_root
- *
- * A tcl wrapper for bu_brlcad_root.
+ * A wrapper for bu_brlcad_root.
  *
  * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
  * @param argc		- number of elements in argv
  * @param argv		- command name and arguments
  *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 HIDDEN int
 tcl_bu_brlcad_root(ClientData UNUSED(clientData),
-		   Tcl_Interp *interp,
 		   int argc,
 		   const char **argv)
 {
     if (argc != 2) {
-	Tcl_AppendResult(interp, "Usage: bu_brlcad_root subdir\n",
-			 (char *)NULL);
-	return TCL_ERROR;
+	bu_log("Usage: bu_brlcad_root subdir\n");
+	return BRLCAD_ERROR;
     }
-    Tcl_AppendResult(interp, bu_brlcad_root(argv[1], 1), NULL);
-    return TCL_OK;
+    bu_log("%s", bu_brlcad_root(argv[1], 1));
+    return BRLCAD_OK;
 }
 
 
 /**
- * tcl_bu_brlcad_data
- *
- * A tcl wrapper for bu_brlcad_data.
+ * A wrapper for bu_brlcad_data.
  *
  * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
  * @param argc		- number of elements in argv
  * @param argv		- command name and arguments
  *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 HIDDEN int
 tcl_bu_brlcad_data(ClientData UNUSED(clientData),
-		   Tcl_Interp *interp,
 		   int argc,
 		   const char **argv)
 {
     if (argc != 2) {
-	Tcl_AppendResult(interp, "Usage: bu_brlcad_data subdir\n",
-			 (char *)NULL);
-	return TCL_ERROR;
+	bu_log("Usage: bu_brlcad_data subdir\n");
+	return BRLCAD_ERROR;
     }
-    Tcl_AppendResult(interp, bu_brlcad_data(argv[1], 1), NULL);
-    return TCL_OK;
+    bu_log("%s", bu_brlcad_data(argv[1], 1));
+    return BRLCAD_OK;
 }
 
 
 /**
- * tcl_bu_units_conversion
- *
- * A tcl wrapper for bu_units_conversion.
+ * A wrapper for bu_units_conversion.
  *
  * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
  * @param argc		- number of elements in argv
  * @param argv		- command name and arguments
  *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 HIDDEN int
 tcl_bu_units_conversion(ClientData UNUSED(clientData),
-			Tcl_Interp *interp,
 			int argc,
 			const char **argv)
 {
@@ -432,23 +346,41 @@ tcl_bu_units_conversion(ClientData UNUSED(clientData),
     struct bu_vls result;
 
     if (argc != 2) {
-	Tcl_AppendResult(interp, "Usage: bu_units_conversion units_string\n",
-			 (char *)NULL);
-	return TCL_ERROR;
+	bu_log("Usage: bu_units_conversion units_string\n");
+	return BRLCAD_ERROR;
     }
 
     conv_factor = bu_units_conversion(argv[1]);
     if (conv_factor <= 0.0) {
-	Tcl_AppendResult(interp, "ERROR: bu_units_conversion: Unrecognized units string: ",
-			 argv[1], "\n", (char *)NULL);
-	return TCL_ERROR;
+	bu_log("ERROR: bu_units_conversion: Unrecognized units string: %s\n", argv[1]);
+	return BRLCAD_ERROR;
     }
 
     bu_vls_init(&result);
     bu_vls_printf(&result, "%.12e", conv_factor);
-    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_log("%s", bu_vls_addr(&result));
     bu_vls_free(&result);
-    return TCL_OK;
+    return BRLCAD_OK;
+}
+
+
+static int
+wrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
+{
+    struct bu_cmdtab *ctp = (struct bu_cmdtab *)data;;
+
+    return ctp->ct_func(interp, argc, argv);
+}
+
+
+static void
+register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
+{
+    struct bu_cmdtab *ctp = NULL;
+
+    for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	(void)Tcl_CreateCommand(interp, ctp->ct_name, wrapper_func, (ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
+    }
 }
 
 
@@ -471,12 +403,13 @@ Bu_Init(void *p)
 
     /*XXX Use of brlcad_interp is temporary */
     brlcad_interp = interp;
-    bu_register_cmds(interp, cmds);
+
+    register_cmds(interp, cmds);
 
     Tcl_SetVar(interp, "BU_DEBUG_FORMAT", BU_DEBUG_FORMAT, TCL_GLOBAL_ONLY);
     Tcl_LinkVar(interp, "bu_debug", (char *)&bu_debug, TCL_LINK_INT);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
