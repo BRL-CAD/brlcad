@@ -105,7 +105,7 @@ extern void dgo_init_qray(struct dg_obj *dgop);
 extern void dgo_free_qray(struct dg_obj *dgop);
 
 /* in wdb_obj.c */
-void wdb_print_node(struct rt_wdb *wdbp, Tcl_Interp *interp, struct directory *dp, int pathpos, int indentSize, char prefix, int cflag, int displayDepth, int currdisplayDepth);
+void wdb_print_node(struct rt_wdb *wdbp, struct directory *dp, int pathpos, int indentSize, char prefix, int cflag, int displayDepth, int currdisplayDepth);
 
 /* in view_obj.c */
 extern struct view_obj HeadViewObj;		/**< @brief  head of view object list */
@@ -4432,7 +4432,7 @@ dgo_tree_cmd(struct dg_obj *dgop,
 	    Tcl_AppendResult(dgop->interp, "\n", (char *)NULL);
 	if ((dp = db_lookup(dgop->dgo_wdbp->dbip, next, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
-	wdb_print_node(dgop->dgo_wdbp, dgop->interp, dp, 0, indentSize, 0, cflag, displayDepth, 0);
+	wdb_print_node(dgop->dgo_wdbp, dp, 0, indentSize, 0, cflag, displayDepth, 0);
     }
 
     if (buffer) {
