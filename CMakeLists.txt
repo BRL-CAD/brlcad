@@ -754,10 +754,11 @@ IF(APACHE_FOP)
 	STRING(REGEX REPLACE "FOP Version ([0-9\\.]*)" "\\1" APACHE_FOP_VERSION "${APACHE_FOP_INFO}")
 ENDIF(APACHE_FOP)
 
-find_program(XSLTPROC_EXEC xsltproc DOC "path to the xsltproc executable")
-MARK_AS_ADVANCED(XSLTPROC_EXEC)
+# If necesssary BRL-CAD provides its own xsltproc, so the html and man page
+# output is always avaiable.  It is the html output that is used in the
+# graphical help browsers in MGED and Archer.
+OPTION(BRLCAD_EXTRADOCS "Enable Docbook documentation." ON)
 include(CMakeDependentOption)
-CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS "Build Docbook documentation" ON "XSLTPROC_EXEC" OFF)
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF "Build PDF output from Docbook documentation" OFF "BRLCAD_EXTRADOCS;APACHE_FOP" OFF)
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF_MAN "Build PDF output from Docbook documentation for man pages" OFF "BRLCAD_EXTRADOCS_PDF" OFF)
 

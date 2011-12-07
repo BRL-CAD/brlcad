@@ -16,15 +16,15 @@ MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
 		STRING(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
 		SET(outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.html)
 		SET(targetname ${filename_root}_${targetname_suffix}_html)
+		SET(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake)
+		FILE(WRITE ${scriptfile} "SET(ENV{XML_CATALOG_FILES} \"${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml\")\n")
+		FILE(APPEND ${scriptfile} "SET(ENV{XML_DEBUG_CATALOG} 1)\n")
+		FILE(APPEND ${scriptfile} "execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/)\n")
+		FILE(APPEND ${scriptfile} "execute_process(COMMAND ${XSLTPROC_EXECUTABLE} ${XSLTPROC_FLAGS} -o ${outfile} ${XSL_XHTML_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename})\n")
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${outfile}
-			COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/
-			COMMAND
-			XML_CATALOG_FILES=${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml
-			XML_DEBUG_CATALOG=1
-			${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${outfile} 
-			${XSL_XHTML_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
-			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+			COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
+			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE}
 			)
 		ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
 		INSTALL(FILES ${outfile} DESTINATION ${DATA_DIR}/${targetdir})
@@ -37,15 +37,15 @@ MACRO(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir)
 		STRING(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
 		SET(outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.${manext})
 		SET(targetname ${filename_root}_${targetname_suffix}_man${mannum})
+		SET(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake)
+		FILE(WRITE ${scriptfile} "SET(ENV{XML_CATALOG_FILES} \"${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml\")\n")
+		FILE(APPEND ${scriptfile} "SET(ENV{XML_DEBUG_CATALOG} 1)\n")
+		FILE(APPEND ${scriptfile} "execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/)\n")
+		FILE(APPEND ${scriptfile} "execute_process(COMMAND ${XSLTPROC_EXECUTABLE} ${XSLTPROC_FLAGS} -o ${outfile} ${XSL_MAN_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename})\n")
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${outfile}
-			COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/
-			COMMAND 
-			XML_CATALOG_FILES=${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml
-			XML_DEBUG_CATALOG=1
-			${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${outfile} 
-			${XSL_MAN_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
-			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+			COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
+			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE}
 			)
 		ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
 		INSTALL(FILES ${outfile} DESTINATION ${MAN_DIR}/man${mannum})
@@ -70,24 +70,25 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 			SET(tmp_fo_file ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.fo)
 			SET(outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.pdf)
 			SET(targetname ${filename_root}_${targetname_suffix}_pdf)
+			SET(scriptfile1 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_fo.cmake)
 			FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
+			FILE(WRITE ${scriptfile1} "SET(ENV{XML_CATALOG_FILES} \"${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml\")\n")
+			FILE(APPEND ${scriptfile1} "SET(ENV{XML_DEBUG_CATALOG} 1)\n")
+			FILE(APPEND ${scriptfile1} "execute_process(COMMAND ${XSLTPROC_EXECUTABLE} ${XSLTPROC_FLAGS} -o ${tmp_fo_file} ${XSL_FO_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename})\n")
 			ADD_CUSTOM_COMMAND(
 				OUTPUT ${tmp_fo_file}
-				COMMAND
-				XML_CATALOG_FILES=${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml
-				XML_DEBUG_CATALOG=1
-				${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${tmp_fo_file} 
-				${XSL_FO_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
-				DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+				COMMAND ${CMAKE_COMMAND} -P ${scriptfile1}
+				DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE}
 				)
+			SET(scriptfile2 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_pdf.cmake)
+			FILE(WRITE ${scriptfile2} "execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/)\n")
+			FILE(APPEND ${scriptfile2} "SET(ENV{FOP_HYPHENATION_PATH} ${FOP_HYP})\n")
+			FILE(APPEND ${scriptfile2} "SET(ENV{CLASSPATH} ${CMAKE_SOURCE_DIR}/doc/docbook)\n")
+			FILE(APPEND ${scriptfile2} "SET(ENV{FOP_OPTS} \"-Djava.awt.headless=true	-Dxml.catalog.files=${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml\")\n")
+			FILE(APPEND ${scriptfile2} "execute_process(COMMAND ${APACHE_FOP} -c ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf ${tmp_fo_file} -pdf ${outfile})\n")
 			ADD_CUSTOM_COMMAND(
 				OUTPUT ${outfile}
-			   COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/
-				COMMAND 
-				FOP_HYPHENATION_PATH=${FOP_HYPH}
-				CLASSPATH=${CMAKE_SOURCE_DIR}/doc/docbook
-				FOP_OPTS=\"-Djava.awt.headless=true	-Dxml.catalog.files=${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml\"
-				${APACHE_FOP} -c ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf ${tmp_fo_file} -pdf ${outfile}
+				COMMAND ${CMAKE_COMMAND} -P ${scriptfile2}
 				DEPENDS ${tmp_fo_file}
 				)
 			ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})

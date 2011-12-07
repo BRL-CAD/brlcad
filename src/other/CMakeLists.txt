@@ -51,6 +51,10 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/ThirdParty.cmake)
 # libregex library -  often needed by tools, so do this one first.
 THIRD_PARTY(regex libregex)
 BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
+
+# Same deal for zlib Library - common requirement, deal with it up front
+THIRD_PARTY(zlib libz)
+
 #-----------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------------
@@ -59,6 +63,7 @@ BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
 THIRD_PARTY_EXECUTABLE(lemon lemon)
 THIRD_PARTY_EXECUTABLE(re2c re2c)
 THIRD_PARTY_EXECUTABLE(perplex perplex)
+THIRD_PARTY_EXECUTABLE(xsltproc xsltproc)
 
 #---------------------------------------------------------------------------------
 # Third Party Sources
@@ -73,11 +78,6 @@ DISTCHECK_IGNORE_ITEM(incrTcl)
 
 # Ignore the osl subdir
 DISTCHECK_IGNORE_ITEM(osl)
-
-# zlib Library
-# The autotools build needs this file, but the CMake zlib build doesn't tolerate
-# it - remove it if it's there.
-THIRD_PARTY(zlib libz)
 
 # libtermlib Library
 #Only on WIN32 will the combination of the build search tests and
