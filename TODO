@@ -262,7 +262,7 @@ comp.r4 ID 5678 material code 5 LOS 75
                                               .___.                      -->|     |<---.
   Symbol type:
        degree:   (superscript circle)
-       radius:   ('R', e.g., '10.5R')
+       radius:   ('R', e.g., 'R10.5')
        diameter: (circle with slash, null symbol)
        ... several others
        http://www.tec-ease.com/gdt-terms.php
