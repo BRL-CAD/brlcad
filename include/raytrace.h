@@ -4328,7 +4328,7 @@ RT_EXPORT extern int rt_bot_vertex_fuse(struct rt_bot_internal *bot);
 RT_EXPORT extern int rt_bot_face_fuse(struct rt_bot_internal *bot);
 RT_EXPORT extern int rt_bot_condense(struct rt_bot_internal *bot);
 RT_EXPORT extern int rt_bot_smooth(struct rt_bot_internal *bot,
-				   char *bot_name,
+				   const char *bot_name,
 				   struct db_i *dbip,
 				   fastf_t normal_tolerance_angle);
 RT_EXPORT extern int rt_bot_flip(struct rt_bot_internal *bot);

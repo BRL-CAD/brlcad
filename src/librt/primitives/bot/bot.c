@@ -4274,7 +4274,7 @@ bot_smooth_hit(struct application *ap, struct partition *PartHeadp, struct seg *
 
 
 int
-rt_bot_smooth(struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, fastf_t norm_tol_angle)
+rt_bot_smooth(struct rt_bot_internal *bot, const char *bot_name, struct db_i *dbip, fastf_t norm_tol_angle)
 {
     int vert_no;
     size_t i, j, k;
