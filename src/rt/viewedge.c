@@ -93,6 +93,7 @@
 #include "raytrace.h"
 #include "fb.h"
 #include "bu.h"
+#include "icv.h"
 
 #include "./rtuif.h"
 #include "./ext.h"
@@ -572,7 +573,7 @@ view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
     int i;
 
     if (outputfile)
-	bif = bu_image_save_open(outputfile, BU_IMAGE_AUTO, width, height, 3);
+	bif = icv_image_save_open(outputfile, ICV_IMAGE_AUTO, width, height, 3);
 
     /*
      * Per_processor_chuck specifies the number of pixels rendered per
@@ -810,7 +811,7 @@ view_eol(struct application *ap)
 	 * Write to a file.
 	 */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	bu_image_save_writeline(bif, ap->a_y, scanline[cpu]);
+	icv_image_save_writeline(bif, ap->a_y, scanline[cpu]);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
     if (fbp == FBIO_NULL && outputfile == NULL)
@@ -839,7 +840,7 @@ void view_cleanup(struct rt_i *UNUSED(rtip))
  */
 void view_end(struct application *UNUSED(ap)) { 
     if (bif)
-	bu_image_save_close(bif); 
+	icv_image_save_close(bif); 
     bif = NULL;
 }
 

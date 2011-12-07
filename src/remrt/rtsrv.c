@@ -58,6 +58,7 @@
 #include "raytrace.h"
 #include "pkg.h"
 #include "fb.h"
+#include "icv.h"
 
 #include "../rt/rtuif.h"
 #include "../rt/ext.h"
@@ -112,7 +113,7 @@ static int	avail_cpus;		/* # of cpus avail on this system */
 
 int	save_overlaps=0;
 
-struct bu_image_file *bif = NULL;
+struct icv_image_file *bif = NULL;
 
 /*
  * Package Handlers.

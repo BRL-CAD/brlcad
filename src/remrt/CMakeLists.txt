@@ -15,7 +15,7 @@ include_directories(
 BRLCAD_ADDEXEC(remrt "ihost.c remrt.c" "libremrt liboptical libfb")
 ADD_MAN_PAGE(1 remrt.1)
 
-BRLCAD_ADDEXEC(rtsrv rtsrv.c "libremrt liboptical libpkg")
+BRLCAD_ADDEXEC(rtsrv rtsrv.c "libremrt liboptical libpkg libicv")
 SET_TARGET_PROPERTIES(rtsrv PROPERTIES COMPILE_DEFINITIONS "RTSRV")
 
 CMAKEFILES(ihost.h protocol.h)

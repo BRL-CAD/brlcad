@@ -50,6 +50,7 @@
 
 #include "vmath.h"
 #include "mater.h"
+#include "icv.h"
 #include "raytrace.h"
 #include "fb.h"
 #include "plot3.h"
@@ -96,7 +97,7 @@ extern int do_kut_plane;           /* from opt.c */
 extern plane_t kut_plane;              /* from opt.c */
 vect_t kut_norm;
 struct soltab *kut_soltab = NULL;
-extern struct bu_image_file *bif;
+extern struct icv_image_file *bif;
 
 extern struct floatpixel *curr_float_frame;	/* buffer of full frame */
 
@@ -315,7 +316,7 @@ view_pixel(struct application *ap)
 
 		if (bif != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
-		    bu_image_save_writepixel(bif, ap->a_y, ap->a_x, p);
+		    icv_image_save_writepixel(bif, ap->a_y, ap->a_x, p);
 		    bu_semaphore_release(BU_SEM_SYSCALL);
 		} else if (outfp != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -567,7 +568,7 @@ view_pixel(struct application *ap)
 	    }
 	    if (bif != NULL) {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		bu_image_save_writeline(bif, ap->a_y, (unsigned char *)scanline[ap->a_y].sl_buf);
+		icv_image_save_writeline(bif, ap->a_y, (unsigned char *)scanline[ap->a_y].sl_buf);
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	    } else if (outfp != NULL) {
 		size_t count;

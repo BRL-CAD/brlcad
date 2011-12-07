@@ -31,6 +31,7 @@
 
 #include "bu.h"
 #include "dm.h"
+#include "icv.h"
 
 #include "./ged_private.h"
 
@@ -52,7 +53,7 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "image_name.ext";
     unsigned char **rows = NULL;
     unsigned char *idata = NULL;
-    struct bu_image_file *bif = NULL;	/* bu image for saving image formats */
+    struct icv_image_file *bif = NULL;	/* bu image for saving image formats */
     struct dm *dmp = NULL;
 
     if ((dmp = (struct dm *)gedp->ged_dmp) == NULL) {
@@ -85,8 +86,8 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
     bytes_per_line = dmp->dm_width * bytes_per_pixel;
 
     /* create image file */
-    if ((bif = bu_image_save_open(argv[1], BU_IMAGE_AUTO, width, height, bytes_per_pixel)) == NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s: could not create bu_image_ write structure.", argv[1]);
+    if ((bif = icv_image_save_open(argv[1], ICV_IMAGE_AUTO, width, height, bytes_per_pixel)) == NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s: could not create icv_image_ write structure.", argv[1]);
 	return GED_ERROR;
     }
 
@@ -96,11 +97,11 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 
     for (i = 0; i < height; ++i) {
 	rows[i] = (unsigned char *)(idata + ((height-i-1)*bytes_per_line));
-	bu_image_save_writeline(bif, i, (unsigned char *)rows[i]);
+	icv_image_save_writeline(bif, i, (unsigned char *)rows[i]);
     }
 
     if (bif != NULL)
-	bu_image_save_close(bif);
+	icv_image_save_close(bif);
     bif = NULL;
 
     bu_free(rows, "rows");

@@ -58,7 +58,7 @@ extern const char title[];
 /***** Variables shared with viewing model *** */
 FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
 FILE		*outfp = NULL;		/* optional pixel output file */
-struct bu_image_file *bif = NULL;	/* optional bu image for saving non-PIX formats */
+struct icv_image_file *bif = NULL;	/* optional bu image for saving non-PIX formats */
 mat_t		view2model;
 mat_t		model2view;
 /***** end of sharing with viewing model *****/

@@ -57,7 +57,7 @@ extern int save_overlaps;		/* flag for setting rti_save_overlaps */
 extern mat_t model2view;
 extern mat_t view2model;
 extern struct application APP;
-extern struct bu_image_file *bif;
+extern struct icv_image_file *bif;
 extern vect_t left_eye_delta;
 extern vect_t left_eye_delta;
 

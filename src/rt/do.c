@@ -44,6 +44,7 @@
 #include "raytrace.h"
 #include "fb.h"
 #include "bu.h"
+#include "icv.h"
 
 #include "./rtuif.h"
 #include "./ext.h"
@@ -82,7 +83,7 @@ void do_ae(double azim, double elev);
 void res_pr(void);
 void memory_summary(void);
 
-extern struct bu_image_file *bif;
+extern struct icv_image_file *bif;
 
 /**
  * O L D _ F R A M E
@@ -781,7 +782,7 @@ do_frame(int framenumber)
 	    /* FIXME: in the case of rtxray, this is wrong.  it writes
 	     * out a bw image so depth should be just 1, not 3.
 	     */
-	    bif = bu_image_save_open(framename, BU_IMAGE_AUTO_NO_PIX, width, height, 3);
+	    bif = icv_image_save_open(framename, ICV_IMAGE_AUTO_NO_PIX, width, height, 3);
 	    if (bif == NULL && (outfp = fopen(framename, "w+b")) == NULL) {
 		perror(framename);
 		if (matflag) return 0;	/* OK */
@@ -919,7 +920,7 @@ do_frame(int framenumber)
 	       wallclock, ((double)(rtip->rti_nrays))/wallclock);
     }
     if (bif != NULL)
-	bu_image_save_close(bif);
+	icv_image_save_close(bif);
     bif = NULL;
     if (outfp != NULL) {
 	/* Protect finished product */
