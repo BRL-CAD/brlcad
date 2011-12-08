@@ -1776,7 +1776,7 @@ static int
 dgo_run_rt(struct dg_obj *dgop,
 	   struct view_obj *vop)
 {
-    int i;
+    size_t i;
     FILE *fp_in;
 #ifndef _WIN32
     int pipe_in[2];
@@ -2325,7 +2325,7 @@ dgo_rtcheck_vector_handler(void *clientData, int UNUSED(mask))
 	    sp->s_flag = DOWN;
 
 	/* Add overlay */
-	dgo_cvt_vlblock_to_solids(rtcp->dgop, rtcp->interp, rtcp->vbp, "OVERLAPS", 0);
+	dgo_cvt_vlblock_to_solids(rtcp->dgop, rtcp->vbp, "OVERLAPS", 0);
 	rt_vlblock_free(rtcp->vbp);
 
 	/* wait for the forked process */
@@ -2395,7 +2395,7 @@ dgo_rtcheck_command(struct dg_obj *dgop,
 		    const char **argv)
 {
     const char **vp;
-    int i;
+    size_t i;
     size_t args;
     int ret;
 
@@ -2568,9 +2568,9 @@ dgo_rtcheck_command(struct dg_obj *dgop,
 	*vp = 0;
 	vp = &dgop->dgo_rt_cmd[0];
 	while (*vp)
-	    Tcl_AppendResult(interp, *vp++, " ", (char *)NULL);
+	    Tcl_AppendResult(dgop->interp, *vp++, " ", (char *)NULL);
 
-	Tcl_AppendResult(interp, "\n", (char *)NULL);
+	Tcl_AppendResult(dgop->interp, "\n", (char *)NULL);
     }
 
 
@@ -2666,7 +2666,7 @@ dgo_rtcheck_command(struct dg_obj *dgop,
     rtcp->vhead = rt_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
     rtcp->csize = vop->vo_scale * 0.01;
     rtcp->dgop = dgop;
-    rtcp->interp = interp;
+    rtcp->interp = dgop->interp;
 
     rtcp->chan = Tcl_MakeFileChannel(pipe_iDup, TCL_READABLE);
     Tcl_CreateChannelHandler(rtcp->chan, TCL_READABLE,
@@ -2677,7 +2677,7 @@ dgo_rtcheck_command(struct dg_obj *dgop,
     rtcop->fd = pipe_eDup;
     rtcop->chan = Tcl_MakeFileChannel(pipe_eDup, TCL_READABLE);
     rtcop->dgop = dgop;
-    rtcop->interp = interp;
+    rtcop->interp = dgop->interp;
     Tcl_CreateChannelHandler(rtcop->chan,
 			     TCL_READABLE,
 			     dgo_rtcheck_output_handler,
