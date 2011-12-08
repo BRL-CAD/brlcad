@@ -821,3 +821,5 @@ s/BU_IMAGE/ICV_IMAGE/g
 	moved BU_IMAGE* macros to icv.h as ICV_IMAGE* [7.21]
 s/bu_cmd\(([^,]*?),[[:space:]]*([^,]*?),[[:space:]]*([^,]*?),[[:space:]]*([^,)]*?),[[:space:]]*([^)]*?)\)/bu_cmd(\4, \2, \3, \5, \1, NULL)/g
 	inputs then outputs.  swapped bu_cmd's 4th parameter to 1st, 1st to 5th, and added a new return value hook last. [7.21]
+s/V3(.*)_TOL\(([^,]*,)([^,]*,)([^,]*,)([^)]*)\)/V3\1_TOL(\1\2\3(\4)->dist)/g
+        V3RPP_OVERLAP_TOL(), V3PT_IN_RPP_TOL(), and V3PT_OUT_RPP_TOL() tol parameter changed to value [7.21]
