@@ -1192,14 +1192,13 @@ addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char fl
 
 /* add all hit point info to info list */
 HIDDEN int
-recordHit(struct application *app, struct partition *partH, struct seg *segs)
+recordHit(struct application *app, struct partition *partH, struct seg *UNUSED(segs))
 {
     struct partition *part;
     struct soltab *soltab;
     float *partColor;
 
     RT_CK_APPLICATION(app);
-    RT_CK_SEG(segs);
 
     /* add all hit points */
     for (part = partH->pt_forw; part != partH; part = part->pt_forw) {
