@@ -155,7 +155,7 @@ tcl_bu_get_value_by_keyword(void *clientData,
 	bu_log("bu_get_value_by_keyword: odd # of items in list (%s).\n", buf);
 
 	if (tofree)
-	    free((char *)tofree); /* not bu_free() */
+	    Tcl_Free((char *)tofree); /* not bu_free() */
 	return BRLCAD_ERROR;
     }
 
@@ -176,16 +176,16 @@ tcl_bu_get_value_by_keyword(void *clientData,
 	    }
 
 	    if (tofree)
-		free((char *)tofree); /* not bu_free() */
+		Tcl_Free((char *)tofree); /* not bu_free() */
 	    return BRLCAD_OK;
 	}
     }
 
     /* Not found */
     bu_log("bu_get_value_by_keyword: keyword '%s' not found in list\n", iwant);
-/* FIXME: convert */
+
     if (tofree)
-	free((char *)tofree); /* not bu_free() */
+	Tcl_Free((char *)tofree); /* not bu_free() */
     return BRLCAD_ERROR;
 }
 
