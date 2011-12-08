@@ -278,7 +278,7 @@ struct bu_list 		FreeList;
 #define LIST_MAGIC	0x4c494c49
 
 #define GET_LIST(p)	if ( BU_LIST_IS_EMPTY( &FreeList ) )  { \
-				BU_GETSTRUCT((p), list); \
+				BU_GET((p), struct list); \
 				(p)->l.magic = LIST_MAGIC; \
 			} else { \
 				(p) = BU_LIST_FIRST(list, &FreeList); \
@@ -313,7 +313,7 @@ struct frame *FreeFrame;
 
 #define GET_FRAME(p)	{ \
 		if ( ((p)=FreeFrame) == FRAME_NULL ) {\
-			BU_GETSTRUCT(p, frame); \
+			BU_GET(p, struct frame); \
 		} else { \
 			FreeFrame = (p)->fr_forw; (p)->fr_forw = FRAME_NULL; \
 		} \
