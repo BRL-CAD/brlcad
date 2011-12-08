@@ -2,14 +2,16 @@ SET(srcdir ${CMAKE_CURRENT_SOURCE_DIR})
 configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/fop.xconf.in ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf)
 configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/log4j.properties ${CMAKE_BINARY_DIR}/doc/docbook/log4j.properties COPYONLY)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-xml-catalog.xml.in ${CMAKE_CURRENT_BINARY_DIR}/brlcad-xml-catalog.xml)
+FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-man-stylesheet.xsl.in
+	${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-man-stylesheet.xsl)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl.in
+	${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl)
 
-SET(XSLTPROC_FLAGS -nonet -xinclude)
-SET(XSL_XHTML_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/brlcad-xhtml-stylesheet.xsl")
-SET(XSL_MAN_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/brlcad-man-stylesheet.xsl")
-# The brlcad/brlcad-fo-stylesheet.xsl stylesheet is for docs with covers
+SET(XSLTPROC_FLAGS "-nonet -xinclude")
+SET(XSL_XHTML_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl")
+SET(XSL_MAN_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-man-stylesheet.xsl")
 SET(XSL_FO_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/other/standard/xsl/fo/docbook.xsl")
-#SET(XSL_FO_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/brlcad-fo-stylesheet.xsl")
 
 MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
 	FOREACH(filename ${${xml_files}})
@@ -17,8 +19,7 @@ MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
 		SET(outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.html)
 		SET(targetname ${filename_root}_${targetname_suffix}_html)
 		SET(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake)
-		FILE(WRITE ${scriptfile} "SET(ENV{XML_CATALOG_FILES} \"${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml\")\n")
-		FILE(APPEND ${scriptfile} "SET(ENV{XML_DEBUG_CATALOG} 1)\n")
+		FILE(WRITE ${scriptfile} "SET(ENV{XML_DEBUG_CATALOG} 1)\n")
 		FILE(APPEND ${scriptfile} "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E make_directory ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/)\n")
 		FILE(APPEND ${scriptfile} "execute_process(COMMAND \"${XSLTPROC_EXECUTABLE}\" ${XSLTPROC_FLAGS} -o ${outfile} ${XSL_XHTML_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename})\n")
 		ADD_CUSTOM_COMMAND(
@@ -38,8 +39,7 @@ MACRO(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir)
 		SET(outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.${manext})
 		SET(targetname ${filename_root}_${targetname_suffix}_man${mannum})
 		SET(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake)
-		FILE(WRITE ${scriptfile} "SET(ENV{XML_CATALOG_FILES} \"${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml\")\n")
-		FILE(APPEND ${scriptfile} "SET(ENV{XML_DEBUG_CATALOG} 1)\n")
+		FILE(WRITE ${scriptfile} "SET(ENV{XML_DEBUG_CATALOG} 1)\n")
 		FILE(APPEND ${scriptfile} "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E make_directory ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/)\n")
 		FILE(APPEND ${scriptfile} "execute_process(COMMAND \"${XSLTPROC_EXECUTABLE}\" ${XSLTPROC_FLAGS} -o ${outfile} ${XSL_MAN_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename})\n")
 		ADD_CUSTOM_COMMAND(
@@ -72,8 +72,7 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 			SET(targetname ${filename_root}_${targetname_suffix}_pdf)
 			SET(scriptfile1 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_fo.cmake)
 			FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
-			FILE(WRITE ${scriptfile1} "SET(ENV{XML_CATALOG_FILES} \"${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml\")\n")
-			FILE(APPEND ${scriptfile1} "SET(ENV{XML_DEBUG_CATALOG} 1)\n")
+			FILE(WRITE ${scriptfile1} "SET(ENV{XML_DEBUG_CATALOG} 1)\n")
 			FILE(APPEND ${scriptfile1} "execute_process(COMMAND \"${XSLTPROC_EXECUTABLE}\" ${XSLTPROC_FLAGS} -o ${tmp_fo_file} ${XSL_FO_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename})\n")
 			ADD_CUSTOM_COMMAND(
 				OUTPUT ${tmp_fo_file}

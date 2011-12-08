@@ -8,7 +8,7 @@
 
 <!-- use prog 'create-book-covers.pl' -->
 
-<xsl:include href="/brlcad/brlcad-gendata.xsl"/>
+<xsl:include href="file://@CMAKE_SOURCE_DIR@/doc/docbook/resources/brlcad/brlcad-gendata.xsl"/>
 <!-- original
 <xsl:include href="brlcad-colors-autogen.xsl"/>
 -->

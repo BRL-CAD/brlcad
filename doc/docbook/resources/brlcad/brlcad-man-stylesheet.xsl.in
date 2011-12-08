@@ -8,10 +8,7 @@
 
   <!-- the base stylesheet (resolved by this name
        in the xml catalog file) -->
-  <xsl:import href="file://@CMAKE_SOURCE_DIR@/doc/docbook/resources/other/standard/xsl/fo/docbook.xsl"/>
-
-  <!-- use "cover" and "back" instead -->
-  <xsl:import href="@TUTORIAL_COVER_XSL@"/>
+  <xsl:import href="file://@CMAKE_SOURCE_DIR@/doc/docbook/resources/other/standard/xsl/manpages/docbook.xsl"/>
 
   <xsl:import href="file://@CMAKE_SOURCE_DIR@/doc/docbook/resources/brlcad/brlcad-fonts.xsl"/>
 
@@ -242,7 +239,7 @@
 
   <!-- ====================================================== -->
   <!-- center tables in print, from p. 474 in Stayton: -->
-  <xsl:include href="file://@CMAKE_SOURCE_DIR@/doc/docbook/resources/brlcad/center-table-print.xsl"/>
+  <xsl:include href="center-table-print.xsl"/>
 
   <!--
 <xsl:template name="table.layout">
