@@ -1307,7 +1307,7 @@ nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
     /* verify the bounding box of each faceuse overlaps the other
      * faceuse bounding box
      */
-    if (!V3RPP_OVERLAP_TOL(f1->min_pt, f1->max_pt, f2->min_pt, f2->max_pt, tol)) {
+    if (!V3RPP_OVERLAP_TOL(f1->min_pt, f1->max_pt, f2->min_pt, f2->max_pt, tol->dist)) {
 	return 0;
     }
 

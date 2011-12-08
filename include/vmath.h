@@ -1651,12 +1651,12 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * by at least distance tolerance.
  */
 #define V3RPP_DISJOINT_TOL(_l1, _h1, _l2, _h2, _t) \
-      (((_l1)[X] > (_h2)[X] + (_t)->dist && \
-	(_l1)[Y] > (_h2)[Y] + (_t)->dist && \
-	(_l1)[Z] > (_h2)[Z] + (_t)->dist) || \
-       ((_l2)[X] > (_h1)[X] + (_t)->dist && \
-	(_l2)[Y] > (_h1)[Y] + (_t)->dist && \
-	(_l2)[Z] > (_h1)[Z] + (_t)->dist)) 
+      (((_l1)[X] > (_h2)[X] + (_t) && \
+	(_l1)[Y] > (_h2)[Y] + (_t) && \
+	(_l1)[Z] > (_h2)[Z] + (_t)) || \
+       ((_l2)[X] > (_h1)[X] + (_t) && \
+	(_l2)[Y] > (_h1)[Y] + (_t) && \
+	(_l2)[Z] > (_h1)[Z] + (_t))) 
 
 /** Compare two bounding boxes and return true If they overlap. */
 #define V3RPP_OVERLAP(_l1, _h1, _l2, _h2) \
@@ -1668,14 +1668,18 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * true.
  */
 #define V3RPP_OVERLAP_TOL(_l1, _h1, _l2, _h2, _t) \
-    (! ((_l1)[X] > (_h2)[X] + (_t)->dist || \
-	(_l1)[Y] > (_h2)[Y] + (_t)->dist || \
-	(_l1)[Z] > (_h2)[Z] + (_t)->dist || \
-	(_l2)[X] > (_h1)[X] + (_t)->dist || \
-	(_l2)[Y] > (_h1)[Y] + (_t)->dist || \
-	(_l2)[Z] > (_h1)[Z] + (_t)->dist))
+    (! ((_l1)[X] > (_h2)[X] + (_t) || \
+	(_l1)[Y] > (_h2)[Y] + (_t) || \
+	(_l1)[Z] > (_h2)[Z] + (_t) || \
+	(_l2)[X] > (_h1)[X] + (_t) || \
+	(_l2)[Y] > (_h1)[Y] + (_t) || \
+	(_l2)[Z] > (_h1)[Z] + (_t)))
 
-/** @brief Is the point within or on the boundary of the RPP? */
+/**
+ * @brief Is the point within or on the boundary of the RPP?
+ *
+ * FIXME: should not be using >= <=, '=' case is unreliable
+ */
 #define V3PT_IN_RPP(_pt, _lo, _hi)	(\
 	(_pt)[X] >= (_lo)[X] && (_pt)[X] <= (_hi)[X] && \
 	(_pt)[Y] >= (_lo)[Y] && (_pt)[Y] <= (_hi)[Y] && \
@@ -1683,24 +1687,28 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /**
  * @brief Within the distance tolerance, is the point within the RPP?
+ *
+ * FIXME: should not be using >= <=, '=' case is unreliable
  */
 #define V3PT_IN_RPP_TOL(_pt, _lo, _hi, _t)	(\
-	(_pt)[X] >= (_lo)[X]-(_t)->dist && (_pt)[X] <= (_hi)[X]+(_t)->dist && \
-	(_pt)[Y] >= (_lo)[Y]-(_t)->dist && (_pt)[Y] <= (_hi)[Y]+(_t)->dist && \
-	(_pt)[Z] >= (_lo)[Z]-(_t)->dist && (_pt)[Z] <= (_hi)[Z]+(_t)->dist)
+	(_pt)[X] >= (_lo)[X]-(_t) && (_pt)[X] <= (_hi)[X]+(_t) && \
+	(_pt)[Y] >= (_lo)[Y]-(_t) && (_pt)[Y] <= (_hi)[Y]+(_t) && \
+	(_pt)[Z] >= (_lo)[Z]-(_t) && (_pt)[Z] <= (_hi)[Z]+(_t))
 
 /**
  * @brief Is the point outside the RPP by at least the distance tolerance?
  * This will not return true if the point is on the RPP.
  */
 #define V3PT_OUT_RPP_TOL(_pt, _lo, _hi, _t)      (\
-        (_pt)[X] < (_lo)[X]-(_t)->dist || (_pt)[X] > (_hi)[X]+(_t)->dist || \
-        (_pt)[Y] < (_lo)[Y]-(_t)->dist || (_pt)[Y] > (_hi)[Y]+(_t)->dist || \
-        (_pt)[Z] < (_lo)[Z]-(_t)->dist || (_pt)[Z] > (_hi)[Z]+(_t)->dist)
+        (_pt)[X] < (_lo)[X]-(_t) || (_pt)[X] > (_hi)[X]+(_t) || \
+        (_pt)[Y] < (_lo)[Y]-(_t) || (_pt)[Y] > (_hi)[Y]+(_t) || \
+        (_pt)[Z] < (_lo)[Z]-(_t) || (_pt)[Z] > (_hi)[Z]+(_t))
 
 /**
  * @brief Determine if one bounding box is within another.  Also
  * returns true if the boxes are the same.
+ *
+ * FIXME: should not be using >= <=, '=' case is unreliable
  */
 #define V3RPP1_IN_RPP2(_lo1, _hi1, _lo2, _hi2)	(\
 	(_lo1)[X] >= (_lo2)[X] && (_hi1)[X] <= (_hi2)[X] && \

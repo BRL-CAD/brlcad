@@ -1480,9 +1480,7 @@ Eplot(union E_tree *eptr,
 
 		    f2 = fu2->f_p;
 
-		    if (!V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt,
-					   f1->min_pt, f1->max_pt,
-					   tol))
+		    if (!V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt, f1->min_pt, f1->max_pt, tol->dist))
 			continue;
 
 		    NMG_GET_FU_PLANE(pl2, fu2);

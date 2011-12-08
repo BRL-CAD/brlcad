@@ -161,7 +161,7 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
 		NMG_GET_FU_PLANE(n2, fu2);
 
                 /* test if the bounding boxes of the faceuse overlap */
-                if (!V3RPP_OVERLAP_TOL(f1->min_pt, f1->max_pt, f2->min_pt, f2->max_pt, tol)) {
+                if (!V3RPP_OVERLAP_TOL(f1->min_pt, f1->max_pt, f2->min_pt, f2->max_pt, tol->dist)) {
 		    continue;
                 }
 

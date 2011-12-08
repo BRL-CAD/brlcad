@@ -575,7 +575,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
      * can skip most of the steps to perform the boolean operation
      */
     if (!V3RPP_OVERLAP_TOL(sA->sa_p->min_pt, sA->sa_p->max_pt, 
-                           sB->sa_p->min_pt, sB->sa_p->max_pt, tol)) {
+                           sB->sa_p->min_pt, sB->sa_p->max_pt, tol->dist)) {
         switch (oper) {
             case NMG_BOOL_ADD: {
                 struct faceuse *fu;

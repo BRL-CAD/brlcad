@@ -3826,7 +3826,7 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
         }
     }
 
-    if (V3PT_OUT_RPP_TOL(line1_pt1, min_pt, max_pt, tol)) {
+    if (V3PT_OUT_RPP_TOL(line1_pt1, min_pt, max_pt, tol->dist)) {
         /* True when the point is outside the loopuse bounding box.
          * Considering distance tolerance, the point is also not on
          * the bounding box and therefore the point can not be on the

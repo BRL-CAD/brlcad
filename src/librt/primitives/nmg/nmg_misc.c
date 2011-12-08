@@ -1913,8 +1913,7 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
 		       nmg_orientation(fu2lu->orientation));
 	    }
 
-	    if (V3RPP_OVERLAP_TOL(fu2lg->min_pt, fu2lg->max_pt,
-				  lg->min_pt, lg->max_pt, tol)) {
+	    if (V3RPP_OVERLAP_TOL(fu2lg->min_pt, fu2lg->max_pt, lg->min_pt, lg->max_pt, tol->dist)) {
 		overlap = 1;
 		break;
 	    }

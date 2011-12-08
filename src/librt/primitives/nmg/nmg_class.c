@@ -443,7 +443,7 @@ nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse
 	HPRINT("\tplane eqn", peqn);
     }
 
-    if (V3PT_OUT_RPP_TOL(pt, lg->min_pt, lg->max_pt, tol)) {
+    if (V3PT_OUT_RPP_TOL(pt, lg->min_pt, lg->max_pt, tol->dist)) {
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 	    bu_log("\tPoint is outside loop RPP\n");
 	}
@@ -654,7 +654,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
 	bu_log("nmg_class_pt_s(): pt=(%g, %g, %g), s=x%x\n",
 	       V3ARGS(pt), s);
     }
-    if (V3PT_OUT_RPP_TOL(pt, s->sa_p->min_pt, s->sa_p->max_pt, tol)) {
+    if (V3PT_OUT_RPP_TOL(pt, s->sa_p->min_pt, s->sa_p->max_pt, tol->dist)) {
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 	    bu_log("nmg_class_pt_s(): OUT, point not in RPP\n");
 	}
@@ -971,7 +971,7 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struc
      * then the edge is outside the shell. also both vertices
      * of the edge are outside the shell.
      */
-    if (!V3RPP_OVERLAP_TOL(e_min_pt, e_max_pt, s->sa_p->min_pt, s->sa_p->max_pt, tol)) {
+    if (!V3RPP_OVERLAP_TOL(e_min_pt, e_max_pt, s->sa_p->min_pt, s->sa_p->max_pt, tol->dist)) {
         NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->e_p);
         NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->vu_p->v_p);
         NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->eumate_p->vu_p->v_p);

@@ -2293,7 +2293,7 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 	}
         dist *= MAGNITUDE(rd->rp->r_dir);
 	VJOIN1(hit_pt, rd->rp->r_pt, dist, r_dir_unit);
-	if (V3PT_OUT_RPP_TOL(hit_pt, fp->min_pt, fp->max_pt, rd->tol)) {
+	if (V3PT_OUT_RPP_TOL(hit_pt, fp->min_pt, fp->max_pt, rd->tol->dist)) {
 	    NMG_GET_HITMISS(myhit, rd->ap);
 	    NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 	    myhit->hit.hit_private = (genptr_t)fu_p->f_p;

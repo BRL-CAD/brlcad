@@ -1293,9 +1293,7 @@ rt_ct_populate_box(union cutter *outp, const union cutter *inp, struct rt_i *rti
 	for (j = plp->npieces-1; j >= 0; j--) {
 	    long indx = plp->pieces[j];
 	    struct bound_rpp *rpp = &stp->st_piece_rpps[indx];
-	    if (!V3RPP_OVERLAP_TOL(
-		    outp->bn.bn_min, outp->bn.bn_max,
-		    rpp->min, rpp->max, tol))
+	    if (!V3RPP_OVERLAP_TOL(outp->bn.bn_min, outp->bn.bn_max, rpp->min, rpp->max, tol->dist))
 		continue;
 	    if (piece_count < PIECE_BLOCK) {
 		piece_list[piece_count++] = indx;

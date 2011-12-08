@@ -1021,7 +1021,7 @@ nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only)
     NMG_CK_LOOP_G(lu->l_p->lg_p);
 
 
-    if (V3PT_OUT_RPP_TOL(fpi->pt, lu->l_p->lg_p->min_pt, lu->l_p->lg_p->max_pt, fpi->tol)) {
+    if (V3PT_OUT_RPP_TOL(fpi->pt, lu->l_p->lg_p->min_pt, lu->l_p->lg_p->max_pt, fpi->tol->dist)) {
 	/* point is not in RPP of loop */
 
 	if (rt_g.NMG_debug & DEBUG_PT_FU) {
@@ -1247,7 +1247,7 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 	       V3ARGS(pt), V4ARGS(fpi.norm), dist);
     }
 
-    if (V3PT_OUT_RPP_TOL(pt, fu->f_p->min_pt, fu->f_p->max_pt, tol)) {
+    if (V3PT_OUT_RPP_TOL(pt, fu->f_p->min_pt, fu->f_p->max_pt, tol->dist)) {
 	/* point is not in RPP of face, so there's NO WAY this point
 	 * is anything but OUTSIDE
 	 */
@@ -1391,7 +1391,7 @@ nmg_class_pt_lu_except(fastf_t *pt, const struct loopuse *lu, const struct edge 
 	       V3ARGS(pt), V4ARGS(fpi.norm), dist);
     }
 
-    if (V3PT_OUT_RPP_TOL(pt, lu->l_p->lg_p->min_pt, lu->l_p->lg_p->max_pt, tol)) {
+    if (V3PT_OUT_RPP_TOL(pt, lu->l_p->lg_p->min_pt, lu->l_p->lg_p->max_pt, tol->dist)) {
 	/* point is not in RPP of loop */
 
 	if (rt_g.NMG_debug & DEBUG_PT_FU)
