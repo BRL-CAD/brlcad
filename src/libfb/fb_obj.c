@@ -741,6 +741,8 @@ fbo_configure_tcl(void *clientData, int argc, const char **argv)
 HIDDEN int
 fbo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char **argv)
 {
+    int ret;
+
     static struct bu_cmdtab fbo_cmds[] = {
 	{"cell",	fbo_cell_tcl},
 	{"clear",	fbo_clear_tcl},
@@ -759,7 +761,11 @@ fbo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char 
 	{(char *)0,	(int (*)())0}
     };
 
-    return bu_cmd(clientData, argc, argv, fbo_cmds, 1);
+    if (bu_cmd(fbo_cmds, argc, argv, 1, clientData, &ret) == BRLCAD_OK)
+	return ret;
+
+    bu_log("ERROR: '%s' command not found\n", argv[1]);
+    return BRLCAD_ERROR;
 }
 
 
