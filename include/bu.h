@@ -223,28 +223,61 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 /**
- * Handy memory allocator macro
+ * Handy memory allocator macro for structures.
  *
- * @def BU_GETSTRUCT(ptr, struct_type)
- * Acquire storage for a given struct_type.
- * e.g., BU_GETSTRUCT(ptr, structname);
+ * Memory acquired with BU_GETSTRUCT() should be released with
+ * BU_PUTSTRUCT().
  *
- * @def BU_GETUNION(ptr, union_type)
- * Allocate storage for a union
+ * DEPRECATED
  */
 #define BU_GETSTRUCT(_p, _str) \
     _p = (struct _str *)bu_calloc(1, sizeof(struct _str), #_str " (getstruct)" BU_FLSTR)
+
+/**
+ * Handy memory deallocator macro for structures.
+ *
+ * DEPRECATED
+ */
+#define BU_PUTSTRUCT(_p, _str) \
+    bu_free(_p, #_str " (putstruct)" BU_FLSTR) && _p = NULL
+
+
+/**
+ * Handy memory allocator macro for a unions.
+ *
+ * Memory acquired with BU_GETUNION() should be released with
+ * BU_PUTUNION().
+ *
+ * DEPRECATED
+ */
 #define BU_GETUNION(_p, _unn) \
     _p = (union _unn *)bu_calloc(1, sizeof(union _unn), #_unn " (getunion)" BU_FLSTR)
+
+/**
+ * Handy memory deallocator macro for unions.
+ *
+ * DEPRECATED
+ */
+#define BU_PUTUNION(_p, _unn) \
+    bu_free(_p, #_unn " (putunion)" BU_FLSTR) && _p = NULL
 
 
 /**
  * Acquire storage for a given TYPE, eg, BU_GETTYPE(ptr, typename);
  * Equivalent to BU_GETSTRUCT, except without the 'struct' Useful
  * for typedef'ed objects.
+ *
+ * Memory acquired with BU_GETTYPE() should be released with
+ * BU_PUTTYPE().
  */
 #define BU_GETTYPE(_p, _type) \
     _p = (_type *)bu_calloc(1, sizeof(_type), #_type " (gettype)")
+
+/**
+ * Handy memory deallocator macro for structures
+ */
+#define BU_PUTTYPE(_p, _type) \
+    bu_free(_p, #_type " (puttype)") && _p = NULL
 
 
 /**
