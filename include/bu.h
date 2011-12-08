@@ -223,6 +223,24 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 /**
+ * Handy dynamic memory allocator macro.  Allocated memory is
+ * automatically initialized to zero and guaranteed (else bu_bomb()).
+ *
+ * Memory acquired with BU_GET() should be returned with BU_PUT().
+ */
+#define BU_GET(_ptr, _type) _ptr = (_type *)bu_calloc(1, sizeof(_type), #_type " (BU_GET) " BU_FLSTR)
+
+/**
+ * Handy dynamic memory deallocator macro.  Deallocated memory has the
+ * first byte zero'd for sanity (and potential early detection of
+ * double-free crashing code) and the pointer is set to NULL.
+ *
+ * Memory acquired with BU_GET() should be returned with BU_PUT().
+ */
+#define BU_PUT(_ptr, _type) (uint8_t)(*(_ptr)) = /*zap*/ 0; bu_free(_ptr, #str " (BU_PUT) " BU_FLSTR); _ptr = NULL
+
+
+/**
  * Handy memory allocator macro for structures.
  *
  * Memory acquired with BU_GETSTRUCT() should be released with
@@ -239,7 +257,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
  * DEPRECATED
  */
 #define BU_PUTSTRUCT(_p, _str) \
-    bu_free(_p, #_str " (putstruct)" BU_FLSTR) && _p = NULL
+    bu_free(_p, #_str " (putstruct)" BU_FLSTR); _p = NULL
 
 
 /**
@@ -259,7 +277,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
  * DEPRECATED
  */
 #define BU_PUTUNION(_p, _unn) \
-    bu_free(_p, #_unn " (putunion)" BU_FLSTR) && _p = NULL
+    bu_free(_p, #_unn " (putunion)" BU_FLSTR); _p = NULL
 
 
 /**
@@ -277,7 +295,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
  * Handy memory deallocator macro for structures
  */
 #define BU_PUTTYPE(_p, _type) \
-    bu_free(_p, #_type " (puttype)") && _p = NULL
+    bu_free(_p, #_type " (puttype)"); _p = NULL
 
 
 /**
