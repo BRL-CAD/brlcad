@@ -825,3 +825,6 @@ s/V3(.*)_TOL\(([^,]*,)([^,]*,)([^,]*,)([^)]*)\)/V3\1_TOL(\1\2\3(\4)->dist)/g
         V3RPP_OVERLAP_TOL(), V3PT_IN_RPP_TOL(), and V3PT_OUT_RPP_TOL() tol parameter changed to value [7.21]
 s/BU_GETSTRUCT\([[:space:]]*([^,)]+,)[[:space:]]*([^)]+)[[:space:]]*\)/BU_GET(\1 struct \2)/g
 	BU_GETSTRUCT(ptr, struct_type) changed to BU_GET(ptr, struct struct_t) [7.21]
+s/BU_GETUNION\([[:space:]]*([^,)]+,)[[:space:]]*([^)]+)[[:space:]]*\)/BU_GET(\1 union \2)/g
+s/BU_GETTYPE\([[:space:]]*([^,)]+,)[[:space:]]*([^)]+)[[:space:]]*\)/BU_GET(\1 \2)/g
+	BU_GETUNION() and BU_GETTYPE() macros changed to BU_GET() [7.21]
