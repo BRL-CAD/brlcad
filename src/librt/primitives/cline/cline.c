@@ -126,7 +126,7 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_CLINE_CK_MAGIC(cline_ip);
     if (rtip) RT_CK_RTI(rtip);
 
-    BU_GETSTRUCT(cline, cline_specific);
+    BU_GET(cline, struct cline_specific);
     cline->thickness = cline_ip->thickness;
     cline->radius = cline_ip->radius;
     VMOVE(cline->V, cline_ip->v);

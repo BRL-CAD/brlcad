@@ -144,7 +144,7 @@ main()
     struct col_properties *cp;
     struct bu_vls currentline;
     bu_vls_init(&currentline);
-    BU_GETSTRUCT(cp, col_properties);
+    BU_GET(cp, struct col_properties);
     cp->col_sizes = (int *)bu_malloc(sizeof(int) * 10, "initial array of column sizes");
     cp->col_attrnames = (char **)bu_malloc(sizeof(char *) * 11, "initial array of attribute names");
     cp->col_cnt = 0;

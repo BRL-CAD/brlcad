@@ -216,14 +216,14 @@ _ged_run_rt(struct ged *gedp)
     _ged_rt_write(gedp, fp_in, eye_model);
     (void)fclose(fp_in);
 
-    BU_GETSTRUCT(run_rtp, ged_run_rt);
+    BU_GET(run_rtp, struct ged_run_rt);
     BU_LIST_INIT(&run_rtp->l);
     BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
 
     run_rtp->fd = pipe_err[0];
     run_rtp->pid = pid;
 
-    BU_GETSTRUCT(drcdp, _ged_rt_client_data);
+    BU_GET(drcdp, struct _ged_rt_client_data);
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
 
@@ -290,7 +290,7 @@ _ged_run_rt(struct ged *gedp)
     _ged_rt_write(gedp, fp_in, eye_model);
     (void)fclose(fp_in);
 
-    BU_GETSTRUCT(run_rtp, ged_run_rt);
+    BU_GET(run_rtp, struct ged_run_rt);
     BU_LIST_INIT(&run_rtp->l);
     BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
 
@@ -300,7 +300,7 @@ _ged_run_rt(struct ged *gedp)
     run_rtp->aborted=0;
     run_rtp->chan = Tcl_MakeFileChannel(run_rtp->fd, TCL_READABLE);
 
-    BU_GETSTRUCT(drcdp, _ged_rt_client_data);
+    BU_GET(drcdp, struct _ged_rt_client_data);
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
 

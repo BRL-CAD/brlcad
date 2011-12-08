@@ -917,7 +917,7 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
     }
 
 
-    BU_GETSTRUCT(dsp, dsp_specific);
+    BU_GET(dsp, struct dsp_specific);
 
     /* this works ok, because the mapped file keeps track of the
      * number of uses.  However, the binunif interface does not.
@@ -1049,7 +1049,7 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
 
-    BU_GETSTRUCT(dsp, dsp_specific);
+    BU_GET(dsp, struct dsp_specific);
     stp->st_specific = (genptr_t) dsp;
 
     /* this works ok, because the mapped file keeps track of the
@@ -4135,7 +4135,7 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
     size_t got;
     int ret;
 
-    BU_GETSTRUCT(dsp_ip->dsp_bip, rt_db_internal);
+    BU_GET(dsp_ip->dsp_bip, struct rt_db_internal);
 
     ret = rt_retrieve_binunif (dsp_ip->dsp_bip, dbip, bu_vls_addr(&dsp_ip->dsp_name));
     if (ret)

@@ -464,7 +464,7 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
     }
 
     o_dm_list = curr_dm_list;
-    BU_GETSTRUCT(curr_dm_list, dm_list);
+    BU_GET(curr_dm_list, struct dm_list);
 
     /* initialize predictor stuff */
     BU_LIST_INIT(&curr_dm_list->dml_p_vlist);
@@ -476,7 +476,7 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 	struct bu_vls tmp_vls;
 
 	/* look for "-d display_string" and use it if provided */
-	BU_GETSTRUCT(tmp_dmp, dm);
+	BU_GET(tmp_dmp, struct dm);
 	bu_vls_init(&tmp_dmp->dm_pathName);
 	bu_vls_init(&tmp_dmp->dm_dName);
 	bu_vls_init(&tmp_vls);
@@ -714,19 +714,19 @@ is_dm_null(void)
 void
 dm_var_init(struct dm_list *initial_dm_list)
 {
-    BU_GETSTRUCT(adc_state, _adc_state);
+    BU_GET(adc_state, struct _adc_state);
     *adc_state = *initial_dm_list->dml_adc_state;		/* struct copy */
     adc_state->adc_rc = 1;
 
-    BU_GETSTRUCT(menu_state, _menu_state);
+    BU_GET(menu_state, struct _menu_state);
     *menu_state = *initial_dm_list->dml_menu_state;		/* struct copy */
     menu_state->ms_rc = 1;
 
-    BU_GETSTRUCT(rubber_band, _rubber_band);
+    BU_GET(rubber_band, struct _rubber_band);
     *rubber_band = *initial_dm_list->dml_rubber_band;		/* struct copy */
     rubber_band->rb_rc = 1;
 
-    BU_GETSTRUCT(mged_variables, _mged_variables);
+    BU_GET(mged_variables, struct _mged_variables);
     *mged_variables = *initial_dm_list->dml_mged_variables;	/* struct copy */
     mged_variables->mv_rc = 1;
     mged_variables->mv_dlist = mged_default_dlist;
@@ -734,27 +734,27 @@ dm_var_init(struct dm_list *initial_dm_list)
     mged_variables->mv_port = 0;
     mged_variables->mv_fb = 0;
 
-    BU_GETSTRUCT(color_scheme, _color_scheme);
+    BU_GET(color_scheme, struct _color_scheme);
 
     /* initialize using the nu display manager */
     *color_scheme = *BU_LIST_LAST(dm_list, &head_dm_list.l)->dml_color_scheme;
 
     color_scheme->cs_rc = 1;
 
-    BU_GETSTRUCT(grid_state, _grid_state);
+    BU_GET(grid_state, struct _grid_state);
     *grid_state = *initial_dm_list->dml_grid_state;		/* struct copy */
     grid_state->gr_rc = 1;
 
-    BU_GETSTRUCT(axes_state, _axes_state);
+    BU_GET(axes_state, struct _axes_state);
     *axes_state = *initial_dm_list->dml_axes_state;		/* struct copy */
     axes_state->ax_rc = 1;
 
-    BU_GETSTRUCT(dlist_state, _dlist_state);
+    BU_GET(dlist_state, struct _dlist_state);
     dlist_state->dl_rc = 1;
 
-    BU_GETSTRUCT(view_state, _view_state);
+    BU_GET(view_state, struct _view_state);
     *view_state = *initial_dm_list->dml_view_state;			/* struct copy */
-    BU_GETSTRUCT(view_state->vs_gvp, ged_view);
+    BU_GET(view_state->vs_gvp, struct ged_view);
     *view_state->vs_gvp = *initial_dm_list->dml_view_state->vs_gvp;	/* struct copy */
     view_state->vs_gvp->gv_clientData = (genptr_t)view_state;
     view_state->vs_rc = 1;

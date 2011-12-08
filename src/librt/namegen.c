@@ -139,12 +139,12 @@ test_regex(char *name, int style)
 
     int *iterators;
 
-    BU_GETSTRUCT(standard1, formatting_style);
+    BU_GET(standard1, struct formatting_style);
     bu_vls_init(&(standard1->regex_spec));
     bu_vls_strcat(&(standard1->regex_spec), "([rcs][.])?([^0-9^.]*)?([0-9]*)?([.][oicb])?([0-9]*)?([+u-])?([0-9]*)?");
     standard1->pos_of_type_id_char = 1;
 
-    BU_GETSTRUCT(standard2, formatting_style);
+    BU_GET(standard2, struct formatting_style);
     bu_vls_init(&(standard2->regex_spec));
     bu_vls_strcat(&(standard2->regex_spec), "([^0-9^.]*)?([0-9]*)?([^.]*)?([.][rcs])?([0-9]*)?([+u-])?([0-9]*)?");
     standard2->pos_of_type_id_char = 5;

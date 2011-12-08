@@ -194,7 +194,7 @@ strsolbld(void)
     if (BU_STR_EQUAL(type, "dsp")) {
 	struct rt_dsp_internal *dsp;
 
-	BU_GETSTRUCT(dsp, rt_dsp_internal);
+	BU_GET(dsp, struct rt_dsp_internal);
 	bu_vls_init(&dsp->dsp_name);
 	bu_vls_strcpy(&str, args);
 	if (bu_struct_parse(&str, rt_functab[ID_DSP].ft_parsetab, (char *)dsp) < 0) {
@@ -215,7 +215,7 @@ strsolbld(void)
     } else if (BU_STR_EQUAL(type, "ebm")) {
 	struct rt_ebm_internal *ebm;
 
-	BU_GETSTRUCT(ebm, rt_ebm_internal);
+	BU_GET(ebm, struct rt_ebm_internal);
 
 	MAT_IDN(ebm->mat);
 
@@ -238,7 +238,7 @@ strsolbld(void)
     } else if (BU_STR_EQUAL(type, "vol")) {
 	struct rt_vol_internal *vol;
 
-	BU_GETSTRUCT(vol, rt_vol_internal);
+	BU_GET(vol, struct rt_vol_internal);
 	MAT_IDN(vol->mat);
 
 	bu_vls_strcpy(&str, args);
@@ -1083,7 +1083,7 @@ polyhbld(void)
     BU_ASSERT_LONG(nlines, >, 0);
 
     /* Allocate storage for the faces */
-    BU_GETSTRUCT(pg, rt_pg_internal);
+    BU_GET(pg, struct rt_pg_internal);
     pg->magic = RT_PG_INTERNAL_MAGIC;
     pg->npoly = nlines;
     pg->poly = (struct rt_pg_face_internal *)bu_calloc(pg->npoly,

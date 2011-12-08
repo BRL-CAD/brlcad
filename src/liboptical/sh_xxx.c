@@ -182,7 +182,7 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 	bu_log("xxx_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT(xxx_sp, xxx_specific);
+    BU_GET(xxx_sp, struct xxx_specific);
     *dpp = xxx_sp;
 
     /* initialize the default values for the shader */

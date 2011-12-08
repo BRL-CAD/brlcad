@@ -1197,7 +1197,7 @@ parse_joint(FILE *fip, struct bu_vls *str)
 	Tcl_AppendResult(INTERP, "parse_joint: reading joint.\n", (char *)NULL);
     }
 
-    BU_GETSTRUCT(jp, joint);
+    BU_GET(jp, struct joint);
     jp->l.magic = MAGIC_JOINT_STRUCT;
     jp->anim = (struct animate *) 0;
     jp->path.type = ARC_UNSET;
@@ -1547,7 +1547,7 @@ parse_hold(FILE *fip, struct bu_vls *str)
     if (joint_debug & DEBUG_J_PARSE) {
 	Tcl_AppendResult(INTERP, "parse_hold: reading constraint\n", (char *)NULL);
     }
-    BU_GETSTRUCT(hp, hold);
+    BU_GET(hp, struct hold);
     hp->l.magic = MAGIC_HOLD_STRUCT;
     hp->name = NULL;
     hp->joint = NULL;
@@ -1730,7 +1730,7 @@ f_jload(int argc, const char *argv[])
     base2mm = dbip->dbi_base2local;
     mm2base = dbip->dbi_local2base;
 
-    BU_GETSTRUCT(instring, bu_vls);
+    BU_GET(instring, struct bu_vls);
     bu_vls_init(instring);
 
     while (argc) {
@@ -2155,7 +2155,7 @@ part_solve(struct hold *hp, double limits, double tol)
 	    if (hp->j_set.path.type == ARC_LIST) {
 		for (i=0; i <= (size_t)hp->j_set.path.arc_last; i++) {
 		    if (BU_STR_EQUAL(jp->name, hp->j_set.path.arc[i])) {
-			BU_GETSTRUCT(jh, jointH);
+			BU_GET(jh, struct jointH);
 			jh->l.magic = MAGIC_JOINT_HANDLE;
 			jh->p = jp;
 			jp->uses++;
@@ -2182,7 +2182,7 @@ part_solve(struct hold *hp, double limits, double tol)
 		    Tcl_AppendResult(INTERP, "part_solve: found ",
 				     jp->name, "\n", (char *)NULL);
 		}
-		BU_GETSTRUCT(jh, jointH);
+		BU_GET(jh, struct jointH);
 		jh->l.magic = MAGIC_JOINT_HANDLE;
 		jh->p = jp;
 		jp->uses++;
@@ -2430,7 +2430,7 @@ part_solve(struct hold *hp, double limits, double tol)
     }
     {
 	struct solve_stack *ssp;
-	BU_GETSTRUCT(ssp, solve_stack);
+	BU_GET(ssp, struct solve_stack);
 	ssp->jp = bestjoint;
 	ssp->freedom = bestfreedom;
 	ssp->old = (bestfreedom<3) ? bestjoint->rots[bestfreedom].current :
@@ -2994,7 +2994,7 @@ joint_move(struct joint *jp)
     if (!anp || anp->magic != ANIMATE_MAGIC) {
 	char *sofar;
 	struct directory *dp = NULL;
-	BU_GETSTRUCT(anp, animate);
+	BU_GET(anp, struct animate);
 	anp->magic = ANIMATE_MAGIC;
 	db_full_path_init(&anp->an_path);
 	anp->an_path.fp_len = jp->path.arc_last+1;

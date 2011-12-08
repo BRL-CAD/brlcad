@@ -108,7 +108,7 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(r
     VSUB2SCALE(work, stp->st_max, stp->st_min, 0.5);
     stp->st_aradius = stp->st_bradius = MAGNITUDE(work);
 
-    BU_GETSTRUCT(nmg_s, nmg_specific);
+    BU_GET(nmg_s, struct nmg_specific);
     stp->st_specific = (genptr_t)nmg_s;
     nmg_s->nmg_model = m;
     ip->idb_ptr = (genptr_t)NULL;

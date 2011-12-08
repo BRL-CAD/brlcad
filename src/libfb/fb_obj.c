@@ -836,7 +836,7 @@ fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	return BRLCAD_ERROR;
     }
 
-    BU_GETSTRUCT(fbop, fb_obj);
+    BU_GET(fbop, struct fb_obj);
     bu_vls_init(&fbop->fbo_name);
     bu_vls_strcpy(&fbop->fbo_name, argv[1]);
     fbop->fbo_fbs.fbs_fbp = ifp;

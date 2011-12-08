@@ -501,7 +501,7 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
 	combp = (struct rt_comb_internal *)intern.idb_ptr;
     } else {
 	/* A primitive was passed, construct a struct rt_comb_internal with a single leaf node */
-	BU_GETSTRUCT(combp, rt_comb_internal);
+	BU_GET(combp, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(combp);
 	combp->region_flag = 0;
 

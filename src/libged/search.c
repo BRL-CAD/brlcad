@@ -64,7 +64,7 @@ HIDDEN void
 _add_toplevel(struct db_full_path_list *path_list, int local)
 {
     struct db_full_path_list *new_entry;
-    BU_GETSTRUCT(new_entry, db_full_path_list);
+    BU_GET(new_entry, struct db_full_path_list);
     new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
     db_full_path_init(new_entry->path);
     new_entry->path->fp_maxlen = 0;
@@ -83,7 +83,7 @@ _gen_toplevel(struct db_i *dbip, struct db_full_path_list *path_list, struct db_
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
 		db_string_to_path(dfp, dbip, dp->d_namep);
-		BU_GETSTRUCT(new_entry, db_full_path_list);
+		BU_GET(new_entry, struct db_full_path_list);
 		new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
 		db_full_path_init(new_entry->path);
 		db_dup_full_path(new_entry->path, (const struct db_full_path *)dfp);
@@ -125,9 +125,9 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     }
 
     /* initialize list of search paths */
-    BU_GETSTRUCT(path_list, db_full_path_list);
+    BU_GET(path_list, struct db_full_path_list);
     BU_LIST_INIT(&(path_list->l));
-    BU_GETSTRUCT(dispatch_list, db_full_path_list);
+    BU_GET(dispatch_list, struct db_full_path_list);
     BU_LIST_INIT(&(dispatch_list->l));
 
 
@@ -178,7 +178,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			    bu_free_argv(argc, argv);
 			    return GED_ERROR;
 			} else {
-			    BU_GETSTRUCT(new_entry, db_full_path_list);
+			    BU_GET(new_entry, struct db_full_path_list);
 			    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
 			    db_full_path_init(new_entry->path);
 			    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
@@ -226,7 +226,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		}
 	    }
 	    if (search_all) {
-		BU_GETSTRUCT(local_list, db_full_path_list);
+		BU_GET(local_list, struct db_full_path_list);
 		BU_LIST_INIT(&(local_list->l));
 		_gen_toplevel(gedp->ged_wdbp->dbip, local_list, &dfp, 1);
 		uniq_db_objs = db_search_unique_objects(dbplan, local_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
@@ -242,7 +242,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	} else {
 	    for (BU_LIST_FOR_BACKWARDS(entry, db_full_path_list, &(path_list->l))) {
 		if (entry->path->fp_maxlen == 0) {
-		    BU_GETSTRUCT(local_list, db_full_path_list);
+		    BU_GET(local_list, struct db_full_path_list);
 		    BU_LIST_INIT(&(local_list->l));
 		    _gen_toplevel(gedp->ged_wdbp->dbip, local_list, &dfp, entry->local);
 		    if (entry->local) {
@@ -261,7 +261,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		    }
 		    db_free_full_path_list(local_list);
 		} else {
-		    BU_GETSTRUCT(new_entry, db_full_path_list);
+		    BU_GET(new_entry, struct db_full_path_list);
 		    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
 		    db_full_path_init(new_entry->path);
 		    db_dup_full_path(new_entry->path, entry->path);

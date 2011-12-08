@@ -49,7 +49,7 @@ mk_brep(struct rt_wdb* file, const char* name, ON_Brep* brep)
     struct rt_brep_internal* bi;
 
     BU_ASSERT(brep != NULL);
-    BU_GETSTRUCT(bi, rt_brep_internal);
+    BU_GET(bi, struct rt_brep_internal);
     bi->magic = RT_BREP_INTERNAL_MAGIC;
     bi->brep = new ON_Brep(*brep); /* copy the users' brep */
     if (!bi->brep) {

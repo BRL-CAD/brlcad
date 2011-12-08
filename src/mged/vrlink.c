@@ -126,7 +126,7 @@ vr_viewpoint_hook(void)
     }
 
     if (!old_str) {
-	BU_GETSTRUCT(old_str, bu_vls);
+	BU_GET(old_str, struct bu_vls);
 	bu_vls_init(old_str);
     }
     bu_vls_init(&str);

@@ -59,7 +59,7 @@ make_nmg_vertex_g(double x, double y, double z, long index)
 {
     struct vertex_g *vg;
 
-    BU_GETSTRUCT(vg, vertex_g);
+    BU_GET(vg, struct vertex_g);
     vg->magic = NMG_VERTEX_G_MAGIC;
 
     VSET(vg->coord, x, y, z);
@@ -73,7 +73,7 @@ make_nmg_vertex(double x, double y, double z, long index)
 {
     struct vertex *v;
 
-    BU_GETSTRUCT(v, vertex);
+    BU_GET(v, struct vertex);
     v->magic = NMG_VERTEX_MAGIC;
     
     BU_LIST_INIT(&v->vu_hd);
@@ -88,7 +88,7 @@ attach_face_g_plane(struct face *f)
 {
     struct face_g_plane *plane;
 
-    BU_GETSTRUCT(plane, face_g_plane);
+    BU_GET(plane, struct face_g_plane);
     plane->magic = NMG_FACE_G_PLANE_MAGIC;
 
     /* link up and down */

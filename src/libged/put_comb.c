@@ -314,7 +314,7 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
 	    bu_free(str, "dealloc bu_strdup str");
 	    return GED_ERROR;
 	} else if (n > 0) {
-	    BU_GETSTRUCT(llp, line_list);
+	    BU_GET(llp, struct line_list);
 	    BU_LIST_INSERT(&HeadLines.l, &llp->l);
 	    llp->line = line;
 
@@ -535,7 +535,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	comb->tree = NULL;
     } else {
 	/* make an empty combination structure */
-	BU_GETSTRUCT(comb, rt_comb_internal);
+	BU_GET(comb, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(comb);
     }
 

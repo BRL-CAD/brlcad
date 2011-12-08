@@ -265,7 +265,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
     /* solid is OK, compute constant terms, etc. */
-    BU_GETSTRUCT(tgc, tgc_specific);
+    BU_GET(tgc, struct tgc_specific);
     stp->st_specific = (genptr_t)tgc;
 
     VMOVE(tgc->tgc_V, tip->v);

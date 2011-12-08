@@ -609,7 +609,7 @@ gettree_leaf( struct db_tree_state *tsp, const struct db_full_path *pathp, struc
 	;
     }
 
-    BU_GETSTRUCT(stp, soltab);
+    BU_GET(stp, struct soltab);
     stp->l.magic = RT_SOLTAB_MAGIC;
     stp->st_id = ip->idb_type;
     stp->st_dp = dp;

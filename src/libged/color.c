@@ -195,7 +195,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "%s: Discarding %s\n", argv[0], line);
 		continue;
 	    }
-	    BU_GETSTRUCT(mp, mater);
+	    BU_GET(mp, struct mater);
 	    mp->mt_low = low;
 	    mp->mt_high = hi;
 	    mp->mt_r = r;
@@ -310,7 +310,7 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* construct the new color record */
-	BU_GETSTRUCT(newp, mater);
+	BU_GET(newp, struct mater);
 	newp->mt_low = atoi(argv[1]);
 	newp->mt_high = atoi(argv[2]);
 	newp->mt_r = atoi(argv[3]);
@@ -332,7 +332,7 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
 	struct bu_vls colors;
 
 	/* construct the new color record */
-	BU_GETSTRUCT(newp, mater);
+	BU_GET(newp, struct mater);
 	newp->mt_low = atoi(argv[1]);
 	newp->mt_high = atoi(argv[2]);
 	newp->mt_r = atoi(argv[3]);

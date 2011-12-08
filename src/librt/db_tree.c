@@ -131,7 +131,7 @@ db_new_combined_tree_state(const struct db_tree_state *tsp, const struct db_full
     RT_CK_FULL_PATH(pathp);
     RT_CK_DBI(tsp->ts_dbip);
 
-    BU_GETSTRUCT(new_ctsp, combined_tree_state);
+    BU_GET(new_ctsp, struct combined_tree_state);
     new_ctsp->magic = RT_CTS_MAGIC;
     db_dup_db_tree_state(&(new_ctsp->cts_s), tsp);
     db_full_path_init(&(new_ctsp->cts_p));
@@ -149,7 +149,7 @@ db_dup_combined_tree_state(const struct combined_tree_state *old_ctsp)
     struct combined_tree_state *new_ctsp;
 
     RT_CK_CTS(old_ctsp);
-    BU_GETSTRUCT(new_ctsp, combined_tree_state);
+    BU_GET(new_ctsp, struct combined_tree_state);
     new_ctsp->magic = RT_CTS_MAGIC;
     db_dup_db_tree_state(&(new_ctsp->cts_s), &(old_ctsp->cts_s));
     db_full_path_init(&(new_ctsp->cts_p));

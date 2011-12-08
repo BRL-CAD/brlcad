@@ -44,7 +44,7 @@ interpolate_data(fastf_t *grid)
     struct face_g_snurb *srf;
     fastf_t rt_nurb_par_edge();
 
-    BU_GETSTRUCT(srf, face_g_snurb);
+    BU_GET(srf, struct face_g_snurb);
 
     rt_nurb_sinterp(srf, 4, grid, 10, 10);
     rt_nurb_kvnorm(&srf->u);

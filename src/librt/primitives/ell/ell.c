@@ -320,7 +320,7 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
     /* Solid is OK, compute constant terms now */
-    BU_GETSTRUCT(ell, ell_specific);
+    BU_GET(ell, struct ell_specific);
     stp->st_specific = (genptr_t)ell;
 
     VMOVE(ell->ell_V, eip->v);

@@ -898,7 +898,7 @@ combdump(void)	/* Print out Combination record information */
     BU_LIST_INIT( &head );
     mcount = 0;
     while (1)  {
-	BU_GETSTRUCT( mp, mchain );
+	BU_GET(mp, struct mchain);
 	if ( fread( (char *)&mp->r, sizeof(mp->r), 1, ifp ) != 1
 	     || feof( ifp ) )
 	    break;

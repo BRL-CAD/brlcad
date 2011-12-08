@@ -140,7 +140,7 @@ make_default_host(const char* name)
 {
     struct ihost	*ihp;
 
-    BU_GETSTRUCT( ihp, ihost );
+    BU_GET(ihp, struct ihost);
     ihp->l.magic = IHOST_MAGIC;
 
     /* Make private copy of host name -- callers have static buffers */

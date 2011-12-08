@@ -51,7 +51,7 @@ mk_vol(struct rt_wdb *fp, const char *name, const char *file, size_t xdim, size_
 {
     struct rt_vol_internal *vol;
 
-    BU_GETSTRUCT(vol, rt_vol_internal);
+    BU_GET(vol, struct rt_vol_internal);
     vol->magic = RT_VOL_INTERNAL_MAGIC;
     bu_strlcpy(vol->file, file, RT_VOL_NAME_LEN);
     vol->xdim = xdim;

@@ -611,7 +611,7 @@ wrobj(struct ged *gedp,
 	case ID_ARB8: {
 	    struct rt_arb_internal *arb;
 
-	    BU_GETSTRUCT(arb, rt_arb_internal);
+	    BU_GET(arb, struct rt_arb_internal);
 
 	    arb->magic = RT_ARB_INTERNAL_MAGIC;
 
@@ -628,7 +628,7 @@ wrobj(struct ged *gedp,
 	case ID_TGC: {
 	    struct rt_tgc_internal *tgc;
 
-	    BU_GETSTRUCT(tgc, rt_tgc_internal);
+	    BU_GET(tgc, struct rt_tgc_internal);
 
 	    tgc->magic = RT_TGC_INTERNAL_MAGIC;
 
@@ -1062,7 +1062,7 @@ track_mk_addmember(
 {
     struct wmember *wp;
 
-    BU_GETSTRUCT(wp, wmember);
+    BU_GET(wp, struct wmember);
     wp->l.magic = WMEMBER_MAGIC;
     wp->wm_name = bu_strdup(name);
     switch (op) {
@@ -1154,7 +1154,7 @@ track_mk_comb(
 	fresh_combination = 0;
     } else {
 	/* Create a fresh new object for export */
-	BU_GETSTRUCT(comb, rt_comb_internal);
+	BU_GET(comb, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(comb);
 
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;

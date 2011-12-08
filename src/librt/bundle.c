@@ -200,7 +200,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     bu_bitv_clear(solidbits);
 
     if (BU_LIST_IS_EMPTY(&resp->re_region_ptbl)) {
-	BU_GETSTRUCT(regionbits, bu_ptbl);
+	BU_GET(regionbits, struct bu_ptbl);
 	bu_ptbl_init(regionbits, 7, "rt_shootray_bundle() regionbits ptbl");
     } else {
 	regionbits = BU_LIST_FIRST(bu_ptbl, &resp->re_region_ptbl);
@@ -698,12 +698,12 @@ bundle_hit(register struct application *ap, struct partition *PartHeadp, struct 
 	/*
 	 * setup partition collection
 	 */
-	BU_GETSTRUCT(bundle->list, partition_list);
+	BU_GET(bundle->list, struct partition_list);
 	BU_LIST_INIT(&(bundle->list->l));
     }
 
     /* add a new partition to list */
-    BU_GETSTRUCT(new_shotline, partition_list);
+    BU_GET(new_shotline, struct partition_list);
 
     /* steal partition list */
     BU_LIST_INIT_MAGIC((struct bu_list *)&new_shotline->PartHeadp, PT_HD_MAGIC);

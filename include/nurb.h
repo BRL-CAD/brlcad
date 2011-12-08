@@ -81,10 +81,10 @@
 #define NMG_CK_CNURB(_p)	BU_CKMAG(_p, NMG_EDGE_G_CNURB_MAGIC, "cnurb")
 #define NMG_CK_SNURB(_p)	BU_CKMAG(_p, NMG_FACE_G_SNURB_MAGIC, "snurb")
 
-#define GET_CNURB(p/*, m*/) 		{BU_GETSTRUCT(p, edge_g_cnurb); \
+#define GET_CNURB(p/*, m*/) 		{BU_GET(p, struct edge_g_cnurb); \
 	/* NMG_INCR_INDEX(p, m); */ \
 	BU_LIST_INIT( &(p)->l ); (p)->l.magic = NMG_EDGE_G_CNURB_MAGIC; }
-#define GET_SNURB(p/*, m*/) 		{BU_GETSTRUCT(p, face_g_snurb); \
+#define GET_SNURB(p/*, m*/) 		{BU_GET(p, struct face_g_snurb); \
 	/* NMG_INCR_INDEX(p, m); */ \
 	BU_LIST_INIT( &(p)->l ); (p)->l.magic = NMG_FACE_G_SNURB_MAGIC; }
 

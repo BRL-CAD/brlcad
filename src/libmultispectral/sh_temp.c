@@ -238,7 +238,7 @@ temp_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
     size_t pixelbytes = 8;
 
     BU_CK_VLS( matparm );
-    BU_GETSTRUCT( tp, temp_specific );
+    BU_GET(tp, struct temp_specific);
     *dpp = tp;
 
     tp->t_file[0] = '\0';

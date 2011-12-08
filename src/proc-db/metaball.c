@@ -120,7 +120,7 @@ mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
      * manually fill in with points from the other metaballs being
      * joined together.
      */
-    BU_GETSTRUCT(newmp, rt_metaball_internal);
+    BU_GET(newmp, struct rt_metaball_internal);
     newmp->magic = RT_METABALL_INTERNAL_MAGIC;
     newmp->threshold = 1.0;
     newmp->method = 1;

@@ -79,7 +79,7 @@ rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     RT_GRIP_CK_MAGIC(gip);
 
-    BU_GETSTRUCT(gripp, grip_specific);
+    BU_GET(gripp, struct grip_specific);
     stp->st_specific = (genptr_t)gripp;
 
     VMOVE(gripp->grip_normal, gip->normal);

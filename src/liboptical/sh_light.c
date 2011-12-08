@@ -604,7 +604,7 @@ light_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 
     BU_CK_VLS(matparm);
 
-    BU_GETSTRUCT(lsp, light_specific);
+    BU_GET(lsp, struct light_specific);
     BU_LIST_INIT_MAGIC(&(lsp->l), LIGHT_MAGIC);
 
     lsp->lt_intensity = 1.0;	/* Lumens */
@@ -1848,7 +1848,7 @@ light_maker(int num, mat_t v2m)
 	    MAT4X3PNT(tmp, v2m, pt); bu_log("Q %g %g %g\n", V3ARGS(tmp));
 	}
 
-	BU_GETSTRUCT(lsp, light_specific);
+	BU_GET(lsp, struct light_specific);
 	BU_LIST_INIT_MAGIC(&(lsp->l), LIGHT_MAGIC);
 
 #ifdef RT_MULTISPECTRAL

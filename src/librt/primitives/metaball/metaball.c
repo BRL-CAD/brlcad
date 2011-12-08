@@ -732,7 +732,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
     if (mat == NULL) mat = bn_mat_identity;
     for (i=1; i<=metaball_count*5; i+=5) {
 	/* Apply modeling transformations */
-	BU_GETSTRUCT(mbpt, wdb_metaballpt);
+	BU_GET(mbpt, struct wdb_metaballpt);
 	mbpt->l.magic = WDB_METABALLPT_MAGIC;
 	MAT4X3PNT(mbpt->coord, mat, &buf[i]);
 	mbpt->fldstr = buf[i+3] / mat[15];
@@ -886,7 +886,7 @@ rt_metaball_add_point (struct rt_metaball_internal *mb, const point_t *loc, cons
 {
     struct wdb_metaballpt *mbpt;
 
-    BU_GETSTRUCT(mbpt, wdb_metaballpt);
+    BU_GET(mbpt, struct wdb_metaballpt);
     mbpt->l.magic = WDB_METABALLPT_MAGIC;
     VMOVE(mbpt->coord, *loc);
     mbpt->fldstr = fldstr;

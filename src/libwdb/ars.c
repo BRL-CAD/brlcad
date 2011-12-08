@@ -53,7 +53,7 @@ mk_ars(struct rt_wdb *filep, const char *name, size_t ncurves, size_t pts_per_cu
 {
     struct rt_ars_internal *ars;
 
-    BU_GETSTRUCT(ars, rt_ars_internal);
+    BU_GET(ars, struct rt_ars_internal);
     ars->magic = RT_ARS_INTERNAL_MAGIC;
     ars->ncurves = ncurves;
     ars->pts_per_curve = pts_per_curve;

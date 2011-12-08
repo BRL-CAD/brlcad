@@ -716,11 +716,11 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
     /* options are already parsed into _dgcdp */
     if (_dgcdp != (struct _ged_client_data *)0) {
-	BU_GETSTRUCT(dgcdp, _ged_client_data);
+	BU_GET(dgcdp, struct _ged_client_data);
 	*dgcdp = *_dgcdp;            /* struct copy */
     } else {
 
-	BU_GETSTRUCT(dgcdp, _ged_client_data);
+	BU_GET(dgcdp, struct _ged_client_data);
 	dgcdp->gedp = gedp;
 
 	/* Initial values for options, must be reset each time */
@@ -1360,7 +1360,7 @@ ged_addToDisplay(struct ged *gedp,
 	gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
     }
 
-    BU_GETSTRUCT(gdlp, ged_display_list);
+    BU_GET(gdlp, struct ged_display_list);
     BU_LIST_INSERT(&gedp->ged_gdp->gd_headDisplay, &gdlp->l);
     BU_LIST_INIT(&gdlp->gdl_headSolid);
     gdlp->gdl_dp = dp;

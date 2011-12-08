@@ -237,7 +237,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
  *
  * Memory acquired with BU_GET() should be returned with BU_PUT().
  */
-#define BU_PUT(_ptr, _type) (uint8_t)(*(_ptr)) = /*zap*/ 0; bu_free(_ptr, #str " (BU_PUT) " BU_FLSTR); _ptr = NULL
+#define BU_PUT(_ptr, _type) (uint8_t)(*(_ptr)) = /*zap*/ 0; bu_free(_ptr, #_type " (BU_PUT) " BU_FLSTR); _ptr = NULL
 
 
 /**
@@ -769,13 +769,13 @@ BU_EXPORT extern bu_endian_t bu_byteorder(void);
  struct my_structure *my_list = NULL;
 
  // allocate and initialize your list head
- BU_GETSTRUCT(my_list, my_structure);
+ BU_GET(my_list, struct my_structure);
  BU_LIST_INIT(&(my_list->l));
  my_list->my_data = -1;
 
  // add a new element to your list
  struct my_structure *new_entry;
- BU_GETSTRUCT(new_entry, my_structure);
+ BU_GET(new_entry, struct my_structure);
  new_entry->my_data = rand();
  BU_LIST_PUSH(&(my_list->l), &(new_entry->l));
 

@@ -512,7 +512,7 @@ grass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 	bu_log("grass_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT(grass_sp, grass_specific);
+    BU_GET(grass_sp, struct grass_specific);
     *dpp = grass_sp;
 
     /* initialize the default values for the shader */

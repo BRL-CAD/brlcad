@@ -164,7 +164,7 @@ scannerFree(scanner_t *scanner);
     yycursor = _re2c_scanner->tokenStart; \
     _re2c_scanner->cursor_p = &yycursor; \
 \
-    BU_GETSTRUCT(_re2c_token_string, bu_vls); \
+    BU_GET(_re2c_token_string, struct bu_vls); \
     bu_vls_init(_re2c_token_string); \
 \
     /* create implicit label */ \

@@ -635,7 +635,7 @@ vdraw_open(void *data, int argc, const char *argv[])
 
     if (!gedp->ged_gdp->gd_currVHead) {
 	/* create new entry */
-	BU_GETSTRUCT(rcp, vd_curve);
+	BU_GET(rcp, struct vd_curve);
 	BU_LIST_APPEND(&gedp->ged_gdp->gd_headVDraw, &(rcp->l));
 
 	bu_strlcpy(rcp->vdc_name, temp_name, RT_VDRW_MAXNAME);

@@ -294,7 +294,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(r
     stp->st_id = ID_EPA;	/* set soltab ID */
     stp->st_meth = &rt_functab[ID_EPA];
 
-    BU_GETSTRUCT(epa, epa_specific);
+    BU_GET(epa, struct epa_specific);
     stp->st_specific = (genptr_t)epa;
 
     epa->epa_h = mag_h;

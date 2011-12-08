@@ -131,7 +131,7 @@ get_obj_material(int red, int green, int blue, fastf_t transparency)
 	}
     }
 
-    BU_GETSTRUCT(gomp, _ged_obj_material);
+    BU_GET(gomp, struct _ged_obj_material);
     BU_LIST_APPEND(&HeadObjMaterials, &gomp->l);
     gomp->r = red;
     gomp->g = green;
@@ -986,7 +986,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	struct _ged_bot_dump_client_data *gbdcdp;
 
 	av[1] = (char *)0;
-	BU_GETSTRUCT(gbdcdp, _ged_bot_dump_client_data);
+	BU_GET(gbdcdp, struct _ged_bot_dump_client_data);
 	gbdcdp->gedp = gedp;
 	gbdcdp->fp = fp;
 	gbdcdp->fd = fd;

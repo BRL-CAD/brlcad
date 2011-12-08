@@ -134,7 +134,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 #endif /* HAVE_SYS_STAT_H */
 
     /* Optimisticly assume that things will proceed OK */
-    BU_GETSTRUCT(mp, bu_mapped_file);
+    BU_GET(mp, struct bu_mapped_file);
     mp->name = bu_strdup(name);
     if (appl) mp->appl = bu_strdup(appl);
 

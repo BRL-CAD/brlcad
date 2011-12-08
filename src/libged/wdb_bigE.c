@@ -172,7 +172,7 @@ wdb_add_solid(const struct directory *dp,
     }
 
     /* get the soltab stuff */
-    BU_GETSTRUCT(eptr->l.stp, soltab);
+    BU_GET(eptr->l.stp, struct soltab);
     eptr->l.stp->l.magic = RT_SOLTAB_MAGIC;
     eptr->l.stp->l2.magic = RT_SOLTAB2_MAGIC;
     eptr->l.stp->st_dp = dp;
@@ -1045,7 +1045,7 @@ wdb_classify_seg(struct seg *seg, struct soltab *shoot, struct xray *rp, struct 
 
     memset(&rd, 0, sizeof(struct ray_data));
 
-    BU_GETSTRUCT(rd.seghead, seg);
+    BU_GET(rd.seghead, struct seg);
     BU_LIST_INIT(&rd.seghead->l);
 
     mid_dist = (seg->seg_in.hit_dist + seg->seg_out.hit_dist) / 2.0;
@@ -1148,7 +1148,7 @@ wdb_shoot_and_plot(point_t start_pt,
 
     memset(&rd, 0, sizeof(struct ray_data));
 
-    BU_GETSTRUCT(rd.seghead, seg);
+    BU_GET(rd.seghead, struct seg);
     BU_LIST_INIT(&rd.seghead->l);
 
     VMOVE(rp.r_pt, start_pt)
@@ -1990,7 +1990,7 @@ wdb_fix_halfs(struct dg_client_data *dgcdp)
 	nmg_close_shell(s, tol);
 	nmg_rebound(tp->l.m, tol);
 
-	BU_GETSTRUCT(pg, rt_pg_internal);
+	BU_GET(pg, struct rt_pg_internal);
 
 	if (!nmg_to_poly(tp->l.m, pg, tol)) {
 	    bu_free((char *)pg, "rt_pg_internal");
@@ -2043,7 +2043,7 @@ dgo_E_cmd(struct dg_obj *dgop,
     if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
 	bu_log("Error at start of 'E'\n");
 
-    BU_GETSTRUCT(dgcdp, dg_client_data);
+    BU_GET(dgcdp, struct dg_client_data);
     dgcdp->dgop = dgop;
     dgcdp->interp = dgop->interp;
     dgcdp->do_polysolids = 0;

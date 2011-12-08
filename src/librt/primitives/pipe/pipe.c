@@ -3382,7 +3382,7 @@ rt_pipe_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
         ntohd((unsigned char *)tmp.pp_coord, exp_pipept->epp_coord, 3);
         
         /* Apply modeling transformations */
-        BU_GETSTRUCT(ptp, wdb_pipept);
+        BU_GET(ptp, struct wdb_pipept);
         ptp->l.magic = WDB_PIPESEG_MAGIC;
         MAT4X3PNT(ptp->pp_coord, mat, tmp.pp_coord);
         ptp->pp_id = tmp.pp_id / mat[15];
@@ -3509,7 +3509,7 @@ rt_pipe_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     if (mat == NULL) mat = bn_mat_identity;
     for (i = 0; i < double_count; i += 6) {
         /* Apply modeling transformations */
-        BU_GETSTRUCT(ptp, wdb_pipept);
+        BU_GET(ptp, struct wdb_pipept);
         ptp->l.magic = WDB_PIPESEG_MAGIC;
         MAT4X3PNT(ptp->pp_coord, mat, &vec[i]);
         ptp->pp_id =		vec[i+3] / mat[15];

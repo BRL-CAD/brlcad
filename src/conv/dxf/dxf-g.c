@@ -310,7 +310,7 @@ get_layer()
 	    max_layers += 5;
 	    layers = (struct layer **)bu_realloc( layers, max_layers*sizeof( struct layer *), "layers" );
 	    for ( i=0; i<5; i++ ) {
-		BU_GETSTRUCT( layers[max_layers-i-1], layer );
+		BU_GET(layers[max_layers-i-1], struct layer);
 	    }
 	}
 	curr_layer = next_layer++;
@@ -613,7 +613,7 @@ process_blocks_code( int code )
 		break;
 	    } else if ( !strncmp( line, "BLOCK", 5 ) ) {
 		/* start of a new block */
-		BU_GETSTRUCT( curr_block, block_list );
+		BU_GET(curr_block, struct block_list);
 		curr_block->offset = ftell( dxf );
 		BU_LIST_INSERT( &(block_head), &(curr_block->l) );
 		break;
@@ -1127,7 +1127,7 @@ process_insert_entities_code( int code )
 
     if ( !new_state ) {
 	insert_init( &ins );
-	BU_GETSTRUCT( new_state, state_data );
+	BU_GET(new_state, struct state_data);
 	*new_state = *curr_state;
 	if ( verbose ) {
 	    bu_log( "Created a new state for INSERT\n" );
@@ -2210,14 +2210,14 @@ process_mtext_entities_code( int code )
     switch ( code ) {
 	case 3:
 	    if (!vls) {
-		BU_GETSTRUCT(vls, bu_vls);
+		BU_GET(vls, struct bu_vls);
 		bu_vls_init(vls);
 	    }
 	    bu_vls_strcat(vls, line);
 	    break;
 	case 1:
 	    if (!vls) {
-		BU_GETSTRUCT(vls, bu_vls);
+		BU_GET(vls, struct bu_vls);
 		bu_vls_init(vls);
 	    }
 	    bu_vls_strcat(vls, line);
@@ -2442,7 +2442,7 @@ process_dimension_entities_code( int code )
 	    if ( block_name != NULL  ) {
 		/* insert this dimension block */
 		get_layer();
-		BU_GETSTRUCT( new_state, state_data );
+		BU_GET(new_state, struct state_data);
 		*new_state = *curr_state;
 		if ( verbose ) {
 		    bu_log( "Created a new state for DIMENSION\n" );
@@ -3007,7 +3007,7 @@ nmg_wire_edges_to_sketch( struct model *m )
 		} else {
 		    eu1 = eu->eumate_p;
 		}
-		BU_GETSTRUCT( lseg, line_seg );
+		BU_GET(lseg, struct line_seg);
 		lseg->magic = CURVE_LSEG_MAGIC;
 		v = eu->vu_p->v_p;
 		lseg->start = Add_vert( V3ARGS(v->vg_p->coord), vr, tol_sq );
@@ -3219,7 +3219,7 @@ main( int argc, char *argv[] )
     BU_LIST_INIT( &state_stack );
 
     /* create initial state */
-    BU_GETSTRUCT( curr_state, state_data );
+    BU_GET(curr_state, struct state_data);
     curr_state->file_offset = 0;
     curr_state->state = UNKNOWN_SECTION;
     curr_state->sub_state = UNKNOWN_ENTITY_STATE;
@@ -3231,7 +3231,7 @@ main( int argc, char *argv[] )
     curr_layer = 0;
     layers = (struct layer **)bu_calloc( 5, sizeof( struct layer *), "layers" );
     for ( i=0; i<max_layers; i++ ) {
-	BU_GETSTRUCT( layers[i], layer );
+	BU_GET(layers[i], struct layer);
     }
     layers[0]->name = bu_strdup( "noname" );
     layers[0]->color_number = 7;	/* default white */

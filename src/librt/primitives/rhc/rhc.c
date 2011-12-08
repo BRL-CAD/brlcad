@@ -311,7 +311,7 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_id = ID_RHC;		/* set soltab ID */
     stp->st_meth = &rt_functab[ID_RHC];
 
-    BU_GETSTRUCT(rhc, rhc_specific);
+    BU_GET(rhc, struct rhc_specific);
     stp->st_specific = (genptr_t)rhc;
     rhc->rhc_b = mag_b;
     rhc->rhc_rsq = magsq_r;

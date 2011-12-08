@@ -142,7 +142,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     if ((do_arb || do_all) && shell_count == 1) {
 	struct rt_arb_internal *arb_int;
 
-	BU_GETSTRUCT(arb_int, rt_arb_internal);
+	BU_GET(arb_int, struct rt_arb_internal);
 
 	if (nmg_to_arb(m, arb_int)) {
 	    new_intern.idb_ptr = (genptr_t)(arb_int);
@@ -179,7 +179,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     if ((do_tgc || do_all) && !success && shell_count == 1) {
 	struct rt_tgc_internal *tgc_int;
 
-	BU_GETSTRUCT(tgc_int, rt_tgc_internal);
+	BU_GET(tgc_int, struct rt_tgc_internal);
 
 	if (nmg_to_tgc(m, tgc_int, &gedp->ged_wdbp->wdb_tol)) {
 	    new_intern.idb_ptr = (genptr_t)(tgc_int);
@@ -198,7 +198,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     if ((do_arb || do_all) && !success && shell_count == 1) {
 	struct rt_arb_internal *arb_int;
 
-	BU_GETSTRUCT(arb_int, rt_arb_internal);
+	BU_GET(arb_int, struct rt_arb_internal);
 
 	r = BU_LIST_FIRST(nmgregion, &m->r_hd);
 	s = BU_LIST_FIRST(shell, &r->s_hd);

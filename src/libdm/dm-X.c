@@ -88,7 +88,7 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
     int r, g, b;
 
     if (!colors) {
-	BU_GETSTRUCT(colors, allocated_colors);
+	BU_GET(colors, struct allocated_colors);
 	BU_LIST_INIT(&(colors->l));
 	colors->r = colors->g = colors->b = -1;
     }
@@ -125,7 +125,7 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
     }
 
     /* got new valid color, add it to our list */
-    BU_GETSTRUCT(c, allocated_colors);
+    BU_GET(c, struct allocated_colors);
     c->r = r;
     c->g = g;
     c->b = b;
@@ -436,7 +436,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     }
 #endif
 
-    BU_GETSTRUCT(dmp, dm);
+    BU_GET(dmp, struct dm);
     if (dmp == DM_NULL) {
 	return DM_NULL;
     }

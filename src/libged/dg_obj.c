@@ -198,7 +198,7 @@ dgo_open_cmd(const char *oname,
 {
     struct dg_obj *dgop;
 
-    BU_GETSTRUCT(dgop, dg_obj);
+    BU_GET(dgop, struct dg_obj);
 
     /* initialize dg_obj */
     bu_vls_init(&dgop->dgo_name);
@@ -1842,14 +1842,14 @@ dgo_run_rt(struct dg_obj *dgop,
     dgo_rt_write(dgop, vop, fp_in, eye_model);
     (void)fclose(fp_in);
 
-    BU_GETSTRUCT(run_rtp, run_rt);
+    BU_GET(run_rtp, struct run_rt);
     BU_LIST_INIT(&run_rtp->l);
     BU_LIST_APPEND(&dgop->dgo_headRunRt.l, &run_rtp->l);
 
     run_rtp->fd = pipe_err[0];
     run_rtp->pid = pid;
 
-    BU_GETSTRUCT(drcdp, dg_rt_client_data);
+    BU_GET(drcdp, struct dg_rt_client_data);
     drcdp->dgop = dgop;
     drcdp->rrtp = run_rtp;
     drcdp->interp = dgop->dgo_wdbp->wdb_interp;
@@ -1917,7 +1917,7 @@ dgo_run_rt(struct dg_obj *dgop,
     dgo_rt_write(dgop, vop, fp_in, eye_model);
     (void)fclose(fp_in);
 
-    BU_GETSTRUCT(run_rtp, run_rt);
+    BU_GET(run_rtp, struct run_rt);
     BU_LIST_INIT(&run_rtp->l);
     BU_LIST_APPEND(&dgop->dgo_headRunRt.l, &run_rtp->l);
 
@@ -1927,7 +1927,7 @@ dgo_run_rt(struct dg_obj *dgop,
     run_rtp->aborted=0;
     run_rtp->chan = Tcl_MakeFileChannel(run_rtp->fd, TCL_READABLE);
 
-    BU_GETSTRUCT(drcdp, dg_rt_client_data);
+    BU_GET(drcdp, struct dg_rt_client_data);
     drcdp->dgop = dgop;
     drcdp->rrtp = run_rtp;
     drcdp->interp = dgop->dgo_wdbp->wdb_interp;
@@ -2510,7 +2510,7 @@ dgo_rtcheck_command(struct dg_obj *dgop,
     (void)close(i_pipe[1]);
     (void)close(e_pipe[1]);
 
-    BU_GETSTRUCT(rtcp, rtcheck);
+    BU_GET(rtcp, struct rtcheck);
 
     /* initialize the rtcheck struct */
     rtcp->fd = i_pipe[0];
@@ -2526,7 +2526,7 @@ dgo_rtcheck_command(struct dg_obj *dgop,
     Tcl_CreateFileHandler(i_pipe[0], TCL_READABLE,
 			  dgo_rtcheck_vector_handler, (ClientData)rtcp);
 
-    BU_GETSTRUCT(rtcop, rtcheck_output);
+    BU_GET(rtcop, struct rtcheck_output);
     rtcop->fd = e_pipe[0];
     rtcop->dgop = dgop;
     rtcop->interp = dgop->interp;
@@ -2654,7 +2654,7 @@ dgo_rtcheck_command(struct dg_obj *dgop,
     dgo_rt_write(dgop, vop, fp, eye_model);
     (void)fclose(fp);
 
-    BU_GETSTRUCT(rtcp, rtcheck);
+    BU_GET(rtcp, struct rtcheck);
 
     /* initialize the rtcheck struct */
     rtcp->fd = pipe_iDup;
@@ -2673,7 +2673,7 @@ dgo_rtcheck_command(struct dg_obj *dgop,
 			     dgo_rtcheck_vector_handler,
 			     (ClientData)rtcp);
 
-    BU_GETSTRUCT(rtcop, rtcheck_output);
+    BU_GET(rtcop, struct rtcheck_output);
     rtcop->fd = pipe_eDup;
     rtcop->chan = Tcl_MakeFileChannel(pipe_eDup, TCL_READABLE);
     rtcop->dgop = dgop;
@@ -3986,11 +3986,11 @@ dgo_drawtrees(struct dg_obj *dgop, int argc, const char **argv, int kind, struct
 
     /* options are already parsed into _dgcdp */
     if (_dgcdp != (struct dg_client_data *)0) {
-	BU_GETSTRUCT(dgcdp, dg_client_data);
+	BU_GET(dgcdp, struct dg_client_data);
 	*dgcdp = *_dgcdp;            /* struct copy */
     } else {
 
-	BU_GETSTRUCT(dgcdp, dg_client_data);
+	BU_GET(dgcdp, struct dg_client_data);
 	dgcdp->dgop = dgop;
 	dgcdp->interp = dgop->interp;
 

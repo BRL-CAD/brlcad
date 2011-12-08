@@ -140,7 +140,7 @@ vo_open_cmd(const char *oname)
 {
     struct view_obj *vop;
 
-    BU_GETSTRUCT(vop, view_obj);
+    BU_GET(vop, struct view_obj);
 
     /* initialize view_obj */
     bu_vls_init(&vop->vo_name);

@@ -167,7 +167,7 @@ rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struc
     vect_t work;
     fastf_t m1, m2, m3, m4;
 
-    BU_GETSTRUCT(trip, tri_specific);
+    BU_GET(trip, struct tri_specific);
     VMOVE(trip->tri_A, ap);
     VSUB2(trip->tri_BA, bp, ap);
     VSUB2(trip->tri_CA, cp, ap);
@@ -976,7 +976,7 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 
     RT_PG_CK_MAGIC(ip_pg);
 
-    BU_GETSTRUCT(ip_bot, rt_bot_internal);
+    BU_GET(ip_bot, struct rt_bot_internal);
     ip_bot->magic = RT_BOT_INTERNAL_MAGIC;
     ip_bot->mode = RT_BOT_SOLID;
     ip_bot->orientation = RT_BOT_CCW;

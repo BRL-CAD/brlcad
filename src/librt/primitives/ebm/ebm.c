@@ -916,7 +916,7 @@ rt_ebm_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     RT_EBM_CK_MAGIC(eip);
 
-    BU_GETSTRUCT(ebmp, rt_ebm_specific);
+    BU_GET(ebmp, struct rt_ebm_specific);
     ebmp->ebm_i = *eip;		/* struct copy */
 
     /* "steal" the bitmap storage */

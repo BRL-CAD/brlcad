@@ -243,7 +243,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    BU_GETSTRUCT(dmp, dm);
+    BU_GET(dmp, struct dm);
     if (dmp == DM_NULL) {
 	return DM_NULL;
     }
@@ -1149,12 +1149,12 @@ addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char fl
 	VMOVE(bin->color, partColor);
 
 	/* create bin list head */
-	BU_GETSTRUCT(bin->list, ptInfoList);
+	BU_GET(bin->list, struct ptInfoList);
 	head = &(bin->list->l);
 	BU_LIST_INIT(head);
 
 	/* add first list item */
-	BU_GETSTRUCT(rtgljob.currItem, ptInfoList);
+	BU_GET(rtgljob.currItem, struct ptInfoList);
 	BU_LIST_PUSH(head, rtgljob.currItem);
 	rtgljob.currItem->used = 0;
 
@@ -1171,7 +1171,7 @@ addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char fl
 	/* if list item is full, create a new item */
 	if (rtgljob.currItem->used == PT_ARRAY_SIZE) {
 
-	    BU_GETSTRUCT(rtgljob.currItem, ptInfoList);
+	    BU_GET(rtgljob.currItem, struct ptInfoList);
 	    BU_LIST_PUSH(head, rtgljob.currItem);
 	    rtgljob.currItem->used = 0;
 	}
@@ -1456,7 +1456,7 @@ shootGrid(struct jobList *jobs, vect_t min, vect_t max, double maxSpan, int pixe
 	    /* make new job if needed */
 	    if (rtgljob.currJob->used == JOB_ARRAY_SIZE) {
 
-		BU_GETSTRUCT(rtgljob.currJob, jobList);
+		BU_GET(rtgljob.currJob, struct jobList);
 		BU_LIST_PUSH(&(jobs->l), rtgljob.currJob);
 		rtgljob.currJob->used = 0;
 	    }
@@ -1836,7 +1836,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 	/* initialize job list */
 	BU_LIST_INIT(&(jobs.l));
 
-	BU_GETSTRUCT(rtgljob.currJob, jobList);
+	BU_GET(rtgljob.currJob, struct jobList);
 	BU_LIST_PUSH(&(jobs.l), rtgljob.currJob);
 	rtgljob.currJob->used = 0;
 

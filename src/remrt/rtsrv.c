@@ -399,7 +399,7 @@ ph_enqueue(struct pkg_conn *pc, char *buf)
 
     if ( debug )  fprintf(stderr, "ph_enqueue: %s\n", buf );
 
-    BU_GETSTRUCT( lp, pkg_queue );
+    BU_GET(lp, struct pkg_queue);
     lp->type = pc->pkc_type;
     lp->buf = buf;
     BU_LIST_INSERT( &WorkHead, &lp->l );

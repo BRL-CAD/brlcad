@@ -568,7 +568,7 @@ mged_setup(Tcl_Interp **interpreter)
 	Tcl_ResetResult(*interpreter);
     }
 
-    BU_GETSTRUCT(view_state->vs_gvp, ged_view);
+    BU_GET(view_state->vs_gvp, struct ged_view);
     ged_view_init(view_state->vs_gvp);
 
     view_state->vs_gvp->gv_callback = mged_view_callback;
@@ -579,7 +579,7 @@ mged_setup(Tcl_Interp **interpreter)
 	/* release any allocated memory */
 	ged_free(gedp);
     } else {
-	BU_GETSTRUCT(gedp, ged);
+	BU_GET(gedp, struct ged);
     }
     GED_INIT(gedp, NULL);
 

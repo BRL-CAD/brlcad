@@ -100,12 +100,12 @@ scannerInit(scanner_t *scanner, FILE *in)
 {
     scannerSetStartCondition(scanner, INITIAL);
 
-    BU_GETSTRUCT(scanner->tokenText, bu_vls);
+    BU_GET(scanner->tokenText, struct bu_vls);
     bu_vls_init(scanner->tokenText);
 
     scanner->in = in;
 
-    BU_GETSTRUCT(scanner->currLine, bu_vls);
+    BU_GET(scanner->currLine, struct bu_vls);
     bu_vls_init(scanner->currLine);
 
     scannerGetNextLine(scanner->currLine, scanner->in);

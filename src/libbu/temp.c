@@ -100,7 +100,7 @@ _bu_add_to_list(const char *fn, int fd)
 	/* schedule files for closure on exit */
 	atexit(_bu_close_files);
 
-	BU_GETSTRUCT(_bu_tf, _bu_tf_list);
+	BU_GET(_bu_tf, struct _bu_tf_list);
 	BU_LIST_INIT(&(_bu_tf->l));
 	bu_vls_init(&_bu_tf->fn);
 
@@ -110,7 +110,7 @@ _bu_add_to_list(const char *fn, int fd)
 	return;
     }
 
-    BU_GETSTRUCT(newtf, _bu_tf_list);
+    BU_GET(newtf, struct _bu_tf_list);
     BU_LIST_INIT(&(_bu_tf->l));
     bu_vls_init(&_bu_tf->fn);
 

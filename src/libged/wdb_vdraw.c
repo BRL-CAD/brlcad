@@ -622,7 +622,7 @@ vdraw_open_tcl(void *clientData, int argc, const char *argv[])
 
     if (!dgop->dgo_currVHead) {
 	/* create new entry */
-	BU_GETSTRUCT(rcp, vd_curve);
+	BU_GET(rcp, struct vd_curve);
 	BU_LIST_APPEND(&dgop->dgo_headVDraw, &(rcp->l));
 
 	bu_strlcpy(rcp->vdc_name, temp_name, RT_VDRW_MAXNAME);

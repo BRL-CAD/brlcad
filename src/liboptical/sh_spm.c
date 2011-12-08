@@ -121,7 +121,7 @@ spm_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *
     register struct spm_specific *spp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(spp, spm_specific);
+    BU_GET(spp, struct spm_specific);
     *dpp = spp;
 
     spp->sp_file[0] = '\0';

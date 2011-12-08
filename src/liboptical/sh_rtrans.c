@@ -93,7 +93,7 @@ rtrans_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
     RT_CHECK_RTI(rtip);
     BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
-    BU_GETSTRUCT(rtrans_sp, rtrans_specific);
+    BU_GET(rtrans_sp, struct rtrans_specific);
     *dpp = rtrans_sp;
 
     memcpy(rtrans_sp, &rtrans_defaults, sizeof(struct rtrans_specific));

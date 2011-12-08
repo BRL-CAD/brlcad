@@ -491,7 +491,7 @@ dgo_nirt_cmd(struct dg_obj *dgop,
 		break;
 	    }
 
-	    BU_GETSTRUCT(ndlp, dg_qray_dataList);
+	    BU_GET(ndlp, struct dg_qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
 	    if (sscanf(line, "%le %le %le %le",
@@ -512,7 +512,7 @@ dgo_nirt_cmd(struct dg_obj *dgop,
 		break;
 	    }
 
-	    BU_GETSTRUCT(ndlp, dg_qray_dataList);
+	    BU_GET(ndlp, struct dg_qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
 	    if (sscanf(line, "%le %le %le %le",

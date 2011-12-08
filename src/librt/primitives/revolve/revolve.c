@@ -198,7 +198,7 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     stp->st_id = ID_REVOLVE;
     stp->st_meth = &rt_functab[ID_REVOLVE];
 
-    BU_GETSTRUCT(rev, revolve_specific);
+    BU_GET(rev, struct revolve_specific);
     stp->st_specific = (genptr_t)rev;
 
     VMOVE(rev->v3d, rip->v3d);

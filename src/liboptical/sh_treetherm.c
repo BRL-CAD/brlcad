@@ -256,7 +256,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 	       rp->reg_name, bu_vls_addr(matparm));
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT(tthrm_sp, tthrm_specific);
+    BU_GET(tthrm_sp, struct tthrm_specific);
     *dpp = tthrm_sp;
     tthrm_sp->magic = tthrm_MAGIC;
 

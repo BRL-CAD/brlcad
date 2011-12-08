@@ -131,7 +131,7 @@ rt_nurb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
 	struct face_g_snurb * s;
 	struct nurb_specific * n;
 
-	BU_GETSTRUCT(n, nurb_specific);
+	BU_GET(n, struct nurb_specific);
 
 	/* Store off the original face_g_snurb */
 	s = rt_nurb_scopy(sip->srfs[i], (struct resource *)NULL);
@@ -232,7 +232,7 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	struct face_g_snurb * s;
 	struct nurb_specific * n;
 
-	BU_GETSTRUCT(n, nurb_specific);
+	BU_GET(n, struct nurb_specific);
 
 	/* Store off the original face_g_snurb */
 	s = rt_nurb_scopy(sip->srfs[i], (struct resource *)NULL);

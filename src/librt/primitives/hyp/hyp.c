@@ -72,7 +72,7 @@ struct hyp_specific {
 struct hyp_specific *
 hyp_internal_to_specific(struct rt_hyp_internal *hyp_in) {
     struct hyp_specific *hyp;
-    BU_GETSTRUCT(hyp, hyp_specific);
+    BU_GET(hyp, struct hyp_specific);
 
     hyp->hyp_r1 = hyp_in->hyp_bnr * MAGNITUDE(hyp_in->hyp_A);
     hyp->hyp_r2 = hyp_in->hyp_bnr * hyp_in->hyp_b;

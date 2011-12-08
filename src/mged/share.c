@@ -55,7 +55,7 @@
       if (dlp1->resource->rc > 1) {   /* must be sharing this resource */ \
 	--dlp1->resource->rc; \
 	strp = dlp1->resource; \
-	BU_GETSTRUCT(dlp1->resource, str); \
+	BU_GET(dlp1->resource, struct str); \
 	*dlp1->resource = *strp;        /* struct copy */ \
 	dlp1->resource->rc = 1; \
       } \

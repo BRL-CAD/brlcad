@@ -101,7 +101,7 @@ cho_open(ClientData UNUSED(clientData), Tcl_Interp *interp, const char *name)
 	}
     }
 
-    BU_GETSTRUCT(chop, bu_cmdhist_obj);
+    BU_GET(chop, struct bu_cmdhist_obj);
     bu_vls_init(&chop->cho_name);
     bu_vls_strcpy(&chop->cho_name, name);
     BU_LIST_INIT(&chop->cho_head.l);

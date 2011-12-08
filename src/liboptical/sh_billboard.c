@@ -132,7 +132,7 @@ void new_image(register const struct bu_structparse *UNUSED(sdp),	/*struct desc*
     struct bbd_specific *bbd_sp = (struct bbd_specific *)base;
     struct bbd_img *bbdi;
 
-    BU_GETSTRUCT(bbdi, bbd_img);
+    BU_GET(bbdi, struct bbd_img);
 
     bbdi->img_mf = bu_open_mapped_file_with_path(
 	bbd_sp->rtip->rti_dbip->dbi_filepath,
@@ -204,7 +204,7 @@ bbd_setup(struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct
 
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT(bbd_sp, bbd_specific);
+    BU_GET(bbd_sp, struct bbd_specific);
     *dpp = bbd_sp;
 
     /* initialize the default values for the shader */

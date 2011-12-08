@@ -1937,7 +1937,7 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 
     teu = eu;
     for (;;) {
-	BU_GETSTRUCT(rad, nmg_radial);
+	BU_GET(rad, struct nmg_radial);
 	rad->l.magic = NMG_RADIAL_MAGIC;
 	rad->eu = teu;
 	rad->fu = nmg_find_fu_of_eu(teu);

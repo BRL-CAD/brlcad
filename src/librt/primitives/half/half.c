@@ -84,7 +84,7 @@ rt_hlf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* Process a HALFSPACE, which is represented as a normal vector,
      * and a distance.
      */
-    BU_GETSTRUCT(halfp, half_specific);
+    BU_GET(halfp, struct half_specific);
     stp->st_specific = (genptr_t)halfp;
 
     VMOVE(halfp->half_eqn, hip->eqn);

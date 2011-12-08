@@ -234,7 +234,7 @@ camo_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
     RT_CHECK_RTI(rtip);
     BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
-    BU_GETSTRUCT(camo_sp, camo_specific);
+    BU_GET(camo_sp, struct camo_specific);
     *dpp = camo_sp;
 
     if (rdebug&RDEBUG_SHADE) {
@@ -381,7 +381,7 @@ marble_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
     RT_CHECK_RTI(rtip);
     BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
-    BU_GETSTRUCT(camo_sp, camo_specific);
+    BU_GET(camo_sp, struct camo_specific);
     *dpp = camo_sp;
 
     if (rdebug&RDEBUG_SHADE) {

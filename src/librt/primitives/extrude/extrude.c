@@ -118,7 +118,7 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
 	return -1;
     }
     
-    BU_GETSTRUCT(extr, extrude_specific);
+    BU_GET(extr, struct extrude_specific);
    
     VMOVE(extr->unit_h, eip->h);
     VUNITIZE(extr->unit_h);
@@ -361,7 +361,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 	return -1;
     }
 
-    BU_GETSTRUCT(extr, extrude_specific);
+    BU_GET(extr, struct extrude_specific);
     stp->st_specific = (genptr_t)extr;
 
     VMOVE(extr->unit_h, eip->h);

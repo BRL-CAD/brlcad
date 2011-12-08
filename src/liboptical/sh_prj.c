@@ -278,7 +278,7 @@ orient_hook(register const struct bu_structparse *UNUSED(sdp), register const ch
      * copy the parameters from the "head" into the new
      * img_specific struct
      */
-    BU_GETSTRUCT(img_new, img_specific);
+    BU_GET(img_new, struct img_specific);
     memcpy(img_new, img_sp, sizeof(struct img_specific));
     BU_LIST_MAGIC_SET(&img_new->l, IMG_MAGIC);
     BU_CK_VLS(&img_sp->i_name);
@@ -447,7 +447,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 	       rp->reg_name, bu_vls_addr(matparm));
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT(prj_sp, prj_specific);
+    BU_GET(prj_sp, struct prj_specific);
     *dpp = prj_sp;
 
     prj_sp->magic = prj_MAGIC;

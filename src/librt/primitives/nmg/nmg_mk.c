@@ -249,7 +249,7 @@ nmg_mm(void)
 {
     struct model *m;
 
-    BU_GETSTRUCT(m, model);
+    BU_GET(m, struct model);
 
     BU_LIST_INIT(&m->r_hd);
     m->index = 0;

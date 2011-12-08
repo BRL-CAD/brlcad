@@ -149,7 +149,7 @@ _ged_combadd(struct ged *gedp,
 
 	GED_DB_DIRADD(gedp, dp, combname, -1, 0, flags, (genptr_t)&intern.idb_type, 0);
 
-	BU_GETSTRUCT(comb, rt_comb_internal);
+	BU_GET(comb, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(comb);
 
 	intern.idb_ptr = (genptr_t)comb;

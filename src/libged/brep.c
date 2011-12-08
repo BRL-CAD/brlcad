@@ -104,7 +104,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    BU_GETSTRUCT(stp, soltab);
+    BU_GET(stp, struct soltab);
 
     if ((bs = (struct brep_specific*)stp->st_specific) == NULL) {
 	bs = (struct brep_specific*)bu_malloc(sizeof(struct brep_specific), "brep_specific");

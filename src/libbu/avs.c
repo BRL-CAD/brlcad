@@ -60,7 +60,7 @@ bu_avs_new(int len, const char *str)
 {
     struct bu_attribute_value_set *avsp;
 
-    BU_GETSTRUCT(avsp, bu_attribute_value_set);
+    BU_GET(avsp, struct bu_attribute_value_set);
     bu_avs_init(avsp, len, "bu_avs_new");
 
     if (UNLIKELY(bu_debug & BU_DEBUG_AVS))

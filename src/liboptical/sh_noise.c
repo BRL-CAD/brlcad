@@ -199,7 +199,7 @@ noise_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 	       rp->reg_mater.ma_shader);
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT(noise_sp, noise_specific);
+    BU_GET(noise_sp, struct noise_specific);
     *dpp = noise_sp;
 
     /* initialize the default values for the shader */

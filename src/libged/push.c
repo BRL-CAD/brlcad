@@ -205,7 +205,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    BU_GETSTRUCT(gpdp, push_data);
+    BU_GET(gpdp, struct push_data);
     gpdp->gedp = gedp;
     gpdp->push_error = 0;
     gpdp->pi_head.magic = PUSH_MAGIC_ID;

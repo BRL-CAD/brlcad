@@ -29,7 +29,7 @@ bu_list_new(void)
 {
     struct bu_list *new_list;
 
-    BU_GETSTRUCT(new_list, bu_list);
+    BU_GET(new_list, struct bu_list);
     BU_LIST_INIT(new_list);
 
     return new_list;

@@ -612,7 +612,7 @@ txt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
     int pixelbytes = 3;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(tp, txt_specific);
+    BU_GET(tp, struct txt_specific);
     *dpp = tp;
 
     bu_vls_init(&tp->tx_name);
@@ -747,7 +747,7 @@ ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *
     register struct ckr_specific *ckp;
 
     /* Default will be white and black checkers */
-    BU_GETSTRUCT(ckp, ckr_specific);
+    BU_GET(ckp, struct ckr_specific);
     *dpp = ckp;
     ckp->ckr_a[0] = ckp->ckr_a[1] = ckp->ckr_a[2] = 255;
     ckp->ckr_b[0] = ckp->ckr_b[1] = ckp->ckr_b[2] = 0;

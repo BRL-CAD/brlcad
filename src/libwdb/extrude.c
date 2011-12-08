@@ -51,7 +51,7 @@ mk_extrusion(
 {
     struct rt_extrude_internal *extr;
 
-    BU_GETSTRUCT(extr, rt_extrude_internal);
+    BU_GET(extr, struct rt_extrude_internal);
     extr->magic = RT_EXTRUDE_INTERNAL_MAGIC;
     extr->sketch_name = bu_strdup(sketch_name);
     VMOVE(extr->V, V);

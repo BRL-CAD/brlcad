@@ -116,7 +116,7 @@ cook_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
     register struct cook_specific *pp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(pp, cook_specific);
+    BU_GET(pp, struct cook_specific);
     *dpp = pp;
 
     pp->m = 0.2;
@@ -163,7 +163,7 @@ cmirror_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp,
     register struct cook_specific *pp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(pp, cook_specific);
+    BU_GET(pp, struct cook_specific);
     *dpp = pp;
 
     pp->m = 0.2;
@@ -204,7 +204,7 @@ cglass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
     register struct cook_specific *pp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(pp, cook_specific);
+    BU_GET(pp, struct cook_specific);
     *dpp = pp;
 
     pp->m = 0.2;

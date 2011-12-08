@@ -540,7 +540,7 @@ struct vertexuse_a_cnurb {
  * storage allocation support
  * OBSOLETE
  */
-#define NMG_GETSTRUCT(p, str) BU_GETSTRUCT(p, str)
+#define NMG_GETSTRUCT(p, str) BU_GET(p, struct str)
 
 /**
  * storage de-allocation support

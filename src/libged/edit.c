@@ -619,7 +619,7 @@ edit_arg_postfix_new(struct edit_arg *head)
 {
     struct edit_arg *arg;
 
-    BU_GETSTRUCT(arg, edit_arg);
+    BU_GET(arg, struct edit_arg);
     edit_arg_postfix(head, arg);
     edit_arg_init(arg);
     return arg;
@@ -644,7 +644,7 @@ edit_arg_duplicate_in_place(struct edit_arg *const dest,
     dest->coords_used = src->coords_used;
     dest->type = src->type;
     if (src->object) {
-	BU_GETSTRUCT(dest->object, db_full_path);
+	BU_GET(dest->object, struct db_full_path);
 	db_full_path_init(dest->object);
 	db_dup_full_path(dest->object, src->object);
     }
@@ -666,7 +666,7 @@ edit_arg_duplicate_in_place(struct edit_arg *const dest,
 HIDDEN void
 edit_arg_duplicate(struct edit_arg **dest, const struct edit_arg *src)
 {
-    BU_GETSTRUCT(*dest, edit_arg);
+    BU_GET(*dest, struct edit_arg);
     edit_arg_duplicate_in_place(*dest, src);
 }
 
@@ -1897,7 +1897,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 
 convert_obj:
     /* convert string to path/object */
-    BU_GETSTRUCT(arg->object, db_full_path);
+    BU_GET(arg->object, struct db_full_path);
     if (db_string_to_path(arg->object, gedp->ged_wdbp->dbip,
 			  str)) {
 	db_free_full_path(arg->object);
@@ -2152,7 +2152,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
      */
     edit_cmd_init(&subcmd);
 
-    BU_GETSTRUCT(subcmd.cmd_line.args, edit_arg);
+    BU_GET(subcmd.cmd_line.args, struct edit_arg);
     edit_arg_init(subcmd.cmd_line.args);
     cur_arg = subcmd.cmd_line.args;
 

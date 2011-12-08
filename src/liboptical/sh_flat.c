@@ -203,7 +203,7 @@ flat_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 	bu_log("flat_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT(flat_sp, flat_specific);
+    BU_GET(flat_sp, struct flat_specific);
     *dpp = flat_sp;
 
     /* color priority:

@@ -577,7 +577,7 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
     struct dm *dmp;
     Tcl_Obj *obj;
 
-    BU_GETSTRUCT(dmp, dm);
+    BU_GET(dmp, struct dm);
     if (dmp == DM_NULL)
 	return DM_NULL;
 
@@ -585,7 +585,7 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
     dmp->dm_interp = interp;
 
     dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct plot_vars), "plot_open: plot_vars");
-    BU_GETSTRUCT(dmp->dm_vars.priv_vars, plot_vars);
+    BU_GET(dmp->dm_vars.priv_vars, struct plot_vars);
     if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
 	bu_free((genptr_t)dmp, "plot_open: dmp");
 	return DM_NULL;

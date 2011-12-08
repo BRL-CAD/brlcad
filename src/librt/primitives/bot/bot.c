@@ -1381,7 +1381,7 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
 
     if (op != ip && !release) {
 	RT_DB_INTERNAL_INIT(op);
-	BU_GETSTRUCT(botop, rt_bot_internal);
+	BU_GET(botop, struct rt_bot_internal);
 	botop->magic = RT_BOT_INTERNAL_MAGIC;
 	botop->mode = botip->mode;
 	botop->orientation = botip->orientation;
@@ -4738,7 +4738,7 @@ rt_bot_create(struct rt_bot_internal *bot, struct tri_pts *newTpp)
     struct tri_pts *tpp;
     struct rt_bot_internal *newbot;
 
-    BU_GETSTRUCT(newbot, rt_bot_internal);
+    BU_GET(newbot, struct rt_bot_internal);
 
     newbot->num_faces = 0;
     for (BU_LIST_FOR(tpp, tri_pts, &newTpp->l)) {
@@ -4801,7 +4801,7 @@ rt_bot_split(struct rt_bot_internal *bot)
 
     RT_BOT_CK_MAGIC(bot);
 
-    BU_GETSTRUCT(headRblp, rt_bot_list);
+    BU_GET(headRblp, struct rt_bot_list);
     BU_LIST_INIT(&headRblp->l);
 
     /* Nothing to do */
@@ -4836,13 +4836,13 @@ rt_bot_split(struct rt_bot_internal *bot)
 
 	    if (BU_LIST_NON_EMPTY(&headTp.l)) {
 		/* Create a new bot */
-		BU_GETSTRUCT(rblp, rt_bot_list);
+		BU_GET(rblp, struct rt_bot_list);
 		rblp->bot = rt_bot_create(bot, &usedTp);
 		BU_LIST_APPEND(&headRblp->l, &rblp->l);
 	    }
 	} else {
 	    /* Create a new bot */
-	    BU_GETSTRUCT(rblp, rt_bot_list);
+	    BU_GET(rblp, struct rt_bot_list);
 	    rblp->bot = rt_bot_create(bot, &usedTp);
 	    BU_LIST_APPEND(&headRblp->l, &rblp->l);
 	}

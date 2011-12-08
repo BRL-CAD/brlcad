@@ -385,7 +385,7 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
 	bu_log("osl_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT(osl_sp, osl_specific);
+    BU_GET(osl_sp, struct osl_specific);
     *dpp = (char *)osl_sp;
 
     /* -----------------------------------

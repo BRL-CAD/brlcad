@@ -258,7 +258,7 @@ _ged_get_obj_bounds2(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    BU_GETSTRUCT(stp, soltab);
+    BU_GET(stp, struct soltab);
     stp->l.magic = RT_SOLTAB_MAGIC;
     stp->l2.magic = RT_SOLTAB2_MAGIC;
     stp->st_dp = dp;

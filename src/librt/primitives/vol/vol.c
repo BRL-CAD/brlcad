@@ -795,7 +795,7 @@ rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
 
-    BU_GETSTRUCT(volp, rt_vol_specific);
+    BU_GET(volp, struct rt_vol_specific);
     volp->vol_i = *vip;		/* struct copy */
     vip->map = (unsigned char *)0;	/* "steal" the bitmap storage */
 

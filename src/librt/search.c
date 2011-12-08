@@ -1494,7 +1494,7 @@ HIDDEN int
 f_print(struct db_plan_t *UNUSED(plan), struct db_full_path *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *results)
 {
     struct db_full_path_list *new_entry;
-    BU_GETSTRUCT(new_entry, db_full_path_list);
+    BU_GET(new_entry, struct db_full_path_list);
     new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
     db_full_path_init(new_entry->path);
     db_dup_full_path(new_entry->path, (const struct db_full_path *)entry);
@@ -2070,7 +2070,7 @@ db_search_full_paths(void *searchplan,        /* search plan */
     struct db_full_path_list *new_entry = NULL;
     struct db_full_path_list *currentpath = NULL;
     struct db_full_path_list *searchresults = NULL;
-    BU_GETSTRUCT(searchresults, db_full_path_list);
+    BU_GET(searchresults, struct db_full_path_list);
     BU_LIST_INIT(&(searchresults->l));
     /* If nothing is passed in, try to get the list of toplevel objects */
     if (BU_LIST_IS_EMPTY(&(pathnames->l))) {
@@ -2079,7 +2079,7 @@ db_search_full_paths(void *searchplan,        /* search plan */
 	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
 		    db_string_to_path(&dfp, dbip, dp->d_namep);
-		    BU_GETSTRUCT(new_entry, db_full_path_list);
+		    BU_GET(new_entry, struct db_full_path_list);
 		    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
 		    db_full_path_init(new_entry->path);
 		    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);

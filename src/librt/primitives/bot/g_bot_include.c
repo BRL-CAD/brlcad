@@ -250,7 +250,7 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip
 
     RT_BOT_CK_MAGIC(bot_ip);
 
-    BU_GETSTRUCT(bot, bot_specific);
+    BU_GET(bot, struct bot_specific);
     stp->st_specific = (genptr_t)bot;
     bot->bot_mode = bot_ip->mode;
     bot->bot_orientation = bot_ip->orientation;

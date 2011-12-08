@@ -415,7 +415,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     (void)close(i_pipe[1]);
     (void)close(e_pipe[1]);
 
-    BU_GETSTRUCT(rtcp, ged_rtcheck);
+    BU_GET(rtcp, struct ged_rtcheck);
 
     /* initialize the rtcheck struct */
     rtcp->fd = i_pipe[0];
@@ -431,7 +431,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     Tcl_CreateFileHandler(i_pipe[0], TCL_READABLE,
 			  rtcheck_vector_handler, (ClientData)rtcp);
 
-    BU_GETSTRUCT(rtcop, rtcheck_output);
+    BU_GET(rtcop, struct rtcheck_output);
     rtcop->fd = e_pipe[0];
     rtcop->gedp = gedp;
     rtcop->interp = brlcad_interp;
@@ -518,7 +518,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     _ged_rt_write(gedp, fp, eye_model);
     (void)fclose(fp);
 
-    BU_GETSTRUCT(rtcp, ged_rtcheck);
+    BU_GET(rtcp, struct ged_rtcheck);
 
     /* initialize the rtcheck struct */
     rtcp->fd = pipe_iDup;
@@ -537,7 +537,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 			     rtcheck_vector_handler,
 			     (ClientData)rtcp);
 
-    BU_GETSTRUCT(rtcop, rtcheck_output);
+    BU_GET(rtcop, struct rtcheck_output);
     rtcop->fd = pipe_eDup;
     rtcop->chan = Tcl_MakeFileChannel(pipe_eDup, TCL_READABLE);
     rtcop->gedp = gedp;

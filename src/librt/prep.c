@@ -75,7 +75,7 @@ rt_new_rti(struct db_i *dbip)
 	BU_LIST_INIT(&rt_g.rtg_vlfree);
     }
 
-    BU_GETSTRUCT(rtip, rt_i);
+    BU_GET(rtip, struct rt_i);
     rtip->rti_magic = RTI_MAGIC;
     for (i=0; i < RT_DBNHASH; i++) {
 	BU_LIST_INIT(&(rtip->rti_solidheads[i]));

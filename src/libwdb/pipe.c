@@ -57,7 +57,7 @@ mk_particle(struct rt_wdb *fp, const char *name, fastf_t *vertex, fastf_t *heigh
 {
     struct rt_part_internal *part;
 
-    BU_GETSTRUCT(part, rt_part_internal);
+    BU_GET(part, struct rt_part_internal);
     part->part_magic = RT_PART_INTERNAL_MAGIC;
     VMOVE(part->part_V, vertex);
     VMOVE(part->part_H, height);
@@ -89,7 +89,7 @@ mk_pipe(struct rt_wdb *fp, const char *name, struct bu_list *headp)
 	return 1;
     }
 
-    BU_GETSTRUCT(pipep, rt_pipe_internal);
+    BU_GET(pipep, struct rt_pipe_internal);
     pipep->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
     BU_LIST_INIT(&pipep->pipe_segs_head);
     /* linked list from caller */
@@ -135,7 +135,7 @@ mk_add_pipe_pt(
 
     BU_CKMAG(headp, WDB_PIPESEG_MAGIC, "pipe point");
 
-    BU_GETSTRUCT(new, wdb_pipept);
+    BU_GET(new, struct wdb_pipept);
     new->l.magic = WDB_PIPESEG_MAGIC;
     new->pp_od = od;
     new->pp_id = id;

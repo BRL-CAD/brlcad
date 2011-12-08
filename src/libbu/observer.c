@@ -59,7 +59,7 @@ observer_attach(void *clientData, int argc, const char **argv)
 	}
 
     /* acquire bu_observer struct */
-    BU_GETSTRUCT(op, bu_observer);
+    BU_GET(op, struct bu_observer);
 
     /* initialize observer */
     bu_vls_init(&op->observer);

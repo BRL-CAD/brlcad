@@ -224,7 +224,7 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 	bu_log("fire_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT(fire_sp, fire_specific);
+    BU_GET(fire_sp, struct fire_specific);
     *dpp = fire_sp;
 
     /* initialize the default values for the shader */

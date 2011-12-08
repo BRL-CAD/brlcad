@@ -266,7 +266,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
     }
 
     /* Build a soltab structure for the new RCC */
-    BU_GETSTRUCT(stp, soltab);
+    BU_GET(stp, struct soltab);
     stp->l.magic = RT_SOLTAB_MAGIC;
     stp->l2.magic = RT_SOLTAB2_MAGIC;
     stp->st_uses = 1;

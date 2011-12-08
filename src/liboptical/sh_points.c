@@ -98,7 +98,7 @@ points_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
     FILE *fp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(ptp, points_specific);
+    BU_GET(ptp, struct points_specific);
     *dpp = ptp;
 
     /* get or default shader parameters */

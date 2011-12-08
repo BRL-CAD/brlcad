@@ -2803,7 +2803,7 @@ read_fast4_colors(char *color_file)
 	if (high < low)
 	    continue;
 
-	BU_GETSTRUCT(color, fast4_color);
+	BU_GET(color, struct fast4_color);
 	color->low = low;
 	color->high = high;
 	color->rgb[0] = r;

@@ -294,7 +294,7 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
 		size_t len;
 
                 /* create new area record */
-                BU_GETSTRUCT(area_record_ptr, area);
+                BU_GET(area_record_ptr, struct area);
 
                 /* initialize new parent-area record (i.e. assembly-area record) */
                 area_record_ptr->assembly = (struct area *) NULL;
@@ -1144,7 +1144,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
     cell_area = cell_width * cell_height;
 
     /* create first parent-area record */
-    BU_GETSTRUCT(assembly, area);
+    BU_GET(assembly, struct area);
 
     /* initialize linked-list pointers for first parent-area record */
     BU_LIST_INIT(&(assembly->l));
@@ -1176,7 +1176,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	struct area *cell;
 
         /* create region-area record */
-        BU_GETSTRUCT(cell, area);
+        BU_GET(cell, struct area);
 
         /* initialize linked-list pointers for region-area record */
         BU_LIST_INIT(&(cell->l));

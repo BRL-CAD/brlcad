@@ -305,7 +305,7 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(r
     stp->st_id = ID_RPC;		/* set soltab ID */
     stp->st_meth = &rt_functab[ID_RPC];
 
-    BU_GETSTRUCT(rpc, rpc_specific);
+    BU_GET(rpc, struct rpc_specific);
     stp->st_specific = (genptr_t)rpc;
     rpc->rpc_b = mag_b;
     rpc->rpc_inv_rsq = 1 / magsq_r;

@@ -107,7 +107,7 @@ brdf_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t 
     register struct brdf_specific *pp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(pp, brdf_specific);
+    BU_GET(pp, struct brdf_specific);
     *dpp = pp;
 
     pp->magic = BRDF_MAGIC;

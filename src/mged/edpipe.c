@@ -239,7 +239,7 @@ pipe_scale_radius(struct rt_db_internal *db_int, fastf_t scale)
     /* make temporary copy of this pipe solid */
     BU_LIST_INIT(&head);
     for (BU_LIST_FOR(old_ps, wdb_pipept, &pipeip->pipe_segs_head)) {
-	BU_GETSTRUCT(new_ps, wdb_pipept);
+	BU_GET(new_ps, struct wdb_pipept);
 	*new_ps = (*old_ps);
 	BU_LIST_APPEND(&head, &new_ps->l);
     }
@@ -329,7 +329,7 @@ add_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const point_t
 	/* add new point to end of pipe solid */
 	last = BU_LIST_LAST(wdb_pipept, &pipeip->pipe_segs_head);
 	if (last->l.magic == BU_LIST_HEAD_MAGIC) {
-	    BU_GETSTRUCT(new, wdb_pipept);
+	    BU_GET(new, struct wdb_pipept);
 	    new->l.magic = WDB_PIPESEG_MAGIC;
 	    new->pp_od = 30.0;
 	    new->pp_id = 0.0;
@@ -341,7 +341,7 @@ add_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const point_t
     }
 
     /* build new point */
-    BU_GETSTRUCT(new, wdb_pipept);
+    BU_GET(new, struct wdb_pipept);
     new->l.magic = WDB_PIPESEG_MAGIC;
     new->pp_od = last->pp_od;
     new->pp_id = last->pp_id;
@@ -379,7 +379,7 @@ ins_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const point_t
 	/* insert new point at start of pipe solid */
 	first = BU_LIST_FIRST(wdb_pipept, &pipeip->pipe_segs_head);
 	if (first->l.magic == BU_LIST_HEAD_MAGIC) {
-	    BU_GETSTRUCT(new, wdb_pipept);
+	    BU_GET(new, struct wdb_pipept);
 	    new->l.magic = WDB_PIPESEG_MAGIC;
 	    new->pp_od = 30.0;
 	    new->pp_id = 0.0;
@@ -391,7 +391,7 @@ ins_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const point_t
     }
 
     /* build new point */
-    BU_GETSTRUCT(new, wdb_pipept);
+    BU_GET(new, struct wdb_pipept);
     new->l.magic = WDB_PIPESEG_MAGIC;
     new->pp_od = first->pp_od;
     new->pp_id = first->pp_id;

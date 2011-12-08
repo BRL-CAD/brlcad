@@ -129,7 +129,7 @@ toon_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 	bu_log("toon_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT(toon_sp, toon_specific);
+    BU_GET(toon_sp, struct toon_specific);
     *dpp = toon_sp;
 
     /* initialize the default values for the shader */

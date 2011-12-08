@@ -131,7 +131,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
 	return -1;
     }
 
-    BU_GETSTRUCT(dsp, rt_dsp_internal);
+    BU_GET(dsp, struct rt_dsp_internal);
     bu_vls_init(&dsp->dsp_name);
     bu_vls_strcat(&dsp->dsp_name, hip->dfile);
     dsp->dsp_xcnt = hip->w;
@@ -302,7 +302,7 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     hip = (struct rt_hf_internal *)ip->idb_ptr;
     RT_HF_CK_MAGIC(hip);
 
-    BU_GETSTRUCT(hf, hf_specific);
+    BU_GET(hf, struct hf_specific);
     stp->st_specific = (genptr_t) hf;
     /*
      * The stuff that is given to us.

@@ -899,7 +899,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    BU_GETSTRUCT(dmp, dm);
+    BU_GET(dmp, struct dm);
     if (dmp == DM_NULL)
 	return DM_NULL;
 

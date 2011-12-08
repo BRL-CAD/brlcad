@@ -39,9 +39,9 @@
 void
 pc_init_pcset(struct pc_pc_set *pcsp)
 {
-    BU_GETSTRUCT(pcsp->ps, pc_param);
+    BU_GET(pcsp->ps, struct pc_param);
     BU_LIST_INIT(&(pcsp->ps->l));
-    BU_GETSTRUCT(pcsp->cs, pc_constrnt);
+    BU_GET(pcsp->cs, struct pc_constrnt);
     BU_LIST_INIT(&(pcsp->cs->l));
 }
 
@@ -58,7 +58,7 @@ pc_init_pcset(struct pc_pc_set *pcsp)
 void
 pc_getparameter(struct pc_param **p, int n)
 {
-    BU_GETSTRUCT(*p, pc_param);
+    BU_GET(*p, struct pc_param);
     bu_vls_init(&((*p)->name));
     if (n == PC_DB_BYEXPR)
 	bu_vls_init(&((*p)->data.expression));
@@ -124,7 +124,7 @@ pc_pushparam_struct(struct pc_pc_set *pcsp, const char *name, int type, void *pt
 void
 pc_getconstraint_expr(struct pc_constrnt **c)
 {
-    BU_GETSTRUCT(*c, pc_constrnt);
+    BU_GET(*c, struct pc_constrnt);
     bu_vls_init(&((*c)->name));
     bu_vls_init(&((*c)->data.expression));
     (*c)->ctype = PC_DB_BYEXPR;
@@ -141,7 +141,7 @@ pc_getconstraint_expr(struct pc_constrnt **c)
 void
 pc_getconstraint_struct(struct pc_constrnt **c, int nargs)
 {
-    BU_GETSTRUCT(*c, pc_constrnt);
+    BU_GET(*c, struct pc_constrnt);
     bu_vls_init(&((*c)->name));
     (*c)->args = (const char **) malloc(nargs *sizeof(char *));
     (*c)->ctype = PC_DB_BYSTRUCT;

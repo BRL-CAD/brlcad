@@ -220,7 +220,7 @@ sh_stk_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
     BU_CK_VLS(matparm);
     RT_CK_RTI(rtip);
 
-    BU_GETSTRUCT(sp, stk_specific);
+    BU_GET(sp, struct stk_specific);
     *dpp = sp;
 
     /*bu_struct_parse(matparm, sh_stk_parse, (char *)sp);*/
@@ -265,7 +265,7 @@ sh_stk_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
     }
 
     /* Request only those input bits needed by subordinate shaders */
-    BU_GETSTRUCT(mfp, mfuncs);
+    BU_GET(mfp, struct mfuncs);
     memcpy((char *)mfp, (char *)rp->reg_mfuncs, sizeof(*mfp));
     mfp->mf_inputs = inputs;
     rp->reg_mfuncs = (genptr_t)mfp;

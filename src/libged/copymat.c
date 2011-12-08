@@ -80,7 +80,7 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    BU_GETSTRUCT(anp, animate);
+    BU_GET(anp, struct animate);
     anp->magic = ANIMATE_MAGIC;
 
     ts = gedp->ged_wdbp->wdb_initial_tree_state;	/* struct copy */

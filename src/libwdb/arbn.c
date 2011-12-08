@@ -52,7 +52,7 @@ mk_arbn(struct rt_wdb *filep, const char *name, size_t neqn, plane_t (*eqn))
 
     if ( neqn <= 0 )  return -1;
 
-    BU_GETSTRUCT( arbn, rt_arbn_internal );
+    BU_GET(arbn, struct rt_arbn_internal);
     arbn->magic = RT_ARBN_INTERNAL_MAGIC;
     arbn->neqn = neqn;
     arbn->eqn = eqn;

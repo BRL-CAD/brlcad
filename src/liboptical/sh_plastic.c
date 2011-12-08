@@ -105,7 +105,7 @@ phong_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
     register struct phong_specific *pp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(pp, phong_specific);
+    BU_GET(pp, struct phong_specific);
     *dpp = pp;
 
     pp->magic = PL_MAGIC;
@@ -138,7 +138,7 @@ mirror_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
     register struct phong_specific *pp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(pp, phong_specific);
+    BU_GET(pp, struct phong_specific);
     *dpp = pp;
 
     pp->magic = PL_MAGIC;
@@ -171,7 +171,7 @@ glass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
     register struct phong_specific *pp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(pp, phong_specific);
+    BU_GET(pp, struct phong_specific);
     *dpp = pp;
 
     pp->magic = PL_MAGIC;

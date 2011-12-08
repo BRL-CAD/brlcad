@@ -128,7 +128,7 @@ air_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
     RT_CHECK_RTI(rtip);
     BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
-    BU_GETSTRUCT(air_sp, air_specific);
+    BU_GET(air_sp, struct air_specific);
     *dpp = (char *)air_sp;
 
     memcpy(air_sp, &air_defaults, sizeof(struct air_specific));

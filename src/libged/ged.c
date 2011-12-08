@@ -129,13 +129,13 @@ ged_init(struct ged *gedp)
     BU_LIST_INIT(&gedp->l);
     gedp->ged_wdbp = RT_WDB_NULL;
 
-    BU_GETSTRUCT(gedp->ged_log, bu_vls);
+    BU_GET(gedp->ged_log, struct bu_vls);
     bu_vls_init(gedp->ged_log);
 
-    BU_GETSTRUCT(gedp->ged_result_str, bu_vls);
+    BU_GET(gedp->ged_result_str, struct bu_vls);
     bu_vls_init(gedp->ged_result_str);
 
-    BU_GETSTRUCT(gedp->ged_gdp, ged_drawable);
+    BU_GET(gedp->ged_gdp, struct ged_drawable);
     BU_LIST_INIT(&gedp->ged_gdp->gd_headDisplay);
     BU_LIST_INIT(&gedp->ged_gdp->gd_headVDraw);
     BU_LIST_INIT(&gedp->ged_gdp->gd_headRunRt.l);
@@ -289,7 +289,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	if (dbip == DBI_NULL) {
 	    int i;
 
-	    BU_GETSTRUCT(dbip, db_i);
+	    BU_GET(dbip, struct db_i);
 	    dbip->dbi_eof = (off_t)-1L;
 	    dbip->dbi_fp = NULL;
 	    dbip->dbi_mf = NULL;
@@ -332,7 +332,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	}
     }
 
-    BU_GETSTRUCT(gedp, ged);
+    BU_GET(gedp, struct ged);
     GED_INIT(gedp, wdbp);
 
     return gedp;

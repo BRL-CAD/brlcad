@@ -74,7 +74,7 @@ mk_bot_w_normals(
 	bu_log("Please upgrade to the current database format by using \"dbupgrade\"\n");
     }
 
-    BU_GETSTRUCT(bot, rt_bot_internal);
+    BU_GET(bot, struct rt_bot_internal);
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->mode = mode;
     bot->orientation = orientation;

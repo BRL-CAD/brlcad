@@ -620,7 +620,7 @@ cmd_openpl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **a
 	    }
 	}
 
-	BU_GETSTRUCT(plp, plot_list);
+	BU_GET(plp, struct plot_list);
 	BU_LIST_APPEND(&HeadPlot.l, &plp->l);
 	bu_vls_init(&plp->pl_name);
 	bu_vls_strcpy(&plp->pl_name, bnp);

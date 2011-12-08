@@ -473,7 +473,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    }
 
-	    BU_GETSTRUCT(ndlp, qray_dataList);
+	    BU_GET(ndlp, struct qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
 	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le", &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los);
@@ -500,7 +500,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    }
 
-	    BU_GETSTRUCT(ndlp, qray_dataList);
+	    BU_GET(ndlp, struct qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
 	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le",

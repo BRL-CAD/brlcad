@@ -881,7 +881,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 
 	    GED_DB_DIRADD(gedp, tmp_dp, bu_vls_addr(&temp_name), -1, 0, RT_DIR_COMB, (genptr_t)&intern.idb_type, 0);
 
-	    BU_GETSTRUCT(comb, rt_comb_internal);
+	    BU_GET(comb, struct rt_comb_internal);
 	    RT_COMB_INTERNAL_INIT(comb);
 
 	    intern.idb_ptr = (genptr_t)comb;

@@ -148,7 +148,7 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
     register struct toyota_specific *tp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(tp, toyota_specific);
+    BU_GET(tp, struct toyota_specific);
     *dpp = tp;
 
     /* Sun was at 44.35 degrees above horizon. */
@@ -234,7 +234,7 @@ tmirror_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr
     register struct toyota_specific *pp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(pp, toyota_specific);
+    BU_GET(pp, struct toyota_specific);
     *dpp = pp;
 
     /* use function, fn(lambda), describing spectral */
@@ -256,7 +256,7 @@ tglass_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
     register struct toyota_specific *pp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(pp, toyota_specific);
+    BU_GET(pp, struct toyota_specific);
     *dpp = pp;
 
     /* use function, fn(lambda), describing spectral */

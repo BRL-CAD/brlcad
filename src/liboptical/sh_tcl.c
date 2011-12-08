@@ -138,7 +138,7 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 	bu_log("tcl_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT(tcl_sp, tcl_specific);
+    BU_GET(tcl_sp, struct tcl_specific);
     *dpp = tcl_sp;
 
     /* initialize the default values for the shader */

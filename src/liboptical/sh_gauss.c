@@ -166,7 +166,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	    struct rt_ell_internal *ell_p;
 	    vect_t v;
 
-	    BU_GETSTRUCT(dbint, reg_db_internals);
+	    BU_GET(dbint, struct reg_db_internals);
 	    BU_LIST_INIT_MAGIC(&(dbint->l), DBINT_MAGIC);
 
 	    if (tp->tr_a.tu_stp->st_matp)
@@ -315,7 +315,7 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT(gauss_sp, gauss_specific);
+    BU_GET(gauss_sp, struct gauss_specific);
     *dpp = gauss_sp;
 
     /* initialize the default values for the shader */

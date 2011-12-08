@@ -170,7 +170,7 @@ stxt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 {
     register struct stxt_specific *stp;
 
-    BU_GETSTRUCT(stp, stxt_specific);
+    BU_GET(stp, struct stxt_specific);
     *dpp = stp;
 
     /** Set up defaults **/

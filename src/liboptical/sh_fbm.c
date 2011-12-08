@@ -98,7 +98,7 @@ fbm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
     register struct fbm_specific *fbm;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(fbm, fbm_specific);
+    BU_GET(fbm, struct fbm_specific);
     *dpp = fbm;
 
     memcpy(fbm, &fbm_defaults, sizeof(struct fbm_specific));

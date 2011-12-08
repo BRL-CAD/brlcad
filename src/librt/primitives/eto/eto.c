@@ -234,7 +234,7 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_ETO_CK_MAGIC(tip);
 
     /* Solid is OK, compute constant terms now */
-    BU_GETSTRUCT(eto, eto_specific);
+    BU_GET(eto, struct eto_specific);
     stp->st_specific = (genptr_t)eto;
 
     eto->eto_r = tip->eto_r;

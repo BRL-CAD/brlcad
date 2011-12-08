@@ -686,7 +686,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 	int flags;
 
 	flags = RT_DIR_COMB;
-	BU_GETSTRUCT(comb, rt_comb_internal);
+	BU_GET(comb, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(comb);
 
 	comb->tree = final_tree;

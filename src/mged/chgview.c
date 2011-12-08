@@ -2957,7 +2957,7 @@ view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2)
 	struct view_ring *vrp1_last_view = NULL;
 
 	for (BU_LIST_FOR(vrp2, view_ring, &vsp2->vs_headView.l)) {
-	    BU_GETSTRUCT(vrp1, view_ring);
+	    BU_GET(vrp1, struct view_ring);
 	    /* append to last list element */
 	    BU_LIST_APPEND(vsp1->vs_headView.l.back, &vrp1->l);
 
@@ -2976,7 +2976,7 @@ view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2)
 	vsp1->vs_current_view = vrp1_current_view;
 	vsp1->vs_last_view = vrp1_last_view;
     } else {
-	BU_GETSTRUCT(vrp1, view_ring);
+	BU_GET(vrp1, struct view_ring);
 	BU_LIST_APPEND(&vsp1->vs_headView.l, &vrp1->l);
 
 	vrp1->vr_id = 1;
@@ -3046,7 +3046,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	view_state->vs_current_view->vr_scale = view_state->vs_gvp->gv_scale;
 
 	/* allocate memory and append to list */
-	BU_GETSTRUCT(vrp, view_ring);
+	BU_GET(vrp, struct view_ring);
 	lv = BU_LIST_LAST(view_ring, &view_state->vs_headView.l);
 	BU_LIST_APPEND(&lv->l, &vrp->l);
 

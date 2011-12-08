@@ -128,7 +128,7 @@ rt_insert_color(struct mater *newp)
 	if (mp->mt_low < newp->mt_low && mp->mt_high > newp->mt_high) {
 	    /* New range entirely contained in old range; split */
 	    bu_log("Splitting region-id based material property entry into 3 ranges\n");
-	    BU_GETSTRUCT(zot, mater);
+	    BU_GET(zot, struct mater);
 	    *zot = *mp;		/* struct copy */
 	    zot->mt_daddr = MATER_NO_ADDR;
 	    /* zot->mt_high = mp->mt_high; */
@@ -181,7 +181,7 @@ rt_color_addrec(int low, int hi, int r, int g, int b, off_t addr)
 {
     register struct mater *mp;
 
-    BU_GETSTRUCT(mp, mater);
+    BU_GET(mp, struct mater);
     mp->mt_low = low;
     mp->mt_high = hi;
     mp->mt_r = r;
@@ -276,7 +276,7 @@ rt_dup_material_head()
 
     mp = material_head;
     while (mp != MATER_NULL) {
-	BU_GETSTRUCT(newmater, mater);
+	BU_GET(newmater, struct mater);
 	*newmater = *mp; /* struct copy */
 	newmater->mt_forw = MATER_NULL;
 

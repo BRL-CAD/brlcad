@@ -122,7 +122,7 @@ rt_mk_bot_w_normals(
 	bu_log("Please upgrade to the current database format by using \"dbupgrade\"\n");
     }
 
-    BU_GETSTRUCT(botip, rt_bot_internal);
+    BU_GET(botip, struct rt_bot_internal);
     botip->magic = RT_BOT_INTERNAL_MAGIC;
     botip->mode = botmode;
     botip->orientation = orientation;

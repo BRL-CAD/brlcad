@@ -170,7 +170,7 @@ load_file(const char *filename)
 
     bu_vls_init(&buffer);
     if (!report) {
-	BU_GETSTRUCT(report, bu_vls);
+	BU_GET(report, struct bu_vls);
 	bu_vls_init(report);
 	atexit(_free_report_memory);
     }

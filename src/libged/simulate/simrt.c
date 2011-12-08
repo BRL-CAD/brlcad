@@ -1230,7 +1230,7 @@ shoot_normal_rays(struct sim_manifold *current_manifold,
 			V3ARGS(center_ray.r_pt), V3ARGS(center_ray.r_dir), V3ARGS(up_vec), r);
 
 	/* Initialize the BU_LIST in preparation for rt_gen_circular_grid() */
-	BU_GETSTRUCT(xrayp, xrays);
+	BU_GET(xrayp, struct xrays);
 	BU_LIST_INIT(&(xrayp->l));
 	VMOVE(xrayp->ray.r_pt, center_ray.r_pt);
 	VMOVE(xrayp->ray.r_dir, center_ray.r_dir);

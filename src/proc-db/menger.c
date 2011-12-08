@@ -277,7 +277,7 @@ mengerize(struct rt_wdb *fp, point_t origin, fastf_t extent, axes xyz, const cha
 
     /* initialize */
     levels = bu_calloc(repeat * strlen(pattern), sizeof(struct wmember *), "alloc uts array");
-    BU_GETSTRUCT(final, wmember);
+    BU_GET(final, struct wmember);
     BU_LIST_INIT(&(final->l));
 
     /* do the pattern */
@@ -285,7 +285,7 @@ mengerize(struct rt_wdb *fp, point_t origin, fastf_t extent, axes xyz, const cha
 	for (j = 0; j < strlen(pattern); j++) {
 	    const int slot = (i * strlen(pattern)) + j;
 
-	    BU_GETSTRUCT(levels[slot], wmember);
+	    BU_GET(levels[slot], struct wmember);
 	    BU_LIST_INIT(&(levels[slot]->l));
 
 	    bu_log("%s %.2zu: %s%s%s width=%lf\n",
@@ -314,7 +314,7 @@ mengerize(struct rt_wdb *fp, point_t origin, fastf_t extent, axes xyz, const cha
     }
 
     /* make the final combination */
-    BU_GETSTRUCT(comb, bu_vls);
+    BU_GET(comb, struct bu_vls);
     BU_VLS_INIT(comb);
     bu_vls_strcat(comb, "sponge.c");
     mk_comb(fp, bu_vls_addr(comb), &(final->l), 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0);
@@ -488,11 +488,11 @@ main(int ac, char *av[])
 	struct wmember *light1 = NULL;
 	struct wmember *sponge = NULL;
 
-	BU_GETSTRUCT(menger, wmember);
-	BU_GETSTRUCT(ground, wmember);
-	BU_GETSTRUCT(light0, wmember);
-	BU_GETSTRUCT(light1, wmember);
-	BU_GETSTRUCT(sponge, wmember);
+	BU_GET(menger, struct wmember);
+	BU_GET(ground, struct wmember);
+	BU_GET(light0, struct wmember);
+	BU_GET(light1, struct wmember);
+	BU_GET(sponge, struct wmember);
 
 	BU_LIST_INIT(&(menger->l));
 	BU_LIST_INIT(&(ground->l));

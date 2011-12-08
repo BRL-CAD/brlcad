@@ -86,7 +86,7 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 		if ((comb->region_id == itnp->id) ||
 		    (comb->aircode != 0 && -comb->aircode == itnp->id)) {
 		    /* add region name to our name list for this region */
-		    BU_GETSTRUCT(inp, _ged_id_names);
+		    BU_GET(inp, struct _ged_id_names);
 		    bu_vls_init(&inp->name);
 		    bu_vls_strcpy(&inp->name, dp->d_namep);
 		    BU_LIST_INSERT(&itnp->headName.l, &inp->l);
@@ -97,7 +97,7 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 
 	    if (!found) {
 		/* create new id_to_names node */
-		BU_GETSTRUCT(itnp, _ged_id_to_names);
+		BU_GET(itnp, struct _ged_id_to_names);
 		if (0 < comb->region_id)
 		    itnp->id = comb->region_id;
 		else
@@ -106,7 +106,7 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 		BU_LIST_INIT(&itnp->headName.l);
 
 		/* add region name to our name list for this region */
-		BU_GETSTRUCT(inp, _ged_id_names);
+		BU_GET(inp, struct _ged_id_names);
 		bu_vls_init(&inp->name);
 		bu_vls_strcpy(&inp->name, dp->d_namep);
 		BU_LIST_INSERT(&itnp->headName.l, &inp->l);

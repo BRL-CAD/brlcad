@@ -1355,11 +1355,11 @@ Usage: go_open\n\
     }
 
     /* initialize tclcad_obj */
-    BU_GETSTRUCT(top, tclcad_obj);
+    BU_GET(top, struct tclcad_obj);
     top->to_interp = interp;
 
     /* initialize ged_obj */
-    BU_GETSTRUCT(top->to_gop, ged_obj);
+    BU_GET(top->to_gop, struct ged_obj);
 
     BU_ASSERT_PTR(gedp, !=, NULL);
     top->to_gop->go_gedp = gedp;
@@ -7958,8 +7958,8 @@ to_new_view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    BU_GETSTRUCT(new_gdvp, ged_dm_view);
-    BU_GETSTRUCT(new_gdvp->gdv_view, ged_view);
+    BU_GET(new_gdvp, struct ged_dm_view);
+    BU_GET(new_gdvp->gdv_view, struct ged_view);
 
     {
 	int i;
@@ -11804,7 +11804,7 @@ to_rt_gettrees_application(struct ged *gedp,
      * trash rt_uniresource.  Once on the rti_resources list,
      * rt_clean() will clean 'em up.
      */
-    BU_GETSTRUCT(resp, resource);
+    BU_GET(resp, struct resource);
     rt_init_resource(resp, 0, rtip);
     BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, 0), !=, NULL);
 

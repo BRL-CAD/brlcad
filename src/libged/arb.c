@@ -81,7 +81,7 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
     rota *= bn_degtorad;
     fb *= bn_degtorad;
 
-    BU_GETSTRUCT(arb, rt_arb_internal);
+    BU_GET(arb, struct rt_arb_internal);
     RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_ARB8;

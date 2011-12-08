@@ -168,7 +168,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
     if(dir->d_minor_type == ID_NMG)
 	return 0;
 
-    BU_GETSTRUCT(mesh, adrt_mesh_s);
+    BU_GET(mesh, struct adrt_mesh_s);
 
     BU_LIST_PUSH(&((*gcvwriter.meshes)->l), &(mesh->l));
 
@@ -222,7 +222,7 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int 
     /* triangulate model */
     nmg_triangulate_model(m, &tol);
 
-    BU_GETSTRUCT(mesh, adrt_mesh_s);
+    BU_GET(mesh, struct adrt_mesh_s);
 
     BU_LIST_PUSH(&((*gcvwriter.meshes)->l), &(mesh->l));
 
@@ -293,7 +293,7 @@ load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct a
 
     tie_init(cur_tie, 4096, TIE_KDTREE_FAST);
 
-    BU_GETSTRUCT(*meshes, adrt_mesh_s);
+    BU_GET(*meshes, struct adrt_mesh_s);
     BU_LIST_INIT(&((*meshes)->l));
 
     gcvwriter.meshes = meshes;

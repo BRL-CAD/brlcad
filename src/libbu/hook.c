@@ -39,7 +39,7 @@ bu_add_hook(struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata)
 {
     struct bu_hook_list *new_hook;
 
-    BU_GETSTRUCT(new_hook, bu_hook_list);
+    BU_GET(new_hook, struct bu_hook_list);
     new_hook->hookfunc = func;
     new_hook->clientdata = clientdata;
     new_hook->l.magic = BU_HOOK_LIST_MAGIC;

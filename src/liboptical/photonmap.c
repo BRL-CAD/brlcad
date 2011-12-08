@@ -383,7 +383,7 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 	phong_sp->refrac_index = 1.0;
 	phong_sp->extinction = 0.0;
 	/*
-	  BU_GETSTRUCT(phong_sp, phong_specific);
+	  BU_GET(phong_sp, struct phong_specific);
 	  memcpy(phong_sp, &phong_defaults, sizeof(struct phong_specific));
 	*/
 	MS += 7;
@@ -419,7 +419,7 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 	phong_sp->extinction = 0.0;
 
 	/*
-	  BU_GETSTRUCT(phong_sp, phong_specific);
+	  BU_GET(phong_sp, struct phong_specific);
 	  memcpy(phong_sp, &phong_defaults, sizeof(struct phong_specific));
 	*/
 	MS += 5; /* move pointer past "pm " (3 characters) */
