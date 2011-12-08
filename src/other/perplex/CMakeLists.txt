@@ -25,4 +25,10 @@ set(perplex_sources
 	perplex.cpp
 )
 
-BRLCAD_ADDEXEC(perplex "${perplex_sources}" "m")
+INCLUDE(${BRLCAD_SOURCE_DIR}/misc/CMake/ResolveCompilerPaths.cmake)
+CHECK_LIBRARY_EXISTS(m cos "" HAVE_MATH_LIB)
+IF(HAVE_MATH_LIB)
+	RESOLVE_LIBRARIES(M_LIBRARY "-lm")
+ENDIF(HAVE_MATH_LIB)
+
+BRLCAD_ADDEXEC(perplex "${perplex_sources}" "${M_LIBRARY}")
