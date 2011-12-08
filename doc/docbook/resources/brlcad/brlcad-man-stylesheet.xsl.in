@@ -239,7 +239,7 @@
 
 		<!-- ====================================================== -->
 		<!-- center tables in print, from p. 474 in Stayton: -->
-		<xsl:include href="center-table-print.xsl"/>
+		<xsl:include href="file:///@CMAKE_SOURCE_DIR@/doc/docbook/resources/brlcad/center-table-print.xsl"/>
 
 		<!--
 		<xsl:template name="table.layout">
