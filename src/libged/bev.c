@@ -59,7 +59,7 @@ bev_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_
     bu_semaphore_acquire(RT_SEM_MODEL);
     if (bev_facetize_tree) {
 	union tree *tr;
-	BU_GETUNION(tr, tree);
+	BU_GET(tr, union tree);
 	RT_TREE_INIT(tr);
 	tr->tr_op = OP_UNION;
 	tr->tr_b.tb_regionp = REGION_NULL;
@@ -194,7 +194,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	if (tmp_tree && op != ' ') {
 	    union tree *new_tree;
 
-	    BU_GETUNION(new_tree, tree);
+	    BU_GET(new_tree, union tree);
 	    RT_TREE_INIT(new_tree);
 
 	    new_tree->tr_b.tb_regionp = REGION_NULL;

@@ -5231,7 +5231,7 @@ facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path
 
     if (*facetize_tree) {
 	union tree *tr;
-	BU_GETUNION(tr, tree);
+	BU_GET(tr, union tree);
 	RT_TREE_INIT(tr);
 	tr->tr_op = OP_UNION;
 	tr->tr_b.tb_regionp = REGION_NULL;

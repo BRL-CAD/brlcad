@@ -117,7 +117,7 @@ add_solid(const struct directory *dp,
     int id;
     int solid_is_plate_mode_bot=0;
 
-    BU_GETUNION(eptr, E_tree);
+    BU_GET(eptr, union E_tree);
     eptr->magic = E_TREE_MAGIC;
 
     id = rt_db_get_internal(&intern, dp, dgcdp->gedp->ged_wdbp->dbip, mat, &rt_uniresource);
@@ -239,7 +239,7 @@ build_etree(union tree *tp,
 	case OP_UNION:
 	case OP_SUBTRACT:
 	case OP_INTERSECT:
-	    BU_GETUNION(eptr, E_tree);
+	    BU_GET(eptr, union E_tree);
 	    eptr->magic = E_TREE_MAGIC;
 	    eptr->n.op = tp->tr_op;
 	    eptr->n.left = build_etree(tp->tr_b.tb_left, dgcdp);
@@ -262,7 +262,7 @@ build_etree(union tree *tp,
 	    break;
 	case OP_NOP:
 	    /* add a NULL solid */
-	    BU_GETUNION(eptr, E_tree);
+	    BU_GET(eptr, union E_tree);
 	    eptr->magic = E_TREE_MAGIC;
 	    eptr->l.m = (struct model *)NULL;
 	    break;

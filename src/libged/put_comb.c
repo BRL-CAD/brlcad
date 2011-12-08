@@ -426,7 +426,7 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
 		    break;
 	    }
 
-	    BU_GETUNION(tp, tree);
+	    BU_GET(tp, union tree);
 	    RT_TREE_INIT(tp);
 	    rt_tree_array[tree_index].tl_tree = tp;
 	    tp->tr_l.tl_op = OP_DB_LEAF;

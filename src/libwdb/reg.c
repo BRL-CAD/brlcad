@@ -57,7 +57,7 @@ mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 
 	WDB_CK_WMEMBER(wp);
 
-	BU_GETUNION(leafp, tree);
+	BU_GET(leafp, union tree);
 	RT_TREE_INIT(leafp);
 	leafp->tr_l.tl_op = OP_DB_LEAF;
 	leafp->tr_l.tl_name = bu_strdup(wp->wm_name);
@@ -70,7 +70,7 @@ mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	    continue;
 	}
 	/* Build a left-heavy tree */
-	BU_GETUNION(nodep, tree);
+	BU_GET(nodep, union tree);
 	RT_TREE_INIT(nodep);
 	switch (wp->wm_op) {
 	    case WMOP_UNION:
@@ -161,7 +161,7 @@ mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	}
 
 	/* make new leaf node, and insert at end of array */
-	BU_GETUNION(tp, tree);
+	BU_GET(tp, union tree);
 	RT_TREE_INIT(tp);
 	tree_list[node_count++].tl_tree = tp;
 	tp->tr_l.tl_op = OP_DB_LEAF;

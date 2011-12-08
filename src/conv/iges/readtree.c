@@ -40,7 +40,7 @@ Readtree(mat_t *matp)
 	Readint(&op, "");
 	if (op < 0) {
 	    /* This is an operand */
-	    BU_GETUNION(ptr, tree);
+	    BU_GET(ptr, union tree);
 	    RT_TREE_INIT(ptr);
 	    ptr->tr_l.tl_op = OP_DB_LEAF;
 	    k = ((-op)-1)/2;
@@ -66,7 +66,7 @@ Readtree(mat_t *matp)
 	    Push(ptr);
 	} else {
 	    /* This is an operator */
-	    BU_GETUNION(ptr, tree);
+	    BU_GET(ptr, union tree);
 	    RT_TREE_INIT(ptr);
 	    switch (op) {
 		case 1:

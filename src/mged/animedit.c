@@ -3289,7 +3289,7 @@ mesh_leaf(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, s
 	return TREE_NULL;
     }
 
-    BU_GETUNION(curtree, tree);
+    BU_GET(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_SOLID;
     curtree->tr_op = OP_NOP;

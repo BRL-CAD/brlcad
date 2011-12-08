@@ -245,7 +245,7 @@ do_inter(struct bu_list *hp)
 	    continue;
 
 	/* this is an eligible intersection operation */
-	BU_GETUNION(tp, tree);
+	BU_GET(tp, union tree);
 	RT_TREE_INIT(tp);
 	tp->tr_b.tb_op = OP_INTERSECT;
 	tp->tr_b.tb_regionp = (struct region *)NULL;
@@ -280,7 +280,7 @@ do_union_subtr(struct bu_list *hp)
 	    continue;
 
 	/* this is an eligible operation */
-	BU_GETUNION(tp, tree);
+	BU_GET(tp, union tree);
 	RT_TREE_INIT(tp);
 	if (tok->type == TOK_UNION)
 	    tp->tr_b.tb_op = OP_UNION;

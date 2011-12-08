@@ -601,7 +601,7 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	    }
 	}
 
-	BU_GETUNION(tp, tree);
+	BU_GET(tp, union tree);
 	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
@@ -684,7 +684,7 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    bn_mat_xform_about_pt(mat, mat_rot, key_pt);
 	}
 
-	BU_GETUNION(tp, tree);
+	BU_GET(tp, union tree);
 	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
@@ -762,7 +762,7 @@ combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes 
 	    bn_mat_arb_rot(mat, pt, dir, ang);
 	}
 
-	BU_GETUNION(tp, tree);
+	BU_GET(tp, union tree);
 	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
@@ -832,7 +832,7 @@ combmem_set_tra(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    MAT_DELTAS_VEC(mat, tvec);
 	}
 
-	BU_GETUNION(tp, tree);
+	BU_GET(tp, union tree);
 	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
@@ -909,7 +909,7 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    combmem_assemble_mat(mat, aetvec, tvec, svec, key_pt, 1);
 	}
 
-	BU_GETUNION(tp, tree);
+	BU_GET(tp, union tree);
 	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 

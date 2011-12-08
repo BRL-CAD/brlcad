@@ -694,7 +694,7 @@ gettree_leaf( struct db_tree_state *tsp, const struct db_full_path *pathp, struc
     bu_vls_free( &sol );
 
 found_it:
-    BU_GETUNION( curtree, tree );
+    BU_GET(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_SOLID;
     curtree->tr_a.tu_stp = stp;

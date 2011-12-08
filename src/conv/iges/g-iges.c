@@ -655,7 +655,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
-    BU_GETUNION(curtree, tree);
+    BU_GET(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;

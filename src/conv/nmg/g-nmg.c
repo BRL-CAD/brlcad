@@ -272,7 +272,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     if ( RT_G_DEBUG&DEBUG_MEM_FULL )
 	bu_prmem( "At end of do_region_end()" );
 
-    BU_GETUNION(curtree, tree);
+    BU_GET(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;

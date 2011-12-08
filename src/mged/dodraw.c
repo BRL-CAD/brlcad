@@ -399,7 +399,7 @@ mged_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp,
     }
 
     /* Indicate success by returning something other than TREE_NULL */
-    BU_GETUNION(curtree, tree);
+    BU_GET(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
 
