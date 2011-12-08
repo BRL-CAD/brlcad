@@ -777,20 +777,31 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	}
     }
 
-    /* Temporary search */
-    if (nmg_has_dangling_faces((uint32_t *)rA, (char *)NULL))
-	bu_log("Dangling faces detected in rA before classification\n");
-    if (nmg_has_dangling_faces((uint32_t *)rB, (char *)NULL))
-	bu_log("Dangling faces detected in rB before classification\n");
-    if (nmg_has_dangling_faces((uint32_t *)m, (char *)NULL))
-	bu_log("Dangling faces detected in model before classification\n");
+    if (rt_g.NMG_debug & DEBUG_BOOL) {
+        int dangle_error = 0;
+        if (nmg_has_dangling_faces((uint32_t *)rA, (char *)NULL)) {
+            dangle_error = 1;
+            bu_log("nmg_bool(): Dangling faces detected in rA before classification\n");
+        }
+        if (nmg_has_dangling_faces((uint32_t *)rB, (char *)NULL)) {
+            dangle_error = 1;
+            bu_log("nmg_bool(): Dangling faces detected in rB before classification\n");
+        }
+        if (nmg_has_dangling_faces((uint32_t *)m, (char *)NULL)) {
+            dangle_error = 1;
+            bu_log("nmg_bool(): Dangling faces detected in model before classification\n");
+        }
+        if (dangle_error) {
+            nmg_stash_model_to_file("dangle.g", m, "After Boolean");
+            bu_bomb("nmg_bool(): Dangling faces detected before classification\n");
+        }
+    }
 
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
 	/* Sometimes the tessllations of non-participating regions
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vmodel(m);
-
     }
 
     /*
@@ -927,17 +938,32 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
      * can not be accomplished this far down in the subroutine tree.
      */
     if (!nmg_shell_is_empty(sA)) {
+
 	nmg_s_radial_check(sA, tol);
-	/* Temporary search */
-	if (nmg_has_dangling_faces((uint32_t *)rA, (char *)NULL))
-	    bu_log("Dangling faces detected in rA after boolean\n");
-	if (nmg_has_dangling_faces((uint32_t *)rB, (char *)NULL))
-	    bu_log("Dangling faces detected in rB after boolean\n");
-	if (nmg_has_dangling_faces((uint32_t *)m, (char *)NULL)) {
-	    if (rt_g.NMG_debug)
-		nmg_stash_model_to_file("dangle.g", m, "After Boolean");
-	    bu_bomb("nmg_bool() Dangling faces detected after boolean\n");
-	}
+
+        if (rt_g.NMG_debug & DEBUG_BOOL) {
+            int dangle_error = 0;
+            if (nmg_has_dangling_faces((uint32_t *)rA, (char *)NULL)) {
+                dangle_error = 1;
+                bu_log("nmg_bool(): Dangling faces detected in rA after boolean\n");
+            }
+            if (nmg_has_dangling_faces((uint32_t *)rB, (char *)NULL)) {
+                dangle_error = 1;
+                bu_log("nmg_bool(): Dangling faces detected in rB after boolean\n");
+            }
+            if (nmg_has_dangling_faces((uint32_t *)m, (char *)NULL)) {
+                dangle_error = 1;
+                bu_log("nmg_bool(): Dangling faces detected in m after boolean\n");
+            }
+            if (dangle_error) {
+                nmg_stash_model_to_file("dangle.g", m, "After Boolean");
+                bu_bomb("nmg_bool(): Dangling faces detected after boolean\n");
+            }
+        } else {
+            if (nmg_has_dangling_faces((uint32_t *)rA, (char *)NULL)) {
+	        bu_bomb("nmg_bool(): Dangling faces detected in rA after boolean\n");
+            }
+        }
 
 	/* Do this before table size changes */
 	if (rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
