@@ -7442,7 +7442,7 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
      * if they overlap the extent of shell 2
      */
     for (BU_LIST_FOR(fu1, faceuse, &s1->fu_hd)) {
-	if (m->maxindex >= flag_len) {
+	if ((size_t)(m->maxindex) >= flag_len) {
             old_flag_len = flag_len;
             flag_len *= 2;
             tmp = (char *)bu_realloc(flags, flag_len * sizeof(char), "realloc nmg_crackshells flags[]"); 
@@ -7472,7 +7472,7 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	 * against each of the faces of shell 2
 	 */
 	for (BU_LIST_FOR(fu2, faceuse, &s2->fu_hd)) {
-	    if (m->maxindex >= flag_len) {
+	    if ((size_t)(m->maxindex) >= flag_len) {
                 old_flag_len = flag_len;
                 flag_len *= 2;
                 tmp = (char *)bu_realloc(flags, flag_len * sizeof(char), "realloc nmg_crackshells flags[]"); 
@@ -7588,7 +7588,7 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	/* Check vert of s1 against vert of s2 */
 	/* Unnecessary: already done by vertex fuser */
     }
-    if (m->maxindex >= flag_len) {
+    if ((size_t)(m->maxindex) >= flag_len) {
         old_flag_len = flag_len;
         flag_len *= 2;
         tmp = (char *)bu_realloc(flags, flag_len * sizeof(char), "realloc nmg_crackshells flags[]"); 
