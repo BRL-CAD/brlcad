@@ -44,7 +44,6 @@ libbu_nil_la_SOURCES = \
 	hook.c \
 	htond.c \
 	htonf.c \
-	image.c \
 	interrupt.c \
 	ispar.c \
 	kill.c \
