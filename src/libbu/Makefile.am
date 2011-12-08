@@ -140,7 +140,6 @@ noinst_HEADERS = \
 
 man_MANS = \
 	htond.3 \
-	libbu.3 \
 	redblack.3
 
 EXTRA_DIST = \

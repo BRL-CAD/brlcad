@@ -123,7 +123,6 @@ target_link_libraries(test_vls libbu)
 
 set(bu_MAN3
   htond.3
-  libbu.3
   redblack.3
 )
 ADD_MAN_PAGES(3 bu_MAN3)

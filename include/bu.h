@@ -53,20 +53,30 @@
  *
  * Main header file for the BRL-CAD Utility Library, LIBBU.
  *
- * This library provides several layers of low-level utility routines,
- * providing features that make coding much easier.
+ * The two letters "BU" stand for "BRL-CAD" and "Utility".  This
+ * library provides several layers of low-level utility routines,
+ * providing features that make cross-platform coding easier.
  *
  * Parallel processing support:  threads, sempahores, parallel-malloc.
  * Consolidated logging support:  bu_log(), bu_exit(), and bu_bomb().
  *
  * The intention is that these routines are general extensions to the
  * data types offered by the C language itself, and to the basic C
- * runtime support provided by the system LIBC.
+ * runtime support provided by the system LIBC.  All routines in LIBBU
+ * are designed to be "parallel-safe" (sometimes called "mp-safe" or
+ * "thread-safe" if parallelism is via threading) to greatly ease code
+ * development for multiprocessor systems.
  *
  * All of the data types provided by this library are defined in bu.h;
  * none of the routines in this library will depend on data types
  * defined in other BRL-CAD header files, such as vmath.h.  Look for
  * those routines in LIBBN.
+ *
+ * All truly fatal errors detected by the library use bu_bomb() to
+ * exit with a status of 12.  The LIBBU variants of system calls
+ * (e.g., bu_malloc()) do not return to the caller (unless there's a
+ * bomb hook defined) unless they succeed, thus sparing the programmer
+ * from constantly having to check for NULL return codes.
  *
  */
 #ifndef __BU_H__
@@ -1822,6 +1832,10 @@ typedef struct bu_attribute_value_set bu_avs_t;
  @brief
  * Variable Length Strings
  *
+ * This structure provides support for variable length strings,
+ * freeing the programmer from concerns about having character arrays
+ * large enough to hold strings.
+ *
  * Assumption:  libc-provided sprintf() function is safe to use in parallel,
  * on parallel systems.
  */
@@ -2048,7 +2062,13 @@ BU_EXPORT extern int bu_debug;
  * The "bu_structparse" struct describes one element of a structure.
  * Collections of these are combined to describe entire structures (or at
  * least those portions for which parse/print/import/export support is
- * desired.  For example:
+ * desired.
+ *
+ * Provides a convenient way of describing a C data structure, and
+ * reading and writing it in both human-readable ASCII and efficient
+ * binary forms.
+ *
+ * For example:
  *
  @code
 
@@ -2240,6 +2260,11 @@ typedef struct bu_color bu_color_t;
  * T. H. Cormen, C. E. Leiserson, and R. L. Rivest, "_Introduction to
  * algorithms", MIT Press, Cambridge, MA, 1990.
  *
+ * The implementation of balanced binary red-black tree operations
+ * provides all the basic dynamic set operations (e.g., insertion,
+ * deletion, search, minimum, maximum, predecessor, and successor) and
+ * order-statistic operations (i.e., select and rank) with optimal
+ * O(log(n)) performance while sorting on multiple keys.
  */
 
 /**
@@ -3134,7 +3159,7 @@ BU_EXPORT extern FILE *bu_temp_file(char *filepath, size_t len);
 /** @file libbu/getopt.c
  *
  * @brief
- * Special re-entrant version of getopt.
+ * Special portable re-entrant version of getopt.
  *
  * Everything is prefixed with bu_, to distinguish it from the various
  * getopt routines found in libc.
@@ -3184,6 +3209,7 @@ BU_EXPORT extern int bu_getopt(int nargc, char * const nargv[], const char *ostr
 /** @{ */
 
 /* hist.c */
+/* These are a set of data histogramming routines. */
 
 /**
  */
@@ -3201,7 +3227,7 @@ BU_EXPORT extern void bu_hist_init(struct bu_hist *histp, fastf_t min, fastf_t m
 BU_EXPORT extern void bu_hist_range(struct bu_hist *hp, fastf_t low, fastf_t high);
 
 /**
- * The original command history interface.
+ * Print a histogram.
  */
 BU_EXPORT extern void bu_hist_pr(const struct bu_hist *histp, const char *title);
 
@@ -3499,6 +3525,10 @@ BU_EXPORT extern void bu_putchar(int c);
 
 /**
  * The routine is primarily called to log library events.
+ *
+ * The function is essentially a semaphore-protected version of
+ * fprintf(stderr) with optional logging hooks and automatic
+ * indentation options.
  */
 BU_EXPORT extern void bu_log(const char *, ...) __BU_ATTR_FORMAT12;
 
@@ -3516,6 +3546,10 @@ BU_EXPORT extern void bu_flog(FILE *, const char *, ...) __BU_ATTR_FORMAT23;
  *
  * @brief
  * Parallel-protected debugging-enhanced wrapper around system malloc().
+ *
+ * Provides a parallel-safe interface to the system memory allocator
+ * with standardized error checking, optional memory-use logging, and
+ * optional run-time pointer and memory corruption testing.
  *
  * The bu_malloc() routines can't use bu_log() because that uses the
  * bu_vls() routines which depend on bu_malloc().  So it goes direct
@@ -3699,6 +3733,12 @@ BU_EXPORT extern char *bu_basename(const char *path);
 /** @{ */
 
 /**
+ * Provides a standardized interface for acquiring the entire contents
+ * of an existing file mapped into the current address space, using
+ * the virtual memory capabilities of the operating system (such as
+ * mmap()) where available, or by allocating sufficient dynamic memory
+ * and reading the entire file.
+ *
  * If the file can not be opened, as descriptive an error message as
  * possible will be printed, to simplify code handling in the caller.
  *
@@ -3782,8 +3822,7 @@ BU_EXPORT extern int bu_process_id();
  *
  * routines for parallel processing
  *
- * Machine-specific routines for parallel processing.
- * Primarily calling functions in multiple threads on multiple CPUs.
+ * Machine-specific routines for portable parallel processing.
  *
  */
 
@@ -4162,6 +4201,18 @@ BU_EXPORT extern void bu_printb(const char *s,
 /** @addtogroup ptbl */
 /** @ingroup container */
 /** @{ */
+/**
+ * This collection of routines implements a "pointer table" data
+ * structure providing a convenient mechanism for managin a collection
+ * of pointers to objects.  This is useful where the size of the array
+ * is not known in advance and may change with time.  It's convenient
+ * to be able to write code that can say "remember this object", and
+ * then later on iterate through the collection of remembered objects.
+ *
+ * When combined with the concept of placing "magic numbers" as the
+ * first field of each data structure, the pointers to the objects
+ * become automatically typed.
+ */
 
 /**
  * Initialize struct & get storage for table.
@@ -4578,7 +4629,7 @@ BU_EXPORT extern void bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visi
  * semaphore implementation
  *
  * Machine-specific routines for parallel processing.  Primarily for
- * handling semaphores for critical sections.
+ * handling semaphores to protect critical sections of code.
  *
  * The new paradigm: semaphores are referred to, not by a pointer, but
  * by a small integer.  This module is now responsible for obtaining
