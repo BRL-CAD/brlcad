@@ -9522,7 +9522,7 @@ static struct bu_cmdtab wdb_newcmds[] = {
     {"rmater",		(int (*)(void *, int, const char **))ged_rmater},
     {"shader",		(int (*)(void *, int, const char **))ged_shader},
     {"wmater",		(int (*)(void *, int, const char **))ged_wmater},
-    {(char *)NULL,	CMD_NULL}
+    {(char *)NULL,	BU_CMD_NULL}
 };
 
 

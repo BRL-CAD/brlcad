@@ -185,7 +185,7 @@ static struct bu_cmdtab bu_observer_cmds[] = {
     {"attach",	observer_attach},
     {"detach",	observer_detach},
     {"show",	observer_show},
-    {(char *)0,	CMD_NULL}
+    {(char *)0,	BU_CMD_NULL}
 };
 
 

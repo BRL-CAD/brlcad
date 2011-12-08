@@ -53,7 +53,7 @@
 #include "bu.h"
 
 
-#define CMD_NULL (int (*)(void *, int, const char **))NULL
+#define BU_CMD_NULL (int (*)(void *, int, const char **))NULL
 
 struct bu_cmdhist {
     struct bu_list l;
@@ -62,7 +62,7 @@ struct bu_cmdhist {
     struct timeval h_finish;
     int h_status;
 };
-#define CMDHIST_NULL (struct bu_cmdhist *)NULL
+#define BU_CMDHIST_NULL (struct bu_cmdhist *)NULL
 
 struct bu_cmdhist_obj {
     struct bu_list l;
@@ -70,12 +70,10 @@ struct bu_cmdhist_obj {
     struct bu_cmdhist cho_head;
     struct bu_cmdhist *cho_curr;
 };
-#define CMDHIST_OBJ_NULL (struct bu_cmdhist_obj *)NULL
+#define BU_CMDHIST_OBJ_NULL (struct bu_cmdhist_obj *)NULL
 
 
 /**
- * b u _ c m d
- *
  * This function is intended to be used for parsing subcommands.  If
  * the command is found in the array of commands, the associated
  * function is called. Otherwise, an error message is created and

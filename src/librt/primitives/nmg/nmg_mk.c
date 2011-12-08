@@ -231,11 +231,10 @@
  *
  * Method:
  *
- * Use NMG_BU_GETSTRUCT to allocate memory and then set all
- * components.  NMG_BU_GETSTRUCT is used instead of the standard
- * GET_name because all of the GET_name macros expect a model pointer
- * to get the maxindex from.  So here we use NMG_BU_GETSTRUCT so that
- * we can set the maxindex and index by hand.
+ * Use BU_GET() to allocate memory and then set all components.
+ * BU_GET() is used instead of the standard GET_*() macros because
+ * they all expect a model pointer to get the maxindex from.  Here we
+ * simply set maxindex to 1.
  *
  * N.B.:
  *

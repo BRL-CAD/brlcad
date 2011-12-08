@@ -49,7 +49,7 @@ cho_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char 
 	{"history",	bu_cmdhist_history},
 	{"next",	bu_cmdhist_next},
 	{"prev",	bu_cmdhist_prev},
-	{(char *)NULL,	CMD_NULL}
+	{(char *)NULL,	BU_CMD_NULL}
     };
 
     if (bu_cmd(cho_cmds, argc, argv, 1, clientData, &ret) == BRLCAD_OK)
@@ -97,7 +97,7 @@ cho_open(ClientData UNUSED(clientData), Tcl_Interp *interp, const char *name)
 	if (BU_STR_EQUAL(name, bu_vls_addr(&chop->cho_name))) {
 	    Tcl_AppendResult(interp, "ch_open: ", name,
 			     " exists.\n", (char *)NULL);
-	    return CMDHIST_OBJ_NULL;
+	    return BU_CMDHIST_OBJ_NULL;
 	}
     }
 
@@ -131,7 +131,7 @@ cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **a
     }
 
     if (argc == 2) {
-	if ((chop = cho_open(clientData, interp, argv[1])) == CMDHIST_OBJ_NULL)
+	if ((chop = cho_open(clientData, interp, argv[1])) == BU_CMDHIST_OBJ_NULL)
 	    return TCL_ERROR;
 
 	(void)Tcl_CreateCommand(interp,

@@ -828,3 +828,6 @@ s/BU_GETSTRUCT\([[:space:]]*([^,)]+,)[[:space:]]*([^)]+)[[:space:]]*\)/BU_GET(\1
 s/BU_GETUNION\([[:space:]]*([^,)]+,)[[:space:]]*([^)]+)[[:space:]]*\)/BU_GET(\1 union \2)/g
 s/BU_GETTYPE\([[:space:]]*([^,)]+,)[[:space:]]*([^)]+)[[:space:]]*\)/BU_GET(\1 \2)/g
 	BU_GETUNION() and BU_GETTYPE() macros changed to BU_GET() [7.21]
+s/CMD_NULL/BU_CMD_NULL/g'
+s/CMDHIST/BU_CMDHIST/g'
+        prefix the cmd.h defines with BU_ since they are part of libbu [7.21]

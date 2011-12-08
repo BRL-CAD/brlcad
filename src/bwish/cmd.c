@@ -383,7 +383,7 @@ cmdInit(Tcl_Interp *interp)
 	{"history",	cmd_history},
 	{"hist",	cmd_hist},
 	{"q",		cmd_quit},
-	{(char *)NULL,	CMD_NULL}
+	{(char *)NULL,	BU_CMD_NULL}
     };
 
     /* Register bwish/btclsh commands */
