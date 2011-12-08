@@ -6918,7 +6918,8 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
 	status = (-1);
     }
 
-    if (!V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt, f1->min_pt, f1->max_pt, bs.tol.dist)) {
+    if (!V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt, 
+			   f1->min_pt, f1->max_pt, &bs.tol)) {
 	return;
     }
 
@@ -7371,8 +7372,9 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
     struct loopuse *lu2;
     struct edgeuse *eu1;
     struct edgeuse *eu2;
-    char *flags1, *flags2;
-    long flag_len1, flag_len2;
+    struct model *m;
+    char *flags, *tmp;
+    size_t flag_len, old_flag_len;
     point_t isect_min_pt, isect_max_pt;
 
     if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -7387,13 +7389,22 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
     sa2 = s2->sa_p;
     NMG_CK_SHELL_A(sa2);
 
+    if (s1->r_p->m_p != s2->r_p->m_p) {
+        bu_bomb("nmg_crackshells(): shells are not in the same model\n");
+    }
+
+    NMG_CK_REGION(s1->r_p);
+    NMG_CK_REGION(s2->r_p);
+    m = s1->r_p->m_p;
+    NMG_CK_MODEL(m);
+
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
 	nmg_ck_vs_in_region(s1->r_p, tol);
 	nmg_ck_vs_in_region(s2->r_p, tol);
     }
 
-    /* test if shell s1 and s2 overlap */
-    if (!V3RPP_OVERLAP_TOL(sa1->min_pt, sa1->max_pt, sa2->min_pt, sa2->max_pt, tol->dist)) {
+    /* test if shell s1 and s2 are disjoint by at least distance tolerance */
+    if (V3RPP_DISJOINT_TOL(sa1->min_pt, sa1->max_pt, sa2->min_pt, sa2->max_pt, tol)) {
 	return;
     }
 
@@ -7423,35 +7434,37 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	nmg_vshell(&s2->r_p->s_hd, s2->r_p);
     }
 
-    flag_len1 = s1->r_p->m_p->maxindex * 10;
-    flags1 = (char *)bu_calloc(flag_len1, sizeof(char),
-			      "nmg_crackshells flags1[]");
-    flag_len2 = s2->r_p->m_p->maxindex * 10;
-    flags2 = (char *)bu_calloc(flag_len2, sizeof(char),
-			      "nmg_crackshells flags2[]");
+    flag_len = m->maxindex * 2;
+    flags = (char *)bu_calloc(flag_len, sizeof(char), "nmg_crackshells flags[]");
 
     /*
      * Check each of the faces in shell 1 to see
      * if they overlap the extent of shell 2
      */
     for (BU_LIST_FOR(fu1, faceuse, &s1->fu_hd)) {
-	if (s1->r_p->m_p->maxindex >= flag_len1) bu_bomb("nmg_crackshells() flag_len1 overrun\n");
+	if (m->maxindex >= flag_len) {
+            old_flag_len = flag_len;
+            flag_len *= 2;
+            tmp = (char *)bu_realloc(flags, flag_len * sizeof(char), "realloc nmg_crackshells flags[]"); 
+            flags = tmp;
+            /* initialize new space */
+            memset((char *)(flags + (old_flag_len * sizeof(char))), 0, (flag_len - old_flag_len) * sizeof(char));
+        }
 	NMG_CK_FACEUSE(fu1);
 	f1 = fu1->f_p;
 	NMG_CK_FACE(f1);
 
 	if (fu1->orientation != OT_SAME) continue;
-	if (NMG_INDEX_IS_SET(flags1, f1)) continue;
+	if (NMG_INDEX_IS_SET(flags, f1)) continue;
 	NMG_CK_FACE_G_PLANE(f1->g.plane_p);
 
         /* test if the face f1 bounding box and isect bounding box 
          * are disjoint
          */
-        if (V3RPP_DISJOINT_TOL(f1->min_pt, f1->max_pt, isect_min_pt, isect_max_pt, tol->dist)) {
-	    NMG_INDEX_SET(flags1, f1);
+        if (V3RPP_DISJOINT_TOL(f1->min_pt, f1->max_pt, isect_min_pt, isect_max_pt, tol)) {
+	    NMG_INDEX_SET(flags, f1);
 	    continue;
         }
-
 	is.fu1 = fu1;
 
 	/*
@@ -7459,7 +7472,14 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	 * against each of the faces of shell 2
 	 */
 	for (BU_LIST_FOR(fu2, faceuse, &s2->fu_hd)) {
-	    if (s2->r_p->m_p->maxindex >= flag_len2) bu_bomb("nmg_crackshells() flag_len2 overrun\n");
+	    if (m->maxindex >= flag_len) {
+                old_flag_len = flag_len;
+                flag_len *= 2;
+                tmp = (char *)bu_realloc(flags, flag_len * sizeof(char), "realloc nmg_crackshells flags[]"); 
+                flags = tmp;
+                /* initialize new space */
+                memset((char *)(flags + (old_flag_len * sizeof(char))), 0, (flag_len - old_flag_len) * sizeof(char));
+            }
 	    NMG_CK_FACEUSE(fu2);
 	    NMG_CK_FACE(fu2->f_p);
 
@@ -7467,13 +7487,13 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	    NMG_CK_FACE(f2);
 
 	    if (fu2->orientation != OT_SAME) continue;
-	    if (NMG_INDEX_IS_SET(flags2, f2)) continue;
+	    if (NMG_INDEX_IS_SET(flags, f2)) continue;
 
             /* test if the face f1 bounding box and isect bounding box 
              * are disjoint
              */
-            if (V3RPP_DISJOINT_TOL(f2->min_pt, f2->max_pt, isect_min_pt, isect_max_pt, tol->dist)) {
-	        NMG_INDEX_SET(flags2, f2);
+            if (V3RPP_DISJOINT_TOL(f2->min_pt, f2->max_pt, isect_min_pt, isect_max_pt, tol)) {
+	        NMG_INDEX_SET(flags, f2);
 	        continue;
             }
 	    nmg_isect_two_generic_faces(fu1, fu2, tol);
@@ -7511,7 +7531,7 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	    nmg_isect_3vertex_3face(&is, s2->vu_p, fu1);
 	}
 
-	NMG_INDEX_SET(flags1, f1);
+	NMG_INDEX_SET(flags, f1);
 
 	if (rt_g.NMG_debug & DEBUG_VERIFY) {
 	    nmg_vshell(&s1->r_p->s_hd, s1->r_p);
@@ -7568,14 +7588,20 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	/* Check vert of s1 against vert of s2 */
 	/* Unnecessary: already done by vertex fuser */
     }
-    if (s1->r_p->m_p->maxindex >= flag_len1) bu_bomb("nmg_crackshells() flag_len1 overrun by end\n");
+    if (m->maxindex >= flag_len) {
+        old_flag_len = flag_len;
+        flag_len *= 2;
+        tmp = (char *)bu_realloc(flags, flag_len * sizeof(char), "realloc nmg_crackshells flags[]"); 
+        flags = tmp;
+        /* initialize new space */
+        memset((char *)(flags + (old_flag_len * sizeof(char))), 0, (flag_len - old_flag_len) * sizeof(char));
+    }
 
     /* Release storage from bogus isect line */
     (void)bu_ptbl_free(&vert_list1);
     (void)bu_ptbl_free(&vert_list2);
 
-    bu_free((char *)flags1, "nmg_crackshells flags1[]");
-    bu_free((char *)flags2, "nmg_crackshells flags2[]");
+    bu_free((char *)flags, "nmg_crackshells flags[]");
 
     /* Eliminate stray vertices that were added along edges in this step */
     (void)nmg_unbreak_region_edges(&s1->l.magic);
