@@ -106,34 +106,30 @@ configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/tutorial-templat
 
 
 IF(BRLCAD_EXTRADOCS_PDF)
+	SET(targetdir pdf/books/en)
+	SET(mk_out_dir ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
 	FOREACH(filename ${docbook_books_EN})
 		STRING(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
-		SET(tmp_fo_file ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.fo)
-		SET(xsl_file ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.xsl)
-		SET(outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/pdf/books/en/${filename_root}.pdf)
+		SET(outfile ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.fo)
 		SET(targetname ${filename_root}_book_pdf)
 		SET(scriptfile1 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_fo.cmake)
-		FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/pdf/books/en)
-		FILE(WRITE ${scriptfile1} "SET(ENV{XML_CATALOG_FILES} \"${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml\")\n")
-		FILE(APPEND ${scriptfile1} "SET(ENV{XML_DEBUG_CATALOG} 1)\n")
-		FILE(APPEND ${scriptfile1} "execute_process(COMMAND \"${XSLTPROC_EXECUTABLE}\" ${XSLTPROC_FLAGS} -o ${tmp_fo_file} ${xsl_file} ${CMAKE_CURRENT_SOURCE_DIR}/${filename})\n")
-		ADD_CUSTOM_COMMAND(
-			OUTPUT ${tmp_fo_file}
-			COMMAND ${CMAKE_COMMAND} -P ${scriptfile1}
-			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
-			)
-		SET(scriptfile2 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_pdf.cmake)
-		FILE(WRITE ${scriptfile2} "SET(ENV{FOP_HYPHENATION_PATH} ${FOP_HYP})\n")
-		FILE(APPEND ${scriptfile2} "SET(ENV{CLASSPATH} ${CMAKE_SOURCE_DIR}/doc/docbook)\n")
-		FILE(APPEND ${scriptfile2} "SET(ENV{FOP_OPTS} \"-Djava.awt.headless=true -Dxml.catalog.files=${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml\")\n")
-		FILE(APPEND ${scriptfile2} "execute_process(COMMAND \"${APACHE_FOP}\" -c ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf ${tmp_fo_file} -pdf ${outfile})\n")
+		SET(CURRENT_XSL_STYLESHEET ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.xsl)
+		configure_file(${BRLCAD_SOURCE_DIR}/doc/docbook/xsltproc.cmake.in	${scriptfile1} @ONLY)
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${outfile}
-			COMMAND ${CMAKE_COMMAND} -P ${scriptfile2}
-			DEPENDS ${tmp_fo_file}
+			COMMAND ${CMAKE_COMMAND} -P ${scriptfile1}
+			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}	"${XSLTPROC_EXECUTABLE}"
 			)
-		ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
-		INSTALL(FILES ${outfile} DESTINATION ${DATA_DIR}/pdf/books/en)
+		SET(pdf_outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.pdf)
+		SET(scriptfile2 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_pdf.cmake)
+		configure_file(${BRLCAD_SOURCE_DIR}/doc/docbook/fop.cmake.in ${scriptfile2} @ONLY)
+		ADD_CUSTOM_COMMAND(
+			OUTPUT ${pdf_outfile}
+			COMMAND ${CMAKE_COMMAND} -P ${scriptfile2}
+			DEPENDS ${outfile}
+			)
+		ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${pdf_outfile})
+		INSTALL(FILES ${pdf_outfile} DESTINATION ${DATA_DIR}/pdf/books/en)
 	ENDFOREACH(filename ${docbook_books_EN})
 ENDIF(BRLCAD_EXTRADOCS_PDF)
 

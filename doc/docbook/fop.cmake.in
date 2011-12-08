@@ -1,0 +1,9 @@
+SET(ENV{FOP_HYPHENATION_PATH} @FOP_HYP@)
+SET(ENV{CLASSPATH} @CMAKE_SOURCE_DIR@/doc/docbook)
+SET(ENV{FOP_OPTS} \"@FOP_OPTS@\")
+execute_process(COMMAND "@CMAKE_COMMAND@" -E make_directory @mk_out_dir@/)
+execute_process(COMMAND "@APACHE_FOP@" -c @CMAKE_BINARY_DIR@/doc/docbook/fop.xconf @outfile@ -pdf @pdf_outfile@ RESULT_VARIABLE CMDRESULT)
+IF(CMDRESULT)
+	MESSAGE(FATAL_ERROR "Apache FOP build failure: ${CMDRESULT}")
+ENDIF(CMDRESULT)
+
