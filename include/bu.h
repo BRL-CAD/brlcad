@@ -5859,8 +5859,8 @@ BU_EXPORT extern const char *bu_dlerror();
 /**
  * Definitions for memory pool "get" and "free" functions.
  */
-BU_EXPORT extern void *bu_get_elem_from_pool(size_t elem_byte_size);
-BU_EXPORT extern void bu_free_elem_pool(void *ptr, size_t elem_byte_size);
+BU_EXPORT extern void *bu_pool_get(size_t elem_byte_size);
+BU_EXPORT extern void bu_pool_put(void *ptr, size_t elem_byte_size);
 
 __END_DECLS
 

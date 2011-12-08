@@ -141,8 +141,8 @@ struct mem_pool {
 
 static struct mem_pool *hd = (struct mem_pool *)NULL;
 
-void
-bu_init_poolframe(void)
+HIDDEN void
+pool_init_frame(void)
 {
     size_t i;
 
@@ -150,6 +150,12 @@ bu_init_poolframe(void)
 	return;
     }
 
+    /* FIXME: should be calling libbu's memory management.  acquiring
+     * BU_SEM_SYSCALL in the parent causes an obvious conflict,
+     * however, that'll cause a deadlock.  should only need to
+     * semaphore-protect changes to the mem_pool (or have per-cpu
+     * dedicated pools).
+     */
     hd = (struct mem_pool *)calloc(1, sizeof(struct mem_pool));
     memset((char *)hd, 0, sizeof(struct mem_pool));
 
@@ -177,7 +183,7 @@ bu_init_poolframe(void)
 
 /* free all pools and free the pool frame structures */
 void
-bu_free_pools_and_poolframe(void)
+pool_free(void)
 {
     size_t i, j;
     size_t num_elem_alloc; /* number of array elements allocated */
@@ -194,9 +200,9 @@ bu_free_pools_and_poolframe(void)
 	    }
 	    if (num_elem_alloc != hd->freelist_cnt[i]) {
 		bu_semaphore_release(BU_SEM_SYSCALL);
-		bu_log("bu_free_pools_and_poolframe(): Warning: freeing %ld bytes not returned to pool %ld\n",
+		bu_log("pool_free(): Warning: freeing %ld bytes not returned to pool %ld\n",
 		       (long)((num_elem_alloc - hd->freelist_cnt[i]) * i), (long)i);
-		bu_bomb("bu_free_pools_and_poolframe(): Warning: freeing memory not returned to pool\n");
+		bu_bomb("pool_free(): Warning: freeing memory not returned to pool\n");
 	    }
 	    for (j = 0 ; j < hd->banklist_cnt[i] ; j++) {
 		free(hd->banklist[i][j]);
@@ -207,6 +213,12 @@ bu_free_pools_and_poolframe(void)
 	}
     }
 
+    /* FIXME: should be calling libbu's memory management.  acquiring
+     * BU_SEM_SYSCALL in the parent causes an obvious conflict,
+     * however, that'll cause a deadlock.  should only need to
+     * semaphore-protect changes to the mem_pool (or have per-cpu
+     * dedicated pools).
+     */
     free(hd->freelist);
     free(hd->freelist_cnt);
     free(hd->freelist_alloc_cnt);
@@ -221,8 +233,8 @@ bu_free_pools_and_poolframe(void)
 /* initialize the structures for an individual pool and allocate
  * an intial amount of memory in the pool
  */
-void
-bu_init_pool(size_t pn)
+HIDDEN void
+pool_init(size_t pn)
 {
     size_t i, j;
 
@@ -231,7 +243,7 @@ bu_init_pool(size_t pn)
      */
 
     if (!hd) {
-	bu_init_poolframe();
+	pool_init_frame();
     }
 
     if (hd->freelist[pn]) {
@@ -242,6 +254,12 @@ bu_init_pool(size_t pn)
     hd->freelist_alloc_cnt[pn] = INITIAL_BANK_ELEM_CNT * INITIAL_BANK_CNT;
     hd->banklist_cnt[pn] = INITIAL_BANK_CNT;
 
+    /* FIXME: should be calling libbu's memory management.  acquiring
+     * BU_SEM_SYSCALL in the parent causes an obvious conflict,
+     * however, that'll cause a deadlock.  should only need to
+     * semaphore-protect changes to the mem_pool (or have per-cpu
+     * dedicated pools).
+     */
     hd->freelist[pn] = (void **)calloc(hd->freelist_alloc_cnt[pn], sizeof(void *));
     hd->banklist[pn] = (void **)calloc(hd->banklist_cnt[pn], sizeof(void *));
     hd->bank_alloc_cnt[pn] = (size_t *)calloc(hd->banklist_cnt[pn], sizeof(size_t));
@@ -262,8 +280,8 @@ bu_init_pool(size_t pn)
 
 
 /* increase number of pool in poolframe */
-void
-bu_inc_poolframe(size_t pn)
+HIDDEN void
+pool_inc_frame(size_t pn)
 {
     void ***tmp1;
     size_t *tmp2;
@@ -273,6 +291,12 @@ bu_inc_poolframe(size_t pn)
     pool_cnt_old = hd->pool_cnt;
     hd->pool_cnt = pn;
 
+    /* FIXME: should be calling libbu's memory management.  acquiring
+     * BU_SEM_SYSCALL in the parent causes an obvious conflict,
+     * however, that'll cause a deadlock.  should only need to
+     * semaphore-protect changes to the mem_pool (or have per-cpu
+     * dedicated pools).
+     */
     tmp1 = (void ***)realloc((char *)hd->freelist,
 			     (hd->pool_cnt+1) * sizeof(void *));
     hd->freelist = tmp1;
@@ -309,8 +333,8 @@ bu_inc_poolframe(size_t pn)
 }
 
 
-void
-bu_inc_pool(size_t pn)
+HIDDEN void
+pool_inc(size_t pn)
 {
     void **tmp2;
     size_t *tmp3;
@@ -321,11 +345,11 @@ bu_inc_pool(size_t pn)
 
     if (!hd) {
 	bu_semaphore_release(BU_SEM_SYSCALL);
-	bu_bomb("bu_inc_pool(): poolframe is not initialized\n");
+	bu_bomb("bu_pool_inc(): poolframe is not initialized\n");
     }
     if (!hd->freelist[pn]) {
 	bu_semaphore_release(BU_SEM_SYSCALL);
-	bu_bomb("bu_inc_pool(): pool is not initialized\n");
+	bu_bomb("bu_pool_inc(): pool is not initialized\n");
     }
 
     new_bank_elem_cnt = hd->bank_alloc_cnt[pn][hd->banklist_cnt[pn]-1] *
@@ -368,10 +392,14 @@ bu_inc_pool(size_t pn)
 
 
 void *
-bu_get_elem_from_pool(size_t pn)
+bu_pool_get(size_t pn)
 {
     void *ret;
 
+    /* FIXME: this is a performance killer and bad practice to block
+     * the entire call (it should only block a system call if using
+     * the BU_SEM_SYSCALL semaphore).
+     */
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 
     if (!pn) {
@@ -386,16 +414,16 @@ bu_get_elem_from_pool(size_t pn)
     }
 
     if (!hd) {
-	bu_init_poolframe();
+	pool_init_frame();
     }
     if (pn > hd->pool_cnt) {
-	bu_inc_poolframe(pn);
+	pool_inc_frame(pn);
     }
     if (!hd->freelist[pn]) {
-	bu_init_pool(pn);
+	pool_init(pn);
     }
     if (!hd->freelist_cnt[pn]) {
-	bu_inc_pool(pn);
+	pool_inc(pn);
     }
 
     ret = hd->freelist[pn][hd->freelist_cnt[pn]-1];
@@ -408,10 +436,14 @@ bu_get_elem_from_pool(size_t pn)
 
 
 void
-bu_free_elem_pool(void *ptr, size_t elem_byte_size)
+bu_pool_put(void *ptr, size_t elem_byte_size)
 {
     size_t pn;
 
+    /* FIXME: this is a performance killer and bad practice to block
+     * the entire call (it should only block a system call if using
+     * the BU_SEM_SYSCALL semaphore).
+     */
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 
     pn = elem_byte_size;
