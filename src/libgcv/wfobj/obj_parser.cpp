@@ -130,7 +130,7 @@ static void destroyParser(detail::parser_type *parser)
 
 static void createScanner(yyscan_t *scanner)
 {
-    BU_GETTYPE(*scanner, scanner_t);
+    BU_GET(*scanner, scanner_t);
 }
 
 static void destroyScanner(yyscan_t *scanner)

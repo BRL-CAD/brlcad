@@ -56,7 +56,7 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
     fastf_t m1, m2, m3, m4;
     size_t i;
 
-    BU_GETTYPE(trip, XGLUE(tri_specific_, TRI_TYPE));
+    BU_GET(trip, XGLUE(tri_specific_, TRI_TYPE));
     VMOVE(trip->tri_A, ap);
     VSUB2(trip->tri_BA, bp, ap);
     VSUB2(trip->tri_CA, cp, ap);
