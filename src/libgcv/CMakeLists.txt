@@ -26,5 +26,4 @@ ADD_SUBDIRECTORY(wfobj)
 add_executable(test_bottess test_bottess.c)
 target_link_libraries(test_bottess libgcv)
 
-CMAKEFILES(NOTES)
-CMAKEFILES(Makefile.am)
+CMAKEFILES(NOTES Makefile.am soup.h tri_intersect.h)
