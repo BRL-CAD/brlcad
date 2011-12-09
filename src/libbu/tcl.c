@@ -182,7 +182,6 @@ tcl_bu_get_value_by_keyword(void *clientData,
     }
 
     /* Not found */
-    bu_log("bu_get_value_by_keyword: keyword '%s' not found in list\n", iwant);
 
     if (tofree)
 	Tcl_Free((char *)tofree); /* not bu_free() */
