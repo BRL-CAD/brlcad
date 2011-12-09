@@ -111,7 +111,7 @@ ADD_SUBDIRECTORY(presentations)
 ADD_SUBDIRECTORY(specifications)
 ADD_SUBDIRECTORY(system)
 
-CMAKEFILES(Makefile.am README fop.xconf.in log4j.properties resources)
+CMAKEFILES(Makefile.am README fop.xconf.in fop.cmake.in xsltproc.cmake.in log4j.properties resources)
 CMAKEFILES(BRLCAD_DB_VALIDATION.pm BRLCAD_DOC.pm DBPATH.pm.in ElNode.pm README.DB_authors_notes)
 CMAKEFILES(create-book-covers.pl create-index.pl create-xml-catalogs.pl	dummy.xml find-db-files.pl make-svg.sh read-db-xml.pl validate.pl)
 CMAKEFILES(css/brlcad.css)
