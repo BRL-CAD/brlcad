@@ -760,7 +760,7 @@ ENDIF(APACHE_FOP)
 OPTION(BRLCAD_EXTRADOCS "Enable Docbook documentation." ON)
 include(CMakeDependentOption)
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF "Build PDF output from Docbook documentation" OFF "BRLCAD_EXTRADOCS;APACHE_FOP" OFF)
-CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF_MAN "Build PDF output from Docbook documentation for man pages" OFF "BRLCAD_EXTRADOCS_PDF" OFF)
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF_MAN "Build PDF output from Docbook documentation for man pages" ON "BRLCAD_EXTRADOCS_PDF" OFF)
 
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
