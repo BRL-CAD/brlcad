@@ -740,11 +740,16 @@ ENDIF(BRLCAD_ENABLE_AQUA)
 OPTION(BRLCAD_ENABLE_JOVE "Enable jove editor build." OFF)
 MARK_AS_ADVANCED(BRLCAD_ENABLE_JOVE)
 
+
+
 # There are extra documentation files available requiring Docbook
 # They are quite useful in graphical interfaces, but also add considerably
-# to the overall build time.  By default, PDF generation is off, and html/man
-# generation (which produces files used in the GUIs) is on.  The options also
-# key off of whether required programs are available
+# to the overall build time.  If necesssary BRL-CAD  provides its own 
+# xsltproc (see src/other/xsltproc), so the html and man page
+# outputs are always potentially available.  PDF output, on the other hand,
+# needs Apache FOP.  FOP is not a candidate to bundle with BRL-CAD for 
+# a number of reasons, so we simply check to see if it is present and set 
+# the options accordingly.
 
 find_program(APACHE_FOP fop DOC "path to the exec script for Apache FOP")
 MARK_AS_ADVANCED(APACHE_FOP)
@@ -754,13 +759,29 @@ IF(APACHE_FOP)
 	STRING(REGEX REPLACE "FOP Version ([0-9\\.]*)" "\\1" APACHE_FOP_VERSION "${APACHE_FOP_INFO}")
 ENDIF(APACHE_FOP)
 
-# If necesssary BRL-CAD provides its own xsltproc, so the html and man page
-# output is always avaiable.  It is the html output that is used in the
-# graphical help browsers in MGED and Archer.
+# The HTML output is used in the graphical help browsers in MGED and Archer,
+# as well as being the most likely candidate for external viewers. Turn this
+# on unless explicitly instructed otherwise by the user.
 OPTION(BRLCAD_EXTRADOCS "Enable Docbook documentation." ON)
+
 include(CMakeDependentOption)
+# By default, always do HTML output if we're doing extradoc output
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_HTML "Build MAN page output from Docbook documentation" ON "BRLCAD_EXTRADOCS" OFF)
+MARK_AS_ADVANCED(BRLCAD_EXTRADOCS_HTML)
+
+# Normally, we'll turn on man page output by default, but there is
+# no point in doing man page output for a Visual Studio build - the
+# files aren't useful and it *seriously* increases the target build 
+# count/build time.  Conditionalize on the CMake MSVC variable NOT 
+# being set.
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_MAN "Build MAN page output from Docbook documentation" ON "BRLCAD_EXTRADOCS; NOT MSVC" OFF)
+MARK_AS_ADVANCED(BRLCAD_EXTRADOCS_MAN)
+
+# Don't do PDF by default, and hide the option unless the tools to do it are
+# present
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF "Build PDF output from Docbook documentation" OFF "BRLCAD_EXTRADOCS;APACHE_FOP" OFF)
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF_MAN "Build PDF output from Docbook documentation for man pages" ON "BRLCAD_EXTRADOCS_PDF" OFF)
+
 
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
@@ -1480,17 +1501,19 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
 	# not present in the global cache and must be explicitly pulled from
 	# src/other
 	get_directory_property(BRLCAD_BUILD_TCL DIRECTORY src/other DEFINITION BRLCAD_TCL_BUILD)
-	#At the moment we aren't set up to detect a system Tcl without Tk and build
-	#Tk for it.  Probably technically possible, but is it worth it?
-	#get_directory_property(BRLCAD_BUILD_TK DIRECTORY src/other DEFINITION BRLCAD_TK_BUILD)
-	SET(BRLCAD_BUILD_TK ${BRLCAD_BUILD_TCL})
+	get_directory_property(BRLCAD_BUILD_TK DIRECTORY src/other DEFINITION BRLCAD_TK_BUILD)
 	get_directory_property(BRLCAD_BUILD_ITCL DIRECTORY src/other DEFINITION	BRLCAD_ITCL_BUILD)
 	get_directory_property(BRLCAD_BUILD_ITK DIRECTORY src/other DEFINITION BRLCAD_ITK_BUILD)
-   IF(BRLCAD_BUILD_ITCL OR BRLCAD_BUILD_ITK)
+	IF(BRLCAD_BUILD_ITCL AND BRLCAD_BUILD_ITK)
 		SET(BRLCAD_BUILD_INCRTCL ON)
-	ELSE(BRLCAD_BUILD_ITCL OR BRLCAD_BUILD_ITK)
-		SET(BRLCAD_BUILD_INCRTCL OFF)
-	ENDIF(BRLCAD_BUILD_ITCL OR BRLCAD_BUILD_ITK)
+	ELSE(BRLCAD_BUILD_ITCL AND BRLCAD_BUILD_ITK)
+		IF(BRLCAD_BUILD_ITCL AND NOT BRLCAD_BUILD_ITK)
+			SET(BRLCAD_BUILD_INCRTCL "ON (Itcl only)")
+		ENDIF(BRLCAD_BUILD_ITCL AND NOT BRLCAD_BUILD_ITK)
+		IF(BRLCAD_BUILD_ITK AND NOT BRLCAD_BUILD_ITCL)
+			SET(BRLCAD_BUILD_INCRTCL "ON (Itk only)")
+		ENDIF(BRLCAD_BUILD_ITK AND NOT BRLCAD_BUILD_ITCL)
+	ENDIF(BRLCAD_BUILD_ITCL AND BRLCAD_BUILD_ITK)
 	get_directory_property(BRLCAD_BUILD_IWIDGETS DIRECTORY src/other DEFINITION BRLCAD_IWIDGETS_BUILD)
 	get_directory_property(BRLCAD_BUILD_TKHTML DIRECTORY src/other DEFINITION BRLCAD_TKHTML_BUILD)
 	get_directory_property(BRLCAD_BUILD_TKPNG DIRECTORY src/other DEFINITION BRLCAD_TKPNG_BUILD)

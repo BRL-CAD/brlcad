@@ -14,42 +14,46 @@ SET(XSL_MAN_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-man-
 SET(XSL_FO_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/other/standard/xsl/fo/docbook.xsl")
 
 MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
-	SET(mk_out_dir ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
-	FOREACH(filename ${${xml_files}})
-		STRING(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
-		SET(outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.html)
-		SET(targetname ${filename_root}_${targetname_suffix}_html)
-		SET(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake)
-		SET(CURRENT_XSL_STYLESHEET ${XSL_XHTML_STYLESHEET})
-		configure_file(${BRLCAD_SOURCE_DIR}/doc/docbook/xsltproc.cmake.in	${scriptfile} @ONLY)
-		ADD_CUSTOM_COMMAND(
-			OUTPUT ${outfile}
-			COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET}
-			)
-		ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
-		INSTALL(FILES ${outfile} DESTINATION ${DATA_DIR}/${targetdir})
-	ENDFOREACH(filename ${${xml_files}})
+	IF(BRLCAD_EXTRADOCS_HTML)
+		SET(mk_out_dir ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
+		FOREACH(filename ${${xml_files}})
+			STRING(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
+			SET(outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.html)
+			SET(targetname ${filename_root}_${targetname_suffix}_html)
+			SET(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake)
+			SET(CURRENT_XSL_STYLESHEET ${XSL_XHTML_STYLESHEET})
+			configure_file(${BRLCAD_SOURCE_DIR}/doc/docbook/xsltproc.cmake.in	${scriptfile} @ONLY)
+			ADD_CUSTOM_COMMAND(
+				OUTPUT ${outfile}
+				COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
+				DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET}
+				)
+			ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
+			INSTALL(FILES ${outfile} DESTINATION ${DATA_DIR}/${targetdir})
+		ENDFOREACH(filename ${${xml_files}})
+	ENDIF(BRLCAD_EXTRADOCS_HTML)
 	CMAKEFILES(${${xml_files}})
 ENDMACRO(DOCBOOK_TO_HTML targetname_suffix srcfile outfile targetdir)
 
 MACRO(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir)
-	SET(mk_out_dir ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
-	FOREACH(filename ${${xml_files}})
-		STRING(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
-		SET(outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.${manext})
-		SET(targetname ${filename_root}_${targetname_suffix}_man${mannum})
-		SET(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake)
-		SET(CURRENT_XSL_STYLESHEET ${XSL_MAN_STYLESHEET})
-		configure_file(${BRLCAD_SOURCE_DIR}/doc/docbook/xsltproc.cmake.in ${scriptfile} @ONLY)
-		ADD_CUSTOM_COMMAND(
-			OUTPUT ${outfile}
-			COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET}
-			)
-		ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
-		INSTALL(FILES ${outfile} DESTINATION ${MAN_DIR}/man${mannum})
-	ENDFOREACH(filename ${${xml_files}})
+	IF(BRLCAD_EXTRADOCS_MAN)
+		SET(mk_out_dir ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
+		FOREACH(filename ${${xml_files}})
+			STRING(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
+			SET(outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.${manext})
+			SET(targetname ${filename_root}_${targetname_suffix}_man${mannum})
+			SET(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake)
+			SET(CURRENT_XSL_STYLESHEET ${XSL_MAN_STYLESHEET})
+			configure_file(${BRLCAD_SOURCE_DIR}/doc/docbook/xsltproc.cmake.in ${scriptfile} @ONLY)
+			ADD_CUSTOM_COMMAND(
+				OUTPUT ${outfile}
+				COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
+				DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET}
+				)
+			ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
+			INSTALL(FILES ${outfile} DESTINATION ${MAN_DIR}/man${mannum})
+		ENDFOREACH(filename ${${xml_files}})
+	ENDIF(BRLCAD_EXTRADOCS_MAN)
 	CMAKEFILES(${${xml_files}})
 ENDMACRO(DOCBOOK_TO_MAN targetname_suffix srcfile outfile targetdir)
 
@@ -91,6 +95,7 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 			INSTALL(FILES ${pdf_outfile} DESTINATION ${DATA_DIR}/${targetdir})
 		ENDFOREACH(filename ${${xml_files}})
 	ENDIF(BRLCAD_EXTRADOCS_PDF)
+	CMAKEFILES(${${xml_files}})
 ENDMACRO(DOCBOOK_TO_PDF targetname_suffix srcfile outfile targetdir)
 
 
