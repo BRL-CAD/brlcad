@@ -88,11 +88,14 @@ SET(re2c_bootstrap_SRCS
 SET_SOURCE_FILES_PROPERTIES(bootstrap/scanner.cc PROPERTIES OBJECT_DEPENDS ${LEMON_re2cParse_OUTPUT_HEADER})
 
 add_executable(re2c_bootstrap ${re2c_bootstrap_SRCS})
+IF(${LEMON_EXECUTABLE_TARGET})
+	add_dependencies(re2c_bootstrap ${LEMON_EXECUTABLE_TARGET})
+ENDIF(${LEMON_EXECUTABLE_TARGET})
 
 ADD_CUSTOM_COMMAND(
 	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc
 	COMMAND re2c_bootstrap -bi -o ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc	${CMAKE_CURRENT_SOURCE_DIR}/scanner.re
-	DEPENDS re2c_bootstrap
+	DEPENDS re2c_bootstrap 
 	)
 
 SET(re2c_SRCS
