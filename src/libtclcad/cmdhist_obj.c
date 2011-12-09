@@ -39,7 +39,7 @@ static struct bu_cmdhist_obj HeadCmdHistObj;		/* head of command history object 
 
 
 HIDDEN int
-cho_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char **argv)
+cho_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     int ret;
 
@@ -52,8 +52,11 @@ cho_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char 
 	{(char *)NULL,	BU_CMD_NULL}
     };
 
-    if (bu_cmd(cho_cmds, argc, argv, 1, clientData, &ret) == BRLCAD_OK)
+    if (bu_cmd(cho_cmds, argc, argv, 1, clientData, &ret) == BRLCAD_OK) {
+	if (ret == BRLCAD_OK)
+	    Tcl_AppendResult(interp, bu_vls_addr(&((struct bu_cmdhist_obj *)clientData)->cho_curr->h_command), NULL);
 	return ret;
+    }
 
     bu_log("ERROR: '%s' command not found\n", argv[1]);
     return BRLCAD_ERROR;
@@ -157,7 +160,12 @@ cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **a
 int
 Cho_Init(Tcl_Interp *interp)
 {
+    memset(&HeadCmdHistObj, 0, sizeof(struct bu_cmdhist_obj));
     BU_LIST_INIT(&HeadCmdHistObj.l);
+    BU_VLS_INIT(&HeadCmdHistObj.cho_name);
+    /* cho_head already zero'd */
+    HeadCmdHistObj.cho_curr = NULL;
+
     (void)Tcl_CreateCommand(interp, "ch_open", (Tcl_CmdProc *)cho_open_tcl,
 			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
