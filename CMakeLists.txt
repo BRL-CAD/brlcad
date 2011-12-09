@@ -741,7 +741,7 @@ OPTION(BRLCAD_ENABLE_JOVE "Enable jove editor build." OFF)
 MARK_AS_ADVANCED(BRLCAD_ENABLE_JOVE)
 
 
-
+#----------------------------------------------------------------------
 # There are extra documentation files available requiring Docbook
 # They are quite useful in graphical interfaces, but also add considerably
 # to the overall build time.  If necesssary BRL-CAD  provides its own 
