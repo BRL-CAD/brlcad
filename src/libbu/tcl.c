@@ -138,7 +138,7 @@ tcl_bu_get_value_by_keyword(void *clientData,
     iwant = argv[1];
 
     if (argc == 3) {
-	if (Tcl_SplitList(interp, argv[2], &listc, (const char ***)&listv) != BRLCAD_OK) {
+	if (Tcl_SplitList(interp, argv[2], &listc, (const char ***)&listv) != TCL_OK) {
 	    bu_log("bu_get_value_by_keyword: iwant='%s', unable to split '%s'\n", iwant, argv[2]);
 	    return BRLCAD_ERROR;
 	}
