@@ -172,6 +172,8 @@ bu_cmdhist_add(void *clientData, int argc, const char **argv)
     cmdhist_record(chop, &vls, &zero, &zero, BRLCAD_OK);
 
     bu_vls_free(&vls);
+
+    /* newly added command is in chop->cho_curr */
     return BRLCAD_OK;
 }
 
@@ -191,7 +193,7 @@ bu_cmdhist_prev(void *clientData, int argc, const char **UNUSED(argv))
     if (BU_LIST_NOT_HEAD(hp, &chop->cho_head.l))
 	chop->cho_curr = hp;
 
-    bu_log("%s", bu_vls_addr(&chop->cho_curr->h_command));
+    /* result is in chop->cho_curr */
     return BRLCAD_OK;
 }
 
@@ -206,10 +208,13 @@ bu_cmdhist_curr(void *clientData, int argc, const char **UNUSED(argv))
 	return BRLCAD_ERROR;
     }
 
-    if (BU_LIST_NOT_HEAD(chop->cho_curr, &chop->cho_head.l))
-	bu_log("%s", bu_vls_addr(&chop->cho_curr->h_command));
+    if (BU_LIST_NOT_HEAD(chop->cho_curr, &chop->cho_head.l)) {
+	/* result is in chop->cho_curr */
+	return BRLCAD_OK;
+    }
 
-    return BRLCAD_OK;
+    /* no commands exist yet */
+    return BRLCAD_ERROR;
 }
 
 
@@ -230,7 +235,7 @@ bu_cmdhist_next(void *clientData, int argc, const char **UNUSED(argv))
     if (BU_LIST_IS_HEAD(chop->cho_curr, &chop->cho_head.l))
 	return BRLCAD_ERROR;
 
-    bu_log("%s", bu_vls_addr(&chop->cho_curr->h_command));
+    /* result is in chop->cho_curr */
     return BRLCAD_OK;
 }
 
