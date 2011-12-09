@@ -267,6 +267,9 @@ Cad_AppInit(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
 
+    /* initialize command history objects */
+    Cho_Init(interp);
+
 #ifdef BWISH
     if ((tkwin = Tk_MainWindow(interp)) == NULL)
 	return TCL_ERROR;
