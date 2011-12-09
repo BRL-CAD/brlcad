@@ -151,7 +151,11 @@ int interactive = 1;	/* >0 means interactive */
 int cbreak_mode = 0;        /* >0 means in cbreak_mode */
 
 #if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL)
+# if defined(HAVE_TK)
 int classic_mged=0;
+#  else
+int classic_mged=1;
+#  endif
 #else
 int classic_mged=1;
 #endif

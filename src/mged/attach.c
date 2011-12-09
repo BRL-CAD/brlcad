@@ -82,8 +82,10 @@ extern void Wgl_fb_open();
 #endif /* DM_WGL */
 
 #ifdef DM_OGL
+# if defined(HAVE_TK)
 extern int Ogl_dm_init();
 extern void Ogl_fb_open();
+# endif
 #endif /* DM_OGL */
 
 #ifdef DM_RTGL
@@ -125,7 +127,9 @@ struct w_dm which_dm[] = {
     { DM_TYPE_WGL, "wgl", Wgl_dm_init },
 #endif /* DM_WGL */
 #ifdef DM_OGL
+#  if defined(HAVE_TK)
     { DM_TYPE_OGL, "ogl", Ogl_dm_init },
+#  endif
 #endif /* DM_OGL */
 #ifdef DM_RTGL
     { DM_TYPE_RTGL, "rtgl", Rtgl_dm_init },
@@ -158,8 +162,10 @@ mged_fb_open(void)
 	Wgl_fb_open();
 #endif /* DM_WGL */
 #ifdef DM_OGL
+#  if defined(HAVE_TK)
     if (dmp->dm_type == DM_TYPE_OGL)
 	Ogl_fb_open();
+#  endif
 #endif /* DM_OGL */
 #ifdef DM_RTGL
     if (dmp->dm_type == DM_TYPE_RTGL)

@@ -199,9 +199,9 @@ tclcad_auto_path(Tcl_Interp *interp)
 #ifdef HAVE_TK
 	bu_vls_printf(&auto_path, "%c%s%clib%citk%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITK_VERSION);
-#endif
 	bu_vls_printf(&auto_path, "%c%s%clib%ciwidgets%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, IWIDGETS_VERSION);
+#endif
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts",
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%clib",
@@ -308,9 +308,9 @@ tclcad_auto_path(Tcl_Interp *interp)
 #ifdef HAVE_TK
 	bu_vls_printf(&auto_path, "%c%s%clib%citk%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITK_VERSION);
-#endif
 	bu_vls_printf(&auto_path, "%c%s%clib%ciwidgets%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, IWIDGETS_VERSION);
+#endif
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts",
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%clib",

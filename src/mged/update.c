@@ -69,6 +69,7 @@ f_update(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 }
 
 
+#if defined(HAVE_TK)
 /*
  * Copied from libtk/generic/tkCmds.c. Used by
  * the f_wait() procedure.
@@ -85,7 +86,6 @@ WaitVariableProc(ClientData clientData,	/* Pointer to integer to set to 1. */
     *donePtr = 1;
     return (char *) NULL;
 }
-
 
 /*
  * Copied from libtk/generic/tkCmds.c. Used by the f_wait() procedure.
@@ -132,6 +132,7 @@ WaitWindowProc(ClientData clientData, void *eventPtr)
 {
 }
 #endif /* HAVE_X11_XLIB_H */
+#endif /* HAVE_TK */
 
 /*
  * This procedure is a slightly modified version of the Tk_TkwaitCmd.
@@ -220,7 +221,8 @@ f_wait(ClientData UNUSED(clientData),	/* Main window associated with interpreter
 			 "\": must be variable, visibility, or window", (char *) NULL);
 	return TCL_ERROR;
     }
-
+#else /* HAVE_TK */
+    if (!argc || !argv) bu_log("argc/argv issue with fwait");
 #endif /* HAVE_TK */
 
     /*

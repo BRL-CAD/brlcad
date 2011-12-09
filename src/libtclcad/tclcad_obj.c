@@ -10191,8 +10191,10 @@ to_view_win_size(struct ged *gedp,
     }
 
 #if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL)
+#   if (defined HAVE_TK)
     Tk_GeometryRequest(((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->xtkwin,
 		       width, height);
+#   endif
 #endif
 
     return GED_OK;

@@ -42,6 +42,7 @@
 
 #include "dm.h"
 
+#ifdef DM_X
 static void
 dm_x11_applicationfocus() {
 #ifdef HAVE_CARBON_CARBON_H
@@ -65,6 +66,7 @@ dm_x11_applicationfocus() {
     } while (status == noErr);
 #endif
 }
+#endif
 
 
 /**

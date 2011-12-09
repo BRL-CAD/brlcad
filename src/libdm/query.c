@@ -40,7 +40,11 @@ int dm_validXType(char *dpy_string, char *name);
 char *dm_bestXType(char *dpy_string);
 
 int
+#if !defined(DM_WGL) && !defined(DM_RTGL) && !defined(DM_OGL) && !defined(DM_X) && !defined(DM_TK)
+dm_validXType(char *UNUSED(dpy_string), char *name)
+#else
 dm_validXType(char *dpy_string, char *name)
+#endif
 {
     if (BU_STR_EQUAL(name, "wgl")) {
 #ifdef DM_WGL
@@ -115,7 +119,11 @@ dm_validXType(char *dpy_string, char *name)
   */
 
 char *
+#if !defined(DM_WGL) && !defined(DM_RTGL) && !defined(DM_OGL) && !defined(DM_X) && !defined(DM_TK)
+dm_bestXType(char *UNUSED(dpy_string))
+#else
 dm_bestXType(char *dpy_string)
+#endif
 {
 #ifdef DM_WGL
     /* should probably make sure wgl works */
@@ -165,6 +173,7 @@ dm_bestXType(char *dpy_string)
 #ifdef DM_TK
     return "tk";
 #endif
+    return "nu";
 }
 
 /*

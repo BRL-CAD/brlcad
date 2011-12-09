@@ -563,7 +563,9 @@ common_dm(int argc, const char *argv[])
 #  if 0
 	    Tk_ResizeWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, width, height);
 #  else
+#if defined(HAVE_TK)
 	    Tk_GeometryRequest(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, width, height);
+#endif
 #  endif
 #endif
 

@@ -2526,7 +2526,11 @@ dmo_png_cmd(struct dm_obj *dmop,
  *
  */
 HIDDEN int
+#if defined(DM_X) || defined(DM_OGL)
 dmo_png_tcl(void *clientData, int argc, const char **argv)
+#else
+dmo_png_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
+#endif
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -2657,7 +2661,11 @@ dmo_debug_tcl(void *clientData, int argc, const char **argv)
  *
  */
 HIDDEN int
+#ifdef DM_X
 dmo_flush_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
+#else
+dmo_flush_tcl(void *UNUSED(clientData), int UNUSED(argc), const char **UNUSED(argv))
+#endif
 {
 #ifdef DM_X
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2680,7 +2688,11 @@ dmo_flush_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
  *
  */
 HIDDEN int
+#ifdef DM_X
 dmo_sync_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
+#else
+dmo_sync_tcl(void *UNUSED(clientData), int UNUSED(argc), const char **UNUSED(argv))
+#endif
 {
 #ifdef DM_X
     struct dm_obj *dmop = (struct dm_obj *)clientData;
