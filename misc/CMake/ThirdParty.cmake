@@ -192,6 +192,12 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir)
 	get_filename_component(FULL_PATH_EXEC ${${upper}_EXECUTABLE} ABSOLUTE)
 	IF(EXISTS ${FULL_PATH_EXEC})
 	    SET(EXEC_CACHED ${${upper}_EXECUTABLE})
+	ELSE(EXISTS ${FULL_PATH_EXEC})
+	    # If we don't have a build output in this cache variable, its not being present may indicate the user
+	    # specified a path and made a mistake doing so - warn that this might be the case.
+	    IF(NOT "${${upper}_EXECUTABLE}" MATCHES ${CMAKE_BINARY_DIR})
+		MESSAGE(WARNING "File path ${${upper}_EXECUTABLE} specified for ${upper}_EXECUTABLE does not exist - this path will not override ${lower} executable search results.")
+	    ENDIF(NOT "${${upper}_EXECUTABLE}" MATCHES ${CMAKE_BINARY_DIR})
 	ENDIF(EXISTS ${FULL_PATH_EXEC})
     ENDIF(${upper}_EXECUTABLE)
 
@@ -207,13 +213,19 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir)
 	ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
 
 	# Include the Find module for the exec in question - need macro routines.  But be quiet,
-	# since we aren't really trying to find anything
+	# since we are going with the bundled option.  We do need the find search result to evaluate
+	# the cached entry if we're BUNDLED (AUTO) instead of BUNDLED
 	SET(${upper}_FIND_QUIETLY TRUE)
+	SET(${upper}_FOUND_STATUS ${${upper}_FOUND})
+	SET(${upper}_FOUND "${upper}-NOTFOUND")
+	SET(${upper}_EXECUTABLE "${upper}-NOTFOUND")
 	IF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
 	    INCLUDE(${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
 	ELSE(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
 	    INCLUDE(${CMAKE_ROOT}/Modules/Find${upper}.cmake)
 	ENDIF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
+	SET(${upper}_EXECUTABLE_FOUND_RESULT "${${upper}_EXECUTABLE}")
+	SET(${upper}_FOUND "${${upper}_FOUND_STATUS}" CACHE STRING "${upper}_FOUND" FORCE)
 
 	# turn it on.  If full-on BUNDLED, don't worry about the cached value - just clear it.
 	IF(${CMAKE_PROJECT_NAME}_${upper} STREQUAL "BUNDLED")
@@ -248,6 +260,7 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir)
 	    INCLUDE(${CMAKE_ROOT}/Modules/Find${upper}.cmake)
 	ENDIF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
 	SET(${upper}_FOUND "${${upper}_FOUND}" CACHE STRING "${upper}_FOUND" FORCE)
+	SET(${upper}_EXECUTABLE_FOUND_RESULT "${${upper}_EXECUTABLE}")
 
 	# handle conversion of *AUTO to indicate whether it's
 	# going to use system or bundled versions of deps
@@ -318,12 +331,12 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir)
     IF(EXEC_CACHED)
 	# Is it the bundled path? (don't override if it is, the bundled option setting takes care of that)
 	IF(NOT "${EXEC_CACHED}" STREQUAL "${CMAKE_BINARY_DIR}/${BIN_DIR}/${lower}")
-	    # Is it the same as the result we've already found?
-	    IF(NOT "${EXEC_CACHED}" STREQUAL "${${upper}_EXECUTABLE}")
+	    # Is it the same as the found results?
+	    IF(NOT "${EXEC_CACHED}" STREQUAL "${${upper}_EXECUTABLE_FOUND_RESULT}")
 		SET(${upper}_EXECUTABLE ${EXEC_CACHED} CACHE STRING "Apparently a user specified path was supplied, use it" FORCE)
 		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
 		SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "Apparently a user specified path was supplied, use it" FORCE)
-	    ENDIF(NOT "${EXEC_CACHED}" STREQUAL "${${upper}_EXECUTABLE}")
+	    ENDIF(NOT "${EXEC_CACHED}" STREQUAL "${${upper}_EXECUTABLE_FOUND_RESULT}")
 	ENDIF(NOT "${EXEC_CACHED}" STREQUAL "${CMAKE_BINARY_DIR}/${BIN_DIR}/${lower}")
     ENDIF(EXEC_CACHED)
 
