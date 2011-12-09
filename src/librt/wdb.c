@@ -479,7 +479,7 @@ wdb_import_from_path2(struct bu_vls *logstr, struct rt_db_internal *ip, const ch
 
 	MAT_COPY(matp, ts.ts_mat);
 
-	if (dp_curr || ret < 0) {
+	if (!dp_curr || ret < 0) {
 	    bu_vls_printf(logstr, "wdb_import_from_path: '%s' is a bad path\n", path);
 	    return BRLCAD_ERROR;
 	}
