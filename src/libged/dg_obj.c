@@ -2427,7 +2427,7 @@ dgo_rtcheck_command(struct dg_obj *dgop,
     vp = (const char **)&dgop->dgo_rt_cmd[0];
     *vp++ = argv[0];
     *vp++ = "-M";
-    for (i=1; i < argc; i++)
+    for (i=1; i < (size_t)argc; i++)
 	*vp++ = argv[i];
     *vp++ = dgop->dgo_wdbp->dbip->dbi_filename;
 
@@ -2436,13 +2436,13 @@ dgo_rtcheck_command(struct dg_obj *dgop,
      * append the names of all stuff currently displayed.
      * Otherwise, simply append the remaining args.
      */
-    if (i == argc) {
+    if (i == (size_t)argc) {
 	dgop->dgo_rt_cmd_len = (char **)vp - (char **)dgop->dgo_rt_cmd;
 	dgop->dgo_rt_cmd_len += dgo_build_tops((struct solid *)&dgop->dgo_headSolid,
 					       vp,
 					       (const char **)&dgop->dgo_rt_cmd[args]);
     } else {
-	while (i < argc)
+	while (i < (size_t)argc)
 	    *vp++ = argv[i++];
 	*vp = 0;
 	vp = (const char **)&dgop->dgo_rt_cmd[0];
