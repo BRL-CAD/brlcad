@@ -1130,18 +1130,6 @@ Go_Init(Tcl_Interp *interp)
     (void)Tcl_CreateCommand(interp, (const char *)"go_open", to_open_tcl,
 			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
-#if 1
-    /*XXX Temporary */
-    /* initialize database objects */
-    Wdb_Init(interp);
-
-    /* initialize drawable geometry objects */
-    Dgo_Init(interp);
-
-    /* initialize view objects */
-    Vo_Init(interp);
-#endif
-
     bu_semaphore_reinit(GED_SEM_LAST);
 
     return TCL_OK;
