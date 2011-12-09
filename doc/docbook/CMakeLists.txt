@@ -25,7 +25,7 @@ MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${outfile}
 			COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE}
+			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET}
 			)
 		ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
 		INSTALL(FILES ${outfile} DESTINATION ${DATA_DIR}/${targetdir})
@@ -45,7 +45,7 @@ MACRO(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir)
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${outfile}
 			COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}	"${XSLTPROC_EXECUTABLE}"
+			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET}
 			)
 		ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
 		INSTALL(FILES ${outfile} DESTINATION ${MAN_DIR}/man${mannum})
@@ -77,7 +77,7 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 			ADD_CUSTOM_COMMAND(
 				OUTPUT ${outfile}
 				COMMAND ${CMAKE_COMMAND} -P ${scriptfile1}
-				DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}	"${XSLTPROC_EXECUTABLE}"
+				DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}	${XSLTPROC_EXECUTABLE_TARGET}
 				)
 			SET(pdf_outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.pdf)
 			SET(scriptfile2 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_pdf.cmake)

@@ -172,125 +172,174 @@ ENDMACRO(THIRD_PARTY)
 
 #-----------------------------------------------------------------------------
 MACRO(THIRD_PARTY_EXECUTABLE lower dir)
-	STRING(TOUPPER ${lower} upper)
-	BUNDLE_OPTION(${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${CMAKE_PROJECT_NAME}_${upper} "")
+    STRING(TOUPPER ${lower} upper)
+    BUNDLE_OPTION(${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${CMAKE_PROJECT_NAME}_${upper} "")
 
-	FOREACH(extraarg ${ARGN})
-		IF(extraarg STREQUAL "NOSYS")
-			IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-				SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "NOSYS passed, using bundled ${lower}" FORCE)
-			ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-		ENDIF(extraarg STREQUAL "NOSYS")
-	ENDFOREACH(extraarg ${ARGN})
+    # For executables, it is a reasonable use case that the developer manually specifies
+    # the location for an executable.  It is tricky to distinguish this situation from
+    # a previously cached executable path resulting from a Find*.cmake script.  The way
+    # we will proceed is to cache the value of ${upper}_EXECUTABLE if it is defined, and
+    # at the end check it against the results of running the THIRD_PARTY logic.  If
+    # it matches neither pattern (Bundled or System) it is assumed that the value passed
+    # in is an intentional setting on the part of the developer.  This has one potential
+    # drawback in that the *removal* of a system executable between searches could result
+    # in a previously cached system search result being identified as a user-specified
+    # result - to prevent that, the cached path is only used to override other results
+    # if the file it specifies actually exists.  One additional wrinkle here - if the
+    # developer has hard-specified BUNDLED for this particular executable, even a user specified
+    # or cached value will be replaced with the local path.
+    IF(${upper}_EXECUTABLE)
+	get_filename_component(FULL_PATH_EXEC ${${upper}_EXECUTABLE} ABSOLUTE)
+	IF(EXISTS ${FULL_PATH_EXEC})
+	    SET(EXEC_CACHED ${${upper}_EXECUTABLE})
+	ENDIF(EXISTS ${FULL_PATH_EXEC})
+    ENDIF(${upper}_EXECUTABLE)
 
-	# Main search logic
-	IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "BUNDLED")
+    # Main search logic
+    IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "BUNDLED")
 
-		# BUNDLED or BUNDLED (AUTO), figure out which
+	# BUNDLED or BUNDLED (AUTO), figure out which
 
-		IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-			SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "Automatically using bundled" FORCE)
-		ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-			SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED" CACHE STRING "Using bundled" FORCE)
-		ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+	IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+	    SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "Automatically using bundled" FORCE)
+	ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+	    SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED" CACHE STRING "Using bundled" FORCE)
+	ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
 
-		# Include the Find module for the exec in question - need macro routines
-		IF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
-			INCLUDE(${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
-		ELSE(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
-			INCLUDE(${CMAKE_ROOT}/Modules/Find${upper}.cmake)
-		ENDIF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
+	# Include the Find module for the exec in question - need macro routines.  But be quiet,
+	# since we aren't really trying to find anything
+	SET(${upper}_FIND_QUIETLY TRUE)
+	IF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
+	    INCLUDE(${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
+	ELSE(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
+	    INCLUDE(${CMAKE_ROOT}/Modules/Find${upper}.cmake)
+	ENDIF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
 
-		# turn it on
-		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
-		SET(${upper}_EXECUTABLE "${CMAKE_BINARY_DIR}/${BIN_DIR}/${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
+	# turn it on.  If full-on BUNDLED, don't worry about the cached value - just clear it.
+	IF(${CMAKE_PROJECT_NAME}_${upper} STREQUAL "BUNDLED")
+	    SET(EXEC_CACHED "")
+	ENDIF(${CMAKE_PROJECT_NAME}_${upper} STREQUAL "BUNDLED")
+	SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
+	SET(${upper}_EXECUTABLE "${CMAKE_BINARY_DIR}/${BIN_DIR}/${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
+	SET(${upper}_EXECUTABLE_TARGET "${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
 
-	ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "BUNDLED")
+    ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "BUNDLED")
 
-		# AUTO or SYSTEM (AUTO) or SYSTEM, figure out which
+	# AUTO or SYSTEM (AUTO) or SYSTEM, figure out which
 
-		# Stash the previous results (if any) so we don't repeatedly call out the tests - only report
-		# if something actually changes in subsequent runs.
-		SET(${upper}_FOUND_STATUS ${${upper}_FOUND})
+	# Stash the previous results (if any) so we don't repeatedly call out the tests - only report
+	# if something actually changes in subsequent runs.
+	SET(${upper}_FOUND_STATUS ${${upper}_FOUND})
 
-		# Initialize (or rather, uninitialize) variables in preparation for search
-		SET(${upper}_FOUND "${upper}-NOTFOUND" CACHE STRING "${upper}_FOUND" FORCE)
-		MARK_AS_ADVANCED(${upper}_FOUND)
-		SET(${upper}_EXECUTABLE "${upper}-NOTFOUND" CACHE STRING "${upper}_EXECUTABLE" FORCE)
+	# Initialize (or rather, uninitialize) variables in preparation for search
+	SET(${upper}_FOUND "${upper}-NOTFOUND" CACHE STRING "${upper}_FOUND" FORCE)
+	MARK_AS_ADVANCED(${upper}_FOUND)
+	SET(${upper}_EXECUTABLE "${upper}-NOTFOUND" CACHE STRING "${upper}_EXECUTABLE" FORCE)
 
-		# Be quiet if we're doing this over
-		IF("${${upper}_FOUND_STATUS}" MATCHES "NOTFOUND")
-			SET(${upper}_FIND_QUIETLY TRUE)
-		ENDIF("${${upper}_FOUND_STATUS}" MATCHES "NOTFOUND")
+	# Be quiet if we're doing this over
+	IF("${${upper}_FOUND_STATUS}" MATCHES "NOTFOUND")
+	    SET(${upper}_FIND_QUIETLY TRUE)
+	ENDIF("${${upper}_FOUND_STATUS}" MATCHES "NOTFOUND")
 
-		# Include the Find module for the exec in question
-		IF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
-			INCLUDE(${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
-		ELSE(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
-			INCLUDE(${CMAKE_ROOT}/Modules/Find${upper}.cmake)
-		ENDIF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
+	# Include the Find module for the exec in question
+	IF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
+	    INCLUDE(${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
+	ELSE(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
+	    INCLUDE(${CMAKE_ROOT}/Modules/Find${upper}.cmake)
+	ENDIF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
+	SET(${upper}_FOUND "${${upper}_FOUND}" CACHE STRING "${upper}_FOUND" FORCE)
 
-		# handle conversion of *AUTO to indicate whether it's
-		# going to use system or bundled versions of deps
-		IF(${upper}_FOUND)
+	# handle conversion of *AUTO to indicate whether it's
+	# going to use system or bundled versions of deps
+	IF(${upper}_FOUND)
 
-			# turn it off, found it
-			SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
-        		SET(${upper}_FOUND "TRUE" CACHE STRING "${upper}_FOUND" FORCE)
+	    # turn it off, found it
+	    SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
+	    SET(${upper}_EXECUTABLE_TARGET "" CACHE STRING "using system ${upper}_EXECUTABLE, no build target" FORCE)
 
-			# found system-installed 3rd-party dep
-			IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-				SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "Automatically using system, ${lower} found" FORCE)
-			ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-				# not auto, must be SYSTEM
-				SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM" CACHE STRING "Using system, ${lower} found" FORCE)
-			ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+	    # found system-installed 3rd-party dep
+	    IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+		SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "Automatically using system, ${lower} found" FORCE)
+	    ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+		# not auto, must be SYSTEM
+		SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM" CACHE STRING "Using system, ${lower} found" FORCE)
+	    ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
 
-		ELSE(${upper}_FOUND)
+	ELSE(${upper}_FOUND)
 
-			# turn it on, didn't find it
-        		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
+	    # did NOT find system-installed 3rd-party dep
+	    IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+		# If we're following the toplevel system 
+		IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
+		    SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "Automatically attempting to use system even though ${lower} was NOT found" FORCE)
+		    IF(NOT EXEC_CACHED)
+			MESSAGE(WARNING "Configuring to use system ${lower} even though it was NOT found - the build is not expected to succeed!")
+		    ENDIF(NOT EXEC_CACHED)
+		    # turn it off even though we didn't find it
+		    SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
+		    SET(${upper}_EXECUTABLE_TARGET "" CACHE STRING "using system ${upper}_EXECUTABLE, no build target" FORCE)
+
+		ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
+
+		    # unless it looks like we have a previously specified value, turn it on - we didn't find it
+		    IF(NOT EXEC_CACHED)
+			SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
+			SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "Automatically using bundled, ${lower} NOT found" FORCE)
 			SET(${upper}_EXECUTABLE "${CMAKE_BINARY_DIR}/${BIN_DIR}/${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
+			SET(${upper}_EXECUTABLE_TARGET "${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
+		    ENDIF(NOT EXEC_CACHED)
 
-			# did NOT find system-installed 3rd-party dep
-                        IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-				IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
-					SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "Automatically attempting to use system even though ${lower} was NOT found" FORCE)
-				        MESSAGE(WARNING "Configuring to use system ${lower} even though it was NOT found")
+		ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
+	    ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
 
-					# turn it off even though we didn't find it
-					SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
+		# not auto, must be SYSTEM
+		IF(NOT EXEC_CACHED)
+		    MESSAGE(WARNING "Configuring to use system ${lower} even though it was NOT found - the build is not expected to succeed!")
+		ENDIF(NOT EXEC_CACHED)
+		# turn it off even though we didn't find it
+		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
+		SET(${upper}_EXECUTABLE_TARGET "" CACHE STRING "using system ${upper}_EXECUTABLE, no build target" FORCE)
 
-				ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
-					SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "Automatically using bundled, ${lower} NOT found" FORCE)
-				ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
-                        ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-				# not auto, must be SYSTEM
-				MESSAGE(FATAL_ERROR "System version of ${lower} NOT found, halting due to setting")
-                        ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+	    ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
 
-		ENDIF(${upper}_FOUND)
+	ENDIF(${upper}_FOUND)
 
-		IF(${upper}_FOUND)
-			IF("${${upper}_FOUND_STATUS}" MATCHES "NOTFOUND")
-				MESSAGE("Reconfiguring to use system ${upper}")
-			ENDIF("${${upper}_FOUND_STATUS}" MATCHES "NOTFOUND")
-		ENDIF(${upper}_FOUND)
-	ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "BUNDLED")
+	IF(${upper}_FOUND)
+	    IF("${${upper}_FOUND_STATUS}" MATCHES "NOTFOUND")
+		IF(NOT EXEC_CACHED OR "${EXEC_CACHED}" STREQUAL "${${upper}_EXECUTABLE}")
+		    MESSAGE("Reconfiguring to use system ${upper}: ${${upper}_EXECUTABLE}")
+		ENDIF(NOT EXEC_CACHED OR "${EXEC_CACHED}" STREQUAL "${${upper}_EXECUTABLE}")
+	    ENDIF("${${upper}_FOUND_STATUS}" MATCHES "NOTFOUND")
+	ENDIF(${upper}_FOUND)
+    ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "BUNDLED")
 
-	IF(${CMAKE_PROJECT_NAME}_${upper}_BUILD)
-		ADD_SUBDIRECTORY(${dir})
-		IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
-			INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
-			DISTCHECK_IGNORE(${dir} ${dir}_ignore_files)
-		ELSE(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
-			MESSAGE("Bundled build, but file ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist not found")
-		ENDIF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
-	ELSE(${CMAKE_PROJECT_NAME}_${upper}_BUILD)
-		DISTCHECK_IGNORE_ITEM(${dir})
-	ENDIF(${CMAKE_PROJECT_NAME}_${upper}_BUILD)
+    # Now that the routine is complete, see if we had a cached value different from any of our
+    # standard results
+    IF(EXEC_CACHED)
+	# Is it the bundled path? (don't override if it is, the bundled option setting takes care of that)
+	IF(NOT "${EXEC_CACHED}" STREQUAL "${CMAKE_BINARY_DIR}/${BIN_DIR}/${lower}")
+	    # Is it the same as the result we've already found?
+	    IF(NOT "${EXEC_CACHED}" STREQUAL "${${upper}_EXECUTABLE}")
+		SET(${upper}_EXECUTABLE ${EXEC_CACHED} CACHE STRING "Apparently a user specified path was supplied, use it" FORCE)
+		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
+		SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "Apparently a user specified path was supplied, use it" FORCE)
+	    ENDIF(NOT "${EXEC_CACHED}" STREQUAL "${${upper}_EXECUTABLE}")
+	ENDIF(NOT "${EXEC_CACHED}" STREQUAL "${CMAKE_BINARY_DIR}/${BIN_DIR}/${lower}")
+    ENDIF(EXEC_CACHED)
 
-	MARK_AS_ADVANCED(${upper}_EXECUTABLE)
+    IF(${CMAKE_PROJECT_NAME}_${upper}_BUILD)
+	ADD_SUBDIRECTORY(${dir})
+	IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
+	    INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
+	    DISTCHECK_IGNORE(${dir} ${dir}_ignore_files)
+	ELSE(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
+	    MESSAGE("Bundled build, but file ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist not found")
+	ENDIF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
+    ELSE(${CMAKE_PROJECT_NAME}_${upper}_BUILD)
+	DISTCHECK_IGNORE_ITEM(${dir})
+    ENDIF(${CMAKE_PROJECT_NAME}_${upper}_BUILD)
+
+    MARK_AS_ADVANCED(${upper}_EXECUTABLE)
 ENDMACRO(THIRD_PARTY_EXECUTABLE)
 
 # Local Variables:

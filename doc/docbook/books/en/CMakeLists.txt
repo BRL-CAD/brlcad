@@ -118,7 +118,7 @@ IF(BRLCAD_EXTRADOCS_PDF)
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${outfile}
 			COMMAND ${CMAKE_COMMAND} -P ${scriptfile1}
-			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}	"${XSLTPROC_EXECUTABLE}"
+			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET}
 			)
 		SET(pdf_outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.pdf)
 		SET(scriptfile2 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_pdf.cmake)

@@ -138,7 +138,7 @@ MACRO(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
 			COMMAND ${LEMON_EXECUTABLE} ${INPUT_NAME} ${LEMON_${Name}_EXTRA_ARGS}
 			COMMAND ${CMAKE_COMMAND} -E rename ${LEMON_GEN_SOURCE} ${LemonSource}
 			COMMAND ${CMAKE_COMMAND} -E rename ${LEMON_GEN_HEADER} ${LemonHeader}
-			DEPENDS ${LemonInput} ${LEMON_EXECUTABLE}
+			DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET}
 			COMMENT "[LEMON][${Name}] Building parser with ${LEMON_EXECUTABLE}"
 		)
 
