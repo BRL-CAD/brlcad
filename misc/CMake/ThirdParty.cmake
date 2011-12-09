@@ -189,16 +189,16 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir)
     # developer has hard-specified BUNDLED for this particular executable, even a user specified
     # or cached value will be replaced with the local path.
     IF(${upper}_EXECUTABLE)
-	get_filename_component(FULL_PATH_EXEC ${${upper}_EXECUTABLE} ABSOLUTE)
-	IF(EXISTS ${FULL_PATH_EXEC})
-	    SET(EXEC_CACHED ${${upper}_EXECUTABLE})
-	ELSE(EXISTS ${FULL_PATH_EXEC})
-	    # If we don't have a build output in this cache variable, its not being present may indicate the user
-	    # specified a path and made a mistake doing so - warn that this might be the case.
-	    IF(NOT "${${upper}_EXECUTABLE}" MATCHES ${CMAKE_BINARY_DIR})
+	IF(NOT "${${upper}_EXECUTABLE}" MATCHES ${CMAKE_BINARY_DIR})
+	    get_filename_component(FULL_PATH_EXEC ${${upper}_EXECUTABLE} ABSOLUTE)
+	    IF(EXISTS ${FULL_PATH_EXEC})
+		SET(EXEC_CACHED ${${upper}_EXECUTABLE})
+	    ELSE(EXISTS ${FULL_PATH_EXEC})
+		# This path not being present may indicate the user specified a path 
+		# and made a mistake doing so - warn that this might be the case.
 		MESSAGE(WARNING "File path ${${upper}_EXECUTABLE} specified for ${upper}_EXECUTABLE does not exist - this path will not override ${lower} executable search results.")
-	    ENDIF(NOT "${${upper}_EXECUTABLE}" MATCHES ${CMAKE_BINARY_DIR})
-	ENDIF(EXISTS ${FULL_PATH_EXEC})
+	    ENDIF(EXISTS ${FULL_PATH_EXEC})
+	ENDIF(NOT "${${upper}_EXECUTABLE}" MATCHES ${CMAKE_BINARY_DIR})
     ENDIF(${upper}_EXECUTABLE)
 
     # Main search logic
