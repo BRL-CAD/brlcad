@@ -93,6 +93,8 @@ static const char usage[] =
 "  -t, --template PATH\tspecify path to scanner template file\n"
 ;
 
+void ParseTrace(FILE*, char*);
+
 int main(int argc, char *argv[])
 {
     char c;
@@ -188,7 +190,31 @@ int main(int argc, char *argv[])
     appData->usingConditions = usingConditions;
 
     /* parse */
+    ParseTrace(stderr, "");
     while ((tokenID = yylex(scanner)) != YYEOF) {
+	switch (tokenID) {
+	case TOKEN_CODE_END:
+	    fprintf(stderr, "##CODE_END(%s)\n", appData->tokenData.string);
+	    break;
+	case TOKEN_CODE_START:
+	    fprintf(stderr, "##CODE_START(%s)\n", appData->tokenData.string);
+	    break;
+	case TOKEN_SEPARATOR:
+	    fprintf(stderr, "##SEPARATOR(%s)\n", appData->tokenData.string);
+	    break;
+	case TOKEN_CONDITION:
+	    fprintf(stderr, "##CONDITION(%s)\n", appData->tokenData.string);
+	    break;
+	case TOKEN_EMPTY_COND:
+	    fprintf(stderr, "##EMPTY_COND(%s)\n", appData->tokenData.string);
+	    break;
+	case TOKEN_COND_CHANGE:
+	    fprintf(stderr, "##COND_CHANGE(%s)\n", appData->tokenData.string);
+	    break;
+	case TOKEN_WORD:
+	    fprintf(stderr, "##WORD(%s)\n", appData->tokenData.string);
+	    break;
+	}
 	Parse(parser, tokenID, appData->tokenData, appData);
     }
     Parse(parser, 0, appData->tokenData, appData);

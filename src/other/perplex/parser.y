@@ -35,20 +35,9 @@ writeString(appData_t *appData, char *string)
     fprintf(appData->out, "%s", string);
     free(string);
 }
-}
 
-%token_type {YYSTYPE}
-%extra_argument {appData_t *appData}
-
-/* suppress compiler warning about unused variable */
-%destructor file {ParseARG_STORE;}
-
-file ::= definitions_section TOKEN_SEPARATOR rules_section.
-file ::= definitions_section TOKEN_SEPARATOR rules_section TOKEN_SEPARATOR code_section.
-
-/* definitions section */
-
-definitions_section ::= definitions.
+static void
+writeDefinitions(appData_t *appData)
 {
     FILE *templateFile = appData->scanner_template;
     FILE *headerFile = appData->header;
@@ -70,13 +59,14 @@ definitions_section ::= definitions.
 	fprintf(outFile, "#define PERPLEX_USING_CONDITIONS\n");
     }
 
+    fprintf(outFile, "\n");
     while ((c = fgetc(templateFile)) != EOF) {
 	if (c == '%') {
 	    if ((c = fgetc(templateFile)) == '%') {
 		/* found %%, ignore */
 		continue;
 	    } else {
-		fprintf(outFile, "%c", '%');
+		fprintf(outFile, "%%");
 	    }
 	}
 	fprintf(outFile, "%c", c);
@@ -90,90 +80,101 @@ definitions_section ::= definitions.
     fprintf(outFile, "\n");
     fclose(templateFile);
 }
-
-definitions ::= /* empty */.
-definitions ::= definitions TOKEN_DEFINITIONS(text).
-{
-    writeString(appData, text.string);
 }
 
-/* rules section */
+%token_type {YYSTYPE}
+%extra_argument {appData_t *appData}
 
-rules_section ::= named_definitions rule_list.
+%type string {char*}
+%type word {char*}
+
+%nonassoc TOKEN_CODE_END.
+%nonassoc TOKEN_CODE_START.
+
+/* suppress compiler warning about unused variable */
+%destructor file {ParseARG_STORE;}
+
+/* three section perplex input file */
+file ::= def_section rule_section code_section.
+
+/* DEFINITIONS SECTION */
+def_section ::= string TOKEN_SEPARATOR.
 {
-    /* close re2c comment and scanner routine */
-    fprintf(appData->out, "*/\n    }\n}\n");
+    writeDefinitions(appData);
+    fprintf(appData->out, "\n/* start rules */\n");
 }
 
-named_definitions ::= /* empty */.
-named_definitions ::= named_definitions named_def.
+/* RULES SECTION */
+rule_section ::= rule_list.
 
-named_def ::= TOKEN_NAMED_DEF(definition).
-{
-    writeString(appData, definition.string);
-}
-
-rule_list ::= rule.
+rule_list ::= /* empty */.
 rule_list ::= rule_list rule.
-rule_list ::= start_scope scoped_rules end_scope.
-rule_list ::= rule_list start_scope scoped_rules end_scope.
 
-scoped_rules ::= scoped_rule.
-scoped_rules ::= scoped_rules scoped_rule.
+rule ::= opt_condition pattern opt_cond_change opt_code.
+rule ::= empty_condition opt_cond_change opt_code.
 
-rule ::= pattern action.
+opt_condition ::= /* empty */.
+opt_condition ::= TOKEN_CONDITION(C).
 {
-    writeRuleClose(appData);
+    writeString(appData, C.string);
 }
 
-rule ::= conditions pattern action.
+empty_condition ::= TOKEN_EMPTY_COND.
 {
-    writeRuleClose(appData);
+    fprintf(appData, "<>");
 }
 
-scoped_rule ::= scoped_pattern action.
-{
-    writeRuleClose(appData);
+pattern ::= word(W). {
+    writeString(appData, W);
 }
 
-conditions ::= TOKEN_CONDITION(conds).
+opt_cond_change ::= /* empty */.
+opt_cond_change ::= TOKEN_COND_CHANGE(C) word(W).
 {
-    writeString(appData, conds.string);
+    writeString(appData, C.string);
+    writeString(appData, W);
 }
 
-start_scope ::= TOKEN_CONDITION_SCOPE(conds).
+opt_code ::= /* empty */. [TOKEN_CODE_END]
+opt_code ::= code_start string TOKEN_CODE_END.
 {
-    appData->conditions = conds.string;
+    fprintf(appData->out, "IGNORE_TOKEN;\n}\n");
 }
 
-end_scope ::= TOKEN_END_CONDITION_SCOPE.
+code_start ::= TOKEN_CODE_START.
 {
-    free(appData->conditions);
-    appData->conditions = NULL;
+    fprintf(appData->out, "{\n");
 }
 
-pattern ::= TOKEN_PATTERN(text).
+/* CODE SECTION */
+code_section ::= /* empty */.
 {
-    writeString(appData, text.string);
+    /* close re2c block, while block, and scanner routine */
+    fprintf(appData->out, "\n*/\n    }\n}\n");
 }
 
-scoped_pattern ::= TOKEN_SCOPED_PATTERN(text).
+code_section ::= code_section_start string.
+
+code_section_start ::= TOKEN_SEPARATOR.
 {
-    fprintf(appData->out, "%s%s ", appData->conditions, text.string);
-    free(text.string);
+    /* close re2c block, while block, and scanner routine */
+    fprintf(appData->out, "\n*/\n    }\n}\n");
+
+    fprintf(appData->out, "\n/* start code */\n");
 }
 
-action ::= TOKEN_ACTION(text).
+/* strings */
+string ::= /* empty */.
+string ::= string word(W).
 {
-    writeString(appData, text.string);
+    writeString(appData, W);
 }
 
-/* code section */
-
-code_section ::= code.
-
-code ::= /* empty */.
-code ::= code TOKEN_CODE(text).
-{
-    writeString(appData, text.string);
-}
+/* A word is a character sequence that ends in a whitespace character,
+ * which does not contain any whitespace chracters except inside quotes.
+ * Example words include:
+ * abc
+ * "abc def"'\n'?
+ * abc[ \t\n]
+ */
+word(A) ::= TOKEN_WORD(B). { A = B.string; }

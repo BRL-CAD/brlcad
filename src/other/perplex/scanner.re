@@ -478,6 +478,11 @@ getCondition(perplex_t scanner)
 #define IGNORE_TOKEN  UPDATE_START; continue;
 #define yytext        getTokenText(scanner)
 
+static void
+copyTokenText(perplex_t scanner) {
+    scanner->appData->tokenData.string = (char*)copyString(yytext);
+}
+
 static int perplexScan(perplex_t scanner);
 
 int yylex(perplex_t scanner) {
@@ -516,174 +521,94 @@ re2c:cond:goto = "continue;";
 re2c:define:YYCONDTYPE = condition_t;
 re2c:define:YYGETCONDITION:naked = 1;
 
-ANY = [^];
-LINE_ANY = [^\n];
-EOL = '\n';
-WHITE = [\n\t ];
-QUOTE = '\'';
-DQUOTE = '"';
-LITERAL_QUOTE = [^\\]QUOTE|"\\\\"QUOTE;
-LITERAL_DQUOTE = [^\\']DQUOTE|[^\\]DQUOTE[^']|"\\\\"DQUOTE;
-LITERAL_RSBRACKET = [^\\]']'|"\\]";
-FAUX_SEPARATOR = LINE_ANY"%%"EOL|"%%"LINE_ANY+EOL;
-SEPARATOR = "%%"EOL;
+<> :=> definitions
 
-<> :=> DEFINITIONS
+<rules>'"' :=> dquote_string
+<rules>"'" :=> squote_string
+<rules>'[' :=> bracket_string
+<rules>"/*" :=> comment
+<rules>"//" :=> line_comment
 
-<DEFINITIONS>FAUX_SEPARATOR {
-    scanner->appData->tokenData.string = copyString(yytext);
-    return TOKEN_DEFINITIONS;
+<definitions,rules>[^\n]"%%\n" {
+    copyTokenText(scanner);
+    return TOKEN_WORD;
 }
-<DEFINITIONS>SEPARATOR => RULES {
+<definitions,rules>"%%\n" {
+    /* Matched "%%\n" appearing at start of file or start of line.
+     * We don't match the optional preceeding '\n' so that '\n' can still
+     * end a word (e.g. "foo\n%%\n" is a word followed by a separator).
+     */
+    if (YYGETCONDITION == definitions) {
+	YYSETCONDITION(rules);
+    } else {
+	YYSETCONDITION(code);
+    }
     return TOKEN_SEPARATOR;
 }
-<DEFINITIONS>ANY {
-    scanner->appData->tokenData.string = copyString(yytext);
-    return TOKEN_DEFINITIONS;
-}
 
-
-<RULES>"/*" => RULES_COMMENT {
-    IGNORE_TOKEN;
-}
-<RULES>"//" => RULES_LINE_COMMENT {
-    IGNORE_TOKEN;
-}
-<RULES>'<' :=> RULES_START_CONDITION
-<RULES>SEPARATOR => CODE {
-    return TOKEN_SEPARATOR;
-}
-<RULES>WHITE+ {
-    IGNORE_TOKEN;
-}
-<RULES>'}' {
-    if (scanner->conditionScope) {
-	scanner->conditionScope = 0;
-	return TOKEN_END_CONDITION_SCOPE;
+<rules>[^]?'<' {
+    /* matched '<' at start of line or section */
+    if (strlen(yytext) == 1 || yytext[0] == '\n') {
+	YYSETCONDITION(condition_list);
     }
     continue;
 }
-<RULES>ANY => RULES_PATTERN {
-    /* roll back cursor to first char of pattern */
-    scanner->cursor--;
+<rules>':'?"=>" {
+    copyTokenText(scanner);
+    return TOKEN_COND_CHANGE;
+}
+<rules>'{' {
+    scanner->braceCount++;
+    if (scanner->braceCount == 1) {
+	return TOKEN_CODE_START;
+    }
     continue;
 }
-
-
-<RULES_START_CONDITION>'>' :=> CONDITION_END
-<RULES_START_CONDITION>ANY {
-    /* part of the condition */
+<rules>'}' {
+    scanner->braceCount--;
+    if (scanner->braceCount == 0) {
+	return TOKEN_CODE_END;
+    }
     continue;
 }
-
-<CONDITION_END>'{' => RULES {
-    char **str = &scanner->appData->tokenData.string;
-
-    /* start condition scope */
-    scanner->conditionScope = 1;
-
-    /* get action string, but don't include the opening brace */
-    *str = copyString(yytext);
-    *strrchr(*str, '{') = '\0';
-
-    return TOKEN_CONDITION_SCOPE;
+<definitions,rules,code>[ \t\n] {
+    /* matched single whitespace */
+    if (strlen(yytext) == 1) {
+	IGNORE_TOKEN;
+    }
+    /* matched end of word */
+    copyTokenText(scanner);
+    return TOKEN_WORD;
 }
-<CONDITION_END>WHITE {
+
+<dquote_string,squote_string,bracket_string>'\\'[^] {
+    /* escape sequence */
     continue;
 }
-<CONDITION_END>ANY => RULES_PATTERN {
-    scanner->cursor--; /* last char is part of pattern */
-    scanner->appData->tokenData.string = copyString(yytext);
+<dquote_string>'"' :=> rules
+<squote_string>"'" :=> rules
+<bracket_string>']' :=> rules
+<comment>"*/" => rules {
+    IGNORE_TOKEN;
+}
+<line_comment>'\n' => rules {
+    IGNORE_TOKEN;
+}
+
+<condition_list>'>' => rules {
+    copyTokenText(scanner);
+
+    /* matched "<>" */
+    if (strlen(yytext) == 2) {
+	return TOKEN_EMPTY_COND;
+    }
     return TOKEN_CONDITION;
 }
 
-<RULES_COMMENT>"*/" :=> RULES
-<RULES_LINE_COMMENT>EOL :=> RULES
-<RULES_COMMENT,RULES_LINE_COMMENT>ANY {
-    IGNORE_TOKEN;
-}
-
-
-<RULES_PATTERN>DQUOTE :=> PATTERN_STRING
-<RULES_PATTERN>QUOTE :=> PATTERN_CHAR
-<RULES_PATTERN>'[' :=> PATTERN_CLASS
-<RULES_PATTERN>'=>' {
-    continue;
-}
-<RULES_PATTERN>'=' :=> PATTERN_DEF
-<RULES_PATTERN>'{' => ACTION { 
-    /* end of pattern, start of action */
-    scanner->braceCount = 1;
-    scanner->appData->tokenData.string = copyString(yytext);
-
-    if (scanner->conditionScope) {
-	return TOKEN_SCOPED_PATTERN;
-    } else {
-	return TOKEN_PATTERN;
-    }
-}
-<RULES_PATTERN>LINE_ANY {
-    /* part of the pattern */
-    continue;
-}
-<RULES_PATTERN>ANY {
-    IGNORE_TOKEN;
-}
-
-<PATTERN_DEF>EOL => RULES {
-    scanner->appData->tokenData.string = copyString(yytext);
-    return TOKEN_NAMED_DEF;
-}
-<PATTERN_CHAR>LITERAL_QUOTE :=> RULES_PATTERN
-<PATTERN_CLASS>LITERAL_RSBRACKET :=> RULES_PATTERN
-<PATTERN_STRING>LITERAL_DQUOTE :=> RULES_PATTERN
-<PATTERN_CHAR,PATTERN_CLASS,PATTERN_STRING,PATTERN_DEF>ANY {
-    /* part of the pattern */
+<*>[^] {
     continue;
 }
 
-
-<ACTION>LITERAL_DQUOTE :=> ACTION_STRING
-<ACTION>LITERAL_QUOTE :=> ACTION_CHAR
-<ACTION>"/*" :=> ACTION_COMMENT
-<ACTION>"//" :=> ACTION_LINE_COMMENT
-<ACTION>'{' {
-    /* found code brace */
-    scanner->braceCount++;
-    continue;
-}
-<ACTION>'}' {
-    scanner->braceCount--;
-
-    if (scanner->braceCount == 0) {
-        /* this brace ends the action */
-	char **str = &scanner->appData->tokenData.string;
-
-	/* get action string, but don't include the closing action brace */
-	*str = copyString(yytext);
-	*strrchr(*str, '}') = '\0';
-
-	YYSETCONDITION(RULES);
-	return TOKEN_ACTION;
-    }
-
-    continue;
-}
-
-<ACTION_COMMENT>"*/" :=> ACTION
-<ACTION_LINE_COMMENT>EOL :=> ACTION
-<ACTION_CHAR>LITERAL_QUOTE :=> ACTION
-<ACTION_STRING>LITERAL_DQUOTE :=> ACTION
-<ACTION,ACTION_COMMENT,ACTION_LINE_COMMENT,ACTION_CHAR,ACTION_STRING>ANY {
-    /* part of the action/comment/string */
-    continue;
-}
-
-
-<CODE>ANY {
-    scanner->appData->tokenData.string = copyString(yytext);
-    return TOKEN_CODE;
-}
 */
     }
 }

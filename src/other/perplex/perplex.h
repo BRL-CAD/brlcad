@@ -52,24 +52,16 @@
 
 /* support for start conditions */
 typedef enum YYCONDTYPE {
-    INITIAL,
-    DEFINITIONS,
-    CONDITION_END,
-    RULES,
-    RULES_COMMENT,
-    RULES_LINE_COMMENT,
-    RULES_START_CONDITION,
-    RULES_PATTERN,
-    PATTERN_CHAR,
-    PATTERN_CLASS,
-    PATTERN_STRING,
-    PATTERN_DEF,
-    ACTION,
-    ACTION_CHAR,
-    ACTION_STRING,
-    ACTION_COMMENT,
-    ACTION_LINE_COMMENT,
-    CODE
+    initial,
+    definitions,
+    rules,
+    code,
+    squote_string,
+    dquote_string,
+    bracket_string,
+    comment,
+    line_comment,
+    condition_list
 } condition_t;
 
 struct Buf {
