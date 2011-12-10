@@ -136,6 +136,9 @@ opt_cond_change ::= TOKEN_COND_CHANGE(C) word(W).
 }
 
 opt_code ::= /* empty */. [TOKEN_CODE_END]
+{
+    fprintf(appData->out, " { IGNORE_TOKEN; }\n");
+}
 opt_code ::= code_start string TOKEN_CODE_END.
 {
     fprintf(appData->out, "IGNORE_TOKEN;\n}\n");
