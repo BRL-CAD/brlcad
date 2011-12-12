@@ -2623,22 +2623,10 @@ nmg_2edgeuse_g_coincident(const struct edgeuse *eu1, const struct edgeuse *eu2, 
     struct edge_g_lseg *eg1;
     struct edge_g_lseg *eg2;
 
-    NMG_CK_EDGEUSE(eu1);
-    NMG_CK_EDGEUSE(eu2);
-    BN_CK_TOL(tol);
-
     eg1 = eu1->g.lseg_p;
     eg2 = eu2->g.lseg_p;
-    NMG_CK_EDGE_G_LSEG(eg1);
-    NMG_CK_EDGE_G_LSEG(eg2);
 
     if (eg1 == eg2) return 1;
-
-    /* Ensure direction vectors are generally parallel */
-    /* These are not unit vectors */
-    /* tol->para and RT_DOT_TOL are too tight a tolerance.  0.1 is 5 degrees */
-    if (fabs(VDOT(eg1->e_dir, eg2->e_dir)) <
-	0.9 * MAGNITUDE(eg1->e_dir) * MAGNITUDE(eg2->e_dir)) return 0;
 
     /* Ensure that vertices on edge 2 are within tol of e1 */
     if (bn_distsq_line3_pt3(eg1->e_pt, eg1->e_dir,
