@@ -546,7 +546,11 @@ re2c:define:YYGETCONDITION:naked = 1;
     return TOKEN_SEPARATOR;
 }
 
-<rules>[^]?'<' {
+<rules>[^\n]'<' {
+    copyTokenText(scanner);
+    return TOKEN_WORD;
+}
+<rules>'<' {
     /* matched '<' at start of line or section */
     if (strlen(yytext) == 1 || yytext[0] == '\n') {
 	YYSETCONDITION(condition_list);
