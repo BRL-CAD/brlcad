@@ -3678,31 +3678,35 @@ nmg_isect_eu_eu(struct edgeuse *eu1, struct vertex_g *vg1a, struct vertex_g *vg1
 {
     struct model *m;
     struct vertex_g *vg2a, *vg2b;
-    vect_t dir2;
+    vect_t dir2, diff;
     fastf_t dist[2];
     int code;
     point_t hit_pt;
-    vect_t diff;
+    vect_t e1_min_pt, e1_max_pt, e2_min_pt, e2_max_pt;
 
     if (rt_g.NMG_debug & DEBUG_POLYSECT)
 	bu_log("nmg_isect_eu_eu(eu1=x%x, eu2=x%x)\n", eu1, eu2);
 
-    NMG_CK_EDGEUSE(eu1);
-    NMG_CK_VERTEX_G(vg1a);
-    NMG_CK_VERTEX_G(vg1b);
-    NMG_CK_EDGEUSE(eu2);
-    BN_CK_TOL(tol);
-    BU_CK_PTBL(inters);
-    BU_CK_PTBL(verts);
-
     m = nmg_find_model(&eu1->l.magic);
-    NMG_CK_MODEL(m);
 
     vg2a = eu2->vu_p->v_p->vg_p;
-    NMG_CK_VERTEX_G(vg2a);
-
     vg2b = eu2->eumate_p->vu_p->v_p->vg_p;
-    NMG_CK_VERTEX_G(vg2b);
+
+    /* compute bounding box for eu1 */
+    VMOVE(e1_min_pt, vg1a->coord);
+    VMIN(e1_min_pt, vg1b->coord);
+    VMOVE(e1_max_pt, vg1a->coord);
+    VMAX(e1_max_pt, vg1b->coord);
+ 
+    /* compute bounding box for eu2 */
+    VMOVE(e2_min_pt, vg2a->coord);
+    VMIN(e2_min_pt, vg2b->coord);
+    VMOVE(e2_max_pt, vg2a->coord);
+    VMAX(e2_max_pt, vg2b->coord);
+
+    if (!V3RPP_OVERLAP_TOL(e1_min_pt, e1_max_pt, e2_min_pt, e2_max_pt, tol->dist)) {
+        return;
+    }
 
     VSUB2(dir2, vg2b->coord, vg2a->coord);
 
@@ -3767,16 +3771,16 @@ nmg_isect_eu_eu(struct edgeuse *eu1, struct vertex_g *vg1a, struct vertex_g *vg1
      */
 
     VSUB2(diff, vg2a->coord, vg1a->coord);
-    if (VDOT(diff, dir1) > 0.0) {
+    if (VDOT(diff, dir1) > SMALL_FASTF) {
 	VSUB2(diff, vg1b->coord, vg2a->coord);
-	if (VDOT(diff, dir1) > 0.0)
+	if (VDOT(diff, dir1) > SMALL_FASTF)
 	    bu_ptbl_ins_unique(inters, (long *)eu2->vu_p->v_p);
     }
 
     VSUB2(diff, vg2b->coord, vg1a->coord);
-    if (VDOT(diff, dir1) > 0.0) {
+    if (VDOT(diff, dir1) > SMALL_FASTF) {
 	VSUB2(diff, vg1b->coord, vg2b->coord);
-	if (VDOT(diff, dir1) > 0.0)
+	if (VDOT(diff, dir1) > SMALL_FASTF)
 	    bu_ptbl_ins_unique(inters, (long *)eu2->eumate_p->vu_p->v_p);
     }
 }
