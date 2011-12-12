@@ -1536,6 +1536,7 @@ nmg_model_break_e_on_v(struct model *m, const struct bn_tol *tol)
     struct bu_ptbl edgeuses;
     struct bu_ptbl new_edgeuses;
     register struct edgeuse **eup;
+    vect_t e_min_pt, e_max_pt;
 
     NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
@@ -1556,13 +1557,17 @@ nmg_model_break_e_on_v(struct model *m, const struct bn_tol *tol)
 	    register struct vertex **vp;
 
 	    eu = *eup;
-	    NMG_CK_EDGEUSE(eu);
 	    if (eu->g.magic_p && *eu->g.magic_p == NMG_EDGE_G_CNURB_MAGIC)
 		continue;
 	    va = eu->vu_p->v_p;
 	    vb = eu->eumate_p->vu_p->v_p;
-	    NMG_CK_VERTEX(va);
-	    NMG_CK_VERTEX(vb);
+
+            /* find edge bounding box */
+            VMOVE(e_min_pt, va->vg_p->coord);
+            VMIN(e_min_pt, vb->vg_p->coord);
+            VMOVE(e_max_pt, va->vg_p->coord);
+            VMAX(e_max_pt, vb->vg_p->coord);
+
 	    for (vp = (struct vertex **)BU_PTBL_LASTADDR(&verts);
 		 vp >= (struct vertex **)BU_PTBL_BASEADDR(&verts);
 		 vp--
@@ -1573,16 +1578,19 @@ nmg_model_break_e_on_v(struct model *m, const struct bn_tol *tol)
 		struct edgeuse *new_eu;
 
 		v = *vp;
-		/* very expensive to keep checking on this inner loop */
-		/* NMG_CK_VERTEX(v); */
 		if (va == v) continue;
 		if (vb == v) continue;
+
+                if (V3PT_OUT_RPP_TOL(v->vg_p->coord, e_min_pt, e_max_pt, tol->dist)) {
+                    continue;
+                }
 
 		/* A good candidate for inline expansion */
 		code = bn_isect_pt_lseg(&dist,
 					va->vg_p->coord,
 					vb->vg_p->coord,
 					v->vg_p->coord, tol);
+
 		if (code < 1) continue;	/* missed */
 		if (code == 1 || code == 2) {
 		    bu_log("nmg_model_break_e_on_v() code=%d, why wasn't this vertex fused?\n", code);
