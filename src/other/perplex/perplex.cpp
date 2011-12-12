@@ -165,8 +165,8 @@ int main(int argc, char *argv[])
     /* look for default if scanner template not specified */
     if (templateFile == NULL) {
 	if ((templateFile = fopen(defaultTemplate, "r")) == NULL) {
-	    fprintf(stderr, "Error: couldn't open default template \"%s\" "
-		    "for reading. Specify template file using \"-t PATH\" "
+	    fprintf(stderr, "Error: Couldn't open default template \"%s\" "
+		    "for reading.\n\tSpecify template file using \"-t PATH\" "
 		    "option.\n", defaultTemplate);
 	    exit(1);
 	}
