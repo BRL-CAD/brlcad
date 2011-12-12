@@ -18,6 +18,19 @@
 #endif
 #endif
 
+#ifndef WITH_TRIO
+#include <stdio.h>
+#else
+/**
+ * TRIO_REPLACE_STDIO:
+ *
+ * This macro is defined if teh trio string formatting functions are to
+ * be used instead of the default stdio ones.
+ */
+#define TRIO_REPLACE_STDIO
+#include "trio.h"
+#endif
+
 #if defined(macintosh)
 #include "config-mac.h"
 #elif defined(_WIN32_WCE)
@@ -38,19 +51,6 @@
 #include <varargs.h>
 int snprintf(char *, size_t, const char *, ...);
 int vfprintf(FILE *, const char *, va_list);
-#endif
-
-#ifndef WITH_TRIO
-#include <stdio.h>
-#else
-/**
- * TRIO_REPLACE_STDIO:
- *
- * This macro is defined if teh trio string formatting functions are to
- * be used instead of the default stdio ones.
- */
-#define TRIO_REPLACE_STDIO
-#include "trio.h"
 #endif
 
 /*

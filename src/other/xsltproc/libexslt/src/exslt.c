@@ -2,11 +2,11 @@
 #include "libexslt/libexslt.h"
 
 #include <libxml/xmlversion.h>
+#include <libxslt/extensions.h>
 
 #include "config.h"
 
 #include <libxslt/xsltconfig.h>
-#include <libxslt/extensions.h>
 
 #include "exsltconfig.h"
 #include "exslt.h"

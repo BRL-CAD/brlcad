@@ -6,13 +6,13 @@
  * daniel@veillard.com
  */
 
+#include <stdio.h>
 #include "libxml/xmlversion.h"
 #include "libxml/config.h"
 #include "libxslt/config.h"
 #include "libexslt/exsltconfig.h"
 #include "libxslt/libxslt.h"
 #include "libexslt/exslt.h"
-#include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
