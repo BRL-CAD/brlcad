@@ -62,12 +62,26 @@ bn_dist_pt3_pt3(const fastf_t *a, const fastf_t *b)
 int
 bn_pt3_pt3_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 {
-    vect_t diff;
+    register fastf_t tmp = tol->dist_sq;
+    register fastf_t ab, abx, aby, abz;
 
-    BN_CK_TOL(tol);
-    VSUB2(diff, b, a);
-    if (MAGSQ(diff) < tol->dist_sq) return 1;
-    return 0;
+    abx = a[X]-b[X];
+    ab = abx * abx;
+    if (ab > tmp) {
+        return 0;
+    }
+    aby = a[Y]-b[Y];
+    ab += (aby * aby);
+    if (ab > tmp) {
+        return 0;
+    }
+    abz = a[Z]-b[Z];
+    ab += (abz * abz);
+    if (ab > tmp) {
+        return 0;
+    }
+
+    return 1;
 }
 
 
