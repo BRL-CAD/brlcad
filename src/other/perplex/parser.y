@@ -89,6 +89,7 @@ writeDefinitions(appData_t *appData)
 %type word {char*}
 
 /* later tokens have greater precedence */
+%nonassoc EMPTY_RULE_LIST.
 %nonassoc TOKEN_WORD.
 %nonassoc TOKEN_CODE_END.
 %nonassoc TOKEN_CODE_START.
@@ -109,9 +110,17 @@ def_section ::= string TOKEN_SEPARATOR.
 }
 
 /* RULES SECTION */
-rule_section ::= rule_list.
+rule_section ::= named_defs rule_list.
 
-rule_list ::= /* empty */.
+named_defs ::= /* empty */.
+named_defs ::= named_defs word(NAME) TOKEN_EQUALS word(DEF).
+{
+    writeString(appData, NAME);
+    fprintf(appData->out, "= ");
+    writeString(appData, DEF);
+}
+
+rule_list ::= /* empty */. [EMPTY_RULE_LIST]
 rule_list ::= rule_list rules. [TOKEN_CODE_END]
 rule_list ::= rule_list start_scope rules end_scope.
 

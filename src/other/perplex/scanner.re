@@ -546,6 +546,9 @@ re2c:define:YYGETCONDITION:naked = 1;
     return TOKEN_SEPARATOR;
 }
 
+<rules>'=' {
+    return TOKEN_EQUALS;
+}
 <rules>[^\n]'<' {
     copyTokenText(scanner);
     return TOKEN_WORD;
