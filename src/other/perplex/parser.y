@@ -121,7 +121,7 @@ opt_condition ::= TOKEN_CONDITION(C).
 
 empty_condition ::= TOKEN_EMPTY_COND.
 {
-    fprintf(appData, "<>");
+    fprintf(appData->out, "<>");
 }
 
 pattern ::= word(W). {
