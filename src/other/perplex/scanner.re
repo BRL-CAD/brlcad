@@ -558,6 +558,11 @@ re2c:define:YYGETCONDITION:naked = 1;
     return TOKEN_COND_CHANGE;
 }
 <rules>'{' {
+    /* brace appears inside condition scope */
+    if (scanner->conditionScope) {
+	scanner->scopeBraceCount++;
+    }
+
     scanner->braceCount++;
     if (scanner->braceCount == 1) {
 	return TOKEN_CODE_START;
@@ -565,7 +570,20 @@ re2c:define:YYGETCONDITION:naked = 1;
     continue;
 }
 <rules>'}' {
+    /* brace appears inside condition scope */
+    if (scanner->conditionScope) {
+
+	scanner->scopeBraceCount--;
+
+	/* brace closes scope */
+	if (scanner->scopeBraceCount == 0) {
+	    return TOKEN_END_SCOPE;
+	}
+    }
+
     scanner->braceCount--;
+
+    /* brace closes rule code */
     if (scanner->braceCount == 0) {
 	return TOKEN_CODE_END;
     }
@@ -595,13 +613,24 @@ re2c:define:YYGETCONDITION:naked = 1;
     IGNORE_TOKEN;
 }
 
-<condition_list>'>' => rules {
+<condition_list>'>'[ \t\n]*'{' => rules {
     copyTokenText(scanner);
 
-    /* matched "<>" */
+    /* trim everything after '>' */
+    strchr(scanner->appData->tokenData.string, '>')[1] = '\0';
+
+    scanner->conditionScope = 1;
+    scanner->scopeBraceCount = 1;
+
+    return TOKEN_START_SCOPE;
+}
+<condition_list>'>' => rules {
     if (strlen(yytext) == 2) {
+	/* matched "<>" */
 	return TOKEN_EMPTY_COND;
     }
+
+    copyTokenText(scanner);
     return TOKEN_CONDITION;
 }
 

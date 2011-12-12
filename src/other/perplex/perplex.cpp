@@ -214,6 +214,12 @@ int main(int argc, char *argv[])
 	case TOKEN_WORD:
 	    fprintf(stderr, "##WORD(%s)\n", appData->tokenData.string);
 	    break;
+	case TOKEN_START_SCOPE:
+	    fprintf(stderr, "##START_SCOPE(%s)\n", appData->tokenData.string);
+	    break;
+	case TOKEN_END_SCOPE:
+	    fprintf(stderr, "##END_SCOPE(%s)\n", appData->tokenData.string);
+	    break;
 	}
 	Parse(parser, tokenID, appData->tokenData, appData);
     }

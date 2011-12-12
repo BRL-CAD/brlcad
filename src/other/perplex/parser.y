@@ -88,8 +88,12 @@ writeDefinitions(appData_t *appData)
 %type string {char*}
 %type word {char*}
 
+/* later tokens have greater precedence */
+%nonassoc TOKEN_WORD.
 %nonassoc TOKEN_CODE_END.
 %nonassoc TOKEN_CODE_START.
+%right TOKEN_EMPTY_COND.
+%right TOKEN_CONDITION.
 
 /* suppress compiler warning about unused variable */
 %destructor file {ParseARG_STORE;}
@@ -108,13 +112,33 @@ def_section ::= string TOKEN_SEPARATOR.
 rule_section ::= rule_list.
 
 rule_list ::= /* empty */.
-rule_list ::= rule_list rule.
+rule_list ::= rule_list rules. [TOKEN_CODE_END]
+rule_list ::= rule_list start_scope rules end_scope.
+
+rules ::= rule.
+rules ::= rules rule.
+
+start_scope ::= TOKEN_START_SCOPE(C).
+{
+    appData->conditions = C.string;
+}
+
+end_scope ::= TOKEN_END_SCOPE.
+{
+    free(appData->conditions);
+    appData->conditions = NULL;
+}
 
 rule ::= opt_condition pattern opt_cond_change opt_code.
 rule ::= empty_condition opt_cond_change opt_code.
 
-opt_condition ::= /* empty */.
-opt_condition ::= TOKEN_CONDITION(C).
+opt_condition ::= /* empty */. [TOKEN_WORD]
+{
+    if (appData->conditions) {
+	fprintf(appData->out, appData->conditions);
+    }
+}
+opt_condition ::= TOKEN_CONDITION(C). [TOKEN_WORD]
 {
     writeString(appData, C.string);
 }
