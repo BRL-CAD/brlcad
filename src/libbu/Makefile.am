@@ -144,12 +144,11 @@ man_MANS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	uce_dirent.h \
+	uce-dirent.h \
 	CMakeLists.txt
 
 AM_CPPFLAGS = \
 	-DPREFIX=\"$(prefix)\" \
-	-I${top_srcdir}/src/other/uce-dirent \
 	${PNG_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
 	${LIBZ_CPPFLAGS}
