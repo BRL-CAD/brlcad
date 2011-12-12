@@ -442,6 +442,7 @@ cmd_setup(void)
     Bn_Init(INTERP);
     Rt_Init(INTERP);
     Go_Init(INTERP);
+    Wdb_Init(INTERP);
 
     tkwin = NULL;
 
