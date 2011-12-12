@@ -154,7 +154,7 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
     /* used for calculating the air gap distance */
     vect_t v;
 
-    int i = 0;
+    int i = 0, j = 0;
 
     /* iterate over each partition until we get back to the head.
      * each partition corresponds to a specific homogeneous region of
@@ -294,24 +294,24 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 				 */
 
 				if(num_airgaps < MAX_AIRGAPS){
-					i = num_airgaps;
+					j = num_airgaps;
 
-					VMOVE(airgap_list[i].in_point,  hit_list[i].in_point);
-					VMOVE(airgap_list[i].out_point, hit_list[i-1].out_point); /* Note: i-1 */
-					VSUB2(v, airgap_list[i].out_point, airgap_list[i].in_point);
-					airgap_list[i].out_dist = MAGNITUDE(v);
+					VMOVE(airgap_list[j].in_point,  hit_list[i].in_point);
+					VMOVE(airgap_list[j].out_point, hit_list[i-1].out_point); /* Note: i-1 */
+					VSUB2(v, airgap_list[j].out_point, airgap_list[j].in_point);
+					airgap_list[j].out_dist = MAGNITUDE(v);
 
-					airgap_list[i].in_stp   = hit_list[i].in_stp;
-					airgap_list[i].out_stp  = hit_list[i-1].out_stp; /* Note: i-1 */
+					airgap_list[j].in_stp   = hit_list[i].in_stp;
+					airgap_list[j].out_stp  = hit_list[i-1].out_stp; /* Note: i-1 */
 
-					airgap_list[i].index = i;
+					airgap_list[j].index = j;
 
 					bu_log("\nRecorded AIR GAP in %s(%f,%f,%f), out %s(%f,%f,%f), gap size %f mm\n",
-							 airgap_list[i].in_stp->st_name,
-							 V3ARGS(airgap_list[i].in_point),
-							 airgap_list[i].out_stp->st_name,
-						     V3ARGS(airgap_list[i].out_point),
-						     airgap_list[i].out_dist
+							 airgap_list[j].in_stp->st_name,
+							 V3ARGS(airgap_list[j].in_point),
+							 airgap_list[j].out_stp->st_name,
+						     V3ARGS(airgap_list[j].out_point),
+						     airgap_list[j].out_dist
 					 );
 
 					num_airgaps++;
