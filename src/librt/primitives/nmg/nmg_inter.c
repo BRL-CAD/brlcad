@@ -6867,6 +6867,64 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
 
 
 /**
+ * N M G _ N O _ I S E C T _ F U _ P L
+ *
+ * Test if the face of faceuse fu2 is above, below, or intersects
+ * the plane of faceuse fu1. If fu2 is completely above or below
+ * the plane then fu2 do not intersect fu1. If fu2 intersects the
+ * plane of fu1, we need more testing to determine if fu1 intersects
+ * fu2.
+ *
+ * Returns:
+ *
+ * 1 = fu1 and fu2 do not intersect
+ * 0 = inconclusive
+ *
+ */
+int
+nmg_no_isect_fu_pl(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol *tol)
+{
+    register fastf_t dist;
+    register struct edgeuse *eu;
+    struct loopuse *lu;
+    int pos, neg, hit;
+    plane_t pl;
+    int ret = 1;
+
+    pos = neg = hit = 0;
+
+    NMG_GET_FU_PLANE(pl, fu1);
+
+    for (BU_LIST_FOR (lu, loopuse, &fu2->lu_hd)) {
+        NMG_CK_LOOPUSE(lu);
+
+        if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
+            continue;
+
+        for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
+
+            dist = DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, pl);
+
+            if (dist < -(tol->dist)) {
+                neg++;
+            } else if (dist > tol->dist) {
+                pos++;
+            } else {
+                hit++;
+            }
+            if ((pos && neg) || hit) {
+                ret = 0;
+                goto out;
+            }
+        }
+    }
+out:
+
+    return ret;
+}
+
+
+/**
  * N M G _ I S E C T _ T W O _ G E N E R I C _ F A C E S
  *
  * Intersect a pair of faces
@@ -6927,6 +6985,11 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
 	return;
     }
 
+    if (nmg_no_isect_fu_pl(fu1, fu2, tol) ||
+        nmg_no_isect_fu_pl(fu2, fu1, tol)) {
+	return;
+    }
+ 
     /*
      * The extents of face1 overlap the extents of face2.
      * Construct a ray which contains the line of intersection.
@@ -7407,8 +7470,8 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	nmg_ck_vs_in_region(s2->r_p, tol);
     }
 
-    /* test if shell s1 and s2 are disjoint by at least distance tolerance */
-    if (V3RPP_DISJOINT_TOL(sa1->min_pt, sa1->max_pt, sa2->min_pt, sa2->max_pt, tol->dist)) {
+    /* test if shell s1 and s2 overlap by at least distance tolerance */
+    if (!V3RPP_OVERLAP_TOL(sa1->min_pt, sa1->max_pt, sa2->min_pt, sa2->max_pt, tol->dist)) {
 	return;
     }
 
@@ -7463,12 +7526,13 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	NMG_CK_FACE_G_PLANE(f1->g.plane_p);
 
         /* test if the face f1 bounding box and isect bounding box 
-         * are disjoint
+         * by at least distance tolerance
          */
-        if (V3RPP_DISJOINT_TOL(f1->min_pt, f1->max_pt, isect_min_pt, isect_max_pt, tol->dist)) {
-	    NMG_INDEX_SET(flags, f1);
-	    continue;
+        if (!V3RPP_OVERLAP_TOL(f1->min_pt, f1->max_pt, isect_min_pt, isect_max_pt, tol->dist)) {
+            NMG_INDEX_SET(flags, f1);
+            continue;
         }
+
 	is.fu1 = fu1;
 
 	/*
@@ -7493,13 +7557,14 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	    if (fu2->orientation != OT_SAME) continue;
 	    if (NMG_INDEX_IS_SET(flags, f2)) continue;
 
-            /* test if the face f1 bounding box and isect bounding box 
-             * are disjoint
+            /* test if the face f2 bounding box and isect bounding box 
+             * overlap by at least distance tolerance
              */
-            if (V3RPP_DISJOINT_TOL(f2->min_pt, f2->max_pt, isect_min_pt, isect_max_pt, tol->dist)) {
+            if (!V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt, isect_min_pt, isect_max_pt, tol->dist)) {
 	        NMG_INDEX_SET(flags, f2);
 	        continue;
             }
+
 	    nmg_isect_two_generic_faces(fu1, fu2, tol);
 	}
 
