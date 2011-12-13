@@ -2626,24 +2626,21 @@ nmg_2edgeuse_g_coincident(const struct edgeuse *eu1, const struct edgeuse *eu2, 
     eg1 = eu1->g.lseg_p;
     eg2 = eu2->g.lseg_p;
 
-    if (eg1 == eg2) return 1;
+    if (eg1 == eg2) {
+        return 1;
+    }
 
     /* Ensure that vertices on edge 2 are within tol of e1 */
     if (bn_distsq_line3_pt3(eg1->e_pt, eg1->e_dir,
-			    eu2->vu_p->v_p->vg_p->coord) > tol->dist_sq) goto trouble;
+			    eu2->vu_p->v_p->vg_p->coord) > tol->dist_sq) {
+        return 0;
+    }
     if (bn_distsq_line3_pt3(eg1->e_pt, eg1->e_dir,
-			    eu2->eumate_p->vu_p->v_p->vg_p->coord) > tol->dist_sq) goto trouble;
-
-    /* Ensure that vertices of both edges are within tol of other eg */
-    if (bn_distsq_line3_pt3(eg2->e_pt, eg2->e_dir,
-			    eu1->vu_p->v_p->vg_p->coord) > tol->dist_sq) goto trouble;
-    if (bn_distsq_line3_pt3(eg2->e_pt, eg2->e_dir,
-			    eu1->eumate_p->vu_p->v_p->vg_p->coord) > tol->dist_sq) goto trouble;
+			    eu2->eumate_p->vu_p->v_p->vg_p->coord) > tol->dist_sq) {
+        return 0;
+    }
 
     return 1;
-
- trouble:
-    return 0;
 }
 
 
