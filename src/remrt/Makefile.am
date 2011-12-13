@@ -10,7 +10,8 @@ dist_man_MANS = remrt.1
 remrt_LDADD = \
 	$(top_builddir)/src/rt/libremrt.a \
 	${OPTICAL} \
-	${FB}
+	${FB} \
+	${ICV}
 remrt_SOURCES = \
 	ihost.c \
 	remrt.c
@@ -20,6 +21,7 @@ rtsrv_LDADD = \
 	$(top_builddir)/src/rt/libremrt.a \
 	${OPTICAL} \
 	${PKG} \
+	${ICV} \
 	${LIBSOCKET} ${LIBNSL}
 
 rtsrv_SOURCES = \
