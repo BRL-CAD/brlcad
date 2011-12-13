@@ -2,11 +2,11 @@
 this_dir = tclscripts/mged
 tcldir = $(BRLCAD_DATA)/$(this_dir)
 
-if BUILD_DOCS
-doc_scripts = man.tcl
-else
+#if BUILD_DOCS
+#doc_scripts = man.tcl
+#else
 doc_scripts =
-endif
+#endif
 
 scripties = \
 	$(doc_scripts) \
@@ -148,6 +148,7 @@ BUILT_SOURCES = \
 EXTRA_DIST = \
 	$(dist_tcl_DATA) \
 	rrmb.tcl \
+	man.tcl \
 	$(tcl_SCRIPTS) \
 	CMakeLists.txt
 

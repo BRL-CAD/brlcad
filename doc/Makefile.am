@@ -1,17 +1,8 @@
-
-if BUILD_DOCS
-DOCBOOK_DIR = docbook
-else
-DOCBOOK_DIR =
-endif
-
 SUBDIRS = \
-	${DOCBOOK_DIR} \
 	html \
 	legal
 
 DIST_SUBDIRS = \
-	docbook \
 	html \
 	legal
 
@@ -230,6 +221,7 @@ man_MANS = \
 EXTRA_DIST = \
 	$(documentation_DATA) \
 	$(man_MANS) \
+	docbook \
 	STARTERS \
 	pad_file.xml.in \
 	CMakeLists.txt

@@ -360,7 +360,7 @@ BC_ARG_ENABLE([build_ug], [unigraphics-build], [Enable compilation of Unigraphic
 BC_ARG_ENABLE([install_geometry], [models-install], [Enable installation of example geometry models], [yes])
 
 # enable building Docbook documentation
-BC_ARG_ENABLE([build_docs], [documentation], [Enable compilation and installation of extra documentation], [auto])
+#BC_ARG_ENABLE([build_docs], [documentation], [Enable compilation and installation of extra documentation], [auto])
 
 # optimized
 BC_ARG_ENABLE([use_optimized], [optimized], [Enable optimized compilation], [no])
@@ -457,9 +457,9 @@ BC_ARG_ALIAS([build_strict], [strict-compile])
 BC_ARG_ALIAS([build_strict], [strict-compile-flags])
 
 # Docbook documentation (help uses documentation)
-BC_ARG_ALIAS([build_docs], [documentation-install])
-BC_ARG_ALIAS([build_docs], [docs])
-BC_ARG_ALIAS([build_docs], [docs-install])
+#BC_ARG_ALIAS([build_docs], [documentation-install])
+#BC_ARG_ALIAS([build_docs], [docs])
+#BC_ARG_ALIAS([build_docs], [docs-install])
 
 # 64-bit compilation (help uses 64bit-build)
 BC_ARG_ALIAS([build_64bit], [64bit])
@@ -800,8 +800,8 @@ AC_MSG_RESULT($bc_build_runtime_debug)
 AC_MSG_CHECKING(whether to use strict compiler options)
 AC_MSG_RESULT($bc_build_strict)
 
-AC_MSG_CHECKING(whether to compile and install Docbook documentation)
-AC_MSG_RESULT($bc_build_docs)
+#AC_MSG_CHECKING(whether to compile and install Docbook documentation)
+#AC_MSG_RESULT($bc_build_docs)
 
 AC_MSG_CHECKING(whether to compile in 64-bit mode)
 AC_MSG_RESULT($bc_build_64bit)
@@ -972,13 +972,13 @@ if test "x$bc_build_progress" != "xyes" ; then
     fi
 fi
 
-# xsltproc is needed for docbook processing, fop is needed for pdf generation
-xsltproc_works=no
-fop_works=no
-if test "x$bc_build_docs" != "xno" ; then
-    AC_PATH_PROG(XSLTPROC, xsltproc)
-    AC_PATH_PROG(APACHEFOP, fop)
-fi
+## xsltproc is needed for docbook processing, fop is needed for pdf generation
+#xsltproc_works=no
+#fop_works=no
+#if test "x$bc_build_docs" != "xno" ; then
+#    AC_PATH_PROG(XSLTPROC, xsltproc)
+#    AC_PATH_PROG(APACHEFOP, fop)
+#fi
 
 dnl Libtool may need AR so try to find it
 AC_PATH_PROG(AR, ar, [], $PATH:/usr/bin:/usr/local/bin:/usr/ccs/bin)
@@ -3820,40 +3820,40 @@ fi
 AC_MSG_RESULT($dials_and_buttons)
 
 
-dnl *** Docbook functionality ***
-docbook_processing=no
-docbook_pdf_processing=no
-if test "x$bc_build_docs" != "xno" ; then
-    if test "x$bc_build_docs" = "xyes" ; then
-	if test "x$XSLTPROC" = "x" ; then
-	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	    AC_MSG_WARN([Extra documentation is enabled but xsltproc was not found])
-	    AC_MSG_ERROR([*** Don't know how to generate documentation without xsltproc ***])
-	fi
-    fi
-fi
+#dnl *** Docbook functionality ***
+#docbook_processing=no
+#docbook_pdf_processing=no
+#if test "x$bc_build_docs" != "xno" ; then
+#    if test "x$bc_build_docs" = "xyes" ; then
+#	if test "x$XSLTPROC" = "x" ; then
+#	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+#	    AC_MSG_WARN([Extra documentation is enabled but xsltproc was not found])
+#	    AC_MSG_ERROR([*** Don't know how to generate documentation without xsltproc ***])
+#	fi
+#    fi
+#fi
 
 # test for this outside of bc_build_docs so vars get set properly
-if test "x$XSLTPROC" = "x" ; then
-    XSLTPROC=:
-else
-    if test "x$APACHEFOP" = "x" ; then
-	docbook_processing="yes (man/html only)"
-	docbook_pdf_processing="no"
-	APACHEFOP=:
-    else
-        docbook_processing="yes (man/html/pdf)"
-	docbook_pdf_processing="yes"
-	# set FOP_OPTS to avoid dock bounce on osX
-	APACHEFOP="FOP_OPTS=-Djava.awt.headless=true $APACHEFOP"
-    fi
-fi
-AC_SUBST(XSLTPROC)
-AC_SUBST(APACHEFOP)
-AC_MSG_CHECKING(for Docbook processing functionality)
-AC_MSG_RESULT($docbook_processing)
-AC_MSG_CHECKING(for Docbook pdf generation functionality)
-AC_MSG_RESULT($docbook_pdf_processing)
+#if test "x$XSLTPROC" = "x" ; then
+#    XSLTPROC=:
+#else
+#    if test "x$APACHEFOP" = "x" ; then
+#	docbook_processing="yes (man/html only)"
+#	docbook_pdf_processing="no"
+#	APACHEFOP=:
+#    else
+#        docbook_processing="yes (man/html/pdf)"
+#	docbook_pdf_processing="yes"
+#	# set FOP_OPTS to avoid dock bounce on osX
+#	APACHEFOP="FOP_OPTS=-Djava.awt.headless=true $APACHEFOP"
+#    fi
+#fi
+#AC_SUBST(XSLTPROC)
+#AC_SUBST(APACHEFOP)
+#AC_MSG_CHECKING(for Docbook processing functionality)
+#AC_MSG_RESULT($docbook_processing)
+#AC_MSG_CHECKING(for Docbook pdf generation functionality)
+#AC_MSG_RESULT($docbook_pdf_processing)
 
 # XXX nasty temp hack for backwards cake compatibility. code needs to be fixed.
 if test "x$host_os" = "xirix6.5" ; then
@@ -3930,8 +3930,8 @@ AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
 AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
 
-AM_CONDITIONAL(BUILD_DOCS, [test "x$docbook_processing" != "xno"])
-AM_CONDITIONAL(BUILD_PDF_DOCS, [test "x$docbook_pdf_processing" != "xno"])
+#AM_CONDITIONAL(BUILD_DOCS, [test "x$docbook_processing" != "xno"])
+#AM_CONDITIONAL(BUILD_PDF_DOCS, [test "x$docbook_pdf_processing" != "xno"])
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
@@ -4043,7 +4043,7 @@ BN_LIBS="${BU} ${BU_LIBS} ${TCL} ${LIBM}"
 RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}"
 ICV_LIBS="{BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 GCV_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
-GED_LIBS="${WDB} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG} ${TCL} ${REGEX} ${ANALYZE}"
+GED_LIBS="${WDB} ${RT} ${RT_LIBS} ${ICV} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG} ${TCL} ${REGEX} ${ANALYZE}"
 WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS} ${TCL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
 OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
@@ -4211,9 +4211,6 @@ AC_CONFIG_FILES([
 	db/Makefile
 	db/include/Makefile
 	doc/Makefile
-	doc/docbook/DBPATH.pm
-	doc/docbook/Makefile
-	doc/docbook/fop.xconf
 	doc/html/Makefile
 	doc/html/ReleaseNotes/Makefile
 	doc/html/ReleaseNotes/Rel5.0/Makefile
@@ -4515,7 +4512,7 @@ AC_MSG_RESULT([])
 AC_MSG_RESULT([Only build benchmark suite ...........: $bc_only_benchmark])
 AC_MSG_RESULT([Only build librtserver ...............: $bc_only_rts])
 AC_MSG_RESULT([Install example geometry models ......: $bc_install_geometry])
-AC_MSG_RESULT([Install extra docs ...................: $docbook_processing])
+#AC_MSG_RESULT([Install extra docs ...................: $docbook_processing])
 AC_MSG_RESULT([])
 if test "x$time_elapsed" != "xunknown" ; then
 AC_MSG_RESULT([Elapsed configuration time ...........: $time_elapsed])

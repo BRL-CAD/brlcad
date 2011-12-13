@@ -24,6 +24,7 @@ libbrlcad_nil_la_LIBADD = \
 	$(top_builddir)/src/libbn/libbn_nil.la \
 	$(top_builddir)/src/librt/librt_nil.la \
 	$(top_builddir)/src/libwdb/libwdb_nil.la \
+	$(top_builddir)/src/libged/libicv_nil.la \
 	$(top_builddir)/src/libged/libged_nil.la \
 	${ON_NIL} \
 	${TCL}
@@ -45,6 +46,7 @@ bench_dirs = \
 	libwdb \
 	libgcv \
 	libanalyze \
+	libicv \
 	libged \
 	liboptical \
 	liborle \
@@ -58,7 +60,6 @@ bench_dirs = \
 kitchensink_dirs = \
 	libcursor \
 	libfft \
-	libicv \
 	libmultispectral \
 	libtermio \
 	adrt \

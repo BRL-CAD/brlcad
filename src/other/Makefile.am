@@ -61,13 +61,9 @@ else !BUILD_TERMLIB
 TERMLIBDIR=
 endif
 
-if BUILD_DOCS
 if BUILD_TKHTML
 if WITH_TK
 TKHTMLDIR=tkhtml
-else
-TKHTMLDIR=
-endif
 else
 TKHTMLDIR=
 endif
