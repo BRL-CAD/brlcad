@@ -68,7 +68,6 @@ EXTRA_DIST = \
 	CMake/test_srcs/time.c.in \
 	CMake/test_srcs/timedelta_end.c.in \
 	CMake/test_srcs/timedelta_start.c.in \
-	CMake/util_macros.cmake \
 	CMakeLists.txt \
 	Description.txt \
 	Doxyfile \
