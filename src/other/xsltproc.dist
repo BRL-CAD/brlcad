@@ -1,11 +1,14 @@
 set(xsltproc_ignore_files
+README
 CMake
 CMake/ResolveCompilerPaths.cmake
+libexslt/Copyright
 libexslt/include
 libexslt/include/libexslt
 libexslt/include/libexslt/exslt.h
 libexslt/include/libexslt/exsltexports.h
 libexslt/include/libexslt/libexslt.h
+libxml/Copyright
 libxml/include
 libxml/include/acconfig.h
 libxml/include/elfgcchack.h
@@ -64,6 +67,7 @@ libxml/include/triop.h
 libxml/include/triostr.h
 libxml/src/trio.c
 libxml/src/triostr.c
+libxslt/Copyright
 libxslt/include
 libxslt/include/libxslt
 libxslt/include/libxslt/attributes.h
