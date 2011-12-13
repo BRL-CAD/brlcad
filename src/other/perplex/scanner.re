@@ -561,6 +561,14 @@ re2c:define:YYGETCONDITION:naked = 1;
     copyTokenText(scanner);
     return TOKEN_COND_CHANGE;
 }
+<rules>'='[ \t\n]*[^>][^]*';' {
+    if (scanner->inAction) {
+	continue;
+    } else {
+	copyTokenText(scanner);
+	return TOKEN_DEFINITION;
+    }
+}
 <rules>'{' {
     /* brace appears inside condition scope */
     if (scanner->conditionScope) {
@@ -594,14 +602,6 @@ re2c:define:YYGETCONDITION:naked = 1;
 	return TOKEN_CODE_END;
     }
     continue;
-}
-<rules>[ \t\n]*'=' {
-    if (scanner->inAction) {
-	continue;
-    } else {
-	copyTokenText(scanner);
-	return TOKEN_NAME;
-    }
 }
 <definitions,rules,code>[ \t\n] {
     /* matched single whitespace */
