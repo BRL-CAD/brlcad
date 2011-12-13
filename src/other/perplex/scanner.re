@@ -546,9 +546,6 @@ re2c:define:YYGETCONDITION:naked = 1;
     return TOKEN_SEPARATOR;
 }
 
-<rules>'=' {
-    return TOKEN_EQUALS;
-}
 <rules>[^\n]'<' {
     copyTokenText(scanner);
     return TOKEN_WORD;
@@ -572,6 +569,7 @@ re2c:define:YYGETCONDITION:naked = 1;
 
     scanner->braceCount++;
     if (scanner->braceCount == 1) {
+	scanner->inAction = 1;
 	return TOKEN_CODE_START;
     }
     continue;
@@ -592,15 +590,25 @@ re2c:define:YYGETCONDITION:naked = 1;
 
     /* brace closes rule code */
     if (scanner->braceCount == 0) {
+	scanner->inAction = 0;
 	return TOKEN_CODE_END;
     }
     continue;
+}
+<rules>[ \t\n]*'=' {
+    if (scanner->inAction) {
+	continue;
+    } else {
+	copyTokenText(scanner);
+	return TOKEN_NAME;
+    }
 }
 <definitions,rules,code>[ \t\n] {
     /* matched single whitespace */
     if (strlen(yytext) == 1) {
 	IGNORE_TOKEN;
     }
+
     /* matched end of word */
     copyTokenText(scanner);
     return TOKEN_WORD;
