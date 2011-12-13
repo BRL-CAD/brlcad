@@ -5,7 +5,7 @@ AM_CPPFLAGS = \
 
 AM_LDFLAGS = \
 	${OPTICAL} \
-	${RT} ${FB}
+	${RT} ${FB} ${ICV}
 
 if ONLY_BENCHMARK
 bin_PROGRAMS = \
