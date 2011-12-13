@@ -92,6 +92,7 @@ typedef struct perplex {
     int scopeBraceCount;
     int conditionScope;
     int inAction;
+    int inDefinition;
     char *cursor;
     char *marker;
     char *null;

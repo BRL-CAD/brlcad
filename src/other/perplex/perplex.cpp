@@ -214,6 +214,9 @@ int main(int argc, char *argv[])
 	case TOKEN_WORD:
 	    fprintf(stderr, "##WORD(%s)\n", appData->tokenData.string);
 	    break;
+	case TOKEN_EQUALS:
+	    fprintf(stderr, "##EQUALS(%s)\n", appData->tokenData.string);
+	    break;
 	case TOKEN_DEFINITION:
 	    fprintf(stderr, "##DEFINITION(%s)\n", appData->tokenData.string);
 	    break;

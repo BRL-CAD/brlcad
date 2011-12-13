@@ -113,10 +113,14 @@ def_section ::= string TOKEN_SEPARATOR.
 rule_section ::= named_defs rule_list.
 
 named_defs ::= /* empty */.
-named_defs ::= named_defs word(NAME) TOKEN_DEFINITION(DEF).
+named_defs ::= named_defs named_def.
+
+named_def ::= TOKEN_WORD(NAME) TOKEN_EQUALS TOKEN_DEFINITION(DEF).
 {
-     writeString(appData, NAME);
+     writeString(appData, NAME.string);
+     fprintf(appData->out, " = ");
      writeString(appData, DEF.string);
+     fprintf(appData->out, "\n");
 }
 
 rule_list ::= /* empty */. [EMPTY_RULE_LIST]

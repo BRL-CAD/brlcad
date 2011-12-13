@@ -57,6 +57,7 @@
  *     perplexFree(scanner);
  *     fclose(inFile);
  */
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -321,6 +322,37 @@ buf_append_null(struct Buf *buf)
     buf_append(buf, &null, sizeof(char));
 }
 
+static void*
+bufLast(struct Buf *buf)
+{
+    size_t bufSize = (size_t)buf->nelts * buf->elt_size;
+
+    return (void*)((size_t)buf->elts + bufSize - 1);
+}
+
+static void
+checkInputMarkers(perplex_t scanner)
+{
+    struct Buf *buf;
+    size_t tokenStart, marker, cursor, null;
+
+    buf = scanner->buffer;
+
+    /* input pointers should point inside input buffer */
+    tokenStart = (size_t)scanner->tokenStart;
+    marker = (size_t)scanner->marker;
+    cursor = (size_t)scanner->cursor;
+    null = (size_t)scanner->null;
+
+    assert(tokenStart >= (size_t)buf->elts);
+    assert(null <= bufLast(buf));
+
+    /* Cursor should be somewhere between start of current token and end
+     * of input. Backtracking marker may or may not be out-of-date.
+     */
+    assert(tokenStart <= cursor <= null);
+}
+
 /* Copy up to n input characters to the end of scanner buffer.
  * If EOF is encountered before n characters are read, '\0'
  * is appended to the buffer to serve as EOF symbol and
@@ -337,7 +369,7 @@ bufferAppend(perplex_t scanner, size_t n)
     buf = scanner->buffer;
     in = scanner->in.file;
 
-    /* remove existing null so it gets overwritten */
+    /* "remove" existing null so it gets overwritten */
     buf->nelts--;
 
     for (i = 0; i < n; i++) {
@@ -347,8 +379,12 @@ bufferAppend(perplex_t scanner, size_t n)
 	}
 	buf_append(buf, &c, sizeof(char));
     }
+
+    /* scanner->null - eltSize should be the last input element,
+     * we put a literal null after this element for debugging
+     */
     buf_append_null(buf);
-    scanner->null = (char*)((size_t)buf->elts + buf->nelts - 1);
+    scanner->null = (char*)(bufLast(buf) + 1);
 }
 
 /* Appends up to n characters of input to scanner buffer. */
@@ -356,29 +392,48 @@ static void
 bufferFill(perplex_t scanner, size_t n)
 {
     struct Buf *buf;
-    size_t shiftSize, marker, start, used;
+    size_t totalElts, usedElts, freeElts;
 
     if (scanner->atEOI) {
 	/* nothing to add to buffer */
 	return;
     }
 
+    checkInputMarkers(scanner);
+
     buf = scanner->buffer;
 
-    start = (size_t)buf->elts;
-    marker = (size_t)scanner->marker;
+    totalElts = (size_t)buf->nmax;
+    usedElts = (size_t)buf->nelts;
+    freeElts = totalElts - usedElts;
 
-    used = start + (size_t)buf->nelts - marker;
+    /* not enough room for append, shift buffer contents to avoid realloc */
+    if (n > freeElts) {
+	size_t firstUsedElt, tokenStart, marker, null, bufFirst;
+	size_t bytesInUse, shiftSize;
 
-    /* if not enough room for append, avoid realloc by shifting contents */
-    if (buf->nelts + n > buf->nmax) {
-	memmove((void*)start, (void*)marker, used);
-        buf->nelts = used;
+	tokenStart = (size_t)scanner->tokenStart;
+	marker = (size_t)scanner->marker;
+	null = (size_t)scanner->null;
+
+	bufFirst = (size_t)buf->elts;
+
+	/* Find first buffer element still in use by scanner. Will be
+	 * tokenStart unless backtracking marker is in use.
+	 */
+	firstUsedElt = tokenStart;
+	if (marker >= bufFirst && marker < tokenStart) {
+	    firstUsedElt = marker;
+	}
+
+	/* copy in-use elements to start of buffer */
+	bytesInUse = null - firstUsedElt;
+	memmove((void*)bufFirst, (void*)firstUsedElt, bytesInUse);
+        buf->nelts = bytesInUse / buf->elt_size;
 
 	/* update markers */
-	scanner->marker = (char*)scanner->buffer->elts;
-
-	shiftSize = marker - start;
+	shiftSize = firstUsedElt - bufFirst;
+	scanner->marker     -= shiftSize;
 	scanner->cursor     -= shiftSize;
 	scanner->null       -= shiftSize;
 	scanner->tokenStart -= shiftSize;
@@ -547,27 +602,39 @@ re2c:define:YYGETCONDITION:naked = 1;
 }
 
 <rules>[^\n]'<' {
+    fprintf(stderr, "=== matched pseudo condition\n");
     copyTokenText(scanner);
     return TOKEN_WORD;
 }
 <rules>'<' {
     /* matched '<' at start of line or section */
+    fprintf(stderr, "=== matched condition\n");
     if (strlen(yytext) == 1 || yytext[0] == '\n') {
+	fprintf(stderr, "=== changing to condition_list\n");
 	YYSETCONDITION(condition_list);
     }
     continue;
 }
-<rules>':'?"=>" {
+<rules>':'?"=>"[ \t\n]* {
     copyTokenText(scanner);
     return TOKEN_COND_CHANGE;
 }
-<rules>'='[ \t\n]*[^>][^]*';' {
+<rules>'=' {
     if (scanner->inAction) {
 	continue;
     } else {
+	scanner->inDefinition = 1;
+	copyTokenText(scanner);
+	return TOKEN_EQUALS;
+    }
+}
+<rules>';' {
+    if (scanner->inDefinition) {
+	scanner->inDefinition = 0;
 	copyTokenText(scanner);
 	return TOKEN_DEFINITION;
     }
+    continue;
 }
 <rules>'{' {
     /* brace appears inside condition scope */
@@ -640,16 +707,26 @@ re2c:define:YYGETCONDITION:naked = 1;
     return TOKEN_START_SCOPE;
 }
 <condition_list>'>' => rules {
+    fprintf(stderr, "=== end of conditon_list\n");
+    fprintf(stderr, "=== conditon_list start %c\n", *scanner->tokenStart);
+
     if (strlen(yytext) == 2) {
 	/* matched "<>" */
+	fprintf(stderr, "=== empty condition\n");
 	return TOKEN_EMPTY_COND;
     }
 
+    fprintf(stderr, "=== condition %s\n", yytext);
     copyTokenText(scanner);
     return TOKEN_CONDITION;
 }
 
 <*>[^] {
+    if (YYGETCONDITION == condition_list) {
+	fprintf(stderr, "=== conditon_list start %c\n", *scanner->tokenStart);
+	fprintf(stderr, "=== conditon_list char %c\n", scanner->cursor[-1]);
+    }
+
     continue;
 }
 
