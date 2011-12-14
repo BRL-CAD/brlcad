@@ -1,8 +1,5 @@
 # Set up xml validation routines
 
-# First, define flags we will pass to xmllint
-SET(XMLLINT_FLAGS "--xinclude --relaxng ${BRLCAD_SOURCE_DIR}/doc/docbook/resources/other/docbook-schema/rng/docbookxi.rng --noout --nonet")
-
 SET(XMLLINT_EXECUTABLE "${CMAKE_BINARY_DIR}/bin/xmllint")
 
 MACRO(DB_VALIDATE_TARGET targetname filename_root)

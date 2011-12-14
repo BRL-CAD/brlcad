@@ -1,4 +1,4 @@
-execute_process(COMMAND "@XMLLINT_EXECUTABLE@" @XMLLINT_FLAGS@ @CMAKE_CURRENT_SOURCE_DIR@/@filename@ RESULT_VARIABLE CMDRESULT)
+execute_process(COMMAND "@XMLLINT_EXECUTABLE@"  --xinclude --schema @BRLCAD_SOURCE_DIR@/doc/docbook/resources/other/docbook-schema/xsd/docbook.xsd --noout --nonet @CMAKE_CURRENT_SOURCE_DIR@/@filename@ RESULT_VARIABLE CMDRESULT)
 IF(CMDRESULT)
 	MESSAGE(FATAL_ERROR "xmllint failure: ${CMDRESULT}")
 ELSE(CMDRESULT)
