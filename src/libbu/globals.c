@@ -77,19 +77,6 @@ const char bu_strdup_message[] = "bu_strdup string";
 int bu_pid_of_initiating_thread = 0;
 
 /**
- * list of callbacks to call during bu_bomb.
- */
-struct bu_hook_list bu_bomb_hook_list = {
-    {
-	BU_LIST_HEAD_MAGIC,
-	&bu_bomb_hook_list.l,
-	&bu_bomb_hook_list.l
-    },
-    NULL,
-    GENPTR_NULL
-};
-
-/**
  * bu_setjmp_valid is global because BU_SETJUMP() *must* be a macro.
  * If you replace bu_bomb() with one of your own, you must also
  * provide these variables, even if you don't use them.

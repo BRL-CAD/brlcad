@@ -1539,7 +1539,7 @@ main(int argc, char *argv[])
 		    perror("pipe");
 #endif  /* HAVE_PIPE */
 
-		bu_add_hook(&bu_bomb_hook_list, mged_bomb_hook, INTERP);
+		bu_bomb_add_hook(mged_bomb_hook, INTERP);
 	    } /* status -- gui initialized */
 	} /* classic */
 

@@ -29,6 +29,20 @@
 #include "bu.h"
 
 
+/**
+ * list of callbacks to call during bu_bomb.
+ */
+struct bu_hook_list bomb_hook_list = {
+    {
+	BU_LIST_HEAD_MAGIC,
+	&bomb_hook_list.l,
+	&bomb_hook_list.l
+    },
+    NULL,
+    GENPTR_NULL
+};
+
+
 /* failsafe storage to help ensure graceful shutdown */
 static char *bomb_failsafe = NULL;
 
@@ -65,6 +79,13 @@ bu_bomb_failsafe_init(void)
 
 
 void
+bu_bomb_add_hook(bu_hook_t func, genptr_t clientdata)
+{
+    bu_add_hook(&bomb_hook_list, func, clientdata);
+}
+
+
+void
 bu_bomb(const char *str)
 {
 
@@ -83,8 +104,8 @@ bu_bomb(const char *str)
     _freebomb_failsafe();
 
     /* MGED would like to be able to additional logging, do callbacks. */
-    if (BU_LIST_NON_EMPTY(&bu_bomb_hook_list.l)) {
-	bu_call_hook(&bu_bomb_hook_list, (genptr_t)str);
+    if (BU_LIST_NON_EMPTY(&bomb_hook_list.l)) {
+	bu_call_hook(&bomb_hook_list, (genptr_t)str);
     }
 
     if (bu_setjmp_valid) {

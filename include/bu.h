@@ -1716,9 +1716,6 @@ typedef struct bu_hook_list bu_hook_list_t;
 #define BU_HOOK_LIST_IS_INITIALIZED(_p) (((struct bu_hook_list *)(_p) != BU_HOOK_LIST_NULL) && LIKELY((_p)->l.magic == BU_HOOK_LIST_MAGIC))
 
 
-/** list of callbacks to call during bu_bomb, used by mged. */
-BU_EXPORT extern struct bu_hook_list bu_bomb_hook_list;
-
 /*----------------------------------------------------------------------*/
 /** @addtogroup avs */
 /** @ingroup container */
@@ -2680,6 +2677,16 @@ BU_EXPORT extern struct bu_bitv *bu_bitv_dup(const struct bu_bitv *bv);
 BU_EXPORT extern int bu_backtrace(FILE *fp);
 
 /**
+ * Adds a hook to the list of bu_bomb hooks.  The top (newest) one of these
+ * will be called with its associated client data and a string to be
+ * processed.  Typically, these hook functions will display the output
+ * (possibly in an X window) or record it.
+ *
+ * NOTE: The hook functions are all non-PARALLEL.
+ */
+BU_EXPORT extern void bu_bomb_add_hook(bu_hook_t func, genptr_t clientdata);
+
+/**
  * Abort the running process.
  *
  * The bu_bomb routine is called on a fatal error, generally where no
@@ -3505,7 +3512,7 @@ BU_EXPORT extern void bu_log_indent_vls(struct bu_vls *v);
 /**
  * Adds a hook to the list of bu_log hooks.  The top (newest) one of these
  * will be called with its associated client data and a string to be
- * processed.  Typcially, these hook functions will display the output
+ * processed.  Typically, these hook functions will display the output
  * (possibly in an X window) or record it.
  *
  * NOTE: The hook functions are all non-PARALLEL.
