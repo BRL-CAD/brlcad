@@ -34,61 +34,61 @@
  *
  * NOT published in a public header.
  */
-static struct bu_hook_list bu_log_hook_list = {
+static struct bu_hook_list log_hook_list = {
     {
 	BU_LIST_HEAD_MAGIC,
-	&bu_log_hook_list.l,
-	&bu_log_hook_list.l
+	&log_hook_list.l,
+	&log_hook_list.l
     },
     NULL,
     GENPTR_NULL
 };
 
-static int bu_log_first_time = 1;
-static int bu_log_hooks_called = 0;
-static int bu_log_indent_cur_level = 0;
+static int log_first_time = 1;
+static int log_hooks_called = 0;
+static int log_indent_level = 0;
 
 
 void
 bu_log_indent_delta(int delta)
 {
-    if ((bu_log_indent_cur_level += delta) < 0)
-	bu_log_indent_cur_level = 0;
+    if ((log_indent_level += delta) < 0)
+	log_indent_level = 0;
 }
 
 
 void
 bu_log_indent_vls(struct bu_vls *v)
 {
-    bu_vls_spaces(v, bu_log_indent_cur_level);
+    bu_vls_spaces(v, log_indent_level);
 }
 
 
 void
 bu_log_add_hook(bu_hook_t func, genptr_t clientdata)
 {
-    bu_add_hook(&bu_log_hook_list, func, clientdata);
+    bu_add_hook(&log_hook_list, func, clientdata);
 }
 
 
 void
 bu_log_delete_hook(bu_hook_t func, genptr_t clientdata)
 {
-    bu_delete_hook(&bu_log_hook_list, func, clientdata);
+    bu_delete_hook(&log_hook_list, func, clientdata);
 }
 
 HIDDEN void
 log_call_hooks(genptr_t buf)
 {
 
-    bu_log_hooks_called = 1;
-    bu_call_hook(&bu_log_hook_list, buf);
-    bu_log_hooks_called = 0;
+    log_hooks_called = 1;
+    bu_call_hook(&log_hook_list, buf);
+    log_hooks_called = 0;
 }
 
 
 /**
- * This subroutine is used to append bu_log_indent_cur_level spaces
+ * This subroutine is used to append log_indent_level spaces
  * into a printf() format specifier string, after each newline
  * character is encountered.
  *
@@ -104,7 +104,7 @@ log_do_indent_level(struct bu_vls *new_vls, register const char *old_vls)
     while (*old_vls) {
 	bu_vls_putc(new_vls, (int)(*old_vls));
 	if (*old_vls == '\n') {
-	    i = bu_log_indent_cur_level;
+	    i = log_indent_level;
 	    while (i-- > 0)
 		bu_vls_putc(new_vls, ' ');
 	}
@@ -118,7 +118,7 @@ bu_putchar(int c)
 {
     int ret = EOF;
 
-    if (BU_LIST_IS_EMPTY(&(bu_log_hook_list.l))) {
+    if (BU_LIST_IS_EMPTY(&(log_hook_list.l))) {
 
 	if (LIKELY(stderr != NULL)) {
 	    ret = fputc(c, stderr);
@@ -140,10 +140,10 @@ bu_putchar(int c)
 	log_call_hooks(buf);
     }
 
-    if (bu_log_indent_cur_level > 0 && c == '\n') {
+    if (log_indent_level > 0 && c == '\n') {
 	int i;
 
-	i = bu_log_indent_cur_level;
+	i = log_indent_level;
 	while (i-- > 0)
 	    bu_putchar(' ');
     }
@@ -166,7 +166,7 @@ bu_log(const char *fmt, ...)
 
     va_start(ap, fmt);
 
-    if (bu_log_indent_cur_level > 0) {
+    if (log_indent_level > 0) {
 	struct bu_vls newfmt;
 
 	bu_vls_init(&newfmt);
@@ -179,13 +179,13 @@ bu_log(const char *fmt, ...)
 
     va_end(ap);
 
-    if (BU_LIST_IS_EMPTY(&(bu_log_hook_list.l)) || bu_log_hooks_called) {
+    if (BU_LIST_IS_EMPTY(&(log_hook_list.l)) || log_hooks_called) {
 	int ret = EOF;
 	size_t len;
 
-	if (UNLIKELY(bu_log_first_time)) {
+	if (UNLIKELY(log_first_time)) {
 	    bu_setlinebuf(stderr);
-	    bu_log_first_time = 0;
+	    log_first_time = 0;
 	}
 
 	len = bu_vls_strlen(&output);
@@ -234,7 +234,7 @@ bu_flog(FILE *fp, const char *fmt, ...)
     bu_vls_init(&output);
 
     va_start(ap, fmt);
-    if (bu_log_indent_cur_level > 0) {
+    if (log_indent_level > 0) {
 	struct bu_vls newfmt;
 
 	bu_vls_init(&newfmt);
@@ -245,7 +245,7 @@ bu_flog(FILE *fp, const char *fmt, ...)
 	bu_vls_vprintf(&output, fmt, ap);
     }
 
-    if (BU_LIST_IS_EMPTY(&(bu_log_hook_list.l)) || bu_log_hooks_called) {
+    if (BU_LIST_IS_EMPTY(&(log_hook_list.l)) || log_hooks_called) {
 	int ret;
 	size_t len;
 
