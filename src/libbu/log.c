@@ -28,8 +28,21 @@
 
 #include "bu.h"
 
-/* non-published global */
-extern struct bu_hook_list bu_log_hook_list;
+
+/**
+ * list of callbacks to call during bu_log.
+ *
+ * NOT published in a public header.
+ */
+static struct bu_hook_list bu_log_hook_list = {
+    {
+	BU_LIST_HEAD_MAGIC,
+	&bu_log_hook_list.l,
+	&bu_log_hook_list.l
+    },
+    NULL,
+    GENPTR_NULL
+};
 
 static int bu_log_first_time = 1;
 static int bu_log_hooks_called = 0;
