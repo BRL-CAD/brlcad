@@ -147,7 +147,6 @@ MACRO(AUTO_OPTION username varname debug_state release_state)
 	ENDIF("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${${username}} MATCHES "AUTO")
 ENDMACRO(AUTO_OPTION varname release_state debug_state)
 
-
 #-----------------------------------------------------------------------------
 # For "top-level" BRL-CAD options, some extra work is in order - descriptions and
 # lists of aliases are supplied, and those are automatically addressed by this
@@ -157,13 +156,9 @@ ENDMACRO(AUTO_OPTION varname release_state debug_state)
 # nomenclature, or anything that the developer things should lead to a given
 # option being set.  The documentation is auto-formatted into a text document
 # describing all BRL-CAD options.
-MACRO(BRLCAD_OPTION default opt opt_ALIASES opt_DESCRIPTION)
-    IF(NOT DEFINED ${opt})
-	SET(${opt} ${default} CACHE STRING "define ${opt}" FORCE)
-    ENDIF(NOT DEFINED ${opt})
-    IF("${${opt}}" STREQUAL "")
-	SET(${opt} ${default} CACHE STRING "define ${opt}" FORCE)
-    ENDIF("${${opt}}" STREQUAL "")
+
+# Handle aliases for BRL-CAD options
+MACRO(OPTION_ALIASES opt opt_ALIASES)
     IF(${opt_ALIASES})
 	FOREACH(item ${${opt_ALIASES}})
 	    STRING(REPLACE "ENABLE_" "DISABLE_" inverse_item ${item})
@@ -195,7 +190,10 @@ MACRO(BRLCAD_OPTION default opt opt_ALIASES opt_DESCRIPTION)
 	    ENDIF(NOT "${item}" STREQUAL "${opt}")
 	ENDFOREACH(item ${inverse_aliases})
     ENDIF(${opt_ALIASES})
+ENDMACRO(OPTION_ALIASES)
 
+# Write documentation description for BRL-CAD options
+MACRO(OPTION_DESCRIPTION opt opt_ALIASES opt_DESCRIPTION)
     FILE(APPEND ${CMAKE_BINARY_DIR}/OPTIONS "\n--- ${opt} ---\n")
     FILE(APPEND ${CMAKE_BINARY_DIR}/OPTIONS "${${opt_DESCRIPTION}}")
 
@@ -228,7 +226,27 @@ MACRO(BRLCAD_OPTION default opt opt_ALIASES opt_DESCRIPTION)
     ENDIF(ALIASES_LIST)	
 
     FILE(APPEND ${CMAKE_BINARY_DIR}/OPTIONS "\n\n")
+ENDMACRO(OPTION_DESCRIPTION)
+
+# Standard option with BRL-CAD aliases and description
+MACRO(BRLCAD_OPTION default opt opt_ALIASES opt_DESCRIPTION)
+    IF(NOT DEFINED ${opt})
+	SET(${opt} ${default} CACHE STRING "define ${opt}" FORCE)
+    ENDIF(NOT DEFINED ${opt})
+    IF("${${opt}}" STREQUAL "")
+	SET(${opt} ${default} CACHE STRING "define ${opt}" FORCE)
+    ENDIF("${${opt}}" STREQUAL "")
+
+    OPTION_ALIASES("${opt}" "${opt_ALIASES}")
+    OPTION_DESCRIPTION("${opt}" "${opt_ALIASES}" "${opt_DESCRIPTION}")
 ENDMACRO(BRLCAD_OPTION)
+
+# Bundle option with BRL-CAD aliases and description
+MACRO(BRLCAD_BUNDLE_OPTION trigger build_test_var optname default_raw opt_ALIASES opt_DESCRIPTION)
+    BUNDLE_OPTION("${trigger}" "${build_test_var}" "${optname}" "${default_raw}")
+    OPTION_ALIASES("${optname}" "${opt_ALIASES}")
+    OPTION_DESCRIPTION("${optname}" "${opt_ALIASES}" "${opt_DESCRIPTION}")
+ENDMACRO(BRLCAD_BUNDLE_OPTION)
 
 # Local Variables:
 # tab-width: 8
