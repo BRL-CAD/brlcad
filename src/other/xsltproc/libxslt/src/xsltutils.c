@@ -19,6 +19,7 @@
 #endif
 
 #include <string.h>
+#include <time.h>
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -1840,7 +1841,28 @@ xsltTimestamp(void)
     return (long) (seconds * XSLT_TIMESTAMP_TICS_PER_SEC);
 
 #else /* XSLT_WIN32_PERFORMANCE_COUNTER */
-#ifdef HAVE_GETTIMEOFDAY
+#ifdef HAVE_CLOCK_GETTIME
+    static struct timespec startup;
+    struct timespec cur;
+    long tics;
+
+    if (calibration < 0) {
+        clock_gettime(CLOCK_MONOTONIC, &startup);
+        calibration = 0;
+        calibration = xsltCalibrateTimestamps();
+        clock_gettime(CLOCK_MONOTONIC, &startup);
+        return (0);
+    }
+
+    clock_gettime(CLOCK_MONOTONIC, &cur);
+    tics = (cur.tv_sec - startup.tv_sec) * XSLT_TIMESTAMP_TICS_PER_SEC;
+    tics += (cur.tv_nsec - startup.tv_nsec) /
+                          (1000000000l / XSLT_TIMESTAMP_TICS_PER_SEC);
+
+    tics -= calibration;
+    return(tics);
+
+#elif HAVE_GETTIMEOFDAY
     static struct timeval startup;
     struct timeval cur;
     long tics;
@@ -1870,6 +1892,30 @@ xsltTimestamp(void)
 #endif /* XSLT_WIN32_PERFORMANCE_COUNTER */
 }
 
+static char *
+pretty_templ_match(xsltTemplatePtr templ) {
+  static char dst[1001];
+  char *src = (char *)templ->match;
+  int i=0,j;
+  
+  /* strip white spaces */
+  for (j=0; i<1000 && src[j]; i++,j++) {
+      for(;src[j]==' ';j++);
+      dst[i]=src[j];
+  }
+  if(i<998 && templ->mode) {
+    /* append [mode] */
+    dst[i++]='[';
+    src=(char *)templ->mode;
+    for (j=0; i<999 && src[j]; i++,j++) {
+      dst[i]=src[j];
+    }
+    dst[i++]=']';
+  }
+  dst[i]='\0';
+  return dst;
+}
+
 #define MAX_TEMPLATES 10000
 
 /**
@@ -1881,13 +1927,14 @@ xsltTimestamp(void)
  */
 void
 xsltSaveProfiling(xsltTransformContextPtr ctxt, FILE *output) {
-    int nb, i,j;
+    int nb, i,j,k,l;
     int max;
     int total;
     long totalt;
     xsltTemplatePtr *templates;
     xsltStylesheetPtr style;
-    xsltTemplatePtr template;
+    xsltTemplatePtr templ1,templ2;
+    int *childt;
 
     if ((output == NULL) || (ctxt == NULL))
 	return;
@@ -1902,14 +1949,14 @@ xsltSaveProfiling(xsltTransformContextPtr ctxt, FILE *output) {
 
     style = ctxt->style;
     while (style != NULL) {
-	template = style->templates;
-	while (template != NULL) {
+	templ1 = style->templates;
+	while (templ1 != NULL) {
 	    if (nb >= max)
 		break;
 
-	    if (template->nbCalls > 0)
-		templates[nb++] = template;
-	    template = template->next;
+	    if (templ1->nbCalls > 0)
+		templates[nb++] = templ1;
+	    templ1 = templ1->next;
 	}
 
 	style = xsltNextImport(style);
@@ -1920,50 +1967,153 @@ xsltSaveProfiling(xsltTransformContextPtr ctxt, FILE *output) {
 	    if ((templates[i]->time <= templates[j]->time) ||
 		((templates[i]->time == templates[j]->time) &&
 	         (templates[i]->nbCalls <= templates[j]->nbCalls))) {
-		template = templates[j];
+		templ1 = templates[j];
 		templates[j] = templates[i];
-		templates[i] = template;
+		templates[i] = templ1;
 	    }
 	}
     }
+
+
+    /* print flat profile */
 
     fprintf(output, "%6s%20s%20s%10s  Calls Tot 100us Avg\n\n",
 	    "number", "match", "name", "mode");
     total = 0;
     totalt = 0;
     for (i = 0;i < nb;i++) {
+         templ1 = templates[i];
 	fprintf(output, "%5d ", i);
-	if (templates[i]->match != NULL) {
-	    if (xmlStrlen(templates[i]->match) > 20)
-		fprintf(output, "%s\n%26s", templates[i]->match, "");
+	if (templ1->match != NULL) {
+	    if (xmlStrlen(templ1->match) > 20)
+		fprintf(output, "%s\n%26s", templ1->match, "");
 	    else
-		fprintf(output, "%20s", templates[i]->match);
+		fprintf(output, "%20s", templ1->match);
 	} else {
 	    fprintf(output, "%20s", "");
 	}
-	if (templates[i]->name != NULL) {
-	    if (xmlStrlen(templates[i]->name) > 20)
-		fprintf(output, "%s\n%46s", templates[i]->name, "");
+	if (templ1->name != NULL) {
+	    if (xmlStrlen(templ1->name) > 20)
+		fprintf(output, "%s\n%46s", templ1->name, "");
 	    else
-		fprintf(output, "%20s", templates[i]->name);
+		fprintf(output, "%20s", templ1->name);
 	} else {
 	    fprintf(output, "%20s", "");
 	}
-	if (templates[i]->mode != NULL) {
-	    if (xmlStrlen(templates[i]->mode) > 10)
-		fprintf(output, "%s\n%56s", templates[i]->mode, "");
+	if (templ1->mode != NULL) {
+	    if (xmlStrlen(templ1->mode) > 10)
+		fprintf(output, "%s\n%56s", templ1->mode, "");
 	    else
-		fprintf(output, "%10s", templates[i]->mode);
+		fprintf(output, "%10s", templ1->mode);
 	} else {
 	    fprintf(output, "%10s", "");
 	}
-	fprintf(output, " %6d", templates[i]->nbCalls);
-	fprintf(output, " %6ld %6ld\n", templates[i]->time,
-		templates[i]->time / templates[i]->nbCalls);
-	total += templates[i]->nbCalls;
-	totalt += templates[i]->time;
+	fprintf(output, " %6d", templ1->nbCalls);
+	fprintf(output, " %6ld %6ld\n", templ1->time,
+		templ1->time / templ1->nbCalls);
+	total += templ1->nbCalls;
+	totalt += templ1->time;
     }
     fprintf(output, "\n%30s%26s %6d %6ld\n", "Total", "", total, totalt);
+
+
+    /* print call graph */
+
+    childt = xmlMalloc((nb + 1) * sizeof(int));
+    if (childt == NULL)
+	return;
+      
+    /* precalculate children times */
+    for (i = 0; i < nb; i++) {
+        templ1 = templates[i];
+  
+        childt[i] = 0;
+        for (k = 0; k < nb; k++) {
+            templ2 = templates[k];
+            for (l = 0; l < templ2->templNr; l++) {
+                if (templ2->templCalledTab[l] == templ1) {
+                    childt[i] +=templ2->time;
+                }
+            }
+        }
+    }
+    childt[i] = 0;
+     
+    fprintf(output, "\nindex %% time    self  children    called     name\n");
+    
+    for (i = 0; i < nb; i++) {
+        char ix_str[20], timep_str[20], times_str[20], timec_str[20], called_str[20];
+        int t;
+
+        templ1 = templates[i];
+        /* callers */
+        for (j = 0; j < templ1->templNr; j++) {
+            templ2 = templ1->templCalledTab[j];
+            for (k = 0; k < nb; k++) {
+              if (templates[k] == templ2)
+                break;
+            }
+            t=templ2?templ2->time:totalt;
+            sprintf(times_str,"%8.3f",(float)t/XSLT_TIMESTAMP_TICS_PER_SEC);
+            sprintf(timec_str,"%8.3f",(float)childt[k]/XSLT_TIMESTAMP_TICS_PER_SEC);
+            sprintf(called_str,"%6d/%d",
+                templ1->templCountTab[j], /* number of times caller calls 'this' */
+                templ1->nbCalls);         /* total number of calls to 'this' */
+
+            fprintf(output, "             %-8s %-8s %-12s     %s [%d]\n",
+                times_str,timec_str,called_str,
+                (templ2?(templ2->name?(char *)templ2->name:pretty_templ_match(templ2)):"-"),k);
+        }
+        /* this */
+        sprintf(ix_str,"[%d]",i);
+        sprintf(timep_str,"%6.2f",(float)templ1->time*100.0/totalt);
+        sprintf(times_str,"%8.3f",(float)templ1->time/XSLT_TIMESTAMP_TICS_PER_SEC);
+        sprintf(timec_str,"%8.3f",(float)childt[i]/XSLT_TIMESTAMP_TICS_PER_SEC);
+        fprintf(output, "%-5s %-6s %-8s %-8s %6d     %s [%d]\n",
+            ix_str, timep_str,times_str,timec_str, 
+            templ1->nbCalls,
+            templ1->name?(char *)templ1->name:pretty_templ_match(templ1),i);
+        /* callees
+         * - go over templates[0..nb] and their templCalledTab[]
+         * - print those where we in the the call-stack
+         */
+        total = 0;
+        for (k = 0; k < nb; k++) {
+            templ2 = templates[k];
+            for (l = 0; l < templ2->templNr; l++) {
+                if (templ2->templCalledTab[l] == templ1) {
+                    total+=templ2->templCountTab[l];
+                }
+            }
+        }
+        for (k = 0; k < nb; k++) {
+            templ2 = templates[k];
+            for (l = 0; l < templ2->templNr; l++) {
+                if (templ2->templCalledTab[l] == templ1) {
+                    sprintf(times_str,"%8.3f",(float)templ2->time/XSLT_TIMESTAMP_TICS_PER_SEC);
+                    sprintf(timec_str,"%8.3f",(float)childt[k]/XSLT_TIMESTAMP_TICS_PER_SEC);
+                    sprintf(called_str,"%6d/%d",
+                        templ2->templCountTab[l], /* number of times 'this' calls callee */
+                        total);                   /* total number of calls from 'this' */
+                    fprintf(output, "             %-8s %-8s %-12s     %s [%d]\n",
+                        times_str,timec_str,called_str,
+                        templ2->name?(char *)templ2->name:pretty_templ_match(templ2),k);
+                }
+            }
+        }
+        fprintf(output, "-----------------------------------------------\n");
+    }
+    
+    fprintf(output, "\f\nIndex by function name\n");
+    for (i = 0; i < nb; i++) {
+        templ1 = templates[i];
+        fprintf(output, "[%d] %s (%s:%d)\n",
+            i, templ1->name?(char *)templ1->name:pretty_templ_match(templ1),
+            templ1->style->doc->URL,templ1->elem->line);
+    }
+    
+    fprintf(output, "\f\n");
+    xmlFree(childt);
 
     xmlFree(templates);
 }

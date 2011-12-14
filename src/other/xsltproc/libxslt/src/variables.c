@@ -675,6 +675,9 @@ xsltStackLookup(xsltTransformContextPtr ctxt, const xmlChar *name,
     return(NULL);
 }
 
+#ifdef XSLT_REFACTORED
+#else
+
 /**
  * xsltCheckStackElem:
  * @ctxt:  xn XSLT transformation context
@@ -709,6 +712,8 @@ xsltCheckStackElem(xsltTransformContextPtr ctxt, const xmlChar *name,
     
     return(1);
 }
+
+#endif /* XSLT_REFACTORED */
 
 /**
  * xsltAddStackElem:
@@ -1045,7 +1050,11 @@ xsltEvalGlobalVariable(xsltStackElemPtr elem, xsltTransformContextPtr ctxt)
 #endif
 
     oldInst = ctxt->inst;
+#ifdef XSLT_REFACTORED
+    comp = (xsltStyleBasicItemVariablePtr) elem->comp;
+#else
     comp = elem->comp;
+#endif
     oldVarName = elem->name;
     elem->name = xsltComputingGlobalVarMarker;
     /*

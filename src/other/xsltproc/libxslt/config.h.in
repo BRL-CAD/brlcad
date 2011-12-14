@@ -12,6 +12,9 @@
 /* Define to 1 if you have the <ansidecl.h> header file. */
 #cmakedefine HAVE_ANSIDECL_H 1
 
+/* Define to 1 if you have the `clock_gettime' function. */
+#cmakedefine HAVE_CLOCK_GETTIME 1
+
 /* Define to 1 if you have the `asctime' function. */
 #cmakedefine HAVE_ASCTIME 1
 

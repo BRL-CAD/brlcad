@@ -13,6 +13,10 @@ SET(XSL_XHTML_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-xh
 SET(XSL_MAN_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-man-stylesheet.xsl")
 SET(XSL_FO_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/other/standard/xsl/fo/docbook.xsl")
 
+# Include macros for validation - if validation is enabled, there's some
+# extra work to do.
+include(${CMAKE_CURRENT_SOURCE_DIR}/DB_VALIDATE.cmake)
+
 MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
 	IF(BRLCAD_EXTRADOCS_HTML)
 		SET(mk_out_dir ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
@@ -28,7 +32,12 @@ MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
 				COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
 				DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET}
 				)
-			ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
+			IF(BRLCAD_EXTRADOCS_VALIDATE)
+				DB_VALIDATE_TARGET(${targetname} ${filename_root})
+				ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile} ${db_outfile})
+			ELSE(BRLCAD_EXTRADOCS_VALIDATE)
+				ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
+			ENDIF(BRLCAD_EXTRADOCS_VALIDATE)
 			INSTALL(FILES ${outfile} DESTINATION ${DATA_DIR}/${targetdir})
 		ENDFOREACH(filename ${${xml_files}})
 	ENDIF(BRLCAD_EXTRADOCS_HTML)
@@ -50,7 +59,12 @@ MACRO(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir)
 				COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
 				DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET}
 				)
-			ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
+			IF(BRLCAD_EXTRADOCS_VALIDATE)
+				DB_VALIDATE_TARGET(${targetname} ${filename_root})
+				ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile} ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.valid)
+			ELSE(BRLCAD_EXTRADOCS_VALIDATE)
+				ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
+			ENDIF(BRLCAD_EXTRADOCS_VALIDATE)
 			INSTALL(FILES ${outfile} DESTINATION ${MAN_DIR}/man${mannum})
 		ENDFOREACH(filename ${${xml_files}})
 	ENDIF(BRLCAD_EXTRADOCS_MAN)
@@ -91,7 +105,12 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 				COMMAND ${CMAKE_COMMAND} -P ${scriptfile2}
 				DEPENDS ${outfile}
 				)
-			ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${pdf_outfile})
+			IF(BRLCAD_EXTRADOCS_VALIDATE)
+				DB_VALIDATE_TARGET(${targetname} ${filename_root})
+				ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile} ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.valid)
+			ELSE(BRLCAD_EXTRADOCS_VALIDATE)
+				ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${pdf_outfile})
+			ENDIF(BRLCAD_EXTRADOCS_VALIDATE)
 			INSTALL(FILES ${pdf_outfile} DESTINATION ${DATA_DIR}/${targetdir})
 		ENDFOREACH(filename ${${xml_files}})
 	ENDIF(BRLCAD_EXTRADOCS_PDF)
@@ -112,6 +131,6 @@ ADD_SUBDIRECTORY(specifications)
 ADD_SUBDIRECTORY(system)
 
 CMAKEFILES(Makefile.am README fop.xconf.in fop.cmake.in xsltproc.cmake.in log4j.properties resources)
-CMAKEFILES(BRLCAD_DB_VALIDATION.pm BRLCAD_DOC.pm DBPATH.pm.in ElNode.pm README.DB_authors_notes)
-CMAKEFILES(create-book-covers.pl create-index.pl create-xml-catalogs.pl	dummy.xml find-db-files.pl make-svg.sh read-db-xml.pl validate.pl)
+CMAKEFILES(README.DB_authors_notes)
+CMAKEFILES(validate.pl)
 CMAKEFILES(css/brlcad.css)

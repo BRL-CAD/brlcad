@@ -654,8 +654,9 @@ xsltFormatNumberFunction(xmlXPathParserContextPtr ctxt, int nargs)
 void
 xsltGenerateIdFunction(xmlXPathParserContextPtr ctxt, int nargs){
     xmlNodePtr cur = NULL;
-    unsigned long val;
-    xmlChar str[20];
+    long val;
+    xmlChar str[30];
+    xmlDocPtr doc;
 
     if (nargs == 0) {
 	cur = ctxt->context->node;
@@ -694,9 +695,24 @@ xsltGenerateIdFunction(xmlXPathParserContextPtr ctxt, int nargs){
      * Okay this is ugly but should work, use the NodePtr address
      * to forge the ID
      */
-    val = (unsigned long)((char *)cur - (char *)0);
-    val /= sizeof(xmlNode);
-    sprintf((char *)str, "id%ld", val);
+    if (cur->type != XML_NAMESPACE_DECL)
+        doc = cur->doc;
+    else {
+        xmlNsPtr ns = (xmlNsPtr) cur;
+
+        if (ns->context != NULL)
+            doc = ns->context;
+        else
+            doc = ctxt->context->doc;
+
+    }
+
+    val = (long)((char *)cur - (char *)doc);
+    if (val >= 0) {
+      sprintf((char *)str, "idp%ld", val);
+    } else {
+      sprintf((char *)str, "idm%ld", -val);
+    }
     valuePush(ctxt, xmlXPathNewString(str));
 }
 

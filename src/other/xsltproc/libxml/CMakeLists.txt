@@ -157,8 +157,13 @@ SET(LIBXML_VERSION "2.7.8")
 SET(LIBXML_VERSION_NUMBER "20708")
 SET(LIBXML_VERSION_EXTRA "-BRLCAD")
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/xmlversion.h.in
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/libxml/xmlversion.h.in
 	${CMAKE_CURRENT_BINARY_DIR}/../include/libxml/xmlversion.h)
+
+IF(WIN32)
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/libxml/xmlwin32version.h.in
+		${CMAKE_CURRENT_BINARY_DIR}/../include/libxml/xmlwin32version.h)
+ENDIF(WIN32)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
 	${CMAKE_CURRENT_BINARY_DIR}/../include/libxml/config.h)

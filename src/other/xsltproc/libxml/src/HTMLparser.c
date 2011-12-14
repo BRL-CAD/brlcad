@@ -3448,7 +3448,8 @@ static void
 htmlCheckEncoding(htmlParserCtxtPtr ctxt, const xmlChar *attvalue) {
     const xmlChar *encoding;
 
-    if ((ctxt == NULL) || (attvalue == NULL))
+    if ((ctxt == NULL) || (attvalue == NULL) ||
+        (ctxt->options & HTML_PARSE_IGNORE_ENC))
 	return;
 
     /* do not change encoding */
@@ -3500,7 +3501,9 @@ htmlCheckEncoding(htmlParserCtxtPtr ctxt, const xmlChar *attvalue) {
 		xmlSwitchToEncoding(ctxt, handler);
 		ctxt->charset = XML_CHAR_ENCODING_UTF8;
 	    } else {
-		ctxt->errNo = XML_ERR_UNSUPPORTED_ENCODING;
+		htmlParseErr(ctxt, XML_ERR_UNSUPPORTED_ENCODING,
+		             "htmlCheckEncoding: unknown encoding %s\n",
+			     encoding, NULL);
 	    }
 	}
 
@@ -6536,6 +6539,10 @@ htmlCtxtUseOptions(htmlParserCtxtPtr ctxt, int options)
     if (options & HTML_PARSE_NODEFDTD) {
 	ctxt->options |= HTML_PARSE_NODEFDTD;
         options -= HTML_PARSE_NODEFDTD;
+    }
+    if (options & HTML_PARSE_IGNORE_ENC) {
+	ctxt->options |= HTML_PARSE_IGNORE_ENC;
+        options -= HTML_PARSE_IGNORE_ENC;
     }
     ctxt->dictNames = 0;
     return (options);

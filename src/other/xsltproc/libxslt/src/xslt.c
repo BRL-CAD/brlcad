@@ -243,6 +243,10 @@ xsltInit (void) {
  */
 void
 xsltUninit (void) {
+#ifdef XSLT_LOCALE_WINAPI
+    xmlFreeRMutex(xsltLocaleMutex);
+    xsltLocaleMutex = NULL;
+#endif
     initialized = 0;
 }
 
@@ -417,6 +421,11 @@ xsltFreeTemplate(xsltTemplatePtr template) {
     if (template->modeURI) xmlFree(template->modeURI);
  */
     if (template->inheritedNs) xmlFree(template->inheritedNs);
+    
+    /* free profiling data */
+    if (template->templCalledTab) xmlFree(template->templCalledTab);
+    if (template->templCountTab) xmlFree(template->templCountTab);
+    
     memset(template, -1, sizeof(xsltTemplate));
     xmlFree(template);
 }
@@ -2432,13 +2441,13 @@ xsltCompilerNodePop(xsltCompilerCtxtPtr cctxt, xmlNodePtr node)
 	"xsltCompilerNodePop: Depth mismatch.\n");
 	goto mismatch;
     }
+    cctxt->depth--;
     /*
     * Pop information of variables.
     */
     if ((cctxt->ivar) && (cctxt->ivar->depth > cctxt->depth))
 	xsltCompilerVarInfoPop(cctxt);
 
-    cctxt->depth--;
     cctxt->inode = cctxt->inode->prev;
     if (cctxt->inode != NULL)
 	cctxt->inode->curChildType = 0;
@@ -5167,7 +5176,7 @@ xsltParseXSLTTemplate(xsltCompilerCtxtPtr cctxt, xmlNodePtr templNode) {
 	/*
 	* TODO: We need a standardized function for extraction
 	*  of namespace names and local names from QNames.
-	*  Don't use xsltGetQNameURI() as it cannot channeö
+	*  Don't use xsltGetQNameURI() as it cannot channeï¿½
 	*  reports through the context.
 	*/
 	modeURI = xsltGetQNameURI(templNode, &prop);

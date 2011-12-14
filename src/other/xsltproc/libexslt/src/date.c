@@ -1577,7 +1577,7 @@ _exsltDateAdd (exsltDateValPtr dt, exsltDateValPtr dur)
         if ((r->hour) || (r->min) || (r->sec))
             ret->type = XS_DATETIME;
         else if (ret->type != XS_DATE) {
-            if ((r->mon != 1) && (r->day != 1))
+            if (r->day != 1)
                 ret->type = XS_DATE;
             else if ((ret->type != XS_GYEARMONTH) && (r->mon != 1))
                 ret->type = XS_GYEARMONTH;

@@ -782,6 +782,9 @@ MARK_AS_ADVANCED(BRLCAD_EXTRADOCS_MAN)
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF "Build PDF output from Docbook documentation" OFF "BRLCAD_EXTRADOCS;APACHE_FOP" OFF)
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF_MAN "Build PDF output from Docbook documentation for man pages" ON "BRLCAD_EXTRADOCS_PDF" OFF)
 
+# Don't do it by default, but provide an option to perform validation as part
+# of the Docbook build - sort of a "strict flags" mode for Docbook
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_VALIDATE "Perform validation for Docbook documentation" OFF "BRLCAD_EXTRADOCS" OFF)
 
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler

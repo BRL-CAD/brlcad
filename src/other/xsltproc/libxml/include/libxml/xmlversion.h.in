@@ -29,7 +29,7 @@ XMLPUBFUN void XMLCALL xmlCheckVersion(int version);
  *
  * the version string like "1.2.3"
  */
-#define LIBXML_DOTTED_VERSION "@LIBXML_VERSION@"
+#define LIBXML_DOTTED_VERSION "@VERSION@"
 
 /**
  * LIBXML_VERSION:
@@ -90,12 +90,10 @@ XMLPUBFUN void XMLCALL xmlCheckVersion(int version);
  *
  * Whether the thread support is configured in
  */
-#ifndef LIBXML_THREAD_ENABLED
 #if @WITH_THREADS@
 #if defined(_REENTRANT) || defined(__MT__) || \
     (defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE - 0 >= 199506L))
 #define LIBXML_THREAD_ENABLED
-#endif
 #endif
 #endif
 

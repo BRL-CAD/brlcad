@@ -279,7 +279,17 @@ xsltAttrTemplateValueProcessNode(xsltTransformContextPtr ctxt,
 	    ret = xmlStrncat(ret, str, cur - str);
 	    str = cur;
 	    cur++;
-	    while ((*cur != 0) && (*cur != '}')) cur++;
+	    while ((*cur != 0) && (*cur != '}')) {
+		/* Need to check for literal (bug539741) */
+		if ((*cur == '\'') || (*cur == '"')) {
+		    char delim = *(cur++);
+		    while ((*cur != 0) && (*cur != delim))
+			cur++;
+		    if (*cur != 0)
+			cur++;	/* skip the ending delimiter */
+		} else
+		    cur++;
+            }
 	    if (*cur == 0) {
 	        xsltTransformError(ctxt, NULL, inst,
 			"xsltAttrTemplateValueProcessNode: unmatched '{'\n");

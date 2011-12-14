@@ -294,6 +294,11 @@ struct _xsltTemplate {
     int nbCalls;        /* the number of time the template was called */
     unsigned long time; /* the time spent in this template */
     void *params;       /* xsl:param instructions */
+    
+    int              templNr;		/* Nb of templates in the stack */
+    int              templMax;		/* Size of the templtes stack */
+    xsltTemplatePtr *templCalledTab;	/* templates called */
+    int             *templCountTab;  /* .. and how often */
 };
 
 /**

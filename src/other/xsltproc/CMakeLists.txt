@@ -37,3 +37,6 @@ include_directories(
 
 add_executable(xsltproc xsltproc.c)
 target_link_libraries(xsltproc xml xslt exslt)
+
+add_executable(xmllint xmllint.c)
+target_link_libraries(xmllint xml xslt exslt)

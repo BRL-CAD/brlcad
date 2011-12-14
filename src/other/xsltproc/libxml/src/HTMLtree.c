@@ -481,7 +481,7 @@ htmlNodeDumpFileFormat(FILE *out, xmlDocPtr doc,
 	if (enc != XML_CHAR_ENCODING_UTF8) {
 	    handler = xmlFindCharEncodingHandler(encoding);
 	    if (handler == NULL)
-		return(-1);
+		htmlSaveErr(XML_SAVE_UNKNOWN_ENCODING, NULL, encoding);
 	}
     }
 
@@ -562,11 +562,9 @@ htmlDocDumpMemoryFormat(xmlDocPtr cur, xmlChar**mem, int *size, int format) {
 	    }
 
 	    handler = xmlFindCharEncodingHandler(encoding);
-	    if (handler == NULL) {
-		*mem = NULL;
-		*size = 0;
-		return;
-	    }
+	    if (handler == NULL)
+                htmlSaveErr(XML_SAVE_UNKNOWN_ENCODING, NULL, encoding);
+
 	} else {
 	    handler = xmlFindCharEncodingHandler(encoding);
 	}
@@ -587,7 +585,7 @@ htmlDocDumpMemoryFormat(xmlDocPtr cur, xmlChar**mem, int *size, int format) {
 	return;
     }
 
-	htmlDocContentDumpFormatOutput(buf, cur, NULL, format);
+    htmlDocContentDumpFormatOutput(buf, cur, NULL, format);
 
     xmlOutputBufferFlush(buf);
     if (buf->conv != NULL) {
@@ -1061,7 +1059,7 @@ htmlDocDump(FILE *f, xmlDocPtr cur) {
 
 	    handler = xmlFindCharEncodingHandler(encoding);
 	    if (handler == NULL)
-		return(-1);
+		htmlSaveErr(XML_SAVE_UNKNOWN_ENCODING, NULL, encoding);
 	} else {
 	    handler = xmlFindCharEncodingHandler(encoding);
 	}
@@ -1120,7 +1118,7 @@ htmlSaveFile(const char *filename, xmlDocPtr cur) {
 
 	    handler = xmlFindCharEncodingHandler(encoding);
 	    if (handler == NULL)
-		return(-1);
+		htmlSaveErr(XML_SAVE_UNKNOWN_ENCODING, NULL, encoding);
 	}
     }
 
@@ -1181,7 +1179,7 @@ htmlSaveFileFormat(const char *filename, xmlDocPtr cur,
 
 	    handler = xmlFindCharEncodingHandler(encoding);
 	    if (handler == NULL)
-		return(-1);
+		htmlSaveErr(XML_SAVE_UNKNOWN_ENCODING, NULL, encoding);
 	}
         htmlSetMetaEncoding(cur, (const xmlChar *) encoding);
     } else {

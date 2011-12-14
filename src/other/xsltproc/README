@@ -8,7 +8,9 @@ used by BRL-CAD to produce HTML output (among other formats) from
 Docbook documentation source files - since we need that documentation
 on platforms (Windows) that don't usually have a pre-installed
 xsltproc handy, we guarantee our ability to generate it by
-building our own xsltproc at need.
+building our own xsltproc at need. For validation purposes, we 
+also compile xmllint - this is only for checking of the xml
+Docbook sources and is not strictly necessary for build functionality.
 
 Each library subdirectory has its Copyright file, and libxml2's
 license statement has been added to the header of xsltproc.c

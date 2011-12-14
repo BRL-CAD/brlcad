@@ -125,7 +125,7 @@ templPush(xsltTransformContextPtr ctxt, xsltTemplatePtr value)
             return (0);
         }
     }
-    if (ctxt->templNr >= ctxt->templMax) {
+    else if (ctxt->templNr >= ctxt->templMax) {
         ctxt->templMax *= 2;
         ctxt->templTab =
             (xsltTemplatePtr *) xmlRealloc(ctxt->templTab,
@@ -249,7 +249,7 @@ profPush(xsltTransformContextPtr ctxt, long value)
             return (0);
         }
     }
-    if (ctxt->profNr >= ctxt->profMax) {
+    else if (ctxt->profNr >= ctxt->profMax) {
         ctxt->profMax *= 2;
         ctxt->profTab =
             (long *) xmlRealloc(ctxt->profTab,
@@ -286,6 +286,54 @@ profPop(xsltTransformContextPtr ctxt)
     ret = ctxt->profTab[ctxt->profNr];
     ctxt->profTab[ctxt->profNr] = 0;
     return (ret);
+}
+
+static void
+profCallgraphAdd(xsltTemplatePtr templ, xsltTemplatePtr parent)
+{
+    int i;
+  
+    if (templ->templMax == 0) {
+        templ->templMax = 4;
+        templ->templCalledTab =
+            (xsltTemplatePtr *) xmlMalloc(templ->templMax *
+                                          sizeof(templ->templCalledTab[0]));
+        templ->templCountTab =
+            (int *) xmlMalloc(templ->templMax *
+                                          sizeof(templ->templCountTab[0]));
+        if (templ->templCalledTab == NULL || templ->templCountTab == NULL) {
+            xmlGenericError(xmlGenericErrorContext, "malloc failed !\n");
+            return;
+        }
+    }
+    else if (templ->templNr >= templ->templMax) {
+        templ->templMax *= 2;
+        templ->templCalledTab =
+            (xsltTemplatePtr *) xmlRealloc(templ->templCalledTab,
+                                           templ->templMax *
+                                           sizeof(templ->templCalledTab[0]));
+        templ->templCountTab =
+            (int *) xmlRealloc(templ->templCountTab,
+                                           templ->templMax *
+                                           sizeof(templ->templCountTab[0]));
+        if (templ->templCalledTab == NULL || templ->templCountTab == NULL) {
+            xmlGenericError(xmlGenericErrorContext, "realloc failed !\n");
+            return;
+        }
+    }
+
+    for (i = 0; i < templ->templNr; i++) {
+        if (templ->templCalledTab[i] == parent) {
+            templ->templCountTab[i]++;
+            break;
+        }
+    }
+    if (i == templ->templNr) {
+        /* not found, add new one */
+        templ->templCalledTab[templ->templNr] = parent;
+        templ->templCountTab[templ->templNr] = 1;
+        templ->templNr++;
+    }
 }
 
 /************************************************************************
@@ -2964,6 +3012,7 @@ xsltApplyXSLTTemplate(xsltTransformContextPtr ctxt,
 	templ->nbCalls++;
 	start = xsltTimestamp();
 	profPush(ctxt, 0);
+	profCallgraphAdd(templ, ctxt->templ);
     }
     /*
     * Push the xsl:template declaration onto the stack.

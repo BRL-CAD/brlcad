@@ -1928,7 +1928,7 @@ xmlCharEncFirstLineInt(xmlCharEncodingHandler *handler, xmlBufferPtr out,
     if (in == NULL) return(-1);
 
     /* calculate space available */
-    written = out->size - out->use;
+    written = out->size - out->use - 1; /* count '\0' */
     toconv = in->use;
     /*
      * echo '<?xml version="1.0" encoding="UCS4"?>' | wc -c => 38
@@ -2059,7 +2059,7 @@ xmlCharEncInFunc(xmlCharEncodingHandler * handler, xmlBufferPtr out,
     toconv = in->use;
     if (toconv == 0)
         return (0);
-    written = out->size - out->use;
+    written = out->size - out->use -1; /* count '\0' */
     if (toconv * 2 >= written) {
         xmlBufferGrow(out, out->size + toconv * 2);
         written = out->size - out->use - 1;

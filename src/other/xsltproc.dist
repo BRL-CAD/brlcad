@@ -10,7 +10,6 @@ libexslt/include/libexslt/exsltexports.h
 libexslt/include/libexslt/libexslt.h
 libxml/Copyright
 libxml/include
-libxml/include/acconfig.h
 libxml/include/elfgcchack.h
 libxml/include/libxml
 libxml/include/libxml.h

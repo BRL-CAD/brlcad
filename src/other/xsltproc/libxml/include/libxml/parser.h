@@ -1105,8 +1105,9 @@ typedef enum {
 				   crash if you try to modify the tree) */
     XML_PARSE_OLD10	= 1<<17,/* parse using XML-1.0 before update 5 */
     XML_PARSE_NOBASEFIX = 1<<18,/* do not fixup XINCLUDE xml:base uris */
-    XML_PARSE_HUGE      = 1<<19, /* relax any hardcoded limit from the parser */
-    XML_PARSE_OLDSAX    = 1<<20 /* parse using SAX2 interface from before 2.7.0 */
+    XML_PARSE_HUGE      = 1<<19,/* relax any hardcoded limit from the parser */
+    XML_PARSE_OLDSAX    = 1<<20,/* parse using SAX2 interface before 2.7.0 */
+    XML_PARSE_IGNORE_ENC= 1<<21 /* ignore internal document encoding hint */
 } xmlParserOption;
 
 XMLPUBFUN void XMLCALL

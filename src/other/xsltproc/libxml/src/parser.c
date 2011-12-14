@@ -197,6 +197,7 @@ unsigned int xmlParserMaxDepth = 256;
 
 static const char *xmlW3CPIs[] = {
     "xml-stylesheet",
+    "xml-model",
     NULL
 };
 
@@ -1819,15 +1820,14 @@ namePush(xmlParserCtxtPtr ctxt, const xmlChar * value)
 
     if (ctxt->nameNr >= ctxt->nameMax) {
         const xmlChar * *tmp;
-        ctxt->nameMax *= 2;
         tmp = (const xmlChar * *) xmlRealloc((xmlChar * *)ctxt->nameTab,
-                                    ctxt->nameMax *
+                                    ctxt->nameMax * 2 *
                                     sizeof(ctxt->nameTab[0]));
         if (tmp == NULL) {
-	    ctxt->nameMax /= 2;
 	    goto mem_error;
         }
 	ctxt->nameTab = tmp;
+        ctxt->nameMax *= 2;
     }
     ctxt->nameTab[ctxt->nameNr] = value;
     ctxt->name = value;
@@ -6992,6 +6992,7 @@ xmlParseReference(xmlParserCtxtPtr ctxt) {
 		    ent->owner = 1;
 		    while (list != NULL) {
 			list->parent = (xmlNodePtr) ent;
+			xmlSetTreeDoc(list, ent->doc);
 			if (list->next == NULL)
 			    ent->last = list;
 			list = list->next;
@@ -9921,6 +9922,13 @@ xmlParseEncodingDecl(xmlParserCtxtPtr ctxt) {
 	} else {
 	    xmlFatalErr(ctxt, XML_ERR_STRING_NOT_STARTED, NULL);
 	}
+
+        /*
+         * Non standard parsing, allowing the user to ignore encoding
+         */
+        if (ctxt->options & XML_PARSE_IGNORE_ENC)
+            return(encoding);
+
 	/*
 	 * UTF-16 encoding stwich has already taken place at this stage,
 	 * more over the little-endian/big-endian selection is already done
@@ -14559,6 +14567,10 @@ xmlCtxtUseOptionsInternal(xmlParserCtxtPtr ctxt, int options, const char *encodi
     if (options & XML_PARSE_OLDSAX) {
 	ctxt->options |= XML_PARSE_OLDSAX;
         options -= XML_PARSE_OLDSAX;
+    }
+    if (options & XML_PARSE_IGNORE_ENC) {
+	ctxt->options |= XML_PARSE_IGNORE_ENC;
+        options -= XML_PARSE_IGNORE_ENC;
     }
     ctxt->linenumbers = 1;
     return (options);
