@@ -83,17 +83,21 @@ MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
 			SET(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake)
 			SET(CURRENT_XSL_STYLESHEET ${XSL_XHTML_STYLESHEET})
 			configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/${XSLT_EXECUTABLE}.cmake.in ${scriptfile} @ONLY)
-			ADD_CUSTOM_COMMAND(
-				OUTPUT ${outfile}
-				COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-				DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET}
-				)
 			IF(BRLCAD_EXTRADOCS_VALIDATE)
 				DB_VALIDATE_TARGET(${targetname} ${filename_root})
-				ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile} ${db_outfile})
+				ADD_CUSTOM_COMMAND(
+					OUTPUT ${outfile}
+					COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
+					DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET}
+					)
 			ELSE(BRLCAD_EXTRADOCS_VALIDATE)
-				ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
+				ADD_CUSTOM_COMMAND(
+					OUTPUT ${outfile}
+					COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
+					DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET}
+					)
 			ENDIF(BRLCAD_EXTRADOCS_VALIDATE)
+			ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
 			INSTALL(FILES ${outfile} DESTINATION ${DATA_DIR}/${targetdir})
 		ENDFOREACH(filename ${${xml_files}})
 	ENDIF(BRLCAD_EXTRADOCS_HTML)
@@ -111,17 +115,21 @@ MACRO(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir)
 			SET(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake)
 			SET(CURRENT_XSL_STYLESHEET ${XSL_MAN_STYLESHEET})
 			configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/${XSLT_EXECUTABLE}.cmake.in ${scriptfile} @ONLY)
-			ADD_CUSTOM_COMMAND(
-				OUTPUT ${outfile}
-				COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-				DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET}
-				)
 			IF(BRLCAD_EXTRADOCS_VALIDATE)
 				DB_VALIDATE_TARGET(${targetname} ${filename_root})
-				ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile} ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.valid)
+				ADD_CUSTOM_COMMAND(
+					OUTPUT ${outfile}
+					COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
+					DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET}
+					)
 			ELSE(BRLCAD_EXTRADOCS_VALIDATE)
-				ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
+				ADD_CUSTOM_COMMAND(
+					OUTPUT ${outfile}
+					COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
+					DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET}
+					)
 			ENDIF(BRLCAD_EXTRADOCS_VALIDATE)
+			ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
 			INSTALL(FILES ${outfile} DESTINATION ${MAN_DIR}/man${mannum})
 		ENDFOREACH(filename ${${xml_files}})
 	ENDIF(BRLCAD_EXTRADOCS_MAN)
@@ -140,11 +148,21 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 			SET(scriptfile1 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_fo.cmake)
 			SET(CURRENT_XSL_STYLESHEET ${XSL_FO_STYLESHEET})
 			configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/${XSLT_EXECUTABLE}.cmake.in ${scriptfile1} @ONLY)
-			ADD_CUSTOM_COMMAND(
-				OUTPUT ${outfile}
-				COMMAND ${CMAKE_COMMAND} -P ${scriptfile1}
-				DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}	${XSLTPROC_EXECUTABLE_TARGET}
-				)
+			IF(BRLCAD_EXTRADOCS_VALIDATE)
+				DB_VALIDATE_TARGET(${targetname} ${filename_root})
+				ADD_CUSTOM_COMMAND(
+					OUTPUT ${outfile}
+					COMMAND ${CMAKE_COMMAND} -P ${scriptfile1}
+					DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET}
+					)
+			ELSE(BRLCAD_EXTRADOCS_VALIDATE)
+				ADD_CUSTOM_COMMAND(
+					OUTPUT ${outfile}
+					COMMAND ${CMAKE_COMMAND} -P ${scriptfile1}
+					DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}	${XSLTPROC_EXECUTABLE_TARGET}
+					)
+			ENDIF(BRLCAD_EXTRADOCS_VALIDATE)
+			ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
 			SET(pdf_outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.pdf)
 			SET(scriptfile2 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_pdf.cmake)
 			configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/${PDF_CONV_EXECUTABLE}.cmake.in ${scriptfile2} @ONLY)
@@ -153,12 +171,7 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 				COMMAND ${CMAKE_COMMAND} -P ${scriptfile2}
 				DEPENDS ${outfile}
 				)
-			IF(BRLCAD_EXTRADOCS_VALIDATE)
-				DB_VALIDATE_TARGET(${targetname} ${filename_root})
-				ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile} ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.valid)
-			ELSE(BRLCAD_EXTRADOCS_VALIDATE)
-				ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${pdf_outfile})
-			ENDIF(BRLCAD_EXTRADOCS_VALIDATE)
+			ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${pdf_outfile})
 			INSTALL(FILES ${pdf_outfile} DESTINATION ${DATA_DIR}/${targetdir})
 		ENDFOREACH(filename ${${xml_files}})
 	ENDIF(BRLCAD_EXTRADOCS_PDF)
