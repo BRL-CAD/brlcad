@@ -439,7 +439,7 @@ bufferFill(perplex_t scanner, size_t n)
 	}
 
 	/* bytes of input being used by scanner */
-	bytesInUse = (size_t)null - (size_t)scannerFirst;
+	bytesInUse = (size_t)null - (size_t)scannerFirst + 1;
 
 	/* copy in-use elements to start of buffer */
 	memmove(bufFirst, scannerFirst, bytesInUse);
