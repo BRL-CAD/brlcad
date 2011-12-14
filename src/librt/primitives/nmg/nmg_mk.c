@@ -254,6 +254,7 @@ nmg_mm(void)
     m->index = 0;
     m->maxindex = 1;
     m->magic = NMG_MODEL_MAGIC;	/* Model Structure is GOOD */
+    m->manifolds = (char *)NULL;
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_mm() returns model 0x%p\n", m);
@@ -1676,6 +1677,11 @@ nmg_km(struct model *m)
 
     while (BU_LIST_NON_EMPTY(&m->r_hd))
 	(void)nmg_kr(BU_LIST_FIRST(nmgregion, &m->r_hd));
+
+    if (m->manifolds) {
+        bu_free((char *)m->manifolds, "free manifolds table");
+        m->manifolds = (char *)NULL;
+    }
 
     FREE_MODEL(m);
     if (rt_g.NMG_debug & DEBUG_BASIC) {
