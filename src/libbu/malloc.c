@@ -68,8 +68,6 @@ extern const char bu_strdup_message[];
 
 
 /**
- * _ B U _ M E M D E B U G _ A D D
- *
  * Add another entry to the memory debug table
  */
 HIDDEN void
@@ -135,8 +133,6 @@ again:
 
 
 /**
- * _ B U _ M E M D E B U G _ C H E C K
- *
  * Check an entry against the memory debug table, based upon its address.
  */
 HIDDEN struct memdebug *
@@ -175,8 +171,6 @@ memdebug_check(register genptr_t ptr, const char *str)
 extern int bu_bomb_failsafe_init();
 
 /**
- * _ B U _ A L L O C
- *
  * This routine only returns on successful allocation.  We promise
  * never to return a NULL pointer; caller doesn't have to check.
  *

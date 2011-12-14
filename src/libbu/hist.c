@@ -96,8 +96,6 @@ bu_hist_range(register struct bu_hist *hp, fastf_t low, fastf_t high)
 
 
 /**
- * _ B U _ H I S T _ P R _ S U P P R E S S
- *
  * Allows caller control over zero-suppression feature.
  */
 HIDDEN void

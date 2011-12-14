@@ -580,8 +580,6 @@ static void (*parallel_func)(int, genptr_t);	/* user function to run in parallel
 
 
 /**
- * B U _ P A R A L L E L _ I N T E R F A C E
- *
  * Interface layer between bu_parallel and the user's function.
  * Necessary so that we can provide unique thread numbers as a
  * parameter to the user's function, and to decrement the global
@@ -623,12 +621,10 @@ parallel_interface(void)
 
 #ifdef SGI_4D
 /**
- * B U _ P R _ F I L E
- *
  * SGI-specific.  Formatted printing of stdio's FILE struct.
  */
 HIDDEN void
-bu_pr_FILE(char *title, FILE *fp)
+parallel_pr_FILE(char *title, FILE *fp)
 {
     bu_log("FILE structure '%s', at x%x:\n", title, fp);
     bu_log(" _cnt = x%x\n", fp->_cnt);
@@ -899,8 +895,8 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	bu_log("\nWarning:  stdin file pointer has been corrupted by SGI multi-processor bug!\n");
 	if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
 	    bu_log("Original position was x%x, now position is x%x!\n", stdin_pos, ftell(stdin));
-	    bu_pr_FILE("saved stdin", &stdin_save);
-	    bu_pr_FILE("current stdin", stdin);
+	    parallel_pr_FILE("saved stdin", &stdin_save);
+	    parallel_pr_FILE("current stdin", stdin);
 	}
 	fseek(stdin, stdin_pos, SEEK_SET);
 	if (UNLIKELY(ftell(stdin) != stdin_pos)) {

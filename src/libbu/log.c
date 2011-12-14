@@ -75,8 +75,6 @@ log_call_hooks(genptr_t buf)
 
 
 /**
- * _ B U _ L O G _ D O _ I N D E N T _ L E V E L
- *
  * This subroutine is used to append bu_log_indent_cur_level spaces
  * into a printf() format specifier string, after each newline
  * character is encountered.
