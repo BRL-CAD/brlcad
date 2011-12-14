@@ -1901,8 +1901,8 @@ parse_list_elem(const char *in, int idx)
 /**
  * Return number of items in a string, interpreted as a Tcl list.
  */
-int
-parse_tcl_list_length(const char *in)
+HIDDEN int
+parse_list_length(const char *in)
 {
     int count=0;
     int depth=0;
@@ -1954,7 +1954,7 @@ parse_key_val_to_vls(struct bu_vls *vls, char *params)
     int len;
     int j;
 
-    len = parse_tcl_list_length(params);
+    len = parse_list_length(params);
 
     if (len == 1) {
 	bu_vls_putc(vls, ' ');
@@ -1977,7 +1977,7 @@ parse_key_val_to_vls(struct bu_vls *vls, char *params)
 	bu_vls_putc(vls, ' ');
 	bu_vls_strcat(vls, keyword);
 	bu_vls_putc(vls, '=');
-	if (parse_tcl_list_length(value) > 1) {
+	if (parse_list_length(value) > 1) {
 	    bu_vls_putc(vls, '"');
 	    bu_vls_strcat(vls, value);
 	    bu_vls_putc(vls, '"');
@@ -2003,7 +2003,7 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
 
     BU_CK_VLS(vls);
 
-    len = parse_tcl_list_length(in);
+    len = parse_list_length(in);
 
     if (len == 0)
 	return 0;
@@ -2042,7 +2042,7 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
 	bu_vls_strcat(vls, "stack");
 
 	/* get number of shaders in the stack */
-	len = parse_tcl_list_length(params);
+	len = parse_list_length(params);
 
 	/* process each shader in the stack */
 	for (i=0; i<len; i++) {
