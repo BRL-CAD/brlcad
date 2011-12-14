@@ -621,6 +621,11 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 
 	loc = (char *)(base + sdp->sp_offset);
 
+	if (loc == NULL) {
+	    bu_log("Structure inconsistency detected parsing '%s'\n", name);
+	    bu_bomb("INTERNAL ERROR: encountered NULL address.\n");
+	}
+
 	if (sdp->sp_fmt[0] == 'i') {
 	    static int warned = 0;
 	    if (!warned) {
