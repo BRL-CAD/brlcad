@@ -322,13 +322,6 @@ buf_append_null(struct Buf *buf)
     buf_append(buf, &null, sizeof(char));
 }
 
-/* get size of buffer in bytes */
-static size_t
-buf_size(struct Buf *buf)
-{
-    return (size_t)buf->nelts * buf->elt_size;
-}
-
 /* get pointer to the start of the first element */
 static void*
 buf_first_elt(struct Buf *buf)
@@ -340,7 +333,8 @@ buf_first_elt(struct Buf *buf)
 static void*
 buf_last_elt(struct Buf *buf)
 {
-    return buf_first_elt(buf) + buf->elt_size * (buf->nelts - 1);
+    size_t first = (size_t)buf_first_elt(buf);
+    return (void*)(first + buf->elt_size * (buf->nelts - 1));
 }
 
 
@@ -364,7 +358,7 @@ checkInputMarkers(perplex_t scanner)
     /* Cursor should be somewhere between start of current token and end
      * of input. Backtracking marker may or may not be out-of-date.
      */
-    assert(tokenStart <= cursor <= null);
+    assert(tokenStart <= cursor && cursor <= null);
 }
 
 /* Copy up to n input characters to the end of scanner buffer. If EOF is
@@ -448,7 +442,7 @@ bufferFill(perplex_t scanner, size_t n)
         buf->nelts = bytesInUse / buf->elt_size;
 
 	/* update markers */
-	shiftSize = scannerFirst - bufFirst;
+	shiftSize = (size_t)scannerFirst - (size_t)bufFirst;
 	scanner->marker     -= shiftSize;
 	scanner->cursor     -= shiftSize;
 	scanner->null       -= shiftSize;
