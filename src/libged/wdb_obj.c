@@ -9666,6 +9666,14 @@ static struct bu_cmdtab wdb_cmds[] = {
 };
 
 
+/* used to suppress bu_log() output */
+static int
+do_nothing(genptr_t UNUSED(nada1), genptr_t UNUSED(nada2))
+{
+    return 0;
+}
+
+
 /**
  * W D B _ C M D
  *@brief
@@ -9686,11 +9694,20 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     /* look for the new libged commands before trying one of the old ones */
     GED_INIT(&ged, wdbp);
 
+    /* suppress bu_log output because we don't care if the command
+     * exists in wdb_newcmds since it might be in wdb_cmds.  this
+     * prevents bu_cmd() from blathering.
+     */
+    bu_log_add_hook(do_nothing, NULL);
+
     if (bu_cmd(wdb_newcmds, argc-1, argv+1, 0, (ClientData)&ged, &ret) == BRLCAD_OK) {
 	Tcl_SetResult(interp, bu_vls_addr(ged.ged_result_str), TCL_VOLATILE);
 	ged_free(&ged);
 	return ret;
     }
+
+    /* unsuppress bu_log output */
+    bu_log_delete_hook(do_nothing, NULL);
 
     /* release any allocated memory */
     ged_free(&ged);
