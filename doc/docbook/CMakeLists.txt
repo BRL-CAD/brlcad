@@ -47,7 +47,7 @@ ADD_SUBDIRECTORY(presentations)
 ADD_SUBDIRECTORY(specifications)
 ADD_SUBDIRECTORY(system)
 
-CMAKEFILES(README fop.xconf.in fop.cmake.in xsltproc.cmake.in log4j.properties resources)
+CMAKEFILES(README fop.xconf.in log4j.properties resources)
 CMAKEFILES(README.DB_authors_notes)
 CMAKEFILES(validate.pl)
 CMAKEFILES(css/brlcad.css)
