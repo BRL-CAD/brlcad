@@ -63,7 +63,8 @@ THIRD_PARTY(zlib libz)
 THIRD_PARTY_EXECUTABLE(lemon lemon)
 THIRD_PARTY_EXECUTABLE(re2c re2c)
 THIRD_PARTY_EXECUTABLE(perplex perplex)
-THIRD_PARTY_EXECUTABLE(xsltproc xsltproc)
+THIRD_PARTY_EXECUTABLE(xsltproc xmltools)
+THIRD_PARTY_EXECUTABLE(xmllint xmltools)
 
 #---------------------------------------------------------------------------------
 # Third Party Sources

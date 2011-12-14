@@ -1,7 +1,3 @@
-# Set up xml validation routines
-
-SET(XMLLINT_EXECUTABLE "${CMAKE_BINARY_DIR}/bin/xmllint")
-
 # In principle, DocBook conversion and validation can be accomplished
 # with multiple programs.  BRL-CAD's CMake logic uses variables to
 # hold the "active" tools for each conversion operation, but will
