@@ -299,6 +299,7 @@ rt_nmg_free(struct soltab *stp)
 
     nmg_km(nmg->nmg_model);
     bu_free((char *)nmg, "nmg_specific");
+    stp->st_specific = NULL; /* sanity */
 }
 
 
@@ -855,10 +856,10 @@ rt_nmg_export4_fastf(const fastf_t *fp, int count, int pt_type, double scale)
     if (pt_type == 0 || ZERO(scale - 1.0)) {
 	htond(cp + (4+4), (unsigned char *)fp, count);
     } else {
-	fastf_t *new;
+	fastf_t *newdata;
 
 	/* Need to scale data by 'scale' ! */
-	new = (fastf_t *)bu_malloc(count*sizeof(fastf_t), "rt_nmg_export4_fastf");
+	newdata = (fastf_t *)bu_malloc(count*sizeof(fastf_t), "rt_nmg_export4_fastf");
 	if (RT_NURB_IS_PT_RATIONAL(pt_type)) {
 	    /* Don't scale the homogeneous (rational) coord */
 	    int i;
@@ -866,15 +867,15 @@ rt_nmg_export4_fastf(const fastf_t *fp, int count, int pt_type, double scale)
 
 	    nelem = RT_NURB_EXTRACT_COORDS(pt_type);
 	    for (i = 0; i < count; i += nelem) {
-		VSCALEN(&new[i], &fp[i], scale, nelem-1);
-		new[i+nelem-1] = fp[i+nelem-1];
+		VSCALEN(&newdata[i], &fp[i], scale, nelem-1);
+		newdata[i+nelem-1] = fp[i+nelem-1];
 	    }
 	} else {
 	    /* Scale everything as one long array */
-	    VSCALEN(new, fp, scale, count);
+	    VSCALEN(newdata, fp, scale, count);
 	}
-	htond(cp + (4+4), (unsigned char *)new, count);
-	bu_free((char *)new, "rt_nmg_export4_fastf");
+	htond(cp + (4+4), (unsigned char *)newdata, count);
+	bu_free((char *)newdata, "rt_nmg_export4_fastf");
     }
     cp += (4+4) + count * 8;
     rt_nmg_fastf_p = cp;
