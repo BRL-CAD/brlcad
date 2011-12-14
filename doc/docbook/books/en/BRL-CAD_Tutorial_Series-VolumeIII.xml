@@ -259,7 +259,8 @@
       user's point of view.
     </para>
 
-    <table><info><title>Various modeling data sources.</title></info>
+    <table>
+      <title>Various modeling data sources.</title>
       
       <tgroup cols="3" align="center">
 	<tbody>
@@ -461,7 +462,7 @@
 	               <imageobject>
 			   <imagedata fileref="../../books/en/images/tutorial_series_volIII_table_image_1.png" format="PNG"/>
 		       </imageobject>
-		       <caption align="left">
+		       <caption>
 			  <para>[a] Intersection and union symbols presented here
 			  should not be confused with the intersection (+) and union (u) symbols used
 			  to represent and execute Boolean operations in BRL-CAD.</para>
@@ -570,7 +571,7 @@
 		  shapes and modeling levels, see Section 5, as well as Lesson 5 and
 		  Appendix C of BRL-CAD Tutorial Volume II (Butler et al., 2001).
 		</para>
-		<table><info><title>Examples of naming conventions.</title></info>
+		<table><title>Examples of naming conventions.</title>
 		  
 		  <tgroup cols="2" align="center">
 		    <tbody>
@@ -908,7 +909,7 @@ mvall oldname newname
 	    is one of the first keys to developing effective geometry.
 	  </para>
 
-	  <table><info><title>The four modeling levels in BRL-CAD</title></info>
+	  <table><title>The four modeling levels in BRL-CAD</title>
 	    
 	    <tgroup cols="2" align="center">
 	      <tbody>
@@ -979,7 +980,7 @@ mvall oldname newname
 	    primitives and understand the data needed to produce accurate models.
 	  </para>
 
-	  <table><info><title>The major BRL-CAD primitives and parameters.</title></info>
+	  <table><title>The major BRL-CAD primitives and parameters.</title>
 	    
 	    <tgroup cols="2" align="center">
 	      <tbody>
@@ -1306,7 +1307,7 @@ mvall oldname newname
 	    and 9).
 	  </para>
 	  
-	  <table><info><title>Various ways to build primitives.</title></info>
+	  <table><title>Various ways to build primitives.</title>
 	    
 	    <tgroup cols="4" align="center">
 	      <tbody>
@@ -1463,7 +1464,7 @@ mvall oldname newname
 	  </note>
 
 
-	  <figure><info><title>Coordinate axes of a turreted ground vehicle.</title></info>
+	  <figure><title>Coordinate axes of a turreted ground vehicle.</title>
 	    
 	    <mediaobject>
 	      <imageobject>
@@ -1545,7 +1546,7 @@ mvall oldname newname
 	    </mediaobject>
 	  </figure>
 	  
-	  <table><info><title>Advantages and disadvantages of replication vs. referencing.</title></info>
+	  <table><title>Advantages and disadvantages of replication vs. referencing.</title>
 	    
 	    <tgroup cols="3" align="center">
 	      <tbody>
@@ -2035,7 +2036,7 @@ comb comb_name u a - b + c
 	</listitem>
       </itemizedlist>
 
-      <table xml:id="mgedcolors"><info><title>Traditionally used MGED colors.</title></info>
+      <table xml:id="mgedcolors"><title>Traditionally used MGED colors.</title>
 	
 	<tgroup cols="2" align="center">
 	  <tbody>
@@ -2563,7 +2564,7 @@ comb comb_name u a - b + c
 	</tgroup>
       </table>
 
-      <table xml:id="system-color-codes"><info><title>Commonly used system-color codes.</title></info>
+      <table xml:id="system-color-codes"><title>Commonly used system-color codes.</title>
 	
 	<tgroup cols="3" align="center">
 	  <tbody>
@@ -3205,7 +3206,7 @@ dbbinary -i u c documentation /home/fred/doc.txt
       </authorgroup>
       <copyright><year>1988</year>
       </copyright>
-      :<publisher>
+      <publisher>
 	<publishername>Somebody</publishername>
       </publisher>
       <citetitle>Placeholder until xincludes from bibliography file are set up</citetitle>
