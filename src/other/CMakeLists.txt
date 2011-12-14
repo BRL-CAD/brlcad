@@ -43,6 +43,10 @@ FOREACH(ITEM ${dlists})
 	DISTCHECK_IGNORE_ITEM(${dlist})
 ENDFOREACH(ITEM ${dlists})
 
+# At the start, clear the src/other subdirs list so repeated
+# configures will correctly add the required directories
+SET(SRC_OTHER_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
+
 #-----------------------------------------------------------------------------
 # Load some CMake macros to handle the special case of third party libraries.
 INCLUDE(${BRLCAD_CMAKE_DIR}/ThirdParty.cmake)
