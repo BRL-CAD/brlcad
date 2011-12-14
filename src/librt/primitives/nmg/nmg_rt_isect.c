@@ -2707,7 +2707,12 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
 	BU_LIST_INIT(&rt_uniresource.re_nmgfree);
 
     rd.rd_m = nmg_find_model(&s->l.magic);
-    rd.manifolds = nmg_manifolds(rd.rd_m);
+
+    if (rd.rd_m->manifolds) {
+        rd.manifolds = rd.rd_m->manifolds;
+    } else {
+        rd.manifolds = nmg_manifolds(rd.rd_m);
+    }
 
     if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) {
 	struct faceuse *fu;
@@ -2815,8 +2820,10 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
     /* free the hitmiss table */
     bu_free((char *)rd.hitmiss, "free nmg geom hit list");
 
-    /* free the manifold table */
-    bu_free((char *)rd.manifolds, "free manifolds table");
+    if (!rd.rd_m->manifolds) {
+        /* free the manifold table */
+        bu_free((char *)rd.manifolds, "free manifolds table");
+    }
 
     if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
 	bu_log("nmg_class_ray_vs_shell() returns %s(%d)\n",
