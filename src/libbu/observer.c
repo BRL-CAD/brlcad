@@ -23,7 +23,6 @@
 #include <string.h>
 #include "bio.h"
 
-#include "tcl.h"
 #include "cmd.h"                  /* includes bu.h */
 
 
