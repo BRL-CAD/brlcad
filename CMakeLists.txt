@@ -211,7 +211,7 @@ IF(BRLCAD_PREFIX)
 ENDIF(BRLCAD_PREFIX)
 MARK_AS_ADVANCED(CMAKE_SYSTEM_IGNORE_PATH) 
 
-# Include a macro for bookkeeping of build files
+# Define CMake routines for bookkeeping of build files
 include(${CMAKE_SOURCE_DIR}/misc/CMake/CMakeFiles.cmake)
 
 #---------------------------------------------------------------------

@@ -49,5 +49,5 @@ ADD_SUBDIRECTORY(system)
 
 CMAKEFILES(README fop.xconf.in log4j.properties resources)
 CMAKEFILES(README.DB_authors_notes)
-CMAKEFILES(validate.pl)
+CMAKEFILES(validate.pl ElNode.pm)
 CMAKEFILES(css/brlcad.css)

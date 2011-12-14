@@ -635,62 +635,6 @@ ENDMACRO(BRLCAD_ADDFILE datalist targetdir)
 
 
 #-----------------------------------------------------------------------------
-MACRO(DISTCHECK_IGNORE_ITEM itemtoignore)
-	IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${itemtoignore})
-		IF(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${itemtoignore})
-			FILE(APPEND ${CMAKE_BINARY_DIR}/cmakedirs.cmake "${CMAKE_CURRENT_SOURCE_DIR}/${itemtoignore}\n")
-		ELSE(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${itemtoignore})
-			FILE(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${CMAKE_CURRENT_SOURCE_DIR}/${itemtoignore}\n")
-		ENDIF(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${itemtoignore})
-	ELSE(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${itemtoignore})
-		MESSAGE(FATAL_ERROR "Attempting to ignore non-existent file ${itemtoignore}")
-	ENDIF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${itemtoignore})
-ENDMACRO(DISTCHECK_IGNORE_ITEM)
-
-
-#-----------------------------------------------------------------------------
-MACRO(DISTCHECK_IGNORE targetdir filestoignore)
-	FOREACH(ITEM ${${filestoignore}})
-		get_filename_component(ITEM_PATH ${ITEM} PATH)
-		get_filename_component(ITEM_NAME ${ITEM} NAME)
-
-		IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${targetdir}/${ITEM})
-			IF(NOT ITEM_PATH STREQUAL "")
-				GET_FILENAME_COMPONENT(ITEM_ABS_PATH ${targetdir}/${ITEM_PATH} ABSOLUTE)
-
-				IF(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${targetdir}/${ITEM})
-					FILE(APPEND ${CMAKE_BINARY_DIR}/cmakedirs.cmake "${ITEM_ABS_PATH}/${ITEM_NAME}\n")
-				ELSE(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${targetdir}/${ITEM})
-					FILE(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${ITEM_ABS_PATH}/${ITEM_NAME}\n")
-				ENDIF(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${targetdir}/${ITEM})
-
-				FILE(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${ITEM_ABS_PATH}\n")
-
-				WHILE(NOT ITEM_PATH STREQUAL "")
-					get_filename_component(ITEM_NAME ${ITEM_PATH} NAME)
-					get_filename_component(ITEM_PATH ${ITEM_PATH} PATH)
-					IF(NOT ITEM_PATH STREQUAL "")
-						GET_FILENAME_COMPONENT(ITEM_ABS_PATH ${targetdir}/${ITEM_PATH} ABSOLUTE)
-						IF(NOT ${ITEM_NAME} MATCHES "\\.\\.")
-							FILE(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${ITEM_ABS_PATH}\n")
-						ENDIF(NOT ${ITEM_NAME} MATCHES "\\.\\.")
-					ENDIF(NOT ITEM_PATH STREQUAL "")
-				ENDWHILE(NOT ITEM_PATH STREQUAL "")
-			ELSE(NOT ITEM_PATH STREQUAL "")
-				IF(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${targetdir}/${ITEM})
-					FILE(APPEND ${CMAKE_BINARY_DIR}/cmakedirs.cmake "${CMAKE_CURRENT_SOURCE_DIR}/${targetdir}/${ITEM}\n")
-				ELSE(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${targetdir}/${ITEM})
-					FILE(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${CMAKE_CURRENT_SOURCE_DIR}/${targetdir}/${ITEM}\n")
-				ENDIF(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${targetdir}/${ITEM})
-			ENDIF(NOT ITEM_PATH STREQUAL "")
-		ELSE(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${targetdir}/${ITEM})
-			MESSAGE(FATAL_ERROR "Attempting to ignore non-existent file ${CMAKE_CURRENT_SOURCE_DIR}/${targetdir}/${ITEM}")
-		ENDIF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${targetdir}/${ITEM})
-	ENDFOREACH(ITEM ${${filestoignore}})
-ENDMACRO(DISTCHECK_IGNORE)
-
-
-#-----------------------------------------------------------------------------
 MACRO(ADD_MAN_PAGES num manlist)
 	CMAKEFILES(${${manlist}})
 	FOREACH(manpage ${${manlist}})

@@ -1,4 +1,4 @@
-set(xsltproc_ignore_files
+set(xmltools_ignore_files
 README
 CMake
 CMake/ResolveCompilerPaths.cmake
