@@ -654,6 +654,8 @@ PERPLEX_PRIVATE_LEXER {
 
     UPDATE_START;
 
+    PERPLEX_ON_ENTER;
+
     while (1) {
 	if (scanner->atEOI && scanner->cursor >= scanner->null) {
 	    return YYEOF;
