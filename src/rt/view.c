@@ -1945,22 +1945,23 @@ view_2init(struct application *ap, char *UNUSED(framename))
  * Called once, very early on in RT setup, even before command line is
  * processed.
  */
-void application_init (void)
+void
+application_init(void)
 {
     /* rpt_overlap = 1; */
 
     /* Set the byte offsets at run time */
-    view_parse[0].sp_offset = bu_byteoffset(gamma_corr);
-    view_parse[1].sp_offset = bu_byteoffset(max_bounces);
-    view_parse[2].sp_offset = bu_byteoffset(max_ireflect);
-    view_parse[3].sp_offset = bu_byteoffset(a_onehit);
-    view_parse[4].sp_offset = bu_byteoffset(background[0]);
-    view_parse[5].sp_offset = bu_byteoffset(overlay);
-    view_parse[6].sp_offset = bu_byteoffset(overlay);
-    view_parse[7].sp_offset = bu_byteoffset(ambSamples);
-    view_parse[8].sp_offset = bu_byteoffset(ambRadius);
-    view_parse[8].sp_offset = bu_byteoffset(ambOffset);
-    view_parse[9].sp_offset = bu_byteoffset(ambSlow);
+    view_parse[ 0].sp_offset = bu_byteoffset(gamma_corr);
+    view_parse[ 1].sp_offset = bu_byteoffset(max_bounces);
+    view_parse[ 2].sp_offset = bu_byteoffset(max_ireflect);
+    view_parse[ 3].sp_offset = bu_byteoffset(a_onehit);
+    view_parse[ 4].sp_offset = bu_byteoffset(background[0]);
+    view_parse[ 5].sp_offset = bu_byteoffset(overlay);
+    view_parse[ 6].sp_offset = bu_byteoffset(overlay);
+    view_parse[ 7].sp_offset = bu_byteoffset(ambSamples);
+    view_parse[ 8].sp_offset = bu_byteoffset(ambRadius);
+    view_parse[ 9].sp_offset = bu_byteoffset(ambOffset);
+    view_parse[10].sp_offset = bu_byteoffset(ambSlow);
 }
 
 
