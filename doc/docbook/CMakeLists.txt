@@ -1,21 +1,39 @@
-SET(srcdir ${CMAKE_CURRENT_SOURCE_DIR})
-configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/fop.xconf.in ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf)
-configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/log4j.properties ${CMAKE_BINARY_DIR}/doc/docbook/log4j.properties COPYONLY)
 
+# We need various configuration files set up for Docbook processing tools -
+# deal with those first
 FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/)
+
+# Style sheet for XSLT transformation to HTML pages
+IF(BRLCAD_EXTRADOCS_HTML)
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl.in
+		${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl)
+ENDIF(BRLCAD_EXTRADOCS_HTML)
+
+# Style sheet for XSLT transformation to manual pages
+IF(BRLCAD_EXTRADOCS_MAN)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-man-stylesheet.xsl.in
 	${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-man-stylesheet.xsl)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl.in
-	${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl)
+ENDIF(BRLCAD_EXTRADOCS_MAN)
 
-SET(XSLTPROC_FLAGS "-nonet -xinclude")
+# If we're doing PDF output, Apache FOP needs a couple of config files set up
+IF(BRLCAD_EXTRADOCS_PDF)
+	SET(srcdir ${CMAKE_CURRENT_SOURCE_DIR})
+	configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/fop.xconf.in ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf)
+	configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/log4j.properties ${CMAKE_BINARY_DIR}/doc/docbook/log4j.properties COPYONLY)
+ENDIF(BRLCAD_EXTRADOCS_PDF)
+
+# For HTML, MAN and FO (FO is an intermediate file used in the XML->PDF
+# transformation) we use variables to hold the full stylesheet path. Because
+# BRL-CAD has not (thus far) needed to customize it's FO stylesheets for most
+# situations, we used the standard XSL FO stylesheet.  In the case we DO need
+# to customize FO stylesheets (the BRL-CAD manuals in books/en) we have
+# separate CMake logic in books/en/CMakeLists.txt to handle the customization.
 SET(XSL_XHTML_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl")
 SET(XSL_MAN_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-man-stylesheet.xsl")
 SET(XSL_FO_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/other/standard/xsl/fo/docbook.xsl")
 
-# Include macros for validation - if validation is enabled, there's some
-# extra work to do.
-include(${CMAKE_CURRENT_SOURCE_DIR}/DB_VALIDATE.cmake)
+# Include CMake macros for Docbook.
+include(${BRLCAD_SOURCE_DIR}/misc/CMake/Docbook.cmake)
 
 MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
 	IF(BRLCAD_EXTRADOCS_HTML)
@@ -71,17 +89,6 @@ MACRO(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir)
 	CMAKEFILES(${${xml_files}})
 ENDMACRO(DOCBOOK_TO_MAN targetname_suffix srcfile outfile targetdir)
 
-# fop hyphenation path (fop version >= 1.0)
-# need v2 hphenation
-IF(APACHE_FOP_VERSION VERSION_LESS 1.0)
-	#SET(FOP_HYPH ${CMAKE_CURRENT_SOURCE_DIR}/resources/other/offo-old/binary/fop-hyph.jar)
-ELSE(APACHE_FOP_VERSION VERSION_LESS 1.0)
-	SET(FOP_HYPH ${CMAKE_SOURCE_DIR}/doc/docbook/resources/other/offo/binary/fop-hyph.jar)
-ENDIF(APACHE_FOP_VERSION VERSION_LESS 1.0)
-
-# Keep FOP headless on OSX
-SET(FOP_OPTS "-Djava.awt.headless=true")
-
 MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 	IF(BRLCAD_EXTRADOCS_PDF)
 		SET(mk_out_dir ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
@@ -130,7 +137,7 @@ ADD_SUBDIRECTORY(presentations)
 ADD_SUBDIRECTORY(specifications)
 ADD_SUBDIRECTORY(system)
 
-CMAKEFILES(Makefile.am README fop.xconf.in fop.cmake.in xsltproc.cmake.in log4j.properties resources)
+CMAKEFILES(README fop.xconf.in fop.cmake.in xsltproc.cmake.in log4j.properties resources)
 CMAKEFILES(README.DB_authors_notes)
 CMAKEFILES(validate.pl)
 CMAKEFILES(css/brlcad.css)

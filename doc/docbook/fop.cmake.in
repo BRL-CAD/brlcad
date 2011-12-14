@@ -1,8 +1,28 @@
+# Apache FOP version from parent CMake build system
+SET(APACHE_FOP_VERSION @APACHE_FOP_VERSION@)
+
+# fop hyphenation path (fop version >= 1.0)
+# need v2 hphenation
+IF(APACHE_FOP_VERSION VERSION_LESS 1.0)
+	#SET(FOP_HYPH @CMAKE_SOURCE_DIR@/doc/docbook/resources/other/offo-old/binary/fop-hyph.jar)
+ELSE(APACHE_FOP_VERSION VERSION_LESS 1.0)
+	SET(FOP_HYPH @CMAKE_SOURCE_DIR@/doc/docbook/resources/other/offo/binary/fop-hyph.jar)
+ENDIF(APACHE_FOP_VERSION VERSION_LESS 1.0)
+
+# FOP uses environment variables - set them.
 SET(ENV{FOP_HYPHENATION_PATH} @FOP_HYP@)
 SET(ENV{CLASSPATH} @CMAKE_SOURCE_DIR@/doc/docbook)
-SET(ENV{FOP_OPTS} \"@FOP_OPTS@\")
+
+# Keep FOP headless on OSX
+SET(ENV{FOP_OPTS} "-Djava.awt.headless=true")
+
+# Make sure the target directory exists
 execute_process(COMMAND "@CMAKE_COMMAND@" -E make_directory @mk_out_dir@/)
+
+# Run FOP to actually generate the PDF
 execute_process(COMMAND "@APACHE_FOP@" -c @CMAKE_BINARY_DIR@/doc/docbook/fop.xconf @outfile@ -pdf @pdf_outfile@ RESULT_VARIABLE CMDRESULT)
+
+# Fatal error if FOP didn't succeed, so the parent CMake build knows something went wrong and can hault.
 IF(CMDRESULT)
 	MESSAGE(FATAL_ERROR "Apache FOP build failure: ${CMDRESULT}")
 ENDIF(CMDRESULT)
