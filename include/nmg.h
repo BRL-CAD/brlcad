@@ -198,6 +198,7 @@ struct knot_vector {
 struct model {
     uint32_t magic;
     struct bu_list r_hd;	/**< @brief list of regions */
+    char *manifolds;            /**< @brief structure 1-3manifold table */
     long index;			/**< @brief struct # in this model */
     long maxindex;		/**< @brief # of structs so far */
 };
