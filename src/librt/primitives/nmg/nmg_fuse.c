@@ -164,6 +164,19 @@ nmg_region_v_unique(struct nmgregion *r1, const struct bn_tol *tol)
 }
 
 
+/* compare function for qsort within function nmg_ptbl_vfuse */
+static int
+x_comp(const void *p1, const void *p2)
+{
+    fastf_t i, j;
+
+    i = (*((struct vertex **)p1))->vg_p->coord[X];
+    j = (*((struct vertex **)p2))->vg_p->coord[X];
+
+    return (int)(i > j);
+}
+
+
 /**
  * N M G _ P T B L _ V F U S E
  *
@@ -175,31 +188,65 @@ nmg_region_v_unique(struct nmgregion *r1, const struct bn_tol *tol)
 int
 nmg_ptbl_vfuse(struct bu_ptbl *t, const struct bn_tol *tol)
 {
-    int count = 0;
-    int i;
-    int j;
+    int count, fuse;
+    register int i, j;
+    register fastf_t tmp = tol->dist_sq;
+    register fastf_t ab, abx, aby, abz;
 
-    for (i = BU_PTBL_END(t)-1; i >= 0; i--) {
-	register struct vertex *vi;
-	vi = (struct vertex *)BU_PTBL_GET(t, i);
-	NMG_CK_VERTEX(vi);
-	if (!vi->vg_p) continue;
+    /* sort the vertices in the 't' list by the 'x' coordinate */
+    qsort(BU_PTBL_BASEADDR(t), BU_PTBL_LEN(t), sizeof(long *), (int (*)(const void *a, const void *b))x_comp);
 
-	for (j = i-1; j >= 0; j--) {
-	    register struct vertex *vj;
-	    vj = (struct vertex *)BU_PTBL_GET(t, j);
-	    NMG_CK_VERTEX(vj);
-	    if ( !vj->vg_p) continue;
+    count = 0;
+    for (i = 0 ; i < BU_PTBL_END(t) ; i++) {
+        register struct vertex *vi;
+        vi = (struct vertex *)BU_PTBL_GET(t, i);
+        if (!vi) continue;
+        NMG_CK_VERTEX(vi);
+        if (!vi->vg_p) continue;
 
-	    if (vi->vg_p==vj->vg_p || bn_pt3_pt3_equal(vi->vg_p->coord, vj->vg_p->coord, tol)) {
-		/* They are the same, fuse vi into vj */
-		nmg_jv(vj, vi);
-		bu_ptbl_rm(t, (long *)vi);
-		count++;
-		break;
-	    }
-	}
+        for (j = i+1 ; j < BU_PTBL_END(t) ; j++) {
+            register struct vertex *vj;
+            vj = (struct vertex *)BU_PTBL_GET(t, j);
+            if (!vj) continue;
+            NMG_CK_VERTEX(vj);
+            if (!vj->vg_p) continue;
+
+            if (vi->vg_p == vj->vg_p) {
+                /* They are the same, fuse vj into vi */
+                nmg_jv(vi, vj);  /* vj gets destroyed */
+                BU_PTBL_SET(t, j, NULL);
+                count++;
+                continue;
+            }
+
+            fuse = 1;
+            abx = vi->vg_p->coord[X] - vj->vg_p->coord[X];
+            ab = abx * abx;
+            if (ab > tmp) {
+                break;  /* no more to test */
+            }
+ 
+            aby = vi->vg_p->coord[Y] - vj->vg_p->coord[Y];
+            ab += (aby * aby);
+            if (ab > tmp) {
+                fuse = 0;
+            } else {
+                abz = vi->vg_p->coord[Z] - vj->vg_p->coord[Z];
+                ab += (abz * abz);
+                if (ab > tmp) {
+                    fuse = 0;
+                }
+            }
+
+            if (fuse) {
+                /* They are the same, fuse vj into vi */
+                nmg_jv(vi, vj);  /* vj gets destroyed */
+                BU_PTBL_SET(t, j, NULL);
+                count++;
+            }
+        }
     }
+
     return count;
 }
 
