@@ -81,7 +81,7 @@ bu_bomb_failsafe_init(void)
 void
 bu_bomb_add_hook(bu_hook_t func, genptr_t clientdata)
 {
-    bu_add_hook(&bomb_hook_list, func, clientdata);
+    bu_hook_add(&bomb_hook_list, func, clientdata);
 }
 
 
@@ -105,7 +105,7 @@ bu_bomb(const char *str)
 
     /* MGED would like to be able to additional logging, do callbacks. */
     if (BU_LIST_NON_EMPTY(&bomb_hook_list.l)) {
-	bu_call_hook(&bomb_hook_list, (genptr_t)str);
+	bu_hook_call(&bomb_hook_list, (genptr_t)str);
     }
 
     if (bu_setjmp_valid) {

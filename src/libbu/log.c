@@ -67,14 +67,14 @@ bu_log_indent_vls(struct bu_vls *v)
 void
 bu_log_add_hook(bu_hook_t func, genptr_t clientdata)
 {
-    bu_add_hook(&log_hook_list, func, clientdata);
+    bu_hook_add(&log_hook_list, func, clientdata);
 }
 
 
 void
 bu_log_delete_hook(bu_hook_t func, genptr_t clientdata)
 {
-    bu_delete_hook(&log_hook_list, func, clientdata);
+    bu_hook_delete(&log_hook_list, func, clientdata);
 }
 
 HIDDEN void
@@ -82,7 +82,7 @@ log_call_hooks(genptr_t buf)
 {
 
     log_hooks_called = 1;
-    bu_call_hook(&log_hook_list, buf);
+    bu_hook_call(&log_hook_list, buf);
     log_hooks_called = 0;
 }
 
