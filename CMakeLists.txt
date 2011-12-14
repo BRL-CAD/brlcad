@@ -330,6 +330,7 @@ SET(CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR};${CMAKE_MODULE_PATH}")
 
 # Load utility macros that will be used throughout the BRL-CAD
 # build logic
+INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_Options.cmake)
 INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_Util.cmake)
 
 #---------------------------------------------------------------------
