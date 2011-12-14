@@ -1669,7 +1669,7 @@ bu_key_eq_to_key_val(const char *in, const char **next, struct bu_vls *vls)
 
 
 int
-bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
+bu_shader_to_list(const char *in, struct bu_vls *vls)
 {
     size_t len;
     int shader_name_len = 0;
@@ -1725,7 +1725,7 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 
 		bu_vls_putc(vls, '{');
 
-		if (bu_shader_to_tcl_list(shade1, vls)) {
+		if (bu_shader_to_list(shade1, vls)) {
 		    bu_free(copy, BU_FLSTR);
 		    return 1;
 		}
@@ -1742,7 +1742,7 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 	
 	if (shader_name_len == 6 && !strncmp(shader, "envmap", 6)) {
 	    bu_vls_strcat(vls, "envmap {");
-	    if (bu_shader_to_tcl_list(iptr, vls)) {
+	    if (bu_shader_to_list(iptr, vls)) {
 		bu_free(copy, BU_FLSTR);
 		return 1;
 	    }
@@ -1804,8 +1804,8 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 
 
 /**
- * Given a Tcl list, return a copy of the 'index'th entry,
- * which may itself be a list.
+ * Given a list in "{1}, {2}, {3}" form, return a copy of the
+ * 'index'th entry, which may itself be a list.
  *
  * Note: caller is responsible for freeing the returned string.
  */

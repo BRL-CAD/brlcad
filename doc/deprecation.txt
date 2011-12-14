@@ -831,3 +831,5 @@ s/BU_GETTYPE\([[:space:]]*([^,)]+,)[[:space:]]*([^)]+)[[:space:]]*\)/BU_GET(\1 \
 s/CMD_NULL/BU_CMD_NULL/g'
 s/CMDHIST/BU_CMDHIST/g'
         prefix the cmd.h defines with BU_ since they are part of libbu [7.21]
+s/bu_shader_to_tcl_list/bu_shader_to_list/g'
+        renamed as it applies to any list in {} form, tcl or otherwise [7.21]

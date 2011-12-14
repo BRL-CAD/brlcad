@@ -394,7 +394,7 @@ rt_comb_import4(
 	strncat(shader_str, rp[0].c.c_matparm, 32);
 
 	/* convert to TCL format and place into comb->shader */
-	if (bu_shader_to_tcl_list(shader_str, &comb->shader)) {
+	if (bu_shader_to_list(shader_str, &comb->shader)) {
 	    bu_log("rt_comb_import4: Error: Cannot convert following shader to TCL format:\n");
 	    bu_log("\t%s\n", shader_str);
 	    bu_vls_free(&comb->shader);

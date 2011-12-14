@@ -127,7 +127,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
     } else {
 	if (!BU_STR_EQUAL(bu_vls_addr(&vls), ".")) {
 	    bu_vls_trunc(&comb->shader, 0);
-	    if (bu_shader_to_tcl_list(bu_vls_addr(&vls), &comb->shader)) {
+	    if (bu_shader_to_list(bu_vls_addr(&vls), &comb->shader)) {
 		bu_vls_printf(gedp->ged_result_str, "Problem with shader string [%s]", argv[2]);
 		rt_db_free_internal(&intern);
 		bu_vls_free(&vls);
