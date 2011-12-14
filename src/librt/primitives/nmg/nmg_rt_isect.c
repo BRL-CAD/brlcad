@@ -2819,12 +2819,11 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
 
     /* free the hitmiss table */
     bu_free((char *)rd.hitmiss, "free nmg geom hit list");
-    rt.hitmiss = NULL; /* sanity */
 
     if (!rd.rd_m->manifolds) {
         /* free the manifold table */
-        bu_free((char *)rd.manifolds, "free manifolds table");
-	rt.manifolds = NULL; /* sanity */
+        bu_free((char *)rd.rd_m->manifolds, "free manifolds table");
+	rd.rd_m->manifolds = NULL; /* sanity */
     }
 
     if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
