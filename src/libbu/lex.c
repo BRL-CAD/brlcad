@@ -29,7 +29,7 @@ static int bu_lex_reading_comment = 0;
 
 
 HIDDEN char *
-_bu_lex_getone(int *used, struct bu_vls *rtstr)
+lex_getone(int *used, struct bu_vls *rtstr)
 {
     register char *cp;
     register char *sp;
@@ -162,7 +162,7 @@ bu_lex(
      * get a unit of information from rtstr.
      */
     used = 0;
-    unit = _bu_lex_getone(&used, rtstr);
+    unit = lex_getone(&used, rtstr);
 
     /*
      * Was line empty or commented out.

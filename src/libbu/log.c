@@ -65,7 +65,7 @@ bu_log_delete_hook(bu_hook_t func, genptr_t clientdata)
 }
 
 HIDDEN void
-_bu_log_call_hooks(genptr_t buf)
+log_call_hooks(genptr_t buf)
 {
 
     bu_log_hooks_called = 1;
@@ -86,7 +86,7 @@ _bu_log_call_hooks(genptr_t buf)
  * to bu_log come from non-librt routines.
  */
 HIDDEN void
-_bu_log_do_indent_level(struct bu_vls *new_vls, register const char *old_vls)
+log_do_indent_level(struct bu_vls *new_vls, register const char *old_vls)
 {
     register int i;
 
@@ -126,7 +126,7 @@ bu_putchar(int c)
 	buf[0] = (char)c;
 	buf[1] = '\0';
 
-	_bu_log_call_hooks(buf);
+	log_call_hooks(buf);
     }
 
     if (bu_log_indent_cur_level > 0 && c == '\n') {
@@ -159,7 +159,7 @@ bu_log(const char *fmt, ...)
 	struct bu_vls newfmt;
 
 	bu_vls_init(&newfmt);
-	_bu_log_do_indent_level(&newfmt, fmt);
+	log_do_indent_level(&newfmt, fmt);
 	bu_vls_vprintf(&output, bu_vls_addr(&newfmt), ap);
 	bu_vls_free(&newfmt);
     } else {
@@ -206,7 +206,7 @@ bu_log(const char *fmt, ...)
 	}
 
     } else {
-	_bu_log_call_hooks(bu_vls_addr(&output));
+	log_call_hooks(bu_vls_addr(&output));
     }
 
     bu_vls_free(&output);
@@ -227,7 +227,7 @@ bu_flog(FILE *fp, const char *fmt, ...)
 	struct bu_vls newfmt;
 
 	bu_vls_init(&newfmt);
-	_bu_log_do_indent_level(&newfmt, fmt);
+	log_do_indent_level(&newfmt, fmt);
 	bu_vls_vprintf(&output, bu_vls_addr(&newfmt), ap);
 	bu_vls_free(&newfmt);
     } else {
@@ -249,7 +249,7 @@ bu_flog(FILE *fp, const char *fmt, ...)
 	}
 
     } else {
-	_bu_log_call_hooks(bu_vls_addr(&output));
+	log_call_hooks(bu_vls_addr(&output));
     }
 
     va_end(ap);

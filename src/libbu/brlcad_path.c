@@ -68,7 +68,7 @@ _brlcad_data()
  * BRLCAD_ROOT (compile-time install path)
  */
 HIDDEN void
-_bu_root_missing(const char *paths)
+root_missing(const char *paths)
 {
     bu_log("\
 Unable to locate where BRL-CAD %s is installed while searching:\n\
@@ -98,7 +98,7 @@ for sh/bash users:\n\
  * BRLCAD_DATA (compile-time install path)
  */
 HIDDEN void
-_bu_data_missing(const char *paths)
+data_missing(const char *paths)
 {
     bu_log("\
 Unable to locate where BRL-CAD %s data resources are installed\n\
@@ -129,7 +129,7 @@ for sh/bash users:\n\
  * @return boolean on whether a match was found.
  */
 HIDDEN int
-_bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct bu_vls *searched, const char *where)
+find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct bu_vls *searched, const char *where)
 {
     size_t llen, rlen;
     static const char *currdir=".";
@@ -236,7 +236,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
     lhs = getenv("BRLCAD_ROOT");
     if (lhs) {
 	snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_ROOT environment variable [%s]\n", lhs);
-	if (_bu_find_path(result, lhs, rhs, &searched, where)) {
+	if (find_path(result, lhs, rhs, &searched, where)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: BRLCAD_ROOT environment variable [%s]\n", result);
 	    }
@@ -253,7 +253,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
     lhs = BRLCAD_ROOT;
     if (lhs) {
 	snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_ROOT compile-time path [%s]\n", lhs);
-	if (_bu_find_path(result, lhs, rhs, &searched, where)) {
+	if (find_path(result, lhs, rhs, &searched, where)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: BRLCAD_ROOT compile-time path [%s]\n", result);
 	    }
@@ -290,7 +290,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 	dirpath = bu_dirname(real_path);
 	snprintf(real_path, MAXPATHLEN, "%s", dirpath);
 	bu_free(dirpath, "free bu_dirname");
-	if (_bu_find_path(result, real_path, rhs, &searched, where)) {
+	if (find_path(result, real_path, rhs, &searched, where)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: Run-time path identification [%s]\n", result);
 	    }
@@ -311,7 +311,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 	    root[4] != '/' || root[5] != 'b' || root[ 6] != 'r' || root[ 7] != 'l' ||
 	    root[8] != 'c' || root[9] != 'a' || root[10] != 'd' || root[11] != '\0') {
 
-	    if (_bu_find_path(result, "/usr/brlcad", rhs, &searched, "\t/usr/brlcad default path\n")) {
+	    if (find_path(result, "/usr/brlcad", rhs, &searched, "\t/usr/brlcad default path\n")) {
 		if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		    bu_log("Found: /usr/brlcad default path [%s]\n", result);
 		}
@@ -322,7 +322,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
     }
 
     /* current directory */
-    if (_bu_find_path(result, ".", rhs, &searched, "\tcurrent directory\n")) {
+    if (find_path(result, ".", rhs, &searched, "\tcurrent directory\n")) {
 	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("Found: current directory [%s]\n", result);
 	}
@@ -331,7 +331,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
     }
 
     if (!fail_quietly) {
-	_bu_root_missing(bu_vls_addr(&searched));
+	root_missing(bu_vls_addr(&searched));
 	if (rhs) {
 	    bu_log("Unable to find '%s' within the BRL-CAD software installation.\nThis copy of BRL-CAD may not be properly installed.\n\n", rhs);
 	} else {
@@ -363,7 +363,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     lhs = getenv("BRLCAD_DATA");
     if (lhs) {
 	snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_DATA environment variable [%s]\n", lhs);
-	if (_bu_find_path(result, lhs, rhs, &searched, where)) {
+	if (find_path(result, lhs, rhs, &searched, where)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: BRLCAD_DATA environment variable [%s]\n", result);
 	    }
@@ -378,7 +378,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     /* BRLCAD_DATA compile-time path */
     lhs = _brlcad_data();
     snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_DATA compile-time path [%s]\n", lhs);
-    if (_bu_find_path(result, lhs, rhs, &searched, where)) {
+    if (find_path(result, lhs, rhs, &searched, where)) {
 	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("Found: BRLCAD_DATA compile-time path [%s]\n", result);
 	}
@@ -391,7 +391,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     lhs = bu_brlcad_root(path, 1);
     if (lhs) {
 	snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_ROOT common data path  [%s]\n", path);
-	if (_bu_find_path(result, lhs, rhs, &searched, where)) {
+	if (find_path(result, lhs, rhs, &searched, where)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: BRLCAD_ROOT common data path [%s]\n", result);
 	    }
@@ -404,7 +404,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     lhs = bu_brlcad_root("share/brlcad", 1);
     if (lhs) {
 	snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_ROOT common data path  [%s]\n", lhs);
-	if (_bu_find_path(result, lhs, rhs, &searched, where)) {
+	if (find_path(result, lhs, rhs, &searched, where)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: BRLCAD_ROOT common data path [%s]\n", result);
 	    }
@@ -417,7 +417,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     lhs = bu_brlcad_root("share", 1);
     if (lhs) {
 	snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_ROOT common data path  [%s]\n", lhs);
-	if (_bu_find_path(result, lhs, rhs, &searched, where)) {
+	if (find_path(result, lhs, rhs, &searched, where)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: BRLCAD_ROOT common data path [%s]\n", result);
 	    }
@@ -430,7 +430,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     lhs = bu_brlcad_root("", 1);
     if (lhs) {
 	snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_ROOT common data path  [%s]\n", lhs);
-	if (_bu_find_path(result, lhs, rhs, &searched, where)) {
+	if (find_path(result, lhs, rhs, &searched, where)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: BRLCAD_ROOT common data path [%s]\n", result);
 	    }
@@ -440,7 +440,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     }
 
     /* current directory (running from uninstalled source distribution) */
-    if (_bu_find_path(result, ".", rhs, &searched, "\tcurrent directory\n")) {
+    if (find_path(result, ".", rhs, &searched, "\tcurrent directory\n")) {
 	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("Found: current directory [%s]\n", result);
 	}
@@ -451,13 +451,13 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     /* running from uninstalled source distribution, look for THIS file */
 #define BPC "/src/libbu/" __FILE__
     if (bu_file_exists("." BPC)) {
-	if (_bu_find_path(result, ".", rhs, NULL, NULL)) {
+	if (find_path(result, ".", rhs, NULL, NULL)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: source directory [%s]\n", result);
 	    }
 	    bu_vls_free(&searched);
 	    return result;
-	} else if (_bu_find_path(result, "./src", rhs, NULL, NULL)) {
+	} else if (find_path(result, "./src", rhs, NULL, NULL)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: source directory [%s]\n", result);
 	    }
@@ -466,13 +466,13 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	}
     }
     if (bu_file_exists(".." BPC)) {
-	if (_bu_find_path(result, "..", rhs, NULL, NULL)) {
+	if (find_path(result, "..", rhs, NULL, NULL)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: source directory [%s]\n", result);
 	    }
 	    bu_vls_free(&searched);
 	    return result;
-	} else if (_bu_find_path(result, "../src", rhs, NULL, NULL)) {
+	} else if (find_path(result, "../src", rhs, NULL, NULL)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: source directory [%s]\n", result);
 	    }
@@ -481,13 +481,13 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	}
     }
     if (bu_file_exists("../.." BPC)) {
-	if (_bu_find_path(result, "../..", rhs, NULL, NULL)) {
+	if (find_path(result, "../..", rhs, NULL, NULL)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: source directory [%s]\n", result);
 	    }
 	    bu_vls_free(&searched);
 	    return result;
-	} else if (_bu_find_path(result, "../../src", rhs, NULL, NULL)) {
+	} else if (find_path(result, "../../src", rhs, NULL, NULL)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: source directory [%s]\n", result);
 	    }
@@ -496,13 +496,13 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	}
     }
     if (bu_file_exists("../../.." BPC)) {
-	if (_bu_find_path(result, "../../..", rhs, NULL, NULL)) {
+	if (find_path(result, "../../..", rhs, NULL, NULL)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: source directory [%s]\n", result);
 	    }
 	    bu_vls_free(&searched);
 	    return result;
-	} else if (_bu_find_path(result, "../../../src", rhs, NULL, NULL)) {
+	} else if (find_path(result, "../../../src", rhs, NULL, NULL)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: source directory [%s]\n", result);
 	    }
@@ -511,13 +511,13 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	}
     }
     if (bu_file_exists("../../../.." BPC)) {
-	if (_bu_find_path(result, "../../../..", rhs, NULL, NULL)) {
+	if (find_path(result, "../../../..", rhs, NULL, NULL)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: source directory [%s]\n", result);
 	    }
 	    bu_vls_free(&searched);
 	    return result;
-	} else if (_bu_find_path(result, "../../../../src", rhs, NULL, NULL)) {
+	} else if (find_path(result, "../../../../src", rhs, NULL, NULL)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: source directory [%s]\n", result);
 	    }
@@ -527,7 +527,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     }
 
     if (!fail_quietly) {
-	_bu_data_missing(bu_vls_addr(&searched));
+	data_missing(bu_vls_addr(&searched));
 	if (rhs) {
 	    bu_log("Unable to find '%s' within the BRL-CAD software installation.\nThis copy of BRL-CAD may not be properly installed.\n\n", rhs);
 	} else {

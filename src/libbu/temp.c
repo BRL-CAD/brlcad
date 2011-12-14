@@ -42,26 +42,26 @@ extern FILE *fdopen(int, const char *);
 #endif
 
 
-struct _bu_tf_list {
+struct temp_file_list {
     struct bu_list l;
     struct bu_vls fn;
     int fd;
 };
 
-static int _bu_temp_files = 0;
-static struct _bu_tf_list *_bu_tf = NULL;
+static int temp_files = 0;
+static struct temp_file_list *TF = NULL;
 
 
 HIDDEN void
-_bu_close_files(void)
+temp_close_files(void)
 {
-    struct _bu_tf_list *popped;
-    if (!_bu_tf) {
+    struct temp_file_list *popped;
+    if (!TF) {
 	return;
     }
 
     /* close all files, free their nodes, and unlink */
-    while (BU_LIST_WHILE(popped, _bu_tf_list, &(_bu_tf->l))) {
+    while (BU_LIST_WHILE(popped, temp_file_list, &(TF->l))) {
 	BU_LIST_DEQUEUE(&(popped->l));
 	if (popped) {
 	    if (popped->fd != -1) {
@@ -77,47 +77,47 @@ _bu_close_files(void)
     }
 
     /* free the head */
-    if (_bu_tf->fd != -1) {
-	close(_bu_tf->fd);
-	_bu_tf->fd = -1;
+    if (TF->fd != -1) {
+	close(TF->fd);
+	TF->fd = -1;
     }
-    if (BU_VLS_IS_INITIALIZED(&_bu_tf->fn) && bu_vls_addr(&_bu_tf->fn)) {
-	bu_file_delete(bu_vls_addr(&_bu_tf->fn));
-	bu_vls_free(&_bu_tf->fn);
+    if (BU_VLS_IS_INITIALIZED(&TF->fn) && bu_vls_addr(&TF->fn)) {
+	bu_file_delete(bu_vls_addr(&TF->fn));
+	bu_vls_free(&TF->fn);
     }
-    bu_free(_bu_tf, "free bu_temp_file head");
+    bu_free(TF, "free bu_temp_file head");
 }
 
 
 HIDDEN void
-_bu_add_to_list(const char *fn, int fd)
+temp_add_to_list(const char *fn, int fd)
 {
-    struct _bu_tf_list *newtf;
+    struct temp_file_list *newtf;
 
-    _bu_temp_files++;
+    temp_files++;
 
-    if (_bu_temp_files == 1) {
+    if (temp_files == 1) {
 	/* schedule files for closure on exit */
-	atexit(_bu_close_files);
+	atexit(temp_close_files);
 
-	BU_GET(_bu_tf, struct _bu_tf_list);
-	BU_LIST_INIT(&(_bu_tf->l));
-	bu_vls_init(&_bu_tf->fn);
+	BU_GET(TF, struct temp_file_list);
+	BU_LIST_INIT(&(TF->l));
+	bu_vls_init(&TF->fn);
 
-	bu_vls_strcpy(&_bu_tf->fn, fn);
-	_bu_tf->fd = fd;
+	bu_vls_strcpy(&TF->fn, fn);
+	TF->fd = fd;
 
 	return;
     }
 
-    BU_GET(newtf, struct _bu_tf_list);
-    BU_LIST_INIT(&(_bu_tf->l));
-    bu_vls_init(&_bu_tf->fn);
+    BU_GET(newtf, struct temp_file_list);
+    BU_LIST_INIT(&(TF->l));
+    bu_vls_init(&TF->fn);
 
-    bu_vls_strcpy(&_bu_tf->fn, fn);
+    bu_vls_strcpy(&TF->fn, fn);
     newtf->fd = fd;
 
-    BU_LIST_PUSH(&(_bu_tf->l), &(newtf->l));
+    BU_LIST_PUSH(&(TF->l), &(newtf->l));
 
     return;
 }
@@ -240,7 +240,7 @@ bu_temp_file(char *filepath, size_t len)
     }
 
     /* add the file to the atexit auto-close list */
-    _bu_add_to_list(tempfile, fd);
+    temp_add_to_list(tempfile, fd);
 
     return fp;
 }

@@ -30,7 +30,7 @@
 
 
 /* failsafe storage to help ensure graceful shutdown */
-static char *_bu_bomb_failsafe = NULL;
+static char *bomb_failsafe = NULL;
 
 /* used for tty printing */
 static int fd = -1;
@@ -42,11 +42,11 @@ static char tracefile[512] = {0};
 
 /* release memory on application exit */
 static void
-_free_bu_bomb_failsafe(void)
+_freebomb_failsafe(void)
 {
-    if (_bu_bomb_failsafe) {
-	free(_bu_bomb_failsafe);
-	_bu_bomb_failsafe = NULL;
+    if (bomb_failsafe) {
+	free(bomb_failsafe);
+	bomb_failsafe = NULL;
     }
 }
 
@@ -54,12 +54,12 @@ _free_bu_bomb_failsafe(void)
 int
 bu_bomb_failsafe_init(void)
 {
-    if (_bu_bomb_failsafe) {
+    if (bomb_failsafe) {
 	return 1;
     }
     /* cannot use bu_*alloc here */
-    _bu_bomb_failsafe = (char *)malloc(65536);
-    atexit(_free_bu_bomb_failsafe);
+    bomb_failsafe = (char *)malloc(65536);
+    atexit(_freebomb_failsafe);
     return 1;
 }
 
@@ -80,7 +80,7 @@ bu_bomb(const char *str)
     }
 
     /* release the failsafe allocation to help get through to the end */
-    _free_bu_bomb_failsafe();
+    _freebomb_failsafe();
 
     /* MGED would like to be able to additional logging, do callbacks. */
     if (BU_LIST_NON_EMPTY(&bu_bomb_hook_list.l)) {

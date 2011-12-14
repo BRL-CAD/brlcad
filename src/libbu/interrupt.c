@@ -36,7 +36,7 @@ typedef void (*sig_t)(int);
 #define _BU_MAX_SIGNUM 128
 
 /* keeps track of whether signal processing is put on hold */
-volatile sig_atomic_t _bu_defer_signal[_BU_MAX_SIGNUM] = {
+volatile sig_atomic_t interrupt_defer_signal[_BU_MAX_SIGNUM] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -48,7 +48,7 @@ volatile sig_atomic_t _bu_defer_signal[_BU_MAX_SIGNUM] = {
 };
 
 /* keeps track of whether a signal was received while on hold */
-volatile sig_atomic_t _bu_signal_pending[_BU_MAX_SIGNUM] = {
+volatile sig_atomic_t interrupt_signal_pending[_BU_MAX_SIGNUM] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -60,7 +60,7 @@ volatile sig_atomic_t _bu_signal_pending[_BU_MAX_SIGNUM] = {
 };
 
 /* keeps track of the installed signal handler that is suspended */
-volatile sig_t _bu_signal_func[_BU_MAX_SIGNUM] = {
+volatile sig_t interrupt_signal_func[_BU_MAX_SIGNUM] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -76,10 +76,10 @@ volatile sig_t _bu_signal_func[_BU_MAX_SIGNUM] = {
  * suspended is raised.
  */
 static void
-_bu_suspend_signal_handler(int signum)
+interrupt_suspend_signal_handler(int signum)
 {
-    if (_bu_defer_signal[signum])
-	_bu_signal_pending[signum]++;
+    if (interrupt_defer_signal[signum])
+	interrupt_signal_pending[signum]++;
 }
 
 
@@ -87,7 +87,7 @@ _bu_suspend_signal_handler(int signum)
  * Defer signal processing for critical sections.
  *
  * Signal processing for a given 'signum' signal is put on hold until
- * _bu_restore_signal() is called.  If a signal is received while
+ * interrupt_restore_signal() is called.  If a signal is received while
  * suspended, it will be raised when/if the signal is restored.
  *
  * Returns non-zero on error (with perror set if signal() failure).
@@ -98,21 +98,21 @@ _bu_suspend_signal_handler(int signum)
  * publicly exposed.
  */
 HIDDEN int
-_bu_suspend_signal(int signum)
+interrupt_suspend_signal(int signum)
 {
     BU_ASSERT(signum < _BU_MAX_SIGNUM && "signal number out of range");
 
-    if (_bu_signal_func[signum] == _bu_suspend_signal_handler) {
+    if (interrupt_signal_func[signum] == interrupt_suspend_signal_handler) {
 	return 1;
     }
 
-    _bu_signal_func[signum] = signal(signum, _bu_suspend_signal_handler);
-    if (_bu_signal_func[signum] == SIG_ERR) {
-	_bu_signal_func[signum] = (sig_t)0;
+    interrupt_signal_func[signum] = signal(signum, interrupt_suspend_signal_handler);
+    if (interrupt_signal_func[signum] == SIG_ERR) {
+	interrupt_signal_func[signum] = (sig_t)0;
 	return 2;
     }
-    _bu_signal_pending[signum] = 0;
-    _bu_defer_signal[signum]++;
+    interrupt_signal_pending[signum] = 0;
+    interrupt_defer_signal[signum]++;
 
     return 0;
 }
@@ -121,7 +121,7 @@ _bu_suspend_signal(int signum)
 /**
  * Restore signal processing for a given suspended signal.
  *
- * If a signal was raised since _bu_suspend_signal() was called, the
+ * If a signal was raised since interrupt_suspend_signal() was called, the
  * previously installed signal handler will be immediately called
  * albeit only once even if multiple signals were received.
  *
@@ -133,24 +133,24 @@ _bu_suspend_signal(int signum)
  * publicly exposed.
  */
 HIDDEN int
-_bu_restore_signal(int signum)
+interrupt_restore_signal(int signum)
 {
     BU_ASSERT(signum < _BU_MAX_SIGNUM && "signal number out of range");
 
     /* must be before the test to avoid a race condition */
-    _bu_defer_signal[signum]--;
+    interrupt_defer_signal[signum]--;
 
-    if (_bu_defer_signal[signum] == 0 && _bu_signal_pending[signum] != 0) {
+    if (interrupt_defer_signal[signum] == 0 && interrupt_signal_pending[signum] != 0) {
 	sig_t ret;
 
-	if (_bu_signal_func[signum] != _bu_suspend_signal_handler) {
+	if (interrupt_signal_func[signum] != interrupt_suspend_signal_handler) {
 	    /* unexpected state, how did we get here? */
 	    return 1;
 	}
 
-	ret = signal(signum, _bu_signal_func[signum]);
-	_bu_signal_func[signum] = (sig_t)0;
-	_bu_signal_pending[signum] = 0;
+	ret = signal(signum, interrupt_signal_func[signum]);
+	interrupt_signal_func[signum] = (sig_t)0;
+	interrupt_signal_pending[signum] = 0;
 
 	if (ret == SIG_ERR) {
 	    return 2;
@@ -168,16 +168,16 @@ bu_suspend_interrupts()
     int ret = 0;
 
 #ifdef SIGINT
-    ret += _bu_suspend_signal(SIGINT);
+    ret += interrupt_suspend_signal(SIGINT);
 #endif
 #ifdef SIGHUP
-    ret += _bu_suspend_signal(SIGHUP);
+    ret += interrupt_suspend_signal(SIGHUP);
 #endif
 #ifdef SIGQUIT
-    ret += _bu_suspend_signal(SIGQUIT);
+    ret += interrupt_suspend_signal(SIGQUIT);
 #endif
 #ifdef SIGTSTP
-    ret += _bu_suspend_signal(SIGTSTP);
+    ret += interrupt_suspend_signal(SIGTSTP);
 #endif
 
     /* should do something sensible on Windows here */
@@ -194,16 +194,16 @@ bu_restore_interrupts()
     int ret = 0;
 
 #ifdef SIGINT
-    ret += _bu_restore_signal(SIGINT);
+    ret += interrupt_restore_signal(SIGINT);
 #endif
 #ifdef SIGHUP
-    ret += _bu_restore_signal(SIGHUP);
+    ret += interrupt_restore_signal(SIGHUP);
 #endif
 #ifdef SIGQUIT
-    ret += _bu_restore_signal(SIGQUIT);
+    ret += interrupt_restore_signal(SIGQUIT);
 #endif
 #ifdef SIGTSTP
-    ret += _bu_restore_signal(SIGTSTP);
+    ret += interrupt_restore_signal(SIGTSTP);
 #endif
 
     /* should do something sensible on Windows here */

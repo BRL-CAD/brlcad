@@ -147,7 +147,7 @@ struct bu_semaphores {
 
 #if defined(SGI_4D)
 HIDDEN void
-_bu_semaphore_sgi_init()
+semaphore_sgi_init()
 {
     FILE *fp;
     /*
@@ -156,7 +156,7 @@ _bu_semaphore_sgi_init()
      * Default for M_BLKSZ is 8k.
      */
     if (mallopt(M_BLKSZ, 128*1024) != 0) {
-	fprintf(stderr, "_bu_semaphore_sgi_init: mallopt() failed\n");
+	fprintf(stderr, "semaphore_sgi_init: mallopt() failed\n");
     }
 
     /* Now, set up the lock arena */
@@ -188,7 +188,7 @@ _bu_semaphore_sgi_init()
     bu_lockstuff = usinit(bu_lockfile);
     if (bu_lockstuff == 0) {
 	perror("usinit");
-	fprintf(stderr, "_bu_semaphore_sgi_init: usinit(%s) failed, unable to allocate lock space\n", bu_lockfile);
+	fprintf(stderr, "semaphore_sgi_init: usinit(%s) failed, unable to allocate lock space\n", bu_lockfile);
 	bu_bomb("fatal semaphore initialization failure");
     }
 }
@@ -196,7 +196,7 @@ _bu_semaphore_sgi_init()
 
 #if defined(convex) || defined(__convex__)
 HIDDEN void
-_bu_convex_acquire(p)
+semaphore_convex_acquire(p)
     register long *p;
 {
     asm("getlck:");
@@ -278,7 +278,7 @@ bu_semaphore_init(unsigned int nsemaphores)
 #	endif
 
 #	ifdef SGI_4D
-    _bu_semaphore_sgi_init();
+    semaphore_sgi_init();
     for (i=0; i < nsemaphores; i++) {
 	bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 	if ((bu_semaphores[i].ltp = usnewlock(bu_lockstuff)) == NULL) {
@@ -378,7 +378,7 @@ bu_semaphore_acquire(unsigned int i)
 #	endif
 
 #	if defined(convex) || defined(__convex__)
-    _bu_convex_acquire(&bu_semaphores[i].sem);
+    semaphore_convex_acquire(&bu_semaphores[i].sem);
 #	endif
 
 #	ifdef CRAY
