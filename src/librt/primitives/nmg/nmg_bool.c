@@ -874,6 +874,12 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	nmg_show_broken_classifier_stuff((uint32_t *)sB, &classlist[4], 1, 1, "unclassed sB");
     }
 
+    if (m->manifolds) {
+        bu_free((char *)m->manifolds, "free manifolds table");
+        m->manifolds = (char *)NULL;
+    }
+    m->manifolds = nmg_manifolds(m);
+
     /*
      * Classify A -vs- B, then B -vs- A.
      * Carry onAonBshared and onAonBanti classifications forward
@@ -891,6 +897,11 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	   (char *)classlist[0+NMG_CLASS_AoutB],
 	   nelem*sizeof(char));
     nmg_class_shells(sB, sA, &classlist[4], tol);
+
+    if (m->manifolds) {
+        bu_free((char *)m->manifolds, "free manifolds table");
+        m->manifolds = (char *)NULL;
+    }
 
     if (rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
 	nmg_class_nothing_broken = 1;
