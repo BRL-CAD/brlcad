@@ -184,7 +184,7 @@
 	should appear in your Command Window (including the appropriate
 	responses).
 	
-	<command><prompt>mged&gt;</prompt> in sph2.s sph</command>
+	<userinput><prompt>mged&gt;</prompt> in sph2.s sph</userinput>
 	
 	<literal>Enter X, Y, Z of vertex: 4 4 4</literal>
 	

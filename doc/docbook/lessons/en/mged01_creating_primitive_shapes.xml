@@ -237,7 +237,7 @@
 	database you are going to make. When you are done, press the ENTER key.
 	For example:
 
-	<command><prompt>mged&gt;</prompt> title MySphere[ENTER]</command>
+	<userinput><prompt>mged&gt;</prompt> title MySphere[ENTER]</userinput>
 	
 	Note that in <application>BRL-CAD</application> versions prior to release 6.0, the title is limited
 	to 72 characters.
@@ -257,7 +257,7 @@
 	just type units in after the <application>MGED</application> prompt in the Command Window, followed
 	by the ENTER key. The Command Line looks like:
 	
-	<command><prompt>mged&gt;</prompt> units in[ENTER]</command>
+	<userinput><prompt>mged&gt;</prompt> units in[ENTER]</userinput>
       </para>  
     </section>
 
