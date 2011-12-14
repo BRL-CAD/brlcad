@@ -227,7 +227,7 @@ include(${CMAKE_SOURCE_DIR}/misc/CMake/CMakeFiles.cmake)
 # To allow a hypothetical parent build to disable this mechanism and
 # replace it, we wrap the whole show in an IF conditional.  To avoid
 # the distcheck setup, the parent file should define the variable
-# BRLCAD_IS_SUBBUILD to ON.  Note that this also disables the
+# IS_SUBBUILD to ON.  Note that this also disables the
 # liblib prefix check in add_library, making that the responsibility
 # of the parent build as well, and disables the mechanism for ensuring
 # that the timing code runs at the correct points during the build.
@@ -240,7 +240,7 @@ include(${CMAKE_SOURCE_DIR}/misc/CMake/CMakeFiles.cmake)
 # to serve two purposes at once; since we only override these functions
 # once the logic for both jobs is intertwined below.
 
-IF(NOT BRLCAD_IS_SUBBUILD)
+IF(NOT IS_SUBBUILD)
 	# Functions in CMake have local variable scope,
 	# hence the use of properties to allow access to directory-specific
 	# and global information scopes.
@@ -307,20 +307,20 @@ IF(NOT BRLCAD_IS_SUBBUILD)
 		FILE(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${CMAKE_CURRENT_SOURCE_DIR}/${name}\n")
 		FILE(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${CMAKE_CURRENT_SOURCE_DIR}/${name}/CMakeLists.txt\n")
 	endfunction(add_subdirectory)
-ENDIF(NOT BRLCAD_IS_SUBBUILD)
+ENDIF(NOT IS_SUBBUILD)
 
 FILE(REMOVE ${CMAKE_BINARY_DIR}/cmakefiles.cmake)
 FILE(REMOVE ${CMAKE_BINARY_DIR}/cmakedirs.cmake)
 
 # We wrap the message function to also append ALL messages to CMakeOutput.log,
 # as well as printing them on the console output.
-IF(NOT BRLCAD_IS_SUBBUILD)
+IF(NOT IS_SUBBUILD)
 	function(message)
 		_message(${ARGN})
 		STRING(REGEX REPLACE ";" ": " msg "${ARGV}")
 		file(APPEND ${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${msg}\n")
 	endfunction(message)
-ENDIF(NOT BRLCAD_IS_SUBBUILD)
+ENDIF(NOT IS_SUBBUILD)
 
 #---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically
@@ -362,14 +362,14 @@ SET(BRLCAD_VERSION "${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PAT
 #---------------------------------------------------------------------
 # Write out entries to populate a tm struct to be used for time deltas
 # later
-IF(NOT BRLCAD_IS_SUBBUILD)
+IF(NOT IS_SUBBUILD)
 	SET(DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/DELTA_START")
 	configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/timedelta_start.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_start.c)
 	TRY_RUN(TIME_RESULT TIME_COMPILED
 		${CMAKE_BINARY_DIR}/CMakeTmp
 		${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_start.c
 		OUTPUT_VARIABLE COMPILEMESSAGES)
-ENDIF(NOT BRLCAD_IS_SUBBUILD)
+ENDIF(NOT IS_SUBBUILD)
 
 #---------------------------------------------------------------------
 # Unfortunately, CMake doesn't give you variables with current day,
@@ -1605,7 +1605,7 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
 
 endif(BRLCAD_PRINT_VERBOSE_SUMMARY)
 
-IF(NOT BRLCAD_IS_SUBBUILD)
+IF(NOT IS_SUBBUILD)
 	# Set up rules to print a timestamp string during build
 	SET(BUILD_DELTA_FILE "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_FILE")
 	SET(BUILD_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_START")
@@ -1633,13 +1633,13 @@ IF(NOT BRLCAD_IS_SUBBUILD)
 		COMMAND ${CMAKE_COMMAND} -E remove ${BUILD_DELTA_START}
 		DEPENDS buildtimeend
 		)
-ENDIF(NOT BRLCAD_IS_SUBBUILD)
+ENDIF(NOT IS_SUBBUILD)
 
 # We want the timestamp to come first, so make ALL library,
 # exec and external targets depend on timestamp (except for
 # the exec target printtimestamp, which is needed by timestamp)
 # Similarly, buildtimedelta needs to depend on every target.
-IF(NOT BRLCAD_IS_SUBBUILD)
+IF(NOT IS_SUBBUILD)
 	get_property(CMAKE_LIBRARY_TARGET_LIST GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST)
 	get_property(CMAKE_EXEC_TARGET_LIST GLOBAL PROPERTY CMAKE_EXEC_TARGET_LIST)
 	get_property(CMAKE_CUSTOM_TARGET_LIST GLOBAL PROPERTY CMAKE_CUSTOM_TARGET_LIST)
@@ -1687,7 +1687,7 @@ IF(NOT BRLCAD_IS_SUBBUILD)
 			ADD_DEPENDENCIES(buildtimedelta ${externaltarget})
 		endif(target_confcmd)
 	ENDFOREACH(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
-ENDIF(NOT BRLCAD_IS_SUBBUILD)
+ENDIF(NOT IS_SUBBUILD)
 
 # Generate the include/conf files
 
@@ -1795,7 +1795,7 @@ ENDIF(NOT ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 
 # CPack is used to produce tgz files, RPMS, etc.  If SUBBUILD is enabled this
 # becomes the responsibility of the parent project.
-IF(NOT BRLCAD_IS_SUBBUILD)
+IF(NOT IS_SUBBUILD)
 	OPTION(BRLCAD_VERSIONED_RPM_NAME "Incorporate BRL-CAD version into RPM package name" OFF)
 	MARK_AS_ADVANCED(BRLCAD_VERSIONED_RPM_NAME)
 	SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "BRL-CAD - a powerful cross-platform open source solid modeling system")
@@ -1871,7 +1871,7 @@ IF(NOT BRLCAD_IS_SUBBUILD)
 	SET(CPACK_PROJECT_CONFIG_FILE "${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake")
 
 	INCLUDE(CPack)
-ENDIF(NOT BRLCAD_IS_SUBBUILD)
+ENDIF(NOT IS_SUBBUILD)
 
 # Some files to ignore for distcheck.  For this case
 # only, we add CMakeLists.txt (others are handled
@@ -1918,7 +1918,7 @@ CMAKEFILES(${toplevel_ignore_files})
 # fall back on cmake --build, with the limitations imposed by that option.
 # This really needs to migrate to it's own .cmake file, too complex for a
 # series of COMMAND statements.
-IF(NOT BRLCAD_IS_SUBBUILD)
+IF(NOT IS_SUBBUILD)
 	FIND_PROGRAM(CPACK_EXEC cpack)
 	MARK_AS_ADVANCED(CPACK_EXEC)
 	configure_file(${BRLCAD_CMAKE_DIR}/distcheck_buildsys.cmake.in
@@ -1994,7 +1994,7 @@ IF(NOT BRLCAD_IS_SUBBUILD)
 		COMMAND ${CMAKE_COMMAND} -E remove ${CPACK_SOURCE_PACKAGE_FILE_NAME}.*
 		)
 
-ENDIF(NOT BRLCAD_IS_SUBBUILD)
+ENDIF(NOT IS_SUBBUILD)
 
 
 # Mark various miscellaneous things as advanced that we don't want in our
@@ -2004,7 +2004,7 @@ MARK_AS_ADVANCED(EXECUTABLE_OUTPUT_PATH)
 MARK_AS_ADVANCED(LIBRARY_OUTPUT_PATH)
 
 #Done with everything else - do the configure time delta
-IF(NOT BRLCAD_IS_SUBBUILD)
+IF(NOT IS_SUBBUILD)
 	SET(DELTA_END "${CMAKE_BINARY_DIR}/CMakeTmp/DELTA_END")
 	configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/timedelta_end.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c)
 	TRY_RUN(TIME_RESULT TIME_COMPILED
@@ -2020,4 +2020,4 @@ IF(NOT BRLCAD_IS_SUBBUILD)
 		STRING(LENGTH ${CONFIG_TIME_MSG_LABEL} CURRENTLENGTH)
 	ENDWHILE(${SETTINGLABELLENGTH} GREATER ${CURRENTLENGTH})
 	MESSAGE("${CONFIG_TIME_MSG_LABEL}..: ${CONFIG_TIME_MSG}")
-ENDIF(NOT BRLCAD_IS_SUBBUILD)
+ENDIF(NOT IS_SUBBUILD)
