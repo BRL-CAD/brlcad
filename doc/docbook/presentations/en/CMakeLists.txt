@@ -14,4 +14,3 @@ DOCBOOK_TO_HTML(presentation docbook_presentations_EN html/presentations/en)
 BRLCAD_ADDDATA(docbook_presentations_EN_IMAGES html/presentations/en/images)
 
 DOCBOOK_TO_PDF(presentation docbook_presentations_EN pdf/presentations/en)
-CMAKEFILES(Makefile.am)

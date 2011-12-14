@@ -133,4 +133,4 @@ IF(BRLCAD_EXTRADOCS_PDF)
 	ENDFOREACH(filename ${docbook_books_EN})
 ENDIF(BRLCAD_EXTRADOCS_PDF)
 
-CMAKEFILES(Makefile.am tutorial_series_authors.xml)
+CMAKEFILES(tutorial_series_authors.xml)

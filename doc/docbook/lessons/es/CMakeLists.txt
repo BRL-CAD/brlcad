@@ -131,5 +131,3 @@ DOCBOOK_TO_HTML(lesson_ES docbook_lessons_ES html/lessons/es)
 BRLCAD_ADDDATA(docbook_lessons_ES_IMAGES html/lessons/es/images)
 
 DOCBOOK_TO_PDF(lesson_ES docbook_lessons_ES pdf/lessons/es)
-
-CMAKEFILES(Makefile.am)

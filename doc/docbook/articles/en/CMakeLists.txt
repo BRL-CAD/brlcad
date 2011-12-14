@@ -108,4 +108,4 @@ IF(BRLCAD_EXTRADOCS_PDF)
   DOCBOOK_TO_PDF(article docbook_articles_EN pdf/articles/en)
 ENDIF(BRLCAD_EXTRADOCS_PDF)
 
-CMAKEFILES(Makefile.am images/tire_fig12.svg images/tire_fig13.svg)
+CMAKEFILES(images/tire_fig12.svg images/tire_fig13.svg)

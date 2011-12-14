@@ -246,5 +246,3 @@ DOCBOOK_TO_MAN(mann docbook_mann_EN n nged man/mann)
 IF(BRLCAD_EXTRADOCS_PDF_MAN)
 	DOCBOOK_TO_PDF(mann docbook_mann_EN pdf/mann/en)
 ENDIF(BRLCAD_EXTRADOCS_PDF_MAN)
-
-CMAKEFILES(Makefile.am)

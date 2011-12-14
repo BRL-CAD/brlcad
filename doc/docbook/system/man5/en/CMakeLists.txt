@@ -8,5 +8,3 @@ DOCBOOK_TO_MAN(man5 docbook_man5_EN 5 5 man/man5)
 IF(BRLCAD_EXTRADOCS_PDF_MAN)
     DOCBOOK_TO_PDF(man5 docbook_man5_EN pdf/man5/en)
 ENDIF(BRLCAD_EXTRADOCS_PDF_MAN)
-
-CMAKEFILES(Makefile.am)
