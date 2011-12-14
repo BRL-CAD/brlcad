@@ -23,10 +23,16 @@ writeHeader(FILE *templateFile, FILE *headerFile)
 }
 
 static void
-writeRuleClose(appData_t *appData)
+writeCodeOpen(appData_t *appData)
+{
+    fprintf(appData->out, "{\n");
+}
+
+static void
+writeCodeClose(appData_t *appData)
 {
     /* prevent fall-through to next rule */
-    fprintf(appData->out, "\n    IGNORE_TOKEN;\n}\n");
+    fprintf(appData->out, "IGNORE_TOKEN;\n}\n");
 }
 
 static void
@@ -80,6 +86,15 @@ writeDefinitions(appData_t *appData)
     fprintf(outFile, "\n");
     fclose(templateFile);
 }
+
+static int
+isDefinition(const char *str)
+{
+    if (str == NULL) {
+	return 0;
+    }
+    return (str[strlen(str) - 1] == ';');
+}
 }
 
 %token_type {YYSTYPE}
@@ -87,6 +102,9 @@ writeDefinitions(appData_t *appData)
 
 %type string {char*}
 %type word {char*}
+%type name_or_def {char*}
+%type opt_special {char*}
+%type special {char*}
 
 /* later tokens have greater precedence */
 %nonassoc EMPTY_RULE_LIST.
@@ -95,6 +113,7 @@ writeDefinitions(appData_t *appData)
 %nonassoc TOKEN_CODE_START.
 %right TOKEN_EMPTY_COND.
 %right TOKEN_CONDITION.
+%right TOKEN_NAME.
 
 /* suppress compiler warning about unused variable */
 %destructor file {ParseARG_STORE;}
@@ -110,18 +129,7 @@ def_section ::= string TOKEN_SEPARATOR.
 }
 
 /* RULES SECTION */
-rule_section ::= named_defs rule_list.
-
-named_defs ::= /* empty */.
-named_defs ::= named_defs named_def.
-
-named_def ::= TOKEN_WORD(NAME) TOKEN_EQUALS TOKEN_DEFINITION(DEF).
-{
-     writeString(appData, NAME.string);
-     fprintf(appData->out, " = ");
-     writeString(appData, DEF.string);
-     fprintf(appData->out, "\n");
-}
+rule_section ::= rule_list.
 
 rule_list ::= /* empty */. [EMPTY_RULE_LIST]
 rule_list ::= rule_list rules. [TOKEN_CODE_END]
@@ -130,9 +138,9 @@ rule_list ::= rule_list start_scope rules end_scope.
 rules ::= rule.
 rules ::= rules rule.
 
-start_scope ::= TOKEN_START_SCOPE(C).
+start_scope ::= TOKEN_START_SCOPE(COND).
 {
-    appData->conditions = C.string;
+    appData->conditions = COND.string;
 }
 
 end_scope ::= TOKEN_END_SCOPE.
@@ -141,8 +149,18 @@ end_scope ::= TOKEN_END_SCOPE.
     appData->conditions = NULL;
 }
 
-rule ::= opt_condition pattern opt_cond_change opt_code.
-rule ::= empty_condition opt_cond_change opt_code.
+rule ::= opt_condition pattern_or_name opt_special(OS) opt_code.
+{
+    if (isDefinition(OS)) {
+	fprintf(appData->out, "\n");
+    } else {
+	writeCodeClose(appData);
+    }
+}
+rule ::= empty_condition opt_special opt_code.
+{
+    writeCodeClose(appData);
+}
 
 opt_condition ::= /* empty */. [TOKEN_WORD]
 {
@@ -154,36 +172,50 @@ opt_condition ::= TOKEN_CONDITION(C). [TOKEN_WORD]
 {
     writeString(appData, C.string);
 }
-
 empty_condition ::= TOKEN_EMPTY_COND.
 {
-    fprintf(appData->out, "<>");
+    fprintf(appData->out, "<> ");
 }
 
-pattern ::= word(W). {
-    writeString(appData, W);
-}
-
-opt_cond_change ::= /* empty */.
-opt_cond_change ::= TOKEN_COND_CHANGE(C) word(W).
+opt_special(OS) ::= /* empty */.
 {
-    writeString(appData, C.string);
-    writeString(appData, W);
+    OS = NULL;
+    writeCodeOpen(appData);
+}
+opt_special(OS) ::= special(S).
+{
+    if (!isDefinition(S)) {
+	writeCodeOpen(appData);
+    }
+    OS = S;
+}
+
+special(S) ::= TOKEN_SPECIAL_OP(OP) name_or_def(ND).
+{
+    writeString(appData, OP.string);
+    fprintf(appData->out, " %s", ND);
+    S = ND;
+}
+
+pattern_or_name ::= TOKEN_PATTERN(PATTERN). {
+    writeString(appData, PATTERN.string);
+}
+
+pattern_or_name ::= TOKEN_NAME(NAME). {
+    writeString(appData, NAME.string);
+}
+
+name_or_def(N) ::= TOKEN_NAME(NAME).
+{
+    N = NAME.string;
+}
+name_or_def(D) ::= TOKEN_DEFINITION(DEF).
+{
+    D = DEF.string;
 }
 
 opt_code ::= /* empty */. [TOKEN_CODE_END]
-{
-    fprintf(appData->out, " { IGNORE_TOKEN; }\n");
-}
-opt_code ::= code_start string TOKEN_CODE_END.
-{
-    fprintf(appData->out, "IGNORE_TOKEN;\n}\n");
-}
-
-code_start ::= TOKEN_CODE_START.
-{
-    fprintf(appData->out, "{\n");
-}
+opt_code ::= TOKEN_CODE_START string TOKEN_CODE_END.
 
 /* CODE SECTION */
 code_section ::= /* empty */.
@@ -204,9 +236,9 @@ code_section_start ::= TOKEN_SEPARATOR.
 
 /* strings */
 string ::= /* empty */.
-string ::= string word(W).
+string ::= string word(WORD).
 {
-    writeString(appData, W);
+    writeString(appData, WORD);
 }
 
 /* A word is a character sequence that ends in a whitespace character,

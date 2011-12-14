@@ -633,7 +633,7 @@ re2c:define:YYGETCONDITION:naked = 1;
 }
 <rules>':'?"=>"[ \t\n]* {
     copyTokenText(scanner);
-    return TOKEN_COND_CHANGE;
+    return TOKEN_SPECIAL_OP;
 }
 <rules>'=' {
     if (scanner->inAction) {
@@ -641,7 +641,7 @@ re2c:define:YYGETCONDITION:naked = 1;
     } else {
 	scanner->inDefinition = 1;
 	copyTokenText(scanner);
-	return TOKEN_EQUALS;
+	return TOKEN_SPECIAL_OP;
     }
 }
 <rules>';' {
@@ -685,6 +685,29 @@ re2c:define:YYGETCONDITION:naked = 1;
 	return TOKEN_CODE_END;
     }
     continue;
+}
+<rules>[ \t\n] {
+    /* matched single whitespace */
+    if (strlen(yytext) == 1) {
+	IGNORE_TOKEN;
+    }
+
+    /* matched end of word */
+    copyTokenText(scanner);
+
+    if (!scanner->inAction) {
+	switch (scanner->appData->tokenData.string[0]) {
+	    case '"':
+	    case '\'':
+	    case '[':
+	    case '(':
+	    case '.':
+		return TOKEN_PATTERN;
+	}
+	return TOKEN_NAME;
+    }
+
+    return TOKEN_WORD;
 }
 <definitions,rules,code>[ \t\n] {
     /* matched single whitespace */

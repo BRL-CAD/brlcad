@@ -208,14 +208,17 @@ int main(int argc, char *argv[])
 	case TOKEN_EMPTY_COND:
 	    fprintf(stderr, "##EMPTY_COND(%s)\n", appData->tokenData.string);
 	    break;
-	case TOKEN_COND_CHANGE:
-	    fprintf(stderr, "##COND_CHANGE(%s)\n", appData->tokenData.string);
+	case TOKEN_SPECIAL_OP:
+	    fprintf(stderr, "##SPECIAL_OP(%s)\n", appData->tokenData.string);
 	    break;
 	case TOKEN_WORD:
 	    fprintf(stderr, "##WORD(%s)\n", appData->tokenData.string);
 	    break;
-	case TOKEN_EQUALS:
-	    fprintf(stderr, "##EQUALS(%s)\n", appData->tokenData.string);
+	case TOKEN_PATTERN:
+	    fprintf(stderr, "##PATTERN(%s)\n", appData->tokenData.string);
+	    break;
+	case TOKEN_NAME:
+	    fprintf(stderr, "##NAME(%s)\n", appData->tokenData.string);
 	    break;
 	case TOKEN_DEFINITION:
 	    fprintf(stderr, "##DEFINITION(%s)\n", appData->tokenData.string);
