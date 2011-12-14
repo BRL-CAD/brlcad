@@ -788,6 +788,20 @@ nmg_merge_models(struct model *m1, struct model *m2)
     }
     BU_LIST_APPEND_LIST(&(m1->r_hd), &(m2->r_hd));
 
+    /* If there are any manifold tables, when the models are
+     * merged they become invalid and need to be regenerated.
+     * To avoid confusion, free them here so it is known they
+     * need to be regenerated.
+     */
+    if (m1->manifolds) {
+        bu_free((char *)m1->manifolds, "free manifolds table");
+        m1->manifolds = (char *)NULL;
+    }
+    if (m2->manifolds) {
+        bu_free((char *)m2->manifolds, "free manifolds table");
+        m2->manifolds = (char *)NULL;
+    }
+
     FREE_MODEL(m2);
 }
 
