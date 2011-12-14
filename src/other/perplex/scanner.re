@@ -322,30 +322,44 @@ buf_append_null(struct Buf *buf)
     buf_append(buf, &null, sizeof(char));
 }
 
-static void*
-bufLast(struct Buf *buf)
+/* get size of buffer in bytes */
+static size_t
+buf_size(struct Buf *buf)
 {
-    size_t bufSize = (size_t)buf->nelts * buf->elt_size;
-
-    return (void*)((size_t)buf->elts + bufSize - 1);
+    return (size_t)buf->nelts * buf->elt_size;
 }
 
+/* get pointer to the start of the first element */
+static void*
+buf_first_elt(struct Buf *buf)
+{
+    return buf->elts;
+}
+
+/* get pointer to the start of the last element */
+static void*
+buf_last_elt(struct Buf *buf)
+{
+    return buf_first_elt(buf) + buf->elt_size * (buf->nelts - 1);
+}
+
+
+/* check validity of the scanner's input markers */
 static void
 checkInputMarkers(perplex_t scanner)
 {
     struct Buf *buf;
-    size_t tokenStart, marker, cursor, null;
+    void *tokenStart, *cursor, *null;
 
     buf = scanner->buffer;
 
     /* input pointers should point inside input buffer */
-    tokenStart = (size_t)scanner->tokenStart;
-    marker = (size_t)scanner->marker;
-    cursor = (size_t)scanner->cursor;
-    null = (size_t)scanner->null;
+    tokenStart = (void*)scanner->tokenStart;
+    cursor = (void*)scanner->cursor;
+    null = (void*)scanner->null;
 
-    assert(tokenStart >= (size_t)buf->elts);
-    assert(null <= bufLast(buf));
+    assert(tokenStart >= buf->elts);
+    assert(null <= buf_last_elt(buf));
 
     /* Cursor should be somewhere between start of current token and end
      * of input. Backtracking marker may or may not be out-of-date.
@@ -353,10 +367,8 @@ checkInputMarkers(perplex_t scanner)
     assert(tokenStart <= cursor <= null);
 }
 
-/* Copy up to n input characters to the end of scanner buffer.
- * If EOF is encountered before n characters are read, '\0'
- * is appended to the buffer to serve as EOF symbol and
- * scanner->atEOI flag is set.
+/* Copy up to n input characters to the end of scanner buffer. If EOF is
+ * encountered before n characters are copied, scanner->atEOI flag is set.
  */
 static void
 bufferAppend(perplex_t scanner, size_t n)
@@ -369,7 +381,7 @@ bufferAppend(perplex_t scanner, size_t n)
     buf = scanner->buffer;
     in = scanner->in.file;
 
-    /* "remove" existing null so it gets overwritten */
+    /* remove last (null) element */
     buf->nelts--;
 
     for (i = 0; i < n; i++) {
@@ -380,11 +392,11 @@ bufferAppend(perplex_t scanner, size_t n)
 	buf_append(buf, &c, sizeof(char));
     }
 
-    /* scanner->null - eltSize should be the last input element,
+    /* (scanner->null - eltSize) should be the last input element,
      * we put a literal null after this element for debugging
      */
     buf_append_null(buf);
-    scanner->null = (char*)(bufLast(buf) + 1);
+    scanner->null = (char*)buf_last_elt(buf);
 }
 
 /* Appends up to n characters of input to scanner buffer. */
@@ -409,30 +421,34 @@ bufferFill(perplex_t scanner, size_t n)
 
     /* not enough room for append, shift buffer contents to avoid realloc */
     if (n > freeElts) {
-	size_t firstUsedElt, tokenStart, marker, null, bufFirst;
+	void *bufFirst, *scannerFirst, *tokenStart, *marker, *null;
 	size_t bytesInUse, shiftSize;
 
-	tokenStart = (size_t)scanner->tokenStart;
-	marker = (size_t)scanner->marker;
-	null = (size_t)scanner->null;
+	tokenStart = (void*)scanner->tokenStart;
+	marker = (void*)scanner->marker;
+	null = (void*)scanner->null;
 
-	bufFirst = (size_t)buf->elts;
+	bufFirst = buf_first_elt(buf);
 
 	/* Find first buffer element still in use by scanner. Will be
 	 * tokenStart unless backtracking marker is in use.
 	 */
-	firstUsedElt = tokenStart;
+	scannerFirst = tokenStart;
 	if (marker >= bufFirst && marker < tokenStart) {
-	    firstUsedElt = marker;
+	    scannerFirst = marker;
 	}
 
+	/* bytes of input being used by scanner */
+	bytesInUse = (size_t)null - (size_t)scannerFirst;
+
 	/* copy in-use elements to start of buffer */
-	bytesInUse = null - firstUsedElt;
-	memmove((void*)bufFirst, (void*)firstUsedElt, bytesInUse);
+	memmove(bufFirst, scannerFirst, bytesInUse);
+
+	/* update number of elements */
         buf->nelts = bytesInUse / buf->elt_size;
 
 	/* update markers */
-	shiftSize = firstUsedElt - bufFirst;
+	shiftSize = scannerFirst - bufFirst;
 	scanner->marker     -= shiftSize;
 	scanner->cursor     -= shiftSize;
 	scanner->null       -= shiftSize;
