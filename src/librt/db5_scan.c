@@ -140,11 +140,10 @@ db_diradd5(
 {
     struct directory **headp;
     register struct directory *dp;
-    struct bu_vls local;
+    struct bu_vls local = BU_VLS_INIT_ZERO;
 
     RT_CK_DBI(dbip);
 
-    bu_vls_init(&local);
     bu_vls_strcpy(&local, name);
     if (db_dircheck(dbip, &local, 0, &headp) < 0) {
 	bu_vls_free(&local);
@@ -209,7 +208,7 @@ db5_diradd(struct db_i *dbip,
 {
     struct directory **headp;
     register struct directory *dp;
-    struct bu_vls local;
+    struct bu_vls local = BU_VLS_INIT_ZERO;
 
     RT_CK_DBI(dbip);
 
@@ -217,7 +216,6 @@ db5_diradd(struct db_i *dbip,
 	bu_log("WARNING: db5_diradd() received non-NULL client_data\n");
     }
 
-    bu_vls_init(&local);
     bu_vls_strcpy(&local, (const char *)rip->name.ext_buf);
     if (db_dircheck(dbip, &local, 0, &headp) < 0) {
 	bu_vls_free(&local);

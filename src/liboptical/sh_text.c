@@ -616,7 +616,6 @@ txt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
     *dpp = tp;
 
     bu_vls_init(&tp->tx_name);
-    /* !?! tp->tx_name[0] = '\0';*/
 
     /* defaults */
     tp->tx_w = tp->tx_n = -1;

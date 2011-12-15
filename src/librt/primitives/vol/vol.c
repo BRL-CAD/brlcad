@@ -408,7 +408,7 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 {
     union record *rp;
     register struct rt_vol_internal *vip;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     FILE *fp;
     int nbytes;
     size_t y;
@@ -441,7 +441,6 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Default VOL cell size in ideal coordinates is one unit/cell */
     VSETALL(vip->cellsize, 1);
 
-    bu_vls_init(&str);
     bu_vls_strcpy(&str, rp->ss.ss_args);
     if (bu_struct_parse(&str, rt_vol_parse, (char *)vip) < 0) {
 	bu_vls_free(&str);
@@ -511,7 +510,7 @@ rt_vol_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_vol_internal *vip;
     struct rt_vol_internal vol;	/* scaled version */
     union record *rec;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -529,7 +528,6 @@ rt_vol_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "vol external");
     rec = (union record *)ep->ext_buf;
 
-    bu_vls_init(&str);
     bu_vls_struct_print(&str, rt_vol_parse, (char *)&vol);
 
     rec->ss.ss_id = DBID_STRSOL;
@@ -552,7 +550,7 @@ int
 rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     register struct rt_vol_internal *vip;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     FILE *fp;
     int nbytes;
     size_t y;
@@ -580,7 +578,6 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Default VOL cell size in ideal coordinates is one unit/cell */
     VSETALL(vip->cellsize, 1);
 
-    bu_vls_init(&str);
     bu_vls_strncpy(&str, (const char *)ep->ext_buf, ep->ext_nbytes);
     if (bu_struct_parse(&str, rt_vol_parse, (char *)vip) < 0) {
 	bu_vls_free(&str);
@@ -649,7 +646,7 @@ rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 {
     struct rt_vol_internal *vip;
     struct rt_vol_internal vol;	/* scaled version */
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -664,7 +661,6 @@ rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
 
-    bu_vls_init(&str);
     bu_vls_struct_print(&str, rt_vol_parse, (char *)&vol);
     ep->ext_nbytes = bu_vls_strlen(&str);
     ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "vol external");
@@ -688,7 +684,7 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 {
     struct rt_vol_internal *vip = (struct rt_vol_internal *)ip->idb_ptr;
     register int i;
-    struct bu_vls substr;
+    struct bu_vls substr = BU_VLS_INIT_ZERO;
     vect_t local;
 
     RT_VOL_CK_MAGIC(vip);
@@ -702,7 +698,6 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 /* bu_vls_struct_print(str, rt_vol_parse, (char *)vip);
    bu_vls_strcat(str, "\n"); */
 
-    bu_vls_init(&substr);
     bu_vls_printf(&substr, "  file=\"%s\" w=%zu n=%zu d=%zu lo=%zu hi=%zu size=%g %g %g\n   mat=",
 		  vip->file, vip->xdim, vip->ydim, vip->zdim, vip->lo, vip->hi,
 		  V3INTCLAMPARGS(local));

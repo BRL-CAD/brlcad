@@ -109,11 +109,9 @@ char *first_command = "no_command?";
 void
 assign_tabdata_to_tcl_var(Tcl_Interp *interp, const char *name, const struct bn_tabdata *tabp)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     BN_CK_TABDATA(tabp);
-
-    bu_vls_init(&str);
 
     bn_tabdata_to_tcl(&str, tabp);
     Tcl_SetVar(interp, (char *)name, bu_vls_addr(&str), 0);
@@ -181,12 +179,11 @@ getntsccurves(ClientData UNUSED(cd), Tcl_Interp *interp, int UNUSED(argc), char 
 int
 getspectrum(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     size_t wl;
 
     BN_CK_TABLE(spectrum);
 
-    bu_vls_init(&vls);
     Tcl_ResetResult(interp);
 
     if (argc <= 1) {
@@ -224,7 +221,7 @@ getspectval(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
     size_t wl;
     char *cp;
     fastf_t val;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     Tcl_ResetResult(interp);
 
@@ -266,7 +263,6 @@ getspectval(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
     if (use_atmosphere)
 	val *= atmosphere->y[wl];
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "%g", val);
     Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
     bu_vls_free(&vls);
@@ -286,7 +282,7 @@ getspectxy(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
     struct bn_tabdata *sp;
     int x, y;
     char *cp;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     Tcl_ResetResult(interp);
 
@@ -313,7 +309,6 @@ getspectxy(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
     sp = (struct bn_tabdata *)cp;
     BN_CK_TABDATA(sp);
 
-    bu_vls_init(&str);
     bn_tabdata_to_tcl(&str, sp);
     Tcl_SetResult(interp, bu_vls_addr(&str), TCL_VOLATILE);
     bu_vls_free(&str);
@@ -363,7 +358,7 @@ tcl_fb_readpixel(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **arg
     FBIO *ifp;
     long x, y;
     unsigned char pixel[4];
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     Tcl_ResetResult(interp);
 
@@ -383,7 +378,6 @@ tcl_fb_readpixel(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **arg
 	return TCL_ERROR;
     }
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "%d %d %d", pixel[RED], pixel[GRN], pixel[BLU]);
     Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
     bu_vls_free(&vls);
@@ -511,8 +505,7 @@ conduct_tests(void)
     bu_log("G:\n");bn_print_table_and_tabdata("/dev/tty", ntsc_g);
     bu_log("B:\n");bn_print_table_and_tabdata("/dev/tty", ntsc_b);
     {
-	struct bu_vls str;
-	bu_vls_init(&str);
+	struct bu_vls str = BU_VLS_INIT_ZERO;
 	bn_tabdata_to_tcl(&str, ntsc_r);
 	bu_log("ntsc_r tcl:  %s\n", bu_vls_addr(&str));
 	bu_vls_free(&str);

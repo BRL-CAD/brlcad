@@ -1169,13 +1169,12 @@ db5_import_color_table(char *cp)
 int
 db5_put_color_table(struct db_i *dbip)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int ret;
 
     RT_CK_DBI(dbip);
     BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
 
-    bu_vls_init(&str);
     db5_export_color_table(&str, dbip);
 
     ret = db5_update_attribute(DB5_GLOBAL_OBJECT_NAME,

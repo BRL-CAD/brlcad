@@ -2534,7 +2534,7 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
     struct edgeuse *prev_eu = (struct edgeuse *)NULL;
     struct edgeuse *first_eu = (struct edgeuse *)NULL;
     FILE *plotfp;
-    struct bu_vls plot_file_name;
+    struct bu_vls plot_file_name = BU_VLS_INIT_ZERO;
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 
@@ -2549,7 +2549,6 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
 
         faceuse_loopuse_count++;
 
-        bu_vls_init(&plot_file_name);
         bu_vls_sprintf(&plot_file_name, "%s_faceuse_%x_loopuse_%x.pl", prefix, fu, lu);
         plotfp = fopen(bu_vls_addr(&plot_file_name), "wb");
 
@@ -3740,9 +3739,7 @@ void
 print_loopuse_tree(struct bu_list *head, struct loopuse_tree_node *parent, const struct bn_tol *tol) 
 {
     struct loopuse_tree_node *node, *node_first;
-    struct bu_vls plot_file_desc;
-
-    bu_vls_init(&plot_file_desc);
+    struct bu_vls plot_file_desc = BU_VLS_INIT_ZERO;
 
     if (head->magic != BU_LIST_HEAD_MAGIC) {
         bu_bomb("print_loopuse_tree(): head not bu_list head\n");

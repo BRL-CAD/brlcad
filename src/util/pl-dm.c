@@ -425,9 +425,8 @@ X_dm(int argc, char *argv[])
     int status;
 
     if (BU_STR_EQUAL(argv[0], "set")) {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	start_catching_output(&tmp_vls);
 
 	stop_catching_output(&tmp_vls);
@@ -577,9 +576,8 @@ cmd_openpl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **a
     struct plot_list *plp;
 
     if (argc < 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "help openpl");
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -656,9 +654,8 @@ static int
 cmd_vrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     if (argc != 4) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "help vrot");
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -680,9 +677,8 @@ static int
 cmd_dm(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     if (argc < 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "help dm");
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -705,9 +701,8 @@ cmd_clear(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **UN
     struct plot_list *plp;
 
     if (argc != 1) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "help clear");
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -732,9 +727,8 @@ cmd_closepl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **
     struct plot_list *plp;
 
     if (argc < 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "help closepl");
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -768,9 +762,8 @@ cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **arg
     struct plot_list *plp;
 
     if (argc < 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "help draw");
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -801,9 +794,8 @@ cmd_erase(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **ar
     struct plot_list *plp;
 
     if (argc < 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "help erase");
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -835,9 +827,8 @@ cmd_list(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **UNU
     int linelen=0;
 
     if (argc != 1) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "help ls");
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -877,9 +868,8 @@ cmd_zoom(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **arg
     double val;
 
     if (argc != 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "help zoom");
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -919,9 +909,8 @@ cmd_slewview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
     vect_t view_pos;
 
     if (argc != 3) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "help sv");
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -951,9 +940,8 @@ cmd_aetview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **
     fastf_t o_twist;
 
     if (argc < 3 || 5 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "help ae");
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1114,8 +1102,8 @@ appInit(Tcl_Interp *_interp)
 {
     Tk_Window tkwin;
     const char *filename;
-    struct bu_vls str;
-    struct bu_vls str2;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct bu_vls str2 = BU_VLS_INIT_ZERO;
 
     /* libdm uses interp */
     INTERP = _interp;
@@ -1145,8 +1133,6 @@ appInit(Tcl_Interp *_interp)
     /* Locate the BRL-CAD-specific Tcl scripts */
     filename = bu_brlcad_data("tclscripts", 0);
 
-    bu_vls_init(&str);
-    bu_vls_init(&str2);
     bu_vls_printf(&str2, "%s/pl-dm", filename);
     bu_vls_printf(&str, "wm withdraw .; set auto_path [linsert $auto_path 0 %s %s]",
 		  bu_vls_addr(&str2), filename);
@@ -1178,6 +1164,7 @@ main(int argc, char *argv[])
 
     memset((void *)&HeadPlot, 0, sizeof(struct plot_list));
     BU_LIST_INIT(&HeadPlot.l);
+    BU_VLS_INIT(&HeadPlot.pl_name);
 
     MAT_IDN(toViewcenter);
     MAT_IDN(Viewrot);

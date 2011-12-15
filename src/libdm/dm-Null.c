@@ -148,9 +148,9 @@ struct dm dm_Null = {
     0,
     0,
     {0, 0},
-    {0, 0, 0, 0, 0},		/* bu_vls path name*/
-    {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
-    {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
+    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     {0, 0, 0},			/* bg color */
     {0, 0, 0},			/* fg color */
     {0.0, 0.0, 0.0},		/* clipmin */

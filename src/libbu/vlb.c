@@ -132,11 +132,9 @@ bu_pr_vlb(const char *title, const struct bu_vlb *vlb)
 {
     size_t i;
     unsigned char *c;
-    struct bu_vls v;
+    struct bu_vls v = BU_VLS_INIT_ZERO;
 
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
-
-    bu_vls_init(&v);
 
     /* optional title */
     if (title) {

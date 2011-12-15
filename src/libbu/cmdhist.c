@@ -80,7 +80,7 @@ bu_cmdhist_history(void *data, int argc, const char *argv[])
     FILE *fp;
     int with_delays = 0;
     struct bu_cmdhist *hp, *hp_prev;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     struct timeval tvdiff;
     struct bu_cmdhist_obj *chop = (struct bu_cmdhist_obj *)data;
 
@@ -120,7 +120,6 @@ bu_cmdhist_history(void *data, int argc, const char *argv[])
 	++argv;
     }
 
-    bu_vls_init(&str);
     for (BU_LIST_FOR(hp, bu_cmdhist, &chop->cho_head.l)) {
 	bu_vls_trunc(&str, 0);
 	hp_prev = BU_LIST_PREV(bu_cmdhist, &hp->l);
@@ -152,7 +151,7 @@ int
 bu_cmdhist_add(void *clientData, int argc, const char **argv)
 {
     struct bu_cmdhist_obj *chop = (struct bu_cmdhist_obj *)clientData;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct timeval zero;
 
     if (argc != 3) {
@@ -163,7 +162,6 @@ bu_cmdhist_add(void *clientData, int argc, const char **argv)
     if (UNLIKELY(argv[2][0] == '\n' || argv[2][0] == '\0'))
 	return BRLCAD_OK;
 
-    bu_vls_init(&vls);
     bu_vls_strcpy(&vls, argv[2]);
     if (argv[2][strlen(argv[2])-1] != '\n')
 	bu_vls_putc(&vls, '\n');

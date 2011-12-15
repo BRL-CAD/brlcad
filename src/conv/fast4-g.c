@@ -248,9 +248,8 @@ static int
 get_line(void)
 {
     int len;
-    struct bu_vls buffer;
+    struct bu_vls buffer = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&buffer);
     len = bu_vls_gets(&buffer, fpin);
 
     /* eof? */
@@ -581,7 +580,7 @@ find_region_name(int g_id, int c_id)
 static char *
 make_unique_name(char *name)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     int found;
 
     /* make a unique name from what we got off the $NAME card */
@@ -589,8 +588,6 @@ make_unique_name(char *name)
     (void)Search_names(name_root, name, &found);
     if (!found)
 	return bu_strdup(name);
-
-    bu_vls_init(&vls);
 
     while (found) {
 	bu_vls_trunc(&vls, 0);
@@ -633,11 +630,10 @@ static char *
 get_solid_name(char type, int element_id, int c_id, int g_id, int inner)
 {
     int reg_id;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     reg_id = g_id * 1000 + c_id;
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "%d.%d.%c%d", reg_id, element_id, type, inner);
 
     return bu_vls_strgrab(&vls);

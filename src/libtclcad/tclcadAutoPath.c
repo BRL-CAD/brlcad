@@ -128,11 +128,11 @@ path_to_src(const char *path)
 void
 tclcad_auto_path(Tcl_Interp *interp)
 {
-    struct bu_vls auto_path;
-    struct bu_vls lappend;
+    struct bu_vls auto_path = BU_VLS_INIT_ZERO;
+    struct bu_vls lappend = BU_VLS_INIT_ZERO;
     const char *library_path = NULL;
 
-    struct bu_vls root_buf;
+    struct bu_vls root_buf = BU_VLS_INIT_ZERO;
     const char *root = NULL;
     const char *data = NULL;
     char buffer[MAX_BUF] = {0};
@@ -153,14 +153,10 @@ tclcad_auto_path(Tcl_Interp *interp)
 	return;
     }
 
-    bu_vls_init(&root_buf);
     root = bu_brlcad_root("", 1);
     bu_vls_printf(&root_buf, "%s", root);
     root = bu_vls_addr(&root_buf);
     data = bu_brlcad_data("", 1);
-
-    bu_vls_init(&auto_path);
-    bu_vls_init(&lappend);
 
     /* determine if TCLCAD_LIBRARY_PATH is set */
     library_path = getenv("TCLCAD_LIBRARY_PATH");

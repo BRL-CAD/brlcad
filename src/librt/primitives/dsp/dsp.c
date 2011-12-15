@@ -630,14 +630,11 @@ rt_dsp_print(register const struct soltab *stp)
 {
     register const struct dsp_specific *dsp =
 	(struct dsp_specific *)stp->st_specific;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 
     RT_DSP_CK_MAGIC(dsp);
     BU_CK_VLS(&dsp->dsp_i.dsp_name);
-
-    bu_vls_init(&vls);
-    BU_CK_VLS(&vls);
 
     bu_vls_printf(&vls, "\n---------db version: %d----------\n",
 		  db_version(stp->st_rtip->rti_dbip));
@@ -2923,9 +2920,8 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     len = MAGNITUDE(t);
 
     if (RT_G_DEBUG & DEBUG_HF) {
-	struct bu_vls str;
+	struct bu_vls str = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&str);
 	bu_vls_printf(&str, "dsp_gourand%02d.pl", plot_file_num++);
 	bu_log("plotting normals in %s", bu_vls_addr(&str));
 	fd = fopen(bu_vls_addr(&str), "w");
@@ -4259,7 +4255,7 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 {
     struct rt_dsp_internal *dsp_ip;
     union record *rp;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_import4_v4()\n");
@@ -4297,7 +4293,6 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     MAT_IDN(dsp_ip->dsp_stom);
     MAT_IDN(dsp_ip->dsp_mtos);
 
-    bu_vls_init(&str);
     bu_vls_strcpy(&str, rp->ss.ss_args);
     if (bu_struct_parse(&str, rt_dsp_parse, (char *)dsp_ip) < 0) {
 	if (BU_VLS_IS_INITIALIZED(&str)) bu_vls_free(&str);
@@ -4341,7 +4336,7 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_dsp_internal *dsp_ip;
     struct rt_dsp_internal dsp;
     union record *rec;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -4364,7 +4359,6 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
      */
     dsp.dsp_stom[15] *= local2mm;
 
-    bu_vls_init(&str);
     bu_vls_struct_print(&str, rt_dsp_ptab, (char *)&dsp);
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_export4_v4(%s)\n", bu_vls_addr(&str));
@@ -4603,12 +4597,10 @@ rt_dsp_describe(struct bu_vls *str,
 {
     register struct rt_dsp_internal *dsp_ip =
 	(struct rt_dsp_internal *)ip->idb_ptr;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (resp) RT_CK_RESOURCE(resp);
     if (db_ip) RT_CK_DBI(db_ip);
-
-    bu_vls_init(&vls);
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_describe()\n");

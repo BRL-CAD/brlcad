@@ -46,9 +46,8 @@ dm_draw_scale(struct dm *dmp,
     int soffset;
     fastf_t xpos1, xpos2;
     fastf_t ypos1, ypos2;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "%g", viewSize*0.5);
     soffset = (int)(strlen(bu_vls_addr(&vls)) * 0.5);
 

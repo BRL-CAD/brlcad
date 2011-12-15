@@ -209,8 +209,8 @@ mlib_setup(struct mfuncs **headp,
 
     const struct mfuncs *mfp;
     int ret = -1;
-    struct bu_vls params;
-    struct bu_vls name;
+    struct bu_vls params = BU_VLS_INIT_ZERO;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
     const char *material;
     size_t mlen;
 
@@ -221,9 +221,6 @@ mlib_setup(struct mfuncs **headp,
 	bu_log("mlib_setup:  region %s already setup\n", rp->reg_name);
 	return -1;
     }
-
-    bu_vls_init(&name);
-    bu_vls_init(&params);
 
     material = rp->reg_mater.ma_shader;
     if (material == NULL || material[0] == '\0') {

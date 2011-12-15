@@ -191,10 +191,10 @@ bu_bitv_vls(struct bu_vls *v, register const struct bu_bitv *bv)
 void
 bu_pr_bitv(const char *str, register const struct bu_bitv *bv)
 {
-    struct bu_vls v;
+    struct bu_vls v = BU_VLS_INIT_ZERO;
 
     BU_CK_BITV(bv);
-    bu_vls_init(&v);
+
     if (str) {
 	bu_vls_strcat(&v, str);
 	bu_vls_strcat(&v, ": ");

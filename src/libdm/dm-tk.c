@@ -847,9 +847,9 @@ struct dm dm_tk = {
     1.0, /* aspect ratio */
     0,
     {0, 0},
-    {0, 0, 0, 0, 0},		/* bu_vls path name*/
-    {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
-    {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
+    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     {0, 0, 0},			/* bg color */
     {0, 0, 0},			/* fg color */
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
@@ -885,8 +885,8 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     int make_square = -1;
     XGCValues gcv;
 
-    struct bu_vls str;
-    struct bu_vls init_proc_vls;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     struct dm *dmp = (struct dm *)NULL;
     Tk_Window tkwin;
     Display *dpy = (Display *)NULL;
@@ -922,7 +922,6 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     bu_vls_init(&dmp->dm_pathName);
     bu_vls_init(&dmp->dm_tkName);
     bu_vls_init(&dmp->dm_dName);
-    bu_vls_init(&init_proc_vls);
 
     dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
@@ -965,9 +964,8 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
 	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = tkwin;
 	} else {
-	    struct bu_vls top_vls;
+	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
 
-	    bu_vls_init(&top_vls);
 	    bu_vls_printf(&top_vls, "%*s", cp - bu_vls_addr(&dmp->dm_pathName),
 			  bu_vls_addr(&dmp->dm_pathName));
 	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top =
@@ -990,7 +988,6 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     bu_vls_printf(&dmp->dm_tkName, "%s",
 		  (char *)Tk_Name(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
 
-    bu_vls_init(&str);
     bu_vls_printf(&str, "_init_dm %V %V\n",
 		  &init_proc_vls,
 		  &dmp->dm_pathName);

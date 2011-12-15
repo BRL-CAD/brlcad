@@ -48,7 +48,7 @@
 static struct wmember all_head;
 static char *input_file;	/* name of the input file */
 static char *brlcad_file;	/* name of output file */
-static struct bu_vls ret_name;	/* unique name built by Build_unique_name() */
+static struct bu_vls ret_name = BU_VLS_INIT_ZERO;	/* unique name built by Build_unique_name() */
 static char *forced_name=NULL;	/* name specified on command line */
 static int stl_format=0;	/* Flag, non-zero indocates raw Stereolithography format input */
 static int solid_count=0;	/* count of solids converted */
@@ -205,18 +205,14 @@ Add_new_name(char *name, unsigned int obj, int type)
 	ptr->solid_name = NULL;
 	return ptr;
     } else if (type == PART_TYPE) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_strcpy(&vls, "s.");
 	bu_vls_strcat(&vls, ptr->brlcad_name);
 
 	ptr->solid_name = bu_vls_strgrab(&vls);
     } else {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_strcpy(&vls, "s.");
 	bu_vls_strcat(&vls, ptr->brlcad_name);
@@ -1049,7 +1045,6 @@ main(int argc, char **argv)
     vert_tree_root = create_vert_tree();
 
     bu_ptbl_init(&null_parts, 64, " &null_parts");
-    bu_vls_init(&ret_name);
 
     forced_name = NULL;
 

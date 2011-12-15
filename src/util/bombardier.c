@@ -155,7 +155,7 @@ static void
 load_file(const char *filename)
 {
     FILE *fp = NULL;
-    struct bu_vls buffer;
+    struct bu_vls buffer = BU_VLS_INIT_ZERO;
 
     if (!bu_file_exists(filename)) {
 	return;
@@ -168,7 +168,6 @@ load_file(const char *filename)
 	return;
     }
 
-    bu_vls_init(&buffer);
     if (!report) {
 	BU_GET(report, struct bu_vls);
 	bu_vls_init(report);
@@ -210,8 +209,8 @@ static int
 init(Tcl_Interp *interp)
 {
     char *c;
-    struct bu_vls appname;
-    struct bu_vls crash_reporter;
+    struct bu_vls appname = BU_VLS_INIT_ZERO;
+    struct bu_vls crash_reporter = BU_VLS_INIT_ZERO;
 
     /* locate brl-cad specific scripts (or uninstalled tcl/tk stuff) */
     tclcad_auto_path(interp);
@@ -232,8 +231,6 @@ init(Tcl_Interp *interp)
 	bu_log("Initialization error, report is NULL\n");
 	return TCL_ERROR;
     }
-
-    bu_vls_init(&appname);
 
     /* try to pull the command name from the report */
     c = bu_vls_addr(report);
@@ -266,7 +263,6 @@ init(Tcl_Interp *interp)
     }
 
     /* FIXME: why are we stashing this in a variable? */
-    bu_vls_init(&crash_reporter);
     init_crash_reporter(&crash_reporter);
     Tcl_SetVar(interp, "script", bu_vls_addr(&crash_reporter), 0);
     bu_vls_free(&crash_reporter);

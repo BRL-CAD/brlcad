@@ -3352,10 +3352,9 @@ main( int argc, char *argv[] )
 
 	if ( BU_LIST_NON_EMPTY( &head ) ) {
 	    unsigned char *tmp_rgb;
-	    struct bu_vls comb_name;
+	    struct bu_vls comb_name = BU_VLS_INIT_ZERO;
 
 	    tmp_rgb = &rgb[layers[i]->color_number*3];
-	    bu_vls_init( &comb_name );
 	    bu_vls_printf( &comb_name, "%s.c.%d", layers[i]->name, i );
 	    if ( mk_comb( out_fp, bu_vls_addr( &comb_name ), &head, 1, NULL, NULL,
 			  tmp_rgb, 1, 0, 1, 100, 0, 0, 0 ) ) {
@@ -3369,10 +3368,9 @@ main( int argc, char *argv[] )
 
 
     if ( BU_LIST_NON_EMPTY( &head_all ) ) {
-	struct bu_vls top_name;
+	struct bu_vls top_name = BU_VLS_INIT_ZERO;
 	int count=0;
 
-	bu_vls_init(&top_name);
 	bu_vls_strcpy( &top_name, "all" );
 	while ( db_lookup( out_fp->dbip, bu_vls_addr( &top_name ), LOOKUP_QUIET ) != RT_DIR_NULL ) {
 	    count++;

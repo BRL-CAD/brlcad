@@ -123,7 +123,7 @@ int
 cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_cmdhist_obj *chop;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc == 1) {
 	/* get list of command history objects */
@@ -149,7 +149,6 @@ cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **a
 	return TCL_OK;
     }
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib ch_open");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);

@@ -810,7 +810,7 @@ rt_submodel_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
 {
     struct rt_submodel_internal *sip;
     union record *rp;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     BU_CK_EXTERNAL(ep);
     RT_CK_DBI(dbip);
@@ -834,7 +834,6 @@ rt_submodel_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     if (mat == NULL) mat = bn_mat_identity;
     MAT_COPY(sip->root2leaf, mat);
 
-    bu_vls_init(&str);
     bu_vls_strcpy(&str, rp->ss.ss_args);
 
     if (bu_struct_parse(&str, rt_submodel_parse, (char *)sip) < 0) {
@@ -867,7 +866,7 @@ rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
 {
     struct rt_submodel_internal *sip;
     union record *rec;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -881,7 +880,6 @@ rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     ep->ext_buf = bu_calloc(1, ep->ext_nbytes, "submodel external");
     rec = (union record *)ep->ext_buf;
 
-    bu_vls_init(&str);
     bu_vls_struct_print(&str, rt_submodel_parse, (char *)sip);
 
     rec->ss.ss_id = DBID_STRSOL;
@@ -903,7 +901,7 @@ int
 rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_submodel_internal *sip;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -922,7 +920,6 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
     if (mat == NULL) mat = bn_mat_identity;
     MAT_COPY(sip->root2leaf, mat);
 
-    bu_vls_init(&str);
     bu_vls_strncpy(&str, (const char *)ep->ext_buf, ep->ext_nbytes);
 
     if (bu_struct_parse(&str, rt_submodel_parse, (char *)sip) < 0) {
@@ -954,7 +951,7 @@ int
 rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     struct rt_submodel_internal *sip;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -964,7 +961,6 @@ rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     RT_SUBMODEL_CK_MAGIC(sip);
 
     BU_CK_EXTERNAL(ep);
-    bu_vls_init(&str);
     bu_vls_struct_print(&str, rt_submodel_parse, (char *)sip);
     ep->ext_nbytes = bu_vls_strlen(&str);
     ep->ext_buf = bu_calloc(1, ep->ext_nbytes, "submodel external");

@@ -70,7 +70,7 @@ rt_pr_soltab(register const struct soltab *stp)
 void
 rt_pr_region(register const struct region *rp)
 {
-    struct bu_vls v;
+    struct bu_vls v = BU_VLS_INIT_ZERO;
 
     RT_CK_REGION(rp);
 
@@ -94,7 +94,6 @@ rt_pr_region(register const struct region *rp)
     if (rp->reg_mater.ma_shader && rp->reg_mater.ma_shader[0] != '\0')
 	bu_log("Shader '%s'\n", rp->reg_mater.ma_shader);
 
-    bu_vls_init(&v);
     rt_pr_tree_vls(&v, rp->reg_treetop);
     bu_log("%s %d %s\n", rp->reg_name,
 	   rp->reg_instnum, bu_vls_addr(&v));
@@ -109,11 +108,10 @@ void
 rt_pr_partitions(const struct rt_i *rtip, register const struct partition *phead, const char *title)
 {
     register const struct partition *pp;
-    struct bu_vls v;
+    struct bu_vls v = BU_VLS_INIT_ZERO;
 
     RT_CHECK_RTI(rtip);
 
-    bu_vls_init(&v);
     bu_log_indent_vls(&v);
     bu_vls_strcat(&v, "------");
     bu_vls_strcat(&v, title);
@@ -202,11 +200,10 @@ rt_pr_pt_vls(struct bu_vls *v, const struct rt_i *rtip, register const struct pa
 void
 rt_pr_pt(const struct rt_i *rtip, register const struct partition *pp)
 {
-    struct bu_vls v;
+    struct bu_vls v = BU_VLS_INIT_ZERO;
 
     RT_CHECK_RTI(rtip);
     RT_CHECK_PT(pp);
-    bu_vls_init(&v);
     rt_pr_pt_vls(&v, rtip, pp);
     bu_log("%s", bu_vls_addr(&v));
     bu_vls_free(&v);
@@ -240,11 +237,10 @@ rt_pr_seg_vls(struct bu_vls *v, register const struct seg *segp)
 void
 rt_pr_seg(register const struct seg *segp)
 {
-    struct bu_vls v;
+    struct bu_vls v = BU_VLS_INIT_ZERO;
 
     RT_CK_SEG(segp);
 
-    bu_vls_init(&v);
     rt_pr_seg_vls(&v, segp);
     bu_log("%s", bu_vls_addr(&v));
     bu_vls_free(&v);
@@ -257,11 +253,10 @@ rt_pr_seg(register const struct seg *segp)
 void
 rt_pr_hit(const char *str, register const struct hit *hitp)
 {
-    struct bu_vls v;
+    struct bu_vls v = BU_VLS_INIT_ZERO;
 
     RT_CK_HIT(hitp);
 
-    bu_vls_init(&v);
     rt_pr_hit_vls(&v, str, hitp);
     bu_log("%s", bu_vls_addr(&v));
     bu_vls_free(&v);

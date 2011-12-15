@@ -512,8 +512,7 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
     /*double attr_float_val;*/
     char *endptr;
     int color[3] = {-1, -1, -1};
-    struct bu_vls newval;
-    bu_vls_init(&newval);
+    struct bu_vls newval = BU_VLS_INIT_ZERO;
 
     /* check inputs */
     RT_CK_COMB(comb);
@@ -643,11 +642,10 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
 void
 db5_sync_comb_to_attr(struct bu_attribute_value_set *avs, const struct rt_comb_internal *comb)
 {
-    struct bu_vls newval;
+    struct bu_vls newval = BU_VLS_INIT_ZERO;
 
     /* check inputs */
     RT_CK_COMB(comb);
-    bu_vls_init(&newval);
 
     /* Region */
     if (comb->region_flag) {

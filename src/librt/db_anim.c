@@ -167,9 +167,8 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 		if (materp->ma_shader) bu_free((genptr_t)materp->ma_shader, "ma_shader");
 		materp->ma_shader = bu_vls_strdup(&anp->an_u.anu_p.anp_shader);
 	    } else if (anp->an_u.anu_p.anp_op == RT_ANP_APPEND) {
-		struct bu_vls str;
+		struct bu_vls str = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&str);
 		bu_vls_strcpy(&str, materp->ma_shader);
 		bu_vls_putc(&str, ' ');
 		bu_vls_vlscat(&str, &anp->an_u.anu_p.anp_shader);

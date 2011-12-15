@@ -766,8 +766,8 @@ c_iregex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_p
 HIDDEN int
 f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
-    struct bu_vls attribname;
-    struct bu_vls value;
+    struct bu_vls attribname = BU_VLS_INIT_ZERO;
+    struct bu_vls value = BU_VLS_INIT_ZERO;
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair *avpp;
     size_t equalpos = 0;
@@ -775,10 +775,6 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
     int strcomparison = 0;
     size_t i;
     struct directory *dp;
-
-    bu_vls_init(&attribname);
-    bu_vls_init(&value);
-
 
     /* Check for unescaped >, < or = characters.  If present, the
      * attribute must not only be present but the value assigned to

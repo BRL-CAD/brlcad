@@ -55,8 +55,8 @@ make_shape(struct rt_wdb *fd, int verbose, int debug, size_t idx, size_t num, po
 
     point_t V = VINIT_ZERO;
     vect_t h = VINIT_ZERO;
-    struct bu_vls str_sketch;
-    struct bu_vls str_extrude;
+    struct bu_vls str_sketch = BU_VLS_INIT_ZERO;
+    struct bu_vls str_extrude = BU_VLS_INIT_ZERO;
 
     struct rt_sketch_internal skt;
     struct line_seg *lsg = NULL;
@@ -106,12 +106,10 @@ make_shape(struct rt_wdb *fd, int verbose, int debug, size_t idx, size_t num, po
     skt.curve.segment[num - 1] = (genptr_t)lsg;
 
     /* write out sketch shape */
-    bu_vls_init(&str_sketch);
     bu_vls_sprintf(&str_sketch, "shape-%zu.sketch", idx);
     mk_sketch(fd, bu_vls_addr(&str_sketch), &skt);
 
     /* extrude the shape */
-    bu_vls_init(&str_extrude);
     bu_vls_sprintf(&str_extrude, "shape-%zu.extrude", idx);
     VSET(h, 0.0, 0.0, 10.0); /* FIXME: arbitrary height */
     mk_extrusion(fd, bu_vls_addr(&str_extrude), bu_vls_addr(&str_sketch), skt.V, h, skt.u_vec, skt.v_vec, 0);
@@ -132,8 +130,8 @@ main(int argc, char *argv[])
     size_t i;
     const char *argv0 = argv[0];
     struct rt_wdb *fd_out;
-    struct bu_vls vls_in;
-    struct bu_vls vls_out;
+    struct bu_vls vls_in = BU_VLS_INIT_ZERO;
+    struct bu_vls vls_out = BU_VLS_INIT_ZERO;
 
     int opt_debug = 0;
     int opt_verbose = 0;
@@ -189,10 +187,8 @@ main(int argc, char *argv[])
 	bu_exit(1, "ERROR: Missing input and output file names\n");
     }
 
-    bu_vls_init(&vls_in);
     bu_vls_strcat(&vls_in, argv[0]);
 
-    bu_vls_init(&vls_out);
     if (argc < 2) {
 	bu_vls_printf(&vls_out, "%s.g", argv[0]);
     } else {

@@ -73,7 +73,7 @@
 void MakeP(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_length, fastf_t ref_ind, fastf_t thickness)
 {
     struct wmember lensglass, lens;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     fastf_t sph_R, epa_H, epa_R, rcc_h;
     int lens_type;
     point_t origin;
@@ -85,9 +85,6 @@ void MakeP(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
     } else {
 	lens_type = -1;
     }
-
-    bu_vls_init(&str);
-
 
     sph_R = lens_type*focal_length*(ref_ind - 1);
     bu_log("sph_R = %f\n", sph_R);
@@ -141,21 +138,18 @@ void MakeP(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
 void MakeD(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_length, fastf_t ref_ind, fastf_t thickness)
 {
     struct wmember lensglass, lens;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     fastf_t sph_R, epa_H, epa_R, rcc_h;
     int lens_type;
     point_t origin;
     vect_t height;
     vect_t breadth;
 
-    bu_vls_init(&str);
-
     if (focal_length > 0) {
 	lens_type = 1;
     } else {
 	lens_type = -1;
     }
-
 
     sph_R = ((ref_ind - 1) * sqrt(focal_length * lens_type * focal_length * lens_type * ref_ind * ref_ind - thickness * focal_length * lens_type * ref_ind) + focal_length * lens_type * ref_ind * ref_ind - focal_length * lens_type * ref_ind)/ref_ind;
     bu_log("sph_R = %f\n", sph_R);
@@ -262,15 +256,11 @@ int ReadArgs(int argc, char **argv, int *lens_1side_2side, fastf_t *ref_ind, fas
 int main(int ac, char *av[])
 {
     struct rt_wdb *db_fp = NULL;
-    struct bu_vls lens_type;
-    struct bu_vls name;
-    struct bu_vls str;
+    struct bu_vls lens_type = BU_VLS_INIT_ZERO;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
     int lens_1side_2side;
     fastf_t ref_ind, thickness, diameter, focal_length;
 
-    bu_vls_init(&str);
-    bu_vls_init(&lens_type);
-    bu_vls_init(&name);
     bu_vls_trunc(&lens_type, 0);
     bu_vls_trunc(&name, 0);
 

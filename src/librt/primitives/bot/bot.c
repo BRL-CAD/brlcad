@@ -817,7 +817,7 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     size_t i;
     size_t chars_used;
     size_t num_recs;
-    struct bu_vls face_mode;
+    struct bu_vls face_mode = BU_VLS_INIT_ZERO;
 
     if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
@@ -839,7 +839,6 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	}
 	if (!bot_ip->thickness)
 	    bot_ip->thickness = (fastf_t *)bu_calloc(bot_ip->num_faces, sizeof(fastf_t), "BOT thickness");
-	bu_vls_init(&face_mode);
 	bu_bitv_to_hex(&face_mode, bot_ip->face_mode);
 	ep->ext_nbytes += bot_ip->num_faces * 8 + bu_vls_strlen(&face_mode) + 1;
     }
@@ -1039,7 +1038,7 @@ int
 rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_bot_internal *bip;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     unsigned char *cp;
     size_t i;
     size_t rem;
@@ -1055,7 +1054,6 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     if (bip->mode == RT_BOT_PLATE || bip->mode == RT_BOT_PLATE_NOCOS) {
 	/* build hex string for face mode */
-	bu_vls_init(&vls);
 	if (bip->face_mode)
 	    bu_bitv_to_hex(&vls, bip->face_mode);
     }

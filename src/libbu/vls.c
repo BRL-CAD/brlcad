@@ -811,10 +811,9 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			    if (stringlen >= fieldlen)
 				bu_vls_strncat(vls, str, (size_t)fieldlen);
 			    else {
-				struct bu_vls padded;
+				struct bu_vls padded = BU_VLS_INIT_ZERO;
 				int i;
 
-				bu_vls_init(&padded);
 				if (left_justify)
 				    bu_vls_strcat(&padded, str);
 				for (i = 0; i < fieldlen - stringlen; ++i)
@@ -850,10 +849,9 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			    if (stringlen >= fieldlen)
 				bu_vls_strncat(vls, bu_vls_addr(vp), (size_t)fieldlen);
 			    else {
-				struct bu_vls padded;
+				struct bu_vls padded = BU_VLS_INIT_ZERO;
 				int i;
 
-				bu_vls_init(&padded);
 				if (left_justify)
 				    bu_vls_vlscat(&padded, vp);
 				for (i = 0; i < fieldlen - stringlen; ++i)
@@ -1123,13 +1121,12 @@ bu_vls_print_positions_used(const struct bu_vls *vp)
 void
 bu_vls_detab(struct bu_vls *vp)
 {
-    struct bu_vls src;
+    struct bu_vls src = BU_VLS_INIT_ZERO;
     char *cp;
     int used;
 
     BU_CK_VLS(vp);
 
-    bu_vls_init(&src);
     bu_vls_vlscatzap(&src, vp);	/* make temporary copy of src */
     bu_vls_extend(vp, (unsigned int)bu_vls_strlen(&src) + (unsigned int)_VLS_ALLOC_STEP);
 

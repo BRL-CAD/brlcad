@@ -427,7 +427,7 @@ region_start ( db_tree_state *tsp,
 {
     rt_comb_internal *comb;
     directory *dp;
-    bu_vls str;
+    bu_vls str = BU_VLS_INIT_ZERO;
     ostringstream ostr;
     string infix, postfix;
 
@@ -442,8 +442,6 @@ region_start ( db_tree_state *tsp,
     /* here is where the conversion should be done */
     cout << "* Here is where the conversion should be done *" << endl;
     printf( "Write this region (name=%s) as a part in your format:\n", dp->d_namep );
-
-    bu_vls_init( &str );
 
     describe_tree( combp->tree, &str );
 
@@ -502,7 +500,8 @@ void
 describe_tree(  tree *tree,
 		bu_vls *str)
 {
-    bu_vls left, right;
+    bu_vls left = BU_VLS_INIT_ZERO;
+    bu_vls right = BU_VLS_INIT_ZERO;
     char *union_op = " u ";
     char *subtract_op = " - ";
     char *intersect_op = " + ";
@@ -545,8 +544,6 @@ describe_tree(  tree *tree,
 	case OP_XOR:		/* exclusive "or" operator node */
 	    op = xor_op;
     binary:				/* common for all binary nodes */
-	    bu_vls_init( &left );
-	    bu_vls_init( &right );
 	    describe_tree( tree->tr_b.tb_left, &left );
 	    describe_tree( tree->tr_b.tb_right, &right );
 	    bu_vls_putc( str, '(' );

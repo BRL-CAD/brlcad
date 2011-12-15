@@ -125,11 +125,9 @@ isst_load_g(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc,
     char **argv;
     int argc;
     double az, el;
-    struct bu_vls tclstr;
+    struct bu_vls tclstr = BU_VLS_INIT_ZERO;
     vect_t vec;
     Togl   *togl;
-
-    bu_vls_init(&tclstr);    
 
     if (objc < 4) {
         Tcl_WrongNumArgs(interp, 1, objv, "load_g pathname object");
@@ -185,8 +183,7 @@ list_geometry(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_O
     static struct db_i *dbip;
     struct directory *dp;   
     int i;
-    struct bu_vls tclstr;
-    bu_vls_init(&tclstr);
+    struct bu_vls tclstr = BU_VLS_INIT_ZERO;
 
     if (objc < 3) {
         Tcl_WrongNumArgs(interp, 1, objv, "file varname");
@@ -557,9 +554,7 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
     double x, y;
     double az, el;
     double mag_pos, mag_focus;
-    struct bu_vls tclstr;
-    bu_vls_init(&tclstr);    
-
+    struct bu_vls tclstr = BU_VLS_INIT_ZERO;
 
     if (objc < 4) {
         Tcl_WrongNumArgs(interp, 1, objv, "pathName x y");

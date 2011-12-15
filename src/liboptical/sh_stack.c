@@ -73,7 +73,7 @@ ext_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 
 {
     struct bu_mapped_file *parameter_file;
-    struct bu_vls parameter_data;
+    struct bu_vls parameter_data = BU_VLS_INIT_ZERO;
     char *filename;
     int status;
 
@@ -88,7 +88,6 @@ ext_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 	bu_bomb("ext_setup()\n");
     }
 
-    bu_vls_init(&parameter_data);
     bu_vls_strncpy(&parameter_data, (char *)parameter_file->buf,
 		   parameter_file->buflen);
 
@@ -121,7 +120,7 @@ sh_stk_dosetup(char *cp, struct region *rp, genptr_t *dpp, struct mfuncs **mpp, 
 {
     register struct mfuncs *mfp;
     register struct mfuncs *mfp_new;
-    struct bu_vls arg;
+    struct bu_vls arg = BU_VLS_INIT_ZERO;
     char matname[32];
     int ret;
     int i;
@@ -178,7 +177,6 @@ retry:
 found:
     *mpp = mfp;
     *dpp = (char *)0;
-    bu_vls_init(&arg);
     if (*cp != '\0')
 	bu_vls_strcat(&arg, ++cp);
     if (rdebug&RDEBUG_MATERIAL)

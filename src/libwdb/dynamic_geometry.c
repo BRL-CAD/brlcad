@@ -111,7 +111,7 @@ make_hole(struct rt_wdb *wdbp,		/* datbase to be modified */
 					 * get this hole applied
 					 */
 {
-    struct bu_vls tmp_name;
+    struct bu_vls tmp_name = BU_VLS_INIT_ZERO;
     int i, base_len, count=0;
     struct directory *dp_tmp;
 
@@ -132,7 +132,6 @@ make_hole(struct rt_wdb *wdbp,		/* datbase to be modified */
     /* make a unique name for the RCC we will use (of the form
      * "make_hole_%d")
      */
-    bu_vls_init(&tmp_name);
     bu_vls_strcat(&tmp_name, "make_hole_");
     base_len = bu_vls_strlen(&tmp_name);
     bu_vls_strcat(&tmp_name, "0");
@@ -225,7 +224,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
 							 * is to be applied
 							 */
 {
-    struct bu_vls tmp_name;
+    struct bu_vls tmp_name = BU_VLS_INIT_ZERO;
     size_t i, base_len, count=0;
     struct directory *dp;
     struct rt_db_internal intern;
@@ -234,7 +233,6 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
     RT_CHECK_WDB(wdbp);
 
     /* make a unique name for the RCC we will use (of the form "make_hole_%d") */
-    bu_vls_init(&tmp_name);
     bu_vls_strcat(&tmp_name, "make_hole_");
     base_len = bu_vls_strlen(&tmp_name);
     bu_vls_strcat(&tmp_name, "0");

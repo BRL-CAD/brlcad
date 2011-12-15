@@ -3816,10 +3816,10 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 	case NMG_ACTION_ERROR:
     bomb:
 	    {
-		struct bu_vls str;
+		struct bu_vls str = BU_VLS_INIT_ZERO;
 
 		bu_log("nmg_face_state_transition: got action=ERROR\n");
-		bu_vls_init(&str);
+
 		bu_vls_printf(&str, "nmg_face_state_transition(vu %p, pos=%d)\n\told=%s, assessed=%s, new=%s, action=%s\n",
 			      (void *)vu, pos,
 			      nmg_state_names[old_state], nmg_v_assessment_names[assessment],

@@ -83,7 +83,7 @@ rt_constraint_export5(
     struct resource *resp)
 {
     struct rt_constraint_internal *cip;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);
@@ -94,7 +94,6 @@ rt_constraint_export5(
 
     BU_EXTERNAL_INIT(ep);
 
-    bu_vls_init(&str);
     bu_vls_struct_print(&str, rt_constraint_parse, (char *)cip);
 
     ep->ext_nbytes = bu_vls_strlen(&str);

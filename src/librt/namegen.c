@@ -135,7 +135,7 @@ test_regex(char *name, int style)
     regex_t compiled_regex;
     regmatch_t *result_locations;
     int i, ret, components = 0;
-    struct bu_vls testresult;
+    struct bu_vls testresult = BU_VLS_INIT_ZERO;
 
     int *iterators;
 
@@ -173,7 +173,6 @@ test_regex(char *name, int style)
 
     ret = regexec(&compiled_regex, name, components+1, result_locations, 0);
     if (ret == 0) {
-	bu_vls_init(&testresult);
 	for (i=1; i<=components; i++) {
 	    bu_vls_trunc(&testresult, 0);
 	    bu_vls_strncpy(&testresult, name+result_locations[i].rm_so, result_locations[i].rm_eo - result_locations[i].rm_so);
@@ -228,8 +227,8 @@ main()
       char **av;
       struct db_i *dbip;
     */
-    struct bu_vls temp;
-    bu_vls_init(&temp);
+    struct bu_vls temp = BU_VLS_INIT_ZERO;
+
     bu_vls_trunc(&temp, 0);
     bu_vls_printf(&temp, "%s", "s.bcore12.b3");
 

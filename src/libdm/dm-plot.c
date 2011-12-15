@@ -138,11 +138,10 @@ plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 	obj = Tcl_DuplicateObj(obj);
 
     if (((struct plot_vars *)dmp->dm_vars.priv_vars)->debug) {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	Tcl_AppendStringsToObj(obj, "plot_loadMatrix()\n", (char *)NULL);
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
 	bu_vls_printf(&tmp_vls, "transformation matrix = \n");
 	bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8], mat[12]);

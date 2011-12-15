@@ -53,7 +53,7 @@ main(int argc, char **argv)
     struct db_i	*dbip4;
     struct directory	*dp;
     struct bn_tol tol;
-    struct bu_vls colortab;
+    struct bu_vls colortab = BU_VLS_INIT_ZERO;
     char name[17];
     int reverse=0;
     int in_arg=1;
@@ -149,7 +149,6 @@ main(int argc, char **argv)
 
     /* set regionid color table */
     if ( rt_material_head() != MATER_NULL ) {
-	bu_vls_init( &colortab );
 	rt_vls_color_map(&colortab);
 
 	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colortab), fp->dbip);

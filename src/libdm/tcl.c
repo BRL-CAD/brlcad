@@ -52,10 +52,8 @@ HIDDEN int
 dm_validXType_tcl(void *clientData, int argc, const char **argv)
 {
     Tcl_Interp *interp = (Tcl_Interp *)clientData;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     Tcl_Obj *obj;
-
-    bu_vls_init(&vls);
 
     if (argc != 3) {
 	bu_vls_printf(&vls, "helplib dm_validXType");
@@ -85,9 +83,8 @@ dm_bestXType_tcl(void *clientData, int argc, const char **argv)
     char buffer[256] = {0};
 
     if (argc != 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib dm_bestXType");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);

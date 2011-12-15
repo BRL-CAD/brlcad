@@ -205,9 +205,9 @@ charclassmatch(const char *pattern, char test, int *s)
     char c;
     int counter = 0;
     int resultholder = 0;
-    struct bu_vls classname;
+    struct bu_vls classname = BU_VLS_INIT_ZERO;
     CHARCLASS *ctclass;
-    bu_vls_init(&classname);
+
     c = *pattern++;
     while (c && (c != ':') && (resultholder != -1)) {
 	if (c == FNMATCH_EOS) resultholder = -1;

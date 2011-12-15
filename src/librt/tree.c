@@ -575,9 +575,8 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
     }
 
     if (RT_G_DEBUG&DEBUG_SOLIDS) {
-	struct bu_vls str;
+	struct bu_vls str = BU_VLS_INIT_ZERO;
 	bu_log("\n---Primitive %d: %s\n", stp->st_bit, dp->d_namep);
-	bu_vls_init(&str);
 
 	/* verbose=1, mm2local=1.0 */
 	ret = -1;

@@ -56,9 +56,8 @@ bu_vls_printb(struct bu_vls *vls, const char *s, register long unsigned int v, r
 void
 bu_printb(const char *s, register long unsigned int v, register const char *bits)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&str);
     bu_vls_printb(&str, s, v, bits);
     bu_log("%s", bu_vls_addr(&str));
     bu_vls_free(&str);

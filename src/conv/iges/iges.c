@@ -548,12 +548,10 @@ write_color_entity(color, fp_dir, fp_param)
     unsigned char color[3];
     FILE *fp_dir, *fp_param;
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int i;
     float c[3];
-
-    bu_vls_init(&str);
 
     /* initialize directory entry */
     for (i=0; i<21; i++)
@@ -604,11 +602,9 @@ int
 write_attribute_definition(fp_dir, fp_param)
     FILE *fp_dir, *fp_param;
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int i;
-
-    bu_vls_init(&str);
 
     /* initialize directory entry */
     for (i=0; i<21; i++)
@@ -741,12 +737,10 @@ w_start_global(
     const char *id,
     const char *version)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     time_t now;
     struct tm *timep;
     struct stat db_stat;
-
-    bu_vls_init(&str);
 
     /* Write Start Section */
     bu_vls_printf(&str, "This IGES file created by %s from the database %s.", prog_name, db_name);
@@ -926,14 +920,12 @@ verts_to_copious_data(pts, vert_count, pt_size, fp_dir, fp_param)
     int pt_size;
     FILE *fp_dir, *fp_param;
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int i;
 
     if (vert_count < 2)
 	return 0;
-
-    bu_vls_init(&str);
 
     /* initialize directory entry */
     for (i=0; i<21; i++)
@@ -987,7 +979,7 @@ nmg_loop_to_tcurve(
     point_t base_pt,
     FILE *fp_dir, FILE *fp_param)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     struct edgeuse *eu;
     int vert_count=0;
@@ -1010,8 +1002,6 @@ nmg_loop_to_tcurve(
     /* Allocate memory for points */
     model_pts = (point_t *)bu_calloc(vert_count, sizeof(point_t), "nmg_loop_to_tcurve: model_pts");
     param_pts = (point_t *)bu_calloc(vert_count, sizeof(point_t), "nmg_loop_to_tcurve: param_pts");
-
-    bu_vls_init(&str);
 
     /* initialize directory entry */
     for (i=0; i<21; i++)
@@ -1080,7 +1070,7 @@ nmg_fu_to_tsurf(fu, fp_dir, fp_param)
     struct faceuse *fu;
     FILE *fp_dir, *fp_param;
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     struct loopuse *lu;
     int surf_de;
@@ -1094,8 +1084,6 @@ nmg_fu_to_tsurf(fu, fp_dir, fp_param)
     int i;
 
     NMG_CK_FACEUSE(fu);
-
-    bu_vls_init(&str);
 
     /* initialize directory entry */
     for (i=0; i<21; i++)
@@ -1185,13 +1173,11 @@ write_vertex_list(r, vtab, fp_dir, fp_param)
     struct bu_ptbl *vtab;   /* vertex table */
     FILE *fp_dir, *fp_param;
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int i;
 
     NMG_CK_REGION(r);
-
-    bu_vls_init(&str);
 
     /* initialize directory entry */
     for (i=0; i<21; i++)
@@ -1246,14 +1232,12 @@ write_line_entity(start_vg, end_vg, fp_dir, fp_param)
     struct vertex_g *end_vg;
     FILE *fp_dir, *fp_param;
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int i;
 
     NMG_CK_VERTEX_G(start_vg);
     NMG_CK_VERTEX_G(end_vg);
-
-    bu_vls_init(&str);
 
     /* initialize directory entry */
     for (i=0; i<21; i++)
@@ -1293,14 +1277,12 @@ write_linear_bspline(start_vg, end_vg, fp_dir, fp_param)
     struct vertex_g *end_vg;
     FILE *fp_dir, *fp_param;
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int i;
 
     NMG_CK_VERTEX_G(start_vg);
     NMG_CK_VERTEX_G(end_vg);
-
-    bu_vls_init(&str);
 
     /* initialize directory entry */
     for (i=0; i<21; i++)
@@ -1342,13 +1324,11 @@ write_edge_list(r, vert_de, etab, vtab, fp_dir, fp_param)
     struct bu_ptbl *vtab;	/* vertex table (already filled in) */
     FILE *fp_dir, *fp_param;
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int i;
 
     NMG_CK_REGION(r);
-
-    bu_vls_init(&str);
 
     /* initialize directory entry */
     for (i=0; i<21; i++)
@@ -1419,14 +1399,12 @@ write_point_entity(pt, fp_dir, fp_param)
     point_t pt;
     FILE *fp_dir, *fp_param;
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int i;
 
     for (i=0; i<21; i++)
 	dir_entry[i] = DEFAULT;
-
-    bu_vls_init(&str);
 
     bu_vls_printf(&str, "116, %g, %g, %g, 0;" ,
 		  pt[X],
@@ -1456,14 +1434,12 @@ write_direction_entity(pt, fp_dir, fp_param)
     point_t pt;
     FILE *fp_dir, *fp_param;
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int i;
 
     for (i=0; i<21; i++)
 	dir_entry[i] = DEFAULT;
-
-    bu_vls_init(&str);
 
     bu_vls_printf(&str, "123, %g, %g, %g;" ,
 		  pt[X],
@@ -1493,15 +1469,13 @@ write_plane_entity(plane, fp_dir, fp_param)
     plane_t plane;
     FILE *fp_dir, *fp_param;
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     point_t pt_on_plane;	/* a point on the plane */
     int dir_entry[21];
     int i;
 
     for (i=0; i<21; i++)
 	dir_entry[i] = DEFAULT;
-
-    bu_vls_init(&str);
 
     VSCALE(pt_on_plane, plane, plane[W]);
 
@@ -1542,7 +1516,7 @@ write_planar_nurb(fu, u_dir, v_dir, u_max, v_max, base_pt, fp_dir, fp_param)
     struct vertex_g *vg, *vg_next;
     point_t ctl_pt;
     fastf_t umin, umax, vmin, vmax;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int i;
 
@@ -1550,8 +1524,6 @@ write_planar_nurb(fu, u_dir, v_dir, u_max, v_max, base_pt, fp_dir, fp_param)
 
     for (i=0; i<21; i++)
 	dir_entry[i] = DEFAULT;
-
-    bu_vls_init(&str);
 
     /* create direction vectors in u and v directions in plane */
     lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
@@ -1662,7 +1634,7 @@ write_shell_face_loop(name, r, dependent, edge_de, etab, vert_de, vtab, fp_dir, 
     struct loopuse *lu;
     struct shell *s;
     struct vertex *v;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     struct iges_properties props;
     int *shell_list;
     int i;
@@ -1673,8 +1645,6 @@ write_shell_face_loop(name, r, dependent, edge_de, etab, vert_de, vtab, fp_dir, 
     int color_de=DEFAULT;
 
     NMG_CK_REGION(r);
-
-    bu_vls_init(&str);
 
     /* count the shells */
     for (BU_LIST_FOR(s, shell, &r->s_hd))
@@ -2008,7 +1978,7 @@ write_name_entity(name, fp_dir, fp_param)
     char *name;
     FILE *fp_dir, *fp_param;
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int i;
     size_t name_len;
@@ -2016,8 +1986,6 @@ write_name_entity(name, fp_dir, fp_param)
     name_len = strlen(name);
     if (!name_len)
 	return 0;
-
-    bu_vls_init(&str);
 
     /* initialize directory entry */
     for (i=0; i<21; i++)
@@ -2053,7 +2021,7 @@ tor_to_iges(ip, name, fp_dir, fp_param)
     FILE *fp_dir, *fp_param;
 {
     struct rt_tor_internal *tor;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int name_de;
     int i;
@@ -2064,8 +2032,6 @@ tor_to_iges(ip, name, fp_dir, fp_param)
     tor = (struct rt_tor_internal *)ip->idb_ptr;
 
     RT_TOR_CK_MAGIC(tor);
-
-    bu_vls_init(&str);
 
     /* initialize directory entry */
     for (i=0; i<21; i++)
@@ -2107,7 +2073,7 @@ sph_to_iges(ip, name, fp_dir, fp_param)
     FILE *fp_dir, *fp_param;
 {
     struct rt_ell_internal *sph;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     double radius;
     int dir_entry[21];
     int name_de;
@@ -2122,8 +2088,6 @@ sph_to_iges(ip, name, fp_dir, fp_param)
 
     /* write name entity */
     name_de = write_name_entity(name, fp_dir, fp_param);
-
-    bu_vls_init(&str);
 
     /* initialize directory entry */
     for (i=0; i<21; i++)
@@ -2162,7 +2126,7 @@ ell_to_iges(ip, name, fp_dir, fp_param)
     FILE *fp_dir, *fp_param;
 {
     struct rt_ell_internal *ell;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     double radius_a;
     double radius_b;
     double radius_c;
@@ -2182,8 +2146,6 @@ ell_to_iges(ip, name, fp_dir, fp_param)
 
     /* write name entity */
     name_de = write_name_entity(name, fp_dir, fp_param);
-
-    bu_vls_init(&str);
 
     /* initialize directory entry */
     for (i=0; i<21; i++)
@@ -2232,7 +2194,7 @@ rpp_to_iges(ip, name, fp_dir, fp_param)
     FILE *fp_dir, *fp_param;
 {
     struct rt_arb_internal *arb;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     double length_a;
     double length_b;
     double length_c;
@@ -2253,8 +2215,6 @@ rpp_to_iges(ip, name, fp_dir, fp_param)
 
     /* write name entity */
     name_de = write_name_entity(name, fp_dir, fp_param);
-
-    bu_vls_init(&str);
 
     /* initialize directory entry */
     for (i=0; i<21; i++)
@@ -2345,7 +2305,7 @@ tgc_to_iges(ip, name, fp_dir, fp_param)
     fastf_t h_len, a_len, b_len, c_len, d_len;
     vect_t h_dir, a_dir, b_dir;
     int iges_type;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int name_de;
     int i;
@@ -2389,8 +2349,6 @@ tgc_to_iges(ip, name, fp_dir, fp_param)
 
 	/* write name entity */
 	name_de = write_name_entity(name, fp_dir, fp_param);
-
-	bu_vls_init(&str);
 
 	/* initialize directory entry */
 	for (i=0; i<21; i++)
@@ -2457,15 +2415,13 @@ write_tree_of_unions(name, de_list, length, dependent, fp_dir, fp_param)
     FILE *fp_dir;
     FILE *fp_param;
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     struct iges_properties props;
     int dir_entry[21];
     int name_de;
     int prop_de;
     int color_de=DEFAULT;
     int i;
-
-    bu_vls_init(&str);
 
     /* write name entity */
     if (name != NULL)
@@ -2533,15 +2489,13 @@ write_solid_assembly(name, de_list, length, dependent, fp_dir, fp_param)
     FILE *fp_dir;
     FILE *fp_param;
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     struct iges_properties props;
     int dir_entry[21];
     int name_de;
     int prop_de;
     int color_de=DEFAULT;
     int i;
-
-    bu_vls_init(&str);
 
     /* write name entity */
     if (name != NULL)
@@ -2689,7 +2643,6 @@ int
 sketch_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param)
 {
     struct rt_sketch_internal *sketch;
-    struct bu_vls str;
 
     if (ip->idb_type != ID_SKETCH)
 	bu_log("sketch_to_iges called for non-sketch (type=%d)\n", ip->idb_type);
@@ -2700,8 +2653,6 @@ sketch_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_par
 
     /* write name entity */
     (void)write_name_entity(name, fp_dir, fp_param);
-
-    bu_vls_init(&str);
 
     bu_log("The 'sketch' primitive is not yet supported for IGES export.\n");
     bu_log("Unable to export %s\n", name);
@@ -2722,11 +2673,9 @@ write_xform_entity(mat, fp_dir, fp_param)
     mat_t mat;
     FILE *fp_dir, *fp_param;
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int i;
-
-    bu_vls_init(&str);
 
     /* initialize directory entry */
     for (i=0; i<21; i++)
@@ -2759,11 +2708,9 @@ write_solid_instance(orig_de, mat, fp_dir, fp_param)
     mat_t mat;
     FILE *fp_dir, *fp_param;
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int i;
-
-    bu_vls_init(&str);
 
     /* initialize directory entry */
     for (i=0; i<21; i++)
@@ -2794,12 +2741,10 @@ write_att_entity(props, fp_dir, fp_param)
     struct iges_properties *props;
     FILE *fp_dir, *fp_param;
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     size_t str_len;
     int i;
-
-    bu_vls_init(&str);
 
     /* initialize directory entry */
     for (i=0; i<21; i++)
@@ -2863,7 +2808,7 @@ short_comb_to_iges(props, dependent, de_pointers, fp_dir, fp_param)
     int de_pointers[];
     FILE *fp_dir, *fp_param;
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int name_de;
     int props_de;
@@ -2877,8 +2822,6 @@ short_comb_to_iges(props, dependent, de_pointers, fp_dir, fp_param)
 
     if (dependent)
 	status = 10001;
-
-    bu_vls_init(&str);
 
     /* initialize directory entry */
     for (i=0; i<21; i++)
@@ -3014,7 +2957,7 @@ tree_to_iges(comb, length, dependent, props, de_pointers, fp_dir, fp_param)
     int de_pointers[];
     FILE *fp_dir, *fp_param;
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int actual_length=0;
     int name_de;
@@ -3037,8 +2980,6 @@ tree_to_iges(comb, length, dependent, props, de_pointers, fp_dir, fp_param)
 
     if (dependent)
 	status = 10001;
-
-    bu_vls_init(&str);
 
     /* initialize directory entry */
     for (i=0; i<21; i++)

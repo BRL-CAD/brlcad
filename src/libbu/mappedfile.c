@@ -353,7 +353,7 @@ bu_open_mapped_file_with_path(char *const *path, const char *name, const char *a
 /* non-null only when app. will use 'apbuf' */
 {
     char * const *pathp = path;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_mapped_file *ret;
 
     BU_ASSERT_PTR(name, !=, NULL);
@@ -362,8 +362,6 @@ bu_open_mapped_file_with_path(char *const *path, const char *name, const char *a
     /* Do not resort to path for a rooted filename */
     if (name[0] == '/')
 	return bu_open_mapped_file(name, appl);
-
-    bu_vls_init(&str);
 
     /* Try each path prefix in sequence */
     for (; *pathp != NULL; pathp++) {

@@ -365,7 +365,7 @@ void
 GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 {
     struct phong_specific *phong_sp;
-    struct bu_vls matparm;
+    struct bu_vls matparm = BU_VLS_INIT_ZERO;
 
     phong_sp = (struct phong_specific*)bu_malloc(sizeof(struct phong_specific), "phong specific");
 
@@ -387,7 +387,6 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 	  memcpy(phong_sp, &phong_defaults, sizeof(struct phong_specific));
 	*/
 	MS += 7;
-	bu_vls_init(&matparm);
 	bu_vls_printf(&matparm, "%s", MS);
 	bu_struct_parse(&matparm, phong_parse, (char *)phong_sp);
 	bu_vls_free(&matparm);
@@ -423,7 +422,6 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 	  memcpy(phong_sp, &phong_defaults, sizeof(struct phong_specific));
 	*/
 	MS += 5; /* move pointer past "pm " (3 characters) */
-	bu_vls_init(&matparm);
 	bu_vls_printf(&matparm, "%s", MS);
 	bu_struct_parse(&matparm, phong_parse, (char *)phong_sp);
 	bu_vls_free(&matparm);

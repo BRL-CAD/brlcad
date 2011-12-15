@@ -899,7 +899,7 @@ bn_table_read(const char *filename)
 {
     int ret;
     struct bn_table *tabp;
-    struct bu_vls line;
+    struct bu_vls line = BU_VLS_INIT_ZERO;
     FILE *fp;
     size_t nw;
     size_t j;
@@ -916,7 +916,6 @@ bn_table_read(const char *filename)
 	return NULL;
     }
 
-    bu_vls_init(&line);
     bu_vls_gets( &line, fp );
     nw = 0;
     /* TODO: %lu to size_t isn't right. We may need a bu_sscanf() that can cope

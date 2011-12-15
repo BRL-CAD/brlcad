@@ -223,10 +223,8 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 {
     static char result[MAXPATHLEN] = {0};
     const char *lhs;
-    struct bu_vls searched;
+    struct bu_vls searched = BU_VLS_INIT_ZERO;
     char where[MAX_WHERE_SIZE] = {0};
-
-    bu_vls_init(&searched);
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	bu_log("bu_brlcad_root: searching for [%s]\n", rhs?rhs:"");
@@ -349,11 +347,9 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 {
     static char result[MAXPATHLEN] = {0};
     const char *lhs;
-    struct bu_vls searched;
+    struct bu_vls searched = BU_VLS_INIT_ZERO;
     char where[MAX_WHERE_SIZE] = {0};
     char path[MAXPATHLEN] = {0};
-
-    bu_vls_init(&searched);
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	bu_log("bu_brlcad_data: looking for [%s]\n", rhs?rhs:"");

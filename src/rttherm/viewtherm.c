@@ -707,7 +707,7 @@ void
 view_2init(struct application *app, char *framename)
 {
     size_t i;
-    struct bu_vls name;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
 
     app->a_refrac_index = 1.0;	/* RI_AIR -- might be water? */
     app->a_cumlen = 0.0;
@@ -734,7 +734,6 @@ view_2init(struct application *app, char *framename)
     }
 
     /* Extra 2nd file! Write out spectrum info */
-    bu_vls_init(&name);
     bu_vls_printf(&name, "%s.spect", framename ? framename : "RTTHERM");
     bn_table_write(bu_vls_addr(&name), spectrum);
     bu_log("Wrote %s\n", bu_vls_addr(&name));

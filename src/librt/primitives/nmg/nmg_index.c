@@ -519,11 +519,10 @@ nmg_vls_struct_counts(struct bu_vls *str, const struct nmg_struct_counts *ctr)
 void
 nmg_pr_struct_counts(const struct nmg_struct_counts *ctr, const char *str)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     bu_log("nmg_pr_count(%s)\n", str);
 
-    bu_vls_init(&vls);
     nmg_vls_struct_counts(&vls, ctr);
     bu_log("%s", bu_vls_addr(&vls));
     bu_vls_free(&vls);

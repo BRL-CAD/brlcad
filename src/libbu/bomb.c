@@ -202,11 +202,9 @@ bu_exit(int status, const char *fmt, ...)
 {
     if (LIKELY(fmt && strlen(fmt) > 0)) {
 	va_list ap;
-	struct bu_vls message;
+	struct bu_vls message = BU_VLS_INIT_ZERO;
 
 	va_start(ap, fmt);
-
-	bu_vls_init(&message);
 
 	bu_vls_vprintf(&message, fmt, ap);
 

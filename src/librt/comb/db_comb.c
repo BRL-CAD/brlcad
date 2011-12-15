@@ -434,7 +434,7 @@ rt_comb_export4(
     union record *rp;
     size_t j;
     char *endp;
-    struct bu_vls tmp_vls;
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
     RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);
@@ -534,8 +534,6 @@ rt_comb_export4(
 	rp[0].c.c_rgb[1] = comb->rgb[1];
 	rp[0].c.c_rgb[2] = comb->rgb[2];
     }
-
-    bu_vls_init(&tmp_vls);
 
     /* convert TCL list format shader to keyword=value format */
     if (bu_shader_to_key_eq(bu_vls_addr(&comb->shader), &tmp_vls)) {

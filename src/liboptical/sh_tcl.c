@@ -63,7 +63,7 @@ struct tcl_specific tcl_defaults = {
     MAT_INIT_ZERO,		/* tcl_m_to_r */
     {0},			/* tcl_interps */
     NULL,			/* tcl_objPtr */
-    {0, NULL, 0, 0, 0},		/* tcl_file */
+    BU_VLS_INIT_ZERO,		/* tcl_file */
     NULL			/* tcl_mp */
 };
 

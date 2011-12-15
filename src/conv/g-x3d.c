@@ -610,7 +610,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     struct nmgregion *reg;
     struct bu_ptbl verts;
     struct vrml_mat mat;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     char *tok;
     int i;
     int first=1;
@@ -686,7 +686,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     mat.tx_file[0] = '\0';
     mat.tx_w = -1;
     mat.tx_n = -1;
-    bu_vls_init( &vls );
+
     bu_vls_strcpy( &vls, &mater->ma_shader[strlen(mat.shader)] );
     (void)bu_struct_parse( &vls, vrml_mat_parse, (char *)&mat );
 

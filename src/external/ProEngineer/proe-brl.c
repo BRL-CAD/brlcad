@@ -561,7 +561,7 @@ make_legal( char *name )
 char *
 create_unique_name( char *name )
 {
-    struct bu_vls tmp_name;
+    struct bu_vls tmp_name = BU_VLS_INIT_ZERO;
     int initial_length=0;
     int count=0;
 
@@ -579,7 +579,6 @@ create_unique_name( char *name )
     }
 
     /* create a unique name */
-    bu_vls_init( &tmp_name );
     bu_vls_strcpy( &tmp_name, name );
     lower_case( bu_vls_addr( &tmp_name ) );
     make_legal( bu_vls_addr( &tmp_name ) );
@@ -2063,7 +2062,7 @@ output_part( ProMdl model )
 	    ProMassProperty mass_prop;
 	    ProMaterialProps material_props;
 	    int got_density;
-	    struct bu_vls tree;
+	    struct bu_vls tree = BU_VLS_INIT_ZERO;
 
 	    curr_tri = 0;
 	    clean_vert_tree(vert_tree_root);
@@ -2160,7 +2159,6 @@ output_part( ProMdl model )
 	    fprintf( outfp, "attr set {%s} %s %s\n", sol_name, PROE_NAME_ATTR, curr_part_name );
 
 	    /* build the tree for this region */
-	    bu_vls_init( &tree );
 	    build_tree( sol_name, &tree );
 	    bu_free( sol_name, "sol_name" );
 	    output_csg_prims();
@@ -3273,7 +3271,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	}
 
 	if ( (name_fd=fopen( name_file, "rb" ) ) == NULL ) {
-	    struct bu_vls error_msg;
+	    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 	    int dialog_return=0;
 	    wchar_t w_error_msg[512];
 
@@ -3282,7 +3280,6 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		fprintf( logger, "%s\n", strerror( errno ) );
 	    }
 
-	    bu_vls_init( &error_msg );
 	    (void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Cannot open part name file" );
 	    ProMessageClear();
 	    fprintf( stderr, "Cannot open part name file\n" );
@@ -3566,9 +3563,8 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
     /* use UI dialog */
     status = ProUIDialogCreate( "proe_brl", "proe_brl" );
     if ( status != PRO_TK_NO_ERROR ) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "Failed to create dialog box for proe-brl, error = %d\n", status );
 	ProMessageDisplay(MSGFIL, "USER_INFO", bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -3577,9 +3573,8 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 
     status = ProUICheckbuttonActivateActionSet( "proe_brl", "elim_small", elim_small_activate, NULL );
     if ( status != PRO_TK_NO_ERROR ) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "Failed to set action for \"eliminate small features\" checkbutton, error = %d\n", status );
 	ProMessageDisplay(MSGFIL, "USER_INFO", bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -3588,9 +3583,8 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 
     status = ProUIPushbuttonActivateActionSet( "proe_brl", "doit", doit, NULL );
     if ( status != PRO_TK_NO_ERROR ) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "Failed to set action for 'Go' button\n" );
 	ProMessageDisplay(MSGFIL, "USER_INFO", bu_vls_addr(&vls));
 	ProUIDialogDestroy( "proe_brl" );
@@ -3600,9 +3594,8 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 
     status = ProUIPushbuttonActivateActionSet( "proe_brl", "quit", do_quit, NULL );
     if ( status != PRO_TK_NO_ERROR ) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "Failed to set action for 'Quit' button\n" );
 	ProMessageDisplay(MSGFIL, "USER_INFO", bu_vls_addr(&vls));
 	ProUIDialogDestroy( "proe_brl" );
@@ -3612,9 +3605,8 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 
     status = ProUIDialogActivate( "proe_brl", &ret_status );
     if ( status != PRO_TK_NO_ERROR ) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "Error in proe-brl Dialog, error = %d\n",
 		 status );
 	bu_vls_printf(&vls, "\t dialog returned %d\n", ret_status );

@@ -225,12 +225,10 @@ Usage(void)
 void
 Make_brlcad_names( struct obj_info *part )
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     int count=0;
     char *tmp_name, *ptr;
     Tcl_HashEntry *hash_entry=NULL;
-
-    bu_vls_init( &vls );
 
     if ( use_part_name_hash ) {
 	hash_entry = Tcl_FindHashEntry( &htbl, part->obj_name );

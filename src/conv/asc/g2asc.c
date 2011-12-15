@@ -275,9 +275,8 @@ main(int argc, char **argv)
 	    }
 
 	    if ( dp->d_flags & RT_DIR_COMB ) {
-		struct bu_vls logstr;
+		struct bu_vls logstr = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&logstr);
 		if (intern.idb_meth->ft_get(&logstr, &intern, "tree") != TCL_OK) {
 		    rt_db_free_internal(&intern);
 		    bu_log("Unable to export '%s', skipping\n", dp->d_namep);
@@ -297,9 +296,8 @@ main(int argc, char **argv)
 			     Tcl_GetStringResult(interp) );
 		}
 	    } else {
-		struct bu_vls logstr;
+		struct bu_vls logstr = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&logstr);
 		if ( (dp->d_minor_type != ID_CONSTRAINT) && (intern.idb_meth->ft_get( &logstr, &intern, NULL ) != TCL_OK) )  {
 		    rt_db_free_internal(&intern);
 		    bu_log("Unable to export '%s', skipping\n", dp->d_namep );
@@ -703,11 +701,10 @@ bot_dump(void)
 	fprintf(ofp,  "	%lu: %26.20e %26.20e %26.20e\n", (unsigned long)i, V3ARGS( &bot->vertices[i*3] ) );
     if ( bot->mode == RT_BOT_PLATE )
     {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	for ( i=0; i<bot->num_faces; i++ )
 	    fprintf(ofp,  "	%lu: %d %d %d %26.20e\n", (unsigned long)i, V3ARGS( &bot->faces[i*3] ), bot->thickness[i] );
-	bu_vls_init( &vls );
 	bu_bitv_to_hex( &vls, bot->face_mode );
 	fprintf(ofp,  "	%s\n", bu_vls_addr( &vls ) );
 	bu_vls_free( &vls );

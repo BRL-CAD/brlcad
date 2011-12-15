@@ -291,13 +291,12 @@ db_apply_state_from_comb(struct db_tree_state *tsp, const struct db_full_path *p
 	    }
 	    /* Just quietly ignore it -- it's being subtracted off */
 	} else if (tsp->ts_mater.ma_minherit == 0) {
-	    struct bu_vls tmp_vls;
+	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	    /* DB_INH_LOWER -- lower nodes in tree override */
 	    if (tsp->ts_mater.ma_shader)
 		bu_free((genptr_t)tsp->ts_mater.ma_shader, "ma_shader");
 
-	    bu_vls_init(&tmp_vls);
 	    if (bu_shader_to_key_eq(bu_vls_addr(&comb->shader), &tmp_vls)) {
 		char *sofar = db_path_to_string(pathp);
 

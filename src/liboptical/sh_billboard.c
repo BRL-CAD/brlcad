@@ -87,12 +87,12 @@ struct bbd_specific bbd_defaults = {
     512,	/* img_width */
     512,	/* img_height */
     100.0,	/* img_scale */
-    {0, NULL, 0, 0, 0},
+    BU_VLS_INIT_ZERO,
     0,
-    {0, NULL, NULL},
+    BU_LIST_INIT_ZERO,
     NULL,
-    {0.0, 0.0, 0.0, 0.0},
-    {0.0, 0.0, 0.0, 0.0}
+    HINIT_ZERO,
+    HINIT_ZERO
 };
 
 

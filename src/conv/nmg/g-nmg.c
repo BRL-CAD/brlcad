@@ -129,7 +129,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     struct bu_list		vhead;
     union tree		*ret_tree;
     char			*sofar;
-    struct bu_vls		shader_params;
+    struct bu_vls		shader_params = BU_VLS_INIT_ZERO;
     char nmg_name[16];
     unsigned char rgb[3];
     unsigned char *color = (unsigned char *)NULL;
@@ -182,7 +182,6 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 	matparm = NULL;
     }
 
-    bu_vls_init( &shader_params );
     if ( matparm ) {
 	bu_vls_strcpy( &shader_params, matparm );
 	matparm = strtok( (char *)NULL, tok_sep );

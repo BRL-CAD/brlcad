@@ -163,17 +163,14 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
     struct shot *sh = (struct shot *)ap->a_uptr;
     int status = 0;
     struct reg_hit *rh;
-    struct bu_vls v;
-    struct bu_vls result;
+    struct bu_vls v = BU_VLS_INIT_ZERO;
+    struct bu_vls result = BU_VLS_INIT_ZERO;
     struct valstruct {
 	double val;
     } vs;
     static struct bu_structparse val_sp[] = {
 	{"%f", 1, "val", bu_offsetof(struct valstruct, val), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     };
-
-    bu_vls_init(&v);
-    bu_vls_init(&result);
 
     /* examine each partition until we get back to the head */
     rh = BU_LIST_FIRST(reg_hit, &sh->regions);
@@ -315,9 +312,8 @@ main(int argc, char **argv)
     char idbuf[2048] = {0};	/* First ID record info */
 
     int status = 0;
-    struct bu_vls buf;
+    struct bu_vls buf = BU_VLS_INIT_ZERO;
     struct shot sh;
-
 
     progname = argv[0];
 
@@ -356,10 +352,6 @@ main(int argc, char **argv)
      * (it precomputes some values, sets up space partitioning, etc.)
      */
     rt_prep_parallel(rtip, 1);
-
-
-    bu_vls_init(&buf);
-
 
     memset((void *)&sh, 0, sizeof(sh));
     BU_LIST_INIT(&sh.regions);

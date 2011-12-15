@@ -52,7 +52,7 @@ static int	ncpu = 1;	/* Number of processors */
 static char	*prefix = NULL;	/* output filename prefix. */
 static FILE	*fp_fig;	/* Jack Figure file. */
 static struct db_i		*dbip;
-static struct bu_vls		base_seg;
+static struct bu_vls		base_seg = BU_VLS_INIT_ZERO;
 static struct rt_tess_tol	ttol;
 static struct bn_tol		tol;
 static struct model		*the_model;
@@ -303,11 +303,9 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     if ( r && !no_file_output )  {
 	FILE	*fp_psurf;
 	size_t	i;
-	struct bu_vls	file_base;
-	struct bu_vls	file;
+	struct bu_vls	file_base = BU_VLS_INIT_ZERO;
+	struct bu_vls	file = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&file_base);
-	bu_vls_init(&file);
 	bu_vls_strcpy(&file_base, prefix);
 	bu_vls_strcat(&file_base, DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
 	/* Dots confuse Jack's Peabody language.  Change to '_'. */
@@ -415,7 +413,7 @@ main(int argc, char **argv)
     char		*dot;
     int	c;
     double		percent;
-    struct bu_vls	fig_file;
+    struct bu_vls	fig_file = BU_VLS_INIT_ZERO;
 
     bu_setlinebuf( stderr );
 
@@ -514,7 +512,7 @@ main(int argc, char **argv)
     }
 
     /* Create .fig file name and open it. */
-    bu_vls_init( &fig_file );
+
     /* Ignore leading path name. */
     if ((dot = strrchr(argv[0], '/')) != (char *)NULL) {
 	if (prefix)
@@ -539,7 +537,6 @@ main(int argc, char **argv)
 	bu_exit(2, "Unable to open fig file [%s]\n", bu_vls_addr(&fig_file));
     }
     fprintf(fp_fig, "figure {\n");
-    bu_vls_init(&base_seg);		/* .fig figure file's main segment. */
 
     BN_CK_TOL(jack_tree_state.ts_tol);
     RT_CK_TESS_TOL(jack_tree_state.ts_ttol);

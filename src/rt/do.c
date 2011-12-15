@@ -316,13 +316,12 @@ int cm_end(int UNUSED(argc), char **UNUSED(argv))
 int cm_tree(int argc, const char **argv)
 {
     register struct rt_i *rtip = APP.a_rt_i;
-    struct bu_vls times;
+    struct bu_vls times = BU_VLS_INIT_ZERO;
 
     if (argc <= 1) {
 	def_tree(rtip);		/* Load the default trees */
 	return 0;
     }
-    bu_vls_init(&times);
 
     rt_prep_timer();
     if (rt_gettrees(rtip, argc-1, &argv[1], npsw) < 0)
@@ -456,14 +455,14 @@ struct bu_structparse set_parse[] = {
  */
 int cm_set(int argc, char **argv)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (argc <= 1) {
 	bu_struct_print("Generic and Application-Specific Parameter Values",
 			set_parse, (char *)0);
 	return 0;
     }
-    bu_vls_init(&str);
+
     bu_vls_from_argv(&str, argc-1, (const char **)argv+1);
     if (bu_struct_parse(&str, set_parse, (char *)0) < 0) {
 	bu_vls_free(&str);
@@ -514,11 +513,10 @@ int cm_opt(int argc, char **argv)
 void
 def_tree(register struct rt_i *rtip)
 {
-    struct bu_vls times;
+    struct bu_vls times = BU_VLS_INIT_ZERO;
 
     RT_CK_RTI(rtip);
 
-    bu_vls_init(&times);
     rt_prep_timer();
     if (rt_gettrees(rtip, nobjs, (const char **)objtab, npsw) < 0)
 	bu_log("rt_gettrees(%s) FAILED\n", objtab[0]);
@@ -539,7 +537,7 @@ def_tree(register struct rt_i *rtip)
 void
 do_prep(struct rt_i *rtip)
 {
-    struct bu_vls times;
+    struct bu_vls times = BU_VLS_INIT_ZERO;
 
     RT_CHECK_RTI(rtip);
     if (rtip->needprep) {
@@ -547,7 +545,6 @@ do_prep(struct rt_i *rtip)
 	view_setup(rtip);
 
 	/* Allow RT library to prepare itself */
-	bu_vls_init(&times);
 	rt_prep_timer();
 	rt_prep_parallel(rtip, npsw);
 
@@ -579,7 +576,7 @@ do_prep(struct rt_i *rtip)
 int
 do_frame(int framenumber)
 {
-    struct bu_vls times;
+    struct bu_vls times = BU_VLS_INIT_ZERO;
     char framename[128] = {0};		/* File name to hold current frame */
     struct rt_i *rtip = APP.a_rt_i;
     double utime = 0.0;			/* CPU time used */
@@ -847,7 +844,6 @@ do_frame(int framenumber)
 	pix_start = 0;
 	pix_end = height*width - 1;
     }
-    bu_vls_init(&times);
     utime = rt_get_timer(&times, &wallclock);
 
     /*

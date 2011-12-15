@@ -139,9 +139,8 @@ void
 bu_observer_notify(Tcl_Interp *interp, struct bu_observer *headp, char *self)
 {
     struct bu_observer *op;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&vls);
     for (BU_LIST_FOR(op, bu_observer, &headp->l)) {
 	if (bu_vls_strlen(&op->cmd) > 0) {
 	    /* Execute cmd */

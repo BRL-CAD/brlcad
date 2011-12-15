@@ -204,8 +204,8 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     static int count = 0;
     GLfloat backgnd[4];
     int make_square = -1;
-    struct bu_vls str;
-    struct bu_vls init_proc_vls;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     struct dm *dmp = (struct dm *)NULL;
     Tk_Window tkwin;
     HWND hwnd;
@@ -243,7 +243,6 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     bu_vls_init(&dmp->dm_pathName);
     bu_vls_init(&dmp->dm_tkName);
     bu_vls_init(&dmp->dm_dName);
-    bu_vls_init(&init_proc_vls);
 
     dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
@@ -336,9 +335,8 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
 	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = tkwin;
 	} else {
-	    struct bu_vls top_vls;
+	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
 
-	    bu_vls_init(&top_vls);
 	    bu_vls_printf(&top_vls, "%*s", cp - bu_vls_addr(&dmp->dm_pathName),
 			  bu_vls_addr(&dmp->dm_pathName));
 	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top =
@@ -362,7 +360,6 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     bu_vls_printf(&dmp->dm_tkName, "%s",
 		  (char *)Tk_Name(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
 
-    bu_vls_init(&str);
     bu_vls_printf(&str, "_init_dm %V %V\n",
 		  &init_proc_vls,
 		  &dmp->dm_pathName);
@@ -800,9 +797,8 @@ wgl_drawEnd(struct dm *dmp)
 
     if (dmp->dm_debugLevel) {
 	int error;
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "ANY ERRORS?\n");
 
 	while ((error = glGetError())!=0) {
@@ -855,11 +851,10 @@ wgl_loadMatrix(struct dm *dmp, mat_t mat, int which_eye)
     GLfloat gtmat[16];
 
     if (dmp->dm_debugLevel) {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	bu_log("wgl_loadMatrix()\n");
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
 	bu_vls_printf(&tmp_vls, "transformation matrix = \n");
 	bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8], mat[12]);
@@ -2151,9 +2146,9 @@ struct dm dm_wgl = {
     1.0, /* aspect ratio */
     0,
     {0, 0},
-    {0, 0, 0, 0, 0},		/* bu_vls path name*/
-    {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
-    {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
+    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     {0, 0, 0},			/* bg color */
     {0, 0, 0},			/* fg color */
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */

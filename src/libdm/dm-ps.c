@@ -139,11 +139,10 @@ ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 	obj = Tcl_DuplicateObj(obj);
 
     if (((struct ps_vars *)dmp->dm_vars.priv_vars)->debug) {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	Tcl_AppendStringsToObj(obj, "ps_loadMatrix()\n", (char *)NULL);
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
 	bu_vls_printf(&tmp_vls, "transformation matrix = \n");
 	bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8], mat[12]);
@@ -548,9 +547,9 @@ struct dm dm_ps = {
     1.0, /* aspect ratio */
     0,
     {0, 0},
-    {0, 0, 0, 0, 0},		/* bu_vls path name*/
-    {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
-    {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
+    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     {0, 0, 0},			/* bg color */
     {0, 0, 0},			/* fg color */
     {0.0, 0.0, 0.0},		/* clipmin */

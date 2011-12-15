@@ -274,7 +274,7 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
     struct directory **headp;
     struct directory *dp;
     char *tmp_ptr;
-    struct bu_vls local;
+    struct bu_vls local = BU_VLS_INIT_ZERO;
 
     RT_CK_DBI(dbip);
 
@@ -293,7 +293,6 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
 	}
     }
 
-    bu_vls_init(&local);
     if (db_version(dbip) < 5) {
 	bu_vls_strncpy(&local, name, NAMESIZE);
     } else {

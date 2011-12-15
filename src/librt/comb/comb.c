@@ -263,7 +263,7 @@ rt_comb_export5(
     unsigned char *cp;
     unsigned char *leafp_end;
     struct bu_attribute_value_set *avsp;
-    struct bu_vls value;
+    struct bu_vls value = BU_VLS_INIT_ZERO;
 
     /* check inputs */
     RT_CK_DB_INTERNAL(ip);
@@ -358,7 +358,6 @@ rt_comb_export5(
 	BU_ASSERT_PTR(ss.exprp, <=, ((unsigned char *)ep->ext_buf) + ep->ext_nbytes);
 
     /* Encode all the other stuff as attributes. */
-    bu_vls_init(&value);
     /* WARNING:  We remove const from the ip pointer!!! */
     avsp = (struct bu_attribute_value_set *)&ip->idb_avs;
     if (avsp->magic != BU_AVS_MAGIC)

@@ -1949,7 +1949,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 {
     struct rt_hf_internal *xip;
     union record *rp;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_mapped_file *mp;
     vect_t tmp;
     int in_cookie;	/* format cookie */
@@ -1988,7 +1988,6 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     bu_strlcpy(xip->fmt, "nd", sizeof(xip->fmt));
 
     /* Process parameters found in .g file */
-    bu_vls_init(&str);
     bu_vls_strcpy(&str, rp->ss.ss_args);
     if (bu_struct_parse(&str, rt_hf_parse, (char *)xip) < 0) {
 	bu_vls_free(&str);
@@ -2012,7 +2011,6 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	    bu_log("rt_hf_import4() unable to open cfile=%s\n", xip->cfile);
 	    goto err1;
 	}
-	bu_vls_init(&str);
 	while (bu_vls_gets(&str, fp) >= 0)
 	    bu_vls_strcat(&str, " ");
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -2124,7 +2122,7 @@ rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 {
     struct rt_hf_internal *xip;
     union record *rec;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -2143,7 +2141,6 @@ rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "hf external");
     rec = (union record *)ep->ext_buf;
 
-    bu_vls_init(&str);
     bu_vls_struct_print(&str, rt_hf_parse, (char *)xip);
 
     /* Any changes made by solid editing affect .g file only, and not

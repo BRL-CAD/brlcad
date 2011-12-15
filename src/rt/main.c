@@ -151,7 +151,7 @@ int main(int argc, const char **argv)
     struct rt_i *rtip = NULL;
     const char *title_file = NULL, *title_obj = NULL;	/* name of file and first object */
     char idbuf[2048] = {0};			/* First ID record info */
-    struct bu_vls	times;
+    struct bu_vls times = BU_VLS_INIT_ZERO;
     int i;
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -328,8 +328,8 @@ int main(int argc, const char **argv)
 
     /* Echo back the command line arugments as given, in 3 Tcl commands */
     if (rt_verbosity & VERBOSE_MODELTITLE) {
-	struct bu_vls str;
-	bu_vls_init(&str);
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+
 	bu_vls_from_argv(&str, bu_optind, (const char **)argv);
 	bu_vls_strcat(&str, "\nopendb ");
 	bu_vls_strcat(&str, title_file);
@@ -346,7 +346,6 @@ int main(int argc, const char **argv)
     }
 
     /* Build directory of GED database */
-    bu_vls_init(&times);
     rt_prep_timer();
     if ((rtip = rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL) {
 	bu_log("rt:  rt_dirbuild(%s) failure\n", title_file);

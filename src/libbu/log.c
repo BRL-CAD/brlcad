@@ -154,10 +154,7 @@ void
 bu_log(const char *fmt, ...)
 {
     va_list ap;
-
-    struct bu_vls output;
-
-    bu_vls_init(&output);
+    struct bu_vls output = BU_VLS_INIT_ZERO;
 
     if (UNLIKELY(!fmt || strlen(fmt) == 0)) {
 	bu_vls_free(&output);
@@ -167,9 +164,8 @@ bu_log(const char *fmt, ...)
     va_start(ap, fmt);
 
     if (log_indent_level > 0) {
-	struct bu_vls newfmt;
+	struct bu_vls newfmt = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&newfmt);
 	log_do_indent_level(&newfmt, fmt);
 	bu_vls_vprintf(&output, bu_vls_addr(&newfmt), ap);
 	bu_vls_free(&newfmt);
@@ -229,15 +225,12 @@ bu_flog(FILE *fp, const char *fmt, ...)
 {
     va_list ap;
 
-    struct bu_vls output;
-
-    bu_vls_init(&output);
+    struct bu_vls output = BU_VLS_INIT_ZERO;
 
     va_start(ap, fmt);
     if (log_indent_level > 0) {
-	struct bu_vls newfmt;
+	struct bu_vls newfmt = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&newfmt);
 	log_do_indent_level(&newfmt, fmt);
 	bu_vls_vprintf(&output, bu_vls_addr(&newfmt), ap);
 	bu_vls_free(&newfmt);

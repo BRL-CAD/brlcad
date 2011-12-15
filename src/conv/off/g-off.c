@@ -52,7 +52,7 @@ static int	ncpu = 1;	/* Number of processors */
 static char	*prefix = NULL;	/* output filename prefix. */
 static FILE	*fp_fig;	/* Jack Figure file. */
 static struct db_i		*dbip;
-static struct bu_vls		base_seg;
+static struct bu_vls		base_seg = BU_VLS_INIT_ZERO;
 static struct rt_tess_tol	ttol;
 static struct bn_tol		tol;
 static struct model		*the_model;
@@ -179,7 +179,6 @@ main(int argc, char **argv)
     if ((fp_fig = fopen(fig_file, "wb")) == NULL)
 	perror(fig_file);
     fprintf(fp_fig, "figure {\n");
-    bu_vls_init(&base_seg);		/* .fig figure file's main segment. */
 
     /* Walk indicated tree(s).  Each region will be output separately */
     (void)db_walk_tree(dbip, argc-1, (const char **)(argv+1),
@@ -293,11 +292,9 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     if (r != 0) {
 	FILE	*fp_psurf;
 	size_t	i;
-	struct bu_vls	file_base;
-	struct bu_vls	file;
+	struct bu_vls	file_base = BU_VLS_INIT_ZERO;
+	struct bu_vls	file = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&file_base);
-	bu_vls_init(&file);
 	bu_vls_strcpy(&file_base, prefix);
 	bu_vls_strcat(&file_base, DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
 	/* Dots confuse Jack's Peabody language.  Change to '_'. */

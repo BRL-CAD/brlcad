@@ -171,13 +171,12 @@ strsolbld(void)
     char	*type = NULL;
     char	*name = NULL;
     char	*args = NULL;
-    struct bu_vls	str;
+    struct bu_vls	str = BU_VLS_INIT_ZERO;
     char *buf2 = (char *)bu_malloc(sizeof(char) * BUFSIZE, "strsolbld temporary buffer");
     char *bufp = buf2;
 
     memcpy(buf2, buf, sizeof(char) * BUFSIZE);
 
-    bu_vls_init(&str);
 
 #if defined (HAVE_STRSEP)
     (void)strsep(&buf2, " ");		/* skip stringsolid_id */
@@ -1520,11 +1519,9 @@ int
 gettclblock(struct bu_vls *line, FILE *fp)
 {
     int ret = 0;
-    struct bu_vls tmp;
+    struct bu_vls tmp = BU_VLS_INIT_ZERO;
     int bcnt = 0;
     int escapedcr = 0;
-
-    bu_vls_init(&tmp);
 
     if ((ret=bu_vls_gets(line, fp)) >= 0) {
 	linecnt++;
@@ -1558,9 +1555,9 @@ gettclblock(struct bu_vls *line, FILE *fp)
 int
 main(int argc, char *argv[])
 {
-    struct bu_vls       str_title;
-    struct bu_vls       str_put;
-    struct bu_vls	line;
+    struct bu_vls       str_title = BU_VLS_INIT_ZERO;
+    struct bu_vls       str_put = BU_VLS_INIT_ZERO;
+    struct bu_vls	line = BU_VLS_INIT_ZERO;
     int                 isComment=1;
 
     bu_debug = BU_DEBUG_COREDUMP;
@@ -1581,11 +1578,8 @@ main(int argc, char *argv[])
 
     rt_init_resource(&rt_uniresource, 0, NULL);
 
-    bu_vls_init(&line);
     bu_vls_extend( &line, SIZE);
-    bu_vls_init(&str_title);
     bu_vls_strcpy( &str_title, "title");
-    bu_vls_init(&str_put);
     bu_vls_strcpy( &str_put, "put ");
 
     while (isComment) {

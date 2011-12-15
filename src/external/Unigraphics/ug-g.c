@@ -502,7 +502,7 @@ add_face_normals( int v1, int v2, int v3 )
 void
 get_part_name( struct bu_vls *name )
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     char *ptr;
     Tcl_HashEntry *hash_entry=NULL;
 
@@ -510,8 +510,6 @@ get_part_name( struct bu_vls *name )
 	return;
 
     lower_case( bu_vls_addr( name ) );
-
-    bu_vls_init( &vls );
 
     hash_entry = Tcl_FindHashEntry( &htbl, bu_vls_addr( name ) );
     if ( !hash_entry ) {
@@ -597,11 +595,10 @@ get_part_name( struct bu_vls *name )
 char *
 create_unique_brlcad_name( struct bu_vls *name_vls )
 {
-    struct bu_vls tmp_vls;
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     int count=0;
     int len=0;
 
-    bu_vls_init( &tmp_vls );
     bu_vls_vlscat( &tmp_vls, name_vls );
     len = bu_vls_strlen( &tmp_vls );
     while ( db_lookup( wdb_fd->dbip, bu_vls_addr( &tmp_vls ), LOOKUP_QUIET ) != RT_DIR_NULL ) {
@@ -617,10 +614,9 @@ create_unique_brlcad_name( struct bu_vls *name_vls )
 char *
 create_unique_brlcad_solid_name()
 {
-    struct bu_vls solid_name_vls;
+    struct bu_vls solid_name_vls = BU_VLS_INIT_ZERO;
     char *solid_name;
 
-    bu_vls_init( &solid_name_vls );
     prim_no++;
     bu_vls_printf( &solid_name_vls, "s.%d", prim_no );
     solid_name = create_unique_brlcad_name( &solid_name_vls );
@@ -632,10 +628,9 @@ create_unique_brlcad_solid_name()
 char *
 create_unique_brlcad_combination_name()
 {
-    struct bu_vls solid_name_vls;
+    struct bu_vls solid_name_vls = BU_VLS_INIT_ZERO;
     char *solid_name;
 
-    bu_vls_init( &solid_name_vls );
     prim_no++;
     bu_vls_printf( &solid_name_vls, "c.%d", prim_no );
     solid_name = create_unique_brlcad_name( &solid_name_vls );
@@ -647,11 +642,10 @@ create_unique_brlcad_combination_name()
 char *
 build_region( struct wmember *head, char *part_name, char *refset_name, char *inst_name, unsigned char *rgb )
 {
-    struct bu_vls region_name_vls;
+    struct bu_vls region_name_vls = BU_VLS_INIT_ZERO;
     char *region_name;
 
     /* make the region */
-    bu_vls_init( &region_name_vls );
     if ( inst_name ) {
 	bu_vls_strcat( &region_name_vls, inst_name );
     } else {
@@ -698,7 +692,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
     double limits[2];
     fastf_t outer_radius=outer_diam/2.0;
     fastf_t inner_radius=inner_diam/2.0;
-    struct bu_vls name_vls;
+    struct bu_vls name_vls = BU_VLS_INIT_ZERO;
     char *outer_solid_name;
     char *inner_solid_name;
     struct pt_list pt_head;
@@ -791,7 +785,6 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
     }
 
     /* now build primitives */
-    bu_vls_init( &name_vls );
     for ( BU_LIST_FOR( pt, pt_list, &pt_head.l ) ) {
 	vect_t height;
 
@@ -885,7 +878,7 @@ make_linear_particle( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
     vect_t height;
     fastf_t outer_radius=outer_diam/2.0;
     fastf_t inner_radius=inner_diam/2.0;
-    struct bu_vls name_vls;
+    struct bu_vls name_vls = BU_VLS_INIT_ZERO;
     char *outer_solid_name;
     char *inner_solid_name;
 
@@ -903,7 +896,6 @@ make_linear_particle( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
     VSUB2( height, end_f, start_f );
 
     prim_no++;
-    bu_vls_init( &name_vls );
     bu_vls_printf( &name_vls, "s.%d", prim_no );
 
     outer_solid_name = create_unique_brlcad_name( &name_vls );
@@ -1265,7 +1257,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
     double *z_coords;
     double tmp;
     char skt_name[31];
-    struct bu_vls sketch_vls;
+    struct bu_vls sketch_vls = BU_VLS_INIT_ZERO;
     char *c;
     int code;
 
@@ -1619,7 +1611,6 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 
     rt_curve_order_segment( &skt->curve );
 
-    bu_vls_init( &sketch_vls );
     bu_vls_strcat( &sketch_vls, skt_name );
     sketch_name = create_unique_brlcad_name( &sketch_vls );
     c = sketch_name;
@@ -1678,7 +1669,9 @@ conv_cable( char *part_name, char *refset_name, char *inst_name, unsigned char *
     struct wmember head_outer, head_inner;
     fastf_t outer_diam=0.0;
     fastf_t inner_diam=0.0;
-    struct bu_vls region_name_vls, outer_name_vls, inner_name_vls;
+    struct bu_vls region_name_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls outer_name_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls inner_name_vls = BU_VLS_INIT_ZERO;
     int i;
 
     DO_INDENT;
@@ -1720,9 +1713,6 @@ conv_cable( char *part_name, char *refset_name, char *inst_name, unsigned char *
 	}
     }
 
-    bu_vls_init( &region_name_vls );
-    bu_vls_init( &outer_name_vls );
-    bu_vls_init( &inner_name_vls );
     if ( inst_name ) {
 	bu_vls_strcat( &region_name_vls, inst_name );
     } else {
@@ -4657,7 +4647,7 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
     int vert_count;
     int face_id;	/* ID of face for a given facet */
     tag_t face_tag;	/* tag of face for a given facet */
-    struct bu_vls name_vls;
+    struct bu_vls name_vls = BU_VLS_INIT_ZERO;
 #define MAX_VERT_PER_FACET 3
     double v[MAX_VERT_PER_FACET][3];	/* vertex list for one facet */
     double normals[MAX_VERT_PER_FACET][3]; /* list of normals (per vertex) for one facet */
@@ -4793,7 +4783,6 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 
     if ( curr_tri > 0 && vert_tree_root->curr_vert > 0 ) {
 	prim_no++;
-	bu_vls_init( &name_vls );
 	bu_vls_printf( &name_vls, "s.%d", prim_no );
 
 	solid_name = create_unique_brlcad_name( &name_vls );
@@ -4820,7 +4809,6 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 	curr_norm = 0;
 
 	if ( make_region ) {
-	    bu_vls_init( &name_vls );
 	    if ( inst_name ) {
 		bu_vls_strcat( &name_vls, inst_name );
 	    } else {
@@ -5029,7 +5017,7 @@ convert_entire_part( tag_t node, char *p_name, char *refset_name, char *inst_nam
     struct wmember head;
     char *member_name;
     char *assy_name=NULL;
-    struct bu_vls name_vls;
+    struct bu_vls name_vls = BU_VLS_INIT_ZERO;
     struct UF_OBJ_disp_props_s disp_props;
 
     /* no reference sets, convert all solid parts */
@@ -5102,7 +5090,6 @@ convert_entire_part( tag_t node, char *p_name, char *refset_name, char *inst_nam
     }
 
     if ( BU_LIST_NON_EMPTY( &head.l ) ) {
-	bu_vls_init( &name_vls );
 	if ( inst_name ) {
 	    bu_vls_strcat( &name_vls, inst_name );
 	} else {
@@ -5149,7 +5136,7 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
     struct wmember head;
     char *member_name;
     char *assy_name=NULL;
-    struct bu_vls name_vls;
+    struct bu_vls name_vls = BU_VLS_INIT_ZERO;
     tag_t tmp_tag;
     int found_refset=0;
     int num_refsets=0;
@@ -5307,7 +5294,6 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
     UF_free(members);
 
     if ( BU_LIST_NON_EMPTY( &head.l ) ) {
-	bu_vls_init( &name_vls );
 	if ( inst_name ) {
 	    bu_vls_strcat( &name_vls, inst_name );
 	} else {

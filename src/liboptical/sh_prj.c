@@ -434,7 +434,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
     struct prj_specific *prj_sp;
     struct img_specific *img_sp;
 
-    struct bu_vls parameter_data;
+    struct bu_vls parameter_data = BU_VLS_INIT_ZERO;
     struct bu_mapped_file *parameter_file;
 
     /* check the arguments */
@@ -472,7 +472,6 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
      * argument string considered the parameter data.
      */
 
-    bu_vls_init(&parameter_data);
     parameter_file = bu_open_mapped_file(bu_vls_addr(matparm), (char *)NULL);
 
     if (parameter_file) {

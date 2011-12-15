@@ -47,7 +47,6 @@ static struct vert_root *tree_root;
 static struct wmember all_head;
 static char *input_file;	/* name of the input file */
 static char *brlcad_file;	/* name of output file */
-static struct bu_vls ret_name;	/* unique name built by Build_unique_name() */
 static char *forced_name=NULL;	/* name specified on command line */
 static int solid_count=0;	/* count of solids converted */
 static struct bn_tol tol;	/* Tolerance structure */
@@ -135,8 +134,8 @@ static void
 Convert_part_ascii(char line[MAX_LINE_SIZE])
 {
     char line1[MAX_LINE_SIZE];
-    struct bu_vls solid_name;
-    struct bu_vls region_name;
+    struct bu_vls solid_name = BU_VLS_INIT_ZERO;
+    struct bu_vls region_name = BU_VLS_INIT_ZERO;
 
     int start;
     int i;
@@ -174,7 +173,6 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
     start += 4;
     while (isspace(line[++start]) && line[start] != '\0');
 
-    bu_vls_init(&region_name);
     if (forced_name) {
 	bu_vls_strcpy(&region_name, forced_name);
     } else if (line[start] != '\0') {
@@ -219,7 +217,6 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
     bu_log("Converting Part: %s\n", bu_vls_addr(&region_name));
 
     solid_count++;
-    bu_vls_init(&solid_name);
     bu_vls_strcpy(&solid_name, "s.");
     bu_vls_vlscat(&solid_name, &region_name);
     mk_unique_brlcad_name(&solid_name);
@@ -401,16 +398,14 @@ Convert_part_binary()
     vect_t normal;
     int tmp_face[3];
     struct wmember head;
-    struct bu_vls solid_name;
-    struct bu_vls region_name;
+    struct bu_vls solid_name = BU_VLS_INIT_ZERO;
+    struct bu_vls region_name = BU_VLS_INIT_ZERO;
     int face_count=0;
     int degenerate_count=0;
     int small_count=0;
     size_t ret;
 
     solid_count++;
-    bu_vls_init(&solid_name);
-    bu_vls_init(&region_name);
     if (forced_name) {
 	bu_vls_strcpy(&solid_name, "s.");
 	bu_vls_strcat(&solid_name, forced_name);
@@ -588,8 +583,6 @@ main(int argc, char *argv[])
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
-
-    bu_vls_init(&ret_name);
 
     forced_name = NULL;
 

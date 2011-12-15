@@ -59,7 +59,7 @@ rt_regionfix(struct rt_i *rtip)
     int ret;
     int oldid;
     int newid;
-    struct bu_vls name;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
 
     RT_CK_RTI(rtip);
 
@@ -67,7 +67,6 @@ rt_regionfix(struct rt_i *rtip)
      * rt_prep() was called, then use that.  Otherwise, replace ".g"
      * suffix on database name with ".regexp".
      */
-    bu_vls_init(&name);
     file = rtip->rti_region_fix_file;
     if (file == (char *)NULL) {
 	bu_vls_strcpy(&name, rtip->rti_dbip->dbi_filename);

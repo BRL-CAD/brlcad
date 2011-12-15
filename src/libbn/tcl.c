@@ -227,12 +227,11 @@ int
 bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     void (*math_func)();
-    struct bu_vls result;
+    struct bu_vls result = BU_VLS_INIT_ZERO;
     struct math_func_link *mfl;
 
     mfl = (struct math_func_link *)clientData;
     math_func = mfl->func;
-    bu_vls_init(&result);
 
     if (math_func == bn_mat_mul) {
 	mat_t o, a, b;

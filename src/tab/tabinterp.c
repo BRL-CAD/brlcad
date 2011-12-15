@@ -170,7 +170,7 @@ cm_file(int argc, char **argv)
     fastf_t *times;
     auto double d;
     int errors = 0;
-    struct bu_vls buf;	/* unlimited size input line buffer */
+    struct bu_vls buf = BU_VLS_INIT_ZERO;	/* unlimited size input line buffer */
 
     file = argv[1];
     if ((fp = fopen(file, "r")) == NULL) {
@@ -195,7 +195,6 @@ cm_file(int argc, char **argv)
     cnum = (int *)bu_malloc(argc * sizeof(int), "cnum[]");
     nwords = argc - 1;
     iwords = (char **)bu_malloc((nwords+1) * sizeof(char *), "iwords[]");
-    bu_vls_init(&buf);
 
     /* Retained dynamic memory */
     times = (fastf_t *)bu_malloc(nlines * sizeof(fastf_t), "times");

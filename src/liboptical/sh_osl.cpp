@@ -278,7 +278,7 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 int
 osl_parse(const struct bu_vls *in_vls, ShaderGroupInfo &group_info)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     register char *cp;
     char *name;
     char *value;
@@ -287,7 +287,6 @@ osl_parse(const struct bu_vls *in_vls, ShaderGroupInfo &group_info)
     BU_CK_VLS(in_vls);
 
     /* Duplicate the input string.  This algorithm is destructive. */
-    bu_vls_init(&vls);
     bu_vls_vlscat(&vls, in_vls);
     cp = bu_vls_addr(&vls);
 

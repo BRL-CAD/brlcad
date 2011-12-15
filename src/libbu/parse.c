@@ -815,7 +815,7 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 /* structure description */
 /* base addr of users struct */
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     register char *cp;
     char *name;
     char *value;
@@ -828,7 +828,6 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
     }
 
     /* Duplicate the input string.  This algorithm is destructive. */
-    bu_vls_init(&vls);
     bu_vls_vlscat(&vls, in_vls);
     cp = bu_vls_addr(&vls);
 
@@ -1275,7 +1274,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 	loc = (char *)(base + sdp->sp_offset);
 
 	if (sdp->sp_fmt[0] == 'i') {
-	    struct bu_vls sub_str;
+	    struct bu_vls sub_str = BU_VLS_INIT_ZERO;
 
 	    /* DEPRECATED: use %p instead. */
 	    static int warned = 0;
@@ -1284,7 +1283,6 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		warned++;
 	    }
 
-	    bu_vls_init(&sub_str);
 	    bu_vls_struct_print(&sub_str, (struct bu_structparse *)sdp->sp_offset, base);
 	    bu_vls_vlscat(vls, &sub_str);
 	    bu_vls_free(&sub_str);
@@ -1317,8 +1315,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 				 *loc);
 		    vls->vls_len += (int)strlen(cp);
 		} else {
-		    struct bu_vls tmpstr;
-		    bu_vls_init(&tmpstr);
+		    struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
 
 		    /* quote the quote characters */
 		    while (*loc) {
@@ -1384,11 +1381,10 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		break;
 	    case 'p':
 		{
-		    struct bu_vls sub_str;
+		    struct bu_vls sub_str = BU_VLS_INIT_ZERO;
 
 		    BU_ASSERT(sdp->sp_count == 1);
 
-		    bu_vls_init(&sub_str);
 		    bu_vls_struct_print(&sub_str, (struct bu_structparse *)sdp->sp_offset, base);
 		    bu_vls_vlscat(vls, &sub_str);
 		    bu_vls_free(&sub_str);
@@ -2193,10 +2189,8 @@ bu_next_token(char *str)
 void
 bu_structparse_get_terse_form(struct bu_vls *logstr, const struct bu_structparse *sp)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     size_t i;
-
-    bu_vls_init(&str);
 
     while (sp->sp_name != NULL) {
 	bu_vls_printf(logstr, "%s ", sp->sp_name);
@@ -2241,7 +2235,7 @@ bu_structparse_argv(struct bu_vls *logstr,
     register size_t ii;
     const char *cp = NULL;
     char *loc = NULL;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (UNLIKELY(desc == (struct bu_structparse *)NULL)) {
 	bu_vls_printf(logstr, "bu_structparse_argv: NULL desc pointer\n");
@@ -2250,7 +2244,6 @@ bu_structparse_argv(struct bu_vls *logstr,
 
     /* Run through each of the attributes and their arguments. */
 
-    bu_vls_init(&str);
     while (argc > 0) {
 	/* Find the attribute which matches this argument. */
 	for (sdp = desc; sdp->sp_name != NULL; sdp++) {

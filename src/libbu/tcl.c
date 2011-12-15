@@ -163,8 +163,8 @@ tcl_bu_get_value_by_keyword(void *clientData,
 	if (BU_STR_EQUAL(iwant, listv[i])) {
 	    /* If value is a list, don't nest it in another list */
 	    if (listv[i+1][0] == '{') {
-		struct bu_vls str;
-		bu_vls_init(&str);
+		struct bu_vls str = BU_VLS_INIT_ZERO;
+
 		/* Skip leading { */
 		bu_vls_strcat(&str, &listv[i+1][1]);
 		/* Trim trailing } */
@@ -207,9 +207,8 @@ tcl_bu_rgb_to_hsv(void *clientData,
     int rgb_int[3];
     unsigned char rgb[3];
     fastf_t hsv[3];
-    struct bu_vls result;
+    struct bu_vls result = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&result);
     if (argc != 4) {
 	bu_log("Usage: bu_rgb_to_hsv R G B\n");
 	return BRLCAD_ERROR;
@@ -257,13 +256,12 @@ tcl_bu_hsv_to_rgb(void *clientData,
 
     fastf_t hsv[3];
     unsigned char rgb[3];
-    struct bu_vls result;
+    struct bu_vls result = BU_VLS_INIT_ZERO;
 
     if (argc != 4) {
 	bu_log("Usage: bu_hsv_to_rgb H S V\n");
 	return BRLCAD_ERROR;
     }
-    bu_vls_init(&result);
     if (sscanf(argv[1], "%lf", &hsv[0]) != 1
 	|| sscanf(argv[2], "%lf", &hsv[1]) != 1
 	|| sscanf(argv[3], "%lf", &hsv[2]) != 1
@@ -347,7 +345,7 @@ tcl_bu_units_conversion(void *clientData,
 {
     Tcl_Interp *interp = (Tcl_Interp *)clientData;
     double conv_factor;
-    struct bu_vls result;
+    struct bu_vls result = BU_VLS_INIT_ZERO;
 
     if (argc != 2) {
 	bu_log("Usage: bu_units_conversion units_string\n");
@@ -360,7 +358,6 @@ tcl_bu_units_conversion(void *clientData,
 	return BRLCAD_ERROR;
     }
 
-    bu_vls_init(&result);
     bu_vls_printf(&result, "%.12e", conv_factor);
     Tcl_AppendResult(interp, bu_vls_addr(&result), NULL);
     bu_vls_free(&result);

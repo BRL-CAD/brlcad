@@ -105,7 +105,7 @@ db_create_inmem(void) {
     struct db_i *dbip;
     struct bu_external obj;
     struct bu_attribute_value_set avs;
-    struct bu_vls units;
+    struct bu_vls units = BU_VLS_INIT_ZERO;
     struct bu_external attr;
     int flags;
 
@@ -115,7 +115,6 @@ db_create_inmem(void) {
     RT_CK_WDB(dbip->dbi_wdbp);
 
     /* Second, create the attribute-only _GLOBAL object */
-    bu_vls_init(&units);
     bu_vls_printf(&units, "%.25e", dbip->dbi_local2base);
 
     bu_avs_init(&avs, 4, "db_create_inmem");

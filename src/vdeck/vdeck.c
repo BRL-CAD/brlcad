@@ -124,9 +124,9 @@ jmp_buf	env;
 /* File names and descriptors.						*/
 char	*objfile;
 FILE	*regfp;
-struct bu_vls	bu_vls;
-struct bu_vls	st_vls;
-struct bu_vls	id_vls;
+struct bu_vls	bu_vls = BU_VLS_INIT_ZERO;
+struct bu_vls	st_vls = BU_VLS_INIT_ZERO;
+struct bu_vls	id_vls = BU_VLS_INIT_ZERO;
 char	*rt_file;
 FILE	*solfp;
 char	*st_file;
@@ -225,10 +225,6 @@ main( int argc, char *argv[] )
 {
     setbuf( stdout, bu_malloc( BUFSIZ, "stdout buffer" ) );
     BU_LIST_INIT( &(sol_hd.l) );
-
-    bu_vls_init( &bu_vls );
-    bu_vls_init( &st_vls );
-    bu_vls_init( &id_vls );
 
     if ( ! parsArg( argc, argv ) )
     {
@@ -416,9 +412,9 @@ region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union t
 {
     struct directory	*dp;
     char			*fullname;
-    struct bu_vls		ident;
-    struct bu_vls		reg;
-    struct bu_vls		flat;
+    struct bu_vls		ident = BU_VLS_INIT_ZERO;
+    struct bu_vls		reg = BU_VLS_INIT_ZERO;
+    struct bu_vls		flat = BU_VLS_INIT_ZERO;
     char			obuf[128];
     char			*cp;
     int			left;
@@ -427,9 +423,6 @@ region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union t
     size_t i;
     int first;
 
-    bu_vls_init( &ident );
-    bu_vls_init( &reg );
-    bu_vls_init( &flat );
     fullname = db_path_to_string(pathp);
 
     dp = DB_FULL_PATH_CUR_DIR(pathp);
@@ -550,11 +543,9 @@ gettree_leaf( struct db_tree_state *tsp, const struct db_full_path *pathp, struc
     struct soltab	*stp;
     union tree		*curtree;
     struct directory	*dp;
-    struct bu_vls		sol;
+    struct bu_vls sol = BU_VLS_INIT_ZERO;
     int		i;
     matp_t		mat;
-
-    bu_vls_init( &sol );
 
     RT_CK_DB_INTERNAL(ip);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
@@ -628,8 +619,7 @@ gettree_leaf( struct db_tree_state *tsp, const struct db_full_path *pathp, struc
     RT_CK_DB_INTERNAL( ip );
 
     if (debug)  {
-	struct bu_vls	str;
-	bu_vls_init( &str );
+	struct bu_vls str = BU_VLS_INIT_ZERO;
 	/* verbose=1, mm2local=1.0 */
 	if ( ip->idb_meth->ft_describe( &str, ip, 1, 1.0, &rt_uniresource, dbip ) < 0 )  {
 	    bu_log("rt_gettree_leaf(%s):  solid describe failure\n",

@@ -831,13 +831,13 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
     struct nmgregion *reg;
     struct bu_ptbl verts;
     struct vrml_mat mat;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     char *tok;
     int i;
     int first = 1;
     int is_light = 0;
     point_t ave_pt = VINIT_ZERO;
-    struct bu_vls shape_name;
+    struct bu_vls shape_name = BU_VLS_INIT_ZERO;
     char *full_path;
     /* There may be a better way to capture the region_id, than
      * getting the rt_comb_internal structure, (and may be a better
@@ -864,8 +864,6 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
     if (!(dp->d_flags & RT_DIR_COMB)) {
 	return;
     }
-
-    bu_vls_init(&shape_name);
 
     id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
     if (id < 0) {
@@ -905,7 +903,6 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
     mat.tx_file[0] = '\0';
     mat.tx_w = -1;
     mat.tx_n = -1;
-    bu_vls_init(&vls);
     bu_vls_strcpy(&vls, &mater->ma_shader[strlen(mat.shader)]);
     (void)bu_struct_parse(&vls, vrml_mat_parse, (char *)&mat);
 
@@ -1158,7 +1155,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 void
 bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_id )
 {
-    struct bu_vls shape_name;
+    struct bu_vls shape_name = BU_VLS_INIT_ZERO;
     char *path_str;
     int appearance;
     struct rt_bot_internal *bot;
@@ -1168,7 +1165,6 @@ bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_i
 
     path_str = db_path_to_string( pathp );
 
-    bu_vls_init(&shape_name);
     path_2_vrml_id(&shape_name, path_str);
 
     fprintf( fp_out, "\t\tDEF %s Shape {\n\t\t\t# Component_ID: %d   %s\n",

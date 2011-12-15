@@ -129,8 +129,8 @@ nmg_to_rib(struct model *m)
     struct shell *s;
     struct faceuse *fu;
     struct loopuse *lu;
-    struct bu_vls points;
-    struct bu_vls norms;
+    struct bu_vls points = BU_VLS_INIT_ZERO;
+    struct bu_vls norms = BU_VLS_INIT_ZERO;
     vect_t fu_normal;
 
     tol.magic = BN_TOL_MAGIC;
@@ -142,9 +142,6 @@ nmg_to_rib(struct model *m)
 
     if (triangulate)
 	nmg_triangulate_model(m, &tol);
-
-    bu_vls_init(&norms);
-    bu_vls_init(&points);
 
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
 	for (BU_LIST_FOR(s, shell, &r->s_hd))

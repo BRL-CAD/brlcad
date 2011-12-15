@@ -513,7 +513,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 {
     union record *rp;
     register struct rt_ebm_internal *eip;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int nbytes;
     mat_t tmat;
     struct bu_mapped_file *mp;
@@ -536,7 +536,6 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Provide default orientation info */
     MAT_IDN(eip->mat);
 
-    bu_vls_init(&str);
     bu_vls_strcpy(&str, rp->ss.ss_args);
     if (bu_struct_parse(&str, rt_ebm_parse, (char *)eip) < 0) {
 	bu_vls_free(&str);
@@ -624,7 +623,7 @@ rt_ebm_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_ebm_internal *eip;
     struct rt_ebm_internal ebm;	/* scaled version */
     union record *rec;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -642,7 +641,6 @@ rt_ebm_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "ebm external");
     rec = (union record *)ep->ext_buf;
 
-    bu_vls_init(&str);
     bu_vls_struct_print(&str, rt_ebm_parse, (char *)&ebm);
 
     rec->ss.ss_id = DBID_STRSOL;
@@ -665,7 +663,7 @@ int
 rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     register struct rt_ebm_internal *eip;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int nbytes;
     mat_t tmat;
     struct bu_mapped_file *mp;
@@ -683,7 +681,6 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Provide default orientation info */
     MAT_IDN(eip->mat);
 
-    bu_vls_init(&str);
     bu_vls_strcpy(&str, (const char *)ep->ext_buf);
     if (bu_struct_parse(&str, rt_ebm_parse, (char *)eip) < 0) {
 	bu_vls_free(&str);
@@ -770,7 +767,7 @@ rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 {
     struct rt_ebm_internal *eip;
     struct rt_ebm_internal ebm;	/* scaled version */
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -785,7 +782,6 @@ rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
 
-    bu_vls_init(&str);
     bu_vls_struct_print(&str, rt_ebm_parse, (char *)&ebm);
 
     ep->ext_nbytes = bu_vls_strlen(&str) + 1;
@@ -811,7 +807,7 @@ rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     register struct rt_ebm_internal *eip =
 	(struct rt_ebm_internal *)ip->idb_ptr;
     int i;
-    struct bu_vls substr;
+    struct bu_vls substr = BU_VLS_INIT_ZERO;
 
     RT_EBM_CK_MAGIC(eip);
 
@@ -820,7 +816,6 @@ rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     if (!verbose)
 	return 0;
 
-    bu_vls_init(&substr);
     bu_vls_printf(&substr, "  file=\"%s\" w=%zu n=%zu depth=%g\n   mat=",
 		  eip->file, eip->xdim, eip->ydim, INTCLAMP(eip->tallness*mm2local));
     bu_vls_vlscat(str, &substr);

@@ -869,8 +869,8 @@ vdraw open rrnorm;vdraw params c 00ffff;vdraw write n 0 %g %g %g;vdraw write n 1
 	       pp->pt_regionp->reg_name);
 #ifdef RT_MULTISPECTRAL
 	{
-	    struct bu_vls str;
-	    bu_vls_init(&str);
+	    struct bu_vls str = BU_VLS_INIT_ZERO;
+
 	    bu_vls_strcat(&str, "ms_shader_color: ");
 	    bn_tabdata_to_tcl(&str, ms_shader_color);
 	    bu_vls_strcat(&str, "\nms_reflect_color: ");
@@ -890,8 +890,8 @@ out:
     if (R_DEBUG&RDEBUG_REFRACT) {
 #ifdef RT_MULTISPECTRAL
 	{
-	    struct bu_vls str;
-	    bu_vls_init(&str);
+	    struct bu_vls str = BU_VLS_INIT_ZERO;
+
 	    bu_vls_strcat(&str, "final swp->msw_color: ");
 	    bn_tabdata_to_tcl(&str, swp->msw_color);
 	    bu_log("rr_render: %s\n", bu_vls_addr(&str));

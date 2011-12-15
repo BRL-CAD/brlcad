@@ -168,7 +168,7 @@ region_start(struct db_tree_state *tsp,
 	     genptr_t UNUSED(client_data))
 {
     struct directory *dp;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     RT_CK_DBTS(tsp);
 
@@ -185,8 +185,6 @@ region_start(struct db_tree_state *tsp,
 	printf("Write this region (name=%s) as a part in your format:\n", dp->d_namep);
     else
 	printf("Write this combination (name=%s) as an assembly in your format:\n", dp->d_namep);
-
-    bu_vls_init(&str);
 
     describe_tree(combp->tree, &str);
 
@@ -240,7 +238,8 @@ void
 describe_tree(union tree *tree,
 	      struct bu_vls *str)
 {
-    struct bu_vls left, right;
+    struct bu_vls left = BU_VLS_INIT_ZERO;
+    struct bu_vls right = BU_VLS_INIT_ZERO;
     char *unionn=" u ";
     char *sub=" - ";
     char *inter=" + ";
@@ -280,8 +279,6 @@ describe_tree(union tree *tree,
 	case OP_XOR:		/* exclusive "or" operator node */
 	    op = xor;
 	binary:				/* common for all binary nodes */
-	    bu_vls_init(&left);
-	    bu_vls_init(&right);
 	    describe_tree(tree->tr_b.tb_left, &left);
 	    describe_tree(tree->tr_b.tb_right, &right);
 	    bu_vls_putc(str, '(');

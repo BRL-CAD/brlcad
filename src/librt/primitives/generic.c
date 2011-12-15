@@ -161,9 +161,7 @@ rt_generic_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
     }
 
     if (attr == (char *)0) {
-	struct bu_vls str;
-
-	bu_vls_init(&str);
+	struct bu_vls str = BU_VLS_INIT_ZERO;
 
 	/* Print out solid type and all attributes */
 	bu_vls_printf(logstr, "%s", ftp->ft_label);

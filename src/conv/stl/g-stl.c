@@ -65,7 +65,7 @@ static FILE *fp;			/* Output file pointer */
 static int bfd;				/* Output binary file descriptor */
 static struct db_i *dbip;
 static struct model *the_model;
-static struct bu_vls file_name;		/* file name built from region name */
+static struct bu_vls file_name = BU_VLS_INIT_ZERO;		/* file name built from region name */
 static struct rt_tess_tol ttol;		/* tesselation tolerance in mm */
 static struct bn_tol tol;		/* calculation tolerance */
 static struct db_tree_state tree_state;	/* includes tol & model */
@@ -363,7 +363,6 @@ main(int argc, char *argv[])
 		break;
 	    case 'm':
 		output_directory = bu_optarg;
-		bu_vls_init(&file_name);
 		break;
 	    case 'r':		/* Relative tolerance. */
 		ttol.rel = atof(bu_optarg);

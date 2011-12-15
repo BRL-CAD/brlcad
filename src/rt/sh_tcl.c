@@ -123,9 +123,9 @@ int
 sh_directchange_shader(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct rt_i	*rtip;
-    struct region	*regp;
+    struct region *regp;
     struct directory *dp;
-    struct bu_vls	shader;
+    struct bu_vls shader = BU_VLS_INIT_ZERO;
 
     if ( argc < 4 )  {
 	Tcl_AppendResult(interp, "Usage: sh_directchange_shader $rtip comb shader_arg(s)\n", NULL);
@@ -145,7 +145,6 @@ sh_directchange_shader(ClientData UNUSED(clientData), Tcl_Interp *interp, int ar
 	return TCL_ERROR;
     }
 
-    bu_vls_init(&shader);
     bu_vls_from_argv(&shader, argc-3, argv+3);
     bu_vls_trimspace(&shader);
 

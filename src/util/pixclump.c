@@ -105,12 +105,11 @@ static void fill_table (char *f_name)
     FILE *fp;
     int line_nm;
     unsigned char rgb[3];
-    struct bu_vls v;
+    struct bu_vls v = BU_VLS_INIT_ZERO;
 
     if ((fp = fopen(f_name, "r")) == NULL)
 	bu_exit(1, "Cannot open color file '%s'\n", bu_optarg);
 
-    bu_vls_init(&v);
     for (line_nm = 1; bu_vls_gets(&v, fp) != -1;
 	 ++line_nm, bu_vls_trunc(&v, 0))
     {

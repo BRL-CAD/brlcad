@@ -425,7 +425,7 @@ int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
 {
     struct bu_attribute_value_set avs;
     struct directory *dp;
-    struct bu_vls units;
+    struct bu_vls units = BU_VLS_INIT_ZERO;
     int ret;
     char *old_title = NULL;
 
@@ -455,7 +455,6 @@ int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
 	bu_free_external(&global);
     }
 
-    bu_vls_init(&units);
     bu_vls_printf(&units, "%.25e", local2mm);
 
     bu_avs_init(&avs, 4, "db5_update_ident");
@@ -507,7 +506,7 @@ int
 db5_fwrite_ident(FILE *fp, const char *title, double local2mm)
 {
     struct bu_attribute_value_set avs;
-    struct bu_vls units;
+    struct bu_vls units = BU_VLS_INIT_ZERO;
     struct bu_external out;
     struct bu_external attr;
     int result;
@@ -531,7 +530,6 @@ db5_fwrite_ident(FILE *fp, const char *title, double local2mm)
     }
 
     /* Second, create the attribute-only object */
-    bu_vls_init(&units);
     bu_vls_printf(&units, "%.25e", local2mm);
 
     bu_avs_init(&avs, 4, "db5_fwrite_ident");

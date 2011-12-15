@@ -2453,7 +2453,7 @@ test_closure(struct ga_t *ga,
     vect_t pnt1;
     vect_t pnt2;
 
-    struct bu_vls plot_file_name;
+    struct bu_vls plot_file_name = BU_VLS_INIT_ZERO;
 
     max_edges += max_edges_increment;
     edges = (edge_arr_2D_t)bu_calloc(max_edges * 2, sizeof(size_t), "edges");
@@ -2524,7 +2524,6 @@ test_closure(struct ga_t *ga,
 			   ga->vert_list[previous_edge[1]][2] * conv_factor);
 		}
 		if ((plot_mode == PLOT_ON) && (open_edges == 0)) {
-		    bu_vls_init(&plot_file_name);
 		    bu_vls_sprintf(&plot_file_name, "%s.%zu.%d.o.pl",
 				   bu_vls_addr(gfi->raw_grouping_name), (long unsigned)gfi->grouping_index + 1,
 				   gfi->face_type);
@@ -3100,12 +3099,10 @@ output_to_nmg(struct ga_t *ga,
 int
 str2mm(const char *units_string, fastf_t *conv_factor)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     fastf_t tmp_value = 0.0;
     char *endp = (char *)NULL;
     int ret = 0;
-
-    bu_vls_init(&str);
 
     if ((units_string == (char *)NULL) || (conv_factor == (fastf_t *)NULL)) {
 	bu_log("NULL pointer(s) passed to function 'str2mm'.\n");
