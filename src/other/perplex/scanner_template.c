@@ -98,6 +98,10 @@ void perplexFree(perplex_t scanner);
 #  define PERPLEX_PARAMETERS    scanner, PERPLEX_APPDATA_PARAM
 #endif
 
+#ifndef PERPLEX_ON_ENTER
+#define PERPLEX_ON_ENTER /* do nothing */
+#endif
+
 PERPLEX_PUBLIC_LEXER;
 
 %%
