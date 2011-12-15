@@ -36,14 +36,6 @@
 #include "raytrace.h"
 #include "bu.h"
 
-struct attr_obj {
-    struct bu_vls modelname;
-    int attr_cnt;
-    char **attr_names;
-    char **attr_vals;
-};
-
-
 struct col_properties {
     int col_cnt;
     int *col_sizes;
@@ -57,8 +49,7 @@ parse_line(struct bu_vls *line, struct col_properties *cp)
     int currentposstart = 0;
     int currentposend = 0;
     int currentcol = -1;
-    struct bu_vls workingstring;
-    bu_vls_init(&workingstring);
+    struct bu_vls workingstring = BU_VLS_INIT_ZERO;
 
     while (currentcol < cp->col_cnt) {
 	currentcol++;
@@ -78,16 +69,12 @@ find_columns(char *name, struct col_properties *cp)
     regex_t compiled_regex;
     regmatch_t *result_locations;
     int ret, components;
-    struct bu_vls modelregex;
-    struct bu_vls attrregex;
-    struct bu_vls workingstring1;
-    struct bu_vls workingstring2;
-    struct bu_vls testresult;
+    struct bu_vls modelregex = BU_VLS_INIT_ZERO;
+    struct bu_vls attrregex = BU_VLS_INIT_ZERO;
+    struct bu_vls workingstring1 = BU_VLS_INIT_ZERO;
+    struct bu_vls workingstring2 = BU_VLS_INIT_ZERO;
+    struct bu_vls testresult = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&modelregex);
-    bu_vls_init(&attrregex);
-    bu_vls_init(&workingstring1);
-    bu_vls_init(&workingstring2);
     bu_vls_sprintf(&modelregex, "([ ]*Model Name[ ]*)(.*)");
     bu_vls_sprintf(&attrregex, "([a-zA-Z0-9]*[ ]*)([a-zA-Z0-9].*$)?");
     bu_vls_sprintf(&workingstring1, "%s", name);
@@ -98,7 +85,6 @@ find_columns(char *name, struct col_properties *cp)
 
     ret=regexec(&compiled_regex, bu_vls_addr(&workingstring1), components+1, result_locations, 0);
 
-    bu_vls_init(&testresult);
     bu_vls_trunc(&testresult, 0);
     bu_vls_strncpy(&testresult, bu_vls_addr(&workingstring1)+result_locations[1].rm_so, result_locations[1].rm_eo - result_locations[1].rm_so);
     cp->col_sizes[0] = bu_vls_strlen(&testresult);
@@ -142,8 +128,8 @@ main()
 {
     FILE *fp;
     struct col_properties *cp;
-    struct bu_vls currentline;
-    bu_vls_init(&currentline);
+    struct bu_vls currentline = BU_VLS_INIT_ZERO;
+
     BU_GET(cp, struct col_properties);
     cp->col_sizes = (int *)bu_malloc(sizeof(int) * 10, "initial array of column sizes");
     cp->col_attrnames = (char **)bu_malloc(sizeof(char *) * 11, "initial array of attribute names");
