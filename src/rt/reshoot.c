@@ -392,7 +392,9 @@ main(int argc, char **argv)
 	    default:
 	    {
 		struct reg_hit *rh = bu_calloc(1, sizeof (struct reg_hit), "");
-
+		BU_VLS_INIT(&rh->regname);
+		BU_VLS_INIT(&rh->in_primitive);
+		BU_VLS_INIT(&rh->out_primitive);
 
 		if (bu_struct_parse(&buf, reg_sp, (const char *)rh)) {
 		    bu_log("Error parsing region %s\nSkipping to next line\n",
