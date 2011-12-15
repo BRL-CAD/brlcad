@@ -276,17 +276,13 @@ nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *to
 struct vertexuse *
 nmg_find_vertex_in_lu(const struct vertex *v, const struct loopuse *lu)
 {
-    struct edgeuse *eu;
+    register struct edgeuse *eu;
     struct vertexuse *ret_vu;
-
-    NMG_CK_VERTEX(v);
-    NMG_CK_LOOPUSE(lu);
 
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 	struct vertexuse *vu;
 
 	vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
-	NMG_CK_VERTEXUSE(vu);
 
 	if (vu->v_p == v)
 	    return vu;
@@ -296,8 +292,6 @@ nmg_find_vertex_in_lu(const struct vertex *v, const struct loopuse *lu)
 
     ret_vu = (struct vertexuse *)NULL;
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	NMG_CK_EDGEUSE(eu);
-
 	if (eu->vu_p->v_p == v) {
 	    ret_vu = eu->vu_p;
 	    break;
