@@ -162,7 +162,6 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 					DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}	${XSLTPROC_EXECUTABLE_TARGET}
 					)
 			ENDIF(BRLCAD_EXTRADOCS_VALIDATE)
-			ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
 			SET(pdf_outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.pdf)
 			SET(scriptfile2 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_pdf.cmake)
 			configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/${PDF_CONV_EXECUTABLE}.cmake.in ${scriptfile2} @ONLY)

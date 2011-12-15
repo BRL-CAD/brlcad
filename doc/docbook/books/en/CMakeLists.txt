@@ -114,7 +114,7 @@ IF(BRLCAD_EXTRADOCS_PDF)
 		SET(targetname ${filename_root}_book_pdf)
 		SET(scriptfile1 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_fo.cmake)
 		SET(CURRENT_XSL_STYLESHEET ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.xsl)
-		configure_file(${BRLCAD_SOURCE_DIR}/doc/docbook/xsltproc.cmake.in	${scriptfile1} @ONLY)
+		configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/xsltproc.cmake.in	${scriptfile1} @ONLY)
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${outfile}
 			COMMAND ${CMAKE_COMMAND} -P ${scriptfile1}
@@ -122,7 +122,7 @@ IF(BRLCAD_EXTRADOCS_PDF)
 			)
 		SET(pdf_outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.pdf)
 		SET(scriptfile2 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_pdf.cmake)
-		configure_file(${BRLCAD_SOURCE_DIR}/doc/docbook/fop.cmake.in ${scriptfile2} @ONLY)
+		configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/fop.cmake.in ${scriptfile2} @ONLY)
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${pdf_outfile}
 			COMMAND ${CMAKE_COMMAND} -P ${scriptfile2}
