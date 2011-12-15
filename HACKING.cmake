@@ -51,7 +51,6 @@ TABLE OF CONTENTS
   Naming a Source Release
   Naming a Binary Release
   Making a Release
-  Making a Debian Package or a Fedora or openSUSE rpm File
   Getting Help
 
 
@@ -348,6 +347,9 @@ not covered here.
 	Example geometry databases
   doc/
 	Documentation
+  doc/docbook
+	Documentation in DocBook xml format, see doc/docbook/README
+	for more details
   include/
 	Public headers
   m4/
@@ -537,6 +539,24 @@ Functions should always specify a return type, including functions
 that return int or void.  ANSI C prototypes should be used to declare
 functions, not K&R function prototypes.
 
+Exact floating point comparisons are unreliable without requiring
+IEEE-compliant floating point math, but BRL-CAD does not require such
+math for portability and performance reasons.  When floating point
+comparisons are necessary, use the NEAR_EQUAL and NEAR_ZERO macros
+with a specified tolerance or the EQUAL and ZERO macros where a
+tolerance is indeterminate (all the macros are available by including
+bn.h, part of libbn).  Examples:
+
+  For known tolerances:
+
+  * instead of "foo == 2.0" use "NEAR_EQUAL(foo,2.0,tol)"
+  * instead of "foo != 0.0" use "foo !NEAR_ZERO(foo,tol)"
+
+  For indeterminate tolerances:
+
+  * instead of "foo == 2.0" use "EQUAL(foo,2.0)"
+  * instead of "foo != 0.0" use "foo !ZERO(foo)"
+
 There are several functions whose functionality are either wrapped or
 implemented in a cross-platform manner by libbu.  This includes
 functions related to memory allocation, command option parsing,
@@ -555,15 +575,16 @@ variables should be utilized instead of the standard C facility:
   bu_optind instead of optind
   bu_optopt instead of optopt
   bu_optarg instead of optarg
-  bu_strlcat instead of strcat(), strncat(), and strlcat()
-  bu_strlcpy instead of strcpy(), strncpy(), and strlcpy()
-  bu_strcmp and BU_STR_EQUAL() instead of strcmp()
+  bu_strlcat() instead of strcat(), strncat(), and strlcat()
+  bu_strlcpy() instead of strcpy(), strncpy(), and strlcpy()
+  bu_strcmp() and BU_STR_EQUAL() instead of strcmp()
+  bu_file_delete() instead of unlink(), rmdir(), and remove()
 
 Similarly, ANSI C functions are preferred over the BSD and POSIX
 interfaces.  The following functions should be used:
 
-  memset instead of bzero
-  memcpy instead of bcopy
+  memset() instead of bzero()
+  memcpy() instead of bcopy()
 
 The code should strive to achieve conformance with the GNU coding
 standard with a few exceptions.  One such exception is NOT utilizing
@@ -668,7 +689,7 @@ Variable names should start with a lowercase letter.
   double LocalVariable; /* bad (looks like class or constructor) */
   double _localVar;     /* bad (looks like member variable)      */
 
-Variables are not to be "decorated" to show their type (i.e. do not
+Variables are not to be "decorated" to show their type (i.e., do not
 use Hungarian notation or variations thereof) with a slight exception
 for pointers on occasion.  The name should use a concise, meaningful
 name that is not cryptic (typing a descriptive name is preferred over
@@ -1109,6 +1130,7 @@ Get the date from the NEWS file.
 5) Make sure default builds complete successfully on all platforms.
 
     cmake ../brlcad && make distcheck 
+    cmake ../brlcad -BRLCAD_BUNDLED_LIBS=ON && make distcheck 
 
 6) Sync trunk with the STABLE branch.  Make sure all changes since the
 previous sync are included and that STABLE matches trunk.
@@ -1145,13 +1167,12 @@ previous sync are included and that STABLE matches trunk.
 
     svn checkout https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH brlcad-MAJOR.MINOR.PATCH
 
-9) Perform another "make distcheck" on the exported/updated sources on
-a system with the latest GNU Autotools installed to generate the
-distributable compressed source tarballs.
+9) Perform another "make distcheck" on the exported/updated sources to
+generate distributable compressed source tarballs.
 
-10) Verify that the source distribution tarballs may be expanded; and
-that they build, run, and that the file permissions are correct.
-Minimally check:
+10) Use one of the source distribution tarballs to verify a binary
+build.  Use the NAMING A BINARY RELEASE section above if the binary
+build will be distributed.  Minimally test:
 
     rt        # should report usage with correct library versions
     benchmark run TIMEFRAME=1            # completes without ERROR
@@ -1159,13 +1180,7 @@ Minimally check:
     rtwizard  # displays gui
     mged      # displays gui, run: opendb test2.g ; make sph sph ; rt
 
-11) Use one of the source distribution tarballs to generate
-platform-specific builds.  Use the NAMING A SOURCE RELEASE and the
-NAMING A BINARY RELEASE sections above for naming source and binary
-distribution files respectively.  Test the build: make regress && make
-bench
-
-12) Post the source and platform-specific binary distributions to
+11) Post the source and platform-specific binary distributions to
 SourceForge and then select them on the sf.net File Release System:
 
 SFUSERNAME=`ls ~/.subversion/auth/svn.simple/* | xargs -n 1 grep -A4 sourceforge | tail -1`
@@ -1176,40 +1191,21 @@ echo "SFUSERNAME=$SFUSERNAME MAJOR=$MAJOR MINOR=$MINOR PATCH=$PATCH"
 ssh -v $SFUSERNAME,brlcad@shell.sourceforge.net create
 ssh -v $SFUSERNAME,brlcad@shell.sourceforge.net mkdir "/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH"
 scp brlcad-$MAJOR.$MINOR.$PATCH* "$SFUSERNAME,brlcad@shell.sourceforge.net:/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH/."
-ssh -v $SFUSERNAME,brlcad@shell.sourceforge.net shutdown
 
 This can all be done through the sf.net project web interface too.
+Extract and upload the release notes:
 
-13) Increment and commit the next BRL-CAD release numbers to SVN;
+cat NEWS | tr '\n' '$' | perl -pi -e 's/.*(\$--*\$---[[:space:]]*[0-9-]*[[:space:]]*Release[[:space:]]*7.20.4[[:space:]]*---\$-*\$.*?)\$---.*/\1/g' | tr '$' '\n' > README-$MAJOR-$MINOR-$PATCH.txt
+scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sourceforge.net:/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH/."
+ssh -v $SFUSERNAME,brlcad@shell.sourceforge.net shutdown
+
+12) Increment and commit the next BRL-CAD release numbers to SVN;
 update the include/conf/(MAJOR|MINOR|PATCH) version files immediately
 to an odd-numbered minor version or a new patch developer version
 (e.g. 7.11.0 or 7.4.1).  Update README and NEWS version to next
 _expected_ release number (e.g. 7.12.0 or 7.4.2).
 
-14) Announce the new release.
-
-The NEWS file should generally be used as a basis for making release
-announcements though the announcements almost always require
-modification and customization tailored to the particular forum and
-audience.  Always notify the following when a release is made:
-
-      14.1) BRL-CAD Website
-         http://brlcad.org/d/node/add/story
-
-      14.2) BRL-CAD NEWS Mailing List
-         brlcad-news@lists.sourceforge.net
-
-      14.3) BRL-CAD Sourceforge NEWS
-         https://sourceforge.net/news/submit.php?group_id=105292
-
-      14.4) Freshmeat  (anyone can submit update)
-         http://freshmeat.net/projects/BRL-CAD/
-	 short summary without news details (sentence format)
-
-If appropriate, notify and/or update the following information outlets
-with the details of the new release:
-
-Source or binary release:
+13) Notify binary platform maintainers:
 
       T2 package maintainer
       http://t2-project.org/packages/brlcad.html
@@ -1221,7 +1217,7 @@ Source or binary release:
       http://www.freebsd.org/cgi/cvsweb.cgi/ports/cad/brlcad/
 
       Gentoo portage maintainer
-      http://packages.gentoo.org/package/sci-misc/brlcad
+      http://packages.gentoo.org/package/media-gfx/brlcad
 
       Ubuntu/Debian .deb maintaner
       Jordi Sayol <g.sayol@yahoo.es>
@@ -1232,7 +1228,38 @@ Source or binary release:
       Slackware maintainer
       http://slackbuilds.org/result/?search=brlcad
 
-Linux binary release:
+14) Announce the new release.
+
+The NEWS file should generally be used as a basis for making release
+announcements though the announcements almost always require
+modification and customization tailored to the particular forum and
+audience.  Always notify the following when a release is made:
+
+      14.1) BRL-CAD Website  (authorized can submit)
+         http://brlcad.org/d/node/add/story
+
+      14.2) BRL-CAD NEWS Mailing List  (anyone can submit, posting moderated)
+         brlcad-news@lists.sourceforge.net
+
+      14.3) BRL-CAD Sourceforge NEWS  (authorized can submit)
+         https://sourceforge.net/news/submit.php?group_id=105292
+
+      14.4) Freshmeat  (anyone can submit update)
+         http://freecode.com/projects/BRL-CAD/
+         short summary without news details (sentence format)
+
+      14.5) BRL-CAD on Facebook  (authorized can submit)
+         http://www.facebook.com/pages/BRL-CAD/387112738872
+         short summary without news details (sentence format)
+
+      14.6) BRL-CAD on Twitter  (authorized can submit)
+         http://twitter.com/#!/BRL_CAD
+         short summary without news details (whatever fits)
+
+If appropriate, notify and/or update the following information outlets
+with the details of the new release:
+
+Linux release:
 
       CAD on Linux mailing list
       cad-linux@freelists.org
@@ -1241,7 +1268,7 @@ Linux binary release:
       Linux Softpedia
       http://linux.softpedia.com/get/Multimedia/Graphics/BRL-CAD-105.shtml
 
-Mac OS X binary release:
+Mac OS X release:
 
       Versiontracker  (only 'brlcad' can update)
       http://www.versiontracker.com/dyn/moreinfo/macosx/26289
@@ -1257,7 +1284,7 @@ Mac OS X binary release:
       Fink package maintainer
       jack@krass.com
 
-Multiple platform major binary release:
+Multiple platform major release:
 
       upFront.ezine
       Ralph Grabowski
@@ -1289,20 +1316,7 @@ Multiple platform major binary release:
       http://cadcam-insider.com/index.php/News-submission-guidelines.html
       copyboy@cadcam-insider.com
 
-16) Sit back and enjoy a beverage for a job well done.
-
-Note:  If it should be necessary to build source or binary packages
-in isolation, instead of within the distcheck framework, the following
-two make targets are defined:
-
-make package_source - Builds source archives
-make package        - Builds binary packages
-
-MAKING A DEBIAN PACKAGE OR A FEDORA OR OPENSUSE RPM FILE
---------------------------------------------------------
-
-See file 'doc/README.Linux' in sections 'Ubuntu/Debian'
-and 'Redhat/Fedora' for details.
+15) Sit back and enjoy a beverage for a job well done.
 
 
 GETTING HELP
