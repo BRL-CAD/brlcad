@@ -1429,7 +1429,7 @@ ENDIF(WIN32)
 # variable named <variable_name>_LABEL - this allows a loop to iterate over a list of variables and handle
 # them all, rather than each line needing its own logic.
 
-if(BRLCAD_PRINT_VERBOSE_SUMMARY)
+IF(NOT BRLCAD_DISABLE_SUMMARY)
 	MESSAGE("\n")
 	MESSAGE("------ BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} - ${CMAKE_BUILD_TYPE} Build  ------")
 	MESSAGE("\n")
@@ -1603,7 +1603,7 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
 		MESSAGE("\n")
 	ENDFOREACH()
 
-endif(BRLCAD_PRINT_VERBOSE_SUMMARY)
+endif(NOT BRLCAD_DISABLE_SUMMARY)
 
 IF(NOT IS_SUBBUILD)
 	# Set up rules to print a timestamp string during build
