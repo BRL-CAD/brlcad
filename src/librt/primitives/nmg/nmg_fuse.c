@@ -1084,61 +1084,49 @@ nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 {
     struct model *m;
     struct bu_ptbl etab;
-    int total = 0;
-    register int i, j;
+    long total = 0;
+    register long i, j;
 
     m = nmg_find_model(magic_p);
-    NMG_CK_MODEL(m);
-    BN_CK_TOL(tol);
 
     /* Make a list of all the edge geometry structs in the model */
     nmg_edge_g_tabulate(&etab, magic_p);
 
     for (i = BU_PTBL_END(&etab)-1; i >= 0; i--) {
-	struct edge_g_lseg *eg1;
-	struct edgeuse *eu1;
+	register struct edge_g_lseg *eg1;
+	register struct edgeuse *eu1;
 
 	eg1 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, i);
-	NMG_CK_EDGE_G_EITHER(eg1);
 
 	/* XXX Need routine to compare two cnurbs geometricly */
 	if (eg1->l.magic == NMG_EDGE_G_CNURB_MAGIC) {
 	    continue;
 	}
 
-	NMG_CK_EDGE_G_LSEG(eg1);
 	eu1 = BU_LIST_MAIN_PTR(edgeuse, BU_LIST_FIRST(bu_list, &eg1->eu_hd2), l2);
-	NMG_CK_EDGEUSE(eu1);
 
 	for (j = i-1; j >= 0; j--) {
-	    struct edge_g_lseg *eg2;
-	    struct edgeuse *eu2;
+	    register struct edge_g_lseg *eg2;
+	    register struct edgeuse *eu2;
 
 	    eg2 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, j);
-	    NMG_CK_EDGE_G_EITHER(eg2);
 	    if (eg2->l.magic == NMG_EDGE_G_CNURB_MAGIC) continue;
-	    NMG_CK_EDGE_G_LSEG(eg2);
 	    eu2 = BU_LIST_MAIN_PTR(edgeuse, BU_LIST_FIRST(bu_list, &eg2->eu_hd2), l2);
-	    NMG_CK_EDGEUSE(eu2);
-
-	    if (eg1 == eg2) bu_bomb("nmg_edge_g_fuse() edge_g listed twice in ptbl?\n");
 
 	    if (!nmg_2edgeuse_g_coincident(eu1, eu2, tol)) continue;
 
-	    /* Comitted to fusing two edge_g_lseg's.
-	     * Make all instances of eg1 become eg2.
-	     * XXX really should check ALL edges using eg1
-	     * XXX against ALL edges using eg2 for coincidence.
-	     */
 	    total++;
 	    nmg_jeg(eg2, eg1);
 	    BU_PTBL_GET(&etab, i) = (long *)NULL;
 	    break;
 	}
     }
+
     bu_ptbl_free(&etab);
+
     if (rt_g.NMG_debug & DEBUG_BASIC && total > 0)
 	bu_log("nmg_edge_g_fuse(): %d edge_g_lseg's fused\n", total);
+
     return total;
 }
 
@@ -1325,10 +1313,6 @@ nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
     int flip2 = 0;
     fastf_t dist;
 
-    NMG_CK_FACE(f1);
-    NMG_CK_FACE(f2);
-    BN_CK_TOL(tol);
-
     fg1 = f1->g.plane_p;
     fg2 = f2->g.plane_p;
 
@@ -1339,9 +1323,6 @@ nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
 	}
 	return 0;
     }
-
-    NMG_CK_FACE_G_PLANE(fg1);
-    NMG_CK_FACE_G_PLANE(fg2);
 
     /* test if the face geometry (i.e. face plane) is already fused */
     if (fg1 == fg2) {
@@ -1408,7 +1389,6 @@ nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
 	}
 	/* Flip flags of faces using fg2, first! */
 	for (BU_LIST_FOR(fn, face, &fg2->f_hd)) {
-	    NMG_CK_FACE(fn);
 	    fn->flip = !fn->flip;
 	    if (rt_g.NMG_debug & DEBUG_MESH) {
 		bu_log("f=x%x, new flip=%d\n", fn, fn->flip);
@@ -1440,9 +1420,6 @@ nmg_model_face_fuse(struct model *m, const struct bn_tol *tol)
     int total = 0;
     register int i, j;
 
-    NMG_CK_MODEL(m);
-    BN_CK_TOL(tol);
-
     /* Make a list of all the face structs in the model */
     nmg_face_tabulate(&ftab, &m->magic);
 
@@ -1450,8 +1427,6 @@ nmg_model_face_fuse(struct model *m, const struct bn_tol *tol)
 	register struct face *f1;
 	register struct face_g_plane *fg1;
 	f1 = (struct face *)BU_PTBL_GET(&ftab, i);
-	NMG_CK_FACE(f1);
-	NMG_CK_FACE_G_EITHER(f1->g.magic_p);
 
 	if (*f1->g.magic_p == NMG_FACE_G_SNURB_MAGIC) {
 	    /* XXX Need routine to compare 2 snurbs for equality here */
@@ -1459,17 +1434,14 @@ nmg_model_face_fuse(struct model *m, const struct bn_tol *tol)
 	}
 
 	fg1 = f1->g.plane_p;
-	NMG_CK_FACE_G_PLANE(fg1);
 
 	for (j = i-1; j >= 0; j--) {
 	    register struct face *f2;
 	    register struct face_g_plane *fg2;
 
 	    f2 = (struct face *)BU_PTBL_GET(&ftab, j);
-	    NMG_CK_FACE(f2);
 	    fg2 = f2->g.plane_p;
 	    if (!fg2) continue;
-	    NMG_CK_FACE_G_PLANE(fg2);
 
 	    if (fg1 == fg2) continue;	/* Already shared */
 
