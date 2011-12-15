@@ -227,7 +227,7 @@ static int antialias = 0;
 static int both_sides = 0;
 
 
-struct bu_vls occlusion_objects;
+struct bu_vls occlusion_objects = BU_VLS_INIT_ZERO;
 struct rt_i *occlusion_rtip = NULL;
 struct application **occlusion_apps;
 
