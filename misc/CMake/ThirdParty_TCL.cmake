@@ -35,7 +35,7 @@
 ###
 
 #-----------------------------------------------------------------------------
-MACRO(THIRD_PARTY_TCL_PACKAGE packagename dir wishcmd depends required_vars)
+MACRO(THIRD_PARTY_TCL_PACKAGE packagename dir wishcmd depends required_vars aliases description)
     STRING(TOUPPER ${packagename} PKGNAME_UPPER)
     SET(ENABLE_PKG ${${CMAKE_PROJECT_NAME}_TCL_BUILD})
 
@@ -49,7 +49,7 @@ MACRO(THIRD_PARTY_TCL_PACKAGE packagename dir wishcmd depends required_vars)
     ENDFOREACH(item ${required_vars})
 
     # If we are doing a local Tcl build, default to bundled unless we need Tk and Tk isn't enabled.
-    BUNDLE_OPTION(${CMAKE_PROJECT_NAME}_TCL ENABLE_PKG ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "") 
+    BRLCAD_BUNDLE_OPTION(${CMAKE_PROJECT_NAME}_TCL ENABLE_PKG ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "" ${aliases} ${description}) 
 
     IF(NOT DISABLE_TEST)
 	IF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} MATCHES "BUNDLED")

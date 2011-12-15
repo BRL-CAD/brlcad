@@ -431,7 +431,15 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/ThirdParty_TCL.cmake)
 
 
 # First up, look for IncrTcl's Itcl.
-THIRD_PARTY_TCL_PACKAGE(Itcl incrTcl/itcl "${TCL_TCLSH_EXECUTABLE}" "tcl" "")
+SET(itcl_ALIASES ENABLE_ITCL)
+SET(itcl_DESCRIPTION "
+Option for enabling and disabling compilation of the IncrTcl package for
+Tcl objects provided with BRL-CAD's source distribution.  Default is AUTO,
+auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first for 
+a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL is 
+set to BUNDLED, local copy is built even if a system version is present.
+")
+THIRD_PARTY_TCL_PACKAGE(Itcl incrTcl/itcl "${TCL_TCLSH_EXECUTABLE}" "tcl" "" itcl_ALIASES itcl_DESCRIPTION)
 IF(BRLCAD_ITCL_BUILD)
 	# If we're building Itcl, remember we also need the C lib and not just the
 	# package - set variables accordingly.  The THIRD_PARTY_TCL_PACKAGE macro
@@ -482,7 +490,16 @@ MARK_AS_ADVANCED(ITCL_INCLUDE_DIRS)
 MARK_AS_ADVANCED(ITCL_VERSION)
 
 # Look for IncrTcl's Itk.
-THIRD_PARTY_TCL_PACKAGE(Itk incrTcl/itk "${TCL_WISH_EXECUTABLE}" "tcl;itcl;tk" "BRLCAD_ENABLE_TK")
+SET(itk_ALIASES ENABLE_ITK)
+SET(itk_DESCRIPTION "
+Option for enabling and disabling compilation of the IncrTcl itk package for
+Tk objects provided with BRL-CAD's source distribution.  Default is AUTO,
+auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first for 
+a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL is 
+set to BUNDLED, local copy is built even if a system version is present.  This
+package will be disabled if BRLCAD_ENABLE_TK is OFF.
+")
+THIRD_PARTY_TCL_PACKAGE(Itk incrTcl/itk "${TCL_WISH_EXECUTABLE}" "tcl;itcl;tk" "BRLCAD_ENABLE_TK" itk_ALIASES itk_DESCRIPTION)
 IF(BRLCAD_ITK_BUILD)
 	# If we're building Itk, remember we also need the C lib and not just the
 	# package - set variables accordingly.  The THIRD_PARTY_TCL_PACKAGE macro
@@ -524,7 +541,17 @@ MARK_AS_ADVANCED(ITK_VERSION)
 
 # For now only turn on Togl for X11, but will need it everywhere eventually.  Will need
 # some logic to both look for package require and the C library, as both APIs will be needed.
-THIRD_PARTY_TCL_PACKAGE(Togl togl "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_ENABLE_OPENGL;BRLCAD_ENABLE_X11")
+SET(togl_ALIASES ENABLE_TOGL)
+SET(togl_DESCRIPTION "
+Option for enabling and disabling compilation of the Togl package for
+Tcl/Tk OpenGL support provided with BRL-CAD's source distribution.  Default is AUTO,
+auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first for 
+a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL is 
+set to BUNDLED, local copy is built even if a system version is present.  This
+package will be disabled if either BRLCAD_ENABLE_OPENGL or BRLCAD_ENABLE_TK 
+are OFF.
+")
+THIRD_PARTY_TCL_PACKAGE(Togl togl "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_ENABLE_OPENGL;BRLCAD_ENABLE_X11" togl_ALIASES togl_DESCRIPTION)
 IF(BRLCAD_TOGL_BUILD)
 	SET(TOGL_LIBRARIES togl CACHE STRING "TOGL_LIBRARIES" FORCE)
 	SET(TOGL_STUB_LIBRARIES toglstub CACHE STRING "TOGL_STUB_LIBRARIES" FORCE)
@@ -564,7 +591,16 @@ MARK_AS_ADVANCED(TOGL_LIBRARIES)
 MARK_AS_ADVANCED(TOGL_STUB_LIBRARIES)
 MARK_AS_ADVANCED(TOGL_INCLUDE_DIRS)
 
-THIRD_PARTY_TCL_PACKAGE(Iwidgets iwidgets "${TCL_WISH_EXECUTABLE}" "tcl;tk;itcl;itk" "BRLCAD_ENABLE_TK")
+SET(iwidgets_ALIASES ENABLE_IWIDGETS)
+SET(iwidgets_DESCRIPTION "
+Option for enabling and disabling compilation of the IWidgets Tk widget 
+package provided with BRL-CAD's source distribution.  Default is AUTO,
+auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first 
+for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL 
+is set to BUNDLED, local copy is built even if a system version is present.  
+This package will be disabled if BRLCAD_ENABLE_TK is OFF.
+")
+THIRD_PARTY_TCL_PACKAGE(Iwidgets iwidgets "${TCL_WISH_EXECUTABLE}" "tcl;tk;itcl;itk" "BRLCAD_ENABLE_TK" iwidgets_ALIASES iwidgets_DESCRIPTION)
 IF(BRLCAD_IWIDGETS_BUILD)
 	SET(IWIDGETS_VERSION "4.0.1" CACHE STRING "IWIDGETS_VERSION" FORCE)
 ELSE(BRLCAD_IWIDGETS_BUILD)
@@ -573,7 +609,16 @@ ENDIF(BRLCAD_IWIDGETS_BUILD)
 FILE(APPEND ${CONFIG_H_FILE} "#define IWIDGETS_VERSION \"${IWIDGETS_VERSION}\"\n")
 MARK_AS_ADVANCED(IWIDGETS_VERSION)
 
-THIRD_PARTY_TCL_PACKAGE(Tkhtml tkhtml "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK")
+SET(tkhtml_ALIASES ENABLE_TKHTML)
+SET(tkhtml_DESCRIPTION "
+Option for enabling and disabling compilation of the Tkhtml HTML viewing
+package provided with BRL-CAD's source distribution.  Default is AUTO,
+auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first 
+for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL 
+is set to BUNDLED, local copy is built even if a system version is present.  
+This package will be disabled if BRLCAD_ENABLE_TK is OFF.
+")
+THIRD_PARTY_TCL_PACKAGE(Tkhtml tkhtml "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK" tkhtml_ALIASES tkhtml_DESCRIPTION)
 #ADD_SUBDIRECTORY(hv3)
 #INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/hv3.dist)
 #DISTCHECK_IGNORE(hv3 hv3_ignore_files)
@@ -583,9 +628,27 @@ THIRD_PARTY_TCL_PACKAGE(Tkhtml tkhtml "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_
 DISTCHECK_IGNORE_ITEM(hv3)
 DISTCHECK_IGNORE_ITEM(sqlite3)
 
-THIRD_PARTY_TCL_PACKAGE(tkpng tkpng "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK")
+SET(tkpng_ALIASES ENABLE_TKHTML)
+SET(tkpng_DESCRIPTION "
+Option for enabling and disabling compilation of the tkpng PNG image viewing
+package provided with BRL-CAD's source distribution.  Default is AUTO,
+auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first 
+for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL 
+is set to BUNDLED, local copy is built even if a system version is present.  
+This package will be disabled if BRLCAD_ENABLE_TK is OFF.
+")
+THIRD_PARTY_TCL_PACKAGE(tkpng tkpng "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK" tkpng_ALIASES tkpng_DESCRIPTION)
 
-THIRD_PARTY_TCL_PACKAGE(Tktable tktable "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK")
+SET(tktable_ALIASES ENABLE_TKHTML)
+SET(tktable_DESCRIPTION "
+Option for enabling and disabling compilation of the Tktable graphical table
+widget package provided with BRL-CAD's source distribution.  Default is AUTO,
+auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first 
+for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL 
+is set to BUNDLED, local copy is built even if a system version is present.  
+This package will be disabled if BRLCAD_ENABLE_TK is OFF.
+")
+THIRD_PARTY_TCL_PACKAGE(Tktable tktable "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK" tktable_ALIASES tktable_DESCRIPTION)
 
 # OpenNURBS Library
 set(opennurbs_ALIASES ENABLE_OPENNURBS)
@@ -600,7 +663,7 @@ THIRD_PARTY(openNURBS openNURBS opennurbs_ALIASES opennurbs_DESCRIPTION NOSYS)
 # STEP Class Libraries
 # If we don't have Lex/Yacc, we can't do STEP - conditionalize
 IF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
-	set(scl_ALIASES ENABLE_SCL)
+	set(scl_ALIASES ENABLE_SCL ENABLE_STEP ENABLE_STEP_CLASS_LIBRARIES)
 	set(scl_DESCRIPTION "
 Option for enabling and disabling compilation of the NIST Step Class
 Libraries provided with BRL-CAD's source code.  Default is
