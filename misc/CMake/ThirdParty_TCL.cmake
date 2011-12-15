@@ -35,21 +35,18 @@
 ###
 
 #-----------------------------------------------------------------------------
-MACRO(THIRD_PARTY_TCL_PACKAGE packagename dir wishcmd depends)
+MACRO(THIRD_PARTY_TCL_PACKAGE packagename dir wishcmd depends required_vars)
     STRING(TOUPPER ${packagename} PKGNAME_UPPER)
     SET(ENABLE_PKG ${${CMAKE_PROJECT_NAME}_TCL_BUILD})
-    SET(NEEDS_TK 0) 
-    FOREACH(item ${depends})
-	IF(${item} STREQUAL "tk")
-	    SET(NEEDS_TK 1)
-	ENDIF(${item} STREQUAL "tk")
-    ENDFOREACH(item ${depends})
-    # If we need Tk and it's not available, this extension is a no-go
-    IF(NEEDS_TK AND NOT BRLCAD_ENABLE_TK)
-	SET(ENABLE_PKG OFF)
-	SET(DISABLE_TEST 1)
-	SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
-    ENDIF(NEEDS_TK AND NOT BRLCAD_ENABLE_TK)
+
+    # If any of the required flags are off, this extension is a no-go.
+    FOREACH(item ${required_vars})
+	IF(NOT ${item})
+	    SET(ENABLE_PKG OFF)
+	    SET(DISABLE_TEST 1)
+	    SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
+	ENDIF(NOT ${item})
+    ENDFOREACH(item ${required_vars})
 
     # If we are doing a local Tcl build, default to bundled unless we need Tk and Tk isn't enabled.
     BUNDLE_OPTION(${CMAKE_PROJECT_NAME}_TCL ENABLE_PKG ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "") 

@@ -431,7 +431,7 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/ThirdParty_TCL.cmake)
 
 
 # First up, look for IncrTcl's Itcl.
-THIRD_PARTY_TCL_PACKAGE(Itcl incrTcl/itcl "${TCL_TCLSH_EXECUTABLE}" "tcl")
+THIRD_PARTY_TCL_PACKAGE(Itcl incrTcl/itcl "${TCL_TCLSH_EXECUTABLE}" "tcl" "")
 IF(BRLCAD_ITCL_BUILD)
 	# If we're building Itcl, remember we also need the C lib and not just the
 	# package - set variables accordingly.  The THIRD_PARTY_TCL_PACKAGE macro
@@ -482,7 +482,7 @@ MARK_AS_ADVANCED(ITCL_INCLUDE_DIRS)
 MARK_AS_ADVANCED(ITCL_VERSION)
 
 # Look for IncrTcl's Itk.
-THIRD_PARTY_TCL_PACKAGE(Itk incrTcl/itk "${TCL_WISH_EXECUTABLE}" "tcl;itcl;tk")
+THIRD_PARTY_TCL_PACKAGE(Itk incrTcl/itk "${TCL_WISH_EXECUTABLE}" "tcl;itcl;tk" "BRLCAD_ENABLE_TK")
 IF(BRLCAD_ITK_BUILD)
 	# If we're building Itk, remember we also need the C lib and not just the
 	# package - set variables accordingly.  The THIRD_PARTY_TCL_PACKAGE macro
@@ -522,7 +522,49 @@ ELSE(BRLCAD_ITK_BUILD)
 ENDIF(BRLCAD_ITK_BUILD)
 MARK_AS_ADVANCED(ITK_VERSION)
 
-THIRD_PARTY_TCL_PACKAGE(Iwidgets iwidgets "${TCL_WISH_EXECUTABLE}" "tcl;tk;itcl;itk")
+# For now only turn on Togl for X11, but will need it everywhere eventually.  Will need
+# some logic to both look for package require and the C library, as both APIs will be needed.
+THIRD_PARTY_TCL_PACKAGE(Togl togl "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_ENABLE_OPENGL;BRLCAD_ENABLE_X11")
+IF(BRLCAD_TOGL_BUILD)
+	SET(TOGL_LIBRARIES togl CACHE STRING "TOGL_LIBRARIES" FORCE)
+	SET(TOGL_STUB_LIBRARIES toglstub CACHE STRING "TOGL_STUB_LIBRARIES" FORCE)
+	SET(TOGL_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/togl/include;${CMAKE_CURRENT_SOURCE_DIR}/togl/include" CACHE STRING "Togl include path" FORCE)
+ELSE(BRLCAD_TOGL_BUILD)
+	# If the decision is NOT to build Togl, remember that we also need the C
+	# library and Tcl/Tk package detection doesn't guarantee that.  Look for
+	# the C library, but only if the required conditions for using Togl are met.
+	IF(BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_X11)
+		find_library(TOGL_LIBRARY NAMES togl togl${TOGL_PACKAGE_VERSION} PATH_SUFFIXES togl${TOGL_PACKAGE_VERSION})
+		IF(NOT TOGL_LIBRARY)
+			# Have Togl package, but no C library - we're building.
+			SET(${CMAKE_PROJECT_NAME}_TOGL "BUNDLED" CACHE STRING "Couldn't find	TOGL_LIBRARY, even though Itcl package is present.  Build bundled itcl library." FORCE)
+			# We've already call the THIRD_PARTY_TCL_PACKAGE macro at this point.
+			# We're enabling, so just do what we need to in this situation
+			add_subdirectory(togl)
+			add_dependencies(togl tcl tk)
+			include(${CMAKE_CURRENT_SOURCE_DIR}/togl.dist)
+			DISTCHECK_IGNORE(togl togl_ignore_files)
+			# Now, handle the non-Tcl package aspects that compelled us to revisit
+			# the enable decision and turn Itcl on - need C library variables set.
+			SET(TOGL_LIBRARIES togl CACHE STRING "TOGL_LIBRARIES" FORCE)
+			SET(TOGL_STUB_LIBRARIES toglstub CACHE STRING "TOGL_STUB_LIBRARIES" FORCE)
+			SET(TOGL_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/togl/include;${CMAKE_CURRENT_SOURCE_DIR}/togl/include" CACHE STRING "Togl include path" FORCE)
+		ELSE(NOT TOGL_LIBRARY)
+			# We have Togl packages AND Togl libraries - we're good.
+			SET(TOGL_LIBRARY ${TOGL_LIBRARY} CACHE STRING "ITK_LIBRARY" FORCE)
+		ENDIF(NOT TOGL_LIBRARY)
+	ELSE(BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_X11)
+		# Requirements not met - no Togl enabled
+		SET(TOGL_LIBRARIES "" CACHE STRING "Tcl/Tk OpenGL disabled" FORCE)
+		SET(TOGL_STUB_LIBRARIES "" CACHE STRING "Tcl/Tk OpenGL disabled" FORCE)
+		SET(TOGL_INCLUDE_DIRS "" CACHE STRING "Tcl/Tk OpenGL disabled" FORCE)
+	ENDIF(BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_X11)
+ENDIF(BRLCAD_TOGL_BUILD)
+MARK_AS_ADVANCED(TOGL_LIBRARIES)
+MARK_AS_ADVANCED(TOGL_STUB_LIBRARIES)
+MARK_AS_ADVANCED(TOGL_INCLUDE_DIRS)
+
+THIRD_PARTY_TCL_PACKAGE(Iwidgets iwidgets "${TCL_WISH_EXECUTABLE}" "tcl;tk;itcl;itk" "BRLCAD_ENABLE_TK")
 IF(BRLCAD_IWIDGETS_BUILD)
 	SET(IWIDGETS_VERSION "4.0.1" CACHE STRING "IWIDGETS_VERSION" FORCE)
 ELSE(BRLCAD_IWIDGETS_BUILD)
@@ -531,7 +573,7 @@ ENDIF(BRLCAD_IWIDGETS_BUILD)
 FILE(APPEND ${CONFIG_H_FILE} "#define IWIDGETS_VERSION \"${IWIDGETS_VERSION}\"\n")
 MARK_AS_ADVANCED(IWIDGETS_VERSION)
 
-THIRD_PARTY_TCL_PACKAGE(Tkhtml tkhtml "${TCL_WISH_EXECUTABLE}" "tcl;tk")
+THIRD_PARTY_TCL_PACKAGE(Tkhtml tkhtml "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK")
 #ADD_SUBDIRECTORY(hv3)
 #INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/hv3.dist)
 #DISTCHECK_IGNORE(hv3 hv3_ignore_files)
@@ -541,9 +583,9 @@ THIRD_PARTY_TCL_PACKAGE(Tkhtml tkhtml "${TCL_WISH_EXECUTABLE}" "tcl;tk")
 DISTCHECK_IGNORE_ITEM(hv3)
 DISTCHECK_IGNORE_ITEM(sqlite3)
 
-THIRD_PARTY_TCL_PACKAGE(tkpng tkpng "${TCL_WISH_EXECUTABLE}" "tcl;tk")
+THIRD_PARTY_TCL_PACKAGE(tkpng tkpng "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK")
 
-THIRD_PARTY_TCL_PACKAGE(Tktable tktable "${TCL_WISH_EXECUTABLE}" "tcl;tk")
+THIRD_PARTY_TCL_PACKAGE(Tktable tktable "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK")
 
 # OpenNURBS Library
 set(opennurbs_ALIASES ENABLE_OPENNURBS)
@@ -589,25 +631,6 @@ ADD_SUBDIRECTORY(tnt)
 SET(TNT_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/tnt" CACHE STRING "Directory containing tnt headers" FORCE)
 DISTCHECK_IGNORE_ITEM(tnt)
 MARK_AS_ADVANCED(TNT_INCLUDE_DIR)
-
-# For now only turn on Togl for X11, but will need it everywhere eventually.  Will need
-# some logic to both look for package require and the C library, as both APIs will be needed.
-IF(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
-	SET(TOGL_LIBRARIES togl CACHE STRING "TOGL_LIBRARIES" FORCE)
-	SET(TOGL_STUB_LIBRARIES toglstub CACHE STRING "TOGL_STUB_LIBRARIES" FORCE)
-	SET(TOGL_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/togl/include;${CMAKE_CURRENT_SOURCE_DIR}/togl/include" CACHE STRING "Togl include path" FORCE)
-	ADD_SUBDIRECTORY(togl)
-	INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/togl.dist)
-	DISTCHECK_IGNORE(togl togl_ignore_files)
-ELSE(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
-	SET(TOGL_LIBRARIES "" CACHE STRING "Tcl/Tk OpenGL disabled" FORCE)
-	SET(TOGL_STUB_LIBRARIES "" CACHE STRING "Tcl/Tk OpenGL disabled" FORCE)
-	SET(TOGL_INCLUDE_DIRS "" CACHE STRING "Tcl/Tk OpenGL disabled" FORCE)
-	DISTCHECK_IGNORE_ITEM(togl)
-ENDIF(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
-MARK_AS_ADVANCED(TOGL_LIBRARIES)
-MARK_AS_ADVANCED(TOGL_STUB_LIBRARIES)
-MARK_AS_ADVANCED(TOGL_INCLUDE_DIRS)
 
 # jove editor - technically this isn't a library,
 # but traditionally it's grouped into the "enable-all"
