@@ -1082,12 +1082,9 @@ nmg_model_edge_fuse(struct model *m, const struct bn_tol *tol)
 int
 nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 {
-    struct model *m;
     struct bu_ptbl etab;
     long total = 0;
     register long i, j;
-
-    m = nmg_find_model(magic_p);
 
     /* Make a list of all the edge geometry structs in the model */
     nmg_edge_g_tabulate(&etab, magic_p);
