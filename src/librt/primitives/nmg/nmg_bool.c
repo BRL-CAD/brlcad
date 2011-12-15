@@ -420,26 +420,21 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
  */
 
 void
-nmg_kill_anti_loops(struct shell *s, const struct bn_tol *tol)
+nmg_kill_anti_loops(struct shell *s)
 {
     struct bu_ptbl loops;
     struct faceuse *fu;
     struct loopuse *lu;
-    int i, j;
-
-    NMG_CK_SHELL(s);
-    BN_CK_TOL(tol);
+    register int i, j;
 
     bu_ptbl_init(&loops, 64, " &loops");
 
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-	NMG_CK_FACEUSE(fu);
 
 	if (fu->orientation != OT_SAME)
 	    continue;
 
 	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-	    NMG_CK_LOOPUSE(lu);
 
 	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		continue;
@@ -454,23 +449,19 @@ nmg_kill_anti_loops(struct shell *s, const struct bn_tol *tol)
 	struct vertex *v1;
 
 	lu1 = (struct loopuse *)BU_PTBL_GET(&loops, i);
-	NMG_CK_LOOPUSE(lu1);
 
 	eu1_start = BU_LIST_FIRST(edgeuse, &lu1->down_hd);
-	NMG_CK_EDGEUSE(eu1_start);
 	v1 = eu1_start->vu_p->v_p;
-	NMG_CK_VERTEX(v1);
 
 	for (j=i+1; j<BU_PTBL_END(&loops); j++) {
-	    struct loopuse *lu2;
-	    struct edgeuse *eu1;
-	    struct edgeuse *eu2;
-	    struct vertexuse *vu2;
-	    struct faceuse *fu1, *fu2;
+	    register struct loopuse *lu2;
+	    register struct edgeuse *eu1;
+	    register struct edgeuse *eu2;
+	    register struct vertexuse *vu2;
+	    register struct faceuse *fu1, *fu2;
 	    int anti=1;
 
 	    lu2 = (struct loopuse *)BU_PTBL_GET(&loops, j);
-	    NMG_CK_LOOPUSE(lu2);
 
 	    /* look for v1 in lu2 */
 	    vu2 = nmg_find_vertex_in_lu(v1, lu2);
@@ -480,7 +471,6 @@ nmg_kill_anti_loops(struct shell *s, const struct bn_tol *tol)
 
 	    /* found common vertex, now look for the rest */
 	    eu2 = vu2->up.eu_p;
-	    NMG_CK_EDGEUSE(eu2);
 	    eu1 = eu1_start;
 	    do {
 		eu2 = BU_LIST_PNEXT_CIRC(edgeuse, &eu2->l);
@@ -724,8 +714,8 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
     (void)nmg_model_vertex_fuse(m, tol);
 
-    (void)nmg_kill_anti_loops(sA, tol);
-    (void)nmg_kill_anti_loops(sB, tol);
+    (void)nmg_kill_anti_loops(sA);
+    (void)nmg_kill_anti_loops(sB);
 
     nmg_m_reindex(m, 0);
 
