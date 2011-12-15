@@ -141,38 +141,22 @@ See this link for help in installing fop 1.0 and saxon-he on Ubuntu:
 VALIDATION
 ----------
 
-In this directory there is a set of experimental tools to assist
-developers and DB authors in ensuring the DB files are valid:
+It is possible to add a validation step to DocBook compilation by
+defining the CMake variable BRLCAD_EXTRADOCS_VALIDATION to ON.
 
-  * validate.pl
-      a Perl program to drive validation of DB source files
+By default, this will use xmllint to validate the xml files as
+they are built.
 
-  * BRLCAD_DB_VALIDATION.pm
-      a Perl module defining local tool paths; used by validate.pl;
-      intended for DB authors to edit for their use; valid tool paths
-      must be entered for each validation tool to be used; see the
-      file for more information on the paths needed
-
-  * find-db-files.pl
-      a Perl program to create an input file listing all DB source
-      files in recognized DB sub-directories
-
-In order to use the validation program the user must obtain some
+In order to use a different validation program the user must obtain some
 external tools that are not presently part of the BRL-CAD package:
 
-  For the 'msv' validation method (the default and recommended method):
+  For the 'msv' validation method (a recommended method):
 
     * msv 
         Oracle Multi-Schema XML Validator (MSV) (see http://msv.java.net/)
 
     * Java
         a working Java run-time environment
-
-  For the 'xmllint' validation method:
-
-    * xmllint
-        a program that comes with the libxml2 library (see
-        http://xmlsoft.org/)
 
   For the 'nvdl' validation method:
 
@@ -183,6 +167,19 @@ external tools that are not presently part of the BRL-CAD package:
     * Java
         a working Java run-time environment
 
+  For the 'rnv' validation method:
+
+    * rnv
+        http://sourceforge.net/projects/rnv/
+
+    * expat library
+        present in most Linux/Unix distributions, see
+        http://expat.sourceforge.net/
+
+To use these tools, a <toolname>.cmake.in file must be present
+in the misc/CMake source directory.  This file tells CMake how
+to run the tool in question.  An example for rnv is already
+present - see misc/CMake/rnv.cmake.in
      
 OTHER CONSIDERATIONS
 --------------------
