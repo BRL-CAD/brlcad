@@ -142,7 +142,7 @@ VALIDATION
 ----------
 
 It is possible to add a validation step to DocBook compilation by
-defining the CMake variable BRLCAD_EXTRADOCS_VALIDATION to ON.
+defining the CMake variable BRLCAD_EXTRADOCS_VALIDATE to ON.
 
 By default, this will use xmllint to validate the xml files as
 they are built.
@@ -178,13 +178,13 @@ external tools that are not presently part of the BRL-CAD package:
 
 To use these tools, a <toolname>.cmake.in file must be present
 in the misc/CMake source directory.  This file tells CMake how
-to run the tool in question.  An example for rnv is already
-present - see misc/CMake/rnv.cmake.in
+to run the tool in question.  Examples for msv and rnv are already
+present - see misc/CMake/rnv.cmake.in and misc/CMake/msv.cmake.in
 
 Once the correct file is preent, configure CMake with options
 similar to the following (alter for your specific tool):
 
-cmake .. -DBRLCAD_EXTRADOCS_VALIDATION=ON -DVALIDATE_EXECUTABLE=rnv
+cmake .. -DBRLCAD_EXTRADOCS_VALIDATE=ON -DVALIDATE_EXECUTABLE=msv
     
  
 OTHER CONSIDERATIONS
