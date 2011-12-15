@@ -3441,13 +3441,13 @@ BU_EXPORT extern void bu_ck_list_magic(const struct bu_list *hd,
  *
  */
 BU_EXPORT extern void bu_hook_list_init(struct bu_hook_list *hlp);
-BU_EXPORT extern void bu_add_hook(struct bu_hook_list *hlp,
+BU_EXPORT extern void bu_hook_add(struct bu_hook_list *hlp,
 				  bu_hook_t func,
 				  genptr_t clientdata);
-BU_EXPORT extern void bu_delete_hook(struct bu_hook_list *hlp,
+BU_EXPORT extern void bu_hook_delete(struct bu_hook_list *hlp,
 				     bu_hook_t func,
 				     genptr_t clientdata);
-BU_EXPORT extern void bu_call_hook(struct bu_hook_list *hlp,
+BU_EXPORT extern void bu_hook_call(struct bu_hook_list *hlp,
 				   genptr_t buf);
 
 /** @} */
