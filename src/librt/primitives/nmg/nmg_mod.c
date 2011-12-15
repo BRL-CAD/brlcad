@@ -98,24 +98,14 @@ nmg_merge_regions(struct nmgregion *r1, struct nmgregion *r2, const struct bn_to
 void
 nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const int simplify)
 {
-    struct model *m;
-    int len;
-    char *flags1;
-    char *flags2;
-    struct faceuse *fu1;
-    struct faceuse *fu2;
-    struct face *f1;
-    struct face *f2;
-    struct face_g_plane *fg1;
-    struct face_g_plane *fg2;
+    char *flags;
+    register struct faceuse *fu1, *fu2;
+    register struct face *f1, *f2;
+    struct faceuse *prev_fu;
+    struct face_g_plane *fg1, *fg2;
 
-    NMG_CK_SHELL(s);
-    m = nmg_find_model(&s->l.magic);
-    len = sizeof(char) * m->maxindex * 2;
-    flags1 = (char *)bu_calloc(sizeof(char), m->maxindex * 2,
-			       "nmg_shell_coplanar_face_merge flags1[]");
-    flags2 = (char *)bu_calloc(sizeof(char), m->maxindex * 2,
-			       "nmg_shell_coplanar_face_merge flags2[]");
+    flags = (char *)bu_calloc(sizeof(char), (s->r_p->m_p->maxindex) * 2,
+                              "nmg_shell_coplanar_face_merge flags[]");
 
     /* Visit each face in the shell */
     for (BU_LIST_FOR(fu1, faceuse, &s->fu_hd)) {
@@ -123,50 +113,45 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
 
 	if (BU_LIST_NEXT_IS_HEAD(fu1, &s->fu_hd)) break;
 	f1 = fu1->f_p;
-	NMG_CK_FACE(f1);
-	if (NMG_INDEX_TEST(flags1, f1)) continue;
-	NMG_INDEX_SET(flags1, f1);
+
+	if (NMG_INDEX_TEST(flags, f1)) continue;
+	NMG_INDEX_SET(flags, f1);
 
 	fg1 = f1->g.plane_p;
-	NMG_CK_FACE_G_PLANE(fg1);
-	NMG_GET_FU_PLANE(n1, fu1);
 
 	/* For this face, visit all remaining faces in the shell. */
 	/* Don't revisit any faces already considered. */
-	memcpy(flags2, flags1, len);
 	for (fu2 = BU_LIST_NEXT(faceuse, &fu1->l);
 	     BU_LIST_NOT_HEAD(fu2, &s->fu_hd);
 	     fu2 = BU_LIST_NEXT(faceuse, &fu2->l)
 	    ) {
-	    register fastf_t dist;
 	    plane_t n2;
 
 	    f2 = fu2->f_p;
-	    NMG_CK_FACE(f2);
 
-	    if (NMG_INDEX_TEST(flags2, f2)) continue;
-
-	    NMG_INDEX_SET(flags2, f2);
+	    if (NMG_INDEX_TEST(flags, f2)) continue;
+	    NMG_INDEX_SET(flags, f2);
 
 	    fg2 = f2->g.plane_p;
-	    NMG_CK_FACE_G_PLANE(fg2);
 
 	    if (fu2->fumate_p == fu1 || fu1->fumate_p == fu2)
 		bu_bomb("nmg_shell_coplanar_face_merge() mate confusion\n");
 
 	    /* See if face geometry is shared & same direction */
 	    if (fg1 != fg2 || f1->flip != f2->flip) {
+                register fastf_t dist;
 		/* If plane equations are different, done */
-
-		NMG_GET_FU_PLANE(n2, fu2);
 
                 /* test if the bounding boxes of the faceuse overlap */
                 if (!V3RPP_OVERLAP_TOL(f1->min_pt, f1->max_pt, f2->min_pt, f2->max_pt, tol->dist)) {
 		    continue;
                 }
 
+	        NMG_GET_FU_PLANE(n1, fu1);
+		NMG_GET_FU_PLANE(n2, fu2);
+
 		/* compare the distance between the faceuse planes at their center */
-		dist = fabs(n1[W] - n2[W]);
+                dist = n1[W] - n2[W];
 		if (!NEAR_ZERO(dist, tol->dist)) {
                     continue;
                 }
@@ -189,31 +174,23 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
 	     * shared fg topology.  Move everything into fu1, and kill
 	     * now empty faceuse, fumate, and face
 	     */
-	    {
-		struct faceuse *prev_fu;
-		prev_fu = BU_LIST_PREV(faceuse, &fu2->l);
-		/* The prev_fu can never be the head */
-		if (BU_LIST_IS_HEAD(prev_fu, &s->fu_hd))
-		    bu_bomb("prev is head?\n");
 
-		nmg_jf(fu1, fu2);
-
-		fu2 = prev_fu;
-	    }
+            prev_fu = BU_LIST_PREV(faceuse, &fu2->l);
+            nmg_jf(fu1, fu2);
+            fu2 = prev_fu;
 
 	    /* There is now the option of simplifying the face, by
 	     * removing unnecessary edges.
 	     */
 	    if (simplify) {
 		struct loopuse *lu;
-
 		for (BU_LIST_FOR(lu, loopuse, &fu1->lu_hd))
 		    nmg_simplify_loop(lu);
 	    }
 	}
     }
-    bu_free((char *)flags1, "nmg_shell_coplanar_face_merge flags1[]");
-    bu_free((char *)flags2, "nmg_shell_coplanar_face_merge flags2[]");
+
+    bu_free((char *)flags, "nmg_shell_coplanar_face_merge flags[]");
 
     nmg_shell_a(s, tol);
 
