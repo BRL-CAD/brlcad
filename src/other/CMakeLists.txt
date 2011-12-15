@@ -60,7 +60,7 @@ provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
 toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
 BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(regex libregex regex_ALIASES regex_DESCRIPTION)
+THIRD_PARTY(regex libregex regex_ALIASES regex_DESCRIPTION "")
 BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
 
 # Same deal for zlib Library - common requirement, deal with it up front
@@ -71,7 +71,7 @@ library provided with BRL-CAD's source distribution.  Default is AUTO, responsiv
 the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
 BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(zlib libz zlib_ALIASES zlib_DESCRIPTION)
+THIRD_PARTY(zlib libz zlib_ALIASES zlib_DESCRIPTION "")
 
 #-----------------------------------------------------------------------------
 
@@ -151,24 +151,19 @@ ELSE(NOT WIN32)
 ENDIF(NOT WIN32)
 MARK_AS_ADVANCED(HAVE_TERMLIB)
 
-IF(HAVE_TERMLIB)
-	SET(termlib_ALIASES ENABLE_TERMLIB)
-
-	SET(termlib_DESCRIPTION "
+SET(termlib_ALIASES ENABLE_TERMLIB)
+SET(termlib_DESCRIPTION "
 Option for enabling and disabling compilation of the termlib library
 provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
 toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
 BRLCAD_BUNDLED_LIBS is also AUTO. (Except when building with Visual Studio,
 where it is disabled. Windows does not support the termlib API.)
 ")
-   THIRD_PARTY(termlib libtermlib termlib_ALIASES termlib_DESCRIPTION)
-	IF(BRLCAD_TERMLIB_BUILD)
-		SET(HAVE_TERMCAP_H 1 CACHE BOOL "src/other termlib is on" FORCE)
-		MARK_AS_ADVANCED(HAVE_TERMCAP_H)
-	ENDIF(BRLCAD_TERMLIB_BUILD)
-ELSE(HAVE_TERMLIB)
-	DISTCHECK_IGNORE_ITEM(libtermlib)
-ENDIF(HAVE_TERMLIB)
+THIRD_PARTY(termlib libtermlib termlib_ALIASES termlib_DESCRIPTION HAVE_TERMLIB)
+IF(BRLCAD_TERMLIB_BUILD)
+	SET(HAVE_TERMCAP_H 1 CACHE BOOL "src/other termlib is on" FORCE)
+	MARK_AS_ADVANCED(HAVE_TERMCAP_H)
+ENDIF(BRLCAD_TERMLIB_BUILD)
 
 # libpng Library - Checks for ZLIB, so need to handle libpng AFTER zlib to set the variables
 # if using a local copy of zlib.  If not using a local copy of zlib, FindZLIB results will
@@ -192,7 +187,7 @@ Graphics library provided with BRL-CAD's source distribution.  Default is
 AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing 
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(png libpng png_ALIASES png_DESCRIPTION)
+THIRD_PARTY(png libpng png_ALIASES png_DESCRIPTION "")
 IF(BRLCAD_PNG_BUILD)
 	# PNG_LIB_NAME doesn't automatically propagate to toplevel due to scoping of CMake variables -
 	# use get_directory_property to recover the value and place it in the CACHE
@@ -222,7 +217,7 @@ library provided with BRL-CAD's source code.  Default is AUTO, responsive
 to the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system 
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(utahrle libutahrle utahrle_ALIASES utahrle_DESCRIPTION NOSYS)
+THIRD_PARTY(utahrle libutahrle utahrle_ALIASES utahrle_DESCRIPTION "" NOSYS)
 IF(BRLCAD_UTAHRLE_BUILD)
 	SET(UTAHRLE_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libutahrle/include" CACHE STRING "directory with rle.h header" FORCE)
 	SET(BRLCAD_UTAHRLE_INCLUDE_DIR "${UTAHRLE_INCLUDE_DIR}" CACHE STRING "directory with rle.h header" FORCE)
@@ -262,7 +257,7 @@ to the toplevel BRLCAD_BUNDLED_LIBS option and testing first for
 a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 
-THIRD_PARTY(tcl tcl tcl_ALIASES tcl_DESCRIPTION)
+THIRD_PARTY(tcl tcl tcl_ALIASES tcl_DESCRIPTION "")
 IF(BRLCAD_TCL_BUILD)
    # Set the variables ourselves since FindTCL.cmake doesn't know about our build
 	SET(TCL_LIBRARY tcl CACHE STRING "TCL_LIBRARY" FORCE)
@@ -658,26 +653,22 @@ library provided with BRL-CAD's source code.  Default is
 AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and 
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(openNURBS openNURBS opennurbs_ALIASES opennurbs_DESCRIPTION NOSYS)
+THIRD_PARTY(openNURBS openNURBS opennurbs_ALIASES opennurbs_DESCRIPTION "" NOSYS)
 
 # STEP Class Libraries
 # If we don't have Lex/Yacc, we can't do STEP - conditionalize
-IF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
-	set(scl_ALIASES ENABLE_SCL ENABLE_STEP ENABLE_STEP_CLASS_LIBRARIES)
-	set(scl_DESCRIPTION "
+set(scl_ALIASES ENABLE_SCL ENABLE_STEP ENABLE_STEP_CLASS_LIBRARIES)
+set(scl_DESCRIPTION "
 Option for enabling and disabling compilation of the NIST Step Class
 Libraries provided with BRL-CAD's source code.  Default is
 AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing 
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-   THIRD_PARTY(scl step scl_ALIASES scl_DESCRIPTION NOSYS)
+THIRD_PARTY(scl step scl_ALIASES scl_DESCRIPTION "YACC_EXECUTABLE;LEX_EXECUTABLE" NOSYS)
+IF(BRLCAD_SCL_BUILD)
 	SET(FEDEX_PLUS_EXEC fedex_plus CACHE STRING "Fedex plus executable" FORCE)
 	MARK_AS_ADVANCED(FEDEX_PLUS_EXEC)
-ELSE(LEX_EXECUTABLE AND YACC_EXECUTABLE)
-	DISTCHECK_IGNORE_ITEM(step)
-	SET(BRLCAD_SCL_BUILD OFF )
-ENDIF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
-
+ENDIF(BRLCAD_SCL_BUILD)
 
 # Clipper polygon clipping library - for now, we're going to use our copy
 ADD_SUBDIRECTORY(clipper)

@@ -34,34 +34,46 @@
 #
 ###
 #-----------------------------------------------------------------------------
-MACRO(THIRD_PARTY lower dir aliases description)
+MACRO(THIRD_PARTY lower dir aliases description required_vars)
 	STRING(TOUPPER ${lower} upper)
-	BRLCAD_BUNDLE_OPTION(${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${CMAKE_PROJECT_NAME}_${upper} """${aliases}" "${description}")
+	SET(ENABLE_PKG ${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS})
 
-	FOREACH(extraarg ${ARGN})
+	# If any of the required flags are off, this extension is a no-go.
+	FOREACH(item ${required_vars})
+	    IF(NOT ${item})
+		SET(ENABLE_PKG OFF)
+		SET(DISABLE_TEST 1)
+		SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
+	    ENDIF(NOT ${item})
+	ENDFOREACH(item ${required_vars})
+
+	BRLCAD_BUNDLE_OPTION(${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${ENABLE_PKG} ${CMAKE_PROJECT_NAME}_${upper} """${aliases}" "${description}")
+
+	IF(NOT DISABLE_TEST)
+	    FOREACH(extraarg ${ARGN})
 		IF(extraarg STREQUAL "NOSYS")
-			IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-				SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "NOSYS passed, using bundled ${lower}" FORCE)
-			ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+		    IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+			SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "NOSYS passed, using bundled ${lower}" FORCE)
+		    ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
 		ENDIF(extraarg STREQUAL "NOSYS")
-	ENDFOREACH(extraarg ${ARGN})
+	    ENDFOREACH(extraarg ${ARGN})
 
-	# Main search logic
-	IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "BUNDLED")
+	    # Main search logic
+	    IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "BUNDLED")
 
 		# BUNDLED or BUNDLED (AUTO), figure out which
 
 		IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-			SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "Automatically using bundled" FORCE)
+		    SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "Automatically using bundled" FORCE)
 		ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-			SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED" CACHE STRING "Using bundled" FORCE)
+		    SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED" CACHE STRING "Using bundled" FORCE)
 		ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
 
 		# turn it on
 		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
 		SET(${upper}_LIBRARY "${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
 
-	ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "BUNDLED")
+	    ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "BUNDLED")
 
 		# AUTO or SYSTEM (AUTO) or SYSTEM, figure out which
 
@@ -77,54 +89,54 @@ MACRO(THIRD_PARTY lower dir aliases description)
 
 		# Be quiet if we're doing this over
 		IF("${${upper}_FOUND_STATUS}" MATCHES "NOTFOUND")
-			SET(${upper}_FIND_QUIETLY TRUE)
+		    SET(${upper}_FIND_QUIETLY TRUE)
 		ENDIF("${${upper}_FOUND_STATUS}" MATCHES "NOTFOUND")
 
 		# Include the Find module for the library in question
 		IF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
-			INCLUDE(${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
+		    INCLUDE(${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
 		ELSE(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
-			INCLUDE(${CMAKE_ROOT}/Modules/Find${upper}.cmake)
+		    INCLUDE(${CMAKE_ROOT}/Modules/Find${upper}.cmake)
 		ENDIF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
 
 		# handle conversion of *AUTO to indicate whether it's
 		# going to use system or bundled versions of deps
 		IF(${upper}_FOUND)
 
-			# turn it off, found it
-			SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
-        		SET(${upper}_FOUND "TRUE" CACHE STRING "${upper}_FOUND" FORCE)
+		    # turn it off, found it
+		    SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
+		    SET(${upper}_FOUND "TRUE" CACHE STRING "${upper}_FOUND" FORCE)
 
-			# found system-installed 3rd-party dep
-			IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-				SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "Automatically using system, ${lower} found" FORCE)
-			ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-				# not auto, must be SYSTEM
-				SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM" CACHE STRING "Using system, ${lower} found" FORCE)
-			ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+		    # found system-installed 3rd-party dep
+		    IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+			SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "Automatically using system, ${lower} found" FORCE)
+		    ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+			# not auto, must be SYSTEM
+			SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM" CACHE STRING "Using system, ${lower} found" FORCE)
+		    ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
 
 		ELSE(${upper}_FOUND)
 
-			# turn it on, didn't find it
-        		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
-			SET(${upper}_LIBRARY "${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
+		    # turn it on, didn't find it
+		    SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
+		    SET(${upper}_LIBRARY "${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
 
-			# did NOT find system-installed 3rd-party dep
-                        IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-				IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
-					SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "Automatically attempting to use system even though ${lower} was NOT found" FORCE)
-				        MESSAGE(WARNING "Configuring to use system ${lower} even though it was NOT found")
+		    # did NOT find system-installed 3rd-party dep
+		    IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+			IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
+			    SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "Automatically attempting to use system even though ${lower} was NOT found" FORCE)
+			    MESSAGE(WARNING "Configuring to use system ${lower} even though it was NOT found")
 
-					# turn it off even though we didn't find it
-					SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
+			    # turn it off even though we didn't find it
+			    SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
 
-				ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
-					SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "Automatically using bundled, ${lower} NOT found" FORCE)
-				ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
-                        ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
-				# not auto, must be SYSTEM
-				MESSAGE(FATAL_ERROR "System version of ${lower} NOT found, halting due to setting")
-                        ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+			ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
+			    SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "Automatically using bundled, ${lower} NOT found" FORCE)
+			ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "SYSTEM")
+		    ELSE(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+			# not auto, must be SYSTEM
+			MESSAGE(FATAL_ERROR "System version of ${lower} NOT found, halting due to setting")
+		    ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
 
 		ENDIF(${upper}_FOUND)
 
@@ -134,22 +146,23 @@ MACRO(THIRD_PARTY lower dir aliases description)
 		# that it may introduce extra build work just from trying configure options, but appears
 		# to be essential to ensuring that the build "just works" each time.
 		IF(${upper}_FOUND)
-			STRING(REGEX REPLACE "lib" "" rootname "${lower}")
-			FILE(GLOB STALE_FILES "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_SHARED_LIBRARY_PREFIX}${rootname}*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+		    STRING(REGEX REPLACE "lib" "" rootname "${lower}")
+		    FILE(GLOB STALE_FILES "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_SHARED_LIBRARY_PREFIX}${rootname}*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
 
-			FOREACH(stale_file ${STALE_FILES})
-				EXEC_PROGRAM(
-					${CMAKE_COMMAND} ARGS -E remove ${stale_file}
-					OUTPUT_VARIABLE rm_out
-					RETURN_VALUE rm_retval
-					)
-			ENDFOREACH(stale_file ${STALE_FILES})
+		    FOREACH(stale_file ${STALE_FILES})
+			EXEC_PROGRAM(
+			    ${CMAKE_COMMAND} ARGS -E remove ${stale_file}
+			    OUTPUT_VARIABLE rm_out
+			    RETURN_VALUE rm_retval
+			    )
+		    ENDFOREACH(stale_file ${STALE_FILES})
 
-			IF("${${upper}_FOUND_STATUS}" MATCHES "NOTFOUND")
-				MESSAGE("Reconfiguring to use system ${upper}")
-			ENDIF("${${upper}_FOUND_STATUS}" MATCHES "NOTFOUND")
+		    IF("${${upper}_FOUND_STATUS}" MATCHES "NOTFOUND")
+			MESSAGE("Reconfiguring to use system ${upper}")
+		    ENDIF("${${upper}_FOUND_STATUS}" MATCHES "NOTFOUND")
 		ENDIF(${upper}_FOUND)
-	ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "BUNDLED")
+	    ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "BUNDLED")
+	ENDIF(NOT DISABLE_TEST)
 
 	IF(${CMAKE_PROJECT_NAME}_${upper}_BUILD)
 		ADD_SUBDIRECTORY(${dir})
