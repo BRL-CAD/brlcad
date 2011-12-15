@@ -53,11 +53,25 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/ThirdParty.cmake)
 
 
 # libregex library -  often needed by tools, so do this one first.
-THIRD_PARTY(regex libregex)
+SET(regex_ALIASES ENABLE_REGEX)
+SET(regex_DESCRIPTION "
+Option for enabling and disabling compilation of the Regular Expression Library
+provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
+toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
+BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(regex libregex regex_ALIASES regex_DESCRIPTION)
 BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
 
 # Same deal for zlib Library - common requirement, deal with it up front
-THIRD_PARTY(zlib libz)
+SET(zlib_ALIASES ENABLE_ZLIB ENABLE_LIBZ)
+SET(zlib_DESCRIPTION "
+Option for enabling and disabling compilation of the zlib
+library provided with BRL-CAD's source distribution.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
+BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(zlib libz zlib_ALIASES zlib_DESCRIPTION)
 
 #-----------------------------------------------------------------------------
 
@@ -97,7 +111,16 @@ ENDIF(NOT WIN32)
 MARK_AS_ADVANCED(HAVE_TERMLIB)
 
 IF(HAVE_TERMLIB)
-   THIRD_PARTY(termlib libtermlib)
+	SET(termlib_ALIASES ENABLE_TERMLIB)
+
+	SET(termlib_DESCRIPTION "
+Option for enabling and disabling compilation of the termlib library
+provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
+toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
+BRLCAD_BUNDLED_LIBS is also AUTO. (Except when building with Visual Studio,
+where it is disabled. Windows does not support the termlib API.)
+")
+   THIRD_PARTY(termlib libtermlib termlib_ALIASES termlib_DESCRIPTION)
 	IF(BRLCAD_TERMLIB_BUILD)
 		SET(HAVE_TERMCAP_H 1 CACHE BOOL "src/other termlib is on" FORCE)
 		MARK_AS_ADVANCED(HAVE_TERMCAP_H)
@@ -121,7 +144,14 @@ MARK_AS_ADVANCED(SKIP_INSTALL_EXPORT)
 SET(PNG_MAN_DIR ${MAN_DIR} CACHE STRING "Set PNG_MAN_DIR to the global MAN_DIR" FORCE)
 MARK_AS_ADVANCED(PNG_MAN_DIR)
 SET(CMAKE_INSTALL_LIBDIR ${LIB_DIR})
-THIRD_PARTY(png libpng)
+SET(png_ALIASES ENABLE_PNG)
+SET(png_DESCRIPTION "
+Option for enabling and disabling compilation of the Portable Network
+Graphics library provided with BRL-CAD's source distribution.  Default is
+AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing 
+first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(png libpng png_ALIASES png_DESCRIPTION)
 IF(BRLCAD_PNG_BUILD)
 	# PNG_LIB_NAME doesn't automatically propagate to toplevel due to scoping of CMake variables -
 	# use get_directory_property to recover the value and place it in the CACHE
@@ -144,7 +174,14 @@ MARK_AS_ADVANCED(uname_executable)
 # libutahrle Library - The directory to perform ADD_SUBDIRECTORY on and the
 # include directory for utahrle are different, so override the macro's setting
 # of UTAHRLE_INCLUDE_DIR here.
-THIRD_PARTY(utahrle libutahrle NOSYS)
+SET(utahrle_ALIASES ENABLE_UTAHRLE)
+SET(utahrle_DESCRIPTION "
+Option for enabling and disabling compilation of the Utah Raster Toolkit
+library provided with BRL-CAD's source code.  Default is AUTO, responsive 
+to the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system 
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(utahrle libutahrle utahrle_ALIASES utahrle_DESCRIPTION NOSYS)
 IF(BRLCAD_UTAHRLE_BUILD)
 	SET(UTAHRLE_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libutahrle/include" CACHE STRING "directory with rle.h header" FORCE)
 	SET(BRLCAD_UTAHRLE_INCLUDE_DIR "${UTAHRLE_INCLUDE_DIR}" CACHE STRING "directory with rle.h header" FORCE)
@@ -176,7 +213,15 @@ ELSE(BRLCAD_ENABLE_TK)
 	SET(TCL_REQUIRE_TK 0)
 ENDIF(BRLCAD_ENABLE_TK)
 
-THIRD_PARTY(tcl tcl)
+SET(tcl_ALIASES ENABLE_TCL)
+SET(tcl_DESCRIPTION "
+Option for enabling and disabling compilation of the Tcl library 
+provided with BRL-CAD's source code.  Default is AUTO, responsive 
+to the toplevel BRLCAD_BUNDLED_LIBS option and testing first for 
+a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+
+THIRD_PARTY(tcl tcl tcl_ALIASES tcl_DESCRIPTION)
 IF(BRLCAD_TCL_BUILD)
    # Set the variables ourselves since FindTCL.cmake doesn't know about our build
 	SET(TCL_LIBRARY tcl CACHE STRING "TCL_LIBRARY" FORCE)
@@ -438,12 +483,26 @@ ELSE(BRLCAD_ENABLE_TK)
 ENDIF(BRLCAD_ENABLE_TK)
 
 # OpenNURBS Library
-THIRD_PARTY(openNURBS openNURBS NOSYS)
+set(opennurbs_ALIASES ENABLE_OPENNURBS)
+set(opennurbs_DESCRIPTION "
+Option for enabling and disabling compilation of the openNURBS
+library provided with BRL-CAD's source code.  Default is
+AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and 
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(openNURBS openNURBS opennurbs_ALIASES opennurbs_DESCRIPTION NOSYS)
 
 # STEP Class Libraries
 # If we don't have Lex/Yacc, we can't do STEP - conditionalize
 IF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
-	THIRD_PARTY(scl step NOSYS)
+	set(scl_ALIASES ENABLE_SCL)
+	set(scl_DESCRIPTION "
+Option for enabling and disabling compilation of the NIST Step Class
+Libraries provided with BRL-CAD's source code.  Default is
+AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing 
+first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+   THIRD_PARTY(scl step scl_ALIASES scl_DESCRIPTION NOSYS)
 	SET(FEDEX_PLUS_EXEC fedex_plus CACHE STRING "Fedex plus executable" FORCE)
 	MARK_AS_ADVANCED(FEDEX_PLUS_EXEC)
 ELSE(LEX_EXECUTABLE AND YACC_EXECUTABLE)

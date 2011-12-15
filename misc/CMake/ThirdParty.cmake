@@ -34,9 +34,9 @@
 #
 ###
 #-----------------------------------------------------------------------------
-MACRO(THIRD_PARTY lower dir)
+MACRO(THIRD_PARTY lower dir aliases description)
 	STRING(TOUPPER ${lower} upper)
-	BUNDLE_OPTION(${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${CMAKE_PROJECT_NAME}_${upper} "")
+	BRLCAD_BUNDLE_OPTION(${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${CMAKE_PROJECT_NAME}_${upper} """${aliases}" "${description}")
 
 	FOREACH(extraarg ${ARGN})
 		IF(extraarg STREQUAL "NOSYS")

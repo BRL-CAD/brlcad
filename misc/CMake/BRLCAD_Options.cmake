@@ -245,7 +245,6 @@ ENDMACRO(BRLCAD_OPTION)
 MACRO(BRLCAD_BUNDLE_OPTION trigger build_test_var optname default_raw opt_ALIASES opt_DESCRIPTION)
     BUNDLE_OPTION("${trigger}" "${build_test_var}" "${optname}" "${default_raw}")
     OPTION_ALIASES("${optname}" "${opt_ALIASES}")
-    OPTION_DESCRIPTION("${optname}" "${opt_ALIASES}" "${opt_DESCRIPTION}")
 ENDMACRO(BRLCAD_BUNDLE_OPTION)
 
 # Local Variables:
