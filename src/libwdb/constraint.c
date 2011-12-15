@@ -46,6 +46,8 @@ mk_constraint(struct rt_wdb *wdbp, const char *name, const char *UNUSED(expr))
     /* Create a fresh new object for export */
     BU_GET(constraint, struct rt_constraint_internal);
     constraint->magic = RT_CONSTRAINT_MAGIC;
+    constraint->id = constraint->type = 0;
+    BU_VLS_INIT(&constraint->expression);
 
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_CONSTRAINT;
