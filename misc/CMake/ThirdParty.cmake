@@ -171,9 +171,9 @@ ENDMACRO(THIRD_PARTY)
 
 
 #-----------------------------------------------------------------------------
-MACRO(THIRD_PARTY_EXECUTABLE lower dir)
+MACRO(THIRD_PARTY_EXECUTABLE lower dir aliases description)
     STRING(TOUPPER ${lower} upper)
-    BUNDLE_OPTION(${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${CMAKE_PROJECT_NAME}_${upper} "")
+    BRLCAD_BUNDLE_OPTION(${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${CMAKE_PROJECT_NAME}_${upper} "" "${aliases}" "${description}")
 
     # For executables, it is a reasonable use case that the developer manually specifies
     # the location for an executable.  It is tricky to distinguish this situation from

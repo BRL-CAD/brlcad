@@ -78,11 +78,52 @@ THIRD_PARTY(zlib libz zlib_ALIASES zlib_DESCRIPTION)
 #---------------------------------------------------------------------------------
 # Local Copies of Tools
 #---------------------------------------------------------------------------------
-THIRD_PARTY_EXECUTABLE(lemon lemon)
-THIRD_PARTY_EXECUTABLE(re2c re2c)
-THIRD_PARTY_EXECUTABLE(perplex perplex)
-THIRD_PARTY_EXECUTABLE(xsltproc xmltools)
-THIRD_PARTY_EXECUTABLE(xmllint xmltools)
+SET(lemon_ALIASES ENABLE_LEMON)
+SET(lemon_DESCRIPTION "
+Option for enabling and disabling compilation of the lemon parser
+provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
+toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
+BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY_EXECUTABLE(lemon lemon lemon_ALIASES lemon_DESCRIPTION)
+
+SET(re2c_ALIASES ENABLE_RE2C)
+SET(re2c_DESCRIPTION "
+Option for enabling and disabling compilation of the re2c scanner utility
+provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
+toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
+BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY_EXECUTABLE(re2c re2c re2c_ALIASES re2c_DESCRIPTION)
+
+SET(perplex_ALIASES ENABLE_PERPLEX)
+SET(perplex_DESCRIPTION "
+Option for enabling and disabling compilation of the perplex scanner generator
+provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
+toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
+BRLCAD_BUNDLED_LIBS is also AUTO.  perplex requires a working re2c.
+")
+THIRD_PARTY_EXECUTABLE(perplex perplex perplex_ALIASES perplex_DESCRIPTION)
+
+SET(xsltproc_ALIASES ENABLE_XSLTPROC)
+SET(xsltproc_DESCRIPTION "
+Option for enabling and disabling compilation of the xsltproc XML
+transformation utilty provided with BRL-CAD's source distribution.  Used 
+for DocBook documentation processing.  Default is AUTO, responsive to the
+toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
+BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY_EXECUTABLE(xsltproc xmltools xsltproc_ALIASES xsltproc_DESCRIPTION)
+
+SET(xmllint_ALIASES ENABLE_XMLLINT)
+SET(xmllint_DESCRIPTION "
+Option for enabling and disabling compilation of the xmllint XML
+validation utilty provided with BRL-CAD's source distribution.  Used 
+for DocBook documentation validation.  Default is AUTO, responsive to the
+toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
+BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY_EXECUTABLE(xmllint xmltools xmllint_ALIASES xmllint_DESCRIPTION)
 
 #---------------------------------------------------------------------------------
 # Third Party Sources
