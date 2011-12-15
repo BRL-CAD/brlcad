@@ -3240,6 +3240,30 @@ BU_EXPORT extern void bu_hist_pr(const struct bu_hist *histp, const char *title)
 
 /** @} */
 
+
+/** @addtogroup hook */
+/** @ingroup container */
+/** @{ */
+/* hook.c */
+
+/* Callback hook mechanism */
+
+/**
+ * Add bu hook.
+ */
+BU_EXPORT extern void bu_hook_add(struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata);
+
+/**
+ * Delete bu hook.
+ */
+BU_EXPORT extern void bu_hook_delete(struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata);
+
+/**
+ * Call bu hook.
+ */
+BU_EXPORT extern void bu_hook_call(struct bu_hook_list *hlp, genptr_t buf);
+
+
 /** @addtogroup hton */
 /** @ingroup data */
 /** @{ */

@@ -429,22 +429,35 @@ ENDIF(BRLCAD_ENABLE_TK)
 # build, only compile extensions that don't use Tk.
 INCLUDE(${BRLCAD_CMAKE_DIR}/ThirdParty_TCL.cmake)
 
+
+# First up, look for IncrTcl's Itcl.
 THIRD_PARTY_TCL_PACKAGE(Itcl incrTcl/itcl "${TCL_TCLSH_EXECUTABLE}" "tcl")
 IF(BRLCAD_ITCL_BUILD)
+	# If we're building Itcl, remember we also need the C lib and not just the
+	# package - set variables accordingly.  The THIRD_PARTY_TCL_PACKAGE macro
+	# does not handle C library settings.
 	SET(ITCL_LIBRARY itcl CACHE STRING "ITCL_LIBRARY" FORCE)
-	MARK_AS_ADVANCED(ITCL_LIBRARY)
 	SET(ITCL_STUB_LIBRARY itclstub CACHE STRING "ITCL_STUB_LIBRARY" FORCE)
-	MARK_AS_ADVANCED(ITCL_STUB_LIBRARY)
 	get_directory_property(ITCL_INCLUDE_DIRS DIRECTORY incrTcl/itcl DEFINITION ITCL_INCLUDE_DIRS)
 	SET(ITCL_INCLUDE_DIRS "${ITCL_INCLUDE_DIRS}" CACHE STRING "Itcl include paths" FORCE)
-	MARK_AS_ADVANCED(ITCL_INCLUDE_DIRS)
 	SET(ITCL_VERSION "3.4" CACHE STRING "ITCL_VERSION" FORCE)
 	SET(ITCL_BIN_PREFIX ${CMAKE_BINARY_DIR}/${LIB_DIR})
 ELSE(BRLCAD_ITCL_BUILD)
+	# If the decision is NOT to build it, remember that we also need the C
+	# library and Tcl/Tk package detection doesn't guarantee that.  Look for
+	# the C library.
 	find_library(ITCL_LIBRARY NAMES itcl itcl${ITCL_PACKAGE_VERSION} PATH_SUFFIXES itcl${ITCL_PACKAGE_VERSION})
 	IF(NOT ITCL_LIBRARY)
+		# Have Itcl package, but no C library - we're building.
 		SET(${CMAKE_PROJECT_NAME}_ITCL "BUNDLED" CACHE STRING "Couldn't find ITCL_LIBRARY, even though Itcl package is present.  Build bundled itcl library." FORCE)
-		THIRD_PARTY_TCL_PACKAGE(Itcl incrTcl/itcl "${TCL_TCLSH_EXECUTABLE}" "tcl")
+		# We've already call the THIRD_PARTY_TCL_PACKAGE macro at this point.
+		# We're enabling, so just do what we need to in this situation
+		add_subdirectory(incrTcl/itcl)
+		add_dependencies(Itcl tcl)
+		include(${CMAKE_CURRENT_SOURCE_DIR}/itcl.dist)
+		DISTCHECK_IGNORE(incrTcl/itcl itcl_ignore_files)
+		# Now, handle the non-Tcl package aspects that compelled us to revisit
+		# the enable decision and turn Itcl on - need C library variables set.
 		SET(ITCL_LIBRARY itcl CACHE STRING "ITCL_LIBRARY" FORCE)
 		MARK_AS_ADVANCED(ITCL_LIBRARY)
 		SET(ITCL_STUB_LIBRARY itclstub CACHE STRING "ITCL_STUB_LIBRARY" FORCE)
@@ -455,6 +468,7 @@ ELSE(BRLCAD_ITCL_BUILD)
 		SET(ITCL_VERSION "3.4" CACHE STRING "ITCL_VERSION" FORCE)
 		SET(ITCL_BIN_PREFIX ${CMAKE_BINARY_DIR}/${LIB_DIR})
 	ELSE(NOT ITCL_LIBRARY)
+		# We have Itcl package AND Itcl library - we're good.
 		SET(ITCL_VERSION "${ITCL_PACKAGE_VERSION}" CACHE STRING "ITCL_VERSION" FORCE)
 		SET(ITCL_LIBRARY ${ITCL_LIBRARY} CACHE STRING "ITCL_LIBRARY" FORCE)
 		get_filename_component(ITCL_BIN_PREFIX ${ITCL_LIBRARY} PATH)
@@ -462,23 +476,43 @@ ELSE(BRLCAD_ITCL_BUILD)
 	MARK_AS_ADVANCED(ITCL_LIBRARY)
 ENDIF(BRLCAD_ITCL_BUILD)
 FILE(APPEND ${CONFIG_H_FILE} "#cmakedefine ITCL_VERSION	\"${ITCL_VERSION}\"\n")
+MARK_AS_ADVANCED(ITCL_LIBRARY)
+MARK_AS_ADVANCED(ITCL_STUB_LIBRARY)
+MARK_AS_ADVANCED(ITCL_INCLUDE_DIRS)
 MARK_AS_ADVANCED(ITCL_VERSION)
 
+# Look for IncrTcl's Itk.
 THIRD_PARTY_TCL_PACKAGE(Itk incrTcl/itk "${TCL_WISH_EXECUTABLE}" "tcl;itcl;tk")
 IF(BRLCAD_ITK_BUILD)
+	# If we're building Itk, remember we also need the C lib and not just the
+	# package - set variables accordingly.  The THIRD_PARTY_TCL_PACKAGE macro
+	# does not handle C library settings.
 	SET(ITK_LIBRARY itk CACHE STRING "ITK_LIBRARY" FORCE)
 	MARK_AS_ADVANCED(ITK_LIBRARY)
 	SET(ITK_VERSION "3.3" CACHE STRING "ITK_VERSION" FORCE)
 ELSE(BRLCAD_ITK_BUILD)
+	# If the decision is NOT to build it, remember that we also need the C
+	# library and Tcl/Tk package detection doesn't guarantee that.  In the
+	# case of Itk, there is also the question of wheter Tk was disabled at
+	# a high level - check for that first.  If it's on, look for the C lib.
 	IF(BRLCAD_ENABLE_TK)
 		find_library(ITK_LIBRARY NAMES itk itk${ITCL_PACKAGE_VERSION} PATH_SUFFIXES itk${ITCL_PACKAGE_VERSION})
 		IF(NOT ITK_LIBRARY OR NOT ITCL_LIBRARY)
+			# Have Itcl/Itk packages, but missing one or more of the C libraries - we're building.
 			SET(${CMAKE_PROJECT_NAME}_ITK "BUNDLED" CACHE STRING "Couldn't find incrTcl libraries, even though packages are present.  Build bundled itk library." FORCE)
-			THIRD_PARTY_TCL_PACKAGE(Itk incrTcl/itk "${TCL_WISH_EXECUTABLE}" "tcl;itcl;tk")
+			# We've already call the THIRD_PARTY_TCL_PACKAGE macro at this point.
+			# We're enabling, so just do what we need to in this situation
+			add_subdirectory(incrTcl/itk)
+			add_dependencies(Itcl tcl)
+			include(${CMAKE_CURRENT_SOURCE_DIR}/itk.dist)
+			DISTCHECK_IGNORE(incrTcl/itk itk_ignore_files)
+			# Now, handle the non-Tcl package aspects that compelled us to revisit
+			# the enable decision and turn Itcl on - need C library variables set.
 			SET(ITK_LIBRARY itk CACHE STRING "ITK_LIBRARY" FORCE)
 			MARK_AS_ADVANCED(ITK_LIBRARY)
 			SET(ITK_VERSION "3.3" CACHE STRING "ITK_VERSION" FORCE)
 		ELSE(NOT ITK_LIBRARY OR NOT ITCL_LIBRARY)
+			# We have Itcl/Itk packages AND Itcl/Itk libraries - we're good.
 			SET(ITK_VERSION "${ITCL_VERSION}" CACHE STRING "ITK_VERSION" FORCE)
 			SET(ITK_LIBRARY ${ITK_LIBRARY} CACHE STRING "ITK_LIBRARY" FORCE)
 			get_filename_component(ITK_BIN_PREFIX ${ITK_LIBRARY} PATH)
