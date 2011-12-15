@@ -360,7 +360,7 @@ bu_backtrace(FILE *fp)
 	struct timeval start, end;
 	gettimeofday(&start, NULL);
 	gettimeofday(&end, NULL);
-	while ((interrupt_wait == 0) && (end.tv_sec - start.tv_sec < 60)) {
+	while ((interrupt_wait == 0) && (end.tv_sec - start.tv_sec < 45 /* seconds */)) {
 	    /* do nothing, wait for debugger to attach but don't wait too long */;
 	    gettimeofday(&end, NULL);
 	    sleep(1);
