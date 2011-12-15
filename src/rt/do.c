@@ -71,7 +71,7 @@ extern int finalframe;		/* frame to halt at */
 /***** end variables shared with rt.c *****/
 
 /***** variables shared with viewg3.c *****/
-struct bu_vls ray_data_file;  /* file name for ray data output */
+struct bu_vls ray_data_file = BU_VLS_INIT_ZERO;  /* file name for ray data output */
 /***** end variables shared with viewg3.c *****/
 
 /***** variables for frame buffer black pixel rendering *****/
@@ -84,6 +84,7 @@ void res_pr(void);
 void memory_summary(void);
 
 extern struct icv_image_file *bif;
+
 
 /**
  * O L D _ F R A M E
@@ -442,7 +443,8 @@ struct bu_structparse set_parse[] = {
     {"%f",	1, "rt_cline_radius",		bu_byteoffset(rt_cline_radius),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 #endif
     {"%V",	1, "ray_data_file",		bu_byteoffset(ray_data_file),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%p", bu_byteoffset(view_parse[0]), "View_Module-Specific Parameters", 0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    /* daisy-chain to additional app-specific parameters */
+    {"%p",	1, "Application-Specific Parameters", bu_byteoffset(view_parse[0]),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,		0,						BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

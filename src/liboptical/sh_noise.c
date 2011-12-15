@@ -147,7 +147,7 @@ struct bu_structparse noise_print_tab[] = {
 
 
 struct bu_structparse noise_parse_tab[] = {
-    {"%p",	bu_byteoffset(noise_print_tab[0]), "noise_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%p", 1, "noise_print_tab", bu_byteoffset(noise_print_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "l",			SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
