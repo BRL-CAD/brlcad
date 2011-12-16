@@ -78,6 +78,25 @@ THIRD_PARTY(zlib libz zlib_ALIASES zlib_DESCRIPTION "")
 #---------------------------------------------------------------------------------
 # Local Copies of Tools
 #---------------------------------------------------------------------------------
+
+# For those wanting to use a system version of the LEMON parser generator
+# from sqlite, remember that the presence of /usr/bin/lemon is not enough.
+# LEMON needs a template file, lempar.c, and by default it needs it in
+# the same directory as /usr/bin/lemon.  The typical approach to avoiding
+# that requirement is to patch lemon, like this Gentoo ebuild:
+#
+# http://gentoo-overlays.zugaina.org/gentoo-zh/portage/dev-util/lemon/
+#
+# BRL-CAD's FindLEMON.cmake macros will look for the template file in
+# the executable directory first, and if not there will check in
+# /usr/share/lemon (the location used by the above ebuild) but it is
+# not possible to list all possible locations for such a non-standard
+# situation.  If your distribution DOES have a working lemon with a
+# template file in a custom location, specify the full path to the
+# template with the variable LEMON_TEMPLATE - something like:
+#
+# cmake .. -DLEMON_TEMPLATE=/etc/lemon/lempar.c
+#
 SET(lemon_ALIASES ENABLE_LEMON)
 SET(lemon_DESCRIPTION "
 Option for enabling and disabling compilation of the lemon parser
@@ -85,7 +104,7 @@ provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
 toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
 BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY_EXECUTABLE(lemon lemon lemon_ALIASES lemon_DESCRIPTION NOSYS)
+THIRD_PARTY_EXECUTABLE(lemon lemon lemon_ALIASES lemon_DESCRIPTION)
 
 SET(re2c_ALIASES ENABLE_RE2C)
 SET(re2c_DESCRIPTION "
@@ -96,6 +115,9 @@ BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY_EXECUTABLE(re2c re2c re2c_ALIASES re2c_DESCRIPTION)
 
+# Perplex is set up as a src/other sub-build, but at this time it is
+# entirely a BRL-CAD effort and not distributed or maintained as its
+# own project.
 SET(perplex_ALIASES ENABLE_PERPLEX)
 SET(perplex_DESCRIPTION "
 Option for enabling and disabling compilation of the perplex scanner generator
@@ -105,6 +127,8 @@ BRLCAD_BUNDLED_LIBS is also AUTO.  perplex requires a working re2c.
 ")
 THIRD_PARTY_EXECUTABLE(perplex perplex perplex_ALIASES perplex_DESCRIPTION	NOSYS)
 
+# libxml and libxslt tools for Docbook processing.  We build just
+# enough library support to get these two tools working.
 SET(xsltproc_ALIASES ENABLE_XSLTPROC)
 SET(xsltproc_DESCRIPTION "
 Option for enabling and disabling compilation of the xsltproc XML
@@ -115,6 +139,9 @@ BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY_EXECUTABLE(xsltproc xmltools xsltproc_ALIASES xsltproc_DESCRIPTION)
 
+# Used only when validating XML for schema compliance
+# (BRLCAD_EXTRADOCS_VALIDATE must be on to use this, although it is compiled
+# regardless if the xmltools subdirectory build is added.)
 SET(xmllint_ALIASES ENABLE_XMLLINT)
 SET(xmllint_DESCRIPTION "
 Option for enabling and disabling compilation of the xmllint XML
