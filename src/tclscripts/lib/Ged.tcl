@@ -638,6 +638,10 @@ package provide cadwidgets::Ged 1.0
 	method clear_data_move_callback_list {}
 	method delete_data_move_callback {_callback}
 
+	method add_data_polygon_callback {_callback}
+	method clear_data_polygon_callback_list {}
+	method delete_data_polygon_callback {_callback}
+
 	method add_view_measure_callback {_callback}
 	method clear_view_measure_callback_list {}
 	method delete_view_measure_callback {_callback}
@@ -694,6 +698,7 @@ package provide cadwidgets::Ged 1.0
 	variable mViewMeasureCallbacks ""
 	variable mViewRectCallbacks ""
 
+	variable mDataPolygonCallbacks ""
 	variable mPolyCircCallbacks ""
 	variable mPolyContCallbacks ""
 	variable mPolyEllCallbacks ""
@@ -3160,19 +3165,15 @@ package provide cadwidgets::Ged 1.0
 	eval $mGed mouse_poly_circ $itk_component($_pane) $mpos
     }
 
-    # For the moment there will never be any callbacks
+    set plist [$mGed data_polygons $itk_component($_pane) polygons]
+    set ti [$mGed data_polygons $itk_component($_pane) target_poly]
+    incr ti
+    if {[llength $plist] > $ti} {
+	$mGed data_polygons $itk_component($_pane) clip
+    }
 
-    if {[llength $mPolyCircCallbacks] == 0} {
-	set plist [$mGed data_polygons $itk_component($_pane) polygons]
-	set ti [$mGed data_polygons $itk_component($_pane) target_poly]
-	incr ti
-	if {[llength $plist] > $ti} {
-	    $mGed data_polygons $itk_component($_pane) clip
-	}
-    } else {
-	foreach callback $mPolyCircCallbacks {
-	    catch {$callback [$mGed rselect $itk_component($_pane)]}
-	}
+    foreach callback $mDataPolygonCallbacks {
+	catch {$callback}
     }
 }
 
@@ -3191,19 +3192,15 @@ package provide cadwidgets::Ged 1.0
     eval $mGed poly_cont_build $itk_component($_pane) $mpos
     $mGed poly_cont_build_end $itk_component($_pane)
 
-    # For the moment there will never be any callbacks
+    set plist [$mGed data_polygons $itk_component($_pane) polygons]
+    set ti [$mGed data_polygons $itk_component($_pane) target_poly]
+    incr ti
+    if {[llength $plist] > $ti} {
+	$mGed data_polygons $itk_component($_pane) clip
+    }
 
-    if {[llength $mPolyContCallbacks] == 0} {
-	set plist [$mGed data_polygons $itk_component($_pane) polygons]
-	set ti [$mGed data_polygons $itk_component($_pane) target_poly]
-	incr ti
-	if {[llength $plist] > $ti} {
-	    $mGed data_polygons $itk_component($_pane) clip
-	}
-    } else {
-	foreach callback $mPolyContCallbacks {
-	    catch {$callback [$mGed rselect $itk_component($_pane)]}
-	}
+    foreach callback $mDataPolygonCallbacks {
+	catch {$callback}
     }
 }
 
@@ -3221,19 +3218,15 @@ package provide cadwidgets::Ged 1.0
 	eval $mGed mouse_poly_ell $itk_component($_pane) $mpos
     }
 
-    # For the moment there will never be any callbacks
+    set plist [$mGed data_polygons $itk_component($_pane) polygons]
+    set ti [$mGed data_polygons $itk_component($_pane) target_poly]
+    incr ti
+    if {[llength $plist] > $ti} {
+	$mGed data_polygons $itk_component($_pane) clip
+    }
 
-    if {[llength $mPolyEllCallbacks] == 0} {
-	set plist [$mGed data_polygons $itk_component($_pane) polygons]
-	set ti [$mGed data_polygons $itk_component($_pane) target_poly]
-	incr ti
-	if {[llength $plist] > $ti} {
-	    $mGed data_polygons $itk_component($_pane) clip
-	}
-    } else {
-	foreach callback $mPolyEllCallbacks {
-	    catch {$callback [$mGed rselect $itk_component($_pane)]}
-	}
+    foreach callback $mDataPolygonCallbacks {
+	catch {$callback}
     }
 }
 
@@ -3251,19 +3244,15 @@ package provide cadwidgets::Ged 1.0
 	eval $mGed mouse_poly_rect $itk_component($_pane) $mpos
     }
 
-    # For the moment there will never be any callbacks
+    set plist [$mGed data_polygons $itk_component($_pane) polygons]
+    set ti [$mGed data_polygons $itk_component($_pane) target_poly]
+    incr ti
+    if {[llength $plist] > $ti} {
+	$mGed data_polygons $itk_component($_pane) clip
+    }
 
-    if {[llength $mPolyRectCallbacks] == 0} {
-	set plist [$mGed data_polygons $itk_component($_pane) polygons]
-	set ti [$mGed data_polygons $itk_component($_pane) target_poly]
-	incr ti
-	if {[llength $plist] > $ti} {
-	    $mGed data_polygons $itk_component($_pane) clip
-	}
-    } else {
-	foreach callback $mPolyRectCallbacks {
-	    catch {$callback [$mGed rselect $itk_component($_pane)]}
-	}
+    foreach callback $mDataPolygonCallbacks {
+	catch {$callback}
     }
 }
 
@@ -4194,6 +4183,26 @@ package provide cadwidgets::Ged 1.0
     set i [lsearch $mDataMoveCallbacks $_callback]
     if {$i != -1} {
 	set mDataMoveCallbacks [lreplace $mDataMoveCallbacks $i $i]
+    }
+}
+
+::itcl::body cadwidgets::Ged::add_data_polygon_callback {_callback} {
+    set i [lsearch $mDataPolygonCallbacks $_callback]
+
+    # Add if not already in list
+    if {$i == -1} {
+	lappend mDataPolygonCallbacks $_callback
+    }
+}
+
+::itcl::body cadwidgets::Ged::clear_data_polygon_callback_list {} {
+    set mDataPolygonCallbacks {}
+}
+
+::itcl::body cadwidgets::Ged::delete_data_polygon_callback {_callback} {
+    set i [lsearch $mDataPolygonCallbacks $_callback]
+    if {$i != -1} {
+	set mDataPolygonCallbacks [lreplace $mDataPolygonCallbacks $i $i]
     }
 }
 
