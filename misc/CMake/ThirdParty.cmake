@@ -214,6 +214,15 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir aliases description)
 	    ENDIF(EXISTS ${FULL_PATH_EXEC})
 	ENDIF(NOT "${${upper}_EXECUTABLE}" MATCHES ${CMAKE_BINARY_DIR})
     ENDIF(${upper}_EXECUTABLE)
+    
+    # If we have a NOSYS flag, SYSTEM isn't expected to work.  Set bundled.
+    FOREACH(extraarg ${ARGN})
+	IF(extraarg STREQUAL "NOSYS")
+	    IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+		SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED (AUTO)" CACHE STRING "NOSYS passed, using bundled ${lower}" FORCE)
+	    ENDIF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "AUTO")
+	ENDIF(extraarg STREQUAL "NOSYS")
+    ENDFOREACH(extraarg ${ARGN})
 
     # Main search logic
     IF(${CMAKE_PROJECT_NAME}_${upper} MATCHES "BUNDLED")

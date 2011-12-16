@@ -85,7 +85,7 @@ provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
 toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
 BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY_EXECUTABLE(lemon lemon lemon_ALIASES lemon_DESCRIPTION)
+THIRD_PARTY_EXECUTABLE(lemon lemon lemon_ALIASES lemon_DESCRIPTION NOSYS)
 
 SET(re2c_ALIASES ENABLE_RE2C)
 SET(re2c_DESCRIPTION "
@@ -103,7 +103,7 @@ provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
 toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
 BRLCAD_BUNDLED_LIBS is also AUTO.  perplex requires a working re2c.
 ")
-THIRD_PARTY_EXECUTABLE(perplex perplex perplex_ALIASES perplex_DESCRIPTION)
+THIRD_PARTY_EXECUTABLE(perplex perplex perplex_ALIASES perplex_DESCRIPTION	NOSYS)
 
 SET(xsltproc_ALIASES ENABLE_XSLTPROC)
 SET(xsltproc_DESCRIPTION "
