@@ -349,7 +349,6 @@ buf_destroy(struct Buf *buf)
     buf->elts = (void *) 0;
 }
 
-
 /* appends ptr[] to buf, grow if necessary.
  * n_elem is number of elements in ptr[], NOT bytes.
  * returns buf.
@@ -391,13 +390,6 @@ buf_append(struct Buf *buf, const void *ptr, int n_elem)
 /* --- */
 /* input buffering support */
 
-static void
-buf_append_null(struct Buf *buf)
-{
-    char null = '\0';
-    buf_append(buf, &null, sizeof(char));
-}
-
 /* get pointer to the start of the first element */
 static void*
 buf_first_elt(struct Buf *buf)
@@ -416,6 +408,13 @@ buf_last_elt(struct Buf *buf)
     }
 
     return (void*)(first + buf->elt_size * (buf->nelts - 1));
+}
+
+static void
+buf_append_char(struct Buf *buf, char c)
+{
+    char *cp = &c;
+    buf_append(buf, cp, sizeof(char) / buf->elt_size);
 }
 
 /* Copy up to n input characters to the end of scanner buffer. If EOF is
@@ -448,13 +447,13 @@ bufferAppend(perplex_t scanner, size_t n)
 	    scanner->atEOI = 1;
 	    break;
 	}
-	buf_append(buf, &c, sizeof(char));
+	buf_append_char(buf, c);
     }
 
     /* (scanner->null - eltSize) should be the last input element,
      * we put a literal null after this element for debugging
      */
-    buf_append_null(buf);
+    buf_append_char(buf, '\0');
     scanner->null = (char*)buf_last_elt(buf);
 
     /* update markers in case append caused buffer to be reallocated */
@@ -537,24 +536,16 @@ getTokenText(perplex_t scanner)
     return scanner->tokenText;
 }
 
+/* scanner helpers */
+#define UPDATE_START  scanner->tokenStart = scanner->cursor;
+#define IGNORE_TOKEN  UPDATE_START; continue;
+#define       yytext  getTokenText(scanner)
+
 static perplex_t
 newScanner()
 {
     perplex_t scanner;
     scanner = (perplex_t)calloc(1, sizeof(struct perplex));
-
-    scanner->in.file = NULL;
-    scanner->in.string = NULL;
-
-    scanner->atEOI = 0;
-
-    scanner->cursor = scanner->marker = scanner->null = NULL;
-
-    scanner->tokenStart = NULL;
-    scanner->buffer = NULL;
-    scanner->tokenText = NULL;
-
-    scanner->condition = 0;
 
     return scanner;
 }
@@ -586,7 +577,7 @@ perplexFileScanner(FILE *input)
 
     scanner->buffer = (struct Buf*)malloc(sizeof(struct Buf));
     buf_init(scanner->buffer, sizeof(char));
-    buf_append_null(scanner->buffer);
+    buf_append_char(scanner->buffer, '\0');
 
     scanner->null = scanner->marker = scanner->cursor = scanner->buffer->elts;
 
@@ -606,7 +597,6 @@ perplexFree(perplex_t scanner)
 
 #ifdef PERPLEX_USING_CONDITIONS
 /* start-condition support */
-
 static void
 setCondition(perplex_t scanner, int cond)
 {
@@ -619,16 +609,15 @@ getCondition(perplex_t scanner)
     return scanner->condition;
 }
 
+/* required re2c macros */
 #define YYGETCONDITION     getCondition(scanner)
 #define YYSETCONDITION(c)  setCondition(scanner, c)
 #endif
 
+/* required re2c macro */
 #define YYFILL(n)          bufferFill(scanner, n)
 
-#define UPDATE_START  scanner->tokenStart = scanner->cursor;
-#define IGNORE_TOKEN  UPDATE_START; continue;
-#define       yytext  getTokenText(scanner)
-
+/* scanner */
 PERPLEX_PRIVATE_LEXER;
 
 PERPLEX_PUBLIC_LEXER {
