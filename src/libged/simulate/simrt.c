@@ -217,10 +217,10 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 
 	    if (pp->pt_overlap_reg) {
 			struct region *pp_reg;
-			int j = -1;
+			int rj = -1;
 
 			bu_log("    Claiming regions:\n");
-			while ((pp_reg = pp->pt_overlap_reg[++j]))
+			while ((pp_reg = pp->pt_overlap_reg[++rj]))
 				bu_log("        %s\n", pp_reg->reg_name);
 			}
 
