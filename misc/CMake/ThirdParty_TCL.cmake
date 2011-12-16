@@ -49,6 +49,12 @@ MACRO(THIRD_PARTY_TCL_PACKAGE packagename dir wishcmd depends required_vars alia
 	ENDIF(NOT ${item})
     ENDFOREACH(item ${required_vars})
 
+    # TODO - need to allow an explicit "BUNDLED" to turn the extension on
+    # regardless - it may not produce a sane build setup, but do what
+    # they ask for...  - probably need to brake the "scrub and homogonize"
+    # routine for bundled options into its own routine - pass in a value,
+    # get back a valid BUNDLED option.
+
     # If BRLCAD_TCL is *exactly* SYSTEM or BRLCAD_TCL matches SYSTEM and 
     # BRLCAD_BUNDLED_LIBS is *exactly* SYSTEM (i.e. it got forced and is not
     # locally overridden to be back on), ALL extensions are a no-go.
