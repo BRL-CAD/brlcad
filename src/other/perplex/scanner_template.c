@@ -410,31 +410,12 @@ static void*
 buf_last_elt(struct Buf *buf)
 {
     size_t first = (size_t)buf_first_elt(buf);
+
+    if (buf->nelts < 1) {
+	return NULL;
+    }
+
     return (void*)(first + buf->elt_size * (buf->nelts - 1));
-}
-
-
-/* check validity of the scanner's input markers */
-static void
-checkInputMarkers(perplex_t scanner)
-{
-    struct Buf *buf;
-    void *tokenStart, *cursor, *null;
-
-    buf = scanner->buffer;
-
-    /* input pointers should point inside input buffer */
-    tokenStart = (void*)scanner->tokenStart;
-    cursor = (void*)scanner->cursor;
-    null = (void*)scanner->null;
-
-    assert(tokenStart >= buf->elts);
-    assert(null <= buf_last_elt(buf));
-
-    /* Cursor should be somewhere between start of current token and end
-     * of input. Backtracking marker may or may not be out-of-date.
-     */
-    assert(tokenStart <= cursor && cursor <= null);
 }
 
 /* Copy up to n input characters to the end of scanner buffer. If EOF is
@@ -480,8 +461,6 @@ bufferFill(perplex_t scanner, size_t n)
 	/* nothing to add to buffer */
 	return;
     }
-
-    checkInputMarkers(scanner);
 
     buf = scanner->buffer;
 
