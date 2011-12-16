@@ -1882,11 +1882,7 @@ SET(toplevel_ignore_files
 	${toplevel_DOCFILES}
 	BUGS
 	ChangeLog
-	HACKING.cmake
-	INSTALL.cmake
-	README.cmake
 	TODO
-	TODO.cmake
 	autogen.sh
 	configure.ac
 	configure.cmake.sh
@@ -2010,7 +2006,7 @@ MARK_AS_ADVANCED(LIBRARY_OUTPUT_PATH)
 # anything has changed - we're not going to overwrite the copy in the src
 # directory (principle of this build is to leave the src dir pristine after
 # configuration and compilation) but check for changes and report if found.
-FILE(READ ${BRLCAD_SOURCE_DIR}/INSTALL.cmake SRC_INSTALL_STR)
+FILE(READ ${BRLCAD_SOURCE_DIR}/INSTALL SRC_INSTALL_STR)
 STRING(REGEX REPLACE "${CONFIG_OPT_STRING}.*" "" INSTALL_PREFIX	"${SRC_INSTALL_STR}")
 FILE(WRITE ${BRLCAD_BINARY_DIR}/INSTALL.new "${INSTALL_PREFIX}")
 FILE(READ ${BRLCAD_BINARY_DIR}/OPTIONS INSTALL_OPTS)
@@ -2022,7 +2018,7 @@ FILE(APPEND ${BRLCAD_BINARY_DIR}/INSTALL.new "\n\n*** Note - Do not add or edit 
    automatically re-generate INSTALL with the new descriptions and alias 
    information.")
 execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
-	${BRLCAD_SOURCE_DIR}/INSTALL.cmake ${BRLCAD_BINARY_DIR}/INSTALL.new
+	${BRLCAD_SOURCE_DIR}/INSTALL ${BRLCAD_BINARY_DIR}/INSTALL.new
 	RESULT_VARIABLE IS_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
 	DIFF_ERROR)
 IF(IS_DIFFERENT)
