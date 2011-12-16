@@ -3199,6 +3199,10 @@ to_extract_contours_av(struct ged *gedp, ged_polygon *gpp, size_t contour_ac, co
     register size_t j, k;
 
     gpp->gp_num_contours = contour_ac;
+
+    if (!contour_ac)
+	return GED_OK;
+
     gpp->gp_hole = (int *)bu_calloc(contour_ac, sizeof(int), "gp_hole");
     gpp->gp_contour = (ged_poly_contour *)bu_calloc(contour_ac, sizeof(ged_poly_contour), "gp_contour");
 
@@ -3257,19 +3261,18 @@ to_extract_polygons_av(struct ged *gedp, ged_polygons *gpp, size_t polygon_ac, c
 
 	/* Split polygon i into contours */
 	if (Tcl_SplitList(current_top->to_interp, polygon_av[i], &ac, &contour_av) != TCL_OK) {
-	    Tcl_Free((char *)polygon_av);
 	    bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
 	    return GED_ERROR;
 	}
 	contour_ac = ac;
 
 	if (to_extract_contours_av(gedp, &gpp->gp_polygon[i], contour_ac, contour_av, mode) != GED_OK) {
-	    Tcl_Free((char *)polygon_av);
 	    Tcl_Free((char *)contour_av);
 	    return GED_ERROR;
 	}
 
-	Tcl_Free((char *)contour_av);
+	if (contour_ac)
+	    Tcl_Free((char *)contour_av);
     }
 
     return GED_OK;
@@ -3835,7 +3838,6 @@ to_data_polygons(struct ged *gedp,
 
 	    if (polygon_ac < 1) {
 		to_refresh_view(gdvp);
-		Tcl_Free((char *)polygon_av);
 		return GED_OK;
 	    }
 
