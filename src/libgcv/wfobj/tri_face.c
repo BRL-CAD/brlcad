@@ -54,12 +54,14 @@ get_faceuse_model(struct faceuse *fu)
 
 /* nmg construction routines */
 
+#define POOL_GET(p, type) p = (type*)bu_pool_get(sizeof(type))
+
 HIDDEN struct vertex_g*
 make_nmg_vertex_g(double x, double y, double z, long index)
 {
     struct vertex_g *vg;
 
-    BU_GET(vg, struct vertex_g);
+    POOL_GET(vg, struct vertex_g);
     vg->magic = NMG_VERTEX_G_MAGIC;
 
     VSET(vg->coord, x, y, z);
@@ -73,7 +75,7 @@ make_nmg_vertex(double x, double y, double z, long index)
 {
     struct vertex *v;
 
-    BU_GET(v, struct vertex);
+    POOL_GET(v, struct vertex);
     v->magic = NMG_VERTEX_MAGIC;
     
     BU_LIST_INIT(&v->vu_hd);
@@ -88,7 +90,7 @@ attach_face_g_plane(struct face *f)
 {
     struct face_g_plane *plane;
 
-    BU_GET(plane, struct face_g_plane);
+    POOL_GET(plane, struct face_g_plane);
     plane->magic = NMG_FACE_G_PLANE_MAGIC;
 
     /* link up and down */
