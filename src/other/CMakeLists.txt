@@ -623,7 +623,7 @@ THIRD_PARTY_TCL_PACKAGE(Tkhtml tkhtml "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_
 DISTCHECK_IGNORE_ITEM(hv3)
 DISTCHECK_IGNORE_ITEM(sqlite3)
 
-SET(tkpng_ALIASES ENABLE_TKHTML)
+SET(tkpng_ALIASES ENABLE_TKPNG)
 SET(tkpng_DESCRIPTION "
 Option for enabling and disabling compilation of the tkpng PNG image viewing
 package provided with BRL-CAD's source distribution.  Default is AUTO,
@@ -634,7 +634,7 @@ This package will be disabled if BRLCAD_ENABLE_TK is OFF.
 ")
 THIRD_PARTY_TCL_PACKAGE(tkpng tkpng "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK" tkpng_ALIASES tkpng_DESCRIPTION)
 
-SET(tktable_ALIASES ENABLE_TKHTML)
+SET(tktable_ALIASES ENABLE_TKTABLE)
 SET(tktable_DESCRIPTION "
 Option for enabling and disabling compilation of the Tktable graphical table
 widget package provided with BRL-CAD's source distribution.  Default is AUTO,

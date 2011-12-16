@@ -547,7 +547,7 @@ for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL
 is set to BUNDLED, local copy is built even if a system version is present.  
 This package will be disabled if BRLCAD_ENABLE_TK is OFF.
 
-Aliases:  ENABLE_TKHTML
+Aliases:  ENABLE_TKPNG
 
 
 --- BRLCAD_TKTABLE ---
@@ -559,7 +559,7 @@ for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL
 is set to BUNDLED, local copy is built even if a system version is present.  
 This package will be disabled if BRLCAD_ENABLE_TK is OFF.
 
-Aliases:  ENABLE_TKHTML
+Aliases:  ENABLE_TKTABLE
 
 
 --- BRLCAD_OPENNURBS ---
