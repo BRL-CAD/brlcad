@@ -43,11 +43,11 @@ MACRO(THIRD_PARTY lower dir aliases description required_vars)
 	    IF(NOT ${item})
 		SET(ENABLE_PKG OFF)
 		SET(DISABLE_TEST 1)
-		SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
+		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
 	    ENDIF(NOT ${item})
 	ENDFOREACH(item ${required_vars})
 
-	BRLCAD_BUNDLE_OPTION(${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ${ENABLE_PKG} ${CMAKE_PROJECT_NAME}_${upper} """${aliases}" "${description}")
+	BRLCAD_BUNDLE_OPTION(${CMAKE_PROJECT_NAME}_BUNDLED_LIBS ENABLE_PKG ${CMAKE_PROJECT_NAME}_${upper} "" ${aliases} ${description})
 
 	IF(NOT DISABLE_TEST)
 	    FOREACH(extraarg ${ARGN})
