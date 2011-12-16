@@ -454,6 +454,9 @@ ELSE(BRLCAD_ITCL_BUILD)
 	# If the decision is NOT to build it, remember that we also need the C
 	# library and Tcl/Tk package detection doesn't guarantee that.  Look for
 	# the C library.
+	IF(NOT ITCL_PACKAGE_VERSION)
+		SET(ITCL_PACKAGE_VERSION "3.4")
+	ENDIF(NOT ITCL_PACKAGE_VERSION)
 	find_library(ITCL_LIBRARY NAMES itcl itcl${ITCL_PACKAGE_VERSION} PATH_SUFFIXES itcl${ITCL_PACKAGE_VERSION})
 	IF(NOT ITCL_LIBRARY)
 		# Before we force anything, check what BRLCAD_TCL and
