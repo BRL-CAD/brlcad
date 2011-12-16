@@ -352,9 +352,17 @@ bufferAppend(perplex_t scanner, size_t n)
     FILE *in;
     size_t i;
     char c;
+    char *bufStart;
+    size_t markerOffset, tokenStartOffset, cursorOffset;
 
     buf = scanner->buffer;
     in = scanner->in.file;
+
+    /* save marker offsets */
+    bufStart = (char*)buf->elts;
+    cursorOffset = (size_t)(scanner->cursor - bufStart);
+    markerOffset = (size_t)(scanner->marker - bufStart);
+    tokenStartOffset = (size_t)(scanner->tokenStart - bufStart);
 
     /* remove last (null) element */
     buf->nelts--;
@@ -372,6 +380,12 @@ bufferAppend(perplex_t scanner, size_t n)
      */
     buf_append_null(buf);
     scanner->null = (char*)buf_last_elt(buf);
+
+    /* update markers in case append caused buffer to be reallocated */
+    bufStart = (char*)buf->elts;
+    scanner->cursor = bufStart + cursorOffset;
+    scanner->marker = bufStart + markerOffset;
+    scanner->tokenStart = bufStart + tokenStartOffset;
 }
 
 /* Appends up to n characters of input to scanner buffer. */
