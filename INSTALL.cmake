@@ -12,10 +12,16 @@ provided in the doc/ directory of the source distribution that should
 be consulted if that is the platform you are installing on.  This
 presently includes the following:
 
-  doc/README.MacOSX	-- Apple Mac OS X
+  doc/README.AIX        -- IBM's Advanced Interactive eXecutive OS
+  doc/README.BSD        -- FreeBSD, NetBSD, OpenBSD, etc.
   doc/README.IRIX	-- SGI IRIX and IRIX64
   doc/README.Linux	-- Various Linux distributions
+  doc/README.MacOSX	-- Apple Mac OS X
+  doc/README.Solaris    -- Oracle Solaris, OpenIndiana (Illumos), etc.
   doc/README.Windows    -- Microsoft Windows
+  doc/README.VAX        -- Virtual Address eXtension architecture from DEC.
+                           One of the original BRL-CAD platforms. These 
+                           days, re-created using the simh simulator.
 
 
 TABLE OF CONTENTS
@@ -25,12 +31,10 @@ TABLE OF CONTENTS
   Quick Installation
   Installing from Binary
   Installing from Source
-  Configuration Options
-  Compilation Options
-  Installation Options
   Testing Functionality
   Post-Installation
   Reporting Problems
+  Configuration Options
 
 
 QUICK INSTALLATION
@@ -50,14 +54,14 @@ below.  The rest of this quick installation section is only relevant
 to source code distributions of BRL-CAD.
 
 For the impatient or simplistic, the following steps should compile, 
-test, and install an optimized BRL-CAD quickly into the /usr/brlcad
+test, and install an optimized BRL-CAD quickly into the /usr/brlcad/rel-X.Y.Z
 directory if CMake is installed on your system:
 
   gunzip brlcad-X.Y.Z.tar.gz
   tar -xvf brlcad-X.Y.Z.tar
   mkdir brlcad-build
   cd brlcad-build
-  cmake ../brlcad-X.Y.Z -DBRLCAD_BUNDLED_LIBS=ON
+  cmake ../brlcad-X.Y.Z -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release
   make
   make benchmark
   make regress
@@ -68,17 +72,17 @@ See the REPORTING PROBLEMS section of this document to report the
 problem or the INSTALLING FROM SOURCE section for more comprehensive
 instructions.
 
-Once installed, add /usr/brlcad/bin to your path, and you should be
+Once installed, add /usr/brlcad/rel-X.Y.Z/bin to your path, and you should be
 able to run any of the 400+ applications that constitute BRL-CAD.  For
 example, to run the MGED solid modeler:
 
-PATH=/usr/brlcad/bin:$PATH ; export PATH
+PATH=/usr/brlcad/rel-X.Y.Z/bin:$PATH ; export PATH
 mged
 
 If you use tcsh or another C-shell based command shell, use this
 instead:
 
-set path=( /usr/brlcad/bin $path ) ; rehash
+set path=( /usr/brlcad/rel-X.Y.Z/bin $path ) ; rehash
 mged
 
 
@@ -96,34 +100,37 @@ Generic Binary Distributions:
 
 For the unspecialized binary distributions that are basically
 compressed tarballs of the installation root, they should contain the
-entire hierarchy of the distribution.  That is to say that they
-contain /usr/brlcad in its entirety so that if you decompress, you
-will have a `usr' directory that contains a single `brlcad' directory:
+entire hierarchy of the distribution.  To put that hierarchy in its
+"installed" location, you just create the dirctory and move the
+expanded tarball contents:
 
 gunzip BRL-CAD_7.2.4_Linux_ia64.tar.gz
 tar -xvf BRL-CAD_7.2.4_Linux_ia64.tar
-sudo mkdir /usr/brlcad
-sudo mv BRL-CAD_7.2.4_Linux_ia64/* /usr/brlcad/
+sudo mkdir /usr/brlcad/rel-7.2.4
+sudo mv BRL-CAD_7.2.4_Linux_ia64/* /usr/brlcad/rel-7.2.4/
 
 Of course, there are other compression options possible including zip
 and bzip2.  By default, BRL-CAD expects to be installed into
-/usr/brlcad. On some platforms the binary may be relocatable, but this
-is not guaranteed. It's recommended that you start from a source 
+/usr/brlcad/rel-7.2.4. On some platforms the binary may be relocatable, 
+but this is not guaranteed. It's recommended that you start from a source 
 distribution if you would like to install into an alternate installation
-location.
+location.  That said, if you do desire to install and/or run BRL-CAD from 
+a different location, give it a try... on some platforms it will work.
 
-However, if you do desire to install and run BRL-CAD from a different
-location, give it a try.. ;)  If it doesn't work (some platforms are more
-problematic than others), you will need to compile and install from a
-source distribution.
+Something to be aware of - even if a binary distribution IS relocatable, 
+it will use its local copies of things like libraries only so long as the
+"final" installed target directory that the build was compiled for
+does not contain a BRL-CAD installation.  Due to the way path logic
+is set, an installed copy of a library in the correct location will
+always be loaded first, regardless of the presence of a "local" copy.
 
 
 Mac OS X Disk Mounting Image:
 
 Mount the .dmg and run the Installer .pkg contained therein.  This
-will install into /usr/brlcad and will only require confirming that
-your environment is set up properly (i.e. add /usr/brlcad/bin to your
-path) as described in this document's Installation Options section.
+will install into /usr/brlcad/rel-X.Y.Z and will only require confirming that
+your environment is set up properly (i.e. add /usr/brlcad/rel-X.Y.Z/bin to your
+path) as described in the Quck Installation section.
 
 
 INSTALLING FROM SOURCE
@@ -154,117 +161,32 @@ use.  See the CONFIGURATION OPTIONS section below for details on how
 to go about selecting which options are appropriate for you.
 
 By default, the default configuration will prepare the build system
-for installation into the /usr/brlcad directory (the 
-CMAKE_INSTALL_PREFIX option may be used to change that).  This 
-tradition goes back a couple decades and is a convenient means to 
-isolate the BRL-CAD solid modeling system from your system, resolves 
-conflicts, facilitates uninstalls, and simplifies upgrades.  The 
-default configuration is performed by running `cmake'.  It is not
-required to do the build in a directory different from your source
-directory, but it is much cleaner and highly recommended - this guide
-will illustrate the build process with the assumption that the
-BRL-CAD source code is in the directory brlcad-7.2.4 and the
-directory intended to hold the build output is brlcad-build, located
-in the same parent directory as brlcad-7.2.4:
+to perform a Debug build and install into the /usr/brlcad/dev-X.Y.Z 
+directory.   The CMAKE_INSTALL_PREFIX option may be used to change 
+that directory, or a Release build type may be specified to install to 
+/usr/brlcad/rel-X.Y.Z - more on this below.  The
+tradition of non-system installation paths goes back a couple decades
+and is a convenient means to isolate the BRL-CAD solid modeling 
+system from your system, resolves conflicts, facilitates uninstalls, 
+and simplifies upgrades.  The default configuration is performed by 
+running `cmake'.  It is not required to do the build in a directory 
+different from your source directory, but it is much cleaner and 
+*highly* recommended - this guide will illustrate the build process 
+with the assumption that the BRL-CAD source code is in the directory 
+brlcad-7.2.4 and the directory intended to hold the build output is 
+brlcad-build, located in the same parent directory as brlcad-7.2.4:
 
   .
   ./brlcad-7.2.4
   ./brlcad-build
 
-To start the build process, cd into brlcad-build and run the following
+To start the build process, cd into brlcad-build and run CMake,
+pointing it to the source directory:
 
+  cd brlcad-build
   cmake ../brlcad-7.2.4
 
-By default, a "Debug" configuration will be selected when 
-configuring that adds debugging flags and sets a default
-install location suitable for a debug build.  Alternately, 
-the "Release" configuration can be set to automatically add
-optimization flags and release style install settings.
-
-By default, all components and functionality will be built except
-jove.  However, BRL-CAD does require and include several 3rd party
-components.  If your system does not include a sufficient version of
-those required 3rd party components, they will be automatically
-configured for compilation.  
-
-If the autodetection mechanisms fail to produce a working configuration,
-the next simplest approach is typically to enable ALL the third party
-components - this is typically a well tested configuration, but will
-increase both the build time and final install size of BRL-CAD on 
-the system.  To set this variable on the command line, use -D to
-define BRLCAD_BUNDLED_LIBS for CMake:
-
-  -DBRLCAD_BUNDLED_LIBS=Bundled
-
-If the graphical interface (cmake-gui) is in use, it will list this
-and other common options by default, allowing the user to check and
-uncheck the ON/OFF status of various options.  This is often quicker
-and more convenient than defining options on the command line, but
-both will work.
-
-You can also force on or off any individual 3rd party library by 
-setting the BRL-CAD variable for that feature to either on or off:
-
-  -DBRLCAD_<FEATURE>=ON
-
-See file './CMakeFiles/AllVariables.txt' for a list of library names
-and labels.  For example, to NOT use OpenGL, set
-
-  -DBRLCAD_ENABLE_OPENGL=OFF
-
-To obtain an optimized build (for example, for BRL-CAD Benchmark
-performance evaluation), enable BRLCAD_ENABLE_OPTIMIZED_BUILD:
-
-  -DBRLCAD_ENABLE_OPTIMIZED_BUILD=ON
-
-See the CONFIGURATION OPTIONS below for more details on all of the
-possible settings.
-
-Once configured, you should be able to succesfully build BRL-CAD via
-make:
-
-  make
-
-See the COMPILATION OPTIONS section in this document for more details
-on compile-time options including options for parallel build support.
-
-
-Testing the Compilation:
-
-To test BRL-CAD before installation, you can run the BRL-CAD benchmark.
-The benchmark will report if the results are correct, testing a 
-majority of the core functionality of BRL-CAD in addition to testing 
-your system's performance:
-
-  make benchmark
-
-Note that the benchmark target will build ONLY the pieces required for
-the benchmark tests, unless a general make has already been performed.
-
-See the TESTING FUNCTIONALITY section of this document for more
-details on how to ensure that the build completed successfully and
-additional tests that may be run.
-
-
-Installing the Compilation:
-
-After the build successfully completes and assuming the benchmark also
-produces correct results, installation may begin.  Like any package,
-you must have sufficient filesystem permissions to install.  To
-install into a system location, you can generally either become a
-super user via the su or sudo commands:
-
-  sudo make install
-
-See the INSTALLATION OPTIONS section of this document for more details
-on BRL-CAD installation options and post-install environment
-preparations.
-
-BUILD TYPES
------------
-
-As mentioned earlier, the default CMake settings are very minimalist and
-not usually the most useful.  There are two "build types", controlled by
+As mentioned earlier, CMake uses two "build types", controlled by
 the CMAKE_BUILD_TYPE variable, that are useful for specific purposes:
 
 * Debug (-DCMAKE_BUILD_TYPE=Debug) - Debug is the configuration that most
@@ -287,10 +209,123 @@ override the ../brlcad-install default.  Build types are a convenient way
 to bundle sets of settings, but they do not prevent overrides if a more
 custom setup is needed.
 
-#=======================================================================
-...to be continued with more cmake info (paralleling the autotools
-INSTALL)...
-#=======================================================================
+By default, all components and functionality will be built except
+jove.  However, BRL-CAD does require and include several 3rd party
+components.  If your system does not include a sufficient version of
+those required 3rd party components, they will be automatically
+configured for compilation.  
+
+If the autodetection mechanisms fail to produce a working configuration,
+the next simplest approach is typically to enable ALL the third party
+components - this is typically a well tested configuration, but will
+increase both the build time and final install size of BRL-CAD on 
+the system.  To set this variable on the command line, use -D to
+define BRLCAD_BUNDLED_LIBS for CMake:
+
+  -DBRLCAD_BUNDLED_LIBS=Bundled
+
+If the graphical interface (cmake-gui) is in use, it will list this
+and other common options by default, allowing the user change them
+graphically.  This is often quicker and more convenient than 
+defining options on the command line, but both will work.
+
+You can also force on or off any individual 3rd party library by 
+setting the BRL-CAD variable for that feature to either on or off:
+
+  -DBRLCAD_<LIBRARY>=ON
+
+Other variables control BRL-CAD features.  For example, to NOT 
+enable functionality using OpenGL, set
+
+  -DBRLCAD_ENABLE_OPENGL=OFF
+
+To obtain an optimized build (for example, for BRL-CAD Benchmark
+performance evaluation), enable BRLCAD_ENABLE_OPTIMIZED_BUILD:
+
+  -DBRLCAD_ENABLE_OPTIMIZED_BUILD=ON
+
+See the CONFIGURATION OPTIONS below for more details on all of the
+possible settings.
+
+Once configured, you should be able to succesfully build BRL-CAD via
+make:
+
+  make  
+
+(On multicore systems, adding the -j flag (e.g. -j6) is recommended)
+
+Installing the Compilation:
+
+After the build successfully completes and assuming the benchmark also
+produces correct results, installation may begin.  Like any package,
+you must have sufficient filesystem permissions to install.  To
+install into a system location, you can generally either become a
+super user via the su command and run
+
+  make install
+
+or on operating systems set up to use sudo:
+
+  sudo make install
+
+
+TESTING FUNCTIONALITY
+---------------------
+
+To test BRL-CAD before installation, you can run the BRL-CAD benchmark.
+The benchmark will report if the results are correct, testing a 
+majority of the core functionality of BRL-CAD in addition to testing 
+your system's performance:
+
+  make benchmark
+
+Note that the benchmark target will build ONLY the pieces required for
+the benchmark tests, unless a general make has already been performed.
+For more testing, you can run the regression test suite:
+
+  make regress
+
+
+POST-INSTALLATION
+-----------------
+
+Permissions:
+
+Something to be aware of with CMake installations is that umask settings
+are ignored by current versions of CMake.  It is a common situation in
+Unix environments to want "group" members to have read/write access -
+to achieve this, after installation the following find command can be
+run (of course, substituting the actual BRL-CAD version for X.Y.Z):
+
+find /usr/brlcad/rel-X.Y.Z -type d -exec chmod ug+rwx {} \; -exec chmod o+rx {} \; -o -type f -exec chmod ug+rw {} \; -exec chmod o+r {} \;
+
+The above 'find' line will set up permissions across a /usr/brlcad
+rooted installation such that 'user' and 'group' will have read-write
+access and 'other' will have read access consistently across all
+files.
+
+
+System PATH:
+
+Normally, BRL-CAD's install directories are not in system PATH lists and
+consequently BRL-CAD's exectuables will not be invokable without specifying
+their full path.  This is normally handled in Unix environments by adding
+the desired BRL-CAD installation's binary directory to the user's local path:
+
+In the bash shell: export PATH=/usr/brlcad/rel-X.Y.Z:$PATH
+In the csh shell:  setenv PATH /usr/brlcad/rel-X.Y.Z:$PATH
+
+REPORTING PROBLEMS
+------------------
+
+Please report any bugs encountered to the project bug tracker at
+http://sourceforge.net/tracker/?group_id=105292&atid=640802
+
+Similarly, please post any request for feature enhancements or support
+to http://sourceforge.net/tracker/?group_id=105292&atid=640805 and
+http://sourceforge.net/tracker/?group_id=105292&atid=640803
+respectively.
+
 
 CONFIGURATION OPTIONS
 ---------------------

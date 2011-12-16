@@ -1,5 +1,5 @@
 			    BRL-CAD
-			 Release 7.18.4
+			 Release 7.22.0
 		       http://brlcad.org/
 
 BRL-CAD is a powerful cross-platform open source combinatorial
@@ -285,3 +285,4 @@ described above in the COMMUNICATIONS section of this document.
 Best Wishes,
 The BRL-CAD Development Team
 devs@brlcad.org
+

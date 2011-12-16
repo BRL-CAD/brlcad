@@ -1318,13 +1318,28 @@ CMAKE
   there are equivalent cmake options for all configure options or
   document the ones not included (e.g., proe options))
 
+  -- Have the majority of these auto-generated and included, need to
+     review and see what's still missing.
+
 * ensure primary cmake option parity with summary option listing
 
+  -- Um.  Not sure this is fully achieveable - we only want to
+     summarize a subset of the src/other settings in the summary
+     printout, was my (CY) understanding...
+
 * move cmake documentation files into place
+   
+  -- Have done so now that the deprecation warning is directing 
+     users to INSTALL, but will still need to look over old 
+     INSTALL docs when reviewing option documentation coverage.
 
 * investigate ignoring .hidden directories/files from dist packing so
   that internal build directories can be used instead of external ones
 
+  -- is this needed?  what's not working with make package and 
+     make package_source?
+
+* 64 bit Windows build of tkhtml3 - is it CMake, tkhtml, or ??
 
 ODDITIES
 --------

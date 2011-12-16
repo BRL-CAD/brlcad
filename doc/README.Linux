@@ -6,25 +6,33 @@ Linux distributions.
 
 Table of Contents
 -----------------
+Parallel Builds
 64-bit Compile
 32-bit Compile
 Arch Linux
 Ubuntu/Debian
 PPC64 Linux
 
+Parallel Builds
+---------------
+BRL-CAD compilation can take advantage of multiple CPUs.  With 
+Make based builds, this is done using the "-j" flag - e.g. a
+six core machine will build faster using "make -j6" to utilize
+all cores.  
+
 
 64-bit Compile (on a platform that defaults to 32-bit)
 --------------
 
-rm -rf *cache*   # remove any previous configure results
-./configure --prefix=/usr/brlcad/rel-MAJOR.MINOR.PATCH --enable-all --enable-64bit-build CFLAGS=-m64 CXXFLAGS=-m64 LDFLAGS=-m64
-
+cmake ../brlcad -DBRLCAD_WORD_SIZE=32BIT
 
 32-bit Compile (on a platform that defaults to 64-bit)
 --------------
 
-rm -rf *cache*   # remove any previous configure results
-./configure --prefix=/usr/brlcad/rel-MAJOR.MINOR.PATCH --enable-all --disable-64bit-build CFLAGS=-m32 LDFLAGS=-m32 CXXFLAGS=-m32
+cmake ../brlcad -DBRLCAD_WORD_SIZE=64BIT
+
+* Note that in both of the above situations you need both a compiler that
+works in the alternate mode and system libraries of the correct type. 
 
 
 Arch Linux
@@ -43,35 +51,18 @@ Users of Ubuntu, Debian, and other similar packaging distributions of
 Linux will need to ensure that a few essentials are in place before
 you will be able to compile BRL-CAD.
 
-Following the build instructions in the INSTALL file, if you are
-starting from configure then you will need:
+Following the build instructions in the INSTALL file.  You will need:
 
 gcc (3+, e.g. 4.0.3)
 make (e.g. gnu make 3.8.0)
+cmake (2.8.3 or newer)
 
-If you are starting from autogen.sh you will need a few additional
-tools that comprise the GNU Autotool toolset:
-
-autoconf (2.50+, e.g. 2.59)
-automake (1.6+, e.g. 1.9)
-libtool (1.4+, e.g. 1.5)
-
-All three of those have implicit dependencies on things like m4, perl,
-cpp, and more.
-
-If you installed automake version 1.4, you will need to install 1.9
-and update the alternatives entry for automake so that it refers to
-version 1.9 and not version 1.4:
-
-sudo update-alternatives automake /usr/bin/automake-1.9
+All three of those have implicit dependencies on other packages.
 
 You will also want to make sure that you have the X11 development
 headers installed:
 
-apt-get install xserver-xorg-dev libx11-dev libxi-dev
-
-Required: make (>= 3.8.0), bison, flex, xserver-xorg-dev, libx11-dev, libxi-dev
-Optional: libpng-dev, zlib1g-dev, tcl8.5-dev (>= 8.5), tk8.5-dev (>= 8.5), tcl3-dev, itk3-dev, iwidgets4, blt-dev
+apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev
 
 Note there is a supported Debian package generation script in file
 'sh/make_deb.sh' which can function only on a Debian or Ubuntu system.
@@ -109,6 +100,8 @@ system.  It can be used like so:
   # create an rpm file:
   $ ./sh/make_rpm.sh
 
+It is also possible to create an RPM package using CPack with the
+make package build target, on systems with the proper RPM tools.
 
 PPC64 Linux
 -----------

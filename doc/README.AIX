@@ -1,6 +1,14 @@
 BRL-CAD on AIX README
 =====================
 
+Dec. 15, 2011 - As of this date, it has been some time since an AIX
+build of BRL-CAD has been tested, and thus far it has NOT been tested
+b with the new CMake build system.
+
+Kitware provides an AIX powerpc binary for CMake, see
+http://www.cmake.org/cmake/resources/software.html
+
+
 Building BRL-CAD under AIX is fairly straightforward using a correctly
 installed version on the GCC compiler.  If, however, you are using the
 IBM Visual Age compiler, then there are additional manual compilation
