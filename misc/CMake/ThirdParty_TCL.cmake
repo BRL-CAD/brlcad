@@ -40,6 +40,7 @@ MACRO(THIRD_PARTY_TCL_PACKAGE packagename dir wishcmd depends required_vars alia
     SET(ENABLE_PKG ${${CMAKE_PROJECT_NAME}_TCL_BUILD})
 
     # If any of the required flags are off, this extension is a no-go.
+    SET(DISABLE_TEST 0)
     FOREACH(item ${required_vars})
 	IF(NOT ${item})
 	    SET(ENABLE_PKG OFF)

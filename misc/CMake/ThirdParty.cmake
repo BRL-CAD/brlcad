@@ -39,6 +39,7 @@ MACRO(THIRD_PARTY lower dir aliases description required_vars)
 	SET(ENABLE_PKG ${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS})
 
 	# If any of the required flags are off, this extension is a no-go.
+	SET(DISABLE_TEST 0)
 	FOREACH(item ${required_vars})
 	    IF(NOT ${item})
 		SET(ENABLE_PKG OFF)
