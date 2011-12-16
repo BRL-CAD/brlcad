@@ -87,16 +87,19 @@ THIRD_PARTY(zlib libz zlib_ALIASES zlib_DESCRIPTION "")
 #
 # http://gentoo-overlays.zugaina.org/gentoo-zh/portage/dev-util/lemon/
 #
+# LEMON packages for other major Linux/BSD distros will do the same.
 # BRL-CAD's FindLEMON.cmake macros will look for the template file in
 # the executable directory first, and if not there will check in
-# /usr/share/lemon (the location used by the above ebuild) but it is
-# not possible to list all possible locations for such a non-standard
-# situation.  If your distribution DOES have a working lemon with a
-# template file in a custom location, specify the full path to the
-# template with the variable LEMON_TEMPLATE - something like:
+# /usr/share/lemon (the location used by several distributions.) 
+# If your distribution has a working lemon with the lempar.c template 
+# file in a custom location, specify the full path to the  template 
+# with the variable LEMON_TEMPLATE - something like:
 #
 # cmake .. -DLEMON_TEMPLATE=/etc/lemon/lempar.c
 #
+# This is not to tell LEMON what template to use - that information is
+# usually hardcoded in LEMON itself - but to let FindLEMON.cmake know 
+# there is a working LEMON installation.
 SET(lemon_ALIASES ENABLE_LEMON)
 SET(lemon_DESCRIPTION "
 Option for enabling and disabling compilation of the lemon parser
