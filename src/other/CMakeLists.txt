@@ -260,6 +260,8 @@ a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 THIRD_PARTY(tcl tcl tcl_ALIASES tcl_DESCRIPTION "")
 IF(BRLCAD_TCL_BUILD)
    # Set the variables ourselves since FindTCL.cmake doesn't know about our build
+	SET(TCL_SRC_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/tcl)
+	SET(TCL_BIN_PREFIX ${CMAKE_BINARY_DIR}/${LIB_DIR})
 	SET(TCL_LIBRARY tcl CACHE STRING "TCL_LIBRARY" FORCE)
 	SET(TCL_LIBRARIES tcl CACHE STRING "TCL_LIBRARY" FORCE)
 	SET(TCL_CONF_PREFIX "NONE-CMake" CACHE STRING "TCL_CONF_PREFIX" FORCE)
@@ -298,13 +300,6 @@ exit
 	MARK_AS_ADVANCED(tcl_inittcl)
 	FILE(APPEND ${CONFIG_H_FILE} "#define TCL_SYSTEM_INITTCL_PATH \"${tcl_inittcl}\"\n")
 ENDIF(BRLCAD_TCL_BUILD)
-IF(TCL_REQUIRE_TK)
-	IF(BRLCAD_TCL_BUILD)
-		SET(BRLCAD_TK_BUILD ON)
-	ENDIF(BRLCAD_TCL_BUILD)
-ELSE(TCL_REQUIRE_TK)
-	SET(BRLCAD_TK_BUILD OFF)
-ENDIF(TCL_REQUIRE_TK)
 MARK_AS_ADVANCED(TCL_COMPILE_DEBUG)
 MARK_AS_ADVANCED(TCL_COMPILE_STATS)
 MARK_AS_ADVANCED(TCL_DEBUG)
@@ -316,47 +311,63 @@ MARK_AS_ADVANCED(TCL_OPTIMIZED)
 MARK_AS_ADVANCED(TCL_THREADS)
 MARK_AS_ADVANCED(TCL_TIMEZONE_DATA)
 
-IF(BRLCAD_ENABLE_TK)
-	IF(BRLCAD_TK_BUILD)
-		SET(TCL_SRC_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/tcl)
-		SET(TCL_BIN_PREFIX ${CMAKE_BINARY_DIR}/${LIB_DIR})
-		ADD_SUBDIRECTORY(tk)
-		# Set the variables ourselves since FindTCL.cmake doesn't know about our build
-		SET(TCL_TK_LIBRARY tk CACHE STRING "TCL_TK_LIBRARY" FORCE)
-		SET(TCL_TK_CONF_PREFIX "NONE-CMake" CACHE STRING "TCL_TK_CONF_PREFIX" FORCE)
-		SET(TCL_LIBRARIES ${TCL_LIBRARIES} tk CACHE STRING "TCL_LIBRARIES" FORCE)
-		SET(TK_LIBRARY tk CACHE STRING "TK_LIBRARY" FORCE)
-		SET(TCL_STUB_LIBRARIES tkstub ${TCL_STUB_LIBRARIES} CACHE STRING "TCL_TK_STUBLIBRARIES" FORCE)
-		SET(TCL_TK_STUB_LIBRARY tkstub CACHE STRING "TCL_TK_STUB_LIBRARY" FORCE)
-		SET(TK_STUB_LIBRARY tkstub CACHE STRING "TK_STUB_LIBRARY" FORCE)
-		SET(TK_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/tk/generic" CACHE STRING "Tk include path" FORCE)
-		SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TK_INCLUDE_PATH} CACHE STRING "Tcl include paths" FORCE)
-		IF(WIN32)
-			SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/tk/win ${CMAKE_CURRENT_SOURCE_DIR}/tk/xlib CACHE STRING "Tcl include paths" FORCE)
-		ENDIF(WIN32)
-		SET(TCL_WISH_EXECUTABLE wish CACHE STRING "Tk shell" FORCE)
-		SET(TK_WISH wish CACHE STRING "Tk shell" FORCE)
-		IF(WIN32)
-			SET(TK_SYSTEM_GRAPHICS "win32" CACHE STRING "Tk system graphics" FORCE)
-		ELSEIF(APPLE)
-			IF(OPENGL_USE_AQUA)
-				SET(TK_SYSTEM_GRAPHICS "aqua" CACHE STRING "Tk system graphics" FORCE)
-			ELSE(OPENGL_USE_AQUA)
-				SET(TK_SYSTEM_GRAPHICS "x11" CACHE STRING "Tk system graphics" FORCE)
-			ENDIF(OPENGL_USE_AQUA)
-		ELSEIF(UNIX)
+# Depending on the Tcl/Tk results, look for packages required by BRL-CAD.  If
+# building local Tcl/Tk, go ahead and enable all the packages as well - otherwise,
+# check the found Tcl/Tk and enable what it doesn't supply.  If doing a non-graphical
+# build, only compile extensions that don't use Tk.
+INCLUDE(${BRLCAD_CMAKE_DIR}/ThirdParty_TCL.cmake)
+
+# The first package to settle is Tk itself
+SET(tk_ALIASES ENABLE_TK)
+SET(tk_DESCRIPTION "
+Option for enabling and disabling compilation of the Tk library 
+provided with BRL-CAD's source code.  Default is AUTO, responsive 
+to the BRLCAD_TCL option and testing first for 
+a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+Option for enabling and disabling compilation of the Tk graphics package for
+Tcl provided with BRL-CAD's source distribution.  Default is AUTO,
+auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first for 
+a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_TK is 
+set to BUNDLED, local copy is built even if a system version is present.
+This option also depends on BRLCAD_ENABLE_TK being ON.
+")
+THIRD_PARTY_TCL_PACKAGE(Tk tk "${TCL_TCLSH_EXECUTABLE}" "tcl" "BRLCAD_ENABLE_TK" tk_ALIASES tk_DESCRIPTION)
+IF(BRLCAD_TK_BUILD)
+	# Set the variables ourselves since FindTCL.cmake doesn't know about our build
+	SET(TCL_TK_LIBRARY tk CACHE STRING "TCL_TK_LIBRARY" FORCE)
+	SET(TCL_TK_CONF_PREFIX "NONE-CMake" CACHE STRING "TCL_TK_CONF_PREFIX" FORCE)
+	SET(TCL_LIBRARIES ${TCL_LIBRARIES} tk CACHE STRING "TCL_LIBRARIES" FORCE)
+	SET(TK_LIBRARY tk CACHE STRING "TK_LIBRARY" FORCE)
+	SET(TCL_STUB_LIBRARIES tkstub ${TCL_STUB_LIBRARIES} CACHE STRING "TCL_TK_STUBLIBRARIES" FORCE)
+	SET(TCL_TK_STUB_LIBRARY tkstub CACHE STRING "TCL_TK_STUB_LIBRARY" FORCE)
+	SET(TK_STUB_LIBRARY tkstub CACHE STRING "TK_STUB_LIBRARY" FORCE)
+	SET(TK_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/tk/generic" CACHE STRING "Tk include path" FORCE)
+	SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TK_INCLUDE_PATH} CACHE STRING "Tcl include paths" FORCE)
+	IF(WIN32)
+		SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/tk/win ${CMAKE_CURRENT_SOURCE_DIR}/tk/xlib CACHE STRING "Tcl include paths" FORCE)
+	ENDIF(WIN32)
+	SET(TCL_WISH_EXECUTABLE wish CACHE STRING "Tk shell" FORCE)
+	SET(TK_WISH wish CACHE STRING "Tk shell" FORCE)
+	IF(WIN32)
+		SET(TK_SYSTEM_GRAPHICS "win32" CACHE STRING "Tk system graphics" FORCE)
+	ELSEIF(APPLE)
+		IF(OPENGL_USE_AQUA)
+			SET(TK_SYSTEM_GRAPHICS "aqua" CACHE STRING "Tk system graphics" FORCE)
+		ELSE(OPENGL_USE_AQUA)
 			SET(TK_SYSTEM_GRAPHICS "x11" CACHE STRING "Tk system graphics" FORCE)
-		ENDIF(WIN32)
-		FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_TK_H 1\n")
-		ADD_DEPENDENCIES(tk tcl)
-		INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/tk.dist)
-		DISTCHECK_IGNORE(tk tk_ignore_files)
-		MARK_AS_ADVANCED(TK-ENABLE_FREETYPE)
-	ELSE(BRLCAD_TK_BUILD)
-		BRLCAD_INCLUDE_FILE(tk.h HAVE_TK_H)
-		DISTCHECK_IGNORE_ITEM(tk)
-	ENDIF(BRLCAD_TK_BUILD)
-ENDIF(BRLCAD_ENABLE_TK)
+		ENDIF(OPENGL_USE_AQUA)
+	ELSEIF(UNIX)
+		SET(TK_SYSTEM_GRAPHICS "x11" CACHE STRING "Tk system graphics" FORCE)
+	ENDIF(WIN32)
+	FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_TK_H 1\n")
+	ADD_DEPENDENCIES(tk tcl)
+	INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/tk.dist)
+	DISTCHECK_IGNORE(tk tk_ignore_files)
+	MARK_AS_ADVANCED(TK-ENABLE_FREETYPE)
+ELSE(BRLCAD_TK_BUILD)
+	BRLCAD_INCLUDE_FILE(tk.h HAVE_TK_H)
+	DISTCHECK_IGNORE_ITEM(tk)
+ENDIF(BRLCAD_TK_BUILD)
 MARK_AS_ADVANCED(TK_INCLUDE_PATH)
 MARK_AS_ADVANCED(TK_LIBRARY)
 MARK_AS_ADVANCED(TK_STUB_LIBRARY)
@@ -365,12 +376,12 @@ MARK_AS_ADVANCED(TK_WISH)
 MARK_AS_ADVANCED(TK_ENABLE_XFT)
 
 # Now that Tcl/Tk is settled, define the HAVE_TK flag for the config.h file
-IF(TCL_TK_LIBRARY AND BRLCAD_ENABLE_TK)
+IF(BRLCAD_ENABLE_TK)
 	SET(HAVE_TK 1 CACHE STRING "C level Tk flag" FORCE)
 	FILE(APPEND ${CONFIG_H_FILE} "#cmakedefine HAVE_TK\n")
-ELSE(TCL_TK_LIBRARY AND BRLCAD_ENABLE_TK)
+ELSE(BRLCAD_ENABLE_TK)
 	SET(HAVE_TK 0 CACHE STRING "C level Tk flag" FORCE)
-ENDIF(TCL_TK_LIBRARY AND BRLCAD_ENABLE_TK)
+ENDIF(BRLCAD_ENABLE_TK)
 MARK_AS_ADVANCED(HAVE_TK)
 
 # Tcl/Tk extensions need a variety of settings provided for them - take care
@@ -417,12 +428,6 @@ IF(BRLCAD_ENABLE_TK)
 		ENDIF(X11_Xscreensaver_INCLUDE_PATH)
 	ENDIF(BRLCAD_TK_BUILD)
 ENDIF(BRLCAD_ENABLE_TK)
-
-# Depending on the Tcl/Tk results, look for packages required by BRL-CAD.  If
-# building local Tcl/Tk, go ahead and enable all the packages as well - otherwise,
-# check the found Tcl/Tk and enable what it doesn't supply.  If doing a non-graphical
-# build, only compile extensions that don't use Tk.
-INCLUDE(${BRLCAD_CMAKE_DIR}/ThirdParty_TCL.cmake)
 
 
 # First up, look for IncrTcl's Itcl.
@@ -558,19 +563,33 @@ ELSE(BRLCAD_TOGL_BUILD)
 	IF(BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_X11)
 		find_library(TOGL_LIBRARY NAMES togl togl${TOGL_PACKAGE_VERSION} PATH_SUFFIXES togl${TOGL_PACKAGE_VERSION})
 		IF(NOT TOGL_LIBRARY)
+			# Before we force anything, check what BRLCAD_TCL and
+			# BRLCAD_BUNDLED_LIBS say
+			SET(TOGL_DISABLED 0)
+			IF("${${CMAKE_PROJECT_NAME}_TCL}" STREQUAL "SYSTEM")
+				SET(TOGL_DISABLED 1)
+			ENDIF("${${CMAKE_PROJECT_NAME}_TCL}" STREQUAL "SYSTEM")
+			IF("${${CMAKE_PROJECT_NAME}_TCL}" MATCHES "SYSTEM" AND
+					"${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS}" STREQUAL "SYSTEM")
+				SET(TOGL_DISABLED 1)
+			ENDIF("${${CMAKE_PROJECT_NAME}_TCL}" MATCHES "SYSTEM" AND
+				"${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS}" STREQUAL "SYSTEM")
+		   	
 			# Have Togl package, but no C library - we're building.
-			SET(${CMAKE_PROJECT_NAME}_TOGL "BUNDLED" CACHE STRING "Couldn't find	TOGL_LIBRARY, even though Itcl package is present.  Build bundled itcl library." FORCE)
-			# We've already call the THIRD_PARTY_TCL_PACKAGE macro at this point.
-			# We're enabling, so just do what we need to in this situation
-			add_subdirectory(togl)
-			add_dependencies(togl tcl tk)
-			include(${CMAKE_CURRENT_SOURCE_DIR}/togl.dist)
-			DISTCHECK_IGNORE(togl togl_ignore_files)
-			# Now, handle the non-Tcl package aspects that compelled us to revisit
-			# the enable decision and turn Itcl on - need C library variables set.
-			SET(TOGL_LIBRARIES togl CACHE STRING "TOGL_LIBRARIES" FORCE)
-			SET(TOGL_STUB_LIBRARIES toglstub CACHE STRING "TOGL_STUB_LIBRARIES" FORCE)
-			SET(TOGL_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/togl/include;${CMAKE_CURRENT_SOURCE_DIR}/togl/include" CACHE STRING "Togl include path" FORCE)
+			IF(NOT TOGL_DISABLED)
+				SET(${CMAKE_PROJECT_NAME}_TOGL "BUNDLED" CACHE STRING "Couldn't find	TOGL_LIBRARY, even though Itcl package is present.  Build bundled itcl library." FORCE)
+				# We've already call the THIRD_PARTY_TCL_PACKAGE macro at this point.
+				# We're enabling, so just do what we need to in this situation
+				add_subdirectory(togl)
+				add_dependencies(togl tcl tk)
+				include(${CMAKE_CURRENT_SOURCE_DIR}/togl.dist)
+				DISTCHECK_IGNORE(togl togl_ignore_files)
+				# Now, handle the non-Tcl package aspects that compelled us to revisit
+				# the enable decision and turn Itcl on - need C library variables set.
+				SET(TOGL_LIBRARIES togl CACHE STRING "TOGL_LIBRARIES" FORCE)
+				SET(TOGL_STUB_LIBRARIES toglstub CACHE STRING "TOGL_STUB_LIBRARIES" FORCE)
+				SET(TOGL_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/togl/include;${CMAKE_CURRENT_SOURCE_DIR}/togl/include" CACHE STRING "Togl include path" FORCE)
+			ENDIF(NOT TOGL_DISABLED)
 		ELSE(NOT TOGL_LIBRARY)
 			# We have Togl packages AND Togl libraries - we're good.
 			SET(TOGL_LIBRARY ${TOGL_LIBRARY} CACHE STRING "ITK_LIBRARY" FORCE)
@@ -582,6 +601,7 @@ ELSE(BRLCAD_TOGL_BUILD)
 		SET(TOGL_INCLUDE_DIRS "" CACHE STRING "Tcl/Tk OpenGL disabled" FORCE)
 	ENDIF(BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_X11)
 ENDIF(BRLCAD_TOGL_BUILD)
+MARK_AS_ADVANCED(TOGL_LIBRARY)
 MARK_AS_ADVANCED(TOGL_LIBRARIES)
 MARK_AS_ADVANCED(TOGL_STUB_LIBRARIES)
 MARK_AS_ADVANCED(TOGL_INCLUDE_DIRS)

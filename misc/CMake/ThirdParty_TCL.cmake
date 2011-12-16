@@ -49,6 +49,20 @@ MACRO(THIRD_PARTY_TCL_PACKAGE packagename dir wishcmd depends required_vars alia
 	ENDIF(NOT ${item})
     ENDFOREACH(item ${required_vars})
 
+    # If BRLCAD_TCL is *exactly* SYSTEM or BRLCAD_TCL matches SYSTEM and 
+    # BRLCAD_BUNDLED_LIBS is *exactly* SYSTEM (i.e. it got forced and is not
+    # locally overridden to be back on), ALL extensions are a no-go.
+    IF("${${CMAKE_PROJECT_NAME}_TCL}" STREQUAL "SYSTEM")
+	SET(ENABLE_PKG OFF)
+	SET(DISABLE_TEST 1)
+	SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
+    ENDIF("${${CMAKE_PROJECT_NAME}_TCL}" STREQUAL "SYSTEM")
+    IF("${${CMAKE_PROJECT_NAME}_TCL}" MATCHES "SYSTEM" AND "${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS}" STREQUAL "SYSTEM")
+	SET(ENABLE_PKG OFF)
+	SET(DISABLE_TEST 1)
+	SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
+    ENDIF("${${CMAKE_PROJECT_NAME}_TCL}" MATCHES "SYSTEM" AND "${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS}" STREQUAL "SYSTEM")
+
     # If we are doing a local Tcl build, default to bundled unless we need Tk and Tk isn't enabled.
     BRLCAD_BUNDLE_OPTION(${CMAKE_PROJECT_NAME}_TCL ENABLE_PKG ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "" ${aliases} ${description}) 
 
