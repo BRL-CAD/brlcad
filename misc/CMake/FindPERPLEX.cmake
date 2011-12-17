@@ -69,18 +69,8 @@
 
 FIND_PROGRAM(PERPLEX_EXECUTABLE perplex_path DOC "path to the perplex executable")
 MARK_AS_ADVANCED(PERPLEX_EXECUTABLE)
-
-IF(PERPLEX_EXECUTABLE)
-	get_filename_component(perplex_path ${PERPLEX_EXECUTABLE} PATH)
-	IF(perplex_path)
-		SET(PERPLEX_TEMPLATE "")
-		IF(EXISTS ${perplex_path}/scanner_template.c)
-			SET(PERPLEX_TEMPLATE "${perplex_path}/scanner_template.c")
-		ENDIF(EXISTS ${perplex_path}/scanner_template.c)
-		INCLUDE(FindPackageHandleStandardArgs)
-		FIND_PACKAGE_HANDLE_STANDARD_ARGS(PERPLEX DEFAULT_MSG PERPLEX_EXECUTABLE PERPLEX_TEMPLATE)
-	ENDIF(perplex_path)
-ENDIF(PERPLEX_EXECUTABLE)
+INCLUDE(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(PERPLEX DEFAULT_MSG PERPLEX_EXECUTABLE)
 
 #============================================================
 # PERPLEX_TARGET (public macro)
