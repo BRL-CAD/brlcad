@@ -1,0 +1,8 @@
+catch {package require @packagename@}
+set packageversion NOTFOUND
+set packageversion [lindex [lsort -decreasing [package versions @packagename@]] 0]
+set filename "@CMAKE_BINARY_DIR@/CMakeTmp/@PKGNAME_UPPER@_PKG_VERSION"
+set fileId [open $filename "w"]
+puts $fileId $packageversion
+close $fileId 
+exit
