@@ -54,14 +54,12 @@ get_faceuse_model(struct faceuse *fu)
 
 /* nmg construction routines */
 
-#define POOL_GET(p, type) p = (type*)bu_pool_get(sizeof(type))
-
 HIDDEN struct vertex_g*
-make_nmg_vertex_g(double x, double y, double z, long index)
+make_nmg_vertex_g(struct model *model, double x, double y, double z, long index)
 {
     struct vertex_g *vg;
 
-    POOL_GET(vg, struct vertex_g);
+    GET_VERTEX_G(vg, model);
     vg->magic = NMG_VERTEX_G_MAGIC;
 
     VSET(vg->coord, x, y, z);
@@ -71,26 +69,26 @@ make_nmg_vertex_g(double x, double y, double z, long index)
 }
 
 HIDDEN struct vertex*
-make_nmg_vertex(double x, double y, double z, long index)
+make_nmg_vertex(struct model *model, double x, double y, double z, long index)
 {
     struct vertex *v;
 
-    POOL_GET(v, struct vertex);
+    GET_VERTEX(v, model);
     v->magic = NMG_VERTEX_MAGIC;
     
     BU_LIST_INIT(&v->vu_hd);
-    v->vg_p = make_nmg_vertex_g(x, y, z, index);
+    v->vg_p = make_nmg_vertex_g(model, x, y, z, index);
     v->index = index;
 
     return v;
 }
 
 HIDDEN void
-attach_face_g_plane(struct face *f)
+attach_face_g_plane(struct model *model, struct face *f)
 {
     struct face_g_plane *plane;
 
-    POOL_GET(plane, struct face_g_plane);
+    GET_FACE_G_PLANE(plane, model);
     plane->magic = NMG_FACE_G_PLANE_MAGIC;
 
     /* link up and down */
@@ -113,18 +111,18 @@ make_model_from_face(const double points[], int numPoints)
     struct vertex **verts;
     const double *p;
 
+    /* make base nmg model */
+    model = nmg_mm();
+    nmg_mrsv(model);
+
     /* copy each point into vertex to create verts array */
     verts = (struct vertex**)bu_malloc(sizeof(struct vertex*) * numPoints,
 	"verts");
 
     for (i = 0; i < numPoints; i++) {
 	p = &points[i * ELEMENTS_PER_POINT];
-	verts[i] = make_nmg_vertex(p[X], p[Y], p[Z], (long)i);
+	verts[i] = make_nmg_vertex(model, p[X], p[Y], p[Z], (long)i);
     }
-
-    /* make base nmg model */
-    model = nmg_mm();
-    nmg_mrsv(model);
 
     /* add face from verts */
     shell = get_first_shell(model);
@@ -133,7 +131,7 @@ make_model_from_face(const double points[], int numPoints)
 
     /* add geometry to face */
     fu = BU_LIST_FIRST(faceuse, &shell->fu_hd);
-    attach_face_g_plane(fu->f_p);
+    attach_face_g_plane(model, fu->f_p);
     nmg_calc_face_plane(fu, fu->f_p->g.plane_p->N);
     fu->orientation = OT_SAME;
 
