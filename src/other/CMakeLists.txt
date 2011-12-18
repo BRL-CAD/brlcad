@@ -361,7 +361,7 @@ a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_TK is
 set to BUNDLED, local copy is built even if a system version is present.
 This option also depends on BRLCAD_ENABLE_TK being ON.
 ")
-THIRD_PARTY_TCL_PACKAGE(Tk tk "${TCL_TCLSH_EXECUTABLE}" "tcl" "BRLCAD_ENABLE_TK" tk_ALIASES tk_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Tk tk "${TCL_TCLSH_EXECUTABLE}" "tcl" "BRLCAD_ENABLE_TK" "tk" tk_ALIASES tk_DESCRIPTION)
 IF(BRLCAD_TK_BUILD)
 	# Set the variables ourselves since FindTCL.cmake doesn't know about our build
 	SET(TCL_TK_LIBRARY tk CACHE STRING "TCL_TK_LIBRARY" FORCE)
@@ -390,13 +390,9 @@ IF(BRLCAD_TK_BUILD)
 		SET(TK_SYSTEM_GRAPHICS "x11" CACHE STRING "Tk system graphics" FORCE)
 	ENDIF(WIN32)
 	FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_TK_H 1\n")
-	ADD_DEPENDENCIES(tk tcl)
-	INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/tk.dist)
-	DISTCHECK_IGNORE(tk tk_ignore_files)
 	MARK_AS_ADVANCED(TK-ENABLE_FREETYPE)
 ELSE(BRLCAD_TK_BUILD)
 	BRLCAD_INCLUDE_FILE(tk.h HAVE_TK_H)
-	DISTCHECK_IGNORE_ITEM(tk)
 ENDIF(BRLCAD_TK_BUILD)
 MARK_AS_ADVANCED(TK_INCLUDE_PATH)
 MARK_AS_ADVANCED(TK_LIBRARY)
@@ -469,11 +465,8 @@ auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first for
 a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL is 
 set to BUNDLED, local copy is built even if a system version is present.
 ")
-THIRD_PARTY_TCL_PACKAGE(Itcl incrTcl/itcl "${TCL_TCLSH_EXECUTABLE}" "tcl" "" itcl_ALIASES itcl_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Itcl incrTcl/itcl "${TCL_TCLSH_EXECUTABLE}" "tcl" "" "itcl" itcl_ALIASES itcl_DESCRIPTION)
 IF(BRLCAD_ITCL_BUILD)
-	# If we're building Itcl, remember we also need the C lib and not just the
-	# package - set variables accordingly.  The THIRD_PARTY_TCL_PACKAGE macro
-	# does not handle C library settings.
 	SET(ITCL_LIBRARY itcl CACHE STRING "ITCL_LIBRARY" FORCE)
 	SET(ITCL_STUB_LIBRARY itclstub CACHE STRING "ITCL_STUB_LIBRARY" FORCE)
 	get_directory_property(ITCL_INCLUDE_DIRS DIRECTORY incrTcl/itcl DEFINITION ITCL_INCLUDE_DIRS)
@@ -481,55 +474,10 @@ IF(BRLCAD_ITCL_BUILD)
 	SET(ITCL_VERSION "3.4" CACHE STRING "ITCL_VERSION" FORCE)
 	SET(ITCL_BIN_PREFIX ${CMAKE_BINARY_DIR}/${LIB_DIR})
 ELSE(BRLCAD_ITCL_BUILD)
-	# If the decision is NOT to build it, remember that we also need the C
-	# library and Tcl/Tk package detection doesn't guarantee that.  Look for
-	# the C library.
-	IF(NOT ITCL_PACKAGE_VERSION)
-		SET(ITCL_PACKAGE_VERSION "3.4")
-	ENDIF(NOT ITCL_PACKAGE_VERSION)
-	find_library(ITCL_LIBRARY NAMES itcl itcl${ITCL_PACKAGE_VERSION} PATH_SUFFIXES itcl${ITCL_PACKAGE_VERSION})
-	IF(NOT ITCL_LIBRARY)
-		# Before we force anything, check what BRLCAD_TCL and
-		# BRLCAD_BUNDLED_LIBS say
-		SET(ITCL_DISABLED 0)
-		IF("${${CMAKE_PROJECT_NAME}_TCL}" STREQUAL "SYSTEM")
-			SET(ITCL_DISABLED 1)
-		ENDIF("${${CMAKE_PROJECT_NAME}_TCL}" STREQUAL "SYSTEM")
-		IF("${${CMAKE_PROJECT_NAME}_TCL}" MATCHES "SYSTEM" AND
-				"${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS}" STREQUAL "SYSTEM")
-			SET(ITCL_DISABLED 1)
-		ENDIF("${${CMAKE_PROJECT_NAME}_TCL}" MATCHES "SYSTEM" AND
-			"${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS}" STREQUAL "SYSTEM")
-
-		IF(NOT ITCL_DISABLED)
-			# Have Itcl package, but no C library - we're building.
-			SET(${CMAKE_PROJECT_NAME}_ITCL "BUNDLED" CACHE STRING "Couldn't find ITCL_LIBRARY, even though Itcl package is present.  Build bundled itcl library." FORCE)
-			# We've already call the THIRD_PARTY_TCL_PACKAGE macro at this point.
-			# We're enabling, so just do what we need to in this situation
-			# Distcheck has already been told to ignore this directory
-			# altogether by THIRD_PARTY_TCL_PACKAGE, so we don't need to do
-			# tell it again.  Slightly unfortunate in that distcheck won't
-			# pick up issues with Itcl's build logic.
-			add_subdirectory(incrTcl/itcl)
-			add_dependencies(Itcl tcl)
-			# Now, handle the non-Tcl package aspects that compelled us to revisit
-			# the enable decision and turn Itcl on - need C library variables set.
-			SET(ITCL_LIBRARY itcl CACHE STRING "ITCL_LIBRARY" FORCE)
-			MARK_AS_ADVANCED(ITCL_LIBRARY)
-			SET(ITCL_STUB_LIBRARY itclstub CACHE STRING "ITCL_STUB_LIBRARY" FORCE)
-			MARK_AS_ADVANCED(ITCL_STUB_LIBRARY)
-			get_directory_property(ITCL_INCLUDE_DIRS DIRECTORY incrTcl/itcl DEFINITION ITCL_INCLUDE_DIRS)
-			SET(ITCL_INCLUDE_DIRS "${ITCL_INCLUDE_DIRS}" CACHE STRING "Itcl include paths" FORCE)
-			SET(ITCL_VERSION "3.4" CACHE STRING "ITCL_VERSION" FORCE)
-			SET(ITCL_BIN_PREFIX ${CMAKE_BINARY_DIR}/${LIB_DIR})
-		ENDIF(NOT ITCL_DISABLED)
-	ELSE(NOT ITCL_LIBRARY)
-		# We have Itcl package AND Itcl library - we're good.
-		SET(ITCL_VERSION "${ITCL_PACKAGE_VERSION}" CACHE STRING "ITCL_VERSION" FORCE)
-		SET(ITCL_LIBRARY ${ITCL_LIBRARY} CACHE STRING "ITCL_LIBRARY" FORCE)
-		get_filename_component(ITCL_BIN_PREFIX ${ITCL_LIBRARY} PATH)
-	ENDIF(NOT ITCL_LIBRARY)
-	MARK_AS_ADVANCED(ITCL_LIBRARY)
+	# We have Itcl package AND Itcl library - we're good.
+	SET(ITCL_VERSION "${ITCL_PACKAGE_VERSION}" CACHE STRING "ITCL_VERSION" FORCE)
+	SET(ITCL_LIBRARY ${ITCL_LIBRARY} CACHE STRING "ITCL_LIBRARY" FORCE)
+	get_filename_component(ITCL_BIN_PREFIX ${ITCL_LIBRARY} PATH)
 ENDIF(BRLCAD_ITCL_BUILD)
 FILE(APPEND ${CONFIG_H_FILE} "#cmakedefine ITCL_VERSION	\"${ITCL_VERSION}\"\n")
 MARK_AS_ADVANCED(ITCL_LIBRARY)
@@ -547,61 +495,19 @@ a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL is
 set to BUNDLED, local copy is built even if a system version is present.  This
 package will be disabled if BRLCAD_ENABLE_TK is OFF.
 ")
-THIRD_PARTY_TCL_PACKAGE(Itk incrTcl/itk "${TCL_WISH_EXECUTABLE}" "tcl;itcl;tk" "BRLCAD_ENABLE_TK" itk_ALIASES itk_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Itk incrTcl/itk "${TCL_WISH_EXECUTABLE}" "tcl;itcl;tk" "BRLCAD_ENABLE_TK" "itk" itk_ALIASES itk_DESCRIPTION)
 IF(BRLCAD_ITK_BUILD)
-	# If we're building Itk, remember we also need the C lib and not just the
-	# package - set variables accordingly.  The THIRD_PARTY_TCL_PACKAGE macro
 	# does not handle C library settings.
 	SET(ITK_LIBRARY itk CACHE STRING "ITK_LIBRARY" FORCE)
-	MARK_AS_ADVANCED(ITK_LIBRARY)
 	SET(ITK_VERSION "3.3" CACHE STRING "ITK_VERSION" FORCE)
 ELSE(BRLCAD_ITK_BUILD)
-	# If the decision is NOT to build it, remember that we also need the C
-	# library and Tcl/Tk package detection doesn't guarantee that.  In the
-	# case of Itk, there is also the question of wheter Tk was disabled at
-	# a high level - check for that first.  If it's on, look for the C lib.
-	IF(BRLCAD_ENABLE_TK)
-		find_library(ITK_LIBRARY NAMES itk itk${ITCL_PACKAGE_VERSION} PATH_SUFFIXES itk${ITCL_PACKAGE_VERSION})
-		IF(NOT ITK_LIBRARY OR NOT ITCL_LIBRARY)
-			# Before we force anything, check what BRLCAD_TCL and
-			# BRLCAD_BUNDLED_LIBS say
-			SET(ITK_DISABLED 0)
-			IF("${${CMAKE_PROJECT_NAME}_TCL}" STREQUAL "SYSTEM")
-				SET(ITK_DISABLED 1)
-			ENDIF("${${CMAKE_PROJECT_NAME}_TCL}" STREQUAL "SYSTEM")
-			IF("${${CMAKE_PROJECT_NAME}_TCL}" MATCHES "SYSTEM" AND
-					"${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS}" STREQUAL "SYSTEM")
-				SET(ITK_DISABLED 1)
-			ENDIF("${${CMAKE_PROJECT_NAME}_TCL}" MATCHES "SYSTEM" AND
-				"${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS}" STREQUAL "SYSTEM")
-
-			IF(NOT ITK_DISABLED)
-				# Have Itcl/Itk packages, but missing one or more of the C libraries - we're building.
-				SET(${CMAKE_PROJECT_NAME}_ITK "BUNDLED" CACHE STRING "Couldn't find incrTcl libraries, even though packages are present.  Build bundled itk library." FORCE)
-				# We've already call the THIRD_PARTY_TCL_PACKAGE macro at this point.
-				# We're enabling, so just do what we need to in this situation.
-				# Distcheck has already been told to ignore this directory
-				# altogether by THIRD_PARTY_TCL_PACKAGE, so we don't need to do
-				# tell it again.  Slightly unfortunate in that distcheck won't
-				# pick up issues with Itk's build logic.
-				add_subdirectory(incrTcl/itk)
-				add_dependencies(Itcl tcl)
-				# Now, handle the non-Tcl package aspects that compelled us to revisit
-				# the enable decision and turn Itcl on - need C library variables set.
-				SET(ITK_LIBRARY itk CACHE STRING "ITK_LIBRARY" FORCE)
-				SET(ITK_VERSION "3.3" CACHE STRING "ITK_VERSION" FORCE)
-			ENDIF(NOT ITK_DISABLED)
-			MARK_AS_ADVANCED(ITK_LIBRARY)
-		ELSE(NOT ITK_LIBRARY OR NOT ITCL_LIBRARY)
-			# We have Itcl/Itk packages AND Itcl/Itk libraries - we're good.
-			SET(ITK_VERSION "${ITCL_VERSION}" CACHE STRING "ITK_VERSION" FORCE)
-			SET(ITK_LIBRARY ${ITK_LIBRARY} CACHE STRING "ITK_LIBRARY" FORCE)
-			get_filename_component(ITK_BIN_PREFIX ${ITK_LIBRARY} PATH)
-		ENDIF(NOT ITK_LIBRARY OR NOT ITCL_LIBRARY)
-		MARK_AS_ADVANCED(ITK_LIBRARY)
-	ENDIF(BRLCAD_ENABLE_TK)
+	# We have Itcl/Itk packages AND Itcl/Itk libraries - we're good.
+	SET(ITK_VERSION "${ITCL_VERSION}" CACHE STRING "ITK_VERSION" FORCE)
+	SET(ITK_LIBRARY ${ITK_LIBRARY} CACHE STRING "ITK_LIBRARY" FORCE)
+	get_filename_component(ITK_BIN_PREFIX ${ITK_LIBRARY} PATH)
 ENDIF(BRLCAD_ITK_BUILD)
 MARK_AS_ADVANCED(ITK_VERSION)
+MARK_AS_ADVANCED(ITK_LIBRARY)
 
 # For now only turn on Togl for X11, but will need it everywhere eventually.  Will need
 # some logic to both look for package require and the C library, as both APIs will be needed.
@@ -615,57 +521,17 @@ set to BUNDLED, local copy is built even if a system version is present.  This
 package will be disabled if either BRLCAD_ENABLE_OPENGL or BRLCAD_ENABLE_TK 
 are OFF.
 ")
-THIRD_PARTY_TCL_PACKAGE(Togl togl "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_ENABLE_OPENGL;BRLCAD_ENABLE_X11" togl_ALIASES togl_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Togl togl "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_ENABLE_OPENGL;BRLCAD_ENABLE_X11" "togl" togl_ALIASES togl_DESCRIPTION)
 IF(BRLCAD_TOGL_BUILD)
 	SET(TOGL_LIBRARIES togl CACHE STRING "TOGL_LIBRARIES" FORCE)
 	SET(TOGL_STUB_LIBRARIES toglstub CACHE STRING "TOGL_STUB_LIBRARIES" FORCE)
 	SET(TOGL_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/togl/include;${CMAKE_CURRENT_SOURCE_DIR}/togl/include" CACHE STRING "Togl include path" FORCE)
 ELSE(BRLCAD_TOGL_BUILD)
-	# If the decision is NOT to build Togl, remember that we also need the C
-	# library and Tcl/Tk package detection doesn't guarantee that.  Look for
-	# the C library, but only if the required conditions for using Togl are met.
-	IF(BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_X11)
-		find_library(TOGL_LIBRARY NAMES togl togl${TOGL_PACKAGE_VERSION} PATH_SUFFIXES togl${TOGL_PACKAGE_VERSION})
-		IF(NOT TOGL_LIBRARY)
-			# Before we force anything, check what BRLCAD_TCL and
-			# BRLCAD_BUNDLED_LIBS say
-			SET(TOGL_DISABLED 0)
-			IF("${${CMAKE_PROJECT_NAME}_TCL}" STREQUAL "SYSTEM")
-				SET(TOGL_DISABLED 1)
-			ENDIF("${${CMAKE_PROJECT_NAME}_TCL}" STREQUAL "SYSTEM")
-			IF("${${CMAKE_PROJECT_NAME}_TCL}" MATCHES "SYSTEM" AND
-					"${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS}" STREQUAL "SYSTEM")
-				SET(TOGL_DISABLED 1)
-			ENDIF("${${CMAKE_PROJECT_NAME}_TCL}" MATCHES "SYSTEM" AND
-				"${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS}" STREQUAL "SYSTEM")
-		   	
-			# Have Togl package, but no C library - we're building.
-			IF(NOT TOGL_DISABLED)
-				SET(${CMAKE_PROJECT_NAME}_TOGL "BUNDLED" CACHE STRING "Couldn't find	TOGL_LIBRARY, even though Itcl package is present.  Build bundled itcl library." FORCE)
-				# We've already call the THIRD_PARTY_TCL_PACKAGE macro at this point.
-				# We're enabling, so just do what we need to in this situation
-				# Distcheck has already been told to ignore this directory
-				# altogether by THIRD_PARTY_TCL_PACKAGE, so we don't need to do
-				# tell it again.  Slightly unfortunate in that distcheck won't
-				# pick up issues with Togl's build logic.
-				add_subdirectory(togl)
-				add_dependencies(togl tcl tk)
-				# Now, handle the non-Tcl package aspects that compelled us to revisit
-				# the enable decision and turn Itcl on - need C library variables set.
-				SET(TOGL_LIBRARIES togl CACHE STRING "TOGL_LIBRARIES" FORCE)
-				SET(TOGL_STUB_LIBRARIES toglstub CACHE STRING "TOGL_STUB_LIBRARIES" FORCE)
-				SET(TOGL_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/togl/include;${CMAKE_CURRENT_SOURCE_DIR}/togl/include" CACHE STRING "Togl include path" FORCE)
-			ENDIF(NOT TOGL_DISABLED)
-		ELSE(NOT TOGL_LIBRARY)
-			# We have Togl packages AND Togl libraries - we're good.
-			SET(TOGL_LIBRARY ${TOGL_LIBRARY} CACHE STRING "ITK_LIBRARY" FORCE)
-		ENDIF(NOT TOGL_LIBRARY)
-	ELSE(BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_X11)
-		# Requirements not met - no Togl enabled
-		SET(TOGL_LIBRARIES "" CACHE STRING "Tcl/Tk OpenGL disabled" FORCE)
-		SET(TOGL_STUB_LIBRARIES "" CACHE STRING "Tcl/Tk OpenGL disabled" FORCE)
-		SET(TOGL_INCLUDE_DIRS "" CACHE STRING "Tcl/Tk OpenGL disabled" FORCE)
-	ENDIF(BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_X11)
+	# No Togl enabled - fix this so a system one has a chance...
+	#SET(TOGL_LIBRARIES "" CACHE STRING "Tcl/Tk OpenGL disabled" FORCE)
+	#SET(TOGL_STUB_LIBRARIES "" CACHE STRING "Tcl/Tk OpenGL disabled" FORCE)
+	#SET(TOGL_INCLUDE_DIRS "" CACHE STRING "Tcl/Tk OpenGL disabled" FORCE)
+	SET(TOGL_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/togl/include;${CMAKE_CURRENT_SOURCE_DIR}/togl/include" CACHE STRING "Togl include path" FORCE)
 ENDIF(BRLCAD_TOGL_BUILD)
 MARK_AS_ADVANCED(TOGL_LIBRARY)
 MARK_AS_ADVANCED(TOGL_LIBRARIES)
@@ -681,7 +547,7 @@ for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL
 is set to BUNDLED, local copy is built even if a system version is present.  
 This package will be disabled if BRLCAD_ENABLE_TK is OFF.
 ")
-THIRD_PARTY_TCL_PACKAGE(Iwidgets iwidgets "${TCL_WISH_EXECUTABLE}" "tcl;tk;itcl;itk" "BRLCAD_ENABLE_TK" iwidgets_ALIASES iwidgets_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Iwidgets iwidgets "${TCL_WISH_EXECUTABLE}" "tcl;tk;itcl;itk" "BRLCAD_ENABLE_TK" "" iwidgets_ALIASES iwidgets_DESCRIPTION)
 IF(BRLCAD_IWIDGETS_BUILD)
 	SET(IWIDGETS_VERSION "4.0.1" CACHE STRING "IWIDGETS_VERSION" FORCE)
 ELSE(BRLCAD_IWIDGETS_BUILD)
@@ -699,7 +565,7 @@ for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL
 is set to BUNDLED, local copy is built even if a system version is present.  
 This package will be disabled if BRLCAD_ENABLE_TK is OFF.
 ")
-THIRD_PARTY_TCL_PACKAGE(Tkhtml tkhtml "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK" tkhtml_ALIASES tkhtml_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Tkhtml tkhtml "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK" "" tkhtml_ALIASES tkhtml_DESCRIPTION)
 #ADD_SUBDIRECTORY(hv3)
 #INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/hv3.dist)
 #DISTCHECK_IGNORE(hv3 hv3_ignore_files)
@@ -718,7 +584,7 @@ for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL
 is set to BUNDLED, local copy is built even if a system version is present.  
 This package will be disabled if BRLCAD_ENABLE_TK is OFF.
 ")
-THIRD_PARTY_TCL_PACKAGE(tkpng tkpng "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK" tkpng_ALIASES tkpng_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(tkpng tkpng "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK" "" tkpng_ALIASES tkpng_DESCRIPTION)
 
 SET(tktable_ALIASES ENABLE_TKTABLE)
 SET(tktable_DESCRIPTION "
@@ -729,7 +595,7 @@ for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL
 is set to BUNDLED, local copy is built even if a system version is present.  
 This package will be disabled if BRLCAD_ENABLE_TK is OFF.
 ")
-THIRD_PARTY_TCL_PACKAGE(Tktable tktable "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK" tktable_ALIASES tktable_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Tktable tktable "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK" "" tktable_ALIASES tktable_DESCRIPTION)
 
 # OpenNURBS Library
 set(opennurbs_ALIASES ENABLE_OPENNURBS)
