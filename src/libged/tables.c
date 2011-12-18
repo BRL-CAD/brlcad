@@ -72,7 +72,7 @@ tables_check(char *a, char *b)
 
 
 HIDDEN int
-tables_sol_number(const matp_t *matrix, char *name, int *old, long *numsol)
+tables_sol_number(const matp_t matrix, char *name, int *old, long *numsol)
 {
     int i;
     struct identt idbuf1, idbuf2;
@@ -81,7 +81,7 @@ tables_sol_number(const matp_t *matrix, char *name, int *old, long *numsol)
 
     memset(&idbuf1, 0, sizeof(struct identt));
     bu_strlcpy(idbuf1.i_name, name, sizeof(idbuf1.i_name));
-    MAT_COPY(idbuf1.i_mat, *matrix);
+    MAT_COPY(idbuf1.i_mat, matrix);
 
     for (i=0; i<*numsol; i++) {
 	(void)lseek(rd_idfd, i*(long)sizeof identt, 0);
@@ -220,11 +220,11 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 			bu_log("Could not import %s\n", tree_list[i].tl_tree->tr_l.tl_name);
 			nsoltemp = 0;
 		    }
-		    nsoltemp = tables_sol_number((const matp_t *)&temp_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
+		    nsoltemp = tables_sol_number((const matp_t)temp_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
 		    (void)fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
 		}
 	    } else {
-		nsoltemp = tables_sol_number((const matp_t *)old_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
+		nsoltemp = tables_sol_number((const matp_t)old_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
 		(void)fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
 		continue;
 	    }
