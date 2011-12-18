@@ -90,14 +90,19 @@ MACRO(BUNDLE_OPTION trigger build_test_var optname default_raw)
 		ENDIF(${${build_test_var}} MATCHES "OFF")
 	ENDIF(${optname} MATCHES "AUTO")
 
-	set_property(CACHE ${optname} PROPERTY STRINGS AUTO BUNDLED SYSTEM)
-
-	# make sure we have a valid value
-	IF(NOT ${${optname}} MATCHES "AUTO" AND NOT ${${optname}} MATCHES "BUNDLED" AND NOT ${${optname}} MATCHES "SYSTEM")
-		MESSAGE(WARNING "Unknown value ${${optname}} supplied for ${optname} - defaulting to AUTO\nValid options are AUTO, BUNDLED and SYSTEM")
-		SET(${optname} "AUTO" CACHE STRING "Using bundled ${optname}" FORCE)
-	ENDIF(NOT ${${optname}} MATCHES "AUTO" AND NOT ${${optname}} MATCHES "BUNDLED" AND NOT ${${optname}} MATCHES "SYSTEM")
-ENDMACRO()
+	IF(NOT ${optname} MATCHES "DISABLED")
+		set_property(CACHE ${optname} PROPERTY STRINGS AUTO BUNDLED SYSTEM)
+		# make sure we have a valid value
+		IF(NOT ${${optname}} MATCHES "AUTO" AND NOT ${${optname}} MATCHES "BUNDLED" AND NOT ${${optname}} MATCHES "SYSTEM")
+			MESSAGE(WARNING "Unknown value ${${optname}} supplied for ${optname} - defaulting to AUTO\nValid options are AUTO, BUNDLED and SYSTEM")
+			SET(${optname} "AUTO" CACHE STRING "Using bundled ${optname}" FORCE)
+		ENDIF(NOT ${${optname}} MATCHES "AUTO" AND NOT ${${optname}} MATCHES "BUNDLED" AND NOT ${${optname}} MATCHES "SYSTEM")
+		MARK_AS_ADVANCED(CLEAR ${optname})
+	ELSE(NOT ${optname} MATCHES "DISABLED")
+		set_property(CACHE ${optname} PROPERTY STRINGS "${${optname}}")
+		MARK_AS_ADVANCED(FORCE ${optname})
+	ENDIF(NOT ${optname} MATCHES "DISABLED")
+ENDMACRO(BUNDLE_OPTION)
 
 
 #-----------------------------------------------------------------------------
