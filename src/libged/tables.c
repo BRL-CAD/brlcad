@@ -83,7 +83,7 @@ tables_sol_number(const matp_t matrix, char *name, int *old, long *numsol)
     bu_strlcpy(idbuf1.i_name, name, sizeof(idbuf1.i_name));
     MAT_COPY(idbuf1.i_mat, matrix);
 
-    for (i=0; i<*numsol; i++) {
+    for (i = 0; i < *numsol; i++) {
 	(void)lseek(rd_idfd, i*(long)sizeof identt, 0);
 	readval = read(rd_idfd, &idbuf2, sizeof identt);
 
@@ -164,7 +164,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 	(void)fprintf(tabptr, " %-4ld %4ld %4ld %4ld %4ld  ",
 		      *numreg, comb->region_id, comb->aircode, comb->GIFTmater,
 		      comb->los);
-	for (k=0; k<BU_PTBL_LEN(cur_path); k++) {
+	for (k = 0; k < BU_PTBL_LEN(cur_path); k++) {
 	    struct directory *path_dp;
 
 	    path_dp = (struct directory *)BU_PTBL_GET(cur_path, k);
@@ -176,7 +176,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 	if (flag == ID_TABLE)
 	    goto out;
 
-	for (i=0; i<actual_count; i++) {
+	for (i = 0; i < actual_count; i++) {
 	    char op;
 	    int nsoltemp=0;
 	    struct rt_db_internal sol_intern;
@@ -256,7 +256,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 	bu_ptbl_ins(cur_path, (long *)dp);
 	cur_length = BU_PTBL_END(cur_path);
 
-	for (i=0; i<actual_count; i++) {
+	for (i = 0; i < actual_count; i++) {
 	    struct directory *nextdp;
 	    mat_t new_mat;
 
@@ -388,7 +388,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     (void)fprintf(tabptr, "7 -2         target units : %s\n",
 		  bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base));
     (void)fprintf(tabptr, "8 -1         objects      :");
-    for (i=2; i<argc; i++) {
+    for (i = 2; i < argc; i++) {
 	if ((i%8) == 0)
 	    (void)fprintf(tabptr, "\n                           ");
 	(void)fprintf(tabptr, " %s", argv[i]);
@@ -396,7 +396,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     (void)fprintf(tabptr, "\n\n");
 
     /* make the tables */
-    for (i=2; i<argc; i++) {
+    for (i = 2; i < argc; i++) {
 	struct directory *dp;
 
 	bu_ptbl_reset(&cur_path);
