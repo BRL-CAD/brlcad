@@ -204,11 +204,11 @@
     </listitem>
 
     <listitem>
-      <para>Can extract elements from the list using the "lindex" command</para>
+      <para>Can extract elements from the list using the "lindex" command (indices start at zero)</para>
 
       <para>mged&gt; lindex {red yellow green blue} 2</para>
 
-      <para>blue</para>
+      <para>green</para>
     </listitem>
 
   </itemizedlist>
