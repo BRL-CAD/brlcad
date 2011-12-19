@@ -337,7 +337,6 @@ MACRO(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
     # we base our decision on the test results.
     IF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
 	IF(NOT ${PKGNAME_UPPER}_TEST_FAIL)
-	    MESSAGE("${PKGNAME_UPPER} tcl test passed.")
 	    IF(NOT ${PKGNAME_UPPER}_LIBS_FAIL)
 		IF(${PKGNAME_UPPER}_TCL_PASSED)
 		    SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
