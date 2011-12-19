@@ -2979,8 +2979,10 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
                 if (edgeuse_vert_count < 3) {
                     nmg_klu(lu);
                     killed_lu = 1;
-                    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- killed loopuse 0x%lx with %d vertices\n", 
-                            (unsigned long)fu, (unsigned long)lu_tmp, edgeuse_vert_count);
+                    if (rt_g.NMG_debug & DEBUG_TRI) {
+                        bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- killed loopuse 0x%lx with %d vertices\n", 
+                                (unsigned long)fu, (unsigned long)lu_tmp, edgeuse_vert_count);
+                    }
                 }
             } else if ((BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) && 
                        (BU_LIST_FIRST_MAGIC(&lu->lumate_p->down_hd) == NMG_VERTEXUSE_MAGIC)) {
@@ -2988,8 +2990,10 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
                 nmg_kvu(BU_LIST_FIRST(vertexuse, &lu->lumate_p->down_hd));
                 nmg_klu(lu);
                 killed_lu = 1;
-                bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- killed single vertex loopuse 0x%lx\n",
-                        (unsigned long)fu, (unsigned long)lu_tmp);
+                if (rt_g.NMG_debug & DEBUG_TRI) {
+                    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- killed single vertex loopuse 0x%lx\n",
+                            (unsigned long)fu, (unsigned long)lu_tmp);
+                }
             } else {
                 bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- unknown loopuse content\n",
                         (unsigned long)fu);
@@ -3002,8 +3006,10 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
                     loopuse_count_tmp++;
                 }
 
-                bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- %d loopuse remain in faceuse after killing loopuse 0x%lx\n", 
-                        (unsigned long)fu, loopuse_count_tmp, (unsigned long)lu_tmp);
+                if (rt_g.NMG_debug & DEBUG_TRI) {
+                    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- %d loopuse remain in faceuse after killing loopuse 0x%lx\n", 
+                            (unsigned long)fu, loopuse_count_tmp, (unsigned long)lu_tmp);
+                }
                 if (loopuse_count_tmp < 1) {
                     lu_done = 1;
                     bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- contains no loopuse\n",
@@ -3067,15 +3073,19 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
 
                 if (unique_vertex_cnt < 3) {
                     nmg_klu(lu);
-                    bu_log("killed loopuse 0x%lx with %d vertices (i.e. < 3 unique vertices)\n", 
-                            (unsigned long)lu_tmp, edgeuse_vert_count);
+                    if (rt_g.NMG_debug & DEBUG_TRI) {
+                        bu_log("killed loopuse 0x%lx with %d vertices (i.e. < 3 unique vertices)\n", 
+                                (unsigned long)lu_tmp, edgeuse_vert_count);
 
+                    }
                     loopuse_count_tmp = 0;
                     for (BU_LIST_FOR(lu1, loopuse, &fu->lu_hd)) {
                         loopuse_count_tmp++;
                     }
 
-                    bu_log("nmg_triangulate_rm_degen_loopuse(): %d remaining loopuse in faceuse after killing loopuse 0x%lx\n", loopuse_count_tmp, (unsigned long)lu_tmp);
+                    if (rt_g.NMG_debug & DEBUG_TRI) {
+                        bu_log("nmg_triangulate_rm_degen_loopuse(): %d remaining loopuse in faceuse after killing loopuse 0x%lx\n", loopuse_count_tmp, (unsigned long)lu_tmp);
+                    }
                     if (loopuse_count_tmp < 1) {
                         lu_done = 1;
                         bu_bomb("nmg_triangulate_rm_degen_loopuse(): faceuse contains no loopuse\n");
