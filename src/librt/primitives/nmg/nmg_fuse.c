@@ -1504,9 +1504,6 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *
     if (rt_g.NMG_debug & DEBUG_BOOL)
 	bu_log("nmg_break_all_es_on_v(magic=x%x, v=x%x)\n", magic_p, v);
 
-    NMG_CK_VERTEX(v);
-    BN_CK_TOL(tol);
-
     magic_type = bu_identify_magic(*magic_p);
     if (BU_STR_EQUAL(magic_type, "NULL") ||
 	BU_STR_EQUAL(magic_type, "Unknown_Magic")) {
@@ -1518,37 +1515,26 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *
 
     for (i=0; i<BU_PTBL_END(&eus); i++) {
 	struct edgeuse *eu;
-	struct edgeuse *eu_next, *eu_prev;
 	struct vertex *va;
 	struct vertex *vb;
 	fastf_t dist;
 	int code;
 
 	eu = (struct edgeuse *)BU_PTBL_GET(&eus, i);
-	NMG_CK_EDGEUSE(eu);
 
 	if (eu->g.magic_p && *eu->g.magic_p == NMG_EDGE_G_CNURB_MAGIC)
 	    continue;
 	va = eu->vu_p->v_p;
 	vb = eu->eumate_p->vu_p->v_p;
-	NMG_CK_VERTEX(va);
-	NMG_CK_VERTEX(vb);
 
 	if (va == v) continue;
 	if (vb == v) continue;
 
-	eu_next = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-	eu_prev = BU_LIST_PPREV_CIRC(edgeuse, &eu->l);
-
-	if (eu_prev->vu_p->v_p == v)
-	    continue;
-
-	if (eu_next->eumate_p->vu_p->v_p == v)
-	    continue;
-
 	code = bn_isect_pt_lseg(&dist, va->vg_p->coord, vb->vg_p->coord,
 				v->vg_p->coord, tol);
+
 	if (code < 1) continue;	/* missed */
+
 	if (code == 1 || code == 2) {
 	    bu_log("nmg_break_all_es_on_v() code=%d, why wasn't this vertex fused?\n", code);
 	    bu_log("\teu=x%x, v=x%x\n", eu, v);
