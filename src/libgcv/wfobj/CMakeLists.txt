@@ -4,33 +4,30 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
 )
 
+PERPLEX_TARGET(OBJ_Scanner obj_rules.l ${CMAKE_CURRENT_BINARY_DIR}/obj_rules.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/obj_scanner.h)
 LEMON_TARGET(OBJ_Parser obj_grammar.yy obj_grammar.cpp obj_grammar.hpp)
-RE2C_TARGET(OBJ_Scanner obj_rules.re ${CMAKE_CURRENT_BINARY_DIR}/obj_rules.cpp COMPILE_FLAGS "-Fc")
-ADD_RE2C_LEMON_DEPENDENCY(OBJ_Scanner OBJ_Parser)
+ADD_PERPLEX_LEMON_DEPENDENCY(OBJ_Scanner OBJ_Parser)
 
 SET(OBJ_G_SRCS
 	${CMAKE_CURRENT_BINARY_DIR}/obj_grammar.cpp
 	${CMAKE_CURRENT_BINARY_DIR}/obj_rules.cpp
-	re2c_utils.c
 	obj_parser.cpp
 	../../conv/obj-g.c
 	tri_face.c
 )
 
-configure_file(obj_grammar_decls.h.in ${CMAKE_CURRENT_BINARY_DIR}/obj_grammar_decls.h COPY_ONLY)
-
 BRLCAD_ADDEXEC(obj-g "${OBJ_G_SRCS}" "libbu libbn librt libwdb")
 
 set(wfobj_ignore_files
 	Makefile.sample
-	obj_grammar_decls.h.in
+	obj_grammar_decls.h
 	obj_grammar.yy
 	obj_parser.h
 	obj_parser_state.h
 	obj_rules.h
-	obj_rules.re
+	obj_rules.l
 	obj_token_type.h
-	re2c_utils.h
 	tri_face.h
 	)
 CMAKEFILES(${wfobj_ignore_files})

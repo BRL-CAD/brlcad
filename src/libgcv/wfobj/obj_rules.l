@@ -29,15 +29,6 @@
 #include "obj_grammar_decls.h"
 #include "obj_parser_state.h"
 #include "obj_rules.h"
-#include "re2c_utils.h"
-
-/* increase token limits of at&t and mk2 lex */
-#undef YYLMAX
-#define YYLMAX 4096
-
-/* increase token limits of pclex (2x) */
-#undef F_BUFSIZE
-#define F_BUFSIZE 2048
 
 namespace arl {
 namespace obj_parser {
@@ -65,267 +56,233 @@ using namespace arl::obj_parser;
 
 void *obj_parser_get_extra(yyscan_t scanner)
 {
-    return scanner->extra;
+    return static_cast<struct extra_t*>(scanner->extra)->state;
 }
 
 void obj_parser_set_extra(yyscan_t scanner, void *extra)
 {
-    scanner->extra = extra;
+    BU_GET(scanner->extra, struct extra_t);
+    static_cast<struct extra_t*>(scanner->extra)->state = extra;
 }
 
 void obj_parser_lex_destroy(yyscan_t scanner)
 {
-    scannerFree(scanner);
+    perplexFree(scanner);
 }
 
-int obj_parser_lex(YYSTYPE *yylval, yyscan_t scanner)
-{
-    using arl::obj_parser::detail::objCombinedState;
+%%
+vertex       = "v";
+t_vertex     = "vt";
+n_vertex     = "vn";
+point        = "p";
+line         = "l";
+face         = "f";
+group        = "g";
+object       = "o";
+smooth       = "s";
+integer      = [+-]?([0-9]+);
+dseq         = ([0-9]+);
+dseq_opt     = ([0-9]*);
+frac         = (((dseq_opt)"."(dseq))|(dseq)".");
+exp          = ([eE][+-]?(dseq));
+exp_opt      = ((exp)?);
+fsuff        = [flFL];
+fsuff_opt    = ((fsuff)?);
+hpref        = ('0'[xX]);
+hdseq        = ([0-9]+);
+hdseq_opt    = ([0-9]*);
+hfrac        = (((hdseq_opt)"."(hdseq))|((hdseq)"."));
+bexp         = ([pP][+-]?(dseq));
+dfc          = (((frac)(exp_opt)(fsuff_opt))|((dseq)(exp)(fsuff_opt)));
+hfc          = (((hpref)(hfrac)(bexp)(fsuff_opt))|((hpref)(hdseq)(bexp)(fsuff_opt)));
+real         = [+-]?((dfc)|(hfc));
+usemtl       = "usemtl";
+mtllib       = "mtllib";
+usemap       = "usemap";
+maplib       = "maplib";
+bevel        = "bevel";
+c_interp     = "c_interp";
+d_interp     = "d_interp";
+lod          = "lod";
+shadow_obj   = "shadow_obj";
+trace_obj    = "trace_obj";
+off          = "off";
+on           = "on";
+v_reference  = (integer)"/""/"?;
+v_tv_reference  = (integer)"/"(integer);
+v_nt_reference  = (integer)"//"(integer);
+v_tnv_reference_list  = (integer)"/"(integer)"/"(integer);
 
-    void *yyextra = static_cast<objCombinedState*>(scanner->extra);
+wspace       = [ \t];
+id           = [!-~]+;
+newline      = ["\r\n""\n"];
+comment      = "#"[^"\r\n""\n"]*(newline);
 
-BEGIN_RE2C(scanner, cursor)
+<INITIAL> {
 
-/*!re2c
-re2c:define:YYCTYPE = char;
-re2c:define:YYCURSOR = cursor;
-re2c:yyfill:enable = 0;
-re2c:condenumprefix = "";
-re2c:define:YYSETCONDITION = BEGIN;
-
-vertex      v
-t_vertex    vt
-n_vertex    vn
-point       p
-line        l
-face        f
-group       g
-object      o
-smooth      s
-integer     [+-]?([0-9]+)
-dseq        ([0-9]+)
-dseq_opt    ([0-9]*)
-frac        (({dseq_opt}"."{dseq})|{dseq}".")
-exp         ([eE][+-]?{dseq})
-exp_opt     ({exp}?)
-fsuff       [flFL]
-fsuff_opt   ({fsuff}?)
-hpref       ('0'[xX])
-hdseq       ([0-9]+)
-hdseq_opt   ([0-9]*)
-hfrac       (({hdseq_opt}"."{hdseq})|({hdseq}"."))
-bexp        ([pP][+-]?{dseq})
-dfc         (({frac}{exp_opt}{fsuff_opt})|({dseq}{exp}{fsuff_opt}))
-hfc         (({hpref}{hfrac}{bexp}{fsuff_opt})|({hpref}{hdseq}{bexp}{fsuff_opt}))
-real        [+-]?({dfc}|{hfc})
-usemtl      usemtl
-mtllib      mtllib
-usemap      usemap
-maplib      maplib
-bevel       bevel
-c_interp    c_interp
-d_interp    d_interp
-lod         lod
-shadow_obj  shadow_obj
-trace_obj   trace_obj
-off         off
-on          on
-v_reference {integer}"/""/"?
-v_tv_reference {integer}"/"{integer}
-v_nt_reference {integer}"//"{integer}
-v_tnv_reference_list {integer}"/"{integer}"/"{integer}
-
-wspace      [ \t]
-id          [!-~]+
-newline     ["\r\n""\n"]
-comment     "#"[^"\r\n""\n"]*{newline}
-
-<INITIAL>{vertex}            { RETURN(VERTEX); }
-<INITIAL>{t_vertex}          { RETURN(T_VERTEX); }
-<INITIAL>{n_vertex}          { RETURN(N_VERTEX); }
-<INITIAL>{point}             { RETURN(POINT); }
-<INITIAL>{line}              { RETURN(LINE); }
-<INITIAL>{face}              { RETURN(FACE); }
-<INITIAL>{group}             {
-    BEGIN(id_list_state);
-    RETURN(GROUP);
+vertex            { return VERTEX; }
+t_vertex          { return T_VERTEX; }
+n_vertex          { return N_VERTEX; }
+point             { return POINT; }
+line              { return LINE; }
+face              { return FACE; }
+group => id_list_state {
+    return GROUP;
 }
-
-<INITIAL>{object}            {
-    BEGIN(id_state);
-    RETURN(OBJECT);
+object => id_state {
+    return OBJECT;
 }
-
-<INITIAL>{smooth}            {
-    RETURN(SMOOTH);
+smooth            {
+    return SMOOTH;
 }
-
-<INITIAL>{integer}           {
+integer           {
     yylval->integer = atoi(yytext);
-    RETURN(INTEGER);
+    return INTEGER;
 }
-
-<INITIAL>{real}              {
+real              {
     yylval->real = atof(yytext);
-    RETURN(FLOAT);
+    return FLOAT;
 }
-
-<INITIAL>{usemtl}            {
-    BEGIN(id_state);
-    RETURN(USEMTL);
+usemtl => id_state {
+    return USEMTL;
 }
-
-<INITIAL>{mtllib}            {
-    BEGIN(id_list_state);
-    RETURN(MTLLIB);
+mtllib => id_list_state {
+    return MTLLIB;
 }
-
-<INITIAL>{usemap}            {
-    BEGIN(toggle_id_state);
-    RETURN(USEMAP);
+usemap => toggle_id_state {
+    return USEMAP;
 }
-
-<INITIAL>{maplib}            {
-    BEGIN(id_list_state);
-    RETURN(MAPLIB);
+maplib => id_list_state {
+    return MAPLIB;
 }
-
-<INITIAL>{bevel}             {
-    RETURN(BEVEL);
+bevel             {
+    return BEVEL;
 }
-
-<INITIAL>{c_interp}          {
-    RETURN(C_INTERP);
+c_interp {
+    return C_INTERP;
 }
-
-<INITIAL>{d_interp}          {
-    RETURN(D_INTERP);
+d_interp {
+    return D_INTERP;
 }
-
-<INITIAL>{lod}               {
-    RETURN(LOD);
+lod {
+    return LOD;
 }
-
-<INITIAL>{shadow_obj}        {
-    BEGIN(id_state);
-    RETURN(SHADOW_OBJ);
+shadow_obj => id_state {
+    return SHADOW_OBJ;
 }
-
-<INITIAL>{trace_obj}         {
-    BEGIN(id_state);
-    RETURN(TRACE_OBJ);
+trace_obj => id_state {
+    return TRACE_OBJ;
 }
-
-<INITIAL>{on}                {
-    RETURN(ON);
+on {
+    return ON;
 }
-
-<INITIAL>{off}               {
-    RETURN(OFF);
+off {
+    return OFF;
 }
-
-<INITIAL>{v_reference}       {
+v_reference {
     if (detail::split_reference(yytext, yylval->reference))
-	RETURN(V_REFERENCE);
-    RETURN(YYEOF);
+	return V_REFERENCE;
+    return YYEOF;
 }
-<INITIAL>{v_tv_reference}    {
+v_tv_reference {
     if (detail::split_reference(yytext, yylval->reference))
-	RETURN(TV_REFERENCE);
-    RETURN(YYEOF);
+	return TV_REFERENCE;
+    return YYEOF;
 }
-<INITIAL>{v_nt_reference}    {
+v_nt_reference {
     if (detail::split_reference(yytext, yylval->reference))
-	RETURN(NV_REFERENCE);
-    RETURN(YYEOF);
+	return NV_REFERENCE;
+    return YYEOF;
 }
-<INITIAL>{v_tnv_reference_list} {
+v_tnv_reference_list {
     if (detail::split_reference(yytext, yylval->reference))
-	RETURN(TNV_REFERENCE);
-    RETURN(YYEOF);
+	return TNV_REFERENCE;
+    return YYEOF;
 }
 
-<INITIAL>{wspace}            { IGNORE_TOKEN; }
+wspace { }
 
-<INITIAL>{comment}|{newline} {
+comment|newline {
     ++(detail::get_state(yyextra).file_stack.back().lineno);
-    RETURN(EOL);
+    return EOL;
 }
 
-<INITIAL>. { IGNORE_TOKEN; }
+. { }
 
-<id_state>{id}                {
-    // Keywords are valid identifiers here
-    // Goto initial state after single token
+} /* INITIAL */
+
+<id_state> {
+id => INITIAL {
+    /* Keywords are valid identifiers here
+     * Goto initial state after single token
+     */
     detail::get_state(yyextra).working_string = yytext;
     bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
 
-    BEGIN(INITIAL);
-    RETURN(ID);
+    return ID;
 }
 
-<id_state>{wspace}            { IGNORE_TOKEN; }
+wspace { }
 
-<id_state>{comment}|{newline} {
-    // Goto initial state when we hit newline
+comment|newline => INITIAL {
+    /* Goto initial state when we hit newline */
     ++(detail::get_state(yyextra).file_stack.back().lineno);
-    BEGIN(INITIAL);
-    RETURN(EOL);
+    return EOL;
 }
 
-<id_state>. { IGNORE_TOKEN; }
+. { }
 
-<toggle_id_state>{off}               {
+} /* id_state */
+
+<toggle_id_state> {
+off => INITIAL {
     // off is a valid token, not an id
-    BEGIN(INITIAL);
-    RETURN(OFF);
+    return OFF;
 }
-
-<toggle_id_state>{id}                {
-    // Keywords are valid identifiers here
-    // Goto initial state after single token
+id => INITIAL {
+    /* Keywords are valid identifiers here
+     * Goto initial state after single token
+     */
     detail::get_state(yyextra).working_string = yytext;
     bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
 
-    BEGIN(INITIAL);
-    RETURN(ID);
+    return ID;
 }
 
-<toggle_id_state>{wspace}            { IGNORE_TOKEN; }
+wspace { }
 
-<toggle_id_state>{comment}|{newline} {
+comment|newline => INITIAL {
     // Goto initial state when we hit newline
     ++(detail::get_state(yyextra).file_stack.back().lineno);
-    BEGIN(INITIAL);
-    RETURN(EOL);
+    return EOL;
 }
 
-<toggle_id_state>. { IGNORE_TOKEN; }
+. { }
 
-<id_list_state>{id}                {
+} /* toggle_id_state */
+
+<id_list_state> {
+id {
     // Keywords are valid identifiers here
     detail::get_state(yyextra).working_string = yytext;
     bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
 
-    RETURN(ID);
+    return ID;
 }
 
-<id_list_state>{wspace}            { IGNORE_TOKEN }
+wspace { }
 
-<id_list_state>{comment}|{newline} {
+comment|newline => INITIAL {
     // Goto initial state when we hit newline
     ++(detail::get_state(yyextra).file_stack.back().lineno);
-    BEGIN(INITIAL);
-    RETURN(EOL);
+    return EOL;
 }
 
-<id_list_state>. { IGNORE_TOKEN; }
+. { }
 
-*/
-END_RE2C
+} /* id_list_state */
 
-} /* scan */
-
+%%
 namespace arl {
 namespace obj_parser {
 namespace detail {

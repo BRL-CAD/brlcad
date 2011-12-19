@@ -37,14 +37,26 @@ enum YYCONDTYPE {
 };
 #define CONDTYPE enum YYCONDTYPE
 
-#include "re2c_utils.h"
-
 __BEGIN_DECLS
 
-typedef scanner_t *yyscan_t;
+#define PERPLEX_LEXER obj_parser_lex
+
+#define PERPLEX_ON_ENTER \
+    using detail::objCombinedState; \
+    struct extra_t *extra = static_cast<struct extra_t*>(scanner->extra); \
+    YYSTYPE *yylval = &extra->tokenData; \
+    objCombinedState *yyextra = static_cast<objCombinedState*>(extra->state);
+
+#include "obj_scanner.h"
+
+typedef perplex_t yyscan_t;
+
+struct extra_t {
+    void *state;
+    YYSTYPE tokenData;
+}; 
 
 void obj_parser_lex_destroy(yyscan_t scanner);
-int obj_parser_lex(YYSTYPE *tokenValue, yyscan_t scanner);
 void *obj_parser_get_extra(yyscan_t scanner);
 void obj_parser_set_extra(yyscan_t scanner, void *extra);
 

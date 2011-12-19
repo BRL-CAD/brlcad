@@ -103,7 +103,7 @@ static int open_file(
 
 
 struct lex_sentry {
-    lex_sentry(yyscan_t s) :scanner(s) {}
+    lex_sentry(yyscan_t s) : scanner(s) {}
 
     ~lex_sentry(void) {
 	obj_parser_lex_destroy(scanner);
@@ -128,19 +128,9 @@ static void destroyParser(detail::parser_type *parser)
     ParseFree(*parser, free);
 }
 
-static void createScanner(yyscan_t *scanner)
-{
-    BU_GET(*scanner, scanner_t);
-}
-
 static void destroyScanner(yyscan_t *scanner)
 {
-    scannerFree(*scanner);
-}
-
-static void setScannerIn(yyscan_t scanner, FILE *in)
-{
-    scannerInit(scanner, in);
+    perplexFree(*scanner);
 }
 
 static void setScannerExtra(yyscan_t scanner, detail::objCombinedState *extra)
@@ -197,13 +187,14 @@ int obj_parse(const char *filename, obj_parser_t parser,
 	}
 
 	yyscan_t scanner;
-	createScanner(&scanner);
 
-	setScannerIn(scanner, extra.parser_state.file_stack.back().file.get());
+        scanner = perplexFileScanner(extra.parser_state.file_stack.back().file.get());
 	setScannerExtra(scanner, &extra);
 
+	struct extra_t *scannerExtra = static_cast<struct extra_t*>(scanner->extra);
+
 	objCombinedState *state =
-	    static_cast<objCombinedState*>(scanner->extra);
+	    static_cast<objCombinedState*>(scannerExtra->state);
 
 	state->parser = NULL;
 	createParser(&(state->parser));
@@ -257,13 +248,14 @@ int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents)
 	}
 
 	yyscan_t scanner;
-	createScanner(&scanner);
 
-	setScannerIn(scanner, extra.parser_state.file_stack.back().file.get());
+	scanner = perplexFileScanner(extra.parser_state.file_stack.back().file.get());
 	setScannerExtra(scanner, &extra);
 
+	struct extra_t *scannerExtra = static_cast<struct extra_t*>(scanner->extra);
+
 	objCombinedState *state =
-	    static_cast<objCombinedState*>(scanner->extra);
+	    static_cast<objCombinedState*>(scannerExtra->state);
 
 	state->parser = NULL;
 	createParser(&(state->parser));

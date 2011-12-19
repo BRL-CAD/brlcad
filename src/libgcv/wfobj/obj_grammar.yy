@@ -182,15 +182,16 @@ int obj_parser_parse(yyscan_t scanner)
     using detail::parser_type;
 
     int yychar;
-    YYSTYPE yyval;
-    objCombinedState *state = static_cast<objCombinedState*>(scanner->extra);
+    struct extra_t *extra = static_cast<struct extra_t*>(scanner->extra);
+    YYSTYPE *tokenData = &extra->tokenData;
+    objCombinedState *state = static_cast<objCombinedState*>(extra->state);
     parser_type parser = state->parser;
     bool &error = state->parser_state.syntaxError;
 
     error = false;
 
-    while ((yychar = obj_parser_lex(&yyval, scanner)) != YYEOF) {
-	Parse(parser, yychar, yyval, scanner);
+    while ((yychar = obj_parser_lex(scanner)) != YYEOF) {
+	Parse(parser, yychar, *tokenData, scanner);
     }
 
     if (error) {
