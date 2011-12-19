@@ -220,7 +220,7 @@ buf_prints(struct Buf *buf, const char *fmt, const char *s)
 {
     char *t;
 
-    t = malloc(strlen(fmt) + strlen(s) + 1);
+    t = (char*)malloc(strlen(fmt) + strlen(s) + 1);
     sprintf(t, fmt, s);
     buf = buf_strappend(buf, t);
     free(t);
@@ -238,7 +238,7 @@ buf_linedir(struct Buf *buf, const char* filename, int lineno)
 {
     char   *t, *fmt = "#line %d \"%s\"\n";
     
-    t = malloc(strlen(fmt) + strlen(filename) + (int)(1 + log10(lineno >= 0? lineno : -lineno)) + 1);
+    t = (char*)malloc(strlen(fmt) + strlen(filename) + (int)(1 + log10(lineno >= 0? lineno : -lineno)) + 1);
     sprintf(t, fmt, lineno, filename);
     buf = buf_strappend(buf, t);
     free(t);
