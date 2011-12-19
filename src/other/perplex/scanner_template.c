@@ -236,7 +236,8 @@ buf_prints(struct Buf *buf, const char *fmt, const char *s)
 struct Buf*
 buf_linedir(struct Buf *buf, const char* filename, int lineno)
 {
-    char   *t, *fmt = "#line %d \"%s\"\n";
+    char *t,
+    char fmt[] = "#line %d \"%s\"\n";
     
     t = (char*)malloc(strlen(fmt) + strlen(filename) + (int)(1 + log10(lineno >= 0? lineno : -lineno)) + 1);
     sprintf(t, fmt, lineno, filename);
