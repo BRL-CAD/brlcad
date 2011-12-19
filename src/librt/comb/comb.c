@@ -911,7 +911,7 @@ int
 rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_comb_internal *comb;
-    char buf[128];
+    char buf[1024] = {'\0'};
     int i;
     double d;
 
@@ -921,8 +921,8 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 
     while (argc >= 2) {
 	/* Force to lower case */
-	for (i=0; i<128 && argv[0][i]!='\0'; i++)
-	    buf[i] = isupper(argv[0][i])?tolower(argv[0][i]):argv[0][i];
+	for (i=0; i<1024 && argv[0][i]!='\0'; i++)
+	    buf[i] = tolower(argv[0][i]);
 	buf[i] = 0;
 
 	if (BU_STR_EQUAL(buf, "region")) {
