@@ -496,27 +496,18 @@ nmg_mesh_two_faces(register struct faceuse *fu1, register struct faceuse *fu2, c
     pointp_t pt1, pt2;
     int count = 0;
 
-    NMG_CK_FACEUSE(fu1);
-    NMG_CK_FACEUSE(fu2);
-    BN_CK_TOL(tol);
-
     /* Visit all the loopuses in faceuse 1 */
     for (BU_LIST_FOR(lu1, loopuse, &fu1->lu_hd)) {
-	NMG_CK_LOOPUSE(lu1);
 	/* Ignore self-loops */
 	if (BU_LIST_FIRST_MAGIC(&lu1->down_hd) != NMG_EDGEUSE_MAGIC)
 	    continue;
 
 	/* Visit all the edgeuses in loopuse1 */
 	for (BU_LIST_FOR(eu1, edgeuse, &lu1->down_hd)) {
-	    NMG_CK_EDGEUSE(eu1);
 
 	    v1a = eu1->vu_p->v_p;
 	    v1b = eu1->eumate_p->vu_p->v_p;
-	    NMG_CK_VERTEX(v1a);
-	    NMG_CK_VERTEX(v1b);
 	    e1 = eu1->e_p;
-	    NMG_CK_EDGE(e1);
 	    if (rt_g.NMG_debug & DEBUG_MESH) {
 		pt1 = v1a->vg_p->coord;
 		pt2 = v1b->vg_p->coord;
@@ -532,7 +523,6 @@ nmg_mesh_two_faces(register struct faceuse *fu1, register struct faceuse *fu2, c
 		    continue;
 		/* Visit all the edgeuses in loopuse2 */
 		for (BU_LIST_FOR(eu2, edgeuse, &lu2->down_hd)) {
-		    NMG_CK_EDGEUSE(eu2);
 		    if (rt_g.NMG_debug & DEBUG_MESH) {
 			pt1 = eu2->vu_p->v_p->vg_p->coord;
 			pt2 = eu2->eumate_p->vu_p->v_p->vg_p->coord;
