@@ -332,7 +332,7 @@ namespace detail {
 
 bool split_reference(const char *s, int val[3])
 {
-    memset(val, sizeof(int)*3, 0);
+    memset(val, 0, sizeof(int)*3);
 
     char *endptr;
     val[0] = strtol(s, &endptr, 0);
