@@ -278,12 +278,12 @@ db_fullpath_traverse(struct db_i *dbip,
 static struct db_plan_t *
 palloc(enum db_search_ntype t, int (*f)(struct db_plan_t *, struct db_full_path *, struct db_i *, struct rt_wdb *, struct db_full_path_list *))
 {
-    struct db_plan_t *new;
+    struct db_plan_t *newplan;
 
-    new = bu_calloc(1, sizeof(struct db_plan_t), "Allocate struct db_plan_t structure");
-    new->type = t;
-    new->eval = f;
-    return new;
+    newplan = bu_calloc(1, sizeof(struct db_plan_t), "Allocate struct db_plan_t structure");
+    newplan->type = t;
+    newplan->eval = f;
+    return newplan;
 }
 
 
@@ -666,11 +666,11 @@ f_name(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *UNUSED(d
 HIDDEN int
 c_name(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
-    struct db_plan_t *new;
+    struct db_plan_t *newplan;
 
-    new = palloc(N_NAME, f_name);
-    new->c_data = pattern;
-    (*resultplan) = new;
+    newplan = palloc(N_NAME, f_name);
+    newplan->c_data = pattern;
+    (*resultplan) = newplan;
     return BRLCAD_OK;
 }
 
@@ -695,11 +695,11 @@ f_iname(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *UNUSED(
 HIDDEN int
 c_iname(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
-    struct db_plan_t *new;
+    struct db_plan_t *newplan;
 
-    new = palloc(N_INAME, f_iname);
-    new->ci_data = pattern;
-    (*resultplan) = new;
+    newplan = palloc(N_INAME, f_iname);
+    newplan->ci_data = pattern;
+    (*resultplan) = newplan;
     return BRLCAD_OK;
 }
 
@@ -722,7 +722,7 @@ HIDDEN int
 c_regex_common(enum db_search_ntype type, char *regexp, int icase, struct db_plan_t **resultplan)
 {
     regex_t reg;
-    struct db_plan_t *new;
+    struct db_plan_t *newplan;
     int rv;
 
     bu_log("Matching regular expression: %s\n", regexp);
@@ -735,9 +735,9 @@ c_regex_common(enum db_search_ntype type, char *regexp, int icase, struct db_pla
 	bu_log("Error - regex compile did not succeed: %s\n", regexp);
 	return BRLCAD_ERROR;
     }
-    new = palloc(type, f_regex);
-    new->regexp_data = reg;
-    (*resultplan) = new;
+    newplan = palloc(type, f_regex);
+    newplan->regexp_data = reg;
+    (*resultplan) = newplan;
     regfree(&reg);
     return BRLCAD_OK;
 }
@@ -1002,11 +1002,11 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 HIDDEN int
 c_attr(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
-    struct db_plan_t *new;
+    struct db_plan_t *newplan;
 
-    new = palloc(N_ATTR, f_attr);
-    new->attr_data = pattern;
-    (*resultplan) = new;
+    newplan = palloc(N_ATTR, f_attr);
+    newplan->attr_data = pattern;
+    (*resultplan) = newplan;
     return BRLCAD_OK;
 }
 
@@ -1068,10 +1068,10 @@ f_stdattr(struct db_plan_t *UNUSED(plan), struct db_full_path *entry, struct db_
 HIDDEN int
 c_stdattr(char *UNUSED(pattern), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
-    struct db_plan_t *new;
+    struct db_plan_t *newplan;
 
-    new = palloc(N_STDATTR, f_stdattr);
-    (*resultplan) = new;
+    newplan = palloc(N_STDATTR, f_stdattr);
+    (*resultplan) = newplan;
     return BRLCAD_OK;
 }
 
@@ -1243,11 +1243,11 @@ f_type(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 HIDDEN int
 c_type(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
-    struct db_plan_t *new;
+    struct db_plan_t *newplan;
 
-    new = palloc(N_TYPE, f_type);
-    new->type_data = pattern;
-    (*resultplan) = new;
+    newplan = palloc(N_TYPE, f_type);
+    newplan->type_data = pattern;
+    (*resultplan) = newplan;
     return BRLCAD_OK;
 }
 
@@ -1278,11 +1278,11 @@ f_maxdepth(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *UNUS
 HIDDEN int
 c_maxdepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
-    struct db_plan_t *new;
+    struct db_plan_t *newplan;
 
-    new = palloc(N_MAXDEPTH, f_maxdepth);
-    new->max_data = atoi(pattern);
-    (*resultplan) = new;
+    newplan = palloc(N_MAXDEPTH, f_maxdepth);
+    newplan->max_data = atoi(pattern);
+    (*resultplan) = newplan;
     return BRLCAD_OK;
 }
 
@@ -1313,11 +1313,11 @@ f_mindepth(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *UNUS
 HIDDEN int
 c_mindepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
-    struct db_plan_t *new;
+    struct db_plan_t *newplan;
 
-    new = palloc(N_MINDEPTH, f_mindepth);
-    new->min_data = atoi(pattern);
-    (*resultplan) = new;
+    newplan = palloc(N_MINDEPTH, f_mindepth);
+    newplan->min_data = atoi(pattern);
+    (*resultplan) = newplan;
     return BRLCAD_OK;
 }
 
@@ -1445,11 +1445,11 @@ f_nnodes(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, 
 HIDDEN int
 c_nnodes(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
-    struct db_plan_t *new;
+    struct db_plan_t *newplan;
 
-    new = palloc(N_NNODES, f_nnodes);
-    new->node_data = pattern;
-    (*resultplan) = new;
+    newplan = palloc(N_NNODES, f_nnodes);
+    newplan->node_data = pattern;
+    (*resultplan) = newplan;
     return BRLCAD_OK;
 }
 
@@ -1471,11 +1471,11 @@ f_path(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *UNUSED(d
 HIDDEN int
 c_path(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
-    struct db_plan_t *new;
+    struct db_plan_t *newplan;
 
-    new = palloc(N_PATH, f_path);
-    new->path_data = pattern;
-    (*resultplan) = new;
+    newplan = palloc(N_PATH, f_path);
+    newplan->path_data = pattern;
+    (*resultplan) = newplan;
     return BRLCAD_OK;
 }
 
@@ -1536,7 +1536,7 @@ HIDDEN int
 find_create(char ***argvp, struct db_plan_t **resultplan, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results), int *db_search_isoutput)
 {
     OPTION *p;
-    struct db_plan_t *new;
+    struct db_plan_t *newplan;
     char **argv;
 
     argv = *argvp;
@@ -1552,22 +1552,22 @@ find_create(char ***argvp, struct db_plan_t **resultplan, struct db_i *UNUSED(db
     }
     switch(p->flags) {
 	case O_NONE:
-	    new = NULL;
+	    newplan = NULL;
 	    break;
 	case O_ZERO:
-	    (p->create)(NULL, NULL, 0, &new, db_search_isoutput);
+	    (p->create)(NULL, NULL, 0, &newplan, db_search_isoutput);
 	    break;
 	case O_ARGV:
-	    (p->create)(*argv++, NULL, 0, &new, db_search_isoutput);
+	    (p->create)(*argv++, NULL, 0, &newplan, db_search_isoutput);
 	    break;
 	case O_ARGVP:
-	    (p->create)(NULL, &argv, p->token == N_OK, &new, db_search_isoutput);
+	    (p->create)(NULL, &argv, p->token == N_OK, &newplan, db_search_isoutput);
 	    break;
 	default:
 	    return BRLCAD_OK;
     }
     *argvp = argv;
-    (*resultplan) = new;
+    (*resultplan) = newplan;
     return BRLCAD_OK;
 }
 
@@ -1943,7 +1943,7 @@ or_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)           /* pl
 void *
 db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
     struct db_plan_t *plan, *tail;
-    struct db_plan_t *new = NULL;
+    struct db_plan_t *newplan = NULL;
     struct db_full_path_list *results = NULL;
     int db_search_isoutput = 0;
 
@@ -1964,14 +1964,14 @@ db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
      * plan->next pointer.
      */
     for (plan = tail = NULL; *argv;) {
-	if (find_create(&argv, &new, dbip, wdbp, results, &db_search_isoutput) != BRLCAD_OK) return NULL;
-	if (!(new))
+	if (find_create(&argv, &newplan, dbip, wdbp, results, &db_search_isoutput) != BRLCAD_OK) return NULL;
+	if (!(newplan))
 	    continue;
 	if (plan == NULL)
-	    tail = plan = new;
+	    tail = plan = newplan;
 	else {
-	    tail->next = new;
-	    tail = new;
+	    tail->next = newplan;
+	    tail = newplan;
 	}
     }
 
@@ -1982,18 +1982,18 @@ db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
      */
     if (!db_search_isoutput) {
 	if (plan == NULL) {
-	    c_print(NULL, NULL, 0, &new, &db_search_isoutput);
-	    tail = plan = new;
+	    c_print(NULL, NULL, 0, &newplan, &db_search_isoutput);
+	    tail = plan = newplan;
 	} else {
-	    c_openparen(NULL, NULL, 0, &new, &db_search_isoutput);
-	    new->next = plan;
-	    plan = new;
-	    c_closeparen(NULL, NULL, 0, &new, &db_search_isoutput);
-	    tail->next = new;
-	    tail = new;
-	    c_print(NULL, NULL, 0, &new, &db_search_isoutput);
-	    tail->next = new;
-	    tail = new;
+	    c_openparen(NULL, NULL, 0, &newplan, &db_search_isoutput);
+	    newplan->next = plan;
+	    plan = newplan;
+	    c_closeparen(NULL, NULL, 0, &newplan, &db_search_isoutput);
+	    tail->next = newplan;
+	    tail = newplan;
+	    c_print(NULL, NULL, 0, &newplan, &db_search_isoutput);
+	    tail->next = newplan;
+	    tail = newplan;
 	}
     }
 

@@ -121,22 +121,22 @@ rt_vlblock_free(struct bn_vlblock *vbp)
 struct bu_list *
 rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
 {
-    long new;
+    long newrgb;
     size_t n;
     size_t omax;		/* old max */
 
     BN_CK_VLBLOCK(vbp);
 
-    new = ((r&0xFF)<<16)|((g&0xFF)<<8)|(b&0xFF);
+    newrgb = ((r&0xFF)<<16)|((g&0xFF)<<8)|(b&0xFF);
 
     for (n=0; n < vbp->nused; n++) {
-	if (vbp->rgb[n] == new)
+	if (vbp->rgb[n] == newrgb)
 	    return &(vbp->head[n]);
     }
     if (vbp->nused < vbp->max) {
 	/* Allocate empty slot */
 	n = vbp->nused++;
-	vbp->rgb[n] = new;
+	vbp->rgb[n] = newrgb;
 	return &(vbp->head[n]);
     }
 

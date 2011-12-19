@@ -1034,19 +1034,19 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		comb->inherit = (char)i;
 	    }
 	} else if (BU_STR_EQUAL(buf, "tree")) {
-	    union tree *new;
+	    union tree *newtree;
 
 	    if (*argv[1] == '\0' || BU_STR_EQUAL(argv[1], "none")) {
 		db_free_tree(comb->tree, &rt_uniresource);
 		comb->tree = TREE_NULL;
 	    } else {
-		new = db_tree_parse(logstr, argv[1], &rt_uniresource);
-		if (new == TREE_NULL) {
+		newtree = db_tree_parse(logstr, argv[1], &rt_uniresource);
+		if (newtree == TREE_NULL) {
 		    bu_vls_printf(logstr, "db adjust tree: bad tree '%s'\n", argv[1]);
 		    return BRLCAD_ERROR;
 		}
 		db_free_tree(comb->tree, &rt_uniresource);
-		comb->tree = new;
+		comb->tree = newtree;
 	    }
 	} else {
 	    bu_vls_printf(logstr, "db adjust %s : no such attribute", buf);
