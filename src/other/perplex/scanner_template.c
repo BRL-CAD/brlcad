@@ -74,6 +74,7 @@ typedef struct perplex {
     char *tokenStart;
     struct Buf *buffer;
     char *tokenText;
+    void *extra;        /* application data */
 } *perplex_t;
 
 perplex_t perplexFileScanner(FILE *input);
@@ -84,25 +85,14 @@ void perplexFree(perplex_t scanner);
 #define PERPLEX_LEXER yylex
 #endif
 
-#ifndef PERPLEX_APPDATA_PARAM
-#define PERPLEX_APPDATA_PARAM appData
-#endif
-
-#ifndef PERPLEX_APPDATA_TYPE
-#  define PERPLEX_PUBLIC_LEXER         int PERPLEX_LEXER(perplex_t scanner)
-#  define PERPLEX_PRIVATE_LEXER static int PERPLEX_LEXER_private(perplex_t scanner)
-#  define PERPLEX_PARAMETERS    scanner
-#else
-#  define PERPLEX_PUBLIC_LEXER         int PERPLEX_LEXER(perplex_t scanner, PERPLEX_APPDATA_TYPE PERPLEX_APPDATA_PARAM)
-#  define PERPLEX_PRIVATE_LEXER static int PERPLEX_LEXER_private(perplex_t scanner, PERPLEX_APPDATA_TYPE PERPLEX_APPDATA_PARAM)
-#  define PERPLEX_PARAMETERS    scanner, PERPLEX_APPDATA_PARAM
-#endif
+#define PERPLEX_PUBLIC_LEXER  PERPLEX_LEXER(perplex_t scanner)
+#define PERPLEX_PRIVATE_LEXER PERPLEX_LEXER_private(perplex_t scanner)
 
 #ifndef PERPLEX_ON_ENTER
 #define PERPLEX_ON_ENTER /* do nothing */
 #endif
 
-PERPLEX_PUBLIC_LEXER;
+int PERPLEX_PUBLIC_LEXER;
 
 %%
 /*              S C A N N E R _ T E M P L A T E . C
@@ -236,7 +226,7 @@ buf_prints(struct Buf *buf, const char *fmt, const char *s)
 struct Buf*
 buf_linedir(struct Buf *buf, const char* filename, int lineno)
 {
-    char *t,
+    char *t;
     char fmt[] = "#line %d \"%s\"\n";
     
     t = (char*)malloc(strlen(fmt) + strlen(filename) + (int)(1 + log10(lineno >= 0? lineno : -lineno)) + 1);
@@ -619,14 +609,15 @@ getCondition(perplex_t scanner)
 #define YYFILL(n)          bufferFill(scanner, n)
 
 /* scanner */
-PERPLEX_PRIVATE_LEXER;
+static int PERPLEX_PRIVATE_LEXER;
 
+int
 PERPLEX_PUBLIC_LEXER {
     int ret;
 
     scanner->tokenText = NULL;
 
-    ret = PERPLEX_LEXER_private(PERPLEX_PARAMETERS);
+    ret = PERPLEX_LEXER_private(scanner);
 
     if (scanner->tokenText != NULL) {
 	free(scanner->tokenText);
@@ -636,6 +627,7 @@ PERPLEX_PUBLIC_LEXER {
     return ret;
 }
 
+static int
 PERPLEX_PRIVATE_LEXER {
     char yych;
 
