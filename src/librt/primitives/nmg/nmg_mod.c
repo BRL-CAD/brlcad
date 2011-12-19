@@ -1430,7 +1430,7 @@ nmg_gluefaces(struct faceuse **fulist, int n, const struct bn_tol *tol)
     struct shell *s;
     struct loopuse *lu;
     struct edgeuse *eu;
-    int i;
+    register int i;
     int f_no;		/* Face number */
 
     NMG_CK_FACEUSE(fulist[0]);
@@ -1442,7 +1442,6 @@ nmg_gluefaces(struct faceuse **fulist, int n, const struct bn_tol *tol)
 	register struct faceuse *fu;
 
 	fu = fulist[i];
-	NMG_CK_FACEUSE(fu);
 	if (fu->s_p != s) {
 	    bu_log("nmg_gluefaces() in %s at %d. faceuses don't share parent\n",
 		   __FILE__, __LINE__);
@@ -1452,7 +1451,6 @@ nmg_gluefaces(struct faceuse **fulist, int n, const struct bn_tol *tol)
 
     for (i=0; i < n; ++i) {
 	for (BU_LIST_FOR(lu, loopuse, &fulist[i]->lu_hd)) {
-	    NMG_CK_LOOPUSE(lu);
 
 	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		continue;
@@ -1463,7 +1461,6 @@ nmg_gluefaces(struct faceuse **fulist, int n, const struct bn_tol *tol)
 		    register struct edgeuse *eu2;
 
 		    for (BU_LIST_FOR(lu2, loopuse, &fulist[f_no]->lu_hd)) {
-			NMG_CK_LOOPUSE(lu2);
 			if (BU_LIST_FIRST_MAGIC(&lu2->down_hd) != NMG_EDGEUSE_MAGIC)
 			    continue;
 			for (BU_LIST_FOR(eu2, edgeuse, &lu2->down_hd)) {
