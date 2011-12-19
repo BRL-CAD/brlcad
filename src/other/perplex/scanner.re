@@ -592,15 +592,12 @@ re2c:define:YYGETCONDITION:naked = 1;
 }
 
 <rules>[^\n]'<' {
-    fprintf(stderr, "=== matched pseudo condition\n");
     copyTokenText(scanner);
     return TOKEN_WORD;
 }
 <rules>'<' {
     /* matched '<' at start of line or section */
-    fprintf(stderr, "=== matched condition\n");
     if (strlen(yytext) == 1 || yytext[0] == '\n') {
-	fprintf(stderr, "=== changing to condition_list\n");
 	YYSETCONDITION(condition_list);
     }
     continue;
@@ -720,26 +717,16 @@ re2c:define:YYGETCONDITION:naked = 1;
     return TOKEN_START_SCOPE;
 }
 <condition_list>'>' => rules {
-    fprintf(stderr, "=== end of conditon_list\n");
-    fprintf(stderr, "=== conditon_list start %c\n", *scanner->tokenStart);
-
     if (strlen(yytext) == 2) {
 	/* matched "<>" */
-	fprintf(stderr, "=== empty condition\n");
 	return TOKEN_EMPTY_COND;
     }
 
-    fprintf(stderr, "=== condition %s\n", yytext);
     copyTokenText(scanner);
     return TOKEN_CONDITION;
 }
 
 <*>[^] {
-    if (YYGETCONDITION == condition_list) {
-	fprintf(stderr, "=== conditon_list start %c\n", *scanner->tokenStart);
-	fprintf(stderr, "=== conditon_list char %c\n", scanner->cursor[-1]);
-    }
-
     continue;
 }
 
