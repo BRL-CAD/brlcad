@@ -2708,6 +2708,10 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
 
     rd.rd_m = nmg_find_model(&s->l.magic);
 
+    /* If there is a manifolds list attached to the model structure
+     * then use it, otherwise create a manifolds list to be used once
+     * in this function and then freed in this function.
+     */
     if (rd.rd_m->manifolds) {
         rd.manifolds = rd.rd_m->manifolds;
     } else {
@@ -2820,10 +2824,17 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
     /* free the hitmiss table */
     bu_free((char *)rd.hitmiss, "free nmg geom hit list");
 
-    if (rd.rd_m->manifolds) {
-        /* free the manifold table */
-        bu_free((char *)rd.rd_m->manifolds, "free manifolds table");
-	rd.rd_m->manifolds = NULL; /* sanity */
+    if (!rd.rd_m->manifolds) {
+        /* If there is no manfolds list attached to the model
+         * structure then the list was created here (within
+         * nmg_class_ray_vs_shell) and should be freed here.
+         * If there is a manifold list attached to the model
+         * structure then it was created in the nmg_bool
+         * function and should be freed in the nmg_bool
+         * function.
+         */
+        bu_free((char *)rd.manifolds, "free local manifolds table");
+	rd.manifolds = NULL; /* sanity */
     }
 
     if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
