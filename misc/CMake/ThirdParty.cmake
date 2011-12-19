@@ -352,15 +352,19 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir aliases description)
     # Now that the routine is complete, see if we had a cached value different from any of our
     # standard results
     IF(EXEC_CACHED)
-	# Is it the bundled path? (don't override if it is, the bundled option setting takes care of that)
-	IF(NOT "${EXEC_CACHED}" STREQUAL "${CMAKE_BINARY_DIR}/${BIN_DIR}/${lower}")
-	    # Is it the same as the found results?
-	    IF(NOT "${EXEC_CACHED}" STREQUAL "${${upper}_EXECUTABLE_FOUND_RESULT}")
-		SET(${upper}_EXECUTABLE ${EXEC_CACHED} CACHE STRING "Apparently a user specified path was supplied, use it" FORCE)
-		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
-		SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "Apparently a user specified path was supplied, use it" FORCE)
-	    ENDIF(NOT "${EXEC_CACHED}" STREQUAL "${${upper}_EXECUTABLE_FOUND_RESULT}")
-	ENDIF(NOT "${EXEC_CACHED}" STREQUAL "${CMAKE_BINARY_DIR}/${BIN_DIR}/${lower}")
+	# Is it a build target?  If so, don't cache it.
+	GET_FILENAME_COMPONENT(EXEC_CACHED_ABS_PATH ${EXEC_CACHED} ABSOLUTE)
+	IF ("${EXEC_CACHED_ABS_PATH}" STREQUAL "${PATH_ABS}")
+	    # Is it the bundled path? (don't override if it is, the bundled option setting takes care of that)
+	    IF(NOT "${EXEC_CACHED}" STREQUAL "${CMAKE_BINARY_DIR}/${BIN_DIR}/${lower}")
+		# Is it the same as the found results?
+		IF(NOT "${EXEC_CACHED}" STREQUAL "${${upper}_EXECUTABLE_FOUND_RESULT}")
+		    SET(${upper}_EXECUTABLE ${EXEC_CACHED} CACHE STRING "Apparently a user specified path was supplied, use it" FORCE)
+		    SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
+		    SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM (AUTO)" CACHE STRING "Apparently a user specified path was supplied, use it" FORCE)
+		ENDIF(NOT "${EXEC_CACHED}" STREQUAL "${${upper}_EXECUTABLE_FOUND_RESULT}")
+	    ENDIF(NOT "${EXEC_CACHED}" STREQUAL "${CMAKE_BINARY_DIR}/${BIN_DIR}/${lower}")
+	ENDIF("${EXEC_CACHED_ABS_PATH}" STREQUAL "${PATH_ABS}")
     ENDIF(EXEC_CACHED)
 
     IF(${CMAKE_PROJECT_NAME}_${upper}_BUILD)
