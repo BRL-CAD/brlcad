@@ -2682,8 +2682,10 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    }
 		}
 
-		if (hitv)
-		    (void)nmg_break_all_es_on_v(&m->magic, hitv, &is->tol);
+		if (hitv) {
+		    (void)nmg_break_all_es_on_v(&fu1->l.magic, hitv, &is->tol);
+		    (void)nmg_break_all_es_on_v(&fu2->l.magic, hitv, &is->tol);
+		}
 	    }
 	}
     }
@@ -4002,7 +4004,8 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	if (v == eu->vu_p->v_p || v == eu->eumate_p->vu_p->v_p)
 	    goto out;
 
-	(void)nmg_break_all_es_on_v(&m->magic, v, &is->tol);
+	(void)nmg_break_all_es_on_v(&fu->l.magic, v, &is->tol);
+	(void)nmg_break_all_es_on_v(&eu->l.magic, v, &is->tol);
 
 	goto out;
     }
@@ -4061,7 +4064,8 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	if (v != eu->vu_p->v_p && v != eu->eumate_p->vu_p->v_p) {
 	    if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		bu_log("Breaking edges at vertex #%d, dist=%g, v=x%x\n", i+1, inter_dist[i], v);
-	    (void)nmg_break_all_es_on_v(&m->magic, v, &is->tol);
+	    (void)nmg_break_all_es_on_v(&fu->l.magic, v, &is->tol);
+	    (void)nmg_break_all_es_on_v(&eu->l.magic, v, &is->tol);
 	}
 
 	inter_dist[index_at_max] = (-10.0);
