@@ -33,11 +33,19 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-# - Find re2c executable
+# Provides a macro to generate custom build rules:
 
-# The module defines the following variables:
-#  RE2C_FOUND - true is re2c executable is found
-#  RE2C_EXECUTABLE - the path to the re2c executable
+# RE2C_TARGET(Name RE2CInput RE2COutput [COMPILE_FLAGS <string>])
+# which creates a custom command  to generate the <RE2COutput> file from
+# the <RE2CInput> file.  If  COMPILE_FLAGS option is specified, the next
+# parameter is added to the re2c  command line. Name is an alias used to
+# get  details of  this custom  command.  
+
+# This module also defines a macro:
+#  ADD_RE2C_LEMON_DEPENDENCY(RE2CTarget LemonTarget)
+# which  adds the  required dependency  between a  scanner and  a parser
+# where  <RE2CTarget>  and <LemonTarget>  are  the  first parameters  of
+# respectively RE2C_TARGET and LEMON_TARGET macros.
 #
 #  ====================================================================
 #  Example:
@@ -92,13 +100,59 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
-FIND_PROGRAM(RE2C_EXECUTABLE re2c DOC "path to the re2c executable")
-MARK_AS_ADVANCED(RE2C_EXECUTABLE)
+#============================================================
+# RE2C_TARGET (public macro)
+#============================================================
+#
+MACRO(RE2C_TARGET Name Input Output)
+	SET(RE2C_TARGET_usage "RE2C_TARGET(<Name> <Input> <Output> [COMPILE_FLAGS <string>]")
+	IF(${ARGC} GREATER 3)
+		IF(${ARGC} EQUAL 5)
+			IF("${ARGV3}" STREQUAL "COMPILE_FLAGS")
+				SET(RE2C_EXECUTABLE_opts  "${ARGV4}")
+				SEPARATE_ARGUMENTS(RE2C_EXECUTABLE_opts)
+			ELSE()
+				MESSAGE(SEND_ERROR ${RE2C_TARGET_usage})
+			ENDIF()
+		ELSE()
+			MESSAGE(SEND_ERROR ${RE2C_TARGET_usage})
+		ENDIF()
+	ENDIF()
 
-INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(RE2C DEFAULT_MSG RE2C_EXECUTABLE)
+	ADD_CUSTOM_COMMAND(OUTPUT ${Output}
+		COMMAND ${RE2C_EXECUTABLE}
+		ARGS ${RE2C_EXECUTABLE_opts} -o${Output} ${Input}
+		DEPENDS ${Input} ${RE2C_EXECUTABLE_TARGET}
+		COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-# FindRE2C.cmake ends here
+	SET(RE2C_${Name}_DEFINED TRUE)
+	SET(RE2C_${Name}_OUTPUTS ${Output})
+	SET(RE2C_${Name}_INPUT ${Input})
+	SET(RE2C_${Name}_COMPILE_FLAGS ${RE2C_EXECUTABLE_opts})
+ENDMACRO(RE2C_TARGET)
+#============================================================
+
+#============================================================
+# ADD_RE2C_LEMON_DEPENDENCY (public macro)
+#============================================================
+#
+MACRO(ADD_RE2C_LEMON_DEPENDENCY RE2CTarget LemonTarget)
+
+	IF(NOT RE2C_${RE2CTarget}_OUTPUTS)
+		MESSAGE(SEND_ERROR "RE2C target `${RE2CTarget}' does not exists.")
+	ENDIF()
+
+	IF(NOT LEMON_${LemonTarget}_OUTPUT_HEADER)
+		MESSAGE(SEND_ERROR "Lemon target `${LemonTarget}' does not exists.")
+	ENDIF()
+
+	SET_SOURCE_FILES_PROPERTIES(${RE2C_${RE2CTarget}_OUTPUTS}
+		PROPERTIES OBJECT_DEPENDS ${LEMON_${LemonTarget}_OUTPUT_HEADER})
+ENDMACRO(ADD_RE2C_LEMON_DEPENDENCY)
+#============================================================
+
+# RE2C_Util.cmake ends here
 
 # Local Variables:
 # tab-width: 8

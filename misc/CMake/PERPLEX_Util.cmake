@@ -1,8 +1,7 @@
-#
-# - Find perplex executable and provides macros to generate custom build rules
-# The module defines the following variables
-#
-#  PERPLEX_EXECUTABLE - path to the perplex program
+# Defines two macros - PERPLEX_TARGET, which takes perplex inputs and
+# runs both perplex and re2c to generate C source code/headers, and 
+# ADD_PERPLEX_LEMON_DEPENDENCY which is used to set up dependencies between
+# scanner and parser targets when necessary.
 #
 # #====================================================================
 #  Example:
@@ -24,7 +23,6 @@
 #  ====================================================================
 # 
 #=============================================================================
-#               F I N D P E R P L E X . C M A K E
 #
 # Originally based off of FindBISON.cmake from Kitware's CMake distribution
 #
@@ -62,13 +60,57 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
-FIND_PROGRAM(PERPLEX_EXECUTABLE perplex_path DOC "path to the perplex executable")
-MARK_AS_ADVANCED(PERPLEX_EXECUTABLE)
-INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(PERPLEX DEFAULT_MSG PERPLEX_EXECUTABLE)
+#============================================================
+# PERPLEX_TARGET (public macro)
+#============================================================
+MACRO(PERPLEX_TARGET Name Input OutputSrc OutputHeader)
+    IF(${ARGC} GREATER 4)
+	SET(Template ${ARGV4})
+    ELSE(${ARGC} GREATER 4)
+	SET(Template ${BRLCAD_SOURCE_DIR}/src/other/perplex/scanner_template.c)
+    ENDIF(${ARGC} GREATER 4)
+
+    get_filename_component(OutputName ${OutputSrc} NAME)
+    SET(re2c_src "${CMAKE_CURRENT_BINARY_DIR}/${OutputName}.re")
+
+    ADD_CUSTOM_COMMAND(
+	OUTPUT ${re2c_src} ${OutputHeader}
+	COMMAND ${PERPLEX_EXECUTABLE} -c -o ${re2c_src} -i ${OutputHeader} -t ${Template} ${Input}
+	DEPENDS ${Input} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET}
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	COMMENT "[PERPLEX][${Name}] Generating re2c input with ${PERPLEX_EXECUTABLE}"
+	)
+    ADD_CUSTOM_COMMAND(
+	OUTPUT ${OutputSrc}
+	COMMAND ${RE2C_EXECUTABLE} -c -o ${OutputSrc} ${re2c_src}
+	DEPENDS ${Input} ${re2c_src} ${OutputHeader} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET}
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
+	)
+    SET(PERPLEX_${Name}_DEFINED TRUE)
+    SET(PERPLEX_${Name}_OUTPUTS ${OutputSrc})
+    SET(PERPLEX_${Name}_INPUT ${Input})
+ENDMACRO(PERPLEX_TARGET)
 
 #============================================================
-# FindPERPLEX.cmake ends here
+# ADD_PERPLEX_LEMON_DEPENDENCY (public macro)
+#============================================================
+MACRO(ADD_PERPLEX_LEMON_DEPENDENCY PERPLEXTarget LemonTarget)
+
+    IF(NOT PERPLEX_${PERPLEXTarget}_OUTPUTS)
+	MESSAGE(SEND_ERROR "PERPLEX target `${PERPLEXTarget}' does not exists.")
+    ENDIF()
+
+    IF(NOT LEMON_${LemonTarget}_OUTPUT_HEADER)
+	MESSAGE(SEND_ERROR "Lemon target `${LemonTarget}' does not exists.")
+    ENDIF()
+
+    SET_SOURCE_FILES_PROPERTIES(${PERPLEX_${PERPLEXTarget}_OUTPUTS}
+	PROPERTIES OBJECT_DEPENDS ${LEMON_${LemonTarget}_OUTPUT_HEADER})
+ENDMACRO(ADD_PERPLEX_LEMON_DEPENDENCY)
+
+#============================================================
+# PERPLEX_Utils.cmake ends here
 
 # Local Variables:
 # tab-width: 8

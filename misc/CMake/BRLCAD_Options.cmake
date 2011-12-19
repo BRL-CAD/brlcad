@@ -33,78 +33,6 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-
-#-----------------------------------------------------------------------------
-# Macro for three-way options that optionally check whether a system
-# resource is available.
-MACRO(BUNDLE_OPTION trigger build_test_var optname default_raw)
-	STRING(TOUPPER "${default_raw}" default)
-	IF(NOT ${optname})
-		IF(default)
-			SET(${optname} "${default}" CACHE STRING "Using bundled ${optname}")
-		ELSE(default)
-			IF(${${trigger}} MATCHES "BUNDLED")
-				SET(${optname} "BUNDLED (AUTO)" CACHE STRING "Using bundled ${optname}")
-			ENDIF(${${trigger}} MATCHES "BUNDLED")
-
-			IF(${${trigger}} MATCHES "SYSTEM")
-				SET(${optname} "SYSTEM (AUTO)" CACHE STRING "Using system ${optname}")
-			ENDIF(${${trigger}} MATCHES "SYSTEM")
-
-			IF(${${trigger}} MATCHES "AUTO")
-				SET(${optname} "AUTO" CACHE STRING "Using bundled ${optname}")
-			ENDIF(${${trigger}} MATCHES "AUTO")
-		ENDIF(default)
-	ENDIF(NOT ${optname})
-
-	# convert ON/OFF value to BUNDLED/SYSTEM
-	STRING(TOUPPER "${${optname}}" optname_upper)
-	IF(${optname_upper} MATCHES "ON")
-		SET(optname_upper "BUNDLED")
-	ENDIF(${optname_upper} MATCHES "ON")
-	IF(${optname_upper} MATCHES "OFF")
-		SET(optname_upper "SYSTEM")
-	ENDIF(${optname_upper} MATCHES "OFF")
-	SET(${optname} ${optname_upper})
-
-	#convert AUTO value to indicate whether we're BUNDLED/SYSTEM
-	IF(${optname} MATCHES "AUTO")
-		IF(${${build_test_var}} MATCHES "BUNDLED")
-			SET(${optname} "BUNDLED (AUTO)" CACHE STRING "Using bundled ${optname}" FORCE)
-		ENDIF(${${build_test_var}} MATCHES "BUNDLED")
-
-		IF(${${build_test_var}} MATCHES "SYSTEM")
-			SET(${optname} "SYSTEM (AUTO)" CACHE STRING "Using system ${optname}" FORCE)
-		ENDIF(${${build_test_var}} MATCHES "SYSTEM")
-
-		IF(${${build_test_var}} MATCHES "AUTO")
-			SET(${optname} "AUTO" CACHE STRING "Using bundled ${optname}" FORCE)
-		ENDIF(${${build_test_var}} MATCHES "AUTO")
-
-		IF(${${build_test_var}} MATCHES "ON")
-			SET(${optname} "BUNDLED (AUTO)" CACHE STRING "Using bundled ${optname}" FORCE)
-		ENDIF(${${build_test_var}} MATCHES "ON")
-
-		IF(${${build_test_var}} MATCHES "OFF")
-			SET(${optname} "SYSTEM (AUTO)" CACHE STRING "Using system ${optname}" FORCE)
-		ENDIF(${${build_test_var}} MATCHES "OFF")
-	ENDIF(${optname} MATCHES "AUTO")
-
-	IF(NOT ${optname} MATCHES "DISABLED")
-		set_property(CACHE ${optname} PROPERTY STRINGS AUTO BUNDLED SYSTEM)
-		# make sure we have a valid value
-		IF(NOT ${${optname}} MATCHES "AUTO" AND NOT ${${optname}} MATCHES "BUNDLED" AND NOT ${${optname}} MATCHES "SYSTEM")
-			MESSAGE(WARNING "Unknown value ${${optname}} supplied for ${optname} - defaulting to AUTO\nValid options are AUTO, BUNDLED and SYSTEM")
-			SET(${optname} "AUTO" CACHE STRING "Using bundled ${optname}" FORCE)
-		ENDIF(NOT ${${optname}} MATCHES "AUTO" AND NOT ${${optname}} MATCHES "BUNDLED" AND NOT ${${optname}} MATCHES "SYSTEM")
-		MARK_AS_ADVANCED(CLEAR ${optname})
-	ELSE(NOT ${optname} MATCHES "DISABLED")
-		set_property(CACHE ${optname} PROPERTY STRINGS "${${optname}}")
-		MARK_AS_ADVANCED(FORCE ${optname})
-	ENDIF(NOT ${optname} MATCHES "DISABLED")
-ENDMACRO(BUNDLE_OPTION)
-
-
 #-----------------------------------------------------------------------------
 # Build Type aware option
 MACRO(AUTO_OPTION username varname debug_state release_state)
@@ -245,13 +173,6 @@ MACRO(BRLCAD_OPTION default opt opt_ALIASES opt_DESCRIPTION)
     OPTION_ALIASES("${opt}" "${opt_ALIASES}")
     OPTION_DESCRIPTION("${opt}" "${opt_ALIASES}" "${opt_DESCRIPTION}")
 ENDMACRO(BRLCAD_OPTION)
-
-# Bundle option with BRL-CAD aliases and description
-MACRO(BRLCAD_BUNDLE_OPTION trigger build_test_var optname default_raw opt_ALIASES opt_DESCRIPTION)
-    BUNDLE_OPTION("${trigger}" "${build_test_var}" "${optname}" "${default_raw}")
-    OPTION_ALIASES("${optname}" "${opt_ALIASES}")
-    OPTION_DESCRIPTION("${optname}" "${opt_ALIASES}" "${opt_DESCRIPTION}")
-ENDMACRO(BRLCAD_BUNDLE_OPTION)
 
 # Local Variables:
 # tab-width: 8

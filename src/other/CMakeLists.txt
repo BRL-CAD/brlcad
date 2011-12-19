@@ -60,7 +60,7 @@ provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
 toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
 BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(regex libregex regex_ALIASES regex_DESCRIPTION "")
+THIRD_PARTY(regex libregex "" regex_ALIASES regex_DESCRIPTION) 
 BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
 
 # Same deal for zlib Library - common requirement, deal with it up front
@@ -71,7 +71,7 @@ library provided with BRL-CAD's source distribution.  Default is AUTO, responsiv
 the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
 BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(zlib libz zlib_ALIASES zlib_DESCRIPTION "")
+THIRD_PARTY(zlib libz "" zlib_ALIASES zlib_DESCRIPTION) 
 
 #-----------------------------------------------------------------------------
 
@@ -107,7 +107,11 @@ provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
 toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
 BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY_EXECUTABLE(lemon lemon lemon_ALIASES lemon_DESCRIPTION)
+IF("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED" OR "${BRLCAD_LEMON}" MATCHES "BUNDLED")
+	SET(LEMON_TEMPLATE "${BRLCAD_SOURCE_DIR}/src/other/lemon/lempar.c")
+ENDIF("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED" OR "${BRLCAD_LEMON}" MATCHES "BUNDLED")
+THIRD_PARTY_EXECUTABLE(lemon lemon "" lemon_ALIASES lemon_DESCRIPTION)
+INCLUDE(${BRLCAD_SOURCE_DIR}/misc/CMake/LEMON_Util.cmake)
 
 SET(re2c_ALIASES ENABLE_RE2C)
 SET(re2c_DESCRIPTION "
@@ -116,7 +120,8 @@ provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
 toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
 BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY_EXECUTABLE(re2c re2c re2c_ALIASES re2c_DESCRIPTION)
+THIRD_PARTY_EXECUTABLE(re2c re2c "" re2c_ALIASES re2c_DESCRIPTION)
+INCLUDE(${BRLCAD_SOURCE_DIR}/misc/CMake/RE2C_Util.cmake)
 
 # Perplex is set up as a src/other sub-build, but at this time it is
 # entirely a BRL-CAD effort and not distributed or maintained as its
@@ -128,7 +133,8 @@ provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
 toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
 BRLCAD_BUNDLED_LIBS is also AUTO.  perplex requires a working re2c.
 ")
-THIRD_PARTY_EXECUTABLE(perplex perplex perplex_ALIASES perplex_DESCRIPTION	NOSYS)
+THIRD_PARTY_EXECUTABLE(perplex perplex "" perplex_ALIASES perplex_DESCRIPTION	NOSYS)
+INCLUDE(${BRLCAD_SOURCE_DIR}/misc/CMake/PERPLEX_Util.cmake)
 
 # libxml and libxslt tools for Docbook processing.  We build just
 # enough library support to get these two tools working.
@@ -138,9 +144,9 @@ Option for enabling and disabling compilation of the xsltproc XML
 transformation utilty provided with BRL-CAD's source distribution.  Used 
 for DocBook documentation processing.  Default is AUTO, responsive to the
 toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
-BRLCAD_BUNDLED_LIBS is also AUTO.
+BRLCAD_BUNDLED_LIBS is also AUTO.  Depends on BRLCAD_EXTRADOCS.
 ")
-THIRD_PARTY_EXECUTABLE(xsltproc xmltools xsltproc_ALIASES xsltproc_DESCRIPTION)
+THIRD_PARTY_EXECUTABLE(xsltproc xmltools "BRLCAD_EXTRADOCS" xsltproc_ALIASES xsltproc_DESCRIPTION)
 
 # Used only when validating XML for schema compliance
 # (BRLCAD_EXTRADOCS_VALIDATE must be on to use this, although it is compiled
@@ -153,7 +159,7 @@ for DocBook documentation validation.  Default is AUTO, responsive to the
 toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
 BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY_EXECUTABLE(xmllint xmltools xmllint_ALIASES xmllint_DESCRIPTION)
+THIRD_PARTY_EXECUTABLE(xmllint xmltools "BRLCAD_EXTRADOCS_VALIDATE" xmllint_ALIASES xmllint_DESCRIPTION)
 
 #---------------------------------------------------------------------------------
 # Third Party Sources
@@ -189,7 +195,7 @@ toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
 BRLCAD_BUNDLED_LIBS is also AUTO. (Except when building with Visual Studio,
 where it is disabled. Windows does not support the termlib API.)
 ")
-THIRD_PARTY(termlib libtermlib termlib_ALIASES termlib_DESCRIPTION HAVE_TERMLIB)
+THIRD_PARTY(termlib libtermlib "HAVE_TERMLIB" termlib_ALIASES termlib_DESCRIPTION)
 IF(BRLCAD_TERMLIB_BUILD)
 	SET(HAVE_TERMCAP_H 1 CACHE BOOL "src/other termlib is on" FORCE)
 	MARK_AS_ADVANCED(HAVE_TERMCAP_H)
@@ -217,7 +223,7 @@ Graphics library provided with BRL-CAD's source distribution.  Default is
 AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing 
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(png libpng png_ALIASES png_DESCRIPTION "")
+THIRD_PARTY(png libpng "" png_ALIASES png_DESCRIPTION)
 IF(BRLCAD_PNG_BUILD)
 	# PNG_LIB_NAME doesn't automatically propagate to toplevel due to scoping of CMake variables -
 	# use get_directory_property to recover the value and place it in the CACHE
@@ -247,7 +253,7 @@ library provided with BRL-CAD's source code.  Default is AUTO, responsive
 to the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system 
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(utahrle libutahrle utahrle_ALIASES utahrle_DESCRIPTION "" NOSYS)
+THIRD_PARTY(utahrle libutahrle "" utahrle_ALIASES utahrle_DESCRIPTION NOSYS)
 IF(BRLCAD_UTAHRLE_BUILD)
 	SET(UTAHRLE_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libutahrle/include" CACHE STRING "directory with rle.h header" FORCE)
 	SET(BRLCAD_UTAHRLE_INCLUDE_DIR "${UTAHRLE_INCLUDE_DIR}" CACHE STRING "directory with rle.h header" FORCE)
@@ -287,7 +293,7 @@ to the toplevel BRLCAD_BUNDLED_LIBS option and testing first for
 a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 
-THIRD_PARTY(tcl tcl tcl_ALIASES tcl_DESCRIPTION "")
+THIRD_PARTY(tcl tcl "" tcl_ALIASES tcl_DESCRIPTION) 
 IF(BRLCAD_TCL_BUILD)
    # Set the variables ourselves since FindTCL.cmake doesn't know about our build
 	SET(TCL_SRC_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/tcl)
@@ -605,7 +611,7 @@ library provided with BRL-CAD's source code.  Default is
 AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and 
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(openNURBS openNURBS opennurbs_ALIASES opennurbs_DESCRIPTION "" NOSYS)
+THIRD_PARTY(openNURBS openNURBS "" opennurbs_ALIASES opennurbs_DESCRIPTION NOSYS)
 
 # STEP Class Libraries
 # If we don't have Lex/Yacc, we can't do STEP - conditionalize
@@ -616,7 +622,7 @@ Libraries provided with BRL-CAD's source code.  Default is
 AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing 
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(scl step scl_ALIASES scl_DESCRIPTION "YACC_EXECUTABLE;LEX_EXECUTABLE" NOSYS)
+THIRD_PARTY(scl step "YACC_EXECUTABLE;LEX_EXECUTABLE"  scl_ALIASES scl_DESCRIPTION NOSYS)
 IF(BRLCAD_SCL_BUILD)
 	SET(FEDEX_PLUS_EXEC fedex_plus CACHE STRING "Fedex plus executable" FORCE)
 	MARK_AS_ADVANCED(FEDEX_PLUS_EXEC)
