@@ -196,7 +196,7 @@ buf_print_strings(struct Buf * buf, FILE* out)
     }
 
     for (i = 0; i < buf->nelts; i++) {
-        const char * s = ((char**)buf->elts)[i];
+        const char *s = ((char**)buf->elts)[i];
         if(s) {
             fprintf(out, "%s", s);
 	}
@@ -227,7 +227,7 @@ struct Buf*
 buf_linedir(struct Buf *buf, const char* filename, int lineno)
 {
     char *t;
-    char fmt[] = "#line %d \"%s\"\n";
+    const char fmt[] = "#line %d \"%s\"\n";
     
     t = (char*)malloc(strlen(fmt) + strlen(filename) + (int)(1 + log10(lineno >= 0? lineno : -lineno)) + 1);
     sprintf(t, fmt, lineno, filename);
@@ -291,10 +291,10 @@ buf_strdefine(struct Buf *buf, const char *str, const char *def)
 struct Buf*
 buf_m4_define(struct Buf *buf, const char* def, const char* val)
 {
-    const char * fmt = "m4_define( [[%s]], [[%s]])m4_dnl\n";
-    char * str;
+    const char *fmt = "m4_define( [[%s]], [[%s]])m4_dnl\n";
+    char *str;
 
-    val = val?val:"";
+    val = val ? val : "";
     str = (char*)malloc(strlen(fmt) + strlen(def) + strlen(val) + 2);
 
     sprintf(str, fmt, def, val);
@@ -310,8 +310,8 @@ buf_m4_define(struct Buf *buf, const char* def, const char* val)
 struct Buf*
 buf_m4_undefine(struct Buf *buf, const char* def)
 {
-    const char * fmt = "m4_undefine( [[%s]])m4_dnl\n";
-    char * str;
+    const char *fmt = "m4_undefine( [[%s]])m4_dnl\n";
+    char *str;
 
     str = (char*)malloc(strlen(fmt) + strlen(def) + 2);
 
@@ -324,7 +324,7 @@ buf_m4_undefine(struct Buf *buf, const char* def)
 void
 buf_init(struct Buf *buf, size_t elem_size)
 {
-    buf->elts = (void *) 0;
+    buf->elts = (void*)0;
     buf->nelts = 0;
     buf->elt_size = elem_size;
     buf->nmax = 0;
@@ -337,7 +337,7 @@ buf_destroy(struct Buf *buf)
     if (buf && buf->elts) {
 	free(buf->elts);
     }
-    buf->elts = (void *) 0;
+    buf->elts = (void*)0;
 }
 
 /* appends ptr[] to buf, grow if necessary.
@@ -561,6 +561,7 @@ perplexStringScanner(char *firstChar, char *lastChar)
 perplex_t
 perplexFileScanner(FILE *input)
 {
+    char *bufFirst;
     perplex_t scanner = newScanner();
 
     scanner->in.file = input;
@@ -570,7 +571,8 @@ perplexFileScanner(FILE *input)
     buf_init(scanner->buffer, sizeof(char));
     buf_append_char(scanner->buffer, '\0');
 
-    scanner->null = scanner->marker = scanner->cursor = scanner->buffer->elts;
+    bufFirst = (char*)scanner->buffer->elts;
+    scanner->null = scanner->marker = scanner->cursor = bufFirst;
 
     return scanner;
 }
