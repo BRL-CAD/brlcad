@@ -169,7 +169,7 @@ MACRO(THIRD_PARTY lower dir required_vars aliases description)
 	ELSE(${upper}_FOUND)
 	    # If one of our previous conditions precludes building this library, we've got a problem.
 	    IF("${OPT_STR_UPPER}" STREQUAL "SYSTEM" OR "${BRLCAD_BUNDLED_LIBS}" STREQUAL SYSTEM)
-		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
+		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
 		SET(${CMAKE_PROJECT_NAME}_${upper}_NOTFOUND 1)
 		MESSAGE(WARNING "Compilation of local version of ${lower} was disabled, but system version not found!")
 		IF(NOT "${OPT_STR_UPPER}" STREQUAL "SYSTEM")
