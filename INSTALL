@@ -342,6 +342,25 @@ as expected.
 Aliases:  ENABLE_ALL
 
 
+--- BRLCAD_ENABLE_OPENGL ---
+
+Enable support for OpenGL based Display Managers in BRL-CAD.
+Default depends on whether OpenGL is successfully detected - 
+if it is, default is to enable.
+
+Aliases:  ENABLE_OPENGL
+
+
+--- BRLCAD_EXTRADOCS ---
+
+The core option that enables and disables bulding of BRL-CAD's DocBook
+based documentation (includes manuals and man pages for commands, among
+other things.)  Defaults to ON, but only HTML and MAN formats are enabled
+by default - PDF must be enabled separately.
+
+Aliases:  ENABLE_DOCS, ENABLE_EXTRA_DOCS, ENABLE_DOCBOOK
+
+
 --- BRLCAD_ENABLE_RUNTIME_DEBUG ---
 
 Enables support for application and library debugging facilities.  
@@ -353,6 +372,21 @@ work where performance is critical.
 
 Aliases:  ENABLE_RUNTIME_DEBUG, ENABLE_RUN_TIME_DEBUG, ENABLE_RUNTIME_DEBUGGING
           ENABLE_RUN_TIME_DEBUGGING
+
+
+--- BRLCAD_FLAGS_DEBUG ---
+
+Add compiler flags to aid in program debugging.  Default depends on CMake
+build type - defaults to ON for Debug, OFF for Release.
+
+Aliases:  ENABLE_DEBUG, ENABLE_FLAGS_DEBUG, ENABLE_DEBUG_FLAGS
+
+
+--- BRLCAD_ENABLE_COMPILER_WARNINGS ---
+
+Use extra compiler warning flags when compiling C/C++ code.  Defaults to ON.
+
+Aliases:  ENABLE_WARNINGS, ENABLE_COMPILER_WARNINGS
 
 
 --- BRLCAD_ENABLE_STRICT ---

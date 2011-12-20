@@ -226,7 +226,7 @@ MACRO(THIRD_PARTY lower dir required_vars aliases description)
 	DISTCHECK_IGNORE_ITEM(${dir})
     ENDIF(${CMAKE_PROJECT_NAME}_${upper}_BUILD)
 
-    OPTION_ALIASES("${CMAKE_PROJECT_NAME}_${upper}" "${aliases}")
+    OPTION_ALIASES("${CMAKE_PROJECT_NAME}_${upper}" "${aliases}" "ABS")
     OPTION_DESCRIPTION("${CMAKE_PROJECT_NAME}_${upper}" "${aliases}" "${description}")
 
     MARK_AS_ADVANCED(${upper}_LIBRARY)
@@ -493,7 +493,7 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
 	SET(${upper}_EXECUTABLE_TARGET "" CACHE STRING "No build target for ${lower}" FORCE)
     ENDIF(${CMAKE_PROJECT_NAME}_${upper}_BUILD)
 
-    OPTION_ALIASES("${CMAKE_PROJECT_NAME}_${upper}" "${aliases}")
+    OPTION_ALIASES("${CMAKE_PROJECT_NAME}_${upper}" "${aliases}" "ABS")
     OPTION_DESCRIPTION("${CMAKE_PROJECT_NAME}_${upper}" "${aliases}" "${description}")
 
     MARK_AS_ADVANCED(${upper}_EXECUTABLE)

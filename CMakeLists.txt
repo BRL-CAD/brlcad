@@ -700,6 +700,20 @@ MARK_AS_ADVANCED(PREVIOUS_CONFIGURE_TYPE)
 SET(CONFIG_OPT_STRING "CONFIGURATION OPTIONS\n---------------------\n")
 FILE(WRITE ${CMAKE_BINARY_DIR}/OPTIONS "${CONFIG_OPT_STRING}")
 
+# The BRL-CAD CMake build will also generate a configure script
+# that emulates the command option style of GNU Autotool's 
+# configure.  Write the pre-defined header into the build-dir template
+# to initialize the file.
+FILE(REMOVE ${CMAKE_BINARY_DIR}/configure.new)
+FILE(READ ${BRLCAD_SOURCE_DIR}/misc/CMake/configure_prefix.sh CONFIG_PREFIX)
+FILE(WRITE ${CMAKE_BINARY_DIR}/configure.new.tmp "${CONFIG_PREFIX}")
+FILE(COPY ${CMAKE_BINARY_DIR}/configure.new.tmp DESTINATION
+	${CMAKE_BINARY_DIR}/CMakeFiles FILE_PERMISSIONS OWNER_READ OWNER_WRITE
+	OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+FILE(REMOVE ${CMAKE_BINARY_DIR}/configure.new.tmp)
+FILE(RENAME ${CMAKE_BINARY_DIR}/CMakeFiles/configure.new.tmp
+	${CMAKE_BINARY_DIR}/configure.new)
+
 # Build shared libs by default.  Mark this as advanced - turning off
 # ALL shared library building is unlikely to result in a working build
 # and is not a typical configuration.  Note that turning this option off
@@ -807,7 +821,15 @@ ENDIF(NOT WIN32)
 
 # Enable features requring OPENGL
 INCLUDE(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
-OPTION(BRLCAD_ENABLE_OPENGL "Use OpenGL." ${OPENGL_FOUND})
+SET(BRLCAD_ENABLE_OPENGL_ALIASES
+	ENABLE_OPENGL
+	)
+SET(BRLCAD_ENABLE_OPENGL_DESCRIPTION "
+Enable support for OpenGL based Display Managers in BRL-CAD.
+Default depends on whether OpenGL is successfully detected - 
+if it is, default is to enable.
+")
+BRLCAD_OPTION(${OPENGL_FOUND} BRLCAD_ENABLE_OPENGL	BRLCAD_ENABLE_OPENGL_ALIASES BRLCAD_ENABLE_OPENGL_DESCRIPTION)
 
 # Enable RTGL.  Requires an enabled OpenGL.
 OPTION(BRLCAD_ENABLE_RTGL "Enable experimental RTGL code." OFF)
@@ -851,7 +873,18 @@ ENDIF(APACHE_FOP)
 # The HTML output is used in the graphical help browsers in MGED and Archer,
 # as well as being the most likely candidate for external viewers. Turn this
 # on unless explicitly instructed otherwise by the user.
-OPTION(BRLCAD_EXTRADOCS "Enable Docbook documentation." ON)
+SET(BRLCAD_EXTRADOCS_ALIASES
+	ENABLE_DOCS
+	ENABLE_EXTRA_DOCS
+	ENABLE_DOCBOOK
+	)
+SET(BRLCAD_EXTRADOCS_DESCRIPTION "
+The core option that enables and disables bulding of BRL-CAD's DocBook
+based documentation (includes manuals and man pages for commands, among
+other things.)  Defaults to ON, but only HTML and MAN formats are enabled
+by default - PDF must be enabled separately.
+")
+BRLCAD_OPTION(ON BRLCAD_EXTRADOCS BRLCAD_EXTRADOCS_ALIASES BRLCAD_EXTRADOCS_DESCRIPTION)
 
 include(CMakeDependentOption)
 # By default, always do HTML output if we're doing extradocs output
@@ -922,10 +955,30 @@ IF(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
 ENDIF(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
 
 # Enable debug flags during compilation
+SET(BRLCAD_FLAGS_DEBUG_ALIASES
+	ENABLE_DEBUG
+	ENABLE_FLAGS_DEBUG
+	ENABLE_DEBUG_FLAGS
+	)
+SET(BRLCAD_FLAGS_DEBUG_DESCRIPTION "
+Add compiler flags to aid in program debugging.  Default depends on CMake
+build type - defaults to ON for Debug, OFF for Release.
+")
 AUTO_OPTION(BRLCAD_FLAGS_DEBUG BRLCAD_DEBUG_BUILD "ON" "OFF")
+OPTION_ALIASES(BRLCAD_FLAGS_DEBUG BRLCAD_FLAGS_DEBUG_ALIASES "BOOL")
+OPTION_DESCRIPTION(BRLCAD_FLAGS_DEBUG BRLCAD_FLAGS_DEBUG_ALIASES BRLCAD_FLAGS_DEBUG_DESCRIPTION)
 
 # Build with compiler warning flags
-OPTION(BRLCAD_ENABLE_COMPILER_WARNINGS "Use compiler warning flags" ON)
+SET(BRLCAD_ENABLE_COMPILER_WARNINGS_ALIASES
+	ENABLE_WARNINGS
+	ENABLE_COMPILER_WARNINGS
+	)
+SET(BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION "
+Use extra compiler warning flags when compiling C/C++ code.  Defaults to ON.
+")
+BRLCAD_OPTION(ON BRLCAD_ENABLE_COMPILER_WARNINGS
+	BRLCAD_ENABLE_COMPILER_WARNINGS_ALIASES
+	BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION)
 MARK_AS_ADVANCED(BRLCAD_ENABLE_COMPILER_WARNINGS)
 
 # Enable/disable strict compiler settings - these are limited to libraries that
@@ -2031,6 +2084,24 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
 IF(IS_DIFFERENT)
 	MESSAGE(WARNING "\n${BRLCAD_SOURCE_DIR}/INSTALL is out of date.  An updated version has been generated at ${BRLCAD_BINARY_DIR}/INSTALL.new\nTo clear this warning, replace ${BRLCAD_SOURCE_DIR}/INSTALL with ${BRLCAD_BINARY_DIR}/INSTALL.new\n")
 ENDIF(IS_DIFFERENT)
+
+# Do the same thing for the configure shell script - finish it and check
+# for differences.
+FILE(READ ${BRLCAD_SOURCE_DIR}/misc/CMake/configure_suffix.sh CONFIG_SUFFIX)
+FILE(APPEND ${CMAKE_BINARY_DIR}/configure.new "${CONFIG_SUFFIX}")
+# Compare
+execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
+	${BRLCAD_SOURCE_DIR}/configure.cmake.sh ${BRLCAD_BINARY_DIR}/configure.new
+	RESULT_VARIABLE IS_CONFIG_SH_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
+	DIFF_ERROR)
+IF(IS_CONFIG_SH_DIFFERENT)
+	MESSAGE(WARNING "\n${BRLCAD_SOURCE_DIR}/configure.cmake.sh is out of date. An updated version has been generated at ${BRLCAD_BINARY_DIR}/configure.new\nTo clear this warning, replace ${BRLCAD_SOURCE_DIR}/configure.cmake.sh with ${BRLCAD_BINARY_DIR}/configure.new\n")
+ENDIF(IS_CONFIG_SH_DIFFERENT)
+
+
+# Grab the old and the new versions
+FILE(READ ${BRLCAD_SOURCE_DIR}/configure.cmake.sh CONFIG_SH_OLD)
+FILE(READ ${BRLCAD_BINARY_DIR}/configure.new CONFIG_SH_NEW)
 
 #Done with everything else - do the configure time delta
 IF(NOT IS_SUBBUILD)

@@ -89,9 +89,13 @@ ENDMACRO(AUTO_OPTION varname release_state debug_state)
 # nomenclature, or anything that the developer things should lead to a given
 # option being set.  The documentation is auto-formatted into a text document
 # describing all BRL-CAD options.
+#
+# We also generate the "translation lines" for converting between Autotools'
+# configure style option syntax and CMake's variables, and append that to
+# the generated configure.new file.
 
 # Handle aliases for BRL-CAD options
-MACRO(OPTION_ALIASES opt opt_ALIASES)
+MACRO(OPTION_ALIASES opt opt_ALIASES style)
     IF(${opt_ALIASES})
 	FOREACH(item ${${opt_ALIASES}})
 	    STRING(REPLACE "ENABLE_" "DISABLE_" inverse_item ${item})
@@ -122,6 +126,23 @@ MACRO(OPTION_ALIASES opt opt_ALIASES)
 		ENDIF(NOT "${${item}}" STREQUAL "")
 	    ENDIF(NOT "${item}" STREQUAL "${opt}")
 	ENDFOREACH(item ${inverse_aliases})
+	FOREACH(item ${${opt_ALIASES}})
+	    STRING(TOLOWER ${item} alias_str)
+	    STRING(REPLACE "_" "-" alias_str "${alias_str}")
+	    STRING(REPLACE "enable" "disable" disable_str "${alias_str}")
+	    IF("${style}" STREQUAL "ABS")
+		FILE(APPEND ${CMAKE_BINARY_DIR}/configure.new "     --${alias_str})                options=\"$options -D${opt}=BUNDLED\";\n")
+		FILE(APPEND ${CMAKE_BINARY_DIR}/configure.new "                                  shift;;\n")
+		FILE(APPEND ${CMAKE_BINARY_DIR}/configure.new "     --${disable_str})                options=\"$options -D${opt}=SYSTEM\";\n")
+		FILE(APPEND ${CMAKE_BINARY_DIR}/configure.new "                                  shift;;\n")
+	    ENDIF("${style}" STREQUAL "ABS")
+	    IF("${style}" STREQUAL "BOOL")
+		FILE(APPEND ${CMAKE_BINARY_DIR}/configure.new "     --${alias_str})                options=\"$options -D${opt}=ON\";\n")
+		FILE(APPEND ${CMAKE_BINARY_DIR}/configure.new "                                  shift;;\n")
+		FILE(APPEND ${CMAKE_BINARY_DIR}/configure.new "     --${disable_str})                options=\"$options -D${opt}=OFF\";\n")
+		FILE(APPEND ${CMAKE_BINARY_DIR}/configure.new "                                  shift;;\n")
+	    ENDIF("${style}" STREQUAL "BOOL")
+	ENDFOREACH(item ${${opt_ALIASES}})
     ENDIF(${opt_ALIASES})
 ENDMACRO(OPTION_ALIASES)
 
@@ -170,7 +191,7 @@ MACRO(BRLCAD_OPTION default opt opt_ALIASES opt_DESCRIPTION)
 	SET(${opt} ${default} CACHE STRING "define ${opt}" FORCE)
     ENDIF("${${opt}}" STREQUAL "")
 
-    OPTION_ALIASES("${opt}" "${opt_ALIASES}")
+    OPTION_ALIASES("${opt}" "${opt_ALIASES}" "BOOL")
     OPTION_DESCRIPTION("${opt}" "${opt_ALIASES}" "${opt_DESCRIPTION}")
 ENDMACRO(BRLCAD_OPTION)
 
