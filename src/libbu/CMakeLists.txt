@@ -95,17 +95,6 @@ IF(BRLCAD_BUILD_LOCAL_TCL)
 	ADD_DEPENDENCIES(libbu tcl)
 ENDIF(BRLCAD_BUILD_LOCAL_TCL)
 
-#add_executable(test_file test_file.c)
-#target_link_libraries(test_file libbu)
-
-add_executable(test_htond test_htond.c)
-target_link_libraries(test_htond libbu)
-
-add_executable(test_timer test_timer.c)
-target_link_libraries(test_timer libbu)
-
-add_executable(test_dirname test_dirname.c)
-target_link_libraries(test_dirname libbu)
 
 add_executable(test_basename test_basename.c)
 target_link_libraries(test_basename libbu)
@@ -113,11 +102,23 @@ IF(CPP_DLL_DEFINES)
 	SET_PROPERTY(TARGET test_basename APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
 ENDIF(CPP_DLL_DEFINES)
 
+add_executable(test_dirname test_dirname.c)
+target_link_libraries(test_dirname libbu)
+
+add_executable(test_escape test_escape.c)
+target_link_libraries(test_escape libbu)
+
+add_executable(test_htond test_htond.c)
+target_link_libraries(test_htond libbu)
+
 add_executable(test_progname test_progname.c)
 target_link_libraries(test_progname libbu)
 
 add_executable(test_quote test_quote.c)
 target_link_libraries(test_quote libbu)
+
+add_executable(test_timer test_timer.c)
+target_link_libraries(test_timer libbu)
 
 add_executable(test_vls test_vls.c)
 target_link_libraries(test_vls libbu)

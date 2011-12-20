@@ -2,10 +2,10 @@
 lib_LTLIBRARIES = libbu.la
 noinst_LTLIBRARIES = libbu_nil.la
 
-#	test_file
 noinst_PROGRAMS = \
 	test_basename \
 	test_dirname \
+	test_escape \
 	test_htond \
 	test_progname \
 	test_quote \
@@ -96,11 +96,6 @@ libbu_la_LIBADD = \
 	libbu_nil.la \
 	${BU_LIBS}
 
-# test_file_SOURCES = test_file.c
-# test_file_LDADD = \
-# 	libbu.la \
-# 	${BU_LIBS}
-
 test_htond_SOURCES = test_htond.c
 test_htond_LDADD = \
 	libbu.la \
@@ -113,6 +108,11 @@ test_timer_LDADD = \
 
 test_basename_SOURCES = test_basename.c
 test_basename_LDADD = \
+	libbu.la \
+	${BU_LIBS}
+
+test_escape_SOURCES = test_escape.c
+test_escape_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
