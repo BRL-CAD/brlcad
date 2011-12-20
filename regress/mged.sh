@@ -62,11 +62,26 @@ opendb mged.g y
 quit
 EOF
 
-if test ! -f mged.g ; then
-    echo "Unable to run mged, aborting"
-    exit 1
-fi
+# make an almost empty database
+rm -f mged2.g
+$MGED -c > mged2.log 2>&1 <<EOF
+opendb mged2.g y
+in t.s sph 0 0 0 1
+r t.r u t.s
+g all t.r
+q
+EOF
 
+
+tgms="mged.g mged2.g"
+for t in $tgms ; do
+  if test ! -f $t ; then
+    echo "Test file '$t' is missing. Unable to run mged, aborting"
+    exit 1
+  fi
+done
+
+# collect all current commands
 cmds="`$MGED -c mged.g ? 2>&1 | grep -v Using`"
 help="`$MGED -c mged.g help 2>&1 | grep -v Using`"
 # cmds="$cmds `$MGED -c mged.g ?lib 2>&1`"
@@ -122,6 +137,20 @@ EOF
 	FAILED="`expr $FAILED + 1`"
 	continue
     fi
+
+    # special tests for some commands
+    if test "x$cmd" = "xregions" || test "x$cmd" = "xsolids" ; then
+	# regions or solids are special because they may core dump
+	$MGED -c mged2.g $cmd t.$cmd all > /dev/null 2>&1 <<EOF
+exit
+EOF
+	if test $? != 0 ; then
+	    echo "ERROR: $cmd returned non-zero exit status $?"
+	    echo "Output: $output"
+	    FAILED="`expr $FAILED + 1`"
+	fi
+    fi
+
 done
 
 if test $FAILED -eq 0 ; then
@@ -129,6 +158,24 @@ if test $FAILED -eq 0 ; then
 else
     echo "-> mged check FAILED"
 fi
+
+# clean up
+# remove test databases
+for t in $tgms ; do
+  if test -f $t ; then
+    rm $t
+  fi
+done
+# remove test files
+tfils="t.solids t.regions"
+for t in $tfils ; do
+  if test -f $t ; then
+    rm $t
+  fi
+done
+
+
+
 
 exit $FAILED
 
