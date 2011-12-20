@@ -5177,8 +5177,10 @@ BU_EXPORT extern int bu_strcmpm(const char *string1, const char *string2, const 
 /**
  * Escapes an input string with preceeding '\'s for any characters
  * defined in the 'chars' string.  The input string is written to the
- * specified output buffer with 'size' capacity.  If 'output' is NULL,
- * then dynamic memory will be allocated.
+ * specified output buffer of 'size' capacity.  The input and output
+ * pointers may overlap or be the same memory (assuming adequate space
+ * is available).  If 'output' is NULL, then dynamic memory will be
+ * allocated and returned.
  *
  * A non-NULL output string is always returned.  This allows
  * expression chaining and embedding as function arguments but care
@@ -5204,6 +5206,36 @@ BU_EXPORT extern int bu_strcmpm(const char *string1, const char *string2, const 
  * input/output buffers are not shared (and strlen() is threadsafe).
  */
 BU_EXPORT extern char *bu_str_escape(const char *input, const char *chars, char *output, size_t size);
+
+/**
+ * Removes one level of '\' escapes from an input string.  The input
+ * string is written to the specified output buffer of 'size'
+ * capacity.  The input and output pointers may overlap or be the same
+ * memory.  If 'output' is NULL, then dynamic memory will be allocated
+ * and returned.
+ *
+ * A non-NULL output string is always returned.  This allows
+ * expression chaining and embedding as function arguments but care
+ * should be taken to free the dynamic memory beging returned when
+ * 'output' is NULL.
+ *
+ * If output 'size' is inadequate for holding the unescaped input
+ * string, bu_bomb() is called.
+ *
+ * Example:
+ *   char *result;
+ *   char buf[128];
+ *   result = bu_str_unescape("\m\y\\ \f\a\i\r\\ \l\a\d\y", buf, 128);
+ *   :: result == buf == "my\ fair\ lady"
+ *   result = bu_str_unescape(buf, NULL, 0);
+ *   :: result == "my fair lady"
+ *   :: buf == "my\ fair\ lady"
+ *   bu_free(result, "bu_str_unescape");
+ *
+ * This function should be thread safe and re-entrant if the
+ * input/output buffers are not shared (and strlen() is threadsafe).
+ */
+BU_EXPORT extern char *bu_str_unescape(const char *input, char *output, size_t size);
 
 
 /** @} */
