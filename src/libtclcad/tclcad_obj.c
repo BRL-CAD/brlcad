@@ -200,6 +200,18 @@ HIDDEN int to_data_move(struct ged *gedp,
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
+HIDDEN int to_data_move_object_mode(struct ged *gedp,
+				    int argc,
+				    const char *argv[],
+				    ged_func_ptr func,
+				    const char *usage,
+				    int maxargs);
+HIDDEN int to_data_move_point_mode(struct ged *gedp,
+				   int argc,
+				   const char *argv[],
+				   ged_func_ptr func,
+				   const char *usage,
+				   int maxargs);
 HIDDEN int to_data_pick(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -841,6 +853,8 @@ static struct to_cmdtab to_cmds[] = {
     {"data_lines",	"???", TO_UNLIMITED, to_data_lines, GED_FUNC_PTR_NULL},
     {"data_polygons",	"???", TO_UNLIMITED, to_data_polygons, GED_FUNC_PTR_NULL},
     {"data_move",	"???", TO_UNLIMITED, to_data_move, GED_FUNC_PTR_NULL},
+    {"data_move_object_mode",	"x y", TO_UNLIMITED, to_data_move_object_mode, GED_FUNC_PTR_NULL},
+    {"data_move_point_mode",	"x y", TO_UNLIMITED, to_data_move_point_mode, GED_FUNC_PTR_NULL},
     {"data_pick",	"???", TO_UNLIMITED, to_data_pick, GED_FUNC_PTR_NULL},
     {"dbconcat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_concat},
     {"dbfind",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_find},
@@ -4064,10 +4078,31 @@ to_data_move(struct ged *gedp,
 	    k >= gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points)
 	    return GED_OK;
 
-	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k]);
-	vpoint[X] = vx;
-	vpoint[Y] = vy;
-	MAT4X3PNT(gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k], gdvp->gdv_view->gv_view2model, vpoint);
+	/* This section is for moving the entire contour */
+	if (gdvp->gdv_view->gv_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	    point_t old_mpoint, new_mpoint;
+	    vect_t diff;
+
+	    VMOVE(old_mpoint, gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k]);
+
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k]);
+	    vpoint[X] = vx;
+	    vpoint[Y] = vy;
+	    MAT4X3PNT(new_mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	    VSUB2(diff, new_mpoint, old_mpoint);
+
+	    for (k = 0; k < gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points; ++k) {
+		VADD2(gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k],
+		      gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k],
+		      diff);
+	    }
+	} else {
+	    /* This section is for moving a single point in the contour */
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k]);
+	    vpoint[X] = vx;
+	    vpoint[Y] = vy;
+	    MAT4X3PNT(gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k], gdvp->gdv_view->gv_view2model, vpoint);
+	}
 
 	to_refresh_view(gdvp);
 	return GED_OK;
@@ -4080,11 +4115,35 @@ to_data_move(struct ged *gedp,
 	if (dindex >= gdvp->gdv_view->gv_data_arrows.gdas_num_points)
 	    return GED_OK;
 
-	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->gdas_points[dindex]);
-	vpoint[X] = vx;
-	vpoint[Y] = vy;
-	MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
-	VMOVE(gdasp->gdas_points[dindex], mpoint);
+	/* This section is for moving the entire arrow */
+	if (gdvp->gdv_view->gv_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	    int dindexA, dindexB;
+	    point_t old_mpoint, new_mpoint;
+	    vect_t diff;
+
+	    dindexA = dindex;
+	    if (dindex%2)
+		dindexB = dindex - 1;
+	    else
+		dindexB = dindex + 1;
+
+	    VMOVE(old_mpoint, gdasp->gdas_points[dindexA]);
+
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->gdas_points[dindexA]);
+	    vpoint[X] = vx;
+	    vpoint[Y] = vy;
+	    MAT4X3PNT(new_mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	    VSUB2(diff, new_mpoint, old_mpoint);
+
+	    VMOVE(gdasp->gdas_points[dindexA], new_mpoint);
+	    VADD2(gdasp->gdas_points[dindexB], gdasp->gdas_points[dindexB], diff);
+	} else {
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->gdas_points[dindex]);
+	    vpoint[X] = vx;
+	    vpoint[Y] = vy;
+	    MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	    VMOVE(gdasp->gdas_points[dindex], mpoint);
+	}
 
 	to_refresh_view(gdvp);
 	return GED_OK;
@@ -4097,11 +4156,35 @@ to_data_move(struct ged *gedp,
 	if (dindex >= gdvp->gdv_view->gv_sdata_arrows.gdas_num_points)
 	    return GED_OK;
 
-	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->gdas_points[dindex]);
-	vpoint[X] = vx;
-	vpoint[Y] = vy;
-	MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
-	VMOVE(gdasp->gdas_points[dindex], mpoint);
+	/* This section is for moving the entire arrow */
+	if (gdvp->gdv_view->gv_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	    int dindexA, dindexB;
+	    point_t old_mpoint, new_mpoint;
+	    vect_t diff;
+
+	    dindexA = dindex;
+	    if (dindex%2)
+		dindexB = dindex - 1;
+	    else
+		dindexB = dindex + 1;
+
+	    VMOVE(old_mpoint, gdasp->gdas_points[dindexA]);
+
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->gdas_points[dindexA]);
+	    vpoint[X] = vx;
+	    vpoint[Y] = vy;
+	    MAT4X3PNT(new_mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	    VSUB2(diff, new_mpoint, old_mpoint);
+
+	    VMOVE(gdasp->gdas_points[dindexA], new_mpoint);
+	    VADD2(gdasp->gdas_points[dindexB], gdasp->gdas_points[dindexB], diff);
+	} else {
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->gdas_points[dindex]);
+	    vpoint[X] = vx;
+	    vpoint[Y] = vy;
+	    MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	    VMOVE(gdasp->gdas_points[dindex], mpoint);
+	}
 
 	to_refresh_view(gdvp);
 	return GED_OK;
@@ -4183,11 +4266,35 @@ to_data_move(struct ged *gedp,
 	if (dindex >= gdvp->gdv_view->gv_data_lines.gdls_num_points)
 	    return GED_OK;
 
-	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdlsp->gdls_points[dindex]);
-	vpoint[X] = vx;
-	vpoint[Y] = vy;
-	MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
-	VMOVE(gdlsp->gdls_points[dindex], mpoint);
+	/* This section is for moving the entire line */
+	if (gdvp->gdv_view->gv_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	    int dindexA, dindexB;
+	    point_t old_mpoint, new_mpoint;
+	    vect_t diff;
+
+	    dindexA = dindex;
+	    if (dindex%2)
+		dindexB = dindex - 1;
+	    else
+		dindexB = dindex + 1;
+
+	    VMOVE(old_mpoint, gdlsp->gdls_points[dindexA]);
+
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdlsp->gdls_points[dindexA]);
+	    vpoint[X] = vx;
+	    vpoint[Y] = vy;
+	    MAT4X3PNT(new_mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	    VSUB2(diff, new_mpoint, old_mpoint);
+
+	    VMOVE(gdlsp->gdls_points[dindexA], new_mpoint);
+	    VADD2(gdlsp->gdls_points[dindexB], gdlsp->gdls_points[dindexB], diff);
+	} else {
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdlsp->gdls_points[dindex]);
+	    vpoint[X] = vx;
+	    vpoint[Y] = vy;
+	    MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	    VMOVE(gdlsp->gdls_points[dindex], mpoint);
+	}
 
 	to_refresh_view(gdvp);
 	return GED_OK;
@@ -4200,11 +4307,35 @@ to_data_move(struct ged *gedp,
 	if (dindex >= gdvp->gdv_view->gv_sdata_lines.gdls_num_points)
 	    return GED_OK;
 
-	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdlsp->gdls_points[dindex]);
-	vpoint[X] = vx;
-	vpoint[Y] = vy;
-	MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
-	VMOVE(gdlsp->gdls_points[dindex], mpoint);
+	/* This section is for moving the entire line */
+	if (gdvp->gdv_view->gv_mode == TCLCAD_DATA_MOVE_OBJECT_MODE) {
+	    int dindexA, dindexB;
+	    point_t old_mpoint, new_mpoint;
+	    vect_t diff;
+
+	    dindexA = dindex;
+	    if (dindex%2)
+		dindexB = dindex - 1;
+	    else
+		dindexB = dindex + 1;
+
+	    VMOVE(old_mpoint, gdlsp->gdls_points[dindexA]);
+
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdlsp->gdls_points[dindexA]);
+	    vpoint[X] = vx;
+	    vpoint[Y] = vy;
+	    MAT4X3PNT(new_mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	    VSUB2(diff, new_mpoint, old_mpoint);
+
+	    VMOVE(gdlsp->gdls_points[dindexA], new_mpoint);
+	    VADD2(gdlsp->gdls_points[dindexB], gdlsp->gdls_points[dindexB], diff);
+	} else {
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdlsp->gdls_points[dindex]);
+	    vpoint[X] = vx;
+	    vpoint[Y] = vy;
+	    MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	    VMOVE(gdlsp->gdls_points[dindex], mpoint);
+	}
 
 	to_refresh_view(gdvp);
 	return GED_OK;
@@ -4214,6 +4345,112 @@ bad:
     bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
+
+
+
+HIDDEN int
+to_data_move_object_mode(struct ged *gedp,
+			 int argc,
+			 const char *argv[],
+			 ged_func_ptr UNUSED(func),
+			 const char *usage,
+			 int UNUSED(maxargs))
+{
+    int x, y;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 4) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
+	return GED_ERROR;
+    }
+
+    gedp->ged_gvp = gdvp->gdv_view;
+
+    if (sscanf(argv[2], "%d", &x) != 1 ||
+	sscanf(argv[3], "%d", &y) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* At the moment, only gv_mode is being used. */
+    gdvp->gdv_view->gv_prevMouseX = x;
+    gdvp->gdv_view->gv_prevMouseY = y;
+    gdvp->gdv_view->gv_mode = TCLCAD_DATA_MOVE_OBJECT_MODE;
+
+    return GED_OK;
+}
+
+
+HIDDEN int
+to_data_move_point_mode(struct ged *gedp,
+			int argc,
+			const char *argv[],
+			ged_func_ptr UNUSED(func),
+			const char *usage,
+			int UNUSED(maxargs))
+{
+    int x, y;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 4) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
+	return GED_ERROR;
+    }
+
+    gedp->ged_gvp = gdvp->gdv_view;
+
+    if (sscanf(argv[2], "%d", &x) != 1 ||
+	sscanf(argv[3], "%d", &y) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* At the moment, only gv_mode is being used. */
+    gdvp->gdv_view->gv_prevMouseX = x;
+    gdvp->gdv_view->gv_prevMouseY = y;
+    gdvp->gdv_view->gv_mode = TCLCAD_DATA_MOVE_POINT_MODE;
+
+    return GED_OK;
+}
+
 
 HIDDEN int
 to_data_pick(struct ged *gedp,

@@ -158,6 +158,8 @@ package provide cadwidgets::Ged 1.0
 	method data_lines {args}
 	method data_polygons {args}
 	method data_move {args}
+	method data_move_object_mode {_pane _x _y}
+	method data_move_point_mode {_pane _x _y}
 	method data_pick {args}
 	method dbconcat {args}
 	method dbfind {args}
@@ -543,6 +545,8 @@ package provide cadwidgets::Ged 1.0
 	method begin_data_arrow {_pane _x _y}
 	method begin_data_line {_pane _x _y}
 	method begin_data_move {_pane _x _y}
+	method begin_data_move_object {_pane _x _y}
+	method begin_data_move_point {_pane _x _y}
 	method begin_view_measure {_pane _part1_button _part1_button _x _y}
 	method begin_view_measure_part2 {_pane _button _x _y}
 	method default_views {}
@@ -574,6 +578,8 @@ package provide cadwidgets::Ged 1.0
 	method init_data_label {{_button 1}}
 	method init_data_line {{_button 1}}
 	method init_data_move {{_button 1}}
+	method init_data_move_object {{_button 1}}
+	method init_data_move_point {{_button 1}}
 	method init_data_pick {{_button 1}}
 	method init_find_pipept {_obj {_button 1} {_callback {}}}
 	method init_poly_circ {{_button 1}}
@@ -1233,9 +1239,21 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
+
 ::itcl::body cadwidgets::Ged::data_move {args} {
     eval $mGed data_move $itk_component($itk_option(-pane)) $args
 }
+
+
+::itcl::body cadwidgets::Ged::data_move_object_mode {_pane _x _y} {
+    eval $mGed data_move_object_mode $_pane $_x $_y
+}
+
+
+::itcl::body cadwidgets::Ged::data_move_point_mode {_pane _x _y} {
+    eval $mGed data_move_point_mode $_pane $_x $_y
+}
+
 
 ::itcl::body cadwidgets::Ged::data_pick {args} {
     eval $mGed data_pick $itk_component($itk_option(-pane)) $args
@@ -2953,6 +2971,19 @@ package provide cadwidgets::Ged 1.0
     bind $itk_component($_pane) <Motion> "[::itcl::code $this handle_data_move $_pane $mLastDataType $mLastDataIndex %x %y]; break"
 }
 
+
+::itcl::body cadwidgets::Ged::begin_data_move_object {_pane _x _y} {
+    data_move_object_mode $itk_component($_pane) $_x $_y
+    begin_data_move $_pane $_x $_y
+}
+
+
+::itcl::body cadwidgets::Ged::begin_data_move_point {_pane _x _y} {
+    data_move_point_mode $itk_component($_pane) $_x $_y
+    begin_data_move $_pane $_x $_y
+}
+
+
 ::itcl::body cadwidgets::Ged::begin_view_measure {_pane _part1_button _part2_button _x _y} {
     measure_line_erase
 
@@ -3524,10 +3555,23 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::init_data_move {{_button 1}} {
+    init_data_move_object $_button
+}
+
+::itcl::body cadwidgets::Ged::init_data_move_object {{_button 1}} {
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_move $dm %x %y]; focus %W; break"
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_move_object $dm %x %y]; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_data_move $dm]; break"
+    }
+}
+
+::itcl::body cadwidgets::Ged::init_data_move_point {{_button 1}} {
+    measure_line_erase
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_move_point $dm %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_data_move $dm]; break"
     }
 }
