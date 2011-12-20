@@ -193,6 +193,8 @@ printSubexpression(const char *name, struct Op_Subexpression *e, int indent)
     printEnd(--indent);
 }
 
+static void printScope();
+
 static void
 printExpression(const char *name, Expression e, int indent)
 {
