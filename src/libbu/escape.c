@@ -31,7 +31,7 @@ bu_str_escape(const char *input, const char *chars, char *output, size_t size)
     const char *c = NULL;
     const char *esc = NULL;
     char *incpy = NULL;
-    size_t need = strlen(input);
+    size_t need = 0;
     size_t i = 0;
 
     if (UNLIKELY(!input))
@@ -41,6 +41,7 @@ bu_str_escape(const char *input, const char *chars, char *output, size_t size)
      * don't partially fill the output buffer before bombing because
      * there might be a bomb-hook registered (and it's faster).
      */
+    need = strlen(input);
     for (c = input; *c != '\0'; c++) {
 	for (esc = chars; *esc != '\0'; esc++) {
 	    if (*c == *esc) {
@@ -95,7 +96,7 @@ bu_str_unescape(const char *input, char *output, size_t size)
 {
     const char *c = NULL;
     char *incpy = NULL;
-    size_t need = strlen(input);
+    size_t need = 0;
     size_t i = 0;
 
     if (UNLIKELY(!input))
@@ -105,6 +106,7 @@ bu_str_unescape(const char *input, char *output, size_t size)
      * don't partially fill the output buffer before bombing because
      * there might be a bomb-hook registered (and it's faster).
      */
+    need = strlen(input);
     for (c = input; *c != '\0'; c++) {
 	if (*c == '\\') {
 	    /* skip the next char */
