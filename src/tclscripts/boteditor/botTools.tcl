@@ -171,7 +171,7 @@ package require Itk
     set ::${itk_interior}EdgeCheck 1
     itk_component add edgeCheck {
 	ttk::checkbutton $pane.edgeCheckbox \
-	    -text {Min Edge Lenth} \
+	    -text {Min Edge Length} \
 	    -variable ${itk_interior}EdgeCheck \
 	    -command "$this updateDecimateState"
     } {}
