@@ -26,7 +26,7 @@
 package require Tk
 package require Itcl
 package require Itk
-load libbu[info sharedlibextension]
+load [file join [bu_brlcad_root "lib"] libbu[info sharedlibextension]]
 
 if {[catch {
     set script [file join [bu_brlcad_data "tclscripts"] boteditor botEditor.tcl]
