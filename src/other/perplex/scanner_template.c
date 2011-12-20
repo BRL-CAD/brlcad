@@ -141,7 +141,6 @@ int PERPLEX_PUBLIC_LEXER;
  *  Department of Energy and the University of California.
  */
 #include <assert.h>
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -217,6 +216,21 @@ buf_prints(struct Buf *buf, const char *fmt, const char *s)
     return buf;
 }
 
+int numDigits(int n)
+{
+    int digits, abs = n >= 0 ? n : -n;
+
+    if (abs == 0) {
+	return 1;
+    }
+
+    for (digits = 0; abs > 0; digits++) {
+	abs /= 10;
+    }
+
+    return digits;
+}
+
 /** Append a line directive to the string buffer.
  * @param buf A string buffer.
  * @param filename file name
@@ -229,7 +243,7 @@ buf_linedir(struct Buf *buf, const char* filename, int lineno)
     char *t;
     const char fmt[] = "#line %d \"%s\"\n";
     
-    t = (char*)malloc(strlen(fmt) + strlen(filename) + (int)(1 + log10(lineno >= 0? lineno : -lineno)) + 1);
+    t = (char*)malloc(strlen(fmt) + strlen(filename) + numDigits(lineno) + 1);
     sprintf(t, fmt, lineno, filename);
     buf = buf_strappend(buf, t);
     free(t);
