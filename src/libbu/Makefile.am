@@ -31,6 +31,7 @@ libbu_nil_la_SOURCES = \
 	dirname.c \
 	dlfcn.c \
 	endian.c \
+	escape.c \
 	fchmod.c \
 	fgets.c \
 	file.c \

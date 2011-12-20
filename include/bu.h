@@ -5166,6 +5166,46 @@ BU_EXPORT extern int bu_strcmpm(const char *string1, const char *string2, const 
  */
 #define BU_STR_EQUAL(s1, s2) (bu_strcmpm((s1), (s2), BU_FLSTR) == 0)
 
+/** @file escape.c
+ *
+ * These routines implement support for escaping and unescaping
+ * generalized strings that may represent filesystem paths, URLs,
+ * object lists, and more.
+ *
+ */
+
+/**
+ * Escapes an input string with preceeding '\'s for any characters
+ * defined in the 'chars' string.  The input string is written to the
+ * specified output buffer with 'size' capacity.  If 'output' is NULL,
+ * then dynamic memory will be allocated.
+ *
+ * A non-NULL output string is always returned.  This allows
+ * expression chaining and embedding as function arguments but care
+ * should be taken to free the dynamic memory beging returned when
+ * 'output' is NULL.
+ *
+ * If output 'size' is inadequate for holding the escaped input
+ * string, bu_bomb() is called.
+ *
+ * Example:
+ *   char *result;
+ *   char buf[128];
+ *   result = bu_str_escape("my fair lady", " ", buf, 128);
+ *   :: result == buf == "my\ fair\ lady"
+ *   result = bu_str_escape(buf, "\", NULL, 0);
+ *   :: result == "my\\ fair\\ lady"
+ *   :: buf == "my\ fair\ lady"
+ *   bu_free(result, "bu_str_escape");
+ *   result = bu_str_escape(buf, "abcdefghijklmnopqrstuvwxyz", buf, 128);
+ *   :: result == buf == "\m\y\ \f\a\i\r\ \l\a\d\y"
+ *
+ * This function should be thread safe and re-entrant if the
+ * input/output buffers are not shared (and strlen() is threadsafe).
+ */
+BU_EXPORT extern char *bu_str_escape(const char *input, const char *chars, char *output, size_t size);
+
+
 /** @} */
 
 /** @addtogroup log */
