@@ -233,10 +233,10 @@ MACRO(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
 	SET(${PKGNAME_UPPER}_FOUND_STATUS ${${PKGNAME_UPPER}_FOUND})
 
 	# 1.  If we have no wish command, we fail immediately.
-	IF(${wishcmd} STREQUAL "")
+	IF("${wishcmd}" STREQUAL "" OR "${wishcmd}" MATCHES "NOTFOUND")
 	    MESSAGE(WARNING "Test for ${pkgname} failed - no tclsh/wish command available for testing!")
 	    SET(${PKGNAME_UPPER}_TEST_FAIL 1)
-	ENDIF(${wishcmd} STREQUAL "")
+	ENDIF("${wishcmd}" STREQUAL "" OR "${wishcmd}" MATCHES "NOTFOUND")
 
 	# 2.  We have wish - now things get interesting.  Write out
 	# a Tcl script to probe for information on the package we're
