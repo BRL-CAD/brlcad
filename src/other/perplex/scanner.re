@@ -646,6 +646,7 @@ NOT_LINE_OR_QUOTE = [^"'\[\n];
 
 	/* brace closes scope */
 	if (scanner->scopeBraceCount == 0) {
+	    scanner->conditionScope = 0;
 	    return TOKEN_END_SCOPE;
 	}
     }
@@ -682,7 +683,7 @@ NOT_LINE_OR_QUOTE = [^"'\[\n];
 
     return TOKEN_WORD;
 }
-<definitions,rules,code>[ \t\n] {
+<definitions,code>[ \t\n] {
     /* matched single whitespace */
     if (strlen(yytext) == 1) {
 	IGNORE_TOKEN;
