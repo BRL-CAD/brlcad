@@ -568,13 +568,15 @@ re2c:define:YYGETCONDITION:naked = 1;
 
 <> :=> definitions
 
+NOT_LINE_OR_QUOTE = [^"'\[\n];
+
 <rules>'"' :=> dquote_string
 <rules>"'" :=> squote_string
 <rules>'[' :=> bracket_string
 <rules>"/*" :=> comment
 <rules>"//" :=> line_comment
 
-<definitions,rules>[^\n]"%%\n" {
+<definitions,rules>NOT_LINE_OR_QUOTE"%%\n" {
     copyTokenText(scanner);
     return TOKEN_WORD;
 }
@@ -591,7 +593,7 @@ re2c:define:YYGETCONDITION:naked = 1;
     return TOKEN_SEPARATOR;
 }
 
-<rules>[^\n]'<' {
+<rules>NOT_LINE_OR_QUOTE'<' {
     copyTokenText(scanner);
     return TOKEN_WORD;
 }
