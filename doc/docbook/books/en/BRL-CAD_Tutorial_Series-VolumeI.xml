@@ -256,7 +256,7 @@
 	<para>
 	   To run the benchmark images, run the script run.sh in the "bench" directory of the source directory tree.
 	</para>
-     <table frame="none" pgwide="1"><info><title>Standard Benchmark Images</title></info>
+     <table frame="none" pgwide="1"><title>Standard Benchmark Images</title>
 
         <tgroup cols="3" align="center">
           <tbody>
