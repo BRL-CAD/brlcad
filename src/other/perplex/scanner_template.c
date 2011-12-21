@@ -614,6 +614,46 @@ perplexFree(perplex_t scanner)
     free(scanner);
 }
 
+/* Make c the next character to be scanned.
+ *
+ * This performs an insert, leaving the input buffer prior to the cursor
+*  unchanged.
+ */
+void
+perplexUnput(perplex_t scanner, char c)
+{
+    struct Buf *buf;
+    char *curr, *cursor, *bufStart;
+    size_t markerOffset, tokenStartOffset, cursorOffset;
+
+    buf = scanner->buffer;
+
+    /* save marker offsets */
+    bufStart = (char*)buf_first_elt(buf);
+    cursorOffset = (size_t)(scanner->cursor - bufStart);
+    markerOffset = (size_t)(scanner->marker - bufStart);
+    tokenStartOffset = (size_t)(scanner->tokenStart - bufStart);
+
+    /* append character to create room for shift */
+    buf_append_char(buf, '\0');
+    scanner->null = (char*)buf_last_elt(buf);
+
+    /* update markers in case append caused buffer to be reallocated */
+    bufStart = (char*)buf_first_elt(buf);
+    scanner->cursor = bufStart + cursorOffset;
+    scanner->marker = bufStart + markerOffset;
+    scanner->tokenStart = bufStart + tokenStartOffset;
+
+    /* input from cursor to null is shifted to the right */
+    cursor = scanner->cursor;
+    for (curr = scanner->null; curr != cursor; curr--) {
+	curr[0] = curr[-1];
+    }
+
+    /* insert c */
+    *curr = c;
+}
+
 #ifdef PERPLEX_USING_CONDITIONS
 /* start-condition support */
 static void
