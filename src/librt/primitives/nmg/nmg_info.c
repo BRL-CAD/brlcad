@@ -1604,9 +1604,8 @@ nmg_find_v_in_shell(const struct vertex *v, const struct shell *s, int edges_onl
 struct vertexuse *
 nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_tol *tol)
 {
-    struct edgeuse *eu;
     vect_t delta;
-    struct vertex *v;
+    register struct edgeuse *eu;
     register struct vertex_g *vg;
     uint32_t magic1;
 
@@ -1614,14 +1613,11 @@ nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_t
     if (magic1 == NMG_VERTEXUSE_MAGIC) {
 	struct vertexuse *vu;
 	vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
-	v = vu->v_p;
-	NMG_CK_VERTEX(v);
-	vg = v->vg_p;
+	vg = vu->v_p->vg_p;
 	if (!vg)
 	    return (struct vertexuse *)NULL;
-	NMG_CK_VERTEX_G(vg);
 	VSUB2(delta, vg->coord, pt);
-	if (MAGSQ(delta) <= tol->dist_sq)
+	if (MAGSQ(delta) < tol->dist_sq)
 	    return vu;
 	return (struct vertexuse *)NULL;
     }
@@ -1630,18 +1626,15 @@ nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_t
     }
 
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	v = eu->vu_p->v_p;
-	NMG_CK_VERTEX(v);
-	vg = v->vg_p;
+	vg = eu->vu_p->v_p->vg_p;
 	if (!vg)
 	    continue;
-	NMG_CK_VERTEX_G(vg);
 	VSUB2(delta, vg->coord, pt);
-	if (MAGSQ(delta) <= tol->dist_sq)
+	if (MAGSQ(delta) < tol->dist_sq)
 	    return eu->vu_p;
     }
-    return (struct vertexuse *)NULL;
 
+    return (struct vertexuse *)NULL;
 }
 
 
