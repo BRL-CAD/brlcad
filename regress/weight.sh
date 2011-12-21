@@ -122,6 +122,104 @@ fi
 
 rm -f weight.out_ns weight.ref_ns
 
+# Need to do a slightly more elaborate test - for now, commented out
+# because rtweight won't handle the quirky density file
+if [ 1 == 0 ] ; then
+rm -f weight2.log .density weight2.g weight2.ref weight2.out weight2.mged
+
+cat > weight2.mged <<EOF
+opendb weight2.g y
+units cm
+in box1 rpp 0 1 0 1 0 1
+in box2 rpp 2 3 2 3 2 3
+in box3 rpp 4 5 4 5 4 5
+r box1.r u box1
+r box2.r u box2
+r box3.r u box3
+attr set box1.r material_id 2
+attr set box2.r material_id 7
+attr set box3.r material_id 12
+g boxes box1.r box2.r box3.r
+EOF
+
+$MGED -c > weight2.log 2>&1 << EOF
+`cat weight2.mged`
+EOF
+
+# test handling of a more complex
+# density file
+cat > .density <<EOF
+#  Test density file with comments and bad input
+2    7.82      Carbon Tool Steel
+3    2.7       Aluminum, 6061-T6
+4    2.74      Aluminum, 7079-T6
+5    	       Copper, pure
+6    19.32     Gold, pure
+7    8.03      Stainless, 18Cr-8Ni
+#  Comment
+8    7.47      Stainless 27Cr
+
+9    7.715     Steel, tool
+
+#  Blank line above
+10   7.84      Carbon Steel
+12   3.00      Gunner
+14   10.00     Fuel
+
+EOF
+
+$RTWEIGHT -a 25 -e 35 -s128 -o weight2.out weight2.g boxes > weight2.log 2>&1
+
+cat >> weight2.ref <<EOF
+RT Weight Program Output:
+
+Database Title: "Untitled BRL-CAD Database"
+Time Stamp: Day Mon  0 00:00:00 0000
+
+
+Density Table Used:/path/to/.density
+
+Material  Density(g/cm^3)  Name
+    1         7.8295       steel
+Weight by region (in grams, density given in g/cm^3):
+
+  Weight Matl LOS  Material Name  Density Name
+ ------- ---- --- --------------- ------- -------------
+   7.829    1 100 steel            7.8295 /box.r
+Weight by item number (in grams):
+
+Item  Weight  Region Names
+---- -------- --------------------
+1000    7.829 /box.r
+RT Weight Program Output:
+
+Database Title: "Untitled BRL-CAD Database"
+Time Stamp: Day Mon  0 00:00:00 0000
+
+
+Total volume = 0.999991 cm^3
+
+Centroid: X = 0.5 cm
+          Y = 0.5 cm
+          Z = 0.5 cm
+
+Total mass = 7.82943 grams
+
+EOF
+
+tr -d ' \t' < weight2.ref | grep -v DensityTableUsed | grep -v TimeStamp > weight2.ref_ns
+tr -d ' \t' < weight2.out | grep -v DensityTableUsed | grep -v TimeStamp > weight2.out_ns
+
+cmp weight2.ref_ns weight2.out_ns
+STATUS=$?
+if [ X$STATUS != X0 ] ; then
+    echo "rtweight results differ $STATUS"
+fi
+
+rm -f weight2.out_ns weight2.ref_ns
+
+fi
+
 if [ X$STATUS = X0 ] ; then
     echo "-> weight.sh succeeded"
 else
