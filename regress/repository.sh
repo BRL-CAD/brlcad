@@ -96,24 +96,6 @@ else
     FAILED="`expr $FAILED + 1`"
 fi
 
-
-# make sure every configure option is documented
-echo "running option documentation check..."
-FOUND=
-for i in `grep ARG_ENABLE ${TOPSRC}/configure.ac | sed 's/[^,]*,\([^,]*\).*/\1/' | awk '{print $1}' | sed 's/\[\(.*\)\]/\1/g'` ; do
-    if test "x`grep "enable-$i" ${TOPSRC}/INSTALL`" = "x" ; then
-	echo "--enable-$i is not documented in INSTALL"
-	FOUND=1
-    fi
-done
-if test "x$FOUND" = "x" ; then
-    echo "-> option documentation check succeeded"
-else
-    echo "-> option documentation check FAILED (non-fatal)"
-    FAILED="`expr $FAILED + 1`"
-fi
-
-
 # make sure there isn't a per-target CPPFLAGS in a Makefile.am
 # support for per-target CPPFLAGS wasn't added until automake 1.7
 echo "running CPPFLAGS check..."
