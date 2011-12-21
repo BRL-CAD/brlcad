@@ -3208,7 +3208,7 @@ to_polygons_free(ged_polygons *gpp)
 
 
 HIDDEN int
-to_extract_contours_av(struct ged *gedp, ged_polygon *gpp, size_t contour_ac, const char **contour_av, int mode)
+to_extract_contours_av(struct ged *gedp, struct ged_dm_view *gdvp, ged_polygon *gpp, size_t contour_ac, const char **contour_av, int mode, int vflag)
 {
     register size_t j, k;
 
@@ -3242,16 +3242,21 @@ to_extract_contours_av(struct ged *gedp, ged_polygon *gpp, size_t contour_ac, co
 	gpp->gp_contour[j].gpc_point = (point_t *)bu_calloc(point_ac, sizeof(point_t), "gpc_point");
 
 	for (k = 0; k < point_ac; ++k) {
-	    if (sscanf(point_av[k], "%lf %lf %lf",
-		       &gpp->gp_contour[j].gpc_point[k][X],
-		       &gpp->gp_contour[j].gpc_point[k][Y],
-		       &gpp->gp_contour[j].gpc_point[k][Z]) != 3) {
+	    point_t pt;
 
+	    if (sscanf(point_av[k], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3) {
 		bu_vls_printf(gedp->ged_result_str, "contour %llu, point %llu: bad data point - %s\n",
 			      j, k, point_av[k]);
 		Tcl_Free((char *)point_av);
 		return GED_ERROR;
 	    }
+
+	    if (vflag) {
+		MAT4X3PNT(gpp->gp_contour[j].gpc_point[k], gdvp->gdv_view->gv_view2model, pt);
+	    } else {
+		VMOVE(gpp->gp_contour[j].gpc_point[k], pt);
+	    }
+
 	}
 
 	Tcl_Free((char *)point_av);
@@ -3261,7 +3266,7 @@ to_extract_contours_av(struct ged *gedp, ged_polygon *gpp, size_t contour_ac, co
 }
 
 HIDDEN int
-to_extract_polygons_av(struct ged *gedp, ged_polygons *gpp, size_t polygon_ac, const char **polygon_av, int mode)
+to_extract_polygons_av(struct ged *gedp, struct ged_dm_view *gdvp, ged_polygons *gpp, size_t polygon_ac, const char **polygon_av, int mode, int vflag)
 {
     register size_t i;
     int ac;
@@ -3280,7 +3285,7 @@ to_extract_polygons_av(struct ged *gedp, ged_polygons *gpp, size_t polygon_ac, c
 	}
 	contour_ac = ac;
 
-	if (to_extract_contours_av(gedp, &gpp->gp_polygon[i], contour_ac, contour_av, mode) != GED_OK) {
+	if (to_extract_contours_av(gedp, gdvp, &gpp->gp_polygon[i], contour_ac, contour_av, mode, vflag) != GED_OK) {
 	    Tcl_Free((char *)contour_av);
 	    return GED_ERROR;
 	}
@@ -3671,8 +3676,8 @@ to_data_polygons(struct ged *gedp,
 									gdpsp->gdps_polygons.gp_num_polygons * sizeof(ged_polygon),
 									"realloc gp_polygon");
 
-	    if (to_extract_contours_av(gedp, &gdpsp->gdps_polygons.gp_polygon[i],
-				       contour_ac, contour_av, gdvp->gdv_view->gv_mode) != GED_OK) {
+	    if (to_extract_contours_av(gedp, gdvp, &gdpsp->gdps_polygons.gp_polygon[i],
+				       contour_ac, contour_av, gdvp->gdv_view->gv_mode, 0) != GED_OK) {
 		Tcl_Free((char *)contour_av);
 		return GED_ERROR;
 	    }
@@ -3807,13 +3812,20 @@ to_data_polygons(struct ged *gedp,
 	return GED_OK;
     }
 
-    /* Usage: polygons [poly_list]
+    /* Usage: [v]polygons [poly_list]
      *
-     * Set/get the polygon list.
+     * Set/get the polygon list. If vpolygons is specified then
+     * the polygon list is in view coordinates.
      */
-    if (BU_STR_EQUAL(argv[2], "polygons")) {
+    if (BU_STR_EQUAL(argv[2], "polygons") || BU_STR_EQUAL(argv[2], "vpolygons")) {
 	register size_t i, j, k;
 	int ac;
+	int vflag;
+
+	if (BU_STR_EQUAL(argv[2], "polygons"))
+	    vflag = 0;
+	else
+	    vflag = 1;
 
 	if (argc == 3) {
 	    for (i = 0; i < gdpsp->gdps_polygons.gp_num_polygons; ++i) {
@@ -3823,8 +3835,15 @@ to_data_polygons(struct ged *gedp,
 		    bu_vls_printf(gedp->ged_result_str, " {");
 
 		    for (k = 0; k < gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points; ++k) {
-			bu_vls_printf(gedp->ged_result_str, " {%lf %lf %lf} ",
-				      V3ARGS(gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k]));
+			point_t pt;
+
+			if (vflag) {
+			    MAT4X3PNT(pt, gdvp->gdv_view->gv_model2view, gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k]);
+			} else {
+			    VMOVE(pt, gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k]);
+			}
+
+			bu_vls_printf(gedp->ged_result_str, " {%lf %lf %lf} ", V3ARGS(pt));
 		    }
 
 		    bu_vls_printf(gedp->ged_result_str, "} ");
@@ -3855,7 +3874,7 @@ to_data_polygons(struct ged *gedp,
 		return GED_OK;
 	    }
 
-	    if (to_extract_polygons_av(gedp, &gdpsp->gdps_polygons, polygon_ac, polygon_av, gdvp->gdv_view->gv_mode) != GED_OK) {
+	    if (to_extract_polygons_av(gedp, gdvp, &gdpsp->gdps_polygons, polygon_ac, polygon_av, gdvp->gdv_view->gv_mode, vflag) != GED_OK) {
 		Tcl_Free((char *)polygon_av);
 		return GED_ERROR;
 	    }
@@ -3892,7 +3911,7 @@ to_data_polygons(struct ged *gedp,
 	}
 	contour_ac = ac;
 
-	if (to_extract_contours_av(gedp, &gp, contour_ac, contour_av,gdvp->gdv_view->gv_mode) != GED_OK) {
+	if (to_extract_contours_av(gedp, gdvp, &gp, contour_ac, contour_av,gdvp->gdv_view->gv_mode, 0) != GED_OK) {
 	    Tcl_Free((char *)contour_av);
 	    return GED_ERROR;
 	}
