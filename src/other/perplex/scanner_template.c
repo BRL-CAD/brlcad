@@ -78,7 +78,7 @@ typedef struct perplex {
 } *perplex_t;
 
 perplex_t perplexFileScanner(FILE *input);
-perplex_t perplexStringScanner(char *firstChar, char *lastChar);
+perplex_t perplexStringScanner(char *firstChar, size_t numChars);
 void perplexFree(perplex_t scanner);
 
 #ifndef PERPLEX_LEXER
@@ -558,7 +558,7 @@ newScanner()
 /* public functions */
 
 perplex_t
-perplexStringScanner(char *firstChar, char *lastChar)
+perplexStringScanner(char *firstChar, size_t numChars)
 {
     perplex_t scanner = newScanner();
 
@@ -566,7 +566,7 @@ perplexStringScanner(char *firstChar, char *lastChar)
     scanner->in.file = NULL;
 
     scanner->marker = scanner->cursor = firstChar;
-    scanner->null = lastChar + 1;
+    scanner->null = firstChar + numChars;
     scanner->atEOI = 1;
 
     return scanner;
