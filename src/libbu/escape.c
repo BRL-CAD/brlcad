@@ -109,9 +109,12 @@ bu_str_unescape(const char *input, char *output, size_t size)
     need = strlen(input);
     for (c = input; *c != '\0'; c++) {
 	if (*c == '\\') {
+	    need--;
+
 	    /* skip the next char */
 	    c++;
-	    need--;
+	    if (*c == '\0')
+		break;
 	}
     }
 
@@ -144,6 +147,8 @@ bu_str_unescape(const char *input, char *output, size_t size)
 	/* make sure last char wasn't a backslash */
 	if (*c != '\0')
 	    output[i++] = *c;
+	else
+	    break;
     }
     /* always null-terminate */
     output[i] = '\0';
