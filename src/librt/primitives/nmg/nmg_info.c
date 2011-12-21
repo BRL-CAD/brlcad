@@ -1654,11 +1654,7 @@ nmg_find_pt_in_face(const struct faceuse *fu, const fastf_t *pt, const struct bn
     register struct loopuse *lu;
     struct vertexuse *vu;
 
-    NMG_CK_FACEUSE(fu);
-    BN_CK_TOL(tol);
-
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-	NMG_CK_LOOPUSE(lu);
 	vu = nmg_find_pt_in_lu(lu, pt, tol);
 	if (vu)
 	    return vu;
