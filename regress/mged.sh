@@ -131,7 +131,7 @@ EOF
     if test "x$cmd" = "xregions" || test "x$cmd" = "xsolids" ; then
 	# regions or solids are special because they may core dump
         # test is a result of bug 3392558 which was fixed at revision 48037
-	$MGED -c mged2.g $cmd t.$cmd all > /dev/null 2>&1 <<EOF
+	$MGED -c mged.g $cmd t.$cmd all > /dev/null 2>&1 <<EOF
 exit
 EOF
 	if test $? != 0 ; then
