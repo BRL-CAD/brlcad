@@ -8,7 +8,7 @@
 static void
 writeHeader(FILE *templateFile, FILE *headerFile)
 {
-    char c;
+    int c;
     while ((c = fgetc(templateFile)) != EOF) {
 	if (c == '%') {
 	    if ((c = fgetc(templateFile)) == '%') {
@@ -48,7 +48,7 @@ writeDefinitions(appData_t *appData)
     FILE *templateFile = appData->scanner_template;
     FILE *headerFile = appData->header;
     FILE *outFile = appData->out;
-    char c;
+    int c;
 
     /* write header file from template */
     if (headerFile != NULL) {

@@ -336,7 +336,7 @@ bufferAppend(perplex_t scanner, size_t n)
     struct Buf *buf;
     FILE *in;
     size_t i;
-    char c;
+    int c;
     char *bufStart;
     size_t markerOffset, tokenStartOffset, cursorOffset;
 

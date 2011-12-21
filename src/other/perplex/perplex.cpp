@@ -95,7 +95,7 @@ static const char usage[] =
 
 int main(int argc, char *argv[])
 {
-    char c;
+    int c;
     int tokenID;
     int opt_ind = 1;
     char *opt_arg = NULL;
