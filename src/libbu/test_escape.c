@@ -39,6 +39,7 @@ compare(const char *input, const char *output, const char *correct)
 int
 main(int ac, char *av[])
 {
+    char *bufp;
     char buffer[32];
 
     printf("Testing unescape\n");
@@ -94,6 +95,22 @@ main(int ac, char *av[])
     CMP_ESC("aaa", "bc", "aaa");
     CMP_ESC("aaa", "a", "\\a\\a\\a");
     CMP_ESC("aaa", "aaa", "\\a\\a\\a");
+
+    bufp = bu_str_unescape(bu_str_escape("abc", "b", buffer, 32), NULL, 0);
+    compare("abc", bufp, "abc");
+    bu_free(bufp, NULL);
+
+    bufp = bu_str_unescape(bu_str_escape("abc\\cba", "b", buffer, 32), NULL, 0);
+    compare("abc\\cba", bufp, "abccba");
+    bu_free(bufp, NULL);
+
+    bufp = bu_str_unescape(bu_str_escape("abc\\\\cba", "b", buffer, 32), NULL, 0);
+    compare("abc\\\\cba", bufp, "abc\\cba");
+    bu_free(bufp, NULL);
+
+    bufp = bu_str_unescape(bu_str_escape("abc\\\\\\c\\ba\\", "b", buffer, 32), NULL, 0);
+    compare("abc\\\\\\c\\ba\\", bufp, "abc\\c\\ba");
+    bu_free(bufp, NULL);
 
     printf("%s: testing complete\n", av[0]);
     return 0;
