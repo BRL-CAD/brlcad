@@ -25,17 +25,13 @@
 #include "bu.h"
 
 
-/* Test for reversibility */
-void
-test_unescape(const char *str)
+static void
+compare(const char *input, const char *output, const char *correct)
 {
-    char buffer[32];
-    const char *unescaped = bu_str_unescape(str, buffer, 32);
-
-    if (!BU_STR_EQUAL(str, unescaped)) {
-	printf("%24s -> %28s [PASS]\n", str, unescaped);
+    if (BU_STR_EQUAL(output, correct)) {
+	printf("%24s -> %28s [PASS]\n", input, output);
     } else {
-	printf("%24s -> %28s [FAIL]  (should be different)\n", str, unescaped);
+	printf("%24s -> %28s [FAIL]  (should be '%s')\n", input, output, correct);
     }
 }
 
@@ -43,34 +39,37 @@ test_unescape(const char *str)
 int
 main(int ac, char *av[])
 {
+    char buffer[32];
+
     printf("Testing unescape\n");
 
     if (ac > 1)
 	printf("Usage: %s\n", av[0]);
 
-    test_unescape(NULL);
-    test_unescape("");
-    test_unescape(" ");
-    test_unescape("hello");
-    test_unescape("\"");
-    test_unescape("\'");
-    test_unescape("\\");
-    test_unescape("\\\"");
-    test_unescape("\\\\");
-    test_unescape("\"hello\"");
-    test_unescape("\'hello\'");
-    test_unescape("\\hello");
-    test_unescape("\\hello\"");
-    test_unescape("hello\\\\");
-    test_unescape("\"hello\'\"");
-    test_unescape("\"hello\'");
-    test_unescape("\'hello\'");
-    test_unescape("\'hello\"");
-    test_unescape("\"\"hello\"");
-    test_unescape("\'\'hello\'\'");
-    test_unescape("\'\"hello\"\'");
-    test_unescape("\"\"hello\"\"");
-    test_unescape("\"\"\"hello\"\"\"");
+#define CMPU(in, out) compare((in), bu_str_unescape((in), buffer, 32), (out))
+    CMPU(NULL, "");
+    CMPU("", "");
+    CMPU(" ", " ");
+    CMPU("hello", "hello");
+    CMPU("\"", "\"");
+    CMPU("\'", "\'");
+    CMPU("\\", "");
+    CMPU("\\\"", "\"");
+    CMPU("\\\\", "\\");
+    CMPU("\"hello\"", "\"hello\"");
+    CMPU("\'hello\'", "'hello'");
+    CMPU("\\hello", "hello");
+    CMPU("\\hello\"", "hello\"");
+    CMPU("hello\\\\", "hello\\");
+    CMPU("\"hello\'\"", "\"hello'\"");
+    CMPU("\"hello\'", "\"hello'");
+    CMPU("\'hello\'", "'hello'");
+    CMPU("\'hello\"", "'hello\"");
+    CMPU("\"\"hello\"", "\"\"hello\"");
+    CMPU("\'\'hello\'\'", "''hello''");
+    CMPU("\'\"hello\"\'", "'\"hello\"'");
+    CMPU("\"\"hello\"\"", "\"\"hello\"\"");
+    CMPU("\\\"\\\"\\\"hello\\", "\"\"\"hello");
 
     printf("%s: testing complete\n", av[0]);
     return 0;
