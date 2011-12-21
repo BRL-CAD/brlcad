@@ -112,7 +112,11 @@ extern int tk_refresh(FBIO *ifp, int x, int y, int w, int h);
 
 
 int
+#if !defined(IF_X) && !defined(IF_WGL) && !defined(IF_OGL) && !defined(IF_TK)
+fb_cmd_open_existing(void *clientData, int argc, const char **UNUSED(argv))
+#else
 fb_cmd_open_existing(void *clientData, int argc, const char **argv)
+#endif
 {
     Tcl_Interp *interp = (Tcl_Interp *)clientData;
     register FBIO *ifp;
@@ -279,7 +283,11 @@ fb_cmd_close_existing(ClientData UNUSED(clientData), int argc, const char **argv
 
 
 void
+#if !defined(IF_X) && !defined(IF_WGL) && !defined(IF_OGL) && !defined(IF_TK)
+fb_configureWindow(FBIO *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+#else
 fb_configureWindow(FBIO *ifp, int width, int height)
+#endif
 {
 #ifdef IF_X
     if (!strncmp(ifp->if_name, X_device_name, strlen(X_device_name))) {
@@ -308,7 +316,11 @@ fb_configureWindow(FBIO *ifp, int width, int height)
 
 
 int
+#if !defined(IF_X) && !defined(IF_WGL) && !defined(IF_OGL) && !defined(IF_TK)
+fb_refresh(FBIO *ifp, int UNUSED(x), int UNUSED(y), int w, int h)
+#else
 fb_refresh(FBIO *ifp, int x, int y, int w, int h)
+#endif
 {
     int status=0;
 

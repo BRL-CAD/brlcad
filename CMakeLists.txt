@@ -820,7 +820,33 @@ IF(NOT WIN32)
 ENDIF(NOT WIN32)
 
 # Enable features requring OPENGL
-INCLUDE(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
+# Be smart about this - if we don't have X11 or Aqua and we're
+# not on Windows, we're non-graphical and that means OpenGL is
+# a no-go.  The Windows version would have to be some sort of
+# option for the WIN32 graphics layer?  Should probably think
+# about that... for now, on Win32 don't try OpenGL if Tk is 
+# off.  That'll hold until we get a non-Tk based GUI - then
+# setting non-graphical on Windows will take more thought.
+IF(NOT WIN32)
+	IF(APPLE)
+		IF(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA)
+			SET(OPENGL_FOUND OFF)
+		ELSE(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA)
+			INCLUDE(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
+		ENDIF(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA)
+	ELSE(APPLE)
+		IF(NOT BRLCAD_ENABLE_X11)
+			SET(OPENGL_FOUND OFF)
+		ELSE(NOT BRLCAD_ENABLE_X11)
+			INCLUDE(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
+		ENDIF(NOT BRLCAD_ENABLE_X11)
+	ENDIF(APPLE)
+ELSE(NOT WIN32)
+	IF(BRLCAD_ENABLE_TK)
+		INCLUDE(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
+	ENDIF(BRLCAD_ENABLE_TK)
+ENDIF(NOT WIN32)
+
 SET(BRLCAD_ENABLE_OPENGL_ALIASES
 	ENABLE_OPENGL
 	)

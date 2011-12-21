@@ -198,7 +198,11 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 }
 #else
 int
+#if !defined(IF_X) && !defined(IF_WGL) && !defined(IF_OGL) && !defined(IF_TK)
+doEvent(ClientData UNUSED(clientData), void *UNUSED(eventPtr)) {
+#else
 doEvent(ClientData clientData, void *eventPtr) {
+#endif
     return TCL_OK;
 }
 #endif /* HAVE_X11_XLIB_H */
