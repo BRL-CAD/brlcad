@@ -643,6 +643,8 @@ int
 PERPLEX_PUBLIC_LEXER {
     int ret;
 
+    UPDATE_START;
+
     scanner->tokenText = NULL;
 
     ret = PERPLEX_LEXER_private(scanner);
@@ -658,8 +660,6 @@ PERPLEX_PUBLIC_LEXER {
 static int
 PERPLEX_PRIVATE_LEXER {
     char yych;
-
-    UPDATE_START;
 
     PERPLEX_ON_ENTER;
 
