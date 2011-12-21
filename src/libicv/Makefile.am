@@ -1,7 +1,7 @@
 lib_LTLIBRARIES = libicv.la
 noinst_LTLIBRARIES = libicv_nil.la
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = ${TCL_CPPFLAGS} -I${top_srcdir}/src/other/libpng -I${top_builddir}/src/other/libpng
 
 libicv_nil_la_SOURCES = \
 	fileformat.c \
