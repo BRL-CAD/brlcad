@@ -62,10 +62,7 @@ struct Buf {
 
 /* scanner data */
 typedef struct perplex {
-    struct {
-	FILE *file;
-	char *string;
-    } in;
+    FILE *inFile;
     int atEOI;
     int condition;
     char *cursor;
@@ -436,7 +433,7 @@ bufferAppend(perplex_t scanner, size_t n)
     size_t markerOffset, tokenStartOffset, cursorOffset;
 
     buf = scanner->buffer;
-    in = scanner->in.file;
+    in = scanner->inFile;
 
     /* save marker offsets */
     bufStart = (char*)buf->elts;
@@ -555,18 +552,35 @@ newScanner()
     return scanner;
 }
 
+static void
+initBuffer(perplex_t scanner)
+{
+    scanner->buffer = (struct Buf*)malloc(sizeof(struct Buf));
+    buf_init(scanner->buffer, sizeof(char));
+}
+
 /* public functions */
 
 perplex_t
 perplexStringScanner(char *firstChar, size_t numChars)
 {
+    size_t i;
+    struct Buf *buf;
     perplex_t scanner = newScanner();
 
-    scanner->in.string = firstChar;
-    scanner->in.file = NULL;
+    scanner->inFile = NULL;
 
-    scanner->marker = scanner->cursor = firstChar;
-    scanner->null = firstChar + numChars;
+    initBuffer(scanner);
+    buf = scanner->buffer;
+
+    /* copy string to buffer */
+    for (i = 0; i < numChars; i++) {
+    buf_append_char(buf, firstChar[i]);
+    }
+    buf_append_char(buf, '\0');
+
+    scanner->marker = scanner->cursor = (char*)buf_first_elt(buf);
+    scanner->null = (char*)buf_last_elt(buf);
     scanner->atEOI = 1;
 
     return scanner;
@@ -578,14 +592,12 @@ perplexFileScanner(FILE *input)
     char *bufFirst;
     perplex_t scanner = newScanner();
 
-    scanner->in.file = input;
-    scanner->in.string = NULL;
+    scanner->inFile = input;
 
-    scanner->buffer = (struct Buf*)malloc(sizeof(struct Buf));
-    buf_init(scanner->buffer, sizeof(char));
+    initBuffer(scanner);
     buf_append_char(scanner->buffer, '\0');
 
-    bufFirst = (char*)scanner->buffer->elts;
+    bufFirst = (char*)buf_first_elt(scanner->buffer);
     scanner->null = scanner->marker = scanner->cursor = bufFirst;
 
     return scanner;
