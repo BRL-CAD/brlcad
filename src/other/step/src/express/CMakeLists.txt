@@ -5,18 +5,12 @@ include_directories(
 
 find_package(LEMON)
 LEMON_TARGET(ExpParser expparse.y expparse.c expparse.h)
-LEX_TARGET(ExpScanner expscan.re ${CMAKE_CURRENT_BINARY_DIR}/expscan.c COMPILE_FLAGS "-l")
-
-# replace with ADD_RE2C_LEMON_DEPENDENCY(ExpScanner ExpParser)
-# when expscan.re is really an re2c input and not a lex input
-#MESSAGE(STATUS "depends on: ${LEMON_ExpParser_OUTPUT_HEADER}")
-#MESSAGE(STATUS "outputs were: ${LEMON_ExpParser_OUTPUTS}")
-
-SET_SOURCE_FILES_PROPERTIES(${LEX_ExpScanner_OUTPUTS} PROPERTIES OBJECT_DEPENDS ${LEMON_ExpParser_OUTPUT_HEADER})
+PERPLEX_TARGET(ExpScanner expscan.l ${CMAKE_CURRENT_BINARY_DIR}/expscan.c ${CMAKE_CURRENT_BINARY_DIR}/expscan.h)
+ADD_PERPLEX_LEMON_DEPENDENCY(ExpScanner ExpParser)
 
 set(EXPRESS_SOURCES
     ${LEMON_ExpParser_OUTPUT_SOURCE}
-    ${LEX_ExpScanner_OUTPUTS}
+    ${PERPLEX_ExpScanner_OUTPUTS}
     symbol.c
     type.c
     variable.c

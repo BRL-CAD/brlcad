@@ -2,6 +2,7 @@
 %include {
 #include <assert.h>
 #include "token_type.h"
+#include "parse_data.h"
 
 int yyerrstatus = 0;
 #define yyerrok (yyerrstatus = 0)
@@ -98,6 +99,7 @@ YYSTYPE yylval;
 #include "express/schema.h"
 #include "express/entity.h"
 #include "express/resolve.h"
+#include "expscan.h"
 
     extern int print_objects_while_running;
 
@@ -124,20 +126,14 @@ YYSTYPE yylval;
     /* differentiated from other schemas parsed earlier */
     Linked_List PARSEnew_schemas;
 
-    extern int	yylineno;
+    int	yylineno;
 
     static int	PARSEchunk_start;
 
-    static void	yyerror PROTO((char *));
-    static void	yyerror2 PROTO((char CONST *));
+    static void	yyerror(const char*, char *string);
+    static void	yyerror2(const char*, char CONST *t);
 
     Boolean		yyeof = False;
-
-#ifdef FLEX
-    extern char	*yytext;
-#else /* LEX */
-    extern char	yytext[];
-#endif /*FLEX*/
 
 #define MAX_SCOPE_DEPTH	20	/* max number of scopes that can be nested */
 
@@ -194,6 +190,8 @@ void parserInitState()
     yyexpresult->symbol.line = 1;
 }
 } /* include */
+
+%extra_argument { parse_data_t parseData }
 
 %type case_action			{ Case_Item }
 %type case_otherwise			{ Case_Item }
@@ -2026,7 +2024,7 @@ schema_header ::= TOK_SCHEMA TOK_IDENTIFIER(A) semicolon.
     }
 
     if (EXPRESSignore_duplicate_schemas && schema) {
-	SCANskip_to_end_schema();
+	SCANskip_to_end_schema(parseData.scanner);
 	PUSH_SCOPE_DUMMY();
     } else {
 	schema = SCHEMAcreate();
@@ -2461,13 +2459,12 @@ while_control(A) ::= TOK_WHILE expression(B).
 
 %include {
 static void
-yyerror(string)
-char *string;
+yyerror(const char *yytext, char *string)
 {
     char buf[200];
     Symbol sym;
 
-    strcpy (buf, string);
+    strcpy(buf, string);
 
     if (yyeof) {
 	strcat(buf, " at end of input");
@@ -2486,8 +2483,7 @@ char *string;
 }
 
 static void
-yyerror2(t)
-char CONST *t;	/* token or 0 to indicate no more tokens */
+yyerror2(const char *yytext, char CONST *t) /* token or 0 to indicate no more tokens */
 {
     char buf[200];
     Symbol sym;
@@ -2515,7 +2511,7 @@ char CONST *t;	/* token or 0 to indicate no more tokens */
 	}
 
 	if (0 == strlen(tokens)) {
-	    yyerror("syntax error");
+	    yyerror(yytext, "syntax error");
 	}
 	sym.line = yylineno - (yytext[0] == '\n');
 	sym.filename = current_filename;

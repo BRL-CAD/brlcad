@@ -100,18 +100,16 @@ extern Error		ERROR_nonascii_char;
 /* function prototypes */
 /***********************/
 
-extern int	yylex PROTO((void));	/* the scanner */
-
 extern void	SCANinitialize PROTO((void));
-extern int	SCANprocess_real_literal PROTO((void));
-extern int	SCANprocess_integer_literal PROTO((void));
-extern int	SCANprocess_binary_literal PROTO((void));
+extern int	SCANprocess_real_literal PROTO((const char *));
+extern int	SCANprocess_integer_literal PROTO((const char *));
+extern int	SCANprocess_binary_literal PROTO((const char *));
 extern int	SCANprocess_logical_literal PROTO((char *));
-extern int	SCANprocess_identifier_or_keyword PROTO((void));
-extern int	SCANprocess_string PROTO((void));
-extern int	SCANprocess_encoded_string PROTO((void));
-extern int	SCANprocess_semicolon PROTO((int));
-extern void	SCANsave_comment PROTO((void));
+extern int	SCANprocess_identifier_or_keyword PROTO((const char *));
+extern int	SCANprocess_string PROTO((const char *));
+extern int	SCANprocess_encoded_string PROTO((const char *));
+extern int	SCANprocess_semicolon PROTO((const char *, int));
+extern void	SCANsave_comment PROTO((const char *));
 extern Boolean	SCANread PROTO((void));
 #if macros_bit_the_dust
 extern void	SCANdefine_macro PROTO((char *, char *));

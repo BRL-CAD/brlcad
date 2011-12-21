@@ -1,5 +1,3 @@
-%{
-
 static char rcsid[] = "$Id: expscan.l,v 1.12 1997/05/29 20:17:34 sauderd Exp $";
 
 /*
@@ -109,6 +107,9 @@ static char rcsid[] = "$Id: expscan.l,v 1.12 1997/05/29 20:17:34 sauderd Exp $";
 #include "express/lexact.h"
 #include "express/express.h"
 #include "expparse.h"
+#include "expscan.h"
+
+enum { INITIAL, code, comment, return_end_schema };
 
 extern void	yyerror();
 extern int	yylineno;
@@ -152,109 +153,29 @@ SCANnextchar(char* buffer)
 	return 0;
 }
 
-
 #undef yywrap
 static int
 yywrap()
 {
-	int i;
+    int i;
 
-	for (i=0;i<nesting_level && i<MAX_NESTED_COMMENTS;i++) {
-		ERRORreport_with_symbol(ERROR_unmatched_open_comment,
-			&open_comment[i]);
-		/* maybe not all, but at least some will be reported - DEL */
-	}
-	return 1;
+    for (i = 0; i < nesting_level && i < MAX_NESTED_COMMENTS; i++) {
+	ERRORreport_with_symbol(ERROR_unmatched_open_comment,
+		&open_comment[i]);
+	/* maybe not all, but at least some will be reported - DEL */
+    }
+    return 1;
 }
 
-#ifdef FLEX_SCANNER
+#define NEWLINE (yylineno++)
 
-#ifdef LEX
-))))this line will generate an error during compilation intentionally - DEL
-You used flex (in make_rules) but compiled with -DLEX (in Makefile)!
-#endif
-
-#define YY_USER_INIT	BEGIN code;	/* DEL */
-
-#undef YY_DECL
-#define YY_DECL int yylex(void)
-
-/* here's the hook for the preprocessor */
-#undef YY_INPUT
-#define YY_INPUT(buf, result, max_size)					\
-	(result) = SCANnextchar(buf)
-
-/* I don't believe this is used anymore, but not sure */
-/* in any case, experimental code above that attempts to skip over */
-/* initial non-Express code explicitly refers to YY_INPUT */
-#ifdef slow_yylineno
-#undef YY_INPUT
-#define YY_INPUT(buf,result,max_size)					\
- 	result = (((buf[0] = getc(yyin)) == '\n')			\
-		  ? (NEWLINE, 1)					\
-		  : ((buf[0] == EOF) ? ((yyeof = True), YY_NULL) : 1))
-#endif /*slow_yylineno*/
-
-/*#define NEWLINE	((SCANbol = SCANtell()), yylineno++)*/
-#define NEWLINE	yylineno++
-#define LINENO_FUDGE yylineno
-
-#else /* !FLEX_SCANNER (i.e, LEX) */
-
-#ifdef FLEX
-))))this line will generate an error during compilation intentionally - DEL
-You used lex (in make_rules) but compiled with -DFLEX (in Makefile)!
-#endif
-
-#undef input
-#undef unput
-
-/* max page size 100 is guaranteed, but lex code uses BUFSIZ! - DEL */
-static char unchar[BUFSIZ];		/* one char for lex unput storage */
-static char *unchar_p = unchar;		/* whether unchar is in use */
-
-static int first_time = True;
-
-static int
-input() {
-	char c;
-
-	if (unchar_p == unchar) {
-		/* no chars pushed back */
-		if (!SCANnextchar(&c)) return(0);
-		if (c == '\n') {
-		    yylineno++;
-/*		    SCANbol = SCANtell();*/
-		}
-		return(c);
-	} else {
-		unchar_p--;
-		if (*unchar_p == '\n') yylineno++;
-		return(*unchar_p);
-	}
-}
-
-/* if paranoid, should check that bounds are never exceeded, but maybe */
-/* lex does this for us?   lex is not documented well enough to know */
-#define unput(c) {yytchar=(c);if(yytchar=='\n')yylineno--;*unchar_p++=yytchar;}
-/* really shouldn't use yytchar since it isn't part of the defined interface */
-
-
-/* lex counts line for us, so turn this into a no-op - DEL */
-#define NEWLINE
 /* when lex looks ahead over a newline, error messages get thrown off */
 /* Fortunately, we know when that occurs, so adjust for it by this hack */
-#define LINENO_FUDGE (yylineno-1)
-
-#endif
-
-#ifdef FLEX_SCANNER
-void exp_flex_init();
-#endif
+#define LINENO_FUDGE (yylineno - 1)
 
 /* added for re-initializing parser -snc 22-Apr-1992 */
 void
-SCAN_lex_init(char *filename,FILE *fp) {
+SCAN_lex_init(char *filename, FILE *fp) {
 	int i;
 
         /* return to initial scan buffer */
@@ -262,217 +183,159 @@ SCAN_lex_init(char *filename,FILE *fp) {
         *(SCANcurrent = SCANbuffer.text) = '\0';
         SCANbuffer.readEof = False;
         SCANbuffer.file = fp;
-	SCANbuffer.filename = (filename?filename:"");
+	SCANbuffer.filename = (filename ? filename : "");
 	current_filename = SCANbuffer.filename;
-
-        /* empty all scan buffers */
-/*      for (i = 0; i < SCAN_NESTING_DEPTH; ++i)*/
-/*          SCAN_buffers[i].text[0] = '\0';*/
-
-#ifdef FLEX_SCANNER
-	exp_flex_init();
-#endif
-
-#ifndef FLEX_SCANNER
-        /* initialize un-got character pointer to start of buffer */
-        unchar_p = unchar;
-
-	first_time = True;
-#endif
 }
-
-
-%}
-
-%s comment code return_end_schema
-
-digit	[0-9]
-integer	{digit}+
-letter	[A-Za-z]
-id_char	[A-Za-z0-9_]
-
 %%
+digit	= [0-9];
+integer	= digit+;
+letter	= [A-Za-z];
+id_char	= [A-Za-z0-9_];
 
-%{
-#ifndef FLEX_SCANNER
-if (first_time) {
-	BEGIN code;
-	first_time = False;
-}
-#endif
-%}
+<> => code
 
-%{
 /* Added * at the end of next rule (to make lexer faster) - DEL */
-%}
-[\t ]*		;
-\n		{ NEWLINE; }
+<*>[\t ]* { }
+<*>'\n' { NEWLINE; }
 
-<code>"--"[^\n]*\n	{ NEWLINE; SCANsave_comment(); }
-
-"(*"	{
-	/* nested comment errors will occur with most deeply nested - DEL */
-	if (nesting_level < MAX_NESTED_COMMENTS) {
-		open_comment[nesting_level].line = yylineno;
-		open_comment[nesting_level].filename = current_filename;
-	}
-	nesting_level++;
-	BEGIN comment;
+<code>"--"[^\n]*'\n' {
+    NEWLINE;
+    SCANsave_comment(yytext);
 }
 
-%{
+<*>"(*" :=> comment {
+    /* nested comment errors will occur with most deeply nested - DEL */
+    if (nesting_level < MAX_NESTED_COMMENTS) {
+	open_comment[nesting_level].line = yylineno;
+	open_comment[nesting_level].filename = current_filename;
+    }
+    nesting_level++;
+}
+
+<code> {
+
 /* real literal (like, think it'll fly?!) */
-%}
-
-<code>{integer}"."{integer}?([eE][+-]?{integer})?	{
-	return SCANprocess_real_literal();
+(integer)'.'(integer)?([eE][+-]?(integer))? {
+    return SCANprocess_real_literal(yytext);
 }
 
-%{
 /* integer literal */
-%}
-
-<code>{integer}	{
-	return SCANprocess_integer_literal();
+integer {
+    return SCANprocess_integer_literal(yytext);
 }
 
-%{
 /* binary literal */
-%}
-
-<code>"\%"[01]+	{
-	return SCANprocess_binary_literal();
+"\%"[01]+ {
+    return SCANprocess_binary_literal(yytext);
 }
 
-%{
 /* identifier/keyword */
-%}
-
-<code>{letter}{id_char}*	{
-	return SCANprocess_identifier_or_keyword();
+(letter)(id_char)* {
+    return SCANprocess_identifier_or_keyword(yytext);
 }
 
-%{
 /* bad identifier */
-%}
-
-<code>[_A-Za-z]{id_char}*	{
-	ERRORreport_with_line(ERROR_bad_identifier,yylineno,yytext);
-	return SCANprocess_identifier_or_keyword();
+[_A-Za-z]id_char* {
+    ERRORreport_with_line(ERROR_bad_identifier, yylineno, yytext);
+    return SCANprocess_identifier_or_keyword(yytext);
 }
 
-%{
 /* string literal */
-%}
-
-<code>'([^'\n]|'')*'	{	/* ' keep font-lock happy */
-	return SCANprocess_string();
+"'"([^'\n]|"''")*"'" {
+    /* ' keep font-lock happy */
+    return SCANprocess_string(yytext);
 }
 
-<code>'([^'\n]|'')*\n	{
-	ERRORreport_with_line(ERROR_unterminated_string,LINENO_FUDGE);
-	NEWLINE;
-	return SCANprocess_string();
+"'"([^'\n]|"''")*'\n' {
+    ERRORreport_with_line(ERROR_unterminated_string, LINENO_FUDGE);
+    NEWLINE;
+    return SCANprocess_string(yytext);
 }
 
-<code>\"[^\"\n]*\"	{
-	return SCANprocess_encoded_string();
+'"'[^\"\n]*'"' {
+    return SCANprocess_encoded_string(yytext);
 }
 
-<code>\"[^\"\n]*\n	{
-	ERRORreport_with_line(ERROR_unterminated_string,LINENO_FUDGE);
-	NEWLINE;
-	return SCANprocess_encoded_string();
+'"'[^\"\n]*'\n' {
+    ERRORreport_with_line(ERROR_unterminated_string, LINENO_FUDGE);
+    NEWLINE;
+    return SCANprocess_encoded_string(yytext);
 }
 
-
-<code>";"[ \t]*"--"[^\n]*\n {
-		  NEWLINE;
-		  return SCANprocess_semicolon(1);
-}
-<code>";"	{ return SCANprocess_semicolon(0); }
-
-<code>":="	{ return TOK_ASSIGNMENT; }
-<code>":"	{ return TOK_COLON; }
-<code>","	{ return TOK_COMMA; }
-<code>"||"	{ return TOK_CONCAT_OP; }
-<code>"."	{ return TOK_DOT; }
-<code>"="	{ return TOK_EQUAL; }
-<code>"**"	{ return TOK_EXP; }
-<code>"|"	{ return TOK_SUCH_THAT; }
-<code>"<*"	{ return TOK_ALL_IN; }
-<code>">="	{ return TOK_GREATER_EQUAL; }
-<code>">"	{ return TOK_GREATER_THAN; }
-<code>"?"	{ return TOK_QUESTION_MARK; }
-<code>":=:"	{ return TOK_INST_EQUAL; }
-<code>":<>:"	{ return TOK_INST_NOT_EQUAL; }
-<code>"["	{ return TOK_LEFT_BRACKET; }
-<code>"{"	{ return TOK_LEFT_CURL; }
-<code>"("	{ return TOK_LEFT_PAREN; }
-<code>"<="	{ return TOK_LESS_EQUAL; }
-<code>"<"	{ return TOK_LESS_THAN; }
-<code>"-"	{ return TOK_MINUS; }
-<code>"<>"	{ return TOK_NOT_EQUAL; }
-<code>"+"	{ return TOK_PLUS; }
-<code>"/"	{ return TOK_REAL_DIV; }
-<code>"]"	{ return TOK_RIGHT_BRACKET; }
-<code>"}"	{ return TOK_RIGHT_CURL; }
-<code>")"	{ return TOK_RIGHT_PAREN; }
-<code>"*"	{ return TOK_TIMES; }
-<code>"\\"	{ return TOK_BACKSLASH; }
-
-<return_end_schema>X	{
-	BEGIN code;
-	return TOK_END_SCHEMA;
+';'[ \t]*"--"[^\n]*'\n' {
+    NEWLINE;
+    return SCANprocess_semicolon(yytext, 1);
 }
 
-<comment>"*)"	{
-	if (0 == --nesting_level) BEGIN code;
+";"	{ return SCANprocess_semicolon(yytext, 0); }
+":="	{ return TOK_ASSIGNMENT; }
+":"	{ return TOK_COLON; }
+","	{ return TOK_COMMA; }
+"||"	{ return TOK_CONCAT_OP; }
+"."	{ return TOK_DOT; }
+"="	{ return TOK_EQUAL; }
+"**"	{ return TOK_EXP; }
+"|"	{ return TOK_SUCH_THAT; }
+"<*"	{ return TOK_ALL_IN; }
+">="	{ return TOK_GREATER_EQUAL; }
+">"	{ return TOK_GREATER_THAN; }
+"?"	{ return TOK_QUESTION_MARK; }
+":=:"	{ return TOK_INST_EQUAL; }
+":<>:"	{ return TOK_INST_NOT_EQUAL; }
+"["	{ return TOK_LEFT_BRACKET; }
+"{"	{ return TOK_LEFT_CURL; }
+"("	{ return TOK_LEFT_PAREN; }
+"<="	{ return TOK_LESS_EQUAL; }
+"<"	{ return TOK_LESS_THAN; }
+"-"	{ return TOK_MINUS; }
+"<>"	{ return TOK_NOT_EQUAL; }
+"+"	{ return TOK_PLUS; }
+"/"	{ return TOK_REAL_DIV; }
+"]"	{ return TOK_RIGHT_BRACKET; }
+"}"	{ return TOK_RIGHT_CURL; }
+")"	{ return TOK_RIGHT_PAREN; }
+"*"	{ return TOK_TIMES; }
+"\\"	{ return TOK_BACKSLASH; }
+
+} /* <code> */
+
+<return_end_schema>'X' => code {
+    return TOK_END_SCHEMA;
 }
 
-<code>"*)"	{
-	ERRORreport_with_line(ERROR_unmatched_close_comment,yylineno);
+<comment>"*)" {
+    if (0 == --nesting_level) {
+	YYSETCONDITION(code);
+    }
+}
+
+<code>"*)" {
+    ERRORreport_with_line(ERROR_unmatched_close_comment, yylineno);
 }	
 
-<comment>\n		{ NEWLINE; }
-<comment>[^*()\n]*	;
-<comment>[*()]		;
+<comment> {
 
-%{
+'\n' { NEWLINE; }
+[^*()\n]* { }
+[*()] { }
+
+} /* <comment> */
+
 /* As per N15, 7.1.5.3, all other recognized chars are incorrect - DEL */
-%}
 <code>[$%&@\^{}~] {
-	ERRORreport_with_line(ERROR_unexpected_character,yylineno,yytext[0]);
+    ERRORreport_with_line(ERROR_unexpected_character,yylineno,yytext[0]);
 }
 
-%{
 /* ... and unrecognized characters are treated as whitespace - DEL */
-%}
-.			;
+<*>[^] { }
 
 %%
 void
-SCANskip_to_end_schema()
+SCANskip_to_end_schema(perplex_t scanner)
 {
-	while (yylex() != TOK_END_SCHEMA);
+    while (yylex(scanner) != TOK_END_SCHEMA);
 
-	unput('X');	/* any old character */
+    perplexUnput(scanner, 'X');	/* any old character */
 
-	BEGIN return_end_schema;
+    YYSETCONDITION(return_end_schema);
 }
-
-#ifdef FLEX_SCANNER
-/* required because yy_init isn't known when we need to re-init it */
-void
-exp_flex_init()
-{
-	/* yy_init is what tells flex to reinitialize its buffers */
-
-#  if (YY_FLEX_MAJOR_VERSION==2 && YY_FLEX_MINOR_VERSION==5 && YY_FLEX_SUBMINOR_VERSION>=33)
-	/* flex 2.5.33 flips the polarity of this flag */
-	yy_init = 0;
-#  else
-	yy_init = 1;
-#  endif
-}
-#endif

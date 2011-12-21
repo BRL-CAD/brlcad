@@ -1,6 +1,3 @@
-#include "token_type.h"
-extern YYSTYPE yylval;
-
 static char rcsid[] = "$Id: lexact.c,v 1.10 1997/09/24 20:05:38 dar Exp $";
 
 /*
@@ -58,15 +55,18 @@ static char rcsid[] = "$Id: lexact.c,v 1.10 1997/09/24 20:05:38 dar Exp $";
 #include <ctype.h>
 /*#include <strings.h>*/
 #include "express/lexact.h"
-
 #include "string.h"
 #include "express/linklist.h"
 #include "stack.h"
 #include "express/hash.h"
 #include "express/express.h"
-#include "expparse.h"
 #include "express/dict.h"
 #include "express/memory.h"
+#include "token_type.h"
+#include "expparse.h"
+#include "expscan.h"
+
+extern YYSTYPE yylval;
 
 Scan_Buffer	SCAN_buffers[SCAN_NESTING_DEPTH];
 int		SCAN_current_buffer	= 0;
@@ -84,13 +84,6 @@ Error		ERROR_nonascii_char;
 
 
 extern int		yylineno;
-extern FILE*		yyin;
-
-#ifdef FLEX
-extern char*		yytext;
-#else /* LEX */
-extern char		yytext[];
-#endif /*FLEX*/
 
 #define SCAN_COMMENT_LENGTH	256
 static char		last_comment_[256] = "";
@@ -303,23 +296,23 @@ SCANinitialize(void)
 }
 
 int
-SCANprocess_real_literal(void)
+SCANprocess_real_literal(const char *yytext)
 {
     sscanf(yytext, "%lf", &(yylval.rVal));
     return TOK_REAL_LITERAL;
 }
 
 int
-SCANprocess_integer_literal(void)
+SCANprocess_integer_literal(const char *yytext)
 {
     sscanf(yytext, "%d", &(yylval.iVal));
     return TOK_INTEGER_LITERAL;
 }
 
 int
-SCANprocess_binary_literal(void)
+SCANprocess_binary_literal(const char *yytext)
 {
-    yylval.binary = SCANstrdup(yytext+1); /* drop '%' prefix */
+    yylval.binary = SCANstrdup(yytext + 1); /* drop '%' prefix */
     return TOK_BINARY_LITERAL;
 }
 
@@ -337,21 +330,21 @@ SCANprocess_logical_literal(char * string)
 }
 
 int
-SCANprocess_identifier_or_keyword(void)
+SCANprocess_identifier_or_keyword(const char *yytext)
 {
     char *test_string;
     struct keyword_entry *k;
 
-	int len;
-	char *src, *dest;
+    int len;
+    char *src, *dest;
 
-	/* make uppercase copy */
-	len = strlen(yytext);
-	dest = test_string = (char *)malloc(len+1);
-	for (src=yytext;*src;src++,dest++) {
-		*dest = (islower(*src)?toupper(*src):*src);
-	}
-	*dest = '\0';
+    /* make uppercase copy */
+    len = strlen(yytext);
+    dest = test_string = (char *)malloc(len+1);
+    for (src=yytext;*src;src++,dest++) {
+	    *dest = (islower(*src)?toupper(*src):*src);
+    }
+    *dest = '\0';
 
     /* check for language keywords */
     k = (struct keyword_entry *)DICTlookup(keyword_dictionary,test_string);
@@ -406,18 +399,18 @@ SCANprocess_identifier_or_keyword(void)
 }
 
 int
-SCANprocess_string(void)
+SCANprocess_string(const char *yytext)
 {
 	char *s, *d;	/* source, destination */
 
 	/* strip off quotes */
-	yylval.string = SCANstrdup(yytext+1); /* remove 1st single quote */
+	yylval.string = SCANstrdup(yytext + 1); /* remove 1st single quote */
 
 	/* change pairs of quotes to single quotes */
 	for (s = d = yylval.string;*s;) {
 		if (*s != '\'') {
 			*d++ = *s++;
-		} else if (0 == strncmp(s,"''",2)) {
+		} else if (0 == strncmp(s, "''", 2)) {
 			*d++ = '\'';
 			s += 2;
 		} else if (*s == '\'') {
@@ -434,13 +427,13 @@ SCANprocess_string(void)
 }
 
 int
-SCANprocess_encoded_string(void)
+SCANprocess_encoded_string(const char *yytext)
 {
 	char *s, *d;	/* source, destination */
 	int count;
 
 	/* strip off quotes */
-	yylval.string = SCANstrdup(yytext+1); /* remove 1st double quote */
+	yylval.string = SCANstrdup(yytext + 1); /* remove 1st double quote */
 
 	s = strrchr(yylval.string,'"');
 	if (s) *s = '\0';			/* remove last double quote */
@@ -462,8 +455,9 @@ SCANprocess_encoded_string(void)
 }
 
 int
-SCANprocess_semicolon(int commentp)
+SCANprocess_semicolon(const char *yytext, int commentp)
 {
+
     if (commentp) {
 	strcpy(last_comment_, strchr(yytext, '-'));
 	yylval.string = last_comment_;
@@ -479,7 +473,7 @@ SCANprocess_semicolon(int commentp)
 }
 
 void
-SCANsave_comment(void)
+SCANsave_comment(const char *yytext)
 {
     strcpy(last_comment_, yytext);
     last_comment = last_comment;
@@ -523,7 +517,7 @@ SCANread(void)
 	    if (SCAN_current_buffer == 0) {
 		done = True;
 		fclose(SCANbuffer.file); /* close yyin */
-		SCANbuffer.file = yyin = NULL;
+		SCANbuffer.file = NULL;
 	    } else {
 		SCANpop_buffer();
 	    }

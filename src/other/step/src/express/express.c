@@ -82,10 +82,12 @@ static char rcsid[] = "";
 #include "express/scope.h"
 #include "token_type.h"
 #include "expparse.h"
+#include "expscan.h"
+#include "parse_data.h"
 
 void *ParseAlloc(void *(*mallocProc)(size_t));
 void ParseFree(void *parser, void (*freeProc)(void*));
-void Parse(void *parser, int tokenID, YYSTYPE data);
+void Parse(void *parser, int tokenID, YYSTYPE data, parse_data_t parseData);
 
 Linked_List EXPRESS_path;
 int EXPRESSpass;
@@ -232,7 +234,6 @@ char *KW_WHERE		= "WHERE";
 char *KW_WHILE		= "WHILE";
 char *KW_XOR		= "XOR";
 
-extern FILE *yyin;
 extern Express yyexpresult;
 
 static Error ERROR_ref_nonexistent;
@@ -593,15 +594,17 @@ EXPRESSparse(Express model,FILE *fp, char *filename)
 static
 /* start parsing a new schema file */
 Express
-PARSERrun(char *filename,FILE *fp)
+PARSERrun(char *filename, FILE *fp)
 {
 	extern void SCAN_lex_init PROTO((char *,FILE *));
 	extern YYSTYPE yylval;
 	extern int yyerrstatus;
 	int tokenID;
+	parse_data_t parseData;
 
-	/* FIXME: should be using bu_malloc */
 	void *parser = ParseAlloc(malloc);
+	perplex_t scanner = perplexFileScanner(fp);
+	parseData.scanner = scanner;
 
 	if (print_objects_while_running & OBJ_PASS_BITS) {
 		fprintf(stdout,"parse (pass 0)\n",EXPRESSpass);
@@ -611,15 +614,14 @@ PARSERrun(char *filename,FILE *fp)
 		fprintf(stdout,"parse: %s (schema file)\n",filename);
 	}
 
-	yyin = fp;
-	SCAN_lex_init(filename,fp);
+	SCAN_lex_init(filename, fp);
 	parserInitState();
 
 	yyerrstatus = 0;
-	while ((tokenID = yylex()) > 0) {
-	    Parse(parser, tokenID, yylval);
+	while ((tokenID = yylex(scanner)) > 0) {
+	    Parse(parser, tokenID, yylval, parseData);
 	}
-	Parse(parser, 0, yylval);
+	Parse(parser, 0, yylval, parseData);
 
 	/* want 0 on success, 1 on invalid input, 2 on memory exhaustion */
 	if (yyerrstatus != 0) {
@@ -630,7 +632,7 @@ PARSERrun(char *filename,FILE *fp)
 	}
 	EXPRESSpass = 1;
 
-	/* FIXME: should be using bu_free */
+	perplexFree(scanner);
 	ParseFree(parser, free);
 
 	return yyexpresult;
