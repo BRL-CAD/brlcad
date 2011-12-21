@@ -78,6 +78,8 @@ perplex_t perplexFileScanner(FILE *input);
 perplex_t perplexStringScanner(char *firstChar, size_t numChars);
 void perplexFree(perplex_t scanner);
 
+void perplexUnput(perplex_t scanner, char c);
+
 #ifndef PERPLEX_LEXER
 #define PERPLEX_LEXER yylex
 #endif
