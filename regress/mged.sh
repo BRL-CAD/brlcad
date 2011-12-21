@@ -51,35 +51,23 @@ if test ! -f "$MGED" ; then
     exit 1
 fi
 
-
-# test all commands
 echo "testing mged commands..."
 
-# make an empty database
+
+# make an almost empty database to make sure mged runs
 rm -f mged.g
 $MGED -c > mged.log 2>&1 <<EOF
 opendb mged.g y
-quit
-EOF
-
-# make an almost empty database
-rm -f mged2.g
-$MGED -c > mged2.log 2>&1 <<EOF
-opendb mged2.g y
 in t.s sph 0 0 0 1
 r t.r u t.s
 g all t.r
-q
+quit
 EOF
-
-
-tgms="mged.g mged2.g"
-for t in $tgms ; do
-  if test ! -f $t ; then
-    echo "Test file '$t' is missing. Unable to run mged, aborting"
+if test ! -f mged.g ; then
+    echo "Test file 'mged.g' is missing. Unable to run mged, aborting"
     exit 1
-  fi
-done
+fi
+
 
 # collect all current commands
 cmds="`$MGED -c mged.g ? 2>&1 | grep -v Using`"
@@ -87,6 +75,7 @@ help="`$MGED -c mged.g help 2>&1 | grep -v Using`"
 # cmds="$cmds `$MGED -c mged.g ?lib 2>&1`"
 # cmds="$cmds `$MGED -c mged.g ?devel 2>&1`"
 
+# test all commands
 FAILED=0
 for cmd in $cmds ; do
     echo "...$cmd"
