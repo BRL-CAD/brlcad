@@ -94,18 +94,34 @@ MACRO(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
 		STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1.h"   LEMON_GEN_HEADER "${INPUT_NAME}")
 		STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1.out" LEMON_GEN_OUT    "${INPUT_NAME}")
 
-		SET(LEMON_${Name}_OUTPUTS ${LemonSource} ${LemonHeader} ${LEMON_GEN_OUT})
-
-		# copy input to bin directory, run lemon, and rename generated outputs
+		# copy input to bin directory and run lemon
 		ADD_CUSTOM_COMMAND(
-			OUTPUT ${LEMON_${Name}_OUTPUTS}
-			COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/${LemonInput} ${LEMON_BIN_INPUT}
-			COMMAND ${LEMON_EXECUTABLE} ${INPUT_NAME} ${LEMON_${Name}_EXTRA_ARGS}
-			COMMAND ${CMAKE_COMMAND} -E rename ${LEMON_GEN_SOURCE} ${LemonSource}
-			COMMAND ${CMAKE_COMMAND} -E rename ${LEMON_GEN_HEADER} ${LemonHeader}
-			DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET}
-			COMMENT "[LEMON][${Name}] Building parser with ${LEMON_EXECUTABLE}"
-		)
+		    OUTPUT ${LEMON_GEN_OUT} ${LEMON_GEN_SOURCE} ${LEMON_GEN_HEADER}
+		    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/${LemonInput} ${LEMON_BIN_INPUT}
+		    COMMAND ${LEMON_EXECUTABLE} ${INPUT_NAME} ${LEMON_${Name}_EXTRA_ARGS}
+		    DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET}
+		    COMMENT "[LEMON][${Name}] Building parser with ${LEMON_EXECUTABLE}"
+		    )
+
+		# rename generated outputs
+		IF(NOT "${LemonSource}" STREQUAL "${LEMON_GEN_SOURCE}")
+		    ADD_CUSTOM_COMMAND(
+			OUTPUT ${LemonSource} 
+			COMMAND ${CMAKE_COMMAND} -E copy ${LEMON_GEN_SOURCE} ${LemonSource}
+			DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET} ${LEMON_GEN_SOURCE} 
+			)
+		    SET(LEMON_${Name}_OUTPUTS ${LemonSource} ${LEMON_${Name}_OUTPUTS})
+		ENDIF(NOT "${LemonSource}" STREQUAL "${LEMON_GEN_SOURCE}")
+		IF(NOT "${LemonHeader}" STREQUAL "${LEMON_GEN_HEADER}")
+		    ADD_CUSTOM_COMMAND(
+			OUTPUT ${LemonHeader}
+			COMMAND ${CMAKE_COMMAND} -E copy ${LEMON_GEN_HEADER} ${LemonHeader}
+			DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET} ${LEMON_GEN_HEADER} 
+			)
+		    SET(LEMON_${Name}_OUTPUTS ${LemonHeader} ${LEMON_${Name}_OUTPUTS})
+		ENDIF(NOT "${LemonHeader}" STREQUAL "${LEMON_GEN_HEADER}")
+
+		SET(LEMON_${Name}_OUTPUTS ${LEMON_GEN_OUT} ${LemonSource} ${LemonHeader})
 
 		# macro ran successfully
 		SET(LEMON_${Name}_DEFINED TRUE)
