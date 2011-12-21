@@ -51,8 +51,15 @@ if test ! -f "$MGED" ; then
     exit 1
 fi
 
-echo "testing mged commands..."
+touch mged.g
+output="`$MGED -c mged.g quit 2>&1`"
+if test $? != 0 ; then
+    echo "Output: $output"
+    echo "Unable to run mged, aborting"
+    exit 1
+fi
 
+echo "testing mged commands..."
 
 # make an almost empty database to make sure mged runs
 rm -f mged.g
@@ -64,10 +71,10 @@ g all t.r
 quit
 EOF
 if test ! -f mged.g ; then
+    cat mged.log
     echo "Test file 'mged.g' is missing. Unable to run mged, aborting"
     exit 1
 fi
-
 
 # collect all current commands
 cmds="`$MGED -c mged.g ? 2>&1 | grep -v Using`"
@@ -87,7 +94,6 @@ exit
 EOF
 	if test $? != 0 ; then
 	    echo "ERROR: $cmd returned non-zero exit status $?"
-	    echo "Output: $output"
 	    FAILED="`expr $FAILED + 1`"
 	fi
 	continue
