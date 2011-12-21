@@ -53,19 +53,19 @@ int mbo_getopt(int argc, char *const *argv, const mbo_opt_struct *opts, char **o
     int opts_idx = -1;
 
     if (*optind >= argc) {
-        return (EOF);
+        return (-1);
     }
 
     if (!dash) {
         if ((argv[*optind][0] != '-')) {
-            return (EOF);
+            return (-1);
         } else {
             if (!argv[*optind][1]) {
                 /*
                 * use to specify stdin. Need to let pgm process this and
                 * the following args
                 */
-                return (EOF);
+                return (-1);
             }
         }
     }
@@ -74,7 +74,7 @@ int mbo_getopt(int argc, char *const *argv, const mbo_opt_struct *opts, char **o
         /* '--' indicates end of args if not followed by a known long option name */
         if (argv[*optind][2] == '\0') {
             (*optind)++;
-            return(EOF);
+            return(-1);
         }
 
         while (1) {
