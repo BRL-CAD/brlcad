@@ -46,30 +46,54 @@ main(int ac, char *av[])
     if (ac > 1)
 	printf("Usage: %s\n", av[0]);
 
-#define CMPU(in, out) compare((in), bu_str_unescape((in), buffer, 32), (out))
-    CMPU(NULL, "");
-    CMPU("", "");
-    CMPU(" ", " ");
-    CMPU("hello", "hello");
-    CMPU("\"", "\"");
-    CMPU("\'", "\'");
-    CMPU("\\", "");
-    CMPU("\\\"", "\"");
-    CMPU("\\\\", "\\");
-    CMPU("\"hello\"", "\"hello\"");
-    CMPU("\'hello\'", "'hello'");
-    CMPU("\\hello", "hello");
-    CMPU("\\hello\"", "hello\"");
-    CMPU("hello\\\\", "hello\\");
-    CMPU("\"hello\'\"", "\"hello'\"");
-    CMPU("\"hello\'", "\"hello'");
-    CMPU("\'hello\'", "'hello'");
-    CMPU("\'hello\"", "'hello\"");
-    CMPU("\"\"hello\"", "\"\"hello\"");
-    CMPU("\'\'hello\'\'", "''hello''");
-    CMPU("\'\"hello\"\'", "'\"hello\"'");
-    CMPU("\"\"hello\"\"", "\"\"hello\"\"");
-    CMPU("\\\"\\\"\\\"hello\\", "\"\"\"hello");
+#define CMP_UNESC(in, out) compare((in), bu_str_unescape((in), buffer, 32), (out))
+    CMP_UNESC(NULL, "");
+    CMP_UNESC("", "");
+    CMP_UNESC(" ", " ");
+    CMP_UNESC("hello", "hello");
+    CMP_UNESC("\"", "\"");
+    CMP_UNESC("\'", "\'");
+    CMP_UNESC("\\", "");
+    CMP_UNESC("\\\"", "\"");
+    CMP_UNESC("\\\\", "\\");
+    CMP_UNESC("\"hello\"", "\"hello\"");
+    CMP_UNESC("\'hello\'", "'hello'");
+    CMP_UNESC("\\hello", "hello");
+    CMP_UNESC("\\hello\"", "hello\"");
+    CMP_UNESC("hello\\\\", "hello\\");
+    CMP_UNESC("\"hello\'\"", "\"hello'\"");
+    CMP_UNESC("\"hello\'", "\"hello'");
+    CMP_UNESC("\'hello\'", "'hello'");
+    CMP_UNESC("\'hello\"", "'hello\"");
+    CMP_UNESC("\"\"hello\"", "\"\"hello\"");
+    CMP_UNESC("\'\'hello\'\'", "''hello''");
+    CMP_UNESC("\'\"hello\"\'", "'\"hello\"'");
+    CMP_UNESC("\"\"hello\"\"", "\"\"hello\"\"");
+    CMP_UNESC("\\\"\\\"\\\"hello\\", "\"\"\"hello");
+
+#define CMP_ESC(in, c, out) compare((in), bu_str_escape((in), (c), buffer, 32), (out))
+    CMP_ESC(NULL, NULL, "");
+    CMP_ESC(NULL, "", "");
+    CMP_ESC("", NULL, "");
+    CMP_ESC("", "", "");
+    CMP_ESC(" ", "", " ");
+    CMP_ESC(" ", " ", "\\ ");
+    CMP_ESC("  ", " ", "\\ \\ ");
+    CMP_ESC("h e l l o", " ", "h\\ e\\ l\\ l\\ o");
+    CMP_ESC("h\\ ello", " ", "h\\\\ ello");
+    CMP_ESC("", "\\", "");
+    CMP_ESC("\\", "\\", "\\\\");
+    CMP_ESC("\\\\", "\\", "\\\\\\\\");
+    CMP_ESC("\\a\\b", "\\", "\\\\a\\\\b");
+    CMP_ESC("abc", "a", "\\abc");
+    CMP_ESC("abc", "b", "a\\bc");
+    CMP_ESC("abc", "c", "ab\\c");
+    CMP_ESC("abc", "ab", "\\a\\bc");
+    CMP_ESC("abc", "bc", "a\\b\\c");
+    CMP_ESC("abc", "abc", "\\a\\b\\c");
+    CMP_ESC("aaa", "bc", "aaa");
+    CMP_ESC("aaa", "a", "\\a\\a\\a");
+    CMP_ESC("aaa", "aaa", "\\a\\a\\a");
 
     printf("%s: testing complete\n", av[0]);
     return 0;
