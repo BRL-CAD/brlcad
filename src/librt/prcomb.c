@@ -60,7 +60,6 @@ main(int argc, char *argv[])
     struct rt_comb_internal *comb;
     mat_t identity_mat;
     int i;
-    struct bu_vls file = BU_VLS_INIT_ZERO;
 
     bu_debug = BU_DEBUG_MEM_CHECK | BU_DEBUG_COREDUMP;
 
