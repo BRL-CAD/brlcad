@@ -3180,6 +3180,10 @@ package provide cadwidgets::Ged 1.0
 	# Replace the mLastDataIndex point with this point
 	eval $mGed data_polygons $itk_component($_pane) replace_point $mLastDataIndex [list $point]
     }
+
+    foreach callback $mDataPolygonCallbacks {
+	catch {$callback $mLastDataIndex}
+    }
 }
 
 
@@ -3204,7 +3208,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     foreach callback $mDataPolygonCallbacks {
-	catch {$callback}
+	catch {$callback $mLastDataIndex}
     }
 }
 
@@ -3231,7 +3235,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     foreach callback $mDataPolygonCallbacks {
-	catch {$callback}
+	catch {$callback $mLastDataIndex}
     }
 }
 
@@ -3257,7 +3261,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     foreach callback $mDataPolygonCallbacks {
-	catch {$callback}
+	catch {$callback $mLastDataIndex}
     }
 }
 
@@ -3283,7 +3287,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     foreach callback $mDataPolygonCallbacks {
-	catch {$callback}
+	catch {$callback $mLastDataIndex}
     }
 }
 
