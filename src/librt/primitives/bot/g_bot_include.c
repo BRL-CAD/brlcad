@@ -87,10 +87,10 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
 
     if ((bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && (bot->bot_flags & RT_BOT_USE_NORMALS) && vertex_normals) {
 	trip->tri_normals = (NORM_TYPE *)bu_malloc(9 * sizeof(NORM_TYPE), "trip->tri_normals");
-	for (i=0; i<3; i++) {
+	for (i = 0; i < 3; i++) {
 	    size_t j;
 
-	    for (j=0; j<3; j++) {
+	    for (j = 0; j < 3; j++) {
 		trip->tri_normals[i*3+j] = vertex_normals[i*3+j] * NORMAL_SCALE;
 	    }
 	}
@@ -264,7 +264,7 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip
 	bot->bot_facemode = bu_bitv_dup(bot_ip->face_mode);
     bot->bot_facelist = (XGLUE(tri_specific_, TRI_TYPE) *)NULL;
 
-    for (tri_index=0; tri_index < bot_ip->num_faces; tri_index++) {
+    for (tri_index = 0; tri_index < bot_ip->num_faces; tri_index++) {
 	point_t p1, p2, p3;
 	long default_normal=-1;
 	size_t pt1, pt2, pt3;
@@ -293,7 +293,7 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip
 
 	if ((bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && (bot_ip->bot_flags & RT_BOT_USE_NORMALS)
 	    && (bot_ip->num_normals > 0) && (bot_ip->num_face_normals > tri_index)) {
-	    for (i=0; i<3; i++) {
+	    for (i = 0; i < 3; i++) {
 		size_t idx;
 
 		idx = bot_ip->face_normals[tri_index*3 + i];
@@ -307,7 +307,7 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip
 	    } else {
 		fastf_t normals[9];
 
-		for (i=0; i<3; i++) {
+		for (i = 0; i < 3; i++) {
 		    size_t idx;
 
 		    idx = bot_ip->face_normals[tri_index*3 + i];
@@ -400,7 +400,7 @@ XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
 
     if (rp) RT_CK_RAY(rp);
 
-    for (i=0; i < nhits; i++) {
+    for (i = 0; i < nhits; i++) {
 	XGLUE(tri_specific_, TRI_TYPE) *trip=(XGLUE(tri_specific_, TRI_TYPE) *)hits[i].hit_private;
 
 	surfno = hits[i].hit_surfno;
@@ -500,14 +500,14 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
     }
 
     /* Remove duplicate hits */
-    for (i=0; i<nhits-1; i++) {
+    for (i = 0; i < nhits - 1; i++) {
 	fastf_t dist;
 
 	dist = hits[i].hit_dist - hits[i+1].hit_dist;
 	if (NEAR_ZERO(dist, ap->a_rt_i->rti_tol.dist)) {
 	    removed++;
 	    rm_dist = hits[i+1].hit_dist;
-	    for (j=i; j<nhits-1; j++)
+	    for (j = i; j < nhits - 1; j++)
 		hits[j] = hits[j+1];
 	    nhits--;
 	    i--;
@@ -523,9 +523,9 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
 	 * duplicate, then it was likely on an edge, so remove the one
 	 * we left.
 	 */
-	for (i=0; i<nhits; i++) {
+	for (i = 0; i < nhits; i++) {
 	    if (ZERO(hits[i].hit_dist - rm_dist)) {
-		for (j=i; j<nhits-1; j++)
+		for (j = i; j < nhits - 1; j++)
 		    hits[j] = hits[j+1];
 		nhits--;
 		i--;
@@ -534,7 +534,7 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
 	}
     }
 
-    for (i=0; i<(nhits&~1); i += 2) {
+    for (i = 0; i < (nhits&~1); i += 2) {
 	XGLUE(tri_specific_, TRI_TYPE) *trip;
 
 	RT_GET_SEG(segp, ap->a_resource);
@@ -588,7 +588,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
     RT_CK_SOLTAB(stp);
 
     if (bot->bot_mode == RT_BOT_SURFACE) {
-	for (i=0; i<snhits; i++) {
+	for (i = 0; i < snhits; i++) {
 	    XGLUE(tri_specific_, TRI_TYPE) *trip=(XGLUE(tri_specific_, TRI_TYPE) *)hits[i].hit_private;
 
 	    RT_GET_SEG(segp, ap->a_resource);
@@ -623,7 +623,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
     {
 	register ssize_t j, k, l;
 
-	for (i=0; i<snhits-1; i++) {
+	for (i = 0; i < snhits-1; i++) {
 	    fastf_t dist;
 	    fastf_t dn;
 
@@ -643,7 +643,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 	    if ((k - i) == 2 && dn * hits[i+1].hit_vpriv[X] > 0) {
 		/* a pair of hits at the same distance and both are exits or entrances,
 		 * likely an edge hit, remove one */
-		for (j=i; j<snhits-1; j++)
+		for (j = i; j < snhits - 1; j++)
 		    hits[j] = hits[j+1];
 		if (psp) {
 		    psp->htab.end--;
@@ -662,7 +662,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 		 * unless they are all entrances or all exits, then just keep one */
 
 		/* first check if we need to do anything */
-		for (j=0; j<k; j++) {
+		for (j = 0; j < k; j++) {
 		    if (hits[j].hit_vpriv[X] > 0)
 			exits++;
 		    else
@@ -683,7 +683,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 		    struct hit tmp_hit;
 		    int changed=0;
 
-		    for (j=i; j<k; j++) {
+		    for (j = i; j < k; j++) {
 
 			if (j%2) {
 			    if (hits[j].hit_vpriv[X] > 0) {
@@ -733,7 +733,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 			/* if we have re-ordered these hits, make sure they are really
 			 * at the same distance.
 			 */
-			for (j=i+1; j<k; j++) {
+			for (j = i + 1; j < k; j++) {
 			    hits[j].hit_dist = hits[i].hit_dist;
 			}
 		    }
@@ -747,7 +747,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 		    } else {
 			dn = hits[i-1].hit_vpriv[X];
 		    }
-		    for (j=i; j<k; j++) {
+		    for (j = i; j < k; j++) {
 			if (hits[j].hit_vpriv[X] > 0)
 			    exits++;
 			else
@@ -770,7 +770,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 			 */
 			if (exits == k - i || enters == k - i) {
 			    /* eliminate all but one entrance or exit */
-			    for (j=k-1; j>i; j--) {
+			    for (j = k - 1; j > i; j--) {
 				/* delete this hit */
 				for (l=j; l<snhits-1; l++)
 				    hits[l] = hits[l+1];
@@ -783,7 +783,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 			}
 		    } else {
 			/* found an entrance and an exit to keep */
-			for (j=k-1; j>=i; j--) {
+			for (j = k - 1; j >= i; j--) {
 			    if (j != keep1 && j != keep2) {
 				/* delete this hit */
 				for (l=j; l<snhits-1; l++)
@@ -838,18 +838,18 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 	 *           |                                   |
 	 *
 	 */
-	for (i=0; i<snhits-1; i++) {
+	for (i = 0; i < snhits-1; i++) {
 	    if (hits[i].hit_vpriv[X] < 0.0) { /* entering */
 		k = i + 1;
 		while ((k < snhits) && (hits[k].hit_vpriv[X] < 0.0)) {
-		    for (j=i; j<snhits-1; j++)
+		    for (j = i; j < snhits-1; j++)
 			hits[j] = hits[j+1];
 		    snhits--;
 		}
 	    } else if (hits[i].hit_vpriv[X] > 0.0) { /* exiting */
 		k = i + 1;
 		while ((k < snhits) && (hits[k].hit_vpriv[X] > 0.0)) {
-		    for (j=i+1; j<snhits-1; j++)
+		    for (j = i + 1; j < snhits - 1; j++)
 			hits[j] = hits[j+1];
 		    snhits--;
 		}
@@ -895,7 +895,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
     while (snhits > 0 && hits[0].hit_vpriv[X] > 0.0) {
 	ssize_t j;
 
-	for (j=1; j<snhits; j++) {
+	for (j = 1; j < snhits; j++) {
 	    hits[j-1] = hits[j];
 	}
 	snhits--;
@@ -942,7 +942,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 			i++;
 			continue;
 		    }
-		    for (j=snhits; j>i; j--)
+		    for (j = snhits; j > i; j--)
 			hits[j] = hits[j-1];	/* struct copy */
 
 		    hits[i].hit_vpriv[X] = -hits[i].hit_vpriv[X];
@@ -968,7 +968,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 			i++;
 			continue;
 		    }
-		    for (j=snhits; j>i; j--)
+		    for (j = snhits; j > i; j--)
 			hits[j] = hits[j-1];	/* struct copy */
 
 		    hits[i] = hits[i-1];	/* struct copy */
@@ -1000,7 +1000,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
     }
 
     /* snhits is even, build segments */
-    for (i=0; i < snhits; i += 2) {
+    for (i = 0; i < snhits; i += 2) {
 	XGLUE(tri_specific_, TRI_TYPE) *trip;
 
 	RT_GET_SEG(segp, ap->a_resource);
@@ -1318,7 +1318,7 @@ XGLUE(rt_bot_norm_, TRI_TYPE)(struct bot_specific *bot, struct hit *hitp, struct
 	if (u < 0.0) u = 0.0;
 	VSETALL(hitp->hit_normal, 0.0);
 
-	for (i=X ; i<=Z; i++) {
+	for (i = X; i <= Z; i++) {
 	    hitp->hit_normal[i] = u*trip->tri_normals[i]*ONE_OVER_SCALE + v*trip->tri_normals[i+3]*ONE_OVER_SCALE + w*trip->tri_normals[i+6]*ONE_OVER_SCALE;
 	}
 	VUNITIZE(hitp->hit_normal);
