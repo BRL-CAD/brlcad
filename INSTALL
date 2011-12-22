@@ -101,7 +101,7 @@ Generic Binary Distributions:
 For the unspecialized binary distributions that are basically
 compressed tarballs of the installation root, they should contain the
 entire hierarchy of the distribution.  To put that hierarchy in its
-"installed" location, you just create the dirctory and move the
+"installed" location, you just create the directory and move the
 expanded tarball contents:
 
 gunzip BRL-CAD_7.2.4_Linux_ia64.tar.gz
@@ -115,7 +115,7 @@ and bzip2.  By default, BRL-CAD expects to be installed into
 but this is not guaranteed. It's recommended that you start from a source 
 distribution if you would like to install into an alternate installation
 location.  That said, if you do desire to install and/or run BRL-CAD from 
-a different location, give it a try... on some platforms it will work.
+a different location, give it a try...on some platforms it will work.
 
 Something to be aware of - even if a binary distribution IS relocatable, 
 it will use its local copies of things like libraries only so long as the
