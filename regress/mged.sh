@@ -157,6 +157,7 @@ fi
 
 # clean up
 # remove test databases
+tgms="mged.g"
 for t in $tgms ; do
   if test -f $t ; then
     rm $t
