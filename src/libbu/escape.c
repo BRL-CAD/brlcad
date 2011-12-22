@@ -25,12 +25,24 @@
 #include "bu.h"
 
 
-static void
+static int
 expand_expression(const char *expression, struct bu_vls *vp)
 {
-    bu_vls_strcpy(vp, expression);
+    const char *ep = expression;
 
-    return;
+    if (!expression)
+	return 0;
+
+    /* skip circumflex */
+    if (ep[0] == '^')
+	ep++;
+
+    bu_vls_extend(vp, 255); /* max ascii */
+    for (const char *cp = ep; *cp != '\0'; cp++) {
+	bu_vls_strncat(vp, cp, 1);
+    }
+
+    return (expression[0] == '^');
 }
 
 
@@ -42,6 +54,7 @@ bu_str_escape(const char *input, const char *expression, char *output, size_t si
     struct bu_vls v = BU_VLS_INIT_ZERO;
     char *chars = NULL;
     char *incpy = NULL;
+    int negative = 0;
     size_t need = 0;
     size_t i = 0;
 
@@ -49,7 +62,7 @@ bu_str_escape(const char *input, const char *expression, char *output, size_t si
 	return bu_strdup("");
 
     /* expand the expression to the list of chars it represents */
-    expand_expression(expression, &v);
+    negative = expand_expression(expression, &v);
     chars = bu_vls_strgrab(&v);
 
     /* first pass, calculate space requirement.  this is done so we
@@ -59,7 +72,9 @@ bu_str_escape(const char *input, const char *expression, char *output, size_t si
     need = strlen(input);
     for (c = input; *c != '\0'; c++) {
 	for (esc = chars; *esc != '\0'; esc++) {
-	    if (*c == *esc) {
+	    if ((*c == *esc && !negative)
+		|| (*c != *esc && negative))
+	    {
 		need++;
 		break;
 	    }
@@ -89,7 +104,9 @@ bu_str_escape(const char *input, const char *expression, char *output, size_t si
      */
     for (c = incpy ? incpy : input; *c != '\0'; c++) {
 	for (esc = chars; *esc != '\0'; esc++) {
-	    if (*c == *esc) {
+	    if ((*c == *esc && !negative)
+		|| (*c != *esc && negative))
+	    {
 		output[i++] = '\\';
 		break;
 	    }
@@ -101,6 +118,7 @@ bu_str_escape(const char *input, const char *expression, char *output, size_t si
 
     if (incpy)
 	bu_free(incpy, "bu_str_escape strdup");
+    bu_vls_free(&v);
 
     return output;
 }
