@@ -287,7 +287,7 @@ bu_vls_strgrab(struct bu_vls *vp)
 
     BU_CK_VLS(vp);
 
-    if (vp->vls_offset != 0) {
+    if (vp->vls_offset != 0 || !vp->vls_str) {
 	str = bu_vls_strdup(vp);
 	bu_vls_free(vp);
 	return str;
