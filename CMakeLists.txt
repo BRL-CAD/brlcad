@@ -555,7 +555,7 @@ ENDIF(NOT DATA_DIR)
 
 # The location in which to install BRL-CAD Manual pages
 IF(NOT MAN_DIR)
-	SET(MAN_DIR man)
+	SET(MAN_DIR ${DATA_DIR}/man)
 ENDIF(NOT MAN_DIR)
 
 # The location in which to install BRL-CAD documentation files
