@@ -71,12 +71,21 @@ bu_str_escape(const char *input, const char *expression, char *output, size_t si
      */
     need = strlen(input);
     for (c = input; *c != '\0'; c++) {
-	for (esc = chars; *esc != '\0'; esc++) {
-	    if ((*c == *esc && !negative)
-		|| (*c != *esc && negative))
-	    {
+	if (negative) {
+	    for (esc = chars; *esc != '\0'; esc++) {
+		if (*c == *esc) {
+		    break;
+		}
+	    }
+	    if (*esc == '\0') {
 		need++;
-		break;
+	    }
+	} else {
+	    for (esc = chars; *esc != '\0'; esc++) {
+		if (*c == *esc) {
+		    need++;
+		    break;
+		}
 	    }
 	}
     }
@@ -103,12 +112,21 @@ bu_str_escape(const char *input, const char *expression, char *output, size_t si
      * characters to escape.  write to the output buffer.
      */
     for (c = incpy ? incpy : input; *c != '\0'; c++) {
-	for (esc = chars; *esc != '\0'; esc++) {
-	    if ((*c == *esc && !negative)
-		|| (*c != *esc && negative))
-	    {
+	if (negative) {
+	    for (esc = chars; *esc != '\0'; esc++) {
+		if (*c == *esc) {
+		    break;
+		}
+	    }
+	    if (*esc == '\0') {
 		output[i++] = '\\';
-		break;
+	    }
+	} else {
+	    for (esc = chars; *esc != '\0'; esc++) {
+		if (*c == *esc) {
+		    output[i++] = '\\';
+		    break;
+		}
 	    }
 	}
 	output[i++] = *c;
@@ -118,7 +136,7 @@ bu_str_escape(const char *input, const char *expression, char *output, size_t si
 
     if (incpy)
 	bu_free(incpy, "bu_str_escape strdup");
-    bu_vls_free(&v);
+    bu_free(chars, "free strgrab");
 
     return output;
 }
