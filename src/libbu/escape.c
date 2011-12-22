@@ -25,17 +25,32 @@
 #include "bu.h"
 
 
+static void
+expand_expression(const char *expression, struct bu_vls *vp)
+{
+    bu_vls_strcpy(vp, expression);
+
+    return;
+}
+
+
 char *
-bu_str_escape(const char *input, const char *chars, char *output, size_t size)
+bu_str_escape(const char *input, const char *expression, char *output, size_t size)
 {
     const char *c = NULL;
     const char *esc = NULL;
+    struct bu_vls v = BU_VLS_INIT_ZERO;
+    char *chars = NULL;
     char *incpy = NULL;
     size_t need = 0;
     size_t i = 0;
 
     if (UNLIKELY(!input))
 	return bu_strdup("");
+
+    /* expand the expression to the list of chars it represents */
+    expand_expression(expression, &v);
+    chars = bu_vls_strgrab(&v);
 
     /* first pass, calculate space requirement.  this is done so we
      * don't partially fill the output buffer before bombing because
