@@ -115,7 +115,6 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-
     VSETALL(rpp_min, MAX_FASTF);
     VSETALL(rpp_max, -MAX_FASTF);
     for (i = 0; i < argc; i++) {
