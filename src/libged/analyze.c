@@ -159,7 +159,7 @@ analyze_face(struct ged *gedp, int face, fastf_t *center_pt, const struct rt_arb
 	return 0;
     }
 
-    /* the plane equations returned by planeqn above do not
+    /* The plane equations returned by planeqn above do not
      * necessarily point outward. Use the reference center
      * point for the arb and reverse direction for
      * any errant planes. This corrects the output rotation,
