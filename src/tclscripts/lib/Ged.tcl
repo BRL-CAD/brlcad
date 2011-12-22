@@ -3808,6 +3808,12 @@ package provide cadwidgets::Ged 1.0
 	    set labels [$mGed data_labels $itk_component($_pane) labels]
 	    set label [lindex $labels $dindex]
 	    set point [lindex $label 1]
+	} elseif {$dtype == "data_polygons"} {
+	    set polygons [$mGed data_polygons $itk_component($_pane) polygons]
+	    set i [lindex $dindex 0]
+	    set j [lindex $dindex 1]
+	    set k [lindex $dindex 2]
+	    set point [lindex [lindex [lindex $polygons $i] $j] $k]
 	} else {
 	    set points [$mGed $dtype $itk_component($_pane) points]
 	    set point [lindex $points $dindex]
