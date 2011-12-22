@@ -28,7 +28,7 @@
       bounding box for an object or set of objects supplied as arguments,
       and reports information about bounding box dimensions at the MGED
       command prompt.  It supports various options, most of which control
-      the type of information reported.  It can optionally creat an ARB8
+      the type of information reported.  It can optionally create an ARB8
       in a database corresponding to the bounding box of the object(s).
     </para>
       
