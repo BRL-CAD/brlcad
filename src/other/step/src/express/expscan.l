@@ -114,7 +114,7 @@ enum { INITIAL, code, comment, return_end_schema };
 extern void	yyerror();
 extern int	yylineno;
 extern Boolean	yyeof;
-static int	nesting_level;
+static int	nesting_level = 0;
 
 /* can't imagine this will ever be more than 2 or 3 - DEL */
 #define MAX_NESTED_COMMENTS 20
@@ -153,7 +153,6 @@ SCANnextchar(char* buffer)
 	return 0;
 }
 
-#undef yywrap
 static int
 yywrap()
 {
@@ -203,7 +202,7 @@ id_char	= [A-Za-z0-9_];
     SCANsave_comment(yytext);
 }
 
-<*>"(*" :=> comment {
+<*>"(*" => comment {
     /* nested comment errors will occur with most deeply nested - DEL */
     if (nesting_level < MAX_NESTED_COMMENTS) {
 	open_comment[nesting_level].line = yylineno;
@@ -225,7 +224,7 @@ integer {
 }
 
 /* binary literal */
-"\%"[01]+ {
+'%'[01]+ {
     return SCANprocess_binary_literal(yytext);
 }
 

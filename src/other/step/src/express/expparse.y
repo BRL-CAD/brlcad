@@ -2451,6 +2451,7 @@ while_control(A) ::= TOK_WHILE expression(B).
 
 %syntax_error {
     yyerrstatus++;
+    fprintf(stderr, "Express parser experienced syntax error at line %d.\n", yylineno);
 }
 
 %stack_overflow {
