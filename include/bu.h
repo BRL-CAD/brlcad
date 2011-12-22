@@ -4786,10 +4786,9 @@ BU_EXPORT extern void bu_vls_free(struct bu_vls *vp);
  */
 BU_EXPORT extern void bu_vls_vlsfree(struct bu_vls *vp);
 /**
- * Make an "ordinary" string copy of a vls string.  Storage for the
- * regular string is acquired using malloc.
- *
- * The source string is not affected.
+ * Return a dynamic copy of a vls.  Memory for the string being
+ * returned is acquired using bu_malloc() implying the caller must
+ * bu_free() the returned string.
  */
 BU_EXPORT extern char *bu_vls_strdup(const struct bu_vls *vp);
 
@@ -5176,11 +5175,45 @@ BU_EXPORT extern int bu_strcmpm(const char *string1, const char *string2, const 
 
 /**
  * Escapes an input string with preceeding '\'s for any characters
- * defined in the 'chars' string.  The input string is written to the
+ * defined in the 'expression' string.  The input string is written to the
  * specified output buffer of 'size' capacity.  The input and output
  * pointers may overlap or be the same memory (assuming adequate space
  * is available).  If 'output' is NULL, then dynamic memory will be
  * allocated and returned.
+ *
+ * The 'expression' parameter is a regular "bracket expression"
+ * commonly used in globbing and POSIX regular expression character
+ * matching.  An expression can be either a matching list (default) or
+ * a non-matching list (starting with a circumflex '^' character).
+ * For example, "abc" matches any of the characters 'a', 'b', or 'c'.
+ * Specifying a non-matching list expression matches any character
+ * except for the ones listed after the circumflex.  For example,
+ * "^abc" matches any character except 'a', 'b', or 'c'.
+ *
+ * Backslash escape sequences are not allowed (e.g., \t or \x01) as
+ * '\' will be matched literally.
+ *
+ * A range expression consists of two characters separated by a hyphen
+ * and will match any single character between the two characters.
+ * For example, "0-9a-c" is equivalent to "0123456789abc".  To match a
+ * '-' dash literally, include it as the last or first (after any '^')
+ * character within the expression.
+ *
+ * The expression may also contain named character classes but only
+ * for ASCII input strings:
+ *
+ * [:alnum:] Alphanumeric characters: a-zA-Z0-9
+ * [:alpha:] Alphabetic characters: a-zA-Z
+ * [:blank:] Space and TAB characters
+ * [:cntrl:] Control characters: ACSII 0x00-0X7F
+ * [:digit:] Numeric characters: 0-9
+ * [:graph:] Characters that are both printable and visible: ASCII 0x21-0X7E
+ * [:lower:] Lowercase alphabetic characters: a-z
+ * [:print:] Visible and space characters (not control characters): ASCII 0x20-0X7E
+ * [:punct:] Punctuation characters (not letters, digits, control, or space): ][!"#$%&'()*+,./:;<=>?@^_`{|}~-\
+ * [:upper:] Uppercase alphabetic characters: A-Z
+ * [:xdigit:] Hexadecimal digits: a-fA-F0-9
+ * [:word:] (non-POSIX) Alphanumeric plus underscore: a-zA-Z0-9_
  *
  * A non-NULL output string is always returned.  This allows
  * expression chaining and embedding as function arguments but care
@@ -5199,13 +5232,13 @@ BU_EXPORT extern int bu_strcmpm(const char *string1, const char *string2, const 
  *   :: result == "my\\ fair\\ lady"
  *   :: buf == "my\ fair\ lady"
  *   bu_free(result, "bu_str_escape");
- *   result = bu_str_escape(buf, "abcdefghijklmnopqrstuvwxyz", buf, 128);
+ *   result = bu_str_escape(buf, "a-zA-Z", buf, 128);
  *   :: result == buf == "\m\y\ \f\a\i\r\ \l\a\d\y"
  *
  * This function should be thread safe and re-entrant if the
  * input/output buffers are not shared (and strlen() is threadsafe).
  */
-BU_EXPORT extern char *bu_str_escape(const char *input, const char *chars, char *output, size_t size);
+BU_EXPORT extern char *bu_str_escape(const char *input, const char *expression, char *output, size_t size);
 
 /**
  * Removes one level of '\' escapes from an input string.  The input
