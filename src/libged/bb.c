@@ -1,4 +1,4 @@
-/*                         B B S I Z E . C
+/*                         B B . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2011 United States Government as represented by
