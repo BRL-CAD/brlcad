@@ -42,10 +42,10 @@ main(int ac, char *av[])
     char *bufp;
     char buffer[32];
 
-    printf("Testing unescape\n");
-
     if (ac > 1)
 	printf("Usage: %s\n", av[0]);
+
+    printf("Testing unescape:\n");
 
 #define CMP_UNESC(in, out) compare((in), bu_str_unescape((in), buffer, 32), (out))
     CMP_UNESC(NULL, "");
@@ -72,17 +72,19 @@ main(int ac, char *av[])
     CMP_UNESC("\"\"hello\"\"", "\"\"hello\"\"");
     CMP_UNESC("\\\"\\\"\\\"hello\\", "\"\"\"hello");
 
+    printf("Testing escape:\n");
+
 #define CMP_ESC(in, c, out) compare((in), bu_str_escape((in), (c), buffer, 32), (out))
     CMP_ESC(NULL, NULL, "");
     CMP_ESC(NULL, "", "");
     CMP_ESC("", NULL, "");
     CMP_ESC("", "", "");
     CMP_ESC(" ", "", " ");
-    CMP_ESC(" ", " ", "\\ ");
-    CMP_ESC("  ", " ", "\\ \\ ");
+    CMP_ESC("[ ]", " ", "[\\ ]");
+    CMP_ESC("[  ]", " ", "[\\ \\ ]");
     CMP_ESC("h e l l o", " ", "h\\ e\\ l\\ l\\ o");
     CMP_ESC("h\\ ello", " ", "h\\\\ ello");
-    CMP_ESC("", "\\", "");
+    CMP_ESC("[]", "\\", "[]");
     CMP_ESC("\\", "\\", "\\\\");
     CMP_ESC("\\\\", "\\", "\\\\\\\\");
     CMP_ESC("\\a\\b", "\\", "\\\\a\\\\b");
@@ -95,6 +97,8 @@ main(int ac, char *av[])
     CMP_ESC("aaa", "bc", "aaa");
     CMP_ESC("aaa", "a", "\\a\\a\\a");
     CMP_ESC("aaa", "aaa", "\\a\\a\\a");
+
+    printf("Testing escape+unescape:\n");
 
     bufp = bu_str_unescape(bu_str_escape("abc", "b", buffer, 32), NULL, 0);
     compare("abc", bufp, "abc");
