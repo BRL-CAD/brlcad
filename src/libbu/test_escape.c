@@ -97,6 +97,15 @@ main(int ac, char *av[])
     CMP_ESC("aaa", "bc", "aaa");
     CMP_ESC("aaa", "a", "\\a\\a\\a");
     CMP_ESC("aaa", "aaa", "\\a\\a\\a");
+    CMP_ESC("abc", "^a", "a\\b\\c");
+    CMP_ESC("abc", "^b", "\\ab\\c");
+    CMP_ESC("abc", "^c", "\\a\\bc");
+    CMP_ESC("abc", "^ab", "ab\\c");
+    CMP_ESC("abc", "^bc", "\\abc");
+    CMP_ESC("abc", "^abc", "abc");
+    CMP_ESC("aaa", "^bc", "\\a\\a\\a");
+    CMP_ESC("aaa", "^a", "aaa");
+    CMP_ESC("aaa", "^aaa", "aaa");
 
     printf("Testing escape+unescape:\n");
 
