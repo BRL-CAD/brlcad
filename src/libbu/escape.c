@@ -29,6 +29,7 @@ static int
 expand_expression(const char *expression, struct bu_vls *vp)
 {
     const char *ep = expression;
+	const char *cp;
 
     if (!expression)
 	return 0;
@@ -38,7 +39,7 @@ expand_expression(const char *expression, struct bu_vls *vp)
 	ep++;
 
     bu_vls_extend(vp, 255); /* max ascii */
-    for (const char *cp = ep; *cp != '\0'; cp++) {
+    for (cp = ep; *cp != '\0'; cp++) {
 	bu_vls_strncat(vp, cp, 1);
     }
 
