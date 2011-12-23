@@ -136,7 +136,7 @@ BRLCAD_BUNDLED_LIBS is also AUTO.  perplex requires a working re2c.
 THIRD_PARTY_EXECUTABLE(perplex perplex "" perplex_ALIASES perplex_DESCRIPTION	NOSYS)
 INCLUDE(${BRLCAD_SOURCE_DIR}/misc/CMake/PERPLEX_Util.cmake)
 
-# libxml and libxslt tools for Docbook processing.  We build just
+# libxml and libxslt tools for DocBook processing.  We build just
 # enough library support to get these two tools working.
 SET(xsltproc_ALIASES ENABLE_XSLTPROC)
 SET(xsltproc_DESCRIPTION "
