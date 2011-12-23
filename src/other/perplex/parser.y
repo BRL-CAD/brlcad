@@ -156,6 +156,10 @@ rule ::= opt_condition pattern_or_name opt_special(OS) opt_code.
     } else {
 	writeCodeClose(appData);
     }
+
+    if(OS != NULL) {
+	free(OS);
+    }
 }
 rule ::= empty_condition opt_special opt_code.
 {

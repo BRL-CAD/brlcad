@@ -186,6 +186,7 @@ int main(int argc, char *argv[])
     appData->header = headerFile;
     appData->scanner_template = templateFile;
     appData->usingConditions = usingConditions;
+    appData->conditions = (char*)NULL;
 
     /* parse */
     while ((tokenID = yylex(scanner)) != YYEOF) {
@@ -193,10 +194,12 @@ int main(int argc, char *argv[])
     }
     Parse(parser, 0, appData->tokenData, appData);
 
+    fclose(inFile);
+    fclose(outFile);
+
     free(appData);
     ParseFree(parser, free);
     perplexFree(scanner);
-    fclose(inFile);
 
     return 0;
 }
