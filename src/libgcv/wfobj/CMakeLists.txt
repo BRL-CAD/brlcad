@@ -20,7 +20,6 @@ SET(OBJ_G_SRCS
 BRLCAD_ADDEXEC(obj-g "${OBJ_G_SRCS}" "libbu libbn librt libwdb")
 
 set(wfobj_ignore_files
-	Makefile.sample
 	obj_grammar_decls.h
 	obj_grammar.yy
 	obj_parser.h
