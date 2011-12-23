@@ -32,7 +32,7 @@ typedef union YYSTYPE
     float real;
     int integer;
     int reference[3];
-    bool toggle;
+    unsigned char toggle;
     size_t index;
     char string[TOKEN_STRING_LEN];
 } YYSTYPE;
