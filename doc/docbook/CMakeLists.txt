@@ -1,5 +1,5 @@
 
-# We need various configuration files set up for Docbook processing tools -
+# We need various configuration files set up for DocBook processing tools -
 # deal with those first
 FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/)
 
@@ -32,8 +32,8 @@ SET(XSL_XHTML_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-xh
 SET(XSL_MAN_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-man-stylesheet.xsl")
 SET(XSL_FO_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/other/standard/xsl/fo/docbook.xsl")
 
-# Include CMake macros for Docbook.
-include(${BRLCAD_SOURCE_DIR}/misc/CMake/Docbook.cmake)
+# Include CMake macros for DocBook.
+include(${BRLCAD_SOURCE_DIR}/misc/CMake/DocBook.cmake)
 
 # For the html files, we need brlcad.css
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/html/css)
