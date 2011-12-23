@@ -130,12 +130,23 @@ static void destroyParser(detail::parser_type *parser)
 
 static void destroyScanner(yyscan_t *scanner)
 {
-    perplexFree(*scanner);
+    struct extra_t *extra =
+	static_cast<struct extra_t*>(obj_parser_get_extra(*scanner));
+
+    free(extra);
+    obj_parser_set_extra(*scanner, NULL);
+
+    obj_parser_lex_destroy(*scanner);
 }
 
-static void setScannerExtra(yyscan_t scanner, detail::objCombinedState *extra)
+static void setScannerExtra(yyscan_t scanner, detail::objCombinedState *state)
 {
-    obj_parser_set_extra(scanner, extra);
+    struct extra_t *extra;
+
+    BU_GET(extra, struct extra_t);
+    extra->state = static_cast<void*>(state);
+
+    obj_parser_set_extra(scanner, static_cast<void*>(extra));
 }
 
 int obj_parser_create(obj_parser_t *parser)
@@ -179,31 +190,26 @@ int obj_parse(const char *filename, obj_parser_t parser,
     try {
 	std::auto_ptr<objFileContents> sentry(new objFileContents);
 
-	objCombinedState extra(p, sentry.get());
+	objCombinedState state(p, sentry.get());
 
 	if ((err =
-	     detail::open_file(std::string(filename), extra.parser_state))) {
+	     detail::open_file(std::string(filename), state.parser_state))) {
 	    return err;
 	}
 
 	yyscan_t scanner;
 
-        scanner = perplexFileScanner(extra.parser_state.file_stack.back().file.get());
-	setScannerExtra(scanner, &extra);
+        scanner = perplexFileScanner(state.parser_state.file_stack.back().file.get());
+	setScannerExtra(scanner, &state);
 
-	struct extra_t *scannerExtra = static_cast<struct extra_t*>(scanner->extra);
-
-	objCombinedState *state =
-	    static_cast<objCombinedState*>(scannerExtra->state);
-
-	state->parser = NULL;
-	createParser(&(state->parser));
+	state.parser = NULL;
+	createParser(&(state.parser));
 
 	err = obj_parser_parse(scanner);
 
-	p->last_error = extra.parser_state.err.str();
+	p->last_error = state.parser_state.err.str();
 
-	destroyParser(&(state->parser));
+	destroyParser(&(state.parser));
 	destroyScanner(&scanner);
 
 	if (err == 2) {
@@ -241,30 +247,25 @@ int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents)
     try {
 	std::auto_ptr<objFileContents> sentry(new objFileContents);
 
-	objCombinedState extra(p, sentry.get());
+	objCombinedState state(p, sentry.get());
 
-	if ((err = detail::set_stream(stream, extra.parser_state))) {
+	if ((err = detail::set_stream(stream, state.parser_state))) {
 	    return err;
 	}
 
 	yyscan_t scanner;
 
-	scanner = perplexFileScanner(extra.parser_state.file_stack.back().file.get());
-	setScannerExtra(scanner, &extra);
+	scanner = perplexFileScanner(state.parser_state.file_stack.back().file.get());
+	setScannerExtra(scanner, &state);
 
-	struct extra_t *scannerExtra = static_cast<struct extra_t*>(scanner->extra);
-
-	objCombinedState *state =
-	    static_cast<objCombinedState*>(scannerExtra->state);
-
-	state->parser = NULL;
-	createParser(&(state->parser));
+	state.parser = NULL;
+	createParser(&(state.parser));
 
 	err = obj_parser_parse(scanner);
 
-	p->last_error = extra.parser_state.err.str();
+	p->last_error = state.parser_state.err.str();
 
-	destroyParser(&(state->parser));
+	destroyParser(&(state.parser));
 	destroyScanner(&scanner);
 
 	if (err == 2) {

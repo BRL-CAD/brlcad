@@ -112,25 +112,25 @@ typedef objCombinedState::parser_state_type parser_state_type;
  */
 inline static parser_state_type & get_state(yyscan_t scanner)
 {
-    return static_cast<objCombinedState*>(obj_parser_get_extra(scanner))->
+    return static_cast<objCombinedState*>(obj_parser_get_state(scanner))->
 	parser_state;
 }
 
 inline static objCombinedState::basic_parser_type &get_parser(yyscan_t scanner)
 {
-    return *(static_cast<objCombinedState*>(obj_parser_get_extra(scanner))->
+    return *(static_cast<objCombinedState*>(obj_parser_get_state(scanner))->
 	    basic_parser);
 }
 
 inline static contents_type & get_contents(yyscan_t scanner)
 {
-    return *(static_cast<objCombinedState*>(obj_parser_get_extra(scanner))->
+    return *(static_cast<objCombinedState*>(obj_parser_get_state(scanner))->
 	    contents);
 }
 
 inline static objCombinedState & get_extra(yyscan_t scanner)
 {
-    return *static_cast<objCombinedState*>(obj_parser_get_extra(scanner));
+    return *static_cast<objCombinedState*>(obj_parser_get_state(scanner));
 }
 
 inline static size_t real_index(int val, std::size_t nvert)

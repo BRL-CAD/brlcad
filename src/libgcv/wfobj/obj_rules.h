@@ -57,6 +57,7 @@ struct extra_t {
 }; 
 
 void obj_parser_lex_destroy(yyscan_t scanner);
+void *obj_parser_get_state(yyscan_t scanner);
 void *obj_parser_get_extra(yyscan_t scanner);
 void obj_parser_set_extra(yyscan_t scanner, void *extra);
 

@@ -56,13 +56,17 @@ using namespace arl::obj_parser;
 
 void *obj_parser_get_extra(yyscan_t scanner)
 {
+    return scanner->extra;
+}
+
+void *obj_parser_get_state(yyscan_t scanner)
+{
     return static_cast<struct extra_t*>(scanner->extra)->state;
 }
 
 void obj_parser_set_extra(yyscan_t scanner, void *extra)
 {
-    BU_GET(scanner->extra, struct extra_t);
-    static_cast<struct extra_t*>(scanner->extra)->state = extra;
+    scanner->extra = extra;
 }
 
 void obj_parser_lex_destroy(yyscan_t scanner)
