@@ -23,7 +23,9 @@ SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 ADD_SUBDIRECTORY(wfobj)
 
-add_executable(test_bottess test_bottess.c)
-target_link_libraries(test_bottess libgcv)
+IF (NOT WIN32)
+    add_executable(test_bottess test_bottess.c)
+    target_link_libraries(test_bottess libgcv)
+ENDIF (NOT WIN32)
 
 CMAKEFILES(NOTES Makefile.am soup.h tri_intersect.h)
