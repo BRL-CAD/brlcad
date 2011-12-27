@@ -50,7 +50,7 @@
  *     int tokenID;
  *     perplex_t scanner;
  *      ...
- *     perplexFileScanner(scanner, inFile);
+ *     scanner = perplexFileScanner(inFile);
  *     while ((tokenID = yylex(scanner)) != YYEOF) {
  *      ...
  *     }
