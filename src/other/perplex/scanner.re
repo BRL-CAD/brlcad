@@ -341,7 +341,7 @@ bufferAppend(perplex_t scanner, size_t n)
     size_t markerOffset, tokenStartOffset, cursorOffset;
 
     buf = scanner->buffer;
-    in = scanner->in.file;
+    in = scanner->inFile;
 
     /* save marker offsets */
     bufStart = (char*)buf->elts;
@@ -485,8 +485,7 @@ perplexFileScanner(FILE *input)
     char *bufFirst;
     perplex_t scanner = newScanner();
 
-    scanner->in.file = input;
-    scanner->in.string = NULL;
+    scanner->inFile = input;
 
     scanner->buffer = (struct Buf*)malloc(sizeof(struct Buf));
     buf_init(scanner->buffer, sizeof(char));

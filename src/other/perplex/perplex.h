@@ -83,10 +83,7 @@ typedef struct appData_t {
 
 /* scanner data */
 typedef struct perplex {
-    struct {
-	FILE *file;
-	char *string;
-    } in;
+    FILE *inFile;
     int atEOI;
     int braceCount;
     int scopeBraceCount;
