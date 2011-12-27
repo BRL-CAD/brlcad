@@ -274,18 +274,24 @@ statement ::= lod.
 coord(A) ::= FLOAT(B). { A.real = B.real; }
 coord(A) ::= INTEGER(B). { A.real = B.integer; }
 
-vertex ::= VERTEX coord(A) coord(B) coord(C).
+vertex ::= VERTEX coord(A) coord(B) coord(C) opt_color.
 {
     detail::objFileContents::gvertex_t vertex = {{A.real, B.real, C.real, 1}};
     detail::get_contents(scanner).gvertices_list.push_back(vertex);
 }
-vertex ::= VERTEX coord(A) coord(B) coord(C) coord(D).
+vertex ::= VERTEX coord(A) coord(B) coord(C) coord(D) opt_color.
 {
     detail::objFileContents::gvertex_t vertex =
 	{{A.real, B.real, C.real, D.real}};
 
     detail::get_contents(scanner).gvertices_list.push_back(vertex);
 }
+
+/* Per-vertex colors are a non-standard OBJ extension. Accept but ignore
+ * them.
+ */
+opt_color ::= /* empty */.
+opt_color ::= coord coord coord.
 
 t_vertex ::= T_VERTEX coord(A).
 {
