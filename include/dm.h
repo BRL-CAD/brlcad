@@ -420,7 +420,7 @@ DM_EXPORT extern const char *dm_version(void);
     HIDDEN int _dmtype##_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect); \
     HIDDEN int _dmtype##_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2); \
     HIDDEN int _dmtype##_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2); \
-    HIDDEN int _dmtype##_drawLines3D(struct dm *dmp, int npoints, point_t *points); \
+    HIDDEN int _dmtype##_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag); \
     HIDDEN int _dmtype##_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y); \
     HIDDEN int _dmtype##_drawVList(struct dm *dmp, struct bn_vlist *vp); \
     HIDDEN int _dmtype##_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data); \
