@@ -62,16 +62,16 @@ struct Buf {
 
 /* scanner data */
 typedef struct perplex {
+    void *extra;        /* application data */
     FILE *inFile;
-    int atEOI;
-    int condition;
+    struct Buf *buffer;
+    char *tokenText;
+    char *tokenStart;
     char *cursor;
     char *marker;
     char *null;
-    char *tokenStart;
-    struct Buf *buffer;
-    char *tokenText;
-    void *extra;        /* application data */
+    int atEOI;
+    int condition;
 } *perplex_t;
 
 perplex_t perplexFileScanner(FILE *input);
@@ -79,6 +79,8 @@ perplex_t perplexStringScanner(char *firstChar, size_t numChars);
 void perplexFree(perplex_t scanner);
 
 void perplexUnput(perplex_t scanner, char c);
+void perplexSetExtra(perplex_t scanner, void *extra);
+void* perplexGetExtra(perplex_t scanner);
 
 #ifndef PERPLEX_LEXER
 #define PERPLEX_LEXER yylex
@@ -544,6 +546,7 @@ getTokenText(perplex_t scanner)
 #define UPDATE_START  scanner->tokenStart = scanner->cursor;
 #define IGNORE_TOKEN  UPDATE_START; continue;
 #define       yytext  getTokenText(scanner)
+#define      yyextra  scanner->extra
 
 static perplex_t
 newScanner()
@@ -614,6 +617,18 @@ perplexFree(perplex_t scanner)
     }
 
     free(scanner);
+}
+
+void
+perplexSetExtra(perplex_t scanner, void *extra)
+{
+    scanner->extra = extra;
+}
+
+void*
+perplexGetExtra(perplex_t scanner)
+{
+    return scanner->extra;
 }
 
 /* Make c the next character to be scanned.

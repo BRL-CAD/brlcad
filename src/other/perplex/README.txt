@@ -35,19 +35,17 @@ copyright.
 =====
  API
 =====
-All scanner data is stored in a perplex_t object (a struct pointer). The
-scanner struct has a member named "extra" suitable for storing application
-data.
+All scanner data is stored in a perplex_t object.
 
 The template implements the following public functions:
 
 perplex_t perplexFileScanner(FILE *input)
     Creates a perplex_t object initialized to scan input from the specified
-    file stream.  The scanner will stop scanning when EOF is encountered.
+    file stream. The scanner will stop scanning when EOF is encountered.
 
 perplex_t perplexStringScanner(char *firstChar, size_t numChars)
     Creates a perplex_t object initialized to scan input from the specified
-    string.  The scanner will stop scanning when numChars characters have
+    string. The scanner will stop scanning when numChars characters have
     been scanned.
 
 void perplexFree(perplex_t scanner)
@@ -60,13 +58,33 @@ int yylex(perplex_t scanner)
     defining the pre-processor symbol PERPLEX_LEXER in section 1 of the
     perplex input file.
 
-void perplexUnput(scanner, char c)
+void perplexSetExtra(perplex_t scanner, void *extra)
+    Set scanner's application data.
+
+void perplexGetExtra(perplex_t scanner)
+    Get scanner's application data.
+
+void perplexUnput(peprlex_t scanner, char c)
     Inserts a character on the specified scanner's input buffer so that it
     is the next character scanned.
 
+Configuration Macros
+---------------------
+These macros can be defined in section 1 of the perplex input file:
 
-The template also declares the following macros, which can only be used
-inside the perplex input file within rule code blocks:
+PERPLEX_LEXER
+    Set this symbol to specify an alternate name for the generated lexer.
+    Default is yylex.
+
+PERPLEX_ON_ENTER
+    Use this symbol to specify code to run at the beginning of each call to
+    the lexer. A common use is to simplify access to application data:
+
+    #define PERPLEX_ON_ENTER appData_t *appData = (appData_t*)yyextra;
+
+Macros Available Inside Rule Code Blocks
+-----------------------------------------
+These macros can only be used inside rule code blocks:
 
 YYGETCONDITION and YYSETCONDITION(condition)
     Get or set the current start conditions, (requires running perplex and
@@ -77,6 +95,9 @@ yytext
     was matched. yytext is guaranteed to exist until the end of the code
     block it is used in, but will be automatically freed afterwards. If
     you need to store the token text, you'll need to make a copy.
+
+yyextra
+    Application data (void*).
 
 ===============
  Using Perplex
@@ -103,8 +124,7 @@ yytext
     int tokenID;
     perplex_t scanner = perplexFileScanner(inFile);
 
-    /* use perplex_t's extra member to hold application data */
-    scanner->extra = appData;
+    perplexSetExtra(scanner, (void*)appData);
     
     while ((tokenID = yylex(scanner)) != YYEOF) {
 	...
@@ -115,7 +135,7 @@ yytext
     perplexFree(scanner);
 
 ======================
-Perplex Input Format
+ Perplex Input Format
 ======================
 Perplex takes a three-section file as input:
 

@@ -61,7 +61,7 @@
 
 #define SET_SYNTAX_ERROR \
     static_cast<detail::objCombinedState*> \
-	(scanner->extra)->parser_state.syntaxError = true;
+	(perplexGetExtra(scanner))->parser_state.syntaxError = true;
 
 #define YYERROR SET_SYNTAX_ERROR
 
@@ -174,7 +174,7 @@ void obj_parser_error(yyscan_t scanner, const char *s)
  *
  * returns 1 on syntax error, 0 otherwise
  * returns error message in
- *     ((objCombinedState*)scanner->extra)->parser_state.err.str()
+ *     ((objCombinedState*)perplexGetExtra(scanner))->parser_state.err.str()
  */
 int obj_parser_parse(yyscan_t scanner)
 {
@@ -182,7 +182,7 @@ int obj_parser_parse(yyscan_t scanner)
     using detail::parser_type;
 
     int yychar;
-    struct extra_t *extra = static_cast<struct extra_t*>(scanner->extra);
+    struct extra_t *extra = static_cast<struct extra_t*>(perplexGetExtra(scanner));
     YYSTYPE *tokenData = &extra->tokenData;
     objCombinedState *state = static_cast<objCombinedState*>(extra->state);
     parser_type parser = state->parser;

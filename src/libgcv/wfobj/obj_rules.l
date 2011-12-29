@@ -38,9 +38,9 @@ namespace detail {
  *  convenience routines
  */
 template<typename T>
-inline static objCombinedState::parser_state_type &get_state(T scanner)
+inline static objCombinedState::parser_state_type &get_state(T combinedState)
 {
-    return static_cast<objCombinedState*>(scanner)->parser_state;
+    return static_cast<objCombinedState*>(combinedState)->parser_state;
 }
 
 /**
@@ -56,17 +56,17 @@ using namespace arl::obj_parser;
 
 void *obj_parser_get_extra(yyscan_t scanner)
 {
-    return scanner->extra;
+    return perplexGetExtra(scanner);
 }
 
 void *obj_parser_get_state(yyscan_t scanner)
 {
-    return static_cast<struct extra_t*>(scanner->extra)->state;
+    return static_cast<struct extra_t*>(perplexGetExtra(scanner))->state;
 }
 
 void obj_parser_set_extra(yyscan_t scanner, void *extra)
 {
-    scanner->extra = extra;
+    perplexSetExtra(scanner, extra);
 }
 
 void obj_parser_lex_destroy(yyscan_t scanner)
@@ -207,7 +207,7 @@ v_tnv_reference_list {
 wspace { }
 
 comment|newline {
-    ++(detail::get_state(yyextra).file_stack.back().lineno);
+    ++(detail::get_state(combinedState).file_stack.back().lineno);
     return EOL;
 }
 
@@ -220,7 +220,7 @@ id => INITIAL {
     /* Keywords are valid identifiers here
      * Goto initial state after single token
      */
-    detail::get_state(yyextra).working_string = yytext;
+    detail::get_state(combinedState).working_string = yytext;
     bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
 
     return ID;
@@ -230,7 +230,7 @@ wspace { }
 
 comment|newline => INITIAL {
     /* Goto initial state when we hit newline */
-    ++(detail::get_state(yyextra).file_stack.back().lineno);
+    ++(detail::get_state(combinedState).file_stack.back().lineno);
     return EOL;
 }
 
@@ -247,7 +247,7 @@ id => INITIAL {
     /* Keywords are valid identifiers here
      * Goto initial state after single token
      */
-    detail::get_state(yyextra).working_string = yytext;
+    detail::get_state(combinedState).working_string = yytext;
     bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
 
     return ID;
@@ -257,7 +257,7 @@ wspace { }
 
 comment|newline => INITIAL {
     // Goto initial state when we hit newline
-    ++(detail::get_state(yyextra).file_stack.back().lineno);
+    ++(detail::get_state(combinedState).file_stack.back().lineno);
     return EOL;
 }
 
@@ -268,7 +268,7 @@ comment|newline => INITIAL {
 <id_list_state> {
 id {
     // Keywords are valid identifiers here
-    detail::get_state(yyextra).working_string = yytext;
+    detail::get_state(combinedState).working_string = yytext;
     bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
 
     return ID;
@@ -278,7 +278,7 @@ wspace { }
 
 comment|newline => INITIAL {
     // Goto initial state when we hit newline
-    ++(detail::get_state(yyextra).file_stack.back().lineno);
+    ++(detail::get_state(combinedState).file_stack.back().lineno);
     return EOL;
 }
 

@@ -43,9 +43,9 @@ __BEGIN_DECLS
 
 #define PERPLEX_ON_ENTER \
     using detail::objCombinedState; \
-    struct extra_t *extra = static_cast<struct extra_t*>(scanner->extra); \
+    struct extra_t *extra = static_cast<struct extra_t*>(yyextra); \
     YYSTYPE *yylval = &extra->tokenData; \
-    objCombinedState *yyextra = static_cast<objCombinedState*>(extra->state);
+    objCombinedState *combinedState = static_cast<objCombinedState*>(extra->state);
 
 #include "obj_scanner.h"
 
