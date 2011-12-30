@@ -77,7 +77,6 @@ static char rcsid[] = "";
 
 #include "express/express.h"
 #include "express/resolve.h"
-#include "express/expprint.h"
 #include "stack.h"
 #include "express/scope.h"
 #include "token_type.h"

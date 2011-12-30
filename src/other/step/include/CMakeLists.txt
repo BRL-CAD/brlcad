@@ -6,7 +6,6 @@ SET(express_HDRS
   express/entity.h
   express/error.h
   express/expbasic.h
-  express/expprint.h
   express/expr.h
   express/express.h
   express/hash.h
