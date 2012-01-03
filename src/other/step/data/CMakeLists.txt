@@ -1,5 +1,6 @@
 SET(ap203_data
   ap203/203wseds.exp
+  ap203/ap203edit.exp
   ap203/cube1.p21
   ap203/cube2.p21
   ap203/g_r_assembly1.p21
