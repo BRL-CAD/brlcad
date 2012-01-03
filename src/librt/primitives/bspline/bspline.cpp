@@ -1014,6 +1014,9 @@ rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	rec_ptr += grans;
 	total_grans -= grans;
     }
+
+    bu_log("DEPRECATED:  The 'bspline' primitive is no longer supported.  Use 'brep' NURBS instead.\n");
+
     return 0;
 }
 
@@ -1098,6 +1101,8 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	      coords * srf->s_size[0] * srf->s_size[1]);
 	cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
     }
+
+    bu_log("DEPRECATED:  The 'bspline' primitive is no longer supported.  Use 'brep' NURBS instead.\n");
 
     return 0;
 }

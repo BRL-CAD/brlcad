@@ -806,6 +806,10 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	    VMOVE(rec[rno].q.q_norms[i], &pp->norms[i*3]);
 	}
     }
+
+    bu_log("DEPRECATED:  The 'poly' primitive is no longer supported.  Use the 'bot' or 'nmg' polygonal mesh instead.\n");
+    bu_log("\tTo convert polysolids to BOT primitives, use 'dbupgrade'.\n");
+
     return 0;
 }
 
@@ -833,7 +837,7 @@ rt_pg_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UN
     if (ip) RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);
 
-    bu_log("As of release 6.0 the polysolid is superceded by the BOT primitive.\n");
+    bu_log("DEPRECATED:  The 'poly' primitive is no longer supported.  Use the 'bot' or 'nmg' polygonal mesh instead.\n");
     bu_log("\tTo convert polysolids to BOT primitives, use 'dbupgrade'.\n");
     /* The rt_pg_to_bot() routine can also be used. */
     return -1;

@@ -647,6 +647,8 @@ rt_hlf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     VMOVE(rec->s.s_values, hip->eqn);
     rec->s.s_values[W] = hip->eqn[W] * local2mm;
 
+    bu_log("DEPRECATED:  The 'half' primitive is no longer supported.  Use the 'dsp' displacement map instead.\n");
+
     return 0;
 }
 
@@ -706,6 +708,7 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	VSCALE(hip->eqn, hip->eqn, f);
 	hip->eqn[W] *= f;
     }
+
     return 0;			/* OK */
 }
 
@@ -739,6 +742,8 @@ rt_hlf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     /* the distance */
     htond(((unsigned char *)(ep->ext_buf)) + SIZEOF_NETWORK_DOUBLE*3,
 	  (unsigned char *)&scaled_dist, 1);
+
+    bu_log("DEPRECATED:  The 'half' primitive is no longer supported.  Use the 'dsp' displacement map instead.\n");
 
     return 0;
 }
