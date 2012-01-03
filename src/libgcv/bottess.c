@@ -144,9 +144,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 	    isv[i] = FACE_INT;
 
     if(isv[0] == 0 || isv[1] == 0) {
-	/*
-	   bu_log("Something real bad %x %x\n", isv[0], isv[1]);
-	   */
+	bu_log("Something real bad %x %x\n", isv[0], isv[1]);
 	return -1;
     }
 
@@ -189,9 +187,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 
     /* if LINE+LINE, break into 3, figure out which side has two verts and cut * that */
     if(isv[0]&LINE_INT && isv[1]&LINE_INT) {
-	/*
 	bu_log("Splitting into 3 %x %x (LINE/LINE)\n", isv[0], isv[1]);
-	*/
 	return 1;
     }
 
@@ -238,7 +234,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 #undef ALL_INT
 #undef FACE_INT
     /* this should never be reached */
-    printf("derp?\n");
+    bu_log("derp?\n");
 
     return 0;
 }
