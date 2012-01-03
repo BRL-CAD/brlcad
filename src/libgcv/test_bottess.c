@@ -33,6 +33,9 @@
 #include "./soup.h"
 #include "./tri_intersect.h"
 
+int soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn_tol *tol);
+int split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], struct face_s *opp_face, const struct bn_tol *tol);
+
 int
 test_intersection(int should, point_t *t1, point_t *t2, point_t p1, point_t p2)
 {
@@ -85,9 +88,57 @@ test_tri_intersections()
 }
 
 int
+test_face_split_single()
+{
+    unsigned long int i, count = 0, nsplt;
+    struct soup_s s;
+    point_t isectpt[2];
+    struct face_s opp;
+    struct bn_tol t;
+
+    BN_TOL_INIT(&t);
+    t.dist = 0.005;
+    t.dist_sq = t.dist * t.dist;
+
+    s.magic = SOUP_MAGIC;
+    s.faces = NULL;
+    s.maxfaces = 0;
+    s.nfaces = 0;
+    VSET(opp.vert[0], -1, 0, 0); VSET(opp.vert[1], 0, 1, 0); VSET(opp.vert[2], 1, 1, 0);
+    soup_add_face(&s, V3ARGS(opp.vert), &t);
+    VSET(opp.plane, 0, 0, 1);
+    VSET(isectpt[0], 0, 0, 0);
+    VSET(isectpt[1], 0, 1, 0);
+    nsplt = split_face_single(&s, 0, isectpt, &opp, &t);
+    if(nsplt != s.nfaces) { printf("Errr, nsplit %lu != s.nfaces %lu ?\n", nsplt, s.nfaces); }
+    if(nsplt != 2) {
+	printf("\033[1;31mFAILURE\033[m\n");
+	printf("%lu faces now\n", s.nfaces);
+	for(i=0;i<s.nfaces;i++)
+	    printf("%03lu: % 2g,% 2g,% 2g | % 2g,% 2g,% 2g | % 2g,% 2g,% 2g\n", i, V3ARGS(s.faces[i].vert[0]), V3ARGS(s.faces[i].vert[1]), V3ARGS(s.faces[i].vert[2]));
+	printf("==== We expected:\n");
+	printf("  ?:  0  0  0 |  1  0  0 | -1  0  0\n");
+	printf("  ?:  0  0  0 |  1  0  0 |  1  0  0\n");
+	count++;
+    }
+
+    return (int)count;
+}
+
+int
+test_face_splits()
+{
+    int count = 0;
+
+    return count;
+}
+
+int
 main(void)
 {
-    printf("%d failures\n", test_tri_intersections());
+    printf("TRI INTERSECTION: %d failures\n", test_tri_intersections());
+    printf("SINGL FACE SPLIT: %d failures\n", test_face_split_single());
+    printf("FACE SPLITTING  : %d failures\n", test_face_splits());
     return 0;
 }
 
