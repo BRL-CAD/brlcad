@@ -84,6 +84,7 @@ test_tri_intersections()
     TRY(1,0,0,0,0,1,0,0,0,1,-1,0,0.5,0,1,0.5,1,0,0.5,0,0,.5,0,.5,.5);	/* ep ef */
     TRY(0,0,0,0,0,1,0,0,0,1,-1,2,0.5,0,3,0.5,1,2,0.5,0,0,.5,0,.5,.5);	/* no intersect */
 
+#undef TRY
     return count;
 }
 
@@ -103,10 +104,8 @@ find_tri(struct soup_s *s, struct face_s *f, struct bn_tol *t) {
 int
 test_face_split_single()
 {
-    unsigned long int i, count = 0, nsplt;
-    int urf[2];
+    unsigned long int i, tcount = 0, count = 0, nsplt;
     struct soup_s s;
-    point_t isectpt[2];
     struct face_s f;
     struct bn_tol t;
 
@@ -114,26 +113,24 @@ test_face_split_single()
     t.dist = 0.005;
     t.dist_sq = t.dist * t.dist;
 
-    s.magic = SOUP_MAGIC;
-    s.faces = NULL;
-    s.maxfaces = 0;
-    s.nfaces = 0;
-    VSET(f.vert[0], -1, 0, 0); VSET(f.vert[1], 0, 1, 0); VSET(f.vert[2], 1, 0, 0);
-    soup_add_face(&s, V3ARGS(f.vert), &t);
-    VSET(f.plane, 0, 0, 1);
-    VSET(isectpt[0], 0, 0, 0);
-    VSET(isectpt[1], 0, 1, 0);
-    nsplt = split_face_single(&s, 0, isectpt, &f, &t);
-    if(nsplt != s.nfaces) { printf("Errr, nsplit %lu != s.nfaces %lu ?\n", nsplt, s.nfaces); }
-    VSET(f.vert[0], 0, 0, 0); VSET(f.vert[1], 0, 1, 0); VSET(f.vert[2], -1, 0, 0); urf[0] = find_tri(&s, &f, &t);
-    VSET(f.vert[0], 0, 0, 0); VSET(f.vert[1], 0, 1, 0); VSET(f.vert[2], 1, 0, 0); urf[1] = find_tri(&s, &f, &t);
-    if(nsplt != 2 && urf[0] == -1 && urf[1] == -1) {
-	printf("\033[1;31mFAILURE\033[m\n");
-	printf("%lu faces now\n", s.nfaces);
-	for(i=0;i<s.nfaces;i++)
-	    printf("%03lu: % 2g,% 2g,% 2g | % 2g,% 2g,% 2g | % 2g,% 2g,% 2g\n", i, V3ARGS(s.faces[i].vert[0]), V3ARGS(s.faces[i].vert[1]), V3ARGS(s.faces[i].vert[2]));
-	count++;
-    }
+    /* evil macros to do a lot of scaffolding, setup, execution, etc... */
+#define PREP(t00,t01,t02,t10,t11,t12,t20,t21,t22,ispt00,ispt01,ispt02,ispt10,ispt11,ispt12,_nsplt) {point_t isectpt[2];int urf[_nsplt];unsigned long int failure=0,numsplit;tcount++;numsplit=nsplt;VSET(isectpt[0],ispt00,ispt01,ispt02);VSET(isectpt[1],ispt10,ispt11,ispt12);s.magic=SOUP_MAGIC;s.faces=NULL;s.maxfaces=0;s.nfaces=0;VSET(f.vert[0],-1,0,0);VSET(f.vert[1],0,1,0);VSET(f.vert[2],1,0,0);soup_add_face(&s,V3ARGS(f.vert),&t);VSET(f.plane,0,0,1);nsplt=split_face_single(&s,0,isectpt,&f,&t);if(nsplt!=s.nfaces){printf("Errr, nsplit %lu != s.nfaces %lu ?\n",numsplit,s.nfaces);}
+#define POST for(i=0;i<numsplit;i++){VSET(f.vert[0],_splits[i][0],_splits[i][1],_splits[i][2]);VSET(f.vert[1],_splits[i][3],_splits[i][4],_splits[i][5]);VSET(f.vert[2],_splits[i][6],_splits[i][7],_splits[i][8]);urf[i]=find_tri(&s,&f,&t);if(urf[i]==-1)failure++;}if(nsplt!=2&&urf[0]==-1&&urf[1]==-1){printf("\033[1;31mFAILURE\033[m\n");printf("%lu faces now\n",s.nfaces);for(i=0;i<s.nfaces;i++)printf("%03lu: % 2g,% 2g,% 2g | % 2g,% 2g,% 2g | % 2g,% 2g,% 2g\n",i,V3ARGS(s.faces[i].vert[0]),V3ARGS(s.faces[i].vert[1]),V3ARGS(s.faces[i].vert[2]));count++;}free(s.faces);}
+
+    /* prep take: the triangle to split (9 fastf_t), the intersection line (6
+     * fastf_t), and the number of expected resulting triangles. */
+    PREP(-1,0,0, 0,1,0, 1,0,0, 0,0,0, 0,1,0, 2);
+    /* the _splits is an array of expected triangles, as 9 fastf_t tuples */
+    fastf_t _splits[2][9] = {{0,0,0,0,1,0,-1,0,0},{0,0,0,0,1,0,1,0,0}};
+    /* post tests to see if the resulting triangles match and cleans up */
+    POST;
+
+    PREP(0,0,0, 0,1,0, 1,0,0, 0,0,0, 0,1,0, 1);
+    fastf_t _splits[1][9] = {{0,0,0, 0,1,0, 1,0,0}};
+    POST;
+
+#undef PREP
+#undef POST
 
     return (int)count;
 }
