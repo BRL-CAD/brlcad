@@ -35,6 +35,8 @@
 
 int soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn_tol *tol);
 int split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], struct face_s *opp_face, const struct bn_tol *tol);
+int split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face, const struct bn_tol *tol);
+
 
 int
 test_intersection(int should, point_t *t1, point_t *t2, point_t p1, point_t p2)
@@ -147,8 +149,7 @@ test_face_split_single()
 #undef PREP
 #undef POST
 
-    bu_log("%d/%d\n", count, tcount);
-    return (int)count;
+    return count;
 }
 
 int
@@ -156,15 +157,46 @@ test_face_splits()
 {
     int count = 0;
 
+    int rval;
+    struct soup_s l, r;
+    struct bn_tol t;
+    point_t p[3];
+
+
+    BN_TOL_INIT(&t);
+    t.dist = 0.005;
+    t.dist_sq = t.dist * t.dist;
+
+    l.magic = r.magic = SOUP_MAGIC;
+    l.faces = r.faces = NULL;
+    l.maxfaces = l.nfaces = r.maxfaces = r.nfaces = 0;
+    VSET(p[0], -1, 0, 0); VSET(p[1], 0, 1, 0); VSET(p[2], 1, 0, 0); soup_add_face(&l, p[0], p[1], p[2], &t);
+    VSET(p[0], 0, 0, -1); VSET(p[1], 0, 1, 0); VSET(p[2], 0, 0, 1); soup_add_face(&r, p[0], p[1], p[2], &t);
+
+    rval = split_face(&l, 0, &r, 0, &t);
+    if(rval != 3 || l.nfaces != 2 || r.nfaces != 2) {
+	printf("\033[1;31mFAILURE\033[m\n");
+	count++;
+    }
+    {
+	struct face_s f;
+	int tri;
+	VSET(f.vert[0], 0,0,0); VSET(f.vert[1], 0,1,0); VSET(f.vert[2], 1,0,0); tri = find_tri(&l, &f, &t); if(tri==-1) { count++; printf("\033[1;31mFAILURE\033[m\n"); } else printf("tri.fu: %x\n", l.faces[tri].foo);
+	VSET(f.vert[0], 0,0,0); VSET(f.vert[1], 0,1,0); VSET(f.vert[2], -1,0,0); tri = find_tri(&l, &f, &t); if(tri==-1) { count++; printf("\033[1;31mFAILURE\033[m\n"); } else printf("tri.fu: %x\n", l.faces[tri].foo);
+
+	VSET(f.vert[0], 0,0,0); VSET(f.vert[1], 0,1,0); VSET(f.vert[2], 0,0,-1); tri = find_tri(&r, &f, &t); if(tri==-1) { count++; printf("\033[1;31mFAILURE\033[m\n"); } else printf("tri.fu: %x\n", l.faces[tri].foo);
+	VSET(f.vert[0], 0,0,0); VSET(f.vert[1], 0,1,0); VSET(f.vert[2], 0,0,1); tri = find_tri(&r, &f, &t); if(tri==-1) { count++; printf("\033[1;31mFAILURE\033[m\n"); } else printf("tri.fu: %x\n", l.faces[tri].foo);
+    }
+
     return count;
 }
 
 int
 main(void)
 {
-    printf("TRI INTERSECTION: %d failures\n", test_tri_intersections());
-    printf("SINGL FACE SPLIT: %d failures\n", test_face_split_single());
-    printf("FACE SPLITTING  : %d failures\n", test_face_splits());
+    printf("RESULT: TRI INTERSECTION: %d failures\n", test_tri_intersections());
+    printf("RESULT: SINGL FACE SPLIT: %d failures\n", test_face_split_single());
+    printf("RESULT: FACE SPLITTING  : %d failures\n", test_face_splits());
     return 0;
 }
 
