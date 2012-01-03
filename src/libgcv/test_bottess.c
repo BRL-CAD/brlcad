@@ -87,13 +87,27 @@ test_tri_intersections()
     return count;
 }
 
+static int
+find_tri(struct soup_s *s, struct face_s *f, struct bn_tol *t) {
+    unsigned int i, j, k;
+    for(i=0;i<s->nfaces;i++) {
+	int found[3] = {0,0,0};
+	struct face_s *wf = s->faces+i;
+
+	for(j=0;j<3;j++) for(k=0;k<3;k++) if(VNEAR_EQUAL( wf->vert[j], f->vert[k], t->dist)) found[j] = 1;
+	if(found[0] == 1 && found[1] == 1 && found[2] == 1) return i;
+    }
+    return -1;
+}
+
 int
 test_face_split_single()
 {
     unsigned long int i, count = 0, nsplt;
+    int urf[2];
     struct soup_s s;
     point_t isectpt[2];
-    struct face_s opp;
+    struct face_s f;
     struct bn_tol t;
 
     BN_TOL_INIT(&t);
@@ -104,21 +118,20 @@ test_face_split_single()
     s.faces = NULL;
     s.maxfaces = 0;
     s.nfaces = 0;
-    VSET(opp.vert[0], -1, 0, 0); VSET(opp.vert[1], 0, 1, 0); VSET(opp.vert[2], 1, 1, 0);
-    soup_add_face(&s, V3ARGS(opp.vert), &t);
-    VSET(opp.plane, 0, 0, 1);
+    VSET(f.vert[0], -1, 0, 0); VSET(f.vert[1], 0, 1, 0); VSET(f.vert[2], 1, 0, 0);
+    soup_add_face(&s, V3ARGS(f.vert), &t);
+    VSET(f.plane, 0, 0, 1);
     VSET(isectpt[0], 0, 0, 0);
     VSET(isectpt[1], 0, 1, 0);
-    nsplt = split_face_single(&s, 0, isectpt, &opp, &t);
+    nsplt = split_face_single(&s, 0, isectpt, &f, &t);
     if(nsplt != s.nfaces) { printf("Errr, nsplit %lu != s.nfaces %lu ?\n", nsplt, s.nfaces); }
-    if(nsplt != 2) {
+    VSET(f.vert[0], 0, 0, 0); VSET(f.vert[1], 0, 1, 0); VSET(f.vert[2], -1, 0, 0); urf[0] = find_tri(&s, &f, &t);
+    VSET(f.vert[0], 0, 0, 0); VSET(f.vert[1], 0, 1, 0); VSET(f.vert[2], 1, 0, 0); urf[1] = find_tri(&s, &f, &t);
+    if(nsplt != 2 && urf[0] == -1 && urf[1] == -1) {
 	printf("\033[1;31mFAILURE\033[m\n");
 	printf("%lu faces now\n", s.nfaces);
 	for(i=0;i<s.nfaces;i++)
 	    printf("%03lu: % 2g,% 2g,% 2g | % 2g,% 2g,% 2g | % 2g,% 2g,% 2g\n", i, V3ARGS(s.faces[i].vert[0]), V3ARGS(s.faces[i].vert[1]), V3ARGS(s.faces[i].vert[2]));
-	printf("==== We expected:\n");
-	printf("  ?:  0  0  0 |  1  0  0 | -1  0  0\n");
-	printf("  ?:  0  0  0 |  1  0  0 |  1  0  0\n");
 	count++;
     }
 
