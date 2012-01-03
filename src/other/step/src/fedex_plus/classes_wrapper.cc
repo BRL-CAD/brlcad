@@ -842,6 +842,7 @@ getMCPrint( Express express, FILE *schema_h, FILE *schema_cc )
 	     "        return (SCLP23(Model_contents_ptr)) new SdaiModel_contents_%s; \n",
 	     SCHEMAget_name(schema));
     }
+    fprintf (schema_cc, "    return (SCLP23(Model_contents_ptr))NULL;\n");
     fprintf (schema_cc, "}\n");
 }
 
