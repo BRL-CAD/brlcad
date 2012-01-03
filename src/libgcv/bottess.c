@@ -71,10 +71,8 @@ soup_add_face_precomputed(struct soup_s *s, point_t a, point_t b , point_t c, pl
     struct face_s *f;
 
     /* grow face array if needed */
-    if(s->nfaces >= s->maxfaces) {
-	bu_log("Resizing, %lu aint' enough\n", s->nfaces);
+    if(s->nfaces >= s->maxfaces)
 	s->faces = bu_realloc(s->faces, (s->maxfaces += faces_per_page) * sizeof(struct face_s), "bot soup faces");
-    }
     f = s->faces + s->nfaces;
 
     VMOVE(f->vert[0], a);
