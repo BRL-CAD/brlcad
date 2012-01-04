@@ -33,11 +33,6 @@
 #include "./soup.h"
 #include "./tri_intersect.h"
 
-int soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn_tol *tol);
-int split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], struct face_s *opp_face, const struct bn_tol *tol);
-int split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face, const struct bn_tol *tol);
-
-
 int
 test_intersection(int should, point_t *t1, point_t *t2, point_t p1, point_t p2)
 {
