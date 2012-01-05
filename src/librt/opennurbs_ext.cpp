@@ -719,7 +719,7 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
     (void)m_root->getLeavesBoundingPoint(from, nodes);
 
     double min_dist = MAX_FASTF;
-    ON_2dPoint curr_uv;
+    ON_2dPoint curr_uv(0.0, 0.0);
     bool found = false;
 
     std::list<BBNode*>::iterator i;
