@@ -1187,6 +1187,14 @@ comp.r4 ID 5678 material code 5 LOS 75
   idea is proven in that command, it should be made into a libgcv routine
   and convertors/other commands retargted to use it.
 
+* write up some documentation on other build tools besides make - 
+  CMake supports other generators, wouldn't hurt to detail how to
+  trigger builds in them (MSVC is partially covered, make sure to
+  coverage is complete - others include Eclipse, XCode once we get
+  the kinks ironed out there, CodeBlocks.  New experimental ninja 
+  build tool and its (also experimental) CMake support are promising - 
+  if/when CMake support goes mainstream, document that too.)
+
 
 CONVERTERS
 ----------
