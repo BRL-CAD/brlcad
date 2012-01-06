@@ -306,8 +306,8 @@ bn_mk_plane_3pts(fastf_t *plane,
 /**
  * B N _ M K P O I N T _ 3 P L A N E S
  *@brief
- * Given the description of three planes, compute the point of
- * intersection, if any.
+ * Given the description of three planes, compute the point of intersection, if
+ * any. The direction vectors of the planes need not be of unit length.
  *
  * Find the solution to a system of three equations in three unknowns:
  @verbatim
@@ -323,7 +323,6 @@ bn_mk_plane_3pts(fastf_t *plane,
  *
  @endverbatim
  *
- *
  * @return 0	OK
  * @return -1	Failure.  Intersection is a line or plane.
  *
@@ -335,27 +334,52 @@ bn_mk_plane_3pts(fastf_t *plane,
 int
 bn_mkpoint_3planes(fastf_t *pt, const fastf_t *a, const fastf_t *b, const fastf_t *c)
 {
-    vect_t v1, v2, v3;
-    register fastf_t det;
+    vect_t v1;
+    fastf_t dot;
 
-    /* Find a vector perpendicular to both planes B and C */
+    /* Find a vector perpendicular to vectors b and c (parallel to planes B
+     * and C).
+     */
     VCROSS(v1, b, c);
 
-    /* If that vector is perpendicular to A, then A is parallel to
-     * either B or C, and no intersection exists.  This dot&cross
-     * product is the determinant of the matrix M.  (I suspect there
-     * is some deep significance to this!)
+    /* If vector a is perpendicular to that vector, then two of the three
+     * planes are parallel. We test by examining their dot product, which is
+     * also the determinant of the matrix M^T:
+     * [ a[X]  a[Y]  a[Z] ]
+     * [ b[X]  b[Y]  b[Z] ]
+     * [ c[X]  c[Y]  c[Z] ]
      */
-    det = VDOT(a, v1);
-    if (ZERO(det)) return -1;
+    dot = VDOT(a, v1);
 
-    VCROSS(v2, a, c);
-    VCROSS(v3, a, b);
+    if (ZERO(dot)) {
+	return -1;
+    } else {
+	vect_t v2, v3;
+	fastf_t det, aH, bH, cH;
 
-    det = 1/det;
-    pt[X] = det*(a[3]*v1[X] - b[3]*v2[X] + c[3]*v3[X]);
-    pt[Y] = det*(a[3]*v1[Y] - b[3]*v2[Y] + c[3]*v3[Y]);
-    pt[Z] = det*(a[3]*v1[Z] - b[3]*v2[Z] + c[3]*v3[Z]);
+	VCROSS(v2, a, c);
+	VCROSS(v3, a, b);
+
+	/* Since this algorithm assumes unit-length direction vectors, we need
+         * to calculate the scale factors associated with the unitized
+         * equivalents of the planes.
+         */
+        aH = MAGNITUDE(a) * a[H];
+        bH = MAGNITUDE(b) * b[H];
+        cH = MAGNITUDE(c) * c[H];
+
+        /* We use the fact that det(M) = 1 / det(M^T) to calculate the
+         * determinant of matrix M:
+         * [ a[X] b[X] c[X] ]
+         * [ a[Y] b[Y] c[Y] ]
+         * [ a[Z] b[Z] c[Z] ]
+         */
+	det = 1 / dot;
+
+	pt[X] = det * (aH * v1[X] - bH * v2[X] + cH * v3[X]);
+	pt[Y] = det * (aH * v1[Y] - bH * v2[Y] + cH * v3[Y]);
+	pt[Z] = det * (aH * v1[Z] - bH * v2[Z] + cH * v3[Z]);
+    }
     return 0;
 }
 
