@@ -497,6 +497,9 @@ IF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 	SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
 ENDIF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 
+# Take the hint from http://forum.openscenegraph.org/viewtopic.php?t=6926 and
+# make all configurations output to the same directories.  This is necessary
+# for allowing the bu_brlcad_data mechanisms to work in the build directory.
 FOREACH(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 	STRING(TOUPPER "${CFG_TYPE}" CFG_TYPE)
 	IF(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}")
