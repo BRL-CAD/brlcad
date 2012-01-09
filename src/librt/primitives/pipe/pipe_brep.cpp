@@ -114,7 +114,7 @@ make_curved_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, O
     revsurf->m_curve = *startinnercurves[0];
     revsurf->m_axis = *revaxis;
     revsurf->m_angle = ON_Interval(2*ON_PI - angle, 2*ON_PI);
-    (*b)->NewFace(*revsurf);
+    (void)(*b)->NewFace(*revsurf);
     
 }
 
