@@ -11,6 +11,9 @@ set(LIBANALYZE_SOURCES
     overlaps.c
 )
 
+add_executable(test_density test_density.c)
+target_link_libraries(test_density libanalyze libbu)
+
 BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" libbu)
 SET_TARGET_PROPERTIES(libanalyze PROPERTIES VERSION 19.0.1 SOVERSION 19)
 CMAKEFILES(Makefile.am)

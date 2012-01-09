@@ -22,7 +22,7 @@
 
 #include "bio.h"
 
-#include "magic.h"
+#include "bu.h"
 
 
 #define MAGICBUFSIZ 512
