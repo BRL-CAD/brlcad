@@ -1040,7 +1040,11 @@ f_stdattr(struct db_plan_t *UNUSED(plan), struct db_full_path *entry, struct db_
 	return 0;
 
     bu_avs_init_empty(&avs);
-    db5_get_attributes(dbip, &avs, dp);
+    if (db5_get_attributes(dbip, &avs, dp) < 0) {
+      bu_avs_free(&avs);
+      return 0;
+    }
+
     avpp = avs.avp;
     for (i = 0; i < (size_t)avs.count; i++, avpp++) {
 	found_attr = 1;
