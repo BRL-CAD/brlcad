@@ -384,6 +384,7 @@ render_mode(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
     /* pack the 'rest' into buf - probably should use a vls for this*/
+    buf[0] = '\0';
 
     isst->dirty = 1;
 
