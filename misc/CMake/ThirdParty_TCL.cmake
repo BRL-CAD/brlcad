@@ -98,298 +98,303 @@
 #-----------------------------------------------------------------------------
 MACRO(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LIBS aliases description)
 
-    # Get uppercase version of pkg string
-    STRING(TOUPPER ${pkgname} PKGNAME_UPPER)
-    # If the pkg variable has been explicitly set, get
-    # an uppercase version of it for easier matching
-    IF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER})
-	STRING(TOUPPER ${${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}} OPT_STR_UPPER)
-    ELSE(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER})
-	SET(OPT_STR_UPPER "")
-    ENDIF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER})
-    IF(OPT_STR_UPPER)
-	IF(${OPT_STR_UPPER} STREQUAL "ON")
-	    SET(OPT_STR_UPPER "BUNDLED")
-	ENDIF(${OPT_STR_UPPER} STREQUAL "ON")
-	IF(${OPT_STR_UPPER} STREQUAL "OFF")
-	    SET(OPT_STR_UPPER "SYSTEM")
-	ENDIF(${OPT_STR_UPPER} STREQUAL "OFF")
-    ENDIF(OPT_STR_UPPER)
+	# Get uppercase version of pkg string
+	STRING(TOUPPER ${pkgname} PKGNAME_UPPER)
+	# If the pkg variable has been explicitly set, get
+	# an uppercase version of it for easier matching
+	IF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER})
+		STRING(TOUPPER ${${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}} OPT_STR_UPPER)
+	ELSE(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER})
+		SET(OPT_STR_UPPER "")
+	ENDIF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER})
+	IF(OPT_STR_UPPER)
+		IF(${OPT_STR_UPPER} STREQUAL "ON")
+			SET(OPT_STR_UPPER "BUNDLED")
+		ENDIF(${OPT_STR_UPPER} STREQUAL "ON")
+		IF(${OPT_STR_UPPER} STREQUAL "OFF")
+			SET(OPT_STR_UPPER "SYSTEM")
+		ENDIF(${OPT_STR_UPPER} STREQUAL "OFF")
+	ENDIF(OPT_STR_UPPER)
 
 
-    # Initialize some variables
-    SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD "?")
-    SET(${PKGNAME_UPPER}_DISABLED 0)
-    SET(${PKGNAME_UPPER}_DISABLE_TEST 0)
-    SET(${PKGNAME_UPPER}_MET_CONDITION 0)
+	# Initialize some variables
+	SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD "?")
+	SET(${PKGNAME_UPPER}_DISABLED 0)
+	SET(${PKGNAME_UPPER}_DISABLE_TEST 0)
+	SET(${PKGNAME_UPPER}_MET_CONDITION 0)
 
-    # 1. First up - If any of the required flags are off, not only is this extension 
-    # build a no-go but so is the test - BRL-CAD doesn't require it.
-    SET(DISABLE_STR "") 
-    FOREACH(item ${required_vars})
-	IF(NOT ${item})
-	    SET(${PKGNAME_UPPER}_DISABLED 1)
-	    SET(${PKGNAME_UPPER}_DISABLE_TEST 1)
-	    SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
-	    IF(NOT DISABLE_STR) 
-		SET(DISABLE_STR "${item}")
-	    ELSE(NOT DISABLE_STR) 
-		SET(DISABLE_STR "${DISABLE_STR},${item}")
-	    ENDIF(NOT DISABLE_STR) 
-	ENDIF(NOT ${item})
-    ENDFOREACH(item ${required_vars})
-    IF(DISABLE_STR)
-	SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "DISABLED ${DISABLE_STR}" CACHE STRING "DISABLED ${DISABLED_STR}" FORCE)
-	MARK_AS_ADVANCED(FORCE ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER})
-	SET(${PKGNAME_UPPER}_MET_CONDITION 1)
-    ELSE(DISABLE_STR)
-	# If we have a leftover disabled setting in the cache from earlier runs, clear it.
-	IF("${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}" MATCHES "DISABLED")
-	    SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "" CACHE STRING "Clear DISABLED setting" FORCE)
-	    MARK_AS_ADVANCED(CLEAR ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER})
-	ENDIF("${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}" MATCHES "DISABLED")
-    ENDIF(DISABLE_STR)
+	# 1. First up - If any of the required flags are off, not only is this extension 
+	# build a no-go but so is the test - BRL-CAD doesn't require it.
+	SET(DISABLE_STR "") 
+	FOREACH(item ${required_vars})
+		IF(NOT ${item})
+			SET(${PKGNAME_UPPER}_DISABLED 1)
+			SET(${PKGNAME_UPPER}_DISABLE_TEST 1)
+			SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
+			IF(NOT DISABLE_STR) 
+				SET(DISABLE_STR "${item}")
+			ELSE(NOT DISABLE_STR) 
+				SET(DISABLE_STR "${DISABLE_STR},${item}")
+			ENDIF(NOT DISABLE_STR) 
+		ENDIF(NOT ${item})
+	ENDFOREACH(item ${required_vars})
+	IF(DISABLE_STR)
+		SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "DISABLED ${DISABLE_STR}" CACHE STRING "DISABLED ${DISABLED_STR}" FORCE)
+		MARK_AS_ADVANCED(FORCE ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER})
+		SET(${PKGNAME_UPPER}_MET_CONDITION 1)
+	ELSE(DISABLE_STR)
+		# If we have a leftover disabled setting in the cache from earlier runs, clear it.
+		IF("${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}" MATCHES "DISABLED")
+			SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "" CACHE STRING "Clear DISABLED setting" FORCE)
+			MARK_AS_ADVANCED(CLEAR ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER})
+		ENDIF("${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}" MATCHES "DISABLED")
+	ENDIF(DISABLE_STR)
 
-    # 2. Next - is the pkg explicitly set to system?  If it is,
-    # we are NOT building it.
-    IF(OPT_STR_UPPER)
-	IF("${OPT_STR_UPPER}" STREQUAL "SYSTEM")
-	    SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
-	    SET(${PKGNAME_UPPER}_MET_CONDITION 2)
-	ENDIF("${OPT_STR_UPPER}" STREQUAL "SYSTEM")
-    ENDIF(OPT_STR_UPPER)
-
-
-    # 3. If we have an explicit BUNDLE request for this particular extension,
-    # honor it as long as features are satisfied.  No point in testing
-    # if we know we're turning it on - set vars accordingly.
-    IF(OPT_STR_UPPER)
-	IF("${OPT_STR_UPPER}" STREQUAL "BUNDLED")
-	    IF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
-		SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD ON)
-		SET(${PKGNAME_UPPER}_DISABLE_TEST 1)
-		SET(${PKGNAME_UPPER}_MET_CONDITION 3)
-	    ENDIF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
-	ENDIF("${OPT_STR_UPPER}" STREQUAL "BUNDLED")
-    ENDIF(OPT_STR_UPPER)
+	# 2. Next - is the pkg explicitly set to system?  If it is,
+	# we are NOT building it.
+	IF(OPT_STR_UPPER)
+		IF("${OPT_STR_UPPER}" STREQUAL "SYSTEM")
+			SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
+			SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "SYSTEM" CACHE STRING "User forced to SYSTEM" FORCE)
+			SET(${PKGNAME_UPPER}_MET_CONDITION 2)
+		ENDIF("${OPT_STR_UPPER}" STREQUAL "SYSTEM")
+	ENDIF(OPT_STR_UPPER)
 
 
-    # 4. If BRLCAD_TCL is *exactly* SYSTEM and we aren't already enabled,
-    # compilation is off.  (Testing depends on #1).
-    IF("${${CMAKE_PROJECT_NAME}_TCL}" STREQUAL "SYSTEM")
-	IF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
-	    SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
-	    SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "SYSTEM (AUTO)" CACHE STRING "From ${CMAKE_PROJECT_NAME}_TCL - SYSTEM" FORCE)
-	    SET(${PKGNAME_UPPER}_MET_CONDITION 4)
-	ENDIF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
-    ENDIF("${${CMAKE_PROJECT_NAME}_TCL}" STREQUAL "SYSTEM")
+	# 3. If we have an explicit BUNDLE request for this particular extension,
+	# honor it as long as features are satisfied.  No point in testing
+	# if we know we're turning it on - set vars accordingly.
+	IF(OPT_STR_UPPER)
+		IF("${OPT_STR_UPPER}" STREQUAL "BUNDLED")
+			IF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
+				SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD ON)
+				SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "BUNDLED" CACHE STRING "User forced to BUNDLED" FORCE)
+				SET(${PKGNAME_UPPER}_DISABLE_TEST 1)
+				SET(${PKGNAME_UPPER}_MET_CONDITION 3)
+			ENDIF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
+		ENDIF("${OPT_STR_UPPER}" STREQUAL "BUNDLED")
+	ENDIF(OPT_STR_UPPER)
 
 
-    # 5. If BRLCAD_TCL matches SYSTEM and BRLCAD_BUNDLED_LIBS is *exactly* 
-    # SYSTEM, compilation is off. (Testing depends on #1).
-    IF("${${CMAKE_PROJECT_NAME}_TCL}" MATCHES "SYSTEM" AND "${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS}" STREQUAL "SYSTEM")
-	IF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
-	    SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
-	    SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "SYSTEM (AUTO)" CACHE STRING "From ${CMAKE_PROJECT_NAME}_BUNDLED_LIBS - SYSTEM" FORCE)
-	    SET(${PKGNAME_UPPER}_MET_CONDITION 5)
-	ENDIF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
-    ENDIF("${${CMAKE_PROJECT_NAME}_TCL}" MATCHES "SYSTEM" AND "${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS}" STREQUAL "SYSTEM")
+	# 4. If BRLCAD_TCL is *exactly* SYSTEM and we aren't already enabled,
+	# compilation is off.  (Testing depends on #1).
+	IF("${${CMAKE_PROJECT_NAME}_TCL}" STREQUAL "SYSTEM")
+		IF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
+			SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
+			SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "SYSTEM (AUTO)" CACHE STRING "From ${CMAKE_PROJECT_NAME}_TCL - SYSTEM" FORCE)
+			SET(${PKGNAME_UPPER}_MET_CONDITION 4)
+		ENDIF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
+	ENDIF("${${CMAKE_PROJECT_NAME}_TCL}" STREQUAL "SYSTEM")
 
-    # 6. If we're building Tcl itself (for whatever reason) and we aren't
-    # already off, default to compilation.  If we're building, no point 
-    # in testing - disable.
-    IF(${CMAKE_PROJECT_NAME}_TCL_BUILD)
-	IF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
-	    SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD ON)
-	    SET(${PKGNAME_UPPER}_DISABLE_TEST 1)
-	    SET(${PKGNAME_UPPER}_MET_CONDITION 6)
-	ENDIF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
-    ENDIF(${CMAKE_PROJECT_NAME}_TCL_BUILD)
-    # Check for the bizarre case of bundled Tcl + system package - error out if that
-    # combination has been specified, since there is no expectation that a package
-    # provided for a system installation of Tcl/Tk would work with BRL-CAD's local 
-    # copy.  If the feature was disabled it doesn't matter, since that's a 
-    # "disabled" condition instead of a SYSTEM condition.  If we don't hit such a
-    # case, properly set ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}
-    IF(NOT ${PKGNAME_UPPER}_DISABLED)
+
+	# 5. If BRLCAD_TCL matches SYSTEM and BRLCAD_BUNDLED_LIBS is *exactly* 
+	# SYSTEM, compilation is off. (Testing depends on #1).
+	IF("${${CMAKE_PROJECT_NAME}_TCL}" MATCHES "SYSTEM" AND "${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS}" STREQUAL "SYSTEM")
+		IF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
+			SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
+			SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "SYSTEM (AUTO)" CACHE STRING "From ${CMAKE_PROJECT_NAME}_BUNDLED_LIBS - SYSTEM" FORCE)
+			SET(${PKGNAME_UPPER}_MET_CONDITION 5)
+		ENDIF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
+	ENDIF("${${CMAKE_PROJECT_NAME}_TCL}" MATCHES "SYSTEM" AND "${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS}" STREQUAL "SYSTEM")
+
+	# 6. If we're building Tcl itself (for whatever reason) and we aren't
+	# already off, default to compilation.  If we're building, no point 
+	# in testing - disable.
 	IF(${CMAKE_PROJECT_NAME}_TCL_BUILD)
-	    IF(NOT ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
-		MESSAGE(FATAL_ERROR "Local Tcl compilation enabled, but compilation of Tcl/Tk extension ${pkgname} has been disabled - unsupported configuration!")
-	    ELSE(NOT ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
-		SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "BUNDLED (AUTO)" CACHE STRING "From ${CMAKE_PROJECT_NAME}_TCL - BUNDLED" FORCE)
-	    ENDIF(NOT ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
+		IF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
+			SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD ON)
+			SET(${PKGNAME_UPPER}_DISABLE_TEST 1)
+			SET(${PKGNAME_UPPER}_MET_CONDITION 6)
+		ENDIF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
 	ENDIF(${CMAKE_PROJECT_NAME}_TCL_BUILD)
-    ENDIF(NOT ${PKGNAME_UPPER}_DISABLED)
+	# Check for the bizarre case of bundled Tcl + system package - error out if that
+	# combination has been specified, since there is no expectation that a package
+	# provided for a system installation of Tcl/Tk would work with BRL-CAD's local 
+	# copy.  If the feature was disabled it doesn't matter, since that's a 
+	# "disabled" condition instead of a SYSTEM condition.  If we don't hit such a
+	# case, properly set ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}
+	IF(NOT ${PKGNAME_UPPER}_DISABLED)
+		IF(${CMAKE_PROJECT_NAME}_TCL_BUILD)
+			IF(NOT ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
+				MESSAGE(FATAL_ERROR "Local Tcl compilation enabled, but compilation of Tcl/Tk extension ${pkgname} has been disabled - unsupported configuration!")
+			ELSE(NOT ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
+				SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "BUNDLED (AUTO)" CACHE STRING "From ${CMAKE_PROJECT_NAME}_TCL - BUNDLED" FORCE)
+			ENDIF(NOT ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
+		ENDIF(${CMAKE_PROJECT_NAME}_TCL_BUILD)
+	ENDIF(NOT ${PKGNAME_UPPER}_DISABLED)
 
-    # 7. If none of the above conditions preclude us from doing so, start
-    # testing.
+	# 7. If none of the above conditions preclude us from doing so, start
+	# testing.
 
-    IF(NOT ${PKGNAME_UPPER}_DISABLE_TEST)
-	# Initialize test tracking variable
-	SET(${PKGNAME_UPPER}_TEST_FAIL 0)
-	SET(${PKGNAME_UPPER}_TCL_PASSED 0)
-	SET(${PKGNAME_UPPER}_LIBS_FAIL 0)
-	# Stash the previous results (if any) so we don't repeatedly 
-	# call out the tests - only report if something actually 
-	# changes in subsequent runs.
-	SET(${PKGNAME_UPPER}_FOUND_STATUS ${${PKGNAME_UPPER}_FOUND})
-
-	# 1.  If we have no wish command, we fail immediately.
-	IF("${wishcmd}" STREQUAL "" OR "${wishcmd}" MATCHES "NOTFOUND")
-	    MESSAGE(WARNING "Test for ${pkgname} failed - no tclsh/wish command available for testing!")
-	    SET(${PKGNAME_UPPER}_TEST_FAIL 1)
-	ENDIF("${wishcmd}" STREQUAL "" OR "${wishcmd}" MATCHES "NOTFOUND")
-
-	# 2.  We have wish - now things get interesting.  Write out
-	# a Tcl script to probe for information on the package we're
-	# interested in, and collect the results.
-	IF(NOT ${PKGNAME_UPPER}_TEST_FAIL)
-	    SET(CURRENT_TCL_PACKAGE_NAME ${pkgname})
-	    SET(pkg_test_file ${CMAKE_BINARY_DIR}/CMakeTmp/${pkgname}_version.tcl)
-	    configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/tcltest.tcl.in ${pkg_test_file} @ONLY)
-	    EXEC_PROGRAM(${wishcmd} ARGS ${pkg_test_file} OUTPUT_VARIABLE EXECOUTPUT)
-	    FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/${PKGNAME_UPPER}_PKG_VERSION pkgversion)
-	    STRING(REGEX REPLACE "\n" "" ${PKGNAME_UPPER}_PACKAGE_VERSION ${pkgversion})
-	    IF(${PKGNAME_UPPER}_PACKAGE_VERSION)
-		SET(${PKGNAME_UPPER}_TCL_PASSED 1)
-	    ELSE(${PKGNAME_UPPER}_PACKAGE_VERSION)
+	IF(NOT ${PKGNAME_UPPER}_DISABLE_TEST)
+		# Initialize test tracking variable
+		SET(${PKGNAME_UPPER}_TEST_FAIL 0)
 		SET(${PKGNAME_UPPER}_TCL_PASSED 0)
-	    ENDIF(${PKGNAME_UPPER}_PACKAGE_VERSION)
-	ENDIF(NOT ${PKGNAME_UPPER}_TEST_FAIL)
+		SET(${PKGNAME_UPPER}_LIBS_FAIL 0)
+		# Stash the previous results (if any) so we don't repeatedly 
+		# call out the tests - only report if something actually 
+		# changes in subsequent runs.
+		SET(${PKGNAME_UPPER}_FOUND_STATUS ${${PKGNAME_UPPER}_FOUND})
 
-	# 3.  After 2, we *almost* know what to do.  Check if we need to base
-	# the decision on C libraries and headers, as well.  If we didn't pass
-	# the package version test, then the libraries and headers are moot - 
-	# we can't assume the package is set up correctly, and need to build
-	# our own or report find failure, as the case may be.
-	#
-	# It might be that the variables we need have already been set by
-	# another routine (FindTCL.cmake, for example, does some sophisticated
-	# work to set the correct library paths for Tk as part of its search)
-	# The user might also be setting variables manually to identify locations
-	# outside normal search parameters. On the other hand, if we are changing
-	# CMake build settings, we don't want to let build-target settings satisfy
-	# the requirements.
-	#
-	# To handle this, each library variable is first checked to see if it's 
-	# full path expansion matches the default variable setting.  If so, accept
-	# the setting.  If not, the setting is assumed to be a build target from
-	# a bundled configuration and cleared.  (If the bundled sources are built
-	# in the end, they will be restored.)
+		# 1.  If we have no wish command, we fail immediately.
+		IF("${wishcmd}" STREQUAL "" OR "${wishcmd}" MATCHES "NOTFOUND")
+			MESSAGE(WARNING "Test for ${pkgname} failed - no tclsh/wish command available for testing!")
+			SET(${PKGNAME_UPPER}_TEST_FAIL 1)
+		ENDIF("${wishcmd}" STREQUAL "" OR "${wishcmd}" MATCHES "NOTFOUND")
 
-	IF(${PKGNAME_UPPER}_TCL_PASSED)
-	    IF(NOT "${NEEDS_LIBS}" STREQUAL "")
-		# We have libraries to find - let's get started.
-		FOREACH(libname ${NEEDS_LIBS})
-		    # get the uppercase version of the lib name
-		    STRING(TOUPPER "${libname}" LIBNAME_UPPER)
-		    # deduce the variable to hold the library results 
-		    IF(${LIBNAME_UPPER} STREQUAL ${PKGNAME_UPPER})
-			SET(LOOKFOR_LIBRARY "${PKGNAME_UPPER}_LIBRARY")
-			SET(CORENAME ${pkgname})
-		    ELSE(${LIBNAME_UPPER} STREQUAL ${PKGNAME_UPPER})
-			SET(LOOKFOR_LIBRARY "${PKGNAME_UPPER}_${LIBNAME_UPPER}_LIBRARY")
-			SET(CORENAME ${libname})
-		    ENDIF(${LIBNAME_UPPER} STREQUAL ${PKGNAME_UPPER})
-		    SET(${PKGNAME_UPPER}_REQUIRED_LIBS ${${PKGNAME_UPPER}_REQUIRED_LIBS} ${${LOOKFOR_LIBRARY}})
-		    # Check if this variable has already been set, and if
-		    # so put it to the full path test
-		    IF(${LOOKFOR_LIBRARY})
-			GET_FILENAME_COMPONENT(PATH_ABS ${${LOOKFOR_LIBRARY}} ABSOLUTE)
-			IF(NOT "${${LOOKFOR_LIBRARY}}" STREQUAL "${PATH_ABS}")
-			    SET(${LOOKFOR_LIBRARY} "NOTFOUND" CACHE STRING "RESET" FORCE)
-			ENDIF(NOT "${${LOOKFOR_LIBRARY}}" STREQUAL "${PATH_ABS}")
-		    ENDIF(${LOOKFOR_LIBRARY})
-		    # If we don't already have a library value, go looking
-		    IF(NOT ${LOOKFOR_LIBRARY} OR "${${LOOKFOR_LIBRARY}}" MATCHES "NOTFOUND")
-			find_library(${LOOKFOR_LIBRARY} NAMES ${libname} ${libname}${${PKGNAME_UPPER}_PACKAGE_VERSION} PATH_SUFFIXES ${libname}${${PKGNAME_UPPER}_PACKAGE_VERSION} ${pkgname}${${PKGNAME_UPPER}_PACKAGE_VERSION})
-		    ENDIF(NOT ${LOOKFOR_LIBRARY} OR "${${LOOKFOR_LIBRARY}}" MATCHES "NOTFOUND")
-		    # If we didn't find anything, we've failed to satisfy
-		    # the package requirements
-		    IF(NOT ${LOOKFOR_LIBRARY})
-			SET(${PKGNAME_UPPER}_LIBS_FAIL 1)
-		    ENDIF(NOT ${LOOKFOR_LIBRARY})
-		    MARK_AS_ADVANCED(${LOOKFOR_LIBRARY})
-		ENDFOREACH(libname ${NEEDS_LIBS})
-	    ENDIF(NOT "${NEEDS_LIBS}" STREQUAL "")
-	ENDIF(${PKGNAME_UPPER}_TCL_PASSED)
-    ENDIF(NOT ${PKGNAME_UPPER}_DISABLE_TEST)
+		# 2.  We have wish - now things get interesting.  Write out
+		# a Tcl script to probe for information on the package we're
+		# interested in, and collect the results.
+		IF(NOT ${PKGNAME_UPPER}_TEST_FAIL)
+			SET(CURRENT_TCL_PACKAGE_NAME ${pkgname})
+			SET(pkg_test_file ${CMAKE_BINARY_DIR}/CMakeTmp/${pkgname}_version.tcl)
+			configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/tcltest.tcl.in ${pkg_test_file} @ONLY)
+			EXEC_PROGRAM(${wishcmd} ARGS ${pkg_test_file} OUTPUT_VARIABLE EXECOUTPUT)
+			FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/${PKGNAME_UPPER}_PKG_VERSION pkgversion)
+			STRING(REGEX REPLACE "\n" "" ${PKGNAME_UPPER}_PACKAGE_VERSION ${pkgversion})
+			IF(${PKGNAME_UPPER}_PACKAGE_VERSION)
+				SET(${PKGNAME_UPPER}_TCL_PASSED 1)
+			ELSE(${PKGNAME_UPPER}_PACKAGE_VERSION)
+				SET(${PKGNAME_UPPER}_TCL_PASSED 0)
+			ENDIF(${PKGNAME_UPPER}_PACKAGE_VERSION)
+		ENDIF(NOT ${PKGNAME_UPPER}_TEST_FAIL)
 
-    # After all that, we finally know what to do - do it.
-    STRING(TOLOWER ${pkgname} PKGNAME_LOWER)
+		# 3.  After 2, we *almost* know what to do.  Check if we need to base
+		# the decision on C libraries and headers, as well.  If we didn't pass
+		# the package version test, then the libraries and headers are moot - 
+		# we can't assume the package is set up correctly, and need to build
+		# our own or report find failure, as the case may be.
+		#
+		# It might be that the variables we need have already been set by
+		# another routine (FindTCL.cmake, for example, does some sophisticated
+		# work to set the correct library paths for Tk as part of its search)
+		# The user might also be setting variables manually to identify locations
+		# outside normal search parameters. On the other hand, if we are changing
+		# CMake build settings, we don't want to let build-target settings satisfy
+		# the requirements.
+		#
+		# To handle this, each library variable is first checked to see if it's 
+		# full path expansion matches the default variable setting.  If so, accept
+		# the setting.  If not, the setting is assumed to be a build target from
+		# a bundled configuration and cleared.  (If the bundled sources are built
+		# in the end, they will be restored.)
 
-    # If testing was disabled, we only care what the _BUILD variable says.
-    # Even if DISABLED, we still need the distcheck ignore, so do the following
-    # for ALL situations.
-    IF(${PKGNAME_UPPER}_DISABLE_TEST)
-	IF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
-	    add_subdirectory(${dir})
-	    FOREACH(dep ${depends})
-		string(TOUPPER ${dep} DEP_UPPER)
-		if(BRLCAD_BUILD_${DEP_UPPER})
-		    add_dependencies(${pkgname} ${dep})
-		endif(BRLCAD_BUILD_${DEP_UPPER})
-	    ENDFOREACH(dep ${depends})
-	    INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/${PKGNAME_LOWER}.dist)
-	    DISTCHECK_IGNORE(${dir} ${PKGNAME_LOWER}_ignore_files)
-	ELSE(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
-	    DISTCHECK_IGNORE_ITEM(${dir})
-	ENDIF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
-    ENDIF(${PKGNAME_UPPER}_DISABLE_TEST)
-
-    # If testing was NOT disabled, but we're forced to system, see if we
-    # need to complain about not finding what we need - we can't enable, so
-    # complain.  This situation is not as dangerous as the potential subtle
-    # issues with system pkg + local Tcl, so we won't FATAL_ERROR - just
-    # warn and let things proceed.
-    IF(NOT ${PKGNAME_UPPER}_DISABLE_TEST)
-	IF(${PKGNAME_UPPER}_MET_CONDITION STREQUAL "4" OR ${PKGNAME_UPPER}_MET_CONDITION STREQUAL "5")
-	    IF(${PKGNAME_UPPER}_TEST_FAIL OR ${PKGNAME_UPPER}_LIBS_FAIL OR NOT ${PKGNAME_UPPER}_TCL_PASSED)
-		SET(BRLCAD_${PKGNAME_UPPER}_NOTFOUND 1)
-		IF(NOT "${wishcmd}" STREQUAL "" AND NOT "${wishcmd}" MATCHES "NOTFOUND")
-		    MESSAGE(WARNING "Local compilation of Tcl/Tk extension ${pkgname} was disabled, but system version not found!")	
-		ENDIF(NOT "${wishcmd}" STREQUAL "" AND NOT "${wishcmd}" MATCHES "NOTFOUND")
-	    ENDIF(${PKGNAME_UPPER}_TEST_FAIL OR ${PKGNAME_UPPER}_LIBS_FAIL OR NOT ${PKGNAME_UPPER}_TCL_PASSED)
-	ENDIF(${PKGNAME_UPPER}_MET_CONDITION STREQUAL "4" OR ${PKGNAME_UPPER}_MET_CONDITION STREQUAL "5")
-    ENDIF(NOT ${PKGNAME_UPPER}_DISABLE_TEST)
-
-    # If testing was NOT disable, and none of the MET_CONDITIONs are satisfied,
-    # we base our decision on the test results.
-    IF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
-	IF(NOT ${PKGNAME_UPPER}_TEST_FAIL)
-	    IF(NOT ${PKGNAME_UPPER}_LIBS_FAIL)
 		IF(${PKGNAME_UPPER}_TCL_PASSED)
-		    SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
-		    SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "SYSTEM (AUTO)" CACHE STRING "Detection based - SYSTEM" FORCE)
-		ELSE(${PKGNAME_UPPER}_TCL_PASSED)
-		    SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD ON)
-		    SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "BUNDLED (AUTO)" CACHE STRING "Detection based - BUNDLED" FORCE)
+			IF(NOT "${NEEDS_LIBS}" STREQUAL "")
+				# We have libraries to find - let's get started.
+				FOREACH(libname ${NEEDS_LIBS})
+					# get the uppercase version of the lib name
+					STRING(TOUPPER "${libname}" LIBNAME_UPPER)
+					# deduce the variable to hold the library results 
+					IF(${LIBNAME_UPPER} STREQUAL ${PKGNAME_UPPER})
+						SET(LOOKFOR_LIBRARY "${PKGNAME_UPPER}_LIBRARY")
+						SET(CORENAME ${pkgname})
+					ELSE(${LIBNAME_UPPER} STREQUAL ${PKGNAME_UPPER})
+						SET(LOOKFOR_LIBRARY "${PKGNAME_UPPER}_${LIBNAME_UPPER}_LIBRARY")
+						SET(CORENAME ${libname})
+					ENDIF(${LIBNAME_UPPER} STREQUAL ${PKGNAME_UPPER})
+					SET(${PKGNAME_UPPER}_REQUIRED_LIBS ${${PKGNAME_UPPER}_REQUIRED_LIBS} ${${LOOKFOR_LIBRARY}})
+					# Check if this variable has already been set, and if
+					# so put it to the full path test
+					IF(${LOOKFOR_LIBRARY})
+						GET_FILENAME_COMPONENT(PATH_ABS ${${LOOKFOR_LIBRARY}} ABSOLUTE)
+						IF(NOT "${${LOOKFOR_LIBRARY}}" STREQUAL "${PATH_ABS}")
+							SET(${LOOKFOR_LIBRARY} "NOTFOUND" CACHE STRING "RESET" FORCE)
+						ENDIF(NOT "${${LOOKFOR_LIBRARY}}" STREQUAL "${PATH_ABS}")
+					ENDIF(${LOOKFOR_LIBRARY})
+					# If we don't already have a library value, go looking
+					IF(NOT ${LOOKFOR_LIBRARY} OR "${${LOOKFOR_LIBRARY}}" MATCHES "NOTFOUND")
+						find_library(${LOOKFOR_LIBRARY} NAMES ${libname} ${libname}${${PKGNAME_UPPER}_PACKAGE_VERSION} PATH_SUFFIXES ${libname}${${PKGNAME_UPPER}_PACKAGE_VERSION} ${pkgname}${${PKGNAME_UPPER}_PACKAGE_VERSION})
+					ENDIF(NOT ${LOOKFOR_LIBRARY} OR "${${LOOKFOR_LIBRARY}}" MATCHES "NOTFOUND")
+					# If we didn't find anything, we've failed to satisfy
+					# the package requirements
+					IF(NOT ${LOOKFOR_LIBRARY})
+						SET(${PKGNAME_UPPER}_LIBS_FAIL 1)
+					ENDIF(NOT ${LOOKFOR_LIBRARY})
+					MARK_AS_ADVANCED(${LOOKFOR_LIBRARY})
+				ENDFOREACH(libname ${NEEDS_LIBS})
+			ENDIF(NOT "${NEEDS_LIBS}" STREQUAL "")
 		ENDIF(${PKGNAME_UPPER}_TCL_PASSED)
-	    ELSE(NOT ${PKGNAME_UPPER}_LIBS_FAIL)
-		SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD ON)
-		SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "BUNDLED (AUTO)" CACHE STRING "Detection based - BUNDLED" FORCE)
-	    ENDIF(NOT ${PKGNAME_UPPER}_LIBS_FAIL)
-	ELSE(NOT ${PKGNAME_UPPER}_TEST_FAIL)
-	    SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD ON)
-	    SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "BUNDLED (AUTO)" CACHE STRING "Detection based - BUNDLED" FORCE)
-	ENDIF(NOT ${PKGNAME_UPPER}_TEST_FAIL)
-	IF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
-	    add_subdirectory(${dir})
-	    FOREACH(dep ${depends})
-		string(TOUPPER ${dep} DEP_UPPER)
-		if(BRLCAD_BUILD_${DEP_UPPER})
-		    add_dependencies(${pkgname} ${dep})
-		endif(BRLCAD_BUILD_${DEP_UPPER})
-	    ENDFOREACH(dep ${depends})
-	    INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/${PKGNAME_LOWER}.dist)
-	    DISTCHECK_IGNORE(${dir} ${PKGNAME_LOWER}_ignore_files)
-	ELSE(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
-	    DISTCHECK_IGNORE_ITEM(${dir})
-	ENDIF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
-    ENDIF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
+	ENDIF(NOT ${PKGNAME_UPPER}_DISABLE_TEST)
 
-    OPTION_ALIASES("${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}" "${aliases}" "ABS")
-    OPTION_DESCRIPTION("${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}" "${aliases}" "${description}") 
+	# After all that, we finally know what to do - do it.
+	STRING(TOLOWER ${pkgname} PKGNAME_LOWER)
+
+	# If testing was disabled, we only care what the _BUILD variable says.
+	# Even if DISABLED, we still need the distcheck ignore, so do the following
+	# for ALL situations.
+	IF(${PKGNAME_UPPER}_DISABLE_TEST)
+		IF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
+			add_subdirectory(${dir})
+			FOREACH(dep ${depends})
+				string(TOUPPER ${dep} DEP_UPPER)
+				if(BRLCAD_BUILD_${DEP_UPPER})
+					add_dependencies(${pkgname} ${dep})
+				endif(BRLCAD_BUILD_${DEP_UPPER})
+			ENDFOREACH(dep ${depends})
+			INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/${PKGNAME_LOWER}.dist)
+			DISTCHECK_IGNORE(${dir} ${PKGNAME_LOWER}_ignore_files)
+		ELSE(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
+			DISTCHECK_IGNORE_ITEM(${dir})
+		ENDIF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
+	ENDIF(${PKGNAME_UPPER}_DISABLE_TEST)
+
+	# If testing was NOT disabled, but we're forced to system, see if we
+	# need to complain about not finding what we need - we can't enable, so
+	# complain.  This situation is not as dangerous as the potential subtle
+	# issues with system pkg + local Tcl, so we won't FATAL_ERROR - just
+	# warn and let things proceed.
+	IF(NOT ${PKGNAME_UPPER}_DISABLE_TEST)
+		IF(${PKGNAME_UPPER}_MET_CONDITION STREQUAL "4" OR ${PKGNAME_UPPER}_MET_CONDITION STREQUAL "5")
+			IF(${PKGNAME_UPPER}_TEST_FAIL OR ${PKGNAME_UPPER}_LIBS_FAIL OR NOT ${PKGNAME_UPPER}_TCL_PASSED)
+				SET(BRLCAD_${PKGNAME_UPPER}_NOTFOUND 1)
+				IF(NOT "${wishcmd}" STREQUAL "" AND NOT "${wishcmd}" MATCHES "NOTFOUND")
+					MESSAGE(WARNING "Local compilation of Tcl/Tk extension ${pkgname} was disabled, but system version not found!")	
+				ENDIF(NOT "${wishcmd}" STREQUAL "" AND NOT "${wishcmd}" MATCHES "NOTFOUND")
+			ENDIF(${PKGNAME_UPPER}_TEST_FAIL OR ${PKGNAME_UPPER}_LIBS_FAIL OR NOT ${PKGNAME_UPPER}_TCL_PASSED)
+		ENDIF(${PKGNAME_UPPER}_MET_CONDITION STREQUAL "4" OR ${PKGNAME_UPPER}_MET_CONDITION STREQUAL "5")
+	ENDIF(NOT ${PKGNAME_UPPER}_DISABLE_TEST)
+
+	# If testing was NOT disable, and none of the MET_CONDITIONs are satisfied,
+	# we base our decision on the test results.
+	IF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
+		IF(NOT ${PKGNAME_UPPER}_TEST_FAIL)
+			IF(NOT ${PKGNAME_UPPER}_LIBS_FAIL)
+				IF(${PKGNAME_UPPER}_TCL_PASSED)
+					SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
+					SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "SYSTEM (AUTO)" CACHE STRING "Detection based - SYSTEM" FORCE)
+				ELSE(${PKGNAME_UPPER}_TCL_PASSED)
+					SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD ON)
+					SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "BUNDLED (AUTO)" CACHE STRING "Detection based - BUNDLED" FORCE)
+				ENDIF(${PKGNAME_UPPER}_TCL_PASSED)
+			ELSE(NOT ${PKGNAME_UPPER}_LIBS_FAIL)
+				SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD ON)
+				SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "BUNDLED (AUTO)" CACHE STRING "Detection based - BUNDLED" FORCE)
+			ENDIF(NOT ${PKGNAME_UPPER}_LIBS_FAIL)
+		ELSE(NOT ${PKGNAME_UPPER}_TEST_FAIL)
+			SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD ON)
+			SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} "BUNDLED (AUTO)" CACHE STRING "Detection based - BUNDLED" FORCE)
+		ENDIF(NOT ${PKGNAME_UPPER}_TEST_FAIL)
+		IF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
+			add_subdirectory(${dir})
+			FOREACH(dep ${depends})
+				string(TOUPPER ${dep} DEP_UPPER)
+				if(BRLCAD_BUILD_${DEP_UPPER})
+					add_dependencies(${pkgname} ${dep})
+				endif(BRLCAD_BUILD_${DEP_UPPER})
+			ENDFOREACH(dep ${depends})
+			INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/${PKGNAME_LOWER}.dist)
+			DISTCHECK_IGNORE(${dir} ${PKGNAME_LOWER}_ignore_files)
+		ELSE(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
+			DISTCHECK_IGNORE_ITEM(${dir})
+		ENDIF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
+	ENDIF(NOT ${PKGNAME_UPPER}_MET_CONDITION)
+
+	OPTION_ALIASES("${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}" "${aliases}" "ABS")
+	OPTION_DESCRIPTION("${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}" "${aliases}" "${description}") 
+
+	# For drop-down menus in CMake gui - set STRINGS property
+	set_property(CACHE ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} PROPERTY STRINGS AUTO BUNDLED SYSTEM)
 
 ENDMACRO(THIRD_PARTY_TCL_PACKAGE)
 
