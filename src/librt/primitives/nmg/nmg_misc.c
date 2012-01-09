@@ -1498,6 +1498,8 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
     fu = fu_in;
     NMG_CK_FACEUSE(fu);
 
+    HSETALL(pl, 0.0); /* sanity */
+
     /* find an OT_SAME loop to use for calculating general direction of normal */
     for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
 	if (!got_dir && BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
@@ -1510,8 +1512,10 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 	loop_count++;
     }
 
-    if (!got_dir)
-	return 1;
+    if (!got_dir) {
+	failed = 1;
+	goto out;
+    }
 
     f = fu->f_p;
     NMG_CK_FACE(f);
@@ -1531,7 +1535,8 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 	/* if this face geometry only has one loop using it, just use Newell's method */
 	if (loop_count < 2) {
 	    HMOVE(pl, old_pl);
-	    return 0;
+	    failed = 0;
+	    goto out;
 	}
 
 	nmg_tabulate_face_g_verts(&verts, fg);
@@ -1540,7 +1545,8 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 	/* If this faceuse only has one loop, just use Newell's method */
 	if (loop_count < 2) {
 	    HMOVE(pl, old_pl);
-	    return 0;
+	    failed = 0;
+	    goto out;
 	}
 
 	nmg_vertex_tabulate(&verts, &fu->l.magic);
@@ -1555,13 +1561,14 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 	if (fu->orientation != OT_SAME) {
 	    bu_log("nmg_calc_face_plane: fu x%x has no OT_SAME use\n", fu);
 	    bu_ptbl_free(&verts);
-	    return 1;
+	    failed = 1;
+	    goto out;
 	}
     }
 
     /* build matrix */
     MAT_ZERO(matrix);
-    VSET(vsum, 0.0, 0.0, 0.0);
+    VSETALL(vsum, 0.0);
 
     one_over_vertex_count = 1.0/(double)(BU_PTBL_END(&verts));
 
@@ -1612,8 +1619,9 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 	pl[H] = VDOT(pl, vsum);
 
 	/* make sure it points in the correct direction */
-	if (VDOT(pl, old_pl) < 0.0)
+	if (VDOT(pl, old_pl) < -SMALL_FASTF) {
 	    HREVERSE(pl, pl);
+	}
     } else {
 	struct vertex *v, *v0;
 	int x_same=1;
@@ -1638,15 +1646,12 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 		break;
 	}
 
-	/* FIXME: VSET on an plane_t?  what about [H] (which we add to
-	 * later below)?
-	 */
 	if (x_same) {
-	    VSET(pl, 1.0, 0.0, 0.0);
+	    HSET(pl, 1.0, 0.0, 0.0, 0.0);
 	} else if (y_same) {
-	    VSET(pl, 0.0, 1.0, 0.0);
+	    HSET(pl, 0.0, 1.0, 0.0, 0.0);
 	} else if (z_same) {
-	    VSET(pl, 0.0, 0.0, 1.0);
+	    HSET(pl, 0.0, 0.0, 1.0, 0.0);
 	}
 
 	if (x_same || y_same || z_same) {
@@ -1657,13 +1662,15 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 	    pl[H] = VDOT(pl, vsum);
 
 	    /* make sure it points in the correct direction */
-	    if (VDOT(pl, old_pl) < 0.0)
+	    if (VDOT(pl, old_pl) < -SMALL_FASTF) {
 		HREVERSE(pl, pl);
+	    }
 	} else {
 	    bu_log("nmg_calc_face_plane: Cannot calculate plane for fu x%x\n", fu);
 	    nmg_pr_fu_briefly(fu, (char *)NULL);
 	    bu_log("%d verts\n", BU_PTBL_END(&verts));
 	    failed = 1;
+	    goto out;
 	}
     }
 
@@ -1686,7 +1693,12 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
     pl[H] += (max_dist + min_dist)/2.0;
 
     bu_ptbl_free(&verts);
+
+    failed = 0;
+
+out:
     return failed;
+
 }
 
 
@@ -8527,7 +8539,7 @@ nmg_make_faces_within_tol(struct shell *s, const struct bn_tol *tol)
 
 	/* check if all the vertices for this face lie on the plane */
 	if (nmg_ck_fu_verts(fu, fu->f_p, tol)) {
-	    plane_t pl;
+	    plane_t pl = HINIT_ZERO; /* sanity */
 
 	    /* Need to triangulate this face */
 	    nmg_triangulate_fu(fu, tol);
@@ -8544,7 +8556,7 @@ nmg_make_faces_within_tol(struct shell *s, const struct bn_tol *tol)
     }
 
     for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
-	plane_t pl;
+	plane_t pl = HINIT_ZERO; /* sanity */
 
 	if (fu->orientation != OT_SAME)
 	    continue;
