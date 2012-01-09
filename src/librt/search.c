@@ -1096,7 +1096,7 @@ f_type(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
     if (!dp)
 	return 0;
 
-    rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource);
+    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return 0;
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) return 0;
 
