@@ -916,7 +916,11 @@ bn_table_read(const char *filename)
 	return NULL;
     }
 
-    bu_vls_gets( &line, fp );
+    if ( bu_vls_gets( &line, fp ) < 0 ) {
+	perror( filename );
+	bu_log("Failed to read line\n");
+	return NULL;
+    }
     nw = 0;
     /* TODO: %lu to size_t isn't right. We may need a bu_sscanf() that can cope
      * with native pointer width correctly, as %p is not ubiquitous and %z is a
