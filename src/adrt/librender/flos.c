@@ -44,18 +44,16 @@ render_flos_free(render_t *UNUSED(render)) {
 void
 render_flos_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel) {
     struct tie_id_s id, tid;
-    adrt_mesh_t *mesh;
     vect_t vec;
     fastf_t angle;
     struct render_flos_s *rd;
 
     rd = (struct render_flos_s *)render->data;
 
-    if ((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL))) {
+    if (tie_work(tie, ray, &id, render_hit, NULL) != NULL) {
 	VSET(*pixel, 0.0, 0.5, 0.0);
-    } else {
+    } else
 	return;
-    }
 
     VSUB2(vec,  ray->pos,  id.pos);
     VUNITIZE(vec);
