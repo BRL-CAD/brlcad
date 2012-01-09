@@ -1655,7 +1655,7 @@ ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t
 	if (!data) {
 	    return TCL_ERROR;
 	} else {
-	    vp = callback_function(data);
+	    (void)callback_function(data);
 	}
     }
     return TCL_OK;
