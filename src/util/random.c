@@ -63,11 +63,9 @@ main(int argc, char *argv[])
 		break;
 	    case 'g':
 		gauss = 1;
-		uniform = 0;
 		break;
 	    case 'u':
 		uniform = 1;
-		gauss = 0;
 		break;
 	    case 'v':
 		verbose = 1;
@@ -76,7 +74,7 @@ main(int argc, char *argv[])
 		bu_exit(1, "%s %s\n", argv[0], usage);
 	}
     }
-    if (! gauss && !uniform) uniform = 1;
+    if (gauss == 0 && uniform == 0) uniform = 1;
     if (gauss && uniform) {
 	bu_log("%s %s\n", argv[0], usage);
 	bu_exit(1, "\tOnly one of gaussian or uniform may be used.\n");
