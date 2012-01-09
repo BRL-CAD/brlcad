@@ -76,8 +76,11 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     struct shell *s;
     int numtri = 0;
 
-    if (r) *r = NULL;
-    if (m) NMG_CK_MODEL(m);
+    if (r == NULL)
+	return -1;
+    *r = NULL;
+    if (m)
+	NMG_CK_MODEL(m);
 
     RT_CK_DB_INTERNAL(ip);
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
