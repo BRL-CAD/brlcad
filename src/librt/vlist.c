@@ -646,7 +646,11 @@ rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
 		carg[j] = '\0';
 		break;
 	    case TCHAR:
-		carg[i] = getc(fp);
+		cc = getc(fp);
+		if (cc == EOF)
+		    return;
+
+		carg[i] = cc;
 		arg[i] = 0;
 		break;
 	    case TNONE:
