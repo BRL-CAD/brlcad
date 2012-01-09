@@ -263,14 +263,20 @@ main(int argc, char **argv)
 		printf("No control card .... STOP\n");
 		return 10;
 	    }
-	    sscanf( ctitle, "%20d%10d", &sol_total, &reg_total );
+	    if ( sscanf( ctitle, "%20d%10d", &sol_total, &reg_total ) != 2 ) {
+		printf("ctitle sscanf failed .... STOP\n");
+		return 10;
+            }
 	    break;
 	case 5:
 	    if ( get_line( ctitle, sizeof(ctitle), "control card" ) == EOF ) {
 		printf("No control card .... STOP\n");
 		return 10;
 	    }
-	    sscanf( ctitle, "%5d%5d", &sol_total, &reg_total );
+	    if ( sscanf( ctitle, "%5d%5d", &sol_total, &reg_total ) != 2 ) {
+		printf("ctitle sscanf failed .... STOP\n");
+		return 10;
+	    }
 	    break;
     }
 
