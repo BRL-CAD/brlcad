@@ -195,7 +195,7 @@ void TIE_VAL(tie_prep)(struct tie_s *tie)
 void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_s *id, void *(*hitfunc)(struct tie_ray_s*, struct tie_id_s*, struct tie_tri_s*, void *ptr), void *ptr)
 {
     struct tie_stack_s stack[40];
-    struct tie_id_s t, id_list[256];
+    struct tie_id_s t = {{0,0,0},{0,0,0},0,0,0}, id_list[256];
     struct tie_tri_s *hit_list[256], *tri;
     struct tie_geom_s *data;
     struct tie_kdtree_s *node_aligned, *temp[2];
