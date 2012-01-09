@@ -462,16 +462,15 @@ region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union t
     do  {
 	char	*op;
 
-	op = obuf;
 	if ( first )  {
-	    (void) snprintf( op, OBUF_SIZE-1, "%5d ", nnr+delreg );
+	    (void) snprintf( obuf, OBUF_SIZE-1, "%5d ", nnr+delreg );
 	    /* sanity */
-	    op[OBUF_SIZE-1]='\0';
+	    obuf[OBUF_SIZE-1]='\0';
 	    first = 0;
 	} else {
 	    bu_strlcpy( op, "      \0", 7 );
 	}
-	op += 6;
+	op = obuf + 6;
 
 	if ( left > 9*7 )  {
 	    bu_strlcpy( op, cp, 9*7+1 );
