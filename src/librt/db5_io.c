@@ -604,7 +604,7 @@ db5_export_object3(
 
     /* Finally, go back to the header and write the actual object length */
     cp = ((unsigned char *)out->ext_buf) + sizeof(struct db5_ondisk_header);
-    cp = db5_encode_length(cp, togo>>3, h_width);
+    (void)db5_encode_length(cp, togo>>3, h_width);
 
     out->ext_nbytes = togo;
     BU_ASSERT_LONG(out->ext_nbytes, >=, 8);
