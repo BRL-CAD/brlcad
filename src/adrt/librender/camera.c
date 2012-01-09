@@ -616,10 +616,10 @@ render_shader_load_plugin(const char *filename) {
 
     if(lh == NULL) { bu_log("Faulty plugin %s: %s\n", filename, bu_dlerror()); return NULL; }
     name = bu_dlsym(lh, "name");
-    if(name == NULL) { bu_log("Faulty plugin %s: No name\n", filename); return NULL; }
+    if(name == NULL) { bu_log("Faulty plugin %s: No name\n", filename); bu_dlclose(lh); return NULL; }
     /* assumes function pointers can be stored as a number, which ISO C does not guarantee */
     init = (int (*) (render_t *, const char *))(intptr_t)bu_dlsym(lh, "init");
-    if(init == NULL) { bu_log("Faulty plugin %s: No init\n", filename); return NULL; }
+    if(init == NULL) { bu_log("Faulty plugin %s: No init\n", filename); bu_dlclose(lh); return NULL; }
     s = render_shader_register(name, init);
     s->dlh = lh;
     return s->name;
