@@ -69,6 +69,7 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
     render_path_t *rd;
 
     VSETALL(new_pix, 0);
+    VSETALL(T, 0);
 
     rd = (render_path_t *)render->data;
 
