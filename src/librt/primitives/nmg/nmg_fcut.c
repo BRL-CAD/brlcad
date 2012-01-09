@@ -3884,7 +3884,6 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 	    for (e_pos = pos-1; e_pos >= 0; e_pos--) {
 		prev_vu = rs->vu[e_pos];
 		NMG_CK_VERTEXUSE(prev_vu);
-		prev_lu = nmg_find_lu_of_vu(prev_vu);
 		/* lu is lone vert loop; l_p is distinct from prev_lu->l_p */
 		if (*prev_vu->up.magic_p == NMG_EDGEUSE_MAGIC)
 		    break;
