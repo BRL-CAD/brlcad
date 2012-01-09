@@ -563,11 +563,11 @@ render_camera_render(render_camera_t *camera, struct tie_s *tie, camera_tile_t *
     /* Allocate storage for results */
     if (tile->format == RENDER_CAMERA_BIT_DEPTH_24)
     {
-	ind += 3 * tile->size_x * tile->size_y + sizeof(camera_tile_t);
+	ind += 3 * (unsigned int)tile->size_x * (unsigned int)tile->size_y + sizeof(camera_tile_t);
     }
     else if (tile->format == RENDER_CAMERA_BIT_DEPTH_128)
     {
-	ind += 4 * sizeof(tfloat) * tile->size_x * tile->size_y + sizeof(camera_tile_t);
+	ind += 4 * sizeof(tfloat) * (unsigned int)tile->size_x * (unsigned int)tile->size_y + sizeof(camera_tile_t);
     }
 
     TIENET_BUFFER_SIZE((*result), ind);
