@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2011-12-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* fixed rt* crash when output file cannot be created - Erik Greenwald
 * fixed mged bot editor inoperative bug (3392650) - Tom Browder
 * fixed mged solids/regions cmds core dump bug (3392558) - Tom Browder
 * fixed mged bug setting color via Combination Editor - Nicholas Reed
