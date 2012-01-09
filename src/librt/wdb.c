@@ -57,6 +57,8 @@ wdb_fopen_v(const char *filename, int version)
 {
     struct db_i *dbip;
 
+    if ( filename == NULL ) return RT_WDB_NULL;
+
     if (rt_uniresource.re_magic != RESOURCE_MAGIC) {
 	rt_init_resource(&rt_uniresource, 0, NULL);
     }
@@ -71,6 +73,7 @@ wdb_fopen_v(const char *filename, int version)
 struct rt_wdb *
 wdb_fopen(const char *filename)
 {
+    if ( filename == NULL ) return RT_WDB_NULL;
     return wdb_fopen_v(filename, 5);
 }
 

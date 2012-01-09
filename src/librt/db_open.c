@@ -77,6 +77,8 @@ db_open(const char *name, const char *mode)
     register int i;
     char **argv;
 
+    if ( name == NULL ) return DBI_NULL;
+
     if (RT_G_DEBUG & DEBUG_DB) {
 	bu_log("db_open(%s, %s)\n", name, mode);
     }
@@ -254,6 +256,8 @@ db_create(const char *name, int version)
     FILE *fp;
     struct db_i *dbip;
     int result;
+
+    if ( name == NULL ) return DBI_NULL;
 
     if (RT_G_DEBUG & DEBUG_DB)
 	bu_log("db_create(%s, %d)\n", name, version);
