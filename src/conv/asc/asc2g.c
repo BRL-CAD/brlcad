@@ -303,8 +303,6 @@ sktbld(void)
     VMOVE(u, fu);
     VMOVE(v, fv);
 
-    verts = (point2d_t *)bu_calloc(vert_count, sizeof(point2d_t), "verts");
-
     if (bu_fgets(buf, BUFSIZE, ifp) == (char *)0)
 	bu_exit(-1, "Unexpected EOF while reading sketch (%s) data\n", name);
 
