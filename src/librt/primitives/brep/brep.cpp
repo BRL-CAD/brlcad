@@ -2718,26 +2718,29 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	int isocurveres = 100;
 
 	for (int index = 0; index < brep->m_F.Count(); index++) {
-		ON_BrepFace& face = brep->m_F[index];
-		const ON_Surface *surf = face.SurfaceOf();
+	    ON_BrepFace& face = brep->m_F[index];
+	    const ON_Surface *surf = face.SurfaceOf();
 
-		ON_RevSurface *revsurf;
-		ON_SumSurface *sumsurf;
-		if ((surf->IsClosed(0) || surf->IsClosed(1)) && (sumsurf = const_cast<ON_SumSurface *> (ON_SumSurface::Cast(surf)))) {
-			SurfaceTree* st = new SurfaceTree(&face, true, 2);
+	    if (surf->IsClosed(0) || surf->IsClosed(1)) {
+		ON_SumSurface *sumsurf = const_cast<ON_SumSurface *> (ON_SumSurface::Cast(surf));
+		if (sumsurf != NULL) {
+		    SurfaceTree* st = new SurfaceTree(&face, true, 2);
 
-			plot_face_from_surface_tree(vhead, st, isocurveres, gridres);
+		    plot_face_from_surface_tree(vhead, st, isocurveres, gridres);
 
-			delete st;
-		} else if (surf->IsClosed(0) || surf->IsClosed(1) || (revsurf
-				= const_cast<ON_RevSurface *> (ON_RevSurface::Cast(surf)))) {
+		    delete st;
+		} else {
+		    ON_RevSurface *revsurf = const_cast<ON_RevSurface *> (ON_RevSurface::Cast(surf));
 
+		    if (revsurf != NULL) {
 			SurfaceTree* st = new SurfaceTree(&face, true, 0);
 
 			plot_face_from_surface_tree(vhead, st, isocurveres, gridres);
 
 			delete st;
+		    }
 		}
+	    }
 	}
 
 	{
