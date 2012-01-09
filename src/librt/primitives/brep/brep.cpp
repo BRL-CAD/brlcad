@@ -2714,90 +2714,90 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     RT_BREP_CK_MAGIC(bi);
 
     ON_Brep* brep = bi->brep;
-	int gridres = 10;
-	int isocurveres = 100;
+    int gridres = 10;
+    int isocurveres = 100;
 
-	for (int index = 0; index < brep->m_F.Count(); index++) {
-	    ON_BrepFace& face = brep->m_F[index];
-	    const ON_Surface *surf = face.SurfaceOf();
+    for (int index = 0; index < brep->m_F.Count(); index++) {
+	ON_BrepFace& face = brep->m_F[index];
+	const ON_Surface *surf = face.SurfaceOf();
 
-	    if (surf->IsClosed(0) || surf->IsClosed(1)) {
-		ON_SumSurface *sumsurf = const_cast<ON_SumSurface *> (ON_SumSurface::Cast(surf));
-		if (sumsurf != NULL) {
-		    SurfaceTree* st = new SurfaceTree(&face, true, 2);
+	if (surf->IsClosed(0) || surf->IsClosed(1)) {
+	    ON_SumSurface *sumsurf = const_cast<ON_SumSurface *> (ON_SumSurface::Cast(surf));
+	    if (sumsurf != NULL) {
+		SurfaceTree* st = new SurfaceTree(&face, true, 2);
+
+		plot_face_from_surface_tree(vhead, st, isocurveres, gridres);
+
+		delete st;
+	    } else {
+		ON_RevSurface *revsurf = const_cast<ON_RevSurface *> (ON_RevSurface::Cast(surf));
+
+		if (revsurf != NULL) {
+		    SurfaceTree* st = new SurfaceTree(&face, true, 0);
 
 		    plot_face_from_surface_tree(vhead, st, isocurveres, gridres);
 
 		    delete st;
-		} else {
-		    ON_RevSurface *revsurf = const_cast<ON_RevSurface *> (ON_RevSurface::Cast(surf));
-
-		    if (revsurf != NULL) {
-			SurfaceTree* st = new SurfaceTree(&face, true, 0);
-
-			plot_face_from_surface_tree(vhead, st, isocurveres, gridres);
-
-			delete st;
-		    }
 		}
 	    }
 	}
+    }
 
-	{
+    {
 
-		point_t pt1, pt2;
+	point_t pt1, pt2;
 
-		for (i = 0; i < bi->brep->m_E.Count(); i++) {
-			ON_BrepEdge& e = brep->m_E[i];
-			const ON_Curve* crv = e.EdgeCurveOf();
+	for (i = 0; i < bi->brep->m_E.Count(); i++) {
+	    ON_BrepEdge& e = brep->m_E[i];
+	    const ON_Curve* crv = e.EdgeCurveOf();
 
-			if (crv->IsLinear()) {
-				ON_BrepVertex& v1 = brep->m_V[e.m_vi[0]];
-				ON_BrepVertex& v2 = brep->m_V[e.m_vi[1]];
-				VMOVE(pt1, v1.Point());
-				VMOVE(pt2, v2.Point());
-				RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-				RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-			} else {
-				ON_Interval dom = crv->Domain();
+	    if (crv->IsLinear()) {
+		ON_BrepVertex& v1 = brep->m_V[e.m_vi[0]];
+		ON_BrepVertex& v2 = brep->m_V[e.m_vi[1]];
+		VMOVE(pt1, v1.Point());
+		VMOVE(pt2, v2.Point());
+		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+		RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+	    } else {
+		ON_Interval dom = crv->Domain();
 
-				double domainval = 0.0;
-				double olddomainval = 1.0;
-				int crudestep = 0;
-				// Insert first point.
-				ON_3dPoint p = crv->PointAt(dom.ParameterAt(domainval));
-				VMOVE(pt1, p);
-				RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+		double domainval = 0.0;
+		double olddomainval = 1.0;
+		int crudestep = 0;
+		// Insert first point.
+		ON_3dPoint p = crv->PointAt(dom.ParameterAt(domainval));
+		VMOVE(pt1, p);
+		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
 
-				/* Dynamic sampling approach - start with an initial guess
-				 * for the next point of one tenth of the domain length
-				 * further down the domain from the previous value.  Set a
-				 * maximum physical distance between points of 100 times
-				 * the model tolerance.  Reduce the increment until the
-				 * tolerance is satisfied, then add the point and use it
-				 * as the starting point for the next calculation until
-				 * the whole domain is finished.  Perhaps it would be more
-				 * ideal to base the tolerance on some fraction of the
-				 * curve bounding box dimensions?
-				 */
+		/* Dynamic sampling approach - start with an initial guess
+		 * for the next point of one tenth of the domain length
+		 * further down the domain from the previous value.  Set a
+		 * maximum physical distance between points of 100 times
+		 * the model tolerance.  Reduce the increment until the
+		 * tolerance is satisfied, then add the point and use it
+		 * as the starting point for the next calculation until
+		 * the whole domain is finished.  Perhaps it would be more
+		 * ideal to base the tolerance on some fraction of the
+		 * curve bounding box dimensions?
+		 */
 
-				while (domainval < 1.0 && crudestep <= 100) {
-					olddomainval = domainval;
-					if (crudestep == 0)
-						domainval = find_next_point(crv, domainval, 0.1,
-								tol->dist * 100, 0);
-					if (crudestep >= 1 || ZERO(domainval)) {
-						crudestep++;
-						domainval = olddomainval + (1.0 - olddomainval)
-								/ 100 * crudestep;
-					}
-					p = crv->PointAt(dom.ParameterAt(domainval));
-					VMOVE(pt1, p);
-					RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_DRAW);
-				}
-			}
+		while (domainval < 1.0 && crudestep <= 100) {
+		    olddomainval = domainval;
+		    if (crudestep == 0)
+			domainval = find_next_point(crv, domainval, 0.1,
+				tol->dist * 100, 0);
+		    if (crudestep >= 1 || ZERO(domainval)) {
+			crudestep++;
+			domainval = olddomainval + (1.0 - olddomainval)
+			    / 100 * crudestep;
+		    }
+		    p = crv->PointAt(dom.ParameterAt(domainval));
+		    VMOVE(pt1, p);
+		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_DRAW);
 		}
+	    }
 	}
+    }
 
     return 0;
 }
