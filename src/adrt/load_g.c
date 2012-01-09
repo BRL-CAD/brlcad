@@ -157,7 +157,10 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
     RT_CK_TREE(rci->tree);
     if( rci->tree->tr_op != OP_DB_LEAF )
 	return 0;
-    dir = db_lookup(dbip, rci->tree->tr_l.tl_name, 1);
+    if((dir = db_lookup(dbip, rci->tree->tr_l.tl_name, 1)) == NULL) {
+	printf("Lookup failed: %s\n", rci->tree->tr_l.tl_name);
+	return 0;
+    }
     if(dir->d_minor_type != ID_BOT && dir->d_minor_type != ID_NMG)
 	return 0;
     if(rt_db_get_internal(&intern, dir, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
