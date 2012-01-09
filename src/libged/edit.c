@@ -1833,8 +1833,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 	    }
 
 	    /* detect >1 inner slashes */
-	    first_slash = (char *)memchr((void *)path_start, '/',
-					 (size_t)(path_end - path_start + 1));
+	    (char *)memchr((void *)path_start, '/', (size_t)(path_end - path_start + 1));
 	    goto convert_obj;
 	}
 
