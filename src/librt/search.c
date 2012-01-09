@@ -1522,6 +1522,7 @@ option(char *name)
     OPTION tmp;
 
     tmp.name = name;
+    tmp.flags = 0;
     return ((OPTION *)bsearch(&tmp, options, sizeof(options)/sizeof(OPTION), sizeof(OPTION), typecompare));
 }
 
