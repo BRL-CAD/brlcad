@@ -11067,9 +11067,8 @@ nmg_vlist_to_eu(struct bu_list *vlist, struct shell *s)
 		    if (polyStartV == NULL) polyStartV = eu->vu_p->v_p;
 		    break;
 		case BN_VLIST_POLY_END:
-		    if (v != NULL &&  polyStartV != NULL) {
-			eu = nmg_me(v, polyStartV, s);
-		    }
+		    if (v != NULL &&  polyStartV != NULL)
+			nmg_me(v, polyStartV, s);
 		    break;
 		case BN_VLIST_POLY_START:
 		    polyStartV = NULL;
