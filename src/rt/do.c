@@ -719,10 +719,10 @@ do_frame(int framenumber)
      * be gentle to the machine.
      */
     if (!interactive) {
-	if (npix > 256*256)
-	    bu_nice_set(10);
-	else if (npix > 512*512)
+	if (npix > 512*512)
 	    bu_nice_set(14);
+	else if (npix > 256*256)
+	    bu_nice_set(10);
     }
 
     /*
