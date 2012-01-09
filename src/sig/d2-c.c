@@ -72,7 +72,7 @@ main(int argc, char *argv[])
 
     while (1) {
 	nr = fread(real, sizeof(double), 1024, rfp);
-	ni = fread(real, sizeof(double), 1024, ifp);
+	ni = fread(imag, sizeof(double), 1024, ifp);
 	if (nr <= 0 && ni <= 0)
 	    break;
 
