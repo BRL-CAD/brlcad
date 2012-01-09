@@ -281,8 +281,9 @@ icv_image_save_open(const char *filename, int format, int width, int height, int
     bif->fd = open(bif->filename, O_WRONLY|O_CREAT|O_TRUNC, WRMODE);
     if (UNLIKELY(bif->fd < 0)) {
 	perror("open");
-	free(bif);
 	bu_log("ERROR: opening output file \"%s\" for writing\n", bif->filename);
+	free(bif->filename);
+	free(bif);
 	return NULL;
     }
     bif->width = width;
