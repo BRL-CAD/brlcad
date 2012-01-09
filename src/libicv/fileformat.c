@@ -169,10 +169,12 @@ bmp_save(int fd, unsigned char *rgb, int width, int height)
 
     if (UNLIKELY(!rgb || width<0 || height<0)) {
 	bu_log("ERROR: invalid image specification\n");
+	fclose(fd);
 	return 0;
     }
 
     bu_log("ERROR: Unimplemented\n");
+    fclose(fd);
 
     return 0;
 }
