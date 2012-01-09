@@ -236,7 +236,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
     bu_vls_strcat(&tmp_name, "make_hole_");
     base_len = bu_vls_strlen(&tmp_name);
     bu_vls_strcat(&tmp_name, "0");
-    while ((dp=db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET)) != RT_DIR_NULL) {
+    while ((db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET)) != RT_DIR_NULL) {
 	count++;
 	bu_vls_trunc(&tmp_name, base_len);
 	bu_vls_printf(&tmp_name, "%zu", count);
@@ -250,8 +250,9 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
     }
 
     /* lookup the newly created RCC */
-    if ((dp=db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET)) == RT_DIR_NULL) {
-	bu_log("Failed to lookup RCC (%s) just made by make_hole_in_prepped_regions()!!!\n",
+    dp=db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
+      bu_log("Failed to lookup RCC (%s) just made by make_hole_in_prepped_regions()!!!\n",
 	       bu_vls_addr(&tmp_name));
 	bu_bomb("Failed to lookup RCC just made by make_hole_in_prepped_regions()!!!\n");
     }
