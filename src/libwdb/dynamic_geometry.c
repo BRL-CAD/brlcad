@@ -113,7 +113,6 @@ make_hole(struct rt_wdb *wdbp,		/* datbase to be modified */
 {
     struct bu_vls tmp_name = BU_VLS_INIT_ZERO;
     int i, base_len, count=0;
-    struct directory *dp_tmp;
 
     RT_CHECK_WDB(wdbp);
 
@@ -135,7 +134,7 @@ make_hole(struct rt_wdb *wdbp,		/* datbase to be modified */
     bu_vls_strcat(&tmp_name, "make_hole_");
     base_len = bu_vls_strlen(&tmp_name);
     bu_vls_strcat(&tmp_name, "0");
-    while ((dp_tmp=db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET)) != RT_DIR_NULL) {
+    while ((db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET)) != RT_DIR_NULL) {
 	count++;
 	bu_vls_trunc(&tmp_name, base_len);
 	bu_vls_printf(&tmp_name, "%d", count);
