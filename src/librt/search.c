@@ -1648,11 +1648,8 @@ yankexpr(struct db_plan_t **planp, struct db_plan_t **resultplan)          /* po
 	    }
 	}
     (*resultplan) = node;
-    if (!(error_return == BRLCAD_OK)) {
-	return BRLCAD_ERROR;
-    } else {
-	return BRLCAD_OK;
-    }
+    /* If we get here, we're OK */
+    return BRLCAD_OK;
 }
 
 
