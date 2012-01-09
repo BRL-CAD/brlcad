@@ -186,7 +186,6 @@ main(int argc, char *argv[])
     struct rt_tess_tol ttol;		/* tesselation tolerance in mm */
     struct db_tree_state tree_state;	/* includes tol & model */
 
-    int regions_tried = 0;
     int regions_converted = 0;
     int regions_written = 0;
 
@@ -334,22 +333,6 @@ main(int argc, char *argv[])
 			    use_mc?NULL:nmg_booltree_leaf_tess, /* leaf func */
 			    (genptr_t)&gcvwriter);  /* client_data */
 	fprintf(gcvwriter.fp, "}\n");
-    }
-
-    percent = 0;
-    if (regions_tried>0) {
-	percent = ((double)regions_converted * 100) / regions_tried;
-	if (verbose)
-	    bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
-		   regions_tried, regions_converted, percent);
-    }
-    percent = 0;
-
-    if (regions_tried > 0) {
-	percent = ((double)regions_written * 100) / regions_tried;
-	if (verbose)
-	    bu_log("                  %d triangulated successfully. %g%%\n",
-		   regions_written, percent);
     }
 
     bu_log("%ld triangles written\n", gcvwriter.tot_polygons);
