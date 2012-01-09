@@ -453,7 +453,7 @@ nmgbld(void)
     int	j;
 
     /* First, process the header line */
-    cp = strtok(buf, " ");
+    strtok(buf, " ");
     /* This is nmg_id, unused here. */
     cp = strtok(NULL, " ");
     version = atoi(cp);
