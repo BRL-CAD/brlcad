@@ -95,7 +95,7 @@ handle_i_opt(const char *arg, long *skip1, long *skip2)
 	if (skip2) {
 	    *skip2 = strtol(arg, NULL, 10);
 	}
-	if (skip1) {
+	if (skip1 && skip2) {
 	    *skip1 = *skip2;
 	}
     } else if (endptr[0] == ':') {
