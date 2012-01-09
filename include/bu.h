@@ -170,8 +170,9 @@ __BEGIN_DECLS
 /**
  * shorthand declaration of a printf-style functions
  */
-#define __BU_ATTR_FORMAT12 __attribute__ ((__format__ (__printf__, 1, 2)))
-#define __BU_ATTR_FORMAT23 __attribute__ ((__format__ (__printf__, 2, 3)))
+#define _BU_ATTR_PRINTF12 __attribute__ ((__format__ (__printf__, 1, 2)))
+#define _BU_ATTR_PRINTF23 __attribute__ ((__format__ (__printf__, 2, 3)))
+#define _BU_ATTR_SCANF23 __attribute__ ((__format__ (__scanf__, 2, 3)))
 
 /**
  * shorthand declaration of a function that doesn't return
@@ -190,11 +191,11 @@ __BEGIN_DECLS
  *  strict checking.
  */
 #if defined(STRICT_FLAGS)
-#  undef __BU_ATTR_FORMAT12
-#  undef __BU_ATTR_FORMAT23
+#  undef _BU_ATTR_PRINTF12
+#  undef _BU_ATTR_PRINTF23
 #  undef __BU_ATTR_NORETURN
-#  define __BU_ATTR_FORMAT12
-#  define __BU_ATTR_FORMAT23
+#  define _BU_ATTR_PRINTF12
+#  define _BU_ATTR_PRINTF23
 #  define __BU_ATTR_NORETURN
 #endif
 
@@ -2779,7 +2780,7 @@ BU_EXPORT extern void bu_bomb(const char *str) __BU_ATTR_NORETURN;
  *
  * This routine should never return.
  */
-BU_EXPORT extern void bu_exit(int status, const char *fmt, ...) __BU_ATTR_NORETURN __BU_ATTR_FORMAT23;
+BU_EXPORT extern void bu_exit(int status, const char *fmt, ...) __BU_ATTR_NORETURN _BU_ATTR_PRINTF23;
 
 /** @file libbu/crashreport.c
  *
@@ -3582,12 +3583,12 @@ BU_EXPORT extern void bu_putchar(int c);
  * fprintf(stderr) with optional logging hooks and automatic
  * indentation options.
  */
-BU_EXPORT extern void bu_log(const char *, ...) __BU_ATTR_FORMAT12;
+BU_EXPORT extern void bu_log(const char *, ...) _BU_ATTR_PRINTF12;
 
 /**
  * Log a library event in the Standard way, to a specified file.
  */
-BU_EXPORT extern void bu_flog(FILE *, const char *, ...) __BU_ATTR_FORMAT23;
+BU_EXPORT extern void bu_flog(FILE *, const char *, ...) _BU_ATTR_PRINTF23;
 
 /** @} */
 
@@ -4985,7 +4986,7 @@ BU_EXPORT extern void bu_vls_vprintf(struct bu_vls *vls,
  * Initializes the va_list, then calls the above bu_vls_vprintf.
  */
 BU_EXPORT extern void bu_vls_printf(struct bu_vls *vls,
-				    const char *fmt, ...) __BU_ATTR_FORMAT23;
+				    const char *fmt, ...) _BU_ATTR_PRINTF23;
 
 /**
  * Format a string into a vls, setting the vls to the given print
@@ -4997,7 +4998,7 @@ BU_EXPORT extern void bu_vls_printf(struct bu_vls *vls,
  * %V is a pointer to a (struct bu_vls *) string.
  */
 BU_EXPORT extern void bu_vls_sprintf(struct bu_vls *vls,
-				     const char *fmt, ...) __BU_ATTR_FORMAT23;
+				     const char *fmt, ...) _BU_ATTR_PRINTF23;
 
 /**
  * Efficiently append 'cnt' spaces to the current vls.
