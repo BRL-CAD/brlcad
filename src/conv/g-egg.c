@@ -186,10 +186,6 @@ main(int argc, char *argv[])
     struct rt_tess_tol ttol;		/* tesselation tolerance in mm */
     struct db_tree_state tree_state;	/* includes tol & model */
 
-    int regions_converted = 0;
-    int regions_written = 0;
-
-    double percent;
     int i, use_mc=0, use_bottess=0;
 
     bu_setlinebuf(stderr);
