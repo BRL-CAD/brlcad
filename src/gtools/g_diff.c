@@ -869,7 +869,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	    continue;
 
 	/* check if this object exists in the other database */
-	if ((dp1 = db_lookup(dbip1, dp2->d_namep, 0)) == RT_DIR_NULL) {
+	if (db_lookup(dbip1, dp2->d_namep, 0) == RT_DIR_NULL) {
 	    /* need to add this object */
 	    has_diff += 1;
 	    argv[2] = dp2->d_namep;
