@@ -116,7 +116,7 @@ png_save(int fd, unsigned char *rgb, int width, int height, int depth)
     png_structp png_ptr = NULL;
     png_infop info_ptr = NULL;
     int i = 0;
-	int png_color_type = PNG_COLOR_TYPE_RGB;
+    int png_color_type = PNG_COLOR_TYPE_RGB;
     FILE *fh;
 
     fh = fdopen(fd, "wb");
@@ -127,13 +127,16 @@ png_save(int fd, unsigned char *rgb, int width, int height, int depth)
     }
 
     png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    if (UNLIKELY(png_ptr == NULL))
+    if (UNLIKELY(png_ptr == NULL)) {
+	fclose(fh);
 	return 0;
+    }
 
     info_ptr = png_create_info_struct(png_ptr);
     if (info_ptr == NULL || setjmp(png_jmpbuf(png_ptr))) {
 	png_destroy_read_struct(&png_ptr, info_ptr ? &info_ptr : NULL, NULL);
 	bu_log("ERROR: Unable to create png header\n");
+	fclose(fh);
 	return 0;
     }
 
@@ -169,12 +172,12 @@ bmp_save(int fd, unsigned char *rgb, int width, int height)
 
     if (UNLIKELY(!rgb || width<0 || height<0)) {
 	bu_log("ERROR: invalid image specification\n");
-	fclose(fd);
+	fclose(fh);
 	return 0;
     }
 
     bu_log("ERROR: Unimplemented\n");
-    fclose(fd);
+    fclose(fh);
 
     return 0;
 }
