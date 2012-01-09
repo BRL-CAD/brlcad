@@ -415,7 +415,8 @@ region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union t
     struct bu_vls		ident = BU_VLS_INIT_ZERO;
     struct bu_vls		reg = BU_VLS_INIT_ZERO;
     struct bu_vls		flat = BU_VLS_INIT_ZERO;
-    char			obuf[128];
+#define OBUF_SIZE 128
+    char			obuf[OBUF_SIZE];
     char			*cp;
     int			left;
     int			length;
@@ -463,7 +464,9 @@ region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union t
 
 	op = obuf;
 	if ( first )  {
-	    (void) sprintf( op, "%5d ", nnr+delreg );
+	    (void) snprintf( op, OBUF_SIZE-1, "%5d ", nnr+delreg );
+	    /* sanity */
+	    op[OBUF_SIZE-1]='\0';
 	    first = 0;
 	} else {
 	    bu_strlcpy( op, "      \0", 7 );
