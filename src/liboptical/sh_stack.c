@@ -289,6 +289,11 @@ sh_stk_render(struct application *ap, const struct partition *pp, struct shadewo
     int ret_status = 0;
     char tmp[128];
 
+    if(sp == NULL) {
+	bu_log("sh_stk_render: Null pointer\n");
+	return;
+    }
+
     for (i = 0; i < 16 && sp->mfuncs[i] != NULL; i++) {
 	if (rdebug&RDEBUG_SHADE) {
 	    snprintf(tmp, 128, "before stacked \"%s\" shader", sp->mfuncs[i]->mf_name);
