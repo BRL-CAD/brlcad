@@ -1274,9 +1274,9 @@ Path::LoadONBrep(ON_Brep *brep)
 bool
 Path::ShiftSurfaceSeam(ON_Brep *brep, double *t)
 {
-    const ON_BrepLoop* loop = &brep->m_L[ON_path_index];
-    const ON_BrepFace* face = loop->Face();
-    const ON_Surface* surface = face->SurfaceOf();
+    const ON_BrepLoop* loop = NULL;
+    const ON_BrepFace* face = NULL;
+    const ON_Surface* surface = NULL;
     double ang_min = 0.0;
     double smin, smax;
 
@@ -1284,6 +1284,24 @@ Path::ShiftSurfaceSeam(ON_Brep *brep, double *t)
 	/* nothing to do */
 	return false;
     }
+
+    loop = &brep->m_L[ON_path_index];
+    if (!loop){
+	/* nothing to do */
+	return false;
+    }
+
+    face = loop->Face();
+    if (!face){
+    	/* nothing to do */
+    	return false;
+        }
+
+    surface = face->SurfaceOf();
+    if (!surface){
+    	/* nothing to do */
+    	return false;
+        }
 
     if (surface->IsCone() || surface->IsCylinder()) {
 	if (surface->IsClosed(0)) {
@@ -2603,13 +2621,15 @@ SurfaceOfLinearExtrusion::LoadONBrep(ON_Brep *brep)
 
     ON_3dPoint sum_basepoint = ON_origin - l->PointAtStart();
     sum_srf = new ON_SumSurface();
+
+    if (!sum_srf){
+	return false;
+    }
     sum_srf->m_curve[0] = srf_base_curve;
     sum_srf->m_curve[1] = l; //srf_path_curve;
     sum_srf->m_basepoint = sum_basepoint;
     sum_srf->BoundingBox(); // fills in sum_srf->m_bbox
 
-    if (!sum_srf)
-	return false;
 
     ON_id = brep->AddSurface(sum_srf);
 
@@ -2642,14 +2662,18 @@ SurfaceOfRevolution::LoadONBrep(ON_Brep *brep)
 
     ON_Line axisline(start, end);
     ON_RevSurface* revsurf = ON_RevSurface::New();
+
+    if (!revsurf) {
+	return false;
+    }
     revsurf->m_curve = brep->m_C3[swept_curve->GetONId()]->DuplicateCurve();
     revsurf->m_axis = axisline;
     revsurf->BoundingBox(); // fills in sum_srf->m_bbox
 
     //ON_Brep* b = ON_BrepRevSurface(revsurf, true, true);
 
-    if (!revsurf)
-	return false;
+    //if (!revsurf)
+	//return false;
 
     ON_id = brep->AddSurface(revsurf);
 

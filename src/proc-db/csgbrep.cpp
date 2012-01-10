@@ -46,12 +46,13 @@ void
 write_out(struct rt_wdb* fp, struct rt_db_internal *ip, const char *name, struct bn_tol *tol)
 {
     ON_Brep* brep = NULL;
-
-    std::string bname = name;
-    bname += ".brep";
+    std::string bname;
 
     if (!fp || !ip || !name)
 	return;
+
+    bname = name;
+    bname += ".brep";
 
     /* write the object in implicit form */
     struct bu_external ext;
