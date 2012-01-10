@@ -1168,7 +1168,7 @@ LoadFile(char *pmfile)
 {
     size_t ret;
     FILE *FH;
-    int I1, i;
+    int I1 = 0, i;
     short S1;
     char C1;
 
@@ -1214,7 +1214,7 @@ LoadFile(char *pmfile)
 	    bu_log("Error reading irradiance cache file (C1)\n");
 
 	ret = fread(&I1, sizeof(int), 1, FH);
-	if (ret != 1)
+	if (ret != 1 || I1 < 0)
 	    bu_log("Error reading irradiance cache file (l1)\n");
 
 	Initialize(PM_CAUSTIC, I1);
