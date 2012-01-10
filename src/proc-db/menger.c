@@ -291,9 +291,9 @@ mengerize(struct rt_wdb *fp, point_t origin, fastf_t extent, axes xyz, const cha
 	    bu_log("%s %.2zu: %s%s%s width=%lf\n",
 		   (pattern[j] != 'i') ? "EXTERIOR" : "INTERIOR",
 		   slot,
-		   (xyz | XDIR) ? "X" : "",
-		   (xyz | YDIR) ? "Y" : "",
-		   (xyz | ZDIR) ? "Z" : "",
+		   (xyz & XDIR) ? "X" : "",
+		   (xyz & YDIR) ? "Y" : "",
+		   (xyz & ZDIR) ? "Z" : "",
 		   extent / pow(3.0, slot));
 	    bu_vls_trunc(&cut, 0);
 	    bu_vls_printf(&cut, "box%zu_", slot);
