@@ -643,6 +643,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: Cannot prepare tree for editing\n");
 	    bu_vls_free(&spacer);
+	    fclose(fp);
 	    return GED_ERROR;
 	}
     }
