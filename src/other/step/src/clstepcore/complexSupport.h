@@ -171,7 +171,7 @@ class SimpleList : public EntList {
 
   public:
     SimpleList( const char *n ) : EntList(SIMPLE), I_marked(NOMARK)
-        { strcpy( name, n ); }
+        { strncpy( name, n, sizeof(name)-1 ); name[sizeof(name)-1] = '\0'; /* sanity */ }
     ~SimpleList() {}
     int operator== ( const char *nm )
         { return ( strcmp( name, nm ) == 0 ); }
