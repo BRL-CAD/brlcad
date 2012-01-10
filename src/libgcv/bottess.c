@@ -551,11 +551,6 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     splitz=0;
     splitty=0;
 
-    if (!tsp || !curtree || !pathp || !client_data) {
-	bu_log("INTERNAL ERROR: gcv_bottess_region_end missing parameters\n");
-	return TREE_NULL;
-    }
-
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
     RT_CK_TESS_TOL(tsp->ts_ttol);
