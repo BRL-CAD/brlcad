@@ -92,7 +92,9 @@ Free_uses(struct db_i *dbip)
 			/* was written to disk */
 			db_delete(dbip, use->dp);
 		    }
-		    db_dirdelete(dbip, use->dp);
+		    if (db_dirdelete(dbip, use->dp) < 0) {
+			bu_log("Free_uses: db_dirdelete failure!\n");
+		    }
 		}
 		BU_LIST_DEQUEUE(&use->l);
 		bu_free((genptr_t)use, "Free_uses: use");
