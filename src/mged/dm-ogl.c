@@ -225,15 +225,20 @@ Ogl_dm(int argc,
 				     COMMA);
 	} else {
 	    struct bu_vls tmp_vls;
+	    int ret;
 
 	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
 	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
 	    bu_vls_putc(&tmp_vls, '\"');
-	    bu_struct_parse(&tmp_vls,
+	    ret = bu_struct_parse(&tmp_vls,
 			    Ogl_vparse,
 			    (char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars);
 	    bu_vls_free(&tmp_vls);
+	    if (ret < 0) {
+	      bu_vls_free(&vls);
+	      return TCL_ERROR;
+	    }
 	}
 
 	Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
