@@ -262,10 +262,10 @@ main(int argc, char *argv[])
 		break;
 	    case '?':
 		bu_log("Unknown argument: \"%c\"\n", i);
+		bu_exit(1, usage, argv[0]);
 	    default:
 		bu_log("Booga. %c\n", i);
 		bu_exit(1, usage, argv[0]);
-		break;
 	}
     }
 
