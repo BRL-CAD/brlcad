@@ -719,7 +719,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     struct shell *s;
     int ret;
 
-    point_t min, max;
+    point_t min={0,0,0}, max={0,0,0};
     if (rt_ars_bbox(ip, &min, &max)) return -1;
     
     m = nmg_mm();
