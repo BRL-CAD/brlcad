@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* g-nff is crashing, fix it
+
 * get rtweight to use more robust density file parsing
   currently can enter infinite loop with malformed density file
 
