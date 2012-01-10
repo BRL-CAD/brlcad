@@ -40,6 +40,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include "bio.h"
 
 #include "bu.h"
@@ -176,8 +177,12 @@ main(int argc, char **argv)
  * "smarter" user look over the header even if the header is barfO.
  */
     if (verbose) {
+	char magic[sizeof(Header.GH_Magic)+1];
+	memcpy(magic, Header.GH_Magic, sizeof(magic));
+	magic[sizeof(magic)-1] = '\0';
+
 	fprintf(stderr, "Magic=%.6s, -w%d -n%d, M=%d, cr=%d, pixel=%d, bg=%d\n",
-		Header.GH_Magic, ScreenWidth, ScreenHeight, GlobalMap,
+		magic, ScreenWidth, ScreenHeight, GlobalMap,
 		CR, GlobalPixels, Header.GH_Background);
     }
 
