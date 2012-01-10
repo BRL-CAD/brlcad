@@ -597,6 +597,10 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     bu_vls_trunc(&spacer, 0);
 
     dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
+      bu_vls_free(&spacer);
+      return GED_ERROR;
+    }
 
     if (comb)
 	RT_CK_COMB(comb);
@@ -605,6 +609,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     if ((fp=fopen(_ged_tmpfil, "w")) == NULL) {
 	perror("fopen");
 	bu_vls_printf(gedp->ged_result_str, "ERROR: Cannot open temporary file [%s] for writing\n", _ged_tmpfil);
+	bu_vls_free(&spacer);
 	return GED_ERROR;
     }
 
@@ -629,6 +634,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	}
 	fprintf(fp, "%s", combseparator);
 	fclose(fp);
+	bu_vls_free(&spacer);
 	return GED_OK;
     }
 
@@ -636,6 +642,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	db_non_union_push(comb->tree, &rt_uniresource);
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: Cannot prepare tree for editing\n");
+	    bu_vls_free(&spacer);
 	    return GED_ERROR;
 	}
     }
