@@ -375,7 +375,7 @@ main(int ac, char *av[])
 	    case 'o':
 	    case 'O':
 		bu_vls_strcpy(&filename, bu_optarg);
-		if (bu_file_exists(bu_vls_addr(&filename, NULL))) {
+		if (bu_file_exists(bu_vls_addr(&filename, NULL), NULL)) {
 		    bu_exit(4, "ERROR: Output file [%V] already exists\n", &filename);
 		}
 		break;
