@@ -2831,6 +2831,8 @@ output_to_nmg(struct ga_t *ga,
     bu_ptbl_init(&faces, 64, " &faces ");
 
     verts = (struct vertex **)bu_calloc(gfi->tot_vertices, sizeof(struct vertex *), "verts");
+    if(verts == NULL)
+	bu_bomb("Unable to allocation vertex struct\n");
     memset((void *)verts, 0, sizeof(struct vertex *) * gfi->tot_vertices);
 
     /* begin bomb protection */
