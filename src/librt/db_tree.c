@@ -1140,7 +1140,9 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 	       sofar, tsp,
 	       *region_start_statepp, tsp->ts_sofar);
 	bu_free(sofar, "path string");
-	bn_mat_ck("db_recurse() tsp->ts_mat at start", tsp->ts_mat);
+	if (bn_mat_ck("db_recurse() tsp->ts_mat at start", tsp->ts_mat) < 0) {
+           bu_log("db_recurse(%s):  matrix does not preserve axis perpendicularity.\n",  dp->d_namep);
+        }
     }
 
     /*
