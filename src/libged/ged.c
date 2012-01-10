@@ -255,6 +255,9 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     struct rt_wdb *wdbp;
     struct mater *save_materp = MATER_NULL;
 
+    if (filename == NULL)
+      return GED_NULL;
+
     save_materp = rt_material_head();
     rt_new_material_head(MATER_NULL);
 
