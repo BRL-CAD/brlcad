@@ -143,13 +143,14 @@ fb_window(FBIO *ifp, int x, int y)
     int xzoom, yzoom;
 
     if (ifp) {
-	FB_CK_FBIO(ifp);
+      FB_CK_FBIO(ifp);
+      fb_getview(ifp, &xcenter, &ycenter, &xzoom, &yzoom);
+      xcenter = x;
+      ycenter = y;
+      return fb_view(ifp, xcenter, ycenter, xzoom, yzoom);
+    } else {
+      return 0;
     }
-
-    fb_getview(ifp, &xcenter, &ycenter, &xzoom, &yzoom);
-    xcenter = x;
-    ycenter = y;
-    return fb_view(ifp, xcenter, ycenter, xzoom, yzoom);
 }
 
 
@@ -160,13 +161,15 @@ fb_zoom(FBIO *ifp, int x, int y)
     int xzoom, yzoom;
 
     if (ifp) {
-	FB_CK_FBIO(ifp);
-    }
+      FB_CK_FBIO(ifp);
 
-    fb_getview(ifp, &xcenter, &ycenter, &xzoom, &yzoom);
-    xzoom = x;
-    yzoom = y;
-    return fb_view(ifp, xcenter, ycenter, xzoom, yzoom);
+      fb_getview(ifp, &xcenter, &ycenter, &xzoom, &yzoom);
+      xzoom = x;
+      yzoom = y;
+      return fb_view(ifp, xcenter, ycenter, xzoom, yzoom);
+    } else {
+      return 0;
+    }
 }
 
 
