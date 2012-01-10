@@ -291,7 +291,7 @@ sh_stk_render(struct application *ap, const struct partition *pp, struct shadewo
 
     if(sp == NULL) {
 	bu_log("sh_stk_render: Null pointer\n");
-	return;
+	return 0;
     }
 
     for (i = 0; i < 16 && sp->mfuncs[i] != NULL; i++) {
