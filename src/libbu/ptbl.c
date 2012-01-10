@@ -70,7 +70,7 @@ bu_ptbl_ins(struct bu_ptbl *b, long int *p)
 
     if ((size_t)b->end >= b->blen) {
 	b->buffer = (long **)bu_realloc((char *)b->buffer,
-					sizeof(p)*(b->blen *= 4),
+					sizeof(long *)*(b->blen *= 4),
 					"bu_ptbl.buffer[] (ins)");
     }
 
