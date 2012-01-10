@@ -1842,8 +1842,10 @@ absorp_coeff(fastf_t lambda, char *material)
     }
 
     /* Find "nearby" values of lambda, absorption for interpolation. */
-    if ((n = fscanf(fp, "%lf %lf", &l, &a)) != 2 || lambda + MIKE_TOL < l)
+    if ((n = fscanf(fp, "%lf %lf", &l, &a)) != 2 || lambda + MIKE_TOL < l) {
+	fclose(fp);
 	return -1.;
+    }
     lambda_l = l;
     absorp_l = a;
 
@@ -1852,9 +1854,10 @@ absorp_coeff(fastf_t lambda, char *material)
 	lambda_l = l;
 	absorp_l = a;
     }
-    if (n != 2)
+    if (n != 2) {
+	fclose(fp);
 	return -1.;
-    else {
+    } else {
 	lambda_h = l;
 	absorp_h = a;
     }
