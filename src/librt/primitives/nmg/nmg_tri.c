@@ -1406,11 +1406,16 @@ pick_eu(struct edgeuse *eu_p, struct faceuse *fu, fastf_t *dir, int find_max)
 
     } while (eu != eu_p);
 
-    if (rt_g.NMG_debug & DEBUG_TRI)
+    if (rt_g.NMG_debug & DEBUG_TRI) {
+      if (keep_eu) {
 	bu_log("\t\tpick_eu() returns %g %g %g -> %g %g %g\n\t\t\tbecause vdot(left) = %g\n",
-	       V3ARGS(keep_eu->vu_p->v_p->vg_p->coord),
-	       V3ARGS(keep_eu->eumate_p->vu_p->v_p->vg_p->coord),
-	       dot_limit);
+	    V3ARGS(keep_eu->vu_p->v_p->vg_p->coord),
+	    V3ARGS(keep_eu->eumate_p->vu_p->v_p->vg_p->coord),
+	    dot_limit);
+      } else {
+	bu_log("pick_eu() returns NULL");
+      }
+    }
 
     return keep_eu;
 }
