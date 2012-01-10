@@ -171,6 +171,7 @@ bu_temp_file(char *filepath, size_t len)
     int i;
     int fd = -1;
     char tempfile[MAXPATHLEN];
+    mode_t mask;
     const char *dir = NULL;
     const char *envdirs[] = {"TMPDIR", "TEMP", "TMP", NULL};
     const char *trydirs[] = {
@@ -216,7 +217,10 @@ bu_temp_file(char *filepath, size_t len)
 
     snprintf(tempfile, MAXPATHLEN, "%s%cBRL-CAD_temp_XXXXXXX", dir, BU_DIR_SEPARATOR);
 
+    /* secure the temp file with user read-write only */
+    mask = umask(S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH);
     fd = mkstemp(tempfile);
+    (void)umask(mask); /* restore */
 
     if (UNLIKELY(fd == -1)) {
 	perror("mkstemp");
