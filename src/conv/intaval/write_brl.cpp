@@ -113,7 +113,10 @@ void smoothBot
 	    rt_bot_internal* bot = static_cast<rt_bot_internal*>(intern.idb_ptr);
 
 	    rt_bot_smooth(bot, name, wdbp->dbip, M_PI / 4.);
-		rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource);
+	
+	    if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
+		bu_bomb("Database write failure in smoothBot\n");
+	    }
 	}
 
 	rt_db_free_internal(&intern);
