@@ -48,7 +48,7 @@ int main(int ac, char *av[])
     filename = DEFAULT_TIRE_FILENAME;
 
     /* Just using "tire.g" for now. */
-    if (!bu_file_exists(filename)) {
+    if (!bu_file_exists(filename, NULL)) {
 	db_fp = wdb_fopen(filename);
     } else {
 	bu_exit(1, "ERROR - refusing to overwrite existing [%s] file.", filename);

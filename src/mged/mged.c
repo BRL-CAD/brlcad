@@ -2675,7 +2675,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	/*
 	 * Check to see if we can access the database
 	 */
-	if (bu_file_exists(argv[1])) {
+	if (bu_file_exists(argv[1], NULL)) {
 	    /* need to reset things before returning */
 	    gedp = save_gedp;
 	    dbip = save_dbip;

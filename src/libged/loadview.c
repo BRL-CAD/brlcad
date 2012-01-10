@@ -120,7 +120,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* make sure the file exists */
-    if (!bu_file_exists(argv[1])) {
+    if (!bu_file_exists(argv[1], NULL)) {
 	bu_log("Error: File %s does not exist\n", argv[1]);
 	return GED_ERROR;
     }

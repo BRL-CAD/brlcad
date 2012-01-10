@@ -383,7 +383,7 @@ main(int argc, char *argv[]) {
     file = *argv++;
 
     /* make sure the file exists */
-    if (!bu_file_exists(file)) {
+    if (!bu_file_exists(file, NULL)) {
 	bu_log("File does not exist: %s\n", file);
 	bu_bomb("Need a file to transfer\n");
     }

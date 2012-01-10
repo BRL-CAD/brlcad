@@ -1033,7 +1033,7 @@ MgedFile(HmItem *itemp)
     if (getInput(ip))
 	bu_strlcpy(gedfile, ip->buffer, LNBUFSZ);
 
-    if (!bu_file_exists(gedfile)) {
+    if (!bu_file_exists(gedfile, NULL)) {
 	(void) snprintf(scrbuf, LNBUFSZ, 
 			"Unable to find file \"%s\"",
 			gedfile);

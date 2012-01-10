@@ -277,14 +277,14 @@ int main(int ac, char *av[])
 
     /* Create file name if supplied, else use "lens.g" */
     if (av[bu_optind]) {
-	if (!bu_file_exists(av[bu_optind])) {
+	if (!bu_file_exists(av[bu_optind], NULL)) {
 	    db_fp = wdb_fopen(av[bu_optind]);
 	} else {
 	    bu_exit(-1, "Error - refusing to overwrite pre-existing file %s", av[bu_optind]);
 	}
     }
     if (!av[bu_optind]) {
-	if (!bu_file_exists(DEFAULT_LENS_FILENAME)) {
+	if (!bu_file_exists(DEFAULT_LENS_FILENAME, NULL)) {
 	    db_fp = wdb_fopen(DEFAULT_LENS_FILENAME);
 	} else {
 	    bu_exit(-1, "Error - no filename supplied and lens.g exists.");

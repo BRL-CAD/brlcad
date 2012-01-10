@@ -1237,7 +1237,7 @@ f_Animate()
 	    if (frame_no == noframes)
 		frame_no = 0;
 	    (void) sprintf(suffixptr, ".%04d", frame_no);
-	    if (!bu_file_exists(movie_file))
+	    if (!bu_file_exists(movie_file, NULL))
 		continue;
 	    if ((movie_fbiop = fb_open(movie_file, grid_sz, grid_sz)) == FBIO_NULL)
 	    {

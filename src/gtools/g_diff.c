@@ -937,12 +937,12 @@ main(int argc, char **argv)
     file1 = *argv++;
     file2 = *argv;
 
-    if (!bu_file_exists(file1)) {
+    if (!bu_file_exists(file1, NULL)) {
 	perror(file1);
 	bu_exit(1, "Cannot stat file %s\n", file1);
     }
 
-    if (!bu_file_exists(file2)) {
+    if (!bu_file_exists(file2, NULL)) {
 	perror(file2);
 	bu_exit(1, "Cannot stat file %s\n", file2);
     }

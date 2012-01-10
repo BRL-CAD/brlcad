@@ -1662,7 +1662,7 @@ wdb_prep_dbip(const char *filename)
 	/*
 	 * Check to see if we can access the database
 	 */
-	if (bu_file_exists(filename) && !bu_file_readable(filename)) {
+	if (bu_file_exists(filename, NULL) && !bu_file_readable(filename)) {
 	    bu_log("wdb_prep_dbip: %s is not readable\n", filename);
 
 	    return DBI_NULL;

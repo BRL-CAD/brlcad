@@ -684,7 +684,7 @@ direct_output(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	new_dest = bu_malloc(strlen(buffer + i)+1, "new_dest");
 
 	snprintf(new_dest, j-i+1, "%s", buffer + i);
-	if (bu_file_exists(new_dest)) {
+	if (bu_file_exists(new_dest, NULL)) {
 	    fprintf(stderr, "File %s already exists.\n", new_dest);
 	    return;
 	}

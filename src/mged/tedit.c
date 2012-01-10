@@ -901,7 +901,7 @@ get_editor_string(struct bu_vls *editstring)
 
     /* still unset? try mac os x */
     if (!editor || editor[0] == '\0') {
-	if (bu_file_exists(MAC_EDITOR)) {
+	if (bu_file_exists(MAC_EDITOR, NULL)) {
 	    editor = MAC_EDITOR;
 	}
     }

@@ -169,7 +169,7 @@ find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct bu_v
     }
 
     /* left-hand path should exist independent of right-hand path */
-    if (!bu_file_exists(lhs)) {
+    if (!bu_file_exists(lhs, NULL)) {
 	if (searched && where) {
 	    bu_vls_strcat(searched, where);
 	}
@@ -207,7 +207,7 @@ find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct bu_v
 
     /* found a match */
     bu_strlcpy(result+llen, rhs, (size_t)(MAXPATHLEN - llen));
-    if (bu_file_exists(result)) {
+    if (bu_file_exists(result, NULL)) {
 	return 1;
     }
 
@@ -446,7 +446,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 
     /* running from uninstalled source distribution, look for THIS file */
 #define BPC "/src/libbu/" __FILE__
-    if (bu_file_exists("." BPC)) {
+    if (bu_file_exists("." BPC, NULL)) {
 	if (find_path(result, ".", rhs, NULL, NULL)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: source directory [%s]\n", result);
@@ -461,7 +461,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	    return result;
 	}
     }
-    if (bu_file_exists(".." BPC)) {
+    if (bu_file_exists(".." BPC, NULL)) {
 	if (find_path(result, "..", rhs, NULL, NULL)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: source directory [%s]\n", result);
@@ -476,7 +476,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	    return result;
 	}
     }
-    if (bu_file_exists("../.." BPC)) {
+    if (bu_file_exists("../.." BPC, NULL)) {
 	if (find_path(result, "../..", rhs, NULL, NULL)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: source directory [%s]\n", result);
@@ -491,7 +491,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	    return result;
 	}
     }
-    if (bu_file_exists("../../.." BPC)) {
+    if (bu_file_exists("../../.." BPC, NULL)) {
 	if (find_path(result, "../../..", rhs, NULL, NULL)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: source directory [%s]\n", result);
@@ -506,7 +506,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	    return result;
 	}
     }
-    if (bu_file_exists("../../../.." BPC)) {
+    if (bu_file_exists("../../../.." BPC, NULL)) {
 	if (find_path(result, "../../../..", rhs, NULL, NULL)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: source directory [%s]\n", result);

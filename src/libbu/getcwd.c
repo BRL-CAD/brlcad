@@ -57,13 +57,13 @@ bu_getcwd(char *buf, size_t size)
     cwd = getcwd(cbuf, MAXPATHLEN);
     if (cwd
 	&& strlen(cwd) > 0
-	&& bu_file_exists(cwd))
+	&& bu_file_exists(cwd, NULL))
     {
 #ifdef HAVE_REALPATH
 	rwd = realpath(cbuf, rbuf);
 	if (rwd
 	    && strlen(rwd) > 0
-	    && bu_file_exists(rwd))
+	    && bu_file_exists(rwd, NULL))
 	{
 	    BU_ASSERT(sz > strlen(rwd)+1);
 	    bu_strlcpy(buf, rwd, strlen(rwd)+1);
@@ -84,13 +84,13 @@ bu_getcwd(char *buf, size_t size)
     pwd = getenv("PWD");
     if (pwd
 	&& strlen(pwd) > 0
-	&& bu_file_exists(pwd))
+	&& bu_file_exists(pwd, NULL))
     {
 #ifdef HAVE_REALPATH
 	rwd = realpath(pwd, rbuf);
 	if (rwd
 	    && strlen(rwd) > 0
-	    && bu_file_exists(rwd))
+	    && bu_file_exists(rwd, NULL))
 	{
 	    BU_ASSERT(sz > strlen(rwd)+1);
 	    bu_strlcpy(buf, rwd, strlen(rwd)+1);

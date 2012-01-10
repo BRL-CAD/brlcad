@@ -2870,12 +2870,13 @@ BU_EXPORT extern int bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb);
 /**
  * Returns truthfully whether the given file path exists or not.  An
  * empty or NULL path name is treated as a non-existent file and, as
- * such, will return false.
+ * such, will return false.  If fd is non-NULL, it will be set to an
+ * open file descriptor for the provided path.
  *
  * @return >0 The given filename exists.
  * @return 0 The given filename does not exist.
  */
-BU_EXPORT extern int bu_file_exists(const char *path);
+BU_EXPORT extern int bu_file_exists(const char *path, int *fd);
 
 /**
  * Returns truthfully as to whether the two provided filenames are the

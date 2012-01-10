@@ -256,7 +256,7 @@ main(int ac, char *av[])
 
     /* verify input */
     if (input && !(input[0] == '-' && input[1] == '\0')) {
-	if (bu_file_exists(input)) {
+	if (bu_file_exists(input, NULL)) {
 	    bu_log("Reading input from [%s]\n", input);
 	    in = fopen(input, "r");
 	    if (!in) {
@@ -298,7 +298,7 @@ main(int ac, char *av[])
 
     /* verify output */
     if (output && !(output[0] == '-' && output[1] == '\0')) {
-	if (bu_file_exists(output)) {
+	if (bu_file_exists(output, NULL)) {
 	    bu_log("WARNING: %s already exists\n", output);
 	    bu_log("Appending output to [%s]\n", output);
 	} else {

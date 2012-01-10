@@ -539,7 +539,7 @@ main(int argc, char *argv[]) {
     geometry_file = *argv++;
 
     /* make sure the geometry file exists */
-    if (!bu_file_exists(geometry_file)) {
+    if (!bu_file_exists(geometry_file, NULL)) {
 	bu_log("Geometry file does not exist: %s\n", geometry_file);
 	bu_exit(EXIT_FAILURE, "Need a BRL-CAD .g geometry database file\n");
     }

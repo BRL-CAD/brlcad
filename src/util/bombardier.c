@@ -157,7 +157,7 @@ load_file(const char *filename)
     FILE *fp = NULL;
     struct bu_vls buffer = BU_VLS_INIT_ZERO;
 
-    if (!bu_file_exists(filename)) {
+    if (!bu_file_exists(filename, NULL)) {
 	return;
     }
 
@@ -291,7 +291,7 @@ main(int argc, char *argv[])
 
     /* load all file arguments into our buffer */
     while (argc > 1) {
-	if (!bu_file_exists(argv[1])) {
+	if (!bu_file_exists(argv[1], NULL)) {
 	    bu_log("WARNING: Log file [%s] does not exist\n", argv[1]);
 	} else {
 	    bu_log("Processing %s\n", argv[1]);

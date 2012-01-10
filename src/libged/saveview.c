@@ -136,7 +136,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (!bu_file_exists(gedp->ged_wdbp->dbip->dbi_filename)) {
+    if (!bu_file_exists(gedp->ged_wdbp->dbip->dbi_filename, NULL)) {
 	bu_log("Error: %s does not exist\n", gedp->ged_wdbp->dbip->dbi_filename);
 	return GED_ERROR;
     }

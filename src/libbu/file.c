@@ -51,7 +51,7 @@
 
 
 int
-bu_file_exists(const char *path)
+bu_file_exists(const char *path, int *fd)
 {
     struct stat sbuf;
 
@@ -65,6 +65,16 @@ bu_file_exists(const char *path)
 	}
 	/* FAIL */
 	return 0;
+    }
+
+    /* capture file descriptor if requested */
+    if (fd) {
+	*fd = open(path, O_RDONLY);
+	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+	    bu_log("YES\n");
+	}
+	/* OK */
+	return 1;
     }
 
     /* does it exist as a filesystem entity? */
@@ -97,7 +107,7 @@ bu_same_file(const char *fn1, const char *fn2)
 	return 0;
     }
 
-    if (!bu_file_exists(fn1) || !bu_file_exists(fn2)) {
+    if (!bu_file_exists(fn1, NULL) || !bu_file_exists(fn2, NULL)) {
 	return 0;
     }
 
@@ -275,7 +285,7 @@ bu_file_delete(const char *path)
 	|| BU_STR_EQUAL(path, "")
 	|| BU_STR_EQUAL(path, ".")
 	|| BU_STR_EQUAL(path, "..")
-	|| !bu_file_exists(path))
+	|| !bu_file_exists(path, NULL))
     {
 	return 0;
     }
@@ -299,7 +309,7 @@ bu_file_delete(const char *path)
     /* all boils down to whether the file still exists, not whether
      * remove thinks it succeeded.
      */
-    if (bu_file_exists(path)) {
+    if (bu_file_exists(path, NULL)) {
 	/* failure */
 	if (retry > 1) {
 	    /* restore original file permission */

@@ -1473,7 +1473,7 @@ create_outputfilename( struct frame *fr )
      *	file exists, is writable -- eliminate all non-black pixels
      *		from work-to-do queue
      */
-    if (!bu_file_exists(fr->fr_filename))  {
+    if (!bu_file_exists(fr->fr_filename, NULL))  {
 	/* File does not yet exist */
 	if ( (fd = creat( fr->fr_filename, 0644 )) < 0 )  {
 	    /* Unable to create new file */

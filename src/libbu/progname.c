@@ -163,7 +163,7 @@ bu_argv0_full_path(void)
 
     /* running from relative dir */
     snprintf(buffer, MAXPATHLEN, "%s%c%s", ipwd, BU_DIR_SEPARATOR, argv0);
-    if (bu_file_exists(buffer)) {
+    if (bu_file_exists(buffer, NULL)) {
 	return buffer;
     }
 

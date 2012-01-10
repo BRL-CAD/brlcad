@@ -144,7 +144,7 @@ get_args(int argc, char **argv)
 	}
     }
     if (argv[bu_optind] != NULL) {
-	if (bu_file_exists(argv[bu_optind])) {
+	if (bu_file_exists(argv[bu_optind], NULL)) {
 	    (void) fprintf(stderr,
 			   "\"%s\" already exists.\n",
 			   argv[bu_optind]);

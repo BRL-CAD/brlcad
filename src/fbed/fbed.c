@@ -1516,7 +1516,7 @@ f_Save_RLE() /* Save framebuffer image with Run-Length Encoding. */
 	fb_log( "No default.\n" );
 	return 0;
     }
-    if ( bu_file_exists( rle_file_nm ) )
+    if ( bu_file_exists( rle_file_nm , NULL) )
     {
 	char answer[2];
 	char question[MAX_LN+32];

@@ -355,7 +355,7 @@ _ged_open_dbip(const char *filename, int existing_only)
 	/*
 	 * Check to see if we can access the database
 	 */
-	if (bu_file_exists(filename) && !bu_file_readable(filename)) {
+	if (bu_file_exists(filename, NULL) && !bu_file_readable(filename)) {
 	    bu_log("_ged_open_dbip: %s is not readable", filename);
 
 	    return DBI_NULL;
