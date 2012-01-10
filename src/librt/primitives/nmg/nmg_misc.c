@@ -6404,6 +6404,7 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
     /* first check for edges that cross both adjacent edges */
     if (BU_PTBL_END(int_faces) > 2) {
 	for (edge_no=0; edge_no<BU_PTBL_END(int_faces); edge_no++) {
+	    int nmg_continue = 0;
 	    int next_edge_no, prev_edge_no;
 	    struct intersect_fus *edge_fus;
 	    struct intersect_fus *next_fus, *prev_fus;
@@ -6426,7 +6427,7 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
 	    if (next_fus->vp && (!edge_fus->free_edge || !next_fus->free_edge))
 		dist1 = nmg_dist_to_cross(edge_fus, next_fus, pt1, tol);
 	    else
-		dist1 = (-1.0);
+		nmg_continue = 1;
 
 	    /* look at previous edge */
 	    prev_edge_no = edge_no - 1;
@@ -6439,11 +6440,10 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
 	    if (prev_fus->vp && (!edge_fus->free_edge || !prev_fus->free_edge))
 		dist2 = nmg_dist_to_cross(edge_fus, prev_fus, pt2, tol);
 	    else
-		dist2 = (-1.0);
+		nmg_continue = 1;
 
 	    /* if no intersections, continue */
-	    if (dist1 < tol->dist || dist2 < tol->dist)
-		continue;
+	    if (nmg_continue) continue;
 
 	    if (rt_g.NMG_debug & DEBUG_BASIC) {
 		bu_log("fus=x%x, prev=x%x, next=x%x, dist1=%f, dist2=%f\n",
