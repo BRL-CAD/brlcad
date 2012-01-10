@@ -132,8 +132,12 @@ make_model_from_face(const double points[], int numPoints)
     /* add geometry to face */
     fu = BU_LIST_FIRST(faceuse, &shell->fu_hd);
     attach_face_g_plane(model, fu->f_p);
-    nmg_calc_face_plane(fu, fu->f_p->g.plane_p->N);
-    fu->orientation = OT_SAME;
+    if (nmg_calc_face_plane(fu, fu->f_p->g.plane_p->N)) {
+	nmg_km(model);
+	model = NULL;
+    } else {
+	fu->orientation = OT_SAME;
+    }
 
     return model;
 }
@@ -143,11 +147,14 @@ make_faceuse_from_face(const double points[], int numPoints)
 {
     struct model *model;
     struct shell *shell;
-    struct faceuse *fu;
+    struct faceuse *fu = NULL;
 
     model = make_model_from_face(points, numPoints);
-    shell = get_first_shell(model);
-    fu = BU_LIST_FIRST(faceuse, &shell->fu_hd);
+
+    if (model != NULL) {
+	shell = get_first_shell(model);
+	fu = BU_LIST_FIRST(faceuse, &shell->fu_hd);
+    }
 
     return fu;
 }
@@ -206,6 +213,12 @@ triangulateFace(
 
     /* get nmg faceuse that represents the face specified by points */
     fu = make_faceuse_from_face(points, numPoints);
+
+    if (fu == NULL) {
+	*faces = NULL;
+	*numFaces = 0;
+	return;
+    }
 
     /* triangulate face */
     nmg_triangulate_fu(fu, &tol);

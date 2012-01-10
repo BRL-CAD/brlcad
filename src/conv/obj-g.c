@@ -1378,27 +1378,33 @@ populate_triangle_indexes(struct ga_t *ga,
 
     fu = make_faceuse_from_face(facePoints, numFacePoints);
 
-    /* do simple or robust triangulation based on whether face is concave or convex */
-    if (nmg_lu_is_convex(BU_LIST_FIRST(loopuse, &fu->lu_hd), tol)) {
+    /* only try triangulation if face is well-formed enough to yield a faceuse */
+    if (fu != NULL) {
 
-	/* compute number of new triangles to create */
-	if (gfi->num_vertices_arr[face_idx] > 3) {
-	    num_new_tri = gfi->num_vertices_arr[face_idx] - 2;
+	/* do simple or robust triangulation based on whether face is concave or convex */
+	if (nmg_lu_is_convex(BU_LIST_FIRST(loopuse, &fu->lu_hd), tol)) {
+
+	    /* compute number of new triangles to create */
+	    if (gfi->num_vertices_arr[face_idx] > 3) {
+		num_new_tri = gfi->num_vertices_arr[face_idx] - 2;
+	    } else {
+		num_new_tri = 1;
+	    }
+
+	    /* create triangles that all start at the first face vertex */
+	    triFaces = (int*)bu_malloc(num_new_tri * POINTS_PER_FACE * sizeof(int),
+		"triFaces");
+
+	    for (vert_idx = 0; vert_idx < num_new_tri; vert_idx++) {
+		triFaces[vert_idx * ELEMENTS_PER_POINT + X] = 0;
+		triFaces[vert_idx * ELEMENTS_PER_POINT + Y] = vert_idx + 1;
+		triFaces[vert_idx * ELEMENTS_PER_POINT + Z] = vert_idx + 2;
+	    }
 	} else {
-	    num_new_tri = 1;
-	}
-
-	/* create triangles that all start at the first face vertex */
-	triFaces = (int*)bu_malloc(num_new_tri * POINTS_PER_FACE * sizeof(int),
-	    "triFaces");
-
-	for (vert_idx = 0; vert_idx < num_new_tri; vert_idx++) {
-	    triFaces[vert_idx * ELEMENTS_PER_POINT + X] = 0;
-	    triFaces[vert_idx * ELEMENTS_PER_POINT + Y] = vert_idx + 1;
-	    triFaces[vert_idx * ELEMENTS_PER_POINT + Z] = vert_idx + 2;
-	}
+	    triangulateFace(&triFaces, &num_new_tri, facePoints, numFacePoints, *tol);
+	} 
     } else {
-	triangulateFace(&triFaces, &num_new_tri, facePoints, numFacePoints, *tol);
+	num_new_tri = 0;
     }
 
     bu_free(facePoints, "facePoints");
