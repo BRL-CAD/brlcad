@@ -746,6 +746,7 @@ static int
 f_Model(struct application *ap, struct partition *pt_headp, struct seg *unused)
 {
     struct partition *pp;
+    Mat_Db_Entry loc_entry;
     Mat_Db_Entry *entry;
     struct soltab *stp;
     struct hit *ihitp;
@@ -881,7 +882,6 @@ f_Model(struct application *ap, struct partition *pt_headp, struct seg *unused)
     if ( strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) == 0 )
     {
 	struct uvcoord uv;
-	Mat_Db_Entry loc_entry;
 	/* Solid has a frame buffer image map. */
 	rt_functab[stp->st_id].ft_uv( ap, stp, ihitp, &uv );
 	loc_entry = *entry;
