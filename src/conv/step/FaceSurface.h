@@ -39,11 +39,8 @@ private:
 
 protected:
 	Surface *face_geometry;
-#ifdef YAYA
 	Boolean same_sense;
-#else
-	int same_sense;
-#endif
+
 
 public:
 	FaceSurface();

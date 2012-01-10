@@ -40,12 +40,14 @@ Axis1Placement::Axis1Placement() {
     step = NULL;
     id = 0;
     axis = NULL;
+    VSET(z,0.0,0.0,0.0);
 }
 
 Axis1Placement::Axis1Placement(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
     axis = NULL;
+    VSET(z,0.0,0.0,0.0);
 }
 
 Axis1Placement::~Axis1Placement() {

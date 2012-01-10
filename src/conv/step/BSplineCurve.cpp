@@ -47,11 +47,19 @@ static const char *B_spline_curve_form_string[] = {
 BSplineCurve::BSplineCurve() {
     step = NULL;
     id = 0;
+    degree = 0;
+    curve_form = B_spline_curve_form_unset;
+    closed_curve = LUnset;
+    self_intersect = LUnset;
 }
 
 BSplineCurve::BSplineCurve(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
+    degree = 0;
+    curve_form = B_spline_curve_form_unset;
+    closed_curve = LUnset;
+    self_intersect = LUnset;
 }
 
 BSplineCurve::~BSplineCurve() {

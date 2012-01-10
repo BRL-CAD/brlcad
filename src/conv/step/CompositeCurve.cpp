@@ -38,11 +38,13 @@ string CompositeCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMe
 CompositeCurve::CompositeCurve() {
     step = NULL;
     id = 0;
+    self_intersect = LUnset;
 }
 
 CompositeCurve::CompositeCurve(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
+    self_intersect = LUnset;
 }
 
 CompositeCurve::~CompositeCurve() {

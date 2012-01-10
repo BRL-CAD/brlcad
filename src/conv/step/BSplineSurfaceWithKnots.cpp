@@ -45,11 +45,13 @@ static const char *Knot_type_string[] = {
 BSplineSurfaceWithKnots::BSplineSurfaceWithKnots() {
     step = NULL;
     id = 0;
+    knot_spec = Knot_type_unset;
 }
 
 BSplineSurfaceWithKnots::BSplineSurfaceWithKnots(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
+    knot_spec = Knot_type_unset;
 }
 
 BSplineSurfaceWithKnots::~BSplineSurfaceWithKnots() {

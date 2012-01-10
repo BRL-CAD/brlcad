@@ -43,6 +43,10 @@ Curve::Curve() {
 	trim_startpoint[i] = 0.0;
 	trim_endpoint[i] = 0.0;
     }
+    t = 0.0;
+    s = 0.0;
+    start = NULL;
+    end = NULL;
 }
 
 Curve::Curve(STEPWrapper *sw,int step_id) {
@@ -54,6 +58,10 @@ Curve::Curve(STEPWrapper *sw,int step_id) {
 	trim_startpoint[i] = 0.0;
 	trim_endpoint[i] = 0.0;
     }
+    t = 0.0;
+    s = 0.0;
+    start = NULL;
+    end = NULL;
 }
 
 Curve::~Curve() {

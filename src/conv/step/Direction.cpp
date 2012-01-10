@@ -26,6 +26,7 @@
 #include "STEPWrapper.h"
 #include "Factory.h"
 
+#include "vmath.h"
 #include "CartesianPoint.h"
 
 #include "Direction.h"
@@ -37,11 +38,13 @@ string Direction::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)
 Direction::Direction() {
     step = NULL;
     id = 0;
+    VSET(direction_ratios,0.0,0.0,0.0);
 }
 
 Direction::Direction(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
+    VSET(direction_ratios,0.0,0.0,0.0);
 }
 
 Direction::~Direction() {

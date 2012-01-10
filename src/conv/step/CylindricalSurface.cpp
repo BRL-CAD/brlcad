@@ -36,11 +36,13 @@ string CylindricalSurface::entityname = Factory::RegisterClass(ENTITYNAME,(Facto
 CylindricalSurface::CylindricalSurface() {
     step = NULL;
     id = 0;
+    radius = 0.0;
 }
 
 CylindricalSurface::CylindricalSurface(STEPWrapper *sw,int step_id) {
     step=sw;
     id = step_id;
+    radius = 0.0;
 }
 
 CylindricalSurface::~CylindricalSurface() {

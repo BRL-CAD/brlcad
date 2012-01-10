@@ -31,14 +31,16 @@
 
 class Placement;
 
-enum axis2_placement_type {
-	AXIS2_PLACEMENT_2D,
-	AXIS2_PLACEMENT_3D
-};
-
 class Axis2Placement : public STEPEntity {
 private:
 	static string entityname;
+
+public:
+	enum axis2_placement_type {
+		AXIS2_PLACEMENT_2D,
+		AXIS2_PLACEMENT_3D,
+		UNKNOWN
+	};
 
 protected:
 	Placement *value;

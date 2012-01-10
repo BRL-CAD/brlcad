@@ -32,7 +32,6 @@
 class BezierSurface : virtual public BSplineSurface {
 private:
 	static string entityname;
-	int sid;
 
 protected:
 

@@ -36,11 +36,15 @@ string ConicalSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMe
 ConicalSurface::ConicalSurface() {
     step = NULL;
     id = 0;
+    radius = 0.0;
+    semi_angle = 0.0;
 }
 
 ConicalSurface::ConicalSurface(STEPWrapper *sw,int step_id) {
     step=sw;
     id = step_id;
+    radius = 0.0;
+    semi_angle = 0.0;
 }
 
 ConicalSurface::~ConicalSurface() {

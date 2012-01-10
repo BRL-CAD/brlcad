@@ -36,11 +36,25 @@ string DimensionalExponents::entityname = Factory::RegisterClass(ENTITYNAME,(Fac
 DimensionalExponents::DimensionalExponents() {
     step = NULL;
     id = 0;
+    length_exponent = 0.0;
+    mass_exponent = 0.0;
+    time_exponent = 0.0;
+    electric_current_exponent = 0.0;
+    thermodynamic_temperature_exponent = 0.0;
+    amount_of_substance_exponent = 0.0;
+    luminous_intensity_exponent = 0.0;
 }
 
 DimensionalExponents::DimensionalExponents(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
+    length_exponent = 0.0;
+    mass_exponent = 0.0;
+    time_exponent = 0.0;
+    electric_current_exponent = 0.0;
+    thermodynamic_temperature_exponent = 0.0;
+    amount_of_substance_exponent = 0.0;
+    luminous_intensity_exponent = 0.0;
 }
 
 DimensionalExponents::~DimensionalExponents() {

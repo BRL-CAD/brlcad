@@ -41,11 +41,8 @@ protected:
 	LIST_OF_INTEGERS v_multiplicities;
 	LIST_OF_REALS u_knots;
 	LIST_OF_REALS v_knots;
-#ifdef YAYA
 	Knot_type knot_spec;
-#else
-	int knot_spec;
-#endif
+
 
 public:
 	BSplineSurfaceWithKnots();

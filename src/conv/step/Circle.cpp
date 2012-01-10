@@ -36,11 +36,13 @@ string Circle::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Cir
 Circle::Circle() {
     step = NULL;
     id = 0;
+    radius = 0.0;
 }
 
 Circle::Circle(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
+    radius = 0.0;
 }
 
 Circle::~Circle() {

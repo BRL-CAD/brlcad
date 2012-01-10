@@ -25,6 +25,7 @@
 #include "STEPWrapper.h"
 #include "Factory.h"
 
+#include "vmath.h"
 #include "CartesianPoint.h"
 
 #define CLASSNAME "CartesianPoint"
@@ -35,12 +36,14 @@ CartesianPoint::CartesianPoint() {
     step = NULL;
     id = 0;
     vertex_index = -1;
+    coordinates[0] = coordinates[1] = coordinates[2] = 0.0;
 }
 
 CartesianPoint::CartesianPoint(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
     vertex_index = -1;
+    coordinates[0] = coordinates[1] = coordinates[2] = 0.0;
 }
 
 CartesianPoint::~CartesianPoint() {
@@ -67,7 +70,7 @@ CartesianPoint::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
 	RealNode *rn = (RealNode *)sa->GetHead();
 	int index = 0;
-	while ( rn != NULL) {
+    while (( rn != NULL) && (index < 3)){
 	    coordinates[index++] = rn->value;
 	    rn = (RealNode *)rn->NextNode();
 	}

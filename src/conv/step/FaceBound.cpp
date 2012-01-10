@@ -40,6 +40,8 @@ FaceBound::FaceBound() {
     id = 0;
     bound = NULL;
     inner = true;
+	ON_face_index=-1;
+	orientation = BUnset;
 }
 
 FaceBound::FaceBound(STEPWrapper *sw,int step_id) {
@@ -47,6 +49,8 @@ FaceBound::FaceBound(STEPWrapper *sw,int step_id) {
     id = step_id;
     bound = NULL;
     inner = true;
+	ON_face_index=-1;
+	orientation = BUnset;
 }
 
 FaceBound::~FaceBound() {

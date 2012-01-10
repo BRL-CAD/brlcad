@@ -42,11 +42,8 @@ protected:
 	Loop *bound;
 	int ON_face_index;
 	bool inner;
-#ifdef YAYA
 	Boolean orientation;
-#else
-	int orientation;
-#endif
+
 
 public:
 	FaceBound();

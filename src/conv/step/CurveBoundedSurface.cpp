@@ -38,12 +38,14 @@ CurveBoundedSurface::CurveBoundedSurface() {
     step=NULL;
     id = 0;
     basis_surface = NULL;
+    implicit_outer = BUnset;
 }
 
 CurveBoundedSurface::CurveBoundedSurface(STEPWrapper *sw,int step_id) {
     step=sw;
     id = step_id;
     basis_surface = NULL;
+    implicit_outer = BUnset;
 }
 
 CurveBoundedSurface::~CurveBoundedSurface() {

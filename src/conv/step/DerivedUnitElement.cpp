@@ -38,12 +38,14 @@ DerivedUnitElement::DerivedUnitElement() {
     step = NULL;
     id = 0;
     unit = NULL;
+    exponent = 0.0;
 }
 
 DerivedUnitElement::DerivedUnitElement(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
     unit = NULL;
+    exponent = 0.0;
 }
 
 DerivedUnitElement::~DerivedUnitElement() {

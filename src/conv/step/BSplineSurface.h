@@ -43,17 +43,10 @@ protected:
 	int u_degree;
 	int v_degree;
 	LIST_OF_LIST_OF_POINTS *control_points_list;
-#ifdef YAYA
 	B_spline_surface_form surface_form;
 	Logical u_closed;
 	Logical v_closed;
 	Logical self_intersect;
-#else
-	int surface_form;
-	int u_closed;
-	int v_closed;
-	int self_intersect;
-#endif
 
 public:
 	BSplineSurface();

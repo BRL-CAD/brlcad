@@ -39,15 +39,9 @@ private:
 protected:
 	int degree;
 	LIST_OF_POINTS control_points_list;
-#ifdef YAYA
 	B_spline_curve_form curve_form;
 	Logical closed_curve;
 	Logical self_intersect;
-#else
-	int curve_form;
-	int closed_curve;
-	int self_intersect;
-#endif
 
 public:
 	BSplineCurve();

@@ -39,12 +39,9 @@ private:
 protected:
 	LIST_OF_INTEGERS knot_multiplicities;
 	LIST_OF_REALS knots;
-	//TODO: fix YAYA references
-#ifdef YAYA
-    Knot_type knot_spec;
-#else
-    int knot_spec;
-#endif
+
+
+	Knot_type knot_spec;
 
 public:
 	BSplineCurveWithKnots();

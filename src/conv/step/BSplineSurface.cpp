@@ -52,12 +52,24 @@ BSplineSurface::BSplineSurface() {
     step=NULL;
     id = 0;
     control_points_list = NULL;
+    u_degree = 0;
+    v_degree = 0;
+    surface_form = B_spline_surface_form_unset;
+    u_closed = LUnset;
+    v_closed = LUnset;
+    self_intersect = LUnset;
 }
 
 BSplineSurface::BSplineSurface(STEPWrapper *sw,int step_id) {
     step=sw;
     id = step_id;
     control_points_list = NULL;
+    u_degree = 0;
+    v_degree = 0;
+    surface_form = B_spline_surface_form_unset;
+    u_closed = LUnset;
+    v_closed = LUnset;
+    self_intersect = LUnset;
 }
 
 BSplineSurface::~BSplineSurface() {

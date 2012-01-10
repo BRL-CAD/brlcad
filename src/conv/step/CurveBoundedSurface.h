@@ -40,12 +40,8 @@ private:
 protected:
 	Surface* basis_surface;
 	LIST_OF_BOUNDARIES boundaries;
-	//TODO: Fix all references to YAYA
-#ifdef YAYA
 	Boolean implicit_outer;
-#else
-	int implicit_outer;
-#endif
+
 
 public:
 	CurveBoundedSurface();

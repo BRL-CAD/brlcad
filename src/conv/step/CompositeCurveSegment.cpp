@@ -47,12 +47,16 @@ CompositeCurveSegment::CompositeCurveSegment() {
     step = NULL;
     id = 0;
     parent_curve = NULL;
+    transition = Transition_code_unset;
+    same_sense = BUnset;
 }
 
 CompositeCurveSegment::CompositeCurveSegment(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
     parent_curve = NULL;
+    transition = Transition_code_unset;
+    same_sense = BUnset;
 }
 
 CompositeCurveSegment::~CompositeCurveSegment() {

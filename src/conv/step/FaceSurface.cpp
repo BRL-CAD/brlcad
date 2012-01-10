@@ -39,12 +39,14 @@ FaceSurface::FaceSurface() {
     step = NULL;
     id = 0;
     face_geometry = NULL;
+	same_sense = BUnset;
 }
 
 FaceSurface::FaceSurface(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
     face_geometry = NULL;
+	same_sense = BUnset;
 }
 
 FaceSurface::~FaceSurface() {
