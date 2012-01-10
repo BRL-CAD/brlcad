@@ -262,7 +262,7 @@ scloud_render(struct application *ap, const struct partition *pp, struct shadewo
     int i;
     double val;
     double trans;
-    point_t incident_light;
+    point_t incident_light = {0,0,0};
     double delta_dpmm;
     double density;
     struct shadework sub_sw;
