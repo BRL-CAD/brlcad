@@ -438,7 +438,9 @@ cmd_setup(void)
     Tcl_LinkVar(INTERP, "output_as_return", (char *)&output_as_return, TCL_LINK_BOOLEAN);
 
     /* Provide Tcl interfaces to the fundamental BRL-CAD libraries */
-    Bu_Init(INTERP);
+    if (Bu_Init(INTERP) == TCL_ERROR) {
+      bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(INTERP));
+    }
     Bn_Init(INTERP);
     Rt_Init(INTERP);
     Go_Init(INTERP);
