@@ -713,7 +713,7 @@ rt_process_uplot_value(register struct bu_list **vhead,
 {
     mat_t mat;
     const struct uplot *up;
-    char carg[256];
+    char carg[256] = {0,0,0};
     fastf_t arg[6];
     vect_t a, b;
     point_t last_pos;
