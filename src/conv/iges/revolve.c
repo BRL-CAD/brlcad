@@ -218,8 +218,8 @@ revolve(int entityno)
 
     /* Eliminate last struct if not used */
     if (trcptr->name[0] == '\0') {
-	trcptr->prev->next = NULL;
-	bu_free((char *)trcptr, "Revolve: trcptr");
+      if (trcptr->prev) trcptr->prev->next = NULL;
+      bu_free((char *)trcptr, "Revolve: trcptr");
     }
 
     if (dir[entityno]->form == 1) {
