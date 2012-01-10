@@ -295,16 +295,19 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 
     if ( face )
     {
-	nmg_kill_zero_length_edgeuses( m );
+        int empty_model;
+	empty_model = nmg_kill_zero_length_edgeuses( m );
+	if (!empty_model) {
 
-	/* Compute "geometry" for region and shell */
-	nmg_region_a(r, &tol);
+	  /* Compute "geometry" for region and shell */
+	  nmg_region_a(r, &tol);
 
-	nmg_model_break_e_on_v( m, &tol );
-	nmg_kill_zero_length_edgeuses( m );
+	  nmg_model_break_e_on_v( m, &tol );
+	  empty_model = nmg_kill_zero_length_edgeuses( m );
 
-	/* Glue edges of outward pointing face uses together. */
-	nmg_model_edge_fuse( m, &tol );
+	  /* Glue edges of outward pointing face uses together. */
+	  if (!empty_model) nmg_model_edge_fuse( m, &tol );
+	}
     }
 
     return 0;
