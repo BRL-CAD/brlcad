@@ -62,7 +62,7 @@ test_intersection(int should, point_t *t1, point_t *t2, point_t p1, point_t p2)
     VCROSS(f[1].plane,tmp[0], tmp[1]);
     f[1].foo = 0;
 
-    if( gcv_tri_tri_intersect_with_isectline(NULL,NULL, f, f+1, &coplanar, (point_t *)&i[0], &tol) == 0 && should == 0)
+    if( gcv_tri_tri_intersect_with_isectline(NULL,NULL, f, f+1, &coplanar, i, &tol) == 0 && should == 0)
 	return 0;
     return !(VNEAR_EQUAL(i[0], p1, tol.dist) && VNEAR_EQUAL(i[1], p2, tol.dist));
 }
