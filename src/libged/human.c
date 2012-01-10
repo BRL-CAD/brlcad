@@ -932,7 +932,7 @@ makeBody(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fastf_t
  * start disappearing, oddly enough.
  */
 HIDDEN void
-makeArmy(struct rt_wdb (*file), struct human_data_t dude, int number, int showBoxes)
+makeArmy(struct rt_wdb (*file), struct human_data_t *dude, int number, int showBoxes)
 {
     point_t locations;
     int x = 0;
@@ -947,13 +947,13 @@ makeArmy(struct rt_wdb (*file), struct human_data_t dude, int number, int showBo
 	for (y=0; y<number; y++) {
 	    sprintf(testname, "%d", num);
 	    bu_strlcpy(suffix, testname, MAXLENGTH);
-	    RandAuto(&dude);	/*Generates random heights for random height, and thus random size, creation. */
-	    Auto(&dude);
-	    makeBody(file, suffix, &dude, locations, showBoxes);
-	    VSET(locations, (locations[X]- (dude.torso.shoulderWidth + dude.arms.upperArmWidth)*4), locations[Y], 0);
+	    RandAuto(dude);	/*Generates random heights for random height, and thus random size, creation. */
+	    Auto(dude);
+	    makeBody(file, suffix, dude, locations, showBoxes);
+	    VSET(locations, (locations[X]- (dude->torso.shoulderWidth + dude->arms.upperArmWidth)*4), locations[Y], 0);
 	    num++;
 	}
-	VSET(locations, 0, (locations[Y]- (dude.torso.shoulderWidth + dude.arms.upperArmWidth)*4), 0);
+	VSET(locations, 0, (locations[Y]- (dude->torso.shoulderWidth + dude->arms.upperArmWidth)*4), 0);
     }
 }
 
@@ -2276,7 +2276,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	    verbose(&human_data);
     }
     if (troops > 1) {
-	makeArmy(gedp->ged_wdbp, human_data, troops, showBoxes);
+	makeArmy(gedp->ged_wdbp, &human_data, troops, showBoxes);
 	mk_id_units(gedp->ged_wdbp, "An army of people", "in");
     }
 /****End Magic****/
