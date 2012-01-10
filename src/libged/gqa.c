@@ -771,6 +771,7 @@ get_densities_from_file(char *name)
 
     if (stat(name, &sb)) {
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "Could not read file - %s\n", name);
+	fclose(fp);
 	return GED_ERROR;
     }
 
