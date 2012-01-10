@@ -183,7 +183,9 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	 */
 	bu_vls_trunc(&v, 0);
 	bu_vls_printf(&v, "val=%g", pp->pt_inhit->hit_dist);
-	bu_struct_parse(&v, val_sp, (const char *)&vs);
+	if (bu_struct_parse(&v, val_sp, (const char *)&vs) < 0) {
+	  bu_log("Warning - bu_struct_parse failure in reshoot.c, function hit\n");
+	}
 
 	if (!EQUAL(vs.val, rh->indist)) {
 	    bu_vls_printf(&result, "\tinhit mismatch %g %g\n", pp->pt_inhit->hit_dist, rh->indist);
@@ -192,8 +194,9 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 
 	bu_vls_trunc(&v, 0);
 	bu_vls_printf(&v, "val=%g", pp->pt_outhit->hit_dist);
-	bu_struct_parse(&v, val_sp, (const char *)&vs);
-
+	if (bu_struct_parse(&v, val_sp, (const char *)&vs) < 0) {
+	  bu_log("Warning - bu_struct_parse failure in reshoot.c, function hit\n");
+	}
 
 	if (!EQUAL(vs.val, rh->outdist)) {
 	    bu_vls_printf(&result, "\touthit mismatch %g %g\n", pp->pt_outhit->hit_dist, rh->outdist);
