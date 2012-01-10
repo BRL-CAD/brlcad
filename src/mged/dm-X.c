@@ -114,7 +114,8 @@ X_dm(int argc, const char *argv[])
 	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
 	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
 	    bu_vls_putc(&tmp_vls, '\"');
-	    bu_struct_parse(&tmp_vls, X_vparse, (char *)dmp);
+	    if (bu_struct_parse(&tmp_vls, X_vparse, (char *)dmp) < 0) 
+	      return TCL_ERROR;
 	    bu_vls_free(&tmp_vls);
 	}
 
