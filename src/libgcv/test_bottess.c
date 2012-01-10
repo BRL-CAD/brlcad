@@ -113,7 +113,7 @@ test_face_split_single()
 	/* evil macros to do a lot of scaffolding, setup, execution, etc... */
     /* prep take: the triangle to split (9 fastf_t), the intersection line (6
      * fastf_t), and the number of expected resulting triangles. */
-#define PREP(t00,t01,t02,t10,t11,t12,t20,t21,t22,ispt00,ispt01,ispt02,ispt10,ispt11,ispt12,_nsplt) {point_t isectpt[2];int urf[_nsplt];unsigned long int failure=0,numsplit;tcount++;numsplit=_nsplt;VSET(isectpt[0],ispt00,ispt01,ispt02);VSET(isectpt[1],ispt10,ispt11,ispt12);s.magic=SOUP_MAGIC;s.faces=NULL;s.maxfaces=0;s.nfaces=0;VSET(f.vert[0],t00,t01,t02);VSET(f.vert[1],t10,t11,t12);VSET(f.vert[2],t20,t21,t22);soup_add_face(&s,V3ARGS(f.vert),&t);VSET(f.plane,0,0,1);nsplt=split_face_single(&s,0,isectpt,&f,&t);if(nsplt!=s.nfaces){printf("Errr, nsplit %lu != s.nfaces %lu ?\n",numsplit,s.nfaces);}
+#define PREP(t00,t01,t02,t10,t11,t12,t20,t21,t22,ispt00,ispt01,ispt02,ispt10,ispt11,ispt12,_nsplt) {point_t isectpt[2];int urf[_nsplt+1];unsigned long int failure=0,numsplit;tcount++;numsplit=_nsplt;VSET(isectpt[0],ispt00,ispt01,ispt02);VSET(isectpt[1],ispt10,ispt11,ispt12);s.magic=SOUP_MAGIC;s.faces=NULL;s.maxfaces=0;s.nfaces=0;VSET(f.vert[0],t00,t01,t02);VSET(f.vert[1],t10,t11,t12);VSET(f.vert[2],t20,t21,t22);soup_add_face(&s,V3ARGS(f.vert),&t);VSET(f.plane,0,0,1);nsplt=split_face_single(&s,0,isectpt,&f,&t);if(nsplt!=s.nfaces){printf("Errr, nsplit %lu != s.nfaces %lu ?\n",numsplit,s.nfaces);}
     /* the _splits is an array of expected triangles, as 9 fastf_t tuples */
     /* fastf_t _splits[nsplt][9] = {{...},{...}} */
     /* post tests to see if the resulting triangles match and cleans up */
