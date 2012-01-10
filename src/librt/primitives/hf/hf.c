@@ -2152,6 +2152,8 @@ rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     bu_strlcpy(rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN);
     bu_vls_free(&str);
 
+    bu_log("DEPRECATED:  The 'hf' height field primitive is no longer supported.  Use the 'dsp' displacement map instead.\n");
+
     return 0;
 }
 
@@ -2163,7 +2165,7 @@ rt_hf_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     if (!ep || !mat) return -1;
     if (dbip) RT_CK_DBI(dbip);
 
-    bu_log("As of release 6.0 the HF primitive is superceded by the DSP primitive.\n");
+    bu_log("DEPRECATED:  The 'hf' height field primitive is no longer supported.  Use the 'dsp' displacement map instead.\n");
     bu_log("\tTo convert HF primitives to DSP, use 'dbupgrade'.\n");
     /* The rt_hf_to_dsp() routine can also be used */
     return -1;
@@ -2177,7 +2179,7 @@ rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UN
     if (ip) RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);
 
-    bu_log("As of release 6.0 the HF primitive is superceded by the DSP primitive.\n");
+    bu_log("DEPRECATED:  The 'hf' height field primitive is no longer supported.  Use the 'dsp' displacement map instead.\n");
     bu_log("\tTo convert HF primitives to DSP, use 'dbupgrade'.\n");
     /* The rt_hf_to_dsp() routine can also be used */
     return -1;
