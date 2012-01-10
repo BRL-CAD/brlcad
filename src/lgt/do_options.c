@@ -1227,7 +1227,8 @@ f_Animate()
 	    bu_log("Illegal input (%s).\n", input_ln);
 	    return	-1;
 	}
-	ready_Output_Device(0);
+	if (! ready_Output_Device(0)) 
+	  return -1;
 	(void) signal(SIGINT, abort_RT);
 	for (frame_no = 0; ! user_interrupt; frame_no++)
 	{
