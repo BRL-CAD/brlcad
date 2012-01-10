@@ -1121,9 +1121,6 @@ bn_tabdata_binary_read(const char *filename, size_t num, const struct bn_table *
     if ( fd <= 0 )  {
 	perror(filename);
 	bu_log("bn_tabdata_binary_read open failed on \"%s\"\n", filename);
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	close(fd);
-	bu_semaphore_release( BU_SEM_SYSCALL );
 	return (struct bn_tabdata *)NULL;
     }
 
