@@ -437,7 +437,8 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
     dp = db_lookup(tsp->ts_dbip, tp->tr_l.tl_name, LOOKUP_NOISY);
     if (!dp)
 	return 0;	/* proceed as usual */
-    if (tsp->ts_mat) {
+
+    if (!bn_mat_is_identity(tsp->ts_mat)) {
 	if (tp->tr_l.tl_mat) {
 	    matp = xform;
 	    bn_mat_mul(xform, tsp->ts_mat, tp->tr_l.tl_mat);
@@ -451,6 +452,7 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 	    matp = (matp_t)NULL;
 	}
     }
+
     if (rt_db_get_internal(&intern, dp, tsp->ts_dbip, matp, &rt_uniresource) < 0)
 	return 0;	/* proceed as usual */
 
