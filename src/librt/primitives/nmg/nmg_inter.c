@@ -420,10 +420,14 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
     } else {
 	this = NULL;
     bad:
-	bu_log("nmg_get_2d_vertex(, assoc_use=%x %s) this=x%x %s, is->twod=%x %s\n",
-	       assoc_use, bu_identify_magic(*assoc_use),
-	       this, bu_identify_magic(*this),
-	       (unsigned long *)is->twod, bu_identify_magic(*(is->twod)));
+	if (this) {
+	  bu_log("nmg_get_2d_vertex(, assoc_use=%x %s) this=x%x %s, is->twod=%x %s\n",
+	      assoc_use, bu_identify_magic(*assoc_use),
+	      this, bu_identify_magic(*this),
+	      (unsigned long *)is->twod, bu_identify_magic(*(is->twod)));
+	} else {
+	  bu_log("nmg_get_2d_vertex - this is NULL\n");
+	}
 	bu_bomb("nmg_get_2d_vertex:  2d association mis-match\n");
     }
 
