@@ -106,10 +106,14 @@ Showtree(struct node *root)
 	    return;
 	}
 
-	if (ptr != ptr->parent->right)
+	if (ptr->parent) {
+	  if (ptr != ptr->parent->right)
 	    ptr = ptr->parent->right;
-	else
+	  else
 	    ptr = NULL;
+	} else {
+	  ptr = NULL;
+	}
     }
 }
 
