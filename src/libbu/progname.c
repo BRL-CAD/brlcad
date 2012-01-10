@@ -125,7 +125,7 @@ progname_argv0(void)
 #endif
 
     if (!argv0) {
-	argv0 = "(unknown)";
+	argv0 = "(BRL-CAD)";
     }
 
     return argv0;
