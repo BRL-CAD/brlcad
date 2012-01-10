@@ -365,6 +365,7 @@ static void path_2_vrml_id(struct bu_vls *id, const char *path) {
 
     if (path == NULL) {
 	bu_vls_printf(id, "NO_PATH_%d", counter++);
+	return;
     }
 
     /* disallow any character from the
