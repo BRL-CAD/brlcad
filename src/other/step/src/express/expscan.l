@@ -194,12 +194,13 @@ id_char	= [A-Za-z0-9_];
 <> => code
 
 /* Added * at the end of next rule (to make lexer faster) - DEL */
-<*>[\t ]* { }
+<*>[\t ]* { IGNORE_TOKEN; }
 <*>'\n' { NEWLINE; }
 
 <code>"--"[^\n]*'\n' {
     NEWLINE;
     SCANsave_comment(yytext);
+    IGNORE_TOKEN;
 }
 
 <*>"(*" => comment {
@@ -209,6 +210,7 @@ id_char	= [A-Za-z0-9_];
 	open_comment[nesting_level].filename = current_filename;
     }
     nesting_level++;
+    IGNORE_TOKEN;
 }
 
 <code> {
@@ -306,27 +308,30 @@ integer {
     if (0 == --nesting_level) {
 	YYSETCONDITION(code);
     }
+    IGNORE_TOKEN;
 }
 
 <code>"*)" {
     ERRORreport_with_line(ERROR_unmatched_close_comment, yylineno);
+    IGNORE_TOKEN;
 }	
 
 <comment> {
 
 '\n' { NEWLINE; }
-[^*()\n]* { }
-[*()] { }
+[^*()\n]* { IGNORE_TOKEN; }
+[*()] { IGNORE_TOKEN; }
 
 } /* <comment> */
 
 /* As per N15, 7.1.5.3, all other recognized chars are incorrect - DEL */
 <code>[$%&@\^{}~] {
     ERRORreport_with_line(ERROR_unexpected_character,yylineno,yytext[0]);
+    IGNORE_TOKEN;
 }
 
 /* ... and unrecognized characters are treated as whitespace - DEL */
-<*>[^] { }
+<*>[^] { IGNORE_TOKEN; }
 
 %%
 void

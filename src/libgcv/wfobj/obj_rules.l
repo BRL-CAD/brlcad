@@ -204,14 +204,14 @@ v_tnv_reference_list {
     return YYEOF;
 }
 
-wspace { }
+wspace { IGNORE_TOKEN; }
 
 comment|newline {
     ++(detail::get_state(combinedState).file_stack.back().lineno);
     return EOL;
 }
 
-. { }
+. { IGNORE_TOKEN; }
 
 } /* INITIAL */
 
@@ -226,7 +226,7 @@ id => INITIAL {
     return ID;
 }
 
-wspace { }
+wspace { IGNORE_TOKEN; }
 
 comment|newline => INITIAL {
     /* Goto initial state when we hit newline */
@@ -234,7 +234,7 @@ comment|newline => INITIAL {
     return EOL;
 }
 
-. { }
+. { IGNORE_TOKEN; }
 
 } /* id_state */
 
@@ -253,7 +253,7 @@ id => INITIAL {
     return ID;
 }
 
-wspace { }
+wspace { IGNORE_TOKEN; }
 
 comment|newline => INITIAL {
     // Goto initial state when we hit newline
@@ -261,7 +261,7 @@ comment|newline => INITIAL {
     return EOL;
 }
 
-. { }
+. { IGNORE_TOKEN; }
 
 } /* toggle_id_state */
 
@@ -274,7 +274,7 @@ id {
     return ID;
 }
 
-wspace { }
+wspace { IGNORE_TOKEN; }
 
 comment|newline => INITIAL {
     // Goto initial state when we hit newline
@@ -282,7 +282,7 @@ comment|newline => INITIAL {
     return EOL;
 }
 
-. { }
+. { IGNORE_TOKEN; }
 
 } /* id_list_state */
 

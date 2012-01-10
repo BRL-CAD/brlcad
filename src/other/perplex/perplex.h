@@ -79,6 +79,7 @@ typedef struct appData_t {
     YYSTYPE tokenData;
     char *conditions;
     int usingConditions;
+    int safeMode;
 } appData_t;
 
 /* scanner data */

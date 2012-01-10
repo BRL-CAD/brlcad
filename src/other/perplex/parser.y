@@ -68,8 +68,11 @@ writeCodeOpen(appData_t *appData)
 static void
 writeCodeClose(appData_t *appData)
 {
-    /* prevent fall-through to next rule */
-    fprintf(appData->out, "IGNORE_TOKEN;\n}\n");
+    if (appData->safeMode) {
+	/* prevent fall-through to next rule */
+	fprintf(appData->out, "IGNORE_TOKEN;\n");
+    }
+    fprintf(appData->out, "}\n");
 }
 
 static void

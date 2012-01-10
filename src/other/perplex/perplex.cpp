@@ -79,6 +79,7 @@ static const mbo_opt_struct options[] =
     mbo_opt_struct('c', 0, "conditions"),
     mbo_opt_struct('i', 1, "header"),
     mbo_opt_struct('o', 1, "output"),
+    mbo_opt_struct('s', 0, "safe-mode"),
     mbo_opt_struct('t', 1, "template"),
     mbo_opt_struct('-', 0, NULL)
 };
@@ -90,6 +91,7 @@ static const char usage[] =
 "  -c, --conditions\tenable support for start conditions\n"
 "  -i, --header PATH\tspecify path of header file\n"
 "  -o, --output\t\tspecify path of output file\n"
+"  -s, --safe-mode\t\tprevent rule fall-through by skipping matched text by default"
 "  -t, --template PATH\tspecify path to scanner template file\n"
 ;
 
@@ -108,6 +110,7 @@ int main(int argc, char *argv[])
     FILE *templateFile = NULL;
     FILE *headerFile = NULL;
     int usingConditions = 0;
+    int safeMode = 0;
 
     if (argc < 2) {
 	puts(usage);
@@ -142,6 +145,9 @@ int main(int argc, char *argv[])
 		    fprintf(stderr, "Error: Couldn't open \"%s\" for writing.\n", opt_arg);
 		    exit(1);
 		}
+		break;
+	    case 's':
+		safeMode = 1;
 		break;
 	    case 't':
 		if (opt_arg == NULL) {
@@ -185,6 +191,7 @@ int main(int argc, char *argv[])
     appData->out = outFile;
     appData->header = headerFile;
     appData->scanner_template = templateFile;
+    appData->safeMode = safeMode;
     appData->usingConditions = usingConditions;
     appData->conditions = (char*)NULL;
 
