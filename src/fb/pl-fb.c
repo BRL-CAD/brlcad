@@ -932,7 +932,7 @@ put_vector_char(char c, coords *pos)
 	end.y = Y_CHAR_SIZE - rv->y + pos->y;
 	edgelimit(&start);
 	edgelimit(&end);
-	BuildStr(&start, &end);	/* pixels */
+	if (!BuildStr(&start, &end)) bu_log("BuildStr error in put_vector_char - start: (%d,%d), end: (%d,%d)\n", start.x, start.y, end.x, end.y);	/* pixels */
 	start = end;
     }
     pos->x += X_CHAR_SIZE;
