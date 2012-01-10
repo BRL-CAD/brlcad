@@ -191,6 +191,11 @@ static segmentList_t *findIntersectors(const growthSegment_t * const segment, co
     for (i=0; i < structure->subStructureCount; i++) {
 	segList = findIntersectors(segment, structure->subStructure[i], exemptList);
 
+	if(segList == NULL) {
+	    bu_log("segList is null?\n");
+	    return NULL;
+	}
+
 	/* ensure we have enough room */
 	if (bigList->count + segList->count + 1 >= bigList->capacity) {
 	    bigList->segment = (growthSegment_t **)bu_realloc(bigList->segment, (bigList->count + segList->count + 10) * sizeof(growthSegment_t *), "bigList->segment");
