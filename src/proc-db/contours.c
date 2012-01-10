@@ -47,6 +47,10 @@ main(int argc, char *argv[])
     while (!feof(stdin)) {
 	if (scanf("%d %d %128s", &npts, &z, name) != 3)  break;
 	for (i=0; i<npts; i++) {
+	    if(npts < 0) {
+		bu_log("Negative # of pts\n");
+		return -1;
+	    }
 	    if (scanf("%d %d", &x, &y) != 2)
 		fprintf(stderr, "bad xy\n");
 	    if (i==0)
