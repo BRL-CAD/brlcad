@@ -683,26 +683,29 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 
 	bu_vls_free(&file_name);
     } else {
-	if (binary && output_type == OTYPE_STL) {
-	    total_faces += bot->num_faces;
-	    write_bot_stl_binary(bot, fd, dp->d_namep);
-	} else {
-	    switch (output_type) {
-		case OTYPE_DXF:
-		    write_bot_dxf(bot, fp, dp->d_namep);
-		    break;
-		case OTYPE_OBJ:
-		    write_bot_obj(bot, fp, dp->d_namep);
-		    break;
-		case OTYPE_SAT:
-		    write_bot_sat(bot, fp, dp->d_namep);
-		    break;
-		case OTYPE_STL:
-		default:
-		    write_bot_stl(bot, fp, dp->d_namep);
-		    break;
-	    }
+      if (binary && output_type == OTYPE_STL) {
+	total_faces += bot->num_faces;
+	write_bot_stl_binary(bot, fd, dp->d_namep);
+      } else if (binary && output_type != OTYPE_STL) {
+	bu_log("Unsupported binary file type - only STL is currently supported\n");
+	return;
+      } else {
+	switch (output_type) {
+	  case OTYPE_DXF:
+	    write_bot_dxf(bot, fp, dp->d_namep);
+	    break;
+	  case OTYPE_OBJ:
+	    write_bot_obj(bot, fp, dp->d_namep);
+	    break;
+	  case OTYPE_SAT:
+	    write_bot_sat(bot, fp, dp->d_namep);
+	    break;
+	  case OTYPE_STL:
+	  default:
+	    write_bot_stl(bot, fp, dp->d_namep);
+	    break;
 	}
+      }
     }
 }
 
