@@ -222,17 +222,17 @@ slice(struct rt_wdb *fp, point_t origin, fastf_t depth, fastf_t width, fastf_t h
 	mk_rpp(fp, bu_vls_addr(&ext), minpt, maxpt);
 
 	/* make interiors */
-	if (xyz | XDIR) {
+	if (xyz & XDIR) {
 	    VSET(minpt, origin[X], origin[Y] + (depth / 3.0), origin[Z] + (height / 3.0));
 	    VSET(maxpt, minpt[X] + width, minpt[Y] + (depth / 3.0), minpt[Z] + (height / 3.0));
 	    mk_rpp(fp, bu_vls_addr(&inX), minpt, maxpt);
 	}
-	if (xyz | YDIR) {
+	if (xyz & YDIR) {
 	    VSET(minpt, origin[X] + (width / 3.0), origin[Y], origin[Z] + (height / 3.0));
 	    VSET(maxpt, minpt[X] + (width / 3.0), minpt[Y] + depth, minpt[Z] + (height / 3.0));
 	    mk_rpp(fp, bu_vls_addr(&inY), minpt, maxpt);
 	}
-	if (xyz | ZDIR) {
+	if (xyz & ZDIR) {
 	    VSET(minpt, origin[X] + (width / 3.0), origin[Y] + (depth / 3.0), origin[Z]);
 	    VSET(maxpt, minpt[X] + (width / 3.0), minpt[Y] + (depth / 3.0), minpt[Z] + height);
 	    mk_rpp(fp, bu_vls_addr(&inZ), minpt, maxpt);
