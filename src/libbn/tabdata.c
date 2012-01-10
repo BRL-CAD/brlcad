@@ -919,6 +919,7 @@ bn_table_read(const char *filename)
     if ( bu_vls_gets( &line, fp ) < 0 ) {
 	perror( filename );
 	bu_log("Failed to read line\n");
+	fclose(fp);
 	return NULL;
     }
     nw = 0;
