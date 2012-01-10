@@ -161,7 +161,7 @@ notify(char *str, int mode)
 	    *p++ = NOTIFY_DELIM;
 	bu_strlcpy(p, str, LNBUFSZ);
     } else {
-        if (p)	*p = NULL;
+        if (p) *p = NUL;
     }
     (void) ScMvCursor(PROMPT_X, PROMPT_Y);
     len = strlen(buf);
