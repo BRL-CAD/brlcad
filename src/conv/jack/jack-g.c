@@ -331,7 +331,10 @@ create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *gr
 
     snprintf(sname, sizeof(reg_name) + 2, "s.%s", reg_name);
     empty_model = nmg_kill_zero_length_edgeuses( m );
-    if (empty_model) return 0;
+    if (empty_model) {
+	bu_log("Warning: skipping empty model.");
+	return 0;
+    }
     nmg_rebound( m, &tol );
     r = BU_LIST_FIRST( nmgregion, &m->r_hd);
     s = BU_LIST_FIRST( shell, &r->s_hd );
