@@ -588,12 +588,17 @@ dm_draw_labels(struct dm *dmp,
     ts.ts_resp = &rt_uniresource;
     MAT_IDN(ts.ts_mat);
 
-    if (db_follow_path_for_state(&ts, &path, name, 1))
-	return BRLCAD_OK;
+    if (db_follow_path_for_state(&ts, &path, name, 1)) {
+      db_free_full_path(&path);
+      return BRLCAD_OK;
+    } 
 
     dp = DB_FULL_PATH_CUR_DIR(&path);
 
-    rt_db_get_internal(&intern, dp, wdbp->dbip, ts.ts_mat, &rt_uniresource);
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, ts.ts_mat, &rt_uniresource) < 0) {
+      db_free_full_path(&path);
+      return BRLCAD_ERROR;
+    }
 
     dm_label_primitive(wdbp, pl, MAX_PL, viewmat, &intern);
 
