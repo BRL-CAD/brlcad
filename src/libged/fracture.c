@@ -170,7 +170,7 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 		v = s->vu_p->v_p;
 
 		new_model = nmg_mm();
-		new_r = nmg_mrsv(new_model);
+		nmg_mrsv(new_model);
 		new_s = BU_LIST_FIRST(shell, &r->s_hd);
 		v_new = new_s->vu_p->v_p;
 		if (v->vg_p) {
