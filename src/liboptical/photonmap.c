@@ -1550,31 +1550,6 @@ HeapDown(struct PhotonSearch *S, int ind)
 }
 
 
-void
-Push(struct PhotonSearch *S, struct PSN P)
-{
-    S->List[S->Found] = P;
-    HeapUp(S, S->Found++);
-    /*
-      for (i = 0; i < S->Found; i++)
-      bu_log("Push[%d]: %.3f :: %d, %d\n", i, S->List[i].Dist, S->Found, S->Max);
-    */
-}
-
-
-void
-Pop(struct PhotonSearch *S)
-{
-    S->Found--;
-    S->List[0] = S->List[S->Found];
-    HeapDown(S, 0);
-    /*
-      for (i = 0; i < S->Found; i++)
-      bu_log("Pop [%d]: %.3f :: %d, %d\n", i, S->List[i].Dist, S->Found, S->Max);
-    */
-}
-
-
 fastf_t
 Dist(point_t a, point_t b)
 {
