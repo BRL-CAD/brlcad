@@ -772,7 +772,10 @@ bn_cmd_noise_slice(ClientData UNUSED(clientData),
 #define NOISE_FBM 0
 #define NOISE_TURB 1
 
+#define COV186_UNUSED_CODE 0
+#if COV186_UNUSED_CODE
     int noise_type = NOISE_FBM;
+#endif
     double val;
     point_t pt;
 
