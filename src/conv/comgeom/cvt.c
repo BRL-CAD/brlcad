@@ -87,6 +87,10 @@ get_args(int argc, char **argv)
     int	c;
     char		*file_name;
 
+    if (argv) {
+	return 0;
+    }
+
     while ( (c = bu_getopt( argc, argv, "d:v:s:" )) != -1 )  {
 	switch ( c )  {
 	    case 'd':
@@ -112,7 +116,13 @@ get_args(int argc, char **argv)
 	return 0;		/* FAIL */
     } else {
 	file_name = argv[bu_optind++];
-	if ( (infp = fopen(file_name, "rb")) == NULL )  {
+
+	if (!file_name || !bu_file_exists(file_name, NULL)) {
+	    perror(file_name);
+	    return 0;
+	}
+	infp = fopen(file_name, "rb");
+	if (infp == NULL) {
 	    perror(file_name);
 	    return 0;
 	}
@@ -123,7 +133,16 @@ get_args(int argc, char **argv)
 	return 0;		/* FAIL */
     } else {
 	file_name = argv[bu_optind++];
-	if ( (outfp = wdb_fopen(file_name)) == NULL )  {
+
+	if (!file_name) {
+	    perror(file_name);
+	    return 0;
+	}
+	if (bu_file_exists(file_name, NULL)) {
+	    bu_log("Warning: appending to existing database\n");
+	}
+	outfp = wdb_fopen(file_name);
+	if (outfp == NULL) {
 	    perror(file_name);
 	    return 0;
 	}
