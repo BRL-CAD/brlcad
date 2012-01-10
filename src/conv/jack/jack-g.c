@@ -318,7 +318,8 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 int
 create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name)
 {
-    char	*rname, *sname;
+    char *rname, *sname;
+    int empty_model;
     struct shell *s;
     struct nmgregion *r;
 
@@ -326,7 +327,8 @@ create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *gr
     sname = bu_malloc(sizeof(reg_name) + 3, "sname");	/* Solid name. */
 
     snprintf(sname, sizeof(reg_name) + 2, "s.%s", reg_name);
-    nmg_kill_zero_length_edgeuses( m );
+    empty_model = nmg_kill_zero_length_edgeuses( m );
+    if (empty_model) return 0;
     nmg_rebound( m, &tol );
     r = BU_LIST_FIRST( nmgregion, &m->r_hd);
     s = BU_LIST_FIRST( shell, &r->s_hd );
