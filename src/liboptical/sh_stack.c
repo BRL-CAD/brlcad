@@ -345,6 +345,9 @@ sh_stk_free(genptr_t cp)
 	(struct stk_specific *)cp;
     int i;
 
+    if(sp == NULL)
+	return;
+
     for (i = 0; i < 16 && sp->mfuncs[i] != NULL; i++) {
 	if (sp && sp->mfuncs[i] && sp->mfuncs[i]->mf_free) {
 	    sp->mfuncs[i]->mf_free(sp->udata[i]);
