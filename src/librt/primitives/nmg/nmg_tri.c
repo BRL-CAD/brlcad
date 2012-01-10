@@ -3647,7 +3647,8 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
                     NMG_CK_EDGEUSE(eu);
                     map_new_vertexuse(tbl2d, eu->vu_p); 
 	            if (rt_g.NMG_debug & DEBUG_TRI) {
-                        if (!(tmp = find_pt2d(tbl2d, eu->vu_p))) {
+	        	tmp = find_pt2d(tbl2d, eu->vu_p);
+                        if (!(tmp)) {
                             bu_bomb("cut_unimonotone(): vertexuse not added to tbl2d table\n");
                         }
                     }

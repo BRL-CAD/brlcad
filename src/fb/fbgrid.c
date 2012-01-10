@@ -175,7 +175,8 @@ oldflavor(void)
     int	fb_sz;
     static RGBpixel	black, white, red;
 
-    if ((fbiop = fb_open(NULL, fbwidth, fbheight)) == NULL) {
+    fbiop = fb_open(NULL, fbwidth, fbheight);
+    if (fbiop == NULL) {
 	bu_exit(1, NULL);
     }
 

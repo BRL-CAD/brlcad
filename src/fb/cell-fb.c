@@ -429,8 +429,8 @@ display_Cells(long int ncells)
     }
 
     zoom = 1;
-    if ((fbiop = fb_open((fbfile[0] != '\0') ? fbfile : NULL, fb_width, fb_height))
-	== FBIO_NULL)
+    fbiop = fb_open((fbfile[0] != '\0') ? fbfile : NULL, fb_width, fb_height);
+    if (fbiop == FBIO_NULL)
 	return 0;
     if (compute_fb_height || compute_fb_width) {
 	bu_log("fb_size requested: %d %d\n", fb_width, fb_height);

@@ -636,7 +636,8 @@ _ged_append_pipept_common(struct ged *gedp, int argc, const char *argv[], struct
 	return GED_ERROR;
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET)) == RT_DIR_NULL) {
+    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
 	return GED_ERROR;
     }
@@ -727,7 +728,8 @@ ged_delete_pipept(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET)) == RT_DIR_NULL) {
+    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
 	return GED_ERROR;
     }
@@ -810,7 +812,8 @@ ged_find_pipept_nearest_pt(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET)) == RT_DIR_NULL) {
+    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
 	return GED_ERROR;
     }
@@ -897,7 +900,8 @@ ged_move_pipept(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET)) == RT_DIR_NULL) {
+    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
 	return GED_ERROR;
     }

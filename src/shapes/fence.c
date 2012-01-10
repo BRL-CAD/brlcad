@@ -1011,7 +1011,8 @@ int generateMesh(struct rt_wdb *fp, char *meshname, fastf_t *startposition, fast
 
 	for (count=0, step=0.0; step <= width; step += (double) MAGNITUDE(incrementvector), count++) {
 
-	    if ((matrixextractor=mk_addmember(wireName, &meshmembers.l, NULL, WMOP_UNION))!=NULL) {
+	    matrixextractor=mk_addmember(wireName, &meshmembers.l, NULL, WMOP_UNION);
+	    if (matrixextractor != NULL) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building mesh combination: wire [%d] of [%d]\n", count+1, count2);
 	    } else {
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh:mk_addmember wireName[%s], count2[%d] FAILED\n", wireName, count);
@@ -1021,7 +1022,8 @@ int generateMesh(struct rt_wdb *fp, char *meshname, fastf_t *startposition, fast
 	    matrixextractor->wm_mat[7]  = dy;
 	    matrixextractor->wm_mat[11] = dz;
 
-	    if ((matrixextractor=mk_addmember(wireName, &meshregionmembers.l, NULL, WMOP_UNION))!=NULL) {
+	    matrixextractor=mk_addmember(wireName, &meshregionmembers.l, NULL, WMOP_UNION);
+	    if (matrixextractor != NULL) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building mesh region: wire [%d] of [%d]\n", count+1, count2);
 	    } else {
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh:mk_addmember wireName[%s], count2[%d] FAILED (region)\n", wireName, count);
@@ -1104,8 +1106,8 @@ int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *
     struct wmember wireregionmembers;
     struct wmember *matrixextractor;
 
-
-    if ((matrixextractor = (struct wmember *) malloc(sizeof(struct wmember)))==NULL) {
+    matrixextractor = (struct wmember *) malloc(sizeof(struct wmember));
+    if (matrixextractor == NULL) {
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:(struct wmember *)matrixextractor malloc FAILED\n");
 	errors++;
     }
@@ -1167,7 +1169,8 @@ int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *
 
     for (count=0, dx=0, dy=0, dz=0, step=0.0; step <= height; step += (double) MAGNITUDE(incrementvector), count++) {
 
-	if ((matrixextractor=mk_addmember(segmentName, &wiremembers.l, NULL, WMOP_UNION))!=NULL) {
+	matrixextractor=mk_addmember(segmentName, &wiremembers.l, NULL, WMOP_UNION);
+	if (matrixextractor != NULL) {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building base wire combination: piece [%d] of [%d]\n", count+1, count2);
 	} else {
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:mk_addmember wirename[%s], count2[%d] FAILED\n", wirename, count);
@@ -1177,7 +1180,8 @@ int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *
 	matrixextractor->wm_mat[7]  = dy;
 	matrixextractor->wm_mat[11] = dz;
 
-	if ((matrixextractor=mk_addmember(segmentName, &wireregionmembers.l, NULL, WMOP_UNION))!=NULL) {
+	matrixextractor=mk_addmember(segmentName, &wireregionmembers.l, NULL, WMOP_UNION);
+	if (matrixextractor != NULL) {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building base wire region: piece [%d] of [%d]\n", count+1, count2);
 	} else {
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:mk_addmember wirename[%s], count2[%d] FAILED (region)\n", wirename, count);

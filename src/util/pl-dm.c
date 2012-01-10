@@ -1127,7 +1127,8 @@ appInit(Tcl_Interp *_interp)
     if (Tk_Init(_interp) == TCL_ERROR)
 	bu_exit (1, "Tk_Init error %s\n", Tcl_GetStringResult(_interp));
 
-    if ((tkwin = Tk_MainWindow(_interp)) == NULL)
+    tkwin = Tk_MainWindow(_interp);
+    if (tkwin == NULL)
 	bu_exit (1, "appInit: Failed to get main window.\n");
 
     /* Locate the BRL-CAD-specific Tcl scripts */
