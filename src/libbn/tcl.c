@@ -792,8 +792,13 @@ bn_cmd_noise_slice(ClientData UNUSED(clientData),
     lacunarity = atof(argv[4]);
     octaves = atof(argv[5]);
 
+#define COV186_UNUSED_CODE 0
+    /* Only NOISE_FBM is possible at this time, so comment out the switching for
+     * NOISE_TURB. This may need to be deleted. */
+#if COV186_UNUSED_CODE
     switch (noise_type) {
 	case NOISE_FBM:
+#endif
 	    for (yval = 0; yval < ydim; yval++) {
 
 		pt[Y] = yval * scale[Y] + delta[Y];
@@ -805,6 +810,7 @@ bn_cmd_noise_slice(ClientData UNUSED(clientData),
 
 		}
 	    }
+#if COV186_UNUSED_CODE
 	    break;
 	case NOISE_TURB:
 	    for (yval = 0; yval < ydim; yval++) {
@@ -820,6 +826,7 @@ bn_cmd_noise_slice(ClientData UNUSED(clientData),
 	    }
 	    break;
     }
+#endif
 
 
     pt[0] = atof(argv[1]);
