@@ -310,6 +310,9 @@ phong_render(register struct application *ap, const struct partition *pp, struct
     if (!ps || ps->magic != PL_MAGIC)
 	bu_bomb("phong_render: bad magic\n");
 
+    if (pp == NULL)
+	bu_bomb("phong_render: bad partiton\n");
+
     if (rdebug&RDEBUG_SHADE)
 	bu_struct_print("phong_render", phong_parse, (char *)ps);
 
@@ -450,7 +453,7 @@ phong_render(register struct application *ap, const struct partition *pp, struct
 		}
 		/* Get Obj Hit Point For Attenuation */
 #ifndef RT_MULTISPECTRAL
-		if (pp && PM_Activated) {
+		if (PM_Activated) {
 		    VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir)
 			dist= sqrt((pt[0]-lp->lt_pos[0])*(pt[0]-lp->lt_pos[0]) + (pt[1]-lp->lt_pos[1])*(pt[1]-lp->lt_pos[1]) + (pt[2]-lp->lt_pos[2])*(pt[2]-lp->lt_pos[2]))/1000.0;
 		    dist= (1.0/(0.1 + 1.0*dist + 0.01*dist*dist));
