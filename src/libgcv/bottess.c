@@ -176,7 +176,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 	vect_t muh;
 	int meh;
 
-	VSUB2(muh, isectpt[1], f->vert[a==2?0:a+11]);
+	VSUB2(muh, isectpt[1], f->vert[a==2?0:a+1]);
 	meh = VDOT(opp_face->plane, muh) > 0;
 	soup_add_face_precomputed(s, f->vert[a], isectpt[1], f->vert[a==2?0:a+1], f->plane, meh == 1 ? OUTSIDE : INSIDE);
 	soup_add_face_precomputed(s, f->vert[a], f->vert[a==0?2:a-1], isectpt[1], f->plane, meh == 1 ? INSIDE : OUTSIDE);
