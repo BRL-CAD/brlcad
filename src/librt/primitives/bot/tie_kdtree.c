@@ -503,7 +503,7 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
 		slice[d][k] += fabs(coef[d][k]-0.5) * SCALE_COEF * smax[d];
 
 	/* Choose the slice with the graphs minima as the splitting plane. */
-	split = 0;
+	*split = 0;
 	smin = tie->tri_num;
 	split_coef = 0.5;
 	for (d = 0; d < 3; d++) {
