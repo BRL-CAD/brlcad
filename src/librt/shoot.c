@@ -807,63 +807,63 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
     sprintf(buf, "cell%d.pl", fnum++);
     fp = fopen(buf, "wb");
     if (fp == NULL) {
-	perror(buf);
-    }
+      perror(buf);
+    } else {
+      /* green box for model RPP */
+      pl_color(fp, 0, 100, 0);
 
-    /* green box for model RPP */
-    pl_color(fp, 0, 100, 0);
+      /* Plot the model RPP, to provide some context */
+      pdv_3space(fp, rtip->rti_pmin, rtip->rti_pmax);
+      pdv_3box(fp, rtip->rti_pmin, rtip->rti_pmax);
 
-    /* Plot the model RPP, to provide some context */
-    pdv_3space(fp, rtip->rti_pmin, rtip->rti_pmax);
-    pdv_3box(fp, rtip->rti_pmin, rtip->rti_pmax);
-
-    /* Plot the outline of this one cell */
-    pl_color(fp, 80, 80, 250);
-    switch (cutp->cut_type) {
+      /* Plot the outline of this one cell */
+      pl_color(fp, 80, 80, 250);
+      switch (cutp->cut_type) {
 	case CUT_BOXNODE:
-	    pdv_3box(fp, cutp->bn.bn_min, cutp->bn.bn_max);
-	    break;
+	  pdv_3box(fp, cutp->bn.bn_min, cutp->bn.bn_max);
+	  break;
 	default:
-	    bu_log("cut_type = %d\n", cutp->cut_type);
-	    bu_bomb("Unknown cut_type\n");
-    }
+	  bu_log("cut_type = %d\n", cutp->cut_type);
+	  bu_bomb("Unknown cut_type\n");
+      }
 
-    if (cutp->bn.bn_len > 0) {
+      if (cutp->bn.bn_len > 0) {
 	/* Plot every solid listed in this cell */
 	stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
 	for (; stpp >= cutp->bn.bn_list; stpp--) {
-	    register struct soltab *stp = *stpp;
+	  register struct soltab *stp = *stpp;
 
-	    rt_plot_solid(fp, rtip, stp, ap->a_resource);
+	  rt_plot_solid(fp, rtip, stp, ap->a_resource);
 	}
-    }
+      }
 
-    /* Plot interval of ray in box, in green */
-    pl_color(fp, 100, 255, 200);
-    rt_3move_raydist(fp, &ap->a_ray, ssp->box_start);
-    rt_3cont_raydist(fp, &ap->a_ray, ssp->box_end);
+      /* Plot interval of ray in box, in green */
+      pl_color(fp, 100, 255, 200);
+      rt_3move_raydist(fp, &ap->a_ray, ssp->box_start);
+      rt_3cont_raydist(fp, &ap->a_ray, ssp->box_end);
 
-    if (bu_list_len(waiting_segs_hd) <= 0) {
+      if (bu_list_len(waiting_segs_hd) <= 0) {
 	/* No segments, just plot the whole ray */
 	pl_color(fp, 255, 255, 0);	/* yellow -- no segs */
 	rt_3move_raydist(fp, &ap->a_ray, ssp->model_start);
 	rt_3cont_raydist(fp, &ap->a_ray, ssp->box_start);
 	rt_3move_raydist(fp, &ap->a_ray, ssp->box_end);
 	rt_3cont_raydist(fp, &ap->a_ray, ssp->model_end);
-    } else {
+      } else {
 	/* Plot the segments awaiting boolweave. */
 	struct seg *segp;
 
 	for (BU_LIST_FOR(segp, seg, waiting_segs_hd)) {
-	    RT_CK_SEG(segp);
-	    pl_color(fp, 255, 0, 0);	/* red */
-	    rt_3move_raydist(fp, &ap->a_ray, segp->seg_in.hit_dist);
-	    rt_3cont_raydist(fp, &ap->a_ray, segp->seg_out.hit_dist);
+	  RT_CK_SEG(segp);
+	  pl_color(fp, 255, 0, 0);	/* red */
+	  rt_3move_raydist(fp, &ap->a_ray, segp->seg_in.hit_dist);
+	  rt_3cont_raydist(fp, &ap->a_ray, segp->seg_out.hit_dist);
 	}
-    }
+      }
 
-    fclose(fp);
-    bu_log("wrote %s\n", buf);
+      fclose(fp);
+      bu_log("wrote %s\n", buf);
+    }
 }
 
 
