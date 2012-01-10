@@ -3619,7 +3619,7 @@ dgo_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp
     dp = db_lookup(tsp->ts_dbip, tp->tr_l.tl_name, LOOKUP_NOISY);
     if (!dp)
 	return 0;	/* proceed as usual */
-    if (tsp->ts_mat) {
+    if (!bn_mat_is_identity(tsp->ts_mat)) {
 	if (tp->tr_l.tl_mat) {
 	    matp = xform;
 	    bn_mat_mul(xform, tsp->ts_mat, tp->tr_l.tl_mat);
