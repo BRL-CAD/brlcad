@@ -122,6 +122,10 @@ read_data(void)
 		ret = scanf("%d", &i);
 		if (ret == 0)
 		    perror("scanf");
+		if (i < 0 || i >= 50) {
+		    fprintf(stderr, "Atom index value %d is out of bounds [0,50)\n", i);
+		    return;
+		}
 		ret = scanf("%128s", atom_list[i].a_name);
 		if (ret == 0)
 		    perror("scanf");
