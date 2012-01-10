@@ -695,7 +695,7 @@ prep_dda(stroke *vp, coords *pt1, coords *pt2)
  * banded buffered mode, we link the descriptor(s) into its starting
  * point band(s).
  */
-static int
+static void
 BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
     /* endpoints */
 {
@@ -744,7 +744,6 @@ BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
 	    /* link descriptor into band corresponding to starting scan */
 	    Requeue(&band[v2->pixel.y / lines_per_band], v2);
     }
-    return true;
 }
 
 
@@ -932,7 +931,7 @@ put_vector_char(char c, coords *pos)
 	end.y = Y_CHAR_SIZE - rv->y + pos->y;
 	edgelimit(&start);
 	edgelimit(&end);
-	if (!BuildStr(&start, &end)) bu_log("BuildStr error in put_vector_char - start: (%d,%d), end: (%d,%d)\n", start.x, start.y, end.x, end.y);	/* pixels */
+	BuildStr(&start, &end);
 	start = end;
     }
     pos->x += X_CHAR_SIZE;
@@ -1055,8 +1054,7 @@ DoFile(void)	/* returns vpl status code */
 			if (debug)
 			    fprintf(stderr, "cont3\n");
 
-		    if (!BuildStr(&virpos, &newpos))
-			return Foo(-10);
+		    BuildStr(&virpos, &newpos);
 		    plotted = true;
 		    virpos = newpos;
 		    continue;
@@ -1087,8 +1085,7 @@ DoFile(void)	/* returns vpl status code */
 			if (debug)
 			    fprintf(stderr, "cont\n");
 
-		    if (!BuildStr(&virpos, &newpos))
-			return Foo(-10);
+		    BuildStr(&virpos, &newpos);
 		    plotted = true;
 		    virpos = newpos;
 		    continue;
@@ -1119,8 +1116,7 @@ DoFile(void)	/* returns vpl status code */
 			if (debug)
 			    fprintf(stderr, "dcont3\n");
 
-		    if (!BuildStr(&virpos, &newpos))
-			return Foo(-10);
+		    BuildStr(&virpos, &newpos);
 		    plotted = true;
 		    virpos = newpos;
 		    continue;
@@ -1151,7 +1147,7 @@ DoFile(void)	/* returns vpl status code */
 			if (debug)
 			    fprintf(stderr, "dcont\n");
 
-		    if (!BuildStr(&virpos, &newpos))
+		    BuildStr(&virpos, &newpos);
 			return Foo(-10);
 		    plotted = true;
 		    virpos = newpos;
