@@ -841,6 +841,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     /* Write the combination components to the file */
     if (write_comb(gedp, comb, argv[1])) {
 	bu_vls_printf(gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
+	(void)fclose(fp);
 	goto cleanup;
     }
 
