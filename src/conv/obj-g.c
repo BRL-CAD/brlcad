@@ -2315,12 +2315,14 @@ fuse_vertex(struct ga_t *ga,
     num_unique_texture_vertex_index_list = num_index_list;
 
     if (debug) {
-	for (idx1 = 0 ; idx1 < num_index_list ; idx1++) {
-	    bu_log("non-unique sorted vertex_index_list[idx1] = (%zu)\n",
-		   vertex_index_list[idx1]);
+	if (vertex_index_list && (num_index_list > 0)) {
+	    for (idx1 = 0 ; idx1 < num_index_list ; idx1++) {
+		bu_log("non-unique sorted vertex_index_list[idx1] = (%zu)\n",
+			vertex_index_list[idx1]);
+	    }
+	    bu_log("num non-unique sorted vertex_index_list[idx1] = (%zu)\n",
+		num_index_list);
 	}
-	bu_log("num non-unique sorted vertex_index_list[idx1] = (%zu)\n",
-	       num_index_list);
     }
 
     /* remove duplicates from lists and return a sorted list, pass in
