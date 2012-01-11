@@ -131,12 +131,12 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(&error_str, " failed to be added to the database.\n");
 		    rt_bot_list_free(headRblp, 0);
 		    rt_db_free_internal(&intern);
-		}
-
-		if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &bot_intern, &rt_uniresource) < 0) {
+		} else {
+		  if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &bot_intern, &rt_uniresource) < 0) {
 		    bu_vls_printf(&error_str, " failed to be added to the database.\n");
 		    rt_bot_list_free(headRblp, 0);
 		    rt_db_free_internal(&intern);
+		  }
 		}
 	    }
 
