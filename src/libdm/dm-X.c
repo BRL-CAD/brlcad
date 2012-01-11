@@ -951,6 +951,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				pt_prev = pt;
 				continue;
 			    } else {
+				if (pt_prev) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
@@ -960,9 +961,11 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				alpha = (dist_prev - delta) / (dist_prev - dist);
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(pnt, privars->xmat, tmp_pt);
+                                }
 			    }
 			} else {
 			    if (dist_prev <= 0.0) {
+                                if (pt_prev) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
@@ -976,6 +979,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				lpnt[1] *= 2047 * dmp->dm_aspect;
 				lpnt[2] *= 2047;
 				MAT4X3PNT(pnt, privars->xmat, *pt);
+                                }
 			    } else {
 				MAT4X3PNT(pnt, privars->xmat, *pt);
 			    }
