@@ -1078,7 +1078,6 @@ isect_ray_vertexuse(struct ray_data *rd, struct vertexuse *vu_p)
     ray_hit_vertex(rd, vu_p, NMG_VERT_UNKNOWN);
 
     if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
-      if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 	nmg_rt_print_hitlist(rd->hitmiss[NMG_HIT_LIST]);
     }
 
