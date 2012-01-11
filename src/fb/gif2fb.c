@@ -178,7 +178,7 @@ main(int argc, char **argv)
  */
     if (verbose) {
 	char magic[sizeof(Header.GH_Magic)+1];
-	memcpy(magic, Header.GH_Magic, sizeof(magic));
+	memcpy(magic, Header.GH_Magic, sizeof(Header.GH_Magic));
 	magic[sizeof(magic)-1] = '\0';
 
 	fprintf(stderr, "Magic=%.6s, -w%d -n%d, M=%d, cr=%d, pixel=%d, bg=%d\n",
