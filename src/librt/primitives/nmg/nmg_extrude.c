@@ -749,19 +749,25 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 		    VSUB2(v2, eu2->eumate_p->vu_p->v_p->vg_p->coord ,
 			  eu2->vu_p->v_p->vg_p->coord);
 
+		    /* The logic below needs to be changed, the meaning of 
+                     * dist[1] is different depending on if the result is '0'
+                     * or '1'. Presently this function is not called.
+                     */
 		    if (bn_isect_lseg3_lseg3(dist, eu1->vu_p->v_p->vg_p->coord, v1 ,
 					     eu2->vu_p->v_p->vg_p->coord, v2, tol) >= 0) {
-			point_t pt;
+			point_t pt = VINIT_ZERO;
 			struct edgeuse *new_eu;
 			struct vertex *v=(struct vertex *)NULL;
 
 			if (dist[0]>0.0 && dist[0]<1.0 &&
 			    dist[1]>=0.0 && dist[1]<=1.0) {
-			    if (ZERO(dist[1]))
+			    if (ZERO(dist[1])) {
 				v = eu2->vu_p->v_p;
-			    else if (ZERO(dist[1] - 1.0)) /* i.e., == 1.0 */
+				VMOVE(pt, v->vg_p->coord);
+			    } else if (ZERO(dist[1] - 1.0)) { /* i.e., == 1.0 */
 				v = eu2->eumate_p->vu_p->v_p;
-			    else {
+				VMOVE(pt, v->vg_p->coord);
+			    } else {
 				VJOIN1(pt, eu1->vu_p->v_p->vg_p->coord ,
 				       dist[0], v1);
 				v = nmg_find_pt_in_shell(is, pt, tol);
@@ -778,11 +784,13 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 			if (dist[1] > 0.0 && dist[1] < 1.0 &&
 			    dist[0]>=0.0 && dist[0]<=1.0)
 			{
-			    if (ZERO(dist[0]))
+			    if (ZERO(dist[0])) {
 				v = eu1->vu_p->v_p;
-			    else if (ZERO(dist[0] - 1.0)) /* i.e., == 1.0 */
+				VMOVE(pt, v->vg_p->coord);
+			    } else if (ZERO(dist[0] - 1.0)) { /* i.e., == 1.0 */
 				v = eu1->eumate_p->vu_p->v_p;
-			    else {
+				VMOVE(pt, v->vg_p->coord);
+			    } else {
 				VJOIN1(pt, eu2->vu_p->v_p->vg_p->coord, dist[1], v2);
 				v = nmg_find_pt_in_shell(is, pt, tol);
 			    }
