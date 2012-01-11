@@ -1058,6 +1058,9 @@ bu_vls_struct_item_named(struct bu_vls *vp, const struct bu_structparse *parseta
 {
     register const struct bu_structparse *sdp;
 
+    if (!parsetab)
+	return -1;
+
     for (sdp = parsetab; sdp->sp_name != NULL; sdp++)
 	if (BU_STR_EQUAL(sdp->sp_name, name)) {
 	    bu_vls_struct_item(vp, sdp, base, sep_char);
