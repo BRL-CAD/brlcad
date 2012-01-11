@@ -30,6 +30,8 @@
 #include <iostream>
 #include <fstream>
 
+#include "bu.h"
+
 #include "regtab.h"
 #include "read_dra.h"
 

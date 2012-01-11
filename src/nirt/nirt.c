@@ -123,26 +123,24 @@ void printusage(void)
 /**
  * List formats installed in global nirt data directory
  */
-void listformats(void)
+void
+listformats(void)
 {
-    int files, i;
-    char **filearray;
-    struct bu_vls nirtfilespath, nirtpathtofile, vlsfileline;
-    char suffix[5]=".nrt";
-    FILE *cfPtr;
+    size_t files, i;
+    char **filearray = NULL;
+    char suffix[6]="*.nrt";
+    FILE *cfPtr = NULL;
     int fnddesc;
 
-    bu_vls_init(&vlsfileline);
-    bu_vls_init(&nirtfilespath);
-    bu_vls_init(&nirtpathtofile);
+    struct bu_vls nirtfilespath = BU_VLS_INIT_ZERO;
+    struct bu_vls nirtpathtofile = BU_VLS_INIT_ZERO;
+    struct bu_vls vlsfileline = BU_VLS_INIT_ZERO;
+
+    /* get a nirt directory listing */
     bu_vls_printf(&nirtfilespath, "%s", bu_brlcad_data("nirt", 0));
+    files = bu_dir_list(bu_vls_addr(&nirtfilespath), suffix, &filearray);
 
-    files = bu_count_path(bu_vls_addr(&nirtfilespath), suffix);
-
-    filearray = (char **)bu_malloc(files*sizeof(char *), "filelist");
-
-    bu_list_path(bu_vls_addr(&nirtfilespath), suffix, filearray);
-
+    /* open every nirt file we find and extract the description */
     for (i = 0; i < files; i++) {
 	bu_vls_trunc(&nirtpathtofile, 0);
 	bu_vls_trunc(&vlsfileline, 0);
@@ -159,7 +157,8 @@ void listformats(void)
 	fclose(cfPtr);
     }
 
-    bu_free(filearray, "filelist");
+    /* release resources */
+    bu_free_argv(files, filearray);
     bu_vls_free(&vlsfileline);
     bu_vls_free(&nirtfilespath);
     bu_vls_free(&nirtpathtofile);

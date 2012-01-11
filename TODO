@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* test nirt template file loading
+
 * g-nff is crashing, fix it; g-dot outputs garbage
 
 * get rtweight to use more robust density file parsing

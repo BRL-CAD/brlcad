@@ -2984,7 +2984,7 @@ BU_EXPORT extern size_t bu_file_glob(const char *pattern, char ***matches);
 
 /**
  * Function fnmatch() as specified in POSIX 1003.2-1992, section B.6.
- * Compares a filename or pathname to a pattern.
+ * Compares a string filename or pathname to a pattern.
  *
  * Returns 0 if a match is found or BU_FNMATCH_NOMATCH otherwise.
  *
@@ -2999,14 +2999,15 @@ BU_EXPORT extern int bu_fnmatch(const char *pattern, const char *pathname, int f
  */
 
 /**
- * Count number of files in directory whose type matches substr
+ * Returns the number of directory entries for a given path matching
+ * an optional glob pattern.  If the caller provides a pointer to an
+ * argv-style 'files' array, this function will allocate the array
+ * with dynamically allocated strings for any matching file(s).
+ *
+ * It is the caller's responsibility to free a non-NULL 'files' array
+ * with bu_free_argv().
  */
-BU_EXPORT extern int bu_count_path(char *path, char *substr);
-
-/**
- * Return array with filenames with suffix matching substr
- */
-BU_EXPORT extern void bu_list_path(char *path, char *substr, char **filearray);
+BU_EXPORT extern size_t bu_dir_list(const char *path, const char *pattern, char ***files);
 
 
 /** @file libbu/brlcad_path.c

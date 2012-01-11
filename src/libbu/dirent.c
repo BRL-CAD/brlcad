@@ -29,43 +29,48 @@
 #include "uce-dirent.h"
 
 
-int
-bu_count_path(char *path, char *substr)
+size_t
+bu_dir_list(const char *path, const char *pattern, char ***files)
 {
-    int filecount = 0;
-    DIR *dir = opendir(path);
-    struct dirent *dp;
+    size_t i = 0;
+    size_t filecount = 0;
+    DIR *dir = NULL;
+    struct dirent *dp = NULL;
+
+    /* calculate file cound */
+    dir = opendir(path);
     while ((dp = readdir(dir)) != NULL) {
-	if (strlen(substr) == 0) {
+	if (!pattern
+	    || (strlen(pattern) == 0)
+	    || (bu_fnmatch(pattern, dp->d_name, 0) == 0))
+	{
 	    filecount++;
-	} else {
-	    if (BU_STR_EQUAL(dp->d_name+(strlen(dp->d_name)-strlen(substr)), substr)) {
-		filecount++;
-	    }
 	}
     }
-    closedir(dir);
+    (void)closedir(dir);
+
+    /* bail now if there's no files array pointer to fill in */
+    if (!files) {
+	return filecount;
+    }
+
+    /* allocate enough space plus room for a null entry too */
+    *files = (char **)bu_calloc(filecount+1, sizeof(char *), "files alloc");
+
+    dir = opendir(path);
+    while ((dp = readdir(dir)) != NULL) {
+	if (!pattern
+	    || (strlen(pattern) == 0)
+	    || (bu_fnmatch(pattern, dp->d_name, 0) == 0))
+	{
+	    (*files)[i++] = bu_strdup(dp->d_name);
+	}
+    }
+    (void)closedir(dir);
+
     return filecount;
 }
 
-void
-bu_list_path(char *path, char *substr, char **filearray)
-{
-    int filecount = -1;
-    DIR *dir = opendir(path);
-    struct dirent *dp;
-    while ((dp = readdir(dir)) != NULL) {
-	if (strlen(substr) == 0) {
-	    filecount++;
-	    filearray[filecount]=dp->d_name;
-	} else {
-	    if (BU_STR_EQUAL(dp->d_name+(strlen(dp->d_name)-strlen(substr)), substr)) {
-		filecount++;
-		filearray[filecount]=dp->d_name;
-	    }
-	}
-    }
-}
 
 /*
  * Local Variables:

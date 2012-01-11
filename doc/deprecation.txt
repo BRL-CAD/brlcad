@@ -837,3 +837,6 @@ s/bu_(add|delete|call)_hook/bu_hook_\1/g
         renamed hook functions to be consistent with other libbu API [7.21]
 s/bu_file_exists\(([^)]*)\)/bu_file_exists(\1, NULL)/g
 	new file descriptor parameter added [7.21]
+s/bu_list_path\(([^,]*),([^,]*),[[:space:]]([^)]*)\)/bu_dir_list(\1,\2, &(\3))/g
+s/bu_count_path(.*)\);/bu_dir_list\1, NULL);/g
+	made bu_dir_list() return the number of entries [7.21
