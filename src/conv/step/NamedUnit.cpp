@@ -50,6 +50,7 @@ NamedUnit::NamedUnit(STEPWrapper *sw,int step_id) {
 NamedUnit::~NamedUnit() {
     if (dimensions != NULL ) {
 	delete dimensions;
+	dimensions = NULL;
     }
 }
 
