@@ -146,6 +146,7 @@ InitTermCap(FILE *fp)
     else
     {
 	(void) strncpy( termName, term, MAX_TERM_LEN ); /* intentionally not bu_strlcpy to not add libbu dep */
+	termName[sizeof(termName) - 1] = '\0';
     }
 
     /* Get terminal entry.						*/
