@@ -87,7 +87,7 @@ get_args(int argc, char **argv)
     int	c;
     char		*file_name;
 
-    if (argv) {
+    if (argv == NULL) {
 	return 0;
     }
 
