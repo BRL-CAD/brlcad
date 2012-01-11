@@ -543,10 +543,14 @@ f_Buffer(char **args)
     {
 	HMitem	*itemptr;
 	if (! tty)
-	{
-	    bu_log("pixel buffering command (%c): missing arg.\n",
-		   *args[0]);
+	{   
+	  if (args == NULL) {
+	    bu_log("f_Buffer - no args!\n");
 	    return	-1;
+	  }
+	  if (args[0])
+	    bu_log("pixel buffering command (%c): missing arg.\n", *args[0]);
+	  return	-1;
 	}
 	if ((itemptr = hmenuhit(&buffer_hmenu, 1, TOP_SCROLL_WIN))
 	    != (HMitem *) 0
