@@ -112,6 +112,15 @@ static struct runs
     RLEpixel *last;
 } runs[NSEG];		/* ptrs to non-background run segs */
 
+#define GETC_CHECKED(c, fp, err_ret) \
+{ \
+    int _c = getc(fp); \
+    if (_c == EOF) { \
+	return err_ret; \
+    } \
+    c = (char)_c; \
+}
+
 /* Global data.								*/
 int _bg_flag;
 int _bw_flag;
@@ -185,8 +194,8 @@ _get_Old_Inst(register FILE *fp, register int *op, register int *dat)
 
     p = (char *) &instruction;
 
-    *p++ = getc(fp);
-    *p++ = getc(fp);
+    GETC_CHECKED(*p++, fp, EOF);
+    GETC_CHECKED(*p++, fp, EOF);
     SWAB(*((short *)&instruction));
     if (feof(fp))
 	return EOF;
@@ -202,18 +211,17 @@ _get_New_Inst(register FILE *fp, register int *opcode, register int *datum)
 {
     static short long_data;
 
-    *opcode = getc(fp);
-    *datum = getc(fp);
+    GETC_CHECKED(*opcode, fp, EOF);
+    GETC_CHECKED(*datum, fp, EOF);
     if (*opcode & LONG) {
 	register char *p = (char *) &long_data;
 	*opcode &= ~LONG;
-	*p++ = getc(fp);
-	*p++ = getc(fp);
+	GETC_CHECKED(*p++, fp, EOF);
+	GETC_CHECKED(*p++, fp, EOF);
 	SWAB(long_data);
 	*datum = long_data;
     }
-    if (feof(fp))
-	return EOF;
+
     return 1;
 }
 
@@ -597,7 +605,7 @@ rle_decode_ln(register FILE *fp, RLEpixel (*scan_buf))
 		PRNT_A1_DEBUG("Byte-Data", n);
 		if (! _bw_flag) {
 		    while (n-- > 0) {
-			*pp = getc(fp);
+			GETC_CHECKED(*pp, fp, -1);
 			pp += STRIDE;
 		    }
 		} else {
@@ -605,14 +613,17 @@ rle_decode_ln(register FILE *fp, RLEpixel (*scan_buf))
 		    register unsigned char c;
 		    while (n-- > 0) {
 			/* Implicit knowledge of sizeof(RLEpixel) */
-			*pp++ = c = getc(fp);
+			GETC_CHECKED(c, fp, -1);
+			*pp++ = c;
 			*pp++ = c;
 			*pp++ = c;
 		    }
 		}
 		if ((datum + 1) & 1) {
 		    /* word align file ptr */
-		    (void) getc(fp);
+		    if (getc(fp) == EOF) {
+			return -1;
+		    }
 		}
 		dirty_flag = 1;
 		break;
@@ -620,8 +631,8 @@ rle_decode_ln(register FILE *fp, RLEpixel (*scan_buf))
 		n = datum + 1;
 		{
 		    register char *p = (char *) &word;
-		    *p++ = getc(fp);
-		    *p++ = getc(fp);
+		    GETC_CHECKED(*p++, fp, -1);
+		    GETC_CHECKED(*p++, fp, -1);
 		    SWAB(word);
 		}
 		PRNT_A2_DEBUG("Run-Data", (long)n,	word);
