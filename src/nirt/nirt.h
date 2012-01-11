@@ -55,7 +55,7 @@ static double nbsd_fmax(double x, double y)
 #define SILENT_UNSET	0
 #define SILENT_YES	1
 #define SILENT_NO	-1
-#define NIRT_PROMPT	"nirt>  "
+#define NIRT_PROMPT	"nirt> "
 #define TITLE_LEN	80
 
 #define OFF		0
