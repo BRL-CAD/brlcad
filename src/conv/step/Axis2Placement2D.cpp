@@ -174,7 +174,7 @@ Axis2Placement2D::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 bool
 Axis2Placement2D::LoadONBrep(ON_Brep *brep)
 {
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
+    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
     return false;
 }
 

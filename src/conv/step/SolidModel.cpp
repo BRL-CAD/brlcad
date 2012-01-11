@@ -88,7 +88,7 @@ SolidModel::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
   void
   SolidModel::LoadONBrep(ON_Brep *brep)
   {
-  std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implememnted for " << entityname << std::endl;
+  std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implememnted for " << entityname << std::endl;
   return; // false;
   }
 */

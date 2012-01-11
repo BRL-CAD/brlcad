@@ -274,7 +274,7 @@ bool
 Axis2Placement3D::LoadONBrep(ON_Brep *UNUSED(brep))
 {
     //TODO: check other axis2placement3d usage notice being loaded from advanced brep in some instances
-    //std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
+    //std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
     return true;
 }
 

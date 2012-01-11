@@ -111,7 +111,7 @@ CartesianTransformationOperator3D::Create(STEPWrapper *sw, SCLP23(Application_in
 bool
 CartesianTransformationOperator3D::LoadONBrep(ON_Brep *brep)
 {
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
+    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
     return false;
 }
 

@@ -153,7 +153,7 @@ BezierCurve::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << " id: " << id << std::endl;
+    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << " id: " << id << std::endl;
     return false;
 }
 
@@ -289,7 +289,7 @@ QuasiUniformCurve::LoadONBrep(ON_Brep *brep)
 	return true;
 
     if (!BSplineCurve::LoadONBrep(brep)) {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << " id: " << id << std::endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << " id: " << id << std::endl;
 	return false;
     }
     return true;
@@ -304,7 +304,7 @@ RationalBezierCurve::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << " id: " << id << std::endl;
+    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << " id: " << id << std::endl;
     return false;
 }
 
@@ -445,7 +445,7 @@ RationalQuasiUniformCurve::LoadONBrep(ON_Brep *brep)
 	return true;
 
     if (!RationalBSplineCurve::LoadONBrep(brep)) {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << " id: " << id << std::endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << " id: " << id << std::endl;
 	return false;
     }
     return true;
@@ -464,7 +464,7 @@ RationalUniformCurve::LoadONBrep(ON_Brep *brep)
 	return true;
 
     if (!RationalBSplineCurve::LoadONBrep(brep)) {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << " id: " << id << std::endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << " id: " << id << std::endl;
 	return false;
     }
     return true;
@@ -483,7 +483,7 @@ UniformCurve::LoadONBrep(ON_Brep *brep)
 	return true;
 
     if (!BSplineCurve::LoadONBrep(brep)) {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << " id: " << id << std::endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << " id: " << id << std::endl;
 	return false;
     }
     return true;
@@ -503,7 +503,7 @@ BezierSurface::LoadONBrep(ON_Brep *brep)
 
     //TODO: add bezier surface
     //ON_BezierSurface* surf = ON_BezierSurface::New(3, false, u_degree+1, v_degree+1);
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
+    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
     return false;
 }
 
@@ -721,7 +721,7 @@ RationalBezierSurface::LoadONBrep(ON_Brep *brep)
     }
 
     //TODO: add rational bezier surface
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
+    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
     return false;
 }
 
@@ -1899,7 +1899,7 @@ Circle::LoadONBrep(ON_Brep *brep) {
 	    ;
 	}
     } else {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec
 		  << ">) not endpoints for specified for curve " << entityname << std::endl;
 	return false;
     }
@@ -2136,7 +2136,7 @@ Ellipse::LoadONBrep(ON_Brep *brep) {
 	    t = tmp;
 	}
     } else {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec
 		  << ">) not endpoints for specified for curve " << entityname << std::endl;
 	return false;
     }
@@ -2331,7 +2331,7 @@ Hyperbola::LoadONBrep(ON_Brep *brep)
 	pnt1 = start->Point3d();
 	pnt2 = end->Point3d();
     } else {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not endpoints for specified for curve " << entityname << std::endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not endpoints for specified for curve " << entityname << std::endl;
 	return false;
     }
 
@@ -2489,7 +2489,7 @@ Parabola::LoadONBrep(ON_Brep *brep)
 	pnt1 = start->Point3d();
 	pnt2 = end->Point3d();
     } else {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not endpoints for specified for curve " << entityname << std::endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not endpoints for specified for curve " << entityname << std::endl;
 	return false;
     }
 

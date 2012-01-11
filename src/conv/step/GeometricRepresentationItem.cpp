@@ -92,7 +92,7 @@ GeometricRepresentationItem::Create(STEPWrapper *sw, SCLP23(Application_instance
 bool
 GeometricRepresentationItem::LoadONBrep(ON_Brep *brep)
 {
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
+    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
     return false;
 }
 
