@@ -99,11 +99,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    GED_DB_LOOKUP(gedp, dp, comb_name, LOOKUP_QUIET, GED_ERROR);
-    /* test dp to quite coverity down (Cov1702) */
-    if(dp) 
-	return GED_OK;
-    return GED_ERROR;
+    return GED_OK;
 }
 
 
