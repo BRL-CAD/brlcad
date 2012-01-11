@@ -64,8 +64,14 @@ int main
 		    ret = 1;
 		}
 		else {
-		    struct rt_wdb* wdbp = wdb_fopen(argv[3]); // force create
+		    struct rt_wdb* wdbp;
 
+		    if (!bu_str_isprint(argv[3])) {
+			std::cout << "Invalid BRL-G filename" << std::endl;
+			return 1;
+		    }
+
+		    wdbp = wdb_fopen(argv[3]); // force create
 		    conv(is, wdbp);
 		    createRegions(wdbp);
 		    wdb_close(wdbp);
