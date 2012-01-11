@@ -1294,8 +1294,13 @@ data_dump(struct ged *gedp, FILE *fp)
 		write_data_obj(gedp, data_fp);
 		fclose(data_fp);
 	    } else
-		write_data_obj(gedp, fp);
-	    break;
+		if (fp) {
+		  write_data_obj(gedp, fp);
+                } else {
+		  bu_vls_printf(gedp->ged_result_str, "data_dump: bad FILE fp\n");
+		  return GED_ERROR;
+                }
+		break;
 	case OTYPE_SAT:
 	    break;
 	case OTYPE_STL:
