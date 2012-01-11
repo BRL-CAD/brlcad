@@ -2713,8 +2713,10 @@ f_Key_Frame(char **args)
 		    save_view_flag = FALSE;
 		    return	1;
 		}
-    if (! read_Frame(svkey_fp))
-	return	-1;
+    if (svkey_fp == NULL)
+	return -1;
+    if (!read_Frame(svkey_fp))
+	return -1;
 
     /* Compute view-to-model rotation matrix. */
     MAT_IDN(to_eye);
