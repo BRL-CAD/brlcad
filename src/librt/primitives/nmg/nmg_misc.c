@@ -9700,7 +9700,8 @@ nmg_to_tgc(
     /* This looks like a good candidate,
      * Calculate center of base and top faces
      */
-
+    
+    if (fu_base) {
     vert_count = 0;
     VSETALL(sum, 0.0);
     lu = BU_LIST_FIRST(loopuse, &fu_base->lu_hd);
@@ -9811,6 +9812,8 @@ nmg_to_tgc(
     VSCALE(tgc_int->d, plv_2, top_r);
 
     tgc_int->magic = RT_TGC_INTERNAL_MAGIC;
+
+    }
 
     return 1;
 }
