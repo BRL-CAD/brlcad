@@ -371,8 +371,7 @@ main(void)
 	(void)fflush(stdout);
 	ret = scanf("%25s", file);
 	if (ret == 0) {
-	    perror("scanf");
-	    break;
+	  bu_exit(EXIT_FAILURE, "ir-X - scanf failure - no file to work with!!\n");
 	}
 	fpr = fopen(file, "rb");
     }
