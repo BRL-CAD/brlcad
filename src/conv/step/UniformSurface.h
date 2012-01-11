@@ -32,7 +32,6 @@
 class UniformSurface : virtual public BSplineSurface {
 private:
 	static string entityname;
-	int sid;
 
 protected:
 

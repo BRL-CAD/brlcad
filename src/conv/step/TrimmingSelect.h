@@ -32,14 +32,17 @@
 class CartesianPoint;
 
 class TrimmingSelect : public STEPEntity {
+public:
+	enum trimming_select_type {
+		CARTESIAN_POINT,
+		PARAMETER_VALUE,
+		UNKNOWN
+	};
+
 private:
 	static string entityname;
 
 protected:
-	enum trimming_select_type {
-		CARTESIAN_POINT,
-		PARAMETER_VALUE
-	};
 	CartesianPoint *cartesian_point;
 	double parameter_value;
 	trimming_select_type type;

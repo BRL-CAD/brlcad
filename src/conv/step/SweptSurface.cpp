@@ -37,12 +37,14 @@ SweptSurface::SweptSurface() {
     step = NULL;
     id = 0;
     swept_curve = NULL;
+    swept_edge_ON_id = 0;
 }
 
 SweptSurface::SweptSurface(STEPWrapper *sw,int step_id) {
     step=sw;
     id = step_id;
     swept_curve = NULL;
+    swept_edge_ON_id = 0;
 }
 
 SweptSurface::~SweptSurface() {

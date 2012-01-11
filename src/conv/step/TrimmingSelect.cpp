@@ -37,6 +37,7 @@ string TrimmingSelect::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMe
 const char *trimming_select_type_strings[] = {
     "CARTESIAN_POINT",
     "PARAMETER_VALUE",
+    "UNKNOWN",
     NULL
 };
 
@@ -44,12 +45,16 @@ TrimmingSelect::TrimmingSelect() {
     step = NULL;
     id = 0;
     cartesian_point = NULL;
+    parameter_value = 0.0;
+    type = TrimmingSelect::UNKNOWN;
 }
 
 TrimmingSelect::TrimmingSelect(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
     cartesian_point = NULL;
+    parameter_value = 0.0;
+    type = TrimmingSelect::UNKNOWN;
 }
 
 TrimmingSelect::~TrimmingSelect() {

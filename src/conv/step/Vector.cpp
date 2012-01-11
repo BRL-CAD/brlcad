@@ -38,12 +38,14 @@ Vector::Vector() {
     step = NULL;
     id = 0;
     orientation = NULL;
+    magnitude = 0.0;
 }
 
 Vector::Vector(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
     orientation = NULL;
+    magnitude = 0.0;
 }
 
 Vector::~Vector() {

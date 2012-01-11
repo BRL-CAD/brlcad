@@ -36,11 +36,13 @@ string SphericalSurface::entityname = Factory::RegisterClass(ENTITYNAME,(Factory
 SphericalSurface::SphericalSurface() {
     step = NULL;
     id = 0;
+    radius = 0.0;
 }
 
 SphericalSurface::SphericalSurface(STEPWrapper *sw,int step_id) {
     step=sw;
     id = step_id;
+    radius = 0.0;
 }
 
 SphericalSurface::~SphericalSurface() {

@@ -46,12 +46,16 @@ TrimmedCurve::TrimmedCurve() {
     step = NULL;
     id = 0;
     basis_curve = NULL;
+    sense_agreement = BUnset;
+    master_representation = Trimming_preference_unset;
 }
 
 TrimmedCurve::TrimmedCurve(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
     basis_curve = NULL;
+    sense_agreement = BUnset;
+    master_representation = Trimming_preference_unset;
 }
 
 TrimmedCurve::~TrimmedCurve() {

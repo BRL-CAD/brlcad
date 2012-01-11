@@ -47,12 +47,20 @@ SurfacePatch::SurfacePatch() {
     step = NULL;
     id = 0;
     parent_surface = NULL;
+    u_transition = Transition_code_unset;
+    v_transition = Transition_code_unset;
+    u_sense = BUnset;
+    v_sense = BUnset;
 }
 
 SurfacePatch::SurfacePatch(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
     parent_surface = NULL;
+    u_transition = Transition_code_unset;
+    v_transition = Transition_code_unset;
+    u_sense = BUnset;
+    v_sense = BUnset;
 }
 
 SurfacePatch::~SurfacePatch() {

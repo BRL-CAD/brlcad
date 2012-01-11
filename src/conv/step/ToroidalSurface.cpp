@@ -36,11 +36,15 @@ string ToroidalSurface::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryM
 ToroidalSurface::ToroidalSurface() {
     step = NULL;
     id = 0;
+    major_radius = 0.0;
+    minor_radius = 0.0;
 }
 
 ToroidalSurface::ToroidalSurface(STEPWrapper *sw,int step_id) {
     step=sw;
     id = step_id;
+    major_radius = 0.0;
+    minor_radius = 0.0;
 }
 
 ToroidalSurface::~ToroidalSurface() {
