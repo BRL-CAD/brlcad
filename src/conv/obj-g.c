@@ -1400,6 +1400,8 @@ populate_triangle_indexes(struct ga_t *ga,
 		triFaces[vert_idx * ELEMENTS_PER_POINT + Y] = vert_idx + 1;
 		triFaces[vert_idx * ELEMENTS_PER_POINT + Z] = vert_idx + 2;
 	    }
+
+	    nmg_km(fu->s_p->r_p->m_p);
 	} else {
 	    triangulateFace(&triFaces, &num_new_tri, facePoints, numFacePoints, *tol);
 	} 
@@ -1408,7 +1410,6 @@ populate_triangle_indexes(struct ga_t *ga,
     }
 
     bu_free(facePoints, "facePoints");
-    nmg_km(fu->s_p->r_p->m_p);
 
     /* if needed, increase size of 'ti->index_arr_tri' array */
     if ((ti->num_tri + num_new_tri) >= ti->max_tri) {
