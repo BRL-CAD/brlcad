@@ -1041,13 +1041,15 @@ wdb_bot_decimate_cmd(struct rt_wdb *wdbp,
     argv += bu_optind;
 
     /* make sure new solid does not already exist */
-    if ((dp=db_lookup(wdbp->dbip, argv[0], LOOKUP_QUIET)) != RT_DIR_NULL) {
+    dp=db_lookup(wdbp->dbip, argv[0], LOOKUP_QUIET);
+    if (dp != RT_DIR_NULL) {
 	Tcl_AppendResult(wdbp->wdb_interp, argv[0], " already exists!!\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
     /* make sure current solid does exist */
-    if ((dp=db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET)) == RT_DIR_NULL) {
+    dp=db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
 	Tcl_AppendResult(wdbp->wdb_interp, argv[1], " Does not exist\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -5128,7 +5130,8 @@ wdb_comb_cmd(struct rt_wdb *wdbp,
 
     /* Save combination name, for use inside loop */
     comb_name = argv[1];
-    if ((dp=db_lookup(wdbp->dbip, comb_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
+    dp=db_lookup(wdbp->dbip, comb_name, LOOKUP_QUIET);
+    if (dp != RT_DIR_NULL) {
 	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    Tcl_AppendResult(wdbp->wdb_interp,
 			     "ERROR: ", comb_name,
@@ -5145,7 +5148,8 @@ wdb_comb_cmd(struct rt_wdb *wdbp,
 	    continue;
 	}
 	oper = argv[i][0];
-	if ((dp = db_lookup(wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	dp = db_lookup(wdbp->dbip,  argv[i+1], LOOKUP_NOISY);
+	if (dp == RT_DIR_NULL) {
 	    Tcl_AppendResult(wdbp->wdb_interp, "skipping ", argv[i+1], "\n", (char *)NULL);
 	    continue;
 	}
@@ -7089,7 +7093,8 @@ Do_copy_membs(struct db_i *dbip,
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
 
-    if ((dp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL)
+    dp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL)
 	return;
 
     xform = (matp_t)user_ptr1;
@@ -7103,7 +7108,8 @@ Do_copy_membs(struct db_i *dbip,
     }
 
     /* Copy member with current tranform matrix */
-    if ((dp_new=Copy_object(dbip, dp, new_xform, wdbp)) == RT_DIR_NULL) {
+    dp_new=Copy_object(dbip, dp, new_xform, wdbp);
+    if (dp_new == RT_DIR_NULL) {
 	Tcl_AppendResult(wdbp->wdb_interp, "Failed to copy object ",
 			 dp->d_namep, "\n", (char *)NULL);
 	return;
@@ -7398,7 +7404,8 @@ wdb_whatid_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if ((dp=db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
+    dp=db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY);
+    if (dp == RT_DIR_NULL)
 	return TCL_ERROR;
 
     if (!(dp->d_flags & RT_DIR_REGION)) {
@@ -8209,7 +8216,8 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if ((dp=db_lookup(wdbp->dbip, argv[2], LOOKUP_QUIET)) == RT_DIR_NULL) {
+    dp=db_lookup(wdbp->dbip, argv[2], LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
 	Tcl_AppendResult(wdbp->wdb_interp,
 			 argv[2],
 			 " does not exist\n",
@@ -8563,7 +8571,8 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if ((dp=db_lookup(wdbp->dbip, nmg_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+    dp=db_lookup(wdbp->dbip, nmg_name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
 	Tcl_AppendResult(wdbp->wdb_interp, nmg_name, " does not exist\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -8796,7 +8805,8 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if ((dp=db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
+    dp=db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY);
+    if (dp == RT_DIR_NULL)
 	return TCL_ERROR;
 
     if (dp->d_flags & RT_DIR_COMB) {
@@ -9299,7 +9309,8 @@ wdb_bo_cmd(struct rt_wdb *wdbp,
 
 	obj_name = *argv;
 
-	if ((dp=db_lookup(wdbp->dbip, obj_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	dp=db_lookup(wdbp->dbip, obj_name, LOOKUP_NOISY);
+	if (dp == RT_DIR_NULL) {
 	    return TCL_ERROR;
 	}
 	if (!(dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK)) {
@@ -9415,11 +9426,13 @@ int wdb_bot_face_sort_cmd(struct rt_wdb *wdbp,
 	struct rt_bot_internal *bot;
 	int id;
 
-	if ((dp=db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	dp=db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY);
+	if (dp == RT_DIR_NULL) {
 	    continue;
 	}
 
-	if ((id=rt_db_get_internal(&intern, dp, wdbp->dbip, bn_mat_identity, wdbp->wdb_resp)) < 0) {
+	id=rt_db_get_internal(&intern, dp, wdbp->dbip, bn_mat_identity, wdbp->wdb_resp);
+	if (id < 0) {
 	    bu_vls_printf(&vls,
 			  "Failed to get internal form of %s, not sorting this one\n",
 			  dp->d_namep);

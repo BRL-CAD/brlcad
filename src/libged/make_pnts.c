@@ -492,7 +492,8 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 			return GED_ERROR;
 		    }
 		} else {
-		    if ((temp_char_ptr = strchr("0123456789.+-eE", buf)) != NULL) {
+		    temp_char_ptr = strchr("0123456789.+-eE", buf);
+		    if (temp_char_ptr != NULL) {
 			/* character read is part of a double */
 			current_character_double = 1;
 		    } else {
