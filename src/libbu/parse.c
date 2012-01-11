@@ -2540,7 +2540,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 		    /* Indirect to another structure */
 		    /* FIXME: unimplemented */
 		    bu_log("INTERNAL ERROR: referencing indirect bu_structparse table, unimplemented\n");
-
+		    break;
 		default:
 		    bu_vls_printf(logstr,
 				  "%s line:%d Parse error, unknown format: '%s' for element \"%s\"",
