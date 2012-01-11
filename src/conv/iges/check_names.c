@@ -44,14 +44,15 @@ Add_brl_name(name)
     /* Check if name already in list */
     ptr = name_root;
     while (ptr) {
-	if (!strncmp(ptr->name, name, NAMESIZE+1))
+	if (!strcmp(ptr->name, name)) {
 	    return ptr->name;
+        }
 	ptr = ptr->next;
     }
 
     /* add this name to the list */
-    ptr = (struct name_list *)bu_malloc(sizeof(struct name_list), "Add_brl_name: ptr");
-    bu_strlcpy(ptr->name, name, NAMESIZE+1);
+    ptr = (struct name_list *)bu_calloc(1, sizeof(struct name_list), "Add_brl_name: ptr");
+    bu_strlcpy(ptr->name, name, namelen+1);
     ptr->next = name_root;
     name_root = ptr;
 
@@ -60,100 +61,92 @@ Add_brl_name(name)
 
 
 char *
-Make_unique_brl_name(name)
-    char *name;
-{
+Make_unique_brl_name(char *name) {
+
+    int found_str_end, name_unique;
+    size_t namelen, i, idx;
     struct name_list *ptr;
-    int found;
-    size_t namelen;
-    size_t char_ptr;
-    size_t i, j;
+    char char_value;
+
+    if (!name) {
+        bu_exit(1, "iges-g; name is null pointer\n");
+        return (char *)NULL;
+    }
+
+    found_str_end = 0;
+    for (i = 0 ; i < NAMESIZE+1 ; i++) {
+        if (name[i] == '\0') {
+            found_str_end = 1;
+            namelen = i;
+            break;
+        }
+    }
+
+    if (!found_str_end) {
+        bu_exit(1, "iges-g; corrupt name string\n");
+        return (char *)NULL;
+    }
 
     /* replace white space */
-    namelen = strlen(name);
-    for (i=0; i<namelen; i++) {
-	if (isspace(name[i]) || name[i] == '/')
-	    name[i] = '_';
+    for (i = 0 ; i < namelen ; i++) {
+        if (isspace(name[i]) || name[i] == '/') {
+            name[i] = '_';
+        }
     }
 
-    /* check if name is already unique */
-    found = 0;
-    ptr = name_root;
-    while (ptr) {
-	if (!strncmp(ptr->name, name, NAMESIZE+1)) {
-	    found = 1;
-	    break;
-	}
-	ptr = ptr->next;
+    if (namelen > 0) {
+        ptr = name_root;
+        name_unique = 1;
+        while (ptr) {
+            if (!strcmp(name, ptr->name)) {
+                name_unique = 0;
+                break;
+            }
+            ptr = ptr->next;
+        }
+        if (name_unique) {
+            return Add_brl_name(name);
+        } 
     }
 
-    if (!found)
-	return Add_brl_name(name);
-
-    /* name is not unique, make it unique with a single character suffix */
-    if (namelen < NAMESIZE)
-	char_ptr = namelen;
-    else
-	char_ptr = NAMESIZE - 1;
-
-    i = 0;
-    while (found && 'A'+i <= 'z') {
-	name[char_ptr] = 'A' + (char)i;
-	name[char_ptr+1] = '\0';
-	found = 0;
-	ptr = name_root;
-	while (ptr) {
-	    if (!strncmp(ptr->name, name, NAMESIZE+1)) {
-		found = 1;
-		break;
-	    }
-	    ptr = ptr->next;
-	}
-	i++;
-	if ('A'+i == '[')
-	    i = 'a' - 'A';
+    idx = namelen;
+    char_value = 'A';
+    name_unique = 0;
+    while (!name_unique && idx < NAMESIZE) {
+        if (idx == 0 && char_value == 'A') {
+            name[idx] = char_value;
+            name[idx+1] = '\0';
+            char_value++;
+        }
+        ptr = name_root;
+        name_unique = 1;
+        while (ptr) {
+            if (!strcmp(name, ptr->name)) {
+                name_unique = 0;
+                break;
+            }
+            ptr = ptr->next;
+        }
+        if (!name_unique) {
+            name[idx] = char_value;
+            name[idx+1] = '\0';
+            if (char_value == 'Z') {
+                char_value = 'a';
+            } else if (char_value == 'z') {
+                idx++;
+                char_value = 'A';
+            } else {
+                char_value++;
+            }
+        }
     }
 
-    if (!found)
-	return Add_brl_name(name);
-
-
-    /* still not unique! Try two character suffix */
-    char_ptr--;
-    i = 0;
-    j = 0;
-    while (found && 'A'+i <= 'z' && 'A'+j <= 'z') {
-	name[char_ptr] = 'A'+ (char)i;
-	name[char_ptr+1] = 'A'+ (char)j;
-	name[char_ptr+2] = '\0';
-	found = 0;
-	ptr = name_root;
-	while (ptr) {
-	    if (!strncmp(ptr->name, name, NAMESIZE+1)) {
-		found = 1;
-		break;
-	    }
-	    ptr = ptr->next;
-	}
-	j++;
-	if ('A'+j == '[')
-	    j = 'a' - 'A';
-
-	if ('A'+j > 'z') {
-	    j = 0;
-	    i++;
-	}
-
-	if ('A'+i == '[')
-	    i = 'a' - 'A';
+    if (name_unique) {
+        return Add_brl_name(name);
     }
 
-    if (!found) {
-	/* not likely */
-	bu_exit(1, "Could not make name unique: (%s)\n", name);
-	return (char *)NULL;		/* make the compilers happy */
-    } else
-	return Add_brl_name(name);
+    bu_exit(1, "Could not make name unique: (%s)\n", name);
+    return (char *)NULL; /* make compilers happy */
 }
 
 
@@ -522,7 +515,6 @@ Get_subfig_name(entityno)
 void
 Check_names()
 {
-
     int i;
 
     bu_log("Looking for Name Entities...\n");
@@ -577,6 +569,7 @@ Check_names()
     }
 
     bu_log("Assigning names to entities without names...\n");
+
     for (i=0; i < totentities; i++) {
 	char tmp_name[NAMESIZE+1];
 
@@ -657,3 +650,4 @@ Check_names()
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

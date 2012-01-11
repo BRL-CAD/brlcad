@@ -556,7 +556,6 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		char *multi_name;
 		size_t len;
 		int unique=0;
-		struct stat stat_ptr;
 		char suffix[SUFFIX_LEN+1];
 
 		/* construct a unique file name */
@@ -566,7 +565,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		bu_strlcpy(suffix, "a", sizeof(suffix));
 		suffix[0]--;
 		while (!unique) {
-		    if (stat(multi_name, &stat_ptr)) {
+		    if (!access(multi_name, R_OK)) {
 			unique = 1;
 			break;
 		    }
