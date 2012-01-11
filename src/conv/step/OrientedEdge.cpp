@@ -73,12 +73,17 @@ OrientedEdge::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"edge_element");
 	if (entity) {
 	    edge_element = dynamic_cast<Edge *>(Factory::CreateObject(sw,entity));
-	    if (orientation == BTrue) {
-		edge_start = edge_element->GetEdgeStart();
-		edge_end = edge_element->GetEdgeEnd();
+	    if (edge_element != NULL) {
+		if (orientation == BTrue) {
+		    edge_start = edge_element->GetEdgeStart();
+		    edge_end = edge_element->GetEdgeEnd();
+		} else {
+		    edge_start = edge_element->GetEdgeEnd();
+		    edge_end = edge_element->GetEdgeStart();
+		}
 	    } else {
-		edge_start = edge_element->GetEdgeEnd();
-		edge_end = edge_element->GetEdgeStart();
+		std::cerr << CLASSNAME << ": Error loading entity attribute 'edge_element'." << std::endl;
+		return false;
 	    }
 	} else {
 	    std::cerr << CLASSNAME << ": Error loading entity attribute 'edge_element'." << std::endl;

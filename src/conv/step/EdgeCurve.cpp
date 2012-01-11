@@ -75,17 +75,26 @@ EdgeCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
     if (edge_geometry == NULL) {
 	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"edge_geometry");
-	edge_geometry = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
-    }
+	if (entity) {
+	    edge_geometry = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
+	    if (edge_geometry != NULL) {
+		same_sense = step->getBooleanAttribute(sse,"same_sense");
 
-    same_sense = step->getBooleanAttribute(sse,"same_sense");
-
-    if (same_sense) {
-	edge_geometry->Start(edge_start);
-	edge_geometry->End(edge_end);
-    } else {
-	edge_geometry->Start(edge_end);
-	edge_geometry->End(edge_start);
+		if (same_sense) {
+		    edge_geometry->Start(edge_start);
+		    edge_geometry->End(edge_end);
+		} else {
+		    edge_geometry->Start(edge_end);
+		    edge_geometry->End(edge_start);
+		}
+	    } else {
+		std::cout << CLASSNAME << ":Error loading field \"edge_geometry\"." << std::endl;
+		return false;
+	    }
+	} else {
+	    std::cout << CLASSNAME << ":Error loading field \"edge_geometry\"." << std::endl;
+	    return false;
+	}
     }
 
     return true;
