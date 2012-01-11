@@ -262,28 +262,21 @@ bu_cv_optimize(register int cookie)
 
     /* Run time check:  which kind of integers does this machine have? */
     if (Endian == END_NOTSET) {
-	volatile size_t soli = sizeof(long int);
-	unsigned long int testval = 0;
-	register int i;
-	for (i=0; i<4; i++) {
-	    ((char *)&testval)[i] = i+1;
-	}
+	bu_endian_t end = bu_byteorder();
 
-	if (soli == 8) {
-	    Endian = END_CRAY;	/* is this good enough? */
-	    if (((testval >> 31) >> 1) == 0x01020304) {
-		Endian = END_BIG; /* XXX 64bit */
-	    } else if (testval == 0x04030201) {
-		Endian = END_LITTLE;	/* 64 bit */
-	    } else {
-		bu_bomb("bu_cv_optimize: can not tell endian of host.\n");
-	    }
-	} else if (testval == 0x01020304) {
+	switch(end) {
+	case BU_PDP_ENDIAN:
+	    Endian = END_CRAY;
+	    break;
+	case BU_BIG_ENDIAN:
 	    Endian = END_BIG;
-	} else if (testval == 0x04030201) {
+	    break;
+	case BU_LITTLE_ENDIAN:
 	    Endian = END_LITTLE;
-	} else if (testval == 0x02010403) {
+	    break;
+	default:
 	    Endian = END_ILL;
+	    break;
 	}
     }
 
