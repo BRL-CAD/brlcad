@@ -1484,10 +1484,15 @@ pkg_bwaitfor (int type, struct pkg_conn *pc)
 	return (char *)0;
 
     /* Read the whole message into the dynamic buffer */
-    if ((i = _pkg_inget(pc, pc->pkc_buf, pc->pkc_len)) != pc->pkc_len) {
+    if (pc->pkc_buf != (char *)0) {
+      if ((i = _pkg_inget(pc, pc->pkc_buf, pc->pkc_len)) != pc->pkc_len) {
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
-		 "pkg_bwaitfor: _pkg_inget %ld gave %ld\n", (long)pc->pkc_len, (long)i);
+	    "pkg_bwaitfor: _pkg_inget %ld gave %ld\n", (long)pc->pkc_len, (long)i);
 	(pc->pkc_errlog)(_pkg_errbuf);
+      } 
+    } else {
+      snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_bwaitfor: tried to read from null pc->pkc_buf!\n");
+      return (char *)0;
     }
     tmpbuf = pc->pkc_buf;
     pc->pkc_buf = (char *)0;
