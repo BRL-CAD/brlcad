@@ -534,6 +534,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 {
     struct servent *sp;
     int pkg_listenfd;
+    if (service == NULL) return (int)PKC_ERROR;
 #ifdef HAVE_WINSOCK_H
     SOCKADDR_IN saServer;
     WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
@@ -615,7 +616,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     memset((char *)&sinme, 0, sizeof(sinme));
 
 #  ifdef HAVE_SYS_UN_H
-    if (service != NULL && service[0] == '/') {
+    if (service[0] == '/') {
 	/* UNIX Domain socket */
 	strncpy(sunme.sun_path, service, sizeof(sunme.sun_path));
 	sunme.sun_family = AF_UNIX;
