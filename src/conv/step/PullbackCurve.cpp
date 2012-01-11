@@ -1291,7 +1291,6 @@ check_pullback_singular_east(std::list<PBCData*> &pbcs)
     const ON_Surface *surf = (*cs)->surftree->getSurface();
     double umin, umax;
     ON_2dPoint *prev = NULL;
-    ON_2dPoint *noprev = NULL;
 
     surf->GetDomain(0, &umin, &umax);
     std::cout << "Umax: " << umax << std::endl;
@@ -1311,8 +1310,6 @@ check_pullback_singular_east(std::list<PBCData*> &pbcs)
 		    if (NEAR_EQUAL((*samples)[i].x, umax, PBC_TOL)) {
 			if (prev != NULL) {
 			    std::cerr << "prev - " << prev->x << ", " << prev->y << std::endl;
-			} else {
-			    noprev = &(*samples)[i];
 			}
 			std::cerr << i << "- " << (*samples)[i].x << ", " << (*samples)[i].y << std::endl << std::endl;
 		    }
@@ -1323,8 +1320,6 @@ check_pullback_singular_east(std::list<PBCData*> &pbcs)
 	}
 	cs++;
     }
-    //std::cerr << "noprev - " << noprev->x << ", " << noprev->y << std::endl;
-    //std::cerr << "last - " << prev->x << ", " << prev->y << std::endl;
     return true;
 }
 
