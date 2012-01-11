@@ -47,12 +47,14 @@ SurfaceCurve::SurfaceCurve() {
     step = NULL;
     id = 0;
     curve_3d = NULL;
+    master_representation = Preferred_surface_curve_representation_unset;
 }
 
 SurfaceCurve::SurfaceCurve(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
     curve_3d = NULL;
+    master_representation = Preferred_surface_curve_representation_unset;
 }
 
 SurfaceCurve::~SurfaceCurve() {

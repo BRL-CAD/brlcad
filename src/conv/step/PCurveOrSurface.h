@@ -32,12 +32,14 @@
 class PCurve;
 class Surface;
 
-enum pcurve_or_surface_type {
-	PCURVE,
-	SURFACE
-};
-
 class PCurveOrSurface : public STEPEntity {
+public:
+    enum pcurve_or_surface_type {
+    	PCURVE,
+    	SURFACE,
+    	UNKNOWN
+    };
+
 private:
 	static string entityname;
 

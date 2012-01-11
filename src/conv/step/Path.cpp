@@ -36,11 +36,13 @@ string Path::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Path:
 Path::Path() {
     step = NULL;
     id = 0;
+    ON_path_index = 0;
 }
 
 Path::Path(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
+    ON_path_index = 0;
 }
 
 Path::~Path() {

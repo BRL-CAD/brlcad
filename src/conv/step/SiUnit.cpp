@@ -90,11 +90,15 @@ static const char *Si_unit_name_string[] = {
 SiUnit::SiUnit() {
     step = NULL;
     id = 0;
+    prefix = Si_prefix_unset;
+    name = Si_unit_name_unset;
 }
 
 SiUnit::SiUnit(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
+    prefix = Si_prefix_unset;
+    name = Si_unit_name_unset;
 }
 
 SiUnit::~SiUnit() {
