@@ -117,23 +117,20 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis) {
     }
 
     for (int i = 0; i < loopcount ; i++) {
-	ON_PolyCurve* poly_curve = NULL;
+	ON_PolyCurve* poly_curve = new ON_PolyCurve();
 	for (int j = 0; j < allsegments.Count(); j++) {
 	    if (curvearray[j] == i) {
-		if (!poly_curve) {
-		    poly_curve = new ON_PolyCurve();
-		    poly_curve->Append(allsegments[j]);
-		} else {
-		    poly_curve->Append(allsegments[j]);
-		}
+		 poly_curve->Append(allsegments[j]);
 	    }
 	}
+
 	ON_NurbsCurve *revcurve = ON_NurbsCurve::New();
 	poly_curve->GetNurbForm(*revcurve);
 	ON_RevSurface* revsurf = ON_RevSurface::New();
 	revsurf->m_curve = revcurve;
 	revsurf->m_axis = *revaxis;
 	ON_BrepFace *face = (*b)->NewFace(*revsurf);
+
 	if (i == largest_loop_index) {
 	    (*b)->FlipFace(*face);
 	}
