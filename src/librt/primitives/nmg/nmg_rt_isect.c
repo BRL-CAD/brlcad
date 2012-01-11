@@ -1078,15 +1078,6 @@ isect_ray_vertexuse(struct ray_data *rd, struct vertexuse *vu_p)
     ray_hit_vertex(rd, vu_p, NMG_VERT_UNKNOWN);
 
     if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
-      if(myhit) {
-	bu_log(" Ray hits vertex, dist %g (priv=x%x, v magic=x%x)\n",
-	    myhit->hit.hit_dist,
-	    myhit->hit.hit_private,
-	    vu_p->v_p->magic);
-      } else {
-	bu_log("myhit is NULL\n");
-      }
-
       if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 	nmg_rt_print_hitlist(rd->hitmiss[NMG_HIT_LIST]);
     }
