@@ -352,7 +352,8 @@ buf_destroy(struct Buf *buf)
     if (buf && buf->elts) {
 	free(buf->elts);
     }
-    buf->elts = (void*)0;
+    if (buf)
+	buf->elts = (void*)0;
 }
 
 /* appends ptr[] to buf, grow if necessary.
