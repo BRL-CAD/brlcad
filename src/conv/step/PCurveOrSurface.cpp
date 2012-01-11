@@ -50,7 +50,7 @@ PCurveOrSurface::PCurveOrSurface() {
     id = 0;
     pcurve = NULL;
     surface = NULL;
-    type = PCurveOrSurface::UNKNOWN;;
+    type = PCurveOrSurface::UNKNOWN;
 }
 
 PCurveOrSurface::PCurveOrSurface(STEPWrapper *sw,int step_id) {
@@ -58,7 +58,7 @@ PCurveOrSurface::PCurveOrSurface(STEPWrapper *sw,int step_id) {
     id = step_id;
     pcurve = NULL;
     surface = NULL;
-    type = PCurveOrSurface::UNKNOWN;;
+    type = PCurveOrSurface::UNKNOWN;
 }
 
 PCurveOrSurface::~PCurveOrSurface() {
