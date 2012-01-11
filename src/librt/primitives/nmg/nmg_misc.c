@@ -9345,7 +9345,7 @@ nmg_to_arb(const struct model *m, struct rt_arb_internal *arb_int)
     struct vertex *v;
     struct edgeuse *eu_start;
     struct faceuse *fu1;
-    struct bu_ptbl tab;
+    struct bu_ptbl tab = BU_PTBL_INIT_ZERO;
     int face_verts;
     int i, j;
     int found;
