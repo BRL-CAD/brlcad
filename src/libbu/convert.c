@@ -251,7 +251,6 @@ bu_cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int cou
 int
 bu_cv_optimize(register int cookie)
 {
-    static int Endian = END_NOTSET;
     int fmt;
 
     if (cookie & CV_HOST_MASK)
@@ -259,26 +258,6 @@ bu_cv_optimize(register int cookie)
 
     /* This is a network format request */
     fmt  =  cookie & CV_TYPE_MASK;
-
-    /* Run time check:  which kind of integers does this machine have? */
-    if (Endian == END_NOTSET) {
-	bu_endian_t end = bu_byteorder();
-
-	switch(end) {
-	case BU_PDP_ENDIAN:
-	    Endian = END_CRAY;
-	    break;
-	case BU_BIG_ENDIAN:
-	    Endian = END_BIG;
-	    break;
-	case BU_LITTLE_ENDIAN:
-	    Endian = END_LITTLE;
-	    break;
-	default:
-	    Endian = END_ILL;
-	    break;
-	}
-    }
 
     switch (fmt) {
 	case CV_D:
@@ -290,7 +269,7 @@ bu_cv_optimize(register int cookie)
 	case CV_32:
 	case CV_64:
 	    /* host is big-endian, so is network */
-	    if (Endian == END_BIG)
+	    if (bu_byteorder() == BU_BIG_ENDIAN)
 		cookie |= CV_HOST_MASK;
 	    return cookie;
     }
