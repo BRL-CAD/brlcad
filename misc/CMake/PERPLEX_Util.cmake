@@ -76,7 +76,7 @@ MACRO(PERPLEX_TARGET Name Input OutputSrc OutputHeader)
     ADD_CUSTOM_COMMAND(
 	OUTPUT ${re2c_src} ${OutputHeader}
 	COMMAND ${PERPLEX_EXECUTABLE} -c -o ${re2c_src} -i ${OutputHeader} -t ${Template} ${Input}
-	DEPENDS ${Input} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET}
+	DEPENDS ${Input} ${Template} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET}
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	COMMENT "[PERPLEX][${Name}] Generating re2c input with ${PERPLEX_EXECUTABLE}"
 	)
