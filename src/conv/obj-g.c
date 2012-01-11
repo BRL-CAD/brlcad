@@ -3248,8 +3248,8 @@ int
 main(int argc, char **argv)
 {
     char *prog = *argv;
-    static char *input_file_name;    /* input file name */
-    static char *brlcad_file_name;   /* output file name */
+    struct bu_vls input_file_name = BU_VLS_INIT_ZERO;  /* input file name */
+    struct bu_vls brlcad_file_name = BU_VLS_INIT_ZERO; /* output file name */
     struct rt_wdb *fd_out;	     /* Resulting BRL-CAD file */
     int ret_val = 0;
     FILE *my_stream;
@@ -3306,6 +3306,8 @@ main(int argc, char **argv)
     tol->para = 1 - tol->perp;
 
     if (argc < 2) {
+        bu_vls_free(&input_file_name);
+        bu_vls_free(&brlcad_file_name);
 	bu_exit(1, usage, argv[0]);
     }
 
@@ -3345,6 +3347,8 @@ main(int argc, char **argv)
 		dist_tmp = (double)atof(bu_optarg);
 		if (dist_tmp <= 0.0) {
 		    bu_log("Distance tolerance must be greater then zero.\n");
+                    bu_vls_free(&input_file_name);
+                    bu_vls_free(&brlcad_file_name);
 		    bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
 		}
 		tol->dist = dist_tmp;
@@ -3369,6 +3373,8 @@ main(int argc, char **argv)
 			break;
 		    default:
 			bu_log("Invalid mode option '%c'.\n", bu_optarg[0]);
+                        bu_vls_free(&input_file_name);
+                        bu_vls_free(&brlcad_file_name);
 			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
 				argv[0]);
 			break;
@@ -3376,6 +3382,8 @@ main(int argc, char **argv)
 		break;
 	    case 'u': /* units */
 		if (str2mm(bu_optarg, &conv_factor)) {
+                    bu_vls_free(&input_file_name);
+                    bu_vls_free(&brlcad_file_name);
 		    bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
 		}
 		break;
@@ -3390,6 +3398,8 @@ main(int argc, char **argv)
 			break;
 		    default:
 			bu_log("Invalid grouping option '%c'.\n", bu_optarg[0]);
+                        bu_vls_free(&input_file_name);
+                        bu_vls_free(&brlcad_file_name);
 			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
 				argv[0]);
 			break;
@@ -3409,6 +3419,8 @@ main(int argc, char **argv)
 		    default:
 			bu_log("Invalid open surface 'native-bot' output bot "
 			       "type '%c'.\n", bu_optarg[0]);
+                        bu_vls_free(&input_file_name);
+                        bu_vls_free(&brlcad_file_name);
 			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
 				argv[0]);
 			break;
@@ -3428,25 +3440,31 @@ main(int argc, char **argv)
 		    default:
 			bu_log("Invalid bot orientation type '%c'.\n",
 				bu_optarg[0]);
+                        bu_vls_free(&input_file_name);
+                        bu_vls_free(&brlcad_file_name);
 			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
 				argv[0]);
 		}
 		break;
 	    default:
 		bu_log("Invalid option '%c'.\n", c);
+                bu_vls_free(&input_file_name);
+                bu_vls_free(&brlcad_file_name);
 		bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
 		break;
 	}
     }
 
     if (argc - bu_optind != 2) {
+        bu_vls_free(&input_file_name);
+        bu_vls_free(&brlcad_file_name);
 	bu_exit(EXIT_FAILURE, "Invalid number of arguments.\nType '%s' for "
 		"usage.\n", argv[0]);
     }
 
-    input_file_name = argv[bu_optind];
+    bu_vls_sprintf(&input_file_name, "%s", argv[bu_optind]);
     bu_optind++;
-    brlcad_file_name = argv[bu_optind];
+    bu_vls_sprintf(&brlcad_file_name, "%s", argv[bu_optind]);
 
     /* if plate bots were selected as the open bot output type but the
      * user did not specify plate bot thickness, abort since thickness
@@ -3456,6 +3474,8 @@ main(int argc, char **argv)
 				       || (open_bot_output_mode == RT_BOT_PLATE_NOCOS)))
     {
 	bu_log("'plate_thickness' was not specified but is required\n");
+        bu_vls_free(&input_file_name);
+        bu_vls_free(&brlcad_file_name);
 	bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
     }
 
@@ -3554,18 +3574,22 @@ main(int argc, char **argv)
 	bu_log("\tDebug messages disabled\n");
     }
 
-    bu_log("\tInput file name (%s)\n", input_file_name);
-    bu_log("\tOutput file name (%s)\n\n", brlcad_file_name);
+    bu_log("\tInput file name (%s)\n", bu_vls_addr(&input_file_name));
+    bu_log("\tOutput file name (%s)\n\n", bu_vls_addr(&brlcad_file_name));
 
-    if ((my_stream = fopen(input_file_name, "r")) == NULL) {
-	bu_log("Cannot open input file (%s)\n", input_file_name);
+    if ((my_stream = fopen(bu_vls_addr(&input_file_name), "r")) == NULL) {
+	bu_log("Cannot open input file (%s)\n", bu_vls_addr(&input_file_name));
 	perror(prog);
+        bu_vls_free(&input_file_name);
+        bu_vls_free(&brlcad_file_name);
 	return EXIT_FAILURE;
     }
 
-    if ((fd_out = wdb_fopen(brlcad_file_name)) == NULL) {
-	bu_log("Cannot create new BRL-CAD file (%s)\n", brlcad_file_name);
+    if ((fd_out = wdb_fopen(bu_vls_addr(&brlcad_file_name))) == NULL) {
+	bu_log("Cannot create new BRL-CAD file (%s)\n", bu_vls_addr(&brlcad_file_name));
 	perror(prog);
+        bu_vls_free(&input_file_name);
+        bu_vls_free(&brlcad_file_name);
 	bu_exit(1, NULL);
     }
 
@@ -3587,6 +3611,8 @@ main(int argc, char **argv)
 	}
 
 	perror(prog);
+        bu_vls_free(&input_file_name);
+        bu_vls_free(&brlcad_file_name);
 	return EXIT_FAILURE;
     }
 
@@ -3612,6 +3638,8 @@ main(int argc, char **argv)
 	    bu_log("Unable to close file.\n");
 	}
 
+        bu_vls_free(&input_file_name);
+        bu_vls_free(&brlcad_file_name);
 	return EXIT_FAILURE;
     }
 
@@ -3893,6 +3921,8 @@ main(int argc, char **argv)
     if (fclose(my_stream) != 0) {
 	bu_log("Unable to close file.\n");
 	perror(prog);
+        bu_vls_free(&input_file_name);
+        bu_vls_free(&brlcad_file_name);
 	return EXIT_FAILURE;
     }
 
@@ -3909,6 +3939,8 @@ main(int argc, char **argv)
 
     bu_log("End time %s", asctime(localtime(&overall_end_time)));
 
+    bu_vls_free(&input_file_name);
+    bu_vls_free(&brlcad_file_name);
     return 0;
 }
 
