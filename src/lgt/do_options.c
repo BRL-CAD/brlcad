@@ -2426,9 +2426,13 @@ f_IRmodule(char **args)
 	HMitem	*itemptr;
 	if (! tty)
 	{
-	    bu_log("IR module command (%c): missing argument\n",
-		   *args[0]);
-	    return	-1;
+	  if (args == NULL) {
+	    bu_log("f_IRmodule - no args!\n");
+	    return      -1;
+	  }
+	  if (args[0])
+	    bu_log("IR module command (%c): missing argument.\n", *args[0]);
+	  return        -1;
 	}
 	if ((itemptr = hmenuhit(&irflags_hmenu, 1, TOP_SCROLL_WIN))
 	    != (HMitem *) 0
