@@ -653,11 +653,11 @@ newNURBSCurve(BSpline& spline, int dimension=3)
 ON_Curve*
 interpolateCurve(ON_2dPointArray &samples)
 {
-    bool useBezier = false;
     if (samples.Count() == 2) {
 	// build a line
 	return new ON_LineCurve(samples[0], samples[1]);
-    } else if (useBezier == true) {
+#ifdef DEBUG_USE_BEZIER_CURVE_INTERPOLATION
+    } else
 	ON_BezierCurve *bezier = new ON_BezierCurve(
 	    samples);
 	ON_NurbsCurve nurbcurve;
@@ -675,6 +675,7 @@ interpolateCurve(ON_2dPointArray &samples)
 	ON_NurbsCurve* nurbs = newNURBSCurve(spline);
 
 	return nurbs;
+#else
     } else {
 	ON_TextLog dump;
 	ON_NurbsCurve* nurbs;
@@ -695,6 +696,7 @@ interpolateCurve(ON_2dPointArray &samples)
 	}
 	return nurbs;
     }
+#endif
 }
 
 
