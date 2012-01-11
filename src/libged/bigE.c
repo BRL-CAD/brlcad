@@ -253,8 +253,10 @@ build_etree(union tree *tp,
 	    break;
 	case OP_DB_LEAF:
 	    if ((dp=db_lookup(dgcdp->gedp->ged_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	      if (eptr) {
 		eptr->l.m = (struct model *)NULL;
-		break;
+	      }
+	      break;
 	    }
 	    eptr = add_solid(dp, tp->tr_l.tl_mat, dgcdp);
 	    eptr->l.op = tp->tr_op;
