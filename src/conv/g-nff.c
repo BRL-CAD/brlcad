@@ -75,9 +75,7 @@ static point_t model_min;
  * M A I N
  */
 int
-main(argc, argv)
-    int argc;
-    char *argv[];
+main(int argc, char *argv[])
 {
     FILE *fpf = NULL;	/* final output file */
     point_t model_center;
