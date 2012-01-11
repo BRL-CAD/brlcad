@@ -282,7 +282,8 @@ vls_long_dpp(struct ged *gedp,
 	    bu_vls_printf(gedp->ged_result_str, "%s", dp->d_namep);
 	    bu_vls_spaces(gedp->ged_result_str, (int)(max_nam_len - strlen(dp->d_namep)));
 	    bu_vls_printf(gedp->ged_result_str, " %s", type);
-	    bu_vls_spaces(gedp->ged_result_str, (int)(max_type_len - strlen(type)));
+            if (type)
+	       bu_vls_spaces(gedp->ged_result_str, (int)(max_type_len - strlen(type)));
 	    bu_vls_printf(gedp->ged_result_str,  " %2d %2d %ld\n",
 			  dp->d_major_type, dp->d_minor_type, (long)(dp->d_len));
 	}
