@@ -2093,7 +2093,7 @@ nmg_count_shell_kids(const struct model *m, size_t *total_faces, size_t *total_w
     for (BU_LIST_FOR (r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR (s, shell, &r->s_hd)) {
 	    if (s->vu_p) {
-		total_points++;
+		(*total_points)++;
 		continue;
 	    }
 	    for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
