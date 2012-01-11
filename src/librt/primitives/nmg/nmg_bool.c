@@ -1095,7 +1095,7 @@ union tree *
 nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
 {
     struct model *m;
-    struct nmgregion *r1;
+    struct nmgregion *r1 = (struct nmgregion *)NULL;
     union tree *curtree;
     struct directory *dp;
 
