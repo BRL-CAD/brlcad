@@ -1148,7 +1148,6 @@ DoFile(void)	/* returns vpl status code */
 			    fprintf(stderr, "dcont\n");
 
 		    BuildStr(&virpos, &newpos);
-			return Foo(-10);
 		    plotted = true;
 		    virpos = newpos;
 		    continue;
