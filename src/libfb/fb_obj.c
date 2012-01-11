@@ -827,8 +827,8 @@ fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     }
 
     if ((ifp = fb_open(argv[2], width, height)) == FBIO_NULL) {
-	bu_log("fb_open: bad device - ",
-			 argv[2], (char *)NULL);
+	bu_log("fb_open: bad device - ", argv[2], (char *)NULL);
+	return BRLCAD_ERROR;
     }
 
     if (fb_ioinit(ifp) != 0) {
