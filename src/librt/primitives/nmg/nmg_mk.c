@@ -2673,7 +2673,7 @@ int
 nmg_demote_lu(struct loopuse *lu1)
 {
     struct edgeuse *eu1;
-    struct loopuse *lu_tmp;
+    size_t tmp;
     struct shell *s;
     int ret_val;
 
@@ -2716,11 +2716,11 @@ nmg_demote_lu(struct loopuse *lu1)
     if (BU_LIST_NON_EMPTY(&lu1->lumate_p->down_hd))
 	bu_bomb("nmg_demote_lu: loopuse mates don't have same # of edges\n");
 
-    lu_tmp = lu1;
+    tmp = (size_t)lu1;
     ret_val = nmg_klu(lu1);
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_demote_lu(lu=0x%p) returns %d\n", lu_tmp, ret_val);
+	bu_log("nmg_demote_lu(lu=%x) returns %d\n", tmp, ret_val);
     }
 
     return ret_val;
