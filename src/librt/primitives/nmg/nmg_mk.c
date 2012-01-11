@@ -2743,6 +2743,7 @@ nmg_demote_eu(struct edgeuse *eu)
     struct shell *s;
     struct vertex *v;
     int ret_val;
+    size_t tmp;
 
     if (*eu->up.magic_p != NMG_SHELL_MAGIC)
 	bu_bomb("nmg_demote_eu() up is not shell\n");
@@ -2759,12 +2760,13 @@ nmg_demote_eu(struct edgeuse *eu)
     if (!nmg_is_vertex_a_selfloop_in_shell(v, s))
 	(void)nmg_mlv(&s->l.magic, v, OT_SAME);
 
+    tmp = (size_t)eu;
     (void)nmg_keu(eu);
 
     ret_val = nmg_shell_is_empty(s);
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_demote_eu(eu=0x%p) returns %d\n", eu, ret_val);
+	bu_log("nmg_demote_eu(eu=%x) returns %d\n", tmp, ret_val);
     }
 
     return ret_val;
