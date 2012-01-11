@@ -123,8 +123,11 @@ Factory::CreateObject(STEPWrapper *sw, SCLP23(Application_instance) *sse)
 	    return NULL;
 	}
 	f = (*i).second;
+	if (f != NULL) {
+	    return f(sw, sse);
+	}
     }
-    return f(sw, sse); // dynamic_cast<STEPEntity *>(Curve::Create(sw,sse));
+    return NULL; // dynamic_cast<STEPEntity *>(Curve::Create(sw,sse));
 }
 
 
@@ -190,6 +193,10 @@ Factory::CreateCurveObject(STEPWrapper *sw, SCLP23(Application_instance) *sse)
 	    return NULL;
 	}
 	f = (*i).second;
+    }
+    if (f == NULL) {
+	std::cerr << "Factory Method returned a NULL object creation method: " << methodname << std::endl;
+	return NULL;
     }
     return f(sw, sse); // dynamic_cast<STEPEntity *>(Curve::Create(sw,sse));
 }
@@ -536,6 +543,10 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SCLP23(Application_instance) *ss
 	}
 	f = (*i).second;
     }
+    if (f == NULL) {
+	std::cerr << "Factory Method returned a NULL object creation method: " << methodname << std::endl;
+	return NULL;
+    }
     return f(sw, sse); // dynamic_cast<STEPEntity *>(Curve::Create(sw,sse));
 }
 
@@ -602,6 +613,10 @@ Factory::CreateSurfaceObject(STEPWrapper *sw, SCLP23(Application_instance) *sse)
 	    return NULL;
 	}
 	f = (*i).second;
+    }
+    if (f == NULL) {
+	std::cerr << "Factory Method returned a NULL object creation method: " << methodname << std::endl;
+	return NULL;
     }
     return f(sw, sse);
 }
