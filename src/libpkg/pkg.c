@@ -431,6 +431,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 	/* UNIX Domain socket, port = pathname */
 	sunhim.sun_family = AF_UNIX;
 	strncpy(sunhim.sun_path, service, sizeof(sunhim.sun_path));
+	sunhim.sun_path[sizeof(sunhim.sun_path) - 1] = '\0';
 	addr = (struct sockaddr *) &sunhim;
 	addrlen = strlen(sunhim.sun_path) + 2;
 	goto ready;
@@ -620,6 +621,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     if (service[0] == '/') {
 	/* UNIX Domain socket */
 	strncpy(sunme.sun_path, service, sizeof(sunme.sun_path));
+	sunme.sun_path[sizeof(sunme.sun_path) - 1] = '\0';
 	sunme.sun_family = AF_UNIX;
 	addr = (struct sockaddr *) &sunme;
 	addrlen = strlen(sunme.sun_path) + 2;
