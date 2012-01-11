@@ -319,7 +319,6 @@ bu_avail_cpus(void)
 	size_t len;
 	len = 4;
 	if (sysctlbyname("hw.ncpu", &maxproc, &len, NULL, 0) == -1) {
-	    ncpu = 1;
 	    perror("sysctlbyname");
 	} else {
 	    ncpu = maxproc;
@@ -337,7 +336,6 @@ bu_avail_cpus(void)
 	len = sizeof(maxproc);
 	if (sysctl(mib, 2, &maxproc, &len, NULL, 0) == -1) {
 	    perror("sysctl");
-	    ncpu = 1;
 	} else {
 	    ncpu = maxproc; /* should be able to get sysctl to return maxproc */
 	}
@@ -358,7 +356,6 @@ bu_avail_cpus(void)
 	ncpu = sysconf(_SC_NPROCESSORS_ONLN);
 	if (ncpu < 0) {
 	    perror("Unable to get the number of available CPUs");
-	    ncpu = 1;
 	}
     }
 #endif
@@ -368,7 +365,6 @@ bu_avail_cpus(void)
 	ncpu = sysconf(_SC_NPROC_ONLN);
 	if (ncpu < 0) {
 	    perror("Unable to get the number of available CPUs");
-	    ncpu = 1;
 	}
     }
 #endif
@@ -379,7 +375,6 @@ bu_avail_cpus(void)
 	ncpu = sysconf(_SC_CRAY_NCPU);
 	if (ncpu < 0) {
 	    perror("Unable to get the number of available CPUs");
-	    ncpu = 1;
 	}
     }
 #  endif
@@ -398,24 +393,18 @@ bu_avail_cpus(void)
 	FILE *fp;
 	char buf[128];
 
-	ncpu = 0;
-
 	fp = fopen (CPUINFO_FILE, "r");
 
 	if (fp == NULL) {
-	    ncpu = 1;
 	    perror (CPUINFO_FILE);
 	} else {
+	    ncpu = 0;
 	    while (bu_fgets(buf, 80, fp) != NULL) {
 		if (strncmp (buf, "processor", 9) == 0) {
-		    ++ ncpu;
+		    ncpu++;
 		}
 	    }
 	    fclose (fp);
-
-	    if (ncpu <= 0) {
-		ncpu = 1;
-	    }
 	}
     }
 #  endif
