@@ -823,11 +823,6 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	     */
 	    if (outIsHost != CV_HOST_MASK) {
 		switch (outfmt) {
-		    case CV_D:
-			(void) htond((unsigned char *)out,
-				     (unsigned char *)from,
-				     work_count);
-			break;
 		    case CV_16 | CV_SIGNED_MASK:
 			(void) bu_cv_htonss(out, bufsize, (short int *)from, work_count);
 			break;
@@ -839,6 +834,10 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 			break;
 		    case CV_32:
 			(void) bu_cv_htonul(out, bufsize, (unsigned long int *)from, work_count);
+			break;
+		    case CV_D:
+		    default:
+			/* do nothing */
 			break;
 		}
 	    }
