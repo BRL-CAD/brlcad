@@ -690,6 +690,8 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 	bu_log("Unsupported binary file type - only STL is currently supported\n");
 	return;
       } else {
+	/* If we get to this point, we need fp - check for it */
+	if (fp) {
 	switch (output_type) {
 	  case OTYPE_DXF:
 	    write_bot_dxf(bot, fp, dp->d_namep);
@@ -705,6 +707,9 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 	    write_bot_stl(bot, fp, dp->d_namep);
 	    break;
 	}
+	} else {
+          bu_log("bot_dump: non-binay file requested but fp is NULL!\n");
+        }
       }
     }
 }
