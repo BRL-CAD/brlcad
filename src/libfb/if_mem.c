@@ -79,6 +79,10 @@ mem_open(FBIO *ifp, const char *file, int width, int height)
 
     FB_CK_FBIO(ifp);
 
+    /* This function doesn't look like it will work if file
+     * is NULL - stop before we start, if that's the case.*/
+    if (file == NULL) return -1;
+
     /*
      * First, attempt to determine operating mode for this open,
      * based upon the "unit number" or flags.
@@ -87,7 +91,6 @@ mem_open(FBIO *ifp, const char *file, int width, int height)
      */
     mode = 0;
 
-    if (file != NULL) {
 	char modebuf[80];
 	char *mp;
 	int alpha;
@@ -123,7 +126,6 @@ mem_open(FBIO *ifp, const char *file, int width, int height)
 	    if (!alpha)
 		mode = atoi(modebuf);
 	}
-    }
 
     /* build a local static info struct */
     if ((MIL(ifp) = (char *)calloc(1, sizeof(struct meminfo))) == NULL) {
