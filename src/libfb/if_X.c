@@ -1372,14 +1372,14 @@ x_make_cursor(FBIO *ifp)
     XSetWindowAttributes xswa;
 
     if (ifp) {
-	FB_CK_FBIO(ifp);
-    }
+      FB_CK_FBIO(ifp);
 
-    xswa.save_under = True;
-    XI(ifp)->curswin = XCreateWindow(XI(ifp)->dpy, XI(ifp)->win,
-				     ifp->if_xcenter, ifp->if_ycenter, 1, 1, 3,
-				     CopyFromParent, InputOutput, CopyFromParent,
-				     CWSaveUnder, &xswa);
+      xswa.save_under = True;
+      XI(ifp)->curswin = XCreateWindow(XI(ifp)->dpy, XI(ifp)->win,
+	  ifp->if_xcenter, ifp->if_ycenter, 1, 1, 3,
+	  CopyFromParent, InputOutput, CopyFromParent,
+	  CWSaveUnder, &xswa);
+    }
     return 0;
 }
 
