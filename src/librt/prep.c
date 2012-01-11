@@ -1370,9 +1370,11 @@ unprep_reg_start(struct db_tree_state *tsp,
     if (comb) RT_CK_COMB(comb);
 
     /* Ignore "air" regions unless wanted */
+    if (tsp) {
     if (tsp->ts_rtip->useair == 0 &&  tsp->ts_aircode != 0) {
 	tsp->ts_rtip->rti_air_discards++;
 	return -1;	/* drop this region */
+    }
     }
     return 0;
 }
