@@ -1177,8 +1177,9 @@ X_wmap(FBIO *ifp, const ColorMap *cmp)
     if (XI(ifp)->depth != 8)
 	return 0;	/* no X colormap allocated - XXX */
 
-    /* If MODE_2_8BIT, load it in the real window colormap */
-    if ((XI(ifp)->mode&MODE_2MASK) == MODE_2_8BIT) {
+    /* If MODE_2_8BIT, load it in the real window colormap.  If
+     * is_linear is true, cmp will not be populated - do nothing. */
+    if ((XI(ifp)->mode&MODE_2MASK) == MODE_2_8BIT && !is_linear) {
 	for (i = 0; i < 256; i++) {
 	    /* Both sides expect 16-bit left-justified maps */
 	    color_defs[i].pixel = i;
