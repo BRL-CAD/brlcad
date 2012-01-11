@@ -25,6 +25,7 @@ set(LIBBU_SOURCES
     color.c
     convert.c
     crashreport.c
+    ctype.c
     dirent.c
     dirname.c
     dlfcn.c

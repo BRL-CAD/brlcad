@@ -6031,6 +6031,15 @@ BU_EXPORT extern const char *bu_dlerror();
 BU_EXPORT extern void *bu_pool_get(size_t elem_byte_size);
 BU_EXPORT extern void bu_pool_put(void *ptr, size_t elem_byte_size);
 
+/** @file libbu/ctype.c
+ *
+ * Routines for checking ctypes.
+ *
+ */
+BU_EXPORT extern int bu_str_isprint(const char *cp);
+
+
+
 __END_DECLS
 
 #endif  /* __BU_H__ */
