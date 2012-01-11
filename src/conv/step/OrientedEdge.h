@@ -34,11 +34,7 @@ private:
 	static string entityname;
 
 protected:
-#ifdef YAYA
 	Boolean orientation;
-#else
-	int orientation;
-#endif
 	Edge *edge_element;
 
 public:

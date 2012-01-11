@@ -38,12 +38,14 @@ OrientedEdge::OrientedEdge() {
     step = NULL;
     id = 0;
     edge_element = NULL;
+    orientation = BUnset;
 }
 
 OrientedEdge::OrientedEdge(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
     edge_element = NULL;
+    orientation = BUnset;
 }
 
 OrientedEdge::~OrientedEdge() {

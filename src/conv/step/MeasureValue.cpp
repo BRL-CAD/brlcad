@@ -55,17 +55,20 @@ const char *measure_type_names[] = {
     "THERMODYNAMIC_TEMPERATURE_MEASURE",
     "TIME_MEASURE",
     "VOLUME_MEASURE",
+    "UNKNOWN",
     NULL
 };
 
 MeasureValue::MeasureValue() {
     step = NULL;
     id = 0;
+    type = MeasureValue::UNKNOWN;
 }
 
 MeasureValue::MeasureValue(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
+    type = MeasureValue::UNKNOWN;
 }
 
 MeasureValue::~MeasureValue() {

@@ -39,11 +39,17 @@ string OffsetCurve2D::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMet
 OffsetCurve2D::OffsetCurve2D() {
     step = NULL;
     id = 0;
+    basis_curve = NULL;
+    distance = 0.0;
+    self_intersect = LUnset;
 }
 
 OffsetCurve2D::OffsetCurve2D(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
+    basis_curve = NULL;
+    distance = 0.0;
+    self_intersect = LUnset;
 }
 
 OffsetCurve2D::~OffsetCurve2D() {

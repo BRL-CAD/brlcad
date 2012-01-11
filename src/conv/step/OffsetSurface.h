@@ -35,12 +35,7 @@ private:
 protected:
 	Surface* basis_surface;
 	double distance;
-	//TODO: Fix all references to YAYA
-#ifdef YAYA
 	Logical self_intersect;
-#else
-	int self_intersect;
-#endif
 
 public:
 	OffsetSurface();

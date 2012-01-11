@@ -37,12 +37,16 @@ OffsetSurface::OffsetSurface() {
     step=NULL;
     id = 0;
     basis_surface = NULL;
+    distance = 0.0;
+    self_intersect = LUnset;
 }
 
 OffsetSurface::OffsetSurface(STEPWrapper *sw,int step_id) {
     step=sw;
     id = step_id;
     basis_surface = NULL;
+    distance = 0.0;
+    self_intersect = LUnset;
 }
 
 OffsetSurface::~OffsetSurface() {

@@ -36,11 +36,13 @@ string Loop::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Loop:
 Loop::Loop() {
     step = NULL;
     id = 0;
+    ON_loop_index = 0;
 }
 
 Loop::Loop(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
+    ON_loop_index = 0;
 }
 
 Loop::~Loop() {

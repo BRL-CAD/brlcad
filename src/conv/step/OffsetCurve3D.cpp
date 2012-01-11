@@ -39,11 +39,19 @@ string OffsetCurve3D::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMet
 OffsetCurve3D::OffsetCurve3D() {
     step = NULL;
     id = 0;
+    basis_curve = NULL;
+    distance = 0.0;
+    self_intersect = LUnset;
+    ref_direction = NULL;
 }
 
 OffsetCurve3D::OffsetCurve3D(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
+    basis_curve = NULL;
+    distance = 0.0;
+    self_intersect = LUnset;
+    ref_direction = NULL;
 }
 
 OffsetCurve3D::~OffsetCurve3D() {

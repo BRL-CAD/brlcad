@@ -36,11 +36,13 @@ string GeometricRepresentationContext::entityname = Factory::RegisterClass(ENTIT
 GeometricRepresentationContext::GeometricRepresentationContext() {
     step = NULL;
     id = 0;
+    coordinate_space_dimension = 0;
 }
 
 GeometricRepresentationContext::GeometricRepresentationContext(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
+    coordinate_space_dimension = 0;
 }
 
 GeometricRepresentationContext::~GeometricRepresentationContext() {

@@ -37,11 +37,15 @@ string Hyperbola::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)
 Hyperbola::Hyperbola() {
     step = NULL;
     id = 0;
+    semi_axis = 0.0;
+    semi_imag_axis = 0.0;
 }
 
 Hyperbola::Hyperbola(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
+    semi_axis = 0.0;
+    semi_imag_axis = 0.0;
 }
 
 Hyperbola::~Hyperbola() {
