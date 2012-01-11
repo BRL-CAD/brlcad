@@ -37,11 +37,7 @@ private:
 	static string entityname;
 
 protected:
-#ifdef YAYA
 	Boolean same_sense;
-#else
-	int same_sense;
-#endif
 	Curve *edge_geometry;
 
 public:

@@ -37,11 +37,15 @@ string Ellipse::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)El
 Ellipse::Ellipse() {
     step = NULL;
     id = 0;
+    semi_axis_1 = 0.0;
+    semi_axis_2 = 0.0;
 }
 
 Ellipse::Ellipse(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
+    semi_axis_1 = 0.0;
+    semi_axis_2 = 0.0;
 }
 
 Ellipse::~Ellipse() {

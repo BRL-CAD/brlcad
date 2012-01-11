@@ -43,6 +43,7 @@ EdgeCurve::EdgeCurve() {
     edge_start = NULL;
     edge_end = NULL;
     edge_geometry = NULL;
+    same_sense = BUnset;
 }
 
 EdgeCurve::EdgeCurve(STEPWrapper *sw,int step_id) {
@@ -51,6 +52,7 @@ EdgeCurve::EdgeCurve(STEPWrapper *sw,int step_id) {
     edge_start = NULL;
     edge_end = NULL;
     edge_geometry = NULL;
+    same_sense = BUnset;
 }
 
 EdgeCurve::~EdgeCurve() {
