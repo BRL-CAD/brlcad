@@ -33,7 +33,6 @@
 class RationalBezierSurface : public RationalBSplineSurface, public BezierSurface {
 private:
 	static string entityname;
-	int sid;
 
 protected:
 

@@ -37,12 +37,24 @@ RectangularTrimmedSurface::RectangularTrimmedSurface() {
     step=NULL;
     id = 0;
     basis_surface = NULL;
+    u1 = 0.0;
+    u2 = 0.0;
+    v1 = 0.0;
+    v2 = 0.0;
+    usense = BUnset;
+    vsense = BUnset;
 }
 
 RectangularTrimmedSurface::RectangularTrimmedSurface(STEPWrapper *sw,int step_id) {
     step=sw;
     id = step_id;
     basis_surface = NULL;
+    u1 = 0.0;
+    u2 = 0.0;
+    v1 = 0.0;
+    v2 = 0.0;
+    usense = BUnset;
+    vsense = BUnset;
 }
 
 RectangularTrimmedSurface::~RectangularTrimmedSurface() {

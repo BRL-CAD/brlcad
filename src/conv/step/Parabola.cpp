@@ -36,11 +36,13 @@ string Parabola::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)P
 Parabola::Parabola() {
     step = NULL;
     id = 0;
+    focal_dist = 0.0;
 }
 
 Parabola::Parabola(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
+    focal_dist = 0.0;
 }
 
 Parabola::~Parabola() {

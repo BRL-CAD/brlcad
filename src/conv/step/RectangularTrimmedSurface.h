@@ -41,14 +41,8 @@ protected:
 	double u2;
 	double v1;
 	double v2;
-	//TODO: Fix all references to YAYA
-#ifdef YAYA
 	Boolean usense;
 	Boolean vsense;
-#else
-	int usense;
-	int vsense;
-#endif
 
 public:
 	RectangularTrimmedSurface();

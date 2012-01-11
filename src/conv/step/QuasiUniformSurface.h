@@ -31,7 +31,6 @@
 class QuasiUniformSurface: virtual public BSplineSurface {
 private:
 	static string entityname;
-	int sid;
 
 protected:
 
