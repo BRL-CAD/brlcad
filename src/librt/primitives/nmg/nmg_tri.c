@@ -2528,7 +2528,6 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
 {
     struct loopuse *lu;
     struct edgeuse *eu;
-    int vert_count;
     int edgeuse_vert_count = 0;
     int non_consec_edgeuse_vert_count = 0;
     int faceuse_loopuse_count = 0;
@@ -2582,7 +2581,6 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
                     pl_color(plotfp, 0, ((edgeuse_vert_count * 30) % 155) + 100, 0);
                 }
             }
-            vert_count++;
             edgeuse_vert_count++;
             if (curr_v_p != prev_v_p) {
                 non_consec_edgeuse_vert_count++;
