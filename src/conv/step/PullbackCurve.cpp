@@ -278,14 +278,17 @@ sample(PBCData& data,
 {
     ON_2dPoint m;
     double t = randomPointFromRange(data, m, t1, t2);
-    ON_2dPointArray * samples = (*data.segments.end());
-    if (isFlat(p1, m, p2, data.flatness)) {
-	samples->Append(p2);
-    } else {
-	sample(data, t1, t, p1, m);
-	sample(data, t, t2, m, p2);
+    if (!data.segments.empty()) {
+	ON_2dPointArray * samples = data.segments.back();
+	if (isFlat(p1, m, p2, data.flatness)) {
+	    samples->Append(p2);
+	} else {
+	    sample(data, t1, t, p1, m);
+	    sample(data, t, t2, m, p2);
+	}
+	return true;
     }
-    return true;
+    return false;
 }
 
 
