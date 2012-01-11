@@ -934,7 +934,13 @@ correct_Lgt(struct application *ap, struct partition *pp, Lgt_Source *lgt_entry)
 {
     fastf_t energy_attenuation = 1.0;
     fastf_t lgt_dir[3];
-    if (lgt_entry && !lgt_entry->beam)
+
+    if (lgt_entry == NULL) {
+        bu_log("Error - correct_Lgt - null lgt_entry supplied!\n");
+	return  energy_attenuation;
+    }
+
+    if (!lgt_entry->beam)
 	return lgt_entry->energy;
 
     /* Vector to light src from surface contact pt. */
