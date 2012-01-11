@@ -63,8 +63,13 @@ DerivedUnitElement::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     if (unit == NULL) {
 	SCLP23(Application_instance) *se = step->getEntityAttribute(sse,"unit");
 
-	//unit = dynamic_cast<NamedUnit*>(Factory::CreateNamedUnitObject(sw,se));
-	unit = (NamedUnit*)Factory::CreateObject(sw,se);
+	if (se != NULL) {
+	    //unit = dynamic_cast<NamedUnit*>(Factory::CreateNamedUnitObject(sw,se));
+	    unit = (NamedUnit*)Factory::CreateObject(sw,se);
+	} else {
+	    std::cout << CLASSNAME << ":Error loading member field \"unit\"." << std::endl;
+	    return false;
+	}
     }
     exponent = step->getRealAttribute(sse,"exponent");
 

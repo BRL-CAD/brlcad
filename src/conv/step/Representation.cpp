@@ -152,7 +152,7 @@ Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		RepresentationItem *aRI = dynamic_cast<RepresentationItem *>(Factory::CreateObject(sw, entity));
 		items.push_back(aRI);
 	    } else {
-		std::cerr << CLASSNAME << ": Unhandled entity in attribute 'items'." << std::endl;;
+		std::cerr << CLASSNAME << ": Unhandled entity in attribute 'items'." << std::endl;
 		return false;
 	    }
 	}
@@ -162,53 +162,58 @@ Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
     if (context_of_items.empty()) {
 	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse, "context_of_items");
-	if (entity->IsComplex()) {
-	    SCLP23(Application_instance) *sub_entity = step->getEntity(entity, "Geometric_Representation_Context");
-	    if (sub_entity) {
-		GeometricRepresentationContext *aGRC = new GeometricRepresentationContext();
+	if (entity) {
+	    if (entity->IsComplex()) {
+		SCLP23(Application_instance) *sub_entity = step->getEntity(entity, "Geometric_Representation_Context");
+		if (sub_entity) {
+		    GeometricRepresentationContext *aGRC = new GeometricRepresentationContext();
 
-		context_of_items.push_back(aGRC);
-		if (!aGRC->Load(step, sub_entity)) {
-		    std::cout << CLASSNAME << ":Error loading GeometricRepresentationContext" << std::endl;;
-		    return false;
+		    context_of_items.push_back(aGRC);
+		    if (!aGRC->Load(step, sub_entity)) {
+			std::cout << CLASSNAME << ":Error loading GeometricRepresentationContext" << std::endl;
+			return false;
+		    }
 		}
-	    }
 
-	    sub_entity = step->getEntity(entity, "Global_Uncertainty_Assigned_Context");
-	    if (sub_entity) {
-		GlobalUncertaintyAssignedContext *aGUAC = new GlobalUncertaintyAssignedContext();
+		sub_entity = step->getEntity(entity, "Global_Uncertainty_Assigned_Context");
+		if (sub_entity) {
+		    GlobalUncertaintyAssignedContext *aGUAC = new GlobalUncertaintyAssignedContext();
 
-		context_of_items.push_back(aGUAC);
-		if (!aGUAC->Load(step, sub_entity)) {
-		    std::cout << CLASSNAME << ":Error loading GlobalUncertaintyAssignedContext" << std::endl;;
-		    return false;
+		    context_of_items.push_back(aGUAC);
+		    if (!aGUAC->Load(step, sub_entity)) {
+			std::cout << CLASSNAME << ":Error loading GlobalUncertaintyAssignedContext" << std::endl;
+			return false;
+		    }
 		}
-	    }
 
-	    sub_entity = step->getEntity(entity, "Global_Unit_Assigned_Context");
-	    if (sub_entity) {
-		GlobalUnitAssignedContext *aGUAC = new GlobalUnitAssignedContext();
+		sub_entity = step->getEntity(entity, "Global_Unit_Assigned_Context");
+		if (sub_entity) {
+		    GlobalUnitAssignedContext *aGUAC = new GlobalUnitAssignedContext();
 
-		context_of_items.push_back(aGUAC);
-		if (!aGUAC->Load(step, sub_entity)) {
-		    std::cout << CLASSNAME << ":Error loading GlobalUnitAssignedContext" << std::endl;;
-		    return false;
+		    context_of_items.push_back(aGUAC);
+		    if (!aGUAC->Load(step, sub_entity)) {
+			std::cout << CLASSNAME << ":Error loading GlobalUnitAssignedContext" << std::endl;
+			return false;
+		    }
 		}
-	    }
 
-	    sub_entity = step->getEntity(entity, "Parametric_Representation_Context");
-	    if (sub_entity) {
-		ParametricRepresentationContext *aPRC = new ParametricRepresentationContext();
+		sub_entity = step->getEntity(entity, "Parametric_Representation_Context");
+		if (sub_entity) {
+		    ParametricRepresentationContext *aPRC = new ParametricRepresentationContext();
 
-		context_of_items.push_back(aPRC);
-		if (!aPRC->Load(step, sub_entity)) {
-		    std::cout << CLASSNAME << ":Error loading ParametricRepresentationContext" << std::endl;;
-		    return false;
+		    context_of_items.push_back(aPRC);
+		    if (!aPRC->Load(step, sub_entity)) {
+			std::cout << CLASSNAME << ":Error loading ParametricRepresentationContext" << std::endl;
+			return false;
+		    }
 		}
+	    } else {
+		RepresentationContext *aRC = (RepresentationContext *)Factory::CreateObject(sw, entity);
+		context_of_items.push_back(aRC);
 	    }
 	} else {
-	    RepresentationContext *aRC = (RepresentationContext *)Factory::CreateObject(sw, entity);
-	    context_of_items.push_back(aRC);
+	    std::cout << CLASSNAME << ":Error loading \"context_of_items\"" << std::endl;
+	    return false;
 	}
     }
     /*
@@ -309,9 +314,9 @@ Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 void
 Representation::Print(int level) {
     TAB(level); std::cout << CLASSNAME << ":" << name << "(";
-    std::cout << "ID:" << STEPid() << ")" << std::endl;;
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level+1); std::cout << "items:" << std::endl;;
+    TAB(level+1); std::cout << "items:" << std::endl;
     LIST_OF_REPRESENTATION_ITEMS::iterator i;
     for (i=items.begin(); i != items.end(); ++i) {
 	//ManifoldSolidBrep *msb = (ManifoldSolidBrep *)(*i);
@@ -320,7 +325,7 @@ Representation::Print(int level) {
 	(*i)->Print(level+1);
     }
 
-    TAB(level+1); std::cout << "context_of_items:" << std::endl;;
+    TAB(level+1); std::cout << "context_of_items:" << std::endl;
     LIST_OF_REPRESENTATION_CONTEXT::iterator ic;
     for (ic=context_of_items.begin(); ic != context_of_items.end(); ++ic) {
 	(*ic)->Print(level+1);
@@ -337,7 +342,7 @@ Representation::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 	Factory::AddObject(object);
 
 	if (!object->Load(sw, sse)) {
-	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;;
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 	    delete object;
 	    return NULL;
 	}

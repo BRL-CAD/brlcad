@@ -82,7 +82,12 @@ SurfacePatch::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
     if (parent_surface == NULL) {
 	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"parent_surface");
-	parent_surface = dynamic_cast<BoundedSurface *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
+	if (entity != NULL) {
+	    parent_surface = dynamic_cast<BoundedSurface *>(Factory::CreateObject(sw,entity));
+	} else {
+	    std::cout << CLASSNAME << ":Error loading member field \"parent_surface\"." << std::endl;
+	    return false;
+	}
     }
 
     u_transition = (Transition_code)step->getEnumAttribute(sse,"u_transition");

@@ -88,11 +88,21 @@ Line::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
     if (pnt == NULL) {
 	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"pnt");
-	pnt = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,entity));
+	if (entity != NULL) {
+	    pnt = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,entity));
+	} else {
+	    std::cout << CLASSNAME << ":Error loading member field \"pnt\"." << std::endl;
+	    return false;
+	}
     }
     if (dir == NULL) {
 	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"dir");
-	dir = dynamic_cast<Vector *>(Factory::CreateObject(sw,entity));
+	if (entity != NULL) {
+	    dir = dynamic_cast<Vector *>(Factory::CreateObject(sw,entity));
+	} else {
+	    std::cout << CLASSNAME << ":Error loading member field \"dir\"." << std::endl;
+	    return false;
+	}
     }
     return true;
 }

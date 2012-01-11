@@ -78,7 +78,12 @@ CompositeCurveSegment::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
     if (parent_curve == NULL) {
 	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"parent_curve");
-	parent_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
+	if (entity != NULL) {
+	    parent_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity));
+	} else {
+	    std::cout << CLASSNAME << ":Error loading member entity \"parent_curve\"." << std::endl;
+	    return false;
+	}
     }
 
     transition = (Transition_code)step->getEnumAttribute(sse,"transition");

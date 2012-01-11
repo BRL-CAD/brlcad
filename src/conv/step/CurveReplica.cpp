@@ -69,12 +69,22 @@ CurveReplica::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
     if (parent_curve == NULL) {
 	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"parent_curve");
-	parent_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
+	if (entity != NULL) {
+	    parent_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
+	} else {
+	    std::cout << CLASSNAME << ":Error loading member field \"parent_curve\"." << std::endl;
+	    return false;
+	}
     }
 
     if (transformation == NULL) {
 	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"transformation");
-	transformation = dynamic_cast<CartesianTransformationOperator *>(Factory::CreateObject(sw,entity));
+	if (entity != NULL) {
+	    transformation = dynamic_cast<CartesianTransformationOperator *>(Factory::CreateObject(sw,entity));
+	} else {
+	    std::cout << CLASSNAME << ":Error loading member field \"transformation\"." << std::endl;
+	    return false;
+	}
     }
 
     return true;

@@ -88,11 +88,11 @@ EdgeCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 		    edge_geometry->End(edge_start);
 		}
 	    } else {
-		std::cout << CLASSNAME << ":Error loading field \"edge_geometry\"." << std::endl;
+		std::cout << CLASSNAME << ":Error loading member field \"edge_geometry\"." << std::endl;
 		return false;
 	    }
 	} else {
-	    std::cout << CLASSNAME << ":Error loading field \"edge_geometry\"." << std::endl;
+	    std::cout << CLASSNAME << ":Error loading member field \"edge_geometry\"." << std::endl;
 	    return false;
 	}
     }
