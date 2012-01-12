@@ -117,6 +117,7 @@ db5_select_length_encoding(size_t len)
 int
 db5_decode_length(size_t *lenp, const unsigned char *cp, int format)
 {
+    *lenp = 0;
     switch (format) {
 	case DB5HDR_WIDTHCODE_8BIT:
 	    *lenp = (*cp);
@@ -384,11 +385,12 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 	bu_log("db5_get_raw_internal_fp(): fread lenbuf error\n");
 	return -2;
     }
-    if (isdigit(*lenbuf) == 0) {
-	bu_log("db5_get_raw_internal_fp(): lenbuf is bad value: \"%s\"\n", lenbuf);
-	return -2;
-    }
+
     used += db5_decode_length(&rip->object_length, lenbuf, rip->h_object_width);
+    if ( rip->object_length > UINTPTR_MAX>>3 ) {
+	bu_log("db5_get_raw_internal_fp() bad length read\n");
+	return -1;
+    }
     rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
     if ((size_t)rip->object_length < sizeof(struct db5_ondisk_header)) {
