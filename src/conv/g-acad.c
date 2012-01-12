@@ -318,7 +318,7 @@ process_region(const struct db_full_path *pathp, union tree *curtree, struct db_
 	*tsp->ts_m = nmg_mm();
 
 	return TREE_NULL;
-    } BU_UNSETJUMP;		/* Relinquish the protection */
+    }
 }
 
 
