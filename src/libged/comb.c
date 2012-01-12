@@ -219,8 +219,9 @@ _ged_combadd(struct ged *gedp,
 	    tree_list[node_count - 1].tl_op = OP_SUBTRACT;
 	    break;
 	default:
-	    bu_vls_printf(gedp->ged_result_str, "unrecognized relation (assume UNION)\n");
-	case 'u':
+	    if (relation != 'u') {
+		bu_vls_printf(gedp->ged_result_str, "unrecognized relation (assume UNION)\n");
+	    }
 	    tree_list[node_count - 1].tl_op = OP_UNION;
 	    break;
     }
