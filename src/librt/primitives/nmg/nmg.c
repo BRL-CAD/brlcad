@@ -915,7 +915,7 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
 	len *= RT_NURB_EXTRACT_COORDS(pt_type);
 
     count = ntohl(*(uint32_t*)(cp + 4));
-    if (count != len) {
+    if (count != len || count < 0) {
 	bu_log("rt_nmg_import4_fastf() subscript=%d, expected len=%d, got=%d\n",
 	       subscript, len, count);
 	bu_bomb("rt_nmg_import4_fastf()\n");
