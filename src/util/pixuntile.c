@@ -108,7 +108,7 @@ main(int argc, char **argv)
     int i, y;
     char ibuf[1024*3] = {0};
     char name[80] = {0};
-    FILE *f[8];
+    FILE *f[8] = {NULL};
     size_t ret;
 
     if (!get_args(argc, argv)) {
