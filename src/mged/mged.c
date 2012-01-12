@@ -2464,7 +2464,7 @@ log_event(const char *event, const char *arg)
 
     /* disable for now until it can be tied to OPTIMIZED too */
     return;
-
+#if 0
     /* get the current time */
     (void)time(&now);
     timep = ctime(&now);	/* returns 26 char string */
@@ -2513,6 +2513,7 @@ log_event(const char *event, const char *arg)
     }
 
     bu_vls_free(&line);
+#endif
 }
 
 
