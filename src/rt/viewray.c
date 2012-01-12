@@ -98,9 +98,9 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 {
     register struct partition *pp = PartHeadp->pt_forw;
     struct partition	*np;	/* next partition */
-    vect_t		inormal;
-    vect_t		onormal;
-    vect_t		inormal2;
+    vect_t inormal = VINIT_ZERO;
+    vect_t onormal = VINIT_ZERO;
+    vect_t inormal2 = VINIT_ZERO;
 
     if ( pp == PartHeadp )
 	return 0;		/* nothing was actually hit?? */
