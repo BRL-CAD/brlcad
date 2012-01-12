@@ -31,6 +31,7 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include <string.h>
 #include "bin.h"
@@ -713,12 +714,20 @@ rt_process_uplot_value(register struct bu_list **vhead,
 {
     mat_t mat;
     const struct uplot *up;
-    char carg[256] = {0,0,0};
-    fastf_t arg[6];
+#define CARG_LEN 256
+#define ARG_LEN 6
+    char carg[CARG_LEN];
+    fastf_t arg[ARG_LEN];
     vect_t a, b;
     point_t last_pos;
     static point_t lpnt;		/* last point of a move/draw series */
     static int moved = 0;	/* moved since color change */
+
+    memset(carg, 0, sizeof(char)*CARG_LEN);
+    memset(arg, 0, sizeof(fastf_t)*ARG_LEN);
+#undef ARG_LEN
+#undef CARG_LEN
+
 
     /* look it up */
     if (c < 'A' || c > 'z') {
