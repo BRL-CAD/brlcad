@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2011-12-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* fix crash in coil when using -S and -l options - Cliff Yapp
 * fixed nirt memory leak and scriptfile off-by-one bug - Sean Morrison
 * d2-c now handles the imaginary part correctly - Erik Greenwald
 * fixed rt* crash when output file cannot be created - Erik Greenwald
