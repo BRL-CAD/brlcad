@@ -172,6 +172,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     if (bu_fgets(line, sizeof (line), fp) == NULL ||
 	line[0] != hdr[0]) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Header line damaged, aborting\n", argv[0]);
+	(void)fclose(fp);
 	return GED_ERROR;
     }
 
