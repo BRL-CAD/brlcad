@@ -6,7 +6,6 @@ noinst_PROGRAMS = \
 	test_basename \
 	test_dirname \
 	test_escape \
-	test_htond \
 	test_progname \
 	test_quote \
 	test_timer \
@@ -95,11 +94,6 @@ libbu_la_SOURCES =
 libbu_la_LDFLAGS = -version-info 19:1 -no-undefined
 libbu_la_LIBADD = \
 	libbu_nil.la \
-	${BU_LIBS}
-
-test_htond_SOURCES = test_htond.c
-test_htond_LDADD = \
-	libbu.la \
 	${BU_LIBS}
 
 test_timer_SOURCES = test_timer.c

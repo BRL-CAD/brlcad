@@ -110,9 +110,6 @@ target_link_libraries(test_dirname libbu)
 add_executable(test_escape test_escape.c)
 target_link_libraries(test_escape libbu)
 
-add_executable(test_htond test_htond.c)
-target_link_libraries(test_htond libbu)
-
 add_executable(test_progname test_progname.c)
 target_link_libraries(test_progname libbu)
 
