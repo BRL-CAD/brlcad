@@ -376,16 +376,12 @@ show_menu()
 }
 
 void
-shoot(char *buffer, com_table *ctp, struct rt_i *rtip)
+shoot(char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *rtip)
 {
     int i;
     double bov = 0.0;	/* back out value */
 
     extern void init_ovlp();
-
-    /* quellage */
-    buffer = buffer;
-    ctp = ctp;
 
     if (!rtip)
       return;
