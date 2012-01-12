@@ -590,30 +590,32 @@ static void yy_reduce(
   */
 %%
   };
-  yygoto = yyRuleInfo[yyruleno].lhs;
-  yysize = yyRuleInfo[yyruleno].nrhs;
-  yypParser->yyidx -= yysize;
-  yyact = yy_find_reduce_action(yymsp[-yysize].stateno,(YYCODETYPE)yygoto);
-  if( yyact < YYNSTATE ){
+  if( yyruleno < (int)(sizeof(yyRuleName)/sizeof(yyRuleName[0])) ) {
+    yygoto = yyRuleInfo[yyruleno].lhs;
+    yysize = yyRuleInfo[yyruleno].nrhs;
+    yypParser->yyidx -= yysize;
+    yyact = yy_find_reduce_action(yymsp[-yysize].stateno,(YYCODETYPE)yygoto);
+    if( yyact < YYNSTATE ){
 #ifdef NDEBUG
-    /* If we are not debugging and the reduce action popped at least
-    ** one element off the stack, then we can push the new element back
-    ** onto the stack here, and skip the stack overflow test in yy_shift().
-    ** That gives a significant speed improvement. */
-    if( yysize ){
-      yypParser->yyidx++;
-      yymsp -= yysize-1;
-      yymsp->stateno = (YYACTIONTYPE)yyact;
-      yymsp->major = (YYCODETYPE)yygoto;
-      yymsp->minor = yygotominor;
-    }else
+      /* If we are not debugging and the reduce action popped at least
+      ** one element off the stack, then we can push the new element back
+      ** onto the stack here, and skip the stack overflow test in yy_shift().
+      ** That gives a significant speed improvement. */
+      if( yysize ){
+        yypParser->yyidx++;
+        yymsp -= yysize-1;
+        yymsp->stateno = (YYACTIONTYPE)yyact;
+        yymsp->major = (YYCODETYPE)yygoto;
+        yymsp->minor = yygotominor;
+      }else
 #endif
-    {
-      yy_shift(yypParser,yyact,yygoto,&yygotominor);
+      {
+        yy_shift(yypParser,yyact,yygoto,&yygotominor);
+      }
+    }else{ 
+      assert( yyact == YYNSTATE + YYNRULE + 1 );
+      yy_accept(yypParser);
     }
-  }else{
-    assert( yyact == YYNSTATE + YYNRULE + 1 );
-    yy_accept(yypParser);
   }
 }
 
