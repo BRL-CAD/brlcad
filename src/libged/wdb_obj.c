@@ -745,8 +745,9 @@ wdb_combadd(struct db_i *dbip,
 	    tree_list[node_count - 1].tl_op = OP_SUBTRACT;
 	    break;
 	default:
-	    bu_log("unrecognized relation (assume UNION)\n");
-	case 'u':
+	    if (relation != 'u') {
+		bu_log("unrecognized relation (assume UNION)\n");
+	    }
 	    tree_list[node_count - 1].tl_op = OP_UNION;
 	    break;
     }
