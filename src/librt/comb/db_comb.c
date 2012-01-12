@@ -496,7 +496,7 @@ rt_comb_export4(
 	}
 
 	NAMEMOVE(tp->tr_l.tl_name, rp[j+1].M.m_instname);
-	tp->tr_l.tl_name[NAMESIZE] = '\0'; /* sanity */
+	rp[j+1].M.m_instname[NAMESIZE] = '\0'; /* sanity */
 
 	if (tp->tr_l.tl_mat) {
 	    flip_dbmat_mat(rp[j+1].M.m_mat, tp->tr_l.tl_mat);
@@ -942,6 +942,7 @@ db_wrap_v4_external(struct bu_external *op, const char *name)
 
     rec = (union record *)op->ext_buf;
     NAMEMOVE(name, rec->s.s_name);
+    rec->s.s_name[NAMESIZE] = '\0';
 }
 
 
