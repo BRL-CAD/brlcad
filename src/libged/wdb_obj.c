@@ -9763,7 +9763,6 @@ wdb_create_cmd(struct rt_wdb *wdbp,	/* pointer to object */
 	       const char *oname)	/* object name */
 {
     if (wdbp == RT_WDB_NULL) {
-	Tcl_AppendResult(wdbp->wdb_interp, "wdb_init_cmd ", oname, " failed", NULL);
 	return TCL_ERROR;
     }
 
