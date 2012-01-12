@@ -671,7 +671,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
     int fieldlen = -1;
     int left_justify = 0;
 
-    char fbuf[64] = {0}; /* % format buffer */
+    char fbuf[256] = {0}; /* % format buffer */
     char buf[BUFSIZ] = {0};
 
     if (UNLIKELY(!vls || !fmt || fmt[0] == '\0')) {
