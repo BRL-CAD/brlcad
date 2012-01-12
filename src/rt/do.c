@@ -754,23 +754,34 @@ do_frame(int framenumber)
 	 * reading and writing, but must do its own positioning.
 	 */
 	{
+	    int fd;
+	    int ret;
 	    struct stat sb;
-	    if (stat(framename, &sb) >= 0 &&
-		sb.st_size > 0 &&
-		(size_t)sb.st_size < width*height*sizeof(RGBpixel)) {
-		/* File exists, with partial results */
-		register int fd;
-		if ((fd = open(framename, 2)) < 0 ||
-		    (outfp = fdopen(fd, "r+")) == NULL) {
+
+	    if (bu_file_exists(framename)) {
+		/* File exists, maybe with partial results */
+		fd = open(framename, 2);
+		outfp = fdopen(fd, "r+");
+		if (fd < 0 || !outfp) {
 		    perror(framename);
-		    if (matflag) return 0;	/* OK */
-		    return -1;			/* Bad */
+
+		    if (matflag)
+			return 0; /* OK: some undocumented reason */
+
+		    return -1; /* BAD: oops, disappeared */
 		}
-		/* Read existing pix data into the frame buffer */
-		if (sb.st_size > 0) {
-		    size_t ret = fread(pixmap, 1, (size_t)sb.st_size, outfp);
-		    if (ret < (size_t)sb.st_size)
-			return -1;
+
+		/* check if partial result */
+		ret = fstat(fd, &sb);
+		if (sb.st_size > 0 && (size_t)sb.st_size < width*height*sizeof(RGBpixel)) {
+
+		    /* Read existing pix data into the frame buffer */
+		    if (sb.st_size > 0) {
+			size_t ret = fread(pixmap, 1, (size_t)sb.st_size, outfp);
+			if (ret < (size_t)sb.st_size)
+			    return -1;
+		    }
+
 		}
 	    }
 	}
