@@ -81,6 +81,8 @@ Polyline::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 		points.push_back(aCP);
 	    } else {
 		std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'points'." << std::endl;
+		l->clear();
+		delete l;
 		return false;
 	    }
 	}

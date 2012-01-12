@@ -153,6 +153,8 @@ Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		items.push_back(aRI);
 	    } else {
 		std::cerr << CLASSNAME << ": Unhandled entity in attribute 'items'." << std::endl;
+		l->clear();
+		delete l;
 		return false;
 	    }
 	}

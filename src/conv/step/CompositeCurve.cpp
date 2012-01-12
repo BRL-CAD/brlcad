@@ -84,6 +84,8 @@ CompositeCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 		segments.push_back(aCCS);
 	    } else {
 		std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'segments'." << std::endl;
+		l->clear();
+		delete l;
 		return false;
 	    }
 	}

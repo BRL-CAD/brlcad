@@ -82,6 +82,8 @@ Face::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		bounds.push_back(aFB);
 	    } else {
 		std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'bounds'." << std::endl;
+		l->clear();
+		delete l;
 		return false;
 	    }
 	}

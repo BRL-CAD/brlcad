@@ -84,6 +84,8 @@ GlobalUncertaintyAssignedContext::Load(STEPWrapper *sw,SCLP23(Application_instan
 		uncertainty.push_back(aUMWU);
 	    } else {
 		std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'uncertainty'." << std::endl;
+		l->clear();
+		delete l;
 		return false;
 	    }
 	}

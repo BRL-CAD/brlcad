@@ -101,6 +101,8 @@ BSplineCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 		control_points_list.push_back(aCP);
 	    } else {
 		std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'control_points_list'." << std::endl;
+		l->clear();
+		delete l;
 		return false;
 	    }
 	}

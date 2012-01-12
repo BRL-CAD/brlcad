@@ -993,6 +993,7 @@ pullback_samples(const brlcad::SurfaceTree* surfacetree,
 		}
 	    } else {
 		std::cerr << "pullback_samples:Error: cannot evaluate curve at parameter 0.0" << std::endl;
+		delete data;
 		return NULL;
 	    }
 	} else {

@@ -115,6 +115,8 @@ Path::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 		std::cerr << CLASSNAME
 			  << ": Unhandled entity in attribute 'edge_list'."
 			  << std::endl;
+		l->clear();
+		delete l;
 		return false;
 	    }
 	}

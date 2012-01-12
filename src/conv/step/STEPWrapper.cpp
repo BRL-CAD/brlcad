@@ -90,6 +90,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 //				LocalUnits::solidangle = 1.0;
 		ON_Brep *onBrep = aBrep->GetONBrep();
 		if (!onBrep) {
+		    delete aBrep;
 		    bu_exit(1, "ERROR: failure creating advanced boundary representation from %s\n", stepfile.c_str());
 		} else {
 		    ON_TextLog tl;
@@ -103,6 +104,9 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		    delete onBrep;
 		}
 		delete aBrep;
+	    } else {
+		delete aBrep;
+		bu_exit(1, "ERROR: failure loading advanced boundary representation from %s\n", stepfile.c_str());
 	    }
 	}
     }

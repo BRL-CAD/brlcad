@@ -88,6 +88,8 @@ CurveBoundedSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		boundaries.push_back(aAF);
 	    } else {
 		std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'cfs_faces'." << std::endl;
+		l->clear();
+		delete l;
 		return false;
 	    }
 	}
