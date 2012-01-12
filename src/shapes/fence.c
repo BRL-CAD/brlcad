@@ -1028,6 +1028,7 @@ int generateMesh(struct rt_wdb *fp, char *meshname, fastf_t *startposition, fast
 	    } else {
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh:mk_addmember wireName[%s], count2[%d] FAILED (region)\n", wireName, count);
 		errors++;
+		return errors;
 	    }
 	    matrixextractor->wm_mat[3]  = dx;
 	    matrixextractor->wm_mat[7]  = dy;
@@ -1106,11 +1107,8 @@ int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *
     struct wmember wireregionmembers;
     struct wmember *matrixextractor;
 
-    matrixextractor = (struct wmember *) malloc(sizeof(struct wmember));
-    if (matrixextractor == NULL) {
-	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:(struct wmember *)matrixextractor malloc FAILED\n");
-	errors++;
-    }
+    matrixextractor = (struct wmember *) bu_calloc(1, sizeof(struct wmember), "wmember");
+
     BU_LIST_INIT(&basicmeshmembers.l);
     BU_LIST_INIT(&wiremembers.l);
     BU_LIST_INIT(&basicmeshregionmembers.l);
@@ -1175,6 +1173,7 @@ int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *
 	} else {
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:mk_addmember wirename[%s], count2[%d] FAILED\n", wirename, count);
 	    errors++;
+	    return errors;
 	}
 	matrixextractor->wm_mat[3]  = dx;
 	matrixextractor->wm_mat[7]  = dy;
@@ -1214,6 +1213,7 @@ int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *
 	errors++;
     }
 
+    bu_free(matrixextractor, "matrixextractor");
 
     return errors;
 }
@@ -1805,7 +1805,6 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
-
 
     return errors;
 }
