@@ -2988,7 +2988,7 @@ RT_EXPORT extern int db_write(struct db_i	*dbip,
 			      size_t		count,
 			      off_t		offset);
 RT_EXPORT extern int db_fwrite_external(FILE			*fp,
-					const char		*name,
+					char			*name,
 					struct bu_external	*ep);
 
 /* malloc & read records */
