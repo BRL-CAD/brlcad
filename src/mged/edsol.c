@@ -3884,6 +3884,7 @@ pscale(void)
 		RT_METABALL_CK_MAGIC(ball);
 		ball->threshold = es_para[0];
 	    }
+	    break;
 	case MENU_METABALL_SET_METHOD:
 	    {
 		struct rt_metaball_internal *ball =
