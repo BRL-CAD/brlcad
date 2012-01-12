@@ -3018,6 +3018,22 @@ BU_EXPORT extern int bu_fnmatch(const char *pattern, const char *pathname, int f
 BU_EXPORT extern size_t bu_dir_list(const char *path, const char *pattern, char ***files);
 
 
+/** @file libbu/realpath.c
+ *
+ */
+
+/**
+ * Call canonicalization routines to both expand and validate
+ * a path name.  
+ *
+ * Returns a pointer to the canonical path. If resolved_path is
+ * NULL, caller is responsible for freeing the returned path
+ * via bu_free.  If supplying a result string, the string must hold
+ * at least MAXPATHLEN characters.
+ */
+BU_EXPORT extern char * bu_realpath(const char *path, char *resolved_path);
+
+
 /** @file libbu/brlcad_path.c
  *
  * @brief
