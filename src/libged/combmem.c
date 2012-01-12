@@ -1059,10 +1059,12 @@ ged_combmem(struct ged *gedp, int argc, const char *argv[])
 	    if (argc > 6 && !((argc-2)%5)) {
 		return combmem_set_tra(gedp, argc, argv, rflag);
 	    }
+	    break;
 	case ETYPES_SCA:
 	    if (argc > 10 && !((argc-2)%9)) {
 		return combmem_set_sca(gedp, argc, argv, rflag);
 	    }
+	    break;
 	case ETYPES_NULL:
 	default:
 	    if (argc > 16 && !((argc-2)%15)) {
