@@ -63,6 +63,15 @@ char inbuf[sizeof(struct rasterfile)];
 #define RMT_NONE 0	/* ras_maplength is expected to be 0 */
 #define RMT_EQUAL_RGB 1	/* red[ras_maplength/3], green[], blue[] */
 
+#define GETUC_CHECKED(uc, fp, err_msg) \
+{ \
+    int _c = getc(fp); \
+    if (_c == EOF) { \
+	bu_exit(1, err_msg); \
+    } \
+    uc = (unsigned char)_c; \
+}
+
 /*
  * NOTES:
  * Each line of the image is rounded out to a multiple of 16 bits.
@@ -245,7 +254,7 @@ main(int argc, char **argv)
     int on = 255;
     int width;			/* line width in bits */
     int scanbytes;		/* bytes/line (padded to 16 bits) */
-    unsigned char buf[4096];
+    unsigned char c, buf[4096];
 
     fp = stdin;
     if (!get_args(argc, argv) || (isatty(fileno(stdout)) && (hflag == 0))) {
@@ -357,24 +366,27 @@ main(int argc, char **argv)
 	    }
 	    scanbytes = width;
 	    for (x = 0; x < header.ras_maplength/3; x++) {
+		GETUC_CHECKED(c, fp, "sun-pix: expected red color value, but end-of-file reached.\n");
 		if (inverted) {
-		    Cmap[x].CL_red = 255-(unsigned char)getc(fp);
+		    Cmap[x].CL_red = 255-c;
 		} else {
-		    Cmap[x].CL_red = getc(fp);
+		    Cmap[x].CL_red = c;
 		}
 	    }
 	    for (x = 0; x < header.ras_maplength/3; x++) {
+		GETUC_CHECKED(c, fp, "sun-pix: expected green color value, but end-of-file reached.\n");
 		if (inverted) {
-		    Cmap[x].CL_green = 255-(unsigned char)getc(fp);
+		    Cmap[x].CL_green = 255-c;
 		} else {
-		    Cmap[x].CL_green = getc(fp);
+		    Cmap[x].CL_green = c;
 		}
 	    }
 	    for (x = 0; x < header.ras_maplength/3; x++) {
+		GETUC_CHECKED(c, fp, "sun-pix: expected blue color value, but end-of-file reached.\n");
 		if (inverted) {
-		    Cmap[x].CL_blue = 255-(unsigned char) getc(fp);
+		    Cmap[x].CL_blue = 255-c;
 		} else {
-		    Cmap[x].CL_blue = getc(fp);
+		    Cmap[x].CL_blue = c;
 		}
 	    }
 	    if (colorout) {
