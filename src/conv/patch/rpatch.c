@@ -217,10 +217,10 @@ main(int argc, char **argv)
 	    case '3':	/* FASTGEN3 format?? */
 		fast3 = 1;
 		break;
-	    default:
-		fprintf( stderr, "Illegal option (%c)\n", c );
 	    case '?':
 		bu_exit(1, "%s", usage );
+	    default:
+		bu_exit(1, "Illegal option (%c)\n%s", c, usage );
 	}
     }
 
