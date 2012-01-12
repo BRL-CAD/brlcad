@@ -2343,7 +2343,7 @@ fuse_vertex(struct ga_t *ga,
 				   &num_unique_texture_vertex_index_list);
     }
 
-    if (debug) {
+    if (debug && vertex_index_list && (num_unique_vertex_index_list > 0)) {
 	for (idx1 = 0 ; idx1 < num_unique_vertex_index_list ; idx1++) {
 	    bu_log("unique sorted vertex_index_list[idx1] = (%zu)\n",
 		   vertex_index_list[idx1]);
