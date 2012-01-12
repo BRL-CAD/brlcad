@@ -1077,11 +1077,11 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
 	    kp_v = (vect_t *)NULL;
 	} else {
 	    BU_ASSERT((*arg_head)->type &= ~EDIT_ABS_POS);
-	    if (!((*arg_head)->coords_used & EDIT_COORD_X))
+	    if (!((*arg_head)->coords_used & EDIT_COORD_X) && kp_v)
 		(*to_v)[0] = (*kp_v)[0];
-	    if (!((*arg_head)->coords_used & EDIT_COORD_Y))
+	    if (!((*arg_head)->coords_used & EDIT_COORD_Y) && kp_v)
 		(*to_v)[1] = (*kp_v)[1];
-	    if (!((*arg_head)->coords_used & EDIT_COORD_Z))
+	    if (!((*arg_head)->coords_used & EDIT_COORD_Z) && kp_v)
 		(*to_v)[2] = (*kp_v)[2];
 	}
 	(*arg_head)->coords_used |= EDIT_COORDS_ALL;
