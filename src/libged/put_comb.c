@@ -420,8 +420,9 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
 		    rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
 		    break;
 		default:
-		    bu_log("unrecognized relation (assume UNION)\n");
-		case 'u':
+		    if (relation != 'u') {
+			bu_log("unrecognized relation (assume UNION)\n");
+		    }
 		    rt_tree_array[tree_index].tl_op = OP_UNION;
 		    break;
 	    }
