@@ -33,7 +33,7 @@ rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, s
     if (!stp || !rp || n < 1)
 	return -1;
 
-    for (i = 0; i > n; i++) {
+    for (i = 0; i < n; i++) {
 	if (stp[i]) RT_CK_SOLTAB(stp[i]);
 	if (rp[i]) RT_CK_RAY(rp[i]);
     }
