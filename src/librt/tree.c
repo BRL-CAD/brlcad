@@ -116,19 +116,19 @@ _rt_tree_region_assign(union tree *tp, const struct region *regionp)
 HIDDEN int
 _rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t UNUSED(client_data))
 {
-    if (tsp) {
-	RT_CK_RTI(tsp->ts_rtip);
-	RT_CK_RESOURCE(tsp->ts_resp);
-    }
+  if (tsp) {
+    RT_CK_RTI(tsp->ts_rtip);
+    RT_CK_RESOURCE(tsp->ts_resp);
     if (pathp) RT_CK_FULL_PATH(pathp);
     if (combp) RT_CHECK_COMB(combp);
 
     /* Ignore "air" regions unless wanted */
     if (tsp->ts_rtip->useair == 0 &&  tsp->ts_aircode != 0) {
-	tsp->ts_rtip->rti_air_discards++;
-	return -1;	/* drop this region */
+      tsp->ts_rtip->rti_air_discards++;
+      return -1;	/* drop this region */
     }
-    return 0;
+  }
+  return 0;
 }
 
 
