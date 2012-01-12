@@ -1787,7 +1787,6 @@ main(int argc, char *argv[])
 		bu_log("%s\n", buf);
 		continue;
 	}
-	memset(buf, 0, sizeof(char) * BUFSIZE);
     }
 
     /* Now, at the end of the database, dump out the entire
