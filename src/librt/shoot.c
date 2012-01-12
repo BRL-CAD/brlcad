@@ -1628,6 +1628,8 @@ rt_cell_n_on_ray(register struct application *ap, int n)
     struct rt_i *rtip;
     const int debug_shoot = RT_G_DEBUG & DEBUG_SHOOT;
 
+    memset(&ss, 0, sizeof(struct rt_shootray_status));
+
     RT_AP_CHECK(ap);
     if (ap->a_magic) {
 	RT_CK_AP(ap);
