@@ -70,8 +70,10 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    }
 	case ID_PIPE:
 	    {
+#if 0
 		struct rt_pipe_internal *pipeip;
 		struct wdb_pipept *pipe_seg;
+#endif
 		bu_vls_printf(gedp->ged_result_str,
 			      "getting origin of PIPE temporarily disabled");
 		return GED_ERROR;
