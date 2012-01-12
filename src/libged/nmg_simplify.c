@@ -71,9 +71,18 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	ret = GED_HELP;
 	goto out3;
     } else if (argc == 3) {
+#if 1
+	/* temporary hack to not allow the 'all' option. if you choose
+         * all but have a TGC, the cleanup for ARB breaks TGC.
+         */
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
+	ret = GED_HELP;
+	goto out3;
+#else
 	do_arb = do_tgc = do_poly = do_all = 1; /* do all */
 	new_name = (char *)argv[1];
 	nmg_name = (char *)argv[2];
+#endif
     } else if (argc == 4) {
 	do_all = 0;
 	if (!strncmp(argv[1], "arb", 3)) {
@@ -168,6 +177,11 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	new_intern.idb_type = ID_ARB8;
 	new_intern.idb_meth = &rt_functab[ID_ARB8];
 
+	r = BU_LIST_FIRST(nmgregion, &m->r_hd);
+	s = BU_LIST_FIRST(shell, &r->s_hd);
+	nmg_shell_coplanar_face_merge(s, &gedp->ged_wdbp->wdb_tol, 0);
+	nmg_simplify_shell(s);
+ 
 	if (nmg_to_arb(m, arb_int)) {
 	    success = 1;
 	    ret = GED_OK;
@@ -252,6 +266,7 @@ out1:
 
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
+	success = 0;
 	ret = GED_ERROR;
 	goto out2;
     }
@@ -259,6 +274,7 @@ out1:
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&new_intern);
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
+	success = 0;
 	ret = GED_ERROR;
 	goto out2;
     }
