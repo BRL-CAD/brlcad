@@ -45,7 +45,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     struct shell *s;
     struct bu_ptbl faces;
     struct face *fp;
-    int do_all=1;
+    int do_all=0;
     int do_arb=0;
     int do_tgc=0;
     int do_poly=0;
@@ -53,8 +53,10 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     char *nmg_name;
     int success = 0;
     int shell_count=0;
+    int ret = GED_ERROR;
+    long i;
 
-    static const char *usage = "[arb|tgc|ell|poly] new_prim nmg_prim";
+    static const char *usage = "[arb|tgc|poly] new_prim nmg_prim";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -63,58 +65,61 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (argc < 3 || 4 < argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    RT_DB_INTERNAL_INIT(&new_intern);
-
-    if (argc == 4) {
+	/* must be wanting help */
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
+	ret = GED_HELP;
+	goto out3;
+    } else if (argc == 3) {
+	do_arb = do_tgc = do_poly = do_all = 1; /* do all */
+	new_name = (char *)argv[1];
+	nmg_name = (char *)argv[2];
+    } else if (argc == 4) {
 	do_all = 0;
-	if (!strncmp(argv[1], "arb", 3))
+	if (!strncmp(argv[1], "arb", 3)) {
 	    do_arb = 1;
-	else if (!strncmp(argv[1], "tgc", 3))
+	} else if (!strncmp(argv[1], "tgc", 3)) {
 	    do_tgc = 1;
-	else if (!strncmp(argv[1], "poly", 4))
+	} else if (!strncmp(argv[1], "poly", 4)) {
 	    do_poly = 1;
-	else {
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, 
+			  "%s is unknown or simplification is not yet supported\n", argv[1]);
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return GED_ERROR;
+	    ret = GED_ERROR;
+	    goto out3;
 	}
-
 	new_name = (char *)argv[2];
 	nmg_name = (char *)argv[3];
     } else {
-	new_name = (char *)argv[1];
-	nmg_name = (char *)argv[2];
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	success = 0;
+	ret = GED_ERROR;
+	goto out3;
     }
 
     if (db_lookup(gedp->ged_wdbp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s already exists\n", new_name);
-	return GED_ERROR;
+	ret = GED_ERROR;
+	goto out3;
     }
 
     if ((dp=db_lookup(gedp->ged_wdbp->dbip, nmg_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s does not exist\n", nmg_name);
-	return GED_ERROR;
+	ret = GED_ERROR;
+	goto out3;
     }
 
     if (rt_db_get_internal(&nmg_intern, dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
-	return GED_ERROR;
+	ret = GED_ERROR;
+	goto out3;
     }
 
     if (nmg_intern.idb_type != ID_NMG) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not an NMG solid\n", nmg_name);
-	rt_db_free_internal(&nmg_intern);
-	return GED_ERROR;
+	ret = GED_ERROR;
+	goto out2;
     }
 
     m = (struct model *)nmg_intern.idb_ptr;
@@ -122,154 +127,165 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 
     /* check that all faces are planar */
     nmg_face_tabulate(&faces, &m->magic);
-    for (BU_PTBL_FOR(fp, (struct face *), &faces)) {
-	if (fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
+
+    for (i = 0 ; i < BU_PTBL_END(&faces) ; i++) {
+        fp = (struct face *)BU_PTBL_GET(&faces, i);
+  	if (fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
 	    bu_ptbl_free(&faces);
 	    bu_vls_printf(gedp->ged_result_str,
-			  "%s cannot be applied to \"%s\" because it has non-planar faces\n",
-			  argv[0], nmg_name);
-	    return GED_ERROR;
+		"%s cannot be applied to \"%s\" because it has non-planar faces\n", argv[0], nmg_name);
+	    ret = GED_ERROR;
+	    goto out2;
 	}
     }
     bu_ptbl_free(&faces);
 
     /* count shells */
+    shell_count = 0;
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-	for (BU_LIST_FOR(s, shell, &r->s_hd))
+	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    shell_count++;
+	}
     }
 
-    if ((do_arb || do_all) && shell_count == 1) {
+    if (shell_count != 1) {
+	bu_vls_printf(gedp->ged_result_str, "shell count is not one\n");
+        ret = GED_ERROR;
+        goto out2;
+    }
+
+    success = 0;
+
+    /* see if we can get an arb by simplifying the nmg */
+    if (do_arb) {
 	struct rt_arb_internal *arb_int;
 
+	RT_DB_INTERNAL_INIT(&new_intern);
 	BU_GET(arb_int, struct rt_arb_internal);
+
+	new_intern.idb_ptr = (genptr_t)(arb_int);
+	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	new_intern.idb_type = ID_ARB8;
+	new_intern.idb_meth = &rt_functab[ID_ARB8];
 
 	if (nmg_to_arb(m, arb_int)) {
-	    new_intern.idb_ptr = (genptr_t)(arb_int);
-	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	    new_intern.idb_type = ID_ARB8;
-	    new_intern.idb_meth = &rt_functab[ID_ARB8];
 	    success = 1;
-	} else if (do_arb) {
-	    /* see if we can get an arb by simplifying the NMG */
-
-	    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-	    s = BU_LIST_FIRST(shell, &r->s_hd);
-	    nmg_shell_coplanar_face_merge(s, &gedp->ged_wdbp->wdb_tol, 1);
-	    if (!nmg_kill_cracks(s)) {
-		(void) nmg_model_edge_fuse(m, &gedp->ged_wdbp->wdb_tol);
-		(void) nmg_edge_g_fuse(&m->magic, &gedp->ged_wdbp->wdb_tol);
-		(void) nmg_unbreak_region_edges(&r->l.magic);
-		if (nmg_to_arb(m, arb_int)) {
-		    new_intern.idb_ptr = (genptr_t)(arb_int);
-		    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-		    new_intern.idb_type = ID_ARB8;
-		    new_intern.idb_meth = &rt_functab[ID_ARB8];
-		    success = 1;
-		}
-	    }
-	    if (!success) {
-		rt_db_free_internal(&nmg_intern);
-		bu_vls_printf(gedp->ged_result_str, "Failed to construct an ARB equivalent to %s\n", nmg_name);
-		return GED_OK;
+	    ret = GED_OK;
+	    goto out1;
+	} else {
+	    rt_db_free_internal(&new_intern);
+	    if (!do_all) {
+		ret = GED_ERROR;
+		goto out2;
 	    }
 	}
     }
 
-    if ((do_tgc || do_all) && !success && shell_count == 1) {
+    /* see if we can get a tgc by simplifying the nmg */
+    if (do_tgc) {
 	struct rt_tgc_internal *tgc_int;
 
+	RT_DB_INTERNAL_INIT(&new_intern);
 	BU_GET(tgc_int, struct rt_tgc_internal);
 
+	new_intern.idb_ptr = (genptr_t)(tgc_int);
+	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	new_intern.idb_type = ID_TGC;
+	new_intern.idb_meth = &rt_functab[ID_TGC];
+
 	if (nmg_to_tgc(m, tgc_int, &gedp->ged_wdbp->wdb_tol)) {
-	    new_intern.idb_ptr = (genptr_t)(tgc_int);
-	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	    new_intern.idb_type = ID_TGC;
-	    new_intern.idb_meth = &rt_functab[ID_TGC];
 	    success = 1;
-	} else if (do_tgc) {
-	    rt_db_free_internal(&nmg_intern);
-	    bu_vls_printf(gedp->ged_result_str, "Failed to construct an TGC equivalent to %s\n", nmg_name);
-	    return GED_OK;
-	}
-    }
-
-    /* see if we can get an arb by simplifying the NMG */
-    if ((do_arb || do_all) && !success && shell_count == 1) {
-	struct rt_arb_internal *arb_int;
-
-	BU_GET(arb_int, struct rt_arb_internal);
-
-	r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-	s = BU_LIST_FIRST(shell, &r->s_hd);
-	nmg_shell_coplanar_face_merge(s, &gedp->ged_wdbp->wdb_tol, 1);
-	if (!nmg_kill_cracks(s)) {
-	    (void) nmg_model_edge_fuse(m, &gedp->ged_wdbp->wdb_tol);
-	    (void) nmg_edge_g_fuse(&m->magic, &gedp->ged_wdbp->wdb_tol);
-	    (void) nmg_unbreak_region_edges(&r->l.magic);
-	    if (nmg_to_arb(m, arb_int)) {
-		new_intern.idb_ptr = (genptr_t)(arb_int);
-		new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-		new_intern.idb_type = ID_ARB8;
-		new_intern.idb_meth = &rt_functab[ID_ARB8];
-		success = 1;
-	    } else if (do_arb) {
-		rt_db_free_internal(&nmg_intern);
-		bu_vls_printf(gedp->ged_result_str, "Failed to construct an ARB equivalent to %s\n", nmg_name);
-		return GED_OK;
+	    ret = GED_OK;
+	    goto out1;
+	} else {
+	    rt_db_free_internal(&new_intern);
+	    if (!do_all) {
+		ret = GED_ERROR;
+		goto out2;
 	    }
 	}
     }
 
-    if ((do_poly || do_all) && !success) {
+    /* see if we can get a poly by simplifying the nmg */
+    if (do_poly) {
 	struct rt_pg_internal *poly_int;
 
-	poly_int = (struct rt_pg_internal *)bu_malloc(sizeof(struct rt_pg_internal), "f_nmg_simplify: poly_int");
+	RT_DB_INTERNAL_INIT(&new_intern);
+	BU_GET(poly_int, struct rt_pg_internal);
+
+	new_intern.idb_ptr = (genptr_t)(poly_int);
+	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	new_intern.idb_type = ID_POLY;
+	new_intern.idb_meth = &rt_functab[ID_POLY];
 
 	if (nmg_to_poly(m, poly_int, &gedp->ged_wdbp->wdb_tol)) {
-	    new_intern.idb_ptr = (genptr_t)(poly_int);
-	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	    new_intern.idb_type = ID_POLY;
-	    new_intern.idb_meth = &rt_functab[ID_POLY];
 	    success = 1;
-	} else if (do_poly) {
-	    rt_db_free_internal(&nmg_intern);
-	    bu_vls_printf(gedp->ged_result_str, "%s is not a closed surface, cannot make a polysolid\n", nmg_name);
-	    return GED_OK;
-	}
-    }
-
-    if (success) {
-	r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-	s = BU_LIST_FIRST(shell, &r->s_hd);
-
-	if (BU_LIST_NON_EMPTY(&s->lu_hd))
-	    bu_vls_printf(gedp->ged_result_str, "wire loops in %s have been ignored in conversion\n",  nmg_name);
-
-	if (BU_LIST_NON_EMPTY(&s->eu_hd))
-	    bu_vls_printf(gedp->ged_result_str, "wire edges in %s have been ignored in conversion\n",  nmg_name);
-
-	if (s->vu_p)
-	    bu_vls_printf(gedp->ged_result_str, "Single vertexuse in shell of %s has been ignored in conversion\n", nmg_name);
-
-	rt_db_free_internal(&nmg_intern);
-
-	dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
-	if (dp == RT_DIR_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
-	    return GED_ERROR;
-	}
-
-	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
+	    ret = GED_OK;
+	    goto out1;
+	} else {
 	    rt_db_free_internal(&new_intern);
-	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
-	    return GED_ERROR;
+	    if (!do_all) {
+		ret = GED_ERROR;
+		goto out2;
+	    }
 	}
-	return GED_OK;
     }
 
-    bu_vls_printf(gedp->ged_result_str, "simplification to %s is not yet supported\n", argv[1]);
-    return GED_OK;
+out1:
+    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
+    s = BU_LIST_FIRST(shell, &r->s_hd);
+
+    if (BU_LIST_NON_EMPTY(&s->lu_hd))
+	bu_vls_printf(gedp->ged_result_str, 
+		"wire loops in %s have been ignored in conversion\n",  nmg_name);
+
+    if (BU_LIST_NON_EMPTY(&s->eu_hd))
+	bu_vls_printf(gedp->ged_result_str, 
+		"wire edges in %s have been ignored in conversion\n",  nmg_name);
+
+    if (s->vu_p)
+	bu_vls_printf(gedp->ged_result_str, 
+		"Single vertexuse in shell of %s has been ignored in conversion\n", nmg_name);
+
+    dp = db_diradd(gedp->ged_wdbp->dbip, new_name,
+	RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+
+    if (dp == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
+	ret = GED_ERROR;
+	goto out2;
+    }
+
+    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
+	rt_db_free_internal(&new_intern);
+	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
+	ret = GED_ERROR;
+	goto out2;
+    }
+
+    ret = GED_OK;
+
+out2:
+    rt_db_free_internal(&nmg_intern);
+
+    if (!success) {
+	if (do_arb && !do_all) {
+	    bu_vls_printf(gedp->ged_result_str, 
+		"Failed to construct an ARB equivalent to %s\n", nmg_name);
+	} else if (do_tgc && !do_all) {
+	    bu_vls_printf(gedp->ged_result_str, 
+		"Failed to construct a TGC equivalent to %s\n", nmg_name);
+	} else if (do_poly && !do_all) {
+	    bu_vls_printf(gedp->ged_result_str, 
+		"Failed to construct a POLY equivalent to %s\n", nmg_name);
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, 
+		"Failed to construct an ARB or TGC or POLY equivalent to %s\n", nmg_name);
+	}
+    }
+
+out3:
+    return ret;
 }
 
 
