@@ -44,7 +44,9 @@ main(int argc, char **argv)
     /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
     char filemged[26];		/* Mged file create. */
-    double hgt, wid, dpt;	/* Height, width, & depth of gas tank. */
+    double hgt=0;       	/* Height, width, & depth of gas tank. */
+    double wid=0;
+    double dpt=0;
     double rds;			/* Radius of the corner of gas tank. */
     point_t pts[8];		/* Points for arb8. */
     point_t bs;			/* Base of cylinder. */
