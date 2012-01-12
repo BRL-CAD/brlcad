@@ -117,8 +117,8 @@ int main(int argc, char **argv)
     int ians;		/*  Answer of question.  */
     double strtpt[3];	/*  Starting point of ray.  */
     double strtdir[3];	/*  Starting direction.  */
-    double loops;	/*  Number of rays fired.  */
-    double r;		/*  Variable in loops.  */
+    size_t loops;	/*  Number of rays fired.  */
+    size_t r;		/*  Variable in loops.  */
     int i, j, k;		/*  Variable in loops.  */
     long seed;		/*  Initial seed for random number generator.  */
     double denom;	/*  Denominator.  */
@@ -213,8 +213,11 @@ int main(int argc, char **argv)
 	/*  Find number of rays to be fired.  */
 	(void)fprintf(stderr, "Enter number of rays to be fired.  ");
 	(void)fflush(stderr);
-	ret = scanf("%lf", &loops);
+	ret = scanf("%llu", (unsigned long long *)&loops);
 	if (ret == 0)
+	    perror("scanf");
+
+	if (loops < 1 || loops > UINT32_MAX)
 	    perror("scanf");
 
 	/*  Set seed for random number generator.  */
@@ -530,8 +533,8 @@ int main(int argc, char **argv)
 
 	    if (EQUAL(r, (dump - 1.0)))
 	    {
-		(void)printf("%f rays have been fired in forward direction.\n",
-			     (r+1));
+		(void)printf("%llu rays have been fired in forward direction.\n",
+			     (unsigned long long)(r+1));
 		(void)fflush(stdout);
 		if (idump == 1)
 		{
@@ -569,7 +572,7 @@ int main(int argc, char **argv)
 	    /*
 	     *	  info[i].engarea = info[i].allvrays * areabs / loops / 2.;
 	     */
-	    info[i].engarea = info[i].allvrays * areabs / loops;
+	    info[i].engarea = info[i].allvrays * areabs / (double)loops;
 
 	    /*  Put area into square meters.  */
 	    info[i].engarea *= 1.e-6;
@@ -666,7 +669,7 @@ int main(int argc, char **argv)
 	if (itype == 0)
 	{
 	    fp = fopen(outfile, "wb");
-	    (void)fprintf(fp, "Number of forward rays fired:  %f\n\n", loops);
+	    (void)fprintf(fp, "Number of forward rays fired:  %llu\n\n", (unsigned long long)loops);
 	    (void)fflush(fp);
 
 	    /*  Print out structure.  */
