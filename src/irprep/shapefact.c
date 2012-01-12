@@ -172,9 +172,9 @@ int main(int argc, char **argv)
 	(void)printf("Enter type of file to be written (0=>regular or ");
 	(void)printf("1=>generic).  ");
 	(void)fflush(stdout);
-	ret = scanf("%d", &itype);
+	ret = scanf("%1d", &itype);
 	if (ret == 0)
-	    perror("scanf");
+	    bu_exit(-1, "scanf failure when reading file type");
 	if (itype != 1) itype = 0;
 
 	/*  Enter names of files to be used.  */
@@ -182,14 +182,14 @@ int main(int argc, char **argv)
 	(void)fflush(stderr);
 	ret = scanf("%15s", outfile);
 	if (ret == 0)
-	    perror("scanf");
+	    bu_exit(-1, "scanf failure when reading output file name");
 
 	/*  Read name of the error file to be written.  */
 	(void)printf("Enter the name of the error file (15 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%15s", errfile);
 	if (ret == 0)
-	    perror("scanf");
+	    bu_exit(-1, "scanf failure when reading error file name");
 
 	/*  Enter name of region # & name file to be read.  */
 	{
@@ -198,7 +198,7 @@ int main(int argc, char **argv)
 	    (void)fflush(stdout);
 	    ret = scanf("%15s", rnnfile);
 	    if (ret == 0)
-		perror("scanf");
+	      bu_exit(-1, "scanf failure when reading region # + name file");
 	}
 
 	/*  Check if dump is to occur.  */
@@ -206,16 +206,16 @@ int main(int argc, char **argv)
 	(void)printf("Do you want to dump intermediate shape factors to ");
 	(void)printf("screen (0-no, 1-yes)?  ");
 	(void)fflush(stdout);
-	ret = scanf("%d", &idump);
+	ret = scanf("%1d", &idump);
 	if (ret == 0)
-	    perror("scanf");
+	  bu_exit(-1, "scanf failure - intermediate shape factors setting");
 
 	/*  Find number of rays to be fired.  */
 	(void)fprintf(stderr, "Enter number of rays to be fired.  ");
 	(void)fflush(stderr);
 	ret = scanf("%llu", (unsigned long long *)&loops);
 	if (ret == 0)
-	    perror("scanf");
+	  bu_exit(-1, "scanf failure - number of rays to be fired");
 
 	/* clamp loops */
 	if (loops > UINT32_MAX)
@@ -226,16 +226,16 @@ int main(int argc, char **argv)
 	(void)fprintf(stderr, "Do you wish to enter your own seed (0) or ");
 	(void)fprintf(stderr, "use the default of 1 (1)?  ");
 	(void)fflush(stderr);
-	ret = scanf("%d", &ians);
+	ret = scanf("%1d", &ians);
 	if (ret == 0)
-	    perror("scanf");
+	  bu_exit(-1, "scanf failure - seed use setting");
 	if (ians == 0)
 	{
 	    (void)fprintf(stderr, "Enter unsigned integer seed.  ");
 	    (void)fflush(stderr);
 	    ret = scanf("%ld", &seed);
 	    if (ret == 0)
-		perror("scanf");
+	      bu_exit(-1, "scanf failure - seed");
 	}
 	msr = bn_unif_init(seed, 0);
 	bu_log("seed initialized\n");
