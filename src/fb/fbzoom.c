@@ -142,6 +142,28 @@ main(int argc, char **argv)
 
 #define ctl(x)	(x&037)
 
+static void
+printUsage()
+{
+    bu_log("\n\nBoth VI and EMACS motions work.\r\n");
+    bu_log("b ^V	zoom Bigger (*2) s	zoom Smaller (*0.5)\n");
+    bu_log("+ =	zoom Bigger (+1)		-	zoom Smaller (-1)\n");
+    bu_log("(zoom Y Bigger (*2)) zoom Y Smaller (*0.5)\n");
+    bu_log("0	zoom Y Bigger (+1)		9	zoom Y Smaller (-1)\n");
+    bu_log("<	zoom X Bigger (*2)		>	zoom X Smaller (*0.5)\n");
+    bu_log(",	zoom X Bigger (+1)		.	zoom X Smaller (-1)\n");
+    bu_log("h B 	pan Left (1) l F	pan Right (1)\n");
+    bu_log("H ^B	pan Left (many) L ^F	pan Right (many)\n");
+    bu_log("k P	pan Up (1) j N	pan Down (1)\n");
+    bu_log("K ^P	pan Up (many) J ^N	pan Down (many)\n");
+    bu_log("T	toggle sense of pan commands\n");
+    bu_log("c	goto Center\n");
+    bu_log("z	zoom 1 1\n");
+    bu_log("r	Reset to normal\n");
+    bu_log("q	Exit\n");
+    bu_log("RETURN	Exit\n");
+}
+
 int
 doKeyPad(void)
 {
@@ -151,30 +173,9 @@ doKeyPad(void)
 	return 0;		/* done */
     ch &= ~0x80;			/* strip off parity bit */
     switch (ch) {
-	default :
-	    (void) fprintf(stdout,
-			   "\r\n'%c' bad -- Type ? for help\r\n",
-			   ch);
 	case '?' :
-	    bu_log("\n\nBoth VI and EMACS motions work.\r\n");
-	    bu_log("b ^V	zoom Bigger (*2) s	zoom Smaller (*0.5)\n");
-	    bu_log("+ =	zoom Bigger (+1)		-	zoom Smaller (-1)\n");
-	    bu_log("(zoom Y Bigger (*2)) zoom Y Smaller (*0.5)\n");
-	    bu_log("0	zoom Y Bigger (+1)		9	zoom Y Smaller (-1)\n");
-	    bu_log("<	zoom X Bigger (*2)		>	zoom X Smaller (*0.5)\n");
-	    bu_log(",	zoom X Bigger (+1)		.	zoom X Smaller (-1)\n");
-	    bu_log("h B 	pan Left (1) l F	pan Right (1)\n");
-	    bu_log("H ^B	pan Left (many) L ^F	pan Right (many)\n");
-	    bu_log("k P	pan Up (1) j N	pan Down (1)\n");
-	    bu_log("K ^P	pan Up (many) J ^N	pan Down (many)\n");
-	    bu_log("T	toggle sense of pan commands\n");
-	    bu_log("c	goto Center\n");
-	    bu_log("z	zoom 1 1\n");
-	    bu_log("r	Reset to normal\n");
-	    bu_log("q	Exit\n");
-	    bu_log("RETURN	Exit\n");
+	    printUsage();
 	    break;
-
 	case 'T' :
 	    toggle_pan = 1 - toggle_pan;
 	    break;
@@ -183,7 +184,6 @@ doKeyPad(void)
 	case 'q' :
 	case 'Q' :
 	    return 0;
-
 	case 'c' :				/* Reset Pan (Center) */
 	case 'C' :
 	    new_xPan = fb_getwidth(fbp)/2;
@@ -278,6 +278,10 @@ doKeyPad(void)
 	case 'L' :
 	case ctl('f') :
 	    new_xPan += PanFactor * (1 - 2 * toggle_pan);
+	    break;
+	default :
+	    (void) fprintf(stdout, "\r\n'%c' bad -- Type ? for help\r\n", ch);
+	    printUsage();
 	    break;
     }
     return 1;		/* keep going */
