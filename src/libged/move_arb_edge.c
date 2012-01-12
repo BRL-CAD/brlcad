@@ -130,28 +130,43 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
     /* check the arb type */
     switch (arb_type) {
 	case ARB4:
-	    if (edge < 0 || 4 < edge)
+	    if (edge < 0 || 4 < edge) {
 		bad_edge_id = 1;
+		goto bad_edge;
+	    }
+
 	    arb_pt_index = arb4_edge_vertex_mapping[edge][0];
 	    break;
 	case ARB5:
-	    if (edge < 0 || 8 < edge)
+	    if (edge < 0 || 8 < edge) {
 		bad_edge_id = 1;
+		goto bad_edge;
+	    }
+
 	    arb_pt_index = arb5_edge_vertex_mapping[edge][0];
 	    break;
 	case ARB6:
-	    if (edge < 0 || 9 < edge)
+	    if (edge < 0 || 9 < edge) {
 		bad_edge_id = 1;
+		goto bad_edge;
+	    }
+
 	    arb_pt_index = arb6_edge_vertex_mapping[edge][0];
 	    break;
 	case ARB7:
-	    if (edge < 0 || 11 < edge)
+	    if (edge < 0 || 11 < edge) {
 		bad_edge_id = 1;
+		goto bad_edge;
+	    }
+
 	    arb_pt_index = arb7_edge_vertex_mapping[edge][0];
 	    break;
 	case ARB8:
-	    if (edge < 0 || 11 < edge)
+	    if (edge < 0 || 11 < edge) {
 		bad_edge_id = 1;
+		goto bad_edge;
+	    }
+
 	    arb_pt_index = arb8_edge_vertex_mapping[edge][0];
 	    break;
 	default:
@@ -160,6 +175,8 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
 
 	    return GED_ERROR;
     }
+
+bad_edge:
 
     /* check the edge id */
     if (bad_edge_id) {
