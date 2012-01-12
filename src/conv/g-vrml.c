@@ -301,7 +301,7 @@ leaf_tess1(struct db_tree_state *tsp, const struct db_full_path *pathp, struct r
 	struct rt_bot_internal **bots_tmp;
 	pmp->array_size += 5;
 	bots_tmp = (struct rt_bot_internal **)bu_realloc((genptr_t)pmp->bots,
-		    pmp->array_size * sizeof(struct rt_bot_internal **), "pmp->bots");
+		    pmp->array_size * sizeof(struct rt_bot_internal *), "pmp->bots");
 	pmp->bots = bots_tmp;
     }
 
@@ -334,7 +334,7 @@ leaf_tess2(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(
 	struct rt_bot_internal **bots_tmp;
 	pmp->array_size += 5;
 	bots_tmp = (struct rt_bot_internal **)bu_realloc((genptr_t)pmp->bots,
-		    pmp->array_size * sizeof(struct rt_bot_internal **), "pmp->bots");
+		    pmp->array_size * sizeof(struct rt_bot_internal *), "pmp->bots");
 	pmp->bots = bots_tmp;
     }
 
@@ -736,7 +736,7 @@ main(int argc, char **argv)
     if (!eval_all) {
 	pm.array_size = 5;
 	pm.bots = (struct rt_bot_internal **)bu_calloc(pm.array_size,
-		   sizeof(struct rt_bot_internal **), "pm.bots");
+		   sizeof(struct rt_bot_internal *), "pm.bots");
     }
 
     if (eval_all) {
