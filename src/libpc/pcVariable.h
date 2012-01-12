@@ -320,7 +320,7 @@ void Domain<T>::intersectInterval(Interval<T> t)
     } else {
 	typename std::list<Interval<T> >::iterator i = this->Interv.begin();
 	while (i != Interv.end() && i->getHigh() < t.getLow())
-	    Interv.erase(i++);
+	    i=Interv.erase(i);
 	i->setLow(t.getLow());
 	i = Interv.end();
 	i--;
