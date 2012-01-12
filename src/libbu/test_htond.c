@@ -70,7 +70,7 @@ main(int argc, char **argv)
     int ret;
     unsigned int i;
     unsigned int nbytes;
-    int len = sizeof(double);
+    volatile int len = sizeof(double);
 
 #define A argv[1][1]
     if (argc != 2 || argv[1][0] != '-' || (A != 'o' && A != 'i' && A != 'v')) {
@@ -111,7 +111,7 @@ main(int argc, char **argv)
 	case 4:
 	default:
 	    /* untested */
-	    bu_log("unknown and untested double size\n");
+	    bu_log("unknown and untested double size, assuming 32-bit\n");
 	    nbytes = 4;
 	    break;
     }
