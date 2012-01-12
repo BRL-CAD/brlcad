@@ -47,7 +47,7 @@ main(int argc, char **argv)
     double hgt=0;       	/* Height, width, & depth of gas tank. */
     double wid=0;
     double dpt=0;
-    double rds;			/* Radius of the corner of gas tank. */
+    double rds=0;		/* Radius of the corner of gas tank. */
     point_t pts[8];		/* Points for arb8. */
     point_t bs;			/* Base of cylinder. */
     vect_t ht;			/* Height of cylinder. */
