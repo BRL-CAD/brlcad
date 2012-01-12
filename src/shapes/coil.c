@@ -144,8 +144,6 @@ cap_squared_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, stru
 	bu_vls_free(&str1);
 	return starting_pitch + pitch + sin(D2R(helix_angle))*coil_radius;
     }
-    bu_vls_free(&str1);
-    return 0;
 }
 
 
