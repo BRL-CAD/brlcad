@@ -387,8 +387,11 @@ shoot(char *buffer, com_table *ctp, struct rt_i *rtip)
     buffer = buffer;
     ctp = ctp;
 
+    if (!rtip)
+      return;
+
     if (need_prep) {
-	if (rtip) rt_clean(rtip);
+	rt_clean(rtip);
 	do_rt_gettrees(rtip, NULL, 0, &need_prep);
     }
 
