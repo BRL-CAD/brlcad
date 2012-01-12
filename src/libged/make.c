@@ -299,7 +299,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	ars_ip->magic = RT_ARS_INTERNAL_MAGIC;
 	ars_ip->ncurves = 3;
 	ars_ip->pts_per_curve = 3;
-	ars_ip->curves = (fastf_t **)bu_malloc((ars_ip->ncurves+1) * sizeof(fastf_t **), "ars curve ptrs");
+	ars_ip->curves = (fastf_t **)bu_malloc((ars_ip->ncurves+1) * sizeof(fastf_t *), "ars curve ptrs");
 
 	for (curve=0; curve < ars_ip->ncurves; curve++) {
 	    ars_ip->curves[curve] = (fastf_t *)bu_calloc(

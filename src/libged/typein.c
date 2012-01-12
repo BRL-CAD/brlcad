@@ -1254,7 +1254,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     total_points = arip->ncurves * arip->pts_per_curve;
 
     arip->curves = (fastf_t **)bu_malloc(
-	(arip->ncurves+1) * sizeof(fastf_t **), "ars curve ptrs");
+	(arip->ncurves+1) * sizeof(fastf_t *), "ars curve ptrs");
     for (i=0; i < arip->ncurves+1; i++) {
 	/* Leave room for first point to be repeated */
 	arip->curves[i] = (fastf_t *)bu_malloc(
