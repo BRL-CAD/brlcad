@@ -109,11 +109,10 @@ main(int argc, char **argv)
 	    nbytes = 6;
 	    break;
 	case 4:
-	    /* untested */
-	    nbytes = 4;
-	    break;
 	default:
-	    bu_bomb("unknown and untested double size\n");
+	    /* untested */
+	    bu_log("unknown and untested double size\n");
+	    nbytes = 4;
 	    break;
     }
     ret = fread(buf, 8, NUM, stdin);
