@@ -178,7 +178,7 @@ Names(void)
 	    if (!cable) /* Inner elbow */
 		Make_name(ptr->elbflu, inform, name, nummer);
 	}
-	if (torus || mitre)	/* Make cutting solid name */
+	if ((torus || mitre) && !sphere)	/* Make cutting solid name */
 	    Make_name(ptr->cut, cutform, name, nummer);
 
 	/* Make region names */
