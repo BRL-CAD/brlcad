@@ -2953,7 +2953,7 @@ RT_EXPORT extern int rt_comb_describe(struct bu_vls	*str,
 				      struct resource *resp,
 				      struct db_i *db_i);
 RT_EXPORT extern void db_wrap_v4_external(struct bu_external *op,
-					  const char *name);
+					  char *name);
 RT_EXPORT extern int db_ck_left_heavy_tree(const union tree	*tp,
 					   int		no_unions);
 RT_EXPORT extern int db_ck_v4gift_tree(const union tree *tp);

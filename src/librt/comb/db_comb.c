@@ -934,7 +934,7 @@ rt_comb_describe(
  * proper place (a standard location in all granules).
  */
 void
-db_wrap_v4_external(struct bu_external *op, const char *name)
+db_wrap_v4_external(struct bu_external *op, char *name)
 {
     union record *rec;
 
