@@ -264,33 +264,32 @@ main(int argc, char **argv)
 /*
  * Open the frame buffer.
  */
-    fbp = fb_open(framebuffer, WORD(Im.IH_Width),
-		  WORD(Im.IH_Height));
-
-/*
- * The speed of this loop can be greatly increased by moving all of
- * the WORD macro calls out of the loop.
- */
-    for (i=0; i<WORD(Im.IH_Height);i++) {
+    if ((fbp = fb_open(framebuffer, WORD(Im.IH_Width), WORD(Im.IH_Height))) != NULL) {
+      /*
+       * The speed of this loop can be greatly increased by moving all of
+       * the WORD macro calls out of the loop.
+       */
+      for (i=0; i<WORD(Im.IH_Height);i++) {
 	int k;
 	lp = line;
 	for (k=0;k<WORD(Im.IH_Width);k++) {
-	    idx = getByte(fp);
-	    *lp++ = GlobalColors[idx].red;
-	    *lp++ = GlobalColors[idx].green;
-	    *lp++ = GlobalColors[idx].blue;
+	  idx = getByte(fp);
+	  *lp++ = GlobalColors[idx].red;
+	  *lp++ = GlobalColors[idx].green;
+	  *lp++ = GlobalColors[idx].blue;
 	}
 	fb_write(fbp, 0, WORD(Im.IH_Height)-lineNumber, line,
-		 WORD(Im.IH_Width));
+	    WORD(Im.IH_Width));
 	fb_flush(fbp);
 	lineNumber += lineInc;
 	if (lineNumber >= WORD(Im.IH_Height)) {
-	    ++lineIdx;
-	    lineInc = lace[lineIdx];
-	    lineNumber = offs[lineIdx];
+	  ++lineIdx;
+	  lineInc = lace[lineIdx];
+	  lineNumber = offs[lineIdx];
 	}
+      }
+      fb_close(fbp);
     }
-    fb_close(fbp);
     return 0;
 }
 /* getcode - Get a LWZ "code"
