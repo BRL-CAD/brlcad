@@ -45,7 +45,9 @@ main(int argc, char **argv)
     /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
     char filemged[26];		/* Mged file create. */
-    double hgt, wid, dpt;	/* Height, width, & depth of outside window */
+    double hgt=0;       	/* Height, width, & depth of outside window */
+    double wid=0;
+    double dpt=0;
     /* frame. */
     double rds;			/* Radius of the corner of window frame. */
     double isw;			/* Width of frame itself. */
