@@ -123,7 +123,7 @@ main (int argc, char *argv[])
 	    break;
 	case 1:
 	    inf_name = argv[bu_optind++];
-	    if(inf_name == NULL || *inf_name == NULL) {
+	    if(inf_name == NULL || *inf_name == '\0') {
 		bu_log("Bad file name\n");
 		return 1;
 	    }
