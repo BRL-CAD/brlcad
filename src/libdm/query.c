@@ -172,8 +172,9 @@ dm_bestXType(char *dpy_string)
 
 #ifdef DM_TK
     return "tk";
-#endif
+#else
     return "nu";
+#endif
 }
 
 /*
