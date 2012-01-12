@@ -402,7 +402,6 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    if (rev->ang > M_PI && rt_sketch_contains(rev->skt, hit2d)) {
 		/* skip it */
 	    } else {
-		if (nhits >= MAX_HITS) return -1; /* too many hits */
 		hitp = hits[nhits++];
 		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = start;
