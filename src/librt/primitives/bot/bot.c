@@ -1552,7 +1552,9 @@ rt_bot_find_e_nearest_pt2(
     /* now look for the closest edge */
     for (i = 0; i < edge_count; i++) {
 	point_t p1, p2, pca;
+#if 0
 	vect_t p1_to_pca, p1_to_p2;
+#endif
 	int ret;
 
 	MAT4X3PNT(p1, mat, &bot->vertices[ edge_list[i*2+0]*3]);
