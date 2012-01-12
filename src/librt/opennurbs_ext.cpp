@@ -1566,6 +1566,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    /* FIXME: this needs to be handled more gracefully */
 	    if (!split || !south || !north) {
 		bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)south, (void *)north);
+		onfree(parent);
 		return NULL;
 	    }
 
@@ -1578,6 +1579,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    /* FIXME: this needs to be handled more gracefully */
 	    if (!split || !q0surf || !q1surf) {
 		bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)q0surf, (void *)q1surf);
+		onfree(parent);
 		return NULL;
 	    }
 
@@ -1589,6 +1591,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    /* FIXME: this needs to be handled more gracefully */
 	    if (!split || !q3surf || !q2surf) {
 		bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)q3surf, (void *)q2surf);
+		onfree(parent);
 		return NULL;
 	    }
 
@@ -1790,6 +1793,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    /* FIXME: this needs to be handled more gracefully */
 	    if (!split || !east || !west) {
 		bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)east, (void *)west);
+		onfree(parent);
 		return NULL;
 	    }
 
@@ -1980,6 +1984,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    /* FIXME: this needs to be handled more gracefully */
 	    if (!split || !south || !north) {
 		bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)south, (void *)north);
+		onfree(parent);
 		return NULL;
 	    }
 
