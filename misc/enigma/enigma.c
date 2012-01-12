@@ -35,8 +35,10 @@ char	t1[ROTORSZ];
 char	t2[ROTORSZ];
 char	t3[ROTORSZ];
 char	deck[ROTORSZ];
-char	ibuf[13];
-char	buf[13];
+
+/* return from crypt() is either 13 or 20 bytes + nul terminator */
+char	ibuf[20+1];
+char	buf[20+1];
 
 void	shuffle(char *);
 
