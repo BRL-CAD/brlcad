@@ -1554,13 +1554,14 @@ frame_is_done(struct frame *fr)
     } else {
 	FILE *fp;
 	if ( (fp = fopen( fr->fr_filename, "r" )) == NULL )  {
+	  perror( fr->fr_filename );
+	} else {
+	  /* Write-protect file, to prevent re-computation */
+	  if ( fchmod( fileno(fp), 0444 ) < 0 ) {
 	    perror( fr->fr_filename );
+	  }
+	  (void)fclose(fp);
 	}
-	/* Write-protect file, to prevent re-computation */
-	if ( fchmod( fileno(fp), 0444 ) < 0 ) {
-	    perror( fr->fr_filename );
-	}
-	(void)fclose(fp);
     }
 
     /* Forget all about this frame */
