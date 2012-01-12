@@ -1697,7 +1697,7 @@ getcmd(char *args[], int ct)
     for ( arg_ct = ct; arg_ct < MAXARG - 1; ++arg_ct )
     {
 	args[arg_ct] = bu_malloc( MAXLN, "getcmd buffer" );
-	if ( ! getarg( args[arg_ct] ) )
+	if ( ! getarg( args[arg_ct], MAXLN ) )
 	    break;
     }
     ++arg_ct;
@@ -1716,30 +1716,45 @@ getcmd(char *args[], int ct)
 /**
  * g e t a r g
  *
- * Get a word of input into 'str', Return 0 if newline is encountered.
+ * Get a word of input into 'str'. Copies no more than maxchars characters
+ * into str and ensures str is null-terminated if possible.
+ *
+ * Return 0 if end of input encountered, or if str is filled (word is truncated).
  * Return 1 otherwise.
  */
 char
-getarg( char *str )
+getarg(char *str, size_t maxchars)
 {
-    int prev;
+    int c;
+    size_t i;
 
-    do {
-	*str = getchar();
-	if ( (int)(*str) == ' ' ) {
-	    *str = '\0';
+    if (str == NULL || maxchars == 0) {
+	return 0;
+    }
+
+    for (i = 0; i < maxchars; ++i) {
+	c = getchar();
+	switch (c) {
+	case '\n':
+	case EOF:
+	    /* end of input */
+	    str[i] = '\0';
+	    return 0;
+	case ' ':
+	    /* end of word/argument */
+	    str[i] = '\0';
 	    return 1;
-	}
-	else
-	    ++str;
+	default:
+	    str[i] = (char)c;
+	} 
+    }
 
-	prev = str[-1];
-    }	while (prev != EOF && (int)(str[-1]) != '\n' );
+    /* ran out of space in dest string before reaching end of word
+     * or end of input
+     */
+    str[i - 1] = '\0';
 
-    if ( (int)(str[-1]) == '\n' )
-	--str;
-    *str = '\0';
-    return	0;
+    return 0;
 }
 
 
