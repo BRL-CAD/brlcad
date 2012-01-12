@@ -676,6 +676,7 @@ solbld(void)
 	    rad2 = val[10];
 
 	    mk_hyp(ofp, NAME, center, height, a, rad1, rad2);
+	    break;
 
 	case ETO:
 	    VSET(center, val[0], val[1], val[2]);
