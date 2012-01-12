@@ -496,6 +496,7 @@ rt_comb_export4(
 	}
 
 	NAMEMOVE(tp->tr_l.tl_name, rp[j+1].M.m_instname);
+	tp->tr_l.tl_name[NAMESIZE] = '\0'; /* sanity */
 
 	if (tp->tr_l.tl_mat) {
 	    flip_dbmat_mat(rp[j+1].M.m_mat, tp->tr_l.tl_mat);
