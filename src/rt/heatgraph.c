@@ -340,9 +340,11 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *fb
 	    }
  	}
     }
-    zoomH = fb_getheight(fbp) / height;
-    zoomW = fb_getwidth(fbp) / width;
-    (void)fb_view(fbp, width/2, height/2, zoomH, zoomW);
+    if (fbp != FBIO_NULL) {
+      zoomH = fb_getheight(fbp) / height;
+      zoomW = fb_getwidth(fbp) / width;
+      (void)fb_view(fbp, width/2, height/2, zoomH, zoomW);
+    }
 }
 
 
