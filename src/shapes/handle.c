@@ -46,8 +46,10 @@ main(int argc, char **argv)
     /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
     char filemged[26];		/* Mged file create. */
-    double hgt, len;		/* Height & length of handle. */
-    double r1, r2;		/* Radius of tori & radius of cylinders. */
+    double hgt = 0.0;		/* Height of handle. */
+    double len = 0.0;		/* Length of handle. */
+    double r1 = 0.0;		/* Radius of tori & radius of cylinders. */
+    double r2 = 0.0;
     point_t pts[8];		/* Eight points of arb8. */
     point_t bs;			/* Base of rcc. */
     vect_t ht;			/* Height of rcc. */
@@ -61,7 +63,7 @@ main(int argc, char **argv)
     char solnam[8];		/* Solid name. */
     char regnam[8];		/* Region name. */
     char grpnam[5];		/* Group name. */
-    int numhan;			/* Number of handles to be created (<=26). */
+    int numhan = 0;		/* Number of handles to be created (<=26). */
 
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
