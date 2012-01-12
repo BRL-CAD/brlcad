@@ -326,6 +326,30 @@ bu_file_delete(const char *path)
 }
 
 
+char *  
+bu_file_path_canonicalize(const char *path) 
+{
+  char *dirpath;
+  char *resolved_path = (char *)bu_calloc(MAXPATHLEN+1, sizeof(char), "resolved_path alloc");
+#ifdef HAVE_REALPATH
+  dirpath = realpath(path, resolved_path);
+  if (!dirpath) {
+    /* if path lookup failed, resort to simple copy */
+    bu_strlcpy(resolved_path, path, (size_t)MAXPATHLEN);
+  }
+#else
+  /* Best solution currently available for Windows
+   * See https://www.securecoding.cert.org/confluence/display/seccode/FIO02-C.+Canonicalize+path+names+originating+from+untrusted+sources */
+#  ifdef HAVE_GETFULLPATHNAME
+  GetFullPathName(lhs, MAXPATHLEN, resolved_path, NULL);
+#  else
+  /* Last resort - if NOTHING is defined, do a simple copy */
+  bu_strlcpy(resolved_path, lhs, (size_t)MAXPATHLEN);
+#  endif
+#endif
+  return resolved_path;
+}
+
 /*
  * Local Variables:
  * mode: C

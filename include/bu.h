@@ -2966,6 +2966,14 @@ BU_EXPORT extern int bu_file_delete(const char *path);
  */
 BU_EXPORT extern size_t bu_file_glob(const char *pattern, char ***matches);
 
+/**
+ * Call canonicalization routines to both expand and validate
+ * a path name.  
+ *
+ * returns a pointer to the canonical path.  Caller must free
+ * the path.
+ */
+BU_EXPORT extern char * bu_file_path_canonicalize(const char *path);
 
 /** @file libbu/fnmatch.c
  *

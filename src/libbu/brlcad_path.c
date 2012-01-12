@@ -267,21 +267,8 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
     /* run-time path identification */
     lhs = bu_argv0_full_path();
     if (lhs) {
-	char real_path[MAXPATHLEN] = {0};
 	char *dirpath;
-#ifdef HAVE_REALPATH
-	dirpath = realpath(lhs, real_path);
-	if (!dirpath) {
-	    /* if path lookup failed, resort to simple copy */
-	    bu_strlcpy(real_path, lhs, (size_t)MAXPATHLEN);
-	}
-#else
-#  ifdef HAVE_GETFULLPATHNAME
-	GetFullPathName(lhs, MAXPATHLEN, real_path, NULL);
-#  else
-	bu_strlcpy(real_path, lhs, (size_t)MAXPATHLEN);
-#  endif
-#endif
+	char *real_path = bu_file_path_canonicalize(lhs);
 	dirpath = bu_dirname(real_path);
 	snprintf(real_path, MAXPATHLEN, "%s", dirpath);
 	bu_free(dirpath, "free bu_dirname");
@@ -293,8 +280,10 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 		bu_log("Found: Run-time path identification [%s]\n", result);
 	    }
 	    bu_vls_free(&searched);
+	    bu_free(real_path, "free real_path");
 	    return result;
 	}
+	bu_free(real_path, "free real_path");
     } else {
 	snprintf(where, MAX_WHERE_SIZE, "\trun-time path identification [UNKNOWN]\n");
 	bu_vls_strcat(&searched, where);
