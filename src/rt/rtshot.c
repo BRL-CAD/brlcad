@@ -574,7 +574,7 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 {
     register struct partition *pp;
     register struct soltab *stp;
-    struct curvature cur;
+    struct curvature cur = RT_CURVATURE_INIT_ZERO;
     point_t inpt, outpt;
     vect_t inormal, onormal;
     int raycnt=1;
