@@ -440,8 +440,12 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
 	nmg_vertex_gv(vertl[0], edges[vi[0]]);
 	nmg_vertex_gv(vertl[1], edges[vi[1]]);
 	nmg_vertex_gv(vertl[2], edges[vi[2]]);
-	if (nmg_calc_face_g(fu))	/* this flips out and spins. */
+	if (nmg_calc_face_g(fu)) {	/* this flips out and spins. */
+	    bu_log("Face calc failed\n");
 	    nmg_kfu(fu);
+	    bu_bomb("Bad face calc\n");
+	    return 0;
+	}
 
 	if(nmg_fu_planeeqn(fu, tol))
 	    bu_log("Tiny triangle! <%g %g %g> <%g %g %g> <%g %g %g> (%g %g %g)\n",
