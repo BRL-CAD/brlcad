@@ -1136,6 +1136,7 @@ main(int argc, char **argv)
 	    case 't':		/* calculational tolerance */
 		tol.dist = atof(bu_optarg);
 		tol.dist_sq = tol.dist * tol.dist;
+		break;
 	    case 'n':
 		polysolids = 0;
 		break;
