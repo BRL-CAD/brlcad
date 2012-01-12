@@ -472,7 +472,12 @@ mged_setup(Tcl_Interp **interpreter)
 	Tcl_FindExecutable("mged");
     }
 
-    if (interpreter && *interpreter != NULL)
+    if (!interpreter ) {
+      bu_log("mged_setup Error - interpreter is NULL!\n");
+      return;
+    }
+
+    if (*interpreter != NULL)
 	Tcl_DeleteInterp(*interpreter);
 
     /* Create the interpreter */
