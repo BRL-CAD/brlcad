@@ -205,8 +205,6 @@ cap_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, struct wmemb
 	bu_vls_free(&str1);
 	return pitch+starting_pitch;
     }
-    bu_vls_free(&str1);
-    return 0;
 }
 
 
