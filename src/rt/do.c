@@ -758,7 +758,7 @@ do_frame(int framenumber)
 	    int ret;
 	    struct stat sb;
 
-	    if (bu_file_exists(framename)) {
+	    if (bu_file_exists(framename, NULL)) {
 		/* File exists, maybe with partial results */
 		fd = open(framename, 2);
 		outfp = fdopen(fd, "r+");
@@ -777,8 +777,8 @@ do_frame(int framenumber)
 
 		    /* Read existing pix data into the frame buffer */
 		    if (sb.st_size > 0) {
-			size_t ret = fread(pixmap, 1, (size_t)sb.st_size, outfp);
-			if (ret < (size_t)sb.st_size)
+			size_t bytes_read = fread(pixmap, 1, (size_t)sb.st_size, outfp);
+			if (bytes_read < (size_t)sb.st_size)
 			    return -1;
 		    }
 
