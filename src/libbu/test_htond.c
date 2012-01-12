@@ -115,9 +115,16 @@ main(int argc, char **argv)
 	    nbytes = 4;
 	    break;
     }
+
+    /* get some data from stdin */
     ret = fread(buf, 8, NUM, stdin);
     if (ret != 8)
-	perror("fwrite");
+	perror("fread");
+
+    /* trivial data sanity test */
+    if (buf[0] == '\0')
+	return 1;
+	
 
     for (i=0; i<NUM; i++) {
 	ntohd((unsigned char *)&after[i], (unsigned char *)&buf[i*8], 1);	/* incremental */
@@ -141,7 +148,8 @@ main(int argc, char **argv)
 	flpr(&buf[i*8]);
 	printf("\n");
     }
-    exit(0);
+
+    return 0;
 }
 
 
