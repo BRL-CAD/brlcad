@@ -919,7 +919,7 @@ ambientOcclusion(struct application *ap, struct partition *pp)
     vect_t vAxis;
     vect_t uAxis;
     int ao_samp;
-    vect_t origin = {0.0, 0.0, 0.0};
+    vect_t origin = VINIT_ZERO;
     float occlusionFactor;
     int hitCount = 0;
 

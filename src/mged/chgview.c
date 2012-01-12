@@ -3703,7 +3703,7 @@ mged_etran(char coords,
 int
 mged_otran(const vect_t tvec)
 {
-    vect_t work = {0.0, 0.0, 0.0};
+    vect_t work = VINIT_ZERO;
 
     if (STATE == ST_S_EDIT || STATE == ST_O_EDIT) {
 	/* apply acc_rot_sol to tvec */

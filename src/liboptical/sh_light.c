@@ -308,7 +308,7 @@ ray_setup(struct application *ap,
 	  point_t span)
 {
     int face;
-    point_t pt = {0.0, 0.0, 0.0};
+    point_t pt = VINIT_ZERO;
     static int idx = 0;
 
     /* pick a face of the bounding RPP at which we will start the ray */

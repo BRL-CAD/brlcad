@@ -207,7 +207,7 @@ int
 Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t local_tol_sq )
 {
     union vert_tree *ptr, *prev=NULL, *new_leaf, *new_node;
-    vect_t diff = {0.0, 0.0, 0.0};
+    vect_t diff = VINIT_ZERO;
     vect_t vertex;
 
     BN_CK_VERT_TREE( vert_root );

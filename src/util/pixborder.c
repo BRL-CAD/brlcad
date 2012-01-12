@@ -284,7 +284,7 @@ static int is_interior (unsigned char *pix_rgb)
 		(! same_rgb(pix_rgb, exterior_rgb))	:
 		same_rgb(pix_rgb, interior_rgb));
     else {
-	vect_t pix_hsv = {0.0, 0.0, 0.0};
+	vect_t pix_hsv = VINIT_ZERO;
 
 	rgb_to_hsv(pix_rgb, pix_hsv);
 	return ((colors_specified == COLORS_EXTERIOR)	?
@@ -304,7 +304,7 @@ static int is_exterior (unsigned char *pix_rgb)
 		(! same_rgb(pix_rgb, interior_rgb))	:
 		same_rgb(pix_rgb, exterior_rgb));
     else {
-	vect_t pix_hsv = {0.0, 0.0, 0.0};
+	vect_t pix_hsv = VINIT_ZERO;
 
 	rgb_to_hsv(pix_rgb, pix_hsv);
 	return ((colors_specified == COLORS_INTERIOR)	?

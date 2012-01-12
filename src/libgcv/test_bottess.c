@@ -37,8 +37,8 @@ int
 test_intersection(int should, point_t *t1, point_t *t2, point_t p1, point_t p2)
 {
     int coplanar = 0;
-    point_t i[2] = {{0,0,0},{0,0,0}};
-    vect_t tmp[2] = {{0,0,0},{0,0,0}};
+    point_t i[2] = {VINIT_ZERO, VINIT_ZERO};
+    vect_t tmp[2] = {VINIT_ZERO, VINIT_ZERO};
     struct face_s f[2];
     struct bn_tol tol;
 

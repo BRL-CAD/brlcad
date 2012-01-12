@@ -189,10 +189,10 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     struct directory *dp = NULL;
     struct ged_display_list *gdlp = NULL;
     struct ged_display_list *next_gdlp = NULL;
-    vect_t eye_model = {0.0, 0.0, 0.0};
-    vect_t sav_center = {0.0, 0.0, 0.0};
-    vect_t sav_start = {0.0, 0.0, 0.0};
-    vect_t xlate = {0.0, 0.0, 0.0};
+    vect_t eye_model = VINIT_ZERO;
+    vect_t sav_center = VINIT_ZERO;
+    vect_t sav_start = VINIT_ZERO;
+    vect_t xlate = VINIT_ZERO;
 
     /* static due to setjmp */
     static int mode = 0;

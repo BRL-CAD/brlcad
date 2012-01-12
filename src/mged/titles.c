@@ -238,7 +238,7 @@ dotitles(struct bu_vls *overlay_vls)
     char ang_z[80] = {0};
 
     int ss_line_not_drawn=1; /* true if the second status line has not been drawn */
-    vect_t temp = {0.0, 0.0, 0.0};
+    vect_t temp = VINIT_ZERO;
     fastf_t tmp_val = 0.0;
 
     if (dbip == DBI_NULL)
