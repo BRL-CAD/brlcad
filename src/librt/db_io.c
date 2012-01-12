@@ -423,7 +423,7 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
  * instead.
  */
 int
-db_fwrite_external(FILE *fp, char *name, struct bu_external *ep)
+db_fwrite_external(FILE *fp, const char *name, struct bu_external *ep)
 {
 
     if (RT_G_DEBUG&DEBUG_DB) bu_log("db_fwrite_external(%s) ep=x%x\n", name, ep);

@@ -934,7 +934,7 @@ rt_comb_describe(
  * proper place (a standard location in all granules).
  */
 void
-db_wrap_v4_external(struct bu_external *op, char *name)
+db_wrap_v4_external(struct bu_external *op, const char *name)
 {
     union record *rec;
 
@@ -942,7 +942,6 @@ db_wrap_v4_external(struct bu_external *op, char *name)
 
     rec = (union record *)op->ext_buf;
     NAMEMOVE(name, rec->s.s_name);
-    name[NAMESIZE] = '\0'; /* sanity */
 }
 
 
