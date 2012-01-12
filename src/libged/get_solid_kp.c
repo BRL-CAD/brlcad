@@ -75,6 +75,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		bu_vls_printf(gedp->ged_result_str,
 			      "getting origin of PIPE temporarily disabled");
 		return GED_ERROR;
+#if 0
 		pipeip = (struct rt_pipe_internal *)ip->idb_ptr;
 
 		RT_PIPE_CK_MAGIC(pipeip);
@@ -82,6 +83,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		pipe_seg = BU_LIST_FIRST(wdb_pipept, &pipeip->pipe_segs_head);
 		VMOVE(mpt, pipe_seg->pp_coord);
 		break;
+#endif
 	    }
 	case ID_METABALL:
 	    {
