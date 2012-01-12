@@ -123,6 +123,10 @@ main (int argc, char *argv[])
 	    break;
 	case 1:
 	    inf_name = argv[bu_optind++];
+	    if(inf_name == NULL || *inf_name == NULL) {
+		bu_log("Bad file name\n");
+		return 1;
+	    }
 	    if ((infd = open(inf_name, O_RDONLY)) == -1) {
 		bu_log("Cannot open file '%s'\n", inf_name);
 		return 1;
