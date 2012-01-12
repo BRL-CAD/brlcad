@@ -125,7 +125,7 @@ main(int argc, char **argv)
     int	c;
     char *cp;
     char cs[4];
-    int i, j, k, lclr, iquit=0, ichg=0, gclr(void), cclr(char *pc);
+    int i, j, k, lclr, ichg=0, gclr(void), cclr(char *pc);
     int il, iu, iclr, iskp, jclr, bsp(void);
     int scr_w=512, scr_h=512, scr_set=0;
     int ret;
@@ -340,8 +340,7 @@ main(int argc, char **argv)
 	    case 'p':
 		paint();
 		break;
-	    case 'q':
-		iquit=1;
+	    case 'q': /* quit */
 	    case 'v':
 		if (ichg!=0) {
 		    ssize_t writeret;
@@ -362,7 +361,10 @@ main(int argc, char **argv)
 		    }
 		    ichg=0;
 		}
-		if (iquit!=0) bu_exit(0, NULL);
+		if (c == 'q') {
+		    /* quit */
+		    bu_exit(0, NULL);
+		}
 		loct=loce;
 		lseek(ifd, (off_t)loce, 0);
 		ic=0;
