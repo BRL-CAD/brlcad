@@ -217,8 +217,9 @@ int main(int argc, char **argv)
 	if (ret == 0)
 	    perror("scanf");
 
-	if (loops < 1 || loops > UINT32_MAX)
-	    perror("scanf");
+	/* clamp loops */
+	if (loops > UINT32_MAX)
+	    loops = UINT32_MAX;
 
 	/*  Set seed for random number generator.  */
 	seed = 1;
