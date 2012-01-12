@@ -110,7 +110,7 @@ setup(pw)
 	salt[2] = '\0';
 	r = crypt( ibuf, salt );
 	strncpy( buf, r, sizeof(buf)-1 );
-	buf[sizeof(buf)-1)] = '\0';
+	buf[sizeof(buf)-1] = '\0';
 
 	/* First 2 bytes are echo of the salt.  Replace with original salt. */
 	buf[0] = ibuf[0];
