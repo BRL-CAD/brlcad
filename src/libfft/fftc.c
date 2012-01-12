@@ -47,8 +47,12 @@ main(int argc, char *argv[])
     }
 
     n = atoi(argv[1]);
-    m = log((double)n)/log(2.0) + 0.5;	/* careful truncation */
+    if (n < 0 || n >= INT32_MAX) {
+	fprintf( stderr, "fftc: bad length - %s\n", argv[1]);
+	return 1;
+    }
 
+    m = log((double)n)/log(2.0) + 0.5;	/* careful truncation */
     splitdit( n, m );
     fprintf( stderr, "adds = %d, mults = %d\n", rfft_adds, rfft_mults );
     return 0;
