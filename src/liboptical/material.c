@@ -112,8 +112,10 @@ try_load(const char *path, const char *material, const char *shader_name)
     for (mfp = shader_mfuncs; mfp && mfp->mf_name != (char *)NULL; mfp++) {
 	RT_CK_MF(mfp);
 
-	if (BU_STR_EQUAL(mfp->mf_name, shader_name))
+	if (BU_STR_EQUAL(mfp->mf_name, shader_name)) {
+	    bu_dlclose(handle);
 	    return shader_mfuncs; /* found it! */
+	}
     }
 
     if (R_DEBUG&RDEBUG_MATERIAL) bu_log("shader '%s' not found in library\n", shader_name);
