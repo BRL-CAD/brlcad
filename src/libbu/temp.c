@@ -62,18 +62,24 @@ temp_close_files(void)
 
     /* close all files, free their nodes, and unlink */
     while (BU_LIST_WHILE(popped, temp_file_list, &(TF->l))) {
+	if (!popped)
+	    break;
+
+	/* take it off the list */
 	BU_LIST_DEQUEUE(&(popped->l));
-	if (popped) {
-	    if (popped->fd != -1) {
-		close(popped->fd);
-		popped->fd = -1;
-	    }
-	    if (BU_VLS_IS_INITIALIZED(&popped->fn) && bu_vls_addr(&popped->fn)) {
-		bu_file_delete(bu_vls_addr(&popped->fn));
-		bu_vls_free(&popped->fn);
-	    }
-	    bu_free(popped, "free bu_temp_file node");
+
+	/* close up shop */
+	if (popped->fd != -1) {
+	    close(popped->fd);
+	    popped->fd = -1;
 	}
+
+	/* burn the house down */
+	if (BU_VLS_IS_INITIALIZED(&popped->fn) && bu_vls_addr(&popped->fn)) {
+	    bu_file_delete(bu_vls_addr(&popped->fn));
+	    bu_vls_free(&popped->fn);
+	}
+	bu_free(popped, "free bu_temp_file node");
     }
 
     /* free the head */
