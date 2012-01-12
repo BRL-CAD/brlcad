@@ -2807,6 +2807,7 @@ read_fast4_colors(char *color_file)
 	color->rgb[2] = b;
 	BU_LIST_APPEND(&HeadColor.l, &color->l);
     }
+    fclose(fp);
 }
 
 
