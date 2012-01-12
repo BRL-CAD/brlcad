@@ -4820,6 +4820,7 @@ rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
     switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
 	    sp = rt_dsp_ptab;
+	    break;
 	case RT_DSP_SRC_FILE:
 	case RT_DSP_SRC_OBJ:
 	    sp = fake_dsp_printab;
