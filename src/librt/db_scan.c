@@ -111,6 +111,10 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 	    || feof(dbip->dbi_fp))
 	    break;
 	next = (off_t)ftell(dbip->dbi_fp);
+	if (next < 0) {
+	    perror("db_scan:  ftell:  ");
+	    return -1;
+	}
 	DEBUG_PR(addr, record);
 
 	nrec++;
