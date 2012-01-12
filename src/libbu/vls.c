@@ -745,8 +745,8 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 	/* Copy off the format string */
 	len = ep-sp+1;
-	if ((size_t)len > sizeof(fbuf))
-	    len = sizeof(fbuf);
+	if ((size_t)len > sizeof(fbuf)-1)
+	    len = sizeof(fbuf)-1;
 	/* intentionally avoid bu_strlcpy here since the source field
 	 * may be legitimately truncated.  FIXME: verify that claim.
 	 */
@@ -775,7 +775,8 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			    || *fp == '+'
 			    || *fp == '.'
 			    || *fp == '-'
-			    || *fp == '*') {
+			    || *fp == '*')
+			{
 			    continue;
 			}
 			if (*fp == 'z') {
