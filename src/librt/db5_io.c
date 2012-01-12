@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include "bin.h"
 
 #include "bu.h"
@@ -406,6 +407,10 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     *((struct db5_ondisk_header *)rip->buf) = header;	/* struct copy */
     memcpy(rip->buf+sizeof(header), lenbuf, count);
 
+    if ( (size_t)used > (UINTPTR_MAX - (size_t)rip->buf) ) {
+	bu_log("db5_get_raw_internal_fp(), Pointer advance goes beyond the end of the universe. Aborting.\n");
+	return -1;
+    }
     cp = rip->buf+used;
     want = rip->object_length-used;
     BU_ASSERT_LONG(want, >, 0);
