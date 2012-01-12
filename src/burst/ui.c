@@ -734,6 +734,7 @@ McolorFile(HmItem *itemp)
     };
     Input *ip = input;
     FILE *colorfp;
+
     if (getInput(ip))
 	bu_strlcpy(colorfile, ip->buffer, LNBUFSZ);
     else
@@ -751,6 +752,7 @@ McolorFile(HmItem *itemp)
     logCmd(scrbuf);
     notify("Reading ident-to-color mappings", NOTIFY_APPEND);
     readColors(&colorids, colorfp);
+    fclose(colorfp);
     notify(NULL, NOTIFY_DELETE);
     return;
 }
