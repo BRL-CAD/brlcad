@@ -763,7 +763,8 @@ rt_tree_max_raynum(register const union tree *tp, register const struct partitio
 void
 rt_fastgen_vol_vol_overlap(struct region **fr1, struct region **fr2, const struct partition *pp)
 {
-    struct bu_ptbl sl1, sl2;
+    struct bu_ptbl sl1 = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl sl2 = BU_PTBL_INIT_ZERO;
     const struct seg *s1 = (const struct seg *)NULL;
     const struct seg *s2 = (const struct seg *)NULL;
     fastf_t s1_in_dist;
