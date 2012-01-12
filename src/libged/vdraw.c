@@ -204,6 +204,12 @@ vdraw_write(void *data, int argc, const char *argv[])
 	idx = uind;
     }
 
+    /* This should never happen. Adding this to silence covarity. */
+    if (idx >= BN_VLIST_CHUNK) {
+	bu_vls_printf(gedp->ged_result_str, "vdraw: vlist chunk size exceeded!\n");
+	return GED_ERROR;
+    }
+
     if (sscanf(argv[3], "%d", &(cp->cmd[idx])) < 1) {
 	bu_vls_printf(gedp->ged_result_str, "vdraw: cmd not an integer\n");
 	return GED_ERROR;
