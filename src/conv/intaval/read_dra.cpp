@@ -390,6 +390,7 @@ void conv
 		translatedShape = true;
 
 		std::cout << "Identical shape" << std::endl;
+		form.id = id;
 	    }
 	    else {
 		form.id         = id;
