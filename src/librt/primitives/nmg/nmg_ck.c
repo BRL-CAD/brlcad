@@ -148,9 +148,6 @@ nmg_veg(const uint32_t *eg)
     for (BU_LIST_FOR(eu2, bu_list, &((struct edge_g_lseg *)eg)->eu_hd2)) {
 	struct edgeuse *eu;
 
-	if (eu2 == NULL) {
-	    bu_bomb("nmg_veg null eu2\n");
-	}
 	eu = BU_LIST_MAIN_PTR(edgeuse, eu2, l2);
 	NMG_CK_EDGEUSE(eu);
 	if (eu->g.magic_p == eg) continue;
