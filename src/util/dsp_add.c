@@ -190,9 +190,14 @@ main(int ac, char *av[])
 
     /* Open the files */
 
-    if (stat(av[next_arg], &sb) ||
-	(in1 = fopen(av[next_arg], "r"))  == (FILE *)NULL) {
+    if ( (in1 = fopen(av[next_arg], "r"))  == (FILE *)NULL) {
 	perror(av[next_arg]);
+	return -1;
+    }
+
+    if(stat(av[next_arg], &sb)) {
+	perror(av[next_arg]);
+	fclose(in1);
 	return -1;
     }
 
