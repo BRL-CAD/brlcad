@@ -3041,13 +3041,15 @@ f_Exec_Shell(char **args)
 {
     int	i;
     int	exit_status;
+    char **stashed_args = NULL;
     if (args == NULL)
     {
-	if ((args = (char **) malloc(sizeof(char *)*2)) == (char **) 0)
+	if ((args = (char **) malloc(sizeof(char *)*3)) == (char **) 0)
 	{
-	    Malloc_Bomb(sizeof(char *)*2);
+	    Malloc_Bomb(sizeof(char *)*3);
 	    return	-1;
 	}
+	stashed_args = args;
 	args[0] = "!";
 	args[1] = NULL;
     }
@@ -3061,13 +3063,19 @@ exec_start :
 	{
 	    if (get_Input(input_ln, BUFSIZ, "Command line : ") == NULL
 		||	(args[0] = strtok(input_ln, " \t")) == NULL
-		)
+		) {
+		if(stashed_args)
+		    free(stashed_args);
 		return	-1;
+	    }
 	    for (i = 1; args[i-1] != NULL; ++i)
 		args[i] = strtok((char *) NULL, " \t");
 	}
-	else
+	else {
+	    if(stashed_args)
+		free(stashed_args);
 	    return	-1;
+	}
     }
     else
 	if ((args[0])[1] != '\0')
@@ -3103,6 +3111,8 @@ exec_start :
 	}
 	(void) f_Redraw();
     }
+    if(stashed_args)
+	free(stashed_args);
     return	1;
 }
 
