@@ -5926,8 +5926,10 @@ to_mouse_constrain_rot(struct ged *gedp,
     switch (argv[2][0]) {
 	case 'x':
 	    bu_vls_printf(&rot_vls, "%lf 0 0", -sf);
+	    break;
 	case 'y':
 	    bu_vls_printf(&rot_vls, "0 %lf 0", -sf);
+	    break;
 	case 'z':
 	    bu_vls_printf(&rot_vls, "0 0 %lf", -sf);
     }
