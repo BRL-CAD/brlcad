@@ -4310,7 +4310,7 @@ rt_bot_smooth(struct rt_bot_internal *bot, const char *bot_name, struct db_i *db
 	bot->face_normals = NULL;
     }
 
-    bot->bot_flags &= !(RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS);
+    bot->bot_flags &= ~(RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS);
     bot->num_normals = 0;
     bot->num_face_normals = 0;
 
