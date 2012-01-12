@@ -774,8 +774,11 @@ read_arbn(char *name)
 	/* Obtain vertex input_points */
 	input_points = (double *)bu_malloc(npt*3*sizeof(double), "input_points");
 
-	if ( getxsoldata( input_points, npt*3, sol_work ) < 0 )
+	if ( getxsoldata( input_points, npt*3, sol_work ) < 0 ) {
+	    bu_free( (char *)input_points, "input_points" );
+	    input_points = (double *)0;
 	    goto bad;
+	}
     }
 
     /* Get planes defined by three points, 6 per card */
@@ -923,7 +926,6 @@ read_arbn(char *name)
     bu_free( (char *)input_points, "input_points" );
     input_points = (double *)0;
 
-
     /*
      *  ARBN must be convex.  Test for concavity.
      *  Byproduct is an enumeration of all the verticies.
@@ -1003,7 +1005,6 @@ read_arbn(char *name)
     /* Write out the solid ! */
     i = mk_arbn( outfp, name, nface, eqn );
 
-    if ( input_points )  bu_free( (char *)input_points, "input_points" );
     if ( vertex )  bu_free( (char *)vertex, "vertex" );
     if ( eqn )  bu_free( (char *)eqn, "eqn" );
     if ( used )  bu_free( (char *)used, "used" );
