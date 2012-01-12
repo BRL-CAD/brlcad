@@ -397,7 +397,7 @@ LZW(void)
 	Message("Warning: unused raster data present");
 
 	do
-	    if ((c == getc(gfp)) == EOF)
+	    if ((c = getc(gfp)) == EOF)
 		Fatal(fbp, "Error reading extra raster data");
 	while (--bytecnt > 0);
     }
