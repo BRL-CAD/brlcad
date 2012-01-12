@@ -1536,13 +1536,16 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 			      "Usage: %s [help] | %s",
 			      cmd->cmd->name, cmd->cmd->usage);
 	    return GED_ERROR;
-	} else {
+	}
+#if 0
+	else {
 	    /* a target obj is set; only flags that were possible when
 	     * this function was last updated should be handled
 	     */
 	    BU_ASSERT(cur_arg->type ^ ~(EDIT_TARGET_OBJ |
 					EDIT_NATURAL_ORIGIN));
 	}
+#endif
 
 	/* disallow non-standard opts */
 	if (cur_arg->cl_options[0] != '\0')
