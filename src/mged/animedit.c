@@ -2613,6 +2613,7 @@ system_solve(int pri, double delta, double epsilon)
 	ssp = (struct solve_stack *) solve_head.forw;
 
 	i = (2<<6) - 1;		/* Six degrees of freedom */
+        if (test_hold) {  /* make sure we've got test_hold */
 	for (BU_LIST_FOR(jh, jointH, &test_hold->j_head)) {
 	    if (ssp->jp != jh->p) {
 		i &= jh->flag;
@@ -2625,6 +2626,7 @@ system_solve(int pri, double delta, double epsilon)
 	    /* All joints, all freedoms */
 	    test_hold->flag |= HOLD_FLAG_TRIED;
 	}
+        }
 	reject_move();
 	goto Middle;
     }
