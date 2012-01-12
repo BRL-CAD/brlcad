@@ -841,7 +841,8 @@ template<typename PrecisionT,
 	 typename Allocator>
 basic_parser_extra<PrecisionT, charT, traits, Allocator>::
 basic_parser_extra(basic_parser_type *p, contents_type *c)
-: basic_parser(p)
+: parser(NULL)
+, basic_parser(p)
 , contents(c)
 {
     parser_state.working_stringset.insert("default");
