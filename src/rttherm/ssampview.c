@@ -518,20 +518,6 @@ conduct_tests(void)
     VPRINT("flat xyz?", xyz);
 
     return;
-
-    /* Check identity of XYZ->RGB->spectrum->XYZ->RGB */
-    check(0.313,     0.329,      0.358);	/* D6500 white */
-    check(0.670,     0.330,      0.000);	/* NTSC red primary */
-    check(0.210,     0.710,      0.080);	/* NTSC green primary */
-    check(0.140,     0.080,      0.780);	/* NTSC blue primary */
-    check(.5, .5, .5);
-    check(1, 0, 0);
-    check(0, 1, 0);
-    check(0, 0, 1);
-    check(1, 1, 1);
-    check(1, 1, 0);
-    check(1, 0, 1);
-    check(0, 1, 1);
 }
 
 
