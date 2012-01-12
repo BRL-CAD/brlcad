@@ -1928,6 +1928,8 @@ vo_keypoint_cmd(struct view_obj *vop,
     struct bu_vls vls;
     vect_t tvec;
 
+    VSETALL(tvec, 0);
+
     /* Get the keypoint */
     if (argc == 1) {
 	bu_vls_init(&vls);
