@@ -283,9 +283,9 @@ main(int argc, char *argv[])
 
     /* Open brl-cad database */
     argc -= bu_optind;
+    argv += bu_optind;
     if(argc < 2 || argv[0] == NULL || argv[1] == NULL)
 	bu_exit(1, usage, argv[0]);
-    argv += bu_optind;
 
     gcvwriter.func = nmg_to_egg;
 
