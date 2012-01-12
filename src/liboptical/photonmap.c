@@ -1204,7 +1204,7 @@ LoadFile(char *pmfile)
 	    return 0;
 	}
 	ret = fread(&I1, sizeof(int), 1, FH);
-	if (ret != 1) {
+	if (ret != 1 || I1 < 0 || I1 > INT_MAX) {
 	    bu_log("Error reading irradiance cache file (map type)\n");
 	    return 0;
 	}
