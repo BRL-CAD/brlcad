@@ -88,10 +88,11 @@
 		   bu_identify_magic(_i), _i, __FILE__, __LINE__);	\
 	    bu_bomb("Bad getput buffer");				\
 	}								\
-	_len = (((unsigned char *)(_p->ext_buf))[2] << 24) |		\
-	    (((unsigned char *)(_p->ext_buf))[3] << 16) |		\
-	    (((unsigned char *)(_p->ext_buf))[4] << 8) |		\
-	    ((unsigned char *)(_p->ext_buf))[5];			\
+	_len = \
+	    ((size_t)((unsigned char *)(_p->ext_buf))[2] << 24) |	\
+	    ((size_t)((unsigned char *)(_p->ext_buf))[3] << 16) |	\
+	    ((size_t)((unsigned char *)(_p->ext_buf))[4] << 8) |	\
+	    (size_t)((unsigned char *)(_p->ext_buf))[5];		\
 	if (UNLIKELY(_len > _p->ext_nbytes)) {				\
 	    bu_log("ERROR: BU_CK_GETPUT buffer %p, expected len=%zu, ext_nbytes=%zu, file %s, line %d\n", \
 		   (void *)_p->ext_buf, (size_t)_len, _p->ext_nbytes,	\
