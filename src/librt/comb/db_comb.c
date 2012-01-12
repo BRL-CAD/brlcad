@@ -942,7 +942,7 @@ db_wrap_v4_external(struct bu_external *op, const char *name)
 
     rec = (union record *)op->ext_buf;
     NAMEMOVE(name, rec->s.s_name);
-    namebuf[NAMESIZE] = '\0'; /* sanity */
+    name[NAMESIZE] = '\0'; /* sanity */
 }
 
 
