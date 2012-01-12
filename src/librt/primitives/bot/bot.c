@@ -1587,6 +1587,7 @@ rt_bot_find_e_nearest_pt2(
 		    *vert1 = edge_list[i*2+0];
 		    *vert2 = edge_list[i*2+1];
 		    break;
+#if 0
 		case 4:
 		    dist = tmp_dist;
 		    *vert1 = edge_list[i*2+1];
@@ -1603,6 +1604,7 @@ rt_bot_find_e_nearest_pt2(
 			*vert2 = edge_list[i*2+0];
 		    }
 		    break;
+#endif
 	    }
 	}
     }
