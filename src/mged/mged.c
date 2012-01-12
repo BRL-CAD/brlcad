@@ -2451,8 +2451,9 @@ refresh(void)
  * Logging routine
  */
 static void
-log_event(const char *event, const char *arg)
+log_event(const char *UNUSED(event), const char *UNUSED(arg))
 {
+#if 0
     struct bu_vls line;
     time_t now;
     char *timep;
@@ -2461,7 +2462,7 @@ log_event(const char *event, const char *arg)
 
     /* let the user know that we're logging */
     static int notified = 0;
-
+#endif
     /* disable for now until it can be tied to OPTIMIZED too */
     return;
 #if 0
