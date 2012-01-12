@@ -445,6 +445,9 @@ main(int argc, char **argv)
 		    prtsmu(1);
 		    prtclr(1);
 		    goto again;
+		} else {
+		    bu_log("error: unrecognized key sequence.\n");
+		    continue;
 		}
 		printf("%c%5ld %-7s%c\n", 13, itm[i],
 		       colortab[itmc[i]].name, 13);
@@ -716,8 +719,8 @@ char gc(void)
 }
 int gclr(void)
 {
-    char c, cs[3];
-    int i;
+    char cs[3];
+    int i, c;
     for (i=0;i<3;i++) {
 	while ((c=getchar())<97||c>122) {
 	    if (c==2) return -2;
@@ -726,8 +729,9 @@ int gclr(void)
 	    if (c==22) return -22;
 	    if (c==32) return -32;
 	    if (c=='?') return -63;
+	    if (c==EOF) return EOF;
 	}
-	cs[i]=c;
+	cs[i]=(char)c;
     }
     return cclr(cs);
 }
