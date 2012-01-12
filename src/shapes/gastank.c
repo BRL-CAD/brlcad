@@ -63,7 +63,7 @@ main(int argc, char **argv)
     char solnam[9];		/* Solid name. */
     char regnam[9];		/* Region name. */
     char grpnam[5];		/* Group name. */
-    int numtnk;			/* Number of gas tanks to be created */
+    int numtnk=0;		/* Number of gas tanks to be created */
 				/* (<=26). */
 
     struct wmember comb;	/* Used to make regions. */
