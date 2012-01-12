@@ -2662,6 +2662,7 @@ system_solve(int pri, double delta, double epsilon)
 	    reject_move();
 	}
 	i = (2 << 6) - 1;
+        if (test_hold) { /* again, make sure we've got test_hold */
 	for (BU_LIST_FOR(jh, jointH, &test_hold->j_head)) {
 	    if (ssp->jp != jh->p) {
 		i &= jh->flag;
@@ -2673,6 +2674,7 @@ system_solve(int pri, double delta, double epsilon)
 	if (i == ((2<<6) - 1)) {
 	    test_hold->flag |= HOLD_FLAG_TRIED;
 	}
+        }
 	reject_move();
 	if (joint_debug & DEBUG_J_SYSTEM) {
 	    Tcl_AppendResult(INTERP, "system_solve: returning -1\n", (char *)NULL);
