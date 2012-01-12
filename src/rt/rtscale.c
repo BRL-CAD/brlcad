@@ -510,8 +510,8 @@ make_bounding_rpp(FILE *outfp, fastf_t *v2mod)
 
     point_t		v_min;		/* view space minimum coordinate */
     point_t		v_max;		/* view space maximum coordinate */
-    point_t		new_min;	/* new min of rotated viewing cube */
-    point_t		new_max;	/* new max of rotated viewing cube */
+    point_t		new_min = VINIT_ZERO;	/* new min of rotated viewing cube */
+    point_t		new_max = VINIT_ZERO;	/* new max of rotated viewing cube */
 
     /* Make the min and max points of the view-space viewing cube */
     VSET(v_min, -1.0, -1.0, -1.0);
