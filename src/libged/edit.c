@@ -2068,7 +2068,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	return ret;
     }
 
-    if (!subcmd.cmd->enabled) {
+    if (subcmd.cmd == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "subcommand \"%s\""
 		      " is disabled", subcmd_name);
 	return GED_ERROR;
