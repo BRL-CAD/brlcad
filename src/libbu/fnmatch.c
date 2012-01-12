@@ -195,6 +195,7 @@ findclass(char *charclass)
 {
     CHARCLASS tmp;
     tmp.idstring = charclass;
+    tmp.checkfun = NULL;
     return (CHARCLASS *)bsearch(&tmp, charclasses, sizeof(charclasses)/sizeof(CHARCLASS), sizeof(CHARCLASS), classcompare);
 }
 
