@@ -2875,21 +2875,16 @@ int
 count_non_union_ops(tp)
     union tree *tp;
 {
-    int count=0;
+    int count = 0;
 
     RT_CK_TREE(tp);
 
-    switch (tp->tr_op) {
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	    count++;
-	case OP_UNION:
-	    count += count_non_union_ops(tp->tr_b.tb_left);
-	    count += count_non_union_ops(tp->tr_b.tb_right);
-	    break;
-	default:
-	    break;
+    if (tp->tr_op != OP_UNION) {
+	count++;
     }
+
+    count += count_non_union_ops(tp->tr_b.tb_left);
+    count += count_non_union_ops(tp->tr_b.tb_right);
 
     return count;
 }
