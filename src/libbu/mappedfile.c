@@ -52,7 +52,7 @@ bu_open_mapped_file(const char *name, const char *appl)
     char *real_path = bu_realpath(name, NULL);
 #ifdef HAVE_SYS_STAT_H
     struct stat sb;
-    int fd;	/* unix file descriptor */
+    int fd = -1;	/* unix file descriptor */
 #else
     FILE *fp = (FILE *)NULL;	/* stdio file pointer */
 #endif
@@ -66,52 +66,103 @@ bu_open_mapped_file(const char *name, const char *appl)
     if (!BU_LIST_IS_INITIALIZED(&bu_mapped_file_list)) {
 	BU_LIST_INIT(&bu_mapped_file_list);
     }
+
     for (BU_LIST_FOR(mp, bu_mapped_file, &bu_mapped_file_list)) {
 	BU_CK_MAPPED_FILE(mp);
-	if (!BU_STR_EQUAL(real_path, mp->name))  continue;
+
+	/* find a match */
+
+	if (!BU_STR_EQUAL(real_path, mp->name))
+	    continue;
 	if (appl && !BU_STR_EQUAL(appl, mp->appl))
 	    continue;
-	/* File is already mapped -- verify size and modtime */
-#ifdef HAVE_SYS_STAT_H
+
+	/* found a match */
+
+	/* if mapped file still exists, verify size and modtime */
 	if (!mp->dont_restat) {
+
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    ret = stat(real_path, &sb);
+	    fd = open(real_path, O_RDONLY | O_BINARY);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
-	    if (ret < 0)  goto do_reuse;	/* File vanished from disk, mapped copy still OK */
+
+	    /* If file vanished from disk, mapped copy should still OK */
+	    if (fd < 0) {
+		bu_semaphore_acquire(BU_SEM_SYSCALL);
+		(void)close(fd);
+		bu_semaphore_release(BU_SEM_SYSCALL);
+		fd = -1;
+
+		/* It is safe to reuse mp */
+		mp->uses++;
+
+		bu_semaphore_release(BU_SEM_MAPPEDFILE);
+		if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
+		    bu_pr_mapped_file("open_reused", mp);
+
+		return mp;
+	    }
+
+#ifdef HAVE_SYS_STAT_H
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    ret = fstat(fd, &sb);
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+
+	    if (ret < 0) {
+		/* odd, open worked but fstat failed */
+
+		bu_semaphore_acquire(BU_SEM_SYSCALL);
+		(void)close(fd);
+		bu_semaphore_release(BU_SEM_SYSCALL);
+		fd = -1;
+
+		/* It is safe to reuse mp */
+		mp->uses++;
+
+		bu_semaphore_release(BU_SEM_MAPPEDFILE);
+		if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
+		    bu_pr_mapped_file("open_reused", mp);
+
+		return mp;
+	    }
 	    if ((size_t)sb.st_size != mp->buflen) {
-		bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n",
-			real_path, (long)mp->buflen, (long)sb.st_size);
-		goto dont_reuse;
+		bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n", real_path, (long)mp->buflen, (long)sb.st_size);
+		/* mp doesn't reflect the file any longer.  Invalidate. */
+		mp->appl = "__STALE__";
+		/* Can't invalidate old copy, it may still be in use. */
+		break;
 	    }
 	    if ((long)sb.st_mtime != mp->modtime) {
-		bu_log("bu_open_mapped_file(%s) WARNING: File modified since last mapped, opening new version.\n",
-			real_path);
-		goto dont_reuse;
+		bu_log("bu_open_mapped_file(%s) WARNING: File modified since last mapped, opening new version.\n", real_path);
+		/* mp doesn't reflect the file any longer.  Invalidate. */
+		mp->appl = "__STALE__";
+		/* Can't invalidate old copy, it may still be in use. */
+		break;
 	    }
 	    /* To be completely safe, should check st_dev and st_inum */
-	}
 #endif
-    do_reuse:
-	/* It is safe to reuse mp */
-	mp->uses++;
-	bu_semaphore_release(BU_SEM_MAPPEDFILE);
-	if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
-	    bu_pr_mapped_file("open_reused", mp);
-	return mp;
-    dont_reuse:
-	/* mp doesn't reflect the file any longer.  Invalidate. */
-	mp->appl = "__STALE__";
-	/* Can't invalidate old copy, it may still be in use. */
-	/* Fall through, and open the new version */
-    }
-    bu_semaphore_release(BU_SEM_MAPPEDFILE);
-    mp = (struct bu_mapped_file *)NULL;
 
-    /* File is not yet mapped, open file read only. */
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    (void)close(fd);
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+	    fd = -1;
+	}
+    }
+    /* done iterating over mapped file list */
+    bu_semaphore_release(BU_SEM_MAPPEDFILE);
+
+    /* necessary in case we take a 'fail' path before BU_GET() */
+    mp = NULL;
+
+    /* File is not yet mapped or has chnaged, open file read only if
+     * we didn't find it earlier.
+     */
 #ifdef HAVE_SYS_STAT_H
-    bu_semaphore_acquire(BU_SEM_SYSCALL);
-    fd = open(real_path, O_RDONLY | O_BINARY);
-    bu_semaphore_release(BU_SEM_SYSCALL);
+    if (fd < 0) {
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	fd = open(real_path, O_RDONLY | O_BINARY);
+	bu_semaphore_release(BU_SEM_SYSCALL);
+    }
 
     if (UNLIKELY(fd < 0)) {
 	if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
@@ -172,16 +223,9 @@ bu_open_mapped_file(const char *name, const char *appl)
 	if (UNLIKELY(ret != sb.st_size)) {
 	    perror(real_path);
 	    bu_free(mp->buf, real_path);
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    (void)close(fd);
-	    bu_semaphore_release(BU_SEM_SYSCALL);
 	    goto fail;
 	}
     }
-
-    bu_semaphore_acquire(BU_SEM_SYSCALL);
-    (void)close(fd);
-    bu_semaphore_release(BU_SEM_SYSCALL);
 
 #else /* !HAVE_SYS_STAT_H */
 
@@ -231,6 +275,13 @@ bu_open_mapped_file(const char *name, const char *appl)
     bu_semaphore_release(BU_SEM_SYSCALL);
 #endif
 
+    if (fd >= 0) {
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	(void)close(fd);
+	bu_semaphore_release(BU_SEM_SYSCALL);
+	fd = -1;
+    }
+
     mp->uses = 1;
     mp->l.magic = BU_MAPPED_FILE_MAGIC;
 
@@ -247,6 +298,13 @@ bu_open_mapped_file(const char *name, const char *appl)
     return mp;
 
 fail:
+    if (fd >= 0) {
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	(void)close(fd);
+	bu_semaphore_release(BU_SEM_SYSCALL);
+	fd = -1;
+    }
+
     if (mp) {
 	bu_free(mp->name, "mp->name");
 	if (mp->appl) bu_free(mp->appl, "mp->appl");
