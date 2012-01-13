@@ -1,3 +1,5 @@
+# Geometry Conversion Regression Tests (experimental)
+ADD_SUBDIRECTORY(gcv)
 
 IF(SH_EXEC)
 	ADD_CUSTOM_TARGET(mged-regress
@@ -107,4 +109,5 @@ CMAKEFILES(
 	spdipix.asc 
 	testlib.c 
 	weight.sh
+	gcv
 	)
