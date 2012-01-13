@@ -996,11 +996,13 @@ f_permute(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     for (i = 0; i < 8; ++i) {
 	char buf[2];
 
-	if ((*p)[i] == '*')
-	    continue;
-	sprintf(buf, "%c", (*p)[i]);
-	k = atoi(buf);
-	VMOVE(tarb.pt[i], larb.pt[ARB_VERT_LOC(es_type, k)]);
+	if ((*p)[i] == '*') {
+	  tarb.pt[i] = VINIT_ZERO;
+        } else {
+	  sprintf(buf, "%c", (*p)[i]);
+	  k = atoi(buf);
+	  VMOVE(tarb.pt[i], larb.pt[ARB_VERT_LOC(es_type, k)]);
+        }
     }
 
     /*
