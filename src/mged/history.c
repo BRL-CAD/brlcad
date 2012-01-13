@@ -220,6 +220,7 @@ f_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	    if (fp != NULL) {
 		Tcl_AppendResult(interp, "history: -outfile option given more than once\n",
 				 (char *)NULL);
+                fclose(fp);
 		return TCL_ERROR;
 	    } else if (argc < 3 || BU_STR_EQUAL(argv[2], "-delays")) {
 		Tcl_AppendResult(interp, "history: I need a file name\n", (char *)NULL);
