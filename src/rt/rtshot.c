@@ -427,10 +427,13 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 {
     register struct partition *pp;
     register struct soltab *stp;
-    struct curvature cur;
     fastf_t out;
     point_t inpt, outpt;
-    vect_t inormal, onormal;
+    vect_t inormal, onormal; 
+    struct curvature cur;
+    cur.crv_c1 = 0.0;
+    cur.crv_c2 = 0.0;
+    VSETALL(cur.crv_pdir, 0.0);
 
     if ((pp=PartHeadp->pt_forw) == PartHeadp)
 	return 0;		/* Nothing hit?? */
