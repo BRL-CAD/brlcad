@@ -307,7 +307,7 @@ main(int argc, char **argv)
 		    face_verts[i] = &verts[i+vert_no].vp;
 
 		/* make a face */
-		fu = nmg_cmface( s, face_verts, 3 );
+		(void)nmg_cmface( s, face_verts, 3 );
 
 		/* make sure any duplicate vertices get the same vertex pointer */
 		for (; vert1 < vert_no+3; vert1++ )
