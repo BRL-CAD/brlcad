@@ -75,11 +75,6 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc < 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
     /* Process any options */
     Three_D = 1;				/* 3-D w/color, by default */
     Z_clip = 0;				/* NO Z clipping, by default*/
