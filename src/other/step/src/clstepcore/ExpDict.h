@@ -1496,7 +1496,7 @@ class AggrTypeDescriptor  :    public TypeDescriptor  {
     AggrTypeDescriptor (const char * nm, PrimitiveType ft, 
 			Schema *origSchema, const char * d, 
 			AggregateCreator f =0 )
-	: TypeDescriptor (nm, ft, origSchema, d), CreateNewAggr(f) { }
+      : TypeDescriptor (nm, ft, origSchema, d), _aggrDomainType(NULL), CreateNewAggr(f) { }
     virtual ~AggrTypeDescriptor ();
 
 
