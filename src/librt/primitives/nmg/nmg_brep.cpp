@@ -53,7 +53,7 @@ sideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, co
 extern "C" void
 rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-    struct model *m = nmg_mm();//not needed for non-tess
+    struct model *m;
     struct nmgregion *r;
     struct shell *s;
     struct faceuse *fu;
