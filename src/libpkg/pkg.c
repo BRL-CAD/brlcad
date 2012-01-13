@@ -335,9 +335,9 @@ _pkg_ck_debug(void)
 	place = buf;
     }
     /* Named file must exist and be writeable */
-    if (stat(place, &sbuf) != 0)
-	return;
     if ((_pkg_debug = fopen(place, "a")) == NULL)
+	return;
+    if (fstat(fileno(_pkg_debug), &sbuf) < 0)
 	return;
 
     /* Log version number of this code */
