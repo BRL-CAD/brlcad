@@ -55,7 +55,7 @@ Convsurfs()
     }
 
     if (totsurfs) {
-	if (curr_file->obj_name)
+	if (!BU_STR_EMPTY(curr_file->obj_name))
 	    mk_bspline(fdout, curr_file->obj_name, surfs);
 	else
 	    mk_bspline(fdout, "nurb.s", surfs);
