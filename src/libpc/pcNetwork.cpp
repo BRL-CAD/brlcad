@@ -30,7 +30,7 @@
 
 /** Default Constructor */
 template<class T>
-BinaryNetwork<T>::BinaryNetwork()
+BinaryNetwork<T>::BinaryNetwork() : v(), e()
 {
 }
 
