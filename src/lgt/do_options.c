@@ -2481,8 +2481,10 @@ f_Rd_IR_Db(char **args)
 	bu_log("Can not open \"%s\" for reading.\n", ir_db_file);
 	return	-1;
     }
-    if (! ready_Output_Device(0))
+    if (! ready_Output_Device(0)) {
+	fclose(ir_fp);
 	return	-1;
+    }
     prnt_Event("Reading IR data base...");
     if (! read_Trie(ir_fp))
     {
