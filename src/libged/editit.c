@@ -53,7 +53,7 @@ _ged_editit(char *editstring, const char *filename)
     int status = 0;
 #endif
     int pid = 0;
-    char **avtmp;
+    char **avtmp = (char **)NULL;
     const char *terminal = (char *)NULL;
     const char *terminal_opt = (char *)NULL;
     const char *editor = (char *)NULL;
