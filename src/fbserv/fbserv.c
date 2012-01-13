@@ -193,7 +193,7 @@ int
 is_socket(int fd)
 {
     struct sockaddr saddr;
-    socklen_t namelen;
+    socklen_t namelen = 0;
 
     if ( getsockname(fd, &saddr, &namelen) == 0 ) {
 	return	1;
