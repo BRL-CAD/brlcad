@@ -1410,17 +1410,18 @@ MreadCmdFile(HmItem *UNUSED(itemp))
     Input *ip = input;
     char cmdfile[LNBUFSZ];
     FILE *cmdfp;
-    if (getInput(ip))
-	bu_strlcpy(cmdfile, ip->buffer, LNBUFSZ);
-    if ((cmdfp = fopen(cmdfile, "rb")) == NULL) {
+    if (getInput(ip)) {
+      bu_strlcpy(cmdfile, ip->buffer, LNBUFSZ);
+      if ((cmdfp = fopen(cmdfile, "rb")) == NULL) {
 	(void) snprintf(scrbuf, LNBUFSZ, 
-			"Read access denied for \"%s\"",
-			cmdfile);
+	    "Read access denied for \"%s\"",
+	    cmdfile);
 	warning(scrbuf);
 	return;
+      }
+      readBatchInput(cmdfp);
+      (void) fclose(cmdfp);
     }
-    readBatchInput(cmdfp);
-    (void) fclose(cmdfp);
     return;
 }
 
