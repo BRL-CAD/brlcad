@@ -11039,7 +11039,8 @@ nmg_bot(struct shell *s, const struct bn_tol *tol)
 void
 nmg_vlist_to_eu(struct bu_list *vlist, struct shell *s)
 {
-    point_t pt1, pt2;
+    point_t pt1 = VINIT_ZERO;
+    point_t pt2 = VINIT_ZERO;
     struct bn_vlist *vp;
     struct edgeuse *eu;
     struct vertex *v=NULL;
