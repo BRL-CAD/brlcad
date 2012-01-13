@@ -434,6 +434,7 @@ icv_rot(int argc, char **argv)
     }
 
 done:
+    fclose(ifp);
     bu_free(buffer, "buffer");
     bu_free(obuf, "obuf");
 
