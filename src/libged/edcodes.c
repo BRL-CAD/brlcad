@@ -235,13 +235,13 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 
     av[i] = NULL;
 
+    (void)fclose(fp);
+
     if (ged_wcodes(gedp, argc + 1, (const char **)av) == GED_ERROR) {
 	bu_file_delete(tmpfil);
 	bu_free((genptr_t)av, "ged_edcodes av");
 	return GED_ERROR;
     }
-
-    (void)fclose(fp);
 
     if (sort_by_ident || sort_by_region) {
 	char **line_array;
