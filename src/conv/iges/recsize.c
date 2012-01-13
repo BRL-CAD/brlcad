@@ -50,7 +50,7 @@ int
 Recsize()
 {
 
-    int i, j, k=(-1), recl=0, length[NRECS], ch;
+    int i, j, k=(-1), recl=0, length[NRECS] = {0}, ch;
 
     for (j=0; j<NRECS; j++) {
 	i = 1;
