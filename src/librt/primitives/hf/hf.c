@@ -1618,12 +1618,15 @@ rt_hf_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 void
 rt_hf_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
-    struct hf_specific *hf = (struct hf_specific *)stp->st_specific;
+    struct hf_specific *hf;
     vect_t delta;
     fastf_t r = 0;
 
     if (ap) RT_CK_APPLICATION(ap);
-    if (!hf || !hitp || !uvp || !stp)
+    if (!hitp || !uvp || !stp)
+	return;
+    hf = (struct hf_specific *)stp->st_specific;
+    if (hf == NULL)
 	return;
     RT_CK_HIT(hitp);
 
