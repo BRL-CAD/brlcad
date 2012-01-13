@@ -369,7 +369,10 @@ tcl_fb_readpixel(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **arg
 	Tcl_AppendResult(interp, "Usage: fb_readpixel fbp x y", (char *)NULL);
 	return TCL_ERROR;
     }
+#if 0
+    /* see hack below */
     ifp = (FBIO *)atol(argv[1]);
+#endif
     x = atol(argv[2]);
     y = atol(argv[3]);
 
