@@ -630,7 +630,7 @@ process_blocks_code( int code )
 	    }
 	    break;
 	case 5:		/* block handle */
-	    if ( curr_block && curr_block->handle == NULL ) {
+	    if ( curr_block && BU_STR_EMPTY(curr_block->handle)) {
 		len = strlen( line );
 		if ( len > 16 ) {
 		    len = 16;
