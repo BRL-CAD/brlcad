@@ -1177,6 +1177,7 @@ LoadFile(char *pmfile)
 	bu_log("  Reading Irradiance Cache File...\n");
 	ret = fread(&S1, sizeof(short), 1, FH);
 	if (ret != 1) {
+ 	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (endian)\n");
 	    return 0;
 	}
@@ -1185,6 +1186,7 @@ LoadFile(char *pmfile)
 
 	ret = fread(&S1, sizeof(short), 1, FH);
 	if (ret != 1) {
+ 	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (revision)\n");
 	    return 0;
 	}
@@ -1192,6 +1194,7 @@ LoadFile(char *pmfile)
 
 	ret = fread(&ScaleFactor, sizeof(double), 1, FH);
 	if (ret != 1) {
+ 	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (scale factor)\n");
 	    return 0;
 	}
@@ -1200,11 +1203,13 @@ LoadFile(char *pmfile)
 	/* Read in Map Type */
 	ret = fread(&C1, sizeof(char), 1, FH);
 	if (ret != 1) {
+ 	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (map type)\n");
 	    return 0;
 	}
 	ret = fread(&I1, sizeof(int), 1, FH);
 	if (ret != 1 || I1 < 0 || I1 > INT_MAX) {
+ 	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (map type)\n");
 	    return 0;
 	}
@@ -1214,6 +1219,7 @@ LoadFile(char *pmfile)
 	for (i = 0; i < I1; i++) {
 	    ret = fread(&Emit[PM_GLOBAL][i], sizeof(struct Photon), 1, FH);
 	    if (ret != 1) {
+ 	        fclose(FH);
 		bu_log("Error reading irradiance cache file (global)\n");
 	    /* bu_log("Pos: [%.3f, %.3f, %.3f], Power: [%.3f, %.3f, %.3f]\n", Emit[PM_GLOBAL][i].Pos[0], Emit[PM_GLOBAL][i].Pos[1], Emit[PM_GLOBAL][i].Pos[2], Emit[PM_GLOBAL][i].Power[0], Emit[PM_GLOBAL][i].Power[1], Emit[PM_GLOBAL][i].Power[2]);*/
 	    /* bu_log("Pos: [%.3f, %.3f, %.3f], Irrad: [%.3f, %.3f, %.3f]\n", Emit[PM_GLOBAL][i].Pos[0], Emit[PM_GLOBAL][i].Pos[1], Emit[PM_GLOBAL][i].Pos[2], Emit[PM_GLOBAL][i].Irrad[0], Emit[PM_GLOBAL][i].Irrad[1], Emit[PM_GLOBAL][i].Irrad[2]);*/
@@ -1223,12 +1229,14 @@ LoadFile(char *pmfile)
 
 	ret = fread(&C1, sizeof(char), 1, FH);
 	if (ret != 1) {
+ 	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (C1)\n");
 	    return 0;
 	}
 
 	ret = fread(&I1, sizeof(int), 1, FH);
 	if (ret != 1 || I1 < 0) {
+ 	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (l1)\n");
 	    return 0;
 	}
@@ -1238,6 +1246,7 @@ LoadFile(char *pmfile)
 	for (i = 0; i < I1; i++) {
 	    ret = fread(&Emit[PM_CAUSTIC][i], sizeof(struct Photon), 1, FH);
 	    if (ret != 1) {
+ 	        fclose(FH);
 		bu_log("Error reading irradiance cache file (caustic)\n");
 		return 0;
 	    }
