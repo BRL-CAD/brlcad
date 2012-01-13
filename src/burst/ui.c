@@ -1531,8 +1531,8 @@ MwriteCmdFile(HmItem *UNUSED(itemp))
     };
     Input *ip = input;
     char cmdfile[LNBUFSZ];
-    FILE *cmdfp;
-    FILE *inpfp;
+    FILE *cmdfp = NULL;
+    FILE *inpfp = NULL;
     if (getInput(ip)) {
       bu_strlcpy(cmdfile, ip->buffer, LNBUFSZ);
       if ((cmdfp = fopen(cmdfile, "wb")) == NULL) {
@@ -1549,13 +1549,17 @@ MwriteCmdFile(HmItem *UNUSED(itemp))
 			"Read access denied for \"%s\"",
 			tmpfname);
 	warning(scrbuf);
-	(void) fclose(cmdfp);
+	if (cmdfp)
+	    (void)fclose(cmdfp);
 	return;
     }
     while (bu_fgets(scrbuf, LNBUFSZ, inpfp) != NULL)
 	fputs(scrbuf, cmdfp);
-    (void) fclose(cmdfp);
+
+    if (cmdfp)
+	(void) fclose(cmdfp);
     (void) fclose(inpfp);
+
     return;
 }
 
