@@ -723,7 +723,7 @@ Convert_part(char *line)
 	} else if (!strncmp(&line1[start], "outer loop", 10) || !strncmp(&line1[start], "OUTER LOOP", 10)) {
 	    int endloop=0;
 	    int vert_no=0;
-	    int tmp_face[3];
+	    int tmp_face[3] = {0, 0, 0};
 
 	    while (!endloop) {
 		if (bu_fgets(line1, MAX_LINE_SIZE, fd_in) == NULL)
