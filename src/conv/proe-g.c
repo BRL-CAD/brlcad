@@ -584,7 +584,6 @@ Convert_part(char *line)
     int i;
     int face_count=0;
     int degenerate_count=0;
-    int small_count=0;
     float colr[3] = VINITALL(0.5);
     unsigned char color[3]={ 128, 128, 128 };
     char *brlcad_name;
@@ -810,8 +809,6 @@ Convert_part(char *line)
 	bu_log("\t%s has no solid parts, ignoring\n", name);
 	if (degenerate_count)
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
-	if (small_count)
-	    bu_log("\t%d faces were too small\n", small_count);
 	brlcad_name = Get_unique_name(name, obj, PART_TYPE);
 	save_name = bu_strdup(brlcad_name);
 	bu_ptbl_ins(&null_parts, (long *)save_name);
@@ -819,8 +816,6 @@ Convert_part(char *line)
     } else {
 	if (degenerate_count)
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
-	if (small_count)
-	    bu_log("\t%d faces were too small\n", small_count);
     }
 
     mk_bot(fd_out, solid_name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, vert_tree_root->curr_vert, bot_fcurr,
