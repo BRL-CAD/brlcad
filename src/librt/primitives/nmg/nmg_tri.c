@@ -2746,7 +2746,7 @@ nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, const struct
 {
     vect_t N;
     int hit;
-    struct loopuse *lu1, *lu2, *lu_tmp;
+    struct loopuse *lu1 = 0, *lu2, *lu_tmp;
     struct edgeuse *eu1, *eu2, *eu_tmp;
     struct vertexuse *vu1;
     struct pt2d *pt2d_cut_to = (struct pt2d *)NULL;
