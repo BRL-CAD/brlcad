@@ -575,7 +575,6 @@ Make_trim_loop(entity_no, orientation, srf, fu)
 
     lu = nmg_mlv(&fu->l.magic, (struct vertex *)NULL, orientation);
     vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
-    eu = nmg_meonvu(vu);
 
     switch (entity_type) {
 	case 102: {
