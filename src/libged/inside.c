@@ -1151,7 +1151,11 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    break;
 
 	default:
-	    bu_vls_printf(gedp->ged_result_str, "Cannot find inside for '%s' solid\n", rt_functab[ip->idb_type].ft_name);
+	    if (ip->idb_type < 0) {
+		bu_vls_printf(gedp->ged_result_str, "Cannot find inside of uninitialized object.\n");
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "Cannot find inside for '%s' solid\n", rt_functab[ip->idb_type].ft_name);
+	    }
 	    return GED_ERROR;
     }
 
