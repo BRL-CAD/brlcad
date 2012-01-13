@@ -64,35 +64,35 @@ void doit(FILE *fd)
 
 
     count = 0;
-    while ((bytes=fread(pixbuf, 3, PIXELS, fd)) > 0) {
-	for (i=(bytes-1)*3; i >= 0; i -= 3) {
-	    if(pixbuf[i] < 0 || pixbuf[i] > 255)
+    while ((bytes = fread(pixbuf, 3, PIXELS, fd)) > 0) {
+	for (i = (bytes-1)*3; i >= 0; i -= 3) {
+	    if (pixbuf[i] < 0 || pixbuf[i] > 255)
 		bu_bomb("Universe isn't right. Halting.\n");
 	    pixel = pixbuf[i] +
 		(pixbuf[i+1] << 8) +
 		(pixbuf[i+2] << 16);
 
-	    if (! (vals[k=(pixel >> 3)] &
-		   (mask=(1 << (pixel & 0x07))))) {
+	    if (!(vals[k=(pixel >> 3)] &
+		   (mask = (1 << (pixel & 0x07))))) {
 		vals[k] |= (unsigned char)mask;
 		++count;
 	    }
 	}
     }
-    (void) printf("%lu\n", (long unsigned)count);
+    (void)printf("%lu\n", (long unsigned)count);
     if (verbose)
-	for (i=0; i < 1<<24; ++i)
+	for (i = 0; i < 1<<24; ++i)
 	    if ((vals[i>>3] & (1<<(i & 0x07))))
-		(void) printf("%3d %3d %3d\n",
-			      i & 0x0ff,
-			      (i >> 8) & 0x0ff,
-			      (i >> 16) & 0x0ff);
+		(void)printf("%3d %3d %3d\n",
+                             i & 0x0ff,
+                             (i >> 8) & 0x0ff,
+                             (i >> 16) & 0x0ff);
 }
 
 
 void usage(void)
 {
-    (void) fprintf(stderr, "Usage: %s [ -v ] < PIXfile\n", progname);
+    (void)fprintf(stderr, "Usage: %s [ -v ] < PIXfile\n", progname);
     bu_exit (1, NULL);
 }
 
