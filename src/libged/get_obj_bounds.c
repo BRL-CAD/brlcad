@@ -105,6 +105,7 @@ _ged_get_obj_bounds(struct ged *gedp,
     for (i = 0; i < argc; i++) {
 	vect_t reg_min, reg_max;
 	const char *reg_name;
+	size_t name_len;
 
 	/* check if input name is a region */
 	for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
@@ -112,38 +113,8 @@ _ged_get_obj_bounds(struct ged *gedp,
 	    if (*argv[i] != '/' && *reg_name == '/')
 		reg_name++;
 
-	    if (BU_STR_EQUAL(reg_name, argv[i]))
-		goto found;
-	}
-	goto not_found;
-
-    found:
-	if (regp != REGION_NULL) {
-	    /* input name was a region */
-	    if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
-		bu_vls_printf(gedp->ged_result_str, "rt_bound_tree failed for %s\n", regp->reg_name);
-		rt_free_rti(rtip);
-		return TCL_ERROR;
-	    }
-	    VMINMAX(rpp_min, rpp_max, reg_min);
-	    VMINMAX(rpp_min, rpp_max, reg_max);
-	} else {
-	    size_t name_len;
-	not_found:
-
-	    /* input name may be a group, need to check all regions under
-	     * that group
-	     */
-	    name_len = strlen(argv[i]);
-	    for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
-		reg_name = regp->reg_name;
-		if (*argv[i] != '/' && *reg_name == '/')
-		    reg_name++;
-
-		if (strncmp(argv[i], reg_name, name_len))
-		    continue;
-
-		/* This is part of the group */
+	    if (BU_STR_EQUAL(reg_name, argv[i])) {
+		/* input name was a region */
 		if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
 		    bu_vls_printf(gedp->ged_result_str, "rt_bound_tree failed for %s\n", regp->reg_name);
 		    rt_free_rti(rtip);
@@ -151,8 +122,34 @@ _ged_get_obj_bounds(struct ged *gedp,
 		}
 		VMINMAX(rpp_min, rpp_max, reg_min);
 		VMINMAX(rpp_min, rpp_max, reg_max);
+
+		goto found;
 	    }
 	}
+
+	/* input name may be a group, need to check all regions under
+	 * that group
+	 */
+	name_len = strlen(argv[i]);
+	for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
+	    reg_name = regp->reg_name;
+	    if (*argv[i] != '/' && *reg_name == '/')
+		reg_name++;
+
+	    if (strncmp(argv[i], reg_name, name_len))
+		continue;
+
+	    /* This is part of the group */
+	    if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
+		bu_vls_printf(gedp->ged_result_str, "rt_bound_tree failed for %s\n", regp->reg_name);
+		rt_free_rti(rtip);
+		return TCL_ERROR;
+	    }
+	    VMINMAX(rpp_min, rpp_max, reg_min);
+	    VMINMAX(rpp_min, rpp_max, reg_max);
+	}
+
+    found:;
     }
 
     rt_free_rti(rtip);
