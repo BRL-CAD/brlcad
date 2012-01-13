@@ -1661,8 +1661,10 @@ f_Rd_Raw_IR(char **args)
 	bu_log("Can not open \"%s\" for reading.\n", ir_file);
 	return	-1;
     }
-    if (! ready_Output_Device(0))
+    if (! ready_Output_Device(0)) {
+	fclose(ir_fp);
 	return	0;
+    }
     prnt_Event("Reading IR data...");
     if (! read_IR(ir_fp))
     {
