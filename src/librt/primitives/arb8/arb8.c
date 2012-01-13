@@ -88,7 +88,7 @@ struct aface {
 struct arb_specific  {
     int arb_nmfaces;		/* number of faces */
     struct oface *arb_opt;	/* pointer to optional info */
-    struct aface arb_face[4];	/* May really be up to [6] faces */
+    struct aface arb_face[6];	/* May really be up to [6] faces */
 };
 
 
@@ -1244,7 +1244,7 @@ rt_arb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "arb external");
+    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "arb external");
     rec = (union record *)ep->ext_buf;
 
     rec->s.s_id = ID_SOLID;
