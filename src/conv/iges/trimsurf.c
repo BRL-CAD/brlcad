@@ -1481,7 +1481,7 @@ Convtrimsurfs()
     if (convsurf) {
 	(void)nmg_model_vertex_fuse(m, &tol);
 
-	if (curr_file->obj_name)
+	if (!BU_STR_EMPTY(curr_file->obj_name))
 	    mk_nmg(fdout, curr_file->obj_name, m);
 	else
 	    mk_nmg(fdout, "Trimmed_surf", m);
