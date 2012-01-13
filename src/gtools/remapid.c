@@ -802,6 +802,7 @@ tankill_reassign(char *db_name)
 	    putchar(ch);
 	}
     }
+    fclose(fd_in);
 }
 
 
