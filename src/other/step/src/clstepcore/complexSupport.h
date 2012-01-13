@@ -259,7 +259,7 @@ class AndList : public JoinList {
 
 class OrList : public MultList {
   public:
-    OrList() : MultList( OR ), choice(-1), choiceCount(0) {}
+    OrList() : MultList( OR ), choice(-1), choice1(-1), choiceCount(0) {}
     ~OrList() {}
     int hit( char * );
     MatchType matchORs( EntNode * );
