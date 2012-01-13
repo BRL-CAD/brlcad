@@ -1466,12 +1466,16 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	/* if there isn't an EDIT_TO, this func shouldn't be called */
 	BU_ASSERT_PTR(cur_arg->next, !=, (struct edit_arg *)NULL);
 
+#if 0
+	/* This assertion, as it is currently, is always true. */
+
 	/* A 'from' position is set; only flags that were possible
 	 * when this function was last updated should be handled.
 	 */
 	BU_ASSERT(cur_arg->type ^ ~(EDIT_FROM |
 				    EDIT_NATURAL_ORIGIN |
 				    EDIT_USE_TARGETS));
+#endif
 
 	/* disallow non-standard opts */
 	if (cur_arg->cl_options[0] != '\0')
