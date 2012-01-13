@@ -80,6 +80,7 @@ f_polybinout(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
     FILE *fp;
     int pno = 1;
     struct polygon_header ph;
+    ph.npts = 0;
 #define MAX_VERTS 10000
     vect_t verts[MAX_VERTS];
     int need_normal = 0;
