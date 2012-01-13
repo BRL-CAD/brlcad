@@ -1832,8 +1832,8 @@ f_jload(int argc, const char *argv[])
 	    db_full_path_init(&hp->objective.path);
 	    hp->objective.path.fp_len = hp->objective.arc.arc_last+1;
 	    hp->objective.path.fp_maxlen = hp->objective.arc.arc_last+1;
-	    hp->objective.path.fp_names = (struct directory *)
-		bu_malloc(sizeof(struct directory **) * hp->objective.path.fp_maxlen,
+	    hp->objective.path.fp_names = (struct directory **)
+		bu_malloc(sizeof(struct directory *) * hp->objective.path.fp_maxlen,
 			  "full path");
 	    for (i=0; i<= hp->objective.arc.arc_last; i++) {
 		dp = hp->objective.path.fp_names[i] =
@@ -3003,8 +3003,8 @@ joint_move(struct joint *jp)
 	db_full_path_init(&anp->an_path);
 	anp->an_path.fp_len = jp->path.arc_last+1;
 	anp->an_path.fp_maxlen= jp->path.arc_last+1;
-	anp->an_path.fp_names = (struct directory *)
-	    bu_malloc(sizeof(struct directory **)*anp->an_path.fp_maxlen,
+	anp->an_path.fp_names = (struct directory **)
+	    bu_malloc(sizeof(struct directory *)*anp->an_path.fp_maxlen,
 		      "full path");
 	for (i=0; i<= jp->path.arc_last; i++) {
 	    dp = anp->an_path.fp_names[i] = db_lookup(dbip,
