@@ -6410,7 +6410,7 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
 	    int next_edge_no, prev_edge_no;
 	    struct intersect_fus *edge_fus;
 	    struct intersect_fus *next_fus, *prev_fus;
-	    fastf_t dist1, dist2;
+	    fastf_t dist1 = 0, dist2;
 	    point_t pt1, pt2;
 
 	    edge_fus = (struct intersect_fus *)BU_PTBL_GET(int_faces, edge_no);
