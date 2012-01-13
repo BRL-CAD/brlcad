@@ -28,9 +28,11 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "bio.h"
+#include "bu.h"
 
 unsigned char pix[3];		/* RGB of one pixel */
 
@@ -44,7 +46,8 @@ main(void)
     setmode(fileno(stdout), O_BINARY);
 #endif
     while ( !feof(stdin) &&
-	    fread( (char *)pix, sizeof(pix), 1, stdin) == 1 )  {
+	fread( (char *)pix, sizeof(pix), 1, stdin) == 1 )  {
+      if (pix[0] <= CHAR_MAX && pix[1] <= CHAR_MAX && pix[2] <= CHAR_MAX) {
 	putc( map[pix[0]>>4], stdout );
 	putc( map[pix[0]&0xF], stdout );
 	putc( map[pix[1]>>4], stdout );
@@ -52,6 +55,9 @@ main(void)
 	putc( map[pix[2]>>4], stdout );
 	putc( map[pix[2]&0xF], stdout );
 	putc( '\n', stdout );
+      } else {
+	bu_log("Invalid char!\n");
+      }
     }
     return 0;
 }
