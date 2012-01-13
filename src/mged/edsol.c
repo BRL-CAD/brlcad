@@ -1975,8 +1975,6 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				if (good_vert)
 				    break;
 			    }
-			    if (good_vert)
-				break;
 			}
 			if (good_vert)
 			    break;
