@@ -146,9 +146,12 @@ f_wait(ClientData UNUSED(clientData),	/* Main window associated with interpreter
        const char *argv[])		/* Argument strings. */
 {
 #ifdef HAVE_TK
-    int c, done;
+    int c;
     size_t length;
     Tk_Window window;
+
+    /* volatile to quell infinite loop warnings */
+    volatile int done;
 
     if (argc != 3) {
 	Tcl_AppendResult(interp, "wrong # args: should be \"",
@@ -159,16 +162,22 @@ f_wait(ClientData UNUSED(clientData),	/* Main window associated with interpreter
     length = strlen(argv[1]);
     if ((c == 'v') && (strncmp(argv[1], "variable", length) == 0)
 	&& (length >= 2)) {
+
+	/* bind to 'done' var */
 	if (Tcl_TraceVar(interp, argv[2],
 			 TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
 			 (Tcl_VarTraceProc *)WaitVariableProc,
 			 (ClientData) &done) != TCL_OK) {
 	    return TCL_ERROR;
 	}
+
+	/* Tcl sets 'done' to non-zero */
 	done = 0;
 	while (!done) {
 	    mged_update(0);
 	}
+
+	/* unbind to 'done' var */
 	Tcl_UntraceVar(interp, argv[2],
 		       TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
 		       (Tcl_VarTraceProc *)WaitVariableProc,
@@ -180,8 +189,12 @@ f_wait(ClientData UNUSED(clientData),	/* Main window associated with interpreter
 	if (window == NULL) {
 	    return TCL_ERROR;
 	}
+
+	/* bind to 'done' var */
 	Tk_CreateEventHandler(window, VisibilityChangeMask|StructureNotifyMask,
 			      WaitVisibilityProc, (ClientData) &done);
+
+	/* Tcl sets 'done' to non-zero */
 	done = 0;
 	while (!done) {
 	    mged_update(0);
@@ -199,15 +212,22 @@ f_wait(ClientData UNUSED(clientData),	/* Main window associated with interpreter
 			     (char *) NULL);
 	    return TCL_ERROR;
 	}
+
+	/* unbind to 'done' var */
 	Tk_DeleteEventHandler(window, VisibilityChangeMask|StructureNotifyMask,
 			      WaitVisibilityProc, (ClientData) &done);
+
     } else if ((c == 'w') && (strncmp(argv[1], "window", length) == 0)) {
 	window = Tk_NameToWindow(interp, argv[2], tkwin);
 	if (window == NULL) {
 	    return TCL_ERROR;
 	}
+
+	/* bind to 'done' var */
 	Tk_CreateEventHandler(window, StructureNotifyMask,
 			      WaitWindowProc, (ClientData) &done);
+
+	/* Tcl sets 'done' to non-zero */
 	done = 0;
 	while (!done) {
 	    mged_update(0);
