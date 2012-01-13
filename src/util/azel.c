@@ -175,8 +175,9 @@ main (int argc, char **argv)
 		Round = 1;
 		break;
 	    default:
-		fprintf(stderr, "Bad option '-%c'\n", Ch);
-	    case '?':
+		if (Ch != '?') {
+		    fprintf(stderr, "Bad option '-%c'\n", Ch);
+		}
 		PrintUsage();
 	}
 
