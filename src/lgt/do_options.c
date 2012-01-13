@@ -3615,7 +3615,7 @@ pars_Argv(int argc, char **argv)
     /* Initialize terminal I/O. */
     if ((tty = isatty(0)))
     {
-	setbuf(stdout, malloc(BUFSIZ));
+	setlinebuf(stdout);
 	InitTermCap(stdout);
 	li = LI;	/* Default window size from termcap. */
 	co = CO;
