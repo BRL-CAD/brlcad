@@ -1433,6 +1433,7 @@ scan_frame_for_finished_pixels(struct frame *fr)
     }
     bu_log("%s Scanning %s complete, %d non-black spans, %d non-black pixels\n",
 	   stamp(), fr->fr_filename, nspans, npix );
+    fclose(fp); 
     return 0;
 }
 
