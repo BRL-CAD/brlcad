@@ -410,7 +410,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 
     /* drive dummy arb8 */
     for (i=0; i<24; i++)
-	sol.s_name[i] = 0.0;
+	sol.s_values[i] = 0.0;
     crname(solname, 8, sizeof(solname));
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
     sol.s_type = ID_ARB8;
