@@ -224,7 +224,7 @@ update_Screen(void)
     for ( row = 0; template[row][0] != '\0'; row++ )
     {
 	int	lastcol = -2;
-	if ( template[row+1] == NULL )
+	if (template[row+1] == '\0')
 	    SetStandout();
 	for ( col = 0; col < tem_co; col++ )
 	    if ( screen[row][col] != template[row][col] )
