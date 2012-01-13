@@ -274,6 +274,10 @@ main(int argc, char **argv)
 	lp = line;
 	for (k=0;k<WORD(Im.IH_Width);k++) {
 	  idx = getByte(fp);
+	  if (idx < 0) {
+	    fb_close(fbp);
+	    bu_exit(1, "Error: Unexpectedly reached end of input. Output may be incomplete.\n");
+	  }
 	  *lp++ = GlobalColors[idx].red;
 	  *lp++ = GlobalColors[idx].green;
 	  *lp++ = GlobalColors[idx].blue;
