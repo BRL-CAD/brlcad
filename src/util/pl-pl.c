@@ -359,16 +359,13 @@ getstring(void)
 short
 getshort(void)
 {
-    long v, w;
+    long v;
 
     v = getchar();
     v |= (getchar()<<8);	/* order is important! */
 
     /* worry about sign extension - sigh */
-    if (v <= 0x7FFF) return v;
-    w = -1;
-    w &= ~0x7FFF;
-    return w | v;
+    return (v <= 0x7FFF) ?  (short)v : (short)(((-1)&(~0x7FFF)) | v);
 }
 
 
