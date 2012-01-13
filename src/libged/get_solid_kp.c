@@ -133,8 +133,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 				if (good_vert)
 				    break;
 			    }
-			    if (good_vert)
-				break;
 			}
 			if (good_vert)
 			    break;
