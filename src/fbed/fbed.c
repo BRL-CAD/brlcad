@@ -545,17 +545,19 @@ init_Try(void)
     for ( key = NUL; key <= DEL; key++ )
     {
 	bindings[key] = &func_tab[key];
-	if ( bindings[key]->f_func != f_Nop )
+	if ( bindings[key]->f_func != f_Nop ) {
 	    add_Try( bindings[key], bindings[key]->f_name, &try_rootp );
-	else
-	    if ( nop_key == EOF )
-		/* First key bound to NOP. */
-		nop_key = key;
+	} else if ( nop_key == EOF ) {
+	    /* First key bound to NOP. */
+	    nop_key = key;
+	}
     }
     /* Add the NOP function to the tree once, although it may be bound
        to many keys.
     */
-    add_Try( &func_tab[nop_key], func_tab[nop_key].f_name, &try_rootp );
+    if (nop_key >= 0) {
+	add_Try( &func_tab[nop_key], func_tab[nop_key].f_name, &try_rootp );
+    }
     return;
 }
 
