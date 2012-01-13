@@ -2357,14 +2357,17 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     /* Later, can implement FD cache here */
     if ( (fd = open( fr->fr_filename, 2 )) < 0 )  {
 	perror( fr->fr_filename );
-	/* The bad fd will trigger a write error, below */
     } else if ( lseek( fd, info.li_startpix*3L, 0 ) < 0 )  {
 	perror( fr->fr_filename );
 	(void)close(fd);	/* prevent write */
 	fd = -1;
-	/* The bad fd will trigger a write error, below */
     }
-    cnt = write( fd, buf+ext.ext_nbytes, i );
+    if (fd < 0) {
+	bu_log("Error: invalid file descriptor %d.\n", fd);
+	cnt = 0;
+    } else {
+	cnt = write( fd, buf+ext.ext_nbytes, i );
+    }
     if (cnt != (ssize_t)i) {
 	perror( fr->fr_filename );
 	bu_log("write s/b %zu, got %zu\n", i, cnt );
