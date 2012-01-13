@@ -257,7 +257,7 @@ main(int argc, char **argv)
 	lineNumber = offs[lineIdx];
 	lineInc= lace[lineIdx];
     } else {
-	lineIdx = 4;
+	lineIdx = sizeof(lace)-1;
 	lineNumber = 0;
 	lineInc = 1;
     }
