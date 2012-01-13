@@ -123,7 +123,7 @@ main(int argc, char *argv[])
 		printf("end;\n");
 		break;
 	    case LOOKAT_YPR:
-		anim_mat2ypr(angles, mat);
+		anim_mat2ypr(mat, angles);
 		angles[0] *= RAD2DEG;
 		angles[1] *= RAD2DEG;
 		angles[2] *= RAD2DEG;

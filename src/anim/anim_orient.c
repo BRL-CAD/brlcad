@@ -250,7 +250,7 @@ main(int argc, char *argv[])
 	/* convert from matrix form and print result*/
 	switch (output_mode) {
 	    case YPR:
-		anim_mat2ypr(angle, matrix);
+		anim_mat2ypr(matrix, angle);
 		if (output_units==DEGREES)
 		    VSCALE(angle, angle, RAD2DEG);
 		printf("%.12g\t%.12g\t%.12g\n", angle[0], angle[1], angle[2]);

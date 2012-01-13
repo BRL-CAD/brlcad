@@ -130,7 +130,7 @@ main(int argc, char *argv[])
 
 	if (mode==YPR) {
 	    anim_v_unpermute(viewrot);
-	    c = anim_mat2ypr(angle, viewrot);
+	    c = anim_mat2ypr(viewrot, angle);
 	    if (c==ERROR1)
 		fprintf(stderr, "Warning: yaw and roll arbitrarily defined at time = %f.\n", time);
 	    else if (c==ERROR2)
