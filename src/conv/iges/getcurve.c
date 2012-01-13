@@ -279,6 +279,8 @@ Getcurve(int curve, struct ptlist **curv_pts)
 	    Readint(&i, "");	/* Skip over continuity */
 	    splroot = (struct spline *)bu_malloc(sizeof(struct spline),
 						 "Getcurve: splroot");
+	    if(splroot == NULL)
+		bu_exit(1, "Failed to allocate spline memory\n");
 	    splroot->start = NULL;
 	    Readint(&splroot->ndim, ""); /* 2->planar, 3->3d */
 	    Readint(&splroot->nsegs, ""); /* Number of segments */
@@ -353,16 +355,15 @@ Getcurve(int curve, struct ptlist **curv_pts)
 	    ptr->next = NULL;
 
 	    /* free the used memory */
-	    if (splroot != NULL) {
-		seg = splroot->start;
-		while (seg != NULL) {
-		    seg1 = seg;
-		    seg = seg->next;
-		    bu_free((char *)seg1, "Getcurve: seg1");
-		}
-		bu_free((char *)splroot, "Getcurve: splroot");
-		splroot = NULL;
+	    seg = splroot->start;
+	    while (seg != NULL) {
+		seg1 = seg;
+		seg = seg->next;
+		bu_free((char *)seg1, "Getcurve: seg1");
 	    }
+	    bu_free((char *)splroot, "Getcurve: splroot");
+	    splroot = NULL;
+
 	    break;
 	}
 	case 104: {
