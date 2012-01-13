@@ -120,13 +120,13 @@ test_face_split_single()
           {                                                             \
             point_t isectpt[2];                                         \
             int urf[_nsplt+1];                                          \
-            unsigned long int failure = 0, numsplit;                    \
+            for (i = 0; i < _nsplt + 1; ++i) urf[i] = 0;                \
+            unsigned long int failure = 0, numsplit = _nsplt;           \
             tcount++;                                                   \
-            numsplit = _nsplt;                                          \
             VSET(isectpt[0],ispt00,ispt01,ispt02);                      \
             VSET(isectpt[1],ispt10,ispt11,ispt12);                      \
-            s.magic = SOUP_MAGIC;                                         \
-            s.faces = NULL;                                               \
+            s.magic = SOUP_MAGIC;                                       \
+            s.faces = NULL;                                             \
             s.maxfaces = 0;                                             \
             s.nfaces = 0;                                               \
             VSET(f.vert[0],t00,t01,t02);                                \
@@ -159,7 +159,7 @@ test_face_split_single()
       count++;                                                          \
     }                                                                   \
     free(s.faces);                                                      \
-} /* NOTE THIS IS THE CLOSING BRACE FROM THE PREVIOUS MACRO!! */
+} /* NOTE THIS IS THE CLOSING BRACE FROM THE OPENING BRACE IN THE PREVIOUS MACRO!! */
 
 
     /* VERT/VERT */
