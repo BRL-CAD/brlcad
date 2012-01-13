@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2011-12-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* fixed crash in anim_cascade animation tool - Nick Reed
 * fixed bug in gif2fb processing non-interlaced images - Sean Morrison
 * fix crash in coil when using -S and -l options - Cliff Yapp
 * fixed nirt memory leak and scriptfile off-by-one bug - Sean Morrison
