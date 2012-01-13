@@ -5528,6 +5528,8 @@ nmg_split_edges_at_pts(const struct vertex *new_v, struct bu_ptbl *int_faces, co
 	struct edgeuse *new_eu;
 
 	i_fus = (struct intersect_fus *)BU_PTBL_GET(int_faces, edge_no);
+	if(i_fus == NULL)
+	    continue;
 
 	/* skip edges between two loops of same face, for now */
 	if (i_fus->fu[0] && i_fus->fu[1] && i_fus->fu[0]->f_p == i_fus->fu[1]->f_p)
