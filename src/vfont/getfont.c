@@ -39,6 +39,9 @@ get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
     struct header lochdr;
     static char	fname[FONTNAMESZ];
 
+    font.width = 0;
+    font.height = 0;
+
     if (fontname == NULL)
 	fontname = FONTNAME;
 
