@@ -461,6 +461,7 @@ region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union t
 
     do  {
 	char	*op;
+	int	 op_left = OBUF_SIZE;
 
 	if ( first )  {
 	    (void) snprintf( obuf, OBUF_SIZE-1, "%5d ", nnr+delreg );
@@ -471,23 +472,31 @@ region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union t
 	    bu_strlcpy( op, "      \0", 7 );
 	}
 	op = obuf + 6;
+	op_left -= 6;
 
 	if ( left > 9*7 )  {
 	    bu_strlcpy( op, cp, 9*7+1 );
 	    cp += 9*7;
 	    op += 9*7;
+	    op_left -= 9*7;
 	    left -= 9*7;
 	} else {
 	    bu_strlcpy( op, cp, left+1 );
 	    op += left;
+	    op_left -= left;
 	    while ( left < 9*7 )  {
 		*op++ = ' ';
+		op_left--;
 		left++;
 	    }
 	    left = 0;
 	}
 	/* copy directory name into op */
-	bu_strlcpy( op, regdp->d_namep, strlen(regdp->d_namep) );
+	if(op_left <= 0) {
+	    bu_log("Ran out of buffer space\n");
+	    return NULL;
+	}
+	bu_strlcpy( op, regdp->d_namep, op_left );
 	/* and advance op to after the directory name */
 	op += strlen(op);
 	*op++ = '\n';
