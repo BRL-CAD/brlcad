@@ -66,7 +66,7 @@ Makegroup()
 	    }
 	}
 	if (nurbs) {
-	    wmem = mk_addmember("nurb.s", &head.l, NULL, operator[Union]);
+	    (void)mk_addmember("nurb.s", &head.l, NULL, operator[Union]);
 	}
 	/* Make the group named "all" */
 	mk_lcomb(fdout, "all", &head, 0 ,
