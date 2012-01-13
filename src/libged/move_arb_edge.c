@@ -40,7 +40,7 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_db_internal intern;
     struct rt_arb_internal *arb;
-    fastf_t planes[7][4];		/* ARBs defining plane equations */
+    plane_t planes[6];  /* ARBs defining plane equations */
     int arb_type;
     int arb_pt_index;
     int edge;

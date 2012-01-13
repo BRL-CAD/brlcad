@@ -1119,7 +1119,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
 {
     struct rt_db_internal intern;
     struct rt_arb_internal *arb;
-    fastf_t planes[7][4];		/* ARBs defining plane equations */
+    plane_t planes[6];  /* ARBs defining plane equations */
     int arb_type;
     int edge;
     int bad_edge_id = 0;
