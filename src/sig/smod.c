@@ -51,8 +51,8 @@ int numop = 0;		/* number of operations */
 int op[256];		/* operations */
 double val[256];		/* arguments to operations */
 short mapbuf[65536];		/* translation buffer/lookup table */
-unsigned char clip_h[256];	/* map of values which clip high */
-unsigned char clip_l[256];	/* map of values which clip low */
+unsigned char clip_h[65536];	/* map of values which clip high */
+unsigned char clip_l[65536];	/* map of values which clip low */
 
 
 int
