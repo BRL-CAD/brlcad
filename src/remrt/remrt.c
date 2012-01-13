@@ -2602,6 +2602,7 @@ repaint_fb(struct frame *fr)
 	if ( cnt != 1 )  break;
     }
     bu_free( (char *)line, "scanline" );
+    fclose(fp);
 }
 
 /*
