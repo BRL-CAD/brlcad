@@ -64,6 +64,7 @@ int
 get_args(int argc, char **argv)
 {
     int ch;
+    char *ifname;
 
     while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1) {
 	switch (ch) {
@@ -124,8 +125,12 @@ get_args(int argc, char **argv)
 	    break;
 	case 1:
 	    file_name = argv[bu_optind++];
-	    if ((infd = open(file_name, O_RDONLY)) == -1)
+	    ifname = bu_realpath(file_name, NULL);
+	    if ((infd = open(ifname, O_RDONLY)) == -1) {
+		bu_free(ifname,"ifname alloc from bu_realpath");
 		bu_exit (1, "Cannot open file '%s'\n", file_name);
+	    }
+	    bu_free(ifname,"ifname alloc from bu_realpath");
 	    fileinput = 1;
 	    break;
 	default:

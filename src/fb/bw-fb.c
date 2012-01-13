@@ -159,13 +159,17 @@ get_args(int argc, char **argv)
 	file_name = "-";
 	infd = 0;
     } else {
+	char *ifname;
 	file_name = argv[bu_optind];
-	if ((infd = open(file_name, 0)) < 0) {
+	ifname = bu_realpath(file_name, NULL);
+	if ((infd = open(ifname, 0)) < 0) {
 	    (void)fprintf(stderr,
-			  "bw-fb: cannot open \"%s\" for reading\n",
-			  file_name);
+			  "bw-fb: cannot open \"%s(canonical %s)\" for reading\n",
+			  file_name,ifname);
+	    bu_free(ifname,"ifname alloc from bu_realpath");
 	    return 0;
 	}
+	bu_free(ifname,"ifname alloc from bu_realpath");
 	fileinput++;
     }
 

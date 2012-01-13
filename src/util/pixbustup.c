@@ -72,6 +72,7 @@ main(int argc, char **argv)
     for (;; framenumber++) {
 	int fd;
 	int rwval = read(0, in1, scanbytes);
+	char *ifname;
 
 	if (rwval != scanbytes) {
 	    if (rwval < 0) {
@@ -80,10 +81,15 @@ main(int argc, char **argv)
 	    break;
 	}
 	snprintf(name, 128, "%s.%d", base_name, framenumber);
-	if ((fd=creat(name, 0444))<0) {
-	    perror(name);
+
+	ifname = bu_realpath(name, NULL);
+	if ((fd=creat(ifname, 0444))<0) {
+	    perror(ifname);
+	    bu_free(ifname,"ifname alloc from bu_realpath");
 	    continue;
 	}
+	bu_free(ifname,"ifname alloc from bu_realpath");
+
 	rwval = write(fd, in1, scanbytes);
 	if (rwval != scanbytes) {
 	    if (rwval < 0) {

@@ -217,6 +217,7 @@ main(int argc, char **argv)
     scanbytes = file_width * file_height * sizeof(RGBpixel);
 
     for (maxframe = 0; maxframe < MAXFRAMES;) {
+	char *ifname;
 
 	if ((obuf = (unsigned char *)malloc(scanbytes)) == (unsigned char *)0) {
 	    (void)fprintf(stderr, "pixflip-fb:  malloc %d failure\n", scanbytes);
@@ -234,10 +235,14 @@ main(int argc, char **argv)
 	} else {
 	    snprintf(name, sizeof(name), "%s.%d", input_basename, framenumber);
 	}
-	if ((fd=open(name, 0))<0) {
-	    perror(name);
+
+	ifname = bu_realpath(name, NULL);
+	if ((fd=open(ifname, 0))<0) {
+	    perror(ifname);
+	    bu_free(ifname,"ifname alloc from bu_realpath");
 	    goto done;
 	}
+	bu_free(ifname,"ifname alloc from bu_realpath");
 
 	/* Read in .pix file.  Bottom to top */
 	i = read(fd, obuf, scanbytes);

@@ -58,6 +58,7 @@ main(int argc, char **argv)
     int x, y;
     int readval;
     ssize_t ret;
+    char *ifname;
 
     if (argc < 2) {
 	fprintf(stderr, "%s", usage);
@@ -65,18 +66,30 @@ main(int argc, char **argv)
     }
 
     nlines = 512;
-    if ((infd1 = open(argv[1], 0)) < 0) {
-	perror(argv[1]);
+    ifname = bu_realpath(argv[1], NULL);
+    if ((infd1 = open(ifname, 0)) < 0) {
+	perror(ifname);
+	bu_free(ifname,"ifname alloc from bu_realpath");
 	bu_exit (3, NULL);
     }
-    if ((infd2 = open(argv[2], 0)) < 0) {
-	perror(argv[2]);
+    bu_free(ifname,"ifname alloc from bu_realpath");
+
+    ifname = bu_realpath(argv[2], NULL);
+    if ((infd2 = open(ifname, 0)) < 0) {
+	perror(ifname);
+	bu_free(ifname,"ifname alloc from bu_realpath");
 	bu_exit (3, NULL);
     }
-    if ((infd3 = open(argv[3], 0)) < 0) {
-	perror(argv[3]);
+    bu_free(ifname,"ifname alloc from bu_realpath");
+
+    ifname = bu_realpath(argv[3], NULL);
+    if ((infd3 = open(ifname, 0)) < 0) {
+	perror(ifname);
+	bu_free(ifname,"ifname alloc from bu_realpath");
 	bu_exit (3, NULL);
     }
+    bu_free(ifname,"ifname alloc from bu_realpath");
+
     if (argc == 5) {
 	nlines = atoi(argv[4]);
     }

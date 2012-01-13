@@ -52,15 +52,19 @@ main(int argc, char **argv)
     double *ep;
     double m;			/* slope */
     double b;			/* intercept */
+    char *ifname;
 
     if (argc < 2) {
 	bu_exit(1, "Usage: dpix-pix file.dpix > file.pix\n");
     }
 
-    if ((fd = open(argv[1], 0)) < 0) {
-	perror(argv[1]);
+    ifname = bu_realpath(argv[1], NULL);
+    if ((fd = open(ifname, 0)) < 0) {
+	perror(ifname);
+	bu_free(ifname,"ifname alloc from bu_realpath");
 	exit(1);
     }
+    bu_free(ifname,"ifname alloc from bu_realpath");
 
     if (isatty(fileno(stdout))) {
 	bu_exit(2, "dpix-pix:  binary output directed to terminal, aborting\n");

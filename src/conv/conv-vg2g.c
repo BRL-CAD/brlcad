@@ -57,19 +57,29 @@ main(int argc, char **argv)
     static int i;
     double factor = 1.0;
     int ret;
+    char *ifpath;
+    char *ofpath;
 
     if ( argc != 3 )  {
 	printf("Usage: conv-vg2g file.vg file.g\n");
 	return 11;
     }
-    if ((ifd = open( argv[1], O_RDONLY | O_BINARY)) < 0) {
-	perror(argv[1]);
+
+    ifpath = bu_realpath(argv[1], NULL);
+    if ((ifd = open( ifpath, O_RDONLY | O_BINARY)) < 0) {
+	perror(ifpath);
+	bu_free(ifpath,"ifpath alloc from bu_realpath");
 	return 12;
     }
-    if ( (ofd = creat(argv[2], 0664)) < 0 )  {
-	perror(argv[2]);
+    bu_free(ifpath,"ifpath alloc from bu_realpath");
+
+    ofpath = bu_realpath(argv[2], NULL);
+    if ( (ofd = creat(ofpath, 0664)) < 0 )  {
+	perror(ofpath);
+	bu_free(ofpath,"ofpath alloc from bu_realpath");
 	return 13;
     }
+    bu_free(ofpath,"ofpath alloc from bu_realpath");
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(ofd, O_BINARY);

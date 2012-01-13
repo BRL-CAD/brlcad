@@ -109,13 +109,17 @@ get_args(int argc, char **argv)
 	    return 0;
 	file_name = "-";
     } else {
+	char *ifname;
 	file_name = argv[bu_optind];
-	if ( freopen(file_name, "r", stdin) == NULL )  {
+	ifname = bu_realpath(file_name, NULL);
+	if ( freopen(ifname, "r", stdin) == NULL )  {
 	    (void)fprintf( stderr,
-			   "bwmod: cannot open \"%s\" for reading\n",
-			   file_name );
+			   "bwmod: cannot open \"%s(canonical %s)\" for reading\n",
+			   file_name,ifname );
+	    bu_free(ifname,"ifname alloc from bu_realpath");
 	    return 0;
 	}
+	bu_free(ifname,"ifname alloc from bu_realpath");
     }
 
     if ( argc > ++bu_optind )

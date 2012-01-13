@@ -151,11 +151,13 @@ void parse_args(int ac, char **av)
 	    usage();
     }
     if (bu_optind < ac) {
-	if (freopen(av[bu_optind], "r", stdin) == (FILE *)NULL) {
-	    perror(av[bu_optind]);
+	char *ifname = bu_realpath(av[bu_optind], NULL);
+	if (freopen(ifname, "r", stdin) == (FILE *)NULL) {
+	    perror(ifname);
 	    bu_exit (-1, NULL);
 	} else
 	    filename = av[bu_optind];
+	bu_free(ifname,"ifname alloc from bu_realpath");
     }
     if (bu_optind+1 < ac)
 	(void)fprintf(stderr, "%s: Excess arguments ignored\n", progname);
