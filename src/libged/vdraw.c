@@ -680,15 +680,15 @@ vdraw_vlist(void *data, int argc, const char *argv[])
     struct vd_curve *rcp, *rcp2;
     static const char *usage = "list\n\tdelete name";
 
+    if (argc < 2) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
+	return GED_ERROR;
+    }
+
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
 	return GED_HELP;
-    }
-
-    if (argc < 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return GED_ERROR;
     }
 
     switch  (argv[2][0]) {
