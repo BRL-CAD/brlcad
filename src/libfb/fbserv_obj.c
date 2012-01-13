@@ -284,7 +284,9 @@ HIDDEN void
 fbs_rfbunknown(struct pkg_conn *pcp, char *buf)
 {
     bu_log("fbserv: unable to handle message type %d\n", pcp->pkc_type);
-    (void)free(buf);
+    if (buf) {
+	(void)free(buf);
+    }
 }
 
 
@@ -307,8 +309,9 @@ fbs_rfbopen(struct pkg_conn *pcp, char *buf)
     if (pkg_send(MSG_RETURN, rbuf, want, pcp) != want)
 	comm_error("pkg_send fb_open reply\n");
 
-    if (buf)
+    if (buf) {
 	(void)free(buf);
+    }
 }
 
 
@@ -330,8 +333,9 @@ fbs_rfbclose(struct pkg_conn *pcp, char *buf)
      */
     (void)pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
 
-    if (buf)
+    if (buf) {
 	(void)free(buf);
+    }
 }
 
 
@@ -344,8 +348,9 @@ fbs_rfbfree(struct pkg_conn *pcp, char *buf)
     if (pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp) != NET_LONG_LEN)
 	comm_error("pkg_send fb_free reply\n");
 
-    if (buf)
+    if (buf) {
 	(void)free(buf);
+    }
 }
 
 
@@ -355,7 +360,7 @@ fbs_rfbclear(struct pkg_conn *pcp, char *buf)
     RGBpixel bg;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if(!buf) {
         bu_log("fbs_rfbclear: null buffer\n");
         return;
     }
@@ -380,7 +385,7 @@ fbs_rfbread(struct pkg_conn *pcp, char *buf)
     static unsigned char *scanbuf = NULL;
     static size_t buflen = 0;
 
-    if(buf == NULL) {
+    if(!buf) {
         bu_log("fbs_rfbread: null buffer\n");
         return;
     }
@@ -419,7 +424,7 @@ fbs_rfbwrite(struct pkg_conn *pcp, char *buf)
     int ret;
     int type;
 
-    if(buf == NULL) {
+    if(!buf) {
         bu_log("fbs_rfbwrite: null buffer\n");
         return;
     }
@@ -451,7 +456,7 @@ fbs_rfbreadrect(struct pkg_conn *pcp, char *buf)
     static unsigned char *scanbuf = NULL;
     static size_t buflen = 0;
 
-    if(buf == NULL) {
+    if(!buf) {
         bu_log("fbs_rfbreadrect: null buffer\n");
         return;
     }
@@ -496,7 +501,7 @@ fbs_rfbwriterect(struct pkg_conn *pcp, char *buf)
     int ret;
     int type;
 
-    if(buf == NULL) {
+    if(!buf) {
         bu_log("fbs_rfbwriterect: null buffer\n");
         return;
     }
@@ -531,7 +536,7 @@ fbs_rfbbwreadrect(struct pkg_conn *pcp, char *buf)
     static unsigned char *scanbuf = NULL;
     static int buflen = 0;
 
-    if(buf == NULL) {
+    if(!buf) {
         bu_log("fbs_rfbbwreadrect: null buffer\n");
         return;
     }
@@ -576,7 +581,7 @@ fbs_rfbbwwriterect(struct pkg_conn *pcp, char *buf)
     int ret;
     int type;
 
-    if(buf == NULL) {
+    if(!buf) {
         bu_log("fbs_rfbbwwriterect: null buffer\n");
         return;
     }
@@ -604,7 +609,7 @@ fbs_rfbcursor(struct pkg_conn *pcp, char *buf)
     int mode, x, y;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if(!buf) {
         bu_log("fbs_rfbcursor: null buffer\n");
         return;
     }
@@ -632,7 +637,10 @@ fbs_rfbgetcursor(struct pkg_conn *pcp, char *buf)
     (void)pkg_plong(&rbuf[2*NET_LONG_LEN], x);
     (void)pkg_plong(&rbuf[3*NET_LONG_LEN], y);
     pkg_send(MSG_RETURN, rbuf, 4*NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+
+    if (buf) {
+	(void)free(buf);
+    }
 }
 
 
@@ -644,7 +652,7 @@ fbs_rfbsetcursor(struct pkg_conn *pcp, char *buf)
     int xbits, ybits;
     int xorig, yorig;
 
-    if(buf == NULL) {
+    if(!buf) {
         bu_log("fbs_rfsetcursor: null buffer\n");
         return;
     }
@@ -672,7 +680,7 @@ fbs_rfbscursor(struct pkg_conn *pcp, char *buf)
     int mode, x, y;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if(!buf) {
         bu_log("fbs_rfbscursor: null buffer\n");
         return;
     }
@@ -699,7 +707,10 @@ fbs_rfbwindow(struct pkg_conn *pcp, char *buf)
 
     (void)pkg_plong(&rbuf[0], fb_window(curr_fbp, x, y));
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+
+    if (buf) {
+	(void)free(buf);
+    }
 }
 
 
@@ -710,7 +721,7 @@ fbs_rfbzoom(struct pkg_conn *pcp, char *buf)
     int x, y;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if(!buf) {
         bu_log("fbs_rfbzoom: null buffer\n");
         return;
     }
@@ -731,7 +742,7 @@ fbs_rfbview(struct pkg_conn *pcp, char *buf)
     int xcenter, ycenter, xzoom, yzoom;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if(!buf) {
         bu_log("fbs_rfbview: null buffer\n");
         return;
     }
@@ -762,7 +773,10 @@ fbs_rfbgetview(struct pkg_conn *pcp, char *buf)
     (void)pkg_plong(&rbuf[3*NET_LONG_LEN], xzoom);
     (void)pkg_plong(&rbuf[4*NET_LONG_LEN], yzoom);
     pkg_send(MSG_RETURN, rbuf, 5*NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+
+    if (buf) {
+	(void)free(buf);
+    }
 }
 
 
@@ -782,7 +796,10 @@ fbs_rfbrmap(struct pkg_conn *pcp, char *buf)
     }
     pkg_send(MSG_DATA, (char *)cm, sizeof(cm), pcp);
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+
+    if (buf) {
+	(void)free(buf);
+    }
 }
 
 
@@ -802,14 +819,14 @@ fbs_rfbwmap(struct pkg_conn *pcp, char *buf)
     long ret;
     ColorMap map;
 
-    if(buf == NULL) {
+    if(!buf) {
         bu_log("fbs_rfbwmap: null buffer\n");
         return;
     }
 
-    if (pcp->pkc_len == 0)
+    if (pcp->pkc_len == 0) {
 	ret = fb_wmap(curr_fbp, COLORMAP_NULL);
-    else {
+    } else {
 	for (i = 0; i < 256; i++) {
 	    map.cm_red[i] = pkg_gshort(buf+2*(0+i));
 	    map.cm_green[i] = pkg_gshort(buf+2*(256+i));
@@ -835,18 +852,24 @@ fbs_rfbflush(struct pkg_conn *pcp, char *buf)
 	(void)pkg_plong(rbuf, ret);
 	pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
     }
-    if (buf) (void)free(buf);
+
+    if (buf) {
+	(void)free(buf);
+    }
 }
 
 
 void
 fbs_rfbpoll(struct pkg_conn *pcp, char *buf)
 {
-    if (pcp == PKC_ERROR)
+    if (pcp == PKC_ERROR) {
 	return;
+    }
 
     (void)fb_poll(curr_fbp);
-    if (buf) (void)free(buf);
+    if (buf) {
+	(void)free(buf);
+    }
 }
 
 
@@ -860,7 +883,7 @@ fbs_rfbhelp(struct pkg_conn *pcp, char *buf)
     long ret;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if(!buf) {
         bu_log("fbs_rfbhelp: null buffer\n");
         return;
     }
@@ -998,10 +1021,11 @@ fbs_open(struct fbserv_obj *fbsp, int port)
     /* XXX hardwired for now */
     sprintf(hostname, "localhost");
 
-    if (available_port < 0)
+    if (available_port < 0) {
 	available_port = 5559;
-    else if (available_port < 1024)
+    } else if (available_port < 1024) {
 	available_port += 5559;
+    }
 
     Tcl_DStringInit(&ds);
 
