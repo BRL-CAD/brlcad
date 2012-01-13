@@ -196,7 +196,7 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
     char *buffer = (char *) NULL;
     size_t depth = 0;
     int parent_found = 0;
-    register struct area *assembly_head_ptr = cell->assembly;
+    register struct area *assembly_head_ptr;
     register struct area *area_record_ptr = (struct area *) NULL;
 
     if (!cell) {
@@ -207,6 +207,8 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
         bu_log("ERROR: Function 'increment_assembly_counter' received a NULL pointer to a region path. Function aborted.\n");
 	return;
     }
+
+    assembly_head_ptr = cell->assembly;
 
     l = strlen(path);
     buffer = bu_calloc((unsigned int)l+1, sizeof(char), "increment_assembly_counter buffer allocation");
