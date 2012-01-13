@@ -137,7 +137,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	    if ((bfd=open(bu_vls_addr(&file_name), O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0)
 	    {
 		perror("g-stl");
-		bu_log("ERROR: Cannot open binary output file (%s) for writing\n", bu_vls_addr(&file_name));
+		bu_exit(1, "ERROR: Cannot open binary output file (%s) for writing\n", bu_vls_addr(&file_name));
 	    }
 
 	    if (!region_name) {
