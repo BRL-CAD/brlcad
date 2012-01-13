@@ -267,10 +267,10 @@ cm_file(int argc, char **argv)
 	    chan[cnum[i]].c_ival[line] = d;
 	}
     }
-    fclose(fp);
 
     /* Free intermediate dynamic memory */
  out:
+    fclose(fp);
     bu_free((char *)cnum, "cnum[]");
     bu_free((char *)iwords, "iwords[]");
     bu_vls_free(&buf);
