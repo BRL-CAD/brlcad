@@ -3590,12 +3590,16 @@ main(int argc, char **argv)
 
 	    if ((stop=fscanf(gfp, "%4d", &num)) == 1) {
 		size_t ret;
-		ret = fscanf(gfp, "%16s %16s", nm[num].ug, nm[num].lg); /* NAMESIZE */
-		if (ret < 2)
+		if (num < 0 || num > 9999) {
+		   bu_log("num value out of range!\n");
+		} else {
+		  ret = fscanf(gfp, "%16s %16s", nm[num].ug, nm[num].lg); /* NAMESIZE */
+		  if (ret < 2)
 		    bu_log("Unexpected error reading label file\n");
 
-		while ((fgetc(gfp)) != '\n')
+		  while ((fgetc(gfp)) != '\n')
 		    ;
+		}
 	    } else {
 		if (stop == EOF) {
 		    done = 0;
