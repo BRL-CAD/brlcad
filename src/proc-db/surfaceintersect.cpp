@@ -249,7 +249,7 @@ Curve_Compare_end(const ON_Curve **a, const ON_Curve **b)
  *
  * @brief create a new unintialized Face_X_Event
  */
-Face_X_Event::Face_X_Event()
+Face_X_Event::Face_X_Event() : face1(NULL), face2(NULL), curve1(NULL), curve2(NULL)
 {}
 
 
