@@ -39,6 +39,12 @@
 #include "bio.h"
 #include "ged.h"
 
+#define WIN_EDITOR "\"c:/Program Files/Windows NT/Accessories/wordpad\""
+#define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
+#define EMACS_EDITOR "emacs"
+#define VIM_EDITOR "vim"
+#define JOVE_EDITOR "jove"
+
 int
 _ged_editit(char *editstring, const char *filename)
 {
@@ -53,6 +59,7 @@ _ged_editit(char *editstring, const char *filename)
     const char *editor = (char *)NULL;
     const char *editor_opt = (char *)NULL;
     const char *file = (const char *)filename;
+    char buffer[RT_MAXLINE] = {0};
 
 #if defined(SIGINT) && defined(SIGQUIT)
     void (*s2)();
@@ -66,17 +73,55 @@ _ged_editit(char *editstring, const char *filename)
 
     /* convert the edit string into pieces suitable for arguments to execlp */
 
-    avtmp = (char **)bu_malloc(sizeof(char *)*5, "ged_editit: editstring args");
-    bu_argv_from_string(avtmp, 4, editstring);
+    if (editstring != NULL) {
+	avtmp = (char **)bu_malloc(sizeof(char *)*5, "ged_editit: editstring args");
+	bu_argv_from_string(avtmp, 4, editstring);
 
-    if (avtmp[0] && !BU_STR_EQUAL(avtmp[0], "(null)"))
-	terminal = avtmp[0];
-    if (avtmp[1] && !BU_STR_EQUAL(avtmp[1], "(null)"))
-	terminal_opt = avtmp[1];
-    if (avtmp[2] && !BU_STR_EQUAL(avtmp[2], "(null)"))
-	editor = avtmp[2];
-    if (avtmp[3] && !BU_STR_EQUAL(avtmp[3], "(null)"))
-	editor_opt = avtmp[3];
+	if (avtmp[0] && !BU_STR_EQUAL(avtmp[0], "(null)"))
+	    terminal = avtmp[0];
+	if (avtmp[1] && !BU_STR_EQUAL(avtmp[1], "(null)"))
+	    terminal_opt = avtmp[1];
+	if (avtmp[2] && !BU_STR_EQUAL(avtmp[2], "(null)"))
+	    editor = avtmp[2];
+	if (avtmp[3] && !BU_STR_EQUAL(avtmp[3], "(null)"))
+	    editor_opt = avtmp[3];
+    } else {
+	editor = getenv("EDITOR");
+
+	/* still unset? try windows */
+	if (!editor || editor[0] == '\0') {
+	    if (bu_file_exists(WIN_EDITOR, NULL)) {
+		editor = WIN_EDITOR;
+	    }
+	}
+
+	/* still unset? try mac os x */
+	if (!editor || editor[0] == '\0') {
+	    if (bu_file_exists(MAC_EDITOR, NULL)) {
+		editor = MAC_EDITOR;
+	    }
+	}
+
+	/* still unset? try emacs */
+	if (!editor || editor[0] == '\0') {
+	    editor = bu_which(EMACS_EDITOR);
+	}
+
+	/* still unset? try vim */
+	if (!editor || editor[0] == '\0') {
+	    editor = bu_which(VIM_EDITOR);
+	}
+
+	/* still unset? default to jove */
+	if (!editor || editor[0] == '\0') {
+	    const char *jovepath = bu_brlcad_root("bin/jove", 1);
+	    editor = JOVE_EDITOR;
+	    if (jovepath) {
+		snprintf(buffer, RT_MAXLINE, "%s", jovepath);
+		editor = buffer;
+	    }
+	}
+    }
 
     if (!editor) {
 	bu_log("INTERNAL ERROR: editit editor missing\n");
@@ -197,7 +242,9 @@ _ged_editit(char *editstring, const char *filename)
     (void)signal(SIGQUIT, s3);
 #endif
 
-    bu_free((genptr_t)avtmp, "ged_editit: avtmp");
+    if (editstring != NULL)
+	bu_free((genptr_t)avtmp, "ged_editit: avtmp");
+
     return 1;
 }
 
