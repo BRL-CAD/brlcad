@@ -9609,7 +9609,7 @@ nmg_to_tgc(
     fastf_t sum_top_r_sq;
     fastf_t ave_top_r_sq;
     fastf_t top_r;
-    plane_t top_pl;
+    plane_t top_pl = HINIT_ZERO;
     plane_t base_pl;
     vect_t plv_1, plv_2;
 
