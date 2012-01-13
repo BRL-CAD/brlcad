@@ -463,11 +463,9 @@ analyze_ell(struct ged *gedp, const struct rt_db_internal *ip)
     if (type == PROLATE) {
 	sur_area = 2.0 * M_PI * minor * minor +
 	    (2.0 * M_PI * (major*minor/ecc) * asin(ecc));
-    } else if (type == OBLATE) {
+    } else { /* type == OBLATE */
 	sur_area = 2.0 * M_PI * major * major +
 	    (M_PI * (minor*minor/ecc) * log((1.0+ecc)/(1.0-ecc)));
-    } else {
-	sur_area = 0.0;
     }
 
     bu_vls_printf(gedp->ged_result_str, "   Surface Area = %.8f\n",
