@@ -224,7 +224,7 @@ BANode<BA>::BANode(const ON_Curve* curve, int adj_face_index, const BA& node,
 		   const ON_BrepFace* face, const ON_Interval& t,
 		   bool innerTrim, bool checkTrim, bool trimmed)
     : m_node(node), m_face(face), m_trim(curve), m_t(t), m_adj_face_index(adj_face_index),
-      m_checkTrim(checkTrim), m_trimmed(trimmed), m_innerTrim(innerTrim)
+      m_checkTrim(checkTrim), m_trimmed(trimmed), m_innerTrim(innerTrim), m_slope(0.0), m_vdot(0.0)
 {
     m_start = curve->PointAt(m_t[0]);
     m_end = curve->PointAt(m_t[1]);
@@ -266,6 +266,18 @@ inline
 __BU_ATTR_ALWAYS_INLINE
 BANode<BA>::BANode(const BA& node) : m_node(node)
 {
+    m_adj_face_index = -99;
+    m_checkTrim = true;
+    m_trimmed = false;
+    m_Horizontal = false;
+    m_Vertical = false;
+    m_XIncreasing = false;
+    m_innerTrim = false;
+    m_bb_diag = 0.0;
+    m_slope = 0.0;
+    m_vdot = 0.0;
+    m_face = NULL;
+    m_trim = NULL;
     for (int i = 0; i < 3; i++) {
 	double d = m_node.m_max[i] - m_node.m_min[i];
 	if (NEAR_ZERO(d, ON_ZERO_TOLERANCE)) {
@@ -848,6 +860,10 @@ inline
 BVNode<BV>::BVNode()
 {
     m_face = NULL;
+    m_ctree = NULL;
+    m_checkTrim = true;
+    m_trimmed = false;
+
 }
 
 
@@ -856,6 +872,9 @@ inline
 BVNode<BV>::BVNode(const BV& node) : m_node(node)
 {
     m_face = NULL;
+    m_ctree = NULL;
+    m_checkTrim = true;
+    m_trimmed = false;
     for (int i = 0; i < 3; i++) {
 	double d = m_node.m_max[i] - m_node.m_min[i];
 	if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
@@ -871,6 +890,8 @@ inline
 BVNode<BV>::BVNode(CurveTree* ct): m_ctree(ct)
 {
     m_face = NULL;
+    m_checkTrim = true;
+    m_trimmed = false;
 }
 
 
@@ -879,6 +900,8 @@ inline
 BVNode<BV>::BVNode(CurveTree* ct, const BV& node) : m_ctree(ct), m_node(node)
 {
     m_face = NULL;
+    m_checkTrim = true;
+    m_trimmed = false;
     for (int i = 0; i < 3; i++) {
 	double d = m_node.m_max[i] - m_node.m_min[i];
 	if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {

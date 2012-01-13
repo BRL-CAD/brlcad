@@ -82,7 +82,7 @@ distribute(const int count, const ON_3dVector* v, double x[], double y[], double
 //--------------------------------------------------------------------------------
 // CurveTree
 CurveTree::CurveTree(ON_BrepFace* face) :
-    m_face(face)
+    m_face(face), m_adj_face_index(-99)
 {
     m_root = initialLoopBBox();
 
