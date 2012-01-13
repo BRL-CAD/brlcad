@@ -2094,15 +2094,14 @@ main(int ac, char *av[])
 	bu_exit(BRLCAD_ERROR, "Exiting.\n");
     }
 
-    remove_whitespace(av[1]);
-    string_length = strlen(av[1]) + 5;
+    input_filename = bu_realpath(av[1], NULL);
+
+    string_length = strlen(input_filename) + 5;
 
     temp_filename = bu_calloc(1, string_length, "temp_filename");
-    input_filename = bu_calloc(1, string_length, "input_filename");
     dsp_output_filename = bu_calloc(1, string_length, "dsp_output_filename");
     model_output_filename = bu_calloc(1, string_length, "model_output_filename");
 
-    strcpy(input_filename, av[1]);
     strcpy(temp_filename, input_filename);
     strcat(temp_filename, ".tmp");
     strcpy(dsp_output_filename, input_filename);
