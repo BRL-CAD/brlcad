@@ -32,6 +32,7 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls obj_name;
     char *cp, *tp;
     static int i = 0;
+    int new_i;
     int len;
     static const char *usage = "template | -s [num]";
 
@@ -52,20 +53,20 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
 	case 2:
 	    if (!BU_STR_EQUAL(argv[1], "-s"))
 		break;
-	    else {
-		i = 0;
+
+	    i = 0;
+	    return GED_OK;
+
+	case 3:
+
+	    if ((BU_STR_EQUAL(argv[1], "-s"))
+		&& (sscanf(argv[2], "%d", &new_i) == 1)) {
+		i = new_i;
 		return GED_OK;
 	    }
-	case 3:
-	    {
-		int new_i;
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return GED_ERROR;
 
-		if ((BU_STR_EQUAL(argv[1], "-s"))
-		    && (sscanf(argv[2], "%d", &new_i) == 1)) {
-		    i = new_i;
-		    return GED_OK;
-		}
-	    }
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
