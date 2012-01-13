@@ -121,10 +121,20 @@ cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
 	RT_DB_INTERNAL_INIT(&intern);
     }
 
+    if (!bu_file_exists(argv[2], &fd)) {
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls,
+		      "Cannot open file %s for reading\n", argv[2]);
+	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+	bu_vls_free(&vls);
+	mged_print_result(TCL_ERROR);
+	return TCL_ERROR;
+    }
+
     /*
      * How much data do we have to suck in?
      */
-    if (stat(argv[2], &stat_buf)) {
+    if (fstat(fd, &stat_buf) < 0) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "Cannot get status of file %s\n", argv[2]);
 	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
@@ -135,16 +145,6 @@ cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
 
     if (RT_G_DEBUG & DEBUG_VOL) {
 	bu_log ("File '%s' is %ld bytes long\n", argv[2], (long)stat_buf.st_size);
-    }
-
-    if ((fd = open(argv[2], O_RDONLY)) == -1) {
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls,
-		      "Cannot open file %s for reading\n", argv[2]);
-	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
-	bu_vls_free(&vls);
-	mged_print_result(TCL_ERROR);
-	return TCL_ERROR;
     }
 
     if (db5_type_descrip_from_codes(&descrip, major_code, minor_code)) {
