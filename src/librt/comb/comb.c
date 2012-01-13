@@ -179,12 +179,18 @@ rt_comb_v5_serialize(
 	    memcpy(ssp->leafp, tp->tr_l.tl_name, n);
 	    ssp->leafp += n;
 
-	    if (tp->tr_l.tl_mat && !bn_mat_is_identity(tp->tr_l.tl_mat))
+	    if (tp->tr_l.tl_mat && !bn_mat_is_identity(tp->tr_l.tl_mat)) {
 		mi = ssp->mat_num++;
-	    else
+	    } else {
 		mi = (ssize_t)-1;
+	    }
+
 	    BU_ASSERT_SSIZE_T(mi, <, (ssize_t)ssp->nmat);
-	    ssp->leafp = db5_encode_length(ssp->leafp, mi, ssp->wid);
+
+	    /* there should be a better way than casting
+	     * 'mi' from ssize_t to size_t
+	     */
+	    ssp->leafp = db5_encode_length(ssp->leafp, (size_t)mi, ssp->wid);
 
 	    /* Encoding of the matrix */
 	    if (mi != (ssize_t)-1) {
