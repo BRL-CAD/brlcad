@@ -143,7 +143,7 @@ main(int argc, char **argv)
 	str = nextsym(buf, str);
 	cm.cm_green[idx] = htoi(buf);
 
-	str = nextsym(buf, str);
+	(void)nextsym(buf, str);
 	cm.cm_blue[idx] = htoi(buf);
     }
 
