@@ -273,7 +273,7 @@ main (int argc, char *argv[])
 	    VADD2(cen_ans, rotated, cen1);
 	    bn_mat_mul(m_ans, m_rot1, m_rot2);
 	}
-	anim_mat2ypr(rad_ang_ans, m_ans);
+	anim_mat2ypr(m_ans, rad_ang_ans);
 	VSCALE(ang_ans, rad_ang_ans, RAD2DEG);
 
 	if (print_time) {
