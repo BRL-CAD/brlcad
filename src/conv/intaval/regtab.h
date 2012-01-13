@@ -38,9 +38,6 @@
 #include "wdb.h"
 
 
-class Region;
-
-
 int readMaterials
 (
     FILE *fp
