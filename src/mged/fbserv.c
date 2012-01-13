@@ -558,6 +558,11 @@ rfbclear(struct pkg_conn *pcp, char *buf)
     RGBpixel bg;
     char rbuf[NET_LONG_LEN+1];
 
+    if(buf == NULL) {
+	bu_log("rfbwindow: null buffer\n");
+	return;
+    }
+
     bg[RED] = buf[0];
     bg[GRN] = buf[1];
     bg[BLU] = buf[2];
@@ -565,8 +570,7 @@ rfbclear(struct pkg_conn *pcp, char *buf)
     (void)pkg_plong(rbuf, fb_clear(fbp, bg));
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
 
-    if (buf)
-	(void)free(buf);
+    (void)free(buf);
 }
 
 
