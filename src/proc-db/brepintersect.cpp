@@ -920,9 +920,7 @@ public:
     int InsertPoint(ON_3dPoint);
 };
 
-PointIndex::PointIndex(
-    ON_Mesh *m
-    )
+PointIndex::PointIndex(ON_Mesh *m) : tol(0.0)
 {
     mesh = m;
 }
