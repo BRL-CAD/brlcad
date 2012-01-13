@@ -4387,6 +4387,10 @@ dgo_tree_cmd(struct dg_obj *dgop,
 		cflag = 1;
 		break;
 	    case 'o':
+                if (fdout != NULL) {
+		    bu_log("Warning - output file already specified");
+                    break;
+                }
 		if ((fdout = fopen(bu_optarg, "w+b")) == NULL) {
 		    Tcl_SetErrno(errno);
 		    bu_log("Failed to open output file, %s", strerror(errno));
