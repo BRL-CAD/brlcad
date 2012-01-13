@@ -386,7 +386,8 @@ vdraw_delete(void *data, int argc, const char *argv[])
 	uind -= vp->nused;
     }
 
-    if ((size_t)uind >= vp->nused) {
+    /* The comparison to BN_VLIST_CHUNK is to silence covarity */
+    if ((size_t)uind >= vp->nused || uind >= BN_VLIST_CHUNK) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: delete out of range\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
@@ -489,7 +490,8 @@ vdraw_read(void *data, int argc, const char *argv[])
 	uind -= vp->nused;
     }
 
-    if ((size_t)uind >= vp->nused) {
+    /* The comparison to BN_VLIST_CHUNK is to silence covarity */
+    if ((size_t)uind >= vp->nused || uind >= BN_VLIST_CHUNK) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: read out of range\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
