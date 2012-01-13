@@ -967,6 +967,11 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     }
 
     path_piece = path_parse(nargv[1]);
+    if(path_piece == NULL) {
+	Tcl_AppendResult(interp, "Path parse failed: '", nargv[1], "'\n", (char *)NULL);
+	goto bail_out;
+    }
+
     for (nm_pieces = 0; path_piece[nm_pieces] != 0; ++nm_pieces)
 	;
 
