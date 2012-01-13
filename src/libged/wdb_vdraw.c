@@ -199,16 +199,18 @@ vdraw_write_tcl(void *clientData, int argc, const char *argv[])
 	Tcl_AppendResult(dgop->interp, "vdraw: cmd not an integer\n", (char *)NULL);
 	return TCL_ERROR;
     }
-    if (argc == 6) {
-	cp->pt[idx][0] = atof(argv[3]);
-	cp->pt[idx][1] = atof(argv[4]);
-	cp->pt[idx][2] = atof(argv[5]);
-    } else {
-	if (argc != 4 ||
-	    bn_decode_vect(cp->pt[idx], argv[3]) != 3) {
-	    Tcl_AppendResult(dgop->interp,
-			     "vdraw write: wrong # args, need either x y z or {x y z}\n", (char *)NULL);
-	    return TCL_ERROR;
+    if (idx < BN_VLIST_CHUNK) {
+	if (argc == 6) {
+	    cp->pt[idx][0] = atof(argv[3]);
+	    cp->pt[idx][1] = atof(argv[4]);
+	    cp->pt[idx][2] = atof(argv[5]);
+	} else {
+	    if (argc != 4 ||
+		bn_decode_vect(cp->pt[idx], argv[3]) != 3) {
+		Tcl_AppendResult(dgop->interp,
+				 "vdraw write: wrong # args, need either x y z or {x y z}\n", (char *)NULL);
+		return TCL_ERROR;
+	    }
 	}
     }
     /* increment counter only if writing onto end */
@@ -363,7 +365,7 @@ vdraw_delete_tcl(void *clientData, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    for (i = uind; i < vp->nused - 1; i++) {
+    for (i = uind; i < (FMIN(vp->nused,BN_VLIST_CHUNK) - 1); i++) {
 	vp->cmd[i] = vp->cmd[i+1];
 	VMOVE(vp->pt[i], vp->pt[i+1]);
     }
