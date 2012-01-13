@@ -1492,6 +1492,9 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	 */
 	BU_ASSERT_PTR(cur_arg->next, !=, (struct edit_arg *)NULL);
 
+#if 0
+	/* This assertion, as it is currently, is always true. */
+
 	/* A 'TO' position is set; only flags that were possible when
 	 * this function was last updated should be handled.
 	 */
@@ -1500,6 +1503,7 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 				    EDIT_REL_DIST |
 				    EDIT_ABS_POS |
 				    EDIT_USE_TARGETS));
+#endif
 
 	/* disallow non-standard opts */
 	if (cur_arg->cl_options[0] != '\0')
