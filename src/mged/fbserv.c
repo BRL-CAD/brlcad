@@ -863,12 +863,17 @@ rfbwindow(struct pkg_conn *pcp, char *buf)
     int x, y;
     char rbuf[NET_LONG_LEN+1];
 
+    if(buf == NULL) {
+	bu_log("rfbwindow: null buffer\n");
+	return;
+    }
+
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
 
     (void)pkg_plong(&rbuf[0], fb_window(fbp, x, y));
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+    (void)free(buf);
 }
 
 
