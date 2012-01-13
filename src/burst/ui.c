@@ -1532,15 +1532,17 @@ MwriteCmdFile(HmItem *UNUSED(itemp))
     char cmdfile[LNBUFSZ];
     FILE *cmdfp;
     FILE *inpfp;
-    if (getInput(ip))
-	bu_strlcpy(cmdfile, ip->buffer, LNBUFSZ);
-    if ((cmdfp = fopen(cmdfile, "wb")) == NULL) {
+    if (getInput(ip)) {
+      bu_strlcpy(cmdfile, ip->buffer, LNBUFSZ);
+      if ((cmdfp = fopen(cmdfile, "wb")) == NULL) {
 	(void) snprintf(scrbuf, LNBUFSZ, 
-			"Write access denied for \"%s\"",
-			cmdfile);
+	    "Write access denied for \"%s\"",
+	    cmdfile);
 	warning(scrbuf);
 	return;
+      }
     }
+
     if ((inpfp = fopen(tmpfname, "rb")) == NULL) {
 	(void) snprintf(scrbuf, LNBUFSZ, 
 			"Read access denied for \"%s\"",
