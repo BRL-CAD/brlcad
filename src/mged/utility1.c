@@ -173,7 +173,7 @@ f_edcodes(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     }
     av[argc] = NULL;
   
-    ged_edcodes(gedp, argc + 1, (const char **)av);
+    ged_edcodes(gedp, argc, (const char **)av);
    
     bu_vls_free(&editstring); 
     bu_free((genptr_t)av, "f_edcodes: av");
