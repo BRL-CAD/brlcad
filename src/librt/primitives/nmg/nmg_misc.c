@@ -7289,7 +7289,8 @@ nmg_vlist_to_wire_edges(struct shell *s, const struct bu_list *vhead)
     const struct bn_vlist *vp;
     struct edgeuse *eu;
     struct vertex *v1, *v2;
-    point_t pt1, pt2;
+    point_t pt1 = VINIT_ZERO;
+    point_t pt2 = VINIT_ZERO;
 
     NMG_CK_SHELL(s);
     NMG_CK_LIST(vhead);
