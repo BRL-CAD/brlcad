@@ -236,11 +236,8 @@ int main(int argc, char **argv)
 	    if (ret == 0)
 		perror("scanf");
 	    if (prmrel != 3) prmrel = 2;
-	}
-
+	} else if (typeout == 1) {
 	/*  Read generic file name if necessary.  */
-	if (typeout == 1)
-	{
 	    (void)printf("Enter name of generic file to be created (15 char ");
 	    (void)printf("max).  ");
 	    (void)fflush(stdout);
@@ -828,12 +825,11 @@ int main(int argc, char **argv)
 			  spfile);
 	    (void)fprintf(fp3, "\tmaterial file used:  %s\n", filemat);
 	    (void)fprintf(fp3, "\toutput file created:  %s\n", filename);
-	    if (typeout == 0)
-	    {
+	    if (typeout == 0) {
 		(void)fprintf(fp3, "\tconductivity file created:  %s\n", confile);
 		(void)fprintf(fp3, "\t  (format is PRISM %d.0)\n", prmrel);
-	    }
-	    if (typeout == 1) (void)fprintf(fp3, "\tgeneric file created:  %s\n"
+	    } else if (typeout == 1)
+		(void)fprintf(fp3, "\tgeneric file created:  %s\n"
 					    , genfile);
 	    (void)fprintf(fp3, "\tconductivity table file created:  %s\n",
 			  tblfile);
@@ -990,17 +986,17 @@ int main(int argc, char **argv)
 	    }	/*  END # 7  */
 	}	/*  END # 6  */
 
-	if (typeout == 0) (void)fclose(fp1);
+	if (typeout == 0)
+	    (void)fclose(fp1);
+	else if (typeout == 1) {
+	    /*------------------------------------------------------------------*/
 
-	/*------------------------------------------------------------------*/
+	    /*  Open and write to generic file if necessary. */
+	    /*  The format follows.  */
+	    /*  4  region number  number of adjacent regions  */
+	    /*     adjacent region  shared area  conduction distance  */
 
-	/*  Open and write to generic file if necessary. */
-	/*  The format follows.  */
-	/*  4  region number  number of adjacent regions  */
-	/*     adjacent region  shared area  conduction distance  */
 
-	if (typeout == 1)
-	{
 	    /*  Open file.  */
 	    fp6 = fopen(genfile, "wb");
 	    (void)printf("Opened generic file.\n");
@@ -1131,12 +1127,12 @@ int main(int argc, char **argv)
 	{
 	    (void)fprintf(stdout, "\toutput file created:  %s\n", filename);
 	}
-	if (typeout == 0)
-	{
+	if (typeout == 0) {
 	    (void)fprintf(stdout, "\tconductivity file created:  %s\n", confile);
 	    (void)fprintf(stdout, "\t  (format is PRISM %d.0)\n", prmrel);
-	}
-	if (typeout == 1) (void)printf("\tgeneric file created:  %s\n", genfile);
+	} else if (typeout == 1)
+	      (void)printf("\tgeneric file created:  %s\n", genfile);
+
 	(void)fprintf(stdout, "\tconductivity table file created:  %s\n", tblfile);
 	(void)fprintf(stdout, "\terror file created:  %s\n\n\n", fileerr);
 	(void)fflush(stdout);
@@ -1149,13 +1145,12 @@ int main(int argc, char **argv)
 	/*  Write errors to error file.  */
 	(void)fprintf(fp4, "\nERRORS from secpass\n\n");
 	/*  Write type of file created to error file.  */
-	if (typeout == 0)
-	{
+	if (typeout == 0) {
 	    (void)fprintf(fp4, "PRISM %d.0 conductivity file, %s, created.\n\n",
 			  prmrel, confile);
-	}
-	if (typeout == 1) (void)fprintf(fp4, "Generic file, %s, created.\n\n",
-					genfile);
+	} else if (typeout == 1)
+	    (void)fprintf(fp4, "Generic file, %s, created.\n\n", genfile);
+
 	(void)fflush(fp4);
 	for (i=0; i<numreg; i++)
 	{
