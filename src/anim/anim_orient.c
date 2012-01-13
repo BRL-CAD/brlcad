@@ -256,7 +256,7 @@ main(int argc, char *argv[])
 		printf("%.12g\t%.12g\t%.12g\n", angle[0], angle[1], angle[2]);
 		break;
 	    case AET:
-		anim_mat2ypr(angle, matrix);
+		anim_mat2ypr(matrix, angle);
 		if (angle[0] > 0.0) {
 		    angle[0] -= M_PI;
 		} else {

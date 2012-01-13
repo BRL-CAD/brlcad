@@ -53,7 +53,7 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
 	bn_mat_trn(mat, gedp->ged_gvp->gv_rotation);
 	anim_v_unpermute(mat);
 
-	if (anim_mat2ypr(pt, mat) == 2) {
+	if (anim_mat2ypr(mat, pt) == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "view %s - matrix is not a rotation matrix", argv[0]);
 	    return GED_ERROR;
 	}
