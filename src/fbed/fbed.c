@@ -830,18 +830,17 @@ f_Iterations() /* Specify number of iterations of next command. */
     char iterate_buf[MAX_DIGITS+1];
     int iterate;
     int c=0, i;
-    if ( remembering )
+    if ( remembering ) {
 	/* Clobber "f_Iterations()" key-stroke. */
 	*--macro_ptr = NUL;
+    }
     prnt_Prompt( "M-" );
-    for ( i = 0; i < MAX_DIGITS && isdigit( c = get_Char() ); i++ )
+    for ( i = 0; i < MAX_DIGITS && (c = get_Char()) != EOF && isdigit(c); i++ )
     {
 	iterate_buf[i] = c;
 	(void) putchar( c );
 	(void) fflush( stdout );
     }
-    if ( i == MAX_DIGITS )
-	c = get_Char();
     iterate_buf[i] = NUL;
     (void) putchar( ':' );
     (void) fflush( stdout );
@@ -850,7 +849,12 @@ f_Iterations() /* Specify number of iterations of next command. */
 	fb_log( "Iterations not set.\n" );
 	return 0;
     }
-    do_Key_Cmd( c, iterate );
+    if (c != EOF) {
+	if (i == MAX_DIGITS) {
+	    c = get_Char();
+	}
+	do_Key_Cmd( c, iterate );
+    }
     return 1;
 }
 
