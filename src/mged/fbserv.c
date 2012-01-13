@@ -640,6 +640,11 @@ rfbreadrect(struct pkg_conn *pcp, char *buf)
     static unsigned char *scanbuf = NULL;
     static size_t buflen = 0;
 
+    if(buf == NULL) {
+	bu_log("rfbreadrect: null buffer\n");
+	return;
+    }
+
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
     ymin = pkg_glong(&buf[1*NET_LONG_LEN]);
     width = pkg_glong(&buf[2*NET_LONG_LEN]);
@@ -654,7 +659,7 @@ rfbreadrect(struct pkg_conn *pcp, char *buf)
 	    buflen = 1024*sizeof(RGBpixel);
 	if ((scanbuf = (unsigned char *)malloc(buflen)) == NULL) {
 	    fb_log("fb_read: malloc failed!");
-	    if (buf) (void)free(buf);
+	    (void)free(buf);
 	    buflen = 0;
 	    return;
 	}
@@ -664,7 +669,7 @@ rfbreadrect(struct pkg_conn *pcp, char *buf)
     if (ret < 0) ret = 0;		/* map error indications */
     /* sending a 0-length package indicates error */
     pkg_send(MSG_RETURN, (char *)scanbuf, ret*sizeof(RGBpixel), pcp);
-    if (buf) (void)free(buf);
+    (void)free(buf);
 }
 
 
