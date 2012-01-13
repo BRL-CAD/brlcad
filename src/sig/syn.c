@@ -81,8 +81,8 @@ Usage: syn samples_per_set [ratio] > doubles\n";
 	    if (ret != 1)
 		perror("fwrite");
 	    findex += stepsize;
-	    if (findex > TABSIZE)
-		findex -= TABSIZE;
+	    if ((int)findex > TABSIZE)
+		findex -= (double)TABSIZE;
 	}
     }
     return 0;
