@@ -429,6 +429,10 @@ read_frame(FILE *fp)
 	    EXAGERATION / (0.02 * inches2mm);
     }
 /* Extrapolate data for the right side -- end of muzzle */
+    if( nsamples < 2 ) {
+	bu_log("Insufficient number of samples for extrapolation. Aborting\n");
+	return -1;
+    }
     sample[nsamples][X] = dxtab[nsamples] + dx;	/* reuse last displacement */
     sample[nsamples][Y] = sample[nsamples-1][Y] * 2 - sample[nsamples-2][Y];
     sample[nsamples][Z] = sample[nsamples-1][Z] * 2 - sample[nsamples-2][Z];
