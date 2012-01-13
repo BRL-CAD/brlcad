@@ -997,12 +997,12 @@ f_permute(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	char buf[2];
 
 	if ((*p)[i] == '*') {
-	  tarb.pt[i] = VINIT_ZERO;
-        } else {
+	  VSETALL(tarb.pt[i], 0);
+	} else {
 	  sprintf(buf, "%c", (*p)[i]);
 	  k = atoi(buf);
 	  VMOVE(tarb.pt[i], larb.pt[ARB_VERT_LOC(es_type, k)]);
-        }
+	}
     }
 
     /*
