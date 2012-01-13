@@ -352,7 +352,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 
 		if (extr->skt && extr->skt->verts) {
 		    VJOIN2(mpt, extr->V, extr->skt->verts[0][0], extr->u_vec,
-			   extr->skt->verts[0][2], extr->v_vec);
+			   extr->skt->verts[0][1], extr->v_vec);
 		} else {
 		    VMOVE(mpt, extr->V);
 		}
