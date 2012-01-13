@@ -41,6 +41,7 @@
 #ifndef _WIN32
 #  include <unistd.h>
 #endif
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -78,7 +79,7 @@ socklen_t fromlen;
 int udp = 0;			/* 0 = tcp, !0 = udp */
 int options = 0;		/* socket options */
 int one = 1;                    /* for 4.3 BSD style setsockopt() */
-short port = 2000;		/* TCP port number */
+int port = 2000;		/* TCP port number (possible range 0 - 65535)*/
 char *host;			/* ptr to name of host */
 int trans;			/* 0=receive, !0=transmit mode */
 int sinkmode;			/* 0=normal I/O, !0=sink/source mode */
@@ -496,15 +497,37 @@ main(int argc, char **argv)
 		break;
 	    case 'n':
 		nbuf = atoi(&argv[0][2]);
+		if(nbuf < 0) {
+		  printf("Negative buffer count.\n");
+		  exit(-1);
+		}
+		if(nbuf >= INT_MAX) {
+		  printf("Too many buffers specified.\n");
+		  exit(-1);
+		}
 		break;
 	    case 'l':
 		buflen = atoi(&argv[0][2]);
+		if(buflen <= 0) {
+		  printf("Invalid buffer length.\n");
+		  exit(-1);
+		}
+		if(buflen >= INT_MAX) {
+		  printf("Buffer length too large.\n");
+		  exit(-1);
+		}
 		break;
 	    case 's':
 		sinkmode = 1;	/* source or sink, really */
 		break;
 	    case 'p':
 		port = atoi(&argv[0][2]);
+		if(port < 0) {
+		  port = 0;
+		}
+		if(port > 65535) {
+		  port = 65535;
+		}
 		break;
 	    case 'u':
 		udp = 1;
