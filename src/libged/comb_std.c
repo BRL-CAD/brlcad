@@ -346,15 +346,12 @@ eval_bool(struct bu_list *hp)
 	done = do_paren(hp);
     }
 
-    if (done == 1) {
-	tok = BU_LIST_NEXT(tokens, hp);
-	final_tree = tok->tp;
-	BU_LIST_DEQUEUE(&tok->l);
-	bu_free((char *)tok, "tok");
-	return final_tree;
-    }
+    tok = BU_LIST_NEXT(tokens, hp);
+    final_tree = tok->tp;
+    BU_LIST_DEQUEUE(&tok->l);
+    bu_free((char *)tok, "tok");
 
-    return (union tree *)NULL;
+    return final_tree;
 }
 
 
