@@ -110,6 +110,7 @@ f_tedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
     if (writesolid()) {
 	bu_file_delete(tmpfil);
+        fclose(fp);
 	return TCL_ERROR;
     }
 
