@@ -332,8 +332,8 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 		cur_loop[i] = verts[lu_verts[i]];
 	    else /* Reuse of a vertex. */
 		cur_loop[i] = NULL;
-	fu = nmg_add_loop_to_face(s, fu, cur_loop, n,
-		dir);
+	nmg_add_loop_to_face(s, fu, cur_loop, n, dir);
+
 	/* Associate geometry with vertices. */
 	for (i = 0; i < n; i++) {
 	    if (lu_verts[i] >= 0 && !verts[lu_verts[i]]) {
