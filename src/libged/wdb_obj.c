@@ -2080,11 +2080,11 @@ wdb_put_cmd(struct rt_wdb *wdbp,
 
     RT_DB_INTERNAL_INIT(&intern);
 
-    for (i = 0; argv[2][i] != 0 && i < 16; i++) {
-	type[i] = isupper(argv[2][i]) ? tolower(argv[2][i]) :
-	    argv[2][i];
+    /* place values in type at 0-14, place null terminator at 15 */
+    for (i = 0; argv[2][i] != 0 && i < 15; i++) {
+	type[i] = isupper(argv[2][i]) ? tolower(argv[2][i]) : argv[2][i];
     }
-    type[i] = 0;
+    type[i] = '\0';
 
     ftp = rt_get_functab_by_label(type);
     if (ftp == NULL) {
