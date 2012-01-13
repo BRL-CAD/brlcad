@@ -4397,12 +4397,14 @@ dgo_tree_cmd(struct dg_obj *dgop,
 		displayDepth = atoi(bu_optarg);
 		if (displayDepth < 0) {
 		    bu_log("Negative number supplied as depth - unsupported.");
+                    fclose(fdout);
 		    return TCL_ERROR;
 		}
 		break;
 	    case '?':
 	    default:
 		bu_log("ERROR: unexpected tree option\n");
+                fclose(fdout);
 		return TCL_ERROR;
 		break;
 	}
