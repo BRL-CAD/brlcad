@@ -34,7 +34,7 @@
  */
 
 Parameter::Parameter(VCSet & vcs, std::string n)
-    : vcset(vcs), name(n)
+    : type(0), vcset(vcs), name(n), Variables()
 {}
 
 Parameter::iterator makeIterator(Parameter::Varlist::iterator i)
