@@ -639,10 +639,13 @@ X_open_fb(FBIO *ifp, const char *file, int width, int height)
     }
     if ((bitbuf = (unsigned char *)calloc(1, (width*height)/8)) == NULL) {
 	fb_log("X_open_fb: bitbuf malloc failed\n");
+        free(bytebuf);
 	return -1;
     }
     if ((scanbuf = (unsigned char *)calloc(1, width)) == NULL) {
 	fb_log("X_open_fb: scanbuf malloc failed\n");
+        free(bytebuf);
+        free(bitbuf);
 	return -1;
     }
     XI(ifp)->bytebuf = bytebuf;
