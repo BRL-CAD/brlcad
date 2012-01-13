@@ -73,7 +73,7 @@ ged_put(struct ged *gedp, int argc, const char *argv[])
 
     RT_DB_INTERNAL_INIT(&intern);
 
-    for (i = 0; argv[2][i] != 0 && i < 16; i++) {
+    for (i = 0; argv[2][i] != 0 && i < 15; i++) {
 	type[i] = isupper(argv[2][i]) ? tolower(argv[2][i]) :
 	    argv[2][i];
     }
