@@ -65,10 +65,11 @@ main(void)
 
     for (;;)  {
 	do {
-	    if ( (a = getchar()) == EOF || a > 255 )  goto out;
+	    a = getchar();
+	    if ( a == EOF || a < 0 || a > 255 )  goto out;
 	} while ( (i = lmap[a]) < 0 );
-
-	if ( (b = getchar()) == EOF || b > 255 )  {
+	b = getchar();
+	if ( b == EOF || b < 0 || b > 255 )  {
 	    fprintf(stderr, "asc2pix: unexpected EOF in middle of hex number\n");
 	    return 1;
 	}
