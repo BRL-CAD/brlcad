@@ -3003,7 +3003,7 @@ joint_move(struct joint *jp)
 	db_full_path_init(&anp->an_path);
 	anp->an_path.fp_len = jp->path.arc_last+1;
 	anp->an_path.fp_maxlen= jp->path.arc_last+1;
-	anp->an_path.fp_names = (struct directory **)
+	anp->an_path.fp_names = (struct directory *)
 	    bu_malloc(sizeof(struct directory **)*anp->an_path.fp_maxlen,
 		      "full path");
 	for (i=0; i<= jp->path.arc_last; i++) {
