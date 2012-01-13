@@ -48,7 +48,7 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
 
     /* return Viewrot as yaw, pitch and roll */
     if (argc == 1) {
-	point_t pt;
+	point_t pt = VINIT_ZERO;
 
 	bn_mat_trn(mat, gedp->ged_gvp->gv_rotation);
 	anim_v_unpermute(mat);
