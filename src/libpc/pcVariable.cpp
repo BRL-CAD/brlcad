@@ -59,7 +59,9 @@ void VariableAbstract::restore()
 template<>
 Variable<int>::Variable(std::string vid, int vvalue) :
     VariableAbstract(vid),
-    value(vvalue)
+    value(vvalue),
+    vcopy_(vvalue),
+    D()
 {
     double min, max;
     VariableAbstract::type = VAR_INT;
