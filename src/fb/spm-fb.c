@@ -145,6 +145,7 @@ spm_square(bn_spm_map_t *mapp)
 	}
 	if (fb_write(fbp, 0, y, scanline, scr_width) != scr_width) break;
     }
+    free(scanline);
 }
 
 
