@@ -6725,12 +6725,12 @@ update_edit_absolute_tran(vect_t view_pos)
 void
 sedit_mouse(const vect_t mousevec)
 {
-    vect_t pos_view;	 	/* Unrotated view space pos */
-    vect_t pos_model;		/* Rotated screen space pos */
-    vect_t tr_temp;		/* temp translation vector */
-    vect_t temp;
-    vect_t raw_kp;                /* es_keypoint with es_invmat applied */
-    vect_t raw_mp;                /* raw model position */
+    vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
+    vect_t pos_model = VINIT_ZERO;	/* Rotated screen space pos */
+    vect_t tr_temp = VINIT_ZERO;	/* temp translation vector */
+    vect_t temp = VINIT_ZERO;
+    vect_t raw_kp = VINIT_ZERO;        	/* es_keypoint with es_invmat applied */
+    vect_t raw_mp = VINIT_ZERO;        	/* raw model position */
     mat_t mat;
 
     if (es_edflag <= 0)
