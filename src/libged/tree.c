@@ -88,12 +88,16 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
 		displayDepth = atoi(bu_optarg);
 		if (displayDepth < 0) {
 		    bu_vls_printf(gedp->ged_result_str, "Negative number supplied as depth - unsupported.");
+                    if (fdout != NULL) 
+		      fclose(fdout);
 		    return GED_ERROR;
 		}
 		break;
 	    case '?':
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		if (fdout != NULL) 
+		  fclose(fdout);
 		return GED_ERROR;
 	}
     }
