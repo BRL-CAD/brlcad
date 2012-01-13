@@ -1509,6 +1509,10 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
     if (nhits & 1) {
 	int i;
 	static int nerrors = 0;
+
+	if (nhits >= MAXHITS) {
+	    bu_bomb("g_hf.c: too many hits.\n");
+	}
 	hits[nhits] = hits[nhits-1];	/* struct copy*/
 	VREVERSE(hits[nhits].hit_normal, hits[nhits-1].hit_normal);
 	nhits++;
