@@ -40,6 +40,11 @@ static int scanbytes;			/* # of bytes of scanline */
 static int nlines;		/* Number of input lines */
 static int pix_line;		/* Number of pixels/line */
 
+static void
+printUsage()
+{
+    bu_exit(1, "Usage: pixbustup basename width [image_offset] [first_number] <input.pix\n");
+}
 
 int
 main(int argc, char **argv)
@@ -50,11 +55,16 @@ main(int argc, char **argv)
     char name[128];
 
     if (argc < 3) {
-	bu_exit(1, "Usage: pixbustup basename width [image_offset] [first_number] <input.pix\n");
+	printUsage();
     }
 
     base_name = argv[1];
     nlines = atoi(argv[2]);
+
+    if (nlines < 1) {
+	bu_log("Error: need width of at least 1 pixel.");
+	printUsage();
+    }
 
     pix_line = nlines;	/* Square pictures */
     scanbytes = nlines * pix_line * 3;
