@@ -188,6 +188,12 @@ main(int argc, char **argv)
 	x2 = ((urx-lrx)/(ynum-1)) * row + lrx;
 	y2 = ((ury-lry)/(ynum-1)) * row + lry;
 
+	if(xnum < 0 || xnum > INT_MAX) {
+	    bu_log("xnum out of range: %d\n", xnum);
+	    fclose(ifp);
+	    fclose(ofp);
+	    return -1;
+	}
 	for (col = 0; col < xnum; col++) {
 	    /* calculate point along row */
 	    x = ((x2-x1)/(xnum-1)) * col + x1;
