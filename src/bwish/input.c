@@ -130,7 +130,7 @@ inputHandler(ClientData clientData, int UNUSED(mask))
     }
 
     /* Process everything in buf */
-    for (i = 0, ch = buf[i]; i < count; ch = buf[++i])
+    for (i = 0, ch = buf[i]; i < count && ch != '\0'; ch = buf[++i])
 	processChar(ch);
 }
 
@@ -144,6 +144,9 @@ processChar(char ch)
     static int escaped = 0;
     static int bracketed = 0;
     static int freshline = 1;
+
+    if(ch == '\0')
+	return;
 
     /* ANSI arrow keys */
     if (escaped && bracketed) {
