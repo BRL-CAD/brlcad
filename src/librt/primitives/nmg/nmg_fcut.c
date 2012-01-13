@@ -1376,6 +1376,8 @@ nmg_face_vu_compare(const void *aa, const void *bb)
 		    nmg_pr_vu_stuff(b);
 		    bu_bomb("nmg_face_vu_compare() WEDGE_ON 2?\n");
 	    }
+	    bu_log("nmg_face_vu_compare: Unhandled wedge class: %d\n", b->wedge_class);
+	    break;  /* should be unreachable, but coverity complains about missing break */
 	case WEDGE_CROSS:
 	    switch (b->wedge_class) {
 		case WEDGE_LEFT:
