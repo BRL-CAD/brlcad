@@ -1042,6 +1042,8 @@ DoFile(void)	/* returns vpl status code */
 		    if (debug)
 			fprintf(stderr, "Line3\n");
 
+		    /* line: fall through */
+
 		case 'N':	/* continue3 */
 		case 'P':	/* point3 */
 		    if (!Get3Coords(&newpos))
@@ -1103,6 +1105,8 @@ DoFile(void)	/* returns vpl status code */
 		    }
 		    if (debug)
 			fprintf(stderr, "dLine3\n");
+
+		    /* line: fall through */
 
 		case 'Q':	/* continue3 */
 		case 'X':	/* point3 */
