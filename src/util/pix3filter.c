@@ -154,12 +154,13 @@ get_args(int argc, char **argv)
 	char *idx, *working_name;
 
 	file_name = argv[bu_optind];
-	working_name = (char *)malloc(strlen(file_name)+5);
+	working_name = (char *)bu_malloc(strlen(file_name)+5, "working_name");
 
 	if ((curfp = fopen(file_name, "r")) == NULL) {
 	    (void)fprintf(stderr,
 			  "pix3filter: cannot open \"%s\" for reading\n",
 			  file_name);
+            bu_free(working_name, "free working_name");
 	    return 0;
 	}
 	idx = file_name + strlen(file_name) -1;
@@ -172,6 +173,7 @@ get_args(int argc, char **argv)
 	    (void) fprintf(stderr,
 			   "pix3filter: no frame number on %s.\n",
 			   file_name);
+            bu_free(working_name, "free working_name");
 	    return 0;
 	}
 
@@ -181,12 +183,14 @@ get_args(int argc, char **argv)
 		(void)fprintf(stderr,
 			      "pix3filter: cannot open \"%s\" for reading.\n",
 			      working_name);
+                bu_free(working_name, "free working_name");
 		return 0;
 	    }
 	    if ((oldfp = fopen(file_name, "r")) == NULL) {
 		(void)fprintf(stderr,
 			      "pix3filter: cannot open \"%s\" for reading.\n",
 			      file_name);
+                bu_free(working_name, "free working_name");
 		return 0;
 	    }
 	}
@@ -196,9 +200,10 @@ get_args(int argc, char **argv)
 	    (void)fprintf(stderr,
 			  "pix3filter: cannot open \"%s\" for reading.\n",
 			  working_name);
+            bu_free(working_name, "free working_name");
 	    return 0;
 	}
-	free(working_name);
+        bu_free(working_name, "free working_name");
 	bu_optind += 1;
     }
 
