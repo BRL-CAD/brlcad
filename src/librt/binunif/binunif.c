@@ -90,11 +90,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
     bip->type = minor_type;
 
-    if (item_length != 0) {
-	num_items = (size_t)(st.st_size / item_length);
-    } else {
-	num_items = 0;
-    }
+    num_items = (size_t)(st.st_size / item_length);
 
     /* maybe only a partial file read */
     if (max_count > 0 && max_count < num_items) {
