@@ -82,7 +82,7 @@ int
 main(int argc, char *argv[])
 {
     fastf_t t /* time */, vsize=0.0;
-    vect_t eye, look, dir, angles, norm, temp;
+    vect_t eye, look, dir, angles, norm, temp = VINIT_ZERO;
     quat_t quat;
     mat_t mat;
     int val = 0;
