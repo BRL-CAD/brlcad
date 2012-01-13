@@ -1241,6 +1241,7 @@ STEP
 
 * implement g-step exporter (see above)
 
+* see additional TODO items in file './src/other/step/README'
 
 BREP/NURBS
 ----------
