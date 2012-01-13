@@ -67,12 +67,16 @@ void createRegions
 class Region {
 public:
     Region() : addCreated(false), excludeCreated(false) {
-	BU_LIST_INIT(&head.l)
+	WMEMBER_INIT(&head);
+	WMEMBER_INIT(&addHead);
+	WMEMBER_INIT(&excludeHead);
     };
 
     Region(int   nr,
 	   char* description) : compnr(nr), desc(description), addCreated(false), excludeCreated(false) {
-	BU_LIST_INIT(&head.l);
+	WMEMBER_INIT(&head);
+	WMEMBER_INIT(&addHead);
+	WMEMBER_INIT(&excludeHead);
     }
 
     ~Region() {
