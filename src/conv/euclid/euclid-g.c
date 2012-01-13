@@ -394,6 +394,13 @@ euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
 	bu_exit(1, "euclid_to_brlcad: no region id\n");
     }
 
+    if(reg_id <= -INT_MAX) {
+      bu_exit(-1, "Magnitude of negative region_id too large.\n");
+    }
+    if(reg_id >= INT_MAX) {
+      bu_exit(-1, "region_id too large.\n");
+    }
+
     /* Convert each region to an individual nmg. */
     do {
 	fprintf( stderr, "Converting region %d...\n", reg_id);
