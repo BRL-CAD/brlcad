@@ -715,6 +715,11 @@ rfbbwreadrect(struct pkg_conn *pcp, char *buf)
     static unsigned char *scanbuf = NULL;
     static int buflen = 0;
 
+    if(buf == NULL) {
+	bu_log("rfbbwreadrect: null buffer\n");
+	return;
+    }
+
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
     ymin = pkg_glong(&buf[1*NET_LONG_LEN]);
     width = pkg_glong(&buf[2*NET_LONG_LEN]);
@@ -729,7 +734,7 @@ rfbbwreadrect(struct pkg_conn *pcp, char *buf)
 	    buflen = 1024;
 	if ((scanbuf = (unsigned char *)malloc(buflen)) == NULL) {
 	    fb_log("rfbbwreadrect: malloc failed!");
-	    if (buf) (void)free(buf);
+	    (void)free(buf);
 	    buflen = 0;
 	    return;
 	}
@@ -739,7 +744,7 @@ rfbbwreadrect(struct pkg_conn *pcp, char *buf)
     if (ret < 0) ret = 0;		/* map error indications */
     /* sending a 0-length package indicates error */
     pkg_send(MSG_RETURN, (char *)scanbuf, ret, pcp);
-    if (buf) (void)free(buf);
+    (void)free(buf);
 }
 
 
