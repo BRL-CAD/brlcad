@@ -499,7 +499,7 @@ public:
     BBNode const * sbv;
 
     brep_hit(const ON_BrepFace& f, const point_t orig, const point_t p, const vect_t n, const pt2d_t _uv)
-	: face(f), trimmed(false), closeToEdge(false), oob(false), sbv(NULL)
+	: face(f), trimmed(false), closeToEdge(false), oob(false), hit(CLEAN_HIT), direction(ENTERING), m_adj_face_index(0), sbv(NULL)
     {
 	VMOVE(origin, orig);
 	VMOVE(point, p);
@@ -508,7 +508,7 @@ public:
     }
 
     brep_hit(const brep_hit& h)
-	: face(h.face), trimmed(h.trimmed), closeToEdge(h.closeToEdge), oob(h.oob), sbv(h.sbv)
+	: face(h.face), trimmed(h.trimmed), closeToEdge(h.closeToEdge), oob(h.oob), hit(CLEAN_HIT), direction(ENTERING), m_adj_face_index(0), sbv(h.sbv)
     {
 	VMOVE(origin, h.origin);
 	VMOVE(point, h.point);
