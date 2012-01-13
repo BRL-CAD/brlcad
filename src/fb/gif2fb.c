@@ -221,6 +221,9 @@ main(int argc, char **argv)
 		Im.IH_Flags>>7, (Im.IH_Flags>>6)&0x01, Im.IH_Flags&0x03);
     }
 
+    if(WORD(Im.IH_Height) < 0 || WORD(Im.IH_Height) > 65535)
+	bu_exit(1, "Bad height info in GIF header\n");
+
     interlaced = (Im.IH_Flags>>6)&0x01;
 
 /*
@@ -265,14 +268,20 @@ main(int argc, char **argv)
  * Open the frame buffer.
  */
     if ((fbp = fb_open(framebuffer, WORD(Im.IH_Width), WORD(Im.IH_Height))) != NULL) {
+      int ih_height = WORD(Im.IH_Height);
+      int ih_width = WORD(Im.IH_Width);
+
+      if(ih_height < 0 || ih_height > 0xffff || ih_width < 0 || ih_height > 0xffff)
+        bu_exit(1, "Invalid height in GIF Header\n");
+
       /*
        * The speed of this loop can be greatly increased by moving all of
        * the WORD macro calls out of the loop.
        */
-      for (i=0; i<WORD(Im.IH_Height);i++) {
+      for (i=0; i<ih_height;i++) {
 	int k;
 	lp = line;
-	for (k=0;k<WORD(Im.IH_Width);k++) {
+	for (k=0;k<ih_width;k++) {
 	  idx = getByte(fp);
 	  if (idx < 0) {
 	    fb_close(fbp);
@@ -282,11 +291,10 @@ main(int argc, char **argv)
 	  *lp++ = GlobalColors[idx].green;
 	  *lp++ = GlobalColors[idx].blue;
 	}
-	fb_write(fbp, 0, WORD(Im.IH_Height)-lineNumber, line,
-	    WORD(Im.IH_Width));
+	fb_write(fbp, 0, ih_height-lineNumber, line, ih_width);
 	fb_flush(fbp);
 	lineNumber += lineInc;
-	if (lineNumber >= WORD(Im.IH_Height)) {
+	if (lineNumber >= ih_height) {
 	  ++lineIdx;
 	  lineInc = lace[lineIdx];
 	  lineNumber = offs[lineIdx];
