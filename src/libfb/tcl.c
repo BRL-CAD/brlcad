@@ -229,7 +229,9 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
 	bu_vls_printf(&vls, "%p", (void *)ifp);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
-
+	ifp->if_magic = 0; /* sanity */
+	free((void *) ifp->if_name);
+	free((void *) ifp);
 	return TCL_OK;
     }
 
