@@ -66,6 +66,8 @@ void doit(FILE *fd)
     count = 0;
     while ((bytes=fread(pixbuf, 3, PIXELS, fd)) > 0) {
 	for (i=(bytes-1)*3; i >= 0; i -= 3) {
+	    if(pixbuf[i] < 0 || pixbuf[i] > 255)
+		bu_bomb("Universe isn't right. Halting.\n");
 	    pixel = pixbuf[i] +
 		(pixbuf[i+1] << 8) +
 		(pixbuf[i+2] << 16);
