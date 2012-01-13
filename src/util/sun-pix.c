@@ -30,6 +30,7 @@
 #include "bio.h"
 
 #include "bu.h"
+#include "vmath.h"
 
 
 /*
@@ -95,7 +96,9 @@ struct colors {
     unsigned char CL_green;
     unsigned char CL_blue;
 };
+
 struct colors Cmap[256];
+static size_t CMAP_MAX_INDEX = sizeof(Cmap) - 1;
 
 static char *file_name;
 static FILE *fp;
@@ -254,7 +257,7 @@ main(int argc, char **argv)
     int on = 255;
     int width;			/* line width in bits */
     int scanbytes;		/* bytes/line (padded to 16 bits) */
-    unsigned char c, buf[4096];
+    unsigned char c, cmap_idx, buf[4096];
 
     fp = stdin;
     if (!get_args(argc, argv) || (isatty(fileno(stdout)) && (hflag == 0))) {
@@ -403,15 +406,20 @@ main(int argc, char **argv)
 	    }
 
 	    while ((header.ras_type == RT_BYTE_ENCODED) ?
-		   decoderead(buf, sizeof(*buf), scanbytes, fp):
+		   decoderead(buf, sizeof(*buf), scanbytes, fp) :
 		   fread(buf, sizeof(*buf), scanbytes, fp)) {
 		for (x=0; x < width; x++) {
+		    cmap_idx = buf[x];
+		    if (cmap_idx >= CMAP_MAX_INDEX) {
+			bu_exit(1, "Warning: Read invalid index %u.\n",
+				(unsigned int)buf[x]);
+		    }
 		    if (pixout) {
-			putchar(Cmap[buf[x]].CL_red);
-			putchar(Cmap[buf[x]].CL_green);
-			putchar(Cmap[buf[x]].CL_blue);
+			putchar(Cmap[cmap_idx].CL_red);
+			putchar(Cmap[cmap_idx].CL_green);
+			putchar(Cmap[cmap_idx].CL_blue);
 		    } else {
-			putchar(buf[x]);
+			putchar(cmap_idx);
 		    }
 		}
 	    }
