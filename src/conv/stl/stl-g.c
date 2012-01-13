@@ -141,7 +141,6 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
     int i;
     int face_count=0;
     int degenerate_count=0;
-    int small_count=0;
     float colr[3]={0.5, 0.5, 0.5};
     unsigned char color[3]={ 128, 128, 128 };
     struct wmember head;
@@ -328,8 +327,6 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 	bu_log("\t%s has no solid parts, ignoring\n", bu_vls_addr(&region_name));
 	if (degenerate_count)
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
-	if (small_count)
-	    bu_log("\t%d faces were too small\n", small_count);
 	bu_vls_free(&region_name);
 	bu_vls_free(&solid_name);
 
@@ -337,8 +334,6 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
     } else {
 	if (degenerate_count)
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
-	if (small_count)
-	    bu_log("\t%d faces were too small\n", small_count);
     }
 
     mk_bot(fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, tree_root->curr_vert, bot_fcurr,
@@ -402,7 +397,6 @@ Convert_part_binary()
     struct bu_vls region_name = BU_VLS_INIT_ZERO;
     int face_count=0;
     int degenerate_count=0;
-    int small_count=0;
     size_t ret;
 
     solid_count++;
@@ -487,14 +481,10 @@ Convert_part_binary()
 	bu_log("\tpart has no solid parts, ignoring\n");
 	if (degenerate_count)
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
-	if (small_count)
-	    bu_log("\t%d faces were too small\n", small_count);
 	return;
     } else {
 	if (degenerate_count)
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
-	if (small_count)
-	    bu_log("\t%d faces were too small\n", small_count);
     }
 
     mk_bot(fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
