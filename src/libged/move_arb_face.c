@@ -60,6 +60,11 @@ static const int arb4_faces_first_vertex[4] = {
     0, 0, 1, 0
 };
 
+static const int ARB4_MAX_FACE_INDEX = (int)(sizeof(arb4_faces_first_vertex) - 1);
+static const int ARB5_MAX_FACE_INDEX = (int)(sizeof(arb5_faces_first_vertex) - 1);
+static const int ARB6_MAX_FACE_INDEX = (int)(sizeof(arb6_faces_first_vertex) - 1);
+static const int ARB7_MAX_FACE_INDEX = (int)(sizeof(arb7_faces_first_vertex) - 1);
+static const int ARB8_MAX_FACE_INDEX = (int)(sizeof(arb8_faces_first_vertex) - 1);
 
 int
 ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])
@@ -138,14 +143,7 @@ ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    /*XXX need better checking of the face */
     face -= 1;
-    if (face < 0 || 5 < face) {
-	bu_vls_printf(gedp->ged_result_str, "bad face - %s", argv[2]);
-	rt_db_free_internal(&intern);
-
-	return GED_ERROR;
-    }
 
     if (sscanf(argv[3], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3) {
 	bu_vls_printf(gedp->ged_result_str, "bad point - %s", argv[3]);
@@ -167,23 +165,35 @@ ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])
 
     VSCALE(pt, pt, gedp->ged_wdbp->dbip->dbi_local2base);
 
+#define CHECK_FACE(face_idx, max_idx) \
+if (face_idx > max_idx) { \
+    bu_vls_printf(gedp->ged_result_str, "bad face - %s", argv[2]); \
+    rt_db_free_internal(&intern); \
+    return GED_ERROR; \
+}
+
     if (rflag) {
 	int arb_pt_index;
 
 	switch (arb_type) {
 	    case ARB4:
+		CHECK_FACE(face, ARB4_MAX_FACE_INDEX);
 		arb_pt_index = arb4_faces_first_vertex[face];
 		break;
 	    case ARB5:
+		CHECK_FACE(face, ARB5_MAX_FACE_INDEX);
 		arb_pt_index = arb5_faces_first_vertex[face];
 		break;
 	    case ARB6:
+		CHECK_FACE(face, ARB6_MAX_FACE_INDEX);
 		arb_pt_index = arb6_faces_first_vertex[face];
 		break;
 	    case ARB7:
+		CHECK_FACE(face, ARB7_MAX_FACE_INDEX);
 		arb_pt_index = arb7_faces_first_vertex[face];
 		break;
 	    case ARB8:
+		CHECK_FACE(face, ARB8_MAX_FACE_INDEX);
 		arb_pt_index = arb8_faces_first_vertex[face];
 		break;
 	    default:
