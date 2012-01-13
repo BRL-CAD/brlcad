@@ -2162,6 +2162,10 @@ skip_section(void)
 
     /* skip to start of next section */
     section_start = ftell(fpin);
+    if (section_start < 0L) {
+	bu_bomb("Error: couldn't get input file's current file position of input file.\n");
+    }
+
     if (get_line()) {
 	while (line[0] && strncmp(line, "SECTION", 7) &&
 	       strncmp(line, "HOLE", 4) &&
