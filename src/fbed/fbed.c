@@ -1064,6 +1064,7 @@ f_Write_Macros_To_File()
 	}
     }
     (void) fflush( macro_fp );
+    fclose(macro_fp);
     return 1;
 }
 
