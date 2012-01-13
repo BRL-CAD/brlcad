@@ -124,6 +124,10 @@ main(int argc, char **argv)
 	    break;
 	case 'n':
 	    num_rings = atoi(argv[1]);
+	    if(num_rings < 1 || num_rings > 100000 /* XXX arbitrary large number */) {
+		bu_log("Invalid number of rings: %d\n", num_rings);
+		return 1;
+	    }
 	    argc -= 2;
 	    argv += 2;
 	    break;
