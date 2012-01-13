@@ -553,7 +553,6 @@ Make_trim_loop(entity_no, orientation, srf, fu)
     struct loopuse *lu;
     struct edgeuse *eu;
     struct edgeuse *new_eu;
-    struct vertexuse *vu;
     struct vertex *vp;
     int entity_type;
     int ncoords;
@@ -574,7 +573,6 @@ Make_trim_loop(entity_no, orientation, srf, fu)
     Readint(&entity_type, "");
 
     lu = nmg_mlv(&fu->l.magic, (struct vertex *)NULL, orientation);
-    vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 
     switch (entity_type) {
 	case 102: {
