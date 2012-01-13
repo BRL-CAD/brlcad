@@ -163,7 +163,7 @@ static unsigned short *hl_dstmap = NULL;
 		 && ((failure=PT_BEHIND, pp->pt_outhit->hit_dist < BEHIND_ME_TOL)\
 		     || (failure=PT_EYE, pp->pt_inseg->seg_stp == lgts[0].stp)\
 		     ||	(failure=PT_GRID, lgts[0].stp != NULL &&\
-			 BU_STR_EQUAL(pp->pt_inseg->seg_stp->st_name, "GRID")));\
+			 BU_STR_EQUAL(pp->pt_inseg->seg_stp->st_name, "GRID"))); \
 	     pp = pp->pt_forw\
 	    )\
 	{ struct partition *pt_back = pp->pt_back;\
@@ -180,9 +180,7 @@ static unsigned short *hl_dstmap = NULL;
 		bu_log("\tlevel=%d grid=<%d, %d>\n", \
 		       ap->a_level, ap->a_x, ap->a_y);\
 		return ap->a_miss(ap);\
-	    case PT_BEHIND :\
-	    case PT_EYE :\
-	    case PT_GRID :\
+	    default :\
 		break;\
 	}\
     }
