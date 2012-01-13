@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 
     /* Create temporary file to hold data, get r/w file descriptor */
     fp = bu_temp_file(template, 512);
-    if ((tfd = fileno(fp)) < 0) {
+    if (fp == NULL || (tfd = fileno(fp)) < 0) {
 	perror(template);
 	goto err;
     }
