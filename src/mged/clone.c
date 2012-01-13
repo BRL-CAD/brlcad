@@ -887,8 +887,8 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	return TCL_OK;
 
     bu_optind = 1;
-    opt = bu_getopt(argc, (char * const *)argv, "fh");
-    while (opt != EOF) {
+
+    while ((opt = bu_getopt(argc, (char * const *)argv, "fh")) != EOF) {
 	switch (opt) {
 	    case 'f':
 		no_draw = 1;
