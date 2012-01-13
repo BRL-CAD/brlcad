@@ -59,7 +59,7 @@ pop_init (struct population *p, int size)
     p->child  = bu_malloc(sizeof(struct individual) * size, "child");
     p->size = size;
     p->db_c = p->db_p = DBI_NULL;
-    p->name = bu_malloc(sizeof(char **) * size, "names");
+    p->name = bu_malloc(sizeof(char *) * size, "names");
 
 #define SEED 33
     /* init in main() bn_rand_init(randomer, SEED);*/
