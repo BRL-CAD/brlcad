@@ -1832,7 +1832,7 @@ f_jload(int argc, const char *argv[])
 	    db_full_path_init(&hp->objective.path);
 	    hp->objective.path.fp_len = hp->objective.arc.arc_last+1;
 	    hp->objective.path.fp_maxlen = hp->objective.arc.arc_last+1;
-	    hp->objective.path.fp_names = (struct directory **)
+	    hp->objective.path.fp_names = (struct directory *)
 		bu_malloc(sizeof(struct directory **) * hp->objective.path.fp_maxlen,
 			  "full path");
 	    for (i=0; i<= hp->objective.arc.arc_last; i++) {
