@@ -46,11 +46,15 @@ main(int argc, char *argv[])
     pl_3space(stdout, -32768,  -32768,  -32768, 32767, 32767, 32767);
     while (!feof(stdin)) {
 	if (scanf("%d %d %128s", &npts, &z, name) != 3)  break;
+	if(npts < 0) {
+	    bu_log("Negative # of pts\n");
+	    return -1;
+	}
+	if(npts >= INT_MAX) {
+	    bu_log("Too many points\n");
+	    return -1;
+	}
 	for (i=0; i<npts; i++) {
-	    if(npts < 0) {
-		bu_log("Negative # of pts\n");
-		return -1;
-	    }
 	    if (scanf("%d %d", &x, &y) != 2)
 		fprintf(stderr, "bad xy\n");
 	    if (i==0)
