@@ -99,7 +99,7 @@ pop_spawn (struct population *p)
     p->db_p->dbi_wdbp = wdb_dbopen(p->db_p, RT_WDB_TYPE_DB_DISK);
 
     for (i = 0; i < p->size; i++) {
-	p->name[i] = bu_malloc(sizeof(char *) * 256, "name");
+	p->name[i] = bu_malloc(sizeof(char) * 256, "name");
 	snprintf(p->name[i], 256, "ind%.3d", i);
 
 	BU_LIST_INIT(&wm_hd.l);
