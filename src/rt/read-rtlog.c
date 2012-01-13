@@ -118,6 +118,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	     */
 	    fprintf(stderr, "read_rt_file: read failure on file %s\n",
 		    name);
+            fclose(fp);
 	    return -1;
 	}
 
@@ -187,6 +188,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	    num = sscanf(arg_ptr, "%lf %9s %lf", &azimuth, forget_it, &elevation);
 	    if (num != 3) {
 		fprintf(stderr, "View= %.6f %s %.6f elevation\n", azimuth, forget_it, elevation);
+                fclose(fp);
 		return -1;
 	    }
 	    seen_view = 1;
@@ -198,6 +200,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	    if (num != 4) {
 		fprintf(stderr, "Orientation= %.6f, %.6f, %.6f, %.6f\n",
 			V4ARGS(orientation));
+                fclose(fp);
 		return -1;
 	    }
 	    seen_orientation = 1;
@@ -207,6 +210,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	    if (num != 3) {
 		fprintf(stderr, "Eye_pos= %.6f, %.6f, %.6f\n",
 			V3ARGS(eye_pos));
+                fclose(fp);
 		return -1;
 	    }
 	    seen_eye_pos = 1;
@@ -214,6 +218,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	    num = sscanf(arg_ptr, "%lf", &m_size);
 	    if (num != 1) {
 		fprintf(stderr, "Size=%.6f\n", m_size);
+                fclose(fp);
 		return -1;
 	    }
 	    seen_size = 1;
@@ -224,21 +229,25 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 
     if (seen_view != 1) {
 	fprintf(stderr, "View not read for %s!\n", name);
+        fclose(fp);
 	return -1;
     }
 
     if (seen_orientation != 1) {
 	fprintf(stderr, "Orientation not read for %s!\n", name);
+        fclose(fp);
 	return -1;
     }
 
     if (seen_eye_pos != 1) {
 	fprintf(stderr, "Eye_pos not read for %s!\n", name);
+        fclose(fp);
 	return -1;
     }
 
     if (seen_size != 1) {
 	fprintf(stderr, "Size not read for %s!\n", name);
+        fclose(fp);
 	return -1;
     }
 
