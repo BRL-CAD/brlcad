@@ -285,6 +285,9 @@ ph_vlist(struct pkg_conn *UNUSED(pc), char *buf)
     struct bu_list vhead;
     struct bu_vls name;
 
+    if(buf == NULL)
+	bu_bomb("ph_vlist: buf is null");
+
     bu_vls_init(&name);
 
     BU_LIST_INIT(&vhead);
