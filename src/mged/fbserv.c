@@ -613,6 +613,11 @@ rfbwrite(struct pkg_conn *pcp, char *buf)
     int ret;
     int type;
 
+    if(buf == NULL) {
+	bu_log("rfbreadrect: null buffer\n");
+	return;
+    }
+
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
     num = pkg_glong(&buf[2*NET_LONG_LEN]);
@@ -623,7 +628,7 @@ rfbwrite(struct pkg_conn *pcp, char *buf)
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
 	pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
     }
-    if (buf) (void)free(buf);
+    (void)free(buf);
 }
 
 
