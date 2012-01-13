@@ -1000,6 +1000,7 @@ f_Rd_Macros_From_File(char *buf)
 	    do_Key_Cmd( (int) *cptr++, 1 );
 	*(cptr = cread_buf) = NUL;
     }
+    fclose(macro_fp);
     return 1;
 }
 
