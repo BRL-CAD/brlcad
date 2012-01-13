@@ -457,7 +457,6 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
     struct rt_db_internal intern;
     struct rt_comb_internal *comb = NULL;
     struct tokens tok_hd;
-    struct tokens *tok;
     short last_tok;
     int i;
     union tree *final_tree;
@@ -589,8 +588,6 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 		/* next token MUST be an operator */
 		if (wdb_add_operator(interp, &tok_hd.l, *ptr, &last_tok) == TCL_ERROR) {
 		    wdb_free_tokens(&tok_hd.l);
-		    if (dp != RT_DIR_NULL)
-			rt_db_free_internal(&intern);
 		    return TCL_ERROR;
 		}
 		ptr++;
@@ -601,8 +598,6 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 		name_len = wdb_add_operand(interp, &tok_hd.l, ptr);
 		if (name_len < 1) {
 		    wdb_free_tokens(&tok_hd.l);
-		    if (dp != RT_DIR_NULL)
-			rt_db_free_internal(&intern);
 		    return TCL_ERROR;
 		}
 		last_tok = WDB_TOK_TREE;
@@ -611,8 +606,6 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 		/* must be an operator */
 		if (wdb_add_operator(interp, &tok_hd.l, *ptr, &last_tok) == TCL_ERROR) {
 		    wdb_free_tokens(&tok_hd.l);
-		    if (dp != RT_DIR_NULL)
-			rt_db_free_internal(&intern);
 		    return TCL_ERROR;
 		}
 		ptr++;
@@ -625,8 +618,6 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 		name_len = wdb_add_operand(interp, &tok_hd.l, ptr);
 		if (name_len < 1) {
 		    wdb_free_tokens(&tok_hd.l);
-		    if (dp != RT_DIR_NULL)
-			rt_db_free_internal(&intern);
 		    return TCL_ERROR;
 		}
 		last_tok = WDB_TOK_TREE;
@@ -640,46 +631,9 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    /* replace any occurences of comb_name with existing tree */
-    if (dp != RT_DIR_NULL) {
-	for (BU_LIST_FOR(tok, tokens, &tok_hd.l)) {
-	    struct rt_db_internal intern1;
-	    struct rt_comb_internal *comb1;
-
-	    switch (tok->type) {
-		case WDB_TOK_LPAREN:
-		case WDB_TOK_RPAREN:
-		case WDB_TOK_UNION:
-		case WDB_TOK_INTER:
-		case WDB_TOK_SUBTR:
-		    break;
-		case WDB_TOK_TREE:
-		    if (tok->tp && BU_STR_EQUAL(tok->tp->tr_l.tl_name, comb_name)) {
-			db_free_tree(tok->tp, &rt_uniresource);
-			if (rt_db_get_internal(&intern1, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-			    Tcl_AppendResult(interp, "Cannot get records for ", comb_name, "\n", (char *)NULL);
-			    Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
-			    return TCL_ERROR;
-			}
-			comb1 = (struct rt_comb_internal *)intern1.idb_ptr;
-			RT_CK_COMB(comb1);
-
-			tok->tp = comb1->tree;
-			comb1->tree = (union tree *)NULL;
-			rt_db_free_internal(&intern1);
-		    }
-		    break;
-		default:
-		    Tcl_AppendResult(interp, "ERROR: Unrecognized token type\n", (char *)NULL);
-		    wdb_free_tokens(&tok_hd.l);
-		    return TCL_ERROR;
-	    }
-	}
-    }
-
     final_tree = wdb_eval_bool(&tok_hd.l);
 
-    if (dp == RT_DIR_NULL) {
+    {
 	int flags;
 
 	flags = RT_DIR_COMB;
@@ -724,18 +678,6 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 			     " to directory, aborting\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
-
-	if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	    Tcl_AppendResult(interp, "Failed to write ", dp->d_namep, (char *)NULL);
-	    return TCL_ERROR;
-	}
-    } else {
-	db_delete(wdbp->dbip, dp);
-
-	dp->d_len = 0;
-	dp->d_un.file_offset = (off_t)-1;
-	db_free_tree(comb->tree, &rt_uniresource);
-	comb->tree = final_tree;
 
 	if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	    Tcl_AppendResult(interp, "Failed to write ", dp->d_namep, (char *)NULL);
