@@ -848,12 +848,11 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	register int i;
 	char itemlwr[128];
 
-	for (i = 0; i < 128 && item[i]; i++) {
+	for (i = 0; i < 127 && item[i]; i++) {
 	    itemlwr[i] = (isupper(item[i]) ? tolower(item[i]) :
 			  item[i]);
 	}
-	if (i < 128)
-		itemlwr[i] = 0;
+	itemlwr[i] = '\0';
 
 	if (BU_STR_EQUAL(itemlwr, "region")) {
 	    snprintf(buf, 128, "%s", comb->region_flag ? "yes" : "no");
@@ -922,10 +921,10 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 
     while (argc >= 2) {
 	/* Force to lower case */
-	for (i=0; i<1024 && argv[0][i]!='\0'; i++)
+	for (i=0; i<1023 && argv[0][i]!='\0'; i++) {
 	    buf[i] = tolower(argv[0][i]);
-	if (i<1024)
-		buf[i] = 0;
+	}
+	buf[i] = '\0';
 
 	if (BU_STR_EQUAL(buf, "region")) {
 	    if (BU_STR_EQUAL(argv[1], "none")) {
