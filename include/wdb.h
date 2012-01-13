@@ -73,6 +73,8 @@ struct wmember {
     mat_t wm_mat;	/**< @brief  FIXME: Should be a matp_t */
     char *wm_name;
 };
+#define WMEMBER_INIT_ZERO { BU_LIST_INIT_ZERO, 0, MAT_INIT_IDN, NULL }
+#define WMEMBER_INIT(x) { BU_LIST_INIT(&((x)->l)); (x)->wm_op = 0; MAT_IDN((x)->wm_mat); (x)->wm_name = NULL; }
 #define WMEMBER_NULL	((struct wmember *)0)
 #define WDB_CK_WMEMBER(_p)	BU_CKMAG(_p, WMEMBER_MAGIC, "wmember" );
 
