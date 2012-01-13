@@ -396,7 +396,7 @@ main(int argc, char **argv)
     delta_angle = bn_twopi/(fastf_t)nlg;
 
     /* allocate memory to hold vertices */
-    curves = (fastf_t **)bu_malloc((nlt+2)*sizeof(fastf_t **), "ars curve pointers");
+    curves = (fastf_t **)bu_malloc((nlt+2)*sizeof(fastf_t *), "ars curve pointers");
     for (y=0; y<nlt+2; y++) {
 	curves[y] = (fastf_t *)bu_calloc((unsigned int)(nlg+1)*3, sizeof(fastf_t), "ars curve");
     }
