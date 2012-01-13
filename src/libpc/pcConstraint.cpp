@@ -28,7 +28,7 @@
 #include "pcVCSet.h"
 #include "pc.h"
 
-ConstraintInterface::ConstraintInterface(pc_constrnt *c)
+ConstraintInterface::ConstraintInterface(pc_constrnt *c) : a(NULL), fp_(NULL), nargs_(0), dimension_(0)
 {
     if (c) {
 	nargs_ = c->data.cf.nargs;
