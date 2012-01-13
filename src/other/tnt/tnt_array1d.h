@@ -244,7 +244,7 @@ template <class T>
 inline int Array1D<T>::dim() const { return n_; }
 
 template <class T>
-Array1D<T>::~Array1D() {}
+  Array1D<T>::~Array1D() { delete data_; }
 
 
 /* ............................ exented interface ......................*/
