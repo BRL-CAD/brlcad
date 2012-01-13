@@ -1022,10 +1022,6 @@ nmg_compare_2_wedges(double a, double b, double c, double d)
 
     if (a_eq_d) {
 	/* We know c <= d, d==a, a <= b */
-	if (b_eq_c) {
-	    ret = WEDGE2_IDENTICAL;
-	    goto out;
-	}
 	if (a_eq_b) {
 	    ret = WEDGE2_AB_IN_CD;
 	} else if (c_eq_d) {
