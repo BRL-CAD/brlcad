@@ -920,6 +920,8 @@ mk_binunif (
 		    minor_type = DB5_MINORTYPE_BINU_32BITINT;
 		}
 		break;
+#if 0
+/* This can't be reached, so if'ed out. */
 	    case 16:
 		if (nosign) {
 		    minor_type = DB5_MINORTYPE_BINU_64BITINT_U;
@@ -927,6 +929,7 @@ mk_binunif (
 		    minor_type = DB5_MINORTYPE_BINU_64BITINT;
 		}
 		break;
+#endif
 	}
     }
 
