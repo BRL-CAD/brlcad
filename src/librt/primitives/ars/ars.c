@@ -186,7 +186,7 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
      * Read all the curves into internal form.
      */
     ari->curves = (fastf_t **)bu_malloc(
-	(ari->ncurves+1) * sizeof(fastf_t **), "ars curve ptrs");
+	(ari->ncurves+1) * sizeof(fastf_t *), "ars curve ptrs");
 
     currec = 1;
     for (i=0; i < ari->ncurves; i++) {
