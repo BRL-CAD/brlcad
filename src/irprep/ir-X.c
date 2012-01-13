@@ -519,7 +519,7 @@ main(void)
 	    {
 		if (array[color[j][i]].more == 0)
 		{
-		    if (lstarr < (MAXARR + EXTRA) )
+		    if (lstarr < (MAXCOL + EXTRA) )
 		    {
 			array[color[j][i]].more = lstarr;
 			k = lstarr;
