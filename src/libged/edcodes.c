@@ -149,28 +149,11 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     char tmpfil[MAXPATHLEN] = {0};
     const char *editstring = NULL;
 
-    static const char *usage = "[-i|-n|-r] object(s)";
+    static const char *usage = "[-i|-n|-r|-E editor] object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    /* First, grab the editstring off of the argv list */
-
-    bu_optind = 1;
-    /* First, grab the editstring off of the argv list */
-    while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != -1) {
-	switch (c) {
-	    case 'E' :
-		editstring = bu_optarg;
-		break;
-	    default :
-		break;
-	}
-    }
-
-    argc -= bu_optind - 1;
-    argv += bu_optind - 1;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -182,8 +165,11 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "inr")) != -1) {
-	switch(c) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "E:inr")) != -1) {
+	switch (c) {
+	    case 'E' :
+		editstring = bu_optarg;
+		break;
 	    case 'i':
 		sort_by_ident = 1;
 		break;
@@ -201,8 +187,8 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    argc -= (bu_optind - 1);
-    argv += (bu_optind - 1);
+    argc -= bu_optind - 1;
+    argv += bu_optind - 1;
 
     if (nflag) {
 	struct directory *dp;
