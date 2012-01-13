@@ -486,7 +486,7 @@ region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union t
 	    }
 	    left = 0;
 	}
-	bu_strlcpy( op, regdp->d_namep, sizeof(op) );
+	bu_strlcpy( op, regdp->d_namep, (size_t)sizeof(op) );
 	op += strlen(op);
 	*op++ = '\n';
 	*op = '\0';
