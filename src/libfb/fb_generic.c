@@ -692,7 +692,7 @@ fb_read_fd(FBIO *ifp, int fd, int file_width, int file_height, int file_xoff, in
 		fb_skip_bytes(fd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 	}
     }
-
+    free(scanline);
     return BRLCAD_OK;
 }
 
