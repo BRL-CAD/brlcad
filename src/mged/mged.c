@@ -2537,6 +2537,8 @@ mged_finish(int exitcode)
 
     /* Release all displays */
     while (BU_LIST_WHILE(p, dm_list, &(head_dm_list.l))) {
+	if(p == NULL)
+	    bu_bomb("dm list entry is null? aborting!\n");
 	BU_LIST_DEQUEUE(&(p->l));
 	if (p && p->dml_dmp) {
 	    DM_CLOSE(p->dml_dmp);
