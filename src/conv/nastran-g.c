@@ -725,7 +725,7 @@ get_coord_sys(void)
 	return;
     }
 
-    ptr = strtok(line, delims);
+    (void)strtok(line, delims);
     ptr = strtok((char *)NULL, delims);
     if (!ptr) {
 	log_line("Incomplete coordinate system definition");
