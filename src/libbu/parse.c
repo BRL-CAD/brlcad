@@ -318,10 +318,11 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		{
 		    register long l;
 		    for (i = ip->sp_count; i > 0; i--) {
-			l =	(cp[0] << 24) |
-			    (cp[1] << 16) |
-			    (cp[2] << 8) |
-			    cp[3];
+			l =
+			    ((long)cp[0] << 24) |
+			    ((long)cp[1] << 16) |
+			    ((long)cp[2] << 8) |
+			    (long)cp[3];
 			*(int *)loc = l;
 			loc += sizeof(int); /* XXX */
 			cp += 4;
@@ -349,10 +350,11 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		     */
 		    register unsigned long lenstr;
 
-		    lenstr = (cp[0] << 24) |
-			(cp[1] << 16) |
-			(cp[2] << 8) |
-			cp[3];
+		    lenstr =
+			((unsigned long)cp[0] << 24) |
+			((unsigned long)cp[1] << 16) |
+			((unsigned long)cp[2] << 8) |
+			((unsigned long)cp[3]);
 
 		    cp += 4;
 
@@ -373,10 +375,11 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		{
 		    register unsigned long lenarray;
 
-		    lenarray = (cp[0] << 24) |
-			(cp[1] << 16) |
-			(cp[2] << 8) |
-			cp[3];
+		    lenarray =
+			((unsigned long)cp[0] << 24) |
+			((unsigned long)cp[1] << 16) |
+			((unsigned long)cp[2] << 8) |
+			((unsigned long)cp[3]);
 		    cp += 4;
 
 		    if ((unsigned long)ip->sp_count < lenarray) {
@@ -447,7 +450,7 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     len = (((unsigned char *)(ext->ext_buf))[2] << 24)
 	| (((unsigned char *)(ext->ext_buf))[3] << 16)
 	| (((unsigned char *)(ext->ext_buf))[4] << 8)
-	| ((unsigned char *)(ext->ext_buf))[5];
+	| (((unsigned char *)(ext->ext_buf))[5]);
 
     if (UNLIKELY(i != BU_GETPUT_MAGIC_1)) {
 	bu_log("ERROR: bad getput buffer header %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
@@ -495,12 +498,13 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
 
     BU_EXTERNAL_INIT(ext);
     ext->ext_buf = buf;
-    i = (((unsigned char *)(ext->ext_buf))[0] << 8) |
-	((unsigned char *)(ext->ext_buf))[1];
-    len = (((unsigned char *)(ext->ext_buf))[2] << 24) |
-	(((unsigned char *)(ext->ext_buf))[3] << 16) |
-	(((unsigned char *)(ext->ext_buf))[4] << 8) |
-	((unsigned char *)(ext->ext_buf))[5];
+    i = ((long)((unsigned char *)(ext->ext_buf))[0] << 8) |
+	((long)((unsigned char *)(ext->ext_buf))[1]);
+    len = 
+	((long)((unsigned char *)(ext->ext_buf))[2] << 24) |
+	((long)((unsigned char *)(ext->ext_buf))[3] << 16) |
+	((long)((unsigned char *)(ext->ext_buf))[4] << 8) |
+	((long)((unsigned char *)(ext->ext_buf))[5]);
     if (UNLIKELY(i != BU_GETPUT_MAGIC_1)) {
 	bu_log("ERROR: bad getput buffer header %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
 	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_1,
