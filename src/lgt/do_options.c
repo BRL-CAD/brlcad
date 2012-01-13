@@ -712,8 +712,10 @@ f_Batch()
     batch_com[6] = script;
     batch_com[7] = NULL;
 
-    if (make_Script(script) == -1)
+    if (make_Script(script) == -1) {
+	fclose(fp);
 	return	-1;
+    }
 
     (void) exec_Shell(batch_com);
     if (fp) {
