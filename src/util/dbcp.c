@@ -87,6 +87,7 @@ main(int argc, char **argv)
 		break;
 	    case 'D':
 		deprecated=0;
+		break;
 	    default:
 		bu_exit(1, "%s", usage);
 	}
