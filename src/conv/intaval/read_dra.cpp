@@ -226,8 +226,13 @@ void readPipe
 
     if (form.id == 1)
 	form.npts = 2;
-    else
+    else {
 	is >> form.npts;
+        if (form.npts > MAX_NPTS) {
+	   bu_log("Bad form.npts count in readPipe!\n");
+	   return;
+        }
+    }
 
     for (size_t i = 0; i<form.npts; ++i)
 	is >> form.pt[i][0] >> form.pt[i][1] >> form.pt[i][2];
