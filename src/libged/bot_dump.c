@@ -1494,6 +1494,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 	if ((obj_materials_fp=fopen(bu_vls_addr(&obj_materials_file), "wb+")) == NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: failed to open %V\n", cmd_name, &obj_materials_file);
 	    bu_vls_free(&obj_materials_file);
+	    fclose(fp);
 	    return GED_ERROR;
 	}
 
