@@ -158,7 +158,9 @@ miss(register struct application *UNUSED(ap))
 
 
 int
-overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct region *UNUSED(reg1), struct region *UNUSED(reg2), struct partition *UNUSED(hp))
+overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp),
+        struct region *UNUSED(reg1), struct region *UNUSED(reg2),
+        struct partition *UNUSED(hp))
 {
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     noverlaps++;
@@ -174,7 +176,8 @@ overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct reg
  *  Returns 1 if framebuffer should be opened, else 0.
  */
 int
-view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int minus_o, int UNUSED(minus_F))
+view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
+          int minus_o, int UNUSED(minus_F))
 {
     register size_t i;
     char buf[BUFSIZ+1];
@@ -194,7 +197,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 	output_is_binary = 0;
     }
 
-    for (i =1; i < MAXMATLS; i++) {
+    for (i = 1; i < MAXMATLS; i++) {
 	density[i]   = -1;
 	dens_name[i] = &null;
     }
@@ -205,9 +208,9 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 
     snprintf(densityfile, i, "%s/%s", curdir, DENSITY_FILE);
 
-    if ((densityfp=fopen(densityfile, "r")) == (FILE *)0) {
+    if ((densityfp = fopen(densityfile, "r")) == (FILE *)0) {
 	snprintf(densityfile, i, "%s/%s", homedir, DENSITY_FILE);
-	if ((densityfp=fopen(densityfile, "r")) == (FILE *)0) {
+	if ((densityfp = fopen(densityfile, "r")) == (FILE *)0) {
 	    bu_log("Unable to load density file \"%s\" for reading\n", densityfile);
 	    perror(densityfile);
 	    bu_exit(-1, NULL);
