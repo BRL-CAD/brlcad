@@ -1,6 +1,6 @@
 This is version 1.0.0 of the stix font which is used as an external
 resource for BRL-CAD.
 
-The STIX fonts are in OpenType format and a TrueType version was for
-fop using FontForge (see http://http://fontforge.sourceforge.net/).
+The STIX fonts are in OpenType format and a TrueType version was made
+using FontForge (see http://http://fontforge.sourceforge.net/).
 
