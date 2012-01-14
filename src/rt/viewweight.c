@@ -105,43 +105,43 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
     genptr_t addp;
     int part_count = 0;
 
-    for ( pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw ) {
+    for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 	register struct region	*reg = pp->pt_regionp;
 	register struct hit	*ihitp = pp->pt_inhit;
 	register struct hit	*ohitp = pp->pt_outhit;
 	register fastf_t	depth;
 	register struct datapoint *dp;
 
-	if ( reg->reg_aircode )
+	if (reg->reg_aircode)
 	    continue;
 
 	/* fill in hit points and hit distances */
-	VJOIN1(ihitp->hit_point, rp->r_pt, ihitp->hit_dist, rp->r_dir );
-	VJOIN1(ohitp->hit_point, rp->r_pt, ohitp->hit_dist, rp->r_dir );
+	VJOIN1(ihitp->hit_point, rp->r_pt, ihitp->hit_dist, rp->r_dir);
+	VJOIN1(ohitp->hit_point, rp->r_pt, ohitp->hit_dist, rp->r_dir);
 	depth = ohitp->hit_dist - ihitp->hit_dist;
 
 	part_count++;
 	/* add the datapoint structure in and then calculate it
 	   in parallel, the region structures are a shared resource */
-	dp = (struct datapoint *) bu_malloc( sizeof(struct datapoint), "dp");
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
+	dp = (struct datapoint *)bu_malloc(sizeof(struct datapoint), "dp");
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	addp = reg->reg_udata;
-	reg->reg_udata = (genptr_t) dp;
-	dp->next = (struct datapoint *) addp;
-	bu_semaphore_release( BU_SEM_SYSCALL );
+	reg->reg_udata = (genptr_t)dp;
+	dp->next = (struct datapoint *)addp;
+	bu_semaphore_release(BU_SEM_SYSCALL);
 
-	if ( density[ reg->reg_gmater ] < 0 ) {
-	    bu_log( "Material type %d used, but has no density file entry.\n", reg->reg_gmater );
-	    bu_semaphore_acquire( BU_SEM_SYSCALL );
+	if (density[ reg->reg_gmater ] < 0) {
+	    bu_log("Material type %d used, but has no density file entry.\n", reg->reg_gmater);
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    reg->reg_gmater = 0;
-	    bu_semaphore_release( BU_SEM_SYSCALL );
+	    bu_semaphore_release(BU_SEM_SYSCALL);
 	}
-	else if ( density[ reg->reg_gmater ] >= 0 ) {
-	    VBLEND2( dp->centroid, 0.5, ihitp->hit_point, 0.5, ohitp->hit_point );
+	else if (density[ reg->reg_gmater ] >= 0) {
+	    VBLEND2(dp->centroid, 0.5, ihitp->hit_point, 0.5, ohitp->hit_point);
 
 	    /* Compute mass in terms of grams */
 	    dp->weight = depth * density[reg->reg_gmater] *
-		(fastf_t) reg->reg_los *
+		(fastf_t)reg->reg_los *
 		cell_height * cell_height * 0.00001;
 	    dp->volume = depth * cell_height * cell_width;
 	}
@@ -160,9 +160,9 @@ miss(register struct application *UNUSED(ap))
 int
 overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct region *UNUSED(reg1), struct region *UNUSED(reg2), struct partition *UNUSED(hp))
 {
-    bu_semaphore_acquire( BU_SEM_SYSCALL );
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
     noverlaps++;
-    bu_semaphore_release( BU_SEM_SYSCALL );
+    bu_semaphore_release(BU_SEM_SYSCALL);
     return 0;
 }
 
@@ -178,9 +178,9 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 {
     register size_t i;
     char buf[BUFSIZ+1];
-    static char null = (char) 0;
-    const char *curdir = getenv( "PWD" );
-    const char *homedir = getenv( "HOME" );
+    static char null = (char)0;
+    const char *curdir = getenv("PWD");
+    const char *homedir = getenv("HOME");
     int line;
 
     /* make sure they're not NULL */
@@ -189,34 +189,34 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
     if (!homedir)
 	homedir = ""; /* drop to root */
 
-    if ( !minus_o ) {
+    if (!minus_o) {
 	outfp = stdout;
 	output_is_binary = 0;
     }
 
-    for ( i=1; i<MAXMATLS; i++ ) {
-	density[i] = -1;
+    for (i =1; i < MAXMATLS; i++) {
+	density[i]   = -1;
 	dens_name[i] = &null;
     }
 
 #define maxm(a, b) (a>b?a:b)
     i = maxm(strlen(curdir), strlen(homedir)) + strlen(DENSITY_FILE) + 2;
-    densityfile = bu_calloc( (unsigned int)i, 1, "densityfile");
+    densityfile = bu_calloc((unsigned int)i, 1, "densityfile");
 
     snprintf(densityfile, i, "%s/%s", curdir, DENSITY_FILE);
 
-    if ( (densityfp=fopen( densityfile, "r" )) == (FILE *) 0 ) {
+    if ((densityfp=fopen(densityfile, "r")) == (FILE *)0) {
 	snprintf(densityfile, i, "%s/%s", homedir, DENSITY_FILE);
-	if ( (densityfp=fopen( densityfile, "r" )) == (FILE *) 0 ) {
-	    bu_log( "Unable to load density file \"%s\" for reading\n", densityfile);
-	    perror( densityfile );
-	    bu_exit( -1, NULL );
+	if ((densityfp=fopen(densityfile, "r")) == (FILE *)0) {
+	    bu_log("Unable to load density file \"%s\" for reading\n", densityfile);
+	    perror(densityfile);
+	    bu_exit(-1, NULL);
 	}
     }
 
     /* Read in density in terms of grams/cm^3 */
 
-    for (line = 1; feof( densityfp ) != EOF; line++) {
+    for (line = 1; feof(densityfp) != EOF; line++) {
 	int idx;
 	float dens;
 
@@ -228,12 +228,12 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 	    continue;
 	}
 
-	if ( idx > 0 && idx < MAXMATLS ) {
+	if (idx > 0 && idx < MAXMATLS) {
 	    density[ idx ] = dens;
 	    dens_name[ idx ] = bu_strdup(buf);
 	} else
-	    bu_log( "Material index %d in \"%s\" is out of range.\n",
-		    idx, densityfile );
+	    bu_log("Material index %d in \"%s\" is out of range.\n",
+		    idx, densityfile);
     }
     ap->a_hit = hit;
     ap->a_miss = miss;
@@ -250,8 +250,8 @@ view_2init(struct application *ap, char *UNUSED(framename))
     register struct region *rp;
     register struct rt_i *rtip = ap->a_rt_i;
 
-    for ( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
-	rp->reg_udata = (genptr_t) NULL;
+    for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
+	rp->reg_udata = (genptr_t)NULL;
     }
 }
 
@@ -290,73 +290,75 @@ view_end(struct application *ap)
     bu_strlcpy(units, "grams", sizeof(units));
     bu_strlcpy(unit2, bu_units_string(dbp->dbi_local2base), sizeof(unit2));
 
-    (void) time( &clockval );
-    locltime = localtime( &clockval );
-    timeptr = asctime( locltime );
+    (void)time(&clockval);
+    locltime = localtime(&clockval);
+    timeptr = asctime(locltime);
 
     /* This section is necessary because libbu doesn't yet
-     * support (nor do BRL-CAD databases store) defaults 
+     * support (nor do BRL-CAD databases store) defaults
      * for mass. Once it does, this section should be
      * reorganized.*/
-    
-    if ( ZERO(dbp->dbi_local2base - 304.8) )  {
+
+    if (ZERO(dbp->dbi_local2base - 304.8)) {
 	/* Feet */
-	bu_strlcpy( units, "grams", sizeof(units) );
-    } else if ( ZERO(dbp->dbi_local2base - 25.4) )  {
+	bu_strlcpy(units, "grams", sizeof(units));
+    } else if (ZERO(dbp->dbi_local2base - 25.4)) {
 	/* inches */
 	conversion = 0.002204623;  /* lbs./gram */
-	bu_strlcpy( units, "lbs.", sizeof(units) );
-    } else if ( ZERO(dbp->dbi_local2base - 1.0) )  {
+	bu_strlcpy(units, "lbs.", sizeof(units));
+    } else if (ZERO(dbp->dbi_local2base - 1.0)) {
 	/* mm */
 	conversion = 0.001;  /* kg/gram */
-	bu_strlcpy( units, "kg", sizeof(units) );
-    } else if ( ZERO(dbp->dbi_local2base - 1000.0) )  {
+	bu_strlcpy(units, "kg", sizeof(units));
+    } else if (ZERO(dbp->dbi_local2base - 1000.0)) {
 	/* km */
 	conversion = 0.001;  /* kg/gram */
-	bu_strlcpy( units, "kg", sizeof(units) );
-    } else if ( ZERO(dbp->dbi_local2base - 0.1) )  {
+	bu_strlcpy(units, "kg", sizeof(units));
+    } else if (ZERO(dbp->dbi_local2base - 0.1)) {
 	/* cm */
-	bu_strlcpy( units, "grams", sizeof(units) );
+	bu_strlcpy(units, "grams", sizeof(units));
     } else {
 	bu_log("Warning: base2mm=%g, using default of %s--%s\n",
-	       dbp->dbi_base2local, units, unit2 );
+	       dbp->dbi_base2local, units, unit2);
     }
 
-    if ( noverlaps )
-	bu_log( "%d overlap%c detected.\n\n", noverlaps,
-		noverlaps==1 ? '\0' : 's' );
+    if (noverlaps)
+	bu_log("%d overlap%c detected.\n\n", noverlaps,
+		noverlaps==1 ? '\0' : 's');
 
-    fprintf( outfp, "RT Weight Program Output:\n" );
-    fprintf( outfp, "\nDatabase Title: \"%s\"\n", dbp->dbi_title );
-    fprintf( outfp, "Time Stamp: %s\n\nDensity Table Used:%s\n\n", timeptr, densityfile );
-    fprintf( outfp, "Material  Density(g/cm^3)  Name\n" );
-    { register int i;
-    for ( i=1; i<MAXMATLS; i++ ) {
-	if ( density[i] >= 0 )
-	    fprintf( outfp, "%5d     %10.4f       %s\n",
-		     i, density[i], dens_name[i] );
-    } }
+    fprintf(outfp, "RT Weight Program Output:\n");
+    fprintf(outfp, "\nDatabase Title: \"%s\"\n", dbp->dbi_title);
+    fprintf(outfp, "Time Stamp: %s\n\nDensity Table Used:%s\n\n", timeptr, densityfile);
+    fprintf(outfp, "Material  Density(g/cm^3)  Name\n");
+    {
+      register int i;
+      for (i = 1; i < MAXMATLS; i++) {
+	if (density[i] >= 0)
+          fprintf(outfp, "%5d     %10.4f       %s\n",
+                  i, density[i], dens_name[i]);
+      }
+    }
 
-    if ( rpt_overlap ) {
+    if (rpt_overlap) {
 	/* ^L is char code for FormFeed/NewPage */
-	fprintf( outfp, "Weight by region (in %s, density given in g/cm^3):\n\n", units );
-	fprintf( outfp, "  Weight Matl LOS  Material Name  Density Name\n" );
-	fprintf( outfp, " ------- ---- --- --------------- ------- -------------\n" );
+	fprintf(outfp, "Weight by region (in %s, density given in g/cm^3):\n\n", units);
+	fprintf(outfp, "  Weight Matl LOS  Material Name  Density Name\n");
+	fprintf(outfp, " ------- ---- --- --------------- ------- -------------\n");
     }
-    for ( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
+    for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
 	register fastf_t weight = 0;
 	register size_t l = strlen(rp->reg_name);
 	register fastf_t *ptr;
 
 	/* */
-	if ( MAX_ITEM < rp->reg_regionid )
+	if (MAX_ITEM < rp->reg_regionid)
 	    MAX_ITEM = rp->reg_regionid;
 	/* */
-	for ( dp = (struct datapoint *) rp->reg_udata;
-	      dp != (struct datapoint *) NULL; dp = dp->next ) {
-	    sum_x += dp->weight * dp->centroid[X];
-	    sum_y += dp->weight * dp->centroid[Y];
-	    sum_z += dp->weight * dp->centroid[Z];
+	for (dp = (struct datapoint *)rp->reg_udata;
+             dp != (struct datapoint *)NULL; dp = dp->next) {
+	    sum_x  += dp->weight * dp->centroid[X];
+	    sum_y  += dp->weight * dp->centroid[Y];
+	    sum_z  += dp->weight * dp->centroid[Z];
 	    weight += dp->weight;
 	    volume += dp->volume;
 	}
@@ -364,19 +366,19 @@ view_end(struct application *ap)
 	weight *= conversion;
 	total_weight += weight;
 
-	ptr = (fastf_t *) bu_malloc( sizeof(fastf_t), "ptr" );
+	ptr = (fastf_t *)bu_malloc(sizeof(fastf_t), "ptr");
 	*ptr = weight;
-	rp->reg_udata = (genptr_t) ptr;
+	rp->reg_udata = (genptr_t)ptr;
 
 	l = l > 37 ? l-37 : 0;
-	if ( rpt_overlap )
-	    fprintf( outfp, "%8.3f %4d %3d %-15.15s %7.4f %-37.37s\n",
-		     weight, rp->reg_gmater, rp->reg_los,
-		     dens_name[rp->reg_gmater],
-		     density[rp->reg_gmater], &rp->reg_name[l] );
+	if (rpt_overlap)
+	    fprintf(outfp, "%8.3f %4d %3d %-15.15s %7.4f %-37.37s\n",
+                    weight, rp->reg_gmater, rp->reg_los,
+                    dens_name[rp->reg_gmater],
+                    density[rp->reg_gmater], &rp->reg_name[l]);
     }
 
-    if ( rpt_overlap ) {
+    if (rpt_overlap) {
 	register int i;
 	/*
 	  #define MAX_ITEM 10001
@@ -384,35 +386,35 @@ view_end(struct application *ap)
 	*/
 	fastf_t *item_wt;
 	MAX_ITEM++;
-	item_wt = (fastf_t *) bu_malloc( sizeof(fastf_t) * (MAX_ITEM + 1), "item_wt" );
-	for ( i=1; i<=MAX_ITEM; i++ )
+	item_wt = (fastf_t *)bu_malloc(sizeof(fastf_t) * (MAX_ITEM + 1), "item_wt");
+	for (i = 1; i <= MAX_ITEM; i++)
 	    item_wt[i] = -1.0;
 
 	fprintf(outfp, "Weight by item number (in %s):\n\n", units);
-	fprintf(outfp, "Item  Weight  Region Names\n" );
-	fprintf(outfp, "---- -------- --------------------\n" );
+	fprintf(outfp, "Item  Weight  Region Names\n");
+	fprintf(outfp, "---- -------- --------------------\n");
 
-	for ( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
+	for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
 	    i = rp->reg_regionid;
 
-	    if ( item_wt[i] < 0 )
+	    if (item_wt[i] < 0)
 		item_wt[i] = *(fastf_t *)rp->reg_udata;
 	    else
 		item_wt[i] += *(fastf_t *)rp->reg_udata;
 	}
 
-	for ( i=1; i<MAX_ITEM; i++ ) {
+	for (i = 1; i < MAX_ITEM; i++) {
 	    int CR = 0;
-	    if ( item_wt[i] < 0 )
+	    if (item_wt[i] < 0)
 		continue;
-	    fprintf(outfp, "%4d %8.3f ", i, item_wt[i] );
-	    for ( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
-		if ( rp->reg_regionid == i ) {
+	    fprintf(outfp, "%4d %8.3f ", i, item_wt[i]);
+	    for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
+		if (rp->reg_regionid == i) {
 		    register size_t l = strlen(rp->reg_name);
 		    l = l > 65 ? l-65 : 0;
-		    if ( CR )
+		    if (CR)
 			fprintf(outfp, "              ");
-		    fprintf(outfp, "%-65.65s\n", &rp->reg_name[l] );
+		    fprintf(outfp, "%-65.65s\n", &rp->reg_name[l]);
 		    CR = 1;
 		}
 	    }
@@ -420,18 +422,18 @@ view_end(struct application *ap)
     }
 
     volume *= (dbp->dbi_base2local*dbp->dbi_base2local*dbp->dbi_base2local);
-    sum_x *= (conversion / total_weight) * dbp->dbi_base2local;
-    sum_y *= (conversion / total_weight) * dbp->dbi_base2local;
-    sum_z *= (conversion / total_weight) * dbp->dbi_base2local;
+    sum_x  *= (conversion / total_weight) * dbp->dbi_base2local;
+    sum_y  *= (conversion / total_weight) * dbp->dbi_base2local;
+    sum_z  *= (conversion / total_weight) * dbp->dbi_base2local;
 
-    fprintf( outfp, "RT Weight Program Output:\n" );
-    fprintf( outfp, "\nDatabase Title: \"%s\"\n", dbp->dbi_title );
-    fprintf( outfp, "Time Stamp: %s\n\n", timeptr );
-    fprintf( outfp, "Total volume = %g %s^3\n\n", volume, unit2 );
-    fprintf( outfp, "Centroid: X = %g %s\n", sum_x, unit2 );
-    fprintf( outfp, "          Y = %g %s\n", sum_y, unit2 );
-    fprintf( outfp, "          Z = %g %s\n", sum_z, unit2 );
-    fprintf( outfp, "\nTotal mass = %g %s\n\n", total_weight, units );
+    fprintf(outfp, "RT Weight Program Output:\n");
+    fprintf(outfp, "\nDatabase Title: \"%s\"\n", dbp->dbi_title);
+    fprintf(outfp, "Time Stamp: %s\n\n", timeptr);
+    fprintf(outfp, "Total volume = %g %s^3\n\n", volume, unit2);
+    fprintf(outfp, "Centroid: X = %g %s\n", sum_x, unit2);
+    fprintf(outfp, "          Y = %g %s\n", sum_y, unit2);
+    fprintf(outfp, "          Z = %g %s\n", sum_z, unit2);
+    fprintf(outfp, "\nTotal mass = %g %s\n\n", total_weight, units);
 }
 
 void view_setup(struct rt_i *UNUSED(rtip))
