@@ -232,8 +232,8 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 	}
 
 	if (idx > 0 && idx < MAXMATLS) {
-	    density[ idx ] = dens;
-	    dens_name[ idx ] = bu_strdup(buf);
+	    density[idx] = dens;
+	    dens_name[idx] = bu_strdup(buf);
 	} else
 	    bu_log("Material index %d in \"%s\" is out of range.\n",
 		    idx, densityfile);
