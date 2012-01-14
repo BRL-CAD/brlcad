@@ -1,6 +1,9 @@
 This is the external offo hyphenation package, version 2.0, which is
 used by the BRL-CAD package for Apache fop, version 1.0 or greater.
 
-See http://offo.sourceforge.net/ for details.
+For more information see http://offo.sourceforge.net/
 
-
+BRL-CAD only uses offo when Apache FOP 1.0 or greater is available - 
+the overhead of supporting older FOP versions in terms of increased 
+complexity and download time is not worth it. In such cases the default
+FOP behavior is used.

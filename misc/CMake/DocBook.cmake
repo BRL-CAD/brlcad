@@ -101,7 +101,7 @@ MACRO(DB_VALIDATE_TARGET targetname filename_root)
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${db_outfile}
 			COMMAND ${CMAKE_COMMAND} -P ${db_scriptfile}
-			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XMLLINT_EXECUTABLE_TARGET}
+			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XMLLINT_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES}
 			COMMENT "Validating DocBook source with ${VALIDATE_EXECUTABLE}:"
 			)
 		ADD_CUSTOM_TARGET(${validate_target} ALL DEPENDS ${db_outfile})
@@ -125,13 +125,13 @@ MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
 				ADD_CUSTOM_COMMAND(
 					OUTPUT ${outfile}
 					COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-					DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET}
+					DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES}
 					)
 			ELSE(BRLCAD_EXTRADOCS_VALIDATE)
 				ADD_CUSTOM_COMMAND(
 					OUTPUT ${outfile}
 					COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-					DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET}
+					DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES}
 					)
 			ENDIF(BRLCAD_EXTRADOCS_VALIDATE)
 			ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
@@ -157,13 +157,13 @@ MACRO(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir)
 				ADD_CUSTOM_COMMAND(
 					OUTPUT ${outfile}
 					COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-					DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET}
+					DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES}
 					)
 			ELSE(BRLCAD_EXTRADOCS_VALIDATE)
 				ADD_CUSTOM_COMMAND(
 					OUTPUT ${outfile}
 					COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-					DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET}
+					DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES}
 					)
 			ENDIF(BRLCAD_EXTRADOCS_VALIDATE)
 			ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
@@ -190,13 +190,13 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 				ADD_CUSTOM_COMMAND(
 					OUTPUT ${outfile}
 					COMMAND ${CMAKE_COMMAND} -P ${scriptfile1}
-					DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET}
+					DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES}
 					)
 			ELSE(BRLCAD_EXTRADOCS_VALIDATE)
 				ADD_CUSTOM_COMMAND(
 					OUTPUT ${outfile}
 					COMMAND ${CMAKE_COMMAND} -P ${scriptfile1}
-					DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}	${XSLTPROC_EXECUTABLE_TARGET}
+					DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}	${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES}
 					)
 			ENDIF(BRLCAD_EXTRADOCS_VALIDATE)
 			SET(pdf_outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.pdf)
@@ -205,7 +205,7 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 			ADD_CUSTOM_COMMAND(
 				OUTPUT ${pdf_outfile}
 				COMMAND ${CMAKE_COMMAND} -P ${scriptfile2}
-				DEPENDS ${outfile}
+				DEPENDS ${outfile} ${DOCBOOK_RESOURCE_FILES}
 				)
 			ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${pdf_outfile})
 			INSTALL(FILES ${pdf_outfile} DESTINATION ${DATA_DIR}/${targetdir})

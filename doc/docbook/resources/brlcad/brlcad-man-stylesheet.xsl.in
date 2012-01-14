@@ -8,7 +8,7 @@
 
 	<!-- the base stylesheet (resolved by this name
 	in the xml catalog file) -->
-	<xsl:import href="file:///@CMAKE_SOURCE_DIR@/doc/docbook/resources/other/standard/xsl/manpages/docbook.xsl"/>
+	<xsl:import href="file:///@CMAKE_BINARY_DIR@/doc/docbook/resources/other/standard/xsl/manpages/docbook.xsl"/>
 
 	<xsl:import href="file:///@CMAKE_SOURCE_DIR@/doc/docbook/resources/brlcad/brlcad-fonts.xsl"/>
 

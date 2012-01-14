@@ -1,2 +1,29 @@
-File "met-fonts.xsl" is from Dean Nelson <deannelson@aol.com>, 2010-06-28,
-from the docbook-apps mailing list.
+w3-svg-dtd.tar.bz2: 
+Bundled and compressed contents of http://www.w3.org/Graphics/SVG/1.1/DTD/ 
+(sans the CVS.zip file.) Newest file date stamps at time of retrieval: 
+08-Jul-2011 03:22
+
+License for svg DTD from svg11-flat-20110816.dtd
+
+ This is SVG, a language for describing two-dimensional graphics in XML.
+
+ The Scalable Vector Graphics (SVG)
+ Copyright 2001, 2002, 2011 World Wide Web Consortium
+    (Massachusetts Institute of Technology, Institut National de
+     Recherche en Informatique et en Automatique, Keio University).
+     All Rights Reserved.
+
+ Permission to use, copy, modify and distribute the SVG DTD and its
+ accompanying documentation for any purpose and without fee is hereby
+ granted in perpetuity, provided that the above copyright notice and
+ this paragraph appear in all copies.  The copyright holders make no
+ representation about the suitability of the DTD for any purpose.
+
+ It is provided "as is" without expressed or implied warranty. 
+
+
+met-fonts.xsl : 
+From Dean Nelson's 2010-06-28 email on the docbook-apps mailing list, 
+illustrating how to customize font setups:
+http://lists.oasis-open.org/archives/docbook-apps/201006/msg00160.html
+We also use the DejaVu fonts, so these settings are correct for us.

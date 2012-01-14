@@ -7,7 +7,7 @@
 
 	<!-- the base stylesheet (resolved by this name
 	in the xml catalog file) -->
-	<xsl:import href="file:///@CMAKE_SOURCE_DIR@/doc/docbook/resources/other/standard/xsl/xhtml-1_1/docbook.xsl"/>
+	<xsl:import href="file:///@CMAKE_BINARY_DIR@/doc/docbook/resources/other/standard/xsl/xhtml-1_1/docbook.xsl"/>
 
 	<!-- common param inputs, etc. -->
 	<xsl:import href="file:///@CMAKE_SOURCE_DIR@/doc/docbook/resources/brlcad/brlcad-common.xsl"/>

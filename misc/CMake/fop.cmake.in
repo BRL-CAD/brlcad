@@ -4,9 +4,9 @@ SET(APACHE_FOP_VERSION @APACHE_FOP_VERSION@)
 # fop hyphenation path (fop version >= 1.0)
 # need v2 hphenation
 IF(APACHE_FOP_VERSION VERSION_LESS 1.0)
-	#SET(FOP_HYPH @CMAKE_SOURCE_DIR@/doc/docbook/resources/other/offo-old/binary/fop-hyph.jar)
+	#SET(FOP_HYPH @CMAKE_BINARY_DIR@/doc/docbook/resources/other/offo-old/binary/fop-hyph.jar)
 ELSE(APACHE_FOP_VERSION VERSION_LESS 1.0)
-	SET(FOP_HYPH @CMAKE_SOURCE_DIR@/doc/docbook/resources/other/offo/binary/fop-hyph.jar)
+	SET(FOP_HYPH @CMAKE_BINARY_DIR@/doc/docbook/resources/other/offo/binary/fop-hyph.jar)
 ENDIF(APACHE_FOP_VERSION VERSION_LESS 1.0)
 
 # FOP uses environment variables - set them.
