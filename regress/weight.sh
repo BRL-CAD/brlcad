@@ -113,12 +113,14 @@ Total mass = 7.82943 grams
 
 EOF
 
-# eliminate the time stamps lines which are obviously different
+# eliminate the time stamp lines which are obviously different and
+# the file path which is not germane to the test
 tr -d ' \t' < weight.ref | grep -v DensityTableUsed | grep -v TimeStamp > weight.ref_ns
 tr -d ' \t' < weight.out | grep -v DensityTableUsed | grep -v TimeStamp > weight.out_ns
 
 cmp weight.ref_ns weight.out_ns
 STATUS=$?
+
 if [ X$STATUS != X0 ] ; then
     echo "rtweight results differ $STATUS"
 else
@@ -187,7 +189,7 @@ Database Title: "Untitled BRL-CAD Database"
 Time Stamp: Sat Jan 14 09:01:50 2012
 
 
-Density Table Used:/usr/src/tbrowde/brlcad-build/regress/.density
+Density Table Used:/path/to/.density
 
 Material  Density(g/cm^3)  Name
     2         7.8200       Carbon Tool Steel
@@ -230,6 +232,8 @@ Total mass = 18.8433 grams
 
 EOF
 
+# eliminate the time stamp lines which are obviously different and
+# the file path which is not germane to the test
 tr -d ' \t' < weight2.ref | grep -v DensityTableUsed | grep -v TimeStamp > weight2.ref_ns
 tr -d ' \t' < weight2.out | grep -v DensityTableUsed | grep -v TimeStamp > weight2.out_ns
 
