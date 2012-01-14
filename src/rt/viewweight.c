@@ -181,6 +181,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 {
     register size_t i;
     char buf[BUFSIZ+1];
+    char linebuf[BUFSIZ+1];
     static char null = (char)0;
     const char *curdir = getenv("PWD");
     const char *homedir = getenv("HOME");
@@ -203,6 +204,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
     }
 
 #define maxm(a, b) (a>b?a:b)
+
     i = maxm(strlen(curdir), strlen(homedir)) + strlen(DENSITY_FILE) + 2;
     /* densityfile is global to this file and will be used later (and then freed) */
     densityfile = bu_calloc((unsigned int)i, 1, "densityfile");
@@ -211,7 +213,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 
     if ((densityfp = fopen(densityfile, "r")) == (FILE *)0) {
 	snprintf(densityfile, i, "%s/%s", homedir, DENSITY_FILE);
-	if ((densityfp = fopen(densityfile, "r")) == (FILE *)0) {
+        if ((densityfp = fopen(densityfile, "r")) == (FILE *)0) {
 	    bu_log("Unable to load density file \"%s\" for reading\n", densityfile);
 	    perror(densityfile);
 	    bu_exit(-1, NULL);
@@ -220,24 +222,30 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 
     /* Read in density in terms of grams/cm^3 */
 
-    for (line = 1; !feof(densityfp); line++) {
-	int idx;
+    /* need to use fgets instead of fscanf because fscanf stops
+       scanning at first failure or error and we get an infinite loop */
+    line = 0;
+    while (fgets(linebuf, BUFSIZ+1, densityfp)) {
+        int idx;
 	float dens;
 
-	i = fscanf(densityfp, "%d %f %[^\n]", &idx, &dens, buf);
-	if ((int)i == EOF)
-	    break;
+        ++line;
+
+        i = sscanf(linebuf, "%d %f %[^\n]", &idx, &dens, buf);
 	if (i != 3) {
-	    bu_log("error parsing line %d of density file.\n%zu args recognized instead of 3\n", line, i);
-	    continue;
+	    bu_log("error parsing line %d of density file.\n  %zu args recognized instead of 3\n",
+                   line, i);
+	    bu_log("  line buffer reads : %s\n", linebuf);
+            continue;
 	}
 
-	if (idx > 0 && idx < MAXMATLS) {
+	if (idx > 0 && idx < MAXMATLS ) {
 	    density[idx] = dens;
 	    dens_name[idx] = bu_strdup(buf);
-	} else
-	    bu_log("Material index %d in \"%s\" is out of range.\n",
-		    idx, densityfile);
+        } else {
+	    bu_log("Material index %d in '%s' is out of range.\n",
+                   idx, densityfile );
+        }
     }
 
     ap->a_hit = hit;

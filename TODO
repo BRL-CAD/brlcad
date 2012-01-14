@@ -22,9 +22,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * g-nff is crashing, fix it; g-dot outputs garbage
 
-* get rtweight to use more robust density file parsing
-  currently can enter infinite loop with malformed density file
-
 * test illuminate (e.g. oed) + Z, report of crash (on Windows)
 
 * fix bottie crash on 32b builds
