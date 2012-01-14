@@ -219,7 +219,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 
     /* Read in density in terms of grams/cm^3 */
 
-    for (line = 1; feof(densityfp) != EOF; line++) {
+    for (line = 1; !feof(densityfp); line++) {
 	int idx;
 	float dens;
 
