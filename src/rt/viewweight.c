@@ -238,6 +238,9 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 	    bu_log("Material index %d in \"%s\" is out of range.\n",
 		    idx, densityfile);
     }
+
+    bu_free(densityfile, "density file name");
+
     ap->a_hit = hit;
     ap->a_miss = miss;
     ap->a_overlap = overlap;
