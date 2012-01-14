@@ -204,6 +204,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 
 #define maxm(a, b) (a>b?a:b)
     i = maxm(strlen(curdir), strlen(homedir)) + strlen(DENSITY_FILE) + 2;
+    /* densityfile is global to this file and will be used later (and then freed) */
     densityfile = bu_calloc((unsigned int)i, 1, "densityfile");
 
     snprintf(densityfile, i, "%s/%s", curdir, DENSITY_FILE);
@@ -238,8 +239,6 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 	    bu_log("Material index %d in \"%s\" is out of range.\n",
 		    idx, densityfile);
     }
-
-    bu_free(densityfile, "density file name");
 
     ap->a_hit = hit;
     ap->a_miss = miss;
@@ -440,6 +439,9 @@ view_end(struct application *ap)
     fprintf(outfp, "          Y = %g %s\n", sum_y, unit2);
     fprintf(outfp, "          Z = %g %s\n", sum_z, unit2);
     fprintf(outfp, "\nTotal mass = %g %s\n\n", total_weight, units);
+
+    /* now finished with density file name */
+    bu_free(densityfile, "density file name");
 }
 
 void view_setup(struct rt_i *UNUSED(rtip))
