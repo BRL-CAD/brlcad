@@ -360,38 +360,39 @@ view_end(struct application *ap)
 	fprintf(outfp, "Weight by region (in %s, density given in g/cm^3):\n\n", units);
 	fprintf(outfp, "  Weight Matl LOS  Material Name  Density Name\n");
 	fprintf(outfp, " ------- ---- --- --------------- ------- -------------\n");
-    }
-    for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
-	register fastf_t weight = 0;
-	register size_t len = strlen(rp->reg_name);
-	register fastf_t *ptr;
 
-	/* */
-	if (MAX_ITEM < rp->reg_regionid)
-	    MAX_ITEM = rp->reg_regionid;
-	/* */
-	for (dp = (struct datapoint *)rp->reg_udata;
-             dp != (struct datapoint *)NULL; dp = dp->next) {
-	    sum_x  += dp->weight * dp->centroid[X];
-	    sum_y  += dp->weight * dp->centroid[Y];
-	    sum_z  += dp->weight * dp->centroid[Z];
-	    weight += dp->weight;
-	    volume += dp->volume;
-	}
+        for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
+            register fastf_t weight = 0;
+            register size_t len = strlen(rp->reg_name);
+            register fastf_t *ptr;
 
-	weight *= conversion;
-	total_weight += weight;
+            /* */
+            if (MAX_ITEM < rp->reg_regionid)
+	      MAX_ITEM = rp->reg_regionid;
+            /* */
+            for (dp = (struct datapoint *)rp->reg_udata;
+                 dp != (struct datapoint *)NULL; dp = dp->next) {
+	        sum_x  += dp->weight * dp->centroid[X];
+                sum_y  += dp->weight * dp->centroid[Y];
+                sum_z  += dp->weight * dp->centroid[Z];
+                weight += dp->weight;
+                volume += dp->volume;
+            }
 
-	ptr = (fastf_t *)bu_malloc(sizeof(fastf_t), "ptr");
-	*ptr = weight;
-	rp->reg_udata = (genptr_t)ptr;
+            weight *= conversion;
+            total_weight += weight;
 
-	len = len > 37 ? len-37 : 0;
-	if (rpt_overlap)
-	    fprintf(outfp, "%8.3f %4d %3d %-15.15s %7.4f %-37.37s\n",
-                    weight, rp->reg_gmater, rp->reg_los,
-                    dens_name[rp->reg_gmater],
-                    density[rp->reg_gmater], &rp->reg_name[len]);
+            ptr = (fastf_t *)bu_malloc(sizeof(fastf_t), "ptr");
+            *ptr = weight;
+            rp->reg_udata = (genptr_t)ptr;
+
+            len = len > 37 ? len-37 : 0;
+            if (rpt_overlap)
+	        fprintf(outfp, "%8.3f %4d %3d %-15.15s %7.4f %-37.37s\n",
+                        weight, rp->reg_gmater, rp->reg_los,
+                        dens_name[rp->reg_gmater],
+                        density[rp->reg_gmater], &rp->reg_name[len]);
+        }
     }
 
     /* WEIGHT BY REGION ID */
