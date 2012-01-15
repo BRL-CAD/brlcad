@@ -352,6 +352,9 @@ view_end(struct application *ap)
       }
     }
 
+    /* WEIGHT BY REGION NAME */
+    /* FIX ME: names seem to change order during alternating runs
+       of the 'weight.sh' regression test */
     if (rpt_overlap) {
 	/* ^L is char code for FormFeed/NewPage */
 	fprintf(outfp, "Weight by region (in %s, density given in g/cm^3):\n\n", units);
@@ -391,6 +394,7 @@ view_end(struct application *ap)
                     density[rp->reg_gmater], &rp->reg_name[l]);
     }
 
+    /* WEIGHT BY REGION ID */
     if (rpt_overlap) {
 	register int i;
 	/*
