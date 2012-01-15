@@ -404,6 +404,8 @@ view_end(struct application *ap)
 	*/
 	fastf_t *item_wt;
 	MAX_ITEM++;
+        /* FIX ME: couldn't we use a fixed size array on the stack
+           here (increment MAX_ITEM before entering this loop)? */
 	item_wt = (fastf_t *)bu_malloc(sizeof(fastf_t) * (MAX_ITEM + 1), "item_wt");
 	for (i = 1; i <= MAX_ITEM; i++)
 	    item_wt[i] = -1.0;
@@ -415,6 +417,7 @@ view_end(struct application *ap)
 	for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
 	    i = rp->reg_regionid;
 
+            /* FIX ME: shouldn't we bu_free reg_udata after using here? */
 	    if (item_wt[i] < 0)
 		item_wt[i] = *(fastf_t *)rp->reg_udata;
 	    else
