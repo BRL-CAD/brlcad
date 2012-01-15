@@ -56,6 +56,7 @@ SET(misc_ignore_files
 	Doxyfile.in
 	Makefile.defs
 	archlinux
+	astyle.opt
 	batch-indent-region.el
 	brlcad-config.1
 	brlcad-config.in
