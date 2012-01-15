@@ -149,6 +149,9 @@ r box3.r u box3
 attr set box1.r material_id 2
 attr set box2.r material_id 7
 attr set box3.r material_id 12
+attr set box1.r region_id 1000
+attr set box2.r region_id 1000
+attr set box3.r region_id 1010
 g boxes box1.r box2.r box3.r
 EOF
 
