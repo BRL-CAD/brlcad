@@ -353,13 +353,24 @@ view_end(struct application *ap)
     }
 
     /* WEIGHT BY REGION NAME */
-    /* FIX ME: names seem to change order during alternating runs
-       of the 'weight.sh' regression test */
+    /* FIX ME: names seem to change order during alternating runs of
+       the 'weight.sh' regression test--believe it is due to nature of
+       the region list */
     if (rpt_overlap) {
 	/* ^L is char code for FormFeed/NewPage */
 	fprintf(outfp, "Weight by region (in %s, density given in g/cm^3):\n\n", units);
-	fprintf(outfp, "  Weight Matl LOS  Material Name  Density Name\n");
-	fprintf(outfp, " ------- ---- --- --------------- ------- -------------\n");
+	fprintf(outfp, "  Weight  Matl  LOS  Material Name  Density Name\n");
+	fprintf(outfp, " ------- ------ --- --------------- ------- -------------\n");
+
+#if 0
+	fastf_t *item_wt;
+	MAX_ITEM++;
+        /* FIX ME: couldn't we use a fixed size array on the stack
+           here (increment MAX_ITEM before entering this loop)? */
+	item_wt = (fastf_t *)bu_malloc(sizeof(fastf_t) * (MAX_ITEM + 1), "item_wt");
+	for (i = 1; i <= MAX_ITEM; i++)
+	    item_wt[i] = -1.0;
+#endif
 
         for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
             register fastf_t weight = 0;
@@ -388,7 +399,7 @@ view_end(struct application *ap)
 
             len = len > 37 ? len-37 : 0;
             if (rpt_overlap)
-	        fprintf(outfp, "%8.3f %4d %3d %-15.15s %7.4f %-37.37s\n",
+	        fprintf(outfp, "%8.3f %5d %3d %-15.15s %7.4f %-37.37s\n",
                         weight, rp->reg_gmater, rp->reg_los,
                         dens_name[rp->reg_gmater],
                         density[rp->reg_gmater], &rp->reg_name[len]);
@@ -410,9 +421,9 @@ view_end(struct application *ap)
 	for (i = 1; i <= MAX_ITEM; i++)
 	    item_wt[i] = -1.0;
 
-	fprintf(outfp, "Weight by item number (in %s):\n\n", units);
-	fprintf(outfp, "Item  Weight  Region Names\n");
-	fprintf(outfp, "---- -------- --------------------\n");
+	fprintf(outfp, "Weight by region ID (in %s):\n\n", units);
+	fprintf(outfp, " ID    Weight  Region Names\n");
+	fprintf(outfp, "----- -------- --------------------\n");
 
 	for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
 	    i = rp->reg_regionid;
@@ -428,7 +439,7 @@ view_end(struct application *ap)
 	    int CR = 0;
 	    if (item_wt[i] < 0)
 		continue;
-	    fprintf(outfp, "%4d %8.3f ", i, item_wt[i]);
+	    fprintf(outfp, "%5d %8.3f ", i, item_wt[i]);
 	    for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
 		if (rp->reg_regionid == i) {
 		    register size_t len = strlen(rp->reg_name);
