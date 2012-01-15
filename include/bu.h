@@ -1300,7 +1300,7 @@ typedef unsigned char bitv_t;
  * unsigned right shift, which some machines don't have in hardware,
  * or an extra subtraction.
  *
- * Application code should *never* peak at the bit-buffer; use the
+ * Application code should *never* peek at the bit-buffer; use the
  * macros.  The external hex form is most signigicant byte first (bit
  * 0 is at the right).  Note that MUVES does it differently.
  */
