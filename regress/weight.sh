@@ -87,16 +87,16 @@ Density Table Used:/path/to/.density
 
 Material  Density(g/cm^3)  Name
     1         7.8295       steel
-Weight by region (in grams, density given in g/cm^3):
+Weight by region name (in grams, density given in g/cm^3):
 
-  Weight Matl LOS  Material Name  Density Name
- ------- ---- --- --------------- ------- -------------
-   7.829    1 100 steel            7.8295 /box.r
-Weight by item number (in grams):
+ Weight   Matl  LOS  Material Name  Density Name
+-------- ------ --- --------------- ------- -------------
+   7.829     1  100 steel            7.8295 /box.r
+Weight by region ID (in grams):
 
-Item  Weight  Region Names
----- -------- --------------------
-1000    7.829 /box.r
+  ID   Weight  Region Names
+----- -------- --------------------
+ 1000    7.829 /box.r
 RT Weight Program Output:
 
 Database Title: "Untitled BRL-CAD Database"
@@ -205,20 +205,20 @@ Material  Density(g/cm^3)  Name
    10         7.8400       Carbon Steel
    12         3.0000       Gunner
    14        10.0000       Fuel
-Weight by region (in grams, density given in g/cm^3):
+Weight by region name (in grams, density given in g/cm^3):
 
-  Weight Matl LOS  Material Name  Density Name
- ------- ---- --- --------------- ------- -------------
-   7.822    2 100 Carbon Tool Ste  7.8200 /boxes/box1.r
-   8.021    7 100 Stainless, 18Cr  8.0300 /boxes/box2.r
-   3.001   12 100 Gunner           3.0000 /boxes/box3.r
-Weight by item number (in grams):
+ Weight   Matl  LOS  Material Name  Density Name
+-------- ------ --- --------------- ------- -------------
+   7.822     2  100 Carbon Tool Ste  7.8200 /boxes/box1.r
+   8.021     7  100 Stainless, 18Cr  8.0300 /boxes/box2.r
+   3.001    12  100 Gunner           3.0000 /boxes/box3.r
+Weight by region ID (in grams):
 
-Item  Weight  Region Names
----- -------- --------------------
-1000   15.843 /boxes/box1.r
-              /boxes/box2.r
-1010    3.001 /boxes/box3.r
+  ID   Weight  Region Names
+----- -------- --------------------
+ 1000   15.843 /boxes/box1.r
+               /boxes/box2.r
+ 1010    3.001 /boxes/box3.r
 RT Weight Program Output:
 
 Database Title: "Untitled BRL-CAD Database"
@@ -263,7 +263,6 @@ if [ X$STATUS = X0 ] ; then
     rm -f weight.log  weight.g  weight.ref  weight.out  weight.mged
     rm -f weight2.log weight2.g weight2.ref weight2.out weight2.mged
 fi
-
 
 exit $STATUS
 

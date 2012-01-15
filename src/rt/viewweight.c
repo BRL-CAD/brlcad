@@ -354,13 +354,13 @@ view_end(struct application *ap)
 
     /* WEIGHT BY REGION NAME */
     /* FIX ME: names seem to change order during alternating runs of
-       the 'weight.sh' regression test--believe it is due to nature of
-       the region list */
+       the 'weight.sh' regression test--believe it is due to the
+       nature of the region list */
     if (rpt_overlap) {
 	/* ^L is char code for FormFeed/NewPage */
-	fprintf(outfp, "Weight by region (in %s, density given in g/cm^3):\n\n", units);
-	fprintf(outfp, "  Weight  Matl  LOS  Material Name  Density Name\n");
-	fprintf(outfp, " ------- ------ --- --------------- ------- -------------\n");
+	fprintf(outfp, "Weight by region name (in %s, density given in g/cm^3):\n\n", units);
+	fprintf(outfp, " Weight   Matl  LOS  Material Name  Density Name\n");
+	fprintf(outfp, "-------- ------ --- --------------- ------- -------------\n");
 
 #if 0
 	fastf_t *item_wt;
@@ -399,7 +399,7 @@ view_end(struct application *ap)
 
             len = len > 37 ? len-37 : 0;
             if (rpt_overlap)
-	        fprintf(outfp, "%8.3f %5d %3d %-15.15s %7.4f %-37.37s\n",
+	        fprintf(outfp, "%8.3f %5d  %3d %-15.15s %7.4f %-37.37s\n",
                         weight, rp->reg_gmater, rp->reg_los,
                         dens_name[rp->reg_gmater],
                         density[rp->reg_gmater], &rp->reg_name[len]);
@@ -422,7 +422,7 @@ view_end(struct application *ap)
 	    item_wt[i] = -1.0;
 
 	fprintf(outfp, "Weight by region ID (in %s):\n\n", units);
-	fprintf(outfp, " ID    Weight  Region Names\n");
+	fprintf(outfp, "  ID   Weight  Region Names\n");
 	fprintf(outfp, "----- -------- --------------------\n");
 
 	for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
@@ -439,13 +439,17 @@ view_end(struct application *ap)
 	    int CR = 0;
 	    if (item_wt[i] < 0)
 		continue;
+            /* the following format string has 15 spaces before the region name: */
+            const int ns = 15;
 	    fprintf(outfp, "%5d %8.3f ", i, item_wt[i]);
 	    for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
 		if (rp->reg_regionid == i) {
 		    register size_t len = strlen(rp->reg_name);
 		    len = len > 65 ? len-65 : 0;
-		    if (CR)
-			fprintf(outfp, "              ");
+		    if (CR) {
+                        /* need leading spaces */
+                        fprintf(outfp, "%*.*s", ns, ns, " ");
+                    }
 		    fprintf(outfp, "%-65.65s\n", &rp->reg_name[len]);
 		    CR = 1;
 		}
