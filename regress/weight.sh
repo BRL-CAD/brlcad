@@ -216,9 +216,9 @@ Material  Density(g/cm^3)  Name
 
 Item  Weight  Region Names
 ---- -------- --------------------
-1000    7.822 /boxes/box1.r
-1001    8.021 /boxes/box2.r
-1002    3.001 /boxes/box3.r
+1000   15.843 /boxes/box1.r
+              /boxes/box2.r
+1010    3.001 /boxes/box3.r
 RT Weight Program Output:
 
 Database Title: "Untitled BRL-CAD Database"
