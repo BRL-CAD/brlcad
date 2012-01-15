@@ -363,7 +363,7 @@ view_end(struct application *ap)
     }
     for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
 	register fastf_t weight = 0;
-	register size_t l = strlen(rp->reg_name);
+	register size_t len = strlen(rp->reg_name);
 	register fastf_t *ptr;
 
 	/* */
@@ -386,12 +386,12 @@ view_end(struct application *ap)
 	*ptr = weight;
 	rp->reg_udata = (genptr_t)ptr;
 
-	l = l > 37 ? l-37 : 0;
+	len = len > 37 ? len-37 : 0;
 	if (rpt_overlap)
 	    fprintf(outfp, "%8.3f %4d %3d %-15.15s %7.4f %-37.37s\n",
                     weight, rp->reg_gmater, rp->reg_los,
                     dens_name[rp->reg_gmater],
-                    density[rp->reg_gmater], &rp->reg_name[l]);
+                    density[rp->reg_gmater], &rp->reg_name[len]);
     }
 
     /* WEIGHT BY REGION ID */
@@ -427,11 +427,11 @@ view_end(struct application *ap)
 	    fprintf(outfp, "%4d %8.3f ", i, item_wt[i]);
 	    for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
 		if (rp->reg_regionid == i) {
-		    register size_t l = strlen(rp->reg_name);
-		    l = l > 65 ? l-65 : 0;
+		    register size_t len = strlen(rp->reg_name);
+		    len = len > 65 ? len-65 : 0;
 		    if (CR)
 			fprintf(outfp, "              ");
-		    fprintf(outfp, "%-65.65s\n", &rp->reg_name[l]);
+		    fprintf(outfp, "%-65.65s\n", &rp->reg_name[len]);
 		    CR = 1;
 		}
 	    }
