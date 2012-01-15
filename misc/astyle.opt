@@ -1,3 +1,8 @@
+# Use k&r styling - there's a bug when return types
+# have spaces (e.g. struct bn_table * as a return)
+# so leave commented out for now.
+#style=k&r
+
 # Enable support for mixed tabs and spaces
 indent=force-tab-x
 
@@ -12,3 +17,7 @@ unpad-paren
 
 # Keep the space between if, while, etc. and the first paren
 pad-header
+
+# Not specified by HACKING, but go with name alignment of pointer/reference
+# characters
+align-pointer=name
