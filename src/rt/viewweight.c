@@ -222,10 +222,10 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 
     /* Read in density in terms of grams/cm^3 */
 
-    /* need to use fgets instead of fscanf because fscanf stops
+    /* need to use bu_fgets instead of fscanf because fscanf stops
        scanning at first failure or error and we get an infinite loop */
     line = 0;
-    while (fgets(linebuf, BUFSIZ+1, densityfp)) {
+    while (bu_fgets(linebuf, BUFSIZ+1, densityfp)) {
         int idx;
 	float dens;
 
