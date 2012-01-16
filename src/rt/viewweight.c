@@ -316,15 +316,12 @@ view_end(struct application *ap)
     struct tm *locltime;
     char *timeptr;
 
-/* #define USE_ARRAY */
-#if defined(USE_ARRAY)
     /* a sortable array is needed to have a consistently sorted region
        list for regression tests; add variables for such a use */
     struct region **rp_array = (struct region **)NULL;
-    register int id = 0;
+    register int id = 0; /* new variable name to clarify purpose */
     int nregions = 0;
     int ridx; /* for region array */
-#endif
 
     /* default units */
     bu_strlcpy(units, "grams", sizeof(units));
@@ -383,22 +380,29 @@ view_end(struct application *ap)
     /* FIX ME: names seem to change order during alternating runs of
        the 'weight.sh' regression test--believe it is due to the
        nature of the region list */
+
+    /* is this test really necessary? or can we return if !rpt_overlap? */
     if (rpt_overlap) {
-	/* ^L is char code for FormFeed/NewPage */
+        /* move block scope variables here */
+        fastf_t *item_wt;
+
+        /* ^L is char code for FormFeed/NewPage */
 	fprintf(outfp, "Weight by region name (in %s, density given in g/cm^3):\n\n", units);
 	fprintf(outfp, " Weight   Matl  LOS  Material Name  Density Name\n");
 	fprintf(outfp, "-------- ------ --- --------------- ------- -------------\n");
-    
+
         for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
             const int flen = 37; /* desired size of name field */
 	    register fastf_t weight = 0;
             register size_t len = strlen(rp->reg_name);
             register fastf_t *ptr;
 
-            /* */
+            ++nregions; /* this is needed to create the region array */
+
+            /* keep track of the highest region ID */
             if (MAX_ITEM < rp->reg_regionid)
               MAX_ITEM = rp->reg_regionid;
-            /* */
+
             for (dp = (struct datapoint *)rp->reg_udata;
                  dp != (struct datapoint *)NULL; dp = dp->next) {
               sum_x  += dp->weight * dp->centroid[X];
@@ -423,54 +427,63 @@ view_end(struct application *ap)
                     flen, flen, &rp->reg_name[len]);
         }
 
+        /* make room for a zero ID number and an "end ID " so we can
+           use ID indexing and our usual loop idiom */
+        MAX_ITEM += 2;
+
+        item_wt = (fastf_t *)bu_malloc(sizeof(fastf_t) * (MAX_ITEM + 1), "item_wt");
+        for (id = 1; id < MAX_ITEM; id++)
+            item_wt[id] = -1.0;
+
         /* WEIGHT BY REGION ID */
-        if (rpt_overlap) {
-          register int i;
-          /*
-            #define MAX_ITEM 10001
-            fastf_t item_wt[MAX_ITEM];
-          */
-          fastf_t *item_wt;
-          MAX_ITEM++;
-          item_wt = (fastf_t *)bu_malloc(sizeof(fastf_t) * (MAX_ITEM + 1), "item_wt");
-          for (i = 1; i <= MAX_ITEM; i++)
-	    item_wt[i] = -1.0;
+        fprintf(outfp, "Weight by region ID (in %s):\n\n", units);
+        fprintf(outfp, "  ID   Weight  Region Names\n");
+        fprintf(outfp, "----- -------- --------------------\n");
 
-          fprintf(outfp, "Weight by region ID (in %s):\n\n", units);
-          fprintf(outfp, "  ID   Weight  Region Names\n");
-          fprintf(outfp, "----- -------- --------------------\n");
+        /* create and fill an array for handling region names and region IDs */
+        rp_array = (struct region **)bu_malloc(sizeof(struct region *)
+                                               * nregions, "rp_array");
 
-          for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
-	    i = rp->reg_regionid;
+        ridx = 0; /* separate index for region array */
+        for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
+            rp_array[ridx++] = rp;
+
+            id = rp->reg_regionid;
 
             /* FIX ME: shouldn't we bu_free reg_udata after using here? */
-	    if (item_wt[i] < 0)
-              item_wt[i] = *(fastf_t *)rp->reg_udata;
+	    if (item_wt[id] < 0)
+              item_wt[id] = *(fastf_t *)rp->reg_udata;
 	    else
-              item_wt[i] += *(fastf_t *)rp->reg_udata;
-          }
+              item_wt[id] += *(fastf_t *)rp->reg_udata;
+        }
 
-          for (i = 1; i < MAX_ITEM; i++) {
-              const int flen = 65; /* desired size of name field */
-	      int CR = 0;
-	      if (item_wt[i] < 0)
-                  continue;
-              /* the following format string has 15 spaces before the region name: */
-              const int ns = 15;
-              fprintf(outfp, "%5d %8.3f ", i, item_wt[i]);
-              for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
-                  if (rp->reg_regionid == i) {
-                      register size_t len = strlen(rp->reg_name);
-                      len = len > (size_t)flen ? len - (size_t)flen : 0;
-                      if (CR) {
-                          /* need leading spaces */
-                          fprintf(outfp, "%*.*s", ns, ns, " ");
-                      }
-                      fprintf(outfp, "%-*.*s\n", flen, flen, &rp->reg_name[len]);
-                      CR = 1;
+        /* sort the region array by ID, then by name */
+        qsort(rp_array, nregions, sizeof(struct region *), region_ID_cmp);
+
+        for (id = 1; id < MAX_ITEM; ++id) {
+            const int flen = 65; /* desired size of name field */
+            int CR = 0;
+
+            if (item_wt[id] < 0)
+              continue;
+
+            /* the following format string has 15 spaces before the region name: */
+            const int ns = 15;
+            fprintf(outfp, "%5d %8.3f ", id, item_wt[id]);
+
+            for (ridx = 0; ridx < nregions; ++ridx) {
+                struct region *r = rp_array[ridx];
+                if (r->reg_regionid == id) {
+                  register size_t len = strlen(r->reg_name);
+                  len = len > (size_t)flen ? len - (size_t)flen : 0;
+                  if (CR) {
+                    /* need leading spaces */
+                    fprintf(outfp, "%*.*s", ns, ns, " ");
                   }
-              }
-          }
+                  fprintf(outfp, "%-*.*s\n", flen, flen, &r->reg_name[len]);
+                  CR = 1;
+                }
+            }
         }
     }
 
