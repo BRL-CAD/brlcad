@@ -54,9 +54,7 @@ if test ! -f "$RTWEIGHT" ; then
 fi
 
 # FIRST TEST =================================
-if [ -f weight.log ] ; then
-  rm -f .density .density0 weight.log weight.g weight.ref weight.out weight.mged
-fi
+rm -f .density .density0 weight.log weight.g weight.ref weight.out weight.mged
 
 cat > weight.mged <<EOF
 opendb weight.g y
@@ -74,7 +72,6 @@ cat > .density <<EOF
 EOF
 
 $RTWEIGHT -a 25 -e 35 -s128 -o weight.out weight.g box.r > weight.log 2>&1
-
 
 cat >> weight.ref <<EOF
 RT Weight Program Output:
@@ -133,9 +130,7 @@ fi
 # save first density file in case we fail here
 mv .density .density0
 
-if [ -f weight2.log ] ; then
-  rm -f weight2.log weight2.g weight2.ref weight2.out weight2.mged
-fi
+rm -f weight2.log weight2.g weight2.ref weight2.out weight2.mged
 
 cat > weight2.mged <<EOF
 opendb weight2.g y
