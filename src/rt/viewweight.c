@@ -132,6 +132,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 
 	if (density[reg->reg_gmater] < 0) {
 	    bu_log("Material type %d used, but has no density file entry.\n", reg->reg_gmater);
+	    bu_log("  (region %s)\n", reg->reg_name);
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    reg->reg_gmater = 0;
 	    bu_semaphore_release(BU_SEM_SYSCALL);
