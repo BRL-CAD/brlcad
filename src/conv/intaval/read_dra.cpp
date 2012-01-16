@@ -375,7 +375,7 @@ void conv
     if (is) {
 	writeTitle(wdbp, title);
 
-	Form form;
+	Form form = {0};
 	bool translatedShape = false;
 	int  id;
 
@@ -395,7 +395,6 @@ void conv
 		translatedShape = true;
 
 		std::cout << "Identical shape" << std::endl;
-		form.id = id;
 	    }
 	    else {
 		form.id         = id;
