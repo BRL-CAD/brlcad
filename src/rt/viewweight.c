@@ -461,7 +461,7 @@ view_end(struct application *ap)
               for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
                   if (rp->reg_regionid == i) {
                       register size_t len = strlen(rp->reg_name);
-                      len = len > (size_t)flen ? len - (size_t) : 0;
+                      len = len > (size_t)flen ? len - (size_t)flen : 0;
                       if (CR) {
                           /* need leading spaces */
                           fprintf(outfp, "%*.*s", ns, ns, " ");
