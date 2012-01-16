@@ -415,11 +415,10 @@ view_end(struct application *ap)
             rp->reg_udata = (genptr_t)ptr;
 
             len = len > 37 ? len - 37 : 0;
-            if (rpt_overlap)
-              fprintf(outfp, "%8.3f %5d  %3d %-15.15s %7.4f %-37.37s\n",
-                      weight, rp->reg_gmater, rp->reg_los,
-                      dens_name[rp->reg_gmater],
-                      density[rp->reg_gmater], &rp->reg_name[len]);
+            fprintf(outfp, "%8.3f %5d  %3d %-15.15s %7.4f %-37.37s\n",
+                    weight, rp->reg_gmater, rp->reg_los,
+                    dens_name[rp->reg_gmater],
+                    density[rp->reg_gmater], &rp->reg_name[len]);
         }
 
         /* WEIGHT BY REGION ID */
