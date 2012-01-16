@@ -280,6 +280,23 @@ view_eol(struct application *UNUSED(ap))
 {
 }
 
+/* a region ID sort comparison for use with qsort on a region array */
+int region_ID_cmp(const void *p1,
+                  const void *p2)
+{
+    /* cast into correct type--note the incoming pointer type is a
+       pointer to a pointer which must be dereferenced! */
+    struct region *r1 = *(struct region **)p1;
+    struct region *r2 = *(struct region **)p2;
+
+    if (r1->reg_regionid < r2->reg_regionid)
+      return -1;
+    else if (r1->reg_regionid > r2->reg_regionid)
+      return +1;
+    else
+      return strcmp(r1->reg_name, r2->reg_name);
+}
+
 /* end of a frame */
 void
 view_end(struct application *ap)
