@@ -130,13 +130,13 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 	dp->next = (struct datapoint *)addp;
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
-	if (density[ reg->reg_gmater ] < 0) {
+	if (density[reg->reg_gmater] < 0) {
 	    bu_log("Material type %d used, but has no density file entry.\n", reg->reg_gmater);
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    reg->reg_gmater = 0;
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	}
-	else if (density[ reg->reg_gmater ] >= 0) {
+	else if (density[reg->reg_gmater] >= 0) {
 	    VBLEND2(dp->centroid, 0.5, ihitp->hit_point, 0.5, ohitp->hit_point);
 
 	    /* Compute mass in terms of grams */
@@ -233,8 +233,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 
         i = sscanf(linebuf, "%d %f %[^\n]", &idx, &dens, buf);
 	if (i != 3) {
-	    bu_log("error parsing line %d of density file.\n"
-                   "  %zu args recognized instead of 3\n",
+	    bu_log("error parsing line %d of density file.\n  %zu args recognized instead of 3\n",
                    line, i);
 	    bu_log("  line buffer reads : %s\n", linebuf);
             continue;
@@ -281,24 +280,6 @@ view_eol(struct application *UNUSED(ap))
 {
 }
 
-/* a region ID sort comparison */
-int region_ID_cmp(const void *p1,
-                  const void *p2)
-{
-  /* cast into correct type--note the incoming pointer type is a
-     pointer to a pointer which must be dereferenced! */
-  struct region *r1 = *(struct region **)p1;
-  struct region *r2 = *(struct region **)p2;
-
-  if (r1->reg_regionid < r2->reg_regionid)
-    return -1;
-  else if (r1->reg_regionid > r2->reg_regionid)
-    return +1;
-  else
-    return strcmp(r1->reg_name, r2->reg_name);
-}
-
-
 /* end of a frame */
 void
 view_end(struct application *ap)
@@ -317,14 +298,6 @@ view_end(struct application *ap)
     time_t clockval;
     struct tm *locltime;
     char *timeptr;
-
-    /* a sortable array is needed to have a consistently sorted region
-       list for regression tests */
-    struct region **rp_array = (struct region **)NULL;
-    register int id = 0;
-    fastf_t *item_wt = (fastf_t *)NULL;
-    int nregions = 0;
-    int ridx; /* for region array */
 
     /* default units */
     bu_strlcpy(units, "grams", sizeof(units));
@@ -388,33 +361,23 @@ view_end(struct application *ap)
 	fprintf(outfp, "Weight by region name (in %s, density given in g/cm^3):\n\n", units);
 	fprintf(outfp, " Weight   Matl  LOS  Material Name  Density Name\n");
 	fprintf(outfp, "-------- ------ --- --------------- ------- -------------\n");
-
-#if 0
-	fastf_t *item_wt;
-	MAX_ITEM++;
-        /* FIX ME: couldn't we use a fixed size array on the stack
-           here (increment MAX_ITEM before entering this loop)? */
-	item_wt = (fastf_t *)bu_malloc(sizeof(fastf_t) * (MAX_ITEM + 1), "item_wt");
-	for (i = 1; i <= MAX_ITEM; i++)
-	    item_wt[i] = -1.0;
-#endif
-
+    
         for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
-            register fastf_t weight = 0;
+	    register fastf_t weight = 0;
             register size_t len = strlen(rp->reg_name);
             register fastf_t *ptr;
 
             /* */
             if (MAX_ITEM < rp->reg_regionid)
-	      MAX_ITEM = rp->reg_regionid;
+              MAX_ITEM = rp->reg_regionid;
             /* */
             for (dp = (struct datapoint *)rp->reg_udata;
                  dp != (struct datapoint *)NULL; dp = dp->next) {
-	        sum_x  += dp->weight * dp->centroid[X];
-                sum_y  += dp->weight * dp->centroid[Y];
-                sum_z  += dp->weight * dp->centroid[Z];
-                weight += dp->weight;
-                volume += dp->volume;
+              sum_x  += dp->weight * dp->centroid[X];
+              sum_y  += dp->weight * dp->centroid[Y];
+              sum_z  += dp->weight * dp->centroid[Z];
+              weight += dp->weight;
+              volume += dp->volume;
             }
 
             weight *= conversion;
@@ -424,64 +387,62 @@ view_end(struct application *ap)
             *ptr = weight;
             rp->reg_udata = (genptr_t)ptr;
 
-            len = len > 37 ? len-37 : 0;
+            len = len > 37 ? len - 37 : 0;
             if (rpt_overlap)
-	        fprintf(outfp, "%8.3f %5d  %3d %-15.15s %7.4f %-37.37s\n",
-                        weight, rp->reg_gmater, rp->reg_los,
-                        dens_name[rp->reg_gmater],
-                        density[rp->reg_gmater], &rp->reg_name[len]);
+              fprintf(outfp, "%8.3f %5d  %3d %-15.15s %7.4f %-37.37s\n",
+                      weight, rp->reg_gmater, rp->reg_los,
+                      dens_name[rp->reg_gmater],
+                      density[rp->reg_gmater], &rp->reg_name[len]);
         }
-    }
 
-    /* WEIGHT BY REGION ID */
-    if (rpt_overlap) {
-	register int i;
-	/*
-	  #define MAX_ITEM 10001
-	  fastf_t item_wt[MAX_ITEM];
-	*/
-	fastf_t *item_wt;
-	MAX_ITEM++;
-        /* FIX ME: couldn't we use a fixed size array on the stack
-           here (increment MAX_ITEM before entering this loop)? */
-	item_wt = (fastf_t *)bu_malloc(sizeof(fastf_t) * (MAX_ITEM + 1), "item_wt");
-	for (i = 1; i <= MAX_ITEM; i++)
+        /* WEIGHT BY REGION ID */
+        if (rpt_overlap) {
+          register int i;
+          /*
+            #define MAX_ITEM 10001
+            fastf_t item_wt[MAX_ITEM];
+          */
+          fastf_t *item_wt;
+          MAX_ITEM++;
+          item_wt = (fastf_t *)bu_malloc(sizeof(fastf_t) * (MAX_ITEM + 1), "item_wt");
+          for (i = 1; i <= MAX_ITEM; i++)
 	    item_wt[i] = -1.0;
 
-	fprintf(outfp, "Weight by region ID (in %s):\n\n", units);
-	fprintf(outfp, "  ID   Weight  Region Names\n");
-	fprintf(outfp, "----- -------- --------------------\n");
+          fprintf(outfp, "Weight by region ID (in %s):\n\n", units);
+          fprintf(outfp, "  ID   Weight  Region Names\n");
+          fprintf(outfp, "----- -------- --------------------\n");
 
-	for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
+          for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
 	    i = rp->reg_regionid;
 
             /* FIX ME: shouldn't we bu_free reg_udata after using here? */
 	    if (item_wt[i] < 0)
-		item_wt[i] = *(fastf_t *)rp->reg_udata;
+              item_wt[i] = *(fastf_t *)rp->reg_udata;
 	    else
-		item_wt[i] += *(fastf_t *)rp->reg_udata;
-	}
+              item_wt[i] += *(fastf_t *)rp->reg_udata;
+          }
 
-	for (i = 1; i < MAX_ITEM; i++) {
-	    int CR = 0;
-	    if (item_wt[i] < 0)
-		continue;
-            /* the following format string has 15 spaces before the region name: */
-            const int ns = 15;
-	    fprintf(outfp, "%5d %8.3f ", i, item_wt[i]);
-	    for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
-		if (rp->reg_regionid == i) {
-		    register size_t len = strlen(rp->reg_name);
-		    len = len > 65 ? len-65 : 0;
-		    if (CR) {
-                        /* need leading spaces */
-                        fprintf(outfp, "%*.*s", ns, ns, " ");
-                    }
-		    fprintf(outfp, "%-65.65s\n", &rp->reg_name[len]);
-		    CR = 1;
-		}
-	    }
-	}
+          for (i = 1; i < MAX_ITEM; i++) {
+	      int CR = 0;
+	      if (item_wt[i] < 0)
+                  continue;
+              /* the following format string has 15 spaces before the region name: */
+              const int ns = 15;
+              fprintf(outfp, "%5d %8.3f ", i, item_wt[i]);
+              for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
+                  if (rp->reg_regionid == i) {
+                      register size_t len = strlen(rp->reg_name);
+                      len = len > 65 ? len - 65 : 0;
+                      if (CR) {
+                          /* need leading spaces */
+                          fprintf(outfp, "%*.*s", ns, ns, " ");
+                      }
+                      fprintf(outfp, "%-65.65s\n", &rp->reg_name[len]);
+                      CR = 1;
+                  }
+              }
+          }
+        }
     }
 
     volume *= (dbp->dbi_base2local*dbp->dbi_base2local*dbp->dbi_base2local);
