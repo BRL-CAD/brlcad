@@ -376,25 +376,16 @@ view_end(struct application *ap)
       }
     }
 
-    /* WEIGHT BY REGION NAME */
-    /* FIX ME: names seem to change order during alternating runs of
-       the 'weight.sh' regression test--believe it is due to the
-       nature of the region list */
-
     /* is this test really necessary? or can we return if !rpt_overlap? */
     if (rpt_overlap) {
         /* move block scope variables here */
         fastf_t *item_wt;
 
-        /* ^L is char code for FormFeed/NewPage */
-	fprintf(outfp, "Weight by region name (in %s, density given in g/cm^3):\n\n", units);
-	fprintf(outfp, " Weight   Matl  LOS  Material Name  Density Name\n");
-	fprintf(outfp, "-------- ------ --- --------------- ------- -------------\n");
-
+        /* grind through the region list WITHOUT printing but track region
+           IDs used and count regions for later use; also do bookkeeping
+           chores */
         for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
-            const int flen = 37; /* desired size of name field */
 	    register fastf_t weight = 0;
-            register size_t len = strlen(rp->reg_name);
             register fastf_t *ptr;
 
             ++nregions; /* this is needed to create the region array */
@@ -418,13 +409,6 @@ view_end(struct application *ap)
             ptr = (fastf_t *)bu_malloc(sizeof(fastf_t), "ptr");
             *ptr = weight;
             rp->reg_udata = (genptr_t)ptr;
-
-            len = len > (size_t)flen ? len - (size_t)flen : 0;
-            fprintf(outfp, "%8.3f %5d  %3d %-15.15s %7.4f %-*.*s\n",
-                    weight, rp->reg_gmater, rp->reg_los,
-                    dens_name[rp->reg_gmater],
-                    density[rp->reg_gmater],
-                    flen, flen, &rp->reg_name[len]);
         }
 
         /* make room for a zero ID number and an "end ID " so we can
@@ -434,11 +418,6 @@ view_end(struct application *ap)
         item_wt = (fastf_t *)bu_malloc(sizeof(fastf_t) * (MAX_ITEM + 1), "item_wt");
         for (id = 1; id < MAX_ITEM; id++)
             item_wt[id] = -1.0;
-
-        /* WEIGHT BY REGION ID */
-        fprintf(outfp, "Weight by region ID (in %s):\n\n", units);
-        fprintf(outfp, "  ID   Weight  Region Names\n");
-        fprintf(outfp, "----- -------- --------------------\n");
 
         /* create and fill an array for handling region names and region IDs */
         rp_array = (struct region **)bu_malloc(sizeof(struct region *)
@@ -460,6 +439,37 @@ view_end(struct application *ap)
         /* sort the region array by ID, then by name */
         qsort(rp_array, nregions, sizeof(struct region *), region_ID_cmp);
 
+        /* WEIGHT BY REGION NAME =============== */
+        /* ^L is char code for FormFeed/NewPage */
+	fprintf(outfp, "Weight by region name (in %s, density given in g/cm^3):\n\n", units);
+	fprintf(outfp, " Weight   Matl  LOS  Material Name  Density Name\n");
+	fprintf(outfp, "-------- ------ --- --------------- ------- -------------\n");
+        for (id = 1; id < MAX_ITEM; ++id) {
+            const int flen = 37; /* desired size of name field */
+
+            if (item_wt[id] < 0)
+                continue;
+
+            for (ridx = 0; ridx < nregions; ++ridx) {
+                struct region *r = rp_array[ridx];
+                if (r->reg_regionid == id) {
+                    fastf_t weight = *(fastf_t *)r->reg_udata;
+                    register size_t len = strlen(r->reg_name);
+                    len = len > (size_t)flen ? len - (size_t)flen : 0;
+                    fprintf(outfp, "%8.3f %5d  %3d %-15.15s %7.4f %-*.*s\n",
+                            weight,
+                            r->reg_gmater, r->reg_los,
+                            dens_name[r->reg_gmater],
+                            density[r->reg_gmater],
+                            flen, flen, &r->reg_name[len]);
+                }
+            }
+        }
+
+        /* WEIGHT BY REGION ID =============== */
+        fprintf(outfp, "Weight by region ID (in %s):\n\n", units);
+        fprintf(outfp, "  ID   Weight  Region Names\n");
+        fprintf(outfp, "----- -------- --------------------\n");
         for (id = 1; id < MAX_ITEM; ++id) {
             const int flen = 65; /* desired size of name field */
             int CR = 0;
