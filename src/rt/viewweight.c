@@ -390,6 +390,7 @@ view_end(struct application *ap)
 	fprintf(outfp, "-------- ------ --- --------------- ------- -------------\n");
     
         for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
+            const int flen = 37; /* desired size of name field */
 	    register fastf_t weight = 0;
             register size_t len = strlen(rp->reg_name);
             register fastf_t *ptr;
@@ -414,11 +415,12 @@ view_end(struct application *ap)
             *ptr = weight;
             rp->reg_udata = (genptr_t)ptr;
 
-            len = len > 37 ? len - 37 : 0;
-            fprintf(outfp, "%8.3f %5d  %3d %-15.15s %7.4f %-37.37s\n",
+            len = len > (size_t)flen ? len - (size_t)flen : 0;
+            fprintf(outfp, "%8.3f %5d  %3d %-15.15s %7.4f %-*.*s\n",
                     weight, rp->reg_gmater, rp->reg_los,
                     dens_name[rp->reg_gmater],
-                    density[rp->reg_gmater], &rp->reg_name[len]);
+                    density[rp->reg_gmater],
+                    flen, flen, &rp->reg_name[len]);
         }
 
         /* WEIGHT BY REGION ID */
@@ -449,6 +451,7 @@ view_end(struct application *ap)
           }
 
           for (i = 1; i < MAX_ITEM; i++) {
+              const int flen = 65; /* desired size of name field */
 	      int CR = 0;
 	      if (item_wt[i] < 0)
                   continue;
@@ -458,12 +461,12 @@ view_end(struct application *ap)
               for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
                   if (rp->reg_regionid == i) {
                       register size_t len = strlen(rp->reg_name);
-                      len = len > 65 ? len - 65 : 0;
+                      len = len > (size_t)flen ? len - (size_t) : 0;
                       if (CR) {
                           /* need leading spaces */
                           fprintf(outfp, "%*.*s", ns, ns, " ");
                       }
-                      fprintf(outfp, "%-65.65s\n", &rp->reg_name[len]);
+                      fprintf(outfp, "%-*.*s\n", flen, flen, &rp->reg_name[len]);
                       CR = 1;
                   }
               }
