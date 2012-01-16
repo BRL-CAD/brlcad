@@ -316,7 +316,7 @@ view_end(struct application *ap)
     struct tm *locltime;
     char *timeptr;
 
-#define USE_ARRAY
+/* #define USE_ARRAY */
 #if defined(USE_ARRAY)
     /* a sortable array is needed to have a consistently sorted region
        list for regression tests; add variables for such a use */
