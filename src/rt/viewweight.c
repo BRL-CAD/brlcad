@@ -316,12 +316,15 @@ view_end(struct application *ap)
     struct tm *locltime;
     char *timeptr;
 
+#define USE_ARRAY
+#if defined(USE_ARRAY)
     /* a sortable array is needed to have a consistently sorted region
        list for regression tests; add variables for such a use */
     struct region **rp_array = (struct region **)NULL;
     register int id = 0;
     int nregions = 0;
     int ridx; /* for region array */
+#endif
 
     /* default units */
     bu_strlcpy(units, "grams", sizeof(units));
