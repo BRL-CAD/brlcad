@@ -233,7 +233,8 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 
         i = sscanf(linebuf, "%d %f %[^\n]", &idx, &dens, buf);
 	if (i != 3) {
-	    bu_log("error parsing line %d of density file.\n  %zu args recognized instead of 3\n",
+	    bu_log("error parsing line %d of density file.\n"
+                   "  %zu args recognized instead of 3\n",
                    line, i);
 	    bu_log("  line buffer reads : %s\n", linebuf);
             continue;
