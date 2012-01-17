@@ -1,7 +1,7 @@
 #                  F I N D R E 2 C . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2010-2011 United States Government as represented by
+# Copyright (c) 2010-2012 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -58,7 +58,7 @@
 #  ====================================================================
 #
 #=============================================================================
-# Copyright 2010 United States Government as represented by
+# Copyright (c) 2010-2012 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
