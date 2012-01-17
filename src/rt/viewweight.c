@@ -236,9 +236,9 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 
         /* delete comments before processing */
         if ((c = strchr(linebuf, cmt)) != NULL) {
-          /* close the buffer there with a newline and a null char*/
-          *c++ = '\n';
-          *c   = '\0';
+            /* close linebuf with a newline and a null char */
+            *c++ = '\n';
+            *c   = '\0';
         }
         i = sscanf(linebuf, "%d %f %[^\n]", &idx, &dens, buf);
 	if (i != 3) {
