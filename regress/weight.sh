@@ -198,7 +198,7 @@ Material  Density(g/cm^3)  Name
     7         8.0300       Stainless, 18Cr-8Ni
     8         7.4700       Stainless 27Cr
     9         7.7150       Steel, tool
-   10         7.8400       Carbon Steel # used for widgets
+   10         7.8400       Carbon Steel
    12         3.0000       Gunner
    14        10.0000       Fuel
 Weight by region name (in grams, density given in g/cm^3):
