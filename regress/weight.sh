@@ -171,7 +171,8 @@ cat > .density <<EOF
 9    7.715     Steel, tool
 
 #  Blank line above
-10   7.84      Carbon Steel
+#  Comment following valid data on the line below
+10   7.84      Carbon Steel # used for widgets
 12   3.00      Gunner
 14   10.00     Fuel
 #  Material ID too high (MAXMTLS = 32768)
@@ -197,7 +198,7 @@ Material  Density(g/cm^3)  Name
     7         8.0300       Stainless, 18Cr-8Ni
     8         7.4700       Stainless 27Cr
     9         7.7150       Steel, tool
-   10         7.8400       Carbon Steel
+   10         7.8400       Carbon Steel # used for widgets
    12         3.0000       Gunner
    14        10.0000       Fuel
 Weight by region name (in grams, density given in g/cm^3):
