@@ -381,6 +381,7 @@ view_end(struct application *ap)
     if (rpt_overlap) {
         /* move block scope variables here */
         fastf_t *item_wt;
+        int start_ridx;
 
         /* grind through the region list WITHOUT printing but track region
            IDs used and count regions for later use; also do bookkeeping
@@ -445,13 +446,16 @@ view_end(struct application *ap)
 	fprintf(outfp, "Weight by region name (in %s, density given in g/cm^3):\n\n", units);
 	fprintf(outfp, " Weight   Matl  LOS  Material Name  Density Name\n");
 	fprintf(outfp, "-------- ------ --- --------------- ------- -------------\n");
+
+        start_ridx = 0; /* region array is indexed from 0 */
         for (id = 1; id < MAX_ITEM; ++id) {
             const int flen = 37; /* desired size of name field */
 
             if (item_wt[id] < 0)
                 continue;
 
-            for (ridx = 0; ridx < nregions; ++ridx) {
+            /* since we're sorted by ID, we only need to start and end with the current ID */
+            for (ridx = start_ridx; ridx < nregions; ++ridx) {
                 struct region *r = rp_array[ridx];
                 if (r->reg_regionid == id) {
                     fastf_t weight = *(fastf_t *)r->reg_udata;
@@ -464,6 +468,14 @@ view_end(struct application *ap)
                             density[r->reg_gmater],
                             flen, flen, &r->reg_name[len]);
                 }
+                else if (r->reg_regionid > id) {
+                    /* FIX ME: an "else" alone should be good enough
+                       because the test should not be necessary if we
+                       trust the sorted array */
+                    /* end loop and save this region index value for the next id iteration */
+                    start_ridx = ridx;
+                    break;
+                }
             }
         }
 
@@ -471,6 +483,8 @@ view_end(struct application *ap)
         fprintf(outfp, "Weight by region ID (in %s):\n\n", units);
         fprintf(outfp, "  ID   Weight  Region Names\n");
         fprintf(outfp, "----- -------- --------------------\n");
+
+        start_ridx = 0; /* region array is indexed from 0 */
         for (id = 1; id < MAX_ITEM; ++id) {
             const int flen = 65; /* desired size of name field */
             int CR = 0;
@@ -482,7 +496,8 @@ view_end(struct application *ap)
             const int ns = 15;
             fprintf(outfp, "%5d %8.3f ", id, item_wt[id]);
 
-            for (ridx = 0; ridx < nregions; ++ridx) {
+            /* since we're sorted by ID, we only need to start and end with the current ID */
+            for (ridx = start_ridx; ridx < nregions; ++ridx) {
                 struct region *r = rp_array[ridx];
                 if (r->reg_regionid == id) {
                   register size_t len = strlen(r->reg_name);
@@ -493,6 +508,14 @@ view_end(struct application *ap)
                   }
                   fprintf(outfp, "%-*.*s\n", flen, flen, &r->reg_name[len]);
                   CR = 1;
+                }
+                else if (r->reg_regionid > id) {
+                    /* FIX ME: an "else" alone should be good enough
+                       because the test should not be necessary if we
+                       trust the sorted array */
+                    /* end loop and save this region index value for the next id iteration */
+                    start_ridx = ridx;
+                    break;
                 }
             }
         }
