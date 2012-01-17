@@ -369,11 +369,11 @@ view_end(struct application *ap)
     fprintf(outfp, "Time Stamp: %s\n\nDensity Table Used:%s\n\n", timeptr, densityfile);
     fprintf(outfp, "Material  Density(g/cm^3)  Name\n");
     {
-      register int i;
-      for (i = 1; i < MAXMATLS; i++) {
-	if (density[i] >= 0)
-          fprintf(outfp, "%5d     %10.4f       %s\n",
-                  i, density[i], dens_name[i]);
+        register int i;
+        for (i = 1; i < MAXMATLS; i++) {
+	    if (density[i] >= 0)
+                fprintf(outfp, "%5d     %10.4f       %s\n",
+                        i, density[i], dens_name[i]);
       }
     }
 
@@ -394,15 +394,15 @@ view_end(struct application *ap)
 
             /* keep track of the highest region ID */
             if (MAX_ITEM < rp->reg_regionid)
-              MAX_ITEM = rp->reg_regionid;
+                MAX_ITEM = rp->reg_regionid;
 
             for (dp = (struct datapoint *)rp->reg_udata;
                  dp != (struct datapoint *)NULL; dp = dp->next) {
-              sum_x  += dp->weight * dp->centroid[X];
-              sum_y  += dp->weight * dp->centroid[Y];
-              sum_z  += dp->weight * dp->centroid[Z];
-              weight += dp->weight;
-              volume += dp->volume;
+                sum_x  += dp->weight * dp->centroid[X];
+                sum_y  += dp->weight * dp->centroid[Y];
+                sum_z  += dp->weight * dp->centroid[Z];
+                weight += dp->weight;
+                volume += dp->volume;
             }
 
             weight *= conversion;
@@ -410,6 +410,8 @@ view_end(struct application *ap)
 
             ptr = (fastf_t *)bu_malloc(sizeof(fastf_t), "ptr");
             *ptr = weight;
+            /* FIX ME: shouldn't the existing reg_udata be bu_free'd first (see previous loop) */
+            /* FIX ME: isn't the region list a "shared resource"? if so, can we use reg_udata so cavalierly? */
             rp->reg_udata = (genptr_t)ptr;
         }
 
@@ -433,9 +435,9 @@ view_end(struct application *ap)
 
             /* FIX ME: shouldn't we bu_free reg_udata after using here? */
 	    if (item_wt[id] < 0)
-              item_wt[id] = *(fastf_t *)rp->reg_udata;
+                item_wt[id] = *(fastf_t *)rp->reg_udata;
 	    else
-              item_wt[id] += *(fastf_t *)rp->reg_udata;
+                item_wt[id] += *(fastf_t *)rp->reg_udata;
         }
 
         /* sort the region array by ID, then by name */
@@ -490,7 +492,7 @@ view_end(struct application *ap)
             int CR = 0;
 
             if (item_wt[id] < 0)
-              continue;
+               continue;
 
             /* the following format string has 15 spaces before the region name: */
             const int ns = 15;
@@ -500,14 +502,14 @@ view_end(struct application *ap)
             for (ridx = start_ridx; ridx < nregions; ++ridx) {
                 struct region *r = rp_array[ridx];
                 if (r->reg_regionid == id) {
-                  register size_t len = strlen(r->reg_name);
-                  len = len > (size_t)flen ? len - (size_t)flen : 0;
-                  if (CR) {
-                    /* need leading spaces */
-                    fprintf(outfp, "%*.*s", ns, ns, " ");
-                  }
-                  fprintf(outfp, "%-*.*s\n", flen, flen, &r->reg_name[len]);
-                  CR = 1;
+                    register size_t len = strlen(r->reg_name);
+                    len = len > (size_t)flen ? len - (size_t)flen : 0;
+                    if (CR) {
+                        /* need leading spaces */
+                        fprintf(outfp, "%*.*s", ns, ns, " ");
+                    }
+                    fprintf(outfp, "%-*.*s\n", flen, flen, &r->reg_name[len]);
+                    CR = 1;
                 }
                 else if (r->reg_regionid > id) {
                     /* FIX ME: an "else" alone should be good enough
@@ -535,8 +537,13 @@ view_end(struct application *ap)
     fprintf(outfp, "          Z = %g %s\n", sum_z, unit2);
     fprintf(outfp, "\nTotal mass = %g %s\n\n", total_weight, units);
 
-    /* now finished with density file name */
+    /* now finished with density file name and other heap variables */
     bu_free(densityfile, "density file name");
+    bu_free(item_wt, "item_wt");
+
+    /* FIX ME: shouldn't we bu_free reg_udata before freeing the region array? */
+    bu_free(rp_array, "rp_array");
+
 }
 
 void view_setup(struct rt_i *UNUSED(rtip))
