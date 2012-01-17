@@ -167,7 +167,7 @@ analyze_face(struct ged *gedp, int face, fastf_t *center_pt, const struct rt_arb
      * pointing normal vector.
      */
     if ((plane[W] - VDOT(center_pt, &plane[0])) < 0.0) {
-	for (i=0; i<4; i++)
+	for (i = 0; i < 4; i++)
 	    plane[i] *= -1.0;
     }
 
@@ -177,7 +177,7 @@ analyze_face(struct ged *gedp, int face, fastf_t *center_pt, const struct rt_arb
     findang(angles, &plane[0]);
 
     /* find the surface area of this face */
-    for (i=0; i<3; i++) {
+    for (i = 0; i < 3; i++) {
 	j = rt_arb_faces[type][face*4+i];
 	k = rt_arb_faces[type][face*4+i+1];
 	VSUB2(v_temp, arb->pt[k], arb->pt[j]);
@@ -185,26 +185,26 @@ analyze_face(struct ged *gedp, int face, fastf_t *center_pt, const struct rt_arb
     }
     len[4] = len[2];
     j = rt_arb_faces[type][face*4+0];
-    for (i=2; i<4; i++) {
+    for (i = 2; i < 4; i++) {
 	k = rt_arb_faces[type][face*4+i];
 	VSUB2(v_temp, arb->pt[k], arb->pt[j]);
 	len[((i*2)-1)] = MAGNITUDE(v_temp);
     }
     len[2] = len[3];
 
-    for (i=0; i<2; i++) {
-	j = i*3;
+    for (i = 0; i < 2; i++) {
+	j = i * 3;
 	temp = .5 * (len[j] + len[j+1] + len[j+2]);
 	area[i] = sqrt(temp * (temp - len[j]) * (temp - len[j+1]) * (temp - len[j+2]));
 	face_area += area[i];
     }
 
     bu_vls_printf(gedp->ged_result_str, "| %4d |", prface[type][face]);
-    bu_vls_printf(gedp->ged_result_str, " %6.8f %6.8f | %6.8f %6.8f %6.8f %11.8f |",
+    bu_vls_printf(gedp->ged_result_str, " %13.8f %13.8f | %11.8f %11.8f %11.8f %12.8f |",
 		  angles[3], angles[4],
 		  plane[X], plane[Y], plane[Z],
 		  plane[W]*gedp->ged_wdbp->dbip->dbi_base2local);
-    bu_vls_printf(gedp->ged_result_str, "   %13.8f  |\n",
+    bu_vls_printf(gedp->ged_result_str, " %15.8f |\n",
 		  (area[0]+area[1])*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
     return face_area;
 }
@@ -225,19 +225,19 @@ analyze_edge(struct ged *gedp, int edge, const struct rt_arb_internal *arb, int 
 	if ((a = edge%4) == 0)
 	    return;
 	if (a == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "  |                |                |                |\n  ");
+	    bu_vls_printf(gedp->ged_result_str, "  |                    |                    |                    |\n  ");
 	    return;
 	}
 	if (a == 2) {
-	    bu_vls_printf(gedp->ged_result_str, "  |                |                |\n  ");
+	    bu_vls_printf(gedp->ged_result_str, "  |                    |                    |\n  ");
 	    return;
 	}
-	bu_vls_printf(gedp->ged_result_str, "  |                |\n  ");
+	bu_vls_printf(gedp->ged_result_str, "  |                    |\n  ");
 	return;
     }
 
     VSUB2(v_temp, arb->pt[b], arb->pt[a]);
-    bu_vls_printf(gedp->ged_result_str, "  |  %d%d %9.8f",
+    bu_vls_printf(gedp->ged_result_str, "  |   %d%d %12.8f",
 		  a+1, b+1, MAGNITUDE(v_temp)*gedp->ged_wdbp->dbip->dbi_base2local);
 
     if (++edge%4 == 0)
@@ -306,19 +306,20 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
     type = cgtype - 4;
 
     /* analyze each face, use center point of arb for reference */
-    bu_vls_printf(gedp->ged_result_str, "\n------------------------------------------------------------------------------\n");
-    bu_vls_printf(gedp->ged_result_str, "| FACE |   ROT     FB  |        PLANE EQUATION            |   SURFACE AREA   |\n");
-    bu_vls_printf(gedp->ged_result_str, "|------|---------------|----------------------------------|------------------|\n");
+    bu_vls_printf(gedp->ged_result_str,"\n-----------------------------------------------------------------------------------------------------------\n");
+    bu_vls_printf(gedp->ged_result_str, "| FACE |      ROT           FB       |                  PLANE EQUATION                  |   SURFACE AREA  |\n");
+    bu_vls_printf(gedp->ged_result_str, "|------|-----------------------------|--------------------------------------------------|-----------------|\n");
     rt_arb_centroid(center_pt, arb, cgtype);
 
-    for (i=0; i<6; i++)
+    for (i = 0; i < 6; i++)
 	tot_area += analyze_face(gedp, i, center_pt, arb, type, &gedp->ged_wdbp->wdb_tol);
 
-    bu_vls_printf(gedp->ged_result_str, "------------------------------------------------------------------------------\n");
+    bu_vls_printf(gedp->ged_result_str, "-----------------------------------------------------------------------------------------------------------\n\n");
 
     /* analyze each edge */
-    bu_vls_printf(gedp->ged_result_str, "    | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   |\n");
-    bu_vls_printf(gedp->ged_result_str, "    |----------------|----------------|----------------|----------------|\n  ");
+    bu_vls_printf(gedp->ged_result_str, "    -------------------------------------------------------------------------------------\n");
+    bu_vls_printf(gedp->ged_result_str, "    | EDGE          LEN  | EDGE          LEN  | EDGE          LEN  | EDGE          LEN  |\n");
+    bu_vls_printf(gedp->ged_result_str, "    |--------------------|--------------------|--------------------|--------------------|\n  ");
 
     /* set up the records for arb4's and arb6's */
     {
@@ -330,24 +331,25 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
 	} else if (cgtype == 6) {
 	    VMOVE(earb.pt[5], earb.pt[6]);
 	}
-	for (i=0; i<12; i++) {
+	for (i = 0; i < 12; i++) {
 	    analyze_edge(gedp, i, &earb, type);
 	    if (nedge[type][i*2] == -1)
 		break;
 	}
     }
-    bu_vls_printf(gedp->ged_result_str, "  ---------------------------------------------------------------------\n");
+    bu_vls_printf(gedp->ged_result_str, "  -------------------------------------------------------------------------------------\n\n");
 
     /* find the volume - break arb8 into 6 arb4s */
-    for (i=0; i<6; i++)
+    for (i = 0; i < 6; i++)
 	tot_vol += analyze_find_vol(i, arb, &gedp->ged_wdbp->wdb_tol);
 
-    bu_vls_printf(gedp->ged_result_str, "      | Volume = %18.8f    Surface Area = %15.8f |\n",
+    bu_vls_printf(gedp->ged_result_str, "      -------------------------------------\n");
+    bu_vls_printf(gedp->ged_result_str, "      | Volume =       %18.8f |\n      | Surface Area = %18.8f |\n",
 		  tot_vol*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
 		  tot_area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
-    bu_vls_printf(gedp->ged_result_str, "      |          %18.8f gal                               |\n",
+    bu_vls_printf(gedp->ged_result_str, "      | gal =          %18.8f |\n",
 		  tot_vol/GALLONS_TO_MM3);
-    bu_vls_printf(gedp->ged_result_str, "      -----------------------------------------------------------------\n");
+    bu_vls_printf(gedp->ged_result_str, "      -------------------------------------\n");
 }
 
 
