@@ -227,11 +227,19 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
        scanning at first failure or error and we get an infinite loop */
     line = 0;
     while (bu_fgets(linebuf, BUFSIZ+1, densityfp)) {
+        const int cmt = '#';
         int idx;
-	float dens;
+        float dens;
+        char* c;
 
         ++line;
 
+        /* delete comments before processing */
+        if ((c = strchr(linebuf, cmt)) != NULL) {
+          /* close the buffer there with a newline and a null char*/
+          *c++ = '\n';
+          *c   = '\0';
+        }
         i = sscanf(linebuf, "%d %f %[^\n]", &idx, &dens, buf);
 	if (i != 3) {
 	    bu_log("error parsing line %d of density file.\n  %zu args recognized instead of 3\n",
