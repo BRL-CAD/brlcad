@@ -120,6 +120,7 @@
 #define creat _creat
 #define dup _dup
 #define dup2 _dup2
+#define fchmod _chmod
 /* #define filelength _filelength */
 #define isatty _isatty
 #define locking _locking
@@ -181,6 +182,7 @@ typedef int pid_t;
 typedef int socklen_t;
 typedef unsigned int gid_t;
 typedef unsigned int uid_t;
+typedef int mode_t;
 
 
 /*
