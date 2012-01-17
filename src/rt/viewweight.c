@@ -521,6 +521,11 @@ view_end(struct application *ap)
                 }
             }
         }
+
+        /* now finished with heap variables */
+        bu_free(item_wt, "item_wt");
+        /* FIX ME: shouldn't we bu_free reg_udata before freeing the region array? */
+        bu_free(rp_array, "rp_array");
     }
 
     volume *= (dbp->dbi_base2local*dbp->dbi_base2local*dbp->dbi_base2local);
@@ -537,12 +542,8 @@ view_end(struct application *ap)
     fprintf(outfp, "          Z = %g %s\n", sum_z, unit2);
     fprintf(outfp, "\nTotal mass = %g %s\n\n", total_weight, units);
 
-    /* now finished with density file name and other heap variables */
+    /* now finished with density file name*/
     bu_free(densityfile, "density file name");
-    bu_free(item_wt, "item_wt");
-
-    /* FIX ME: shouldn't we bu_free reg_udata before freeing the region array? */
-    bu_free(rp_array, "rp_array");
 
 }
 
