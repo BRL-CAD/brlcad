@@ -3,7 +3,7 @@
 
 /* pnglibconf.h - library build configuration */
 
-/* libpng version 1.5.4 - last changed on June 22, 2011 */
+/* Libpng 1.5.7 - December 15, 2011 */
 
 /* Copyright (c) 1998-2011 Glenn Randers-Pehrson */
 
@@ -33,8 +33,8 @@
 #define PNG_sCAL_PRECISION 5
 #define PNG_USER_CHUNK_CACHE_MAX 0
 #define PNG_USER_CHUNK_MALLOC_MAX 0
-#define PNG_USER_HEIGHT_MAX 1000000L
-#define PNG_USER_WIDTH_MAX 1000000L
+#define PNG_USER_HEIGHT_MAX 1000000
+#define PNG_USER_WIDTH_MAX 1000000
 #define PNG_WEIGHT_SHIFT 8
 #define PNG_ZBUF_SIZE 8192
 /* end of settings */
@@ -54,6 +54,8 @@
 #define PNG_FIXED_POINT_SUPPORTED
 #define PNG_FLOATING_ARITHMETIC_SUPPORTED
 #define PNG_FLOATING_POINT_SUPPORTED
+#define PNG_FORMAT_AFIRST_SUPPORTED
+#define PNG_FORMAT_BGR_SUPPORTED
 #define PNG_gAMA_SUPPORTED
 #define PNG_HANDLE_AS_UNKNOWN_SUPPORTED
 #define PNG_hIST_SUPPORTED

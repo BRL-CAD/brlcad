@@ -2,11 +2,10 @@
 #if 0 /* in case someone actually tries to compile this */
 
 /* example.c - an example of using libpng
- * Last changed in libpng 1.5.4 [July 7, 2011]
- * This file has been placed in the public domain by the authors.
+ * Last changed in libpng 1.5.7 [December 15, 2011]
  * Maintained 1998-2011 Glenn Randers-Pehrson
- * Maintained 1996, 1997 Andreas Dilger)
- * Written 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
+ * Maintained 1996, 1997 Andreas Dilger
+ * Written 1995, 1996 Guy Eric Schalnat, Group 42, Inc.
  */
 
 /* This is an example of how to use libpng to read and write PNG files.
@@ -14,6 +13,8 @@
  * read it, do so first.  This was designed to be a starting point of an
  * implementation.  This is not officially part of libpng, is hereby placed
  * in the public domain, and therefore does not require a copyright notice.
+ * To the extent possible under law, the authors have waived all copyright and
+ * related or neighboring rights to this file.
  *
  * This file does not currently compile, because it is missing certain
  * parts, like allocating memory to hold an image.  You will have to
@@ -341,11 +342,16 @@ void read_png(FILE *fp, unsigned int sig_read)  /* File is already open */
    /* Add filler (or alpha) byte (before/after each RGB triplet) */
    png_set_filler(png_ptr, 0xff, PNG_FILLER_AFTER);
 
+#ifdef PNG_READ_INTERLACING_SUPPORTED
    /* Turn on interlace handling.  REQUIRED if you are not using
     * png_read_image().  To see how to handle interlacing passes,
     * see the png_read_row() method below:
     */
    number_passes = png_set_interlace_handling(png_ptr);
+#else
+   number_passes = 1;
+#endif /* PNG_READ_INTERLACING_SUPPORTED */
+
 
    /* Optional call to gamma correct and add the background to the palette
     * and update info structure.  REQUIRED if you are expecting libpng to
@@ -527,6 +533,7 @@ row_callback(png_structp png_ptr, png_bytep new_row,
     */
    png_bytep old_row = ((png_bytep *)our_data)[row_num];
 
+#ifdef PNG_READ_INTERLACING_SUPPORTED
    /* If both rows are allocated then copy the new row
     * data to the corresponding row data.
     */
@@ -555,6 +562,7 @@ row_callback(png_structp png_ptr, png_bytep new_row,
     * to pass the current row as new_row, and the function will combine
     * the old row and the new row.
     */
+#endif /* PNG_READ_INTERLACING_SUPPORTED */
 }
 
 end_callback(png_structp png_ptr, png_infop info)

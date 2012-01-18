@@ -1,7 +1,6 @@
 # Makefile.am:
 #   Source file for Makefile.in (and hence Makefile)
 #
-ACLOCAL_AMFLAGS = -I ../../../m4
 
 PNGLIB_BASENAME= libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@
 
@@ -13,13 +12,17 @@ PNGLIB_BASENAME= libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@
 AUTOMAKE_OPTIONS = foreign
 
 # test programs - run on make check, make distcheck
-check_PROGRAMS= pngtest pngvalid
+TESTS_ENVIRONMENT= srcdir=$(srcdir)
+check_PROGRAMS= pngtest
 pngtest_SOURCES = pngtest.c
 pngtest_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
-pngvalid_SOURCES = pngvalid.c
+TESTS = test-pngtest.sh
+
+# Only do the following if the contrib directory is present.
+check_PROGRAMS+= pngvalid
+pngvalid_SOURCES = contrib/libtests/pngvalid.c
 pngvalid_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
-TESTS = test-pngtest.sh test-pngvalid-simple.sh test-pngvalid-full.sh
-TESTS_ENVIRONMENT= srcdir=$(srcdir)
+TESTS += test-pngvalid-simple.sh test-pngvalid-full.sh
 
 # man pages
 dist_man_MANS= libpng.3 libpngpf.3 png.5
@@ -37,21 +40,28 @@ libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES = png.c pngerror.c\
 	pngset.c pngtrans.c pngwio.c pngwrite.c pngwtran.c pngwutil.c\
 	png.h pngconf.h pngdebug.h pnginfo.h pngpriv.h pngstruct.h
 
+if PNG_ARM_NEON
+libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES += arm/filter_neon.S
+endif
+
 nodist_libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES = pnglibconf.h
 
-# libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_CPPFLAGS = @LIBPNG_DEFINES@
-# support automake 1.7+, no target-specific CPPFLAGS
-AM_CPPFLAGS = @LIBPNG_DEFINES@
+libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_CPPFLAGS = @LIBPNG_DEFINES@
 
 libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LDFLAGS = -no-undefined -export-dynamic \
 	-version-number @PNGLIB_MAJOR@@PNGLIB_MINOR@:@PNGLIB_RELEASE@:0
 
 if HAVE_LD_VERSION_SCRIPT
-  # Versioned symbols and restricted exports
+#   Versioned symbols and restricted exports
+if HAVE_SOLARIS_LD
+  libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LDFLAGS += -Wl,-M -Wl,libpng.vers
+else
   libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LDFLAGS += -Wl,--version-script=libpng.vers
+endif
+
   libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_DEPENDENCIES = libpng.vers
 else
-  # Only restricted exports when possible
+#   Only restricted exports when possible
   libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LDFLAGS += -export-symbols libpng.sym
   libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_DEPENDENCIES = libpng.sym
 endif
@@ -100,7 +110,7 @@ $(PNGLIB_BASENAME)-config: libpng-config
 	cp libpng-config $@
 
 scripts/sym.out scripts/vers.out: png.h pngconf.h pnglibconf.h
-scripts/symbols.out: png.h pngconf.h scripts/pnglibconf.h.prebuilt
+scripts/symbols.out: png.h pngconf.h $(srcdir)/scripts/pnglibconf.h.prebuilt
 
 libpng.sym: scripts/sym.out
 	rm -f $@
@@ -111,7 +121,8 @@ libpng.vers: scripts/vers.out
 pnglibconf.h: pnglibconf.out
 	rm -f $@
 	cp $? $@
-scripts/pnglibconf.h.prebuilt:
+$(srcdir)/scripts/pnglibconf.h.prebuilt:
+	@echo "Attempting to build $@" >&2
 	@echo "This is a machine generated file, but if you want to make" >&2
 	@echo "a new one simply make 'scripts/pnglibconf.out' and copy that" >&2
 	@exit 1
@@ -119,11 +130,11 @@ scripts/pnglibconf.h.prebuilt:
 # The following is necessary to ensure that the local pnglibconf.h is used, not
 # an installed one (this can happen immediately after on a clean system if
 # 'make test' is the first thing the user does.)
-pngvalid.o pngtest.o: pnglibconf.h
+contrib/libtests/pngvalid.o pngtest.o: pnglibconf.h
 
 # We must use -DPNG_NO_USE_READ_MACROS here even when the library may actually
-# be built with PNG_USE_READ_MACROS; this stops the read macros interfering
-# with the symbol file format.
+# be built with PNG_USE_READ_MACROS; this prevents the read macros from
+# interfering with the symbol file format.
 SYMBOL_CFLAGS = -DPNGLIB_LIBNAME='PNG@PNGLIB_MAJOR@@PNGLIB_MINOR@_0'\
 		-DPNGLIB_VERSION='@PNGLIB_VERSION@'\
 		-DSYMBOL_PREFIX='$(SYMBOL_PREFIX)'\
@@ -135,17 +146,18 @@ SYMBOL_CFLAGS = -DPNGLIB_LIBNAME='PNG@PNGLIB_MAJOR@@PNGLIB_MINOR@_0'\
 	echo '#include "$<"' >dfn.c
 	$(DFNCPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) @LIBPNG_DEFINES@\
 	    $(CPPFLAGS) $(SYMBOL_CFLAGS) dfn.c > dfn1.out
-	$(SED) -n -e 's|^.*PNG_DEFN_MAGIC-\(.*\)-PNG_DEFN_END.*$$|\1|p'\
+	$(SED) -n -e 's|^.*PNG_DEFN_MAGIC *-\(.*\)- *PNG_DEFN_END.*$$|\1|p'\
 	    dfn1.out >dfn2.out
-	$(SED) -e 's| *@@@ *||g' -e 's| *$$||' dfn2.out >dfn3.out
+	$(SED) -e 's| *PNG_JOIN *||g' -e 's| *$$||' dfn2.out >dfn3.out
 	rm -f dfn.c dfn[12].out
 	mv dfn3.out $@
 
 # The .dfn file for pnglibconf.h is machine generated
-pnglibconf.dfn: scripts/pnglibconf.dfa scripts/options.awk
+pnglibconf.dfn: scripts/pnglibconf.dfa scripts/options.awk pngconf.h
 	rm -f $@ dfn?.out
-	$(AWK) -f ${srcdir}/scripts/options.awk out=dfn1.out\
-	    ${srcdir}/scripts/pnglibconf.dfa $(DFA_XTRA) 1>&2
+	$(AWK) -f ${srcdir}/scripts/options.awk out=dfn1.out version=search\
+	    ${srcdir}/pngconf.h ${srcdir}/scripts/pnglibconf.dfa\
+	    $(DFA_XTRA) 1>&2
 	$(AWK) -f ${srcdir}/scripts/options.awk out=dfn2.out dfn1.out 1>&2
 	rm dfn1.out
 	mv dfn2.out $@
@@ -160,12 +172,13 @@ scripts/symbols.chk: scripts/checksym.awk scripts/symbols.def scripts/symbols.ou
 
 # used on demand to regenerate the standard header, CPPFLAGS should
 # be empty - no non-standard defines
-scripts/pnglibconf.dfn: scripts/pnglibconf.dfa scripts/options.awk
+scripts/pnglibconf.dfn: scripts/pnglibconf.dfa scripts/options.awk pngconf.h
 	rm -f $@ dfn?.out
 	test -z "$(CPPFLAGS)"
 	echo "com @PNGLIB_VERSION@ STANDARD API DEFINITION" |\
-	$(AWK) -f ${srcdir}/scripts/options.awk out=dfn1.out\
-	    logunsupported=4 - ${srcdir}/scripts/pnglibconf.dfa 1>&2
+	$(AWK) -f ${srcdir}/scripts/options.awk out=dfn1.out logunsupported=1
+		version=search ${srcdir}/pngconf.h -\
+		${srcdir}/scripts/pnglibconf.dfa 1>&2
 	$(AWK) -f ${srcdir}/scripts/options.awk out=dfn2.out dfn1.out 1>&2
 	rm dfn1.out
 	mv dfn2.out $@
@@ -212,5 +225,3 @@ uninstall-hook:
 	rm -f $(DESTDIR)$(bindir)/libpng-config
 	rm -f $(DESTDIR)$(libdir)/libpng.a
 	rm -f $(DESTDIR)$(libdir)/libpng.la
-
-depends:

@@ -5,7 +5,7 @@
 LIBRARY
 
 EXPORTS
-;Version 1.5.4
+;Version 1.5.7
  png_access_version_number @1
  png_set_sig_bytes @2
  png_sig_cmp @3
@@ -235,3 +235,7 @@ EXPORTS
  png_set_alpha_mode @227
  png_set_alpha_mode_fixed @228
  png_set_scale_16 @229
+ png_get_cHRM_XYZ @230
+ png_get_cHRM_XYZ_fixed @231
+ png_set_cHRM_XYZ @232
+ png_set_cHRM_XYZ_fixed @233
