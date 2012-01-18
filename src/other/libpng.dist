@@ -5,6 +5,7 @@ INSTALL
 LICENSE
 README
 TODO
+arm
 autogen.sh
 configure.ac
 contrib
@@ -22,7 +23,6 @@ projects
 scripts
 test-pngtest.sh
 libpng-manual.txt
-pngvalid.c
 test-pngvalid-full.sh
 test-pngvalid-simple.sh
 Makefile.am
