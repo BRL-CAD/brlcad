@@ -530,7 +530,7 @@ struct soltab {
  * NOTE: must update the non-geometric object id's below the
  * ADD_BELOW_HERE marker
  */
-#define	ID_MAX_SOLID	42	/**< @brief Maximum defined ID_xxx for solids */
+#define	ID_MAX_SOLID	43	/**< @brief Maximum defined ID_xxx for solids */
 
 /*
  * Non-geometric objects
@@ -549,8 +549,9 @@ struct soltab {
 #define ID_HYP		38	/**< @brief Hyperboloid of one sheet */
 #define ID_REVOLVE	40	/**< @brief Solid of Revolutin */
 #define ID_PNTS         41      /**< @brief Collection of Points */
+#define ID_ANNOTATION   42      /**< @brief Annotation */
 
-#define ID_MAXIMUM	42	/**< @brief Maximum defined ID_xxx value */
+#define ID_MAXIMUM	43	/**< @brief Maximum defined ID_xxx value */
 
 /**
  * M A T E R _ I N F O

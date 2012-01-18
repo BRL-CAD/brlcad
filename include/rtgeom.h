@@ -768,6 +768,91 @@ struct rt_pnts_internal {
 };
 #define RT_PNTS_CK_MAGIC(_p)     BU_CKMAG(_p, RT_PNTS_INTERNAL_MAGIC, "rt_pnts_internal")
 
+/*
+ *	ID_ANNOTATION
+ *
+ * Annotations are used to provide labels in-scene when viewing geometry.  Leaders connect labels
+ * to geometry objects or fixed points in space.
+ *
+ */
+
+typedef enum {
+    AN_DEFAULT = 0,
+    AN_ABOVE = 1,
+    AN_BELOW = 2,
+    AN_INLINE = 3,
+    AN_INTERIOR = 4,
+    AN_EXTERIOR = 5,
+    AN_LEFT = 6,
+    AN_CENTER = 7,
+    AN_RIGHT = 8,
+    AN_BOTTOM = 9,
+    AN_MIDDLE = 10,
+    AN_TOP = 11
+} annotation_placement_t;
+
+/* Need to look over the STEP and other standards here and list appropriate symbols... */
+/* Question of how to define and store them also - sketches in bu_brlcad_data somewhere? */
+typedef enum {
+    AN_NONE = 0,
+    AN_DEGREE = 1,
+    AN_RADIUS = 2,
+    AN_DIAMETER = 3
+} gdt_symbol_t;
+
+struct obj_leader {
+    struct bu_list l;
+    struct annotation_label *label;
+    point2d_t label_origin;	/* uv point in label plane the leader starts at */
+    point2d_t uv_head_pt;	/* head point where leader terminates (if specifically specified in the label plane) */
+    point_t head_pt;		/* head point where leader terminates (if specifically specified as a fixed 3d point) */
+    char *obj;			/* name of object used as leader destination */
+    point_t *obj_pt;		/* point on target object to use as a relative calculating point for placement */
+    fastf_t offset;
+    annotation_placement_t vertical;
+    annotation_placement_t horizontal;
+    struct bu_list uvleader_segs_head;  /* list of 2d information for leaders specified in the label plane*/
+    struct bu_list leader_segs_head;  /* list of 3d information for leaders specified in 3d space */
+};
+
+struct annotation_label {
+    struct bu_list l;
+    gdt_symbol_t symbol;
+    struct bu_vls label_str;
+    char *font_name;
+    char *font_size;
+    char *font_style;
+    struct bu_color font_color;
+    annotation_placement_t vertical;
+    annotation_placement_t horizontal;
+    fastf_t offset;
+    point2d_t uv;
+    char *obj;			/* name of object used for relative positioning of label (if any) */
+    point_t *obj_pt;		/* point on target object to use as a relative calculating point for placement */
+    struct bu_list obj_arrows_list_head;	/**< @brief  list of obj_leaders associated with label (if any) */
+};
+
+struct rt_annotation_internal
+{
+    uint32_t magic;
+    point_t		V;			/**< @brief  vertex, start and end point of loop to be extruded */
+    vect_t		h;			/**< @brief  extrusion vector, may not be in (u_vec X v_vec) plane */
+    vect_t		u_vec;			/**< @brief  vector in U parameter direction */
+    vect_t		v_vec;			/**< @brief  vector in V parameter direction */
+    int			scale_mode;		/**< @brief  scale relative to view size, model size, none, etc... */
+    fastf_t 		scale_factor;           /**< @brief  numerical scale factor (if needed) */
+    fastf_t		thickness;		/**< @brief  physical thickness for raytracing (mm) */
+    int			view_aligned;
+    struct annotation_label *labels;		/**< @brief  either user supplied labels, format strings, or empty */
+    struct rt_sketch_internal	*skt;		/**< @brief  pointer to sketch holding label decoration (if any) - same plane as text plane */
+};
+
+/**
+ * Note that the u_vec and v_vec are not unit vectors, their magnitude
+ * and direction are used for scaling and rotation.
+ */
+#define RT_ANNOTATION_CK_MAGIC(_p)	BU_CKMAG(_p, RT_ANNOTATION_INTERNAL_MAGIC, "rt_annotation_internal")
+
 
 __END_DECLS
 

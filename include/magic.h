@@ -127,6 +127,7 @@
 #define RT_TOR_INTERNAL_MAGIC		0x9bffed87 /**< ???? */
 #define RT_VOL_INTERNAL_MAGIC		0x987ba1d0 /**< ?{?? */
 #define RT_PNTS_INTERNAL_MAGIC          0x706e7473 /**< pnts */
+#define RT_ANNOTATION_INTERNAL_MAGIC    0x616e6e6f /**< anno */
 
 /* n-manifold geometry */
 

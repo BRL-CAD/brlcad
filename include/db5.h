@@ -160,6 +160,7 @@ struct db5_ondisk_header {
 #define DB5_MINORTYPE_BRLCAD_CONSTRAINT		39
 
 #define DB5_MINORTYPE_BRLCAD_REVOLVE		40
+#define DB5_MINORTYPE_BRLCAD_ANNOTATION		41
 
 /* Uniform-array binary */
 #define DB5_MINORTYPE_BINU_WID_MASK		0x30
