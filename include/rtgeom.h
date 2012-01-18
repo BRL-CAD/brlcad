@@ -809,6 +809,9 @@ struct obj_leader {
     char *obj;			/* name of object used as leader destination */
     point_t *obj_pt;		/* point on target object to use as a relative calculating point for placement */
     fastf_t offset;
+    int label_head_style;
+    int obj_head_style;
+    int intermediate_head_style;
     annotation_placement_t vertical;
     annotation_placement_t horizontal;
     struct bu_list uvleader_segs_head;  /* list of 2d information for leaders specified in the label plane*/
