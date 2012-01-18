@@ -1,0 +1,26 @@
+Y14.5M-2009.ttf & WeldSymbols.ttf
+
+Copyright 2010 Peter Kanold
+These fonts are public domain freeware - copying & redistributing it is encouraged.
+You may use them in what ever personal or commercial way you would like. Credit to me if it is used
+in a commercial package would be nice but is not mandatory.
+
+This font follows the guideline of the ASME Y14.5M-2009 technical specification. Rather than reverse
+engineering this font you would likely be better off just going right to the standard for the complete
+font details.
+
+The font is specifically designed for use in geometric dimensioning & tolerancing. It is capable of 
+producing both boxed (basic) & unboxed feature control frames.  It includes some rudimentary surface 
+finish and welding symbols as well.
+
+Be aware that some programs allow only characters with ASCII values of 255 or less. Because of this
+I created the WeldSymbols.ttf font. It has the welding symbols with ASCII values of 255 or less.
+
+The font uses some unusual metrics to create boxes around characters. Rather than using separate
+characters for boxed and unboxed letters, the font uses special characters to box the preceding letter.
+The special characters are “_” [low line], “~” [tilda] and “`” [accent grave]. There are other characters 
+that control the start, transition and end of boxed characters these include “{” [left curly bracket] , 
+“|” [vertical line] ,”}” [right curly bracket] , ”æ” [latin ae] ”ç” [latin c with cedilla] , 
+”è” [latin e with grave] among others. 
+
+Source:  http://p-00-kanold.com/?page_id=7
