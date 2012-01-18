@@ -773,7 +773,10 @@
 # Group Name,Attr Name,Value1,Value2,...,ValueN
 #
 ::itcl::body AttrGroupsDisplayUtility::readAttrGroups {_file} {
-    set fh [open $_file r]
+    if {[catch {open $_file r} fh]} {
+	return
+    }
+
     set data [read $fh]
     close $fh
     set lines [split $data "\n"]
@@ -815,7 +818,10 @@
 # ATTR2,ATTRVAL2,rid1,rid2, ... ridN
 #
 ::itcl::body AttrGroupsDisplayUtility::readAttrMap {_file} {
-    set fh [open $_file r]
+    if {[catch {open $_file r} fh]} {
+	return
+    }
+
     set data [read $fh]
     close $fh
     set lines [lsort -unique -dictionary [split $data "\n"]]
