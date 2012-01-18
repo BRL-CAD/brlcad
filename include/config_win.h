@@ -120,7 +120,6 @@
 #define creat _creat
 #define dup _dup
 #define dup2 _dup2
-#define fchmod _chmod
 /* #define filelength _filelength */
 #define isatty _isatty
 #define locking _locking

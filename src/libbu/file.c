@@ -300,7 +300,7 @@ bu_file_delete(const char *path)
 	    if (fstat(fd, &sb) == -1) {
 		break;
 	    }
-	    fchmod(fd, (sb.st_mode|S_IRWXU));
+	    bu_fchmod(fd, (sb.st_mode|S_IRWXU));
 	}
 
 	ret = (remove(path) == 0) ? 0 : 1;
@@ -315,7 +315,7 @@ bu_file_delete(const char *path)
 	/* failure */
 	if (retry > 1) {
 	    /* restore original file permission */
-	    fchmod(fd, sb.st_mode);
+	    bu_fchmod(fd, sb.st_mode);
 	}
 	close(fd);
 	return 0;

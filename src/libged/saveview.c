@@ -129,7 +129,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
 	perror(argv[1]);
 	return GED_ERROR;
     }
-    (void)bu_fchmod(fp, 0755);	/* executable */
+    (void)bu_fchmod_stream(fp, 0755);	/* executable */
 
     if (!gedp->ged_wdbp->dbip->dbi_filename) {
 	bu_log("Error: geometry file is not specified\n");

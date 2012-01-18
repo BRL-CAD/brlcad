@@ -111,7 +111,7 @@ get_args(int argc, char **argv)
 	    bu_log("fb-png: cannot open \"%s\" for writing\n", file_name);
 	    return 0;
 	}
-	(void)bu_fchmod(outfp, 0444);
+	(void)bu_fchmod_stream(outfp, 0444);
     }
 
     if (argc > ++bu_optind)

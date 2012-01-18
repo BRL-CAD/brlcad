@@ -5872,7 +5872,8 @@ BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_next(struct bu_hash_record *r
 
 /**
  */
-BU_EXPORT extern int bu_fchmod(FILE *fp, unsigned long pmode);
+BU_EXPORT extern int bu_fchmod(int fd, unsigned long pmode);
+BU_EXPORT extern int bu_fchmod_stream(FILE *fp, unsigned long pmode);
 
 /** @file libbu/argv.c
  *

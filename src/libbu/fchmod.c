@@ -131,15 +131,11 @@ GetFileNameFromHandle(HANDLE hFile, char filepath[])
 
 
 int
-bu_fchmod(FILE *fp,
+bu_fchmod(int fd,
 	  unsigned long pmode)
 {
-    if (UNLIKELY(!fp)) {
-	return 0;
-    }
-
 #ifdef HAVE_FCHMOD
-    return fchmod(fileno(fp), (mode_t)pmode);
+    return fchmod(fd, (mode_t)pmode);
 #else
     /* Presumably Windows, so get dirty.  We can call chmod() instead
      * of fchmod(), but that means we need to know the file name.
@@ -152,12 +148,23 @@ bu_fchmod(FILE *fp,
      */
     {
 	char filepath[MAXPATHLEN+1];
-	int fd = fileno(fp);
 	HANDLE h = (HANDLE)_get_osfhandle(fd);
 	GetFileNameFromHandle(h, filepath);
 	return chmod(filepath, pmode);
     }
 #endif
+}
+
+
+int
+bu_fchmod_stream(FILE *fp,
+	  unsigned long pmode)
+{
+    if (UNLIKELY(!fp)) {
+	return 0;
+    }
+
+    return bu_fchmod(fileno(fp), pmode);
 }
 
 

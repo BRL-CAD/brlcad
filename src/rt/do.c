@@ -934,7 +934,7 @@ do_frame(int framenumber)
     if (outfp != NULL) {
 	/* Protect finished product */
 	if (outputfile != (char *)0)
-	    (void)bu_fchmod(outfp, 0444);
+	    (void)bu_fchmod_stream(outfp, 0444);
 
 	(void)fclose(outfp);
 	outfp = NULL;
