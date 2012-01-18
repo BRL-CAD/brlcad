@@ -9,7 +9,8 @@ noinst_PROGRAMS = \
 	test_progname \
 	test_quote \
 	test_timer \
-	test_vls
+	test_vls \
+	test_sscanf
 
 libbu_nil_la_SOURCES = \
 	argv.c \
@@ -77,6 +78,7 @@ libbu_nil_la_SOURCES = \
 	rb_walk.c \
 	semaphore.c \
 	simd.c \
+	sscanf.c \
 	str.c \
 	tcl.c \
 	temp.c \
@@ -128,6 +130,11 @@ test_quote_LDADD = \
 
 test_vls_SOURCES = test_vls.c
 test_vls_LDADD = \
+	libbu.la \
+	${BU_LIBS}
+
+test_sscanf_SOURCES = test_sscanf.c
+test_sscanf_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 

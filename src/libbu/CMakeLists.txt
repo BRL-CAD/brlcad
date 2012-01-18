@@ -74,9 +74,10 @@ set(LIBBU_SOURCES
     rb_rotate.c
     rb_search.c
     rb_walk.c
-	 realpath.c
+    realpath.c
     semaphore.c
     simd.c
+    sscanf.c
     str.c
     tcl.c
     temp.c
@@ -121,6 +122,9 @@ target_link_libraries(test_timer libbu)
 
 add_executable(test_vls test_vls.c)
 target_link_libraries(test_vls libbu)
+
+add_executable(test_sscanf test_sscanf.c)
+target_link_libraries(test_sscanf libbu)
 
 set(bu_MAN3
   htond.3
