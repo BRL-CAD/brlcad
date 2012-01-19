@@ -63,8 +63,8 @@ echo "testing mged commands..."
 
 # make an almost empty database to make sure mged runs
 rm -f mged.g
-$MGED -c > mged.log 2>&1 <<EOF
-opendb mged.g y
+# opendb no longer exists at the moment
+$MGED -c mged.g > mged.log 2>&1 <<EOF
 in t.s sph 0 0 0 1
 r t.r u t.s
 g all t.r
@@ -77,10 +77,14 @@ if test ! -f mged.g ; then
 fi
 
 # collect all current commands
-cmds="`$MGED -c mged.g ? 2>&1 | grep -v Using`"
+# needto protect the '?' all of a sudden
+cmds="`$MGED -c mged.g '?' 2>&1 | grep -v Using`"
 help="`$MGED -c mged.g help 2>&1 | grep -v Using`"
-# cmds="$cmds `$MGED -c mged.g ?lib 2>&1`"
-# cmds="$cmds `$MGED -c mged.g ?devel 2>&1`"
+#echo "cmds: $cmds"
+#echo "help: $help"
+#echo "DEBUG exit"
+#exit
+
 
 # test all commands
 FAILED=0
@@ -156,23 +160,22 @@ else
 fi
 
 # clean up
-# remove test databases
-tgms="mged.g"
-for t in $tgms ; do
-  if test -f $t ; then
-    rm $t
-  fi
-done
-# remove test files
-tfils="t.solids t.regions"
-for t in $tfils ; do
-  if test -f $t ; then
-    rm $t
-  fi
-done
-
-
-
+# remove test databases (but only if no failure)
+if test $FAILED -eq 0 ; then
+    tgms="mged.g"
+    for t in $tgms ; do
+        if test -f $t ; then
+            rm $t
+        fi
+    done
+    # remove test files
+    tfils="t.solids t.regions"
+    for t in $tfils ; do
+        if test -f $t ; then
+            rm $t
+        fi
+    done
+fi
 
 exit $FAILED
 
