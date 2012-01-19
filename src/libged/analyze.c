@@ -26,6 +26,9 @@
 #include "common.h"
 
 #include <math.h>
+#include <string.h>
+#include <assert.h>
+
 #include "bio.h"
 
 #include "bu.h"
@@ -35,7 +38,6 @@
 #include "rtgeom.h"
 
 #include "./ged_private.h"
-
 
 /* Conversion factor for Gallons to cubic millimeters */
 #define GALLONS_TO_MM3 3785411.784
@@ -71,6 +73,558 @@ static const int nedge[5][24] = {
     {0, 1, 1, 2, 2, 3, 0, 3, 0, 4, 4, 5, 1, 5, 5, 6, 6, 7, 4, 7, 3, 7, 2, 6},			/* ARB8 */
 };
 
+/* structures and subroutines for analyze pretty printing */
+
+#define FBUFSIZ 100
+#define NFIELDS   9
+#define NROWS    12
+#define NOT_A_PLANE -1
+typedef struct row_field
+{
+  int  nchars;
+  char buf[FBUFSIZ];
+} field_t;
+
+typedef struct table_row
+{
+  int nfields;
+  field_t fields[NFIELDS];
+} row_t;
+
+typedef struct table
+{
+  int nrows;
+  row_t rows[NROWS];
+} table_t;
+
+void get_dashes(field_t *f, const int ndashes)
+{
+  int i;
+  f->buf[0] = '\0';
+  for (i = 0; i < ndashes; ++i) {
+    strcat(f->buf, "-");
+  }
+  f->nchars = ndashes;
+}
+
+void print_volume_table(struct ged *gedp
+                        , const fastf_t tot_vol
+                        , const fastf_t tot_area
+                        , const fastf_t tot_gallons
+                        )
+{
+
+/* table format
+
+    +------------------------------------+
+    | Volume       = 7999999999.99999905 |
+    | Surface Area =   24000000.00000000 |
+    | Gallons      =       2113.37641887 |
+    +------------------------------------+
+
+*/
+    /* track actual table column widths */
+    /* this table has 1 column (plus a name column) */
+    int maxwidth[2] = {0, 0};
+    field_t dashes;
+    char* fnames[3] = {"Volume",
+                       "Surface Area",
+                       "Gallons"};
+    int indent = 4; /* number spaces to indent the table */
+    int table_width_chars;
+    table_t table;
+    int i, nd, field;
+
+    table.nrows = 3;
+    for (i = 0; i < table.nrows; ++i) {
+        double val;
+
+        /* field 0 */
+        field = 0;
+        table.rows[i].fields[0].nchars = sprintf(table.rows[i].fields[field].buf, "%s",
+                                                 fnames[i]);
+        if (maxwidth[field] < table.rows[i].fields[field].nchars)
+            maxwidth[field] = table.rows[i].fields[field].nchars;
+
+        if (i == 0) {
+            val = tot_vol;
+        } else if (i == 1) {
+            val = tot_area;
+        } else if (i == 2) {
+            val = tot_gallons;
+        }
+
+        /* field 1 */
+        field = 1;
+        table.rows[i].fields[1].nchars = sprintf(table.rows[i].fields[field].buf, "%10.8f",
+                                                 val);
+        if (maxwidth[field] < table.rows[i].fields[field].nchars)
+            maxwidth[field] = table.rows[i].fields[field].nchars;
+    }
+
+    /* get total table width */
+    table_width_chars  = maxwidth[0] + maxwidth[1];
+    table_width_chars += 2 + 2; /* 2 chars at each end of a row */
+    table_width_chars += 3; /* ' = ' between the two fields of a row */
+
+    /* header row 1 */
+    nd = table_width_chars - 4;
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "%-*.*s+-%-*.*s-+\n",
+                  indent, indent, " ",
+                  nd, nd, dashes.buf);
+
+    /* the three data rows */
+    for (i = 0; i < table.nrows; ++i) {
+#if 1
+        char tbuf[FBUFSIZ];
+        sprintf(tbuf, "%-*.*s| %-*.*s = %*.*s |\n",
+                indent, indent, " ",
+                maxwidth[0], maxwidth[0], table.rows[i].fields[0].buf,
+                maxwidth[1], maxwidth[1], table.rows[i].fields[1].buf);
+        bu_vls_printf(gedp->ged_result_str, "%s", tbuf);
+#else
+        /* bu_vls_printf can't handle this at the moment */
+        bu_vls_printf(gedp->ged_result_str, "%-*.*s| %-*.*s = %*.*s |\n",
+                      indent, indent, " ",
+                      maxwidth[0], maxwidth[0], table.rows[i].fields[0].buf,
+                      maxwidth[1], maxwidth[1], table.rows[i].fields[1].buf);
+#endif
+    }
+
+    /* closing table row */
+    bu_vls_printf(gedp->ged_result_str, "%-*.*s+-%-*.*s-+\n",
+                  indent, indent, " ",
+                  nd, nd, dashes.buf);
+
+}
+
+void print_edges_table(struct ged *gedp, table_t *table)
+{
+
+/* table header
+
+   +--------------------+--------------------+--------------------+--------------------+
+   | EDGE          LEN  | EDGE          LEN  | EDGE          LEN  | EDGE          LEN  |
+   +--------------------+--------------------+--------------------+--------------------+
+
+*/
+
+    int i; //j, k
+    int tcol, ntcols, nd, nrow, nrows;
+    int maxwidth[] = {0, 0, 0,
+                      0, 0, 0,
+                      0, 0};
+    int indent = 2;
+    field_t dashes;
+    char EDGE[] = {"EDGE"};
+    int elen    = strlen(EDGE);
+    char LEN[]  = {"LENGTH"};
+    int llen    = strlen(LEN);
+    char buf[FBUFSIZ];
+
+    /* put four edges per row making 8 columns */
+    /* this table has 8 columns per row: 2 columns per edge; 4 edges per row  */
+    ntcols = 8;
+    //bu_vls_printf(gedp->ged_result_str, " ");
+
+    /* collect max table column widths */
+    tcol = 0;
+    for (i = 0; i < table->nrows; ++i) {
+        /* field 0 */
+        int field = 0;
+        if (maxwidth[tcol] < table->rows[i].fields[field].nchars)
+            maxwidth[tcol] = table->rows[i].fields[field].nchars;
+        if (maxwidth[tcol] < elen)
+            maxwidth[tcol] = elen;
+
+        /* field 1 */
+        field = 1;
+        if (maxwidth[tcol+1] < table->rows[i].fields[field].nchars)
+            maxwidth[tcol+1] = table->rows[i].fields[field].nchars;
+        if (maxwidth[tcol] < llen)
+            maxwidth[tcol] = llen;
+
+        /* iterate on columns */
+        tcol += 2;
+        tcol = tcol > 6 ? 0 : tcol;
+    }
+
+    /* header row 1 */
+    /* print dashes in 4 sets */
+    nd = maxwidth[0] + maxwidth[1] + 3; /* 1 space between numbers and one at each end */
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "%-*.*s+%-*.*s",
+                  indent, indent, " ",
+                  nd, nd, dashes.buf);
+    nd = maxwidth[2] + maxwidth[3] + 3; /* 1 space between numbers and one at each end */
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "+%-*.*s",
+                  nd, nd, dashes.buf);
+    nd = maxwidth[4] + maxwidth[5] + 3; /* 1 space between numbers and one at each end */
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "+%-*.*s",
+                  nd, nd, dashes.buf);
+    nd = maxwidth[6] + maxwidth[7] + 3; /* 1 space between numbers and one at each end */
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "+%-*.*s+\n",
+                  nd, nd, dashes.buf);
+
+    /* header row 2 */
+    /* print titles in 4 sets */
+
+#if 1
+    /* using sprintf because bu_vls_printf is broken for complex formats */
+    sprintf(buf, "%-*.*s| %-*.*s %*.*s ",
+            indent, indent, " ",
+            maxwidth[0], maxwidth[0], EDGE,
+            maxwidth[1], maxwidth[1], LEN);
+    bu_vls_printf(gedp->ged_result_str, "%s", buf);
+
+    sprintf(buf, "| %-*.*s %*.*s ",
+            maxwidth[2], maxwidth[2], EDGE,
+            maxwidth[3], maxwidth[3], LEN);
+    bu_vls_printf(gedp->ged_result_str, "%s", buf);
+
+    sprintf(buf, "| %-*.*s %*.*s ",
+            maxwidth[4], maxwidth[4], EDGE,
+            maxwidth[5], maxwidth[5], LEN);
+    bu_vls_printf(gedp->ged_result_str, "%s", buf);
+
+    sprintf(buf, "| %-*.*s %*.*s |\n",
+            maxwidth[6], maxwidth[6], EDGE,
+            maxwidth[7], maxwidth[7], LEN);
+    bu_vls_printf(gedp->ged_result_str, "%s", buf);
+
+#elif 0
+    /* bu_vls_printf can't handle this at the moment */
+    bu_vls_printf(gedp->ged_result_str, "%-*.*s| %-*.*s %*.*s ",
+                  indent, indent, " ",
+                  maxwidth[0], maxwidth[0], EDGE,
+                  maxwidth[1], maxwidth[1], LEN);
+    bu_vls_printf(gedp->ged_result_str, "| %-*.*s %*.*s ",
+                  maxwidth[2], maxwidth[2], EDGE,
+                  maxwidth[3], maxwidth[3], LEN);
+    bu_vls_printf(gedp->ged_result_str, "| %-*.*s %*.*s ",
+                  maxwidth[4], maxwidth[4], EDGE,
+                  maxwidth[5], maxwidth[5], LEN);
+    bu_vls_printf(gedp->ged_result_str, "| %-*.*s %*.*s |\n",
+                  maxwidth[6], maxwidth[6], EDGE,
+                  maxwidth[7], maxwidth[7], LEN);
+#endif
+
+    /* header row 3 */
+    /* print dashes in 4 sets */
+    nd = maxwidth[0] + maxwidth[1] + 3; /* 1 space between numbers and one at each end */
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "%-*.*s+%-*.*s",
+                  indent, indent, " ",
+                  nd, nd, dashes.buf);
+    nd = maxwidth[2] + maxwidth[3] + 3; /* 1 space between numbers and one at each end */
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "+%-*.*s",
+                  nd, nd, dashes.buf);
+    nd = maxwidth[4] + maxwidth[5] + 3; /* 1 space between numbers and one at each end */
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "+%-*.*s",
+                  nd, nd, dashes.buf);
+    nd = maxwidth[6] + maxwidth[7] + 3; /* 1 space between numbers and one at each end */
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "+%-*.*s+\n",
+                  nd, nd, dashes.buf);
+
+    /* print the data lines */
+    /* collect max table column widths */
+    tcol = 0;
+    nrow = 0;
+    for (i = 0; i < table->nrows; ++i) {
+
+        if (tcol == 0) {
+          /* need to start a row */
+          sprintf(buf, "%-*.*s|",
+                  indent, indent, " ");
+          bu_vls_printf(gedp->ged_result_str, "%s", buf);
+        }
+
+        /* data in sets of two */
+        /* field 0 */
+        int field = 0;
+        /* using sprintf because bu_vls_printf is broken for complex formats */
+        sprintf(buf, " %-*.*s",
+                maxwidth[tcol], maxwidth[tcol], table->rows[i].fields[field].buf);
+        bu_vls_printf(gedp->ged_result_str, "%s", buf);
+
+        /* field 1 */
+        field = 1;
+        /* using sprintf because bu_vls_printf is broken for complex formats */
+        sprintf(buf, " %-*.*s |",
+                maxwidth[tcol+1], maxwidth[tcol+1], table->rows[i].fields[field].buf);
+        bu_vls_printf(gedp->ged_result_str, "%s", buf);
+
+        /* iterate on columns */
+        tcol += 2;
+
+        if (tcol > 6) {
+          /* time for a newline to end the row */
+          bu_vls_printf(gedp->ged_result_str, "\n");
+          tcol = 0;
+          ++nrow;
+        }
+    }
+
+    /* we may have a row to finish */
+    nrows = table->nrows % 4;
+    if (nrows) {
+        assert(tcol < 8);
+
+        /* write blanks */
+        while (tcol < 7) {
+
+            /* data in sets of two */
+            /* field 0 */
+            int field = 0;
+            /* using sprintf because bu_vls_printf is broken for complex formats */
+            sprintf(buf, " %-*.*s",
+                    maxwidth[tcol], maxwidth[tcol], " ");
+            bu_vls_printf(gedp->ged_result_str, "%s", buf);
+
+            /* field 1 */
+            field = 1;
+            /* using sprintf because bu_vls_printf is broken for complex formats */
+            sprintf(buf, " %-*.*s |",
+                    maxwidth[tcol+1], maxwidth[tcol+1], " ");
+            bu_vls_printf(gedp->ged_result_str, "%s", buf);
+
+            /* iterate on columns */
+            tcol += 2;
+
+            if (tcol > 6) {
+              /* time for a newline to end the row */
+              bu_vls_printf(gedp->ged_result_str, "\n");
+            }
+        }
+    }
+
+    /* close the table */
+    /* print dashes in 4 sets */
+    nd = maxwidth[0] + maxwidth[1] + 3; /* 1 space between numbers and one at each end */
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "%-*.*s+%-*.*s",
+                  indent, indent, " ",
+                  nd, nd, dashes.buf);
+    nd = maxwidth[2] + maxwidth[3] + 3; /* 1 space between numbers and one at each end */
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "+%-*.*s",
+                  nd, nd, dashes.buf);
+    nd = maxwidth[4] + maxwidth[5] + 3; /* 1 space between numbers and one at each end */
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "+%-*.*s",
+                  nd, nd, dashes.buf);
+    nd = maxwidth[6] + maxwidth[7] + 3; /* 1 space between numbers and one at each end */
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "+%-*.*s+\n",
+                  nd, nd, dashes.buf);
+}
+
+void print_faces_table(struct ged *gedp, table_t *table)
+{
+
+/* table header
+
+   +------+-----------------------------+--------------------------------------------------+-----------------+
+   | FACE |      ROT           FB       |                  PLANE EQUATION                  |   SURFACE AREA  |
+   +------+-----------------------------+--------------------------------------------------+-----------------+
+
+*/
+
+    /* track actual table column widths */
+    /* this table has 8 columns */
+    int maxwidth[8] = {0, 0, 0,
+                       0, 0, 0,
+                       0, 0};
+    int i, j;
+    int c0, h1a, h1b, h1c;
+    int h2a, h2b, h2c;
+    int c2, c2a, c2b, c2c;
+    int f7, f7a, f7b, f7c;
+    int nd, tnd;
+    field_t dashes;
+    char ROT[] = {"ROT"};
+    char FB[]  = {"FB"};
+    char PA[]  = {"PLANE EQUATION"};
+    char SA[]  = {"SURFACE AREA"};
+
+    /* get max fields widths */
+    for (i = 0; i < table->nrows; ++i) {
+        for (j = 0; j < table->rows[i].nfields; ++j) {
+            if (table->rows[i].fields[j].nchars > maxwidth[j])
+                maxwidth[j] = table->rows[i].fields[j].nchars;
+      }
+    }
+
+    /* blank line following previous table */
+    bu_vls_printf(gedp->ged_result_str, "\n");
+
+    /* get max width of header columns (not counting single space on either side) */
+    c0 = maxwidth[0] > 4 ? maxwidth[0] : 4;
+
+    /* print "ROT" in center of field 1 space */
+    h1b = strlen(ROT);
+    h1a = (maxwidth[1] - h1b)/2;
+    h1c = (maxwidth[1] - h1b - h1a);
+
+    /* print "FB"  in center of field 2 space  */
+    h2b = strlen(FB);
+    h2a = (maxwidth[2] - h2b)/2;
+    h2c = (maxwidth[2] - h2b - h2a);
+
+    /* get width of subcolumns of header column 2 */
+    /* print "PLANE EQUATION" in center of columns 2 space  */
+    c2 = maxwidth[3] + maxwidth[4] + maxwidth[5] + maxwidth[6] + 3; /* 3 spaces between fields */
+    c2b = strlen(PA);
+    c2a = (c2 - c2b)/2;
+    c2c = (c2 - c2b - c2a);
+
+    /* print "SURFACE AREA" in center of field 7 space  */
+    f7b = strlen(SA);
+    f7  = maxwidth[7] > f7b ? maxwidth[7] : f7b;
+    f7a = (f7 - f7b)/2;
+    f7c = (f7 - f7b - f7a);
+
+    /* print the pieces */
+
+    /* header row 1 */
+    bu_vls_printf(gedp->ged_result_str, "+-");
+    nd = c0; tnd = nd;
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "%-*.*s",
+                  nd, nd, dashes.buf);
+    bu_vls_printf(gedp->ged_result_str, "-+-");
+    nd = h1a + h1b + h1c + 1 + h2a + h2b + h2c; tnd += nd + 3;
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "%*.*s",
+                  nd, nd, dashes.buf);
+    bu_vls_printf(gedp->ged_result_str, "-+-");
+    nd = c2a + c2b + c2c; tnd += nd + 3;
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "%*.*s",
+                  nd, nd, dashes.buf);
+    bu_vls_printf(gedp->ged_result_str, "-+-");
+    nd = f7a + f7b + f7c; tnd += nd + 3;
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "%*.*s",
+                  nd, nd, dashes.buf);
+    bu_vls_printf(gedp->ged_result_str, "-+\n");
+
+    /* header row 2 */
+    bu_vls_printf(gedp->ged_result_str, "| ");
+
+    bu_vls_printf(gedp->ged_result_str, "%-*.*s", c0, c0, "FACE");
+
+    bu_vls_printf(gedp->ged_result_str, " | ");
+
+
+
+    bu_vls_printf(gedp->ged_result_str, "%*.*s", h1a, h1a, " ");
+
+    bu_vls_printf(gedp->ged_result_str, "%*.*s", h1b, h1b, ROT);
+
+    bu_vls_printf(gedp->ged_result_str, "%*.*s", h1c+h2a, h1c+h2a, " ");
+
+    bu_vls_printf(gedp->ged_result_str, "%*.*s", h2b, h2b, FB);
+
+    bu_vls_printf(gedp->ged_result_str, "%*.*s ", h2c, h2c, " ");
+
+
+    bu_vls_printf(gedp->ged_result_str, " | ");
+
+
+    bu_vls_printf(gedp->ged_result_str, "%*.*s", c2a, c2a, " ");
+
+    bu_vls_printf(gedp->ged_result_str, "%*.*s", c2b, c2b, PA);
+
+    bu_vls_printf(gedp->ged_result_str, "%*.*s", c2c, c2c, " ");
+
+
+
+    bu_vls_printf(gedp->ged_result_str, " | ");
+
+    bu_vls_printf(gedp->ged_result_str, "%*.*s", f7a, f7a, " ");
+
+    bu_vls_printf(gedp->ged_result_str, "%*.*s", f7b, f7b, SA);
+
+    bu_vls_printf(gedp->ged_result_str, "%*.*s", f7c, f7c, " ");
+
+    bu_vls_printf(gedp->ged_result_str, " |\n");
+
+    /* header row 3 */
+    bu_vls_printf(gedp->ged_result_str, "+-");
+    nd = c0; tnd = nd;
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "%-*.*s",
+                  nd, nd, dashes.buf);
+    bu_vls_printf(gedp->ged_result_str, "-+-");
+    nd = h1a + h1b + h1c + 1 + h2a + h2b + h2c; tnd += nd + 3;
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "%*.*s",
+                  nd, nd, dashes.buf);
+    bu_vls_printf(gedp->ged_result_str, "-+-");
+    nd = c2a + c2b + c2c; tnd += nd + 3;
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "%*.*s",
+                  nd, nd, dashes.buf);
+    bu_vls_printf(gedp->ged_result_str, "-+-");
+    nd = f7a + f7b + f7c; tnd += nd + 3;
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "%*.*s",
+                  nd, nd, dashes.buf);
+    bu_vls_printf(gedp->ged_result_str, "-+\n");
+
+    /* output table data rows */
+    for (i = 0; i < table->nrows; ++i) {
+        /* may not have a row with data */
+        if (table->rows[i].nfields == 0)
+            continue;
+        if (table->rows[i].nfields == NOT_A_PLANE)
+            bu_vls_printf(gedp->ged_result_str, "***NOT A PLANE ***");
+
+        bu_vls_printf(gedp->ged_result_str, "|");
+        for (j = 0; j < table->rows[i].nfields; ++j) {
+            assert(table->rows[i].fields[j].buf);
+            bu_vls_printf(gedp->ged_result_str, " %*.*s",
+                          maxwidth[j], maxwidth[j],
+                          table->rows[i].fields[j].buf);
+            /* do we need a separator? */
+            if (j == 0 || j == 2 || j == 6 || j == 7)
+              bu_vls_printf(gedp->ged_result_str, " |");
+        }
+        /* close the row */
+        bu_vls_printf(gedp->ged_result_str, "\n");
+    }
+
+    /* close the table with the ender row */
+    bu_vls_printf(gedp->ged_result_str, "+-");
+    nd = c0; tnd = nd;
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "%-*.*s",
+                  nd, nd, dashes.buf);
+    bu_vls_printf(gedp->ged_result_str, "-+-");
+    nd = h1a + h1b + h1c + 1 + h2a + h2b + h2c; tnd += nd + 3;
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "%*.*s",
+                  nd, nd, dashes.buf);
+    bu_vls_printf(gedp->ged_result_str, "-+-");
+    nd = c2a + c2b + c2c; tnd += nd + 3;
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "%*.*s",
+                  nd, nd, dashes.buf);
+    bu_vls_printf(gedp->ged_result_str, "-+-");
+    nd = f7a + f7b + f7c; tnd += nd + 3;
+    get_dashes(&dashes, nd);
+    bu_vls_printf(gedp->ged_result_str, "%*.*s",
+                  nd, nd, dashes.buf);
+    bu_vls_printf(gedp->ged_result_str, "-+\n");
+}
 
 /*
  * F I N D A N G
