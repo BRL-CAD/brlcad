@@ -58,6 +58,13 @@ MACRO(BRLCAD_INCLUDE_FILE filename var)
   endif(CONFIG_H_FILE AND ${var})
 ENDMACRO(BRLCAD_INCLUDE_FILE)
 
+MACRO(BRLCAD_INCLUDE_FILE_WINDOWS filename var)
+  CHECK_INCLUDE_FILES("windows.h;${filename}" ${var})
+  if(CONFIG_H_FILE AND ${var})
+     FILE(APPEND ${CONFIG_H_FILE} "#cmakedefine ${var} 1\n")
+  endif(CONFIG_H_FILE AND ${var})
+ENDMACRO(BRLCAD_INCLUDE_FILE_WINDOWS)
+
 MACRO(BRLCAD_INCLUDE_FILE_CXX filename var)
   CHECK_INCLUDE_FILE_CXX(${filename} ${var})
   if(CONFIG_H_FILE AND ${var})
