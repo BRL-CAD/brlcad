@@ -272,7 +272,7 @@ void print_edges_table(struct ged *gedp, table_t *table)
     /* print titles in 4 sets */
 
 #if 1
-    /* using sprintf because bu_vls_printf is broken for complex formats */
+    /* FIXME: using sprintf because bu_vls_printf is broken for complex formats */
     sprintf(buf, "%-*.*s| %-*.*s %*.*s ",
             indent, indent, " ",
             maxwidth[0], maxwidth[0], EDGE,
@@ -347,14 +347,14 @@ void print_edges_table(struct ged *gedp, table_t *table)
         /* data in sets of two */
         /* field 0 */
         int field = 0;
-        /* using sprintf because bu_vls_printf is broken for complex formats */
+        /* FIXME: using sprintf because bu_vls_printf is broken for complex formats */
         sprintf(buf, " %-*.*s",
                 maxwidth[tcol], maxwidth[tcol], table->rows[i].fields[field].buf);
         bu_vls_printf(gedp->ged_result_str, "%s", buf);
 
         /* field 1 */
         field = 1;
-        /* using sprintf because bu_vls_printf is broken for complex formats */
+        /* FIXME: using sprintf because bu_vls_printf is broken for complex formats */
         sprintf(buf, " %-*.*s |",
                 maxwidth[tcol+1], maxwidth[tcol+1], table->rows[i].fields[field].buf);
         bu_vls_printf(gedp->ged_result_str, "%s", buf);
@@ -379,16 +379,12 @@ void print_edges_table(struct ged *gedp, table_t *table)
         while (tcol < 7) {
 
             /* data in sets of two */
-            /* field 0 */
-            int field = 0;
-            /* using sprintf because bu_vls_printf is broken for complex formats */
+            /* FIXME: using sprintf because bu_vls_printf is broken for complex formats */
             sprintf(buf, " %-*.*s",
                     maxwidth[tcol], maxwidth[tcol], " ");
             bu_vls_printf(gedp->ged_result_str, "%s", buf);
 
-            /* field 1 */
-            field = 1;
-            /* using sprintf because bu_vls_printf is broken for complex formats */
+            /* FIXME: using sprintf because bu_vls_printf is broken for complex formats */
             sprintf(buf, " %-*.*s |",
                     maxwidth[tcol+1], maxwidth[tcol+1], " ");
             bu_vls_printf(gedp->ged_result_str, "%s", buf);
