@@ -58,7 +58,12 @@ IF(SH_EXEC)
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/red.sh ${CMAKE_SOURCE_DIR}
 		DEPENDS mged
 		)
+	ADD_CUSTOM_TARGET(vls-regress
+		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/vls.sh ${CMAKE_SOURCE_DIR}
+		DEPENDS test_vls
+		)
 	ADD_CUSTOM_TARGET(regress
+		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/weight.sh ${CMAKE_SOURCE_DIR}
 		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/mged.sh ${CMAKE_SOURCE_DIR}
 		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/moss.sh ${CMAKE_SOURCE_DIR}
 		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/lights.sh ${CMAKE_SOURCE_DIR}
@@ -73,7 +78,7 @@ IF(SH_EXEC)
 		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/flawfinder.sh ${CMAKE_SOURCE_DIR}
 		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/repository.sh ${CMAKE_SOURCE_DIR}
 		#COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/red.sh ${CMAKE_SOURCE_DIR}
-		DEPENDS rt mged pixdiff fast4-g g_diff g_qa rtweight iges-g g-iges asc2pix gencolor pix-png png-pix
+		DEPENDS test_vls rt mged pixdiff fast4-g g_diff g_qa rtweight iges-g g-iges asc2pix gencolor pix-png png-pix
 		)
 
 ENDIF(SH_EXEC)
@@ -107,7 +112,8 @@ CMAKEFILES(
 	solidspix.asc 
 	spdi.sh 
 	spdipix.asc 
-	testlib.c 
+	testlib.c
+	vls.sh
 	weight.sh
 	gcv
 	)
