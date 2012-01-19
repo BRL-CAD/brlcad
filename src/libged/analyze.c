@@ -379,11 +379,13 @@ void print_edges_table(struct ged *gedp, table_t *table)
         while (tcol < 7) {
 
             /* data in sets of two */
+            /* this is field 0 */
             /* FIXME: using sprintf because bu_vls_printf is broken for complex formats */
             sprintf(buf, " %-*.*s",
                     maxwidth[tcol], maxwidth[tcol], " ");
             bu_vls_printf(gedp->ged_result_str, "%s", buf);
 
+            /* this is field 1 */
             /* FIXME: using sprintf because bu_vls_printf is broken for complex formats */
             sprintf(buf, " %-*.*s |",
                     maxwidth[tcol+1], maxwidth[tcol+1], " ");
