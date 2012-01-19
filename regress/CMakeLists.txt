@@ -58,10 +58,10 @@ IF(SH_EXEC)
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/red.sh ${CMAKE_SOURCE_DIR}
 		DEPENDS mged
 		)
-	ADD_CUSTOM_TARGET(vls-regress
-		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/vls.sh ${CMAKE_SOURCE_DIR}
-		DEPENDS test_vls
-		)
+	#ADD_CUSTOM_TARGET(vls-regress
+	#	${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/vls.sh ${CMAKE_SOURCE_DIR}
+	#	DEPENDS test_vls
+	#	)
 	ADD_CUSTOM_TARGET(regress
 		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/weight.sh ${CMAKE_SOURCE_DIR}
 		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/mged.sh ${CMAKE_SOURCE_DIR}
@@ -113,7 +113,7 @@ CMAKEFILES(
 	spdi.sh 
 	spdipix.asc 
 	testlib.c
-	vls.sh
+	#vls.sh
 	weight.sh
 	gcv
 	)
