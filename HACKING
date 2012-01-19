@@ -809,7 +809,8 @@ To add tests to the test suite look at regress/weight.sh as an
 example.  It gets added to the automatic execution list by creating
 two target entries in the ./regress/CMakeLists.txt: one for running
 the test individually (e.g., make weight-regress) and one for running
-it with all the other tests (make regress).
+it with all the other tests (make regress).  Also added is the
+dependency of the tests on rtweight.
  
 
 Note that individual programs may be tested after a build without
