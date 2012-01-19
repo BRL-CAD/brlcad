@@ -56,6 +56,7 @@ test_vls(const char *fmt, ...)
 int
 main(int ac, char *av[])
 {
+    int n;
     printf("Testing vls\n");
 
     /* various types */
@@ -95,6 +96,11 @@ main(int ac, char *av[])
     test_vls("%#lf", 123.0);
     test_vls("he%#-12.10tullo", (ptrdiff_t)0x1234);
     test_vls("he%+-6.3ld%-+3.6dllo", 123, 321);
+
+    /* combinations, e.g., bug ID 3475562 */
+    /* left justify, right justify, in wider fields than the strings */
+    n = 2;
+    test_vls("|%-*.*s|%*.*s|", n, n, "t", n, n, "t");
 
     printf("%s: testing complete\n", av[0]);
     return 0;
