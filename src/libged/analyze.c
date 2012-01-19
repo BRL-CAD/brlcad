@@ -1017,8 +1017,10 @@ analyze_ell(struct ged *gedp, const struct rt_db_internal *ip)
 
     type = 0;
 
+    bu_vls_printf(gedp->ged_result_str, "\n");
+
     vol = 4.0 * M_PI * ma * mb * mc / 3.0;
-    bu_vls_printf(gedp->ged_result_str, "ELL Volume = %.8f (%.8f gal)",
+    bu_vls_printf(gedp->ged_result_str, "\nELL Volume = %.8f (%.8f gal)",
 		  vol*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
 		  vol/GALLONS_TO_MM3);
 
@@ -1235,7 +1237,7 @@ analyze_tgc(struct ged *gedp, const struct rt_db_internal *ip)
 	    area_top = area_base;
 	    area_side = 2.0 * M_PI * ma * mh;
 	    vol = M_PI * ma * ma * mh;
-	    bu_vls_printf(gedp->ged_result_str, "RCC ");
+	    bu_vls_printf(gedp->ged_result_str, "\nRCC\n");
 	    break;
 
 	case GED_ANAL_TRC:
@@ -1243,7 +1245,8 @@ analyze_tgc(struct ged *gedp, const struct rt_db_internal *ip)
 	    area_top = M_PI * mc * mc;
 	    area_side = M_PI * (ma+mc) * sqrt((ma-mc)*(ma-mc)+(mh*mh));
 	    vol = M_PI * mh * (ma*ma + mc*mc + ma*mc) / 3.0;
-	    bu_vls_printf(gedp->ged_result_str, "TRC ");
+
+	    bu_vls_printf(gedp->ged_result_str, "\nTRC\n");
 	    break;
 
 	case GED_ANAL_REC:
@@ -1252,13 +1255,15 @@ analyze_tgc(struct ged *gedp, const struct rt_db_internal *ip)
 	    /* approximate */
 	    area_side = 2.0 * M_PI * mh * sqrt(0.5 * (ma*ma + mb*mb));
 	    vol = M_PI * ma * mb * mh;
-	    bu_vls_printf(gedp->ged_result_str, "REC ");
+	    bu_vls_printf(gedp->ged_result_str, "\nREC\n");
 	    break;
 
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "\nTGC Cannot find areas and volume\n");
 	    return;
     }
+
+    bu_vls_printf(gedp->ged_result_str, "\n");
 
     /* print the results */
     bu_vls_printf(gedp->ged_result_str, "Surface Areas:  base(AxB)=%.8f  top(CxD)=%.8f  side=%.8f\n",
@@ -1329,6 +1334,8 @@ analyze_rpc(struct ged *gedp, const struct rt_db_internal *ip)
     area_body = .5*sqrt(r*r + 4.*b*b) + .25*r*r/b*arcsinh(2.*b/r);
     area_body *= 2.;
 
+    bu_vls_printf(gedp->ged_result_str, "\n");
+
     bu_vls_printf(gedp->ged_result_str, "Surface Areas:  front(BxR)=%.8f  top(RxH)=%.8f  body=%.8f\n",
 		  area_parab*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
 		  2*r*h*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
@@ -1370,6 +1377,8 @@ analyze_rhc(struct ged *gedp, const struct rt_db_internal *ip)
 	+ r*k*(r*r*c*c + 4.*k - r*r*c*c/k)*arcsinh((y)*sqrt(k)/c)
     area_body = 2.*(L_eval(r) - L_eval(0.));
 #endif
+
+    bu_vls_printf(gedp->ged_result_str, "\n");
 
     bu_vls_printf(gedp->ged_result_str, "Surface Areas:  front(BxR)=%.8f  top(RxH)=%.8f  body=%.8f\n",
 		  area_hyperb*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
@@ -1433,7 +1442,7 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 	    break;
 
 	default:
-	    bu_vls_printf(gedp->ged_result_str, "analyze: unable to process %s solid\n",
+	    bu_vls_printf(gedp->ged_result_str, "\nanalyze: unable to process %s solid\n",
 			  rt_functab[ip->idb_type].ft_name);
 	    break;
     }
