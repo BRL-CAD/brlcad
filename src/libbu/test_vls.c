@@ -60,58 +60,77 @@ test_vls(const char *fmt, ...)
 int
 main(int ac, char *av[])
 {
-    int status = 0; /* no falures */
+    int fails    = 0; /* track unexpected failures */
+    int expfails = 0; /* track expected failures */
     int n;
 
     printf("Testing vls\n");
 
     /* various types */
-    status += test_vls("");
-    status += test_vls("\n");
-    status += test_vls("hello");
-    status += test_vls("%s", "hello");
-    status += test_vls("%d", 123);
-    status += test_vls("%u", -123);
-    status += test_vls("%f %F", 1.23, -3.21);
-    status += test_vls("%e %E", 1.23, -3.21);
-    status += test_vls("%g %G", 1.23, -3.21);
-    status += test_vls("%x %X", 1.23, -3.21);
-    status += test_vls("%o", 1.23);
-    status += test_vls("%c%c%c", '1', '2', '3');
-    status += test_vls("%p", (void *)av);
-    status += test_vls("%%%d%%", ac);
+    printf("An empty string (\"\"):\n");
+    fails += test_vls("");
+
+    printf("A newline (\"\\n\"):\n");
+    fails += test_vls("\n");
+
+    fails += test_vls("hello");
+    fails += test_vls("%s", "hello");
+    fails += test_vls("%d", 123);
+    fails += test_vls("%u", -123);
+    fails += test_vls("%e %E", 1.23, -3.21);
+    fails += test_vls("%g %G", 1.23, -3.21);
+    fails += test_vls("%x %X", 1.23, -3.21);
+    fails += test_vls("%o", 1.23);
+    fails += test_vls("%c%c%c", '1', '2', '3');
+    fails += test_vls("%p", (void *)av);
+    fails += test_vls("%%%d%%", ac);
 
     /* various lengths */
-    status += test_vls("%hd %hhd", 123, -123);
-    status += test_vls("%ld %lld %Lu", 123, -123, -321.0);
-    status += test_vls("%zu %zd", (size_t)123, (ssize_t)-123);
-    status += test_vls("%jd %td", (intmax_t)123, (ptrdiff_t)-123);
+    fails += test_vls("%hd %hhd", 123, -123);
+    fails += test_vls("%zu %zd", (size_t)123, (ssize_t)-123);
+    fails += test_vls("%jd %td", (intmax_t)123, (ptrdiff_t)-123);
 
     /* various widths */
-    status += test_vls("he%10dllo", 123);
-    status += test_vls("he%-10ullo", 123);
-    status += test_vls("he%*so", 2, "ll");
+    fails += test_vls("he%10dllo", 123);
+    fails += test_vls("he%-10ullo", 123);
+    fails += test_vls("he%*so", 2, "ll");
 
     /* various precisions */
-    status += test_vls("he%.10dllo", 123);
-    status += test_vls("he%.-10ullo", 123);
-    status += test_vls("he%.*so", 2, "ll");
+    fails += test_vls("he%.10dllo", 123);
+    fails += test_vls("he%.-10ullo", 123);
+    fails += test_vls("he%.*so", 2, "ll");
 
     /* various flags */
-    status += test_vls("%010d", 123);
-    status += test_vls("%#-.10lx", 123);
-    status += test_vls("%#lf", 123.0);
-    status += test_vls("he%#-12.10tullo", (ptrdiff_t)0x1234);
-    status += test_vls("he%+-6.3ld%-+3.6dllo", 123, 321);
+    fails += test_vls("%010d", 123);
+    fails += test_vls("%#-.10lx", 123);
+    fails += test_vls("%#lf", 123.0);
+    fails += test_vls("he%#-12.10tullo", (ptrdiff_t)0x1234);
+    fails += test_vls("he%+-6.3ld%-+3.6dllo", 123, 321);
 
+
+    /* FAILING TESTS (make vls-regress) ================ */
+    printf("\nExpected failures (don't use in production code):\n");
+    /* from "various types" */
+    expfails += test_vls("%f %F", 1.23, -3.21);;
+    /* from "various lengths" */
+    expfails += test_vls("%ld %lld %Lu", 123, -123, -321.0);;
     /* combinations, e.g., bug ID 3475562 */
     /* left justify, right justify, in wider fields than the strings */
     n = 2;
-    status += test_vls("|%-*.*s|%*.*s|", n, n, "t", n, n, "t");
+    expfails += test_vls("|%-*.*s|%*.*s|", n, n, "t", n, n, "t");
 
     printf("%s: testing complete\n", av[0]);
 
-    return status;
+    if (fails != 0) {
+      /* as long as fails is < 127 the STATUS will be the number of unexped failures */
+      return fails;
+    }
+
+    /* output expected failures to stderr to be used for the
+       regression test script */
+    fprintf(stderr, "%d", expfails);
+
+    return 0;
 }
 
 
