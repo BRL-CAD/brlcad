@@ -211,7 +211,7 @@ void print_edges_table(struct ged *gedp, table_t *table)
 */
 
     int i; //j, k
-    int tcol, ntcols, nd, nrow, nrows;
+    int tcol, nd, nrow, nrows;
     int maxwidth[] = {0, 0, 0,
                       0, 0, 0,
                       0, 0};
@@ -225,8 +225,6 @@ void print_edges_table(struct ged *gedp, table_t *table)
 
     /* put four edges per row making 8 columns */
     /* this table has 8 columns per row: 2 columns per edge; 4 edges per row  */
-    ntcols = 8;
-    //bu_vls_printf(gedp->ged_result_str, " ");
 
     /* collect max table column widths */
     tcol = 0;
@@ -670,7 +668,8 @@ findang(fastf_t *angles, fastf_t *unitv)
 	else
 	    angles[3] = bn_radtodeg * acos(f);
     }  else
-	angles[3] = 0.0;
+           angles[3] = 0.0;
+
     if (unitv[Y] < 0)
 	angles[3] = 360.0 - angles[3];
 
@@ -681,7 +680,9 @@ findang(fastf_t *angles, fastf_t *unitv)
 /* Analyzes an arb face
  */
 static double
-analyze_face(struct ged *gedp, int face, fastf_t *center_pt, const struct rt_arb_internal *arb, int type, const struct bn_tol *tol)
+analyze_face(struct ged *gedp, int face, fastf_t *center_pt,
+             const struct rt_arb_internal *arb, int type,
+             const struct bn_tol *tol, row_t *row)
 
 
 /* reference center point */
@@ -689,7 +690,7 @@ analyze_face(struct ged *gedp, int face, fastf_t *center_pt, const struct rt_arb
 
 {
     int i, j, k;
-    int a, b, c, d;		/* 4 points of face to look at */
+    int a, b, c, d;	/* 4 points of face to look at */
     fastf_t angles[5];	/* direction cosines, rot, fb */
     fastf_t temp;
     fastf_t area[2], len[6];
@@ -702,14 +703,20 @@ analyze_face(struct ged *gedp, int face, fastf_t *center_pt, const struct rt_arb
     c = rt_arb_faces[type][face*4+2];
     d = rt_arb_faces[type][face*4+3];
 
-    if (a == -1)
+    if (a == -1) {
+        row->nfields = 0;
 	return 0;
+    }
 
     /* find plane eqn for this face */
     if (bn_mk_plane_3pts(plane, arb->pt[a], arb->pt[b],
 			 arb->pt[c], tol) < 0) {
+#if 1
 	bu_vls_printf(gedp->ged_result_str, "| %d%d%d%d |         ***NOT A PLANE***                                          |\n",
 		      a+1, b+1, c+1, d+1);
+#endif
+        /* this row has 1 special fields */
+        row->nfields = NOT_A_PLANE;
 	return 0;
     }
 
@@ -753,49 +760,57 @@ analyze_face(struct ged *gedp, int face, fastf_t *center_pt, const struct rt_arb
 	face_area += area[i];
     }
 
-    bu_vls_printf(gedp->ged_result_str, "| %4d |", prface[type][face]);
-    bu_vls_printf(gedp->ged_result_str, " %13.8f %13.8f | %11.8f %11.8f %11.8f %12.8f |",
-		  angles[3], angles[4],
-		  plane[X], plane[Y], plane[Z],
-		  plane[W]*gedp->ged_wdbp->dbip->dbi_base2local);
-    bu_vls_printf(gedp->ged_result_str, " %15.8f |\n",
-		  (area[0]+area[1])*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
+    /* don't printf, just sprintf! */
+    /* these rows have 8 fields */
+    row->nfields = 8;
+    row->fields[0].nchars = sprintf(row->fields[0].buf, "%4d", prface[type][face]);
+    row->fields[1].nchars = sprintf(row->fields[1].buf, "%10.8f", angles[3]);
+    row->fields[2].nchars = sprintf(row->fields[2].buf, "%10.8f", angles[4]);
+    row->fields[3].nchars = sprintf(row->fields[3].buf, "%10.8f", plane[X]);
+    row->fields[4].nchars = sprintf(row->fields[4].buf, "%10.8f", plane[Y]);
+    row->fields[5].nchars = sprintf(row->fields[5].buf, "%10.8f", plane[Z]);
+    row->fields[6].nchars = sprintf(row->fields[6].buf, "%10.8f",
+                                    plane[W]*gedp->ged_wdbp->dbip->dbi_base2local);
+    row->fields[7].nchars = sprintf(row->fields[7].buf, "%10.8f",
+                                    (area[0]+area[1])*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local );
+
     return face_area;
 }
 
 
 /* Analyzes arb edges - finds lengths */
 static void
-analyze_edge(struct ged *gedp, int edge, const struct rt_arb_internal *arb, int type)
+analyze_edge(struct ged *gedp, const int edge, const struct rt_arb_internal *arb,
+             const int type, row_t *row)
 {
-    int a, b;
     static vect_t v_temp;
-
-    a = nedge[type][edge*2];
-    b = nedge[type][edge*2+1];
+    int a = nedge[type][edge*2];
+    int b = nedge[type][edge*2+1];
 
     if (b == -1) {
 	/* fill out the line */
-	if ((a = edge%4) == 0)
+        if ((a = edge % 4) == 0) {
+            row->nfields = 0;
 	    return;
+        }
 	if (a == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "  |                    |                    |                    |\n  ");
+            row->nfields = 0;
 	    return;
 	}
 	if (a == 2) {
-	    bu_vls_printf(gedp->ged_result_str, "  |                    |                    |\n  ");
+            row->nfields = 0;
 	    return;
 	}
-	bu_vls_printf(gedp->ged_result_str, "  |                    |\n  ");
+        row->nfields = 0;
 	return;
     }
 
     VSUB2(v_temp, arb->pt[b], arb->pt[a]);
-    bu_vls_printf(gedp->ged_result_str, "  |   %d%d %12.8f",
-		  a+1, b+1, MAGNITUDE(v_temp)*gedp->ged_wdbp->dbip->dbi_base2local);
 
-    if (++edge%4 == 0)
-	bu_vls_printf(gedp->ged_result_str, "  |\n  ");
+    row->nfields = 2;
+    row->fields[0].nchars = sprintf(row->fields[0].buf, "%d%d", a + 1, b + 1);
+    row->fields[1].nchars = sprintf(row->fields[1].buf, "%10.8f",
+                                    MAGNITUDE(v_temp)*gedp->ged_wdbp->dbip->dbi_base2local);
 }
 
 
@@ -834,7 +849,6 @@ analyze_find_vol(int loc, struct rt_arb_internal *arb, struct bn_tol *tol)
     return vol;
 }
 
-
 /*
  * A R B _ A N A L
  */
@@ -849,6 +863,9 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
     int cgtype;		/* COMGEOM arb type: # of vertices */
     int type;
 
+    /* variables for pretty printing */
+    table_t table;      /* holds table data from child functions */
+
     /* find the specific arb type, in GIFT order. */
     if ((cgtype = rt_arb_std_type(ip, &gedp->ged_wdbp->wdb_tol)) == 0) {
 	bu_vls_printf(gedp->ged_result_str, "analyze_arb: bad ARB\n");
@@ -859,51 +876,76 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
 
     type = cgtype - 4;
 
+    /* to get formatting correct, we need to collect the actual string
+       lengths for each field BEFORE we start printing a table (fields
+       are allowed to overflow the stated printf field width) */
+
+    /* TABLE 1 =========================================== */
     /* analyze each face, use center point of arb for reference */
-    bu_vls_printf(gedp->ged_result_str,"\n-----------------------------------------------------------------------------------------------------------\n");
-    bu_vls_printf(gedp->ged_result_str, "| FACE |      ROT           FB       |                  PLANE EQUATION                  |   SURFACE AREA  |\n");
-    bu_vls_printf(gedp->ged_result_str, "|------|-----------------------------|--------------------------------------------------|-----------------|\n");
     rt_arb_centroid(center_pt, arb, cgtype);
 
-    for (i = 0; i < 6; i++)
-	tot_area += analyze_face(gedp, i, center_pt, arb, type, &gedp->ged_wdbp->wdb_tol);
+    /* collect table data */
+    table.nrows = 0;
+    for (i = 0; i < 6; i++) {
+      tot_area += analyze_face(gedp, i, center_pt, arb, type, &gedp->ged_wdbp->wdb_tol,
+                               &(table.rows[i]));
+      table.nrows += 1;
+    }
 
-    bu_vls_printf(gedp->ged_result_str, "-----------------------------------------------------------------------------------------------------------\n\n");
+    /* and print it */
+    print_faces_table(gedp, &table);
 
+    /* TABLE 2 =========================================== */
     /* analyze each edge */
-    bu_vls_printf(gedp->ged_result_str, "    -------------------------------------------------------------------------------------\n");
-    bu_vls_printf(gedp->ged_result_str, "    | EDGE          LEN  | EDGE          LEN  | EDGE          LEN  | EDGE          LEN  |\n");
-    bu_vls_printf(gedp->ged_result_str, "    |--------------------|--------------------|--------------------|--------------------|\n  ");
+
+    /* blank line following previous table */
+    bu_vls_printf(gedp->ged_result_str, "\n");
 
     /* set up the records for arb4's and arb6's */
+    /* also collect table data */
+    table.nrows = 0;
+    
     {
-	struct rt_arb_internal earb;
+	struct rt_arb_internal earb = *arb;	/* struct copy */
 
-	earb = *arb;		/* struct copy */
-	if (cgtype == 4) {
+        if (cgtype == 4) {
 	    VMOVE(earb.pt[3], earb.pt[4]);
 	} else if (cgtype == 6) {
 	    VMOVE(earb.pt[5], earb.pt[6]);
 	}
+
 	for (i = 0; i < 12; i++) {
-	    analyze_edge(gedp, i, &earb, type);
+            analyze_edge(gedp, i, &earb, type, &(table.rows[i]));
 	    if (nedge[type][i*2] == -1)
 		break;
+            table.nrows += 1;
 	}
     }
-    bu_vls_printf(gedp->ged_result_str, "  -------------------------------------------------------------------------------------\n\n");
 
+    print_edges_table(gedp, &table);
+
+    /* TABLE 3 =========================================== */
     /* find the volume - break arb8 into 6 arb4s */
+
+    /* blank line following previous table */
+    bu_vls_printf(gedp->ged_result_str, "\n");
+
     for (i = 0; i < 6; i++)
 	tot_vol += analyze_find_vol(i, arb, &gedp->ged_wdbp->wdb_tol);
 
-    bu_vls_printf(gedp->ged_result_str, "      -------------------------------------\n");
-    bu_vls_printf(gedp->ged_result_str, "      | Volume =       %18.8f |\n      | Surface Area = %18.8f |\n",
-		  tot_vol*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  tot_area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
-    bu_vls_printf(gedp->ged_result_str, "      | gal =          %18.8f |\n",
-		  tot_vol/GALLONS_TO_MM3);
-    bu_vls_printf(gedp->ged_result_str, "      -------------------------------------\n");
+    print_volume_table(gedp,
+                       tot_vol
+                       * gedp->ged_wdbp->dbip->dbi_base2local
+                       * gedp->ged_wdbp->dbip->dbi_base2local
+                       * gedp->ged_wdbp->dbip->dbi_base2local,
+
+                       tot_area
+                       * gedp->ged_wdbp->dbip->dbi_base2local
+                       * gedp->ged_wdbp->dbip->dbi_base2local,
+
+                       tot_vol/GALLONS_TO_MM3
+                       );
+
 }
 
 
@@ -1413,7 +1455,6 @@ ged_analyze(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
-
 
 /*
  * Local Variables:
