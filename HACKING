@@ -805,12 +805,16 @@ To perform a run of the test suite:
 
   make regress
 
-To add tests to the test suite look at regress/weight.sh as an
-example.  It gets added to the automatic execution list by creating
-two target entries in the ./regress/CMakeLists.txt: one for running
-the test individually (e.g., make weight-regress) and one for running
-it with all the other tests (make regress).  Also added is the
-dependency of the tests on rtweight.
+To add tests to the test suite look at regress/weight.sh (for an mged
+command) and regress/vls.h (for a utility function) as examples.  Each
+test gets added to the automatic execution list by creating two target
+entries in the ./regress/CMakeLists.txt: one for running the test
+individually (e.g., make weight-regress) and one for running it with
+all the other tests (make regress).  Also added are the dependencies
+of the tests on binary executable rtweight and test_vls, respectively.
+Note also that each added file in the regress directory must be added
+to the list in CMAKEFILES at the bottom of file
+./regress/CMakeLists.txt
  
 
 Note that individual programs may be tested after a build without
