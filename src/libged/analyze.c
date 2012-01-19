@@ -964,10 +964,27 @@ analyze_tor(struct ged *gedp, const struct rt_db_internal *ip)
     vol = 2.0 * M_PI * M_PI * r1 * r2 * r2;
     sur_area = 4.0 * M_PI * M_PI * r1 * r2;
 
+    bu_vls_printf(gedp->ged_result_str, "\n");
+
+    print_volume_table(gedp,
+                       vol
+                       * gedp->ged_wdbp->dbip->dbi_base2local
+                       * gedp->ged_wdbp->dbip->dbi_base2local
+                       * gedp->ged_wdbp->dbip->dbi_base2local,
+		       sur_area
+                       * gedp->ged_wdbp->dbip->dbi_base2local
+                       * gedp->ged_wdbp->dbip->dbi_base2local,
+                       vol/GALLONS_TO_MM3
+                       );
+
+#if 0
+    //OR Vol = %.8f (%.8f gal) Surface Area = %.8f\n",
+
     bu_vls_printf(gedp->ged_result_str, "TOR Vol = %.8f (%.8f gal) Surface Area = %.8f\n",
 		  vol*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
 		  vol/GALLONS_TO_MM3,
 		  sur_area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
+#endif
 
     return;
 }
@@ -1012,6 +1029,7 @@ analyze_ell(struct ged *gedp, const struct rt_db_internal *ip)
 		      sur_area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
 	return;
     }
+
     if (fabs(ma-mb) < .00001) {
 	/* A == B */
 	if (mc > ma) {
@@ -1057,6 +1075,7 @@ analyze_ell(struct ged *gedp, const struct rt_db_internal *ip)
 		bu_vls_printf(gedp->ged_result_str, "   Cannot find surface area\n");
 		return;
 	    }
+
     ecc = sqrt(major*major - minor*minor) / major;
     if (type == PROLATE) {
 	sur_area = 2.0 * M_PI * minor * minor +
