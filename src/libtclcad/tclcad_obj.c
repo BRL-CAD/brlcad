@@ -3337,6 +3337,12 @@ to_data_polygons(struct ged *gedp,
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
+    gdpsp->gdps_scale = gdvp->gdv_view->gv_scale;
+    VMOVE(gdpsp->gdps_origin, gdvp->gdv_view->gv_center);
+    MAT_COPY(gdpsp->gdps_rotation, gdvp->gdv_view->gv_rotation);
+    MAT_COPY(gdpsp->gdps_model2view, gdvp->gdv_view->gv_model2view);
+    MAT_COPY(gdpsp->gdps_view2model, gdvp->gdv_view->gv_view2model);
+
     if (BU_STR_EQUAL(argv[2], "target_poly")) {
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%llu", gdpsp->gdps_target_polygon_i);
