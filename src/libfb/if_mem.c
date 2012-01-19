@@ -76,6 +76,10 @@ mem_open(FBIO *ifp, const char *file, int width, int height)
     int mode;
     const char *cp;
     FBIO *fbp;
+    char modebuf[80];
+    char *mp;
+    int alpha;
+    struct modeflags *mfp;
 
     FB_CK_FBIO(ifp);
 
@@ -90,11 +94,6 @@ mem_open(FBIO *ifp, const char *file, int width, int height)
      * The default mode is zero.
      */
     mode = 0;
-
-	char modebuf[80];
-	char *mp;
-	int alpha;
-	struct modeflags *mfp;
 
 	if (strncmp(file, "/dev/mem", 8)) {
 	    /* How did this happen?? */
