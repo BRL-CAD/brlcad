@@ -1256,7 +1256,7 @@ analyze_tgc(struct ged *gedp, const struct rt_db_internal *ip)
 	    break;
 
 	default:
-	    bu_vls_printf(gedp->ged_result_str, "TGC Cannot find areas and volume\n");
+	    bu_vls_printf(gedp->ged_result_str, "\nTGC Cannot find areas and volume\n");
 	    return;
     }
 
