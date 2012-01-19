@@ -811,7 +811,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * make Mac OS X universal binaries actually work.
 
-* implement analyze for all primitives lacking an implementation
+* fully implement analyze for all primitives
 
 * implement general analyze estimate (perhaps just raytrace it) for
   primitives where values like surface area are very difficult to
@@ -820,6 +820,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 * move analyze logic into librt (with their respective primitives).
 
 * fix analyze output formatting, columns are pooched.
+    (for arbs, it should be fixed as of revision 48900)
 
 * extend analyze output formatting to user-specified formats ala nirt
 
