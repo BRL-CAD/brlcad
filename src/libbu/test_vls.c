@@ -28,9 +28,10 @@
 
 
 /* Test against sprintf */
-void
+int
 test_vls(const char *fmt, ...)
 {
+    int status = 0;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     char buffer[1024] = {0};
     va_list ap;
@@ -47,63 +48,70 @@ test_vls(const char *fmt, ...)
         printf("%24s -> %28s [PASS]\n", fmt, bu_vls_addr(&vls));
     } else {
         printf("%24s -> %28s [FAIL]  (should be: %s)\n", fmt, bu_vls_addr(&vls), buffer);
+        status = 1;
     }
 
     bu_vls_free(&vls);
+
+    return status;
 }
 
 
 int
 main(int ac, char *av[])
 {
+    int status = 0; /* no falures */
     int n;
+
     printf("Testing vls\n");
 
     /* various types */
-    test_vls("");
-    test_vls("hello");
-    test_vls("%s", "hello");
-    test_vls("%d", 123);
-    test_vls("%u", -123);
-    test_vls("%f %F", 1.23, -3.21);
-    test_vls("%e %E", 1.23, -3.21);
-    test_vls("%g %G", 1.23, -3.21);
-    test_vls("%x %X", 1.23, -3.21);
-    test_vls("%o", 1.23);
-    test_vls("%c%c%c", '1', '2', '3');
-    test_vls("%p", (void *)av);
-    test_vls("%%%d%%", ac);
+    status += test_vls("");
+    status += test_vls("\n");
+    status += test_vls("hello");
+    status += test_vls("%s", "hello");
+    status += test_vls("%d", 123);
+    status += test_vls("%u", -123);
+    status += test_vls("%f %F", 1.23, -3.21);
+    status += test_vls("%e %E", 1.23, -3.21);
+    status += test_vls("%g %G", 1.23, -3.21);
+    status += test_vls("%x %X", 1.23, -3.21);
+    status += test_vls("%o", 1.23);
+    status += test_vls("%c%c%c", '1', '2', '3');
+    status += test_vls("%p", (void *)av);
+    status += test_vls("%%%d%%", ac);
 
     /* various lengths */
-    test_vls("%hd %hhd", 123, -123);
-    test_vls("%ld %lld %Lu", 123, -123, -321.0);
-    test_vls("%zu %zd", (size_t)123, (ssize_t)-123);
-    test_vls("%jd %td", (intmax_t)123, (ptrdiff_t)-123);
+    status += test_vls("%hd %hhd", 123, -123);
+    status += test_vls("%ld %lld %Lu", 123, -123, -321.0);
+    status += test_vls("%zu %zd", (size_t)123, (ssize_t)-123);
+    status += test_vls("%jd %td", (intmax_t)123, (ptrdiff_t)-123);
 
     /* various widths */
-    test_vls("he%10dllo", 123);
-    test_vls("he%-10ullo", 123);
-    test_vls("he%*so", 2, "ll");
+    status += test_vls("he%10dllo", 123);
+    status += test_vls("he%-10ullo", 123);
+    status += test_vls("he%*so", 2, "ll");
 
     /* various precisions */
-    test_vls("he%.10dllo", 123);
-    test_vls("he%.-10ullo", 123);
-    test_vls("he%.*so", 2, "ll");
+    status += test_vls("he%.10dllo", 123);
+    status += test_vls("he%.-10ullo", 123);
+    status += test_vls("he%.*so", 2, "ll");
 
     /* various flags */
-    test_vls("%010d", 123);
-    test_vls("%#-.10lx", 123);
-    test_vls("%#lf", 123.0);
-    test_vls("he%#-12.10tullo", (ptrdiff_t)0x1234);
-    test_vls("he%+-6.3ld%-+3.6dllo", 123, 321);
+    status += test_vls("%010d", 123);
+    status += test_vls("%#-.10lx", 123);
+    status += test_vls("%#lf", 123.0);
+    status += test_vls("he%#-12.10tullo", (ptrdiff_t)0x1234);
+    status += test_vls("he%+-6.3ld%-+3.6dllo", 123, 321);
 
     /* combinations, e.g., bug ID 3475562 */
     /* left justify, right justify, in wider fields than the strings */
     n = 2;
-    test_vls("|%-*.*s|%*.*s|", n, n, "t", n, n, "t");
+    status += test_vls("|%-*.*s|%*.*s|", n, n, "t", n, n, "t");
 
     printf("%s: testing complete\n", av[0]);
-    return 0;
+
+    return status;
 }
 
 
