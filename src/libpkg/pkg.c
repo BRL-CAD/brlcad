@@ -535,8 +535,6 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 {
     struct servent *sp;
     int pkg_listenfd;
-    if (service == NULL) 
-      return -1;
 #ifdef HAVE_WINSOCK_H
     SOCKADDR_IN saServer;
     WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
@@ -550,6 +548,9 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     size_t addrlen;			/* length of address */
     int on = 1;
 #endif
+
+    if (service == NULL) 
+      return -1;
 
     _pkg_ck_debug();
     if (_pkg_debug) {
