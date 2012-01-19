@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include "bu.h"
 #include "magic.h"
 
 
