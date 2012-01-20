@@ -13,6 +13,9 @@ indent-switches
 # We don't want to add additional indentation to conditionals 
 min-conditional-indent=0
 
+# Allow deeper indenting of statements
+max-instatement-indent=120
+
 # Pad operators
 #pad-oper
 
