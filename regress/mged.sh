@@ -45,6 +45,10 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . $1/regress/library.sh
 
+# don't pop up a window on the commands that invoke tk
+DISPLAY=/dev/null
+export DISPLAY
+
 MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
     echo "Unable to find mged, aborting"
@@ -137,6 +141,7 @@ EOF
     if test "x$cmd" = "xregions" || test "x$cmd" = "xsolids" ; then
 	# regions or solids are special because they may core dump
         # test is a result of bug 3392558 which was fixed at revision 48037
+	rm -f $t.cmd
 	$MGED -c mged.g $cmd t.$cmd all > /dev/null 2>&1 <<EOF
 exit
 EOF
