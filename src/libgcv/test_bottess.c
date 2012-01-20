@@ -219,11 +219,12 @@ test_face_splits()
     {
 	struct face_s f;
 	int tri;
-	VSET(f.vert[0], 0,0,0); VSET(f.vert[1], 0,1,0); VSET(f.vert[2], 1,0,0); tri = find_tri(&l, &f, &t); if(tri==-1) { count++; printf("\033[1;31mFAILURE\033[m\n"); } else printf("tri.fu: %x\n", l.faces[tri].foo);
-	VSET(f.vert[0], 0,0,0); VSET(f.vert[1], 0,1,0); VSET(f.vert[2], -1,0,0); tri = find_tri(&l, &f, &t); if(tri==-1) { count++; printf("\033[1;31mFAILURE\033[m\n"); } else printf("tri.fu: %x\n", l.faces[tri].foo);
-
-	VSET(f.vert[0], 0,0,0); VSET(f.vert[1], 0,1,0); VSET(f.vert[2], 0,0,-1); tri = find_tri(&r, &f, &t); if(tri==-1) { count++; printf("\033[1;31mFAILURE\033[m\n"); } else printf("tri.fu: %x\n", l.faces[tri].foo);
-	VSET(f.vert[0], 0,0,0); VSET(f.vert[1], 0,1,0); VSET(f.vert[2], 0,0,1); tri = find_tri(&r, &f, &t); if(tri==-1) { count++; printf("\033[1;31mFAILURE\033[m\n"); } else printf("tri.fu: %x\n", l.faces[tri].foo);
+#define ZORF(XVAL,ZVAL,LR) VSET(f.vert[0], 0,0,0); VSET(f.vert[1], 0,1,0); VSET(f.vert[2], XVAL,0,ZVAL); tri = find_tri(&LR, &f, &t); if(tri==-1) { count++; printf("\033[1;31mFAILURE\033[m\n"); } else printf("tri.fu: %x\n", l.faces[tri].foo);
+	ZORF(1,0,l);
+	ZORF(-1,0,l);
+	ZORF(0,-1,r);
+	ZORF(0,1,r);
+#undef ZORF
     }
 
     return count;
