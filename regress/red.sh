@@ -188,7 +188,8 @@ cat > red.edit.sh <<EOF
 cat \$REDFILE > \$1
 EOF
 chmod u+rwx red.edit.sh
-export EDITOR=./red.edit.sh
+EDITOR="./red.edit.sh"
+export EDITOR
 
 
 # write out our initial unedited objects, verify sanity
