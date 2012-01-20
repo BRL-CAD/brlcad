@@ -90,6 +90,12 @@ MACRO(THIRD_PARTY lower dir required_vars aliases description)
 		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
 		SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM" CACHE STRING "User forced to SYSTEM" FORCE)
 		SET(${upper}_MET_CONDITION 2)
+		FOREACH(extraarg ${ARGN})
+		    IF(extraarg STREQUAL "NOSYS")
+			MESSAGE(WARNING "Compilation of ${lower} was disabled, but local copy is modified - using a system version of ${lower} may introduce problems or even fail to work!")
+
+		    ENDIF(extraarg STREQUAL "NOSYS")
+		ENDFOREACH(extraarg ${ARGN})
 	    ENDIF("${OPT_STR_UPPER}" STREQUAL "SYSTEM")
 	ENDIF(OPT_STR_UPPER)
 
@@ -325,6 +331,12 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
 			SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
 			SET(${upper}_MET_CONDITION 2)
 		ENDIF("${OPT_STR_UPPER}" STREQUAL "SYSTEM")
+		FOREACH(extraarg ${ARGN})
+		    IF(extraarg STREQUAL "NOSYS")
+			MESSAGE(WARNING "Compilation of ${lower} was disabled, but local copy is modified - using a system version of ${lower} may introduce problems or even fail to work!")
+
+		    ENDIF(extraarg STREQUAL "NOSYS")
+		ENDFOREACH(extraarg ${ARGN})
 	ENDIF(OPT_STR_UPPER)
 
 	# 3. If we have a NOSYS flag, ALWAYS* use the bundled version.  The NOSYS flag signifies that
