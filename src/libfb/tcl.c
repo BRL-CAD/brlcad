@@ -388,7 +388,7 @@ fb_cmd_common_file_size(ClientData clientData, int argc, const char **argv)
     int pixel_size = 3;
 
     if (argc != 2 && argc != 3) {
-	bu_log("wrong #args: should be \"", argv[0], " fileName [#bytes/pixel]\"");
+	bu_log("wrong #args: should be \" fileName [#bytes/pixel]\"", argv[0]);
 	return TCL_ERROR;
     }
 
