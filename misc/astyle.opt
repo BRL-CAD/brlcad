@@ -10,6 +10,9 @@ indent-labels
 # Indent switch cases
 indent-switches
 
+# We don't want to add additional indentation to conditionals 
+min-conditional-indent=0
+
 # Pad operators
 #pad-oper
 
