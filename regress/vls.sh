@@ -77,8 +77,15 @@ if [ $STATUS -eq 0 ] ; then
         echo "   Do NOT use the failures in production code."
     else
         echo "-> $TESTSCRIPT succeeded"
-        # remove test products
-        rm -f $TESTLOG $ELOG
+        # one more check
+        if [ $KNOWNEXP -ne 0 ] ; then
+          echo "   But SURPRISE!  We expected $KNOWNEXP failed tests so something has changed!"
+          echo "   See file './regress/$TESTLOG' for results and compare"
+          echo "       with file './src/libbu/test_vls.c'."
+        else
+          # remove test products
+          rm -f $TESTLOG $ELOG
+        fi
     fi
 else
     echo "-> $TESTSCRIPT unexpectedly FAILED $STATUS test(s)."
