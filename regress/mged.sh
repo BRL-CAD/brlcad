@@ -77,7 +77,7 @@ if test ! -f mged.g ; then
 fi
 
 # collect all current commands
-cmds="`$MGED -c mged.g ? 2>&1 | grep -v Using`"
+cmds="`$MGED -c mged.g '?' 2>&1 | grep -v Using`"
 help="`$MGED -c mged.g help 2>&1 | grep -v Using`"
 # cmds="$cmds `$MGED -c mged.g ?lib 2>&1`"
 # cmds="$cmds `$MGED -c mged.g ?devel 2>&1`"
@@ -157,7 +157,7 @@ fi
 
 # clean up
 # remove test databases (but only if tests succeed)
-if test $FAILED -ne 0 ; then
+if test $FAILED -eq 0 ; then
     tgms="mged.g"
     for t in $tgms ; do
       if test -f $t ; then
