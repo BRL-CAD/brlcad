@@ -84,32 +84,30 @@ MACRO(THIRD_PARTY lower dir required_vars aliases description)
 		ENDIF("${CMAKE_PROJECT_NAME}_${upper}" MATCHES "DISABLED")
 	ENDIF(DISABLE_STR)
 
-
-	# 2. If we have a NOSYS flag, ALWAYS use the bundled version.  The NOSYS flag signifies that
-	# the BRL-CAD project requires modifications in the local src/other version of a library or
-	# tool that are not likely to be present in a system version.  These flags should be periodically
-	# reviewed to determine if they can be removed (i.e. system packages have appeared in modern
-	# OS distributions with the fixes needed by BRL-CAD...)
-	IF(NOT ${upper}_MET_CONDITION)
-		FOREACH(extraarg ${ARGN})
-			IF(extraarg STREQUAL "NOSYS")
-				SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED" CACHE STRING "NOSYS passed, using bundled ${lower}" FORCE)
-				SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
-				SET(${upper}_MET_CONDITION 2)
-				SET(${upper}_DISABLE_TEST 1)
-			ENDIF(extraarg STREQUAL "NOSYS")
-		ENDFOREACH(extraarg ${ARGN})
-	ENDIF(NOT ${upper}_MET_CONDITION)
-
-
-	# 3. Next - is the library variable explicitly set to SYSTEM?  If it is, we are NOT building it.
+	# 2. Next - is the library variable explicitly set to SYSTEM?  If it is, we are NOT building it.
 	IF(OPT_STR_UPPER)
-		IF("${OPT_STR_UPPER}" STREQUAL "SYSTEM")
-			SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
-			SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM" CACHE STRING "User forced to SYSTEM" FORCE)
-			SET(${upper}_MET_CONDITION 3)
-		ENDIF("${OPT_STR_UPPER}" STREQUAL "SYSTEM")
+	    IF("${OPT_STR_UPPER}" STREQUAL "SYSTEM")
+		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
+		SET(${CMAKE_PROJECT_NAME}_${upper} "SYSTEM" CACHE STRING "User forced to SYSTEM" FORCE)
+		SET(${upper}_MET_CONDITION 2)
+	    ENDIF("${OPT_STR_UPPER}" STREQUAL "SYSTEM")
 	ENDIF(OPT_STR_UPPER)
+
+	# 3. If we have a NOSYS flag and aren't explicitly disabled, ALWAYS use the bundled version.  
+	# The NOSYS flag signifies that the BRL-CAD project requires modifications in the local src/other 
+	# version of a library or tool that are not likely to be present in a system version.  These flags 
+	# should be periodically reviewed to determine if they can be removed (i.e. system packages have 
+	# appeared in modern OS distributions with the fixes needed by BRL-CAD...)
+	IF(NOT ${upper}_MET_CONDITION)
+	    FOREACH(extraarg ${ARGN})
+		IF(extraarg STREQUAL "NOSYS")
+		    SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED" CACHE STRING "NOSYS passed, using bundled ${lower}" FORCE)
+		    SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
+		    SET(${upper}_MET_CONDITION 3)
+		    SET(${upper}_DISABLE_TEST 1)
+		ENDIF(extraarg STREQUAL "NOSYS")
+	    ENDFOREACH(extraarg ${ARGN})
+	ENDIF(NOT ${upper}_MET_CONDITION)
 
 	# 4. If we have an explicit BUNDLE request for this particular library,  honor it as long as 
 	# features are satisfied.  No point in testing if we know we're turning it on - set vars accordingly.
@@ -321,7 +319,15 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
 		ENDIF("${CMAKE_PROJECT_NAME}_${upper}" MATCHES "DISABLED")
 	ENDIF(DISABLE_STR)
 
-	# 2. If we have a NOSYS flag, ALWAYS* use the bundled version.  The NOSYS flag signifies that
+	# 2. Next - is the executable variable explicitly set to SYSTEM?  If it is, we are NOT building it.
+	IF(OPT_STR_UPPER)
+		IF("${OPT_STR_UPPER}" STREQUAL "SYSTEM")
+			SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
+			SET(${upper}_MET_CONDITION 2)
+		ENDIF("${OPT_STR_UPPER}" STREQUAL "SYSTEM")
+	ENDIF(OPT_STR_UPPER)
+
+	# 3. If we have a NOSYS flag, ALWAYS* use the bundled version.  The NOSYS flag signifies that
 	# the BRL-CAD project requires modifications in the local src/other version of a library or
 	# tool that are not likely to be present in a system version.  These flags should be periodically
 	# reviewed to determine if they can be removed (i.e. system packages have appeared in modern
@@ -335,20 +341,11 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
 			IF(extraarg STREQUAL "NOSYS")
 				SET(${CMAKE_PROJECT_NAME}_${upper} "BUNDLED" CACHE STRING "NOSYS passed, using bundled ${lower}" FORCE)
 				SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
-				SET(${upper}_MET_CONDITION 2)
+				SET(${upper}_MET_CONDITION 3)
 				SET(${upper}_DISABLE_TEST 1)
 			ENDIF(extraarg STREQUAL "NOSYS")
 		ENDFOREACH(extraarg ${ARGN})
 	ENDIF(NOT ${upper}_MET_CONDITION)
-
-
-	# 3. Next - is the executable variable explicitly set to SYSTEM?  If it is, we are NOT building it.
-	IF(OPT_STR_UPPER)
-		IF("${OPT_STR_UPPER}" STREQUAL "SYSTEM")
-			SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
-			SET(${upper}_MET_CONDITION 3)
-		ENDIF("${OPT_STR_UPPER}" STREQUAL "SYSTEM")
-	ENDIF(OPT_STR_UPPER)
 
 	# 4. If we have an explicit BUNDLE request for this particular executable,  honor it as long as 
 	# features are satisfied.  No point in testing if we know we're turning it on - set vars accordingly.
