@@ -137,7 +137,7 @@ void print_volume_table(struct ged *gedp
 
     table.nrows = 3;
     for (i = 0; i < table.nrows; ++i) {
-        double val;
+        double val = 0.0;
 
         /* field 0 */
         field = 0;
