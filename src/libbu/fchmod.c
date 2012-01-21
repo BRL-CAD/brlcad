@@ -39,11 +39,6 @@
 #include "bu.h"
 
 
-/* c99 doesn't declare these */
-#ifndef fileno
-extern int fileno(FILE*);
-#endif
-
 #ifdef HAVE_FCHMOD
 extern int fchmod(int, mode_t);
 #else
