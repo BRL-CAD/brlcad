@@ -418,8 +418,8 @@ view_end(struct application *ap)
 
             ptr = (fastf_t *)bu_malloc(sizeof(fastf_t), "ptr");
             *ptr = weight;
-            /* FIX ME: shouldn't the existing reg_udata be bu_free'd first (see previous loop) */
-            /* FIX ME: isn't the region list a "shared resource"? if so, can we use reg_udata so cavalierly? */
+            /* FIXME: shouldn't the existing reg_udata be bu_free'd first (see previous loop) */
+            /* FIXME: isn't the region list a "shared resource"? if so, can we use reg_udata so cavalierly? */
             rp->reg_udata = (genptr_t)ptr;
         }
 
@@ -441,7 +441,7 @@ view_end(struct application *ap)
 
             id = rp->reg_regionid;
 
-            /* FIX ME: shouldn't we bu_free reg_udata after using here? */
+            /* FIXME: shouldn't we bu_free reg_udata after using here? */
 	    if (item_wt[id] < 0)
                 item_wt[id] = *(fastf_t *)rp->reg_udata;
 	    else
@@ -479,7 +479,7 @@ view_end(struct application *ap)
                             flen, flen, &r->reg_name[len]);
                 }
                 else if (r->reg_regionid > id) {
-                    /* FIX ME: an "else" alone should be good enough
+                    /* FIXME: an "else" alone should be good enough
                        because the test should not be necessary if we
                        trust the sorted array */
                     /* end loop and save this region index value for the next id iteration */
@@ -520,7 +520,7 @@ view_end(struct application *ap)
                     CR = 1;
                 }
                 else if (r->reg_regionid > id) {
-                    /* FIX ME: an "else" alone should be good enough
+                    /* FIXME: an "else" alone should be good enough
                        because the test should not be necessary if we
                        trust the sorted array */
                     /* end loop and save this region index value for the next id iteration */
@@ -532,7 +532,7 @@ view_end(struct application *ap)
 
         /* now finished with heap variables */
         bu_free(item_wt, "item_wt");
-        /* FIX ME: shouldn't we bu_free reg_udata before freeing the region array? */
+        /* FIXME: shouldn't we bu_free reg_udata before freeing the region array? */
         bu_free(rp_array, "rp_array");
     }
 
