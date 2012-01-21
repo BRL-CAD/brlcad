@@ -86,38 +86,49 @@ main(int ac, char *av[])
     fails += test_vls("%%%d%%", ac);
 
     /* various lengths */
-    fails += test_vls("%hd %hhd", 123, -123);
     fails += test_vls("%zu %zd", (size_t)123, (ssize_t)-123);
     fails += test_vls("%jd %td", (intmax_t)123, (ptrdiff_t)-123);
 
     /* various widths */
-    fails += test_vls("he%10dllo", 123);
-    fails += test_vls("he%-10ullo", 123);
     fails += test_vls("he%*so", 2, "ll");
 
     /* various precisions */
-    fails += test_vls("he%.10dllo", 123);
-    fails += test_vls("he%.-10ullo", 123);
     fails += test_vls("he%.*so", 2, "ll");
+    fails += test_vls("he%.-1-o", 123);
+    fails += test_vls("%6.-3f", 123);
 
     /* various flags */
     fails += test_vls("%010d", 123);
     fails += test_vls("%#-.10lx", 123);
     fails += test_vls("%#lf", 123.0);
+
+    /* two-character length modifiers */
+    fails += test_vls("he%10dllo", 123);
+    fails += test_vls("he%-10ullo", 123);
     fails += test_vls("he%#-12.10tullo", (ptrdiff_t)0x1234);
     fails += test_vls("he%+-6.3ld%-+3.6dllo", 123, 321);
+    fails += test_vls("he%.10dllo", 123);
+    fails += test_vls("he%.-10ullo", 123);
+    fails += test_vls("%hd %hhd", 123, -123);
 
-
-    /* FAILING TESTS (make vls-regress) ================ */
-    printf("\nExpected failures (don't use in production code):\n");
-    /* from "various types" */
-    expfails += test_vls("%f %F", 1.23, -3.21);;
-    /* from "various lengths" */
-    expfails += test_vls("%ld %lld %Lu", 123, -123, -321.0);;
-    /* combinations, e.g., bug ID 3475562 */
+    /* combinations, e.g., bug ID 3475562, fixed at rev 48958 */
     /* left justify, right justify, in wider fields than the strings */
     n = 2;
-    expfails += test_vls("|%-*.*s|%*.*s|", n, n, "t", n, n, "t");
+    fails += test_vls("|%-*.*s|%*.*s|", n, n, "t", n, n, "t");
+
+    /* ======================================================== */
+    /* KNOWN FAILURES BELOW HERE. NOTE: increment expfail vs. fails */
+    /* FAILING TESTS (make vls-regress) ================ */
+    printf("\nExpected failures (don't use in production code):\n");
+
+    /* from "various types" */
+    expfails += test_vls("%f %F", 1.23, -3.21);
+
+    /* from "two-character length modifiers" */
+    /* the last field ('%Lu') should result in zero because the number
+       is a negative float and it is converted to a an unsigned int
+       (it shouldn't be used with an integer) */
+    expfails += test_vls("%ld %lld %Lu", 123, -123, -321.0);
 
     printf("%s: testing complete\n", av[0]);
 
