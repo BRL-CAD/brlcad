@@ -478,7 +478,7 @@ bu_get_public_cpus(void)
 	(fp = fopen(PUBLIC_CPUS2, "wb")) != NULL)
     {
 	fprintf(fp, "%d\n", avail_cpus);
-	bu_fchmod_stream(fp, 0666);
+	bu_fchmod(fileno(fp), 0666);
 	fclose(fp);
     }
 #endif

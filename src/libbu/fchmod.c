@@ -40,7 +40,7 @@
 
 
 /* c99 doesn't declare these */
-#ifndef  fileno
+#ifndef fileno
 extern int fileno(FILE*);
 #endif
 
@@ -153,18 +153,6 @@ bu_fchmod(int fd,
 	return chmod(filepath, pmode);
     }
 #endif
-}
-
-
-int
-bu_fchmod_stream(FILE *fp,
-	  unsigned long pmode)
-{
-    if (UNLIKELY(!fp)) {
-	return 0;
-    }
-
-    return bu_fchmod(fileno(fp), pmode);
 }
 
 

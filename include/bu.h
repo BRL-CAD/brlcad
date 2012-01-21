@@ -3221,7 +3221,7 @@ DEPRECATED BU_EXPORT extern FILE *bu_fopen_uniq(const char *outfmt, const char *
   fclose(fp); // optional, auto-closed on exit
   ...
   fp = bu_temp_file(NULL, 0); // don't need file name
-  fchmod(fileno(fp), 0777);
+  bu_fchmod(fileno(fp), 0777);
   ...
   rewind(fp);
   while (fputc(0, fp) == 0);
@@ -5889,9 +5889,11 @@ BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_next(struct bu_hash_record *r
  */
 
 /**
+ * Portable wrapper for setting a file descriptor's permissions ala
+ * fchmod().
  */
 BU_EXPORT extern int bu_fchmod(int fd, unsigned long pmode);
-BU_EXPORT extern int bu_fchmod_stream(FILE *fp, unsigned long pmode);
+
 
 /** @file libbu/argv.c
  *
