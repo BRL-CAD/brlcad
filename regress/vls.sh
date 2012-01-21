@@ -62,7 +62,7 @@ STATUS=$?
 # STATUS contains number of UNEXPECTED failures
 EXP=`cat $ELOG`
 # the known number of expected failures is:
-KNOWNEXP=3
+KNOWNEXP=2
 
 if [ $STATUS -eq 0 ] ; then
     if [ $EXP -eq $KNOWNEXP ] ; then
