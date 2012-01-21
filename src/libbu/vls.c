@@ -696,10 +696,13 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	if (*sp == '\0')
 	    break;
 
-	/* Saw a percent sign, find end of fmt specifier */
+	/* Saw a percent sign, now need to find end of fmt specifier */
+        /* All gets reset for this fmt specifier */
+	flags        = 0;
+        fieldlen     = -1;
+        left_justify = 0;
 
-	flags = 0;
-	ep = sp;
+        ep = sp;
 	while (*ep) {
 	    ++ep;
 	    if (*ep == ' ' || *ep == '#' || *ep == '+' || *ep == '.' || isdigit(*ep)) {
