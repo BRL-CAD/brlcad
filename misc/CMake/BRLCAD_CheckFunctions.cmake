@@ -44,6 +44,11 @@ INCLUDE(CheckLibraryExists)
 INCLUDE(CheckStructHasMember)
 INCLUDE(ResolveCompilerPaths)
 
+
+###
+# Check if a function exists (i.e., compiles to a valid symbol).  Adds
+# HAVE_* define to config header.
+###
 MACRO(BRLCAD_FUNCTION_EXISTS function var)
   CHECK_FUNCTION_EXISTS(${function} ${var})
   if(CONFIG_H_FILE AND ${var})
@@ -51,6 +56,12 @@ MACRO(BRLCAD_FUNCTION_EXISTS function var)
   endif(CONFIG_H_FILE AND ${var})
 ENDMACRO(BRLCAD_FUNCTION_EXISTS)
 
+
+###
+# Check if a header exists.  Headers requiring other headers being
+# included first can be prepended in the filelist separated by
+# semicolons.  Add HAVE_*_H define to config header.
+###
 MACRO(BRLCAD_INCLUDE_FILE filelist var)
     CHECK_INCLUDE_FILES("${filelist}" ${var})
     if(CONFIG_H_FILE AND ${var})
@@ -58,6 +69,10 @@ MACRO(BRLCAD_INCLUDE_FILE filelist var)
     endif(CONFIG_H_FILE AND ${var})
 ENDMACRO(BRLCAD_INCLUDE_FILE)
 
+
+###
+# Check if a C++ header exists.  Adds HAVE_* define to config header.
+###
 MACRO(BRLCAD_INCLUDE_FILE_CXX filename var)
   CHECK_INCLUDE_FILE_CXX(${filename} ${var})
   if(CONFIG_H_FILE AND ${var})
@@ -65,8 +80,15 @@ MACRO(BRLCAD_INCLUDE_FILE_CXX filename var)
   endif(CONFIG_H_FILE AND ${var})
 ENDMACRO(BRLCAD_INCLUDE_FILE_CXX)
 
-MACRO(BRLCAD_TYPE_SIZE typename var header)
-	SET(CMAKE_EXTRA_INCLUDE_FILES ${header})
+
+###
+# Check the size of a given typename, setting the size in the provided
+# variable.  If type has header prerequisites, a semicolon-separated
+# header list may be specified.  Adds HAVE_ and SIZEOF_ defines to
+# config header.
+###
+MACRO(BRLCAD_TYPE_SIZE typename var headers)
+	SET(CMAKE_EXTRA_INCLUDE_FILES "${headers}")
 	CHECK_TYPE_SIZE(${typename} HAVE_${var}_T)
 	SET(CMAKE_EXTRA_INCLUDE_FILES)
 	if(CONFIG_H_FILE AND HAVE_${var}_T)
@@ -75,13 +97,24 @@ MACRO(BRLCAD_TYPE_SIZE typename var header)
 	endif(CONFIG_H_FILE AND HAVE_${var}_T)
 ENDMACRO(BRLCAD_TYPE_SIZE)
 
-MACRO(BRLCAD_STRUCT_MEMBER structname member header var)
-	CHECK_STRUCT_HAS_MEMBER(${structname} ${member} ${header} HAVE_${var})
+
+###
+# Check if a given structure has a specific member element.  Structure
+# should be defined within the semicolon-separated header file list.
+# Adds HAVE_* to config header and sets VAR.
+###
+MACRO(BRLCAD_STRUCT_MEMBER structname member headers var)
+	CHECK_STRUCT_HAS_MEMBER(${structname} ${member} "${headers}" HAVE_${var})
 	if(CONFIG_H_FILE AND HAVE_${var})
 		FILE(APPEND ${CONFIG_H_FILE} "#define HAVE_${var} 1\n")
 	endif(CONFIG_H_FILE AND HAVE_${var})
 ENDMACRO(BRLCAD_STRUCT_MEMBER)
 
+
+###
+# Check if a given function exists in the specified library.  Sets
+# targetname_LINKOPT variable as advanced if found.
+###
 MACRO(BRLCAD_CHECK_LIBRARY targetname lname func)
 	IF(NOT ${targetname}_LIBRARY)
 		CHECK_LIBRARY_EXISTS(${lname} ${func} "" HAVE_${targetname}_${lname})
@@ -93,10 +126,15 @@ MACRO(BRLCAD_CHECK_LIBRARY targetname lname func)
 	ENDIF(NOT ${targetname}_LIBRARY)
 ENDMACRO(BRLCAD_CHECK_LIBRARY lname func)
 
+
 # Special purpose macros
 
 INCLUDE(CheckCSourceRuns)
 
+
+###
+# Undocumented.
+###
 MACRO(BRLCAD_CHECK_BASENAME)
 SET(BASENAME_SRC "
 #include <libgen.h>
@@ -110,6 +148,10 @@ IF(HAVE_BASENAME)
 ENDIF(HAVE_BASENAME)
 ENDMACRO(BRLCAD_CHECK_BASENAME var)
 
+
+###
+# Undocumented.
+###
 MACRO(BRLCAD_CHECK_DIRNAME)
 SET(DIRNAME_SRC "
 #include <libgen.h>
@@ -126,7 +168,11 @@ ENDMACRO(BRLCAD_CHECK_DIRNAME var)
 INCLUDE (CheckPrototypeExists)
 INCLUDE (CheckCFileRuns)
 
+
+###
+# Undocumented.
 # Based on AC_HEADER_SYS_WAIT
+###
 MACRO(BRLCAD_HEADER_SYS_WAIT)
   CHECK_C_FILE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c WORKING_SYS_WAIT)
   IF(WORKING_SYS_WAIT)
@@ -134,7 +180,10 @@ MACRO(BRLCAD_HEADER_SYS_WAIT)
   ENDIF(WORKING_SYS_WAIT)
 ENDMACRO(BRLCAD_HEADER_SYS_WAIT)
 
+###
+# Undocumented.
 # Based on AC_FUNC_ALLOCA
+###
 MACRO(BRLCAD_ALLOCA)
 	CHECK_C_FILE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/alloca_header_test.c WORKING_ALLOCA_H)
 	IF(WORKING_ALLOCA_H)
@@ -147,8 +196,10 @@ MACRO(BRLCAD_ALLOCA)
 	ENDIF(WORKING_ALLOCA)
 ENDMACRO(BRLCAD_ALLOCA)
 
+
 ###
-# See if the compiler supports the C99 %z print specifier for size_t
+# See if the compiler supports the C99 %z print specifier for size_t.
+# Sets -DHAVE_STDINT_H=1 as global preprocessor flag if found.
 ###
 MACRO(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
 	SET(CMAKE_REQUIRED_DEFINITIONS_BAK ${CMAKE_REQUIRED_DEFINITIONS})
