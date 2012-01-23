@@ -33,6 +33,7 @@ test_vls(const char *fmt, ...)
 {
     int status = 0;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
+    char output[80] = {0};
     char buffer[1024] = {0};
     va_list ap;
 
@@ -47,10 +48,11 @@ test_vls(const char *fmt, ...)
 
     va_end(ap);
 
+    snprintf(output, sizeof(output), "%-24s -> '%s'", fmt, bu_vls_addr(&vls));
     if (BU_STR_EQUAL(buffer, bu_vls_addr(&vls))) {
-        printf("%-24s -> '%s' [PASS]\n", fmt, bu_vls_addr(&vls));
+	printf("%-*s[PASS]\n", 60, output);
     } else {
-        printf("%-24s -> '%s' [FAIL]  (should be: '%s')\n", fmt, bu_vls_addr(&vls), buffer);
+	printf("%-*s[FAIL]  (should be: '%s')\n", 60, output, buffer);
         status = 1;
     }
 
@@ -155,12 +157,6 @@ main(int ac, char *av[])
     f = 8; p = 0;
     printf("fw=%d, '%s': '%%%ds'\n", f, word, f);
     fails += test_vls("%*s", f, word);
-
-    /* from Sean on the same bug */
-    fails += test_vls("he%*so", 2, "ll");
-    fails += test_vls("he%*so", 2, "llll");
-    fails += test_vls("he%*so", 4, "ll");
-
 
     /* same but left justify */
 
