@@ -282,7 +282,7 @@ wdb_vls_col_pr4v(struct bu_vls *vls,
      * will be one.
      */
     maxnamelen = 0;
-    for (k=0; k < num_in_list; k++) {
+    for (k = 0; k < num_in_list; k++) {
 	namelen = (int)strlen(list_of_names[k]->d_namep);
 	if (namelen > maxnamelen)
 	    maxnamelen = namelen;
@@ -301,8 +301,8 @@ wdb_vls_col_pr4v(struct bu_vls *vls,
      * print in vertical format.
      */
     lines = (num_in_list + (numcol - 1)) / numcol;
-    for (i=0; i < lines; i++) {
-	for (j=0; j < numcol; j++) {
+    for (i = 0; i < lines; i++) {
+	for (j = 0; j < numcol; j++) {
 	    this_one = j * lines + i;
 	    bu_vls_printf(vls, "%s", list_of_names[this_one]->d_namep);
 	    namelen = (int)strlen(list_of_names[this_one]->d_namep);
@@ -367,7 +367,7 @@ wdb_vls_long_dpp(struct rt_wdb *wdbp,
 	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
 	  (int (*)(const void *, const void *))wdb_cmpdirname);
 
-    for (i=0; i < num_in_list; i++) {
+    for (i = 0; i < num_in_list; i++) {
 	int len;
 
 	dp = list_of_names[i];
@@ -407,7 +407,7 @@ wdb_vls_long_dpp(struct rt_wdb *wdbp,
     /*
      * i - tracks the list item
      */
-    for (i=0; i < num_in_list; ++i) {
+    for (i = 0; i < num_in_list; ++i) {
 	if (list_of_names[i]->d_flags & RT_DIR_COMB) {
 	    isComb = 1;
 	    isSolid = 0;
@@ -492,7 +492,7 @@ wdb_vls_line_dpp(struct rt_wdb *UNUSED(wdbp),
     /*
      * i - tracks the list item
      */
-    for (i=0; i < num_in_list; ++i) {
+    for (i = 0; i < num_in_list; ++i) {
 	if (list_of_names[i]->d_flags & RT_DIR_COMB) {
 	    isComb = 1;
 	    isSolid = 0;
@@ -1043,14 +1043,14 @@ wdb_bot_decimate_cmd(struct rt_wdb *wdbp,
     argv += bu_optind;
 
     /* make sure new solid does not already exist */
-    dp=db_lookup(wdbp->dbip, argv[0], LOOKUP_QUIET);
+    dp = db_lookup(wdbp->dbip, argv[0], LOOKUP_QUIET);
     if (dp != RT_DIR_NULL) {
 	Tcl_AppendResult(wdbp->wdb_interp, argv[0], " already exists!!\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
     /* make sure current solid does exist */
-    dp=db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET);
+    dp = db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	Tcl_AppendResult(wdbp->wdb_interp, argv[1], " Does not exist\n", (char *)NULL);
 	return TCL_ERROR;
@@ -1564,7 +1564,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
 
     /* check if point 5 is in the face */
     pnt5 = 0;
-    for (i=0; i<4; i++) {
+    for (i = 0; i < 4; i++) {
 	if (rt_arb_vertices[arb_type-4][face*4+i]==5)
 	    pnt5=1;
     }
@@ -2746,7 +2746,7 @@ wdb_shells_cmd(struct rt_wdb *wdbp,
 	    new_intern.idb_meth = &rt_functab[ID_NMG];
 	    new_intern.idb_ptr = (genptr_t)m_tmp;
 
-	    new_dp=db_diradd(wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+	    new_dp = db_diradd(wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
 	    if (new_dp == RT_DIR_NULL) {
 		WDB_TCL_ALLOC_ERR_return;
 	    }
@@ -3031,7 +3031,7 @@ wdb_ls_cmd(struct rt_wdb *wdbp,
 
 	dirp = wdb_getspace(wdbp->dbip, BU_PTBL_LEN(tbl));
 	dirp0 = dirp;
-	for (i=0; i<BU_PTBL_LEN(tbl); i++) {
+	for (i = 0; i < BU_PTBL_LEN(tbl); i++) {
 	    *dirp++ = (struct directory *)BU_PTBL_GET(tbl, i);
 	}
 
@@ -3166,7 +3166,7 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
 	gtd.gtd_objpos = argc-1;
 
 	/* build directory pointer array for desired path */
-	for (i=0; i<gtd.gtd_objpos; i++) {
+	for (i = 0; i < gtd.gtd_objpos; i++) {
 	    if ((gtd.gtd_obj[i] = db_lookup(wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 
 		/* release any allocated memory */
@@ -3186,7 +3186,7 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
     if (gtd.gtd_prflag == 0) {
 	/* path not found */
 	Tcl_AppendResult(wdbp->wdb_interp, "PATH:  ", (char *)NULL);
-	for (i=0; i<gtd.gtd_objpos; i++)
+	for (i = 0; i < gtd.gtd_objpos; i++)
 	    Tcl_AppendResult(wdbp->wdb_interp, "/", gtd.gtd_obj[i]->d_namep, (char *)NULL);
 
 	Tcl_AppendResult(wdbp->wdb_interp, "  NOT FOUND\n", (char *)NULL);
@@ -3562,7 +3562,7 @@ wdb_killall_cmd(struct rt_wdb *wdbp,
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    RT_CK_COMB(comb);
 
-	    for (k=1; k<argc; k++) {
+	    for (k = 1; k < argc; k++) {
 		int code;
 
 		code = db_tree_del_dbleaf(&(comb->tree), argv[k], &rt_uniresource, 0);
@@ -3673,7 +3673,7 @@ wdb_killtree_cmd(struct rt_wdb *wdbp,
     ktd.interp = wdbp->wdb_interp;
     ktd.notify = 0;
 
-    for (i=1; i<argc; i++) {
+    for (i = 1; i < argc; i++) {
 	if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 
@@ -3760,7 +3760,7 @@ wdb_copy_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    dp=db_diradd(wdbp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, proto->d_flags, (genptr_t)&proto->d_minor_type);
+    dp = db_diradd(wdbp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, proto->d_flags, (genptr_t)&proto->d_minor_type);
     if (dp == RT_DIR_NULL) {
 	if (wdbp->wdb_interp) {
 	    Tcl_AppendResult(wdbp->wdb_interp, "An error has occured while adding a new object to the database.", (char *)NULL);
@@ -4540,7 +4540,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
 	    tok = strtok((char *)NULL, "/");
 	}
     } else {
-	for (i=2; i<argc; i++) {
+	for (i = 2; i < argc; i++) {
 	    if ((gtd.gtd_obj[i-2] = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 		/* release any allocated memory */
 		ged_free(&ged);
@@ -4581,7 +4581,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
     if (gtd.gtd_prflag == 0) {
 	Tcl_AppendResult(wdbp->wdb_interp, "PATH:  ", (char *)NULL);
 
-	for (i=0; i<gtd.gtd_objpos; i++)
+	for (i = 0; i < gtd.gtd_objpos; i++)
 	    Tcl_AppendResult(wdbp->wdb_interp, "/", gtd.gtd_obj[i]->d_namep, (char *)NULL);
 
 	Tcl_AppendResult(wdbp->wdb_interp, "  NOT FOUND\n", (char *)NULL);
@@ -4609,7 +4609,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    dp=db_diradd(wdbp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0, gtd.gtd_obj[endpos-1]->d_flags, (genptr_t)&new_int.idb_type);
+    dp = db_diradd(wdbp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0, gtd.gtd_obj[endpos-1]->d_flags, (genptr_t)&new_int.idb_type);
 
     /* release any allocated memory */
     ged_free(&ged);
@@ -5132,7 +5132,7 @@ wdb_comb_cmd(struct rt_wdb *wdbp,
 
     /* Save combination name, for use inside loop */
     comb_name = argv[1];
-    dp=db_lookup(wdbp->dbip, comb_name, LOOKUP_QUIET);
+    dp = db_lookup(wdbp->dbip, comb_name, LOOKUP_QUIET);
     if (dp != RT_DIR_NULL) {
 	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    Tcl_AppendResult(wdbp->wdb_interp,
@@ -5459,7 +5459,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	nmg_model = (struct model *)NULL;
     }
 
-    dp=db_diradd(dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
+    dp = db_diradd(dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	Tcl_AppendResult(wdbp->wdb_interp, "Cannot add ", newname, " to directory\n", (char *)NULL);
 	return TCL_ERROR;
@@ -5536,7 +5536,7 @@ wdb_find_cmd(struct rt_wdb *wdbp,
 	    }
 
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
-	    for (k=1; k<argc; k++)
+	    for (k = 1; k < argc; k++)
 		db_tree_funcleaf(wdbp->dbip,
 				 comb,
 				 comb->tree,
@@ -5774,7 +5774,7 @@ wdb_which_cmd(struct rt_wdb *wdbp,
     BU_LIST_INIT(&headIdName.l);
 
     /* Build list of id_to_names */
-    for (j=1; j<argc; j++) {
+    for (j = 1; j < argc; j++) {
 	int n;
 	int start, end;
 	int range;
@@ -6004,7 +6004,7 @@ wdb_list_children(struct rt_wdb *wdbp,
 	}
 
 	bu_vls_init(&vls);
-	for (i=0; i<actual_count; i++) {
+	for (i = 0; i < actual_count; i++) {
 	    char op;
 
 	    switch (rt_tree_array[i].tl_op) {
@@ -6140,12 +6140,12 @@ wdb_print_node(struct rt_wdb *wdbp,
     if (cflag && !(dp->d_flags & RT_DIR_COMB))
 	return;
 
-    for (i=0; i<(size_t)pathpos; i++)
+    for (i = 0; i < (size_t)pathpos; i++)
 	if (indentSize < 0) {
 	    Tcl_AppendResult(wdbp->wdb_interp, "\t", (char *)NULL);
 	} else {
 	    int j;
-	    for (j=0; j<indentSize; j++) {
+	    for (j = 0; j < indentSize; j++) {
 		Tcl_AppendResult(wdbp->wdb_interp, " ", (char *)NULL);
 	    }
 	}
@@ -6208,7 +6208,7 @@ wdb_print_node(struct rt_wdb *wdbp,
 	    rt_tree_array = NULL;
 	}
 
-	for (i=0; i<actual_count; i++) {
+	for (i = 0; i < actual_count; i++) {
 	    char op;
 
 	    switch (rt_tree_array[i].tl_op) {
@@ -6230,7 +6230,7 @@ wdb_print_node(struct rt_wdb *wdbp,
 		int j;
 		struct bu_vls tmp_vls;
 
-		for (j=0; j<pathpos+1; j++)
+		for (j = 0; j < pathpos + 1; j++)
 		    Tcl_AppendResult(wdbp->wdb_interp, "\t", (char *)NULL);
 
 		bu_vls_init(&tmp_vls);
@@ -6876,11 +6876,11 @@ Free_uses(struct db_i *dbip)
 {
     int i;
 
-    for (i=0; i<RT_DBNHASH; i++) {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 	struct object_use *use;
 
-	for (dp=dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
@@ -6891,7 +6891,7 @@ Free_uses(struct db_i *dbip)
 			/* was written to disk */
 			db_delete(dbip, use->dp);
 		    }
-		    if(db_dirdelete(dbip, use->dp) < 0) {
+		    if (db_dirdelete(dbip, use->dp) < 0) {
 		      bu_log("Free_uses: db_dirdelete failed!\n"); 
 		    }
 		}
@@ -7095,7 +7095,7 @@ Do_copy_membs(struct db_i *dbip,
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
 
-    dp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET);
+    dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL)
 	return;
 
@@ -7265,10 +7265,10 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
     }
 
     /* Initialize use and reference counts of all directory entries */
-    for (i=0; i<RT_DBNHASH; i++) {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
@@ -7281,10 +7281,10 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
     db_functree(wdbp->dbip, old_dp, increment_uses, increment_uses, &rt_uniresource, NULL);
 
     /* Do a simple reference count to find top level objects */
-    for (i=0; i<RT_DBNHASH; i++) {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_flags & RT_DIR_SOLID)
 		continue;
 
@@ -7303,10 +7303,10 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
 
     /* anything with zero references is a tree top */
     bu_ptbl_init(&tops, 0, "tops for xpush");
-    for (i=0; i<RT_DBNHASH; i++) {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_flags & RT_DIR_SOLID)
 		continue;
 
@@ -7319,10 +7319,10 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
     }
 
     /* now re-zero the reference counts */
-    for (i=0; i<RT_DBNHASH; i++) {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
@@ -7331,7 +7331,7 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
     }
 
     /* accurately count references in entire model */
-    for (i=0; i<BU_PTBL_END(&tops); i++) {
+    for (i = 0; i < BU_PTBL_END(&tops); i++) {
 	struct directory *dp;
 
 	dp = (struct directory *)BU_PTBL_GET(&tops, i);
@@ -7406,7 +7406,7 @@ wdb_whatid_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    dp=db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY);
+    dp = db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY);
     if (dp == RT_DIR_NULL)
 	return TCL_ERROR;
 
@@ -7841,7 +7841,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
     new_intern.idb_meth = &rt_functab[ID_ARB8];
     new_intern.idb_ptr = (genptr_t)arb;
 
-    dp=db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+    dp = db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	Tcl_AppendResult(wdbp->wdb_interp, "Cannot add ", new_name, " to directory\n", (char *)NULL);
 	return TCL_ERROR;
@@ -7999,7 +7999,7 @@ wdb_hide_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    for (i=1; i<argc; i++) {
+    for (i = 1; i < argc; i++) {
 	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    continue;
 	}
@@ -8101,7 +8101,7 @@ wdb_unhide_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    for (i=1; i<argc; i++) {
+    for (i = 1; i < argc; i++) {
 	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    continue;
 	}
@@ -8218,7 +8218,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    dp=db_lookup(wdbp->dbip, argv[2], LOOKUP_QUIET);
+    dp = db_lookup(wdbp->dbip, argv[2], LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	Tcl_AppendResult(wdbp->wdb_interp,
 			 argv[2],
@@ -8238,7 +8238,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	if (argc == 3) {
 	    /* just list all the attributes */
 	    avpp = avs.avp;
-	    for (i=0; i < (int)avs.count; i++, avpp++) {
+	    for (i = 0; i < (int)avs.count; i++, avpp++) {
 		Tcl_AppendResult(wdbp->wdb_interp, avpp->name, " {",
 				 avpp->value, "} ", (char *)NULL);
 	    }
@@ -8246,7 +8246,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	    const char *val;
 	    int do_separators=argc-4; /* if more than one attribute */
 
-	    for (i=3; i<argc; i++) {
+	    for (i = 3; i < argc; i++) {
 		val = bu_avs_get(&avs, argv[i]);
 		if (!val) {
 		    Tcl_ResetResult(wdbp->wdb_interp);
@@ -8396,7 +8396,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	if (argc == 3) {
 	    /* just display all attributes */
 	    avpp = avs.avp;
-	    for (i=0; i < (int)avs.count; i++, avpp++) {
+	    for (i = 0; i < (int)avs.count; i++, avpp++) {
 		int len;
 
 		len = (int)strlen(avpp->name);
@@ -8406,7 +8406,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	    }
 	    tabs1 = 2 + max_attr_name_len/8;
 	    avpp = avs.avp;
-	    for (i=0; i < (int)avs.count; i++, avpp++) {
+	    for (i = 0; i < (int)avs.count; i++, avpp++) {
 		const char *c;
 		int tabs2;
 		int k;
@@ -8415,14 +8415,14 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 		bu_vls_printf(&vls, "\t%s", avpp->name);
 		len = (int)strlen(avpp->name);
 		tabs2 = tabs1 - 1 - len/8;
-		for (k=0; k<tabs2; k++) {
+		for (k = 0; k < tabs2; k++) {
 		    bu_vls_putc(&vls, '\t');
 		}
 		c = avpp->value;
 		while (*c) {
 		    bu_vls_putc(&vls, *c);
 		    if (*c == '\n') {
-			for (k=0; k<tabs1; k++) {
+			for (k = 0; k < tabs1; k++) {
 			    bu_vls_putc(&vls, '\t');
 			}
 		    }
@@ -8435,14 +8435,14 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	    int len;
 
 	    /* show just the specified attributes */
-	    for (i=0; i<argc; i++) {
+	    for (i = 0; i < argc; i++) {
 		len = (int)strlen(argv[i]);
 		if (len > max_attr_name_len) {
 		    max_attr_name_len = len;
 		}
 	    }
 	    tabs1 = 2 + max_attr_name_len/8;
-	    for (i=3; i<argc; i++) {
+	    for (i = 3; i < argc; i++) {
 		int tabs2;
 		int k;
 		const char *c;
@@ -8460,14 +8460,14 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 		bu_vls_printf(&vls, "\t%s", argv[i]);
 		len = (int)strlen(val);
 		tabs2 = tabs1 - 1 - len/8;
-		for (k=0; k<tabs2; k++) {
+		for (k = 0; k < tabs2; k++) {
 		    bu_vls_putc(&vls, '\t');
 		}
 		c = val;
 		while (*c) {
 		    bu_vls_putc(&vls, *c);
 		    if (*c == '\n') {
-			for (k=0; k<tabs1; k++) {
+			for (k = 0; k < tabs1; k++) {
 			    bu_vls_putc(&vls, '\t');
 			}
 		    }
@@ -8573,7 +8573,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    dp=db_lookup(wdbp->dbip, nmg_name, LOOKUP_QUIET);
+    dp = db_lookup(wdbp->dbip, nmg_name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	Tcl_AppendResult(wdbp->wdb_interp, nmg_name, " does not exist\n", (char *)NULL);
 	return TCL_ERROR;
@@ -8733,7 +8733,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 
 	rt_db_free_internal(&nmg_intern);
 
-	dp=db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+	dp = db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
 	if (dp == RT_DIR_NULL) {
 	    Tcl_AppendResult(wdbp->wdb_interp, "Cannot add ", new_name, " to directory\n", (char *)NULL);
 	    return TCL_ERROR;
@@ -8807,7 +8807,7 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    dp=db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY);
+    dp = db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY);
     if (dp == RT_DIR_NULL)
 	return TCL_ERROR;
 
@@ -8862,7 +8862,7 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
 
     count = nmg_edge_collapse(m, &wdbp->wdb_tol, tol_coll, min_angle);
 
-    dp=db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
+    dp = db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	Tcl_AppendResult(wdbp->wdb_interp, "Cannot add ", new_name, " to directory\n", (char *)NULL);
 	rt_db_free_internal(&intern);
@@ -9311,7 +9311,7 @@ wdb_bo_cmd(struct rt_wdb *wdbp,
 
 	obj_name = *argv;
 
-	dp=db_lookup(wdbp->dbip, obj_name, LOOKUP_NOISY);
+	dp = db_lookup(wdbp->dbip, obj_name, LOOKUP_NOISY);
 	if (dp == RT_DIR_NULL) {
 	    return TCL_ERROR;
 	}
@@ -9422,13 +9422,13 @@ int wdb_bot_face_sort_cmd(struct rt_wdb *wdbp,
     }
 
     bu_vls_init(&vls);
-    for (i=2; i<argc; i++) {
+    for (i = 2; i < argc; i++) {
 	struct directory *dp;
 	struct rt_db_internal intern;
 	struct rt_bot_internal *bot;
 	int id;
 
-	dp=db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY);
+	dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY);
 	if (dp == RT_DIR_NULL) {
 	    continue;
 	}
