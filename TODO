@@ -1183,7 +1183,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   tends to result in explosive completion times for worst-case scenarios - 
   try to get closer to the "only do the work we need to" ideal.  Once a new
   idea is proven in that command, it should be made into a libgcv routine
-  and convertors/other commands retargted to use it.
+  and convertors/other commands retargeted to use it.
 
 * write up some documentation on other build tools besides make - 
   CMake supports other generators, wouldn't hurt to detail how to
@@ -1192,6 +1192,11 @@ comp.r4 ID 5678 material code 5 LOS 75
   the kinks ironed out there, CodeBlocks.  New experimental ninja 
   build tool and its (also experimental) CMake support are promising - 
   if/when CMake support goes mainstream, document that too.)
+
+* refactor .density file and density database reading code in files
+  src/rt/viewweight.c, src/libged/analyze.c and src/libged/gqa.c into
+  common code in src/libanalyze (there may be more candidates around
+  the tree)
 
 
 CONVERTERS
