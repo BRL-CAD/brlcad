@@ -52,9 +52,9 @@ INCLUDE(ResolveCompilerPaths)
 ###
 MACRO(BRLCAD_FUNCTION_EXISTS function var)
   CHECK_FUNCTION_EXISTS(${function} ${var})
-  if(CONFIG_H_FILE AND ${var})
+  IF(CONFIG_H_FILE AND ${var})
     FILE(APPEND ${CONFIG_H_FILE} "#cmakedefine ${var} 1\n")
-  endif(CONFIG_H_FILE AND ${var})
+  ENDIF(CONFIG_H_FILE AND ${var})
 ENDMACRO(BRLCAD_FUNCTION_EXISTS)
 
 
