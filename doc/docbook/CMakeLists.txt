@@ -1,10 +1,9 @@
+# We need various configuration files set up for DocBook processing tools
+FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/)
 
 # First, define the commands to expand the third party components we will need to handle
 # DocBook processing from their archives into the build directory
 INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/resources/other/expand.cmake)
-
-# We need various configuration files set up for DocBook processing tools
-FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/)
 
 # Style sheet for XSLT transformation to HTML pages
 IF(BRLCAD_EXTRADOCS_HTML)
