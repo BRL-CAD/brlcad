@@ -84,10 +84,12 @@ fi
 
 # FIXME: this if/else block can be more efficient
 if [ $STATUS -eq 0 ] ; then
-    if [ $EXP -eq $KNOWNEXP ] ; then
-        echo "-> $TESTSCRIPT succeeded with $EXP expected failed test(s)."
-        echo "     See file './regress/$TESTLOG' for results."
-        echo "   Do NOT use the failures in production code."
+    if [ $KNOWNEXP -ne 0 ] ; then
+        if [ $EXP -eq $KNOWNEXP ] ; then
+            echo "-> $TESTSCRIPT succeeded with $EXP expected failed test(s)."
+            echo "     See file './regress/$TESTLOG' for results."
+            echo "   Do NOT use the failures in production code."
+        fi
     elif [ $EXP -ne 0 ] ; then
         echo "-> $TESTSCRIPT succeeded with $EXP expected failed test(s)."
         echo "     But SURPRISE!  We expected $KNOWNEXP failed tests so something has changed!"
