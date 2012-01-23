@@ -79,7 +79,7 @@ CompositeCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	for(i=l->begin();i!=l->end();i++) {
 	    SCLP23(Application_instance) *entity = (*i);
 	    if (entity) {
-		CompositeCurveSegment *aCCS = (CompositeCurveSegment *)Factory::CreateObject(sw,entity);
+	    	CompositeCurveSegment *aCCS = dynamic_cast<CompositeCurveSegment *>(Factory::CreateObject(sw,entity));
 
 		segments.push_back(aCCS);
 	    } else {
