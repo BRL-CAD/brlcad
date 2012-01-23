@@ -29,7 +29,7 @@
 
 #include "STEPEntity.h"
 
-class RepresentationContext : public STEPEntity {
+class RepresentationContext : virtual public STEPEntity {
 private:
 	static string entityname;
 

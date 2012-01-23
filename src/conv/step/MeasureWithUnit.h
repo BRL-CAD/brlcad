@@ -32,7 +32,7 @@
 class MeasureValue;
 class Unit;
 
-class MeasureWithUnit : public STEPEntity {
+class MeasureWithUnit : virtual public STEPEntity {
 private:
 	static string entityname;
 

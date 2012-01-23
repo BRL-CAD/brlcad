@@ -31,7 +31,7 @@
 
 class CartesianPoint;
 
-class TrimmingSelect : public STEPEntity {
+class TrimmingSelect : virtual public STEPEntity {
 public:
 	enum trimming_select_type {
 		CARTESIAN_POINT,

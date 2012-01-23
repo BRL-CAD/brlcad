@@ -29,7 +29,7 @@
 
 #include "STEPEntity.h"
 
-class DimensionalExponents : public STEPEntity {
+class DimensionalExponents : virtual public STEPEntity {
 private:
 	static string entityname;
 

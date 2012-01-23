@@ -32,7 +32,7 @@
 class PCurve;
 class Surface;
 
-class PCurveOrSurface : public STEPEntity {
+class PCurveOrSurface : virtual public STEPEntity {
 public:
     enum pcurve_or_surface_type {
     	PCURVE,

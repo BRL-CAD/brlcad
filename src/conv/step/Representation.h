@@ -44,7 +44,7 @@ typedef std::list<RepresentationItem *> LIST_OF_REPRESENTATION_ITEMS;
 typedef std::list<RepresentationContext *> LIST_OF_REPRESENTATION_CONTEXT;
 
 
-class Representation : public STEPEntity
+class Representation : virtual public STEPEntity
 {
 private:
     static std::string entityname;

@@ -29,7 +29,7 @@
 
 #include "STEPEntity.h"
 
-class Unit : public STEPEntity {
+class Unit : virtual public STEPEntity {
 private:
 	static string entityname;
 

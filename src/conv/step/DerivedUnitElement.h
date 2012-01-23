@@ -31,7 +31,7 @@
 
 class NamedUnit;
 
-class DerivedUnitElement : public STEPEntity {
+class DerivedUnitElement : virtual public STEPEntity {
 private:
 	static string entityname;
 

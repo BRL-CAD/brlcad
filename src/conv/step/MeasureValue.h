@@ -30,7 +30,7 @@
 #include "STEPEntity.h"
 
 
-class MeasureValue : public STEPEntity {
+class MeasureValue : virtual public STEPEntity {
 public:
     enum measure_type {
     	AMOUNT_OF_SUBSTANCE_MEASURE,
