@@ -244,7 +244,7 @@ setDirection(fastf_t *inVect, fastf_t *resultVect, fastf_t *outMatrix, fastf_t x
 
 /* Print rotation matrix
  *	int i = 0;
- *	for (i = 1; i < =16; i++) {
+ *	for (i = 1; i <= 16; i++) {
  *		bu_log("%3.4f\t", rotMatrix[(i-1)]);
  *		if (i%4 == 0)
  *			bu_log("\n");
@@ -300,7 +300,7 @@ boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *lengt
     }
 
 /* Print rotation matrix */
-    for (w=1; w<=16; w++) {
+    for (w = 1; w <= 16; w++) {
 
 /*These z, y, x, rot matrices were for debugging purposes but didn't help. */
 	/*Z rotation matrix */
