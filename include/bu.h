@@ -3619,20 +3619,12 @@ BU_EXPORT extern void bu_flog(FILE *, const char *, ...) _BU_ATTR_PRINTF23;
 /**
  * Custom vsscanf.
  */
-#ifdef HAVE_VSSCANF
 BU_EXPORT extern int bu_vsscanf(const char *src, const char *fmt, va_list ap);
-#else
-#define bu_vsscanf(src, fmt, ap) EOF
-#endif
 
 /**
  * Initializes the va_list, then calls the above bu_vsscanf.
  */
-#ifdef HAVE_VSSCANF
 BU_EXPORT extern int bu_sscanf(const char *src, const char *fmt, ...) _BU_ATTR_PRINTF23;
-#else
-#define bu_sscanf sscanf
-#endif
 
 /** @} */
 

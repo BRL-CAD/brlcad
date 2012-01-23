@@ -105,11 +105,10 @@
  * conv_spec
  *     lf, d, c, ... creates test_sscanf_lf, test_sscanf_d, ...
  * val_type
- *     pointer type, double, int, char, ...
+ *     double, int, char, ...
  * val_test
- *     equality test for two val_type vals names a and b, like (a == b)
+ *     equality test for two val_type vals named a and b, like (a == b)
  */
-#ifdef HAVE_VSSCANF
 #define TEST_VSSCANF(conv_spec, val_type, val_test) \
 /* returns true if a and b are equal */ \
 static int \
@@ -178,9 +177,6 @@ test_sscanf_##conv_spec(const char *src, const char *fmt, ...) \
 	bu_values = NULL; \
     } \
 }
-#else
-#define TEST_VSSCANF(conv_spec, val_type, val_test) /* nop */
-#endif
 
 /* simple test routines */
 TEST_VSSCANF(d, int, (a == b))
@@ -189,7 +185,6 @@ TEST_VSSCANF(c, char, (a == b))
 TEST_VSSCANF(lf, double, (NEAR_EQUAL(a, b, FLOAT_TOL)))
 
 /* string test routine */
-#ifdef HAVE_VSSCANF
 static void
 test_sscanf_s(const char *src, const char *fmt, ...)
 {
@@ -262,9 +257,6 @@ test_sscanf_s(const char *src, const char *fmt, ...)
 	values = bu_values = NULL;
     }
 }
-#else
-#define test_sscanf_s sscanf
-#endif
 
 int
 main(int argc, char *argv[])
