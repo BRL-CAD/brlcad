@@ -24,6 +24,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
+#include <assert.h>
 
 #ifdef HAVE_STDINT_H
 #   include <stdint.h>
@@ -658,18 +659,36 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
     const char *ep; /* end pointer */
     int len;
 
-#define LONG_INT 0x001
-#define FIELDLEN 0x002
-#define SHORTINT 0x004
-#define LLONGINT 0x008
-#define SHHRTINT 0x010
-#define INTMAX_T 0x020
-#define PTRDIFFT 0x040
-#define SIZETINT 0x080
+/* flags for fmt specifier attributes */
+/* short (char) length modifiers */
+#define SHORTINT  0x0001
+#define SHHRTINT  0x0002
+/* integer length modifiers */
+#define LONG_INT  0x0004
+#define LLONGINT  0x0008
+/* double length modifiers  */
+#define LONGDBLE  0x0010
+/* misc */
+#define FIELDLEN  0x0020
+#define INTMAX_T  0x0040
+#define PTRDIFFT  0x0080
+#define SIZETINT  0x0100
+#define PRECISION 0x0200
 
+/* groups */
+#define SHORTINTMODS   (SHORTINT & SHHRTINT)
+#define LONGINTMODS    (LONG_INT & LLONGINT)
+#define ALL_INTMODS    (SHORTINTMODS & LONGINTMODS)
+#define ALL_DOUBLEMODS (LONGDBLE)
+#define ALL_LENGTHMODS (ALL_INTMODS & ALL_DOUBLEMODS)
+
+    /* variables reset for each fmt specifier */
     int flags;
-    int fieldlen = -1;
-    int left_justify = 0;
+    int fieldlen     = -1;
+    int left_justify =  0;
+    int have_dot     =  0;
+    int have_digit   =  0;
+    int precision    =  0;
 
     char fbuf[256] = {0}; /* % format buffer */
     char buf[BUFSIZ] = {0};
@@ -698,32 +717,70 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 	/* Saw a percent sign, now need to find end of fmt specifier */
         /* All gets reset for this fmt specifier */
-	flags        = 0;
+	flags        =  0;
         fieldlen     = -1;
-        left_justify = 0;
+        left_justify =  0;
+        have_dot     =  0;
+        have_digit   =  0;
+        precision    =  0;
 
         ep = sp;
 	while (*ep) {
 	    ++ep;
 	    if (*ep == ' ' || *ep == '#' || *ep == '+' || *ep == '.' || isdigit(*ep)) {
+                if (*ep == '.')
+                    have_dot = 1;
+                if (isdigit(*ep)) {
+                    /* set flag for later error checks */
+                    have_digit = 1;
+                }
 		continue;
 	    } else if (*ep == '-') {
-		left_justify = 1;
+                /* the first occurrence before a dot is the
+                 left-justify flag, but the occurrence AFTER a dot is
+                 taken to be zero precision */
+                if (have_dot) {
+                  precision  = 0;
+                  have_digit = 0;
+                } else if (have_digit) {
+		    /* FIXME: ERROR condition?: invalid format string
+                       (e.g., '%7.8-f') */
+                    /* seems as if the man page is indefinite here,
+                       looks like the '-' is passed through and
+                       appears in output */
+                    ;
+                } else {
+		    left_justify = 1;
+                }
 	    } else if (*ep == 'l' || *ep == 'U' || *ep == 'O') {
+                /* clear all length modifiers first */
+		flags ^= ALL_LENGTHMODS;
 		if (flags & LONG_INT) {
-		    flags ^= LONG_INT;
+                    /* 'l' can be doubled, this step recognizes that */
 		    flags |= LLONGINT;
 		} else {
+                    /* set the new flag */
 		    flags |= LONG_INT;
 		}
 	    } else if (*ep == '*') {
-		fieldlen = va_arg(ap, int);
-		flags |= FIELDLEN;
+                /* the first occurrence is the field width, but the
+                   second occurrence is the precision specifier */
+                if (!have_dot) {
+		    fieldlen = va_arg(ap, int);
+		    flags |= FIELDLEN;
+                }
+                else {
+		    precision = va_arg(ap, int);
+		    flags |= PRECISION;
+                }
 	    } else if (*ep == 'h') {
+                /* clear all length modifiers first */
+		flags ^= ALL_LENGTHMODS;
 		if (flags & SHORTINT) {
-		    flags ^= SHORTINT;
+                    /* 'h' can be doubled, this step recognizes that */
 		    flags |= SHHRTINT;
 		} else {
+                    /* set the new flag */
 		    flags |= SHORTINT;
 		}
 	    } else if (*ep == 'j') {
@@ -732,6 +789,12 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		flags |= PTRDIFFT;
 	    } else if (*ep == 'z') {
 		flags |= SIZETINT;
+	    } else if (*ep == 'L') {
+                /* a length modifier for doubles */
+                /* clear all length modifiers first */
+                flags ^= ALL_LENGTHMODS;
+                /* set the new flag */
+                flags |= LONGDBLE;
 	    } else
 		/* Anything else must be the end of the fmt specifier */
 		break;
@@ -805,9 +868,94 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	switch (*ep) {
 	    case 's':
 		{
-		    char *str;
+#define NEW_STRING_HANDLING
+#if defined(NEW_STRING_HANDLING)
+                    /* variables used to determine final effects of
+                       field length and precision (different for
+                       strings versus numbers) */
+                    int minfldwid = -1;
+                    int maxstrlen = -1;
+                    //int maxfldwid;
+#endif
+		    char *str = va_arg(ap, char *);
 
-		    str = va_arg(ap, char *);
+                    /* for strings only */
+                    /* field length is a minimum size and precision is
+                       max length of string to be printed */
+		    if (flags & FIELDLEN) {
+                        minfldwid = fieldlen;
+                    }
+		    if (flags & PRECISION) {
+                        maxstrlen = precision;
+                    }
+#if defined(NEW_STRING_HANDLING)
+                    /* NEW STRING HANDLING ==================== */
+		    if (str) {
+                        int stringlen = (int)strlen(str);
+                        struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
+
+                        /* use a copy of the string */
+                        bu_vls_strcpy(&tmpstr, str);
+
+                        /* handle a non-empty string */
+                        /* strings may be truncated */
+                        if (maxstrlen >= 0) {
+                            if (maxstrlen < stringlen) {
+                                /* have to truncate */
+                                bu_vls_trunc(&tmpstr, maxstrlen);
+                                stringlen = maxstrlen;
+                            } else {
+                                maxstrlen = stringlen;
+                            }
+                        }
+                        minfldwid = minfldwid < maxstrlen ? maxstrlen : minfldwid;
+
+                        if (stringlen < minfldwid) {
+                            /* padding spaces needed */
+                            /* start a temp string to deal with padding */
+                            struct bu_vls padded = BU_VLS_INIT_ZERO;
+                            int i;
+
+			    if (left_justify) {
+                                /* string goes before padding spaces */
+				bu_vls_vlscat(&padded, &tmpstr);
+                            }
+                            /* now put in padding spaces in all cases */
+			    for (i = 0; i < minfldwid - stringlen; ++i) {
+                                bu_vls_putc(&padded, ' ');
+                            }
+			    if (!left_justify) {
+                                /* string follows the padding spaces */
+				bu_vls_vlscat(&padded, &tmpstr);
+                            }
+                            /* now we can send the padded string to the tmp string */
+                            /* have to truncate it to zero length first */
+                            bu_vls_trunc(&tmpstr, 0);
+			    bu_vls_vlscat(&tmpstr, &padded);
+                        }
+                        /* now take string as is */
+			bu_vls_vlscat(vls, &tmpstr);
+		    }  else  {
+                        /* handle an empty string */
+                        /* FIXME: should we trunc to precision if > fieldlen? */
+                        if (flags & PRECISION) {
+#if 1
+                            //bu_vls_strncat(vls, "(null)", (size_t)flen);
+			    bu_vls_strcat(vls, "(null)");
+#else
+                            if (flen < strlen("(null")) {
+			        bu_vls_strncat(vls, "(null)", (size_t)flen);
+                            } else {
+			        bu_vls_strncat(vls, "(null)", (size_t)flen);
+                            }
+#endif
+                        } else {
+			    bu_vls_strcat(vls, "(null)");
+                        }
+		    }
+                    /* END NEW STRING HANDLING ==================== */
+#else
+                    /* OLD STRING METHOD ==================== */
 		    if (str) {
 			if (flags & FIELDLEN) {
 			    int stringlen = (int)strlen(str);
@@ -830,11 +978,14 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			    bu_vls_strcat(vls, str);
 			}
 		    }  else  {
+                        /* handle an empty string */
 			if (flags & FIELDLEN)
 			    bu_vls_strncat(vls, "(null)", (size_t)fieldlen);
 			else
 			    bu_vls_strcat(vls, "(null)");
 		    }
+                    /* END OLD STRING METHOD ==================== */
+#endif
 		}
 		break;
 	    case 'S': /* XXX - DEPRECATED [7.14] */
@@ -880,6 +1031,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	    case 'f':
 	    case 'g':
 	    case 'G':
+            case 'F':
 		/* All floating point ==> "double" */
 		{
 		    double d;
@@ -895,6 +1047,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	    case 'o':
 	    case 'u':
 	    case 'x':
+	    case 'X':
 		if (flags & LONG_INT) {
 		    /* Unsigned long int */
 		    unsigned long l;
