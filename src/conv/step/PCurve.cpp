@@ -83,7 +83,7 @@ PCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     if (reference_to_curve == NULL) {
 	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"reference_to_curve");
 	if (entity) {
-	    reference_to_curve = (DefinitionalRepresentation*) Factory::CreateObject(sw, entity);
+	    reference_to_curve = dynamic_cast<DefinitionalRepresentation*>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cerr << CLASSNAME << ": Error loading entity attribute 'reference_to_curve'" << std::endl;
 	    return false;

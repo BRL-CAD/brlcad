@@ -177,13 +177,13 @@ GlobalUnitAssignedContext::Load(STEPWrapper *sw,SCLP23(Application_instance) *ss
 	    unit=(SdaiUnit *)(*i);
 	    if (unit->IsNamed_unit()){
 		SdaiNamed_unit *snu = *unit;
-		NamedUnit *nu = (NamedUnit*)Factory::CreateObject(sw,(SCLP23(Application_instance) *)snu);
+		NamedUnit *nu = dynamic_cast<NamedUnit*>(Factory::CreateObject(sw,(SCLP23(Application_instance) *)snu));
 		units.push_back(nu);
 #ifdef AP203e2
 	    } else if (unit->IsDerived_unit()) { 		//TODO: derived_unit
 		SdaiDerived_unit *sdu = *unit;
 		NamedUnit *nu = (NamedUnit*)
-		    Unit *du = (Unit *)Factory::CreateObject(sw,(SCLP23(Application_instance) *)sdu);
+		Unit *du = dynamic_cast<Unit *>(Factory::CreateObject(sw,(SCLP23(Application_instance) *)sdu));
 		units.push_back(du);
 #endif
 	    } else {

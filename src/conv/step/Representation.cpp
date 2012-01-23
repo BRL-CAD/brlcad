@@ -132,9 +132,9 @@ Representation::GetSolidAngleConversionFactor() {
 }
 
 
-bool
-Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-    step=sw;
+bool Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
     // need to do this for local attributes to makes sure we have
@@ -146,11 +146,12 @@ Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
     if (items.empty()) {
 	LIST_OF_ENTITIES *l = step->getListOfEntities(sse, "items");
 	LIST_OF_ENTITIES::iterator i;
-	for (i=l->begin();i!=l->end();i++) {
+	for (i = l->begin(); i != l->end(); i++) {
 	    SCLP23(Application_instance) *entity = (*i);
 	    if (entity) {
 		RepresentationItem *aRI = dynamic_cast<RepresentationItem *>(Factory::CreateObject(sw, entity));
-		items.push_back(aRI);
+		if (aRI != NULL)
+		    items.push_back(aRI);
 	    } else {
 		std::cerr << CLASSNAME << ": Unhandled entity in attribute 'items'." << std::endl;
 		l->clear();
@@ -210,105 +211,19 @@ Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		    }
 		}
 	    } else {
-		RepresentationContext *aRC = (RepresentationContext *)Factory::CreateObject(sw, entity);
-		context_of_items.push_back(aRC);
+		RepresentationContext *aRC = dynamic_cast<RepresentationContext *>(Factory::CreateObject(sw, entity));
+		if (aRC != NULL) {
+		    context_of_items.push_back(aRC);
+		} else {
+		    std::cout << CLASSNAME << ":Error loading RepresentationContext" << std::endl;
+		    return false;
+		}
 	    }
 	} else {
 	    std::cout << CLASSNAME << ":Error loading \"context_of_items\"" << std::endl;
 	    return false;
 	}
     }
-    /*
-      LIST_OF_STRINGS *attributes = step->getAttributes(id);
-
-      LIST_OF_STRINGS::iterator i;
-      for (i=attributes->begin(); i != attributes->end(); ++i) {
-      std::string attrName = (*i);
-
-      if (attrName.compare("name") == 0) {
-      name = step->getStringAttribute(id, attrName.c_str());
-      } else if (attrName.compare("items") == 0) {
-      LIST_OF_ENTITIES *entities = step->getListOfEntities(id, attrName.c_str());
-
-      LIST_OF_ENTITIES::iterator i;
-      for (i=entities->begin();i!=entities->end();i++) {
-      SCLP23(Application_instance) *entity = (*i);
-      if (entity) {
-      //if ((entity->STEPfile_id > 0) && (entity->IsA(config_control_designe_manifold_solid_brep))) {
-      //ManifoldSolidBrep *aMSB = new ManifoldSolidBrep();
-      RepresentationItem *aRI = (RepresentationItem *)Factory::CreateRepresentationItemObject(sw, entity);
-
-      items.push_back(aRI);
-
-      //if (!aMSB->Load(step, entity)) {
-      //	std::cout << CLASSNAME << "::" << __func__ << "()" << ":Error loading ManifoldSolidBrep." << std::endl;;
-      //	return false;
-      //}
-      } else {
-      std::cout << CLASSNAME << "::" << __func__ << "()" << ":Unhandled entity in attribute 'items': " << entity->EntityName() << std::endl;;
-      return false;
-      }
-      }
-
-      entities->clear();
-      delete entities;
-
-      } else if (attrName.compare("context_of_items") == 0) {
-      SCLP23(Application_instance) *ae = step->getEntityAttribute(sse, "context_of_items");
-
-      int aeID = ae->STEPfile_id;
-      SCLP23(Application_instance) *entity = step->getEntity(aeID, "Geometric_Representation_Context");
-      if (entity) {
-      GeometricRepresentationContext *aGRC = new GeometricRepresentationContext();
-
-      context_of_items.push_back(aGRC);
-      if (!aGRC->Load(step, entity)) {
-      std::cout << CLASSNAME << ":Error loading GeometricRepresentationContext" << std::endl;;
-      return false;
-      }
-      }
-
-      entity = step->getEntity(aeID, "Global_Uncertainty_Assigned_Context");
-
-      if (entity) {
-      GlobalUncertaintyAssignedContext *aGUAC = new GlobalUncertaintyAssignedContext();
-
-      context_of_items.push_back(aGUAC);
-      if (!aGUAC->Load(step, entity)) {
-      std::cout << CLASSNAME << ":Error loading GlobalUncertaintyAssignedContext" << std::endl;;
-      return false;
-      }
-      }
-
-      entity = step->getEntity(aeID, "Global_Unit_Assigned_Context");
-
-      if (entity) {
-      GlobalUnitAssignedContext *aGUAC = new GlobalUnitAssignedContext();
-
-      context_of_items.push_back(aGUAC);
-      if (!aGUAC->Load(step, entity)) {
-      std::cout << CLASSNAME << ":Error loading GlobalUnitAssignedContext" << std::endl;;
-      return false;
-      }
-      }
-
-      entity = step->getEntity(aeID, "Parametric_Representation_Context");
-
-      if (entity) {
-      ParametricRepresentationContext *aPRC = new ParametricRepresentationContext();
-
-      context_of_items.push_back(aPRC);
-      if (!aPRC->Load(step, entity)) {
-      std::cout << CLASSNAME << ":Error loading ParametricRepresentationContext" << std::endl;;
-      return false;
-      }
-      }
-
-      } else {
-      std::cout << CLASSNAME << ":Unhandled AttrName :" << attrName << std::endl;;
-      }
-      }
-    */
     return true;
 }
 

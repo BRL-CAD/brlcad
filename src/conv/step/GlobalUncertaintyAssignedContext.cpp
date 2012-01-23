@@ -79,7 +79,7 @@ GlobalUncertaintyAssignedContext::Load(STEPWrapper *sw,SCLP23(Application_instan
 	for(i=l->begin();i!=l->end();i++) {
 	    SCLP23(Application_instance) *entity = (*i);
 	    if (entity) {
-		UncertaintyMeasureWithUnit *aUMWU = (UncertaintyMeasureWithUnit *)Factory::CreateObject(sw,entity);
+		UncertaintyMeasureWithUnit *aUMWU = dynamic_cast<UncertaintyMeasureWithUnit *>(Factory::CreateObject(sw,entity));
 
 		uncertainty.push_back(aUMWU);
 	    } else {

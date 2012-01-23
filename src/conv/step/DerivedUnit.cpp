@@ -67,7 +67,7 @@ DerivedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	LIST_OF_ENTITIES *l = step->getListOfEntities(sse,"elements");
 	LIST_OF_ENTITIES::iterator i;
 	for(i=l->begin();i!=l->end();i++) {
-	    DerivedUnitElement *aDUE = (DerivedUnitElement *)Factory::CreateObject(sw,(*i));
+	    DerivedUnitElement *aDUE = dynamic_cast<DerivedUnitElement *>(Factory::CreateObject(sw,(*i)));
 
 	    elements.push_back(aDUE);
 	    if (!aDUE->Load(step,(*i))) {

@@ -121,11 +121,11 @@ MeasureWithUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	    SdaiUnit *u = (SdaiUnit *)select;
 	    if ( u->IsNamed_unit() ) {
 		SdaiNamed_unit *nu = *u;
-		unit_component = (Unit*)Factory::CreateObject(sw,(SCLP23(Application_instance) *)nu);
+		unit_component = dynamic_cast<Unit*>(Factory::CreateObject(sw,(SCLP23(Application_instance) *)nu));
 #ifdef AP203e
 	    } else if (u->IsDerived_unit()) {
 		SdaiDerived_unit *du = *u;
-		unit_component = (Unit*)Factory::CreateObject(sw,(SCLP23(Application_instance) *)du);
+		unit_component = dynamic_cast<Unit*>(Factory::CreateObject(sw,(SCLP23(Application_instance) *)du));
 #endif
 	    } else {
 		std::cerr << CLASSNAME << ": Unknown 'Unit' type from select." << std::endl;
