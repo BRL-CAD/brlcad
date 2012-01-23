@@ -1,7 +1,8 @@
 #     B R L C A D _ C H E C K F U N C T I O N S . C M A K E
-# BRLCAD_CompilerFlags.cmake
+# BRL-CAD
 #
-# Copyright (c) 2011 BRLCAD_Dependent_Options.cmake
+# Copyright (c) 2011-2012 United States Government as represented by
+# the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
