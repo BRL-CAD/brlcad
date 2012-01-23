@@ -299,7 +299,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	    dbip->dbi_read_only = 0;
 
 	    /* Initialize fields */
-	    for (i=0; i<RT_DBNHASH; i++) {
+	    for (i = 0; i <RT_DBNHASH; i++) {
 		dbip->dbi_Head[i] = RT_DIR_NULL;
 	    }
 
@@ -541,7 +541,7 @@ _ged_print_node(struct ged *gedp,
 	    if ((nextdp = db_lookup(gedp->ged_wdbp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 		size_t j;
 
-		for (j=0; j<pathpos+1; j++)
+		for (j = 0; j < pathpos+1; j++)
 		    bu_vls_printf(gedp->ged_result_str, "\t");
 
 		bu_vls_printf(gedp->ged_result_str, "%c ", op);
