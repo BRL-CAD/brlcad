@@ -36,19 +36,19 @@ main(int argc, char **argv)
   int i;
 
   if (argc < 2) {
-    bu_log("Error - please supply density file\n");
-    bu_exit(EXIT_FAILURE, NULL);
+      bu_log("Error - please supply density file\n");
+      bu_exit(EXIT_FAILURE, NULL);
   }
 
   fp = fopen(argv[1], "rb");
   if (fp == (FILE *)NULL) {
-    bu_log("Error - file %s not opened\n", argv[1]);
-    bu_exit(EXIT_FAILURE, NULL);
+      bu_log("Error - file %s not opened\n", argv[1]);
+      bu_exit(EXIT_FAILURE, NULL);
   }
 
   if (stat(argv[1], &sb)) {
-    bu_log("Error - file %s not stat successfully\n", argv[1]);
-    bu_exit(EXIT_FAILURE, NULL);
+      bu_log("Error - file %s not stat successfully\n", argv[1]);
+      bu_exit(EXIT_FAILURE, NULL);
   }
 
   buf = bu_malloc(sb.st_size+1, "density buffer");
@@ -62,9 +62,9 @@ main(int argc, char **argv)
 
   ret = parse_densities_buffer(buf, (unsigned long)sb.st_size, densities, NULL, &num_densities);
 
-  for(i=0; i<num_densities; i++) {
-    if (densities[i].name)
-       bu_log("densities[%i]: %s, %d\n", i, densities[i].name, densities[i].grams_per_cu_mm); 
+  for (i = 0; i < num_densities; i++) {
+      if (densities[i].name)
+          bu_log("densities[%i]: %s, %d\n", i, densities[i].name, densities[i].grams_per_cu_mm);
   }
  
 }

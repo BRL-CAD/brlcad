@@ -114,7 +114,7 @@ parse_densities_buffer(char *buf, size_t len, struct density_entry *densities, s
     }
 
 #ifdef PRINT_DENSITIES
-    for (idx=0; idx < &num_densities; idx++)
+    for (idx = 0; idx < &num_densities; idx++)
 	if (densities[idx].magic == DENSITY_MAGIC)
 	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "%4d %6g %s\n",
 			  idx,
