@@ -768,10 +768,10 @@ slope(struct ged *gedp,
     work[0] = work[2] = 0.0;
     work[1] = t[1] - t[0];
     VMOVE(&sol.s_values[12], work);
-    for (i = 3; i < =9; i+=3) {
-	j = i + 12;
-	VADD2(&sol.s_values[j], &sol.s_values[i], work);
-    }
+    for (i = 3; i <= 9; i += 3) {
+		j = i + 12;
+		VADD2(&sol.s_values[j], &sol.s_values[i], work);
+	}
 
     return;
 }

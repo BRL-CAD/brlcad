@@ -256,10 +256,10 @@ slope(fastf_t wh1[],
     work[0] = work[2] = 0.0;
     work[1] = t[1] - t[0];
     VMOVE(&sol.s_values[12], work);
-    for (i = 3; i < =9; i+=3) {
-	j = i + 12;
-	VADD2(&sol.s_values[j], &sol.s_values[i], work);
-    }
+    for (i = 3; i <= 9; i += 3) {
+		j = i + 12;
+		VADD2(&sol.s_values[j], &sol.s_values[i], work);
+	}
 
     return;
 }
@@ -298,10 +298,10 @@ crdummy(fastf_t w[3], fastf_t t[3], int flag)
     vec[2] = 0.0;
     vec[1] = t[1] - t[0] + 2.0;
     VMOVE(&sol.s_values[12], vec);
-    for (i = 3; i < =9; i+=3) {
-	j = i + 12;
-	VADD2(&sol.s_values[j], &sol.s_values[i], vec);
-    }
+    for (i = 3; i <= 9; i += 3) {
+		j = i + 12;
+		VADD2(&sol.s_values[j], &sol.s_values[i], vec);
+	}
 
     return;
 
@@ -340,10 +340,10 @@ bottom(vect_t vec1, vect_t vec2, fastf_t t[])
     tvec[1] = t[1] - t[0];
     VMOVE(&sol.s_values[12], tvec);
 
-    for (i = 3; i < =9; i+=3) {
-	j = i + 12;
-	VADD2(&sol.s_values[j], &sol.s_values[i], tvec);
-    }
+    for (i = 3; i <= 9; i += 3) {
+		j = i + 12;
+		VADD2(&sol.s_values[j], &sol.s_values[i], tvec);
+	}
 }
 
 
@@ -373,10 +373,10 @@ top(vect_t vec1, vect_t vec2, fastf_t t[])
     VADD2(&sol.s_values[6], &sol.s_values[3], &sol.s_values[9]);
     VMOVE(&sol.s_values[12], tvec);
 
-    for (i = 3; i < =9; i+=3) {
-	j = i + 12;
-	VADD2(&sol.s_values[j], &sol.s_values[i], tvec);
-    }
+    for (i = 3; i <= 9; i += 3) {
+		j = i + 12;
+		VADD2(&sol.s_values[j], &sol.s_values[i], tvec);
+	}
 }
 
 
