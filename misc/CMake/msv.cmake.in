@@ -1,4 +1,5 @@
-execute_process(COMMAND msv -warning @BRLCAD_SOURCE_DIR@/doc/docbook/resources/other/docbook-schema/rng/docbookxi.rng @CMAKE_CURRENT_SOURCE_DIR@/@filename@ RESULT_VARIABLE CMDRESULT)
+execute_process(COMMAND @CMAKE_COMMAND@ -E remove -f @db_outfile@)
+execute_process(COMMAND msv -warning @BRLCAD_BINARY_DIR@/doc/docbook/resources/other/docbook-schema/rng/docbookxi.rng @CMAKE_CURRENT_SOURCE_DIR@/@filename@ RESULT_VARIABLE CMDRESULT)
 IF(CMDRESULT)
 	MESSAGE(FATAL_ERROR "msv failure: ${CMDRESULT}")
 ELSE(CMDRESULT)
