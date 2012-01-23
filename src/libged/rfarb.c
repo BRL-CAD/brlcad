@@ -98,7 +98,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
     norm[1] = cos(fba) * sin(rota);
     norm[2] = sin(fba);
 
-    for (i=0; i<3; i++) {
+    for (i = 0; i < 3; i++) {
 	switch (argv[7+3*i][0]) {
 	    case 'x':
 		if (ZERO(norm[0])) {
@@ -171,7 +171,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
     aip = (struct rt_arb_internal *)internal.idb_ptr;
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
-    for (i=0; i<8; i++) {
+    for (i = 0; i < 8; i++) {
 	VSET(aip->pt[i], 0.0, 0.0, 0.0);
     }
 
@@ -180,7 +180,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
     ndotv = VDOT(aip->pt[0], norm);
 
     /* calculate the unknown coordinate for points 2, 3, 4 */
-    for (i=0; i<3; i++) {
+    for (i = 0; i < 3; i++) {
 	int j;
 	j = i+1;
 
@@ -216,7 +216,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* calculate the remaining 4 vertices */
-    for (i=0; i<4; i++) {
+    for (i = 0; i < 4; i++) {
 	VJOIN1(aip->pt[i+4], aip->pt[i], thick, norm);
     }
 

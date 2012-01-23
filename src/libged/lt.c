@@ -77,7 +77,7 @@ list_children(struct ged *gedp, struct directory *dp)
 	}
 
 	bu_vls_init(&vls);
-	for (i=0; i<actual_count; i++) {
+	for (i = 0; i < actual_count; i++) {
 	    char op;
 
 	    switch (rt_tree_array[i].tl_op) {

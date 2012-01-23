@@ -62,7 +62,7 @@ ged_eac(struct ged *gedp, int argc, const char *argv[])
     bu_vls_strcat(&v, "draw");
     lim = 1;
 
-    for (j=1; j<argc; j++) {
+    for (j = 1; j < argc; j++) {
 	item = atoi(argv[j]);
 	if (item < 1)
 	    continue;

@@ -277,7 +277,7 @@ dgo_nirt_cmd(struct dg_obj *dgop,
     *vp++ = "-e";
     *vp++ = bu_vls_addr(&p_vls);
 
-    for (i=1; i < argc; i++)
+    for (i = 1; i < argc; i++)
 	*vp++ = argv[i];
     *vp++ = dgop->dgo_wdbp->dbip->dbi_filename;
 
@@ -339,7 +339,7 @@ dgo_nirt_cmd(struct dg_obj *dgop,
 	(void)close(pipe_out[1]);
 	(void)close(pipe_err[0]);
 	(void)close(pipe_err[1]);
-	for (i=3; i < 20; i++)
+	for (i = 3; i < 20; i++)
 	    (void)close(i);
 	(void)signal(SIGINT, SIG_DFL);
 	(void)execvp(dgop->dgo_rt_cmd[0], dgop->dgo_rt_cmd);
@@ -428,7 +428,7 @@ dgo_nirt_cmd(struct dg_obj *dgop,
     snprintf(line1, rem, "%s ", dgop->dgo_rt_cmd[0]);
     rem -= (int)strlen(line1) - 1;
 
-    for (i=1; i<dgop->dgo_rt_cmd_len; i++) {
+    for (i = 1; i < dgop->dgo_rt_cmd_len; i++) {
 	/* skip commands */
 	if (strstr(dgop->dgo_rt_cmd[i], "-e") != NULL)
 	    ++i;
@@ -456,7 +456,7 @@ dgo_nirt_cmd(struct dg_obj *dgop,
     setmode(fileno(fp_in), O_BINARY);
 
     /* send commands down the pipe */
-    for (i=1; i<dgop->dgo_rt_cmd_len-2; i++)
+    for (i = 1; i < dgop->dgo_rt_cmd_len-2; i++)
 	if (strstr(dgop->dgo_rt_cmd[i], "-e") != NULL)
 	    fprintf(fp_in, "%s\n", dgop->dgo_rt_cmd[++i]);
 

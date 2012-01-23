@@ -309,7 +309,7 @@ vdraw_insert(void *data, int argc, const char *argv[])
 	vp = wp;
     }
 
-    for (i=vp->nused-1; i>idx; i--) {
+    for (i = vp->nused - 1; i > idx; i--) {
 	vp->cmd[i] = vp->cmd[i-1];
 	VMOVE(vp->pt[i], vp->pt[i-1]);
     }
@@ -406,7 +406,7 @@ vdraw_delete(void *data, int argc, const char *argv[])
 	vp->cmd[BN_VLIST_CHUNK-1] = wp->cmd[0];
 	VMOVE(vp->pt[BN_VLIST_CHUNK-1], wp->pt[0]);
 
-	for (i=0; i< wp->nused - 1; i++) {
+	for (i = 0; i < wp->nused - 1; i++) {
 	    wp->cmd[i] = wp->cmd[i+1];
 	    VMOVE(wp->pt[i], wp->pt[i+1]);
 	}

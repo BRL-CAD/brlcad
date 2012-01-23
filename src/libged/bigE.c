@@ -1566,7 +1566,7 @@ Eplot(union E_tree *eptr,
 		    VUNITIZE(dir);
 		    max_dist = dists1[1];
 		    max_hit = 1;
-		    for (i=2; i<hit_count1; i++) {
+		    for (i = 2; i < hit_count1; i++) {
 			VSUB2(vdiff, hits1[i], start_pt);
 			dists1[i] = MAGNITUDE(vdiff);
 			if (VDOT(dir, vdiff) < 0.0)
@@ -1588,7 +1588,7 @@ Eplot(union E_tree *eptr,
 		    done = 0;
 		    while (!done) {
 			done = 1;
-			for (i=1; i<hit_count1; i++) {
+			for (i = 1; i < hit_count1; i++) {
 			    if (dists1[i-1] > dists1[i]) {
 				fastf_t tmp;
 				point_t tmp_pt;
@@ -1609,7 +1609,7 @@ Eplot(union E_tree *eptr,
 		    min_hit = -1;
 		    max_dist = -min_dist;
 		    max_hit = -1;
-		    for (i=0; i<hit_count2; i++) {
+		    for (i = 0; i < hit_count2; i++) {
 			VSUB2(vdiff, hits2[i], start_pt);
 			dists2[i] = MAGNITUDE(vdiff);
 			if (VDOT(dir, vdiff) < 0.0)
@@ -1627,7 +1627,7 @@ Eplot(union E_tree *eptr,
 		    done = 0;
 		    while (!done) {
 			done = 1;
-			for (i=1; i<hit_count2; i++) {
+			for (i = 1; i < hit_count2; i++) {
 			    if (dists2[i-1] > dists2[i]) {
 				fastf_t tmp;
 				point_t tmp_pt;
@@ -1649,7 +1649,7 @@ Eplot(union E_tree *eptr,
 		    BU_LIST_INIT(A);
 		    BU_LIST_INIT(B);
 
-		    for (i=1; i<hit_count1; i += 2) {
+		    for (i = 1; i < hit_count1; i += 2) {
 			fastf_t diff;
 
 			diff = dists1[i] - dists1[i-1];
@@ -1667,7 +1667,7 @@ Eplot(union E_tree *eptr,
 			BU_LIST_APPEND(A, &aseg->l);
 		    }
 
-		    for (i=1; i<hit_count2; i += 2) {
+		    for (i = 1; i < hit_count2; i += 2) {
 			fastf_t diff;
 
 			diff = dists2[i] - dists2[i-1];
@@ -1760,7 +1760,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
     VSETALL(max, -MAX_FASTF);
     VSETALL(min, MAX_FASTF);
 
-    for (i=0; i<BU_PTBL_END(&dgcdp->leaf_list); i++) {
+    for (i = 0; i < BU_PTBL_END(&dgcdp->leaf_list); i++) {
 	union E_tree *tp;
 
 	tp = (union E_tree *)BU_PTBL_GET(&dgcdp->leaf_list, i);
@@ -1778,7 +1778,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	return;
     }
 
-    for (i=0; i<BU_PTBL_END(&dgcdp->leaf_list); i++) {
+    for (i = 0; i < BU_PTBL_END(&dgcdp->leaf_list); i++) {
 	union E_tree *tp;
 	struct vertex *v[8];
 	struct vertex **vp[4];
@@ -1808,7 +1808,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	r = nmg_mrsv(tp->l.m);
 	s = BU_LIST_FIRST(shell, &r->s_hd);
 
-	for (j=0; j<8; j++)
+	for (j = 0; j < 8; j++)
 	    v[j] = (struct vertex *)NULL;
 
 	vp[0] = &v[0];

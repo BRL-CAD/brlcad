@@ -68,7 +68,7 @@ ged_bot_face_sort(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    for (i=2; i<argc; i++) {
+    for (i = 2; i < argc; i++) {
 	struct directory *dp;
 	struct rt_db_internal intern;
 	struct rt_bot_internal *bot;

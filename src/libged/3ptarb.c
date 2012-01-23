@@ -90,7 +90,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* preliminary calculations to check input so far */
-    for (i=0; i<3; i++) {
+    for (i = 0; i < 3; i++) {
 	vec1[i] = atof(argv[i+2]) - atof(argv[i+5]);
 	vec2[i] = atof(argv[i+2]) - atof(argv[i+8]);
     }
@@ -192,11 +192,11 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
     aip = (struct rt_arb_internal *)internal.idb_ptr;
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
-    for (i=0; i<8; i++) {
+    for (i = 0; i < 8; i++) {
 	VSET(aip->pt[i], 0.0, 0.0, 0.0);
     }
 
-    for (i=0; i<3; i++) {
+    for (i = 0; i < 3; i++) {
 	/* the three given vertices */
 	VSET(aip->pt[i], atof(argv[i*3+2])*gedp->ged_wdbp->dbip->dbi_local2base, atof(argv[i*3+3])*gedp->ged_wdbp->dbip->dbi_local2base, atof(argv[i*3+4])*gedp->ged_wdbp->dbip->dbi_local2base);
     }
@@ -244,7 +244,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* calculate the remaining 4 vertices */
-    for (i=0; i<4; i++) {
+    for (i = 0; i < 4; i++) {
 	VJOIN1(aip->pt[i+4], aip->pt[i], thick, norm);
     }
 

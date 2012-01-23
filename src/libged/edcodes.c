@@ -267,7 +267,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 
 	/* rewrite the temp file using the sorted lines */
 	rewind(f_srt);
-	for (j=0; j<line_count; j++) {
+	for (j = 0; j < line_count; j++) {
 	    fprintf(f_srt, "%s", line_array[j]);
 	    bu_free(line_array[j], "ged_edcodes line array element");
 	}

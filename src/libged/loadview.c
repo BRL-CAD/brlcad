@@ -327,7 +327,7 @@ _ged_cm_vrot(int argc, char **argv)
 
     if (argc < 17)
 	return -1;
-    for (i=0; i<16; i++)
+    for (i = 0; i < 16; i++)
 	_ged_viewrot[i] = atof(argv[i+1]);
     /* Processing is deferred until ged_cm_end() */
     return 0;
@@ -343,7 +343,7 @@ _ged_cm_orientation(int argc, char **argv)
     if (argc < 4)
 	return -1;
 
-    for (i=0; i<4; i++)
+    for (i = 0; i < 4; i++)
 	quat[i] = atof(argv[i+1]);
     quat_quat2mat(_ged_viewrot, quat);
 

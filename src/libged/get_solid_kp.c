@@ -109,16 +109,16 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		int good_vert = 0;
 
 		RT_ARBN_CK_MAGIC(arbn);
-		for (i=0; i<arbn->neqn; i++) {
-		    for (j=i+1; j<arbn->neqn; j++) {
-			for (k=j+1; k<arbn->neqn; k++) {
+		for (i = 0; i < arbn->neqn; i++) {
+		    for (j = i + 1; j < arbn->neqn; j++) {
+			for (k = j + 1; k < arbn->neqn; k++) {
 			    if (!bn_mkpoint_3planes(mpt, arbn->eqn[i],
 						    arbn->eqn[j],
 						    arbn->eqn[k])) {
 				size_t l;
 
 				good_vert = 1;
-				for (l=0; l<arbn->neqn; l++) {
+				for (l = 0; l < arbn->neqn; l++) {
 				    if (l == i || l == j || l == k)
 					continue;
 

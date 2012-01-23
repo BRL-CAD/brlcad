@@ -158,7 +158,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
     if (gktd.nflag)
 	bu_vls_printf(gedp->ged_result_str, "{");
 
-    for (i=1; i<argc; i++) {
+    for (i = 1; i < argc; i++) {
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 
@@ -182,7 +182,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 	(void)ged_killrefs(gedp, gktd.ac, (const char **)gktd.av);
 	gedp->ged_internal_call = 0;
 
-	for (i=1; i<gktd.ac; i++) {
+	for (i = 1; i < gktd.ac; i++) {
 	    if (!gktd.nflag)
 		bu_vls_printf(gedp->ged_result_str, "Freeing %s\n", gktd.av[i]);
 	    bu_free((genptr_t)gktd.av[i], "killtree_data");

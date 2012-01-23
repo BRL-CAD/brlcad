@@ -113,7 +113,7 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
-	    for (k=1; k<argc; k++)
+	    for (k = 1; k < argc; k++)
 		db_tree_funcleaf(gedp->ged_wdbp->dbip,
 				 comb,
 				 comb->tree,

@@ -130,14 +130,14 @@ rt_mk_bot_w_normals(
     botip->num_vertices = num_vertices;
     botip->num_faces = num_faces;
     botip->vertices = (fastf_t *)bu_calloc(num_vertices * 3, sizeof(fastf_t), "botip->vertices");
-    for (i=0; i<num_vertices*3; i++)
+    for (i = 0; i < num_vertices*3; i++)
 	botip->vertices[i] = vertices[i];
     botip->faces = (int *)bu_calloc(num_faces * 3, sizeof(int), "botip->faces");
-    for (i=0; i<num_faces*3; i++)
+    for (i = 0; i < num_faces * 3; i++)
 	botip->faces[i] = faces[i];
     if (botmode == RT_BOT_PLATE) {
 	botip->thickness = (fastf_t *)bu_calloc(num_faces, sizeof(fastf_t), "botip->thickness");
-	for (i=0; i<num_faces; i++)
+	for (i = 0; i < num_faces; i++)
 	    botip->thickness[i] = thickness[i];
 	botip->face_mode = bu_bitv_dup(face_mode);
     } else {
@@ -415,7 +415,7 @@ make_bot_object(const char *name,
     struct rt_bot_internal bot_ip;
 
     bot_ip.magic = RT_BOT_INTERNAL_MAGIC;
-    for (i=0; i<face_count; i++) {
+    for (i = 0; i < face_count; i++) {
 	V_MIN(min_pt, FACES[i*3]);
 	V_MAX(max_pt, FACES[i*3]);
 	V_MIN(min_pt, FACES[i*3+1]);
@@ -427,14 +427,14 @@ make_bot_object(const char *name,
     num_vertices = max_pt - min_pt + 1;
     bot_ip.num_vertices = num_vertices;
     bot_ip.vertices = (fastf_t *)bu_calloc(num_vertices*3, sizeof(fastf_t), "BOT vertices");
-    for (i=0; i<num_vertices; i++)
+    for (i = 0; i < num_vertices; i++)
 	VMOVE(&bot_ip.vertices[i*3], grid_pts[min_pt+i])
 
-	    for (i=0; i<face_count*3; i++)
+	    for (i = 0; i < face_count*3; i++)
 		FACES[i] -= min_pt;
     bot_ip.num_faces = face_count;
     bot_ip.faces = bu_calloc(face_count*3, sizeof(int), "BOT faces");
-    for (i=0; i<face_count*3; i++)
+    for (i = 0; i < face_count*3; i++)
 	bot_ip.faces[i] = FACES[i];
 
     bot_ip.face_mode = (struct bu_bitv *)NULL;
@@ -442,13 +442,13 @@ make_bot_object(const char *name,
     if (mode == PLATE_MODE) {
 	bot_mode = RT_BOT_PLATE;
 	bv = bu_bitv_new(face_count);
-	for (i=0; i<face_count; i++) {
+	for (i = 0; i < face_count; i++) {
 	    if (facemode[i] == POS_FRONT)
 		BU_BITSET(bv, i);
 	}
 	bot_ip.face_mode = bv;
 	bot_ip.thickness = (fastf_t *)bu_calloc(face_count, sizeof(fastf_t), "BOT thickness");
-	for (i=0; i<face_count; i++)
+	for (i = 0; i < face_count; i++)
 	    bot_ip.thickness[i] = THICKNESS[i];
     } else
 	bot_mode = RT_BOT_SOLID;

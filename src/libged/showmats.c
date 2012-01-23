@@ -143,7 +143,7 @@ Run_showmats(struct ged *gedp, const char *path, int aflag)
     } else {
 	int i;
 
-	for (i=0; i<16; ++i)
+	for (i = 0; i < 16; ++i)
 	    bu_vls_printf(gedp->ged_result_str, " %lf", sm_data.smd_mat[i]);
     }
 

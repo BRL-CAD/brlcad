@@ -167,7 +167,7 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
     if (arb_type == ARB7) {
 	/* check if point 5 is in the face */
 	pnt5 = 0;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 	    if (arb_vertices[arb_type-4][face*4+i]==5)
 		pnt5=1;
 	}

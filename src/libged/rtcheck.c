@@ -328,7 +328,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
     *vp++ = rtcheck;
     *vp++ = "-M";
-    for (i=1; i < argc; i++)
+    for (i = 1; i < argc; i++)
 	*vp++ = (char *)argv[i];
 
 #ifndef _WIN32
@@ -395,7 +395,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 	(void)close(e_pipe[0]);
 	(void)close(e_pipe[1]);
 
-	for (i=3; i < 20; i++)
+	for (i = 3; i < 20; i++)
 	    (void)close(i);
 
 	(void)execvp(gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd);
@@ -494,7 +494,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     si.wShowWindow = SW_HIDE;
 
     snprintf(line, sizeof(line), "%s ", gedp->ged_gdp->gd_rt_cmd[0]);
-    for (i=1; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
+    for (i = 1; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
 	snprintf(name, sizeof(name), "%s ", gedp->ged_gdp->gd_rt_cmd[i]);
 	bu_strlcat(line, name, sizeof(line));
     }

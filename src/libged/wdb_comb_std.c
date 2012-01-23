@@ -365,15 +365,15 @@ HIDDEN int
 wdb_check_syntax(Tcl_Interp *interp, struct db_i *dbip, struct bu_list *hp, char *comb_name, struct directory *dp)
 {
     struct tokens *tok;
-    int paren_count=0;
-    int paren_error=0;
-    int missing_exp=0;
-    int missing_op=0;
-    int op_count=0;
-    int arg_count=0;
-    int circular_ref=0;
-    int errors=0;
-    short last_tok=WDB_TOK_NULL;
+    int paren_count  = 0;
+    int paren_error  = 0;
+    int missing_exp  = 0;
+    int missing_op   = 0;
+    int op_count     = 0;
+    int arg_count    = 0;
+    int circular_ref = 0;
+    int errors       = 0;
+    short last_tok   = WDB_TOK_NULL;
 
     if (dbip == DBI_NULL)
 	return 0;
@@ -562,7 +562,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
     tok_hd.type = WDB_TOK_NULL;
 
     last_tok = WDB_TOK_LPAREN;
-    for (i=0; i<argc; i++) {
+    for (i = 0; i < argc; i++) {
 	char *ptr;
 
 	ptr = argv[i];

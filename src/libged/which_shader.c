@@ -71,7 +71,7 @@ ged_which_shader(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    for (j=1; j<myArgc; j++) {
+    for (j = 1; j < myArgc; j++) {
 
 	if (!sflag)
 	    bu_vls_printf(gedp->ged_result_str, "Combination[s] with shader %s:\n", myArgv[j]);

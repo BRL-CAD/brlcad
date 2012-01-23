@@ -64,7 +64,7 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    for (i=1; i < argc; ++i) {
+    for (i = 1; i < argc; ++i) {
 	/* Skip past any path elements */
 	char *obj = bu_basename(argv[i]);
 	struct rt_bot_list *headRblp = NULL;

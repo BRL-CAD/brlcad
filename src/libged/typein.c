@@ -998,14 +998,14 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     bot->thickness = (fastf_t *)NULL;
     bot->face_mode = (struct bu_bitv *)NULL;
 
-    for (i=0; i<num_verts; i++) {
+    for (i = 0; i < num_verts; i++) {
 	bot->vertices[i*3] = atof(argv[7+i*3]) * gedp->ged_wdbp->dbip->dbi_local2base;
 	bot->vertices[i*3+1] = atof(argv[8+i*3]) * gedp->ged_wdbp->dbip->dbi_local2base;
 	bot->vertices[i*3+2] = atof(argv[9+i*3]) * gedp->ged_wdbp->dbip->dbi_local2base;
     }
 
     arg_count = 7 + num_verts*3;
-    for (i=0; i<num_faces; i++) {
+    for (i = 0; i < num_faces; i++) {
 	bot->faces[i*3] = atoi(argv[arg_count + i*3]);
 	bot->faces[i*3+1] = atoi(argv[arg_count + i*3 + 1]);
 	bot->faces[i*3+2] = atoi(argv[arg_count + i*3 + 2]);
@@ -1015,7 +1015,7 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 	arg_count = 7 + num_verts*3 + num_faces*3;
 	bot->thickness = (fastf_t *)bu_calloc(num_faces, sizeof(fastf_t), "bot thickness");
 	bot->face_mode = bu_bitv_new(num_faces);
-	for (i=0; i<num_faces; i++) {
+	for (i = 0; i < num_faces; i++) {
 	    int j;
 
 	    j = atoi(argv[arg_count + i*2]);
@@ -1066,7 +1066,7 @@ arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     arbn->eqn = (plane_t *)bu_calloc(arbn->neqn, sizeof(plane_t), "arbn planes");
 
     /* Normal is unscaled, should have unit length; d is scaled */
-    for (i=0; i<arbn->neqn; i++) {
+    for (i = 0; i < arbn->neqn; i++) {
 	arbn->eqn[i][X] = atof(argv[4+i*4]);
 	arbn->eqn[i][Y] = atof(argv[4+i*4+1]);
 	arbn->eqn[i][Z] = atof(argv[4+i*4+2]);
@@ -1114,7 +1114,7 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     pipeip = (struct rt_pipe_internal *)intern->idb_ptr;
     pipeip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
     BU_LIST_INIT(&pipeip->pipe_segs_head);
-    for (i=4; i<argc; i+= 6) {
+    for (i = 4; i < argc; i += 6) {
 	struct wdb_pipept *pipept;
 
 	pipept = (struct wdb_pipept *)bu_malloc(sizeof(struct wdb_pipept), "wdb_pipept");
@@ -1255,7 +1255,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 
     arip->curves = (fastf_t **)bu_malloc(
 	(arip->ncurves+1) * sizeof(fastf_t *), "ars curve ptrs");
-    for (i=0; i < arip->ncurves+1; i++) {
+    for (i = 0; i < arip->ncurves+1; i++) {
 	/* Leave room for first point to be repeated */
 	arip->curves[i] = (fastf_t *)bu_malloc(
 	    (arip->pts_per_curve+1) * sizeof(point_t),
@@ -1268,14 +1268,14 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     arip->curves[0][2] = atof(argv[7]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
     /* The first point is duplicated across the first curve */
-    for (i=1; i < arip->pts_per_curve; ++i) {
+    for (i = 1; i < arip->pts_per_curve; ++i) {
 	VMOVE(arip->curves[0]+3*i, arip->curves[0]);
     }
 
     cv = 1;
     axis = 0;
     /* scan each of the other points we've already got */
-    for (i=8; i < (size_t)argc && i < total_points * ELEMENTS_PER_POINT; ++i) {
+    for (i = 8; i < (size_t)argc && i < total_points * ELEMENTS_PER_POINT; ++i) {
 	arip->curves[cv][axis] = atof(argv[i]) * gedp->ged_wdbp->dbip->dbi_local2base;
 	if (++axis >= arip->pts_per_curve * ELEMENTS_PER_POINT) {
 	    axis = 0;
@@ -1284,7 +1284,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     }
 
     /* The first point is duplicated across the last curve */
-    for (i=1; i < arip->pts_per_curve; ++i) {
+    for (i = 1; i < arip->pts_per_curve; ++i) {
 	VMOVE(arip->curves[ncurves_minus_one]+3*i,
 	      arip->curves[ncurves_minus_one]);
     }
@@ -2415,7 +2415,7 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
      * MORE points than the value in the num_points field if it's all on one
      * line. Is that a bug, or a feature?
      */
-    for (i=6; i<argc; i+= 4) {
+    for (i = 6; i < argc; i+ = 4) {
 	struct wdb_metaballpt *metaballpt;
 
 	metaballpt = (struct wdb_metaballpt *)bu_malloc(sizeof(struct wdb_metaballpt), "wdb_metaballpt");

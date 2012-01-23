@@ -392,7 +392,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 
     COMBMEM_GETCOMBTREE(gedp, argv[0], argv[1], dp, intern, ntp, rt_tree_array, node_count);
 
-    for (i=0; i<node_count; i++) {
+    for (i = 0; i < node_count; i++) {
 	union tree *itp = rt_tree_array[i].tl_tree;
 	char op = '\0';
 

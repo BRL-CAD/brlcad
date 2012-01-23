@@ -89,7 +89,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
     BU_LIST_INIT(&headIdName.l);
 
     /* Build list of id_to_names */
-    for (j=1; j<argc; j++) {
+    for (j = 1; j < argc; j++) {
 	int n;
 	int start, end;
 	int range;

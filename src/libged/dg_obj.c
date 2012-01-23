@@ -1114,7 +1114,7 @@ dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, struct bn_vlblock *vbp, const cha
 
     bu_strlcpy(shortname, name, sizeof(shortname));
 
-    for (i=0; i < vbp->nused; i++) {
+    for (i = 0; i < vbp->nused; i++) {
 	if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
 	    continue;
 
@@ -1538,12 +1538,12 @@ dgo_rt_write(struct dg_obj *dgop,
 
     (void)fprintf(fp, "start 0; clean;\n");
     FOR_ALL_SOLIDS (sp, &dgop->dgo_headSolid) {
-	for (i=0;i<sp->s_fullpath.fp_len;i++) {
+	for (i = 0; i < sp->s_fullpath.fp_len; i++) {
 	    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
 	}
     }
     FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
-	for (i=0; i<sp->s_fullpath.fp_len; i++) {
+	for (i = 0; i < sp->s_fullpath.fp_len; i++) {
 	    if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & RT_DIR_USED)) {
 		struct animate *anp;
 		for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp;
@@ -1556,7 +1556,7 @@ dgo_rt_write(struct dg_obj *dgop,
     }
 
     FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
-	for (i=0;i< sp->s_fullpath.fp_len;i++) {
+	for (i = 0; i < sp->s_fullpath.fp_len; i++) {
 	    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
 	}
     }
@@ -1824,7 +1824,7 @@ dgo_run_rt(struct dg_obj *dgop,
 	(void)close(pipe_err[0]);
 	(void)close(pipe_err[1]);
 
-	for (i=3; i < 20; i++)
+	for (i = 3; i < 20; i++)
 	    (void)close(i);
 
 	(void)execvp(dgop->dgo_rt_cmd[0], dgop->dgo_rt_cmd);
@@ -1898,7 +1898,7 @@ dgo_run_rt(struct dg_obj *dgop,
     si.hStdError   = pipe_err[1];
 
     snprintf(line, sizeof(line), "%s ", dgop->dgo_rt_cmd[0]);
-    for (i=1; i<dgop->dgo_rt_cmd_len; i++) {
+    for (i = 1; i < dgop->dgo_rt_cmd_len; i++) {
 	snprintf(name, sizeof(name), "%s ", dgop->dgo_rt_cmd[i]);
 	bu_strlcat(line, name, sizeof(line));
     }
@@ -1971,7 +1971,7 @@ dgo_rt_command(struct dg_obj *dgop,
 	*vp++ = pstring;
     }
 
-    for (i=1; i < argc; i++) {
+    for (i = 1; i < argc; i++) {
 	if (argv[i][0] == '-' && argv[i][1] == '-' &&
 	    argv[i][2] == '\0') {
 	    ++i;
@@ -2427,7 +2427,7 @@ dgo_rtcheck_command(struct dg_obj *dgop,
     vp = (const char **)&dgop->dgo_rt_cmd[0];
     *vp++ = argv[0];
     *vp++ = "-M";
-    for (i=1; i < (size_t)argc; i++)
+    for (i = 1; i < (size_t)argc; i++)
 	*vp++ = argv[i];
     *vp++ = dgop->dgo_wdbp->dbip->dbi_filename;
 
@@ -2485,7 +2485,7 @@ dgo_rtcheck_command(struct dg_obj *dgop,
 	(void)close(e_pipe[0]);
 	(void)close(e_pipe[1]);
 
-	for (i=3; i < 20; i++)
+	for (i = 3; i < 20; i++)
 	    (void)close(i);
 
 	(void)execvp(dgop->dgo_rt_cmd[0], dgop->dgo_rt_cmd);
@@ -2542,7 +2542,7 @@ dgo_rtcheck_command(struct dg_obj *dgop,
     vp = &dgop->dgo_rt_cmd[0];
     *vp++ = "rtcheck";
     *vp++ = "-M";
-    for (i=1; i < argc; i++)
+    for (i = 1; i < argc; i++)
 	*vp++ = argv[i];
 
     {
@@ -2625,7 +2625,7 @@ dgo_rtcheck_command(struct dg_obj *dgop,
     si.wShowWindow = SW_HIDE;
 
     snprintf(line, sizeof(line), "%s ", dgop->dgo_rt_cmd[0]);
-    for (i=1; i < dgop->dgo_rt_cmd_len; i++) {
+    for (i = 1; i < dgop->dgo_rt_cmd_len; i++) {
 	snprintf(name, sizeof(name), "%s ", dgop->dgo_rt_cmd[i]);
 	bu_strlcat(line, name, sizeof(line));
     }
@@ -4212,7 +4212,7 @@ dgo_drawtrees(struct dg_obj *dgop, int argc, const char **argv, int kind, struct
     }
     if (dgcdp->fastpath_count) {
 	bu_log("%d region%s rendered through polygon fastpath\n",
-	       dgcdp->fastpath_count, dgcdp->fastpath_count==1?"":"s");
+	       dgcdp->fastpath_count, dgcdp->fastpath_count == 1 ? "" : "s");
     }
 
     bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");

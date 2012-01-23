@@ -155,7 +155,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
     (void)fprintf(fp, "#!/bin/sh\n%s -M ", rtcmd);
     if (gedp->ged_gvp->gv_perspective > 0)
 	(void)fprintf(fp, "-p%g ", gedp->ged_gvp->gv_perspective);
-    for (i=2; i < argc; i++)
+    for (i = 2; i < argc; i++)
 	(void)fprintf(fp, "%s ", argv[i]);
 
     if (strncmp(rtcmd, "nirt", 4) != 0)

@@ -108,7 +108,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	if (gtd.gtd_prflag == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "PATH:  ");
 
-	    for (i=0; i<gtd.gtd_objpos; i++)
+	    for (i = 0; i < gtd.gtd_objpos; i++)
 		bu_vls_printf(gedp->ged_result_str, "/%s", gtd.gtd_obj[i]->d_namep);
 
 	    bu_vls_printf(gedp->ged_result_str, "  NOT FOUND\n");

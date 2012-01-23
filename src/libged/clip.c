@@ -154,7 +154,7 @@ ged_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
     maxdist = CLIP_DISTANCE;
     VSUB2(diff, b, a);
 
-    for (i=0; i < 3; i++, pt++, dir++, max++, min++) {
+    for (i = 0; i < 3; i++, pt++, dir++, max++, min++) {
 	if (*dir < -EPSILON) {
 	    if ((sv = (*min - *pt) / *dir) < 0.0)
 		return 0;	/* MISS */

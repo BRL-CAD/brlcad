@@ -52,8 +52,8 @@ ged_echo(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    for (i=1; i < argc; i++) {
-	bu_vls_printf(gedp->ged_result_str, "%s%s", i==1 ? "" : " ", argv[i]);
+    for (i = 1; i < argc; i++) {
+	bu_vls_printf(gedp->ged_result_str, "%s%s", i == 1 ? "" : " ", argv[i]);
     }
 
     bu_vls_printf(gedp->ged_result_str, "\n");

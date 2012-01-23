@@ -670,7 +670,7 @@ _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name,
 
     bu_strlcpy(shortname, name, sizeof(shortname));
 
-    for (i=0; i < vbp->nused; i++) {
+    for (i = 0; i < vbp->nused; i++) {
 	if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
 	    continue;
 
@@ -972,7 +972,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
     if (dgcdp->fastpath_count) {
 	bu_log("%d region%s rendered through polygon fastpath\n",
-	       dgcdp->fastpath_count, dgcdp->fastpath_count==1?"":"s");
+	       dgcdp->fastpath_count, dgcdp->fastpath_count == 1 ? "" : "s");
     }
 
     bu_free((genptr_t)dgcdp, "_ged_drawtrees: dgcdp");
@@ -1166,7 +1166,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 
     /* check args for "-A" (attributes) and "-o" */
     bu_vls_init(&vls);
-    for (i=0; i<(size_t)argc; i++) {
+    for (i = 0; i < (size_t)argc; i++) {
 	char *ptr_A=NULL;
 	char *ptr_o=NULL;
 	char *c;
@@ -1251,7 +1251,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	    bu_vls_free(&vls);
 	    return TCL_OK;
 	}
-	for (i=0; i<BU_PTBL_LEN(tbl); i++) {
+	for (i = 0; i < BU_PTBL_LEN(tbl); i++) {
 	    struct directory *dp;
 
 	    dp = (struct directory *)BU_PTBL_GET(tbl, i);

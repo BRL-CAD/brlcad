@@ -160,7 +160,7 @@ arbin(struct ged *gedp,
     /* move new face planes for the desired thicknesses
      * don't do this yet for an arb7 */
     if (cgtype != 7) {
-	for (i=0; i<nface; i++) {
+	for (i = 0; i < nface; i++) {
 	    if ((planes[i][W] - VDOT(center_pt, &planes[i][0])) > 0.0)
 		thick[i] *= -1.0;
 	    planes[i][W] += thick[i];
@@ -173,7 +173,7 @@ arbin(struct ged *gedp,
 	num_pts = 0;	/* don't use rt_arb_3face_intersect for any points */
 
     /* find the new vertices by intersecting the new face planes */
-    for (i=0; i<num_pts; i++) {
+    for (i = 0; i < num_pts; i++) {
 	if (rt_arb_3face_intersect(arb->pt[i], (const plane_t *)planes, cgtype, i*3) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "cannot find inside arb\n");
 	    return GED_ERROR;
@@ -229,7 +229,7 @@ arbin(struct ged *gedp,
 	    /* if any two of the calculates intersection points are equal,
 	     * then all four must be equal
 	     */
-	    for (i=4; i<8; i++)
+	    for (i = 4; i < 8; i++)
 		VMOVE(arb->pt[i], pt[0]);
 
 	    return GED_OK;
@@ -287,7 +287,7 @@ arbin(struct ged *gedp,
 	}
 
 	/* move face planes */
-	for (i=0; i<nface; i++) {
+	for (i = 0; i < nface; i++) {
 	    int found=0;
 
 	    /* look for the face plane with the same geometry as the arb7 planes */
@@ -328,7 +328,7 @@ arbin(struct ged *gedp,
 	 */
 	bu_ptbl_init(&vert_tab, 64, "vert_tab");
 	nmg_vertex_tabulate(&vert_tab, &m->magic);
-	for (i=0; i<BU_PTBL_END(&vert_tab); i++) {
+	for (i = 0; i < BU_PTBL_END(&vert_tab); i++) {
 	    struct vertex *v;
 
 	    v = (struct vertex *)BU_PTBL_GET(&vert_tab, i);
@@ -688,13 +688,13 @@ ellgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
     mag[1] = MAGNITUDE(ell->b);
     mag[2] = MAGNITUDE(ell->c);
 
-    for (i=0; i<3; i++) {
+    for (i = 0; i < 3; i++) {
 	order[i] = i;
     }
 
-    for (i=0; i<2; i++) {
+    for (i = 0; i < 2; i++) {
 	k = i + 1;
-	for (j=k; j<3; j++) {
+	for (j = k; j < 3; j++) {
 	    if (mag[i] < mag[j])
 		order[i] = j;
 	}
@@ -705,7 +705,7 @@ ellgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
     if ((ratio = mag[order[2]] / mag[order[1]]) < .8)
 	thick[order[2]] = thick[order[2]]/(1.016447*pow(ratio, .071834));
 
-    for (i=0; i<3; i++) {
+    for (i = 0; i < 3; i++) {
 	if ((nmag[i] = mag[i] - thick[i]) <= 0.0)
 	    bu_vls_printf(gedp->ged_result_str, "Warning: new vector [%d] length <= 0 \n", i);
     }
@@ -1003,7 +1003,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 		    break;
 	    }
 
-	    for (i=0; i<nface; i++) {
+	    for (i = 0; i < nface; i++) {
 		if (argc < arg+1) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", prompt[i]);
 		    return GED_MORE;
@@ -1018,7 +1018,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	}
 
 	case ID_TGC:
-	    for (i=0; i<3; i++) {
+	    for (i = 0; i < 3; i++) {
 		if (argc < arg+1) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", p_tgcin[i]);
 		    return GED_MORE;

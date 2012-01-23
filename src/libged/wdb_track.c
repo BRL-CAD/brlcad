@@ -108,7 +108,7 @@ wrobj(struct rt_wdb *wdbp,
 	    arb->magic = RT_ARB_INTERNAL_MAGIC;
 
 	    VMOVE(arb->pt[0], &sol.s_values[0]);
-	    for (i=1; i<8; i++)
+	    for (i = 1; i < 8; i++)
 		VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0])
 
 		    intern.idb_ptr = (genptr_t)arb;
@@ -208,7 +208,7 @@ slope(fastf_t wh1[],
     switchs = 0;
     if (wh1[2] < wh2[2]) {
 	switchs++;
-	for (i=0; i<3; i++) {
+	for (i = 0; i < 3; i++) {
 	    temp = wh1[i];
 	    wh1[i] = wh2[i];
 	    wh2[i] = temp;
@@ -216,14 +216,14 @@ slope(fastf_t wh1[],
     }
     tancir(wh1, wh2);
     if (switchs) {
-	for (i=0; i<3; i++) {
+	for (i = 0; i < 3; i++) {
 	    temp = wh1[i];
 	    wh1[i] = wh2[i];
 	    wh2[i] = temp;
 	}
     }
     if (plano[1] <= plant[1]) {
-	for (i=0; i<2; i++) {
+	for (i = 0; i < 2; i++) {
 	    temp = plano[i];
 	    plano[i] = plant[i];
 	    plant[i] = temp;
@@ -256,7 +256,7 @@ slope(fastf_t wh1[],
     work[0] = work[2] = 0.0;
     work[1] = t[1] - t[0];
     VMOVE(&sol.s_values[12], work);
-    for (i=3; i<=9; i+=3) {
+    for (i = 3; i < =9; i+=3) {
 	j = i + 12;
 	VADD2(&sol.s_values[j], &sol.s_values[i], work);
     }
@@ -274,7 +274,7 @@ crdummy(fastf_t w[3], fastf_t t[3], int flag)
 
     vec[1] = 0.0;
     if (plano[1] <= plant[1]) {
-	for (i=0; i<2; i++) {
+	for (i = 0; i < 2; i++) {
 	    temp = plano[i];
 	    plano[i] = plant[i];
 	    plant[i] = temp;
@@ -298,7 +298,7 @@ crdummy(fastf_t w[3], fastf_t t[3], int flag)
     vec[2] = 0.0;
     vec[1] = t[1] - t[0] + 2.0;
     VMOVE(&sol.s_values[12], vec);
-    for (i=3; i<=9; i+=3) {
+    for (i = 3; i < =9; i+=3) {
 	j = i + 12;
 	VADD2(&sol.s_values[j], &sol.s_values[i], vec);
     }
@@ -340,7 +340,7 @@ bottom(vect_t vec1, vect_t vec2, fastf_t t[])
     tvec[1] = t[1] - t[0];
     VMOVE(&sol.s_values[12], tvec);
 
-    for (i=3; i<=9; i+=3) {
+    for (i = 3; i < =9; i+=3) {
 	j = i + 12;
 	VADD2(&sol.s_values[j], &sol.s_values[i], tvec);
     }
@@ -373,7 +373,7 @@ top(vect_t vec1, vect_t vec2, fastf_t t[])
     VADD2(&sol.s_values[6], &sol.s_values[3], &sol.s_values[9]);
     VMOVE(&sol.s_values[12], tvec);
 
-    for (i=3; i<=9; i+=3) {
+    for (i = 3; i < =9; i+=3) {
 	j = i + 12;
 	VADD2(&sol.s_values[j], &sol.s_values[i], tvec);
     }
@@ -771,7 +771,7 @@ crregion(struct rt_wdb *wdbp,
 
     BU_LIST_INIT(&head);
 
-    for (i=0; i<number; i++) {
+    for (i = 0; i < number; i++) {
 	solidname[grpname_len + extraTypeChars] = '\0';
 	crname(solidname, members[i], maxlen);
 	if (db_lookup(wdbp->dbip, solidname, LOOKUP_QUIET) == RT_DIR_NULL) {
@@ -968,7 +968,7 @@ wdb_track_cmd(void *data,
  * grpname.s.0->9 and grpname.r.0->9
  */
 
-    for (i=0; i<10; i++) {
+    for (i = 0; i < 10; i++) {
 	crname(solname, i, len);
 	crname(regname, i, len);
 	if ((db_lookup(wdbp->dbip, solname, LOOKUP_QUIET) != RT_DIR_NULL) ||
@@ -984,7 +984,7 @@ wdb_track_cmd(void *data,
     }
 
     /* find the front track slope to the idler */
-    for (i=0; i<24; i++)
+    for (i = 0; i < 24; i++)
 	sol.s_values[i] = 0.0;
 
     /* add the solids */
@@ -1002,7 +1002,7 @@ wdb_track_cmd(void *data,
 
     /* solid 1 */
     /* find track around idler */
-    for (i=0; i<24; i++)
+    for (i = 0; i < 24; i++)
 	sol.s_values[i] = 0.0;
     sol.s_type = ID_TGC;
     trcurve(iw, tr);
@@ -1025,7 +1025,7 @@ wdb_track_cmd(void *data,
 
     /* solid 3 */
     /* find idler track dummy arb8 */
-    for (i=0; i<24; i++)
+    for (i = 0; i < 24; i++)
 	sol.s_values[i] = 0.0;
     crname(solname, 3, len);
     bu_strlcpy(sol.s_name, solname, len);
@@ -1037,7 +1037,7 @@ wdb_track_cmd(void *data,
 
     /* solid 4 */
     /* track slope to drive */
-    for (i=0; i<24; i++)
+    for (i = 0; i < 24; i++)
 	sol.s_values[i] = 0.0;
     slope(lw, dw, tr);
     VMOVE(temp1, &sol.s_values[0]);
@@ -1049,7 +1049,7 @@ wdb_track_cmd(void *data,
 
     /* solid 5 */
     /* track around drive */
-    for (i=0; i<24; i++)
+    for (i = 0; i < 24; i++)
 	sol.s_values[i] = 0.0;
     sol.s_type = ID_TGC;
     trcurve(dw, tr);
@@ -1073,7 +1073,7 @@ wdb_track_cmd(void *data,
 
     /* solid 7 */
     /* drive dummy arb8 */
-    for (i=0; i<24; i++)
+    for (i = 0; i < 24; i++)
 	sol.s_values[i] = 0.0;
     crname(solname, 7, len);
     bu_strlcpy(sol.s_name, solname, len);
@@ -1169,7 +1169,7 @@ wdb_track_cmd(void *data,
     regname[grpname_len + extraTypeChars] = '\0';
 
     /* group all the track regions */
-    for (i=0; i<10; i++) {
+    for (i = 0; i < 10; i++) {
 	if (i == 2 || i == 3 || i == 6 || i == 7)
 	    continue;
 	regname[grpname_len + extraTypeChars] = '\0';

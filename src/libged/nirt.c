@@ -260,7 +260,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     *vp++ = "-e";
     *vp++ = bu_vls_addr(&p_vls);
 
-    for (i=1; i < argc; i++)
+    for (i = 1; i < argc; i++)
 	*vp++ = (char *)argv[i];
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
 
@@ -319,7 +319,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	(void)close(pipe_out[1]);
 	(void)close(pipe_err[0]);
 	(void)close(pipe_err[1]);
-	for (i=3; i < 20; i++)
+	for (i = 3; i < 20; i++)
 	    (void)close(i);
 	(void)signal(SIGINT, SIG_DFL);
 	(void)execvp(gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd);
@@ -407,7 +407,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     snprintf(line1, rem, "%s ", gedp->ged_gdp->gd_rt_cmd[0]);
     rem -= strlen(line1) - 1;
 
-    for (i=1; i<gedp->ged_gdp->gd_rt_cmd_len; i++) {
+    for (i = 1; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
 	/* skip commands */
 	if (!strcmp(gedp->ged_gdp->gd_rt_cmd[i], "-e"))
 	    ++i;
@@ -434,7 +434,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     fp_in = _fdopen(_open_osfhandle((intptr_t)pipe_inDup, _O_TEXT), "w");
 
     /* send commands down the pipe */
-    for (i=1; i<gedp->ged_gdp->gd_rt_cmd_len-2; i++)
+    for (i = 1; i < gedp->ged_gdp->gd_rt_cmd_len - 2; i++)
 	if (strstr(gedp->ged_gdp->gd_rt_cmd[i], "-e") != NULL)
 	    fprintf(fp_in, "%s\n", gedp->ged_gdp->gd_rt_cmd[++i]);
 

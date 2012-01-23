@@ -70,7 +70,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 
     /* check args for options */
     bu_vls_init(&vls);
-    for (i=0; i<(size_t)argc; i++) {
+    for (i = 0; i < (size_t)argc; i++) {
 	char *ptr_A=NULL;
 	char *ptr_o=NULL;
 
@@ -153,7 +153,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_free(&vls);
 	    return TCL_OK;
 	}
-	for (i=0; i<BU_PTBL_LEN(tbl); i++) {
+	for (i = 0; i < BU_PTBL_LEN(tbl); i++) {
 	    struct directory *dp;
 
 	    dp = (struct directory *)BU_PTBL_GET(tbl, i);

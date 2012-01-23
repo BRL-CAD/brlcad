@@ -258,7 +258,7 @@ clone_get_name(struct directory *dp, struct ged_clone_state *state, size_t iter)
 	    else
 		bu_vls_printf(newname, "%d", num + i*state->incr);
 	} else /* non-region combinations */
-	    bu_vls_printf(newname, "%d", (num==0)?i+1:i+num);
+	    bu_vls_printf(newname, "%d", (num == 0) ? i + 1 : i + num);
 	i++;
     } while (db_lookup(state->gedp->ged_wdbp->dbip, bu_vls_addr(newname), LOOKUP_QUIET) != NULL);
     return newname;
@@ -280,7 +280,7 @@ copy_v4_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
     for (i = 0; i < state->n_copies; i++) {
 	struct bu_vls *name;
 
-	if (i==0)
+	if (i == 0)
 	    name = clone_get_name(proto, state, i);
 	else {
 	    dp = db_lookup(dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET);
@@ -400,7 +400,7 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	struct directory *dp = (struct directory *)NULL;
 	struct rt_db_internal intern;
 
-	if (i==0)
+	if (i == 0)
 	    dp = proto;
 	else
 	    dp = db_lookup(dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET);
@@ -509,7 +509,7 @@ copy_v4_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 	    *bu_vls_addr(&obj_list.names[idx].dest[i]) = 'r';
 	} else {
 	    struct bu_vls *name;
-	    if (i==0)
+	    if (i == 0)
 		name = clone_get_name(proto, state, i);
 	    else {
 		dp = db_lookup(dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET);
@@ -608,7 +608,7 @@ copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
-	if (i==0)
+	if (i == 0)
 	    name = clone_get_name(proto, state, i);
 	else {
 	    dp = db_lookup(dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET);

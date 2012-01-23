@@ -163,7 +163,7 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-	for (k=2; k<argc; k++)
+	for (k = 2; k < argc; k++)
 	    db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, prefix_do,
 			     (genptr_t)argv[1], (genptr_t)argv[k], (genptr_t)NULL);
 	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource)) {

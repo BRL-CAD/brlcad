@@ -103,7 +103,7 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
 		comb->aircode,
 		comb->GIFTmater,
 		comb->los);
-	for (i=0; i < pathpos; i++)
+	for (i =0 ; i < pathpos; i++)
 	    fprintf(fp, "/%s", path[i]->d_namep);
 	fprintf(fp, "/%s\n", dp->d_namep);
 	intern.idb_meth->ft_ifree(&intern);

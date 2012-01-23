@@ -1126,7 +1126,7 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 
     bu_vls_sprintf(&str2, "tire-tread-shape%s.c", suffix);
     (void)mk_addmember(bu_vls_addr(&str2), &tread.l, NULL, WMOP_UNION);
-    for (i=1; i<=number_of_patterns; i++) {
+    for (i = 1; i <= number_of_patterns; i++) {
 	bu_vls_sprintf(&str, "tread_master%s.c", suffix);
 	getYRotMat(&y, i * 2 * M_PI / number_of_patterns);
 	(void)mk_addmember(bu_vls_addr(&str), &tread.l, y, WMOP_SUBTRACT);

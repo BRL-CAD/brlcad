@@ -80,7 +80,7 @@ _ged_print_matrix(FILE *fp, matp_t matrix)
     if (!matrix)
 	return;
 
-    for (k=0; k<16; k++) {
+    for (k = 0; k < 16; k++) {
 	sprintf(buf, "%g", matrix[k]);
 	tmp = atof(buf);
 	if (ZERO(tmp - matrix[k]))
@@ -519,7 +519,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
   printf("\n");
   int i, m;
   fastf_t tmp;
-  for (i=0; i<tree_index; i++) {
+  for (i = 0; i < tree_index; i++) {
   char op;
 
   switch (rt_tree_array[i].tl_op) {
@@ -614,7 +614,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     }
 
     maxlength = 0;
-    for (i=0; (attr = db5_standard_attribute(i)) != NULL; i++) {
+    for (i = 0; (attr = db5_standard_attribute(i)) != NULL; i++) {
 	if (strlen(attr) > maxlength)
 	    maxlength = strlen(attr);
     }
@@ -625,7 +625,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	    bu_vls_printf(&spacer, " ");
 	}
 	fprintf(fp, "name%s= %s\n", bu_vls_addr(&spacer), name);
-	for (i=0; (attr = db5_standard_attribute(i)) != NULL; i++) {
+	for (i = 0; (attr = db5_standard_attribute(i)) != NULL; i++) {
 	    bu_vls_trunc(&spacer, 0);
 	    for (j = 0; j < maxlength - strlen(attr); j++) {
 		bu_vls_printf(&spacer, " ");
@@ -663,7 +663,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 
     if (!hasattr) {
 	avpp = avs.avp;
-	for (i=0; i < avs.count; i++, avpp++) {
+	for (i = 0; i < avs.count; i++, avpp++) {
 	    if (strlen(avpp->name) > maxlength)
 		maxlength = strlen(avpp->name);
 	}
@@ -672,7 +672,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	    bu_vls_printf(&spacer, " ");
 	}
 	fprintf(fp, "name%s= %s\n", bu_vls_addr(&spacer), name);
-	for (i=0; (attr = db5_standard_attribute(i)) != NULL; i++) {
+	for (i = 0; (attr = db5_standard_attribute(i)) != NULL; i++) {
 	    bu_vls_trunc(&spacer, 0);
 	    for (j = 0; j < maxlength - strlen(attr) + 1; j++) {
 		bu_vls_printf(&spacer, " ");
@@ -684,7 +684,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	    }
 	}
 	avpp = avs.avp;
-	for (i=0; i < avs.count; i++, avpp++) {
+	for (i = 0; i < avs.count; i++, avpp++) {
 	    if (!db5_is_standard_attribute(avpp->name)) {
 		bu_vls_trunc(&spacer, 0);
 		for (j = 0; j < maxlength - strlen(avpp->name) + 1; j++) {
@@ -698,7 +698,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 
     fprintf(fp, "%s", combseparator);
 
-    for (i=0; i<actual_count; i++) {
+    for (i = 0; i<actual_count; i++) {
 	char op;
 
 	switch (rt_tree_array[i].tl_op) {

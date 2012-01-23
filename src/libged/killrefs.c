@@ -87,7 +87,7 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
 
-	for (k=1; k<argc; k++) {
+	for (k = 1; k < argc; k++) {
 	    int code;
 
 	    code = db_tree_del_dbleaf(&(comb->tree), argv[k], &rt_uniresource, nflag);

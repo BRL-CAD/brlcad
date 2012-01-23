@@ -119,7 +119,7 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
     VJOIN1(arb->pt[1], arb->pt[0], 508.0, norm2);
     VJOIN1(arb->pt[3], arb->pt[0], -508.0, norm3);
     VJOIN2(arb->pt[2], arb->pt[0], 508.0, norm2, -508.0, norm3);
-    for (i=0; i<4; i++)
+    for (i = 0; i < 4; i++)
 	VJOIN1(arb->pt[i+4], arb->pt[i], -50.8, norm1);
 
     GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);

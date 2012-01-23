@@ -64,7 +64,7 @@ ged_hide(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    for (i=1; i<argc; i++) {
+    for (i = 1; i < argc; i++) {
 	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    continue;
 	}

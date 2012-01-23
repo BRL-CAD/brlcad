@@ -57,7 +57,7 @@ ged_bot_sync(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    for (i=1; i < argc; ++i) {
+    for (i = 1; i < argc; ++i) {
 	/* Skip past any path elements */
 	char *obj = bu_basename(argv[i]);
 

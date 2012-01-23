@@ -88,7 +88,7 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 	gtd.gtd_objpos = argc-1;
 
 	/* build directory pointer array for desired path */
-	for (i=0; i<gtd.gtd_objpos; i++) {
+	for (i = 0; i < gtd.gtd_objpos; i++) {
 	    if ((gtd.gtd_obj[i] = db_lookup(gedp->ged_wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == RT_DIR_NULL)
 		return GED_ERROR;
 	}
@@ -101,7 +101,7 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
     if (gtd.gtd_prflag == 0) {
 	/* path not found */
 	bu_vls_printf(gedp->ged_result_str, "PATH:  ");
-	for (i=0; i<gtd.gtd_objpos; i++)
+	for (i = 0; i < gtd.gtd_objpos; i++)
 	    bu_vls_printf(gedp->ged_result_str, "/%s", gtd.gtd_obj[i]->d_namep);
 
 	bu_vls_printf(gedp->ged_result_str, "  NOT FOUND\n");

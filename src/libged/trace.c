@@ -96,7 +96,7 @@ _ged_trace(struct directory *dp,
     if (pathpos >= _GED_MAX_LEVELS) {
 	bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "nesting exceeds %d levels\n", _GED_MAX_LEVELS);
 
-	for (i=0; i<_GED_MAX_LEVELS; i++)
+	for (i = 0; i < _GED_MAX_LEVELS; i++)
 	    bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "/%s", gtdp->gtd_path[i]->d_namep);
 
 	bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "\n");
@@ -127,14 +127,14 @@ _ged_trace(struct directory *dp,
 
     /* check for desired path */
     if (gtdp->gtd_flag == _GED_CPEVAL) {
-	for (i=0; i<=pathpos; i++) {
+	for (i = 0; i <= pathpos; i++) {
 	    if (gtdp->gtd_path[i]->d_addr != gtdp->gtd_obj[i]->d_addr) {
 		/* not the desired path */
 		return;
 	    }
 	}
     } else {
-	for (i=0; i<gtdp->gtd_objpos; i++) {
+	for (i = 0; i < gtdp->gtd_objpos; i++) {
 	    if (gtdp->gtd_path[i]->d_addr != gtdp->gtd_obj[i]->d_addr) {
 		/* not the desired path */
 		return;
@@ -151,7 +151,7 @@ _ged_trace(struct directory *dp,
 	return;
 
     /* print the path */
-    for (i=0; i<pathpos; i++)
+    for (i = 0; i < pathpos; i++)
 	bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "/%s", gtdp->gtd_path[i]->d_namep);
 
     if (gtdp->gtd_flag == _GED_LISTPATH) {

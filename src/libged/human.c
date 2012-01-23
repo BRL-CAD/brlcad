@@ -243,10 +243,10 @@ setDirection(fastf_t *inVect, fastf_t *resultVect, fastf_t *outMatrix, fastf_t x
     MAT3X3VEC(outVect, rotMatrix, inVect);
 
 /* Print rotation matrix
- *	int i=0;
- *	for (i=1; i<=16; i++) {
+ *	int i = 0;
+ *	for (i = 1; i < =16; i++) {
  *		bu_log("%3.4f\t", rotMatrix[(i-1)]);
- *		if (i%4==0)
+ *		if (i%4 == 0)
  *			bu_log("\n");
  *	}
  */
@@ -304,20 +304,20 @@ boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *lengt
 
 /*These z, y, x, rot matrices were for debugging purposes but didn't help. */
 	/*Z rotation matrix */
-/*		if (w==1 || w==2 || w== 5 || w== 6 || w==11)
+/*		if (w == 1 || w == 2 || w == 5 || w == 6 || w == 11)
  *			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
  */
 	/*Y rotation Matrix */
-/*		if (w==1 || w==3 || w== 6 || w==9 || w==11)
+/*		if (w == 1 || w == 3 || w == 6 || w == 9 || w == 11)
  *			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
  */
 	/*X rotation Matrix */
-/*		if (w==1 || w==6 || w== 7 || w==10 || w==11)
+/*		if (w == 1 || w == 6 || w == 7 || w == 10 || w == 11)
  *			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
  */
 /*
  *		bu_log("%3.4f\t", rotMatrix[(w-1)]);
- *		if (w%4==0)
+ *		if (w%4 == 0)
  *			bu_log("\n");
  */
     }
@@ -2093,7 +2093,7 @@ getText(struct human_data_t *UNUSED(dude))
 
     input = fopen("Stats.txt", "r");
 
-    if (input==NULL) {
+    if (input == NULL) {
 	bu_log("Non existant input file.\n");
     } else {
 	bu_log("File opened, reading data:\n");
@@ -2261,18 +2261,18 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     bu_strlcpy(humanName, topLevel, MAXLENGTH);
 
     setStance(stance, &human_data);
-    if (human_data.textread==1)
+    if (human_data.textread == 1)
 	getText(&human_data);
-    if (human_data.verbread==1)
+    if (human_data.verbread == 1)
 	verbIn(&human_data);
     if (troops <= 1) {
 	makeBody(gedp->ged_wdbp, suffix, &human_data, location, showBoxes);
 	mk_id_units(gedp->ged_wdbp, "A single Human", "in");
 
 	/*This function dumps out a text file of all dimentions of bounding boxes/antrho-data/whatever on human model.*/
-	if (human_data.textwrite==1)
+	if (human_data.textwrite == 1)
 	    text(&human_data);
-	if (human_data.verbwrite==1)
+	if (human_data.verbwrite == 1)
 	    verbose(&human_data);
     }
     if (troops > 1) {

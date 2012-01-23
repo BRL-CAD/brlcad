@@ -247,12 +247,12 @@ count_nodes(struct ged *gedp, char *line)
 	 * If this token is not a boolean operator, then it must be the start
 	 * of a matrix which we will skip.
 	 */
-	if (ptr && !((*ptr == 'u' || *ptr == '-' || *ptr=='+') &&
+	if (ptr && !((*ptr == 'u' || *ptr == '-' || *ptr == '+') &&
 		     *(ptr+1) == '\0')) {
 	    int k;
 
-	    /* skip past matrix, k=1 because we already have the first value */
-	    for (k=1; k<16; k++) {
+	    /* skip past matrix, k = 1 because we already have the first value */
+	    for (k = 1; k < 16; k++) {
 		ptr = strtok((char *)NULL, _delims);
 		if (!ptr) {
 		    bu_vls_printf(gedp->ged_result_str, "expecting a matrix\n");
@@ -388,7 +388,7 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
 
 		matrix = (matp_t)bu_calloc(16, sizeof(fastf_t), "red: matrix");
 		matrix[0] = atof(ptr);
-		for (k=1; k<16; k++) {
+		for (k = 1; k < 16; k++) {
 		    ptr = strtok((char *)NULL, _delims);
 		    if (!ptr) {
 			bu_log("incomplete matrix for member %s - No changes made\n", name);
@@ -537,7 +537,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     } else {
 	/* make an empty combination structure */
 	BU_GET(comb, struct rt_comb_internal);
-	if(comb == NULL)
+	if (comb == NULL)
 	    bu_bomb("Unable to allocate comb memory");
 	RT_COMB_INTERNAL_INIT(comb);
     }

@@ -77,11 +77,11 @@ Free_uses(struct db_i *dbip)
 {
     int i;
 
-    for (i=0; i<RT_DBNHASH; i++) {
+    for (i = 0; i <RT_DBNHASH; i++) {
 	struct directory *dp;
 	struct object_use *use;
 
-	for (dp=dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
@@ -226,7 +226,7 @@ Do_copy_membs(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tr
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
 
-    if ((dp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL)
+    if ((dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL)
 	return;
 
     xform = (matp_t)user_ptr1;
@@ -482,10 +482,10 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Initialize use and reference counts of all directory entries */
-    for (i=0; i<RT_DBNHASH; i++) {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=gedp->ged_wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
@@ -498,10 +498,10 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     db_functree(gedp->ged_wdbp->dbip, old_dp, increment_uses, increment_uses, &rt_uniresource, NULL);
 
     /* Do a simple reference count to find top level objects */
-    for (i=0; i<RT_DBNHASH; i++) {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=gedp->ged_wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_flags & RT_DIR_SOLID)
 		continue;
 
@@ -522,10 +522,10 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
 
     /* anything with zero references is a tree top */
     bu_ptbl_init(&tops, 0, "tops for xpush");
-    for (i=0; i<RT_DBNHASH; i++) {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=gedp->ged_wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_flags & RT_DIR_SOLID)
 		continue;
 
@@ -538,10 +538,10 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* now re-zero the reference counts */
-    for (i=0; i<RT_DBNHASH; i++) {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=gedp->ged_wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
@@ -550,7 +550,7 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* accurately count references in entire model */
-    for (i=0; i<BU_PTBL_END(&tops); i++) {
+    for (i = 0; i < BU_PTBL_END(&tops); i++) {
 	struct directory *dp;
 
 	dp = (struct directory *)BU_PTBL_GET(&tops, i);

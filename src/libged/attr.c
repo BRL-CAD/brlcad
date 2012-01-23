@@ -283,7 +283,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 		while (*c) {
 		    bu_vls_putc(gedp->ged_result_str, *c);
 		    if (*c == '\n') {
-			for (k=0; k<tabs1; k++) {
+			for (k = 0; k < tabs1; k++) {
 			    bu_vls_putc(gedp->ged_result_str, '\t');
 			}
 		    }

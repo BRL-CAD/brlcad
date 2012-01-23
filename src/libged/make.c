@@ -148,13 +148,13 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	     origin[X] + 0.5*scale,
 	     origin[Y] - 0.5*scale,
 	     origin[Z] - 0.5*scale);
-	for (i=1; i<8; i++)
+	for (i = 1; i < 8; i++)
 	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
 	arb_ip->pt[1][Y] += scale;
 	arb_ip->pt[2][Y] += scale;
 	arb_ip->pt[2][Z] += scale;
 	arb_ip->pt[3][Z] += scale;
-	for (i=4; i<8; i++)
+	for (i = 4; i < 8; i++)
 	    arb_ip->pt[i][X] -= scale;
 	arb_ip->pt[5][Y] += scale;
 	arb_ip->pt[6][Y] += scale;
@@ -171,13 +171,13 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	     origin[X] + 0.5*scale,
 	     origin[Y] - 0.5*scale,
 	     origin[Z] - 0.25*scale);
-	for (i=1; i<8; i++)
+	for (i = 1; i < 8; i++)
 	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
 	arb_ip->pt[1][Y] += scale;
 	arb_ip->pt[2][Y] += scale;
 	arb_ip->pt[2][Z] += scale;
 	arb_ip->pt[3][Z] += 0.5*scale;
-	for (i=4; i<8; i++)
+	for (i = 4; i < 8; i++)
 	    arb_ip->pt[i][X] -= scale;
 	arb_ip->pt[5][Y] += scale;
 	arb_ip->pt[6][Y] += scale;
@@ -193,13 +193,13 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	     origin[X] + 0.5*scale,
 	     origin[Y] - 0.5*scale,
 	     origin[Z] - 0.5*scale);
-	for (i=1; i<8; i++)
+	for (i = 1; i < 8; i++)
 	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
 	arb_ip->pt[1][Y] += scale;
 	arb_ip->pt[2][Y] += scale;
 	arb_ip->pt[2][Z] += scale;
 	arb_ip->pt[3][Z] += scale;
-	for (i=4; i<8; i++)
+	for (i = 4; i < 8; i++)
 	    arb_ip->pt[i][X] -= scale;
 	arb_ip->pt[4][Y] += 0.5*scale;
 	arb_ip->pt[5][Y] += 0.5*scale;
@@ -218,13 +218,13 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	     origin[X] + 0.5*scale,
 	     origin[Y] - 0.5*scale,
 	     origin[Z] - 0.5*scale);
-	for (i=1; i<8; i++)
+	for (i = 1; i < 8; i++)
 	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
 	arb_ip->pt[1][Y] += scale;
 	arb_ip->pt[2][Y] += scale;
 	arb_ip->pt[2][Z] += scale;
 	arb_ip->pt[3][Z] += scale;
-	for (i=4; i<8; i++)
+	for (i = 4; i < 8; i++)
 	{
 	    arb_ip->pt[i][X] -= scale;
 	    arb_ip->pt[i][Y] += 0.5*scale;
@@ -241,14 +241,14 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	     origin[X] + 0.5*scale,
 	     origin[Y] - 0.5*scale,
 	     origin[Z] - 0.5*scale);
-	for (i=1; i<8; i++)
+	for (i = 1; i < 8; i++)
 	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
 	arb_ip->pt[1][Y] += scale;
 	arb_ip->pt[2][Y] += scale;
 	arb_ip->pt[2][Z] += scale;
 	arb_ip->pt[3][Y] += scale;
 	arb_ip->pt[3][Z] += scale;
-	for (i=4; i<8; i++)
+	for (i = 4; i < 8; i++)
 	{
 	    arb_ip->pt[i][X] -= scale;
 	    arb_ip->pt[i][Y] += scale;
@@ -285,7 +285,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	     origin[X],
 	     origin[Y],
 	     origin[Z]);
-	for (i=0; i<arbn_ip->neqn; i++) {
+	for (i = 0; i < arbn_ip->neqn; i++) {
 	    arbn_ip->eqn[i][W] +=
 		VDOT(view_center, arbn_ip->eqn[i]);
 	}

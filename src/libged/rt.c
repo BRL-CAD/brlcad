@@ -92,7 +92,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 	*vp++ = pstring;
     }
 
-    for (i=1; i < argc; i++) {
+    for (i = 1; i < argc; i++) {
 	if (argv[i][0] == '-' && argv[i][1] == 'u' &&
 	    BU_STR_EQUAL(argv[1], "-u")) {
 	    units_supplied=1;
@@ -198,7 +198,7 @@ _ged_run_rt(struct ged *gedp)
 	(void)close(pipe_err[0]);
 	(void)close(pipe_err[1]);
 
-	for (i=3; i < 20; i++)
+	for (i = 3; i < 20; i++)
 	    (void)close(i);
 
 	(void)execvp(gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd);
@@ -271,7 +271,7 @@ _ged_run_rt(struct ged *gedp)
     si.hStdError   = pipe_err[1];
 
     bu_vls_init(&line);
-    for (i=0; i<gedp->ged_gdp->gd_rt_cmd_len; i++) {
+    for (i = 0; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
 	bu_vls_printf(&line, "%s ", gedp->ged_gdp->gd_rt_cmd[i]);
     }
 
@@ -338,7 +338,7 @@ _ged_rt_write(struct ged *gedp,
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    for (i=0;i<sp->s_fullpath.fp_len;i++) {
+	    for (i = 0; i < sp->s_fullpath.fp_len; i++) {
 		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
 	    }
 	}
@@ -351,7 +351,7 @@ _ged_rt_write(struct ged *gedp,
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    for (i=0; i<sp->s_fullpath.fp_len; i++) {
+	    for (i = 0; i < sp->s_fullpath.fp_len; i++) {
 		if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & RT_DIR_USED)) {
 		    struct animate *anp;
 		    for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp;
@@ -371,7 +371,7 @@ _ged_rt_write(struct ged *gedp,
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    for (i=0;i< sp->s_fullpath.fp_len;i++) {
+	    for (i = 0; i < sp->s_fullpath.fp_len; i++) {
 		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
 	    }
 	}

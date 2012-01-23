@@ -48,7 +48,7 @@ savekey_rt_oldwrite(struct ged *gedp, FILE *fp, fastf_t *eye_model)
     (void)fprintf(fp, "%.9e\n", gedp->ged_gvp->gv_size);
     (void)fprintf(fp, "%.9e %.9e %.9e\n",
 		  eye_model[X], eye_model[Y], eye_model[Z]);
-    for (i=0; i < 16; i++) {
+    for (i = 0; i < 16; i++) {
 	(void)fprintf(fp, "%.9e ", gedp->ged_gvp->gv_rotation[i]);
 	if ((i%4) == 3)
 	    (void)fprintf(fp, "\n");

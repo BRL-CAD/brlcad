@@ -404,23 +404,25 @@ binop(struct exists_data *ed)
 
 
 /* test functions */
-int db_object_exists(struct exists_data *ed){
-	struct directory *dp = NULL;
-        dp = db_lookup(ed->gedp->ged_wdbp->dbip, *(ed->t_wp), LOOKUP_QUIET);
-	if (dp) return 1;
-	return 0;
+int db_object_exists(struct exists_data *ed)
+{
+    struct directory *dp = NULL;
+    dp = db_lookup(ed->gedp->ged_wdbp->dbip, *(ed->t_wp), LOOKUP_QUIET);
+    if (dp) return 1;
+    return 0;
 }
 
-int db_object_exists_and_non_null(struct exists_data *ed){
-        int result;
-	result = db_object_exists(ed);
-	if (result) {
-	     /* db_lookup passes: todo - check for null database object */
-	     return result;
-	} else {
-	     /* db_lookup fails - no go */
-	     return result;
-	}
+int db_object_exists_and_non_null(struct exists_data *ed)
+{
+    int result;
+    result = db_object_exists(ed);
+    if (result) {
+        /* db_lookup passes: todo - check for null database object */
+        return result;
+    } else {
+        /* db_lookup fails - no go */
+        return result;
+    }
 }
 
 

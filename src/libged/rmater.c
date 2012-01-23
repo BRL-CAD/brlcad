@@ -43,7 +43,7 @@ extract_mater_from_line(char *line,
     str[1] = shader;
 
     /* Extract first 2 strings. */
-    for (i=j=0; i < 2; ++i) {
+    for (i = j =0; i < 2; ++i) {
 
 	/* skip white space */
 	while (line[j] == ' ' || line[j] == '\t')

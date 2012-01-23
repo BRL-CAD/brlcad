@@ -359,15 +359,15 @@ HIDDEN int
 check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct directory *dp)
 {
     struct tokens *tok;
-    int paren_count=0;
-    int paren_error=0;
-    int missing_exp=0;
-    int missing_op=0;
-    int op_count=0;
-    int arg_count=0;
-    int circular_ref=0;
-    int errors=0;
-    short last_tok=TOK_NULL;
+    int paren_count  = 0;
+    int paren_error  = 0;
+    int missing_exp  = 0;
+    int missing_op   = 0;
+    int op_count     = 0;
+    int arg_count    = 0;
+    int circular_ref = 0;
+    int errors       = 0;
+    short last_tok   = TOK_NULL;
 
     for (BU_LIST_FOR(tok, tokens, hp)) {
 	switch (tok->type) {
@@ -541,7 +541,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
     tok_hd.type = TOK_NULL;
 
     last_tok = TOK_LPAREN;
-    for (i=0; i<argc; i++) {
+    for (i = 0; i < argc; i++) {
 	char *ptr;
 
 	ptr = (char *)argv[i];

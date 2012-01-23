@@ -179,7 +179,7 @@ _ged_vls_print_matrix(struct bu_vls *vls, matp_t matrix)
     if (bn_mat_is_identity(matrix))
 	return;
 
-    for (k=0; k<16; k++) {
+    for (k = 0; k < 16; k++) {
 	sprintf(buf, "%g", matrix[k]);
 	tmp = atof(buf);
 	if (ZERO(tmp - matrix[k]))

@@ -130,7 +130,7 @@ ged_getmat(struct ged *gedp, int argc, const char *argv[])
     } else {
 	register int i;
 
-	for (i=0; i<16; i++)
+	for (i = 0; i < 16; i++)
 	    bu_vls_printf(gedp->ged_result_str, "%lf ", tp->tr_l.tl_mat[i]);
 
 	rt_db_free_internal(&intern);

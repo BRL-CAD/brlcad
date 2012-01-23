@@ -560,7 +560,7 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 	flt_ptr += 3;
 
 	htonf(vert_buffer, (const unsigned char *)flts, 12);
-	for (j=0; j<12; j++) {
+	for (j = 0; j < 12; j++) {
 	    lswap((unsigned int *)&vert_buffer[j*4]);
 	}
 	ret = write(fd, vert_buffer, 50);
@@ -972,7 +972,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	    if (dp->d_flags & RT_DIR_COMB) continue;
 
 	    /* get the internal form */
-	    i=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, mat, &rt_uniresource);
+	    i = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, mat, &rt_uniresource);
 	    if (i < 0) {
 		fprintf(stderr, "%s: rt_get_internal failure %d on %s\n", cmd_name, i, dp->d_namep);
 		continue;

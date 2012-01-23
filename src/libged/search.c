@@ -235,7 +235,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	    } else {
 		uniq_db_objs = db_search_unique_objects(dbplan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
 	    }
-	    for (i=(int)BU_PTBL_LEN(uniq_db_objs) - 1; i >=0 ; i--) {
+	    for (i = (int)BU_PTBL_LEN(uniq_db_objs) - 1; i >= 0 ; i--) {
 		dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, i);
 		bu_vls_printf(gedp->ged_result_str, "%s\n", dp->d_namep);
 	    }
@@ -248,7 +248,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		    _gen_toplevel(gedp->ged_wdbp->dbip, local_list, &dfp, entry->local);
 		    if (entry->local) {
 			uniq_db_objs = db_search_unique_objects(dbplan, local_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-			for (i=(int)BU_PTBL_LEN(uniq_db_objs) - 1; i >=0 ; i--) {
+			for (i = (int)BU_PTBL_LEN(uniq_db_objs) - 1; i >= 0 ; i--) {
 			    dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, i);
 			    bu_vls_printf(gedp->ged_result_str, "%s\n", dp->d_namep);
 			}
@@ -269,7 +269,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		    BU_LIST_PUSH(&(dispatch_list->l), &(new_entry->l));
 		    if (entry->local) {
 			uniq_db_objs = db_search_unique_objects(dbplan, dispatch_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-			for (i=(int)BU_PTBL_LEN(uniq_db_objs) - 1; i >=0 ; i--) {
+			for ( i = (int)BU_PTBL_LEN(uniq_db_objs) - 1; i >= 0 ; i--) {
 			    dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, i);
 			    bu_vls_printf(gedp->ged_result_str, "%s\n", dp->d_namep);
 			}
