@@ -108,7 +108,7 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
      * columns will be one.
      */
     maxnamelen = 0;
-    for (k=0; k < num_in_list; k++) {
+    for (k = 0; k < num_in_list; k++) {
 	namelen = strlen(list_of_names[k]->d_namep);
 	if (namelen > maxnamelen)
 	    maxnamelen = namelen;
@@ -127,8 +127,8 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
      * print in vertical format.
      */
     lines = (num_in_list + (numcol - 1)) / numcol;
-    for (i=0; i < lines; i++) {
-	for (j=0; j < numcol; j++) {
+    for (i = 0; i < lines; i++) {
+	for (j = 0; j < numcol; j++) {
 	    this_one = j * lines + i;
 	    bu_vls_printf(vls, "%s", list_of_names[this_one]->d_namep);
 	    namelen = strlen(list_of_names[this_one]->d_namep);
@@ -192,7 +192,7 @@ vls_long_dpp(struct ged *gedp,
 	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
 	  (int (*)(const void *, const void *))cmpdirname);
 
-    for (i=0; i < num_in_list; i++) {
+    for (i = 0; i < num_in_list; i++) {
 	size_t len;
 
 	dp = list_of_names[i];
@@ -232,7 +232,7 @@ vls_long_dpp(struct ged *gedp,
     /*
      * i - tracks the list item
      */
-    for (i=0; i < num_in_list; ++i) {
+    for (i = 0; i < num_in_list; ++i) {
 	dp = list_of_names[i];
 
 	if (dp->d_flags & RT_DIR_COMB) {
@@ -317,7 +317,7 @@ vls_line_dpp(struct ged *gedp,
     /*
      * i - tracks the list item
      */
-    for (i=0; i < num_in_list; ++i) {
+    for (i = 0; i < num_in_list; ++i) {
 	if (list_of_names[i]->d_flags & RT_DIR_COMB) {
 	    isComb = 1;
 	    isSolid = 0;
@@ -453,7 +453,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 
 	dirp = _ged_getspace(gedp->ged_wdbp->dbip, BU_PTBL_LEN(tbl));
 	dirp0 = dirp;
-	for (i=0; i<BU_PTBL_LEN(tbl); i++) {
+	for (i = 0; i < BU_PTBL_LEN(tbl); i++) {
 	    *dirp++ = (struct directory *)BU_PTBL_GET(tbl, i);
 	}
 
