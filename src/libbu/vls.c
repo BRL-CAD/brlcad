@@ -868,16 +868,13 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	switch (*ep) {
 	    case 's':
 		{
-#define NEW_STRING_HANDLING
-#if defined(NEW_STRING_HANDLING)
                     /* variables used to determine final effects of
                        field length and precision (different for
                        strings versus numbers) */
                     int minfldwid = -1;
                     int maxstrlen = -1;
-                    //int maxfldwid;
-#endif
-		    char *str = va_arg(ap, char *);
+
+                    char *str = va_arg(ap, char *);
 
                     /* for strings only */
                     /* field length is a minimum size and precision is
@@ -888,8 +885,6 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    if (flags & PRECISION) {
                         maxstrlen = precision;
                     }
-#if defined(NEW_STRING_HANDLING)
-                    /* NEW STRING HANDLING ==================== */
 		    if (str) {
                         int stringlen = (int)strlen(str);
                         struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
@@ -938,54 +933,12 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    }  else  {
                         /* handle an empty string */
                         /* FIXME: should we trunc to precision if > fieldlen? */
-                        if (flags & PRECISION) {
-#if 1
-                            //bu_vls_strncat(vls, "(null)", (size_t)flen);
-			    bu_vls_strcat(vls, "(null)");
-#else
-                            if (flen < strlen("(null")) {
-			        bu_vls_strncat(vls, "(null)", (size_t)flen);
-                            } else {
-			        bu_vls_strncat(vls, "(null)", (size_t)flen);
-                            }
-#endif
+                        if (flags & FIELDLEN) {
+			    bu_vls_strncat(vls, "(null)", (size_t)fieldlen);
                         } else {
 			    bu_vls_strcat(vls, "(null)");
                         }
 		    }
-                    /* END NEW STRING HANDLING ==================== */
-#else
-                    /* OLD STRING METHOD ==================== */
-		    if (str) {
-			if (flags & FIELDLEN) {
-			    int stringlen = (int)strlen(str);
-
-			    if (stringlen >= fieldlen)
-				bu_vls_strncat(vls, str, (size_t)fieldlen);
-			    else {
-				struct bu_vls padded = BU_VLS_INIT_ZERO;
-				int i;
-
-				if (left_justify)
-				    bu_vls_strcat(&padded, str);
-				for (i = 0; i < fieldlen - stringlen; ++i)
-				    bu_vls_putc(&padded, ' ');
-				if (!left_justify)
-				    bu_vls_strcat(&padded, str);
-				bu_vls_vlscat(vls, &padded);
-			    }
-			} else {
-			    bu_vls_strcat(vls, str);
-			}
-		    }  else  {
-                        /* handle an empty string */
-			if (flags & FIELDLEN)
-			    bu_vls_strncat(vls, "(null)", (size_t)fieldlen);
-			else
-			    bu_vls_strcat(vls, "(null)");
-		    }
-                    /* END OLD STRING METHOD ==================== */
-#endif
 		}
 		break;
 	    case 'S': /* XXX - DEPRECATED [7.14] */
