@@ -29,6 +29,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
+#include <float.h>
 
 #include "bu.h"
 #include "vmath.h"
@@ -109,7 +111,7 @@
  * val_test
  *     equality test for two val_type vals named a and b, like (a == b)
  */
-#define TEST_VSSCANF(conv_spec, val_type, val_test) \
+#define TEST_SSCANF(conv_spec, val_type, val_test) \
 /* returns true if a and b are equal */ \
 static int \
 equal_##conv_spec(val_type a, val_type b) { \
@@ -143,6 +145,8 @@ test_sscanf_##conv_spec(const char *src, const char *fmt, ...) \
 	    values[i] = *va_arg(ap, val_type*); \
 	} \
 	va_end(ap); \
+    } else { \
+	printf("Warning: no assignments done for %s.\n", fmt); \
     } \
     /* run bu routine */ \
     va_start(ap, fmt); \
@@ -178,12 +182,6 @@ test_sscanf_##conv_spec(const char *src, const char *fmt, ...) \
     } \
 }
 
-/* simple test routines */
-TEST_VSSCANF(d, int, (a == b))
-TEST_VSSCANF(u, unsigned int, (a == b))
-TEST_VSSCANF(c, char, (a == b))
-TEST_VSSCANF(lf, double, (NEAR_EQUAL(a, b, FLOAT_TOL)))
-
 /* string test routine */
 static void
 test_sscanf_s(const char *src, const char *fmt, ...)
@@ -214,6 +212,8 @@ test_sscanf_s(const char *src, const char *fmt, ...)
 	    strcpy(values[i], va_arg(ap, char*));
 	}
 	va_end(ap);
+    } else {
+	printf("Warning: no assignments done for %s.\n", fmt);
     }
     /* run bu routine */
     va_start(ap, fmt);
@@ -258,14 +258,28 @@ test_sscanf_s(const char *src, const char *fmt, ...)
     }
 }
 
+/* simple test routines */
+TEST_SSCANF(d, int, (a == b))
+TEST_SSCANF(hd, short int, (a == b))
+TEST_SSCANF(ld, long int, (a == b))
+TEST_SSCANF(u, unsigned int, (a == b))
+TEST_SSCANF(hu, unsigned short int, (a == b))
+TEST_SSCANF(lu, unsigned long int, (a == b))
+TEST_SSCANF(c, char, (a == b))
+TEST_SSCANF(lf, double, (NEAR_EQUAL(a, b, FLOAT_TOL)))
+
 int
 main(int argc, char *argv[])
 {
     int d_vals[3];
-    unsigned int u_vals[3];
+    short hd_vals[3];
+    long ld_vals[3];
+    unsigned u_vals[2];
+    unsigned short hu_vals[2];
+    unsigned long lu_vals[2];
     char c_vals[3];
-    char s_vals[3][STR_SIZE];
     double lf_vals[3];
+    char s_vals[3][STR_SIZE];
 
     if (argc > 1) {
 	printf("Warning: %s takes no arguments.\n", argv[0]);
@@ -288,21 +302,31 @@ main(int argc, char *argv[])
  *
  */
 
-    /* basic tests */
-    test_sscanf_d("0 +256 -2048", "%d %d %d",
-	    &d_vals[0], &d_vals[1], &d_vals[2]);
+    /* integer tests */
+    test_sscanf_d("0 +" bu_cpp_xstr(INT_MAX) " -" bu_cpp_xstr(INT_MIN),
+	    "%d %d %d", &d_vals[0], &d_vals[1], &d_vals[2]);
 
-    test_sscanf_u("0 256 2048", "%d %d %d",
-	    &u_vals[0], &u_vals[1], &u_vals[2]);
+    test_sscanf_hd("0 +" bu_cpp_xstr(SHRT_MAX) " -" bu_cpp_xstr(SHRT_MIN),
+	    "%hd %hd %hd", &hd_vals[0], &hd_vals[1], &hd_vals[2]);
+
+    test_sscanf_ld("0 +" bu_cpp_xstr(LONG_MAX) " -" bu_cpp_xstr(LONG_MIN),
+	    "%ld %ld %ld", &ld_vals[0], &ld_vals[1], &ld_vals[2]);
+
+    test_sscanf_u("0 " bu_cpp_xstr(UINT_MAX), "%u %u", &u_vals[0], &u_vals[1]);
+    test_sscanf_hu("0 " bu_cpp_xstr(USHRT_MAX), "%hu %hu", &hu_vals[0], &hu_vals[1]);
+    test_sscanf_lu("0 " bu_cpp_xstr(ULONG_MAX), "%lu %lu", &lu_vals[0], &lu_vals[1]);
 
     test_sscanf_c("a b c", "%c %c %c",
 	    &c_vals[0], &c_vals[1], &c_vals[2]);
 
+    /* float tests */
+    test_sscanf_lf(".0123 .4567 8.91011", "%lf %lf %lf",
+	    &lf_vals[0], &lf_vals[1], &lf_vals[2]);
+
+    /* string tests */
     test_sscanf_s(" aBc  DeF   gHi\t", "%s %s %s",
 	    s_vals[0], s_vals[1], s_vals[2]);
 
-    test_sscanf_lf(".0123 .4567 8.91011", "%lf %lf %lf",
-	    &lf_vals[0], &lf_vals[1], &lf_vals[2]);
 
     printf("bu_sscanf: testing complete\n");
     return 0;
