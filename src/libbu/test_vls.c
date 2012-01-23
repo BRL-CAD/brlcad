@@ -151,6 +151,17 @@ main(int ac, char *av[])
     printf("fw=%d, prec=%d, '%s': '%%%d.%ds'\n", f, p, word, f, p);
     fails += test_vls("%*.*s", f, p, word);
 
+    /* mged bug at rev 48989 */
+    f = 8; p = 0;
+    printf("fw=%d, '%s': '%%%ds'\n", f, word, f);
+    fails += test_vls("%*s", f, word);
+
+    /* from Sean on the same bug */
+    fails += test_vls("he%*so", 2, "ll");
+    fails += test_vls("he%*so", 2, "llll");
+    fails += test_vls("he%*so", 4, "ll");
+
+
     /* same but left justify */
 
     f = 2; p = 4;
