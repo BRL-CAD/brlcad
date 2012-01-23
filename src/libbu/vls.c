@@ -927,9 +927,13 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
                             /* have to truncate it to zero length first */
                             bu_vls_trunc(&tmpstr, 0);
 			    bu_vls_vlscat(&tmpstr, &padded);
+
+                            bu_vls_free(&padded);
                         }
                         /* now take string as is */
 			bu_vls_vlscat(vls, &tmpstr);
+
+                        bu_vls_free(&tmpstr);
 		    }  else  {
                         /* handle an empty string */
                         /* FIXME: should we trunc to precision if > fieldlen? */
