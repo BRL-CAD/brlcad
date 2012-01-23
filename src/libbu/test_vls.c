@@ -27,16 +27,6 @@
 
 #include "bu.h"
 
-#if 0
-void
-termination_handler(const int signum)
-{
-  fprintf(stderr, "DEBUG: received signal %d (but exiting with status 0\n",
-          signum);
-  /* restore the signal */
-}
-#endif
-
 /* Test against sprintf */
 int
 test_vls(const char *fmt, ...)
