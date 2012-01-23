@@ -62,11 +62,11 @@ endmacro(pkg_message)
 
 # Get environment variable, define it as ENV_$var and make sure backslashes are converted to forward slashes
 macro(getenv_path VAR)
-   set(ENV_${VAR} $ENV{${VAR}})
-   # replace won't work if var is blank
-   if (ENV_${VAR})
-     string( REGEX REPLACE "\\\\" "/" ENV_${VAR} ${ENV_${VAR}} )
-   endif ()
+  set(ENV_${VAR} $ENV{${VAR}})
+  # replace won't work if var is blank
+  if (ENV_${VAR})
+    string( REGEX REPLACE "\\\\" "/" ENV_${VAR} ${ENV_${VAR}} )
+  endif ()
 endmacro(getenv_path)
 
 # Construct search paths for includes and libraries from a PREFIX_PATH
@@ -138,12 +138,12 @@ macro(findpkg_finish PREFIX)
   # skip if already processed during this run
   if (NOT ${PREFIX}_FOUND)
     if (${PREFIX}_INCLUDE_DIR AND ${PREFIX}_LIBRARY)
-		 set(${PREFIX}_FOUND TRUE CACHE BOOL "Found ${PREFIX}")
-		 set(${PREFIX}_INCLUDE_DIRS ${${PREFIX}_INCLUDE_DIR} CACHE STRING "${PREFIX} include dirs")
-		 set(${PREFIX}_LIBRARIES ${${PREFIX}_LIBRARY} CACHE STRING "${PREFIX} libraries")
+      set(${PREFIX}_FOUND TRUE CACHE BOOL "Found ${PREFIX}")
+      set(${PREFIX}_INCLUDE_DIRS ${${PREFIX}_INCLUDE_DIR} CACHE STRING "${PREFIX} include dirs")
+      set(${PREFIX}_LIBRARIES ${${PREFIX}_LIBRARY} CACHE STRING "${PREFIX} libraries")
       if (NOT ${PREFIX}_FIND_QUIETLY)
         message(STATUS "Found ${PREFIX}: ${${PREFIX}_LIBRARIES}")
-		  SET(${PREFIX}_FIND_QUIETLY 1 CACHE BOOL "find quietly")
+	SET(${PREFIX}_FIND_QUIETLY 1 CACHE BOOL "find quietly")
       endif ()
     else ()
       if (NOT ${PREFIX}_FIND_QUIETLY)
@@ -176,7 +176,7 @@ MACRO(findpkg_framework fwk)
       ${OGRE_PREFIX_PATH}/lib/Debug
       ${OGRE_PREFIX_BUILD}/lib/Release
       ${OGRE_PREFIX_BUILD}/lib/Debug
-    )
+      )
     FOREACH(dir ${${fwk}_FRAMEWORK_PATH})
       SET(fwkpath ${dir}/${fwk}.framework)
       IF(EXISTS ${fwkpath})

@@ -102,7 +102,7 @@
 
 FIND_PROGRAM(YACC_EXECUTABLE bison DOC "path to the yacc executable")
 IF(NOT YACC_EXECUTABLE)
-   FIND_PROGRAM(YACC_EXECUTABLE yacc DOC "path to the yacc executable")
+  FIND_PROGRAM(YACC_EXECUTABLE yacc DOC "path to the yacc executable")
 ENDIF(NOT YACC_EXECUTABLE)
 MARK_AS_ADVANCED(YACC_EXECUTABLE)
 
@@ -158,7 +158,7 @@ IF(YACC_EXECUTABLE)
         IF("${ARGV5}" STREQUAL "VERBOSE")
           YACC_TARGET_option_verbose(${Name} ${YaccOutput} "${ARGV6}")
         ENDIF()
-      
+	
         IF("${ARGV5}" STREQUAL "COMPILE_FLAGS")
           YACC_TARGET_option_extraopts("${ARGV6}")
         ENDIF()
@@ -169,9 +169,9 @@ IF(YACC_EXECUTABLE)
       STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\2" _fileext "${ARGV2}")
       STRING(REPLACE "c" "h" _fileext ${_fileext})
       STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1${_fileext}" 
-          YACC_${Name}_OUTPUT_HEADER "${ARGV2}")
+        YACC_${Name}_OUTPUT_HEADER "${ARGV2}")
       LIST(APPEND YACC_TARGET_outputs "${YACC_${Name}_OUTPUT_HEADER}")
-        
+      
       ADD_CUSTOM_COMMAND(OUTPUT ${YACC_TARGET_outputs}
         ${YACC_TARGET_extraoutputs}
         COMMAND ${YACC_EXECUTABLE}
@@ -179,7 +179,7 @@ IF(YACC_EXECUTABLE)
         DEPENDS ${ARGV1}
 	COMMENT "[YACC][${Name}] Building parser with ${YACC_EXECUTABLE}"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-    
+      
       # define target variables
       SET(YACC_${Name}_DEFINED TRUE)
       SET(YACC_${Name}_INPUT ${ARGV1})
