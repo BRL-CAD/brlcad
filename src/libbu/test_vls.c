@@ -101,6 +101,8 @@ main(int ac, char *av[])
 
     /* various widths */
     fails += test_vls("he%*so", 2, "ll");
+    fails += test_vls("he%*so", 2, "llll");
+    fails += test_vls("he%*so", 4, "ll");
 
     /* various precisions */
     fails += test_vls("he%.*so", 2, "ll");
