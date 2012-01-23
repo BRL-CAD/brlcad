@@ -970,7 +970,9 @@ comp.r4 ID 5678 material code 5 LOS 75
 * add verification and validation tests confirming behavior of the
   ray-tracer and computations of area, mass, volume, etc
 
-* testing suite for all binaries: for cmd2 in $(for cmd in `find . -name Makefile.am | xargs cat | perl -pi -e 's/\\\\\n//g'| grep -E "PROGRAMS ?=" | sed 's/.*=//g'` ; do echo $cmd ; done | sort | uniq ) ; do echo command: $cmd2 ; done
+* testing suite for all binaries: 
+
+     for cmd2 in $(for cmd in `find . -name Makefile.am | xargs cat | perl -pi -e 's/\\\\\n//g'| grep -E "PROGRAMS ?=" | sed 's/.*=//g'` ; do echo $cmd ; done | sort | uniq ) ; do echo command: $cmd2 ; done
 
 * add geometry example of building 238
 
@@ -1382,7 +1384,8 @@ ARCHER
 
 * numerous warnings on exit on Mac OS X (10.6):
    <Error>: kCGErrorIllegalArgument: CGSGetSurfaceBounds
-   <Error>: kCGErrorFailure: Set a breakpoint @ CGErrorBreakpoint() to catch errors as they are logged.
+   <Error>: kCGErrorFailure: Set a breakpoint @ CGErrorBreakpoint() to \
+     catch errors as they are logged.
    <Error>: kCGErrorIllegalArgument: CGSBindSurface: Invalid window 0x492c
    ...
 
@@ -1558,7 +1561,8 @@ FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
 
 * implement SIMD shots
 
-* implement SAH for all primitives (routine that fires a ray at each primitive for initial estimate, caches result)
+* implement SAH for all primitives (routine that fires a ray at each
+  primitive for initial estimate, caches result)
 
 * write and use kdtree - make traversal cache coherent
 
@@ -1582,43 +1586,78 @@ DOCUMENTATION
 	Keybindings, GUI elements, scripting
 
 * Introduction to BRL-CAD Tutorial
-	mged, rt, pix-png, rtcheck, rtarea, rtweight, g_qa, fbserv, nirt.  Succint overview of less than 10% of the core functionality in 10 pages or less (plus pictures).
+	mged, rt, pix-png, rtcheck, rtarea, rtweight, g_qa, fbserv,
+	nirt.  Succint overview of less than 10% of the core
+	functionality in 10 pages or less (plus pictures).
 
 * Technical Overview of BRL-CAD
-        Describes everything in the package succinctly yet comprehensively.  Survey of all the major features, methodologies, and tools implemented in BRL-CAD with coverage on code maturity, library encapsulation, and tool aggregation.
+        Describes everything in the package succinctly yet
+        comprehensively.  Survey of all the major features,
+        methodologies, and tools implemented in BRL-CAD with coverage
+        on code maturity, library encapsulation, and tool aggregation.
 
 * BRL-CAD Validation and Verification
-        Overview of how contributions to BRL-CAD are reviewed and tested including regression, performance, and system integration testing as well as independent ARL configuration review.  This specifically addresses the issue of world-wide and potentially anonymous contributions to BRL-CAD and how those changes are managed.
+        Overview of how contributions to BRL-CAD are reviewed and
+        tested including regression, performance, and system
+        integration testing as well as independent ARL configuration
+        review.  This specifically addresses the issue of world-wide
+        and potentially anonymous contributions to BRL-CAD and how
+        those changes are managed.
 
 * DoD V/L M&S Industry Diagram
-	Similar to existing Industry Diagram.  Survey of all the major features, methodologies, and tools implemented in BRL-CAD with coverage on code maturity, library encapsulation, and tool aggregation.  This one is a particularly useful marketing and educational visual aid for describing how the various M&S codes interoperate in terms of features and scope.
+	Similar to existing Industry Diagram.  Survey of all the major
+	features, methodologies, and tools implemented in BRL-CAD with
+	coverage on code maturity, library encapsulation, and tool
+	aggregation.  This one is a particularly useful marketing and
+	educational visual aid for describing how the various M&S
+	codes interoperate in terms of features and scope.
 
 * Commercial CAD Comparison Diagram
-        Comparison of how BRL-CAD overlaps feature-wise with various major commercial CAD systems.
+        Comparison of how BRL-CAD overlaps feature-wise with various
+        major commercial CAD systems.
 
 * Solid Geometry Representation Comparisons
-        Describe the implications, tradeoffs, and conversion issues involved when converting between different geometry representations.  Includes describing implicit geometry, explicit polygonal boundary representations, explicit spline surface representations, volumetric models, wireframes, boolean operations, feature edit operations, and parametric modeling.
+        Describe the implications, tradeoffs, and conversion issues
+        involved when converting between different geometry
+        representations.  Includes describing implicit geometry,
+        explicit polygonal boundary representations, explicit spline
+        surface representations, volumetric models, wireframes,
+        boolean operations, feature edit operations, and parametric
+        modeling.
 
 * BRL-CAD Primitives
-        An overview of the various primitive object types in BRL-CAD, their range of features, and a description of their input parameters.
+        An overview of the various primitive object types in BRL-CAD,
+        their range of features, and a description of their input
+        parameters.
 
 * BRL-CAD Ray Tracing Shaders
-        An overview of the various shaders and shader options available in BRL-CAD.
+        An overview of the various shaders and shader options
+        available in BRL-CAD.
 
 * BRL-CAD Open Source
-	An overview of how BRL-CAD is organized as an open source project and community describing the developer meritocracy, code reviews, development prioritization, and change management.  This introduces and explains the concept and philosophy of open source software, it's fundamental tenants, and the basic "why and how" it works.
+	An overview of how BRL-CAD is organized as an open source
+	project and community describing the developer meritocracy,
+	code reviews, development prioritization, and change
+	management.  This introduces and explains the concept and
+	philosophy of open source software, it's fundamental tenants,
+	and the basic "why and how" it works.
 
 * History of BRL-CAD
-        Covers the 30-years development history of BRL-CAD, from 1979 to 2009, documenting the origins of the project, major development achievements, the conversion to open source, and lesson's learned.
+        Covers the 30-years development history of BRL-CAD, from 1979
+        to 2009, documenting the origins of the project, major
+        development achievements, the conversion to open source, and
+        lesson's learned.
 
 * BRL-CAD Manifesto
 	Vision & Scope
 
 * BRL-CAD Taxonomy
-        Description of the common terminology used throughout BRL-CAD, conventions employed, and tool categorization.
+        Description of the common terminology used throughout BRL-CAD,
+        conventions employed, and tool categorization.
 
 * Implementing a BRL-CAD Primitive
-        How-To for creating a new primitive in BRL-CAD that can be ray-traced, tessellated, plotted, and transformed seamlessly.
+        How-To for creating a new primitive in BRL-CAD that can be
+        ray-traced, tessellated, plotted, and transformed seamlessly.
 
 * Procedural Geometry in BRL-CAD
         How-To for creating new tools that create geometry.
@@ -1627,10 +1666,15 @@ DOCUMENTATION
         How-To for creating new shaders.
 
 * Geometry Conversion with BRL-CAD
-        Overview of the various geometry conversion facilities in BRL-CAD and how they related to solid geometry representations.
+        Overview of the various geometry conversion facilities in
+        BRL-CAD and how they related to solid geometry
+        representations.
 
 * A Developer's Introduction to BRL-CAD
-        An overview of BRL-CAD from a developer perspective intended for new developers.  Provides overview of structure, important sections, operating procedures, and answers to FAQ development questions.
+        An overview of BRL-CAD from a developer perspective intended
+        for new developers.  Provides overview of structure, important
+        sections, operating procedures, and answers to FAQ development
+        questions.
 
 ---
 See the feature request and bug trackers for more tasks and future
