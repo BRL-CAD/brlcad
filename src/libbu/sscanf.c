@@ -132,7 +132,7 @@ append_n(char **fmt) {
 int
 bu_vsscanf(const char *src, const char *fmt, va_list ap)
 {
-    int c, base, flags;
+    int c, flags;
     int numCharsConsumed, partConsumed;
     int numFieldsAssigned, partAssigned;
     char *partFmt;
@@ -148,7 +148,6 @@ numFieldsAssigned += partAssigned;
 
     numFieldsAssigned = 0;
     numCharsConsumed = 0;
-    base = 0;
 
 #define FREE_FORMAT_PART \
 if (partFmt != NULL) { \
@@ -280,21 +279,17 @@ again:
 	/* CONVERSION */
 	case 'd':
 	    c = CT_INT;
-	    base = 10;
 	    break;
 	case 'i':
 	    c = CT_INT;
-	    base = 0;
 	    break;
 	case 'o':
 	    c = CT_INT;
 	    flags |= UNSIGNED;
-	    base = 8;
 	    break;
 	case 'u':
 	    c = CT_INT;
 	    flags |= UNSIGNED;
-	    base = 10;
 	    break;
 	case 'p':
 	case 'x':
@@ -305,7 +300,6 @@ again:
 	    flags |= PFXOK;
 	    flags |= UNSIGNED;
 	    c = CT_INT; 
-	    base = 16;
 	    break;
 	case 'A': case 'E': case 'F': case 'G':
 	case 'a': case 'e': case 'f': case 'g':
