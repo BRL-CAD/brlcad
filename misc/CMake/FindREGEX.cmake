@@ -68,7 +68,7 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(REGEX DEFAULT_MSG REGEX_INCLUDE_DIR REGEX_LIBR
 
 # Local Variables:
 # tab-width: 8
-# mode: sh
+# mode: cmake
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=4 tabstop=8

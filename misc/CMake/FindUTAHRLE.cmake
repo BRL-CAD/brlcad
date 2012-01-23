@@ -56,7 +56,7 @@ IF (UTAHRLE_FOUND)
 ENDIF()
 # Local Variables:
 # tab-width: 8
-# mode: sh
+# mode: cmake
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=4 tabstop=8

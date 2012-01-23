@@ -71,7 +71,7 @@ MARK_AS_ADVANCED(SCL_EXPPP_EXECUTABLE SCL_EXPRESS_EXECUTABLE SCL_FEDEX_IDL_EXECU
 
 # Local Variables:
 # tab-width: 8
-# mode: sh
+# mode: cmake
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=4 tabstop=8

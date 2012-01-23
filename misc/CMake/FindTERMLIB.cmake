@@ -81,7 +81,7 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(TERMLIB DEFAULT_MSG TERMLIB_LIBRARY TERMLIB_IN
 
 # Local Variables:
 # tab-width: 8
-# mode: sh
+# mode: cmake
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=4 tabstop=8

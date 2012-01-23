@@ -49,7 +49,7 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(XMLLINT DEFAULT_MSG XMLLINT_EXECUTABLE)
 
 # Local Variables:
 # tab-width: 8
-# mode: sh
+# mode: cmake
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=4 tabstop=8
