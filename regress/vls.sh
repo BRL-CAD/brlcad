@@ -34,7 +34,8 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-
+# for debugging uncomment the following:
+#set -x
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
@@ -52,39 +53,57 @@ if test ! -f "$TESTCMD" ; then
     exit 1
 fi
 
-rm -f $TESTLOG
+# another file for test output
+ERRLOG=vsl_test.stderr
 
-# the test program outputs expected failues to stderr
-# run the test (capture number of expected failures in file $ELOG)
-ELOG=t
-`$TESTCMD 1> $TESTLOG 2>$ELOG`
+rm -f $TESTLOG $ERRLOG
+
+# the known number of expected failures is:
+KNOWNEXP=0
+# run the test and capture exit status
+`$TESTCMD 1> $TESTLOG 2>$ERRLOG`
 STATUS=$?
 # STATUS contains number of UNEXPECTED failures
-EXP=`cat $ELOG`
-# the known number of expected failures is:
-KNOWNEXP=2
+# get the failure numbers
+if [ -f $ERRLOG ] ; then
+  EXP=`cat $ERRLOG`
+else
+  EXP=0
+fi
+if [ $STATUS -ge 128 ] ; then
+    # a signal received
+    SIGNUM=`expr $STATUS - 128`
+    echo "-> $TESTSCRIPT FAILED with signal $SIGNUM."
+    if [ $SIGNUM -eq 11 ] ; then
+        echo "       (SIGSEGV, invalid memory reference)"
+    fi
+    echo "     See file './regress/$TESTLOG' for results (may be empty with a code dump)."
+    # allow the rest of the test to continue
+    STATUS=`expr $STATUS - $SIGNUM - 128`
+fi
 
+# FIXME: this if/else block can be more efficient
 if [ $STATUS -eq 0 ] ; then
     if [ $EXP -eq $KNOWNEXP ] ; then
         echo "-> $TESTSCRIPT succeeded with $EXP expected failed test(s)."
-        echo "   See file './regress/$TESTLOG' for results."
+        echo "     See file './regress/$TESTLOG' for results."
         echo "   Do NOT use the failures in production code."
     elif [ $EXP -ne 0 ] ; then
         echo "-> $TESTSCRIPT succeeded with $EXP expected failed test(s)."
-        echo "   But SURPRISE!  We expected $KNOWNEXP failed tests so something has changed!"
-        echo "   See file './regress/$TESTLOG' for results and compare"
+        echo "     But SURPRISE!  We expected $KNOWNEXP failed tests so something has changed!"
+        echo "     See file './regress/$TESTLOG' for results and compare"
         echo "       with file './src/libbu/test_vls.c'."
         echo "   Do NOT use the failures in production code."
     else
-        echo "-> $TESTSCRIPT succeeded"
-        # one more check
+        echo "-> $TESTSCRIPT succeeded with no failures of any kind."
+        # but one more check
         if [ $KNOWNEXP -ne 0 ] ; then
-          echo "   But SURPRISE!  We expected $KNOWNEXP failed tests so something has changed!"
-          echo "   See file './regress/$TESTLOG' for results and compare"
-          echo "       with file './src/libbu/test_vls.c'."
+            echo "     But SURPRISE!  We expected $KNOWNEXP failed tests so something has changed!"
+            echo "     See file './regress/$TESTLOG' for results and compare"
+            echo "       with file './src/libbu/test_vls.c'."
         else
-          # remove test products
-          rm -f $TESTLOG $ELOG
+            # remove test products since all appears well
+            rm -f $TESTLOG $ERRLOG
         fi
     fi
 else
