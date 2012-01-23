@@ -31,7 +31,7 @@
 
 class Placement;
 
-class Axis2Placement : public STEPEntity {
+class Axis2Placement : virtual public STEPEntity {
 private:
 	static string entityname;
 
