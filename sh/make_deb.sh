@@ -50,33 +50,24 @@ if test -z $1 ;then
     echo "Script to create Debian binary and source packages."
     echo
     echo "Usage:"
-    echo "  sh/make_deb.sh -b | -s [-t]"
+    echo "  sh/make_deb.sh -b | -s"
     echo
     echo "Options:"
     echo "  -b       build the Debian binary package (deb file)"
     echo "  -s *     build the Debian source package"
-    echo "  -t       as second argument: test for all prerequisites"
     echo
     echo "           * (use with a clean brlcad tree)"
     exit 1
 fi
 
 # too many parameters
-if test $# -gt 2 ;then
+if test $# -gt 1 ;then
     ferror "Too many arguments" "Exiting..."
 fi
 
 # unknown parameter
 if test "$1" != "-s" && test "$1" != "-b" ; then
     ferror "Unknown first argument '$!'." "Exiting..."
-fi
-
-# check for test
-TEST=0
-if test $# -eq 2 && test "$2" != "-t" ; then
-    ferror "Unknown second argument '$2'." "Exiting..."
-elif test $# -eq 2 && test "$2" = "-t" ; then
-   TEST=1
 fi
 
 # test if in project root
@@ -94,44 +85,28 @@ E=0
 fcheck() {
     T="install ok installed"
     if test ! `dpkg -s $1 2>/dev/null | grep "$T" | wc -l` -eq 0 ; then
-        # success
         echo "Found package $1..."
-        return
+    else
+	echo "* Missing $1..."
+	LLIST=$LLIST" "$1
+	E=1
     fi
-
-    # need to check for local, non-package versions
-    # check for binaries
-    if test "$2" = "x" ; then
-        if [ -f /usr/bin/$1 ]; then
-            # success
-            echo "Found /usr/bin/$1..."
-            return
-        elif [ -f /usr/local/bin/$1 ]; then
-            # success
-            echo "Found /usr/local/bin/$1..."
-            return
-        fi
-    fi
-
-    echo "* Missing $1..."
-    LLIST=$LLIST" "$1
-    E=1
 }
 
 fcheck debhelper
-fcheck fakeroot x
+fcheck fakeroot
 
 if test "$1" = "-b" ;then
     fcheck build-essential
     fcheck make 
-    fcheck cmake x
-    fcheck libtool x
-    fcheck bc x
-    fcheck sed x
-    fcheck bison x
-    fcheck flex x
+    fcheck cmake
+    fcheck libtool
+    fcheck bc
+    fcheck sed
+    fcheck bison
+    fcheck flex
     fcheck libxi-dev
-    fcheck xsltproc x
+    fcheck xsltproc
     fcheck libglu1-mesa-dev
     fcheck libpango1.0-dev
     #fcheck fop # allows pdf creation
@@ -141,21 +116,13 @@ if [ $E -eq 1 ]; then
     ferror "Mandatory to install these packages first:" "$LLIST"
 fi
 
-if [ $TEST -eq 1 ]; then
-    echo "=========================================================="
-    echo "Testing complete"
-    echo "Ready to create a Debian package"
-    echo "=========================================================="
-    exit
-fi
-
 # set variables
 BVERSION=`cat include/conf/MAJOR | sed 's/[^0-9]//g'`"."`cat include/conf/MINOR | sed 's/[^0-9]//g'`"."`cat include/conf/PATCH | sed 's/[^0-9]//g'`
 CDATE=`date -R`
 CFILE="debian/changelog"
 RELEASE="0"
 
-NJOBS=`getconf _NPROCESSORS_ONLN | sed "s/.*/&*2-1/" | bc`
+NJOBS=`getconf _NPROCESSORS_ONLN`
 if test ! $NJOBS -gt 0 2>/dev/null ;then
     NJOBS=1
 fi

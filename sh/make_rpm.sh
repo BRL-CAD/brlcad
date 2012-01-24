@@ -72,8 +72,11 @@ if test ! -x "`which rpm 2>/dev/null`" ; then
 fi
 fcheck(){
     if ! `rpm -q $1 &>/dev/null` ; then
+	echo "* Missing $1..."
 	LLIST=$LLIST" "$1
 	E=1
+    else
+        echo "Found package $1..."
     fi
 }
 
@@ -132,7 +135,7 @@ else
     ferror "Unknown architecture. \"`gcc -dumpmachine`\"" "Exiting..."
 fi
 
-NJOBS=`getconf _NPROCESSORS_ONLN | sed "s/.*/&*2-1/" | bc`
+NJOBS=`getconf _NPROCESSORS_ONLN`
 if test ! $NJOBS -gt 0 2>/dev/null ;then
     NJOBS=1
 fi
