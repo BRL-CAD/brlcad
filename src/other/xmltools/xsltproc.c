@@ -80,7 +80,9 @@
 
 #if defined(WIN32) && !defined (__CYGWIN__)
 #if defined(_MSC_VER) || defined(__MINGW32__)
+#if !defined(_WINSOCKAPI_)
 #include <winsock2.h>
+#endif
 #define gettimeofday(p1,p2)
 #define snprintf _snprintf
 #endif /* _MS_VER */
