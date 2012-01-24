@@ -94,7 +94,9 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		    bu_exit(1, "ERROR: failure creating advanced boundary representation from %s\n", stepfile.c_str());
 		} else {
 		    ON_TextLog tl;
-		    if (!onBrep->IsValid(&tl)) bu_log("Warning - brep is not valid\n");
+
+		    if (!onBrep->IsValid(&tl))
+			bu_log("WARNING: %s is not valid\n", name.c_str());
 
 		    //onBrep->SpSplitClosedFaces();
 		    //ON_Brep *tbrep = TightenBrep(onBrep);
