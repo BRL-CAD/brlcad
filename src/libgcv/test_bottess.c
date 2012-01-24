@@ -120,8 +120,8 @@ test_face_split_single()
           {                                                             \
             point_t isectpt[2];                                         \
             int urf[_nsplt+1];                                          \
-            for (i = 0; i < _nsplt + 1; ++i) urf[i] = 0;                \
             unsigned long int failure = 0, numsplit = _nsplt;           \
+            for (i = 0; i < _nsplt + 1; ++i) urf[i] = 0;                \
             tcount++;                                                   \
             VSET(isectpt[0],ispt00,ispt01,ispt02);                      \
             VSET(isectpt[1],ispt10,ispt11,ispt12);                      \
@@ -163,21 +163,21 @@ test_face_split_single()
 
 
     /* VERT/VERT */
-    PREP(0,0,0, 0,1,0, 1,0,0, 0,0,0, 0,1,0, 1); fastf_t _splits[1][9] = {{0,0,0, 0,1,0, 1,0,0}}; POST("VERT/VERT");
+	PREP(0,0,0, 0,1,0, 1,0,0, 0,0,0, 0,1,0, 1); {fastf_t _splits[1][9] = {{0,0,0, 0,1,0, 1,0,0}}; POST("VERT/VERT");}
 
     /* VERT/EDGE */
-    PREP(-1,0,0, 0,1,0, 1,0,0, 0,0,0, 0,1,0, 2); fastf_t _splits[2][9] = {{0,0,0,0,1,0,-1,0,0},{0,0,0,0,1,0,1,0,0}}; POST("VERT/EDGE");
+	PREP(-1,0,0, 0,1,0, 1,0,0, 0,0,0, 0,1,0, 2); {fastf_t _splits[2][9] = {{0,0,0,0,1,0,-1,0,0},{0,0,0,0,1,0,1,0,0}}; POST("VERT/EDGE");}
 
 #if 0 /* known to be broken right now.  */
     /* EDGE/EDGE */
-    PREP(-2,0,0, 0,2,0, 2,0,0, 1,1,0, -1,1,0, 3); fastf_t _splits[3][9] = { { 1,1,0,  0,2,0, -1,1,0}, { 1,1,0, -2,0,0,  2,0,0}, {-1,1,0,  1,1,0, -2,0,0}}; POST("EDGE/EDGE");
+	PREP(-2,0,0, 0,2,0, 2,0,0, 1,1,0, -1,1,0, 3); {fastf_t _splits[3][9] = { { 1,1,0,  0,2,0, -1,1,0}, { 1,1,0, -2,0,0,  2,0,0}, {-1,1,0,  1,1,0, -2,0,0}}; POST("EDGE/EDGE");}
 #endif
 
     /* VERT/FACE */
-    PREP(-2,0,0, 0,2,0, 2,0,0, 0,2,0, 0,1,0, 3); fastf_t _splits[4][9]={ {-2,0,0,2,0,0,0,1,0}, {-2,0,0,0,2,0,0,1,0}, {2,0,0,0,2,0,0,1,0}}; POST("VERT/FACE");
+	PREP(-2,0,0, 0,2,0, 2,0,0, 0,2,0, 0,1,0, 3); {fastf_t _splits[4][9]={ {-2,0,0,2,0,0,0,1,0}, {-2,0,0,0,2,0,0,1,0}, {2,0,0,0,2,0,0,1,0}}; POST("VERT/FACE");}
 
     /* EDGE/FACE */
-    PREP(-2,0,0, 0,2,0, 2,0,0, 0,0,0, 0,1,0, 4); fastf_t _splits[4][9]={{0,0,0,-2,0,0,0,1,0},{0,0,0,2,0,0,0,1,0},{-2,0,0,0,2,0,0,1,0},{2,0,0,0,2,0,0,1,0}}; POST("EDGE/FACE");
+	PREP(-2,0,0, 0,2,0, 2,0,0, 0,0,0, 0,1,0, 4); {fastf_t _splits[4][9]={{0,0,0,-2,0,0,0,1,0},{0,0,0,2,0,0,0,1,0},{-2,0,0,0,2,0,0,1,0},{2,0,0,0,2,0,0,1,0}}; POST("EDGE/FACE");}
 
 #if 0 /* known to be broken right now */
     /* FACE/FACE */
