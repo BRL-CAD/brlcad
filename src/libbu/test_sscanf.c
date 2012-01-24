@@ -111,6 +111,7 @@
  * val_test
  *     equality test for two val_type vals named a and b, like (a == b)
  */
+#ifdef HAVE_VSSCANF
 #define TEST_SSCANF(conv_spec, val_type, val_test) \
 /* returns true if a and b are equal */ \
 static int \
@@ -181,8 +182,12 @@ test_sscanf_##conv_spec(const char *src, const char *fmt, ...) \
 	bu_values = NULL; \
     } \
 }
+#else
+#define TEST_SSCANF(conv_spec, val_type, val_test) /* nop */
+#endif
 
 /* string test routine */
+#ifdef HAVE_VSSCANF
 static void
 test_sscanf_s(const char *src, const char *fmt, ...)
 {
@@ -257,6 +262,9 @@ test_sscanf_s(const char *src, const char *fmt, ...)
 	values = bu_values = NULL;
     }
 }
+#else
+#define test_sscanf_s sscanf
+#endif
 
 /* integer test routines */
 TEST_SSCANF(d, int, (a == b))
@@ -286,6 +294,11 @@ main(int argc, char *argv[])
     long double Lf_vals[6];
     char c_vals[3];
     char s_vals[3][STR_SIZE];
+
+#ifndef HAVE_VSSCANF
+    printf("%s requires a system vsscanf for proper execution.\n", argv[0]);
+    return 0;
+#endif
 
     if (argc > 1) {
 	printf("Warning: %s takes no arguments.\n", argv[0]);
