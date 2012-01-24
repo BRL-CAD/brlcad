@@ -206,11 +206,10 @@ void std_out_or_err(ClientData clientData, int mask);
 static int
 mged_bomb_hook(genptr_t clientData, genptr_t data)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     char *str = (char *)data;
     Tcl_Interp *interpreter = (Tcl_Interp *)clientData;
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "set mbh_dialog [Dialog .#auto -modality application];");
     bu_vls_printf(&vls, "$mbh_dialog hide 1; $mbh_dialog hide 2; $mbh_dialog hide 3;");
     bu_vls_printf(&vls, "label [$mbh_dialog childsite].l -text {%s};", str);
@@ -319,9 +318,8 @@ reset_input_strings()
 	bu_log("\n");
 	pr_prompt(interactive);
     } else {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "reset_input_strings");
 	Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -429,10 +427,8 @@ do_rc(void)
 {
     FILE *fp = NULL;
     char *path;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int bogus;
-
-    bu_vls_init(&str);
 
 #define ENVRC	"MGED_RCFILE"
 #define RCFILE	".mgedrc"
@@ -505,9 +501,8 @@ mged_insert_char(char ch)
 	bu_vls_putc(&input_str, (int)ch);
 	++input_str_index;
     } else {
-	struct bu_vls temp;
+	struct bu_vls temp = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&temp);
 	bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index);
 	bu_vls_trunc(&input_str, input_str_index);
 	bu_log("%c%V", (int)ch, &temp);
@@ -753,8 +748,8 @@ mged_process_char(char ch)
 		bu_log("exit\n");
 		quit();
 	    }
-	    bu_vls_init(&temp);
-	    bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index+1);
+
+	    bu_vls_strcpy(&temp, bu_vls_addr(&input_str)+input_str_index+1);
 	    bu_vls_trunc(&input_str, input_str_index);
 	    bu_log("%V ", &temp);
 	    pr_prompt(interactive);
@@ -939,8 +934,7 @@ mged_process_char(char ch)
 		    ++curr;
 
 		i = curr - start;
-		bu_vls_init(&temp);
-		bu_vls_strcat(&temp, curr);
+		bu_vls_strcpy(&temp, curr);
 		bu_vls_trunc(&input_str, input_str_index);
 		pr_prompt(interactive);
 		bu_log("%V%V", &input_str, &temp);
@@ -976,8 +970,7 @@ mged_process_char(char ch)
 		    ++curr;
 
 		input_str_index = curr - start;
-		bu_vls_init(&temp);
-		bu_vls_strcat(&temp, start+input_str_index);
+		bu_vls_strcpy(&temp, start+input_str_index);
 		bu_vls_trunc(&input_str, input_str_index);
 		pr_prompt(interactive);
 		bu_log("%V", &input_str);
@@ -1010,8 +1003,7 @@ mged_process_char(char ch)
 		else
 		    input_str_index = curr - start + 1;
 
-		bu_vls_init(&temp);
-		bu_vls_strcat(&temp, start+input_str_index);
+		bu_vls_strcpy(&temp, start+input_str_index);
 		bu_vls_trunc(&input_str, input_str_index);
 		pr_prompt(interactive);
 		bu_log("%V", &input_str);
@@ -1401,11 +1393,9 @@ main(int argc, char *argv[])
 	    /* start up the gui */
 
 	    int status;
-	    struct bu_vls vls;
-	    struct bu_vls error;
+	    struct bu_vls vls = BU_VLS_INIT_ZERO;
+	    struct bu_vls error = BU_VLS_INIT_ZERO;
 
-	    bu_vls_init(&vls);
-	    bu_vls_init(&error);
 	    if (dpy_string != (char *)NULL)
 		bu_vls_printf(&vls, "loadtk %s", dpy_string);
 	    else
@@ -1487,9 +1477,8 @@ main(int argc, char *argv[])
 	    }
 
 	} else {
-	    struct bu_vls vls;
+	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 	    int status;
-	    bu_vls_init(&vls);
 
 #ifdef HAVE_SETPGID
 	    /* make this a process group leader */
@@ -1619,9 +1608,8 @@ main(int argc, char *argv[])
 	}
 #endif
     } else {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "output_hook output_callback");
 	Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1729,7 +1717,7 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 {
     int count;
     char ch;
-    struct bu_vls temp;
+    struct bu_vls temp = BU_VLS_INIT_ZERO;
 #if defined(_WIN32) && !defined(__CYGWIN__)
     Tcl_Channel chan = (Tcl_Channel)clientData;
     Tcl_DString ds;
@@ -1742,7 +1730,6 @@ stdin_input(ClientData clientData, int UNUSED(mask))
      */
 
     if (!cbreak_mode) {
-	bu_vls_init(&temp);
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	Tcl_DStringInit(&ds);
@@ -1871,9 +1858,8 @@ cmd_stuff_str(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, 
     size_t i;
 
     if (argc != 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helpdevel stuff_str");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1903,7 +1889,7 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
     Tcl_DString ds;
 #endif
     int count;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     char line[RT_MAXLINE] = {0};
     Tcl_Obj *save_result;
 
@@ -1930,7 +1916,6 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
     save_result = Tcl_GetObjResult(INTERP);
     Tcl_IncrRefCount(save_result);
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "output_callback {%s}", line);
     (void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -1992,7 +1977,7 @@ event_check(int non_blocking)
      *********************************/
     save_dm_list = curr_dm_list;
     if (edit_rateflag_model_rotate) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
 	curr_dm_list = edit_rate_mr_dm_list;
@@ -2009,7 +1994,6 @@ event_check(int non_blocking)
 	}
 
 	non_blocking++;
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
 		      edit_rate_model_origin,
 		      edit_rate_model_rotate[X],
@@ -2027,7 +2011,7 @@ event_check(int non_blocking)
 	    edobj = save_edflag;
     }
     if (edit_rateflag_object_rotate) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
 	curr_dm_list = edit_rate_or_dm_list;
@@ -2044,7 +2028,6 @@ event_check(int non_blocking)
 	}
 
 	non_blocking++;
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
 		      edit_rate_object_origin,
 		      edit_rate_object_rotate[X],
@@ -2062,7 +2045,7 @@ event_check(int non_blocking)
 	    edobj = save_edflag;
     }
     if (edit_rateflag_view_rotate) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
 	curr_dm_list = edit_rate_vr_dm_list;
@@ -2079,7 +2062,6 @@ event_check(int non_blocking)
 	}
 
 	non_blocking++;
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
 		      edit_rate_view_origin,
 		      edit_rate_view_rotate[X],
@@ -2098,7 +2080,7 @@ event_check(int non_blocking)
     }
     if (edit_rateflag_model_tran) {
 	char save_coords;
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	curr_dm_list = edit_rate_mt_dm_list;
 	save_coords = mged_variables->mv_coords;
@@ -2114,7 +2096,6 @@ event_check(int non_blocking)
 	}
 
 	non_blocking++;
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
 		      edit_rate_model_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
 		      edit_rate_model_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
@@ -2132,7 +2113,7 @@ event_check(int non_blocking)
     }
     if (edit_rateflag_view_tran) {
 	char save_coords;
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	curr_dm_list = edit_rate_vt_dm_list;
 	save_coords = mged_variables->mv_coords;
@@ -2148,7 +2129,6 @@ event_check(int non_blocking)
 	}
 
 	non_blocking++;
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
 		      edit_rate_view_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
 		      edit_rate_view_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
@@ -2165,7 +2145,7 @@ event_check(int non_blocking)
 	    edobj = save_edflag;
     }
     if (edit_rateflag_scale) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	if (STATE == ST_S_EDIT) {
 	    save_edflag = es_edflag;
@@ -2178,7 +2158,6 @@ event_check(int non_blocking)
 	}
 
 	non_blocking++;
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -i -e aS %f\n", edit_rate_scale * 0.01);
 
 	Tcl_Eval(INTERP, bu_vls_addr(&vls));
@@ -2197,10 +2176,9 @@ event_check(int non_blocking)
 	curr_dm_list = p;
 
 	if (view_state->vs_rateflag_model_rotate) {
-	    struct bu_vls vls;
+	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "knob -o %c -i -m ax %f ay %f az %f\n",
 			  view_state->vs_rate_model_origin,
 			  view_state->vs_rate_model_rotate[X],
@@ -2211,10 +2189,9 @@ event_check(int non_blocking)
 	    bu_vls_free(&vls);
 	}
 	if (view_state->vs_rateflag_model_tran) {
-	    struct bu_vls vls;
+	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "knob -i -m aX %f aY %f aZ %f\n",
 			  view_state->vs_rate_model_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
 			  view_state->vs_rate_model_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
@@ -2224,10 +2201,9 @@ event_check(int non_blocking)
 	    bu_vls_free(&vls);
 	}
 	if (view_state->vs_rateflag_rotate) {
-	    struct bu_vls vls;
+	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "knob -o %c -i -v ax %f ay %f az %f\n",
 			  view_state->vs_rate_origin,
 			  view_state->vs_rate_rotate[X],
@@ -2238,10 +2214,9 @@ event_check(int non_blocking)
 	    bu_vls_free(&vls);
 	}
 	if (view_state->vs_rateflag_tran) {
-	    struct bu_vls vls;
+	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "knob -i -v aX %f aY %f aZ %f",
 			  view_state->vs_rate_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
 			  view_state->vs_rate_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
@@ -2251,10 +2226,9 @@ event_check(int non_blocking)
 	    bu_vls_free(&vls);
 	}
 	if (view_state->vs_rateflag_scale) {
-	    struct bu_vls vls;
+	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "zoom %f",
 			  1.0 / (1.0 - (view_state->vs_rate_scale / 10.0)));
 	    Tcl_Eval(INTERP, bu_vls_addr(&vls));
@@ -2287,14 +2261,12 @@ refresh(void)
 {
     struct dm_list *p;
     struct dm_list *save_dm_list;
-    struct bu_vls overlay_vls;
-    struct bu_vls tmp_vls;
+    struct bu_vls overlay_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     int do_overlay = 1;
     double elapsed_time;
     int do_time = 0;
 
-    bu_vls_init(&overlay_vls);
-    bu_vls_init(&tmp_vls);
     rt_prep_timer();
 
     FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
@@ -2634,7 +2606,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     struct ged *save_gedp;
     struct db_i *save_dbip = DBI_NULL;
     struct mater *save_materp = MATER_NULL;
-    struct bu_vls msg;	/* use this to hold returned message */
+    struct bu_vls msg = BU_VLS_INIT_ZERO;	/* use this to hold returned message */
     int created_new_db = 0;
     int c;
     int flip_v4 = 0;
@@ -2650,8 +2622,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	Tcl_AppendResult(interpreter, "", (char *)NULL);
 	return TCL_OK;
     }
-
-    bu_vls_init(&msg);
 
     /* handle getopt arguments */
     bu_optind = 1;
@@ -2722,10 +2692,8 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 			return TCL_OK;
 		    }
 		} else {
-		    struct bu_vls vls;
+		    struct bu_vls vls = BU_VLS_INIT_ZERO;
 		    int status;
-
-		    bu_vls_init(&vls);
 
 		    if (dpy_string != (char *)NULL)
 			bu_vls_printf(&vls, "cad_dialog .createdb %s \"Create New Database?\" \"Create new database named %s?\" \"\" 0 Yes No Quit",
@@ -2917,9 +2885,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
      * up the GUI.
      */
     {
-	struct bu_vls cmd;
-
-	bu_vls_init(&cmd);
+	struct bu_vls cmd = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&cmd, "wdb_open %s inmem [get_dbip]", MGED_INMEM_NAME);
 	if (Tcl_Eval(interpreter, bu_vls_addr(&cmd)) != TCL_OK) {
