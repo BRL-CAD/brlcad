@@ -21,7 +21,7 @@ set(LIBGCV_SOURCES
 BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt libbu")
 SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
-ADD_SUBDIRECTORY(wfobj)
+add_subdirectory(wfobj)
 
 add_executable(test_bottess test_bottess.c)
 target_link_libraries(test_bottess libgcv)

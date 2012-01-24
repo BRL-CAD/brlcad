@@ -18,4 +18,4 @@ BRLCAD_ADDLIB(libpkg "${LIBPKG_SOURCES}" libbu)
 SET_TARGET_PROPERTIES(libpkg PROPERTIES VERSION 19.0.1 SOVERSION 19)
 CMAKEFILES(Makefile.am)
 
-ADD_SUBDIRECTORY(example)
+add_subdirectory(example)

@@ -11,10 +11,10 @@ set(FFT_LOCAL_INCLUDE_DIRS
 
 BRLCAD_INCLUDE_DIRS(FFT_INCLUDE_DIRS)
 
-ADD_EXECUTABLE(fftc fftc.c splitditc.c)
+add_executable(fftc fftc.c splitditc.c)
 target_link_libraries(fftc ${M_LIBRARY})
 
-ADD_EXECUTABLE(ifftc ifftc.c ditsplitc.c)
+add_executable(ifftc ifftc.c ditsplitc.c)
 target_link_libraries(ifftc ${M_LIBRARY})
 
 # 512 and 1024 are tough in optimized compiles, don't
@@ -24,13 +24,13 @@ set(FFT_NUMLIST "16;32;64;128;256")
 set(FFT_GEN_SRCS "")
 
 foreach(filenum ${FFT_NUMLIST})
-  ADD_CUSTOM_COMMAND(
+  add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/rfft${filenum}.c
     COMMAND fftc ${filenum} > ${CMAKE_CURRENT_BINARY_DIR}/rfft${filenum}.c
     DEPENDS fftc
   )
   set(FFT_GEN_SRCS "${FFT_GEN_SRCS};${CMAKE_CURRENT_BINARY_DIR}/rfft${filenum}.c")
-  ADD_CUSTOM_COMMAND(
+  add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/irfft${filenum}.c
     COMMAND ifftc ${filenum} > ${CMAKE_CURRENT_BINARY_DIR}/irfft${filenum}.c
     DEPENDS ifftc

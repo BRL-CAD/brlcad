@@ -20,7 +20,7 @@ include_directories(
 )
 
 if(LEX_EXECUTABLE AND YACC_EXECUTABLE)
-	ADD_SUBDIRECTORY(points)
+	add_subdirectory(points)
 	set(MGED_EXTRA_LIBS libpoints)
 endif(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 

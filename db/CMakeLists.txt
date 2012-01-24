@@ -40,12 +40,12 @@ set(G_SAMPLE_MODELS
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/db)
 foreach(g_model ${G_SAMPLE_MODELS})
   string(REGEX REPLACE "([0-9a-z]*).asc" "\\1" g_model_root "${g_model}")
-  ADD_CUSTOM_COMMAND(
+  add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${g_model_root}.g
     COMMAND asc2g ${CMAKE_CURRENT_SOURCE_DIR}/${g_model} ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${g_model_root}.g
 	 DEPENDS asc2g ${CMAKE_CURRENT_SOURCE_DIR}/${g_model}
   )
-  ADD_CUSTOM_TARGET(${g_model_root}.g ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${g_model_root}.g)
+  add_custom_target(${g_model_root}.g ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${g_model_root}.g)
   if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
 	  install(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${g_model_root}.g DESTINATION ${DATA_DIR}/db)
   endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)

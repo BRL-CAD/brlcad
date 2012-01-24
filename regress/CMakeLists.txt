@@ -1,68 +1,68 @@
 # Geometry Conversion Regression Tests (experimental)
-ADD_SUBDIRECTORY(gcv)
+add_subdirectory(gcv)
 
 if(SH_EXEC)
-	ADD_CUSTOM_TARGET(mged-regress
+	add_custom_target(mged-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/mged.sh ${CMAKE_SOURCE_DIR}
 		DEPENDS mged
 		)
-	ADD_CUSTOM_TARGET(moss-regress
+	add_custom_target(moss-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/moss.sh ${CMAKE_SOURCE_DIR}
 		DEPENDS rt asc2g pixdiff asc2pix pix-png png-pix
 		)
-	ADD_CUSTOM_TARGET(lights-regress
+	add_custom_target(lights-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/lights.sh ${CMAKE_SOURCE_DIR}
 		DEPENDS rt asc2g pixdiff asc2pix
 		)
-	ADD_CUSTOM_TARGET(solids-regress
+	add_custom_target(solids-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/solids.sh ${CMAKE_SOURCE_DIR}
 		DEPENDS rt mged pixdiff asc2pix gencolor
 		)
-	ADD_CUSTOM_TARGET(shaders-regress
+	add_custom_target(shaders-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/shaders.sh ${CMAKE_SOURCE_DIR}
 		DEPENDS rt mged pixdiff asc2pix gencolor
 		)
-	ADD_CUSTOM_TARGET(spdi-regress
+	add_custom_target(spdi-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/spdi.sh ${CMAKE_SOURCE_DIR}
 		DEPENDS rt mged pixdiff asc2pix
 		)
-	ADD_CUSTOM_TARGET(iges-regress
+	add_custom_target(iges-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/iges.sh ${CMAKE_SOURCE_DIR}
 		DEPENDS iges-g g-iges mged
 		)
-	ADD_CUSTOM_TARGET(weight-regress
+	add_custom_target(weight-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/weight.sh ${CMAKE_SOURCE_DIR}
 		DEPENDS rtweight mged
 		)
-	ADD_CUSTOM_TARGET(gqa-regress
+	add_custom_target(gqa-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/gqa.sh ${CMAKE_SOURCE_DIR}
 		DEPENDS g_qa mged
 		)
-	ADD_CUSTOM_TARGET(fastgen-regress
+	add_custom_target(fastgen-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/fastgen.sh ${CMAKE_SOURCE_DIR}
 		DEPENDS fast4-g g_diff
 		)
-	ADD_CUSTOM_TARGET(bots-regress
+	add_custom_target(bots-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/bots.sh ${CMAKE_SOURCE_DIR}
 		DEPENDS mged pixdiff rt
 		)
-	ADD_CUSTOM_TARGET(flawfinder-regress
+	add_custom_target(flawfinder-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/flawfinder.sh ${CMAKE_SOURCE_DIR}
 		DEPENDS rt
 		)
-	ADD_CUSTOM_TARGET(repository-regress
+	add_custom_target(repository-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/repository.sh ${CMAKE_SOURCE_DIR}
 		DEPENDS rt
 		)
-	ADD_CUSTOM_TARGET(red-regress
+	add_custom_target(red-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/red.sh ${CMAKE_SOURCE_DIR}
 		DEPENDS mged
 		)
-	ADD_CUSTOM_TARGET(vls-regress
+	add_custom_target(vls-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/vls.sh ${CMAKE_SOURCE_DIR}
 		DEPENDS test_vls
 		)
-	ADD_CUSTOM_TARGET(regress
+	add_custom_target(regress
 		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/vls.sh ${CMAKE_SOURCE_DIR}
 		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/mged.sh ${CMAKE_SOURCE_DIR}
 		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/moss.sh ${CMAKE_SOURCE_DIR}

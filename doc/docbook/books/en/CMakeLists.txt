@@ -115,7 +115,7 @@ if(BRLCAD_EXTRADOCS_PDF)
 		set(scriptfile1 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_fo.cmake)
 		set(CURRENT_XSL_STYLESHEET ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.xsl)
 		configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/xsltproc.cmake.in	${scriptfile1} @ONLY)
-		ADD_CUSTOM_COMMAND(
+		add_custom_command(
 			OUTPUT ${outfile}
 			COMMAND ${CMAKE_COMMAND} -P ${scriptfile1}
 			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} 
@@ -123,12 +123,12 @@ if(BRLCAD_EXTRADOCS_PDF)
 		set(pdf_outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.pdf)
 		set(scriptfile2 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_pdf.cmake)
 		configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/fop.cmake.in ${scriptfile2} @ONLY)
-		ADD_CUSTOM_COMMAND(
+		add_custom_command(
 			OUTPUT ${pdf_outfile}
 			COMMAND ${CMAKE_COMMAND} -P ${scriptfile2}
 			DEPENDS ${outfile} ${DOCBOOK_RESOURCE_FILES}
 			)
-		ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${pdf_outfile})
+		add_custom_target(${targetname} ALL DEPENDS ${pdf_outfile})
 		install(FILES ${pdf_outfile} DESTINATION ${DATA_DIR}/pdf/books/en)
 	endforeach(filename ${docbook_books_EN})
 endif(BRLCAD_EXTRADOCS_PDF)

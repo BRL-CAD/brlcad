@@ -1,2 +1,2 @@
-ADD_SUBDIRECTORY(en)
+add_subdirectory(en)
 CMAKEFILES(README)

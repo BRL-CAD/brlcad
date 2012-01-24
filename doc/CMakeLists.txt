@@ -1,12 +1,12 @@
 
 if(BRLCAD_EXTRADOCS)
-	ADD_SUBDIRECTORY(docbook)
+	add_subdirectory(docbook)
 else(BRLCAD_EXTRADOCS)
 	CMAKEFILES(docbook)
 endif(BRLCAD_EXTRADOCS)
 
-ADD_SUBDIRECTORY(html)
-ADD_SUBDIRECTORY(legal)
+add_subdirectory(html)
+add_subdirectory(legal)
 
 set(documentation_DATA
 	IDEAS

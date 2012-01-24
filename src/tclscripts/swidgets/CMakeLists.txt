@@ -1,5 +1,5 @@
-ADD_SUBDIRECTORY(images)
-ADD_SUBDIRECTORY(scripts)
+add_subdirectory(images)
+add_subdirectory(scripts)
 
 set(swidgets_TCLSCRIPTS
 	swidgets.tcl

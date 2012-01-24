@@ -1,8 +1,8 @@
 if(LEX_EXECUTABLE AND YACC_EXECUTABLE)
-	ADD_SUBDIRECTORY(step)
+	add_subdirectory(step)
 endif(LEX_EXECUTABLE AND YACC_EXECUTABLE)
-ADD_SUBDIRECTORY(iges)
-ADD_SUBDIRECTORY(intaval)
+add_subdirectory(iges)
+add_subdirectory(intaval)
 
 set(CONV_INCLUDE_DIRS
 	${BU_INCLUDE_DIRS}

@@ -30,7 +30,7 @@ set(required_dirs
 )
 
 foreach(subdir ${required_dirs})
-	ADD_SUBDIRECTORY(${subdir})
+	add_subdirectory(${subdir})
 endforeach(subdir ${required_dirs})
 
 # Directories needed to run benchmarks
@@ -101,19 +101,19 @@ set(non_win32_dirs
 # put it all together #
 #######################
 foreach(subdir ${benchmark_dirs})
-	ADD_SUBDIRECTORY(${subdir})
+	add_subdirectory(${subdir})
 endforeach(subdir ${benchmark_dirs})
 if(BRLCAD_ENABLE_RTSERVER)
-	ADD_SUBDIRECTORY(librtserver)
+	add_subdirectory(librtserver)
 else(BRLCAD_ENABLE_RTSERVER)
 	CMAKEFILES(librtserver)
 endif(BRLCAD_ENABLE_RTSERVER)
 foreach(subdir ${remaining_dirs})
-	ADD_SUBDIRECTORY(${subdir})
+	add_subdirectory(${subdir})
 endforeach(subdir ${remaining_dirs})
 if(NOT WIN32)
 	foreach(subdir ${non_win32_dirs})
-		ADD_SUBDIRECTORY(${subdir})
+		add_subdirectory(${subdir})
 	endforeach(subdir ${non_win32_dirs})
 endif(NOT WIN32)
 

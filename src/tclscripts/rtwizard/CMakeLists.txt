@@ -1,10 +1,10 @@
-ADD_SUBDIRECTORY(lib)
+add_subdirectory(lib)
 
-ADD_CUSTOM_COMMAND(
+add_custom_command(
 	OUTPUT  ${CMAKE_BINARY_DIR}/bin/rtwizard
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.tcl ${CMAKE_BINARY_DIR}/bin/rtwizard
 	)
-ADD_CUSTOM_TARGET(rtwizard ALL DEPENDS ${CMAKE_BINARY_DIR}/bin/rtwizard)
+add_custom_target(rtwizard ALL DEPENDS ${CMAKE_BINARY_DIR}/bin/rtwizard)
 install(PROGRAMS ${CMAKE_BINARY_DIR}/bin/rtwizard DESTINATION ${BIN_DIR})
 
 set(rtwizard_TCLSCRIPTS

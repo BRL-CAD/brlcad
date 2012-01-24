@@ -1,19 +1,19 @@
 if(WIN32)
-	ADD_CUSTOM_COMMAND(
+	add_custom_command(
 		OUTPUT ${CMAKE_BINARY_DIR}/bin/archer ${CMAKE_BINARY_DIR}/bin/archer.bat
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/archer.bat ${CMAKE_BINARY_DIR}/bin/archer.bat
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/archer ${CMAKE_BINARY_DIR}/bin/archer
 		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/archer.bat ${CMAKE_CURRENT_SOURCE_DIR}/archer.bat
 		)
-	ADD_CUSTOM_TARGET(archer ALL DEPENDS ${CMAKE_BINARY_DIR}/bin/archer.bat ${CMAKE_BINARY_DIR}/bin/archer)
+	add_custom_target(archer ALL DEPENDS ${CMAKE_BINARY_DIR}/bin/archer.bat ${CMAKE_BINARY_DIR}/bin/archer)
 	install(PROGRAMS archer.bat DESTINATION bin)
 else(WIN32)
-	ADD_CUSTOM_COMMAND(
+	add_custom_command(
 		OUTPUT ${CMAKE_BINARY_DIR}/bin/archer
 		COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/archer ${CMAKE_BINARY_DIR}/bin/archer
 		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/archer
 		)
-	ADD_CUSTOM_TARGET(archer ALL DEPENDS ${CMAKE_BINARY_DIR}/bin/archer)
+	add_custom_target(archer ALL DEPENDS ${CMAKE_BINARY_DIR}/bin/archer)
 endif(WIN32)
 install(PROGRAMS archer DESTINATION bin)
 

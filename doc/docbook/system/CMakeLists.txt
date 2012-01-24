@@ -1,6 +1,6 @@
-ADD_SUBDIRECTORY(man1)
-ADD_SUBDIRECTORY(man3)
-ADD_SUBDIRECTORY(man5)
-ADD_SUBDIRECTORY(mann)
+add_subdirectory(man1)
+add_subdirectory(man3)
+add_subdirectory(man5)
+add_subdirectory(mann)
 
 CMAKEFILES(README)

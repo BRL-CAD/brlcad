@@ -1,5 +1,5 @@
 if(BUILD_STATIC_LIBS AND BRLCAD_ENABLE_BRLCAD_LIBRARY)
-	ADD_SUBDIRECTORY(win32-msvc)
+	add_subdirectory(win32-msvc)
 endif(BUILD_STATIC_LIBS AND BRLCAD_ENABLE_BRLCAD_LIBRARY)
 
 set(prefix ${CMAKE_INSTALL_PREFIX})
@@ -9,12 +9,12 @@ set(includedir "\${prefix}/include")
 set(datarootdir "\${prefix}/share")
 set(datadir "\${datarootdir}")
 
-ADD_SUBDIRECTORY(pkgconfig)
+add_subdirectory(pkgconfig)
 # FIXME - need to finish porting enigma to Windows -
 # tried adding postgresql crypt function but it doesn't
 # seem to be working.
 if(NOT WIN32)
-	ADD_SUBDIRECTORY(enigma)
+	add_subdirectory(enigma)
 endif(NOT WIN32)
 
 CONFIGURE_file(brlcad-config.in ${CMAKE_BINARY_DIR}/bin/brlcad-config @ONLY)
@@ -36,12 +36,12 @@ BRLCAD_ADDfile(nsis/archer.ico icons)
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
 	if(BRLCAD_BUILD_DOXYGEN_DOCS)
-		ADD_CUSTOM_COMMAND(
+		add_custom_command(
 			OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html
 			COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/misc/Doxyfile
 			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
 			)
-		ADD_CUSTOM_TARGET(dox DEPENDS ${CMAKE_BINARY_DIR}/misc/doxygen_output/html/index.html)
+		add_custom_target(dox DEPENDS ${CMAKE_BINARY_DIR}/misc/doxygen_output/html/index.html)
 	endif(BRLCAD_BUILD_DOXYGEN_DOCS)
 else(DOXYGEN_FOUND)
 	if(BRLCAD_BUILD_DOXYGEN_DOCS)

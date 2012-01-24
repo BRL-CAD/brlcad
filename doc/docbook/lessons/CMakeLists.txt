@@ -1,2 +1,2 @@
-ADD_SUBDIRECTORY(en)
-ADD_SUBDIRECTORY(es)
+add_subdirectory(en)
+add_subdirectory(es)

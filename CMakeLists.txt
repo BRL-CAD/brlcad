@@ -1119,7 +1119,7 @@ endif(NOT MSVC)
 # we don't want flags that are otherwise global to BRL-CAD to be passed
 # to the src/other directory (particularly things like strict compiler
 # flags) so add src/other before any of that setup occurs.
-ADD_SUBDIRECTORY(src/other)
+add_subdirectory(src/other)
 
 # Requires that CompilerFlags.cmake already be loaded
 if(NOT MSVC)
@@ -1488,15 +1488,15 @@ if(MSVC)
 endif(MSVC)
 
 # We've done the toplevel configure steps, now add the subdirectories
-ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(db)
-ADD_SUBDIRECTORY(include)
-ADD_SUBDIRECTORY(doc)
-ADD_SUBDIRECTORY(sh)
-ADD_SUBDIRECTORY(misc)
-ADD_SUBDIRECTORY(pix)
-ADD_SUBDIRECTORY(bench)
-ADD_SUBDIRECTORY(regress)
+add_subdirectory(src)
+add_subdirectory(db)
+add_subdirectory(include)
+add_subdirectory(doc)
+add_subdirectory(sh)
+add_subdirectory(misc)
+add_subdirectory(pix)
+add_subdirectory(bench)
+add_subdirectory(regress)
 
 # Now that all the tests are done, configure the brlcad_config.h file:
 file(APPEND ${CONFIG_H_FILE} "#endif /* __CONFIG_H__ */\n")
@@ -1709,21 +1709,21 @@ if(NOT IS_SUBBUILD)
     ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c)
   configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/builddelta_end.c.in
     ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c)
-  ADD_EXECUTABLE(printtimestamp ${BRLCAD_CMAKE_DIR}/test_srcs/print_timestamp.c)
-  ADD_EXECUTABLE(buildtimestart ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c)
-  ADD_EXECUTABLE(buildtimeend ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c)
-  ADD_CUSTOM_COMMAND(
+  add_executable(printtimestamp ${BRLCAD_CMAKE_DIR}/test_srcs/print_timestamp.c)
+  add_executable(buildtimestart ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c)
+  add_executable(buildtimeend ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c)
+  add_custom_command(
     OUTPUT ${BUILD_DELTA_FILE}
     COMMAND buildtimestart
     COMMENT ""
     DEPENDS buildtimestart
     )
-  ADD_CUSTOM_TARGET(timestamp ALL
+  add_custom_target(timestamp ALL
     COMMAND printtimestamp
     COMMAND ${CMAKE_COMMAND} -E rename ${BUILD_DELTA_FILE} ${BUILD_DELTA_START}
     DEPENDS ${BUILD_DELTA_FILE} printtimestamp
     )
-  ADD_CUSTOM_TARGET(buildtimedelta ALL
+  add_custom_target(buildtimedelta ALL
     COMMAND buildtimeend
     COMMAND ${CMAKE_COMMAND} -E remove ${BUILD_DELTA_START}
     DEPENDS buildtimeend
@@ -2016,7 +2016,7 @@ if(NOT IS_SUBBUILD)
     ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake @ONLY)
 
   if("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
-    ADD_CUSTOM_TARGET(distcheck
+    add_custom_target(distcheck
       COMMAND ${CMAKE_COMMAND} -E echo "Stage 1:  Check files in Source Repository against files specified in Build Logic"
       COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake
       COMMAND ${CMAKE_COMMAND} -E echo "Stage 2:  Create source tgz, tbz2 and zip archives from toplevel archive."
@@ -2046,7 +2046,7 @@ if(NOT IS_SUBBUILD)
       COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_message
       )
   else("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
-    ADD_CUSTOM_TARGET(distcheck
+    add_custom_target(distcheck
       COMMAND ${CMAKE_COMMAND} -E echo "Stage 1:  Check files in Source Repository against files specified in Build Logic"
       COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake
       COMMAND ${CMAKE_COMMAND} -E echo "Stage 2:  Create source tgz, tbz2 and zip archives from toplevel archive."
@@ -2076,7 +2076,7 @@ if(NOT IS_SUBBUILD)
       COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_message
       )
   endif("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
-  ADD_CUSTOM_TARGET(distclean
+  add_custom_target(distclean
     COMMAND ${CMAKE_COMMAND} -E remove_directory	${CPACK_SOURCE_PACKAGE_FILE_NAME}
     COMMAND ${CMAKE_COMMAND} -E remove_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
     COMMAND ${CMAKE_COMMAND} -E remove_directory	_${CPACK_SOURCE_PACKAGE_FILE_NAME}-install

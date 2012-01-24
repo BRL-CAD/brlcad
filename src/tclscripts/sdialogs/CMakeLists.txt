@@ -1,4 +1,4 @@
-ADD_SUBDIRECTORY(scripts)
+add_subdirectory(scripts)
 
 set(sdialogs_TCLSCRIPTS
 	sdialogs.tcl

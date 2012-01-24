@@ -23,16 +23,16 @@ ADD_MAN_PAGES(1 bench_MANS)
 CMAKEFILES(lgt.sh run.sh try.sh viewdiff.sh Makefile.am)
 
 if(SH_EXEC)
-	ADD_CUSTOM_TARGET(benchmark
+	add_custom_target(benchmark
 		COMMAND ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/benchmark run
 		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake
 		DEPENDS rt pixcmp
 		)
 	ADD_DEPENDENCIES(benchmark bldg391.g m35.g moss.g sphflake.g star.g world.g)
-	ADD_CUSTOM_TARGET(benchmark-clean
+	add_custom_target(benchmark-clean
 		${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/benchmark clean
 		)
-	ADD_CUSTOM_TARGET(benchmark-clobber
+	add_custom_target(benchmark-clobber
 		${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/benchmark clobber
 		)
 endif(SH_EXEC)
