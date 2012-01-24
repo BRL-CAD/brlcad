@@ -18,6 +18,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* regress-solids is failing (ebm/dsp import/export failures), fix.
+  encountered on gcc110 (power7, F16) recently, seems to work on RHEL.
+
 * test nirt template file loading
 
 * g-nff is crashing, fix it; g-dot outputs garbage
