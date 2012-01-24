@@ -1,6 +1,6 @@
-if(LEX_EXECUTABLE AND YACC_EXECUTABLE)
+if(NOT MSVC)
 	add_subdirectory(step)
-endif(LEX_EXECUTABLE AND YACC_EXECUTABLE)
+endif(NOT MSVC)
 add_subdirectory(iges)
 add_subdirectory(intaval)
 

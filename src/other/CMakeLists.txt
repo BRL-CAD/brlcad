@@ -623,6 +623,7 @@ testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY(openNURBS openNURBS "" opennurbs_ALIASES opennurbs_DESCRIPTION NOSYS)
 
+IF(NOT MSVC)
 # STEP Class Libraries
 # Need Lemon/Perplex to build STEP - conditionalize
 set(scl_ALIASES ENABLE_SCL ENABLE_STEP ENABLE_STEP_CLASS_LIBRARIES)
@@ -637,6 +638,9 @@ IF(BRLCAD_SCL_BUILD)
 	SET(FEDEX_PLUS_EXEC fedex_plus CACHE STRING "Fedex plus executable" FORCE)
 	MARK_AS_ADVANCED(FEDEX_PLUS_EXEC)
 ENDIF(BRLCAD_SCL_BUILD)
+ELSE(NOT MSVC)
+	DISTCHECK_IGNORE_ITEM(step)
+ENDIF(NOT MSVC)
 
 # Clipper polygon clipping library - for now, we're going to use our copy
 ADD_SUBDIRECTORY(clipper)
