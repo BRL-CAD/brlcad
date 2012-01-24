@@ -498,12 +498,12 @@ view_end(struct application *ap)
         for (id = 1; id < MAX_ITEM; ++id) {
             const int flen = 65; /* desired size of name field */
             int CR = 0;
+            const int ns = 15;
 
             if (item_wt[id] < 0)
                continue;
 
             /* the following format string has 15 spaces before the region name: */
-            const int ns = 15;
             fprintf(outfp, "%5d %8.3f ", id, item_wt[id]);
 
             /* since we're sorted by ID, we only need to start and end with the current ID */
