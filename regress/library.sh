@@ -61,7 +61,7 @@ ensearch ( ) {
 
     for dir in $ensearch_dirs ; do
 	ensearch_binary="$dir/$ensearch_file"
-	echo "Searching for $ensearch_binary" 1>&2
+	#echo "Searching for $ensearch_binary" 1>&2
 	if test -f "$ensearch_binary" ; then
 	    echo "$ensearch_binary"
 
