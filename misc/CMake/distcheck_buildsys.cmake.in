@@ -42,6 +42,10 @@ endif(COMMAND CMAKE_POLICY)
 set(NOT_DISTCHECK_READY 0)
 set(CMAKE_BINARY_DIR @CMAKE_BINARY_DIR@)
 
+# CPack needs a list of things to ignore - it is inclusive by default.  This
+# macro updates an existing CPack configuration by sourcing the old CPack
+# settings, updating various values, and including CPack again to re-generate
+# the CPack output files.
 macro(UPDATE_CPACK_CONFIGS)
   include(@CMAKE_BINARY_DIR@/CPackConfig.cmake)
   set(CPACK_PROJECT_CONFIG_FILE "@CMAKE_BINARY_DIR@/BRLCAD_CPackOptions.cmake")
@@ -52,6 +56,10 @@ macro(UPDATE_CPACK_CONFIGS)
   include(CPack)
 endmacro(UPDATE_CPACK_CONFIGS)
 
+# Subversion generates a textual report that we need to convert into a file
+# list.  The basic approach is to crush anything that's not what we want down
+# to line returns, then replace all line returns with semicolons to create
+# a valid CMake lists.
 macro(SVN_INFO_TO_PATH_LIST SVN_RAW SVN_PATHLIST)
   set(SVN_PROCESSING ${${SVN_RAW}})
   string(REGEX REPLACE "Name: [^\r\n]*" "\n" SVN_PROCESSING "${SVN_PROCESSING}")
@@ -71,15 +79,27 @@ macro(SVN_INFO_TO_PATH_LIST SVN_RAW SVN_PATHLIST)
   set(${SVN_PATHLIST} ${SVN_PROCESSING})
 endmacro(SVN_INFO_TO_PATH_LIST)
 
+# By default, assume that nothing has been modified.
 set(SVN_TREE_MODIFIED 0)
 
+# Look for Subversion - if we don't have the command, we can't query the
+# repository even if it is present.
 find_program(SVN_EXEC svn)
+
+# We need the Subversion binary and the source directory must be a
+# checkout of the BRL-CAD subversion repository.  If these two conditions
+# are met, we can collect information from subversion
 if(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
+
   message(" --- Building file list from Subversion manifests: ...")
+ 
+  # Get the file list 
   set(SVN_FILES "")
   execute_process(COMMAND ${SVN_EXEC} info -R @CMAKE_SOURCE_DIR@ OUTPUT_VARIABLE SVN_RAWOUT)
   SVN_INFO_TO_PATH_list(SVN_RAWOUT SVN_FILES)
 
+  # Check whether Subversion is reporting modified files.  Also, if any
+  # deleted files are reported, remove those from the SVN_FILES list
   execute_process(COMMAND ${SVN_EXEC} status @CMAKE_SOURCE_DIR@ OUTPUT_VARIABLE SVN_RAWSTATUS)
   string(REGEX REPLACE "@CMAKE_SOURCE_DIR@/" "" SVN_RAWSTATUS "${SVN_RAWSTATUS}")
   string(REGEX REPLACE "\r?\n" ";" SVN_STATUS "${SVN_RAWSTATUS}")
@@ -92,22 +112,36 @@ if(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
       list(REMOVE_ITEM SVN_FILES ${item_path})
     endif(${ITEM} MATCHES "^D")
   endforeach(ITEM ${SVN_STATUS})
+
+  # Generate a sorted text file with the results of the Subversion list processing.
   list(SORT SVN_FILES)
   list(REMOVE_DUPLICATES SVN_FILES)
   string(REGEX REPLACE ";" "\n" SVN_FILES "${SVN_FILES}")
   file(WRITE @CMAKE_BINARY_DIR@/svn_files_list.txt "${SVN_FILES}")
 
+  # If we've got modified files, we shouldn't use resulting tarballs for a distribution -
+  # warn accordingly.
   if(SVN_TREE_MODIFIED)
     message("\n**** NOTE:  Subversion reports modified source files present in the source tree.\n     Distcheck proceeding, but archives will not be suitable for release.\n")
     set(NOT_DISTCHECK_READY 1)
   endif(SVN_TREE_MODIFIED)
 
   message(" --- Building file list from Subversion manifests: Done") 
+
 endif(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
 
+# The build system has kindly created lists of files and directories for us,
+# but in order to compare the build system's lists to the others generated
+# by this script we need the fully expanded list.  Read and expand...
 message(" --- Building list of files known to the build system: ...") 
 file(STRINGS @CMAKE_BINARY_DIR@/cmakefiles.cmake BUILD_FILES)
 file(STRINGS @CMAKE_BINARY_DIR@/cmakedirs.cmake IGNORED_DIRECTORIES)
+
+# Having read in the raw data, we process all the ignored directories to 
+# get explicit lists of what they contain.  If we have Subversion use
+# that to tell us what *should* be in those directories - this lets us
+# spot stray files even in ignored directories.  If we don't have 
+# Subversion, use GLOB_RECURSE.
 foreach(ITEM ${IGNORED_DIRECTORIES})
   if(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
     set(IGNORED_FILES "")
@@ -129,17 +163,29 @@ foreach(ITEM ${IGNORED_DIRECTORIES})
   endif(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
 endforeach(ITEM ${DIR_FILES_LIST})
 string(REGEX REPLACE "@CMAKE_SOURCE_DIR@/" "" BUILD_FILES "${BUILD_FILES}")
+
+# Generate a sorted text file with the results of the CMake build system list processing.
 list(SORT BUILD_FILES)
 list(REMOVE_DUPLICATES BUILD_FILES)
 string(REGEX REPLACE ";" "\n" BUILD_FILES "${BUILD_FILES}")
 file(WRITE @CMAKE_BINARY_DIR@/build_files_list.txt "${BUILD_FILES}")
 message(" --- Building list of files known to the build system: Done") 
 
+# Get the CPack ignore build path value from the parent CMake build
 set(CPACK_IGNORE_BUILD_PATH "@CPACK_IGNORE_BUILD_PATH@")
+
+# From the perspective of this script, "ground truth" is defined as what files
+# are actually present on the file system at the time the script is executed (as
+# opposed to what the build system or Subversion *expect* to be present) minus
+# files that CPack knows to ignore (i.e., things that will not be included in a
+# source archive.) This list is collected with CMake globbing and information
+# based on CPack's settings.
 message(" --- Building 'ground truth' list of files actually present in source tree: ...") 
 file(WRITE @CMAKE_BINARY_DIR@/ground_truth.txt "")
 file(WRITE @CMAKE_BINARY_DIR@/cpack_ignore_files.txt "")
 file(GLOB_RECURSE GROUND_TRUTH_RAW RELATIVE @CMAKE_SOURCE_DIR@ "@CMAKE_SOURCE_DIR@/*")
+
+# Start scrubbing...
 string(REGEX REPLACE ";[^;]*\\.svn[^;]*" "" GROUND_TRUTH_SCRUBBED "${GROUND_TRUTH_RAW}")
 if(CPACK_IGNORE_BUILD_PATH)
   set(GROUND_TRUTH_SCRUBBED ";${GROUND_TRUTH_SCRUBBED}")
@@ -152,16 +198,29 @@ string(REGEX REPLACE "[^/]*;" ";" GROUND_TRUTH_P2 "${GROUND_TRUTH_P1}")
 string(REGEX REPLACE "/;" ";" GROUND_TRUTH_P2 "${GROUND_TRUTH_P2}")
 list(REMOVE_DUPLICATES GROUND_TRUTH_P2)
 set(GROUND_TRUTH ${GROUND_TRUTH_SCRUBBED} ${GROUND_TRUTH_P1} ${GROUND_TRUTH_P2})
+
+# Generate a sorted text file with the results of the CMake build system list processing.
 if(GROUND_TRUTH)
   list(REMOVE_DUPLICATES GROUND_TRUTH)
   list(SORT GROUND_TRUTH)
   string(REGEX REPLACE ";" "\n" GROUND_TRUTH "${GROUND_TRUTH}")
   file(WRITE @CMAKE_BINARY_DIR@/ground_truth.txt "${GROUND_TRUTH}")
+else(GROUND_TRUTH)
+    message("No files found in ground truth search?? ") 
 endif(GROUND_TRUTH)
 message(" --- Building 'ground truth' list of files actually present in source tree: Done") 
 
+
+# To generate lists of "interesting" files - things the build system knows about but 
+# subversion doesn't, files the Subversion system knows about that the build system
+# doesn't, and files present in the source tree that *neither* system knows about,
+# we need to generate relative compliment sets of the various lists.  Using a technique
+# from Eric Noulard on the CMake mailing list:
+#
+# http://www.cmake.org/pipermail/cmake/2011-September/046214.html
 message(" --- Performing comparisons...") 
 
+# Read in the text files as lists
 file(STRINGS @CMAKE_BINARY_DIR@/build_files_list.txt BUILD_FILES)
 if(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
   file(STRINGS @CMAKE_BINARY_DIR@/svn_files_list.txt SVN_FILES)
@@ -169,6 +228,8 @@ endif(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
 file(STRINGS @CMAKE_BINARY_DIR@/ground_truth.txt GROUND_TRUTH)
 list(REMOVE_DUPLICATES BUILD_FILES)
 
+# If we have Subversion, we can do lots more interesting comparisions.
+# Otherwise, just look for files the build system doesn't know about.
 if(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
   set(BUILD_FILES_NOT_IN_SVN ${BUILD_FILES})
   set(SVN_FILES_NOT_IN_BUILD ${SVN_FILES})
@@ -178,32 +239,41 @@ if(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
 endif(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
 list(REMOVE_ITEM GROUND_TRUTH ${BUILD_FILES})
 
+# Report file in Subversion but not the build logic:
 if(SVN_FILES_NOT_IN_BUILD)
   string(REGEX REPLACE ";" "\n" SVN_FILES_NOT_IN_BUILD "${SVN_FILES_NOT_IN_BUILD}")
   message("\nFiles listed in subversion but not accounted for in build logic: \n${SVN_FILES_NOT_IN_BUILD}\n")
 endif(SVN_FILES_NOT_IN_BUILD)
 
+# Report file in the build logic but not Subversion:
 if(BUILD_FILES_NOT_IN_SVN)
   string(REGEX REPLACE ";" "\n" BUILD_FILES_NOT_IN_SVN "${BUILD_FILES_NOT_IN_SVN}")
   message("\nFiles present in the build logic but not accounted for in Subversion: \n${BUILD_FILES_NOT_IN_SVN}\n")
 endif(BUILD_FILES_NOT_IN_SVN)
 
+# Either of the previous two cases haults distcheck until fixed.
 if(SVN_FILES_NOT_IN_BUILD OR BUILD_FILES_NOT_IN_SVN)
   message(FATAL_ERROR "Distcheck cannot proceed until the above errors are corrected.")
 endif(SVN_FILES_NOT_IN_BUILD OR BUILD_FILES_NOT_IN_SVN)
 
+# We need to teach CPack to ignore files that we don't want included
 list(LENGTH GROUND_TRUTH IGNORE_COUNT)
 if(IGNORE_COUNT)
   string(REGEX REPLACE ";" "\n" CPACK_IGNORE_FILES "${GROUND_TRUTH}")
   file(WRITE @CMAKE_BINARY_DIR@/cpack_ignore_files.txt "${CPACK_IGNORE_FILES}")
 endif(IGNORE_COUNT)
+
+# If we have subversion, we need one type of error message
 if(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
+
   if(GROUND_TRUTH)
     # We're ignoring specific files, not patterns, so construct the right entry style for CPack
     # see http://www.cmake.org/pipermail/cmake/2006-October/011548.html
     set(CPACK_EXTRA_IGNORE_FILES "^@CMAKE_SOURCE_DIR@/${GROUND_TRUTH}$")
     string(REGEX REPLACE ";" "$;^@CMAKE_SOURCE_DIR@/" CPACK_EXTRA_IGNORE_FILES "${CPACK_EXTRA_IGNORE_FILES}")
     string(REGEX REPLACE "\^@CMAKE_SOURCE_DIR@/\$" "" CPACK_EXTRA_IGNORE_FILES "${CPACK_EXTRA_IGNORE_FILES}")
+    # If we don't have an insane number of ignored files (the more normal case) then report
+    # them explicitly - easier to fix that way.  Otherwise, refer the user to the report file.
     if(${IGNORE_COUNT} LESS 51)
       string(REGEX REPLACE ";" "\n" GROUND_TRUTH "${GROUND_TRUTH}")
       message("\nFiles unknown to both Subversion and the Build logic (will not be incorporated into dist):\n${GROUND_TRUTH}\n")
@@ -211,19 +281,24 @@ if(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
       message("\nMore than 50 files are unknown to both Subversion and the Build logic - archives will not be filtered and are not suitable for distribution.\n")
     endif(${IGNORE_COUNT} LESS 51)
   endif(GROUND_TRUTH)
+
 else(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
+
+  # Different error message  - in fact, without Subversion to keep us straight, this is a fatal error.
   if(GROUND_TRUTH)
+    # If we don't have an insane number of ignored files (the more normal case) then report
+    # them explicitly - easier to fix that way.  Otherwise, refer the user to the report file.
     if(${IGNORE_COUNT} LESS 51)
       string(REGEX REPLACE ";" "\n" GROUND_TRUTH "${GROUND_TRUTH}")
       message("\nFiles unknown to the Build logic:\n${GROUND_TRUTH}\n")
     else(${IGNORE_COUNT} LESS 51)
       message("\nMore than 50 files unknown to the Build logic\nSee @CMAKE_BINARY_DIR@/cpack_ignore_files.txt for the list of ignored files.\n")
     endif(${IGNORE_COUNT} LESS 51)
-
     message(FATAL_ERROR "Distcheck without subversion, unknown source files cannot be positivily identified as non-distribution files, haulting.\n")
   else(GROUND_TRUTH)
     message("\nWarning: Distcheck is being performed without subversion.  Temporary files and other unknown files present in directories explicitly ignored by the build logic will be incorporated into the archives by CPack.  If building archives for distribution, using a subversion checkout is recommended.\n")
   endif(GROUND_TRUTH)
+
 endif(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
 
 # If the list of files to ignore is at most 50 items in length, go ahead and update the CPack 
@@ -232,6 +307,7 @@ if(${IGNORE_COUNT} LESS 51)
   UPDATE_CPACK_CONFIGS()
 endif(${IGNORE_COUNT} LESS 51)
 
+# All done - print result messages and configure the appropriate final message for the distcheck build.
 set(FINAL_DIST_MESSAGE "--- distcheck succeeded ---")
 if(NOT_DISTCHECK_READY)
   set(FINAL_DIST_MESSAGE "--- distcheck succeeded ---\n*** WARNING - archive files contain modified sources, NOT suitable for distribution! ***")
