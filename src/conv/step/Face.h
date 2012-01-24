@@ -41,6 +41,7 @@ private:
 	static string entityname;
 
 protected:
+	bool reverse;
 	LIST_OF_FACE_BOUNDS bounds;
 
 public:
@@ -51,6 +52,7 @@ public:
 	bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual void Print(int level);
+	virtual void ReverseFace();
 
 	//static methods
 	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);

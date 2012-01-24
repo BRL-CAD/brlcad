@@ -37,11 +37,13 @@ string Face::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Face:
 Face::Face() {
     step = NULL;
     id = 0;
+	reverse = false;
 }
 
 Face::Face(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
+	reverse = false;
 }
 
 Face::~Face() {
@@ -107,6 +109,11 @@ Face::Print(int level) {
 
     TAB(level); std::cout << "Inherited Attributes:" << std::endl;
     TopologicalRepresentationItem::Print(level+1);
+}
+
+void
+Face::ReverseFace() {
+    reverse = true;
 }
 
 STEPEntity *
