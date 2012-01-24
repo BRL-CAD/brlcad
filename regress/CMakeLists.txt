@@ -70,6 +70,7 @@ endif(SH_EXEC)
 
 CMAKEFILES(
 	Makefile.am
+	analyze.asc
 	bots.sh 
         dsp.sh
 	fastgen.sh 
