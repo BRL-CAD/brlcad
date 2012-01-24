@@ -187,7 +187,7 @@ main(int ac, char *av[])
     /* the last field ('%Lu') should result in zero because the number
        is a negative float and it is converted to a an unsigned int
        (it shouldn't be used with an integer) */
-    fails += test_vls("%ld %lld %Lu", 123, -123, -321.0);
+    fails += test_vls("%ld %lld %Lu", 123, -123, (unsigned int)-321.0);
 
     /* ======================================================== */
     /* EXPECTED FAILURES ONLY BELOW HERE                           */
