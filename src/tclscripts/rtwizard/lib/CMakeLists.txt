@@ -1,4 +1,4 @@
-SET(rtwizard_lib_TCLSCRIPTS
+set(rtwizard_lib_TCLSCRIPTS
 	DbPage.itk
 	ExamplePage.itk
 	FbPage.itk

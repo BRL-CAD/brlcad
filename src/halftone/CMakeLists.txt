@@ -1,11 +1,11 @@
-SET(HALFTONE_INCLUDE_DIRS
+set(HALFTONE_INCLUDE_DIRS
 	${FB_INCLUDE_DIRS}
 	${RT_INCLUDE_DIRS}
 	)
 LIST(REMOVE_DUPLICATES HALFTONE_INCLUDE_DIRS)
 include_directories(${HALFTONE_INCLUDE_DIRS})
 
-SET(halftone_SOURCES
+set(halftone_SOURCES
   main.c
   sharpen.c
   tone_classic.c

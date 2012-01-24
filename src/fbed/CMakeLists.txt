@@ -1,5 +1,5 @@
-IF(HAVE_TERMLIB)
-	SET(FBED_INCLUDE_DIRS
+if(HAVE_TERMLIB)
+	set(FBED_INCLUDE_DIRS
 		${FB_INCLUDE_DIRS}
 		${VFONT_INCLUDE_DIRS}
 		${TERMIO_INCLUDE_DIRS}
@@ -9,7 +9,7 @@ IF(HAVE_TERMLIB)
 	LIST(REMOVE_DUPLICATES FBED_INCLUDE_DIRS)
 	include_directories(${FBED_INCLUDE_DIRS})
 
-	SET(fbed_SOURCES
+	set(fbed_SOURCES
 		char.c
 		empty.c
 		execshell.c
@@ -27,5 +27,5 @@ IF(HAVE_TERMLIB)
 
 	ADD_MAN_PAGE(1 fbed.1)
 	CMAKEFILES(ascii.h cursorbits.h extern.h fb_ik.h popup.h std.h try.h)
-ENDIF(HAVE_TERMLIB)
+endif(HAVE_TERMLIB)
 CMAKEFILES(Makefile.am)

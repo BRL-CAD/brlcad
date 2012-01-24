@@ -1,4 +1,4 @@
-SET(swidgets_image_DATA
+set(swidgets_image_DATA
 	closed.gif
 	leaf.gif
 	minus.xbm

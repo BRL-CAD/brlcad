@@ -1,4 +1,4 @@
-SET(FBBIN_INCLUDE_DIRS
+set(FBBIN_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${BU_INCLUDE_DIRS}
 	${BN_INCLUDE_DIRS}
@@ -13,11 +13,11 @@ SET(FBBIN_INCLUDE_DIRS
 BRLCAD_SORT_INCLUDE_DIRS(FBBIN_INCLUDE_DIRS)
 include_directories(${FBBIN_INCLUDE_DIRS})
 
-IF(MSVC)
+if(MSVC)
 		  add_definitions(
 					 -DIF_WGL
 					 )
-ENDIF(MSVC)
+endif(MSVC)
 BRLCAD_ADDEXEC(bw-fb bw-fb.c libfb)
 BRLCAD_ADDEXEC(cell-fb cell-fb.c "libfb libbn")
 BRLCAD_ADDEXEC(cmap-fb cmap-fb.c libfb)
@@ -34,9 +34,9 @@ BRLCAD_ADDEXEC(fbclear fbclear.c libfb)
 BRLCAD_ADDEXEC(fbcmap fbcmap.c libfb)
 BRLCAD_ADDEXEC(fbcmrot fbcmrot.c libfb)
 
-IF(HAVE_TERMLIB)
+if(HAVE_TERMLIB)
 	BRLCAD_ADDEXEC(fbcolor fbcolor.c "libfb libtermio")
-ENDIF(HAVE_TERMLIB)
+endif(HAVE_TERMLIB)
 BRLCAD_ADDEXEC(fbfade "fbfade.c ioutil.c" libfb)
 BRLCAD_ADDEXEC(fbframe fbframe.c libfb)
 BRLCAD_ADDEXEC(fbfree fbfree.c libfb)
@@ -46,19 +46,19 @@ BRLCAD_ADDEXEC(fbgrid fbgrid.c libfb)
 BRLCAD_ADDEXEC(fbhelp fbhelp.c libfb)
 BRLCAD_ADDEXEC(fblabel fblabel.c libfb)
 BRLCAD_ADDEXEC(fbline fbline.c libfb)
-IF(HAVE_TERMLIB)
+if(HAVE_TERMLIB)
 	BRLCAD_ADDEXEC(fbpoint fbpoint.c "libfb libbu libtermio libpkg")
-ENDIF(HAVE_TERMLIB)
+endif(HAVE_TERMLIB)
 BRLCAD_ADDEXEC(fbscanplot fbscanplot.c libfb)
 BRLCAD_ADDEXEC(fbstretch "fbstretch.c ioutil.c" libfb)
-IF(BRLCAD_ENABLE_TK)
+if(BRLCAD_ENABLE_TK)
 	BRLCAD_ADDEXEC(fbthreadtest fbthreadtest.c "libfb ${TCL_TK_LIBRARY}")
 	SET_TARGET_PROPERTIES(fbthreadtest PROPERTIES COMPILE_DEFINITIONS "IF_TK")
 	SET_TARGET_PROPERTIES(fbthreadtest PROPERTIES LINKER_LANGUAGE C)
-ENDIF(BRLCAD_ENABLE_TK)
-IF(HAVE_TERMLIB)
+endif(BRLCAD_ENABLE_TK)
+if(HAVE_TERMLIB)
 	BRLCAD_ADDEXEC(fbzoom fbzoom.c "libfb libtermio")
-ENDIF(HAVE_TERMLIB)
+endif(HAVE_TERMLIB)
 BRLCAD_ADDEXEC(gif-fb "gif-fb.c ioutil.c" libfb)
 BRLCAD_ADDEXEC(gif2fb gif2fb.c libfb)
 BRLCAD_ADDEXEC(orle-fb orle-fb.c "libfb liborle")
@@ -68,17 +68,17 @@ BRLCAD_ADDEXEC(pixflip-fb pixflip-fb.c libfb)
 BRLCAD_ADDEXEC(pl-fb pl-fb.c libfb)
 BRLCAD_ADDEXEC(png-fb png-fb.c "libfb ${PNG_LIBRARY}")
 BRLCAD_ADDEXEC(polar-fb polar-fb.c "libfb ${M_LIBRARY}")
-IF(HAVE_TERMLIB)
+if(HAVE_TERMLIB)
 	BRLCAD_ADDEXEC(pp-fb pp-fb.c "libfb libtermio")
-ENDIF(HAVE_TERMLIB)
+endif(HAVE_TERMLIB)
 BRLCAD_ADDEXEC(rle-fb rle-fb.c "libfb ${UTAHRLE_LIBRARY}")
-IF(CPP_DLL_DEFINES)
+if(CPP_DLL_DEFINES)
 	SET_PROPERTY(TARGET rle-fb APPEND PROPERTY COMPILE_DEFINITIONS "RLE_DLL_IMPORTS")
-ENDIF(CPP_DLL_DEFINES)
+endif(CPP_DLL_DEFINES)
 
 BRLCAD_ADDEXEC(spm-fb spm-fb.c "libfb libbn")
 
-SET(fb_MANS
+set(fb_MANS
   bw-fb.1
   cell-fb.1
   cmap-fb.1

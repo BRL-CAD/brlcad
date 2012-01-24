@@ -8,33 +8,33 @@ add_definitions(
 	-DBRLCADBUILD=1
 	)
 
-IF(MSVC)
+if(MSVC)
    add_definitions(
 	   -D_CRT_SECURE_NO_WARNINGS
 	   -DCMAKE_HEADERS
    )
    # FIXME: these should be proper library checks, not based on MSVC "platform"
-   SET(WINSOCK_LIB ws2_32.lib)
-   SET(PSAPI_LIB psapi.lib)
-   SET(RPCRT_LIB rpcrt4.lib)
-ENDIF(MSVC)
+   set(WINSOCK_LIB ws2_32.lib)
+   set(PSAPI_LIB psapi.lib)
+   set(RPCRT_LIB rpcrt4.lib)
+endif(MSVC)
 
 # We will always need the required directories,
 # so go ahead and add them
 
-SET(required_dirs
+set(required_dirs
 	libbu
 	libbn
 	libsysv
 	librt
 )
 
-FOREACH(subdir ${required_dirs})
+foreach(subdir ${required_dirs})
 	ADD_SUBDIRECTORY(${subdir})
-ENDFOREACH(subdir ${required_dirs})
+endforeach(subdir ${required_dirs})
 
 # Directories needed to run benchmarks
-SET(benchmark_dirs
+set(benchmark_dirs
 	libpkg
 	libfb
 	libwdb
@@ -49,11 +49,11 @@ SET(benchmark_dirs
 )
 # The interaction of MSVC and Boost looks problematic -
 # since we're not using libpc at the moment, conditionalize
-IF(NOT MSVC)
-	SET(LIBPC libpc)
-ENDIF(NOT MSVC)
+if(NOT MSVC)
+	set(LIBPC libpc)
+endif(NOT MSVC)
 # anything not included from above
-SET(remaining_dirs
+set(remaining_dirs
 	libcursor
 	libdm
 	libfft
@@ -92,7 +92,7 @@ SET(remaining_dirs
 
 # FIXME: Ideally these should all be in the above list,
 # need to fix them on Windows.
-SET(non_win32_dirs
+set(non_win32_dirs
 	remrt
 	rttherm
 	)
@@ -100,22 +100,22 @@ SET(non_win32_dirs
 #######################
 # put it all together #
 #######################
-FOREACH(subdir ${benchmark_dirs})
+foreach(subdir ${benchmark_dirs})
 	ADD_SUBDIRECTORY(${subdir})
-ENDFOREACH(subdir ${benchmark_dirs})
-IF(BRLCAD_ENABLE_RTSERVER)
+endforeach(subdir ${benchmark_dirs})
+if(BRLCAD_ENABLE_RTSERVER)
 	ADD_SUBDIRECTORY(librtserver)
-ELSE(BRLCAD_ENABLE_RTSERVER)
+else(BRLCAD_ENABLE_RTSERVER)
 	CMAKEFILES(librtserver)
-ENDIF(BRLCAD_ENABLE_RTSERVER)
-FOREACH(subdir ${remaining_dirs})
+endif(BRLCAD_ENABLE_RTSERVER)
+foreach(subdir ${remaining_dirs})
 	ADD_SUBDIRECTORY(${subdir})
-ENDFOREACH(subdir ${remaining_dirs})
-IF(NOT WIN32)
-	FOREACH(subdir ${non_win32_dirs})
+endforeach(subdir ${remaining_dirs})
+if(NOT WIN32)
+	foreach(subdir ${non_win32_dirs})
 		ADD_SUBDIRECTORY(${subdir})
-	ENDFOREACH(subdir ${non_win32_dirs})
-ENDIF(NOT WIN32)
+	endforeach(subdir ${non_win32_dirs})
+endif(NOT WIN32)
 
 DISTCHECK_IGNORE_ITEM(README)
 DISTCHECK_IGNORE_ITEM(external)

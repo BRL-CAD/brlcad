@@ -1,6 +1,6 @@
 if(HAVE_TERMLIB)
 
-	SET(BURST_INCLUDE_DIRS
+	set(BURST_INCLUDE_DIRS
 		${TERMIO_INCLUDE_DIRS}
 		${FB_INCLUDE_DIRS}
 		${RT_INCLUDE_DIRS}
@@ -9,7 +9,7 @@ if(HAVE_TERMLIB)
 	LIST(REMOVE_DUPLICATES BURST_INCLUDE_DIRS)
 	include_directories(${BURST_INCLUDE_DIRS})
 
-	SET(burst_SOURCES
+	set(burst_SOURCES
 		burst.c
 		error.c
 		fb.c
@@ -30,7 +30,7 @@ if(HAVE_TERMLIB)
 
 	BRLCAD_ADDEXEC(burst "${burst_SOURCES}" "librt libfb libtermio ${TERMLIB_LIBRARY} ${M_LIBRARY}")
 
-	SET(burst_noinst_HEADERS
+	set(burst_noinst_HEADERS
 		ascii.h
 		burst.h
 		extern.h

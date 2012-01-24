@@ -9,7 +9,7 @@ PERPLEX_TARGET(OBJ_Scanner obj_rules.l ${CMAKE_CURRENT_BINARY_DIR}/obj_rules.cpp
 LEMON_TARGET(OBJ_Parser obj_grammar.yy obj_grammar.cpp obj_grammar.hpp)
 ADD_PERPLEX_LEMON_DEPENDENCY(OBJ_Scanner OBJ_Parser)
 
-SET(OBJ_G_SRCS
+set(OBJ_G_SRCS
 	${CMAKE_CURRENT_BINARY_DIR}/obj_grammar.cpp
 	${CMAKE_CURRENT_BINARY_DIR}/obj_rules.cpp
 	obj_parser.cpp

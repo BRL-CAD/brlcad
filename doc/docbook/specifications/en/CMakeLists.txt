@@ -1,4 +1,4 @@
-SET(docbook_specifications_EN
+set(docbook_specifications_EN
 	BRL_CAD_g_format_V5.xml
 )
 

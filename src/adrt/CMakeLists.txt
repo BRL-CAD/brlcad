@@ -1,4 +1,4 @@
-SET(ADRT_INCLUDE_DIRS
+set(ADRT_INCLUDE_DIRS
 	${GCV_INCLUDE_DIRS}
 	)
 LIST(REMOVE_DUPLICATES ADRT_INCLUDE_DIRS)
@@ -10,7 +10,7 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/src/adrt/librender
 )
 
-SET(LIBRENDER_SRCS
+set(LIBRENDER_SRCS
   load.c
   load_g.c
   librender/camera.c
@@ -40,7 +40,7 @@ SET(LIBRENDER_SRCS
 )
 BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" libgcv)
 
-SET(tie_HDRS
+set(tie_HDRS
 	adrt.h
 	adrt_struct.h
 	librender/camera.h
@@ -50,7 +50,7 @@ SET(tie_HDRS
 	librender/texture.h
 	librender/texture_internal.h
 )
-INSTALL(FILES ${tie_HDRS} DESTINATION include/tie)
+install(FILES ${tie_HDRS} DESTINATION include/tie)
 CMAKEFILES(${tie_HDRS})
 
 # Tcl/Tk based ISST
@@ -61,33 +61,33 @@ INCLUDE_DIRECTORIES(
 	${X11_INCLUDE_DIR}
 	${CMAKE_CURRENT_BINARY_DIR}/../other/togl/src
 	)
-IF(TOGL_LIBRARIES)
+if(TOGL_LIBRARIES)
 	ADD_DEFINITIONS(-DTOGL_USE_EXTERNAL_CONFIG_H=1)
 	add_library(issttcltk isst_tcltk.c)
-	IF(WIN32)
+	if(WIN32)
 		target_link_libraries(issttcltk librender ${TCL_LIBRARIES} ${TOGL_STUB_LIBRARIES} ${OPENGL_LIBRARIES} opengl32.lib)
-	ELSE(WIN32)
+	else(WIN32)
 		target_link_libraries(issttcltk librender ${TCL_LIBRARIES} ${TOGL_LIBRARIES})
-	ENDIF(WIN32)
-	INSTALL(TARGETS issttcltk DESTINATION ${LIB_DIR}/isst0.1)
+	endif(WIN32)
+	install(TARGETS issttcltk DESTINATION ${LIB_DIR}/isst0.1)
 	GET_TARGET_PROPERTY(ISSTTCL_LIBLOCATION issttcltk LOCATION_${CMAKE_BUILD_TYPE})
 	GET_FILENAME_COMPONENT(ISSTTCL_LIBNAME ${ISSTTCL_LIBLOCATION} NAME)
-	FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded isst	0.1 [list load [file join $dir .. .. ${LIB_DIR} isst0.1 ${ISSTTCL_LIBNAME}]]")
+	file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded isst	0.1 [list load [file join $dir .. .. ${LIB_DIR} isst0.1 ${ISSTTCL_LIBNAME}]]")
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/isst0.1)
-	FILE(WRITE ${CMAKE_BINARY_DIR}/lib/isst0.1/pkgIndex.tcl "package ifneeded isst 0.1 [list load [file join $dir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}	${ISSTTCL_LIBNAME}] isst]")
+	file(WRITE ${CMAKE_BINARY_DIR}/lib/isst0.1/pkgIndex.tcl "package ifneeded isst 0.1 [list load [file join $dir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}	${ISSTTCL_LIBNAME}] isst]")
 	# TODO - need to make this configure line into a real target ala
 	# BRLCAD_ADDDATA in order for the build dir copy to be updated when it
    # is changed.
-	IF(WIN32)
+	if(WIN32)
 		configure_file(isst.bat ${CMAKE_BINARY_DIR}/bin/isst.bat COPYONLY)
-		INSTALL(PROGRAMS isst.bat DESTINATION bin)
-	ENDIF(WIN32)
+		install(PROGRAMS isst.bat DESTINATION bin)
+	endif(WIN32)
 	configure_file(isst ${CMAKE_BINARY_DIR}/bin/isst COPYONLY)
 	install(PROGRAMS isst DESTINATION bin)
 
-ENDIF(TOGL_LIBRARIES)
+endif(TOGL_LIBRARIES)
 
-SET(adrt_ignore_files
+set(adrt_ignore_files
 	isst.h
 	isst
 	isst.bat

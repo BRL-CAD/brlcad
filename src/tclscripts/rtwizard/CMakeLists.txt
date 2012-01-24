@@ -5,24 +5,24 @@ ADD_CUSTOM_COMMAND(
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.tcl ${CMAKE_BINARY_DIR}/bin/rtwizard
 	)
 ADD_CUSTOM_TARGET(rtwizard ALL DEPENDS ${CMAKE_BINARY_DIR}/bin/rtwizard)
-INSTALL(PROGRAMS ${CMAKE_BINARY_DIR}/bin/rtwizard DESTINATION ${BIN_DIR})
+install(PROGRAMS ${CMAKE_BINARY_DIR}/bin/rtwizard DESTINATION ${BIN_DIR})
 
-SET(rtwizard_TCLSCRIPTS
+set(rtwizard_TCLSCRIPTS
 	RaytraceWizard.tcl
 	rtwizard.bat
 	rtwizard.tcl
 	)
-IF(WIN32)
+if(WIN32)
 	configure_file(rtwizard.bat ${CMAKE_BINARY_DIR}/bin/rtwizard.bat COPYONLY)
-	INSTALL(PROGRAMS rtwizard.bat DESTINATION bin)
-ENDIF(WIN32)
+	install(PROGRAMS rtwizard.bat DESTINATION bin)
+endif(WIN32)
 BRLCAD_ADDDATA(rtwizard_TCLSCRIPTS tclscripts/rtwizard)
 pkgIndex_BUILD(rtwizard tclscripts/rtwizard)
 tclIndex_BUILD(rtwizard tclscripts/rtwizard)
 
 # Examples
 
-SET(PictureTypeA_DATA
+set(PictureTypeA_DATA
 	examples/PictureTypeA/desc.txt
 	examples/PictureTypeA/helpstr.txt
 	examples/PictureTypeA/intro.txt
@@ -31,7 +31,7 @@ SET(PictureTypeA_DATA
 	)
 BRLCAD_ADDDATA(PictureTypeA_DATA tclscripts/rtwizard/examples/PictureTypeA)
 
-SET(PictureTypeB_DATA
+set(PictureTypeB_DATA
 	examples/PictureTypeB/desc.txt
 	examples/PictureTypeB/helpstr.txt
 	examples/PictureTypeB/intro.txt
@@ -40,7 +40,7 @@ SET(PictureTypeB_DATA
 	)
 BRLCAD_ADDDATA(PictureTypeB_DATA tclscripts/rtwizard/examples/PictureTypeB)
 
-SET(PictureTypeC_DATA
+set(PictureTypeC_DATA
 	examples/PictureTypeC/desc.txt
 	examples/PictureTypeC/helpstr.txt
 	examples/PictureTypeC/intro.txt
@@ -49,7 +49,7 @@ SET(PictureTypeC_DATA
 	)
 BRLCAD_ADDDATA(PictureTypeC_DATA tclscripts/rtwizard/examples/PictureTypeC)
 
-SET(PictureTypeD_DATA
+set(PictureTypeD_DATA
 	examples/PictureTypeD/desc.txt
 	examples/PictureTypeD/helpstr.txt
 	examples/PictureTypeD/intro.txt
@@ -58,7 +58,7 @@ SET(PictureTypeD_DATA
 	)
 BRLCAD_ADDDATA(PictureTypeD_DATA tclscripts/rtwizard/examples/PictureTypeD)
 
-SET(PictureTypeE_DATA
+set(PictureTypeE_DATA
 	examples/PictureTypeE/desc.txt
 	examples/PictureTypeE/helpstr.txt
 	examples/PictureTypeE/intro.txt
@@ -67,7 +67,7 @@ SET(PictureTypeE_DATA
 	)
 BRLCAD_ADDDATA(PictureTypeE_DATA tclscripts/rtwizard/examples/PictureTypeE)
 
-SET(PictureTypeF_DATA
+set(PictureTypeF_DATA
 	examples/PictureTypeF/desc.txt
 	examples/PictureTypeF/helpstr.txt
 	examples/PictureTypeF/intro.txt

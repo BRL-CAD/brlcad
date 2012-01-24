@@ -1,4 +1,4 @@
-SET(swidgets_scripts_TCLSCRIPTS
+set(swidgets_scripts_TCLSCRIPTS
 	selectlists.itk
 	tkgetdir.itk
 	togglearrow.itk

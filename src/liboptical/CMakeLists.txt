@@ -1,5 +1,5 @@
 # Include directories needed by liboptical users
-SET(OPTICAL_INCLUDE_DIRS
+set(OPTICAL_INCLUDE_DIRS
 	${BRLCAD_BINARY_DIR}/include
 	${BRLCAD_SOURCE_DIR}/include
 	${BU_INCLUDE_DIRS}
@@ -48,7 +48,7 @@ set(LIBOPTICAL_SOURCES
 	wray.c
 )
 
-IF(BRLCAD_ENABLE_OSL)
+if(BRLCAD_ENABLE_OSL)
 
     ##########################################
     # Build OSL-renderer Library
@@ -85,9 +85,9 @@ IF(BRLCAD_ENABLE_OSL)
     find_package (Boost 1.46 REQUIRED
       COMPONENTS ${Boost_COMPONENTS})
     # If it was not found, check if BOOST_ROOT was set
-    IF(NOT Boost_FILESYSTEM_LIBRARY)
+    if(NOT Boost_FILESYSTEM_LIBRARY)
       message("Cheking if BOOST ROOT was FOUND")
-    ENDIF()
+    endif()
 
     message("Boost filesystem: ${Boost_FILESYSTEM_LIBRARY}")
     message("Boost regex: ${Boost_REGEX_LIBRARY}")
@@ -96,7 +96,7 @@ IF(BRLCAD_ENABLE_OSL)
 
     set(OSLRT_LIBS "${OSLEXEC_LIBRARY} ${OSLCOMP_LIBRARY} ${OSLQUERY_LIBRARY} ${OPENIMAGEIO_LIBRARY} ${Boost_LIBRARIES} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY}")
 
-    STRING(REGEX REPLACE ";" " " OSLRT_LIBS2 "${OSLRT_LIBS}")
+    string(REGEX REPLACE ";" " " OSLRT_LIBS2 "${OSLRT_LIBS}")
 
     BRLCAD_ADDLIB(liboslrend "${OSLRT_SOURCES}" "${OSLRT_LIBS2}")
 
@@ -110,11 +110,11 @@ IF(BRLCAD_ENABLE_OSL)
     # Link liboptical with osl-renderer library
     BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu liboslrend")
 
-ELSE(BRLCAD_ENABLE_OSL)
+else(BRLCAD_ENABLE_OSL)
 
     BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu")
 
-ENDIF(BRLCAD_ENABLE_OSL)
+endif(BRLCAD_ENABLE_OSL)
 
 CMAKEFILES(
 	liboslrend.cpp
@@ -128,7 +128,7 @@ CMAKEFILES(
 
 SET_TARGET_PROPERTIES(liboptical PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
-SET(LIBRTMS_SRCS
+set(LIBRTMS_SRCS
 	sh_camo.c
 	sh_light.c
 	sh_noise.c
@@ -140,11 +140,11 @@ SET(LIBRTMS_SRCS
 add_library(librtms-static STATIC ${LIBRTMS_SRCS})
 target_link_libraries(librtms-static librt libbn libbu)
 SET_TARGET_PROPERTIES(librtms-static PROPERTIES COMPILE_DEFINITIONS "RT_MULTISPECTRAL")
-IF(NOT WIN32)
+if(NOT WIN32)
 	SET_TARGET_PROPERTIES(librtms-static PROPERTIES OUTPUT_NAME "librtms")
-ENDIF(NOT WIN32)
-IF(WIN32)
+endif(NOT WIN32)
+if(WIN32)
 	SET_TARGET_PROPERTIES(librtms-static PROPERTIES PREFIX "lib")
-ENDIF(WIN32)
-INSTALL(TARGETS librtms-static DESTINATION ${LIB_DIR})
+endif(WIN32)
+install(TARGETS librtms-static DESTINATION ${LIB_DIR})
 CMAKEFILES(Makefile.am)

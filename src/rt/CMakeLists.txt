@@ -1,4 +1,4 @@
-SET(RTBIN_INCLUDE_DIRS
+set(RTBIN_INCLUDE_DIRS
 	${OPTICAL_INCLUDE_DIRS}
 	${FB_INCLUDE_DIRS}
 	${RT_INCLUDE_DIRS}
@@ -13,12 +13,12 @@ set(RT_COMMON_SRCS
 	opt.c
 	worker.c
 )
-IF(NOT MSVC)
-	SET(RT_COMMON_SRCS ${RT_COMMON_SRCS} heatgraph.c)
-ENDIF(NOT MSVC)
+if(NOT MSVC)
+	set(RT_COMMON_SRCS ${RT_COMMON_SRCS} heatgraph.c)
+endif(NOT MSVC)
 
 set(rtexample_SRCS rtexample.c)
-BRLCAD_ADDFILE(rtexample.c sample_applications)
+BRLCAD_ADDfile(rtexample.c sample_applications)
 
 set(reshoot_SRCS reshoot.c)
 
@@ -125,9 +125,9 @@ set(LIBREMRT_SOURCES
 	view.c
 	worker.c
 )
-IF(NOT MSVC)
-    SET(LIBREMRT_SOURCES ${LIBREMRT_SOURCES} heatgraph.c)
-ENDIF(NOT MSVC)
+if(NOT MSVC)
+    set(LIBREMRT_SOURCES ${LIBREMRT_SOURCES} heatgraph.c)
+endif(NOT MSVC)
 
 add_executable(rtexample "${rtexample_SRCS}")
 target_link_libraries(rtexample librt libfb liboptical libicv)
@@ -176,14 +176,14 @@ BRLCAD_ADDEXEC(rtxray "${rtxray_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb li
 
 
 add_library(libremrt STATIC ${LIBREMRT_SOURCES})
-IF(M_LIBRARY)
+if(M_LIBRARY)
 	target_link_libraries(libremrt ${M_LIBRARY})
-ENDIF(M_LIBRARY)
+endif(M_LIBRARY)
 
 add_library(librttherm STATIC ${RT_COMMON_SRCS})
 SET_TARGET_PROPERTIES(librttherm PROPERTIES LINKER_LANGUAGE C)
 
-SET(rt_MANS
+set(rt_MANS
   reshoot.1
   rt_bot_faces.1
   rtg3.1
@@ -200,7 +200,7 @@ SET(rt_MANS
 )
 ADD_MAN_PAGES(1 rt_MANS)
 
-SET(rt_ignore_files
+set(rt_ignore_files
 	ext.h
 	libfb-dummy.c
 	rad.h

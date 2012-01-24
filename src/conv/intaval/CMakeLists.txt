@@ -1,4 +1,4 @@
-SET(INTAVAL_INCLUDE_DIRS
+set(INTAVAL_INCLUDE_DIRS
 	${BU_INCLUDE_DIRS}
 	${RT_INCLUDE_DIRS}
 	${WDB_INCLUDE_DIRS}
@@ -6,13 +6,13 @@ SET(INTAVAL_INCLUDE_DIRS
 LIST(REMOVE_DUPLICATES INTAVAL_INCLUDE_DIRS)
 include_directories(${INTAVAL_INCLUDE_DIRS})
 
-IF(MSVC)
+if(MSVC)
 add_definitions(
     -DON_DLL_IMPORTS
 )
-ENDIF(MSVC)
+endif(MSVC)
 
-SET(tgf_SRCS
+set(tgf_SRCS
 	 read_dra.cpp
     regtab.cpp
     tgf-g.cpp
@@ -20,7 +20,7 @@ SET(tgf_SRCS
 )
 BRLCAD_ADDEXEC(tgf-g "${tgf_SRCS}" "libwdb librt libbu")
 
-SET(intaval_ignore_files
+set(intaval_ignore_files
 	glob.h
 	read_dra.h
 	readme.txt

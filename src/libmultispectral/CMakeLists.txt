@@ -1,5 +1,5 @@
 # Include directories needed by libmultispectral users
-SET(MULTISPECTRAL_INCLUDE_DIRS
+set(MULTISPECTRAL_INCLUDE_DIRS
 	${BRLCAD_BINARY_DIR}/include
 	${BRLCAD_SOURCE_DIR}/include
 	${RT_INCLUDE_DIRS}

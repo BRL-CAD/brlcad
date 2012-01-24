@@ -1,7 +1,7 @@
 # Geometry Conversion Regression Tests (experimental)
 ADD_SUBDIRECTORY(gcv)
 
-IF(SH_EXEC)
+if(SH_EXEC)
 	ADD_CUSTOM_TARGET(mged-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/mged.sh ${CMAKE_SOURCE_DIR}
 		DEPENDS mged
@@ -81,7 +81,7 @@ IF(SH_EXEC)
 		DEPENDS test_vls rt mged pixdiff fast4-g g_diff g_qa rtweight iges-g g-iges asc2pix gencolor pix-png png-pix
 		)
 
-ENDIF(SH_EXEC)
+endif(SH_EXEC)
 
 CMAKEFILES(
 	Makefile.am

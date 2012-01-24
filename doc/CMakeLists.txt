@@ -1,14 +1,14 @@
 
-IF(BRLCAD_EXTRADOCS)
+if(BRLCAD_EXTRADOCS)
 	ADD_SUBDIRECTORY(docbook)
-ELSE(BRLCAD_EXTRADOCS)
+else(BRLCAD_EXTRADOCS)
 	CMAKEFILES(docbook)
-ENDIF(BRLCAD_EXTRADOCS)
+endif(BRLCAD_EXTRADOCS)
 
 ADD_SUBDIRECTORY(html)
 ADD_SUBDIRECTORY(legal)
 
-SET(documentation_DATA
+set(documentation_DATA
 	IDEAS
 	PROJECTS
 	README.AIX
@@ -213,7 +213,7 @@ SET(documentation_DATA
 )
 BRLCAD_ADDDATA(documentation_DATA doc)
 
-SET(doc_MANS
+set(doc_MANS
 	bw.5
 	cmap.5
 	pix.5
@@ -221,7 +221,7 @@ SET(doc_MANS
 )
 ADD_MAN_PAGES(5 doc_MANS)
 
-CONFIGURE_FILE(pad_file.xml.in ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml @ONLY)
+CONFIGURE_file(pad_file.xml.in ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml DESTINATION ${DATA_DIR}/doc)
 
 CMAKEFILES(Makefile.am pad_file.xml.in STARTERS)

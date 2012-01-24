@@ -1,4 +1,4 @@
-SET(docbook_lessons_EN
+set(docbook_lessons_EN
 	mged01_creating_primitive_shapes.xml
 	mged02_learning_viewing_options.xml
 	mged03_using_insert_command.xml
@@ -17,7 +17,7 @@ SET(docbook_lessons_EN
 	mged16_mod_tech_struct.xml
 )
 
-SET(docbook_lessons_EN_IMAGES
+set(docbook_lessons_EN_IMAGES
 	images/mged01_commandwindow.png
 	images/mged01_graphicswindow.png
 	images/mged01_terminal.png

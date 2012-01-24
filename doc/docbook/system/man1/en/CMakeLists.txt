@@ -1,4 +1,4 @@
-SET(docbook_man1_EN
+set(docbook_man1_EN
 	bwscale.xml
 	coil.xml
 	db.xml
@@ -16,6 +16,6 @@ SET(docbook_man1_EN
 DOCBOOK_TO_HTML(man1 docbook_man1_EN html/man1/en)
 DOCBOOK_TO_MAN(man1 docbook_man1_EN 1 1 man/man1)
 
-IF(BRLCAD_EXTRADOCS_PDF_MAN)
+if(BRLCAD_EXTRADOCS_PDF_MAN)
   DOCBOOK_TO_PDF(man1 docbook_man1_EN pdf/man1/en)
-ENDIF(BRLCAD_EXTRADOCS_PDF_MAN)
+endif(BRLCAD_EXTRADOCS_PDF_MAN)

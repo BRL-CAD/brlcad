@@ -6,15 +6,15 @@
 
 # No point in warnings here, we can't do anything about
 # it until the boost issue is handled
-STRING(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
-IF(BUILD_TYPE)
-	SET(CMAKE_CXX_FLAGS_${BUILD_TYPE} "${CMAKE_CXX_FLAGS_${BUILD_TYPE}} -w")
-ELSE(BUILD_TYPE)
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
-ENDIF(BUILD_TYPE)
+string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
+if(BUILD_TYPE)
+	set(CMAKE_CXX_FLAGS_${BUILD_TYPE} "${CMAKE_CXX_FLAGS_${BUILD_TYPE}} -w")
+else(BUILD_TYPE)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+endif(BUILD_TYPE)
 
 # Include directories needed by libpc users
-SET(PC_INCLUDE_DIRS
+set(PC_INCLUDE_DIRS
 	${BRLCAD_BINARY_DIR}/include
 	${BRLCAD_SOURCE_DIR}/include
 	${BU_INCLUDE_DIRS}
@@ -22,11 +22,11 @@ SET(PC_INCLUDE_DIRS
 	${ZLIB_INCLUDE_DIR}
 	)
 
-SET(PC_LOCAL_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/src/other/boost)
+set(PC_LOCAL_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/src/other/boost)
 
 BRLCAD_INCLUDE_DIRS(PC_INCLUDE_DIRS)
 
-SET(LIBPC_NOINST_HDRS
+set(LIBPC_NOINST_HDRS
 	pcBasic.h
 	pcInterval.h
 	pcVariable.h
@@ -42,7 +42,7 @@ SET(LIBPC_NOINST_HDRS
 	pcSolver.h
 	)
 
-SET(LIBPC_SOURCES
+set(LIBPC_SOURCES
 	pc_main.c
 	pc_constraints.c
 	pcVariable.cpp
@@ -68,7 +68,7 @@ SET_TARGET_PROPERTIES(libpc PROPERTIES VERSION 19.0.1 SOVERSION 19)
 #add_executable(vm_test vm_test.cpp)
 #target_link_libraries(vm_test libpc)
 
-SET(pc_ignore_files
+set(pc_ignore_files
 	NOTES
 	TODO
 	pcBasic.h

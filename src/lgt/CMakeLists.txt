@@ -1,4 +1,4 @@
-SET(LGT_INCLUDE_DIRS
+set(LGT_INCLUDE_DIRS
 	${FB_INCLUDE_DIRS}
 	${RT_INCLUDE_DIRS}
 	${TERMIO_INCLUDE_DIRS}
@@ -9,7 +9,7 @@ SET(LGT_INCLUDE_DIRS
 LIST(REMOVE_DUPLICATES LGT_INCLUDE_DIRS)
 include_directories(${LGT_INCLUDE_DIRS})
 
-SET(lgt_SOURCES
+set(lgt_SOURCES
   char.c
   do_options.c
   error.c
@@ -29,13 +29,13 @@ SET(lgt_SOURCES
   trie.c
 )
 
-IF(HAVE_TERMLIB)
+if(HAVE_TERMLIB)
    BRLCAD_ADDEXEC(lgt "${lgt_SOURCES}" "librt libfb libtermio libvfont libcursor ${M_LIBRARY}")
    SET_TARGET_PROPERTIES(lgt PROPERTIES COMPILE_DEFINITIONS "BEHIND_ME_TOL=0.05")
 
 	ADD_MAN_PAGE(1 lgt.1)
-ENDIF(HAVE_TERMLIB)
-SET(lgt_ignore_files
+endif(HAVE_TERMLIB)
+set(lgt_ignore_files
 	ascii.h
 	cursors.h
 	extern.h

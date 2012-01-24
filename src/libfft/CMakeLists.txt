@@ -1,11 +1,11 @@
 # Include directories needed by libfft users
-SET(FFT_INCLUDE_DIRS
+set(FFT_INCLUDE_DIRS
 	${BRLCAD_BINARY_DIR}/include
 	${BRLCAD_SOURCE_DIR}/include
 	)
 
 # local directories
-SET(FFT_LOCAL_INCLUDE_DIRS
+set(FFT_LOCAL_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}
 )
 
@@ -20,25 +20,25 @@ target_link_libraries(ifftc ${M_LIBRARY})
 # 512 and 1024 are tough in optimized compiles, don't
 # go that high until there's a demonstrated need. Only
 # use in BRL-CAD right now is 256.
-SET(FFT_NUMLIST "16;32;64;128;256")
-SET(FFT_GEN_SRCS "")
+set(FFT_NUMLIST "16;32;64;128;256")
+set(FFT_GEN_SRCS "")
 
-FOREACH(filenum ${FFT_NUMLIST})
+foreach(filenum ${FFT_NUMLIST})
   ADD_CUSTOM_COMMAND(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/rfft${filenum}.c
     COMMAND fftc ${filenum} > ${CMAKE_CURRENT_BINARY_DIR}/rfft${filenum}.c
     DEPENDS fftc
   )
-  SET(FFT_GEN_SRCS "${FFT_GEN_SRCS};${CMAKE_CURRENT_BINARY_DIR}/rfft${filenum}.c")
+  set(FFT_GEN_SRCS "${FFT_GEN_SRCS};${CMAKE_CURRENT_BINARY_DIR}/rfft${filenum}.c")
   ADD_CUSTOM_COMMAND(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/irfft${filenum}.c
     COMMAND ifftc ${filenum} > ${CMAKE_CURRENT_BINARY_DIR}/irfft${filenum}.c
     DEPENDS ifftc
   )
-  SET(FFT_GEN_SRCS "${FFT_GEN_SRCS};${CMAKE_CURRENT_BINARY_DIR}/irfft${filenum}.c")
-ENDFOREACH(filenum ${FFT_NUMLIST})
+  set(FFT_GEN_SRCS "${FFT_GEN_SRCS};${CMAKE_CURRENT_BINARY_DIR}/irfft${filenum}.c")
+endforeach(filenum ${FFT_NUMLIST})
 
-SET(LIBFFT_SRCS
+set(LIBFFT_SRCS
   fftfast.c
   splitdit.c
   ditsplit.c

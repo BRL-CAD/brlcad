@@ -1,6 +1,6 @@
 ADD_SUBDIRECTORY(images)
 
-SET(archer_TCLSCRIPTS
+set(archer_TCLSCRIPTS
 	Arb4EditFrame.tcl
 	Arb5EditFrame.tcl
 	Arb6EditFrame.tcl

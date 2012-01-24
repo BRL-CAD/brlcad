@@ -9,18 +9,18 @@ add_definitions(
   -DBRLCADBUILD
 )
 
-IF(CRYPT_LIBRARY)
+if(CRYPT_LIBRARY)
 	add_executable(enigma enigma.c)
 	target_link_libraries(enigma ${BSD_LIBRARY} ${CRYPT_LIBRARY})
-ELSE(CRYPT_LIBRARY)
+else(CRYPT_LIBRARY)
 	add_executable(enigma enigma.c crypt.c)
 	target_link_libraries(enigma ${BSD_LIBRARY})
-ENDIF(CRYPT_LIBRARY)
+endif(CRYPT_LIBRARY)
 install(TARGETS enigma DESTINATION ${BIN_DIR})
 set_target_properties(enigma PROPERTIES COMPILE_FLAGS "-w")
 
 ADD_MAN_PAGE(1 enigma.1)
-SET(enigma_ignore_files
+set(enigma_ignore_files
 	AUTHORS
 	COPYING
 	ChangeLog

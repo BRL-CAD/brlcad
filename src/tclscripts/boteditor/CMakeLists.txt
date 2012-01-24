@@ -1,4 +1,4 @@
-SET(boteditor_TCLSCRIPTS
+set(boteditor_TCLSCRIPTS
 	botEditor.tcl
 	botPropertyBox.tcl
 	botTools.tcl

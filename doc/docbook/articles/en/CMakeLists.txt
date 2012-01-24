@@ -1,4 +1,4 @@
-SET(docbook_articles_EN
+set(docbook_articles_EN
 	build_pattern.xml
 	build_region.xml
 	ebm_primitive.xml
@@ -10,7 +10,7 @@ SET(docbook_articles_EN
 	tire.xml
 )
 
-SET(docbook_articles_EN_IMAGES
+set(docbook_articles_EN_IMAGES
 	images/build_pattern_fig01.png
 	images/build_pattern_fig02.png
 	images/build_pattern_fig03.png
@@ -104,8 +104,8 @@ SET(docbook_articles_EN_IMAGES
 DOCBOOK_TO_HTML(article docbook_articles_EN html/articles/en)
 BRLCAD_ADDDATA(docbook_articles_EN_IMAGES html/articles/en/images)
 
-IF(BRLCAD_EXTRADOCS_PDF)
+if(BRLCAD_EXTRADOCS_PDF)
   DOCBOOK_TO_PDF(article docbook_articles_EN pdf/articles/en)
-ENDIF(BRLCAD_EXTRADOCS_PDF)
+endif(BRLCAD_EXTRADOCS_PDF)
 
 CMAKEFILES(images/tire_fig12.svg images/tire_fig13.svg)

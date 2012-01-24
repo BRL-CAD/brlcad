@@ -9,20 +9,20 @@ add_definitions(
 BRLCAD_ADDEXEC(pixcmp pixcmp.c libbu)
 
 configure_file(run.sh ${CMAKE_BINARY_DIR}/bin/benchmark COPYONLY)
-INSTALL(PROGRAMS ${CMAKE_BINARY_DIR}/bin/benchmark DESTINATION ${BIN_DIR})
+install(PROGRAMS ${CMAKE_BINARY_DIR}/bin/benchmark DESTINATION ${BIN_DIR})
 
-FILE(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake "MESSAGE(\"---\")\n")
-FILE(APPEND ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake "MESSAGE(\"Run 'make benchmark-clean' in the bench directory to delete the logic\")\n")
-FILE(APPEND ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake "MESSAGE(\"and image files generated during the benchmark analysis.\")\n")
+file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake "message(\"---\")\n")
+file(APPEND ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake "message(\"Run 'make benchmark-clean' in the bench directory to delete the logic\")\n")
+file(APPEND ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake "message(\"and image files generated during the benchmark analysis.\")\n")
 
-SET(bench_MANS
+set(bench_MANS
   benchmark.1
   pixcmp.1
 )
 ADD_MAN_PAGES(1 bench_MANS)
 CMAKEFILES(lgt.sh run.sh try.sh viewdiff.sh Makefile.am)
 
-IF(SH_EXEC)
+if(SH_EXEC)
 	ADD_CUSTOM_TARGET(benchmark
 		COMMAND ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/benchmark run
 		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake
@@ -35,4 +35,4 @@ IF(SH_EXEC)
 	ADD_CUSTOM_TARGET(benchmark-clobber
 		${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/benchmark clobber
 		)
-ENDIF(SH_EXEC)
+endif(SH_EXEC)

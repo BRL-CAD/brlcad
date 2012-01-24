@@ -1,12 +1,12 @@
 # Include directories needed by libbu users
-SET(BU_INCLUDE_DIRS
+set(BU_INCLUDE_DIRS
 	${BRLCAD_BINARY_DIR}/include
 	${BRLCAD_SOURCE_DIR}/include
 	${TCL_INCLUDE_DIRS}
 	)
 
 # locally used but not needed by users of the library
-SET(BU_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
+set(BU_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
 BRLCAD_INCLUDE_DIRS(BU_INCLUDE_DIRS)
 
@@ -94,16 +94,16 @@ set(LIBBU_SOURCES
 
 BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT} ${TCL_LIBRARY} ${WINSOCK_LIB} ${PSAPI_LIB} ${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libbu PROPERTIES VERSION 19.0.1 SOVERSION 19)
-IF(BRLCAD_BUILD_LOCAL_TCL)
+if(BRLCAD_BUILD_LOCAL_TCL)
 	ADD_DEPENDENCIES(libbu tcl)
-ENDIF(BRLCAD_BUILD_LOCAL_TCL)
+endif(BRLCAD_BUILD_LOCAL_TCL)
 
 
 add_executable(test_basename test_basename.c)
 target_link_libraries(test_basename libbu)
-IF(CPP_DLL_DEFINES)
+if(CPP_DLL_DEFINES)
 	SET_PROPERTY(TARGET test_basename APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
-ENDIF(CPP_DLL_DEFINES)
+endif(CPP_DLL_DEFINES)
 
 add_executable(test_dirname test_dirname.c)
 target_link_libraries(test_dirname libbu)

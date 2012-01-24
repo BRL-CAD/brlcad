@@ -1,4 +1,4 @@
-SET(util_TCLSCRIPTS
+set(util_TCLSCRIPTS
 	expand_int_ranges.tcl
 	luniq.tcl
 	)

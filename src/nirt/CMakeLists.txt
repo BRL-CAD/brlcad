@@ -1,11 +1,11 @@
-SET(NIRT_INCLUDE_DIRS
+set(NIRT_INCLUDE_DIRS
 	${FB_INCLUDE_DIRS}
 	${RT_INCLUDE_DIRS}
 	)
 LIST(REMOVE_DUPLICATES NIRT_INCLUDE_DIRS)
 include_directories(${NIRT_INCLUDE_DIRS})
 
-SET(NIRT_SRCS
+set(NIRT_SRCS
     nirt.c
     command.c
     conversion.c
@@ -23,7 +23,7 @@ SET_PROPERTY(TARGET nirt APPEND PROPERTY COMPILE_DEFINITIONS "DFLT_SHELL=\"/bin/
 BRLCAD_ADDEXEC(showshot showshot.c libbn)
 ADD_MAN_PAGE(1 showshot.1)
 
-SET(nirt_sfiles
+set(nirt_sfiles
   sfiles/csv.nrt
   sfiles/csv-gap.nrt
   sfiles/default.nrt
@@ -33,7 +33,7 @@ SET(nirt_sfiles
 )
 BRLCAD_ADDDATA(nirt_sfiles nirt)
 
-SET(nirt_ignore_files
+set(nirt_ignore_files
 	nirt.h
 	usrfmt.h
 	)

@@ -1,8 +1,8 @@
-SET(docbook_presentations_EN
+set(docbook_presentations_EN
 	intro-to-tcltk.xml
 	)
 
-SET(docbook_presentations_EN_IMAGES
+set(docbook_presentations_EN_IMAGES
 	images/copy-sph-part-left.png
 	images/copy-sph-part-right.png
 	images/mged-defaults.png

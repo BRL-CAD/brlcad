@@ -1,4 +1,4 @@
-SET(sh_SCRIPTS
+set(sh_SCRIPTS
   elapsed.sh
   any-png.sh
   cadbug.sh
@@ -16,13 +16,13 @@ SET(sh_SCRIPTS
   tracker.sh
   trimconfig.sh
 )
-FOREACH(script ${sh_SCRIPTS})
+foreach(script ${sh_SCRIPTS})
 	configure_file(${script} ${CMAKE_BINARY_DIR}/bin/${script} COPYONLY)
-ENDFOREACH(script ${sh_SCRIPTS})
+endforeach(script ${sh_SCRIPTS})
 
-INSTALL(PROGRAMS ${sh_SCRIPTS} DESTINATION ${BIN_DIR})
+install(PROGRAMS ${sh_SCRIPTS} DESTINATION ${BIN_DIR})
 
-SET(noinst_SCRIPTS
+set(noinst_SCRIPTS
   cmakecheck.sh
   copyright.sh
   enumerate.sh

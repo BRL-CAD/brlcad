@@ -1,4 +1,4 @@
-SET(geometree_TCLSCRIPTS
+set(geometree_TCLSCRIPTS
 	GeometryBrowser.tcl
 	geometree.tcl
 )

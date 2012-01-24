@@ -1,4 +1,4 @@
-SET(FB_INCLUDE_DIRS
+set(FB_INCLUDE_DIRS
 	${BRLCAD_BINARY_DIR}/include
 	${BRLCAD_SOURCE_DIR}/include
 	${BU_INCLUDE_DIRS}
@@ -11,31 +11,31 @@ SET(FB_INCLUDE_DIRS
 	)
 BRLCAD_INCLUDE_DIRS(FB_INCLUDE_DIRS)
 
-SET(LINKLIBS "")
+set(LINKLIBS "")
 if(BRLCAD_ENABLE_X11 AND X11_FOUND)
-   SET(FBX11DEFS "-DIF_X")
-	FOREACH(xlib ${X11_LIBRARIES})
-	   SET(LINKLIBS "${LINKLIBS} ${xlib}")
-	ENDFOREACH(xlib ${X11_LIBRARIES})
-	SET(fbX11_srcs if_X.c if_X24.c)
+   set(FBX11DEFS "-DIF_X")
+	foreach(xlib ${X11_LIBRARIES})
+	   set(LINKLIBS "${LINKLIBS} ${xlib}")
+	endforeach(xlib ${X11_LIBRARIES})
+	set(fbX11_srcs if_X.c if_X24.c)
 endif()
 if(BRLCAD_ENABLE_OPENGL AND OPENGL_FOUND AND NOT MSVC)
-   SET(FBOGLDEFS "-DIF_OGL")
-	FOREACH(ogllib ${OPENGL_LIBRARIES})
-	   SET(LINKLIBS "${LINKLIBS} ${ogllib}")
-	ENDFOREACH(ogllib ${OPENGL_LIBRARIES})
-	SET(fbogl_srcs if_ogl.c)
+   set(FBOGLDEFS "-DIF_OGL")
+	foreach(ogllib ${OPENGL_LIBRARIES})
+	   set(LINKLIBS "${LINKLIBS} ${ogllib}")
+	endforeach(ogllib ${OPENGL_LIBRARIES})
+	set(fbogl_srcs if_ogl.c)
 endif()
-IF(WIN32)
+if(WIN32)
 	add_definitions(
 		-DIF_WGL
 	)
-   SET(LINKLIBS "${LINKLIBS} opengl32.lib ${TCL_TK_LIBRARY}")
-	SET(fbwgl_srcs if_wgl.c)
-ENDIF(WIN32)
-IF(BRLCAD_ENABLE_TK)
-	SET(fbtk_srcs if_tk.c)
-ENDIF(BRLCAD_ENABLE_TK)
+   set(LINKLIBS "${LINKLIBS} opengl32.lib ${TCL_TK_LIBRARY}")
+	set(fbwgl_srcs if_wgl.c)
+endif(WIN32)
+if(BRLCAD_ENABLE_TK)
+	set(fbtk_srcs if_tk.c)
+endif(BRLCAD_ENABLE_TK)
 
 set(LIBFB_SOURCES
 	${fbX11_srcs}
@@ -71,13 +71,13 @@ add_definitions(
 
 BRLCAD_ADDLIB(libfb "${LIBFB_SOURCES}" "libbu libpkg ${LINKLIBS}")
 SET_TARGET_PROPERTIES(libfb PROPERTIES VERSION 19.0.1 SOVERSION 19)
-IF(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
+if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
 	ADD_DEPENDENCIES(libfb tk)
-ENDIF(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
+endif(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
 
 ADD_MAN_PAGE(3 libfb.3)
 
-SET(libfb_ignore_files
+set(libfb_ignore_files
 	dmdfb.h
 	if_TEMPLATE.c
 	nilcursor.h

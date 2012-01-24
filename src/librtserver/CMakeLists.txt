@@ -1,5 +1,5 @@
 # Include directories needed by librtserver users
-SET(RTSERVER_INCLUDE_DIRS
+set(RTSERVER_INCLUDE_DIRS
 	${BRLCAD_BINARY_DIR}/include
 	${BRLCAD_SOURCE_DIR}/include
 	${BU_INCLUDE_DIRS}

@@ -1,4 +1,4 @@
-SET(lib_TCLSCRIPTS
+set(lib_TCLSCRIPTS
 	Accordian.tcl
 	CellPlot.tcl
 	ColorEntry.tcl

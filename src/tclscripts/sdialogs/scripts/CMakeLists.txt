@@ -1,4 +1,4 @@
-SET(sdialogs_scripts_TCLSCRIPTS
+set(sdialogs_scripts_TCLSCRIPTS
 	entrydialog.itk
 	listdialog.itk
 	stddlgs.tcl

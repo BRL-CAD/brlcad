@@ -1,4 +1,4 @@
-SET(docbook_mann_EN
+set(docbook_mann_EN
 	3ptarb.xml
 	B.xml
 	E.xml
@@ -235,7 +235,7 @@ SET(docbook_mann_EN
 	zoom.xml
 	)
 
-SET(docbook_mann_INTRO
+set(docbook_mann_INTRO
 	Introduction.xml
 	)
 
@@ -243,6 +243,6 @@ DOCBOOK_TO_HTML(mann docbook_mann_EN html/mann/en)
 DOCBOOK_TO_HTML(mann docbook_mann_INTRO html/mann/en)
 DOCBOOK_TO_MAN(mann docbook_mann_EN n nged man/mann)
 
-IF(BRLCAD_EXTRADOCS_PDF_MAN)
+if(BRLCAD_EXTRADOCS_PDF_MAN)
 	DOCBOOK_TO_PDF(mann docbook_mann_EN pdf/mann/en)
-ENDIF(BRLCAD_EXTRADOCS_PDF_MAN)
+endif(BRLCAD_EXTRADOCS_PDF_MAN)

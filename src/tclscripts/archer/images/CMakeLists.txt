@@ -1,4 +1,4 @@
-SET(archer_images
+set(archer_images
 	aboutArcher.png
 	air.png
 	air_intersect.png

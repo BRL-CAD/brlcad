@@ -1,4 +1,4 @@
-SET(STEP_INCLUDE_DIRS
+set(STEP_INCLUDE_DIRS
 	${BU_INCLUDE_DIRS}
 	${RT_INCLUDE_DIRS}
 	${WDB_INCLUDE_DIRS}
@@ -19,18 +19,18 @@ include_directories(
 	${TNT_INCLUDE_DIR}
 	)
 
-#SET(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/step/data/ap203/203wseds.exp)
+#set(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/step/data/ap203/203wseds.exp)
 
 # read the schema name from a line like 'SCHEMA AUTOMOTIVE_DESIGN;'
 #file(STRINGS ${SCHEMA_FILE} SCHEMA_STATEMENT LIMIT_COUNT 1 REGEX "SCHEMA .*")
 #string(REGEX REPLACE "^SCHEMA \(.*\)\;$" "\\1" SCHEMA_N ${SCHEMA_STATEMENT} )
 #string(TOUPPER ${SCHEMA_N} SCHEMA_NAME) #fedex_plus always uses upper case for file names
 
-#SET(SCHEMA_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/${SCHEMA_NAME})
+#set(SCHEMA_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/${SCHEMA_NAME})
 #MAKE_DIRECTORY(${SCHEMA_OUT_DIR})
 #include_directories(${SCHEMA_OUT_DIR})
 
-#SET(FEDEX_OUTPUT 
+#set(FEDEX_OUTPUT 
 #	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.cc
 #	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.h
 #	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.init.cc
@@ -48,7 +48,7 @@ include_directories(
 #	COMMENT "Generating C++ code to express ${SCHEMA_NAME}..."
 #	VERBATIM)
 
-#SET(fedex_srcs
+#set(fedex_srcs
 #	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.cc
 #	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.init.cc
 #	${SCHEMA_OUT_DIR}/SdaiAll.cc
@@ -60,7 +60,7 @@ include_directories(
 # files from the EXPRESS schema.  Be sure to remove these files
 # from the source tree before trying to build with generated
 # files.
-SET(fedex_srcs
+set(fedex_srcs
 	SdaiAll.cc
 	SdaiCONFIG_CONTROL_DESIGN.cc
 	SdaiCONFIG_CONTROL_DESIGN.init.cc
@@ -68,7 +68,7 @@ SET(fedex_srcs
 	schema.cc
 )
 
-SET(stepg_SOURCES
+set(stepg_SOURCES
 	${fedex_srcs}
 	AdvancedBrepShapeRepresentation.cpp
 	AdvancedFace.cpp
@@ -247,13 +247,13 @@ SET(stepg_SOURCES
 	step-g.cpp
 )
 
-SET(fedex_hdrs
+set(fedex_hdrs
 	SdaiCONFIG_CONTROL_DESIGN.h
 	Sdaiclasses.h
 	schema.h
 )
 
-SET(stepg_HDRS
+set(stepg_HDRS
 	${fedex_hdrs}
 	AdvancedBrepShapeRepresentation.h
 	AdvancedFace.h

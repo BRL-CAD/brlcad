@@ -1,4 +1,4 @@
-SET(UTIL_INCLUDE_DIRS
+set(UTIL_INCLUDE_DIRS
 	${BU_INCLUDE_DIRS}
 	${BN_INCLUDE_DIRS}
 	${DM_INCLUDE_DIRS}
@@ -18,28 +18,28 @@ include_directories(
   ${PNG_INCLUDE_DIR}
 )
 
-IF(MSVC)
+if(MSVC)
 	add_definitions(
 	-D_CONSOLE
 	-DIF_WGL
 	)
-ENDIF(MSVC)
+endif(MSVC)
 
 
-IF(BRLCAD_ENABLE_X11)
+if(BRLCAD_ENABLE_X11)
 	BRLCAD_ADDEXEC(pl-X pl-X.c "libdm libbu")
-	IF(BRLCAD_ENABLE_TK)
+	if(BRLCAD_ENABLE_TK)
 		BRLCAD_ADDEXEC(pl-dm pl-dm.c "libdm libbu ${M_LIBRARY}")
 		BRLCAD_ADDEXEC(bombardier bombardier.c "libtclcad libbu")
-	ENDIF(BRLCAD_ENABLE_TK)
-ENDIF(BRLCAD_ENABLE_X11)
+	endif(BRLCAD_ENABLE_TK)
+endif(BRLCAD_ENABLE_X11)
 
-BRLCAD_ADDFILE(pl-dm.c sample_applications)
+BRLCAD_ADDfile(pl-dm.c sample_applications)
 
-IF(LIBPC)
+if(LIBPC)
 	add_executable(pc_test pc_test.c)
 	target_link_libraries(pc_test libwdb libpc)
-ENDIF(LIBPC)
+endif(LIBPC)
 
 BRLCAD_ADDEXEC(alias-pix alias-pix.c libbu)
 BRLCAD_ADDEXEC(ap-pix ap-pix.c libbu)
@@ -69,18 +69,18 @@ BRLCAD_ADDEXEC(bwthresh bwthresh.c libbu)
 BRLCAD_ADDEXEC(cv cv.c libbu)
 # FIXME dbcp is a "copy program for UNIX" - will need some porting
 # work for Windows
-IF(NOT WIN32)
+if(NOT WIN32)
 	BRLCAD_ADDEXEC(dbcp dbcp.c libbu)
-ENDIF(NOT WIN32)
+endif(NOT WIN32)
 BRLCAD_ADDEXEC(decimate decimate.c libbu)
 BRLCAD_ADDEXEC(double-asc double-asc.c "libfb libbu")
 BRLCAD_ADDEXEC(dpix-pix dpix-pix.c libbu)
 BRLCAD_ADDEXEC(dsp_add dsp_add.c libbu)
 # Not fixing these for Windows - they're on their way out (deprecated)
-IF(NOT WIN32)
+if(NOT WIN32)
 	BRLCAD_ADDEXEC(dunncolor "dunncolor.c dunncomm.c" libbu)
 	BRLCAD_ADDEXEC(dunnsnap "dunnsnap.c dunncomm.c" "libfb libbu")
-ENDIF(NOT WIN32)
+endif(NOT WIN32)
 BRLCAD_ADDEXEC(fix_polysolids fix_polysolids.c "librt libbu")
 BRLCAD_ADDEXEC(gencolor gencolor.c libbu)
 BRLCAD_ADDEXEC(hex hex.c libbu)
@@ -153,26 +153,26 @@ BRLCAD_ADDEXEC(png-bw png-bw.c "libbn libbu ${PNG_LIBRARY}")
 BRLCAD_ADDEXEC(png-pix png-pix.c "libbn libbu ${PNG_LIBRARY}")
 BRLCAD_ADDEXEC(png_info png_info.c "libbn libbu ${PNG_LIBRARY}")
 BRLCAD_ADDEXEC(rle-pix rle-pix.c "libbu libsysv ${UTAHRLE_LIBRARY}")
-IF(CPP_DLL_DEFINES)
+if(CPP_DLL_DEFINES)
 	SET_PROPERTY(TARGET rle-pix APPEND PROPERTY COMPILE_DEFINITIONS "RLE_DLL_IMPORTS")
-ENDIF(CPP_DLL_DEFINES)
+endif(CPP_DLL_DEFINES)
 BRLCAD_ADDEXEC(sun-pix sun-pix.c libbu)
 BRLCAD_ADDEXEC(terrain terrain.c "libbn libbu ${M_LIBRARY}")
 BRLCAD_ADDEXEC(texturescale texturescale.c "libfb libbn libbu ${M_LIBRARY}")
 #FIXME - Need to look at pcattcp port to Windows - ttcp should be
 #maintained and ported
-IF(NOT WIN32)
+if(NOT WIN32)
    BRLCAD_ADDEXEC(ttcp ttcp.c libbu)
-ENDIF(NOT WIN32)
+endif(NOT WIN32)
 BRLCAD_ADDEXEC(wavelet wavelet.c "libfb libbn libbu")
 BRLCAD_ADDEXEC(xyz-pl xyz-pl.c "libbn libbu")
 BRLCAD_ADDEXEC(yuv-pix yuv-pix.c "libfb libbn libbu")
 
-INSTALL(PROGRAMS morphedit.tcl DESTINATION bin)
+install(PROGRAMS morphedit.tcl DESTINATION bin)
 
 add_executable(roots_example roots_example.c)
 target_link_libraries(roots_example libbu librt)
-BRLCAD_ADDFILE(roots_example.c sample_applications)
+BRLCAD_ADDfile(roots_example.c sample_applications)
 
 set(util_MANS
   ap-pix.1

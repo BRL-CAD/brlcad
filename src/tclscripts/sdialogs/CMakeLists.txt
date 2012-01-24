@@ -1,6 +1,6 @@
 ADD_SUBDIRECTORY(scripts)
 
-SET(sdialogs_TCLSCRIPTS
+set(sdialogs_TCLSCRIPTS
 	sdialogs.tcl
 )
 BRLCAD_ADDDATA(sdialogs_TCLSCRIPTS tclscripts/sdialogs)

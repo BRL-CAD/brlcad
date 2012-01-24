@@ -1,5 +1,5 @@
 # Include directories needed by libsysv users
-SET(SYSV_INCLUDE_DIRS
+set(SYSV_INCLUDE_DIRS
 	${BRLCAD_BINARY_DIR}/include
 	${BRLCAD_SOURCE_DIR}/include
 	${TCL_INCLUDE_DIRS}

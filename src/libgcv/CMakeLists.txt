@@ -3,7 +3,7 @@ enable_testing()
 add_test(bottess_test ${CMAKE_BINARY_DIR}/bin/test_bottess)
 
 # Include directories needed by libgcv users
-SET(GCV_INCLUDE_DIRS
+set(GCV_INCLUDE_DIRS
 	${BRLCAD_BINARY_DIR}/include
 	${BRLCAD_SOURCE_DIR}/include
 	${BU_INCLUDE_DIRS}
@@ -25,8 +25,8 @@ ADD_SUBDIRECTORY(wfobj)
 
 add_executable(test_bottess test_bottess.c)
 target_link_libraries(test_bottess libgcv)
-IF(CPP_DLL_DEFINES)
+if(CPP_DLL_DEFINES)
 	SET_PROPERTY(TARGET test_basename APPEND PROPERTY COMPILE_DEFINITIONS "BOTTESS_DLL_IMPORTS")
-ENDIF(CPP_DLL_DEFINES)
+endif(CPP_DLL_DEFINES)
 
 CMAKEFILES(NOTES Makefile.am soup.h tri_intersect.h)

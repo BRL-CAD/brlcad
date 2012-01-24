@@ -1,4 +1,4 @@
-SET(pl-dm_TCLSCRIPTS
+set(pl-dm_TCLSCRIPTS
 	bindings.tcl
 	help.tcl
 	menu.tcl

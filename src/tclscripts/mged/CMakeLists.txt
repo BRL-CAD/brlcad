@@ -1,4 +1,4 @@
-SET(mged_TCLSCRIPTS
+set(mged_TCLSCRIPTS
 	accel.tcl
 	adc.tcl
 	anim.tcl
@@ -86,7 +86,7 @@ BRLCAD_ADDDATA(mged_TCLSCRIPTS tclscripts/mged)
 # pkgIndex_BUILD(mged tclscripts/mged)
 tclIndex_BUILD(mged tclscripts/mged)
 
-SET(mged_tcl_DATA
+set(mged_tcl_DATA
 	l_i0_v0_s0.gif
 	l_i0_v0_s1.gif
 	l_i0_v0_s2.gif

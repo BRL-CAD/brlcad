@@ -1,5 +1,5 @@
 # Include directories needed by libanalyze users
-SET(ANALYZE_INCLUDE_DIRS
+set(ANALYZE_INCLUDE_DIRS
 	${BRLCAD_BINARY_DIR}/include
 	${BRLCAD_SOURCE_DIR}/include
 	${BU_INCLUDE_DIRS}

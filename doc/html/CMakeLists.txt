@@ -1,10 +1,10 @@
-SET(toplevel_HTML
+set(toplevel_HTML
 	bookmarks.html
 	toc.html
 )
 BRLCAD_ADDDATA(toplevel_HTML html)
 
-SET(anim_tutorial_HTML
+set(anim_tutorial_HTML
 	manuals/Anim_Tutorial/Lee_tux.gif
 	manuals/Anim_Tutorial/animtbl.gif
 	manuals/Anim_Tutorial/chans.html
@@ -49,7 +49,7 @@ SET(anim_tutorial_HTML
 )
 BRLCAD_ADDDATA(anim_tutorial_HTML html/manuals/Anim_Tutorial)
 
-SET(cadwidgets_HTML
+set(cadwidgets_HTML
 	manuals/cadwidgets/Command.html
 	manuals/cadwidgets/Database.html
 	manuals/cadwidgets/Db.html
@@ -66,14 +66,14 @@ SET(cadwidgets_HTML
 )
 BRLCAD_ADDDATA(cadwidgets_HTML html/manuals/cadwidgets)
 
-SET(libbu_HTML
+set(libbu_HTML
 	manuals/libbu/cmdhist_obj.html
 	manuals/libbu/contents.html
 	manuals/libbu/index.html
 )
 BRLCAD_ADDDATA(libbu_HTML html/manuals/libbu)
 
-SET(libdm_HTML
+set(libdm_HTML
 	manuals/libdm/api.html
 	manuals/libdm/contents.html
 	manuals/libdm/dm_obj.html
@@ -83,7 +83,7 @@ SET(libdm_HTML
 )
 BRLCAD_ADDDATA(libdm_HTML html/manuals/libdm)
 
-SET(librt_HTML
+set(librt_HTML
 	manuals/librt/contents.html
 	manuals/librt/dg_obj.html
 	manuals/librt/index.html
@@ -92,7 +92,7 @@ SET(librt_HTML
 )
 BRLCAD_ADDDATA(librt_HTML html/manuals/librt)
 
-SET(manuals_HTML
+set(manuals_HTML
 	manuals/Install.html
 	manuals/Obtain.html
 	manuals/Overview.html
@@ -103,7 +103,7 @@ SET(manuals_HTML
 )
 BRLCAD_ADDDATA(manuals_HTML html/manuals)
 
-SET(manuals_mged_animmate_HTML
+set(manuals_mged_animmate_HTML
 	manuals/mged/animmate/anim_cascade.html
 	manuals/mged/animmate/anim_doc.html
 	manuals/mged/animmate/anim_fly.html
@@ -171,7 +171,7 @@ SET(manuals_mged_animmate_HTML
 )
 BRLCAD_ADDDATA(manuals_mged_animmate_HTML html/manuals/mged/animmate)
 
-SET(manuals_mged_HTML
+set(manuals_mged_HTML
 	manuals/mged/az_el.gif
 	manuals/mged/az_el.jpg
 	manuals/mged/az_el_sm.gif
@@ -236,9 +236,9 @@ SET(manuals_mged_HTML
 )
 BRLCAD_ADDDATA(manuals_mged_HTML html/manuals/mged)
 
-BRLCAD_ADDFILE(manuals/shaders/camo.html html/manuals/shaders)
+BRLCAD_ADDfile(manuals/shaders/camo.html html/manuals/shaders)
 
-SET(relnotes_HTML
+set(relnotes_HTML
 	ReleaseNotes/email2.0.html
 	ReleaseNotes/email3.0.html
 	ReleaseNotes/email3.1.html
@@ -249,7 +249,7 @@ SET(relnotes_HTML
 )
 BRLCAD_ADDDATA(relnotes_HTML html/ReleaseNotes)
 
-SET(relnotes_5_HTML
+set(relnotes_5_HTML
 	ReleaseNotes/Rel5.0/deprecated.html
 	ReleaseNotes/Rel5.0/index.html
 	ReleaseNotes/Rel5.0/new_cmds.html
@@ -257,7 +257,7 @@ SET(relnotes_5_HTML
 )
 BRLCAD_ADDDATA(relnotes_5_HTML html/ReleaseNotes/Rel5.0)
 
-SET(relnotes_5_summary_HTML
+set(relnotes_5_summary_HTML
 	ReleaseNotes/Rel5.0/Summary/activem.gif
 	ReleaseNotes/Rel5.0/Summary/activep.gif
 	ReleaseNotes/Rel5.0/Summary/collapse.gif
@@ -333,9 +333,9 @@ SET(relnotes_5_summary_HTML
 )
 BRLCAD_ADDDATA(relnotes_5_summary_HTML html/ReleaseNotes/Rel5.0/Summary)
 
-BRLCAD_ADDFILE(ReleaseNotes/Rel6.0/index.html html/ReleaseNotes/Rel6.0)
+BRLCAD_ADDfile(ReleaseNotes/Rel6.0/index.html html/ReleaseNotes/Rel6.0)
 
-SET(html_ignore_files
+set(html_ignore_files
 	ReleaseNotes/Rel6.0
 	manuals/mged/animmate
 	manuals/shaders

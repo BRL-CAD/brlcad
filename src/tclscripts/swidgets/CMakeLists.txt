@@ -1,7 +1,7 @@
 ADD_SUBDIRECTORY(images)
 ADD_SUBDIRECTORY(scripts)
 
-SET(swidgets_TCLSCRIPTS
+set(swidgets_TCLSCRIPTS
 	swidgets.tcl
 )
 BRLCAD_ADDDATA(swidgets_TCLSCRIPTS tclscripts/swidgets)

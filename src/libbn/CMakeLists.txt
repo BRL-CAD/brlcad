@@ -1,5 +1,5 @@
 # Include directories needed by libbn users
-SET(BN_INCLUDE_DIRS
+set(BN_INCLUDE_DIRS
 	${BRLCAD_BINARY_DIR}/include
 	${BRLCAD_SOURCE_DIR}/include
 	${BU_INCLUDE_DIRS}
@@ -46,10 +46,10 @@ ADD_MAN_PAGE(3 libplot3.3)
 
 add_executable(bntester bntester.c)
 target_link_libraries(bntester libbu libbn)
-IF(CPP_DLL_DEFINES)
+if(CPP_DLL_DEFINES)
 	SET_PROPERTY(TARGET bntester APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
 	SET_PROPERTY(TARGET bntester APPEND PROPERTY COMPILE_DEFINITIONS "BN_DLL_IMPORTS")
-ENDIF(CPP_DLL_DEFINES)
+endif(CPP_DLL_DEFINES)
 
 CMAKEFILES(
         Makefile.am

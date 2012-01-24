@@ -6,31 +6,31 @@
 # with the last two arguments being optional.
 MACRO(GED_ADD_CMD sources)
 	get_filename_component(currentdir ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-	FOREACH(srcfile ${${sources}})
+	foreach(srcfile ${${sources}})
 		LIST(APPEND cmd_srcs "${currentdir}/${srcfile}")
-	ENDFOREACH(srcfile ${${sources}})
-	SET(LIBGED_CMD_SRCS ${LIBGED_CMD_SRCS} ${cmd_srcs} CACHE INTERNAL "libged cmd srcs" FORCE)
-	IF(${ARGV1})
-		SET(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${${ARGV1}})
+	endforeach(srcfile ${${sources}})
+	set(LIBGED_CMD_SRCS ${LIBGED_CMD_SRCS} ${cmd_srcs} CACHE INTERNAL "libged cmd srcs" FORCE)
+	if(${ARGV1})
+		set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${${ARGV1}})
 		LIST(REMOVE_DUPLICATES LIBGED_CMD_INCLUDE_DIRS)
-		SET(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} CACHE INTERNAL "libged cmd includes" FORCE)
-	ENDIF(${ARGV1})
-	IF(${ARGV2})
-		SET(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${${ARGV2}}) 
+		set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} CACHE INTERNAL "libged cmd includes" FORCE)
+	endif(${ARGV1})
+	if(${ARGV2})
+		set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${${ARGV2}}) 
 		LIST(REMOVE_DUPLICATES LIBGED_CMD_LIBS_LIST)
-		SET(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} CACHE INTERNAL	"libged cmd libs" FORCE)
-	ENDIF(${ARGV2})
+		set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} CACHE INTERNAL	"libged cmd libs" FORCE)
+	endif(${ARGV2})
 ENDMACRO(GED_ADD_CMD)
 
 # if this subdir stuff is pushed into the actual subdirs, the autoconf vs cmake
 # verification (sh/cmakecheck.sh) will fail on dist-hook.
-IF(BULLET_FOUND)
+if(BULLET_FOUND)
     GED_ADD_CMD(LIBGED_SIM_SOURCES BULLET_INCLUDE_DIR BULLET_LIBRARIES)
-    SET(SIM_SRCS simulate/simphysics.cpp simulate/simulate.c simulate/simcollisionalgo.cpp simulate/simutils.h simulate/simutils.c simulate/simrt.c simulate/simrt.h)
-ELSE(BULLET_FOUND)
-    SET(SIM_SRCS "")
-    SET(ged_ignore_files simulate/simphysics.cpp simulate/simulate.c simulate/simcollisionalgo.cpp simulate/simcollisionalgo.h simulate/simutils.h simulate/simutils.c simulate/simrt.c simulate/simrt.h)
-ENDIF(BULLET_FOUND)
+    set(SIM_SRCS simulate/simphysics.cpp simulate/simulate.c simulate/simcollisionalgo.cpp simulate/simutils.h simulate/simutils.c simulate/simrt.c simulate/simrt.h)
+else(BULLET_FOUND)
+    set(SIM_SRCS "")
+    set(ged_ignore_files simulate/simphysics.cpp simulate/simulate.c simulate/simcollisionalgo.cpp simulate/simcollisionalgo.h simulate/simutils.h simulate/simutils.c simulate/simrt.c simulate/simrt.h)
+endif(BULLET_FOUND)
 
 set(LIBGED_SOURCES
     3ptarb.c
@@ -302,32 +302,32 @@ set(LIBGED_SOURCES
 )
 
 # Core logic for adding commands to the libged source/lib/include lists.
-FILE(GLOB GED_DIR_CONTENTS ${CMAKE_CURRENT_SOURCE_DIR} *)
-FOREACH(item ${GED_DIR_CONTENTS})
+file(GLOB GED_DIR_CONTENTS ${CMAKE_CURRENT_SOURCE_DIR} *)
+foreach(item ${GED_DIR_CONTENTS})
 	get_filename_component(item_name ${item} NAME)
-	IF(IS_DIRECTORY ${item} AND NOT ${item_name} STREQUAL "libged" AND NOT ${item_name} STREQUAL ".svn")
+	if(IS_DIRECTORY ${item} AND NOT ${item_name} STREQUAL "libged" AND NOT ${item_name} STREQUAL ".svn")
 		LIST(APPEND ged_subdirs ${item_name})
-	ENDIF(IS_DIRECTORY ${item} AND NOT ${item_name} STREQUAL "libged" AND NOT ${item_name} STREQUAL ".svn")
-ENDFOREACH(item ${GED_DIR_CONTENTS})
-FOREACH(item ${ged_subdirs})
-	IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${item}/CMakeLists.txt)
+	endif(IS_DIRECTORY ${item} AND NOT ${item_name} STREQUAL "libged" AND NOT ${item_name} STREQUAL ".svn")
+endforeach(item ${GED_DIR_CONTENTS})
+foreach(item ${ged_subdirs})
+	if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${item}/CMakeLists.txt)
 		ADD_SUBDIRECTORY(${item})
-	ENDIF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${item}/CMakeLists.txt)
-ENDFOREACH(item ${ged_subdirs})
-SET(LIBGED_SOURCES ${LIBGED_SOURCES} ${LIBGED_CMD_SRCS})
-IF(LIBGED_CMD_LIBS_LIST)
+	endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${item}/CMakeLists.txt)
+endforeach(item ${ged_subdirs})
+set(LIBGED_SOURCES ${LIBGED_SOURCES} ${LIBGED_CMD_SRCS})
+if(LIBGED_CMD_LIBS_LIST)
 	LIST(REMOVE_DUPLICATES LIBGED_CMD_LIBS_LIST)
-	FOREACH(lib ${LIBGED_CMD_LIBS_LIST})
-		SET(LIBGED_CMD_LIBS "${LIBGED_CMD_LIBS} ${lib}")
-	ENDFOREACH(lib ${LIBGED_CMD_LIBS_LIST})
-ENDIF(LIBGED_CMD_LIBS_LIST)
-IF(LIBGED_CMD_INCLUDE_DIRS)
+	foreach(lib ${LIBGED_CMD_LIBS_LIST})
+		set(LIBGED_CMD_LIBS "${LIBGED_CMD_LIBS} ${lib}")
+	endforeach(lib ${LIBGED_CMD_LIBS_LIST})
+endif(LIBGED_CMD_LIBS_LIST)
+if(LIBGED_CMD_INCLUDE_DIRS)
 	LIST(REMOVE_DUPLICATES LIBGED_CMD_INCLUDE_DIRS)
-ENDIF(LIBGED_CMD_INCLUDE_DIRS)
+endif(LIBGED_CMD_INCLUDE_DIRS)
 
 
 # Include directories needed by libged users
-SET(GED_INCLUDE_DIRS
+set(GED_INCLUDE_DIRS
 	${BRLCAD_BINARY_DIR}/include
 	${BRLCAD_SOURCE_DIR}/include
 	${ANALYZE_INCLUDE_DIRS}
@@ -339,27 +339,27 @@ SET(GED_INCLUDE_DIRS
 
 # Local include directories
 # includes from plugins
-SET(GED_LOCAL_INCLUDE_DIRS
+set(GED_LOCAL_INCLUDE_DIRS
 	${PNG_INCLUDE_DIR}
 	${LIBGED_CMD_INCLUDE_DIRS}
 	${REGEX_INCLUDE_DIR}
 	)
 # local includes
-SET(GED_LOCAL_INCLUDE_DIRS
+set(GED_LOCAL_INCLUDE_DIRS
 	${GED_LOCAL_INCLUDE_DIRS}
 	${CLIPPER_INCLUDE_DIR}
 	)
 
 BRLCAD_INCLUDE_DIRS(GED_INCLUDE_DIRS)
 
-IF(CPP_DLL_DEFINES)
+if(CPP_DLL_DEFINES)
 	add_definitions(-DCLIPPER_DLL_IMPORTS)
-ENDIF(CPP_DLL_DEFINES)
+endif(CPP_DLL_DEFINES)
 
 BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb librt libfb libbu libicv libanalyze ${LIBGED_CMD_LIBS} ${REGEX_LIBRARY} ${WINSOCK_LIB} ${CLIPPER_LIBRARY} ${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
-SET(ged_ignore_files
+set(ged_ignore_files
 	 ${ged_ignore_files}
     ged_private.h
     qray.h
