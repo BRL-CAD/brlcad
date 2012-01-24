@@ -29,7 +29,7 @@
 
 #include "RepresentationItem.h"
 
-#define CLASSNAME "RepresentationContext"
+#define CLASSNAME "RepresentationItem"
 #define ENTITYNAME "Representation_Item"
 string RepresentationItem::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RepresentationItem::Create);
 
