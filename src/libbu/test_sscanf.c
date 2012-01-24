@@ -67,10 +67,12 @@
  * modifiers:
  *  h - expect (signed|unsigned) short int (not int) pointer
  * hh - expect (signed|unsigned) char (not int) pointer
- *  j - expect (signed|unsigned) intmax_t or uintmax_t (not int) pointer
  *  l - expect (signed|unsigned) long int (not int) pointer, or double (not
  *      float), or wide char (not char) pointer
- *q/L - expect long double (not double) pointer
+ *  L - expect long double (not double) pointer
+ *
+ * C99 modifiers:
+ *  j - expect (signed|unsigned) intmax_t or uintmax_t (not int) pointer
  *  t - expect ptrdiff_t (not int) pointer
  *  z - expect size_t (not int) pointer
  *
@@ -102,18 +104,19 @@
  */
 
 enum {
-    INT, UINT, SHORT, USHORT, LONG, ULONG,
+    INT, UINT, SHORT, USHORT, SHORTSHORT, USHORTSHORT, LONG, ULONG,
     FLOAT, DOUBLE, LDOUBLE
 };
 
 static void
 test_sscanf(int type, const char *src, const char *fmt) {
-    int ret = 0, bu_ret = 0;
+    int ret, bu_ret;
     void *val, *bu_val;
 
+    ret = bu_ret = 0;
     val = bu_val = NULL;
 
-    printf("(%s, %s)\n", src, fmt);
+    printf("%s, %s\n", src, fmt);
 
     /* call sscanf and bu_sscanf with appropriately cast pointers */
 #define SSCANF_TYPE(type) \
@@ -134,6 +137,12 @@ test_sscanf(int type, const char *src, const char *fmt) {
 	break;
     case USHORT:
 	SSCANF_TYPE(unsigned short);
+	break;
+    case SHORTSHORT:
+	SSCANF_TYPE(char);
+	break;
+    case USHORTSHORT:
+	SSCANF_TYPE(unsigned char);
 	break;
     case LONG:
 	SSCANF_TYPE(long);
@@ -194,6 +203,12 @@ test_sscanf(int type, const char *src, const char *fmt) {
 	case USHORT:
 	    CHECK_INT(unsigned short, hu);
 	    break;
+	case SHORTSHORT:
+	    CHECK_INT(char, hhd);
+	    break;
+	case USHORTSHORT:
+	    CHECK_INT(unsigned char, hhu);
+	    break;
 	case LONG:
 	    CHECK_INT(long, ld);
 	    break;
@@ -224,7 +239,8 @@ test_sscanf_s(const char *src, const char *fmt)
     int ret, bu_ret;
     char dest[STR_SIZE], bu_dest[STR_SIZE];
 
-    printf("(%s, %s)\n", src, fmt);
+    ret = bu_ret = 0;
+    printf("%s, %s\n", src, fmt);
 
     ret = sscanf(src, fmt, dest);
     bu_ret = bu_sscanf(src, fmt, bu_dest);
@@ -248,21 +264,47 @@ test_sscanf_s(const char *src, const char *fmt)
     }
 }
 
-
-/* The problem with the macros in limits.h is that they aren't necessarily
- * printable. We could have something like:
- *     #define INT_MIN (-INT_MAX - 1)
+/* Here we define printable constants that should be safe on any platform.
  *
- * So, here we define printable constants that should be safe on any
- * platform.
+ * Note that we don't use the macros in limits.h, because they aren't
+ * necessarily printable, as in:
+ *     #define INT_MIN (-INT_MAX - 1)
  */
-#define SMALL_INT -32767 /* -2^15 + 1 (not assuming 2's complement) */
+#define SMALL_SHORTSHORT -127 /*  2^7 + 1 (not assuming 2's complement) */
+#define LARGE_SHORTSHORT +127 /*  2^7 - 1 */
+#define LARGE_USHORTSHORT 255 /*  2^8 - 1 */
+
+#define SMALL_SHORTSHORT_OCT -0177
+#define LARGE_SHORTSHORT_OCT +0177
+#define LARGE_USHORTSHORT_OCT 0377
+
+#define SMALL_SHORTSHORT_HEX -0x7F
+#define LARGE_SHORTSHORT_HEX +0x7F
+#define LARGE_USHORTSHORT_HEX 0xFF
+
+#define SMALL_INT -32767 /* -2^15 + 1 */
 #define LARGE_INT +32767 /*  2^15 - 1 */
 #define LARGE_UINT 65535 /*  2^16 - 1 */
+
+#define SMALL_INT_OCT -077777
+#define LARGE_INT_OCT +077777
+#define LARGE_UINT_OCT 0177777
+
+#define SMALL_INT_HEX -0x7FFF
+#define LARGE_INT_HEX +0x7FFF
+#define LARGE_UINT_HEX 0xFFFF
 
 #define SMALL_LONG -2147483647L /* -2^31 + 1 */
 #define LARGE_LONG +2147483647L /*  2^31 - 1 */
 #define LARGE_ULONG 4294967295U /*  2^32 - 1 */
+
+#define SMALL_LONG_OCT -17777777777L
+#define LARGE_LONG_OCT +17777777777L
+#define LARGE_ULONG_OCT 37777777777U
+
+#define SMALL_LONG_HEX -0x7FFFFFFFL
+#define LARGE_LONG_HEX +0x7FFFFFFFL
+#define LARGE_ULONG_HEX 0xFFFFFFFFU
 
 int
 main(int argc, char *argv[])
@@ -289,27 +331,115 @@ main(int argc, char *argv[])
  */
 
     /* signed integer tests */
-    test_sscanf(INT, "0", "%d");
-    test_sscanf(INT, bu_cpp_xstr(LARGE_INT), "%d");
-    test_sscanf(INT, bu_cpp_xstr(SMALL_INT), "%d");
+
+    /* d decimal tests */
+    test_sscanf(SHORTSHORT, "0", "%hhd");
+    test_sscanf(SHORTSHORT, bu_cpp_xstr(LARGE_SHORTSHORT), "%hhd");
+    test_sscanf(SHORTSHORT, bu_cpp_xstr(SMALL_SHORTSHORT), "%hhd");
 
     test_sscanf(SHORT, "0", "%hd");
     test_sscanf(SHORT, bu_cpp_xstr(LARGE_INT), "%hd");
     test_sscanf(SHORT, bu_cpp_xstr(SMALL_INT), "%hd");
 
+    test_sscanf(INT, "0", "%d");
+    test_sscanf(INT, bu_cpp_xstr(LARGE_INT), "%d");
+    test_sscanf(INT, bu_cpp_xstr(SMALL_INT), "%d");
+
     test_sscanf(LONG, "0", "%ld");
     test_sscanf(LONG, bu_cpp_xstr(LARGE_LONG), "%ld");
     test_sscanf(LONG, bu_cpp_xstr(SMALL_LONG), "%ld");
 
+    /* i decimal tests */
+    test_sscanf(SHORTSHORT, "0", "%hhi");
+    test_sscanf(SHORTSHORT, bu_cpp_xstr(LARGE_SHORTSHORT), "%hhi");
+    test_sscanf(SHORTSHORT, bu_cpp_xstr(SMALL_SHORTSHORT), "%hhi");
+
+    test_sscanf(SHORT, "0", "%hi");
+    test_sscanf(SHORT, bu_cpp_xstr(LARGE_INT), "%hi");
+    test_sscanf(SHORT, bu_cpp_xstr(SMALL_INT), "%hi");
+
+    test_sscanf(INT, "0", "%i");
+    test_sscanf(INT, bu_cpp_xstr(LARGE_INT), "%i");
+    test_sscanf(INT, bu_cpp_xstr(SMALL_INT), "%i");
+
+    test_sscanf(LONG, "0", "%li");
+    test_sscanf(LONG, bu_cpp_xstr(LARGE_LONG), "%li");
+    test_sscanf(LONG, bu_cpp_xstr(SMALL_LONG), "%li");
+
+    /* i octal tests */
+    test_sscanf(SHORTSHORT, "0", "%hhi");
+    test_sscanf(SHORTSHORT, bu_cpp_xstr(LARGE_SHORTSHORT_OCT), "%hhi");
+    test_sscanf(SHORTSHORT, bu_cpp_xstr(SMALL_SHORTSHORT_OCT), "%hhi");
+
+    test_sscanf(SHORT, "0", "%hi");
+    test_sscanf(SHORT, bu_cpp_xstr(LARGE_INT_OCT), "%hi");
+    test_sscanf(SHORT, bu_cpp_xstr(SMALL_INT_OCT), "%hi");
+
+    test_sscanf(INT, "0", "%i");
+    test_sscanf(INT, bu_cpp_xstr(LARGE_INT_OCT), "%i");
+    test_sscanf(INT, bu_cpp_xstr(SMALL_INT_OCT), "%i");
+
+    test_sscanf(LONG, "0", "%li");
+    test_sscanf(LONG, bu_cpp_xstr(LARGE_LONG_OCT), "%li");
+    test_sscanf(LONG, bu_cpp_xstr(SMALL_LONG_OCT), "%li");
+
+    /* i hex tests */
+    test_sscanf(SHORTSHORT, "0", "%hhi");
+    test_sscanf(SHORTSHORT, bu_cpp_xstr(LARGE_SHORTSHORT_HEX), "%hhi");
+    test_sscanf(SHORTSHORT, bu_cpp_xstr(SMALL_SHORTSHORT_HEX), "%hhi");
+
+    test_sscanf(SHORT, "0", "%hi");
+    test_sscanf(SHORT, bu_cpp_xstr(LARGE_INT_HEX), "%hi");
+    test_sscanf(SHORT, bu_cpp_xstr(SMALL_INT_HEX), "%hi");
+
+    test_sscanf(INT, "0", "%i");
+    test_sscanf(INT, bu_cpp_xstr(LARGE_INT_HEX), "%i");
+    test_sscanf(INT, bu_cpp_xstr(SMALL_INT_HEX), "%i");
+
+    test_sscanf(LONG, "0", "%li");
+    test_sscanf(LONG, bu_cpp_xstr(LARGE_LONG_HEX), "%li");
+    test_sscanf(LONG, bu_cpp_xstr(SMALL_LONG_HEX), "%li");
+
     /* unsigned integer tests */
-    test_sscanf(UINT, "0", "%u");
-    test_sscanf(UINT, bu_cpp_xstr(LARGE_UINT), "%u");
+
+    /* decimal tests */
+    test_sscanf(USHORTSHORT, "0", "%hhu");
+    test_sscanf(USHORTSHORT, bu_cpp_xstr(LARGE_USHORTSHORT), "%hhu");
 
     test_sscanf(USHORT, "0", "%hu");
     test_sscanf(USHORT, bu_cpp_xstr(LARGE_UINT), "%hu");
 
-    test_sscanf(ULONG, "0", "%lu");
+    test_sscanf(UINT, "0", "%u");
+    test_sscanf(UINT, bu_cpp_xstr(LARGE_UINT), "%u");
+
+    test_sscanf(ULONG, "0U", "%lu");
     test_sscanf(ULONG, bu_cpp_xstr(LARGE_ULONG), "%lu");
+
+    /* octal tests */
+    test_sscanf(USHORTSHORT, "0", "%hho");
+    test_sscanf(USHORTSHORT, bu_cpp_xstr(LARGE_USHORTSHORT_OCT), "%hho");
+
+    test_sscanf(USHORT, "0", "%ho");
+    test_sscanf(USHORT, bu_cpp_xstr(LARGE_UINT_OCT), "%ho");
+
+    test_sscanf(UINT, "0", "%o");
+    test_sscanf(UINT, bu_cpp_xstr(LARGE_UINT_OCT), "%o");
+
+    test_sscanf(ULONG, "0U", "%lo");
+    test_sscanf(ULONG, bu_cpp_xstr(LARGE_ULONG_OCT), "%lo");
+
+    /* hex tests */
+    test_sscanf(USHORTSHORT, "0", "%hhx");
+    test_sscanf(USHORTSHORT, bu_cpp_xstr(LARGE_USHORTSHORT_HEX), "%hhx");
+
+    test_sscanf(USHORT, "0", "%hx");
+    test_sscanf(USHORT, bu_cpp_xstr(LARGE_UINT_HEX), "%hx");
+
+    test_sscanf(UINT, "0", "%x");
+    test_sscanf(UINT, bu_cpp_xstr(LARGE_UINT_HEX), "%x");
+
+    test_sscanf(ULONG, "0U", "%lx");
+    test_sscanf(ULONG, bu_cpp_xstr(LARGE_ULONG_HEX), "%lx");
 
     /* float tests */
     test_sscanf(FLOAT, "0.0F", "%f");
