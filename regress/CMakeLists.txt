@@ -86,6 +86,7 @@ endif(SH_EXEC)
 CMAKEFILES(
 	Makefile.am
 	bots.sh 
+        dsp.sh
 	fastgen.sh 
 	fastgen_dos.fast4 
 	flawfinder.sh 

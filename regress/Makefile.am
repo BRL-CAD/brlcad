@@ -69,6 +69,7 @@ repository: $(top_srcdir)/regress/repository.sh
 # these are here because they go in the distribution but are not installed
 EXTRA_DIST = \
 	bots.sh \
+	dsp.sh \
 	fastgen.sh \
 	fastgen_dos.fast4 \
 	flawfinder.sh \
