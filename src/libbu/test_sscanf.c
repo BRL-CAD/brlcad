@@ -108,7 +108,7 @@ enum {
 
 static void
 test_sscanf(int type, const char *src, const char *fmt) {
-    int ret, bu_ret;
+    int ret = 0, bu_ret = 0;
     void *val, *bu_val;
 
     val = bu_val = NULL;
