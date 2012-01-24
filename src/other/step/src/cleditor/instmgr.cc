@@ -62,7 +62,11 @@ InstMgr::~InstMgr()
     if(_ownsInstances)
     {
 	master->DeleteEntries();
+    } else {
+	master->ClearEntries();
     }
+    sortedMaster->ClearEntries();
+
     delete master;
     delete sortedMaster;
 }
