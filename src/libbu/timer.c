@@ -24,6 +24,9 @@
 #include <time.h>
 #include "bio.h"
 
+#ifdef HAVE_WINDOWS_H
+#  include <windows.h>
+#endif
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
@@ -32,9 +35,6 @@
 #endif
 #ifdef HAVE_SCHED_H
 #  include <sched.h>
-#endif
-#ifdef HAVE_MMSYSTEM_H
-#  include <mmsystem.h>
 #endif
 
 #include "bu.h"
@@ -52,7 +52,7 @@ bu_gettime(void)
 	    + (int64_t)nowTime.tv_usec);
 
 #else /* HAVE_SYS_TIME_H */
-#  ifdef HAVE_MMSYSTEM_H
+#  ifdef HAVE_WINDOWS_H
 
     LARGE_INTEGER count;
 	static LARGE_INTEGER freq = {0};
@@ -70,16 +70,12 @@ bu_gettime(void)
 
     return 1e6*count.QuadPart/freq.QuadPart;
 
-#  else /* HAVE_MMSYSTEM_H */
-#    if _MSC_VER
-#	   pragma NOTE("bu_gettime() implementation missing for this machine type")
-#    else
-#      warning "bu_gettime() implementation missing for this machine type"
-#    endif
+#  else /* HAVE_WINDOWS_H */
+#    warning "bu_gettime() implementation missing for this machine type"
     bu_log("timer.c: WARNING, no gettime implementation for this machine type.\n");
     return -1;
 
-#  endif /* HAVE_MMSYSTEM_H */
+#  endif /* HAVE_WINDOWS_H */
 #endif /* HAVE_SYS_TIME_H */
 
 }
