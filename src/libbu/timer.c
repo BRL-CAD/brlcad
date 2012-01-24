@@ -71,8 +71,11 @@ bu_gettime(void)
     return 1e6*count.QuadPart/freq.QuadPart;
 
 #  else /* HAVE_MMSYSTEM_H */
-#    warning "bu_gettime() implementation missing for this machine type"
-
+#    if _MSC_VER
+#	   pragma NOTE("bu_gettime() implementation missing for this machine type")
+#    else
+#      warning "bu_gettime() implementation missing for this machine type"
+#    endif
     bu_log("timer.c: WARNING, no gettime implementation for this machine type.\n");
     return -1;
 
