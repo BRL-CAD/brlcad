@@ -165,8 +165,12 @@ int old_mged_gui=1;
 
 static int mged_init_flag = 1;	/* >0 means in initialization stage */
 
-struct bu_vls input_str, scratchline, input_str_prefix;
 size_t input_str_index = 0;
+
+struct bu_vls input_str = BU_VLS_INIT_ZERO;
+struct bu_vls input_str_prefix = BU_VLS_INIT_ZERO;
+struct bu_vls scratchline = BU_VLS_INIT_ZERO;
+struct bu_vls mged_prompt = BU_VLS_INIT_ZERO;
 
 char *dpy_string = (char *)NULL;
 
@@ -188,7 +192,6 @@ int mged_db_version = 5;
 struct bn_tol mged_tol;	/* calculation tolerance */
 struct rt_tess_tol mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
 
-struct bu_vls mged_prompt;
 
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
@@ -526,14 +529,16 @@ do_tab_expansion()
     Tcl_Obj *newCommand;
     Tcl_Obj *matches;
     int numExpansions=0;
-    struct bu_vls tab_expansion;
+    struct bu_vls tab_expansion = BU_VLS_INIT_ZERO;
+    struct bu_vls spaces = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&tab_expansion);
     bu_vls_printf(&tab_expansion, "tab_expansion {%s}", bu_vls_addr(&input_str));
     ret = Tcl_Eval(INTERP, bu_vls_addr(&tab_expansion));
     bu_vls_free(&tab_expansion);
 
     if (ret == TCL_OK) {
+	size_t len;
+
         result = Tcl_GetObjResult(INTERP);
         Tcl_ListObjIndex(INTERP, result, 0, &newCommand);
         Tcl_ListObjIndex(INTERP, result, 1, &matches);
@@ -545,16 +550,22 @@ do_tab_expansion()
         }
 
 	/* display the expanded line */
-        /* first clear the current line */
         pr_prompt(interactive);
-        bu_log("%*s", bu_vls_strlen(&input_str), SPACES);
+
+        /* first clear the current line */
+	len = bu_vls_strlen(&input_str);
+	if (len > 0) {
+	    bu_vls_strncat(&spaces, SPACES, len);
+	    bu_log("%V", &spaces);
+	}
+
         pr_prompt(interactive);
         bu_vls_trunc(&input_str, 0);
         input_str_index = 0;
         bu_vls_trunc(&input_str, 0);
         bu_vls_strcat(&input_str, Tcl_GetString(newCommand));
         input_str_index = bu_vls_strlen(&input_str);
-        bu_log("%s", bu_vls_addr(&input_str));
+        bu_log("%V", &input_str);
     } else {
         bu_log("ERROR\n");
         bu_log("%s\n", Tcl_GetStringResult(INTERP));
@@ -1346,12 +1357,6 @@ main(int argc, char *argv[])
     rt_prep_timer();		/* Initialize timer */
 
     es_edflag = -1;		/* no solid editing just now */
-
-    bu_vls_init(&input_str);
-    bu_vls_init(&input_str_prefix);
-    bu_vls_init(&scratchline);
-    bu_vls_init(&mged_prompt);
-    input_str_index = 0;
 
     /* prepare mged, adjust our path, get set up to use Tcl */
     mged_setup(&INTERP);
