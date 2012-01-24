@@ -29,7 +29,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include <limits.h>
 #include <float.h>
 
 #include "bu.h"
@@ -102,204 +101,172 @@
  *      pointer. PROBABLY shouldn't affect returned conversion count.
  */
 
-/* Macro for creating type-specific test routines.
- *
- * conv_spec
- *     lf, d, c, ... creates test_sscanf_lf, test_sscanf_d, ...
- * val_type
- *     double, int, char, ...
- * val_test
- *     equality test for two val_type vals named a and b, like (a == b)
- */
-#ifdef HAVE_VSSCANF
-#define TEST_SSCANF(conv_spec, val_type, val_test) \
-/* returns true if a and b are equal */ \
-static int \
-equal_##conv_spec(val_type a, val_type b) { \
-    return val_test; \
-} \
-/* Runs vsscanf and bu_vsscanf, compares their return values and,
- * if they match, compares their conversion values. On any mismatch,
- * prints log and returns.
- */ \
-static void \
-test_sscanf_##conv_spec(const char *src, const char *fmt, ...) \
-{ \
-    va_list ap; \
-    int i, ret, bu_ret; \
-    val_type *values = NULL; \
-    val_type *bu_values = NULL; \
-    /* run system routine */ \
-    va_start(ap, fmt); \
-    ret = vsscanf(src, fmt, ap); \
-    va_end(ap); \
-    if (ret > 0) { \
-	/* Create value arrays. Return tells us how many values we converted, \
-	 * which will be less than or (hopefully) equal to the number of \
-	 * pointers in the va_list. \
-	 */ \
-	values = (val_type*)bu_malloc(ret * sizeof(val_type), "test_sscanf: value array"); \
-	bu_values = (val_type*)bu_malloc(ret * sizeof(val_type), "test_sscanf: bu_value array"); \
-	/* copy vsscanf pointer values to array */ \
-	va_start(ap, fmt); \
-	for (i = 0; i < ret; ++i) { \
-	    values[i] = *va_arg(ap, val_type*); \
-	} \
-	va_end(ap); \
-    } else { \
-	printf("Warning: no assignments done for %s.\n", fmt); \
-    } \
-    /* run bu routine */ \
-    va_start(ap, fmt); \
-    bu_ret = bu_vsscanf(src, fmt, ap); \
-    va_end(ap); \
-    /* return values equal? */ \
-    if (bu_ret != ret) { \
-	printf("[FAIL] sscanf returned %d but bu_sscanf returned %d\n", \
-		ret, bu_ret); \
-	return; \
-    } \
-    /* conversion values equal? */ \
-    if (values != NULL && bu_values != NULL) { \
-	/* copy bu_vsscanf pointer values to array */ \
-	va_start(ap, fmt); \
-	for (i = 0; i < bu_ret; ++i) { \
-	    bu_values[i] = *va_arg(ap, val_type*); \
-	} \
-	va_end(ap); \
-	/* compare vsscanf and bu_vsscanf values */ \
-	for (i = 0; i < ret; ++i) { \
-	    if (!equal_##conv_spec(values[i], bu_values[i])) { \
-		printf("[FAIL] conversion value mismatch. " \
-			"(sscanf) %" #conv_spec "!= %" #conv_spec " (bu_sscanf)\n", \
-			values[i], bu_values[i]); \
-		break; \
-	    } \
-	} \
-	bu_free(values, "test_sscanf: value array\n"); \
-	values = NULL; \
-	bu_free(bu_values, "test_sscanf: bu_value array\n"); \
-	bu_values = NULL; \
-    } \
-}
-#else
-#define TEST_SSCANF(conv_spec, val_type, val_test) /* nop */
-#endif
+enum {
+    INT, UINT, SHORT, USHORT, LONG, ULONG,
+    FLOAT, DOUBLE, LDOUBLE
+};
 
-/* string test routine */
-#ifdef HAVE_VSSCANF
 static void
-test_sscanf_s(const char *src, const char *fmt, ...)
-{
-    va_list ap;
-    int i, ret, bu_ret;
-    char **values = NULL;
-    char **bu_values = NULL;
+test_sscanf(int type, const char *src, const char *fmt) {
+    int ret, bu_ret;
+    void *val, *bu_val;
 
-    /* run system routine */
-    va_start(ap, fmt);
-    ret = vsscanf(src, fmt, ap);
-    va_end(ap);
+    val = bu_val = NULL;
 
-    if (ret > 0) {
-	/* Create string arrays. Copy vsscanf pointer values to array. */
-	values = (char**)bu_malloc(ret * sizeof(char*), "test_sscanf: value array");
-	bu_values = (char**)bu_malloc(ret * sizeof(char*), "test_sscanf: value array");
+    printf("(%s, %s)\n", src, fmt);
 
-	va_start(ap, fmt);
-	for (i = 0; i < ret; ++i) {
-	    values[i] = (char*)bu_malloc(STR_SIZE * sizeof(char),
-		    "test_sscanf: value array");
+    /* call sscanf and bu_sscanf with appropriately cast pointers */
+#define SSCANF_TYPE(type) \
+    val = bu_malloc(sizeof(type), "test_sscanf val"); \
+    bu_val = bu_malloc(sizeof(type), "test_sscanf bu_val"); \
+    ret = sscanf(src, fmt, (type*)val); \
+    bu_ret = bu_sscanf(src, fmt, (type*)bu_val);
 
-	    bu_values[i] = (char*)bu_malloc(STR_SIZE * sizeof(char),
-		    "test_sscanf: bu_value array");
-
-	    strcpy(values[i], va_arg(ap, char*));
-	}
-	va_end(ap);
-    } else {
-	printf("Warning: no assignments done for %s.\n", fmt);
+    switch (type) {
+    case INT:
+	SSCANF_TYPE(int);
+	break;
+    case UINT:
+	SSCANF_TYPE(unsigned);
+	break;
+    case SHORT:
+	SSCANF_TYPE(short);
+	break;
+    case USHORT:
+	SSCANF_TYPE(unsigned short);
+	break;
+    case LONG:
+	SSCANF_TYPE(long);
+	break;
+    case ULONG:
+	SSCANF_TYPE(unsigned long);
+	break;
+    case FLOAT:
+	SSCANF_TYPE(float);
+	break;
+    case DOUBLE:
+	SSCANF_TYPE(double);
+	break;
+    case LDOUBLE:
+	SSCANF_TYPE(long double);
+	break;
     }
-    /* run bu routine */
-    va_start(ap, fmt);
-    bu_ret = bu_vsscanf(src, fmt, ap);
-    va_end(ap);
+
+    if (ret != 1) {
+	printf("\tWarning: no assignment done.\n");
+    }
 
     /* return values equal? */
     if (bu_ret != ret) {
-	printf("[FAIL] sscanf returned %d but bu_sscanf returned %d\n",
+	printf("\t[FAIL] sscanf returned %d but bu_sscanf returned %d.\n",
 		ret, bu_ret);
-	printf("\tSource was \"%s\"\n", src);
-	printf("\tFormat was \"%s\"\n", fmt);
+	return;
+    }
+
+
+#define CHECK_INT(type, conv_spec) \
+    if (*(type*)val != *(type*)bu_val) { \
+	printf("\t[FAIL] conversion value mismatch.\n" \
+		"\t(sscanf) %" # conv_spec " != %" # conv_spec " (bu_sscanf).\n", \
+		*(type*)val, *(type*)bu_val); \
+    }
+
+#define CHECK_FLOAT(type, conv_spec) \
+    if (!NEAR_EQUAL(*(type*)val, *(type*)bu_val, FLOAT_TOL)) { \
+	printf("\t[FAIL] conversion value mismatch.\n" \
+		"\t(sscanf) %" # conv_spec " != %" # conv_spec " (bu_sscanf).\n", \
+		*(type*)val, *(type*)bu_val); \
+    }
+
+    /* conversion values equal? */
+    if (val != NULL && bu_val != NULL) {
+
+	switch (type) {
+	case INT:
+	    CHECK_INT(int, d);
+	    break;
+	case UINT:
+	    CHECK_INT(unsigned, u);
+	    break;
+	case SHORT:
+	    CHECK_INT(short, hd);
+	    break;
+	case USHORT:
+	    CHECK_INT(unsigned short, hu);
+	    break;
+	case LONG:
+	    CHECK_INT(long, ld);
+	    break;
+	case ULONG:
+	    CHECK_INT(unsigned long, lu);
+	    break;
+	case FLOAT:
+	    CHECK_FLOAT(float, e);
+	    break;
+	case DOUBLE:
+	    CHECK_FLOAT(double, le);
+	    break;
+	case LDOUBLE:
+	    CHECK_FLOAT(long double, Le);
+	break;
+	}
+	bu_free(val, "test_sscanf val");
+	val = NULL;
+	bu_free(bu_val, "test_sscanf bu_val");
+	bu_val = NULL;
+    }
+} /* test_sscanf */
+
+/* string test routine */
+static void
+test_sscanf_s(const char *src, const char *fmt)
+{
+    int ret, bu_ret;
+    char dest[STR_SIZE], bu_dest[STR_SIZE];
+
+    printf("(%s, %s)\n", src, fmt);
+
+    ret = sscanf(src, fmt, dest);
+    bu_ret = bu_sscanf(src, fmt, bu_dest);
+
+    if (ret != 1) {
+	printf("\tWarning: no assignments done.\n");
+    }
+
+    /* return values equal? */
+    if (bu_ret != ret) {
+	printf("\t[FAIL] sscanf returned %d but bu_sscanf returned %d.\n",
+		ret, bu_ret);
 	return;
     }
 
     /* conversion values equal? */
-    if (values != NULL && bu_values != NULL) {
-
-	/* copy bu_vsscanf pointer values to array */
-	va_start(ap, fmt);
-	for (i = 0; i < bu_ret; ++i) {
-	    strcpy(bu_values[i], va_arg(ap, char*));
-	}
-	va_end(ap);
-
-	/* compare vsscanf and bu_vsscanf values */
-	for (i = 0; i < ret; ++i) {
-	    if (!BU_STR_EQUAL(values[i], bu_values[i])) {
-		printf("[FAIL] conversion value mismatch. "
-			"(sscanf) %s != %s (bu_sscanf)\n",
-			values[i], bu_values[i]);
-		printf("\tSource was \"%s\"\n", src);
-		printf("\tFormat was \"%s\"\n", fmt);
-		break;
-	    }
-	}
-	bu_free_array(ret, values, "test_sscanf: values\n");
-	bu_free_array(ret, bu_values, "test_sscanf: bu_values\n");
-	bu_free(values, "test_sscanf: value array\n");
-	bu_free(bu_values, "test_sscanf: bu_value array\n");
-	values = bu_values = NULL;
+    if (!BU_STR_EQUAL(dest, bu_dest)) {
+	printf("\t[FAIL] conversion value mismatch.\n"
+		"\t(sscanf) %s != %s (bu_sscanf).\n",
+		dest, bu_dest);
     }
 }
-#else
-#define test_sscanf_s sscanf
-#endif
 
-/* integer test routines */
-TEST_SSCANF(d, int, (a == b))
-TEST_SSCANF(hd, short int, (a == b))
-TEST_SSCANF(ld, long int, (a == b))
-TEST_SSCANF(u, unsigned int, (a == b))
-TEST_SSCANF(hu, unsigned short int, (a == b))
-TEST_SSCANF(lu, unsigned long int, (a == b))
-TEST_SSCANF(c, char, (a == b))
 
-/* floating-point test routines */
-TEST_SSCANF(f, float, (NEAR_EQUAL(a, b, FLOAT_TOL)))
-TEST_SSCANF(lf, double, (NEAR_EQUAL(a, b, FLOAT_TOL)))
-TEST_SSCANF(Lf, long double, (NEAR_EQUAL(a, b, FLOAT_TOL)))
+/* The problem with the macros in limits.h is that they aren't necessarily
+ * printable. We could have something like:
+ *     #define INT_MIN (-INT_MAX - 1)
+ *
+ * So, here we define printable constants that should be safe on any
+ * platform.
+ */
+#define SMALL_INT -32767 /* -2^15 + 1 (not assuming 2's complement) */
+#define LARGE_INT +32767 /*  2^15 - 1 */
+#define LARGE_UINT 65535 /*  2^16 - 1 */
+
+#define SMALL_LONG -2147483647L /* -2^31 + 1 */
+#define LARGE_LONG +2147483647L /*  2^31 - 1 */
+#define LARGE_ULONG 4294967295U /*  2^32 - 1 */
 
 int
 main(int argc, char *argv[])
 {
-    int d_vals[3];
-    short hd_vals[3];
-    long ld_vals[3];
-    unsigned u_vals[2];
-    unsigned short hu_vals[2];
-    unsigned long lu_vals[2];
-    float f_vals[6];
-    double lf_vals[6];
-    long double Lf_vals[6];
-    char c_vals[3];
-    char s_vals[3][STR_SIZE];
-
-#ifndef HAVE_VSSCANF
-    printf("%s requires a system vsscanf for proper execution.\n", argv[0]);
-    return 0;
-#endif
-
     if (argc > 1) {
 	printf("Warning: %s takes no arguments.\n", argv[0]);
     }
@@ -322,40 +289,43 @@ main(int argc, char *argv[])
  */
 
     /* signed integer tests */
-    test_sscanf_d("0 +" bu_cpp_xstr(INT_MAX) " -" bu_cpp_xstr(INT_MIN),
-	    "%d %d %d", &d_vals[0], &d_vals[1], &d_vals[2]);
-    test_sscanf_hd("0 +" bu_cpp_xstr(SHRT_MAX) " -" bu_cpp_xstr(SHRT_MIN),
-	    "%hd %hd %hd", &hd_vals[0], &hd_vals[1], &hd_vals[2]);
-    test_sscanf_ld("0 +" bu_cpp_xstr(LONG_MAX) " -" bu_cpp_xstr(LONG_MIN),
-	    "%ld %ld %ld", &ld_vals[0], &ld_vals[1], &ld_vals[2]);
+    test_sscanf(INT, "0", "%d");
+    test_sscanf(INT, bu_cpp_xstr(LARGE_INT), "%d");
+    test_sscanf(INT, bu_cpp_xstr(SMALL_INT), "%d");
+
+    test_sscanf(SHORT, "0", "%hd");
+    test_sscanf(SHORT, bu_cpp_xstr(LARGE_INT), "%hd");
+    test_sscanf(SHORT, bu_cpp_xstr(SMALL_INT), "%hd");
+
+    test_sscanf(LONG, "0", "%ld");
+    test_sscanf(LONG, bu_cpp_xstr(LARGE_LONG), "%ld");
+    test_sscanf(LONG, bu_cpp_xstr(SMALL_LONG), "%ld");
 
     /* unsigned integer tests */
-    test_sscanf_u("0 " bu_cpp_xstr(UINT_MAX), "%u %u", &u_vals[0], &u_vals[1]);
-    test_sscanf_hu("0 " bu_cpp_xstr(USHRT_MAX), "%hu %hu", &hu_vals[0], &hu_vals[1]);
-    test_sscanf_lu("0 " bu_cpp_xstr(ULONG_MAX), "%lu %lu", &lu_vals[0], &lu_vals[1]);
+    test_sscanf(UINT, "0", "%u");
+    test_sscanf(UINT, bu_cpp_xstr(LARGE_UINT), "%u");
 
-    test_sscanf_lu("0 " bu_cpp_xstr(ULONG_MAX), "%lu %lu", &lu_vals[0], &lu_vals[1]);
+    test_sscanf(USHORT, "0", "%hu");
+    test_sscanf(USHORT, bu_cpp_xstr(LARGE_UINT), "%hu");
+
+    test_sscanf(ULONG, "0", "%lu");
+    test_sscanf(ULONG, bu_cpp_xstr(LARGE_ULONG), "%lu");
 
     /* float tests */
-    test_sscanf_f("0.0 .0123 .4567 8.91011 " bu_cpp_xstr(FLT_MIN) " "
-	    bu_cpp_xstr(FLT_MAX), "%f %f %f %f %f %f", &f_vals[0], &f_vals[1],
-	    &f_vals[2], &f_vals[3], &f_vals[4], &f_vals[5]);
+    test_sscanf(FLOAT, "0.0F", "%f");
+    test_sscanf(FLOAT, bu_cpp_xstr(FLT_MAX), "%f");
+    test_sscanf(FLOAT, bu_cpp_xstr(FLT_MIN), "%f");
 
-    test_sscanf_lf("0.0 .0123 .4567 8.91011 " bu_cpp_xstr(DBL_MIN) " "
-	    bu_cpp_xstr(DBL_MAX), "%lf %lf %lf %lf %lf %lf", &lf_vals[0],
-	    &lf_vals[1], &lf_vals[2], &lf_vals[3], &lf_vals[4], &lf_vals[5]);
+    test_sscanf(DOUBLE, "0.0", "%lf");
+    test_sscanf(DOUBLE, bu_cpp_xstr(DBL_MAX), "%lf");
+    test_sscanf(DOUBLE, bu_cpp_xstr(DBL_MIN), "%lf");
 
-    test_sscanf_Lf("0.0 .0123 .4567 8.91011 " bu_cpp_xstr(LDBL_MIN) " "
-	    bu_cpp_xstr(LDBL_MAX), "%Lf %Lf %Lf %Lf %Lf %Lf", &Lf_vals[0],
-	    &Lf_vals[1], &Lf_vals[2], &Lf_vals[3], &Lf_vals[4], &Lf_vals[5]);
+    test_sscanf(LDOUBLE, "0.0L", "%Lf");
+    test_sscanf(LDOUBLE, bu_cpp_xstr(LDBL_MAX), "%Lf");
+    test_sscanf(LDOUBLE, bu_cpp_xstr(LDBL_MIN), "%Lf");
 
     /* string tests */
-    test_sscanf_s(" aBc  DeF   gHi\t", "%s %s %s",
-	    s_vals[0], s_vals[1], s_vals[2]);
-
-    test_sscanf_c("a b c", "%c %c %c",
-	    &c_vals[0], &c_vals[1], &c_vals[2]);
-
+    test_sscanf_s(" aBc \t", "%s");
 
     printf("bu_sscanf: testing complete\n");
     return 0;
