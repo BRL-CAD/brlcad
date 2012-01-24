@@ -258,7 +258,7 @@ test_sscanf_s(const char *src, const char *fmt, ...)
     }
 }
 
-/* simple test routines */
+/* integer test routines */
 TEST_SSCANF(d, int, (a == b))
 TEST_SSCANF(hd, short int, (a == b))
 TEST_SSCANF(ld, long int, (a == b))
@@ -266,7 +266,11 @@ TEST_SSCANF(u, unsigned int, (a == b))
 TEST_SSCANF(hu, unsigned short int, (a == b))
 TEST_SSCANF(lu, unsigned long int, (a == b))
 TEST_SSCANF(c, char, (a == b))
+
+/* floating-point test routines */
+TEST_SSCANF(f, float, (NEAR_EQUAL(a, b, FLOAT_TOL)))
 TEST_SSCANF(lf, double, (NEAR_EQUAL(a, b, FLOAT_TOL)))
+TEST_SSCANF(Lf, long double, (NEAR_EQUAL(a, b, FLOAT_TOL)))
 
 int
 main(int argc, char *argv[])
@@ -277,8 +281,10 @@ main(int argc, char *argv[])
     unsigned u_vals[2];
     unsigned short hu_vals[2];
     unsigned long lu_vals[2];
+    float f_vals[6];
+    double lf_vals[6];
+    long double Lf_vals[6];
     char c_vals[3];
-    double lf_vals[3];
     char s_vals[3][STR_SIZE];
 
     if (argc > 1) {
@@ -302,30 +308,40 @@ main(int argc, char *argv[])
  *
  */
 
-    /* integer tests */
+    /* signed integer tests */
     test_sscanf_d("0 +" bu_cpp_xstr(INT_MAX) " -" bu_cpp_xstr(INT_MIN),
 	    "%d %d %d", &d_vals[0], &d_vals[1], &d_vals[2]);
-
     test_sscanf_hd("0 +" bu_cpp_xstr(SHRT_MAX) " -" bu_cpp_xstr(SHRT_MIN),
 	    "%hd %hd %hd", &hd_vals[0], &hd_vals[1], &hd_vals[2]);
-
     test_sscanf_ld("0 +" bu_cpp_xstr(LONG_MAX) " -" bu_cpp_xstr(LONG_MIN),
 	    "%ld %ld %ld", &ld_vals[0], &ld_vals[1], &ld_vals[2]);
 
+    /* unsigned integer tests */
     test_sscanf_u("0 " bu_cpp_xstr(UINT_MAX), "%u %u", &u_vals[0], &u_vals[1]);
     test_sscanf_hu("0 " bu_cpp_xstr(USHRT_MAX), "%hu %hu", &hu_vals[0], &hu_vals[1]);
     test_sscanf_lu("0 " bu_cpp_xstr(ULONG_MAX), "%lu %lu", &lu_vals[0], &lu_vals[1]);
 
-    test_sscanf_c("a b c", "%c %c %c",
-	    &c_vals[0], &c_vals[1], &c_vals[2]);
+    test_sscanf_lu("0 " bu_cpp_xstr(ULONG_MAX), "%lu %lu", &lu_vals[0], &lu_vals[1]);
 
     /* float tests */
-    test_sscanf_lf(".0123 .4567 8.91011", "%lf %lf %lf",
-	    &lf_vals[0], &lf_vals[1], &lf_vals[2]);
+    test_sscanf_f("0.0 .0123 .4567 8.91011 " bu_cpp_xstr(FLT_MIN) " "
+	    bu_cpp_xstr(FLT_MAX), "%f %f %f %f %f %f", &f_vals[0], &f_vals[1],
+	    &f_vals[2], &f_vals[3], &f_vals[4], &f_vals[5]);
+
+    test_sscanf_lf("0.0 .0123 .4567 8.91011 " bu_cpp_xstr(DBL_MIN) " "
+	    bu_cpp_xstr(DBL_MAX), "%lf %lf %lf %lf %lf %lf", &lf_vals[0],
+	    &lf_vals[1], &lf_vals[2], &lf_vals[3], &lf_vals[4], &lf_vals[5]);
+
+    test_sscanf_Lf("0.0 .0123 .4567 8.91011 " bu_cpp_xstr(LDBL_MIN) " "
+	    bu_cpp_xstr(LDBL_MAX), "%Lf %Lf %Lf %Lf %Lf %Lf", &Lf_vals[0],
+	    &Lf_vals[1], &Lf_vals[2], &Lf_vals[3], &Lf_vals[4], &Lf_vals[5]);
 
     /* string tests */
     test_sscanf_s(" aBc  DeF   gHi\t", "%s %s %s",
 	    s_vals[0], s_vals[1], s_vals[2]);
+
+    test_sscanf_c("a b c", "%c %c %c",
+	    &c_vals[0], &c_vals[1], &c_vals[2]);
 
 
     printf("bu_sscanf: testing complete\n");
