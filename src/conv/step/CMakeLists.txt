@@ -330,7 +330,7 @@ set(stepg_HDRS
 	DefinitionalRepresentation.h
 	DerivedUnit.h
 	DerivedUnitElement.h
-	DesignContext.cpp
+	DesignContext.h
 	DimensionalExponents.h
 	Direction.h
 	Edge.h
