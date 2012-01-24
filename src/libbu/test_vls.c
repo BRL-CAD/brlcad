@@ -184,10 +184,7 @@ main(int ac, char *av[])
     fails += test_vls("%f %F", 1.23, -3.21);
 
     /* from "two-character length modifiers" */
-    /* the last field ('%Lu') should result in zero because the number
-       is a negative float and it is converted to a an unsigned int
-       (it shouldn't be used with an integer) */
-    fails += test_vls("%ld %lld %Lu", 123, -123, (unsigned int)-321.0);
+    fails += test_vls("%ld %lld", 123, -123);
 
     /* ======================================================== */
     /* EXPECTED FAILURES ONLY BELOW HERE                           */
