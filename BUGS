@@ -15,6 +15,14 @@ on-going issues.
 Recent Bugs
 -----------
 
+* big-endian bug writing out ebm and dsp objects due to the automatic
+  bu_structparse conversion of the 64-bit size_t struct members into
+  32-bit serialized types.  structparse export assumes a size match.
+  this means any ebm/dsp written out on a big endian since bug was
+  introduced (2010-12) will be probably zero-dimensioned (corrupt).
+  repeatable via regress-solids on 64-bit big-endian system.
+  encountered on big endian fc16 system (gcc110, power7).
+
 * TIE seems to be corrupting the application structure during shot().
   see m1151 with ambient occlusion patch (butler).  may also be
   ignoring the onehit flag and returning a hit for segments behind the

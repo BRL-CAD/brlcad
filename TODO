@@ -18,8 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* regress-solids is failing (ebm/dsp import/export failures), fix.
-  encountered on gcc110 (power7, F16) recently, seems to work on RHEL.
+* fix big-endian ebm/dsp bug, review all '%d' callers to
+  bu_struct_export() looking for size_t mismatches.
 
 * test nirt template file loading
 
