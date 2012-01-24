@@ -13,7 +13,7 @@ changes made.  See document footer for additional details.
 --- 2012-01-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
-* improved tab-completion behavior in mged - Sean Morrison
+* improved tab-completion behavior for mged and archer - Sean Morrison
 * fixed formatting for mged analyze (for arbs) - Tom Browder
 * upgraded libpng to 1.5.7 - Cliff Yapp
 * fixed rtweight to handle incorrect lines - Tom Browder
