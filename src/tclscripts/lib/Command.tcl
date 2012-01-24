@@ -1157,7 +1157,9 @@
     set results [tab_expansion $line]
 
     set expansions [lindex $results 1]
-    if { [llength $expansions] > 1 } {
+    set numExpansions [llength $expansions]
+
+    if { $numExpansions > 1 } {
 	# show the possible matches
 	$w delete {insert linestart} {end-2c}
 	$w insert insert "\n${expansions}\n"
@@ -1168,6 +1170,10 @@
     $w delete promptEnd {end - 2c}
     $w mark set insert promptEnd
     $w insert insert [lindex $results 0]
+    if { $numExpansions == 1 } {
+	# only one match remaining, pad space so we can keep going
+	$w insert insert " "
+    }
     $w see insert
 }
 
