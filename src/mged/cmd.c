@@ -1171,14 +1171,19 @@ cmdline(struct bu_vls *vp, int record)
 	    /* First check to see if it's a secret message. */
 
 	    if ((cp = strstr(result, MORE_ARGS_STR)) != NULL) {
+		bu_vls_trunc(&mged_prompt, 0);
+
 		if (cp == result) {
-		    bu_vls_trunc(&mged_prompt, 0);
 		    bu_vls_printf(&mged_prompt, "\r%s",
 				  result+sizeof(MORE_ARGS_STR)-1);
 		} else {
+		    struct bu_vls buf = BU_VLS_INIT_ZERO;
+
 		    len = cp - result;
-		    bu_log("%*s%s", len, result, result[len-1] == '\n' ? "" : "\n");
-		    bu_vls_trunc(&mged_prompt, 0);
+		    bu_vls_strncpy(&buf, result, len);
+		    bu_log("%s%s", bu_vls_addr(&buf), result[len-1] == '\n' ? "" : "\n");
+		    bu_vls_free(&buf);
+
 		    bu_vls_printf(&mged_prompt, "\r%s",
 				  result+sizeof(MORE_ARGS_STR)-1+len);
 		}
