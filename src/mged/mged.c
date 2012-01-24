@@ -569,7 +569,7 @@ static void
 mged_process_char(char ch)
 {
     struct bu_vls *vp = (struct bu_vls *)NULL;
-    struct bu_vls temp;
+    struct bu_vls temp = BU_VLS_INIT_ZERO;
     static int escaped = 0;
     static int bracketed = 0;
     static int tilded = 0;
@@ -717,7 +717,6 @@ mged_process_char(char ch)
 		bu_log("\b \b");
 		bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1);
 	    } else {
-		bu_vls_init(&temp);
 		bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index);
 		bu_vls_trunc(&input_str, input_str_index-1);
 		bu_log("\b%V ", &temp);
@@ -766,14 +765,18 @@ mged_process_char(char ch)
 	    break;
 	case CTRL_U:                   /* Delete whole line */
 	    pr_prompt(interactive);
-	    bu_log("%*s", bu_vls_strlen(&input_str), SPACES);
+	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&input_str));
+	    bu_log("%V", &temp);
+	    bu_vls_free(&temp);
 	    pr_prompt(interactive);
 	    bu_vls_trunc(&input_str, 0);
 	    input_str_index = 0;
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_K:                    /* Delete to end of line */
-	    bu_log("%*s", bu_vls_strlen(&input_str)-input_str_index, SPACES);
+	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&input_str)-input_str_index);
+	    bu_log("%V", &temp);
+	    bu_vls_free(&temp);
 	    bu_vls_trunc(&input_str, input_str_index);
 	    pr_prompt(interactive);
 	    bu_log("%V", &input_str);
@@ -821,7 +824,8 @@ mged_process_char(char ch)
 	    bu_vls_addr(&input_str)[input_str_index] =
 		bu_vls_addr(&input_str)[input_str_index - 1];
 	    bu_vls_addr(&input_str)[input_str_index - 1] = ch;
-	    bu_log("\b%*s", 2, bu_vls_addr(&input_str)+input_str_index-1);
+	    bu_log("\b");
+	    bu_log("%c%c", bu_vls_addr(&input_str)+input_str_index-1, bu_vls_addr(&input_str)+input_str_index);
 	    ++input_str_index;
 	    escaped = bracketed = 0;
 	    break;
@@ -858,8 +862,12 @@ mged_process_char(char ch)
 		    }
 		}
 	    }
+
 	    pr_prompt(interactive);
-	    bu_log("%*s", bu_vls_strlen(&input_str), SPACES);
+	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&input_str));
+	    bu_log("%V", &temp);
+	    bu_vls_free(&temp);
+
 	    pr_prompt(interactive);
 	    bu_vls_trunc(&input_str, 0);
 	    bu_vls_vlscat(&input_str, vp);
@@ -874,6 +882,7 @@ mged_process_char(char ch)
 		char *start;
 		char *curr;
 		int len;
+		struct bu_vls temp2 = BU_VLS_INIT_ZERO;
 
 		start = bu_vls_addr(&input_str);
 		curr = start + input_str_index - 1;
@@ -886,8 +895,7 @@ mged_process_char(char ch)
 		while (curr > start && *curr != ' ')
 		    --curr;
 
-		bu_vls_init(&temp);
-		bu_vls_strcat(&temp, start+input_str_index);
+		bu_vls_strcpy(&temp, start+input_str_index);
 
 		if (curr == start)
 		    input_str_index = 0;
@@ -898,7 +906,11 @@ mged_process_char(char ch)
 		bu_vls_trunc(&input_str, input_str_index);
 		pr_prompt(interactive);
 		bu_log("%V%V", &input_str, &temp);
-		bu_log("%*s", len - input_str_index, SPACES);
+
+		bu_vls_strncpy(&temp2, SPACES, len - input_str_index);
+		bu_log("%V", &temp2);
+		bu_vls_free(&temp2);
+
 		pr_prompt(interactive);
 		bu_log("%V", &input_str);
 		bu_vls_vlscat(&input_str, &temp);
@@ -913,6 +925,7 @@ mged_process_char(char ch)
 		char *start;
 		char *curr;
 		int i;
+		struct bu_vls temp2 = BU_VLS_INIT_ZERO;
 
 		start = bu_vls_addr(&input_str);
 		curr = start + input_str_index;
@@ -931,7 +944,11 @@ mged_process_char(char ch)
 		bu_vls_trunc(&input_str, input_str_index);
 		pr_prompt(interactive);
 		bu_log("%V%V", &input_str, &temp);
-		bu_log("%*s", i - input_str_index, SPACES);
+
+		bu_vls_strncpy(&temp2, SPACES, i - input_str_index);
+		bu_log("%V", &temp2);
+		bu_vls_free(&temp2);
+
 		pr_prompt(interactive);
 		bu_log("%V", &input_str);
 		bu_vls_vlscat(&input_str, &temp);
