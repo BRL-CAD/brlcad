@@ -139,8 +139,8 @@ inputHandler(ClientData clientData, int UNUSED(mask))
 HIDDEN void
 processChar(char ch)
 {
-    struct bu_vls *vp;
-    struct bu_vls temp;
+    struct bu_vls *vp = NULL;
+    struct bu_vls temp = BU_VLS_INIT_ZERO;
     static int escaped = 0;
     static int bracketed = 0;
     static int freshline = 1;
@@ -213,8 +213,7 @@ processChar(char ch)
 		bu_log("\b \b");
 		bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1);
 	    } else {
-		bu_vls_init(&temp);
-		bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index);
+		bu_vls_strcpy(&temp, bu_vls_addr(&input_str)+input_str_index);
 		bu_vls_trunc(&input_str, input_str_index-1);
 		bu_log("\b%V ", &temp);
 		insert_prompt();
@@ -242,8 +241,7 @@ processChar(char ch)
 		insert_beep(); /* Beep if at end of input string */
 		break;
 	    }
-	    bu_vls_init(&temp);
-	    bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index+1);
+	    bu_vls_strcpy(&temp, bu_vls_addr(&input_str)+input_str_index+1);
 	    bu_vls_trunc(&input_str, input_str_index);
 	    bu_log("%V ", &temp);
 	    insert_prompt();
@@ -254,14 +252,18 @@ processChar(char ch)
 	    break;
 	case CTRL_U:                   /* Delete whole line */
 	    insert_prompt();
-	    bu_log("%*s", bu_vls_strlen(&input_str), SPACES);
+	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&input_str));
+	    bu_log("%V", &temp);
+	    bu_vls_free(&temp);
 	    insert_prompt();
 	    bu_vls_trunc(&input_str, 0);
 	    input_str_index = 0;
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_K:                    /* Delete to end of line */
-	    bu_log("%*s", bu_vls_strlen(&input_str)-input_str_index, SPACES);
+	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&input_str)-input_str_index);
+	    bu_log("%V", &temp);
+	    bu_vls_free(&temp);
 	    bu_vls_trunc(&input_str, input_str_index);
 	    insert_prompt();
 	    bu_log("%V", &input_str);
@@ -309,7 +311,8 @@ processChar(char ch)
 	    bu_vls_addr(&input_str)[input_str_index] =
 		bu_vls_addr(&input_str)[input_str_index - 1];
 	    bu_vls_addr(&input_str)[input_str_index - 1] = ch;
-	    bu_log("\b%*s", 2, bu_vls_addr(&input_str)+input_str_index-1);
+	    bu_log("\b");
+	    bu_log("%c%c", bu_vls_addr(&input_str)+input_str_index-1, bu_vls_addr(&input_str)+input_str_index);
 	    ++input_str_index;
 	    escaped = bracketed = 0;
 	    break;
@@ -347,7 +350,9 @@ processChar(char ch)
 		}
 	    }
 	    insert_prompt();
-	    bu_log("%*s", bu_vls_strlen(&input_str), SPACES);
+	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&input_str));
+	    bu_log("%V", &temp);
+	    bu_vls_free(&temp);
 	    insert_prompt();
 	    bu_vls_trunc(&input_str, 0);
 	    bu_vls_vlscat(&input_str, vp);
@@ -363,6 +368,7 @@ processChar(char ch)
 		char *start;
 		char *curr;
 		int len;
+		struct bu_vls temp2 = BU_VLS_INIT_ZERO;
 
 		start = bu_vls_addr(&input_str);
 		curr = start + input_str_index - 1;
@@ -375,7 +381,6 @@ processChar(char ch)
 		while (curr > start && *curr != ' ')
 		    --curr;
 
-		bu_vls_init(&temp);
 		bu_vls_strcat(&temp, start+input_str_index);
 
 		if (curr == start)
@@ -386,7 +391,12 @@ processChar(char ch)
 		len = bu_vls_strlen(&input_str);
 		bu_vls_trunc(&input_str, input_str_index);
 		insert_prompt();
-		bu_log("%V%V%*s", &input_str, &temp, len - input_str_index, SPACES);
+		bu_log("%V%V", &input_str, &temp);
+
+		bu_vls_strncpy(&temp2, SPACES, len - input_str_index);
+		bu_log("%V", &temp2);
+		bu_vls_free(&temp2);
+
 		insert_prompt();
 		bu_log("%V", &input_str);
 		bu_vls_vlscat(&input_str, &temp);
@@ -401,6 +411,7 @@ processChar(char ch)
 		char *start;
 		char *curr;
 		int i;
+		struct bu_vls temp2 = BU_VLS_INIT_ZERO;
 
 		start = bu_vls_addr(&input_str);
 		curr = start + input_str_index;
@@ -414,11 +425,15 @@ processChar(char ch)
 		    ++curr;
 
 		i = curr - start;
-		bu_vls_init(&temp);
-		bu_vls_strcat(&temp, curr);
+		bu_vls_strcpy(&temp, curr);
 		bu_vls_trunc(&input_str, input_str_index);
 		insert_prompt();
-		bu_log("%V%V%*s", &input_str, &temp, i - input_str_index, SPACES);
+		bu_log("%V%V", &input_str, &temp);
+
+		bu_vls_strncpy(&temp2, SPACES, i - input_str_index);
+		bu_log("%V", &temp2);
+		bu_vls_free(&temp2);
+
 		insert_prompt();
 		bu_log("%V", &input_str);
 		bu_vls_vlscat(&input_str, &temp);
@@ -446,8 +461,7 @@ processChar(char ch)
 		    ++curr;
 
 		input_str_index = curr - start;
-		bu_vls_init(&temp);
-		bu_vls_strcat(&temp, start+input_str_index);
+		bu_vls_strcpy(&temp, start+input_str_index);
 		bu_vls_trunc(&input_str, input_str_index);
 		insert_prompt();
 		bu_log("%V", &input_str);
@@ -480,8 +494,7 @@ processChar(char ch)
 		else
 		    input_str_index = curr - start + 1;
 
-		bu_vls_init(&temp);
-		bu_vls_strcat(&temp, start+input_str_index);
+		bu_vls_strcpy(&temp, start+input_str_index);
 		bu_vls_trunc(&input_str, input_str_index);
 		insert_prompt();
 		bu_log("%V", &input_str);
@@ -524,9 +537,8 @@ insert_char(char ch)
 	bu_vls_putc(&input_str, (int)ch);
 	++input_str_index;
     } else {
-	struct bu_vls temp;
+	struct bu_vls temp = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&temp);
 	bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index);
 	bu_vls_trunc(&input_str, input_str_index);
 	bu_log("%c%V", (int)ch, &temp);
