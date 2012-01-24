@@ -219,11 +219,11 @@ test_face_splits()
     {
 	struct face_s f;
 	int tri;
-#define ZORF(XVAL,ZVAL,LR) VSET(f.vert[0], 0,0,0); VSET(f.vert[1], 0,1,0); VSET(f.vert[2], XVAL,0,ZVAL); tri = find_tri(&LR, &f, &t); if(tri==-1) { count++; printf("\033[1;31mFAILURE\033[m\n"); } else printf("tri.fu: %x\n", l.faces[tri].foo);
-	ZORF(1,0,l);
-	ZORF(-1,0,l);
-	ZORF(0,-1,r);
-	ZORF(0,1,r);
+#define ZORF(XVAL,ZVAL,LR,FU) VSET(f.vert[0], 0,0,0); VSET(f.vert[1], 0,1,0); VSET(f.vert[2], XVAL,0,ZVAL); tri = find_tri(&LR, &f, &t); if(tri==-1 || l.faces[tri].foo != FU) { count++; printf("\033[1;31mFAILURE\033[m\n"); }
+	ZORF(1,0,l,INSIDE);
+	ZORF(-1,0,l,OUTSIDE);
+	ZORF(0,-1,r,OUTSIDE);
+	ZORF(0,1,r,INSIDE);
 #undef ZORF
     }
 
@@ -233,9 +233,11 @@ test_face_splits()
 int
 main(void)
 {
-    printf("RESULT: TRI INTERSECTION: %d failures\n", test_tri_intersections());
-    printf("RESULT: SINGL FACE SPLIT: %d failures\n", test_face_split_single());
-    printf("RESULT: FACE SPLITTING  : %d failures\n", test_face_splits());
+#define TRY(STR,FNC) { int rval = FNC(); printf("RESULT:%18s: \033[1;%dm%d\033[m failures\n", STR, rval==0?32:31, rval); }
+    TRY("TRI INTERSECTION", test_tri_intersections);
+    TRY("SINGLE FACE SPLIT", test_face_split_single);
+    TRY("FACE SPLITTING", test_face_splits);
+#undef TRY
     return 0;
 }
 
