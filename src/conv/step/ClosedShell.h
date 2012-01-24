@@ -42,6 +42,7 @@ public:
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual void Print(int level);
+	virtual void ReverseFaceSet();
 
 	//static methods
 	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);

@@ -66,6 +66,12 @@ ClosedShell::Print(int level) {
     TAB(level); std::cout << "Inherited Attributes:" << std::endl;
     ConnectedFaceSet::Print(level+1);
 }
+
+void
+ClosedShell::ReverseFaceSet() {
+    ConnectedFaceSet::ReverseFaceSet();
+}
+
 STEPEntity *
 ClosedShell::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
     Factory::OBJECTS::iterator i;

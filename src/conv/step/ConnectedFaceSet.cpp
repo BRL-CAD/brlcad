@@ -108,6 +108,14 @@ ConnectedFaceSet::Print(int level) {
     TopologicalRepresentationItem::Print(level+1);
 }
 
+void
+ConnectedFaceSet::ReverseFaceSet() {
+	LIST_OF_FACES::iterator i;
+	for(i=cfs_faces.begin(); i != cfs_faces.end(); ++i) {
+		(*i)->ReverseFace();
+	}
+}
+
 STEPEntity *
 ConnectedFaceSet::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
     Factory::OBJECTS::iterator i;
@@ -136,11 +144,14 @@ ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
     }
 
     LIST_OF_FACES::iterator i;
+    int facecnt = 0;
     for(i=cfs_faces.begin(); i != cfs_faces.end(); ++i) {
+    	//if (facecnt == 5)
 	if ( !(*i)->LoadONBrep(brep) ) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	    return false;
 	}
+	facecnt++;
     }
     return true;
 }
