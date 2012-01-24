@@ -460,7 +460,6 @@ Tcl/Tk files use the .tcl/.tk extensions.  POSIX Bourne-style shell
 scripts use the .sh extension.  Perl files use the .pl (program) or
 .pm (module) extensions.
 
-
 Source files go into the src/ directory on the top level, into a
 corresponding directory for the category of binary or library that it
 belongs to.  Documentation files go into the doc/ directory on the top
@@ -809,7 +808,7 @@ To add tests to the test suite look at regress/weight.sh for an mged
 command example and regress/vls.sh for a utility function example.
 Each test gets added to the automatic execution list by creating two
 target entries in the ./regress/CMakeLists.txt: one for running the
-test individually (e.g., make weight-regress) and one for running it
+test individually (e.g., make regress-weight) and one for running it
 with all the other tests (make regress).  Also added are the
 dependencies of the tests on binary executable rtweight and test_vls,
 respectively.  Note also that each added file in the regress directory
