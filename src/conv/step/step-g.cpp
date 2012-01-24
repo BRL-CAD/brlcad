@@ -97,8 +97,9 @@ main(int argc, char *argv[])
 
     /* check our inputs/outputs */
     if (bu_file_exists(output_file, NULL)) {
-	bu_exit(1, "ERROR: refusing to overwrite existing \"%s\" file", output_file);
+	bu_exit(1, "ERROR: refusing to overwrite existing output file:\"%s\". Please remove file or change output file name and try again.", output_file);
     }
+
     if (!bu_file_exists(argv[0], NULL) && !BU_STR_EQUAL(argv[0], "-")) {
 	bu_exit(2, "ERROR: unable to read input \"%s\" STEP file", argv[0]);
     }
