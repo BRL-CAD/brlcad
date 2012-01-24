@@ -220,7 +220,10 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    if (*val == '\0')
 		bu_vls_printf(&o_vls, " fmt r \"\\n\" ");
 	    else {
-		bu_vls_printf(&o_vls, " fmt r \"\\n%*s\" ", count, val);
+		struct bu_vls tmp = BU_VLS_INIT_ZERO;
+		bu_vls_strncpy(&tmp, val, count);
+		bu_vls_printf(&o_vls, " fmt r \"\\n%V\" ", &tmp);
+		bu_vls_free(&tmp);
 
 		if (count)
 		    val += count + 1;
