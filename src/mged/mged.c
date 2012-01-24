@@ -530,15 +530,12 @@ do_tab_expansion()
     Tcl_Obj *matches;
     int numExpansions=0;
     struct bu_vls tab_expansion = BU_VLS_INIT_ZERO;
-    struct bu_vls spaces = BU_VLS_INIT_ZERO;
 
     bu_vls_printf(&tab_expansion, "tab_expansion {%s}", bu_vls_addr(&input_str));
     ret = Tcl_Eval(INTERP, bu_vls_addr(&tab_expansion));
     bu_vls_free(&tab_expansion);
 
     if (ret == TCL_OK) {
-	size_t len;
-
         result = Tcl_GetObjResult(INTERP);
         Tcl_ListObjIndex(INTERP, result, 0, &newCommand);
         Tcl_ListObjIndex(INTERP, result, 1, &matches);
@@ -546,21 +543,10 @@ do_tab_expansion()
         if (numExpansions > 1) {
             /* show the possible matches */
             bu_log("\n%s\n", Tcl_GetString(matches));
-            pr_prompt(interactive);
         }
 
 	/* display the expanded line */
         pr_prompt(interactive);
-
-        /* first clear the current line */
-	len = bu_vls_strlen(&input_str);
-	if (len > 0) {
-	    bu_vls_strncat(&spaces, SPACES, len);
-	    bu_log("%V", &spaces);
-	}
-
-        pr_prompt(interactive);
-        bu_vls_trunc(&input_str, 0);
         input_str_index = 0;
         bu_vls_trunc(&input_str, 0);
         bu_vls_strcat(&input_str, Tcl_GetString(newCommand));
