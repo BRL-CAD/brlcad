@@ -1318,22 +1318,19 @@
     } else {
 	# command expansion
 	set cmd [lindex $line 0]
-	if { [string length $cmd] < 1 } {
-	    # just a Tab on an empty line, don't show all commands, we have "?" for that
+
+	# even if line is empty, return all registered commands.
+	set matches [lsearch -all -inline $cmdlist "${cmd}*"]
+	set numMatches [llength $matches]
+	if { $numMatches == 0  } {
+	    # no matches
 	    set newCommand $line
+	} elseif { $numMatches > 1 } {
+	    # get longest match
+	    set newCommand [get_longest_common_string $matches]
 	} else {
-	    set matches [lsearch -all -inline $cmdlist "${cmd}*"]
-	    set numMatches [llength $matches]
-	    if { $numMatches == 0  } {
-		# no matches
-		set newCommand $line
-	    } elseif { $numMatches > 1 } {
-		# get longest match
-		set newCommand [get_longest_common_string $matches]
-	    } else {
-		# just one match
-		set newCommand $matches
-	    }
+	    # just one match
+	    set newCommand $matches
 	}
     }
 
