@@ -30,6 +30,7 @@
 
 #include "vmath.h"
 #include "bn.h"
+#include "gcv.h"
 #include "soup.h"
 #include "tri_intersect.h"
 
