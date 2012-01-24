@@ -1,4 +1,4 @@
-/*                 FunctionallyDefinedTransformation.h
+/*                 ApplicationContext.h
  * BRL-CAD
  *
  * Copyright (c) 1994-2012 United States Government as represented by
@@ -17,40 +17,45 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step/FunctionallyDefinedTransformation.h
+/** @file step/ApplicationContext.h
  *
- * Class definition used to convert STEP "FunctionallyDefinedTransformation" to BRL-CAD BREP
+ * Class definition used to convert STEP "ApplicationContext" to BRL-CAD BREP
  * structures.
  *
  */
 
-#ifndef FUNCTIONALLYDEFINEDTRANSFORMATION_H_
-#define FUNCTIONALLYDEFINEDTRANSFORMATION_H_
+#ifndef APPLICATION_CONTEXT_H_
+#define APPLICATION_CONTEXT_H_
 
 #include "STEPEntity.h"
 
-#include "Transformation.h"
+#include "sdai.h"
 
-class FunctionallyDefinedTransformation : public Transformation {
+// forward declaration of class
+class ON_Brep;
+
+class ApplicationContext: virtual public STEPEntity {
 private:
-	static string entityname;
+    static string entityname;
 
 protected:
-	string name;
-	string description;
+    string application;
 
 public:
-	FunctionallyDefinedTransformation();
-	virtual ~FunctionallyDefinedTransformation();
-	FunctionallyDefinedTransformation(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
-	virtual void Print(int level);
+    ApplicationContext();
+    virtual ~ApplicationContext();
+    ApplicationContext(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    string ClassName();
+    string Application();
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SCLP23(Application_instance) *sse);
 };
 
-#endif /* FUNCTIONALLYDEFINEDTRANSFORMATION_H_ */
+#endif /* APPLICATION_CONTEXT_H_ */
 
 /*
  * Local Variables:

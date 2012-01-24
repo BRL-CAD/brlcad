@@ -1,4 +1,4 @@
-/*                 FunctionallyDefinedTransformation.cpp
+/*                 ProductContext.cpp
  * BRL-CAD
  *
  * Copyright (c) 1994-2012 United States Government as represented by
@@ -17,71 +17,80 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step/FunctionallyDefinedTransformation.cpp
+/** @file step/ProductContext.cpp
  *
- * Routines to convert STEP "FunctionallyDefinedTransformation" to BRL-CAD BREP
+ * Routines to convert STEP "ProductContext" to BRL-CAD BREP
  * structures.
  *
  */
-
 #include "STEPWrapper.h"
 #include "Factory.h"
 
-#include "FunctionallyDefinedTransformation.h"
+#include "ProductContext.h"
 
-#define CLASSNAME "FunctionallyDefinedTransformation"
-#define ENTITYNAME "Functionally_Defined_Transformation"
-string FunctionallyDefinedTransformation::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)FunctionallyDefinedTransformation::Create);
+#define CLASSNAME "ProductContext"
+#define ENTITYNAME "Product_Context"
+string ProductContext::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod) ProductContext::Create);
 
-FunctionallyDefinedTransformation::FunctionallyDefinedTransformation() {
+ProductContext::ProductContext()
+{
     step = NULL;
     id = 0;
+    discipline_type = "";
 }
 
-FunctionallyDefinedTransformation::FunctionallyDefinedTransformation(STEPWrapper *sw,int step_id) {
+ProductContext::ProductContext(STEPWrapper *sw, int step_id)
+{
     step = sw;
     id = step_id;
+    discipline_type = "";
 }
 
-FunctionallyDefinedTransformation::~FunctionallyDefinedTransformation() {
+ProductContext::~ProductContext()
+{
 }
 
-bool
-FunctionallyDefinedTransformation::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-
-    step=sw;
+bool ProductContext::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+{
+    step = sw;
     id = sse->STEPfile_id;
 
-	if ( !Transformation::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::Transformation." << std::endl;
-		return false;
-	}
+    if (!ApplicationContextElement::Load(step, sse)) {
+	std::cout << CLASSNAME << ":Error loading base class ::ApplicationContextElement." << std::endl;
+	return false;
+    }
 
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse,ENTITYNAME);
+    sse = step->getEntity(sse, ENTITYNAME);
 
-    name = step->getStringAttribute(sse,"name");
-	description = step->getStringAttribute(sse,"description");
+    discipline_type = step->getStringAttribute(sse, "discipline_type");
 
     return true;
 }
 
-void
-FunctionallyDefinedTransformation::Print(int level) {
-    TAB(level); std::cout << CLASSNAME << ":" << "(";
+void ProductContext::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-    TAB(level); std::cout << "Attributes:" << std::endl;
-    TAB(level+1); std::cout << "name:" << name << std::endl;
-	TAB(level+1); std::cout << "description:" << description << std::endl;
+    TAB(level);
+    std::cout << "Attributes:" << std::endl;
+    TAB(level+1);
+    std::cout << "discipline_type:" << discipline_type << std::endl;
+
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    ApplicationContextElement::Print(level + 1);
 }
 
 STEPEntity *
-FunctionallyDefinedTransformation::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+ProductContext::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+{
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-	FunctionallyDefinedTransformation *object = new FunctionallyDefinedTransformation(sw,sse->STEPfile_id);
+	ProductContext *object = new ProductContext(sw, sse->STEPfile_id);
 
 	Factory::AddObject(object);
 
@@ -96,6 +105,11 @@ FunctionallyDefinedTransformation::Create(STEPWrapper *sw, SCLP23(Application_in
     }
 }
 
+bool ProductContext::LoadONBrep(ON_Brep *brep)
+{
+    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
+    return false;
+}
 
 // Local Variables:
 // tab-width: 8

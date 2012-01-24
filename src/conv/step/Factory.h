@@ -66,6 +66,8 @@ private:
 	static STEPEntity *CreateCurveObject(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	static STEPEntity *CreateSurfaceObject(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	static STEPEntity *CreateNamedUnitObject(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	static STEPEntity *CreateShapeRepresentationRelationshipObject(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	static STEPEntity *CreateRepresentationContext(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 
 public:
 	static const char *factoryname;

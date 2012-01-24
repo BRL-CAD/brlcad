@@ -965,6 +965,11 @@ FaceSurface::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
+    if (reverse) {
+	ON_BrepFace *face = brep->Face(ON_id);
+	face->Reverse(1);
+	face->m_bRev = face->m_bRev ? false : true;
+    }
     return true;
 }
 
@@ -1195,9 +1200,10 @@ OrientedEdge::LoadONBrep(ON_Brep *brep)
     if (ON_id >= 0)
 	return true; //already loaded
 
-    if ((false) && (brep->m_E.Count() == 5)) {
-	std::cerr << "Debug:LoadONBrep for OrientedEdge:" << brep->m_E.Count() << std::endl;
-    }
+	//TODO: remove debugging code
+    //if ((false) && (brep->m_E.Count() == 5)) {
+	//std::cerr << "Debug:LoadONBrep for OrientedEdge:" << brep->m_E.Count() << std::endl;
+    //}
 
     if (!edge_start->LoadONBrep(brep)) {
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
@@ -1215,9 +1221,9 @@ OrientedEdge::LoadONBrep(ON_Brep *brep)
     ON_id = edge_element->GetONId();
 
     //TODO: remove debugging code
-    if ((false) && (ON_id == 31)) {
-	std::cerr << "Debug:LoadONBrep for OrientedEdge:" << ON_id << std::endl;
-    }
+    //if ((true) && (ON_id == 12)) {
+	//std::cerr << "Debug:LoadONBrep for OrientedEdge:" << ON_id << std::endl;
+    //}
     return true;
 }
 

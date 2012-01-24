@@ -32,6 +32,10 @@
 #include "VertexPoint.h"
 #include "SurfacePatch.h"
 #include "LocalUnits.h"
+#include "ProductDefinition.h"
+#include "ProductDefinitionContextAssociation.h"
+#include "ProductRelatedProductCategory.h"
+#include "ContextDependentShapeRepresentation.h"
 
 #include <cctype>
 #include <algorithm>
@@ -111,6 +115,71 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		bu_exit(1, "ERROR: failure loading advanced boundary representation from %s\n", stepfile.c_str());
 	    }
 	}
+#if 0
+	else if ((sse->STEPfile_id > 0) && (sse->IsA(config_control_designe_product_definition))) {
+	    ProductDefinition *pd = new ProductDefinition();
+
+	    if (!pd) {
+		bu_exit(1, "ERROR: unable to allocate a 'ProductDefinitionFormation' entity\n");
+	    }
+
+	    std::cerr << std::endl;
+	    std::cerr << "ProductDefinitionFormation [" << sse->STEPfile_id << "]:" << std::endl<< std::endl;
+	    if (pd->Load(this, sse)) {
+		pd->Print(0);
+		delete pd;
+	    }
+	}
+#ifdef AP203e2
+	else if ((sse->STEPfile_id > 0) && (sse->IsA(config_control_designe_product_definition_context_association))) {
+	    ProductDefinitionContextAssociation *pdca = new ProductDefinitionContextAssociation();
+
+	    if (!pdca) {
+		bu_exit(1, "ERROR: unable to allocate a 'ProductDefinitionContextAssociation' entity\n");
+	    }
+
+	    std::cerr << std::endl;
+	    std::cerr << "ProductDefinitionContextAssociation [" << sse->STEPfile_id << "]:" << std::endl<< std::endl;
+	    if (pdca->Load(this, sse)) {
+		pdca->Print(0);
+		delete pdca;
+	    }
+	}
+#endif
+#endif
+#if 0
+	// ContextDependentShapeRepresentation
+	else if ((sse->STEPfile_id > 0) && (sse->IsA(config_control_designe_context_dependent_shape_representation))) {
+	    ContextDependentShapeRepresentation *cdsr = new ContextDependentShapeRepresentation();
+	    if (!cdsr) {
+		bu_exit(1, "ERROR: unable to allocate a 'ContextDependentShapeRepresentation' entity\n");
+	    }
+
+	    std::cerr << std::endl << std::endl;
+	    //std::cerr << "ContextDependentShapeRepresentation [" << sse->STEPfile_id << "]:" << std::endl<< std::endl;
+	    if (cdsr->Load(this, sse)) {
+		LocalUnits::length = cdsr->GetLengthConversionFactor();
+		LocalUnits::planeangle = cdsr->GetPlaneAngleConversionFactor();
+		LocalUnits::solidangle = cdsr->GetSolidAngleConversionFactor();
+		cdsr->Print(0);
+		delete cdsr;
+	    }
+	}
+	else if ((sse->STEPfile_id > 0) && (sse->IsA(config_control_designe_product_related_product_category))) {
+	    ProductRelatedProductCategory *prpc = new ProductRelatedProductCategory();
+
+	    if (!prpc) {
+		bu_exit(1, "ERROR: unable to allocate a 'ProductRelatedProductCategory' entity\n");
+	    }
+
+	    std::cerr << std::endl;
+	    std::cerr << "ProductRelatedProductCategory [" << sse->STEPfile_id << "]:" << std::endl<< std::endl;
+	    if (prpc->Load(this, sse)) {
+		prpc->Print(0);
+		delete prpc;
+	    }
+	}
+#endif
     }
 
     return true;

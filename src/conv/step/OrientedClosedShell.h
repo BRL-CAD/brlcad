@@ -1,4 +1,4 @@
-/*                 FunctionallyDefinedTransformation.h
+/*                 OrientedClosedShell.h
  * BRL-CAD
  *
  * Copyright (c) 1994-2012 United States Government as represented by
@@ -17,40 +17,39 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step/FunctionallyDefinedTransformation.h
+/** @file OrientedClosedShell.h
  *
- * Class definition used to convert STEP "FunctionallyDefinedTransformation" to BRL-CAD BREP
+ * Class definition used to convert STEP "OrientedClosedShell" to BRL-CAD BREP
  * structures.
  *
  */
 
-#ifndef FUNCTIONALLYDEFINEDTRANSFORMATION_H_
-#define FUNCTIONALLYDEFINEDTRANSFORMATION_H_
+#ifndef ORIENTEDCLOSEDSHELL_H_
+#define ORIENTEDCLOSEDSHELL_H_
 
-#include "STEPEntity.h"
+#include "ClosedShell.h"
 
-#include "Transformation.h"
-
-class FunctionallyDefinedTransformation : public Transformation {
+class OrientedClosedShell: public ClosedShell {
 private:
-	static string entityname;
+    static string entityname;
 
 protected:
-	string name;
-	string description;
+    Boolean orientation;
+    ClosedShell *closed_shell_element;
 
 public:
-	FunctionallyDefinedTransformation();
-	virtual ~FunctionallyDefinedTransformation();
-	FunctionallyDefinedTransformation(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
-	virtual void Print(int level);
+    OrientedClosedShell();
+    virtual ~OrientedClosedShell();
+    OrientedClosedShell(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SCLP23(Application_instance) *sse);
 };
 
-#endif /* FUNCTIONALLYDEFINEDTRANSFORMATION_H_ */
+#endif /* ORIENTEDCLOSEDSHELL_H_ */
 
 /*
  * Local Variables:

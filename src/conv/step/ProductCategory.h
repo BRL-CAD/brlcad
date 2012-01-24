@@ -1,4 +1,4 @@
-/*                 FunctionallyDefinedTransformation.h
+/*                 ProductCategory.h
  * BRL-CAD
  *
  * Copyright (c) 1994-2012 United States Government as represented by
@@ -17,40 +17,47 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step/FunctionallyDefinedTransformation.h
+/** @file step/ProductCategory.h
  *
- * Class definition used to convert STEP "FunctionallyDefinedTransformation" to BRL-CAD BREP
+ * Class definition used to convert STEP "ProductCategory" to BRL-CAD BREP
  * structures.
  *
  */
 
-#ifndef FUNCTIONALLYDEFINEDTRANSFORMATION_H_
-#define FUNCTIONALLYDEFINEDTRANSFORMATION_H_
+#ifndef PRODUCT_CATEGORY_H_
+#define PRODUCT_CATEGORY_H_
 
 #include "STEPEntity.h"
 
-#include "Transformation.h"
+#include "sdai.h"
 
-class FunctionallyDefinedTransformation : public Transformation {
+// forward declaration of class
+class ON_Brep;
+
+class ProductCategory: virtual public STEPEntity {
 private:
-	static string entityname;
+    static string entityname;
 
 protected:
-	string name;
-	string description;
+    string name;
+    string description;
 
 public:
-	FunctionallyDefinedTransformation();
-	virtual ~FunctionallyDefinedTransformation();
-	FunctionallyDefinedTransformation(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
-	virtual void Print(int level);
+    ProductCategory();
+    virtual ~ProductCategory();
+    ProductCategory(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    string ClassName();
+    string Name();
+    string Description();
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SCLP23(Application_instance) *sse);
 };
 
-#endif /* FUNCTIONALLYDEFINEDTRANSFORMATION_H_ */
+#endif /* PRODUCT_CATEGORY_H_ */
 
 /*
  * Local Variables:

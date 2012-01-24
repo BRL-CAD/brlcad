@@ -1,4 +1,4 @@
-/*                 FunctionallyDefinedTransformation.h
+/*                 MechanicalContext.h
  * BRL-CAD
  *
  * Copyright (c) 1994-2012 United States Government as represented by
@@ -17,40 +17,36 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step/FunctionallyDefinedTransformation.h
+/** @file step/MechanicalContext.h
  *
- * Class definition used to convert STEP "FunctionallyDefinedTransformation" to BRL-CAD BREP
+ * Class definition used to convert STEP "MechanicalContext" to BRL-CAD BREP
  * structures.
  *
  */
 
-#ifndef FUNCTIONALLYDEFINEDTRANSFORMATION_H_
-#define FUNCTIONALLYDEFINEDTRANSFORMATION_H_
+#ifndef MECHANICAL_CONTEXT_H_
+#define MECHANICAL_CONTEXT_H_
 
-#include "STEPEntity.h"
+#include "ProductContext.h"
 
-#include "Transformation.h"
-
-class FunctionallyDefinedTransformation : public Transformation {
+class MechanicalContext: public ProductContext {
 private:
-	static string entityname;
-
-protected:
-	string name;
-	string description;
+    static string entityname;
 
 public:
-	FunctionallyDefinedTransformation();
-	virtual ~FunctionallyDefinedTransformation();
-	FunctionallyDefinedTransformation(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
-	virtual void Print(int level);
+    MechanicalContext();
+    virtual ~MechanicalContext();
+    MechanicalContext(STEPWrapper *sw, int step_id);
+    bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
+    virtual void Print(int level);
+    string DisciplineType();
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SCLP23(Application_instance) *sse);
 };
 
-#endif /* FUNCTIONALLYDEFINEDTRANSFORMATION_H_ */
+#endif /* MECHANICAL_CONTEXT_H_ */
 
 /*
  * Local Variables:

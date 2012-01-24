@@ -76,6 +76,8 @@ set(stepg_SOURCES
 	AmountOfSubstanceConversionBasedUnit.cpp
 	AmountOfSubstanceSiUnit.cpp
 	AmountOfSubstanceUnit.cpp
+	ApplicationContext.cpp
+	ApplicationContextElement.cpp
 	AreaContextDependentUnit.cpp
 	AreaConversionBasedUnit.cpp
 	AreaSiUnit.cpp
@@ -96,6 +98,7 @@ set(stepg_SOURCES
 	BoundedPCurve.cpp
 	BoundedSurface.cpp
 	BoundedSurfaceCurve.cpp
+	BrepWithVoids.cpp
 	CartesianPoint.cpp
 	CartesianTransformationOperator.cpp
 	CartesianTransformationOperator2D.cpp
@@ -108,6 +111,7 @@ set(stepg_SOURCES
 	Conic.cpp
 	ConicalSurface.cpp
 	ConnectedFaceSet.cpp
+	ContextDependentShapeRepresentation.cpp
 	ContextDependentUnit.cpp
 	ConversionBasedUnit.cpp
 	Curve.cpp
@@ -117,6 +121,7 @@ set(stepg_SOURCES
 	DefinitionalRepresentation.cpp
 	DerivedUnit.cpp
 	DerivedUnitElement.cpp
+	DesignContext.cpp
 	DimensionalExponents.cpp
 	Direction.cpp
 	Edge.cpp
@@ -141,6 +146,7 @@ set(stepg_SOURCES
 	GlobalUnitAssignedContext.cpp
 	Hyperbola.cpp
 	IntersectionCurve.cpp
+	ItemDefinedTransformation.cpp
 	LengthContextDependentUnit.cpp
 	LengthConversionBasedUnit.cpp
 	LengthMeasureWithUnit.cpp
@@ -160,12 +166,14 @@ set(stepg_SOURCES
 	MassUnit.cpp
 	MeasureValue.cpp
 	MeasureWithUnit.cpp
+	MechanicalContext.cpp
 	NamedUnit.cpp
 	OffsetCurve2D.cpp
 	OffsetCurve3D.cpp
 	OffsetSurface.cpp
 	OpenNurbsInterfaces.cpp
 	OrientedEdge.cpp
+	OrientedClosedShell.cpp
 	PCurve.cpp
 	PCurveOrSurface.cpp
 	Parabola.cpp
@@ -180,6 +188,18 @@ set(stepg_SOURCES
 	PlaneAngleUnit.cpp
 	Point.cpp
 	Polyline.cpp
+	Product.cpp
+	ProductCategory.cpp
+	ProductContext.cpp
+	ProductDefinition.cpp
+	ProductDefinitionContext.cpp
+	ProductDefinitionContextAssociation.cpp
+	ProductDefinitionContextRole.cpp
+	ProductDefinitionFormation.cpp
+	ProductDefinitionFormationWithSpecifiedSource.cpp
+	ProductDefinitionShape.cpp
+	ProductRelatedProductCategory.cpp
+	PropertyDefinition.cpp
 	PullbackCurve.cpp
 	QuasiUniformCurve.cpp
 	QuasiUniformSurface.cpp
@@ -202,10 +222,13 @@ set(stepg_SOURCES
 	Representation.cpp
 	RepresentationContext.cpp
 	RepresentationItem.cpp
+	RepresentationRelationship.cpp
+	RepresentationRelationshipWithTransformation.cpp
 	STEPEntity.cpp
 	STEPWrapper.cpp
 	SeamCurve.cpp
 	ShapeRepresentation.cpp
+	ShapeRepresentationRelationship.cpp
 	SiUnit.cpp
 	SolidAngleContextDependentUnit.cpp
 	SolidAngleConversionBasedUnit.cpp
@@ -230,6 +253,7 @@ set(stepg_SOURCES
 	TimeUnit.cpp
 	TopologicalRepresentationItem.cpp
 	ToroidalSurface.cpp
+	Transformation.cpp
 	TrimmedCurve.cpp
 	TrimmingSelect.cpp
 	UncertaintyMeasureWithUnit.cpp
@@ -261,6 +285,8 @@ set(stepg_HDRS
 	AmountOfSubstanceConversionBasedUnit.h
 	AmountOfSubstanceSiUnit.h
 	AmountOfSubstanceUnit.h
+	ApplicationContext.h
+	ApplicationContextElement.h
 	AreaContextDependentUnit.h
 	AreaConversionBasedUnit.h
 	AreaSiUnit.h
@@ -281,6 +307,7 @@ set(stepg_HDRS
 	BoundedPCurve.h
 	BoundedSurface.h
 	BoundedSurfaceCurve.h
+	BrepWithVoids.h
 	CartesianPoint.h
 	CartesianTransformationOperator.h
 	CartesianTransformationOperator2D.h
@@ -293,6 +320,7 @@ set(stepg_HDRS
 	Conic.h
 	ConicalSurface.h
 	ConnectedFaceSet.h
+	ContextDependentShapeRepresentation.h
 	ContextDependentUnit.h
 	ConversionBasedUnit.h
 	Curve.h
@@ -302,6 +330,7 @@ set(stepg_HDRS
 	DefinitionalRepresentation.h
 	DerivedUnit.h
 	DerivedUnitElement.h
+	DesignContext.cpp
 	DimensionalExponents.h
 	Direction.h
 	Edge.h
@@ -326,6 +355,7 @@ set(stepg_HDRS
 	GlobalUnitAssignedContext.h
 	Hyperbola.h
 	IntersectionCurve.h
+	ItemDefinedTransformation.h
 	LengthContextDependentUnit.h
 	LengthConversionBasedUnit.h
 	LengthMeasureWithUnit.h
@@ -345,11 +375,13 @@ set(stepg_HDRS
 	MassUnit.h
 	MeasureValue.h
 	MeasureWithUnit.h
+	MechanicalContext.h
 	NamedUnit.h
 	OffsetCurve2D.h
 	OffsetCurve3D.h
 	OffsetSurface.h
 	OrientedEdge.h
+	OrientedClosedShell.h
 	PCurve.h
 	PCurveOrSurface.h
 	Parabola.h
@@ -364,6 +396,18 @@ set(stepg_HDRS
 	PlaneAngleUnit.h
 	Point.h
 	Polyline.h
+	Product.h
+	ProductCategory.h
+	ProductContext.h
+	ProductDefinition.h
+	ProductDefinitionContext.h
+	ProductDefinitionContextAssociation.h
+	ProductDefinitionContextRole.h
+	ProductDefinitionFormation.h
+	ProductDefinitionFormationWithSpecifiedSource.h
+	ProductDefinitionShape.h
+	ProductRelatedProductCategory.h
+	PropertyDefinition.h
 	PullbackCurve.h
 	QuasiUniformCurve.h
 	QuasiUniformSurface.h
@@ -386,10 +430,13 @@ set(stepg_HDRS
 	Representation.h
 	RepresentationContext.h
 	RepresentationItem.h
+	RepresentationRelationship.h
+	RepresentationRelationshipWithTransformation.h
 	STEPEntity.h
 	STEPWrapper.h
 	SeamCurve.h
 	ShapeRepresentation.h
+	ShapeRepresentationRelationship.h
 	SiUnit.h
 	SolidAngleContextDependentUnit.h
 	SolidAngleConversionBasedUnit.h
@@ -414,6 +461,7 @@ set(stepg_HDRS
 	TimeUnit.h
 	TopologicalRepresentationItem.h
 	ToroidalSurface.h
+	Transformation.h
 	TrimmedCurve.h
 	TrimmingSelect.h
 	UncertaintyMeasureWithUnit.h

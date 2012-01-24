@@ -112,6 +112,12 @@ Factory::CreateObject(STEPWrapper *sw, SCLP23(Application_instance) *sse)
 	     ANDOR
 	     PATH))
 	    */
+	} else if (sse->IsA(config_control_designe_shape_representation_relationship)) {
+	    // not sure why complex here
+	    return (STEPEntity *)CreateShapeRepresentationRelationshipObject(sw,sse);
+	} else if (sse->IsA(config_control_designe_representation_context)) {
+	    // not sure why complex here
+	    return (STEPEntity *)CreateRepresentationContext(sw,sse);
 	} else {
 	    std::cerr << CLASSNAME << ": Error unknown complex type." << std::endl;
 	    return NULL;
@@ -621,6 +627,94 @@ Factory::CreateSurfaceObject(STEPWrapper *sw, SCLP23(Application_instance) *sse)
     return f(sw, sse);
 }
 
+
+STEPEntity *
+Factory::CreateShapeRepresentationRelationshipObject(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+{
+	string methodname = sse->EntityName();
+	FACTORYMAP &methodmap = GetMap();
+	FactoryMethod f = NULL;
+	FACTORYMAP::iterator i;
+
+	if (sse->IsComplex()) {
+		if (sse->IsA(config_control_designe_shape_representation_relationship)) {
+			if ((i = methodmap.find(methodname)) == methodmap.end()) {
+				std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+				return NULL;
+			}
+			f = (*i).second;
+		} else {
+			// not sure if/why this would happen so error for now
+			std::cerr << CLASSNAME << ": Tagged as complex config_control_designe_shape_representation_relationship but not complex." << std::endl;
+			return NULL;
+		}
+	} else {
+		//std::cout << "Getting Factory Method for:" << methodname << std::endl;
+		if ((i = methodmap.find(methodname)) == methodmap.end()) {
+			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			return NULL;
+		}
+		f = (*i).second;
+	}
+	return f(sw, sse); // dynamic_cast<STEPEntity *>(Curve::Create(sw,sse));
+}
+
+STEPEntity *
+Factory::CreateRepresentationContext(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+{
+	string methodname = sse->EntityName();
+	FACTORYMAP &methodmap = GetMap();
+	FactoryMethod f = NULL;
+	FACTORYMAP::iterator i;
+
+	if (sse->IsComplex()) {
+		if (sse->IsA(config_control_designe_geometric_representation_context)) {
+		    methodname = "Geometric_Representation_Context";
+		    //std::cout << "   Entity of type:rational_b_spline_surface_with_knots" << std::endl;
+		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
+			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			return NULL;
+		    }
+		    f = (*i).second;
+		} else if (sse->IsA(config_control_designe_global_uncertainty_assigned_context)) {
+		    methodname = "Global_Uncertainty_Assigned_Context";
+		    //std::cout << "   Entity of type:rational_b_spline_surface_with_knots" << std::endl;
+		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
+			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			return NULL;
+		    }
+		    f = (*i).second;
+		} else if (sse->IsA(config_control_designe_global_unit_assigned_context)) {
+		    methodname = "Global_Unit_Assigned_Context";
+		    //std::cout << "   Entity of type:rational_b_spline_surface_with_knots" << std::endl;
+		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
+			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			return NULL;
+		    }
+		    f = (*i).second;
+		} else if (sse->IsA(config_control_designe_parametric_representation_context)) {
+		    methodname = "Parametric_Representation_Context";
+		    //std::cout << "   Entity of type:rational_b_spline_surface_with_knots" << std::endl;
+		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
+			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			return NULL;
+		    }
+		    f = (*i).second;
+		} else {
+			// not sure if/why this would happen so error for now
+			std::cerr << CLASSNAME << ": Tagged as complex config_control_designe_shape_representation_relationship but not complex." << std::endl;
+			return NULL;
+		}
+	} else {
+		//std::cout << "Getting Factory Method for:" << methodname << std::endl;
+		if ((i = methodmap.find(methodname)) == methodmap.end()) {
+			std::cerr << "Factory Method not mapped: " << methodname << std::endl;
+			return NULL;
+		}
+		f = (*i).second;
+	}
+	return f(sw, sse); // dynamic_cast<STEPEntity *>(Curve::Create(sw,sse));
+}
 
 string Factory::RegisterClass(string methodname, FactoryMethod f)
 {
