@@ -39,10 +39,10 @@
 #  XSLTPROC_FOUND - true is xsltproc executable is found
 #  XSLTPROC_EXECUTABLE - the path to the xsltproc executable
 
-FIND_PROGRAM(XSLTPROC_EXECUTABLE xsltproc DOC "path to the xsltproc executable")
-MARK_AS_ADVANCED(XSLTPROC_EXECUTABLE)
+find_program(XSLTPROC_EXECUTABLE xsltproc DOC "path to the xsltproc executable")
+mark_as_advanced(XSLTPROC_EXECUTABLE)
 
-INCLUDE(FindPackageHandleStandardArgs)
+include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(XSLTPROC DEFAULT_MSG XSLTPROC_EXECUTABLE)
 
 # FindXSLTPROC.cmake ends here

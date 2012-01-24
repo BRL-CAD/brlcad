@@ -69,27 +69,27 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
-FIND_PROGRAM(LEMON_EXECUTABLE lemon DOC "path to the lemon executable")
-MARK_AS_ADVANCED(LEMON_EXECUTABLE)
+find_program(LEMON_EXECUTABLE lemon DOC "path to the lemon executable")
+mark_as_advanced(LEMON_EXECUTABLE)
 
-FIND_PROGRAM(MOVE_EXECUTABLE NAMES mv move DOC "path to the move executable")
-MARK_AS_ADVANCED(MOVE_EXECUTABLE)
+find_program(MOVE_EXECUTABLE NAMES mv move DOC "path to the move executable")
+mark_as_advanced(MOVE_EXECUTABLE)
 
-IF(LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
+if(LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
   get_filename_component(lemon_path ${LEMON_EXECUTABLE} PATH)
-  IF(lemon_path)
-    SET(LEMON_TEMPLATE "")
-    IF(EXISTS ${lemon_path}/lempar.c)
-      SET(LEMON_TEMPLATE "${lemon_path}/lempar.c")
-    ENDIF(EXISTS ${lemon_path}/lempar.c)
-    IF(EXISTS /usr/share/lemon/lempar.c)
-      SET(LEMON_TEMPLATE "/usr/share/lemon/lempar.c")
-    ENDIF(EXISTS /usr/share/lemon/lempar.c)
-  ENDIF(lemon_path)
-ENDIF(LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
-INCLUDE(FindPackageHandleStandardArgs)
+  if(lemon_path)
+    set(LEMON_TEMPLATE "")
+    if(EXISTS ${lemon_path}/lempar.c)
+      set(LEMON_TEMPLATE "${lemon_path}/lempar.c")
+    endif(EXISTS ${lemon_path}/lempar.c)
+    if(EXISTS /usr/share/lemon/lempar.c)
+      set(LEMON_TEMPLATE "/usr/share/lemon/lempar.c")
+    endif(EXISTS /usr/share/lemon/lempar.c)
+  endif(lemon_path)
+endif(LEMON_EXECUTABLE AND NOT LEMON_TEMPLATE)
+include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(LEMON DEFAULT_MSG LEMON_EXECUTABLE LEMON_TEMPLATE)
-MARK_AS_ADVANCED(LEMON_TEMPLATE)
+mark_as_advanced(LEMON_TEMPLATE)
 
 #============================================================
 # FindLEMON.cmake ends here

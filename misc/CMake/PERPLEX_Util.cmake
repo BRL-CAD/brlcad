@@ -63,51 +63,51 @@
 #============================================================
 # PERPLEX_TARGET (public macro)
 #============================================================
-MACRO(PERPLEX_TARGET Name Input OutputSrc OutputHeader)
-  IF(${ARGC} GREATER 4)
-    SET(Template ${ARGV4})
-  ELSE(${ARGC} GREATER 4)
-    SET(Template ${BRLCAD_SOURCE_DIR}/src/other/perplex/scanner_template.c)
-  ENDIF(${ARGC} GREATER 4)
+macro(PERPLEX_TARGET Name Input OutputSrc OutputHeader)
+  if(${ARGC} GREATER 4)
+    set(Template ${ARGV4})
+  else(${ARGC} GREATER 4)
+    set(Template ${BRLCAD_SOURCE_DIR}/src/other/perplex/scanner_template.c)
+  endif(${ARGC} GREATER 4)
 
   get_filename_component(OutputName ${OutputSrc} NAME)
-  SET(re2c_src "${CMAKE_CURRENT_BINARY_DIR}/${OutputName}.re")
+  set(re2c_src "${CMAKE_CURRENT_BINARY_DIR}/${OutputName}.re")
 
-  ADD_CUSTOM_COMMAND(
+  add_custom_command(
     OUTPUT ${re2c_src} ${OutputHeader}
     COMMAND ${PERPLEX_EXECUTABLE} -c -o ${re2c_src} -i ${OutputHeader} -t ${Template} ${Input}
     DEPENDS ${Input} ${Template} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "[PERPLEX][${Name}] Generating re2c input with ${PERPLEX_EXECUTABLE}"
     )
-  ADD_CUSTOM_COMMAND(
+  add_custom_command(
     OUTPUT ${OutputSrc}
     COMMAND ${RE2C_EXECUTABLE} -c -o ${OutputSrc} ${re2c_src}
     DEPENDS ${Input} ${re2c_src} ${OutputHeader} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
     )
-  SET(PERPLEX_${Name}_DEFINED TRUE)
-  SET(PERPLEX_${Name}_OUTPUTS ${OutputSrc})
-  SET(PERPLEX_${Name}_INPUT ${Input})
-ENDMACRO(PERPLEX_TARGET)
+  set(PERPLEX_${Name}_DEFINED TRUE)
+  set(PERPLEX_${Name}_OUTPUTS ${OutputSrc})
+  set(PERPLEX_${Name}_INPUT ${Input})
+endmacro(PERPLEX_TARGET)
 
 #============================================================
 # ADD_PERPLEX_LEMON_DEPENDENCY (public macro)
 #============================================================
-MACRO(ADD_PERPLEX_LEMON_DEPENDENCY PERPLEXTarget LemonTarget)
+macro(ADD_PERPLEX_LEMON_DEPENDENCY PERPLEXTarget LemonTarget)
 
-  IF(NOT PERPLEX_${PERPLEXTarget}_OUTPUTS)
-    MESSAGE(SEND_ERROR "PERPLEX target `${PERPLEXTarget}' does not exists.")
-  ENDIF()
+  if(NOT PERPLEX_${PERPLEXTarget}_OUTPUTS)
+    message(SEND_ERROR "PERPLEX target `${PERPLEXTarget}' does not exists.")
+  endif()
 
-  IF(NOT LEMON_${LemonTarget}_OUTPUT_HEADER)
-    MESSAGE(SEND_ERROR "Lemon target `${LemonTarget}' does not exists.")
-  ENDIF()
+  if(NOT LEMON_${LemonTarget}_OUTPUT_HEADER)
+    message(SEND_ERROR "Lemon target `${LemonTarget}' does not exists.")
+  endif()
 
-  SET_SOURCE_FILES_PROPERTIES(${PERPLEX_${PERPLEXTarget}_OUTPUTS}
+  set_source_files_properties(${PERPLEX_${PERPLEXTarget}_OUTPUTS}
     PROPERTIES OBJECT_DEPENDS ${LEMON_${LemonTarget}_OUTPUT_HEADER})
-ENDMACRO(ADD_PERPLEX_LEMON_DEPENDENCY)
+endmacro(ADD_PERPLEX_LEMON_DEPENDENCY)
 
 #============================================================
 # PERPLEX_Utils.cmake ends here

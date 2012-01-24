@@ -78,50 +78,50 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
-FIND_PROGRAM(LEX_EXECUTABLE flex DOC "path to the lex executable")
-IF(NOT LEX_EXECUTABLE)
-  FIND_PROGRAM(LEX_EXECUTABLE lex DOC "path to the lex executable")
-ENDIF(NOT LEX_EXECUTABLE)
-MARK_AS_ADVANCED(LEX_EXECUTABLE)
+find_program(LEX_EXECUTABLE flex DOC "path to the lex executable")
+if(NOT LEX_EXECUTABLE)
+  find_program(LEX_EXECUTABLE lex DOC "path to the lex executable")
+endif(NOT LEX_EXECUTABLE)
+mark_as_advanced(LEX_EXECUTABLE)
 
-FIND_LIBRARY(FL_LIBRARY NAMES fl
+find_library(FL_LIBRARY NAMES fl
   DOC "path to the fl library")
-MARK_AS_ADVANCED(FL_LIBRARY)
-SET(LEX_LIBRARIES ${FL_LIBRARY})
+mark_as_advanced(FL_LIBRARY)
+set(LEX_LIBRARIES ${FL_LIBRARY})
 
-IF(LEX_EXECUTABLE)
+if(LEX_EXECUTABLE)
 
   #============================================================
   # LEX_TARGET (public macro)
   #============================================================
   #
-  MACRO(LEX_TARGET Name Input Output)
-    SET(LEX_TARGET_usage "LEX_TARGET(<Name> <Input> <Output> [COMPILE_FLAGS <string>]")
-    IF(${ARGC} GREATER 3)
-      IF(${ARGC} EQUAL 5)
-        IF("${ARGV3}" STREQUAL "COMPILE_FLAGS")
-          SET(LEX_EXECUTABLE_opts  "${ARGV4}")
+  macro(LEX_TARGET Name Input Output)
+    set(LEX_TARGET_usage "LEX_TARGET(<Name> <Input> <Output> [COMPILE_FLAGS <string>]")
+    if(${ARGC} GREATER 3)
+      if(${ARGC} EQUAL 5)
+        if("${ARGV3}" STREQUAL "COMPILE_FLAGS")
+          set(LEX_EXECUTABLE_opts  "${ARGV4}")
           SEPARATE_ARGUMENTS(LEX_EXECUTABLE_opts)
-        ELSE()
-          MESSAGE(SEND_ERROR ${LEX_TARGET_usage})
-        ENDIF()
-      ELSE()
-        MESSAGE(SEND_ERROR ${LEX_TARGET_usage})
-      ENDIF()
-    ENDIF()
+        else()
+          message(SEND_ERROR ${LEX_TARGET_usage})
+        endif()
+      else()
+        message(SEND_ERROR ${LEX_TARGET_usage})
+      endif()
+    endif()
 
-    ADD_CUSTOM_COMMAND(OUTPUT ${Output}
+    add_custom_command(OUTPUT ${Output}
       COMMAND ${LEX_EXECUTABLE}
       ARGS ${LEX_EXECUTABLE_opts} -o${Output} ${Input}
       DEPENDS ${Input}
       COMMENT "[LEX][${Name}] Building scanner with ${LEX_EXECUTABLE}"
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-    SET(LEX_${Name}_DEFINED TRUE)
-    SET(LEX_${Name}_OUTPUTS ${Output})
-    SET(LEX_${Name}_INPUT ${Input})
-    SET(LEX_${Name}_COMPILE_FLAGS ${LEX_EXECUTABLE_opts})
-  ENDMACRO(LEX_TARGET)
+    set(LEX_${Name}_DEFINED TRUE)
+    set(LEX_${Name}_OUTPUTS ${Output})
+    set(LEX_${Name}_INPUT ${Input})
+    set(LEX_${Name}_COMPILE_FLAGS ${LEX_EXECUTABLE_opts})
+  endmacro(LEX_TARGET)
   #============================================================
 
 
@@ -129,34 +129,34 @@ IF(LEX_EXECUTABLE)
   # ADD_LEX_YACC_DEPENDENCY (public macro)
   #============================================================
   #
-  MACRO(ADD_LEX_YACC_DEPENDENCY FlexTarget YaccTarget)
+  macro(ADD_LEX_YACC_DEPENDENCY FlexTarget YaccTarget)
 
-    IF(NOT LEX_${FlexTarget}_OUTPUTS)
-      MESSAGE(SEND_ERROR "Flex target `${FlexTarget}' does not exists.")
-    ENDIF()
+    if(NOT LEX_${FlexTarget}_OUTPUTS)
+      message(SEND_ERROR "Flex target `${FlexTarget}' does not exists.")
+    endif()
 
-    IF(NOT YACC_${YaccTarget}_OUTPUT_HEADER)
-      MESSAGE(SEND_ERROR "Yacc target `${YaccTarget}' does not exists.")
-    ENDIF()
+    if(NOT YACC_${YaccTarget}_OUTPUT_HEADER)
+      message(SEND_ERROR "Yacc target `${YaccTarget}' does not exists.")
+    endif()
 
-    SET_SOURCE_FILES_PROPERTIES(${LEX_${FlexTarget}_OUTPUTS}
+    set_source_files_properties(${LEX_${FlexTarget}_OUTPUTS}
       PROPERTIES OBJECT_DEPENDS ${YACC_${YaccTarget}_OUTPUT_HEADER})
-  ENDMACRO(ADD_LEX_YACC_DEPENDENCY)
+  endmacro(ADD_LEX_YACC_DEPENDENCY)
   #============================================================
 
   #Need to run a test lex file to determine if YYTEXT_POINTER needs
   #to be defined
   EXEC_PROGRAM(${LEX_EXECUTABLE} ARGS ${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/lex_test.l -o ${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.c RETURN_VALUE _retval OUTPUT_VARIABLE _lexOut)
   INCLUDE (CheckCFileRuns)
-  SET(FILE_RUN_DEFINITIONS "-DYYTEXT_POINTER=1")
+  set(FILE_RUN_DEFINITIONS "-DYYTEXT_POINTER=1")
   CHECK_C_FILE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c YYTEXT_POINTER)
-  SET(FILE_RUN_DEFINITIONS)
-  IF(CONFIG_H_FILE)
-    FILE(APPEND ${CONFIG_H_FILE} "#cmakedefine YYTEXT_POINTER 1\n")
-  ENDIF(CONFIG_H_FILE)
+  set(FILE_RUN_DEFINITIONS)
+  if(CONFIG_H_FILE)
+    file(APPEND ${CONFIG_H_FILE} "#cmakedefine YYTEXT_POINTER 1\n")
+  endif(CONFIG_H_FILE)
   
 
-ENDIF(LEX_EXECUTABLE)
+endif(LEX_EXECUTABLE)
 
-INCLUDE(FindPackageHandleStandardArgs)
+include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(LEX DEFAULT_MSG LEX_EXECUTABLE)

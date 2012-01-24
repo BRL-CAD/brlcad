@@ -57,45 +57,45 @@
 # LEMON_TARGET (public macro)
 #============================================================
 #
-MACRO(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
-  IF(NOT ${ARGC} EQUAL 4 AND NOT ${ARGC} EQUAL 5)
-    MESSAGE(SEND_ERROR "Usage")
-  ELSE()
-    GET_FILENAME_COMPONENT(LemonInputFull ${LemonInput}  ABSOLUTE)
-    GET_FILENAME_COMPONENT(LemonSourceFull ${LemonSource} ABSOLUTE)
-    GET_FILENAME_COMPONENT(LemonHeaderFull ${LemonHeader} ABSOLUTE)
+macro(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
+  if(NOT ${ARGC} EQUAL 4 AND NOT ${ARGC} EQUAL 5)
+    message(SEND_ERROR "Usage")
+  else()
+    get_filename_component(LemonInputFull ${LemonInput}  ABSOLUTE)
+    get_filename_component(LemonSourceFull ${LemonSource} ABSOLUTE)
+    get_filename_component(LemonHeaderFull ${LemonHeader} ABSOLUTE)
     
-    IF(NOT ${LemonInput} STREQUAL ${LemonInputFull})
-      SET(LEMON_${Name}_INPUT "${CMAKE_CURRENT_BINARY_DIR}/${LemonInput}")
-    ELSE(NOT ${LemonInput} STREQUAL ${LemonInputFull})
-      SET(LEMON_${Name}_INPUT "${LemonInput}")
-    ENDIF(NOT ${LemonInput} STREQUAL ${LemonInputFull})
+    if(NOT ${LemonInput} STREQUAL ${LemonInputFull})
+      set(LEMON_${Name}_INPUT "${CMAKE_CURRENT_BINARY_DIR}/${LemonInput}")
+    else(NOT ${LemonInput} STREQUAL ${LemonInputFull})
+      set(LEMON_${Name}_INPUT "${LemonInput}")
+    endif(NOT ${LemonInput} STREQUAL ${LemonInputFull})
 
-    IF(NOT ${LemonSource} STREQUAL ${LemonSourceFull})
-      SET(LEMON_${Name}_OUTPUT_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/${LemonSource}")
-    ELSE(NOT ${LemonSource} STREQUAL ${LemonSourceFull})
-      SET(LEMON_${Name}_OUTPUT_SOURCE "${LemonSource}")
-    ENDIF(NOT ${LemonSource} STREQUAL ${LemonSourceFull})
+    if(NOT ${LemonSource} STREQUAL ${LemonSourceFull})
+      set(LEMON_${Name}_OUTPUT_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/${LemonSource}")
+    else(NOT ${LemonSource} STREQUAL ${LemonSourceFull})
+      set(LEMON_${Name}_OUTPUT_SOURCE "${LemonSource}")
+    endif(NOT ${LemonSource} STREQUAL ${LemonSourceFull})
 
-    IF(NOT ${LemonHeader} STREQUAL ${LemonHeaderFull})
-      SET(LEMON_${Name}_OUTPUT_HEADER "${CMAKE_CURRENT_BINARY_DIR}/${LemonHeader}")
-    ELSE(NOT ${LemonHeader} STREQUAL ${LemonHeaderFull})
-      SET(LEMON_${Name}_OUTPUT_HEADER "${LemonHeader}")
-    ENDIF(NOT ${LemonHeader} STREQUAL ${LemonHeaderFull})
+    if(NOT ${LemonHeader} STREQUAL ${LemonHeaderFull})
+      set(LEMON_${Name}_OUTPUT_HEADER "${CMAKE_CURRENT_BINARY_DIR}/${LemonHeader}")
+    else(NOT ${LemonHeader} STREQUAL ${LemonHeaderFull})
+      set(LEMON_${Name}_OUTPUT_HEADER "${LemonHeader}")
+    endif(NOT ${LemonHeader} STREQUAL ${LemonHeaderFull})
 
-    SET(LEMON_${Name}_EXTRA_ARGS    "${ARGV4}")
+    set(LEMON_${Name}_EXTRA_ARGS    "${ARGV4}")
 
     # get input name minus path
-    GET_FILENAME_COMPONENT(INPUT_NAME "${LemonInput}" NAME)
-    SET(LEMON_BIN_INPUT ${CMAKE_CURRENT_BINARY_DIR}/${INPUT_NAME})
+    get_filename_component(INPUT_NAME "${LemonInput}" NAME)
+    set(LEMON_BIN_INPUT ${CMAKE_CURRENT_BINARY_DIR}/${INPUT_NAME})
 
     # names of lemon output files will be based on the name of the input file
-    STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1.c"   LEMON_GEN_SOURCE "${INPUT_NAME}")
-    STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1.h"   LEMON_GEN_HEADER "${INPUT_NAME}")
-    STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1.out" LEMON_GEN_OUT    "${INPUT_NAME}")
+    string(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1.c"   LEMON_GEN_SOURCE "${INPUT_NAME}")
+    string(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1.h"   LEMON_GEN_HEADER "${INPUT_NAME}")
+    string(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1.out" LEMON_GEN_OUT    "${INPUT_NAME}")
 
     # copy input to bin directory and run lemon
-    ADD_CUSTOM_COMMAND(
+    add_custom_command(
       OUTPUT ${LEMON_GEN_OUT} ${LEMON_GEN_SOURCE} ${LEMON_GEN_HEADER}
       COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/${LemonInput} ${LEMON_BIN_INPUT}
       COMMAND ${LEMON_EXECUTABLE} ${INPUT_NAME} ${LEMON_${Name}_EXTRA_ARGS}
@@ -104,29 +104,29 @@ MACRO(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
       )
 
     # rename generated outputs
-    IF(NOT "${LemonSource}" STREQUAL "${LEMON_GEN_SOURCE}")
-      ADD_CUSTOM_COMMAND(
+    if(NOT "${LemonSource}" STREQUAL "${LEMON_GEN_SOURCE}")
+      add_custom_command(
 	OUTPUT ${LemonSource} 
 	COMMAND ${CMAKE_COMMAND} -E copy ${LEMON_GEN_SOURCE} ${LemonSource}
 	DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET} ${LEMON_GEN_SOURCE} 
 	)
-      SET(LEMON_${Name}_OUTPUTS ${LemonSource} ${LEMON_${Name}_OUTPUTS})
-    ENDIF(NOT "${LemonSource}" STREQUAL "${LEMON_GEN_SOURCE}")
-    IF(NOT "${LemonHeader}" STREQUAL "${LEMON_GEN_HEADER}")
-      ADD_CUSTOM_COMMAND(
+      set(LEMON_${Name}_OUTPUTS ${LemonSource} ${LEMON_${Name}_OUTPUTS})
+    endif(NOT "${LemonSource}" STREQUAL "${LEMON_GEN_SOURCE}")
+    if(NOT "${LemonHeader}" STREQUAL "${LEMON_GEN_HEADER}")
+      add_custom_command(
 	OUTPUT ${LemonHeader}
 	COMMAND ${CMAKE_COMMAND} -E copy ${LEMON_GEN_HEADER} ${LemonHeader}
 	DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET} ${LEMON_GEN_HEADER} 
 	)
-      SET(LEMON_${Name}_OUTPUTS ${LemonHeader} ${LEMON_${Name}_OUTPUTS})
-    ENDIF(NOT "${LemonHeader}" STREQUAL "${LEMON_GEN_HEADER}")
+      set(LEMON_${Name}_OUTPUTS ${LemonHeader} ${LEMON_${Name}_OUTPUTS})
+    endif(NOT "${LemonHeader}" STREQUAL "${LEMON_GEN_HEADER}")
 
-    SET(LEMON_${Name}_OUTPUTS ${LEMON_GEN_OUT} ${LemonSource} ${LemonHeader})
+    set(LEMON_${Name}_OUTPUTS ${LEMON_GEN_OUT} ${LemonSource} ${LemonHeader})
 
     # macro ran successfully
-    SET(LEMON_${Name}_DEFINED TRUE)
-  ENDIF(NOT ${ARGC} EQUAL 4 AND NOT ${ARGC} EQUAL 5)
-ENDMACRO(LEMON_TARGET)
+    set(LEMON_${Name}_DEFINED TRUE)
+  endif(NOT ${ARGC} EQUAL 4 AND NOT ${ARGC} EQUAL 5)
+endmacro(LEMON_TARGET)
 #
 #============================================================
 # LEMON_Utils.cmake ends here

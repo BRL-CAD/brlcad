@@ -143,7 +143,7 @@ macro(findpkg_finish PREFIX)
       set(${PREFIX}_LIBRARIES ${${PREFIX}_LIBRARY} CACHE STRING "${PREFIX} libraries")
       if (NOT ${PREFIX}_FIND_QUIETLY)
         message(STATUS "Found ${PREFIX}: ${${PREFIX}_LIBRARIES}")
-	SET(${PREFIX}_FIND_QUIETLY 1 CACHE BOOL "find quietly")
+	set(${PREFIX}_FIND_QUIETLY 1 CACHE BOOL "find quietly")
       endif ()
     else ()
       if (NOT ${PREFIX}_FIND_QUIETLY)
@@ -160,9 +160,9 @@ endmacro(findpkg_finish)
 
 
 # Slightly customised framework finder
-MACRO(findpkg_framework fwk)
-  IF(APPLE)
-    SET(${fwk}_FRAMEWORK_PATH
+macro(findpkg_framework fwk)
+  if(APPLE)
+    set(${fwk}_FRAMEWORK_PATH
       ${${fwk}_FRAMEWORK_SEARCH_PATH}
       ${CMAKE_FRAMEWORK_PATH}
       ~/Library/Frameworks
@@ -177,19 +177,19 @@ MACRO(findpkg_framework fwk)
       ${OGRE_PREFIX_BUILD}/lib/Release
       ${OGRE_PREFIX_BUILD}/lib/Debug
       )
-    FOREACH(dir ${${fwk}_FRAMEWORK_PATH})
-      SET(fwkpath ${dir}/${fwk}.framework)
-      IF(EXISTS ${fwkpath})
-        SET(${fwk}_FRAMEWORK_INCLUDES ${${fwk}_FRAMEWORK_INCLUDES}
+    foreach(dir ${${fwk}_FRAMEWORK_PATH})
+      set(fwkpath ${dir}/${fwk}.framework)
+      if(EXISTS ${fwkpath})
+        set(${fwk}_FRAMEWORK_INCLUDES ${${fwk}_FRAMEWORK_INCLUDES}
           ${fwkpath}/Headers ${fwkpath}/PrivateHeaders)
-        SET(${fwk}_FRAMEWORK_PATH ${dir})
+        set(${fwk}_FRAMEWORK_PATH ${dir})
         if (NOT ${fwk}_LIBRARY_FWK)
-          SET(${fwk}_LIBRARY_FWK "-framework ${fwk}")
+          set(${fwk}_LIBRARY_FWK "-framework ${fwk}")
         endif ()
-      ENDIF(EXISTS ${fwkpath})
-    ENDFOREACH(dir)
-  ENDIF(APPLE)
-ENDMACRO(findpkg_framework)
+      endif(EXISTS ${fwkpath})
+    endforeach(dir)
+  endif(APPLE)
+endmacro(findpkg_framework)
 
 # Local Variables:
 # tab-width: 8

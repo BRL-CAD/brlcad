@@ -104,52 +104,52 @@
 # RE2C_TARGET (public macro)
 #============================================================
 #
-MACRO(RE2C_TARGET Name Input Output)
-	SET(RE2C_TARGET_usage "RE2C_TARGET(<Name> <Input> <Output> [COMPILE_FLAGS <string>]")
-	IF(${ARGC} GREATER 3)
-		IF(${ARGC} EQUAL 5)
-			IF("${ARGV3}" STREQUAL "COMPILE_FLAGS")
-				SET(RE2C_EXECUTABLE_opts  "${ARGV4}")
+macro(RE2C_TARGET Name Input Output)
+	set(RE2C_TARGET_usage "RE2C_TARGET(<Name> <Input> <Output> [COMPILE_FLAGS <string>]")
+	if(${ARGC} GREATER 3)
+		if(${ARGC} EQUAL 5)
+			if("${ARGV3}" STREQUAL "COMPILE_FLAGS")
+				set(RE2C_EXECUTABLE_opts  "${ARGV4}")
 				SEPARATE_ARGUMENTS(RE2C_EXECUTABLE_opts)
-			ELSE()
-				MESSAGE(SEND_ERROR ${RE2C_TARGET_usage})
-			ENDIF()
-		ELSE()
-			MESSAGE(SEND_ERROR ${RE2C_TARGET_usage})
-		ENDIF()
-	ENDIF()
+			else()
+				message(SEND_ERROR ${RE2C_TARGET_usage})
+			endif()
+		else()
+			message(SEND_ERROR ${RE2C_TARGET_usage})
+		endif()
+	endif()
 
-	ADD_CUSTOM_COMMAND(OUTPUT ${Output}
+	add_custom_command(OUTPUT ${Output}
 		COMMAND ${RE2C_EXECUTABLE}
 		ARGS ${RE2C_EXECUTABLE_opts} -o${Output} ${Input}
 		DEPENDS ${Input} ${RE2C_EXECUTABLE_TARGET}
 		COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-	SET(RE2C_${Name}_DEFINED TRUE)
-	SET(RE2C_${Name}_OUTPUTS ${Output})
-	SET(RE2C_${Name}_INPUT ${Input})
-	SET(RE2C_${Name}_COMPILE_FLAGS ${RE2C_EXECUTABLE_opts})
-ENDMACRO(RE2C_TARGET)
+	set(RE2C_${Name}_DEFINED TRUE)
+	set(RE2C_${Name}_OUTPUTS ${Output})
+	set(RE2C_${Name}_INPUT ${Input})
+	set(RE2C_${Name}_COMPILE_FLAGS ${RE2C_EXECUTABLE_opts})
+endmacro(RE2C_TARGET)
 #============================================================
 
 #============================================================
 # ADD_RE2C_LEMON_DEPENDENCY (public macro)
 #============================================================
 #
-MACRO(ADD_RE2C_LEMON_DEPENDENCY RE2CTarget LemonTarget)
+macro(ADD_RE2C_LEMON_DEPENDENCY RE2CTarget LemonTarget)
 
-	IF(NOT RE2C_${RE2CTarget}_OUTPUTS)
-		MESSAGE(SEND_ERROR "RE2C target `${RE2CTarget}' does not exists.")
-	ENDIF()
+	if(NOT RE2C_${RE2CTarget}_OUTPUTS)
+		message(SEND_ERROR "RE2C target `${RE2CTarget}' does not exists.")
+	endif()
 
-	IF(NOT LEMON_${LemonTarget}_OUTPUT_HEADER)
-		MESSAGE(SEND_ERROR "Lemon target `${LemonTarget}' does not exists.")
-	ENDIF()
+	if(NOT LEMON_${LemonTarget}_OUTPUT_HEADER)
+		message(SEND_ERROR "Lemon target `${LemonTarget}' does not exists.")
+	endif()
 
-	SET_SOURCE_FILES_PROPERTIES(${RE2C_${RE2CTarget}_OUTPUTS}
+	set_source_files_properties(${RE2C_${RE2CTarget}_OUTPUTS}
 		PROPERTIES OBJECT_DEPENDS ${LEMON_${LemonTarget}_OUTPUT_HEADER})
-ENDMACRO(ADD_RE2C_LEMON_DEPENDENCY)
+endmacro(ADD_RE2C_LEMON_DEPENDENCY)
 #============================================================
 
 # RE2C_Util.cmake ends here

@@ -110,28 +110,28 @@
 # 
 #=============================================================================
 
-IF (WIN32)
-  IF (CYGWIN)
+if(WIN32)
+  if(CYGWIN)
 
-    FIND_PATH(OPENGL_INCLUDE_DIR_GL GL/gl.h )
+    find_path(OPENGL_INCLUDE_DIR_GL GL/gl.h )
 
-    FIND_LIBRARY(OPENGL_gl_LIBRARY opengl32 )
+    find_library(OPENGL_gl_LIBRARY opengl32 )
 
-    FIND_LIBRARY(OPENGL_glu_LIBRARY glu32 )
+    find_library(OPENGL_glu_LIBRARY glu32 )
 
-  ELSE (CYGWIN)
+  else (CYGWIN)
 
-    IF(BORLAND)
-      SET (OPENGL_gl_LIBRARY import32 CACHE STRING "OpenGL library for win32")
-      SET (OPENGL_glu_LIBRARY import32 CACHE STRING "GLU library for win32")
-    ELSE(BORLAND)
-      SET (OPENGL_gl_LIBRARY opengl32 CACHE STRING "OpenGL library for win32")
-      SET (OPENGL_glu_LIBRARY glu32 CACHE STRING "GLU library for win32")
-    ENDIF(BORLAND)
+    if(BORLAND)
+      set(OPENGL_gl_LIBRARY import32 CACHE STRING "OpenGL library for win32")
+      set(OPENGL_glu_LIBRARY import32 CACHE STRING "GLU library for win32")
+    else(BORLAND)
+      set(OPENGL_gl_LIBRARY opengl32 CACHE STRING "OpenGL library for win32")
+      set(OPENGL_glu_LIBRARY glu32 CACHE STRING "GLU library for win32")
+    endif(BORLAND)
 
-  ENDIF (CYGWIN)
+  endif(CYGWIN)
 
-ELSE (WIN32)
+else (WIN32)
 
   # The first line below is to make sure that the proper headers
   # are used on a Linux machine with the NVidia drivers installed.
@@ -142,7 +142,7 @@ ELSE (WIN32)
   #  - Atanas Georgiev <atanas@cs.columbia.edu>
 
 
-  SET(OPENGL_INC_SEARCH_PATH
+  set(OPENGL_INC_SEARCH_PATH
     /usr/share/doc/NVIDIA_GLX-1.0/include
     /usr/pkg/xorg/include
     /usr/X11/include
@@ -158,22 +158,22 @@ ELSE (WIN32)
     )
   # Handle HP-UX cases where we only want to find OpenGL in either hpux64
   # or hpux32 depending on if we're doing a 64 bit build.
-  IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
-    SET(HPUX_IA_OPENGL_LIB_PATH /opt/graphics/OpenGL/lib/hpux32/)
-  ELSE(CMAKE_SIZEOF_VOID_P EQUAL 4)
-    SET(HPUX_IA_OPENGL_LIB_PATH
+  if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    set(HPUX_IA_OPENGL_LIB_PATH /opt/graphics/OpenGL/lib/hpux32/)
+  else(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    set(HPUX_IA_OPENGL_LIB_PATH
       /opt/graphics/OpenGL/lib/hpux64/
       /opt/graphics/OpenGL/lib/pa20_64)
-  ENDIF(CMAKE_SIZEOF_VOID_P EQUAL 4)
+  endif(CMAKE_SIZEOF_VOID_P EQUAL 4)
 
-  GET_PROPERTY(SEARCH_64BIT GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
-  IF(SEARCH_64BIT)
-    SET(64BIT_DIRS "/usr/lib64/X11;/usr/lib64")
-  ELSE(SEARCH_64BIT)
-    SET(32BIT_DIRS "/usr/lib/X11;/usr/lib")
-  ENDIF(SEARCH_64BIT)
+  get_property(SEARCH_64BIT GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
+  if(SEARCH_64BIT)
+    set(64BIT_DIRS "/usr/lib64/X11;/usr/lib64")
+  else(SEARCH_64BIT)
+    set(32BIT_DIRS "/usr/lib/X11;/usr/lib")
+  endif(SEARCH_64BIT)
 
-  SET(OPENGL_LIB_SEARCH_PATH
+  set(OPENGL_LIB_SEARCH_PATH
     ${64BIT_DIRS}
     ${32BIT_DIRS}
     /usr/X11/lib
@@ -186,88 +186,88 @@ ELSE (WIN32)
     ${HPUX_IA_OPENGL_LIB_PATH}
     )
 
-  IF (APPLE)
+  if(APPLE)
     OPTION(OPENGL_USE_AQUA "Require native OSX Framework version of OpenGL." ON)
-  ENDIF(APPLE)
+  endif(APPLE)
 
-  IF(OPENGL_USE_AQUA)
-    FIND_LIBRARY(OPENGL_gl_LIBRARY OpenGL DOC "OpenGL lib for OSX")
-    FIND_LIBRARY(OPENGL_glu_LIBRARY AGL DOC "AGL lib for OSX")
-    FIND_PATH(OPENGL_INCLUDE_DIR_GL OpenGL/gl.h DOC "Include for OpenGL on OSX")
-  ELSE(OPENGL_USE_AQUA)
+  if(OPENGL_USE_AQUA)
+    find_library(OPENGL_gl_LIBRARY OpenGL DOC "OpenGL lib for OSX")
+    find_library(OPENGL_glu_LIBRARY AGL DOC "AGL lib for OSX")
+    find_path(OPENGL_INCLUDE_DIR_GL OpenGL/gl.h DOC "Include for OpenGL on OSX")
+  else(OPENGL_USE_AQUA)
     # If we're on Apple and not using Aqua, we don't want frameworks
-    SET(CMAKE_FIND_FRAMEWORK "NEVER")
+    set(CMAKE_FIND_FRAMEWORK "NEVER")
 
-    FIND_PATH(OPENGL_INCLUDE_DIR_GL GL/gl.h        ${OPENGL_INC_SEARCH_PATH})
-    FIND_PATH(OPENGL_INCLUDE_DIR_GLX GL/glx.h      ${OPENGL_INC_SEARCH_PATH})
-    FIND_PATH(OPENGL_xmesa_INCLUDE_DIR GL/xmesa.h  ${OPENGL_INC_SEARCH_PATH})
-    FIND_LIBRARY(OPENGL_gl_LIBRARY NAMES GL MesaGL PATHS ${OPENGL_LIB_SEARCH_PATH})
+    find_path(OPENGL_INCLUDE_DIR_GL GL/gl.h        ${OPENGL_INC_SEARCH_PATH})
+    find_path(OPENGL_INCLUDE_DIR_GLX GL/glx.h      ${OPENGL_INC_SEARCH_PATH})
+    find_path(OPENGL_xmesa_INCLUDE_DIR GL/xmesa.h  ${OPENGL_INC_SEARCH_PATH})
+    find_library(OPENGL_gl_LIBRARY NAMES GL MesaGL PATHS ${OPENGL_LIB_SEARCH_PATH})
 
     # On Unix OpenGL most certainly always requires X11.
     # Feel free to tighten up these conditions if you don't
     # think this is always true.
     # It's not true on OSX.
 
-    IF (OPENGL_gl_LIBRARY)
-      IF(NOT X11_FOUND)
-	INCLUDE(FindX11)
-      ENDIF(NOT X11_FOUND)
-      IF (X11_FOUND)
-	SET (OPENGL_LIBRARIES ${X11_LIBRARIES})
-      ENDIF (X11_FOUND)
-    ENDIF (OPENGL_gl_LIBRARY)
+    if(OPENGL_gl_LIBRARY)
+      if(NOT X11_FOUND)
+	include(FindX11)
+      endif(NOT X11_FOUND)
+      if(X11_FOUND)
+	set(OPENGL_LIBRARIES ${X11_LIBRARIES})
+      endif(X11_FOUND)
+    endif(OPENGL_gl_LIBRARY)
 
-    FIND_LIBRARY(OPENGL_glu_LIBRARY NAMES GLU MesaGLU PATHS ${OPENGL_LIB_SEARCH_PATH})
-  ENDIF(OPENGL_USE_AQUA)
+    find_library(OPENGL_glu_LIBRARY NAMES GLU MesaGLU PATHS ${OPENGL_LIB_SEARCH_PATH})
+  endif(OPENGL_USE_AQUA)
 
-ENDIF (WIN32)
+endif(WIN32)
 
-SET( OPENGL_FOUND "NO" )
+set( OPENGL_FOUND "NO" )
 
-IF(X11_FOUND)
-  IF(OPENGL_INCLUDE_DIR_GLX AND OPENGL_INCLUDE_DIR_GL AND OPENGL_gl_LIBRARY)
-    SET(OPENGL_FOUND "YES" )
-  ENDIF(OPENGL_INCLUDE_DIR_GLX AND OPENGL_INCLUDE_DIR_GL AND OPENGL_gl_LIBRARY)
-ELSE(X11_FOUND)
-  IF(MSVC)
-    IF(OPENGL_gl_LIBRARY)
-      SET(OPENGL_FOUND "YES" )
-    ENDIF(OPENGL_gl_LIBRARY)
-  ELSE(MSVC)
-    IF(OPENGL_INCLUDE_DIR_GL AND OPENGL_gl_LIBRARY)
-      SET(OPENGL_FOUND "YES" )
-    ENDIF(OPENGL_INCLUDE_DIR_GL AND OPENGL_gl_LIBRARY)
-  ENDIF(MSVC)
-ENDIF(X11_FOUND)
+if(X11_FOUND)
+  if(OPENGL_INCLUDE_DIR_GLX AND OPENGL_INCLUDE_DIR_GL AND OPENGL_gl_LIBRARY)
+    set(OPENGL_FOUND "YES" )
+  endif(OPENGL_INCLUDE_DIR_GLX AND OPENGL_INCLUDE_DIR_GL AND OPENGL_gl_LIBRARY)
+else(X11_FOUND)
+  if(MSVC)
+    if(OPENGL_gl_LIBRARY)
+      set(OPENGL_FOUND "YES" )
+    endif(OPENGL_gl_LIBRARY)
+  else(MSVC)
+    if(OPENGL_INCLUDE_DIR_GL AND OPENGL_gl_LIBRARY)
+      set(OPENGL_FOUND "YES" )
+    endif(OPENGL_INCLUDE_DIR_GL AND OPENGL_gl_LIBRARY)
+  endif(MSVC)
+endif(X11_FOUND)
 
 
-IF(OPENGL_FOUND)
-  IF(OPENGL_xmesa_INCLUDE_DIR)
-    SET( OPENGL_XMESA_FOUND "YES" )
-  ELSE(OPENGL_xmesa_INCLUDE_DIR)
-    SET( OPENGL_XMESA_FOUND "NO" )
-  ENDIF(OPENGL_xmesa_INCLUDE_DIR)
+if(OPENGL_FOUND)
+  if(OPENGL_xmesa_INCLUDE_DIR)
+    set( OPENGL_XMESA_FOUND "YES" )
+  else(OPENGL_xmesa_INCLUDE_DIR)
+    set( OPENGL_XMESA_FOUND "NO" )
+  endif(OPENGL_xmesa_INCLUDE_DIR)
 
-  SET(OPENGL_LIBRARIES  ${OPENGL_gl_LIBRARY} ${OPENGL_LIBRARIES})
-  IF(OPENGL_glu_LIBRARY)
-    SET(OPENGL_GLU_FOUND "YES" )
-    SET(OPENGL_LIBRARIES ${OPENGL_glu_LIBRARY} ${OPENGL_LIBRARIES} )
-  ELSE(OPENGL_glu_LIBRARY)
-    SET( OPENGL_GLU_FOUND "NO" )
-  ENDIF(OPENGL_glu_LIBRARY)
+  set(OPENGL_LIBRARIES  ${OPENGL_gl_LIBRARY} ${OPENGL_LIBRARIES})
+  if(OPENGL_glu_LIBRARY)
+    set(OPENGL_GLU_FOUND "YES" )
+    set(OPENGL_LIBRARIES ${OPENGL_glu_LIBRARY} ${OPENGL_LIBRARIES} )
+  else(OPENGL_glu_LIBRARY)
+    set( OPENGL_GLU_FOUND "NO" )
+  endif(OPENGL_glu_LIBRARY)
 
   # This deprecated setting is for backward compatibility with CMake1.4
-  SET (OPENGL_LIBRARY ${OPENGL_LIBRARIES})
-ELSE(OPENGL_FOUND)
+  set(OPENGL_LIBRARY ${OPENGL_LIBRARIES})
+else(OPENGL_FOUND)
   # We don't have enough, so no partials - clean up
-  SET(OPENGL_INCLUDE_DIR_GL "" CACHE STRING "OpenGL not found" FORCE)
-  SET(OPENGL_INCLUDE_DIR_GLX "" CACHE STRING "OpenGL not found" FORCE)
-  SET(OPENGL_xmesa_INCLUDE_DIR "" CACHE STRING "OpenGL not found" FORCE)
-  SET(OPENGL_glu_LIBRARY "" CACHE STRING "OpenGL not found" FORCE)
-  SET(OPENGL_gl_LIBRARY "" CACHE STRING "OpenGL not found" FORCE)
-ENDIF(OPENGL_FOUND)
+  set(OPENGL_INCLUDE_DIR_GL "" CACHE STRING "OpenGL not found" FORCE)
+  set(OPENGL_INCLUDE_DIR_GLX "" CACHE STRING "OpenGL not found" FORCE)
+  set(OPENGL_xmesa_INCLUDE_DIR "" CACHE STRING "OpenGL not found" FORCE)
+  set(OPENGL_glu_LIBRARY "" CACHE STRING "OpenGL not found" FORCE)
+  set(OPENGL_gl_LIBRARY "" CACHE STRING "OpenGL not found" FORCE)
+endif(OPENGL_FOUND)
 
-MARK_AS_ADVANCED(
+mark_as_advanced(
   OPENGL_INCLUDE_DIR_GL
   OPENGL_INCLUDE_DIR_GLX
   OPENGL_xmesa_INCLUDE_DIR

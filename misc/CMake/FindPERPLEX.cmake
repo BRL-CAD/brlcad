@@ -62,9 +62,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
-FIND_PROGRAM(PERPLEX_EXECUTABLE perplex_path DOC "path to the perplex executable")
-MARK_AS_ADVANCED(PERPLEX_EXECUTABLE)
-INCLUDE(FindPackageHandleStandardArgs)
+find_program(PERPLEX_EXECUTABLE perplex_path DOC "path to the perplex executable")
+mark_as_advanced(PERPLEX_EXECUTABLE)
+include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(PERPLEX DEFAULT_MSG PERPLEX_EXECUTABLE)
 
 #============================================================

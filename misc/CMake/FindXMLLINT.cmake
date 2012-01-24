@@ -39,10 +39,10 @@
 #  XSLTPROC_FOUND - true is xsltproc executable is found
 #  XSLTPROC_EXECUTABLE - the path to the xsltproc executable
 
-FIND_PROGRAM(XMLLINT_EXECUTABLE xmllint DOC "path to the xmllint executable")
-MARK_AS_ADVANCED(XMLLINT_EXECUTABLE)
+find_program(XMLLINT_EXECUTABLE xmllint DOC "path to the xmllint executable")
+mark_as_advanced(XMLLINT_EXECUTABLE)
 
-INCLUDE(FindPackageHandleStandardArgs)
+include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(XMLLINT DEFAULT_MSG XMLLINT_EXECUTABLE)
 
 # FindXMLLINT.cmake ends here

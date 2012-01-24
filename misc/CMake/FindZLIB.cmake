@@ -104,33 +104,33 @@
 # 
 #=============================================================================
 
-FIND_PATH(ZLIB_INCLUDE_DIR zlib.h
+find_path(ZLIB_INCLUDE_DIR zlib.h
     "[HKEY_LOCAL_MACHINE\\SOFTWARE\\GnuWin32\\Zlib;InstallPath]/include"
 )
 
-SET(ZLIB_NAMES z zlib zdll)
-FIND_LIBRARY(ZLIB_LIBRARY
+set(ZLIB_NAMES z zlib zdll)
+find_library(ZLIB_LIBRARY
     NAMES
         ${ZLIB_NAMES}
     PATHS
         "[HKEY_LOCAL_MACHINE\\SOFTWARE\\GnuWin32\\Zlib;InstallPath]/lib"
 )
-MARK_AS_ADVANCED(ZLIB_LIBRARY ZLIB_INCLUDE_DIR)
+mark_as_advanced(ZLIB_LIBRARY ZLIB_INCLUDE_DIR)
 
 IF (ZLIB_INCLUDE_DIR AND EXISTS "${ZLIB_INCLUDE_DIR}/zlib.h")
-    FILE(READ "${ZLIB_INCLUDE_DIR}/zlib.h" ZLIB_H)
-    STRING(REGEX REPLACE ".*#define ZLIB_VERSION \"([0-9]+)\\.([0-9]+)\\.([0-9]+)\".*" "\\1.\\2.\\3" ZLIB_VERSION_STRING "${ZLIB_H}")
-ENDIF()
+    file(READ "${ZLIB_INCLUDE_DIR}/zlib.h" ZLIB_H)
+    string(REGEX REPLACE ".*#define ZLIB_VERSION \"([0-9]+)\\.([0-9]+)\\.([0-9]+)\".*" "\\1.\\2.\\3" ZLIB_VERSION_STRING "${ZLIB_H}")
+endif()
 
 # handle the QUIETLY and REQUIRED arguments and set ZLIB_FOUND to TRUE if 
 # all listed variables are TRUE
-INCLUDE(FindPackageHandleStandardArgs)
+include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(ZLIB DEFAULT_MSG ZLIB_INCLUDE_DIR ZLIB_LIBRARY)
 
 IF (ZLIB_FOUND)
-    SET(ZLIB_INCLUDE_DIRS ${ZLIB_INCLUDE_DIR})
-    SET(ZLIB_LIBRARIES    ${ZLIB_LIBRARY})
-ENDIF()
+    set(ZLIB_INCLUDE_DIRS ${ZLIB_INCLUDE_DIR})
+    set(ZLIB_LIBRARIES    ${ZLIB_LIBRARY})
+endif()
 
 
 # Local Variables:

@@ -55,13 +55,13 @@ endif ()
 message("OSL_HOME = ${OSLHOME}")
 
 # Find OSL library and its dependencies
-FIND_LIBRARY(OSLEXEC_LIBRARY 
+find_library(OSLEXEC_LIBRARY 
   NAMES oslexec
   PATHS ${OSLHOME}/lib)
-FIND_LIBRARY(OSLCOMP_LIBRARY 
+find_library(OSLCOMP_LIBRARY 
   NAMES oslcomp
   PATHS ${OSLHOME}/lib)
-FIND_LIBRARY(OSLQUERY_LIBRARY 
+find_library(OSLQUERY_LIBRARY 
   NAMES oslquery
   PATHS ${OSLHOME}/lib)
 

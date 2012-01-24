@@ -92,10 +92,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
-FIND_PROGRAM(RE2C_EXECUTABLE re2c DOC "path to the re2c executable")
-MARK_AS_ADVANCED(RE2C_EXECUTABLE)
+find_program(RE2C_EXECUTABLE re2c DOC "path to the re2c executable")
+mark_as_advanced(RE2C_EXECUTABLE)
 
-INCLUDE(FindPackageHandleStandardArgs)
+include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(RE2C DEFAULT_MSG RE2C_EXECUTABLE)
 
 # FindRE2C.cmake ends here
