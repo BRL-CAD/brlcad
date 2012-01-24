@@ -343,7 +343,7 @@ struct curvature {
     fastf_t	crv_c2;		/**< @brief curvature in other direction */
 };
 #define CURVE_NULL	((struct curvature *)0)
-#define RT_CURVATURE_INIT_ZERO { VINIT_ZERO, 0.0, 0.0 };
+#define RT_CURVATURE_INIT_ZERO { VINIT_ZERO, 0.0, 0.0 }
 
 /**
  * Use this macro after having computed the normal, to compute the
