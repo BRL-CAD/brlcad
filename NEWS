@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2012-01-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* fixed step-g importer memory management issues - Keith Bowman
 * improved tab-completion behavior for mged and archer - Sean Morrison
 * fixed pervasive string handling memory leak - Tom Browder
 * improved table output formatting for 'analyze' command - Tom Browder
