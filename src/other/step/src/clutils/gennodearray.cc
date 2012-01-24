@@ -81,7 +81,7 @@ GenNodeArray::Check (int index)
         _bufsize = (index+1) * 2;
         newbuf = new GenericNode*[_bufsize];
 
-	memset(newbuf, 0, _bufsize);
+	memset(newbuf, 0, _bufsize*sizeof(GenericNode*));
 //	memset(newbuf[oldBufSize], 0, 
 //		(_bufsize - oldBufSize)*sizeof(GenericNode*) );
 //        bcopy(_buf, newbuf, _count*sizeof(GenericNode*));
