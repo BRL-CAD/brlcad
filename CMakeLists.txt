@@ -299,9 +299,7 @@ IF(NOT IS_SUBBUILD)
     ENDIF(${ITEM_ABS} STREQUAL ${BUILD_DIR_TRIMMED})
   endfunction(configure_file)
   
-  # The add_subdirectory wrapper must clear old files holding distcheck lists
-  # to avoid continually growing files over multiple configure runs, as well
-  # as adding directories to distcheck.
+  # Override and wrap add_subdirctory.
   function(add_subdirectory name)
     _add_subdirectory(${name} ${ARGN})
     FILE(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${CMAKE_CURRENT_SOURCE_DIR}/${name}\n")
