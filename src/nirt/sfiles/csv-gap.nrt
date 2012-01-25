@@ -6,4 +6,4 @@ fmt p "\"%s\",\"%s\",%d,%8f,%8f,%8f,%8f,%8f,%8f,%8f,%8f,%8f,%8f,%8f,%8f,%d,%d\n"
 fmt f "\n"
 fmt m "You missed the target\n\n"
 fmt o "\nOVERLAP:,over_reg1_name,over_reg2_name,ov_x_in,ov_y_in,ov_z_in,ov_los\n ,\"%s\",\"%s\",%.8f,%.8f,%.8f,%.8f\n\n" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los
-fmt g "\nGAP:,x_gap_in,y_gap_in,z_gap_in,x_gap_out,y_gap_out,z_gap_out,gap_los\n ,%.8f,%.8f,%.8f,%8f,%8f,%8f,%.8f\n\n" x_gap_in y_gap_in z_gap_in x_in, y_in, z_in gap_los
+fmt g "\nGAP:,x_gap_in,y_gap_in,z_gap_in,x_gap_out,y_gap_out,z_gap_out,gap_los\n ,%.8f,%.8f,%.8f,%8f,%8f,%8f,%.8f\n\n" x_gap_in y_gap_in z_gap_in x_in y_in z_in gap_los
