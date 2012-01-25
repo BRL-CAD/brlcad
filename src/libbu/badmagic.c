@@ -38,7 +38,7 @@ bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *fi
 		 str, file, line);
 	bu_bomb(buf);
     }
-    if (UNLIKELY(((size_t)(ptr)) & (sizeof(unsigned long)-1))) {
+    if (UNLIKELY(((size_t)(ptr)) & (sizeof(uint32_t)-1))) {
 	snprintf(buf, MAGICBUFSIZ, "ERROR: %p mis-aligned %s pointer, file %s, line %d\n",
 		 (void *)ptr, str, file, line);
 	bu_bomb(buf);
