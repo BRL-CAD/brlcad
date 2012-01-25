@@ -1,4 +1,5 @@
 set(docbook_articles_EN
+	TEMPLATE.xml
 	build_pattern.xml
 	build_region.xml
 	ebm_primitive.xml

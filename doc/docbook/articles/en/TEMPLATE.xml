@@ -1,0 +1,155 @@
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+
+  <info>
+    <title>Article Title</title>
+
+    <author>
+      <personname>
+	<firstname>Firstname</firstname>
+	<othername>Middlename</othername>
+	<surname>Lastname</surname>
+      </personname>
+
+      <!-- optional e-mail address -->
+      <affiliation>
+	<address>
+	  <orgname>BRL-CAD Open Source</orgname>
+	  <email>devs@brlcad.org</email>
+	</address>
+      </affiliation>
+    </author>
+  </info>
+
+  <section xml:id="some-descriptive-tag">
+    <!-- the xml:id tag is just something descriptive that you can
+    reference if you wanted to use CSS to modify the layout. -->
+    
+    <para>
+      First paragraph goes here.
+    </para>
+
+    <literallayout>
+      <command>benchmark TIMEFRAME=1 run</command>
+    </literallayout>
+
+    <note>
+      <para>
+	The preceeding <application>benchmark</application> command
+	example can get a lot more complex.
+      </para>
+    </note>
+
+    <para>
+      When you run the <command>benchmark</command> with
+      the <option>help</option> option, you might see this output:
+
+      <literallayout><computeroutput>
+<prompt>sean@gcc1-power7 bin]$</prompt> <command>benchmark</command> help
+Usage: ./benchmark [command(s)] [OPTION=value] [RT_OPTIONS]
+
+Available commands:
+  clean
+...
+      </computeroutput></literallayout>
+    </para>
+
+    <para>
+      Another paragraph with embedded list is shown here.  Each
+      paragraph gets it's own para and should be wrapped for
+      readability and localized context diff comparisons.
+
+      <info><title>A list of items:</title></info>
+
+      <itemizedlist mark="bullet">
+	<listitem>
+	  <para>
+	    Bullet item 1.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Bullet item 2.
+	  </para>
+	</listitem>
+      </itemizedlist>
+    </para>
+
+  </section>
+
+  <section xml:id="another-tag-for-main-body">
+    <title>Breaking up the flow into sections</title>
+
+    <para>
+      You can use sections to group sections of your document
+      together, but they are not necessary.
+    </para>
+
+    <figure><info><title>Example embedded image text.</title></info>
+      <mediaobject>
+	<imageobject>
+	  <!--
+	      NOTE: fileref will normally be something like
+	      "../../articles/en/images/nirt_fig02.png" NOT http: URL
+	    -->
+	  <imagedata align="center" fileref="http://brlcad.org/images/logo/BRL-CAD_256x256.png" format="PNG" width="64"/>
+	</imageobject>
+	<caption>
+	  <para>
+	    Image caption text.
+	  </para>
+	</caption>
+      </mediaobject>
+    </figure>
+
+    <para>
+      Another image, but rendered inline
+      <inlinegraphic fileref="http://brlcad.org/images/logo/BRL-CAD_64x64.png"
+		     format="PNG" width="64"/> with the paragraph text.
+    </para>
+
+    <para>
+      More paragraphs...
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+	<thead>
+	  <row>
+	    <entry>Type</entry>
+	    <entry>Description</entry>
+	  </row>
+	  </thead>
+	<tbody>
+	  <row>
+	    <entry>ell</entry>
+	    <entry>Generalized Ellipsoid</entry>
+	  </row>
+	  <row>
+	    <entry>arb8</entry>
+	    <entry>Arbitrary Regular Polyhedron with up to 8 vertices</entry>
+	  </row>
+	</tbody>
+      </tgroup>
+    </informaltable>
+
+  </section>
+
+  <caution>
+    <para>
+      There's a lot more you can do with Docbook/XML.  Search the web for references and examples:
+    </para>
+    <itemizedlist>
+      <listitem>
+	<ulink url="http://www.docbook.org/tdg5/en/html/article.html">
+	  http://www.docbook.org/tdg5/en/html/article.html
+	</ulink>
+      </listitem>
+      <listitem>
+	<ulink url="http://www.openoffice.org/xml/xmerge/docbook/UserGuide.html">
+	  http://www.openoffice.org/xml/xmerge/docbook/UserGuide.html
+	</ulink>
+      </listitem>
+    </itemizedlist>
+  </caution>
+
+</article>
