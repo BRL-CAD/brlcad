@@ -375,7 +375,7 @@ void conv
     if (is) {
 	writeTitle(wdbp, title);
 
-	Form form = {0};
+	Form form = {0, 0, 0, 0, {{{0}}}, {0, 0, 0}, 0, 0, 0, 0};
 	bool translatedShape = false;
 	int  id;
 
