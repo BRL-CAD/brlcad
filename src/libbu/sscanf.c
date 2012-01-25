@@ -89,9 +89,13 @@
 static char*
 getSubstring(const char *srcStart, const char *srcEnd)
 {
-    size_t size = (size_t)srcEnd - (size_t)srcStart + 1;
-    char *sub = (char*)bu_malloc(size * sizeof(char), "getSubstring");
+    size_t size;
+    char *sub;
+
+    size = (size_t)srcEnd - (size_t)srcStart + 1;
+    sub = (char*)bu_malloc(size * sizeof(char), "getSubstring");
     bu_strlcpy(sub, srcStart, size);
+
     return sub;
 }
 
@@ -315,6 +319,36 @@ again:
 	case '[':
 	    flags |= NOSKIP;
 	    c = CT_CCL;
+
+	    /* note that at this point c == '[' == fmt[-1] and so fmt[0] is
+	     * either '^' or the first character of the class
+	     */
+
+	    /* there should be at least one character in between brackets */
+	    if (fmt[0] == '\0' || fmt[1] == '\0') {
+		/* error */
+		goto exit;
+	    }
+
+	    /* skip literal ']' ("[]" or "[^]") */
+	    if (fmt[0] == ']') {
+		fmt = &fmt[1];
+	    } else if (fmt[0] == '^' && fmt[1] == ']') {
+		fmt = &fmt[2];
+	    }
+
+	    /* point fmt after character class */
+	    while (1) {
+		c = *fmt++;
+		if (c == '\0') {
+		    /* error */
+		    goto exit;
+		}
+		if (c == ']') {
+		    /* found end of character class */
+		    break;
+		}
+	    }
 	    break;
 	case 'C':
 	    /* XXX This may be a BSD extension. */
