@@ -106,7 +106,7 @@ SCLP23(Select)::CanBeSet (const char * n, const char *schnm) const
   return _type -> CanBeSet (n, schnm);
 }
 
-const int
+int
 SCLP23(Select)::IsUnique (const BASE_TYPE bt) const
 {
   if (bt == ARRAY_TYPE ||

@@ -691,7 +691,7 @@ AttrDescriptor::AttrExprDefStr(std::string & s) const
   return const_cast<char *>(s.c_str());
 }    
 
-const PrimitiveType 
+PrimitiveType 
 AttrDescriptor::BaseType() const
 {
     if(_domainType)
@@ -705,7 +705,7 @@ AttrDescriptor::IsAggrType() const
     return ReferentType()->IsAggrType();
 }
 
-const PrimitiveType 
+PrimitiveType 
 AttrDescriptor::AggrElemType() const
 {
     if(IsAggrType())
@@ -733,7 +733,7 @@ AttrDescriptor::NonRefTypeDescriptor() const
     return 0;
 }
 
-const PrimitiveType 
+PrimitiveType 
 AttrDescriptor::NonRefType() const
 {
     if(_domainType)
@@ -741,7 +741,7 @@ AttrDescriptor::NonRefType() const
     return UNKNOWN_TYPE;
 }
 
-const PrimitiveType 
+PrimitiveType 
 AttrDescriptor::Type() const
 {
     if(_domainType)
@@ -1829,7 +1829,7 @@ TypeDescriptor::IsA (const char * other) const  {
 	// would work the same?
 	///////////////////////////////////////////////////////////////////////
 
-const PrimitiveType 
+PrimitiveType 
 TypeDescriptor::NonRefType() const
 {
     const TypeDescriptor *td = NonRefTypeDescriptor();
@@ -1874,7 +1874,7 @@ int TypeDescriptor::IsAggrType() const
     }
 }
 
-const PrimitiveType 
+PrimitiveType 
 TypeDescriptor::AggrElemType() const
 {
     const TypeDescriptor *aggrElemTD = AggrElemTypeDescriptor();
@@ -1908,7 +1908,7 @@ TypeDescriptor::AggrElemTypeDescriptor() const
 	//  for Integer
 	////////////////////////////////////////////////////////////
 
-const PrimitiveType
+PrimitiveType
 TypeDescriptor::BaseType() const
 {
     const TypeDescriptor *td = BaseTypeDescriptor();

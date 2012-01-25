@@ -178,9 +178,9 @@ class STEPattribute {
 
     const char * 	Name() const;
     const char *	TypeName() const;
-    const BASE_TYPE	Type() const;
-    const BASE_TYPE	NonRefType() const;
-    const BASE_TYPE	BaseType() const;
+    BASE_TYPE	Type() const;
+    BASE_TYPE	NonRefType() const;
+    BASE_TYPE	BaseType() const;
 
     const TypeDescriptor   *ReferentType() const;
 

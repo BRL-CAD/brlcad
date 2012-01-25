@@ -37,7 +37,7 @@ class SCLP23_NAME(Model_contents_instances) : public SCLP23_NAME(DAObject)
     // This function shall return the set of DAObjects contained in 
     // the receiver.
     SCLP23_NAME(DAObject__set_var) contents_() { return &_instances; }
-    const SCLP23_NAME(DAObject__set_var) contents_() const 
+    SCLP23_NAME(DAObject__set_var) contents_() const 
 	{ return (const SCLP23_NAME(DAObject__set_var)) &_instances; };
 
 };
@@ -87,14 +87,14 @@ class SCLP23_NAME(Model_contents) : public SCLP23_NAME(Session_instance) {
        */
   public:
     SCLP23_NAME(Model_contents_instances_ptr) instances_();
-    const SCLP23_NAME(Model_contents_instances_ptr) instances_() const;
+    SCLP23_NAME(Model_contents_instances_ptr) instances_() const;
 
     SCLP23_NAME(Entity_extent__set_var) folders_();
-    const SCLP23_NAME(Entity_extent__set_var) folders_() const;
+    SCLP23_NAME(Entity_extent__set_var) folders_() const;
 
     //Boolean TestFolders() const;
 
-    const SCLP23_NAME(Entity_extent__set_var) populated_folders_() const;
+    SCLP23_NAME(Entity_extent__set_var) populated_folders_() const;
     SCLP23_NAME(Entity_extent__set_var) populated_folders_();
     //Boolean TestPopulated_folders() const;
 

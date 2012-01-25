@@ -91,7 +91,7 @@ STEPattribute::TypeName() const
     return aDesc->TypeName(); 
 }
 
-const BASE_TYPE 
+BASE_TYPE 
 STEPattribute::Type() const
 {
     if ( _redefAttr )  {
@@ -100,7 +100,7 @@ STEPattribute::Type() const
     return aDesc->Type(); 
 }
 
-const BASE_TYPE 
+BASE_TYPE 
 STEPattribute::NonRefType() const
 {
     if ( _redefAttr )  {
@@ -109,7 +109,7 @@ STEPattribute::NonRefType() const
     return aDesc->NonRefType(); 
 }
 
-const BASE_TYPE 
+BASE_TYPE 
 STEPattribute::BaseType() const
 {
     if ( _redefAttr )  {

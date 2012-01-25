@@ -44,7 +44,7 @@ friend class SCLP23_NAME(Model_contents);
     SCLP23_NAME(Entity_name) definition_name_() const 
 			{ return _definition_name; }
 
-    const Entity_ptr definition_() const;
+    Entity_ptr definition_() const;
 #ifdef SDAI_CPP_LATE_BINDING
 //    const Entity_ptr definition_() const;
 #endif
@@ -54,7 +54,7 @@ friend class SCLP23_NAME(Model_contents);
 		{ return (const SCLP23_NAME(DAObject__set_var))&_instances; }
 
 // need to implement Model_contents__list
-    const SCLP23_NAME(Model_contents__list_var) owned_by_() const;
+    SCLP23_NAME(Model_contents__list_var) owned_by_() const;
 
 //    static SCLP23_NAME(Entity_extent_ptr) 
 //			_duplicate(SCLP23_NAME(Entity_extent_ptr) eep);

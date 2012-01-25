@@ -474,7 +474,7 @@ class Where_rule : public Dictionary_instance {
     virtual ~Where_rule();
 
     Express_id label_() const { return _label; }
-    const Type_or_rule_var parent_item() const { return _type_or_rule; }
+    Type_or_rule_var parent_item() const { return _type_or_rule; }
     std::string comment_() const { return _comment; }
 
     void label_(const Express_id& ei) { _label = ei; }
@@ -522,9 +522,9 @@ class Global_rule : public Dictionary_instance {
     virtual ~Global_rule();
 
     Express_id name_() const { return _name; }
-    const Entity__set_var entities_() const { return _entities; }
-    const Where_rule__list_var where_rules_() const { return _where_rules; }
-    const Schema_ptr parent_schema_() const { return _parent_schema; }
+    Entity__set_var entities_() const { return _entities; }
+    Where_rule__list_var where_rules_() const { return _where_rules; }
+    Schema_ptr parent_schema_() const { return _parent_schema; }
     const char * rule_text_() { return const_cast<char *>(_rule_text.c_str()); }
 
     void name_(Express_id& n) { _name = n; }
@@ -837,7 +837,7 @@ class AttrDescriptor {
 	   //     for the first two and a TypeDescriptor for an
 	   //     aggregate for the last.
 
-	const PrimitiveType BaseType() const;
+	PrimitiveType BaseType() const;
 	const TypeDescriptor *BaseTypeDescriptor() const;
 
 	   // the first PrimitiveType that is not REFERENCE_TYPE (the first 
@@ -848,15 +848,15 @@ class AttrDescriptor {
 	   // an element by calling AggrElemType().  Select types
 	   // would work the same?
 
-	const PrimitiveType NonRefType() const;
+	PrimitiveType NonRefType() const;
 	const TypeDescriptor *NonRefTypeDescriptor() const;
 
 	int   IsAggrType() const;
-	const PrimitiveType	AggrElemType() const;
+	PrimitiveType	AggrElemType() const;
 	const TypeDescriptor *AggrElemTypeDescriptor() const;
 
 		// The type of the attributes TypeDescriptor
-	const PrimitiveType Type() const;
+	PrimitiveType Type() const;
 	const char * TypeName() const;	// right side of attr def
 
 			// an expanded right side of attr def
@@ -1197,7 +1197,7 @@ class TypeDescriptor {
 	const char *TypeString(std::string & s) const;
 
 		// This TypeDescriptor's type
-	const PrimitiveType Type() const	{ return _fundamentalType; }
+	PrimitiveType Type() const	{ return _fundamentalType; }
 	void  Type(const PrimitiveType type) 	{ _fundamentalType = type; }
 
 	   // This is the underlying Express base type of this type. It will 
@@ -1210,7 +1210,7 @@ class TypeDescriptor {
 	   //  each one, PrimitiveType BaseType() will return INTEGER_TYPE.
 	   //  TypeDescriptor *BaseTypeDescriptor() returns the TypeDescriptor 
 	   //  for Integer.
-	const PrimitiveType       BaseType() const;
+	PrimitiveType       BaseType() const;
 	const TypeDescriptor *BaseTypeDescriptor() const;
 	const char * BaseTypeName () const;
 
@@ -1222,14 +1222,14 @@ class TypeDescriptor {
 	   // an element by calling AggrElemType().  Select types
 	   // would work the same?
 
-	const PrimitiveType	NonRefType() const;
+	PrimitiveType	NonRefType() const;
 	const TypeDescriptor *NonRefTypeDescriptor() const;
 
 	int   IsAggrType() const;
-	const PrimitiveType	AggrElemType() const;
+	PrimitiveType	AggrElemType() const;
 	const TypeDescriptor *AggrElemTypeDescriptor() const;
 
-	const PrimitiveType FundamentalType() const { return _fundamentalType; }
+	PrimitiveType FundamentalType() const { return _fundamentalType; }
 	void FundamentalType (PrimitiveType ftype) { _fundamentalType = ftype; }
 
 		// The TypeDescriptor for the type this type is based on 

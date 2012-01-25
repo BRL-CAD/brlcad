@@ -65,7 +65,7 @@ class SCLP23_NAME(Enum)  {
 			    int optional, char *tokenList,
 			    int needDelims = 0, int clearError = 1);
 
-    const int asInt () const {	return v;    }
+    int asInt () const {	return v;    }
     
     const char * asStr (std::string& s) const;
     void STEPwrite (ostream& out = cout)  const;

@@ -1045,19 +1045,19 @@ class SdaiCharacterized_product_definition  :  public SCLP23(Select) {
 	operator SdaiProduct_definition_relationship_ptr();
 
 	//  part 3
-	const SdaiProduct_definition_ptr related_product_definition_() const;
+	SdaiProduct_definition_ptr related_product_definition_() const;
 	void related_product_definition_ (const SdaiProduct_definition_ptr x);
 
-	const SdaiProduct_definition_ptr relating_product_definition_() const;
+	SdaiProduct_definition_ptr relating_product_definition_() const;
 	void relating_product_definition_ (const SdaiProduct_definition_ptr x);
 
 	const SdaiLabel name_() const;
 	void name_ (const SdaiLabel x);
 
-	const SdaiProduct_definition_context_ptr frame_of_reference_() const;
+	SdaiProduct_definition_context_ptr frame_of_reference_() const;
 	void frame_of_reference_ (const SdaiProduct_definition_context_ptr x);
 
-	const SdaiProduct_definition_formation_ptr formation_() const;
+	SdaiProduct_definition_formation_ptr formation_() const;
 	void formation_ (const SdaiProduct_definition_formation_ptr x);
 
 	const SdaiText description_() const;
@@ -1186,19 +1186,19 @@ class SdaiShape_definition  :  public SCLP23(Select) {
 	operator SdaiShape_aspect_relationship_ptr();
 
 	//  part 3
-	const SdaiShape_aspect_ptr related_shape_aspect_() const;
+	SdaiShape_aspect_ptr related_shape_aspect_() const;
 	void related_shape_aspect_ (const SdaiShape_aspect_ptr x);
 
-	const SdaiShape_aspect_ptr relating_shape_aspect_() const;
+	SdaiShape_aspect_ptr relating_shape_aspect_() const;
 	void relating_shape_aspect_ (const SdaiShape_aspect_ptr x);
 
-	const Logical product_definitional_() const;
+	Logical product_definitional_() const;
 	void product_definitional_ (const Logical x);
 
-	const SdaiProduct_definition_shape_ptr of_shape_() const;
+	SdaiProduct_definition_shape_ptr of_shape_() const;
 	void of_shape_ (const SdaiProduct_definition_shape_ptr x);
 
-	const SdaiCharacterized_definition_ptr definition_() const;
+	SdaiCharacterized_definition_ptr definition_() const;
 	void definition_ (const SdaiCharacterized_definition_ptr x);
 
 	const SdaiText description_() const;
@@ -1438,7 +1438,7 @@ class SdaiChange_request_item  :  public SCLP23(Select) {
 	operator SdaiProduct_definition_formation_ptr();
 
 	//  part 3
-	const SdaiProduct_ptr of_product_() const;
+	SdaiProduct_ptr of_product_() const;
 	void of_product_ (const SdaiProduct_ptr x);
 
 	const SdaiText description_() const;
@@ -1577,25 +1577,25 @@ class SdaiReversible_topology_item  :  public SCLP23(Select) {
 	operator SdaiOpen_shell_ptr();
 
 	//  part 3
-	const EntityAggregate_ptr cfs_faces_() const;
+	EntityAggregate_ptr cfs_faces_() const;
 	void cfs_faces_ (const EntityAggregate_ptr x);
 
-	const Boolean orientation_() const;
+	Boolean orientation_() const;
 	void orientation_ (const Boolean x);
 
-	const SdaiLoop_ptr bound_() const;
+	SdaiLoop_ptr bound_() const;
 	void bound_ (const SdaiLoop_ptr x);
 
-	const EntityAggregate_ptr bounds_() const;
+	EntityAggregate_ptr bounds_() const;
 	void bounds_ (const EntityAggregate_ptr x);
 
-	const EntityAggregate_ptr edge_list_() const;
+	EntityAggregate_ptr edge_list_() const;
 	void edge_list_ (const EntityAggregate_ptr x);
 
-	const SdaiVertex_ptr edge_end_() const;
+	SdaiVertex_ptr edge_end_() const;
 	void edge_end_ (const SdaiVertex_ptr x);
 
-	const SdaiVertex_ptr edge_start_() const;
+	SdaiVertex_ptr edge_start_() const;
 	void edge_start_ (const SdaiVertex_ptr x);
 
 	const SdaiLabel name_() const;
@@ -1725,13 +1725,13 @@ class SdaiAxis2_placement  :  public SCLP23(Select) {
 	operator SdaiAxis2_placement_3d_ptr();
 
 	//  part 3
-	const SdaiDirection_ptr axis_() const;
+	SdaiDirection_ptr axis_() const;
 	void axis_ (const SdaiDirection_ptr x);
 
-	const SdaiDirection_ptr ref_direction_() const;
+	SdaiDirection_ptr ref_direction_() const;
 	void ref_direction_ (const SdaiDirection_ptr x);
 
-	const SdaiCartesian_point_ptr location_() const;
+	SdaiCartesian_point_ptr location_() const;
 	void location_ (const SdaiCartesian_point_ptr x);
 
 	const SdaiLabel name_() const;
@@ -1853,19 +1853,19 @@ class SdaiSpecified_item  :  public SCLP23(Select) {
 	operator SdaiShape_aspect_ptr();
 
 	//  part 3
-	const Logical product_definitional_() const;
+	Logical product_definitional_() const;
 	void product_definitional_ (const Logical x);
 
-	const SdaiProduct_definition_shape_ptr of_shape_() const;
+	SdaiProduct_definition_shape_ptr of_shape_() const;
 	void of_shape_ (const SdaiProduct_definition_shape_ptr x);
 
 	const SdaiLabel name_() const;
 	void name_ (const SdaiLabel x);
 
-	const SdaiProduct_definition_context_ptr frame_of_reference_() const;
+	SdaiProduct_definition_context_ptr frame_of_reference_() const;
 	void frame_of_reference_ (const SdaiProduct_definition_context_ptr x);
 
-	const SdaiProduct_definition_formation_ptr formation_() const;
+	SdaiProduct_definition_formation_ptr formation_() const;
 	void formation_ (const SdaiProduct_definition_formation_ptr x);
 
 	const SdaiText description_() const;
@@ -2132,10 +2132,10 @@ class SdaiPerson_organization_select  :  public SCLP23(Select) {
 	operator SdaiPerson_and_organization_ptr();
 
 	//  part 3
-	const SdaiOrganization_ptr the_organization_() const;
+	SdaiOrganization_ptr the_organization_() const;
 	void the_organization_ (const SdaiOrganization_ptr x);
 
-	const SdaiPerson_ptr the_person_() const;
+	SdaiPerson_ptr the_person_() const;
 	void the_person_ (const SdaiPerson_ptr x);
 
 	const SdaiText description_() const;
@@ -2144,13 +2144,13 @@ class SdaiPerson_organization_select  :  public SCLP23(Select) {
 	const SdaiLabel name_() const;
 	void name_ (const SdaiLabel x);
 
-	const StringAggregate_ptr suffix_titles_() const;
+	StringAggregate_ptr suffix_titles_() const;
 	void suffix_titles_ (const StringAggregate_ptr x);
 
-	const StringAggregate_ptr prefix_titles_() const;
+	StringAggregate_ptr prefix_titles_() const;
 	void prefix_titles_ (const StringAggregate_ptr x);
 
-	const StringAggregate_ptr middle_names_() const;
+	StringAggregate_ptr middle_names_() const;
 	void middle_names_ (const StringAggregate_ptr x);
 
 	const SdaiLabel first_name_() const;
@@ -2280,10 +2280,10 @@ class SdaiPcurve_or_surface  :  public SCLP23(Select) {
 	operator SdaiSurface_ptr();
 
 	//  part 3
-	const SdaiDefinitional_representation_ptr reference_to_curve_() const;
+	SdaiDefinitional_representation_ptr reference_to_curve_() const;
 	void reference_to_curve_ (const SdaiDefinitional_representation_ptr x);
 
-	const SdaiSurface_ptr basis_surface_() const;
+	SdaiSurface_ptr basis_surface_() const;
 	void basis_surface_ (const SdaiSurface_ptr x);
 
 	const SdaiLabel name_() const;
@@ -2408,16 +2408,16 @@ class SdaiClassified_item  :  public SCLP23(Select) {
 	const SdaiIdentifier reference_designator_() const;
 	void reference_designator_ (const SdaiIdentifier x);
 
-	const SdaiProduct_definition_ptr related_product_definition_() const;
+	SdaiProduct_definition_ptr related_product_definition_() const;
 	void related_product_definition_ (const SdaiProduct_definition_ptr x);
 
-	const SdaiProduct_definition_ptr relating_product_definition_() const;
+	SdaiProduct_definition_ptr relating_product_definition_() const;
 	void relating_product_definition_ (const SdaiProduct_definition_ptr x);
 
 	const SdaiLabel name_() const;
 	void name_ (const SdaiLabel x);
 
-	const SdaiProduct_ptr of_product_() const;
+	SdaiProduct_ptr of_product_() const;
 	void of_product_ (const SdaiProduct_ptr x);
 
 	const SdaiText description_() const;
@@ -2661,13 +2661,13 @@ class SdaiVector_or_direction  :  public SCLP23(Select) {
 	operator SdaiDirection_ptr();
 
 	//  part 3
-	const RealAggregate_ptr direction_ratios_() const;
+	RealAggregate_ptr direction_ratios_() const;
 	void direction_ratios_ (const RealAggregate_ptr x);
 
-	const SdaiLength_measure magnitude_() const;
+	SdaiLength_measure magnitude_() const;
 	void magnitude_ (const SdaiLength_measure x);
 
-	const SdaiDirection_ptr orientation_() const;
+	SdaiDirection_ptr orientation_() const;
 	void orientation_ (const SdaiDirection_ptr x);
 
 	const SdaiLabel name_() const;
@@ -2789,10 +2789,10 @@ class SdaiWireframe_model  :  public SCLP23(Select) {
 	operator SdaiEdge_based_wireframe_model_ptr();
 
 	//  part 3
-	const EntityAggregate_ptr ebwm_boundary_() const;
+	EntityAggregate_ptr ebwm_boundary_() const;
 	void ebwm_boundary_ (const EntityAggregate_ptr x);
 
-	const SdaiShells_ptr sbwm_boundary_() const;
+	SdaiShells_ptr sbwm_boundary_() const;
 	void sbwm_boundary_ (const SdaiShells_ptr x);
 
 	const SdaiLabel name_() const;
@@ -3035,7 +3035,7 @@ class SdaiStart_request_item  :  public SCLP23(Select) {
 	operator SdaiProduct_definition_formation_ptr();
 
 	//  part 3
-	const SdaiProduct_ptr of_product_() const;
+	SdaiProduct_ptr of_product_() const;
 	void of_product_ (const SdaiProduct_ptr x);
 
 	const SdaiText description_() const;
@@ -3190,25 +3190,25 @@ class SdaiPerson_organization_item  :  public SCLP23(Select) {
 	operator SdaiSecurity_classification_ptr();
 
 	//  part 3
-	const SdaiSecurity_classification_level_ptr security_level_() const;
+	SdaiSecurity_classification_level_ptr security_level_() const;
 	void security_level_ (const SdaiSecurity_classification_level_ptr x);
 
-	const SdaiContract_type_ptr kind_() const;
+	SdaiContract_type_ptr kind_() const;
 	void kind_ (const SdaiContract_type_ptr x);
 
-	const SdaiProduct_definition_formation_ptr formation_() const;
+	SdaiProduct_definition_formation_ptr formation_() const;
 	void formation_ (const SdaiProduct_definition_formation_ptr x);
 
-	const SdaiProduct_ptr of_product_() const;
+	SdaiProduct_ptr of_product_() const;
 	void of_product_ (const SdaiProduct_ptr x);
 
-	const EntityAggregate_ptr frame_of_reference_() const;
+	EntityAggregate_ptr frame_of_reference_() const;
 	void frame_of_reference_ (const EntityAggregate_ptr x);
 
 	const SdaiLabel purpose_() const;
 	void purpose_ (const SdaiLabel x);
 
-	const SdaiProduct_concept_ptr item_concept_() const;
+	SdaiProduct_concept_ptr item_concept_() const;
 	void item_concept_ (const SdaiProduct_concept_ptr x);
 
 	const SdaiText description_() const;
@@ -3220,13 +3220,13 @@ class SdaiPerson_organization_item  :  public SCLP23(Select) {
 	const SdaiIdentifier id_() const;
 	void id_ (const SdaiIdentifier x);
 
-	const SdaiVersioned_action_request_ptr assigned_action_request_() const;
+	SdaiVersioned_action_request_ptr assigned_action_request_() const;
 	void assigned_action_request_ (const SdaiVersioned_action_request_ptr x);
 
-	const SdaiWork_items_ptr items_() const;
+	SdaiWork_items_ptr items_() const;
 	void items_ (const SdaiWork_items_ptr x);
 
-	const SdaiAction_ptr assigned_action_() const;
+	SdaiAction_ptr assigned_action_() const;
 	void assigned_action_ (const SdaiAction_ptr x);
 
 
@@ -3389,10 +3389,10 @@ class SdaiDate_time_item  :  public SCLP23(Select) {
 	operator SdaiCertification_ptr();
 
 	//  part 3
-	const SdaiSecurity_classification_level_ptr security_level_() const;
+	SdaiSecurity_classification_level_ptr security_level_() const;
 	void security_level_ (const SdaiSecurity_classification_level_ptr x);
 
-	const SdaiContract_type_ptr kind_() const;
+	SdaiContract_type_ptr kind_() const;
 	void kind_ (const SdaiContract_type_ptr x);
 
 	const SdaiText purpose_() const;
@@ -3401,28 +3401,28 @@ class SdaiDate_time_item  :  public SCLP23(Select) {
 	const SdaiLabel name_() const;
 	void name_ (const SdaiLabel x);
 
-	const SdaiApproval_role_ptr role_() const;
+	SdaiApproval_role_ptr role_() const;
 	void role_ (const SdaiApproval_role_ptr x);
 
-	const SdaiApproval_ptr authorized_approval_() const;
+	SdaiApproval_ptr authorized_approval_() const;
 	void authorized_approval_ (const SdaiApproval_ptr x);
 
-	const SdaiPerson_organization_select_ptr person_organization_() const;
+	SdaiPerson_organization_select_ptr person_organization_() const;
 	void person_organization_ (const SdaiPerson_organization_select_ptr x);
 
-	const SdaiAction_ptr assigned_action_() const;
+	SdaiAction_ptr assigned_action_() const;
 	void assigned_action_ (const SdaiAction_ptr x);
 
-	const SdaiChange_request_items_ptr items_() const;
+	SdaiChange_request_items_ptr items_() const;
 	void items_ (const SdaiChange_request_items_ptr x);
 
-	const SdaiVersioned_action_request_ptr assigned_action_request_() const;
+	SdaiVersioned_action_request_ptr assigned_action_request_() const;
 	void assigned_action_request_ (const SdaiVersioned_action_request_ptr x);
 
-	const SdaiProduct_definition_context_ptr frame_of_reference_() const;
+	SdaiProduct_definition_context_ptr frame_of_reference_() const;
 	void frame_of_reference_ (const SdaiProduct_definition_context_ptr x);
 
-	const SdaiProduct_definition_formation_ptr formation_() const;
+	SdaiProduct_definition_formation_ptr formation_() const;
 	void formation_ (const SdaiProduct_definition_formation_ptr x);
 
 	const SdaiText description_() const;
@@ -3569,13 +3569,13 @@ class SdaiShell  :  public SCLP23(Select) {
 	operator SdaiClosed_shell_ptr();
 
 	//  part 3
-	const EntityAggregate_ptr cfs_faces_() const;
+	EntityAggregate_ptr cfs_faces_() const;
 	void cfs_faces_ (const EntityAggregate_ptr x);
 
-	const EntityAggregate_ptr wire_shell_extent_() const;
+	EntityAggregate_ptr wire_shell_extent_() const;
 	void wire_shell_extent_ (const EntityAggregate_ptr x);
 
-	const SdaiVertex_loop_ptr vertex_shell_extent_() const;
+	SdaiVertex_loop_ptr vertex_shell_extent_() const;
 	void vertex_shell_extent_ (const SdaiVertex_loop_ptr x);
 
 	const SdaiLabel name_() const;
@@ -3701,10 +3701,10 @@ class SdaiTransformation  :  public SCLP23(Select) {
 	operator SdaiFunctionally_defined_transformation_ptr();
 
 	//  part 3
-	const SdaiRepresentation_item_ptr transform_item_2_() const;
+	SdaiRepresentation_item_ptr transform_item_2_() const;
 	void transform_item_2_ (const SdaiRepresentation_item_ptr x);
 
-	const SdaiRepresentation_item_ptr transform_item_1_() const;
+	SdaiRepresentation_item_ptr transform_item_1_() const;
 	void transform_item_1_ (const SdaiRepresentation_item_ptr x);
 
 	const SdaiText description_() const;
@@ -3938,10 +3938,10 @@ class SdaiCertified_item  :  public SCLP23(Select) {
 	operator SdaiSupplied_part_relationship_ptr();
 
 	//  part 3
-	const SdaiProduct_definition_ptr related_product_definition_() const;
+	SdaiProduct_definition_ptr related_product_definition_() const;
 	void related_product_definition_ (const SdaiProduct_definition_ptr x);
 
-	const SdaiProduct_definition_ptr relating_product_definition_() const;
+	SdaiProduct_definition_ptr relating_product_definition_() const;
 	void relating_product_definition_ (const SdaiProduct_definition_ptr x);
 
 	const SdaiText description_() const;
@@ -4071,25 +4071,25 @@ class SdaiDate_time_select  :  public SCLP23(Select) {
 	operator SdaiDate_and_time_ptr();
 
 	//  part 3
-	const SdaiLocal_time_ptr time_component_() const;
+	SdaiLocal_time_ptr time_component_() const;
 	void time_component_ (const SdaiLocal_time_ptr x);
 
-	const SdaiDate_ptr date_component_() const;
+	SdaiDate_ptr date_component_() const;
 	void date_component_ (const SdaiDate_ptr x);
 
-	const SdaiCoordinated_universal_time_offset_ptr zone_() const;
+	SdaiCoordinated_universal_time_offset_ptr zone_() const;
 	void zone_ (const SdaiCoordinated_universal_time_offset_ptr x);
 
-	const SdaiSecond_in_minute second_component_() const;
+	SdaiSecond_in_minute second_component_() const;
 	void second_component_ (const SdaiSecond_in_minute x);
 
-	const SdaiMinute_in_hour minute_component_() const;
+	SdaiMinute_in_hour minute_component_() const;
 	void minute_component_ (const SdaiMinute_in_hour x);
 
-	const SdaiHour_in_day hour_component_() const;
+	SdaiHour_in_day hour_component_() const;
 	void hour_component_ (const SdaiHour_in_day x);
 
-	const SdaiYear_number year_component_() const;
+	SdaiYear_number year_component_() const;
 	void year_component_ (const SdaiYear_number x);
 
 
@@ -4214,25 +4214,25 @@ class SdaiCurve_on_surface  :  public SCLP23(Select) {
 	operator SdaiComposite_curve_on_surface_ptr();
 
 	//  part 3
-	const Logical self_intersect_() const;
+	Logical self_intersect_() const;
 	void self_intersect_ (const Logical x);
 
-	const EntityAggregate_ptr segments_() const;
+	EntityAggregate_ptr segments_() const;
 	void segments_ (const EntityAggregate_ptr x);
 
 	const SdaiPreferred_surface_curve_representation_var master_representation_() const;
 	void master_representation_ (const SdaiPreferred_surface_curve_representation_var x);
 
-	const SdaiPcurve_or_surfaces_ptr associated_geometry_() const;
+	SdaiPcurve_or_surfaces_ptr associated_geometry_() const;
 	void associated_geometry_ (const SdaiPcurve_or_surfaces_ptr x);
 
-	const SdaiCurve_ptr curve_3d_() const;
+	SdaiCurve_ptr curve_3d_() const;
 	void curve_3d_ (const SdaiCurve_ptr x);
 
-	const SdaiDefinitional_representation_ptr reference_to_curve_() const;
+	SdaiDefinitional_representation_ptr reference_to_curve_() const;
 	void reference_to_curve_ (const SdaiDefinitional_representation_ptr x);
 
-	const SdaiSurface_ptr basis_surface_() const;
+	SdaiSurface_ptr basis_surface_() const;
 	void basis_surface_ (const SdaiSurface_ptr x);
 
 	const SdaiLabel name_() const;
@@ -4357,7 +4357,7 @@ class SdaiTrimming_select  :  public SCLP23(Select) {
 	operator SdaiParameter_value();
 
 	//  part 3
-	const RealAggregate_ptr coordinates_() const;
+	RealAggregate_ptr coordinates_() const;
 	void coordinates_ (const RealAggregate_ptr x);
 
 	const SdaiLabel name_() const;
@@ -4475,7 +4475,7 @@ class SdaiContracted_item  :  public SCLP23(Select) {
 	operator SdaiProduct_definition_formation_ptr();
 
 	//  part 3
-	const SdaiProduct_ptr of_product_() const;
+	SdaiProduct_ptr of_product_() const;
 	void of_product_ (const SdaiProduct_ptr x);
 
 	const SdaiText description_() const;
@@ -4594,7 +4594,7 @@ class SdaiUnit  :  public SCLP23(Select) {
 	operator SdaiNamed_unit_ptr();
 
 	//  part 3
-	const SdaiDimensional_exponents_ptr dimensions_() const;
+	SdaiDimensional_exponents_ptr dimensions_() const;
 	void dimensions_ (const SdaiDimensional_exponents_ptr x);
 
 
@@ -4827,7 +4827,7 @@ class SdaiWork_item  :  public SCLP23(Select) {
 	operator SdaiProduct_definition_formation_ptr();
 
 	//  part 3
-	const SdaiProduct_ptr of_product_() const;
+	SdaiProduct_ptr of_product_() const;
 	void of_product_ (const SdaiProduct_ptr x);
 
 	const SdaiText description_() const;
@@ -4960,10 +4960,10 @@ class SdaiSupported_item  :  public SCLP23(Select) {
 	const SdaiText consequence_() const;
 	void consequence_ (const SdaiText x);
 
-	const SdaiAction_method_ptr chosen_method_() const;
+	SdaiAction_method_ptr chosen_method_() const;
 	void chosen_method_ (const SdaiAction_method_ptr x);
 
-	const EntityAggregate_ptr requests_() const;
+	EntityAggregate_ptr requests_() const;
 	void requests_ (const EntityAggregate_ptr x);
 
 	const SdaiText comment_() const;
@@ -5132,43 +5132,43 @@ class SdaiApproved_item  :  public SCLP23(Select) {
 	operator SdaiContract_ptr();
 
 	//  part 3
-	const SdaiCertification_type_ptr kind_() const;
+	SdaiCertification_type_ptr kind_() const;
 	void kind_ (const SdaiCertification_type_ptr x);
 
-	const SdaiAction_ptr assigned_action_() const;
+	SdaiAction_ptr assigned_action_() const;
 	void assigned_action_ (const SdaiAction_ptr x);
 
-	const SdaiChange_request_items_ptr items_() const;
+	SdaiChange_request_items_ptr items_() const;
 	void items_ (const SdaiChange_request_items_ptr x);
 
-	const SdaiVersioned_action_request_ptr assigned_action_request_() const;
+	SdaiVersioned_action_request_ptr assigned_action_request_() const;
 	void assigned_action_request_ (const SdaiVersioned_action_request_ptr x);
 
-	const SdaiSecurity_classification_level_ptr security_level_() const;
+	SdaiSecurity_classification_level_ptr security_level_() const;
 	void security_level_ (const SdaiSecurity_classification_level_ptr x);
 
 	const SdaiLabel purpose_() const;
 	void purpose_ (const SdaiLabel x);
 
-	const SdaiProduct_concept_ptr item_concept_() const;
+	SdaiProduct_concept_ptr item_concept_() const;
 	void item_concept_ (const SdaiProduct_concept_ptr x);
 
 	const SdaiLabel name_() const;
 	void name_ (const SdaiLabel x);
 
-	const SdaiConfiguration_design_ptr configuration_() const;
+	SdaiConfiguration_design_ptr configuration_() const;
 	void configuration_ (const SdaiConfiguration_design_ptr x);
 
-	const SdaiProduct_definition_relationship_ptr usage_() const;
+	SdaiProduct_definition_relationship_ptr usage_() const;
 	void usage_ (const SdaiProduct_definition_relationship_ptr x);
 
-	const SdaiProduct_definition_context_ptr frame_of_reference_() const;
+	SdaiProduct_definition_context_ptr frame_of_reference_() const;
 	void frame_of_reference_ (const SdaiProduct_definition_context_ptr x);
 
-	const SdaiProduct_definition_formation_ptr formation_() const;
+	SdaiProduct_definition_formation_ptr formation_() const;
 	void formation_ (const SdaiProduct_definition_formation_ptr x);
 
-	const SdaiProduct_ptr of_product_() const;
+	SdaiProduct_ptr of_product_() const;
 	void of_product_ (const SdaiProduct_ptr x);
 
 	const SdaiText description_() const;
@@ -5307,7 +5307,7 @@ class SdaiSurface_model  :  public SCLP23(Select) {
 	operator SdaiShell_based_surface_model_ptr();
 
 	//  part 3
-	const SdaiShells_ptr sbsm_boundary_() const;
+	SdaiShells_ptr sbsm_boundary_() const;
 	void sbsm_boundary_ (const SdaiShells_ptr x);
 
 	const SdaiLabel name_() const;
@@ -5591,16 +5591,16 @@ class SdaiCartesian_transformation_operator  :    public SdaiGeometric_represent
 #endif
 
 	int opcode ()  { return 3 ; }
-	const SdaiDirection_ptr axis1_() const;
+	SdaiDirection_ptr axis1_() const;
 	void axis1_ (const SdaiDirection_ptr x);
 
-	const SdaiDirection_ptr axis2_() const;
+	SdaiDirection_ptr axis2_() const;
 	void axis2_ (const SdaiDirection_ptr x);
 
-	const SdaiCartesian_point_ptr local_origin_() const;
+	SdaiCartesian_point_ptr local_origin_() const;
 	void local_origin_ (const SdaiCartesian_point_ptr x);
 
-	const SCLP23(Real) scale_() const;
+	SCLP23(Real) scale_() const;
 	void scale_ (const SCLP23(Real) x);
 
 	/* The first parent's access functions are */
@@ -5661,7 +5661,7 @@ class SdaiCartesian_transformation_operator_3d  :    public SdaiCartesian_transf
 #endif
 
 	int opcode ()  { return 4 ; }
-	const SdaiDirection_ptr axis3_() const;
+	SdaiDirection_ptr axis3_() const;
 	void axis3_ (const SdaiDirection_ptr x);
 
 	/* The first parent's access functions are */
@@ -5802,10 +5802,10 @@ class SdaiRepresentation  :    public SCLP23(Application_instance) {
 	const SdaiLabel name_() const;
 	void name_ (const SdaiLabel x);
 
-	const EntityAggregate_ptr items_() const;
+	EntityAggregate_ptr items_() const;
 	void items_ (const EntityAggregate_ptr x);
 
-	const SdaiRepresentation_context_ptr context_of_items_() const;
+	SdaiRepresentation_context_ptr context_of_items_() const;
 	void context_of_items_ (const SdaiRepresentation_context_ptr x);
 
 
@@ -5983,7 +5983,7 @@ class SdaiCertification  :    public SCLP23(Application_instance) {
 	const SdaiText purpose_() const;
 	void purpose_ (const SdaiText x);
 
-	const SdaiCertification_type_ptr kind_() const;
+	SdaiCertification_type_ptr kind_() const;
 	void kind_ (const SdaiCertification_type_ptr x);
 
 
@@ -6058,10 +6058,10 @@ class SdaiProduct_definition_relationship  :    public SCLP23(Application_instan
 	const SdaiText description_() const;
 	void description_ (const SdaiText x);
 
-	const SdaiProduct_definition_ptr relating_product_definition_() const;
+	SdaiProduct_definition_ptr relating_product_definition_() const;
 	void relating_product_definition_ (const SdaiProduct_definition_ptr x);
 
-	const SdaiProduct_definition_ptr related_product_definition_() const;
+	SdaiProduct_definition_ptr related_product_definition_() const;
 	void related_product_definition_ (const SdaiProduct_definition_ptr x);
 
 
@@ -6234,7 +6234,7 @@ class SdaiQuantified_assembly_component_usage  :    public SdaiAssembly_componen
 #endif
 
 	int opcode ()  { return 13 ; }
-	const SdaiMeasure_with_unit_ptr quantity_() const;
+	SdaiMeasure_with_unit_ptr quantity_() const;
 	void quantity_ (const SdaiMeasure_with_unit_ptr x);
 
 	/* The first parent's access functions are */
@@ -6349,7 +6349,7 @@ class SdaiManifold_solid_brep  :    public SdaiSolid_model  {
 #endif
 
 	int opcode ()  { return 15 ; }
-	const SdaiClosed_shell_ptr outer_() const;
+	SdaiClosed_shell_ptr outer_() const;
 	void outer_ (const SdaiClosed_shell_ptr x);
 
 	/* The first parent's access functions are */
@@ -6485,7 +6485,7 @@ class SdaiAction_directive  :    public SCLP23(Application_instance) {
 	const SdaiText comment_() const;
 	void comment_ (const SdaiText x);
 
-	const EntityAggregate_ptr requests_() const;
+	EntityAggregate_ptr requests_() const;
 	void requests_ (const EntityAggregate_ptr x);
 
 
@@ -6543,7 +6543,7 @@ class SdaiNamed_unit  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 18 ; }
-	const SdaiDimensional_exponents_ptr dimensions_() const;
+	SdaiDimensional_exponents_ptr dimensions_() const;
 	void dimensions_ (const SdaiDimensional_exponents_ptr x);
 
 
@@ -6658,10 +6658,10 @@ class SdaiMeasure_with_unit  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 20 ; }
-	const SdaiMeasure_value_ptr value_component_() const;
+	SdaiMeasure_value_ptr value_component_() const;
 	void value_component_ (const SdaiMeasure_value_ptr x);
 
-	const SdaiUnit_ptr unit_component_() const;
+	SdaiUnit_ptr unit_component_() const;
 	void unit_component_ (const SdaiUnit_ptr x);
 
 
@@ -6956,13 +6956,13 @@ class SdaiOffset_surface  :    public SdaiSurface  {
 #endif
 
 	int opcode ()  { return 25 ; }
-	const SdaiSurface_ptr basis_surface_() const;
+	SdaiSurface_ptr basis_surface_() const;
 	void basis_surface_ (const SdaiSurface_ptr x);
 
-	const SdaiLength_measure distance_() const;
+	SdaiLength_measure distance_() const;
 	void distance_ (const SdaiLength_measure x);
 
-	const Logical self_intersect_() const;
+	Logical self_intersect_() const;
 	void self_intersect_ (const Logical x);
 
 	/* The first parent's access functions are */
@@ -7022,7 +7022,7 @@ class SdaiPlacement  :    public SdaiGeometric_representation_item  {
 #endif
 
 	int opcode ()  { return 26 ; }
-	const SdaiCartesian_point_ptr location_() const;
+	SdaiCartesian_point_ptr location_() const;
 	void location_ (const SdaiCartesian_point_ptr x);
 
 	/* The first parent's access functions are */
@@ -7083,7 +7083,7 @@ class SdaiAxis2_placement_2d  :    public SdaiPlacement  {
 #endif
 
 	int opcode ()  { return 27 ; }
-	const SdaiDirection_ptr ref_direction_() const;
+	SdaiDirection_ptr ref_direction_() const;
 	void ref_direction_ (const SdaiDirection_ptr x);
 
 	/* The first parent's access functions are */
@@ -7207,7 +7207,7 @@ class SdaiProduct_related_product_category  :    public SdaiProduct_category  {
 #endif
 
 	int opcode ()  { return 29 ; }
-	const EntityAggregate_ptr products_() const;
+	EntityAggregate_ptr products_() const;
 	void products_ (const EntityAggregate_ptr x);
 
 	/* The first parent's access functions are */
@@ -7322,7 +7322,7 @@ class SdaiConic  :    public SdaiCurve  {
 #endif
 
 	int opcode ()  { return 31 ; }
-	const SdaiAxis2_placement_ptr position_() const;
+	SdaiAxis2_placement_ptr position_() const;
 	void position_ (const SdaiAxis2_placement_ptr x);
 
 	/* The first parent's access functions are */
@@ -7384,10 +7384,10 @@ class SdaiHyperbola  :    public SdaiConic  {
 #endif
 
 	int opcode ()  { return 32 ; }
-	const SdaiPositive_length_measure semi_axis_() const;
+	SdaiPositive_length_measure semi_axis_() const;
 	void semi_axis_ (const SdaiPositive_length_measure x);
 
-	const SdaiPositive_length_measure semi_imag_axis_() const;
+	SdaiPositive_length_measure semi_imag_axis_() const;
 	void semi_imag_axis_ (const SdaiPositive_length_measure x);
 
 	/* The first parent's access functions are */
@@ -7563,7 +7563,7 @@ class SdaiOrganizational_address  :    public SdaiAddress  {
 #endif
 
 	int opcode ()  { return 34 ; }
-	const EntityAggregate_ptr organizations_() const;
+	EntityAggregate_ptr organizations_() const;
 	void organizations_ (const EntityAggregate_ptr x);
 
 	const SdaiText description_() const;
@@ -7697,25 +7697,25 @@ class SdaiB_spline_surface  :    public SdaiBounded_surface  {
 #endif
 
 	int opcode ()  { return 36 ; }
-	const SCLP23(Integer) u_degree_() const;
+	SCLP23(Integer) u_degree_() const;
 	void u_degree_ (const SCLP23(Integer) x);
 
-	const SCLP23(Integer) v_degree_() const;
+	SCLP23(Integer) v_degree_() const;
 	void v_degree_ (const SCLP23(Integer) x);
 
-	const GenericAggregate_ptr control_points_list_() const;
+	GenericAggregate_ptr control_points_list_() const;
 	void control_points_list_ (const GenericAggregate_ptr x);
 
 	const SdaiB_spline_surface_form_var surface_form_() const;
 	void surface_form_ (const SdaiB_spline_surface_form_var x);
 
-	const Logical u_closed_() const;
+	Logical u_closed_() const;
 	void u_closed_ (const Logical x);
 
-	const Logical v_closed_() const;
+	Logical v_closed_() const;
 	void v_closed_ (const Logical x);
 
-	const Logical self_intersect_() const;
+	Logical self_intersect_() const;
 	void self_intersect_ (const Logical x);
 
 	/* The first parent's access functions are */
@@ -7886,7 +7886,7 @@ class SdaiAxis1_placement  :    public SdaiPlacement  {
 #endif
 
 	int opcode ()  { return 39 ; }
-	const SdaiDirection_ptr axis_() const;
+	SdaiDirection_ptr axis_() const;
 	void axis_ (const SdaiDirection_ptr x);
 
 	/* The first parent's access functions are */
@@ -8012,19 +8012,19 @@ class SdaiB_spline_curve  :    public SdaiBounded_curve  {
 #endif
 
 	int opcode ()  { return 41 ; }
-	const SCLP23(Integer) degree_() const;
+	SCLP23(Integer) degree_() const;
 	void degree_ (const SCLP23(Integer) x);
 
-	const EntityAggregate_ptr control_points_list_() const;
+	EntityAggregate_ptr control_points_list_() const;
 	void control_points_list_ (const EntityAggregate_ptr x);
 
 	const SdaiB_spline_curve_form_var curve_form_() const;
 	void curve_form_ (const SdaiB_spline_curve_form_var x);
 
-	const Logical closed_curve_() const;
+	Logical closed_curve_() const;
 	void closed_curve_ (const Logical x);
 
-	const Logical self_intersect_() const;
+	Logical self_intersect_() const;
 	void self_intersect_ (const Logical x);
 
 	/* The first parent's access functions are */
@@ -8085,7 +8085,7 @@ class SdaiRational_b_spline_curve  :    public SdaiB_spline_curve  {
 #endif
 
 	int opcode ()  { return 42 ; }
-	const RealAggregate_ptr weights_data_() const;
+	RealAggregate_ptr weights_data_() const;
 	void weights_data_ (const RealAggregate_ptr x);
 
 	/* The first parent's access functions are */
@@ -8145,7 +8145,7 @@ class SdaiAction_request_assignment  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 43 ; }
-	const SdaiVersioned_action_request_ptr assigned_action_request_() const;
+	SdaiVersioned_action_request_ptr assigned_action_request_() const;
 	void assigned_action_request_ (const SdaiVersioned_action_request_ptr x);
 
 
@@ -8260,10 +8260,10 @@ class SdaiFace_bound  :    public SdaiTopological_representation_item  {
 #endif
 
 	int opcode ()  { return 45 ; }
-	const SdaiLoop_ptr bound_() const;
+	SdaiLoop_ptr bound_() const;
 	void bound_ (const SdaiLoop_ptr x);
 
-	const Boolean orientation_() const;
+	Boolean orientation_() const;
 	void orientation_ (const Boolean x);
 
 	/* The first parent's access functions are */
@@ -8380,10 +8380,10 @@ class SdaiDated_effectivity  :    public SdaiEffectivity  {
 #endif
 
 	int opcode ()  { return 47 ; }
-	const SdaiDate_and_time_ptr effectivity_start_date_() const;
+	SdaiDate_and_time_ptr effectivity_start_date_() const;
 	void effectivity_start_date_ (const SdaiDate_and_time_ptr x);
 
-	const SdaiDate_and_time_ptr effectivity_end_date_() const;
+	SdaiDate_and_time_ptr effectivity_end_date_() const;
 	void effectivity_end_date_ (const SdaiDate_and_time_ptr x);
 
 	/* The first parent's access functions are */
@@ -8443,7 +8443,7 @@ class SdaiDirection  :    public SdaiGeometric_representation_item  {
 #endif
 
 	int opcode ()  { return 48 ; }
-	const RealAggregate_ptr direction_ratios_() const;
+	RealAggregate_ptr direction_ratios_() const;
 	void direction_ratios_ (const RealAggregate_ptr x);
 
 	/* The first parent's access functions are */
@@ -8560,10 +8560,10 @@ class SdaiEdge  :    public SdaiTopological_representation_item  {
 #endif
 
 	int opcode ()  { return 50 ; }
-	const SdaiVertex_ptr edge_start_() const;
+	SdaiVertex_ptr edge_start_() const;
 	void edge_start_ (const SdaiVertex_ptr x);
 
-	const SdaiVertex_ptr edge_end_() const;
+	SdaiVertex_ptr edge_end_() const;
 	void edge_end_ (const SdaiVertex_ptr x);
 
 	/* The first parent's access functions are */
@@ -8627,10 +8627,10 @@ class SdaiOriented_edge  :    public SdaiEdge  {
 #endif
 
 	int opcode ()  { return 51 ; }
-	const SdaiEdge_ptr edge_element_() const;
+	SdaiEdge_ptr edge_element_() const;
 	void edge_element_ (const SdaiEdge_ptr x);
 
-	const Boolean orientation_() const;
+	Boolean orientation_() const;
 	void orientation_ (const Boolean x);
 
 	/* The first parent's access functions are */
@@ -8712,13 +8712,13 @@ class SdaiPerson  :    public SCLP23(Application_instance) {
 	const SdaiLabel first_name_() const;
 	void first_name_ (const SdaiLabel x);
 
-	const StringAggregate_ptr middle_names_() const;
+	StringAggregate_ptr middle_names_() const;
 	void middle_names_ (const StringAggregate_ptr x);
 
-	const StringAggregate_ptr prefix_titles_() const;
+	StringAggregate_ptr prefix_titles_() const;
 	void prefix_titles_ (const StringAggregate_ptr x);
 
-	const StringAggregate_ptr suffix_titles_() const;
+	StringAggregate_ptr suffix_titles_() const;
 	void suffix_titles_ (const StringAggregate_ptr x);
 
 
@@ -8791,7 +8791,7 @@ class SdaiDocument  :    public SCLP23(Application_instance) {
 	const SdaiText description_() const;
 	void description_ (const SdaiText x);
 
-	const SdaiDocument_type_ptr kind_() const;
+	SdaiDocument_type_ptr kind_() const;
 	void kind_ (const SdaiDocument_type_ptr x);
 
 
@@ -8914,7 +8914,7 @@ class SdaiConversion_based_unit  :    public SdaiNamed_unit  {
 	const SdaiLabel name_() const;
 	void name_ (const SdaiLabel x);
 
-	const SdaiMeasure_with_unit_ptr conversion_factor_() const;
+	SdaiMeasure_with_unit_ptr conversion_factor_() const;
 	void conversion_factor_ (const SdaiMeasure_with_unit_ptr x);
 
 	/* The first parent's access functions are */
@@ -9033,13 +9033,13 @@ class SdaiPoint_on_surface  :    public SdaiPoint  {
 #endif
 
 	int opcode ()  { return 57 ; }
-	const SdaiSurface_ptr basis_surface_() const;
+	SdaiSurface_ptr basis_surface_() const;
 	void basis_surface_ (const SdaiSurface_ptr x);
 
-	const SdaiParameter_value point_parameter_u_() const;
+	SdaiParameter_value point_parameter_u_() const;
 	void point_parameter_u_ (const SdaiParameter_value x);
 
-	const SdaiParameter_value point_parameter_v_() const;
+	SdaiParameter_value point_parameter_v_() const;
 	void point_parameter_v_ (const SdaiParameter_value x);
 
 	/* The first parent's access functions are */
@@ -9109,7 +9109,7 @@ class SdaiProduct_definition_formation  :    public SCLP23(Application_instance)
 	const SdaiText description_() const;
 	void description_ (const SdaiText x);
 
-	const SdaiProduct_ptr of_product_() const;
+	SdaiProduct_ptr of_product_() const;
 	void of_product_ (const SdaiProduct_ptr x);
 
 
@@ -9169,10 +9169,10 @@ class SdaiPerson_and_organization_assignment  :    public SCLP23(Application_ins
 #endif
 
 	int opcode ()  { return 59 ; }
-	const SdaiPerson_and_organization_ptr assigned_person_and_organization_() const;
+	SdaiPerson_and_organization_ptr assigned_person_and_organization_() const;
 	void assigned_person_and_organization_ (const SdaiPerson_and_organization_ptr x);
 
-	const SdaiPerson_and_organization_role_ptr role_() const;
+	SdaiPerson_and_organization_role_ptr role_() const;
 	void role_ (const SdaiPerson_and_organization_role_ptr x);
 
 
@@ -9231,7 +9231,7 @@ class SdaiCc_design_person_and_organization_assignment  :    public SdaiPerson_a
 #endif
 
 	int opcode ()  { return 60 ; }
-	const SdaiPerson_organization_items_ptr items_() const;
+	SdaiPerson_organization_items_ptr items_() const;
 	void items_ (const SdaiPerson_organization_items_ptr x);
 
 	/* The first parent's access functions are */
@@ -9297,16 +9297,16 @@ class SdaiOffset_curve_3d  :    public SdaiCurve  {
 #endif
 
 	int opcode ()  { return 61 ; }
-	const SdaiCurve_ptr basis_curve_() const;
+	SdaiCurve_ptr basis_curve_() const;
 	void basis_curve_ (const SdaiCurve_ptr x);
 
-	const SdaiLength_measure distance_() const;
+	SdaiLength_measure distance_() const;
 	void distance_ (const SdaiLength_measure x);
 
-	const Logical self_intersect_() const;
+	Logical self_intersect_() const;
 	void self_intersect_ (const Logical x);
 
-	const SdaiDirection_ptr ref_direction_() const;
+	SdaiDirection_ptr ref_direction_() const;
 	void ref_direction_ (const SdaiDirection_ptr x);
 
 	/* The first parent's access functions are */
@@ -9368,7 +9368,7 @@ class SdaiApproval  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 62 ; }
-	const SdaiApproval_status_ptr status_() const;
+	SdaiApproval_status_ptr status_() const;
 	void status_ (const SdaiApproval_status_ptr x);
 
 	const SdaiLabel level_() const;
@@ -9434,10 +9434,10 @@ class SdaiComposite_curve  :    public SdaiBounded_curve  {
 #endif
 
 	int opcode ()  { return 63 ; }
-	const EntityAggregate_ptr segments_() const;
+	EntityAggregate_ptr segments_() const;
 	void segments_ (const EntityAggregate_ptr x);
 
-	const Logical self_intersect_() const;
+	Logical self_intersect_() const;
 	void self_intersect_ (const Logical x);
 
 	/* The first parent's access functions are */
@@ -9619,7 +9619,7 @@ class SdaiRepresentation_context  :    public SCLP23(Application_instance) {
 	const SdaiText context_type_() const;
 	void context_type_ (const SdaiText x);
 
-	const EntityAggregate_ptr representations_in_context_() const;
+	EntityAggregate_ptr representations_in_context_() const;
 	void representations_in_context_ (const EntityAggregate_ptr x);
 
 
@@ -9677,7 +9677,7 @@ class SdaiGeometric_representation_context  :    public SdaiRepresentation_conte
 #endif
 
 	int opcode ()  { return 67 ; }
-	const SdaiDimension_count coordinate_space_dimension_() const;
+	SdaiDimension_count coordinate_space_dimension_() const;
 	void coordinate_space_dimension_ (const SdaiDimension_count x);
 
 	/* The first parent's access functions are */
@@ -9742,7 +9742,7 @@ class SdaiAction_status  :    public SCLP23(Application_instance) {
 	const SdaiLabel status_() const;
 	void status_ (const SdaiLabel x);
 
-	const SdaiExecuted_action_ptr assigned_action_() const;
+	SdaiExecuted_action_ptr assigned_action_() const;
 	void assigned_action_ (const SdaiExecuted_action_ptr x);
 
 
@@ -9806,7 +9806,7 @@ class SdaiApplication_context  :    public SCLP23(Application_instance) {
 	const SdaiText application_() const;
 	void application_ (const SdaiText x);
 
-	const EntityAggregate_ptr context_elements_() const;
+	EntityAggregate_ptr context_elements_() const;
 	void context_elements_ (const EntityAggregate_ptr x);
 
 
@@ -9865,7 +9865,7 @@ class SdaiChange_request  :    public SdaiAction_request_assignment  {
 #endif
 
 	int opcode ()  { return 70 ; }
-	const SdaiChange_request_items_ptr items_() const;
+	SdaiChange_request_items_ptr items_() const;
 	void items_ (const SdaiChange_request_items_ptr x);
 
 	/* The first parent's access functions are */
@@ -9927,10 +9927,10 @@ class SdaiDate_and_time  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 71 ; }
-	const SdaiDate_ptr date_component_() const;
+	SdaiDate_ptr date_component_() const;
 	void date_component_ (const SdaiDate_ptr x);
 
-	const SdaiLocal_time_ptr time_component_() const;
+	SdaiLocal_time_ptr time_component_() const;
 	void time_component_ (const SdaiLocal_time_ptr x);
 
 
@@ -9990,10 +9990,10 @@ class SdaiApproval_date_time  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 72 ; }
-	const SdaiDate_time_select_ptr date_time_() const;
+	SdaiDate_time_select_ptr date_time_() const;
 	void date_time_ (const SdaiDate_time_select_ptr x);
 
-	const SdaiApproval_ptr dated_approval_() const;
+	SdaiApproval_ptr dated_approval_() const;
 	void dated_approval_ (const SdaiApproval_ptr x);
 
 
@@ -10114,7 +10114,7 @@ class SdaiApplication_context_element  :    public SCLP23(Application_instance) 
 	const SdaiLabel name_() const;
 	void name_ (const SdaiLabel x);
 
-	const SdaiApplication_context_ptr frame_of_reference_() const;
+	SdaiApplication_context_ptr frame_of_reference_() const;
 	void frame_of_reference_ (const SdaiApplication_context_ptr x);
 
 
@@ -10232,7 +10232,7 @@ class SdaiElementary_surface  :    public SdaiSurface  {
 #endif
 
 	int opcode ()  { return 76 ; }
-	const SdaiAxis2_placement_3d_ptr position_() const;
+	SdaiAxis2_placement_3d_ptr position_() const;
 	void position_ (const SdaiAxis2_placement_3d_ptr x);
 
 	/* The first parent's access functions are */
@@ -10292,7 +10292,7 @@ class SdaiSpherical_surface  :    public SdaiElementary_surface  {
 #endif
 
 	int opcode ()  { return 77 ; }
-	const SdaiPositive_length_measure radius_() const;
+	SdaiPositive_length_measure radius_() const;
 	void radius_ (const SdaiPositive_length_measure x);
 
 	/* The first parent's access functions are */
@@ -10364,10 +10364,10 @@ class SdaiApplication_protocol_definition  :    public SCLP23(Application_instan
 	const SdaiLabel application_interpreted_model_schema_name_() const;
 	void application_interpreted_model_schema_name_ (const SdaiLabel x);
 
-	const SdaiYear_number application_protocol_year_() const;
+	SdaiYear_number application_protocol_year_() const;
 	void application_protocol_year_ (const SdaiYear_number x);
 
-	const SdaiApplication_context_ptr application_() const;
+	SdaiApplication_context_ptr application_() const;
 	void application_ (const SdaiApplication_context_ptr x);
 
 
@@ -10427,10 +10427,10 @@ class SdaiSpecified_higher_usage_occurrence  :    public SdaiAssembly_component_
 #endif
 
 	int opcode ()  { return 79 ; }
-	const SdaiAssembly_component_usage_ptr upper_usage_() const;
+	SdaiAssembly_component_usage_ptr upper_usage_() const;
 	void upper_usage_ (const SdaiAssembly_component_usage_ptr x);
 
-	const SdaiNext_assembly_usage_occurrence_ptr next_usage_() const;
+	SdaiNext_assembly_usage_occurrence_ptr next_usage_() const;
 	void next_usage_ (const SdaiNext_assembly_usage_occurrence_ptr x);
 
 	/* The first parent's access functions are */
@@ -10552,10 +10552,10 @@ class SdaiAction_request_solution  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 81 ; }
-	const SdaiAction_method_ptr method_() const;
+	SdaiAction_method_ptr method_() const;
 	void method_ (const SdaiAction_method_ptr x);
 
-	const SdaiVersioned_action_request_ptr request_() const;
+	SdaiVersioned_action_request_ptr request_() const;
 	void request_ (const SdaiVersioned_action_request_ptr x);
 
 
@@ -10679,7 +10679,7 @@ class SdaiEdge_based_wireframe_model  :    public SdaiGeometric_representation_i
 #endif
 
 	int opcode ()  { return 83 ; }
-	const EntityAggregate_ptr ebwm_boundary_() const;
+	EntityAggregate_ptr ebwm_boundary_() const;
 	void ebwm_boundary_ (const EntityAggregate_ptr x);
 
 	/* The first parent's access functions are */
@@ -10740,7 +10740,7 @@ class SdaiPath  :    public SdaiTopological_representation_item  {
 #endif
 
 	int opcode ()  { return 84 ; }
-	const EntityAggregate_ptr edge_list_() const;
+	EntityAggregate_ptr edge_list_() const;
 	void edge_list_ (const EntityAggregate_ptr x);
 
 	/* The first parent's access functions are */
@@ -10801,7 +10801,7 @@ class SdaiConnected_face_set  :    public SdaiTopological_representation_item  {
 #endif
 
 	int opcode ()  { return 85 ; }
-	const EntityAggregate_ptr cfs_faces_() const;
+	EntityAggregate_ptr cfs_faces_() const;
 	void cfs_faces_ (const EntityAggregate_ptr x);
 
 	/* The first parent's access functions are */
@@ -10919,10 +10919,10 @@ class SdaiOriented_open_shell  :    public SdaiOpen_shell  {
 #endif
 
 	int opcode ()  { return 87 ; }
-	const SdaiOpen_shell_ptr open_shell_element_() const;
+	SdaiOpen_shell_ptr open_shell_element_() const;
 	void open_shell_element_ (const SdaiOpen_shell_ptr x);
 
-	const Boolean orientation_() const;
+	Boolean orientation_() const;
 	void orientation_ (const Boolean x);
 
 	/* The first parent's access functions are */
@@ -11041,10 +11041,10 @@ class SdaiCoordinated_universal_time_offset  :    public SCLP23(Application_inst
 #endif
 
 	int opcode ()  { return 89 ; }
-	const SdaiHour_in_day hour_offset_() const;
+	SdaiHour_in_day hour_offset_() const;
 	void hour_offset_ (const SdaiHour_in_day x);
 
-	const SdaiMinute_in_hour minute_offset_() const;
+	SdaiMinute_in_hour minute_offset_() const;
 	void minute_offset_ (const SdaiMinute_in_hour x);
 
 	const SdaiAhead_or_behind_var sense_() const;
@@ -11107,10 +11107,10 @@ class SdaiCurve_replica  :    public SdaiCurve  {
 #endif
 
 	int opcode ()  { return 90 ; }
-	const SdaiCurve_ptr parent_curve_() const;
+	SdaiCurve_ptr parent_curve_() const;
 	void parent_curve_ (const SdaiCurve_ptr x);
 
-	const SdaiCartesian_transformation_operator_ptr transformation_() const;
+	SdaiCartesian_transformation_operator_ptr transformation_() const;
 	void transformation_ (const SdaiCartesian_transformation_operator_ptr x);
 
 	/* The first parent's access functions are */
@@ -11231,10 +11231,10 @@ class SdaiSurface_curve  :    public SdaiCurve  {
 #endif
 
 	int opcode ()  { return 92 ; }
-	const SdaiCurve_ptr curve_3d_() const;
+	SdaiCurve_ptr curve_3d_() const;
 	void curve_3d_ (const SdaiCurve_ptr x);
 
-	const SdaiPcurve_or_surfaces_ptr associated_geometry_() const;
+	SdaiPcurve_or_surfaces_ptr associated_geometry_() const;
 	void associated_geometry_ (const SdaiPcurve_or_surfaces_ptr x);
 
 	const SdaiPreferred_surface_curve_representation_var master_representation_() const;
@@ -11302,7 +11302,7 @@ class SdaiAction_request_status  :    public SCLP23(Application_instance) {
 	const SdaiLabel status_() const;
 	void status_ (const SdaiLabel x);
 
-	const SdaiVersioned_action_request_ptr assigned_request_() const;
+	SdaiVersioned_action_request_ptr assigned_request_() const;
 	void assigned_request_ (const SdaiVersioned_action_request_ptr x);
 
 
@@ -11423,13 +11423,13 @@ class SdaiComposite_curve_segment  :    public SdaiFounded_item  {
 	const SdaiTransition_code_var transition_() const;
 	void transition_ (const SdaiTransition_code_var x);
 
-	const Boolean same_sense_() const;
+	Boolean same_sense_() const;
 	void same_sense_ (const Boolean x);
 
-	const SdaiCurve_ptr parent_curve_() const;
+	SdaiCurve_ptr parent_curve_() const;
 	void parent_curve_ (const SdaiCurve_ptr x);
 
-	const EntityAggregate_ptr using_curves_() const;
+	EntityAggregate_ptr using_curves_() const;
 	void using_curves_ (const EntityAggregate_ptr x);
 
 	/* The first parent's access functions are */
@@ -11489,7 +11489,7 @@ class SdaiReparametrised_composite_curve_segment  :    public SdaiComposite_curv
 #endif
 
 	int opcode ()  { return 96 ; }
-	const SdaiParameter_value param_length_() const;
+	SdaiParameter_value param_length_() const;
 	void param_length_ (const SdaiParameter_value x);
 
 	/* The first parent's access functions are */
@@ -11561,10 +11561,10 @@ class SdaiRepresentation_relationship  :    public SCLP23(Application_instance) 
 	const SdaiText description_() const;
 	void description_ (const SdaiText x);
 
-	const SdaiRepresentation_ptr rep_1_() const;
+	SdaiRepresentation_ptr rep_1_() const;
 	void rep_1_ (const SdaiRepresentation_ptr x);
 
-	const SdaiRepresentation_ptr rep_2_() const;
+	SdaiRepresentation_ptr rep_2_() const;
 	void rep_2_ (const SdaiRepresentation_ptr x);
 
 
@@ -11622,7 +11622,7 @@ class SdaiRepresentation_relationship_with_transformation  :    public SdaiRepre
 #endif
 
 	int opcode ()  { return 98 ; }
-	const SdaiTransformation_ptr transformation_operator_() const;
+	SdaiTransformation_ptr transformation_operator_() const;
 	void transformation_operator_ (const SdaiTransformation_ptr x);
 
 	/* The first parent's access functions are */
@@ -11795,7 +11795,7 @@ class SdaiSwept_surface  :    public SdaiSurface  {
 #endif
 
 	int opcode ()  { return 101 ; }
-	const SdaiCurve_ptr swept_curve_() const;
+	SdaiCurve_ptr swept_curve_() const;
 	void swept_curve_ (const SdaiCurve_ptr x);
 
 	/* The first parent's access functions are */
@@ -11865,7 +11865,7 @@ class SdaiProperty_definition  :    public SCLP23(Application_instance) {
 	const SdaiText description_() const;
 	void description_ (const SdaiText x);
 
-	const SdaiCharacterized_definition_ptr definition_() const;
+	SdaiCharacterized_definition_ptr definition_() const;
 	void definition_ (const SdaiCharacterized_definition_ptr x);
 
 
@@ -11924,7 +11924,7 @@ class SdaiGlobal_uncertainty_assigned_context  :    public SdaiRepresentation_co
 #endif
 
 	int opcode ()  { return 103 ; }
-	const EntityAggregate_ptr uncertainty_() const;
+	EntityAggregate_ptr uncertainty_() const;
 	void uncertainty_ (const EntityAggregate_ptr x);
 
 	/* The first parent's access functions are */
@@ -11996,10 +11996,10 @@ class SdaiOrganization_relationship  :    public SCLP23(Application_instance) {
 	const SdaiText description_() const;
 	void description_ (const SdaiText x);
 
-	const SdaiOrganization_ptr relating_organization_() const;
+	SdaiOrganization_ptr relating_organization_() const;
 	void relating_organization_ (const SdaiOrganization_ptr x);
 
-	const SdaiOrganization_ptr related_organization_() const;
+	SdaiOrganization_ptr related_organization_() const;
 	void related_organization_ (const SdaiOrganization_ptr x);
 
 
@@ -12057,7 +12057,7 @@ class SdaiParabola  :    public SdaiConic  {
 #endif
 
 	int opcode ()  { return 105 ; }
-	const SdaiLength_measure focal_dist_() const;
+	SdaiLength_measure focal_dist_() const;
 	void focal_dist_ (const SdaiLength_measure x);
 
 	/* The first parent's access functions are */
@@ -12120,7 +12120,7 @@ class SdaiRectangular_composite_surface  :    public SdaiBounded_surface  {
 #endif
 
 	int opcode ()  { return 106 ; }
-	const GenericAggregate_ptr segments_() const;
+	GenericAggregate_ptr segments_() const;
 	void segments_ (const GenericAggregate_ptr x);
 
 	/* The first parent's access functions are */
@@ -12185,7 +12185,7 @@ class SdaiLot_effectivity  :    public SdaiEffectivity  {
 	const SdaiIdentifier effectivity_lot_id_() const;
 	void effectivity_lot_id_ (const SdaiIdentifier x);
 
-	const SdaiMeasure_with_unit_ptr effectivity_lot_size_() const;
+	SdaiMeasure_with_unit_ptr effectivity_lot_size_() const;
 	void effectivity_lot_size_ (const SdaiMeasure_with_unit_ptr x);
 
 	/* The first parent's access functions are */
@@ -12245,7 +12245,7 @@ class SdaiSurface_of_linear_extrusion  :    public SdaiSwept_surface  {
 #endif
 
 	int opcode ()  { return 108 ; }
-	const SdaiVector_ptr extrusion_axis_() const;
+	SdaiVector_ptr extrusion_axis_() const;
 	void extrusion_axis_ (const SdaiVector_ptr x);
 
 	/* The first parent's access functions are */
@@ -12306,7 +12306,7 @@ class SdaiShell_based_surface_model  :    public SdaiGeometric_representation_it
 #endif
 
 	int opcode ()  { return 109 ; }
-	const SdaiShells_ptr sbsm_boundary_() const;
+	SdaiShells_ptr sbsm_boundary_() const;
 	void sbsm_boundary_ (const SdaiShells_ptr x);
 
 	/* The first parent's access functions are */
@@ -12589,7 +12589,7 @@ class SdaiDate  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 114 ; }
-	const SdaiYear_number year_component_() const;
+	SdaiYear_number year_component_() const;
 	void year_component_ (const SdaiYear_number x);
 
 
@@ -12649,10 +12649,10 @@ class SdaiCalendar_date  :    public SdaiDate  {
 #endif
 
 	int opcode ()  { return 115 ; }
-	const SdaiDay_in_month_number day_component_() const;
+	SdaiDay_in_month_number day_component_() const;
 	void day_component_ (const SdaiDay_in_month_number x);
 
-	const SdaiMonth_in_year_number month_component_() const;
+	SdaiMonth_in_year_number month_component_() const;
 	void month_component_ (const SdaiMonth_in_year_number x);
 
 	/* The first parent's access functions are */
@@ -12714,10 +12714,10 @@ class SdaiToroidal_surface  :    public SdaiElementary_surface  {
 #endif
 
 	int opcode ()  { return 116 ; }
-	const SdaiPositive_length_measure major_radius_() const;
+	SdaiPositive_length_measure major_radius_() const;
 	void major_radius_ (const SdaiPositive_length_measure x);
 
-	const SdaiPositive_length_measure minor_radius_() const;
+	SdaiPositive_length_measure minor_radius_() const;
 	void minor_radius_ (const SdaiPositive_length_measure x);
 
 	/* The first parent's access functions are */
@@ -12832,7 +12832,7 @@ class SdaiApproval_assignment  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 118 ; }
-	const SdaiApproval_ptr assigned_approval_() const;
+	SdaiApproval_ptr assigned_approval_() const;
 	void assigned_approval_ (const SdaiApproval_ptr x);
 
 
@@ -12907,7 +12907,7 @@ class SdaiConfiguration_item  :    public SCLP23(Application_instance) {
 	const SdaiText description_() const;
 	void description_ (const SdaiText x);
 
-	const SdaiProduct_concept_ptr item_concept_() const;
+	SdaiProduct_concept_ptr item_concept_() const;
 	void item_concept_ (const SdaiProduct_concept_ptr x);
 
 	const SdaiLabel purpose_() const;
@@ -12968,7 +12968,7 @@ class SdaiContract_assignment  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 120 ; }
-	const SdaiContract_ptr assigned_contract_() const;
+	SdaiContract_ptr assigned_contract_() const;
 	void assigned_contract_ (const SdaiContract_ptr x);
 
 
@@ -13028,10 +13028,10 @@ class SdaiVector  :    public SdaiGeometric_representation_item  {
 #endif
 
 	int opcode ()  { return 121 ; }
-	const SdaiDirection_ptr orientation_() const;
+	SdaiDirection_ptr orientation_() const;
 	void orientation_ (const SdaiDirection_ptr x);
 
-	const SdaiLength_measure magnitude_() const;
+	SdaiLength_measure magnitude_() const;
 	void magnitude_ (const SdaiLength_measure x);
 
 	/* The first parent's access functions are */
@@ -13093,10 +13093,10 @@ class SdaiPcurve  :    public SdaiCurve  {
 #endif
 
 	int opcode ()  { return 122 ; }
-	const SdaiSurface_ptr basis_surface_() const;
+	SdaiSurface_ptr basis_surface_() const;
 	void basis_surface_ (const SdaiSurface_ptr x);
 
-	const SdaiDefinitional_representation_ptr reference_to_curve_() const;
+	SdaiDefinitional_representation_ptr reference_to_curve_() const;
 	void reference_to_curve_ (const SdaiDefinitional_representation_ptr x);
 
 	/* The first parent's access functions are */
@@ -13276,16 +13276,16 @@ class SdaiTrimmed_curve  :    public SdaiBounded_curve  {
 #endif
 
 	int opcode ()  { return 125 ; }
-	const SdaiCurve_ptr basis_curve_() const;
+	SdaiCurve_ptr basis_curve_() const;
 	void basis_curve_ (const SdaiCurve_ptr x);
 
-	const SdaiTrimming_selects_ptr trim_1_() const;
+	SdaiTrimming_selects_ptr trim_1_() const;
 	void trim_1_ (const SdaiTrimming_selects_ptr x);
 
-	const SdaiTrimming_selects_ptr trim_2_() const;
+	SdaiTrimming_selects_ptr trim_2_() const;
 	void trim_2_ (const SdaiTrimming_selects_ptr x);
 
-	const Boolean sense_agreement_() const;
+	Boolean sense_agreement_() const;
 	void sense_agreement_ (const Boolean x);
 
 	const SdaiTrimming_preference_var master_representation_() const;
@@ -13475,10 +13475,10 @@ class SdaiItem_defined_transformation  :    public SCLP23(Application_instance) 
 	const SdaiText description_() const;
 	void description_ (const SdaiText x);
 
-	const SdaiRepresentation_item_ptr transform_item_1_() const;
+	SdaiRepresentation_item_ptr transform_item_1_() const;
 	void transform_item_1_ (const SdaiRepresentation_item_ptr x);
 
-	const SdaiRepresentation_item_ptr transform_item_2_() const;
+	SdaiRepresentation_item_ptr transform_item_2_() const;
 	void transform_item_2_ (const SdaiRepresentation_item_ptr x);
 
 
@@ -13621,10 +13621,10 @@ class SdaiProduct_category_relationship  :    public SCLP23(Application_instance
 	const SdaiText description_() const;
 	void description_ (const SdaiText x);
 
-	const SdaiProduct_category_ptr category_() const;
+	SdaiProduct_category_ptr category_() const;
 	void category_ (const SdaiProduct_category_ptr x);
 
-	const SdaiProduct_category_ptr sub_category_() const;
+	SdaiProduct_category_ptr sub_category_() const;
 	void sub_category_ (const SdaiProduct_category_ptr x);
 
 
@@ -13797,13 +13797,13 @@ class SdaiRepresentation_map  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 133 ; }
-	const SdaiRepresentation_item_ptr mapping_origin_() const;
+	SdaiRepresentation_item_ptr mapping_origin_() const;
 	void mapping_origin_ (const SdaiRepresentation_item_ptr x);
 
-	const SdaiRepresentation_ptr mapped_representation_() const;
+	SdaiRepresentation_ptr mapped_representation_() const;
 	void mapped_representation_ (const SdaiRepresentation_ptr x);
 
-	const EntityAggregate_ptr map_usage_() const;
+	EntityAggregate_ptr map_usage_() const;
 	void map_usage_ (const EntityAggregate_ptr x);
 
 
@@ -13861,7 +13861,7 @@ class SdaiProduct_definition_effectivity  :    public SdaiEffectivity  {
 #endif
 
 	int opcode ()  { return 134 ; }
-	const SdaiProduct_definition_relationship_ptr usage_() const;
+	SdaiProduct_definition_relationship_ptr usage_() const;
 	void usage_ (const SdaiProduct_definition_relationship_ptr x);
 
 	/* The first parent's access functions are */
@@ -13921,7 +13921,7 @@ class SdaiConfiguration_effectivity  :    public SdaiProduct_definition_effectiv
 #endif
 
 	int opcode ()  { return 135 ; }
-	const SdaiConfiguration_design_ptr configuration_() const;
+	SdaiConfiguration_design_ptr configuration_() const;
 	void configuration_ (const SdaiConfiguration_design_ptr x);
 
 	/* The first parent's access functions are */
@@ -13983,10 +13983,10 @@ class SdaiEllipse  :    public SdaiConic  {
 #endif
 
 	int opcode ()  { return 136 ; }
-	const SdaiPositive_length_measure semi_axis_1_() const;
+	SdaiPositive_length_measure semi_axis_1_() const;
 	void semi_axis_1_ (const SdaiPositive_length_measure x);
 
-	const SdaiPositive_length_measure semi_axis_2_() const;
+	SdaiPositive_length_measure semi_axis_2_() const;
 	void semi_axis_2_ (const SdaiPositive_length_measure x);
 
 	/* The first parent's access functions are */
@@ -14120,10 +14120,10 @@ class SdaiAlternate_product_relationship  :    public SCLP23(Application_instanc
 	const SdaiText definition_() const;
 	void definition_ (const SdaiText x);
 
-	const SdaiProduct_ptr alternate_() const;
+	SdaiProduct_ptr alternate_() const;
 	void alternate_ (const SdaiProduct_ptr x);
 
-	const SdaiProduct_ptr base_() const;
+	SdaiProduct_ptr base_() const;
 	void base_ (const SdaiProduct_ptr x);
 
 	const SdaiText basis_() const;
@@ -14244,7 +14244,7 @@ class SdaiDocument_reference  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 140 ; }
-	const SdaiDocument_ptr assigned_document_() const;
+	SdaiDocument_ptr assigned_document_() const;
 	void assigned_document_ (const SdaiDocument_ptr x);
 
 	const SdaiLabel source_() const;
@@ -14361,7 +14361,7 @@ class SdaiShell_based_wireframe_model  :    public SdaiGeometric_representation_
 #endif
 
 	int opcode ()  { return 142 ; }
-	const SdaiShells_ptr sbwm_boundary_() const;
+	SdaiShells_ptr sbwm_boundary_() const;
 	void sbwm_boundary_ (const SdaiShells_ptr x);
 
 	/* The first parent's access functions are */
@@ -14431,7 +14431,7 @@ class SdaiContract  :    public SCLP23(Application_instance) {
 	const SdaiText purpose_() const;
 	void purpose_ (const SdaiText x);
 
-	const SdaiContract_type_ptr kind_() const;
+	SdaiContract_type_ptr kind_() const;
 	void kind_ (const SdaiContract_type_ptr x);
 
 
@@ -14501,25 +14501,25 @@ class SdaiDimensional_exponents  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 144 ; }
-	const SCLP23(Real) length_exponent_() const;
+	SCLP23(Real) length_exponent_() const;
 	void length_exponent_ (const SCLP23(Real) x);
 
-	const SCLP23(Real) mass_exponent_() const;
+	SCLP23(Real) mass_exponent_() const;
 	void mass_exponent_ (const SCLP23(Real) x);
 
-	const SCLP23(Real) time_exponent_() const;
+	SCLP23(Real) time_exponent_() const;
 	void time_exponent_ (const SCLP23(Real) x);
 
-	const SCLP23(Real) electric_current_exponent_() const;
+	SCLP23(Real) electric_current_exponent_() const;
 	void electric_current_exponent_ (const SCLP23(Real) x);
 
-	const SCLP23(Real) thermodynamic_temperature_exponent_() const;
+	SCLP23(Real) thermodynamic_temperature_exponent_() const;
 	void thermodynamic_temperature_exponent_ (const SCLP23(Real) x);
 
-	const SCLP23(Real) amount_of_substance_exponent_() const;
+	SCLP23(Real) amount_of_substance_exponent_() const;
 	void amount_of_substance_exponent_ (const SCLP23(Real) x);
 
-	const SCLP23(Real) luminous_intensity_exponent_() const;
+	SCLP23(Real) luminous_intensity_exponent_() const;
 	void luminous_intensity_exponent_ (const SCLP23(Real) x);
 
 
@@ -14578,7 +14578,7 @@ class SdaiStart_request  :    public SdaiAction_request_assignment  {
 #endif
 
 	int opcode ()  { return 145 ; }
-	const SdaiStart_request_items_ptr items_() const;
+	SdaiStart_request_items_ptr items_() const;
 	void items_ (const SdaiStart_request_items_ptr x);
 
 	/* The first parent's access functions are */
@@ -14639,7 +14639,7 @@ class SdaiCc_design_specification_reference  :    public SdaiDocument_reference 
 #endif
 
 	int opcode ()  { return 146 ; }
-	const SdaiSpecified_items_ptr items_() const;
+	SdaiSpecified_items_ptr items_() const;
 	void items_ (const SdaiSpecified_items_ptr x);
 
 	/* The first parent's access functions are */
@@ -14756,10 +14756,10 @@ class SdaiContext_dependent_shape_representation  :    public SCLP23(Application
 #endif
 
 	int opcode ()  { return 148 ; }
-	const SdaiShape_representation_relationship_ptr representation_relation_() const;
+	SdaiShape_representation_relationship_ptr representation_relation_() const;
 	void representation_relation_ (const SdaiShape_representation_relationship_ptr x);
 
-	const SdaiProduct_definition_shape_ptr represented_product_relation_() const;
+	SdaiProduct_definition_shape_ptr represented_product_relation_() const;
 	void represented_product_relation_ (const SdaiProduct_definition_shape_ptr x);
 
 
@@ -14817,7 +14817,7 @@ class SdaiDegenerate_toroidal_surface  :    public SdaiToroidal_surface  {
 #endif
 
 	int opcode ()  { return 149 ; }
-	const Boolean select_outer_() const;
+	Boolean select_outer_() const;
 	void select_outer_ (const Boolean x);
 
 	/* The first parent's access functions are */
@@ -14877,7 +14877,7 @@ class SdaiOrdinal_date  :    public SdaiDate  {
 #endif
 
 	int opcode ()  { return 150 ; }
-	const SdaiDay_in_year_number day_component_() const;
+	SdaiDay_in_year_number day_component_() const;
 	void day_component_ (const SdaiDay_in_year_number x);
 
 	/* The first parent's access functions are */
@@ -15048,7 +15048,7 @@ class SdaiBrep_with_voids  :    public SdaiManifold_solid_brep  {
 #endif
 
 	int opcode ()  { return 153 ; }
-	const EntityAggregate_ptr voids_() const;
+	EntityAggregate_ptr voids_() const;
 	void voids_ (const EntityAggregate_ptr x);
 
 	/* The first parent's access functions are */
@@ -15110,10 +15110,10 @@ class SdaiWeek_of_year_and_day_date  :    public SdaiDate  {
 #endif
 
 	int opcode ()  { return 154 ; }
-	const SdaiWeek_in_year_number week_component_() const;
+	SdaiWeek_in_year_number week_component_() const;
 	void week_component_ (const SdaiWeek_in_year_number x);
 
-	const SdaiDay_in_week_number day_component_() const;
+	SdaiDay_in_week_number day_component_() const;
 	void day_component_ (const SdaiDay_in_week_number x);
 
 	/* The first parent's access functions are */
@@ -15175,10 +15175,10 @@ class SdaiPoint_on_curve  :    public SdaiPoint  {
 #endif
 
 	int opcode ()  { return 155 ; }
-	const SdaiCurve_ptr basis_curve_() const;
+	SdaiCurve_ptr basis_curve_() const;
 	void basis_curve_ (const SdaiCurve_ptr x);
 
-	const SdaiParameter_value point_parameter_() const;
+	SdaiParameter_value point_parameter_() const;
 	void point_parameter_ (const SdaiParameter_value x);
 
 	/* The first parent's access functions are */
@@ -15294,7 +15294,7 @@ class SdaiFace  :    public SdaiTopological_representation_item  {
 #endif
 
 	int opcode ()  { return 157 ; }
-	const EntityAggregate_ptr bounds_() const;
+	EntityAggregate_ptr bounds_() const;
 	void bounds_ (const EntityAggregate_ptr x);
 
 	/* The first parent's access functions are */
@@ -15356,10 +15356,10 @@ class SdaiFace_surface  :    public SdaiFace  {
 #endif
 
 	int opcode ()  { return 158 ; }
-	const SdaiSurface_ptr face_geometry_() const;
+	SdaiSurface_ptr face_geometry_() const;
 	void face_geometry_ (const SdaiSurface_ptr x);
 
-	const Boolean same_sense_() const;
+	Boolean same_sense_() const;
 	void same_sense_ (const Boolean x);
 
 	/* The first parent's access functions are */
@@ -15422,10 +15422,10 @@ class SdaiOriented_face  :    public SdaiFace  {
 #endif
 
 	int opcode ()  { return 159 ; }
-	const SdaiFace_ptr face_element_() const;
+	SdaiFace_ptr face_element_() const;
 	void face_element_ (const SdaiFace_ptr x);
 
-	const Boolean orientation_() const;
+	Boolean orientation_() const;
 	void orientation_ (const Boolean x);
 
 	/* The first parent's access functions are */
@@ -15486,7 +15486,7 @@ class SdaiSurface_of_revolution  :    public SdaiSwept_surface  {
 #endif
 
 	int opcode ()  { return 160 ; }
-	const SdaiAxis1_placement_ptr axis_position_() const;
+	SdaiAxis1_placement_ptr axis_position_() const;
 	void axis_position_ (const SdaiAxis1_placement_ptr x);
 
 	/* The first parent's access functions are */
@@ -15603,10 +15603,10 @@ class SdaiEdge_curve  :    public SdaiEdge  {
 #endif
 
 	int opcode ()  { return 162 ; }
-	const SdaiCurve_ptr edge_geometry_() const;
+	SdaiCurve_ptr edge_geometry_() const;
 	void edge_geometry_ (const SdaiCurve_ptr x);
 
-	const Boolean same_sense_() const;
+	Boolean same_sense_() const;
 	void same_sense_ (const Boolean x);
 
 	/* The first parent's access functions are */
@@ -15668,10 +15668,10 @@ class SdaiPoint_replica  :    public SdaiPoint  {
 #endif
 
 	int opcode ()  { return 163 ; }
-	const SdaiPoint_ptr parent_pt_() const;
+	SdaiPoint_ptr parent_pt_() const;
 	void parent_pt_ (const SdaiPoint_ptr x);
 
-	const SdaiCartesian_transformation_operator_ptr transformation_() const;
+	SdaiCartesian_transformation_operator_ptr transformation_() const;
 	void transformation_ (const SdaiCartesian_transformation_operator_ptr x);
 
 	/* The first parent's access functions are */
@@ -15747,7 +15747,7 @@ class SdaiProduct  :    public SCLP23(Application_instance) {
 	const SdaiText description_() const;
 	void description_ (const SdaiText x);
 
-	const EntityAggregate_ptr frame_of_reference_() const;
+	EntityAggregate_ptr frame_of_reference_() const;
 	void frame_of_reference_ (const EntityAggregate_ptr x);
 
 
@@ -15817,10 +15817,10 @@ class SdaiShape_aspect_relationship  :    public SCLP23(Application_instance) {
 	const SdaiText description_() const;
 	void description_ (const SdaiText x);
 
-	const SdaiShape_aspect_ptr relating_shape_aspect_() const;
+	SdaiShape_aspect_ptr relating_shape_aspect_() const;
 	void relating_shape_aspect_ (const SdaiShape_aspect_ptr x);
 
-	const SdaiShape_aspect_ptr related_shape_aspect_() const;
+	SdaiShape_aspect_ptr related_shape_aspect_() const;
 	void related_shape_aspect_ (const SdaiShape_aspect_ptr x);
 
 
@@ -15890,25 +15890,25 @@ class SdaiRectangular_trimmed_surface  :    public SdaiBounded_surface  {
 #endif
 
 	int opcode ()  { return 166 ; }
-	const SdaiSurface_ptr basis_surface_() const;
+	SdaiSurface_ptr basis_surface_() const;
 	void basis_surface_ (const SdaiSurface_ptr x);
 
-	const SdaiParameter_value u1_() const;
+	SdaiParameter_value u1_() const;
 	void u1_ (const SdaiParameter_value x);
 
-	const SdaiParameter_value u2_() const;
+	SdaiParameter_value u2_() const;
 	void u2_ (const SdaiParameter_value x);
 
-	const SdaiParameter_value v1_() const;
+	SdaiParameter_value v1_() const;
 	void v1_ (const SdaiParameter_value x);
 
-	const SdaiParameter_value v2_() const;
+	SdaiParameter_value v2_() const;
 	void v2_ (const SdaiParameter_value x);
 
-	const Boolean usense_() const;
+	Boolean usense_() const;
 	void usense_ (const Boolean x);
 
-	const Boolean vsense_() const;
+	Boolean vsense_() const;
 	void vsense_ (const Boolean x);
 
 	/* The first parent's access functions are */
@@ -16023,7 +16023,7 @@ class SdaiAction_assignment  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 168 ; }
-	const SdaiAction_ptr assigned_action_() const;
+	SdaiAction_ptr assigned_action_() const;
 	void assigned_action_ (const SdaiAction_ptr x);
 
 
@@ -16082,7 +16082,7 @@ class SdaiChange  :    public SdaiAction_assignment  {
 #endif
 
 	int opcode ()  { return 169 ; }
-	const SdaiWork_items_ptr items_() const;
+	SdaiWork_items_ptr items_() const;
 	void items_ (const SdaiWork_items_ptr x);
 
 	/* The first parent's access functions are */
@@ -16142,7 +16142,7 @@ class SdaiCircle  :    public SdaiConic  {
 #endif
 
 	int opcode ()  { return 170 ; }
-	const SdaiPositive_length_measure radius_() const;
+	SdaiPositive_length_measure radius_() const;
 	void radius_ (const SdaiPositive_length_measure x);
 
 	/* The first parent's access functions are */
@@ -16204,10 +16204,10 @@ class SdaiLine  :    public SdaiCurve  {
 #endif
 
 	int opcode ()  { return 171 ; }
-	const SdaiCartesian_point_ptr pnt_() const;
+	SdaiCartesian_point_ptr pnt_() const;
 	void pnt_ (const SdaiCartesian_point_ptr x);
 
-	const SdaiVector_ptr dir_() const;
+	SdaiVector_ptr dir_() const;
 	void dir_ (const SdaiVector_ptr x);
 
 	/* The first parent's access functions are */
@@ -16269,10 +16269,10 @@ class SdaiProperty_definition_representation  :    public SCLP23(Application_ins
 #endif
 
 	int opcode ()  { return 172 ; }
-	const SdaiProperty_definition_ptr definition_() const;
+	SdaiProperty_definition_ptr definition_() const;
 	void definition_ (const SdaiProperty_definition_ptr x);
 
-	const SdaiRepresentation_ptr used_representation_() const;
+	SdaiRepresentation_ptr used_representation_() const;
 	void used_representation_ (const SdaiRepresentation_ptr x);
 
 
@@ -16331,7 +16331,7 @@ class SdaiGeometric_set  :    public SdaiGeometric_representation_item  {
 #endif
 
 	int opcode ()  { return 173 ; }
-	const SdaiGeometric_set_selects_ptr elements_() const;
+	SdaiGeometric_set_selects_ptr elements_() const;
 	void elements_ (const SdaiGeometric_set_selects_ptr x);
 
 	/* The first parent's access functions are */
@@ -16449,7 +16449,7 @@ class SdaiPersonal_address  :    public SdaiAddress  {
 #endif
 
 	int opcode ()  { return 175 ; }
-	const EntityAggregate_ptr people_() const;
+	EntityAggregate_ptr people_() const;
 	void people_ (const EntityAggregate_ptr x);
 
 	const SdaiText description_() const;
@@ -16524,10 +16524,10 @@ class SdaiDocument_relationship  :    public SCLP23(Application_instance) {
 	const SdaiText description_() const;
 	void description_ (const SdaiText x);
 
-	const SdaiDocument_ptr relating_document_() const;
+	SdaiDocument_ptr relating_document_() const;
 	void relating_document_ (const SdaiDocument_ptr x);
 
-	const SdaiDocument_ptr related_document_() const;
+	SdaiDocument_ptr related_document_() const;
 	void related_document_ (const SdaiDocument_ptr x);
 
 
@@ -16707,10 +16707,10 @@ class SdaiAssembly_component_usage_substitute  :    public SCLP23(Application_in
 	const SdaiText definition_() const;
 	void definition_ (const SdaiText x);
 
-	const SdaiAssembly_component_usage_ptr base_() const;
+	SdaiAssembly_component_usage_ptr base_() const;
 	void base_ (const SdaiAssembly_component_usage_ptr x);
 
-	const SdaiAssembly_component_usage_ptr substitute_() const;
+	SdaiAssembly_component_usage_ptr substitute_() const;
 	void substitute_ (const SdaiAssembly_component_usage_ptr x);
 
 
@@ -16770,10 +16770,10 @@ class SdaiDegenerate_pcurve  :    public SdaiPoint  {
 #endif
 
 	int opcode ()  { return 180 ; }
-	const SdaiSurface_ptr basis_surface_() const;
+	SdaiSurface_ptr basis_surface_() const;
 	void basis_surface_ (const SdaiSurface_ptr x);
 
-	const SdaiDefinitional_representation_ptr reference_to_curve_() const;
+	SdaiDefinitional_representation_ptr reference_to_curve_() const;
 	void reference_to_curve_ (const SdaiDefinitional_representation_ptr x);
 
 	/* The first parent's access functions are */
@@ -16833,7 +16833,7 @@ class SdaiEvaluated_degenerate_pcurve  :    public SdaiDegenerate_pcurve  {
 #endif
 
 	int opcode ()  { return 181 ; }
-	const SdaiCartesian_point_ptr equivalent_point_() const;
+	SdaiCartesian_point_ptr equivalent_point_() const;
 	void equivalent_point_ (const SdaiCartesian_point_ptr x);
 
 	/* The first parent's access functions are */
@@ -16949,7 +16949,7 @@ class SdaiConnected_edge_set  :    public SdaiTopological_representation_item  {
 #endif
 
 	int opcode ()  { return 183 ; }
-	const EntityAggregate_ptr ces_edges_() const;
+	EntityAggregate_ptr ces_edges_() const;
 	void ces_edges_ (const EntityAggregate_ptr x);
 
 	/* The first parent's access functions are */
@@ -17019,7 +17019,7 @@ class SdaiAction  :    public SCLP23(Application_instance) {
 	const SdaiText description_() const;
 	void description_ (const SdaiText x);
 
-	const SdaiAction_method_ptr chosen_method_() const;
+	SdaiAction_method_ptr chosen_method_() const;
 	void chosen_method_ (const SdaiAction_method_ptr x);
 
 
@@ -17132,7 +17132,7 @@ class SdaiDirected_action  :    public SdaiExecuted_action  {
 #endif
 
 	int opcode ()  { return 186 ; }
-	const SdaiAction_directive_ptr directive_() const;
+	SdaiAction_directive_ptr directive_() const;
 	void directive_ (const SdaiAction_directive_ptr x);
 
 	/* The first parent's access functions are */
@@ -17203,7 +17203,7 @@ class SdaiOrganizational_project  :    public SCLP23(Application_instance) {
 	const SdaiText description_() const;
 	void description_ (const SdaiText x);
 
-	const EntityAggregate_ptr responsible_organizations_() const;
+	EntityAggregate_ptr responsible_organizations_() const;
 	void responsible_organizations_ (const EntityAggregate_ptr x);
 
 
@@ -17324,13 +17324,13 @@ class SdaiCurve_bounded_surface  :    public SdaiBounded_surface  {
 #endif
 
 	int opcode ()  { return 189 ; }
-	const SdaiSurface_ptr basis_surface_() const;
+	SdaiSurface_ptr basis_surface_() const;
 	void basis_surface_ (const SdaiSurface_ptr x);
 
-	const EntityAggregate_ptr boundaries_() const;
+	EntityAggregate_ptr boundaries_() const;
 	void boundaries_ (const EntityAggregate_ptr x);
 
-	const Boolean implicit_outer_() const;
+	Boolean implicit_outer_() const;
 	void implicit_outer_ (const Boolean x);
 
 	/* The first parent's access functions are */
@@ -17731,7 +17731,7 @@ class SdaiCertification_assignment  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 196 ; }
-	const SdaiCertification_ptr assigned_certification_() const;
+	SdaiCertification_ptr assigned_certification_() const;
 	void assigned_certification_ (const SdaiCertification_ptr x);
 
 
@@ -17790,7 +17790,7 @@ class SdaiStart_work  :    public SdaiAction_assignment  {
 #endif
 
 	int opcode ()  { return 197 ; }
-	const SdaiWork_items_ptr items_() const;
+	SdaiWork_items_ptr items_() const;
 	void items_ (const SdaiWork_items_ptr x);
 
 	/* The first parent's access functions are */
@@ -17914,10 +17914,10 @@ class SdaiB_spline_curve_with_knots  :    public SdaiB_spline_curve  {
 #endif
 
 	int opcode ()  { return 199 ; }
-	const IntAggregate_ptr knot_multiplicities_() const;
+	IntAggregate_ptr knot_multiplicities_() const;
 	void knot_multiplicities_ (const IntAggregate_ptr x);
 
-	const RealAggregate_ptr knots_() const;
+	RealAggregate_ptr knots_() const;
 	void knots_ (const RealAggregate_ptr x);
 
 	const SdaiKnot_type_var knot_spec_() const;
@@ -17981,7 +17981,7 @@ class SdaiCc_design_approval  :    public SdaiApproval_assignment  {
 #endif
 
 	int opcode ()  { return 200 ; }
-	const SdaiApproved_items_ptr items_() const;
+	SdaiApproved_items_ptr items_() const;
 	void items_ (const SdaiApproved_items_ptr x);
 
 	/* The first parent's access functions are */
@@ -18166,7 +18166,7 @@ class SdaiProduct_concept  :    public SCLP23(Application_instance) {
 	const SdaiText description_() const;
 	void description_ (const SdaiText x);
 
-	const SdaiProduct_concept_context_ptr market_context_() const;
+	SdaiProduct_concept_context_ptr market_context_() const;
 	void market_context_ (const SdaiProduct_concept_context_ptr x);
 
 
@@ -18225,7 +18225,7 @@ class SdaiCc_design_contract  :    public SdaiContract_assignment  {
 #endif
 
 	int opcode ()  { return 204 ; }
-	const SdaiContracted_items_ptr items_() const;
+	SdaiContracted_items_ptr items_() const;
 	void items_ (const SdaiContracted_items_ptr x);
 
 	/* The first parent's access functions are */
@@ -18343,10 +18343,10 @@ class SdaiAxis2_placement_3d  :    public SdaiPlacement  {
 #endif
 
 	int opcode ()  { return 206 ; }
-	const SdaiDirection_ptr axis_() const;
+	SdaiDirection_ptr axis_() const;
 	void axis_ (const SdaiDirection_ptr x);
 
-	const SdaiDirection_ptr ref_direction_() const;
+	SdaiDirection_ptr ref_direction_() const;
 	void ref_direction_ (const SdaiDirection_ptr x);
 
 	/* The first parent's access functions are */
@@ -18407,7 +18407,7 @@ class SdaiRational_b_spline_surface  :    public SdaiB_spline_surface  {
 #endif
 
 	int opcode ()  { return 207 ; }
-	const GenericAggregate_ptr weights_data_() const;
+	GenericAggregate_ptr weights_data_() const;
 	void weights_data_ (const GenericAggregate_ptr x);
 
 	/* The first parent's access functions are */
@@ -18469,10 +18469,10 @@ class SdaiConfiguration_design  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 208 ; }
-	const SdaiConfiguration_item_ptr configuration_() const;
+	SdaiConfiguration_item_ptr configuration_() const;
 	void configuration_ (const SdaiConfiguration_item_ptr x);
 
-	const SdaiProduct_definition_formation_ptr design_() const;
+	SdaiProduct_definition_formation_ptr design_() const;
 	void design_ (const SdaiProduct_definition_formation_ptr x);
 
 
@@ -18597,10 +18597,10 @@ class SdaiProduct_definition  :    public SCLP23(Application_instance) {
 	const SdaiText description_() const;
 	void description_ (const SdaiText x);
 
-	const SdaiProduct_definition_formation_ptr formation_() const;
+	SdaiProduct_definition_formation_ptr formation_() const;
 	void formation_ (const SdaiProduct_definition_formation_ptr x);
 
-	const SdaiProduct_definition_context_ptr frame_of_reference_() const;
+	SdaiProduct_definition_context_ptr frame_of_reference_() const;
 	void frame_of_reference_ (const SdaiProduct_definition_context_ptr x);
 
 
@@ -18659,7 +18659,7 @@ class SdaiProduct_definition_with_associated_documents  :    public SdaiProduct_
 #endif
 
 	int opcode ()  { return 211 ; }
-	const EntityAggregate_ptr documentation_ids_() const;
+	EntityAggregate_ptr documentation_ids_() const;
 	void documentation_ids_ (const EntityAggregate_ptr x);
 
 	/* The first parent's access functions are */
@@ -18788,7 +18788,7 @@ class SdaiCc_design_certification  :    public SdaiCertification_assignment  {
 #endif
 
 	int opcode ()  { return 213 ; }
-	const SdaiCertified_items_ptr items_() const;
+	SdaiCertified_items_ptr items_() const;
 	void items_ (const SdaiCertified_items_ptr x);
 
 	/* The first parent's access functions are */
@@ -18860,16 +18860,16 @@ class SdaiB_spline_surface_with_knots  :    public SdaiB_spline_surface  {
 #endif
 
 	int opcode ()  { return 214 ; }
-	const IntAggregate_ptr u_multiplicities_() const;
+	IntAggregate_ptr u_multiplicities_() const;
 	void u_multiplicities_ (const IntAggregate_ptr x);
 
-	const IntAggregate_ptr v_multiplicities_() const;
+	IntAggregate_ptr v_multiplicities_() const;
 	void v_multiplicities_ (const IntAggregate_ptr x);
 
-	const RealAggregate_ptr u_knots_() const;
+	RealAggregate_ptr u_knots_() const;
 	void u_knots_ (const RealAggregate_ptr x);
 
-	const RealAggregate_ptr v_knots_() const;
+	RealAggregate_ptr v_knots_() const;
 	void v_knots_ (const RealAggregate_ptr x);
 
 	const SdaiKnot_type_var knot_spec_() const;
@@ -18993,10 +18993,10 @@ class SdaiOriented_path  :    public SdaiPath  {
 #endif
 
 	int opcode ()  { return 216 ; }
-	const SdaiPath_ptr path_element_() const;
+	SdaiPath_ptr path_element_() const;
 	void path_element_ (const SdaiPath_ptr x);
 
-	const Boolean orientation_() const;
+	Boolean orientation_() const;
 	void orientation_ (const Boolean x);
 
 	/* The first parent's access functions are */
@@ -19066,7 +19066,7 @@ class SdaiSecurity_classification  :    public SCLP23(Application_instance) {
 	const SdaiText purpose_() const;
 	void purpose_ (const SdaiText x);
 
-	const SdaiSecurity_classification_level_ptr security_level_() const;
+	SdaiSecurity_classification_level_ptr security_level_() const;
 	void security_level_ (const SdaiSecurity_classification_level_ptr x);
 
 
@@ -19124,7 +19124,7 @@ class SdaiVertex_loop  :    public SdaiLoop  {
 #endif
 
 	int opcode ()  { return 218 ; }
-	const SdaiVertex_ptr loop_vertex_() const;
+	SdaiVertex_ptr loop_vertex_() const;
 	void loop_vertex_ (const SdaiVertex_ptr x);
 
 	/* The first parent's access functions are */
@@ -19243,7 +19243,7 @@ class SdaiCartesian_point  :    public SdaiPoint  {
 #endif
 
 	int opcode ()  { return 220 ; }
-	const RealAggregate_ptr coordinates_() const;
+	RealAggregate_ptr coordinates_() const;
 	void coordinates_ (const RealAggregate_ptr x);
 
 	/* The first parent's access functions are */
@@ -19305,10 +19305,10 @@ class SdaiDate_and_time_assignment  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 221 ; }
-	const SdaiDate_and_time_ptr assigned_date_and_time_() const;
+	SdaiDate_and_time_ptr assigned_date_and_time_() const;
 	void assigned_date_and_time_ (const SdaiDate_and_time_ptr x);
 
-	const SdaiDate_time_role_ptr role_() const;
+	SdaiDate_time_role_ptr role_() const;
 	void role_ (const SdaiDate_time_role_ptr x);
 
 
@@ -19492,7 +19492,7 @@ class SdaiSurface_patch  :    public SdaiFounded_item  {
 #endif
 
 	int opcode ()  { return 224 ; }
-	const SdaiBounded_surface_ptr parent_surface_() const;
+	SdaiBounded_surface_ptr parent_surface_() const;
 	void parent_surface_ (const SdaiBounded_surface_ptr x);
 
 	const SdaiTransition_code_var u_transition_() const;
@@ -19501,13 +19501,13 @@ class SdaiSurface_patch  :    public SdaiFounded_item  {
 	const SdaiTransition_code_var v_transition_() const;
 	void v_transition_ (const SdaiTransition_code_var x);
 
-	const Boolean u_sense_() const;
+	Boolean u_sense_() const;
 	void u_sense_ (const Boolean x);
 
-	const Boolean v_sense_() const;
+	Boolean v_sense_() const;
 	void v_sense_ (const Boolean x);
 
-	const EntityAggregate_ptr using_surfaces_() const;
+	EntityAggregate_ptr using_surfaces_() const;
 	void using_surfaces_ (const EntityAggregate_ptr x);
 
 	/* The first parent's access functions are */
@@ -19634,10 +19634,10 @@ class SdaiShape_aspect  :    public SCLP23(Application_instance) {
 	const SdaiText description_() const;
 	void description_ (const SdaiText x);
 
-	const SdaiProduct_definition_shape_ptr of_shape_() const;
+	SdaiProduct_definition_shape_ptr of_shape_() const;
 	void of_shape_ (const SdaiProduct_definition_shape_ptr x);
 
-	const Logical product_definitional_() const;
+	Logical product_definitional_() const;
 	void product_definitional_ (const Logical x);
 
 
@@ -19875,10 +19875,10 @@ class SdaiApproval_relationship  :    public SCLP23(Application_instance) {
 	const SdaiText description_() const;
 	void description_ (const SdaiText x);
 
-	const SdaiApproval_ptr relating_approval_() const;
+	SdaiApproval_ptr relating_approval_() const;
 	void relating_approval_ (const SdaiApproval_ptr x);
 
-	const SdaiApproval_ptr related_approval_() const;
+	SdaiApproval_ptr related_approval_() const;
 	void related_approval_ (const SdaiApproval_ptr x);
 
 
@@ -19937,7 +19937,7 @@ class SdaiPolyline  :    public SdaiBounded_curve  {
 #endif
 
 	int opcode ()  { return 231 ; }
-	const EntityAggregate_ptr points_() const;
+	EntityAggregate_ptr points_() const;
 	void points_ (const EntityAggregate_ptr x);
 
 	/* The first parent's access functions are */
@@ -20001,13 +20001,13 @@ class SdaiApproval_person_organization  :    public SCLP23(Application_instance)
 #endif
 
 	int opcode ()  { return 232 ; }
-	const SdaiPerson_organization_select_ptr person_organization_() const;
+	SdaiPerson_organization_select_ptr person_organization_() const;
 	void person_organization_ (const SdaiPerson_organization_select_ptr x);
 
-	const SdaiApproval_ptr authorized_approval_() const;
+	SdaiApproval_ptr authorized_approval_() const;
 	void authorized_approval_ (const SdaiApproval_ptr x);
 
-	const SdaiApproval_role_ptr role_() const;
+	SdaiApproval_role_ptr role_() const;
 	void role_ (const SdaiApproval_role_ptr x);
 
 
@@ -20067,10 +20067,10 @@ class SdaiSurface_replica  :    public SdaiSurface  {
 #endif
 
 	int opcode ()  { return 233 ; }
-	const SdaiSurface_ptr parent_surface_() const;
+	SdaiSurface_ptr parent_surface_() const;
 	void parent_surface_ (const SdaiSurface_ptr x);
 
-	const SdaiCartesian_transformation_operator_3d_ptr transformation_() const;
+	SdaiCartesian_transformation_operator_3d_ptr transformation_() const;
 	void transformation_ (const SdaiCartesian_transformation_operator_3d_ptr x);
 
 	/* The first parent's access functions are */
@@ -20130,7 +20130,7 @@ class SdaiSecurity_classification_assignment  :    public SCLP23(Application_ins
 #endif
 
 	int opcode ()  { return 234 ; }
-	const SdaiSecurity_classification_ptr assigned_security_classification_() const;
+	SdaiSecurity_classification_ptr assigned_security_classification_() const;
 	void assigned_security_classification_ (const SdaiSecurity_classification_ptr x);
 
 
@@ -20189,7 +20189,7 @@ class SdaiCc_design_security_classification  :    public SdaiSecurity_classifica
 #endif
 
 	int opcode ()  { return 235 ; }
-	const SdaiClassified_items_ptr items_() const;
+	SdaiClassified_items_ptr items_() const;
 	void items_ (const SdaiClassified_items_ptr x);
 
 	/* The first parent's access functions are */
@@ -20308,7 +20308,7 @@ class SdaiDocument_usage_constraint  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 237 ; }
-	const SdaiDocument_ptr source_() const;
+	SdaiDocument_ptr source_() const;
 	void source_ (const SdaiDocument_ptr x);
 
 	const SdaiLabel subject_element_() const;
@@ -20372,7 +20372,7 @@ class SdaiVertex_point  :    public SdaiVertex  {
 #endif
 
 	int opcode ()  { return 238 ; }
-	const SdaiPoint_ptr vertex_geometry_() const;
+	SdaiPoint_ptr vertex_geometry_() const;
 	void vertex_geometry_ (const SdaiPoint_ptr x);
 
 	/* The first parent's access functions are */
@@ -20433,7 +20433,7 @@ class SdaiCc_design_date_and_time_assignment  :    public SdaiDate_and_time_assi
 #endif
 
 	int opcode ()  { return 239 ; }
-	const SdaiDate_time_items_ptr items_() const;
+	SdaiDate_time_items_ptr items_() const;
 	void items_ (const SdaiDate_time_items_ptr x);
 
 	/* The first parent's access functions are */
@@ -20496,10 +20496,10 @@ class SdaiOriented_closed_shell  :    public SdaiClosed_shell  {
 #endif
 
 	int opcode ()  { return 240 ; }
-	const SdaiClosed_shell_ptr closed_shell_element_() const;
+	SdaiClosed_shell_ptr closed_shell_element_() const;
 	void closed_shell_element_ (const SdaiClosed_shell_ptr x);
 
-	const Boolean orientation_() const;
+	Boolean orientation_() const;
 	void orientation_ (const Boolean x);
 
 	/* The first parent's access functions are */
@@ -20561,10 +20561,10 @@ class SdaiPerson_and_organization  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 241 ; }
-	const SdaiPerson_ptr the_person_() const;
+	SdaiPerson_ptr the_person_() const;
 	void the_person_ (const SdaiPerson_ptr x);
 
-	const SdaiOrganization_ptr the_organization_() const;
+	SdaiOrganization_ptr the_organization_() const;
 	void the_organization_ (const SdaiOrganization_ptr x);
 
 
@@ -20622,7 +20622,7 @@ class SdaiCylindrical_surface  :    public SdaiElementary_surface  {
 #endif
 
 	int opcode ()  { return 242 ; }
-	const SdaiPositive_length_measure radius_() const;
+	SdaiPositive_length_measure radius_() const;
 	void radius_ (const SdaiPositive_length_measure x);
 
 	/* The first parent's access functions are */
@@ -20688,16 +20688,16 @@ class SdaiLocal_time  :    public SCLP23(Application_instance) {
 #endif
 
 	int opcode ()  { return 243 ; }
-	const SdaiHour_in_day hour_component_() const;
+	SdaiHour_in_day hour_component_() const;
 	void hour_component_ (const SdaiHour_in_day x);
 
-	const SdaiMinute_in_hour minute_component_() const;
+	SdaiMinute_in_hour minute_component_() const;
 	void minute_component_ (const SdaiMinute_in_hour x);
 
-	const SdaiSecond_in_minute second_component_() const;
+	SdaiSecond_in_minute second_component_() const;
 	void second_component_ (const SdaiSecond_in_minute x);
 
-	const SdaiCoordinated_universal_time_offset_ptr zone_() const;
+	SdaiCoordinated_universal_time_offset_ptr zone_() const;
 	void zone_ (const SdaiCoordinated_universal_time_offset_ptr x);
 
 
@@ -20810,7 +20810,7 @@ class SdaiVertex_shell  :    public SdaiTopological_representation_item  {
 #endif
 
 	int opcode ()  { return 245 ; }
-	const SdaiVertex_loop_ptr vertex_shell_extent_() const;
+	SdaiVertex_loop_ptr vertex_shell_extent_() const;
 	void vertex_shell_extent_ (const SdaiVertex_loop_ptr x);
 
 	/* The first parent's access functions are */
@@ -20871,7 +20871,7 @@ class SdaiPoly_loop  :    public SdaiLoop  {
 #endif
 
 	int opcode ()  { return 246 ; }
-	const EntityAggregate_ptr polygon_() const;
+	EntityAggregate_ptr polygon_() const;
 	void polygon_ (const EntityAggregate_ptr x);
 
 	/* The first parent's access functions are */
@@ -20932,7 +20932,7 @@ class SdaiWire_shell  :    public SdaiTopological_representation_item  {
 #endif
 
 	int opcode ()  { return 247 ; }
-	const EntityAggregate_ptr wire_shell_extent_() const;
+	EntityAggregate_ptr wire_shell_extent_() const;
 	void wire_shell_extent_ (const EntityAggregate_ptr x);
 
 	/* The first parent's access functions are */
@@ -21049,10 +21049,10 @@ class SdaiMapped_item  :    public SdaiRepresentation_item  {
 #endif
 
 	int opcode ()  { return 249 ; }
-	const SdaiRepresentation_map_ptr mapping_source_() const;
+	SdaiRepresentation_map_ptr mapping_source_() const;
 	void mapping_source_ (const SdaiRepresentation_map_ptr x);
 
-	const SdaiRepresentation_item_ptr mapping_target_() const;
+	SdaiRepresentation_item_ptr mapping_target_() const;
 	void mapping_target_ (const SdaiRepresentation_item_ptr x);
 
 	/* The first parent's access functions are */
@@ -21224,10 +21224,10 @@ class SdaiConical_surface  :    public SdaiElementary_surface  {
 #endif
 
 	int opcode ()  { return 252 ; }
-	const SdaiLength_measure radius_() const;
+	SdaiLength_measure radius_() const;
 	void radius_ (const SdaiLength_measure x);
 
-	const SdaiPlane_angle_measure semi_angle_() const;
+	SdaiPlane_angle_measure semi_angle_() const;
 	void semi_angle_ (const SdaiPlane_angle_measure x);
 
 	/* The first parent's access functions are */
@@ -21288,7 +21288,7 @@ class SdaiGlobal_unit_assigned_context  :    public SdaiRepresentation_context  
 #endif
 
 	int opcode ()  { return 253 ; }
-	const SdaiUnits_ptr units_() const;
+	SdaiUnits_ptr units_() const;
 	void units_ (const SdaiUnits_ptr x);
 
 	/* The first parent's access functions are */

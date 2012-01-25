@@ -28,7 +28,7 @@ SCLP23(Entity_extent)::~SCLP23_NAME(Entity_extent) ()
     delete _definition_name;
 }
 
-const Entity_ptr 
+Entity_ptr 
 SCLP23(Entity_extent)::definition_() const
 {
     return _definition;
@@ -61,7 +61,7 @@ SCLP23(Entity_extent)::owned_by_(SCLP23_NAME(Model_contents__list_var)& mclv)
 //    _owned_by = mcp;
 }
 
-const SCLP23(Model_contents__list_var) 
+SCLP23(Model_contents__list_var) 
 SCLP23(Entity_extent)::owned_by_() const
 {
     return (const SCLP23(Model_contents__list_var)) &_owned_by;

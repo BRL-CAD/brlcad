@@ -34,7 +34,7 @@ class SCLP23_NAME(Select) {
 	const TypeDescriptor * CanBe (const TypeDescriptor * td) const;
 	const TypeDescriptor * CanBeSet (const char *, const char *) const;
 
-        const int IsUnique(const BASE_TYPE bt) const;
+        int IsUnique(const BASE_TYPE bt) const;
     
 	virtual const TypeDescriptor * AssignEntity (SCLP23_NAME(Application_instance) * se) =0;
 	virtual SCLP23_NAME(Select) * NewSelect () =0;

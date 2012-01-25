@@ -1717,7 +1717,7 @@ SdaiCharacterized_product_definition::operator SdaiProduct_definition_relationsh
 
 	//  part 3
 
-const SdaiProduct_definition_ptr
+SdaiProduct_definition_ptr
 SdaiCharacterized_product_definition::related_product_definition_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product_definition_relationship )
@@ -1745,7 +1745,7 @@ SdaiCharacterized_product_definition::related_product_definition_ (const SdaiPro
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_definition_ptr
+SdaiProduct_definition_ptr
 SdaiCharacterized_product_definition::relating_product_definition_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product_definition_relationship )
@@ -1801,7 +1801,7 @@ SdaiCharacterized_product_definition::name_ (const SdaiLabel x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_definition_context_ptr
+SdaiProduct_definition_context_ptr
 SdaiCharacterized_product_definition::frame_of_reference_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
@@ -1829,7 +1829,7 @@ SdaiCharacterized_product_definition::frame_of_reference_ (const SdaiProduct_def
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_definition_formation_ptr
+SdaiProduct_definition_formation_ptr
 SdaiCharacterized_product_definition::formation_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
@@ -2385,7 +2385,7 @@ SdaiShape_definition::operator SdaiShape_aspect_relationship_ptr()
 
 	//  part 3
 
-const SdaiShape_aspect_ptr
+SdaiShape_aspect_ptr
 SdaiShape_definition::related_shape_aspect_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect_relationship )
@@ -2413,7 +2413,7 @@ SdaiShape_definition::related_shape_aspect_ (const SdaiShape_aspect_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiShape_aspect_ptr
+SdaiShape_aspect_ptr
 SdaiShape_definition::relating_shape_aspect_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect_relationship )
@@ -2441,7 +2441,7 @@ SdaiShape_definition::relating_shape_aspect_ (const SdaiShape_aspect_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const Logical
+Logical
 SdaiShape_definition::product_definitional_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
@@ -2469,7 +2469,7 @@ SdaiShape_definition::product_definitional_ (const Logical x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_definition_shape_ptr
+SdaiProduct_definition_shape_ptr
 SdaiShape_definition::of_shape_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
@@ -2497,7 +2497,7 @@ SdaiShape_definition::of_shape_ (const SdaiProduct_definition_shape_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiCharacterized_definition_ptr
+SdaiCharacterized_definition_ptr
 SdaiShape_definition::definition_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product_definition_shape )
@@ -3360,7 +3360,7 @@ SdaiChange_request_item::operator SdaiProduct_definition_formation_ptr()
 
 	//  part 3
 
-const SdaiProduct_ptr
+SdaiProduct_ptr
 SdaiChange_request_item::of_product_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
@@ -4059,7 +4059,7 @@ SdaiReversible_topology_item::operator SdaiOpen_shell_ptr()
 
 	//  part 3
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiReversible_topology_item::cfs_faces_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_closed_shell )
@@ -4095,7 +4095,7 @@ SdaiReversible_topology_item::cfs_faces_ (const EntityAggregate_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const Boolean
+Boolean
 SdaiReversible_topology_item::orientation_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_face_bound )
@@ -4123,7 +4123,7 @@ SdaiReversible_topology_item::orientation_ (const Boolean x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiLoop_ptr
+SdaiLoop_ptr
 SdaiReversible_topology_item::bound_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_face_bound )
@@ -4151,7 +4151,7 @@ SdaiReversible_topology_item::bound_ (const SdaiLoop_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiReversible_topology_item::bounds_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_face )
@@ -4179,7 +4179,7 @@ SdaiReversible_topology_item::bounds_ (const EntityAggregate_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiReversible_topology_item::edge_list_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_path )
@@ -4207,7 +4207,7 @@ SdaiReversible_topology_item::edge_list_ (const EntityAggregate_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiVertex_ptr
+SdaiVertex_ptr
 SdaiReversible_topology_item::edge_end_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_edge )
@@ -4235,7 +4235,7 @@ SdaiReversible_topology_item::edge_end_ (const SdaiVertex_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiVertex_ptr
+SdaiVertex_ptr
 SdaiReversible_topology_item::edge_start_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_edge )
@@ -4811,7 +4811,7 @@ SdaiAxis2_placement::operator SdaiAxis2_placement_3d_ptr()
 
 	//  part 3
 
-const SdaiDirection_ptr
+SdaiDirection_ptr
 SdaiAxis2_placement::axis_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_axis2_placement_3d )
@@ -4839,7 +4839,7 @@ SdaiAxis2_placement::axis_ (const SdaiDirection_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiDirection_ptr
+SdaiDirection_ptr
 SdaiAxis2_placement::ref_direction_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_axis2_placement_2d )
@@ -4875,7 +4875,7 @@ SdaiAxis2_placement::ref_direction_ (const SdaiDirection_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiCartesian_point_ptr
+SdaiCartesian_point_ptr
 SdaiAxis2_placement::location_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_axis2_placement_2d )
@@ -5343,7 +5343,7 @@ SdaiSpecified_item::operator SdaiShape_aspect_ptr()
 
 	//  part 3
 
-const Logical
+Logical
 SdaiSpecified_item::product_definitional_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
@@ -5371,7 +5371,7 @@ SdaiSpecified_item::product_definitional_ (const Logical x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_definition_shape_ptr
+SdaiProduct_definition_shape_ptr
 SdaiSpecified_item::of_shape_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
@@ -5427,7 +5427,7 @@ SdaiSpecified_item::name_ (const SdaiLabel x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_definition_context_ptr
+SdaiProduct_definition_context_ptr
 SdaiSpecified_item::frame_of_reference_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
@@ -5455,7 +5455,7 @@ SdaiSpecified_item::frame_of_reference_ (const SdaiProduct_definition_context_pt
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_definition_formation_ptr
+SdaiProduct_definition_formation_ptr
 SdaiSpecified_item::formation_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
@@ -6671,7 +6671,7 @@ SdaiPerson_organization_select::operator SdaiPerson_and_organization_ptr()
 
 	//  part 3
 
-const SdaiOrganization_ptr
+SdaiOrganization_ptr
 SdaiPerson_organization_select::the_organization_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_person_and_organization )
@@ -6699,7 +6699,7 @@ SdaiPerson_organization_select::the_organization_ (const SdaiOrganization_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiPerson_ptr
+SdaiPerson_ptr
 SdaiPerson_organization_select::the_person_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_person_and_organization )
@@ -6783,7 +6783,7 @@ SdaiPerson_organization_select::name_ (const SdaiLabel x)
    Error( "Mismatch in underlying type." );
 }
 
-const StringAggregate_ptr
+StringAggregate_ptr
 SdaiPerson_organization_select::suffix_titles_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_person )
@@ -6811,7 +6811,7 @@ SdaiPerson_organization_select::suffix_titles_ (const StringAggregate_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const StringAggregate_ptr
+StringAggregate_ptr
 SdaiPerson_organization_select::prefix_titles_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_person )
@@ -6839,7 +6839,7 @@ SdaiPerson_organization_select::prefix_titles_ (const StringAggregate_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const StringAggregate_ptr
+StringAggregate_ptr
 SdaiPerson_organization_select::middle_names_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_person )
@@ -7376,7 +7376,7 @@ SdaiPcurve_or_surface::operator SdaiSurface_ptr()
 
 	//  part 3
 
-const SdaiDefinitional_representation_ptr
+SdaiDefinitional_representation_ptr
 SdaiPcurve_or_surface::reference_to_curve_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_pcurve )
@@ -7404,7 +7404,7 @@ SdaiPcurve_or_surface::reference_to_curve_ (const SdaiDefinitional_representatio
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiSurface_ptr
+SdaiSurface_ptr
 SdaiPcurve_or_surface::basis_surface_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_pcurve )
@@ -7892,7 +7892,7 @@ SdaiClassified_item::reference_designator_ (const SdaiIdentifier x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_definition_ptr
+SdaiProduct_definition_ptr
 SdaiClassified_item::related_product_definition_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_assembly_component_usage )
@@ -7920,7 +7920,7 @@ SdaiClassified_item::related_product_definition_ (const SdaiProduct_definition_p
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_definition_ptr
+SdaiProduct_definition_ptr
 SdaiClassified_item::relating_product_definition_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_assembly_component_usage )
@@ -7976,7 +7976,7 @@ SdaiClassified_item::name_ (const SdaiLabel x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_ptr
+SdaiProduct_ptr
 SdaiClassified_item::of_product_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
@@ -8896,7 +8896,7 @@ SdaiVector_or_direction::operator SdaiDirection_ptr()
 
 	//  part 3
 
-const RealAggregate_ptr
+RealAggregate_ptr
 SdaiVector_or_direction::direction_ratios_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_direction )
@@ -8924,7 +8924,7 @@ SdaiVector_or_direction::direction_ratios_ (const RealAggregate_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiLength_measure
+SdaiLength_measure
 SdaiVector_or_direction::magnitude_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_vector )
@@ -8952,7 +8952,7 @@ SdaiVector_or_direction::magnitude_ (const SdaiLength_measure x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiDirection_ptr
+SdaiDirection_ptr
 SdaiVector_or_direction::orientation_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_vector )
@@ -9412,7 +9412,7 @@ SdaiWireframe_model::operator SdaiEdge_based_wireframe_model_ptr()
 
 	//  part 3
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiWireframe_model::ebwm_boundary_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_edge_based_wireframe_model )
@@ -9440,7 +9440,7 @@ SdaiWireframe_model::ebwm_boundary_ (const EntityAggregate_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiShells_ptr
+SdaiShells_ptr
 SdaiWireframe_model::sbwm_boundary_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_shell_based_wireframe_model )
@@ -10361,7 +10361,7 @@ SdaiStart_request_item::operator SdaiProduct_definition_formation_ptr()
 
 	//  part 3
 
-const SdaiProduct_ptr
+SdaiProduct_ptr
 SdaiStart_request_item::of_product_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
@@ -11300,7 +11300,7 @@ SdaiPerson_organization_item::operator SdaiSecurity_classification_ptr()
 
 	//  part 3
 
-const SdaiSecurity_classification_level_ptr
+SdaiSecurity_classification_level_ptr
 SdaiPerson_organization_item::security_level_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_security_classification )
@@ -11328,7 +11328,7 @@ SdaiPerson_organization_item::security_level_ (const SdaiSecurity_classification
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiContract_type_ptr
+SdaiContract_type_ptr
 SdaiPerson_organization_item::kind_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_contract )
@@ -11356,7 +11356,7 @@ SdaiPerson_organization_item::kind_ (const SdaiContract_type_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_definition_formation_ptr
+SdaiProduct_definition_formation_ptr
 SdaiPerson_organization_item::formation_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
@@ -11384,7 +11384,7 @@ SdaiPerson_organization_item::formation_ (const SdaiProduct_definition_formation
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_ptr
+SdaiProduct_ptr
 SdaiPerson_organization_item::of_product_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
@@ -11412,7 +11412,7 @@ SdaiPerson_organization_item::of_product_ (const SdaiProduct_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiPerson_organization_item::frame_of_reference_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product )
@@ -11487,7 +11487,7 @@ SdaiPerson_organization_item::purpose_ (const SdaiLabel x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_concept_ptr
+SdaiProduct_concept_ptr
 SdaiPerson_organization_item::item_concept_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_configuration_item )
@@ -11671,7 +11671,7 @@ SdaiPerson_organization_item::id_ (const SdaiIdentifier x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiVersioned_action_request_ptr
+SdaiVersioned_action_request_ptr
 SdaiPerson_organization_item::assigned_action_request_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_change_request )
@@ -11707,7 +11707,7 @@ SdaiPerson_organization_item::assigned_action_request_ (const SdaiVersioned_acti
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiWork_items_ptr
+SdaiWork_items_ptr
 SdaiPerson_organization_item::items_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_change )
@@ -11749,7 +11749,7 @@ SdaiPerson_organization_item::items_ (const SdaiWork_items_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiAction_ptr
+SdaiAction_ptr
 SdaiPerson_organization_item::assigned_action_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_change )
@@ -12769,7 +12769,7 @@ SdaiDate_time_item::operator SdaiCertification_ptr()
 
 	//  part 3
 
-const SdaiSecurity_classification_level_ptr
+SdaiSecurity_classification_level_ptr
 SdaiDate_time_item::security_level_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_security_classification )
@@ -12797,7 +12797,7 @@ SdaiDate_time_item::security_level_ (const SdaiSecurity_classification_level_ptr
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiContract_type_ptr
+SdaiContract_type_ptr
 SdaiDate_time_item::kind_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_contract )
@@ -12916,7 +12916,7 @@ SdaiDate_time_item::name_ (const SdaiLabel x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiApproval_role_ptr
+SdaiApproval_role_ptr
 SdaiDate_time_item::role_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_approval_person_organization )
@@ -12944,7 +12944,7 @@ SdaiDate_time_item::role_ (const SdaiApproval_role_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiApproval_ptr
+SdaiApproval_ptr
 SdaiDate_time_item::authorized_approval_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_approval_person_organization )
@@ -12972,7 +12972,7 @@ SdaiDate_time_item::authorized_approval_ (const SdaiApproval_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiPerson_organization_select_ptr
+SdaiPerson_organization_select_ptr
 SdaiDate_time_item::person_organization_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_approval_person_organization )
@@ -13000,7 +13000,7 @@ SdaiDate_time_item::person_organization_ (const SdaiPerson_organization_select_p
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiAction_ptr
+SdaiAction_ptr
 SdaiDate_time_item::assigned_action_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_change )
@@ -13036,7 +13036,7 @@ SdaiDate_time_item::assigned_action_ (const SdaiAction_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiChange_request_items_ptr
+SdaiChange_request_items_ptr
 SdaiDate_time_item::items_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_change_request )
@@ -13073,7 +13073,7 @@ SdaiDate_time_item::items_ (const SdaiChange_request_items_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiVersioned_action_request_ptr
+SdaiVersioned_action_request_ptr
 SdaiDate_time_item::assigned_action_request_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_change_request )
@@ -13109,7 +13109,7 @@ SdaiDate_time_item::assigned_action_request_ (const SdaiVersioned_action_request
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_definition_context_ptr
+SdaiProduct_definition_context_ptr
 SdaiDate_time_item::frame_of_reference_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
@@ -13137,7 +13137,7 @@ SdaiDate_time_item::frame_of_reference_ (const SdaiProduct_definition_context_pt
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_definition_formation_ptr
+SdaiProduct_definition_formation_ptr
 SdaiDate_time_item::formation_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
@@ -13884,7 +13884,7 @@ SdaiShell::operator SdaiClosed_shell_ptr()
 
 	//  part 3
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiShell::cfs_faces_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_open_shell )
@@ -13920,7 +13920,7 @@ SdaiShell::cfs_faces_ (const EntityAggregate_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiShell::wire_shell_extent_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_wire_shell )
@@ -13948,7 +13948,7 @@ SdaiShell::wire_shell_extent_ (const EntityAggregate_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiVertex_loop_ptr
+SdaiVertex_loop_ptr
 SdaiShell::vertex_shell_extent_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_vertex_shell )
@@ -14466,7 +14466,7 @@ SdaiTransformation::operator SdaiFunctionally_defined_transformation_ptr()
 
 	//  part 3
 
-const SdaiRepresentation_item_ptr
+SdaiRepresentation_item_ptr
 SdaiTransformation::transform_item_2_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_item_defined_transformation )
@@ -14494,7 +14494,7 @@ SdaiTransformation::transform_item_2_ (const SdaiRepresentation_item_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiRepresentation_item_ptr
+SdaiRepresentation_item_ptr
 SdaiTransformation::transform_item_1_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_item_defined_transformation )
@@ -15273,7 +15273,7 @@ SdaiCertified_item::operator SdaiSupplied_part_relationship_ptr()
 
 	//  part 3
 
-const SdaiProduct_definition_ptr
+SdaiProduct_definition_ptr
 SdaiCertified_item::related_product_definition_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_supplied_part_relationship )
@@ -15301,7 +15301,7 @@ SdaiCertified_item::related_product_definition_ (const SdaiProduct_definition_pt
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_definition_ptr
+SdaiProduct_definition_ptr
 SdaiCertified_item::relating_product_definition_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_supplied_part_relationship )
@@ -15848,7 +15848,7 @@ SdaiDate_time_select::operator SdaiDate_and_time_ptr()
 
 	//  part 3
 
-const SdaiLocal_time_ptr
+SdaiLocal_time_ptr
 SdaiDate_time_select::time_component_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_date_and_time )
@@ -15876,7 +15876,7 @@ SdaiDate_time_select::time_component_ (const SdaiLocal_time_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiDate_ptr
+SdaiDate_ptr
 SdaiDate_time_select::date_component_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_date_and_time )
@@ -15904,7 +15904,7 @@ SdaiDate_time_select::date_component_ (const SdaiDate_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiCoordinated_universal_time_offset_ptr
+SdaiCoordinated_universal_time_offset_ptr
 SdaiDate_time_select::zone_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_local_time )
@@ -15932,7 +15932,7 @@ SdaiDate_time_select::zone_ (const SdaiCoordinated_universal_time_offset_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiSecond_in_minute
+SdaiSecond_in_minute
 SdaiDate_time_select::second_component_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_local_time )
@@ -15960,7 +15960,7 @@ SdaiDate_time_select::second_component_ (const SdaiSecond_in_minute x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiMinute_in_hour
+SdaiMinute_in_hour
 SdaiDate_time_select::minute_component_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_local_time )
@@ -15988,7 +15988,7 @@ SdaiDate_time_select::minute_component_ (const SdaiMinute_in_hour x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiHour_in_day
+SdaiHour_in_day
 SdaiDate_time_select::hour_component_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_local_time )
@@ -16016,7 +16016,7 @@ SdaiDate_time_select::hour_component_ (const SdaiHour_in_day x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiYear_number
+SdaiYear_number
 SdaiDate_time_select::year_component_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_date )
@@ -16521,7 +16521,7 @@ SdaiCurve_on_surface::operator SdaiComposite_curve_on_surface_ptr()
 
 	//  part 3
 
-const Logical
+Logical
 SdaiCurve_on_surface::self_intersect_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_composite_curve_on_surface )
@@ -16549,7 +16549,7 @@ SdaiCurve_on_surface::self_intersect_ (const Logical x)
    Error( "Mismatch in underlying type." );
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiCurve_on_surface::segments_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_composite_curve_on_surface )
@@ -16605,7 +16605,7 @@ SdaiCurve_on_surface::master_representation_ (const SdaiPreferred_surface_curve_
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiPcurve_or_surfaces_ptr
+SdaiPcurve_or_surfaces_ptr
 SdaiCurve_on_surface::associated_geometry_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_surface_curve )
@@ -16633,7 +16633,7 @@ SdaiCurve_on_surface::associated_geometry_ (const SdaiPcurve_or_surfaces_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiCurve_ptr
+SdaiCurve_ptr
 SdaiCurve_on_surface::curve_3d_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_surface_curve )
@@ -16661,7 +16661,7 @@ SdaiCurve_on_surface::curve_3d_ (const SdaiCurve_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiDefinitional_representation_ptr
+SdaiDefinitional_representation_ptr
 SdaiCurve_on_surface::reference_to_curve_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_pcurve )
@@ -16689,7 +16689,7 @@ SdaiCurve_on_surface::reference_to_curve_ (const SdaiDefinitional_representation
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiSurface_ptr
+SdaiSurface_ptr
 SdaiCurve_on_surface::basis_surface_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_pcurve )
@@ -17170,7 +17170,7 @@ SdaiTrimming_select::operator SdaiParameter_value()
 
 	//  part 3
 
-const RealAggregate_ptr
+RealAggregate_ptr
 SdaiTrimming_select::coordinates_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_cartesian_point )
@@ -17562,7 +17562,7 @@ SdaiContracted_item::operator SdaiProduct_definition_formation_ptr()
 
 	//  part 3
 
-const SdaiProduct_ptr
+SdaiProduct_ptr
 SdaiContracted_item::of_product_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
@@ -17961,7 +17961,7 @@ SdaiUnit::operator SdaiNamed_unit_ptr()
 
 	//  part 3
 
-const SdaiDimensional_exponents_ptr
+SdaiDimensional_exponents_ptr
 SdaiUnit::dimensions_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_named_unit )
@@ -18730,7 +18730,7 @@ SdaiWork_item::operator SdaiProduct_definition_formation_ptr()
 
 	//  part 3
 
-const SdaiProduct_ptr
+SdaiProduct_ptr
 SdaiWork_item::of_product_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
@@ -19305,7 +19305,7 @@ SdaiSupported_item::consequence_ (const SdaiText x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiAction_method_ptr
+SdaiAction_method_ptr
 SdaiSupported_item::chosen_method_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_action )
@@ -19333,7 +19333,7 @@ SdaiSupported_item::chosen_method_ (const SdaiAction_method_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiSupported_item::requests_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_action_directive )
@@ -20462,7 +20462,7 @@ SdaiApproved_item::operator SdaiContract_ptr()
 
 	//  part 3
 
-const SdaiCertification_type_ptr
+SdaiCertification_type_ptr
 SdaiApproved_item::kind_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_certification )
@@ -20493,7 +20493,7 @@ SdaiApproved_item::kind_ (const SdaiCertification_type_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiAction_ptr
+SdaiAction_ptr
 SdaiApproved_item::assigned_action_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_change )
@@ -20529,7 +20529,7 @@ SdaiApproved_item::assigned_action_ (const SdaiAction_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiChange_request_items_ptr
+SdaiChange_request_items_ptr
 SdaiApproved_item::items_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_change_request )
@@ -20566,7 +20566,7 @@ SdaiApproved_item::items_ (const SdaiChange_request_items_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiVersioned_action_request_ptr
+SdaiVersioned_action_request_ptr
 SdaiApproved_item::assigned_action_request_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_change_request )
@@ -20602,7 +20602,7 @@ SdaiApproved_item::assigned_action_request_ (const SdaiVersioned_action_request_
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiSecurity_classification_level_ptr
+SdaiSecurity_classification_level_ptr
 SdaiApproved_item::security_level_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_security_classification )
@@ -20682,7 +20682,7 @@ SdaiApproved_item::purpose_ (const SdaiLabel x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_concept_ptr
+SdaiProduct_concept_ptr
 SdaiApproved_item::item_concept_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_configuration_item )
@@ -20762,7 +20762,7 @@ SdaiApproved_item::name_ (const SdaiLabel x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiConfiguration_design_ptr
+SdaiConfiguration_design_ptr
 SdaiApproved_item::configuration_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_configuration_effectivity )
@@ -20790,7 +20790,7 @@ SdaiApproved_item::configuration_ (const SdaiConfiguration_design_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_definition_relationship_ptr
+SdaiProduct_definition_relationship_ptr
 SdaiApproved_item::usage_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_configuration_effectivity )
@@ -20818,7 +20818,7 @@ SdaiApproved_item::usage_ (const SdaiProduct_definition_relationship_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_definition_context_ptr
+SdaiProduct_definition_context_ptr
 SdaiApproved_item::frame_of_reference_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
@@ -20846,7 +20846,7 @@ SdaiApproved_item::frame_of_reference_ (const SdaiProduct_definition_context_ptr
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_definition_formation_ptr
+SdaiProduct_definition_formation_ptr
 SdaiApproved_item::formation_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
@@ -20874,7 +20874,7 @@ SdaiApproved_item::formation_ (const SdaiProduct_definition_formation_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SdaiProduct_ptr
+SdaiProduct_ptr
 SdaiApproved_item::of_product_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
@@ -21523,7 +21523,7 @@ SdaiSurface_model::operator SdaiShell_based_surface_model_ptr()
 
 	//  part 3
 
-const SdaiShells_ptr
+SdaiShells_ptr
 SdaiSurface_model::sbsm_boundary_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_shell_based_surface_model )
@@ -22244,7 +22244,7 @@ SdaiCartesian_transformation_operator::SdaiCartesian_transformation_operator (SC
     MakeDerived ("scl");
 }
 
-const SdaiDirection_ptr
+SdaiDirection_ptr
 SdaiCartesian_transformation_operator::axis1_() const
 {
     return (SdaiDirection_ptr) _axis1;
@@ -22257,7 +22257,7 @@ SdaiCartesian_transformation_operator::axis1_ (const SdaiDirection_ptr x)
     _axis1 = x;
 }
 
-const SdaiDirection_ptr
+SdaiDirection_ptr
 SdaiCartesian_transformation_operator::axis2_() const
 {
     return (SdaiDirection_ptr) _axis2;
@@ -22270,7 +22270,7 @@ SdaiCartesian_transformation_operator::axis2_ (const SdaiDirection_ptr x)
     _axis2 = x;
 }
 
-const SdaiCartesian_point_ptr
+SdaiCartesian_point_ptr
 SdaiCartesian_transformation_operator::local_origin_() const
 {
     return (SdaiCartesian_point_ptr) _local_origin;
@@ -22283,7 +22283,7 @@ SdaiCartesian_transformation_operator::local_origin_ (const SdaiCartesian_point_
     _local_origin = x;
 }
 
-const SCLP23(Real)
+SCLP23(Real)
 SdaiCartesian_transformation_operator::scale_() const
 {
     return (const SCLP23(Real)) _scale;
@@ -22448,7 +22448,7 @@ SdaiCartesian_transformation_operator_3d::SdaiCartesian_transformation_operator_
     MakeDerived ("u");
 }
 
-const SdaiDirection_ptr
+SdaiDirection_ptr
 SdaiCartesian_transformation_operator_3d::axis3_() const
 {
     return (SdaiDirection_ptr) _axis3;
@@ -22889,7 +22889,7 @@ SdaiRepresentation::name_ (const SdaiLabel x)
     _name = x;
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiRepresentation::items_() const
 {
     return (EntityAggregate_ptr) &_items;
@@ -22900,7 +22900,7 @@ SdaiRepresentation::items_ (const EntityAggregate_ptr x)
 
 	{ _items.ShallowCopy (*x); }
 
-const SdaiRepresentation_context_ptr
+SdaiRepresentation_context_ptr
 SdaiRepresentation::context_of_items_() const
 {
     return (SdaiRepresentation_context_ptr) _context_of_items;
@@ -23274,7 +23274,7 @@ SdaiCertification::purpose_ (const SdaiText x)
     _purpose = x;
 }
 
-const SdaiCertification_type_ptr
+SdaiCertification_type_ptr
 SdaiCertification::kind_() const
 {
     return (SdaiCertification_type_ptr) _kind;
@@ -23553,7 +23553,7 @@ SdaiProduct_definition_relationship::description_ (const SdaiText x)
     _description = x;
 }
 
-const SdaiProduct_definition_ptr
+SdaiProduct_definition_ptr
 SdaiProduct_definition_relationship::relating_product_definition_() const
 {
     return (SdaiProduct_definition_ptr) _relating_product_definition;
@@ -23566,7 +23566,7 @@ SdaiProduct_definition_relationship::relating_product_definition_ (const SdaiPro
     _relating_product_definition = x;
 }
 
-const SdaiProduct_definition_ptr
+SdaiProduct_definition_ptr
 SdaiProduct_definition_relationship::related_product_definition_() const
 {
     return (SdaiProduct_definition_ptr) _related_product_definition;
@@ -23902,7 +23902,7 @@ SdaiQuantified_assembly_component_usage::SdaiQuantified_assembly_component_usage
         se->attributes.push (a);
 }
 
-const SdaiMeasure_with_unit_ptr
+SdaiMeasure_with_unit_ptr
 SdaiQuantified_assembly_component_usage::quantity_() const
 {
     return (SdaiMeasure_with_unit_ptr) _quantity;
@@ -24118,7 +24118,7 @@ SdaiManifold_solid_brep::SdaiManifold_solid_brep (SCLP23(Application_instance) *
     MakeDerived ("dim");
 }
 
-const SdaiClosed_shell_ptr
+SdaiClosed_shell_ptr
 SdaiManifold_solid_brep::outer_() const
 {
     return (SdaiClosed_shell_ptr) _outer;
@@ -24494,7 +24494,7 @@ SdaiAction_directive::comment_ (const SdaiText x)
     _comment = x;
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiAction_directive::requests_() const
 {
     return (EntityAggregate_ptr) &_requests;
@@ -24614,7 +24614,7 @@ SdaiNamed_unit::SdaiNamed_unit( SCLP23(Application_instance) *se, int *addAttrs)
         se->attributes.push (a);
 }
 
-const SdaiDimensional_exponents_ptr
+SdaiDimensional_exponents_ptr
 SdaiNamed_unit::dimensions_() const
 {
     return (SdaiDimensional_exponents_ptr) _dimensions;
@@ -24847,7 +24847,7 @@ SdaiMeasure_with_unit::SdaiMeasure_with_unit( SCLP23(Application_instance) *se, 
         se->attributes.push (a);
 }
 
-const SdaiMeasure_value_ptr
+SdaiMeasure_value_ptr
 SdaiMeasure_with_unit::value_component_() const
 	{ return (const SdaiMeasure_value_ptr) &_value_component; }
 
@@ -24856,7 +24856,7 @@ SdaiMeasure_with_unit::value_component_ (const SdaiMeasure_value_ptr x)
 
 	{ _value_component = x; }
 
-const SdaiUnit_ptr
+SdaiUnit_ptr
 SdaiMeasure_with_unit::unit_component_() const
 	{ return (const SdaiUnit_ptr) &_unit_component; }
 
@@ -25496,7 +25496,7 @@ SdaiOffset_surface::SdaiOffset_surface (SCLP23(Application_instance) *se, int *a
     MakeDerived ("dim");
 }
 
-const SdaiSurface_ptr
+SdaiSurface_ptr
 SdaiOffset_surface::basis_surface_() const
 {
     return (SdaiSurface_ptr) _basis_surface;
@@ -25509,7 +25509,7 @@ SdaiOffset_surface::basis_surface_ (const SdaiSurface_ptr x)
     _basis_surface = x;
 }
 
-const SdaiLength_measure
+SdaiLength_measure
 SdaiOffset_surface::distance_() const
 {
     return (const SdaiLength_measure) _distance;
@@ -25522,7 +25522,7 @@ SdaiOffset_surface::distance_ (const SdaiLength_measure x)
     _distance = x;
 }
 
-const Logical
+Logical
 SdaiOffset_surface::self_intersect_() const
 {
     return (Logical) _self_intersect;
@@ -25652,7 +25652,7 @@ SdaiPlacement::SdaiPlacement (SCLP23(Application_instance) *se, int *addAttrs) :
     MakeDerived ("dim");
 }
 
-const SdaiCartesian_point_ptr
+SdaiCartesian_point_ptr
 SdaiPlacement::location_() const
 {
     return (SdaiCartesian_point_ptr) _location;
@@ -25785,7 +25785,7 @@ SdaiAxis2_placement_2d::SdaiAxis2_placement_2d (SCLP23(Application_instance) *se
     MakeDerived ("p");
 }
 
-const SdaiDirection_ptr
+SdaiDirection_ptr
 SdaiAxis2_placement_2d::ref_direction_() const
 {
     return (SdaiDirection_ptr) _ref_direction;
@@ -26073,7 +26073,7 @@ SdaiProduct_related_product_category::SdaiProduct_related_product_category (SCLP
         se->attributes.push (a);
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiProduct_related_product_category::products_() const
 {
     return (EntityAggregate_ptr) &_products;
@@ -26285,7 +26285,7 @@ SdaiConic::SdaiConic (SCLP23(Application_instance) *se, int *addAttrs) : SdaiCur
     MakeDerived ("dim");
 }
 
-const SdaiAxis2_placement_ptr
+SdaiAxis2_placement_ptr
 SdaiConic::position_() const
 	{ return (const SdaiAxis2_placement_ptr) &_position; }
 
@@ -26438,7 +26438,7 @@ SdaiHyperbola::SdaiHyperbola (SCLP23(Application_instance) *se, int *addAttrs) :
     MakeDerived ("dim");
 }
 
-const SdaiPositive_length_measure
+SdaiPositive_length_measure
 SdaiHyperbola::semi_axis_() const
 {
     return (const SdaiPositive_length_measure) _semi_axis;
@@ -26451,7 +26451,7 @@ SdaiHyperbola::semi_axis_ (const SdaiPositive_length_measure x)
     _semi_axis = x;
 }
 
-const SdaiPositive_length_measure
+SdaiPositive_length_measure
 SdaiHyperbola::semi_imag_axis_() const
 {
     return (const SdaiPositive_length_measure) _semi_imag_axis;
@@ -27188,7 +27188,7 @@ SdaiOrganizational_address::SdaiOrganizational_address (SCLP23(Application_insta
         se->attributes.push (a);
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiOrganizational_address::organizations_() const
 {
     return (EntityAggregate_ptr) &_organizations;
@@ -27596,7 +27596,7 @@ SdaiB_spline_surface::SdaiB_spline_surface (SCLP23(Application_instance) *se, in
     MakeDerived ("control_points");
 }
 
-const SCLP23(Integer)
+SCLP23(Integer)
 SdaiB_spline_surface::u_degree_() const
 {
     return (const SCLP23(Integer)) _u_degree;
@@ -27609,7 +27609,7 @@ SdaiB_spline_surface::u_degree_ (const SCLP23(Integer) x)
     _u_degree = x;
 }
 
-const SCLP23(Integer)
+SCLP23(Integer)
 SdaiB_spline_surface::v_degree_() const
 {
     return (const SCLP23(Integer)) _v_degree;
@@ -27622,7 +27622,7 @@ SdaiB_spline_surface::v_degree_ (const SCLP23(Integer) x)
     _v_degree = x;
 }
 
-const GenericAggregate_ptr
+GenericAggregate_ptr
 SdaiB_spline_surface::control_points_list_() const
 {
     return (GenericAggregate_ptr) &_control_points_list;
@@ -27646,7 +27646,7 @@ SdaiB_spline_surface::surface_form_ (const SdaiB_spline_surface_form_var x)
     _surface_form.put (x);
 }
 
-const Logical
+Logical
 SdaiB_spline_surface::u_closed_() const
 {
     return (Logical) _u_closed;
@@ -27659,7 +27659,7 @@ SdaiB_spline_surface::u_closed_ (const Logical x)
     _u_closed.put (x);
 }
 
-const Logical
+Logical
 SdaiB_spline_surface::v_closed_() const
 {
     return (Logical) _v_closed;
@@ -27672,7 +27672,7 @@ SdaiB_spline_surface::v_closed_ (const Logical x)
     _v_closed.put (x);
 }
 
-const Logical
+Logical
 SdaiB_spline_surface::self_intersect_() const
 {
     return (Logical) _self_intersect;
@@ -27981,7 +27981,7 @@ SdaiAxis1_placement::SdaiAxis1_placement (SCLP23(Application_instance) *se, int 
     MakeDerived ("z");
 }
 
-const SdaiDirection_ptr
+SdaiDirection_ptr
 SdaiAxis1_placement::axis_() const
 {
     return (SdaiDirection_ptr) _axis;
@@ -28317,7 +28317,7 @@ SdaiB_spline_curve::SdaiB_spline_curve (SCLP23(Application_instance) *se, int *a
     MakeDerived ("control_points");
 }
 
-const SCLP23(Integer)
+SCLP23(Integer)
 SdaiB_spline_curve::degree_() const
 {
     return (const SCLP23(Integer)) _degree;
@@ -28330,7 +28330,7 @@ SdaiB_spline_curve::degree_ (const SCLP23(Integer) x)
     _degree = x;
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiB_spline_curve::control_points_list_() const
 {
     return (EntityAggregate_ptr) &_control_points_list;
@@ -28354,7 +28354,7 @@ SdaiB_spline_curve::curve_form_ (const SdaiB_spline_curve_form_var x)
     _curve_form.put (x);
 }
 
-const Logical
+Logical
 SdaiB_spline_curve::closed_curve_() const
 {
     return (Logical) _closed_curve;
@@ -28367,7 +28367,7 @@ SdaiB_spline_curve::closed_curve_ (const Logical x)
     _closed_curve.put (x);
 }
 
-const Logical
+Logical
 SdaiB_spline_curve::self_intersect_() const
 {
     return (Logical) _self_intersect;
@@ -28502,7 +28502,7 @@ SdaiRational_b_spline_curve::SdaiRational_b_spline_curve (SCLP23(Application_ins
     MakeDerived ("weights");
 }
 
-const RealAggregate_ptr
+RealAggregate_ptr
 SdaiRational_b_spline_curve::weights_data_() const
 {
     return (RealAggregate_ptr) &_weights_data;
@@ -28624,7 +28624,7 @@ SdaiAction_request_assignment::SdaiAction_request_assignment( SCLP23(Application
         se->attributes.push (a);
 }
 
-const SdaiVersioned_action_request_ptr
+SdaiVersioned_action_request_ptr
 SdaiAction_request_assignment::assigned_action_request_() const
 {
     return (SdaiVersioned_action_request_ptr) _assigned_action_request;
@@ -28865,7 +28865,7 @@ SdaiFace_bound::SdaiFace_bound (SCLP23(Application_instance) *se, int *addAttrs)
         se->attributes.push (a);
 }
 
-const SdaiLoop_ptr
+SdaiLoop_ptr
 SdaiFace_bound::bound_() const
 {
     return (SdaiLoop_ptr) _bound;
@@ -28878,7 +28878,7 @@ SdaiFace_bound::bound_ (const SdaiLoop_ptr x)
     _bound = x;
 }
 
-const Boolean
+Boolean
 SdaiFace_bound::orientation_() const
 {
     return (Boolean) _orientation;
@@ -29121,7 +29121,7 @@ SdaiDated_effectivity::SdaiDated_effectivity (SCLP23(Application_instance) *se, 
         se->attributes.push (a);
 }
 
-const SdaiDate_and_time_ptr
+SdaiDate_and_time_ptr
 SdaiDated_effectivity::effectivity_start_date_() const
 {
     return (SdaiDate_and_time_ptr) _effectivity_start_date;
@@ -29134,7 +29134,7 @@ SdaiDated_effectivity::effectivity_start_date_ (const SdaiDate_and_time_ptr x)
     _effectivity_start_date = x;
 }
 
-const SdaiDate_and_time_ptr
+SdaiDate_and_time_ptr
 SdaiDated_effectivity::effectivity_end_date_() const
 {
     return (SdaiDate_and_time_ptr) _effectivity_end_date;
@@ -29262,7 +29262,7 @@ SdaiDirection::SdaiDirection (SCLP23(Application_instance) *se, int *addAttrs) :
     MakeDerived ("dim");
 }
 
-const RealAggregate_ptr
+RealAggregate_ptr
 SdaiDirection::direction_ratios_() const
 {
     return (RealAggregate_ptr) &_direction_ratios;
@@ -29503,7 +29503,7 @@ SdaiEdge::SdaiEdge (SCLP23(Application_instance) *se, int *addAttrs) : SdaiTopol
         se->attributes.push (a);
 }
 
-const SdaiVertex_ptr
+SdaiVertex_ptr
 SdaiEdge::edge_start_() const
 {
     return (SdaiVertex_ptr) _edge_start;
@@ -29516,7 +29516,7 @@ SdaiEdge::edge_start_ (const SdaiVertex_ptr x)
     _edge_start = x;
 }
 
-const SdaiVertex_ptr
+SdaiVertex_ptr
 SdaiEdge::edge_end_() const
 {
     return (SdaiVertex_ptr) _edge_end;
@@ -29679,7 +29679,7 @@ SdaiOriented_edge::SdaiOriented_edge (SCLP23(Application_instance) *se, int *add
     MakeDerived ("edge_end");
 }
 
-const SdaiEdge_ptr
+SdaiEdge_ptr
 SdaiOriented_edge::edge_element_() const
 {
     return (SdaiEdge_ptr) _edge_element;
@@ -29692,7 +29692,7 @@ SdaiOriented_edge::edge_element_ (const SdaiEdge_ptr x)
     _edge_element = x;
 }
 
-const Boolean
+Boolean
 SdaiOriented_edge::orientation_() const
 {
     return (Boolean) _orientation;
@@ -29998,7 +29998,7 @@ SdaiPerson::first_name_ (const SdaiLabel x)
     _first_name = x;
 }
 
-const StringAggregate_ptr
+StringAggregate_ptr
 SdaiPerson::middle_names_() const
 {
     return (StringAggregate_ptr) &_middle_names;
@@ -30009,7 +30009,7 @@ SdaiPerson::middle_names_ (const StringAggregate_ptr x)
 
 	{ _middle_names.ShallowCopy (*x); }
 
-const StringAggregate_ptr
+StringAggregate_ptr
 SdaiPerson::prefix_titles_() const
 {
     return (StringAggregate_ptr) &_prefix_titles;
@@ -30020,7 +30020,7 @@ SdaiPerson::prefix_titles_ (const StringAggregate_ptr x)
 
 	{ _prefix_titles.ShallowCopy (*x); }
 
-const StringAggregate_ptr
+StringAggregate_ptr
 SdaiPerson::suffix_titles_() const
 {
     return (StringAggregate_ptr) &_suffix_titles;
@@ -30266,7 +30266,7 @@ SdaiDocument::description_ (const SdaiText x)
     _description = x;
 }
 
-const SdaiDocument_type_ptr
+SdaiDocument_type_ptr
 SdaiDocument::kind_() const
 {
     return (SdaiDocument_type_ptr) _kind;
@@ -30560,7 +30560,7 @@ SdaiConversion_based_unit::name_ (const SdaiLabel x)
     _name = x;
 }
 
-const SdaiMeasure_with_unit_ptr
+SdaiMeasure_with_unit_ptr
 SdaiConversion_based_unit::conversion_factor_() const
 {
     return (SdaiMeasure_with_unit_ptr) _conversion_factor;
@@ -30834,7 +30834,7 @@ SdaiPoint_on_surface::SdaiPoint_on_surface (SCLP23(Application_instance) *se, in
     MakeDerived ("dim");
 }
 
-const SdaiSurface_ptr
+SdaiSurface_ptr
 SdaiPoint_on_surface::basis_surface_() const
 {
     return (SdaiSurface_ptr) _basis_surface;
@@ -30847,7 +30847,7 @@ SdaiPoint_on_surface::basis_surface_ (const SdaiSurface_ptr x)
     _basis_surface = x;
 }
 
-const SdaiParameter_value
+SdaiParameter_value
 SdaiPoint_on_surface::point_parameter_u_() const
 {
     return (const SdaiParameter_value) _point_parameter_u;
@@ -30860,7 +30860,7 @@ SdaiPoint_on_surface::point_parameter_u_ (const SdaiParameter_value x)
     _point_parameter_u = x;
 }
 
-const SdaiParameter_value
+SdaiParameter_value
 SdaiPoint_on_surface::point_parameter_v_() const
 {
     return (const SdaiParameter_value) _point_parameter_v;
@@ -31068,7 +31068,7 @@ SdaiProduct_definition_formation::description_ (const SdaiText x)
     _description = x;
 }
 
-const SdaiProduct_ptr
+SdaiProduct_ptr
 SdaiProduct_definition_formation::of_product_() const
 {
     return (SdaiProduct_ptr) _of_product;
@@ -31221,7 +31221,7 @@ SdaiPerson_and_organization_assignment::SdaiPerson_and_organization_assignment( 
         se->attributes.push (a);
 }
 
-const SdaiPerson_and_organization_ptr
+SdaiPerson_and_organization_ptr
 SdaiPerson_and_organization_assignment::assigned_person_and_organization_() const
 {
     return (SdaiPerson_and_organization_ptr) _assigned_person_and_organization;
@@ -31234,7 +31234,7 @@ SdaiPerson_and_organization_assignment::assigned_person_and_organization_ (const
     _assigned_person_and_organization = x;
 }
 
-const SdaiPerson_and_organization_role_ptr
+SdaiPerson_and_organization_role_ptr
 SdaiPerson_and_organization_assignment::role_() const
 {
     return (SdaiPerson_and_organization_role_ptr) _role;
@@ -31358,7 +31358,7 @@ SdaiCc_design_person_and_organization_assignment::SdaiCc_design_person_and_organ
         se->attributes.push (a);
 }
 
-const SdaiPerson_organization_items_ptr
+SdaiPerson_organization_items_ptr
 SdaiCc_design_person_and_organization_assignment::items_() const
 {
     return (SdaiPerson_organization_items_ptr) &_items;
@@ -31575,7 +31575,7 @@ SdaiOffset_curve_3d::SdaiOffset_curve_3d (SCLP23(Application_instance) *se, int 
     MakeDerived ("dim");
 }
 
-const SdaiCurve_ptr
+SdaiCurve_ptr
 SdaiOffset_curve_3d::basis_curve_() const
 {
     return (SdaiCurve_ptr) _basis_curve;
@@ -31588,7 +31588,7 @@ SdaiOffset_curve_3d::basis_curve_ (const SdaiCurve_ptr x)
     _basis_curve = x;
 }
 
-const SdaiLength_measure
+SdaiLength_measure
 SdaiOffset_curve_3d::distance_() const
 {
     return (const SdaiLength_measure) _distance;
@@ -31601,7 +31601,7 @@ SdaiOffset_curve_3d::distance_ (const SdaiLength_measure x)
     _distance = x;
 }
 
-const Logical
+Logical
 SdaiOffset_curve_3d::self_intersect_() const
 {
     return (Logical) _self_intersect;
@@ -31614,7 +31614,7 @@ SdaiOffset_curve_3d::self_intersect_ (const Logical x)
     _self_intersect.put (x);
 }
 
-const SdaiDirection_ptr
+SdaiDirection_ptr
 SdaiOffset_curve_3d::ref_direction_() const
 {
     return (SdaiDirection_ptr) _ref_direction;
@@ -31767,7 +31767,7 @@ SdaiApproval::SdaiApproval( SCLP23(Application_instance) *se, int *addAttrs)
         se->attributes.push (a);
 }
 
-const SdaiApproval_status_ptr
+SdaiApproval_status_ptr
 SdaiApproval::status_() const
 {
     return (SdaiApproval_status_ptr) _status;
@@ -31941,7 +31941,7 @@ SdaiComposite_curve::SdaiComposite_curve (SCLP23(Application_instance) *se, int 
     MakeDerived ("closed_curve");
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiComposite_curve::segments_() const
 {
     return (EntityAggregate_ptr) &_segments;
@@ -31952,7 +31952,7 @@ SdaiComposite_curve::segments_ (const EntityAggregate_ptr x)
 
 	{ _segments.ShallowCopy (*x); }
 
-const Logical
+Logical
 SdaiComposite_curve::self_intersect_() const
 {
     return (Logical) _self_intersect;
@@ -32315,7 +32315,7 @@ SdaiRepresentation_context::context_type_ (const SdaiText x)
     _context_type = x;
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiRepresentation_context::representations_in_context_() const
 {
     return (EntityAggregate_ptr) &_representations_in_context;
@@ -32437,7 +32437,7 @@ SdaiGeometric_representation_context::SdaiGeometric_representation_context (SCLP
         se->attributes.push (a);
 }
 
-const SdaiDimension_count
+SdaiDimension_count
 SdaiGeometric_representation_context::coordinate_space_dimension_() const
 {
     return (const SdaiDimension_count) _coordinate_space_dimension;
@@ -32603,7 +32603,7 @@ SdaiAction_status::status_ (const SdaiLabel x)
     _status = x;
 }
 
-const SdaiExecuted_action_ptr
+SdaiExecuted_action_ptr
 SdaiAction_status::assigned_action_() const
 {
     return (SdaiExecuted_action_ptr) _assigned_action;
@@ -32737,7 +32737,7 @@ SdaiApplication_context::application_ (const SdaiText x)
     _application = x;
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiApplication_context::context_elements_() const
 {
     return (EntityAggregate_ptr) &_context_elements;
@@ -32859,7 +32859,7 @@ SdaiChange_request::SdaiChange_request (SCLP23(Application_instance) *se, int *a
         se->attributes.push (a);
 }
 
-const SdaiChange_request_items_ptr
+SdaiChange_request_items_ptr
 SdaiChange_request::items_() const
 {
     return (SdaiChange_request_items_ptr) &_items;
@@ -33012,7 +33012,7 @@ SdaiDate_and_time::SdaiDate_and_time( SCLP23(Application_instance) *se, int *add
         se->attributes.push (a);
 }
 
-const SdaiDate_ptr
+SdaiDate_ptr
 SdaiDate_and_time::date_component_() const
 {
     return (SdaiDate_ptr) _date_component;
@@ -33025,7 +33025,7 @@ SdaiDate_and_time::date_component_ (const SdaiDate_ptr x)
     _date_component = x;
 }
 
-const SdaiLocal_time_ptr
+SdaiLocal_time_ptr
 SdaiDate_and_time::time_component_() const
 {
     return (SdaiLocal_time_ptr) _time_component;
@@ -33176,7 +33176,7 @@ SdaiApproval_date_time::SdaiApproval_date_time( SCLP23(Application_instance) *se
         se->attributes.push (a);
 }
 
-const SdaiDate_time_select_ptr
+SdaiDate_time_select_ptr
 SdaiApproval_date_time::date_time_() const
 	{ return (const SdaiDate_time_select_ptr) &_date_time; }
 
@@ -33185,7 +33185,7 @@ SdaiApproval_date_time::date_time_ (const SdaiDate_time_select_ptr x)
 
 	{ _date_time = x; }
 
-const SdaiApproval_ptr
+SdaiApproval_ptr
 SdaiApproval_date_time::dated_approval_() const
 {
     return (SdaiApproval_ptr) _dated_approval;
@@ -33469,7 +33469,7 @@ SdaiApplication_context_element::name_ (const SdaiLabel x)
     _name = x;
 }
 
-const SdaiApplication_context_ptr
+SdaiApplication_context_ptr
 SdaiApplication_context_element::frame_of_reference_() const
 {
     return (SdaiApplication_context_ptr) _frame_of_reference;
@@ -33723,7 +33723,7 @@ SdaiElementary_surface::SdaiElementary_surface (SCLP23(Application_instance) *se
     MakeDerived ("dim");
 }
 
-const SdaiAxis2_placement_3d_ptr
+SdaiAxis2_placement_3d_ptr
 SdaiElementary_surface::position_() const
 {
     return (SdaiAxis2_placement_3d_ptr) _position;
@@ -33851,7 +33851,7 @@ SdaiSpherical_surface::SdaiSpherical_surface (SCLP23(Application_instance) *se, 
     MakeDerived ("dim");
 }
 
-const SdaiPositive_length_measure
+SdaiPositive_length_measure
 SdaiSpherical_surface::radius_() const
 {
     return (const SdaiPositive_length_measure) _radius;
@@ -34088,7 +34088,7 @@ SdaiApplication_protocol_definition::application_interpreted_model_schema_name_ 
     _application_interpreted_model_schema_name = x;
 }
 
-const SdaiYear_number
+SdaiYear_number
 SdaiApplication_protocol_definition::application_protocol_year_() const
 {
     return (const SdaiYear_number) _application_protocol_year;
@@ -34101,7 +34101,7 @@ SdaiApplication_protocol_definition::application_protocol_year_ (const SdaiYear_
     _application_protocol_year = x;
 }
 
-const SdaiApplication_context_ptr
+SdaiApplication_context_ptr
 SdaiApplication_protocol_definition::application_() const
 {
     return (SdaiApplication_context_ptr) _application;
@@ -34258,7 +34258,7 @@ SdaiSpecified_higher_usage_occurrence::SdaiSpecified_higher_usage_occurrence (SC
         se->attributes.push (a);
 }
 
-const SdaiAssembly_component_usage_ptr
+SdaiAssembly_component_usage_ptr
 SdaiSpecified_higher_usage_occurrence::upper_usage_() const
 {
     return (SdaiAssembly_component_usage_ptr) _upper_usage;
@@ -34271,7 +34271,7 @@ SdaiSpecified_higher_usage_occurrence::upper_usage_ (const SdaiAssembly_componen
     _upper_usage = x;
 }
 
-const SdaiNext_assembly_usage_occurrence_ptr
+SdaiNext_assembly_usage_occurrence_ptr
 SdaiSpecified_higher_usage_occurrence::next_usage_() const
 {
     return (SdaiNext_assembly_usage_occurrence_ptr) _next_usage;
@@ -34552,7 +34552,7 @@ SdaiAction_request_solution::SdaiAction_request_solution( SCLP23(Application_ins
         se->attributes.push (a);
 }
 
-const SdaiAction_method_ptr
+SdaiAction_method_ptr
 SdaiAction_request_solution::method_() const
 {
     return (SdaiAction_method_ptr) _method;
@@ -34565,7 +34565,7 @@ SdaiAction_request_solution::method_ (const SdaiAction_method_ptr x)
     _method = x;
 }
 
-const SdaiVersioned_action_request_ptr
+SdaiVersioned_action_request_ptr
 SdaiAction_request_solution::request_() const
 {
     return (SdaiVersioned_action_request_ptr) _request;
@@ -34859,7 +34859,7 @@ SdaiEdge_based_wireframe_model::SdaiEdge_based_wireframe_model (SCLP23(Applicati
     MakeDerived ("dim");
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiEdge_based_wireframe_model::ebwm_boundary_() const
 {
     return (EntityAggregate_ptr) &_ebwm_boundary;
@@ -34983,7 +34983,7 @@ SdaiPath::SdaiPath (SCLP23(Application_instance) *se, int *addAttrs) : SdaiTopol
         se->attributes.push (a);
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiPath::edge_list_() const
 {
     return (EntityAggregate_ptr) &_edge_list;
@@ -35107,7 +35107,7 @@ SdaiConnected_face_set::SdaiConnected_face_set (SCLP23(Application_instance) *se
         se->attributes.push (a);
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiConnected_face_set::cfs_faces_() const
 {
     return (EntityAggregate_ptr) &_cfs_faces;
@@ -35349,7 +35349,7 @@ SdaiOriented_open_shell::SdaiOriented_open_shell (SCLP23(Application_instance) *
     MakeDerived ("cfs_faces");
 }
 
-const SdaiOpen_shell_ptr
+SdaiOpen_shell_ptr
 SdaiOriented_open_shell::open_shell_element_() const
 {
     return (SdaiOpen_shell_ptr) _open_shell_element;
@@ -35362,7 +35362,7 @@ SdaiOriented_open_shell::open_shell_element_ (const SdaiOpen_shell_ptr x)
     _open_shell_element = x;
 }
 
-const Boolean
+Boolean
 SdaiOriented_open_shell::orientation_() const
 {
     return (Boolean) _orientation;
@@ -35626,7 +35626,7 @@ SdaiCoordinated_universal_time_offset::SdaiCoordinated_universal_time_offset( SC
         se->attributes.push (a);
 }
 
-const SdaiHour_in_day
+SdaiHour_in_day
 SdaiCoordinated_universal_time_offset::hour_offset_() const
 {
     return (const SdaiHour_in_day) _hour_offset;
@@ -35639,7 +35639,7 @@ SdaiCoordinated_universal_time_offset::hour_offset_ (const SdaiHour_in_day x)
     _hour_offset = x;
 }
 
-const SdaiMinute_in_hour
+SdaiMinute_in_hour
 SdaiCoordinated_universal_time_offset::minute_offset_() const
 {
     return (const SdaiMinute_in_hour) _minute_offset;
@@ -35811,7 +35811,7 @@ SdaiCurve_replica::SdaiCurve_replica (SCLP23(Application_instance) *se, int *add
     MakeDerived ("dim");
 }
 
-const SdaiCurve_ptr
+SdaiCurve_ptr
 SdaiCurve_replica::parent_curve_() const
 {
     return (SdaiCurve_ptr) _parent_curve;
@@ -35824,7 +35824,7 @@ SdaiCurve_replica::parent_curve_ (const SdaiCurve_ptr x)
     _parent_curve = x;
 }
 
-const SdaiCartesian_transformation_operator_ptr
+SdaiCartesian_transformation_operator_ptr
 SdaiCurve_replica::transformation_() const
 {
     return (SdaiCartesian_transformation_operator_ptr) _transformation;
@@ -36107,7 +36107,7 @@ SdaiSurface_curve::SdaiSurface_curve (SCLP23(Application_instance) *se, int *add
     MakeDerived ("basis_surface");
 }
 
-const SdaiCurve_ptr
+SdaiCurve_ptr
 SdaiSurface_curve::curve_3d_() const
 {
     return (SdaiCurve_ptr) _curve_3d;
@@ -36120,7 +36120,7 @@ SdaiSurface_curve::curve_3d_ (const SdaiCurve_ptr x)
     _curve_3d = x;
 }
 
-const SdaiPcurve_or_surfaces_ptr
+SdaiPcurve_or_surfaces_ptr
 SdaiSurface_curve::associated_geometry_() const
 {
     return (SdaiPcurve_or_surfaces_ptr) &_associated_geometry;
@@ -36297,7 +36297,7 @@ SdaiAction_request_status::status_ (const SdaiLabel x)
     _status = x;
 }
 
-const SdaiVersioned_action_request_ptr
+SdaiVersioned_action_request_ptr
 SdaiAction_request_status::assigned_request_() const
 {
     return (SdaiVersioned_action_request_ptr) _assigned_request;
@@ -36573,7 +36573,7 @@ SdaiComposite_curve_segment::transition_ (const SdaiTransition_code_var x)
     _transition.put (x);
 }
 
-const Boolean
+Boolean
 SdaiComposite_curve_segment::same_sense_() const
 {
     return (Boolean) _same_sense;
@@ -36586,7 +36586,7 @@ SdaiComposite_curve_segment::same_sense_ (const Boolean x)
     _same_sense.put (x);
 }
 
-const SdaiCurve_ptr
+SdaiCurve_ptr
 SdaiComposite_curve_segment::parent_curve_() const
 {
     return (SdaiCurve_ptr) _parent_curve;
@@ -36599,7 +36599,7 @@ SdaiComposite_curve_segment::parent_curve_ (const SdaiCurve_ptr x)
     _parent_curve = x;
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiComposite_curve_segment::using_curves_() const
 {
     return (EntityAggregate_ptr) &_using_curves;
@@ -36723,7 +36723,7 @@ SdaiReparametrised_composite_curve_segment::SdaiReparametrised_composite_curve_s
         se->attributes.push (a);
 }
 
-const SdaiParameter_value
+SdaiParameter_value
 SdaiReparametrised_composite_curve_segment::param_length_() const
 {
     return (const SdaiParameter_value) _param_length;
@@ -36962,7 +36962,7 @@ SdaiRepresentation_relationship::description_ (const SdaiText x)
     _description = x;
 }
 
-const SdaiRepresentation_ptr
+SdaiRepresentation_ptr
 SdaiRepresentation_relationship::rep_1_() const
 {
     return (SdaiRepresentation_ptr) _rep_1;
@@ -36975,7 +36975,7 @@ SdaiRepresentation_relationship::rep_1_ (const SdaiRepresentation_ptr x)
     _rep_1 = x;
 }
 
-const SdaiRepresentation_ptr
+SdaiRepresentation_ptr
 SdaiRepresentation_relationship::rep_2_() const
 {
     return (SdaiRepresentation_ptr) _rep_2;
@@ -37099,7 +37099,7 @@ SdaiRepresentation_relationship_with_transformation::SdaiRepresentation_relation
         se->attributes.push (a);
 }
 
-const SdaiTransformation_ptr
+SdaiTransformation_ptr
 SdaiRepresentation_relationship_with_transformation::transformation_operator_() const
 	{ return (const SdaiTransformation_ptr) &_transformation_operator; }
 
@@ -37435,7 +37435,7 @@ SdaiSwept_surface::SdaiSwept_surface (SCLP23(Application_instance) *se, int *add
     MakeDerived ("dim");
 }
 
-const SdaiCurve_ptr
+SdaiCurve_ptr
 SdaiSwept_surface::swept_curve_() const
 {
     return (SdaiCurve_ptr) _swept_curve;
@@ -37641,7 +37641,7 @@ SdaiProperty_definition::description_ (const SdaiText x)
     _description = x;
 }
 
-const SdaiCharacterized_definition_ptr
+SdaiCharacterized_definition_ptr
 SdaiProperty_definition::definition_() const
 	{ return (const SdaiCharacterized_definition_ptr) &_definition; }
 
@@ -37761,7 +37761,7 @@ SdaiGlobal_uncertainty_assigned_context::SdaiGlobal_uncertainty_assigned_context
         se->attributes.push (a);
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiGlobal_uncertainty_assigned_context::uncertainty_() const
 {
     return (EntityAggregate_ptr) &_uncertainty;
@@ -37998,7 +37998,7 @@ SdaiOrganization_relationship::description_ (const SdaiText x)
     _description = x;
 }
 
-const SdaiOrganization_ptr
+SdaiOrganization_ptr
 SdaiOrganization_relationship::relating_organization_() const
 {
     return (SdaiOrganization_ptr) _relating_organization;
@@ -38011,7 +38011,7 @@ SdaiOrganization_relationship::relating_organization_ (const SdaiOrganization_pt
     _relating_organization = x;
 }
 
-const SdaiOrganization_ptr
+SdaiOrganization_ptr
 SdaiOrganization_relationship::related_organization_() const
 {
     return (SdaiOrganization_ptr) _related_organization;
@@ -38137,7 +38137,7 @@ SdaiParabola::SdaiParabola (SCLP23(Application_instance) *se, int *addAttrs) : S
     MakeDerived ("dim");
 }
 
-const SdaiLength_measure
+SdaiLength_measure
 SdaiParabola::focal_dist_() const
 {
     return (const SdaiLength_measure) _focal_dist;
@@ -38271,7 +38271,7 @@ SdaiRectangular_composite_surface::SdaiRectangular_composite_surface (SCLP23(App
     MakeDerived ("n_v");
 }
 
-const GenericAggregate_ptr
+GenericAggregate_ptr
 SdaiRectangular_composite_surface::segments_() const
 {
     return (GenericAggregate_ptr) &_segments;
@@ -38439,7 +38439,7 @@ SdaiLot_effectivity::effectivity_lot_id_ (const SdaiIdentifier x)
     _effectivity_lot_id = x;
 }
 
-const SdaiMeasure_with_unit_ptr
+SdaiMeasure_with_unit_ptr
 SdaiLot_effectivity::effectivity_lot_size_() const
 {
     return (SdaiMeasure_with_unit_ptr) _effectivity_lot_size;
@@ -38569,7 +38569,7 @@ SdaiSurface_of_linear_extrusion::SdaiSurface_of_linear_extrusion (SCLP23(Applica
     MakeDerived ("dim");
 }
 
-const SdaiVector_ptr
+SdaiVector_ptr
 SdaiSurface_of_linear_extrusion::extrusion_axis_() const
 {
     return (SdaiVector_ptr) _extrusion_axis;
@@ -38697,7 +38697,7 @@ SdaiShell_based_surface_model::SdaiShell_based_surface_model (SCLP23(Application
     MakeDerived ("dim");
 }
 
-const SdaiShells_ptr
+SdaiShells_ptr
 SdaiShell_based_surface_model::sbsm_boundary_() const
 {
     return (SdaiShells_ptr) &_sbsm_boundary;
@@ -39214,7 +39214,7 @@ SdaiDate::SdaiDate( SCLP23(Application_instance) *se, int *addAttrs)
         se->attributes.push (a);
 }
 
-const SdaiYear_number
+SdaiYear_number
 SdaiDate::year_component_() const
 {
     return (const SdaiYear_number) _year_component;
@@ -39367,7 +39367,7 @@ SdaiCalendar_date::SdaiCalendar_date (SCLP23(Application_instance) *se, int *add
         se->attributes.push (a);
 }
 
-const SdaiDay_in_month_number
+SdaiDay_in_month_number
 SdaiCalendar_date::day_component_() const
 {
     return (const SdaiDay_in_month_number) _day_component;
@@ -39380,7 +39380,7 @@ SdaiCalendar_date::day_component_ (const SdaiDay_in_month_number x)
     _day_component = x;
 }
 
-const SdaiMonth_in_year_number
+SdaiMonth_in_year_number
 SdaiCalendar_date::month_component_() const
 {
     return (const SdaiMonth_in_year_number) _month_component;
@@ -39537,7 +39537,7 @@ SdaiToroidal_surface::SdaiToroidal_surface (SCLP23(Application_instance) *se, in
     MakeDerived ("dim");
 }
 
-const SdaiPositive_length_measure
+SdaiPositive_length_measure
 SdaiToroidal_surface::major_radius_() const
 {
     return (const SdaiPositive_length_measure) _major_radius;
@@ -39550,7 +39550,7 @@ SdaiToroidal_surface::major_radius_ (const SdaiPositive_length_measure x)
     _major_radius = x;
 }
 
-const SdaiPositive_length_measure
+SdaiPositive_length_measure
 SdaiToroidal_surface::minor_radius_() const
 {
     return (const SdaiPositive_length_measure) _minor_radius;
@@ -39758,7 +39758,7 @@ SdaiApproval_assignment::SdaiApproval_assignment( SCLP23(Application_instance) *
         se->attributes.push (a);
 }
 
-const SdaiApproval_ptr
+SdaiApproval_ptr
 SdaiApproval_assignment::assigned_approval_() const
 {
     return (SdaiApproval_ptr) _assigned_approval;
@@ -40035,7 +40035,7 @@ SdaiConfiguration_item::description_ (const SdaiText x)
     _description = x;
 }
 
-const SdaiProduct_concept_ptr
+SdaiProduct_concept_ptr
 SdaiConfiguration_item::item_concept_() const
 {
     return (SdaiProduct_concept_ptr) _item_concept;
@@ -40170,7 +40170,7 @@ SdaiContract_assignment::SdaiContract_assignment( SCLP23(Application_instance) *
         se->attributes.push (a);
 }
 
-const SdaiContract_ptr
+SdaiContract_ptr
 SdaiContract_assignment::assigned_contract_() const
 {
     return (SdaiContract_ptr) _assigned_contract;
@@ -40327,7 +40327,7 @@ SdaiVector::SdaiVector (SCLP23(Application_instance) *se, int *addAttrs) : SdaiG
     MakeDerived ("dim");
 }
 
-const SdaiDirection_ptr
+SdaiDirection_ptr
 SdaiVector::orientation_() const
 {
     return (SdaiDirection_ptr) _orientation;
@@ -40340,7 +40340,7 @@ SdaiVector::orientation_ (const SdaiDirection_ptr x)
     _orientation = x;
 }
 
-const SdaiLength_measure
+SdaiLength_measure
 SdaiVector::magnitude_() const
 {
     return (const SdaiLength_measure) _magnitude;
@@ -40501,7 +40501,7 @@ SdaiPcurve::SdaiPcurve (SCLP23(Application_instance) *se, int *addAttrs) : SdaiC
     MakeDerived ("dim");
 }
 
-const SdaiSurface_ptr
+SdaiSurface_ptr
 SdaiPcurve::basis_surface_() const
 {
     return (SdaiSurface_ptr) _basis_surface;
@@ -40514,7 +40514,7 @@ SdaiPcurve::basis_surface_ (const SdaiSurface_ptr x)
     _basis_surface = x;
 }
 
-const SdaiDefinitional_representation_ptr
+SdaiDefinitional_representation_ptr
 SdaiPcurve::reference_to_curve_() const
 {
     return (SdaiDefinitional_representation_ptr) _reference_to_curve;
@@ -40971,7 +40971,7 @@ SdaiTrimmed_curve::SdaiTrimmed_curve (SCLP23(Application_instance) *se, int *add
     MakeDerived ("dim");
 }
 
-const SdaiCurve_ptr
+SdaiCurve_ptr
 SdaiTrimmed_curve::basis_curve_() const
 {
     return (SdaiCurve_ptr) _basis_curve;
@@ -40984,7 +40984,7 @@ SdaiTrimmed_curve::basis_curve_ (const SdaiCurve_ptr x)
     _basis_curve = x;
 }
 
-const SdaiTrimming_selects_ptr
+SdaiTrimming_selects_ptr
 SdaiTrimmed_curve::trim_1_() const
 {
     return (SdaiTrimming_selects_ptr) &_trim_1;
@@ -40995,7 +40995,7 @@ SdaiTrimmed_curve::trim_1_ (const SdaiTrimming_selects_ptr x)
 
 	{ _trim_1.ShallowCopy (*x); }
 
-const SdaiTrimming_selects_ptr
+SdaiTrimming_selects_ptr
 SdaiTrimmed_curve::trim_2_() const
 {
     return (SdaiTrimming_selects_ptr) &_trim_2;
@@ -41006,7 +41006,7 @@ SdaiTrimmed_curve::trim_2_ (const SdaiTrimming_selects_ptr x)
 
 	{ _trim_2.ShallowCopy (*x); }
 
-const Boolean
+Boolean
 SdaiTrimmed_curve::sense_agreement_() const
 {
     return (Boolean) _sense_agreement;
@@ -41509,7 +41509,7 @@ SdaiItem_defined_transformation::description_ (const SdaiText x)
     _description = x;
 }
 
-const SdaiRepresentation_item_ptr
+SdaiRepresentation_item_ptr
 SdaiItem_defined_transformation::transform_item_1_() const
 {
     return (SdaiRepresentation_item_ptr) _transform_item_1;
@@ -41522,7 +41522,7 @@ SdaiItem_defined_transformation::transform_item_1_ (const SdaiRepresentation_ite
     _transform_item_1 = x;
 }
 
-const SdaiRepresentation_item_ptr
+SdaiRepresentation_item_ptr
 SdaiItem_defined_transformation::transform_item_2_() const
 {
     return (SdaiRepresentation_item_ptr) _transform_item_2;
@@ -42005,7 +42005,7 @@ SdaiProduct_category_relationship::description_ (const SdaiText x)
     _description = x;
 }
 
-const SdaiProduct_category_ptr
+SdaiProduct_category_ptr
 SdaiProduct_category_relationship::category_() const
 {
     return (SdaiProduct_category_ptr) _category;
@@ -42018,7 +42018,7 @@ SdaiProduct_category_relationship::category_ (const SdaiProduct_category_ptr x)
     _category = x;
 }
 
-const SdaiProduct_category_ptr
+SdaiProduct_category_ptr
 SdaiProduct_category_relationship::sub_category_() const
 {
     return (SdaiProduct_category_ptr) _sub_category;
@@ -42342,7 +42342,7 @@ SdaiRepresentation_map::SdaiRepresentation_map( SCLP23(Application_instance) *se
         se->attributes.push (a);
 }
 
-const SdaiRepresentation_item_ptr
+SdaiRepresentation_item_ptr
 SdaiRepresentation_map::mapping_origin_() const
 {
     return (SdaiRepresentation_item_ptr) _mapping_origin;
@@ -42355,7 +42355,7 @@ SdaiRepresentation_map::mapping_origin_ (const SdaiRepresentation_item_ptr x)
     _mapping_origin = x;
 }
 
-const SdaiRepresentation_ptr
+SdaiRepresentation_ptr
 SdaiRepresentation_map::mapped_representation_() const
 {
     return (SdaiRepresentation_ptr) _mapped_representation;
@@ -42368,7 +42368,7 @@ SdaiRepresentation_map::mapped_representation_ (const SdaiRepresentation_ptr x)
     _mapped_representation = x;
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiRepresentation_map::map_usage_() const
 {
     return (EntityAggregate_ptr) &_map_usage;
@@ -42492,7 +42492,7 @@ SdaiProduct_definition_effectivity::SdaiProduct_definition_effectivity (SCLP23(A
         se->attributes.push (a);
 }
 
-const SdaiProduct_definition_relationship_ptr
+SdaiProduct_definition_relationship_ptr
 SdaiProduct_definition_effectivity::usage_() const
 {
     return (SdaiProduct_definition_relationship_ptr) _usage;
@@ -42620,7 +42620,7 @@ SdaiConfiguration_effectivity::SdaiConfiguration_effectivity (SCLP23(Application
         se->attributes.push (a);
 }
 
-const SdaiConfiguration_design_ptr
+SdaiConfiguration_design_ptr
 SdaiConfiguration_effectivity::configuration_() const
 {
     return (SdaiConfiguration_design_ptr) _configuration;
@@ -42777,7 +42777,7 @@ SdaiEllipse::SdaiEllipse (SCLP23(Application_instance) *se, int *addAttrs) : Sda
     MakeDerived ("dim");
 }
 
-const SdaiPositive_length_measure
+SdaiPositive_length_measure
 SdaiEllipse::semi_axis_1_() const
 {
     return (const SdaiPositive_length_measure) _semi_axis_1;
@@ -42790,7 +42790,7 @@ SdaiEllipse::semi_axis_1_ (const SdaiPositive_length_measure x)
     _semi_axis_1 = x;
 }
 
-const SdaiPositive_length_measure
+SdaiPositive_length_measure
 SdaiEllipse::semi_axis_2_() const
 {
     return (const SdaiPositive_length_measure) _semi_axis_2;
@@ -43184,7 +43184,7 @@ SdaiAlternate_product_relationship::definition_ (const SdaiText x)
     _definition = x;
 }
 
-const SdaiProduct_ptr
+SdaiProduct_ptr
 SdaiAlternate_product_relationship::alternate_() const
 {
     return (SdaiProduct_ptr) _alternate;
@@ -43197,7 +43197,7 @@ SdaiAlternate_product_relationship::alternate_ (const SdaiProduct_ptr x)
     _alternate = x;
 }
 
-const SdaiProduct_ptr
+SdaiProduct_ptr
 SdaiAlternate_product_relationship::base_() const
 {
     return (SdaiProduct_ptr) _base;
@@ -43481,7 +43481,7 @@ SdaiDocument_reference::SdaiDocument_reference( SCLP23(Application_instance) *se
         se->attributes.push (a);
 }
 
-const SdaiDocument_ptr
+SdaiDocument_ptr
 SdaiDocument_reference::assigned_document_() const
 {
     return (SdaiDocument_ptr) _assigned_document;
@@ -43704,7 +43704,7 @@ SdaiShell_based_wireframe_model::SdaiShell_based_wireframe_model (SCLP23(Applica
     MakeDerived ("dim");
 }
 
-const SdaiShells_ptr
+SdaiShells_ptr
 SdaiShell_based_wireframe_model::sbwm_boundary_() const
 {
     return (SdaiShells_ptr) &_sbwm_boundary;
@@ -43910,7 +43910,7 @@ SdaiContract::purpose_ (const SdaiText x)
     _purpose = x;
 }
 
-const SdaiContract_type_ptr
+SdaiContract_type_ptr
 SdaiContract::kind_() const
 {
     return (SdaiContract_type_ptr) _kind;
@@ -44204,7 +44204,7 @@ SdaiDimensional_exponents::SdaiDimensional_exponents( SCLP23(Application_instanc
         se->attributes.push (a);
 }
 
-const SCLP23(Real)
+SCLP23(Real)
 SdaiDimensional_exponents::length_exponent_() const
 {
     return (const SCLP23(Real)) _length_exponent;
@@ -44217,7 +44217,7 @@ SdaiDimensional_exponents::length_exponent_ (const SCLP23(Real) x)
     _length_exponent = x;
 }
 
-const SCLP23(Real)
+SCLP23(Real)
 SdaiDimensional_exponents::mass_exponent_() const
 {
     return (const SCLP23(Real)) _mass_exponent;
@@ -44230,7 +44230,7 @@ SdaiDimensional_exponents::mass_exponent_ (const SCLP23(Real) x)
     _mass_exponent = x;
 }
 
-const SCLP23(Real)
+SCLP23(Real)
 SdaiDimensional_exponents::time_exponent_() const
 {
     return (const SCLP23(Real)) _time_exponent;
@@ -44243,7 +44243,7 @@ SdaiDimensional_exponents::time_exponent_ (const SCLP23(Real) x)
     _time_exponent = x;
 }
 
-const SCLP23(Real)
+SCLP23(Real)
 SdaiDimensional_exponents::electric_current_exponent_() const
 {
     return (const SCLP23(Real)) _electric_current_exponent;
@@ -44256,7 +44256,7 @@ SdaiDimensional_exponents::electric_current_exponent_ (const SCLP23(Real) x)
     _electric_current_exponent = x;
 }
 
-const SCLP23(Real)
+SCLP23(Real)
 SdaiDimensional_exponents::thermodynamic_temperature_exponent_() const
 {
     return (const SCLP23(Real)) _thermodynamic_temperature_exponent;
@@ -44269,7 +44269,7 @@ SdaiDimensional_exponents::thermodynamic_temperature_exponent_ (const SCLP23(Rea
     _thermodynamic_temperature_exponent = x;
 }
 
-const SCLP23(Real)
+SCLP23(Real)
 SdaiDimensional_exponents::amount_of_substance_exponent_() const
 {
     return (const SCLP23(Real)) _amount_of_substance_exponent;
@@ -44282,7 +44282,7 @@ SdaiDimensional_exponents::amount_of_substance_exponent_ (const SCLP23(Real) x)
     _amount_of_substance_exponent = x;
 }
 
-const SCLP23(Real)
+SCLP23(Real)
 SdaiDimensional_exponents::luminous_intensity_exponent_() const
 {
     return (const SCLP23(Real)) _luminous_intensity_exponent;
@@ -44406,7 +44406,7 @@ SdaiStart_request::SdaiStart_request (SCLP23(Application_instance) *se, int *add
         se->attributes.push (a);
 }
 
-const SdaiStart_request_items_ptr
+SdaiStart_request_items_ptr
 SdaiStart_request::items_() const
 {
     return (SdaiStart_request_items_ptr) &_items;
@@ -44530,7 +44530,7 @@ SdaiCc_design_specification_reference::SdaiCc_design_specification_reference (SC
         se->attributes.push (a);
 }
 
-const SdaiSpecified_items_ptr
+SdaiSpecified_items_ptr
 SdaiCc_design_specification_reference::items_() const
 {
     return (SdaiSpecified_items_ptr) &_items;
@@ -44767,7 +44767,7 @@ SdaiContext_dependent_shape_representation::SdaiContext_dependent_shape_represen
         se->attributes.push (a);
 }
 
-const SdaiShape_representation_relationship_ptr
+SdaiShape_representation_relationship_ptr
 SdaiContext_dependent_shape_representation::representation_relation_() const
 {
     return (SdaiShape_representation_relationship_ptr) _representation_relation;
@@ -44780,7 +44780,7 @@ SdaiContext_dependent_shape_representation::representation_relation_ (const Sdai
     _representation_relation = x;
 }
 
-const SdaiProduct_definition_shape_ptr
+SdaiProduct_definition_shape_ptr
 SdaiContext_dependent_shape_representation::represented_product_relation_() const
 {
     return (SdaiProduct_definition_shape_ptr) _represented_product_relation;
@@ -44906,7 +44906,7 @@ SdaiDegenerate_toroidal_surface::SdaiDegenerate_toroidal_surface (SCLP23(Applica
     MakeDerived ("dim");
 }
 
-const Boolean
+Boolean
 SdaiDegenerate_toroidal_surface::select_outer_() const
 {
     return (Boolean) _select_outer;
@@ -45032,7 +45032,7 @@ SdaiOrdinal_date::SdaiOrdinal_date (SCLP23(Application_instance) *se, int *addAt
         se->attributes.push (a);
 }
 
-const SdaiDay_in_year_number
+SdaiDay_in_year_number
 SdaiOrdinal_date::day_component_() const
 {
     return (const SdaiDay_in_year_number) _day_component;
@@ -45328,7 +45328,7 @@ SdaiBrep_with_voids::SdaiBrep_with_voids (SCLP23(Application_instance) *se, int 
     MakeDerived ("dim");
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiBrep_with_voids::voids_() const
 {
     return (EntityAggregate_ptr) &_voids;
@@ -45481,7 +45481,7 @@ SdaiWeek_of_year_and_day_date::SdaiWeek_of_year_and_day_date (SCLP23(Application
         se->attributes.push (a);
 }
 
-const SdaiWeek_in_year_number
+SdaiWeek_in_year_number
 SdaiWeek_of_year_and_day_date::week_component_() const
 {
     return (const SdaiWeek_in_year_number) _week_component;
@@ -45494,7 +45494,7 @@ SdaiWeek_of_year_and_day_date::week_component_ (const SdaiWeek_in_year_number x)
     _week_component = x;
 }
 
-const SdaiDay_in_week_number
+SdaiDay_in_week_number
 SdaiWeek_of_year_and_day_date::day_component_() const
 {
     return (const SdaiDay_in_week_number) _day_component;
@@ -45653,7 +45653,7 @@ SdaiPoint_on_curve::SdaiPoint_on_curve (SCLP23(Application_instance) *se, int *a
     MakeDerived ("dim");
 }
 
-const SdaiCurve_ptr
+SdaiCurve_ptr
 SdaiPoint_on_curve::basis_curve_() const
 {
     return (SdaiCurve_ptr) _basis_curve;
@@ -45666,7 +45666,7 @@ SdaiPoint_on_curve::basis_curve_ (const SdaiCurve_ptr x)
     _basis_curve = x;
 }
 
-const SdaiParameter_value
+SdaiParameter_value
 SdaiPoint_on_curve::point_parameter_() const
 {
     return (const SdaiParameter_value) _point_parameter;
@@ -45876,7 +45876,7 @@ SdaiFace::SdaiFace (SCLP23(Application_instance) *se, int *addAttrs) : SdaiTopol
         se->attributes.push (a);
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiFace::bounds_() const
 {
     return (EntityAggregate_ptr) &_bounds;
@@ -46071,7 +46071,7 @@ SdaiFace_surface::SdaiFace_surface (SCLP23(Application_instance) *se, int *addAt
     MakeDerived ("dim");
 }
 
-const SdaiSurface_ptr
+SdaiSurface_ptr
 SdaiFace_surface::face_geometry_() const
 {
     return (SdaiSurface_ptr) _face_geometry;
@@ -46084,7 +46084,7 @@ SdaiFace_surface::face_geometry_ (const SdaiSurface_ptr x)
     _face_geometry = x;
 }
 
-const Boolean
+Boolean
 SdaiFace_surface::same_sense_() const
 {
     return (Boolean) _same_sense;
@@ -46248,7 +46248,7 @@ SdaiOriented_face::SdaiOriented_face (SCLP23(Application_instance) *se, int *add
     MakeDerived ("bounds");
 }
 
-const SdaiFace_ptr
+SdaiFace_ptr
 SdaiOriented_face::face_element_() const
 {
     return (SdaiFace_ptr) _face_element;
@@ -46261,7 +46261,7 @@ SdaiOriented_face::face_element_ (const SdaiFace_ptr x)
     _face_element = x;
 }
 
-const Boolean
+Boolean
 SdaiOriented_face::orientation_() const
 {
     return (Boolean) _orientation;
@@ -46394,7 +46394,7 @@ SdaiSurface_of_revolution::SdaiSurface_of_revolution (SCLP23(Application_instanc
     MakeDerived ("axis_line");
 }
 
-const SdaiAxis1_placement_ptr
+SdaiAxis1_placement_ptr
 SdaiSurface_of_revolution::axis_position_() const
 {
     return (SdaiAxis1_placement_ptr) _axis_position;
@@ -46669,7 +46669,7 @@ SdaiEdge_curve::SdaiEdge_curve (SCLP23(Application_instance) *se, int *addAttrs)
     MakeDerived ("dim");
 }
 
-const SdaiCurve_ptr
+SdaiCurve_ptr
 SdaiEdge_curve::edge_geometry_() const
 {
     return (SdaiCurve_ptr) _edge_geometry;
@@ -46682,7 +46682,7 @@ SdaiEdge_curve::edge_geometry_ (const SdaiCurve_ptr x)
     _edge_geometry = x;
 }
 
-const Boolean
+Boolean
 SdaiEdge_curve::same_sense_() const
 {
     return (Boolean) _same_sense;
@@ -46847,7 +46847,7 @@ SdaiPoint_replica::SdaiPoint_replica (SCLP23(Application_instance) *se, int *add
     MakeDerived ("dim");
 }
 
-const SdaiPoint_ptr
+SdaiPoint_ptr
 SdaiPoint_replica::parent_pt_() const
 {
     return (SdaiPoint_ptr) _parent_pt;
@@ -46860,7 +46860,7 @@ SdaiPoint_replica::parent_pt_ (const SdaiPoint_ptr x)
     _parent_pt = x;
 }
 
-const SdaiCartesian_transformation_operator_ptr
+SdaiCartesian_transformation_operator_ptr
 SdaiPoint_replica::transformation_() const
 {
     return (SdaiCartesian_transformation_operator_ptr) _transformation;
@@ -47108,7 +47108,7 @@ SdaiProduct::description_ (const SdaiText x)
     _description = x;
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiProduct::frame_of_reference_() const
 {
     return (EntityAggregate_ptr) &_frame_of_reference;
@@ -47343,7 +47343,7 @@ SdaiShape_aspect_relationship::description_ (const SdaiText x)
     _description = x;
 }
 
-const SdaiShape_aspect_ptr
+SdaiShape_aspect_ptr
 SdaiShape_aspect_relationship::relating_shape_aspect_() const
 {
     return (SdaiShape_aspect_ptr) _relating_shape_aspect;
@@ -47356,7 +47356,7 @@ SdaiShape_aspect_relationship::relating_shape_aspect_ (const SdaiShape_aspect_pt
     _relating_shape_aspect = x;
 }
 
-const SdaiShape_aspect_ptr
+SdaiShape_aspect_ptr
 SdaiShape_aspect_relationship::related_shape_aspect_() const
 {
     return (SdaiShape_aspect_ptr) _related_shape_aspect;
@@ -47658,7 +47658,7 @@ SdaiRectangular_trimmed_surface::SdaiRectangular_trimmed_surface (SCLP23(Applica
     MakeDerived ("dim");
 }
 
-const SdaiSurface_ptr
+SdaiSurface_ptr
 SdaiRectangular_trimmed_surface::basis_surface_() const
 {
     return (SdaiSurface_ptr) _basis_surface;
@@ -47671,7 +47671,7 @@ SdaiRectangular_trimmed_surface::basis_surface_ (const SdaiSurface_ptr x)
     _basis_surface = x;
 }
 
-const SdaiParameter_value
+SdaiParameter_value
 SdaiRectangular_trimmed_surface::u1_() const
 {
     return (const SdaiParameter_value) _u1;
@@ -47684,7 +47684,7 @@ SdaiRectangular_trimmed_surface::u1_ (const SdaiParameter_value x)
     _u1 = x;
 }
 
-const SdaiParameter_value
+SdaiParameter_value
 SdaiRectangular_trimmed_surface::u2_() const
 {
     return (const SdaiParameter_value) _u2;
@@ -47697,7 +47697,7 @@ SdaiRectangular_trimmed_surface::u2_ (const SdaiParameter_value x)
     _u2 = x;
 }
 
-const SdaiParameter_value
+SdaiParameter_value
 SdaiRectangular_trimmed_surface::v1_() const
 {
     return (const SdaiParameter_value) _v1;
@@ -47710,7 +47710,7 @@ SdaiRectangular_trimmed_surface::v1_ (const SdaiParameter_value x)
     _v1 = x;
 }
 
-const SdaiParameter_value
+SdaiParameter_value
 SdaiRectangular_trimmed_surface::v2_() const
 {
     return (const SdaiParameter_value) _v2;
@@ -47723,7 +47723,7 @@ SdaiRectangular_trimmed_surface::v2_ (const SdaiParameter_value x)
     _v2 = x;
 }
 
-const Boolean
+Boolean
 SdaiRectangular_trimmed_surface::usense_() const
 {
     return (Boolean) _usense;
@@ -47736,7 +47736,7 @@ SdaiRectangular_trimmed_surface::usense_ (const Boolean x)
     _usense.put (x);
 }
 
-const Boolean
+Boolean
 SdaiRectangular_trimmed_surface::vsense_() const
 {
     return (Boolean) _vsense;
@@ -47946,7 +47946,7 @@ SdaiAction_assignment::SdaiAction_assignment( SCLP23(Application_instance) *se, 
         se->attributes.push (a);
 }
 
-const SdaiAction_ptr
+SdaiAction_ptr
 SdaiAction_assignment::assigned_action_() const
 {
     return (SdaiAction_ptr) _assigned_action;
@@ -48070,7 +48070,7 @@ SdaiChange::SdaiChange (SCLP23(Application_instance) *se, int *addAttrs) : SdaiA
         se->attributes.push (a);
 }
 
-const SdaiWork_items_ptr
+SdaiWork_items_ptr
 SdaiChange::items_() const
 {
     return (SdaiWork_items_ptr) &_items;
@@ -48196,7 +48196,7 @@ SdaiCircle::SdaiCircle (SCLP23(Application_instance) *se, int *addAttrs) : SdaiC
     MakeDerived ("dim");
 }
 
-const SdaiPositive_length_measure
+SdaiPositive_length_measure
 SdaiCircle::radius_() const
 {
     return (const SdaiPositive_length_measure) _radius;
@@ -48357,7 +48357,7 @@ SdaiLine::SdaiLine (SCLP23(Application_instance) *se, int *addAttrs) : SdaiCurve
     MakeDerived ("dim");
 }
 
-const SdaiCartesian_point_ptr
+SdaiCartesian_point_ptr
 SdaiLine::pnt_() const
 {
     return (SdaiCartesian_point_ptr) _pnt;
@@ -48370,7 +48370,7 @@ SdaiLine::pnt_ (const SdaiCartesian_point_ptr x)
     _pnt = x;
 }
 
-const SdaiVector_ptr
+SdaiVector_ptr
 SdaiLine::dir_() const
 {
     return (SdaiVector_ptr) _dir;
@@ -48525,7 +48525,7 @@ SdaiProperty_definition_representation::SdaiProperty_definition_representation( 
         se->attributes.push (a);
 }
 
-const SdaiProperty_definition_ptr
+SdaiProperty_definition_ptr
 SdaiProperty_definition_representation::definition_() const
 {
     return (SdaiProperty_definition_ptr) _definition;
@@ -48538,7 +48538,7 @@ SdaiProperty_definition_representation::definition_ (const SdaiProperty_definiti
     _definition = x;
 }
 
-const SdaiRepresentation_ptr
+SdaiRepresentation_ptr
 SdaiProperty_definition_representation::used_representation_() const
 {
     return (SdaiRepresentation_ptr) _used_representation;
@@ -48664,7 +48664,7 @@ SdaiGeometric_set::SdaiGeometric_set (SCLP23(Application_instance) *se, int *add
     MakeDerived ("dim");
 }
 
-const SdaiGeometric_set_selects_ptr
+SdaiGeometric_set_selects_ptr
 SdaiGeometric_set::elements_() const
 {
     return (SdaiGeometric_set_selects_ptr) &_elements;
@@ -48903,7 +48903,7 @@ SdaiPersonal_address::SdaiPersonal_address (SCLP23(Application_instance) *se, in
         se->attributes.push (a);
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiPersonal_address::people_() const
 {
     return (EntityAggregate_ptr) &_people;
@@ -49153,7 +49153,7 @@ SdaiDocument_relationship::description_ (const SdaiText x)
     _description = x;
 }
 
-const SdaiDocument_ptr
+SdaiDocument_ptr
 SdaiDocument_relationship::relating_document_() const
 {
     return (SdaiDocument_ptr) _relating_document;
@@ -49166,7 +49166,7 @@ SdaiDocument_relationship::relating_document_ (const SdaiDocument_ptr x)
     _relating_document = x;
 }
 
-const SdaiDocument_ptr
+SdaiDocument_ptr
 SdaiDocument_relationship::related_document_() const
 {
     return (SdaiDocument_ptr) _related_document;
@@ -49579,7 +49579,7 @@ SdaiAssembly_component_usage_substitute::definition_ (const SdaiText x)
     _definition = x;
 }
 
-const SdaiAssembly_component_usage_ptr
+SdaiAssembly_component_usage_ptr
 SdaiAssembly_component_usage_substitute::base_() const
 {
     return (SdaiAssembly_component_usage_ptr) _base;
@@ -49592,7 +49592,7 @@ SdaiAssembly_component_usage_substitute::base_ (const SdaiAssembly_component_usa
     _base = x;
 }
 
-const SdaiAssembly_component_usage_ptr
+SdaiAssembly_component_usage_ptr
 SdaiAssembly_component_usage_substitute::substitute_() const
 {
     return (SdaiAssembly_component_usage_ptr) _substitute;
@@ -49751,7 +49751,7 @@ SdaiDegenerate_pcurve::SdaiDegenerate_pcurve (SCLP23(Application_instance) *se, 
     MakeDerived ("dim");
 }
 
-const SdaiSurface_ptr
+SdaiSurface_ptr
 SdaiDegenerate_pcurve::basis_surface_() const
 {
     return (SdaiSurface_ptr) _basis_surface;
@@ -49764,7 +49764,7 @@ SdaiDegenerate_pcurve::basis_surface_ (const SdaiSurface_ptr x)
     _basis_surface = x;
 }
 
-const SdaiDefinitional_representation_ptr
+SdaiDefinitional_representation_ptr
 SdaiDegenerate_pcurve::reference_to_curve_() const
 {
     return (SdaiDefinitional_representation_ptr) _reference_to_curve;
@@ -49894,7 +49894,7 @@ SdaiEvaluated_degenerate_pcurve::SdaiEvaluated_degenerate_pcurve (SCLP23(Applica
     MakeDerived ("dim");
 }
 
-const SdaiCartesian_point_ptr
+SdaiCartesian_point_ptr
 SdaiEvaluated_degenerate_pcurve::equivalent_point_() const
 {
     return (SdaiCartesian_point_ptr) _equivalent_point;
@@ -50104,7 +50104,7 @@ SdaiConnected_edge_set::SdaiConnected_edge_set (SCLP23(Application_instance) *se
         se->attributes.push (a);
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiConnected_edge_set::ces_edges_() const
 {
     return (EntityAggregate_ptr) &_ces_edges;
@@ -50310,7 +50310,7 @@ SdaiAction::description_ (const SdaiText x)
     _description = x;
 }
 
-const SdaiAction_method_ptr
+SdaiAction_method_ptr
 SdaiAction::chosen_method_() const
 {
     return (SdaiAction_method_ptr) _chosen_method;
@@ -50520,7 +50520,7 @@ SdaiDirected_action::SdaiDirected_action (SCLP23(Application_instance) *se, int 
         se->attributes.push (a);
 }
 
-const SdaiAction_directive_ptr
+SdaiAction_directive_ptr
 SdaiDirected_action::directive_() const
 {
     return (SdaiAction_directive_ptr) _directive;
@@ -50726,7 +50726,7 @@ SdaiOrganizational_project::description_ (const SdaiText x)
     _description = x;
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiOrganizational_project::responsible_organizations_() const
 {
     return (EntityAggregate_ptr) &_responsible_organizations;
@@ -51030,7 +51030,7 @@ SdaiCurve_bounded_surface::SdaiCurve_bounded_surface (SCLP23(Application_instanc
     MakeDerived ("dim");
 }
 
-const SdaiSurface_ptr
+SdaiSurface_ptr
 SdaiCurve_bounded_surface::basis_surface_() const
 {
     return (SdaiSurface_ptr) _basis_surface;
@@ -51043,7 +51043,7 @@ SdaiCurve_bounded_surface::basis_surface_ (const SdaiSurface_ptr x)
     _basis_surface = x;
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiCurve_bounded_surface::boundaries_() const
 {
     return (EntityAggregate_ptr) &_boundaries;
@@ -51054,7 +51054,7 @@ SdaiCurve_bounded_surface::boundaries_ (const EntityAggregate_ptr x)
 
 	{ _boundaries.ShallowCopy (*x); }
 
-const Boolean
+Boolean
 SdaiCurve_bounded_surface::implicit_outer_() const
 {
     return (Boolean) _implicit_outer;
@@ -51777,7 +51777,7 @@ SdaiCertification_assignment::SdaiCertification_assignment( SCLP23(Application_i
         se->attributes.push (a);
 }
 
-const SdaiCertification_ptr
+SdaiCertification_ptr
 SdaiCertification_assignment::assigned_certification_() const
 {
     return (SdaiCertification_ptr) _assigned_certification;
@@ -51901,7 +51901,7 @@ SdaiStart_work::SdaiStart_work (SCLP23(Application_instance) *se, int *addAttrs)
         se->attributes.push (a);
 }
 
-const SdaiWork_items_ptr
+SdaiWork_items_ptr
 SdaiStart_work::items_() const
 {
     return (SdaiWork_items_ptr) &_items;
@@ -52212,7 +52212,7 @@ SdaiB_spline_curve_with_knots::SdaiB_spline_curve_with_knots (SCLP23(Application
     MakeDerived ("upper_index_on_knots");
 }
 
-const IntAggregate_ptr
+IntAggregate_ptr
 SdaiB_spline_curve_with_knots::knot_multiplicities_() const
 {
     return (IntAggregate_ptr) &_knot_multiplicities;
@@ -52223,7 +52223,7 @@ SdaiB_spline_curve_with_knots::knot_multiplicities_ (const IntAggregate_ptr x)
 
 	{ _knot_multiplicities.ShallowCopy (*x); }
 
-const RealAggregate_ptr
+RealAggregate_ptr
 SdaiB_spline_curve_with_knots::knots_() const
 {
     return (RealAggregate_ptr) &_knots;
@@ -52360,7 +52360,7 @@ SdaiCc_design_approval::SdaiCc_design_approval (SCLP23(Application_instance) *se
         se->attributes.push (a);
 }
 
-const SdaiApproved_items_ptr
+SdaiApproved_items_ptr
 SdaiCc_design_approval::items_() const
 {
     return (SdaiApproved_items_ptr) &_items;
@@ -52776,7 +52776,7 @@ SdaiProduct_concept::description_ (const SdaiText x)
     _description = x;
 }
 
-const SdaiProduct_concept_context_ptr
+SdaiProduct_concept_context_ptr
 SdaiProduct_concept::market_context_() const
 {
     return (SdaiProduct_concept_context_ptr) _market_context;
@@ -52900,7 +52900,7 @@ SdaiCc_design_contract::SdaiCc_design_contract (SCLP23(Application_instance) *se
         se->attributes.push (a);
 }
 
-const SdaiContracted_items_ptr
+SdaiContracted_items_ptr
 SdaiCc_design_contract::items_() const
 {
     return (SdaiContracted_items_ptr) &_items;
@@ -53150,7 +53150,7 @@ SdaiAxis2_placement_3d::SdaiAxis2_placement_3d (SCLP23(Application_instance) *se
     MakeDerived ("p");
 }
 
-const SdaiDirection_ptr
+SdaiDirection_ptr
 SdaiAxis2_placement_3d::axis_() const
 {
     return (SdaiDirection_ptr) _axis;
@@ -53163,7 +53163,7 @@ SdaiAxis2_placement_3d::axis_ (const SdaiDirection_ptr x)
     _axis = x;
 }
 
-const SdaiDirection_ptr
+SdaiDirection_ptr
 SdaiAxis2_placement_3d::ref_direction_() const
 {
     return (SdaiDirection_ptr) _ref_direction;
@@ -53300,7 +53300,7 @@ SdaiRational_b_spline_surface::SdaiRational_b_spline_surface (SCLP23(Application
     MakeDerived ("weights");
 }
 
-const GenericAggregate_ptr
+GenericAggregate_ptr
 SdaiRational_b_spline_surface::weights_data_() const
 {
     return (GenericAggregate_ptr) &_weights_data;
@@ -53453,7 +53453,7 @@ SdaiConfiguration_design::SdaiConfiguration_design( SCLP23(Application_instance)
         se->attributes.push (a);
 }
 
-const SdaiConfiguration_item_ptr
+SdaiConfiguration_item_ptr
 SdaiConfiguration_design::configuration_() const
 {
     return (SdaiConfiguration_item_ptr) _configuration;
@@ -53466,7 +53466,7 @@ SdaiConfiguration_design::configuration_ (const SdaiConfiguration_item_ptr x)
     _configuration = x;
 }
 
-const SdaiProduct_definition_formation_ptr
+SdaiProduct_definition_formation_ptr
 SdaiConfiguration_design::design_() const
 {
     return (SdaiProduct_definition_formation_ptr) _design;
@@ -53787,7 +53787,7 @@ SdaiProduct_definition::description_ (const SdaiText x)
     _description = x;
 }
 
-const SdaiProduct_definition_formation_ptr
+SdaiProduct_definition_formation_ptr
 SdaiProduct_definition::formation_() const
 {
     return (SdaiProduct_definition_formation_ptr) _formation;
@@ -53800,7 +53800,7 @@ SdaiProduct_definition::formation_ (const SdaiProduct_definition_formation_ptr x
     _formation = x;
 }
 
-const SdaiProduct_definition_context_ptr
+SdaiProduct_definition_context_ptr
 SdaiProduct_definition::frame_of_reference_() const
 {
     return (SdaiProduct_definition_context_ptr) _frame_of_reference;
@@ -53924,7 +53924,7 @@ SdaiProduct_definition_with_associated_documents::SdaiProduct_definition_with_as
         se->attributes.push (a);
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiProduct_definition_with_associated_documents::documentation_ids_() const
 {
     return (EntityAggregate_ptr) &_documentation_ids;
@@ -54252,7 +54252,7 @@ SdaiCc_design_certification::SdaiCc_design_certification (SCLP23(Application_ins
         se->attributes.push (a);
 }
 
-const SdaiCertified_items_ptr
+SdaiCertified_items_ptr
 SdaiCc_design_certification::items_() const
 {
     return (SdaiCertified_items_ptr) &_items;
@@ -54506,7 +54506,7 @@ SdaiB_spline_surface_with_knots::SdaiB_spline_surface_with_knots (SCLP23(Applica
     MakeDerived ("knot_v_upper");
 }
 
-const IntAggregate_ptr
+IntAggregate_ptr
 SdaiB_spline_surface_with_knots::u_multiplicities_() const
 {
     return (IntAggregate_ptr) &_u_multiplicities;
@@ -54517,7 +54517,7 @@ SdaiB_spline_surface_with_knots::u_multiplicities_ (const IntAggregate_ptr x)
 
 	{ _u_multiplicities.ShallowCopy (*x); }
 
-const IntAggregate_ptr
+IntAggregate_ptr
 SdaiB_spline_surface_with_knots::v_multiplicities_() const
 {
     return (IntAggregate_ptr) &_v_multiplicities;
@@ -54528,7 +54528,7 @@ SdaiB_spline_surface_with_knots::v_multiplicities_ (const IntAggregate_ptr x)
 
 	{ _v_multiplicities.ShallowCopy (*x); }
 
-const RealAggregate_ptr
+RealAggregate_ptr
 SdaiB_spline_surface_with_knots::u_knots_() const
 {
     return (RealAggregate_ptr) &_u_knots;
@@ -54539,7 +54539,7 @@ SdaiB_spline_surface_with_knots::u_knots_ (const RealAggregate_ptr x)
 
 	{ _u_knots.ShallowCopy (*x); }
 
-const RealAggregate_ptr
+RealAggregate_ptr
 SdaiB_spline_surface_with_knots::v_knots_() const
 {
     return (RealAggregate_ptr) &_v_knots;
@@ -54830,7 +54830,7 @@ SdaiOriented_path::SdaiOriented_path (SCLP23(Application_instance) *se, int *add
     MakeDerived ("edge_list");
 }
 
-const SdaiPath_ptr
+SdaiPath_ptr
 SdaiOriented_path::path_element_() const
 {
     return (SdaiPath_ptr) _path_element;
@@ -54843,7 +54843,7 @@ SdaiOriented_path::path_element_ (const SdaiPath_ptr x)
     _path_element = x;
 }
 
-const Boolean
+Boolean
 SdaiOriented_path::orientation_() const
 {
     return (Boolean) _orientation;
@@ -55051,7 +55051,7 @@ SdaiSecurity_classification::purpose_ (const SdaiText x)
     _purpose = x;
 }
 
-const SdaiSecurity_classification_level_ptr
+SdaiSecurity_classification_level_ptr
 SdaiSecurity_classification::security_level_() const
 {
     return (SdaiSecurity_classification_level_ptr) _security_level;
@@ -55177,7 +55177,7 @@ SdaiVertex_loop::SdaiVertex_loop (SCLP23(Application_instance) *se, int *addAttr
         se->attributes.push (a);
 }
 
-const SdaiVertex_ptr
+SdaiVertex_ptr
 SdaiVertex_loop::loop_vertex_() const
 {
     return (SdaiVertex_ptr) _loop_vertex;
@@ -55425,7 +55425,7 @@ SdaiCartesian_point::SdaiCartesian_point (SCLP23(Application_instance) *se, int 
     MakeDerived ("dim");
 }
 
-const RealAggregate_ptr
+RealAggregate_ptr
 SdaiCartesian_point::coordinates_() const
 {
     return (RealAggregate_ptr) &_coordinates;
@@ -55578,7 +55578,7 @@ SdaiDate_and_time_assignment::SdaiDate_and_time_assignment( SCLP23(Application_i
         se->attributes.push (a);
 }
 
-const SdaiDate_and_time_ptr
+SdaiDate_and_time_ptr
 SdaiDate_and_time_assignment::assigned_date_and_time_() const
 {
     return (SdaiDate_and_time_ptr) _assigned_date_and_time;
@@ -55591,7 +55591,7 @@ SdaiDate_and_time_assignment::assigned_date_and_time_ (const SdaiDate_and_time_p
     _assigned_date_and_time = x;
 }
 
-const SdaiDate_time_role_ptr
+SdaiDate_time_role_ptr
 SdaiDate_and_time_assignment::role_() const
 {
     return (SdaiDate_time_role_ptr) _role;
@@ -56044,7 +56044,7 @@ SdaiSurface_patch::SdaiSurface_patch (SCLP23(Application_instance) *se, int *add
         se->attributes.push (a);
 }
 
-const SdaiBounded_surface_ptr
+SdaiBounded_surface_ptr
 SdaiSurface_patch::parent_surface_() const
 {
     return (SdaiBounded_surface_ptr) _parent_surface;
@@ -56083,7 +56083,7 @@ SdaiSurface_patch::v_transition_ (const SdaiTransition_code_var x)
     _v_transition.put (x);
 }
 
-const Boolean
+Boolean
 SdaiSurface_patch::u_sense_() const
 {
     return (Boolean) _u_sense;
@@ -56096,7 +56096,7 @@ SdaiSurface_patch::u_sense_ (const Boolean x)
     _u_sense.put (x);
 }
 
-const Boolean
+Boolean
 SdaiSurface_patch::v_sense_() const
 {
     return (Boolean) _v_sense;
@@ -56109,7 +56109,7 @@ SdaiSurface_patch::v_sense_ (const Boolean x)
     _v_sense.put (x);
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiSurface_patch::using_surfaces_() const
 {
     return (EntityAggregate_ptr) &_using_surfaces;
@@ -56428,7 +56428,7 @@ SdaiShape_aspect::description_ (const SdaiText x)
     _description = x;
 }
 
-const SdaiProduct_definition_shape_ptr
+SdaiProduct_definition_shape_ptr
 SdaiShape_aspect::of_shape_() const
 {
     return (SdaiProduct_definition_shape_ptr) _of_shape;
@@ -56441,7 +56441,7 @@ SdaiShape_aspect::of_shape_ (const SdaiProduct_definition_shape_ptr x)
     _of_shape = x;
 }
 
-const Logical
+Logical
 SdaiShape_aspect::product_definitional_() const
 {
     return (Logical) _product_definitional;
@@ -56970,7 +56970,7 @@ SdaiApproval_relationship::description_ (const SdaiText x)
     _description = x;
 }
 
-const SdaiApproval_ptr
+SdaiApproval_ptr
 SdaiApproval_relationship::relating_approval_() const
 {
     return (SdaiApproval_ptr) _relating_approval;
@@ -56983,7 +56983,7 @@ SdaiApproval_relationship::relating_approval_ (const SdaiApproval_ptr x)
     _relating_approval = x;
 }
 
-const SdaiApproval_ptr
+SdaiApproval_ptr
 SdaiApproval_relationship::related_approval_() const
 {
     return (SdaiApproval_ptr) _related_approval;
@@ -57109,7 +57109,7 @@ SdaiPolyline::SdaiPolyline (SCLP23(Application_instance) *se, int *addAttrs) : S
     MakeDerived ("dim");
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiPolyline::points_() const
 {
     return (EntityAggregate_ptr) &_points;
@@ -57291,7 +57291,7 @@ SdaiApproval_person_organization::SdaiApproval_person_organization( SCLP23(Appli
         se->attributes.push (a);
 }
 
-const SdaiPerson_organization_select_ptr
+SdaiPerson_organization_select_ptr
 SdaiApproval_person_organization::person_organization_() const
 	{ return (const SdaiPerson_organization_select_ptr) &_person_organization; }
 
@@ -57300,7 +57300,7 @@ SdaiApproval_person_organization::person_organization_ (const SdaiPerson_organiz
 
 	{ _person_organization = x; }
 
-const SdaiApproval_ptr
+SdaiApproval_ptr
 SdaiApproval_person_organization::authorized_approval_() const
 {
     return (SdaiApproval_ptr) _authorized_approval;
@@ -57313,7 +57313,7 @@ SdaiApproval_person_organization::authorized_approval_ (const SdaiApproval_ptr x
     _authorized_approval = x;
 }
 
-const SdaiApproval_role_ptr
+SdaiApproval_role_ptr
 SdaiApproval_person_organization::role_() const
 {
     return (SdaiApproval_role_ptr) _role;
@@ -57472,7 +57472,7 @@ SdaiSurface_replica::SdaiSurface_replica (SCLP23(Application_instance) *se, int 
     MakeDerived ("dim");
 }
 
-const SdaiSurface_ptr
+SdaiSurface_ptr
 SdaiSurface_replica::parent_surface_() const
 {
     return (SdaiSurface_ptr) _parent_surface;
@@ -57485,7 +57485,7 @@ SdaiSurface_replica::parent_surface_ (const SdaiSurface_ptr x)
     _parent_surface = x;
 }
 
-const SdaiCartesian_transformation_operator_3d_ptr
+SdaiCartesian_transformation_operator_3d_ptr
 SdaiSurface_replica::transformation_() const
 {
     return (SdaiCartesian_transformation_operator_3d_ptr) _transformation;
@@ -57609,7 +57609,7 @@ SdaiSecurity_classification_assignment::SdaiSecurity_classification_assignment( 
         se->attributes.push (a);
 }
 
-const SdaiSecurity_classification_ptr
+SdaiSecurity_classification_ptr
 SdaiSecurity_classification_assignment::assigned_security_classification_() const
 {
     return (SdaiSecurity_classification_ptr) _assigned_security_classification;
@@ -57733,7 +57733,7 @@ SdaiCc_design_security_classification::SdaiCc_design_security_classification (SC
         se->attributes.push (a);
 }
 
-const SdaiClassified_items_ptr
+SdaiClassified_items_ptr
 SdaiCc_design_security_classification::items_() const
 {
     return (SdaiClassified_items_ptr) &_items;
@@ -57997,7 +57997,7 @@ SdaiDocument_usage_constraint::SdaiDocument_usage_constraint( SCLP23(Application
         se->attributes.push (a);
 }
 
-const SdaiDocument_ptr
+SdaiDocument_ptr
 SdaiDocument_usage_constraint::source_() const
 {
     return (SdaiDocument_ptr) _source;
@@ -58189,7 +58189,7 @@ SdaiVertex_point::SdaiVertex_point (SCLP23(Application_instance) *se, int *addAt
     MakeDerived ("dim");
 }
 
-const SdaiPoint_ptr
+SdaiPoint_ptr
 SdaiVertex_point::vertex_geometry_() const
 {
     return (SdaiPoint_ptr) _vertex_geometry;
@@ -58319,7 +58319,7 @@ SdaiCc_design_date_and_time_assignment::SdaiCc_design_date_and_time_assignment (
         se->attributes.push (a);
 }
 
-const SdaiDate_time_items_ptr
+SdaiDate_time_items_ptr
 SdaiCc_design_date_and_time_assignment::items_() const
 {
     return (SdaiDate_time_items_ptr) &_items;
@@ -58477,7 +58477,7 @@ SdaiOriented_closed_shell::SdaiOriented_closed_shell (SCLP23(Application_instanc
     MakeDerived ("cfs_faces");
 }
 
-const SdaiClosed_shell_ptr
+SdaiClosed_shell_ptr
 SdaiOriented_closed_shell::closed_shell_element_() const
 {
     return (SdaiClosed_shell_ptr) _closed_shell_element;
@@ -58490,7 +58490,7 @@ SdaiOriented_closed_shell::closed_shell_element_ (const SdaiClosed_shell_ptr x)
     _closed_shell_element = x;
 }
 
-const Boolean
+Boolean
 SdaiOriented_closed_shell::orientation_() const
 {
     return (Boolean) _orientation;
@@ -58645,7 +58645,7 @@ SdaiPerson_and_organization::SdaiPerson_and_organization( SCLP23(Application_ins
         se->attributes.push (a);
 }
 
-const SdaiPerson_ptr
+SdaiPerson_ptr
 SdaiPerson_and_organization::the_person_() const
 {
     return (SdaiPerson_ptr) _the_person;
@@ -58658,7 +58658,7 @@ SdaiPerson_and_organization::the_person_ (const SdaiPerson_ptr x)
     _the_person = x;
 }
 
-const SdaiOrganization_ptr
+SdaiOrganization_ptr
 SdaiPerson_and_organization::the_organization_() const
 {
     return (SdaiOrganization_ptr) _the_organization;
@@ -58784,7 +58784,7 @@ SdaiCylindrical_surface::SdaiCylindrical_surface (SCLP23(Application_instance) *
     MakeDerived ("dim");
 }
 
-const SdaiPositive_length_measure
+SdaiPositive_length_measure
 SdaiCylindrical_surface::radius_() const
 {
     return (const SdaiPositive_length_measure) _radius;
@@ -58995,7 +58995,7 @@ SdaiLocal_time::SdaiLocal_time( SCLP23(Application_instance) *se, int *addAttrs)
         se->attributes.push (a);
 }
 
-const SdaiHour_in_day
+SdaiHour_in_day
 SdaiLocal_time::hour_component_() const
 {
     return (const SdaiHour_in_day) _hour_component;
@@ -59008,7 +59008,7 @@ SdaiLocal_time::hour_component_ (const SdaiHour_in_day x)
     _hour_component = x;
 }
 
-const SdaiMinute_in_hour
+SdaiMinute_in_hour
 SdaiLocal_time::minute_component_() const
 {
     return (const SdaiMinute_in_hour) _minute_component;
@@ -59021,7 +59021,7 @@ SdaiLocal_time::minute_component_ (const SdaiMinute_in_hour x)
     _minute_component = x;
 }
 
-const SdaiSecond_in_minute
+SdaiSecond_in_minute
 SdaiLocal_time::second_component_() const
 {
     return (const SdaiSecond_in_minute) _second_component;
@@ -59034,7 +59034,7 @@ SdaiLocal_time::second_component_ (const SdaiSecond_in_minute x)
     _second_component = x;
 }
 
-const SdaiCoordinated_universal_time_offset_ptr
+SdaiCoordinated_universal_time_offset_ptr
 SdaiLocal_time::zone_() const
 {
     return (SdaiCoordinated_universal_time_offset_ptr) _zone;
@@ -59244,7 +59244,7 @@ SdaiVertex_shell::SdaiVertex_shell (SCLP23(Application_instance) *se, int *addAt
         se->attributes.push (a);
 }
 
-const SdaiVertex_loop_ptr
+SdaiVertex_loop_ptr
 SdaiVertex_shell::vertex_shell_extent_() const
 {
     return (SdaiVertex_loop_ptr) _vertex_shell_extent;
@@ -59403,7 +59403,7 @@ SdaiPoly_loop::SdaiPoly_loop (SCLP23(Application_instance) *se, int *addAttrs) :
     MakeDerived ("dim");
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiPoly_loop::polygon_() const
 {
     return (EntityAggregate_ptr) &_polygon;
@@ -59531,7 +59531,7 @@ SdaiWire_shell::SdaiWire_shell (SCLP23(Application_instance) *se, int *addAttrs)
         se->attributes.push (a);
 }
 
-const EntityAggregate_ptr
+EntityAggregate_ptr
 SdaiWire_shell::wire_shell_extent_() const
 {
     return (EntityAggregate_ptr) &_wire_shell_extent;
@@ -59772,7 +59772,7 @@ SdaiMapped_item::SdaiMapped_item (SCLP23(Application_instance) *se, int *addAttr
         se->attributes.push (a);
 }
 
-const SdaiRepresentation_map_ptr
+SdaiRepresentation_map_ptr
 SdaiMapped_item::mapping_source_() const
 {
     return (SdaiRepresentation_map_ptr) _mapping_source;
@@ -59785,7 +59785,7 @@ SdaiMapped_item::mapping_source_ (const SdaiRepresentation_map_ptr x)
     _mapping_source = x;
 }
 
-const SdaiRepresentation_item_ptr
+SdaiRepresentation_item_ptr
 SdaiMapped_item::mapping_target_() const
 {
     return (SdaiRepresentation_item_ptr) _mapping_target;
@@ -60110,7 +60110,7 @@ SdaiConical_surface::SdaiConical_surface (SCLP23(Application_instance) *se, int 
     MakeDerived ("dim");
 }
 
-const SdaiLength_measure
+SdaiLength_measure
 SdaiConical_surface::radius_() const
 {
     return (const SdaiLength_measure) _radius;
@@ -60123,7 +60123,7 @@ SdaiConical_surface::radius_ (const SdaiLength_measure x)
     _radius = x;
 }
 
-const SdaiPlane_angle_measure
+SdaiPlane_angle_measure
 SdaiConical_surface::semi_angle_() const
 {
     return (const SdaiPlane_angle_measure) _semi_angle;
@@ -60249,7 +60249,7 @@ SdaiGlobal_unit_assigned_context::SdaiGlobal_unit_assigned_context (SCLP23(Appli
         se->attributes.push (a);
 }
 
-const SdaiUnits_ptr
+SdaiUnits_ptr
 SdaiGlobal_unit_assigned_context::units_() const
 {
     return (SdaiUnits_ptr) &_units;
