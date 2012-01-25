@@ -42,7 +42,7 @@ class SCLP23_NAME(Select) {
 	Severity severity() const;
 	Severity severity( Severity );
 	const char *Error();
-	void Error( char * );
+	void Error( const char * );
 		// clears select's error  
 	void ClearError();
 		// clears error

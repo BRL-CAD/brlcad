@@ -212,7 +212,7 @@ typedef SCLP23_NAME(Application_instance_ptr) SCLP23_NAME(Application_instance_v
 //typedef SCLP23_NAME(Application_instance)* STEPentityH;
 
 //extern SCLP23_NAME(Application_instance) *
-//ReadEntityRef(istream &in, ErrorDescriptor *err, char *tokenList, 
+//ReadEntityRef(istream &in, ErrorDescriptor *err, const char *tokenList, 
 //	      InstMgr * instances, int addFileId);
 
 //typedef  SCLP23_NAME(Application_instance) * (* Creator) () const;

@@ -13,15 +13,15 @@ extern void IStreamState(istream &in);
 
 extern int 
 ReadInteger(SCLP23(Integer) &val, istream &in, ErrorDescriptor *err, 
-	    char *tokenList);
+	    const char *tokenList);
 
 extern int 
 ReadInteger(SCLP23(Integer) &val, const char *s, ErrorDescriptor *err, 
-	    char *tokenList);
+	    const char *tokenList);
 
 extern Severity 
 IntValidLevel (const char *attrValue, ErrorDescriptor *err,
-	       int clearError, int optional, char *tokenList);
+	       int clearError, int optional, const char *tokenList);
 
 extern char * 
 WriteReal(SCLP23(Real) val, std::string &s);
@@ -31,27 +31,27 @@ WriteReal(SCLP23(Real) val, ostream &out);
 
 extern int
 ReadReal(SCLP23(Real) &val, istream &in, ErrorDescriptor *err, 
-	 char *tokenList);
+	 const char *tokenList);
 
 extern int
 ReadReal(SCLP23(Real) &val, const char *s, ErrorDescriptor *err, 
-	 char *tokenList);
+	 const char *tokenList);
 
 extern Severity 
 RealValidLevel (const char *attrValue, ErrorDescriptor *err,
-		int clearError, int optional, char *tokenList);
+		int clearError, int optional, const char *tokenList);
 
 extern int
 ReadNumber(SCLP23(Real) &val, istream &in, ErrorDescriptor *err, 
-	   char *tokenList);
+	   const char *tokenList);
 
 extern int
 ReadNumber(SCLP23(Real) &val, const char *s, ErrorDescriptor *err, 
-	   char *tokenList);
+	   const char *tokenList);
 
 extern Severity 
 NumberValidLevel (const char *attrValue, ErrorDescriptor *err,
-		  int clearError, int optional, char *tokenList);
+		  int clearError, int optional, const char *tokenList);
 
 
 ////////////////////

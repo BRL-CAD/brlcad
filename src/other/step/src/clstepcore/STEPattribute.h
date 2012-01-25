@@ -61,11 +61,11 @@ CheckRemainingInput(istream &in, ErrorDescriptor *err,
 		    const char *tokenList); // e.g. ",)"
 
 extern SCLP23(Application_instance) *
-ReadEntityRef(istream &in, ErrorDescriptor *err, char *tokenList, 
+ReadEntityRef(istream &in, ErrorDescriptor *err, const char *tokenList, 
 	      InstMgr * instances, int addFileId);
 
 extern SCLP23(Application_instance) *
-ReadEntityRef(const char * s, ErrorDescriptor *err, char *tokenList, 
+ReadEntityRef(const char * s, ErrorDescriptor *err, const char *tokenList, 
 	      InstMgr * instances, int addFileId);
 
 extern Severity 

@@ -79,7 +79,7 @@ void IStreamState(istream &in)
 
 int
 ReadInteger(SCLP23(Integer) &val, istream &in, ErrorDescriptor *err, 
-	    char *tokenList)
+	    const char *tokenList)
 {
     SCLP23(Integer) i = 0;
     in >> ws;
@@ -104,7 +104,7 @@ ReadInteger(SCLP23(Integer) &val, istream &in, ErrorDescriptor *err,
 
 int
 ReadInteger(SCLP23(Integer) &val, const char *s, ErrorDescriptor *err, 
-	    char *tokenList)
+	    const char *tokenList)
 {
     istringstream in((char *)s);
     return ReadInteger(val, in, err, tokenList);
@@ -132,7 +132,7 @@ ReadInteger(SCLP23(Integer) &val, const char *s, ErrorDescriptor *err,
 
 Severity 
 IntValidLevel(const char *attrValue, ErrorDescriptor *err,
-              int clearError, int optional, char *tokenList)
+              int clearError, int optional, const char *tokenList)
 {
     if(clearError)
 	err->ClearErrorMsg();
@@ -288,7 +288,7 @@ WriteReal(SCLP23(Real) val, ostream &out)
 
 int
 ReadReal(SCLP23(Real) &val, istream &in, ErrorDescriptor *err, 
-	 char *tokenList)
+	 const char *tokenList)
 {
     SCLP23(Real) d = 0;
 
@@ -427,7 +427,7 @@ ReadReal(SCLP23(Real) &val, istream &in, ErrorDescriptor *err,
 
 int
 ReadReal(SCLP23(Real) &val, const char *s, ErrorDescriptor *err, 
-	 char *tokenList)
+	 const char *tokenList)
 {
     istringstream in((char *)s);
     return ReadReal(val, in, err, tokenList);
@@ -455,7 +455,7 @@ ReadReal(SCLP23(Real) &val, const char *s, ErrorDescriptor *err,
 
 Severity 
 RealValidLevel(const char *attrValue, ErrorDescriptor *err,
-               int clearError, int optional, char *tokenList)
+               int clearError, int optional, const char *tokenList)
 {
     if(clearError)
 	err->ClearErrorMsg();
@@ -508,7 +508,7 @@ RealValidLevel(const char *attrValue, ErrorDescriptor *err,
 
 int
 ReadNumber(SCLP23(Real) &val, istream &in, ErrorDescriptor *err, 
-	   char *tokenList)
+	   const char *tokenList)
 {
     SCLP23(Real) d = 0;
     in >> ws;
@@ -532,7 +532,7 @@ ReadNumber(SCLP23(Real) &val, istream &in, ErrorDescriptor *err,
 
 int
 ReadNumber(SCLP23(Real) &val, const char *s, ErrorDescriptor *err, 
-	   char *tokenList)
+	   const char *tokenList)
 {
     istringstream in((char *)s);
     return ReadNumber(val, in, err, tokenList);
@@ -561,7 +561,7 @@ ReadNumber(SCLP23(Real) &val, const char *s, ErrorDescriptor *err,
 
 Severity 
 NumberValidLevel(const char *attrValue, ErrorDescriptor *err,
-                 int clearError, int optional, char *tokenList)
+                 int clearError, int optional, const char *tokenList)
 {
     if(clearError)
 	err->ClearErrorMsg();

@@ -56,7 +56,7 @@ const char * SCLP23(Select)::Error()
    return _error.DetailMsg();
 }		/**  end function  **/
 
-void SCLP23(Select)::Error( char * e )
+void SCLP23(Select)::Error( const char * e )
 {		/**  fn Error  **/
    _error.DetailMsg( e );
 }		/**  end function  **/
