@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2012-02-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+# added -h option to nirt to suppress header printing - Cliff Yapp
 # fix attribute reporting in nirt - Cliff Yapp
 * fixed ebm/dsp/vol/hf corruption on 64-bit big endian - Sean Morrison
 * fixed step-g importer memory management issues - Keith Bowman
