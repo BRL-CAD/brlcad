@@ -320,7 +320,7 @@ dir_vect(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current direct coors */
-	bu_log("(x, y, z) = (%4.2f, %4.2f, %4.2f)\n",
+	fprintf(stdout, "(x, y, z) = (%4.2f, %4.2f, %4.2f)\n",
 	       direct(X), direct(Y), direct(Z));
 	return;
     }
