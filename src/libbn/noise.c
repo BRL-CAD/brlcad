@@ -126,13 +126,15 @@ static double RTable[MAXSIZE];
 struct str_ht {
     uint32_t magic;
     char hashTableValid;
-    long *hashTableMagic1;
-    short *hashTable;
-    long *hashTableMagic2;
+    uint32_t *hashTableMagic1;
+    uint32_t *hashTable;
+    uint32_t *hashTableMagic2;
     uint32_t magic_end;
 };
 
 static struct str_ht ht;
+
+#define TABLE_SIZE 4096
 
 #define MAGIC_STRHT1 1771561
 #define MAGIC_STRHT2 1651771
@@ -143,18 +145,18 @@ static struct str_ht ht;
 	BU_CKMAG(&ht.magic_end, MAGIC_STRHT2, "struct str_ht ht 2");	\
 	BU_CKMAG(ht.hashTableMagic1, MAGIC_TAB1, "hashTable Magic 1");	\
 	BU_CKMAG(ht.hashTableMagic2, MAGIC_TAB2, "hashTable Magic 2");	\
-	if (ht.hashTable != (short *)&ht.hashTableMagic1[1])		\
+	if (ht.hashTable != &ht.hashTableMagic1[1])			\
 	    bu_bomb("ht.hashTable changed rel ht.hashTableMagic1");	\
-	if (ht.hashTableMagic2 != (long *)&ht.hashTable[4096])		\
+	if (ht.hashTableMagic2 != &ht.hashTable[TABLE_SIZE])		\
 	    bu_bomb("ht.hashTable changed rel ht.hashTableMagic2");	\
     }
 
 /**
- * Map integer point into repeatable random number [0..4095].  We
- * actually only use the first 8 bits of the final value extracted
- * from this table.  It's not quite clear that we really need this big
- * a table.  The extra size does provide some extra randomness for
- * intermediate results.
+ * Map integer point into repeatable random number [0..TABLE_SIZE-1]
+ * (i.e., [0-4095]).  We actually only use the first 8 bits of the
+ * final value extracted from this table.  It's not quite clear that
+ * we really need this big a table.  The extra size does provide some
+ * extra randomness for intermediate results.
  */
 #define Hash3d(a, b, c)					\
     ht.hashTable[					\
@@ -167,8 +169,8 @@ static struct str_ht ht;
 void
 bn_noise_init(void)
 {
-    int i, j, k, temp;
-    int rndtabi = BN_RAND_TABSIZE - 1;
+    uint32_t i, j, k, temp;
+    uint32_t rndtabi = BN_RAND_TABSIZE - 1;
 
     bu_semaphore_acquire(BU_SEM_BN_NOISE);
 
@@ -178,24 +180,25 @@ bn_noise_init(void)
     }
 
     BN_RANDSEED(rndtabi, (BN_RAND_TABSIZE-1));
-    ht.hashTableMagic1 = (long *) bu_malloc(
-	2*sizeof(long) + 4096*sizeof(short int),
-	"noise hashTable");
-    ht.hashTable = (short *)&ht.hashTableMagic1[1];
-    ht.hashTableMagic2 = (long *)&ht.hashTable[4096];
 
-    *ht.hashTableMagic1 = MAGIC_TAB1;
-    *ht.hashTableMagic2 = MAGIC_TAB2;
+    /* alloc table size plus two magic numbers */
+    ht.hashTableMagic1 = (uint32_t *) bu_calloc(1, 2*sizeof(uint32_t) + TABLE_SIZE*sizeof(uint32_t), "noise hashTable");
 
-    ht.magic_end = MAGIC_STRHT2;
-    ht.magic = MAGIC_STRHT1;
+    ht.hashTable = &ht.hashTableMagic1[1];
+    ht.hashTableMagic2 = &ht.hashTable[TABLE_SIZE];
 
-    for (i = 0; i < 4096; i++)
+    *ht.hashTableMagic1 = (uint32_t)MAGIC_TAB1;
+    *ht.hashTableMagic2 = (uint32_t)MAGIC_TAB2;
+
+    ht.magic_end = (uint32_t)MAGIC_STRHT2;
+    ht.magic = (uint32_t)MAGIC_STRHT1;
+
+    for (i = 0; i < TABLE_SIZE; i++)
 	ht.hashTable[i] = i;
 
     /* scramble the hash table */
-    for (i = 4095; i > 0; i--) {
-	j = (int)(BN_RANDOM(rndtabi) * 4096.0);
+    for (i = TABLE_SIZE-1; i > 0; i--) {
+	j = (uint32_t)(BN_RANDOM(rndtabi) * (fastf_t)TABLE_SIZE);
 
 	temp = ht.hashTable[i];
 	ht.hashTable[i] = ht.hashTable[j];
@@ -207,11 +210,9 @@ bn_noise_init(void)
     for (i = 0; i < MAXSIZE; i++)
 	RTable[i] = BN_RANDOM(k) * 2.0 - 1.0;
 
-
     ht.hashTableValid = 1;
 
     bu_semaphore_release(BU_SEM_BN_NOISE);
-
 
     CK_HT();
 }
@@ -276,7 +277,7 @@ bn_noise_perlin(fastf_t *point)
     /*
      * interpolate!
      */
-    /* get a repeatable random # 0..4096 & 0xFF*/
+    /* get a repeatable random # 0..TABLE_SIZE & 0xFF*/
     m = Hash3d(ix, iy, iz) & 0xFF;
     sum = INCRSUM(m, (tx*ty*tz), (x-ix), (y-iy), (z-iz));
 
