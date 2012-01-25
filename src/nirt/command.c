@@ -527,7 +527,7 @@ nirt_units(char *buffer, com_table *ctp, struct rt_i *rtip)
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current destination */
-	bu_log("units = '%s'\n", local_u_name);
+	fprintf(stdout, "units = '%s'\n", local_u_name);
 	return;
     }
 
