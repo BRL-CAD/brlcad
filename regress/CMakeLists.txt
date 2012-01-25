@@ -1,6 +1,9 @@
 # Geometry Conversion Regression Tests (experimental)
 add_subdirectory(gcv)
 
+# MGED command tests
+add_subdirectory(mged)
+
 if(SH_EXEC)
 	add_custom_target(regress-mged
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/mged.sh ${CMAKE_SOURCE_DIR}
@@ -62,8 +65,16 @@ if(SH_EXEC)
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/vls.sh ${CMAKE_SOURCE_DIR}
 		DEPENDS test_vls
 		)
+	add_custom_target(regress-nirt
+		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/nirt.sh ${CMAKE_SOURCE_DIR}
+		DEPENDS mged nirt
+		)
 	add_custom_target(regress
-		DEPENDS regress-mged regress-moss regress-lights regress-solids regress-shaders regress-spdi regress-iges regress-weight regress-gqa regress-fastgen regress-bots regress-flawfinder regress-repository regress-red regress-vls
+		DEPENDS regress-mged regress-moss regress-lights
+		regress-solids regress-shaders regress-spdi regress-iges
+		regress-weight regress-gqa regress-fastgen regress-bots
+		regress-flawfinder regress-repository regress-red regress-nirt
+		regress-vls
 		)
 
 endif(SH_EXEC)
