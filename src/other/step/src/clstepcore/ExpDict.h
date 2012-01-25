@@ -1622,7 +1622,7 @@ class SelectTypeDescriptor  :    public TypeDescriptor  {
 
         SelectTypeDescriptor (int b, const char * nm, PrimitiveType ft, 
 			      Schema *origSchema, 
-			      char * d, SelectCreator f =0 ) 
+			      const char * d, SelectCreator f =0 ) 
           : TypeDescriptor (nm, ft, origSchema, d), 
 	  _unique_elements (b), CreateNewSelect(f)
 		{ }
