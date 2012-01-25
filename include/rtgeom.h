@@ -251,8 +251,11 @@ struct rt_brep_internal {
 struct rt_ebm_internal  {
     uint32_t magic;
     char		file[RT_EBM_NAME_LEN];
-    size_t		xdim;		/**< @brief  X dimension (w cells) */
-    size_t		ydim;		/**< @brief  Y dimension (n cells) */
+    /* NOTE: xdim/ydim cannot be size_t until rel8 as they are
+     * written out to disk via bu_vls_struct_print() as 32-bit ints.
+     */
+    uint32_t		xdim;		/**< @brief  X dimension (w cells) */
+    uint32_t		ydim;		/**< @brief  Y dimension (n cells) */
     fastf_t		tallness;	/**< @brief  Z dimension (mm) */
     mat_t		mat;		/**< @brief  convert local coords to model space */
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
@@ -267,11 +270,14 @@ struct rt_ebm_internal  {
 struct rt_vol_internal  {
     uint32_t magic;
     char		file[RT_VOL_NAME_LEN];
-    size_t		xdim;			/**< @brief  X dimension */
-    size_t		ydim;			/**< @brief  Y dimension */
-    size_t		zdim;			/**< @brief  Z dimension */
-    size_t		lo;			/**< @brief  Low threshold */
-    size_t		hi;			/**< @brief  High threshold */
+    /* NOTE: [xyz]dim/lo/hi cannot be size_t until rel8 as they are
+     * written out to disk via bu_vls_struct_print() as 32-bit ints.
+     */
+    uint32_t		xdim;		/**< @brief  X dimension */
+    uint32_t		ydim;		/**< @brief  Y dimension */
+    uint32_t		zdim;		/**< @brief  Z dimension */
+    uint32_t		lo;		/**< @brief  Low threshold */
+    uint32_t		hi;		/**< @brief  High threshold */
     vect_t		cellsize;	/**< @brief  ideal coords: size of each cell */
     mat_t		mat;		/**< @brief  convert local coords to model space */
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
@@ -288,9 +294,12 @@ struct rt_hf_internal {
     char		cfile[128];	/**< @brief  name of control file (optional) */
     char		dfile[128];	/**< @brief  name of data file */
     char		fmt[8];		/**< @brief  CV style file format descriptor */
-    size_t		w;			/**< @brief  # samples wide of data file.  ("i", "x") */
-    size_t		n;			/**< @brief  nlines of data file.  ("j", "y") */
-    int			shorts;			/**< @brief  !0 --> memory array is short, not float */
+    /* NOTE: w/n/shorts cannot be size_t until rel8 as they are
+     * written out to disk via bu_vls_struct_print() as 32-bit ints.
+     */
+    uint32_t		w;		/**< @brief  # samples wide of data file.  ("i", "x") */
+    uint32_t		n;		/**< @brief  nlines of data file.  ("j", "y") */
+    uint32_t		shorts;		/**< @brief  !0 --> memory array is short, not float */
     fastf_t		file2mm;	/**< @brief  scale factor to cvt file units to mm */
     vect_t		v;		/**< @brief  origin of HT in model space */
     vect_t		x;		/**< @brief  model vect corresponding to "w" dir (will be unitized) */
@@ -429,8 +438,12 @@ struct rt_dsp_internal{
     uint32_t magic;
 #define dsp_file dsp_name 		/**< @brief for backwards compatibility */
     struct bu_vls dsp_name;	/**< TODO: make this a pointer, name of data file */
-    size_t dsp_xcnt;	/**< @brief  # samples in row of data */
-    size_t dsp_ycnt;	/**< @brief  # of columns in data */
+
+    /* NOTE: dsp_xcnt/dsp_ycnt cannot be size_t until rel8 as they are
+     * written out to disk via bu_vls_struct_print() as 32-bit ints.
+     */
+    uint32_t dsp_xcnt;	/**< @brief  # samples in row of data */
+    uint32_t dsp_ycnt;	/**< @brief  # of columns in data */
     unsigned short dsp_smooth;	/**< @brief  bool: surf normal interp */
 #define DSP_CUT_DIR_ADAPT	'a'
 #define DSP_CUT_DIR_llUR	'l'
