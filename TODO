@@ -18,9 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* fix big-endian ebm/dsp bug, review all '%d' callers to
-  bu_struct_export() looking for size_t mismatches.
-
 * test nirt template file loading
 
 * g-nff is crashing, fix it; g-dot outputs garbage
