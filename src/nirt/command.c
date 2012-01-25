@@ -211,7 +211,7 @@ grid_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current grid coordinates */
-	bu_log("(h, v, d) = (%4.2f, %4.2f, %4.2f)\n",
+	fprintf(stdout, "(h, v, d) = (%4.2f, %4.2f, %4.2f)\n",
 	       grid(HORZ) * base2local,
 	       grid(VERT) * base2local,
 	       grid(DIST) * base2local);
@@ -269,7 +269,7 @@ target_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current target coors */
-	bu_log("(x, y, z) = (%4.2f, %4.2f, %4.2f)\n",
+	fprintf(stdout, "(x, y, z) = (%4.2f, %4.2f, %4.2f)\n",
 	       target(X) * base2local,
 	       target(Y) * base2local,
 	       target(Z) * base2local);
