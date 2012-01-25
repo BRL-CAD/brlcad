@@ -124,7 +124,7 @@ test_sscanf(int type, const char *src, const char *fmt) {
     ret = bu_ret = 0;
     val = bu_val = NULL;
 
-    printf("%s, %s\n", src, fmt);
+    printf("\"%s\", \"%s\"\n", src, fmt);
 
     /* call sscanf and bu_sscanf with appropriately cast pointers */
 #define SSCANF_TYPE(type) \
@@ -243,38 +243,6 @@ test_sscanf(int type, const char *src, const char *fmt) {
 	bu_val = NULL;
     }
 } /* test_sscanf */
-
-/* string test routine */
-static void
-test_sscanf_s(const char *src, const char *fmt)
-{
-    int ret, bu_ret;
-    char dest[STR_SIZE], bu_dest[STR_SIZE];
-
-    ret = bu_ret = 0;
-    printf("%s, %s\n", src, fmt);
-
-    ret = sscanf(src, fmt, dest);
-    bu_ret = bu_sscanf(src, fmt, bu_dest);
-
-    if (ret != 1) {
-	printf("\tWarning: no assignments done.\n");
-    }
-
-    /* return values equal? */
-    if (bu_ret != ret) {
-	printf("\t[FAIL] sscanf returned %d but bu_sscanf returned %d.\n",
-		ret, bu_ret);
-	return;
-    }
-
-    /* conversion values equal? */
-    if (!BU_STR_EQUAL(dest, bu_dest)) {
-	printf("\t[FAIL] conversion value mismatch.\n"
-		"\t(sscanf) %s != %s (bu_sscanf).\n",
-		dest, bu_dest);
-    }
-}
 
 /* Here we define printable constants that should be safe on any platform.
  *
@@ -461,6 +429,67 @@ doNumericTests()
     FLOAT_VARIANT(g);
 }
 
+/* string test routine */
+static void
+test_sscanf_s(const char *src, const char *fmt)
+{
+    int ret, bu_ret;
+    char dest[STR_SIZE], bu_dest[STR_SIZE];
+
+    ret = bu_ret = 0;
+
+    /* ensure NULL termination even for c and [...] */
+    memset(dest, '\0', STR_SIZE);
+    memset(bu_dest, '\0', STR_SIZE);
+
+    printf("\"%s\", \"%s\"\n", src, fmt);
+
+    ret = sscanf(src, fmt, dest);
+    bu_ret = bu_sscanf(src, fmt, bu_dest);
+
+    if (ret != 1) {
+	printf("\tWarning: no assignments done.\n");
+    }
+
+    /* return values equal? */
+    if (bu_ret != ret) {
+	printf("\t[FAIL] sscanf returned %d but bu_sscanf returned %d.\n",
+		ret, bu_ret);
+	return;
+    }
+
+    if (!BU_STR_EQUAL(dest, bu_dest)) {
+	printf("\t[FAIL] conversion value mismatch.\n"
+		"\t(sscanf) %s != %s (bu_sscanf).\n",
+		dest, bu_dest);
+    }
+}
+
+static void
+doStringTests()
+{
+    /* For %s sscanf should not include leading whitespace in the string, so
+     * the following should all be quivalent.
+     */
+    test_sscanf_s("aBc", "%s");
+    test_sscanf_s("aBc", " %s");
+    test_sscanf_s(" \t\naBc", "%s");
+    test_sscanf_s(" \t\naBc", " %s");
+
+    /* For %c, leading whitespace should be included unless the conversion
+     * specifier is preceeded by whitespace.
+     */
+    test_sscanf_s(" \t\naBc", "%c");  /* should assign ' ' */
+    test_sscanf_s(" \t\naBc", " %c"); /* should assign 'a' */
+
+    /* For %[...], should act like %s, but should assign any/only characters
+     * in the class.
+     */
+    test_sscanf_s(" \t\naBc", "%[^A-Z]");  /* should assign " \t\na" */
+    test_sscanf_s(" \t\naBc", " %[^A-Z]"); /* should assign "a"      */
+    test_sscanf_s(" \t\naBc", " %[a-z]");  /* should assign "a"      */
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -486,9 +515,7 @@ main(int argc, char *argv[])
  */
 
     doNumericTests();
-
-    /* string tests */
-    test_sscanf_s(" aBc \t", "%s");
+    doStringTests();
 
     printf("bu_sscanf: testing complete\n");
     return 0;
