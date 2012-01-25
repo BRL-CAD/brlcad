@@ -317,9 +317,6 @@ again:
 	    c = CT_STRING;
 	    break;
 	case '[':
-	    flags |= NOSKIP;
-	    c = CT_CCL;
-
 	    /* note that at this point c == '[' == fmt[-1] and so fmt[0] is
 	     * either '^' or the first character of the class
 	     */
@@ -349,6 +346,9 @@ again:
 		    break;
 		}
 	    }
+
+	    flags |= NOSKIP;
+	    c = CT_CCL;
 	    break;
 	case 'C':
 	    /* XXX This may be a BSD extension. */
