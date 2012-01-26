@@ -482,11 +482,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 # Output directories - this is where built library and executable
 # files will be placed after building but prior to install.
 if(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-  if(WIN32)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all libraries.")
-  else(WIN32)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
-  endif(WIN32)
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
 endif(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
 if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
