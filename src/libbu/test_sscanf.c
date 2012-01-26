@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <float.h>
@@ -508,6 +507,8 @@ doStringTests()
 int
 main(int argc, char *argv[])
 {
+    int ret, bu_ret;
+
     if (argc > 1) {
 	printf("Warning: %s takes no arguments.\n", argv[0]);
     }
@@ -536,6 +537,21 @@ main(int argc, char *argv[])
     test_sscanf(SCAN_POINTER, "0", "%p");
     test_sscanf(SCAN_POINTER, "0xf", "%p");
     test_sscanf(SCAN_POINTER, bu_cpp_xstr(LARGE_UINT_HEX), "%p");
+
+    /* %% non-conversion */
+#define PCT_SRC_STR "%%n    %"
+#define PCT_FMT_STR "%%%%n %%"
+    puts("\"" PCT_SRC_STR "\", \"" PCT_FMT_STR "\"");
+    ret = sscanf(PCT_SRC_STR, PCT_FMT_STR);
+    bu_ret = bu_sscanf(PCT_SRC_STR, PCT_FMT_STR);
+
+    if (ret != 0) {
+	bu_exit(1, "Error: sscanf returned %d. Expected 0.\n", ret);
+    }
+    if (bu_ret != ret) {
+	printf("\t[FAIL] sscanf returned %d but bu_sscanf returned %d.\n",
+		ret, bu_ret);
+    }
 
     printf("bu_sscanf: testing complete\n");
     return 0;
