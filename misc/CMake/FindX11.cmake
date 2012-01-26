@@ -130,12 +130,42 @@
 # 
 #=============================================================================
 
+MACRO(X11_FIND_INCLUDE_PATH component header)
+  find_path(X11_${component}_INCLUDE_PATH ${header} ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
+  set(X11_HDR_VARS ${X11_HDR_VARS} X11_${component}_INCLUDE_PATH)
+  if(X11_${component}_INCLUDE_PATH)
+    set(X11_HDR_PATHS ${X11_HDR_PATHS} ${X11_${component}_INCLUDE_PATH})
+    list(REMOVE_DUPLICATES X11_HDR_PATHS)
+  endif(X11_${component}_INCLUDE_PATH)
+ENDMACRO(X11_FIND_INCLUDE_PATH)
+
+MACRO(X11_FIND_LIB_PATH component libname)
+  find_library(X11_${component}_LIB ${libname} ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
+  set(X11_LIB_VARS ${X11_LIB_VARS} X11_${component}_LIB)
+  if(X11_${component}_LIB)
+    get_filename_component(X11_${component}_DIR ${X11_${component}_LIB} PATH)
+    set(X11_LIB_PATHS ${X11_LIB_PATHS} ${X11_${component}_DIR})
+    list(REMOVE_DUPLICATES X11_LIB_PATHS)
+  endif(X11_${component}_LIB)
+ENDMACRO(X11_FIND_LIB_PATH)
+
 if(UNIX)
   set(X11_FOUND 0)
   # X11 is never a framework and some header files may be
   # found in tcl on the mac
   set(CMAKE_FIND_FRAMEWORK_SAVE ${CMAKE_FIND_FRAMEWORK})
   set(CMAKE_FIND_FRAMEWORK NEVER)
+
+
+  # See whether we're looking for 32 or 64 bit libraries
+  get_property(SEARCH_64BIT GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
+  if(SEARCH_64BIT)
+    set(64BIT_DIRS "/usr/lib64/X11;/usr/lib64;/usr/lib/x86_64-linux-gnu")
+  else(SEARCH_64BIT)
+    set(32BIT_DIRS "/usr/lib/X11;/usr/lib")
+  endif(SEARCH_64BIT)
+
+  # Candidate directories for headers
   set(X11_INC_SEARCH_PATH
     /usr/X11/include
     /usr/include
@@ -150,13 +180,7 @@ if(UNIX)
     /opt/graphics/OpenGL/include
     )
 
-  get_property(SEARCH_64BIT GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
-  if(SEARCH_64BIT)
-    set(64BIT_DIRS "/usr/lib64/X11;/usr/lib64;/usr/lib/x86_64-linux-gnu")
-  else(SEARCH_64BIT)
-    set(32BIT_DIRS "/usr/lib/X11;/usr/lib")
-  endif(SEARCH_64BIT)
-
+  # Candidate directories for libraries.
   set(X11_LIB_SEARCH_PATH
     ${64BIT_DIRS}
     ${32BIT_DIRS}
@@ -167,67 +191,70 @@ if(UNIX)
     /usr/pkg/xorg/lib
     )
 
-  find_path(X11_X11_INCLUDE_PATH X11/X.h                            ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xlib_INCLUDE_PATH X11/Xlib.h                        ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
+  # Just in case, clear our lists
+  set(X11_HDR_VARS)
+  set(X11_HDR_PATHS)
+  set(X11_LIB_VARS)
+  set(X11_LIB_PATHS)
+  
+  # Find primary X11 headers
+  X11_FIND_INCLUDE_PATH(X11		X11/X.h)
+  X11_FIND_INCLUDE_PATH(Xlib		X11/Xlib.h)
+  # Look for other X11 includes; keep the list sorted by name of the cmake X11_<component>_INCLUDE_PATH
+  # variable (component doesn't need to match the include file name).
+  X11_FIND_INCLUDE_PATH(ICE 		X11/ICE/ICE.h)
+  X11_FIND_INCLUDE_PATH(Xaccessrules 	X11/extensions/XKBrules.h)
+  X11_FIND_INCLUDE_PATH(Xaccessstr 	X11/extensions/XKBstr.h)
+  X11_FIND_INCLUDE_PATH(Xau 		X11/Xauth.h)
+  X11_FIND_INCLUDE_PATH(Xcomposite 	X11/extensions/Xcomposite.h)
+  X11_FIND_INCLUDE_PATH(Xcursor 	X11/Xcursor/Xcursor.h)
+  X11_FIND_INCLUDE_PATH(Xdamage 	X11/extensions/Xdamage.h)
+  X11_FIND_INCLUDE_PATH(Xdmcp 		X11/Xdmcp.h)
+  X11_FIND_INCLUDE_PATH(dpms 		X11/extensions/dpms.h)
+  X11_FIND_INCLUDE_PATH(xf86misc 	X11/extensions/xf86misc.h)
+  X11_FIND_INCLUDE_PATH(xf86vmode 	X11/extensions/xf86vmode.h)
+  X11_FIND_INCLUDE_PATH(Xfixes		X11/extensions/Xfixes.h)
+  X11_FIND_INCLUDE_PATH(Xft		X11/Xft/Xft.h)
+  X11_FIND_INCLUDE_PATH(Xi		X11/extensions/XInput.h)
+  X11_FIND_INCLUDE_PATH(Xinerama	X11/extensions/Xinerama.h)
+  X11_FIND_INCLUDE_PATH(Xinput		X11/extensions/XInput.h)
+  X11_FIND_INCLUDE_PATH(Xkb		X11/extensions/XKB.h)
+  X11_FIND_INCLUDE_PATH(Xkblib		X11/XKBlib.h)
+  X11_FIND_INCLUDE_PATH(Xpm		X11/xpm.h)
+  X11_FIND_INCLUDE_PATH(XTest		X11/extensions/XTest.h)
+  X11_FIND_INCLUDE_PATH(XShm		X11/extensions/XShm.h)
+  X11_FIND_INCLUDE_PATH(Xrandr		X11/extensions/Xrandr.h)
+  X11_FIND_INCLUDE_PATH(Xrender		X11/extensions/Xrender.h)
+  X11_FIND_INCLUDE_PATH(Xscreensaver	X11/extensions/scrnsaver.h)
+  X11_FIND_INCLUDE_PATH(Xshape		X11/extensions/shape.h)
+  X11_FIND_INCLUDE_PATH(Xutil		X11/Xutil.h)
+  X11_FIND_INCLUDE_PATH(Xt		X11/Intrinsic.h)
+  X11_FIND_INCLUDE_PATH(Xv		X11/extensions/Xvlib.h)
+  
 
-  # Look for includes; keep the list sorted by name of the cmake *_INCLUDE_PATH
-  # variable (which doesn't need to match the include file name).
-
-  # Solaris lacks XKBrules.h, so we should skip kxkbd there.
-  find_path(X11_ICE_INCLUDE_PATH X11/ICE/ICE.h                       ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xaccessrules_INCLUDE_PATH X11/extensions/XKBrules.h  ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xaccessstr_INCLUDE_PATH X11/extensions/XKBstr.h      ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xau_INCLUDE_PATH X11/Xauth.h                         ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xcomposite_INCLUDE_PATH X11/extensions/Xcomposite.h  ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xcursor_INCLUDE_PATH X11/Xcursor/Xcursor.h           ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xdamage_INCLUDE_PATH X11/extensions/Xdamage.h        ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xdmcp_INCLUDE_PATH X11/Xdmcp.h                       ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_dpms_INCLUDE_PATH X11/extensions/dpms.h              ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_xf86misc_INCLUDE_PATH X11/extensions/xf86misc.h      ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_xf86vmode_INCLUDE_PATH X11/extensions/xf86vmode.h    ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xfixes_INCLUDE_PATH X11/extensions/Xfixes.h          ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xft_INCLUDE_PATH X11/Xft/Xft.h                       ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xi_INCLUDE_PATH X11/extensions/XInput.h              ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xinerama_INCLUDE_PATH X11/extensions/Xinerama.h      ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xinput_INCLUDE_PATH X11/extensions/XInput.h          ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xkb_INCLUDE_PATH X11/extensions/XKB.h                ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xkblib_INCLUDE_PATH X11/XKBlib.h                     ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xpm_INCLUDE_PATH X11/xpm.h                           ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_XTest_INCLUDE_PATH X11/extensions/XTest.h            ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_XShm_INCLUDE_PATH X11/extensions/XShm.h              ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xrandr_INCLUDE_PATH X11/extensions/Xrandr.h          ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xrender_INCLUDE_PATH X11/extensions/Xrender.h        ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xscreensaver_INCLUDE_PATH X11/extensions/scrnsaver.h ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xshape_INCLUDE_PATH X11/extensions/shape.h           ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xutil_INCLUDE_PATH X11/Xutil.h                       ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xt_INCLUDE_PATH X11/Intrinsic.h                      ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_path(X11_Xv_INCLUDE_PATH X11/extensions/Xvlib.h               ${X11_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-
-
-  find_library(X11_X11_LIB X11               ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-
+  # Find primary X11 library
+  X11_FIND_LIB_PATH(X11			X11)
   # Find additional X libraries. Keep list sorted by library name.
-  find_library(X11_ICE_LIB ICE               ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_SM_LIB SM                 ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_Xau_LIB Xau               ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_Xcomposite_LIB Xcomposite ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_Xcursor_LIB Xcursor       ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_Xdamage_LIB Xdamage       ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_Xdmcp_LIB Xdmcp           ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_Xext_LIB Xext             ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_Xfixes_LIB Xfixes         ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_Xft_LIB Xft               ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_Xi_LIB Xi                 ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_Xinerama_LIB Xinerama     ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_Xinput_LIB Xi             ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_Xpm_LIB Xpm               ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_Xrandr_LIB Xrandr         ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_Xrender_LIB Xrender       ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_Xscreensaver_LIB Xss      ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_Xt_LIB Xt                 ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_XTest_LIB Xtst            ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_Xv_LIB Xv                 ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
-  find_library(X11_Xxf86misc_LIB Xxf86misc   ${X11_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
+  X11_FIND_LIB_PATH(ICE			ICE)
+  X11_FIND_LIB_PATH(SM			SM)
+  X11_FIND_LIB_PATH(Xau			Xau)
+  X11_FIND_LIB_PATH(Xcomposite		Xcomposite)
+  X11_FIND_LIB_PATH(Xcursor		Xcursor)
+  X11_FIND_LIB_PATH(Xdamage		Xdamage)
+  X11_FIND_LIB_PATH(Xdmcp		Xdmcp)
+  X11_FIND_LIB_PATH(Xext		Xext)
+  X11_FIND_LIB_PATH(Xfixes		Xfixes)
+  X11_FIND_LIB_PATH(Xft			Xft)
+  X11_FIND_LIB_PATH(Xi			Xi)
+  X11_FIND_LIB_PATH(Xinerama		Xinerama)
+  X11_FIND_LIB_PATH(Xpm			Xpm)
+  X11_FIND_LIB_PATH(Xrandr		Xrandr)
+  X11_FIND_LIB_PATH(Xrender		Xrender)
+  X11_FIND_LIB_PATH(Xscreensaver	Xss)
+  X11_FIND_LIB_PATH(Xt			Xt)
+  X11_FIND_LIB_PATH(XTest		Xtst)
+  X11_FIND_LIB_PATH(Xv			Xv)
+  X11_FIND_LIB_PATH(Xxf86misc		Xxf86misc)
 
   set(X11_LIBRARY_DIR "")
   if(X11_X11_LIB)
@@ -252,8 +279,10 @@ if(UNIX)
     set(X11_Xshape_FOUND TRUE)
     set(X11_INCLUDE_DIR ${X11_INCLUDE_DIR} ${X11_Xshape_INCLUDE_PATH})
   endif(X11_Xshape_INCLUDE_PATH)
-
+  
+  # We'll need a variable containing all X11 libraries found
   set(X11_LIBRARIES) # start with empty list
+
   if(X11_X11_LIB)
     set(X11_LIBRARIES ${X11_LIBRARIES} ${X11_X11_LIB})
   endif(X11_X11_LIB)
@@ -467,6 +496,46 @@ if(UNIX)
 
     # Build the final list of libraries.
     set(X11_LIBRARIES ${X11_X_PRE_LIBS} ${X11_LIBRARIES} ${X11_X_EXTRA_LIBS})
+
+    # Check whether we're pulling headers from multiple directoreis
+    list(LENGTH X11_HDR_PATHS HDR_PATH_CNT)
+    if("${HDR_PATH_CNT}" GREATER 1)
+      message("\nNote: FindX11 is returning headers found in multiple paths.  The user may wish to verify that components are not being returned from multiple X11 installations.\n")
+      if(CMAKE_SEARCH_OSX_PATHS)
+	if(NOT "${CMAKE_SEARCH_OSX_PATHS}" STREQUAL "SYSTEM")
+	  message("Note that CMAKE_SEARCH_OSX_PATHS is set to ${CMAKE_SEARCH_OSX_PATHS} - if ${CMAKE_SEARCH_OSX_PATHS} has an incomplete installation of X11, that may cause this issue - a possible workaround is to set CMAKE_SEARCH_OSX_PATHS to SYSTEM and not use ${CMAKE_SEARCH_OSX_PATHS}.\n")
+	endif(NOT "${CMAKE_SEARCH_OSX_PATHS}" STREQUAL "SYSTEM")
+      endif(CMAKE_SEARCH_OSX_PATHS)
+      foreach(pathitem ${X11_HDR_PATHS})
+	message("Headers found in ${pathitem}:")
+	foreach(varitem ${X11_HDR_VARS})
+	  if("${${varitem}}" MATCHES "${pathitem}")
+	    message("     ${varitem}:${${varitem}}")
+	  endif("${${varitem}}" MATCHES "${pathitem}")
+	endforeach(varitem ${X11_HDR_PATHS})
+	message(" ")
+      endforeach(pathitem ${X11_HDR_PATHS})
+    endif("${HDR_PATH_CNT}" GREATER 1)
+
+    list(LENGTH X11_LIB_PATHS LIB_PATH_CNT)
+    if("${LIB_PATH_CNT}" GREATER 1)
+      message("\nNote: FindX11 is returning libraries found in multiple paths.  The user may wish to verify that components are not being returned from multiple X11 installations.\n")
+      if(CMAKE_SEARCH_OSX_PATHS)
+	if(NOT "${CMAKE_SEARCH_OSX_PATHS}" STREQUAL "SYSTEM")
+	  message("Note that CMAKE_SEARCH_OSX_PATHS is set to ${CMAKE_SEARCH_OSX_PATHS} - if ${CMAKE_SEARCH_OSX_PATHS} has an incomplete installation of X11, that may cause this issue - a possible workaround is to set CMAKE_SEARCH_OSX_PATHS to SYSTEM and not use ${CMAKE_SEARCH_OSX_PATHS}.\n")
+	endif(NOT "${CMAKE_SEARCH_OSX_PATHS}" STREQUAL "SYSTEM")
+      endif(CMAKE_SEARCH_OSX_PATHS)
+
+      foreach(pathitem ${X11_LIB_PATHS})
+	message("Libraries found in ${pathitem}:")
+	foreach(varitem ${X11_LIB_VARS})
+	  if("${${varitem}}" MATCHES "${pathitem}")
+	    message("     ${varitem}:${${varitem}}")
+	  endif("${${varitem}}" MATCHES "${pathitem}")
+	endforeach(varitem ${X11_LIB_PATHS})
+	message(" ")
+      endforeach(pathitem ${X11_LIB_PATHS})
+    endif("${LIB_PATH_CNT}" GREATER 1)
 
     include(FindPackageMessage)
     FIND_PACKAGE_MESSAGE(X11 "Found X11: ${X11_X11_LIB}"
