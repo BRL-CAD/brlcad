@@ -5337,6 +5337,13 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::man {args} {
+    global tcl_platform
+
+    # Disable on 64-bit windows. Tkhtml is broken on this platform.
+    if {$tcl_platform(platform) == "windows" && $tcl_platform(pointerSize) != 4} {
+	return
+    }
+
     set archerMan $itk_interior.archerMan
 
     set len [llength $args]
