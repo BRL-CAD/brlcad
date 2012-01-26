@@ -194,7 +194,8 @@ append_n(&partFmt);
 	    /* scan literal sequence */
 	    GET_FORMAT_PART;
 	    partAssigned = sscanf(&src[numCharsConsumed], partFmt, &partConsumed);
-	    if (partAssigned < 1) {
+	    if (partAssigned < 0) {
+		/* error */
 		goto exit;
 	    }
 	    UPDATE_COUNTS;
@@ -213,7 +214,8 @@ again:
 	case '%':
 	    GET_FORMAT_PART;
 	    partAssigned = sscanf(&src[numCharsConsumed], partFmt, &partConsumed);
-	    if (partAssigned < 1) {
+	    if (partAssigned < 0) {
+		/* error */
 		goto exit;
 	    }
 	    UPDATE_COUNTS;
