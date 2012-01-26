@@ -111,9 +111,8 @@ enum {
     SCAN_SHORT, SCAN_USHORT,
     SCAN_INT, SCAN_UINT,
     SCAN_LONG, SCAN_ULONG,
-    SCAN_FLOAT,
-    SCAN_DOUBLE,
-    SCAN_LDOUBLE
+    SCAN_POINTER,
+    SCAN_FLOAT, SCAN_DOUBLE, SCAN_LDOUBLE
 };
 
 static void
@@ -157,6 +156,10 @@ test_sscanf(int type, const char *src, const char *fmt) {
 	break;
     case SCAN_ULONG:
 	SSCANF_TYPE(unsigned long);
+	break;
+    case SCAN_POINTER:
+	ret = sscanf(src, fmt, &val);
+	bu_ret = bu_sscanf(src, fmt, &bu_val);
 	break;
     case SCAN_FLOAT:
 	SSCANF_TYPE(float);
@@ -225,6 +228,14 @@ test_sscanf(int type, const char *src, const char *fmt) {
 	case SCAN_ULONG:
 	    CHECK_INT(unsigned long, lu);
 	    break;
+	case SCAN_POINTER:
+	    if (val != bu_val) {
+		printf("\t[FAIL] conversion value mismatch.\n"
+			"\t(sscanf) %p != %p (bu_sscanf).\n",
+			val, bu_val);
+	    }
+	    val = bu_val = NULL;
+	    break;
 	case SCAN_FLOAT:
 	    CHECK_FLOAT(float, e);
 	    break;
@@ -237,10 +248,14 @@ test_sscanf(int type, const char *src, const char *fmt) {
 	default:
 	    bu_exit(1, "Error: test_sscanf was given an unrecognized pointer type.\n");
 	}
-	bu_free(val, "test_sscanf val");
-	val = NULL;
-	bu_free(bu_val, "test_sscanf bu_val");
-	bu_val = NULL;
+	if (val != NULL) {
+	    bu_free(val, "test_sscanf val");
+	    val = NULL;
+	}
+	if (bu_val != NULL) {
+	    bu_free(bu_val, "test_sscanf bu_val");
+	    bu_val = NULL;
+	}
     }
 } /* test_sscanf */
 
@@ -516,6 +531,11 @@ main(int argc, char *argv[])
 
     doNumericTests();
     doStringTests();
+
+    /* pointer tests */
+    test_sscanf(SCAN_POINTER, "0", "%p");
+    test_sscanf(SCAN_POINTER, "0xf", "%p");
+    test_sscanf(SCAN_POINTER, bu_cpp_xstr(LARGE_UINT_HEX), "%p");
 
     printf("bu_sscanf: testing complete\n");
     return 0;
