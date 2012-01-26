@@ -288,17 +288,17 @@ test_sscanf(int type, const char *src, const char *fmt) {
 #define LARGE_INT_HEX +0x7FFF
 #define LARGE_UINT_HEX 0xFFFF
 
-#define SMALL_LONG -2147483647L /* -2^31 + 1 */
-#define LARGE_LONG +2147483647L /*  2^31 - 1 */
-#define LARGE_ULONG 4294967295U /*  2^32 - 1 */
+#define SMALL_LONG -2147483647 /* -2^31 + 1 */
+#define LARGE_LONG +2147483647 /*  2^31 - 1 */
+#define LARGE_ULONG 4294967295 /*  2^32 - 1 */
 
-#define SMALL_LONG_OCT -17777777777L
-#define LARGE_LONG_OCT +17777777777L
-#define LARGE_ULONG_OCT 37777777777U
+#define SMALL_LONG_OCT -17777777777
+#define LARGE_LONG_OCT +17777777777
+#define LARGE_ULONG_OCT 37777777777
 
-#define SMALL_LONG_HEX -0x7FFFFFFFL
-#define LARGE_LONG_HEX +0x7FFFFFFFL
-#define LARGE_ULONG_HEX 0xFFFFFFFFU
+#define SMALL_LONG_HEX -0x7FFFFFFF
+#define LARGE_LONG_HEX +0x7FFFFFFF
+#define LARGE_ULONG_HEX 0xFFFFFFFF
 
 static void
 doNumericTests()
@@ -317,12 +317,7 @@ doNumericTests()
     test_sscanf(SCAN_USHORTSHORT, str, "%hh" bu_cpp_str(fmt)); \
     test_sscanf(SCAN_USHORT, str, "%h" bu_cpp_str(fmt)); \
     test_sscanf(SCAN_UINT, str, "%" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_ULONG, str, "%l" bu_cpp_str(fmt)); \
-    /* include equivalent suffixed versions of str */ \
-    test_sscanf(SCAN_ULONG, str "u", "%l" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_ULONG, str "U", "%l" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_ULONG, str "l", "%l" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_ULONG, str "L", "%l" bu_cpp_str(fmt));
+    test_sscanf(SCAN_ULONG, str, "%l" bu_cpp_str(fmt));
 
     TEST_SIGNED_FMTS("0", d);
     TEST_SIGNED_FMTS("0", i);
@@ -413,25 +408,13 @@ doNumericTests()
 
     /* float tests */
 #define FLOAT_VARIANT(letter) \
-    test_sscanf(SCAN_FLOAT, "0.0F", "%" bu_cpp_str(letter)); \
-    test_sscanf(SCAN_FLOAT, "0.0f", "%" bu_cpp_str(letter)); \
     test_sscanf(SCAN_FLOAT, "0.0", "%" bu_cpp_str(letter)); \
-    test_sscanf(SCAN_FLOAT, "0.0e0F", "%" bu_cpp_str(letter)); \
-    test_sscanf(SCAN_FLOAT, "0.0e0f", "%" bu_cpp_str(letter)); \
+    test_sscanf(SCAN_FLOAT, bu_cpp_xstr(FLT_MAX), "%" bu_cpp_str(letter)); \
+    test_sscanf(SCAN_FLOAT, bu_cpp_xstr(FLT_MIN), "%" bu_cpp_str(letter)); \
 \
     test_sscanf(SCAN_DOUBLE, "0.0", "%l" bu_cpp_str(letter)); \
     test_sscanf(SCAN_DOUBLE, "0.0e0", "%l" bu_cpp_str(letter)); \
     test_sscanf(SCAN_DOUBLE, "0.0E0", "%l" bu_cpp_str(letter)); \
-\
-    test_sscanf(SCAN_LDOUBLE, "0.0L", "%L" bu_cpp_str(letter)); \
-    test_sscanf(SCAN_LDOUBLE, "0.0e0L", "%L" bu_cpp_str(letter)); \
-    test_sscanf(SCAN_LDOUBLE, "0.0E0L", "%L" bu_cpp_str(letter)); \
-    test_sscanf(SCAN_LDOUBLE, "0.0l", "%L" bu_cpp_str(letter)); \
-    test_sscanf(SCAN_LDOUBLE, "0.0e0l", "%L" bu_cpp_str(letter)); \
-    test_sscanf(SCAN_LDOUBLE, "0.0E0l", "%L" bu_cpp_str(letter)); \
-\
-    test_sscanf(SCAN_FLOAT, bu_cpp_xstr(FLT_MAX), "%" bu_cpp_str(letter)); \
-    test_sscanf(SCAN_FLOAT, bu_cpp_xstr(FLT_MIN), "%" bu_cpp_str(letter)); \
     test_sscanf(SCAN_DOUBLE, bu_cpp_xstr(DBL_MAX), "%l" bu_cpp_str(letter)); \
     test_sscanf(SCAN_DOUBLE, bu_cpp_xstr(DBL_MIN), "%l" bu_cpp_str(letter)); \
     test_sscanf(SCAN_LDOUBLE, bu_cpp_xstr(LDBL_MAX), "%L" bu_cpp_str(letter)); \
@@ -504,10 +487,13 @@ doStringTests()
     test_sscanf_s(" \t\naBc", " %[a-z]");  /* should assign "a"      */
 }
 
+/* non-conversion does do SOMETHING, so make sure it did what it was
+ * supposed to do, and didn't assign anything
+ */
 int
 main(int argc, char *argv[])
 {
-    int ret, bu_ret;
+    int ret, bu_ret, count, bu_count;
 
     if (argc > 1) {
 	printf("Warning: %s takes no arguments.\n", argv[0]);
@@ -535,23 +521,48 @@ main(int argc, char *argv[])
 
     /* pointer tests */
     test_sscanf(SCAN_POINTER, "0", "%p");
-    test_sscanf(SCAN_POINTER, "0xf", "%p");
     test_sscanf(SCAN_POINTER, bu_cpp_xstr(LARGE_UINT_HEX), "%p");
 
-    /* %% non-conversion */
-#define PCT_SRC_STR "%%n    %"
-#define PCT_FMT_STR "%%%%n %%"
-    puts("\"" PCT_SRC_STR "\", \"" PCT_FMT_STR "\"");
-    ret = sscanf(PCT_SRC_STR, PCT_FMT_STR);
-    bu_ret = bu_sscanf(PCT_SRC_STR, PCT_FMT_STR);
+    /* non-conversions */
 
-    if (ret != 0) {
-	bu_exit(1, "Error: sscanf returned %d. Expected 0.\n", ret);
+#define PRINT_SRC_FMT(src, fmt) \
+    puts("\"" src "\", \"" fmt "\"");
+
+#define CHECK_NO_ASSIGNMENT \
+    if (ret != 0) { \
+	bu_exit(1, "Error: sscanf returned %d. Expected 0.\n", ret); \
+    } \
+    if (bu_ret != ret) { \
+	printf("\t[FAIL] sscanf returned %d but bu_sscanf returned %d.\n", \
+		ret, bu_ret); \
     }
-    if (bu_ret != ret) {
-	printf("\t[FAIL] sscanf returned %d but bu_sscanf returned %d.\n",
-		ret, bu_ret);
+
+#define COMPARE_COUNTS \
+    if (bu_count != count) { \
+	printf("\t[FAIL] sscanf consumed %d chars, " \
+		"but bu_sscanf consumed %d.\n", count, bu_count); \
     }
+
+#define TEST_SSCANF_NOCONV(src, fmt) \
+    PRINT_SRC_FMT(src, fmt); \
+    count = bu_count = 0; \
+    ret = sscanf(src, fmt, &count); \
+    bu_ret = bu_sscanf(src, fmt, &bu_count); \
+    CHECK_NO_ASSIGNMENT; \
+    COMPARE_COUNTS;
+
+    /* %n - don't convert/assign, but do store consumed char count */
+    TEST_SSCANF_NOCONV(". \tg\t\tn i    RTSA si sihT", ". g n i RTSA%n");
+    TEST_SSCANF_NOCONV(" foo", "foo%n");
+
+    /* %% - don't convert/assign, but do scan literal % */
+    TEST_SSCANF_NOCONV("%%n    %", "%%%%n %%%n");
+
+    /* suppressed assignments */
+    TEST_SSCANF_NOCONV(bu_cpp_xstr(LARGE_INT), "%*d%n");
+    TEST_SSCANF_NOCONV(bu_cpp_xstr(LARGE_UINT), "%*u%n");
+    TEST_SSCANF_NOCONV(bu_cpp_xstr(LDBL_MAX), "%*f%n");
+    TEST_SSCANF_NOCONV("42 42  4.2e1", "%*d %*u %*f%n");
 
     printf("bu_sscanf: testing complete\n");
     return 0;
