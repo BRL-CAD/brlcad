@@ -427,14 +427,55 @@ doStringTests()
     test_sscanf_s(" \t\naBc", " %[a-z]");  /* should assign "a"      */
 }
 
+static void
+doPointerTests()
+{
+    test_sscanf(SCAN_POINTER, "0", "%p");
+    test_sscanf(SCAN_POINTER, bu_cpp_xstr(UNSIGNED_L_HEX), "%p");
+}
+
+static void
+doNonConversionTests()
+{
+    int ret, bu_ret, count, bu_count;
+
+#define TEST_SSCANF_NOCONV(src, fmt) \
+    puts("\"" src "\", \"" fmt "\""); \
+    count = bu_count = 0; \
+    ret = sscanf(src, fmt, &count); \
+    bu_ret = bu_sscanf(src, fmt, &bu_count); \
+    if (ret != 0) { \
+	bu_exit(1, "Error: sscanf returned %d. Expected 0.\n", ret); \
+    } \
+    if (bu_ret != ret) { \
+	printf("\t[FAIL] sscanf returned %d but bu_sscanf returned %d.\n", \
+		ret, bu_ret); \
+    } \
+    if (bu_count != count) { \
+	printf("\t[FAIL] sscanf consumed %d chars, " \
+		"but bu_sscanf consumed %d.\n", count, bu_count); \
+    }
+
+    /* %n - don't convert/assign, but do store consumed char count */
+    TEST_SSCANF_NOCONV(". \tg\t\tn i    RTSA si sihT", ". g n i RTSA%n");
+    TEST_SSCANF_NOCONV(" foo", "foo%n");
+
+    /* %% - don't convert/assign, but do scan literal % */
+    TEST_SSCANF_NOCONV("%%n    %", "%%%%n %%%n");
+
+    /* suppressed assignments */
+    TEST_SSCANF_NOCONV(bu_cpp_xstr(SIGNED_DEC), "%*d%n");
+    TEST_SSCANF_NOCONV(bu_cpp_xstr(UNSIGNED_DEC), "%*u%n");
+    TEST_SSCANF_NOCONV(bu_cpp_xstr(DBL_MAX), "%*f%n");
+    TEST_SSCANF_NOCONV("42 42  4.2e1", "%*d %*u %*f%n");
+}
+
 /* non-conversion does do SOMETHING, so make sure it did what it was
  * supposed to do, and didn't assign anything
  */
 int
 main(int argc, char *argv[])
 {
-    int ret, bu_ret, count, bu_count;
-
     if (argc > 1) {
 	printf("Warning: %s takes no arguments.\n", argv[0]);
     }
@@ -458,51 +499,11 @@ main(int argc, char *argv[])
 
     doNumericTests();
     doStringTests();
-
-    /* pointer tests */
-    test_sscanf(SCAN_POINTER, "0", "%p");
-    test_sscanf(SCAN_POINTER, bu_cpp_xstr(UNSIGNED_L_HEX), "%p");
+    doPointerTests();
+    doNonConversionTests();
 
     /* non-conversions */
 
-#define PRINT_SRC_FMT(src, fmt) \
-    puts("\"" src "\", \"" fmt "\"");
-
-#define CHECK_NO_ASSIGNMENT \
-    if (ret != 0) { \
-	bu_exit(1, "Error: sscanf returned %d. Expected 0.\n", ret); \
-    } \
-    if (bu_ret != ret) { \
-	printf("\t[FAIL] sscanf returned %d but bu_sscanf returned %d.\n", \
-		ret, bu_ret); \
-    }
-
-#define COMPARE_COUNTS \
-    if (bu_count != count) { \
-	printf("\t[FAIL] sscanf consumed %d chars, " \
-		"but bu_sscanf consumed %d.\n", count, bu_count); \
-    }
-
-#define TEST_SSCANF_NOCONV(src, fmt) \
-    PRINT_SRC_FMT(src, fmt); \
-    count = bu_count = 0; \
-    ret = sscanf(src, fmt, &count); \
-    bu_ret = bu_sscanf(src, fmt, &bu_count); \
-    CHECK_NO_ASSIGNMENT; \
-    COMPARE_COUNTS;
-
-    /* %n - don't convert/assign, but do store consumed char count */
-    TEST_SSCANF_NOCONV(". \tg\t\tn i    RTSA si sihT", ". g n i RTSA%n");
-    TEST_SSCANF_NOCONV(" foo", "foo%n");
-
-    /* %% - don't convert/assign, but do scan literal % */
-    TEST_SSCANF_NOCONV("%%n    %", "%%%%n %%%n");
-
-    /* suppressed assignments */
-    TEST_SSCANF_NOCONV(bu_cpp_xstr(SIGNED_DEC), "%*d%n");
-    TEST_SSCANF_NOCONV(bu_cpp_xstr(UNSIGNED_DEC), "%*u%n");
-    TEST_SSCANF_NOCONV(bu_cpp_xstr(LDBL_MAX), "%*f%n");
-    TEST_SSCANF_NOCONV("42 42  4.2e1", "%*d %*u %*f%n");
 
     printf("bu_sscanf: testing complete\n");
     return 0;
