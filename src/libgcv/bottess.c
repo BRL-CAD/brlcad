@@ -38,11 +38,6 @@
 #include "soup.h"
 #include "tri_intersect.h"
 
-#ifdef HIDDEN
-# undef HIDDEN
-#endif
-#define HIDDEN /**/
-
 struct gcv_data {
     void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
 };
@@ -50,10 +45,10 @@ struct gcv_data {
 
 /* assume 4096, seems common enough. a portable way to get to PAGE_SIZE might be
  * better. */
-HIDDEN const int faces_per_page = 4096 / sizeof(struct face_s);
+const int faces_per_page = 4096 / sizeof(struct face_s);
 
 
-HIDDEN int
+int
 soup_rm_face(struct soup_s *s, unsigned long int i)
 {
     if(i>=s->nfaces) {
@@ -65,7 +60,7 @@ soup_rm_face(struct soup_s *s, unsigned long int i)
 }
 
 
-HIDDEN int
+int
 soup_add_face_precomputed(struct soup_s *s, point_t a, point_t b , point_t c, plane_t d, uint32_t foo)
 {
     struct face_s *f;
@@ -95,7 +90,7 @@ soup_add_face_precomputed(struct soup_s *s, point_t a, point_t b , point_t c, pl
 }
 
 
-HIDDEN int
+int
 soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn_tol *tol) {
     plane_t p;
 
@@ -109,7 +104,7 @@ soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn
 long int splitz = 0;
 long int splitty = 0;
 
-HIDDEN int
+int
 split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], struct face_s *opp_face, const struct bn_tol *tol)
 {
     struct face_s *f = s->faces+fid;
@@ -242,7 +237,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 
 /* returns 0 to continue, 1 if the left face was split, 2 if the right face was
  * split */
-HIDDEN int
+int
 split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face, const struct bn_tol *tol) {
     struct face_s *lf, *rf;
     vect_t isectpt[2] = {{0, 0, 0}, {0, 0, 0}};
@@ -263,7 +258,7 @@ split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *righ
 }
 
 
-HIDDEN struct soup_s *
+struct soup_s *
 bot2soup(struct rt_bot_internal *bot, const struct bn_tol *tol)
 {
     struct soup_s *s;
@@ -287,7 +282,7 @@ bot2soup(struct rt_bot_internal *bot, const struct bn_tol *tol)
 }
 
 
-HIDDEN struct nmgregion *
+struct nmgregion *
 soup2nmg(struct soup_s *soup, const struct bn_tol *UNUSED(tol))
 {
     unsigned int i;
@@ -342,7 +337,7 @@ soup2nmg(struct soup_s *soup, const struct bn_tol *UNUSED(tol))
 }
 
 
-HIDDEN void
+void
 free_soup(struct soup_s *s) {
     if(s == NULL)
 	bu_bomb("null soup");
@@ -353,7 +348,7 @@ free_soup(struct soup_s *s) {
 }
 
 
-HIDDEN union tree *
+union tree *
 invert(union tree *tree)
 {
     struct soup_s *s;
@@ -381,7 +376,7 @@ invert(union tree *tree)
 }
 
 
-HIDDEN void
+void
 split_faces(union tree *left_tree, union tree *right_tree, const struct bn_tol *tol)
 {
     struct soup_s *l, *r;
@@ -418,7 +413,7 @@ split_faces(union tree *left_tree, union tree *right_tree, const struct bn_tol *
 }
 
 
-HIDDEN union tree *
+union tree *
 compose(union tree *left_tree, union tree *right_tree, unsigned long int face_status1, unsigned long int UNUSED(face_status2), unsigned long int face_status3)
 {
     struct soup_s *l, *r;
@@ -450,7 +445,7 @@ compose(union tree *left_tree, union tree *right_tree, unsigned long int face_st
 }
 
 
-HIDDEN union tree *
+union tree *
 evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     RT_CK_TREE(tr);
