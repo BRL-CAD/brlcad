@@ -443,6 +443,8 @@ if (flags & UNSIGNED) { \
 		SSCANF_SIGNED_UNSIGNED(long int*);
 	    } else if (flags & LONGLONG) {
 		SSCANF_SIGNED_UNSIGNED(long long int*);
+	    } else if (flags & POINTER) {
+		SSCANF_TYPE(void*);
 	    } else if (flags & PTRDIFFT) {
 		SSCANF_TYPE(ptrdiff_t*);
 	    } else if (flags & SIZET) {
