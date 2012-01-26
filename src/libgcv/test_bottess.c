@@ -227,16 +227,36 @@ test_face_splits()
 #undef ZORF
     }
 
+    /* TODO: add more cases */
+
     return count;
+}
+
+int test_invert() 
+{
+    return -1; 
+}
+
+int test_compose() 
+{ 
+    return -1; 
+}
+
+int test_evaluate() 
+{ 
+    return -1; 
 }
 
 int
 main(void)
 {
-#define TRY(STR,FNC) { int rval = FNC(); printf("RESULT:%18s: \033[1;%dm%d\033[m failures\n", STR, rval==0?32:31, rval); }
-    TRY("TRI INTERSECTION", test_tri_intersections);
-    TRY("SINGLE FACE SPLIT", test_face_split_single);
-    TRY("FACE SPLITTING", test_face_splits);
+#define TRY(STR,FNC) { int rval = FNC(); printf("RESULT:%18s: \033[1;", STR); if(rval) printf("31m%d\033[m failures\n",  rval); else printf("32mOK\033[m\n"); }
+    TRY("tri intersection", test_tri_intersections);
+    TRY("single face split", test_face_split_single);
+    TRY("face splitting", test_face_splits);
+    TRY("invert", test_invert);
+    TRY("compose", test_compose);
+    TRY("evaluate", test_evaluate);
 #undef TRY
     return 0;
 }
