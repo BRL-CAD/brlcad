@@ -215,6 +215,19 @@ mark_as_advanced(CMAKE_SYSTEM_IGNORE_PATH)
 include(${CMAKE_SOURCE_DIR}/misc/CMake/CMakeFiles.cmake)
 
 #---------------------------------------------------------------------
+# Define the current BRL-CAD version.
+# See HACKING for details on how to properly update the version
+
+file(READ ${BRLCAD_SOURCE_DIR}/include/conf/MAJOR BRLCAD_MAJOR_VERSION)
+string(STRIP ${BRLCAD_MAJOR_VERSION} BRLCAD_MAJOR_VERSION)
+file(READ ${BRLCAD_SOURCE_DIR}/include/conf/MINOR BRLCAD_MINOR_VERSION)
+string(STRIP ${BRLCAD_MINOR_VERSION} BRLCAD_MINOR_VERSION)
+file(READ ${BRLCAD_SOURCE_DIR}/include/conf/PATCH BRLCAD_PATCH_VERSION)
+string(STRIP ${BRLCAD_PATCH_VERSION} BRLCAD_PATCH_VERSION)
+
+set(BRLCAD_VERSION "${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PATCH_VERSION}")
+
+#---------------------------------------------------------------------
 # Define relative install locations.  Don't set these if they have already
 # been set by some other means (like a higher level CMakeLists.txt file
 # including this one.)
@@ -396,17 +409,6 @@ endif(_orig_lc_messages)
 if(_orig_lang)
   set(ENV{LANG}        C)
 endif(_orig_lang)
-
-#---------------------------------------------------------------------
-# See HACKING for details on how to properly update the version
-file(READ ${BRLCAD_SOURCE_DIR}/include/conf/MAJOR BRLCAD_MAJOR_VERSION)
-string(STRIP ${BRLCAD_MAJOR_VERSION} BRLCAD_MAJOR_VERSION)
-file(READ ${BRLCAD_SOURCE_DIR}/include/conf/MINOR BRLCAD_MINOR_VERSION)
-string(STRIP ${BRLCAD_MINOR_VERSION} BRLCAD_MINOR_VERSION)
-file(READ ${BRLCAD_SOURCE_DIR}/include/conf/PATCH BRLCAD_PATCH_VERSION)
-string(STRIP ${BRLCAD_PATCH_VERSION} BRLCAD_PATCH_VERSION)
-
-set(BRLCAD_VERSION "${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PATCH_VERSION}")
 
 #---------------------------------------------------------------------
 # Write out entries to populate a tm struct to be used for time deltas
