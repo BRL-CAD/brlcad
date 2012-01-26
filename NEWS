@@ -14,7 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * added -h option to nirt to suppress header printing - Cliff Yapp
-# fix attribute reporting in nirt - Cliff Yapp
+* fixed nirt attribute reporting for specified attributes - Cliff Yapp
 * fixed ebm/dsp/vol/hf corruption on 64-bit big endian - Sean Morrison
 * fixed step-g importer memory management issues - Keith Bowman
 * improved tab-completion behavior for mged and archer - Sean Morrison
