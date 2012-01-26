@@ -255,7 +255,7 @@ int test_compose()
     /* fill in right tree */
     PREP;
     compose(&l, r, 0, 0, 0);	/* r is destroyed */
-    if(ls.nfaces != 0) { printf("Erm, 0+0=%d?\n", ls.nfaces); rval++; }
+    if(ls.nfaces != 0) { printf("Erm, 0+0=%lu?\n", ls.nfaces); rval++; }
     /* verify left tree */
 #undef PREP
     return rval; 
