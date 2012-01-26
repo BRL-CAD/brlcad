@@ -411,8 +411,13 @@ again:
 	GET_FORMAT_PART;
 
 #define SSCANF_TYPE(type) \
-partAssigned = sscanf(&src[numCharsConsumed], partFmt, va_arg(ap, type), \
-		      &partConsumed);
+    if (flags & SUPPRESS) { \
+	partAssigned = sscanf(&src[numCharsConsumed], partFmt, \
+		&partConsumed); \
+    } else { \
+	partAssigned = sscanf(&src[numCharsConsumed], partFmt, \
+		va_arg(ap, type), &partConsumed); \
+    }
 
 #define SSCANF_SIGNED_UNSIGNED(type) \
 if (flags & UNSIGNED) { \
