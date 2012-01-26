@@ -312,7 +312,7 @@ if(NOT IS_SUBBUILD)
     endif(${name} MATCHES "^lib*")
     # Put ALL library outputs, runtime (i.e. DLL) or otherwise, in the LIB directory 
     # Per discussion from http://www.cmake.org/pipermail/cmake/2011-July/045591.html
-    set_target_properties(${name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${LIB_DIR})
+    set_target_properties(${name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${LIB_DIR}")
     set_property(GLOBAL APPEND PROPERTY CMAKE_LIBRARY_TARGET_LIST ${name})
   endfunction(add_library)
 
