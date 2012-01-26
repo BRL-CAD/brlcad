@@ -871,7 +871,13 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     if (dir_dot_z < 0.0)
 	dir_dot_z = -dir_dot_z;
 
-    if (ZERO(dir_dot_z - 1.0)) {
+    /* Previously using SMALL_FASTF. A tolerance of dist_sq is
+     * also too small (i.e. 1.0-16); using dist. There were cases
+     * where dir_dot_z was very close to 1.0, but not close enough
+     * to switch to using u vector as the ray direction and yet still
+     * close enough to cause a miss when there should have been a hit.
+     */
+    if (NEAR_EQUAL(dir_dot_z, 1.0, extr_tol.dist)) {
 	/* ray is parallel to extrusion vector set mode to just count
 	 * intersections for Jordan Theorem
 	 */
@@ -902,6 +908,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		VSUB2(tmp, extr->verts[lsg->end], extr->verts[lsg->start]);
 		VMOVE(tmp2, extr->verts[lsg->start]);
 		code = bn_isect_line2_line2(dist, ray_start, ray_dir, tmp2, tmp, &extr_tol);
+
 		if (code < 1)
 		    continue;
 
