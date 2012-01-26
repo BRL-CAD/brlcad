@@ -215,6 +215,53 @@ mark_as_advanced(CMAKE_SYSTEM_IGNORE_PATH)
 include(${CMAKE_SOURCE_DIR}/misc/CMake/CMakeFiles.cmake)
 
 #---------------------------------------------------------------------
+# Define relative install locations.  Don't set these if they have already
+# been set by some other means (like a higher level CMakeLists.txt file
+# including this one.)
+
+# The location in which to install BRLCAD executables.
+if(NOT BIN_DIR)
+  set(BIN_DIR bin)
+endif(NOT BIN_DIR)
+
+# The location in which to install BRLCAD header files.
+if(NOT INCLUDE_DIR)
+  set(INCLUDE_DIR include)
+endif(NOT INCLUDE_DIR)
+
+# The location in which to install BRL-CAD libraries.
+if(NOT LIB_DIR)
+  set(LIB_DIR lib)
+endif(NOT LIB_DIR)
+
+# The location in which to install BRL-CAD configuration files.
+if(NOT CONF_DIR)
+  set(CONF_DIR etc)
+endif(NOT CONF_DIR)
+
+# The location in which to install CMake scripts for packaging BRLCAD.
+if(NOT PACKAGE_DIR)
+  set(PACKAGE_DIR lib)
+endif(NOT PACKAGE_DIR)
+
+# The location in which to install BRL-CAD data files
+if(NOT DATA_DIR)
+  set(DATA_DIR "share/brlcad/${BRLCAD_VERSION}")
+endif(NOT DATA_DIR)
+
+# The location in which to install BRL-CAD Manual pages
+if(NOT MAN_DIR)
+  set(MAN_DIR ${DATA_DIR}/man)
+endif(NOT MAN_DIR)
+
+# The location in which to install BRL-CAD documentation files
+if(NOT DOC_DIR)
+  set(DOC_DIR ${DATA_DIR}/doc)
+endif(NOT DOC_DIR)
+
+
+
+#---------------------------------------------------------------------
 # By default (as of version 2.8.2) CMake does not provide access to
 # global lists of executable and library targets.  This is useful
 # in a number of situations related to formulating custom rules and
@@ -263,6 +310,9 @@ if(NOT IS_SUBBUILD)
     if(${name} MATCHES "^lib*")
       set_target_properties(${name} PROPERTIES PREFIX "")
     endif(${name} MATCHES "^lib*")
+    # Put ALL library outputs, runtime (i.e. DLL) or otherwise, in the LIB directory 
+    # Per discussion from http://www.cmake.org/pipermail/cmake/2011-July/045591.html
+    set_target_properties(${name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${LIB_DIR})
     set_property(GLOBAL APPEND PROPERTY CMAKE_LIBRARY_TARGET_LIST ${name})
   endfunction(add_library)
 
@@ -470,9 +520,9 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 
 # the RPATH/INSTALL_NAME_DIR to be used when installing
 if (NOT APPLE)
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:\$ORIGIN/../lib")
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:\$ORIGIN/../${LIB_DIR}")
 endif(NOT APPLE)
-set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}")
 
 # add the automatically determined parts of the RPATH which point to
 # directories outside the build tree to the install RPATH
@@ -482,13 +532,13 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 # Output directories - this is where built library and executable
 # files will be placed after building but prior to install.
 if(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building all libraries.")
 endif(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
 if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building all archives.")
 endif(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
 if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/${BIN_DIR} CACHE INTERNAL "Single output directory for building all executables.")
 endif(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 
 # Take the hint from http://forum.openscenegraph.org/viewtopic.php?t=6926 and
@@ -497,64 +547,15 @@ endif(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   string(TOUPPER "${CFG_TYPE}" CFG_TYPE)
   if(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}")
-    set("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}" ${BRLCAD_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building ${CFG_TYPE} libraries.")
+    set("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}" ${BRLCAD_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} libraries.")
   endif(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}")
   if(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}")
-    set("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}" ${BRLCAD_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building ${CFG_TYPE} archives.")
+    set("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}" ${BRLCAD_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} archives.")
   endif(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}")
   if(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}")
-    set("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}" ${BRLCAD_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building ${CFG_TYPE} executables.")
+    set("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}" ${BRLCAD_BINARY_DIR}/${BIN_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} executables.")
   endif(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}")
 endforeach()
-
-#---------------------------------------------------------------------
-# Configure install locations.  Don't set these if they have already
-# been set by some other means (like a higher level CMakeLists.txt file
-# including this one.)
-
-# The location in which to install BRLCAD executables.
-if(NOT BIN_DIR)
-  set(BIN_DIR bin)
-endif(NOT BIN_DIR)
-
-# The location in which to install BRLCAD header files.
-if(NOT INCLUDE_DIR)
-  set(INCLUDE_DIR include)
-endif(NOT INCLUDE_DIR)
-
-# The location in which to install BRL-CAD libraries.
-if(NOT LIB_DIR)
-  if(NOT WIN32)
-    set(LIB_DIR lib)
-  else(NOT WIN32)
-    set(LIB_DIR bin)
-  endif(NOT WIN32)
-endif(NOT LIB_DIR)
-
-# The location in which to install BRL-CAD configuration files.
-if(NOT CONF_DIR)
-  set(CONF_DIR etc)
-endif(NOT CONF_DIR)
-
-# The location in which to install CMake scripts for packaging BRLCAD.
-if(NOT PACKAGE_DIR)
-  set(PACKAGE_DIR lib)
-endif(NOT PACKAGE_DIR)
-
-# The location in which to install BRL-CAD data files
-if(NOT DATA_DIR)
-  set(DATA_DIR "share/brlcad/${BRLCAD_VERSION}")
-endif(NOT DATA_DIR)
-
-# The location in which to install BRL-CAD Manual pages
-if(NOT MAN_DIR)
-  set(MAN_DIR ${DATA_DIR}/man)
-endif(NOT MAN_DIR)
-
-# The location in which to install BRL-CAD documentation files
-if(NOT DOC_DIR)
-  set(DOC_DIR ${DATA_DIR}/doc)
-endif(NOT DOC_DIR)
 
 #---------------------------------------------------------------------
 # We will need a brlcad_config.h.in file to hold all the #cmakedefine
@@ -2029,8 +2030,8 @@ if(NOT IS_SUBBUILD)
       COMMAND ${CMAKE_COMMAND} -E remove_directory	${CPACK_SOURCE_PACKAGE_FILE_NAME}
       COMMAND ${CMAKE_COMMAND} -E remove_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
       COMMAND ${CMAKE_COMMAND} -E echo "Stage 8:  Run benchmark testing from tgz archive installed build."
-      COMMAND TIMEFRAME=1 _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install/bin/benchmark	run
-      COMMAND _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install/bin/benchmark	clean
+      COMMAND TIMEFRAME=1 _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install/${BIN_DIR}/benchmark run
+      COMMAND _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install/${BIN_DIR}/benchmark clean
       COMMAND ${CMAKE_COMMAND} -E echo "Stage 9: Cleanup."
       COMMAND ${CMAKE_COMMAND} -E remove summary
       COMMAND ${CMAKE_COMMAND} -E remove run-*.log
@@ -2059,8 +2060,8 @@ if(NOT IS_SUBBUILD)
       COMMAND ${CMAKE_COMMAND} -E remove_directory	${CPACK_SOURCE_PACKAGE_FILE_NAME}
       COMMAND ${CMAKE_COMMAND} -E remove_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
       COMMAND ${CMAKE_COMMAND} -E echo "Stage 8:  Run benchmark testing from tgz archive installed build."
-      COMMAND TIMEFRAME=1 _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install/bin/benchmark	run
-      COMMAND _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install/bin/benchmark	clean
+      COMMAND TIMEFRAME=1 _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install/${BIN_DIR}/benchmark run
+      COMMAND _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install/${BIN_DIR}/benchmark clean
       COMMAND ${CMAKE_COMMAND} -E echo "Stage 9: Cleanup."
       COMMAND ${CMAKE_COMMAND} -E remove summary
       COMMAND ${CMAKE_COMMAND} -E remove run-*.log
