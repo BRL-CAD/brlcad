@@ -239,6 +239,43 @@ int test_invert()
 
 int test_compose() 
 { 
+    union tree l, r;
+    struct soup_s ls, rs;
+    struct model lm, rm;
+    struct nmgregion lnr, rnr;
+
+    /* assembly tree linkages */
+    l.magic = RT_TREE_MAGIC;
+    ls.magic = SOUP_MAGIC;
+    lm.magic = NMG_MODEL_MAGIC;
+    lnr.m_p = &lm;
+    ls.faces = NULL;
+    ls.nfaces = ls.maxfaces = 0;
+
+    r.magic = RT_TREE_MAGIC;
+    rs.magic = SOUP_MAGIC;
+    rm.magic = NMG_MODEL_MAGIC;
+    rnr.m_p = &rm;
+    rs.faces = NULL;
+    rs.nfaces = rs.maxfaces = 0;
+
+    l.tr_d.td_r = &lnr;
+    r.tr_d.td_r = &rnr;
+
+    l.tr_d.td_r->m_p = (struct model *)&ls;
+    r.tr_d.td_r->m_p = (struct model *)&rs;
+
+    /* compose simply removes drop faces, puts all faces in left and removes
+     * right. */
+
+    {
+	/* fill in left tree */
+	/* fill in right tree */
+	compose(&l, &r, 0, 0, 0);
+	/* verify left tree */
+	/* verify right tree is dead */
+    }
+
     return -1; 
 }
 
