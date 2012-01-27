@@ -16,5 +16,11 @@ bootstrap()
 }
 
 
+BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
+{
+  return bootstrap();
+}
+
+
 static bool initialized = bootstrap();
 
