@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <float.h>
 
 #include "bu.h"
 #include "vmath.h"
@@ -260,8 +259,8 @@ test_sscanf(int type, const char *src, const char *fmt) {
 
 /* Here we define printable constants that should be safe on any platform.
  *
- * Note that we don't use the macros in limits.h, because they aren't
- * necessarily printable, as in:
+ * Note that we don't use the macros in limits.h or float.h, because they
+ * aren't necessarily printable, as in:
  *     #define INT_MIN (-INT_MAX - 1)
  */
 #define   SIGNED_HH_DEC 127
@@ -284,6 +283,9 @@ test_sscanf(int type, const char *src, const char *fmt) {
 #define UNSIGNED_L_OCT 37777777777
 #define   SIGNED_L_HEX 0x7FFFFFFF
 #define UNSIGNED_L_HEX 0xFFFFFFFF
+
+#define SMALL_FLT 1.0e-37
+#define LARGE_FLT 1.0e+37
 
 static void
 doNumericTests()
@@ -353,12 +355,12 @@ doNumericTests()
     TEST_FLOAT_CONSTANT("0.0", fmt); \
     TEST_FLOAT_CONSTANT("0.0e0", fmt); \
     TEST_FLOAT_CONSTANT("0.0e1", fmt); \
-    test_sscanf(SCAN_FLOAT, bu_cpp_xstr(FLT_MIN), "%" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_FLOAT, bu_cpp_xstr(FLT_MAX), "%" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_DOUBLE, bu_cpp_xstr(DBL_MIN), "%l" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_DOUBLE, bu_cpp_xstr(DBL_MAX), "%l" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_LDOUBLE, bu_cpp_xstr(DBL_MIN), "%L" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_LDOUBLE, bu_cpp_xstr(DBL_MAX), "%L" bu_cpp_str(fmt));
+    test_sscanf(SCAN_FLOAT, bu_cpp_xstr(SMALL_FLT), "%" bu_cpp_str(fmt)); \
+    test_sscanf(SCAN_FLOAT, bu_cpp_xstr(LARGE_FLT), "%" bu_cpp_str(fmt)); \
+    test_sscanf(SCAN_DOUBLE, bu_cpp_xstr(SMALL_FLT), "%l" bu_cpp_str(fmt)); \
+    test_sscanf(SCAN_DOUBLE, bu_cpp_xstr(LARGE_FLT), "%l" bu_cpp_str(fmt)); \
+    test_sscanf(SCAN_LDOUBLE, bu_cpp_xstr(SMALL_FLT), "%L" bu_cpp_str(fmt)); \
+    test_sscanf(SCAN_LDOUBLE, bu_cpp_xstr(LARGE_FLT), "%L" bu_cpp_str(fmt));
 
     TEST_FLOAT_VARIANT(f);
     TEST_FLOAT_VARIANT(e);
@@ -509,7 +511,7 @@ doNonConversionTests()
     /* suppressed assignments */
     TEST_SSCANF_NOCONV(bu_cpp_xstr(SIGNED_DEC), "%*d%n");
     TEST_SSCANF_NOCONV(bu_cpp_xstr(UNSIGNED_DEC), "%*u%n");
-    TEST_SSCANF_NOCONV(bu_cpp_xstr(DBL_MAX), "%*f%n");
+    TEST_SSCANF_NOCONV(bu_cpp_xstr(LARGE_FLT), "%*f%n");
     TEST_SSCANF_NOCONV("42 42  4.2e1", "%*d %*u %*f%n");
 }
 
