@@ -266,17 +266,38 @@ int test_compose()
     VSET(p[0], 1,0,0); VSET(p[1], 1,1,0); VSET(p[0], 1,0,1); soup_add_face(rs,V3ARGS(p),&t);
     VSET(p[0], 2,0,0); VSET(p[1], 2,1,0); VSET(p[0], 2,0,1); soup_add_face(rs,V3ARGS(p),&t);
     for(i=0;i<rs->nfaces;i++) rs->faces[i].foo = OUTSIDE;
-    compose(&l, r, INSIDE, OUTSIDE, OUTSIDE);
-    if(ls.nfaces != 3) { rval++; printf("Missing faces\n"); }
+    compose(&l, r, INSIDE, OUTSIDE, INSIDE);
+    if(ls.nfaces != 0) { rval++; printf("Missing faces\n"); }
 
     /* test all moves, all kept */
     PREP;
-    compose(&l, r, 0, 0, 0);
+    VSET(p[0], 0,0,0); VSET(p[1], 0,1,0); VSET(p[0], 0,0,1); soup_add_face(rs,V3ARGS(p),&t);
+    VSET(p[0], 1,0,0); VSET(p[1], 1,1,0); VSET(p[0], 1,0,1); soup_add_face(rs,V3ARGS(p),&t);
+    VSET(p[0], 2,0,0); VSET(p[1], 2,1,0); VSET(p[0], 2,0,1); soup_add_face(rs,V3ARGS(p),&t);
+    for(i=0;i<rs->nfaces;i++) rs->faces[i].foo = OUTSIDE;
+    compose(&l, r, INSIDE, OUTSIDE, OUTSIDE);
+    if(ls.nfaces != 3) { rval++; printf("Missing faces\n"); }
 
     /* test partial moves */
     PREP;
-    compose(&l, r, 0, 0, 0);
+    VSET(p[0], 0,0,0); VSET(p[1], 0,1,0); VSET(p[0], 0,0,1); soup_add_face(rs,V3ARGS(p),&t);
+    VSET(p[0], 1,0,0); VSET(p[1], 1,1,0); VSET(p[0], 1,0,1); soup_add_face(rs,V3ARGS(p),&t);
+    VSET(p[0], 2,0,0); VSET(p[1], 2,1,0); VSET(p[0], 2,0,1); soup_add_face(rs,V3ARGS(p),&t);
+    rs->faces[0].foo = OUTSIDE;
+    rs->faces[1].foo = INSIDE;
+    rs->faces[2].foo = OUTSIDE;
+    compose(&l, r, INSIDE, OUTSIDE, OUTSIDE);
+    if(ls.nfaces != 2) { rval++; printf("Missing faces\n"); }
 
+    PREP;
+    VSET(p[0], 0,0,0); VSET(p[1], 0,1,0); VSET(p[0], 0,0,1); soup_add_face(rs,V3ARGS(p),&t);
+    VSET(p[0], 1,0,0); VSET(p[1], 1,1,0); VSET(p[0], 1,0,1); soup_add_face(rs,V3ARGS(p),&t);
+    VSET(p[0], 2,0,0); VSET(p[1], 2,1,0); VSET(p[0], 2,0,1); soup_add_face(rs,V3ARGS(p),&t);
+    rs->faces[0].foo = OUTSIDE;
+    rs->faces[1].foo = INSIDE;
+    rs->faces[2].foo = OUTSIDE;
+    compose(&l, r, INSIDE, OUTSIDE, INSIDE);
+    if(ls.nfaces != 1) { rval++; printf("Missing faces\n"); }
 #undef PREP
     return rval;
 }
