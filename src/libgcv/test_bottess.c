@@ -232,38 +232,54 @@ test_face_splits()
     return count;
 }
 
-int test_invert() 
+int test_invert()
 {
-    return -1; 
+    return -1;
 }
 
-int test_compose() 
-{ 
+int test_compose()
+{
     int rval = 0;
     union tree l, *r;
     struct soup_s ls, *rs;
     struct model lm, rm;
     struct nmgregion lnr, rnr;
+    struct bn_tol t;
+    point_t p[3];
+
+    t.dist = 0.005;
+    t.dist_sq = t.dist * t.dist;
 
     /* assembly tree linkages */
 #define PREP l.magic = RT_TREE_MAGIC; ls.magic = SOUP_MAGIC; lm.magic = NMG_MODEL_MAGIC; lnr.m_p = &lm; ls.faces = NULL; ls.nfaces = ls.maxfaces = 0; l.tr_d.td_r = &lnr; l.tr_d.td_r->m_p = (struct model *)&ls; r = bu_malloc(sizeof(union tree), "right tree"); rs = bu_malloc(sizeof(struct soup_s), "right soup"); r->magic = RT_TREE_MAGIC; rs->magic = SOUP_MAGIC; rm.magic = NMG_MODEL_MAGIC; rnr.m_p = &rm; rs->faces = NULL; rs->nfaces = rs->maxfaces = 0; r->tr_d.td_r = &rnr; r->tr_d.td_r->m_p = (struct model *)rs;
 
-    /* compose simply removes drop faces, puts all faces in left and removes
-     * right. */
-
-    /* fill in left tree */
-    /* fill in right tree */
+    /* test empty tree */
     PREP;
     compose(&l, r, 0, 0, 0);	/* r is destroyed */
     if(ls.nfaces != 0) { printf("Erm, 0+0=%lu?\n", ls.nfaces); rval++; }
-    /* verify left tree */
+
+    /* test no moves, all deleted */
+    PREP;
+    VSET(p[0], 0,0,0); VSET(p[1], 0,1,0); VSET(p[0], 0,0,1); soup_add_face(rs,V3ARGS(p),&t);
+    VSET(p[0], 1,0,0); VSET(p[1], 1,1,0); VSET(p[0], 1,0,1); soup_add_face(rs,V3ARGS(p),&t);
+    VSET(p[0], 2,0,0); VSET(p[1], 2,1,0); VSET(p[0], 2,0,1); soup_add_face(rs,V3ARGS(p),&t);
+    compose(&l, r, INSIDE, OUTSIDE, OUTSIDE);
+
+    /* test all moves, all kept */
+    PREP;
+    compose(&l, r, 0, 0, 0);
+
+    /* test partial moves */
+    PREP;
+    compose(&l, r, 0, 0, 0);
+
 #undef PREP
-    return rval; 
+    return rval;
 }
 
-int test_evaluate() 
-{ 
-    return -1; 
+int test_evaluate()
+{
+    return -1;
 }
 
 int
