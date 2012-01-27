@@ -12,7 +12,7 @@
 static bool
 bootstrap()
 {
-  return SetDllDirectory(BRLCAD_ROOT "\lib");
+  return SetDllDirectory(BRLCAD_ROOT "\\lib");
 }
 
 
