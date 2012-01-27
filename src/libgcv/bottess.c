@@ -424,7 +424,7 @@ compose(union tree *left_tree, union tree *right_tree, unsigned long int face_st
     l = (struct soup_s *)left_tree->tr_d.td_r->m_p;
     r = (struct soup_s *)right_tree->tr_d.td_r->m_p;
 
-    /* group component stuff? 
+    /* group component stuff?
      * obj1, vert, ind, col, facestatus1, facestatus2
      * obj2, vert, ind, col, facestatus3, facestatus3 ??
      */
@@ -437,7 +437,7 @@ compose(union tree *left_tree, union tree *right_tree, unsigned long int face_st
     if(r->nfaces>0)
 	for(i=r->nfaces-1;i>=0;i--)
 	    if(r->faces[i].foo != face_status3)
-		soup_rm_face(l, i);
+		soup_rm_face(r, i);
     for(i=0;i<(int)r->nfaces;i++)
 	soup_add_face_precomputed(l, V3ARGS(r->faces[i].vert), r->faces[i].plane, r->faces[i].foo);
 
