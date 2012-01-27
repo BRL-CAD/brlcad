@@ -405,26 +405,69 @@ test_sscanf_s(const char *src, const char *fmt)
 static void
 doStringTests()
 {
+    int bu_ret;
+    char buf[STR_SIZE];
+    char *cp;
+
+#define TEST_STR_SPACE " \t\naBc\n"
+#define TEST_STR_NOSPACE "aBc"
+
+#define TEST_TERMINATION(src, fmt) \
+    puts("\"" src "\", \"" fmt "\""); \
+    /* init so that 'X' appears after the last char written by bu_sscanf */ \
+    memset(buf, 'X', STR_SIZE); \
+    bu_ret = bu_sscanf(src, fmt, buf); \
+    if (bu_ret != 1) { \
+	printf("\t[FAIL] bu_sscanf returned %d. Expected 1.\n", bu_ret); \
+    } \
+    cp = strchr(buf, 'X');
+
+    /* %s should append '\0' */
+    TEST_TERMINATION(TEST_STR_SPACE, "%s");
+    if (cp != NULL) {
+	/* cp != NULL implies strchr found 'X' before finding '\0' */
+	printf("\t[FAIL] bu_sscanf didn't null-terminate %%s conversion.\n");
+    }
+
+    /* %[...] should append '\0' */
+    TEST_TERMINATION(TEST_STR_SPACE, "%[^z]");
+    if (cp != NULL) {
+	/* cp != NULL implies strchr found 'X' before finding '\0' */
+	printf("\t[FAIL] bu_sscanf null-terminated %%[...] conversion.\n");
+    }
+
+    /* %c should NOT append '\0' */
+    TEST_TERMINATION(TEST_STR_SPACE, "%" bu_cpp_xstr(STR_SIZE) "c");
+    if (cp == NULL) {
+	/* cp == NULL implies strchr found '\0' before finding 'X' */
+	printf("\t[FAIL] bu_sscanf null-terminated %%c conversion.\n");
+    }
+
     /* For %s sscanf should not include leading whitespace in the string, so
      * the following should all be quivalent.
      */
-    test_sscanf_s("aBc", "%s");
-    test_sscanf_s("aBc", " %s");
-    test_sscanf_s(" \t\naBc", "%s");
-    test_sscanf_s(" \t\naBc", " %s");
+    test_sscanf_s(TEST_STR_NOSPACE, "%s");
+    test_sscanf_s(TEST_STR_NOSPACE, " %s");
+    test_sscanf_s(TEST_STR_SPACE, "%s");
+    test_sscanf_s(TEST_STR_SPACE, " %s");
 
     /* For %c, leading whitespace should be included unless the conversion
      * specifier is preceeded by whitespace.
      */
-    test_sscanf_s(" \t\naBc", "%c");  /* should assign ' ' */
-    test_sscanf_s(" \t\naBc", " %c"); /* should assign 'a' */
+    test_sscanf_s(TEST_STR_SPACE, "%c");  /* should assign ' ' */
+    test_sscanf_s(TEST_STR_SPACE, " %c"); /* should assign 'a' */
 
     /* For %[...], should act like %s, but should assign any/only characters
      * in the class.
      */
-    test_sscanf_s(" \t\naBc", "%[^A-Z]");  /* should assign " \t\na" */
-    test_sscanf_s(" \t\naBc", " %[^A-Z]"); /* should assign "a"      */
-    test_sscanf_s(" \t\naBc", " %[a-z]");  /* should assign "a"      */
+    test_sscanf_s(TEST_STR_SPACE, "%[^A-Z]");  /* should assign " \t\na" */
+    test_sscanf_s(TEST_STR_SPACE, " %[^A-Z]"); /* should assign "a"      */
+    test_sscanf_s(TEST_STR_SPACE, " %[a-z]");  /* should assign "a"      */
+
+    /* should be able to include literal ] and - characters */
+    test_sscanf_s("[-[- ", "%[[-]");
+    test_sscanf_s(" zZ [- ", "%[^[-]");
+    test_sscanf_s(" zZ -[ ", "%[^[-]");
 }
 
 static void
@@ -470,9 +513,6 @@ doNonConversionTests()
     TEST_SSCANF_NOCONV("42 42  4.2e1", "%*d %*u %*f%n");
 }
 
-/* non-conversion does do SOMETHING, so make sure it did what it was
- * supposed to do, and didn't assign anything
- */
 int
 main(int argc, char *argv[])
 {
@@ -501,9 +541,6 @@ main(int argc, char *argv[])
     doStringTests();
     doPointerTests();
     doNonConversionTests();
-
-    /* non-conversions */
-
 
     printf("bu_sscanf: testing complete\n");
     return 0;
