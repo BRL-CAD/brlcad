@@ -431,11 +431,11 @@ compose(union tree *left_tree, union tree *right_tree, unsigned long int face_st
 
     /* remove unnecessary faces and compose a single new internal */
     if(l->nfaces>0)
-	for(i=l->nfaces;i>=0;i--)
+	for(i=l->nfaces-1;i>=0;i--)
 	    if(l->faces[i].foo != face_status1)
 		soup_rm_face(l, i);
     if(r->nfaces>0)
-	for(i=r->nfaces;i>=0;i--)
+	for(i=r->nfaces-1;i>=0;i--)
 	    if(r->faces[i].foo != face_status3)
 		soup_rm_face(l, i);
     for(i=0;i<(int)r->nfaces;i++)
