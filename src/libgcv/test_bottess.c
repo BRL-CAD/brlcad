@@ -240,6 +240,7 @@ int test_invert()
 int test_compose()
 {
     int rval = 0;
+    unsigned int i;
     union tree l, *r;
     struct soup_s ls, *rs;
     struct model lm, rm;
@@ -247,6 +248,7 @@ int test_compose()
     struct bn_tol t;
     point_t p[3];
 
+    BN_TOL_INIT(&t);
     t.dist = 0.005;
     t.dist_sq = t.dist * t.dist;
 
@@ -263,7 +265,9 @@ int test_compose()
     VSET(p[0], 0,0,0); VSET(p[1], 0,1,0); VSET(p[0], 0,0,1); soup_add_face(rs,V3ARGS(p),&t);
     VSET(p[0], 1,0,0); VSET(p[1], 1,1,0); VSET(p[0], 1,0,1); soup_add_face(rs,V3ARGS(p),&t);
     VSET(p[0], 2,0,0); VSET(p[1], 2,1,0); VSET(p[0], 2,0,1); soup_add_face(rs,V3ARGS(p),&t);
+    for(i=0;i<rs->nfaces;i++) rs->faces[i].foo = OUTSIDE;
     compose(&l, r, INSIDE, OUTSIDE, OUTSIDE);
+    if(ls.nfaces != 3) { rval++; printf("Missing faces\n"); }
 
     /* test all moves, all kept */
     PREP;
