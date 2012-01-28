@@ -323,14 +323,6 @@ if(NOT IS_SUBBUILD)
     if(${name} MATCHES "^lib*")
       set_target_properties(${name} PROPERTIES PREFIX "")
     endif(${name} MATCHES "^lib*")
-    # Put ALL library outputs, runtime (i.e. DLL) or otherwise, in the LIB directory 
-    # Per discussion from http://www.cmake.org/pipermail/cmake/2011-July/045591.html
-    # http://www.cmake.org/pipermail/cmake/2012-January/048867.html
-    set_target_properties(${name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${BRLCAD_BINARY_DIR}/${LIB_DIR}")
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE)
-      set_target_properties(${name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE} "${BRLCAD_BINARY_DIR}/${LIB_DIR}")
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     set_property(GLOBAL APPEND PROPERTY CMAKE_LIBRARY_TARGET_LIST ${name})
   endfunction(add_library)
 
