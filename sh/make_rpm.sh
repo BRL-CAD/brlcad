@@ -86,8 +86,6 @@ if test "$DNAME" = "fedora" ;then
     fcheck gcc-c++
     fcheck make
     fcheck cmake
-    fcheck libtool
-    fcheck bc
     fcheck sed
     fcheck bison
     fcheck flex
@@ -103,8 +101,6 @@ if test "$DNAME" = "openSUSE" ;then
     fcheck gcc-c++
     fcheck make
     fcheck cmake
-    fcheck libtool
-    fcheck bc
     fcheck sed
     fcheck bison
     fcheck flex

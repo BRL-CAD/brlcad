@@ -67,7 +67,7 @@ fi
 
 # unknown parameter
 if test "$1" != "-s" && test "$1" != "-b" ; then
-    ferror "Unknown first argument '$!'." "Exiting..."
+    ferror "Unknown argument \"$1\"" "Exiting..."
 fi
 
 # test if in project root
@@ -100,8 +100,6 @@ if test "$1" = "-b" ;then
     fcheck build-essential
     fcheck make 
     fcheck cmake
-    fcheck libtool
-    fcheck bc
     fcheck sed
     fcheck bison
     fcheck flex
