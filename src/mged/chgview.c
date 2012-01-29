@@ -556,10 +556,10 @@ cmd_autoview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
     struct dm_list *save_dmlp;
     struct cmd_list *save_cmd_list;
 
-    if (argc != 1) {
+    if (argc > 2) {
 	struct bu_vls vls;
 
-	bu_log("Unexpected parameter [%s]\n", argv[1]);
+	bu_log("Unexpected parameter [%s]\n", argv[2]);
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help autoview");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -584,11 +584,17 @@ cmd_autoview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	gedp->ged_gvp = view_state->vs_gvp;
 
 	{
-	    char *av[2];
+	    int ac = 1;
+	    const char *av[3];
 
 	    av[0] = "autoview";
-	    av[1] = (char *)0;
-	    ged_autoview(gedp, 1, (const char **)av);
+	    av[1] = NULL;
+	    av[2] = NULL;
+	    if (argc > 1) {
+		av[1] = argv[1];
+		ac = 2;
+	    }
+	    ged_autoview(gedp, ac, (const char **)av);
 	    view_state->vs_flag = 1;
 	}
 	(void)mged_svbase();
