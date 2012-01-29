@@ -51,7 +51,7 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
     vect_t radial;
     vect_t sqrt_small;
 
-    /* less than or near zero uses default, 0.5 scale == 2.0 factor */
+    /* less than or near zero uses default, 0.5 model scale == 2.0 view factor */
     fastf_t factor = -1.0; 
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
