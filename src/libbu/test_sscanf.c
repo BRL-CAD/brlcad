@@ -248,7 +248,7 @@ test_sscanf(int type, const char *src, const char *fmt) {
 	    break;
 	case SCAN_POINTER:
 	    if (val != bu_val) {
-		printf("\t[FAIL] conversion value mismatch.\n"
+		bu_exit(1, "\t[FAIL] conversion value mismatch.\n"
 			"\t(sscanf) %p != %p (bu_sscanf).\n",
 			val, bu_val);
 	    }
@@ -410,7 +410,7 @@ test_sscanf_s(const char *src, const char *fmt)
     CHECK_RETURNS_EQUAL(bu_ret, ret);
 
     if (!BU_STR_EQUAL(dest, bu_dest)) {
-	printf("\t[FAIL] conversion value mismatch.\n"
+	bu_exit(1, "\t[FAIL] conversion value mismatch.\n"
 		"\t(sscanf) %s != %s (bu_sscanf).\n",
 		dest, bu_dest);
     }
@@ -438,21 +438,21 @@ doStringTests()
     TEST_TERMINATION(TEST_STR_SPACE, "%s");
     if (cp != NULL) {
 	/* cp != NULL implies strchr found 'X' before finding '\0' */
-	printf("\t[FAIL] bu_sscanf didn't null-terminate %%s conversion.\n");
+	bu_exit(1, "\t[FAIL] bu_sscanf didn't null-terminate %%s conversion.\n");
     }
 
     /* %[...] should append '\0' */
     TEST_TERMINATION(TEST_STR_SPACE, "%[^z]");
     if (cp != NULL) {
 	/* cp != NULL implies strchr found 'X' before finding '\0' */
-	printf("\t[FAIL] bu_sscanf null-terminated %%[...] conversion.\n");
+	bu_exit(1, "\t[FAIL] bu_sscanf null-terminated %%[...] conversion.\n");
     }
 
     /* %c should NOT append '\0' */
     TEST_TERMINATION(TEST_STR_SPACE, "%" bu_cpp_xstr(STR_SIZE) "c");
     if (cp == NULL) {
 	/* cp == NULL implies strchr found '\0' before finding 'X' */
-	printf("\t[FAIL] bu_sscanf null-terminated %%c conversion.\n");
+	bu_exit(1, "\t[FAIL] bu_sscanf null-terminated %%c conversion.\n");
     }
 
     /* For %s sscanf should not include leading whitespace in the string, so
@@ -502,7 +502,7 @@ doNonConversionTests()
     CHECK_RETURN_VAL("sscanf", ret, 0); \
     CHECK_RETURNS_EQUAL(bu_ret, ret); \
     if (bu_count != count) { \
-	printf("\t[FAIL] sscanf consumed %d chars, " \
+	bu_exit(1, "\t[FAIL] sscanf consumed %d chars, " \
 		"but bu_sscanf consumed %d.\n", count, bu_count); \
     }
 
@@ -574,7 +574,7 @@ doWidthTests()
 	    if (str_vals[i][j] != bu_str_vals[i][j]) { \
 		str_vals[i][j + 1] = '\0'; \
 		bu_str_vals[i][j + 1] = '\0'; \
-		printf("\t[FAIL] conversion value mismatch.\n" \
+		bu_exit(1, "\t[FAIL] conversion value mismatch.\n" \
 			"\t(sscanf) %s != %s (bu_sscanf)\n", \
 			str_vals[i], bu_str_vals[i]); \
 	    } \
