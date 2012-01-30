@@ -81,6 +81,31 @@ __BEGIN_DECLS
 #define TCLCAD_OBJ_FB_MODE_INTERLAY 2
 #define TCLCAD_OBJ_FB_MODE_OVERLAY  3
 
+struct ged_dm_view {
+    struct bu_list		l;
+    struct bu_vls		gdv_callback;
+    struct bu_vls		gdv_name;
+    struct ged_view		*gdv_view;
+    struct dm			*gdv_dmp;
+    struct fbserv_obj		gdv_fbs;
+    struct ged_obj		*gdv_gop;
+};
+
+struct ged_obj {
+    struct ged		*go_gedp;
+    struct ged_dm_view	go_head_views;
+    struct bu_vls	go_name;
+    struct bu_observer	go_observers;
+    struct bu_vls	go_more_args_callback;
+    struct bu_vls	go_rt_end_callback;
+    struct bu_vls	*go_prim_label_list;
+    int			go_prim_label_list_size;
+    int			go_refresh_on;
+    Tcl_Interp		*interp;
+};
+#define GED_OBJ_NULL ((struct ged_obj *)0)
+
+
 struct tclcad_obj {
     struct bu_list	l;
     struct ged_obj	*to_gop;
@@ -103,6 +128,10 @@ TCLCAD_EXPORT extern int to_open_tcl(ClientData UNUSED(clientData),
 TCLCAD_EXPORT extern struct application *to_rt_gettrees_application(struct ged *gedp,
 								    int argc,
 								    const char *argv[]);
+TCLCAD_EXPORT extern void go_refresh(struct ged_obj *gop,
+				  struct ged_dm_view *gdvp);
+TCLCAD_EXPORT extern void go_refresh_draw(struct ged_obj *gop,
+				       struct ged_dm_view *gdvp);
 
 /* defined in cmdhist_obj.c */
 TCLCAD_EXPORT extern int Cho_Init(Tcl_Interp *interp);

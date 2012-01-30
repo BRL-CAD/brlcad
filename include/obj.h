@@ -69,21 +69,6 @@ struct view_obj {
 };
 #define GED_VIEW_OBJ_NULL ((struct view_obj *)0)
 
-struct ged_obj {
-    struct ged		*go_gedp;
-    struct ged_dm_view	go_head_views;
-    struct bu_vls	go_name;
-    struct bu_observer	go_observers;
-    struct bu_vls	go_more_args_callback;
-    struct bu_vls	go_rt_end_callback;
-    struct bu_vls	*go_prim_label_list;
-    int			go_prim_label_list_size;
-    int			go_refresh_on;
-    Tcl_Interp		*interp;
-};
-#define GED_OBJ_NULL ((struct ged_obj *)0)
-
-
 /* DEPRECATED * DEPRECATED * DEPRECATED * DEPRECATED * DEPRECATED * DEPRECATED *
  * DEPRECATED *                                                   * DEPRECATED *
  * DEPRECATED *    Everything in this file should not be used.    * DEPRECATED *
@@ -103,12 +88,6 @@ GED_EXPORT extern int wdb_create_cmd(struct rt_wdb *wdbp, const char *oname);
 GED_EXPORT extern int wdb_copy_cmd(struct rt_wdb *wdbp, int argc, const char *argv[]);
 GED_EXPORT extern int wdb_stub_cmd(struct rt_wdb *wdbp, int argc, const char *argv[]);
 GED_EXPORT extern int wdb_rt_gettrees_cmd(struct rt_wdb *wdbp, int argc, const char *argv[]);
-
-/* go_refresh.c */
-GED_EXPORT extern void go_refresh(struct ged_obj *gop,
-				  struct ged_dm_view *gdvp);
-GED_EXPORT extern void go_refresh_draw(struct ged_obj *gop,
-				       struct ged_dm_view *gdvp);
 
 
 __END_DECLS

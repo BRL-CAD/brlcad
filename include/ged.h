@@ -82,6 +82,8 @@ __BEGIN_DECLS
 
 #define GED_FUNC_PTR_NULL ((ged_func_ptr)0)
 #define GED_REFRESH_CALLBACK_PTR_NULL ((ged_refresh_callback_ptr)0)
+#define GED_CREATE_VLIST_CALLBACK_PTR_NULL ((ged_create_vlist_callback_ptr)0)
+#define GED_FREE_VLIST_CALLBACK_PTR_NULL ((ged_free_vlist_callback_ptr)0)
 
 /**
  * S E M A P H O R E S
@@ -547,6 +549,8 @@ struct ged {
     void			(*ged_refresh_handler)();	/**< @brief  function for handling refresh requests */
     void			(*ged_output_handler)();	/**< @brief  function for handling output */
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
+    void			(*ged_create_vlist_callback)();	/**< @brief  function to call after creating a vlist */
+    void			(*ged_free_vlist_callback)();	/**< @brief  function to call after freeing a vlist */
 
     /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
     int 			ged_internal_call;
@@ -560,6 +564,8 @@ struct ged {
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
 typedef void (*ged_refresh_callback_ptr)(void *);
+typedef void (*ged_create_vlist_callback_ptr)(struct solid *);
+typedef void (*ged_free_vlist_callback_ptr)(unsigned int, int);
 
 
 /**
@@ -577,19 +583,6 @@ struct ged_cmd {
     int (*exec)(struct ged *, int, const char *[]);
 };
 
-
-/* FIXME: this shouldn't be part of libged API (libged shouldn't know
- * about libdm or libfb types, should be managed through callbacks).
- */
-struct ged_dm_view {
-    struct bu_list		l;
-    struct bu_vls		gdv_callback;
-    struct bu_vls		gdv_name;
-    struct ged_view		*gdv_view;
-    struct dm			*gdv_dmp;
-    struct fbserv_obj		gdv_fbs; /* FIXME: this shouldn't be here */
-    struct ged_obj		*gdv_gop; /* FIXME: this shouldn't be here */
-};
 
 /* defined in adc.c */
 GED_EXPORT extern void ged_calc_adc_pos(struct ged_view *gvp);
