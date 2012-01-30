@@ -168,6 +168,7 @@ package provide cadwidgets::Ged 1.0
 	method decompose {args}
 	method delay {args}
 	method dir2ae {args}
+	method dlist_on {args}
 	method draw {args}
 	method dump {args}
 	method dup {args}
@@ -1285,6 +1286,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::dir2ae {args} {
     eval $mGed dir2ae $args
+}
+
+::itcl::body cadwidgets::Ged::dlist_on {args} {
+    eval $mGed dlist_on $args
 }
 
 ::itcl::body cadwidgets::Ged::draw {args} {
@@ -2415,7 +2420,7 @@ package provide cadwidgets::Ged 1.0
     incr mRefreshOn -1
 
     if {$mRefreshOn == 0} {
-	eval $mGed refresh_on 0
+	$mGed refresh_on 0
     }
 }
 
@@ -2423,7 +2428,7 @@ package provide cadwidgets::Ged 1.0
     incr mRefreshOn 1
 
     if {$mRefreshOn == 1} {
-	eval $mGed refresh_on 1
+	$mGed refresh_on 1
     }
 }
 

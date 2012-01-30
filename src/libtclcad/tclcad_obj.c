@@ -99,11 +99,6 @@
  */
 #define CLIPPER_MAX 1518500249
 
-GED_EXPORT extern void go_refresh(struct ged_obj *gop,
-				  struct ged_dm_view *gdvp);
-GED_EXPORT extern void go_refresh_draw(struct ged_obj *gop,
-				       struct ged_dm_view *gdvp);
-
 HIDDEN int to_autoview(struct ged *gedp,
 		       int argc,
 		       const char *argv[],
@@ -218,6 +213,12 @@ HIDDEN int to_data_pick(struct ged *gedp,
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
+HIDDEN int to_dlist_on(struct ged *gedp,
+		       int argc,
+		       const char *argv[],
+		       ged_func_ptr func,
+		       const char *usage,
+		       int maxargs);
 HIDDEN int to_fontsize(struct ged *gedp,
 		       int argc,
 		       const char *argv[],
@@ -262,6 +263,7 @@ HIDDEN int to_idle_mode(struct ged *gedp,
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
+HIDDEN int to_is_viewable(struct ged_dm_view *gdvp);
 HIDDEN int to_light(struct ged *gedp,
 		    int argc,
 		    const char *argv[],
@@ -773,6 +775,8 @@ HIDDEN int to_close_fbs(struct ged_dm_view *gdvp);
 HIDDEN void to_fbs_callback();
 HIDDEN int to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp);
 
+HIDDEN void to_create_vlist_callback(struct solid *sp);
+HIDDEN void to_free_vlist_callback(unsigned int dlist, int range);
 HIDDEN void to_refresh_all_views(struct tclcad_obj *top);
 HIDDEN void to_refresh_view(struct ged_dm_view *gdvp);
 HIDDEN void to_refresh_handler(void *clientdata);
@@ -865,6 +869,7 @@ static struct to_cmdtab to_cmds[] = {
     {"delete_pipept",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_delete_pipept},
     {"delete_view",	"vname", TO_UNLIMITED, to_delete_view, GED_FUNC_PTR_NULL},
     {"dir2ae",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dir2ae},
+    {"dlist_on",	"[0|1]", TO_UNLIMITED, to_dlist_on, GED_FUNC_PTR_NULL},
     {"draw",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_draw},
     {"dump",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dump},
     {"dup",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dup},
@@ -1368,6 +1373,8 @@ Usage: go_open\n\
 
     top->to_gop->go_gedp->ged_output_handler = to_output_handler;
     top->to_gop->go_gedp->ged_refresh_handler = to_refresh_handler;
+    top->to_gop->go_gedp->ged_create_vlist_callback = to_create_vlist_callback;
+    top->to_gop->go_gedp->ged_free_vlist_callback = to_free_vlist_callback;
 
     BU_ASSERT_PTR(gedp->ged_gdp, !=, NULL);
     top->to_gop->go_gedp->ged_gdp->gd_rtCmdNotify = to_rt_end_callback_internal;
@@ -5003,6 +5010,43 @@ to_init_default_bindings(struct ged_dm_view *gdvp)
     bu_vls_free(&bindings);
 }
 
+
+HIDDEN int
+to_dlist_on(struct ged *gedp,
+	    int argc,
+	    const char *argv[],
+	    ged_func_ptr UNUSED(func),
+	    const char *UNUSED(usage),
+	    int UNUSED(maxargs))
+{
+    int on;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (2 < argc) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
+	return GED_ERROR;
+    }
+
+    /* Get dlist_on state */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "%d", current_top->to_gop->go_dlist_on);
+	return GED_OK;
+    }
+
+    /* Set dlist_on state */
+    if (sscanf(argv[1], "%d", &on) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
+	return GED_ERROR;
+    }
+
+    current_top->to_gop->go_dlist_on = on;
+
+    return GED_OK;
+}
+
+
 HIDDEN int
 to_fontsize(struct ged *gedp,
 	    int argc,
@@ -5497,6 +5541,35 @@ to_idle_mode(struct ged *gedp,
 
     return GED_OK;
 }
+
+
+HIDDEN int
+to_is_viewable(struct ged_dm_view *gdvp)
+{
+    struct bu_vls vls;
+    Tcl_Obj *result_obj;
+    int result_int;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "winfo viewable %V", &gdvp->gdv_dmp->dm_pathName);
+
+    if (Tcl_Eval(current_top->to_interp, bu_vls_addr(&vls)) != TCL_OK) {
+	bu_vls_free(&vls);
+	return 0;
+    }
+
+    result_obj = Tcl_GetObjResult(current_top->to_interp);
+    Tcl_GetIntFromObj(current_top->to_interp, result_obj, &result_int);
+
+    if (!result_int) {
+	bu_vls_free(&vls);
+	return 0;
+    }
+
+    bu_vls_free(&vls);
+    return 1;
+}
+
 
 HIDDEN int
 to_light(struct ged *gedp,
@@ -9450,6 +9523,9 @@ to_refresh_on(struct ged *gedp,
 {
     int on;
 
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
     if (2 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_ERROR;
@@ -9471,6 +9547,7 @@ to_refresh_on(struct ged *gedp,
 
     return GED_OK;
 }
+
 
 HIDDEN int
 to_rotate_arb_face_mode(struct ged *gedp,
@@ -11330,6 +11407,48 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 
 
 HIDDEN void
+to_create_vlist_callback(struct solid *sp)
+{
+    struct ged_dm_view *gdvp;
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (to_is_viewable(gdvp)) {
+	    DM_BEGINDLIST(gdvp->gdv_dmp, sp->s_dlist);
+
+	    if (sp->s_iflag == UP)
+		DM_SET_FGCOLOR(gdvp->gdv_dmp, 255, 255, 255, 0, sp->s_transparency);
+	    else
+		DM_SET_FGCOLOR(gdvp->gdv_dmp,
+			       (unsigned char)sp->s_color[0],
+			       (unsigned char)sp->s_color[1],
+			       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
+
+	    if (sp->s_hiddenLine) {
+		DM_DRAW_VLIST_HIDDEN_LINE(gdvp->gdv_dmp, (struct bn_vlist *)&sp->s_vlist);
+	    } else {
+		DM_DRAW_VLIST(gdvp->gdv_dmp, (struct bn_vlist *)&sp->s_vlist);
+	    }
+
+	    DM_ENDDLIST(gdvp->gdv_dmp);
+	}
+    }
+}
+
+
+HIDDEN void
+to_free_vlist_callback(unsigned int dlist, int range)
+{
+    struct ged_dm_view *gdvp;
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (to_is_viewable(gdvp)) {
+	    DM_FREEDLISTS(gdvp->gdv_dmp, dlist, range);
+	}
+    }
+}
+
+
+HIDDEN void
 to_refresh_all_views(struct tclcad_obj *top)
 {
     struct ged_dm_view *gdvp;
@@ -11346,32 +11465,8 @@ to_refresh_view(struct ged_dm_view *gdvp)
     if (!current_top->to_gop->go_refresh_on)
 	return;
 
-    /* Check if window is viewable */
-    {
-	struct bu_vls vls;
-	Tcl_Obj *result_obj;
-	int result_int;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "winfo viewable %V", &gdvp->gdv_dmp->dm_pathName);
-
-	if (Tcl_Eval(current_top->to_interp, bu_vls_addr(&vls)) != TCL_OK) {
-	    bu_vls_free(&vls);
-	    return;
-	}
-
-	result_obj = Tcl_GetObjResult(current_top->to_interp);
-	Tcl_GetIntFromObj(current_top->to_interp, result_obj, &result_int);
-
-	if (!result_int) {
-	    bu_vls_free(&vls);
-	    return;
-	}
-
-	bu_vls_free(&vls);
-    }
-
-    go_refresh(current_top->to_gop, gdvp);
+    if (to_is_viewable(gdvp))
+	go_refresh(current_top->to_gop, gdvp);
 }
 
 HIDDEN void
@@ -11460,13 +11555,9 @@ HIDDEN void go_dm_draw_lines(struct dm *dmp, struct ged_data_line_state *gdlsp);
 HIDDEN void go_dm_draw_polys(struct dm *dmp, ged_data_polygon_state *gdpsp, int mode);
 
 HIDDEN void go_draw(struct ged_dm_view *gdvp);
-#if 1
-int go_draw_dlist(struct dm *dmp, struct bu_list *hsp);
-#else
-HIDDEN int go_draw_dlist(struct dm *dmp, struct bu_list *hsp);
-#endif
+HIDDEN int go_draw_dlist(struct ged_obj *gop, struct dm *dmp, struct bu_list *hsp);
 HIDDEN void go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp);
-HIDDEN void go_draw_solid(struct dm *dmp, struct solid *sp);
+HIDDEN void go_draw_solid(struct ged_obj *gop, struct dm *dmp, struct solid *sp);
 
 
 HIDDEN void
@@ -11696,17 +11787,13 @@ go_draw(struct ged_dm_view *gdvp)
     }
 
     DM_LOADMATRIX(gdvp->gdv_dmp, mat, 0);
-    go_draw_dlist(gdvp->gdv_dmp, &gdvp->gdv_gop->go_gedp->ged_gdp->gd_headDisplay);
+    go_draw_dlist(gdvp->gdv_gop, gdvp->gdv_dmp, &gdvp->gdv_gop->go_gedp->ged_gdp->gd_headDisplay);
 }
 
 
 /* Draw all display lists */
-#if 1
-int
-#else
 HIDDEN int
-#endif
-go_draw_dlist(struct dm *dmp, struct bu_list *hdlp)
+go_draw_dlist(struct ged_obj *gop, struct dm *dmp, struct bu_list *hdlp)
 {
     register struct ged_display_list *gdlp;
     register struct ged_display_list *next_gdlp;
@@ -11728,7 +11815,7 @@ go_draw_dlist(struct dm *dmp, struct bu_list *hdlp)
 		    DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
 		}
 
-		go_draw_solid(dmp, sp);
+		go_draw_solid(gop, dmp, sp);
 	    }
 
 	    gdlp = next_gdlp;
@@ -11752,7 +11839,7 @@ go_draw_dlist(struct dm *dmp, struct bu_list *hdlp)
 		    DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
 		}
 
-		go_draw_solid(dmp, sp);
+		go_draw_solid(gop, dmp, sp);
 	    }
 
 	    gdlp = next_gdlp;
@@ -11771,7 +11858,7 @@ go_draw_dlist(struct dm *dmp, struct bu_list *hdlp)
 		    DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
 		}
 
-		go_draw_solid(dmp, sp);
+		go_draw_solid(gop, dmp, sp);
 	    }
 
 	    gdlp = next_gdlp;
@@ -11875,20 +11962,24 @@ go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp)
 
 
 HIDDEN void
-go_draw_solid(struct dm *dmp, struct solid *sp)
+go_draw_solid(struct ged_obj *gop, struct dm *dmp, struct solid *sp)
 {
-    if (sp->s_iflag == UP)
-	DM_SET_FGCOLOR(dmp, 255, 255, 255, 0, sp->s_transparency);
-    else
-	DM_SET_FGCOLOR(dmp,
-		       (unsigned char)sp->s_color[0],
-		       (unsigned char)sp->s_color[1],
-		       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
-
-    if (sp->s_hiddenLine) {
-	DM_DRAW_VLIST_HIDDEN_LINE(dmp, (struct bn_vlist *)&sp->s_vlist);
+    if (gop->go_dlist_on) {
+	DM_DRAWDLIST(dmp, sp->s_dlist);
     } else {
-	DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
+	if (sp->s_iflag == UP)
+	    DM_SET_FGCOLOR(dmp, 255, 255, 255, 0, sp->s_transparency);
+	else
+	    DM_SET_FGCOLOR(dmp,
+			   (unsigned char)sp->s_color[0],
+			   (unsigned char)sp->s_color[1],
+			   (unsigned char)sp->s_color[2], 0, sp->s_transparency);
+
+	if (sp->s_hiddenLine) {
+	    DM_DRAW_VLIST_HIDDEN_LINE(dmp, (struct bn_vlist *)&sp->s_vlist);
+	} else {
+	    DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
+	}
     }
 }
 

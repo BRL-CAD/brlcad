@@ -101,6 +101,7 @@ struct ged_obj {
     struct bu_vls	*go_prim_label_list;
     int			go_prim_label_list_size;
     int			go_refresh_on;
+    int			go_dlist_on;
     Tcl_Interp		*interp;
 };
 #define GED_OBJ_NULL ((struct ged_obj *)0)
