@@ -140,7 +140,6 @@ ged_cm_end(int UNUSED(argc), char **UNUSED(argv))
 
 	(void)ged_zap(_ged_current_gedp, 1, av);
 	_ged_drawtrees(_ged_current_gedp, _ged_current_gedp->ged_gdp->gd_rt_cmd_len, (const char **)&_ged_current_gedp->ged_gdp->gd_rt_cmd[1], preview_mode, (struct _ged_client_data *)0);
-	ged_color_soltab(&_ged_current_gedp->ged_gdp->gd_headDisplay);
     }
 
     if (_ged_current_gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)

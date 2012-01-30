@@ -61,6 +61,12 @@ ged_zap(struct ged *gedp, int argc, const char *argv[])
     }
 
     while (BU_LIST_WHILE(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+	if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
+	    (*gedp->ged_free_vlist_callback)(gedp,
+					     BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist,
+					     BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist -
+					     BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist + 1);
+
 	while (BU_LIST_WHILE(sp, solid, &gdlp->gdl_headSolid)) {
 	    dp = FIRST_SOLID(sp);
 	    RT_CK_DIR(dp);

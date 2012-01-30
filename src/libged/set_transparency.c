@@ -96,6 +96,9 @@ ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
 
 	    /* found a match */
 	    sp->s_transparency = transparency;
+
+	    if (gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
+		(*gedp->ged_create_vlist_callback)(sp);
 	}
 
 	gdlp = next_gdlp;

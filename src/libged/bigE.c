@@ -2167,7 +2167,6 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    ged_color_soltab(&gedp->ged_gdp->gd_headDisplay);
     (void)time(&dgcdp->etime);
 
     /* free leaf_list */

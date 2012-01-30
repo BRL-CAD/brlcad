@@ -219,6 +219,52 @@ bound_solid(struct ged *gedp, struct solid *sp)
 }
 
 
+void
+_ged_color_soltab(struct solid *sp)
+{
+    const struct mater *mp;
+
+    sp->s_cflag = 0;
+
+    /* the user specified the color, so use it */
+    if (sp->s_uflag) {
+	sp->s_color[0] = sp->s_basecolor[0];
+	sp->s_color[1] = sp->s_basecolor[1];
+	sp->s_color[2] = sp->s_basecolor[2];
+
+	return;
+    }
+
+    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
+	if (sp->s_regionid <= mp->mt_high &&
+	    sp->s_regionid >= mp->mt_low) {
+	    sp->s_color[0] = mp->mt_r;
+	    sp->s_color[1] = mp->mt_g;
+	    sp->s_color[2] = mp->mt_b;
+
+	    return;
+	}
+    }
+
+    /*
+     * There is no region-id-based coloring entry in the
+     * table, so use the combination-record ("mater"
+     * command) based color if one was provided. Otherwise,
+     * use the default wireframe color.
+     * This is the "new way" of coloring things.
+     */
+
+    /* use wireframe_default_color */
+    if (sp->s_dflag)
+	sp->s_cflag = 1;
+
+    /* Be conservative and copy color anyway, to avoid black */
+    sp->s_color[0] = sp->s_basecolor[0];
+    sp->s_color[1] = sp->s_basecolor[1];
+    sp->s_color[2] = sp->s_basecolor[2];
+}
+
+
 /**
  * G E D _ D R A W H _ P A R T 2
  *
@@ -301,7 +347,12 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
 	bu_semaphore_acquire(RT_SEM_MODEL);
 	BU_LIST_APPEND(dgcdp->gdlp->gdl_headSolid.back, &sp->l);
 	bu_semaphore_release(RT_SEM_MODEL);
+
+	_ged_color_soltab(sp);
     }
+
+    if (dgcdp->gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
+	(*dgcdp->gedp->ged_create_vlist_callback)(sp);
 }
 
 
@@ -1068,6 +1119,11 @@ _ged_invent_solid(struct ged *gedp,
     /* Solid successfully drawn, add to linked list of solid structs */
     BU_LIST_APPEND(gdlp->gdl_headSolid.back, &sp->l);
 
+    _ged_color_soltab(sp);
+
+    if (gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
+	(*gedp->ged_create_vlist_callback)(sp);
+
     return 0;		/* OK */
 }
 
@@ -1084,52 +1140,13 @@ ged_color_soltab(struct bu_list *hdlp)
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
     struct solid *sp;
-    const struct mater *mp;
 
     gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    sp->s_cflag = 0;
-
-	    /* the user specified the color, so use it */
-	    if (sp->s_uflag) {
-		sp->s_color[0] = sp->s_basecolor[0];
-		sp->s_color[1] = sp->s_basecolor[1];
-		sp->s_color[2] = sp->s_basecolor[2];
-
-		continue;
-	    }
-
-	    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
-		if (sp->s_regionid <= mp->mt_high &&
-		    sp->s_regionid >= mp->mt_low) {
-		    sp->s_color[0] = mp->mt_r;
-		    sp->s_color[1] = mp->mt_g;
-		    sp->s_color[2] = mp->mt_b;
-
-		    goto done;
-		}
-	    }
-
-	    /*
-	     * There is no region-id-based coloring entry in the
-	     * table, so use the combination-record ("mater"
-	     * command) based color if one was provided. Otherwise,
-	     * use the default wireframe color.
-	     * This is the "new way" of coloring things.
-	     */
-
-	    /* use wireframe_default_color */
-	    if (sp->s_dflag)
-		sp->s_cflag = 1;
-	    /* Be conservative and copy color anyway, to avoid black */
-	    sp->s_color[0] = sp->s_basecolor[0];
-	    sp->s_color[1] = sp->s_basecolor[1];
-	    sp->s_color[2] = sp->s_basecolor[2];
-
-	done: ;
+	    _ged_color_soltab(sp);
 	}
 
 	gdlp = next_gdlp;
@@ -1295,8 +1312,6 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 
 	_ged_drawtrees(gedp, argc, argv, kind, (struct _ged_client_data *)0);
     }
-
-    ged_color_soltab(&gedp->ged_gdp->gd_headDisplay);
 
     return GED_OK;
 }
