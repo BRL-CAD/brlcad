@@ -515,6 +515,116 @@ doNonConversionTests()
     TEST_SSCANF_NOCONV("42 42  4.2e1", "%*d %*u %*f%n");
 }
 
+static void
+doWidthTests()
+{
+#define NUM_VALS 3
+    int i, j;
+    int ret, bu_ret;
+    void *vals, *bu_vals;
+    char str_vals[NUM_VALS][STR_SIZE];
+    char bu_str_vals[NUM_VALS][STR_SIZE];
+
+#define SCAN_3_VALS(type, pfmt, src, fmt) \
+    puts("\"" src "\", \"" fmt "\""); \
+    vals = bu_malloc(sizeof(type) * NUM_VALS, "test_sscanf vals"); \
+    bu_vals = bu_malloc(sizeof(type) * NUM_VALS, "test_sscanf bu_vals"); \
+    ret = sscanf(src, fmt, &((type*)vals)[0], &((type*)vals)[1], &((type*)vals)[2]); \
+    bu_ret = bu_sscanf(src, fmt, &((type*)bu_vals)[0], &((type*)bu_vals)[1], &((type*)bu_vals)[2]); \
+    if (ret != 3) { \
+	bu_free(vals, "test_sscanf vals"); \
+	bu_free(bu_vals, "test_sscanf bu_vals"); \
+	bu_exit(1, "Error: sscanf returned %d. Expected 3.\n", ret); \
+    } \
+    if (bu_ret != ret) { \
+	printf("\t[FAIL] sscanf returned %d but bu_sscanf returned %d.\n", \
+		ret, bu_ret); \
+	bu_free(vals, "test_sscanf vals"); \
+	bu_free(bu_vals, "test_sscanf bu_vals"); \
+	return; \
+    }
+
+#define TEST_INT_WIDTH(type, pfmt, src, fmt) \
+    SCAN_3_VALS(type, pfmt, src, fmt); \
+    for (i = 0; i < NUM_VALS; ++i) { \
+	if (((type*)bu_vals)[i] != ((type*)vals)[i]) { \
+	    printf("\t[FAIL] conversion value mismatch.\n" \
+		    "\t(sscanf) %" bu_cpp_str(pfmt) " != %" bu_cpp_str(pfmt) " (bu_sscanf).\n", \
+		    ((type*)vals)[i], ((type*)bu_vals)[i]); \
+	    bu_free(vals, "test_sscanf vals"); \
+	    bu_free(bu_vals, "test_sscanf bu_vals"); \
+	    return; \
+	} \
+    } \
+    bu_free(vals, "test_sscanf vals"); \
+    bu_free(bu_vals, "test_sscanf bu_vals");
+
+#define TEST_FLOAT_WIDTH(type, pfmt, src, fmt) \
+    SCAN_3_VALS(type, pfmt, src, fmt); \
+    for (i = 0; i < NUM_VALS; ++i) { \
+	if (!NEAR_EQUAL(((type*)bu_vals)[i], ((type*)vals)[i], FLOAT_TOL)) { \
+	    printf("\t[FAIL] conversion value mismatch.\n" \
+		    "\t(sscanf) %" bu_cpp_str(pfmt) " != %" bu_cpp_str(pfmt) " (bu_sscanf).\n", \
+		    ((type*)vals)[i], ((type*)bu_vals)[i]); \
+	    bu_free(vals, "test_sscanf vals"); \
+	    bu_free(bu_vals, "test_sscanf bu_vals"); \
+	    return; \
+	} \
+    } \
+    bu_free(vals, "test_sscanf vals"); \
+    bu_free(bu_vals, "test_sscanf bu_vals");
+
+#define TEST_STRING_WIDTH(src, fmt) \
+    puts("\"" src "\", \"" fmt "\""); \
+    for (i = 0; i < NUM_VALS; ++i) { \
+	memset(str_vals[i], 'X', STR_SIZE); \
+	memset(bu_str_vals[i], 'X', STR_SIZE); \
+    } \
+    ret = sscanf(src, fmt, str_vals[0], str_vals[1], str_vals[2]); \
+    bu_ret = bu_sscanf(src, fmt, bu_str_vals[0], bu_str_vals[1], bu_str_vals[2]); \
+    if (ret != 3) { \
+	bu_exit(1, "Error: sscanf returned %d. Expected 3.\n", ret); \
+    } \
+    if (bu_ret != ret) { \
+	printf("\t[FAIL] sscanf returned %d but bu_sscanf returned %d.\n", \
+		ret, bu_ret); \
+	return; \
+    } \
+    for (i = 0; i < NUM_VALS; ++i) { \
+	for (j = 0; j < STR_SIZE - 1; ++j) { \
+	    if (str_vals[i][j] != bu_str_vals[i][j]) { \
+		str_vals[i][j + 1] = '\0'; \
+		bu_str_vals[i][j + 1] = '\0'; \
+		printf("\t[FAIL] conversion value mismatch.\n" \
+			"\t(sscanf) %s != %s (bu_sscanf)\n", \
+			str_vals[i], bu_str_vals[i]); \
+	    } \
+	} \
+    }
+
+    /* Stop at non-matching even if width not met. */
+    TEST_INT_WIDTH(int, d, "12 34 5a6", "%5d %5d %5d");
+    TEST_INT_WIDTH(int, i, "12 0042 0x3z8", "%5i %5i %5i");
+    TEST_INT_WIDTH(unsigned, x, "0xC 0x22 0x38", "%5x %5x %5x");
+    TEST_FLOAT_WIDTH(float, f, ".0012 .34 56.0a0", "%10f %10f %10f");
+    TEST_FLOAT_WIDTH(double, f, ".0012 .34 56.0a0", "%10lf %10lf %10lf");
+    TEST_STRING_WIDTH("aa AA aa", "%5s %5s %5s");
+    TEST_STRING_WIDTH("1234512345123451", "%5c %5c %5c");
+    TEST_STRING_WIDTH("aaAA  zzzzzz", "%5[a]%5[A] %5[z]");
+
+    /* Stop at width even if there are more matching chars.
+     * Do not include discarded whitespace in count.
+     */
+    TEST_INT_WIDTH(int, d, "  123\t456", " %1d%2d %3d");
+    TEST_INT_WIDTH(int, i, "  10\t0x38", " %1i%1i %4i");
+    TEST_INT_WIDTH(unsigned, x, "  0xC00X22\t0x38", " %4x%3x %3x");
+    TEST_FLOAT_WIDTH(float, f, "  .0012\t.3456", " %3f%2f %4f");
+    TEST_FLOAT_WIDTH(double, f, "  .0012\t.3456", " %3lf%2lf %4lf");
+    TEST_STRING_WIDTH("  abc  ABCDE", " %2s%1s  %4s");
+    TEST_STRING_WIDTH("abc  ABCD", "%2c%2c  %4c");
+    TEST_STRING_WIDTH("aaAA   1%1%1%", "%2[aA]%3[A ] %5[1%]");
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -543,6 +653,7 @@ main(int argc, char *argv[])
     doStringTests();
     doPointerTests();
     doNonConversionTests();
+    doWidthTests();
 
     printf("bu_sscanf: testing complete\n");
     return 0;
