@@ -1,34 +1,34 @@
 if(NOT MSVC)
-	add_subdirectory(step)
+  add_subdirectory(step)
 endif(NOT MSVC)
 add_subdirectory(iges)
 add_subdirectory(intaval)
 
 set(CONV_INCLUDE_DIRS
-	${BU_INCLUDE_DIRS}
-	${BN_INCLUDE_DIRS}
-	${RT_INCLUDE_DIRS}
-	${GED_INCLUDE_DIRS}
-	${GCV_INCLUDE_DIRS}
-	${SYSV_INCLUDE_DIRS}
-	${ORLE_INCLUDE_DIRS}
-	${WDB_INCLUDE_DIRS}
-	${TCLCAD_INCLUDE_DIRS}
-	${REGEX_INCLUDE_DIR}
-	)
+  ${BU_INCLUDE_DIRS}
+  ${BN_INCLUDE_DIRS}
+  ${RT_INCLUDE_DIRS}
+  ${GED_INCLUDE_DIRS}
+  ${GCV_INCLUDE_DIRS}
+  ${SYSV_INCLUDE_DIRS}
+  ${ORLE_INCLUDE_DIRS}
+  ${WDB_INCLUDE_DIRS}
+  ${TCLCAD_INCLUDE_DIRS}
+  ${REGEX_INCLUDE_DIR}
+  )
 LIST(REMOVE_DUPLICATES CONV_INCLUDE_DIRS)
 include_directories(${CONV_INCLUDE_DIRS})
 
 if(MSVC)
-    add_definitions(
-		-DON_DLL_IMPORTS
+  add_definitions(
+    -DON_DLL_IMPORTS
     )
 endif(MSVC)
 
 add_definitions(
-	-D_CONSOLE
-        -DBRLCAD_DLL
-)
+  -D_CONSOLE
+  -DBRLCAD_DLL
+  )
 
 BRLCAD_ADDEXEC(3dm-g 3dm/3dm-g.cpp "libwdb ${OPENNURBS_LIBRARY}")
 
@@ -49,14 +49,14 @@ BRLCAD_ADDEXEC(bot_dump bot_dump.c "libged librt")
 BRLCAD_ADDEXEC(bot_shell-vtk bot_shell-vtk.c librt)
 
 set(comgeom-g_SRCS
-    comgeom/cvt.c
-    comgeom/f2a.c
-    comgeom/mat.c
-    comgeom/read.c
-    comgeom/region.c
-    comgeom/solid.c
-    comgeom/tools.c
-)
+  comgeom/cvt.c
+  comgeom/f2a.c
+  comgeom/mat.c
+  comgeom/read.c
+  comgeom/region.c
+  comgeom/solid.c
+  comgeom/tools.c
+  )
 BRLCAD_ADDEXEC(comgeom-g "${comgeom-g_SRCS}" "libwdb libbn libbu ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(conv-vg2g conv-vg2g.c "libbu libsysv")
@@ -108,16 +108,16 @@ BRLCAD_ADDEXEC(g-stl stl/g-stl.c "librt libgcv libbu ${WINSOCK_LIB}")
 add_executable(g4-g5 g4-g5.c)
 target_link_libraries(g4-g5 librt libbu)
 if(CPP_DLL_DEFINES)
-	SET_PROPERTY(TARGET g4-g5 APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
-	SET_PROPERTY(TARGET g4-g5 APPEND PROPERTY COMPILE_DEFINITIONS "RT_DLL_IMPORTS")
+  SET_PROPERTY(TARGET g4-g5 APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
+  SET_PROPERTY(TARGET g4-g5 APPEND PROPERTY COMPILE_DEFINITIONS "RT_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 
 add_executable(g5-g4 g5-g4.c)
 target_link_libraries(g5-g4 libwdb librt libbu)
 if(CPP_DLL_DEFINES)
-	SET_PROPERTY(TARGET g5-g4 APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
-	SET_PROPERTY(TARGET g5-g4 APPEND PROPERTY COMPILE_DEFINITIONS "RT_DLL_IMPORTS")
-	SET_PROPERTY(TARGET g5-g4 APPEND PROPERTY COMPILE_DEFINITIONS "WDB_DLL_IMPORTS")
+  SET_PROPERTY(TARGET g5-g4 APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
+  SET_PROPERTY(TARGET g5-g4 APPEND PROPERTY COMPILE_DEFINITIONS "RT_DLL_IMPORTS")
+  SET_PROPERTY(TARGET g5-g4 APPEND PROPERTY COMPILE_DEFINITIONS "WDB_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 
 BRLCAD_ADDEXEC(g-acad g-acad.c "librt libbu")
@@ -165,8 +165,8 @@ BRLCAD_ADDEXEC(viewpoint-g viewpoint-g.c "libwdb librt libbu")
 add_executable(g-xxx_facets g-xxx_facets.c)
 target_link_libraries(g-xxx_facets librt libbu)
 if(CPP_DLL_DEFINES)
-	SET_PROPERTY(TARGET g-xxx_facets APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
-	SET_PROPERTY(TARGET g-xxx_facets APPEND PROPERTY COMPILE_DEFINITIONS "RT_DLL_IMPORTS")
+  SET_PROPERTY(TARGET g-xxx_facets APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
+  SET_PROPERTY(TARGET g-xxx_facets APPEND PROPERTY COMPILE_DEFINITIONS "RT_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 
 BRLCAD_ADDEXEC(g-shell-rect g-shell-rect.c "libwdb librt libbu ${M_LIBRARY}")
@@ -215,26 +215,26 @@ set(conv_MANS
   tankill/g-tankill.1
   tankill/tankill-g.1
   viewpoint-g.1
-)
+  )
 ADD_MAN_PAGES(1 conv_MANS)
 
 set(conv_ignore_files
-	Formats.csv
-	comgeom/3d.h
-	comgeom/try.sh
-	dbclean.sh
-	dxf/dxf.h
-	intaval-g.py
-	off
-	patch/patch-g.h
-	patch/pull_comp.sh
-	patch/pull_solidsub.sh
-	patch/rpatch.f
-	shp/shapelib/LICENSE.LGPL
-	shp/shapelib/license.html
-	shp/shapelib/shapefil.h
-	shp/README
-	walk_example.c
-	)
+  Formats.csv
+  comgeom/3d.h
+  comgeom/try.sh
+  dbclean.sh
+  dxf/dxf.h
+  intaval-g.py
+  off
+  patch/patch-g.h
+  patch/pull_comp.sh
+  patch/pull_solidsub.sh
+  patch/rpatch.f
+  shp/shapelib/LICENSE.LGPL
+  shp/shapelib/license.html
+  shp/shapelib/shapefil.h
+  shp/README
+  walk_example.c
+  )
 CMAKEFILES(${conv_ignore_files})
 CMAKEFILES(Makefile.am)
