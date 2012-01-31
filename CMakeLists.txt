@@ -93,6 +93,20 @@ endif(COMMAND CMAKE_POLICY)
 # set CMake project name
 project(BRLCAD)
 
+#---------------------------------------------------------------------
+# Write out entries to populate a tm struct to be used for time deltas
+# later
+if(NOT IS_SUBBUILD)
+  set(DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/DELTA_START")
+  configure_file(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/timedelta_start.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_start.c)
+  TRY_RUN(TIME_RESULT TIME_COMPILED
+    ${CMAKE_BINARY_DIR}/CMakeTmp
+    ${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_start.c
+    OUTPUT_VARIABLE COMPILEMESSAGES)
+endif(NOT IS_SUBBUILD)
+
+
+#---------------------------------------------------------------------
 # If it exists, load a BRL-CAD_CONFIG.GLOBAL file.  This allows advanced
 # users to specify options they want to always use by default even when
 # doing clean BRL-CAD builds without a CMakeCache.txt file - for example,
@@ -406,18 +420,6 @@ endif(_orig_lc_messages)
 if(_orig_lang)
   set(ENV{LANG}        C)
 endif(_orig_lang)
-
-#---------------------------------------------------------------------
-# Write out entries to populate a tm struct to be used for time deltas
-# later
-if(NOT IS_SUBBUILD)
-  set(DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/DELTA_START")
-  configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/timedelta_start.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_start.c)
-  TRY_RUN(TIME_RESULT TIME_COMPILED
-    ${CMAKE_BINARY_DIR}/CMakeTmp
-    ${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_start.c
-    OUTPUT_VARIABLE COMPILEMESSAGES)
-endif(NOT IS_SUBBUILD)
 
 #---------------------------------------------------------------------
 # Unfortunately, CMake doesn't give you variables with current day,
