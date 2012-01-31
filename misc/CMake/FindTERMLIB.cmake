@@ -84,4 +84,4 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(TERMLIB DEFAULT_MSG TERMLIB_LIBRARY TERMLIB_IN
 # mode: cmake
 # indent-tabs-mode: t
 # End:
-# ex: shiftwidth=4 tabstop=8
+# ex: shiftwidth=2 tabstop=8

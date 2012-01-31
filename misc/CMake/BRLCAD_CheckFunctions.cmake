@@ -240,4 +240,4 @@ endmacro(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
 # mode: cmake
 # indent-tabs-mode: t
 # End:
-# ex: shiftwidth=4 tabstop=8
+# ex: shiftwidth=2 tabstop=8

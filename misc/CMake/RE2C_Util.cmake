@@ -159,4 +159,4 @@ endmacro(ADD_RE2C_LEMON_DEPENDENCY)
 # mode: cmake
 # indent-tabs-mode: t
 # End:
-# ex: shiftwidth=4 tabstop=8
+# ex: shiftwidth=2 tabstop=8

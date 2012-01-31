@@ -71,4 +71,4 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(REGEX DEFAULT_MSG REGEX_INCLUDE_DIR REGEX_LIBR
 # mode: cmake
 # indent-tabs-mode: t
 # End:
-# ex: shiftwidth=4 tabstop=8
+# ex: shiftwidth=2 tabstop=8

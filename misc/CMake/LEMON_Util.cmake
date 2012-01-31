@@ -136,4 +136,4 @@ endmacro(LEMON_TARGET)
 # mode: cmake
 # indent-tabs-mode: t
 # End:
-# ex: shiftwidth=4 tabstop=8
+# ex: shiftwidth=2 tabstop=8

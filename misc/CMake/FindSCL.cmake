@@ -74,4 +74,4 @@ mark_as_advanced(SCL_EXPPP_EXECUTABLE SCL_EXPRESS_EXECUTABLE SCL_FEDEX_IDL_EXECU
 # mode: cmake
 # indent-tabs-mode: t
 # End:
-# ex: shiftwidth=4 tabstop=8
+# ex: shiftwidth=2 tabstop=8
