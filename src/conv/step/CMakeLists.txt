@@ -21,23 +21,27 @@ include_directories(
 
 #set(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/step/data/ap203/203wseds.exp)
 
-# read the schema name from a line like 'SCHEMA AUTOMOTIVE_DESIGN;'
+## read the schema name from a line like 'SCHEMA AUTOMOTIVE_DESIGN;'
 #file(STRINGS ${SCHEMA_FILE} SCHEMA_STATEMENT LIMIT_COUNT 1 REGEX "SCHEMA .*")
 #string(REGEX REPLACE "^SCHEMA \(.*\)\;$" "\\1" SCHEMA_N ${SCHEMA_STATEMENT} )
 #string(TOUPPER ${SCHEMA_N} SCHEMA_NAME) #fedex_plus always uses upper case for file names
 
 #set(SCHEMA_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/${SCHEMA_NAME})
-#MAKE_DIRECTORY(${SCHEMA_OUT_DIR})
+#make_directory(${SCHEMA_OUT_DIR})
 #include_directories(${SCHEMA_OUT_DIR})
 
-#set(FEDEX_OUTPUT 
+#set(fedex_srcs
 #	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.cc
-#	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.h
 #	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.init.cc
 #	${SCHEMA_OUT_DIR}/SdaiAll.cc
-#	${SCHEMA_OUT_DIR}/Sdaiclasses.h 
 #	${SCHEMA_OUT_DIR}/compstructs.cc 
 #	${SCHEMA_OUT_DIR}/schema.cc
+#)
+
+#set(FEDEX_OUTPUT 
+#	${fedex_srcs}
+#	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.h
+#	${SCHEMA_OUT_DIR}/Sdaiclasses.h 
 #	${SCHEMA_OUT_DIR}/schema.h
 #	)
 
@@ -48,13 +52,6 @@ include_directories(
 #	COMMENT "Generating C++ code to express ${SCHEMA_NAME}..."
 #	VERBATIM)
 
-#set(fedex_srcs
-#	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.cc
-#	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.init.cc
-#	${SCHEMA_OUT_DIR}/SdaiAll.cc
-#	${SCHEMA_OUT_DIR}/compstructs.cc 
-#	${SCHEMA_OUT_DIR}/schema.cc
-#)
 
 # Replace this with above if using fedex_plus to generate these
 # files from the EXPRESS schema.  Be sure to remove these files
