@@ -81,6 +81,79 @@
 #define	CT_INT		3	/* %[dioupxX] conversion */
 #define	CT_FLOAT	4	/* %[efgEFG] conversion */
 
+#define CCL_TABLE_SIZE 256
+#define CCL_ACCEPT 1
+#define CCL_REJECT 0
+
+static const char*
+get_ccl_table(char *tab, const char *fmt)
+{
+    int i, v, curr, lower, upper;
+
+    BU_ASSERT(tab != NULL);
+    BU_ASSERT(fmt != NULL);
+
+#define SET_CCL_ENTRY(e) tab[e] = v;
+
+    curr = *fmt++;
+    if (curr == '^') {
+	/* accept all chars by default */
+	memset(tab, CCL_ACCEPT, CCL_TABLE_SIZE);
+	v = CCL_REJECT;
+	curr = *fmt++;
+    } else {
+	/* reject all chars by default */
+	memset(tab, CCL_REJECT, CCL_TABLE_SIZE);
+	v = CCL_ACCEPT;
+    }
+
+    if (curr == '\0') {
+	/* format ended before closing ] */
+	return fmt - 1;
+    }
+
+    SET_CCL_ENTRY(curr);
+
+    /* set table entries from fmt */
+    while (1) {
+	lower = curr;
+	curr = *fmt++;
+
+	if (curr == '\0') {
+	    return fmt - 1;
+	}
+	if (curr == ']') {
+	    return fmt;
+	}
+
+	/* '-' usually used to specify a range */
+	if (curr == '-') {
+	    upper = *fmt;
+
+	    if (upper == ']' || upper < lower) {
+		/* ordinary '-' */
+		SET_CCL_ENTRY(curr);
+		continue;
+	    }
+
+	    /* Range. Set everything in the range. */
+	    for (i = 0; i < CCL_TABLE_SIZE; ++i) {
+		if (lower < i && i <= upper) {
+		    SET_CCL_ENTRY(i);
+		}
+	    }
+
+	    /* need to skip upper since it is not an ordinary character */
+	    curr = upper;
+	    ++fmt;
+	} else {
+	    /* ordinary char */
+	    SET_CCL_ENTRY(curr);
+	}
+    }
+    /* NOTREACHED */
+}
+
 /* Copy part of a string, everything from srcStart to srcEnd (exclusive),
  * into a new buffer. Returns the allocated buffer.
  */
@@ -141,6 +214,7 @@ bu_vsscanf(const char *src, const char *fmt, va_list ap)
     char *partFmt;
     const char *wordStart;
     size_t width;
+    char ccl_tab[CCL_TABLE_SIZE];
 
     BU_ASSERT(src != NULL);
     BU_ASSERT(fmt != NULL);
@@ -318,36 +392,7 @@ again:
 	    c = CT_STRING;
 	    break;
 	case '[':
-	    /* note that at this point c == '[' == fmt[-1] and so fmt[0] is
-	     * either '^' or the first character of the class
-	     */
-
-	    /* there should be at least one character in between brackets */
-	    if (fmt[0] == '\0' || fmt[1] == '\0') {
-		/* error */
-		goto exit;
-	    }
-
-	    /* skip literal ']' ("[]" or "[^]") */
-	    if (fmt[0] == ']') {
-		fmt = &fmt[1];
-	    } else if (fmt[0] == '^' && fmt[1] == ']') {
-		fmt = &fmt[2];
-	    }
-
-	    /* point fmt after character class */
-	    while (1) {
-		c = *fmt++;
-		if (c == '\0') {
-		    /* error */
-		    goto exit;
-		}
-		if (c == ']') {
-		    /* found end of character class */
-		    break;
-		}
-	    }
-
+	    fmt = get_ccl_table(ccl_tab, fmt);
 	    flags |= NOSKIP;
 	    c = CT_CCL;
 	    break;
