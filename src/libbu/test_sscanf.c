@@ -113,6 +113,12 @@ enum {
     SCAN_FLOAT, SCAN_DOUBLE, SCAN_LDOUBLE
 };
 
+static void
+print_src_and_fmt(const char *src, const char *fmt)
+{
+    printf("\"%s\", \"%s\"\n", src, fmt);
+}
+
 /* This test is intended to catch errors in the tests themselves. If we make a
  * typo in a test format string causing fewer assignments than expected, then
  * we could end up silently comparing error behavior rather than the behavior
@@ -164,7 +170,7 @@ test_sscanf(int type, const char *src, const char *fmt) {
     ret = bu_ret = 0;
     val = bu_val = NULL;
 
-    printf("\"%s\", \"%s\"\n", src, fmt);
+    print_src_and_fmt(src, fmt);
 
     /* call sscanf and bu_sscanf with appropriately cast pointers */
 #define SSCANF_TYPE(type) \
@@ -401,7 +407,7 @@ test_sscanf_s(const char *src, const char *fmt)
     memset(dest, '\0', STR_SIZE);
     memset(bu_dest, '\0', STR_SIZE);
 
-    printf("\"%s\", \"%s\"\n", src, fmt);
+    print_src_and_fmt(src, fmt);
 
     ret = sscanf(src, fmt, dest);
     bu_ret = bu_sscanf(src, fmt, bu_dest);
@@ -427,7 +433,7 @@ doStringTests()
 #define TEST_STR_NOSPACE "aBc"
 
 #define TEST_TERMINATION(src, fmt) \
-    puts("\"" src "\", \"" fmt "\""); \
+    print_src_and_fmt(src, fmt); \
     /* init so that 'X' appears after the last char written by bu_sscanf */ \
     memset(buf, 'X', STR_SIZE); \
     bu_ret = bu_sscanf(src, fmt, buf); \
@@ -495,7 +501,7 @@ doNonConversionTests()
     int ret, bu_ret, count, bu_count;
 
 #define TEST_SSCANF_NOCONV(src, fmt) \
-    puts("\"" src "\", \"" fmt "\""); \
+    print_src_and_fmt(src, fmt); \
     count = bu_count = 0; \
     ret = sscanf(src, fmt, &count); \
     bu_ret = bu_sscanf(src, fmt, &bu_count); \
@@ -531,7 +537,7 @@ doWidthTests()
     char bu_str_vals[NUM_VALS][STR_SIZE];
 
 #define SCAN_3_VALS(type, src, fmt) \
-    puts("\"" src "\", \"" fmt "\""); \
+    print_src_and_fmt(src, fmt); \
     vals = bu_malloc(sizeof(type) * NUM_VALS, "test_sscanf vals"); \
     bu_vals = bu_malloc(sizeof(type) * NUM_VALS, "test_sscanf bu_vals"); \
     ret = sscanf(src, fmt, &((type*)vals)[0], &((type*)vals)[1], &((type*)vals)[2]); \
@@ -560,7 +566,7 @@ doWidthTests()
     bu_free(bu_vals, "test_sscanf bu_vals");
 
 #define TEST_STRING_WIDTH(src, fmt) \
-    puts("\"" src "\", \"" fmt "\""); \
+    print_src_and_fmt(src, fmt); \
     for (i = 0; i < NUM_VALS; ++i) { \
 	memset(str_vals[i], 'X', STR_SIZE); \
 	memset(bu_str_vals[i], 'X', STR_SIZE); \
@@ -615,7 +621,7 @@ doErrorTests()
 #define FMT_READ2_ASSIGN1(fmt) \
     "%*" bu_cpp_str(fmt) " %*" bu_cpp_str(fmt) " %" bu_cpp_str(fmt)
 
-    /* Attepmt to assign 3 values from src.
+    /* Attempt to assign 3 values from src.
      * If src begins with an invalid input value, should return 0 to indicate
      * a matching failure.
      * If src is empty, should return EOF to indicate input failure.
@@ -623,7 +629,7 @@ doErrorTests()
 #define TEST_FAILURE_1(type, type_fmt, type_init, src, expected_err) \
 { \
     type vals[3] = { type_init, type_init, type_init }; \
-    puts("\"" src "\", \"" FMT_ASSIGN3(type_fmt) "\""); \
+    print_src_and_fmt(src, FMT_ASSIGN3(type_fmt)); \
     ret = sscanf(src, FMT_ASSIGN3(type_fmt), &vals[0], &vals[1], &vals[2]); \
     bu_ret = sscanf(src, FMT_ASSIGN3(type_fmt), &vals[0], &vals[1], &vals[2]); \
     CHECK_RETURN_VAL("sscanf", ret, expected_err); \
@@ -646,7 +652,7 @@ doErrorTests()
 #define TEST_FAILURE_2(type, type_fmt, type_init, src, expected_err) \
 { \
     type val = type_init; \
-    puts("\"" src "\", \"" FMT_READ2_ASSIGN1(type_fmt) "\""); \
+    print_src_and_fmt(src, FMT_READ2_ASSIGN1(type_fmt)); \
     ret = sscanf(src, FMT_READ2_ASSIGN1(type_fmt), &val); \
     bu_ret = sscanf(src, FMT_READ2_ASSIGN1(type_fmt), &val); \
     CHECK_RETURN_VAL("sscanf", ret, expected_err); \
