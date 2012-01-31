@@ -46,23 +46,21 @@
 #include <string.h>
 #include "bu.h"
 
-#define	BUF 513  /* Maximum length of numeric string. */
-
 /*
  * Flags used during conversion.
  */
-#define	LONG		0x0001	/* l: long or double */
-#define	LONGDBL		0x0002	/* L: long double */
-#define	SHORT		0x0004	/* h: short */
-#define	SUPPRESS	0x0008	/* *: suppress assignment */
-#define	POINTER		0x0010	/* p: void * (as hex) */
-#define	NOSKIP		0x0020	/* [ or c: do not skip blanks */
-#define	LONGLONG	0x0400	/* ll: long long (+ deprecated q: quad) */
-#define	INTMAXT		0x0800	/* j: intmax_t */
-#define	PTRDIFFT	0x1000	/* t: ptrdiff_t */
-#define	SIZET		0x2000	/* z: size_t */
-#define	SHORTSHORT	0x4000	/* hh: char */
-#define	UNSIGNED	0x8000	/* %[oupxX] conversions */
+#define	LONG		0x00001	/* l: long or double */
+#define	LONGDBL		0x00002	/* L: long double */
+#define	SHORT		0x00004	/* h: short */
+#define	SUPPRESS	0x00008	/* *: suppress assignment */
+#define	POINTER		0x00010	/* p: void * (as hex) */
+#define	NOSKIP		0x00020	/* [ or c: do not skip blanks */
+#define	LONGLONG	0x00400	/* ll: long long (+ deprecated q: quad) */
+#define	INTMAXT		0x00800	/* j: intmax_t */
+#define	PTRDIFFT	0x01000	/* t: ptrdiff_t */
+#define	SIZET		0x02000	/* z: size_t */
+#define	SHORTSHORT	0x04000	/* hh: char */
+#define	UNSIGNED	0x08000	/* %[oupxX] conversions */
 
 /*
  * The following are used in integral conversions only:
@@ -136,7 +134,8 @@ append_n(char **fmt) {
 int
 bu_vsscanf(const char *src, const char *fmt, va_list ap)
 {
-    int c, flags;
+    int c;
+    long flags;
     int numCharsConsumed, partConsumed;
     int numFieldsAssigned, partAssigned;
     char *partFmt;
