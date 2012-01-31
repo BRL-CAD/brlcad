@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2012-02-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* fixed memory double-freeing issue in shp-g - Erik Greenwald
 * added optional scaling parameter to autoview command - Sean Morrison
 * fixed extrude object bug rendering at near right angles - Bob Parker
 * added -h option to nirt to suppress header printing - Cliff Yapp
