@@ -120,9 +120,9 @@ enum {
  */
 #define CHECK_RETURN_VAL(func_str, actual, expected) \
     if (actual != expected) { \
-	bu_exit(1, "\tError: " func_str " returned %s. Expected %s.\n", \
-		actual == EOF ? "EOF" : bu_cpp_str(actual), \
-		expected == EOF ? "EOF" : bu_cpp_str(expected)); \
+	bu_exit(1, "\tError: " func_str " returned %d%s. Expected %d%s.\n", \
+		actual, actual == EOF ? "EOF" : "", \
+		expected, expected == EOF ? "EOF" : ""); \
     }
 
 /* Exit if returns from sscanf and bu_sscanf are not equal. */
@@ -530,7 +530,7 @@ doWidthTests()
     char str_vals[NUM_VALS][STR_SIZE];
     char bu_str_vals[NUM_VALS][STR_SIZE];
 
-#define SCAN_3_VALS(type, pfmt, src, fmt) \
+#define SCAN_3_VALS(type, src, fmt) \
     puts("\"" src "\", \"" fmt "\""); \
     vals = bu_malloc(sizeof(type) * NUM_VALS, "test_sscanf vals"); \
     bu_vals = bu_malloc(sizeof(type) * NUM_VALS, "test_sscanf bu_vals"); \
@@ -540,7 +540,7 @@ doWidthTests()
     CHECK_RETURNS_EQUAL(bu_ret, ret);
 
 #define TEST_INT_WIDTH(type, pfmt, src, fmt) \
-    SCAN_3_VALS(type, pfmt, src, fmt); \
+    SCAN_3_VALS(type, src, fmt); \
     for (i = 0; i < NUM_VALS; ++i) { \
 	val = (void*)&((type*)vals)[i]; \
 	bu_val = (void*)&((type*)bu_vals)[i]; \
@@ -550,7 +550,7 @@ doWidthTests()
     bu_free(bu_vals, "test_sscanf bu_vals");
 
 #define TEST_FLOAT_WIDTH(type, pfmt, src, fmt) \
-    SCAN_3_VALS(type, pfmt, src, fmt); \
+    SCAN_3_VALS(type, src, fmt); \
     for (i = 0; i < NUM_VALS; ++i) { \
 	val = (void*)&((type*)vals)[i]; \
 	bu_val = (void*)&((type*)bu_vals)[i]; \
@@ -604,6 +604,74 @@ doWidthTests()
     TEST_STRING_WIDTH("aaAA   1%1%1%", "%2[aA]%3[A ] %5[1%]");
 }
 
+static void
+doErrorTests()
+{
+    int i, ret, bu_ret;
+
+#define FMT_ASSIGN3(fmt) \
+    "%" bu_cpp_str(fmt) " %" bu_cpp_str(fmt) " %" bu_cpp_str(fmt)
+
+#define FMT_READ2_ASSIGN1(fmt) \
+    "%*" bu_cpp_str(fmt) " %*" bu_cpp_str(fmt) " %" bu_cpp_str(fmt)
+
+    /* Attepmt to assign 3 values from src.
+     * If src begins with an invalid input value, should return 0 to indicate
+     * a matching failure.
+     * If src is empty, should return EOF to indicate input failure.
+     */
+#define TEST_FAILURE_1(type, type_fmt, type_init, src, expected_err) \
+{ \
+    type vals[3] = { type_init, type_init, type_init }; \
+    puts("\"" src "\", \"" FMT_ASSIGN3(type_fmt) "\""); \
+    ret = sscanf(src, FMT_ASSIGN3(type_fmt), &vals[0], &vals[1], &vals[2]); \
+    bu_ret = sscanf(src, FMT_ASSIGN3(type_fmt), &vals[0], &vals[1], &vals[2]); \
+    CHECK_RETURN_VAL("sscanf", ret, expected_err); \
+    CHECK_RETURNS_EQUAL(ret, bu_ret); \
+    for (i = 0; i < 3; ++i) { \
+	if (vals[i] != type_init) { \
+	    bu_exit(1, "\t[FAIL] No assignment expected, but vals[%d] " \
+		    "changed from %" bu_cpp_str(type_fmt) " to %" bu_cpp_str(type_fmt) ".\n", \
+		    i, type_init, vals[i]); \
+	} \
+    } \
+}
+
+    /* Attempt to read 2 values and assign 1 value from src.
+     * If src includes 2 valid and 1 invalid input value, should return 0 to
+     * indicate matching failiure.
+     * If src includes 2 valid values and terminates, should return EOF to
+     * indicate input failure.
+     */
+#define TEST_FAILURE_2(type, type_fmt, type_init, src, expected_err) \
+{ \
+    type val = type_init; \
+    puts("\"" src "\", \"" FMT_READ2_ASSIGN1(type_fmt) "\""); \
+    ret = sscanf(src, FMT_READ2_ASSIGN1(type_fmt), &val); \
+    bu_ret = sscanf(src, FMT_READ2_ASSIGN1(type_fmt), &val); \
+    CHECK_RETURN_VAL("sscanf", ret, expected_err); \
+    CHECK_RETURNS_EQUAL(ret, bu_ret); \
+    if (val != type_init) { \
+	bu_exit(1, "\t[FAIL] No assignment expected, but val " \
+		"changed from %" bu_cpp_str(type_fmt) " to %" bu_cpp_str(type_fmt) ".\n", \
+		type_init, val); \
+    } \
+}
+
+#define EXPECT_MATCH_FAILURE 0
+#define EXPECT_INPUT_FAILURE EOF
+
+    TEST_FAILURE_1(int, d, 0, "xx 34 56", EXPECT_MATCH_FAILURE);
+    TEST_FAILURE_2(int, d, 0, "12 34 xx", EXPECT_MATCH_FAILURE);
+    TEST_FAILURE_2(int, d, 0, "12 34", EXPECT_INPUT_FAILURE);
+    TEST_FAILURE_1(int, d, 0, "", EXPECT_INPUT_FAILURE);
+
+    TEST_FAILURE_1(char, 1[123], 'a', "x 2 3", EXPECT_MATCH_FAILURE);
+    TEST_FAILURE_2(char, 1[123], 'a', "1 2 x", EXPECT_MATCH_FAILURE);
+    TEST_FAILURE_2(char, 1[123], 'a', "1 2", EXPECT_INPUT_FAILURE);
+    TEST_FAILURE_1(char, 1[123], 'a', "", EXPECT_INPUT_FAILURE);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -618,6 +686,7 @@ main(int argc, char *argv[])
     doPointerTests();
     doNonConversionTests();
     doWidthTests();
+    doErrorTests();
 
     printf("bu_sscanf: testing complete\n");
     return 0;
