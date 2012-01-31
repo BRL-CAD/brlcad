@@ -1389,7 +1389,7 @@ HIDDEN int
 ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 {
     register struct bn_vlist	*tvp;
-    int				first;
+    register int		first;
 
     if (dmp->dm_debugLevel)
 	bu_log("ogl_drawVList()\n");
@@ -1440,17 +1440,31 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 		    break;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_POLY_DRAW:
+		case BN_VLIST_TRI_MOVE:
+		case BN_VLIST_TRI_DRAW:
 		    glVertex3dv(*pt);
 		    break;
 		case BN_VLIST_POLY_END:
 		    /* Draw, End Polygon */
-		    glVertex3dv(*pt);
 		    glEnd();
 		    first = 1;
 		    break;
 		case BN_VLIST_POLY_VERTNORM:
+		case BN_VLIST_TRI_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
 		    glNormal3dv(*pt);
+		    break;
+		case BN_VLIST_TRI_START:
+		    if (first)
+			glBegin(GL_TRIANGLES);
+
+		    first = 0;
+
+		    /* Set surface normal (vl_pnt points outward) */
+		    glNormal3dv(*pt);
+
+		    break;
+		case BN_VLIST_TRI_END:
 		    break;
 	    }
 	}
@@ -1458,7 +1472,6 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 
     if (first == 0)
 	glEnd();
-
 
     /* Last, draw wireframe/edges. */
 
@@ -1486,6 +1499,7 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 		    glVertex3dv(*pt);
 		    break;
 		case BN_VLIST_POLY_START:
+		case BN_VLIST_TRI_START:
 		    /* Start poly marker & normal */
 		    if (first == 0)
 			glEnd();
@@ -1496,15 +1510,19 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 		case BN_VLIST_LINE_DRAW:
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_POLY_DRAW:
+		case BN_VLIST_TRI_MOVE:
+		case BN_VLIST_TRI_DRAW:
 		    glVertex3dv(*pt);
 		    break;
 		case BN_VLIST_POLY_END:
+		case BN_VLIST_TRI_END:
 		    /* Draw, End Polygon */
 		    glVertex3dv(*pt);
 		    glEnd();
 		    first = 1;
 		    break;
 		case BN_VLIST_POLY_VERTNORM:
+		case BN_VLIST_TRI_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
 		    glNormal3dv(*pt);
 		    break;
@@ -1539,8 +1557,8 @@ HIDDEN int
 ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
     struct bn_vlist *tvp;
-    int first;
-    int mflag = 1;
+    register int first;
+    register int mflag = 1;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
 
     if (dmp->dm_debugLevel)
@@ -1578,10 +1596,8 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    glVertex3dv(*pt);
 		    break;
 		case BN_VLIST_POLY_START:
+		case BN_VLIST_TRI_START:
 		    /* Start poly marker & normal */
-		    if (first == 0)
-			glEnd();
-		    first = 0;
 
 		    if (dmp->dm_light && mflag) {
 			mflag = 0;
@@ -1608,22 +1624,36 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			    glEnable(GL_BLEND);
 		    }
 
-		    glBegin(GL_POLYGON);
+		    if (*cmd == BN_VLIST_POLY_START) {
+			if (first == 0)
+			    glEnd();
+
+			glBegin(GL_POLYGON);
+		    } else if (first)
+			glBegin(GL_TRIANGLES);
+
 		    /* Set surface normal (vl_pnt points outward) */
 		    glNormal3dv(*pt);
+
+		    first = 0;
+
 		    break;
 		case BN_VLIST_LINE_DRAW:
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_POLY_DRAW:
+		case BN_VLIST_TRI_MOVE:
+		case BN_VLIST_TRI_DRAW:
 		    glVertex3dv(*pt);
 		    break;
 		case BN_VLIST_POLY_END:
 		    /* Draw, End Polygon */
-		    glVertex3dv(*pt);
 		    glEnd();
 		    first = 1;
 		    break;
+		case BN_VLIST_TRI_END:
+		    break;
 		case BN_VLIST_POLY_VERTNORM:
+		case BN_VLIST_TRI_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
 		    glNormal3dv(*pt);
 		    break;

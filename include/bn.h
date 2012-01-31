@@ -1716,7 +1716,13 @@ struct bn_vlist  {
 #define BN_VLIST_POLY_DRAW	4	/**< @brief subsequent poly vertex */
 #define BN_VLIST_POLY_END	5	/**< @brief last vert (repeats 1st), draw poly */
 #define BN_VLIST_POLY_VERTNORM	6	/**< @brief per-vertex normal, for interpoloation */
-#define BN_VLIST_POINT_DRAW	7	/**< @brief  Draw a single point */
+#define BN_VLIST_TRI_START	7	/**< @brief pt[] has surface normal */
+#define BN_VLIST_TRI_MOVE	8	/**< @brief move to first triangle vertex */
+#define BN_VLIST_TRI_DRAW	9	/**< @brief subsequent triangle vertex */
+#define BN_VLIST_TRI_END	10	/**< @brief last vert (repeats 1st), draw poly */
+#define BN_VLIST_TRI_VERTNORM	11	/**< @brief per-vertex normal, for interpoloation */
+#define BN_VLIST_POINT_DRAW	12	/**< @brief  Draw a single point */
+#define BN_VLIST_CMD_MAX	12	/**< @brief  Max command number */
 
 /**
  * Applications that are going to use BN_ADD_VLIST and BN_GET_VLIST

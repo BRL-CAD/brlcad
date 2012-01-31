@@ -85,6 +85,8 @@ _ged_select(struct ged *gedp, fastf_t vx, fastf_t vy, fastf_t vwidth, fastf_t vh
 		    switch (*cmd) {
 			case BN_VLIST_POLY_START:
 			case BN_VLIST_POLY_VERTNORM:
+			case BN_VLIST_TRI_START:
+			case BN_VLIST_TRI_VERTNORM:
 			    /* Has normal vector, not location */
 			    break;
 			case BN_VLIST_LINE_MOVE:
@@ -92,6 +94,9 @@ _ged_select(struct ged *gedp, fastf_t vx, fastf_t vy, fastf_t vwidth, fastf_t vh
 			case BN_VLIST_POLY_MOVE:
 			case BN_VLIST_POLY_DRAW:
 			case BN_VLIST_POLY_END:
+			case BN_VLIST_TRI_MOVE:
+			case BN_VLIST_TRI_DRAW:
+			case BN_VLIST_TRI_END:
 			    MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, *pt);
 			    V_MIN(vmin[X], vpt[X]);
 			    V_MAX(vmax[X], vpt[X]);

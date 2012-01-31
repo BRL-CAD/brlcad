@@ -301,12 +301,17 @@ work:
 			switch (*cmd) {
 			    case BN_VLIST_POLY_START:
 			    case BN_VLIST_POLY_VERTNORM:
+			    case BN_VLIST_TRI_START:
+			    case BN_VLIST_TRI_VERTNORM:
 				break;
 			    case BN_VLIST_LINE_MOVE:
 			    case BN_VLIST_LINE_DRAW:
 			    case BN_VLIST_POLY_MOVE:
 			    case BN_VLIST_POLY_DRAW:
 			    case BN_VLIST_POLY_END:
+			    case BN_VLIST_TRI_MOVE:
+			    case BN_VLIST_TRI_DRAW:
+			    case BN_VLIST_TRI_END:
 				VADD2(*pt, *pt, xlate);
 				break;
 			}
@@ -332,12 +337,17 @@ work:
 		    switch (*cmd) {
 			case BN_VLIST_POLY_START:
 			case BN_VLIST_POLY_VERTNORM:
+			case BN_VLIST_TRI_START:
+			case BN_VLIST_TRI_VERTNORM:
 			    break;
 			case BN_VLIST_LINE_MOVE:
 			case BN_VLIST_LINE_DRAW:
 			case BN_VLIST_POLY_MOVE:
 			case BN_VLIST_POLY_DRAW:
 			case BN_VLIST_POLY_END:
+			case BN_VLIST_TRI_MOVE:
+			case BN_VLIST_TRI_DRAW:
+			case BN_VLIST_TRI_END:
 			    VADD2(*pt, *pt, xlate);
 			    break;
 		    }

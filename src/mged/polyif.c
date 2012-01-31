@@ -122,9 +122,11 @@ f_polybinout(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 			    /* Draw line */
 			    break;
 			case BN_VLIST_POLY_VERTNORM:
+			case BN_VLIST_TRI_VERTNORM:
 			    /* Ignore per-vertex normal */
 			    break;
 			case BN_VLIST_POLY_START:
+			case BN_VLIST_TRI_START:
 			    /* Start poly marker & normal, followed by POLY_MOVE */
 			    ph.magic = POLYGON_HEADER_MAGIC;
 			    ph.ident = pno++;
@@ -136,9 +138,11 @@ f_polybinout(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 			    need_normal = 0;
 			    break;
 			case BN_VLIST_POLY_MOVE:
+			case BN_VLIST_TRI_MOVE:
 			    /* Start of polygon, has first point */
 			    /* fall through to... */
 			case BN_VLIST_POLY_DRAW:
+			case BN_VLIST_TRI_DRAW:
 			    /* Polygon Draw */
 			    if (ph.npts >= MAX_VERTS) {
 				Tcl_AppendResult(interp, "excess vertex skipped\n",
@@ -149,6 +153,7 @@ f_polybinout(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 			    ph.npts++;
 			    break;
 			case BN_VLIST_POLY_END:
+			case BN_VLIST_TRI_END:
 			    /*
 			     * End Polygon.  Point given is repeat of
 			     * first one, ignore it.

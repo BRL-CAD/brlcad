@@ -558,7 +558,7 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	VSUB2(ac, aa, cc);
 	VCROSS(norm, ab, ac);
 	VUNITIZE(norm);
-	RT_ADD_VLIST(vhead, norm, BN_VLIST_POLY_START);
+	RT_ADD_VLIST(vhead, norm, BN_VLIST_TRI_START);
 
 	if ((bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) &&
 	    (bot_ip->bot_flags & RT_BOT_USE_NORMALS)) {
@@ -567,18 +567,18 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	    VMOVE(na, &bot_ip->normals[bot_ip->face_normals[i*3+0]*3]);
 	    VMOVE(nb, &bot_ip->normals[bot_ip->face_normals[i*3+1]*3]);
 	    VMOVE(nc, &bot_ip->normals[bot_ip->face_normals[i*3+2]*3]);
-	    RT_ADD_VLIST(vhead, na, BN_VLIST_POLY_VERTNORM);
-	    RT_ADD_VLIST(vhead, aa, BN_VLIST_POLY_MOVE);
-	    RT_ADD_VLIST(vhead, nb, BN_VLIST_POLY_VERTNORM);
-	    RT_ADD_VLIST(vhead, bb, BN_VLIST_POLY_DRAW);
-	    RT_ADD_VLIST(vhead, nc, BN_VLIST_POLY_VERTNORM);
-	    RT_ADD_VLIST(vhead, cc, BN_VLIST_POLY_DRAW);
-	    RT_ADD_VLIST(vhead, aa, BN_VLIST_POLY_END);
+	    RT_ADD_VLIST(vhead, na, BN_VLIST_TRI_VERTNORM);
+	    RT_ADD_VLIST(vhead, aa, BN_VLIST_TRI_MOVE);
+	    RT_ADD_VLIST(vhead, nb, BN_VLIST_TRI_VERTNORM);
+	    RT_ADD_VLIST(vhead, bb, BN_VLIST_TRI_DRAW);
+	    RT_ADD_VLIST(vhead, nc, BN_VLIST_TRI_VERTNORM);
+	    RT_ADD_VLIST(vhead, cc, BN_VLIST_TRI_DRAW);
+	    RT_ADD_VLIST(vhead, aa, BN_VLIST_TRI_END);
 	} else {
-	    RT_ADD_VLIST(vhead, aa, BN_VLIST_POLY_MOVE);
-	    RT_ADD_VLIST(vhead, bb, BN_VLIST_POLY_DRAW);
-	    RT_ADD_VLIST(vhead, cc, BN_VLIST_POLY_DRAW);
-	    RT_ADD_VLIST(vhead, aa, BN_VLIST_POLY_END);
+	    RT_ADD_VLIST(vhead, aa, BN_VLIST_TRI_MOVE);
+	    RT_ADD_VLIST(vhead, bb, BN_VLIST_TRI_DRAW);
+	    RT_ADD_VLIST(vhead, cc, BN_VLIST_TRI_DRAW);
+	    RT_ADD_VLIST(vhead, aa, BN_VLIST_TRI_END);
 	}
     }
 

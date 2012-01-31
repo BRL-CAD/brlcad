@@ -232,7 +232,7 @@ rt_ck_vlist(const struct bu_list *vhead)
 		    bu_bomb("rt_ck_vlist() bad coordinate value\n");
 		}
 		/* XXX Need a define for largest command number */
-		if (*cmd < 0 || *cmd > BN_VLIST_POLY_VERTNORM) {
+		if (*cmd < 0 || *cmd > BN_VLIST_CMD_MAX) {
 		    bu_log("cmd = x%x (%d.)\n", *cmd, *cmd);
 		    bu_bomb("rt_ck_vlist() bad vlist command\n");
 		}
@@ -504,14 +504,18 @@ rt_vlist_to_uplot(FILE *fp, const struct bu_list *vhead)
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
+		case BN_VLIST_TRI_START:
 		    break;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_LINE_MOVE:
+		case BN_VLIST_TRI_MOVE:
 		    pdv_3move(fp, *pt);
 		    break;
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_POLY_END:
 		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_TRI_DRAW:
+		case BN_VLIST_TRI_END:
 		    pdv_3cont(fp, *pt);
 		    break;
 		default:

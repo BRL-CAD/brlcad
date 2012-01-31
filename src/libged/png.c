@@ -183,9 +183,12 @@ draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, matp_t
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_POLY_VERTNORM:
+		case BN_VLIST_TRI_START:
+		case BN_VLIST_TRI_VERTNORM:
 		    continue;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_LINE_MOVE:
+		case BN_VLIST_TRI_MOVE:
 		    /* Move, not draw */
 		    if (gedp->ged_gvp->gv_perspective > 0) {
 			/* cannot apply perspective transformation to
@@ -207,6 +210,8 @@ draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, matp_t
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_POLY_END:
 		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_TRI_DRAW:
+		case BN_VLIST_TRI_END:
 		    /* draw */
 		    if (gedp->ged_gvp->gv_perspective > 0) {
 			/* cannot apply perspective transformation to

@@ -210,15 +210,20 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 		    switch (*cmd) {
 			case BN_VLIST_POLY_START:
 			case BN_VLIST_POLY_VERTNORM:
+			case BN_VLIST_TRI_START:
+		        case BN_VLIST_TRI_VERTNORM:
 			    continue;
 			case BN_VLIST_POLY_MOVE:
 			case BN_VLIST_LINE_MOVE:
+		        case BN_VLIST_TRI_MOVE:
 			    /* Move, not draw */
 			    MAT4X3VEC(last, view_state->vs_gvp->gv_rotation, *pt);
 			    continue;
 			case BN_VLIST_POLY_DRAW:
 			case BN_VLIST_POLY_END:
 			case BN_VLIST_LINE_DRAW:
+		        case BN_VLIST_TRI_DRAW:
+		        case BN_VLIST_TRI_END:
 			    /* draw.  */
 			    MAT4X3VEC(fin, view_state->vs_gvp->gv_rotation, *pt);
 			    break;

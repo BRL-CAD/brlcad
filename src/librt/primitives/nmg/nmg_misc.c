@@ -7313,12 +7313,14 @@ nmg_vlist_to_wire_edges(struct shell *s, const struct bu_list *vhead)
 	    switch(vp->cmd[i]) {
 		case BN_VLIST_LINE_MOVE:
 		case BN_VLIST_POLY_MOVE:
+		case BN_VLIST_TRI_MOVE:
 		    v1 = (struct vertex *)NULL;
 		    v2 = (struct vertex *)NULL;
 		    VMOVE(pt2, vp->pt[i]);
 		    break;
 		case BN_VLIST_LINE_DRAW:
 		case BN_VLIST_POLY_DRAW:
+		case BN_VLIST_TRI_DRAW:
 		    VSUB2(edge_vec, pt2, vp->pt[i]);
 		    if (VNEAR_ZERO(edge_vec, SMALL_FASTF))
 			break;
@@ -7336,6 +7338,8 @@ nmg_vlist_to_wire_edges(struct shell *s, const struct bu_list *vhead)
 		    break;
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_POLY_END:
+		case BN_VLIST_TRI_START:
+		case BN_VLIST_TRI_END:
 		    break;
 	    }
 	}

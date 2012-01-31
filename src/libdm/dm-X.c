@@ -895,11 +895,13 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
-
 		case BN_VLIST_POLY_VERTNORM:
+		case BN_VLIST_TRI_START:
+		case BN_VLIST_TRI_VERTNORM:
 		    continue;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_LINE_MOVE:
+		case BN_VLIST_TRI_MOVE:
 		    /* Move, not draw */
 		    if (dmp->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");
@@ -931,6 +933,8 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_POLY_END:
 		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_TRI_DRAW:
+		case BN_VLIST_TRI_END:
 		    /* draw */
 		    if (dmp->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");

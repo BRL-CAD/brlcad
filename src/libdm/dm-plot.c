@@ -205,9 +205,12 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_POLY_VERTNORM:
+		case BN_VLIST_TRI_START:
+		case BN_VLIST_TRI_VERTNORM:
 		    continue;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_LINE_MOVE:
+		case BN_VLIST_TRI_MOVE:
 		    /* Move, not draw */
 		    if (dmp->dm_perspective > 0) {
 			/* cannot apply perspective transformation to
@@ -229,6 +232,8 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_POLY_END:
 		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_TRI_DRAW:
+		case BN_VLIST_TRI_END:
 		    /* draw */
 		    if (dmp->dm_perspective > 0) {
 			/* cannot apply perspective transformation to
