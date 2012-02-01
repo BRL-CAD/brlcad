@@ -511,6 +511,8 @@ endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${CMAKE_INSTALL_PREFIX}	STREQUAL
 # The following logic is what allows binaries to run successfully in
 # the build directory AND install directory.  Thanks to plplot for
 # identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
+# Documentation of these options is available at
+# http://www.cmake.org/Wiki/CMake_RPATH_handling
 
 # use, i.e. don't skip the full RPATH for the build tree
 set(CMAKE_SKIP_BUILD_RPATH  FALSE)
@@ -523,6 +525,8 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 if (NOT APPLE)
   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:\$ORIGIN/../${LIB_DIR}")
 endif(NOT APPLE)
+# On OSX, we need to set INSTALL_NAME_DIR instead of RPATH
+# http://www.cmake.org/cmake/help/cmake-2-8-docs.html#variable:CMAKE_INSTALL_NAME_DIR
 set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}")
 
 # add the automatically determined parts of the RPATH which point to
