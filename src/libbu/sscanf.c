@@ -519,14 +519,65 @@ if (flags & UNSIGNED) { \
 			++partConsumed;
 		    }
 
-		    /* successful assignment */
-		    ++partAssigned;
+		    if (partConsumed > 0) {
+			/* successful assignment */
+			++partAssigned;
+		    }
 		}
 
 		break;
 	    }
 	    /* FALLTHROUGH */
 	case CT_CCL:
+
+	    /* %V[...] conversion */
+	    if (flags & BUVLS) {
+
+		/* default width for %[...] conversion is infinity */
+		if (width == 0) {
+		    width = ~(width & 0);
+		}
+
+		if (flags & SUPPRESS) {
+		    partAssigned = 0;
+
+		    /* Read characters from src. Stop once width is satisfied,
+		     * a non-matching char is found, or if EOI is reached.
+		     */
+		    for (i = 0; i < width; ++i) {
+			c = src[numCharsConsumed + i];
+			if (ccl_tab[c] == CCL_REJECT || c == '\0') {
+			    break;
+			}
+			++partConsumed;
+		    }
+		} else {
+		    struct bu_vls *vls = va_arg(ap, struct bu_vls*);
+
+		    bu_vls_trunc(vls, 0);
+
+		    /* Copy characters from src to vls. Stop once width is satisfied,
+		     * a non-matching char is found, or if EOI is reached.
+		     */
+		    partAssigned = 0;
+		    for (i = 0; i < width; ++i) {
+			c = src[numCharsConsumed + i];
+			if (ccl_tab[c] == CCL_REJECT || c == '\0') {
+			    break;
+			}
+			bu_vls_putc(vls, c);
+			++partConsumed;
+		    }
+
+		    if (partConsumed > 0) {
+			/* successful assignment */
+			++partAssigned;
+		    }
+		}
+
+		break;
+	    }
+	    /* FALLTHROUGH */
 	case CT_STRING:
 	    if (flags & LONG) {
 		SSCANF_TYPE(wchar_t*);
