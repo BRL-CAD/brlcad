@@ -2703,7 +2703,12 @@ namespace eval ArcherCore {
 		    } else {
 			set drawitem [lindex $bnames 0]
 		    }
+
+		    $itk_component(ged) refresh_off
 		    gedCmd draw -m$how $drawitem
+		    gedCmd erase [lindex $bnames 1]
+		    $itk_component(ged) refresh_on
+		    $itk_component(ged) refresh_all
 
 		    syncTree
 		    setSave
