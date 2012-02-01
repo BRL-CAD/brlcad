@@ -132,7 +132,11 @@ if {[catch {
 #     Lets user pick what bot they want to edit by displaying a combobox
 #     populated with the elements of the bots list argument.
 #
-::itcl::body BotUtility::selectBot {bots} {    
+::itcl::body BotUtility::selectBot {bots} {
+
+    # Sort the list of bots
+    set bots [lsort -dictionary $bots]
+
     # create container frame
     itk_component add sframe {
 	ttk::frame $itk_interior.selectFrame
