@@ -1,11 +1,11 @@
 set(LGT_INCLUDE_DIRS
-	${FB_INCLUDE_DIRS}
-	${RT_INCLUDE_DIRS}
-	${TERMIO_INCLUDE_DIRS}
-	${VFONT_INCLUDE_DIRS}
-	${CURSOR_INCLUDE_DIRS}
-	${CMAKE_CURRENT_SOURCE_DIR}
-	)
+  ${FB_INCLUDE_DIRS}
+  ${RT_INCLUDE_DIRS}
+  ${TERMIO_INCLUDE_DIRS}
+  ${VFONT_INCLUDE_DIRS}
+  ${CURSOR_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  )
 LIST(REMOVE_DUPLICATES LGT_INCLUDE_DIRS)
 include_directories(${LGT_INCLUDE_DIRS})
 
@@ -27,25 +27,25 @@ set(lgt_SOURCES
   reflect.c
   texture.c
   trie.c
-)
+  )
 
 if(HAVE_TERMLIB)
-   BRLCAD_ADDEXEC(lgt "${lgt_SOURCES}" "librt libfb libtermio libvfont libcursor ${M_LIBRARY}")
-   SET_TARGET_PROPERTIES(lgt PROPERTIES COMPILE_DEFINITIONS "BEHIND_ME_TOL=0.05")
+  BRLCAD_ADDEXEC(lgt "${lgt_SOURCES}" "librt libfb libtermio libvfont libcursor ${M_LIBRARY}")
+  SET_TARGET_PROPERTIES(lgt PROPERTIES COMPILE_DEFINITIONS "BEHIND_ME_TOL=0.05")
 
-	ADD_MAN_PAGE(1 lgt.1)
+  ADD_MAN_PAGE(1 lgt.1)
 endif(HAVE_TERMLIB)
 set(lgt_ignore_files
-	ascii.h
-	cursors.h
-	extern.h
-	hmenu.h
-	lgt.1
-	lgt.h
-	mat_db.h
-	screen.h
-	texture.h
-	tree.h
-	)
+  ascii.h
+  cursors.h
+  extern.h
+  hmenu.h
+  lgt.1
+  lgt.h
+  mat_db.h
+  screen.h
+  texture.h
+  tree.h
+  )
 CMAKEFILES(${lgt_ignore_files})
 CMAKEFILES(Makefile.am)

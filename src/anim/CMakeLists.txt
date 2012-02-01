@@ -1,7 +1,7 @@
 set(ANIM_INCLUDE_DIRS
-	${BU_INCLUDE_DIRS}
-	${BN_INCLUDE_DIRS}
-	)
+  ${BU_INCLUDE_DIRS}
+  ${BN_INCLUDE_DIRS}
+  )
 LIST(REMOVE_DUPLICATES ANIM_INCLUDE_DIRS)
 include_directories(${ANIM_INCLUDE_DIRS})
 
@@ -43,7 +43,7 @@ set(anim_MANS
   anim_turn.1
   chan_mult.1
   chan_permute.1
-)
+  )
 ADD_MAN_PAGES(1 anim_MANS)
 CMAKEFILES(cattrack.h)
 CMAKEFILES(Makefile.am)

@@ -1,22 +1,20 @@
 set(FBBIN_INCLUDE_DIRS
-	${CMAKE_CURRENT_SOURCE_DIR}
-	${BU_INCLUDE_DIRS}
-	${BN_INCLUDE_DIRS}
-	${PKG_INCLUDE_DIRS}
-	${FB_INCLUDE_DIRS}
-	${ORLE_INCLUDE_DIRS}
-	${TERMINFO_INCLUDE_DIRS}
-	${UTAHRLE_INCLUDE_DIR}
-	${PNG_INCLUDE_DIR}
-	${ZLIB_INCLUDE_DIR}
-	)
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${BU_INCLUDE_DIRS}
+  ${BN_INCLUDE_DIRS}
+  ${PKG_INCLUDE_DIRS}
+  ${FB_INCLUDE_DIRS}
+  ${ORLE_INCLUDE_DIRS}
+  ${TERMINFO_INCLUDE_DIRS}
+  ${UTAHRLE_INCLUDE_DIR}
+  ${PNG_INCLUDE_DIR}
+  ${ZLIB_INCLUDE_DIR}
+  )
 BRLCAD_SORT_INCLUDE_DIRS(FBBIN_INCLUDE_DIRS)
 include_directories(${FBBIN_INCLUDE_DIRS})
 
 if(MSVC)
-		  add_definitions(
-					 -DIF_WGL
-					 )
+  add_definitions(-DIF_WGL)
 endif(MSVC)
 BRLCAD_ADDEXEC(bw-fb bw-fb.c libfb)
 BRLCAD_ADDEXEC(cell-fb cell-fb.c "libfb libbn")
@@ -35,7 +33,7 @@ BRLCAD_ADDEXEC(fbcmap fbcmap.c libfb)
 BRLCAD_ADDEXEC(fbcmrot fbcmrot.c libfb)
 
 if(HAVE_TERMLIB)
-	BRLCAD_ADDEXEC(fbcolor fbcolor.c "libfb libtermio")
+  BRLCAD_ADDEXEC(fbcolor fbcolor.c "libfb libtermio")
 endif(HAVE_TERMLIB)
 BRLCAD_ADDEXEC(fbfade "fbfade.c ioutil.c" libfb)
 BRLCAD_ADDEXEC(fbframe fbframe.c libfb)
@@ -47,17 +45,17 @@ BRLCAD_ADDEXEC(fbhelp fbhelp.c libfb)
 BRLCAD_ADDEXEC(fblabel fblabel.c libfb)
 BRLCAD_ADDEXEC(fbline fbline.c libfb)
 if(HAVE_TERMLIB)
-	BRLCAD_ADDEXEC(fbpoint fbpoint.c "libfb libbu libtermio libpkg")
+  BRLCAD_ADDEXEC(fbpoint fbpoint.c "libfb libbu libtermio libpkg")
 endif(HAVE_TERMLIB)
 BRLCAD_ADDEXEC(fbscanplot fbscanplot.c libfb)
 BRLCAD_ADDEXEC(fbstretch "fbstretch.c ioutil.c" libfb)
 if(BRLCAD_ENABLE_TK)
-	BRLCAD_ADDEXEC(fbthreadtest fbthreadtest.c "libfb ${TCL_TK_LIBRARY}")
-	SET_TARGET_PROPERTIES(fbthreadtest PROPERTIES COMPILE_DEFINITIONS "IF_TK")
-	SET_TARGET_PROPERTIES(fbthreadtest PROPERTIES LINKER_LANGUAGE C)
+  BRLCAD_ADDEXEC(fbthreadtest fbthreadtest.c "libfb ${TCL_TK_LIBRARY}")
+  SET_TARGET_PROPERTIES(fbthreadtest PROPERTIES COMPILE_DEFINITIONS "IF_TK")
+  SET_TARGET_PROPERTIES(fbthreadtest PROPERTIES LINKER_LANGUAGE C)
 endif(BRLCAD_ENABLE_TK)
 if(HAVE_TERMLIB)
-	BRLCAD_ADDEXEC(fbzoom fbzoom.c "libfb libtermio")
+  BRLCAD_ADDEXEC(fbzoom fbzoom.c "libfb libtermio")
 endif(HAVE_TERMLIB)
 BRLCAD_ADDEXEC(gif-fb "gif-fb.c ioutil.c" libfb)
 BRLCAD_ADDEXEC(gif2fb gif2fb.c libfb)
@@ -69,11 +67,11 @@ BRLCAD_ADDEXEC(pl-fb pl-fb.c libfb)
 BRLCAD_ADDEXEC(png-fb png-fb.c "libfb ${PNG_LIBRARY}")
 BRLCAD_ADDEXEC(polar-fb polar-fb.c "libfb ${M_LIBRARY}")
 if(HAVE_TERMLIB)
-	BRLCAD_ADDEXEC(pp-fb pp-fb.c "libfb libtermio")
+  BRLCAD_ADDEXEC(pp-fb pp-fb.c "libfb libtermio")
 endif(HAVE_TERMLIB)
 BRLCAD_ADDEXEC(rle-fb rle-fb.c "libfb ${UTAHRLE_LIBRARY}")
 if(CPP_DLL_DEFINES)
-	SET_PROPERTY(TARGET rle-fb APPEND PROPERTY COMPILE_DEFINITIONS "RLE_DLL_IMPORTS")
+  SET_PROPERTY(TARGET rle-fb APPEND PROPERTY COMPILE_DEFINITIONS "RLE_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 
 BRLCAD_ADDEXEC(spm-fb spm-fb.c "libfb libbn")
@@ -117,7 +115,7 @@ set(fb_MANS
   polar-fb.1
   pp-fb.1
   rle-fb.1
-)
+  )
 ADD_MAN_PAGES(1 fb_MANS)
 CMAKEFILES(fbthreadtest.c)
 CMAKEFILES(Makefile.am)

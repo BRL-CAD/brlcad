@@ -1,8 +1,8 @@
 set(PROC_DB_INCLUDE_DIRS
-	${WDB_INCLUDE_DIRS}
-	${OPENNURBS_INCLUDE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}
-	)
+  ${WDB_INCLUDE_DIRS}
+  ${OPENNURBS_INCLUDE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  )
 LIST(REMOVE_DUPLICATES PROC_DB_INCLUDE_DIRS)
 include_directories(${PROC_DB_INCLUDE_DIRS})
 
@@ -44,14 +44,14 @@ BRLCAD_ADDEXEC(vegetation vegetation.c "libwdb ${M_LIBRARY}")
 BRLCAD_ADDEXEC(wdb_example wdb_example.c libwdb)
 
 set(proc-db_ignore_files
-	brepintersect.h
-	metaballs.pl
-	mkbuilding.h
-	sgi.sh
-	spiral.pl
-	surfaceintersect.h
-	tea.h
-	vegetation.h
-)
+  brepintersect.h
+  metaballs.pl
+  mkbuilding.h
+  sgi.sh
+  spiral.pl
+  surfaceintersect.h
+  tea.h
+  vegetation.h
+  )
 CMAKEFILES(${proc-db_ignore_files})
 CMAKEFILES(Makefile.am)

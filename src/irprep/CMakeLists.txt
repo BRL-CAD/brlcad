@@ -1,8 +1,8 @@
 set(IRPREP_INCLUDE_DIRS
-	${BU_INCLUDE_DIRS}
-	${RT_INCLUDE_DIRS}
-	${X11_INCLUDE_DIR}
-	)
+  ${BU_INCLUDE_DIRS}
+  ${RT_INCLUDE_DIRS}
+  ${X11_INCLUDE_DIR}
+  )
 LIST(REMOVE_DUPLICATES IRPREP_INCLUDE_DIRS)
 include_directories(${IRPREP_INCLUDE_DIRS})
 
@@ -12,7 +12,7 @@ if(BRLCAD_ENABLE_X11)
   set(irprep_X_MANS
     irdisp.1
     ir-X.1
-  )
+    )
 endif(BRLCAD_ENABLE_X11)
 
 BRLCAD_ADDEXEC(all_sf all_sf.c "librt ${M_LIBRARY}")
@@ -27,7 +27,7 @@ set(irprep_MANS
   secpass.1
   shapefact.1
   showtherm.1
-)
+  )
 #  pictx.1
 ADD_MAN_PAGES(1 irprep_MANS)
 CMAKEFILES(pictx.1 pictx.c)

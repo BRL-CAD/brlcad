@@ -1,8 +1,8 @@
 add_subdirectory(scripts)
 
 set(sdialogs_TCLSCRIPTS
-	sdialogs.tcl
-)
+  sdialogs.tcl
+  )
 BRLCAD_ADDDATA(sdialogs_TCLSCRIPTS tclscripts/sdialogs)
 pkgIndex_BUILD(sdialogs tclscripts/sdialogs)
 tclIndex_BUILD(sdialogs tclscripts/sdialogs)

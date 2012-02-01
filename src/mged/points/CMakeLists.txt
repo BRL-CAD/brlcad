@@ -5,16 +5,16 @@
 # environments
 string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
 if(BUILD_TYPE)
-	set(CMAKE_C_FLAGS_${BUILD_TYPE} "")
+  set(CMAKE_C_FLAGS_${BUILD_TYPE} "")
 else(BUILD_TYPE)
-	set(CMAKE_C_FLAGS "")
+  set(CMAKE_C_FLAGS "")
 endif(BUILD_TYPE)
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
   ${TCL_INCLUDE_DIRS}
-)
+  )
 
 YACC_TARGET(MGEDPointsParser points_parse.y
   ${CMAKE_CURRENT_BINARY_DIR}/points_parse.c)
@@ -28,17 +28,17 @@ set(MGED_POINTS_SRCS
   count.c
   process.c
   main.c
-)
+  )
 
 add_library(libpoints ${MGED_POINTS_SRCS})
 target_link_libraries(libpoints libbu)
 install(TARGETS libpoints DESTINATION lib)
 SET_TARGET_PROPERTIES(libpoints PROPERTIES COMPILE_DEFINITIONS "ENABLE_POINTS")
 set(mged_points_ignore_files
-	count.h
-	points_parse.y
-	points_scan.l
-	process.h
-	)
+  count.h
+  points_parse.y
+  points_scan.l
+  process.h
+  )
 CMAKEFILES(${mged_points_ignore_files})
 CMAKEFILES(Makefile.am)

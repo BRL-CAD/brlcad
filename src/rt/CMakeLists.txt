@@ -1,20 +1,20 @@
 set(RTBIN_INCLUDE_DIRS
-	${OPTICAL_INCLUDE_DIRS}
-	${FB_INCLUDE_DIRS}
-	${RT_INCLUDE_DIRS}
-	${CMAKE_CURRENT_SOURCE_DIR}
-	)
+  ${OPTICAL_INCLUDE_DIRS}
+  ${FB_INCLUDE_DIRS}
+  ${RT_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  )
 LIST(REMOVE_DUPLICATES RTBIN_INCLUDE_DIRS)
 include_directories(${RTBIN_INCLUDE_DIRS})
 
 set(RT_COMMON_SRCS
-	do.c
-	main.c
-	opt.c
-	worker.c
-)
+  do.c
+  main.c
+  opt.c
+  worker.c
+  )
 if(NOT MSVC)
-	set(RT_COMMON_SRCS ${RT_COMMON_SRCS} heatgraph.c)
+  set(RT_COMMON_SRCS ${RT_COMMON_SRCS} heatgraph.c)
 endif(NOT MSVC)
 
 set(rtexample_SRCS rtexample.c)
@@ -27,106 +27,106 @@ set(rtwalk_SRCS rtwalk.c)
 set(rtshot_SRCS rtshot.c)
 
 set(rtregis_SRCS
-    read-rtlog.c
-    rtregis.c
-)
+  read-rtlog.c
+  rtregis.c
+  )
 
 set(rtscale_SRCS
-    read-rtlog.c
-    rtscale.c
-)
+  read-rtlog.c
+  rtscale.c
+  )
 
 set(rt_SRCS
-    ${RT_COMMON_SRCS}
-    scanline.c
-    view.c
-)
+  ${RT_COMMON_SRCS}
+  scanline.c
+  view.c
+  )
 
 set(rt_bot_faces_SRCS
-	${RT_COMMON_SRCS}
-	view_bot_faces.c
-)
+  ${RT_COMMON_SRCS}
+  view_bot_faces.c
+  )
 
 set(rtarea_SRCS
-	${RT_COMMON_SRCS}
-	viewarea.c
-)
+  ${RT_COMMON_SRCS}
+  viewarea.c
+  )
 
 set(rtcell_SRCS
-	${RT_COMMON_SRCS}
-	viewcell.c
-)
+  ${RT_COMMON_SRCS}
+  viewcell.c
+  )
 
 set(rtcheck_SRCS
-	${RT_COMMON_SRCS}
-	viewcheck.c
-)
+  ${RT_COMMON_SRCS}
+  viewcheck.c
+  )
 
 set(rtedge_SRCS
-	${RT_COMMON_SRCS}
-	viewedge.c
-)
+  ${RT_COMMON_SRCS}
+  viewedge.c
+  )
 
 set(rtfrac_SRCS
-	${RT_COMMON_SRCS}
-	viewfrac.c
-)
+  ${RT_COMMON_SRCS}
+  viewfrac.c
+  )
 
 set(rtg3_SRCS
-	${RT_COMMON_SRCS}
-	viewg3.c
-)
+  ${RT_COMMON_SRCS}
+  viewg3.c
+  )
 
 set(rthide_SRCS
-	${RT_COMMON_SRCS}
-	viewhide.c
-)
+  ${RT_COMMON_SRCS}
+  viewhide.c
+  )
 
 set(rtpp_SRCS
-	${RT_COMMON_SRCS}
-	viewpp.c
-)
+  ${RT_COMMON_SRCS}
+  viewpp.c
+  )
 
 set(rtrad_SRCS
-	${RT_COMMON_SRCS}
-	viewrad.c
-)
+  ${RT_COMMON_SRCS}
+  viewrad.c
+  )
 
 set(rtrange_SRCS
-	${RT_COMMON_SRCS}
-	viewrange.c
-)
+  ${RT_COMMON_SRCS}
+  viewrange.c
+  )
 
 set(rtray_SRCS
-	${RT_COMMON_SRCS}
-	viewray.c
-)
+  ${RT_COMMON_SRCS}
+  viewray.c
+  )
 
 set(rtsil_SRCS
-	${RT_COMMON_SRCS}
-	viewsil.c
-)
+  ${RT_COMMON_SRCS}
+  viewsil.c
+  )
 
 set(rtweight_SRCS
-	${RT_COMMON_SRCS}
-	viewweight.c
-)
+  ${RT_COMMON_SRCS}
+  viewweight.c
+  )
 
 set(rtxray_SRCS
-	${RT_COMMON_SRCS}
-	viewxray.c
-)
+  ${RT_COMMON_SRCS}
+  viewxray.c
+  )
 
 set(LIBREMRT_SOURCES
-	do.c
-	opt.c
-	scanline.c
-	sh_tcl.c
-	view.c
-	worker.c
-)
+  do.c
+  opt.c
+  scanline.c
+  sh_tcl.c
+  view.c
+  worker.c
+  )
 if(NOT MSVC)
-    set(LIBREMRT_SOURCES ${LIBREMRT_SOURCES} heatgraph.c)
+  set(LIBREMRT_SOURCES ${LIBREMRT_SOURCES} heatgraph.c)
 endif(NOT MSVC)
 
 add_executable(rtexample "${rtexample_SRCS}")
@@ -177,7 +177,7 @@ BRLCAD_ADDEXEC(rtxray "${rtxray_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb li
 
 add_library(libremrt STATIC ${LIBREMRT_SOURCES})
 if(M_LIBRARY)
-	target_link_libraries(libremrt ${M_LIBRARY})
+  target_link_libraries(libremrt ${M_LIBRARY})
 endif(M_LIBRARY)
 
 add_library(librttherm STATIC ${RT_COMMON_SRCS})
@@ -197,18 +197,18 @@ set(rt_MANS
   rtwalk.1
   rtweight.1
   rtxray.1
-)
+  )
 ADD_MAN_PAGES(1 rt_MANS)
 
 set(rt_ignore_files
-	ext.h
-	libfb-dummy.c
-	rad.h
-	rtuif.h
-	scanline.h
-	viewdir.c
-	viewdummy.c
-	viewscat.c
-	)
+  ext.h
+  libfb-dummy.c
+  rad.h
+  rtuif.h
+  scanline.h
+  viewdir.c
+  viewdummy.c
+  viewscat.c
+  )
 CMAKEFILES(${rt_ignore_files})
 CMAKEFILES(Makefile.am)

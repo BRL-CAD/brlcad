@@ -1,14 +1,14 @@
 set(UTIL_INCLUDE_DIRS
-	${BU_INCLUDE_DIRS}
-	${BN_INCLUDE_DIRS}
-	${DM_INCLUDE_DIRS}
-	${FB_INCLUDE_DIRS}
-	${RT_INCLUDE_DIRS}
-	${SYSV_INCLUDE_DIRS}
-	${ORLE_INCLUDE_DIRS}
-	${TCLCAD_INCLUDE_DIRS}
-	${WDB_INCLUDE_DIRS}
-	)
+  ${BU_INCLUDE_DIRS}
+  ${BN_INCLUDE_DIRS}
+  ${DM_INCLUDE_DIRS}
+  ${FB_INCLUDE_DIRS}
+  ${RT_INCLUDE_DIRS}
+  ${SYSV_INCLUDE_DIRS}
+  ${ORLE_INCLUDE_DIRS}
+  ${TCLCAD_INCLUDE_DIRS}
+  ${WDB_INCLUDE_DIRS}
+  )
 LIST(REMOVE_DUPLICATES UTIL_INCLUDE_DIRS)
 include_directories(${UTIL_INCLUDE_DIRS})
 
@@ -16,29 +16,29 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${UTAHRLE_INCLUDE_DIR}
   ${PNG_INCLUDE_DIR}
-)
+  )
 
 if(MSVC)
-	add_definitions(
-	-D_CONSOLE
-	-DIF_WGL
-	)
+  add_definitions(
+    -D_CONSOLE
+    -DIF_WGL
+    )
 endif(MSVC)
 
 
 if(BRLCAD_ENABLE_X11)
-	BRLCAD_ADDEXEC(pl-X pl-X.c "libdm libbu")
-	if(BRLCAD_ENABLE_TK)
-		BRLCAD_ADDEXEC(pl-dm pl-dm.c "libdm libbu ${M_LIBRARY}")
-		BRLCAD_ADDEXEC(bombardier bombardier.c "libtclcad libbu")
-	endif(BRLCAD_ENABLE_TK)
+  BRLCAD_ADDEXEC(pl-X pl-X.c "libdm libbu")
+  if(BRLCAD_ENABLE_TK)
+    BRLCAD_ADDEXEC(pl-dm pl-dm.c "libdm libbu ${M_LIBRARY}")
+    BRLCAD_ADDEXEC(bombardier bombardier.c "libtclcad libbu")
+  endif(BRLCAD_ENABLE_TK)
 endif(BRLCAD_ENABLE_X11)
 
 BRLCAD_ADDFILE(pl-dm.c sample_applications)
 
 if(LIBPC)
-	add_executable(pc_test pc_test.c)
-	target_link_libraries(pc_test libwdb libpc)
+  add_executable(pc_test pc_test.c)
+  target_link_libraries(pc_test libwdb libpc)
 endif(LIBPC)
 
 BRLCAD_ADDEXEC(alias-pix alias-pix.c libbu)
@@ -70,7 +70,7 @@ BRLCAD_ADDEXEC(cv cv.c libbu)
 # FIXME dbcp is a "copy program for UNIX" - will need some porting
 # work for Windows
 if(NOT WIN32)
-	BRLCAD_ADDEXEC(dbcp dbcp.c libbu)
+  BRLCAD_ADDEXEC(dbcp dbcp.c libbu)
 endif(NOT WIN32)
 BRLCAD_ADDEXEC(decimate decimate.c libbu)
 BRLCAD_ADDEXEC(double-asc double-asc.c "libfb libbu")
@@ -78,8 +78,8 @@ BRLCAD_ADDEXEC(dpix-pix dpix-pix.c libbu)
 BRLCAD_ADDEXEC(dsp_add dsp_add.c libbu)
 # Not fixing these for Windows - they're on their way out (deprecated)
 if(NOT WIN32)
-	BRLCAD_ADDEXEC(dunncolor "dunncolor.c dunncomm.c" libbu)
-	BRLCAD_ADDEXEC(dunnsnap "dunnsnap.c dunncomm.c" "libfb libbu")
+  BRLCAD_ADDEXEC(dunncolor "dunncolor.c dunncomm.c" libbu)
+  BRLCAD_ADDEXEC(dunnsnap "dunnsnap.c dunncomm.c" "libfb libbu")
 endif(NOT WIN32)
 BRLCAD_ADDEXEC(fix_polysolids fix_polysolids.c "librt libbu")
 BRLCAD_ADDEXEC(gencolor gencolor.c libbu)
@@ -154,7 +154,7 @@ BRLCAD_ADDEXEC(png-pix png-pix.c "libbn libbu ${PNG_LIBRARY}")
 BRLCAD_ADDEXEC(png_info png_info.c "libbn libbu ${PNG_LIBRARY}")
 BRLCAD_ADDEXEC(rle-pix rle-pix.c "libbu libsysv ${UTAHRLE_LIBRARY}")
 if(CPP_DLL_DEFINES)
-	SET_PROPERTY(TARGET rle-pix APPEND PROPERTY COMPILE_DEFINITIONS "RLE_DLL_IMPORTS")
+  SET_PROPERTY(TARGET rle-pix APPEND PROPERTY COMPILE_DEFINITIONS "RLE_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 BRLCAD_ADDEXEC(sun-pix sun-pix.c libbu)
 BRLCAD_ADDEXEC(terrain terrain.c "libbn libbu ${M_LIBRARY}")
@@ -162,7 +162,7 @@ BRLCAD_ADDEXEC(texturescale texturescale.c "libfb libbn libbu ${M_LIBRARY}")
 #FIXME - Need to look at pcattcp port to Windows - ttcp should be
 #maintained and ported
 if(NOT WIN32)
-   BRLCAD_ADDEXEC(ttcp ttcp.c libbu)
+  BRLCAD_ADDEXEC(ttcp ttcp.c libbu)
 endif(NOT WIN32)
 BRLCAD_ADDEXEC(wavelet wavelet.c "libfb libbn libbu")
 BRLCAD_ADDEXEC(xyz-pl xyz-pl.c "libbn libbu")
@@ -268,7 +268,7 @@ set(util_MANS
   sun-pix.1
   terrain.1
   wavelet.1
-)
+  )
 ADD_MAN_PAGES(1 util_MANS)
 CMAKEFILES(bombardier.h morphedit.tcl pldebug.c)
 CMAKEFILES(Makefile.am)

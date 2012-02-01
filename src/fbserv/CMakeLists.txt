@@ -1,6 +1,6 @@
 include_directories(
-	${FB_INCLUDE_DIRS}
-)
+  ${FB_INCLUDE_DIRS}
+  )
 
 BRLCAD_ADDEXEC(fbserv "fbserv.c server.c" libfb)
 
