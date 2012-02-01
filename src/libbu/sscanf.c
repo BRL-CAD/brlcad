@@ -497,8 +497,11 @@ if (flags & UNSIGNED) { \
 		    EXIT_DUE_TO_INPUT_FAILURE;
 		}
 
-		/* skip leading whitespace for %Vs */
-		if (conversion == CT_STRING) {
+		/* Input whitespace is skipped for %Vs, and skipped for
+		 * %Vc and %V[...] if the conversion specification is
+		 * preceeded by at least one whitespace character.
+		 */
+		if (isspace(*wordStart) || conversion == CT_STRING) {
 		    while (1) {
 			c = src[numCharsConsumed];
 			if (c == '\0' || !isspace(c)) {
