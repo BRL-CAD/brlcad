@@ -473,113 +473,84 @@ if (flags & UNSIGNED) { \
 } else { \
     SSCANF_TYPE(type); \
 }
+	partAssigned = partConsumed = 0;
+
 	switch (c) {
 
-	/* %c conversion */
-	/* %[...] conversion */
-	/* %s conversion */
 	case CT_CHAR:
-
-	    /* %Vc conversion */
-	    if (flags & BUVLS) {
-
-		/* default width for %c conversion is 1 */
-		if (width == 0) {
-		    width = 1;
-		}
-
-		if (flags & SUPPRESS) {
-		    partAssigned = 0;
-
-		    /* Read characters from src. Stop once width is
-		     * satisfied, or if EOI is reached.
-		     */
-		    for (i = 0; i < width; ++i) {
-			c = src[numCharsConsumed + i];
-			if (c == '\0') {
-			    break;
-			}
-			++partConsumed;
-		    }
-		} else {
-		    struct bu_vls *vls = va_arg(ap, struct bu_vls*);
-
-		    bu_vls_trunc(vls, 0);
-
-		    /* Copy characters from src to vls. Stop once width is
-		     * satisfied, or if EOI is reached.
-		     */
-		    partAssigned = 0;
-		    for (i = 0; i < width; ++i) {
-			c = src[numCharsConsumed + i];
-			if (c == '\0') {
-			    break;
-			}
-			bu_vls_putc(vls, c);
-			++partConsumed;
-		    }
-
-		    if (partConsumed > 0) {
-			/* successful assignment */
-			++partAssigned;
-		    }
-		}
-
-		break;
-	    }
-	    /* FALLTHROUGH */
 	case CT_CCL:
-
-	    /* %V[...] conversion */
-	    if (flags & BUVLS) {
-
-		/* default width for %[...] conversion is infinity */
-		if (width == 0) {
-		    width = ~(width & 0);
-		}
-
-		if (flags & SUPPRESS) {
-		    partAssigned = 0;
-
-		    /* Read characters from src. Stop once width is satisfied,
-		     * a non-matching char is found, or if EOI is reached.
-		     */
-		    for (i = 0; i < width; ++i) {
-			c = src[numCharsConsumed + i];
-			if (ccl_tab[c] == CCL_REJECT || c == '\0') {
-			    break;
-			}
-			++partConsumed;
-		    }
-		} else {
-		    struct bu_vls *vls = va_arg(ap, struct bu_vls*);
-
-		    bu_vls_trunc(vls, 0);
-
-		    /* Copy characters from src to vls. Stop once width is satisfied,
-		     * a non-matching char is found, or if EOI is reached.
-		     */
-		    partAssigned = 0;
-		    for (i = 0; i < width; ++i) {
-			c = src[numCharsConsumed + i];
-			if (ccl_tab[c] == CCL_REJECT || c == '\0') {
-			    break;
-			}
-			bu_vls_putc(vls, c);
-			++partConsumed;
-		    }
-
-		    if (partConsumed > 0) {
-			/* successful assignment */
-			++partAssigned;
-		    }
-		}
-
-		break;
-	    }
-	    /* FALLTHROUGH */
 	case CT_STRING:
-	    if (flags & LONG) {
+
+	    /* %Vc or %V[...] or %Vs conversion */
+	    if (flags & BUVLS) {
+		struct bu_vls *vls = NULL;
+		int conversion = c;
+
+		if (src[numCharsConsumed] == '\0') {
+		    /* input error */
+		    goto exit;
+		}
+
+		/* skip leading whitespace for %Vs */
+		if (conversion == CT_STRING) {
+		    while (1) {
+			c = src[numCharsConsumed];
+			if (c == '\0' || !isspace(c)) {
+			    break;
+			}
+			++numCharsConsumed;
+		    }
+		}
+
+		/* set default width */
+		if (width == 0) {
+		    if (conversion == CT_CHAR) {
+			width = 1;
+		    } else {
+			/* infinity */
+			width = ~(width & 0);
+		    }
+		}
+
+		if (!(flags & SUPPRESS)) {
+		    vls = va_arg(ap, struct bu_vls*);
+		    bu_vls_trunc(vls, 0);
+		}
+
+		/* Copy characters from src to vls. Stop at width, non-matching
+		 * character, or EOI.
+		 */
+		for (i = 0; i < width; ++i) {
+		    c = src[numCharsConsumed + i];
+
+		    /* stop at EOI */
+		    if (c == '\0') {
+			break;
+		    }
+
+		    /* stop at non-matching */
+		    if (ccl_tab[c] == CCL_REJECT && conversion == CT_CCL) {
+			break;
+		    }
+		    if (isspace(c) && conversion == CT_STRING) {
+			break;
+		    }
+
+		    if (!(flags & SUPPRESS)) {
+			/* copy valid char to vls */
+			bu_vls_putc(vls, c);
+		    }
+		    ++partConsumed;
+		}
+
+		if (!(flags & SUPPRESS) && partConsumed > 0) {
+		    /* successful assignment */
+		    ++partAssigned;
+		}
+	    } /* BUVLS */
+
+	    /* %c or %[...] or %s conversion */
+	    else if (flags & LONG) {
 		SSCANF_TYPE(wchar_t*);
 	    } else {
 		SSCANF_TYPE(char*);
