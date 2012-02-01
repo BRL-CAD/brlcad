@@ -61,6 +61,7 @@
 #define	SIZET		0x02000	/* z: size_t */
 #define	SHORTSHORT	0x04000	/* hh: char */
 #define	UNSIGNED	0x08000	/* %[oupxX] conversions */
+#define	BUVLS		0x20000	/* V: struct bu_vls */
 
 /*
  * The following are used in integral conversions only:
@@ -213,7 +214,7 @@ bu_vsscanf(const char *src, const char *fmt, va_list ap)
     int numFieldsAssigned, partAssigned;
     char *partFmt;
     const char *wordStart;
-    size_t width;
+    size_t i, width;
     char ccl_tab[CCL_TABLE_SIZE];
 
     BU_ASSERT(src != NULL);
@@ -345,6 +346,9 @@ again:
 		flags |= SHORTSHORT;
 	    }
 	    goto again;
+	case 'V':
+	    flags |= BUVLS;
+	    goto again;
 
 
 	/* MAXIMUM FIELD WIDTH */
@@ -378,7 +382,7 @@ again:
 	    }
 	    flags |= PFXOK;
 	    flags |= UNSIGNED;
-	    c = CT_INT; 
+	    c = CT_INT;
 	    break;
 	case 'A': case 'E': case 'F': case 'G':
 	case 'a': case 'e': case 'f': case 'g':
@@ -475,6 +479,53 @@ if (flags & UNSIGNED) { \
 	/* %[...] conversion */
 	/* %s conversion */
 	case CT_CHAR:
+
+	    /* %Vc conversion */
+	    if (flags & BUVLS) {
+
+		/* default width for %c conversion is 1 */
+		if (width == 0) {
+		    width = 1;
+		}
+
+		if (flags & SUPPRESS) {
+		    partAssigned = 0;
+
+		    /* Read characters from src. Stop once width is
+		     * satisfied, or if EOI is reached.
+		     */
+		    for (i = 0; i < width; ++i) {
+			c = src[numCharsConsumed + i];
+			if (c == '\0') {
+			    break;
+			}
+			++partConsumed;
+		    }
+		} else {
+		    struct bu_vls *vls = va_arg(ap, struct bu_vls*);
+
+		    bu_vls_trunc(vls, 0);
+
+		    /* Copy characters from src to vls. Stop once width is
+		     * satisfied, or if EOI is reached.
+		     */
+		    partAssigned = 0;
+		    for (i = 0; i < width; ++i) {
+			c = src[numCharsConsumed + i];
+			if (c == '\0') {
+			    break;
+			}
+			bu_vls_putc(vls, c);
+			++partConsumed;
+		    }
+
+		    /* successful assignment */
+		    ++partAssigned;
+		}
+
+		break;
+	    }
+	    /* FALLTHROUGH */
 	case CT_CCL:
 	case CT_STRING:
 	    if (flags & LONG) {
