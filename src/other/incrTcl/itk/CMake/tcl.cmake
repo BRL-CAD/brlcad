@@ -13,7 +13,7 @@ INCLUDE(CheckCSourceCompiles)
 INCLUDE(ResolveCompilerPaths)
 INCLUDE(CheckPrototypeExists)
 INCLUDE(CheckCSourceRuns)
-INCLUDE(CheckCFileRuns)
+INCLUDE(CheckCSourceRuns)
 
 INCLUDE(ac_std_funcs)
 

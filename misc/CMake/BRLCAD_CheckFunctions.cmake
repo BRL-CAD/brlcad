@@ -171,7 +171,7 @@ endmacro(BRLCAD_CHECK_DIRNAME var)
 # FIXME: Why are these here?
 ###
 include(CheckPrototypeExists)
-include(CheckCFileRuns)
+include(CheckCSourceRuns)
 
 
 ###
@@ -179,7 +179,7 @@ include(CheckCFileRuns)
 # Based on AC_HEADER_SYS_WAIT
 ###
 macro(BRLCAD_HEADER_SYS_WAIT)
-  CHECK_C_FILE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c WORKING_SYS_WAIT)
+  CHECK_C_SOURCE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c WORKING_SYS_WAIT)
   if(WORKING_SYS_WAIT)
     file(APPEND ${CONFIG_H_FILE} "#define HAVE_SYS_WAIT_H 1\n")
   endif(WORKING_SYS_WAIT)
@@ -190,12 +190,12 @@ endmacro(BRLCAD_HEADER_SYS_WAIT)
 # Based on AC_FUNC_ALLOCA
 ###
 macro(BRLCAD_ALLOCA)
-  CHECK_C_FILE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/alloca_header_test.c WORKING_ALLOCA_H)
+  CHECK_C_SOURCE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/alloca_header_test.c WORKING_ALLOCA_H)
   if(WORKING_ALLOCA_H)
     file(APPEND ${CONFIG_H_FILE} "#define HAVE_ALLOCA_H 1\n")
     set(FILE_RUN_DEFINITIONS "-DHAVE_ALLOCA_H")
   endif(WORKING_ALLOCA_H)
-  CHECK_C_FILE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/alloca_test.c WORKING_ALLOCA)
+  CHECK_C_SOURCE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/alloca_test.c WORKING_ALLOCA)
   if(WORKING_ALLOCA)
     file(APPEND ${CONFIG_H_FILE} "#define HAVE_ALLOCA 1\n")
   endif(WORKING_ALLOCA)
