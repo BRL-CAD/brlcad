@@ -220,12 +220,6 @@ bu_vsscanf(const char *src, const char *fmt, va_list ap)
     BU_ASSERT(src != NULL);
     BU_ASSERT(fmt != NULL);
 
-    /* XXX if fmt is only whitespace, then we should immediately return 0.  */
-
-    /* if src is only whitespace and fmt is not only whitespace, then
-     * then we should immediately return EOF.
-     */
-
     numFieldsAssigned = 0;
     numCharsConsumed = 0;
     partConsumed = 0;
@@ -276,14 +270,7 @@ bu_vsscanf(const char *src, const char *fmt, va_list ap)
 	    /* Must have found literal sequence. Find where it ends. */
 	    while (1) {
 		c = *fmt;
-		if (c == '\0') {
-		    /* Literal sequence terminated by EOI. No point in scanning
-		     * src for the sequence.
-		     */
-		    goto exit;
-		}
-		if (isspace(c) || c == '%') {
-		    /* found start of next word */
+		if (c == '\0' || isspace(c) || c == '%') {
 		    break;
 		}
 		++fmt;
