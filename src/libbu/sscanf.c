@@ -220,26 +220,37 @@ bu_vsscanf(const char *src, const char *fmt, va_list ap)
     BU_ASSERT(src != NULL);
     BU_ASSERT(fmt != NULL);
 
-#define UPDATE_COUNTS \
-numCharsConsumed += partConsumed; \
-numFieldsAssigned += partAssigned;
-
     numFieldsAssigned = 0;
     numCharsConsumed = 0;
-
-#define FREE_FORMAT_PART \
-if (partFmt != NULL) { \
-    bu_free(partFmt, "bu_sscanf partFmt"); \
-}
-
-#define GET_FORMAT_PART \
-FREE_FORMAT_PART; \
-partFmt = getSubstring(wordStart, fmt); \
-append_n(&partFmt);
-
-    partFmt = NULL;
     partConsumed = 0;
     partAssigned = 0;
+    partFmt = NULL;
+
+#define UPDATE_COUNTS \
+    numCharsConsumed += partConsumed; \
+    numFieldsAssigned += partAssigned;
+
+#define FREE_FORMAT_PART \
+    if (partFmt != NULL) { \
+	bu_free(partFmt, "bu_sscanf partFmt"); \
+	partFmt = NULL; \
+    }
+
+#define GET_FORMAT_PART \
+    FREE_FORMAT_PART; \
+    partFmt = getSubstring(wordStart, fmt); \
+    append_n(&partFmt);
+
+#define EXIT_DUE_TO_INPUT_FAILURE \
+    FREE_FORMAT_PART; \
+    if (numFieldsAssigned == 0) { \
+	return EOF; \
+    } \
+    return numFieldsAssigned;
+
+#define EXIT_DUE_TO_MATCH_FAILIURE \
+    FREE_FORMAT_PART; \
+    return numFieldsAssigned;
 
     while (1) {
 	/* Mark word start, then skip to first non-white char. */
@@ -269,8 +280,7 @@ append_n(&partFmt);
 	    GET_FORMAT_PART;
 	    partAssigned = sscanf(&src[numCharsConsumed], partFmt, &partConsumed);
 	    if (partAssigned < 0) {
-		/* error */
-		goto exit;
+		EXIT_DUE_TO_INPUT_FAILURE;
 	    }
 	    UPDATE_COUNTS;
 	    continue;
@@ -289,8 +299,7 @@ again:
 	    GET_FORMAT_PART;
 	    partAssigned = sscanf(&src[numCharsConsumed], partFmt, &partConsumed);
 	    if (partAssigned < 0) {
-		/* error */
-		goto exit;
+		EXIT_DUE_TO_INPUT_FAILURE;
 	    }
 	    UPDATE_COUNTS;
 	    continue;
@@ -448,8 +457,7 @@ again:
 	    return EOF;
 
 	default:
-	    /* match failure */
-	    goto exit;
+	    EXIT_DUE_TO_MATCH_FAILURE;
 	}
 
 	/* Done parsing conversion specification.
@@ -487,8 +495,7 @@ if (flags & UNSIGNED) { \
 		int conversion = c;
 
 		if (src[numCharsConsumed] == '\0') {
-		    /* input error */
-		    goto exit;
+		    EXIT_DUE_TO_INPUT_FAILURE;
 		}
 
 		/* skip leading whitespace for %Vs */
@@ -597,13 +604,12 @@ if (flags & UNSIGNED) { \
 
 	/* check for read error or bad source string */
 	if (partAssigned == EOF) {
-	    FREE_FORMAT_PART;
-	    return EOF;
+	    EXIT_DUE_TO_INPUT_FAILURE;
 	}
 
         /* check that assignment was successful */
 	if (!(flags & SUPPRESS) && partAssigned < 1) {
-	    goto exit;
+	    EXIT_DUE_TO_MATCH_FAILURE;
 	}
 
 	/* Conversion successful, on to the next one! */
