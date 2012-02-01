@@ -2694,6 +2694,7 @@ namespace eval ArcherCore {
 		redrawObj $path
 	    } \
 	    $COMP_PICK_BOT_SPLIT_MODE { \
+		SetWaitCursor $this
 		set how [gedCmd how $path]
 		if {![catch {bot_split2 $last} bnames] && $bnames != ""} {
 		    set dirname [file dirname $path]
@@ -2707,6 +2708,7 @@ namespace eval ArcherCore {
 		    syncTree
 		    setSave
 		}
+		SetNormalCursor $this
 	    } \
 	    $COMP_PICK_BOT_SYNC_MODE { \
 		catch {bot_sync $path}
