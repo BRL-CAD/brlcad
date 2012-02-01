@@ -1756,7 +1756,7 @@ if(NOT IS_SUBBUILD)
     get_target_property(target_location ${exectarget} LOCATION_${CMAKE_BUILD_TYPE})
     if(target_location)
       if(NOT ${exectarget} MATCHES "printtimestamp"
-	  AND NOT ${custtarget} MATCHES "buildtimestart")
+	  AND NOT ${exectarget} MATCHES "buildtimestart")
 	ADD_DEPENDENCIES(${exectarget} timestamp)
       endif()
       ADD_DEPENDENCIES(buildtimedelta ${exectarget})
