@@ -1,12 +1,12 @@
 set(GTOOLS_INCLUDE_DIRS
-	${BU_INCLUDE_DIRS}
-	${RT_INCLUDE_DIRS}
-	${WDB_INCLUDE_DIRS}
-	${TCLCAD_INCLUDE_DIRS}
-	${GED_INCLUDE_DIRS}
-	${PKG_INCLUDE_DIRS}
-	${BRLCAD_SOURCE_DIR}/src/gtools/beset
-	)
+  ${BU_INCLUDE_DIRS}
+  ${RT_INCLUDE_DIRS}
+  ${WDB_INCLUDE_DIRS}
+  ${TCLCAD_INCLUDE_DIRS}
+  ${GED_INCLUDE_DIRS}
+  ${PKG_INCLUDE_DIRS}
+  ${BRLCAD_SOURCE_DIR}/src/gtools/beset
+  )
 LIST(REMOVE_DUPLICATES GTOOLS_INCLUDE_DIRS)
 include_directories(${GTOOLS_INCLUDE_DIRS})
 
@@ -14,7 +14,7 @@ set(beset_SRCS
   beset/beset.c
   beset/fitness.c
   beset/population.c
-)
+  )
 
 add_executable(beset ${beset_SRCS})
 target_link_libraries(beset libbu librt libwdb)
@@ -36,13 +36,13 @@ set(gtools_MANS
   g_diff.1
   g_lint.1
   remapid.1
-)
+  )
 file(COPY ${gtools_MANS} DESTINATION ${CMAKE_BINARY_DIR}/${MAN_DIR}/man1)
 ADD_MAN_PAGES(1 gtools_MANS)
 set(gtools_ignore_files
-	beset/beset.h
-	beset/fitness.h
-	beset/population.h
-	)
+  beset/beset.h
+  beset/fitness.h
+  beset/population.h
+  )
 CMAKEFILES(${gtools_ignore_files})
 CMAKEFILES(Makefile.am beset/Makefile.am)

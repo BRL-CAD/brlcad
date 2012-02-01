@@ -1,5 +1,5 @@
 if(BUILD_STATIC_LIBS AND BRLCAD_ENABLE_BRLCAD_LIBRARY)
-	add_subdirectory(win32-msvc)
+  add_subdirectory(win32-msvc)
 endif(BUILD_STATIC_LIBS AND BRLCAD_ENABLE_BRLCAD_LIBRARY)
 
 set(prefix ${CMAKE_INSTALL_PREFIX})
@@ -14,7 +14,7 @@ add_subdirectory(pkgconfig)
 # tried adding postgresql crypt function but it doesn't
 # seem to be working.
 if(NOT WIN32)
-	add_subdirectory(enigma)
+  add_subdirectory(enigma)
 endif(NOT WIN32)
 
 CONFIGURE_file(brlcad-config.in ${CMAKE_BINARY_DIR}/bin/brlcad-config @ONLY)
@@ -27,7 +27,7 @@ install(FILES brlcad-config.1 DESTINATION ${MAN_DIR}/man1)
 set(density_DATAFILES
   GQA_SAMPLE_DENSITIES
   NIST_DENSITIES
-)
+  )
 BRLCAD_ADDDATA(density_DATAFILES data)
 
 BRLCAD_ADDFILE(nsis/brlcad.ico icons)
@@ -35,39 +35,39 @@ BRLCAD_ADDFILE(nsis/archer.ico icons)
 
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
-	if(BRLCAD_BUILD_DOXYGEN_DOCS)
-		add_custom_command(
-			OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html
-			COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/misc/Doxyfile
-			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
-			)
-		add_custom_target(dox DEPENDS ${CMAKE_BINARY_DIR}/misc/doxygen_output/html/index.html)
-	endif(BRLCAD_BUILD_DOXYGEN_DOCS)
+  if(BRLCAD_BUILD_DOXYGEN_DOCS)
+    add_custom_command(
+      OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html
+      COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/misc/Doxyfile
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+      )
+    add_custom_target(dox DEPENDS ${CMAKE_BINARY_DIR}/misc/doxygen_output/html/index.html)
+  endif(BRLCAD_BUILD_DOXYGEN_DOCS)
 else(DOXYGEN_FOUND)
-	if(BRLCAD_BUILD_DOXYGEN_DOCS)
-		message("Doxygen build requested but doxygen not found, disabling")
-	endif(BRLCAD_BUILD_DOXYGEN_DOCS)
+  if(BRLCAD_BUILD_DOXYGEN_DOCS)
+    message("Doxygen build requested but doxygen not found, disabling")
+  endif(BRLCAD_BUILD_DOXYGEN_DOCS)
 endif(DOXYGEN_FOUND)
 
 set(misc_ignore_files
-	CMake
-	Description.txt
-	Doxyfile
-	Doxyfile.in
-	Makefile.defs
-	archlinux
-	astyle.opt
-	batch-indent-region.el
-	brlcad-config.1
-	brlcad-config.in
-	brlcad.spec.in
-	debian
-	doxygen_structure
-	flawfinder
-	libtool.m4
-	macosx
-	nsis
-	win32-msvc
-	Makefile.am
-	)
+  CMake
+  Description.txt
+  Doxyfile
+  Doxyfile.in
+  Makefile.defs
+  archlinux
+  astyle.opt
+  batch-indent-region.el
+  brlcad-config.1
+  brlcad-config.in
+  brlcad.spec.in
+  debian
+  doxygen_structure
+  flawfinder
+  libtool.m4
+  macosx
+  nsis
+  win32-msvc
+  Makefile.am
+  )
 CMAKEFILES(${misc_ignore_files})

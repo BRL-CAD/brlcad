@@ -7,21 +7,21 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/resources/other/expand.cmake)
 
 # Style sheet for XSLT transformation to HTML pages
 if(BRLCAD_EXTRADOCS_HTML)
-	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl.in
-		${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl)
 endif(BRLCAD_EXTRADOCS_HTML)
 
 # Style sheet for XSLT transformation to manual pages
 if(BRLCAD_EXTRADOCS_MAN)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-man-stylesheet.xsl.in
-	${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-man-stylesheet.xsl)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-man-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-man-stylesheet.xsl)
 endif(BRLCAD_EXTRADOCS_MAN)
 
 # If we're doing PDF output, Apache FOP needs a couple of config files set up
 if(BRLCAD_EXTRADOCS_PDF)
-	set(srcdir ${CMAKE_CURRENT_SOURCE_DIR})
-	configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/fop.xconf.in ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf)
-	configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/log4j.properties ${CMAKE_BINARY_DIR}/doc/docbook/log4j.properties COPYONLY)
+  set(srcdir ${CMAKE_CURRENT_SOURCE_DIR})
+  configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/fop.xconf.in ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf)
+  configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/log4j.properties ${CMAKE_BINARY_DIR}/doc/docbook/log4j.properties COPYONLY)
 endif(BRLCAD_EXTRADOCS_PDF)
 
 # For HTML, MAN and FO (FO is an intermediate file used in the XML->PDF

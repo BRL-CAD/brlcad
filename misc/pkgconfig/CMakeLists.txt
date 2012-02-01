@@ -38,7 +38,7 @@ set(pkgconfig_DATA
   libpkg.pc.in
   librt.pc.in
   libwdb.pc.in
-)
+  )
 
 foreach(pkgfile ${pkgconfig_DATA})
   string(REGEX REPLACE "([0-9a-z_-]*).pc.in" "\\1" filename_root "${pkgfile}")

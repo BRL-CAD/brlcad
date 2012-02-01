@@ -1,6 +1,6 @@
 set(docbook_man3_EN
-	libfb.xml
-)
+  libfb.xml
+  )
 
 DOCBOOK_TO_HTML(man3 docbook_man3_EN html/man3/en)
 DOCBOOK_TO_MAN(man3 docbook_man3_EN 3 3 man/man3)
