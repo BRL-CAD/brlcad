@@ -34,7 +34,7 @@ if(BRLCAD_ENABLE_X11)
 	endif(BRLCAD_ENABLE_TK)
 endif(BRLCAD_ENABLE_X11)
 
-BRLCAD_ADDfile(pl-dm.c sample_applications)
+BRLCAD_ADDFILE(pl-dm.c sample_applications)
 
 if(LIBPC)
 	add_executable(pc_test pc_test.c)
@@ -172,7 +172,7 @@ install(PROGRAMS morphedit.tcl DESTINATION bin)
 
 add_executable(roots_example roots_example.c)
 target_link_libraries(roots_example libbu librt)
-BRLCAD_ADDfile(roots_example.c sample_applications)
+BRLCAD_ADDFILE(roots_example.c sample_applications)
 
 set(util_MANS
   ap-pix.1

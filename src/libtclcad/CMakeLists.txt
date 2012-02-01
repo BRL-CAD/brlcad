@@ -1,10 +1,10 @@
 # Include directories needed by libtclcad users
 set(TCLCAD_INCLUDE_DIRS
-	${BRLCAD_BINARY_DIR}/include
-	${BRLCAD_SOURCE_DIR}/include
-	${DM_INCLUDE_DIRS}
-	${GED_INCLUDE_DIRS}
-	)
+  ${BRLCAD_BINARY_DIR}/include
+  ${BRLCAD_SOURCE_DIR}/include
+  ${DM_INCLUDE_DIRS}
+  ${GED_INCLUDE_DIRS}
+  )
 
 # We need to guarantee internal Tcl headers
 set(TCLCAD_LOCAL_INCLUDE_DIRS
@@ -13,25 +13,25 @@ set(TCLCAD_LOCAL_INCLUDE_DIRS
   ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
   ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
   ${PNG_INCLUDE_DIR}
-)
+  )
 
-BRLCAD_INCLUDE_DIRS(TCLCAD_INCLUDE_DIRS)
+BRLCAD_LIB_INCLUDE_DIRS(tclcad TCLCAD_INCLUDE_DIRS TCLCAD_LOCAL_INCLUDE_DIRS)
 
 add_definitions(
-	${C99_FLAG}
-	${XOPEN_DEFINE}
-)
+  ${C99_FLAG}
+  ${XOPEN_DEFINE}
+  )
 
 foreach(xlib ${X11_LIBRARIES})
-	set(TCLCAD_XLIBS "${TCLCAD_XLIBS} ${xlib}")
+  set(TCLCAD_XLIBS "${TCLCAD_XLIBS} ${xlib}")
 endforeach(xlib ${X11_LIBRARIES})
 set(LIBTCLCAD_SRCS
-	tclcad.c
-	tclcadAutoPath.c
-	tclcad_obj.c
-	tkImgFmtPIX.c
-        cmdhist_obj.c
-	)
+  tclcad.c
+  tclcadAutoPath.c
+  tclcad_obj.c
+  tkImgFmtPIX.c
+  cmdhist_obj.c
+  )
 BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "libged libdm ${TCLCAD_XLIBS} ${X11_Xi_LIB}")
 SET_TARGET_PROPERTIES(libtclcad PROPERTIES VERSION 19.0.1 SOVERSION 19)
 CMAKEFILES(Makefile.am)

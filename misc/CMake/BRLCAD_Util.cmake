@@ -335,21 +335,20 @@ endmacro(BRLCAD_SORT_INCLUDE_DIRS)
 
 #-----------------------------------------------------------------------------
 # Wrapper to handle include directories specific to libraries.  Removes
-# duplicates and makes sure the <LIB>_INCLUDE_DIRS is in the cache
-# immediately, so it can be used by other libraries.  These are not
+# duplicates and makes sure the <LIB>_INCLUDE_DIRS list is in the cache
+# immediately, so it can be used by other libraries.  These lists are not
 # intended as toplevel user settable options so mark as advanced.
-macro(BRLCAD_INCLUDE_DIRS DIR_LIST)
-  string(REGEX REPLACE "_INCLUDE_DIRS" "" LIB_UPPER "${DIR_LIST}")
-  string(TOLOWER ${LIB_UPPER} LIB_LOWER)
+macro(BRLCAD_LIB_INCLUDE_DIRS libname DIR_LIST LOCAL_DIR_LIST)
+  string(TOUPPER ${libname} LIB_UPPER)
 
   list(REMOVE_DUPLICATES ${DIR_LIST})
-  set(${DIR_LIST} ${${DIR_LIST}} CACHE STRING "Include directories for lib${LIB_LOWER}" FORCE)
+  set(${LIB_UPPER}_INCLUDE_DIRS ${${DIR_LIST}} CACHE STRING "Include directories for lib${libname}" FORCE)
   mark_as_advanced(${DIR_LIST})
 
-  set(UPPER_INCLUDES ${${DIR_LIST}} ${${LIB_UPPER}_LOCAL_INCLUDE_DIRS})
-  BRLCAD_SORT_INCLUDE_DIRS(UPPER_INCLUDES)	
-  include_directories(${UPPER_INCLUDES})
-endmacro(BRLCAD_INCLUDE_DIRS)
+  set(ALL_INCLUDES ${${DIR_LIST}} ${${LOCAL_DIR_LIST}})
+  BRLCAD_SORT_INCLUDE_DIRS(ALL_INCLUDES)	
+  include_directories(${ALL_INCLUDES})
+endmacro(BRLCAD_LIB_INCLUDE_DIRS)
 
 
 #-----------------------------------------------------------------------------

@@ -43,8 +43,8 @@ if(BRLCAD_ENABLE_TK)
 	endif(BRLCAD_BUILD_TKTABLE)
 endif(BRLCAD_ENABLE_TK)
 
-BRLCAD_ADDfile(plugins/Core/README plugins/archer/Core)
-BRLCAD_ADDfile(plugins/Commands/README plugins/archer/Command)
+BRLCAD_ADDFILE(plugins/Core/README plugins/archer/Core)
+BRLCAD_ADDFILE(plugins/Commands/README plugins/archer/Command)
 
 set(archer_utility_FILES
   plugins/Utility/botUtilityP.tcl
@@ -53,8 +53,8 @@ set(archer_utility_FILES
 )
 BRLCAD_ADDDATA(archer_utility_FILES plugins/archer/Utility)
 
-BRLCAD_ADDfile(plugins/Utility/botUtilityP/BotUtilityP.tcl plugins/archer/Utility/botUtilityP)
-BRLCAD_ADDfile(plugins/Utility/attrGroupsDisplayUtilityP/AttrGroupsDisplayUtilityP.tcl	plugins/archer/Utility/attrGroupsDisplayUtilityP)
+BRLCAD_ADDFILE(plugins/Utility/botUtilityP/BotUtilityP.tcl plugins/archer/Utility/botUtilityP)
+BRLCAD_ADDFILE(plugins/Utility/attrGroupsDisplayUtilityP/AttrGroupsDisplayUtilityP.tcl	plugins/archer/Utility/attrGroupsDisplayUtilityP)
 
 set(archer_wizard_FILES
   plugins/Wizards/humanwizard.tcl
@@ -63,10 +63,10 @@ set(archer_wizard_FILES
 )
 BRLCAD_ADDDATA(archer_wizard_FILES plugins/archer/Wizards)
 
-BRLCAD_ADDfile(plugins/Wizards/humanwizard/HumanWizard.tcl plugins/archer/Wizards/humanwizard)
-BRLCAD_ADDfile(plugins/Wizards/tankwizard/TankWizard.tcl	plugins/archer/Wizards/tankwizard)
-BRLCAD_ADDfile(plugins/Wizards/tankwizard/images/tank.png plugins/archer/Wizards/tankwizardIA/images)
-BRLCAD_ADDfile(plugins/Wizards/tirewizard/TireWizard.tcl plugins/archer/Wizards/tirewizard)
+BRLCAD_ADDFILE(plugins/Wizards/humanwizard/HumanWizard.tcl plugins/archer/Wizards/humanwizard)
+BRLCAD_ADDFILE(plugins/Wizards/tankwizard/TankWizard.tcl	plugins/archer/Wizards/tankwizard)
+BRLCAD_ADDFILE(plugins/Wizards/tankwizard/images/tank.png plugins/archer/Wizards/tankwizardIA/images)
+BRLCAD_ADDFILE(plugins/Wizards/tirewizard/TireWizard.tcl plugins/archer/Wizards/tirewizard)
 
 set(archer_ignore_files
 	TODO

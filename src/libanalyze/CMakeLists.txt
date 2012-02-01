@@ -1,15 +1,15 @@
 # Include directories needed by libanalyze users
 set(ANALYZE_INCLUDE_DIRS
-	${BRLCAD_BINARY_DIR}/include
-	${BRLCAD_SOURCE_DIR}/include
-	${BU_INCLUDE_DIRS}
-	)
-BRLCAD_INCLUDE_DIRS(ANALYZE_INCLUDE_DIRS)
+  ${BRLCAD_BINARY_DIR}/include
+  ${BRLCAD_SOURCE_DIR}/include
+  ${BU_INCLUDE_DIRS}
+  )
+BRLCAD_LIB_INCLUDE_DIRS(analyze ANALYZE_INCLUDE_DIRS "")
 
 set(LIBANALYZE_SOURCES
-    density.c
-    overlaps.c
-)
+  density.c
+  overlaps.c
+  )
 
 #add_executable(test_density test_density.c)
 #target_link_libraries(test_density libanalyze libbu)

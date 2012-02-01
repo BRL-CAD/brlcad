@@ -1,12 +1,12 @@
 #Include directories needed by liborle users
 set(ORLE_INCLUDE_DIRS
-	${BRLCAD_BINARY_DIR}/include
-	${BRLCAD_SOURCE_DIR}/include
-	)
+  ${BRLCAD_BINARY_DIR}/include
+  ${BRLCAD_SOURCE_DIR}/include
+  )
 # local includes
 set(ORLE_LOCAL_INCLUDE_DIRS ${UTAHRLE_INCLUDE_DIR})
 
-BRLCAD_INCLUDE_DIRS(ORLE_INCLUDE_DIRS)
+BRLCAD_LIB_INCLUDE_DIRS(orle ORLE_INCLUDE_DIRS ORLE_LOCAL_INCLUDE_DIRS)
 
 set(LIBORLE_SOURCES rle.c)
 

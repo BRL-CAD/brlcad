@@ -236,7 +236,7 @@ set(manuals_mged_HTML
 )
 BRLCAD_ADDDATA(manuals_mged_HTML html/manuals/mged)
 
-BRLCAD_ADDfile(manuals/shaders/camo.html html/manuals/shaders)
+BRLCAD_ADDFILE(manuals/shaders/camo.html html/manuals/shaders)
 
 set(relnotes_HTML
 	ReleaseNotes/email2.0.html
@@ -333,7 +333,7 @@ set(relnotes_5_summary_HTML
 )
 BRLCAD_ADDDATA(relnotes_5_summary_HTML html/ReleaseNotes/Rel5.0/Summary)
 
-BRLCAD_ADDfile(ReleaseNotes/Rel6.0/index.html html/ReleaseNotes/Rel6.0)
+BRLCAD_ADDFILE(ReleaseNotes/Rel6.0/index.html html/ReleaseNotes/Rel6.0)
 
 set(html_ignore_files
 	ReleaseNotes/Rel6.0

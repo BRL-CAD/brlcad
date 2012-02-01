@@ -30,7 +30,7 @@ target_link_libraries(g_transfer librt libpkg)
 BRLCAD_TARGET_ADD_DEF_LISTS(g_transfer BU_DEFINES RT_DEFINES WDB_DEFINES)
 SET_TARGET_PROPERTIES(g_transfer PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
 
-BRLCAD_ADDfile(g_transfer.c sample_applications)
+BRLCAD_ADDFILE(g_transfer.c sample_applications)
 
 set(gtools_MANS
   g_diff.1
