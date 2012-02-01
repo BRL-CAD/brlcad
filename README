@@ -71,9 +71,10 @@ COMPILE AND INSTALL
 
 See the INSTALL file for details on configuring, compiling, and
 installing BRL-CAD.  In order to compile and install BRL-CAD from a
-source distribution, the build tool CMake is required - see the
-website at http://www.cmake.org for source and binary installers.
-CMake is also available in many Linux and *BSD distributions.
+source distribution, the build tool CMake is required (minimum version
+currently required is 2.8.4) - see the website at http://www.cmake.org
+for source and binary installers.  CMake is also available in many
+Linux and *BSD distributions.
 
 Once CMake is installed, the following steps may be taken for a full
 default install (starting with a source tarball):
