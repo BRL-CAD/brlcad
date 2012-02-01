@@ -2695,12 +2695,12 @@ namespace eval ArcherCore {
 	    } \
 	    $COMP_PICK_BOT_SPLIT_MODE { \
 		set how [gedCmd how $path]
-		if {![catch {bot_split2 $last} bgroup]} {
+		if {![catch {bot_split2 $last} bnames] && $bnames != ""} {
 		    set dirname [file dirname $path]
 		    if {$dirname != "."} {
 			set drawitem $dirname
 		    } else {
-			set drawitem $bgroup
+			set drawitem [lindex $bnames 0]
 		    }
 		    gedCmd draw -m$how $drawitem
 
