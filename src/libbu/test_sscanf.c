@@ -678,6 +678,47 @@ doErrorTests()
     TEST_FAILURE_1(char, 1[123], 'a', "", EXPECT_INPUT_FAILURE);
 }
 
+static void
+doVlsTests()
+{
+    int bu_ret;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+
+#define TEST_VLS(src, fmt, expected_str) \
+    print_src_and_fmt(src, fmt); \
+    bu_ret = bu_sscanf(src, fmt, &vls); \
+    CHECK_RETURN_VAL("bu_sscanf", bu_ret, 1); \
+    if (!BU_STR_EQUAL(bu_vls_addr(&vls), expected_str)) { \
+	bu_exit(1, "\t[FAIL] \"%s\" was assigned to vls instead of \"%s\".\n", \
+		bu_vls_addr(&vls), expected_str); \
+    }
+
+    /* %Vc */
+    TEST_VLS("de mus noc", "%Vc", "d");
+    TEST_VLS(" de mus noc", "%6Vc", " de mu");
+    TEST_VLS(" de mus noc", " %7Vc", "de mus ");
+    TEST_VLS("de mus noc", "%11Vc", "de mus noc");
+
+    bu_ret = bu_sscanf("de mus noc", "%*11Vc", &vls);
+    CHECK_RETURN_VAL("bu_sscanf", bu_ret, 0);
+
+    /* %V[...] */
+    TEST_VLS("abcA", "%V[a-z]", "abc");
+    TEST_VLS(" abcA", " %V[a-z]", "abc");
+    TEST_VLS(" abcA", "%3V[ a-z]", " ab");
+
+    bu_ret = bu_sscanf(" abcA", "%*V[ a-z]", &vls);
+    CHECK_RETURN_VAL("bu_sscanf", bu_ret, 0);
+
+    /* %Vs */
+    TEST_VLS(" \tabc ABC", "%Vs", "abc");
+    TEST_VLS(" \tabc ABC", "%4Vs", "abc");
+    TEST_VLS(" \tabc", "%4Vs", "abc");
+
+    bu_ret = bu_sscanf(" abcA", "%*Vs", &vls);
+    CHECK_RETURN_VAL("bu_sscanf", bu_ret, 0);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -693,6 +734,7 @@ main(int argc, char *argv[])
     doNonConversionTests();
     doWidthTests();
     doErrorTests();
+    doVlsTests();
 
     printf("bu_sscanf: testing complete\n");
     return 0;
