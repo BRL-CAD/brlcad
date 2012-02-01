@@ -220,6 +220,12 @@ bu_vsscanf(const char *src, const char *fmt, va_list ap)
     BU_ASSERT(src != NULL);
     BU_ASSERT(fmt != NULL);
 
+    /* XXX if fmt is only whitespace, then we should immediately return 0.  */
+
+    /* if src is only whitespace and fmt is not only whitespace, then
+     * then we should immediately return EOF.
+     */
+
     numFieldsAssigned = 0;
     numCharsConsumed = 0;
     partConsumed = 0;
@@ -248,7 +254,7 @@ bu_vsscanf(const char *src, const char *fmt, va_list ap)
     } \
     return numFieldsAssigned;
 
-#define EXIT_DUE_TO_MATCH_FAILIURE \
+#define EXIT_DUE_TO_MATCH_FAILURE \
     FREE_FORMAT_PART; \
     return numFieldsAssigned;
 
@@ -258,6 +264,9 @@ bu_vsscanf(const char *src, const char *fmt, va_list ap)
 	do {
 	    c = *fmt;
 	    if (c == '\0') {
+		/* Found EOI before next word; implies fmt contains trailing
+		 * whitespace or is empty. No worries; exit normally.
+		 */
 		goto exit;
 	    }
 	    ++fmt;
@@ -268,6 +277,9 @@ bu_vsscanf(const char *src, const char *fmt, va_list ap)
 	    while (1) {
 		c = *fmt;
 		if (c == '\0') {
+		    /* Literal sequence terminated by EOI. No point in scanning
+		     * src for the sequence.
+		     */
 		    goto exit;
 		}
 		if (isspace(c) || c == '%') {
