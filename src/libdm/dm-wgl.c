@@ -2087,7 +2087,7 @@ wgl_beginDList(struct dm *dmp, unsigned int list)
 	return TCL_ERROR;
     }
 
-    glNewList(dmp->dm_displaylist + list, GL_COMPILE);
+    glNewList((GLuint)list, GL_COMPILE);
     return TCL_OK;
 }
 
@@ -2103,14 +2103,10 @@ wgl_endDList(struct dm *dmp)
 }
 
 
-int
-wgl_drawDList(struct dm *dmp, unsigned int list)
+void
+wgl_drawDList(unsigned int list)
 {
-    if (dmp->dm_debugLevel)
-	bu_log("wgl_drawDList()\n");
-
-    glCallList(dmp->dm_displaylist + list);
-    return TCL_OK;
+    glCallList((GLuint)list);
 }
 
 
@@ -2126,8 +2122,24 @@ wgl_freeDLists(struct dm *dmp, unsigned int list, int range)
 	return TCL_ERROR;
     }
 
-    glDeleteLists(dmp->dm_displaylist + list, (GLsizei)range);
+    glDeleteLists((GLuint)list, (GLsizei)range);
     return TCL_OK;
+}
+
+
+int
+wgl_genDLists(struct dm *dmp, size_t range)
+{
+    if (dmp->dm_debugLevel)
+	bu_log("wgl_freeDLists()\n");
+
+    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
+			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+	bu_log("wgl_freeDLists: Couldn't make context current\n");
+	return TCL_ERROR;
+    }
+
+    return glGenLists((GLsizei)range);
 }
 
 
@@ -2159,6 +2171,7 @@ struct dm dm_wgl = {
     wgl_endDList,
     wgl_drawDList,
     wgl_freeDLists,
+    wgl_genDLists,
     Nu_int0, /* display to image function */
     wgl_reshape,
     0,

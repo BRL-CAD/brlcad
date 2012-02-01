@@ -2834,6 +2834,8 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     GED_INIT(gedp, ged_wdbp);
     gedp->ged_output_handler = mged_output_handler;
     gedp->ged_refresh_handler = mged_refresh_handler;
+    gedp->ged_create_vlist_callback = createDListAll;
+    gedp->ged_free_vlist_callback = freeDListsAll;
 
     /* increment use count for gedp db instance */
     (void)db_clone_dbi(dbip, NULL);

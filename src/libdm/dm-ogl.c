@@ -123,8 +123,9 @@ HIDDEN int ogl_setWinBounds(struct dm *dmp, fastf_t *w);
 HIDDEN int ogl_debug(struct dm *dmp, int lvl);
 HIDDEN int ogl_beginDList(struct dm *dmp, unsigned int list);
 HIDDEN int ogl_endDList(struct dm *dmp);
-HIDDEN int ogl_drawDList(struct dm *dmp, unsigned int list);
+HIDDEN void ogl_drawDList(unsigned int list);
 HIDDEN int ogl_freeDLists(struct dm *dmp, unsigned int list, int range);
+HIDDEN int ogl_genDLists(struct dm *dmp, size_t range);
 HIDDEN int ogl_getDisplayImage(struct dm *dmp, unsigned char **image);
 HIDDEN void ogl_reshape(struct dm *dmp, int width, int height);
 
@@ -161,6 +162,7 @@ struct dm dm_ogl = {
     ogl_endDList,
     ogl_drawDList,
     ogl_freeDLists,
+    ogl_genDLists,
     ogl_getDisplayImage, /* display to image function */
     ogl_reshape,
     0,
@@ -2130,7 +2132,7 @@ ogl_beginDList(struct dm *dmp, unsigned int list)
 	return TCL_ERROR;
     }
 
-    glNewList(dmp->dm_displaylist + list, GL_COMPILE);
+    glNewList((GLuint)list, GL_COMPILE);
     return TCL_OK;
 }
 
@@ -2146,14 +2148,10 @@ ogl_endDList(struct dm *dmp)
 }
 
 
-HIDDEN int
-ogl_drawDList(struct dm *dmp, unsigned int list)
+HIDDEN void
+ogl_drawDList(unsigned int list)
 {
-    if (dmp->dm_debugLevel)
-	bu_log("ogl_drawDList()\n");
-
-    glCallList(dmp->dm_displaylist + list);
-    return TCL_OK;
+    glCallList((GLuint)list);
 }
 
 
@@ -2170,8 +2168,25 @@ ogl_freeDLists(struct dm *dmp, unsigned int list, int range)
 	return TCL_ERROR;
     }
 
-    glDeleteLists(dmp->dm_displaylist + list, (GLsizei)range);
+    glDeleteLists((GLuint)list, (GLsizei)range);
     return TCL_OK;
+}
+
+
+HIDDEN int
+ogl_genDLists(struct dm *dmp, size_t range)
+{
+    if (dmp->dm_debugLevel)
+	bu_log("ogl_freeDLists()\n");
+
+    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+	bu_log("ogl_freeDLists: Couldn't make context current\n");
+	return TCL_ERROR;
+    }
+
+    return glGenLists((GLsizei)range);
 }
 
 

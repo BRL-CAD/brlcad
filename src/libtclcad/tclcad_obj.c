@@ -11410,9 +11410,15 @@ HIDDEN void
 to_create_vlist_callback(struct solid *sp)
 {
     struct ged_dm_view *gdvp;
+    register int first = 1;
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
 	if (to_is_viewable(gdvp)) {
+	    if (first) {
+		sp->s_dlist = DM_GEN_DLISTS(gdvp->gdv_dmp, 1);
+		first = 0;
+	    }
+
 	    DM_BEGINDLIST(gdvp->gdv_dmp, sp->s_dlist);
 
 	    if (sp->s_iflag == UP)

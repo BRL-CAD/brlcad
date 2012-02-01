@@ -604,7 +604,17 @@ dozoom(int which_eye)
 void
 createDList(struct solid *sp)
 {
+    if (sp->s_dlist == 0)
+	sp->s_dlist = DM_GEN_DLISTS(dmp, 1);
+
     DM_BEGINDLIST(dmp, sp->s_dlist);
+    if (sp->s_iflag == UP)
+	DM_SET_FGCOLOR(dmp, 255, 255, 255, 0, sp->s_transparency);
+    else
+	DM_SET_FGCOLOR(dmp,
+		       (unsigned char)sp->s_color[0],
+		       (unsigned char)sp->s_color[1],
+		       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
     DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
     DM_ENDDLIST(dmp);
 }
@@ -642,27 +652,20 @@ createDLists(struct bu_list *hdlp)
  * display manager that has already created the display list)
  */
 void
-createDListALL(struct solid *sp)
+createDListAll(struct solid *sp)
 {
     struct dm_list *dlp;
     struct dm_list *save_dlp;
 
     save_dlp = curr_dm_list;
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-	dlp->dml_dlist_state->dl_flag = 1;
-
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
 	if (dlp->dml_dmp->dm_displaylist &&
 	    dlp->dml_mged_variables->mv_dlist) {
-	    if (dlp->dml_dlist_state->dl_flag) {
-		curr_dm_list = dlp;
-		createDList(sp);
-	    }
+	    createDList(sp);
 	}
 
 	dlp->dml_dirty = 1;
-	dlp->dml_dlist_state->dl_flag = 0;
     }
 
     curr_dm_list = save_dlp;
@@ -678,18 +681,13 @@ freeDListsAll(unsigned int dlist, int range)
 {
     struct dm_list *dlp;
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-	dlp->dml_dlist_state->dl_flag = 1;
-
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
 	if (dlp->dml_dmp->dm_displaylist &&
 	    dlp->dml_mged_variables->mv_dlist) {
-	    if (dlp->dml_dlist_state->dl_flag)
-		DM_FREEDLISTS(dlp->dml_dmp, dlist, range);
+	    DM_FREEDLISTS(dlp->dml_dmp, dlist, range);
 	}
 
 	dlp->dml_dirty = 1;
-	dlp->dml_dlist_state->dl_flag = 0;
     }
 }
 

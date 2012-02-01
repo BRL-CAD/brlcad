@@ -113,6 +113,7 @@ struct dm dm_rtgl = {
     rtgl_endDList,
     rtgl_drawDList,
     rtgl_freeDLists,
+    rtgl_genDLists,
     Nu_int0, /* display to image function */
     Nu_void,
     0,
@@ -2676,7 +2677,7 @@ rtgl_beginDList(struct dm *dmp, unsigned int list)
 	return TCL_ERROR;
     }
 
-    glNewList(dmp->dm_displaylist + list, GL_COMPILE);
+    glNewList((GLuint)list, GL_COMPILE);
     return TCL_OK;
 }
 
@@ -2692,14 +2693,10 @@ rtgl_endDList(struct dm *dmp)
 }
 
 
-int
+void
 rtgl_drawDList(struct dm *dmp, unsigned int list)
 {
-    if (dmp->dm_debugLevel)
-	bu_log("rtgl_drawDList()\n");
-
-    glCallList(dmp->dm_displaylist + list);
-    return TCL_OK;
+    glCallList((GLuint)list);
 }
 
 
@@ -2716,8 +2713,25 @@ rtgl_freeDLists(struct dm *dmp, unsigned int list, int range)
 	return TCL_ERROR;
     }
 
-    glDeleteLists(dmp->dm_displaylist + list, (GLsizei)range);
+    glDeleteLists((GLuint)list, (GLsizei)range);
     return TCL_OK;
+}
+
+
+int
+rtgl_genDLists(struct dm *dmp, size_t range)
+{
+    if (dmp->dm_debugLevel)
+	bu_log("rtgl_freeDLists()\n");
+
+    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+	bu_log("rtgl_freeDLists: Couldn't make context current\n");
+	return TCL_ERROR;
+    }
+
+    return glGenLists((GLsizei)range);
 }
 
 

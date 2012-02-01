@@ -257,11 +257,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
     if (!existing_sp) {
 	/* Handling a new solid */
 	GET_SOLID(sp, &MGED_FreeSolid.l);
-	/* NOTICE:  The structure is dirty & not initialized for you! */
-
-	/* Grab the last display list */
-	gdlp = BU_LIST_PREV(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-	sp->s_dlist = BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist + 1;
+	sp->s_dlist = 0;
     } else {
 	/* Just updating an existing solid.
 	 * 'tsp' and 'pathpos' will not be used
@@ -312,7 +308,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	  sp->s_regionid = tsp->ts_regionid;
     }
 
-    createDListALL(sp);
+    createDListAll(sp);
 
     /* Solid is successfully drawn */
     if (!existing_sp) {
@@ -1143,11 +1139,8 @@ invent_solid(
     /* Solid successfully drawn, add to linked list of solid structs */
     BU_LIST_APPEND(gdlp->gdl_headSolid.back, &sp->l);
 
-    /* Grab the last display list */
-    gdlp = BU_LIST_PREV(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    sp->s_dlist = BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist + 1;
-
-    createDListALL(sp);
+    sp->s_dlist = 0;
+    createDListAll(sp);
 
     return 0;		/* OK */
 }

@@ -243,8 +243,9 @@ struct dm {
     int (*dm_debug)();		/**< @brief Set DM debug level */
     int (*dm_beginDList)();
     int (*dm_endDList)();
-    int (*dm_drawDList)();
+    void (*dm_drawDList)();
     int (*dm_freeDLists)();
+    int (*dm_genDLists)();
     int (*dm_getDisplayImage)(struct dm *dmp, unsigned char **image);
     void (*dm_reshape)();
     unsigned long dm_id;          /**< @brief window id */
@@ -311,8 +312,9 @@ struct dm {
 #define DM_DEBUG(_dmp, _lvl) _dmp->dm_debug(_dmp, _lvl)
 #define DM_BEGINDLIST(_dmp, _list) _dmp->dm_beginDList(_dmp, _list)
 #define DM_ENDDLIST(_dmp) _dmp->dm_endDList(_dmp)
-#define DM_DRAWDLIST(_dmp, _list) _dmp->dm_drawDList(_dmp, _list)
+#define DM_DRAWDLIST(_dmp, _list) _dmp->dm_drawDList(_list)
 #define DM_FREEDLISTS(_dmp, _list, _range) _dmp->dm_freeDLists(_dmp, _list, _range)
+#define DM_GEN_DLISTS(_dmp, _range) _dmp->dm_genDLists(_dmp, _range)
 #define DM_GET_DISPLAY_IMAGE(_dmp, _image) _dmp->dm_getDisplayImage(_dmp, _image)
 
 DM_EXPORT extern struct dm dm_Null;

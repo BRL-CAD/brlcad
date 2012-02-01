@@ -833,6 +833,7 @@ struct dm dm_tk = {
     tk_debug,
     Nu_int0,
     Nu_int0,
+    Nu_void,
     Nu_int0,
     Nu_int0,
     Nu_int0, /* display to image function */
