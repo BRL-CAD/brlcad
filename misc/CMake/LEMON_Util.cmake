@@ -123,9 +123,12 @@ macro(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
 
     set(LEMON_${Name}_OUTPUTS ${LEMON_GEN_OUT} ${LemonSource} ${LemonHeader})
 
-    # make sure we clean up generated output
-    set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${LEMON_${Name}_OUTPUTS})
-    
+    # make sure we clean up generated output and copied input
+    if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+      set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${LEMON_${Name}_OUTPUTS}")
+    else(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+      set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${LEMON_${Name}_OUTPUTS} ${LemonInput}")
+    endif(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 
     # macro ran successfully
     set(LEMON_${Name}_DEFINED TRUE)
