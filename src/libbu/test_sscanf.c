@@ -32,8 +32,10 @@
 #include "bu.h"
 #include "vmath.h"
 
-#define STR_SIZE 128
-#define FLOAT_TOL .0005
+#define TS_FLOAT_TOL .0005
+
+#define TS_STR_SIZE 128
+#define TS_STR_WIDTH "127"
 
 /* scanf specification summarized from Linux man page:
  *
@@ -154,7 +156,7 @@ print_src_and_fmt(const char *src, const char *fmt)
 { \
     float_type _val = *(float_type*)(valp); \
     float_type _bu_val = *(float_type*)(bu_valp); \
-    if (!NEAR_EQUAL(_val, _bu_val, FLOAT_TOL)) { \
+    if (!NEAR_EQUAL(_val, _bu_val, TS_FLOAT_TOL)) { \
 	bu_exit(1, "\t[FAIL] conversion value mismatch.\n" \
 		"\t(sscanf) %" bu_cpp_str(pfmt) " != " \
 		"%" bu_cpp_str(pfmt) " (bu_sscanf).\n", \
@@ -399,13 +401,13 @@ static void
 test_sscanf_s(const char *src, const char *fmt)
 {
     int ret, bu_ret;
-    char dest[STR_SIZE], bu_dest[STR_SIZE];
+    char dest[TS_STR_SIZE], bu_dest[TS_STR_SIZE];
 
     ret = bu_ret = 0;
 
     /* ensure NULL termination even for c and [...] */
-    memset(dest, '\0', STR_SIZE);
-    memset(bu_dest, '\0', STR_SIZE);
+    memset(dest, '\0', TS_STR_SIZE);
+    memset(bu_dest, '\0', TS_STR_SIZE);
 
     print_src_and_fmt(src, fmt);
 
@@ -426,7 +428,7 @@ static void
 doStringTests()
 {
     int bu_ret;
-    char buf[STR_SIZE];
+    char buf[TS_STR_SIZE];
     char *cp;
 
 #define TEST_STR_SPACE " \t\naBc\n"
@@ -435,27 +437,27 @@ doStringTests()
 #define TEST_TERMINATION(src, fmt) \
     print_src_and_fmt(src, fmt); \
     /* init so that 'X' appears after the last char written by bu_sscanf */ \
-    memset(buf, 'X', STR_SIZE); \
+    memset(buf, 'X', TS_STR_SIZE); \
     bu_ret = bu_sscanf(src, fmt, buf); \
     CHECK_RETURN_VAL("bu_sscanf", bu_ret, 1); \
     cp = strchr(buf, 'X');
 
     /* %s should append '\0' */
-    TEST_TERMINATION(TEST_STR_SPACE, "%s");
+    TEST_TERMINATION(TEST_STR_SPACE, "%" TS_STR_WIDTH "s");
     if (cp != NULL) {
 	/* cp != NULL implies strchr found 'X' before finding '\0' */
 	bu_exit(1, "\t[FAIL] bu_sscanf didn't null-terminate %%s conversion.\n");
     }
 
     /* %[...] should append '\0' */
-    TEST_TERMINATION(TEST_STR_SPACE, "%[^z]");
+    TEST_TERMINATION(TEST_STR_SPACE, "%" TS_STR_WIDTH "[^z]");
     if (cp != NULL) {
 	/* cp != NULL implies strchr found 'X' before finding '\0' */
 	bu_exit(1, "\t[FAIL] bu_sscanf null-terminated %%[...] conversion.\n");
     }
 
     /* %c should NOT append '\0' */
-    TEST_TERMINATION(TEST_STR_SPACE, "%" bu_cpp_xstr(STR_SIZE) "c");
+    TEST_TERMINATION(TEST_STR_SPACE, "%" TS_STR_WIDTH "c");
     if (cp == NULL) {
 	/* cp == NULL implies strchr found '\0' before finding 'X' */
 	bu_exit(1, "\t[FAIL] bu_sscanf null-terminated %%c conversion.\n");
@@ -464,10 +466,10 @@ doStringTests()
     /* For %s sscanf should not include leading whitespace in the string, so
      * the following should all be quivalent.
      */
-    test_sscanf_s(TEST_STR_NOSPACE, "%s");
-    test_sscanf_s(TEST_STR_NOSPACE, " %s");
-    test_sscanf_s(TEST_STR_SPACE, "%s");
-    test_sscanf_s(TEST_STR_SPACE, " %s");
+    test_sscanf_s(TEST_STR_NOSPACE, "%" TS_STR_WIDTH "s");
+    test_sscanf_s(TEST_STR_NOSPACE, " %" TS_STR_WIDTH "s");
+    test_sscanf_s(TEST_STR_SPACE, "%" TS_STR_WIDTH "s");
+    test_sscanf_s(TEST_STR_SPACE, " %" TS_STR_WIDTH "s");
 
     /* For %c, leading whitespace should be included unless the conversion
      * specifier is preceeded by whitespace.
@@ -478,14 +480,14 @@ doStringTests()
     /* For %[...], should act like %s, but should assign any/only characters
      * in the class.
      */
-    test_sscanf_s(TEST_STR_SPACE, "%[^A-Z]");  /* should assign " \t\na" */
-    test_sscanf_s(TEST_STR_SPACE, " %[^A-Z]"); /* should assign "a"      */
-    test_sscanf_s(TEST_STR_SPACE, " %[a-z]");  /* should assign "a"      */
+    test_sscanf_s(TEST_STR_SPACE, "%" TS_STR_WIDTH "[^A-Z]");  /* should assign " \t\na" */
+    test_sscanf_s(TEST_STR_SPACE, " %" TS_STR_WIDTH "[^A-Z]"); /* should assign "a"      */
+    test_sscanf_s(TEST_STR_SPACE, " %" TS_STR_WIDTH "[a-z]");  /* should assign "a"      */
 
     /* should be able to include literal ] and - characters */
-    test_sscanf_s("[-[- ", "%[[-]");
-    test_sscanf_s(" zZ [- ", "%[^[-]");
-    test_sscanf_s(" zZ -[ ", "%[^[-]");
+    test_sscanf_s("[-[- ", "%" TS_STR_WIDTH "[[-]");
+    test_sscanf_s(" zZ [- ", "%" TS_STR_WIDTH "[^[-]");
+    test_sscanf_s(" zZ -[ ", "%" TS_STR_WIDTH "[^[-]");
 }
 
 static void
@@ -533,8 +535,8 @@ doWidthTests()
     int i, j;
     int ret, bu_ret;
     void *val, *bu_val, *vals, *bu_vals;
-    char str_vals[NUM_VALS][STR_SIZE];
-    char bu_str_vals[NUM_VALS][STR_SIZE];
+    char str_vals[NUM_VALS][TS_STR_SIZE];
+    char bu_str_vals[NUM_VALS][TS_STR_SIZE];
 
 #define SCAN_3_VALS(type, src, fmt) \
     print_src_and_fmt(src, fmt); \
@@ -568,15 +570,15 @@ doWidthTests()
 #define TEST_STRING_WIDTH(src, fmt) \
     print_src_and_fmt(src, fmt); \
     for (i = 0; i < NUM_VALS; ++i) { \
-	memset(str_vals[i], 'X', STR_SIZE); \
-	memset(bu_str_vals[i], 'X', STR_SIZE); \
+	memset(str_vals[i], 'X', TS_STR_SIZE); \
+	memset(bu_str_vals[i], 'X', TS_STR_SIZE); \
     } \
     ret = sscanf(src, fmt, str_vals[0], str_vals[1], str_vals[2]); \
     bu_ret = bu_sscanf(src, fmt, bu_str_vals[0], bu_str_vals[1], bu_str_vals[2]); \
     CHECK_RETURN_VAL("sscanf", ret, 3); \
     CHECK_RETURNS_EQUAL(bu_ret, ret); \
     for (i = 0; i < NUM_VALS; ++i) { \
-	for (j = 0; j < STR_SIZE - 1; ++j) { \
+	for (j = 0; j < TS_STR_SIZE - 1; ++j) { \
 	    if (str_vals[i][j] != bu_str_vals[i][j]) { \
 		str_vals[i][j + 1] = '\0'; \
 		bu_str_vals[i][j + 1] = '\0'; \

@@ -206,19 +206,22 @@ append_n(char **fmt) {
  * routine.
  */
 int
-bu_vsscanf(const char *src, const char *fmt, va_list ap)
+bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 {
     int c;
     long flags;
     int numCharsConsumed, partConsumed;
     int numFieldsAssigned, partAssigned;
+    const char *fmt;
     char *partFmt;
     const char *wordStart;
     size_t i, width;
     char ccl_tab[CCL_TABLE_SIZE];
 
     BU_ASSERT(src != NULL);
-    BU_ASSERT(fmt != NULL);
+    BU_ASSERT(fmt0 != NULL);
+
+    fmt = fmt0;
 
     numFieldsAssigned = 0;
     numCharsConsumed = 0;
@@ -558,11 +561,19 @@ if (flags & UNSIGNED) { \
 		}
 	    } /* BUVLS */
 
-	    /* %c or %[...] or %s conversion */
-	    else if (flags & LONG) {
-		SSCANF_TYPE(wchar_t*);
-	    } else {
-		SSCANF_TYPE(char*);
+	    else {
+		if (!(flags & SUPPRESS) && width == 0 && c != CT_CHAR) {
+		    bu_exit(1, "ERROR.\n"
+				"  bu_sscanf was called with bad format string: \"%s\"\n"
+				"  %%s and %%[...] conversions must be bounded using "
+				"a maximum field width.", fmt0);
+		}
+		/* %c or %[...] or %s conversion */
+		if (flags & LONG) {
+		    SSCANF_TYPE(wchar_t*);
+		} else {
+		    SSCANF_TYPE(char*);
+		}
 	    }
 	    break;
 
