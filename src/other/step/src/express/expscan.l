@@ -120,7 +120,7 @@ static int	nesting_level = 0;
 #define MAX_NESTED_COMMENTS 20
 static struct Symbol_ open_comment[MAX_NESTED_COMMENTS];
 
-static inline
+static_inline
 int
 SCANnextchar(char* buffer)
 {
