@@ -62,51 +62,67 @@
 #include "obj_parser.h"
 #include "tri_face.h"
 
-static char *usage =
-    "Usage: %s [options] input.obj output.g\n\n"
+static void
+usage(const char *argv0)
+{
 
-    "  -c\t\tContinue processing on nmg-bomb. Conversion will fall-back to\n"
-    "\t\tnative bot mode if a fatal error occurs when using the nmg or\n"
-    "\t\tbot via nmg modes.\n"
-    "  -d\t\tOutput debug info to stderr.\n"
-    "  -g grouping\tSelect which OBJ face grouping is used to create BRL-CAD\n"
-    "\t\tprimitives:\n"
-    "\t\t\tg = group (default)\n"
-    "\t\t\tm = material\n"
-    "\t\t\tn = none\n"
-    "\t\t\to = object\n"
-    "\t\t\tt = texture\n"
-    "  -h mm\t\tThickness used when a bot is not a closed volume and it's\n"
-    "\t\tconverted as a plate or plate-nocos bot.\n"
-    "  -i\t\tIgnore the normals defined in the input file when using native\n"
-    "\t\tbot conversion mode.\n"
-    "  -m mode\tSelect the conversion mode:\n"
-    "\t\t\tb = native bot (default)\n"
-    "\t\t\tn = nmg\n"
-    "\t\t\tv = bot via nmg\n"
-    "  -o type\tSelect the type used for bots that aren't closed volumes:\n"
-    "\t\t\tn = plate nocos\n"
-    "\t\t\tp = plate\n"
-    "\t\t\ts = surface (default)\n"
-    "  -p\t\tCreates a plot/overlay (.pl) file of open edges for bots that\n"
-    "\t\taren't closed volumes. <bot_name>.pl will be created in the\n"
-    "\t\tcurrent directory and will overwrite any exisiting file with the\n"
-    "\t\tsame name.\n"
-    "  -r orient\tSelect the bot orientation mode:\n"
-    "\t\t\t1 = unoriented (default)\n"
-    "\t\t\t2 = ccw\n"
-    "\t\t\t3 = cw\n"
-    "  -t mm\t\tDistance tolerance. Two vertices are considered to be the same\n"
-    "\t\tif they are within this distance of one another. Default is\n"
-    "\t\t.0005mm. You should not change this value without setting the\n"
-    "\t\traytracer tolerance to match it.\n"
-    "  -u units\tSelect units for the obj file: (m|cm|mm|ft|in). Default is m.\n"
-    "\t\tYou can also provide a custom conversion factor from file units\n"
-    "\t\tto mm.\n"
-    "  -v\t\tOut verbose user info to stderr. Each occurrance of this option\n"
-    "\t\tin the option list increases the verbosity level.\n"
-    "  -x flag\tSpecify rt debug flag bits (see raytrace.h).\n"
-    "  -X flag\tSpecify nmg debug flag bits (see nmg.h).\n";
+    bu_log("Usage: %s [options] input.obj output.g\n\n", argv0);
+
+    bu_log("  -c\t\tContinue processing on nmg-bomb. Conversion will fall-back to\n"
+	   "\t\tnative bot mode if a fatal error occurs when using the nmg or\n"
+	   "\t\tbot via nmg modes.\n"
+	);
+
+    bu_log("  -d\t\tOutput debug info to stderr.\n"
+	   "  -g grouping\tSelect which OBJ face grouping is used to create BRL-CAD\n"
+	   "\t\tprimitives:\n"
+	   "\t\t\tg = group (default)\n"
+	   "\t\t\tm = material\n"
+	   "\t\t\tn = none\n"
+	   "\t\t\to = object\n"
+	   "\t\t\tt = texture\n"
+	);
+
+    bu_log("  -h mm\t\tThickness used when a bot is not a closed volume and it's\n"
+	   "\t\tconverted as a plate or plate-nocos bot.\n"
+	   "  -i\t\tIgnore the normals defined in the input file when using native\n"
+	   "\t\tbot conversion mode.\n"
+	   "  -m mode\tSelect the conversion mode:\n"
+	   "\t\t\tb = native bot (default)\n"
+	   "\t\t\tn = nmg\n"
+	   "\t\t\tv = bot via nmg\n"
+	);
+
+    bu_log("  -o type\tSelect the type used for bots that aren't closed volumes:\n"
+	   "\t\t\tn = plate nocos\n"
+	   "\t\t\tp = plate\n"
+	   "\t\t\ts = surface (default)\n"
+	   "  -p\t\tCreates a plot/overlay (.pl) file of open edges for bots that\n"
+	   "\t\taren't closed volumes. <bot_name>.pl will be created in the\n"
+	   "\t\tcurrent directory and will overwrite any exisiting file with the\n"
+	   "\t\tsame name.\n"
+	   "  -r orient\tSelect the bot orientation mode:\n"
+	   "\t\t\t1 = unoriented (default)\n"
+	   "\t\t\t2 = ccw\n"
+	   "\t\t\t3 = cw\n"
+	);
+
+    bu_log("  -t mm\t\tDistance tolerance. Two vertices are considered to be the same\n"
+	   "\t\tif they are within this distance of one another. Default is\n"
+	   "\t\t.0005mm. You should not change this value without setting the\n"
+	   "\t\traytracer tolerance to match it.\n"
+	   "  -u units\tSelect units for the obj file: (m|cm|mm|ft|in). Default is m.\n"
+	   "\t\tYou can also provide a custom conversion factor from file units\n"
+	   "\t\tto mm.\n"
+	);
+
+    bu_log("  -v\t\tOut verbose user info to stderr. Each occurrance of this option\n"
+	   "\t\tin the option list increases the verbosity level.\n"
+	   "  -x flag\tSpecify rt debug flag bits (see raytrace.h).\n"
+	   "  -X flag\tSpecify nmg debug flag bits (see nmg.h).\n"
+	);
+}
+
 
 /* global definition */
 size_t *tmp_ptr = NULL;
@@ -3309,7 +3325,8 @@ main(int argc, char **argv)
     if (argc < 2) {
         bu_vls_free(&input_file_name);
         bu_vls_free(&brlcad_file_name);
-	bu_exit(1, usage, argv[0]);
+	usage(argv[0]);
+	bu_exit(1, NULL);
     }
 
     while ((c = bu_getopt(argc, argv, "cpidx:X:vt:h:m:u:g:o:r:")) != -1) {
