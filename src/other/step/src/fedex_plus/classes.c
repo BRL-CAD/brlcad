@@ -30,7 +30,7 @@ static char rcsid[] ="$Id: classes.c,v 3.0.1.11 1997/09/18 21:14:46 sauderd Exp 
 
 char *FundamentalType(const Type t,int report_reftypes);
 
-static inline
+static_inline
 Boolean
 LISTempty(Linked_List list)
 {
@@ -4233,24 +4233,25 @@ TYPEenum_lib_print (const Type type, FILE* f)
   fprintf (f, "\n%s::operator %s () const {\n", n, 
 	   EnumName(TYPEget_name (type)));
   fprintf (f, "  switch (v) {\n");
-        //buf [0] = '\0';
+  /*buf [0] = '\0'; */
 	DICTdo_type_init(ENUM_TYPEget_items(type),&de,OBJ_ENUM);
 	while (0 != (expr = (Expression)DICTdo(&de))) {
 	  strncpy (c_enum_ele, EnumCElementName (type, expr), BUFSIZ);
 	  fprintf (f, "\tcase %s\t:  ", c_enum_ele);
 	  fprintf (f, "return %s;\n", c_enum_ele);
 
-	  //fprintf (f, "%s", buf);
-	  //strncpy (c_enum_ele, EnumCElementName (type, expr), BUFSIZ);
-	  //fprintf (f, "\tcase %s\t:  ", c_enum_ele);
-	  //sprintf (buf, "return %s;\n", c_enum_ele);
+	  /* fprintf (f, "%s", buf);
+	   * strncpy (c_enum_ele, EnumCElementName (type, expr), BUFSIZ);
+	   * fprintf (f, "\tcase %s\t:  ", c_enum_ele);
+	   * sprintf (buf, "return %s;\n", c_enum_ele);
+	   */
 
 	}
   /*  print the last case with the default so sun c++ doesn\'t complain */
   fprintf (f, "\tcase %s_unset\t:\n", EnumName(TYPEget_name(type)));
   fprintf (f, "\tdefault\t\t:  return %s_unset;\n  }\n}\n", EnumName(TYPEget_name(type)));
 
-	//fprintf (f, "\n\tdefault\t\t:  %s  }\n}\n", buf);
+  /*fprintf (f, "\n\tdefault\t\t:  %s  }\n}\n", buf); */
 
 /*	fprintf (f, "\n\tdefault :  %s;\n  }\n}\n", buf);*/
 /*	fprintf (f, "\t\tdefault:  return 0;\n  }\n}\n");*/
@@ -4329,7 +4330,7 @@ TypeBody_Description(TypeBody body, char *buf)
 	Expression expr;
 	DictionaryEntry de;
 	char *s;
-/* // I believe it should never go here? DAS
+/* I believe it should never go here? DAS
 	if(body->type != array_ && body->type != list_)
 	{
 	    if (body->flags.unique)	strcat(buf," UNIQUE");

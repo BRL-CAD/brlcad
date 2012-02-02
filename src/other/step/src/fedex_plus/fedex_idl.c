@@ -6,7 +6,7 @@
 
 #define SCHEMA_FILE_PREFIX	"Sdai"
 
-static inline
+static_inline
 Boolean
 LISTempty(Linked_List list)
 {
