@@ -187,12 +187,10 @@ CHECK_C_FLAG(msse3)
 # Check for c90 && c99 support with gnu extensions on release just so
 # we get broader portability testing
 if(${BUILD_TYPE} MATCHES "RELEASE")
-CHECK_C_FLAG("std=gnu99")
-else(${BUILD_TYPE} MATCHES "RELEASE")
-CHECK_C_FLAG("std=gnu90")
-#CHECK_C_FLAG("std=gnu1x")
+  CHECK_C_FLAG("std=gnu99")
+  CHECK_C_FLAG("std=gnu90")
+# CHECK_C_FLAG("std=gnu1x")
 endif(${BUILD_TYPE} MATCHES "RELEASE")
-
 
 # Silence check for unused arguments (used to silence clang warnings about
 # unused options on the command line). By default clang generates a lot of
