@@ -1,30 +1,30 @@
 include_directories(
-	${CMAKE_CURRENT_SOURCE_DIR}
-	${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/include)
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/include)
 
 set(LIBREGEX_PUBLIC_HDRS
-    regex.h
-)
+  regex.h
+  )
 
 set(LIBREGEX_SOURCES
-    regcomp.c
-    regerror.c
-    regexec.c
-    regfree.c
-)
+  regcomp.c
+  regerror.c
+  regexec.c
+  regfree.c
+  )
 
 add_definitions(
-	-DREGEX_EXPORT_DLL
-	-DBRLCAD_DLL
-)
+  -DREGEX_EXPORT_DLL
+  -DBRLCAD_DLL
+  )
 
 add_library(regex SHARED ${LIBREGEX_SOURCES})
 INSTALL(TARGETS regex DESTINATION ${LIB_DIR})
 add_library(regex-static STATIC ${LIBREGEX_SOURCES})
 INSTALL(TARGETS regex-static ARCHIVE DESTINATION ${LIB_DIR})
 IF(NOT WIN32)
-	SET_TARGET_PROPERTIES(regex-static PROPERTIES OUTPUT_NAME "regex")
+  SET_TARGET_PROPERTIES(regex-static PROPERTIES OUTPUT_NAME "regex")
 ENDIF(NOT WIN32)
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
-   install(FILES ${LIBREGEX_PUBLIC_HDRS} DESTINATION include)
+  install(FILES ${LIBREGEX_PUBLIC_HDRS} DESTINATION include)
 endif()

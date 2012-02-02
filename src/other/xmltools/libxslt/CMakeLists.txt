@@ -1,11 +1,11 @@
 FIND_PACKAGE(Threads)
 INCLUDE(CheckIncludeFile)
 IF(CMAKE_THREAD_LIBS_INIT)
-	CHECK_INCLUDE_FILE(pthread.h HAVE_PTHREAD_H)
-	add_definitions(-DLIBXML_THREAD_ENABLED)
+  CHECK_INCLUDE_FILE(pthread.h HAVE_PTHREAD_H)
+  add_definitions(-DLIBXML_THREAD_ENABLED)
 ENDIF(CMAKE_THREAD_LIBS_INIT)
 IF(CMAKE_USE_PTHREADS_INIT)
-	SET(HAVE_LIBPTHREAD 1)
+  SET(HAVE_LIBPTHREAD 1)
 ENDIF(CMAKE_USE_PTHREADS_INIT)
 
 CHECK_INCLUDE_FILE(ansidecl.h HAVE_ANSIDECL_H)
@@ -58,17 +58,17 @@ SET(WITH_TRIO 0)
 SET(WITH_DEBUGGER 1)
 SET(WITH_MODULES 0)
 IF(NOT WIN32)
-	SET(LIBXSLT_DEFAULT_PLUGINS_PATH "${CMAKE_INSTALL_PREFIX}/lib/libxslt-plugins")
+  SET(LIBXSLT_DEFAULT_PLUGINS_PATH "${CMAKE_INSTALL_PREFIX}/lib/libxslt-plugins")
 ENDIF(NOT WIN32)
 IF(HAVE_XLOCALE_H)
-	SET(XSLT_LOCALE_XLOCALE 1)
+  SET(XSLT_LOCALE_XLOCALE 1)
 ELSE(HAVE_XLOCALE_H)
-	SET(XSLT_LOCALE_XLOCALE 0)
+  SET(XSLT_LOCALE_XLOCALE 0)
 ENDIF(HAVE_XLOCALE_H)
 IF(WIN32)
-	SET(XSLT_LOCALE_WINAPI 1)
+  SET(XSLT_LOCALE_WINAPI 1)
 ELSE(WIN32)
-	SET(XSLT_LOCALE_WINAPI 0)
+  SET(XSLT_LOCALE_WINAPI 0)
 ENDIF(WIN32)
 
 SET(VERSION "1.1.26")
@@ -76,40 +76,40 @@ SET(LIBXSLT_VERSION_NUMBER 10126)
 SET(LIBXSLT_VERSION_EXTRA "-BRLCAD")
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
-	${CMAKE_CURRENT_BINARY_DIR}/../include/libxslt/config.h)
+  ${CMAKE_CURRENT_BINARY_DIR}/../include/libxslt/config.h)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/xsltconfig.h.in
-	${CMAKE_CURRENT_BINARY_DIR}/../include/libxslt/xsltconfig.h)
+  ${CMAKE_CURRENT_BINARY_DIR}/../include/libxslt/xsltconfig.h)
 
 SET(libxslt_srcs
-	src/attributes.c
-	src/attrvt.c
-	src/documents.c
-	src/extensions.c
-	src/extra.c
-	src/functions.c
-	src/imports.c
-	src/keys.c
-	src/namespaces.c
-	src/numbers.c
-	src/pattern.c
-	src/preproc.c
-	src/security.c
-	src/templates.c
-	src/transform.c
-	src/variables.c
-	src/xslt.c
-	src/xsltlocale.c
-	src/xsltutils.c
-	)
+  src/attributes.c
+  src/attrvt.c
+  src/documents.c
+  src/extensions.c
+  src/extra.c
+  src/functions.c
+  src/imports.c
+  src/keys.c
+  src/namespaces.c
+  src/numbers.c
+  src/pattern.c
+  src/preproc.c
+  src/security.c
+  src/templates.c
+  src/transform.c
+  src/variables.c
+  src/xslt.c
+  src/xsltlocale.c
+  src/xsltutils.c
+  )
 
 include_directories(
-	${CMAKE_CURRENT_SOURCE_DIR}/include
-	${CMAKE_CURRENT_SOURCE_DIR}/include/libxslt
-	${CMAKE_CURRENT_SOURCE_DIR}/../libxml/include
-	${CMAKE_CURRENT_BINARY_DIR}/../include
-	${CMAKE_CURRENT_BINARY_DIR}/../include/libxslt
-	)
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/libxslt
+  ${CMAKE_CURRENT_SOURCE_DIR}/../libxml/include
+  ${CMAKE_CURRENT_BINARY_DIR}/../include
+  ${CMAKE_CURRENT_BINARY_DIR}/../include/libxslt
+  )
 
 add_library(xslt SHARED ${libxslt_srcs})
 target_link_libraries(xslt xml)

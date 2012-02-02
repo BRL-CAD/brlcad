@@ -1,20 +1,20 @@
 FIND_PACKAGE(ZLIB)
 IF(ZLIB_LIBRARY)
-	SET(HAVE_ZLIB 1)
-	SET(HAVE_ZLIB_H 1)
-	include_directories(${ZLIB_INCLUDE_DIR})
+  SET(HAVE_ZLIB 1)
+  SET(HAVE_ZLIB_H 1)
+  include_directories(${ZLIB_INCLUDE_DIR})
 ELSE(ZLIB_LIBRARY)
-	SET(ZLIB_LIBRARY "")
-	SET(ZLIB_INCLUDE_DIR "")
+  SET(ZLIB_LIBRARY "")
+  SET(ZLIB_INCLUDE_DIR "")
 ENDIF(ZLIB_LIBRARY)
 FIND_PACKAGE(Threads)
 INCLUDE(CheckIncludeFile)
 IF(CMAKE_THREAD_LIBS_INIT)
-	CHECK_INCLUDE_FILE(pthread.h HAVE_PTHREAD_H)
-	add_definitions(-DLIBXML_THREAD_ENABLED)
+  CHECK_INCLUDE_FILE(pthread.h HAVE_PTHREAD_H)
+  add_definitions(-DLIBXML_THREAD_ENABLED)
 ENDIF(CMAKE_THREAD_LIBS_INIT)
 IF(CMAKE_USE_PTHREADS_INIT)
-	SET(HAVE_LIBPTHREAD 1)
+  SET(HAVE_LIBPTHREAD 1)
 ENDIF(CMAKE_USE_PTHREADS_INIT)
 
 CHECK_INCLUDE_FILE(ansidecl.h HAVE_ANSIDECL_H)
@@ -77,9 +77,9 @@ CHECK_FUNCTION_EXISTS(localtime HAVE_LOCALTIME)
 CHECK_FUNCTION_EXISTS(signal HAVE_SIGNAL)
 CHECK_FUNCTION_EXISTS(sscanf HAVE_SSCANF)
 IF(NOT MSVC)
-   CHECK_FUNCTION_EXISTS(stat HAVE_STAT)
+  CHECK_FUNCTION_EXISTS(stat HAVE_STAT)
 ELSE(NOT MSVC)
-   SET(HAVE_STAT 0)
+  SET(HAVE_STAT 0)
 ENDIF(NOT MSVC)
 CHECK_FUNCTION_EXISTS(strdup HAVE_STRDUP)
 CHECK_FUNCTION_EXISTS(strndup HAVE_STRNDUP)
@@ -103,27 +103,27 @@ INCLUDE(CheckLibraryExists)
 INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/../CMake/ResolveCompilerPaths.cmake)
 CHECK_LIBRARY_EXISTS(dl dlopen "" HAVE_STD_DLOPEN)
 IF(HAVE_STD_DLOPEN)
-	RESOLVE_LIBRARIES(DL_LIBRARY "-ldl")
-	SET(HAVE_DLOPEN 1)
+  RESOLVE_LIBRARIES(DL_LIBRARY "-ldl")
+  SET(HAVE_DLOPEN 1)
 ELSE(HAVE_STD_DLOPEN)
-	CHECK_LIBRARY_EXISTS(c dlopen "" HAVE_C_DLOPEN)
-	IF(HAVE_C_DLOPEN)
-		RESOLVE_LIBRARIES(DL_LIBRARY "-lc")
-		SET(HAVE_DLOPEN 1)
-	ENDIF(HAVE_C_DLOPEN)
+  CHECK_LIBRARY_EXISTS(c dlopen "" HAVE_C_DLOPEN)
+  IF(HAVE_C_DLOPEN)
+    RESOLVE_LIBRARIES(DL_LIBRARY "-lc")
+    SET(HAVE_DLOPEN 1)
+  ENDIF(HAVE_C_DLOPEN)
 ENDIF(HAVE_STD_DLOPEN)
 
 
 CHECK_LIBRARY_EXISTS(m pow "" HAVE_MATH_LIB)
 IF(HAVE_MATH_LIB)
-	RESOLVE_LIBRARIES(M_LIBRARY "-lm")
+  RESOLVE_LIBRARIES(M_LIBRARY "-lm")
 ENDIF(HAVE_MATH_LIB)
 
 SET(WITH_TRIO 0)
 IF(CMAKE_THREAD_LIBS_INIT OR MSVC)
-	SET(WITH_THREADS 1)
+  SET(WITH_THREADS 1)
 ELSE(CMAKE_THREAD_LIBS_INIT OR MSVC)
-	SET(WITH_THREADS 0)
+  SET(WITH_THREADS 0)
 ENDIF(CMAKE_THREAD_LIBS_INIT OR MSVC)
 SET(WITH_TREE 1)
 SET(WITH_OUTPUT 1)
@@ -160,79 +160,79 @@ SET(LIBXML_VERSION_NUMBER "20708")
 SET(LIBXML_VERSION_EXTRA "-BRLCAD")
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/libxml/xmlversion.h.in
-	${CMAKE_CURRENT_BINARY_DIR}/../include/libxml/xmlversion.h)
+  ${CMAKE_CURRENT_BINARY_DIR}/../include/libxml/xmlversion.h)
 
 IF(WIN32)
-	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/libxml/xmlwin32version.h.in
-		${CMAKE_CURRENT_BINARY_DIR}/../include/libxml/xmlwin32version.h)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/libxml/xmlwin32version.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/../include/libxml/xmlwin32version.h)
 ENDIF(WIN32)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
-	${CMAKE_CURRENT_BINARY_DIR}/../include/libxml/config.h)
+  ${CMAKE_CURRENT_BINARY_DIR}/../include/libxml/config.h)
 
 add_definitions(-DHAVE_CONFIG_H)
 
 include_directories(
-	${CMAKE_CURRENT_BINARY_DIR}/../include
-	${CMAKE_CURRENT_BINARY_DIR}/../include/libxml/
-	${CMAKE_CURRENT_SOURCE_DIR}/include
-	)
+  ${CMAKE_CURRENT_BINARY_DIR}/../include
+  ${CMAKE_CURRENT_BINARY_DIR}/../include/libxml/
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  )
 
 IF(WITH_TRIO)
-	SET(trio_srcs
-		src/trio.c
-		src/triostr.c
-)
+  SET(trio_srcs
+    src/trio.c
+    src/triostr.c
+    )
 ELSE(WITH_TRIO)
-	SET(trio_srcs
-		src/trionan.c
-		)
+  SET(trio_srcs
+    src/trionan.c
+    )
 ENDIF(WITH_TRIO)
 
 SET(libxml_srcs
-   src/DOCBparser.c
-	src/HTMLparser.c
-	src/HTMLtree.c
-	src/SAX.c
-	src/SAX2.c
-   src/c14n.c
-	src/catalog.c
-	src/chvalid.c
-	src/debugXML.c
-	src/dict.c
-	src/encoding.c
-	src/entities.c
-	src/error.c
-	src/globals.c
-	src/hash.c
-	src/list.c
-	src/parser.c
-	src/parserInternals.c
-	src/pattern.c
-   src/relaxng.c
-	src/schematron.c
-	src/threads.c
-	src/tree.c
-	${trio_srcs}
-	src/uri.c
-	src/valid.c
-	src/xinclude.c
-	src/xlink.c
-   src/xlink.c
-   src/xmlIO.c
-   src/xmlmemory.c
-   src/xmlmodule.c
-   src/xmlreader.c
-   src/xmlregexp.c
-   src/xmlsave.c
-   src/xmlschemas.c
-   src/xmlschemastypes.c
-   src/xmlstring.c
-   src/xmlwriter.c
-   src/xmlunicode.c
-   src/xpath.c
-   src/xpointer.c
-	)
+  src/DOCBparser.c
+  src/HTMLparser.c
+  src/HTMLtree.c
+  src/SAX.c
+  src/SAX2.c
+  src/c14n.c
+  src/catalog.c
+  src/chvalid.c
+  src/debugXML.c
+  src/dict.c
+  src/encoding.c
+  src/entities.c
+  src/error.c
+  src/globals.c
+  src/hash.c
+  src/list.c
+  src/parser.c
+  src/parserInternals.c
+  src/pattern.c
+  src/relaxng.c
+  src/schematron.c
+  src/threads.c
+  src/tree.c
+  ${trio_srcs}
+  src/uri.c
+  src/valid.c
+  src/xinclude.c
+  src/xlink.c
+  src/xlink.c
+  src/xmlIO.c
+  src/xmlmemory.c
+  src/xmlmodule.c
+  src/xmlreader.c
+  src/xmlregexp.c
+  src/xmlsave.c
+  src/xmlschemas.c
+  src/xmlschemastypes.c
+  src/xmlstring.c
+  src/xmlwriter.c
+  src/xmlunicode.c
+  src/xpath.c
+  src/xpointer.c
+  )
 
 add_library(xml SHARED ${libxml_srcs})
 target_link_libraries(xml ${ZLIB_LIBRARY} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${M_LIBRARY})

@@ -1,7 +1,7 @@
 # Minimum required version of CMake
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 IF(COMMAND CMAKE_POLICY)
-	CMAKE_POLICY(SET CMP0003 NEW)
+  CMAKE_POLICY(SET CMP0003 NEW)
 ENDIF(COMMAND CMAKE_POLICY)
 
 # Set CMake project name
@@ -17,9 +17,9 @@ SET(PACKAGE_TARNAME ${PACKAGE})
 SET(PACKAGE_VERSION ${VERSION})
 
 INCLUDE_DIRECTORIES(
-	${CMAKE_CURRENT_BINARY_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}
-	)
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  )
 
 SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
 find_package(LEMON)
@@ -28,31 +28,31 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/LEMON_Util.cmake)
 LEMON_TARGET(re2cParse parser.yy parser.cc parser_tokens.h)
 
 SET(re2c_common_SRCS
-	code.cc
-	dfa.cc
-	main.cc
-	${LEMON_re2cParse_OUTPUT_SOURCE}
-	actions.cc
-	substr.cc
-	translate.cc
-	mbo_getopt.cc
-	)
+  code.cc
+  dfa.cc
+  main.cc
+  ${LEMON_re2cParse_OUTPUT_SOURCE}
+  actions.cc
+  substr.cc
+  translate.cc
+  mbo_getopt.cc
+  )
 
 SET(re2c_HDRS
-	basics.h
-	dfa.h
-	globals.h
-	ins.h
-	re2c_parser.h
-	re.h
-	scanner.h
-	substr.h
-	token.h
-	mbo_getopt.h
-	code.h
-	stream_lc.h
-	code_names.h
-	)
+  basics.h
+  dfa.h
+  globals.h
+  ins.h
+  re2c_parser.h
+  re.h
+  scanner.h
+  substr.h
+  token.h
+  mbo_getopt.h
+  code.h
+  stream_lc.h
+  code_names.h
+  )
 
 SET(STDC_HEADERS 1)
 INCLUDE(CheckIncludeFile)
@@ -83,26 +83,26 @@ add_definitions(-DHAVE_CONFIG_H)
 
 
 SET(re2c_bootstrap_SRCS
-	${re2c_common_SRCS}
-	bootstrap/scanner.cc
-	)
+  ${re2c_common_SRCS}
+  bootstrap/scanner.cc
+  )
 SET_SOURCE_FILES_PROPERTIES(bootstrap/scanner.cc PROPERTIES OBJECT_DEPENDS ${LEMON_re2cParse_OUTPUT_HEADER})
 
 add_executable(re2c_bootstrap ${re2c_bootstrap_SRCS})
 IF(${LEMON_EXECUTABLE_TARGET})
-	add_dependencies(re2c_bootstrap ${LEMON_EXECUTABLE_TARGET})
+  add_dependencies(re2c_bootstrap ${LEMON_EXECUTABLE_TARGET})
 ENDIF(${LEMON_EXECUTABLE_TARGET})
 
 ADD_CUSTOM_COMMAND(
-	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc
-	COMMAND re2c_bootstrap -bi -o ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc	${CMAKE_CURRENT_SOURCE_DIR}/scanner.re
-	DEPENDS re2c_bootstrap 
-	)
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc
+  COMMAND re2c_bootstrap -bi -o ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc	${CMAKE_CURRENT_SOURCE_DIR}/scanner.re
+  DEPENDS re2c_bootstrap 
+  )
 
 SET(re2c_SRCS
-	${re2c_common_SRCS}
-	${CMAKE_CURRENT_BINARY_DIR}/scanner.cc
-	)
+  ${re2c_common_SRCS}
+  ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc
+  )
 
 add_executable(re2c ${re2c_SRCS})
 
