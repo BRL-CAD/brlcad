@@ -111,7 +111,7 @@ run_server(int port) {
     struct pkg_conn *client;
     int netfd;
     char portname[MAX_DIGITS + 1] = {0};
-    //int pkg_result  = 0;
+    /* int pkg_result  = 0; */
     char *buffer, *msgbuffer;
     long bytes = 0;
     FILE *fp;
