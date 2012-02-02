@@ -123,6 +123,10 @@ macro(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
 
     set(LEMON_${Name}_OUTPUTS ${LEMON_GEN_OUT} ${LemonSource} ${LemonHeader})
 
+    # make sure we clean up generated output
+    set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${LEMON_${Name}_OUTPUTS})
+    
+
     # macro ran successfully
     set(LEMON_${Name}_DEFINED TRUE)
   endif(NOT ${ARGC} EQUAL 4 AND NOT ${ARGC} EQUAL 5)
