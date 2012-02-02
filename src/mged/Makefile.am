@@ -95,7 +95,6 @@ mged_SOURCES = \
 	facedef.c \
 	fbserv.c \
 	grid.c \
-	hideline.c \
 	history.c \
 	mater.c \
 	menu.c \
