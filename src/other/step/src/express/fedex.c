@@ -76,6 +76,7 @@ char *FEDEXversion(void)
 	return("V2.11.4-beta CADDETC preval June 8, 1995");
 }
 
+#include <getopt.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
