@@ -411,6 +411,7 @@ set(CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR};${CMAKE_MODULE_PATH}")
 # build logic
 include(${BRLCAD_CMAKE_DIR}/BRLCAD_Options.cmake)
 include(${BRLCAD_CMAKE_DIR}/BRLCAD_Util.cmake)
+include(CheckTypeSize)
 
 #---------------------------------------------------------------------
 # Save the current LC_ALL, LC_MESSAGES, and LANG environment variables
@@ -623,6 +624,10 @@ if(NOT BRLCAD_WORD_SIZE MATCHES "AUTO" AND NOT BRLCAD_WORD_SIZE MATCHES "64BIT" 
   set(BRLCAD_WORD_SIZE "AUTO" CACHE STRING WORD_SIZE_LABEL FORCE)
 endif(NOT BRLCAD_WORD_SIZE MATCHES "AUTO" AND NOT BRLCAD_WORD_SIZE MATCHES "64BIT" AND NOT BRLCAD_WORD_SIZE MATCHES "32BIT")
 
+# calculate the size of a pointer if we haven't already
+CHECK_TYPE_SIZE("void *" CMAKE_SIZEOF_VOID_P)
+
+# still not defined?
 if(NOT CMAKE_SIZEOF_VOID_P)
   message(WARNING "CMAKE_SIZEOF_VOID_P is not defined - assuming 32 bit platform")
   set(CMAKE_SIZEOF_VOID_P 4)
