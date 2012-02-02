@@ -63,7 +63,7 @@ SET(SCL_VERSION "${SCL_VERSION_MAJOR}.${SCL_VERSION_MINOR}.${SCL_VERSION_PATCH}"
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.
 SET(SCL_CMAKE_DIR "${SCL_SOURCE_DIR}/CMake")
-SET(CMAKE_MODULE_PATH "${SCL_CMAKE_DIR};${CMAKE_MODULE_PATH}")
+SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${SCL_CMAKE_DIR}")
 
 INCLUDE(${SCL_CMAKE_DIR}/SCL_Utils.cmake)
 
@@ -175,9 +175,9 @@ INCLUDE(CheckLibraryExists)
 INCLUDE(CheckIncludeFile)
 INCLUDE(CheckFunctionExists)
 INCLUDE(CheckTypeSize)
-INCLUDE(${SCL_CMAKE_DIR}/FindLEX.cmake)
-INCLUDE(${SCL_CMAKE_DIR}/FindLEMON.cmake)
-INCLUDE(${SCL_CMAKE_DIR}/LEMON_Util.cmake)
+find_package(LEX)
+find_package(LEMON)
+load_macros(LEMON_Util)
 
 CHECK_INCLUDE_FILE(ndir.h HAVE_NDIR_H)
 CHECK_INCLUDE_FILE(stdarg.h HAVE_STDARG_H)

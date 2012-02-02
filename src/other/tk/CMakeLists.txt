@@ -141,7 +141,7 @@ ENDIF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 
 #-----------------------------------------------------------------------------
 # Set CMake module path
-SET(CMAKE_MODULE_PATH "${TK_SOURCE_DIR}/CMake")
+SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${TK_SOURCE_DIR}/CMake")
 
 #-----------------------------------------------------------------------------
 # Check if the compiler supports pipe - if so, use it

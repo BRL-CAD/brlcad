@@ -58,6 +58,7 @@
 #============================================================
 #
 macro(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
+  MESSAGE("Loading LEMON_TARGET from misc/CMake")
   if(NOT ${ARGC} EQUAL 4 AND NOT ${ARGC} EQUAL 5)
     message(SEND_ERROR "Usage")
   else()
@@ -125,9 +126,9 @@ macro(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
 
     # make sure we clean up generated output and copied input
     if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-      set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${LEMON_${Name}_OUTPUTS}")
+      set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${LEMON_${Name}_OUTPUTS}") 
     else("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-      set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${LEMON_${Name}_OUTPUTS} ${LemonInput}")
+      set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${LEMON_${Name}_OUTPUTS};${LEMON_BIN_INPUT}") 
     endif("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 
     # macro ran successfully

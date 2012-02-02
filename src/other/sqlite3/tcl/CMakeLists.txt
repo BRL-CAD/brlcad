@@ -1,5 +1,5 @@
 # Tcl bindings
-SET(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
+SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/CMake")
 include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/tcl.cmake)
 
 # First, get some standard options out of the way - things that are constant

@@ -115,7 +115,7 @@ ENDIF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 
 #-----------------------------------------------------------------------------
 # Set CMake module path
-SET(CMAKE_MODULE_PATH "${TCL_SOURCE_DIR}/CMake")
+SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${TCL_SOURCE_DIR}/CMake")
 
 #-----------------------------------------------------------------------------
 # Tcl/Tk's normal build system uses autotools macros, referred to as the

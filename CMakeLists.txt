@@ -403,9 +403,20 @@ endif(NOT IS_SUBBUILD)
 
 #---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically
-# stored in one directory - let CMake know where to find them.
+# stored in one directory - let CMake know where to find them.  If we
+# are a subbuild, let the parent's CMAKE_MODULE_PATH supply files before
+# our own, otherwise misc/CMake takes first priority.
 set(BRLCAD_CMAKE_DIR "${BRLCAD_SOURCE_DIR}/misc/CMake")
-set(CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR};${CMAKE_MODULE_PATH}")
+if(IS_SUBBUILD)
+  set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${BRLCAD_CMAKE_DIR}")
+else(IS_SUBBUILD)
+  set(CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR};${CMAKE_MODULE_PATH}")
+endif(IS_SUBBUILD)
+
+# There are collections of macro definitions in misc/CMake that
+# don't make sense to load with find_package - define a convenience
+# macro to do what we want in such cases.
+include(${BRLCAD_CMAKE_DIR}/LoadMacros.cmake)
 
 # Load utility macros that will be used throughout the BRL-CAD
 # build logic
