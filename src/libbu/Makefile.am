@@ -76,6 +76,7 @@ libbu_nil_la_SOURCES = \
 	rb_rotate.c \
 	rb_search.c \
 	rb_walk.c \
+	realpath.c \
 	semaphore.c \
 	simd.c \
 	sscanf.c \
