@@ -184,13 +184,17 @@ CHECK_CXX_FLAG(ftemplate-depth-128)
 # CHECK_C_FLAG(msse2)
 CHECK_C_FLAG(msse3)
 
-# Check for c90 && c99 support with gnu extensions on release just so
-# we get broader portability testing
-if(${BUILD_TYPE} MATCHES "RELEASE")
+# Check for c90 support with gnu extensions if we're not building for a 
+# release and c99 support with gnu extensions when we are building for a
+# release just so we get broader portability testing - default development
+# mode is Debug, so the default behavior will be to keep things working
+# with the less feature-rich C standard.
+if(${BUILD_TYPE} MATCHES "Release")
   CHECK_C_FLAG("std=gnu99")
+else(${BUILD_TYPE} MATCHES "Release")
   CHECK_C_FLAG("std=gnu90")
+endif(${BUILD_TYPE} MATCHES "Release")
 # CHECK_C_FLAG("std=gnu1x")
-endif(${BUILD_TYPE} MATCHES "RELEASE")
 
 # Silence check for unused arguments (used to silence clang warnings about
 # unused options on the command line). By default clang generates a lot of
