@@ -58,7 +58,6 @@
 #============================================================
 #
 macro(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
-  MESSAGE("Loading LEMON_TARGET from misc/CMake")
   if(NOT ${ARGC} EQUAL 4 AND NOT ${ARGC} EQUAL 5)
     message(SEND_ERROR "Usage")
   else()
