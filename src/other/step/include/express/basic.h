@@ -105,7 +105,8 @@ typedef int (*intFuncptr)();
 /* deal with inline functions */
 /******************************/
 
-#define static_inline static inline
+/* inline is c99, so use __inline__ extension instead */
+#define static_inline static __inline__
 
 /* allow same declarations to suffice for both Standard and Classic C */
 /* ... at least in header files ... */
