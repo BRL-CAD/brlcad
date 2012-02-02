@@ -78,8 +78,7 @@ endif(BUILD_TYPE)
 
 macro(CHECK_C_FLAG flag)
   string(TOUPPER ${flag} UPPER_FLAG)
-  string(REGEX REPLACE " " "_" UPPER_FLAG ${UPPER_FLAG})
-  string(REGEX REPLACE "=" "_" UPPER_FLAG ${UPPER_FLAG})
+  string(REGEX REPLACE "[^a-zA-Z0-9]" "_" UPPER_FLAG ${UPPER_FLAG})
   if(${ARGC} LESS 2)
     CHECK_C_COMPILER_FLAG(-${flag} ${UPPER_FLAG}_COMPILER_FLAG_FOUND)
     if(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
@@ -101,8 +100,7 @@ endmacro()
 
 macro(CHECK_CXX_FLAG flag)
   string(TOUPPER ${flag} UPPER_FLAG)
-  string(REGEX REPLACE " " "_" UPPER_FLAG ${UPPER_FLAG})
-  string(REGEX REPLACE "=" "_" UPPER_FLAG ${UPPER_FLAG})
+  string(REGEX REPLACE "[^a-zA-Z0-9]" "_" UPPER_FLAG ${UPPER_FLAG})
   if(${ARGC} LESS 2)
     CHECK_CXX_COMPILER_FLAG(-${flag} ${UPPER_FLAG}_COMPILER_FLAG_FOUND)
     if(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
@@ -125,7 +123,7 @@ endmacro()
 
 macro(CHECK_C_FLAG_GATHER flag FLAGS)
   string(TOUPPER ${flag} UPPER_FLAG)
-  string(REGEX REPLACE " " "_" UPPER_FLAG ${UPPER_FLAG})
+  string(REGEX REPLACE "[^a-zA-Z0-9]" "_" UPPER_FLAG ${UPPER_FLAG})
   CHECK_C_COMPILER_FLAG(-${flag} ${UPPER_FLAG}_COMPILER_FLAG_FOUND)
   if(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
     if(${FLAGS})
@@ -189,12 +187,12 @@ CHECK_C_FLAG(msse3)
 # release just so we get broader portability testing - default development
 # mode is Debug, so the default behavior will be to keep things working
 # with the less feature-rich C standard.
-if(${BUILD_TYPE} MATCHES "Release")
-  CHECK_C_FLAG("std=gnu99")
-else(${BUILD_TYPE} MATCHES "Release")
-  CHECK_C_FLAG("std=gnu90")
-endif(${BUILD_TYPE} MATCHES "Release")
+if(${BUILD_TYPE} MATCHES "RELEASE")
 # CHECK_C_FLAG("std=gnu1x")
+  CHECK_C_FLAG("std=gnu99")
+else(${BUILD_TYPE} MATCHES "RELEASE")
+  CHECK_C_FLAG("std=gnu89")
+endif(${BUILD_TYPE} MATCHES "RELEASE")
 
 # Silence check for unused arguments (used to silence clang warnings about
 # unused options on the command line). By default clang generates a lot of
