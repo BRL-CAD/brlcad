@@ -562,10 +562,10 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	fastf_t tx, ty, tz;
 	fastf_t sa, sx, sy, sz;
 	fastf_t kx, ky, kz;
+	hvect_t svec = HINIT_ZERO;
+	point_t key_pt = VINIT_ZERO;
 	vect_t aetvec = VINIT_ZERO;
 	vect_t tvec = VINIT_ZERO;
-	point_t key_pt = VINIT_ZERO;
-	hvect_t svec = HINIT_ZERO;
 
 	COMBMEM_SET_PART_II(gedp, argv, op, i, rt_tree_array, tree_index, mat);
 
@@ -657,7 +657,7 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	mat_t mat;
 	fastf_t az, el, tw;
 	fastf_t kx, ky, kz;
-	point_t key_pt;
+	point_t key_pt = VINIT_ZERO;
 
 	COMBMEM_SET_PART_II(gedp, argv, op, i, rt_tree_array, tree_index, mat);
 
@@ -692,9 +692,9 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    BU_STR_EQUAL(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
 	    fastf_t tx, ty, tz;
 	    fastf_t sa, sx, sy, sz;
+	    hvect_t svec = HINIT_ZERO;
 	    vect_t aetvec = VINIT_ZERO;
 	    vect_t tvec = VINIT_ZERO;
-	    vect_t svec;
 
 	    COMBMEM_CHECK_MAT(tp, tree_index, old_rt_tree_array, mat, aetvec, tvec, svec, key_pt, az, el, tw, tx, ty, tz, sa, sx, sy, sz);
 	} else {
@@ -771,10 +771,10 @@ combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes 
 	    fastf_t az, el, tw;
 	    fastf_t tx, ty, tz;
 	    fastf_t sa, sx, sy, sz;
+	    hvect_t svec = HINIT_ZERO;
+	    point_t key_pt = VINIT_ZERO;
 	    vect_t aetvec = VINIT_ZERO;
 	    vect_t tvec = VINIT_ZERO;
-	    vect_t svec;
-	    point_t key_pt;
 
 	    COMBMEM_CHECK_MAT(tp, tree_index, old_rt_tree_array, mat, aetvec, tvec, svec, key_pt, az, el, tw, tx, ty, tz, sa, sx, sy, sz);
 	} else {
@@ -883,10 +883,10 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	mat_t mat;
 	fastf_t sa, sx, sy, sz;
 	fastf_t kx, ky, kz;
+	hvect_t svec = HINIT_ZERO;
+	point_t key_pt = VINIT_ZERO;
 	vect_t aetvec = VINIT_ZERO;
 	vect_t tvec = VINIT_ZERO;
-	point_t key_pt;
-	hvect_t svec;
 
 	HSETALL(svec, 0);
 
