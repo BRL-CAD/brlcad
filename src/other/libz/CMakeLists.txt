@@ -67,8 +67,10 @@ if(MSVC)
     add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/zconf.h.in
-	       ${CMAKE_CURRENT_BINARY_DIR}/zconf.h @ONLY)
+if(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/zconf.h
+	${CMAKE_CURRENT_BINARY_DIR}/zconf.h COPYONLY)
+endif(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 
