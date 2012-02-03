@@ -98,12 +98,10 @@ cap_squared_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, stru
 {
     fastf_t pipe_bend, coil_radius;
     point_t origin, height, pnt1, pnt2, pnt4, pnt6, pnt8;
-    struct bu_vls str1;
+    struct bu_vls str1 = BU_VLS_INIT_ZERO;
 
     coil_radius = mean_outer_diameter/2 - wire_diameter/2;
     pipe_bend = coil_radius;
-
-    bu_vls_init(&str1);
 
     *need_subtraction += 1;
 
@@ -152,12 +150,10 @@ cap_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, struct wmemb
 {
     fastf_t coil_radius, pipe_bend, center_height;
     point_t origin, height, pnt1, pnt2, pnt4, pnt6, pnt8;
-    struct bu_vls str1;
+    struct bu_vls str1 = BU_VLS_INIT_ZERO;
 
     coil_radius = mean_outer_diameter/2 - wire_diameter/2;
     pipe_bend = coil_radius;
-
-    bu_vls_init(&str1);
 
     *need_subtraction += 1;
 
@@ -243,7 +239,7 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
 	struct coil_data_t *s_data;
     struct coil_data_t *e_data;
     struct coil_data_t *cd;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     BU_LIST_INIT(&coil.l);
     BU_LIST_INIT(&coil_subtractions.l);
@@ -251,8 +247,6 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
 
     s_data = BU_LIST_FIRST(coil_data_t, &(*sections));
     e_data = BU_LIST_LAST(coil_data_t, &(*sections));
-
-    bu_vls_init(&str);
 
     last_pitch_pt = 0;
 
@@ -399,9 +393,8 @@ int
 main(int ac, char *av[])
 {
     struct rt_wdb *db_fp = NULL;
-    struct bu_vls coil_type;
-    struct bu_vls name;
-    struct bu_vls str;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     fastf_t mean_outer_diameter, wire_diameter, overall_length, nominal_length;
     fastf_t helix_angle, pitch;
 
@@ -411,12 +404,6 @@ main(int ac, char *av[])
     int nt; /* Number of turns */
     int start_cap_type, end_cap_type;
     int lhf; /* Winding flag */
-
-    bu_vls_init(&str);
-    bu_vls_init(&coil_type);
-    bu_vls_init(&name);
-    bu_vls_trunc(&coil_type, 0);
-    bu_vls_trunc(&name, 0);
 
     BU_LIST_INIT(&sections);
 
