@@ -43,7 +43,6 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
     size_t i;
     size_t node_count;
     size_t actual_count;
-    struct bu_vls vls;
     static const char *usage = "comb";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -64,7 +63,6 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    bu_vls_init(&vls);
 
     dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
 
