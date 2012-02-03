@@ -500,6 +500,8 @@ package provide Archer 1.0
 	pushZClipSettings
     }
 
+    gedCmd dlist_on $mDisplayListMode
+
 
     bind [namespace tail $this] <Configure> [::itcl::code $this handleConfigure]
 }
@@ -2397,6 +2399,13 @@ proc title_node_handler {node} {
 	    -value $LIGHT_MODE_FRONT_AND_BACK_LIGHT \
 	    -variable [::itcl::scope mLightingModePref]
     } {}
+
+    itk_component add dlistModeCB {
+	::ttk::checkbutton $parent.dlistModeCB \
+	    -text "Use Display Lists" \
+	    -variable [::itcl::scope mDisplayListModePref]
+    } {}
+
     set i 0
     grid $itk_component(lightModeFrontRB) -row $i -sticky nsew
     incr i
@@ -2422,9 +2431,10 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(lightModeL) -column 0 -row $i -sticky ne
     grid $itk_component(lightModeF) -column 1 -row $i -sticky ew
-
     incr i
+    grid $itk_component(dlistModeCB) -columnspan 2 -column 0 -row $i -sticky sw
     grid rowconfigure $parent $i -weight 1
+
     grid columnconfigure $parent 1 -weight 1
 
     set i 0
@@ -7355,6 +7365,11 @@ proc title_node_handler {node} {
 	set mLightingMode $mLightingModePref
 	doLighting
     }
+
+    if {$mDisplayListModePref != $mDisplayListMode} {
+	set mDisplayListMode $mDisplayListModePref
+	gedCmd dlist_on $mDisplayListMode
+    }
 }
 
 
@@ -7975,6 +7990,7 @@ proc title_node_handler {node} {
     set mZClipBackPref $mZClipBack
     set mZClipFrontPref $mZClipFront
     set mLightingModePref $mLightingMode
+    set mDisplayListModePref $mDisplayListMode
 
     $itk_component(preferencesDialog) center [namespace tail $this]
     ::update
@@ -8123,6 +8139,7 @@ proc title_node_handler {node} {
     puts $_pfile "set mZClipBack $mZClipBack"
     puts $_pfile "set mZClipFront $mZClipFront"
     puts $_pfile "set mLightingMode $mLightingMode"
+    puts $_pfile "set mDisplayListMode $mDisplayListMode"
 
     puts $_pfile "set mHPaneFraction1 $mHPaneFraction1"
     puts $_pfile "set mHPaneFraction2 $mHPaneFraction2"

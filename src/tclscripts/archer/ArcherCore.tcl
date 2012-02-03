@@ -296,8 +296,6 @@ namespace eval ArcherCore {
 	variable mTargetCopy ""
 	variable mTargetOldCopy ""
 	variable mDisplayType
-	variable mLightingMode 1
-	variable mLightingModePref ""
 	variable mLighting 1
 	variable mRenderMode -1
 	variable mActivePane
@@ -394,6 +392,11 @@ namespace eval ArcherCore {
 	variable mDisplayFontSize 0
 	variable mDisplayFontSizePref ""
 	variable mDisplayFontSizes {}
+
+	variable mLightingMode 1
+	variable mLightingModePref ""
+	variable mDisplayListMode 0
+	variable mDisplayListModePref ""
 
 	variable mGridAnchor "0 0 0"
 	variable mGridAnchorXPref ""
