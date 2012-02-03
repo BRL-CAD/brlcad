@@ -73,6 +73,8 @@
 #define	NZDIGITS	0x00200	/* no zero digits detected */
 #define	HAVESIGN	0x10000	/* sign detected */
 
+#define	HAVEWIDTH	0x40000
+
 /*
  * Conversion types.
  */
@@ -210,12 +212,12 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 {
     int c;
     long flags;
+    size_t i, width;
     int numCharsConsumed, partConsumed;
     int numFieldsAssigned, partAssigned;
-    const char *fmt;
     char *partFmt;
+    const char *fmt;
     const char *wordStart;
-    size_t i, width;
     char ccl_tab[CCL_TABLE_SIZE];
 
     BU_ASSERT(src != NULL);
@@ -363,9 +365,13 @@ again:
 
 
 	/* MAXIMUM FIELD WIDTH */
-	case '0': case '1': case '2': case '3': case '4':
-	case '5': case '6': case '7': case '8': case '9':
 #define NUMERIC_CHAR_TO_INT(c) (c - '0')
+	case '0':
+	    /* distingish default width from width set to 0 */
+	    flags |= HAVEWIDTH; 
+	    /* FALLTHROUGH */
+	case '1': case '2': case '3': case '4':
+	case '5': case '6': case '7': case '8': case '9':
 	    width = (width * 10) + NUMERIC_CHAR_TO_INT(c);
 	    goto again;
 
@@ -515,7 +521,7 @@ if (flags & UNSIGNED) { \
 		}
 
 		/* set default width */
-		if (width == 0) {
+		if (width == 0 && !(flags & HAVEWIDTH)) {
 		    if (conversion == CT_CHAR) {
 			width = 1;
 		    } else {
@@ -562,13 +568,49 @@ if (flags & UNSIGNED) { \
 	    } /* BUVLS */
 
 	    else {
-		if (!(flags & SUPPRESS) && width == 0 && c != CT_CHAR) {
-		    bu_exit(1, "ERROR.\n"
-				"  bu_sscanf was called with bad format string: \"%s\"\n"
-				"  %%s and %%[...] conversions must be bounded using "
-				"a maximum field width.", fmt0);
+		/* unsupressed %s or %[...] conversion */
+		if (!(flags & SUPPRESS) && c != CT_CHAR) {
+
+		    if (width == 0 && !(flags & HAVEWIDTH)) {
+			struct bu_vls err = BU_VLS_INIT_ZERO;
+
+			/* No width was provided by caller.
+			 *
+			 * If the caller is using %s or %[...] without a
+			 * maximum field width, then there is a bug in the
+			 * caller code.
+			 *
+			 * sscanf could easily overrun the provided buffer and
+			 * cause a program crash, so just bomb here and make
+			 * the source of the problem clear.
+			 */
+			bu_vls_sprintf(&err, "ERROR.\n"
+				    "  bu_sscanf was called with bad format string: \"%s\"\n"
+				    "  %%s and %%[...] conversions must be bounded using "
+				    "a maximum field width.", fmt0);
+			bu_bomb(bu_vls_addr(&err));
+		    }
+
+		    if (width == 0) {
+			/* Caller specified zero width in the format string.
+			 *
+			 * The behavior of sscanf for a zero width is
+			 * undefined, so we provide our own consistent
+			 * behavior here.
+			 *
+			 * The assignment wasn't suppressed, so we'll assume
+			 * the caller provided a pointer and wants us to write
+			 * to it. Just write '\0' and call it a successfull
+			 * assignment.
+			 */
+			*va_arg(ap, char*) = '\0';
+			++partAssigned;
+			break;
+		    }
+		    
 		}
-		/* %c or %[...] or %s conversion */
+
+		/* ordinary %c or %[...] or %s conversion */
 		if (flags & LONG) {
 		    SSCANF_TYPE(wchar_t*);
 		} else {
