@@ -1,12 +1,17 @@
 
 # Define the commands to expand the third party components we will need to handle
 # DocBook processing from their archives into the build directory
-FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/other/docbook-schema)
-FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/other/fonts/dejavu-lgc)
-FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/other/fonts/stix)
-FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/other/offo)
-FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/other/standard/svg)
-FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/other/standard/xsl)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/other/docbook-schema)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/other/fonts/dejavu-lgc)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/resources/other/fonts/dejavu-lgc)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/other/fonts/stix)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/resources/other/fonts/stix)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/other/offo)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/other/standard/svg)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/other/standard/xsl)
+if(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+	DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/resources/other)
+endif(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 
 ADD_CUSTOM_COMMAND(
 	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/resources/other/docbook-schema/schema.sentinel

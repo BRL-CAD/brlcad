@@ -32,10 +32,14 @@ set(SAVEVIEWS
 # Benchmark scripts don't know where the source directory is, so copy
 # to the binary directory
 foreach(pixfile ${BENCHMARK_PIX})
-	configure_file(${pixfile} ${CMAKE_BINARY_DIR}/pix/${pixfile} COPYONLY)
+	if(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+	  configure_file(${pixfile} ${CMAKE_BINARY_DIR}/pix/${pixfile} COPYONLY)
+	endif(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 endforeach(pixfile ${BENCHMARK_PIX})
 foreach(pixlog ${PIX_LOG})
-	configure_file(${pixlog} ${CMAKE_BINARY_DIR}/pix/${pixlog} COPYONLY)
+	if(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+	  configure_file(${pixlog} ${CMAKE_BINARY_DIR}/pix/${pixlog} COPYONLY)
+	endif(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 endforeach(pixlog ${PIX_LOG})
 
 file(COPY ${BENCHMARK_PIX} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/pix)

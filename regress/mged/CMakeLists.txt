@@ -84,6 +84,7 @@ set(MGED_TESTS
 foreach(testfile ${MGED_TESTS})
   file(READ ${CMAKE_CURRENT_SOURCE_DIR}/${testfile} TEST_CONTENTS)
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile} "source ${CMAKE_CURRENT_SOURCE_DIR}/regression_resources.tcl\n\n${TEST_CONTENTS}")
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile})
 endforeach(testfile ${MGED_TESTS})
 
 set(G_FILENAME "regress_mged_cmd_functionality.g")

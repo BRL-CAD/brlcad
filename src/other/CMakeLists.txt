@@ -72,6 +72,7 @@ the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version i
 BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY(zlib libz "" zlib_ALIASES zlib_DESCRIPTION) 
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libz/CTestTestfile.cmake)
 
 #-----------------------------------------------------------------------------
 
@@ -111,6 +112,7 @@ IF("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED" OR "${BRLCAD_LEMON}" MATCHES "BUN
   SET(LEMON_TEMPLATE "${BRLCAD_SOURCE_DIR}/src/other/lemon/lempar.c")
 ENDIF("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED" OR "${BRLCAD_LEMON}" MATCHES "BUNDLED")
 THIRD_PARTY_EXECUTABLE(lemon lemon "" lemon_ALIASES lemon_DESCRIPTION)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/lemon/Makefile)
 load_macros(LEMON_Util)
 
 SET(re2c_ALIASES ENABLE_RE2C)
@@ -121,6 +123,7 @@ toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
 BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY_EXECUTABLE(re2c re2c "" re2c_ALIASES re2c_DESCRIPTION)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/re2c/Makefile)
 INCLUDE(${BRLCAD_SOURCE_DIR}/misc/CMake/RE2C_Util.cmake)
 
 # Perplex is set up as a src/other sub-build, but at this time it is
@@ -135,6 +138,7 @@ BRLCAD_BUNDLED_LIBS is also AUTO.  perplex requires a working re2c.
 ")
 THIRD_PARTY_EXECUTABLE(perplex perplex "" perplex_ALIASES perplex_DESCRIPTION	NOSYS)
 INCLUDE(${BRLCAD_SOURCE_DIR}/misc/CMake/PERPLEX_Util.cmake)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/perplex/Makefile)
 
 # libxml and libxslt tools for DocBook processing.  We build just
 # enough library support to get these two tools working.
@@ -160,6 +164,7 @@ toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
 BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY_EXECUTABLE(xmllint xmltools "BRLCAD_EXTRADOCS_VALIDATE" xmllint_ALIASES xmllint_DESCRIPTION)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/xmltools/include)
 
 #---------------------------------------------------------------------------------
 # Third Party Sources
@@ -234,6 +239,11 @@ ELSE(BRLCAD_PNG_BUILD)
   # a generic macro won't pick up the setting - handle it here
   SET(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
 ENDIF(BRLCAD_PNG_BUILD)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libpng/CTestTestfile.cmake)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng.pc)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng-config)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng.so)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng.a)
 # Other PNG options to mark as advanced
 MARK_AS_ADVANCED(PNGARG)
 MARK_AS_ADVANCED(PNG_DEBUG)
@@ -316,6 +326,11 @@ IF(BRLCAD_TCL_BUILD)
   FILE(APPEND ${CONFIG_H_FILE} "#define TCL_SYSTEM_INITTCL_PATH \"\"\n")
   INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/tcl.dist)
   DISTCHECK_IGNORE(tcl tcl_ignore_files)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/Makefile)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/man1)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/man3)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/mann)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tcl/library/Makefile)
 ELSE(BRLCAD_TCL_BUILD)
   IF(${TCL_TCLSH_EXECUTABLE})
     BRLCAD_INCLUDE_FILE(tcl.h HAVE_TCL_H)
@@ -399,6 +414,12 @@ IF(BRLCAD_TK_BUILD)
   ENDIF(WIN32)
   FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_TK_H 1\n")
   MARK_AS_ADVANCED(TK-ENABLE_FREETYPE)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tk/doc/Makefile)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tk/doc/man1)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tk/doc/man3)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tk/doc/mann)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tk/library/Makefile)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tk/pkgIndex.tcl)
 ELSE(BRLCAD_TK_BUILD)
   IF(BRLCAD_ENABLE_TK)
     BRLCAD_INCLUDE_FILE(tk.h HAVE_TK_H)
@@ -485,6 +506,7 @@ IF(BRLCAD_ITCL_BUILD)
   SET(ITCL_INCLUDE_DIRS "${ITCL_INCLUDE_DIRS}" CACHE STRING "Itcl include paths" FORCE)
   SET(ITCL_VERSION "3.4" CACHE STRING "ITCL_VERSION" FORCE)
   SET(ITCL_BIN_PREFIX ${CMAKE_BINARY_DIR}/${LIB_DIR})
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/incrTcl/itcl/pkgIndex.tcl)
 ELSE(BRLCAD_ITCL_BUILD)
   # We have Itcl package AND Itcl library - we're good.
   SET(ITCL_VERSION "${ITCL_PACKAGE_VERSION}" CACHE STRING "ITCL_VERSION" FORCE)
@@ -514,6 +536,7 @@ IF(BRLCAD_ITK_BUILD)
   # does not handle C library settings.
   SET(ITK_LIBRARY itk CACHE STRING "ITK_LIBRARY" FORCE)
   SET(ITK_VERSION "3.3" CACHE STRING "ITK_VERSION" FORCE)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/incrTcl/itk/pkgIndex.tcl)
 ELSE(BRLCAD_ITK_BUILD)
   # We have Itcl/Itk packages AND Itcl/Itk libraries - we're good.
   SET(ITK_VERSION "${ITCL_VERSION}" CACHE STRING "ITK_VERSION" FORCE)
@@ -542,6 +565,8 @@ IF(BRLCAD_TOGL_BUILD)
   SET(TOGL_LIBRARIES togl CACHE STRING "TOGL_LIBRARIES" FORCE)
   SET(TOGL_STUB_LIBRARIES toglstub CACHE STRING "TOGL_STUB_LIBRARIES" FORCE)
   SET(TOGL_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/togl/include;${CMAKE_CURRENT_SOURCE_DIR}/togl/include" CACHE STRING "Togl include path" FORCE)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/togl/pkgIndex.tcl 
+	         ${CMAKE_CURRENT_BINARY_DIR}/togl/src/pkgIndex.tcl)
 ELSE(BRLCAD_TOGL_BUILD)
   # No Togl enabled - fix this so a system one has a chance...
   #SET(TOGL_LIBRARIES "" CACHE STRING "Tcl/Tk OpenGL disabled" FORCE)
@@ -566,6 +591,7 @@ This package will be disabled if BRLCAD_ENABLE_TK is OFF.
 THIRD_PARTY_TCL_PACKAGE(Iwidgets iwidgets "${TCL_WISH_EXECUTABLE}" "tcl;tk;itcl;itk" "BRLCAD_ENABLE_TK" "" iwidgets_ALIASES iwidgets_DESCRIPTION)
 IF(BRLCAD_IWIDGETS_BUILD)
   SET(IWIDGETS_VERSION "4.0.1" CACHE STRING "IWIDGETS_VERSION" FORCE)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/iwidgets/pkgIndex.tcl)
 ELSE(BRLCAD_IWIDGETS_BUILD)
   SET(IWIDGETS_VERSION "${IWIDGETS_PACKAGE_VERSION}" CACHE STRING "IWIDGETS_VERSION" FORCE)
 ENDIF(BRLCAD_IWIDGETS_BUILD)
@@ -582,6 +608,7 @@ is set to BUNDLED, local copy is built even if a system version is present.
 This package will be disabled if BRLCAD_ENABLE_TK is OFF.
 ")
 THIRD_PARTY_TCL_PACKAGE(Tkhtml tkhtml "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK" "" tkhtml_ALIASES tkhtml_DESCRIPTION)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tkhtml/pkgIndex.tcl)
 #ADD_SUBDIRECTORY(hv3)
 #INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/hv3.dist)
 #DISTCHECK_IGNORE(hv3 hv3_ignore_files)
@@ -601,6 +628,7 @@ is set to BUNDLED, local copy is built even if a system version is present.
 This package will be disabled if BRLCAD_ENABLE_TK is OFF.
 ")
 THIRD_PARTY_TCL_PACKAGE(tkpng tkpng "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK" "" tkpng_ALIASES tkpng_DESCRIPTION)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tkpng/pkgIndex.tcl)
 
 SET(tktable_ALIASES ENABLE_TKTABLE)
 SET(tktable_DESCRIPTION "
@@ -612,6 +640,8 @@ is set to BUNDLED, local copy is built even if a system version is present.
 This package will be disabled if BRLCAD_ENABLE_TK is OFF.
 ")
 THIRD_PARTY_TCL_PACKAGE(Tktable tktable "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK" "" tktable_ALIASES tktable_DESCRIPTION)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tktable/pkgIndex.tcl)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tktable/tktable_cfg.h)
 
 # OpenNURBS Library
 set(opennurbs_ALIASES ENABLE_OPENNURBS)
@@ -646,6 +676,7 @@ ENDIF(NOT MSVC)
 ADD_SUBDIRECTORY(clipper)
 INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/clipper.dist)
 DISTCHECK_IGNORE(clipper clipper_ignore_files)
+DISTCLEAN(${CMAKE_CURRENT_SOURCE_DIR}/clipper/Makefile)
 SET(CLIPPER_LIBRARY "clipper" CACHE STRING "Clipper library" FORCE)
 SET(CLIPPER_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/clipper" CACHE STRING "Directory containing clipper header" FORCE)
 MARK_AS_ADVANCED(CLIPPER_LIBRARY)

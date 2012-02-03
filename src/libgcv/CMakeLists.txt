@@ -30,3 +30,5 @@ if(CPP_DLL_DEFINES)
 endif(CPP_DLL_DEFINES)
 
 CMAKEFILES(NOTES Makefile.am soup.h tri_intersect.h)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/wfobj/CTestTestfile.cmake)
