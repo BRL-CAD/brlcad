@@ -72,10 +72,11 @@ if(TOGL_LIBRARIES)
   install(TARGETS issttcltk DESTINATION ${LIB_DIR}/isst0.1)
   GET_TARGET_PROPERTY(ISSTTCL_LIBLOCATION issttcltk LOCATION_${CMAKE_BUILD_TYPE})
   GET_FILENAME_COMPONENT(ISSTTCL_LIBNAME ${ISSTTCL_LIBLOCATION} NAME)
-  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded isst	0.1 [list load [file join $dir .. .. ${LIB_DIR} isst0.1 ${ISSTTCL_LIBNAME}]]")
+  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded isst 0.1 [list load [file join $dir .. .. ${LIB_DIR} isst0.1 ${ISSTTCL_LIBNAME}]]")
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/isst0.1)
-  file(WRITE ${CMAKE_BINARY_DIR}/lib/isst0.1/pkgIndex.tcl "package ifneeded isst 0.1 [list load [file join $dir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}	${ISSTTCL_LIBNAME}] isst]")
+  file(WRITE ${CMAKE_BINARY_DIR}/lib/isst0.1/pkgIndex.tcl "package ifneeded isst 0.1 [list load [file join $dir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} ${ISSTTCL_LIBNAME}] isst]")
   DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl)
+  DISTCLEAN(${CMAKE_BINARY_DIR}/lib/isst0.1)
   # TODO - need to make this configure line into a real target ala
   # BRLCAD_ADDDATA in order for the build dir copy to be updated when it
   # is changed.

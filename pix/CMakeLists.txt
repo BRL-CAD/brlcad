@@ -29,23 +29,24 @@ set(SAVEVIEWS
   cube.rt
 )
 
+file(COPY ${BENCHMARK_PIX} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/pix)
+file(COPY ${PIX_LOG} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/pix)
+install(FILES ${BENCHMARK_PIX} DESTINATION ${DATA_DIR}/pix)
+install(FILES ${PIX_LOG} DESTINATION ${DATA_DIR}/pix)
 # Benchmark scripts don't know where the source directory is, so copy
 # to the binary directory
 foreach(pixfile ${BENCHMARK_PIX})
 	if(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 	  configure_file(${pixfile} ${CMAKE_BINARY_DIR}/pix/${pixfile} COPYONLY)
 	endif(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+	DISTCLEAN(${CMAKE_BINARY_DIR}/${DATA_DIR}/pix/${pixfile})
 endforeach(pixfile ${BENCHMARK_PIX})
 foreach(pixlog ${PIX_LOG})
 	if(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 	  configure_file(${pixlog} ${CMAKE_BINARY_DIR}/pix/${pixlog} COPYONLY)
 	endif(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+	DISTCLEAN(${CMAKE_BINARY_DIR}/${DATA_DIR}/pix/${pixlog})
 endforeach(pixlog ${PIX_LOG})
-
-file(COPY ${BENCHMARK_PIX} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/pix)
-file(COPY ${PIX_LOG} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/pix)
-install(FILES ${BENCHMARK_PIX} DESTINATION ${DATA_DIR}/pix)
-install(FILES ${PIX_LOG} DESTINATION ${DATA_DIR}/pix)
 
 CMAKEFILES(${BENCHMARK_PIX})
 CMAKEFILES(${OTHER_PIX})

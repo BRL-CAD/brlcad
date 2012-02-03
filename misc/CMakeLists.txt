@@ -17,12 +17,11 @@ if(NOT WIN32)
   add_subdirectory(enigma)
 endif(NOT WIN32)
 
-CONFIGURE_file(brlcad-config.in ${CMAKE_BINARY_DIR}/bin/brlcad-config @ONLY)
+configure_file(brlcad-config.in ${CMAKE_BINARY_DIR}/bin/brlcad-config @ONLY)
 
 BRLCAD_ADDFILE(fortran_example.f sample_applications)
 install(PROGRAMS ${CMAKE_BINARY_DIR}/bin/brlcad-config DESTINATION ${BIN_DIR})
-file(COPY brlcad-config.1 DESTINATION ${CMAKE_BINARY_DIR}/${MAN_DIR}/man1)
-install(FILES brlcad-config.1 DESTINATION ${MAN_DIR}/man1)
+ADD_MAN_PAGE(1 brlcad-config.1)
 
 set(density_DATAFILES
   GQA_SAMPLE_DENSITIES

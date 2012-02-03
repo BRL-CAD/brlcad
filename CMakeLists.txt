@@ -401,10 +401,11 @@ if(NOT IS_SUBBUILD)
     _add_subdirectory(${name} ${ARGN})
     file(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${CMAKE_CURRENT_SOURCE_DIR}/${name}\n")
     file(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${CMAKE_CURRENT_SOURCE_DIR}/${name}/CMakeLists.txt\n")
-	 DISTCLEAN(${CMAKE_CURRENT_SOURCE_DIR}/${name}/CMakeFiles)
-	 DISTCLEAN(${CMAKE_CURRENT_SOURCE_DIR}/${name}/cmake_install.cmake)
-	 DISTCLEAN(${CMAKE_CURRENT_SOURCE_DIR}/${name}/Makefile)
+    DISTCLEAN(${CMAKE_CURRENT_SOURCE_DIR}/${name}/CMakeFiles)
+    DISTCLEAN(${CMAKE_CURRENT_SOURCE_DIR}/${name}/cmake_install.cmake)
+    DISTCLEAN(${CMAKE_CURRENT_SOURCE_DIR}/${name}/Makefile)
   endfunction(add_subdirectory)
+
 endif(NOT IS_SUBBUILD)
 
 file(REMOVE ${CMAKE_BINARY_DIR}/cmakefiles.cmake)
@@ -585,16 +586,6 @@ endif(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
 if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/${BIN_DIR} CACHE INTERNAL "Single output directory for building all executables.")
 endif(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-
-# TODO - This is waaay too aggressive, but a more surgical removal of just
-# the files CMake is responsible for will take more time to work out.
-if(NOT IS_SUBBUILD)
-	DISTCLEAN(${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
-	DISTCLEAN(${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
-	DISTCLEAN(${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-   DISTCLEAN(${CMAKE_BINARY_DIR}/${DATA_DIR})
-   DISTCLEAN(${CMAKE_BINARY_DIR}/share)
-endif(NOT IS_SUBBUILD)
 
 # Take the hint from http://forum.openscenegraph.org/viewtopic.php?t=6926 and
 # make all configurations output to the same directories.  This is necessary
@@ -1929,7 +1920,9 @@ set(toplevel_DOCFILES
   NEWS
   README
   )
-file(COPY ${toplevel_DOCFILES} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR})
+foreach(item ${toplevel_DOCFILES})
+  configure_file(${item} ${CMAKE_BINARY_DIR}/${DATA_DIR}/${item} COPYONLY)
+endforeach(item ${toplevel_DOCFILES})
 install(FILES ${toplevel_DOCFILES} DESTINATION ${DATA_DIR})
 
 # We want to ignore an in-source build directory if possible, try to recognize

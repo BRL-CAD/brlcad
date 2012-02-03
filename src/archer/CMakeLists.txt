@@ -64,7 +64,7 @@ set(archer_wizard_FILES
 BRLCAD_ADDDATA(archer_wizard_FILES plugins/archer/Wizards)
 
 BRLCAD_ADDFILE(plugins/Wizards/humanwizard/HumanWizard.tcl plugins/archer/Wizards/humanwizard)
-BRLCAD_ADDFILE(plugins/Wizards/tankwizard/TankWizard.tcl	plugins/archer/Wizards/tankwizard)
+BRLCAD_ADDFILE(plugins/Wizards/tankwizard/TankWizard.tcl plugins/archer/Wizards/tankwizard)
 BRLCAD_ADDFILE(plugins/Wizards/tankwizard/images/tank.png plugins/archer/Wizards/tankwizardIA/images)
 BRLCAD_ADDFILE(plugins/Wizards/tirewizard/TireWizard.tcl plugins/archer/Wizards/tirewizard)
 

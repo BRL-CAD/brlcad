@@ -37,7 +37,6 @@ set(gtools_MANS
   g_lint.1
   remapid.1
   )
-file(COPY ${gtools_MANS} DESTINATION ${CMAKE_BINARY_DIR}/${MAN_DIR}/man1)
 ADD_MAN_PAGES(1 gtools_MANS)
 set(gtools_ignore_files
   beset/beset.h
