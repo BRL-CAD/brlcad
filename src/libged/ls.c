@@ -349,7 +349,6 @@ vls_line_dpp(struct ged *gedp,
 int
 ged_ls(struct ged *gedp, int argc, const char *argv[])
 {
-    struct bu_vls vls;
     struct directory *dp;
     size_t i;
     int c;
@@ -372,8 +371,6 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
-
-    bu_vls_init(&vls);
 
     bu_optind = 1;	/* re-init bu_getopt() */
     while ((c = bu_getopt(argc, (char * const *)argv, "acrslopqA")) != -1) {
