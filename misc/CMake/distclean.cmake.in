@@ -1,0 +1,73 @@
+# Clear out the files the BRL-CAD build told us to clear
+message("Removing CMake-generated files...")
+set(CMAKE_DISTCLEAN_TARGET_LIST @CMAKE_DISTCLEAN_TARGET_LIST@)
+foreach(item ${CMAKE_DISTCLEAN_TARGET_LIST})
+  if(IS_DIRECTORY "${item}")
+    EXEC_PROGRAM(${CMAKE_COMMAND} ARGS -E remove_directory "${item}" OUTPUT_VARIABLE SCRATCH)
+  else(IS_DIRECTORY "${item}")
+    EXEC_PROGRAM(${CMAKE_COMMAND} ARGS -E remove "${item}" OUTPUT_VARIABLE SCRATCH)
+  endif(IS_DIRECTORY "${item}")
+endforeach(item ${CMAKE_DISTCLEAN_TARGET_LIST})
+message("Removing CMake-generated files... done.")
+
+# If the find command is available, clear out empty directories too
+find_program(FIND_EXEC NAMES find DOC "path to find executable")
+mark_as_advanced(FIND_EXEC)
+
+if(FIND_EXEC)
+  message("Removing CMake-generated directories that are now empty...")
+endif(FIND_EXEC)
+
+set(target_dirs 
+	"@CMAKE_LIBRARY_OUTPUT_DIRECTORY@" 
+	"@CMAKE_RUNTIME_OUTPUT_DIRECTORY@" 
+	"@BRLCAD_BINARY_DIR@/share"
+	"@BRLCAD_BINARY_DIR@/bench"
+	"@BRLCAD_BINARY_DIR@/db"
+	"@BRLCAD_BINARY_DIR@/doc"
+	"@BRLCAD_BINARY_DIR@/include"
+	"@BRLCAD_BINARY_DIR@/misc"
+	"@BRLCAD_BINARY_DIR@/pix"
+	"@BRLCAD_BINARY_DIR@/regress"
+	"@BRLCAD_BINARY_DIR@/sh"
+	"@BRLCAD_BINARY_DIR@/src"
+	)
+
+macro(get_empty_dirs targets results)
+  set(${results} "")
+  if(FIND_EXEC)
+    foreach(dir ${${targets}})
+      if(EXISTS ${dir})
+	EXEC_PROGRAM(${FIND_EXEC} ARGS ${dir} -type d -empty ! -path *.svn* OUTPUT_VARIABLE FIND_EMPTY_DIRS)
+	if(FIND_EMPTY_DIRS)
+	string(REPLACE "\n" ";" FIND_EMPTY_DIRS ${FIND_EMPTY_DIRS})
+	set(${results} ${${results}} ${FIND_EMPTY_DIRS})
+	endif(FIND_EMPTY_DIRS)
+      endif(EXISTS ${dir})
+    endforeach(dir ${${targets}})
+  endif(FIND_EXEC)
+endmacro(get_empty_dirs)
+
+get_empty_dirs(target_dirs CURRENT_EMPTY_DIRS)
+
+if(CURRENT_EMPTY_DIRS)
+  foreach(dir ${CURRENT_EMPTY_DIRS})
+    EXEC_PROGRAM(${CMAKE_COMMAND} ARGS -E remove_directory "${dir}" OUTPUT_VARIABLE SCRATCH)
+  endforeach(dir ${CURRENT_EMPTY_DIRS})
+  while(NOT "${CURRENT_EMPTY_DIRS}" STREQUAL "")
+    get_empty_dirs(target_dirs CURRENT_EMPTY_DIRS)
+    if(CURRENT_EMPTY_DIRS)
+      foreach(dir ${CURRENT_EMPTY_DIRS})
+	EXEC_PROGRAM(${CMAKE_COMMAND} ARGS -E remove_directory "${dir}" OUTPUT_VARIABLE SCRATCH)
+      endforeach(dir ${CURRENT_EMPTY_DIRS})
+    endif(CURRENT_EMPTY_DIRS)
+  endwhile(NOT "${CURRENT_EMPTY_DIRS}" STREQUAL "")
+endif(CURRENT_EMPTY_DIRS)
+
+if(FIND_EXEC)
+  message("Removing CMake-generated directories that are now empty... done.")
+endif(FIND_EXEC)
+
+
+# Done - now remove the output form of this script
+EXEC_PROGRAM(${CMAKE_COMMAND} ARGS -E remove "@BRLCAD_BINARY_DIR@/distclean.cmake" OUTPUT_VARIABLE SCRATCH)

@@ -2,7 +2,7 @@
 # Define the commands to expand the third party components we will need to handle
 # DocBook processing from their archives into the build directory
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/other/docbook-schema)
-DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/resources/other/fonts/docbook-schema)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/resources/other/docbook-schema)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/other/fonts/dejavu-lgc)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/resources/other/fonts/dejavu-lgc)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/other/fonts/stix)
