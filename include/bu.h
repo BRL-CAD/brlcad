@@ -5226,7 +5226,8 @@ BU_EXPORT extern char *bu_strdupm(const char *cp, const char *label);
  * Compares two strings for equality.  It performs the comparison more
  * robustly than the standard library's strcmp() function by defining
  * consistent behavior for NULL and empty strings.  It accepts NULL as
- * valid input values and considers "" and NULL as equal.
+ * valid input values and considers "" and NULL as equal.  Returns 0
+ * if the strings match.
  *
  * bu_strcmp() is a macro that includes the current file name and line
  * number that can be used when bu debugging is enabled.
@@ -5240,7 +5241,7 @@ BU_EXPORT extern int bu_strcmpm(const char *string1, const char *string2, const 
  * the string.  It performs the comparison more robustly than the
  * standard strcasecmp() function by defining consistent behavior for
  * NULL and empty strings.  It accepts NULL as valid input values and
- * considers "" and NULL as equal.
+ * considers "" and NULL as equal.  Returns 0 if the strings match.
  */
 BU_EXPORT extern int bu_strcasecmp(const char *string1, const char *string2);
 
@@ -5254,10 +5255,19 @@ BU_EXPORT extern int bu_strcasecmp(const char *string1, const char *string2);
  * BU_STR_EQUAL() is a convenience macro for testing two
  * null-terminated strings for equality.  It is equivalent to
  * (bu_strcmp(s1, s2) == 0) whereby NULL strings are allowed and
- * equivalent to an empty string.  Macro returns true when the strings
+ * equivalent to an empty string.  Evaluates true when the strings
  * match and false if they do not.
  */
 #define BU_STR_EQUAL(s1, s2) (bu_strcmpm((s1), (s2), BU_FLSTR) == 0)
+
+/**
+ * BU_STR_SIMILAR() is a convenience macro that compares two
+ * null-terminated strings for equality without regard for case.  Two
+ * strings are similar if they are a case-insensitive match.  NULL
+ * strings are allowed and equivalent to an empty string.  Evaluates
+ * true if the strings are similar and false if they are not.
+ */
+#define BU_STR_SIMILAR(s1, s2) (bu_strcasecmp((s1), (s2)) == 0)
 
 
 /** @file escape.c
