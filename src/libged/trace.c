@@ -89,9 +89,6 @@ _ged_trace(struct directory *dp,
     struct rt_comb_internal *comb;
     int i;
     int id;
-    struct bu_vls str;
-
-    bu_vls_init(&str);
 
     if (pathpos >= _GED_MAX_LEVELS) {
 	bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "nesting exceeds %d levels\n", _GED_MAX_LEVELS);
