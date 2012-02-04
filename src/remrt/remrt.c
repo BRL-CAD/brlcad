@@ -1080,17 +1080,13 @@ eat_script(FILE *fp)
     char		*nsbuf;
     int		argc;
     char		*argv[64+1];
-    struct bu_vls	prelude;
-    struct bu_vls	body;
-    struct bu_vls	finish;
+    struct bu_vls prelude = BU_VLS_INIT_ZERO;
+    struct bu_vls body = BU_VLS_INIT_ZERO;
+    struct bu_vls finish = BU_VLS_INIT_ZERO;
     int		frame = 0;
     struct frame	*fr;
 
     bu_log("%s Starting to scan animation script\n", stamp() );
-
-    bu_vls_init( &prelude );
-    bu_vls_init( &body );
-    bu_vls_init( &finish );
 
     /* Once only, collect up any prelude */
     while ( (buf = rt_read_cmd( fp )) != (char *)0 )  {
@@ -3087,12 +3083,11 @@ cd_rdebug(int argc, char **argv)
 {
     struct servers *sp;
     int		len;
-    struct bu_vls	cmd;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
 
     if (argc < 2)
 	return 1;
 
-    bu_vls_init( &cmd );
     bu_vls_strcpy( &cmd, "opt " );
     bu_vls_strcat( &cmd, argv[1] );
     len = bu_vls_strlen( &cmd )+1;
