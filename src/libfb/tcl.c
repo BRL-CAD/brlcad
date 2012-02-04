@@ -132,7 +132,7 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
     }
 
 #ifdef IF_X
-    if (strcasecmp(argv[1], X_device_name) == 0) {
+    if (BU_STR_EQUIV(argv[1], X_device_name)) {
 	found=1;
 	*ifp = X24_interface; /* struct copy */
 
@@ -155,7 +155,7 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
 #ifdef IF_TK
 #if 0
 /* XXX TJM implment tk_open_existing */
-    if (strcasecmp(argv[1], tk_device_name) == 0) {
+    if (BU_STR_EQUIV(argv[1], tk_device_name)) {
 	found=1;
 	*ifp = tk_interface; /* struct copy */
 
@@ -177,7 +177,7 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
 #endif  /* IF_TK */
 
 #ifdef IF_WGL
-    if (strcasecmp(argv[1], wgl_device_name) == 0) {
+    if (BU_STR_EQUIV(argv[1], wgl_device_name)) {
 	found=1;
 	*ifp = wgl_interface; /* struct copy */
 
@@ -198,7 +198,7 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
 #endif  /* IF_WGL */
 
 #ifdef IF_OGL
-    if (strcasecmp(argv[1], ogl_device_name) == 0) {
+    if (BU_STR_EQUIV(argv[1], ogl_device_name)) {
 	found=1;
 	*ifp = ogl_interface; /* struct copy */
 

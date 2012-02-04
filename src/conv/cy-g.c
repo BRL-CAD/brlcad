@@ -124,7 +124,7 @@ main(int argc, char **argv)
     if (line[strlen(line)-1] == '\n') {
 	line[strlen(line)-1] = '\0';
     }
-    if (strcasecmp(line, "Cyberware Digitizer Data") != 0) {
+    if (!BU_STR_EQUIV(line, "Cyberware Digitizer Data")) {
 	bu_log("WARNING: Input file does not seem to be Cyberware Digitizer Data\n");
 	bu_log("Trying to continue regardless...\n");
     }
@@ -260,7 +260,7 @@ main(int argc, char **argv)
 		db5_update_attribute("_GLOBAL", "SPACE", cptr, outfp->dbip);
 		bu_log("SPACE=%s\n", space);
 
-		if (strcasecmp(space, "CYLINDRICAL") != 0) {
+		if (!BU_STR_EQUIV(space, "CYLINDRICAL")) {
 		    /* don't support CARTESIAN or BILATERAL */
 		    bu_log("Encountered SPACE=%s\n", space);
 		    bu_exit(1, "%s only supports CYLINDRICAL scans\n", argv[0]);

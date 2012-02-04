@@ -257,7 +257,7 @@ fbo_getcursor_tcl(void *clientData, int argc, const char **argv)
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc != 2
-	|| strcasecmp(argv[1], "getcursor") != 0)
+	|| !BU_STR_EQUIV(argv[1], "getcursor"))
     {
 	bu_log("ERROR: unexpected argument(s)\n");
 	return BRLCAD_ERROR;
@@ -514,7 +514,7 @@ fbo_flush_tcl(void *clientData, int argc, const char **argv)
     struct fb_obj *fbop = (struct fb_obj *)clientData;
 
     if (argc != 2
-	|| strcasecmp(argv[1], "flush") != 0)
+	|| !BU_STR_EQUIV(argv[1], "flush"))
     {
 	bu_log("ERROR: expecting two arguments\n");
 	return BRLCAD_ERROR;
@@ -538,7 +538,7 @@ fbo_getheight_tcl(void *clientData, int argc, const char **argv)
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc != 2
-	|| strcasecmp(argv[1], "getheight") != 0)
+	|| !BU_STR_EQUIV(argv[1], "getheight"))
     {
 	bu_log("ERROR: expecting two arguments\n");
 	return BRLCAD_ERROR;
@@ -564,7 +564,7 @@ fbo_getwidth_tcl(void *clientData, int argc, const char **argv)
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc != 2
-	|| strcasecmp(argv[1], "getwidth") != 0)
+	|| !BU_STR_EQUIV(argv[1], "getwidth"))
     {
 	bu_log("ERROR: expecting two arguments\n");
 	return BRLCAD_ERROR;
@@ -590,7 +590,7 @@ fbo_getsize_tcl(void *clientData, int argc, const char **argv)
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc != 2
-	|| strcasecmp(argv[1], "getsize") != 0)
+	|| !BU_STR_EQUIV(argv[1], "getsize"))
     {
 	bu_log("ERROR: expecting two arguments\n");
 	return BRLCAD_ERROR;

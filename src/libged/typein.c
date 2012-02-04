@@ -609,7 +609,7 @@ booleanize(const char *answer)
 
     ap = noes[idx];
     while (ap && ap[0] != '\0') {
-	if ((strcasecmp(ap, answer) == 0)) {
+	if (BU_STR_EQUIV(ap, answer)) {
 	    return 0;
 	}
 	idx++;
