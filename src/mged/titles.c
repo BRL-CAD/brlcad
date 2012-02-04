@@ -122,7 +122,7 @@ create_text_overlay(struct bu_vls *vp)
 	int imax = 0;
 	int i = 0;
 	int j;
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	start = bu_vls_addr(vp);
 	/*
@@ -147,7 +147,6 @@ create_text_overlay(struct bu_vls *vp)
 	/* Prep string for use with Tcl/Tk */
 	++imax;
 	i = 0;
-	bu_vls_init(&vls);
 	for (p = start; *p != '\0'; ++p) {
 	    if (*p == '\n') {
 		for (j = 0; j < imax - i; ++j)
@@ -227,7 +226,7 @@ dotitles(struct bu_vls *overlay_vls)
     int yloc = 0;
     int xloc = 0;
     int scroll_ybot = 0;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     char cent_x[80] = {0};
     char cent_y[80] = {0};
@@ -244,12 +243,11 @@ dotitles(struct bu_vls *overlay_vls)
     if (dbip == DBI_NULL)
 	return;
 
-    bu_vls_init(&vls);
-
     /* Set the Tcl variables to the appropriate values. */
 
     if (illump != SOLID_NULL) {
-	struct bu_vls path_lhs, path_rhs;
+	struct bu_vls path_lhs = BU_VLS_INIT_ZERO;
+	struct bu_vls path_rhs = BU_VLS_INIT_ZERO;
 	struct directory *dp;
 	struct db_full_path *dbfp = &illump->s_fullpath;
 
@@ -259,8 +257,6 @@ dotitles(struct bu_vls *overlay_vls)
 	}
 	RT_CK_FULL_PATH(dbfp);
 
-	bu_vls_init(&path_lhs);
-	bu_vls_init(&path_rhs);
 	for (i = 0; i < (size_t)ipathpos; i++) {
 	    dp = DB_FULL_PATH_GET(dbfp, i);
 	    if (dp && dp->d_namep) {
@@ -559,9 +555,8 @@ dotitles(struct bu_vls *overlay_vls)
     }
 
     if (STATE == ST_S_EDIT || STATE == ST_O_EDIT) {
-	struct bu_vls kp_vls;
+	struct bu_vls kp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&kp_vls);
 	bu_vls_printf(&kp_vls,
 		      " Keypoint: %s %s: (%g, %g, %g)",
 		      rt_functab[es_int.idb_type].ft_name+3,	/* Skip ID_ */

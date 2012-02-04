@@ -398,9 +398,8 @@ adc_reset(void)
 static void
 adc_print_vars(void)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "draw = %d\n", adc_state->adc_draw);
     bu_vls_printf(&vls, "a1 = %.15e\n", adc_state->adc_a1);
     bu_vls_printf(&vls, "a2 = %.15e\n", adc_state->adc_a2);
@@ -446,7 +445,7 @@ f_adc (
     int argc,
     const char *argv[])
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     const char *parameter;
     const char **argp = argv;
     point_t user_pt;		/* Value(s) provided by user */
@@ -457,7 +456,6 @@ f_adc (
     CHECK_DBI_NULL;
 
     if (6 < argc) {
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help adc");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -483,7 +481,6 @@ f_adc (
 
     if (BU_STR_EQUAL(argv[1], "-i")) {
 	if (argc < 4) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "adc: -i option specified without an op-val pair");
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -507,7 +504,6 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "draw")) {
 	if (argc == 0) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d", adc_state->adc_draw);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -532,7 +528,6 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "a1")) {
 	if (argc == 0) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%.15e", adc_state->adc_a1);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -558,7 +553,6 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "a2")) {
 	if (argc == 0) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%.15e", adc_state->adc_a2);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -584,7 +578,6 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "dst")) {
 	if (argc == 0) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%.15e", adc_state->adc_dst * view_state->vs_gvp->gv_scale * base2local);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -611,7 +604,6 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "odst")) {
 	if (argc == 0) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d", adc_state->adc_dv_dist);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -671,7 +663,6 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "hv")) {
 	if (argc == 0) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%.15e %.15e",
 			  adc_state->adc_pos_grid[X] * view_state->vs_gvp->gv_scale * base2local,
 			  adc_state->adc_pos_grid[Y] * view_state->vs_gvp->gv_scale * base2local);
@@ -758,7 +749,6 @@ f_adc (
 	if (argc == 0) {
 	    VSCALE(scaled_pos, adc_state->adc_pos_model, base2local);
 
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -787,7 +777,6 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "x")) {
 	if (argc == 0) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d", adc_state->adc_dv_x);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -818,7 +807,6 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "y")) {
 	if (argc == 0) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d", adc_state->adc_dv_y);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -849,7 +837,6 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "anchor_pos")) {
 	if (argc == 0) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d", adc_state->adc_anchor_pos);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -878,7 +865,6 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "anchor_a1")) {
 	if (argc == 0) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d", adc_state->adc_anchor_a1);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -906,7 +892,6 @@ f_adc (
 	if (argc == 0) {
 	    VSCALE(scaled_pos, adc_state->adc_anchor_pt_a1, base2local);
 
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -933,7 +918,6 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "anchor_a2")) {
 	if (argc == 0) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d", adc_state->adc_anchor_a2);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -961,7 +945,6 @@ f_adc (
 	if (argc == 0) {
 	    VSCALE(scaled_pos, adc_state->adc_anchor_pt_a2, base2local);
 
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -988,7 +971,6 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "anchor_dst")) {
 	if (argc == 0) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d", adc_state->adc_anchor_dst);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -1016,7 +998,6 @@ f_adc (
 	if (argc == 0) {
 	    VSCALE(scaled_pos, adc_state->adc_anchor_pt_dst, base2local);
 
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);

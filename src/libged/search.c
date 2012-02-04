@@ -43,10 +43,10 @@
 HIDDEN int
 _path_scrub(struct bu_vls *path)
 {
-    struct bu_vls tmp;
+    struct bu_vls tmp = BU_VLS_INIT_ZERO;
     const char *normalized;
     int islocal = 1;
-    bu_vls_init(&tmp);
+
     if (bu_vls_addr(path)[0] == '/') islocal = 0;
     normalized = db_normalize(bu_vls_addr(path));
     if (normalized && !BU_STR_EQUAL(normalized, "/")) {
@@ -104,7 +104,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     int plan_argv = 1;
     int plan_found = 0;
     int path_found = 0;
-    struct bu_vls argvls;
+    struct bu_vls argvls = BU_VLS_INIT_ZERO;
     struct directory *dp;
     struct db_full_path dfp;
     struct db_full_path_list *entry;
@@ -117,8 +117,6 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     struct bu_ptbl *uniq_db_objs;
     /* COPY argv_orig to argv; */
     char **argv = bu_dup_argv(argc, argv_orig);
-
-    bu_vls_init(&argvls);
 
     if (argc < 2) {
 	bu_vls_printf(gedp->ged_result_str, " [path] [expressions...]\n");

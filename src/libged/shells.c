@@ -42,7 +42,7 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
     struct nmgregion *r_tmp, *r;
     struct shell *s_tmp, *s;
     int shell_count=0;
-    struct bu_vls shell_name;
+    struct bu_vls shell_name = BU_VLS_INIT_ZERO;
     long **trans_tbl;
     static const char *usage = "nmg_model";
 
@@ -80,7 +80,6 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
     m = (struct model *)old_intern.idb_ptr;
     NMG_CK_MODEL(m);
 
-    bu_vls_init(&shell_name);
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    s_tmp = nmg_dup_shell(s, &trans_tbl, &gedp->ged_wdbp->wdb_tol);

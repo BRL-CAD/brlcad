@@ -67,9 +67,8 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
     CHECK_READ_ONLY;
 
     if (argc < 3 || 3 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help cpi");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -167,9 +166,8 @@ find_solid_with_path(struct db_full_path *pathp)
     }
 
     if (count > 1) {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "find_solid_with_path() found %d matches\n", count);
 	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
@@ -206,9 +204,8 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     CHECK_DBI_NULL;
 
     if (argc < 3 || 3 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help oed");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);

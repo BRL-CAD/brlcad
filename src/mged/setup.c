@@ -408,7 +408,7 @@ HIDDEN void
 cmd_setup(void)
 {
     struct cmdtab *ctp;
-    struct bu_vls temp;
+    struct bu_vls temp = BU_VLS_INIT_ZERO;
     const char *pathname;
     char buffer[1024];
 
@@ -416,7 +416,6 @@ cmd_setup(void)
     extern int glob_compat_mode;
     extern int output_as_return;
 
-    bu_vls_init(&temp);
     for (ctp = mged_cmdtab; ctp->name != NULL; ctp++) {
 	bu_vls_strcpy(&temp, "_mged_");
 	bu_vls_strcat(&temp, ctp->name);
@@ -462,7 +461,7 @@ mged_setup(Tcl_Interp **interpreter)
 
     int init_tcl = 1;
     int init_itcl = 1;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     const char *name = bu_argv0_full_path();
 
     /* locate our run-time binary (must be called before Tcl_CreateInterp()) */
@@ -599,7 +598,6 @@ mged_setup(Tcl_Interp **interpreter)
     mged_variable_setup(*interpreter);
 
     /* Tcl needs to write nulls onto subscripted variable names */
-    bu_vls_init(&str);
     bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);
     Tcl_SetVar(*interpreter, bu_vls_addr(&str), state_str[STATE], TCL_GLOBAL_ONLY);
 

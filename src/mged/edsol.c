@@ -1640,9 +1640,8 @@ nmg_ed(int arg)
 	    es_eu = BU_LIST_PNEXT_CIRC(edgeuse, es_eu);
 
 	    {
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
 			      (void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
 			      V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
@@ -1661,9 +1660,8 @@ nmg_ed(int arg)
 	    es_eu = BU_LIST_PPREV_CIRC(edgeuse, es_eu);
 
 	    {
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
 			      (void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
 			      V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
@@ -1682,9 +1680,8 @@ nmg_ed(int arg)
 	    es_eu = es_eu->eumate_p->radial_p;
 
 	    {
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
 			      (void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
 			      V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
@@ -1785,9 +1782,8 @@ nmg_ed(int arg)
 			if ((ret_val = bn_isect_lseg3_lseg3(dist, v1->vg_p->coord, edge1,
 							    v2->vg_p->coord, edge2, &mged_tol)) > (-1))
 			{
-			    struct bu_vls tmp_vls;
+			    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-			    bu_vls_init(&tmp_vls);
 			    bu_vls_printf(&tmp_vls,
 					  "Loop crosses itself, cannot extrude\n");
 			    bu_vls_printf(&tmp_vls,
@@ -2523,7 +2519,7 @@ init_sedit(void)
     es_menu = 0;
     if (id == ID_ARB8) {
 	struct rt_arb_internal *arb;
-	struct bu_vls error_msg;
+	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 
 	arb = (struct rt_arb_internal *)es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
@@ -2531,7 +2527,6 @@ init_sedit(void)
 	type = rt_arb_std_type(&es_int, &mged_tol);
 	es_type = type;
 
-	bu_vls_init(&error_msg);
 	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol)) {
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&error_msg),
 			     "\nCannot calculate plane equations for ARB8\n",
@@ -2583,9 +2578,8 @@ init_sedit(void)
     init_sedit_vars();
 
     {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "begin_edit_callback ");
 	db_path_to_vls(&vls, &illump->s_fullpath);
 	(void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
@@ -2773,15 +2767,13 @@ get_rotation_vertex(void)
     int i, j;
     int type, loc, valid;
     int vertex = -1;
-    struct bu_vls str;
-    struct bu_vls cmd;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
 
     type = es_type - 4;
 
     loc = es_menu*4;
     valid = 0;
-    bu_vls_init(&str);
-    bu_vls_init(&cmd);
 
     bu_vls_printf(&str, "Enter fixed vertex number(");
     for (i=0; i<4; i++) {
@@ -2816,15 +2808,13 @@ get_rotation_vertex(void)
 const char *
 get_file_name(char *str)
 {
-    struct bu_vls cmd;
-    struct bu_vls varname_vls;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
+    struct bu_vls varname_vls = BU_VLS_INIT_ZERO;
     char *dir;
     char *fptr;
     char *ptr1;
     char *ptr2;
 
-    bu_vls_init(&cmd);
-    bu_vls_init(&varname_vls);
     bu_vls_strcpy(&varname_vls, "mged_gui(getFileDir)");
 
     if ((fptr=strrchr(str, '/'))) {
@@ -3969,7 +3959,7 @@ sedit(void)
 		const char *fname;
 		struct stat stat_buf;
 		off_t need_size;
-		struct bu_vls message;
+		struct bu_vls message = BU_VLS_INIT_ZERO;
 
 		RT_DSP_CK_MAGIC(dsp);
 
@@ -3978,7 +3968,6 @@ sedit(void)
 		if (! fname) break;
 
 		if (stat(fname, &stat_buf)) {
-		    bu_vls_init(&message);
 		    bu_vls_printf(&message, "Cannot get status of file %s\n", fname);
 		    Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
 		    bu_vls_free(&message);
@@ -3988,7 +3977,6 @@ sedit(void)
 
 		need_size = dsp->dsp_xcnt * dsp->dsp_ycnt * 2;
 		if (stat_buf.st_size < need_size) {
-		    bu_vls_init(&message);
 		    bu_vls_printf(&message, "File (%s) is too small, adjust the file size parameters first", fname);
 		    Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
 		    bu_vls_free(&message);
@@ -4044,10 +4032,9 @@ sedit(void)
 
 		fname = get_file_name(ebm->file);
 		if (fname) {
-		    struct bu_vls message;
+		    struct bu_vls message = BU_VLS_INIT_ZERO;
 
 		    if (stat(fname, &stat_buf)) {
-			bu_vls_init(&message);
 			bu_vls_printf(&message, "Cannot get status of file %s\n", fname);
 			Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
 			bu_vls_free(&message);
@@ -4056,7 +4043,6 @@ sedit(void)
 		    }
 		    need_size = ebm->xdim * ebm->ydim * sizeof(unsigned char);
 		    if (stat_buf.st_size < need_size) {
-			bu_vls_init(&message);
 			bu_vls_printf(&message, "File (%s) is too small, adjust the file size parameters first", fname);
 			Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
 			bu_vls_free(&message);
@@ -4208,10 +4194,9 @@ sedit(void)
 
 		fname = get_file_name(vol->file);
 		if (fname) {
-		    struct bu_vls message;
+		    struct bu_vls message = BU_VLS_INIT_ZERO;
 
 		    if (stat(fname, &stat_buf)) {
-			bu_vls_init(&message);
 			bu_vls_printf(&message, "Cannot get status of file %s\n", fname);
 			Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
 			bu_vls_free(&message);
@@ -4220,7 +4205,6 @@ sedit(void)
 		    }
 		    need_size = vol->xdim * vol->ydim * vol->zdim * sizeof(unsigned char);
 		    if (stat_buf.st_size < need_size) {
-			bu_vls_init(&message);
 			bu_vls_printf(&message, "File (%s) is too small, adjust the file size parameters first", fname);
 			Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
 			bu_vls_free(&message);
@@ -4546,11 +4530,10 @@ sedit(void)
 		int ret_tcl;
 		struct directory *dp;
 		struct rt_db_internal tmp_ip;
-		struct bu_vls tcl_cmd;
+		struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
 
 		RT_EXTRUDE_CK_MAGIC(extr);
 
-		bu_vls_init(&tcl_cmd);
 		bu_vls_printf(&tcl_cmd, "cad_input_dialog .get_sketch_name $mged_gui(mged,screen) {Select Sketch} {Enter the name of the sketch to be extruded} final_sketch_name %s 0 {{summary \"Enter sketch name\"}} APPLY DISMISS",
 			      extr->sketch_name);
 		ret_tcl = Tcl_Eval(INTERP, bu_vls_addr(&tcl_cmd));
@@ -5932,7 +5915,7 @@ sedit(void)
 		point_t pick_pt;
 		vect_t view_dir;
 		vect_t z_dir;
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		point_t selected_pt;
 
 		RT_ARS_CK_MAGIC(ars);
@@ -5961,7 +5944,7 @@ sedit(void)
 		VSCALE(selected_pt, es_pt, base2local);
 		bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 		       es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-		bu_vls_init(&tmp_vls);
+
 		bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 		mged_print_result(TCL_ERROR);
@@ -5972,7 +5955,7 @@ sedit(void)
 	    {
 		struct rt_ars_internal *ars=
 		    (struct rt_ars_internal *)es_int.idb_ptr;
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		point_t selected_pt;
 
 		RT_ARS_CK_MAGIC(ars);
@@ -5985,7 +5968,7 @@ sedit(void)
 		    VSCALE(selected_pt, es_pt, base2local);
 		    bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 			   es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-		    bu_vls_init(&tmp_vls);
+
 		    bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 		    mged_print_result(TCL_ERROR);
@@ -5997,7 +5980,7 @@ sedit(void)
 	    {
 		struct rt_ars_internal *ars=
 		    (struct rt_ars_internal *)es_int.idb_ptr;
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		point_t selected_pt;
 
 		RT_ARS_CK_MAGIC(ars);
@@ -6010,7 +5993,7 @@ sedit(void)
 		    VSCALE(selected_pt, es_pt, base2local);
 		    bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 			   es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-		    bu_vls_init(&tmp_vls);
+
 		    bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 		    mged_print_result(TCL_ERROR);
@@ -6022,7 +6005,7 @@ sedit(void)
 	    {
 		struct rt_ars_internal *ars=
 		    (struct rt_ars_internal *)es_int.idb_ptr;
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		point_t selected_pt;
 
 		RT_ARS_CK_MAGIC(ars);
@@ -6035,7 +6018,7 @@ sedit(void)
 		    VSCALE(selected_pt, es_pt, base2local);
 		    bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 			   es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-		    bu_vls_init(&tmp_vls);
+
 		    bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 		    mged_print_result(TCL_ERROR);
@@ -6047,7 +6030,7 @@ sedit(void)
 	    {
 		struct rt_ars_internal *ars=
 		    (struct rt_ars_internal *)es_int.idb_ptr;
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		point_t selected_pt;
 
 		RT_ARS_CK_MAGIC(ars);
@@ -6060,7 +6043,7 @@ sedit(void)
 		    VSCALE(selected_pt, es_pt, base2local);
 		    bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 			   es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-		    bu_vls_init(&tmp_vls);
+
 		    bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 		    mged_print_result(TCL_ERROR);
@@ -6644,9 +6627,8 @@ sedit(void)
 
 	default:
 	    {
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "sedit():  unknown edflag = %d.\n", es_edflag);
 		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 		mged_print_result(TCL_ERROR);
@@ -6656,12 +6638,11 @@ sedit(void)
 
     /* must re-calculate the face plane equations for arbs */
     if (es_int.idb_type == ID_ARB8) {
-	struct bu_vls error_msg;
+	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 
 	arb = (struct rt_arb_internal *)es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	bu_vls_init(&error_msg);
 	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol) < 0)
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&error_msg), (char *)0);
 	bu_vls_free(&error_msg);
@@ -6675,9 +6656,8 @@ sedit(void)
     replot_editing_solid();
 
     if (update_views) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "active_edit_callback");
 	(void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -6968,11 +6948,9 @@ sedit_mouse(const vect_t mousevec)
 		int hits, ret_tcl;
 		int v1, v2, v3;
 		point_t pt1, pt2, pt3;
-		struct bu_vls vls;
+		struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 		RT_BOT_CK_MAGIC(bot);
-
-		bu_vls_init(&vls);
 
 		VSET(tmp, mousevec[X], mousevec[Y], 0.0);
 		MAT4X3PNT(start_pt, view_state->vs_gvp->gv_view2model, tmp);
@@ -7052,9 +7030,8 @@ sedit_mouse(const vect_t mousevec)
 		NMG_CK_EDGEUSE(es_eu);
 
 		{
-		    struct bu_vls tmp_vls;
+		    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		    bu_vls_init(&tmp_vls);
 		    bu_vls_printf(&tmp_vls,
 				  "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
 				  (void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
@@ -7451,7 +7428,7 @@ init_oedit_vars(void)
 void
 init_oedit(void)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     /* do real initialization work */
     init_oedit_guts();
@@ -7459,7 +7436,6 @@ init_oedit(void)
     es_edclass = EDIT_CLASS_NULL;
 
     /* begin edit callback */
-    bu_vls_init(&vls);
     bu_vls_strcpy(&vls, "begin_edit_callback {}");
     (void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -7601,9 +7577,8 @@ f_eqn(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     CHECK_READ_ONLY;
 
     if (argc < 4 || 4 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help eqn");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -7955,9 +7930,8 @@ f_param(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     CHECK_READ_ONLY;
 
     if (argc < 2 || 4 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help p");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -8651,9 +8625,8 @@ f_keypoint(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
     CHECK_DBI_NULL;
 
     if (argc < 1 || 4 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help keypoint");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -8668,12 +8641,10 @@ f_keypoint(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
     switch (--argc) {
 	case 0:
 	    {
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		point_t key;
 
-
 		VSCALE(key, es_keypoint, base2local);
-		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "%s (%g, %g, %g)\n", es_keytag, V3ARGS(key));
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
@@ -8710,19 +8681,15 @@ int
 f_get_sedit_menus(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     struct menu_item *mip = (struct menu_item *)NULL;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (STATE != ST_S_EDIT)
 	return TCL_ERROR;
 
-    bu_vls_init(&vls);
-
     switch (es_int.idb_type) {
 	case ID_ARB8:
 	    {
-		struct bu_vls vls2;
-
-		bu_vls_init(&vls2);
+		struct bu_vls vls2 = BU_VLS_INIT_ZERO;
 
 		/* title */
 		bu_vls_printf(&vls, "{{ARB MENU} {}}");
@@ -8761,10 +8728,9 @@ f_get_sedit_menus(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(
 	    break;
 	case ID_ARS:
 	    {
-		struct bu_vls vls2;
+		struct bu_vls vls2 = BU_VLS_INIT_ZERO;
 
 		/* build ARS PICK MENU Tcl list */
-		bu_vls_init(&vls2);
 
 		mip = ars_pick_menu;
 		/* title */
@@ -8882,9 +8848,8 @@ f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     Tcl_Obj *pnto;
 
     if (argc < 1 || 2 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helpdevel get_sed");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -8897,9 +8862,7 @@ f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     }
 
     if (argc == 1) {
-	struct bu_vls logstr;
-
-	bu_vls_init(&logstr);
+	struct bu_vls logstr = BU_VLS_INIT_ZERO;
 
 	/* get solid type and parameters */
 	RT_CK_DB_INTERNAL(&es_int);
@@ -8932,9 +8895,8 @@ f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     RT_CK_DB_INTERNAL(&ces_int);
     RT_CK_FUNCTAB(ces_int.idb_meth);
     {
-	struct bu_vls logstr;
+	struct bu_vls logstr = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&logstr);
 	status = ces_int.idb_meth->ft_get(&logstr, &ces_int, (char *)0);
 	Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)0);
 	bu_vls_free(&logstr);
@@ -8944,8 +8906,8 @@ f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     pnto = Tcl_NewObj();
     /* insert full pathname */
     {
-	struct bu_vls str;
-	bu_vls_init(&str);
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+
 	db_path_to_vls(&str, &illump->s_fullpath);
 	Tcl_AppendStringsToObj(pnto, bu_vls_addr(&str), NULL);
 	bu_vls_free(&str);
@@ -8971,9 +8933,8 @@ f_put_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     /*XXX needs better argument checking */
     if (argc < 6) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helpdevel put_sed");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -9013,8 +8974,8 @@ f_put_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     *((uint32_t *)es_int.idb_ptr) = ftp->ft_internal_magic;
     {
 	int ret;
-	struct bu_vls vlog;
-	bu_vls_init(&vlog);
+	struct bu_vls vlog = BU_VLS_INIT_ZERO;
+
 	ret = bu_structparse_argv(&vlog, argc-2, argv+2, ftp->ft_parsetab, (char *)es_int.idb_ptr);
 	Tcl_AppendResult(interp, bu_vls_addr(&vlog), (char *)NULL);
 	bu_vls_free(&vlog);
@@ -9029,12 +8990,11 @@ f_put_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     /* must re-calculate the face plane equations for arbs */
     if (es_int.idb_type == ID_ARB8) {
 	struct rt_arb_internal *arb;
-	struct bu_vls error_msg;
+	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 
 	arb = (struct rt_arb_internal *)es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	bu_vls_init(&error_msg);
 	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol) < 0)
 	    Tcl_AppendResult(interp, bu_vls_addr(&error_msg), (char *)0);
 	bu_vls_free(&error_msg);
@@ -9056,13 +9016,12 @@ f_put_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 int
 f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *UNUSED(argv[]))
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (STATE != ST_S_EDIT || !illump)
 	return TCL_ERROR;
 
     if (argc != 1) {
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helpdevel sed_reset");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -9117,7 +9076,6 @@ f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
     update_views = 1;
 
     /* active edit callback */
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "active_edit_callback");
     (void)Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -9129,7 +9087,7 @@ f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
 int
 f_sedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc), const char *UNUSED(argv[]))
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     CHECK_DBI_NULL;
 
@@ -9144,7 +9102,6 @@ f_sedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc
     (void)sedit_apply(0);
 
     /* active edit callback */
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "active_edit_callback");
     (void)Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -9156,13 +9113,12 @@ f_sedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc
 int
 f_oedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *UNUSED(argv[]))
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (STATE != ST_O_EDIT)
 	return TCL_ERROR;
 
     if (argc != 1) {
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helpdevel oed_reset");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -9176,7 +9132,6 @@ f_oedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
     update_views = 1;
 
     /* active edit callback */
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "active_edit_callback");
     (void)Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -9188,7 +9143,7 @@ f_oedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
 int
 f_oedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc), const char *UNUSED(argv[]))
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     char *strp="";
 
     CHECK_DBI_NULL;
@@ -9207,7 +9162,6 @@ f_oedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc
     update_views = 1;
 
     /* active edit callback */
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "active_edit_callback");
     (void)Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);

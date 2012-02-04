@@ -167,20 +167,13 @@ rect_rt(struct ged *gedp, int port)
 
     {
 	int ret;
-	struct bu_vls wvls;
-	struct bu_vls nvls;
-	struct bu_vls vvls;
-	struct bu_vls fvls;
-	struct bu_vls jvls;
-	struct bu_vls cvls;
+	struct bu_vls wvls = BU_VLS_INIT_ZERO;
+	struct bu_vls nvls = BU_VLS_INIT_ZERO;
+	struct bu_vls vvls = BU_VLS_INIT_ZERO;
+	struct bu_vls fvls = BU_VLS_INIT_ZERO;
+	struct bu_vls jvls = BU_VLS_INIT_ZERO;
+	struct bu_vls cvls = BU_VLS_INIT_ZERO;
 	char *av[14];
-
-	bu_vls_init(&wvls);
-	bu_vls_init(&nvls);
-	bu_vls_init(&vvls);
-	bu_vls_init(&fvls);
-	bu_vls_init(&jvls);
-	bu_vls_init(&cvls);
 
 	bu_vls_printf(&wvls, "%d", gedp->ged_gvp->gv_rect.grs_cdim[X]);
 	bu_vls_printf(&nvls, "%d", gedp->ged_gvp->gv_rect.grs_cdim[Y]);

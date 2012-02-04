@@ -52,20 +52,21 @@ void init_ovlp(void);
 int
 if_hit(struct application *ap, struct partition *part_head, struct seg *finished_segs)
 {
-    struct partition *part;
+    char regionPN[512] = {0};
+    const char *val;
     fastf_t ar = azimuth() * DEG2RAD;
     fastf_t er = elevation() * DEG2RAD;
+    fastf_t get_obliq(fastf_t *ray, fastf_t *normal);
     int i;
+    int need_to_free = 0;	/* Clean up the bu_vls? */
     int part_nm = 0;
     overlap *ovp;	/* the overlap record for this partition */
     point_t inormal;
     point_t onormal;
-    struct bu_vls claimant_list;	/* Names of the claiming regions */
-    int need_to_free = 0;	/* Clean up the bu_vls? */
-    fastf_t get_obliq(fastf_t *ray, fastf_t *normal);
-    struct bu_vls attr_vls;
-    char regionPN[512] = {0};
-    const char *val;
+    struct partition *part;
+
+    struct bu_vls claimant_list = BU_VLS_INIT_ZERO;	/* Names of the claiming regions */
+    struct bu_vls attr_vls = BU_VLS_INIT_ZERO;
 
     /* quellage */
     finished_segs = finished_segs;
@@ -158,7 +159,6 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	    struct region **rpp;
 	    char *cp;
 
-	    bu_vls_init(&claimant_list);
 	    ValTab[VTI_CLAIMANT_COUNT].value.ival = 0;
 	    for (rpp = part->pt_overlap_reg; *rpp != REGION_NULL; ++rpp) {
 		char tmpcp[512] = {0};
@@ -167,7 +167,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 		if (ValTab[VTI_CLAIMANT_COUNT].value.ival++)
 		    bu_vls_strcat(&claimant_list, " ");
 		bu_strlcpy(tmpcp, (*rpp)->reg_name, sizeof(tmpcp));
-		
+
 		base = bu_basename(tmpcp);
 		bu_vls_strcat(&claimant_list, base);
 		bu_free(base, "bu_basename");
@@ -186,7 +186,6 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	}
 
 	/* format up the attribute strings into a single string */
-	bu_vls_init(&attr_vls);
         for (i = 0; i < a_tab.attrib_use; i++) {
 	   if ((val = bu_avs_get(&part->pt_regionp->attr_values, db5_standard_attribute(db5_standardize_attribute(a_tab.attrib[i])))) != NULL) {
 	       bu_vls_printf(&attr_vls, "%s=%s ", a_tab.attrib[i], val);

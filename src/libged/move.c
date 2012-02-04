@@ -90,11 +90,9 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
     for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
 	int first = 1;
 	int found = 0;
-	struct bu_vls new_path;
+	struct bu_vls new_path = BU_VLS_INIT_ZERO;
 	char *dupstr = strdup(bu_vls_addr(&gdlp->gdl_path));
 	char *tok = strtok(dupstr, "/");
-
-	bu_vls_init(&new_path);
 
 	while (tok) {
 	    if (first) {

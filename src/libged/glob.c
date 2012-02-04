@@ -89,9 +89,9 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
     char *start, *end;          /* Start and ends of words */
     int regexp;                 /* Set to TRUE when word is a regexp */
     int backslashed;
-    struct bu_vls word;         /* Current word being processed */
-    struct bu_vls temp;
-    struct bu_vls src;
+    struct bu_vls word = BU_VLS_INIT_ZERO;         /* Current word being processed */
+    struct bu_vls temp = BU_VLS_INIT_ZERO;
+    struct bu_vls src = BU_VLS_INIT_ZERO;
     static const char *usage = "expression";
 
     /* Silently return */
@@ -111,10 +111,6 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
-
-    bu_vls_init(&word);
-    bu_vls_init(&temp);
-    bu_vls_init(&src);
 
     bu_vls_strcat(&src, argv[1]);
 

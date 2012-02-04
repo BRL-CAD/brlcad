@@ -1001,7 +1001,7 @@ int
 fbs_open(struct fbserv_obj *fbsp, int port)
 {
     int i;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     char hostname[32] = {0};
     Tcl_DString ds;
     int failed = 0;
@@ -1066,7 +1066,6 @@ fbs_open(struct fbserv_obj *fbsp, int port)
 #endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
 
     if (failed) {
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "fbs_open: failed to hang a listen on ports %d - %d\n", port, available_port);
 	Tcl_AppendResult(fbsp->fbs_interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);

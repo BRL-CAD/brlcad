@@ -2440,7 +2440,7 @@ static void
 log_event(const char *UNUSED(event), const char *UNUSED(arg))
 {
 #if 0
-    struct bu_vls line;
+    struct bu_vls line = BU_VLS_INIT_ZERO;
     time_t now;
     char *timep;
     int logfd;
@@ -2467,7 +2467,6 @@ log_event(const char *UNUSED(event), const char *UNUSED(arg))
     getlogin_r(uname, 256);
 #endif
 
-    bu_vls_init(&line);
     bu_vls_printf(&line, "%s (%ld) %s [%s] %s: %s\n",
 		  timep,
 		  (long)now,

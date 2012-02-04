@@ -68,7 +68,7 @@ tk_dm_init(struct dm_list *o_dm_list,
 	   int argc,
 	   const char *argv[])
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     dm_var_init(o_dm_list);
 
@@ -87,7 +87,6 @@ tk_dm_init(struct dm_list *o_dm_list,
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
     (void)DM_CONFIGURE_WIN(dmp, 0);
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
     Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -130,9 +129,7 @@ static int
 tk_dm(int argc, const char *argv[])
 {
     if (BU_STR_EQUAL(argv[0], "set")) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	if (argc < 2) {
 	    /* Bare set command, print out current settings */
@@ -140,9 +137,8 @@ tk_dm(int argc, const char *argv[])
 	} else if (argc == 2) {
 	    bu_vls_struct_item_named(&vls, tk_vparse, argv[1], (const char *)dmp, COMMA);
 	} else {
-	    struct bu_vls tmp_vls;
+	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
 	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
 	    bu_vls_putc(&tmp_vls, '\"');

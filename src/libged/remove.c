@@ -87,9 +87,8 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: Failure deleting %s/%s\n", dp->d_namep, argv[i]);
 	    ret = GED_ERROR;
 	} else {
-	    struct bu_vls path;
+	    struct bu_vls path = BU_VLS_INIT_ZERO;
 
-	    bu_vls_init(&path);
 	    bu_vls_printf(&path, "%s/%s", dp->d_namep, argv[i]);
 	    _ged_eraseAllPathsFromDisplay(gedp, bu_vls_addr(&path), 0);
 	    bu_vls_free(&path);

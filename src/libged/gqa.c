@@ -2077,7 +2077,7 @@ summary_reports(struct cstate *state)
 		 * inertia for the current object.
 		 */
 		if (analysis_flags & ANALYSIS_MOMENTS) {
-		    struct bu_vls title;
+		    struct bu_vls title = BU_VLS_INIT_ZERO;
 		    mat_t tmat; /* total mat */
 
 		    MAT_ZERO(tmat);
@@ -2115,7 +2115,6 @@ summary_reports(struct cstate *state)
 		    tmat[8] = tmat[2];
 		    tmat[9] = tmat[6];
 
-		    bu_vls_init(&title);
 		    bu_vls_printf(&title, "For the Moments and Products of Inertia For %s", obj_tbl[obj].o_name);
 		    bn_mat_print_vls(bu_vls_addr(&title), tmat, _ged_current_gedp->ged_result_str);
 		    bu_vls_free(&title);

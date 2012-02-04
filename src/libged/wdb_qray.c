@@ -94,9 +94,8 @@ static void
 qray_print_vars(struct dg_obj *dgop,
 		Tcl_Interp *interp)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "basename = %s\n", bu_vls_addr(&dgop->dgo_qray_basename));
     bu_vls_printf(&vls, "script = %s\n", bu_vls_addr(&dgop->dgo_qray_script));
     bu_vls_printf(&vls, "effects = %c\n", dgop->dgo_qray_effects);
@@ -136,7 +135,7 @@ dgo_qray_cmd(void *data,
 	     const char **argv)
 {
     struct dg_obj *dgop = (struct dg_obj *)data;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (6 < argc) {
 	bu_log("ERROR: expecting fewer arguments\n");
@@ -228,7 +227,6 @@ dgo_qray_cmd(void *data,
     if (BU_STR_EQUAL(argv[1], "effects")) {
 	if (argc == 2) {
 	    /* get value */
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%c", dgop->dgo_qray_effects);
 	    Tcl_AppendResult(dgop->interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -237,7 +235,6 @@ dgo_qray_cmd(void *data,
 	} else if (argc == 3) {
 	    /* set value */
 	    if (*argv[2] != 't' && *argv[2] != 'g' && *argv[2] != 'b') {
-		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "qray effects: bad value - %s", argv[2]);
 		Tcl_AppendResult(dgop->interp, bu_vls_addr(&vls), (char *)NULL);
 		bu_vls_free(&vls);
@@ -270,7 +267,6 @@ dgo_qray_cmd(void *data,
 	    int ival;
 
 	    if (sscanf(argv[2], "%d", &ival) < 1) {
-		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "qray echo: bad value - %s", argv[2]);
 		Tcl_AppendResult(dgop->interp, bu_vls_addr(&vls), (char *)NULL);
 		bu_vls_free(&vls);
@@ -295,7 +291,6 @@ dgo_qray_cmd(void *data,
     if (BU_STR_EQUAL(argv[1], "oddcolor")) {
 	if (argc == 2) {
 	    /* get value */
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d %d %d",
 			  dgop->dgo_qray_odd_color.r, dgop->dgo_qray_odd_color.g, dgop->dgo_qray_odd_color.b);
 	    Tcl_AppendResult(dgop->interp, bu_vls_addr(&vls), (char *)NULL);
@@ -316,7 +311,6 @@ dgo_qray_cmd(void *data,
 		|| 255 < g
 		|| 255 < b)
 	    {
-		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "qray oddcolor %s %s %s - bad value",
 			      argv[2], argv[3], argv[4]);
 		Tcl_AppendResult(dgop->interp, bu_vls_addr(&vls), (char *)NULL);
@@ -339,7 +333,6 @@ dgo_qray_cmd(void *data,
     if (BU_STR_EQUAL(argv[1], "evencolor")) {
 	if (argc == 2) {
 	    /* get value */
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d %d %d",
 			  dgop->dgo_qray_even_color.r, dgop->dgo_qray_even_color.g, dgop->dgo_qray_even_color.b);
 	    Tcl_AppendResult(dgop->interp, bu_vls_addr(&vls), (char *)NULL);
@@ -356,7 +349,6 @@ dgo_qray_cmd(void *data,
 		|| r < 0 || g < 0 || b < 0
 		|| 255 < r || 255 < g || 255 < b)
 	    {
-		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "qray evencolor %s %s %s - bad value",
 			      argv[2], argv[3], argv[4]);
 		Tcl_AppendResult(dgop->interp, bu_vls_addr(&vls), (char *)NULL);
@@ -379,7 +371,6 @@ dgo_qray_cmd(void *data,
     if (BU_STR_EQUAL(argv[1], "voidcolor")) {
 	if (argc == 2) {
 	    /* get value */
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d %d %d",
 			  dgop->dgo_qray_void_color.r, dgop->dgo_qray_void_color.g, dgop->dgo_qray_void_color.b);
 	    Tcl_AppendResult(dgop->interp, bu_vls_addr(&vls), (char *)NULL);
@@ -396,7 +387,6 @@ dgo_qray_cmd(void *data,
 		|| r < 0 || g < 0 || b < 0
 		|| 255 < r || 255 < g || 255 < b)
 	    {
-		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "qray voidcolor %s %s %s - bad value",
 			      argv[2], argv[3], argv[4]);
 		Tcl_AppendResult(dgop->interp, bu_vls_addr(&vls), (char *)NULL);
@@ -419,7 +409,6 @@ dgo_qray_cmd(void *data,
     if (BU_STR_EQUAL(argv[1], "overlapcolor")) {
 	if (argc == 2) {
 	    /* get value */
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d %d %d",
 			  dgop->dgo_qray_overlap_color.r, dgop->dgo_qray_overlap_color.g, dgop->dgo_qray_overlap_color.b);
 	    Tcl_AppendResult(dgop->interp, bu_vls_addr(&vls), (char *)NULL);
@@ -436,7 +425,6 @@ dgo_qray_cmd(void *data,
 		|| r < 0 || g < 0 || b < 0
 		|| 255 < r || 255 < g || 255 < b)
 	    {
-		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "qray overlapcolor %s %s %s - bad value",
 			      argv[2], argv[3], argv[4]);
 		Tcl_AppendResult(dgop->interp, bu_vls_addr(&vls), (char *)NULL);

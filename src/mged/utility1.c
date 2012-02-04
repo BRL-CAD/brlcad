@@ -86,11 +86,10 @@ int
 editit(const char *command, const char *tempfile) {
     int argc = 5;
     const char *av[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
-    struct bu_vls editstring;
+    struct bu_vls editstring = BU_VLS_INIT_ZERO;
 
     CHECK_DBI_NULL;
 
-    bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
     av[0] = command;
@@ -118,11 +117,10 @@ f_edcolor(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 {
     const char **av;
     int i;
-    struct bu_vls editstring;
+    struct bu_vls editstring = BU_VLS_INIT_ZERO;
 
     CHECK_DBI_NULL;
 
-    bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
     av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edcolor: av");
@@ -134,10 +132,10 @@ f_edcolor(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 	av[i] = argv[i-2];
     }
     av[argc] = NULL;
-  
+
     ged_edcolor(gedp, argc, (const char **)av);
-    
-    bu_vls_free(&editstring); 
+
+    bu_vls_free(&editstring);
     bu_free((genptr_t)av, "f_edcolor: av");
     return TCL_OK;
 }
@@ -150,7 +148,7 @@ int
 f_edcodes(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     const char **av;
-    struct bu_vls editstring;
+    struct bu_vls editstring = BU_VLS_INIT_ZERO;
     int i;
 
     CHECK_DBI_NULL;
@@ -160,7 +158,6 @@ f_edcodes(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
 	return TCL_ERROR;
     }
 
-    bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
     av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edcodes: av");
@@ -172,10 +169,10 @@ f_edcodes(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
 	av[i] = argv[i-2];
     }
     av[argc] = NULL;
-  
+
     ged_edcodes(gedp, argc, (const char **)av);
-   
-    bu_vls_free(&editstring); 
+
+    bu_vls_free(&editstring);
     bu_free((genptr_t)av, "f_edcodes: av");
     return TCL_OK;
 }
@@ -191,7 +188,7 @@ int
 f_edmater(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     const char **av;
-    struct bu_vls editstring;
+    struct bu_vls editstring = BU_VLS_INIT_ZERO;
     int i;
 
     CHECK_DBI_NULL;
@@ -201,7 +198,6 @@ f_edmater(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
 	return TCL_ERROR;
     }
 
-    bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
     av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edmater: av");
@@ -215,8 +211,8 @@ f_edmater(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     av[argc] = NULL;
 
     ged_edmater(gedp, argc + 1, (const char **)av);
-   
-    bu_vls_free(&editstring); 
+
+    bu_vls_free(&editstring);
     bu_free((genptr_t)av, "f_edmater: av");
     return TCL_OK;
 }
@@ -232,7 +228,7 @@ int
 f_red(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     const char **av;
-    struct bu_vls editstring;
+    struct bu_vls editstring = BU_VLS_INIT_ZERO;
     int i;
 
     CHECK_DBI_NULL;
@@ -242,7 +238,6 @@ f_red(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 	return TCL_ERROR;
     }
 
-    bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
     av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_red: av");
@@ -256,8 +251,8 @@ f_red(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     av[argc] = NULL;
 
     ged_red(gedp, argc + 1, (const char **)av);
-   
-    bu_vls_free(&editstring); 
+
+    bu_vls_free(&editstring);
     bu_free((genptr_t)av, "f_red: av");
     return TCL_OK;
 }

@@ -232,7 +232,7 @@ common_dbtext(char *str)
 HIDDEN void
 motion_event_handler(XMotionEvent *xmotion)
 {
-    struct bu_vls cmd;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
     int save_edflag = -1;
     int mx, my;
     int dx, dy;
@@ -242,8 +242,6 @@ motion_event_handler(XMotionEvent *xmotion)
 
     if (dbip == DBI_NULL)
 	return;
-
-    bu_vls_init(&cmd);
 
     mx = xmotion->x;
     my = xmotion->y;
@@ -748,7 +746,7 @@ HIDDEN void
 dials_event_handler(XDeviceMotionEvent *dmep)
 {
     static int knob_values[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-    struct bu_vls cmd;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
     int save_edflag = -1;
     int setting;
     fastf_t f;
@@ -760,8 +758,6 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 	common_dbtext((adc_state->adc_draw ? kn1_knobs:kn2_knobs)[dmep->first_axis]);
 	return;
     }
-
-    bu_vls_init(&cmd);
 
     switch (DIAL0 + dmep->first_axis) {
 	case DIAL0:
@@ -1417,7 +1413,7 @@ HIDDEN void
 buttons_event_handler(XDeviceButtonEvent *dbep, int press)
 {
     if (press) {
-	struct bu_vls cmd;
+	struct bu_vls cmd = BU_VLS_INIT_ZERO;
 
 	if (dbep->button == 1) {
 	    button0 = 1;
@@ -1430,10 +1426,8 @@ buttons_event_handler(XDeviceButtonEvent *dbep, int press)
 	} else if (dbep->button == 4) {
 	    set_knob_offset();
 
-	    bu_vls_init(&cmd);
 	    bu_vls_strcat(&cmd, "knob zero\n");
 	} else {
-	    bu_vls_init(&cmd);
 	    bu_vls_printf(&cmd, "press %s\n",
 			  label_button(bmap[dbep->button - 1]));
 	}

@@ -74,9 +74,8 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
     CHECK_DBI_NULL;
 
     if (argc < 1 || 2 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help area");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -109,9 +108,8 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    if (!sp->s_Eflag && sp->s_soldash != 0) {
-		struct bu_vls vls;
+		struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "help area");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
@@ -126,10 +124,9 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	Tcl_AppendResult(interp, "Tolerance is ", argv[1], "\n", (char *)NULL);
 	tol_ptr = argv[1];
     } else {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	double tol = 0.0005;
 
-	bu_vls_init(&tmp_vls);
 	sprintf(tol_str, "%e", tol);
 	tol_ptr = tol_str;
 	bu_vls_printf(&tmp_vls, "Auto-tolerance is %s\n", tol_str);

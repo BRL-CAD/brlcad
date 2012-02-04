@@ -2030,9 +2030,8 @@ dgo_E_cmd(struct dg_obj *dgop,
     struct dg_client_data *dgcdp;
 
     if (argc < 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help E");
 	Tcl_Eval(dgop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -2078,9 +2077,8 @@ dgo_E_cmd(struct dg_obj *dgop,
 		dgcdp->do_polysolids = 1;
 		break;
 	    default: {
-		struct bu_vls vls;
+		struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "help %s", argv[0]);
 		Tcl_Eval(dgop->interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);

@@ -36,10 +36,8 @@
 HIDDEN void
 VMessage(const char *format, va_list ap)
 {
-    struct bu_vls str;
-    char *tmp_basename;
-
-    bu_vls_init(&str);
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    char *tmp_basename = NULL;
 
     bu_vls_printf(&str, format, ap);
     tmp_basename = bu_basename(bu_getprogname());

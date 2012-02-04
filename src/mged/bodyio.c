@@ -55,7 +55,7 @@ cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
     int major_code, minor_code;
     int majc, minc;
     char *descrip;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct rt_db_internal intern;
     struct rt_binunif_internal *bip;
     int fd;
@@ -64,7 +64,6 @@ cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
     CHECK_DBI_NULL;
 
     if (argc != 4) {
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -82,7 +81,6 @@ cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
 					argv[3])
 	    && db5_type_codes_from_tag(&majc, &minc,
 				       argv[3])) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls,
 			  "Invalid data type: '%s'\n", argv[3]);
 	    Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
@@ -94,7 +92,7 @@ cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
 	minor_code = minc;
 	break;
     }
-    bu_vls_init(&vls);
+
     if (db5_type_descrip_from_codes(&descrip, major_code, minor_code)) {
 	bu_vls_printf(&vls,
 		      "Invalid maj/min: %d %d\n",
@@ -111,7 +109,6 @@ cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
      * Check to see if we need to create a new object
      */
     if ((dp = db_lookup(dbip, argv[1], LOOKUP_QUIET)) == RT_DIR_NULL) {
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "object \"%s\" does not exist.\n", argv[1]);
 	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
 	bu_vls_free(&vls);
@@ -122,7 +119,6 @@ cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
     }
 
     if (!bu_file_exists(argv[2], &fd)) {
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls,
 		      "Cannot open file %s for reading\n", argv[2]);
 	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
@@ -135,7 +131,6 @@ cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
      * How much data do we have to suck in?
      */
     if (fstat(fd, &stat_buf) < 0) {
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "Cannot get status of file %s\n", argv[2]);
 	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
 	bu_vls_free(&vls);
@@ -170,7 +165,6 @@ cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
 	    perror("import_body");
 	    return TCL_ERROR;
 	} else if (gotten < stat_buf.st_size) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls,
 			  "Incomplete read of object %s from file %s, got %zu bytes\n",
 			  argv[1], argv[2], gotten);
@@ -227,13 +221,12 @@ cmd_export_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
     struct db5_raw_internal raw;
     struct rt_db_internal intern;
     struct rt_binunif_internal *bip;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     char *tmp;
 
     CHECK_DBI_NULL;
 
     if (argc != 3) {
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -244,7 +237,6 @@ cmd_export_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
      * Find the guy we're told to write
      */
     if ((dp = db_lookup(dbip, argv[2], LOOKUP_NOISY)) == RT_DIR_NULL) {
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls,
 		      "Cannot find object %s for writing\n", argv[2]);
 	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
@@ -275,7 +267,6 @@ cmd_export_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
 #endif
 	{
 	    bu_free_external(&ext);
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls,
 			  "Cannot open file %s for writing\n", argv[1]);
 	    Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
@@ -358,7 +349,6 @@ cmd_export_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
 	perror(argv[1]);
 	bu_log("%s:%d\n", __FILE__, __LINE__);
 	bu_free_external(&ext);
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls,
 		      "Incomplete write of object %s to file %s, got %zd, s/b=%zu\n",
 		      argv[2], argv[1], written, nbytes);

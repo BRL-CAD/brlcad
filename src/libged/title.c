@@ -36,7 +36,7 @@
 int
 ged_title(struct ged *gedp, int argc, const char *argv[])
 {
-    struct bu_vls title;
+    struct bu_vls title = BU_VLS_INIT_ZERO;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -53,7 +53,6 @@ ged_title(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
     /* set title */
-    bu_vls_init(&title);
     bu_vls_from_argv(&title, argc-1, (const char **)argv+1);
 
     if (db_update_ident(gedp->ged_wdbp->dbip, bu_vls_addr(&title), gedp->ged_wdbp->dbip->dbi_local2base) < 0) {

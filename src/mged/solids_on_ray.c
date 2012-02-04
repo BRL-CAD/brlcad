@@ -146,11 +146,10 @@ static void
 print_solid(void *vp)
 {
     struct sol_name_dist *sol = vp;
-    struct bu_vls tmp_vls;
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
     BU_CKMAG(sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
-    bu_vls_init(&tmp_vls);
     bu_vls_printf(&tmp_vls, "solid %s at distance %g along ray\n",
 		  sol->name, sol->dist);
     Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);

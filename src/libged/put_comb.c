@@ -286,7 +286,7 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
     int tree_index = 0;
     union tree *tp;
     matp_t matrix;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     char *str;
 
     if (imstr == (char *)NULL)
@@ -302,7 +302,7 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
     ptr = strchr(str, '\n');
     if (ptr != NULL)
 	*ptr = '\0';
-    bu_vls_init(&vls);
+
     while (line != (char *)NULL) {
 	int n;
 

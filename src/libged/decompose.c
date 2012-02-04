@@ -36,7 +36,7 @@ int
 ged_decompose(struct ged *gedp, int argc, const char *argv[])
 {
     int count;
-    struct bu_vls solid_name;
+    struct bu_vls solid_name = BU_VLS_INIT_ZERO;
     char *nmg_solid_name;
     char *prefix;
     char *def_prefix="sh";
@@ -92,8 +92,6 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "%s: %s is not an NMG solid!", argv[0], nmg_solid_name);
 	return GED_ERROR;
     }
-
-    bu_vls_init(&solid_name);
 
     m = (struct model *)nmg_intern.idb_ptr;
     NMG_CK_MODEL(m);

@@ -54,12 +54,12 @@ f_update(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     int non_blocking;
 
     if (argc != 2 || sscanf(argv[1], "%d", &non_blocking) != 1) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helpdevel mged_update");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 

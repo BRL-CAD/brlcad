@@ -103,9 +103,9 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     struct solid *sp = NULL;
     char line[RT_MAXLINE] = {0};
     char *val = NULL;
-    struct bu_vls o_vls;
-    struct bu_vls p_vls;
-    struct bu_vls t_vls;
+    struct bu_vls o_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls p_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls t_vls = BU_VLS_INIT_ZERO;
     struct bn_vlblock *vbp = NULL;
     struct qray_dataList *ndlp = NULL;
     struct qray_dataList HeadQRayData;
@@ -115,7 +115,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     int args;
 
     /* for bu_fgets space trimming */
-    struct bu_vls v;
+    struct bu_vls v = BU_VLS_INIT_ZERO;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -164,7 +164,6 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
     VSCALE(dir, dir, -1.0);
 
-    bu_vls_init(&p_vls);
     bu_vls_printf(&p_vls, "xyz %lf %lf %lf;",
 		  cml[X], cml[Y], cml[Z]);
     bu_vls_printf(&p_vls, "dir %lf %lf %lf; s",
@@ -195,8 +194,6 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	if (DG_QRAY_TEXT(gedp->ged_gdp)) {
 	    char *cp;
 	    int count = 0;
-
-	    bu_vls_init(&o_vls);
 
 	    /* get 'r' format now; prepend its' format string with a newline */
 	    val = bu_vls_addr(&gedp->ged_gdp->gd_qray_fmts[0].fmt);
@@ -238,8 +235,6 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (DG_QRAY_TEXT(gedp->ged_gdp)) {
-
-	bu_vls_init(&t_vls);
 
 	/* load vp with formats for printing */
 	for (; gedp->ged_gdp->gd_qray_fmts[i].type != (char)0; ++i)
@@ -455,8 +450,6 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
 #endif
 
-    bu_vls_init(&v);
-
     bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
     if (DG_QRAY_GRAPHICS(gedp->ged_gdp)) {
 
@@ -584,9 +577,9 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
     fastf_t sf = 1.0 * DG_INV_GED;
     vect_t view_ray_orig;
     vect_t center_model;
-    struct bu_vls x_vls;
-    struct bu_vls y_vls;
-    struct bu_vls z_vls;
+    struct bu_vls x_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls y_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls z_vls = BU_VLS_INIT_ZERO;
     char **av;
     static const char *usage = "vnirt options vX vY";
 
@@ -631,9 +624,6 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
     MAT4X3PNT(center_model, gedp->ged_gvp->gv_view2model, view_ray_orig);
     VSCALE(center_model, center_model, gedp->ged_wdbp->dbip->dbi_base2local);
 
-    bu_vls_init(&x_vls);
-    bu_vls_init(&y_vls);
-    bu_vls_init(&z_vls);
     bu_vls_printf(&x_vls, "%lf", center_model[X]);
     bu_vls_printf(&y_vls, "%lf", center_model[Y]);
     bu_vls_printf(&z_vls, "%lf", center_model[Z]);

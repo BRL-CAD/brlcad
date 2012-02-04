@@ -105,7 +105,6 @@ dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
 	    rt_tree_array = NULL;
 	}
 
-	bu_vls_init(&vls);
 	for (i=0; i<actual_count; i++) {
 	    char op;
 

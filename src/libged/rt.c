@@ -162,7 +162,7 @@ _ged_run_rt(struct ged *gedp)
     STARTUPINFO si = {0};
     PROCESS_INFORMATION pi = {0};
     SECURITY_ATTRIBUTES sa = {0};
-    struct bu_vls line;
+    struct bu_vls line = BU_VLS_INIT_ZERO;
 #endif
     vect_t eye_model;
     struct ged_run_rt *run_rtp;
@@ -270,7 +270,6 @@ _ged_run_rt(struct ged *gedp)
     si.hStdOutput  = pipe_err[1];
     si.hStdError   = pipe_err[1];
 
-    bu_vls_init(&line);
     for (i = 0; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
 	bu_vls_printf(&line, "%s ", gedp->ged_gdp->gd_rt_cmd[i]);
     }

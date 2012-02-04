@@ -236,9 +236,7 @@ dgo_headSolid_tcl(void *clientData,
 {
     struct dg_obj *dgop = (struct dg_obj *)clientData;
     Tcl_Interp *interp = dgop->interp;
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc != 2) {
 	bu_vls_printf(&vls, "helplib_alias dgo_headSolid %s", argv[0]);
@@ -550,9 +548,8 @@ dgo_eraseobjpath(struct dg_obj *dgop,
 {
     struct directory *dp;
     int i;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&vls);
     for (i = 0; i < argc; i++) {
 	int j;
 	char *list;
@@ -682,9 +679,7 @@ dgo_draw_cmd(struct dg_obj *dgop,
 	     int kind)
 {
     if (argc < 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	switch (kind) {
 	    default:
@@ -874,9 +869,7 @@ dgo_build_dpp(struct dg_obj *dgop,
     int ac;
     const char **av;
     const char **av_orig = NULL;
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     /*
      * First, build an array of the object's path components.
@@ -944,13 +937,11 @@ dgo_how_cmd(struct dg_obj *dgop,
 	    const char **argv)
 {
     struct solid *sp;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     size_t i;
     struct directory **dpp;
     struct directory **tmp_dpp;
     int both = 0;
-
-    bu_vls_init(&vls);
 
     if (argc < 2 || 3 < argc) {
 	bu_vls_printf(&vls, "helplib_alias dgo_how %s", argv[0]);
@@ -1284,9 +1275,8 @@ dgo_autoview_tcl(void *clientData,
     struct view_obj *vop;
 
     if (argc != 3) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dgo_autoview %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1316,7 +1306,7 @@ dgo_get_autoview_cmd(struct dg_obj *dgop,
 		     int argc,
 		     const char **argv)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct solid *sp;
     vect_t min, max;
     vect_t minus, plus;
@@ -1382,7 +1372,6 @@ dgo_get_autoview_cmd(struct dg_obj *dgop,
     VSCALE(center, center, dgop->dgo_wdbp->dbip->dbi_base2local);
     radial[X] *= dgop->dgo_wdbp->dbip->dbi_base2local;
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "center {%g %g %g} size %g", V3ARGS(center), radial[X] * 2.0);
     Tcl_AppendResult(dgop->interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);

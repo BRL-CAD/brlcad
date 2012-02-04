@@ -81,14 +81,13 @@ pr_wait_status(Tcl_Interp *interp,
     int sig = status & 0x7f;
     int core = status & 0x80;
     int ret = status >> 8;
-    struct bu_vls tmp_vls;
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
     if (status == 0) {
 	Tcl_AppendResult(interp, "Normal exit\n", (char *)NULL);
 	return;
     }
 
-    bu_vls_init(&tmp_vls);
     bu_vls_printf(&tmp_vls, "Abnormal exit x%x", status);
 
     if (core)
@@ -145,10 +144,10 @@ dgo_nirt_cmd(struct dg_obj *dgop,
     struct solid *sp;
     char line[RT_MAXLINE];
     char *val;
-    struct bu_vls vls;
-    struct bu_vls o_vls;
-    struct bu_vls p_vls;
-    struct bu_vls t_vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    struct bu_vls o_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls p_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls t_vls = BU_VLS_INIT_ZERO;
     struct bn_vlblock *vbp;
     struct dg_qray_dataList *ndlp;
     struct dg_qray_dataList HeadQRayData;
@@ -181,7 +180,6 @@ dgo_nirt_cmd(struct dg_obj *dgop,
     VMOVEN(dir, vop->vo_rotation + 8, 3);
     VSCALE(dir, dir, -1.0);
 
-    bu_vls_init(&p_vls);
     bu_vls_printf(&p_vls, "xyz %lf %lf %lf;",
 		  cml[X], cml[Y], cml[Z]);
     bu_vls_printf(&p_vls, "dir %lf %lf %lf; s",
@@ -212,8 +210,6 @@ dgo_nirt_cmd(struct dg_obj *dgop,
 	if (DG_QRAY_TEXT(dgop)) {
 	    char *cp;
 	    int count = 0;
-
-	    bu_vls_init(&o_vls);
 
 	    /* get 'r' format now; prepend its' format string with a newline */
 	    val = bu_vls_addr(&dgop->dgo_qray_fmts[0].fmt);
@@ -255,8 +251,6 @@ dgo_nirt_cmd(struct dg_obj *dgop,
     }
 
     if (DG_QRAY_TEXT(dgop)) {
-
-	bu_vls_init(&t_vls);
 
 	/* load vp with formats for printing */
 	for (; dgop->dgo_qray_fmts[i].type != (char)0; ++i)
@@ -301,7 +295,6 @@ dgo_nirt_cmd(struct dg_obj *dgop,
     }
 
     if (use_input_orig) {
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "\nFiring from (%lf, %lf, %lf)...\n",
 		      center_model[X], center_model[Y], center_model[Z]);
 	Tcl_AppendResult(dgop->interp, bu_vls_addr(&vls), (char *)NULL);
@@ -585,15 +578,14 @@ dgo_vnirt_cmd(struct dg_obj *dgop,
     fastf_t sf = 1.0 * DG_INV_GED;
     vect_t view_ray_orig;
     vect_t center_model;
-    struct bu_vls x_vls;
-    struct bu_vls y_vls;
-    struct bu_vls z_vls;
+    struct bu_vls x_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls y_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls z_vls = BU_VLS_INIT_ZERO;
     const char **av;
 
     if (argc < 3) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dgo_vnirt %s", argv[0]);
 	Tcl_Eval(dgop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -622,9 +614,6 @@ dgo_vnirt_cmd(struct dg_obj *dgop,
     MAT4X3PNT(center_model, vop->vo_view2model, view_ray_orig);
     VSCALE(center_model, center_model, dgop->dgo_wdbp->dbip->dbi_base2local);
 
-    bu_vls_init(&x_vls);
-    bu_vls_init(&y_vls);
-    bu_vls_init(&z_vls);
     bu_vls_printf(&x_vls, "%lf", center_model[X]);
     bu_vls_printf(&y_vls, "%lf", center_model[Y]);
     bu_vls_printf(&z_vls, "%lf", center_model[Z]);

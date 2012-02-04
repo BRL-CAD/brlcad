@@ -1537,10 +1537,9 @@ setMeasurements(struct human_data_t *UNUSED(dude), fastf_t percentile)
 HIDDEN void
 show_help(const char *name, const char *optstr)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     const char *cp = optstr;
 
-    bu_vls_init(&str);
     while (cp && *cp != '\0') {
 	if (*cp == ':') {
 	    cp++;
@@ -2221,8 +2220,8 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     struct wmember boxes;
     struct wmember hollow;
     struct wmember crowd;
-    struct bu_vls name;
-    struct bu_vls str;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     struct human_data_t human_data;
     int showBoxes = 0, troops = 0, stance = 0;
     fastf_t percentile = (fastf_t)50.0;
@@ -2236,9 +2235,6 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     srand(time(NULL));
     human_data.height = DEFAULT_HEIGHT_INCHES;
     VSET(location, 0, 0, 0); /* Default standing location */
-
-    bu_vls_init(&name);
-    bu_vls_init(&str);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);

@@ -38,7 +38,7 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
 {
     char *child = NULL;
     char *parent = NULL;
-    struct bu_vls pvls;
+    struct bu_vls pvls = BU_VLS_INIT_ZERO;
     int i;
     int sep;
     int status;
@@ -95,7 +95,6 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    bu_vls_init(&pvls);
     bu_vls_strcat(&pvls, argv[2]);
     parent = bu_vls_addr(&pvls);
     sep = strchr(parent, '/') - parent;

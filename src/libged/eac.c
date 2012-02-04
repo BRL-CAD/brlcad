@@ -39,7 +39,7 @@ ged_eac(struct ged *gedp, int argc, const char *argv[])
     int j;
     int item;
     struct directory *dp;
-    struct bu_vls v;
+    struct bu_vls v = BU_VLS_INIT_ZERO;
     int new_argc;
     int lim;
     static const char *usage = "air_code(s)";
@@ -56,8 +56,6 @@ ged_eac(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
-
-    bu_vls_init(&v);
 
     bu_vls_strcat(&v, "draw");
     lim = 1;

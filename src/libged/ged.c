@@ -398,16 +398,12 @@ _ged_print_node(struct ged *gedp,
     struct rt_comb_internal *comb;
     unsigned aflag = (flags & _GED_TREE_AFLAG);
     unsigned cflag = (flags & _GED_TREE_CFLAG);
-    struct bu_vls tmp_str;
+    struct bu_vls tmp_str = BU_VLS_INIT_ZERO;
 
     /* cflag = don't show shapes, so return if this is not a combination */
     if (cflag && !(dp->d_flags & RT_DIR_COMB)) {
 	return;
     }
-
-    /* need another string for aflag */
-    if (aflag)
-	bu_vls_init(&tmp_str);
 
     /* set up spacing from the left margin */
     for (i = 0; i < pathpos; i++) {

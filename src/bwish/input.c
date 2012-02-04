@@ -83,19 +83,19 @@ HIDDEN void insert_prompt(void);
 HIDDEN void insert_char(char ch);
 HIDDEN void insert_beep(void);
 
-static struct bu_vls input_str;
-static struct bu_vls input_str_prefix;
-static size_t input_str_index;
-static struct bu_vls scratchline;
-static struct bu_vls prompt;
+static struct bu_vls input_str = BU_VLS_INIT_ZERO;
+static struct bu_vls input_str_prefix = BU_VLS_INIT_ZERO;
+static size_t input_str_index  = 0;
+static struct bu_vls scratchline = BU_VLS_INIT_ZERO;
+static struct bu_vls prompt = BU_VLS_INIT_ZERO;
 
 void
 initInput(void)
 {
-    bu_vls_init(&input_str);
-    bu_vls_init(&input_str_prefix);
-    bu_vls_init(&scratchline);
-    bu_vls_init(&prompt);
+    bu_vls_trunc(&input_str, 0);
+    bu_vls_trunc(&input_str_prefix, 0);
+    bu_vls_trunc(&scratchline, 0);
+    bu_vls_trunc(&prompt, 0);
     input_str_index = 0;
 
     Tcl_CreateFileHandler(STDIN_FILENO, TCL_READABLE,

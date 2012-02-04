@@ -231,8 +231,7 @@ enqueue_script(struct bu_list *qp, int type, char *string)
 {
     struct script_rec *srp;
     FILE *cfPtr;
-    struct bu_vls str;
-    bu_vls_init(&str);
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     BU_CK_LIST_HEAD(qp);
 

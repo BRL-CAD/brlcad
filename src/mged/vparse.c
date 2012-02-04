@@ -48,9 +48,8 @@ mged_vls_struct_parse(struct bu_vls *vls,
     } else if (argc == 2) {
 	bu_vls_struct_item_named(vls, how_to_parse, argv[1], structp, ' ');
     } else {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
 	bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
 	bu_vls_putc(&tmp_vls, '\"');
@@ -73,9 +72,8 @@ mged_vls_struct_parse_old(
 	/* Bare set command, print out current settings */
 	bu_vls_struct_print2(vls, title, how_to_parse, structp);
     } else if (argc == 2) {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_strcpy(&tmp_vls, argv[1]);
 	if (bu_struct_parse(&tmp_vls, how_to_parse, structp) < 0) bu_log("Warning - bu_struct_parse failure, mged_vls_struct_parse_old.\n");
 	bu_vls_free(&tmp_vls);

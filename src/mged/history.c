@@ -139,13 +139,13 @@ history_journalize(struct mged_hist *hptr)
 int
 f_journal(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    if (argc < 1 || 3 < argc) {
-	struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
+    if (argc < 1 || 3 < argc) {
 	bu_vls_printf(&vls, "help journal");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 
@@ -166,12 +166,10 @@ f_journal(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
 
     if (argc < 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help journal");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 
@@ -199,16 +197,16 @@ f_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     FILE *fp;
     int with_delays = 0;
     struct mged_hist *hp, *hp_prev;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     struct timeval tvdiff;
 
     if (argc < 1 || 4 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help history");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 
@@ -241,7 +239,6 @@ f_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	++argv;
     }
 
-    bu_vls_init(&str);
     for (BU_LIST_FOR(hp, mged_hist, &(mged_hist_head.l))) {
 	bu_vls_trunc(&str, 0);
 	hp_prev = BU_LIST_PREV(mged_hist, &(hp->l));
@@ -335,9 +332,7 @@ int
 cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct bu_vls *vp;
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 2) {
 	bu_vls_printf(&vls, "helpdevel hist");

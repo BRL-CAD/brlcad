@@ -277,7 +277,7 @@ snap_keypoint_to_grid(void)
 {
     point_t view_pt;
     point_t model_pt;
-    struct bu_vls cmd;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
 
     if (dbip == DBI_NULL)
 	return;
@@ -297,7 +297,6 @@ snap_keypoint_to_grid(void)
     MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
     VSCALE(model_pt, model_pt, base2local);
 
-    bu_vls_init(&cmd);
     if (STATE == ST_S_EDIT)
 	bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
     else
@@ -412,17 +411,14 @@ void
 update_grids(fastf_t sf)
 {
     struct dm_list *dlp;
-    struct bu_vls save_result;
-    struct bu_vls cmd;
+    struct bu_vls save_result = BU_VLS_INIT_ZERO;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
 
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
 	dlp->dml_grid_state->gr_res_h *= sf;
 	dlp->dml_grid_state->gr_res_v *= sf;
 	VSCALE(dlp->dml_grid_state->gr_anchor, dlp->dml_grid_state->gr_anchor, sf);
     }
-
-    bu_vls_init(&save_result);
-    bu_vls_init(&cmd);
 
     bu_vls_strcpy(&save_result, Tcl_GetStringResult(INTERP));
 
@@ -439,9 +435,7 @@ update_grids(fastf_t sf)
 int
 f_grid_set (ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 1 || 5 < argc) {
 	bu_vls_printf(&vls, "help grid_set");

@@ -278,30 +278,27 @@ release(char *name, int need_close)
 int
 f_release(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    if (argc < 1 || 2 < argc) {
-	struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
+    if (argc < 1 || 2 < argc) {
 	bu_vls_printf(&vls, "help release");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 
     if (argc == 2) {
 	int status;
-	struct bu_vls vls1;
-
-	bu_vls_init(&vls1);
 
 	if (*argv[1] != '.')
-	    bu_vls_printf(&vls1, ".%s", argv[1]);
+	    bu_vls_printf(&vls, ".%s", argv[1]);
 	else
-	    bu_vls_strcpy(&vls1, argv[1]);
+	    bu_vls_strcpy(&vls, argv[1]);
 
-	status = release(bu_vls_addr(&vls1), 1);
+	status = release(bu_vls_addr(&vls), 1);
 
-	bu_vls_free(&vls1);
+	bu_vls_free(&vls);
 	return status;
     } else
 	return release((char *)NULL, 1);
@@ -352,13 +349,13 @@ f_attach(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
     struct w_dm *wp;
 
     if (argc < 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help attach");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	print_valid_dm(interpreter);
+
 	return TCL_ERROR;
     }
 
@@ -479,13 +476,13 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
     /* Only need to do this once */
     if (tkwin == NULL && NEED_GUI(wp->type)) {
 	struct dm *tmp_dmp;
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	/* look for "-d display_string" and use it if provided */
 	BU_GET(tmp_dmp, struct dm);
 	bu_vls_init(&tmp_dmp->dm_pathName);
 	bu_vls_init(&tmp_dmp->dm_dName);
-	bu_vls_init(&tmp_vls);
+
 	dm_processOptions(tmp_dmp, &tmp_vls, argc - 1, argv + 1);
 	if (strlen(bu_vls_addr(&tmp_dmp->dm_dName))) {
 	    if (gui_setup(bu_vls_addr(&tmp_dmp->dm_dName)) == TCL_ERROR) {
@@ -564,9 +561,7 @@ get_attached(void)
     struct w_dm *wp = (struct w_dm *)NULL;
     int inflimit = 1000;
     int ret;
-    struct bu_vls type;
-
-    bu_vls_init(&type);
+    struct bu_vls type = BU_VLS_INIT_ZERO;
 
     while (inflimit > 0) {
 	bu_vls_trunc(&type, 0);
@@ -635,11 +630,9 @@ get_attached(void)
 int
 f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help dm");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -648,9 +641,6 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
 
     if (BU_STR_EQUAL(argv[1], "valid")) {
 	if (argc < 3) {
-    	    struct bu_vls vls;
-	    
-    	    bu_vls_init(&vls);
     	    bu_vls_printf(&vls, "help dm");
     	    Tcl_Eval(interpreter, bu_vls_addr(&vls));
     	    bu_vls_free(&vls);
@@ -802,12 +792,12 @@ f_get_dm_list(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, 
     struct dm_list *dlp;
 
     if (argc != 1 || !argv) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helpdevel get_dm_list");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 

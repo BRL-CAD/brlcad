@@ -90,14 +90,13 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     struct rt_arb_internal *arbo;
     plane_t planes[6];
     int status = TCL_OK;
-    struct bu_vls error_msg;
+    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 
     RT_DB_INTERNAL_INIT(&intern);
 
     if (argc < 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help facedef");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -127,7 +126,6 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     RT_ARB_CK_MAGIC(arb);
 
     /* find new planes to account for any editing */
-    bu_vls_init(&error_msg);
     if (rt_arb_calc_planes(&error_msg, arb, es_type, planes, &mged_tol)) {
 	Tcl_AppendResult(interp, bu_vls_addr(&error_msg),
 			 "Unable to determine plane equations\n", (char *)NULL);
@@ -187,9 +185,8 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	    break;
 	default:
 	    {
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "bad face (product=%d)\n", prod);
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
@@ -238,9 +235,8 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 		}
 	    if (argc < 12) {
 		/* total # of args under this option */
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "%s%s %d: ", MORE_ARGS_STR, p_3pts[(argc-3)%3], argc/3);
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);

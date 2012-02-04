@@ -46,7 +46,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
     int r=0, g=0, b=0;
     struct rt_comb_internal *comb = NULL;
     struct rt_db_internal intern;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     int offset = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -73,8 +73,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
      * and blue color channels, so offset our argument indices.
      */
     if (argc > 3) {
-	struct bu_vls color;
-	bu_vls_init(&color);
+	struct bu_vls color = BU_VLS_INIT_ZERO;
 	bu_vls_strcat(&color, argv[3]);
 	bu_vls_trimspace(&color);
 	if (strncmp(bu_vls_addr(&color), "del", 3) == 0) {
@@ -118,7 +117,6 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Material */
-    bu_vls_init(&vls);
     bu_vls_strcat(&vls, argv[2]);
     bu_vls_trimspace(&vls);
     if (bu_vls_strlen(&vls) == 0 || strncmp(bu_vls_addr(&vls), "del", 3) == 0) {
@@ -143,8 +141,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 	comb->rgb_valid = 0;
 	comb->rgb[0] = comb->rgb[1] = comb->rgb[2] = 0;
     } else {
-	struct bu_vls rgb;
-	bu_vls_init(&rgb);
+	struct bu_vls rgb = BU_VLS_INIT_ZERO;
 
 	bu_vls_strcpy(&rgb, argv[3]); /* RED */
 	bu_vls_trimspace(&rgb);

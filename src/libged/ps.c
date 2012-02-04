@@ -298,9 +298,9 @@ int
 ged_ps(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
-    struct bu_vls creator;
-    struct bu_vls font;
-    struct bu_vls title;
+    struct bu_vls creator = BU_VLS_INIT_ZERO;
+    struct bu_vls title = BU_VLS_INIT_ZERO;
+    struct bu_vls font = BU_VLS_INIT_ZERO;
     fastf_t scale = ps_default_scale;
     int linewidth = 4;
     int xoffset = 0;
@@ -325,9 +325,6 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Initialize var defaults */
-    bu_vls_init(&font);
-    bu_vls_init(&title);
-    bu_vls_init(&creator);
     bu_vls_printf(&font, "Courier");
     bu_vls_printf(&title, "No Title");
     bu_vls_printf(&creator, "LIBGED ps");

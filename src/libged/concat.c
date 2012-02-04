@@ -65,7 +65,7 @@ get_new_name(const char *name,
 		 Tcl_HashTable *used_names_tbl,
 		 struct ged_concat_data *cc_data)
 {
-    struct bu_vls new_name;
+    struct bu_vls new_name = BU_VLS_INIT_ZERO;
     Tcl_HashEntry *ptr = NULL;
     char *aname = NULL;
     char *ret_name = NULL;
@@ -87,8 +87,6 @@ get_new_name(const char *name,
     if (!new) {
 	return (char *)Tcl_GetHashValue(ptr);
     }
-
-    bu_vls_init(&new_name);
 
     do {
 	/* iterate until we find an object name that is not in

@@ -110,13 +110,11 @@ compare_char(const char *a, const char *b)
 int
 str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_result_str)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     char *temp_string = (char *)NULL;
     size_t idx = 0;
     size_t format_string_length = 0;
     int ret = GED_OK;
-
-    bu_vls_init(&str);
 
     if ((format_string == (char *)NULL) || (pnt_type == (rt_pnt_type *)NULL)) {
 	bu_vls_printf(ged_result_str, "NULL pointer(s) passed to function 'str2type'.\n");
@@ -175,12 +173,10 @@ str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_re
 int
 str2mm(const char *units_string, double *conv_factor, struct bu_vls *ged_result_str)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     double tmp_value = 0.0;
     char *endp = (char *)NULL;
     int ret = GED_OK;
-
-    bu_vls_init(&str);
 
     if ((units_string == (char *)NULL) || (conv_factor == (double *)NULL)) {
 	bu_vls_printf(ged_result_str, "NULL pointer(s) passed to function 'str2mm'.\n");
@@ -270,7 +266,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 				  /* it is expected that the character representation of a double will never exceed this size string */
     char *endp = (char *)NULL;
 
-    struct bu_vls format_string;
+    struct bu_vls format_string = BU_VLS_INIT_ZERO;
     size_t format_string_index = 0;
 
     unsigned int num_doubles_per_point = 0;
@@ -349,7 +345,6 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    bu_vls_init(&format_string);
     bu_vls_strcat(&format_string, argv[3]);
     bu_vls_trimspace(&format_string);
 

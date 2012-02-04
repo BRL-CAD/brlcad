@@ -162,9 +162,8 @@ editarb(vect_t pos_model)
 
     if (newp == 9) {
 	/* special flag --> redo all the planes */
-	struct bu_vls error_msg;
+	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&error_msg);
 	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol)) {
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&error_msg), (char *)0);
 	    bu_vls_free(&error_msg);
@@ -254,9 +253,8 @@ editarb(vect_t pos_model)
  err:
     /* Error handling */
     {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "cannot move edge: %d%d\n", pt1+1, pt2+1);
 	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
@@ -311,17 +309,17 @@ f_extrude(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     static int prod;
     static fastf_t dist;
     struct rt_arb_internal larb;	/* local copy of arb for new way */
-    struct bu_vls error_msg;
+    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 
     CHECK_DBI_NULL;
 
     if (argc < 3 || 3 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help extrude");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 
@@ -334,12 +332,12 @@ f_extrude(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
 
     if (es_type != ARB8 && es_type != ARB6 && es_type != ARB4) {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "ARB%d: extrusion of faces not allowed\n", es_type);
 	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
+
 	return TCL_ERROR;
     }
 
@@ -488,7 +486,6 @@ f_extrude(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
 
     /* redo the plane equations */
-    bu_vls_init(&error_msg);
     if (rt_arb_calc_planes(&error_msg, &larb, es_type, es_peqn, &mged_tol)) {
 	Tcl_AppendResult(interp, bu_vls_addr(&error_msg),
 			 "Cannot calculate new plane equations for faces\n",
@@ -521,15 +518,15 @@ f_mirface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     static vect_t work;
     struct rt_arb_internal *arb;
     struct rt_arb_internal larb;	/* local copy of solid */
-    struct bu_vls error_msg;
+    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 
     if (argc < 3 || 3 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help mirface");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 
@@ -545,9 +542,8 @@ f_mirface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     RT_ARB_CK_MAGIC(arb);
 
     if (es_type != ARB8 && es_type != ARB6) {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "ARB%d: mirroring of faces not allowed\n", es_type);
 	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
@@ -679,7 +675,6 @@ f_mirface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
 
     /* redo the plane equations */
-    bu_vls_init(&error_msg);
     if (rt_arb_calc_planes(&error_msg, &larb, es_type, es_peqn, &mged_tol)) {
 	Tcl_AppendResult(interp, bu_vls_addr(&error_msg), (char *)0);
 	bu_vls_free(&error_msg);
@@ -709,12 +704,12 @@ f_edgedir(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     fastf_t rot, fb;
 
     if (argc < 3 || 4 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help edgedir");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 
@@ -820,6 +815,7 @@ f_permute(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     size_t arglen;
     size_t face_size;	/* # vertices in THE face */
     char **p;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct rt_arb_internal *arb;
     struct rt_arb_internal larb;		/* local copy of solid */
     struct rt_arb_internal tarb;		/* temporary copy of solid */
@@ -904,12 +900,10 @@ f_permute(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     CHECK_READ_ONLY;
 
     if (argc < 2 || 2 < argc) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help permute");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 
@@ -922,12 +916,10 @@ f_permute(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
 
     if ((es_type < 4) || (es_type > 8)) {
-	struct bu_vls tmp_vls;
+	bu_vls_printf(&vls, "Permute: es_type=%d\nThis shouldn't happen\n", es_type);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
 
-	bu_vls_init(&tmp_vls);
-	bu_vls_printf(&tmp_vls, "Permute: es_type=%d\nThis shouldn't happen\n", es_type);
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	bu_vls_free(&tmp_vls);
 	return TCL_ERROR;
     }
 
@@ -943,37 +935,29 @@ f_permute(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
      */
     arglen = strlen(argv[1]);
     if (arglen < min_tuple_size[es_type]) {
-	struct bu_vls tmp_vls;
 
-	bu_vls_init(&tmp_vls);
-	bu_vls_printf(&tmp_vls, "ERROR: tuple '%s' too short to disambiguate ARB%d face\n",
+	bu_vls_printf(&vls, "ERROR: tuple '%s' too short to disambiguate ARB%d face\n",
 		      argv[1], es_type);
-	bu_vls_printf(&tmp_vls, "Need at least %zu vertices\n", min_tuple_size[es_type]);
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	bu_vls_free(&tmp_vls);
+	bu_vls_printf(&vls, "Need at least %zu vertices\n", min_tuple_size[es_type]);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
 
 	return TCL_ERROR;
     }
     face_size = (es_type == 4) ? 3 : 4;
     if (arglen > face_size) {
-	struct bu_vls tmp_vls;
-
-	bu_vls_init(&tmp_vls);
-	bu_vls_printf(&tmp_vls, "ERROR: tuple '%s' length exceeds ARB%d face size of %zu\n",
+	bu_vls_printf(&vls, "ERROR: tuple '%s' length exceeds ARB%d face size of %zu\n",
 		      argv[1], es_type, face_size);
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	bu_vls_free(&tmp_vls);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
 
 	return TCL_ERROR;
     }
     vertex = argv[1][0] - '1';
     if ((vertex < 0) || (vertex >= es_type)) {
-	struct bu_vls tmp_vls;
-
-	bu_vls_init(&tmp_vls);
-	bu_vls_printf(&tmp_vls, "ERROR: invalid vertex %c\n", argv[1][0]);
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	bu_vls_free(&tmp_vls);
+	bu_vls_printf(&vls, "ERROR: invalid vertex %c\n", argv[1][0]);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
     p = (es_type == 4) ? perm4[vertex] :
@@ -1043,12 +1027,12 @@ f_permute(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	    break;
 	default:
 	    {
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "%s: %d: This shouldn't happen\n", __FILE__, __LINE__);
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
+
 		return TCL_ERROR;
 	    }
     }

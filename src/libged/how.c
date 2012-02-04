@@ -136,9 +136,7 @@ _ged_build_dpp(struct ged *gedp,
     int ac;
     const char **av;
     const char **av_orig = NULL;
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     /*
      * First, build an array of the object's path components.

@@ -82,7 +82,7 @@ int
 common_dm(int argc, const char *argv[])
 {
     int status;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (dbip == DBI_NULL)
 	return TCL_OK;
@@ -144,7 +144,6 @@ common_dm(int argc, const char *argv[])
 	y = fy * GED_MAX;
 
     end:
-	bu_vls_init(&vls);
 	if (mged_variables->mv_mouse_behavior == 'q' && !stolen) {
 	    point_t view_pt;
 	    point_t model_pt;
@@ -356,7 +355,6 @@ common_dm(int argc, const char *argv[])
 		fx = dm_Xx2Normal(dmp, dml_omx) * GED_MAX - adc_state->adc_dv_x;
 		fy = dm_Xy2Normal(dmp, dml_omy, 1) * GED_MAX - adc_state->adc_dv_y;
 
-		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
 		Tcl_Eval(INTERP, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
@@ -367,7 +365,6 @@ common_dm(int argc, const char *argv[])
 		fx = dm_Xx2Normal(dmp, dml_omx) * GED_MAX - adc_state->adc_dv_x;
 		fy = dm_Xy2Normal(dmp, dml_omy, 1) * GED_MAX - adc_state->adc_dv_y;
 
-		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
 		Tcl_Eval(INTERP, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
@@ -378,8 +375,6 @@ common_dm(int argc, const char *argv[])
 		{
 		    point_t model_pt;
 		    point_t view_pt;
-
-		    bu_vls_init(&vls);
 
 		    VSET(view_pt, dm_Xx2Normal(dmp, dml_omx), dm_Xy2Normal(dmp, dml_omy, 1), 0.0);
 
@@ -404,7 +399,7 @@ common_dm(int argc, const char *argv[])
 		      adc_state->adc_dv_y) * view_state->vs_gvp->gv_scale * base2local * INV_GED;
 
 		td = sqrt(fx * fx + fy * fy);
-		bu_vls_init(&vls);
+
 		bu_vls_printf(&vls, "adc dst %lf\n", td);
 		Tcl_Eval(INTERP, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
@@ -546,7 +541,6 @@ common_dm(int argc, const char *argv[])
 
 	/* get the window size */
 	if (argc == 1) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d %d", dmp->dm_width, dmp->dm_height);
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -579,16 +573,14 @@ common_dm(int argc, const char *argv[])
 #if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL)
     if (BU_STR_EQUAL(argv[0], "getx")) {
 	if (argc == 1) {
-	    struct bu_vls tmp_vls;
+	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	    bu_vls_init(&tmp_vls);
 	    /* Bare set command, print out current settings */
 	    bu_vls_struct_print2(&tmp_vls, "dm internal X variables", dm_xvars_vparse,
 				 (const char *)dmp->dm_vars.pub_vars);
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
 	} else if (argc == 2) {
-	    bu_vls_init(&vls);
 	    bu_vls_struct_item_named(&vls, dm_xvars_vparse, argv[1], (const char *)dmp->dm_vars.pub_vars, COMMA);
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -602,7 +594,6 @@ common_dm(int argc, const char *argv[])
 	int r, g, b;
 
 	if (argc != 1 && argc != 4) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "Usage: dm bg [r g b]");
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -612,7 +603,6 @@ common_dm(int argc, const char *argv[])
 
 	/* return background color of current display manager */
 	if (argc == 1) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d %d %d",
 			  dmp->dm_bg[0],
 			  dmp->dm_bg[1],
@@ -626,7 +616,6 @@ common_dm(int argc, const char *argv[])
 	if (sscanf(argv[1], "%d", &r) != 1 ||
 	    sscanf(argv[2], "%d", &g) != 1 ||
 	    sscanf(argv[3], "%d", &b) != 1) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "Usage: dm bg r g b");
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);

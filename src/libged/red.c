@@ -98,13 +98,12 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
     int ret = 1;
     regex_t matrix_entry, full_matrix, nonwhitespace_regex;
     regmatch_t *float_locations;
-    struct bu_vls current_substring, matrix_substring;
+    struct bu_vls current_substring = BU_VLS_INIT_ZERO;
+    struct bu_vls matrix_substring = BU_VLS_INIT_ZERO;
     int floatcnt, tail_start;
     const char *floatptr;
     const char *float_string = "[+-]?[0-9]*[.]?[0-9]+([eE][+-]?[0-9]+)?";
 
-    bu_vls_init(&current_substring);
-    bu_vls_init(&matrix_substring);
     bu_vls_sprintf(&current_substring, "(%s[[:space:]]+)", float_string);
     regcomp(&matrix_entry, bu_vls_addr(&current_substring), REG_EXTENDED);
     bu_vls_sprintf(&current_substring,
@@ -208,15 +207,17 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
     const char *currptr;
     regex_t nonwhitespace_regex, attr_regex, combtree_regex, combtree_op_regex;
     regmatch_t *result_locations;
-    struct bu_vls current_substring, attr_vls, val_vls, curr_op_vls, next_op_vls;
+    struct bu_vls current_substring = BU_VLS_INIT_ZERO;
+    struct bu_vls attr_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls val_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls curr_op_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls next_op_vls = BU_VLS_INIT_ZERO;
     struct bu_mapped_file *redtmpfile;
     int attrstart, attrend, attrcumulative, name_end;
     int ret, gedret, combtagstart, combtagend;
     struct bu_attribute_value_set avs;
     matp_t matrix = {0};
     struct bu_vls *target_name = bu_malloc(sizeof(struct bu_vls), "target vls");
-
-    bu_vls_init(target_name);
 
     rt_tree_array = (struct rt_tree_array *)NULL;
 
@@ -231,7 +232,6 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
 	RT_CK_COMB(comb);
 	RT_CK_DIR(dp);
     }
-    bu_vls_init(&current_substring);
 
     /* Map the temp file for reading */
     redtmpfile = bu_open_mapped_file(_ged_tmpfil, (char *)NULL);
@@ -291,8 +291,6 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
     }
 
     /* Parsing the file is handled in two stages - attributes and combination tree.  Start with attributes */
-    bu_vls_init(&attr_vls);
-    bu_vls_init(&val_vls);
     bu_avs_init_empty(&avs);
     while (attrcumulative < combtagstart - 1) {
 	/* If attributes are present, the first line must match the attr regex - mult-line attribute names are not supported. */
@@ -367,8 +365,6 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
     }
     currptr = (const char *)(redtmpfile->buf) + combtagend;
     name_end = 0;
-    bu_vls_init(&curr_op_vls);
-    bu_vls_init(&next_op_vls);
 
     ret = regexec(&combtree_op_regex, currptr, combtree_op_regex.re_nsub , result_locations, 0);
     if (ret == 0) {
@@ -587,14 +583,10 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     int hasattr;
     size_t node_count;
     size_t actual_count;
-    struct bu_vls spacer;
+    struct bu_vls spacer = BU_VLS_INIT_ZERO;
     const char *attr;
 
     bu_avs_init_empty(&avs);
-
-
-    bu_vls_init(&spacer);
-    bu_vls_trunc(&spacer, 0);
 
     dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
@@ -746,8 +738,8 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "comb";
     const char *editstring = NULL;
     const char *av[3];
-    struct bu_vls comb_name;
-    struct bu_vls temp_name;
+    struct bu_vls comb_name = BU_VLS_INIT_ZERO;
+    struct bu_vls temp_name = BU_VLS_INIT_ZERO;
     struct bu_vls *final_name = NULL;
     int force_flag = 0;
 
@@ -786,9 +778,6 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     }
 
     dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
-
-    bu_vls_init(&comb_name);
-    bu_vls_init(&temp_name);
 
     /* Now, sanity check to make sure a comb is listed instead of a
      * primitive, and either write out existing contents for an

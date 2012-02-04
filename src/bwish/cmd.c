@@ -157,7 +157,7 @@ cmd_history(void *clientData, int argc, const char **argv)
     FILE *fp;
     int with_delays = 0;
     struct bu_cmdhist *hp, *hp_prev;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     struct timeval tvdiff;
 
     if (argc < 1 || 4 < argc) {
@@ -195,7 +195,6 @@ cmd_history(void *clientData, int argc, const char **argv)
 	++argv;
     }
 
-    bu_vls_init(&str);
     for (BU_LIST_FOR(hp, bu_cmdhist, &(histHead.l))) {
 	bu_vls_trunc(&str, 0);
 	hp_prev = BU_LIST_PREV(bu_cmdhist, &(hp->l));
@@ -281,9 +280,7 @@ cmd_hist(void *clientData, int argc, const char **argv)
 {
     Tcl_Interp *interp = (Tcl_Interp *)clientData;
     struct bu_vls *vp;
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 2) {
 	Tcl_AppendResult(interp, "hist command\n\troutine for maintaining command history", (char *)0);

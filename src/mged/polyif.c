@@ -88,9 +88,8 @@ f_polybinout(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
     ph.npts = 0;
 
     if (argc < 2 || 2 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help polybinout");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -161,9 +160,8 @@ f_polybinout(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 			     * XXX poly will end with next POLY_MOVE.
 			     */
 			    if (ph.npts < 3) {
-				struct bu_vls tmp_vls;
+				struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-				bu_vls_init(&tmp_vls);
 				bu_vls_printf(&tmp_vls, "polygon with %d points discarded\n",
 					      ph.npts);
 				Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);

@@ -133,12 +133,10 @@ _ged_editit(char *editstring, const char *filename)
      */
     {
 	int length;
-	struct bu_vls str;
-	struct bu_vls sep;
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+	struct bu_vls sep = BU_VLS_INIT_ZERO;
 	char *editor_basename;
 
-	bu_vls_init(&str);
-	bu_vls_init(&sep);
 	if (terminal && editor_opt) {
 	    bu_log("Invoking [%s %s %s] via %s\n\n", editor, editor_opt, file, terminal);
 	} else if (terminal) {

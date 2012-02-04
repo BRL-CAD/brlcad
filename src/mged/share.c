@@ -100,9 +100,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
     int uflag = 0;		/* unshare flag */
     struct dm_list *dlp1 = (struct dm_list *)NULL;
     struct dm_list *dlp2 = (struct dm_list *)NULL;
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc != 4) {
 	bu_vls_printf(&vls, "helpdevel share");
@@ -275,9 +273,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 int
 f_rset (ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     /* print values for all resources */
     if (argc == 1) {
@@ -446,9 +442,8 @@ share_dlist(struct dm_list *dlp2)
 	    dlp1->dml_dmp->dm_type == dlp2->dml_dmp->dm_type &&
 	    !bu_vls_strcmp(&dlp1->dml_dmp->dm_dName, &dlp2->dml_dmp->dm_dName)) {
 	    if (dm_share_dlist(dlp1->dml_dmp, dlp2->dml_dmp) == TCL_OK) {
-		struct bu_vls vls;
+		struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&vls);
 		SHARE_RESOURCE(0, _dlist_state, dml_dlist_state, dl_rc, dlp1, dlp2, vls, "share: dlist_state");
 		dlp1->dml_dirty = dlp2->dml_dirty = 1;
 		bu_vls_free(&vls);

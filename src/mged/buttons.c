@@ -250,11 +250,9 @@ f_press(ClientData clientData,
 	const char *argv[])
 {
     int i;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help press");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -269,18 +267,12 @@ f_press(ClientData clientData,
 	struct menu_item *mptr;
 
 	if (edsol && edobj) {
-	    struct bu_vls tmp_vls;
-
-	    bu_vls_init(&tmp_vls);
-	    bu_vls_printf(&tmp_vls, "WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj);
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	    bu_vls_free(&tmp_vls);
+	    bu_vls_printf(&vls, "WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj);
+	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	    bu_vls_free(&vls);
 	}
 
 	if (BU_STR_EQUAL(str, "help")) {
-	    struct bu_vls vls;
-
-	    bu_vls_init(&vls);
 
 	    for (bp = button_table; bp->bu_code >= 0; bp++)
 		vls_col_item(&vls, bp->bu_name);
@@ -348,9 +340,8 @@ label_button(int bnum)
     }
 
     {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "label_button(%d):  Not a defined operation\n", bnum);
 	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
@@ -768,9 +759,8 @@ be_accept()
 	    dmlp->dml_mged_variables->mv_transform = 'v';
 
     {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "end_edit_callback");
 	(void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -844,9 +834,8 @@ be_reject()
 	    dmlp->dml_mged_variables->mv_transform = 'v';
 
     {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "end_edit_callback");
 	(void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -981,7 +970,7 @@ chg_state(int from, int to, char *str)
 {
     struct dm_list *p;
     struct dm_list *save_dm_list;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (STATE != from) {
 	bu_log("Unable to do <%s> going from %s to %s state.\n", str, state_str[from], state_str[to]);
@@ -1001,7 +990,6 @@ chg_state(int from, int to, char *str)
 
     curr_dm_list = save_dm_list;
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "%s(state)", MGED_DISPLAY_VAR);
     Tcl_SetVar(INTERP, bu_vls_addr(&vls), state_str[STATE], TCL_GLOBAL_ONLY);
     bu_vls_free(&vls);
@@ -1053,9 +1041,8 @@ btn_head_menu(int i, int UNUSED(menu), int UNUSED(item)) {
 	    break;
 	default:
 	    {
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "btn_head_menu(%d): bad arg\n", i);
 		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
@@ -1080,9 +1067,8 @@ chg_l2menu(int i) {
 	    break;
 	default:
 	    {
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "chg_l2menu(%d): bad arg\n", i);
 		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);

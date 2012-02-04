@@ -3153,7 +3153,6 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 			    dmo_deleteProc);
 
     /* send Configure event */
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "event generate %s <Configure>; update", bu_vls_addr(&dmop->dmo_name));
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);

@@ -51,10 +51,9 @@ static char *options="an:c:d:W:R:D:g:j:p:s:t:u:w:h";
 static void
 show_help(struct ged *gedp, const char *name)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     const char *cp = options;
 
-    bu_vls_init(&str);
     while (cp && *cp != '\0') {
 	if (*cp == ':') {
 	    cp++;
@@ -507,11 +506,9 @@ MakeWheelCenter(struct rt_wdb (*file), char *suffix,
     vect_t height, a, b, c;
     point_t origin, vertex;
     mat_t y;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int i;
     struct wmember bolthole, boltholes, hubhole, hubholes, innerhub;
-
-    bu_vls_init(&str);
 
     bu_vls_sprintf(&str, "Inner-Hub%s.s", suffix);
     VSET(origin, 0, fixing_start_middle + fixing_width / 4, 0);
@@ -618,9 +615,7 @@ MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub,
     unsigned char rgb[3];
     vect_t normal, height;
     point_t vertex;
-    struct bu_vls str;
-
-    bu_vls_init(&str);
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     /* Set wheel color */
 
@@ -814,11 +809,8 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
     point_t V;
     vect_t u_vec, v_vec, h;
     size_t i;
-    struct bu_vls str;
-    struct bu_vls str2;
-
-    bu_vls_init(&str);
-    bu_vls_init(&str2);
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct bu_vls str2 = BU_VLS_INIT_ZERO;
 
     /* Basic allocation of structure */
     skt.magic = RT_SKETCH_INTERNAL_MAGIC;
@@ -897,8 +889,8 @@ static void
 MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 		  fastf_t z_base, fastf_t ztire, int number_of_patterns)
 {
-    struct bu_vls str;
-    struct bu_vls str2;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct bu_vls str2 = BU_VLS_INIT_ZERO;
     struct wmember treadpattern, tread, treadrotated;
     fastf_t patternwidth1, patternwidth2;
     mat_t y;
@@ -938,9 +930,6 @@ MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 	{ -.1, .87 },
 	{ .8, .8 }
     };
-
-    bu_vls_init(&str);
-    bu_vls_init(&str2);
 
     patternwidth1 = ztire * sin(M_PI / number_of_patterns);
     patternwidth2 = z_base * sin(M_PI / number_of_patterns);
@@ -998,8 +987,8 @@ static void
 MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 		  fastf_t z_base, fastf_t ztire, int number_of_patterns)
 {
-    struct bu_vls str;
-    struct bu_vls str2;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct bu_vls str2 = BU_VLS_INIT_ZERO;
     struct wmember treadpattern, tread, treadrotated;
     fastf_t patternwidth1, patternwidth2;
     mat_t y;
@@ -1070,9 +1059,6 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 	{ 1.1, .9 },
 	{ 1.1, .88 }
     };
-
-    bu_vls_init(&str);
-    bu_vls_init(&str2);
 
     patternwidth1 = ztire * sin(M_PI / number_of_patterns);
     patternwidth2 = z_base * sin(M_PI / number_of_patterns);
@@ -1173,11 +1159,9 @@ MakeTireSurface(struct rt_wdb (*file), char *suffix,
     struct wmember tireslicktread, tireslicktopsides, tireslickbottomshapes, tireslickbottomsides;
     struct wmember tireslick;
     struct wmember innersolid;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     vect_t vertex, height;
     point_t origin, normal, C;
-
-    bu_vls_init(&str);
 
     /* Insert primitives */
     VSET(origin, 0, ell1cadparams[0], 0);
@@ -1359,9 +1343,7 @@ MakeTreadSolid(struct rt_wdb (*file), char *suffix,
     point_t origin, normal, C;
 
     int i;
-    struct bu_vls str;
-
-    bu_vls_init(&str);
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     matrixelltread1 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *), "matrixrows");
     for (i = 0; i < 5; i++)
@@ -1485,11 +1467,9 @@ MakeTreadSolid1(struct rt_wdb (*file), char *suffix,
     fastf_t d1_intercept;
     struct wmember tiretreadintercept, tiretreadsolid, tiretreadshape;
     int i;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     vect_t vertex, height;
     point_t origin, normal, C;
-
-    bu_vls_init(&str);
 
     matrixelltred1 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),
 					   "matrixrows");
@@ -1639,11 +1619,8 @@ MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred,
     unsigned char rgb[3];
     MakeTreadProfile TreadProfile[2];
 
-    struct bu_vls str;
-    struct bu_vls str2;
-
-    bu_vls_init(&str);
-    bu_vls_init(&str2);
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct bu_vls str2 = BU_VLS_INIT_ZERO;
 
     /* Set Tire color */
     VSET(rgb, 40, 40, 40);
@@ -1816,11 +1793,9 @@ MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub, 
 {
     struct wmember wheelair;
     struct bu_list air;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     point_t origin;
     vect_t height;
-
-    bu_vls_init(&str);
 
     VSET(origin, 0, -dyhub/2, 0);
     VSET(height, 0, dyhub, 0);
@@ -1983,9 +1958,9 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     struct wmember wheel_and_tire;
     fastf_t isoarray[3];
     fastf_t overridearray[3];
-    struct bu_vls name;
-    struct bu_vls dimen;
-    struct bu_vls str;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    struct bu_vls dimen = BU_VLS_INIT_ZERO;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int gen_name = 0;
     int tread_type = 0;
     int usewheel = 1;
@@ -2014,9 +1989,6 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     overridearray[1] = 0;
     overridearray[2] = 0;
 
-    bu_vls_init(&name);
-    bu_vls_init(&dimen);
-
     /* Process arguments */
     ret = ReadArgs(gedp, argc, argv,
 		   isoarray, overridearray,
@@ -2032,8 +2004,6 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     }
 
     GED_CHECK_EXISTS(gedp, bu_vls_addr(&name), LOOKUP_QUIET, GED_ERROR);
-
-    bu_vls_init(&str);
 
     /* Calculate floating point value for tread depth */
     tread_depth_float = tread_depth/32.0;

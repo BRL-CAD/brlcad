@@ -1390,7 +1390,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 
 
 void application_init(void) {
-    bu_vls_init(&occlusion_objects);
+    bu_vls_trunc(&occlusion_objects, 0);
 }
 
 

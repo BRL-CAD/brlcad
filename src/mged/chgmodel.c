@@ -192,9 +192,8 @@ f_rot_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     CHECK_READ_ONLY;
 
     if (argc < 4 || 5 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -233,9 +232,8 @@ f_sc_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     CHECK_READ_ONLY;
 
     if (argc < 2 || 2 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help oscale");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -308,9 +306,8 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     CHECK_READ_ONLY;
 
     if (argc < 4 || 4 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help translate");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -377,9 +374,8 @@ f_qorot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     CHECK_READ_ONLY;
 
     if (argc < 8 || 8 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help qorot");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -422,15 +418,12 @@ f_qorot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 void
 set_localunit_TclVar(void)
 {
-    struct bu_vls vls;
-    struct bu_vls units_vls;
-    const char *str;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    struct bu_vls units_vls = BU_VLS_INIT_ZERO;
+    const char *str = NULL;
 
     if (dbip == DBI_NULL)
 	return;
-
-    bu_vls_init(&vls);
-    bu_vls_init(&units_vls);
 
     str = bu_units_string(dbip->dbi_local2base);
     if (str)

@@ -72,7 +72,7 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     char tempstring_v4[NAMESIZE+1];
-    struct bu_vls tempstring_v5;
+    struct bu_vls tempstring_v5 = BU_VLS_INIT_ZERO;
     char *tempstring;
     int len = NAMESIZE+1;
     static const char *usage = "new_prefix object(s)";
@@ -95,8 +95,7 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    bu_log("XXXged_prefix: step 1\n");
-    bu_vls_init(&tempstring_v5);
+    bu_log("!!! ged_prefix: step 1\n");
 
     /* First, check validity, and change node names */
     for (i = 2; i < argc; i++) {

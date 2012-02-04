@@ -183,9 +183,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    if (!old_val) {
 		(void)bu_avs_add(&avs, argv[i], argv[i+1]);
 	    } else {
-		struct bu_vls vls;
+		struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&vls);
 		bu_vls_strcat(&vls, old_val);
 		bu_vls_strcat(&vls, argv[i+1]);
 		bu_avs_add_vls(&avs, argv[i], &vls);

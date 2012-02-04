@@ -1201,8 +1201,7 @@ track_mk_comb(
 	    if (strchr(shaderargs, '=') != NULL &&
 		strchr(shaderargs, '{') == NULL)
 	    {
-		struct bu_vls old;
-		bu_vls_init(&old);
+		struct bu_vls old = BU_VLS_INIT_ZERO;
 		bu_vls_vlscatzap(&old, &comb->shader);
 		if (bu_shader_to_list(bu_vls_addr(&old), &comb->shader))
 		    bu_log("Unable to convert shader string '%s %s'\n", shadername, shaderargs);

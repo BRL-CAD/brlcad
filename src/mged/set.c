@@ -149,11 +149,10 @@ set_dirty_flag(void)
 static void
 nmg_eu_dist_set(void)
 {
-    struct bu_vls tmp_vls;
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
     nmg_eue_dist = mged_variables->mv_nmg_eu_dist;
 
-    bu_vls_init(&tmp_vls);
     bu_vls_printf(&tmp_vls, "New nmg_eue_dist = %g\n", nmg_eue_dist);
     Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
     bu_vls_free(&tmp_vls);
@@ -175,11 +174,10 @@ read_var(ClientData clientData, Tcl_Interp *interp, char *UNUSED(name1), char *U
 
 {
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     /* Ask the libbu structparser for the value of the variable */
 
-    bu_vls_init(&str);
     bu_vls_struct_item(&str, sp, (const char *)mged_variables, ' ');
 
     /* Next, set the Tcl variable to this value */
@@ -203,12 +201,11 @@ static char *
 write_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags)
 {
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     const char *newvalue;
 
     newvalue = Tcl_GetVar(interp, sp->sp_name,
 			  (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
-    bu_vls_init(&str);
     bu_vls_printf(&str, "%s=\"%s\"", name1, newvalue);
     if (bu_struct_parse(&str, mged_vparse, (char *)mged_variables) < 0) {
 	Tcl_AppendResult(interp, "ERROR OCCURED WHEN SETTING ", name1,
@@ -280,9 +277,7 @@ mged_variable_setup(Tcl_Interp *interp)
 int
 f_set(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 1 || 2 < argc) {
 	bu_vls_printf(&vls, "help vars");

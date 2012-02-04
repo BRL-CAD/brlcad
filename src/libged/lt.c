@@ -50,7 +50,7 @@ list_children(struct ged *gedp, struct directory *dp)
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     if (comb->tree) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	size_t node_count;
 	size_t actual_count;
 	struct rt_tree_array *rt_tree_array;
@@ -76,7 +76,6 @@ list_children(struct ged *gedp, struct directory *dp)
 	    rt_tree_array = NULL;
 	}
 
-	bu_vls_init(&vls);
 	for (i = 0; i < actual_count; i++) {
 	    char op;
 

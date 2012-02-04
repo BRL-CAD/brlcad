@@ -48,11 +48,10 @@ f_memprint(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
     CHECK_DBI_NULL;
 
     if (argc < 1 || 1 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	if (argv && argc > 1)
 	    bu_log("Unexpected parameter [%s]\n", argv[1]);
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help memprint");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);

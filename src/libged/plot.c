@@ -111,8 +111,7 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
     if (argv[1][0] == '|') {
-	struct bu_vls str;
-	bu_vls_init(&str);
+	struct bu_vls str = BU_VLS_INIT_ZERO;
 	bu_vls_strcpy(&str, &argv[1][1]);
 	while ((++argv)[1] != (char *)0) {
 	    bu_vls_strcat(&str, " ");

@@ -47,10 +47,9 @@
 
 
 #define FB_TCL_CKMAG(_ptr, _magic, _str) {				\
-	struct bu_vls _fb_vls;						\
+	struct bu_vls _fb_vls = BU_VLS_INIT_ZERO;			\
 									\
 	if (!(_ptr)) {							\
-	    bu_vls_init(&_fb_vls);					\
 	    bu_vls_printf(&_fb_vls, "ERROR: null %s ptr, file %s, line %d\n", \
 			  _str, __FILE__, __LINE__);			\
 	    Tcl_AppendResult(interp, bu_vls_addr(&_fb_vls), (char *)NULL); \
@@ -58,7 +57,6 @@
 									\
 	    return TCL_ERROR;						\
 	} else if (*((uint32_t *)(_ptr)) != (_magic)) {			\
-	    bu_vls_init(&_fb_vls);					\
 	    bu_vls_printf(&_fb_vls, "ERROR: bad %s ptr %p, s/b x%x, was x%lx, file %s, line %d\n", \
 			  _str, (void *)_ptr, _magic, (unsigned long)*((uint32_t *)(_ptr)), __FILE__, __LINE__); \
 	    Tcl_AppendResult(interp, bu_vls_addr(&_fb_vls), (char *)NULL); \
@@ -120,7 +118,7 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
 {
     Tcl_Interp *interp = (Tcl_Interp *)clientData;
     register FBIO *ifp;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     int found = 0;
 
     if (argc < 2) {
@@ -225,7 +223,6 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
      * pass go, find a better data-based approach.
      */
     if (found) {
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%p", (void *)ifp);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
@@ -239,7 +236,6 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
     free((void *) ifp->if_name);
     free((void *) ifp);
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "fb_open_existing: supports only the following device types\n");
 #ifdef IF_X
     bu_vls_strcat(&vls, X_device_name);
@@ -397,8 +393,7 @@ fb_cmd_common_file_size(ClientData clientData, int argc, const char **argv)
     }
 
     if (fb_common_file_size(&width, &height, argv[1], pixel_size) > 0) {
-	struct bu_vls vls;
-	bu_vls_init(&vls);
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&vls, "%lu %lu", (unsigned long)width, (unsigned long)height);
 	Tcl_SetObjResult(interp,
 			 Tcl_NewStringObj(bu_vls_addr(&vls), bu_vls_strlen(&vls)));

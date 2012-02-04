@@ -48,7 +48,7 @@ dup_dir_check5(struct db_i *input_dbip,
 {
     char *name;
     struct directory *dupdp;
-    struct bu_vls local;
+    struct bu_vls local = BU_VLS_INIT_ZERO;
     struct dir_check_stuff *dcsp = (struct dir_check_stuff *)ptr;
 
     if (dcsp->main_dbip == DBI_NULL)
@@ -71,7 +71,6 @@ dup_dir_check5(struct db_i *input_dbip,
 	return;
 
     /* Add the prefix, if any */
-    bu_vls_init(&local);
     if (db_version(dcsp->main_dbip) < 5) {
 	if (dcsp->wdbp->wdb_ncharadd > 0) {
 	    bu_vls_strncpy(&local, bu_vls_addr(&dcsp->wdbp->wdb_prestr), dcsp->wdbp->wdb_ncharadd);
@@ -111,7 +110,7 @@ static int
 dup_dir_check(struct db_i *input_dbip, const char *name, off_t UNUSED(laddr), size_t UNUSED(len), int UNUSED(flags), genptr_t ptr)
 {
     struct directory *dupdp;
-    struct bu_vls local;
+    struct bu_vls local = BU_VLS_INIT_ZERO;
     struct dir_check_stuff *dcsp = (struct dir_check_stuff *)ptr;
 
     if (dcsp->main_dbip == DBI_NULL)
@@ -120,7 +119,6 @@ dup_dir_check(struct db_i *input_dbip, const char *name, off_t UNUSED(laddr), si
     RT_CK_DBI(input_dbip);
 
     /* Add the prefix, if any */
-    bu_vls_init(&local);
     if (db_version(dcsp->main_dbip) < 5) {
 	if (dcsp->wdbp->wdb_ncharadd > 0) {
 	    bu_vls_strncpy(&local, bu_vls_addr(&dcsp->wdbp->wdb_prestr), dcsp->wdbp->wdb_ncharadd);

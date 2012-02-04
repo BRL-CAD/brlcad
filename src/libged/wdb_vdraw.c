@@ -407,7 +407,7 @@ vdraw_read_tcl(void *clientData, int argc, const char *argv[])
 {
     struct dg_obj *dgop = (struct dg_obj *)clientData;
     struct bn_vlist *vp;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     unsigned long uind = 0;
     int length;
 
@@ -421,7 +421,6 @@ vdraw_read_tcl(void *clientData, int argc, const char *argv[])
     }
     if (argv[1][0] == 'c') {
 	/* read color of current solid */
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%.6lx", dgop->dgo_currVHead->vdc_rgb);
 	Tcl_AppendResult(dgop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
@@ -429,7 +428,6 @@ vdraw_read_tcl(void *clientData, int argc, const char *argv[])
     }
     if (argv[1][0] == 'n') {
 	/*read name of currently open solid*/
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%.89s", dgop->dgo_currVHead->vdc_name);
 	Tcl_AppendResult(dgop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
@@ -443,7 +441,6 @@ vdraw_read_tcl(void *clientData, int argc, const char *argv[])
 	    length += vp->nused;
 	    vp = BU_LIST_PNEXT(bn_vlist, vp);
 	}
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%d", length);
 	Tcl_AppendResult(dgop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
@@ -471,7 +468,6 @@ vdraw_read_tcl(void *clientData, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "%d %.12e %.12e %.12e",
 		  vp->cmd[uind], vp->pt[uind][0],
 		  vp->pt[uind][1], vp->pt[uind][2]);
@@ -491,7 +487,7 @@ vdraw_send_tcl(void *clientData, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     struct dg_obj *dgop = (struct dg_obj *)clientData;
     struct directory *dp;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     char solid_name [RT_VDRW_MAXNAME+RT_VDRW_PREFIX_LEN+1];
     int idx;
     int real_flag;
@@ -523,7 +519,6 @@ vdraw_send_tcl(void *clientData, int UNUSED(argc), const char *UNUSED(argv[]))
 			   1, 0.0, 0);
     dgo_notify(dgop);
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "%d", idx);
     Tcl_AppendResult(dgop->interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
@@ -560,11 +555,11 @@ vdraw_params_tcl(void *clientData, int argc, const char *argv[])
 	/* check for conflicts with existing vlists*/
 	for (BU_LIST_FOR(rcp, vd_curve, &dgop->dgo_headVDraw)) {
 	    if (!strncmp(rcp->vdc_name, argv[1], RT_VDRW_MAXNAME)) {
-		struct bu_vls vls;
+		struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "vdraw: name %.40s is already in use\n", argv[1]);
 		Tcl_AppendResult(dgop->interp, bu_vls_addr(&vls), (char *)NULL);
+
 		return TCL_ERROR;
 	    }
 	}
@@ -592,9 +587,8 @@ vdraw_open_tcl(void *clientData, int argc, const char *argv[])
     char temp_name[RT_VDRW_MAXNAME+1];
 
     if (argc < 1 || 2 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib vdraw_open");
 	Tcl_Eval(dgop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -661,7 +655,7 @@ vdraw_vlist_tcl(void *clientData, int argc, const char *argv[])
 {
     struct dg_obj *dgop = (struct dg_obj *)clientData;
     struct vd_curve *rcp, *rcp2;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 2) {
 	Tcl_AppendResult(dgop->interp, "vdraw: need more args", (char *)NULL);
@@ -670,7 +664,6 @@ vdraw_vlist_tcl(void *clientData, int argc, const char *argv[])
 
     switch (argv[1][0]) {
 	case 'l':
-	    bu_vls_init(&vls);
 	    for (BU_LIST_FOR(rcp, vd_curve, &dgop->dgo_headVDraw)) {
 		bu_vls_strcat(&vls, rcp->vdc_name);
 		bu_vls_strcat(&vls, " ");
@@ -692,7 +685,6 @@ vdraw_vlist_tcl(void *clientData, int argc, const char *argv[])
 		}
 	    }
 	    if (!rcp2) {
-		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "vdraw: vlist %.40s not found", argv[2]);
 		Tcl_AppendResult(dgop->interp, bu_vls_addr(&vls), (char *)NULL);
 		bu_vls_free(&vls);

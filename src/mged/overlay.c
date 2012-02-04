@@ -44,7 +44,7 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     Tcl_DString ds;
     int ac;
     const char *av[5];
-    struct bu_vls char_size;
+    struct bu_vls char_size = BU_VLS_INIT_ZERO;
 
     if (gedp == GED_NULL)
 	return TCL_OK;
@@ -58,7 +58,7 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     }
 
     ac = argc + 1;
-    bu_vls_init(&char_size);
+
     bu_vls_printf(&char_size, "%lf", view_state->vs_gvp->gv_scale * 0.01);
     av[0] = argv[0];		/* command name */
     av[1] = argv[1];		/* plotfile name */
@@ -98,9 +98,8 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     CHECK_DBI_NULL;
 
     if (argc < 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help labelvert");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);

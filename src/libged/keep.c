@@ -112,7 +112,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
     struct keep_node_data knd;
     struct rt_wdb *keepfp;
     struct directory *dp;
-    struct bu_vls title;
+    struct bu_vls title = BU_VLS_INIT_ZERO;
     struct db_i *new_dbip;
     const char *cmd = argv[0];
     static const char *usage = "[-R] file object(s)";
@@ -195,7 +195,6 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
     knd.gedp = gedp;
 
     /* ident record */
-    bu_vls_init(&title);
     if (strncmp(gedp->ged_wdbp->dbip->dbi_title, "Parts of: ", 10) != 0) {
 	bu_vls_strcat(&title, "Parts of: ");
     }

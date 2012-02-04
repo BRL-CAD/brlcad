@@ -467,12 +467,12 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
     }
 
     if (argc < 3) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias wdb_comb_std %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 
@@ -649,14 +649,14 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 	    comb->region_flag = region_flag;
 
 	if (comb->region_flag) {
-	    struct bu_vls tmp_vls;
+	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	    comb->region_flag = 1;
 	    comb->region_id = wdbp->wdb_item_default++;;
 	    comb->aircode = wdbp->wdb_air_default;
 	    comb->los = wdbp->wdb_los_default;
 	    comb->GIFTmater = wdbp->wdb_mat_default;
-	    bu_vls_init(&tmp_vls);
+
 	    bu_vls_printf(&tmp_vls,
 			  "Creating region id=%d, air=%d, los=%d, GIFTmaterial=%d\n",
 			  comb->region_id, comb->aircode, comb->los, comb->GIFTmater);

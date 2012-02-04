@@ -207,12 +207,10 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 	    color_putrec(gedp, mp);
 	}
     } else {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	/* free colors in rt_material_head */
 	rt_color_free();
-
-	bu_vls_init(&vls);
 
 	while (bu_fgets(line, sizeof (line), fp) != NULL) {
 	    int cnt;
@@ -330,7 +328,7 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
 	    mp = next_mater;
 	}
     } else {
-	struct bu_vls colors;
+	struct bu_vls colors = BU_VLS_INIT_ZERO;
 
 	/* construct the new color record */
 	BU_GET(newp, struct mater);
@@ -348,7 +346,6 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
 	 * Gather color records from the in-memory list to build
 	 * the _GLOBAL objects regionid_colortable attribute.
 	 */
-	bu_vls_init(&colors);
 	rt_vls_color_map(&colors);
 
 	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colors), gedp->ged_wdbp->dbip);

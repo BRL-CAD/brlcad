@@ -123,7 +123,7 @@ ged_annotate(struct ged *gedp, int argc, const char *argv[])
 {
     char **object_argv;
     const char *argv0 = argv[0];
-    struct bu_vls objects;
+    struct bu_vls objects = BU_VLS_INIT_ZERO;
     int object_count = 0;
     int i;
 
@@ -140,8 +140,6 @@ ged_annotate(struct ged *gedp, int argc, const char *argv[])
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-
-    bu_vls_init(&objects);
 
     /* stash objects, quoting them if they include spaces */
     for (i = 1; i < argc; i++) {

@@ -80,7 +80,7 @@ struct _ged_obj_material {
 
 static int using_dbot_dump;
 struct bu_list HeadObjMaterials;
-struct bu_vls obj_materials_file;
+struct bu_vls obj_materials_file = BU_VLS_INIT_ZERO;
 FILE *obj_materials_fp;
 int num_obj_materials;
 int curr_obj_red;
@@ -578,9 +578,8 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 
     if (output_directory) {
 	char *cp;
-	struct bu_vls file_name;
+	struct bu_vls file_name = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&file_name);
 	bu_vls_strcpy(&file_name, output_directory);
 	bu_vls_putc(&file_name, '/');
 	cp = dp->d_namep;
@@ -1267,7 +1266,7 @@ data_dump(struct ged *gedp, FILE *fp)
 	case OTYPE_OBJ:
 	    if (output_directory) {
 		char *cp;
-		struct bu_vls filepath;
+		struct bu_vls filepath = BU_VLS_INIT_ZERO;
 		FILE *data_fp;
 
 		cp = strrchr(output_directory, '/');
@@ -1281,7 +1280,6 @@ data_dump(struct ged *gedp, FILE *fp)
 		    return GED_ERROR;
 		}
 
-		bu_vls_init(&filepath);
 		bu_vls_printf(&filepath, "%s/%s_data.obj", output_directory, cp);
 
 		if ((data_fp=fopen(bu_vls_addr(&filepath), "wb+")) == NULL) {
@@ -1434,7 +1432,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 
 		{
 		    char *cp;
-		    struct bu_vls filepath;
+		    struct bu_vls filepath = BU_VLS_INIT_ZERO;
 
 		    cp = strrchr(output_directory, '/');
 		    if (!cp)
@@ -1447,10 +1445,9 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 			return GED_ERROR;
 		    }
 
-		    bu_vls_init(&obj_materials_file);
+		    bu_vls_trunc(&obj_materials_file, 0);
 		    bu_vls_printf(&obj_materials_file, "%s.mtl", cp);
 
-		    bu_vls_init(&filepath);
 		    bu_vls_printf(&filepath, "%s/%V", output_directory, &obj_materials_file);
 
 		    if ((obj_materials_fp=fopen(bu_vls_addr(&filepath), "wb+")) == NULL) {
@@ -1477,7 +1474,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
     } else if (output_type == OTYPE_OBJ) {
 	char *cp;
 
-	bu_vls_init(&obj_materials_file);
+	bu_vls_trunc(&obj_materials_file, 0);
 
 	cp = strrchr(output_file, '.');
 	if (!cp)

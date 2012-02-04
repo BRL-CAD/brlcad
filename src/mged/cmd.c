@@ -80,7 +80,7 @@ Tk_Window tkwin = NULL;
 /* The following is for GUI output hooks: contains name of function to
  * run with output.
  */
-static struct bu_vls tcl_output_hook;
+static struct bu_vls tcl_output_hook = BU_VLS_INIT_ZERO;
 
 
 /**
@@ -338,9 +338,8 @@ cmd_ged_in(ClientData clientData, Tcl_Interp *interpreter, int argc, const char 
 		break;
 	    default:
 		{
-		    struct bu_vls tmp_vls;
+		    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		    bu_vls_init(&tmp_vls);
 		    bu_vls_printf(&tmp_vls, "in: option '%c' unknown\n", bu_optopt);
 		    Tcl_AppendResult(interpreter, bu_vls_addr(&tmp_vls), (char *)NULL);
 		    bu_vls_free(&tmp_vls);
@@ -651,9 +650,8 @@ cmd_tk(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const c
     int status;
 
     if (argc < 1 || 2 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help loadtk");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -678,13 +676,12 @@ cmd_tk(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const c
 int
 cmd_output_hook(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    struct bu_vls infocommand;
+    struct bu_vls infocommand = BU_VLS_INIT_ZERO;
     int status;
 
     if (argc < 1 || 2 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helpdevel output_hook");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -700,7 +697,6 @@ cmd_output_hook(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc
     /* Note - the parameters to proc could be wrong and/or the proc
      * could still disappear later.
      */
-    bu_vls_init(&infocommand);
     bu_vls_strcat(&infocommand, "info commands ");
     bu_vls_strcat(&infocommand, argv[1]);
     status = Tcl_Eval(interpreter, bu_vls_addr(&infocommand));
@@ -741,9 +737,7 @@ cmd_nop(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(ar
 int
 cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 2) {
 	bu_vls_printf(&vls, "helpdevel cmd_win");
@@ -879,11 +873,10 @@ int
 cmd_get_more_default(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     if (argc != 1) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_log("Unrecognized option [%s]\n", argv[1]);
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helpdevel get_more_default");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -899,9 +892,8 @@ int
 cmd_set_more_default(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     if (argc != 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helpdevel set_more_default");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -974,16 +966,13 @@ mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
     int regexp;                 /* Set to TRUE when word is a regexp */
     int backslashed;
     int firstword;
-    struct bu_vls word;         /* Current word being processed */
-    struct bu_vls temp;
+    struct bu_vls word = BU_VLS_INIT_ZERO;         /* Current word being processed */
+    struct bu_vls temp = BU_VLS_INIT_ZERO;
 
     if (dbip == DBI_NULL) {
 	bu_vls_vlscat(dest, src);
 	return;
     }
-
-    bu_vls_init(&word);
-    bu_vls_init(&temp);
 
     start = end = bu_vls_addr(src);
     firstword = 1;
@@ -1085,9 +1074,9 @@ int
 cmdline(struct bu_vls *vp, int record)
 {
     int status;
-    struct bu_vls globbed;
-    struct bu_vls tmp_vls;
-    struct bu_vls save_vp;
+    struct bu_vls globbed = BU_VLS_INIT_ZERO;
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls save_vp = BU_VLS_INIT_ZERO;
     struct timeval start, finish;
     size_t len;
     extern struct bu_vls mged_prompt;
@@ -1099,9 +1088,6 @@ cmdline(struct bu_vls *vp, int record)
     if (bu_vls_strlen(vp) <= 0)
 	return CMD_OK;
 
-    bu_vls_init(&globbed);
-    bu_vls_init(&tmp_vls);
-    bu_vls_init(&save_vp);
     bu_vls_vlscat(&save_vp, vp);
 
     /* MUST MAKE A BACKUP OF THE INPUT STRING AND USE THAT IN THE CALL
@@ -1305,9 +1291,8 @@ f_comm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const c
 {
 
     if (argc != 1 || !classic_mged || curr_cmd_list != &head_cmd_list) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help %s", argv[0]);
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1345,9 +1330,8 @@ int
 f_quit(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     if (argc < 1 || 1 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help %s", argv[0]);
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1425,10 +1409,9 @@ int
 f_fhelp2(int argc, const char *argv[], struct funtab *functions)
 {
     struct funtab *ftp;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (argc <= 1) {
-	bu_vls_init(&str);
 	Tcl_AppendResult(INTERP, "The following ", functions->ft_name,
 			 " commands are available:\n", (char *)NULL);
 	for (ftp = functions+1; ftp->ft_name; ftp++) {
@@ -1467,9 +1450,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     int uflag = 0;		/* untie flag */
     struct cmd_list *clp;
     struct dm_list *dlp;
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 1 || 3 < argc) {
 	bu_vls_printf(&vls, "helpdevel tie");
@@ -1593,9 +1574,8 @@ f_ps(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[
     struct _view_state *vsp;
 
     if (argc < 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help ps");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1648,9 +1628,8 @@ f_pl(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[
     struct _view_state *vsp;
 
     if (argc < 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help pl");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1698,9 +1677,8 @@ f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
     struct dm_list *p;
 
     if (argc < 1 || 2 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helpdevel winset");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1768,12 +1746,11 @@ int
 f_bomb(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
     char buffer[1024] = {0};
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc > 1) {
 	argc--; argv++;
 
-	bu_vls_init(&vls);
 	bu_vls_from_argv(&vls, argc, argv);
 	snprintf(buffer, 1024, "%s", bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1890,7 +1867,7 @@ int
 cmd_lm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     struct bu_attribute_value_set avs;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct bu_ptbl *tbl;
     struct directory *dp;
     size_t i;
@@ -1902,7 +1879,6 @@ cmd_lm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const c
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n");
 
-    bu_vls_init(&vls);
     bu_vls_strcat(&vls, argv[0]);
     for (i=1; i<(size_t)argc; i++) {
 	if (*argv[i] == '-') {
@@ -2097,10 +2073,9 @@ cmd_shaded_mode(ClientData UNUSED(clientData),
 	strlen(argv[1]) >= 2 &&
 	argv[1][0] == '-' &&
 	argv[1][1] == 'a') {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	/* set zbuffer, zclip and lighting for all */
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "mged_shaded_mode_helper %s", argv[2]);
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);

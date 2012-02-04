@@ -121,9 +121,7 @@ int
 f_jdebug(int argc,
 	 const char *argv[])
 {
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc >= 2) {
 	sscanf(argv[1], "%x", &joint_debug);
@@ -145,9 +143,8 @@ f_joint(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     int status;
 
     if (argc < 1) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help joint");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -301,9 +298,8 @@ f_junload(int argc, const char *argv[])
 	free_joint(jp);
     }
     if (joint_debug & DEBUG_J_LOAD) {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "joint unload: unloaded %d joints, %d constraints.\n",
 		      joints, holds);
 	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -418,13 +414,11 @@ static double mm2base, base2mm;
 static void
 parse_error(struct bu_vls *str, char *error)
 {
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     char *text;
     size_t i;
 
     if (!str->vls_str) {
-	struct bu_vls tmp_vls;
-
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "%s:%d %s\n", lex_name, lex_line, error);
 	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
@@ -438,9 +432,6 @@ parse_error(struct bu_vls *str, char *error)
     text[str->vls_offset+1] = '\0';
 
     {
-	struct bu_vls tmp_vls;
-
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "%s:%d %s\n%s\n%s\n", lex_name, lex_line, error, str->vls_str, text);
 	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
@@ -466,9 +457,8 @@ get_token(union bu_lex_token *token, FILE *fip, struct bu_vls *str, struct bu_le
     bu_vls_nibble(str, used);
 
     {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	if (joint_debug & DEBUG_J_LEX) {
 	    int i;
 	    switch (token->type) {
@@ -2090,9 +2080,8 @@ hold_eval(struct hold *hp)
     }
     value = hp->weight * DIST_PT_PT(e_loc, o_loc);
     if (joint_debug & DEBUG_J_EVAL) {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "hold_eval: PT->PT of %s is %g\n", hp->name, value);
 	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
@@ -2137,6 +2126,7 @@ part_solve(struct hold *hp, double limits, double tol)
     int bestfreedom = -1;
     struct joint *bestjoint;
     struct jointH *jh;
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
     if (joint_debug & DEBUG_J_SOLVE) {
 	Tcl_AppendResult(INTERP, "part_solve: solving for ", hp->name,
@@ -2220,9 +2210,6 @@ part_solve(struct hold *hp, double limits, double tol)
     origvalue = besteval = hold_eval(hp);
     if (fabs(origvalue) < tol) {
 	if (joint_debug & DEBUG_J_SOLVE) {
-	    struct bu_vls tmp_vls;
-
-	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "part_solve: solved, original(%g) < tol(%g)\n",
 			  origvalue, tol);
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -2303,9 +2290,6 @@ part_solve(struct hold *hp, double limits, double tol)
 	    joint_move(jp);
 	    if (f0 < besteval) {
 		if (joint_debug & DEBUG_J_SOLVE) {
-		    struct bu_vls tmp_vls;
-
-		    bu_vls_init(&tmp_vls);
 		    bu_vls_printf(&tmp_vls, "part_solve: NEW min %s(%d, %g) %g <%g\n",
 				  jp->name, i, x0, f0, besteval);
 		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -2316,9 +2300,6 @@ part_solve(struct hold *hp, double limits, double tol)
 		bestfreedom = i;
 		bestvalue = x0;
 	    } else if (joint_debug & DEBUG_J_SOLVE) {
-		struct bu_vls tmp_vls;
-
-		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "part_solve: OLD min %s(%d, %g)%g >= %g\n",
 			      jp->name, i, x0, f0, besteval);
 		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -2389,9 +2370,6 @@ part_solve(struct hold *hp, double limits, double tol)
 	    joint_move(jp);
 	    if (f0 < besteval-SQRT_SMALL_FASTF) {
 		if (joint_debug & DEBUG_J_SOLVE) {
-		    struct bu_vls tmp_vls;
-
-		    bu_vls_init(&tmp_vls);
 		    bu_vls_printf(&tmp_vls, "part_solve: NEW min %s(%d, %g) %g <%g delta=%g\n",
 				  jp->name, i+3, x0, f0, besteval, besteval-f0);
 		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -2402,9 +2380,6 @@ part_solve(struct hold *hp, double limits, double tol)
 		bestfreedom = i + 3;
 		bestvalue = x0;
 	    } else if (joint_debug & DEBUG_J_SOLVE) {
-		struct bu_vls tmp_vls;
-
-		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "part_solve: OLD min %s(%d, %g)%g >= %g\n",
 			      jp->name, i, x0, f0, besteval);
 		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -2453,9 +2428,7 @@ reject_move(void)
     BU_LIST_POP(solve_stack, &solve_head, ssp);
     if (!ssp) return;
     if (joint_debug & DEBUG_J_SYSTEM) {
-	struct bu_vls tmp_vls;
-
-	bu_vls_init(&tmp_vls);
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&tmp_vls, "reject_move: rejecting %s(%d, %g)->%g\n", ssp->jp->name,
 		      ssp->freedom, ssp->new, ssp->old);
 	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -2520,9 +2493,8 @@ system_solve(int pri, double delta, double epsilon)
     if (joint_debug & DEBUG_J_SYSTEM) {
 	for (i=0; i <= pri; i++) {
 	    if (pri_weights[i] > 0.0) {
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "system_solve: priority %d has system weight of %g.\n",
 			      i, pri_weights[i]);
 		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -2592,9 +2564,8 @@ system_solve(int pri, double delta, double epsilon)
 	new_eval += hold_eval(hp);
     }
     if (joint_debug & DEBUG_J_SYSTEM) {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "system_solve: old eval = %g, new eval = %g\n",
 		      pri_weights[pri], new_eval);
 	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -2682,9 +2653,8 @@ system_solve(int pri, double delta, double epsilon)
 	return -1;
     }
     if (joint_debug & DEBUG_J_SYSTEM) {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "system_solve: new_weights[%d] = %g, returning ", pri,
 		      new_weights[pri]);
 	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -2705,6 +2675,7 @@ system_solve(int pri, double delta, double epsilon)
 int
 f_jsolve(int argc, char *argv[])
 {
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     struct hold *hp;
     int loops, count;
     double delta, epsilon;
@@ -2775,9 +2746,6 @@ f_jsolve(int argc, char *argv[])
 		}
 
 		{
-		    struct bu_vls tmp_vls;
-
-		    bu_vls_init(&tmp_vls);
 		    bu_vls_printf(&tmp_vls, "joint solve: finished %d loops of %s.\n",
 				  count, hp->name);
 		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -2826,9 +2794,6 @@ f_jsolve(int argc, char *argv[])
 	} else if (result == -1) {
 	    delta /= 2.0;
 	    if (joint_debug & DEBUG_J_SYSTEM) {
-		struct bu_vls tmp_vls;
-
-		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "joint solve: spliting delta (%g)\n",
 			      delta);
 		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -2861,9 +2826,6 @@ f_jsolve(int argc, char *argv[])
 	    } else if (result == -1) {
 		delta /= 2.0;
 		if (joint_debug & DEBUG_J_SYSTEM) {
-		    struct bu_vls tmp_vls;
-
-		    bu_vls_init(&tmp_vls);
 		    bu_vls_printf(&tmp_vls, "joint solve: spliting delta (%g)\n",
 				  delta);
 		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -2882,9 +2844,6 @@ f_jsolve(int argc, char *argv[])
 	Tcl_AppendResult(INTERP, "joint solve: system has convereged to a result.\n",
 			 (char *)NULL);
     } else if (result == 0) {
-	struct bu_vls tmp_vls;
-
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "joint solve: system has not converged in %d loops.\n",
 		      count);
 	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -2935,9 +2894,8 @@ print_hold(struct hold *hp)
     bu_free(t2, "hold_point_to_string");
 
     {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "\n\twith a weight: %g, pull %g\n",
 		      hp->weight, hold_eval(hp));
 	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -2967,9 +2925,8 @@ int
 f_jlist(int UNUSED(argc), const char *UNUSED(argv[]))
 {
     struct joint *jp;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&vls);
     for (BU_LIST_FOR(jp, joint, &joint_head)) {
 	vls_col_item(&vls, jp->name);
     }
@@ -2982,6 +2939,7 @@ f_jlist(int UNUSED(argc), const char *UNUSED(argv[]))
 void
 joint_move(struct joint *jp)
 {
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     struct animate *anp;
     double tmp;
     mat_t m1, m2;
@@ -3019,9 +2977,7 @@ joint_move(struct joint *jp)
 	jp->anim=anp;
 	db_add_anim(dbip, anp, 0);
 	if (joint_debug & DEBUG_J_MOVE) {
-	    struct bu_vls tmp_vls;
 
-	    bu_vls_init(&tmp_vls);
 	    sofar = db_path_to_string(&jp->anim->an_path);
 	    bu_vls_printf(&tmp_vls, "joint move: %s added animate %s to %s(%p)\n",
 			  jp->name, sofar, dp->d_namep, (void *)dp);
@@ -3053,9 +3009,6 @@ joint_move(struct joint *jp)
 	tmp = (jp->rots[i].current * DEG2RAD)/2.0;
 	VMOVE(q1, jp->rots[i].quat);
 	if (joint_debug & DEBUG_J_MOVE) {
-	    struct bu_vls tmp_vls;
-
-	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "joint move: rotating %g around (%g %g %g)\n",
 			  tmp*2*RAD2DEG, q1[X], q1[Y], q1[Z]);
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -3093,9 +3046,6 @@ joint_move(struct joint *jp)
 		   jp->dirs[i].unitvec[Z]*tmp);
 
 	if (joint_debug & DEBUG_J_MOVE) {
-	    struct bu_vls tmp_vls;
-
-	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "joint move: moving %g along (%g %g %g)\n",
 			  tmp*base2local, m2[3], m2[7], m2[11]);
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -3121,6 +3071,7 @@ f_jmove(int argc, const char *argv[])
     struct joint *jp;
     int i;
     double tmp;
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
     if (dbip == DBI_NULL)
 	return CMD_OK;
@@ -3151,9 +3102,6 @@ f_jmove(int argc, const char *argv[])
 	}
 	tmp = atof(*argv);
 	if (joint_debug & DEBUG_J_MOVE) {
-	    struct bu_vls tmp_vls;
-
-	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "joint move: %s rotate (%g %g %g) %g degrees.\n",
 			  jp->name, jp->rots[i].quat[X],
 			  jp->rots[i].quat[Y], jp->rots[i].quat[Z],
@@ -3167,9 +3115,6 @@ f_jmove(int argc, const char *argv[])
 	    tmp >= jp->rots[i].lower) {
 	    jp->rots[i].current = tmp;
 	} else {
-	    struct bu_vls tmp_vls;
-
-	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "joint move: %s, rotation %d, %s out of range.\n",
 			  jp->name, i, *argv);
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -3193,9 +3138,6 @@ f_jmove(int argc, const char *argv[])
 	    tmp >= jp->dirs[i].lower) {
 	    jp->dirs[i].current = tmp;
 	} else {
-	    struct bu_vls tmp_vls;
-
-	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "joint move: %s, vector %d, %s out of range.\n",
 			  jp->name, i, *argv);
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -3443,9 +3385,8 @@ f_jmesh(int argc, const char *argv[])
 	    }
 	}
 	if (joint_debug & DEBUG_J_MESH) {
-	    struct bu_vls tmp_vls;
+	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "joint mesh: %s has %d grips.\n",
 			  (jp->joint) ? jp->joint->name: "UNGROUPED", i);
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);

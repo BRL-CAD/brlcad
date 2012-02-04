@@ -37,14 +37,15 @@
 int
 ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 {
-    int i;
-    struct directory *dp;
-    struct rt_db_internal intern;
-    struct rt_bot_internal *bot;
-    struct bu_vls bot_result_list;
-    struct bu_vls new_bots;
-    struct bu_vls error_str;
     static const char *usage = "bot [bot2 bot3 ...]";
+
+    int i;
+    struct bu_vls bot_result_list = BU_VLS_INIT_ZERO;
+    struct bu_vls error_str = BU_VLS_INIT_ZERO;
+    struct bu_vls new_bots = BU_VLS_INIT_ZERO;
+    struct directory *dp;
+    struct rt_bot_internal *bot;
+    struct rt_db_internal intern;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -52,11 +53,6 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* initialize bot lists */
-    bu_vls_init(&bot_result_list);
-    bu_vls_init(&new_bots);
-    bu_vls_init(&error_str);
 
     /* must be wanting help */
     if (argc == 1) {
@@ -110,7 +106,6 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 	    ac = 2;
 	    av[2] = (char *)0;
 
-	    bu_vls_init(&new_bots);
 	    for (BU_LIST_FOR(rblp, rt_bot_list, &headRblp->l)) {
 		/* Get a unique name based on the original name */
 		av[1] = obj;

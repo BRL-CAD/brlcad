@@ -122,7 +122,7 @@ Make_new_name(struct db_i *dbip,
     int name_length;
     int j;
     char format_v4[50], format_v5[50];
-    struct bu_vls name_v5;
+    struct bu_vls name_v5 = BU_VLS_INIT_ZERO;
     char name_v4[NAMESIZE+1];
     char *name;
     struct ged *gedp;
@@ -146,8 +146,6 @@ Make_new_name(struct db_i *dbip,
 	suffix_start = NAMESIZE - digits - 2;
     else
 	suffix_start = name_length;
-
-    bu_vls_init(&name_v5);
 
     j = 0;
     for (use_no=0; use_no<dp->d_uses; use_no++) {

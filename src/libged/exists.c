@@ -435,7 +435,7 @@ ged_exists(struct ged *gedp, int argc, const char *argv_orig[])
 /*    struct directory *dp;*/
     static const char *usage = "object";
     struct exists_data ed;
-    struct bu_vls message;
+    struct bu_vls message = BU_VLS_INIT_ZERO;
     int result;
     char **argv = bu_dup_argv(argc, argv_orig);
 
@@ -460,7 +460,6 @@ ged_exists(struct ged *gedp, int argc, const char *argv_orig[])
     ed.t_wp = &argv[1];
     ed.gedp = gedp;
     ed.t_wp_op = NULL;
-    bu_vls_init(&message);
     ed.message = &message;
     result = oexpr(t_lex(*(ed.t_wp), &ed),&ed);
 

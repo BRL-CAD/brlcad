@@ -46,9 +46,8 @@ cmd_mmenu_get(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
     int index;
 
     if (argc > 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helpdevel mmenu_get");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -74,10 +73,9 @@ cmd_mmenu_get(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
 	    Tcl_AppendElement(interp, mptr->menu_string);
     } else {
 	struct menu_item **m;
-	struct bu_vls result;
+	struct bu_vls result = BU_VLS_INIT_ZERO;
 	int status;
 
-	bu_vls_init(&result);
 	bu_vls_strcat(&result, "list");
 	for (m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++)
 	    bu_vls_printf(&result, " [%s %d]", argv[0], m-menu_state->ms_menus);
@@ -117,11 +115,10 @@ mmenu_set(int index, struct menu_item *value)
     struct dm_list *dlp;
 
     Tcl_DString ds_menu;
-    struct bu_vls menu_string;
+    struct bu_vls menu_string = BU_VLS_INIT_ZERO;
 
     menu_state->ms_menus[index] = value;  /* Change the menu internally */
 
-    bu_vls_init(&menu_string);
     Tcl_DStringInit(&ds_menu);
 
     bu_vls_printf(&menu_string, "mmenu_set %V %d ", &curr_cmd_list->cl_name, index);

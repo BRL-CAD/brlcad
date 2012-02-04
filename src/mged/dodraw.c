@@ -218,9 +218,8 @@ mged_bound_solid(struct solid *sp)
 		    break;
 		default:
 		    {
-			struct bu_vls tmp_vls;
+			struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-			bu_vls_init(&tmp_vls);
 			bu_vls_printf(&tmp_vls, "unknown vlist op %d\n", *cmd);
 			Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 			bu_vls_free(&tmp_vls);
@@ -796,9 +795,8 @@ drawtrees(int argc, const char *argv[], int kind)
 		break;
 	    default:
 		{
-		    struct bu_vls vls;
+		    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-		    bu_vls_init(&vls);
 		    bu_vls_printf(&vls, "help %s", argv[0]);
 		    Tcl_Eval(INTERP, bu_vls_addr(&vls));
 		    bu_vls_free(&vls);
@@ -1154,9 +1152,8 @@ add_solid_path_to_result(
     Tcl_Interp *interp,
     struct solid *sp)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&str);
     db_path_to_vls(&str, &sp->s_fullpath);
     Tcl_AppendResult(interp, bu_vls_addr(&str), " ", NULL);
     bu_vls_free(&str);
@@ -1182,9 +1179,8 @@ cmd_redraw_vlist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, co
     CHECK_DBI_NULL;
 
     if (argc < 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help redraw_vlist");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);

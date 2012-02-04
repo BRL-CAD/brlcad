@@ -1158,7 +1158,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
     int flag_A_attr=0;
     int flag_o_nonunique=1;
     int last_opt=0;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     static const char *usage = "<[-R -C#/#/# -s] objects> | <-o -A attribute name/value pairs>";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -1179,7 +1179,6 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
     ++argv;
 
     /* check args for "-A" (attributes) and "-o" */
-    bu_vls_init(&vls);
     for (i = 0; i < (size_t)argc; i++) {
 	char *ptr_A=NULL;
 	char *ptr_o=NULL;

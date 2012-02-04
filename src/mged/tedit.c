@@ -91,9 +91,8 @@ f_tedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     CHECK_READ_ONLY;
 
     if (argc < 1 || 1 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help ted");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);

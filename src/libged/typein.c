@@ -2592,8 +2592,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     /* prompt for X, Y, Z of points */
     if ((unsigned long)argc < numPoints * (unsigned long)valuesPerPoint) {
 	int nextAsk = nextPrompt + 6;
-	struct bu_vls vls;
-	bu_vls_init(&vls);
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	switch (type) {
 	    case RT_PNT_TYPE_PNT:

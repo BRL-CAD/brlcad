@@ -2090,7 +2090,7 @@ to_constrain_rmode(struct ged *gedp,
 		   int UNUSED(maxargs))
 {
     fastf_t x, y;
-    struct bu_vls bindings;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -2134,7 +2134,6 @@ to_constrain_rmode(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_CONSTRAINED_ROTATE_MODE;
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_constrain_rot %V %s %%x %%y}; break",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -2155,7 +2154,7 @@ to_constrain_tmode(struct ged *gedp,
 		   int UNUSED(maxargs))
 {
     fastf_t x, y;
-    struct bu_vls bindings;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -2199,7 +2198,6 @@ to_constrain_tmode(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_CONSTRAINED_TRANSLATE_MODE;
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_constrain_trans %V %s %%x %%y}; break",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -2224,9 +2222,9 @@ to_copy(struct ged *gedp,
     int ret;
     char *cp;
     struct tclcad_obj *top;
-    struct bu_vls db_vls;
-    struct bu_vls from_vls;
-    struct bu_vls to_vls;
+    struct bu_vls db_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls from_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls to_vls = BU_VLS_INIT_ZERO;
     int fflag;
 
     /* initialize result */
@@ -2256,10 +2254,6 @@ to_copy(struct ged *gedp,
 	++argv;
     } else
 	fflag = 0;
-
-    bu_vls_init(&db_vls);
-    bu_vls_init(&from_vls);
-    bu_vls_init(&to_vls);
 
     cp = strchr(argv[1], ':');
     if (cp) {
@@ -4804,9 +4798,8 @@ to_deleteViewProc(ClientData clientData)
 HIDDEN void
 to_init_default_bindings(struct ged_dm_view *gdvp)
 {
-    struct bu_vls bindings;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Configure> {%V configure %V; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -5509,9 +5502,8 @@ to_idle_mode(struct ged *gedp,
 
 
     if (gdvp->gdv_view->gv_mode != TCLCAD_POLY_CONTOUR_MODE || gdvp->gdv_view->gv_data_polygons.gdps_cflag == 0) {
-	struct bu_vls bindings;
+	struct bu_vls bindings = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&bindings);
 	bu_vls_printf(&bindings, "bind %V <Motion> {}",
 		      &gdvp->gdv_dmp->dm_pathName);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -5546,11 +5538,10 @@ to_idle_mode(struct ged *gedp,
 HIDDEN int
 to_is_viewable(struct ged_dm_view *gdvp)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     Tcl_Obj *result_obj;
     int result_int;
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "winfo viewable %V", &gdvp->gdv_dmp->dm_pathName);
 
     if (Tcl_Eval(current_top->to_interp, bu_vls_addr(&vls)) != TCL_OK) {
@@ -5860,7 +5851,7 @@ to_mouse_append_pipept_common(struct ged *gedp,
     fastf_t inv_aspect;
     point_t model;
     point_t view;
-    struct bu_vls pt_vls;
+    struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -5906,7 +5897,6 @@ to_mouse_append_pipept_common(struct ged *gedp,
 
     MAT4X3PNT(model, gdvp->gdv_view->gv_view2model, view);
 
-    bu_vls_init(&pt_vls);
     bu_vls_printf(&pt_vls, "%lf %lf %lf", model[X], model[Y], model[Z]);
 
     gedp->ged_gvp = gdvp->gdv_view;
@@ -5942,7 +5932,7 @@ to_mouse_constrain_rot(struct ged *gedp,
     fastf_t x, y;
     fastf_t dx, dy;
     fastf_t sf;
-    struct bu_vls rot_vls;
+    struct bu_vls rot_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -6004,7 +5994,6 @@ to_mouse_constrain_rot(struct ged *gedp,
     else
 	sf = dy;
 
-    bu_vls_init(&rot_vls);
     switch (argv[2][0]) {
 	case 'x':
 	    bu_vls_printf(&rot_vls, "%lf 0 0", -sf);
@@ -6052,7 +6041,7 @@ to_mouse_constrain_trans(struct ged *gedp,
     fastf_t dx, dy;
     fastf_t sf;
     fastf_t inv_width;
-    struct bu_vls tran_vls;
+    struct bu_vls tran_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -6115,7 +6104,6 @@ to_mouse_constrain_trans(struct ged *gedp,
     else
 	sf = dy;
 
-    bu_vls_init(&tran_vls);
     switch (argv[2][0]) {
 	case 'x':
 	    bu_vls_printf(&tran_vls, "%lf 0 0", -sf);
@@ -6163,7 +6151,7 @@ to_mouse_find_pipept(struct ged *gedp,
     fastf_t inv_aspect;
     point_t model;
     point_t view;
-    struct bu_vls pt_vls;
+    struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -6204,7 +6192,6 @@ to_mouse_find_pipept(struct ged *gedp,
     VSET(view, x, y, 0.0);
     MAT4X3PNT(model, gdvp->gdv_view->gv_view2model, view);
 
-    bu_vls_init(&pt_vls);
     bu_vls_printf(&pt_vls, "%lf %lf %lf", model[X], model[Y], model[Z]);
 
     gedp->ged_gvp = gdvp->gdv_view;
@@ -6235,7 +6222,7 @@ to_mouse_move_arb_edge(struct ged *gedp,
     point_t model;
     point_t view;
     mat_t inv_rot;
-    struct bu_vls pt_vls;
+    struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -6292,7 +6279,6 @@ to_mouse_move_arb_edge(struct ged *gedp,
     bn_mat_inv(inv_rot, gdvp->gdv_view->gv_rotation);
     MAT4X3PNT(model, inv_rot, view);
 
-    bu_vls_init(&pt_vls);
     bu_vls_printf(&pt_vls, "%lf %lf %lf", model[X], model[Y], model[Z]);
 
     gedp->ged_gvp = gdvp->gdv_view;
@@ -6332,7 +6318,7 @@ to_mouse_move_arb_face(struct ged *gedp,
     point_t model;
     point_t view;
     mat_t inv_rot;
-    struct bu_vls pt_vls;
+    struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -6389,7 +6375,6 @@ to_mouse_move_arb_face(struct ged *gedp,
     bn_mat_inv(inv_rot, gdvp->gdv_view->gv_rotation);
     MAT4X3PNT(model, inv_rot, view);
 
-    bu_vls_init(&pt_vls);
     bu_vls_printf(&pt_vls, "%lf %lf %lf", model[X], model[Y], model[Z]);
 
     gedp->ged_gvp = gdvp->gdv_view;
@@ -6429,7 +6414,7 @@ to_mouse_move_pipept(struct ged *gedp,
     point_t model;
     point_t view;
     mat_t inv_rot;
-    struct bu_vls pt_vls;
+    struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -6486,7 +6471,6 @@ to_mouse_move_pipept(struct ged *gedp,
     bn_mat_inv(inv_rot, gdvp->gdv_view->gv_rotation);
     MAT4X3PNT(model, inv_rot, view);
 
-    bu_vls_init(&pt_vls);
     bu_vls_printf(&pt_vls, "%lf %lf %lf", model[X], model[Y], model[Z]);
 
     gedp->ged_gvp = gdvp->gdv_view;
@@ -6525,9 +6509,9 @@ to_mouse_orotate(struct ged *gedp,
     point_t model;
     point_t view;
     mat_t inv_rot;
-    struct bu_vls rot_x_vls;
-    struct bu_vls rot_y_vls;
-    struct bu_vls rot_z_vls;
+    struct bu_vls rot_x_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls rot_y_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls rot_z_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -6583,9 +6567,6 @@ to_mouse_orotate(struct ged *gedp,
     bn_mat_inv(inv_rot, gdvp->gdv_view->gv_rotation);
     MAT4X3PNT(model, inv_rot, view);
 
-    bu_vls_init(&rot_x_vls);
-    bu_vls_init(&rot_y_vls);
-    bu_vls_init(&rot_z_vls);
     bu_vls_printf(&rot_x_vls, "%lf", model[X]);
     bu_vls_printf(&rot_y_vls, "%lf", model[Y]);
     bu_vls_printf(&rot_z_vls, "%lf", model[Z]);
@@ -6627,7 +6608,7 @@ to_mouse_oscale(struct ged *gedp,
     fastf_t dx, dy;
     fastf_t sf;
     fastf_t inv_width;
-    struct bu_vls sf_vls;
+    struct bu_vls sf_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -6685,7 +6666,6 @@ to_mouse_oscale(struct ged *gedp,
     else
 	sf = 1.0 + dx;
 
-    bu_vls_init(&sf_vls);
     bu_vls_printf(&sf_vls, "%lf", sf);
 
     gedp->ged_gvp = gdvp->gdv_view;
@@ -6723,9 +6703,9 @@ to_mouse_otranslate(struct ged *gedp,
     point_t model;
     point_t view;
     mat_t inv_rot;
-    struct bu_vls tran_x_vls;
-    struct bu_vls tran_y_vls;
-    struct bu_vls tran_z_vls;
+    struct bu_vls tran_x_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls tran_y_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls tran_z_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -6782,9 +6762,6 @@ to_mouse_otranslate(struct ged *gedp,
     bn_mat_inv(inv_rot, gdvp->gdv_view->gv_rotation);
     MAT4X3PNT(model, inv_rot, view);
 
-    bu_vls_init(&tran_x_vls);
-    bu_vls_init(&tran_y_vls);
-    bu_vls_init(&tran_z_vls);
     bu_vls_printf(&tran_x_vls, "%lf", model[X]);
     bu_vls_printf(&tran_y_vls, "%lf", model[Y]);
     bu_vls_printf(&tran_z_vls, "%lf", model[Z]);
@@ -6829,7 +6806,8 @@ to_mouse_poly_circ(struct ged *gedp,
     fastf_t inv_height;
     fastf_t inv_aspect;
     point_t v_pt, m_pt;
-    struct bu_vls plist, i_vls;
+    struct bu_vls plist = BU_VLS_INIT_ZERO;
+    struct bu_vls i_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
     ged_data_polygon_state *gdpsp;
 
@@ -6877,7 +6855,6 @@ to_mouse_poly_circ(struct ged *gedp,
     fx = x * inv_width * 2.0 - 1.0;
     fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
 
-    bu_vls_init(&plist);
     bu_vls_printf(&plist, "{ ");
 
     {
@@ -6916,9 +6893,6 @@ to_mouse_poly_circ(struct ged *gedp,
     }
 
     bu_vls_printf(&plist, " }");
-    
-
-    bu_vls_init(&i_vls);
     bu_vls_printf(&i_vls, "%llu", gdpsp->gdps_curr_polygon_i);
 
     gedp->ged_gvp = gdvp->gdv_view;
@@ -7008,17 +6982,12 @@ to_mouse_poly_cont(struct ged *gedp,
     gedp->ged_gvp = gdvp->gdv_view;
 
     {
-	struct bu_vls i_vls;
-	struct bu_vls k_vls;
-	struct bu_vls plist;
+	struct bu_vls i_vls = BU_VLS_INIT_ZERO;
+	struct bu_vls k_vls = BU_VLS_INIT_ZERO;
+	struct bu_vls plist = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&i_vls);
 	bu_vls_printf(&i_vls, "%llu", gdpsp->gdps_curr_polygon_i);
-
-	bu_vls_init(&k_vls);
 	bu_vls_printf(&k_vls, "%llu", gdpsp->gdps_curr_point_i);
-
-	bu_vls_init(&plist);
 	bu_vls_printf(&plist, "%lf %lf %lf", V3ARGS(m_pt));
 
 	ac = 7;
@@ -7059,7 +7028,8 @@ to_mouse_poly_ell(struct ged *gedp,
     fastf_t inv_height;
     fastf_t inv_aspect;
     point_t m_pt;
-    struct bu_vls plist, i_vls;
+    struct bu_vls plist = BU_VLS_INIT_ZERO;
+    struct bu_vls i_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
     ged_data_polygon_state *gdpsp;
 
@@ -7107,7 +7077,6 @@ to_mouse_poly_ell(struct ged *gedp,
     fx = x * inv_width * 2.0 - 1.0;
     fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
 
-    bu_vls_init(&plist);
     bu_vls_printf(&plist, "{ ");
 
     {
@@ -7155,9 +7124,6 @@ to_mouse_poly_ell(struct ged *gedp,
     }
 
     bu_vls_printf(&plist, " }");
-    
-
-    bu_vls_init(&i_vls);
     bu_vls_printf(&i_vls, "%llu", gdpsp->gdps_curr_polygon_i);
 
     gedp->ged_gvp = gdvp->gdv_view;
@@ -7195,7 +7161,8 @@ to_mouse_poly_rect(struct ged *gedp,
     fastf_t inv_height;
     fastf_t inv_aspect;
     point_t v_pt, m_pt;
-    struct bu_vls plist, i_vls;
+    struct bu_vls plist = BU_VLS_INIT_ZERO;
+    struct bu_vls i_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
     ged_data_polygon_state *gdpsp;
 
@@ -7243,8 +7210,6 @@ to_mouse_poly_rect(struct ged *gedp,
     fx = x * inv_width * 2.0 - 1.0;
     fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
 
-    bu_vls_init(&plist);
-
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, gdpsp->gdps_prev_point);
     bu_vls_printf(&plist, "{ {%lf %lf %lf} ",  V3ARGS(m_pt));
 
@@ -7259,8 +7224,7 @@ to_mouse_poly_rect(struct ged *gedp,
     VSET(v_pt, fx, gdpsp->gdps_prev_point[Y], 1.0);
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
     bu_vls_printf(&plist, "{%lf %lf %lf} }",  V3ARGS(m_pt));
-		  
-    bu_vls_init(&i_vls);
+
     bu_vls_printf(&i_vls, "%llu", gdpsp->gdps_curr_polygon_i);
 
     gedp->ged_gvp = gdvp->gdv_view;
@@ -7305,7 +7269,8 @@ to_mouse_rect(struct ged *gedp,
     char *av[5];
     int x, y;
     int dx, dy;
-    struct bu_vls dx_vls, dy_vls;
+    struct bu_vls dx_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls dy_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -7341,8 +7306,6 @@ to_mouse_rect(struct ged *gedp,
     dx = x - gdvp->gdv_view->gv_prevMouseX;
     dy = gdvp->gdv_dmp->dm_height - y - gdvp->gdv_view->gv_prevMouseY;
 
-    bu_vls_init(&dx_vls);
-    bu_vls_init(&dy_vls);
     bu_vls_printf(&dx_vls, "%d", dx);
     bu_vls_printf(&dy_vls, "%d", dy);
     gedp->ged_gvp = gdvp->gdv_view;
@@ -7376,7 +7339,7 @@ to_mouse_rot(struct ged *gedp,
     char *av[4];
     fastf_t x, y;
     fastf_t dx, dy;
-    struct bu_vls rot_vls;
+    struct bu_vls rot_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -7428,7 +7391,6 @@ to_mouse_rot(struct ged *gedp,
     dx *= gdvp->gdv_view->gv_rscale;
     dy *= gdvp->gdv_view->gv_rscale;
 
-    bu_vls_init(&rot_vls);
     bu_vls_printf(&rot_vls, "%lf %lf 0", dx, dy);
 
     gedp->ged_gvp = gdvp->gdv_view;
@@ -7467,7 +7429,7 @@ to_mouse_rotate_arb_face(struct ged *gedp,
     point_t model;
     point_t view;
     mat_t inv_rot;
-    struct bu_vls pt_vls;
+    struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -7523,7 +7485,6 @@ to_mouse_rotate_arb_face(struct ged *gedp,
     bn_mat_inv(inv_rot, gdvp->gdv_view->gv_rotation);
     MAT4X3PNT(model, inv_rot, view);
 
-    bu_vls_init(&pt_vls);
     bu_vls_printf(&pt_vls, "%lf %lf %lf", model[X], model[Y], model[Z]);
 
     gedp->ged_gvp = gdvp->gdv_view;
@@ -7561,7 +7522,7 @@ to_mouse_scale(struct ged *gedp,
     fastf_t dx, dy;
     fastf_t sf;
     fastf_t inv_width;
-    struct bu_vls zoom_vls;
+    struct bu_vls zoom_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -7619,7 +7580,6 @@ to_mouse_scale(struct ged *gedp,
     else
 	sf = 1.0 + dy;
 
-    bu_vls_init(&zoom_vls);
     bu_vls_printf(&zoom_vls, "%lf", sf);
 
     gedp->ged_gvp = gdvp->gdv_view;
@@ -7656,7 +7616,7 @@ to_mouse_protate(struct ged *gedp,
     point_t model;
     point_t view;
     mat_t inv_rot;
-    struct bu_vls mrot_vls;
+    struct bu_vls mrot_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -7712,7 +7672,6 @@ to_mouse_protate(struct ged *gedp,
     bn_mat_inv(inv_rot, gdvp->gdv_view->gv_rotation);
     MAT4X3PNT(model, inv_rot, view);
 
-    bu_vls_init(&mrot_vls);
     bu_vls_printf(&mrot_vls, "%lf %lf %lf", V3ARGS(model));
 
     gedp->ged_gvp = gdvp->gdv_view;
@@ -7749,7 +7708,7 @@ to_mouse_pscale(struct ged *gedp,
     fastf_t dx, dy;
     fastf_t sf;
     fastf_t inv_width;
-    struct bu_vls sf_vls;
+    struct bu_vls sf_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -7807,7 +7766,6 @@ to_mouse_pscale(struct ged *gedp,
     else
 	sf = 1.0 + dx;
 
-    bu_vls_init(&sf_vls);
     bu_vls_printf(&sf_vls, "%lf", sf);
 
     gedp->ged_gvp = gdvp->gdv_view;
@@ -7847,7 +7805,7 @@ to_mouse_ptranslate(struct ged *gedp,
     point_t view;
     fastf_t inv_width;
     mat_t inv_rot;
-    struct bu_vls tvec_vls;
+    struct bu_vls tvec_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -7904,7 +7862,6 @@ to_mouse_ptranslate(struct ged *gedp,
     bn_mat_inv(inv_rot, gdvp->gdv_view->gv_rotation);
     MAT4X3PNT(model, inv_rot, view);
 
-    bu_vls_init(&tvec_vls);
     bu_vls_printf(&tvec_vls, "%lf %lf %lf", V3ARGS(model));
 
     gedp->ged_gvp = gdvp->gdv_view;
@@ -7942,7 +7899,7 @@ to_mouse_trans(struct ged *gedp,
     fastf_t x, y;
     fastf_t dx, dy;
     fastf_t inv_width;
-    struct bu_vls trans_vls;
+    struct bu_vls trans_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -7995,7 +7952,6 @@ to_mouse_trans(struct ged *gedp,
     dx *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_local2base;
     dy *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_local2base;
 
-    bu_vls_init(&trans_vls);
     bu_vls_printf(&trans_vls, "%lf %lf 0", dx, dy);
 
     gedp->ged_gvp = gdvp->gdv_view;
@@ -8067,7 +8023,7 @@ to_move_arb_edge_mode(struct ged *gedp,
 		      int UNUSED(maxargs))
 {
     fastf_t x, y;
-    struct bu_vls bindings;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -8104,7 +8060,6 @@ to_move_arb_edge_mode(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_MOVE_ARB_EDGE_MODE;
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_move_arb_edge %V %s %s %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -8126,7 +8081,7 @@ to_move_arb_face_mode(struct ged *gedp,
 		      int UNUSED(maxargs))
 {
     fastf_t x, y;
-    struct bu_vls bindings;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -8163,7 +8118,6 @@ to_move_arb_face_mode(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_MOVE_ARB_FACE_MODE;
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_move_arb_face %V %s %s %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -8185,7 +8139,7 @@ to_move_pipept_mode(struct ged *gedp,
 		    int UNUSED(maxargs))
 {
     fastf_t x, y;
-    struct bu_vls bindings;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -8222,7 +8176,6 @@ to_move_pipept_mode(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_MOVE_PIPE_POINT_MODE;
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_move_pipept %V %s %s %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -8246,7 +8199,7 @@ to_new_view(struct ged *gedp,
     struct ged_dm_view *new_gdvp;
     HIDDEN const int name_index = 1;
     int type = DM_TYPE_BAD;
-    struct bu_vls event_vls;
+    struct bu_vls event_vls = BU_VLS_INIT_ZERO;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
 
@@ -8350,7 +8303,6 @@ to_new_view(struct ged *gedp,
     /* Set default bindings */
     to_init_default_bindings(new_gdvp);
 
-    bu_vls_init(&event_vls);
     bu_vls_printf(&event_vls, "event generate %V <Configure>; %V autoview %V",
 		  &new_gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -8377,7 +8329,7 @@ to_orotate_mode(struct ged *gedp,
 		int UNUSED(maxargs))
 {
     fastf_t x, y;
-    struct bu_vls bindings;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -8414,7 +8366,6 @@ to_orotate_mode(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_OROTATE_MODE;
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_orotate %V %s %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -8435,7 +8386,7 @@ to_oscale_mode(struct ged *gedp,
 	       int UNUSED(maxargs))
 {
     fastf_t x, y;
-    struct bu_vls bindings;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -8472,7 +8423,6 @@ to_oscale_mode(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_OSCALE_MODE;
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_oscale %V %s %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -8493,7 +8443,7 @@ to_otranslate_mode(struct ged *gedp,
 		   int UNUSED(maxargs))
 {
     fastf_t x, y;
-    struct bu_vls bindings;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -8530,7 +8480,6 @@ to_otranslate_mode(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_OTRANSLATE_MODE;
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_otranslate %V %s %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -8800,8 +8749,8 @@ to_poly_circ_mode(struct ged *gedp,
     fastf_t inv_height;
     fastf_t inv_aspect;
     point_t v_pt, m_pt;
-    struct bu_vls plist;
-    struct bu_vls bindings;
+    struct bu_vls plist = BU_VLS_INIT_ZERO;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
     ged_data_polygon_state *gdpsp;
 
@@ -8865,7 +8814,6 @@ to_poly_circ_mode(struct ged *gedp,
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
     VMOVE(gdpsp->gdps_prev_point, v_pt);
 
-    bu_vls_init(&plist);
     bu_vls_printf(&plist, "{ {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} }",
 		  V3ARGS(m_pt), V3ARGS(m_pt), V3ARGS(m_pt), V3ARGS(m_pt));
     ac = 4;
@@ -8883,7 +8831,6 @@ to_poly_circ_mode(struct ged *gedp,
     (void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
     bu_vls_free(&plist);
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_poly_circ %V %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -8978,8 +8925,8 @@ to_poly_cont_build(struct ged *gedp,
     av[0] = "data_polygons";
     av[1] = bu_vls_addr(&gdvp->gdv_name);
     if (gdpsp->gdps_cflag == 0) {
-	struct bu_vls plist;
-	struct bu_vls bindings;
+	struct bu_vls plist = BU_VLS_INIT_ZERO;
+	struct bu_vls bindings = BU_VLS_INIT_ZERO;
 
 	if (gdpsp->gdps_polygons.gp_num_polygons == gdpsp->gdps_target_polygon_i)
 	    gdpsp->gdps_curr_polygon_i = gdpsp->gdps_target_polygon_i;
@@ -8989,7 +8936,6 @@ to_poly_cont_build(struct ged *gedp,
 	gdpsp->gdps_cflag = 1;
 	gdpsp->gdps_curr_point_i = 1;
 
-	bu_vls_init(&plist);
 	bu_vls_printf(&plist, "{ {%lf %lf %lf} {%lf %lf %lf} }", V3ARGS(m_pt), V3ARGS(m_pt));
 	ac = 4;
 	av[2] = "append_poly";
@@ -8999,7 +8945,6 @@ to_poly_cont_build(struct ged *gedp,
 	(void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
 	bu_vls_free(&plist);
 
-	bu_vls_init(&bindings);
 	bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_poly_cont %V %%x %%y}",
 		      &gdvp->gdv_dmp->dm_pathName,
 		      &current_top->to_gop->go_name,
@@ -9007,17 +8952,12 @@ to_poly_cont_build(struct ged *gedp,
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
 	bu_vls_free(&bindings);
     } else {
-	struct bu_vls i_vls;
-	struct bu_vls k_vls;
-	struct bu_vls plist;
+	struct bu_vls i_vls = BU_VLS_INIT_ZERO;
+	struct bu_vls k_vls = BU_VLS_INIT_ZERO;
+	struct bu_vls plist = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&i_vls);
 	bu_vls_printf(&i_vls, "%llu", gdpsp->gdps_curr_polygon_i);
-
-	bu_vls_init(&k_vls);
 	bu_vls_printf(&k_vls, "%llu", gdpsp->gdps_curr_point_i);
-
-	bu_vls_init(&plist);
 	bu_vls_printf(&plist, "%lf %lf %lf", V3ARGS(m_pt));
 
 	ac = 7;
@@ -9109,8 +9049,8 @@ to_poly_ell_mode(struct ged *gedp,
     fastf_t inv_height;
     fastf_t inv_aspect;
     point_t v_pt, m_pt;
-    struct bu_vls plist;
-    struct bu_vls bindings;
+    struct bu_vls plist = BU_VLS_INIT_ZERO;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
     ged_data_polygon_state *gdpsp;
 
@@ -9174,7 +9114,6 @@ to_poly_ell_mode(struct ged *gedp,
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
     VMOVE(gdpsp->gdps_prev_point, v_pt);
 
-    bu_vls_init(&plist);
     bu_vls_printf(&plist, "{ {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} }",
 		  V3ARGS(m_pt), V3ARGS(m_pt), V3ARGS(m_pt), V3ARGS(m_pt));
     ac = 4;
@@ -9192,7 +9131,6 @@ to_poly_ell_mode(struct ged *gedp,
     (void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
     bu_vls_free(&plist);
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_poly_ell %V %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -9222,8 +9160,8 @@ to_poly_rect_mode(struct ged *gedp,
     fastf_t inv_height;
     fastf_t inv_aspect;
     point_t v_pt, m_pt;
-    struct bu_vls plist;
-    struct bu_vls bindings;
+    struct bu_vls plist = BU_VLS_INIT_ZERO;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
     ged_data_polygon_state *gdpsp;
 
@@ -9287,7 +9225,6 @@ to_poly_rect_mode(struct ged *gedp,
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
     VMOVE(gdpsp->gdps_prev_point, v_pt);
 
-    bu_vls_init(&plist);
     bu_vls_printf(&plist, "{ {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} }",
 		  V3ARGS(m_pt), V3ARGS(m_pt), V3ARGS(m_pt), V3ARGS(m_pt));
     ac = 4;
@@ -9305,7 +9242,6 @@ to_poly_rect_mode(struct ged *gedp,
     (void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
     bu_vls_free(&plist);
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_poly_rect %V %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -9363,10 +9299,11 @@ to_rect_mode(struct ged *gedp,
 	     int UNUSED(maxargs))
 {
     int ac;
-    char *av[5];
     int x, y;
-    struct bu_vls bindings;
-    struct bu_vls x_vls, y_vls;
+    char *av[5];
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
+    struct bu_vls x_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls y_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -9413,8 +9350,6 @@ to_rect_mode(struct ged *gedp,
     av[4] = (char *)0;
     (void)ged_rect(gedp, ac, (const char **)av);
 
-    bu_vls_init(&x_vls);
-    bu_vls_init(&y_vls);
     bu_vls_printf(&x_vls, "%d", (int)gdvp->gdv_view->gv_prevMouseX);
     bu_vls_printf(&y_vls, "%d", (int)gdvp->gdv_view->gv_prevMouseY);
     av[1] = "pos";
@@ -9431,7 +9366,6 @@ to_rect_mode(struct ged *gedp,
     av[3] = (char *)0;
     (void)ged_rect(gedp, ac, (const char **)av);
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_rect %V %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -9558,7 +9492,7 @@ to_rotate_arb_face_mode(struct ged *gedp,
 			int UNUSED(maxargs))
 {
     fastf_t x, y;
-    struct bu_vls bindings;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -9595,7 +9529,6 @@ to_rotate_arb_face_mode(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_ROTATE_ARB_FACE_MODE;
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_rotate_arb_face %V %s %s %s %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -9618,7 +9551,7 @@ to_rotate_mode(struct ged *gedp,
 	       int UNUSED(maxargs))
 {
     fastf_t x, y;
-    struct bu_vls bindings;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -9655,7 +9588,6 @@ to_rotate_mode(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_ROTATE_MODE;
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_rot %V %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -9782,7 +9714,7 @@ to_protate_mode(struct ged *gedp,
 		int UNUSED(maxargs))
 {
     fastf_t x, y;
-    struct bu_vls bindings;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -9819,7 +9751,6 @@ to_protate_mode(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_PROTATE_MODE;
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_protate %V %s %s %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -9841,7 +9772,7 @@ to_pscale_mode(struct ged *gedp,
 	       int UNUSED(maxargs))
 {
     fastf_t x, y;
-    struct bu_vls bindings;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -9878,7 +9809,6 @@ to_pscale_mode(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_PSCALE_MODE;
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_pscale %V %s %s %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -9900,7 +9830,7 @@ to_ptranslate_mode(struct ged *gedp,
 		   int UNUSED(maxargs))
 {
     fastf_t x, y;
-    struct bu_vls bindings;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -9937,7 +9867,6 @@ to_ptranslate_mode(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_PTRANSLATE_MODE;
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_ptranslate %V %s %s %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -9959,7 +9888,7 @@ to_scale_mode(struct ged *gedp,
 	      int UNUSED(maxargs))
 {
     fastf_t x, y;
-    struct bu_vls bindings;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -9996,7 +9925,6 @@ to_scale_mode(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_SCALE_MODE;
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_scale %V %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -10294,7 +10222,7 @@ to_translate_mode(struct ged *gedp,
 		  int UNUSED(maxargs))
 {
     fastf_t x, y;
-    struct bu_vls bindings;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -10331,7 +10259,6 @@ to_translate_mode(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_TRANSLATE_MODE;
 
-    bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_trans %V %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -10683,7 +10610,7 @@ to_vslew(struct ged *gedp,
     fastf_t xpos1, ypos1;
     fastf_t xpos2, ypos2;
     fastf_t sf;
-    struct bu_vls slew_vec;
+    struct bu_vls slew_vec = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -10720,7 +10647,6 @@ to_vslew(struct ged *gedp,
     ypos2 = 0.5 * gdvp->gdv_dmp->dm_height;
     sf = 2.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
 
-    bu_vls_init(&slew_vec);
     bu_vls_printf(&slew_vec, "%lf %lf", (xpos1 - xpos2) * sf, (ypos2 - ypos1) * sf);
 
     gedp->ged_gvp = gdvp->gdv_view;
@@ -10996,11 +10922,8 @@ to_more_args_func(struct ged *gedp,
     int ac;
     int ret;
     char *av[256];
-    struct bu_vls callback_cmd;
-    struct bu_vls temp;
-
-    bu_vls_init(&callback_cmd);
-    bu_vls_init(&temp);
+    struct bu_vls callback_cmd = BU_VLS_INIT_ZERO;
+    struct bu_vls temp = BU_VLS_INIT_ZERO;
 
     /* copy all args */
     ac = argc;
@@ -11174,9 +11097,8 @@ to_view_func_common(struct ged *gedp,
 
     if (ret == GED_OK) {
 	if (cflag && 0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    struct bu_vls save_result;
+	    struct bu_vls save_result = BU_VLS_INIT_ZERO;
 
-	    bu_vls_init(&save_result);
 	    bu_vls_printf(&save_result, "%V", gedp->ged_result_str);
 	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback));
 	    bu_vls_trunc(gedp->ged_result_str, 0);
@@ -11524,9 +11446,8 @@ HIDDEN void
 to_rt_end_callback_internal(int aborted)
 {
     if (0 < bu_vls_strlen(&current_top->to_gop->go_rt_end_callback)) {
-	struct bu_vls callback_cmd;
+	struct bu_vls callback_cmd = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&callback_cmd);
 	bu_vls_printf(&callback_cmd, "%s %d",
 		      bu_vls_addr(&current_top->to_gop->go_rt_end_callback),
 		      aborted);
@@ -11537,17 +11458,13 @@ to_rt_end_callback_internal(int aborted)
 HIDDEN void
 to_output_handler(struct ged *gedp, char *line)
 {
-    if (gedp->ged_output_script != (char *)0) {
-	struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
+    if (gedp->ged_output_script != (char *)0) {
 	bu_vls_printf(&vls, "%s \"%s\"", gedp->ged_output_script, line);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     } else {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "puts \"%s\"", line);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -11930,14 +11847,13 @@ go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp)
 
     /* View parameters */
     if (gdvp->gdv_view->gv_view_params.gos_draw) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	point_t center;
 	char *ustr;
 
 	MAT_DELTAS_GET_NEG(center, gdvp->gdv_view->gv_center);
 	VSCALE(center, center, gop->go_gedp->ged_wdbp->dbip->dbi_base2local);
 
-	bu_vls_init(&vls);
 	ustr = (char *)bu_units_string(gop->go_gedp->ged_wdbp->dbip->dbi_local2base);
 	bu_vls_printf(&vls, "units:%s  size:%.2f  center:(%.2f, %.2f, %.2f)  az:%.2f  el:%.2f  tw::%.2f",
 		      ustr,

@@ -321,9 +321,8 @@ show_gift_bool (struct bool_tree_node *rp, int new_line)
 		break;
 	    default:
 		{
-		    struct bu_vls tmp_vls;
+		    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		    bu_vls_init(&tmp_vls);
 		    bu_vls_printf(&tmp_vls, "%s:%d: Illegal operation type: %d\n",
 				  __FILE__, __LINE__, bt_opn(rp));
 		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);

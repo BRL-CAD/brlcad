@@ -237,8 +237,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 
 	    if (!old && (sol_dp->d_flags & RT_DIR_SOLID)) {
 		/* if we get here, we must be looking for a solid table */
-		struct bu_vls tmp_vls;
-		bu_vls_init(&tmp_vls);
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 		if (!rt_functab[sol_intern.idb_type].ft_describe ||
 		    rt_functab[sol_intern.idb_type].ft_describe(&tmp_vls, &sol_intern, 1, gedp->ged_wdbp->dbip->dbi_base2local, &rt_uniresource, gedp->ged_wdbp->dbip) < 0) {
@@ -293,8 +292,8 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     static const char sortcmd_orig[] = "sort -n +1 -2 -o /tmp/ord_id ";
     static const char sortcmd_long[] = "sort --numeric --key=2, 2 --output /tmp/ord_id ";
     static const char catcmd[] = "cat /tmp/ord_id >> ";
-    struct bu_vls tmp_vls;
-    struct bu_vls cmd;
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
     struct bu_ptbl cur_path;
     int flag;
     int status;
@@ -323,9 +322,6 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-
-    bu_vls_init(&tmp_vls);
-    bu_vls_init(&cmd);
     bu_ptbl_init(&cur_path, 8, "f_tables: cur_path");
 
     status = GED_OK;

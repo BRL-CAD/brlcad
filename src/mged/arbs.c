@@ -80,12 +80,12 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     CHECK_READ_ONLY;
 
     if (argc < 1 || 27 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help rfarb");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 
@@ -128,12 +128,12 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     for (i=0; i<3; i++) {
 	if (argc < 8+3*i) {
-	    struct bu_vls tmp_vls;
+	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "POINT %d...\n", i+2);
 	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), MORE_ARGS_STR,
 			     "Enter coordinate to solve for (x, y, or z): ", (char *)NULL);
+
 	    return TCL_ERROR;
 	}
 

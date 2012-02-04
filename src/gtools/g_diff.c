@@ -509,10 +509,8 @@ int
 compare_tcl_solids(char *str1, Tcl_Obj *obj1, struct directory *dp1, char *str2, Tcl_Obj *obj2)
 {
     char *c1, *c2;
-    struct bu_vls adjust;
+    struct bu_vls adjust = BU_VLS_INIT_ZERO;
     int different = 0;
-
-    bu_vls_init(&adjust);
 
     /* check if same solid type */
     c1 = str1;
@@ -552,10 +550,8 @@ int
 compare_tcl_combs(Tcl_Obj *obj1, struct directory *dp1, Tcl_Obj *obj2)
 {
     int junk;
-    struct bu_vls adjust;
+    struct bu_vls adjust = BU_VLS_INIT_ZERO;
     int different = 0;
-
-    bu_vls_init(&adjust);
 
     /* first check if there is any difference */
     if (BU_STR_EQUAL(Tcl_GetStringFromObj(obj1, &junk), Tcl_GetStringFromObj(obj2, &junk)))
@@ -698,11 +694,9 @@ remove_region_attrs(Tcl_Obj *obj)
 int
 compare_attrs(struct directory *dp1, struct directory *dp2)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     Tcl_Obj *obj1, *obj2;
     int different = 0;
-
-    bu_vls_init(&vls);
 
     if (db_version(dbip1) > 4) {
 	bu_vls_printf(&vls, "_db1 attr get %s", dp1->d_namep);
@@ -759,16 +753,13 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 {
     struct directory *dp1, *dp2;
     char *argv[4] = {NULL, NULL, NULL, NULL};
-    struct bu_vls s1_tcl, s2_tcl;
-    struct bu_vls vls;
+    struct bu_vls s1_tcl = BU_VLS_INIT_ZERO;
+    struct bu_vls s2_tcl = BU_VLS_INIT_ZERO;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     int has_diff = 0;
 
     RT_CK_WDB(wdb1);
     RT_CK_WDB(wdb2);
-
-    bu_vls_init(&s1_tcl);
-    bu_vls_init(&s2_tcl);
-    bu_vls_init(&vls);
 
     /* look at all objects in this database */
     FOR_ALL_DIRECTORY_START(dp1, dbip1) {
