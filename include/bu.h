@@ -5261,13 +5261,13 @@ BU_EXPORT extern int bu_strcasecmp(const char *string1, const char *string2);
 #define BU_STR_EQUAL(s1, s2) (bu_strcmpm((s1), (s2), BU_FLSTR) == 0)
 
 /**
- * BU_STR_SIMILAR() is a convenience macro that compares two
+ * BU_STR_EQUIV() is a convenience macro that compares two
  * null-terminated strings for equality without regard for case.  Two
- * strings are similar if they are a case-insensitive match.  NULL
+ * strings are equivalent if they are a case-insensitive match.  NULL
  * strings are allowed and equivalent to an empty string.  Evaluates
  * true if the strings are similar and false if they are not.
  */
-#define BU_STR_SIMILAR(s1, s2) (bu_strcasecmp((s1), (s2)) == 0)
+#define BU_STR_EQUIV(s1, s2) (bu_strcasecmp((s1), (s2)) == 0)
 
 
 /** @file escape.c
