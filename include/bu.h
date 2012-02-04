@@ -5223,8 +5223,10 @@ BU_EXPORT extern char *bu_strdupm(const char *cp, const char *label);
 #define bu_strdup(s) bu_strdupm(s, BU_FLSTR)
 
 /**
- * Compares two strings more gracefully as standard library's strcmp().
- * It accepts NULL as valid input values and considers "" and NULL as equal.
+ * Compares two strings for equality.  It performs the comparison more
+ * robustly than the standard library's strcmp() function by defining
+ * consistent behavior for NULL and empty strings.  It accepts NULL as
+ * valid input values and considers "" and NULL as equal.
  *
  * bu_strcmp() is a macro that includes the current file name and line
  * number that can be used when bu debugging is enabled.
@@ -5234,6 +5236,15 @@ BU_EXPORT extern int bu_strcmpm(const char *string1, const char *string2, const 
 #define bu_strcmp(s1, s2) bu_strcmpm((s1), (s2), BU_FLSTR)
 
 /**
+ * Compares two strings for equality without regard for the case in
+ * the string.  It performs the comparison more robustly than the
+ * standard strcasecmp() function by defining consistent behavior for
+ * NULL and empty strings.  It accepts NULL as valid input values and
+ * considers "" and NULL as equal.
+ */
+BU_EXPORT extern int bu_strcasecmp(const char *string1, const char *string2);
+
+/**
  * BU_STR_EMPTY() is a convenience macro that tests a string for
  * emptiness, i.e. "" or NULL.
  */
@@ -5241,11 +5252,13 @@ BU_EXPORT extern int bu_strcmpm(const char *string1, const char *string2, const 
 
 /**
  * BU_STR_EQUAL() is a convenience macro for testing two
- * null-terminaed strings for equality, i.e. A == B, and is equivalent
- * to (bu_strcmp(s1, s2) == 0) returning true if the strings match and
- * false if they do not.
+ * null-terminated strings for equality.  It is equivalent to
+ * (bu_strcmp(s1, s2) == 0) whereby NULL strings are allowed and
+ * equivalent to an empty string.  Macro returns true when the strings
+ * match and false if they do not.
  */
 #define BU_STR_EQUAL(s1, s2) (bu_strcmpm((s1), (s2), BU_FLSTR) == 0)
+
 
 /** @file escape.c
  *

@@ -183,6 +183,24 @@ bu_strcmpm(const char *string1, const char *string2, const char *label)
 }
 
 
+int
+bu_strcasecmp(const char *string1, const char *string2)
+{
+    const char *s1 = "";
+    const char *s2 = "";
+
+    /* "" and NULL are considered equal */
+
+    if (string1)
+	s1 = string1;
+
+    if (string2)
+	s2 = string2;
+
+    return strcasecmp(s1, s2);
+}
+
+
 /*
  * Local Variables:
  * mode: C
