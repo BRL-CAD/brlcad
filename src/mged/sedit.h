@@ -247,19 +247,6 @@ extern struct dm_list *edit_rate_vr_dm_list;
 extern struct dm_list *edit_rate_mt_dm_list;
 extern struct dm_list *edit_rate_vt_dm_list;
 
-extern struct bu_vls edit_rate_model_tran_vls[3];
-extern struct bu_vls edit_rate_view_tran_vls[3];
-extern struct bu_vls edit_rate_model_rotate_vls[3];
-extern struct bu_vls edit_rate_object_rotate_vls[3];
-extern struct bu_vls edit_rate_view_rotate_vls[3];
-extern struct bu_vls edit_rate_scale_vls;
-extern struct bu_vls edit_absolute_model_tran_vls[3];
-extern struct bu_vls edit_absolute_view_tran_vls[3];
-extern struct bu_vls edit_absolute_model_rotate_vls[3];
-extern struct bu_vls edit_absolute_object_rotate_vls[3];
-extern struct bu_vls edit_absolute_view_rotate_vls[3];
-extern struct bu_vls edit_absolute_scale_vls;
-
 extern fastf_t es_scale;	/* scale factor */
 extern fastf_t es_para[3];	/* keyboard input parameter changes */
 extern fastf_t es_peqn[7][4];	/* ARBs defining plane equations */

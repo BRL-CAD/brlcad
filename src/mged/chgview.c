@@ -112,19 +112,6 @@ struct dm_list *edit_rate_vr_dm_list;
 struct dm_list *edit_rate_mt_dm_list;
 struct dm_list *edit_rate_vt_dm_list;
 
-struct bu_vls edit_rate_model_tran_vls[3];
-struct bu_vls edit_rate_view_tran_vls[3];
-struct bu_vls edit_rate_model_rotate_vls[3];
-struct bu_vls edit_rate_object_rotate_vls[3];
-struct bu_vls edit_rate_view_rotate_vls[3];
-struct bu_vls edit_rate_scale_vls;
-struct bu_vls edit_absolute_model_tran_vls[3];
-struct bu_vls edit_absolute_view_tran_vls[3];
-struct bu_vls edit_absolute_model_rotate_vls[3];
-struct bu_vls edit_absolute_object_rotate_vls[3];
-struct bu_vls edit_absolute_view_rotate_vls[3];
-struct bu_vls edit_absolute_scale_vls;
-
 double mged_abs_tol;
 double mged_rel_tol = 0.01;		/* 1%, by default */
 double mged_nrm_tol;			/* normal ang tol, radians */
