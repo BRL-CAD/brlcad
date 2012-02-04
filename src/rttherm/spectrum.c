@@ -280,7 +280,7 @@ void
 make_ntsc_xyz2rgb(fastf_t *xyz2rgb)
 {
     mat_t rgb2xyz;
-    point_t tst, new;
+    point_t tst, newpt;
 
     if (rt_clr__cspace_to_xyz(rgb_NTSC, rgb2xyz) == 0)
 	bu_exit(EXIT_FAILURE, "make_ntsc_xyz2rgb() can't initialize color space\n");
@@ -289,44 +289,44 @@ make_ntsc_xyz2rgb(fastf_t *xyz2rgb)
 #if 1
     /* Verify that it really works, I'm a skeptic */
     VSET(tst, 1, 1, 1);
-    MAT3X3VEC(new, rgb2xyz, tst);
+    MAT3X3VEC(newpt, rgb2xyz, tst);
     VPRINT("white_rgb (i)", tst);
-    VPRINT("white_xyz (o)", new);
+    VPRINT("white_xyz (o)", newpt);
 
     VSET(tst, 0.313,     0.329,      0.358);
-    MAT3X3VEC(new, xyz2rgb, tst);
+    MAT3X3VEC(newpt, xyz2rgb, tst);
     VPRINT("white_xyz (i)", tst);
-    VPRINT("white_rgb (o)", new);
+    VPRINT("white_rgb (o)", newpt);
 
     VSET(tst, 1, 0, 0);
-    MAT3X3VEC(new, rgb2xyz, tst);
+    MAT3X3VEC(newpt, rgb2xyz, tst);
     VPRINT("red_rgb (i)", tst);
-    VPRINT("red_xyz (o)", new);
+    VPRINT("red_xyz (o)", newpt);
 
     VSET(tst, 0.670,     0.330,      0.000);
-    MAT3X3VEC(new, xyz2rgb, tst);
+    MAT3X3VEC(newpt, xyz2rgb, tst);
     VPRINT("red_xyz (i)", tst);
-    VPRINT("red_rgb (o)", new);
+    VPRINT("red_rgb (o)", newpt);
 
     VSET(tst, 0, 1, 0);
-    MAT3X3VEC(new, rgb2xyz, tst);
+    MAT3X3VEC(newpt, rgb2xyz, tst);
     VPRINT("grn_rgb (i)", tst);
-    VPRINT("grn_xyz (o)", new);
+    VPRINT("grn_xyz (o)", newpt);
 
     VSET(tst, 0.210,     0.710,      0.080);
-    MAT3X3VEC(new, xyz2rgb, tst);
+    MAT3X3VEC(newpt, xyz2rgb, tst);
     VPRINT("grn_xyz (i)", tst);
-    VPRINT("grn_rgb (o)", new);
+    VPRINT("grn_rgb (o)", newpt);
 
     VSET(tst, 0, 0, 1);
-    MAT3X3VEC(new, rgb2xyz, tst);
+    MAT3X3VEC(newpt, rgb2xyz, tst);
     VPRINT("blu_rgb (i)", tst);
-    VPRINT("blu_xyz (o)", new);
+    VPRINT("blu_xyz (o)", newpt);
 
     VSET(tst, 0.140,     0.080,      0.780);
-    MAT3X3VEC(new, xyz2rgb, tst);
+    MAT3X3VEC(newpt, xyz2rgb, tst);
     VPRINT("blu_xyz (i)", tst);
-    VPRINT("blu_rgb (o)", new);
+    VPRINT("blu_rgb (o)", newpt);
 #endif
 }
 
@@ -418,7 +418,7 @@ spect_xyz_to_curve(struct bn_tabdata *tabp, const fastf_t *xyz, const struct bn_
 struct bn_table *
 bn_table_make_visible_and_uniform(int num, double first, double last, int vis_nsamp)
 {
-    struct bn_table *new;
+    struct bn_table *newtab;
     struct bn_table *uniform;
     struct bn_table *vis;
 
@@ -426,13 +426,13 @@ bn_table_make_visible_and_uniform(int num, double first, double last, int vis_ns
     uniform = bn_table_make_uniform(num, first, last);
     vis = bn_table_make_uniform(vis_nsamp, 340.0, 700.0);
 
-    new = bn_table_merge2(uniform, vis);
-    bn_ck_table(new);
+    newtab = bn_table_merge2(uniform, vis);
+    bn_ck_table(newtab);
 
     bn_table_free(uniform);
     bn_table_free(vis);
 
-    return new;
+    return newtab;
 }
 
 

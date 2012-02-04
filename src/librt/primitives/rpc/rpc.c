@@ -873,7 +873,7 @@ rt_mk_parabola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf
     int n;
     point_t mpt, p0, p1;
     vect_t norm_line, norm_parab;
-    struct rt_pt_node *new;
+    struct rt_pt_node *newpt;
 
 #define RPC_TOL .0001
     /* endpoints of segment approximating parabola */
@@ -904,16 +904,16 @@ rt_mk_parabola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf
     /* split segment at widest point if not within error tolerances */
     if (dist > dtol || theta0 > ntol || theta1 > ntol) {
 	/* split segment */
-	new = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-	VMOVE(new->p, mpt);
-	new->next = pts->next;
-	pts->next = new;
+	newpt = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	VMOVE(newpt->p, mpt);
+	newpt->next = pts->next;
+	pts->next = newpt;
 	/* keep track of number of pts added */
 	n = 1;
 	/* recurse on first new segment */
 	n += rt_mk_parabola(pts, r, b, dtol, ntol);
 	/* recurse on second new segment */
-	n += rt_mk_parabola(new, r, b, dtol, ntol);
+	n += rt_mk_parabola(newpt, r, b, dtol, ntol);
     } else
 	n  = 0;
     return n;

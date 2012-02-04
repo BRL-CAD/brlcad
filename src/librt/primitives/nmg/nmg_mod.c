@@ -1947,7 +1947,7 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
 	    break;
 	case NMG_FACE_G_SNURB_MAGIC: {
 	    struct face_g_snurb *old = fu->f_p->g.snurb_p;
-	    struct face_g_snurb *new;
+	    struct face_g_snurb *newface;
 	    /* Create a new, duplicate snurb */
 	    nmg_face_g_snurb(new_fu,
 			     old->order[0], old->order[1],
@@ -1956,12 +1956,12 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
 			     old->s_size[0], old->s_size[1],
 			     old->pt_type,
 			     NULL);
-	    new = new_fu->f_p->g.snurb_p;
+	    newface = new_fu->f_p->g.snurb_p;
 	    /* Copy knots */
-	    memcpy(new->u.knots, old->u.knots, old->u.k_size*sizeof(fastf_t));
-	    memcpy(new->v.knots, old->v.knots, old->v.k_size*sizeof(fastf_t));
+	    memcpy(newface->u.knots, old->u.knots, old->u.k_size*sizeof(fastf_t));
+	    memcpy(newface->v.knots, old->v.knots, old->v.k_size*sizeof(fastf_t));
 	    /* Copy mesh */
-	    memcpy(new->ctl_points, old->ctl_points,
+	    memcpy(newface->ctl_points, old->ctl_points,
 		   old->s_size[0] * old->s_size[1] *
 		   RT_NURB_EXTRACT_COORDS(old->pt_type) *
 		   sizeof(fastf_t));

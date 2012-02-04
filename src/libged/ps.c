@@ -234,7 +234,7 @@ ps_draw_body(struct ged *gedp, FILE *fp)
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
-    mat_t new;
+    mat_t newmat;
     matp_t mat;
     mat_t perspective_mat;
     struct solid *sp;
@@ -258,8 +258,8 @@ ps_draw_body(struct ged *gedp, FILE *fp)
 	    ged_deering_persp_mat(perspective_mat, l, h, gedp->ged_gvp->gv_eye_pos);
 	}
 
-	bn_mat_mul(new, perspective_mat, mat);
-	mat = new;
+	bn_mat_mul(newmat, perspective_mat, mat);
+	mat = newmat;
     }
 
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);

@@ -2713,7 +2713,7 @@ int
 rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_extrude_internal *extr;
-    fastf_t *new;
+    fastf_t *newval;
     fastf_t len;
 
     RT_CK_DB_INTERNAL(intern);
@@ -2724,21 +2724,21 @@ rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 	int array_len=3;
 
 	if (*argv[0] == 'V') {
-	    new = extr->V;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) != array_len) {
+	    newval = extr->V;
+	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) != array_len) {
 		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (*argv[0] == 'H') {
-	    new = extr->h;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
+	    newval = extr->h;
+	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (*argv[0] == 'A') {
-	    new = extr->u_vec;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
+	    newval = extr->u_vec;
+	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
@@ -2749,8 +2749,8 @@ rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 	    VUNITIZE(extr->v_vec);
 	    VSCALE(extr->v_vec, extr->v_vec, len);
 	} else if (*argv[0] == 'B') {
-	    new = extr->v_vec;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) != array_len) {
+	    newval = extr->v_vec;
+	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) != array_len) {
 		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
 	    }

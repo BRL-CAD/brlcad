@@ -508,16 +508,16 @@ paintSolidRegion(unsigned char *regionpix, Point *pt)
 HIDDEN void
 pushPoint(Point *pt, PtStack **spp)
 {	
-    PtStack *new;
-    if ( (new = (PtStack *) malloc( sizeof(PtStack) )) == NULL )
+    PtStack *newp;
+    if ( (newp = (PtStack *) malloc( sizeof(PtStack) )) == NULL )
     {
 	fb_log(	"\"%s\"(%d) Malloc() no more space.\n",
 		__FILE__, __LINE__ );
 	return;
     }
-    new->pt = *pt; /* struct copy */
-    new->next = *spp;
-    *spp = new;
+    newp->pt = *pt; /* struct copy */
+    newp->next = *spp;
+    *spp = newp;
 }
 
 HIDDEN int

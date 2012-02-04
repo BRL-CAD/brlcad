@@ -2315,7 +2315,7 @@ cut_diagonals(struct bu_list *tbl2d, struct bu_list *tlist, const struct faceuse
 HIDDEN void
 cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *tol)
 {
-    struct pt2d *min, *max, *new, *first=NULL, *prev, *next, *current;
+    struct pt2d *min, *max, *newpt, *first=NULL, *prev, *next, *current;
     struct edgeuse *eu;
     int verts=0;
     int vert_count_sq;	/* XXXXX Hack for catching infinite loop */
@@ -2333,22 +2333,22 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 
     /* find min/max points & count vertex points */
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	new = find_pt2d(tbl2d, eu->vu_p);
-	if (!new) {
+	newpt = find_pt2d(tbl2d, eu->vu_p);
+	if (!newpt) {
 	    bu_log("why can't I find a 2D point for %g %g %g?\n",
 		   V3ARGS(eu->vu_p->v_p->vg_p->coord));
 	    bu_bomb("bombing\n");
 	}
 
 	if (rt_g.NMG_debug & DEBUG_TRI)
-	    bu_log("%g %g\n", new->coord[X], new->coord[Y]);
+	    bu_log("%g %g\n", newpt->coord[X], newpt->coord[Y]);
 
 	verts++;
 
-	if (!min || P_LT_V(new, min))
-	    min = new;
-	if (!max || P_GT_V(new, max))
-	    max = new;
+	if (!min || P_LT_V(newpt, min))
+	    min = newpt;
+	if (!max || P_GT_V(newpt, max))
+	    max = newpt;
     }
     vert_count_sq = verts * verts;
 
@@ -3311,7 +3311,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
     fastf_t invDenom, u, v;
     fastf_t dist;
 
-    struct pt2d *min, *max, *new, *first, *prev, *next, *current, *tmp;
+    struct pt2d *min, *max, *newpt, *first, *prev, *next, *current, *tmp;
     struct pt2d *prev_orig, *next_orig, *pt, *t;
 
     struct model *m;
@@ -3330,7 +3330,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
     BN_CK_TOL(tol);
     NMG_CK_LOOPUSE(lu);
 
-    min = max = new = first = prev = next = current = (struct pt2d *)NULL;
+    min = max = newpt = first = prev = next = current = (struct pt2d *)NULL;
     prev_orig = next_orig = pt = t = tmp = (struct pt2d *)NULL;
 
     orig_lu_p = lu;
@@ -3343,22 +3343,22 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
     verts = 0;
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
         NMG_CK_EDGEUSE(eu);
-	new = find_pt2d(tbl2d, eu->vu_p);
-	if (!new) {
+	newpt = find_pt2d(tbl2d, eu->vu_p);
+	if (!newpt) {
 	    bu_log("cut_unimonotone(): can not find a 2D point for %g %g %g\n",
 		   V3ARGS(eu->vu_p->v_p->vg_p->coord));
 	    bu_bomb("cut_unimonotone(): can not find a 2D point\n");
 	}
 
 	if (rt_g.NMG_debug & DEBUG_TRI) {
-	    bu_log("%g %g\n", new->coord[X], new->coord[Y]);
+	    bu_log("%g %g\n", newpt->coord[X], newpt->coord[Y]);
         }
 
-	if (!min || P_LT_V(new, min)) {
-	    min = new;
+	if (!min || P_LT_V(newpt, min)) {
+	    min = newpt;
         }
-	if (!max || P_GT_V(new, max)) {
-	    max = new;
+	if (!max || P_GT_V(newpt, max)) {
+	    max = newpt;
         }
 	verts++;
     }

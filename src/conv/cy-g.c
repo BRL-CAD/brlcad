@@ -274,7 +274,7 @@ main(int argc, char **argv)
 		db5_update_attribute("_GLOBAL", "COLOR", cptr, outfp->dbip);
 		bu_log("COLOR=%s\n", color);
 
-		if (strcasecmp(color, "SGI") != 0) {
+		if (!BU_STR_EQUIV(color, "SGI")) {
 		    bu_log("Encountered unknown COLOR, ignoring\n");
 		}
 

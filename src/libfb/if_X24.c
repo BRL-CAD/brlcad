@@ -2053,7 +2053,7 @@ X24_getmem(FBIO *ifp)
     char *mem = NULL;
     int pixsize;
     int size;
-    int new = 0;
+    int isnew = 0;
 
     FB_CK_FBIO(ifp);
 
@@ -2092,7 +2092,7 @@ X24_getmem(FBIO *ifp)
 		if ((xi->xi_shmid = shmget(SHMEM_KEY, size, 0)) < 0) {
 		    /* No existing one, create a new one */
 		    xi->xi_shmid = shmget(SHMEM_KEY, size, IPC_CREAT|0666);
-		    new = 1;
+		    isnew = 1;
 		}
 
 		if (xi->xi_shmid < 0) {
@@ -2126,7 +2126,7 @@ using private memory instead, errno %d\n", errno);
 store\n  Run shell command 'limit datasize unlmited' and try again.\n", size);
 		return -1;
 	    }
-	    new = 1;
+	    isnew = 1;
 	    break;
     }
 
@@ -2134,11 +2134,11 @@ store\n  Run shell command 'limit datasize unlmited' and try again.\n", size);
     xi->xi_mem = (unsigned char *) mem + sizeof (*xi->xi_rgb_cmap);
 
     /* Clear memory frame buffer to black */
-    if (new) {
+    if (isnew) {
 	memset(mem, 0, size);
     }
 
-    return new;
+    return isnew;
 }
 
 

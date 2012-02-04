@@ -214,21 +214,21 @@ void
 bu_cpulimit_set(int sec)
 {
 #ifdef CRAY
-    long old;		/* seconds */
-    long new;		/* seconds */
+    long prev;		/* seconds */
+    long curr;		/* seconds */
     long newtick;	/* 64-bit clock counts */
     extern long limit();
 
-    old = bu_cpulimit_get();
-    new = old + sec;
-    if (new <= 0 || new >= INT_MAX)
-	new = INT_MAX;	/* no limit, for practical purposes */
-    newtick = new * HZ;
+    prev = bu_cpulimit_get();
+    curr = prev + sec;
+    if (curr <= 0 || curr >= INT_MAX)
+	curr = INT_MAX;	/* no limit, for practical purposes */
+    newtick = curr * HZ;
     if (limit(C_PROC, 0, L_CPU, newtick) < 0) {
 	perror("bu_cpulimit_set: CPU limit(set)");
     }
     bu_log("Cray CPU limit changed from %d to %d seconds\n",
-	   old, newtick/HZ);
+	   prev, newtick/HZ);
 
     /* Eliminate any memory limit */
     if (limit(C_PROC, 0, L_MEM, 0) < 0) {
@@ -646,7 +646,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     int x;
 
 #  if defined(SGI_4D) || defined(CRAY)
-    int new;
+    int curr;
 #  endif
 
 #  ifdef sgi
@@ -782,7 +782,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	 */
 #    if defined(IRIX) && IRIX <= 4
 	/* Stack size per proc comes from RLIMIT_STACK (typ 64MBytes). */
-	new = sproc(parallel_interface, PR_SALL, 0);
+	curr = sproc(parallel_interface, PR_SALL, 0);
 #    else
 	/* State maximum stack size.  Be generous, as this mainly
 	 * costs address space.  RAM is allocated only to those pages
@@ -792,7 +792,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	 * the hopes of creating a small 32k "buffer zone" to catch
 	 * stack overflows.
 	 */
-	new = sprocsp((void (*)(void *, size_t))parallel_interface,
+	curr = sprocsp((void (*)(void *, size_t))parallel_interface,
 		      PR_SALL, 0, NULL,
 #      if defined(IRIX64)
 		      64*1024*1024 - 32*1024
@@ -801,15 +801,15 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 #      endif
 	    );
 #    endif
-	if (new < 0) {
+	if (curr < 0) {
 	    perror("sproc");
 	    bu_log("ERROR bu_parallel(): sproc(x%x, x%x)=%d failed on processor %d\n",
 		   parallel_interface, PR_SALL,
-		   new, x);
+		   curr, x);
 	    bu_log("sbrk(0)=%p\n", sbrk(0));
 	    bu_bomb("bu_parallel() failure");
 	} else {
-	    worker_pid_tbl[x] = new;
+	    worker_pid_tbl[x] = curr;
 	}
 
     }

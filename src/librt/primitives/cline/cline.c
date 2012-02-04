@@ -1073,7 +1073,7 @@ rt_cline_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, 
 {
     struct rt_cline_internal *cli =
 	(struct rt_cline_internal *)intern->idb_ptr;
-    fastf_t *new;
+    fastf_t *newval;
 
     RT_CK_DB_INTERNAL(intern);
     RT_CLINE_CK_MAGIC(cli);
@@ -1082,15 +1082,15 @@ rt_cline_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, 
 	int array_len=3;
 
 	if (*argv[0] == 'V') {
-	    new = cli->v;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
+	    newval = cli->v;
+	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (*argv[0] == 'H') {
-	    new = cli->h;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
+	    newval = cli->h;
+	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for point\n");
 		return BRLCAD_ERROR;

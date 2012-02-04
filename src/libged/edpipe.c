@@ -363,7 +363,7 @@ struct wdb_pipept *
 _ged_add_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const point_t new_pt)
 {
     struct wdb_pipept *last;
-    struct wdb_pipept *new;
+    struct wdb_pipept *newpp;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
@@ -375,39 +375,39 @@ _ged_add_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const po
 	last = BU_LIST_LAST(wdb_pipept, &pipeip->pipe_segs_head);
 
 	if (last->l.magic == BU_LIST_HEAD_MAGIC) {
-	    BU_GET(new, struct wdb_pipept);
-	    new->l.magic = WDB_PIPESEG_MAGIC;
-	    new->pp_od = 30.0;
-	    new->pp_id = 0.0;
-	    new->pp_bendradius = 40.0;
-	    VMOVE(new->pp_coord, new_pt);
-	    BU_LIST_INSERT(&pipeip->pipe_segs_head, &new->l);
-	    return new;
+	    BU_GET(newpp, struct wdb_pipept);
+	    newpp->l.magic = WDB_PIPESEG_MAGIC;
+	    newpp->pp_od = 30.0;
+	    newpp->pp_id = 0.0;
+	    newpp->pp_bendradius = 40.0;
+	    VMOVE(newpp->pp_coord, new_pt);
+	    BU_LIST_INSERT(&pipeip->pipe_segs_head, &newpp->l);
+	    return newpp;
 	}
     }
 
     /* build new point */
-    BU_GET(new, struct wdb_pipept);
-    new->l.magic = WDB_PIPESEG_MAGIC;
-    new->pp_od = last->pp_od;
-    new->pp_id = last->pp_id;
-    new->pp_bendradius = last->pp_bendradius;
-    VMOVE(new->pp_coord, new_pt);
+    BU_GET(newpp, struct wdb_pipept);
+    newpp->l.magic = WDB_PIPESEG_MAGIC;
+    newpp->pp_od = last->pp_od;
+    newpp->pp_id = last->pp_id;
+    newpp->pp_bendradius = last->pp_bendradius;
+    VMOVE(newpp->pp_coord, new_pt);
 
     if (pp) { /* append after current point */
-	BU_LIST_APPEND(&pp->l, &new->l);
+	BU_LIST_APPEND(&pp->l, &newpp->l);
     } else { /* add to end of pipe solid */
-	BU_LIST_INSERT(&pipeip->pipe_segs_head, &new->l);
+	BU_LIST_INSERT(&pipeip->pipe_segs_head, &newpp->l);
     }
 
     if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
 	/* won't work here, so refuse to do it */
-	BU_LIST_DEQUEUE(&new->l);
-	bu_free((genptr_t)new, "add_pipept: new ");
+	BU_LIST_DEQUEUE(&newpp->l);
+	bu_free((genptr_t)newpp, "add_pipept: newpp ");
 	return pp;
     }
 
-    return new;
+    return newpp;
 }
 
 
@@ -415,7 +415,7 @@ struct wdb_pipept *
 _ged_ins_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const point_t new_pt)
 {
     struct wdb_pipept *first;
-    struct wdb_pipept *new;
+    struct wdb_pipept *newpp;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
@@ -427,39 +427,39 @@ _ged_ins_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const po
 	first = BU_LIST_FIRST(wdb_pipept, &pipeip->pipe_segs_head);
 
 	if (first->l.magic == BU_LIST_HEAD_MAGIC) {
-	    BU_GET(new, struct wdb_pipept);
-	    new->l.magic = WDB_PIPESEG_MAGIC;
-	    new->pp_od = 30.0;
-	    new->pp_id = 0.0;
-	    new->pp_bendradius = 40.0;
-	    VMOVE(new->pp_coord, new_pt);
-	    BU_LIST_APPEND(&pipeip->pipe_segs_head, &new->l);
-	    return new;
+	    BU_GET(newpp, struct wdb_pipept);
+	    newpp->l.magic = WDB_PIPESEG_MAGIC;
+	    newpp->pp_od = 30.0;
+	    newpp->pp_id = 0.0;
+	    newpp->pp_bendradius = 40.0;
+	    VMOVE(newpp->pp_coord, new_pt);
+	    BU_LIST_APPEND(&pipeip->pipe_segs_head, &newpp->l);
+	    return newpp;
 	}
     }
 
     /* build new point */
-    BU_GET(new, struct wdb_pipept);
-    new->l.magic = WDB_PIPESEG_MAGIC;
-    new->pp_od = first->pp_od;
-    new->pp_id = first->pp_id;
-    new->pp_bendradius = first->pp_bendradius;
-    VMOVE(new->pp_coord, new_pt);
+    BU_GET(newpp, struct wdb_pipept);
+    newpp->l.magic = WDB_PIPESEG_MAGIC;
+    newpp->pp_od = first->pp_od;
+    newpp->pp_id = first->pp_id;
+    newpp->pp_bendradius = first->pp_bendradius;
+    VMOVE(newpp->pp_coord, new_pt);
 
     if (pp) { /* insert before current point */
-	BU_LIST_INSERT(&pp->l, &new->l);
+	BU_LIST_INSERT(&pp->l, &newpp->l);
     } else { /* add to start of pipe */
-	BU_LIST_APPEND(&pipeip->pipe_segs_head, &new->l);
+	BU_LIST_APPEND(&pipeip->pipe_segs_head, &newpp->l);
     }
 
     if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
 	/* won't work here, so refuse to do it */
-	BU_LIST_DEQUEUE(&new->l);
-	bu_free((genptr_t)new, "ins_pipept: new ");
+	BU_LIST_DEQUEUE(&newpp->l);
+	bu_free((genptr_t)newpp, "ins_pipept: newpp ");
 	return pp;
     }
 
-    return new;
+    return newpp;
 }
 
 

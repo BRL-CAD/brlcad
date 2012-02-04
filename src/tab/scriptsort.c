@@ -160,7 +160,7 @@ struct frame *getframe(FILE *in)
 {
     extern FILE *yyin;
     extern char yytext[];
-    struct frame *new;
+    struct frame *newframe;
 
     yyin = in;
 
@@ -188,17 +188,17 @@ struct frame *getframe(FILE *in)
 /*
  * get a frame and set it up.
  */
-    new = (struct frame *) bu_calloc(1, sizeof(struct frame), "struct frame");
-    BU_LIST_INIT_MAGIC(&(new->l), MAGIC);
-    new->number = atoi(yytext);
-    new->number += frame_offset;
+    newframe = (struct frame *) bu_calloc(1, sizeof(struct frame), "struct frame");
+    BU_LIST_INIT_MAGIC(&(newframe->l), MAGIC);
+    newframe->number = atoi(yytext);
+    newframe->number += frame_offset;
 /*
  * The next token should be SEMI COLON;
  */
     token = yylex();
     if (!token) {
-	new->l.magic = -1;
-	bu_free(new, "struct frame");
+	newframe->l.magic = -1;
+	bu_free(newframe, "struct frame");
 	return NULL;
     }
 
@@ -212,24 +212,24 @@ struct frame *getframe(FILE *in)
     while ((token = yylex()) != END && (token)) {
 	if (token == CLEAN) {
 	    (void) yylex(); /* skip semi-colon */
-	    new->flags |= FLAG_CLEAN;
+	    newframe->flags |= FLAG_CLEAN;
 	} else {
-	    addtext(new, yytext);
+	    addtext(newframe, yytext);
 	    /* Can't concatenate commands to comments. */
 	    if (token == COMMENT) {
-		addtext(new, "\n");
+		addtext(newframe, "\n");
 	    }
 	}
     }
     token = yylex();	/* scarf the semi-colon */
     token = yylex();	/* Get the next token.  It could be shell */
     if (token == SHELL) {
-	new->flags |= FLAG_SCRIPT;
+	newframe->flags |= FLAG_SCRIPT;
     }
     if (verbose) {
-	fprintf(stderr, "scriptsort: Frame %d(%d)\n", new->number, new->tp);
+	fprintf(stderr, "scriptsort: Frame %d(%d)\n", newframe->number, newframe->tp);
     }
-    return new;
+    return newframe;
 }
 
 
@@ -318,7 +318,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char *argv[])
 {
-    struct frame *new, *lp;
+    struct frame *newframe, *lp;
 
     int base, count;
 
@@ -335,8 +335,8 @@ main(int argc, char *argv[])
 
     if (verbose) fprintf(stderr, "scriptsort: reading.\n");
 
-    while ((new=getframe(stdin)) != NULL) {
-	BU_LIST_INSERT(&head, &new->l);
+    while ((newframe=getframe(stdin)) != NULL) {
+	BU_LIST_INSERT(&head, &newframe->l);
     }
     if (verbose) fprintf(stderr, "scriptsort: sorting.\n");
     bubblesort();

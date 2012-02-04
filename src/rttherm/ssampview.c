@@ -774,7 +774,7 @@ show_color(int off)
     int todo;
     int nbytes;
     fastf_t scale;
-    struct bn_tabdata *new;
+    struct bn_tabdata *newtab;
 
     cp = (char *)data;
     nbytes = BN_SIZEOF_TABDATA(spectrum);
@@ -787,7 +787,7 @@ show_color(int off)
     if (cie_x->magic == 0)
 	rt_spect_make_CIE_XYZ(&cie_x, &cie_y, &cie_z, spectrum);
 
-    BN_GET_TABDATA(new, spectrum);
+    BN_GET_TABDATA(newtab, spectrum);
 
     for (todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3) {
 	struct bn_tabdata *sp;
@@ -799,13 +799,13 @@ show_color(int off)
 	BN_CK_TABDATA(sp);
 
 	if (use_atmosphere) {
-	    bn_tabdata_mul(new, sp, atmosphere);
-	    bn_tabdata_freq_shift(new, new, spectrum->x[off] - 380.0);
+	    bn_tabdata_mul(newtab, sp, atmosphere);
+	    bn_tabdata_freq_shift(newtab, newtab, spectrum->x[off] - 380.0);
 	} else {
-	    bn_tabdata_freq_shift(new, sp, spectrum->x[off] - 380.0);
+	    bn_tabdata_freq_shift(newtab, sp, spectrum->x[off] - 380.0);
 	}
 
-	spect_curve_to_xyz(xyz, new, cie_x, cie_y, cie_z);
+	spect_curve_to_xyz(xyz, newtab, cie_x, cie_y, cie_z);
 
 	MAT3X3VEC(rgb, xyz2rgb, xyz);
 
@@ -825,7 +825,7 @@ show_color(int off)
 	pp[BLU] = val;
     }
 
-    bn_tabdata_free(new);
+    bn_tabdata_free(newtab);
 }
 
 

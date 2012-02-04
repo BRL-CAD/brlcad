@@ -11667,7 +11667,7 @@ go_dm_draw_polys(struct dm *dmp, ged_data_polygon_state *gdpsp, int mode)
 HIDDEN void
 go_draw(struct ged_dm_view *gdvp)
 {
-    mat_t new;
+    mat_t newmat;
     matp_t mat;
     mat_t perspective_mat;
 
@@ -11705,8 +11705,8 @@ go_draw(struct ged_dm_view *gdvp)
 	ged_mike_persp_mat(perspective_mat, eye);
 #endif
 
-	bn_mat_mul(new, perspective_mat, mat);
-	mat = new;
+	bn_mat_mul(newmat, perspective_mat, mat);
+	mat = newmat;
     }
 
     DM_LOADMATRIX(gdvp->gdv_dmp, mat, 0);

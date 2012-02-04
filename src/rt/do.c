@@ -642,7 +642,7 @@ do_frame(int framenumber)
 	 */
 	{
 	    mat_t rotscale, xlate;
-	    mat_t new;
+	    mat_t newmat;
 	    quat_t newquat;
 
 	    bn_mat_print("model2view", model2view);
@@ -650,9 +650,9 @@ do_frame(int framenumber)
 	    rotscale[15] = 0.5 * viewsize;
 	    MAT_IDN(xlate);
 	    MAT_DELTAS_VEC_NEG(xlate, eye_model);
-	    bn_mat_mul(new, rotscale, xlate);
-	    bn_mat_print("reconstructed m2v", new);
-	    quat_mat2quat(newquat, new);
+	    bn_mat_mul(newmat, rotscale, xlate);
+	    bn_mat_print("reconstructed m2v", newmat);
+	    quat_mat2quat(newquat, newmat);
 	    HPRINT("reconstructed orientation:", newquat);
 	}
 #endif

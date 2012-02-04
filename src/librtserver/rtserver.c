@@ -201,7 +201,7 @@ get_muves_components()
 	/* visit each region in this rt_i */
 	for ( j=0; j<rtip->nregions; j++ ) {
 	    struct region *rp=rtip->Regions[j];
-	    int new;
+	    int isnew;
 	    const char *attrget;
 
 	    attrget = bu_avs_get(&(rp->attr_values), "MUVES_Component");
@@ -212,13 +212,13 @@ get_muves_components()
 	    }
 
 	    /* create an entry for this MUVES_Component name */
-	    name_entry = Tcl_CreateHashEntry( &name_tbl, attrget, &new );
+	    name_entry = Tcl_CreateHashEntry( &name_tbl, attrget, &isnew );
 	    if ( verbose ) {
 		fprintf( stderr, "region %s, name = %s\n",
 			 rp->reg_name, attrget );
 	    }
 	    /* set value to next index */
-	    if ( new ) {
+	    if ( isnew ) {
 		comp_count++;
 		Tcl_SetHashValue( name_entry, (ClientData)comp_count );
 	    }

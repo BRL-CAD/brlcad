@@ -131,17 +131,17 @@ mk_add_pipe_pt(
     double id,
     double bendradius)
 {
-    struct wdb_pipept *new;
+    struct wdb_pipept *newpp;
 
     BU_CKMAG(headp, WDB_PIPESEG_MAGIC, "pipe point");
 
-    BU_GET(new, struct wdb_pipept);
-    new->l.magic = WDB_PIPESEG_MAGIC;
-    new->pp_od = od;
-    new->pp_id = id;
-    new->pp_bendradius = bendradius;
-    VMOVE(new->pp_coord, coord);
-    BU_LIST_INSERT(headp, &new->l);
+    BU_GET(newpp, struct wdb_pipept);
+    newpp->l.magic = WDB_PIPESEG_MAGIC;
+    newpp->pp_od = od;
+    newpp->pp_id = id;
+    newpp->pp_bendradius = bendradius;
+    VMOVE(newpp->pp_coord, coord);
+    BU_LIST_INSERT(headp, &newpp->l);
 }
 
 

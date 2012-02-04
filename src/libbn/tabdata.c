@@ -1446,44 +1446,44 @@ bn_table_delete_sample_pts(struct bn_table *tabp, unsigned int i, unsigned int j
 struct bn_table *
 bn_table_merge2(const struct bn_table *a, const struct bn_table *b)
 {
-    struct bn_table *new;
+    struct bn_table *newtab;
     register size_t i, j, k;
 
     BN_CK_TABLE(a);
     BN_CK_TABLE(b);
 
-    BN_GET_TABLE(new, a->nx + b->nx + 2 );
+    BN_GET_TABLE(newtab, a->nx + b->nx + 2 );
 
     i = j = 0;		/* input subscripts */
     k = 0;			/* output subscript */
     while ( i <= a->nx || j <= b->nx )  {
 	if ( i > a->nx )  {
 	    while ( j <= b->nx )
-		new->x[k++] = b->x[j++];
+		newtab->x[k++] = b->x[j++];
 	    break;
 	}
 	if ( j > b->nx )  {
 	    while ( i <= a->nx )
-		new->x[k++] = a->x[i++];
+		newtab->x[k++] = a->x[i++];
 	    break;
 	}
 	/* Both have remaining elements, take lower one */
 	if (ZERO(a->x[i] - b->x[j]))  {
-	    new->x[k++] = a->x[i++];
+	    newtab->x[k++] = a->x[i++];
 	    j++;		/* compress out duplicate */
 	    continue;
 	}
 	if ( a->x[i] <= b->x[j] )  {
-	    new->x[k++] = a->x[i++];
+	    newtab->x[k++] = a->x[i++];
 	} else {
-	    new->x[k++] = b->x[j++];
+	    newtab->x[k++] = b->x[j++];
 	}
     }
-    if ( k > new->nx )  bu_bomb("bn_table_merge2() assertion failed, k>nx?\n");
-    new->nx = k-1;
+    if ( k > newtab->nx )  bu_bomb("bn_table_merge2() assertion failed, k>nx?\n");
+    newtab->nx = k-1;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_merge2(%p, %p) = %p\n", (void *)a, (void *)b, (void *)new);
-    return new;
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_merge2(%p, %p) = %p\n", (void *)a, (void *)b, (void *)newtab);
+    return newtab;
 }
 
 /*

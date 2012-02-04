@@ -753,7 +753,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 
     /* refine approximation */
     while ( !done ) {
-	struct pt_list *cur, *new;
+	struct pt_list *cur, *newlist;
 	double this_pt[3];
 
 	done = 1;
@@ -774,11 +774,11 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 		continue;
 	    }
 
-	    new = (struct pt_list *)bu_malloc( sizeof( struct pt_list), "struct pt_list" );
-	    BU_LIST_INIT( &new->l );
-	    new->t = t;
-	    VMOVE( new->pt, this_pt );
-	    BU_LIST_APPEND( &cur->l, &new->l );
+	    newlist = (struct pt_list *)bu_malloc( sizeof( struct pt_list), "struct pt_list" );
+	    BU_LIST_INIT( &newlist->l );
+	    newlist->t = t;
+	    VMOVE( newlist->pt, this_pt );
+	    BU_LIST_APPEND( &cur->l, &newlist->l );
 
 	    done = 0;
 	}

@@ -133,15 +133,15 @@ static int	regions_converted = 0;
  */
 static void
 char_replace(char *str,
-	     char old,
-	     char new)
+	     char oldc,
+	     char newc)
 {
     if (str == (char *)0)
 	return;
 
     while (*str != '\0') {
-	if (*str == old)
-	    *str = new;
+	if (*str == oldc)
+	    *str = newc;
 
 	++str;
     }
