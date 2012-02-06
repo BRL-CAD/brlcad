@@ -5275,7 +5275,7 @@ BU_EXPORT extern int bu_strncasecmp(const char *string1, const char *string2, si
  * equivalent to an empty string.  Evaluates true when the strings
  * match and false if they do not.
  */
-#define BU_STR_EQUAL(s1, s2) (bu_strcmpm((s1), (s2)) == 0)
+#define BU_STR_EQUAL(s1, s2) (bu_strcmp((s1), (s2)) == 0)
 
 /**
  * BU_STR_EQUIV() is a convenience macro that compares two
