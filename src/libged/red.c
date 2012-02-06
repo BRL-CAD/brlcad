@@ -219,6 +219,8 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
     matp_t matrix = {0};
     struct bu_vls *target_name = bu_malloc(sizeof(struct bu_vls), "target vls");
 
+    bu_vls_init(target_name);
+
     rt_tree_array = (struct rt_tree_array *)NULL;
 
     /* Standard sanity checks */
