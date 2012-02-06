@@ -535,6 +535,11 @@ if (flags & UNSIGNED) { \
 		    bu_vls_trunc(vls, 0);
 		}
 
+		/* character class table must be initialized */
+		if (conversion != CT_CCL) {
+		    memset(ccl_tab, CCL_ACCEPT, CCL_TABLE_SIZE);
+		}
+
 		/* Copy characters from src to vls. Stop at width, non-matching
 		 * character, or EOI.
 		 */
