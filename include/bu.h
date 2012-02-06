@@ -177,12 +177,12 @@ __BEGIN_DECLS
 /**
  * shorthand declaration of a function that doesn't return
  */
-#define __BU_ATTR_NORETURN __attribute__ ((__noreturn__))
+#define _BU_ATTR_NORETURN __attribute__ ((__noreturn__))
 
 /**
  * shorthand declaration of a function that should always be inline
  */
-#define __BU_ATTR_ALWAYS_INLINE __attribute__ ((always_inline))
+#define _BU_ATTR_ALWAYS_INLINE __attribute__ ((always_inline))
 
 /**
  *  If we're compiling strict, turn off "format string vs arguments"
@@ -193,10 +193,12 @@ __BEGIN_DECLS
 #if defined(STRICT_FLAGS)
 #  undef _BU_ATTR_PRINTF12
 #  undef _BU_ATTR_PRINTF23
-#  undef __BU_ATTR_NORETURN
+#  undef _BU_ATTR_SCANF23
+#  undef _BU_ATTR_NORETURN
 #  define _BU_ATTR_PRINTF12
 #  define _BU_ATTR_PRINTF23
-#  define __BU_ATTR_NORETURN
+#  define _BU_ATTR_SCANF23
+#  define _BU_ATTR_NORETURN
 #endif
 
 
@@ -2766,7 +2768,7 @@ BU_EXPORT extern void bu_bomb_add_hook(bu_hook_t func, genptr_t clientdata);
  * This routine should never return unless there is a bu_setjmp
  * handler registered.
  */
-BU_EXPORT extern void bu_bomb(const char *str) __BU_ATTR_NORETURN;
+BU_EXPORT extern void bu_bomb(const char *str) _BU_ATTR_NORETURN;
 
 /**
  * Semi-graceful termination of the application that doesn't cause a
@@ -2780,7 +2782,7 @@ BU_EXPORT extern void bu_bomb(const char *str) __BU_ATTR_NORETURN;
  *
  * This routine should never return.
  */
-BU_EXPORT extern void bu_exit(int status, const char *fmt, ...) __BU_ATTR_NORETURN _BU_ATTR_PRINTF23;
+BU_EXPORT extern void bu_exit(int status, const char *fmt, ...) _BU_ATTR_NORETURN _BU_ATTR_PRINTF23;
 
 /** @file libbu/crashreport.c
  *
@@ -3624,7 +3626,7 @@ BU_EXPORT extern int bu_vsscanf(const char *src, const char *fmt, va_list ap);
 /**
  * Initializes the va_list, then calls the above bu_vsscanf.
  */
-BU_EXPORT extern int bu_sscanf(const char *src, const char *fmt, ...) _BU_ATTR_PRINTF23;
+BU_EXPORT extern int bu_sscanf(const char *src, const char *fmt, ...) _BU_ATTR_SCANF23;
 
 /** @} */
 
