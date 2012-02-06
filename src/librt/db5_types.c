@@ -510,7 +510,7 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
     size_t i;
     long int attr_num_val;
     /*double attr_float_val;*/
-    char *endptr;
+    char *endptr = NULL;
     int color[3] = {-1, -1, -1};
     struct bu_vls newval = BU_VLS_INIT_ZERO;
 
