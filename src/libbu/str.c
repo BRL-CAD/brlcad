@@ -218,7 +218,7 @@ bu_strcasecmp(const char *string1, const char *string2)
 
 
 int
-bu_strcasencmp(const char *string1, const char *string2, size_t n)
+bu_strncasecmp(const char *string1, const char *string2, size_t n)
 {
     const char *s1 = "";
     const char *s2 = "";
