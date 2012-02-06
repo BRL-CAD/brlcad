@@ -123,12 +123,12 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	}
 
 	/* Check the first for a colon in the buffer.  If there is
-	 * one, replace it with a NULL, and set a pointer to the
-	 * next space.  Then feed the buffer to
-	 * strcmp see whether it is the view, the orientation,
-	 * the eye_position, or the size.  If it is, then sscanf()
-	 * the needed information into the appropriate variables.
-	 * If the keyword is not found, go back for another line.
+	 * one, replace it with a NULL, and set a pointer to the next
+	 * space.  Then feed the buffer to BU_STR_EQUAL to see whether
+	 * it is the view, the orientation, the eye_position, or the
+	 * size.  If it is, then sscanf() the needed information into
+	 * the appropriate variables.  If the keyword is not found, go
+	 * back for another line.
 	 *
 	 * Set arg_ptr to NULL so it can be used as a flag to verify
 	 * finding a colon in the input buffer.

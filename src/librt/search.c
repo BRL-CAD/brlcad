@@ -780,9 +780,8 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
      * attribute must not only be present but the value assigned to
      * the attribute must satisfy the logical expression.  In the case
      * where a > or < is used with a string argument the behavior will
-     * follow that of the strcmp comparison command.  In the case of
-     * equality between strings, fnmatch is used to support pattern
-     * matching
+     * follow ASCII lexicographical order.  In the case of equality
+     * between strings, fnmatch is used to support pattern matching
      */
 
     while ((equalpos < strlen(plan->attr_data)) &&
