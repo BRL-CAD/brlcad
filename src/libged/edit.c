@@ -2037,7 +2037,8 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     for (i = 0; edit_cmds[i].name; ++i) {
 	/* search for command name in the table */
 	if (BU_STR_EQUAL(edit_cmds[i].name, cmd_name)) {
-	    subcmd_name = cmd_name; /* saves a strcmp later */
+	    subcmd_name = cmd_name;
+	    /* save the name for a string comparison later */
 	    subcmd.cmd = &edit_cmds[i];
 	    /* match of cmd name takes precedence over match of subcmd
 	     * name
