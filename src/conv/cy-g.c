@@ -148,7 +148,7 @@ main(int argc, char **argv)
 	}
 
 	/* start of the scan data marks the end of the header */
-	if (strncasecmp("DATA=", line, 5) == 0) {
+	if (bu_strncasecmp("DATA=", line, 5) == 0) {
 	    bu_log("Processing DATA\n");
 	    break;
 	}
@@ -158,7 +158,7 @@ main(int argc, char **argv)
 	 * NLT, NLG, LGSHIFT, LTINCR, LGINCR, RSHIFT
 	 */
 
-	if (strncasecmp("NLG=", line, 4) == 0) {
+	if (bu_strncasecmp("NLG=", line, 4) == 0) {
 	    /* number of longitude scan values */
 
 	    cptr = line+4;
@@ -166,7 +166,7 @@ main(int argc, char **argv)
 	    db5_update_attribute("_GLOBAL", "NLG", cptr, outfp->dbip);
 	    bu_log("NLG=%d\n", nlg);
 
-	} else if (strncasecmp("NLT=", line, 4) == 0) {
+	} else if (bu_strncasecmp("NLT=", line, 4) == 0) {
 	    /* number of latitude scan values */
 
 	    cptr = line+4;
@@ -174,7 +174,7 @@ main(int argc, char **argv)
 	    db5_update_attribute("_GLOBAL", "NLT", cptr, outfp->dbip);
 	    bu_log("NLT=%d\n", nlt);
 
-	} else if (strncasecmp("LGSHIFT=", line, 8) == 0) {
+	} else if (bu_strncasecmp("LGSHIFT=", line, 8) == 0) {
 	    /* rotate longitude values by (+/-) N positions */
 
 	    cptr = line+8;
@@ -182,7 +182,7 @@ main(int argc, char **argv)
 	    db5_update_attribute("_GLOBAL", "LGSHIFT", cptr, outfp->dbip);
 	    bu_log("LGSHIFT=%d\n", lgshift);
 
-	} else if (strncasecmp("LTINCR=", line, 7) == 0) {
+	} else if (bu_strncasecmp("LTINCR=", line, 7) == 0) {
 	    /* latitude increment (in microns)
 	     *
 	     * The latitude increment is the separation between the
@@ -196,7 +196,7 @@ main(int argc, char **argv)
 	    db5_update_attribute("_GLOBAL", "LTINCR", cptr, outfp->dbip);
 	    bu_log("LTINCR=%d\n", ltincr);
 
-	} else if (strncasecmp("LGINCR=", line, 7) == 0) {
+	} else if (bu_strncasecmp("LGINCR=", line, 7) == 0) {
 	    /* longitude increment (in microradians)
 	     *
 	     * For a cylindrical scan, the longitude increment is the
@@ -209,7 +209,7 @@ main(int argc, char **argv)
 	    db5_update_attribute("_GLOBAL", "LGINCR", cptr, outfp->dbip);
 	    bu_log("LGINCR=%d\n", lgincr);
 
-	} else if (strncasecmp("RSHIFT=", line, 7) == 0) {
+	} else if (bu_strncasecmp("RSHIFT=", line, 7) == 0) {
 	    /* radius left shift (scale radius values by 2^RSHIFT) */
 
 	    cptr = line+7;
@@ -226,7 +226,7 @@ main(int argc, char **argv)
 	     * THETA_RIGHTHAND
 	     */
 
-	    if (strncasecmp("NAME=", line, 5) == 0) {
+	    if (bu_strncasecmp("NAME=", line, 5) == 0) {
 		/* name of the scan subject */
 
 		cptr = line+5;
@@ -240,7 +240,7 @@ main(int argc, char **argv)
 		    bu_log("NAME=%s\n", name);
 		}
 
-	    } else if (strncasecmp("DATE=", line, 5) == 0) {
+	    } else if (bu_strncasecmp("DATE=", line, 5) == 0) {
 		/* date the scan was performed */
 
 		cptr = line+5;
@@ -252,7 +252,7 @@ main(int argc, char **argv)
 		    bu_log("DATE=%s\n", date);
 		}
 
-	    } else if (strncasecmp("SPACE=", line, 6) == 0) {
+	    } else if (bu_strncasecmp("SPACE=", line, 6) == 0) {
 		/* what kind of scan */
 
 		cptr = line+6;
@@ -266,7 +266,7 @@ main(int argc, char **argv)
 		    bu_exit(1, "%s only supports CYLINDRICAL scans\n", argv[0]);
 		}
 
-	    } else if (strncasecmp("COLOR=", line, 6) == 0) {
+	    } else if (bu_strncasecmp("COLOR=", line, 6) == 0) {
 		/* unknown/unsupported */
 
 		cptr = line+6;
@@ -278,7 +278,7 @@ main(int argc, char **argv)
 		    bu_log("Encountered unknown COLOR, ignoring\n");
 		}
 
-	    } else if (strncasecmp("LGMIN=", line, 6) == 0) {
+	    } else if (bu_strncasecmp("LGMIN=", line, 6) == 0) {
 		/* minimum longitude data window (inclusive) */
 
 		cptr = line+6;
@@ -286,7 +286,7 @@ main(int argc, char **argv)
 		db5_update_attribute("_GLOBAL", "LGMIN", cptr, outfp->dbip);
 		bu_log("LGMIN=%d\n", lgmin);
 
-	    } else if (strncasecmp("LGMAX=", line, 6) == 0) {
+	    } else if (bu_strncasecmp("LGMAX=", line, 6) == 0) {
 		/* maximum longitude data window (inclusive) */
 
 		cptr = line+6;
@@ -294,7 +294,7 @@ main(int argc, char **argv)
 		db5_update_attribute("_GLOBAL", "LGMAX", cptr, outfp->dbip);
 		bu_log("LGMAX=%d\n", lgmax);
 
-	    } else if (strncasecmp("LTMIN=", line, 6) == 0) {
+	    } else if (bu_strncasecmp("LTMIN=", line, 6) == 0) {
 		/* minimum latitude data window (inclusive) */
 
 		cptr = line+6;
@@ -302,7 +302,7 @@ main(int argc, char **argv)
 		db5_update_attribute("_GLOBAL", "LTMIN", cptr, outfp->dbip);
 		bu_log("LTMIN=%d\n", ltmin);
 
-	    } else if (strncasecmp("LTMAX=", line, 6) == 0) {
+	    } else if (bu_strncasecmp("LTMAX=", line, 6) == 0) {
 		/* maximum latitude data window (inclusive) */
 
 		cptr = line+6;
@@ -310,7 +310,7 @@ main(int argc, char **argv)
 		db5_update_attribute("_GLOBAL", "LTMAX", cptr, outfp->dbip);
 		bu_log("LTMAX=%d\n", ltmax);
 
-	    } else if (strncasecmp("RMIN=", line, 5) == 0) {
+	    } else if (bu_strncasecmp("RMIN=", line, 5) == 0) {
 		/* minimum radius */
 
 		cptr = line+5;
@@ -318,7 +318,7 @@ main(int argc, char **argv)
 		db5_update_attribute("_GLOBAL", "RMIN", cptr, outfp->dbip);
 		bu_log("RMIN=%d\n", rmin);
 
-	    } else if (strncasecmp("RMAX=", line, 5) == 0) {
+	    } else if (bu_strncasecmp("RMAX=", line, 5) == 0) {
 		/* maximum radius */
 
 		cptr = line+5;
@@ -326,7 +326,7 @@ main(int argc, char **argv)
 		db5_update_attribute("_GLOBAL", "RMAX", cptr, outfp->dbip);
 		bu_log("RMAX=%d\n", rmax);
 
-	    } else if (strncasecmp("LTSHIFT=", line, 8) == 0) {
+	    } else if (bu_strncasecmp("LTSHIFT=", line, 8) == 0) {
 		/* translate latitude values by (+/-) N positions,
 		 * wrapping around at the latitude limit.
 		 */
@@ -336,7 +336,7 @@ main(int argc, char **argv)
 		db5_update_attribute("_GLOBAL", "LTSHIFT", cptr, outfp->dbip);
 		bu_log("LTSHIFT=%d\n", ltshift);
 
-	    } else if (strncasecmp("SCALE=", line, 6) == 0) {
+	    } else if (bu_strncasecmp("SCALE=", line, 6) == 0) {
 		/* scan value scaling factor */
 
 		cptr = line+6;
@@ -344,7 +344,7 @@ main(int argc, char **argv)
 		db5_update_attribute("_GLOBAL", "SCALE", cptr, outfp->dbip);
 		bu_log("SCALE=%lf\n", scale);
 
-	    } else if (strncasecmp("RPROP=", line, 6) == 0) {
+	    } else if (bu_strncasecmp("RPROP=", line, 6) == 0) {
 		/* radius scaling factor */
 
 		cptr = line+6;
@@ -352,35 +352,35 @@ main(int argc, char **argv)
 		db5_update_attribute("_GLOBAL", "RPROP", cptr, outfp->dbip);
 		bu_log("RPROP=%lf\n", rprop);
 
-	    } else if (strncasecmp("FILLED=", line, 7) == 0) {
+	    } else if (bu_strncasecmp("FILLED=", line, 7) == 0) {
 		/* unknown/unsupported */
 
 		cptr = line+6;
-		filled = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0;
+		filled = bu_strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0;
 		db5_update_attribute("_GLOBAL", "FILLED", cptr, outfp->dbip);
 		bu_log("FILLED=%d\n", filled);
 
-	    } else if (strncasecmp("SMOOTHED=", line, 9) == 0) {
+	    } else if (bu_strncasecmp("SMOOTHED=", line, 9) == 0) {
 		/* unknown/unsupported */
 
 		cptr = line+9;
-		smoothed = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0;
+		smoothed = bu_strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0;
 		db5_update_attribute("_GLOBAL", "SMOOTHED", cptr, outfp->dbip);
 		bu_log("SMOOTHED=%d\n", smoothed);
 
-	    } else if (strncasecmp("INSIDE_OUT=", line, 11) == 0) {
+	    } else if (bu_strncasecmp("INSIDE_OUT=", line, 11) == 0) {
 		/* unsupported, presumably being scanned from the inside */
 
 		cptr = line+11;
-		inside_out = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0;
+		inside_out = bu_strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0;
 		db5_update_attribute("_GLOBAL", "INSIDE_OUT", cptr, outfp->dbip);
 		bu_log("INSIDE_OUT=%d\n", inside_out);
 
-	    } else if (strncasecmp("THETA_RIGHTHAND=", line, 16) == 0) {
+	    } else if (bu_strncasecmp("THETA_RIGHTHAND=", line, 16) == 0) {
 		/* unsupported */
 
 		cptr = line+16;
-		theta_righthand = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0;
+		theta_righthand = bu_strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0;
 		db5_update_attribute("_GLOBAL", "THETA_RIGHTHAND", cptr, outfp->dbip);
 		bu_log("INSIDE_OUT=%d\n", theta_righthand);
 
