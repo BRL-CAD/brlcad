@@ -160,18 +160,14 @@ bu_strdupm(register const char *cp, const char *label)
 
 
 int
-bu_strcmpm(const char *string1, const char *string2, const char *label)
+bu_strcmp(const char *string1, const char *string2)
 {
     const char *s1 = "";
     const char *s2 = "";
 
-    if (UNLIKELY((!string1 || !string2) && label)) {
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fprintf(stderr, "WARNING: [%s] string comparison with NULL\n", label);
-	bu_semaphore_release(BU_SEM_SYSCALL);
-    }
-
-    /* "" and NULL are considered as equal */
+    /* "" and NULL are considered equivalent which helps prevent
+     * strcmp() from crashing.
+     */
 
     if (string1)
 	s1 = string1;
@@ -180,6 +176,26 @@ bu_strcmpm(const char *string1, const char *string2, const char *label)
 	s2 = string2;
 
     return strcmp(s1, s2);
+}
+
+
+int
+bu_strncmp(const char *string1, const char *string2, size_t n)
+{
+    const char *s1 = "";
+    const char *s2 = "";
+
+    /* "" and NULL are considered equivalent which helps prevent
+     * strncmp() from crashing.
+     */
+
+    if (string1)
+	s1 = string1;
+
+    if (string2)
+	s2 = string2;
+
+    return strncmp(s1, s2, n);
 }
 
 
@@ -198,6 +214,24 @@ bu_strcasecmp(const char *string1, const char *string2)
 	s2 = string2;
 
     return strcasecmp(s1, s2);
+}
+
+
+int
+bu_strcasencmp(const char *string1, const char *string2, size_t n)
+{
+    const char *s1 = "";
+    const char *s2 = "";
+
+    /* "" and NULL are considered equal */
+
+    if (string1)
+	s1 = string1;
+
+    if (string2)
+	s2 = string2;
+
+    return strncasecmp(s1, s2, n);
 }
 
 

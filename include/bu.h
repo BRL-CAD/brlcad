@@ -5228,22 +5228,39 @@ BU_EXPORT extern char *bu_strdupm(const char *cp, const char *label);
  * consistent behavior for NULL and empty strings.  It accepts NULL as
  * valid input values and considers "" and NULL as equal.  Returns 0
  * if the strings match.
- *
- * bu_strcmp() is a macro that includes the current file name and line
- * number that can be used when bu debugging is enabled.
- *
  */
-BU_EXPORT extern int bu_strcmpm(const char *string1, const char *string2, const char *label);
-#define bu_strcmp(s1, s2) bu_strcmpm((s1), (s2), BU_FLSTR)
+BU_EXPORT extern int bu_strcmp(const char *string1, const char *string2);
+
+/**
+ * Compares two strings for equality.  No more than n-characters are
+ * compared.  It performs the comparison more robustly than the
+ * standard library's strncmp() function by defining consistent
+ * behavior for NULL and empty strings.  It accepts NULL as valid
+ * input values and considers "" and NULL as equal.  Returns 0 if the
+ * strings match.
+ */
+BU_EXPORT extern int bu_strncmp(const char *string1, const char *string2, size_t n);
 
 /**
  * Compares two strings for equality without regard for the case in
  * the string.  It performs the comparison more robustly than the
- * standard strcasecmp() function by defining consistent behavior for
- * NULL and empty strings.  It accepts NULL as valid input values and
- * considers "" and NULL as equal.  Returns 0 if the strings match.
+ * standard strcasecmp()/stricmp() function by defining consistent
+ * behavior for NULL and empty strings.  It accepts NULL as valid
+ * input values and considers "" and NULL as equal.  Returns 0 if the
+ * strings match.
  */
 BU_EXPORT extern int bu_strcasecmp(const char *string1, const char *string2);
+
+/**
+ * Compares two strings for equality without regard for the case in
+ * the string.  No more than n-characters are compared.  It performs
+ * the comparison more robustly than the standard
+ * strncasecmp()/strnicmp() function by defining consistent behavior
+ * for NULL and empty strings.  It accepts NULL as valid input values
+ * and considers "" and NULL as equal.  Returns 0 if the strings
+ * match.
+ */
+BU_EXPORT extern int bu_strncasecmp(const char *string1, const char *string2, size_t n);
 
 /**
  * BU_STR_EMPTY() is a convenience macro that tests a string for
