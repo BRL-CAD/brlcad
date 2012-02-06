@@ -195,7 +195,7 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
 
 
 HIDDEN int
-build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
+build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 {
     struct rt_comb_internal *comb;
     size_t node_count=0;
@@ -217,9 +217,6 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
     int ret, gedret, combtagstart, combtagend;
     struct bu_attribute_value_set avs;
     matp_t matrix = {0};
-    struct bu_vls *target_name = bu_malloc(sizeof(struct bu_vls), "target vls");
-
-    bu_vls_init(target_name);
 
     rt_tree_array = (struct rt_tree_array *)NULL;
 
@@ -341,7 +338,6 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
 	    if (get_attr_val_pair(bu_vls_addr(&current_substring), &attr_vls, &val_vls)) {
 		if (BU_STR_EQUAL(bu_vls_addr(&attr_vls), "name")) {
 		    bu_vls_sprintf(target_name, "%s", bu_vls_addr(&val_vls));
-		    (*final_name) = target_name;
 		}
 		if (!BU_STR_EQUAL(bu_vls_addr(&val_vls), "") && !BU_STR_EQUAL(bu_vls_addr(&attr_vls), "name"))
 		    (void)bu_avs_add(&avs, bu_vls_addr(&attr_vls), bu_vls_addr(&val_vls));
@@ -742,7 +738,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     const char *av[3];
     struct bu_vls comb_name = BU_VLS_INIT_ZERO;
     struct bu_vls temp_name = BU_VLS_INIT_ZERO;
-    struct bu_vls *final_name = NULL;
+    struct bu_vls final_name = BU_VLS_INIT_ZERO;
     int force_flag = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -910,28 +906,26 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	 * pre-existing comb (unless the -f force flag is set).  If we
 	 * don't have a name, assume we're working on comb_name
 	 */
-	if (final_name) {
-	    if (!BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(final_name))) {
-		if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(final_name), LOOKUP_QUIET) != RT_DIR_NULL) {
+	if (bu_vls_strlen(&final_name) > 0) {
+	    if (!BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(&final_name))) {
+		if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&final_name), LOOKUP_QUIET) != RT_DIR_NULL) {
 		    if (force_flag) {
 			av[0] = "kill";
-			av[1] = bu_vls_addr(final_name);
+			av[1] = bu_vls_addr(&final_name);
 			av[2] = NULL;
 			(void)ged_kill(gedp, 2, (const char **)av);
 		    } else {
 			/* not forced, can't overwrite destination, can't proceed */
-			bu_vls_printf(gedp->ged_result_str, "%s: Error - %s already exists\n", *argv, bu_vls_addr(final_name));
+			bu_vls_printf(gedp->ged_result_str, "%s: Error - %s already exists\n", *argv, bu_vls_addr(&final_name));
 			goto cleanup;
 		    }
 		}
 	    }
 	} else {
-	    final_name = bu_malloc(sizeof(struct bu_vls), "target vls");
-	    bu_vls_init(final_name);
-	    bu_vls_sprintf(final_name, "%s", bu_vls_addr(&comb_name));
+	    bu_vls_sprintf(&final_name, "%s", bu_vls_addr(&comb_name));
 	}
 	/* if we ended up with an empty final name, print an error message and head for cleanup */
-	if (strlen(bu_vls_addr(final_name)) == 0) {
+	if (strlen(bu_vls_addr(&final_name)) == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: Error - no target name supplied\n", *argv);
 	    goto cleanup;
 	}
@@ -941,7 +935,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	 * otherwise just move temp_name to final_name.
 	 */
 	if (!BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(&temp_name))) {
-	    if (BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(final_name))) {
+	    if (BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(&final_name))) {
 		av[0] = "kill";
 		av[1] = bu_vls_addr(&comb_name);
 		av[2] = NULL;
@@ -950,7 +944,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	}
 	av[0] = "mv";
 	av[1] = bu_vls_addr(&temp_name);
-	av[2] = bu_vls_addr(final_name);
+	av[2] = bu_vls_addr(&final_name);
 	(void)ged_move(gedp, 3, (const char **)av);
 
     }
@@ -960,10 +954,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 cleanup:
     bu_file_delete(_ged_tmpfil);
 
-    if (final_name) {
-	bu_vls_free(final_name);
-	bu_free(final_name, "final_name");
-    }
+    bu_vls_free(&final_name);
     bu_vls_free(&comb_name);
     bu_vls_free(&temp_name);
 
