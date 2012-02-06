@@ -668,24 +668,23 @@ testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY(openNURBS openNURBS "" opennurbs_ALIASES opennurbs_DESCRIPTION NOSYS)
 
-IF(NOT MSVC)
-  # STEP Class Libraries
-  # Need Lemon/Perplex to build STEP - conditionalize
-  set(scl_ALIASES ENABLE_SCL ENABLE_STEP ENABLE_STEP_CLASS_LIBRARIES)
-  set(scl_DESCRIPTION "
+if(NOT MSVC)
+  set(NOT_MSVC 1)
+endif(NOT MSVC)
+# STEP Class Libraries
+# Need Lemon/Perplex to build STEP - conditionalize
+set(scl_ALIASES ENABLE_SCL ENABLE_STEP ENABLE_STEP_CLASS_LIBRARIES)
+set(scl_DESCRIPTION "
 Option for enabling and disabling compilation of the NIST Step Class
 Libraries provided with BRL-CAD's source code.  Default is
 AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing 
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-  THIRD_PARTY(scl step "LEMON_EXECUTABLE;PERPLEX_EXECUTABLE"  scl_ALIASES scl_DESCRIPTION NOSYS)
-  IF(BRLCAD_SCL_BUILD)
-    SET(FEDEX_PLUS_EXEC fedex_plus CACHE STRING "Fedex plus executable" FORCE)
-    MARK_AS_ADVANCED(FEDEX_PLUS_EXEC)
-  ENDIF(BRLCAD_SCL_BUILD)
-ELSE(NOT MSVC)
-  DISTCHECK_IGNORE_ITEM(step)
-ENDIF(NOT MSVC)
+THIRD_PARTY(scl step "LEMON_EXECUTABLE;PERPLEX_EXECUTABLE;NOT_MSVC"  scl_ALIASES scl_DESCRIPTION NOSYS)
+IF(BRLCAD_SCL_BUILD)
+  SET(FEDEX_PLUS_EXEC fedex_plus CACHE STRING "Fedex plus executable" FORCE)
+  MARK_AS_ADVANCED(FEDEX_PLUS_EXEC)
+ENDIF(BRLCAD_SCL_BUILD)
 
 # Clipper polygon clipping library - for now, we're going to use our copy
 ADD_SUBDIRECTORY(clipper)
