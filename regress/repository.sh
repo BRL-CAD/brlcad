@@ -53,9 +53,9 @@ fi
 
 # get a source and header file list so we only walk the sources onces
 
-SRCFILES="`find ${TOPSRC}/src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`"
+SRCFILES="`find ${TOPSRC}/src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*src/libpkg.*' -not -regex '.*/shapelib/.*'`"
 
-INCFILES="`find ${TOPSRC}/include -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`"
+INCFILES="`find ${TOPSRC}/include -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*pkg.h'`"
 
 
 ###
@@ -68,6 +68,7 @@ for i in bio.h bin.h bselect.h ; do
 	exit 1
     fi
     FOUND="`grep '[^f]${i}' $INCFILES /dev/null | grep -v 'include/${i}'`"
+    
     if test "x$FOUND" = "x" ; then
 	echo "-> $i header check succeeded"
     else
@@ -95,7 +96,7 @@ for file in $COMMONSRCS $COMMONINCS ; do
 	    # not a BRL-CAD file (or it's lexer-generated) , so skip it
 	    continue
 	fi
-	echo "Header (common.h) out of order: $MATCH"
+	echo "ERROR: Header (common.h) out of order: $MATCH"
 	FOUND=1
     fi
 done
@@ -125,7 +126,7 @@ for file in $AMFILES ; do
 	# skip commented lines
 	continue
     fi
-    echo "Target-specific CPPFLAGS found in $file"
+    echo "ERROR: Target-specific CPPFLAGS found in $file"
     FOUND=1
 done
 if test "x$FOUND" = "x" ; then
@@ -141,7 +142,36 @@ fi
 # functions where they replace or wrap a standard C function
 echo "running API usage check"
 
-# TODO: FILL ME IN
+# 1800 - printf
+# 360 - free
+# 203 - malloc
+# 89 - calloc
+# 21 - realloc
+for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy strlcpy strcmp strcasecmp stricmp strncmp strncasecmp stricmp unlink rmdir remove ; do
+    echo "Searching for $func ..."
+    MATCH="`grep -n -e [^a-zA-Z0-9_]$func\( $INCFILES $SRCFILES /dev/null`"
+
+    # handle implementation exceptions
+    MATCH="`echo \"$MATCH\" \
+| sed 's/.*test_dirname.c.*dirname.*//' \
+| sed 's/.*bomb.c.*abort.*//g' \
+| sed 's/.*str.c.*strncat.*//' \
+| sed 's/.*str.c.*strlcat.*//' \
+| sed 's/.*str.c.*strncpy.*//' \
+| sed 's/.*str.c.*strlcpy.*//' \
+| sed 's/.*str.c.*strcasecmp.*//' \
+| sed 's/.*str.c.*strcmp.*//' \
+| sed 's/.*str.c.*strncmp.*//' \
+| sed 's/.*str.c.*strncasecmp.*//' \
+| sed 's/.*file.c.*remove.*//' \
+| sed '/^$/d' \
+`"
+
+    if test "x$MATCH" != "x" ; then
+	echo "ERROR: Found `echo \"$MATCH\" | wc -l | awk '{print $1}'` instances of $func ..."
+	echo "$MATCH"
+    fi
+done
 
 if test "x$FOUND" = "x" ; then
     echo "-> API usage check succeeded"
