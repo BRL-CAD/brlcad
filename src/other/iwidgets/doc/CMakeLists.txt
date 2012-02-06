@@ -53,9 +53,9 @@ SET(iwidgets_MANS
 	watch.n
 	)
 
-FOREACH(manpage ${iwidgets_MANS})
-	configure_file(${manpage} ${CMAKE_CURRENT_BINARY_DIR}/iwidgets_${manpage} COPY_ONLY)
-	SET(iwidgets_named_MANS ${iwidgets_named_MANS} ${CMAKE_CURRENT_BINARY_DIR}/iwidgets_${manpage})
-ENDFOREACH(manpage ${iwidgets_MANS})
+foreach(manpage ${iwidgets_MANS})
+  file(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${manfile}\n")
+  configure_file(${manpage} ${CMAKE_BINARY_DIR}/${MAN_DIR}/mann/iwidgets_${manpage})
+  install(FILES ${CMAKE_BINARY_DIR}/${MAN_DIR}/mann/iwidgets_${manpage} DESTINATION ${MAN_DIR}/mann)
+endforeach(manpage ${iwidgets_MANS})
 
-ADD_MAN_PAGES(n iwidgets_named_MANS)
