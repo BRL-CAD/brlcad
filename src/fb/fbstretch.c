@@ -276,7 +276,7 @@ main(int argc, char **argv)
     }
 
     if (dst_file == NULL)
-	dst_file = getenv("FB_FILE");	/* needed for later strcmp */
+	dst_file = getenv("FB_FILE");
 
     /* Figure out what scale factors to use before messing up size info. */
 
