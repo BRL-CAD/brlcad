@@ -1922,7 +1922,7 @@ rt_get_functab_by_label(const char *label)
     register const struct rt_functab *ftp;
 
     for (ftp = rt_functab; ftp->magic != 0; ftp++) {
-	if (strncmp(label, ftp->ft_label, 8) == 0)
+	if (bu_strncmp(label, ftp->ft_label, 8) == 0)
 	    return ftp;
     }
     return NULL;

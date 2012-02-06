@@ -407,7 +407,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     for (i = 1; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
 	/* skip commands */
-	if (!strcmp(gedp->ged_gdp->gd_rt_cmd[i], "-e"))
+	if (BU_STR_EQUAL(gedp->ged_gdp->gd_rt_cmd[i], "-e"))
 	    ++i;
 	else {
 	    /* append other arguments (i.e. options, file and obj(s)) */

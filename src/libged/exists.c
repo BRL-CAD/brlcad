@@ -102,11 +102,11 @@ struct t_op {
         short op_num, op_type;
 };
 
-/* The following option structures need
- * to be kept in sorted order for bsearch -
- * be sure any new entries are in the right
- * numerical order per strcmp (or the ASCII
- * character values, in the single char case.*/
+/* The following option structures need to be kept in sorted order for
+ * bsearch - be sure any new entries are in the right numerical order
+ * per bu_strcmp (or the ASCII character values, in the single char
+ * case.
+ */
 static const struct t_op cop[] = {
         {"!",   UNOT,   BUNOP},
         {"(",   LPAREN, PAREN},
@@ -175,7 +175,7 @@ compare3(const void *va, const void *vb)
 {
         const char *a = va;
         const char *b = (const char *)VTOC(vb);
-	return strcmp(a, b);
+	return bu_strcmp(a, b);
 }
 
 static struct t_op const *
@@ -196,7 +196,7 @@ findop(const char *s)
                 if (s[1] == '\0')
                         return bsearch(s, cop, __arraycount(cop), sizeof(*cop),
                             compare1);
-                else if (strcmp(s, cop2[0].op_text) == 0)
+                else if (BU_STR_EQUAL(s, cop2[0].op_text))
                         return cop2;
                 else
                         return NULL;

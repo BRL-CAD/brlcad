@@ -303,7 +303,7 @@ int region_ID_cmp(const void *p1,
     else if (r1->reg_regionid > r2->reg_regionid)
       return +1;
     else
-      return strcmp(r1->reg_name, r2->reg_name);
+      return bu_strcmp(r1->reg_name, r2->reg_name);
 }
 
 /* end of a frame */
