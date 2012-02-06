@@ -4041,22 +4041,38 @@ namespace eval ArcherCore {
 	foreach path [string trim [gedCmd search / -name $mSelectedObj]] {
 	    set path [regsub {^/} $path {}]
 	    set pathNodes [getTreeNodes $path]
-#	    set pnodes [lreverse [lindex $pathNodes 0]]
-	    set pnodes [lindex $pathNodes 0]
+	    set pnodes [lreverse [lindex $pathNodes 0]]
 	    set cnodes [lindex $pathNodes 1]
-	    set found 0
+
+	    set found_pnode ""
+	    set pnode_not_open 0
+	    set snodeEQpnode 0
 	    foreach pnode $pnodes {
-		if {[$itk_component(newtree) item $pnode -open]} {
-		    lappend mAffectedNodeList $pnode
-		    set found 1
-		    addTreeNodeTag $pnode $TREE_AFFECTED_TAG
+		if {$mNode2Text($snode) == $mNode2Text($pnode)} {
+		    set snodeEQpnode 1
+		    break
+		}
+
+		set found_pnode $pnode
+
+		if {![$itk_component(newtree) item $pnode -open]} {
+		    if {$mNode2Text($pnode) != $TREE_PLACEHOLDER_TAG} {
+			set pnode_not_open 1
+		    }
+
 		    break
 		}
 	    }
 
-	    if {!$found} {
-		set cnode [lindex $cnodes 0]
-		if {$cnode != $snode} {
+	    set cnode [lindex $cnodes 0]
+	    if {$found_pnode != "" && ($pnode_not_open || $snodeEQpnode || $mNode2Text($snode) == $mNode2Text($cnode))} {
+		lappend mAffectedNodeList $found_pnode
+		addTreeNodeTag $pnode $TREE_AFFECTED_TAG
+	    } elseif {$cnode != $snode} {
+		if {$mNode2Text($snode) == $mNode2Text($cnode) && $found_pnode != ""} {
+		    lappend mAffectedNodeList $found_pnode
+		    addTreeNodeTag $pnode $TREE_AFFECTED_TAG
+		} else {
 		    lappend mAffectedNodeList $cnode
 		    addTreeNodeTag $cnode $TREE_AFFECTED_TAG
 		}
