@@ -98,7 +98,7 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
     	current_node->iter = sim_params->iter;
 
 	// Check if we should add a ground plane
-	if (strcmp(current_node->rb_namep, sim_params->ground_plane_name) == 0) {
+	if (BU_STR_EQUAL(current_node->rb_namep, sim_params->ground_plane_name)) {
 	    // Add a static ground plane : should be controlled by an option : TODO
 	    btCollisionShape* groundShape = new btBoxShape(btVector3(current_node->bb_dims[0]/2,
 								     current_node->bb_dims[1]/2,

@@ -44,7 +44,7 @@ Add_brl_name(name)
     /* Check if name already in list */
     ptr = name_root;
     while (ptr) {
-	if (!strcmp(ptr->name, name)) {
+	if (BU_STR_EQUAL(ptr->name, name)) {
 	    return ptr->name;
         }
 	ptr = ptr->next;
@@ -98,7 +98,7 @@ Make_unique_brl_name(char *name) {
         ptr = name_root;
         name_unique = 1;
         while (ptr) {
-            if (!strcmp(name, ptr->name)) {
+            if (BU_STR_EQUAL(name, ptr->name)) {
                 name_unique = 0;
                 break;
             }
@@ -121,7 +121,7 @@ Make_unique_brl_name(char *name) {
         ptr = name_root;
         name_unique = 1;
         while (ptr) {
-            if (!strcmp(name, ptr->name)) {
+            if (BU_STR_EQUAL(name, ptr->name)) {
                 name_unique = 0;
                 break;
             }

@@ -1197,7 +1197,7 @@ STEPWrapper::printLoadStatistics()
     const EntityDescriptor *ent;   // needs to be declared const...
     std::string filler = ".....................................................................";
     std::cout << "Loaded " << num_ents << " instances from ";
-    if (strcmp(stepfile.c_str(), "-") == 0) {
+    if (BU_STR_EQUAL(stepfile.c_str(), "-")) {
 	std::cout << "standard input" << std::endl;
     } else {
 	std::cout << "STEP file \"" << stepfile << "\"" << std::endl;

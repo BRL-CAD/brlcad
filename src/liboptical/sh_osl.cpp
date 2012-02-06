@@ -162,7 +162,7 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
     while((item = strtok(NULL, "#")) != NULL){
 
 	/* Setting layer name, in case we're doing a shader group */
-	if(strcmp(item, "layername") == 0){
+	if (BU_STR_EQUAL(item, "layername")) {
 
 	    /* Get the name of the layer being set */
 	    item = strtok(NULL, "#");
@@ -182,7 +182,7 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 		fprintf(stderr, "[Error] Missing parameter type\n");
 		return -1;
 	    }
-	    else if(strcmp(item, "int") == 0){
+	    else if (BU_STR_EQUAL(item, "int")) {
 		item = strtok(NULL, "#");
 		if(item == NULL){
 		    fprintf(stderr, "[Error] Missing float value\n");
@@ -191,7 +191,7 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 		int value = atoi(item);
 		sh_info.iparam.push_back(std::make_pair(param_name, value));
 	    }
-	    else if(strcmp(item, "float") == 0){
+	    else if (BU_STR_EQUAL(item, "float")) {
 		item = strtok(NULL, "#");
 		if(item == NULL){
 		    fprintf(stderr, "[Error] Missing float value\n");
@@ -200,7 +200,7 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 		float value = atof(item);
 		sh_info.fparam.push_back(std::make_pair(param_name, value));
 	    }
-	    else if(strcmp(item, "color") == 0){
+	    else if (BU_STR_EQUAL(item, "color")) {
 		Color3 color_value;
 		for(int i=0; i<3; i++){
 		    item = strtok(NULL, "#");
@@ -212,13 +212,13 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 		}
 		sh_info.cparam.push_back(std::make_pair(param_name, color_value));
 	    }
-	    else if(strcmp(item, "normal") == 0 || strcmp(item, "point") == 0 || strcmp(item, "vector") == 0){
+	    else if (BU_STR_EQUAL(item, "normal") || BU_STR_EQUAL(item, "point") || BU_STR_EQUAL(item, "vector")) {
 
-		TypeDesc type;	
+		TypeDesc type;
 		std::string type_name(item);
-		if(strcmp(item, "normal") == 0) type = TypeDesc::TypeNormal;
-		else if(strcmp(item, "point") == 0) type = TypeDesc::TypePoint;
-		else if(strcmp(item, "vector") == 0) type = TypeDesc::TypeVector;
+		if (BU_STR_EQUAL(item, "normal")) type = TypeDesc::TypeNormal;
+		else if (BU_STR_EQUAL(item, "point")) type = TypeDesc::TypePoint;
+		else if (BU_STR_EQUAL(item, "vector")) type = TypeDesc::TypeVector;
 
 		Vec3 vec_value;
 		for(int i=0; i<3; i++){
@@ -232,7 +232,7 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 		ShaderInfo::TypeVec type_vec(type, vec_value);
 		sh_info.vparam.push_back(std::make_pair(param_name, type_vec));
 	    }
-	    else if(strcmp(item, "matrix") == 0){
+	    else if (BU_STR_EQUAL(item, "matrix")){
 		fprintf(stderr, "matrix\n");
 		Matrix44 mat_value;
 		for(int i=0; i<4; i++)
@@ -248,7 +248,7 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 		fprintf(stderr, "\n");
 		sh_info.mparam.push_back(std::make_pair(param_name, mat_value));
 	    }
-	    else if(strcmp(item, "string") == 0){
+	    else if (BU_STR_EQUAL(item, "string")) {
 		item = strtok(NULL, "#");
 		if(item == NULL){
 		    fprintf(stderr, "[Error] Missing string\n");
@@ -340,12 +340,12 @@ osl_parse(const struct bu_vls *in_vls, ShaderGroupInfo &group_info)
 	if (*cp != '\0')
 	    *cp++ = '\0';
 
-	if(strcmp(name, "shadername") == 0){
+	if (BU_STR_EQUAL(name, "shadername")) {
 	    ShaderInfo sh_info;
 	    osl_parse_shader(value, sh_info);
 	    group_info.shader_layers.push_back(sh_info);
 	}
-	else if (strcmp(name, "join") == 0){
+	else if (BU_STR_EQUAL(name, "join")) {
 	    ShaderEdge sh_edge;
 	    osl_parse_edge(value, sh_edge);
 	    group_info.shader_edges.push_back(sh_edge);
