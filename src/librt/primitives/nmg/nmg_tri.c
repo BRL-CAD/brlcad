@@ -223,7 +223,7 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
     fp=fopen(name, "wb");
     if (fp == (FILE *)NULL) {
 	perror(name);
-	abort();
+	return;
     }
 
     bu_log("\tplotting %s\n", name);
