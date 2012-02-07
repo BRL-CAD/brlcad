@@ -159,7 +159,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	    struct region **rpp;
 	    char *cp;
 
-	    bu_vls_trunc(&claimant_vls, 0);
+	    bu_vls_trunc(&claimant_list, 0);
 	    ValTab[VTI_CLAIMANT_COUNT].value.ival = 0;
 	    for (rpp = part->pt_overlap_reg; *rpp != REGION_NULL; ++rpp) {
 		char tmpcp[512] = {0};
