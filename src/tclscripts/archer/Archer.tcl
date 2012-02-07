@@ -5275,8 +5275,8 @@ proc title_node_handler {node} {
 		$itk_component(${prefix}displaymenu) entryconfigure "Clear" -state normal
 		$itk_component(${prefix}displaymenu) entryconfigure "Refresh" -state normal
 
-		#$itk_component(${prefix}modesmenu) entryconfigure "Active Pane" -state normal
-		#$itk_component(${prefix}modesmenu) entryconfigure "Quad View" -state normal
+		$itk_component(${prefix}modesmenu) entryconfigure "Active Pane" -state normal
+		$itk_component(${prefix}modesmenu) entryconfigure "Quad View" -state normal
 		$itk_component(${prefix}modesmenu) entryconfigure "View Axes" -state normal
 		$itk_component(${prefix}modesmenu) entryconfigure "Model Axes" -state normal
 		$itk_component(${prefix}modesmenu) entryconfigure "Ground Plane" -state normal
@@ -5303,8 +5303,8 @@ proc title_node_handler {node} {
 	    $itk_component(menubar) menuconfigure .display.clear -state normal
 	    $itk_component(menubar) menuconfigure .display.refresh -state normal
 
-	    #$itk_component(menubar) menuconfigure .modes.activepane -state normal
-	    #$itk_component(menubar) menuconfigure .modes.quad -state normal
+	    $itk_component(menubar) menuconfigure .modes.activepane -state normal
+	    $itk_component(menubar) menuconfigure .modes.quad -state normal
 	    $itk_component(menubar) menuconfigure .modes.vaxes -state normal
 	    $itk_component(menubar) menuconfigure .modes.maxes -state normal
 	    $itk_component(menubar) menuconfigure .modes.gplane -state normal
