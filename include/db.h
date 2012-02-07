@@ -68,8 +68,9 @@
 
 
 #define NAMESIZE		16
-#define NAMEMOVE(from,to)	(void)strncpy(to, from, NAMESIZE)
+
 /* don't use bu_strlcpy for NAMEMOVE */
+#define NAMEMOVE(from,to)	(void)strncpy(to, from, NAMESIZE)
 
 /*
  *  Define the database format for storing binary floating point values.
