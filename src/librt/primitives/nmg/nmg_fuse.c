@@ -44,6 +44,7 @@
 
 extern int debug_file_count;
 
+
 struct pt_list
 {
     struct bu_list l;
@@ -1014,18 +1015,6 @@ nmg_cnurb_is_on_crv(const struct edgeuse *eu, const struct edge_g_cnurb *cnrb, c
     return coincident;
 }
 
-/* compare function for qsort within function nmg_model_edge_fuse */
-static int
-v_ptr_comp(const void *p1, const void *p2)
-{
-    size_t i, j;
-
-    i = ((size_t *)p1)[1];
-    j = ((size_t *)p2)[1];
-
-    return (int)(i > j);
-}
-
 
 /**
  * N M G _ M O D E L _ E D G E _ F U S E
@@ -1033,83 +1022,51 @@ v_ptr_comp(const void *p1, const void *p2)
 int
 nmg_model_edge_fuse(struct model *m, const struct bn_tol *tol)
 {
-    typedef size_t (*edgeuse_vert_list_t)[2];
-    edgeuse_vert_list_t edgeuse_vert_list;
+    struct bu_ptbl edges;
+    int i, j;
     int count=0;
-    size_t nelem;
-    struct bu_ptbl eu_list;
-    struct edge *e1;
-    struct edgeuse *eu, *eu1;
-    struct vertex *v1;
-    register size_t i, j;
-    register struct edge *e2;
-    register struct edgeuse *eu2;
-    register struct vertex *v2;
 
-    bu_ptbl_init(&eu_list, 64, "eu1_list1 buffer");
-    nmg_edgeuse_tabulate(&eu_list, &m->magic);
+    NMG_CK_MODEL(m);
+    BN_CK_TOL(tol);
 
-    nelem = BU_PTBL_END(&eu_list) * 2;
-    if (nelem == 0)
-	return 0;
+    nmg_edge_tabulate(&edges, &m->magic);
 
-    edgeuse_vert_list = (edgeuse_vert_list_t)bu_calloc(nelem, 2 * sizeof(size_t), "edgeuse_vert_list");
+    for (i=0; i<BU_PTBL_END(&edges)-1; i++) {
+	struct edge *e1;
+	struct edgeuse *eu1;
 
-    j = 0;
-    for (i = 0; i < (size_t)BU_PTBL_END(&eu_list) ; i++) {
-	eu = (struct edgeuse *)BU_PTBL_GET(&eu_list, i);
-        edgeuse_vert_list[j][0] = (size_t)eu;
-        edgeuse_vert_list[j][1] = (size_t)eu->vu_p->v_p;
-        j++;
-        edgeuse_vert_list[j][0] = (size_t)eu;
-        edgeuse_vert_list[j][1] = (size_t)eu->eumate_p->vu_p->v_p;
-        j++;
-    }
+	e1 = (struct edge *)BU_PTBL_GET(&edges, i);
+	if (!e1 || !e1->index || e1->magic != NMG_EDGE_MAGIC)
+	    continue;
+	eu1 = e1->eu_p;
+	if (!eu1)
+	    continue;
+	if (*eu1->g.magic_p != NMG_EDGE_G_LSEG_MAGIC)
+	    continue;
 
-    qsort(&edgeuse_vert_list[0][0], nelem, 2 * sizeof(size_t), (int (*)(const void *a, const void *b))v_ptr_comp);
+	for (j=i+1; j<BU_PTBL_END(&edges); j++) {
+	    struct edge *e2;
+	    struct edgeuse *eu2;
 
-    for (i = 0; i < nelem ; i++) {
-
-        eu1 = (struct edgeuse *)edgeuse_vert_list[i][0];
-
-        if (!eu1) {
-            continue;
-        }
-
-        v1 = (struct vertex *)edgeuse_vert_list[i][1];
-        e1 = eu1->e_p;
-
-        for (j = i+1; j < nelem ; j++) {
-
-            eu2 = (struct edgeuse *)edgeuse_vert_list[j][0];
-
-            if (!eu2) {
-                continue;
-            }
-
-            v2 = (struct vertex *)edgeuse_vert_list[j][1];
-            e2 = eu2->e_p;
-
-            if (v1 != v2) {
-                break; /* no more to test */
-            }
-
-            if (e1 == e2) {
-                /* we found ourself, or already fused, mark as fused and continue */ 
-                edgeuse_vert_list[j][0] = (size_t)NULL;
-                continue;
-            }
+	    e2 = (struct edge *)BU_PTBL_GET(&edges, j);
+	    if (!e2 || !e2->index || e2->magic != NMG_EDGE_MAGIC)
+		continue;
+	    eu2 = e2->eu_p;
+	    if (!eu2)
+		continue;
+	    if (*eu2->g.magic_p != NMG_EDGE_G_LSEG_MAGIC)
+		continue;
 
 	    if (NMG_ARE_EUS_ADJACENT(eu1, eu2)) {
 		count++;
 		nmg_radial_join_eu(eu1, eu2, tol);
-                edgeuse_vert_list[j][0] = (size_t)NULL; /* mark as fused */
+		if (!e2->magic)
+		    bu_ptbl_zero(&edges, (long *)e2);
 	    }
-        }
+	}
     }
 
-    bu_free((char *)edgeuse_vert_list, "edgeuse_vert_list");
-    bu_ptbl_free(&eu_list);
+    bu_ptbl_free(&edges);
 
     return count;
 }
