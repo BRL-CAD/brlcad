@@ -145,8 +145,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, size_t faceidx, int vidx[4])
      * this is probably a bogus face, and something bad has happened
      */
     if ((size_t)vnum[0] > bot->num_vertices-1) {
-	fprintf(stderr, "Bounds error %lu > %lu\n", (long unsigned int)vnum[0], (long unsigned int)bot->num_vertices-1);
-	abort();
+	bu_exit(1, "ERROR: Invalid %lu > %lu bounds.  Something bad has happened.\n", (long unsigned int)vnum[0], (long unsigned int)bot->num_vertices-1);
     }
 
 
