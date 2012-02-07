@@ -158,7 +158,7 @@ int obj_parser_create(obj_parser_t *parser)
     } catch (std::bad_alloc &) {
 	err = ENOMEM;
     } catch (...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return err;
@@ -171,7 +171,7 @@ void obj_parser_destroy(obj_parser_t parser)
 	delete static_cast<detail::objParser*>(parser.p);
 	parser.p = 0;
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 }
 
@@ -227,7 +227,7 @@ int obj_parse(const char *filename, obj_parser_t parser,
 	p->last_error = ex.what();
 	err = -1;
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return err;
@@ -283,7 +283,7 @@ int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents)
 	p->last_error = ex.what();
 	err = -1;
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return err;
@@ -301,7 +301,7 @@ const char * obj_parse_error(obj_parser_t parser)
 	    err = p->last_error.c_str();
 	}
     } catch (...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return err;
@@ -314,7 +314,7 @@ int obj_contents_destroy(obj_contents_t contents)
 	delete static_cast<detail::objFileContents*>(contents.p);
 	contents.p = 0;
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -334,7 +334,7 @@ size_t obj_vertices(obj_contents_t contents, const float (*val_arr[])[4])
 
 	return c->gvertices_list.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -354,7 +354,7 @@ size_t obj_texture_coord(obj_contents_t contents, const float (*val_arr[])[3])
 
 	return c->tvertices_list.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -374,7 +374,7 @@ size_t obj_normals(obj_contents_t contents, const float (*val_arr[])[3])
 
 	return c->nvertices_list.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -393,7 +393,7 @@ size_t obj_groups(obj_contents_t contents, const char * const (*val_arr[]))
 
 	return c->groupchar_set.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -408,7 +408,7 @@ size_t obj_num_groupsets(obj_contents_t contents)
 
 	return c->groupindex_set.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -428,7 +428,7 @@ size_t obj_groupset(obj_contents_t contents, size_t n,
 
 	return c->groupindex_set[n].size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -447,7 +447,7 @@ size_t obj_objects(obj_contents_t contents, const char * const (*val_arr[]))
 
 	return c->objectchar_set.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -466,7 +466,7 @@ size_t obj_materials(obj_contents_t contents, const char * const (*val_arr[]))
 
 	return c->materialchar_set.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -486,7 +486,7 @@ size_t obj_materiallibs(obj_contents_t contents,
 
 	return c->materiallibchar_set.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -501,7 +501,7 @@ size_t obj_num_materiallibsets(obj_contents_t contents)
 
 	return c->materiallibindex_set.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -520,7 +520,7 @@ size_t obj_materiallibset(obj_contents_t contents, size_t n, const size_t (*inde
 
 	return c->materiallibindex_set[n].size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -539,7 +539,7 @@ size_t obj_texmaps(obj_contents_t contents, const char * const (*val_arr[]))
 
 	return c->texmapchar_set.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -558,7 +558,7 @@ size_t obj_texmaplibs(obj_contents_t contents, const char * const (*val_arr[]))
 
 	return c->texmaplibchar_set.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -573,7 +573,7 @@ size_t obj_num_texmaplibsets(obj_contents_t contents)
 
 	return c->texmaplibindex_set.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -593,7 +593,7 @@ size_t obj_texmaplibset(obj_contents_t contents, size_t n,
 
 	return c->texmaplibindex_set[n].size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -612,7 +612,7 @@ size_t obj_shadow_objs(obj_contents_t contents, const char * const (*val_arr[]))
 
 	return c->shadow_objchar_set.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -631,7 +631,7 @@ size_t obj_trace_objs(obj_contents_t contents, const char * const (*val_arr[]))
 
 	return c->trace_objchar_set.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -651,7 +651,7 @@ size_t obj_polygonal_attributes(obj_contents_t contents,
 
 	return c->polyattributes_set.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -671,7 +671,7 @@ size_t obj_polygonal_v_points(obj_contents_t contents,
 
 	return c->point_v_attr_list.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -691,7 +691,7 @@ size_t obj_polygonal_v_point_vertices(obj_contents_t contents, size_t face,
 
 	return c->point_v_loclist[face].second;
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -711,7 +711,7 @@ size_t obj_polygonal_v_lines(obj_contents_t contents,
 
 	return c->line_v_attr_list.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -731,7 +731,7 @@ size_t obj_polygonal_v_line_vertices(obj_contents_t contents, size_t face,
 
 	return c->line_v_loclist[face].second;
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -751,7 +751,7 @@ size_t obj_polygonal_tv_lines(obj_contents_t contents,
 
 	return c->line_tv_attr_list.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -772,7 +772,7 @@ size_t obj_polygonal_tv_line_vertices(obj_contents_t contents, size_t face,
 
 	return c->line_tv_loclist[face].second;
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -792,7 +792,7 @@ size_t obj_polygonal_v_faces(obj_contents_t contents,
 
 	return c->polygonal_v_attr_list.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -816,7 +816,7 @@ size_t obj_polygonal_v_face_vertices(obj_contents_t contents, size_t face,
 
 	return length;
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -836,7 +836,7 @@ size_t obj_polygonal_tv_faces(obj_contents_t contents,
 
 	return c->polygonal_tv_attr_list.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -858,7 +858,7 @@ size_t obj_polygonal_tv_face_vertices(obj_contents_t contents, size_t face,
 	return c->polygonal_tv_loclist[face].second;
 
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -878,7 +878,7 @@ size_t obj_polygonal_nv_faces(obj_contents_t contents,
 
 	return c->polygonal_nv_attr_list.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -899,7 +899,7 @@ size_t obj_polygonal_nv_face_vertices(obj_contents_t contents, size_t face,
 
 	return c->polygonal_nv_loclist[face].second;
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -919,7 +919,7 @@ size_t obj_polygonal_tnv_faces(obj_contents_t contents,
 
 	return c->polygonal_tnv_attr_list.size();
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
@@ -940,7 +940,7 @@ size_t obj_polygonal_tnv_face_vertices(obj_contents_t contents, size_t face,
 
 	return c->polygonal_tnv_loclist[face].second;
     } catch(...) {
-	abort();
+	bu_bomb("unexpected error encountered\n");
     }
 
     return 0;
