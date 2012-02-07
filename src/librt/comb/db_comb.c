@@ -267,8 +267,8 @@ rt_comb_import4(
 	    tp->tr_l.tl_op = OP_DB_LEAF;
 
 	    /* bu_strlcpy not safe here, buffer size mismatch */
-	    strncpy(namebuf, rp[j+1].M.m_instname, NAMESIZE);
-	    namebuf[NAMESIZE] = '\0'; /* sanity */
+	    memset(namebuf, 0, NAMESIZE+1);
+	    memcpy(namebuf, rp[j+1].M.m_instname, sizeof(rp[j+1].M.m_instname));
 
 	    tp->tr_l.tl_name = bu_strdup(namebuf);
 
