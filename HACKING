@@ -563,6 +563,8 @@ logging routines, and more.  The following functions and global
 variables should be utilized instead of the standard C facility:
 
   bu_malloc() instead of malloc()
+  bu_calloc() instead of calloc()
+  bu_realloc() instead of realloc()
   bu_fgets() instead of fgets()
   bu_free() instead of free()
   bu_log() instead of printf()
@@ -578,6 +580,8 @@ variables should be utilized instead of the standard C facility:
   bu_strlcpy() instead of strcpy(), strncpy(), and strlcpy()
   bu_strcmp() and BU_STR_EQUAL() instead of strcmp()
   bu_strcasecmp() and BU_STR_EQUIV() instead of stricmp()/strcasecmp()
+  bu_strncmp() instead of strncmp()
+  bu_strcasecmp() instead of strnicmp()/strncasecmp()
   bu_file_delete() instead of unlink(), rmdir(), and remove()
 
 Similarly, ANSI C functions are preferred over the BSD and POSIX
