@@ -903,8 +903,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	/* if we got a final_name from build_comb and it isn't
 	 * identical to comb_name, check to ensure an object with the
 	 * new name doesn't already exist - red will not overwrite a
-	 * pre-existing comb (unless the -f force flag is set).  If we
-	 * don't have a name, assume we're working on comb_name
+	 * pre-existing comb (unless the -f force flag is set).
 	 */
 	if (bu_vls_strlen(&final_name) > 0) {
 	    if (!BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(&final_name))) {
@@ -921,9 +920,8 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		    }
 		}
 	    }
-	} else {
-	    bu_vls_sprintf(&final_name, "%s", bu_vls_addr(&comb_name));
 	}
+
 	/* if we ended up with an empty final name, print an error message and head for cleanup */
 	if (strlen(bu_vls_addr(&final_name)) == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: Error - no target name supplied\n", *argv);
