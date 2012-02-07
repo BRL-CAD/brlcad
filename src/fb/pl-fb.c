@@ -182,13 +182,8 @@ typedef struct descr {
 } stroke; 			/* rasterization descriptor */
 #define STROKE_MAGIC 0x12997601	/* Magic number */
 
-#define CK_STROKE(_sp) { \
-	if ((_sp)->magic != STROKE_MAGIC) {  \
-		fprintf(stderr, "Bad stroke struct, ptr=%p, magic was x%lx, s/b=x%lx, at file %s, line %d\n",  \
-			(void *)(_sp), (unsigned long)((_sp)->magic), (unsigned long)STROKE_MAGIC,  \
-			__FILE__, __LINE__);  \
-		abort();  \
-	} }
+#define CK_STROKE(_sp) BU_CKMAG(&((_sp)->magic), STROKE_MAGIC, "stroke struct")
+
 
 /* Global data allocations:	*/
 

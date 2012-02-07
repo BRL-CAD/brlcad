@@ -294,17 +294,7 @@ struct frame *FreeFrame;
 #define FRAME_NULL	((struct frame *)0)
 #define FRAME_MAGIC	0xbafe12ce
 
-#define CHECK_FRAME(_p)	CHECK_IT(_p, fr_magic, FRAME_MAGIC, "frame pointer")
-
-#define CHECK_IT(_q, _el, _magic, _str)	\
-	if ( !(_q) )  { \
-		bu_log("NULL %s in %s line %d\n", _str, __FILE__, __LINE__ ); \
-		abort(); \
-	} else if ( (_q)->_el != _magic )  { \
-		bu_log("ERROR %s=%p magic was=%lx s/b=%lx in %s line %d\n", \
-		       _str, (void *)(_q), (unsigned long)((_q)->_el), (unsigned long)(_magic), __FILE__, __LINE__ ); \
-		abort(); \
-	}
+#define CHECK_FRAME(_p)	BU_CKMAG(&(_p->fr_magic), FRAME_MAGIC, "frame pointer")
 
 
 /*
