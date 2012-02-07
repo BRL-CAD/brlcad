@@ -1900,8 +1900,7 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
 #else
     Tcl_DStringInit(&ds);
     count = Tcl_Gets(chan, &ds);
-    strncpy(line, Tcl_DStringValue(&ds), count);
-    line[count] = '\0';
+    bu_strlcpy(line, Tcl_DStringValue(&ds), RT_MAXLINE);
 #endif
 
     if (count <= 0) {
