@@ -155,6 +155,7 @@ for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy str
     MATCH="`echo \"$MATCH\" \
 | sed 's/.*\/bomb\.c:.*abort.*//g' \
 | sed 's/.*\/bu\.h.*//' \
+| sed 's/.*\/cursor\.c.*//g' \
 | sed 's/.*\/file\.c:.*remove.*//' \
 | sed 's/.*\/str\.c:.*strcasecmp.*//' \
 | sed 's/.*\/str\.c:.*strcmp.*//' \
