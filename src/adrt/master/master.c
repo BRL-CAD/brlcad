@@ -687,8 +687,7 @@ int main(int argc, char **argv) {
     {
 	switch (c) {
             case 'c':
-		strncpy(comp_host, bu_optarg, 64-1);
-		comp_host[64-1] = '\0'; /* sanity */
+		bu_strlcpy(comp_host, bu_optarg, 64);
 		break;
 
 	    case 'd':
@@ -708,13 +707,11 @@ int main(int argc, char **argv) {
 		break;
 
             case 'l':
-		strncpy(list, bu_optarg, 64-1);
-		list[64-1] = '\0'; /* sanity */
+		bu_strlcpy(list, bu_optarg, 64);
 		break;
 
             case 'e':
-		strncpy(exec, bu_optarg, 64-1);
-		exec[64-1] = '\0'; /* sanity */
+		bu_strlcpy(exec, bu_optarg, 64);
 		break;
 
             case 'b':

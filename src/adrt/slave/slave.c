@@ -582,7 +582,7 @@ main(int argc, char **argv)
 		break;
 
 	    case 't':
-		strncpy(temp, bu_optarg, 4);
+		bu_strlcpy(temp, bu_optarg, 5);
 		threads = atoi(temp);
 		if (threads < 0) threads = 0;
 		if (threads > 32) threads = 32;
@@ -602,8 +602,7 @@ main(int argc, char **argv)
     argv += bu_optind;
 
     if (argc) {
-	strncpy(host, argv[0], 64-1);
-	host[64-1] = '\0'; /* sanity */
+	bu_strlcpy(host, argv[0], 64);
     }
 
     if (!host[0]) {

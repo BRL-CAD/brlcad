@@ -183,7 +183,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
     rt_comb_get_color(rgb, rci);
     VSCALE(mesh->attributes->color.v, rgb, 1.0/256.0);
 
-    strncpy(mesh->name, db_path_to_string(path), 255);
+    bu_strlcpy(mesh->name, db_path_to_string(path), sizeof(mesh->name));
 
     if(intern.idb_minor_type == ID_NMG) {
 	nmg_to_adrt_internal(mesh, (struct nmgregion *)intern.idb_ptr);
@@ -235,7 +235,7 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int 
     mesh->matid = material_id;
 
     VMOVE(mesh->attributes->color.v, color);
-    strncpy(mesh->name, db_path_to_string(pathp), 255);
+    bu_strlcpy(mesh->name, db_path_to_string(pathp), sizeof(mesh->name));
 
     nmg_to_adrt_internal(mesh, r);
 }

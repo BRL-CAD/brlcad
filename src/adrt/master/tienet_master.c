@@ -205,8 +205,8 @@ void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char
     TIENET_BUFFER_INIT(tienet_master_result_buffer_comp);
 #endif
 
-    strncpy(tienet_master_list, list, sizeof(tienet_master_list));
-    strncpy(tienet_master_exec, exec, sizeof(tienet_master_exec));
+    bu_strlcpy(tienet_master_list, list, sizeof(tienet_master_list));
+    bu_strlcpy(tienet_master_exec, exec, sizeof(tienet_master_exec));
 
     /* Copy version key to validate slaves of correct version are connecting */
     tienet_master_ver_key = ver_key;
