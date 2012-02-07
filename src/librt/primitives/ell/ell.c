@@ -1704,19 +1704,19 @@ rt_ell_params(struct pc_pc_set *UNUSED(pcs), const struct rt_db_internal *UNUSED
     pcs->ps = bu_calloc(pcs->n_params, sizeof (struct pc_param), "pc_param");
     pcs->cs = bu_calloc(pcs->n_constraints, sizeof (struct pc_constrnt), "pc_constrnt");
 
-    strcpy(pcs->ps[0].pname, "V");
+    bu_vls_strcpy(&(pcs->ps[0].name), "V");
     pcs->ps[0].ptype = pc_point;
     pcs->ps[0].pval.pointp = (pointp_t) &(eip->v);
 
-    strcpy(pcs->ps[1].pname, "A");
+    bu_vls_strcpy(&(pcs->ps[1].name), "A");
     pcs->ps[1].ptype = pc_vector;
     pcs->ps[1].pval.vectorp = (vectp_t) &(eip->a);
 
-    strcpy(pcs->ps[2].pname, "B");
+    bu_vls_strcpy(&(pcs->ps[2].name), "B");
     pcs->ps[2].ptype = pc_vector;
     pcs->ps[2].pval.vectorp = (vectp_t)  &(eip->b);
 
-    strcpy(pcs->ps[3].pname, "C");
+    bu_vls_strcpy(&(pcs->ps[3].name), "C");
     pcs->ps[3].ptype = pc_value;
     pcs->ps[3].pval.vectorp = (vectp_t) &(eip->c);
 #endif
