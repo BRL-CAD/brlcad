@@ -215,7 +215,10 @@ macro(BRLCAD_ADDLIB libname srcs libs)
       target_link_libraries(${libname} ${libslist})
     endif(NOT ${libs} MATCHES "NONE")
 
-    install(TARGETS ${libname} DESTINATION ${LIB_DIR})
+    install(TARGETS ${libname} 
+      RUNTIME DESTINATION ${BIN_DIR}
+      LIBRARY DESTINATION ${LIB_DIR}
+      ARCHIVE DESTINATION ${LIB_DIR})
 
     foreach(lib_define ${${UPPER_CORE}_DEFINES})
       set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${lib_define}")
@@ -249,7 +252,10 @@ macro(BRLCAD_ADDLIB libname srcs libs)
       set_target_properties(${libname}-static PROPERTIES OUTPUT_NAME "${libname}")
     endif(NOT MSVC)
 
-    install(TARGETS ${libname}-static DESTINATION ${LIB_DIR})
+    install(TARGETS ${libname}-static
+      RUNTIME DESTINATION ${BIN_DIR}
+      LIBRARY DESTINATION ${LIB_DIR}
+      ARCHIVE DESTINATION ${LIB_DIR})
 
     foreach(extraarg ${ARGN})
       if(${extraarg} MATCHES "NOSTRICT" AND BRLCAD_ENABLE_STRICT)
