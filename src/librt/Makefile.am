@@ -309,7 +309,6 @@ EXTRA_DIST = \
 	brep_test.cpp \
 	columnparse.c \
 	namegen.c \
-	pmalloc.c \
 	primitives/bot/g_bot_include.c \
 	primitives/bot/tie.c \
 	primitives/bot/tie_kdtree.c \
