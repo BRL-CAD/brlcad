@@ -194,7 +194,7 @@ int cm_start(int argc, char **argv)
 
 	cp = buf;
 	while (*cp && isspace(*cp)) cp++;	/* skip spaces */
-	if (strncmp(cp, "start", 5) != 0) continue;
+	if (bu_strncmp(cp, "start", 5) != 0) continue;
 	while (*cp && !isspace(*cp)) cp++;	/* skip keyword */
 	while (*cp && isspace(*cp)) cp++;	/* skip spaces */
 	frame = atoi(cp);

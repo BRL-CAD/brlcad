@@ -178,7 +178,7 @@ fb_open(const char *file, int width, int height)
      */
     i = 0;
     while (_if_list[i] != (FBIO *)NULL) {
-	if (strncmp(file, _if_list[i]->if_name,
+	if (bu_strncmp(file, _if_list[i]->if_name,
 		    strlen(_if_list[i]->if_name)) == 0) {
 	    /* found it, copy its struct in */
 	    *ifp = *(_if_list[i]);
@@ -189,7 +189,7 @@ fb_open(const char *file, int width, int height)
 
     /* Not in list, check special interfaces or disk files */
     /* "/dev/" protection! */
-    if (strncmp(file, "/dev/", 5) == 0) {
+    if (bu_strncmp(file, "/dev/", 5) == 0) {
 	fb_log("fb_open: no such device \"%s\".\n", file);
 	free((void *) ifp);
 	return FBIO_NULL;

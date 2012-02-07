@@ -195,7 +195,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
     knd.gedp = gedp;
 
     /* ident record */
-    if (strncmp(gedp->ged_wdbp->dbip->dbi_title, "Parts of: ", 10) != 0) {
+    if (bu_strncmp(gedp->ged_wdbp->dbip->dbi_title, "Parts of: ", 10) != 0) {
 	bu_vls_strcat(&title, "Parts of: ");
     }
     bu_vls_strcat(&title, gedp->ged_wdbp->dbip->dbi_title);

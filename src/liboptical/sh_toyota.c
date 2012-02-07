@@ -209,11 +209,11 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
     }
     fclose(fp);
 
-    if (strncmp("glass", tp->material, 5) == 0) {
+    if (bu_strncmp("glass", tp->material, 5) == 0) {
 	tp->glass = 1;
     } else if (tp->material[0] == '/') {
 	char *cp = strrchr(tp->material, '/')+1;
-	if (strncmp("glass", cp, 5) == 0)
+	if (bu_strncmp("glass", cp, 5) == 0)
 	    tp->glass = 1;
     } else {
 	tp->glass = 0;

@@ -221,11 +221,11 @@ main(int argc, char **argv)
 		if (g_avs.count) {
 		    int printedHeader = 0;
 		    for (i=0; i < g_avs.count; i++) {
-			if (strncmp(g_avs.avp[i].name, "title", 6) == 0) {
+			if (bu_strncmp(g_avs.avp[i].name, "title", 6) == 0) {
 			    continue;
-			} else if (strncmp(g_avs.avp[i].name, "units", 6) == 0) {
+			} else if (bu_strncmp(g_avs.avp[i].name, "units", 6) == 0) {
 			    continue;
-			} else if (strncmp(g_avs.avp[i].name, "regionid_colortable", 19) == 0) {
+			} else if (bu_strncmp(g_avs.avp[i].name, "regionid_colortable", 19) == 0) {
 			    continue;
 			} else if (strlen(g_avs.avp[i].name) <= 0) {
 			    continue;

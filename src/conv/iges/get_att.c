@@ -47,7 +47,7 @@ Get_att()
 	    }
 
 	    Readname(&str, "");
-	    if (!strncmp(str, "BRLCAD", 6) || !strncmp(str, "BRL-CAD", 7)) {
+	    if (!bu_strncmp(str, "BRLCAD", 6) || !bu_strncmp(str, "BRL-CAD", 7)) {
 		/* this is what we have been looking for */
 		brlcad_att_de = 2*i+1;
 		return;

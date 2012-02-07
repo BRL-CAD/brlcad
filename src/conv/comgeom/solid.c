@@ -531,7 +531,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strncmp( solid_type, "wir", 3 ) == 0 )  {
+    if ( bu_strncmp( solid_type, "wir", 3 ) == 0 )  {
 	int			numpts;		/* points per wire */
 	int			num;
 	double			dia;

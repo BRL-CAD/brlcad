@@ -605,17 +605,17 @@ rt_tcl_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *c
 	return TCL_ERROR;
     }
 
-    if (argv[2][0] == 'o' && !strncmp(argv[2], "onehit", 6)) {
+    if (argv[2][0] == 'o' && !bu_strncmp(argv[2], "onehit", 6)) {
 	if (argc == 3)
 	    val = ap->a_onehit;
 	else
 	    ap->a_onehit = val;
-    } else if (argv[2][0] == 'n' && !strncmp(argv[2], "no_bool", 7)) {
+    } else if (argv[2][0] == 'n' && !bu_strncmp(argv[2], "no_bool", 7)) {
 	if (argc == 3)
 	    val = ap->a_no_booleans;
 	else
 	    ap->a_no_booleans = val;
-    } else if (argv[2][0] == 'b' && !strncmp(argv[2], "bot_reverse_normal_disabled", 27)) {
+    } else if (argv[2][0] == 'b' && !bu_strncmp(argv[2], "bot_reverse_normal_disabled", 27)) {
 	if (argc == 3)
 	    val = ap->a_bot_reverse_normal_disabled;
 	else

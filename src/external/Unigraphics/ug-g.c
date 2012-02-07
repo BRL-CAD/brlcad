@@ -4094,7 +4094,7 @@ convert_a_feature( tag_t feat_tag,
     bu_log( "Feature %s is type %s, sign is %s, starting prim number is %d\n",
 	    feat_name, feat_type, feat_sign[sign], prim_no );
 #if 0
-    if ( !strncmp( feat_name, "UNITE", 5 ) ) {
+    if ( !bu_strncmp( feat_name, "UNITE", 5 ) ) {
 	bu_log( "Cannot handle UNITE features yet!\n" );
 	UF_free( feat_name );
 	UF_free( feat_type );

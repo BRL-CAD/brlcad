@@ -538,11 +538,11 @@ wdb_importFg4Section_cmd(void *data,
 	line = cp;
 	FIND_NEWLINE(cp, eosFlag);
 
-	if (!strncmp(line, "GRID", 4))
+	if (!bu_strncmp(line, "GRID", 4))
 	    do_grid(line);
-	else if (!strncmp(line, "CTRI", 4))
+	else if (!bu_strncmp(line, "CTRI", 4))
 	    do_tri(line);
-	else if (!strncmp(line, "CQUAD", 4))
+	else if (!bu_strncmp(line, "CQUAD", 4))
 	    do_quad(line);
     }
 

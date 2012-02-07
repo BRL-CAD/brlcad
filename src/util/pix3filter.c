@@ -402,7 +402,7 @@ select_filter(char *str)
 
     i = 0;
     while (kernel[i].name != NULL) {
-	if (strncmp(str, kernel[i].uname, strlen(kernel[i].uname)) == 0)
+	if (bu_strncmp(str, kernel[i].uname, strlen(kernel[i].uname)) == 0)
 	    break;
 	i++;
     }

@@ -907,7 +907,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
     bu_vls_strcpy(&vls, &mater->ma_shader[strlen(mat.shader)]);
     (void)bu_struct_parse(&vls, vrml_mat_parse, (char *)&mat);
 
-    if (strncmp("light", mat.shader, 5) == 0) {
+    if (bu_strncmp("light", mat.shader, 5) == 0) {
 	/* this is a light source */
 	is_light = 1;
     } else {
@@ -917,7 +917,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 	fprintf(fp_out, "\t\t\t# Component_ID: %ld   %s\n", comb->region_id, full_path);
 	fprintf(fp_out, "\t\t\tappearance Appearance { \n");
 
-	if (strncmp("plastic", mat.shader, 7) == 0) {
+	if (bu_strncmp("plastic", mat.shader, 7) == 0) {
 	    if (mat.shininess < 0) {
 		mat.shininess = 10;
 	    }
@@ -932,7 +932,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 		fprintf(fp_out, "\t\t\t\t\ttransparency %g\n", mat.transparency);
 	    }
 	    fprintf(fp_out, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0);
-	} else if (strncmp("glass", mat.shader, 5) == 0) {
+	} else if (bu_strncmp("glass", mat.shader, 5) == 0) {
 	    if (mat.shininess < 0) {
 		mat.shininess = 4;
 	    }
@@ -947,7 +947,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 		fprintf(fp_out, "\t\t\t\t\ttransparency %g\n", mat.transparency);
 	    }
 	    fprintf(fp_out, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0);
-	} else if (strncmp("texture", mat.shader, 7) == 0) {
+	} else if (bu_strncmp("texture", mat.shader, 7) == 0) {
 	    if (mat.tx_w < 0) {
 		mat.tx_w = 512;
 	    }

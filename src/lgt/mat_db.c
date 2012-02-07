@@ -153,7 +153,7 @@ mat_Print_Db(int material_id)
 	prnt_Scroll( "        refractive index\t(%g)\n", entry->refrac_index );
 	if ( --lines <= 0 && ! do_More( &lines ) )
 	    break;
-	if ( strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) != 0 )
+	if ( bu_strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) != 0 )
 	    prnt_Scroll( "        diffuse color\t\t(%d %d %d)\n",
 			 entry->df_rgb[0],
 			 entry->df_rgb[1],
@@ -242,7 +242,7 @@ mat_Edit_Db_Entry(int id)
     if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )
 	(void) sscanf( input_buf, "%lf", &entry->refrac_index );
 
-    if ( strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) != 0 )
+    if ( bu_strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) != 0 )
     {
 	(void) sprintf( editprompt, "diffuse RGB values ? [0 to 255](%d %d %d) ",
 			entry->df_rgb[RED],

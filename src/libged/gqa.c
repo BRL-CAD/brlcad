@@ -436,7 +436,7 @@ read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
     if (i == 2) {
 	*val = a;
 	for (; cvt->name[0] != '\0';) {
-	    if (!strncmp(cvt->name, units_string, 256)) {
+	    if (!bu_strncmp(cvt->name, units_string, 256)) {
 		goto found_units;
 	    } else {
 		cvt++;

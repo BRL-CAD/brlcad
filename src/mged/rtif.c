@@ -75,7 +75,7 @@ cmd_rt(ClientData UNUSED(clientData),
 
     /* skip past _mged_ */
     if (argv[0][0] == '_' && argv[0][1] == 'm' &&
-	strncmp(argv[0], "_mged_", 6) == 0)
+	bu_strncmp(argv[0], "_mged_", 6) == 0)
 	argv[0] += 6;
 
     if (BU_STR_EQUAL(argv[0], "rtcheck"))
@@ -377,7 +377,7 @@ f_nirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 
     /* skip past _mged_ */
     if (argv[0][0] == '_' && argv[0][1] == 'm' &&
-	strncmp(argv[0], "_mged_", 6) == 0)
+	bu_strncmp(argv[0], "_mged_", 6) == 0)
 	argv[0] += 6;
 
     Tcl_DStringInit(&ds);
@@ -419,7 +419,7 @@ f_vnirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
     /* skip past _mged_ */
     if (argv[0][0] == '_' && argv[0][1] == 'm' &&
-	strncmp(argv[0], "_mged_", 6) == 0)
+	bu_strncmp(argv[0], "_mged_", 6) == 0)
 	argv[0] += 6;
 
     Tcl_DStringInit(&ds);

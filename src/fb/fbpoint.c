@@ -148,11 +148,11 @@ main(int argc, char **argv)
     while ( argc > 1 ) {
 	if ( BU_STR_EQUAL( argv[1], "-h" ) ) {
 	    width = height = 1024;
-	} else if ( strncmp( argv[1], "-x", 2 ) == 0 ) {
+	} else if ( bu_strncmp( argv[1], "-x", 2 ) == 0 ) {
 	    if ( xflag++ != 0 )
 		break;
 	    xprefix = &argv[1][2];
-	} else if ( strncmp( argv[1], "-y", 2 ) == 0 ) {
+	} else if ( bu_strncmp( argv[1], "-y", 2 ) == 0 ) {
 	    if ( yflag++ != 0 )
 		break;
 	    yprefix = &argv[1][2];

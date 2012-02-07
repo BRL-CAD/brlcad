@@ -388,7 +388,7 @@ read_frame(FILE *fp)
 	    fprintf(stderr, "EOF?\n");
 	    return -1;
 	}
-	if (strncmp(buf, "TIME", strlen("TIME")) != 0)  continue;
+	if (bu_strncmp(buf, "TIME", strlen("TIME")) != 0)  continue;
 	if (sscanf(buf, "TIME %f", &last_read_time) < 1) {
 	    fprintf(stderr, "bad TIME\n");
 	    return -1;

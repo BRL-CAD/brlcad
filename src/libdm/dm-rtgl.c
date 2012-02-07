@@ -1108,7 +1108,7 @@ addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char fl
     VJOIN1(point, app->a_ray.r_pt, hit->hit_dist, app->a_ray.r_dir);
 
     /* hack fix for bad tgc surfaces */
-    if (strncmp("rec", soltab->st_meth->ft_label, 3) == 0 || strncmp("tgc", soltab->st_meth->ft_label, 3) == 0) {
+    if (bu_strncmp("rec", soltab->st_meth->ft_label, 3) == 0 || bu_strncmp("tgc", soltab->st_meth->ft_label, 3) == 0) {
 
 	/* correct invalid surface number */
 	if (hit->hit_surfno < 1 || hit->hit_surfno > 3) {
@@ -1208,7 +1208,7 @@ recordHit(struct application *app, struct partition *partH, struct seg *UNUSED(s
 	/* add "out" hit point info (unless half-space) */
 	soltab = part->pt_inseg->seg_stp;
 
-	if (strncmp("half", soltab->st_meth->ft_label, 4) != 0) {
+	if (bu_strncmp("half", soltab->st_meth->ft_label, 4) != 0) {
 
 	    addInfo(app, part->pt_outhit, soltab, part->pt_outflip, partColor);
 	}

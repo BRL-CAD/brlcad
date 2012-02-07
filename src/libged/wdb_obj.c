@@ -7569,7 +7569,7 @@ wdb_keep_cmd(struct rt_wdb *wdbp,
 
     /* ident record */
     bu_vls_init(&title);
-    if (strncmp(wdbp->dbip->dbi_title, "Parts of: ", 10) != 0) {
+    if (bu_strncmp(wdbp->dbip->dbi_title, "Parts of: ", 10) != 0) {
 	bu_vls_strcat(&title, "Parts of: ");
     }
     bu_vls_strcat(&title, wdbp->dbip->dbi_title);
@@ -8545,11 +8545,11 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 
     if (argc == 4) {
 	do_all = 0;
-	if (!strncmp(argv[1], "arb", 3))
+	if (!bu_strncmp(argv[1], "arb", 3))
 	    do_arb = 1;
-	else if (!strncmp(argv[1], "tgc", 3))
+	else if (!bu_strncmp(argv[1], "tgc", 3))
 	    do_tgc = 1;
-	else if (!strncmp(argv[1], "poly", 4))
+	else if (!bu_strncmp(argv[1], "poly", 4))
 	    do_poly = 1;
 	else {
 	    struct bu_vls vls;

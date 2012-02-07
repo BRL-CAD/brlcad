@@ -587,7 +587,7 @@ vdraw_params(void *data, int argc, const char *argv[])
     if (argv[2][0] == 'n') {
 	/* check for conflicts with existing vlists*/
 	for (BU_LIST_FOR(rcp, vd_curve, &gedp->ged_gdp->gd_headVDraw)) {
-	    if (!strncmp(rcp->vdc_name, argv[2], RT_VDRW_MAXNAME)) {
+	    if (!bu_strncmp(rcp->vdc_name, argv[2], RT_VDRW_MAXNAME)) {
 		bu_vls_printf(gedp->ged_result_str, "%s %s: name %.40s is already in use\n", argv[0], argv[1], argv[2]);
 		return GED_ERROR;
 	    }
@@ -635,7 +635,7 @@ vdraw_open(void *data, int argc, const char *argv[])
 
     gedp->ged_gdp->gd_currVHead = (struct vd_curve *) NULL;
     for (BU_LIST_FOR(rcp, vd_curve, &gedp->ged_gdp->gd_headVDraw)) {
-	if (!strncmp(rcp->vdc_name, temp_name, RT_VDRW_MAXNAME)) {
+	if (!bu_strncmp(rcp->vdc_name, temp_name, RT_VDRW_MAXNAME)) {
 	    gedp->ged_gdp->gd_currVHead = rcp;
 	    break;
 	}
@@ -708,7 +708,7 @@ vdraw_vlist(void *data, int argc, const char *argv[])
 	    }
 	    rcp2 = (struct vd_curve *)NULL;
 	    for (BU_LIST_FOR(rcp, vd_curve, &gedp->ged_gdp->gd_headVDraw)) {
-		if (!strncmp(rcp->vdc_name, argv[3], RT_VDRW_MAXNAME)) {
+		if (!bu_strncmp(rcp->vdc_name, argv[3], RT_VDRW_MAXNAME)) {
 		    rcp2 = rcp;
 		    break;
 		}

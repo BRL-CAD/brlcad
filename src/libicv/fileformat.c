@@ -88,7 +88,7 @@ HIDDEN int
 guess_file_format(const char *filename, char *trimmedname)
 {
     /* look for the FMT: header */
-#define CMP(name) if (!strncmp(filename, #name":", strlen(#name))) {bu_strlcpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return ICV_IMAGE_##name; }
+#define CMP(name) if (!bu_strncmp(filename, #name":", strlen(#name))) {bu_strlcpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return ICV_IMAGE_##name; }
     CMP(PIX);
     CMP(PNG);
     CMP(PPM);
@@ -100,7 +100,7 @@ guess_file_format(const char *filename, char *trimmedname)
     bu_strlcpy(trimmedname, filename, BUFSIZ);
 
     /* and guess based on extension */
-#define CMP(name, ext) if (!strncmp(filename+strlen(filename)-strlen(#name)-1, "."#ext, strlen(#name)+1)) return ICV_IMAGE_##name;
+#define CMP(name, ext) if (!bu_strncmp(filename+strlen(filename)-strlen(#name)-1, "."#ext, strlen(#name)+1)) return ICV_IMAGE_##name;
     CMP(PNG, png);
     CMP(PPM, ppm);
     CMP(BMP, bmp);

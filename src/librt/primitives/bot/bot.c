@@ -1739,7 +1739,7 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 		    status = BRLCAD_OK;
 		}
 	    }
-	} else if (!strncmp(attr, "fn", 2)) {
+	} else if (!bu_strncmp(attr, "fn", 2)) {
 	    if (attr[2] == '\0') {
 		for (i = 0; i < bot->num_faces; i++) {
 		    bu_vls_printf(logstr, " { %lu %lu %lu }", V3ARGS(&bot->face_normals[i*3]));
@@ -1769,7 +1769,7 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 		bu_vls_printf(logstr, "%lu", (long unsigned)bot->num_face_normals);
 	    }
 	    status = BRLCAD_OK;
-	} else if (!strncmp(attr, "fm", 2)) {
+	} else if (!bu_strncmp(attr, "fm", 2)) {
 	    if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
 		bu_vls_strcat(logstr, "Only plate mode BOTs have face_modes");
 		status = BRLCAD_ERROR;
@@ -1981,7 +1981,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
     while (argc >= 2) {
 	obj = Tcl_NewStringObj(argv[1], -1);
 
-	if (!strncmp(argv[0], "fm", 2)) {
+	if (!bu_strncmp(argv[0], "fm", 2)) {
 	    if (argv[0][2] == '\0') {
 		if (bot->face_mode)
 		    bu_free(bot->face_mode, "bot->face_mode");
@@ -2040,7 +2040,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 
 	    }
 
-	} else if (!strncmp(argv[0], "fn", 2)) {
+	} else if (!bu_strncmp(argv[0], "fn", 2)) {
 	    char *f_str;
 
 	    if (argv[0][2] == '\0') {
@@ -2464,7 +2464,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		}
 		bot->mode = mode;
 	    } else {
-		if (!strncmp(m_str, modes[RT_BOT_SURFACE], 4))
+		if (!bu_strncmp(m_str, modes[RT_BOT_SURFACE], 4))
 		    bot->mode = RT_BOT_SURFACE;
 		else if (BU_STR_EQUAL(m_str, modes[RT_BOT_SOLID]))
 		    bot->mode = RT_BOT_SOLID;
@@ -2478,7 +2478,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    return BRLCAD_ERROR;
 		}
 	    }
-	} else if (!strncmp(argv[0], "orient", 6)) {
+	} else if (!bu_strncmp(argv[0], "orient", 6)) {
 	    char *o_str;
 
 	    o_str = Tcl_GetStringFromObj(obj, NULL);
@@ -2843,27 +2843,27 @@ rt_bot_propget(struct rt_bot_internal *bot, const char *property)
     len = strlen(property);
 
     /* return value of requested property */
-    if (strncmp(property, "faces", len) == 0) {
+    if (bu_strncmp(property, "faces", len) == 0) {
 	return bot->num_faces;
     }
-    else if (strncmp(property, "orientation", len) == 0) {
+    else if (bu_strncmp(property, "orientation", len) == 0) {
 	return bot->orientation;
     }
-    else if (strncmp(property, "type", len) == 0 ||
-	     strncmp(property, "mode", len) == 0)
+    else if (bu_strncmp(property, "type", len) == 0 ||
+	     bu_strncmp(property, "mode", len) == 0)
     {
 	return bot->mode;
     }
-    else if (strncmp(property, "vertices", len) == 0) {
+    else if (bu_strncmp(property, "vertices", len) == 0) {
 	return bot->num_vertices;
     }
-    else if (strncmp(property, "minEdge", len) == 0 ||
-	     strncmp(property, "minedge", len) == 0)
+    else if (bu_strncmp(property, "minEdge", len) == 0 ||
+	     bu_strncmp(property, "minedge", len) == 0)
     {
 	return minEdge(bot);
     }
-    else if (strncmp(property, "maxEdge", len) == 0 ||
-	     strncmp(property, "maxedge", len) == 0)
+    else if (bu_strncmp(property, "maxEdge", len) == 0 ||
+	     bu_strncmp(property, "maxedge", len) == 0)
     {
 	return maxEdge(bot);
     }

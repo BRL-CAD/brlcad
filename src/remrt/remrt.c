@@ -1090,7 +1090,7 @@ eat_script(FILE *fp)
 
     /* Once only, collect up any prelude */
     while ( (buf = rt_read_cmd( fp )) != (char *)0 )  {
-	if ( strncmp( buf, "start", 5 ) == 0 )  break;
+	if ( bu_strncmp( buf, "start", 5 ) == 0 )  break;
 
 	bu_vls_strcat( &prelude, buf );
 	bu_vls_strcat( &prelude, ";" );
@@ -1108,14 +1108,14 @@ eat_script(FILE *fp)
 	needtree = 0;
 	/* Gobble until "end" keyword seen */
 	while ( (ebuf = rt_read_cmd( fp )) != (char *)0 )  {
-	    if ( strncmp( ebuf, "end", 3 ) == 0 )  {
+	    if ( bu_strncmp( ebuf, "end", 3 ) == 0 )  {
 		bu_free( ebuf, "end line" );
 		break;
 	    }
-	    if ( strncmp( ebuf, "clean", 5 ) == 0 ) {
+	    if ( bu_strncmp( ebuf, "clean", 5 ) == 0 ) {
 		needtree=1;
 	    }
-	    if ( strncmp( ebuf, "tree", 4 ) == 0 ) {
+	    if ( bu_strncmp( ebuf, "tree", 4 ) == 0 ) {
 		needtree=1;
 	    }
 	    bu_vls_strcat( &body, ebuf );
@@ -1129,7 +1129,7 @@ eat_script(FILE *fp)
 
 	/* Gobble trailer until next "start" keyword seen */
 	while ( (nsbuf = rt_read_cmd( fp )) != (char *)0 )  {
-	    if ( strncmp( nsbuf, "start", 5 ) == 0 )  {
+	    if ( bu_strncmp( nsbuf, "start", 5 ) == 0 )  {
 		break;
 	    }
 	    bu_vls_strcat( &finish, nsbuf );

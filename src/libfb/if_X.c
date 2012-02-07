@@ -549,7 +549,7 @@ X_open_fb(FBIO *ifp, const char *file, int width, int height)
 	int alpha;
 	struct modeflags *mfp;
 
-	if (strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
+	if (bu_strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
 	    /* How did this happen?? */
 	    mode = 0;
 	} else {

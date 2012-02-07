@@ -204,7 +204,7 @@ view_2init(struct application *ap, char *framename)
 
 	/* File exists, with partial results */
 	while (bu_fgets(line, RT_MAXLINE, outfp)) {
-	    if (!strncmp(line, "BOT:", 4)) {
+	    if (!bu_strncmp(line, "BOT:", 4)) {
 		struct directory *dp;
 
 		/* found a BOT entry, addit to the hash table */

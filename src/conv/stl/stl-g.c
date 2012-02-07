@@ -163,7 +163,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
     start = (-1);
     /* skip leading blanks */
     while (isspace(line[++start]) && line[start] != '\0');
-    if (strncmp(&line[start], "solid", 5) && strncmp(&line[start], "SOLID", 5)) {
+    if (bu_strncmp(&line[start], "solid", 5) && bu_strncmp(&line[start], "SOLID", 5)) {
 	bu_log("Convert_part_ascii: Called for non-part\n%s\n", line);
 	return;
     }
@@ -228,26 +228,26 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
     while (bu_fgets(line1, MAX_LINE_SIZE, fd_in) != NULL) {
 	start = (-1);
 	while (isspace(line1[++start]));
-	if (!strncmp(&line1[start], "endsolid", 8) || !strncmp(&line1[start], "ENDSOLID", 8)) {
+	if (!bu_strncmp(&line1[start], "endsolid", 8) || !bu_strncmp(&line1[start], "ENDSOLID", 8)) {
 	    break;
-	} else if (!strncmp(&line1[start], "color", 5) || !strncmp(&line1[start], "COLOR", 5)) {
+	} else if (!bu_strncmp(&line1[start], "color", 5) || !bu_strncmp(&line1[start], "COLOR", 5)) {
 	    sscanf(&line1[start+5], "%f%f%f", &colr[0], &colr[1], &colr[2]);
 	    for (i=0; i<3; i++)
 		color[i] = (int)(colr[i] * 255.0);
-	} else if (!strncmp(&line1[start], "normal", 6) || !strncmp(&line1[start], "NORMAL", 6)) {
+	} else if (!bu_strncmp(&line1[start], "normal", 6) || !bu_strncmp(&line1[start], "NORMAL", 6)) {
 	    float x, y, z;
 
 	    start += 6;
 	    sscanf(&line1[start], "%f%f%f", &x, &y, &z);
 	    VSET(normal, x, y, z);
-	} else if (!strncmp(&line1[start], "facet", 5) || !strncmp(&line1[start], "FACET", 5)) {
+	} else if (!bu_strncmp(&line1[start], "facet", 5) || !bu_strncmp(&line1[start], "FACET", 5)) {
 	    VSET(normal, 0.0, 0.0, 0.0);
 
 	    start += 4;
 	    while (line1[++start] && isspace(line1[start]));
 
 	    if (line1[start]) {
-		if (!strncmp(&line1[start], "normal", 6) || !strncmp(&line1[start], "NORMAL", 6)) {
+		if (!bu_strncmp(&line1[start], "normal", 6) || !bu_strncmp(&line1[start], "NORMAL", 6)) {
 		    float x, y, z;
 
 		    start += 6;
@@ -255,7 +255,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 		    VSET(normal, x, y, z);
 		}
 	    }
-	} else if (!strncmp(&line1[start], "outer loop", 10) || !strncmp(&line1[start], "OUTER LOOP", 10)) {
+	} else if (!bu_strncmp(&line1[start], "outer loop", 10) || !bu_strncmp(&line1[start], "OUTER LOOP", 10)) {
 	    int endloop=0;
 	    int vert_no=0;
 	    int tmp_face[3] = {0, 0, 0};
@@ -267,9 +267,9 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 		start = (-1);
 		while (isspace(line1[++start]));
 
-		if (!strncmp(&line1[start], "endloop", 7) || !strncmp(&line1[start], "ENDLOOP", 7))
+		if (!bu_strncmp(&line1[start], "endloop", 7) || !bu_strncmp(&line1[start], "ENDLOOP", 7))
 		    endloop = 1;
-		else if (!strncmp(&line1[start], "vertex", 6) || !strncmp(&line1[start], "VERTEX", 6)) {
+		else if (!bu_strncmp(&line1[start], "vertex", 6) || !bu_strncmp(&line1[start], "VERTEX", 6)) {
 		    double x, y, z;
 
 		    sscanf(&line1[start+6], "%lf%lf%lf", &x, &y, &z);
@@ -547,7 +547,7 @@ Convert_input()
 	    while (line[start] != '\0' && isspace(line[start])) {
 		start++;
 	    }
-	    if (!strncmp(&line[start], "solid", 5) || !strncmp(&line[start], "SOLID", 5))
+	    if (!bu_strncmp(&line[start], "solid", 5) || !bu_strncmp(&line[start], "SOLID", 5))
 		Convert_part_ascii(line);
 	    else
 		bu_log("Unrecognized line:\n%s\n", line);

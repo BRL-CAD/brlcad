@@ -76,7 +76,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 	struct bu_vls color = BU_VLS_INIT_ZERO;
 	bu_vls_strcat(&color, argv[3]);
 	bu_vls_trimspace(&color);
-	if (strncmp(bu_vls_addr(&color), "del", 3) == 0) {
+	if (bu_strncmp(bu_vls_addr(&color), "del", 3) == 0) {
 	    offset=2;
 	}
 	bu_vls_free(&color);
@@ -119,7 +119,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
     /* Material */
     bu_vls_strcat(&vls, argv[2]);
     bu_vls_trimspace(&vls);
-    if (bu_vls_strlen(&vls) == 0 || strncmp(bu_vls_addr(&vls), "del", 3) == 0) {
+    if (bu_vls_strlen(&vls) == 0 || bu_strncmp(bu_vls_addr(&vls), "del", 3) == 0) {
 	/* delete the current shader string */
 	bu_vls_free(&comb->shader);
     } else {

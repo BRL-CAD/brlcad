@@ -207,11 +207,11 @@ backtrace(char * const *args, int fd)
 			} else {
 			    position++;
 			}
-			if (strncmp(buffer, "No locals", 9) == 0) {
+			if (bu_strncmp(buffer, "No locals", 9) == 0) {
 			    /* skip it */
-			} else if (strncmp(buffer, "No symbol table", 15) == 0) {
+			} else if (bu_strncmp(buffer, "No symbol table", 15) == 0) {
 			    /* skip it */
-			} else if (strncmp(buffer, "Detaching", 9) == 0) {
+			} else if (bu_strncmp(buffer, "Detaching", 9) == 0) {
 			    /* done processing backtrace output */
 			    processing_bt = 0;
 			} else if (processing_bt == 1) {

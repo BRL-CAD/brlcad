@@ -136,7 +136,7 @@ _ged_get_obj_bounds(struct ged *gedp,
 	    if (*argv[i] != '/' && *reg_name == '/')
 		reg_name++;
 
-	    if (strncmp(argv[i], reg_name, name_len))
+	    if (bu_strncmp(argv[i], reg_name, name_len))
 		continue;
 
 	    /* This is part of the group */

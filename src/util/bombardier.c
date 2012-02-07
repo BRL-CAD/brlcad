@@ -235,7 +235,7 @@ init(Tcl_Interp *interp)
     /* try to pull the command name from the report */
     c = bu_vls_addr(report);
     while (c[0] != '\0') {
-	if (strncmp(c, "Command:", 8) == 0) {
+	if (bu_strncmp(c, "Command:", 8) == 0) {
 	    c+=8;
 	    while (c[0] != '\0' && isspace(c[0])) {
 		c++;

@@ -554,7 +554,7 @@ main(int argc, char **argv)
 			if (fread(ver, 1, 3, gfp) != 3)
 			    Fatal(fbp, "Error reading GIF signature");
 
-			if (strncmp(ver, "87a", 3) != 0)
+			if (bu_strncmp(ver, "87a", 3) != 0)
 			    Message(
 				"GIF version \"%3.3s\" not known, \"87a\" assumed",
 				ver

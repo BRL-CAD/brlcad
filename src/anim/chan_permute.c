@@ -72,10 +72,10 @@ main(int argc, char *argv[])
 
     i=j=icount = ocount = maxlength = 0;
     for (i=1;i<argc;i++) {
-	if (!strncmp(argv[i], ihead, 2)) {
+	if (!bu_strncmp(argv[i], ihead, 2)) {
 	    j=0;
 	    icount++;
-	} else if (!strncmp(argv[i], ohead, 2)) {
+	} else if (!bu_strncmp(argv[i], ohead, 2)) {
 	    j=0;
 	    ocount++;
 	} else
@@ -85,7 +85,7 @@ main(int argc, char *argv[])
     y = (struct unit *) bu_calloc(icount+ocount, sizeof(struct unit), "struct unit");
     x = y - 1;
     for (i=1;i<argc;i++) {
-	if (!strncmp(argv[i], "-", 1)) {
+	if (!bu_strncmp(argv[i], "-", 1)) {
 	    j=0;
 	    x++;
 	    x->list = (short *) bu_calloc(maxlength, sizeof(short), "short array");

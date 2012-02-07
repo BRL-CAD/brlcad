@@ -1554,7 +1554,7 @@ f4_do_ccone3(void)
 	bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
     }
 
-    if (strncmp(field, line, 8)) {
+    if (bu_strncmp(field, line, 8)) {
 	bu_log("WARNING: CCONE3 continuation flags disagree, %8.8s vs %8.8s\n", field, line);
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 	       group_id, comp_id, element_id);
@@ -2167,10 +2167,10 @@ skip_section(void)
     }
 
     if (get_line()) {
-	while (line[0] && strncmp(line, "SECTION", 7) &&
-	       strncmp(line, "HOLE", 4) &&
-	       strncmp(line, "WALL", 4) &&
-	       strncmp(line, "VEHICLE", 7)) {
+	while (line[0] && bu_strncmp(line, "SECTION", 7) &&
+	       bu_strncmp(line, "HOLE", 4) &&
+	       bu_strncmp(line, "WALL", 4) &&
+	       bu_strncmp(line, "VEHICLE", 7)) {
 	    section_start = ftell(fpin);
 	    if (!get_line())
 		break;
@@ -2417,13 +2417,13 @@ Process_hole_wall(void)
 
     rewind(fpin);
     while (1) {
-	if (!strncmp(line, "HOLE", 4)) {
+	if (!bu_strncmp(line, "HOLE", 4)) {
 	    f4_do_hole_wall(HOLE);
-	} else if (!strncmp(line, "WALL", 4)) {
+	} else if (!bu_strncmp(line, "WALL", 4)) {
 	    f4_do_hole_wall(WALL);
-	} else if (!strncmp(line, "COMPSPLT", 8)) {
+	} else if (!bu_strncmp(line, "COMPSPLT", 8)) {
 	    f4_do_compsplt();
-	} else if (!strncmp(line, "SECTION", 7)) {
+	} else if (!bu_strncmp(line, "SECTION", 7)) {
 	    bu_strlcpy(field, &line[24], sizeof(field));
 	    mode = atoi(field);
 	    if (mode != 1 && mode != 2) {
@@ -2431,7 +2431,7 @@ Process_hole_wall(void)
 		       mode, group_id, comp_id);
 		mode = 2;
 	    }
-	} else if (!strncmp(line, "ENDDATA", 7)) {
+	} else if (!bu_strncmp(line, "ENDDATA", 7)) {
 	    break;
 	}
 
@@ -2515,45 +2515,45 @@ Process_input(int pass_number)
     if (!get_line() || !line[0])
 	bu_strlcpy(line, "ENDDATA", sizeof(line));
     while (1) {
-	if (!strncmp(line, "VEHICLE", 7))
+	if (!bu_strncmp(line, "VEHICLE", 7))
 	    f4_do_vehicle();
-	else if (!strncmp(line, "HOLE", 4))
+	else if (!bu_strncmp(line, "HOLE", 4))
 	    ;
-	else if (!strncmp(line, "WALL", 4))
+	else if (!bu_strncmp(line, "WALL", 4))
 	    ;
-	else if (!strncmp(line, "COMPSPLT", 8))
+	else if (!bu_strncmp(line, "COMPSPLT", 8))
 	    ;
-	else if (!strncmp(line, "CBACKING", 8))
+	else if (!bu_strncmp(line, "CBACKING", 8))
 	    f4_do_cbacking();
-	else if (!strncmp(line, "CHGCOMP", 7))
+	else if (!bu_strncmp(line, "CHGCOMP", 7))
 	    f4_do_chgcomp();
-	else if (!strncmp(line, "SECTION", 7))
+	else if (!bu_strncmp(line, "SECTION", 7))
 	    f4_do_section(0);
-	else if (!strncmp(line, "$NAME", 5))
+	else if (!bu_strncmp(line, "$NAME", 5))
 	    f4_do_name();
-	else if (!strncmp(line, "$COMMENT", 8))
+	else if (!bu_strncmp(line, "$COMMENT", 8))
 	    ;
-	else if (!strncmp(line, "GRID", 4))
+	else if (!bu_strncmp(line, "GRID", 4))
 	    f4_do_grid();
-	else if (!strncmp(line, "CLINE", 5))
+	else if (!bu_strncmp(line, "CLINE", 5))
 	    f4_do_cline();
-	else if (!strncmp(line, "CHEX1", 5))
+	else if (!bu_strncmp(line, "CHEX1", 5))
 	    f4_do_hex1();
-	else if (!strncmp(line, "CHEX2", 5))
+	else if (!bu_strncmp(line, "CHEX2", 5))
 	    f4_do_hex2();
-	else if (!strncmp(line, "CTRI", 4))
+	else if (!bu_strncmp(line, "CTRI", 4))
 	    f4_do_tri();
-	else if (!strncmp(line, "CQUAD", 5))
+	else if (!bu_strncmp(line, "CQUAD", 5))
 	    f4_do_quad();
-	else if (!strncmp(line, "CCONE1", 6))
+	else if (!bu_strncmp(line, "CCONE1", 6))
 	    f4_do_ccone1();
-	else if (!strncmp(line, "CCONE2", 6))
+	else if (!bu_strncmp(line, "CCONE2", 6))
 	    f4_do_ccone2();
-	else if (!strncmp(line, "CCONE3", 6))
+	else if (!bu_strncmp(line, "CCONE3", 6))
 	    f4_do_ccone3();
-	else if (!strncmp(line, "CSPHERE", 7))
+	else if (!bu_strncmp(line, "CSPHERE", 7))
 	    f4_do_sphere();
-	else if (!strncmp(line, "ENDDATA", 7)) {
+	else if (!bu_strncmp(line, "ENDDATA", 7)) {
 	    f4_do_section(1);
 	    break;
 	} else {

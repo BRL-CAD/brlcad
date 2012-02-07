@@ -400,7 +400,7 @@ bu_avail_cpus(void)
 	} else {
 	    ncpu = 0;
 	    while (bu_fgets(buf, 80, fp) != NULL) {
-		if (strncmp (buf, "processor", 9) == 0) {
+		if (bu_strncmp (buf, "processor", 9) == 0) {
 		    ncpu++;
 		}
 	    }

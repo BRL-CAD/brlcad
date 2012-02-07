@@ -1182,7 +1182,7 @@ main(int argc, char **argv)
     bulk_data_start_line = 0;
     while (bu_fgets(line, MAX_LINE_SIZE, fpin)) {
 	bulk_data_start_line++;
-	if (strncmp(line, "BEGIN BULK", 10))
+	if (bu_strncmp(line, "BEGIN BULK", 10))
 	    continue;
 
 	start_off = ftell(fpin);
@@ -1213,7 +1213,7 @@ main(int argc, char **argv)
     /* count grid points */
     fseek(fptmp, 0, SEEK_SET);
     while (bu_fgets(line, MAX_LINE_SIZE, fptmp)) {
-	if (!strncmp(line, "GRID", 4))
+	if (!bu_strncmp(line, "GRID", 4))
 	    grid_count++;
     }
     if (!grid_count) {
@@ -1223,10 +1223,10 @@ main(int argc, char **argv)
     /* get default values and properties */
     fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
-	if (!strncmp(curr_rec[0], "BAROR", 5)) {
+	if (!bu_strncmp(curr_rec[0], "BAROR", 5)) {
 	    /* get BAR defaults */
 	    bar_def_pid = atoi(curr_rec[2]);
-	} else if (!strncmp(curr_rec[0], "PBAR", 4)) {
+	} else if (!bu_strncmp(curr_rec[0], "PBAR", 4)) {
 	    struct pbar *pb;
 
 	    BU_GET(pb, struct pbar);
@@ -1238,7 +1238,7 @@ main(int argc, char **argv)
 	    BU_LIST_INIT(&pb->head.l);
 
 	    BU_LIST_INSERT(&pbar_head.l, &pb->l);
-	} else if (!strncmp(curr_rec[0], "PSHELL", 6)) {
+	} else if (!bu_strncmp(curr_rec[0], "PSHELL", 6)) {
 	    BU_GET(psh, struct pshell);
 
 	    psh->s = (struct shell *)NULL;
@@ -1260,7 +1260,7 @@ main(int argc, char **argv)
 	int cid;
 	double tmp[3];
 
-	if (strncmp(curr_rec[0], "GRID", 4))
+	if (bu_strncmp(curr_rec[0], "GRID", 4))
 	    continue;
 
 	gid = atoi(curr_rec[1]);
@@ -1281,7 +1281,7 @@ main(int argc, char **argv)
     /* find coordinate systems */
     fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
-	if (strncmp(curr_rec[0], "CORD", 4))
+	if (bu_strncmp(curr_rec[0], "CORD", 4))
 	    continue;
 
 	get_coord_sys();
@@ -1300,13 +1300,13 @@ main(int argc, char **argv)
     /* get elements */
     fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
-	if (!strncmp(curr_rec[0], "CBAR", 4))
+	if (!bu_strncmp(curr_rec[0], "CBAR", 4))
 	    get_cbar();
-	else if (!strncmp(curr_rec[0], "CROD", 4))
+	else if (!bu_strncmp(curr_rec[0], "CROD", 4))
 	    get_cbar();
-	else if (!strncmp(curr_rec[0], "CTRIA3", 6))
+	else if (!bu_strncmp(curr_rec[0], "CTRIA3", 6))
 	    get_ctria3();
-	else if (!strncmp(curr_rec[0], "CQUAD4", 6))
+	else if (!bu_strncmp(curr_rec[0], "CQUAD4", 6))
 	    get_cquad4();
     }
 

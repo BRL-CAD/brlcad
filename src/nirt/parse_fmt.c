@@ -190,7 +190,7 @@ format_output (const char* buffer, com_table* ctp, struct rt_i *UNUSED(rtip))
 	    }
 	    break;
 	default:
-	    if (strncmp(bp, "default", 7) == 0) {
+	    if (bu_strncmp(bp, "default", 7) == 0) {
 		use_defaults = 1;
 		break;
 	    }

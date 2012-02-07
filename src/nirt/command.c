@@ -597,12 +597,12 @@ cm_attr(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	return;
     }
 
-    if (! strncmp(buffer, "-p", 2)) {
+    if (! bu_strncmp(buffer, "-p", 2)) {
 	attrib_print();
 	return;
     }
 
-    if (! strncmp(buffer, "-f", 2)) {
+    if (! bu_strncmp(buffer, "-f", 2)) {
 	attrib_flush();
 	return;
     }

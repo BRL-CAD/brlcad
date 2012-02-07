@@ -2929,7 +2929,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	nvals = 3*1 + 1;
 	menu = p_half;
 	fn_in = half_in;
-    } else if (strncmp(argv[2], "arb", 3) == 0) {
+    } else if (bu_strncmp(argv[2], "arb", 3) == 0) {
 	int n = atoi(&argv[2][3]);
 
 	if (n < 4 || 8 < n) {

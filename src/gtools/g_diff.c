@@ -624,7 +624,7 @@ verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 			dp->d_namep, dbip->dbi_filename, los, comb->los);
 	    }
 	} else if (BU_STR_EQUAL(key, "material")) {
-	    if (!strncmp(value, "gift", 4)) {
+	    if (!bu_strncmp(value, "gift", 4)) {
 		long GIFTmater;
 
 		GIFTmater = strtol(&value[4], NULL, 0);
@@ -683,7 +683,7 @@ remove_region_attrs(Tcl_Obj *obj)
 	}
 	if (!found_material && BU_STR_EQUAL(key, "material")) {
 	    found_material = 1;
-	    if (!strncmp(Tcl_GetStringFromObj(objs[i], NULL), "gift", 4)) {
+	    if (!bu_strncmp(Tcl_GetStringFromObj(objs[i], NULL), "gift", 4)) {
 		Tcl_ListObjReplace(interp, obj, i-1, 2, 0, NULL);
 	    }
 	}
@@ -865,7 +865,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	    has_diff += 1;
 	    argv[2] = dp2->d_namep;
 	    if (wdb_get_tcl((void *)wdb2, 3, (const char **)argv) == TCL_ERROR ||
-		!strncmp(Tcl_GetStringResult(interp), "invalid", 7)) {
+		!bu_strncmp(Tcl_GetStringResult(interp), "invalid", 7)) {
 		/* could not get TCL version */
 		if (mode == HUMAN)
 		    printf("Import %s from %s\n",

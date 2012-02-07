@@ -2574,7 +2574,7 @@ nmg_to_iges(ip, name, fp_dir, fp_param)
 
     dependent = 1;
     for (i=0; i<no_of_indeps; i++) {
-	if (!strncmp(name, independent[i], NAMESIZE+1)) {
+	if (!bu_strncmp(name, independent[i], NAMESIZE+1)) {
 	    dependent = 0;
 	    break;
 	}

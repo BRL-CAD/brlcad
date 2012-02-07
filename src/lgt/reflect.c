@@ -660,7 +660,7 @@ getMaMID(struct mater_info *map, int *id)
 	if (p[i] == '\0')
 	    i++;
 	else {
-	    if (strncmp(&p[i], MA_MID, (size_t)mid_len)) {
+	    if (bu_strncmp(&p[i], MA_MID, (size_t)mid_len)) {
 		while (++i < len && p[i] != '\0');
 	    } else {
 		/* found MA_MID */
@@ -824,7 +824,7 @@ f_Model(struct application *ap, struct partition *pt_headp, struct seg *unused)
 	    )
 	    entry = &mat_dfl_entry;
     /* If texture mapping replace color with texture map look up. */
-    if (strncmp(TEX_KEYWORD, entry->name, TEX_KEYLEN) == 0) {
+    if (bu_strncmp(TEX_KEYWORD, entry->name, TEX_KEYLEN) == 0) {
 	struct uvcoord uv;
 	/* Solid has a frame buffer image map. */
 	rt_functab[stp->st_id].ft_uv(ap, stp, ihitp, &uv);

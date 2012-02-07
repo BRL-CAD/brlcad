@@ -484,7 +484,7 @@ bu_vls_strncmp(struct bu_vls *s1, struct bu_vls *s2, size_t n)
 	bu_vls_extend(s2, 1);
     }
 
-    return strncmp(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset, n);
+    return bu_strncmp(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset, n);
 }
 
 

@@ -690,7 +690,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     bu_vls_strcpy( &vls, &mater->ma_shader[strlen(mat.shader)] );
     (void)bu_struct_parse( &vls, vrml_mat_parse, (char *)&mat );
 
-    if ( strncmp( "light", mat.shader, 5 ) == 0 )
+    if ( bu_strncmp( "light", mat.shader, 5 ) == 0 )
     {
 	/* this is a light source */
 	is_light = 1;
@@ -700,7 +700,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 	fprintf( fp, "\t<Shape DEF=\"%s\">\n", full_path);
 	fprintf( fp, "\t\t<Appearance>\n");
 
-	if ( strncmp( "plastic", mat.shader, 7 ) == 0 )
+	if ( bu_strncmp( "plastic", mat.shader, 7 ) == 0 )
 	{
 	    if ( mat.shininess < 0 )
 		mat.shininess = 10;
@@ -709,7 +709,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 
 	    fprintf( fp, "\t\t\t<Material diffuseColor=\"%g %g %g\" shininess=\"%g\" transparency=\"%g\" specularColor=\"%g %g %g\"/>\n", r, g, b, 1.0-exp(-(double)mat.shininess/20.0), mat.transparency, 1.0, 1.0, 1.0);
 	}
-	else if ( strncmp( "glass", mat.shader, 5 ) == 0 )
+	else if ( bu_strncmp( "glass", mat.shader, 5 ) == 0 )
 	{
 	    if ( mat.shininess < 0 )
 		mat.shininess = 4;

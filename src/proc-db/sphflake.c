@@ -285,7 +285,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
 		sscanf(input, "%48s", p->fileName); /* MAX_INPUT_LENGTH */
 	    }
 	}
@@ -298,7 +298,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (strncmp(input, "", MAX_INPUT_LENGTH) == 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) == 0) {
 		sscanf(input, "%lg %lg %lg", &(p->pos[X]), &(p->pos[Y]), &(p->pos[Z]));
 	    }
 	}
@@ -311,7 +311,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
 		sscanf(input, "%d", &(p->maxRadius));
 	    }
 	}
@@ -324,7 +324,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
 		sscanf(input, "%lg", &(p->deltaRadius));
 	    }
 	}
@@ -337,7 +337,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
 		sscanf(input, "%d", &(p->maxDepth));
 	    }
 	}
@@ -352,7 +352,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	    } else {
 		len = strlen(input);
 		if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-		if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+		if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
 		    sscanf(input, "%48s", p->matArray[i].name); /* MAX_INPUT_LENGTH */
 		}
 	    }
@@ -365,7 +365,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	    } else {
 		len = strlen(input);
 		if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-		if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+		if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
 		    sscanf(input, "%48s", p->matArray[i].params); /* MAX_INPUT_LENGTH */
 		}
 	    }
@@ -378,7 +378,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	    } else {
 		len = strlen(input);
 		if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-		if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+		if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
 		    sscanf(input, "%d %d %d", (int *)&(c[0]), (int *)&(c[1]), (int *)&(c[2]));
 		    p->matArray[i].color[0] = c[0];
 		    p->matArray[i].color[1] = c[1];

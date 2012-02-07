@@ -91,9 +91,9 @@ HIDDEN void
 txt_source_hook(const struct bu_structparse *UNUSED(ip), const char *sp_name, genptr_t base, char *UNUSED(p))
 {
     struct txt_specific *textureSpecific = (struct txt_specific *)base;
-    if (strncmp(sp_name, "file", 4)==0) {
+    if (bu_strncmp(sp_name, "file", 4)==0) {
 	textureSpecific->tx_datasrc=TXT_SRC_FILE;
-    } else if (strncmp(sp_name, "obj", 3)==0) {
+    } else if (bu_strncmp(sp_name, "obj", 3)==0) {
 	textureSpecific->tx_datasrc=TXT_SRC_OBJECT;
     } else {
 	textureSpecific->tx_datasrc=TXT_SRC_AUTO;

@@ -970,7 +970,7 @@ f_permute(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 			     argv[1], "'\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
-	if (strncmp(*p, argv[1], arglen) == 0)
+	if (bu_strncmp(*p, argv[1], arglen) == 0)
 	    break;
     }
 

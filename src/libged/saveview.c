@@ -158,7 +158,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
     for (i = 2; i < argc; i++)
 	(void)fprintf(fp, "%s ", argv[i]);
 
-    if (strncmp(rtcmd, "nirt", 4) != 0)
+    if (bu_strncmp(rtcmd, "nirt", 4) != 0)
 	(void)fprintf(fp, "\\\n -o %s\\\n $*\\\n", outpix);
 
     if (inputg[0] == '\0') {

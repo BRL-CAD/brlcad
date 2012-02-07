@@ -249,7 +249,7 @@ ged_loadframe(struct ged *gedp, FILE *fp)
 	    }
 	}
 
-	if (cmd[0] == 'e' && strncmp(cmd, "end", 3) == 0) {
+	if (cmd[0] == 'e' && bu_strncmp(cmd, "end", 3) == 0) {
 	    end = 1;
 	}
 

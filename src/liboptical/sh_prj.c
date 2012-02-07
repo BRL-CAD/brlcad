@@ -96,9 +96,9 @@ struct prj_specific {
  */
 HIDDEN void img_source_hook(const struct bu_structparse *UNUSED(ip), const char *sp_name, genptr_t base, char *UNUSED(p)) {
     struct img_specific *imageSpecific = (struct img_specific *)base;
-    if (strncmp(sp_name, "file", 4) == 0) {
+    if (bu_strncmp(sp_name, "file", 4) == 0) {
 	imageSpecific->i_datasrc=IMG_SRC_FILE;
-    } else if (strncmp(sp_name, "obj", 3) == 0) {
+    } else if (bu_strncmp(sp_name, "obj", 3) == 0) {
 	imageSpecific->i_datasrc=IMG_SRC_OBJECT;
     } else {
 	imageSpecific->i_datasrc=IMG_SRC_AUTO;

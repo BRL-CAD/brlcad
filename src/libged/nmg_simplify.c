@@ -85,11 +85,11 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 #endif
     } else if (argc == 4) {
 	do_all = 0;
-	if (!strncmp(argv[1], "arb", 3)) {
+	if (!bu_strncmp(argv[1], "arb", 3)) {
 	    do_arb = 1;
-	} else if (!strncmp(argv[1], "tgc", 3)) {
+	} else if (!bu_strncmp(argv[1], "tgc", 3)) {
 	    do_tgc = 1;
-	} else if (!strncmp(argv[1], "poly", 4)) {
+	} else if (!bu_strncmp(argv[1], "poly", 4)) {
 	    do_poly = 1;
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, 

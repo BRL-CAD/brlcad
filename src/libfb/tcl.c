@@ -288,24 +288,24 @@ fb_configureWindow(FBIO *ifp, int width, int height)
 #endif
 {
 #ifdef IF_X
-    if (!strncmp(ifp->if_name, X_device_name, strlen(X_device_name))) {
+    if (!bu_strncmp(ifp->if_name, X_device_name, strlen(X_device_name))) {
 	X24_configureWindow(ifp, width, height);
     }
 #endif /* IF_X */
 #ifdef IF_WGL
-    if (!strncmp(ifp->if_name, wgl_device_name, strlen(wgl_device_name))) {
+    if (!bu_strncmp(ifp->if_name, wgl_device_name, strlen(wgl_device_name))) {
 	wgl_configureWindow(ifp, width, height);
     }
 #endif  /* IF_WGL */
 #ifdef IF_OGL
-    if (!strncmp(ifp->if_name, ogl_device_name, strlen(ogl_device_name))) {
+    if (!bu_strncmp(ifp->if_name, ogl_device_name, strlen(ogl_device_name))) {
 	ogl_configureWindow(ifp, width, height);
     }
 #endif  /* IF_OGL */
 #ifdef IF_TK
 #if 0
 /* XXX TJM implement tk_configureWindow */
-    if (!strncmp(ifp->if_name, tk_device_name, strlen(tk_device_name))) {
+    if (!bu_strncmp(ifp->if_name, tk_device_name, strlen(tk_device_name))) {
 	tk_configureWindow(ifp, width, height);
     }
 #endif
@@ -339,19 +339,19 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 
 #ifdef IF_X
     status = -1;
-    if (!strncmp(ifp->if_name, X_device_name, strlen(X_device_name))) {
+    if (!bu_strncmp(ifp->if_name, X_device_name, strlen(X_device_name))) {
 	status = X24_refresh(ifp, x, y, w, h);
     }
 #endif /* IF_X */
 #ifdef IF_WGL
     status = -1;
-    if (!strncmp(ifp->if_name, wgl_device_name, strlen(wgl_device_name))) {
+    if (!bu_strncmp(ifp->if_name, wgl_device_name, strlen(wgl_device_name))) {
 	status = wgl_refresh(ifp, x, y, w, h);
     }
 #endif  /* IF_WGL */
 #ifdef IF_OGL
     status = -1;
-    if (!strncmp(ifp->if_name, ogl_device_name, strlen(ogl_device_name))) {
+    if (!bu_strncmp(ifp->if_name, ogl_device_name, strlen(ogl_device_name))) {
 	status = ogl_refresh(ifp, x, y, w, h);
     }
 #endif  /* IF_OGL */
@@ -359,7 +359,7 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 #if 0
 /* XXX TJM implement tk_refresh */
     status = -1;
-    if (!strncmp(ifp->if_name, tk_device_name, strlen(tk_device_name))) {
+    if (!bu_strncmp(ifp->if_name, tk_device_name, strlen(tk_device_name))) {
 	status = tk_refresh(ifp, x, y, w, h);
     }
 #endif

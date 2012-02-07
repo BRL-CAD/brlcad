@@ -611,7 +611,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	if (mode == FACET_MODE) {
 	    dependent = 1;
 	    for (i=0; i<no_of_indeps; i++) {
-		if (!strncmp(dp->d_namep, independent[i], NAMESIZE+1)) {
+		if (!bu_strncmp(dp->d_namep, independent[i], NAMESIZE+1)) {
 		    dependent = 0;
 		    break;
 		}
@@ -740,7 +740,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
 	return;
 
     for (i=0; i<no_of_indeps; i++) {
-	if (!strncmp(dp->d_namep, independent[i], NAMESIZE+1)) {
+	if (!bu_strncmp(dp->d_namep, independent[i], NAMESIZE+1)) {
 	    dependent = 0;
 	    break;
 	}

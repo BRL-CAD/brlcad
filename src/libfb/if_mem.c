@@ -95,7 +95,7 @@ mem_open(FBIO *ifp, const char *file, int width, int height)
      */
     mode = 0;
 
-	if (strncmp(file, "/dev/mem", 8)) {
+	if (bu_strncmp(file, "/dev/mem", 8)) {
 	    /* How did this happen?? */
 	    mode = 0;
 	} else {

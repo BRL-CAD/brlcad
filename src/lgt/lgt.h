@@ -54,7 +54,7 @@
 
 /* Guess whether or not a frame buffer name is a disk file. (XXX) */
 #define DiskFile(fil)	(*fil != '\0'\
-			&& strncmp(fil, "/dev", 4 ) != 0 \
+			&& bu_strncmp(fil, "/dev", 4 ) != 0 \
 			&& strchr( fil, ':' ) == (char *)NULL)
 
 /* Values for grid type. */

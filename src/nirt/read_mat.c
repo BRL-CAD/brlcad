@@ -63,7 +63,7 @@ void read_mat (struct rt_i *rtip)
     quat_t	q;
 
     while ((buf = rt_read_cmd(stdin)) != (char *) 0) {
-	if (strncmp(buf, "eye_pt", 6) == 0) {
+	if (bu_strncmp(buf, "eye_pt", 6) == 0) {
 	    if (sscanf(buf + 6, "%lf%lf%lf", &p[X], &p[Y], &p[Z]) != 3) {
 		bu_exit(1, "nirt: read_mat(): Failed to read eye_pt\n");
 	    }
@@ -71,7 +71,7 @@ void read_mat (struct rt_i *rtip)
 	    target(Y) = p[Y];
 	    target(Z) = p[Z];
 	    status |= RMAT_SAW_EYE;
-	} else if (strncmp(buf, "orientation", 11) == 0) {
+	} else if (bu_strncmp(buf, "orientation", 11) == 0) {
 	    if (sscanf(buf + 11,
 		       "%lf%lf%lf%lf",
 		       &q[0], &q[1], &q[2], &q[3]) != 4) {
@@ -83,7 +83,7 @@ void read_mat (struct rt_i *rtip)
 	    azimuth() = atan2(-m[0], m[1]) / DEG2RAD;
 	    elevation() = atan2(m[10], m[6]) / DEG2RAD;
 	    status |= RMAT_SAW_ORI;
-	} else if (strncmp(buf, "viewrot", 7) == 0) {
+	} else if (bu_strncmp(buf, "viewrot", 7) == 0) {
 	    if (sscanf(buf + 7,
 		       "%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf",
 		       &m[0], &m[1], &m[2], &m[3],

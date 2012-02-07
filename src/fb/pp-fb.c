@@ -151,7 +151,7 @@ main(int argc, char **argv)
 	} else if (BU_STR_EQUAL("-N", argv[i])) {
 	    sscanf(argv[++i], "%d", &scr_h);
 	    scr_set=1;
-	} else if (strncmp("-", argv[i], 1)==0) {
+	} else if (bu_strncmp("-", argv[i], 1)==0) {
 	    printf("Unknown option: %s\n", argv[i]);
 	    bu_exit(10, NULL);
 /* get plot file */

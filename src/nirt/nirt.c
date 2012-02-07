@@ -150,7 +150,7 @@ listformats(void)
 	cfPtr = fopen(bu_vls_addr(&nirtpathtofile), "rb");
 	fnddesc = 0;
 	while (bu_vls_gets(&vlsfileline, cfPtr) && fnddesc == 0) {
-	    if (strncmp(bu_vls_addr(&vlsfileline), "# Description: ", 15) == 0) {
+	    if (bu_strncmp(bu_vls_addr(&vlsfileline), "# Description: ", 15) == 0) {
 		fnddesc = 1;
 		bu_log("%s\n", bu_vls_addr(&vlsfileline)+15);
 	    }

@@ -56,7 +56,7 @@ main(int argc, char **argv)
     }
 
     count = -1;
-    if (argc > 1 && strncmp(argv[1], "-r", 2) == 0) {
+    if (argc > 1 && bu_strncmp(argv[1], "-r", 2) == 0) {
 	count = atoi(&argv[1][2]);
 	argv++;
 	argc--;

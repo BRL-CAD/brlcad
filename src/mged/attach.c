@@ -404,7 +404,7 @@ gui_setup(const char *dstr)
     if (Tk_Init(INTERP) == TCL_ERROR) {
 	const char *result = Tcl_GetStringResult(INTERP);
 	/* hack to avoid a stupid Tk error */
-	if (strncmp(result, "this isn't a Tk applicationcouldn't", 35) == 0) {
+	if (bu_strncmp(result, "this isn't a Tk applicationcouldn't", 35) == 0) {
 	    result = (result + 27);
 	    Tcl_ResetResult(INTERP);
 	    Tcl_AppendResult(INTERP, result, (char *)NULL);

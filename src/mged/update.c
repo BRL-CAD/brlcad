@@ -160,7 +160,7 @@ f_wait(ClientData UNUSED(clientData),	/* Main window associated with interpreter
     }
     c = argv[1][0];
     length = strlen(argv[1]);
-    if ((c == 'v') && (strncmp(argv[1], "variable", length) == 0)
+    if ((c == 'v') && (bu_strncmp(argv[1], "variable", length) == 0)
 	&& (length >= 2)) {
 
 	/* bind to 'done' var */
@@ -182,7 +182,7 @@ f_wait(ClientData UNUSED(clientData),	/* Main window associated with interpreter
 		       TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
 		       (Tcl_VarTraceProc *)WaitVariableProc,
 		       (ClientData) &done);
-    } else if ((c == 'v') && (strncmp(argv[1], "visibility", length) == 0)
+    } else if ((c == 'v') && (bu_strncmp(argv[1], "visibility", length) == 0)
 	       && (length >= 2)) {
 
 	window = Tk_NameToWindow(interp, argv[2], tkwin);
@@ -217,7 +217,7 @@ f_wait(ClientData UNUSED(clientData),	/* Main window associated with interpreter
 	Tk_DeleteEventHandler(window, VisibilityChangeMask|StructureNotifyMask,
 			      WaitVisibilityProc, (ClientData) &done);
 
-    } else if ((c == 'w') && (strncmp(argv[1], "window", length) == 0)) {
+    } else if ((c == 'w') && (bu_strncmp(argv[1], "window", length) == 0)) {
 	window = Tk_NameToWindow(interp, argv[2], tkwin);
 	if (window == NULL) {
 	    return TCL_ERROR;

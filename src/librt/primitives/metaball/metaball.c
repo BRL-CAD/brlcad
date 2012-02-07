@@ -80,7 +80,7 @@ int rt_metaball_lookup_type_id(const char *name)
 {
     int i = 0;
     while (metaballnames[i++])
-	if (!strncmp(metaballnames[i], name, 4))
+	if (!bu_strncmp(metaballnames[i], name, 4))
 	    return i;
     return -1;
 }

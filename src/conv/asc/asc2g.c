@@ -1345,7 +1345,7 @@ pipebld(void)
 
     BU_LIST_INIT(&head);
     bu_fgets(buf, BUFSIZE, ifp);
-    while (strncmp (buf, "END_PIPE", 8)) {
+    while (bu_strncmp (buf, "END_PIPE", 8)) {
 	double id, od, x, y, z, bendradius;
 
 	sp = (struct wdb_pipept *)bu_malloc(sizeof(struct wdb_pipept), "pipe");

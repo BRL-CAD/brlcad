@@ -80,7 +80,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     arg = argv[2];
     len = strlen(sub);
 
-    if (strncmp(sub, "get", len) == 0) {
+    if (bu_strncmp(sub, "get", len) == 0) {
 
 	propVal = rt_bot_propget(bot, arg);
 
