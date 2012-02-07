@@ -530,45 +530,63 @@ if (flags & UNSIGNED) { \
 		    }
 		}
 
+		/* grab vls pointer if we're assigning */
 		if (!(flags & SUPPRESS)) {
 		    vls = va_arg(ap, struct bu_vls*);
 		    bu_vls_trunc(vls, 0);
 		}
 
-		/* character class table must be initialized */
+		/* if not CT_CCL, character class table isn't initialized */
 		if (conversion != CT_CCL) {
-		    memset(ccl_tab, CCL_ACCEPT, CCL_TABLE_SIZE);
+
+		    /* CT_CHAR accepts all */
+		    memset(ccl_tab, CCL_ACCEPT, sizeof(ccl_tab));
+
+		    /* CT_STRING accepts all except space */
+		    if (conversion == CT_STRING) {
+			for (c = 0; c < CCL_TABLE_SIZE; ++c) {
+			    if (isspace(c)) {
+				ccl_tab[c] = CCL_REJECT;
+			    }
+			}
+		    }
 		}
+
+		/* always break on '\0' */
+		ccl_tab['\0'] = CCL_REJECT;
 
 		/* Copy characters from src to vls. Stop at width, non-matching
 		 * character, or EOI.
 		 */
-		for (i = 0; i < width; ++i) {
-		    c = src[numCharsConsumed + i];
+		if (flags & SUPPRESS) {
+		    for (i = 0; i < width; ++i) {
+			c = src[numCharsConsumed + i];
 
-		    /* stop at EOI */
-		    if (c == '\0') {
-			break;
+			/* stop at non-matching or EOI */
+			if (ccl_tab[c] == CCL_REJECT) {
+			    break;
+			}
+			++partConsumed;
 		    }
+		} else {
+		    for (i = 0; i < width; ++i) {
+			c = src[numCharsConsumed + i];
 
-		    /* stop at non-matching */
-		    if (ccl_tab[c] == CCL_REJECT && conversion == CT_CCL) {
-			break;
-		    }
-		    if (isspace(c) && conversion == CT_STRING) {
-			break;
-		    }
+			/* stop at non-matching or EOI */
+			if (ccl_tab[c] == CCL_REJECT) {
+			    break;
+			}
 
-		    if (!(flags & SUPPRESS)) {
 			/* copy valid char to vls */
 			bu_vls_putc(vls, c);
-		    }
-		    ++partConsumed;
-		}
 
-		if (!(flags & SUPPRESS) && partConsumed > 0) {
-		    /* successful assignment */
-		    ++partAssigned;
+			++partConsumed;
+		    }
+
+		    if (partConsumed > 0) {
+			/* successful assignment */
+			++partAssigned;
+		    }
 		}
 	    } /* BUVLS */
 
