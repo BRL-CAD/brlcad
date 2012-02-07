@@ -580,9 +580,9 @@ main(int argc, char *argv[])
     local2base = rtip->rti_dbip->dbi_local2base;
     tmp_str = bu_units_string(local2base);
     if (tmp_str) {
-	bu_strlcpy(local_u_name, bu_units_string(local2base), sizeof(local_u_name));
+	bu_strlcpy(local_u_name, tmp_str, sizeof(local_u_name));
     } else {
-	strcpy(local_u_name, "Unknown units");
+	bu_strlcpy(local_u_name, "Unknown units", sizeof(local_u_name));
     }
 
     if (silent_flag != SILENT_YES) {
