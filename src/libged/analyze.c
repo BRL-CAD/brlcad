@@ -102,7 +102,7 @@ void get_dashes(field_t *f, const int ndashes)
   int i;
   f->buf[0] = '\0';
   for (i = 0; i < ndashes; ++i) {
-    strcat(f->buf, "-");
+      bu_strlcat(f->buf, "-", FBUFSIZ);
   }
   f->nchars = ndashes;
 }
