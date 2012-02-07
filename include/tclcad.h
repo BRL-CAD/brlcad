@@ -143,7 +143,7 @@ TCLCAD_EXPORT extern int Cho_Init(Tcl_Interp *interp);
  * USAGE:
  * ch_open name
  */
-TCLCAD_EXPORT extern int cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+TCLCAD_EXPORT extern int cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
 
 
 /**
