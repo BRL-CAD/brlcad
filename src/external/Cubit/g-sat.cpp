@@ -337,8 +337,6 @@ main(int argc, char *argv[])
     CGMApp::instance()->shutdown();
 
     cout << "Number of primitives processed: " << g_body_cnt << endl;
-    cout << "GOT HERE!" << endl;
-    abort(); /* !!! should not need this */
 
     return 0;
 }
