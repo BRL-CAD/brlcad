@@ -4122,6 +4122,7 @@ proc title_node_handler {node} {
 	gedCmd rt_end_callback [::itcl::code $this rtEndCallback]
     } else {
 	$itk_component(primaryToolbar) itemconfigure toggle_fb -state disabled
+	$itk_component(primaryToolbar) itemconfigure toggle_fb_mode -state disabled
 	$itk_component(primaryToolbar) itemconfigure raytrace -state disabled
 	$itk_component(primaryToolbar) itemconfigure clear_fb -state disabled
     }
