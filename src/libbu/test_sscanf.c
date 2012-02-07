@@ -691,6 +691,7 @@ doVlsTests()
     bu_ret = bu_sscanf(src, fmt, &vls); \
     CHECK_RETURN_VAL("bu_sscanf", bu_ret, 1); \
     if (!BU_STR_EQUAL(bu_vls_addr(&vls), expected_str)) { \
+	bu_vls_free(&vls); \
 	bu_exit(1, "\t[FAIL] \"%s\" was assigned to vls instead of \"%s\".\n", \
 		bu_vls_addr(&vls), expected_str); \
     }
@@ -719,6 +720,8 @@ doVlsTests()
 
     bu_ret = bu_sscanf(" abcA", "%*Vs", &vls);
     CHECK_RETURN_VAL("bu_sscanf", bu_ret, 0);
+
+    bu_vls_free(&vls);
 }
 
 int
