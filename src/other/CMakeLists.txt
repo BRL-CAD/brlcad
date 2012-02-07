@@ -289,6 +289,8 @@ DISTCHECK_IGNORE(URToolkit URToolkit_ignore_files)
 # own FindTCL routine which handles Tcl/Tk and its stubs, so trigger this using
 # the THIRD_PARTY macro for TCL.
 
+include(${BRLCAD_SOURCE_DIR}/misc/CMake/TCL_PKGINDEX.cmake)
+
 # Set Tcl/Tk requirements for BRL-CAD so FindTCL.cmake knows what to reject
 SET(TCL_PATH_NOMATCH_PATTERNS "/usr/brlcad;brlcad-install;${CMAKE_INSTALL_PREFIX}" CACHE STRING "Paths to avoid when looking for tcl/tk" FORCE)
 SET(TCL_MIN_VERSION "8.5" CACHE STRING "Minimum acceptable Tcl/Tk version" FORCE)

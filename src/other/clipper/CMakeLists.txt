@@ -12,18 +12,20 @@ INCLUDE_DIRECTORIES(
   )
 
 IF(NOT LIB_DIR)
-  IF(NOT WIN32)
     SET(LIB_DIR lib)
-  ELSE(NOT WIN32)
-    SET(LIB_DIR bin)
-  ENDIF(NOT WIN32)
 ENDIF(NOT LIB_DIR)
+IF(NOT BIN_DIR)
+    SET(BIN_DIR bin)
+ENDIF(NOT BIN_DIR)
 
 IF(MSVC)
   add_definitions("-DCLIPPER_DLL_EXPORTS")
 ENDIF(MSVC)
 
 add_library(clipper clipper.cpp)
-install(TARGETS clipper DESTINATION ${LIB_DIR})
+install(TARGETS clipper 
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR})
 
-install(FILES clipper.hpp DESTINATION install)
+install(FILES clipper.hpp DESTINATION include)

@@ -30,9 +30,7 @@ set(MGED_POINTS_SRCS
   main.c
   )
 
-add_library(libpoints ${MGED_POINTS_SRCS})
-target_link_libraries(libpoints libbu)
-install(TARGETS libpoints DESTINATION lib)
+BRLCAD_ADDLIB(libpoints "${MGED_POINTS_SRCS}" libbu)
 SET_TARGET_PROPERTIES(libpoints PROPERTIES COMPILE_DEFINITIONS "ENABLE_POINTS")
 set(mged_points_ignore_files
   count.h
