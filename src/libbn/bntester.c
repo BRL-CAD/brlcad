@@ -313,7 +313,7 @@ main(int argc, char **argv)
             return EXIT_FAILURE;
         }
         line_num++;
-	if (fgets(buf, BUFSIZ, fp_in) == NULL) {
+	if (bu_fgets(buf, BUFSIZ, fp_in) == NULL) {
 	    if (feof(fp_in)) {
 		found_eof = 1;
 	    } else if (ferror(fp_in)) {

@@ -27,10 +27,12 @@
  *	IABG mbH (Germany)
  */
 
+/* interface header */
+#include "regtab.h"
+
 #include <map>
 #include <iostream>
 
-#include "regtab.h"
 #include "glob.h"
 
 
@@ -43,7 +45,7 @@ int readMaterials(FILE *fp)
    char name[20];
    int mat;
 
-   if (fgets(title, LINELEN, fp) == NULL)
+   if (bu_fgets(title, LINELEN, fp) == NULL)
       return 1;
 
    char descr[LINELEN];
