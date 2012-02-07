@@ -343,12 +343,6 @@ int read_element(ResultStruct *io_struct)
 	}
     }
 
-    /* strncpy(tmp_str, &buf[element_attributes[record_type][element][sub_element][1]-1], element_attributes[record_type][element][sub_element][2]); */
-
-    /* in bu_strlcpy must include in the 3rd parameter (i.e. count or
-     * size) one extra character to account for string terminator.
-     */
-
     bu_strlcpy(tmp_str, &buf[start_character - 1], field_width + 1);
 
     tmp_str[field_width] = '\0';
@@ -372,8 +366,7 @@ int read_element(ResultStruct *io_struct)
      * --------------------------------------------------------------------
      */
     if (datatype == type_alpha) {
-	/* strcpy((*io_struct).out_alpha, tmp_str); */
-	bu_strlcpy((*io_struct).out_alpha, tmp_str, strlen(tmp_str)+1);
+	bu_strlcpy((*io_struct).out_alpha, tmp_str, MAX_STRING_LENGTH);
 	status = BRLCAD_OK;
     }
 
@@ -392,7 +385,7 @@ int read_element(ResultStruct *io_struct)
 	} else {
 	    /* convert to integer failed */
 	    /* copy string which failed to convert to inetger to output structure */
-	    strcpy((*io_struct).out_alpha, tmp_str);
+	    bu_strlcpy((*io_struct).out_alpha, tmp_str, MAX_STRING_LENGTH);
 	    status = BRLCAD_ERROR;
 	}
     }
@@ -428,7 +421,7 @@ int read_element(ResultStruct *io_struct)
 	} else {
 	    /* convert to double failed */
 	    /* copy string which failed to convert to double to output structure */
-	    strcpy((*io_struct).out_alpha, tmp_str);
+	    bu_strlcpy((*io_struct).out_alpha, tmp_str, MAX_STRING_LENGTH);
 	    status = BRLCAD_ERROR;
 	}
     }
