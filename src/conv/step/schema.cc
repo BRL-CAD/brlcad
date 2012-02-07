@@ -4,8 +4,12 @@
 // it since your modifications will be lost if fedex_plus is used to
 // regenerate it.
 /* $Id$  */ 
-#include "bu.h"
+
 #include <schema.h>
+
+#include "bu.h"
+
+
 class Registry;
 
 void
