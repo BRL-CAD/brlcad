@@ -126,19 +126,25 @@ print_src_and_fmt(const char *src, const char *fmt)
  * we could end up silently comparing error behavior rather than the behavior
  * we actually want to test.
  */
-#define CHECK_RETURN_VAL(func_str, actual, expected) \
-    if (actual != expected) { \
-	bu_exit(1, "\tError: " func_str " returned %d%s. Expected %d%s.\n", \
-		actual, actual == EOF ? "EOF" : "", \
-		expected, expected == EOF ? "EOF" : ""); \
+static void
+checkReturnVal(const char *funcStr, int actual, int expected)
+{
+    if (actual != expected) {
+	bu_exit(1, "\tError: %s returned %d%s. Expected %d%s.\n", funcStr,
+		actual, (actual == EOF) ? " (EOF)" : "",
+		expected, (expected == EOF) ? " (EOF)" : "");
     }
+}
 
 /* Exit if returns from sscanf and bu_sscanf are not equal. */
-#define CHECK_RETURNS_EQUAL(ret, bu_ret) \
-    if (bu_ret != ret) { \
-	bu_exit(1, "\t[FAIL] sscanf returned %d but bu_sscanf returned %d.\n", \
-		ret, bu_ret); \
+static void
+checkReturnsEqual(int ret, int bu_ret)
+{
+    if (bu_ret != ret) {
+	bu_exit(1, "\t[FAIL] sscanf returned %d but bu_sscanf returned %d.\n",
+		ret, bu_ret);
     }
+}
 
 #define CHECK_INT_VALS_EQUAL(int_type, pfmt, valp, bu_valp) \
 { \
@@ -223,8 +229,8 @@ test_sscanf(int type, const char *src, const char *fmt) {
 	bu_exit(1, "Error: test_sscanf was given an unrecognized pointer type.\n");
     }
 
-    CHECK_RETURN_VAL("sscanf", ret, 1);
-    CHECK_RETURNS_EQUAL(bu_ret, ret);
+    checkReturnVal("sscanf", ret, 1);
+    checkReturnsEqual(bu_ret, ret);
 
     /* conversion values equal? */
     if (val != NULL && bu_val != NULL) {
@@ -414,8 +420,8 @@ test_sscanf_s(const char *src, const char *fmt)
     ret = sscanf(src, fmt, dest);
     bu_ret = bu_sscanf(src, fmt, bu_dest);
 
-    CHECK_RETURN_VAL("sscanf", ret, 1);
-    CHECK_RETURNS_EQUAL(bu_ret, ret);
+    checkReturnVal("sscanf", ret, 1);
+    checkReturnsEqual(bu_ret, ret);
 
     if (!BU_STR_EQUAL(dest, bu_dest)) {
 	bu_exit(1, "\t[FAIL] conversion value mismatch.\n"
@@ -439,7 +445,7 @@ doStringTests()
     /* init so that 'X' appears after the last char written by bu_sscanf */ \
     memset(buf, 'X', TS_STR_SIZE); \
     bu_ret = bu_sscanf(src, fmt, buf); \
-    CHECK_RETURN_VAL("bu_sscanf", bu_ret, 1); \
+    checkReturnVal("bu_sscanf", bu_ret, 1); \
     cp = strchr(buf, 'X');
 
     /* %s should append '\0' */
@@ -498,58 +504,102 @@ doPointerTests()
 }
 
 static void
+test_sscanf_noconv(const char *src, const char *fmt)
+{
+    int count, bu_count, ret, bu_ret;
+
+    count = bu_count = 0;
+
+    print_src_and_fmt(src, fmt);
+
+    ret = sscanf(src, fmt, &count);
+    bu_ret = bu_sscanf(src, fmt, &bu_count);
+
+    checkReturnVal("sscanf", ret, 0);
+    checkReturnsEqual(bu_ret, ret);
+
+    if (bu_count != count) {
+	bu_exit(1, "\t[FAIL] sscanf consumed %d chars, "
+		"but bu_sscanf consumed %d.\n", count, bu_count);
+    }
+}
+
+static void
 doNonConversionTests()
 {
-    int ret, bu_ret, count, bu_count;
-
-#define TEST_SSCANF_NOCONV(src, fmt) \
-    print_src_and_fmt(src, fmt); \
-    count = bu_count = 0; \
-    ret = sscanf(src, fmt, &count); \
-    bu_ret = bu_sscanf(src, fmt, &bu_count); \
-    CHECK_RETURN_VAL("sscanf", ret, 0); \
-    CHECK_RETURNS_EQUAL(bu_ret, ret); \
-    if (bu_count != count) { \
-	bu_exit(1, "\t[FAIL] sscanf consumed %d chars, " \
-		"but bu_sscanf consumed %d.\n", count, bu_count); \
-    }
-
     /* %n - don't convert/assign, but do store consumed char count */
-    TEST_SSCANF_NOCONV(". \tg\t\tn i    RTSA si sihT", ". g n i RTSA%n");
-    TEST_SSCANF_NOCONV(" foo", "foo%n");
+    test_sscanf_noconv(". \tg\t\tn i    RTSA si sihT", ". g n i RTSA%n");
+    test_sscanf_noconv(" foo", "foo%n");
 
     /* %% - don't convert/assign, but do scan literal % */
-    TEST_SSCANF_NOCONV("%%n    %", "%%%%n %%%n");
+    test_sscanf_noconv("%%n    %", "%%%%n %%%n");
 
     /* suppressed assignments */
-    TEST_SSCANF_NOCONV(bu_cpp_xstr(SIGNED_DEC), "%*d%n");
-    TEST_SSCANF_NOCONV(bu_cpp_xstr(UNSIGNED_DEC), "%*u%n");
-    TEST_SSCANF_NOCONV(bu_cpp_xstr(LARGE_FLT), "%*f%n");
-    TEST_SSCANF_NOCONV("42 42  4.2e1", "%*d %*u %*f%n");
+    test_sscanf_noconv(bu_cpp_xstr(SIGNED_DEC), "%*d%n");
+    test_sscanf_noconv(bu_cpp_xstr(UNSIGNED_DEC), "%*u%n");
+    test_sscanf_noconv(bu_cpp_xstr(LARGE_FLT), "%*f%n");
+    test_sscanf_noconv("42 42  4.2e1", "%*d %*u %*f%n");
+}
+
+#define TS_NUM_ASSIGNMENTS 3
+
+static void
+test_string_width(const char *src, const char *fmt)
+{
+    int i, j, ret, bu_ret;
+    char str_vals[TS_NUM_ASSIGNMENTS][TS_STR_SIZE];
+    char bu_str_vals[TS_NUM_ASSIGNMENTS][TS_STR_SIZE];
+
+    print_src_and_fmt(src, fmt);
+
+    /* init so that 'X' appears after the last char written by bu_sscanf */
+    for (i = 0; i < TS_NUM_ASSIGNMENTS; ++i) {
+	memset(str_vals[i], 'X', TS_STR_SIZE);
+	memset(bu_str_vals[i], 'X', TS_STR_SIZE);
+    }
+
+    ret = sscanf(src, fmt, str_vals[0], str_vals[1], str_vals[2]);
+    bu_ret = bu_sscanf(src, fmt, bu_str_vals[0], bu_str_vals[1],
+	    bu_str_vals[2]);
+    checkReturnVal("sscanf", ret, 3);
+    checkReturnsEqual(bu_ret, ret);
+
+    /* each str should be exactly equivalent to each bu_str */
+    for (i = 0; i < TS_NUM_ASSIGNMENTS; ++i) {
+	for (j = 0; j < TS_STR_SIZE - 1; ++j) {
+	    if (str_vals[i][j] != bu_str_vals[i][j]) {
+
+		/* terminate for printing */
+		str_vals[i][j + 1] = '\0';
+		bu_str_vals[i][j + 1] = '\0';
+
+		bu_exit(1, "\t[FAIL] conversion value mismatch.\n"
+			"\t(sscanf) %s != %s (bu_sscanf)\n",
+			str_vals[i], bu_str_vals[i]);
+	    }
+	}
+    }
 }
 
 static void
 doWidthTests()
 {
-#define NUM_VALS 3
-    int i, j;
+    int i;
     int ret, bu_ret;
     void *val, *bu_val, *vals, *bu_vals;
-    char str_vals[NUM_VALS][TS_STR_SIZE];
-    char bu_str_vals[NUM_VALS][TS_STR_SIZE];
 
 #define SCAN_3_VALS(type, src, fmt) \
     print_src_and_fmt(src, fmt); \
-    vals = bu_malloc(sizeof(type) * NUM_VALS, "test_sscanf vals"); \
-    bu_vals = bu_malloc(sizeof(type) * NUM_VALS, "test_sscanf bu_vals"); \
+    vals = bu_malloc(sizeof(type) * TS_NUM_ASSIGNMENTS, "test_sscanf vals"); \
+    bu_vals = bu_malloc(sizeof(type) * TS_NUM_ASSIGNMENTS, "test_sscanf bu_vals"); \
     ret = sscanf(src, fmt, &((type*)vals)[0], &((type*)vals)[1], &((type*)vals)[2]); \
     bu_ret = bu_sscanf(src, fmt, &((type*)bu_vals)[0], &((type*)bu_vals)[1], &((type*)bu_vals)[2]); \
-    CHECK_RETURN_VAL("sscanf", ret, 3); \
-    CHECK_RETURNS_EQUAL(bu_ret, ret);
+    checkReturnVal("sscanf", ret, 3); \
+    checkReturnsEqual(bu_ret, ret);
 
 #define TEST_INT_WIDTH(type, pfmt, src, fmt) \
     SCAN_3_VALS(type, src, fmt); \
-    for (i = 0; i < NUM_VALS; ++i) { \
+    for (i = 0; i < TS_NUM_ASSIGNMENTS; ++i) { \
 	val = (void*)&((type*)vals)[i]; \
 	bu_val = (void*)&((type*)bu_vals)[i]; \
 	CHECK_INT_VALS_EQUAL(type, pfmt, val, bu_val); \
@@ -559,7 +609,7 @@ doWidthTests()
 
 #define TEST_FLOAT_WIDTH(type, pfmt, src, fmt) \
     SCAN_3_VALS(type, src, fmt); \
-    for (i = 0; i < NUM_VALS; ++i) { \
+    for (i = 0; i < TS_NUM_ASSIGNMENTS; ++i) { \
 	val = (void*)&((type*)vals)[i]; \
 	bu_val = (void*)&((type*)bu_vals)[i]; \
 	CHECK_FLOAT_VALS_EQUAL(type, pfmt, val, bu_val); \
@@ -567,37 +617,15 @@ doWidthTests()
     bu_free(vals, "test_sscanf vals"); \
     bu_free(bu_vals, "test_sscanf bu_vals");
 
-#define TEST_STRING_WIDTH(src, fmt) \
-    print_src_and_fmt(src, fmt); \
-    for (i = 0; i < NUM_VALS; ++i) { \
-	memset(str_vals[i], 'X', TS_STR_SIZE); \
-	memset(bu_str_vals[i], 'X', TS_STR_SIZE); \
-    } \
-    ret = sscanf(src, fmt, str_vals[0], str_vals[1], str_vals[2]); \
-    bu_ret = bu_sscanf(src, fmt, bu_str_vals[0], bu_str_vals[1], bu_str_vals[2]); \
-    CHECK_RETURN_VAL("sscanf", ret, 3); \
-    CHECK_RETURNS_EQUAL(bu_ret, ret); \
-    for (i = 0; i < NUM_VALS; ++i) { \
-	for (j = 0; j < TS_STR_SIZE - 1; ++j) { \
-	    if (str_vals[i][j] != bu_str_vals[i][j]) { \
-		str_vals[i][j + 1] = '\0'; \
-		bu_str_vals[i][j + 1] = '\0'; \
-		bu_exit(1, "\t[FAIL] conversion value mismatch.\n" \
-			"\t(sscanf) %s != %s (bu_sscanf)\n", \
-			str_vals[i], bu_str_vals[i]); \
-	    } \
-	} \
-    }
-
     /* Stop at non-matching even if width not met. */
     TEST_INT_WIDTH(int, d, "12 34 5a6", "%5d %5d %5d");
     TEST_INT_WIDTH(int, i, "12 0042 0x3z8", "%5i %5i %5i");
     TEST_INT_WIDTH(unsigned, x, "0xC 0x22 0x38", "%5x %5x %5x");
     TEST_FLOAT_WIDTH(float, f, ".0012 .34 56.0a0", "%10f %10f %10f");
     TEST_FLOAT_WIDTH(double, f, ".0012 .34 56.0a0", "%10lf %10lf %10lf");
-    TEST_STRING_WIDTH("aa AA aa", "%5s %5s %5s");
-    TEST_STRING_WIDTH("1234512345123451", "%5c %5c %5c");
-    TEST_STRING_WIDTH("aaAA  zzzzzz", "%5[a]%5[A] %5[z]");
+    test_string_width("aa AA aa", "%5s %5s %5s");
+    test_string_width("1234512345123451", "%5c %5c %5c");
+    test_string_width("aaAA  zzzzzz", "%5[a]%5[A] %5[z]");
 
     /* Stop at width even if there are more matching chars.
      * Do not include discarded whitespace in count.
@@ -607,9 +635,9 @@ doWidthTests()
     TEST_INT_WIDTH(unsigned, x, "  0xC00X22\t0x38", " %4x%3x %3x");
     TEST_FLOAT_WIDTH(float, f, "  .0012\t.3456", " %3f%2f %4f");
     TEST_FLOAT_WIDTH(double, f, "  .0012\t.3456", " %3lf%2lf %4lf");
-    TEST_STRING_WIDTH("  abc  ABCDE", " %2s%1s  %4s");
-    TEST_STRING_WIDTH("abc  ABCD", "%2c%2c  %4c");
-    TEST_STRING_WIDTH("aaAA   1%1%1%", "%2[aA]%3[A ] %5[1%]");
+    test_string_width("  abc  ABCDE", " %2s%1s  %4s");
+    test_string_width("abc  ABCD", "%2c%2c  %4c");
+    test_string_width("aaAA   1%1%1%", "%2[aA]%3[A ] %5[1%]");
 }
 
 static void
@@ -634,8 +662,8 @@ doErrorTests()
     print_src_and_fmt(src, FMT_ASSIGN3(type_fmt)); \
     ret = sscanf(src, FMT_ASSIGN3(type_fmt), &vals[0], &vals[1], &vals[2]); \
     bu_ret = sscanf(src, FMT_ASSIGN3(type_fmt), &vals[0], &vals[1], &vals[2]); \
-    CHECK_RETURN_VAL("sscanf", ret, expected_err); \
-    CHECK_RETURNS_EQUAL(ret, bu_ret); \
+    checkReturnVal("sscanf", ret, expected_err); \
+    checkReturnsEqual(ret, bu_ret); \
     for (i = 0; i < 3; ++i) { \
 	if (vals[i] != type_init) { \
 	    bu_exit(1, "\t[FAIL] No assignment expected, but vals[%d] " \
@@ -657,8 +685,8 @@ doErrorTests()
     print_src_and_fmt(src, FMT_READ2_ASSIGN1(type_fmt)); \
     ret = sscanf(src, FMT_READ2_ASSIGN1(type_fmt), &val); \
     bu_ret = sscanf(src, FMT_READ2_ASSIGN1(type_fmt), &val); \
-    CHECK_RETURN_VAL("sscanf", ret, expected_err); \
-    CHECK_RETURNS_EQUAL(ret, bu_ret); \
+    checkReturnVal("sscanf", ret, expected_err); \
+    checkReturnsEqual(ret, bu_ret); \
     if (val != type_init) { \
 	bu_exit(1, "\t[FAIL] No assignment expected, but val " \
 		"changed from %" bu_cpp_str(type_fmt) " to %" bu_cpp_str(type_fmt) ".\n", \
@@ -681,45 +709,54 @@ doErrorTests()
 }
 
 static void
+test_vls(const char *src, const char *fmt, const char *expectedStr)
+{
+    int bu_ret;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+
+    print_src_and_fmt(src, fmt);
+
+    bu_ret = bu_sscanf(src, fmt, &vls);
+    checkReturnVal("bu_sscanf", bu_ret, 1);
+
+    if (!BU_STR_EQUAL(bu_vls_addr(&vls), expectedStr)) {
+	bu_vls_free(&vls);
+	bu_exit(1, "\t[FAIL] \"%s\" was assigned to vls instead of \"%s\".\n",
+		bu_vls_addr(&vls), expectedStr);
+    }
+    bu_vls_free(&vls);
+}
+
+static void
 doVlsTests()
 {
     int bu_ret;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-#define TEST_VLS(src, fmt, expected_str) \
-    print_src_and_fmt(src, fmt); \
-    bu_ret = bu_sscanf(src, fmt, &vls); \
-    CHECK_RETURN_VAL("bu_sscanf", bu_ret, 1); \
-    if (!BU_STR_EQUAL(bu_vls_addr(&vls), expected_str)) { \
-	bu_vls_free(&vls); \
-	bu_exit(1, "\t[FAIL] \"%s\" was assigned to vls instead of \"%s\".\n", \
-		bu_vls_addr(&vls), expected_str); \
-    }
-
     /* %Vc */
-    TEST_VLS("de mus noc", "%Vc", "d");
-    TEST_VLS(" de mus noc", "%6Vc", " de mu");
-    TEST_VLS(" de mus noc", " %7Vc", "de mus ");
-    TEST_VLS("de mus noc", "%11Vc", "de mus noc");
+    test_vls("de mus noc", "%Vc", "d");
+    test_vls(" de mus noc", "%6Vc", " de mu");
+    test_vls(" de mus noc", " %7Vc", "de mus ");
+    test_vls("de mus noc", "%11Vc", "de mus noc");
 
     bu_ret = bu_sscanf("de mus noc", "%*11Vc", &vls);
-    CHECK_RETURN_VAL("bu_sscanf", bu_ret, 0);
+    checkReturnVal("bu_sscanf", bu_ret, 0);
 
     /* %V[...] */
-    TEST_VLS("abcA", "%V[a-z]", "abc");
-    TEST_VLS(" abcA", " %V[a-z]", "abc");
-    TEST_VLS(" abcA", "%3V[ a-z]", " ab");
+    test_vls("abcA", "%V[a-z]", "abc");
+    test_vls(" abcA", " %V[a-z]", "abc");
+    test_vls(" abcA", "%3V[ a-z]", " ab");
 
     bu_ret = bu_sscanf(" abcA", "%*V[ a-z]", &vls);
-    CHECK_RETURN_VAL("bu_sscanf", bu_ret, 0);
+    checkReturnVal("bu_sscanf", bu_ret, 0);
 
     /* %Vs */
-    TEST_VLS(" \tabc ABC", "%Vs", "abc");
-    TEST_VLS(" \tabc ABC", "%4Vs", "abc");
-    TEST_VLS(" \tabc", "%4Vs", "abc");
+    test_vls(" \tabc ABC", "%Vs", "abc");
+    test_vls(" \tabc ABC", "%4Vs", "abc");
+    test_vls(" \tabc", "%4Vs", "abc");
 
     bu_ret = bu_sscanf(" abcA", "%*Vs", &vls);
-    CHECK_RETURN_VAL("bu_sscanf", bu_ret, 0);
+    checkReturnVal("bu_sscanf", bu_ret, 0);
 
     bu_vls_free(&vls);
 }
