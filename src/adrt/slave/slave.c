@@ -542,7 +542,8 @@ static void help()
 }
 
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
     int		port = 0, c = 0, threads = 0;
     char		host[64], temp[64];
@@ -568,7 +569,7 @@ int main(int argc, char **argv)
 #ifdef HAVE_GETOPT_LONG
 	    getopt_long(argc, argv, shortopts, longopts, NULL)
 #else
-	    getopt(argc, argv, shortopts)
+	    bu_getopt(argc, argv, shortopts)
 #endif
 	       )!= -1) {
 	switch (c) {
@@ -577,11 +578,11 @@ int main(int argc, char **argv)
 		return EXIT_SUCCESS;
 
 	    case 'p':
-		port = atoi(optarg);
+		port = atoi(bu_optarg);
 		break;
 
 	    case 't':
-		strncpy(temp, optarg, 4);
+		strncpy(temp, bu_optarg, 4);
 		threads = atoi(temp);
 		if (threads < 0) threads = 0;
 		if (threads > 32) threads = 32;
@@ -597,8 +598,8 @@ int main(int argc, char **argv)
 	}
     }
 
-    argc -= optind;
-    argv += optind;
+    argc -= bu_optind;
+    argv += bu_optind;
 
     if (argc) {
 	strncpy(host, argv[0], 64-1);
