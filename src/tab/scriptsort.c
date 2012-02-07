@@ -124,10 +124,13 @@ void addtext(struct frame *fp, char *tp)
 {
     char *p;
     int length;
+
 #ifdef DEBUG
     fprintf(stderr, "addtext: %s\n", tp);
 #endif
-    if (fp->l.magic != MAGIC) abort();
+
+    BU_CKMAG(&(fp->l.magic), MAGIC, "frame magic");
+
     length = strlen(tp) + 1;	/* length of text string and NULL */
     length += 1;			/* For the Space or newline */
     if (fp->text) {
