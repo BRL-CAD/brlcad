@@ -460,7 +460,6 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
 	/* handle partitions */
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
-	    bu_vls_trunc(&v, 0);
 	    bu_vls_strcpy(&v, line);
 	    bu_vls_trimspace(&v);
 
@@ -487,7 +486,6 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
 	/* handle overlaps */
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
-	    bu_vls_trunc(&v, 0);
 	    bu_vls_strcpy(&v, line);
 	    bu_vls_trimspace(&v);
 
@@ -506,7 +504,6 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    }
 	}
-	bu_vls_free(&v);
 
 	vbp = rt_vlblock_init();
 	qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 1);
@@ -519,7 +516,6 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&t_vls);
 
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
-	    bu_vls_trunc(&v, 0);
 	    bu_vls_strcpy(&v, line);
 	    bu_vls_trimspace(&v);
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
@@ -529,7 +525,6 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     (void)fclose(fp_out);
 
     while (bu_fgets(line, RT_MAXLINE, fp_err) != (char *)NULL) {
-	bu_vls_trunc(&v, 0);
 	bu_vls_strcpy(&v, line);
 	bu_vls_trimspace(&v);
 	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
