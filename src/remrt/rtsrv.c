@@ -842,8 +842,7 @@ bu_bomb(const char *str)
 
     if (debug)  fprintf(stderr, "\n%s\n", str);
     fflush(stderr);
-    if ( RT_G_DEBUG || rt_g.NMG_debug || bu_debug || debug )
-	abort();	/* should dump */
+
     bu_exit(12, NULL);
 }
 
