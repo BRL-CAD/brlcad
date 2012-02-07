@@ -1964,25 +1964,25 @@ general_Handler(int sig)
 	case SIGQUIT :
 	    prnt_Event( "Quit (core dumped)." );
 	    restore_Tty();
-	    abort();
+	    bu_bomb("SIGQUIT");
 	    /*NOTREACHED*/
 	case SIGILL :
 	    prnt_Event( "Illegal instruction (core dumped)." );
 	    restore_Tty();
-	    abort();
+	    bu_bomb("SIGILL");
 	    /*NOTREACHED*/
 #if defined(SIGIOT)
 	case SIGIOT :
 	    prnt_Event( "IOT trap (core dumped)." );
 	    restore_Tty();
-	    abort();
+	    bu_bomb("SIGIOT");
 	    /*NOTREACHED*/
 #endif
 #if defined(SIGBUS)
 	case SIGBUS :
 	    prnt_Event( "Bus error (core dumped)." );
 	    restore_Tty();
-	    abort();
+	    bu_bomb("SIGBUS");
 	    /*NOTREACHED*/
 #endif
 #if defined(SIGSEGV)
@@ -1990,7 +1990,7 @@ general_Handler(int sig)
 	case SIGSEGV :
 	    prnt_Event( "Segmentation violation (core dumped)." );
 	    restore_Tty();
-	    abort();
+	    bu_bomb("SIGSEGV");
 	    /*NOTREACHED*/
 #  endif
 #endif
