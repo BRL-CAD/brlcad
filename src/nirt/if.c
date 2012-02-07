@@ -159,6 +159,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	    struct region **rpp;
 	    char *cp;
 
+	    bu_vls_trunc(&claimant_vls, 0);
 	    ValTab[VTI_CLAIMANT_COUNT].value.ival = 0;
 	    for (rpp = part->pt_overlap_reg; *rpp != REGION_NULL; ++rpp) {
 		char tmpcp[512] = {0};
@@ -186,6 +187,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	}
 
 	/* format up the attribute strings into a single string */
+	bu_vls_trunc(&attr_vls, 0);
         for (i = 0; i < a_tab.attrib_use; i++) {
 	   if ((val = bu_avs_get(&part->pt_regionp->attr_values, db5_standard_attribute(db5_standardize_attribute(a_tab.attrib[i])))) != NULL) {
 	       bu_vls_printf(&attr_vls, "%s=%s ", a_tab.attrib[i], val);
