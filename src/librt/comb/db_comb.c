@@ -380,18 +380,24 @@ rt_comb_import4(
 	comb->rgb[2] = rp[0].c.c_rgb[2];
     }
     if (rp[0].c.c_matname[0] != '\0') {
-	char shader_str[94];
+#define MAX_SS 128
+	char shader_str[MAX_SS];
 
-	memset(shader_str, 0, 94);
+	memset(shader_str, 0, MAX_SS);
 
 	/* copy shader info to a static string */
-	strncpy(shader_str,  rp[0].c.c_matname, 32);
-	shader_str[32] = '\0'; /* c_matname is a buffer, bu_strlcpy not safe here */
 
-	strcat(shader_str, " ");
+	/* write shader name.  c_matname is a buffer, bu_strlcpy not
+	 * safe here.
+	 */
+	memcpy(shader_str, rp[0].c.c_matname, sizeof(rp[0].c.c_matname));
 
-	/* c_matparm is a buffer, bu_strlcpy not safe here */
-	strncat(shader_str, rp[0].c.c_matparm, 32);
+	bu_strlcat(shader_str, " ", MAX_SS);
+
+	/* write shader parameters.  c_matparm is a buffer, bu_strlcpy
+	 * not safe here.
+	 */
+	memcpy(shader_str+strlen(shader_str), rp[0].c.c_matparm, sizeof(rp[0].c.c_matparm));
 
 	/* convert to TCL format and place into comb->shader */
 	if (bu_shader_to_list(shader_str, &comb->shader)) {
