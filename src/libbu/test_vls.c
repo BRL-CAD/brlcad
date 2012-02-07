@@ -24,6 +24,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <signal.h>
+#include <string.h>
 
 #include "bu.h"
 
@@ -49,7 +50,9 @@ test_vls(const char *fmt, ...)
     va_end(ap);
 
     snprintf(output, sizeof(output), "%-24s -> '%s'", fmt, bu_vls_addr(&vls));
-    if (BU_STR_EQUAL(buffer, bu_vls_addr(&vls))) {
+    if (BU_STR_EQUAL(buffer, bu_vls_addr(&vls))
+	&& strlen(buffer) == bu_vls_strlen(&vls))
+    {
 	printf("%-*s[PASS]\n", 60, output);
     } else {
 	printf("%-*s[FAIL]  (should be: '%s')\n", 60, output, buffer);
