@@ -193,17 +193,7 @@ FB_EXPORT extern int _wgl_open_existing(FBIO *ifp, Display *dpy, Window win, Col
 #define FB_DEBUG_RW 4	/* Contents of reads and writes */
 #define FB_DEBUG_BRW 8	/* Buffered IO rpixel and wpixel */
 
-#define FB_CKMAG(_ptr, _magic, _str)	\
-	if (!(_ptr)) { \
-		fb_log("ERROR: null %s ptr, file %s, line %d\n", \
-			_str, __FILE__, __LINE__); \
-		abort(); \
-	} else if (*((uint32_t *)(_ptr)) != (uint32_t)(_magic)) { \
-		fb_log("ERROR: bad %s ptr 0x%x, s/b 0x%x, was %p, file %s, line %d\n", \
-		       _str, *((uint32_t *)(_ptr)), (uint32_t)(_magic), \
-		       *((uintptr_t *)(_ptr)), __FILE__, __LINE__); \
-		abort(); \
-	}
+#define FB_CKMAG(_ptr, _magic, _str) BU_CKMAG(_ptr, _magic, _str)
 
 /* tcl.c */
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
