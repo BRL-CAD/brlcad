@@ -28,6 +28,11 @@
 #ifndef __FBIO_H__
 #define __FBIO_H__
 
+#include "common.h"
+
+#include "bu.h"
+
+
 #define FB_ARGS(args) args
 
 #ifndef FB_EXPORT
@@ -73,8 +78,6 @@ typedef struct {
 #define RGBPIXEL_NULL (unsigned char *) 0
 #define COLORMAP_NULL (ColorMap *) 0
 #define FBIO_NULL (FBIO *) 0
-
-#define FB_CK_FBIO(_p) FB_CKMAG(_p, FB_MAGIC, "FBIO")
 
 
 /**
@@ -140,6 +143,11 @@ typedef struct FBIO_ {
 	size_t l;
     } u1, u2, u3, u4, u5, u6;
 } FBIO;
+
+/**
+ * assert the integrity of an FBIO struct.
+ */
+#define FB_CK_FBIO(_p) BU_CKMAG(_p, FB_MAGIC, "FBIO")
 
 /* declare all the possible interfaces */
 #ifdef IF_REMOTE

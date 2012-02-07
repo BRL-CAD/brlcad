@@ -46,8 +46,8 @@
 #  include <sys/time.h>
 #endif
 
-#include "fbio.h"
 #include "bu.h"
+#include "fbio.h"
 
 
 /* Library entry points which are macros.
@@ -192,8 +192,6 @@ FB_EXPORT extern int _wgl_open_existing(FBIO *ifp, Display *dpy, Window win, Col
 #define FB_DEBUG_CMAP 2	/* Contents of colormaps */
 #define FB_DEBUG_RW 4	/* Contents of reads and writes */
 #define FB_DEBUG_BRW 8	/* Buffered IO rpixel and wpixel */
-
-#define FB_CKMAG(_ptr, _magic, _str) BU_CKMAG(_ptr, _magic, _str)
 
 /* tcl.c */
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
