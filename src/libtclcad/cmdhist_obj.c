@@ -25,6 +25,7 @@
 
 #include "tcl.h"
 #include "cmd.h"
+#include "tclcad.h"
 
 
 /* FIXME: this is apparently used by src/tclscripts/lib/Command.tcl so
