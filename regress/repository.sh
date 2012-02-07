@@ -153,17 +153,18 @@ for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy str
 
     # handle implementation exceptions
     MATCH="`echo \"$MATCH\" \
-| sed 's/.*test_dirname.c.*dirname.*//' \
-| sed 's/.*bomb.c.*abort.*//g' \
-| sed 's/.*str.c.*strncat.*//' \
-| sed 's/.*str.c.*strlcat.*//' \
-| sed 's/.*str.c.*strncpy.*//' \
-| sed 's/.*str.c.*strlcpy.*//' \
-| sed 's/.*str.c.*strcasecmp.*//' \
-| sed 's/.*str.c.*strcmp.*//' \
-| sed 's/.*str.c.*strncmp.*//' \
-| sed 's/.*str.c.*strncasecmp.*//' \
-| sed 's/.*file.c.*remove.*//' \
+| sed 's/.*\/test_dirname\.c:.*dirname.*//' \
+| sed 's/.*\/bomb\.c:.*abort.*//g' \
+| sed 's/.*\/str\.c:.*strncat.*//' \
+| sed 's/.*\/str\.c:.*strlcat.*//' \
+| sed 's/.*\/str\.c:.*strncpy.*//' \
+| sed 's/.*\/str\.c:.*strlcpy.*//' \
+| sed 's/.*\/str\.c:.*strcasecmp.*//' \
+| sed 's/.*\/str\.c:.*strcmp.*//' \
+| sed 's/.*\/str\.c:.*strncmp.*//' \
+| sed 's/.*\/str\.c:.*strncasecmp.*//' \
+| sed 's/.*\/file\.c:.*remove.*//' \
+| sed 's/.*\/bu\.h.*abort.*//' \
 | sed '/^$/d' \
 `"
 
