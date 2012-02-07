@@ -866,8 +866,7 @@ combbld(void)
 		temp_pflag ? matparm : (char *)0,
 		override ? (unsigned char *)rgb : (unsigned char *)0,
 		regionid, aircode, material, los, inherit, 0, 1) < 0) {
-	fprintf(stderr, "asc2g: mk_lrcomb fail\n");
-	abort();
+	bu_exit(1, "asc2g: mk_lrcomb fail\n");
     }
 
     if (buf[0] == '\0')  return 0;

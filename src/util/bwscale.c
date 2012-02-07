@@ -379,7 +379,7 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 	    }
 	    *op++ = (int)(sum / (pxlen * pylen));
 	    if (op > (outbuf+scanlen))
-		abort();
+		bu_bomb("unexpected buffer overrun");
 	}
 	ret = fwrite(outbuf, 1, ox, ofp);
 	if (ret != (size_t)ox) 
