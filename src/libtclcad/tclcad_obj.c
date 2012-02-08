@@ -11977,17 +11977,13 @@ go_refresh(struct ged_obj *gop, struct ged_dm_view *gdvp)
     }
 
     DM_DRAW_BEGIN(gdvp->gdv_dmp);
-    go_refresh_draw(gop, gdvp);
+    go_refresh_draw(gop, gdvp, restore_zbuffer);
     DM_DRAW_END(gdvp->gdv_dmp);
-
-    if (restore_zbuffer) {
-	DM_SET_ZBUFFER(gdvp->gdv_dmp, 1);
-    }
 }
 
 
 void
-go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp)
+go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuffer)
 {
     if (gdvp->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_OVERLAY) {
 	if (gdvp->gdv_view->gv_rect.grs_draw) {
@@ -12005,6 +12001,10 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp)
 	    fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
 		       gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height);
 
+	if (restore_zbuffer) {
+	    DM_SET_ZBUFFER(gdvp->gdv_dmp, 1);
+	}
+
 	return;
     } else if (gdvp->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_INTERLAY) {
 	go_draw(gdvp);
@@ -12016,6 +12016,10 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp)
 	} else
 	    fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
 		       gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height);
+
+	if (restore_zbuffer) {
+	    DM_SET_ZBUFFER(gdvp->gdv_dmp, 1);
+	}
     } else {
 	if (gdvp->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_UNDERLAY) {
 	    if (gdvp->gdv_view->gv_rect.grs_draw) {
@@ -12025,6 +12029,15 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp)
 	    } else
 		fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
 			   gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height);
+
+	    if (gdvp->gdv_dmp->dm_zbuffer) {
+		bu_log("Set zbuffer on, after underlay\n");
+		DM_SET_ZBUFFER(gdvp->gdv_dmp, 1);
+	    }
+	}
+
+	if (restore_zbuffer) {
+	    DM_SET_ZBUFFER(gdvp->gdv_dmp, 1);
 	}
 
 	go_draw(gdvp);

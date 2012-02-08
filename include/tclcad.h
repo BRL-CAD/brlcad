@@ -132,7 +132,8 @@ TCLCAD_EXPORT extern struct application *to_rt_gettrees_application(struct ged *
 TCLCAD_EXPORT extern void go_refresh(struct ged_obj *gop,
 				  struct ged_dm_view *gdvp);
 TCLCAD_EXPORT extern void go_refresh_draw(struct ged_obj *gop,
-				       struct ged_dm_view *gdvp);
+					  struct ged_dm_view *gdvp,
+					  int restore_zbuffer);
 
 /* defined in cmdhist_obj.c */
 TCLCAD_EXPORT extern int Cho_Init(Tcl_Interp *interp);
