@@ -604,9 +604,6 @@ get_args(int argc, const char *argv[])
 		}
 	    }
 	    break;
-	    case EOF:
-		fprintf(stderr, "ERROR: unknown option %c\n", c);
-		return 0;	/* BAD */
 	    default:		/* '?' */
 		fprintf(stderr, "ERROR: bad option specified\n");
 		return 0;	/* BAD */
