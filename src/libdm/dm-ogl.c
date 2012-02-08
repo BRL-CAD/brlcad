@@ -1666,6 +1666,9 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
     if (first == 0)
 	glEnd();
 
+    if (dmp->dm_light && dmp->dm_transparency)
+	glDisable(GL_BLEND);
+
     return TCL_OK;
 }
 
