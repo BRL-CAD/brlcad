@@ -116,16 +116,26 @@ struct lex_sentry {
 
 __BEGIN_DECLS
 
+static void*
+bu_malloc_wrapper(size_t size)
+{
+    return bu_malloc(size, "alloc lemon parser object");
+}
+
+static void
+bu_free_wrapper(void *ptr)
+{
+    return bu_free(ptr, "free lemon parser object");
+}
+
 static void createParser(detail::parser_type *parser)
 {
-    /* FIXME: should be using libbu memory management */
-    *parser = ParseAlloc(malloc);
+    *parser = ParseAlloc(bu_malloc_wrapper);
 }
 
 static void destroyParser(detail::parser_type *parser)
 {
-    /* FIXME: should be using libbu memory management */
-    ParseFree(*parser, free);
+    ParseFree(*parser, bu_free_wrapper);
 }
 
 static void destroyScanner(yyscan_t *scanner)
