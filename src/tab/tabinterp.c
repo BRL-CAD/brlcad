@@ -883,7 +883,7 @@ spline(struct chan *chp, fastf_t *times)
 	    D2yi = (end*v+rrr[i]-hi1*D2yi1-s*D2yn1)/
 		(diag[i]+corr);
 	    if (end) D2yn1 = D2yi;
-	    if (i>1) {
+	    if (i>=1) {
 		a = 2*(hi+hi1);
 		if (i==1) a += konst*hi;
 		if (i==chp->c_ilen-2) a += konst*hi1;
