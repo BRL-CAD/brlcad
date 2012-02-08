@@ -918,11 +918,18 @@ f_Menu() /* Print menu. */
 	    ;
 	if ( j <= DEL )
 	{
+	    int c;
 	    SetStandout();
 	    prnt_Prompt( "-- More -- " );
 	    ClrStandout();
 	    (void) fflush( stdout );
-	    switch ( *cptr != NUL ? *cptr++ : get_Char() )
+
+	    if (*cptr != NUL)
+		c = *cptr++;
+	    else
+		c = get_Char();
+
+	    switch (c)
 	    {
 		case 'q' :
 		case 'n' :
