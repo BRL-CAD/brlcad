@@ -4390,7 +4390,8 @@ dgo_tree_cmd(struct dg_obj *dgop,
 		displayDepth = atoi(bu_optarg);
 		if (displayDepth < 0) {
 		    bu_log("Negative number supplied as depth - unsupported.");
-                    fclose(fdout);
+		    if(fdout != NULL)
+			fclose(fdout);
 		    return TCL_ERROR;
 		}
 		break;
