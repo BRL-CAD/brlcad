@@ -45,7 +45,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     struct shell *s;
     struct bu_ptbl faces;
     struct face *fp;
-    int do_all=0;
+    int do_all=1;
     int do_arb=0;
     int do_tgc=0;
     int do_poly=0;
@@ -71,18 +71,12 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	ret = GED_HELP;
 	goto out3;
     } else if (argc == 3) {
-#if 1
-	/* temporary hack to not allow the 'all' option. if you choose
-         * all but have a TGC, the cleanup for ARB breaks TGC.
+	/* FIXME: if you use the default but have a TGC, the cleanup
+	 * for ARB breaks TGC.
          */
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
-	ret = GED_HELP;
-	goto out3;
-#else
 	do_arb = do_tgc = do_poly = do_all = 1; /* do all */
 	new_name = (char *)argv[1];
 	nmg_name = (char *)argv[2];
-#endif
     } else if (argc == 4) {
 	do_all = 0;
 	if (!bu_strncmp(argv[1], "arb", 3)) {
