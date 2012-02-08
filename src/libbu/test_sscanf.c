@@ -733,29 +733,24 @@ doVlsTests()
     int bu_ret;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    /* %Vc */
-    test_vls("de mus noc", "%Vc", "d");
-    test_vls(" de mus noc", "%6Vc", " de mu");
-    test_vls(" de mus noc", " %7Vc", "de mus ");
-    test_vls("de mus noc", "%11Vc", "de mus noc");
+    /* %V */
+    test_vls("de mus noc", "%V", "de mus noc");
+    test_vls(" de mus noc", "%6V", " de mu");
+    test_vls(" de mus noc", " %7V", "de mus ");
+    test_vls("de mus noc", "%11V", "de mus noc");
 
-    bu_ret = bu_sscanf("de mus noc", "%*11Vc", &vls);
+    print_src_and_fmt("de mus noc", "%*11V");
+    bu_ret = bu_sscanf("de mus noc", "%*11V", &vls);
     checkReturnVal("bu_sscanf", bu_ret, 0);
 
-    /* %V[...] */
-    test_vls("abcA", "%V[a-z]", "abc");
-    test_vls(" abcA", " %V[a-z]", "abc");
-    test_vls(" abcA", "%3V[ a-z]", " ab");
+    /* %#V */
+    test_vls(" \tabc ABC", "%#V", "abc");
+    test_vls(" \tabc ABC", "%#4V", "abc");
+    test_vls(" \tabc", "%#4Vs", "abc");
 
-    bu_ret = bu_sscanf(" abcA", "%*V[ a-z]", &vls);
-    checkReturnVal("bu_sscanf", bu_ret, 0);
-
-    /* %Vs */
-    test_vls(" \tabc ABC", "%Vs", "abc");
-    test_vls(" \tabc ABC", "%4Vs", "abc");
-    test_vls(" \tabc", "%4Vs", "abc");
-
-    bu_ret = bu_sscanf(" abcA", "%*Vs", &vls);
+    print_src_and_fmt(" \tabc ABC", "%#*V");
+    bu_vls_trunc(&vls, 0);
+    bu_ret = bu_sscanf(" \tabc ABC", "%#*V", &vls);
     checkReturnVal("bu_sscanf", bu_ret, 0);
 
     bu_vls_free(&vls);

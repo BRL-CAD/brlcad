@@ -61,7 +61,7 @@
 #define	SIZET		0x02000	/* z: size_t */
 #define	SHORTSHORT	0x04000	/* hh: char */
 #define	UNSIGNED	0x08000	/* %[oupxX] conversions */
-#define	BUVLS		0x20000	/* V: struct bu_vls */
+#define	ALTERNATE	0x40000	/* # flag for alternate behavior */
 
 /*
  * The following are used in integral conversions only:
@@ -72,8 +72,7 @@
 #define	PFXOK		0x00100	/* 0x prefix is (still) legal */
 #define	NZDIGITS	0x00200	/* no zero digits detected */
 #define	HAVESIGN	0x10000	/* sign detected */
-
-#define	HAVEWIDTH	0x40000
+#define	HAVEWIDTH	0x20000
 
 /*
  * Conversion types.
@@ -83,79 +82,7 @@
 #define	CT_STRING	2	/* %s conversion */
 #define	CT_INT		3	/* %[dioupxX] conversion */
 #define	CT_FLOAT	4	/* %[efgEFG] conversion */
-
-#define CCL_TABLE_SIZE 256
-#define CCL_ACCEPT 1
-#define CCL_REJECT 0
-
-static const char*
-get_ccl_table(char *tab, const char *fmt)
-{
-    int i, v, curr, lower, upper;
-
-    BU_ASSERT(tab != NULL);
-    BU_ASSERT(fmt != NULL);
-
-#define SET_CCL_ENTRY(e) tab[e] = v;
-
-    curr = *fmt++;
-    if (curr == '^') {
-	/* accept all chars by default */
-	memset(tab, CCL_ACCEPT, CCL_TABLE_SIZE);
-	v = CCL_REJECT;
-	curr = *fmt++;
-    } else {
-	/* reject all chars by default */
-	memset(tab, CCL_REJECT, CCL_TABLE_SIZE);
-	v = CCL_ACCEPT;
-    }
-
-    if (curr == '\0') {
-	/* format ended before closing ] */
-	return fmt - 1;
-    }
-
-    SET_CCL_ENTRY(curr);
-
-    /* set table entries from fmt */
-    while (1) {
-	lower = curr;
-	curr = *fmt++;
-
-	if (curr == '\0') {
-	    return fmt - 1;
-	}
-	if (curr == ']') {
-	    return fmt;
-	}
-
-	/* '-' usually used to specify a range */
-	if (curr == '-') {
-	    upper = *fmt;
-
-	    if (upper == ']' || upper < lower) {
-		/* ordinary '-' */
-		SET_CCL_ENTRY(curr);
-		continue;
-	    }
-
-	    /* Range. Set everything in the range. */
-	    for (i = 0; i < CCL_TABLE_SIZE; ++i) {
-		if (lower < i && i <= upper) {
-		    SET_CCL_ENTRY(i);
-		}
-	    }
-
-	    /* need to skip upper since it is not an ordinary character */
-	    curr = upper;
-	    ++fmt;
-	} else {
-	    /* ordinary char */
-	    SET_CCL_ENTRY(curr);
-	}
-    }
-    /* NOTREACHED */
-}
+#define	CT_VLS		5	/* %V and %#V conversion */
 
 /* Copy part of a string, everything from srcStart to srcEnd (exclusive),
  * into a new buffer. Returns the allocated buffer.
@@ -193,13 +120,13 @@ append_n(char **fmt) {
 }
 
 /* The basic strategy of this routine is to break the formatted scan into
- * pieces, one for each word of the format string.
+ * pieces, one for each conversion in the format string.
  *
- * New two-word format strings are created by appending "%n" (request to sscanf
- * for consumed char count) to each word of the provided format string. sscanf
- * is called with each two-word format string, followed by an appropriately
- * cast pointer from the vararg list, followed by the local consumed count
- * pointer.
+ * New two-conversion format strings are created by appending "%n" (request to
+ * sscanf for consumed char count) to each conversion of the provided format
+ * string. sscanf is called with each two-conversion format string, followed by
+ * an appropriately cast pointer from the vararg list, followed by the local
+ * consumed count pointer.
  *
  * Each time sscanf successfully returns, the total assignment count and the
  * total consumed character count are updated. The consumed character count is
@@ -218,7 +145,6 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
     char *partFmt;
     const char *fmt;
     const char *wordStart;
-    char ccl_tab[CCL_TABLE_SIZE];
 
     BU_ASSERT(src != NULL);
     BU_ASSERT(fmt0 != NULL);
@@ -256,6 +182,10 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 #define EXIT_DUE_TO_MATCH_FAILURE \
     FREE_FORMAT_PART; \
     return numFieldsAssigned;
+
+#define EXIT_DUE_TO_MISC_ERROR \
+    FREE_FORMAT_PART; \
+    return EOF;
 
     while (1) {
 	/* Mark word start, then skip to first non-white char. */
@@ -313,6 +243,9 @@ again:
 	case '*':
 	    flags |= SUPPRESS;
 	    goto again;
+	case '#':
+	    flags |= ALTERNATE;
+	    goto again;
 	case 'j':
 	    flags |= INTMAXT;
 	    goto again;
@@ -358,9 +291,6 @@ again:
 		flags &= ~SHORT;
 		flags |= SHORTSHORT;
 	    }
-	    goto again;
-	case 'V':
-	    flags |= BUVLS;
 	    goto again;
 
 
@@ -413,7 +343,35 @@ again:
 	    c = CT_STRING;
 	    break;
 	case '[':
-	    fmt = get_ccl_table(ccl_tab, fmt);
+	    /* note that at this point c == '[' == fmt[-1] and so fmt[0] is
+	     * either '^' or the first character of the class
+	     */
+
+	    /* there should be at least one character in between brackets */
+	    if (fmt[0] == '\0' || fmt[1] == '\0') {
+		EXIT_DUE_TO_MISC_ERROR;
+	    }
+
+	    /* skip literal ']' ("[]" or "[^]") */
+	    if (fmt[0] == ']') {
+		fmt = &fmt[1];
+	    } else if (fmt[0] == '^' && fmt[1] == ']') {
+		fmt = &fmt[2];
+	    }
+
+	    /* point fmt after character class */
+	    while (1) {
+		c = *fmt++;
+		if (c == '\0') {
+		    /* error */
+		    goto exit;
+		}
+		if (c == ']') {
+		    /* found end of character class */
+		    break;
+		}
+	    }
+
 	    flags |= NOSKIP;
 	    c = CT_CCL;
 	    break;
@@ -424,6 +382,9 @@ again:
 	case 'c':
 	    flags |= NOSKIP;
 	    c = CT_CHAR;
+	    break;
+	case 'V':
+	    c = CT_VLS;
 	    break;
 	case 'n':
 	    if (flags & SUPPRESS) {
@@ -461,8 +422,7 @@ again:
 	    /* Format string ends with bare '%'. Returning EOF regardless of
 	     * successfull assignments is a backwards compatability behavior.
 	     */
-	    FREE_FORMAT_PART;
-	    return EOF;
+	    EXIT_DUE_TO_MISC_ERROR;
 
 	default:
 	    EXIT_DUE_TO_MATCH_FAILURE;
@@ -493,152 +453,133 @@ if (flags & UNSIGNED) { \
 
 	switch (c) {
 
+	case CT_VLS:
+	    /* %V %#V conversion */
+	{
+	    struct bu_vls *vls = NULL;
+
+	    if (src[numCharsConsumed] == '\0') {
+		EXIT_DUE_TO_INPUT_FAILURE;
+	    }
+
+	    /* Leading input whitespace is skipped for %#V, and for %V iff the
+	     * conversion specification is preceeded by at least one whitespace
+	     * character.
+	     */
+	    if (isspace(*wordStart) || flags & ALTERNATE) {
+		while (1) {
+		    c = src[numCharsConsumed];
+		    if (c == '\0' || !isspace(c)) {
+			break;
+		    }
+		    ++numCharsConsumed;
+		}
+	    }
+
+	    /* if no width provided, width is infinity */
+	    if (width == 0 && !(flags & HAVEWIDTH)) {
+		    width = ~(width & 0);
+	    }
+
+	    /* grab vls pointer if we're assigning */
+	    if (!(flags & SUPPRESS)) {
+		vls = va_arg(ap, struct bu_vls*);
+	    }
+
+	    /* Copy characters from src to vls. Stop at width, whitespace
+	     * character, or EOI.
+	     */
+	    if (flags & SUPPRESS) {
+		for (i = 0; i < width; ++i) {
+		    c = src[numCharsConsumed + i];
+
+		    /* stop at non-matching or EOI */
+		    if (c == '\0') {
+			break;
+		    }
+		    if ((flags & ALTERNATE) && isspace(c)) {
+			break;
+		    }
+		    ++partConsumed;
+		}
+	    } else {
+		for (i = 0; i < width; ++i) {
+		    c = src[numCharsConsumed + i];
+
+		    /* stop at non-matching or EOI */
+		    /* stop at non-matching or EOI */
+		    if (c == '\0') {
+			break;
+		    }
+		    if ((flags & ALTERNATE) && isspace(c)) {
+			break;
+		    }
+
+		    /* copy valid char to vls */
+		    bu_vls_putc(vls, c);
+		    ++partConsumed;
+		}
+
+		if (partConsumed > 0) {
+		    /* successful assignment */
+		    ++partAssigned;
+		}
+	    }
+	    break;
+	} /* CT_VLS */
+
 	case CT_CHAR:
 	case CT_CCL:
 	case CT_STRING:
 
-	    /* %Vc or %V[...] or %Vs conversion */
-	    if (flags & BUVLS) {
-		struct bu_vls *vls = NULL;
-		int conversion = c;
+	    /* unsupressed %s or %[...] conversion */
+	    if (!(flags & SUPPRESS) && c != CT_CHAR) {
 
-		if (src[numCharsConsumed] == '\0') {
-		    EXIT_DUE_TO_INPUT_FAILURE;
-		}
-
-		/* Input whitespace is skipped for %Vs, and skipped for
-		 * %Vc and %V[...] if the conversion specification is
-		 * preceeded by at least one whitespace character.
-		 */
-		if (isspace(*wordStart) || conversion == CT_STRING) {
-		    while (1) {
-			c = src[numCharsConsumed];
-			if (c == '\0' || !isspace(c)) {
-			    break;
-			}
-			++numCharsConsumed;
-		    }
-		}
-
-		/* set default width */
 		if (width == 0 && !(flags & HAVEWIDTH)) {
-		    if (conversion == CT_CHAR) {
-			width = 1;
-		    } else {
-			/* infinity */
-			width = ~(width & 0);
-		    }
+		    struct bu_vls err = BU_VLS_INIT_ZERO;
+
+		    /* No width was provided by caller.
+		     *
+		     * If the caller is using %s or %[...] without a
+		     * maximum field width, then there is a bug in the
+		     * caller code.
+		     *
+		     * sscanf could easily overrun the provided buffer and
+		     * cause a program crash, so just bomb here and make
+		     * the source of the problem clear.
+		     */
+		    bu_vls_sprintf(&err, "ERROR.\n"
+				"  bu_sscanf was called with bad format string: \"%s\"\n"
+				"  %%s and %%[...] conversions must be bounded using "
+				"a maximum field width.", fmt0);
+		    bu_bomb(bu_vls_addr(&err));
 		}
 
-		/* grab vls pointer if we're assigning */
-		if (!(flags & SUPPRESS)) {
-		    vls = va_arg(ap, struct bu_vls*);
-		    bu_vls_trunc(vls, 0);
+		if (width == 0) {
+		    /* Caller specified zero width in the format string.
+		     * (%0c %0s or %0[...])
+		     *
+		     * The behavior of sscanf for a zero width is
+		     * undefined, so we provide our own consistent
+		     * behavior here.
+		     *
+		     * The assignment wasn't suppressed, so we'll assume
+		     * the caller provided a pointer and wants us to write
+		     * to it. Just write '\0' and call it a successfull
+		     * assignment.
+		     */
+		    *va_arg(ap, char*) = '\0';
+		    ++partAssigned;
+		    break;
 		}
+		
+	    }
 
-		/* if not CT_CCL, character class table isn't initialized */
-		if (conversion != CT_CCL) {
-
-		    /* CT_CHAR accepts all */
-		    memset(ccl_tab, CCL_ACCEPT, sizeof(ccl_tab));
-
-		    /* CT_STRING accepts all except space */
-		    if (conversion == CT_STRING) {
-			for (c = 0; c < CCL_TABLE_SIZE; ++c) {
-			    if (isspace(c)) {
-				ccl_tab[c] = CCL_REJECT;
-			    }
-			}
-		    }
-		}
-
-		/* always break on '\0' */
-		ccl_tab['\0'] = CCL_REJECT;
-
-		/* Copy characters from src to vls. Stop at width, non-matching
-		 * character, or EOI.
-		 */
-		if (flags & SUPPRESS) {
-		    for (i = 0; i < width; ++i) {
-			c = src[numCharsConsumed + i];
-
-			/* stop at non-matching or EOI */
-			if (ccl_tab[c] == CCL_REJECT) {
-			    break;
-			}
-			++partConsumed;
-		    }
-		} else {
-		    for (i = 0; i < width; ++i) {
-			c = src[numCharsConsumed + i];
-
-			/* stop at non-matching or EOI */
-			if (ccl_tab[c] == CCL_REJECT) {
-			    break;
-			}
-
-			/* copy valid char to vls */
-			bu_vls_putc(vls, c);
-
-			++partConsumed;
-		    }
-
-		    if (partConsumed > 0) {
-			/* successful assignment */
-			++partAssigned;
-		    }
-		}
-	    } /* BUVLS */
-
-	    else {
-		/* unsupressed %s or %[...] conversion */
-		if (!(flags & SUPPRESS) && c != CT_CHAR) {
-
-		    if (width == 0 && !(flags & HAVEWIDTH)) {
-			struct bu_vls err = BU_VLS_INIT_ZERO;
-
-			/* No width was provided by caller.
-			 *
-			 * If the caller is using %s or %[...] without a
-			 * maximum field width, then there is a bug in the
-			 * caller code.
-			 *
-			 * sscanf could easily overrun the provided buffer and
-			 * cause a program crash, so just bomb here and make
-			 * the source of the problem clear.
-			 */
-			bu_vls_sprintf(&err, "ERROR.\n"
-				    "  bu_sscanf was called with bad format string: \"%s\"\n"
-				    "  %%s and %%[...] conversions must be bounded using "
-				    "a maximum field width.", fmt0);
-			bu_bomb(bu_vls_addr(&err));
-		    }
-
-		    if (width == 0) {
-			/* Caller specified zero width in the format string.
-			 *
-			 * The behavior of sscanf for a zero width is
-			 * undefined, so we provide our own consistent
-			 * behavior here.
-			 *
-			 * The assignment wasn't suppressed, so we'll assume
-			 * the caller provided a pointer and wants us to write
-			 * to it. Just write '\0' and call it a successfull
-			 * assignment.
-			 */
-			*va_arg(ap, char*) = '\0';
-			++partAssigned;
-			break;
-		    }
-		    
-		}
-
-		/* ordinary %c or %[...] or %s conversion */
-		if (flags & LONG) {
-		    SSCANF_TYPE(wchar_t*);
-		} else {
-		    SSCANF_TYPE(char*);
-		}
+	    /* ordinary %c or %[...] or %s conversion */
+	    if (flags & LONG) {
+		SSCANF_TYPE(wchar_t*);
+	    } else {
+		SSCANF_TYPE(char*);
 	    }
 	    break;
 
