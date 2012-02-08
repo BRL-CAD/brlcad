@@ -1864,10 +1864,8 @@ absorp_coeff(fastf_t lambda, char *material)
 
     fclose(fp);
 
-    absorp = (absorp_h - absorp_l)*(lambda - lambda_l)
-	/(lambda_h - lambda_l) + absorp_l;
-
-    return absorp;
+    absorp = (absorp_h - absorp_l)*(lambda - lambda_l) /(lambda_h - lambda_l);
+    return ( absorp > (DBL_MAX - absorp_l) ) ? DBL_MAX : absorp + absorp_l;
 }
 
 
