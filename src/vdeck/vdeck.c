@@ -1053,28 +1053,6 @@ addtgc(struct bu_vls *v, struct rt_tgc_internal *gp, char *name, int num )
     /* Print the solid parameters.					*/
     vls_itoa( v, num, 5 );
     switch ( cgtype )  {
-	case TGC:
-	    bu_vls_strcat( v, "tgc  " );		/* 5 */
-	    vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
-	    vls_ftoa_vec_cvt( v, gp->h, 10, 4 );
-	    bu_vls_strcat( v, name );
-	    bu_vls_strcat( v, "\n" );
-
-	    vls_itoa( v, num, 5 );
-	    vls_blanks( v, 5 );
-	    vls_ftoa_vec_cvt( v, gp->a, 10, 4 );
-	    vls_ftoa_vec_cvt( v, gp->b, 10, 4 );
-	    bu_vls_strcat( v, name );
-	    bu_vls_strcat( v, "\n");
-
-	    vls_itoa( v, num, 5 );
-	    vls_blanks( v, 5 );
-	    vls_ftoa_cvt( v, mc, 10, 4 );
-	    vls_ftoa_cvt( v, md, 10, 4 );
-	    vls_blanks( v, 4*10 );
-	    bu_vls_strcat( v, name );
-	    bu_vls_strcat( v, "\n");
-	    break;
 	case RCC:
 	    bu_vls_strcat( v, "rcc  " );		/* 5 */
 	    vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
@@ -1139,12 +1117,29 @@ addtgc(struct bu_vls *v, struct rt_tgc_internal *gp, char *name, int num )
 	    bu_vls_strcat( v, name );
 	    bu_vls_strcat( v, "\n");
 	    break;
+	case TGC:
 	default:
-	    (void) fprintf( stderr,
-			    "Error in tgc type (%d).\n",
-			    cgtype
-		);
-	    bu_exit( 10, NULL );
+	    bu_vls_strcat( v, "tgc  " );		/* 5 */
+	    vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
+	    vls_ftoa_vec_cvt( v, gp->h, 10, 4 );
+	    bu_vls_strcat( v, name );
+	    bu_vls_strcat( v, "\n" );
+
+	    vls_itoa( v, num, 5 );
+	    vls_blanks( v, 5 );
+	    vls_ftoa_vec_cvt( v, gp->a, 10, 4 );
+	    vls_ftoa_vec_cvt( v, gp->b, 10, 4 );
+	    bu_vls_strcat( v, name );
+	    bu_vls_strcat( v, "\n");
+
+	    vls_itoa( v, num, 5 );
+	    vls_blanks( v, 5 );
+	    vls_ftoa_cvt( v, mc, 10, 4 );
+	    vls_ftoa_cvt( v, md, 10, 4 );
+	    vls_blanks( v, 4*10 );
+	    bu_vls_strcat( v, name );
+	    bu_vls_strcat( v, "\n");
+	    break;
     }
 }
 
