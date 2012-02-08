@@ -720,7 +720,7 @@ GetStartPointsInternal(
 	return_value = false;
 	for (i = 0; i < 4; i++) {
 	    for (j = 0; j < 4; j++) {
-		return_value = return_value && GetStartPointsInternal(Parts1[i], Parts2[j], start_points1, start_points2, tol);
+		return_value &= GetStartPointsInternal(Parts1[i], Parts2[j], start_points1, start_points2, tol);
 	    }
 	}
     }
