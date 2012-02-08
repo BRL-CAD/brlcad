@@ -29,6 +29,8 @@
 #include "vmath.h"
 #include "bn.h"
 
+#define USAGE "Usage: bntester [-l test_case_line_number] [-f function_number] -i input_file [-o output_file]\n"
+
 
 int
 parse_case(char *buf_p, int *i, long *l, double *d, unsigned long *u, char *fmt_str, unsigned long line_num, FILE *stream)
@@ -135,8 +137,6 @@ parse_case(char *buf_p, int *i, long *l, double *d, unsigned long *u, char *fmt_
 int
 main(int argc, char **argv)
 {
-    static char *usage="Usage: bntester [-l test_case_line_number] [-f function_number] -i input_file [-o output_file]\n";
-
     /* static to prevent longjmp clobber warning */
     static FILE *stream = NULL;
     static unsigned long line_num = 0;
@@ -188,7 +188,7 @@ main(int argc, char **argv)
 
     if (argc < 2) {
         bu_log("Too few parameters, %d specified, at least 1 required\n", argc - 1);
-        bu_exit(EXIT_FAILURE, usage);
+        bu_exit(EXIT_FAILURE, USAGE);
     }
 
     while ((c = bu_getopt(argc, argv, "l:f:i:o:")) != -1) {
@@ -198,11 +198,11 @@ main(int argc, char **argv)
                 test_case_line_num = strtoul(bu_optarg, &endp, 10);
                 if (errno) {
                     bu_log("Invalid test case line number '%s' '%s'\n", bu_optarg, strerror(errno));
-                    bu_exit(EXIT_FAILURE, usage);
+                    bu_exit(EXIT_FAILURE, USAGE);
                 }
                 if ((*endp != '\0') || (bu_optarg == endp) || (strchr(bu_optarg, '-') != '\0')) {
                     bu_log("Invalid test case line number '%s'\n", bu_optarg);
-                    bu_exit(EXIT_FAILURE, usage);
+                    bu_exit(EXIT_FAILURE, USAGE);
                 }
                 process_single_test_case = 1;
                 break;
@@ -211,11 +211,11 @@ main(int argc, char **argv)
                 function_num = strtoul(bu_optarg, &endp, 10);
                 if (errno) {
                     bu_log("Invalid function number '%s' '%s'\n", bu_optarg, strerror(errno));
-                    bu_exit(EXIT_FAILURE, usage);
+                    bu_exit(EXIT_FAILURE, USAGE);
                 }
                 if ((*endp != '\0') || (bu_optarg == endp) || (strchr(bu_optarg, '-') != '\0')) {
                     bu_log("Invalid function number '%s'\n", bu_optarg);
-                    bu_exit(EXIT_FAILURE, usage);
+                    bu_exit(EXIT_FAILURE, USAGE);
                 }
                 process_single_function = 1;
                 break;
@@ -224,7 +224,7 @@ main(int argc, char **argv)
                 if (string_length >= BUFSIZ) {
                     bu_log("Input file name too long, length was %d but must be less than %d\n",
 			   string_length, BUFSIZ);
-                    bu_exit(EXIT_FAILURE, usage);
+                    bu_exit(EXIT_FAILURE, USAGE);
                 }
                 bu_vls_strcpy(&input_file_name, bu_optarg);
                 input_file_name_defined = 1;
@@ -234,14 +234,14 @@ main(int argc, char **argv)
                 if (string_length >= BUFSIZ) {
                     bu_log("Output file name too long, length was %d but must be less than %d\n",
 			   string_length, BUFSIZ);
-                    bu_exit(EXIT_FAILURE, usage);
+                    bu_exit(EXIT_FAILURE, USAGE);
                 }
                 bu_vls_strcpy(&output_file_name, bu_optarg);
                 output_file_name_defined = 1;
                 break;
             default:
                 bu_log("Invalid option '%c'.\n", c);
-                bu_exit(EXIT_FAILURE, usage);
+                bu_exit(EXIT_FAILURE, USAGE);
                 break;
         }
     }
@@ -259,7 +259,7 @@ main(int argc, char **argv)
     if (early_exit) {
 	bu_vls_free(&input_file_name);
 	bu_vls_free(&output_file_name);
-        bu_exit(EXIT_FAILURE, usage);
+        bu_exit(EXIT_FAILURE, USAGE);
     }
 
     if ((fp_in = fopen(bu_vls_addr(&input_file_name), "r")) == NULL) {
