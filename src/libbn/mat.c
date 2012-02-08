@@ -1037,7 +1037,7 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
     register int i;
 
     if (NEAR_ZERO(MAGSQ(in), SQRT_SMALL_FASTF)) {
-	bu_log("bn_vec_ortho(): zero magnitude input vector %lf %lf %lf\n", V3ARGS(in));
+	bu_log("bn_vec_ortho(): zero magnitude input vector %g %g %g\n", V3ARGS(in));
 	VSETALL(out, 0);
 	return;
     }
@@ -1060,7 +1060,7 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
     }
     f = hypot(in[j], in[k]);
     if (ZERO(f)) {
-	bu_log("bn_vec_ortho(): zero hypot on %lf %lf %lf\n", V3ARGS(in));
+	bu_log("bn_vec_ortho(): zero hypot on %g %g %g\n", V3ARGS(in));
 	VSETALL(out, 0);
 	return;
     }
