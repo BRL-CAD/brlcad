@@ -301,15 +301,11 @@ fastf_t
 air_mass(fastf_t air_gamma)
 /* Solar altitude off horizon (degrees). */
 {
-    fastf_t m;
-
     if (air_gamma <= 0.) {
-	bu_log("air_mass: sun altitude of %g degrees ignored.\n");
-	m = 0.;
-    } else
-	m = 1./(sin(air_gamma*DEG2RAD)
-		+ 0.1500*pow((air_gamma + 3.885), -1.253));
-    return m;
+	bu_log("air_mass: sun altitude of %g degrees ignored.\n", air_gamma);
+	return 0;
+    }
+    return 1.0/(sin(air_gamma*DEG2RAD) + 0.1500*pow((air_gamma + 3.885), -1.253));
 }
 
 
