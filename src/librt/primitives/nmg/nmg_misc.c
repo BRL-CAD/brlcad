@@ -303,7 +303,6 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
     struct edgeuse *eu, *eu1;
     struct vertexuse *vu;
     struct vertex *v1, *v2;
-    int bottommost=0;
 
     if (rt_g.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_find_top_face_in_dir(s = x%x, dir=%d, flags = x%x)\n", s, dir, flags);
@@ -327,16 +326,10 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
 	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
 		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
 		    NMG_CK_EDGEUSE(eu);
-		    if (bottommost) {
-			if (eu->vu_p->v_p->vg_p->coord[dir] < extreme_value) {
-			    extreme_value = eu->vu_p->v_p->vg_p->coord[dir];
-			    vp_top = eu->vu_p->v_p;
-			}
-		    } else {
-			if (eu->vu_p->v_p->vg_p->coord[dir] > extreme_value) {
-			    extreme_value = eu->vu_p->v_p->vg_p->coord[dir];
-			    vp_top = eu->vu_p->v_p;
-			}
+
+		    if (eu->vu_p->v_p->vg_p->coord[dir] > extreme_value) {
+			extreme_value = eu->vu_p->v_p->vg_p->coord[dir];
+			vp_top = eu->vu_p->v_p;
 		    }
 		}
 	    }
@@ -407,18 +400,11 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
 	}
 
 	/* check against current maximum slope */
-	if (bottommost) {
-	    if (edge[dir] < extreme_slope) {
-		extreme_slope = edge[dir];
-		e_top = eu->e_p;
-	    }
-	} else {
-	    if (edge[dir] > extreme_slope) {
-		if (rt_g.NMG_debug & DEBUG_BASIC)
-		    bu_log("New top edge!\n");
-		extreme_slope = edge[dir];
-		e_top = eu->e_p;
-	    }
+	if (edge[dir] > extreme_slope) {
+	    if (rt_g.NMG_debug & DEBUG_BASIC)
+		bu_log("New top edge!\n");
+	    extreme_slope = edge[dir];
+	    e_top = eu->e_p;
 	}
     }
     if (e_top == (struct edge *)NULL) {
@@ -440,10 +426,7 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
 
     /* now find the face containing edge between v1 nad v2
        with "left-pointing vector" having the most extreme slope */
-    if (bottommost)
-	extreme_slope = MAX_FASTF;
-    else
-	extreme_slope = (-MAX_FASTF);
+    extreme_slope = (-MAX_FASTF);
 
     for (BU_LIST_FOR (vu, vertexuse, &v1->vu_hd)) {
 	vect_t left;
@@ -508,18 +491,11 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
 	}
 
 	/* check against current most extreme slope */
-	if (bottommost) {
-	    if (left[dir] < extreme_slope) {
-		extreme_slope = left[dir];
-		f_top = fu->f_p;
-	    }
-	} else {
-	    if (left[dir] > extreme_slope) {
-		if (rt_g.NMG_debug & DEBUG_BASIC)
-		    bu_log("new f_top\n");
-		extreme_slope = left[dir];
-		f_top = fu->f_p;
-	    }
+	if (left[dir] > extreme_slope) {
+	    if (rt_g.NMG_debug & DEBUG_BASIC)
+		bu_log("new f_top\n");
+	    extreme_slope = left[dir];
+	    f_top = fu->f_p;
 	}
     }
 
