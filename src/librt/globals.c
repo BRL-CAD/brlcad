@@ -304,6 +304,12 @@ const char *rt_vlist_cmd_descriptions[] = {
     "poly draw ",
     "poly end  ",
     "poly vnorm",
+    "tri start",
+    "tri move",
+    "tri draw",
+    "tri end",
+    "tri vnorm",
+    "point draw",
     "**unknown*"
 };
 
