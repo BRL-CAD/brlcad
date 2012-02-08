@@ -275,7 +275,7 @@ main(int argc, char *argv[])
 	    solcyl[5] = '0';
 	    solcyl[6] = temp[0];
 	}						/* END # 11 */
-	else if ((10 <= i) || (i < 100)) {
+	else if (i < 100) {
 	    /* START # 12 */
 	    solcyl[5] = temp[0];
 	    solcyl[6] = temp[1];
@@ -312,7 +312,7 @@ main(int argc, char *argv[])
 	    solsph[5] = '0';
 	    solsph[6] = temp[0];
 	}						/* END # 21 */
-	else if ((10 <= i) || (i < 100)) {
+	else if (i < 100) {
 	    /* START # 22 */
 	    solsph[5] = temp[0];
 	    solsph[6] = temp[1];
@@ -361,8 +361,7 @@ main(int argc, char *argv[])
 		}					/* END # 34 */
 	    }						/* END # 32 */
 	}						/* END # 31 */
-
-	else if ((10 <= i) || (i < 100)) {
+	else if (i < 100) {
 	    /* START # 35 */
 	    solcyl[5] = temp[0];
 	    solcyl[6] = temp[1];
@@ -410,8 +409,7 @@ main(int argc, char *argv[])
 	    solsub2[5] = '0';
 	    solsub2[6] = temp[0];
 	}						/* END # 41 */
-
-	else if ((10 <= i) || (i < 100)) {
+	else if (i < 100) {
 	    /* START # 42 */
 	    solsph[5] = temp[0];
 	    solsph[6] = temp[1];
