@@ -455,15 +455,13 @@ main(int argc, char *argv[])
 		regsph[6] = temp[0];
 	    }						/* END # 52 */
 	}						/* END # 51 */
-
-	else if ((10 <= i) || (i < 100)) {
+	else if (i < 100) {
 	    /* START # 53 */
 	    regcyl[5] = temp[0];
 	    regcyl[6] = temp[1];
 	    regsph[5] = temp[0];
 	    regsph[6] = temp[1];
 	}						/* END # 53 */
-
 	else {
 	    /* START # 54 */
 	    (void)printf("** ERROR ** i = %d\n", i);
