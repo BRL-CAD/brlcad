@@ -93,9 +93,7 @@ rt_cut_one_axis(struct bu_ptbl *boxes, struct rt_i *rtip, int axis, int min, int
 	box->bn.bn_type = CUT_BOXNODE;
 	box->bn.bn_len = 0;
 	box->bn.bn_maxlen = rtip->nsolids;
-	box->bn.bn_list = (struct soltab **)bu_malloc(
-	    box->bn.bn_maxlen * sizeof(struct soltab *),
-	    "xbox boxnode []");
+	box->bn.bn_list = (struct soltab **)bu_calloc(box->bn.bn_maxlen, sizeof(struct soltab *), "xbox boxnode []");
 	VMOVE(box->bn.bn_min, rtip->mdl_min);
 	VMOVE(box->bn.bn_max, rtip->mdl_max);
 	box->bn.bn_min[axis] = nuginfop->nu_axis[axis][slice].nu_spos;
@@ -362,8 +360,7 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
     /* Allocate memory for nugrid axis parition. */
 
     for (i=0; i<3; i++)
-	nugnp->nu_axis[i] = (struct nu_axis *)bu_malloc(
-	    nu_max_ncells*sizeof(struct nu_axis), "NUgrid axis");
+	nugnp->nu_axis[i] = (struct nu_axis *)bu_calloc(nu_max_ncells, sizeof(struct nu_axis), "NUgrid axis");
 
 #if USE_HIST
     /*
@@ -438,10 +435,10 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	register int nstart, nend, axi, len = fromp->bn_len;
 	register fastf_t pos;
 
-	list_min = (struct soltab **)bu_malloc(len *
+	list_min = (struct soltab **)bu_calloc(len,
 					       sizeof(struct soltab *),
 					       "min solid list");
-	list_max = (struct soltab **)bu_malloc(len *
+	list_max = (struct soltab **)bu_calloc(len,
 					       sizeof(struct soltab *),
 					       "max solid list");
 	memcpy(list_min, fromp->bn_list, len*sizeof(struct soltab *));
@@ -548,26 +545,19 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
     if (just_collect_info) return;
 
     /* For the moment, re-use "union cutter" */
-    nugnp->nu_grid = (union cutter *)bu_malloc(
-	nugnp->nu_cells_per_axis[X] *
-	nugnp->nu_cells_per_axis[Y] *
-	nugnp->nu_cells_per_axis[Z] * sizeof(union cutter),
-	"3-D NUgrid union cutter []");
+    nugnp->nu_grid = (union cutter *)bu_calloc(nugnp->nu_cells_per_axis[X] *
+					       nugnp->nu_cells_per_axis[Y] *
+					       nugnp->nu_cells_per_axis[Z], sizeof(union cutter),
+					       "3-D NUgrid union cutter []");
     nu_xbox.bn_len = 0;
     nu_xbox.bn_maxlen = fromp->bn_len;
-    nu_xbox.bn_list = (struct soltab **)bu_malloc(
-	nu_xbox.bn_maxlen * sizeof(struct soltab *),
-	"xbox boxnode []");
+    nu_xbox.bn_list = (struct soltab **)bu_calloc(nu_xbox.bn_maxlen, sizeof(struct soltab *), "xbox boxnode []");
     nu_ybox.bn_len = 0;
     nu_ybox.bn_maxlen = fromp->bn_len;
-    nu_ybox.bn_list = (struct soltab **)bu_malloc(
-	nu_ybox.bn_maxlen * sizeof(struct soltab *),
-	"ybox boxnode []");
+    nu_ybox.bn_list = (struct soltab **)bu_calloc(nu_ybox.bn_maxlen, sizeof(struct soltab *), "ybox boxnode []");
     nu_zbox.bn_len = 0;
     nu_zbox.bn_maxlen = fromp->bn_len;
-    nu_zbox.bn_list = (struct soltab **)bu_malloc(
-	nu_zbox.bn_maxlen * sizeof(struct soltab *),
-	"zbox boxnode []");
+    nu_zbox.bn_list = (struct soltab **)bu_calloc(nu_zbox.bn_maxlen, sizeof(struct soltab *), "zbox boxnode []");
     /* Build each of the X slices */
     for (xp = 0; xp < nugnp->nu_cells_per_axis[X]; xp++) {
 	VMOVE(xmin, fromp->bn_min);
@@ -645,8 +635,8 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 		 * and copy it in */
 
 		cutp->bn.bn_list =
-		    (struct soltab **)bu_malloc(
-			nu_zbox.bn_len *
+		    (struct soltab **)bu_calloc(
+			nu_zbox.bn_len,
 			sizeof(struct soltab *),
 			"NUgrid cell bn_list[]");
 		cutp->bn.bn_len = cutp->bn.bn_maxlen =
@@ -828,8 +818,8 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
     VMOVE(finp->bn.bn_max, rtip->mdl_max);
     finp->bn.bn_len = 0;
     finp->bn.bn_maxlen = rtip->nsolids+1;
-    finp->bn.bn_list = (struct soltab **)bu_malloc(
-	finp->bn.bn_maxlen * sizeof(struct soltab *),
+    finp->bn.bn_list = (struct soltab **)bu_calloc(
+	finp->bn.bn_maxlen, sizeof(struct soltab *),
 	"rt_cut_it: initial list alloc");
 
     rtip->rti_inf_box.cut_type = CUT_BOXNODE;
@@ -998,8 +988,8 @@ rt_cut_extend(register union cutter *cutp, struct soltab *stp, const struct rt_i
 	if (cutp->bn.bn_piecelist == NULL) {
 	    /* Allocate enough piecelist's to hold all solids */
 	    BU_ASSERT(rtip->nsolids > 0);
-	    cutp->bn.bn_piecelist = (struct rt_piecelist *) bu_malloc(
-		sizeof(struct rt_piecelist) * (rtip->nsolids + 2),
+	    cutp->bn.bn_piecelist = (struct rt_piecelist *) bu_calloc(
+		sizeof(struct rt_piecelist), (rtip->nsolids + 2),
 		"rt_ct_box bn_piecelist (root node)");
 	    cutp->bn.bn_piecelen = 0;	/* sanity */
 	    cutp->bn.bn_maxpiecelen = rtip->nsolids + 2;
@@ -1010,9 +1000,7 @@ rt_cut_extend(register union cutter *cutp, struct soltab *stp, const struct rt_i
 
 	/* List every index that this solid has */
 	plp->npieces = stp->st_npieces;
-	plp->pieces = (long *)bu_malloc(
-	    sizeof(long) * plp->npieces,
-	    "pieces[]");
+	plp->pieces = (long *)bu_calloc(plp->npieces, sizeof(long), "pieces[]");
 	for (i = stp->st_npieces-1; i >= 0; i--)
 	    plp->pieces[i] = i;
 
@@ -1028,8 +1016,8 @@ rt_cut_extend(register union cutter *cutp, struct soltab *stp, const struct rt_i
 		cutp->bn.bn_maxlen = rtip->rti_cutlen;
 	    else
 		cutp->bn.bn_maxlen = rtip->nsolids + 2;
-	    cutp->bn.bn_list = (struct soltab **)bu_malloc(
-		cutp->bn.bn_maxlen * sizeof(struct soltab *),
+	    cutp->bn.bn_list = (struct soltab **)bu_calloc(
+		cutp->bn.bn_maxlen, sizeof(struct soltab *),
 		"rt_cut_extend: initial list alloc");
 	} else {
 	    cutp->bn.bn_maxlen *= 8;
@@ -1212,8 +1200,8 @@ rt_ct_populate_box(union cutter *outp, const union cutter *inp, struct rt_i *rti
     outp->bn.bn_len = 0;
     outp->bn.bn_maxlen = inp->bn.bn_len;
     if (outp->bn.bn_maxlen > 0) {
-	outp->bn.bn_list = (struct soltab **) bu_malloc(
-	    sizeof(struct soltab *) * outp->bn.bn_maxlen,
+	outp->bn.bn_list = (struct soltab **) bu_calloc(
+	    outp->bn.bn_maxlen, sizeof(struct soltab *),
 	    "bn_list");
 	for (i = inp->bn.bn_len-1; i >= 0; i--) {
 	    struct soltab *stp = inp->bn.bn_list[i];
@@ -1235,8 +1223,8 @@ rt_ct_populate_box(union cutter *outp, const union cutter *inp, struct rt_i *rti
 	return success;
     }
 
-    outp->bn.bn_piecelist = (struct rt_piecelist *) bu_malloc(
-	sizeof(struct rt_piecelist) * inp->bn.bn_piecelen,
+    outp->bn.bn_piecelist = (struct rt_piecelist *) bu_calloc(
+	sizeof(struct rt_piecelist), inp->bn.bn_piecelen,
 	"rt_piecelist");
     outp->bn.bn_maxpiecelen = inp->bn.bn_piecelen;
 
@@ -1278,7 +1266,7 @@ rt_ct_populate_box(union cutter *outp, const union cutter *inp, struct rt_i *rti
 	    olp->magic = RT_PIECELIST_MAGIC;
 	    olp->stp = stp;
 	    outp->bn.bn_piecelen++;
-	    olp->pieces = (long *)bu_malloc(sizeof(long) * olp->npieces, "olp->pieces[]");
+	    olp->pieces = (long *)bu_calloc(olp->npieces, sizeof(long), "olp->pieces[]");
 	    for (j=0; j<piece_count; j++) {
 		olp->pieces[j] = piece_list[j];
 	    }
@@ -1446,7 +1434,8 @@ rt_ct_piececount(const union cutter *cutp)
 
     count = cutp->bn.bn_len;
 
-    if (cutp->bn.bn_piecelen <= 0) return count;
+    if (cutp->bn.bn_piecelen <= 0 || !cutp->bn.bn_piecelist)
+	return count;
 
     for (i = cutp->bn.bn_piecelen-1; i >= 0; i--) {
 	count += cutp->bn.bn_piecelist[i].npieces;
@@ -1710,7 +1699,7 @@ rt_ct_get(struct rt_i *rtip)
 	size_t bytes;
 
 	bytes = (size_t)bu_malloc_len_roundup(64*sizeof(union cutter));
-	cutp = (union cutter *)bu_malloc(bytes, " rt_ct_get");
+	cutp = (union cutter *)bu_calloc(1, bytes, " rt_ct_get");
 	/* Remember this allocation for later */
 	bu_ptbl_ins(&rtip->rti_busy_cutter_nodes, (long *)cutp);
 	/* Now, dice it up */
@@ -2180,7 +2169,7 @@ rt_cut_clean(struct rt_i *rtip)
     if (!BU_LIST_IS_INITIALIZED(&rtip->rti_busy_cutter_nodes.l))
 	return;
 
-    /* Release the blocks we got from bu_malloc() */
+    /* Release the blocks we got from bu_calloc() */
     for (BU_PTBL_FOR(p, (genptr_t *), &rtip->rti_busy_cutter_nodes)) {
 	bu_free(*p, "rt_ct_get");
     }
@@ -2343,8 +2332,8 @@ insert_in_bsp(struct soltab *stp, union cutter *cutp)
 		    if (cutp->bn.bn_maxlen <= 0) {
 			/* Initial allocation */
 			cutp->bn.bn_maxlen = 5;
-			cutp->bn.bn_list = (struct soltab **)bu_malloc(
-			    cutp->bn.bn_maxlen * sizeof(struct soltab *),
+			cutp->bn.bn_list = (struct soltab **)bu_calloc(
+			    cutp->bn.bn_maxlen, sizeof(struct soltab *),
 			    "insert_in_bsp: initial list alloc");
 		    } else {
 			cutp->bn.bn_maxlen += 5;
@@ -2372,7 +2361,7 @@ insert_in_bsp(struct soltab *stp, union cutter *cutp)
 			    pieces[piece_count++] = i;
 			} else if (more_pieces_alloced == 0) {
 			    more_pieces_alloced = stp->st_npieces - PIECE_BLOCK;
-			    more_pieces = (long *)bu_malloc(sizeof(long) * more_pieces_alloced,
+			    more_pieces = (long *)bu_calloc(more_pieces_alloced, sizeof(long),
 							    "more_pieces");
 			    more_pieces[more_pieces_count++] = i;
 			} else {
@@ -2395,7 +2384,7 @@ insert_in_bsp(struct soltab *stp, union cutter *cutp)
 		plp->magic = RT_PIECELIST_MAGIC;
 		plp->stp = stp;
 		plp->npieces = piece_count + more_pieces_count;
-		plp->pieces = (long *)bu_malloc(plp->npieces * sizeof(long), "plp->pieces");
+		plp->pieces = (long *)bu_calloc(plp->npieces, sizeof(long), "plp->pieces");
 		for (i=0; i<piece_count; i++) {
 		    plp->pieces[i] = pieces[i];
 		}
