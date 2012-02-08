@@ -147,6 +147,7 @@ echo "running API usage check"
 # 203 - malloc
 # 89 - calloc
 # 21 - realloc
+FOUND=
 for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy strlcpy strcmp strcasecmp stricmp strncmp strncasecmp stricmp unlink rmdir remove ; do
     echo "Searching for $func ..."
     MATCH="`grep -n -e [^a-zA-Z0-9_]$func\( $INCFILES $SRCFILES /dev/null`"
@@ -175,6 +176,7 @@ for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy str
     if test "x$MATCH" != "x" ; then
 	echo "ERROR: Found `echo \"$MATCH\" | wc -l | awk '{print $1}'` instances of $func ..."
 	echo "$MATCH"
+	FOUND=1
     fi
 done
 
