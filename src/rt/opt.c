@@ -157,7 +157,13 @@ fastf_t		rt_perp_tol = (fastf_t)0.0;	/* Value for rti_tol.perp */
 char		*framebuffer = (char *)NULL;		/* desired framebuffer */
 
 int		space_partition = 	/*space partitioning algorithm to use*/
+#if 1
+/* Non-uniform grid/mesh discretized spatial partitioning */
+RT_PART_NUGRID;
+#else
+/* Non-uniform Binary Spatial Partitioning (BSP) tree */
 RT_PART_NUBSPT;
+#endif
 int		nugrid_dimlimit = 0;	/* limit to each dimension of
 					   the nugrid */
 double		nu_gfactor = RT_NU_GFACTOR_DEFAULT;
@@ -175,7 +181,7 @@ get_args(int argc, const char *argv[])
 {
     register int c;
     register int i;
-    char *env_str;              
+    char *env_str;
 
     bu_optind = 1;		/* restart */
 
