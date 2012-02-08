@@ -133,13 +133,13 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
 
     if (!gedp->ged_wdbp->dbip->dbi_filename) {
 	bu_log("Error: geometry file is not specified\n");
-        fclose(fp);
+	fclose(fp);
 	return GED_ERROR;
     }
 
     if (!bu_file_exists(gedp->ged_wdbp->dbip->dbi_filename, NULL)) {
 	bu_log("Error: %s does not exist\n", gedp->ged_wdbp->dbip->dbi_filename);
-        fclose(fp);
+	fclose(fp);
 	return GED_ERROR;
     }
 

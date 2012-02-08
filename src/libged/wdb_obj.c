@@ -456,7 +456,7 @@ wdb_vls_long_dpp(struct rt_wdb *wdbp,
 	    bu_vls_printf(vls, "%s", dp->d_namep);
 	    bu_vls_spaces(vls, (int)(max_nam_len - strlen(dp->d_namep)));
 	    bu_vls_printf(vls, " %s", type);
-            if (type)
+	    if (type)
 	       bu_vls_spaces(vls, (int)(max_type_len - strlen(type)));
 	    bu_vls_printf(vls,  " %2d %2d %ld\n",
 			  dp->d_major_type, dp->d_minor_type, (long)(dp->d_len));
@@ -6890,10 +6890,10 @@ Free_uses(struct db_i *dbip)
 		    if (use->dp->d_un.file_offset >= 0) {
 			/* was written to disk */
 			if(db_delete(dbip, use->dp) != 0)
-			    bu_log("Free_uses: db_delete failed!\n"); 
+			    bu_log("Free_uses: db_delete failed!\n");
 		    }
 		    if (db_dirdelete(dbip, use->dp) < 0) {
-		      bu_log("Free_uses: db_dirdelete failed!\n"); 
+		      bu_log("Free_uses: db_dirdelete failed!\n");
 		    }
 		}
 		BU_LIST_DEQUEUE(&use->l);

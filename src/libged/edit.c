@@ -463,7 +463,7 @@ struct edit_arg {
 #define EDIT_COORD_Z 	0x04
 #define EDIT_COORDS_ALL (EDIT_COORD_X | EDIT_COORD_Y | EDIT_COORD_Z)
 
-/* edit_arg flags of coordinates that are already set; only used by 
+/* edit_arg flags of coordinates that are already set; only used by
  * edit_str[s]_to_arg(). Ignored by edit() */
 /* FIXME: these shouldn't be edit_arg flags... edit_strs_to_arg()
  * should just pass edit_str_to_arg() references to automatic vars */
@@ -574,7 +574,7 @@ struct edit_cmd_tab {
 };
 
 
-/* 
+/*
  * Argument builder/helper functions
  */
 
@@ -832,7 +832,7 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 	GED_DB_GET_INTERNAL(gedp, &intern, d, (fastf_t *)NULL,
 			    &rt_uniresource, GED_ERROR);
 	if (_ged_get_solid_keypoint(gedp, leaf_deltas, &intern,
-	                            (const fastf_t *const)gtd.gtd_xform) ==
+				    (const fastf_t *const)gtd.gtd_xform) ==
 	    GED_ERROR) {
 	    bu_vls_printf(gedp->ged_result_str, "\nunable to get natural origin"
 			  " of \"%s\"", d->d_namep);
@@ -908,7 +908,7 @@ edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
 		     const struct edit_arg *src_objs, const int flags)
 {
     struct edit_arg *prototype;
-    struct edit_arg **dest; 
+    struct edit_arg **dest;
     const struct edit_arg *src;
     const int noisy = (flags & GED_ERROR); /* side with verbosity */
     int firstrun = 1;
@@ -951,7 +951,7 @@ edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
 }
 
 
-/* 
+/*
  * Command helper functions
  */
 
@@ -1041,7 +1041,7 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
     if (edit_arg_to_apparent_coord(gedp, *arg_head, &src_v) == GED_ERROR)
 	return GED_ERROR;
 
-    while ((arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) != 
+    while ((arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) !=
 	   &subcmd->common.objects) {
 	if (!(*arg_head))
 	    continue;
@@ -1102,7 +1102,7 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
  * Returns GED_ERROR on failure, and GED_OK on success.
  */
 HIDDEN int
-edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd, 
+edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
 		      int skip_common_objects)
 {
     struct edit_arg **arg_head;
@@ -1114,7 +1114,7 @@ edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
     if (skip_common_objects)
 	i = 1;
 
-    while (((arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) != 
+    while (((arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) !=
 	    &subcmd->common.objects) || !skip_common_objects) {
 	skip_common_objects = 1;
 	prev_arg = *arg_head;
@@ -1381,7 +1381,7 @@ edit_translate(struct ged *gedp, const vect_t *const from,
 	leaf_to_modify = db_find_named_leaf(comb->tree, d_obj->d_namep);
 
 	/* path is already validated */
-	BU_ASSERT_PTR(leaf_to_modify, !=, TREE_NULL); 
+	BU_ASSERT_PTR(leaf_to_modify, !=, TREE_NULL);
 	if (!leaf_to_modify->tr_l.tl_mat) {
 	    leaf_to_modify->tr_l.tl_mat = (matp_t)bu_malloc(sizeof(mat_t),
 							    "mat_t block for edit_translate()");
@@ -2068,7 +2068,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	if (argc > 1) {
 	    /* no arguments accepted without a subcommand */
 	    bu_vls_printf(gedp->ged_result_str, "unknown subcommand \"%s\"\n",
-	    		  argv[1]);
+			  argv[1]);
 	    ret = GED_ERROR;
 	}
 
@@ -2112,7 +2112,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 
 		if (!edit_cmds[i].name) {
 		    bu_vls_printf(gedp->ged_result_str,
-		   		  "unknown subcommand \"%s\"\n",
+				  "unknown subcommand \"%s\"\n",
 				  argv[0]);
 		    bu_vls_printf(gedp->ged_result_str,
 				  "Available subcommands: ");
@@ -2287,14 +2287,14 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	conv_flags = GED_ERROR;
 	switch (c) {
 	    case 'n': /* use natural coordinates of object */
-	    	conv_flags = GED_QUIET;
+		conv_flags = GED_QUIET;
 		allow_subopts = 0;
 		break;
 	    case 'x': /* singular coord specif. sub-opts */
 	    case 'y':
 	    case 'z':
 		idx_cur_opt = 0;
-	    	if (!bu_optarg)
+		if (!bu_optarg)
 		    goto err_missing_arg;
 		if ((strlen(bu_optarg) > 1) && (bu_optarg[0] == '-') &&
 		    (!isdigit(bu_optarg[1])))
@@ -2311,7 +2311,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	    case 'r':
 		idx_cur_opt = 0;
 		allow_subopts = 1;
-	    	if (!bu_optarg)
+		if (!bu_optarg)
 		    goto err_missing_arg;
 		if ((strlen(bu_optarg) > 1) && (bu_optarg[0] == '-')) {
 		    switch (bu_optarg[1]) {
@@ -2329,8 +2329,8 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case '?': /* nonstandard or unknown option */
 		allow_subopts = 1;
-	        c = bu_optopt;
-	    	if (!bu_optarg)
+		c = bu_optopt;
+		if (!bu_optarg)
 		    if (!isprint(c)) {
 			bu_vls_printf(gedp->ged_result_str,
 				      "Unknown option character '\\x%x'", c);
@@ -2339,14 +2339,14 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		    }
 
 		/* next element may be an arg */
-	    	conv_flags = GED_QUIET;
+		conv_flags = GED_QUIET;
 
 		/* record opt for validation/processing by subcmd */
 		cur_arg->cl_options[idx_cur_opt] = c;
 		++idx_cur_opt;
 		break;
 	    case ':':
-	        goto err_missing_arg;
+		goto err_missing_arg;
 	}
 
 	/* set flags for standard options */
@@ -2361,19 +2361,19 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		cur_arg->coords_used &= EDIT_COORD_Z;
 		break;
 	    case 'k':
-	        cur_arg->type |= EDIT_FROM;
-	        keypoint = cur_arg;
+		cur_arg->type |= EDIT_FROM;
+		keypoint = cur_arg;
 		break;
 	    case 'a':
-	        cur_arg->type |= EDIT_TO | EDIT_ABS_POS;
+		cur_arg->type |= EDIT_TO | EDIT_ABS_POS;
 		keypoint = NULL;
 		break;
 	    case 'r':
-	        cur_arg->type |= EDIT_TO | EDIT_REL_DIST;
+		cur_arg->type |= EDIT_TO | EDIT_REL_DIST;
 		keypoint = NULL;
 		break;
 	    case 'n':
-	        cur_arg->type |= EDIT_NATURAL_ORIGIN;
+		cur_arg->type |= EDIT_NATURAL_ORIGIN;
 		break;
 	    default:
 		break;

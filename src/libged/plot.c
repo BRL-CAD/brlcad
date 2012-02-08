@@ -220,18 +220,18 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
 			case BN_VLIST_POLY_START:
 			case BN_VLIST_POLY_VERTNORM:
 			case BN_VLIST_TRI_START:
-		        case BN_VLIST_TRI_VERTNORM:
+			case BN_VLIST_TRI_VERTNORM:
 			    continue;
 			case BN_VLIST_POLY_MOVE:
 			case BN_VLIST_LINE_MOVE:
-		        case BN_VLIST_TRI_MOVE:
+			case BN_VLIST_TRI_MOVE:
 			    /* Move, not draw */
 			    MAT4X3PNT(last, gedp->ged_gvp->gv_model2view, *pt);
 			    continue;
 			case BN_VLIST_LINE_DRAW:
 			case BN_VLIST_POLY_DRAW:
 			case BN_VLIST_POLY_END:
-		        case BN_VLIST_TRI_DRAW:
+			case BN_VLIST_TRI_DRAW:
 			case BN_VLIST_TRI_END:
 			    /* draw */
 			    MAT4X3PNT(fin, gedp->ged_gvp->gv_model2view, *pt);

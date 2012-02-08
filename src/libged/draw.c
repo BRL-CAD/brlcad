@@ -339,7 +339,7 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
 	db_dup_full_path(&sp->s_fullpath, pathp);
 	if (tsp) {
 	  sp->s_regionid = tsp->ts_regionid;
-        }
+	}
 	sp->s_transparency = dgcdp->transparency;
 	sp->s_dmode = dgcdp->dmode;
 	sp->s_hiddenLine = dgcdp->hiddenLine;

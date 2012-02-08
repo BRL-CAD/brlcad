@@ -707,8 +707,8 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 	    break;
 	}
 	} else {
-          bu_log("bot_dump: non-binay file requested but fp is NULL!\n");
-        }
+	  bu_log("bot_dump: non-binay file requested but fp is NULL!\n");
+	}
       }
     }
 }
@@ -1294,10 +1294,10 @@ data_dump(struct ged *gedp, FILE *fp)
 	    } else
 		if (fp) {
 		  write_data_obj(gedp, fp);
-                } else {
+		} else {
 		  bu_vls_printf(gedp->ged_result_str, "data_dump: bad FILE fp\n");
 		  return GED_ERROR;
-                }
+		}
 		break;
 	case OTYPE_SAT:
 	    break;

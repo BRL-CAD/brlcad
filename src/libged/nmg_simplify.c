@@ -73,7 +73,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     } else if (argc == 3) {
 	/* FIXME: if you use the default but have a TGC, the cleanup
 	 * for ARB breaks TGC.
-         */
+	 */
 	do_arb = do_tgc = do_poly = do_all = 1; /* do all */
 	new_name = (char *)argv[1];
 	nmg_name = (char *)argv[2];
@@ -86,7 +86,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	} else if (!bu_strncmp(argv[1], "poly", 4)) {
 	    do_poly = 1;
 	} else {
-	    bu_vls_printf(gedp->ged_result_str, 
+	    bu_vls_printf(gedp->ged_result_str,
 			  "%s is unknown or simplification is not yet supported\n", argv[1]);
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    ret = GED_ERROR;
@@ -132,8 +132,8 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     nmg_face_tabulate(&faces, &m->magic);
 
     for (i = 0 ; i < BU_PTBL_END(&faces) ; i++) {
-        fp = (struct face *)BU_PTBL_GET(&faces, i);
-  	if (fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
+	fp = (struct face *)BU_PTBL_GET(&faces, i);
+	if (fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
 	    bu_ptbl_free(&faces);
 	    bu_vls_printf(gedp->ged_result_str,
 		"%s cannot be applied to \"%s\" because it has non-planar faces\n", argv[0], nmg_name);
@@ -153,8 +153,8 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 
     if (shell_count != 1) {
 	bu_vls_printf(gedp->ged_result_str, "shell count is not one\n");
-        ret = GED_ERROR;
-        goto out2;
+	ret = GED_ERROR;
+	goto out2;
     }
 
     success = 0;
@@ -175,7 +175,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	s = BU_LIST_FIRST(shell, &r->s_hd);
 	nmg_shell_coplanar_face_merge(s, &gedp->ged_wdbp->wdb_tol, 0);
 	nmg_simplify_shell(s);
- 
+
 	if (nmg_to_arb(m, arb_int)) {
 	    success = 1;
 	    ret = GED_OK;
@@ -244,15 +244,15 @@ out1:
     s = BU_LIST_FIRST(shell, &r->s_hd);
 
     if (BU_LIST_NON_EMPTY(&s->lu_hd))
-	bu_vls_printf(gedp->ged_result_str, 
+	bu_vls_printf(gedp->ged_result_str,
 		"wire loops in %s have been ignored in conversion\n",  nmg_name);
 
     if (BU_LIST_NON_EMPTY(&s->eu_hd))
-	bu_vls_printf(gedp->ged_result_str, 
+	bu_vls_printf(gedp->ged_result_str,
 		"wire edges in %s have been ignored in conversion\n",  nmg_name);
 
     if (s->vu_p)
-	bu_vls_printf(gedp->ged_result_str, 
+	bu_vls_printf(gedp->ged_result_str,
 		"Single vertexuse in shell of %s has been ignored in conversion\n", nmg_name);
 
     dp = db_diradd(gedp->ged_wdbp->dbip, new_name,
@@ -280,16 +280,16 @@ out2:
 
     if (!success) {
 	if (do_arb && !do_all) {
-	    bu_vls_printf(gedp->ged_result_str, 
+	    bu_vls_printf(gedp->ged_result_str,
 		"Failed to construct an ARB equivalent to %s\n", nmg_name);
 	} else if (do_tgc && !do_all) {
-	    bu_vls_printf(gedp->ged_result_str, 
+	    bu_vls_printf(gedp->ged_result_str,
 		"Failed to construct a TGC equivalent to %s\n", nmg_name);
 	} else if (do_poly && !do_all) {
-	    bu_vls_printf(gedp->ged_result_str, 
+	    bu_vls_printf(gedp->ged_result_str,
 		"Failed to construct a POLY equivalent to %s\n", nmg_name);
 	} else {
-	    bu_vls_printf(gedp->ged_result_str, 
+	    bu_vls_printf(gedp->ged_result_str,
 		"Failed to construct an ARB or TGC or POLY equivalent to %s\n", nmg_name);
 	}
     }

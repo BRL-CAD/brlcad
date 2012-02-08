@@ -225,7 +225,7 @@ draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, matp_t
 				pt_prev = pt;
 				continue;
 			    } else {
-                                if (pt_prev) {
+				if (pt_prev) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
@@ -235,11 +235,11 @@ draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, matp_t
 				alpha = (dist_prev - delta) / (dist_prev - dist);
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(fin, psmat, tmp_pt);
-                                }
+				}
 			    }
 			} else {
 			    if (dist_prev <= 0.0) {
-                                if (pt_prev) {
+				if (pt_prev) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
@@ -250,7 +250,7 @@ draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, matp_t
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(last, psmat, tmp_pt);
 				MAT4X3PNT(fin, psmat, *pt);
-                                }
+				}
 			    } else {
 				MAT4X3PNT(fin, psmat, *pt);
 			    }

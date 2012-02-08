@@ -971,7 +971,6 @@ ged_prepend_pipept(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-
 /*
  * Local Variables:
  * mode: C

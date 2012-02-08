@@ -184,7 +184,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 
 		/* restore state before leaving */
 		gedp->ged_gvp->gv_perspective = prevPerspective;
-	 	fclose(fp);
+		fclose(fp);
 		return GED_ERROR;
 	    }
 

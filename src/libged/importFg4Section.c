@@ -446,10 +446,10 @@ make_bot_object(const char *name,
     bot_ip.num_vertices = num_vertices;
     bot_ip.vertices = (fastf_t *)bu_calloc(num_vertices*3, sizeof(fastf_t), "BOT vertices");
     for (i = 0; i < num_vertices; i++)
-        VMOVE(&bot_ip.vertices[i*3], grid_pts[min_pt+i]);
+	VMOVE(&bot_ip.vertices[i*3], grid_pts[min_pt+i]);
 
     for (i = 0; i < face_count * 3; i++)
-        faces[i] -= min_pt;
+	faces[i] -= min_pt;
     bot_ip.num_faces = face_count;
     bot_ip.faces = bu_calloc(face_count*3, sizeof(int), "BOT faces");
     for (i = 0; i < face_count*3; i++)

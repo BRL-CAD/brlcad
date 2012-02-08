@@ -3471,7 +3471,7 @@ dgo_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *
 	sp->s_soldash = dashflag;
 	sp->s_Eflag = 0;	/* This is a solid */
 	db_dup_full_path(&sp->s_fullpath, pathp);
-        if (tsp)
+	if (tsp)
 	   sp->s_regionid = tsp->ts_regionid;
 	sp->s_transparency = dgcdp->transparency;
 	sp->s_dmode = dgcdp->dmode;
@@ -4376,10 +4376,10 @@ dgo_tree_cmd(struct dg_obj *dgop,
 		cflag = 1;
 		break;
 	    case 'o':
-                if (fdout != NULL) {
+		if (fdout != NULL) {
 		    bu_log("Warning - output file already specified");
-                    break;
-                }
+		    break;
+		}
 		if ((fdout = fopen(bu_optarg, "w+b")) == NULL) {
 		    Tcl_SetErrno(errno);
 		    bu_log("Failed to open output file, %s", strerror(errno));
@@ -4398,7 +4398,7 @@ dgo_tree_cmd(struct dg_obj *dgop,
 	    case '?':
 	    default:
 		bu_log("ERROR: unexpected tree option\n");
-                fclose(fdout);
+		fclose(fdout);
 		return TCL_ERROR;
 		break;
 	}

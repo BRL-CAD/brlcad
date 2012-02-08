@@ -168,7 +168,6 @@ print_schain_vlcmds(struct ged *gedp)
 }
 
 
-
 /*
  * Returns the solid table & vector list as a string
  *
