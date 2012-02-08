@@ -196,7 +196,8 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 		/* Found EOI before next word; implies fmt contains trailing
 		 * whitespace or is empty. No worries; exit normally.
 		 */
-		goto exit;
+		FREE_FORMAT_PART;
+		return numFieldsAssigned;
 	    }
 	    ++fmt;
 	} while (isspace(c));
@@ -262,12 +263,6 @@ again:
 		flags &= ~LONG;
 		flags |= LONGLONG;
 	    }
-	    goto again;
-	case 'q':
-	    /* Quad conversion specific to 4.4BSD and Linux libc5 only.
-	     * Should probably print a warning here to use ll or L instead.
-	     */
-	    flags |= LONGLONG;
 	    goto again;
 	case 't':
 	    flags |= PTRDIFFT;
@@ -335,10 +330,6 @@ again:
 	case 'a': case 'e': case 'f': case 'g':
 	    c = CT_FLOAT;
 	    break;
-	case 'S':
-	    /* XXX This may be a BSD extension. */
-	    flags |= LONG;
-	    /* FALLTHROUGH */
 	case 's':
 	    c = CT_STRING;
 	    break;
@@ -363,8 +354,7 @@ again:
 	    while (1) {
 		c = *fmt++;
 		if (c == '\0') {
-		    /* error */
-		    goto exit;
+		    EXIT_DUE_TO_MISC_ERROR;
 		}
 		if (c == ']') {
 		    /* found end of character class */
@@ -375,10 +365,6 @@ again:
 	    flags |= NOSKIP;
 	    c = CT_CCL;
 	    break;
-	case 'C':
-	    /* XXX This may be a BSD extension. */
-	    flags |= LONG;
-	    /* FALLTHROUGH */
 	case 'c':
 	    flags |= NOSKIP;
 	    c = CT_CHAR;
@@ -576,11 +562,7 @@ if (flags & UNSIGNED) { \
 	    }
 
 	    /* ordinary %c or %[...] or %s conversion */
-	    if (flags & LONG) {
-		SSCANF_TYPE(wchar_t*);
-	    } else {
-		SSCANF_TYPE(char*);
-	    }
+	    SSCANF_TYPE(char*);
 	    break;
 
 	/* %[dioupxX] conversion */
@@ -636,7 +618,6 @@ if (flags & UNSIGNED) { \
 
     } /* while (1) */
 
-exit:
     FREE_FORMAT_PART;
     return numFieldsAssigned;
 } /* bu_vsscanf */
