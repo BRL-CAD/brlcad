@@ -6889,7 +6889,8 @@ Free_uses(struct db_i *dbip)
 		if (!use->used) {
 		    if (use->dp->d_un.file_offset >= 0) {
 			/* was written to disk */
-			db_delete(dbip, use->dp);
+			if(db_delete(dbip, use->dp) != 0)
+			    bu_log("Free_uses: db_delete failed!\n"); 
 		    }
 		    if (db_dirdelete(dbip, use->dp) < 0) {
 		      bu_log("Free_uses: db_dirdelete failed!\n"); 
