@@ -64,7 +64,7 @@ _rb_insert(struct bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
     rb_size(new_node, order) = 1;
     if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_OS))
 	bu_log("_rb_insert(%p): size(%p, %d)=%d\n",
-	       new_node, new_node, order, rb_size(new_node, order));
+	       (void*)new_node, (void*)new_node, order, rb_size(new_node, order));
 
     /*
      * Perform vanilla-flavored binary-tree insertion
@@ -77,18 +77,18 @@ _rb_insert(struct bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
 	++rb_size(parent, order);
 	if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_OS))
 	    bu_log("_rb_insert(%p): size(%p, %d)=%d\n",
-		   new_node, parent, order, rb_size(parent, order));
+		   (void*)new_node, (void*)parent, order, rb_size(parent, order));
 	comparison = (*compare)(rb_data(new_node, order),
 				rb_data(node, order));
 	if (comparison < 0) {
 	    if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_INSERT))
 		bu_log("_rb_insert(%p): <_%d <%p>, going left\n",
-		       new_node, order, node);
+		       (void*)new_node, order, (void*)node);
 	    node = rb_left_child(node, order);
 	} else {
 	    if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_INSERT))
 		bu_log("_rb_insert(%p): >=_%d <%p>, going right\n",
-		       new_node, order, node);
+		       (void*)new_node, order, (void*)node);
 	    node = rb_right_child(node, order);
 	    if (comparison == 0)
 		result = 1;
@@ -142,7 +142,7 @@ _rb_insert(struct bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
 
     if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_INSERT))
 	bu_log("_rb_insert(%p): comparison = %d, returning %d\n",
-	       new_node, comparison, result);
+	       (void*)new_node, comparison, result);
 
     return result;
 }
@@ -176,7 +176,7 @@ bu_rb_insert(struct bu_rb_tree *tree, void *data)
 	{
 	    if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_UNIQ))
 		bu_log("bu_rb_insert(<%p>, <%p>, TBD) will return %d\n",
-		       tree, data, -(order + 1));
+		       (void*)tree, (void*)data, -(order + 1));
 	    return -(order + 1);
 	}
     }
@@ -259,7 +259,7 @@ bu_rb_insert(struct bu_rb_tree *tree, void *data)
 	    rb_size(node, order) = 1;
 	    if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_OS))
 		bu_log("bu_rb_insert(<%p>, <%p>, <%p>): size(%p, %d)=%d\n",
-		       tree, data, node, node, order, rb_size(node, order));
+		       (void*)tree, (void*)data, (void*)node, (void*)node, order, rb_size(node, order));
 	}
     } else {
 	/* Otherwise, insert the node into the tree */
@@ -267,7 +267,7 @@ bu_rb_insert(struct bu_rb_tree *tree, void *data)
 	    result += _rb_insert(tree, order, node);
 	if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_UNIQ))
 	    bu_log("bu_rb_insert(<%p>, <%p>, <%p>) will return %d\n",
-		   tree, data, node, result);
+		   (void*)tree, (void*)data, (void*)node, result);
     }
 
     ++(tree->rbt_nm_nodes);

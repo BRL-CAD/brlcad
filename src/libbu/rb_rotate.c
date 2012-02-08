@@ -46,7 +46,7 @@ rb_rot_left(struct bu_rb_node *x, int order)
     y = rb_right_child(x, order);
 
     if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_ROTATE))
-	bu_log("rb_rot_left(<%p>, %d)...\n", x, order);
+	bu_log("rb_rot_left(<%p>, %d)...\n", (void*)x, order);
 
     rb_right_child(x, order) = beta = rb_left_child(y, order);
     if (beta != rb_null(tree))
@@ -67,7 +67,7 @@ rb_rot_left(struct bu_rb_node *x, int order)
 	rb_size(rb_right_child(x, order), order) + 1;
     if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_OS))
 	bu_log("After rotation, size(%p, %d)=%d, size(%p, %d)=%d\n",
-	       x, order, rb_size(x, order), y, order, rb_size(y, order));
+	       (void*)x, order, rb_size(x, order), (void*)y, order, rb_size(y, order));
 }
 
 
@@ -87,7 +87,7 @@ void rb_rot_right (struct bu_rb_node *y, int order)
     x = rb_left_child(y, order);
 
     if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_ROTATE))
-	bu_log("rb_rot_right(<%p>, %d)...\n", y, order);
+	bu_log("rb_rot_right(<%p>, %d)...\n", (void*)y, order);
 
     rb_left_child(y, order) = beta = rb_right_child(x, order);
     if (beta != rb_null(tree))
@@ -108,7 +108,7 @@ void rb_rot_right (struct bu_rb_node *y, int order)
 	rb_size(rb_right_child(y, order), order) + 1;
     if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_OS))
 	bu_log("After rotation, size(%p, %d)=%d, size(%p, %d)=%d\n",
-	       x, order, rb_size(x, order), y, order, rb_size(y, order));
+	       (void*)x, order, rb_size(x, order), (void*)y, order, rb_size(y, order));
 }
 
 /** @} */

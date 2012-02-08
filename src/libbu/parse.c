@@ -440,7 +440,7 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
 
 	perror("fread");
 	bu_log("ERROR: bu_struct_get bad fread (%ld), file %s, line %d\n",
-	       i, __FILE__, __LINE__);
+	       (long int)i, __FILE__, __LINE__);
 	return 0;
     }
 
@@ -455,7 +455,7 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     if (UNLIKELY(i != BU_GETPUT_MAGIC_1)) {
 	bu_log("ERROR: bad getput buffer header %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
 	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_1,
-	       bu_identify_magic(i), i, __FILE__, __LINE__);
+	       bu_identify_magic(i), (long int)i, __FILE__, __LINE__);
 	bu_bomb("bad getput buffer");
     }
     ext->ext_nbytes = len;
@@ -467,7 +467,7 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
 
     if (UNLIKELY(i != len-6)) {
 	bu_log("ERROR: bu_struct_get bad fread (%ld), file %s, line %d\n",
-	       i, __FILE__, __LINE__);
+	       (long int)i, __FILE__, __LINE__);
 	ext->ext_nbytes = 0;
 	bu_free(ext->ext_buf, "bu_struct_get full buffer");
 	ext->ext_buf = NULL;
@@ -480,7 +480,7 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     if (UNLIKELY(i != BU_GETPUT_MAGIC_2)) {
 	bu_log("ERROR: bad getput buffer %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
 	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_2,
-	       bu_identify_magic(i), i, __FILE__, __LINE__);
+	       bu_identify_magic(i), (long int)i, __FILE__, __LINE__);
 	ext->ext_nbytes = 0;
 	bu_free(ext->ext_buf, "bu_struct_get full buffer");
 	ext->ext_buf = NULL;
@@ -1140,7 +1140,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 
 		    bu_log("\t%s=\"%V\"\n", sdp->sp_name, vls);
 		    bu_log("\t\t(vls_magic)0x%lx (vls_offset)%zu (vls_len)%zu (vls_max)%zu\n",
-			   vls->vls_magic, vls->vls_offset, vls->vls_len, vls->vls_max);
+			   (long unsigned int)vls->vls_magic, vls->vls_offset, vls->vls_len, vls->vls_max);
 		}
 		break;
 	    case 'i':
@@ -1471,7 +1471,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 
 		    bu_vls_printf(vls_out, "\t%s=\"%V\"\n", sdp->sp_name, vls);
 		    bu_vls_printf(vls_out, "\t\t(vls_magic)%ld (vls_offset)%zu (vls_len)%zu (vls_max)%zu\n",
-				  vls->vls_magic, vls->vls_offset, vls->vls_len, vls->vls_max);
+				  (long unsigned int)vls->vls_magic, vls->vls_offset, vls->vls_len, vls->vls_max);
 		}
 		break;
 	    case 'i':
@@ -2213,7 +2213,7 @@ bu_structparse_get_terse_form(struct bu_vls *logstr, const struct bu_structparse
 	    BU_STR_EQUAL(sp->sp_fmt, "%V")) {
 	    if (sp->sp_count > 1) {
 		/* Make them all look like %###s */
-		bu_vls_printf(logstr, "%%%lds", sp->sp_count);
+		bu_vls_printf(logstr, "%%%lds", (long int)sp->sp_count);
 	    } else {
 		/* Singletons are specified by their actual character */
 		bu_vls_printf(logstr, "%%c");
@@ -2285,7 +2285,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 			bu_vls_printf(logstr,
 				      "not enough values for \"%s\" argument: should be %ld",
 				      sdp->sp_name,
-				      sdp->sp_count);
+				      (long int)sdp->sp_count);
 			return BRLCAD_ERROR;
 		    }
 		    for (ii = j = 0;
@@ -2320,7 +2320,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 			    bu_vls_printf(logstr,
 					  "not enough values for \"%V\" argument: should be %ld",
 					  sdp->sp_name,
-					  sdp->sp_count);
+					  (long int)sdp->sp_count);
 			    return BRLCAD_ERROR;
 			}
 
@@ -2339,7 +2339,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 			bu_vls_printf(logstr,
 				      "not enough values for \"%s\" argument: should have %ld",
 				      sdp->sp_name,
-				      sdp->sp_count);
+				      (long int)sdp->sp_count);
 			return BRLCAD_ERROR;
 		    }
 
@@ -2358,7 +2358,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 			    bu_vls_printf(logstr,
 					  "not enough values for \"%s\" argument: should have %ld",
 					  sdp->sp_name,
-					  sdp->sp_count);
+					  (long int)sdp->sp_count);
 			    return BRLCAD_ERROR;
 			}
 
@@ -2402,7 +2402,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 			bu_vls_printf(logstr,
 				      "not enough values for \"%s\" argument: should have %ld",
 				      sdp->sp_name,
-				      sdp->sp_count);
+				      (long int)sdp->sp_count);
 			return BRLCAD_ERROR;
 		    }
 
@@ -2421,7 +2421,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 			    bu_vls_printf(logstr,
 					  "not enough values for \"%s\" argument: should have %ld",
 					  sdp->sp_name,
-					  sdp->sp_count);
+					  (long int)sdp->sp_count);
 			    return BRLCAD_ERROR;
 			}
 
@@ -2467,7 +2467,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 			bu_vls_printf(&str,
 				      "not enough values for \"%s\" argument: should have %ld, only %d given",
 				      sdp->sp_name,
-				      sdp->sp_count, argc);
+				      (long int)sdp->sp_count, argc);
 			return BRLCAD_ERROR;
 		    }
 
@@ -2479,7 +2479,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 			    bu_vls_printf(logstr,
 					  "not enough values for \"%s\" argument: should have %ld, only %zu given",
 					  sdp->sp_name,
-					  sdp->sp_count,
+					  (long int)sdp->sp_count,
 					  ii);
 			    return BRLCAD_ERROR;
 			}

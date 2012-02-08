@@ -111,7 +111,7 @@ _rb_delete(struct bu_rb_tree *tree, struct bu_rb_node *node, int order)
 
     if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_DELETE))
 	bu_log("_rb_delete(%p, %p, %d): data=%p\n",
-	       tree, node, order, rb_data(node, order));
+	       (void*)tree, (void*)node, order, rb_data(node, order));
 
     if ((rb_left_child(node, order) == rb_null(tree))
 	|| (rb_right_child(node, order) == rb_null(tree)))

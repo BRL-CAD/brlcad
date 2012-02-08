@@ -242,8 +242,8 @@ bu_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
 
     BU_CK_PTBL(tbl);
 
-    bu_log("%s: bu_ptbl array with %d entries\n",
-	   title, tbl->end);
+    bu_log("%s: bu_ptbl array with %ld entries\n",
+	   title, (long int)tbl->end);
 
     if (!verbose)
 	return;
