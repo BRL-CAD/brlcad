@@ -343,7 +343,7 @@ struct basic_parser_state {
 /**
  *  Composition object for dealing with lex/lacc reentrant interface.
  *
- *  Lifetime is only until the parse completion of a single file and 
+ *  Lifetime is only until the parse completion of a single file and
  *  it's includes.
  */
 template<typename PrecisionT,
@@ -437,7 +437,7 @@ void set_working_groupset(basic_parser_extra<PrecisionT, charT, traits,
 
     extra.parser_state.working_stringset.clear();
 
-    extra.parser_state.working_polyattributes.groupset_index = 
+    extra.parser_state.working_polyattributes.groupset_index =
 	extra.parser_state.current_groupset;
 
     extra.parser_state.polyattributes_dirty = true;
@@ -598,7 +598,7 @@ void set_working_materiallib(basic_parser_extra<PrecisionT, charT, traits,
 
     extra.parser_state.working_stringset.clear();
 
-    extra.parser_state.working_polyattributes.materiallibset_index = 
+    extra.parser_state.working_polyattributes.materiallibset_index =
 	extra.parser_state.current_materiallib;
 
     extra.parser_state.polyattributes_dirty = true;
@@ -718,7 +718,7 @@ void set_working_texmaplib(basic_parser_extra<PrecisionT, charT, traits,
 
     extra.parser_state.working_stringset.clear();
 
-    extra.parser_state.working_polyattributes.texmaplibset_index = 
+    extra.parser_state.working_polyattributes.texmaplibset_index =
 	extra.parser_state.current_texmaplib;
 
     extra.parser_state.polyattributes_dirty = true;

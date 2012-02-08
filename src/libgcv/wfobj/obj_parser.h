@@ -204,7 +204,7 @@ int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents);
  *
  *  Return:
  *  0 - The previous parse attempt succeeded and no warnings generated.
- *  !0 - A null terminated string containing information about the last parse 
+ *  !0 - A null terminated string containing information about the last parse
  */
 const char * obj_parse_error(obj_parser_t parser);
 
@@ -219,7 +219,7 @@ int obj_contents_destroy(obj_contents_t contents);
 /**
  *  Obtain a list of all vertices contained in 'contents'.
  *
- *  Copy a pointer to a multidimensional array of vertices contained in 
+ *  Copy a pointer to a multidimensional array of vertices contained in
  *  'contents' to the location pointed to by val_arr and return its length.
  *
  *  The vertices are contained in an array of type const float[][4] and must
@@ -234,7 +234,7 @@ size_t obj_vertices(obj_contents_t contents, const float (*val_arr[])[4]);
 /**
  *  Obtain a list of all texture vertices contained in 'contents'.
  *
- *  Copy a pointer to a multidimensional array of texture vertices contained in 
+ *  Copy a pointer to a multidimensional array of texture vertices contained in
  *  'contents' to the location pointed to by val_arr and return its length.
  *
  *  The vertices are contained in an array of type const float[][3] and must
@@ -249,7 +249,7 @@ size_t obj_texture_coord(obj_contents_t contents, const float (*val_arr[])[3]);
 /**
  *  Obtain a list of all normals contained in 'contents'.
  *
- *  Copy a pointer to a multidimensional array of normals contained in 
+ *  Copy a pointer to a multidimensional array of normals contained in
  *  'contents' to the location pointed to by val_arr and return its length.
  *
  *  The normals are contained in an array of type const float[][3] and must
@@ -269,7 +269,7 @@ size_t obj_normals(obj_contents_t contents, const float (*val_arr[])[3]);
  *  its length.
  *
  *  Group names are guaranteed to be a unique set.
- *  
+ *
  *  If an element has not been explicitly tagged as being part of a particular
  *  group, per the wavefront obj spec, the element is placed in the "default"
  *  group.
@@ -295,7 +295,7 @@ size_t obj_num_groupsets(obj_contents_t contents);
  *  its length.
  *
  *  Group sets are guaranteed to be a unique set.
- *  
+ *
  *  When an element references a groupset index of 'n', calling obj_groupset
  *  with the 'n'th set will obtain a unique set of indices that can be used
  *  to obtain the group name.
@@ -314,7 +314,7 @@ size_t obj_groupset(obj_contents_t contents, size_t n,
  *  return its length.
  *
  *  Object names are guaranteed to be a unique set.
- *  
+ *
  *  The wavefront obj spec does not specify the default behavior for elements
  *  not explicitly being defined as being a part of an object. Therefore,
  *  for this implementation, if an element has not been explicitly tagged as
@@ -338,7 +338,7 @@ size_t obj_objects(obj_contents_t contents, const char * const (*val_arr[]));
  *  return its length.
  *
  *  Material names are guaranteed to be a unique set.
- *  
+ *
  *  The wavefront obj spec does not specify the default behavior for elements
  *  not explicitly being defined as having a material trait. Therefore,
  *  for this implementation, if an element has not been explicitly tagged as
@@ -361,7 +361,7 @@ size_t obj_materials(obj_contents_t contents, const char * const (*val_arr[]));
  *  and return its length.
  *
  *  Material library names are guaranteed to be a unique set.
- *  
+ *
  *  The wavefront obj spec does not specify the default behavior for elements
  *  not explicitly being defined as using a material library. Therefore,
  *  for this implementation, if an element has not been explicitly tagged as
@@ -394,7 +394,7 @@ size_t obj_num_materiallibsets(obj_contents_t contents);
  *  return its length.
  *
  *  Material library sets are guaranteed to be a unique set.
- *  
+ *
  *  When an element references a materiallibset index of 'n', calling
  *  obj_materiallibset with the 'n'th set will obtain a unique set of indices
  *  that can be used to obtain the material library name.
@@ -413,7 +413,7 @@ size_t obj_materiallibset(obj_contents_t contents, size_t n,
  *  return its length.
  *
  *  Texture map names are guaranteed to be a unique set.
- *  
+ *
  *  The wavefront obj spec does not specify the default behavior for elements
  *  not explicitly being defined as having a texture map. Therefore,
  *  for this implementation, if an element has not been explicitly tagged as
@@ -437,7 +437,7 @@ size_t obj_texmaps(obj_contents_t contents, const char * const (*val_arr[]));
  *  and return its length.
  *
  *  Texture map library names are guaranteed to be a unique set.
- *  
+ *
  *  The wavefront obj spec does not specify the default behavior for elements
  *  not explicitly being defined as using a texture map library. Therefore,
  *  for this implementation, if an element has not been explicitly tagged as
@@ -470,7 +470,7 @@ size_t obj_num_texmaplibsets(obj_contents_t contents);
  *  return its length.
  *
  *  Texture map library sets are guaranteed to be a unique set.
- *  
+ *
  *  When an element references a texmaplibset index of 'n', calling
  *  obj_textmaplibset with the 'n'th set will obtain a unique set of indices
  *  that can be used to obtain the texture map library name.
@@ -489,7 +489,7 @@ size_t obj_texmaplibset(obj_contents_t contents, size_t set,
  *  and return its length.
  *
  *  Shadow object names are guaranteed to be a unique set.
- *  
+ *
  *  The wavefront obj spec does not specify the default behavior for elements
  *  not explicitly being defined as having a shadow object. Therefore,
  *  for this implementation, if an element has not been explicitly tagged as
@@ -513,7 +513,7 @@ size_t obj_shadow_objs(obj_contents_t contents,
  *  and return its length.
  *
  *  Trace object names are guaranteed to be a unique set.
- *  
+ *
  *  The wavefront obj spec does not specify the default behavior for elements
  *  not explicitly being defined as having a trace object. Therefore,
  *  for this implementation, if an element has not been explicitly tagged as
@@ -633,12 +633,12 @@ size_t obj_polygonal_tv_lines(obj_contents_t contents,
  *  polygonal line in 'contents'
  *
  *  Copy a pointer to the 'n'th multidimensional index array to the location
- *  pointed to by 'index_arr' and return the length of the array. 
+ *  pointed to by 'index_arr' and return the length of the array.
  *
  *  The line indices are contained in an array of type const size_t[][2] and
  *  must not be modified by the caller. The format of the second dimension is:
  *  {vertex_index, texture_coordinate_index}
- *  
+ *
  *  Return value
  *  The number of vertices that make up the 'n'th polygonal line
  */
@@ -698,12 +698,12 @@ size_t obj_polygonal_tv_faces(obj_contents_t contents,
  *  polygonal face in 'contents'
  *
  *  Copy a pointer to the 'n'th multidimensional index array to the location
- *  pointed to by 'index_arr' and return the length of the array. 
+ *  pointed to by 'index_arr' and return the length of the array.
  *
  *  The face indices are contained in an array of type const size_t[][2] and
  *  must not be modified by the caller. The format of the second dimension is:
  *  {vertex_index, texture_coordinate_index}
- *  
+ *
  *  Return value
  *  The number of vertices that make up the 'n'th polygonal face
  */
@@ -732,12 +732,12 @@ size_t obj_polygonal_nv_faces(obj_contents_t contents,
  *  in 'contents'
  *
  *  Copy a pointer to the 'n'th multidimensional index array to the location
- *  pointed to by 'index_arr' and return the length of the array. 
+ *  pointed to by 'index_arr' and return the length of the array.
  *
  *  The face indices are contained in an array of type const size_t[][2] and
  *  must not be modified by the caller. The format of the second dimension is:
  *  {vertex_index, normal_index}
- *  
+ *
  *  Return value
  *  The number of vertices that make up the 'n'th polygonal face
  */
@@ -766,12 +766,12 @@ size_t obj_polygonal_tnv_faces(obj_contents_t contents,
  *  textured and oriented polygonal face in 'contents'
  *
  *  Copy a pointer to the 'n'th multidimensional index array to the location
- *  pointed to by 'index_arr' and return the length of the array. 
+ *  pointed to by 'index_arr' and return the length of the array.
  *
  *  The face indices are contained in an array of type const size_t[][3] and
  *  must not be modified by the caller. The format of the second dimension is:
  *  {vertex_index, texture_coordinate_index, normal_index}
- *  
+ *
  *  Return value
  *  The number of vertices that make up the 'n'th polygonal face
  */

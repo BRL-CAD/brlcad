@@ -51,7 +51,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
-  
+
 #include <vector>
 #include <set>
 #include <string>
@@ -377,7 +377,7 @@ p_v_reference_list(A) ::= p_v_reference_list(B) V_REFERENCE(C).
     if (obj::index_check(C.reference[0], gindex, num_gvertices,
 		obj::vertex_ref_err, scanner))
     {
-        YYERROR;
+	YYERROR;
     }
 
     A.index = B.index;
@@ -412,9 +412,9 @@ l_v_reference_list(A) ::= V_REFERENCE(B).
     if (obj::index_check(B.reference[0], gindex, num_gvertices,
 		obj::vertex_ref_err, scanner))
     {
-        YYERROR;
+	YYERROR;
     }
-      
+
     A.index = obj::get_contents(scanner).line_v_indexlist.size();
     obj::get_contents(scanner).line_v_indexlist.push_back(gindex);
 }
@@ -429,7 +429,7 @@ l_v_reference_list(A) ::= l_v_reference_list(B) INTEGER(C).
     if (obj::index_check(C.integer, gindex, num_gvertices,
 		obj::vertex_ref_err, scanner))
     {
-        YYERROR;
+	YYERROR;
     }
 
     A.index = B.index;
@@ -497,7 +497,7 @@ l_tv_reference_list(A) ::= l_tv_reference_list(B) TV_REFERENCE(C).
     {
 	YYERROR;
     }
-      
+
     A.index = B.index;
     obj::get_contents(scanner).line_tv_indexlist.push_back(tv_index);
 }
@@ -749,8 +749,8 @@ point ::= POINT p_v_reference_list(A).
 line ::= LINE l_v_reference_list(A).
 {
     if (obj::get_contents(scanner).line_v_indexlist.size() - A.index < 2) {
-        obj_parser_error(scanner, obj::line_length_err);
-        YYERROR;
+	obj_parser_error(scanner, obj::line_length_err);
+	YYERROR;
     }
 
     if (obj::get_state(scanner).polyattributes_dirty) {
@@ -910,10 +910,10 @@ smooth ::= SMOOTH INTEGER(A).
 	YYERROR;
     }
 
-    if (obj::get_state(scanner).working_polyattributes.smooth_group != 
+    if (obj::get_state(scanner).working_polyattributes.smooth_group !=
 	static_cast<unsigned int>(A.integer))
     {
-	obj::get_state(scanner).working_polyattributes.smooth_group = 
+	obj::get_state(scanner).working_polyattributes.smooth_group =
 	    static_cast<unsigned int>(A.integer);
 
 	obj::get_state(scanner).polyattributes_dirty = true;
@@ -961,7 +961,7 @@ maplib ::= MAPLIB id_list.
 {
     obj::set_working_texmaplib(obj::get_extra(scanner));
 }
-  
+
 shadow_obj ::= SHADOW_OBJ ID.
 {
     obj::set_working_shadow_obj(obj::get_extra(scanner));
@@ -1002,9 +1002,9 @@ lod ::= LOD INTEGER(A).
 	obj_parser_error(scanner, obj::lod_range_err);
 	YYERROR;
     }
-      
+
     unsigned char tmp = A.integer;
-      
+
     if (obj::get_state(scanner).working_polyattributes.lod != tmp) {
 	obj::get_state(scanner).working_polyattributes.lod = tmp;
 	obj::get_state(scanner).polyattributes_dirty = true;

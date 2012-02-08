@@ -209,7 +209,7 @@ int obj_parse(const char *filename, obj_parser_t parser,
 
 	yyscan_t scanner;
 
-        scanner = perplexFileScanner(state.parser_state.file_stack.back().file.get());
+	scanner = perplexFileScanner(state.parser_state.file_stack.back().file.get());
 	setScannerExtra(scanner, &state);
 
 	state.parser = NULL;

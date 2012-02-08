@@ -75,7 +75,7 @@ make_nmg_vertex(struct model *model, double x, double y, double z, long index)
 
     GET_VERTEX(v, model);
     v->magic = NMG_VERTEX_MAGIC;
-    
+
     BU_LIST_INIT(&v->vu_hd);
     v->vg_p = make_nmg_vertex_g(model, x, y, z, index);
     v->index = index;

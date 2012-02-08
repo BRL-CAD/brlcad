@@ -54,7 +54,7 @@ typedef perplex_t yyscan_t;
 struct extra_t {
     void *state;
     YYSTYPE tokenData;
-}; 
+};
 
 void obj_parser_lex_destroy(yyscan_t scanner);
 void *obj_parser_get_state(yyscan_t scanner);
