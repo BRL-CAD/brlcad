@@ -40,8 +40,8 @@ ged_getmat(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     union tree *tp;
-    char name1[RT_MAXLINE];
-    char name2[RT_MAXLINE];
+    struct bu_vls name1 = BU_VLS_INIT_ZERO;
+    struct bu_vls name2 = BU_VLS_INIT_ZERO;
     static const char *usage = "a/b";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -88,23 +88,28 @@ ged_getmat(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad path specification '%s'", argv[0], argv[1]);
 	    return GED_ERROR;
 	}
-	strncpy(name1, begin, (size_t)(last_fs-begin));
-	name1[last_fs-begin] = '\0';
-	strncpy(name2, last_fs+1, (size_t)(end-last_fs)); /* This includes the EOS */
+	bu_vls_strncpy(&name1, begin, (size_t)(last_fs-begin));
+	bu_vls_strncpy(&name2, last_fs+1, (size_t)(end-last_fs));
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, name1, LOOKUP_NOISY)) == RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[0], name1);
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&name1), LOOKUP_NOISY)) == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[0], bu_vls_addr(&name1));
+	bu_vls_free(&name1);
+	bu_vls_free(&name2);
 	return GED_ERROR;
     }
 
     if (!(dp->d_flags & RT_DIR_COMB)) {
-	bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not a combination\n", argv[0], name1);
+	bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not a combination\n", argv[0], bu_vls_addr(&name1));
+	bu_vls_free(&name1);
+	bu_vls_free(&name2);
 	return GED_ERROR;
     }
 
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
+	bu_vls_free(&name1);
+	bu_vls_free(&name2);
 	return GED_ERROR;
     }
 
@@ -116,9 +121,10 @@ ged_getmat(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Search for first mention of arc */
-    if ((tp = db_find_named_leaf(comb->tree, name2)) == TREE_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "Unable to find instance of '%s' in combination '%s', error",
-		      name2, name1);
+    if ((tp = db_find_named_leaf(comb->tree, bu_vls_addr(&name2))) == TREE_NULL) {
+	bu_vls_printf(gedp->ged_result_str,
+		      "Unable to find instance of '%s' in combination '%s', error",
+		      bu_vls_addr(&name2), bu_vls_addr(&name1));
 	goto fail;
     }
 
@@ -139,6 +145,8 @@ ged_getmat(struct ged *gedp, int argc, const char *argv[])
     }
 
 fail:
+    bu_vls_free(&name1);
+    bu_vls_free(&name2);
     rt_db_free_internal(&intern);
     return GED_ERROR;
 }
