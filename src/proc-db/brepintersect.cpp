@@ -894,7 +894,7 @@ int TriIntersections::Faces(
 	    /* only executed when we append edge i */
 	    segments.Remove(i);
 	    flippable.Remove(i);
-	    ext = ext && segexternal[i];
+	    ext &= segexternal[i];
 	    segexternal.Remove(i);
 	    i = 0;
 	}
