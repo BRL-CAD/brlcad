@@ -156,6 +156,7 @@ for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy str
 | sed 's/.*\/bomb\.c:.*abort.*//g' \
 | sed 's/.*\/bu\.h.*//' \
 | sed 's/.*\/cursor\.c.*//g' \
+| sed 's/.*\/db\.h.*strncpy.*//' \
 | sed 's/.*\/file\.c:.*remove.*//' \
 | sed 's/.*\/str\.c:.*strcasecmp.*//' \
 | sed 's/.*\/str\.c:.*strcmp.*//' \
@@ -167,6 +168,7 @@ for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy str
 | sed 's/.*\/str\.c:.*strncpy.*//' \
 | sed 's/.*\/test_dirname\.c:.*dirname.*//' \
 | sed 's/.*\/ttcp.c:.*//' \
+| sed 's/.*\/vls\.c:.*strncpy.*//' \
 | sed '/^$/d' \
 `"
 
