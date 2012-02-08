@@ -42,7 +42,7 @@ __BEGIN_DECLS
 #define PERPLEX_LEXER obj_parser_lex
 
 #define PERPLEX_ON_ENTER \
-    using detail::objCombinedState; \
+    using obj::objCombinedState; \
     struct extra_t *extra = static_cast<struct extra_t*>(yyextra); \
     YYSTYPE *yylval = &extra->tokenData; \
     objCombinedState *combinedState = static_cast<objCombinedState*>(extra->state);

@@ -30,9 +30,9 @@
 #include "obj_parser_state.h"
 #include "obj_rules.h"
 
-namespace arl {
-namespace obj_parser {
-namespace detail {
+namespace cad {
+namespace gcv {
+namespace obj {
 
 /**
  *  convenience routines
@@ -48,11 +48,11 @@ inline static objCombinedState::parser_state_type &get_state(T combinedState)
  */
 static bool split_reference(const char *s, int val[3]);
 
-} /* namespace detail */
-} /* namespace obj_parser */
-} /* namespace arl */
+} /* namespace obj */
+} /* namespace gcv */
+} /* namespace cad */
 
-using namespace arl::obj_parser;
+using namespace cad::gcv;
 
 void *obj_parser_get_extra(yyscan_t scanner)
 {
@@ -184,22 +184,22 @@ off {
     return OFF;
 }
 v_reference {
-    if (detail::split_reference(yytext, yylval->reference))
+    if (obj::split_reference(yytext, yylval->reference))
 	return V_REFERENCE;
     return YYEOF;
 }
 v_tv_reference {
-    if (detail::split_reference(yytext, yylval->reference))
+    if (obj::split_reference(yytext, yylval->reference))
 	return TV_REFERENCE;
     return YYEOF;
 }
 v_nt_reference {
-    if (detail::split_reference(yytext, yylval->reference))
+    if (obj::split_reference(yytext, yylval->reference))
 	return NV_REFERENCE;
     return YYEOF;
 }
 v_tnv_reference_list {
-    if (detail::split_reference(yytext, yylval->reference))
+    if (obj::split_reference(yytext, yylval->reference))
 	return TNV_REFERENCE;
     return YYEOF;
 }
@@ -207,7 +207,7 @@ v_tnv_reference_list {
 wspace { IGNORE_TOKEN; }
 
 comment|newline {
-    ++(detail::get_state(combinedState).file_stack.back().lineno);
+    ++(obj::get_state(combinedState).file_stack.back().lineno);
     return EOL;
 }
 
@@ -220,7 +220,7 @@ id => INITIAL {
     /* Keywords are valid identifiers here
      * Goto initial state after single token
      */
-    detail::get_state(combinedState).working_string = yytext;
+    obj::get_state(combinedState).working_string = yytext;
     bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
 
     return ID;
@@ -230,7 +230,7 @@ wspace { IGNORE_TOKEN; }
 
 comment|newline => INITIAL {
     /* Goto initial state when we hit newline */
-    ++(detail::get_state(combinedState).file_stack.back().lineno);
+    ++(obj::get_state(combinedState).file_stack.back().lineno);
     return EOL;
 }
 
@@ -247,7 +247,7 @@ id => INITIAL {
     /* Keywords are valid identifiers here
      * Goto initial state after single token
      */
-    detail::get_state(combinedState).working_string = yytext;
+    obj::get_state(combinedState).working_string = yytext;
     bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
 
     return ID;
@@ -257,7 +257,7 @@ wspace { IGNORE_TOKEN; }
 
 comment|newline => INITIAL {
     // Goto initial state when we hit newline
-    ++(detail::get_state(combinedState).file_stack.back().lineno);
+    ++(obj::get_state(combinedState).file_stack.back().lineno);
     return EOL;
 }
 
@@ -268,7 +268,7 @@ comment|newline => INITIAL {
 <id_list_state> {
 id {
     // Keywords are valid identifiers here
-    detail::get_state(combinedState).working_string = yytext;
+    obj::get_state(combinedState).working_string = yytext;
     bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
 
     return ID;
@@ -278,7 +278,7 @@ wspace { IGNORE_TOKEN; }
 
 comment|newline => INITIAL {
     // Goto initial state when we hit newline
-    ++(detail::get_state(combinedState).file_stack.back().lineno);
+    ++(obj::get_state(combinedState).file_stack.back().lineno);
     return EOL;
 }
 
@@ -287,9 +287,9 @@ comment|newline => INITIAL {
 } /* id_list_state */
 
 %%
-namespace arl {
-namespace obj_parser {
-namespace detail {
+namespace cad {
+namespace gcv {
+namespace obj {
 
 bool split_reference(const char *s, int val[3])
 {
@@ -317,9 +317,9 @@ bool split_reference(const char *s, int val[3])
     return (*endptr == 0);
 }
 
-} /* namespace detail */
-} /* namespace obj_parser */
-} /* namespace arl */
+} /* namespace obj */
+} /* namespace gcv */
+} /* namespace cad */
 /*
  * Local Variables:
  * mode: C++

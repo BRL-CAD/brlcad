@@ -45,9 +45,9 @@ inline bool operator<(const obj_polygonal_attributes_t &lhs,
 }
 
 
-namespace arl {
-namespace obj_parser {
-namespace detail {
+namespace cad {
+namespace gcv {
+namespace obj {
 
 typedef void *parser_type;
 
@@ -912,9 +912,9 @@ typedef basic_obj_contents<float, char> objFileContents;
 typedef basic_obj_parser<char> objParser;
 typedef basic_parser_extra<float, char> objCombinedState;
 
-} /* namespace detail */
-} /* namespace obj_parser */
-} /* namespace arl */
+} /* namespace obj */
+} /* namespace gcv */
+} /* namespace cad */
 
 
 #endif

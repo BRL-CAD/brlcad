@@ -60,7 +60,7 @@
 #include <iostream>
 
 #define SET_SYNTAX_ERROR \
-    static_cast<detail::objCombinedState*> \
+    static_cast<obj::objCombinedState*> \
 	(perplexGetExtra(scanner))->parser_state.syntaxError = true;
 
 #define YYERROR SET_SYNTAX_ERROR
@@ -70,17 +70,17 @@
     std::cout << "\n\tworking_stringset: "; \
 \
     std::set<std::string>::iterator string = \
-	detail::get_state(scanner).working_stringset.begin(); \
+	obj::get_state(scanner).working_stringset.begin(); \
 \
     std::set<std::string>::iterator lastString = \
-	detail::get_state(scanner).working_stringset.end(); \
+	obj::get_state(scanner).working_stringset.end(); \
 \
     for (; string != lastString; string++) { \
 	std::cout << "\"" << *string << "\" "; \
     } \
 \
     std::cout << "\n\tworking_string: \"" << \
-	detail::get_state(scanner).working_string << "\"";
+	obj::get_state(scanner).working_string << "\"";
 #else
 #define DEBUG_STRINGS /* empty */
 #endif
@@ -90,9 +90,9 @@
  */
 void obj_parser_error(yyscan_t scanner, const char *s);
 
-namespace arl {
-namespace obj_parser {
-namespace detail {
+namespace cad {
+namespace gcv {
+namespace obj {
 
 static const char vertex_ref_err[] = "Invalid vertex reference";
 static const char texture_ref_err[] = "Invalid texture reference";
@@ -153,19 +153,19 @@ inline static bool index_check(int raw, std::size_t index,
     return false;
 }
 
-} /* namespace detail */
-} /* namespcae obj_parser */
-} /* namespace arl */
+} /* namespace obj */
+} /* namespcae gcv */
+} /* namespace cad */
 
-using namespace arl::obj_parser;
+using namespace cad::gcv;
 
 /**
  *  Error reporting function as required by yacc
  */
 void obj_parser_error(yyscan_t scanner, const char *s)
 {
-    if (!detail::get_state(scanner).syntaxError) {
-	detail::verbose_output_formatter(detail::get_state(scanner), s);
+    if (!obj::get_state(scanner).syntaxError) {
+	obj::verbose_output_formatter(obj::get_state(scanner), s);
     }
 }
 
@@ -178,8 +178,8 @@ void obj_parser_error(yyscan_t scanner, const char *s)
  */
 int obj_parser_parse(yyscan_t scanner)
 {
-    using detail::objCombinedState;
-    using detail::parser_type;
+    using obj::objCombinedState;
+    using obj::parser_type;
 
     int yychar;
     struct extra_t *extra = static_cast<struct extra_t*>(perplexGetExtra(scanner));
@@ -235,7 +235,7 @@ void printToken(YYSTYPE token)
 
 %syntax_error {
     /* only report first error */
-    if (!detail::get_state(scanner).syntaxError) {
+    if (!obj::get_state(scanner).syntaxError) {
 	SET_SYNTAX_ERROR;
 
 	std::cerr << "Error: Parser experienced a syntax error.\n";
@@ -276,15 +276,15 @@ coord(A) ::= INTEGER(B). { A.real = B.integer; }
 
 vertex ::= VERTEX coord(A) coord(B) coord(C) opt_color.
 {
-    detail::objFileContents::gvertex_t vertex = {{A.real, B.real, C.real, 1}};
-    detail::get_contents(scanner).gvertices_list.push_back(vertex);
+    obj::objFileContents::gvertex_t vertex = {{A.real, B.real, C.real, 1}};
+    obj::get_contents(scanner).gvertices_list.push_back(vertex);
 }
 vertex ::= VERTEX coord(A) coord(B) coord(C) coord(D) opt_color.
 {
-    detail::objFileContents::gvertex_t vertex =
+    obj::objFileContents::gvertex_t vertex =
 	{{A.real, B.real, C.real, D.real}};
 
-    detail::get_contents(scanner).gvertices_list.push_back(vertex);
+    obj::get_contents(scanner).gvertices_list.push_back(vertex);
 }
 
 /* Per-vertex colors are a non-standard OBJ extension. Accept but ignore
@@ -295,509 +295,509 @@ opt_color ::= coord coord coord.
 
 t_vertex ::= T_VERTEX coord(A).
 {
-    detail::objFileContents::tvertex_t vertex = {{A.real, 0, 0}};
-    detail::get_contents(scanner).tvertices_list.push_back(vertex);
+    obj::objFileContents::tvertex_t vertex = {{A.real, 0, 0}};
+    obj::get_contents(scanner).tvertices_list.push_back(vertex);
 }
 t_vertex ::= T_VERTEX coord(A) coord(B).
 {
-    detail::objFileContents::tvertex_t vertex = {{A.real, B.real, 0}};
-    detail::get_contents(scanner).tvertices_list.push_back(vertex);
+    obj::objFileContents::tvertex_t vertex = {{A.real, B.real, 0}};
+    obj::get_contents(scanner).tvertices_list.push_back(vertex);
 }
 t_vertex ::= T_VERTEX coord(A) coord(B) coord(C).
 {
-    detail::objFileContents::tvertex_t vertex = {{A.real, B.real, C.real}};
-    detail::get_contents(scanner).tvertices_list.push_back(vertex);
+    obj::objFileContents::tvertex_t vertex = {{A.real, B.real, C.real}};
+    obj::get_contents(scanner).tvertices_list.push_back(vertex);
 }
 
 n_vertex ::= N_VERTEX coord(A) coord(B) coord(C).
 {
-    detail::objFileContents::nvertex_t vertex = {{A.real, B.real, C.real}};
-    detail::get_contents(scanner).nvertices_list.push_back(vertex);
+    obj::objFileContents::nvertex_t vertex = {{A.real, B.real, C.real}};
+    obj::get_contents(scanner).nvertices_list.push_back(vertex);
 }
 
 p_v_reference_list(A) ::= INTEGER(B).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
 
-    detail::contents_type::polygonal_v_index_type gindex =
-	detail::real_index(B.integer, num_gvertices);
+    obj::contents_type::polygonal_v_index_type gindex =
+	obj::real_index(B.integer, num_gvertices);
 
-    if (detail::index_check(B.integer, gindex, num_gvertices,
-		detail::vertex_ref_err, scanner))
+    if (obj::index_check(B.integer, gindex, num_gvertices,
+		obj::vertex_ref_err, scanner))
     {
 	YYERROR;
     }
 
-    A.index = detail::get_contents(scanner).point_v_indexlist.size();
-    detail::get_contents(scanner).point_v_indexlist.push_back(gindex);
+    A.index = obj::get_contents(scanner).point_v_indexlist.size();
+    obj::get_contents(scanner).point_v_indexlist.push_back(gindex);
 }
 p_v_reference_list(A) ::= V_REFERENCE(B).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
 
-    detail::contents_type::polygonal_v_index_type gindex =
-	detail::real_index(B.reference[0], num_gvertices);
+    obj::contents_type::polygonal_v_index_type gindex =
+	obj::real_index(B.reference[0], num_gvertices);
 
-    if (detail::index_check(B.reference[0], gindex, num_gvertices,
-		detail::vertex_ref_err, scanner))
+    if (obj::index_check(B.reference[0], gindex, num_gvertices,
+		obj::vertex_ref_err, scanner))
     {
 	YYERROR;
     }
 
-    A.index = detail::get_contents(scanner).point_v_indexlist.size();
-    detail::get_contents(scanner).point_v_indexlist.push_back(gindex);
+    A.index = obj::get_contents(scanner).point_v_indexlist.size();
+    obj::get_contents(scanner).point_v_indexlist.push_back(gindex);
 }
 p_v_reference_list(A) ::= p_v_reference_list(B) INTEGER(C).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
 
-    detail::contents_type::polygonal_v_index_type gindex =
-	detail::real_index(C.integer, num_gvertices);
+    obj::contents_type::polygonal_v_index_type gindex =
+	obj::real_index(C.integer, num_gvertices);
 
-    if (detail::index_check(C.integer, gindex, num_gvertices,
-		detail::vertex_ref_err, scanner))
+    if (obj::index_check(C.integer, gindex, num_gvertices,
+		obj::vertex_ref_err, scanner))
     {
 	YYERROR;
     }
 
     A.index = B.index;
-    detail::get_contents(scanner).point_v_indexlist.push_back(gindex);
+    obj::get_contents(scanner).point_v_indexlist.push_back(gindex);
 }
 p_v_reference_list(A) ::= p_v_reference_list(B) V_REFERENCE(C).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
 
-    detail::contents_type::polygonal_v_index_type gindex =
-	detail::real_index(C.reference[0], num_gvertices);
+    obj::contents_type::polygonal_v_index_type gindex =
+	obj::real_index(C.reference[0], num_gvertices);
 
-    if (detail::index_check(C.reference[0], gindex, num_gvertices,
-		detail::vertex_ref_err, scanner))
+    if (obj::index_check(C.reference[0], gindex, num_gvertices,
+		obj::vertex_ref_err, scanner))
     {
         YYERROR;
     }
 
     A.index = B.index;
-    detail::get_contents(scanner).point_v_indexlist.push_back(gindex);
+    obj::get_contents(scanner).point_v_indexlist.push_back(gindex);
 }
 
 l_v_reference_list(A) ::= INTEGER(B).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
 
-    detail::contents_type::polygonal_v_index_type gindex =
-	detail::real_index(B.integer, num_gvertices);
+    obj::contents_type::polygonal_v_index_type gindex =
+	obj::real_index(B.integer, num_gvertices);
 
-    if (detail::index_check(B.integer, gindex, num_gvertices,
-		detail::vertex_ref_err, scanner))
+    if (obj::index_check(B.integer, gindex, num_gvertices,
+		obj::vertex_ref_err, scanner))
     {
 	YYERROR;
     }
 
-    A.index = detail::get_contents(scanner).line_v_indexlist.size();
-    detail::get_contents(scanner).line_v_indexlist.push_back(gindex);
+    A.index = obj::get_contents(scanner).line_v_indexlist.size();
+    obj::get_contents(scanner).line_v_indexlist.push_back(gindex);
 }
 l_v_reference_list(A) ::= V_REFERENCE(B).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
 
-    detail::contents_type::polygonal_v_index_type gindex =
-	detail::real_index(B.reference[0], num_gvertices);
+    obj::contents_type::polygonal_v_index_type gindex =
+	obj::real_index(B.reference[0], num_gvertices);
 
-    if (detail::index_check(B.reference[0], gindex, num_gvertices,
-		detail::vertex_ref_err, scanner))
+    if (obj::index_check(B.reference[0], gindex, num_gvertices,
+		obj::vertex_ref_err, scanner))
     {
         YYERROR;
     }
       
-    A.index = detail::get_contents(scanner).line_v_indexlist.size();
-    detail::get_contents(scanner).line_v_indexlist.push_back(gindex);
+    A.index = obj::get_contents(scanner).line_v_indexlist.size();
+    obj::get_contents(scanner).line_v_indexlist.push_back(gindex);
 }
 l_v_reference_list(A) ::= l_v_reference_list(B) INTEGER(C).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
 
-    detail::contents_type::polygonal_v_index_type gindex =
-	detail::real_index(C.integer, num_gvertices);
+    obj::contents_type::polygonal_v_index_type gindex =
+	obj::real_index(C.integer, num_gvertices);
 
-    if (detail::index_check(C.integer, gindex, num_gvertices,
-		detail::vertex_ref_err, scanner))
+    if (obj::index_check(C.integer, gindex, num_gvertices,
+		obj::vertex_ref_err, scanner))
     {
         YYERROR;
     }
 
     A.index = B.index;
-    detail::get_contents(scanner).line_v_indexlist.push_back(gindex);
+    obj::get_contents(scanner).line_v_indexlist.push_back(gindex);
 }
 l_v_reference_list(A) ::= l_v_reference_list(B) V_REFERENCE(C).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
 
-    detail::contents_type::polygonal_v_index_type gindex =
-	detail::real_index(C.reference[0], num_gvertices);
+    obj::contents_type::polygonal_v_index_type gindex =
+	obj::real_index(C.reference[0], num_gvertices);
 
-    if (detail::index_check(C.reference[0], gindex, num_gvertices,
-		detail::vertex_ref_err, scanner))
+    if (obj::index_check(C.reference[0], gindex, num_gvertices,
+		obj::vertex_ref_err, scanner))
     {
 	YYERROR;
     }
 
     A.index = B.index;
-    detail::get_contents(scanner).line_v_indexlist.push_back(gindex);
+    obj::get_contents(scanner).line_v_indexlist.push_back(gindex);
 }
 
 l_tv_reference_list(A) ::= TV_REFERENCE(B).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
 
     std::size_t num_tvertices =
-	detail::get_contents(scanner).tvertices_list.size();
+	obj::get_contents(scanner).tvertices_list.size();
 
-    detail::contents_type::polygonal_tv_index_type tv_index = {{
-	detail::real_index(B.reference[0], num_gvertices),
-	detail::real_index(B.reference[1], num_tvertices)
+    obj::contents_type::polygonal_tv_index_type tv_index = {{
+	obj::real_index(B.reference[0], num_gvertices),
+	obj::real_index(B.reference[1], num_tvertices)
     }};
 
-    if (detail::index_check(B.reference[0], tv_index.v[0], num_gvertices,
-	detail::vertex_ref_err, scanner) ||
-	detail::index_check(B.reference[1], tv_index.v[1], num_tvertices,
-	detail::texture_ref_err, scanner))
+    if (obj::index_check(B.reference[0], tv_index.v[0], num_gvertices,
+	obj::vertex_ref_err, scanner) ||
+	obj::index_check(B.reference[1], tv_index.v[1], num_tvertices,
+	obj::texture_ref_err, scanner))
     {
 	YYERROR;
     }
 
-    A.index = detail::get_contents(scanner).line_tv_indexlist.size();
-    detail::get_contents(scanner).line_tv_indexlist.push_back(tv_index);
+    A.index = obj::get_contents(scanner).line_tv_indexlist.size();
+    obj::get_contents(scanner).line_tv_indexlist.push_back(tv_index);
 }
 l_tv_reference_list(A) ::= l_tv_reference_list(B) TV_REFERENCE(C).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
 
     std::size_t num_tvertices =
-	detail::get_contents(scanner).tvertices_list.size();
+	obj::get_contents(scanner).tvertices_list.size();
 
-    detail::contents_type::polygonal_tv_index_type tv_index = {{
-	detail::real_index(C.reference[0], num_gvertices),
-	detail::real_index(C.reference[1], num_tvertices)
+    obj::contents_type::polygonal_tv_index_type tv_index = {{
+	obj::real_index(C.reference[0], num_gvertices),
+	obj::real_index(C.reference[1], num_tvertices)
     }};
 
-    if (detail::index_check(C.reference[0], tv_index.v[0], num_gvertices,
-	detail::vertex_ref_err, scanner) ||
-	detail::index_check(C.reference[1], tv_index.v[1], num_tvertices,
-	detail::texture_ref_err, scanner))
+    if (obj::index_check(C.reference[0], tv_index.v[0], num_gvertices,
+	obj::vertex_ref_err, scanner) ||
+	obj::index_check(C.reference[1], tv_index.v[1], num_tvertices,
+	obj::texture_ref_err, scanner))
     {
 	YYERROR;
     }
       
     A.index = B.index;
-    detail::get_contents(scanner).line_tv_indexlist.push_back(tv_index);
+    obj::get_contents(scanner).line_tv_indexlist.push_back(tv_index);
 }
 
 f_v_reference_list(A) ::= INTEGER(B).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
 
-    detail::contents_type::polygonal_v_index_type gindex =
-	detail::real_index(B.integer, num_gvertices);
+    obj::contents_type::polygonal_v_index_type gindex =
+	obj::real_index(B.integer, num_gvertices);
 
-    if (detail::index_check(B.integer, gindex, num_gvertices,
-		detail::vertex_ref_err, scanner))
+    if (obj::index_check(B.integer, gindex, num_gvertices,
+		obj::vertex_ref_err, scanner))
     {
 	YYERROR;
     }
 
-    A.index = detail::get_contents(scanner).pologonal_v_indexlist.size();
-    detail::get_contents(scanner).pologonal_v_indexlist.push_back(gindex);
+    A.index = obj::get_contents(scanner).pologonal_v_indexlist.size();
+    obj::get_contents(scanner).pologonal_v_indexlist.push_back(gindex);
 }
 f_v_reference_list(A) ::= V_REFERENCE(B).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
 
-    detail::contents_type::polygonal_v_index_type gindex =
-	detail::real_index(B.reference[0], num_gvertices);
+    obj::contents_type::polygonal_v_index_type gindex =
+	obj::real_index(B.reference[0], num_gvertices);
 
-    if (detail::index_check(B.reference[0], gindex, num_gvertices,
-		detail::vertex_ref_err, scanner))
+    if (obj::index_check(B.reference[0], gindex, num_gvertices,
+		obj::vertex_ref_err, scanner))
     {
 	YYERROR;
     }
 
-    A.index = detail::get_contents(scanner).pologonal_v_indexlist.size();
-    detail::get_contents(scanner).pologonal_v_indexlist.push_back(gindex);
+    A.index = obj::get_contents(scanner).pologonal_v_indexlist.size();
+    obj::get_contents(scanner).pologonal_v_indexlist.push_back(gindex);
 }
 f_v_reference_list(A) ::= f_v_reference_list(B) INTEGER(C).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
 
-    detail::contents_type::polygonal_v_index_type gindex =
-	detail::real_index(C.integer, num_gvertices);
+    obj::contents_type::polygonal_v_index_type gindex =
+	obj::real_index(C.integer, num_gvertices);
 
-    if (detail::index_check(C.integer, gindex, num_gvertices,
-		detail::vertex_ref_err, scanner))
+    if (obj::index_check(C.integer, gindex, num_gvertices,
+		obj::vertex_ref_err, scanner))
     {
 	YYERROR;
     }
 
     A.index = B.index;
-    detail::get_contents(scanner).pologonal_v_indexlist.push_back(gindex);
+    obj::get_contents(scanner).pologonal_v_indexlist.push_back(gindex);
 }
 f_v_reference_list(A) ::= f_v_reference_list(B) V_REFERENCE(C).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
 
-    detail::contents_type::polygonal_v_index_type gindex =
-	detail::real_index(C.reference[0], num_gvertices);
+    obj::contents_type::polygonal_v_index_type gindex =
+	obj::real_index(C.reference[0], num_gvertices);
 
-    if (detail::index_check(C.reference[0], gindex, num_gvertices,
-	detail::vertex_ref_err, scanner))
+    if (obj::index_check(C.reference[0], gindex, num_gvertices,
+	obj::vertex_ref_err, scanner))
     {
 	YYERROR;
     }
 
     A.index = B.index;
-    detail::get_contents(scanner).pologonal_v_indexlist.push_back(gindex);
+    obj::get_contents(scanner).pologonal_v_indexlist.push_back(gindex);
 }
 
 f_tv_reference_list(A) ::= TV_REFERENCE(B).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
     std::size_t num_tvertices =
-	detail::get_contents(scanner).tvertices_list.size();
+	obj::get_contents(scanner).tvertices_list.size();
 
-    detail::contents_type::polygonal_tv_index_type tv_index = {{
-	detail::real_index(B.reference[0], num_gvertices),
-	detail::real_index(B.reference[1], num_tvertices)
+    obj::contents_type::polygonal_tv_index_type tv_index = {{
+	obj::real_index(B.reference[0], num_gvertices),
+	obj::real_index(B.reference[1], num_tvertices)
     }};
 
-    if (detail::index_check(B.reference[0], tv_index.v[0], num_gvertices,
-	detail::vertex_ref_err, scanner) ||
-	detail::index_check(B.reference[1], tv_index.v[1], num_tvertices,
-	detail::texture_ref_err, scanner))
+    if (obj::index_check(B.reference[0], tv_index.v[0], num_gvertices,
+	obj::vertex_ref_err, scanner) ||
+	obj::index_check(B.reference[1], tv_index.v[1], num_tvertices,
+	obj::texture_ref_err, scanner))
     {
 	YYERROR;
     }
 
-    A.index = detail::get_contents(scanner).pologonal_tv_indexlist.size();
-    detail::get_contents(scanner).pologonal_tv_indexlist.push_back(tv_index);
+    A.index = obj::get_contents(scanner).pologonal_tv_indexlist.size();
+    obj::get_contents(scanner).pologonal_tv_indexlist.push_back(tv_index);
 }
 f_tv_reference_list(A) ::= f_tv_reference_list(B) TV_REFERENCE(C).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
 
     std::size_t num_tvertices =
-	detail::get_contents(scanner).tvertices_list.size();
+	obj::get_contents(scanner).tvertices_list.size();
 
-    detail::contents_type::polygonal_tv_index_type tv_index = {{
-	detail::real_index(C.reference[0], num_gvertices),
-	detail::real_index(C.reference[1], num_tvertices)
+    obj::contents_type::polygonal_tv_index_type tv_index = {{
+	obj::real_index(C.reference[0], num_gvertices),
+	obj::real_index(C.reference[1], num_tvertices)
     }};
 
-    if (detail::index_check(C.reference[0], tv_index.v[0], num_gvertices,
-	detail::vertex_ref_err, scanner) ||
-	detail::index_check(C.reference[1], tv_index.v[1], num_tvertices,
-	detail::texture_ref_err, scanner))
+    if (obj::index_check(C.reference[0], tv_index.v[0], num_gvertices,
+	obj::vertex_ref_err, scanner) ||
+	obj::index_check(C.reference[1], tv_index.v[1], num_tvertices,
+	obj::texture_ref_err, scanner))
     {
 	YYERROR;
     }
 
     A.index = B.index;
-    detail::get_contents(scanner).pologonal_tv_indexlist.push_back(tv_index);
+    obj::get_contents(scanner).pologonal_tv_indexlist.push_back(tv_index);
 }
 
 f_nv_reference_list(A) ::= NV_REFERENCE(B).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
 
     std::size_t num_nvertices =
-	detail::get_contents(scanner).nvertices_list.size();
+	obj::get_contents(scanner).nvertices_list.size();
 
-    detail::contents_type::polygonal_nv_index_type nv_index = {{
-	detail::real_index(B.reference[0], num_gvertices),
-	detail::real_index(B.reference[2], num_nvertices)
+    obj::contents_type::polygonal_nv_index_type nv_index = {{
+	obj::real_index(B.reference[0], num_gvertices),
+	obj::real_index(B.reference[2], num_nvertices)
     }};
 
-    if (detail::index_check(B.reference[0], nv_index.v[0], num_gvertices,
-	detail::vertex_ref_err, scanner) ||
-	detail::index_check(B.reference[2], nv_index.v[1], num_nvertices,
-	detail::normal_ref_err, scanner))
+    if (obj::index_check(B.reference[0], nv_index.v[0], num_gvertices,
+	obj::vertex_ref_err, scanner) ||
+	obj::index_check(B.reference[2], nv_index.v[1], num_nvertices,
+	obj::normal_ref_err, scanner))
     {
 	YYERROR;
     }
 
-    A.index = detail::get_contents(scanner).pologonal_nv_indexlist.size();
-    detail::get_contents(scanner).pologonal_nv_indexlist.push_back(nv_index);
+    A.index = obj::get_contents(scanner).pologonal_nv_indexlist.size();
+    obj::get_contents(scanner).pologonal_nv_indexlist.push_back(nv_index);
 }
 f_nv_reference_list(A) ::= f_nv_reference_list(B) NV_REFERENCE(C).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
 
     std::size_t num_nvertices =
-	detail::get_contents(scanner).nvertices_list.size();
+	obj::get_contents(scanner).nvertices_list.size();
 
-    detail::contents_type::polygonal_nv_index_type nv_index = {{
-	detail::real_index(C.reference[0], num_gvertices),
-	detail::real_index(C.reference[2], num_nvertices)
+    obj::contents_type::polygonal_nv_index_type nv_index = {{
+	obj::real_index(C.reference[0], num_gvertices),
+	obj::real_index(C.reference[2], num_nvertices)
     }};
 
-    if (detail::index_check(C.reference[0], nv_index.v[0], num_gvertices,
-	detail::vertex_ref_err, scanner) ||
-	detail::index_check(C.reference[2], nv_index.v[1], num_nvertices,
-	detail::normal_ref_err, scanner))
+    if (obj::index_check(C.reference[0], nv_index.v[0], num_gvertices,
+	obj::vertex_ref_err, scanner) ||
+	obj::index_check(C.reference[2], nv_index.v[1], num_nvertices,
+	obj::normal_ref_err, scanner))
     {
 	YYERROR;
     }
 
     A.index = B.index;
-    detail::get_contents(scanner).pologonal_nv_indexlist.push_back(nv_index);
+    obj::get_contents(scanner).pologonal_nv_indexlist.push_back(nv_index);
 }
 
 f_tnv_reference_list(A) ::= TNV_REFERENCE(B).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
 
     std::size_t num_tvertices =
-	detail::get_contents(scanner).tvertices_list.size();
+	obj::get_contents(scanner).tvertices_list.size();
 
     std::size_t num_nvertices =
-	detail::get_contents(scanner).nvertices_list.size();
+	obj::get_contents(scanner).nvertices_list.size();
 
-    detail::contents_type::polygonal_tnv_index_type tnv_index = {{
-	detail::real_index(B.reference[0], num_gvertices),
-	detail::real_index(B.reference[1], num_tvertices),
-	detail::real_index(B.reference[2], num_nvertices)
+    obj::contents_type::polygonal_tnv_index_type tnv_index = {{
+	obj::real_index(B.reference[0], num_gvertices),
+	obj::real_index(B.reference[1], num_tvertices),
+	obj::real_index(B.reference[2], num_nvertices)
     }};
 
-    if (detail::index_check(B.reference[0], tnv_index.v[0], num_gvertices,
-		detail::vertex_ref_err, scanner) ||
-	detail::index_check(B.reference[1], tnv_index.v[1], num_tvertices,
-	detail::texture_ref_err, scanner) ||
-	detail::index_check(B.reference[2], tnv_index.v[2], num_nvertices,
-	detail::normal_ref_err, scanner))
+    if (obj::index_check(B.reference[0], tnv_index.v[0], num_gvertices,
+		obj::vertex_ref_err, scanner) ||
+	obj::index_check(B.reference[1], tnv_index.v[1], num_tvertices,
+	obj::texture_ref_err, scanner) ||
+	obj::index_check(B.reference[2], tnv_index.v[2], num_nvertices,
+	obj::normal_ref_err, scanner))
     {
 	YYERROR;
     }
 
-    A.index = detail::get_contents(scanner).pologonal_tnv_indexlist.size();
-    detail::get_contents(scanner).pologonal_tnv_indexlist.push_back(tnv_index);
+    A.index = obj::get_contents(scanner).pologonal_tnv_indexlist.size();
+    obj::get_contents(scanner).pologonal_tnv_indexlist.push_back(tnv_index);
 }
 f_tnv_reference_list(A) ::= f_tnv_reference_list(B) TNV_REFERENCE(C).
 {
     std::size_t num_gvertices =
-	detail::get_contents(scanner).gvertices_list.size();
+	obj::get_contents(scanner).gvertices_list.size();
 
     std::size_t num_tvertices =
-	detail::get_contents(scanner).tvertices_list.size();
+	obj::get_contents(scanner).tvertices_list.size();
 
     std::size_t num_nvertices =
-	detail::get_contents(scanner).nvertices_list.size();
+	obj::get_contents(scanner).nvertices_list.size();
 
-    detail::contents_type::polygonal_tnv_index_type tnv_index = {{
-	detail::real_index(C.reference[0], num_gvertices),
-	detail::real_index(C.reference[1], num_tvertices),
-	detail::real_index(C.reference[2], num_nvertices)
+    obj::contents_type::polygonal_tnv_index_type tnv_index = {{
+	obj::real_index(C.reference[0], num_gvertices),
+	obj::real_index(C.reference[1], num_tvertices),
+	obj::real_index(C.reference[2], num_nvertices)
     }};
 
-    if (detail::index_check(C.reference[0], tnv_index.v[0], num_gvertices,
-	detail::vertex_ref_err, scanner) ||
-	detail::index_check(C.reference[1], tnv_index.v[1], num_tvertices,
-	detail::texture_ref_err, scanner) ||
-	detail::index_check(C.reference[2], tnv_index.v[2], num_nvertices,
-	detail::normal_ref_err, scanner))
+    if (obj::index_check(C.reference[0], tnv_index.v[0], num_gvertices,
+	obj::vertex_ref_err, scanner) ||
+	obj::index_check(C.reference[1], tnv_index.v[1], num_tvertices,
+	obj::texture_ref_err, scanner) ||
+	obj::index_check(C.reference[2], tnv_index.v[2], num_nvertices,
+	obj::normal_ref_err, scanner))
     {
 	YYERROR;
     }
 
     A.index = B.index;
-    detail::get_contents(scanner).pologonal_tnv_indexlist.push_back(tnv_index);
+    obj::get_contents(scanner).pologonal_tnv_indexlist.push_back(tnv_index);
 }
 
 point ::= POINT p_v_reference_list(A).
 {
-    if (detail::get_state(scanner).polyattributes_dirty) {
-	detail::set_working_polygattributes(detail::get_extra(scanner));
+    if (obj::get_state(scanner).polyattributes_dirty) {
+	obj::set_working_polygattributes(obj::get_extra(scanner));
     }
-    detail::get_contents(scanner).point_v_attr_list.
-	push_back(detail::get_state(scanner).current_polyattributes);
+    obj::get_contents(scanner).point_v_attr_list.
+	push_back(obj::get_state(scanner).current_polyattributes);
 
-    detail::get_contents(scanner).point_v_loclist.
-	resize(detail::get_contents(scanner).point_v_loclist.size() + 1);
+    obj::get_contents(scanner).point_v_loclist.
+	resize(obj::get_contents(scanner).point_v_loclist.size() + 1);
 
-    detail::get_contents(scanner).point_v_loclist.back().first = A.index;
+    obj::get_contents(scanner).point_v_loclist.back().first = A.index;
 
-    detail::get_contents(scanner).point_v_loclist.back().second =
-	detail::get_contents(scanner).point_v_indexlist.size() - A.index;
+    obj::get_contents(scanner).point_v_loclist.back().second =
+	obj::get_contents(scanner).point_v_indexlist.size() - A.index;
 }
 
 line ::= LINE l_v_reference_list(A).
 {
-    if (detail::get_contents(scanner).line_v_indexlist.size() - A.index < 2) {
-        obj_parser_error(scanner, detail::line_length_err);
+    if (obj::get_contents(scanner).line_v_indexlist.size() - A.index < 2) {
+        obj_parser_error(scanner, obj::line_length_err);
         YYERROR;
     }
 
-    if (detail::get_state(scanner).polyattributes_dirty) {
-	detail::set_working_polygattributes(detail::get_extra(scanner));
+    if (obj::get_state(scanner).polyattributes_dirty) {
+	obj::set_working_polygattributes(obj::get_extra(scanner));
     }
-    detail::get_contents(scanner).line_v_attr_list.
-	push_back(detail::get_state(scanner).current_polyattributes);
+    obj::get_contents(scanner).line_v_attr_list.
+	push_back(obj::get_state(scanner).current_polyattributes);
 
-    detail::get_contents(scanner).line_v_loclist.
-	resize(detail::get_contents(scanner).line_v_loclist.size() + 1);
+    obj::get_contents(scanner).line_v_loclist.
+	resize(obj::get_contents(scanner).line_v_loclist.size() + 1);
 
-    detail::get_contents(scanner).line_v_loclist.back().first = A.index;
+    obj::get_contents(scanner).line_v_loclist.back().first = A.index;
 
-    detail::get_contents(scanner).line_v_loclist.back().second =
-	detail::get_contents(scanner).line_v_indexlist.size() - A.index;
+    obj::get_contents(scanner).line_v_loclist.back().second =
+	obj::get_contents(scanner).line_v_indexlist.size() - A.index;
 }
 line ::= LINE l_tv_reference_list(A).
 {
-    if (detail::get_contents(scanner).line_tv_indexlist.size() - A.index < 3) {
-	obj_parser_error(scanner, detail::line_length_err);
+    if (obj::get_contents(scanner).line_tv_indexlist.size() - A.index < 3) {
+	obj_parser_error(scanner, obj::line_length_err);
 	YYERROR;
     }
 
-    if (detail::get_state(scanner).polyattributes_dirty) {
-	detail::set_working_polygattributes(detail::get_extra(scanner));
+    if (obj::get_state(scanner).polyattributes_dirty) {
+	obj::set_working_polygattributes(obj::get_extra(scanner));
     }
-    detail::get_contents(scanner).line_tv_attr_list.
-	push_back(detail::get_state(scanner).current_polyattributes);
+    obj::get_contents(scanner).line_tv_attr_list.
+	push_back(obj::get_state(scanner).current_polyattributes);
 
-    detail::get_contents(scanner).line_tv_loclist.
-	resize(detail::get_contents(scanner).line_tv_loclist.size() + 1);
+    obj::get_contents(scanner).line_tv_loclist.
+	resize(obj::get_contents(scanner).line_tv_loclist.size() + 1);
 
-    detail::get_contents(scanner).line_tv_loclist.back().first = A.index;
+    obj::get_contents(scanner).line_tv_loclist.back().first = A.index;
 
-    detail::get_contents(scanner).line_tv_loclist.back().second =
-	detail::get_contents(scanner).line_tv_indexlist.size() - A.index;
+    obj::get_contents(scanner).line_tv_loclist.back().second =
+	obj::get_contents(scanner).line_tv_indexlist.size() - A.index;
 }
 
 face ::= FACE f_v_reference_list(A).
 {
-    using detail::get_contents;
-    using detail::get_state;
-    using detail::get_extra;
-    using detail::set_working_polygattributes;
-    using detail::face_length_err;
-    using detail::contents_type;
-    using detail::parser_state_type;
+    using obj::get_contents;
+    using obj::get_state;
+    using obj::get_extra;
+    using obj::set_working_polygattributes;
+    using obj::face_length_err;
+    using obj::contents_type;
+    using obj::parser_state_type;
 
     contents_type &contents = get_contents(scanner);
     parser_state_type &state = get_state(scanner);
@@ -825,195 +825,195 @@ face ::= FACE f_v_reference_list(A).
 }
 face ::= FACE f_tv_reference_list(A).
 {
-    if (detail::get_contents(scanner).pologonal_tv_indexlist.size() -
+    if (obj::get_contents(scanner).pologonal_tv_indexlist.size() -
 	A.index < 3)
     {
-	obj_parser_error(scanner, detail::face_length_err);
+	obj_parser_error(scanner, obj::face_length_err);
 	YYERROR;
     }
 
-    if (detail::get_state(scanner).polyattributes_dirty) {
-	detail::set_working_polygattributes(detail::get_extra(scanner));
+    if (obj::get_state(scanner).polyattributes_dirty) {
+	obj::set_working_polygattributes(obj::get_extra(scanner));
     }
-    detail::get_contents(scanner).polygonal_tv_attr_list.
-	push_back(detail::get_state(scanner).current_polyattributes);
+    obj::get_contents(scanner).polygonal_tv_attr_list.
+	push_back(obj::get_state(scanner).current_polyattributes);
 
-    detail::get_contents(scanner).polygonal_tv_loclist.
-	resize(detail::get_contents(scanner).polygonal_tv_loclist.size() + 1);
+    obj::get_contents(scanner).polygonal_tv_loclist.
+	resize(obj::get_contents(scanner).polygonal_tv_loclist.size() + 1);
 
-    detail::get_contents(scanner).polygonal_tv_loclist.back().first = A.index;
+    obj::get_contents(scanner).polygonal_tv_loclist.back().first = A.index;
 
-    detail::get_contents(scanner).polygonal_tv_loclist.back().second =
-	detail::get_contents(scanner).pologonal_tv_indexlist.size() - A.index;
+    obj::get_contents(scanner).polygonal_tv_loclist.back().second =
+	obj::get_contents(scanner).pologonal_tv_indexlist.size() - A.index;
 }
 face ::= FACE f_nv_reference_list(A).
 {
-    if (detail::get_contents(scanner).pologonal_nv_indexlist.size() -
+    if (obj::get_contents(scanner).pologonal_nv_indexlist.size() -
 	A.index < 3)
     {
-	obj_parser_error(scanner, detail::face_length_err);
+	obj_parser_error(scanner, obj::face_length_err);
 	YYERROR;
     }
 
-    if (detail::get_state(scanner).polyattributes_dirty) {
-	detail::set_working_polygattributes(detail::get_extra(scanner));
+    if (obj::get_state(scanner).polyattributes_dirty) {
+	obj::set_working_polygattributes(obj::get_extra(scanner));
     }
 
-    detail::get_contents(scanner).polygonal_nv_attr_list.
-	push_back(detail::get_state(scanner).current_polyattributes);
+    obj::get_contents(scanner).polygonal_nv_attr_list.
+	push_back(obj::get_state(scanner).current_polyattributes);
 
-    detail::get_contents(scanner).polygonal_nv_loclist.
-	resize(detail::get_contents(scanner).polygonal_nv_loclist.size() + 1);
+    obj::get_contents(scanner).polygonal_nv_loclist.
+	resize(obj::get_contents(scanner).polygonal_nv_loclist.size() + 1);
 
-    detail::get_contents(scanner).polygonal_nv_loclist.back().first =
+    obj::get_contents(scanner).polygonal_nv_loclist.back().first =
 	A.index;
 
-    detail::get_contents(scanner).polygonal_nv_loclist.back().second =
-	detail::get_contents(scanner).pologonal_nv_indexlist.size() - A.index;
+    obj::get_contents(scanner).polygonal_nv_loclist.back().second =
+	obj::get_contents(scanner).pologonal_nv_indexlist.size() - A.index;
 }
 face ::= FACE f_tnv_reference_list(A).
 {
-    if (detail::get_contents(scanner).pologonal_tnv_indexlist.size() -
+    if (obj::get_contents(scanner).pologonal_tnv_indexlist.size() -
 	A.index < 3)
     {
-	obj_parser_error(scanner, detail::face_length_err);
+	obj_parser_error(scanner, obj::face_length_err);
 	YYERROR;
     }
 
-    if (detail::get_state(scanner).polyattributes_dirty) {
-	detail::set_working_polygattributes(detail::get_extra(scanner));
+    if (obj::get_state(scanner).polyattributes_dirty) {
+	obj::set_working_polygattributes(obj::get_extra(scanner));
     }
-    detail::get_contents(scanner).polygonal_tnv_attr_list.
-	push_back(detail::get_state(scanner).current_polyattributes);
+    obj::get_contents(scanner).polygonal_tnv_attr_list.
+	push_back(obj::get_state(scanner).current_polyattributes);
 
-    detail::get_contents(scanner).polygonal_tnv_loclist.
-	resize(detail::get_contents(scanner).polygonal_tnv_loclist.size()+1);
+    obj::get_contents(scanner).polygonal_tnv_loclist.
+	resize(obj::get_contents(scanner).polygonal_tnv_loclist.size()+1);
 
-    detail::get_contents(scanner).polygonal_tnv_loclist.back().first =
+    obj::get_contents(scanner).polygonal_tnv_loclist.back().first =
 	A.index;
 
-    detail::get_contents(scanner).polygonal_tnv_loclist.back().second =
-	detail::get_contents(scanner).pologonal_tnv_indexlist.size() - A.index;
+    obj::get_contents(scanner).polygonal_tnv_loclist.back().second =
+	obj::get_contents(scanner).pologonal_tnv_indexlist.size() - A.index;
 }
 
 group ::= GROUP id_list.
 {
     DEBUG_STRINGS
 
-    detail::set_working_groupset(detail::get_extra(scanner));
+    obj::set_working_groupset(obj::get_extra(scanner));
 }
 
 smooth ::= SMOOTH INTEGER(A).
 {
     if (A.integer < 0) {
-	obj_parser_error(scanner, detail::smooth_range_err);
+	obj_parser_error(scanner, obj::smooth_range_err);
 	YYERROR;
     }
 
-    if (detail::get_state(scanner).working_polyattributes.smooth_group != 
+    if (obj::get_state(scanner).working_polyattributes.smooth_group != 
 	static_cast<unsigned int>(A.integer))
     {
-	detail::get_state(scanner).working_polyattributes.smooth_group = 
+	obj::get_state(scanner).working_polyattributes.smooth_group = 
 	    static_cast<unsigned int>(A.integer);
 
-	detail::get_state(scanner).polyattributes_dirty = true;
+	obj::get_state(scanner).polyattributes_dirty = true;
     }
 }
 smooth ::= SMOOTH OFF.
 {
-    if (detail::get_state(scanner).working_polyattributes.smooth_group != 0) {
-	detail::get_state(scanner).working_polyattributes.smooth_group = 0;
-	detail::get_state(scanner).polyattributes_dirty = true;
+    if (obj::get_state(scanner).working_polyattributes.smooth_group != 0) {
+	obj::get_state(scanner).working_polyattributes.smooth_group = 0;
+	obj::get_state(scanner).polyattributes_dirty = true;
     }
 }
 
 object ::= OBJECT.
 {
-    detail::get_state(scanner).working_string.clear();
-    detail::set_working_object(detail::get_extra(scanner));
+    obj::get_state(scanner).working_string.clear();
+    obj::set_working_object(obj::get_extra(scanner));
 }
 object ::= OBJECT ID.
 {
-    detail::set_working_object(detail::get_extra(scanner));
+    obj::set_working_object(obj::get_extra(scanner));
 }
 
 usemtl ::= USEMTL ID.
 {
-    detail::set_working_material(detail::get_extra(scanner));
+    obj::set_working_material(obj::get_extra(scanner));
 }
 
 mtllib ::= MTLLIB id_list.
 {
-    detail::set_working_materiallib(detail::get_extra(scanner));
+    obj::set_working_materiallib(obj::get_extra(scanner));
 }
 
 usemap ::= USEMAP ID.
 {
-    detail::set_working_texmap(detail::get_extra(scanner));
+    obj::set_working_texmap(obj::get_extra(scanner));
 }
 usemap ::= USEMAP OFF.
 {
-    detail::get_state(scanner).working_string.clear();
-    detail::set_working_texmap(detail::get_extra(scanner));
+    obj::get_state(scanner).working_string.clear();
+    obj::set_working_texmap(obj::get_extra(scanner));
 }
 
 maplib ::= MAPLIB id_list.
 {
-    detail::set_working_texmaplib(detail::get_extra(scanner));
+    obj::set_working_texmaplib(obj::get_extra(scanner));
 }
   
 shadow_obj ::= SHADOW_OBJ ID.
 {
-    detail::set_working_shadow_obj(detail::get_extra(scanner));
+    obj::set_working_shadow_obj(obj::get_extra(scanner));
 }
 
 trace_obj ::= TRACE_OBJ ID.
 {
-    detail::set_working_trace_obj(detail::get_extra(scanner));
+    obj::set_working_trace_obj(obj::get_extra(scanner));
 }
 
 bevel ::= BEVEL toggle(A).
 {
-    if (detail::get_state(scanner).working_polyattributes.bevel != A.toggle) {
-	detail::get_state(scanner).working_polyattributes.bevel = A.toggle;
-	detail::get_state(scanner).polyattributes_dirty = true;
+    if (obj::get_state(scanner).working_polyattributes.bevel != A.toggle) {
+	obj::get_state(scanner).working_polyattributes.bevel = A.toggle;
+	obj::get_state(scanner).polyattributes_dirty = true;
     }
 }
 
 c_interp ::= C_INTERP toggle(A).
 {
-    if (detail::get_state(scanner).working_polyattributes.c_interp != A.toggle) {
-	detail::get_state(scanner).working_polyattributes.c_interp = A.toggle;
-	detail::get_state(scanner).polyattributes_dirty = true;
+    if (obj::get_state(scanner).working_polyattributes.c_interp != A.toggle) {
+	obj::get_state(scanner).working_polyattributes.c_interp = A.toggle;
+	obj::get_state(scanner).polyattributes_dirty = true;
     }
 }
 
 d_interp ::= D_INTERP toggle(A).
 {
-    if (detail::get_state(scanner).working_polyattributes.d_interp != A.toggle) {
-	detail::get_state(scanner).working_polyattributes.d_interp = A.toggle;
-	detail::get_state(scanner).polyattributes_dirty = true;
+    if (obj::get_state(scanner).working_polyattributes.d_interp != A.toggle) {
+	obj::get_state(scanner).working_polyattributes.d_interp = A.toggle;
+	obj::get_state(scanner).polyattributes_dirty = true;
     }
 }
 
 lod ::= LOD INTEGER(A).
 {
     if (!(A.integer >= 0 && A.integer <= 100)) {
-	obj_parser_error(scanner, detail::lod_range_err);
+	obj_parser_error(scanner, obj::lod_range_err);
 	YYERROR;
     }
       
     unsigned char tmp = A.integer;
       
-    if (detail::get_state(scanner).working_polyattributes.lod != tmp) {
-	detail::get_state(scanner).working_polyattributes.lod = tmp;
-	detail::get_state(scanner).polyattributes_dirty = true;
+    if (obj::get_state(scanner).working_polyattributes.lod != tmp) {
+	obj::get_state(scanner).working_polyattributes.lod = tmp;
+	obj::get_state(scanner).polyattributes_dirty = true;
     }
 }
 
 id_list ::= ID(A).
 {
-    detail::get_state(scanner).working_stringset.insert(A.string);
+    obj::get_state(scanner).working_stringset.insert(A.string);
 
     DEBUG_STRINGS
 
@@ -1021,7 +1021,7 @@ id_list ::= ID(A).
 }
 id_list ::= id_list ID(A).
 {
-    detail::get_state(scanner).working_stringset.insert(A.string);
+    obj::get_state(scanner).working_stringset.insert(A.string);
 
     DEBUG_STRINGS
 
