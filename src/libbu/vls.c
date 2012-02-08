@@ -690,8 +690,10 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
     int have_digit   =  0;
     int precision    =  0;
 
-    char fbuf[256] = {0}; /* % format buffer */
     char buf[BUFSIZ] = {0};
+
+    struct bu_vls fbuf = BU_VLS_INIT_ZERO; /* % format buffer */
+    const char *fbufp = NULL;
 
     if (UNLIKELY(!vls || !fmt || fmt[0] == '\0')) {
 	/* nothing to print to or from */
@@ -809,15 +811,14 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	    left_justify = 1;
 	}
 
-	/* Copy off the format string */
+	/* Copy off the entire format string */
 	len = ep-sp+1;
-	if ((size_t)len > sizeof(fbuf)-1)
-	    len = sizeof(fbuf)-1;
+
 	/* intentionally avoid bu_strlcpy here since the source field
-	 * may be legitimately truncated.  FIXME: verify that claim.
+	 * may be legitimately truncated.
 	 */
-	strncpy(fbuf, sp, (size_t)len);
-	fbuf[len] = '\0'; /* sanity */
+	bu_vls_strncpy(&fbuf, sp, (size_t)len);
+	fbufp = bu_vls_addr(&fbuf);
 
 #ifndef HAVE_C99_FORMAT_SPECIFIERS
 	/* if the format string uses the %z width specifier, we need
@@ -826,7 +827,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	 */
 
 	if (flags & SIZETINT) {
-	    char *fp = fbuf;
+	    char *fp = fbufp;
 	    while (*fp) {
 		if (*fp == '%') {
 		    /* found the next format specifier */
@@ -995,9 +996,9 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 		    d = va_arg(ap, double);
 		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, d);
+			snprintf(buf, BUFSIZ, fbufp, fieldlen, d);
 		    else
-			snprintf(buf, BUFSIZ, fbuf, d);
+			snprintf(buf, BUFSIZ, fbufp, d);
 		}
 		bu_vls_strcat(vls, buf);
 		break;
@@ -1011,56 +1012,56 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 		    l = va_arg(ap, unsigned long);
 		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, l);
+			snprintf(buf, BUFSIZ, fbufp, fieldlen, l);
 		    else
-			snprintf(buf, BUFSIZ, fbuf, l);
+			snprintf(buf, BUFSIZ, fbufp, l);
 		} else if (flags & LLONGINT) {
 		    /* Unsigned long long int */
 		    unsigned long long ll;
 
 		    ll = va_arg(ap, unsigned long long);
 		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, ll);
+			snprintf(buf, BUFSIZ, fbufp, fieldlen, ll);
 		    else
-			snprintf(buf, BUFSIZ, fbuf, ll);
+			snprintf(buf, BUFSIZ, fbufp, ll);
 		} else if (flags & SHORTINT || flags & SHHRTINT) {
 		    /* unsigned short int */
 		    unsigned short int sh;
 		    sh = (unsigned short int)va_arg(ap, int);
 		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, sh);
+			snprintf(buf, BUFSIZ, fbufp, fieldlen, sh);
 		    else
-			snprintf(buf, BUFSIZ, fbuf, sh);
+			snprintf(buf, BUFSIZ, fbufp, sh);
 		} else if (flags & INTMAX_T) {
 		    intmax_t im;
 		    im = va_arg(ap, intmax_t);
 		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, im);
+			snprintf(buf, BUFSIZ, fbufp, fieldlen, im);
 		    else
-			snprintf(buf, BUFSIZ, fbuf, im);
+			snprintf(buf, BUFSIZ, fbufp, im);
 		} else if (flags & PTRDIFFT) {
 		    ptrdiff_t pd;
 		    pd = va_arg(ap, ptrdiff_t);
 		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, pd);
+			snprintf(buf, BUFSIZ, fbufp, fieldlen, pd);
 		    else
-			snprintf(buf, BUFSIZ, fbuf, pd);
+			snprintf(buf, BUFSIZ, fbufp, pd);
 		} else if (flags & SIZETINT) {
 		    size_t st;
 		    st = va_arg(ap, size_t);
 		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, st);
+			snprintf(buf, BUFSIZ, fbufp, fieldlen, st);
 		    else
-			snprintf(buf, BUFSIZ, fbuf, st);
+			snprintf(buf, BUFSIZ, fbufp, st);
 		} else {
 		    /* Regular unsigned int */
 		    unsigned int j;
 
 		    j = (unsigned int)va_arg(ap, unsigned int);
 		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, j);
+			snprintf(buf, BUFSIZ, fbufp, fieldlen, j);
 		    else
-			snprintf(buf, BUFSIZ, fbuf, j);
+			snprintf(buf, BUFSIZ, fbufp, j);
 		}
 		bu_vls_strcat(vls, buf);
 		break;
@@ -1072,56 +1073,56 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 		    l = va_arg(ap, long);
 		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, l);
+			snprintf(buf, BUFSIZ, fbufp, fieldlen, l);
 		    else
-			snprintf(buf, BUFSIZ, fbuf, l);
+			snprintf(buf, BUFSIZ, fbufp, l);
 		} else if (flags & LLONGINT) {
 		    /* Long long int */
 		    long long ll;
 
 		    ll = va_arg(ap, long long);
 		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, ll);
+			snprintf(buf, BUFSIZ, fbufp, fieldlen, ll);
 		    else
-			snprintf(buf, BUFSIZ, fbuf, ll);
+			snprintf(buf, BUFSIZ, fbufp, ll);
 		} else if (flags & SHORTINT || flags & SHHRTINT) {
 		    /* short int */
 		    short int sh;
 		    sh = (short int)va_arg(ap, int);
 		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, sh);
+			snprintf(buf, BUFSIZ, fbufp, fieldlen, sh);
 		    else
-			snprintf(buf, BUFSIZ, fbuf, sh);
+			snprintf(buf, BUFSIZ, fbufp, sh);
 		} else if (flags & INTMAX_T) {
 		    intmax_t im;
 		    im = va_arg(ap, intmax_t);
 		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, im);
+			snprintf(buf, BUFSIZ, fbufp, fieldlen, im);
 		    else
-			snprintf(buf, BUFSIZ, fbuf, im);
+			snprintf(buf, BUFSIZ, fbufp, im);
 		} else if (flags & PTRDIFFT) {
 		    ptrdiff_t pd;
 		    pd = va_arg(ap, ptrdiff_t);
 		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, pd);
+			snprintf(buf, BUFSIZ, fbufp, fieldlen, pd);
 		    else
-			snprintf(buf, BUFSIZ, fbuf, pd);
+			snprintf(buf, BUFSIZ, fbufp, pd);
 		} else if (flags & SIZETINT) {
 		    size_t st;
 		    st = va_arg(ap, size_t);
 		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, st);
+			snprintf(buf, BUFSIZ, fbufp, fieldlen, st);
 		    else
-			snprintf(buf, BUFSIZ, fbuf, st);
+			snprintf(buf, BUFSIZ, fbufp, st);
 		} else {
 		    /* Regular int */
 		    int j;
 
 		    j = va_arg(ap, int);
 		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, j);
+			snprintf(buf, BUFSIZ, fbufp, fieldlen, j);
 		    else
-			snprintf(buf, BUFSIZ, fbuf, j);
+			snprintf(buf, BUFSIZ, fbufp, j);
 		}
 		bu_vls_strcat(vls, buf);
 		break;
@@ -1132,9 +1133,9 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    void *vp;
 		    vp = (void *)va_arg(ap, void *);
 		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, vp);
+			snprintf(buf, BUFSIZ, fbufp, fieldlen, vp);
 		    else
-			snprintf(buf, BUFSIZ, fbuf, vp);
+			snprintf(buf, BUFSIZ, fbufp, vp);
 		}
 		bu_vls_strcat(vls, buf);
 		break;
@@ -1150,9 +1151,9 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 		    j = va_arg(ap, int);
 		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, j);
+			snprintf(buf, BUFSIZ, fbufp, fieldlen, j);
 		    else
-			snprintf(buf, BUFSIZ, fbuf, j);
+			snprintf(buf, BUFSIZ, fbufp, j);
 		}
 		bu_vls_strcat(vls, buf);
 		break;
@@ -1161,6 +1162,8 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
     }
 
     va_end(ap);
+
+    bu_vls_free(&fbuf);
 }
 
 
