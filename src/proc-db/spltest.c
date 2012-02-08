@@ -48,7 +48,7 @@ make_face(struct rt_nurb_internal *s, fastf_t *a, fastf_t *b, fastf_t *c, fastf_
     int i;
     int ki;
     int cur_kv;
-    int interior_pts = 0;
+    int interior_pts = 2;
     fastf_t *fp = NULL;
     struct face_g_snurb *srf = NULL;
 
