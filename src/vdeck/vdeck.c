@@ -903,7 +903,7 @@ void
 addell(struct bu_vls *v, struct rt_ell_internal *gp, char *name, int num )
 {
     double	ma, mb, mc;
-    int	cgtype;
+    int	cgtype = GENELL;
 
     /* Check for ell1 or sph.					*/
     ma = MAGNITUDE( gp->a );
@@ -926,28 +926,13 @@ addell(struct bu_vls *v, struct rt_ell_internal *gp, char *name, int num )
 	/* switch vector A and vector B */
 	swap_vec( gp->a, gp->b );
 	swap_dbl( &ma, &mb );
-    } else if ( fabs( mb-mc ) < CONV_EPSILON )
+    } else if ( fabs( mb-mc ) < CONV_EPSILON ) {
 	cgtype = ELL1;
-    else
-	cgtype = GENELL;
+    }
 
     /* Print the solid parameters.					*/
     vls_itoa( v, num, 5 );
     switch ( cgtype )  {
-	case GENELL:
-	    bu_vls_strcat( v, "ellg " );		/* 5 */
-	    vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
-	    vls_ftoa_vec_cvt( v, gp->a, 10, 4 );
-	    bu_vls_strcat( v, name );
-	    bu_vls_strcat( v, "\n" );
-
-	    vls_itoa( v, num, 5 );
-	    vls_blanks( v, 5 );
-	    vls_ftoa_vec_cvt( v, gp->b, 10, 4 );
-	    vls_ftoa_vec_cvt( v, gp->c, 10, 4 );
-	    bu_vls_strcat( v, name );
-	    bu_vls_strcat( v, "\n");
-	    break;
 	case ELL1:
 	    bu_vls_strcat( v, "ell1 " );		/* 5 */
 	    vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
@@ -970,12 +955,21 @@ addell(struct bu_vls *v, struct rt_ell_internal *gp, char *name, int num )
 	    bu_vls_strcat( v, name );
 	    bu_vls_strcat( v, "\n" );
 	    break;
+	case GENELL:
 	default:
-	    (void) fprintf( stderr,
-			    "Error in type of ellipse (%d).\n",
-			    cgtype
-		);
-	    bu_exit( 10, NULL );
+	    bu_vls_strcat( v, "ellg " );		/* 5 */
+	    vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
+	    vls_ftoa_vec_cvt( v, gp->a, 10, 4 );
+	    bu_vls_strcat( v, name );
+	    bu_vls_strcat( v, "\n" );
+
+	    vls_itoa( v, num, 5 );
+	    vls_blanks( v, 5 );
+	    vls_ftoa_vec_cvt( v, gp->b, 10, 4 );
+	    vls_ftoa_vec_cvt( v, gp->c, 10, 4 );
+	    bu_vls_strcat( v, name );
+	    bu_vls_strcat( v, "\n");
+	    break;
     }
 }
 
