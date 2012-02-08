@@ -561,6 +561,11 @@ if (flags & UNSIGNED) { \
 		
 	    }
 
+	    /* %lc %l[...] %ls are unsupported */
+	    if (flags & LONG) {
+		EXIT_DUE_TO_MISC_ERROR;
+	    }
+
 	    /* ordinary %c or %[...] or %s conversion */
 	    SSCANF_TYPE(char*);
 	    break;
