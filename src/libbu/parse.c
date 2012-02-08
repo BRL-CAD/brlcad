@@ -536,7 +536,7 @@ parse_double(const char *str, size_t count, double *loc)
     int dot_seen;
     const char *numstart;
     double tmp_double;
-    char buf[128];
+    struct bu_vls buf = BU_VLS_INIT_ZERO;
     int len;
 
     for (i=0; i < count && *str; ++i) {
@@ -571,13 +571,12 @@ parse_double(const char *str, size_t count, double *loc)
 	}
 
 	len = str - numstart;
-	if ((size_t)len > sizeof(buf)-1)
-	    len = sizeof(buf)-1;
-	strncpy(buf, numstart, len);
-	buf[len] = '\0';
+	bu_vls_strncpy(&buf, numstart, len);
 
-	if (UNLIKELY(sscanf(buf, "%lf", &tmp_double) != 1))
+	if (UNLIKELY(sscanf(bu_vls_addr(&buf), "%lf", &tmp_double) != 1)) {
+	    bu_vls_free(&buf);
 	    return -1;
+	}
 
 	*loc++ = tmp_double;
 
@@ -593,6 +592,8 @@ parse_double(const char *str, size_t count, double *loc)
 	while (*str && isspace(*str))
 	    str++;
     }
+
+    bu_vls_free(&buf);
     return 0;
 }
 
@@ -1842,7 +1843,9 @@ parse_list_elem(const char *in, int idx)
     const char *prev=NULL;
     const char *start=NULL;
     const char *end=NULL;
-    char *out=NULL;
+
+    struct bu_vls out = BU_VLS_INIT_ZERO;
+    char *ret = NULL;
 
     while (*ptr) {
 	/* skip leading white space */
@@ -1913,11 +1916,12 @@ parse_list_elem(const char *in, int idx)
     }
 
     len = end - start + 1;
-    out = (char *)bu_malloc(len+1, "parse_list_elem:out");
-    strncpy(out, start, len);
-    *(out + len) = '\0';
+    bu_vls_strncpy(&out, start, len);
 
-    return out;
+    ret = bu_vls_strdup(&out);
+    bu_vls_free(&out);
+
+    return ret;
 }
 
 
