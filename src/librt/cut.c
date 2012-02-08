@@ -444,8 +444,8 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	list_max = (struct soltab **)bu_malloc(len *
 					       sizeof(struct soltab *),
 					       "max solid list");
-	memcpy(fromp->bn_list, list_min, len*sizeof(struct soltab *));
-	memcpy(fromp->bn_list, list_max, len*sizeof(struct soltab *));
+	memcpy(list_min, fromp->bn_list, len*sizeof(struct soltab *));
+	memcpy(list_max, fromp->bn_list, len*sizeof(struct soltab *));
 	for (i=0; i<3; i++) {
 	    qsort((genptr_t)list_min, len,
 		  sizeof(struct soltab *), pairs[i].cmp_min);
@@ -651,6 +651,7 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 			"NUgrid cell bn_list[]");
 		cutp->bn.bn_len = cutp->bn.bn_maxlen =
 		    nu_zbox.bn_len;
+
 		memcpy((char *)cutp->bn.bn_list,
 		       (char *)nu_zbox.bn_list,
 		       nu_zbox.bn_len *
