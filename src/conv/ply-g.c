@@ -345,6 +345,8 @@ get_double( int type )
 	}
     }
 
+    if( val > (DBL_MAX / scale_factor) )
+	    return DBL_MAX;
     return val*scale_factor;
 }
 
