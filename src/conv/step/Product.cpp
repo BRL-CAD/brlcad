@@ -92,6 +92,8 @@ bool Product::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
 		frame_of_reference.push_back(aPC);
 	    } else {
 		std::cerr << CLASSNAME << ": Unhandled entity in attribute 'frame_of_reference'." << std::endl;
+		l->clear();
+		delete l;
 		return false;
 	    }
 	}

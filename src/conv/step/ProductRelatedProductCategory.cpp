@@ -80,6 +80,8 @@ bool ProductRelatedProductCategory::Load(STEPWrapper *sw, SCLP23(Application_ins
 		products.push_back(aProd);
 	    } else {
 		std::cerr << CLASSNAME << ": Unhandled entity in attribute 'products'." << std::endl;
+		l->clear();
+		delete l;
 		return false;
 	    }
 	}
