@@ -313,7 +313,9 @@ main(int argc, char *argv[])
     FILE *stream;
     int last_frame;
 
+    VSETALL(p1, 0.0);
     VSETALL(p2, 0.0);
+    VSETALL(p3, 0.0);
     VSETALL(zero, 0.0);
     VSETALL(to_track, 0.0);
     VSETALL(centroid, 0.0);
