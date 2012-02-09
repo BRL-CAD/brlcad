@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <math.h>
 
 #include "bu.h"
@@ -53,28 +54,35 @@ main(int argc, char *argv[])
 {
     int status = INTEGER;
 
-    int i;
-    int start,  finish, incr;
+    long int i;
+    long int start,  finish;
+    long int incr;
 
     double d;
     double dstart, dfinish, dincr;
 
-    char c;
-    char cstart, cfinish;
-    int cincr;
+    unsigned long int c;
+    unsigned long int cstart, cfinish;
+    long int cincr;
 
     if (argc < 3 || argc > 5) {
-	bu_exit(9, "Usage:  loop [-c|-n] start finish [incr] \n -n is the default option\n");
+	bu_exit(9, "Usage:  loop [-c] start finish [incr] \n -c use for character(char) looping \n");
     }
 
     /* Check if -c is present in comandline argument*/
 
-    if (argv[1][0] == '-' && argv[1][1]) status = CHAR;
+    if (argv[1][0] == '-') {
+	if (argv[1][1] == 'c') {
+	    status = CHAR;
+	} else if ((argv[1][1] != '.') && !isdigit(argv[1][1])) {
+	    bu_exit(9, "Usage:  loop [-c] start finish [incr] \n -c use for character(char) looping \n");
+	}
+    }
 
     /* determine if any arguments are real */
     for (i = 1; i < argc; i++) {
 	double dval = atof(argv[i]);
-	int ival = atoi(argv[i]);
+	long int ival = strtol(argv[i],NULL,0);
 	if (!ZERO(dval - (double)ival)) {
 	    status = REAL;
 	    break;
@@ -83,23 +91,36 @@ main(int argc, char *argv[])
 
     if (status == REAL) {
 	dstart  = atof(argv[1]);
-	dfinish = atof(argv[2]);
+	if ((dstart < -DBL_MAX) || (dstart > DBL_MAX)) {
+	    bu_exit(-1, "'start' out of range of double.\n");
+	}
 
-	if (argc == 4)
+	dfinish = atof(argv[2]);
+	if ((dfinish < -DBL_MAX) || (dfinish > DBL_MAX)) {
+	    bu_exit(-1, "'finish' out of range of double.\n");
+	}
+
+	if (argc == 4) {
 	    dincr = atof(argv[3]);
-	else {
+	    if ((dincr < -DBL_MAX) || (dincr > DBL_MAX)) {
+		bu_exit(-1, "'incr' out of range of double.\n");
+	    }
+	} else {
 	    if (dstart > dfinish)
 		dincr = -1.0;
 	    else
 		dincr =  1.0;
 	}
 
-	if (dincr >= 0.0)
+	if (dincr > 0.0)
 	    for (d = dstart; d <= dfinish; d += dincr)
 		printf("%g\n", d);
-	else
+	else if (dincr < 0.0)
 	    for (d = dstart; d >= dfinish; d += dincr)
 		printf("%g\n", d);
+	else
+	    bu_exit(-1, "loop 'incr' can not be zero.\n");
+
     } else if (status == INTEGER) {
 	/* print out integer output */
 	char *cp;
@@ -151,42 +172,63 @@ main(int argc, char *argv[])
 	    bu_strlcpy(fmt_string, "%d\n", sizeof(fmt_string));
 	fmt_string[50-1] = '\0'; /* sanity */
 
-	start  = atoi(argv[1]);
-	finish = atoi(argv[2]);
+	start  = strtol(argv[1],NULL,0);
+	if ((start < INT_MIN) || (start > INT_MAX)) {
+	    bu_exit(-1, "'start' out of range of signed integer.\n");
+	}
 
-	if (argc == 4)
-	    incr = atoi(argv[3]);
-	else {
+	finish = strtol(argv[2],NULL,0);
+	if ((finish < INT_MIN) || (finish > INT_MAX)) {
+	    bu_exit(-1, "'finish' out of range of signed integer.\n");
+	}
+
+	if (argc == 4) {
+	    incr = strtol(argv[3],NULL,0);
+	    if ((incr < INT_MIN) || (incr > INT_MAX)) {
+		bu_exit(-1, "'incr' out of range of signed integer.\n");
+	    }
+	} else {
 	    if (start > finish)
 		incr = -1;
 	    else
 		incr =  1;
 	}
 
-	if (incr >= 0)
+	if (incr > 0)
 	    for (i = start; i <= finish; i += incr)
 		printf(fmt_string, i);
-	else
+	else if (incr < 0)
 	    for (i = start; i >= finish; i += incr)
 		printf(fmt_string, i);
+	else
+	    bu_exit(-1, "loop 'incr' can not be zero.\n");
     } else {
+	if (argc < 4) {
+	    bu_exit(9, "Usage:  loop [-c] start finish [incr] \n -c use for character(char) looping \n");
+	}
 	/* print out character output */
 	cstart = argv[2][0];
 	cfinish = argv[3][0];
 	
-	if (argc == 5) cincr = atoi(argv[4]);
-	else {
+	if (argc == 5) {
+	    cincr = strtol(argv[4],NULL,0);
+	    if ((cincr < -UCHAR_MAX) || (cincr > UCHAR_MAX)) {
+		bu_exit(-1, "'incr' out of range of char.\n");
+	    }
+	} else {
 	    if (cstart > cfinish)
 		cincr = -1;
 	    else
 		cincr = 1;
 	}
-	if (cincr >= 0)
-	    for (c=cstart; c <= cfinish; c += cincr)
-		printf("%c\n", c);
-	else
+	if (cincr > 0)
+	    for (c=cstart;  c <= cfinish; c += cincr)
+		printf("%c\n", (char)c);
+	else if (cincr < 0)
 	    for (c=cstart; c >= cfinish; c +=cincr)
-		printf("%c\n", c);
+		printf("%c\n", (char)c);
+	else
+	    bu_exit(-1, "loop 'incr' can not be zero.\n");
     }
 
     return 0;
