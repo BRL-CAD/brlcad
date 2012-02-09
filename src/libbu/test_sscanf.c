@@ -184,110 +184,82 @@ test_sscanf(int type, const char *src, const char *fmt) {
 #define SSCANF_TYPE(type) \
     val = bu_malloc(sizeof(type), "test_sscanf val"); \
     bu_val = bu_malloc(sizeof(type), "test_sscanf bu_val"); \
+\
     ret = sscanf(src, fmt, (type*)val); \
-    bu_ret = bu_sscanf(src, fmt, (type*)bu_val);
+    bu_ret = bu_sscanf(src, fmt, (type*)bu_val); \
+\
+    checkReturnVal("sscanf", ret, 1); \
+    checkReturnsEqual(bu_ret, ret);
 
     switch (type) {
     case SCAN_INT:
 	SSCANF_TYPE(int);
+	CHECK_INT_VALS_EQUAL(int, d, val, bu_val);
 	break;
     case SCAN_UINT:
 	SSCANF_TYPE(unsigned);
+	CHECK_INT_VALS_EQUAL(unsigned, u, val, bu_val);
 	break;
     case SCAN_SHORT:
 	SSCANF_TYPE(short);
+	CHECK_INT_VALS_EQUAL(short, hd, val, bu_val);
 	break;
     case SCAN_USHORT:
 	SSCANF_TYPE(unsigned short);
+	CHECK_INT_VALS_EQUAL(unsigned short, hu, val, bu_val);
 	break;
     case SCAN_SHORTSHORT:
 	SSCANF_TYPE(char);
+	CHECK_INT_VALS_EQUAL(char, hhd, val, bu_val);
 	break;
     case SCAN_USHORTSHORT:
 	SSCANF_TYPE(unsigned char);
+	CHECK_INT_VALS_EQUAL(unsigned char, hhu, val, bu_val);
 	break;
     case SCAN_LONG:
 	SSCANF_TYPE(long);
+	CHECK_INT_VALS_EQUAL(long, ld, val, bu_val);
 	break;
     case SCAN_ULONG:
 	SSCANF_TYPE(unsigned long);
+	CHECK_INT_VALS_EQUAL(unsigned long, lu, val, bu_val);
 	break;
     case SCAN_POINTER:
 	ret = sscanf(src, fmt, &val);
 	bu_ret = bu_sscanf(src, fmt, &bu_val);
+
+	checkReturnVal("sscanf", ret, 1);
+	checkReturnsEqual(bu_ret, ret);
+
+	if (val != bu_val) {
+	    bu_exit(1, "\t[FAIL] conversion value mismatch.\n"
+		    "\t(sscanf) %p != %p (bu_sscanf).\n",
+		    val, bu_val);
+	}
+	val = bu_val = NULL;
 	break;
     case SCAN_FLOAT:
 	SSCANF_TYPE(float);
+	CHECK_FLOAT_VALS_EQUAL(float, e, val, bu_val);
 	break;
     case SCAN_DOUBLE:
 	SSCANF_TYPE(double);
+	CHECK_FLOAT_VALS_EQUAL(double, le, val, bu_val);
 	break;
     case SCAN_LDOUBLE:
 	SSCANF_TYPE(long double);
+	CHECK_FLOAT_VALS_EQUAL(long double, Le, val, bu_val);
 	break;
     default:
 	bu_exit(1, "Error: test_sscanf was given an unrecognized pointer type.\n");
     }
-
-    checkReturnVal("sscanf", ret, 1);
-    checkReturnsEqual(bu_ret, ret);
-
-    /* conversion values equal? */
-    if (val != NULL && bu_val != NULL) {
-
-	switch (type) {
-	case SCAN_INT:
-	    CHECK_INT_VALS_EQUAL(int, d, val, bu_val);
-	    break;
-	case SCAN_UINT:
-	    CHECK_INT_VALS_EQUAL(unsigned, u, val, bu_val);
-	    break;
-	case SCAN_SHORT:
-	    CHECK_INT_VALS_EQUAL(short, hd, val, bu_val);
-	    break;
-	case SCAN_USHORT:
-	    CHECK_INT_VALS_EQUAL(unsigned short, hu, val, bu_val);
-	    break;
-	case SCAN_SHORTSHORT:
-	    CHECK_INT_VALS_EQUAL(char, hhd, val, bu_val);
-	    break;
-	case SCAN_USHORTSHORT:
-	    CHECK_INT_VALS_EQUAL(unsigned char, hhu, val, bu_val);
-	    break;
-	case SCAN_LONG:
-	    CHECK_INT_VALS_EQUAL(long, ld, val, bu_val);
-	    break;
-	case SCAN_ULONG:
-	    CHECK_INT_VALS_EQUAL(unsigned long, lu, val, bu_val);
-	    break;
-	case SCAN_POINTER:
-	    if (val != bu_val) {
-		bu_exit(1, "\t[FAIL] conversion value mismatch.\n"
-			"\t(sscanf) %p != %p (bu_sscanf).\n",
-			val, bu_val);
-	    }
-	    val = bu_val = NULL;
-	    break;
-	case SCAN_FLOAT:
-	    CHECK_FLOAT_VALS_EQUAL(float, e, val, bu_val);
-	    break;
-	case SCAN_DOUBLE:
-	    CHECK_FLOAT_VALS_EQUAL(double, le, val, bu_val);
-	    break;
-	case SCAN_LDOUBLE:
-	    CHECK_FLOAT_VALS_EQUAL(long double, Le, val, bu_val);
-	    break;
-	default:
-	    bu_exit(1, "Error: test_sscanf was given an unrecognized pointer type.\n");
-	}
-	if (val != NULL) {
-	    bu_free(val, "test_sscanf val");
-	    val = NULL;
-	}
-	if (bu_val != NULL) {
-	    bu_free(bu_val, "test_sscanf bu_val");
-	    bu_val = NULL;
-	}
+    if (val != NULL) {
+	bu_free(val, "test_sscanf val");
+	val = NULL;
+    }
+    if (bu_val != NULL) {
+	bu_free(bu_val, "test_sscanf bu_val");
+	bu_val = NULL;
     }
 } /* test_sscanf */
 
