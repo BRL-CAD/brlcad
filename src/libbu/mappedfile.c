@@ -88,11 +88,6 @@ bu_open_mapped_file(const char *name, const char *appl)
 
 	    /* If file vanished from disk, mapped copy should still OK */
 	    if (fd < 0) {
-		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		(void)close(fd);
-		bu_semaphore_release(BU_SEM_SYSCALL);
-		fd = -1;
-
 		/* It is safe to reuse mp */
 		mp->uses++;
 
