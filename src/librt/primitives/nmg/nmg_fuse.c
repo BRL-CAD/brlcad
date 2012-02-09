@@ -1050,6 +1050,9 @@ nmg_model_edge_fuse(struct model *m, const struct bn_tol *tol)
     nmg_edgeuse_tabulate(&eu_list, &m->magic);
 
     nelem = BU_PTBL_END(&eu_list) * 2;
+    if (nelem == 0)
+       return 0;
+
     edgeuse_vert_list = (edgeuse_vert_list_t)bu_calloc(nelem, 2 * sizeof(size_t), "edgeuse_vert_list");
 
     j = 0;
