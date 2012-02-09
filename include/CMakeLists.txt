@@ -24,6 +24,7 @@ set(brlcadinclude_wanted
 	bot.h
 	brep.h
 	brlcad.h
+	brlcad.i
 	cmd.h
 	db.h
 	db5.h
