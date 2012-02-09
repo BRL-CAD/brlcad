@@ -45,6 +45,9 @@
     itk_option define -fb_enabled fb_enabled FB_Enabled 0
     itk_option define -fb_enabled_callback fb_enabled_callback FB_Enabled_Callback ""
     itk_option define -fb_mode_callback fb_mode_callback FB_Mode_Callback ""
+    itk_option define -do_rtedge do_rtedge Do_Rtedge 0
+    itk_option define -do_rtedge_overlay do_rtedge_overlay Do_Rtedge_Overlay 0
+    itk_option define -overlay_fg_color overlay_fg_color Overlay_Fg_Color "128 128 128"
 
     constructor {args} {}
 
@@ -490,11 +493,17 @@
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
 
+    if {$itk_option(-do_rtedge)} {
+	set rt_cmd_name "rtedge"
+    } else {
+	set rt_cmd_name "rt"
+    }
+
     if {$isaMged} {
-	set rt_cmd "$itk_option(-mged) component $rtActivePane rt -F [get_cooked_dest]"
+	set rt_cmd "$itk_option(-mged) component $rtActivePane $rt_cmd_name -F [get_cooked_dest]"
     } else {
 	# isaGed must be true
-	set rt_cmd "$itk_option(-mged) pane_rt $rtActivePane -F [get_cooked_dest]"
+	set rt_cmd "$itk_option(-mged) pane_$rt_cmd_name $rtActivePane -F [get_cooked_dest]"
 
 	if {[$itk_option(-mged) rect draw]} {
 	    set pos [$itk_option(-mged) rect pos]
@@ -543,7 +552,23 @@
 	}
     }
 
-    append rt_cmd " -C[lindex $rtColor 0]/[lindex $rtColor 1]/[lindex $rtColor 2]"
+    if {$itk_option(-do_rtedge)} {
+	set r [lindex $itk_option(-overlay_fg_color) 0]
+	set g [lindex $itk_option(-overlay_fg_color) 1]
+	set b [lindex $itk_option(-overlay_fg_color) 2]
+	append rt_cmd " -c \"set fg=$r/$g/$b\""
+
+	if {$itk_option(-do_rtedge_overlay)} {
+	    append rt_cmd " -c \"set ov=1\""
+	} else {
+	    set r [lindex $rtColor 0]
+	    set g [lindex $rtColor 1]
+	    set b [lindex $rtColor 2]
+	    append rt_cmd " -c \"set bg=$r/$g/$b\""
+	}
+    } else {
+	append rt_cmd " -C[lindex $rtColor 0]/[lindex $rtColor 1]/[lindex $rtColor 2]"
+    }
 
     if {$itk_option(-nproc) != ""} {
 	append rt_cmd " -P$itk_option(-nproc)"
