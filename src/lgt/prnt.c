@@ -28,6 +28,7 @@
 #include <assert.h>
 #include <stdarg.h>
 
+#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -221,11 +222,14 @@ update_Screen(void)
 {
     int	tem_co, row, col;
     tem_co = FMIN(co, TEMPLATE_COLS);
-    for ( row = 0; template[row][0] != '\0'; row++ )
+    for ( row = 0; !BU_STR_EMPTY(template[row]); row++ )
     {
 	int	lastcol = -2;
-	if (template[row+1] == '\0')
+
+	if (BU_STR_EMPTY(template[row + 1])) {
 	    SetStandout();
+	}
+
 	for ( col = 0; col < tem_co; col++ )
 	    if ( screen[row][col] != template[row][col] )
 	    {
