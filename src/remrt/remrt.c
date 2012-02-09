@@ -2342,38 +2342,36 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     /* Write pixels into file */
     /* Later, can implement FD cache here */
     if ( (fd = open( fr->fr_filename, 2 )) < 0 )  {
+	/* open failed */
 	perror( fr->fr_filename );
     } else if ( lseek( fd, info.li_startpix*3L, 0 ) < 0 )  {
+	/* seek failed */
 	perror( fr->fr_filename );
-	(void)close(fd);	/* prevent write */
-	fd = -1;
-    }
-    if (fd < 0) {
-	bu_log("Error: invalid file descriptor %d.\n", fd);
-	cnt = 0;
+	(void)close(fd);
     } else {
 	cnt = write( fd, buf+ext.ext_nbytes, i );
-    }
-    if (cnt != (ssize_t)i) {
-	perror( fr->fr_filename );
-	bu_log("write s/b %zu, got %zu\n", i, cnt );
-	/*
-	 *  Generally, a write error is caused by lack of disk space.
-	 *  In any case, it is indicative of bad problems.
-	 *  Stop assigning new work.
-	 */
-	/* XXX should re-queue this assignment */
-	bu_log("%s disk write error, preparing graceful STOP\n", stamp() );
-	cd_stop( 0, (char **)0 );
-
-	/* Dropping the (innocent) server will requeue the work */
-	drop_server( sp, "disk write error" );
-
-	/* Return, as if nothing had happened. */
 	(void)close(fd);
-	goto out;
+
+	if (cnt != (ssize_t)i) {
+	    /* write failed */
+	    perror( fr->fr_filename );
+	    bu_log("write s/b %zu, got %zu\n", i, cnt );
+	    /*
+	     *  Generally, a write error is caused by lack of disk space.
+	     *  In any case, it is indicative of bad problems.
+	     *  Stop assigning new work.
+	     */
+	    /* XXX should re-queue this assignment */
+	    bu_log("%s disk write error, preparing graceful STOP\n", stamp() );
+	    cd_stop( 0, (char **)0 );
+
+	    /* Dropping the (innocent) server will requeue the work */
+	    drop_server( sp, "disk write error" );
+
+	    /* Return, as if nothing had happened. */
+	    goto out;
+	}
     }
-    (void)close(fd);
 
     /* If display attached, also draw it */
     if ( fbp != FBIO_NULL )  {
