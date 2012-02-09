@@ -1745,6 +1745,43 @@ const struct rt_functab rt_functab[] = {
     },
 
     {
+	/* 42 */
+	RT_FUNCTAB_MAGIC, "ID_ANNOTATION", "anno",
+	0,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	sizeof(struct rt_annotation_internal),
+	RT_ANNOTATION_INTERNAL_MAGIC,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+    },
+
+    {
 	/* this entry for sanity only */
 	0L, ">ID_MAXIMUM", ">id_max",
 	0,
