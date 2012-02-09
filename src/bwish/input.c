@@ -129,6 +129,12 @@ inputHandler(ClientData clientData, int UNUSED(mask))
 	Cad_Exit(TCL_OK);
     }
 
+    /* Validate results of read */
+    for (i = 0; i < count; ++i) {
+      if ((int)(*buf + sizeof(char) * i) < CHAR_MIN || (int)(*buf + sizeof(char) * i) > CHAR_MAX)
+	bu_exit(EXIT_FAILURE, "bwish: bad char read\n");
+    }
+
     /* Process everything in buf */
     for (i = 0, ch = buf[i]; i < count && ch != '\0'; ch = buf[++i])
 	processChar(ch);
