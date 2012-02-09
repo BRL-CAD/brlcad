@@ -949,8 +949,9 @@ pullback_samples_from_closed_surface(PBCData* data,
     const ON_Surface *surf = data->surftree->getSurface();
     ON_Interval dom[2];
     ON_2dPointArray *samples= new ON_2dPointArray();
-    int numKnots = curve->SpanCount();
+    size_t numKnots = curve->SpanCount();
     double *knots = new double[numKnots+1];
+
     curve->GetSpanVector(knots);
 
     for (int i=0; i<2; i++) {
@@ -958,30 +959,28 @@ pullback_samples_from_closed_surface(PBCData* data,
 	//std::cout << "Dom[" << i << "] - " << dom[i].m_t[0]  << "," << dom[i].m_t[1] << std::endl;
     }
 
-    int istart = 0;
-    while (t >= knots[istart])
+    size_t istart = 0;
+    while ((istart < (numKnots+1)) && (t >= knots[istart]))
 	istart++;
 
     if (istart > 0) {
-	istart--;
-	knots[istart] = t;
+	knots[--istart] = t;
     }
 
-    int istop = numKnots;
-    while (s <= knots[istop])
+    size_t istop = numKnots;
+    while ((istop > 0) && (s <= knots[istop]))
 	istop--;
 
     if (istop < numKnots) {
-	istop++;
-	knots[istop] = s;
+	knots[++istop] = s;
     }
 
     //TODO: remove debugging code
     //std::cerr << "t - " << t << " istart - " << istart << "knots[istart] - " << knots[istart] << std::endl;
     //std::cerr << "s - " << s << " istop - " << istop << "knots[istop] - " << knots[istop] << std::endl;
 
-    int samplesperknotinterval;
-    int degree = curve->Degree();
+    size_t samplesperknotinterval;
+    size_t degree = curve->Degree();
 
     if (degree > 1) {
 	samplesperknotinterval = 3*degree;
@@ -1001,7 +1000,7 @@ pullback_samples_from_closed_surface(PBCData* data,
     double steptol = 0.0000001;
     bool has_dir = false;
     bool has_prev_dir = false;
-    for (int i=istart; i<=istop; i++) {
+    for (size_t i=istart; i<=istop; i++) {
 	if (i <= numKnots/2) {
 	    if (i>0) {
 		double delta = (knots[i] - knots[i-1])/(double)samplesperknotinterval;
@@ -1087,7 +1086,7 @@ pullback_samples_from_closed_surface(PBCData* data,
 		}
 	    }
 	    if (toUV(*data, pt, knots[i], PBC_FROM_OFFSET)) {
-		if (i == istart) {
+		if ((i == istart) && (i < numKnots)) {
 		    double delta = (knots[i+1] - knots[i])/(double)samplesperknotinterval;
 		    if (surf->IsClosed(0) || surf->IsClosed(1)) {
 			ON_2dPoint test;
@@ -1135,7 +1134,7 @@ pullback_samples_from_closed_surface(PBCData* data,
 		//std::cout << "didn't find point on surface" << std::endl;
 	    }
 	} else {
-	    if (i>0) {
+	    if ((i>0) && (i < (numKnots+1))) {
 		double delta = (knots[i] - knots[i-1])/(double)samplesperknotinterval;
 		for (int j=1; j<samplesperknotinterval; ) {
 		    if (toUV(*data, pt, knots[i-1]+j*delta, -PBC_FROM_OFFSET)) {
@@ -2369,23 +2368,25 @@ pullback_curve(const brlcad::SurfaceTree* surfacetree,
     ON_2dPoint p1, p2;
     const ON_Surface *surf = (data.surftree)->getSurface();
 
-    toUV(data, p1, tmin, PBC_TOL);
-    ON_3dPoint a = surf->PointAt(p1.x, p1.y);
-    toUV(data, p2, tmax, -PBC_TOL);
-    ON_3dPoint b = surf->PointAt(p2.x, p2.y);
+    if (toUV(data, p1, tmin, PBC_TOL) && toUV(data, p2, tmax, -PBC_TOL)) {
+	ON_3dPoint a = surf->PointAt(p1.x, p1.y);
+	ON_3dPoint b = surf->PointAt(p2.x, p2.y);
 
-    p = curve->PointAt(tmax);
-    from = curve->PointAt(tmax-0.0001);
-    if (!st->getSurfacePoint((const ON_3dPoint&)p, uv, (const ON_3dPoint&)from) > 0) {
-	std::cerr << "Error: Can not get surface point." << std::endl;
-    }
+	p = curve->PointAt(tmax);
+	from = curve->PointAt(tmax-0.0001);
+	if (!st->getSurfacePoint((const ON_3dPoint&)p, uv, (const ON_3dPoint&)from) > 0) {
+	    std::cerr << "Error: Can not get surface point." << std::endl;
+	}
 
-    if (!sample(data, tmin, tmax, p1, p2)) {
+	if (!sample(data, tmin, tmax, p1, p2)) {
+	    return NULL;
+	}
+
+	for (int i = 0; i < samples.Count(); i++) {
+	    std::cerr << samples[i].x << ", " << samples[i].y << std::endl;
+	}
+    } else {
 	return NULL;
-    }
-
-    for (int i = 0; i < samples.Count(); i++) {
-	std::cerr << samples[i].x << ", " << samples[i].y << std::endl;
     }
 
     return interpolateCurve(samples);
@@ -2415,23 +2416,25 @@ pullback_seam_curve(enum seam_direction seam_dir,
 
     ON_2dPoint p1, p2;
 
-    toUV(data, p1, tmin, PBC_TOL);
-    toUV(data, p2, tmax, -PBC_TOL);
-    if (!sample(data, tmin, tmax, p1, p2)) {
-	return NULL;
-    }
-
-    for (int i = 0; i < samples.Count(); i++) {
-	if (seam_dir == NORTH_SEAM) {
-	    samples[i].y = 1.0;
-	} else if (seam_dir == EAST_SEAM) {
-	    samples[i].x = 1.0;
-	} else if (seam_dir == SOUTH_SEAM) {
-	    samples[i].y = 0.0;
-	} else if (seam_dir == WEST_SEAM) {
-	    samples[i].x = 0.0;
+    if (toUV(data, p1, tmin, PBC_TOL) && toUV(data, p2, tmax, -PBC_TOL)) {
+	if (!sample(data, tmin, tmax, p1, p2)) {
+	    return NULL;
 	}
-	std::cerr << samples[i].x << ", " << samples[i].y << std::endl;
+
+	for (int i = 0; i < samples.Count(); i++) {
+	    if (seam_dir == NORTH_SEAM) {
+		samples[i].y = 1.0;
+	    } else if (seam_dir == EAST_SEAM) {
+		samples[i].x = 1.0;
+	    } else if (seam_dir == SOUTH_SEAM) {
+		samples[i].y = 0.0;
+	    } else if (seam_dir == WEST_SEAM) {
+		samples[i].x = 0.0;
+	    }
+	    std::cerr << samples[i].x << ", " << samples[i].y << std::endl;
+	}
+    } else {
+	return NULL;
     }
 
     return interpolateCurve(samples);
