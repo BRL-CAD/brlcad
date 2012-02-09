@@ -534,6 +534,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	}
 
     }
+    fclose(muves_in);
     return TCL_OK;
 }
 
