@@ -218,6 +218,8 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
     struct bu_attribute_value_set avs;
     matp_t matrix = {0};
 
+    bu_vls_init(target_name);
+
     rt_tree_array = (struct rt_tree_array *)NULL;
 
     /* Standard sanity checks */
@@ -561,7 +563,8 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	return -1;
     }
 
-    db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip);
+    if(db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip))
+	bu_vls_printf(gedp->ged_result_str, "build_comb %s: Failed to update attributes\n", dp->d_namep);
 
     bu_avs_free(&avs);
     return node_count;
