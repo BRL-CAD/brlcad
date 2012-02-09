@@ -249,12 +249,14 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 	 * distance in mm.  This will prevent doing microscopic
 	 * models.
 	 */
+
 	t0 = ssp->box_start;
 	/* NB: can't compute px, py, pz here since t0 may advance in
 	 * the following statement!
 	 */
 
-    top:		switch (curcut->cut_type) {
+    top:
+	switch (curcut->cut_type) {
 	    case CUT_NUGRIDNODE: {
 		/*********************************************************
 		 * NOTE: This portion implements Gigante's non-uniform 3-D
@@ -331,13 +333,15 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		     * the NUgrid array.
 		     */
 
-		again:				t0 = ssp->tv[out_axis];
+		nugrid_again:
+		    t0 = ssp->tv[out_axis];
 		    if (ssp->rstep[out_axis] > 0) {
 			if (++(ssp->igrid[out_axis]) >=
 			    nu_cells_per_axis[out_axis]) {
 			    cutp = CUTTER_NULL;
 			    break;
 			}
+
 			cutp += nu_stepsize[out_axis];
 		    } else {
 			if (--(ssp->igrid[out_axis]) < 0) {
@@ -371,7 +375,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		    cutp->bn.bn_len <= 0 &&
 		    cutp->bn.bn_piecelen <= 0) {
 		    ++ssp->resp->re_nempty_cells;
-		    goto again;
+		    goto nugrid_again;
 		}
 
 		ssp->out_axis = out_axis;
@@ -388,9 +392,12 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 			   cutp->cut_type==CUT_BOXNODE?"box":
 			   cutp->cut_type==CUT_NUGRIDNODE?"nu":
 			   "?");
-		break; }
+		break;
+	    } /* CUT_NUGRIDNODE */
+
 	    case CUT_CUTNODE:
 		/* fall through */
+
 	    case CUT_BOXNODE:
 		/*********************************************************
 		 * NOTE: This portion implements Muuss' non-uniform binary
