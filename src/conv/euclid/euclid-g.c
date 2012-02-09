@@ -411,6 +411,35 @@ euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
     build_groups( fpout );
 }
 
+/* Kill the cracks in region's next shell.
+ * Return 1 if the region is empty.
+ * Return 0 otherwise.
+ */
+static int
+kill_cracks_in_next_shell(struct nmgregion *r)
+{
+    struct shell *s = NULL;
+
+    if (BU_LIST_IS_EMPTY(&r->s_hd)) {
+	/* region is empty (no next shell) */
+	return 1;
+    }
+
+    /* kill cracks in next shell */
+    s = BU_LIST_FIRST(shell, &r->s_hd);
+    if (nmg_kill_cracks(s)) {
+
+	/* shell is now empty, remove it from the region */
+	if (nmg_ks(s)) {
+
+	    /* removing shell made region empty */
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 
 /*
  *	R e a d _ E u c l i d _ R e g i o n
@@ -532,20 +561,10 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	return cur_id;
     }
 
-    /* kill cracks */
-    s = BU_LIST_FIRST( shell, &r->s_hd );
-    if ( nmg_kill_cracks( s ) )
-    {
-	if ( nmg_ks( s ) )
-	{
-	    nmg_km( m );
-	    m = (struct model *)0;
-	}
-	s = (struct shell *)0;
-    }
-
-    if ( !m )
+    if (kill_cracks_in_next_shell(r)) {
+	nmg_km(m);
 	return cur_id;
+    }
 
     if ( RT_G_DEBUG&DEBUG_MEM_FULL )
 	bu_prmem( "Before assoc face geom:\n" );
@@ -597,39 +616,19 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	bu_log( "nmg_s_join_touchingloops( %p )\n", (void *)s );
     nmg_s_join_touchingloops( s, &tol );
 
-    /* kill cracks */
-    s = BU_LIST_FIRST( shell, &r->s_hd );
-    if ( nmg_kill_cracks( s ) )
-    {
-	if ( nmg_ks( s ) )
-	{
-	    nmg_km( m );
-	    m = (struct model *)0;
-	}
-	s = (struct shell *)0;
-    }
-
-    if ( !m )
+    if (kill_cracks_in_next_shell(r)) {
+	nmg_km(m);
 	return cur_id;
+    }
 
     if ( debug )
 	bu_log( "nmg_s_split_touchingloops( %p )\n", (void *)s );
     nmg_s_split_touchingloops( s, &tol);
 
-    /* kill cracks */
-    s = BU_LIST_FIRST( shell, &r->s_hd );
-    if ( nmg_kill_cracks( s ) )
-    {
-	if ( nmg_ks( s ) )
-	{
-	    nmg_km( m );
-	    m = (struct model *)0;
-	}
-	s = (struct shell *)0;
-    }
-
-    if ( !m )
+    if (kill_cracks_in_next_shell(r)) {
+	nmg_km(m);
 	return cur_id;
+    }
 
     /* verify face plane calculations */
     if ( debug )
