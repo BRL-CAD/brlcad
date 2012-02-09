@@ -64,8 +64,6 @@ extern int viewshade(struct application *app,
 		     const struct partition *pp,
 		     struct shadework *swp);
 
-extern void multispectral_shader_init(struct mfuncs **headp);
-
 /* XXX Move to raytrace.h when routine goes into LIBRT */
 extern double rt_pixel_footprint(const struct application *app,
 				 const struct hit *hitp,
@@ -680,7 +678,7 @@ view_init(struct application *UNUSED(app), char *UNUSED(file), char *UNUSED(obj)
 {
     bu_log("%s", brlcad_ident(title));
 
-    multispectral_shader_init(&mfHead);	/* in libmultispectral/init.c */
+    optical_shader_init(&mfHead);	/* in libmultispectral/init.c */
 
     bu_struct_print("rttherm variables", view_parse, NULL);
 

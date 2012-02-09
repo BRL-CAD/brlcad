@@ -11,6 +11,6 @@ add_definitions(
   -DRT_MULTISPECTRAL
   )
 
-BRLCAD_ADDLIB(libmultispectral "init.c sh_temp.c" "librt librtms-static")
+BRLCAD_ADDLIB(libmultispectral "sh_temp.c" "librt librtms-static")
 SET_TARGET_PROPERTIES(libmultispectral PROPERTIES VERSION 19.0.1 SOVERSION 19)
 CMAKEFILES(Makefile.am)
