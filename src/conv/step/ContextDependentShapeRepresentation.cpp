@@ -81,46 +81,48 @@ bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SCLP23(Applicati
 
     if (representation_relation.empty()) {
 	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse, "representation_relation");
-	if (entity->IsComplex()) {
-	    SCLP23(Application_instance) *sub_entity = step->getEntity(entity, "Representation_Relationship_With_Transformation");
-	    if (sub_entity) {
-		RepresentationRelationshipWithTransformation *aRRWT = new RepresentationRelationshipWithTransformation();
+	if (entity) {
+	    if (entity->IsComplex()) {
+		SCLP23(Application_instance) *sub_entity = step->getEntity(entity, "Representation_Relationship_With_Transformation");
+		if (sub_entity) {
+		    RepresentationRelationshipWithTransformation *aRRWT = new RepresentationRelationshipWithTransformation();
 
-		representation_relation.push_back(aRRWT);
-		if (!aRRWT->Load(step, sub_entity)) {
-		    std::cout << CLASSNAME << ":Error loading RepresentationRelationshipWithTransformation" << std::endl;
-		    return false;
+		    representation_relation.push_back(aRRWT);
+		    if (!aRRWT->Load(step, sub_entity)) {
+			std::cout << CLASSNAME << ":Error loading RepresentationRelationshipWithTransformation" << std::endl;
+			return false;
+		    }
 		}
-	    }
 
-	    sub_entity = step->getEntity(entity, "Shape_Representation_Relationship");
-	    if (sub_entity) {
-		ShapeRepresentationRelationship *aSRR = new ShapeRepresentationRelationship();
+		sub_entity = step->getEntity(entity, "Shape_Representation_Relationship");
+		if (sub_entity) {
+		    ShapeRepresentationRelationship *aSRR = new ShapeRepresentationRelationship();
 
-		representation_relation.push_back(aSRR);
-		if (!aSRR->Load(step, sub_entity)) {
+		    representation_relation.push_back(aSRR);
+		    if (!aSRR->Load(step, sub_entity)) {
+			std::cout << CLASSNAME << ":Error loading ShapeRepresentationRelationship" << std::endl;
+			return false;
+		    }
+		}
+
+		sub_entity = step->getEntity(entity, "Representation_Relationship");
+		if (sub_entity) {
+		    RepresentationRelationship *aRR = new RepresentationRelationship();
+
+		    representation_relation.push_back(aRR);
+		    if (!aRR->Load(step, sub_entity)) {
+			std::cout << CLASSNAME << ":Error loading RepresentationRelationship" << std::endl;
+			return false;
+		    }
+		}
+	    } else {
+		ShapeRepresentationRelationship *aSRR = dynamic_cast<ShapeRepresentationRelationship *>(Factory::CreateObject(sw, entity));
+		if (aSRR != NULL) {
+		    representation_relation.push_back(aSRR);
+		} else {
 		    std::cout << CLASSNAME << ":Error loading ShapeRepresentationRelationship" << std::endl;
 		    return false;
 		}
-	    }
-
-	    sub_entity = step->getEntity(entity, "Representation_Relationship");
-	    if (sub_entity) {
-		RepresentationRelationship *aRR = new RepresentationRelationship();
-
-		representation_relation.push_back(aRR);
-		if (!aRR->Load(step, sub_entity)) {
-		    std::cout << CLASSNAME << ":Error loading RepresentationRelationship" << std::endl;
-		    return false;
-		}
-	    }
-	} else {
-	    ShapeRepresentationRelationship *aSRR = dynamic_cast<ShapeRepresentationRelationship *>(Factory::CreateObject(sw, entity));
-	    if (aSRR != NULL) {
-		representation_relation.push_back(aSRR);
-	    } else {
-		std::cout << CLASSNAME << ":Error loading ShapeRepresentationRelationship" << std::endl;
-		return false;
 	    }
 	}
     }

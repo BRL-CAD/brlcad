@@ -72,8 +72,12 @@ bool OrientedClosedShell::Load(STEPWrapper *sw, SCLP23(Application_instance) *ss
 	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse, "closed_shell_element");
 	if (entity) {
 	    closed_shell_element = dynamic_cast<ClosedShell *>(Factory::CreateObject(sw, entity));
+	    if (closed_shell_element == NULL) {
+		std::cerr << CLASSNAME << ": Error loading entity attribute 'closed_shell_element'." << std::endl;
+		return false;
+	    }
 	} else {
-	    std::cerr << CLASSNAME << ": Error loading entity attribute 'edge_element'." << std::endl;
+	    std::cerr << CLASSNAME << ": Error loading entity attribute 'closed_shell_element'." << std::endl;
 	    return false;
 	}
     }
