@@ -47,6 +47,10 @@ struct bn_tabdata *background = NULL;	/* radiant emittance of bg */
 vect_t background = VINIT_ZERO; /* Black */
 #endif
 
+/* initialized in the app code view handler */
+struct region env_region;
+
+
 #define MFUNCS(_name)							\
     { mlib_add_shader(headp, _name); }
 
@@ -63,25 +67,27 @@ optical_shader_init(struct mfuncs **headp)
      * Note that sh_plastic.c defines the required "default" entry.
      */
     MFUNCS(phg_mfuncs);
-    DMFUNCS(null_mfuncs); /* null test shader */
     MFUNCS(light_mfuncs);
+    MFUNCS(camo_mfuncs);
+    MFUNCS(stk_mfuncs);
+    MFUNCS(noise_mfuncs);
+
+#ifndef RT_MULTISPECTRAL
+    DMFUNCS(null_mfuncs); /* null test shader */
     DMFUNCS(cloud_mfuncs);
     DMFUNCS(spm_mfuncs);
-    DMFUNCS(txt_mfuncs);
-    MFUNCS(stk_mfuncs);
     DMFUNCS(cook_mfuncs);
     DMFUNCS(stxt_mfuncs);
+    DMFUNCS(txt_mfuncs);
     DMFUNCS(points_mfuncs);
     DMFUNCS(toyota_mfuncs);
     DMFUNCS(wood_mfuncs);
-    MFUNCS(camo_mfuncs);
     DMFUNCS(scloud_mfuncs);
     DMFUNCS(air_mfuncs);
     DMFUNCS(rtrans_mfuncs);
     DMFUNCS(fire_mfuncs);
     DMFUNCS(brdf_mfuncs);
     DMFUNCS(gauss_mfuncs);
-    MFUNCS(noise_mfuncs);
     DMFUNCS(prj_mfuncs);
     DMFUNCS(grass_mfuncs);
     DMFUNCS(tthrm_mfuncs);
@@ -92,6 +98,8 @@ optical_shader_init(struct mfuncs **headp)
 #ifdef OSL_ENABLED
     /* This shader requires OSL, so it won't be compiled if this library was not enabled */
     DMFUNCS(osl_mfuncs);
+#endif
+
 #endif
 }
 

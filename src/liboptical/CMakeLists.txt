@@ -129,12 +129,16 @@ CMAKEFILES(
 SET_TARGET_PROPERTIES(liboptical PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 set(LIBRTMS_SRCS
+  init.c
+  material.c
+  refract.c
   sh_camo.c
   sh_light.c
   sh_noise.c
   sh_plastic.c
   sh_stack.c
   shade.c
+  wray.c
   )
 
 add_library(librtms-static STATIC ${LIBRTMS_SRCS})

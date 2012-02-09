@@ -68,10 +68,10 @@ multispectral_shader_init(struct mfuncs **headp)
     /* these are not included yet as they do not have RT_MULTISPECTRAL hooks */
     DMFUNCS( cloud_mfuncs );
     DMFUNCS( spm_mfuncs );
-    DMFUNCS( txt_mfuncs );
     DMFUNCS( cook_mfuncs );
     DMFUNCS( marble_mfuncs );
     DMFUNCS( stxt_mfuncs );
+    DMFUNCS( txt_mfuncs );
     DMFUNCS( points_mfuncs );
     DMFUNCS( toyota_mfuncs );
     DMFUNCS( wood_mfuncs );

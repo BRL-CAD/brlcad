@@ -56,8 +56,6 @@ struct txt_specific {
 #define TX_O(m) bu_offsetof(struct txt_specific, m)
 #define TX_AO(m) bu_offsetofarray(struct txt_specific, m)
 
-struct region env_region;  /* initialized in the app code view handler */
-
 
 HIDDEN void txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value);
 HIDDEN void txt_source_hook(const struct bu_structparse *ip, const char *sp_name, genptr_t base, char *p);
