@@ -2163,15 +2163,19 @@ skip_section(void)
     /* skip to start of next section */
     section_start = ftell(fpin);
     if (section_start < 0L) {
-	bu_bomb("Error: couldn't get input file's current file position of input file.\n");
+	bu_exit(1, "Error: couldn't get input file's current file position.\n");
     }
 
     if (get_line()) {
 	while (line[0] && bu_strncmp(line, "SECTION", 7) &&
 	       bu_strncmp(line, "HOLE", 4) &&
 	       bu_strncmp(line, "WALL", 4) &&
-	       bu_strncmp(line, "VEHICLE", 7)) {
+	       bu_strncmp(line, "VEHICLE", 7))
+	{
 	    section_start = ftell(fpin);
+	    if (section_start < 0L) {
+		bu_exit(1, "Error: couldn't get input file's current file position.\n");
+	    }
 	    if (!get_line())
 		break;
 	}
