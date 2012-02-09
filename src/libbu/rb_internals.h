@@ -43,13 +43,13 @@
 /*
  * Access functions for fields of struct bu_rb_tree
  */
-#define rb_order_func(t, o) (((t)->rbt_order)[o])
-#define rb_print(t, p) (((t)->rbt_print)((p)->rbp_data))
-#define rb_root(t, o) (((t)->rbt_root)[o])
-#define rb_current(t) ((t)->rbt_current)
-#define rb_null(t) ((t)->rbt_empty_node)
-#define rb_get_uniqueness(t, o) ((((t)->rbt_unique)[(o)/8] & (0x1 << ((o) % 8))) ? 1 : 0)
-#define rb_set_uniqueness(t, o, u) {		\
+#define RB_ORDER_FUNC(t, o) (((t)->rbt_order)[o])
+#define RB_PRINT(t, p) (((t)->rbt_print)((p)->rbp_data))
+#define RB_ROOT(t, o) (((t)->rbt_root)[o])
+#define RB_CURRENT(t) ((t)->rbt_current)
+#define RB_NULL(t) ((t)->rbt_empty_node)
+#define RB_GET_UNIQUENESS(t, o) ((((t)->rbt_unique)[(o)/8] & (0x1 << ((o) % 8))) ? 1 : 0)
+#define RB_SET_UNIQUENESS(t, o, u) {		\
 	int _b = (o) / 8;			\
 	int _p = (o) - _b * 8;			\
 	((t)->rbt_unique)[_b] &= ~(0x1 << _p);	\
@@ -59,21 +59,21 @@
 /*
  * Access functions for fields of (struct bu_rb_node)
  */
-#define rb_parent(n, o) (((n)->rbn_parent)[o])
-#define rb_left_child(n, o) (((n)->rbn_left)[o])
-#define rb_right_child(n, o) (((n)->rbn_right)[o])
+#define RB_PARENT(n, o) (((n)->rbn_parent)[o])
+#define RB_LEFT_CHILD(n, o) (((n)->rbn_left)[o])
+#define RB_RIGHT_CHILD(n, o) (((n)->rbn_right)[o])
 #define RB_LEFT 0
 #define RB_RIGHT 1
-#define rb_child(n, o, d) (((d) == RB_LEFT) ?		\
-			   rb_left_child((n), (o)) :	\
-			   rb_right_child((n), (o)))
-#define rb_other_child(n, o, d) (((d) == RB_LEFT) ?		\
-				 rb_right_child((n), (o)) :	\
-				 rb_left_child((n), (o)))
-#define rb_size(n, o) (((n)->rbn_size)[o])
-#define rb_get_color(n, o)					\
+#define RB_CHILD(n, o, d) (((d) == RB_LEFT) ?		\
+			   RB_LEFT_CHILD((n), (o)) :	\
+			   RB_RIGHT_CHILD((n), (o)))
+#define RB_OTHER_CHILD(n, o, d) (((d) == RB_LEFT) ?		\
+				 RB_RIGHT_CHILD((n), (o)) :	\
+				 RB_LEFT_CHILD((n), (o)))
+#define RB_SIZE(n, o) (((n)->rbn_size)[o])
+#define RB_GET_COLOR(n, o)					\
     ((((n)->rbn_color)[(o)/8] & (0x1 << ((o) % 8))) ? 1 : 0)
-#define rb_set_color(n, o, c) {			\
+#define RB_SET_COLOR(n, o, c) {			\
 	int _b = (o) / 8;			\
 	int _p = (o) - _b * 8;			\
 	((n)->rbn_color)[_b] &= ~(0x1 << _p);	\
@@ -81,7 +81,7 @@
     }
 #define RB_RED 0
 #define RB_BLK 1
-#define rb_data(n, o) (((n)->rbn_package)[o]->rbp_data)
+#define RB_DATA(n, o) (((n)->rbn_package)[o]->rbp_data)
 
 /**
  * Interface to rb_walk()
@@ -97,7 +97,7 @@
  * the order to be rotated, and the direction of rotation.  They allow
  * indirection in the use of rb_rot_left() and rb_rot_right().
  */
-#define rb_rotate(n, o, d) (((d) == RB_LEFT) ?		\
+#define RB_ROTATE(n, o, d) (((d) == RB_LEFT) ?		\
 			    rb_rot_left((n), (o)) :	\
 			    rb_rot_right((n), (o)))
 
@@ -108,7 +108,7 @@
  * the order to be rotated, and the direction of rotation.  They allow
  * indirection in the use of rb_rot_left() and rb_rot_right().
  */
-#define rb_other_rotate(n, o, d) (((d) == RB_LEFT) ?		\
+#define RB_OTHER_ROTATE(n, o, d) (((d) == RB_LEFT) ?		\
 				  rb_rot_right((n), (o)) :	\
 				  rb_rot_left((n), (o)))
 
@@ -129,7 +129,7 @@
  */
 extern struct bu_rb_node *rb_neighbor(struct bu_rb_node *node, int order, int sense);
 
-/** @file rb_rotate.c
+/** @file RB_ROTATE.c
  *
  * Routines to perform rotations on a red-black tree
  *

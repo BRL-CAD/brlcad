@@ -46,7 +46,7 @@ _rb_select(struct bu_rb_node *root, int order, int k)
 
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
 
-    rank = rb_size(rb_left_child(root, order), order) + 1;
+    rank = RB_SIZE(RB_LEFT_CHILD(root, order), order) + 1;
     if (UNLIKELY(root->rbn_tree->rbt_debug & BU_RB_DEBUG_OS))
 	bu_log("_rb_select(<%p>, %d, %d): rank=%d\n",
 	       (void*)root, order, k, rank);
@@ -54,9 +54,9 @@ _rb_select(struct bu_rb_node *root, int order, int k)
     if (rank == k)
 	return root;
     else if (rank > k)
-	return _rb_select(rb_left_child(root, order), order, k);
+	return _rb_select(RB_LEFT_CHILD(root, order), order, k);
     else
-	return _rb_select(rb_right_child(root, order), order, k - rank);
+	return _rb_select(RB_RIGHT_CHILD(root, order), order, k - rank);
 }
 
 
@@ -72,16 +72,16 @@ bu_rb_select(struct bu_rb_tree *tree, int order, int k)
 	if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_OS))
 	    bu_log("bu_rb_select(<%p>, %d, %d): k out of bounds [1, %d]\n",
 		   (void*)tree, order, k, tree->rbt_nm_nodes);
-	rb_current(tree) = rb_null(tree);
+	RB_CURRENT(tree) = RB_NULL(tree);
 	return NULL;
     }
     if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_OS))
 	bu_log("bu_rb_select(<%p>, %d, %d): root=<%p>\n",
-	       (void*)tree, order, k, (void*)rb_root(tree, order));
+	       (void*)tree, order, k, (void*)RB_ROOT(tree, order));
 
-    rb_current(tree) = node
-	= _rb_select(rb_root(tree, order), order, k);
-    return rb_data(node, order);
+    RB_CURRENT(tree) = node
+	= _rb_select(RB_ROOT(tree, order), order, k);
+    return RB_DATA(node, order);
 }
 
 
@@ -95,15 +95,15 @@ int bu_rb_rank(struct bu_rb_tree *tree, int order)
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
 
-    if ((node = rb_current(tree)) == rb_null(tree))
+    if ((node = RB_CURRENT(tree)) == RB_NULL(tree))
 	return 0;
 
-    root = rb_root(tree, order);
-    rank = rb_size(rb_left_child(node, order), order) + 1;
+    root = RB_ROOT(tree, order);
+    rank = RB_SIZE(RB_LEFT_CHILD(node, order), order) + 1;
     while (node != root) {
-	parent = rb_parent(node, order);
-	if (node == rb_right_child(parent, order))
-	    rank += rb_size(rb_left_child(parent, order), order) + 1;
+	parent = RB_PARENT(node, order);
+	if (node == RB_RIGHT_CHILD(parent, order))
+	    rank += RB_SIZE(RB_LEFT_CHILD(parent, order), order) + 1;
 	node = parent;
     }
 

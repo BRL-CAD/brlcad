@@ -83,8 +83,8 @@ rb_free_node(struct bu_rb_node *node)
     BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
 
     tree = node->rbn_tree;
-    if (rb_current(tree) == node)
-	rb_current(tree) = rb_null(tree);
+    if (RB_CURRENT(tree) == node)
+	RB_CURRENT(tree) = RB_NULL(tree);
     BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
 
     /*

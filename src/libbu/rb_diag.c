@@ -57,10 +57,10 @@ _rb_describe_node(struct bu_rb_node *node, int depth)
 
     bu_log("%*snode <%p>...\n", depth * 2, "", (void*)node);
     bu_log("%*s  tree:   <%p>\n", depth * 2, "", (void*)node->rbn_tree);
-    bu_log("%*s  parent: <%p>\n", depth * 2, "", (void*)rb_parent(node, d_order));
-    bu_log("%*s  left:   <%p>\n", depth * 2, "", (void*)rb_left_child(node, d_order));
-    bu_log("%*s  right:  <%p>\n", depth * 2, "", (void*)rb_right_child(node, d_order));
-    bu_log("%*s  color:  %s\n", depth * 2, "", (rb_get_color(node, d_order) == RB_RED) ? "RED" : (rb_get_color(node, d_order) == RB_BLK) ? "BLACK" : "Huh?");
+    bu_log("%*s  parent: <%p>\n", depth * 2, "", (void*)RB_PARENT(node, d_order));
+    bu_log("%*s  left:   <%p>\n", depth * 2, "", (void*)RB_LEFT_CHILD(node, d_order));
+    bu_log("%*s  right:  <%p>\n", depth * 2, "", (void*)RB_RIGHT_CHILD(node, d_order));
+    bu_log("%*s  color:  %s\n", depth * 2, "", (RB_GET_COLOR(node, d_order) == RB_RED) ? "RED" : (RB_GET_COLOR(node, d_order) == RB_BLK) ? "BLACK" : "Huh?");
     bu_log("%*s  package: <%p> ", depth * 2, "", (void*)package);
 
     if ((pp != 0) && (package != BU_RB_PKG_NULL))
@@ -81,7 +81,7 @@ bu_rb_diagnose_tree(struct bu_rb_tree *tree, int order, int trav_type)
     bu_log("Order:       %d of %d\n", order, tree->rbt_nm_orders);
     bu_log("Current:     <%p>\n", (void*)tree->rbt_current);
     bu_log("Empty node:  <%p>\n", (void*)tree->rbt_empty_node);
-    bu_log("Uniqueness:  %d\n", rb_get_uniqueness(tree, order));
+    bu_log("Uniqueness:  %d\n", RB_GET_UNIQUENESS(tree, order));
     d_order = order;
     rb_walk(tree, order, _rb_describe_node, WALK_NODES, trav_type);
     bu_log("--------------------------------------------------\n");
@@ -106,11 +106,11 @@ bu_rb_summarize_tree(struct bu_rb_tree *tree)
 	for (i = 0; i < tree->rbt_nm_orders; ++i) {
 	    bu_log("%-3d  <%p>    %c      <%p>    <%p>    <%p>\n",
 		   i,
-		   rb_order_func(tree, i),
-		   rb_get_uniqueness(tree, i) ? 'Y' : 'N',
-		   (void*)rb_root(tree, i),
-		   (rb_root(tree, i) == BU_RB_NODE_NULL) ? 0 : (void*)(rb_root(tree, i)->rbn_package)[i],
-		   (rb_root(tree, i) == BU_RB_NODE_NULL) ? 0 : rb_data(rb_root(tree, i), i));
+		   RB_ORDER_FUNC(tree, i),
+		   RB_GET_UNIQUENESS(tree, i) ? 'Y' : 'N',
+		   (void*)RB_ROOT(tree, i),
+		   (RB_ROOT(tree, i) == BU_RB_NODE_NULL) ? 0 : (void*)(RB_ROOT(tree, i)->rbn_package)[i],
+		   (RB_ROOT(tree, i) == BU_RB_NODE_NULL) ? 0 : RB_DATA(RB_ROOT(tree, i), i));
 	}
     }
     bu_log("-------------------------------------------------\n");

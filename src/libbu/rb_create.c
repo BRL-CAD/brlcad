@@ -42,25 +42,25 @@ bu_rb_create(char *description, int nm_orders, int (**order_funcs)())
     tree->rbt_unique = (char *)
 	bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
 		  "red-black uniqueness flags");
-    rb_null(tree) = (struct bu_rb_node *)
+    RB_NULL(tree) = (struct bu_rb_node *)
 	bu_malloc(sizeof(struct bu_rb_node),
 		  "red-black empty node");
-    rb_null(tree)->rbn_parent = (struct bu_rb_node **)
+    RB_NULL(tree)->rbn_parent = (struct bu_rb_node **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
 		  "red-black parents");
-    rb_null(tree)->rbn_left = (struct bu_rb_node **)
+    RB_NULL(tree)->rbn_left = (struct bu_rb_node **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
 		  "red-black left children");
-    rb_null(tree)->rbn_right = (struct bu_rb_node **)
+    RB_NULL(tree)->rbn_right = (struct bu_rb_node **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
 		  "red-black right children");
-    rb_null(tree)->rbn_color = (char *)
+    RB_NULL(tree)->rbn_color = (char *)
 	bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
 		  "red-black colors");
-    rb_null(tree)->rbn_size = (int *)
+    RB_NULL(tree)->rbn_size = (int *)
 	bu_malloc(nm_orders * sizeof(int),
 		  "red-black subtree sizes");
-    rb_null(tree)->rbn_package = (struct bu_rb_package **)
+    RB_NULL(tree)->rbn_package = (struct bu_rb_package **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_package *),
 		  "red-black packages");
     /*
@@ -73,24 +73,24 @@ bu_rb_create(char *description, int nm_orders, int (**order_funcs)())
     tree->rbt_print = 0;
     bu_rb_uniq_all_off(tree);
     tree->rbt_debug = 0x0;
-    tree->rbt_current = rb_null(tree);
+    tree->rbt_current = RB_NULL(tree);
     for (order = 0; order < nm_orders; ++order)
-	rb_root(tree, order) = rb_null(tree);
+	RB_ROOT(tree, order) = RB_NULL(tree);
     BU_LIST_INIT(&(tree->rbt_nodes.l));
     BU_LIST_INIT(&(tree->rbt_packages.l));
 
     /*
      * Initialize the nil sentinel
      */
-    rb_null(tree)->rbn_magic = BU_RB_NODE_MAGIC;
-    rb_null(tree)->rbn_tree = tree;
+    RB_NULL(tree)->rbn_magic = BU_RB_NODE_MAGIC;
+    RB_NULL(tree)->rbn_tree = tree;
     for (order = 0; order < nm_orders; ++order) {
-	rb_parent(rb_null(tree), order) = BU_RB_NODE_NULL;
-	rb_set_color(rb_null(tree), order, RB_BLK);
-	rb_left_child(rb_null(tree), order) = BU_RB_NODE_NULL;
-	rb_right_child(rb_null(tree), order) = BU_RB_NODE_NULL;
-	rb_size(rb_null(tree), order) = 0;
-	(rb_null(tree)->rbn_package)[order] = BU_RB_PKG_NULL;
+	RB_PARENT(RB_NULL(tree), order) = BU_RB_NODE_NULL;
+	RB_SET_COLOR(RB_NULL(tree), order, RB_BLK);
+	RB_LEFT_CHILD(RB_NULL(tree), order) = BU_RB_NODE_NULL;
+	RB_RIGHT_CHILD(RB_NULL(tree), order) = BU_RB_NODE_NULL;
+	RB_SIZE(RB_NULL(tree), order) = 0;
+	(RB_NULL(tree)->rbn_package)[order] = BU_RB_PKG_NULL;
     }
 
     return tree;

@@ -50,43 +50,43 @@ _rb_fixup(struct bu_rb_tree *tree, struct bu_rb_node *node, int order)
     BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(tree, order);
 
-    while ((node != rb_root(tree, order))
-	   && (rb_get_color(node, order) == RB_BLK))
+    while ((node != RB_ROOT(tree, order))
+	   && (RB_GET_COLOR(node, order) == RB_BLK))
     {
-	parent = rb_parent(node, order);
-	if (node == rb_left_child(parent, order))
+	parent = RB_PARENT(node, order);
+	if (node == RB_LEFT_CHILD(parent, order))
 	    direction = RB_LEFT;
 	else
 	    direction = RB_RIGHT;
 
-	w = rb_other_child(parent, order, direction);
-	if (rb_get_color(w, order) == RB_RED) {
-	    rb_set_color(w, order, RB_BLK);
-	    rb_set_color(parent, order, RB_RED);
-	    rb_rotate(parent, order, direction);
-	    w = rb_other_child(parent, order, direction);
+	w = RB_OTHER_CHILD(parent, order, direction);
+	if (RB_GET_COLOR(w, order) == RB_RED) {
+	    RB_SET_COLOR(w, order, RB_BLK);
+	    RB_SET_COLOR(parent, order, RB_RED);
+	    RB_ROTATE(parent, order, direction);
+	    w = RB_OTHER_CHILD(parent, order, direction);
 	}
-	if ((rb_get_color(rb_child(w, order, direction), order) == RB_BLK)
-	    && (rb_get_color(rb_other_child(w, order, direction), order) == RB_BLK))
+	if ((RB_GET_COLOR(RB_CHILD(w, order, direction), order) == RB_BLK)
+	    && (RB_GET_COLOR(RB_OTHER_CHILD(w, order, direction), order) == RB_BLK))
 	{
-	    rb_set_color(w, order, RB_RED);
+	    RB_SET_COLOR(w, order, RB_RED);
 	    node = parent;
 	} else {
-	    if (rb_get_color(rb_other_child(w, order, direction), order) == RB_BLK) {
-		rb_set_color(rb_child(w, order, direction), order, RB_BLK);
-		rb_set_color(w, order, RB_RED);
-		rb_other_rotate(w, order, direction);
-		w = rb_other_child(parent, order, direction);
+	    if (RB_GET_COLOR(RB_OTHER_CHILD(w, order, direction), order) == RB_BLK) {
+		RB_SET_COLOR(RB_CHILD(w, order, direction), order, RB_BLK);
+		RB_SET_COLOR(w, order, RB_RED);
+		RB_OTHER_ROTATE(w, order, direction);
+		w = RB_OTHER_CHILD(parent, order, direction);
 	    }
-	    rb_set_color(w, order, rb_get_color(parent, order));
-	    rb_set_color(parent, order, RB_BLK);
-	    rb_set_color(rb_other_child(w, order, direction),
+	    RB_SET_COLOR(w, order, RB_GET_COLOR(parent, order));
+	    RB_SET_COLOR(parent, order, RB_BLK);
+	    RB_SET_COLOR(RB_OTHER_CHILD(w, order, direction),
 			 order, RB_BLK);
-	    rb_rotate(parent, order, direction);
-	    node = rb_root(tree, order);
+	    RB_ROTATE(parent, order, direction);
+	    node = RB_ROOT(tree, order);
 	}
     }
-    rb_set_color(node, order, RB_BLK);
+    RB_SET_COLOR(node, order, RB_BLK);
 }
 
 /**
@@ -111,26 +111,26 @@ _rb_delete(struct bu_rb_tree *tree, struct bu_rb_node *node, int order)
 
     if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_DELETE))
 	bu_log("_rb_delete(%p, %p, %d): data=%p\n",
-	       (void*)tree, (void*)node, order, rb_data(node, order));
+	       (void*)tree, (void*)node, order, RB_DATA(node, order));
 
-    if ((rb_left_child(node, order) == rb_null(tree))
-	|| (rb_right_child(node, order) == rb_null(tree)))
+    if ((RB_LEFT_CHILD(node, order) == RB_NULL(tree))
+	|| (RB_RIGHT_CHILD(node, order) == RB_NULL(tree)))
 	y = node;
     else
 	y = rb_neighbor(node, order, SENSE_MAX);
 
-    if (rb_left_child(y, order) == rb_null(tree))
-	only_child = rb_right_child(y, order);
+    if (RB_LEFT_CHILD(y, order) == RB_NULL(tree))
+	only_child = RB_RIGHT_CHILD(y, order);
     else
-	only_child = rb_left_child(y, order);
+	only_child = RB_LEFT_CHILD(y, order);
 
-    parent = rb_parent(only_child, order) = rb_parent(y, order);
-    if (parent == rb_null(tree))
-	rb_root(tree, order) = only_child;
-    else if (y == rb_left_child(parent, order))
-	rb_left_child(parent, order) = only_child;
+    parent = RB_PARENT(only_child, order) = RB_PARENT(y, order);
+    if (parent == RB_NULL(tree))
+	RB_ROOT(tree, order) = only_child;
+    else if (y == RB_LEFT_CHILD(parent, order))
+	RB_LEFT_CHILD(parent, order) = only_child;
     else
-	rb_right_child(parent, order) = only_child;
+	RB_RIGHT_CHILD(parent, order) = only_child;
 
     /*
      * Splice y out if it's not node
@@ -140,7 +140,7 @@ _rb_delete(struct bu_rb_tree *tree, struct bu_rb_node *node, int order)
 	((node->rbn_package)[order]->rbp_node)[order] = node;
     }
 
-    if (rb_get_color(y, order) == RB_BLK)
+    if (RB_GET_COLOR(y, order) == RB_BLK)
 	_rb_fixup(tree, only_child, order);
 
     if (--(y->rbn_pkg_refs) == 0)
@@ -163,13 +163,13 @@ bu_rb_delete(struct bu_rb_tree *tree, int order)
 	       tree->rbt_nm_nodes);
 	bu_bomb("");
     }
-    if (UNLIKELY(rb_current(tree) == rb_null(tree))) {
+    if (UNLIKELY(RB_CURRENT(tree) == RB_NULL(tree))) {
 	bu_log("Warning: bu_rb_delete(): current node is undefined\n");
 	return;
     }
 
     nm_orders = tree->rbt_nm_orders;
-    package = (rb_current(tree)->rbn_package)[order];
+    package = (RB_CURRENT(tree)->rbn_package)[order];
 
     node = (struct bu_rb_node **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node *), "node list");

@@ -40,11 +40,11 @@ prewalknodes(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int 
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(root->rbn_tree, order);
 
-    if (root == rb_null(root->rbn_tree))
+    if (root == RB_NULL(root->rbn_tree))
 	return;
     visit(root, depth);
-    prewalknodes (rb_left_child(root, order), order, visit, depth + 1);
-    prewalknodes (rb_right_child(root, order), order, visit, depth + 1);
+    prewalknodes (RB_LEFT_CHILD(root, order), order, visit, depth + 1);
+    prewalknodes (RB_RIGHT_CHILD(root, order), order, visit, depth + 1);
 }
 
 
@@ -59,11 +59,11 @@ inwalknodes(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int d
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(root->rbn_tree, order);
 
-    if (root == rb_null(root->rbn_tree))
+    if (root == RB_NULL(root->rbn_tree))
 	return;
-    inwalknodes (rb_left_child(root, order), order, visit, depth + 1);
+    inwalknodes (RB_LEFT_CHILD(root, order), order, visit, depth + 1);
     visit(root, depth);
-    inwalknodes (rb_right_child(root, order), order, visit, depth + 1);
+    inwalknodes (RB_RIGHT_CHILD(root, order), order, visit, depth + 1);
 }
 
 
@@ -78,10 +78,10 @@ postwalknodes(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(root->rbn_tree, order);
 
-    if (root == rb_null(root->rbn_tree))
+    if (root == RB_NULL(root->rbn_tree))
 	return;
-    postwalknodes (rb_left_child(root, order), order, visit, depth + 1);
-    postwalknodes (rb_right_child(root, order), order, visit, depth + 1);
+    postwalknodes (RB_LEFT_CHILD(root, order), order, visit, depth + 1);
+    postwalknodes (RB_RIGHT_CHILD(root, order), order, visit, depth + 1);
     visit(root, depth);
 }
 
@@ -97,11 +97,11 @@ prewalkdata(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int d
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(root->rbn_tree, order);
 
-    if (root == rb_null(root->rbn_tree))
+    if (root == RB_NULL(root->rbn_tree))
 	return;
-    visit(rb_data(root, order), depth);
-    prewalkdata (rb_left_child(root, order), order, visit, depth + 1);
-    prewalkdata (rb_right_child(root, order), order, visit, depth + 1);
+    visit(RB_DATA(root, order), depth);
+    prewalkdata (RB_LEFT_CHILD(root, order), order, visit, depth + 1);
+    prewalkdata (RB_RIGHT_CHILD(root, order), order, visit, depth + 1);
 }
 
 
@@ -116,11 +116,11 @@ inwalkdata(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int de
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(root->rbn_tree, order);
 
-    if (root == rb_null(root->rbn_tree))
+    if (root == RB_NULL(root->rbn_tree))
 	return;
-    inwalkdata (rb_left_child(root, order), order, visit, depth + 1);
-    visit(rb_data(root, order), depth);
-    inwalkdata (rb_right_child(root, order), order, visit, depth + 1);
+    inwalkdata (RB_LEFT_CHILD(root, order), order, visit, depth + 1);
+    visit(RB_DATA(root, order), depth);
+    inwalkdata (RB_RIGHT_CHILD(root, order), order, visit, depth + 1);
 }
 
 
@@ -135,11 +135,11 @@ postwalkdata(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int 
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(root->rbn_tree, order);
 
-    if (root == rb_null(root->rbn_tree))
+    if (root == RB_NULL(root->rbn_tree))
 	return;
-    postwalkdata (rb_left_child(root, order), order, visit, depth + 1);
-    postwalkdata (rb_right_child(root, order), order, visit, depth + 1);
-    visit(rb_data(root, order), depth);
+    postwalkdata (RB_LEFT_CHILD(root, order), order, visit, depth + 1);
+    postwalkdata (RB_RIGHT_CHILD(root, order), order, visit, depth + 1);
+    visit(RB_DATA(root, order), depth);
 }
 
 
@@ -161,7 +161,7 @@ rb_walk(struct bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int what_
 		case WALK_NODES:
 		case WALK_DATA:
 		    (*walk[what_to_visit][trav_type])
-			(rb_root(tree, order), order, visit, 0);
+			(RB_ROOT(tree, order), order, visit, 0);
 		    break;
 		default:
 		    bu_log("ERROR: rb_walk(): Illegal visitation object: %d\n",
