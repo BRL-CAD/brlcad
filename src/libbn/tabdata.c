@@ -1050,7 +1050,7 @@ bn_read_table_and_tabdata(const char *filename) {
 
     if (fp == NULL)  {
 	perror(filename);
-	bu_log("bn_read_table_and_tabdata(%s) FAILED\n", filename);
+	bu_log("bn_read_table_and_tabdata(%s) FAILED. Couldn't open file.\n", filename);
 	return NULL;
     }
 
@@ -1063,6 +1063,12 @@ bn_read_table_and_tabdata(const char *filename) {
     fclose(fp);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
+    if (count < 2)  {
+	perror(filename);
+	bu_log("bn_read_table_and_tabdata(%s) FAILED. Expected at least 2 lines in file.\n", filename);
+	return NULL;
+    }
+
     /* Allocate storage */
     BN_GET_TABLE(tabp, count);
     BN_GET_TABDATA(data, tabp);
@@ -1070,7 +1076,7 @@ bn_read_table_and_tabdata(const char *filename) {
     /* Second pass:  Read only as much data as storage was allocated for */
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     fp = fopen(filename, "rb");
-    for (i=0; i < count; i++)  {
+    for (i=0; i < count; i++) {
 	buf[0] = '\0';
 	if (bu_fgets(buf, sizeof(buf), fp) == NULL)  {
 	    bu_log("bn_read_table_and_tabdata(%s) unexpected EOF on line %zu\n", filename, i);
