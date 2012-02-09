@@ -324,7 +324,9 @@ main(int argc, char **argv)
 	if (bu_fgets(buf, BUFSIZ, fp_in) == NULL) {
 	    if (feof(fp_in)) {
 		found_eof = 1;
-	    } else if (ferror(fp_in)) {
+		continue;
+	    }
+	    if (ferror(fp_in)) {
 		perror("ERROR: Problem reading file, system error message");
 		if (fclose(fp_in) != 0) {
 		    (void)fprintf(stream, "Unable to close input file.\n");
@@ -332,7 +334,6 @@ main(int argc, char **argv)
 	    } else {
 		perror("Oddness reading input file");
 	    }
-
 	    bu_vls_free(&input_file_name);
 	    bu_vls_free(&output_file_name);
 	    return EXIT_FAILURE;
