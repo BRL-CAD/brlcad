@@ -353,6 +353,11 @@ namespace eval ArcherCore {
 	variable mTreeAttrColumns ""
 	variable mTreeAttrColumnsPref ""
 
+	variable mDoRtEdge 0
+	variable mDoRtEdgePref ""
+	variable mDoRtEdgeOverlay 0
+	variable mDoRtEdgeOverlayPref ""
+
 	variable mSeparateCommandWindow 0
 	variable mSeparateCommandWindowPref ""
 	variable mSepCmdPrefix "sepcmd_"
@@ -375,6 +380,8 @@ namespace eval ArcherCore {
 	variable mBackgroundColorPref ""
 	variable mFBBackgroundColor Black
 	variable mFBBackgroundColorPref ""
+	variable mFBOverlayColor White
+	variable mFBOverlayColorPref ""
 	variable mPrimitiveLabelColor Yellow
 	variable mPrimitiveLabelColorPref
 	variable mViewingParamsColor Yellow
@@ -1098,6 +1105,9 @@ namespace eval ArcherCore {
     trace add variable [::itcl::scope mViewAxesLabelColor] write watchVar
 
     trace add variable [::itcl::scope mFBBackgroundColor] write watchVar
+    trace add variable [::itcl::scope mFBOverlayColor] write watchVar
+    trace add variable [::itcl::scope mDoRtEdge] write watchVar
+    trace add variable [::itcl::scope mDoRtEdgeOverlay] write watchVar
     trace add variable [::itcl::scope mDisplayFontSize] write watchVar
 
     eval itk_initialize $args
@@ -5955,6 +5965,15 @@ namespace eval ArcherCore {
     switch -- $_name1 {
 	mFBBackgroundColor {
 	    $itk_component(rtcntrl) configure -color [cadwidgets::Ged::get_rgb_color $mFBBackgroundColor]
+	}
+	mFBOverlayColor {
+	    $itk_component(rtcntrl) configure -overlay_fg_color [cadwidgets::Ged::get_rgb_color $mFBOverlayColor]
+	}
+	mDoRtEdge {
+	    $itk_component(rtcntrl) configure -do_rtedge $mDoRtEdge
+	}
+	mDoRtEdgeOverlay {
+	    $itk_component(rtcntrl) configure -do_rtedge_overlay $mDoRtEdgeOverlay
 	}
 	mDisplayFontSize {
 	    $itk_component(ged) fontsize $mDisplayFontSize

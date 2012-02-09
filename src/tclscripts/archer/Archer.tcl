@@ -2465,6 +2465,13 @@ proc title_node_handler {node} {
 	$mColorListNoTriple
 
     buildComboBox $itk_component(generalF) \
+	fboverlayColor \
+	fbocolor \
+	mFBOverlayColorPref \
+	"FB Overlay Color:" \
+	$mColorListNoTriple
+
+    buildComboBox $itk_component(generalF) \
 	fontsize \
 	fontsize \
 	mDisplayFontSizePref \
@@ -2545,6 +2552,18 @@ proc title_node_handler {node} {
 	    -command [::itcl::code $this listViewAllAffectedCallback]
     } {}
 
+    itk_component add doRtEdgeCB {
+	::ttk::checkbutton $itk_component(generalF).doRtEdgeCB \
+	    -text "Do Rtedge" \
+	    -variable [::itcl::scope mDoRtEdgePref]
+    } {}
+
+    itk_component add doRtEdgeOverlayCB {
+	::ttk::checkbutton $itk_component(generalF).doRtEdgeOverlayCB \
+	    -text "Do Rtedge Overlay" \
+	    -variable [::itcl::scope mDoRtEdgeOverlayPref]
+    } {}
+
     if {$ArcherCore::inheritFromToplevel} {
 	itk_component add sepCmdWinCB {
 	    ::ttk::checkbutton $itk_component(generalF).sepCmdWinCB \
@@ -2578,6 +2597,9 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(fbbackgroundColorL) -column 0 -row $i -sticky ne
     grid $itk_component(fbbackgroundColorF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(fboverlayColorL) -column 0 -row $i -sticky ne
+    grid $itk_component(fboverlayColorF) -column 1 -row $i -sticky ew
     incr i
     grid $itk_component(fontsizeL) -column 0 -row $i -sticky e
     grid $itk_component(fontsizeF) -column 1 -row $i -sticky ew
@@ -2616,6 +2638,19 @@ proc title_node_handler {node} {
 	-column 0 \
 	-row $i \
 	-sticky sw
+    incr i
+    grid $itk_component(doRtEdgeCB) \
+	-columnspan 2 \
+	-column 0 \
+	-row $i \
+	-sticky sw
+    incr i
+    grid $itk_component(doRtEdgeOverlayCB) \
+	-columnspan 2 \
+	-column 0 \
+	-row $i \
+	-sticky sw
+
     if {$ArcherCore::inheritFromToplevel} {
 	incr i
 	grid $itk_component(sepCmdWinCB) \
@@ -2624,6 +2659,7 @@ proc title_node_handler {node} {
 	    -row $i \
 	    -sticky sw
     }
+
     incr i
     grid $itk_component(bigEMenuItemCB) \
 	-columnspan 2 \
@@ -7386,6 +7422,9 @@ proc title_node_handler {node} {
 
     backgroundColor $mBackgroundColor
     $itk_component(rtcntrl) configure -color [cadwidgets::Ged::get_rgb_color $mFBBackgroundColor]
+    $itk_component(rtcntrl) configure -overlay_fg_color [cadwidgets::Ged::get_rgb_color $mFBOverlayColor]
+    $itk_component(rtcntrl) configure -do_rtedge $mDoRtEdge
+    $itk_component(rtcntrl) configure -do_rtedge_overlay $mDoRtEdgeOverlay
     gedCmd configure -measuringStickColor $mMeasuringStickColor
     gedCmd configure -measuringStickMode $mMeasuringStickMode
     gedCmd configure -primitiveLabelColor $mPrimitiveLabelColor
@@ -7421,6 +7460,18 @@ proc title_node_handler {node} {
 
     if {$mFBBackgroundColor != $mFBBackgroundColorPref} {
 	set mFBBackgroundColor $mFBBackgroundColorPref
+    }
+
+    if {$mFBOverlayColor != $mFBOverlayColorPref} {
+	set mFBOverlayColor $mFBOverlayColorPref
+    }
+
+    if {$mDoRtEdge != $mDoRtEdgePref} {
+	set mDoRtEdge $mDoRtEdgePref
+    }
+
+    if {$mDoRtEdgeOverlay != $mDoRtEdgeOverlayPref} {
+	set mDoRtEdgeOverlay $mDoRtEdgeOverlayPref
     }
 
     if {$mDisplayFontSize != $mDisplayFontSizePref} {
@@ -7937,6 +7988,7 @@ proc title_node_handler {node} {
     set mBindingModePref $mBindingMode
     set mEnableBigEPref $mEnableBigE
     set mFBBackgroundColorPref $mFBBackgroundColor
+    set mFBOverlayColorPref $mFBOverlayColor
     set mDisplayFontSizePref $mDisplayFontSize
     set mMeasuringStickColorPref $mMeasuringStickColor
     set mMeasuringStickModePref $mMeasuringStickMode
@@ -7949,6 +8001,8 @@ proc title_node_handler {node} {
     set mEnableAffectedNodeHighlightPref $mEnableAffectedNodeHighlight
     set mSeparateCommandWindowPref $mSeparateCommandWindow
     set mDbUnits [gedCmd units -s]
+    set mDoRtEdgePref $mDoRtEdge
+    set mDoRtEdgeOverlayPref $mDoRtEdgeOverlay
 
     set mGridAnchorXPref [lindex $mGridAnchor 0]
     set mGridAnchorYPref [lindex $mGridAnchor 1]
@@ -8090,6 +8144,7 @@ proc title_node_handler {node} {
     puts $_pfile "set mBindingMode $mBindingMode"
     puts $_pfile "set mEnableBigE $mEnableBigE"
     puts $_pfile "set mFBBackgroundColor \"$mFBBackgroundColor\""
+    puts $_pfile "set mFBOverlayColor \"$mFBOverlayColor\""
     puts $_pfile "set mDisplayFontSize \"$mDisplayFontSize\""
     puts $_pfile "set mMeasuringStickColor \"$mMeasuringStickColor\""
     puts $_pfile "set mMeasuringStickMode $mMeasuringStickMode"
@@ -8100,6 +8155,8 @@ proc title_node_handler {node} {
     puts $_pfile "set mEnableListView $mEnableListView"
     puts $_pfile "set mEnableListViewAllAffected $mEnableListViewAllAffected"
     puts $_pfile "set mEnableAffectedNodeHighlight $mEnableAffectedNodeHighlight"
+    puts $_pfile "set mDoRtEdge $mDoRtEdge"
+    puts $_pfile "set mDoRtEdgeOverlay $mDoRtEdgeOverlay"
     puts $_pfile "set mSeparateCommandWindow $mSeparateCommandWindow"
 
     puts $_pfile "set mGridAnchor \"$mGridAnchor\""
