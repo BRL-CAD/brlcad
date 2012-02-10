@@ -458,7 +458,6 @@ endmacro(ADD_MAN_PAGES num manlist)
 #-----------------------------------------------------------------------------
 macro(ADD_MAN_PAGE num manfile)
   CMAKEFILES(${manfile})
-  file(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${manfile}\n")
   configure_file(${manfile} ${CMAKE_BINARY_DIR}/${MAN_DIR}/man${num}/${manfile} COPYONLY)
   install(FILES ${manfile} DESTINATION ${MAN_DIR}/man${num})
 endmacro(ADD_MAN_PAGE num manfile)

@@ -101,6 +101,7 @@ CMAKEFILES(
   moss.sh 
   mosspix.asc 
   nightly.sh 
+  nirt.sh
   red.sh 
   repository.sh 
   shaders.sh 
