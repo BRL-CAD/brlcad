@@ -15,7 +15,7 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
   BRLCAD_ADDEXEC(ssampview "spectrum.c ssampview.c" "libfb liboptical ${TCL_TK_LIBRARY} ${RTTHERM_XLIBS}")
 endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
 
-BRLCAD_ADDEXEC(rttherm "spectrum.c viewtherm.c" "libged libfb librttherm liboptical libmultispectral")
+BRLCAD_ADDEXEC(rttherm "spectrum.c viewtherm.c" "libged libfb librttherm libmultispectral")
 SET_TARGET_PROPERTIES(rttherm PROPERTIES COMPILE_DEFINITIONS "RT_MULTISPECTRAL")
 install(PROGRAMS ssampview.tcl DESTINATION ${BIN_DIR})
 
