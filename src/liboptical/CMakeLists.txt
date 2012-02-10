@@ -128,31 +128,4 @@ CMAKEFILES(
 
 SET_TARGET_PROPERTIES(liboptical PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
-set(LIBRTMS_SRCS
-  init.c
-  material.c
-  refract.c
-  sh_camo.c
-  sh_light.c
-  sh_noise.c
-  sh_plastic.c
-  sh_stack.c
-  shade.c
-  wray.c
-  )
-
-add_library(librtms-static STATIC ${LIBRTMS_SRCS})
-target_link_libraries(librtms-static librt libbn libbu)
-SET_TARGET_PROPERTIES(librtms-static PROPERTIES COMPILE_DEFINITIONS "RT_MULTISPECTRAL")
-if(NOT WIN32)
-  SET_TARGET_PROPERTIES(librtms-static PROPERTIES OUTPUT_NAME "librtms")
-endif(NOT WIN32)
-if(WIN32)
-  SET_TARGET_PROPERTIES(librtms-static PROPERTIES PREFIX "lib")
-endif(WIN32)
-install(TARGETS librtms-static 
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
-
 CMAKEFILES(Makefile.am)
