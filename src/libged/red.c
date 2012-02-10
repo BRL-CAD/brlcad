@@ -462,11 +462,13 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 		case '-':
 		    rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
 		    break;
-		default:
-		    bu_vls_printf(gedp->ged_result_str, "build_comb: unrecognized relation (assume UNION)\n");
 		case 'u':
 		    rt_tree_array[tree_index].tl_op = OP_UNION;
 		    break;
+		default:
+		    bu_vls_printf(gedp->ged_result_str,
+			"build_comb: unrecognized relation (assume UNION)\n");
+		    rt_tree_array[tree_index].tl_op = OP_UNION;
 	    }
 	    BU_GET(tp, union tree);
 	    RT_TREE_INIT(tp);
