@@ -137,6 +137,9 @@ main(int argc, char **argv)
 	}
     }
     nframes = atoi(argv[bu_optind+1]);
+    if (nframes < 0 || nframes >= INT_MAX - 1) {
+	bu_exit(2, "Invalid number of frames");
+    }
     if ( bu_optind+2 >= argc )
 	fps = 8;
     else
