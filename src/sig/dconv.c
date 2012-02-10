@@ -48,8 +48,8 @@ void	irfft256();
 void	irfft();
 
 double	savebuffer[MAXM];
-double	xbuf[2*MAXM];
-double	ibuf[2*MAXM];		/* impulse response */
+double	xbuf[2 * (MAXM + 1)];
+double	ibuf[2 * (MAXM + 1)];		/* impulse response */
 
 
 /*
