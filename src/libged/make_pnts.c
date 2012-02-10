@@ -498,6 +498,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 
 		if (previous_character_double && current_character_double) {
 		    if (temp_string_index >= temp_string_size) {
+			fclose(fp);
 			bu_vls_printf(gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
 			bu_vls_printf(gedp->ged_result_str, "String representing double too large, exceeds '%d' character limit. ", temp_string_size - 1);
 			report_import_error_location(num_doubles_read, num_doubles_per_point, start_offset_of_current_double,
@@ -512,6 +513,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 
 		if (previous_character_double && !current_character_double) {
 		    if (temp_string_index >= temp_string_size) {
+			fclose(fp);
 			bu_vls_printf(gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
 			bu_vls_printf(gedp->ged_result_str, "String representing double too large, exceeds '%d' character limit. ", temp_string_size - 1);
 			report_import_error_location(num_doubles_read, num_doubles_per_point, start_offset_of_current_double,
@@ -526,6 +528,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 		    if (format != '?') {
 			temp_double = strtod(temp_string, &endp);
 			if (!((endp != temp_string) && (*endp == '\0'))) {
+			    fclose(fp);
 			    bu_vls_printf(gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
 			    bu_vls_printf(gedp->ged_result_str, "Unable to convert string '%s' to double. ", temp_string);
 			    report_import_error_location(num_doubles_read, num_doubles_per_point, start_offset_of_current_double,
