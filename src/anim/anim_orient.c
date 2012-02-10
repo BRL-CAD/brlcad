@@ -269,7 +269,7 @@ main(int argc, char *argv[])
 		printf("%.12g\t%.12g\t%.12g\n", angle[0], angle[1], angle[2]);
 		break;
 	    case XYZ:
-		anim_mat2zyx(angle, matrix);
+		anim_mat2zyx(matrix, angle);
 		if (output_units==DEGREES)
 		    VSCALE(angle, angle, RAD2DEG);
 		printf("%.12g\t%.12g\t%.12g\n", angle[0], angle[1], angle[2]);

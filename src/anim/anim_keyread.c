@@ -139,7 +139,7 @@ main(int argc, char *argv[])
 		VSCALE(angle, angle, RAD2DEG);
 	    printf("%.10g\t%.10g\t%.10g\n", angle[0], angle[1], angle[2]);
 	} else if (mode==XYZ) {
-	    c = anim_mat2zyx(angle, viewrot);
+	    c = anim_mat2zyx(viewrot, angle);
 	    if (c==ERROR1)
 		fprintf(stderr, "Warning: x and z rotations arbitrarily defined at time = %f.\n", time);
 	    else if (c==ERROR2)
