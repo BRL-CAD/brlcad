@@ -1184,6 +1184,10 @@ comp.r4 ID 5678 material code 5 LOS 75
   common code in src/libanalyze (there may be more candidates around
   the tree)
 
+* look into embedding both rgb[3] and complex[n] data types in a union to
+  allow unification of libmultispectral and liboptical APIs to a single
+  more general liboptical.  Need to be careful about performance and
+  maintainability concerns.
 
 CONVERTERS
 ----------
