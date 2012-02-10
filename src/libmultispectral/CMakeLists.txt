@@ -1,3 +1,17 @@
+set(LIBMULTISPECTRAL_SRCS
+  ../liboptical/init.c
+  ../liboptical/material.c
+  ../liboptical/refract.c
+  ../liboptical/sh_camo.c
+  ../liboptical/sh_light.c
+  ../liboptical/sh_noise.c
+  ../liboptical/sh_plastic.c
+  ../liboptical/sh_stack.c
+  ../liboptical/shade.c
+  ../liboptical/wray.c
+  sh_temp.c
+  )
+
 # Include directories needed by libmultispectral users
 set(MULTISPECTRAL_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
@@ -11,6 +25,6 @@ add_definitions(
   -DRT_MULTISPECTRAL
   )
 
-BRLCAD_ADDLIB(libmultispectral "sh_temp.c" "librt librtms-static")
+BRLCAD_ADDLIB(libmultispectral "${LIBMULTISPECTRAL_SRCS}" "librt libbn libbu")
 SET_TARGET_PROPERTIES(libmultispectral PROPERTIES VERSION 19.0.1 SOVERSION 19)
 CMAKEFILES(Makefile.am)
