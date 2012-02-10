@@ -157,7 +157,7 @@ fastf_t		rt_perp_tol = (fastf_t)0.0;	/* Value for rti_tol.perp */
 char		*framebuffer = (char *)NULL;		/* desired framebuffer */
 
 int		space_partition = 	/*space partitioning algorithm to use*/
-#if 1
+#if 0
 /* Non-uniform grid/mesh discretized spatial partitioning */
 RT_PART_NUGRID;
 #else
