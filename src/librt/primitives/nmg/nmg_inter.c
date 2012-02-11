@@ -7052,7 +7052,7 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
     (void)nmg_unbreak_region_edges(&fu1->l.magic);
     (void)nmg_unbreak_region_edges(&fu2->l.magic);
 
-    if (fu1 && rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
+    if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
 	&& rt_g.NMG_debug & DEBUG_PLOTEM) {
 	static int nshell = 1;
 	char name[32];
