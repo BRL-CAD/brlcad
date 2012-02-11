@@ -819,7 +819,7 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
  * are detected and killed
  */
 struct shell *
-nmg_extrude_cleanup(struct shell *is, const int is_void, const struct bn_tol *tol)
+nmg_extrude_cleanup(struct shell *in_shell, const int is_void, const struct bn_tol *tol)
 {
     struct model *m;
     struct nmgregion *new_r;
@@ -828,25 +828,26 @@ nmg_extrude_cleanup(struct shell *is, const int is_void, const struct bn_tol *to
     struct vertexuse *vu;
     struct nmgregion *old_r;
     struct shell *s_tmp;
+    const int UNDETERMINED = -1;
 
-    NMG_CK_SHELL(is);
+    NMG_CK_SHELL(in_shell);
     BN_CK_TOL(tol);
 
     if (rt_g.NMG_debug & DEBUG_BASIC)
-	bu_log("nmg_extrude_cleanup(is=x%x)\n", is);
+	bu_log("nmg_extrude_cleanup(in_shell=x%x)\n", in_shell);
 
-    m = nmg_find_model(&is->l.magic);
+    m = nmg_find_model(&in_shell->l.magic);
 
     /* intersect each face in the shell with every other face in the
      * same shell
      */
-    nmg_isect_shell_self(is, tol);
+    nmg_isect_shell_self(in_shell, tol);
 
     /* Extrusion may create loops that overlap */
-    nmg_fix_overlapping_loops(is, tol);
+    nmg_fix_overlapping_loops(in_shell, tol);
 
     /* look for self-touching loops */
-    for (BU_LIST_FOR(fu, faceuse, &is->fu_hd)) {
+    for (BU_LIST_FOR(fu, faceuse, &in_shell->fu_hd)) {
 	if (fu->orientation != OT_SAME)
 	    continue;
 
@@ -880,37 +881,49 @@ nmg_extrude_cleanup(struct shell *is, const int is_void, const struct bn_tol *to
 
     nmg_rebound(m, tol);
 
-    /* remember the nmgregion where "is" came from */
-    old_r = is->r_p;
+    /* We now build a temporary region in the model where we can move in_shell
+     * in order to isolate it from other shells.
+     */
 
-    /* make a new nmgregion, shell, and vertex */
+    /* remember the nmgregion where "in_shell" came from */
+    old_r = in_shell->r_p;
+
+    /* NMG rules require a region to always have a shell, so in order
+     * to get our in_shell in a new region by itself we must:
+     *   1) Create a new region containing a temporary shell.
+     *   2) Add our in_shell to the region.
+     *   3) Remove the temporary shell.
+     */
     new_r = nmg_mrsv(m);
-
-    /* s_tmp is the shell just created */
     s_tmp = BU_LIST_FIRST(shell, &new_r->s_hd);
 
-    /* move our shell (is) to the new nmgregion in preparaion for
-     * nmg_decompose_shell.  don't want to confuse pieces of this
-     * shell with other shells in "old_r"
-     */
-    (void)nmg_mv_shell_to_region(is, new_r);
+    (void)nmg_mv_shell_to_region(in_shell, new_r);
 
-    /* kill the unused, newly created shell */
     if (nmg_ks(s_tmp))
 	bu_bomb("nmg_extrude_shell: Nothing got moved to new region\n");
 
     /* now decompose our shell, count number of inside shells */
-    if ((nmg_decompose_shell(is, tol)) < 2) {
-	/* we still have only one shell */
-	if (nmg_bad_face_normals(is, tol)) {
-	    (void)nmg_ks(is);
-	    is = (struct shell *)NULL;
-	} else if (is_void != -1 && nmg_shell_is_void(is) != is_void) {
-	    (void)nmg_ks(is);
-	    is = (struct shell *)NULL;
-	} else
-	    (void)nmg_mv_shell_to_region(is, old_r);
+    if (nmg_decompose_shell(in_shell, tol) < 2) {
 
+	/* We still have only one shell. If there's a problem with it, then
+	 * kill it. Otherwise, move it back to the region it came from.
+	 */
+	if (nmg_bad_face_normals(in_shell, tol)) {
+	    /* shell contains bad face normals */
+	    (void)nmg_ks(in_shell);
+	    in_shell = (struct shell *)NULL;
+	} else if (is_void != UNDETERMINED && is_void != nmg_shell_is_void(in_shell)) {
+	    /* shell was known to be a void shell and became an exterior shell
+	     * OR
+	     * shell was known to be an exterior shell and became a void shell
+	     */
+	    (void)nmg_ks(in_shell);
+	    in_shell = (struct shell *)NULL;
+	} else {
+	    (void)nmg_mv_shell_to_region(in_shell, old_r);
+	}
+
+	/* kill temporary region */
 	nmg_kr(new_r);
 	new_r = NULL;
     } else {
@@ -926,16 +939,20 @@ nmg_extrude_cleanup(struct shell *is, const int is_void, const struct bn_tol *to
 		kill_it = 1;
 
 	    if (!kill_it) {
-		if (is_void != -1 && nmg_shell_is_void(s_tmp) != is_void)
+		if (is_void != UNDETERMINED && is_void != nmg_shell_is_void(s_tmp))
 		    kill_it = 1;
 	    }
 
 	    if (kill_it) {
 		/* Bad shell, kill it */
 		if (nmg_ks(s_tmp)) {
+
+		    /* All shells have been removed (all were bad).
+		     * Kill the now-empty temporary region. 
+		     */
 		    nmg_kr(new_r);
 		    new_r = (struct nmgregion *)NULL;
-		    is = (struct shell *)NULL;
+		    in_shell = (struct shell *)NULL;
 		    break;
 		}
 	    }
@@ -944,35 +961,26 @@ nmg_extrude_cleanup(struct shell *is, const int is_void, const struct bn_tol *to
     }
 
     if (new_r) {
-	/* merge remaining shells in "new_r" */
-	is = BU_LIST_FIRST(shell, &new_r->s_hd);
+	/* temp region contains multiple valid shells that we must merge */
 
-	s_tmp = BU_LIST_PNEXT(shell, &is->l);
-	while (BU_LIST_NOT_HEAD(s_tmp, &new_r->s_hd)) {
-	    struct shell *next_s;
-
-	    next_s = BU_LIST_PNEXT(shell, &s_tmp->l);
-
-	    if (s_tmp == is) {
-		s_tmp = next_s;
+	in_shell = BU_LIST_FIRST(shell, &new_r->s_hd);
+	for (BU_LIST_FOR(s_tmp, shell, &new_r->s_hd)) {
+	    if (s_tmp == in_shell) {
 		continue;
 	    }
-
-	    nmg_js(is, s_tmp, tol);
-	    s_tmp = next_s;
+	    nmg_js(in_shell, s_tmp, tol);
 	}
 
-	/* move it all back into the original nmgregion */
-	if (is)
-	    (void)nmg_mv_shell_to_region(is, old_r);
+	/* move resulting shell back to the original region */
+	(void)nmg_mv_shell_to_region(in_shell, old_r);
 
-	/* kill the temporary nmgregion */
+	/* kill the temporary region */
 	if (BU_LIST_NON_EMPTY(&new_r->s_hd))
 	    bu_log("nmg_extrude_cleanup: temporary nmgregion not empty!!\n");
 
 	(void)nmg_kr(new_r);
     }
-    return is;
+    return in_shell;
 }
 
 
