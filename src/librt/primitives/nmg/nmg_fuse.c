@@ -316,6 +316,11 @@ nmg_model_vertex_fuse(struct model *m, const struct bn_tol *tol)
 
     nmg_vertex_tabulate(&t1, &m->magic);
 
+    /* if there are no vertex, do nothing */
+    if (!BU_PTBL_END(&t1)) {
+	return 0;
+    }
+
     total = nmg_ptbl_vfuse(&t1, tol);
 
     bu_ptbl_free(&t1);
