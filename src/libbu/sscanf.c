@@ -84,41 +84,6 @@
 #define	CT_FLOAT	4	/* %[efgEFG] conversion */
 #define	CT_VLS		5	/* %V and %#V conversion */
 
-/* Copy part of a string, everything from srcStart to srcEnd (exclusive),
- * into a new buffer. Returns the allocated buffer.
- */
-static char*
-getSubstring(const char *srcStart, const char *srcEnd)
-{
-    size_t size;
-    char *sub;
-
-    size = (size_t)srcEnd - (size_t)srcStart + 1;
-    sub = (char*)bu_malloc(size * sizeof(char), "getSubstring");
-    bu_strlcpy(sub, srcStart, size);
-
-    return sub;
-}
-
-/* append %n to format string to get consumed count */
-static void
-append_n(char **fmt) {
-    char *result;
-    int nLen, size, resultSize;
-
-    size = strlen(*fmt) + 1;
-    nLen = strlen("%n");
-
-    resultSize = size + nLen;
-    result = (char*)bu_malloc(resultSize * sizeof(char), "append_n");
-
-    bu_strlcpy(result, *fmt, resultSize);
-    bu_strlcat(result, "%n", resultSize);
-
-    bu_free(*fmt, "append_n");
-    *fmt = result;
-}
-
 /* The basic strategy of this routine is to break the formatted scan into
  * pieces, one for each conversion in the format string.
  *
@@ -142,9 +107,8 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
     size_t i, width;
     int numCharsConsumed, partConsumed;
     int numFieldsAssigned, partAssigned;
-    char *partFmt;
+    struct bu_vls partFmt = BU_VLS_INIT_ZERO;
     const char *fmt;
-    const char *wordStart;
 
     BU_ASSERT(src != NULL);
     BU_ASSERT(fmt0 != NULL);
@@ -155,22 +119,16 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
     numCharsConsumed = 0;
     partConsumed = 0;
     partAssigned = 0;
-    partFmt = NULL;
 
 #define UPDATE_COUNTS \
     numCharsConsumed += partConsumed; \
     numFieldsAssigned += partAssigned;
 
 #define FREE_FORMAT_PART \
-    if (partFmt != NULL) { \
-	bu_free(partFmt, "bu_sscanf partFmt"); \
-	partFmt = NULL; \
-    }
+    bu_vls_free(&partFmt);
 
 #define GET_FORMAT_PART \
-    FREE_FORMAT_PART; \
-    partFmt = getSubstring(wordStart, fmt); \
-    append_n(&partFmt);
+    bu_vls_strcat(&partFmt, "%n");
 
 #define EXIT_DUE_TO_INPUT_FAILURE \
     FREE_FORMAT_PART; \
@@ -188,8 +146,8 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
     return EOF;
 
     while (1) {
-	/* Mark word start, then skip to first non-white char. */
-	wordStart = fmt;
+	/* skip to first non-white char */
+	bu_vls_trunc(&partFmt, 0);
 	do {
 	    c = *fmt;
 	    if (c == '\0') {
@@ -199,6 +157,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 		FREE_FORMAT_PART;
 		return numFieldsAssigned;
 	    }
+	    bu_vls_putc(&partFmt, c);
 	    ++fmt;
 	} while (isspace(c));
 
@@ -209,11 +168,15 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 		if (c == '\0' || isspace(c) || c == '%') {
 		    break;
 		}
+		bu_vls_putc(&partFmt, c);
 		++fmt;
 	    }
+
 	    /* scan literal sequence */
 	    GET_FORMAT_PART;
-	    partAssigned = sscanf(&src[numCharsConsumed], partFmt, &partConsumed);
+	    partAssigned = sscanf(&src[numCharsConsumed],
+		    bu_vls_addr(&partFmt), &partConsumed);
+
 	    if (partAssigned < 0) {
 		EXIT_DUE_TO_INPUT_FAILURE;
 	    }
@@ -227,12 +190,15 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 	flags = 0;
 again:
 	c = *fmt++;
+	bu_vls_putc(&partFmt, c);
 	switch (c) {
 
 	/* Literal '%'. */
 	case '%':
 	    GET_FORMAT_PART;
-	    partAssigned = sscanf(&src[numCharsConsumed], partFmt, &partConsumed);
+	    partAssigned = sscanf(&src[numCharsConsumed],
+		    bu_vls_addr(&partFmt), &partConsumed);
+
 	    if (partAssigned < 0) {
 		EXIT_DUE_TO_INPUT_FAILURE;
 	    }
@@ -328,6 +294,13 @@ again:
 	    break;
 	case 'A': case 'E': case 'F': case 'G':
 	case 'a': case 'e': case 'f': case 'g':
+	    /* e/f/g, E/F/G, and a/A (C99) are all synonyms for float
+	     * conversion. Support for a/A is limited to C99-compliant
+	     * implementations, and there is varying support for E/F/G.
+	     * Replace all with the most portable 'f' variant.
+	     */
+	    bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
+	    bu_vls_putc(&partFmt, 'f');
 	    c = CT_FLOAT;
 	    break;
 	case 's':
@@ -353,6 +326,8 @@ again:
 	    /* point fmt after character class */
 	    while (1) {
 		c = *fmt++;
+		bu_vls_putc(&partFmt, c);
+
 		if (c == '\0') {
 		    EXIT_DUE_TO_MISC_ERROR;
 		}
@@ -422,10 +397,10 @@ again:
 
 #define SSCANF_TYPE(type) \
     if (flags & SUPPRESS) { \
-	partAssigned = sscanf(&src[numCharsConsumed], partFmt, \
+	partAssigned = sscanf(&src[numCharsConsumed], bu_vls_addr(&partFmt), \
 		&partConsumed); \
     } else { \
-	partAssigned = sscanf(&src[numCharsConsumed], partFmt, \
+	partAssigned = sscanf(&src[numCharsConsumed], bu_vls_addr(&partFmt), \
 		va_arg(ap, type), &partConsumed); \
     }
 
@@ -452,7 +427,7 @@ if (flags & UNSIGNED) { \
 	     * conversion specification is preceeded by at least one whitespace
 	     * character.
 	     */
-	    if (isspace(*wordStart) || flags & ALTERNATE) {
+	    if (isspace(*bu_vls_addr(&partFmt)) || flags & ALTERNATE) {
 		while (1) {
 		    c = src[numCharsConsumed];
 		    if (c == '\0' || !isspace(c)) {
