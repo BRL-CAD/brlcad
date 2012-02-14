@@ -261,6 +261,7 @@ _ged_get_obj_bounds2(struct ged *gedp,
     stp->st_dp = dp;
     MAT_IDN(imat);
     stp->st_matp = imat;
+    stp->st_meth = intern.idb_meth;
 
     /* Get bounds from internal object */
     VMOVE(stp->st_min, rpp_min);
