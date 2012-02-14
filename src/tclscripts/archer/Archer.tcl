@@ -5662,6 +5662,8 @@ proc title_node_handler {node} {
     $itk_component(ged) init_button_no_op 2
     set ::GeometryEditFrame::mEditLastTransMode $OBJECT_TRANSLATE_MODE
 
+putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFrame::mEditCommand"
+
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
 
@@ -5742,7 +5744,12 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::endObjTranslate {_dm _obj _mx _my} {
     $itk_component(ged) pane_idle_mode $_dm
-    handleObjCenter $_dm $_obj $_mx $_my 
+
+    set ocenter [gedCmd ocenter $_obj]
+    set vcenter [gedCmd pane_m2v_point $_dm $ocenter]
+    set screen [gedCmd pane_view2screen $_dm $vcenter]
+
+    handleObjCenter $_dm $_obj [lindex $screen 0] [lindex $screen 1]
     endObjCenter $_obj
 }
 
