@@ -107,34 +107,46 @@ main(int argc, char **argv)
 	(void)printf("Enter the mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    bu_strlcpy(filemged, "window_frame.g", sizeof(filemged));
+	}
 
 	/* Find the number of window frames to create. */
 	(void)printf("Enter the number of window frames to create (26 max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%d", &numwin);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    numwin = 1;
+	}
 
 	/* Find the dimensions of the window frames. */
 	(void)printf("Enter the height, width, and depth of the window frame.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf %lf %lf", &hgt, &wid, &dpt);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    hgt = 1618; /* golden ratio */
+	    wid = 1000;
+	    dpt = 10;
+	}
 
 	(void)printf("Enter the radius of the corner.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf", &rds);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    rds = 2;
+	}
 
 	(void)printf("Enter the actual width of the window frame.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf", &isw);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    isw = 5;
+	}
     }							/* END # 3 */
 
     /* If there are arguments get answers from arguments. */
