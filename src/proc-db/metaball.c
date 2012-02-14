@@ -138,6 +138,7 @@ mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
 	dp = db_lookup(dbip, av[i], 1);
 	if (!dp) {
 	    bu_log("Unable to find %s\n", av[i]);
+	    continue;
 	}
 
 	/* load the existing database object */
