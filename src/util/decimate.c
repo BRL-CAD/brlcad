@@ -79,6 +79,11 @@ main(int argc, char **argv)
 	oheight = atoi(argv[5]);
     }
 
+    if(owidth <= 0 || owidth > INT_MAX || oheight <= 0 || oheight > INT_MAX ) {
+	bu_log("Output size of range: %ldx%ld\n", (long int)owidth, (long int)oheight);
+	return EXIT_FAILURE;
+    }
+
     /* Determine how many samples/lines to discard after each one saved,
      * and how much padding to add to the end of each line.
      */
