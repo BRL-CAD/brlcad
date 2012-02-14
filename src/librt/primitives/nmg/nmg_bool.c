@@ -491,6 +491,12 @@ nmg_kill_anti_loops(struct shell *s)
 	    if (fu1 == fu2)
 		continue;
 
+	    /* remove from loops prior to kill so we don't pass around
+	     * free'd pointers.  fine for ptbl, but misleading.
+	     */
+	    bu_ptbl_rm(&loops, lu1);
+	    bu_ptbl_rm(&loops, lu2);
+
 	    if (nmg_klu(lu1)) {
 		if (nmg_kfu(fu1))
 		    goto out;
@@ -500,8 +506,6 @@ nmg_kill_anti_loops(struct shell *s)
 		    goto out;
 	    }
 
-	    bu_ptbl_rm(&loops, (long *)lu1);
-	    bu_ptbl_rm(&loops, (long *)lu2);
 	    i--;
 	    break;
 	}
