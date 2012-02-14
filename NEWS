@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2012-02-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* improved handling of rgb/color attributes by adjust cmd - C. Yapp
 * added a basic SWIG spec file - Erik Greenwald
 * fixed highlighting of related objects in Archer treeview - B. Parker
 * fixed error handling input reading failure in burst - Sean Morrison
