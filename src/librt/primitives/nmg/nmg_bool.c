@@ -920,12 +920,12 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     nmg_s_radial_check(sA, tol);
     nmg_s_radial_check(sB, tol);
     nmg_evaluate_boolean(sA, sB, oper, classlist, tol);
+    sB = NULL; /* sanity, killed during boolean eval */
 
     if (rt_g.NMG_debug & DEBUG_BOOL) {
 	bu_log("Just after nmg_evaluate_boolean:\nShell A:\n");
 	nmg_pr_s_briefly(sA, 0);
-	bu_log("Shell B:\n");
-	nmg_pr_s_briefly(sB, 0);
+	bu_log("Shell B:\nFreed.");
     }
 
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
@@ -990,8 +990,6 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	if (rt_g.NMG_debug & DEBUG_BOOL) {
 	    bu_log("Just after nmg_simplify_shell:\nShell A:\n");
 	    nmg_pr_s_briefly(sA, 0);
-	    bu_log("Shell B:\n");
-	    nmg_pr_s_briefly(sB, 0);
 	}
 
 	/* Bounding boxes may have changed */
