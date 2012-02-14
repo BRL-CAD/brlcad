@@ -231,9 +231,19 @@ again:
 	    }
 	    goto again;
 	case 't':
+#ifndef HAVE_C99_FORMAT_SPECIFIERS
+	    /* Assume MSVC, where equivalent of %t[dioxX] is %I[dioxX]. */
+	    bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
+	    bu_vls_putc(&partFmt, 'I');
+#endif
 	    flags |= PTRDIFFT;
 	    goto again;
 	case 'z':
+#ifndef HAVE_C99_FORMAT_SPECIFIERS
+	    /* Assume MSVC, where equivalent of %z[ouxX] is %I[ouxX]. */
+	    bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
+	    bu_vls_putc(&partFmt, 'I');
+#endif
 	    flags |= SIZET;
 	    goto again;
 	case 'L':
@@ -244,6 +254,13 @@ again:
 		/* First occurance of 'h' in this conversion specifier. */
 		flags |= SHORT;
 	    } else {
+#ifndef HAVE_C99_FORMAT_SPECIFIERS
+		/* Assume MSVC, where there is no equivalent of %hh[diouxX].
+		 * Will use %h[diouxX] with short instead, then cast into
+		 * char argument.
+		 */
+		bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
+#endif
 		/* Since SHORT is set, the previous conversion character must
 		 * have been 'h'. With this second 'h', we know we have an "hh"
 		 * modifer, not an 'h' modifer. We need to replace the
@@ -550,7 +567,33 @@ if (flags & UNSIGNED) { \
 	    if (flags & SHORT) {
 		SSCANF_SIGNED_UNSIGNED(short int*);
 	    } else if (flags & SHORTSHORT) {
+#ifndef HAVE_C99_FORMAT_SPECIFIERS
+		/* Assume MSVC, where there is no equivalent of %hh[diouxX].
+		 * Will use %h[diouxX] with short instead, then cast into
+		 * char argument.
+		 */
+		if (flags & SUPPRESS) {
+		    partAssigned = sscanf(&src[numCharsConsumed],
+			    bu_vls_addr(&partFmt), &partConsumed);
+		} else {
+		    if (flags & UNSIGNED) {
+			unsigned short charConvVal = 0;
+			partAssigned = sscanf(&src[numCharsConsumed],
+				bu_vls_addr(&partFmt), &charConvVal,
+				&partConsumed);
+			*va_arg(ap, unsigned char*) = (unsigned char)charConvVal;
+		    } else {
+			short charConvVal = 0;
+			partAssigned = sscanf(&src[numCharsConsumed],
+				bu_vls_addr(&partFmt), &charConvVal,
+				&partConsumed);
+			*va_arg(ap, signed char*) = (signed char)charConvVal;
+		    }
+		}
+
+#else
 		SSCANF_SIGNED_UNSIGNED(char*);
+#endif
 	    } else if (flags & LONG) {
 		SSCANF_SIGNED_UNSIGNED(long int*);
 	    } else if (flags & LONGLONG) {

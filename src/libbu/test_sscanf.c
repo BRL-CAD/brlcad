@@ -112,7 +112,9 @@ enum {
     SCAN_INT, SCAN_UINT,
     SCAN_LONG, SCAN_ULONG,
     SCAN_POINTER,
-    SCAN_FLOAT, SCAN_DOUBLE, SCAN_LDOUBLE
+    SCAN_FLOAT, SCAN_DOUBLE, SCAN_LDOUBLE,
+    SCAN_SIZE,
+    SCAN_PTRDIFF
 };
 
 static void
@@ -224,6 +226,14 @@ test_sscanf(int type, const char *src, const char *fmt) {
 	SSCANF_TYPE(unsigned long);
 	CHECK_INT_VALS_EQUAL(unsigned long, lu, val, bu_val);
 	break;
+    case SCAN_SIZE:
+	SSCANF_TYPE(size_t);
+	CHECK_INT_VALS_EQUAL(size_t, z, val, bu_val);
+	break;
+    case SCAN_PTRDIFF:
+	SSCANF_TYPE(ptrdiff_t);
+	CHECK_INT_VALS_EQUAL(ptrdiff_t, t, val, bu_val);
+	break;
     case SCAN_POINTER:
 	ret = sscanf(src, fmt, &val);
 	bu_ret = bu_sscanf(src, fmt, &bu_val);
@@ -298,6 +308,7 @@ doNumericTests()
 {
 #define TEST_SIGNED_CONSTANT(str, fmt) \
     test_sscanf(SCAN_SHORTSHORT, str, "%hh" bu_cpp_str(fmt)); \
+    test_sscanf(SCAN_SIZE, str, "%z" bu_cpp_str(fmt)); \
     test_sscanf(SCAN_SHORT, str, "%h" bu_cpp_str(fmt)); \
     test_sscanf(SCAN_INT, str, "%" bu_cpp_str(fmt)); \
     test_sscanf(SCAN_LONG, str, "%l" bu_cpp_str(fmt));
@@ -310,6 +321,7 @@ doNumericTests()
 
 #define TEST_UNSIGNED_CONSTANT(str, fmt) \
     test_sscanf(SCAN_USHORTSHORT, str, "%hh" bu_cpp_str(fmt)); \
+    test_sscanf(SCAN_SIZE, str, "%z" bu_cpp_str(fmt)); \
     test_sscanf(SCAN_USHORT, str, "%h" bu_cpp_str(fmt)); \
     test_sscanf(SCAN_UINT, str, "%" bu_cpp_str(fmt)); \
     test_sscanf(SCAN_ULONG, str, "%l" bu_cpp_str(fmt));
@@ -326,6 +338,7 @@ doNumericTests()
     test_sscanf(SCAN_SHORTSHORT, "+" bu_cpp_str(small), "%hh" bu_cpp_str(fmt)); \
     test_sscanf(SCAN_SHORTSHORT, bu_cpp_str(small), "%hh" bu_cpp_str(fmt)); \
     test_sscanf(SCAN_SHORTSHORT, "-" bu_cpp_str(small), "%hh" bu_cpp_str(fmt)); \
+    test_sscanf(SCAN_SIZE, bu_cpp_str(small), "%z" bu_cpp_str(fmt)); \
     test_sscanf(SCAN_SHORT, "+" bu_cpp_str(med), "%h" bu_cpp_str(fmt)); \
     test_sscanf(SCAN_SHORT, bu_cpp_str(med), "%h" bu_cpp_str(fmt)); \
     test_sscanf(SCAN_SHORT, "-" bu_cpp_str(med), "%h" bu_cpp_str(fmt)); \
@@ -341,8 +354,9 @@ doNumericTests()
     TEST_SIGNED_CONSTANTS(SIGNED_HH_OCT, SIGNED_OCT, SIGNED_L_OCT, i);
     TEST_SIGNED_CONSTANTS(SIGNED_HH_HEX, SIGNED_HEX, SIGNED_L_HEX, i);
 
-#define TEST_UNSIGNED_CONSTANTS(small, med,large, fmt) \
+#define TEST_UNSIGNED_CONSTANTS(small, med, large, fmt) \
     test_sscanf(SCAN_USHORTSHORT, bu_cpp_str(small), "%hh" bu_cpp_str(fmt)); \
+    test_sscanf(SCAN_SIZE, bu_cpp_str(small), "%z" bu_cpp_str(fmt)); \
     test_sscanf(SCAN_USHORT, bu_cpp_str(med), "%h" bu_cpp_str(fmt)); \
     test_sscanf(SCAN_UINT, bu_cpp_str(med), "%" bu_cpp_str(fmt)); \
     test_sscanf(SCAN_ULONG, bu_cpp_str(large), "%l" bu_cpp_str(fmt));
@@ -368,10 +382,15 @@ doNumericTests()
     test_sscanf(SCAN_LDOUBLE, bu_cpp_xstr(SMALL_FLT), "%L" bu_cpp_str(fmt)); \
     test_sscanf(SCAN_LDOUBLE, bu_cpp_xstr(LARGE_FLT), "%L" bu_cpp_str(fmt));
 
-    TEST_FLOAT_VARIANT(f);
+    TEST_FLOAT_VARIANT(a);
     TEST_FLOAT_VARIANT(e);
-    TEST_FLOAT_VARIANT(E);
+    TEST_FLOAT_VARIANT(f);
     TEST_FLOAT_VARIANT(g);
+
+    TEST_FLOAT_VARIANT(A);
+    TEST_FLOAT_VARIANT(E);
+    TEST_FLOAT_VARIANT(F);
+    TEST_FLOAT_VARIANT(G);
 }
 
 /* string test routine */
@@ -473,6 +492,23 @@ doPointerTests()
 {
     test_sscanf(SCAN_POINTER, "0", "%p");
     test_sscanf(SCAN_POINTER, bu_cpp_xstr(UNSIGNED_L_HEX), "%p");
+
+    test_sscanf(SCAN_PTRDIFF, "0", "%ti");
+    test_sscanf(SCAN_PTRDIFF, "0", "%td");
+    test_sscanf(SCAN_PTRDIFF, "0", "%tu");
+    test_sscanf(SCAN_PTRDIFF, bu_cpp_xstr(SIGNED_L_DEC), "%ti");
+    test_sscanf(SCAN_PTRDIFF, bu_cpp_xstr(SIGNED_L_DEC), "%td");
+    test_sscanf(SCAN_PTRDIFF, bu_cpp_xstr(UNSIGNED_L_DEC), "%tu");
+
+    test_sscanf(SCAN_PTRDIFF, "000", "%ti");
+    test_sscanf(SCAN_PTRDIFF, "000", "%to");
+    test_sscanf(SCAN_PTRDIFF, bu_cpp_xstr(SIGNED_L_OCT), "%ti");
+    test_sscanf(SCAN_PTRDIFF, bu_cpp_xstr(UNSIGNED_L_OCT), "%to");
+
+    test_sscanf(SCAN_PTRDIFF, "0x0", "%ti");
+    test_sscanf(SCAN_PTRDIFF, "0x0", "%tx");
+    test_sscanf(SCAN_PTRDIFF, bu_cpp_xstr(SIGNED_L_HEX), "%ti");
+    test_sscanf(SCAN_PTRDIFF, bu_cpp_xstr(UNSIGNED_L_HEX), "%tx");
 }
 
 static void
