@@ -3477,10 +3477,10 @@ proc title_node_handler {node} {
 	-command [::itcl::code $this doAe -90 0]
     $itk_component(${_prefix}stdviewsmenu) add command \
 	-label "Top" \
-	-command [::itcl::code $this doAe 0 90]
+	-command [::itcl::code $this doAe 270 90]
     $itk_component(${_prefix}stdviewsmenu) add command \
 	-label "Bottom" \
-	-command [::itcl::code $this doAe 0 -90]
+	-command [::itcl::code $this doAe 270 -90]
     $itk_component(${_prefix}stdviewsmenu) add separator
     $itk_component(${_prefix}stdviewsmenu) add command \
 	-label "35, 25" \
@@ -4840,9 +4840,9 @@ proc title_node_handler {node} {
     $itk_component(menubar) menuconfigure .display.standard.starboard \
 	-command [::itcl::code $this doAe -90 0]
     $itk_component(menubar) menuconfigure .display.standard.top \
-	-command [::itcl::code $this doAe 0 90]
+	-command [::itcl::code $this doAe 270 90]
     $itk_component(menubar) menuconfigure .display.standard.bottom \
-	-command [::itcl::code $this doAe 0 -90]
+	-command [::itcl::code $this doAe 270 -90]
     $itk_component(menubar) menuconfigure .display.standard.35, 25 \
 	-command [::itcl::code $this doAe 35 25]
     $itk_component(menubar) menuconfigure .display.standard.45, 45 \

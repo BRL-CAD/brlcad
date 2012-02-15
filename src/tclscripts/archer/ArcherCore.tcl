@@ -1293,10 +1293,10 @@ namespace eval ArcherCore {
 	    -command [::itcl::code $this doAe -90 0] \
 	    -state disabled
 	$itk_component(canvas_menu) menuconfigure .view.top \
-	    -command [::itcl::code $this doAe 0 90] \
+	    -command [::itcl::code $this doAe 270 90] \
 	    -state disabled
 	$itk_component(canvas_menu) menuconfigure .view.bottom \
-	    -command [::itcl::code $this doAe 0 -90] \
+	    -command [::itcl::code $this doAe 270 -90] \
 	    -state disabled
 	$itk_component(canvas_menu) menuconfigure .view.35,25 \
 	    -command [::itcl::code $this doAe 35 25] \
