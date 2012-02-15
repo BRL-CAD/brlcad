@@ -3619,12 +3619,46 @@ BU_EXPORT extern void bu_log(const char *, ...) _BU_ATTR_PRINTF12;
 BU_EXPORT extern void bu_flog(FILE *, const char *, ...) _BU_ATTR_PRINTF23;
 
 /**
- * Custom vsscanf.
+ * Custom vsscanf which wraps the system sscanf, and is wrapped by bu_sscanf.
+ *
+ * bu_vsscanf differs notably from the underlying system sscanf in that:
+ *
+ *  - A maximum field width is required for unsuppressed %s and %[...]
+ *    conversions. If a %s or %[...] conversion is encountered which does
+ *    not include a maximum field width, the routine bombs in order to avoid
+ *    an accidental buffer overrun.
+ *
+ *  - %V and %#V have been added as valid conversions. Both expect a pointer to
+ *    a struct bu_vls as their argument.
+ *   
+ *    %V is comparable to %[^]. It instructs bu_vsscanf to read arbitrary
+ *    characters from the source and store them in the vls buffer. The default
+ *    maximum field width is infinity.
+ *
+ *    %#V is comparable to %s. It instructs bu_vsscanf to skip leading
+ *    whitespace, and then read characters from the source and store them in the
+ *    vls buffer until the next whitespace character is encountered. The default
+ *    maximum field width is infinity.
+ *
+ *  - 0 is always a valid field width for unsuppressed %c, %s, and %[...]
+ *    conversions and causes '\0' to be written to the supplied char*
+ *    argument.
+ *
+ *  - a/e/f/g and A/E/F/G are always synonyms for float conversion.
+ *
+ *  - The C99 conversions hh[diouxX], z[diouxX], and t[diouxX] are always
+ *    supported.
+ *
+ * This routine has an associated test program named test_sscanf, which
+ * compares its behavior to the system sscanf.
  */
 BU_EXPORT extern int bu_vsscanf(const char *src, const char *fmt, va_list ap);
 
 /**
- * Initializes the va_list, then calls the above bu_vsscanf.
+ * Initializes the va_list, then calls bu_vsscanf.
+ *
+ * This routine has an associated test program named test_sscanf, which
+ * compares its behavior to the system sscanf.
  */
 BU_EXPORT extern int bu_sscanf(const char *src, const char *fmt, ...) _BU_ATTR_SCANF23;
 
