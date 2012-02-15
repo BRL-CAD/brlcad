@@ -3640,6 +3640,8 @@ namespace eval ArcherCore {
 	-command [::itcl::code $this setDisplayColor $_node {0 255 0}]
     $color add command -label "Blue" \
 	-command [::itcl::code $this setDisplayColor $_node {0 0 255}]
+    $color add command -label "Cyan" \
+	-command [::itcl::code $this setDisplayColor $_node {0 255 255}]
     $color add command -label "Indigo" \
 	-command [::itcl::code $this setDisplayColor $_node {0 0 128}]
     $color add command -label "Violet" \
