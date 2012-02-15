@@ -4496,6 +4496,22 @@ to_data_pick(struct ged *gedp,
     point_t dpoint, vpoint;
     register int i;
     struct ged_dm_view *gdvp;
+    fastf_t top_z;
+    point_t top_point;
+    size_t top_i, top_j, top_k;
+    int found_top = 0;
+    char *top_data_str;
+    char *top_data_label;
+    static fastf_t tol = 0.015;
+    static char *data_polygons_str = "data_polygons";
+    static char *data_labels_str = "data_labels";
+    static char *sdata_labels_str = "sdata_labels";
+    static char *data_lines_str = "data_lines";
+    static char *sdata_lines_str = "sdata_lines";
+    static char *data_arrows_str = "data_arrows";
+    static char *sdata_arrows_str = "sdata_arrows";
+    static char *data_axes_str = "data_axes";
+    static char *sdata_axes_str = "sdata_axes";
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -4552,18 +4568,30 @@ to_data_pick(struct ged *gedp,
 		    fastf_t minY, maxY;
 
 		    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdpsp->gdps_polygons.gp_polygon[si].gp_contour[sj].gpc_point[sk]);
-		    minX = vpoint[X] - 0.015;
-		    maxX = vpoint[X] + 0.015;
-		    minY = vpoint[Y] - 0.015;
-		    maxY = vpoint[Y] + 0.015;
+		    minX = vpoint[X] - tol;
+		    maxX = vpoint[X] + tol;
+		    minY = vpoint[Y] - tol;
+		    maxY = vpoint[Y] + tol;
 
 		    if (minX < vx && vx < maxX &&
 			minY < vy && vy < maxY) {
-			bu_vls_printf(gedp->ged_result_str, "data_polygons {%llu %llu %llu} {%lf %lf %lf}",
-				      si, sj, sk, V3ARGS(gdpsp->gdps_polygons.gp_polygon[si].gp_contour[sj].gpc_point[sk]));
-			return GED_OK;
+			if (!found_top || top_z < vpoint[Z]) {
+			    top_z = vpoint[Z];
+			    top_data_str = data_polygons_str;
+			    top_i = si;
+			    top_j = sj;
+			    top_k = sk;
+			    VMOVE(top_point, gdpsp->gdps_polygons.gp_polygon[si].gp_contour[sj].gpc_point[sk]);
+			    found_top = 1;
+			}
 		    }
 		}
+    }
+
+    if (found_top) {
+	bu_vls_printf(gedp->ged_result_str, "%s {%llu %llu %llu} {%lf %lf %lf}",
+		      top_data_str, top_i, top_j, top_k, V3ARGS(top_point));
+	return GED_OK;
     }
 
     /* check for label points */
@@ -4578,22 +4606,21 @@ to_data_pick(struct ged *gedp,
 	    VMOVE(dpoint, gdlsp->gdls_points[i]);
 	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
 
-#if 1
 	    minX = vpoint[X];
-	    maxX = vpoint[X] + 0.03;
+	    maxX = vpoint[X] + (2 * tol);
 	    minY = vpoint[Y];
-	    maxY = vpoint[Y] + 0.03;
-#else
-	    minX = vpoint[X] - 0.015;
-	    maxX = vpoint[X] + 0.015;
-	    minY = vpoint[Y] - 0.015;
-	    maxY = vpoint[Y] + 0.015;
-#endif
+	    maxY = vpoint[Y] + (2 * tol);
+
 	    if (minX < vx && vx < maxX &&
 		minY < vy && vy < maxY) {
-		bu_vls_printf(gedp->ged_result_str, "data_labels %d {{%s} {%lf %lf %lf}}",
-			      i, gdlsp->gdls_labels[i], V3ARGS(dpoint));
-		return GED_OK;
+		if (!found_top || top_z < vpoint[Z]) {
+		    top_z = vpoint[Z];
+		    top_data_str = data_labels_str;
+		    top_i = i;
+		    top_data_label = gdlsp->gdls_labels[i];
+		    VMOVE(top_point, dpoint);
+		    found_top = 1;
+		}
 	    }
 	}
     }
@@ -4610,25 +4637,29 @@ to_data_pick(struct ged *gedp,
 	    VMOVE(dpoint, gdlsp->gdls_points[i]);
 	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
 
-#if 1
 	    minX = vpoint[X];
-	    maxX = vpoint[X] + 0.03;
+	    maxX = vpoint[X] + (2 * tol);
 	    minY = vpoint[Y];
-	    maxY = vpoint[Y] + 0.03;
-#else
-	    minX = vpoint[X] - 0.015;
-	    maxX = vpoint[X] + 0.015;
-	    minY = vpoint[Y] - 0.015;
-	    maxY = vpoint[Y] + 0.015;
-#endif
+	    maxY = vpoint[Y] + (2 * tol);
 
 	    if (minX < vx && vx < maxX &&
 		minY < vy && vy < maxY) {
-		bu_vls_printf(gedp->ged_result_str, "sdata_labels %d {{%s} {%lf %lf %lf}}",
-			      i, gdlsp->gdls_labels[i], V3ARGS(dpoint));
-		return GED_OK;
+		if (!found_top || top_z < vpoint[Z]) {
+		    top_z = vpoint[Z];
+		    top_data_str = sdata_labels_str;
+		    top_i = i;
+		    top_data_label = gdlsp->gdls_labels[i];
+		    VMOVE(top_point, dpoint);
+		    found_top = 1;
+		}
 	    }
 	}
+    }
+
+    if (found_top) {
+	bu_vls_printf(gedp->ged_result_str, "%s %llu {{%s} {%lf %lf %lf}}",
+		      top_data_str, top_i, top_data_label, V3ARGS(top_point));
+	return GED_OK;
     }
 
     /* check for line points */
@@ -4643,12 +4674,19 @@ to_data_pick(struct ged *gedp,
 	    VMOVE(dpoint, gdlsp->gdls_points[i]);
 	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
 
-	    minX = vpoint[X] - 0.015;
-	    maxX = vpoint[X] + 0.015;
-	    minY = vpoint[Y] - 0.015;
-	    maxY = vpoint[Y] + 0.015;
+	    minX = vpoint[X] - tol;
+	    maxX = vpoint[X] + tol;
+	    minY = vpoint[Y] - tol;
+	    maxY = vpoint[Y] + tol;
 	    if (minX < vx && vx < maxX &&
 		minY < vy && vy < maxY) {
+		if (!found_top || top_z < vpoint[Z]) {
+		    top_z = vpoint[Z];
+		    top_data_str = data_lines_str;
+		    top_i = i;
+		    VMOVE(top_point, dpoint);
+		    found_top = 1;
+		}
 		bu_vls_printf(gedp->ged_result_str, "data_lines %d {%lf %lf %lf}", i, V3ARGS(dpoint));
 		return GED_OK;
 	    }
@@ -4667,16 +4705,27 @@ to_data_pick(struct ged *gedp,
 	    VMOVE(dpoint, gdlsp->gdls_points[i]);
 	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
 
-	    minX = vpoint[X] - 0.015;
-	    maxX = vpoint[X] + 0.015;
-	    minY = vpoint[Y] - 0.015;
-	    maxY = vpoint[Y] + 0.015;
+	    minX = vpoint[X] - tol;
+	    maxX = vpoint[X] + tol;
+	    minY = vpoint[Y] - tol;
+	    maxY = vpoint[Y] + tol;
 	    if (minX < vx && vx < maxX &&
 		minY < vy && vy < maxY) {
-		bu_vls_printf(gedp->ged_result_str, "sdata_lines %d {%lf %lf %lf}", i, V3ARGS(dpoint));
-		return GED_OK;
+		if (!found_top || top_z < vpoint[Z]) {
+		    top_z = vpoint[Z];
+		    top_data_str = sdata_lines_str;
+		    top_i = i;
+		    VMOVE(top_point, dpoint);
+		    found_top = 1;
+		}
 	    }
 	}
+    }
+
+    if (found_top) {
+	bu_vls_printf(gedp->ged_result_str, "%s %d {%lf %lf %lf}",
+		      top_data_str, top_i, V3ARGS(top_point));
+	return GED_OK;
     }
 
     /* check for arrow points */
@@ -4691,14 +4740,19 @@ to_data_pick(struct ged *gedp,
 	    VMOVE(dpoint, gdasp->gdas_points[i]);
 	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
 
-	    minX = vpoint[X] - 0.015;
-	    maxX = vpoint[X] + 0.015;
-	    minY = vpoint[Y] - 0.015;
-	    maxY = vpoint[Y] + 0.015;
+	    minX = vpoint[X] - tol;
+	    maxX = vpoint[X] + tol;
+	    minY = vpoint[Y] - tol;
+	    maxY = vpoint[Y] + tol;
 	    if (minX < vx && vx < maxX &&
 		minY < vy && vy < maxY) {
-		bu_vls_printf(gedp->ged_result_str, "data_arrows %d {%lf %lf %lf}", i, V3ARGS(dpoint));
-		return GED_OK;
+		if (!found_top || top_z < vpoint[Z]) {
+		    top_z = vpoint[Z];
+		    top_data_str = data_arrows_str;
+		    top_i = i;
+		    VMOVE(top_point, dpoint);
+		    found_top = 1;
+		}
 	    }
 	}
     }
@@ -4715,16 +4769,27 @@ to_data_pick(struct ged *gedp,
 	    VMOVE(dpoint, gdasp->gdas_points[i]);
 	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
 
-	    minX = vpoint[X] - 0.015;
-	    maxX = vpoint[X] + 0.015;
-	    minY = vpoint[Y] - 0.015;
-	    maxY = vpoint[Y] + 0.015;
+	    minX = vpoint[X] - tol;
+	    maxX = vpoint[X] + tol;
+	    minY = vpoint[Y] - tol;
+	    maxY = vpoint[Y] + tol;
 	    if (minX < vx && vx < maxX &&
 		minY < vy && vy < maxY) {
-		bu_vls_printf(gedp->ged_result_str, "sdata_arrows %d {%lf %lf %lf}", i, V3ARGS(dpoint));
-		return GED_OK;
+		if (!found_top || top_z < vpoint[Z]) {
+		    top_z = vpoint[Z];
+		    top_data_str = sdata_arrows_str;
+		    top_i = i;
+		    VMOVE(top_point, dpoint);
+		    found_top = 1;
+		}
 	    }
 	}
+    }
+
+    if (found_top) {
+	bu_vls_printf(gedp->ged_result_str, "%s %d {%lf %lf %lf}",
+		      top_data_str, top_i, V3ARGS(top_point));
+	return GED_OK;
     }
 
     /* check for axes points */
@@ -4739,14 +4804,19 @@ to_data_pick(struct ged *gedp,
 	    VMOVE(dpoint, gdasp->gdas_points[i]);
 	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
 
-	    minX = vpoint[X] - 0.015;
-	    maxX = vpoint[X] + 0.015;
-	    minY = vpoint[Y] - 0.015;
-	    maxY = vpoint[Y] + 0.015;
+	    minX = vpoint[X] - tol;
+	    maxX = vpoint[X] + tol;
+	    minY = vpoint[Y] - tol;
+	    maxY = vpoint[Y] + tol;
 	    if (minX < vx && vx < maxX &&
 		minY < vy && vy < maxY) {
-		bu_vls_printf(gedp->ged_result_str, "data_axes %d {%lf %lf %lf}", i, V3ARGS(dpoint));
-		return GED_OK;
+		if (!found_top || top_z < vpoint[Z]) {
+		    top_z = vpoint[Z];
+		    top_i = i;
+		    top_data_str = data_axes_str;
+		    VMOVE(top_point, dpoint);
+		    found_top = 1;
+		}
 	    }
 	}
     }
@@ -4763,17 +4833,26 @@ to_data_pick(struct ged *gedp,
 	    VMOVE(dpoint, gdasp->gdas_points[i]);
 	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
 
-	    minX = vpoint[X] - 0.015;
-	    maxX = vpoint[X] + 0.015;
-	    minY = vpoint[Y] - 0.015;
-	    maxY = vpoint[Y] + 0.015;
+	    minX = vpoint[X] - tol;
+	    maxX = vpoint[X] + tol;
+	    minY = vpoint[Y] - tol;
+	    maxY = vpoint[Y] + tol;
 	    if (minX < vx && vx < maxX &&
 		minY < vy && vy < maxY) {
-		bu_vls_printf(gedp->ged_result_str, "sdata_axes %d {%lf %lf %lf}", i, V3ARGS(dpoint));
-		return GED_OK;
+		if (!found_top || top_z < vpoint[Z]) {
+		    top_z = vpoint[Z];
+		    top_i = i;
+		    top_data_str = sdata_axes_str;
+		    VMOVE(top_point, dpoint);
+		    found_top = 1;
+		}
 	    }
 	}
     }
+
+    if (found_top)
+	bu_vls_printf(gedp->ged_result_str, "%s %d {%lf %lf %lf}",
+		      top_data_str, top_i, V3ARGS(top_point));
 
     return GED_OK;
 
