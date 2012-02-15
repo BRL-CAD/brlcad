@@ -318,7 +318,7 @@ integer {
 
 <comment> {
 
-'\n' { NEWLINE; }
+'\n' { NEWLINE; IGNORE_TOKEN; }
 [^*()\n]* { IGNORE_TOKEN; }
 [*()] { IGNORE_TOKEN; }
 
