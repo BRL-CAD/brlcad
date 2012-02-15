@@ -195,7 +195,10 @@ id_char	= [A-Za-z0-9_];
 
 /* Added * at the end of next rule (to make lexer faster) - DEL */
 <*>[\t ]* { IGNORE_TOKEN; }
-<*>'\n' { NEWLINE; }
+<*>'\n' {
+    NEWLINE;
+    IGNORE_TOKEN;
+}
 
 <code>"--"[^\n]*'\n' {
     NEWLINE;
@@ -318,7 +321,10 @@ integer {
 
 <comment> {
 
-'\n' { NEWLINE; IGNORE_TOKEN; }
+'\n' {
+    NEWLINE;
+    IGNORE_TOKEN;
+}
 [^*()\n]* { IGNORE_TOKEN; }
 [*()] { IGNORE_TOKEN; }
 
