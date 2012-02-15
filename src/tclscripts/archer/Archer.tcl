@@ -450,6 +450,7 @@ package provide Archer 1.0
 	buildObjAttrView
 	buildObjEditView
 	buildObjToolView
+	buildSelectTransparencyDialog
 
 	# set initial toggle variables
 	set mVPaneToggle3 $mVPaneFraction3

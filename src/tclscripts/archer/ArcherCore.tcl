@@ -318,6 +318,7 @@ namespace eval ArcherCore {
 	variable mSelectedObjType ""
 	variable mPasteActive 0
 	variable mMultiPane 0
+	variable mTransparency 0
 
 	variable mHPaneFraction1 80
 	variable mHPaneFraction2 20
@@ -775,6 +776,8 @@ namespace eval ArcherCore {
 	method render             {_node _state _trans _updateTree {_wflag 1}}
 	method selectDisplayColor  {_node}
 	method setDisplayColor	   {_node _rgb}
+	method selectTransparency  {_node}
+	method selectTransparencyCmd  {_node _alpha}
 	method setTransparency	   {_node _alpha}
 	method raytracePanel    {}
 	method doPng             {}
@@ -842,6 +845,7 @@ namespace eval ArcherCore {
 	# Dialogs Section
 	method buildInfoDialog {_name _title _info _size _wrapOption _modality}
 	method buildSaveDialog {}
+	method buildSelectTransparencyDialog {}
 	method buildViewCenterDialog {}
 	method centerDialogOverPane {_dialog}
 
@@ -3232,6 +3236,27 @@ namespace eval ArcherCore {
     updateSaveMode
 }
 
+
+::itcl::body ArcherCore::selectTransparency {_node} {
+    set rdata [gedCmd how -b $_node]
+    if {$rdata == -1} {
+	return
+    }
+
+    set mTransparency [expr {1.0 - [lindex $rdata 1]}]
+
+    set pane [centerDialogOverPane $itk_component(selTranspDialog)]
+    $itk_component(selTranspDialogSc) configure \
+	-command [::itcl::code $this selectTransparencyCmd $_node]
+    $itk_component(selTranspDialog) activate
+}
+
+
+::itcl::body ArcherCore::selectTransparencyCmd {_node _alpha} {
+    setTransparency $_node [expr {1.0 - $_alpha}]
+}
+
+
 ::itcl::body ArcherCore::setTransparency {node alpha} {
     gedCmd set_transparency $node $alpha
 }
@@ -3361,6 +3386,7 @@ namespace eval ArcherCore {
 
     addHistory "ae $_az $_el"
 }
+
 
 ::itcl::body ArcherCore::showViewAxes {} {
     catch {gedCmd configure -viewAxesEnable $mShowViewAxes}
@@ -3681,20 +3707,23 @@ namespace eval ArcherCore {
 #	    -command [::itcl::code $this setTransparency $_node 0.5]
 #	$trans add command -label "60%" \
 #	    -command [::itcl::code $this setTransparency $_node 0.4]
-#	$trans add command -label "70%" \
-#	    -command [::itcl::code $this setTransparency $_node 0.3]
+	$trans add command -label "70%" \
+	    -command [::itcl::code $this setTransparency $_node 0.3]
 	$trans add command -label "80%" \
 	    -command [::itcl::code $this setTransparency $_node 0.2]
-	$trans add command -label "85%" \
+#	$trans add command -label "85%" \
 	    -command [::itcl::code $this setTransparency $_node 0.15]
 	$trans add command -label "90%" \
 	    -command [::itcl::code $this setTransparency $_node 0.1]
-	$trans add command -label "95%" \
+#	$trans add command -label "95%" \
 	    -command [::itcl::code $this setTransparency $_node 0.05]
-	$trans add command -label "97%" \
+#	$trans add command -label "97%" \
 	    -command [::itcl::code $this setTransparency $_node 0.03]
-	$trans add command -label "99%" \
+#	$trans add command -label "99%" \
 	    -command [::itcl::code $this setTransparency $_node 0.01]
+	$trans add separator
+	$trans add command -label "Select..." \
+	    -command [::itcl::code $this selectTransparency $_node]
 
 	# set up bindings for transparency status
 	bind $trans <<MenuSelect>> \
@@ -5817,6 +5846,45 @@ namespace eval ArcherCore {
 	-vscrollmode none \
 	-hscrollmode none
 }
+
+
+::itcl::body ArcherCore::buildSelectTransparencyDialog {} {
+    itk_component add selTranspDialog {
+	::iwidgets::dialog $itk_interior.selTranspDialog \
+	    -modality application \
+	    -title "Select Transparency"
+    } {}
+    $itk_component(selTranspDialog) hide 1
+    $itk_component(selTranspDialog) hide 2
+    $itk_component(selTranspDialog) hide 3
+    $itk_component(selTranspDialog) configure \
+	-thickness 2 \
+	-buttonboxpady 0
+    $itk_component(selTranspDialog) buttonconfigure 0 \
+	-defaultring yes \
+	-defaultringpad 3 \
+	-borderwidth 1 \
+	-pady 0
+
+    # ITCL can be nasty
+    set win [$itk_component(selTranspDialog) component bbox component OK component hull]
+    after idle "$win configure -relief flat"
+
+    set parent [$itk_component(selTranspDialog) childsite]
+    itk_component add selTranspDialogSc {
+	::scale $parent.scale \
+	    -length 200 \
+	    -orient horizontal \
+	    -from 0.0 \
+	    -to 0.99 \
+	    -resolution 0.01 \
+	    -showvalue 1 \
+	    -variable [::itcl::scope mTransparency]
+    } {}
+
+    pack $itk_component(selTranspDialogSc) -expand yes -fill both
+}
+
 
 ::itcl::body ArcherCore::buildViewCenterDialog {} {
     itk_component add centerDialog {
