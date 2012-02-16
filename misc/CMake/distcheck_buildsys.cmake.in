@@ -308,7 +308,7 @@ if(${IGNORE_COUNT} LESS 51)
   UPDATE_CPACK_CONFIGS()
 endif(${IGNORE_COUNT} LESS 51)
 
-# All done - print result messages and configure the appropriate final message for the distcheck build.
+# All done - print result messages and prepare the appropriate final message for the distcheck build.
 set(FINAL_DIST_MESSAGE "--- distcheck succeeded ---")
 if(NOT_DISTCHECK_READY)
   set(FINAL_DIST_MESSAGE "--- distcheck succeeded ---\n*** WARNING - archive files contain modified sources, NOT suitable for distribution! ***")
@@ -316,7 +316,7 @@ endif(NOT_DISTCHECK_READY)
 if(NOT SVN_EXEC OR NOT EXISTS @CMAKE_SOURCE_DIR@/.svn)
   set(FINAL_DIST_MESSAGE "--- distcheck succeeded ---\n*** WARNING - distcheck run without subversion based checks!  Archive files may not be suitable for distribution. ***")
 endif(NOT SVN_EXEC OR NOT EXISTS @CMAKE_SOURCE_DIR@/.svn)
-configure_file(@CMAKE_SOURCE_DIR@/misc/CMake/distcheck_message.in @CMAKE_BINARY_DIR@/CMakeTmp/distcheck_message @ONLY) 
+file(WRITE @CMAKE_BINARY_DIR@/CMakeTmp/distcheck_message "${FINAL_DIST_MESSAGE}")
 
 # If we got this far, it worked
 message("Stage 1: Passed")
