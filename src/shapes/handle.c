@@ -45,7 +45,7 @@ main(int argc, char **argv)
 {
     /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[26];		/* Mged file create. */
+    char filemged[26] = {0};	/* Mged file create. */
     double hgt = 0.0;		/* Height of handle. */
     double len = 0.0;		/* Length of handle. */
     double r1 = 0.0;		/* Radius of tori & radius of cylinders. */
@@ -112,8 +112,9 @@ main(int argc, char **argv)
 	ret = scanf("%26s", filemged);
 	if (ret == 0) {
 	    perror("scanf");
-	    bu_strlcpy(filemged, "handle.g", sizeof(filemged));
 	}
+	if (BU_STR_EQUAL(filemged, ""))
+	    bu_strlcpy(filemged, "handle.g", sizeof(filemged));
 
 	/* Find number of handles to create (<=26). */
 	(void)printf("Enter number of handles to create (26 max).\n\t");
@@ -123,7 +124,10 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    numhan = 1;
 	}
-	if (numhan > 26) numhan = 26;
+	if (numhan < 1)
+	    numhan = 1;
+	if (numhan > 26)
+	    numhan = 26;
 
 	/* Find dimensions of handle. */
 	(void)printf("Enter the length and height of handle in mm.\n\t");
@@ -134,6 +138,10 @@ main(int argc, char **argv)
 	    len = 100.0;
 	    hgt = 10.0;
 	}
+	if (len < SMALL_FASTF)
+	    len = SMALL_FASTF;
+	if (hgt < SMALL_FASTF)
+	    hgt = SMALL_FASTF;
 
 	(void)printf("Enter the radius of the tori in mm.\n\t");
 	(void)fflush(stdout);
@@ -142,6 +150,8 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    r1 = 5.0;
 	}
+	if (r1 < SMALL_FASTF)
+	    r1 = SMALL_FASTF;
 
 	(void)printf("Enter the radius of the cylinders in mm.\n\t");
 	(void)fflush(stdout);
@@ -150,6 +160,8 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    r2 = 5.0;
 	}
+	if (r2 < SMALL_FASTF)
+	    r2 = SMALL_FASTF;
     }							/* END # 3 */
 
     /* if there are arguments get the answers from the arguments. */
