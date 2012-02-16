@@ -5550,7 +5550,7 @@ namespace eval ArcherCore {
     if {$len == 2} {
 	set tree "l [lindex $line 1]"
     } elseif {$len == 18} {
-	set tree "l [lindex $line 1] [lrange $line 2 end]"
+	set tree "l [lindex $line 1] [list [lrange $line 2 end]]"
     } else {
 	#	error "packTree: malformed line - $line"
     }
