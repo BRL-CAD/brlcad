@@ -197,8 +197,9 @@ endif(${BUILD_TYPE} MATCHES "RELEASE")
 # also check for c99 conformance regardles since some platform
 # environments require it due to c99-specific system headers (e.g.,
 # /System/Library/Frameworks/OpenGL.framework/Headers/gl.h on Mac OS X
-# having '//' comments embedded)
-CHECK_C_FLAG_GATHER("std=c99" C99_FLAG)
+# having '//' comments embedded)  Do as the Autotools system did
+# and use gnu99 here - c99 has problems on Linux.
+CHECK_C_FLAG_GATHER("std=gnu99" C99_FLAG)
 
 # Silence check for unused arguments (used to silence clang warnings about
 # unused options on the command line). By default clang generates a lot of
