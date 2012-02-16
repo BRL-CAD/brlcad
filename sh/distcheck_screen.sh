@@ -63,6 +63,7 @@ screen -X screen
 screen -X screen
 
 
+screen -X -p 0 title "Main"
 screen -X select 0
 screen -X split -v
 screen -X focus
@@ -75,6 +76,7 @@ screen -X -p 2 title "Release"
 #screen -X split
 #screen -X focus
 #screen -X select 3
+#screen -X -p 3 title "Tk Disabled"
 screen -X focus
 
 screen -X -p 1 exec tail --retry -f distcheck-debug.log
