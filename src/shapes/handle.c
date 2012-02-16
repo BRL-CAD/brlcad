@@ -110,35 +110,46 @@ main(int argc, char **argv)
 	(void)printf("(25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    bu_strlcpy(filemged, "handle.g", sizeof(filemged));
+	}
 
 	/* Find number of handles to create (<=26). */
 	(void)printf("Enter number of handles to create (26 max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%d", &numhan);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    numhan = 1;
+	}
 	if (numhan > 26) numhan = 26;
 
 	/* Find dimensions of handle. */
 	(void)printf("Enter the length and height of handle in mm.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf %lf", &len, &hgt);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    len = 100.0;
+	    hgt = 10.0;
+	}
 
 	(void)printf("Enter the radius of the tori in mm.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf", &r1);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    r1 = 5.0;
+	}
 
 	(void)printf("Enter the radius of the cylinders in mm.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf", &r2);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    r2 = 5.0;
+	}
     }							/* END # 3 */
 
     /* if there are arguments get the answers from the arguments. */

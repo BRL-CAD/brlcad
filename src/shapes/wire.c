@@ -185,7 +185,7 @@ main(int argc, char *argv[])
 			&strtpt[i][2]);
 	    if (ret == 0) {
 		perror("scanf");
-		VSET(strtpt[i], 0, 0, 0);
+		VSET(strtpt[i], 0.0, 0.0, 0.0);
 	    }
 	    (void)printf("Enter radius at the starting point of ");
 	    (void)printf("segment # %d.\n\t", (i+1));
@@ -193,14 +193,14 @@ main(int argc, char *argv[])
 	    ret = scanf("%lf", &strtrad[i]);
 	    if (ret == 0) {
 		perror("scanf");
-		strtrad[i] = 10;
+		strtrad[i] = 10.0;
 	    }
 	    (void)printf("Enter ending point of segment # %d.\n\t", (i+1));
 	    (void)fflush(stdout);
 	    ret = scanf("%lf %lf %lf", &endpt[i][0], &endpt[i][1], &endpt[i][2]);
 	    if (ret == 0) {
 		perror("scanf");
-		VSET(endpt[i], 0, 0, 1000);
+		VSET(endpt[i], 0.0, 0.0, 1000.0);
 	    }
 	    (void)printf("Enter radius at the ending point of ");
 	    (void)printf("segment # %d.\n\t", (i+1));
@@ -208,7 +208,7 @@ main(int argc, char *argv[])
 	    ret = scanf("%lf", &endrad[i]);
 	    if (ret == 0) {
 		perror("scanf");
-		endrad[i] = 20;
+		endrad[i] = 20.0;
 	    }
 	}						/* END # 3 */
 
@@ -223,7 +223,7 @@ main(int argc, char *argv[])
 	    ret = scanf("%lf %lf %lf", &endpt[i][0], &endpt[i][1], &endpt[i][2]);
 	    if (ret == 0) {
 		perror("scanf");
-		VSET(endpt[i], 0, 0, 1000);
+		VSET(endpt[i], 0.0, 0.0, 1000.0);
 	    }
 	    (void)printf("Enter radius at the ending point of ");
 	    (void)printf("segment # %d.\n\t", (i+1));
@@ -231,7 +231,7 @@ main(int argc, char *argv[])
 	    ret = scanf("%lf", &endrad[i]);
 	    if (ret == 0) {
 		perror("scanf");
-		endrad[i] = 20;
+		endrad[i] = 20.0;
 	    }
 	}						/* END # 4 */
     }							/* END # 2 */

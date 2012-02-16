@@ -104,28 +104,38 @@ main(int argc, char **argv)
 	(void)printf("Enter the mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    bu_strlcpy(filemged, "window.g", sizeof(filemged));
+	}
 
 	/* Find the number of windows to create. */
 	(void)printf("Enter the number of windows to create (26 max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%d", &numwin);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    numwin = 1;
+	}
 
 	/* Find the dimensions of the windows. */
 	(void)printf("Enter the height, width, and depth of the window.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf %lf %lf", &hgt, &wid, &dpt);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    hgt = 1618.0; /* golden ratio */
+	    wid = 1000.0;
+	    dpt = 100.0;
+	}
 
 	(void)printf("Enter the radius of the corner.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf", &rds);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    rds = 5.0;
+	}
 
     }							/* END # 3 */
 

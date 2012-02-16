@@ -127,9 +127,9 @@ main(int argc, char **argv)
 	ret = scanf("%lf %lf %lf", &hgt, &wid, &dpt);
 	if (ret == 0) {
 	    perror("scanf");
-	    hgt = 1618; /* golden ratio */
-	    wid = 1000;
-	    dpt = 10;
+	    hgt = 1618.0; /* golden ratio */
+	    wid = 1000.0;
+	    dpt = 100.0;
 	}
 
 	(void)printf("Enter the radius of the corner.\n\t");
@@ -137,7 +137,7 @@ main(int argc, char **argv)
 	ret = scanf("%lf", &rds);
 	if (ret == 0) {
 	    perror("scanf");
-	    rds = 2;
+	    rds = 5.0;
 	}
 
 	(void)printf("Enter the actual width of the window frame.\n\t");
@@ -145,7 +145,7 @@ main(int argc, char **argv)
 	ret = scanf("%lf", &isw);
 	if (ret == 0) {
 	    perror("scanf");
-	    isw = 5;
+	    isw = 100.0;
 	}
     }							/* END # 3 */
 
