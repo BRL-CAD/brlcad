@@ -156,8 +156,7 @@ CHECK_CXX_FLAG(pipe)
 CHECK_C_FLAG(fno-strict-aliasing)
 CHECK_CXX_FLAG(fno-strict-aliasing)
 
-# check for -fno-common (libtcl needs it on darwin, do we need
-# this anymore with ExternalProject_ADD calling the configure?)
+# check for -fno-common (libtcl needs it on darwin)
 CHECK_C_FLAG(fno-common)
 CHECK_CXX_FLAG(fno-common)
 
@@ -197,7 +196,7 @@ endif(${BUILD_TYPE} MATCHES "RELEASE")
 # also check for c99 conformance regardles since some platform
 # environments require it due to c99-specific system headers (e.g.,
 # /System/Library/Frameworks/OpenGL.framework/Headers/gl.h on Mac OS X
-# having '//' comments embedded)  Do as the Autotools system did
+# having '//' comments embedded).  Do as the Autotools system did
 # and use gnu99 here - c99 has problems on Linux.
 CHECK_C_FLAG_GATHER("std=gnu99" C99_FLAG)
 
