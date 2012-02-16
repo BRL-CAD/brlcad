@@ -44,7 +44,7 @@ main(int argc, char **argv)
 {
     /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[26];		/* Mged file create. */
+    char filemged[26] = {0};	/* Mged file create. */
     double hgt = 0.0;       	/* Height, width, & depth of outside window */
     double wid = 0.0;
     double dpt = 0.0;
@@ -109,8 +109,9 @@ main(int argc, char **argv)
 	ret = scanf("%26s", filemged);
 	if (ret == 0) {
 	    perror("scanf");
-	    bu_strlcpy(filemged, "window_frame.g", sizeof(filemged));
 	}
+	if (BU_STR_EQUAL(filemged, ""))
+	    bu_strlcpy(filemged, "window_frame.g", sizeof(filemged));
 
 	/* Find the number of window frames to create. */
 	(void)printf("Enter the number of window frames to create (26 max).\n\t");
@@ -120,6 +121,10 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    numwin = 1;
 	}
+	if (numwin < 1)
+	    numwin = 1;
+	if (numwin > 26)
+	    numwin = 26;
 
 	/* Find the dimensions of the window frames. */
 	(void)printf("Enter the height, width, and depth of the window frame.\n\t");
@@ -131,6 +136,12 @@ main(int argc, char **argv)
 	    wid = 1000.0;
 	    dpt = 100.0;
 	}
+	if (hgt < SMALL_FASTF)
+	    hgt = SMALL_FASTF;
+	if (wid < SMALL_FASTF)
+	    wid = SMALL_FASTF;
+	if (dpt < SMALL_FASTF)
+	    dpt = SMALL_FASTF;
 
 	(void)printf("Enter the radius of the corner.\n\t");
 	(void)fflush(stdout);
@@ -139,6 +150,8 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    rds = 5.0;
 	}
+	if (rds < SMALL_FASTF)
+	    rds = SMALL_FASTF;
 
 	(void)printf("Enter the actual width of the window frame.\n\t");
 	(void)fflush(stdout);
@@ -147,6 +160,8 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    isw = 100.0;
 	}
+	if (isw < SMALL_FASTF)
+	    isw = SMALL_FASTF;
     }							/* END # 3 */
 
     /* If there are arguments get answers from arguments. */

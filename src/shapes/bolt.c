@@ -40,7 +40,7 @@ int
 main(int argc, char **argv)
 {
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[26];		/* Mged file create. */
+    char filemged[26] = {0};	/* Mged file create. */
     double hd, hh;		/* Diameter & height of bolt head. */
     double wd, wh;		/* Diameter & height of washer. */
     double sd, sh;		/* Diameter & height of bolt stem. */
@@ -116,6 +116,10 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    iopt = 3;
 	}
+	if (iopt < 0)
+	    iopt = 0;
+	if (iopt > 4)
+	    iopt = 4;
 
 	/* Get file name of mged file to be created. */
 	(void)printf("Enter name of mged file to be created (25 char max).\n\t");
@@ -123,8 +127,9 @@ main(int argc, char **argv)
 	ret = scanf("%26s", filemged);
 	if (ret == 0) {
 	    perror("scanf");
-	    bu_strlcpy(filemged, "bolt.g", sizeof(filemged));
 	}
+	if (BU_STR_EQUAL(filemged, ""))
+	    bu_strlcpy(filemged, "bolt.g", sizeof(filemged));
 
 	/* Find the number of bolts to be created (<=26). */
 	(void)printf("Enter the number of bolts to be created (26 max).\n\t");
@@ -134,7 +139,10 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    numblt = 1;
 	}
-	if (numblt > 26) numblt = 26;
+	if (numblt < 1)
+	    numblt = 1;
+	if (numblt > 26)
+	    numblt = 26;
 
 	/* Find dimensions of the bolt. */
 	/* Find dimensions of head first. */
@@ -147,6 +155,10 @@ main(int argc, char **argv)
 	    hd = 20.0;
 	    hh = 20.0;
 	}
+	if (hd < SMALL_FASTF)
+	    hd = SMALL_FASTF;
+	if (hh < SMALL_FASTF)
+	    hh = SMALL_FASTF;
 
 	/* Find dimensions of washer if necessary. */
 	if ((iopt == 2) || (iopt == 3)) {
@@ -158,6 +170,10 @@ main(int argc, char **argv)
 		wd = 30.0;
 		wh = 2.0;
 	    }
+	    if (wd < SMALL_FASTF)
+		wd = SMALL_FASTF;
+	    if (wh < SMALL_FASTF)
+		wh = SMALL_FASTF;
 	}
 	/* Find dimensions of bolt stem if necessary. */
 	if ((iopt == 3) || (iopt == 4)) {
@@ -169,6 +185,10 @@ main(int argc, char **argv)
 		sd = 10.0;
 		sh = 100.0;
 	    }
+	    if (sd < SMALL_FASTF)
+		sd = SMALL_FASTF;
+	    if (sh < SMALL_FASTF)
+		sh = SMALL_FASTF;
 	}
 
     }							/* END # 1 */

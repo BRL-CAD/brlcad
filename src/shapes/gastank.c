@@ -43,7 +43,7 @@ main(int argc, char **argv)
 {
     /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[26];		/* Mged file create. */
+    char filemged[26] = {0};	/* Mged file create. */
     double hgt=0;       	/* Height, width, & depth of gas tank. */
     double wid=0;
     double dpt=0;
@@ -111,8 +111,9 @@ main(int argc, char **argv)
 	ret = scanf("%26s", filemged);
 	if (ret == 0) {
 	    perror("scanf");
-	    bu_strlcpy(filemged, "gastank.g", sizeof(filemged));
 	}
+	if (BU_STR_EQUAL(filemged, ""))
+	    bu_strlcpy(filemged, "gastank.g", sizeof(filemged));
 
 	/* Find the number of gas tanks to create. */
 	(void)printf("Enter the number of gas tanks to create (26 max).\n\t");
@@ -122,7 +123,10 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    numtnk = 1;
 	}
-	if (numtnk > 26) numtnk = 26;
+	if (numtnk < 1)
+	    numtnk = 1;
+	if (numtnk > 26)
+	    numtnk = 26;
 
 	/* Find the dimensions of the gas tanks. */
 	(void)printf("Enter the height, width, and depth of the gas tank.\n\t");
@@ -134,6 +138,13 @@ main(int argc, char **argv)
 	    wid = 1000.0;
 	    dpt = 1000.0;
 	}
+	if (hgt < SMALL_FASTF)
+	    hgt = SMALL_FASTF;
+	if (wid < SMALL_FASTF)
+	    wid = SMALL_FASTF;
+	if (dpt < SMALL_FASTF)
+	    dpt = SMALL_FASTF;
+
 	(void)printf("Enter the radius of the corners.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf", &rds);
@@ -141,6 +152,8 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    rds = 10.0;
 	}
+	if (rds < SMALL_FASTF)
+	    rds = SMALL_FASTF;
     }							/* END # 3 */
 
     /* If there are arguments get answers from arguments. */

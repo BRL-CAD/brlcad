@@ -48,7 +48,7 @@ main(int argc, char *argv[])
 {
     /* START # 1 */
     struct rt_wdb *fpw;			/* File to be created. */
-    char filemged[26];			/* Mged file name. */
+    char filemged[26] = {0};		/* Mged file name. */
     double numseg;			/* Number of segments. */
     double strtpt[MAXWIRESEG][3];	/* Start point of segment. */
     double endpt[MAXWIRESEG][3];	/* End point of segment. */
@@ -147,8 +147,9 @@ main(int argc, char *argv[])
     ret = scanf("%26s", filemged);
     if (ret == 0) {
 	perror("scanf");
-	bu_strlcpy(filemged, "wire.g", sizeof(filemged));
     }
+    if (BU_STR_EQUAL(filemged, ""))
+	bu_strlcpy(filemged, "wire.g", sizeof(filemged));
 
     /* Find the number of segments. */
     (void)printf("Enter the number of segments (maximum of %d).\n\t",
@@ -173,6 +174,8 @@ main(int argc, char *argv[])
 	    numseg = MAXWIRESEG;
 	}
     }
+    if (numseg < 1)
+	numseg = 1;
 
     /* Enter starting & ending points of segments & radi. */
     for (i=0; i<numseg; i++) {
@@ -195,6 +198,9 @@ main(int argc, char *argv[])
 		perror("scanf");
 		strtrad[i] = 10.0;
 	    }
+	    if (strtrad[i] < SMALL_FASTF)
+		strtrad[i] = SMALL_FASTF;
+
 	    (void)printf("Enter ending point of segment # %d.\n\t", (i+1));
 	    (void)fflush(stdout);
 	    ret = scanf("%lf %lf %lf", &endpt[i][0], &endpt[i][1], &endpt[i][2]);
@@ -202,6 +208,7 @@ main(int argc, char *argv[])
 		perror("scanf");
 		VSET(endpt[i], 0.0, 0.0, 1000.0);
 	    }
+
 	    (void)printf("Enter radius at the ending point of ");
 	    (void)printf("segment # %d.\n\t", (i+1));
 	    (void)fflush(stdout);
@@ -210,6 +217,8 @@ main(int argc, char *argv[])
 		perror("scanf");
 		endrad[i] = 20.0;
 	    }
+	    if (endrad[i] < SMALL_FASTF)
+		endrad[i] = SMALL_FASTF;
 	}						/* END # 3 */
 
 	else {
@@ -225,6 +234,7 @@ main(int argc, char *argv[])
 		perror("scanf");
 		VSET(endpt[i], 0.0, 0.0, 1000.0);
 	    }
+
 	    (void)printf("Enter radius at the ending point of ");
 	    (void)printf("segment # %d.\n\t", (i+1));
 	    (void)fflush(stdout);
@@ -233,6 +243,8 @@ main(int argc, char *argv[])
 		perror("scanf");
 		endrad[i] = 20.0;
 	    }
+	    if (endrad[i] < SMALL_FASTF)
+		endrad[i] = SMALL_FASTF;
 	}						/* END # 4 */
     }							/* END # 2 */
 
