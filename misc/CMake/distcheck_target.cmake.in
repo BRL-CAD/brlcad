@@ -1,6 +1,6 @@
 add_custom_target(distcheck
   COMMAND ${CMAKE_COMMAND} -E echo "Stage 1:  Check files in Source Repository against files specified in Build Logic"
-  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake
+  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake
   COMMAND ${CMAKE_COMMAND} -E echo "Stage 2:  Create source tgz, tbz2 and zip archives from toplevel archive."
   COMMAND ${CPACK_EXEC} --config ${CMAKE_CURRENT_BINARY_DIR}/CPackSourceConfig.cmake
   COMMAND ${CMAKE_COMMAND} -E echo "Stage 3:  Expand tgz archive and prepare to build using the Debug configuration from archive sources."

@@ -4,7 +4,7 @@ macro(DEFINE_DISTCHECK_TARGET)
     mark_as_advanced(CPACK_EXEC)
 
     # Set up the script that will be used to verify the source archives
-    configure_file(${BRLCAD_CMAKE_DIR}/distcheck_buildsys.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake @ONLY)
+    configure_file(${BRLCAD_CMAKE_DIR}/distcheck_repo_verify.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake @ONLY)
 
     # Determine how to trigger the build in the distcheck target
     if("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
