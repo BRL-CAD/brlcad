@@ -43,7 +43,7 @@ if(NOT IS_SUBBUILD)
       # Determine how to trigger the build in the distcheck target
       if("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
 	if(NOT CMAKE_VERBOSE_DISTCHECK)
-	  set(TARGET_REDIRECT " >> distcheck_${TARGET_SUFFIX}.log ")
+	  set(TARGET_REDIRECT " >> distcheck-${TARGET_SUFFIX}.log ")
 	endif(NOT CMAKE_VERBOSE_DISTCHECK)
 	set(DISTCHECK_BUILD_CMD "${CMAKE_COMMAND} -E chdir  distcheck-${TARGET_SUFFIX}/build $(MAKE) ${TARGET_REDIRECT}")
       else("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
