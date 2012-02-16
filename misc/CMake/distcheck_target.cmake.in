@@ -41,6 +41,7 @@ add_custom_target(distcheck
   COMMAND ${CMAKE_COMMAND} -E remove summary
   COMMAND ${CMAKE_COMMAND} -E remove run-*.log
   COMMAND ${CMAKE_COMMAND} -E echo "Stage 10: Final Cleanup."
+  COMMAND ${CMAKE_COMMAND} -E remove distcheck_compilation_log
   COMMAND ${CMAKE_COMMAND} -E remove_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
   COMMAND ${CMAKE_COMMAND} -E remove_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
   # The source repository verification script is responsible for generating this file
