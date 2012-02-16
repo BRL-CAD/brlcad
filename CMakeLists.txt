@@ -2053,10 +2053,13 @@ DISTCLEAN(${CMAKE_BINARY_DIR}/INSTALL.new)
 DISTCLEAN(${CMAKE_BINARY_DIR}/Makefile)
 DISTCLEAN(${CMAKE_BINARY_DIR}/include/brlcad_config.h.in)
 
-#  Define a distcheck target.  This performs a variety of tests to determine
-#  whether BRL-CAD is in a distribution ready state.
+# Define a distcheck target.  This performs a variety of tests to determine
+# whether BRL-CAD is in a distribution ready state.  Default to the standard
+# set of tests - Debug and Release build configurations
 include(${BRLCAD_CMAKE_DIR}/Distcheck.cmake)
-DEFINE_DISTCHECK_TARGET()
+# Define some custom distcheck targets for distcheck-full (not run by default)
+CREATE_DISTCHECK(no_tk "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_ENABLE_TK=OFF")
+DEFINE_DISTCHECK_TARGET(STD)
 
 # Mark various miscellaneous things as advanced that we don't want in our
 # default view
