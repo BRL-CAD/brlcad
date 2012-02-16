@@ -25,7 +25,7 @@ add_custom_target(distcheck-@TARGET_SUFFIX@
   COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-@TARGET_SUFFIX@/build
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Clear tgz archive sources and build directory... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Run benchmark testing from tgz archive installed build..."
-  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-@TARGET_SUFFIX@ TIMEFRAME=1 install/${BIN_DIR}/benchmark run @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-@TARGET_SUFFIX@ install/${BIN_DIR}/benchmark run TIMEFRAME=1 @TARGET_REDIRECT@
   COMMAND ${CMAKE_COMMAND} -E chdir distcheck-@TARGET_SUFFIX@ install/${BIN_DIR}/benchmark clean @TARGET_REDIRECT@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Run benchmark testing from installed build... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Cleanup..."
