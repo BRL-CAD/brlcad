@@ -194,6 +194,12 @@ else(${BUILD_TYPE} MATCHES "RELEASE")
   CHECK_C_FLAG("std=gnu89")
 endif(${BUILD_TYPE} MATCHES "RELEASE")
 
+# also check for c99 conformance regardles since some platform
+# environments require it due to c99-specific system headers (e.g.,
+# /System/Library/Frameworks/OpenGL.framework/Headers/gl.h on Mac OS X
+# having '//' comments embedded)
+CHECK_C_FLAG_GATHER("std=c99" C99_FLAG)
+
 # Silence check for unused arguments (used to silence clang warnings about
 # unused options on the command line). By default clang generates a lot of
 # warnings about such arguments, and we don't really care. 
