@@ -67,11 +67,11 @@ screen -X select 0
 screen -X split -v
 screen -X focus
 screen -X select 1
-screen -X title "Debug"
+screen -X -p 1 title "Debug"
 screen -X split
 screen -X focus
 screen -X select 2
-screen -X title "Release"
+screen -X -p 2 title "Release"
 #screen -X split
 #screen -X focus
 #screen -X select 3
