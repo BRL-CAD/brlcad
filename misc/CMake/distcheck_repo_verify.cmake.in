@@ -1,4 +1,4 @@
-#     D I S T C H E C K _ B U I L D S Y S . C M A K E . I N
+#     D I S T C H E C K _ R E P O _ V E R I F Y . C M A K E . I N
 #
 # BRL-CAD
 #
@@ -316,7 +316,7 @@ endif(NOT_DISTCHECK_READY)
 if(NOT SVN_EXEC OR NOT EXISTS @CMAKE_SOURCE_DIR@/.svn)
   set(FINAL_DIST_MESSAGE "--- distcheck succeeded ---\n*** WARNING - distcheck run without subversion based checks!  Archive files may not be suitable for distribution. ***")
 endif(NOT SVN_EXEC OR NOT EXISTS @CMAKE_SOURCE_DIR@/.svn)
-file(WRITE @CMAKE_BINARY_DIR@/CMakeTmp/distcheck_message "${FINAL_DIST_MESSAGE}")
+file(WRITE @CMAKE_BINARY_DIR@/CMakeTmp/distcheck_message "execute_process(COMMAND @CMAKE_COMMAND@ -E echo \"${FINAL_DIST_MESSAGE}\")")
 
 # If we got this far, it worked
 message("Stage 1: Passed")
