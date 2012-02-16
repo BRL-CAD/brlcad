@@ -77,8 +77,8 @@ if(NOT IS_SUBBUILD)
       endif(${ARGV0_UPPER} STREQUAL "FULL")
     endif(${ARGC} EQUAL 1)
 
-    CREATE_DISTCHECK(debug   "-DCMAKE_BUILD_TYPE=Debug")
-    CREATE_DISTCHECK(release "-DCMAKE_BUILD_TYPE=Release")
+    CREATE_DISTCHECK(debug   "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED")
+    CREATE_DISTCHECK(release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_BUNDLED_LIBS=BUNDLED")
 
     add_custom_target(distcheck-std
       # The source repository verification script is responsible for generating this file

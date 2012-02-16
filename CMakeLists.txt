@@ -2058,7 +2058,7 @@ DISTCLEAN(${CMAKE_BINARY_DIR}/include/brlcad_config.h.in)
 # set of tests - Debug and Release build configurations
 include(${BRLCAD_CMAKE_DIR}/Distcheck.cmake)
 # Define some custom distcheck targets for distcheck-full (not run by default)
-CREATE_DISTCHECK(no_tk "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_ENABLE_TK=OFF")
+CREATE_DISTCHECK(no_tk "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_TK=OFF")
 DEFINE_DISTCHECK_TARGET(STD)
 
 # Mark various miscellaneous things as advanced that we don't want in our
