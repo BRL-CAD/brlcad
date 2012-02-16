@@ -53,8 +53,8 @@ if test ! -f "$RTWEIGHT" ; then
     exit 1
 fi
 
-
-rm -f weight.log .density weight.g weight.ref weight.out weight.mged
+# FIRST TEST =================================
+rm -f .density .density0 weight.log weight.g weight.ref weight.out weight.mged
 
 cat > weight.mged <<EOF
 opendb weight.g y
@@ -73,7 +73,6 @@ EOF
 
 $RTWEIGHT -a 25 -e 35 -s128 -o weight.out weight.g box.r > weight.log 2>&1
 
-
 cat >> weight.ref <<EOF
 RT Weight Program Output:
 
@@ -85,16 +84,16 @@ Density Table Used:/path/to/.density
 
 Material  Density(g/cm^3)  Name
     1         7.8295       steel
-Weight by region (in grams, density given in g/cm^3):
+Weight by region name (in grams, density given in g/cm^3):
 
-  Weight Matl LOS  Material Name  Density Name
- ------- ---- --- --------------- ------- -------------
-   7.829    1 100 steel            7.8295 /box.r
-Weight by item number (in grams):
+ Weight   Matl  LOS  Material Name  Density Name
+-------- ------ --- --------------- ------- -------------
+   7.829     1  100 steel            7.8295 /box.r
+Weight by region ID (in grams):
 
-Item  Weight  Region Names
----- -------- --------------------
-1000    7.829 /box.r
+  ID   Weight  Region Names
+----- -------- --------------------
+ 1000    7.829 /box.r
 RT Weight Program Output:
 
 Database Title: "Untitled BRL-CAD Database"
@@ -111,21 +110,154 @@ Total mass = 7.82943 grams
 
 EOF
 
+# eliminate the time stamp lines which are obviously different and
+# the file path which is not germane to the test
 tr -d ' \t' < weight.ref | grep -v DensityTableUsed | grep -v TimeStamp > weight.ref_ns
 tr -d ' \t' < weight.out | grep -v DensityTableUsed | grep -v TimeStamp > weight.out_ns
 
 cmp weight.ref_ns weight.out_ns
 STATUS=$?
+
+if [ X$STATUS != X0 ] ; then
+    echo "rtweight results differ $STATUS"
+else
+    echo "-> weight.sh succeeded (1 of 2)"
+fi
+
+# SECOND TEST =================================
+
+# Need to do a slightly more elaborate test
+# save first density file in case we fail here
+mv .density .density0
+
+rm -f weight2.log weight2.g weight2.ref weight2.out weight2.mged
+
+cat > weight2.mged <<EOF
+opendb weight2.g y
+units cm
+in box1 rpp 0 1 0 1 0 1
+in box2 rpp 2 3 2 3 2 3
+in box3 rpp 4 5 4 5 4 5
+r box1.r u box1
+r box2.r u box2
+r box3.r u box3
+attr set box1.r material_id 2
+attr set box2.r material_id 7
+attr set box3.r material_id 12
+attr set box1.r region_id 1000
+attr set box2.r region_id 1000
+attr set box3.r region_id 1010
+g boxes box1.r box2.r box3.r
+EOF
+
+$MGED -c > weight2.log 2>&1 << EOF
+`cat weight2.mged`
+EOF
+
+# test handling of a more complex
+# density file
+cat > .density <<EOF
+#  Test density file with comments and bad input
+2    7.82      Carbon Tool Steel
+3    2.7       Aluminum, 6061-T6
+4    2.74      Aluminum, 7079-T6
+#  Incomplete line following
+    	       Copper, pure
+6    19.32     Gold, pure
+7    8.03      Stainless, 18Cr-8Ni
+#  Comment
+8    7.47      Stainless 27Cr
+
+9    7.715     Steel, tool
+
+#  Blank line above
+#  Comment following valid data on the line below
+10   7.84      Carbon Steel # used for widgets
+12   3.00      Gunner
+14   10.00     Fuel
+#  Material ID too high (MAXMTLS = 32768)
+99999 70.84    Kryptonite
+EOF
+
+$RTWEIGHT -a 25 -e 35 -s128 -o weight2.out weight2.g boxes > weight2.log 2>&1
+
+cat >> weight2.ref <<EOF
+RT Weight Program Output:
+
+Database Title: "Untitled BRL-CAD Database"
+Time Stamp: Sat Jan 14 09:01:50 2012
+
+
+Density Table Used:/path/to/.density
+
+Material  Density(g/cm^3)  Name
+    2         7.8200       Carbon Tool Steel
+    3         2.7000       Aluminum, 6061-T6
+    4         2.7400       Aluminum, 7079-T6
+    6        19.3200       Gold, pure
+    7         8.0300       Stainless, 18Cr-8Ni
+    8         7.4700       Stainless 27Cr
+    9         7.7150       Steel, tool
+   10         7.8400       Carbon Steel
+   12         3.0000       Gunner
+   14        10.0000       Fuel
+Weight by region name (in grams, density given in g/cm^3):
+
+ Weight   Matl  LOS  Material Name  Density Name
+-------- ------ --- --------------- ------- -------------
+   7.822     2  100 Carbon Tool Ste  7.8200 /boxes/box1.r
+   8.021     7  100 Stainless, 18Cr  8.0300 /boxes/box2.r
+   3.001    12  100 Gunner           3.0000 /boxes/box3.r
+Weight by region ID (in grams):
+
+  ID   Weight  Region Names
+----- -------- --------------------
+ 1000   15.843 /boxes/box1.r
+               /boxes/box2.r
+ 1010    3.001 /boxes/box3.r
+RT Weight Program Output:
+
+Database Title: "Untitled BRL-CAD Database"
+Time Stamp: Sat Jan 14 09:01:50 2012
+
+
+Total volume = 2.99933 cm^3
+
+Centroid: X = 1.98812 cm
+          Y = 1.98833 cm
+          Z = 1.98831 cm
+
+Total mass = 18.8433 grams
+
+EOF
+
+# eliminate the time stamp lines which are obviously different and
+# the file path which is not germane to the test
+tr -d ' \t' < weight2.ref | grep -v DensityTableUsed | grep -v TimeStamp > weight2.ref_ns
+tr -d ' \t' < weight2.out | grep -v DensityTableUsed | grep -v TimeStamp > weight2.out_ns
+
+cmp weight2.ref_ns weight2.out_ns
+STATUS=$?
+
 if [ X$STATUS != X0 ] ; then
     echo "rtweight results differ $STATUS"
 fi
 
-rm -f weight.out_ns weight.ref_ns
 
 if [ X$STATUS = X0 ] ; then
-    echo "-> weight.sh succeeded"
+    echo "-> weight.sh succeeded (2 of 2)"
 else
-    echo "-> weight.sh FAILED"
+    echo "-> weight.sh FAILED (2 of 2)"
+fi
+
+# remove all test products here, but only if all tests pass
+if [ X$STATUS = X0 ] ; then
+    # now remove all generated files
+    rm -f weight.out_ns  weight.ref_ns
+    rm -f weight2.ref_ns weight2.out_ns
+    rm -f .density .density0
+    rm -f weight.log  weight.g  weight.ref  weight.out  weight.mged
+    rm -f weight2.log weight2.g weight2.ref weight2.out weight2.mged
 fi
 
 exit $STATUS

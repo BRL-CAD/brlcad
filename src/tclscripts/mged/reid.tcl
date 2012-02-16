@@ -23,8 +23,7 @@
 # some given region ID number.
 #
 
-
-proc  reid { args } {
+proc reid { args } {
 
     set extern_commands [list db get_regions attr]
 
@@ -42,11 +41,11 @@ proc  reid { args } {
 	return
     }
 
-    if { [llength $args] == 4} {
+    if { $argc == 4} {
 	set incrval [lindex $args 1]
 	set name [lindex $args 2]
 	set regionid [lindex $args 3]
-    } elseif { [llength $args] == 2} {
+    } else {
 	set incrval 1
 	set name [lindex $args 0]
 	set regionid [lindex $args 1]
@@ -54,7 +53,7 @@ proc  reid { args } {
 
     set objData [db get $name]
     if { [lindex $objData 0] != "comb" } {
-	puts "Not a combination."
+	puts "Not a combination: $name"
 	return
     }
 
@@ -63,7 +62,9 @@ proc  reid { args } {
 	attr set $region region_id $regionid
 	incr regionid $incrval
     }
-    return [expr $regionid - $incrval ]
+    set highest [expr $regionid - $incrval]
+    puts "Highest region_id set here: $highest"
+    return
 }
 
 # Local Variables:

@@ -963,6 +963,9 @@ do_ae(double azim, double elev)
     mat_t toEye;
     struct rt_i *rtip = APP.a_rt_i;
 
+    if (rtip == NULL)
+	return;
+
     if (rtip->nsolids <= 0)
 	bu_exit(EXIT_FAILURE, "ERROR: no primitives active\n");
 

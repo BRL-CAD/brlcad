@@ -22,6 +22,17 @@
 # Description:
 #	This is an Archer class for editing a BoT primitive.
 #
+
+package require Tk
+package require Itcl
+package require Itk
+
+if {$tcl_platform(platform) == "windows"} {
+    load [file join [bu_brlcad_root "bin"] libbu[info sharedlibextension]]
+} else {
+    load [file join [bu_brlcad_root "lib"] libbu[info sharedlibextension]]
+}
+
 if {[catch {
     set script [file join [bu_brlcad_data "tclscripts"] boteditor botEditor.tcl]
     source $script

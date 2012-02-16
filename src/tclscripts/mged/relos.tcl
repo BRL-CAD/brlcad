@@ -44,7 +44,7 @@ proc relos { args } {
 
     set objData [db get $name]
     if { [lindex $objData 0] != "comb" } {
-	puts "Not a combination."
+	puts "Not a combination: $name"
 	return
     }
 

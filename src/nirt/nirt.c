@@ -114,6 +114,8 @@ void printusage(void)
     bu_log(" -M         read matrix, cmds on stdin\n");
     bu_log(" -O action  handle overlap claims via action\n");
     bu_log(" -s         run in silent (non-verbose) mode\n ");
+    bu_log(" -h n       enable/disable informational header\n ");
+    bu_log("            (on by default, always off in silent mode\n ");
     bu_log(" -u n       set use_air=n (default 0)\n");
     bu_log(" -v         run in verbose mode\n");
     bu_log(" -x v       set librt(3) diagnostic flag=v\n");
@@ -171,7 +173,7 @@ attrib_print(void)
     int i;
 
     for (i=0; i < a_tab.attrib_use; i++) {
-	bu_log("\"%s\"\n", a_tab.attrib[i]);
+	fprintf(stdout, "\"%s\"\n", a_tab.attrib[i]);
     }
 }
 
@@ -212,7 +214,7 @@ attrib_add(char *a, int *prep)
 	}
 
 	/* add the attribute name(s) */
-	a_tab.attrib[a_tab.attrib_use] = bu_strdup(p);
+	a_tab.attrib[a_tab.attrib_use] = bu_strdup(db5_standard_attribute(db5_standardize_attribute(p)));
 	/* bu_log("attrib[%d]=\"%s\"\n", attrib_use, attrib[attrib_use]); */
 	a_tab.attrib[++a_tab.attrib_use] = (char *)NULL;
 
@@ -363,6 +365,7 @@ main(int argc, char *argv[])
     int Ch;		/* Option name */
     int mat_flag = 0;	/* Read matrix from stdin? */
     int use_of_air = 0;
+    int print_ident_flag = 1;
     char ocastring[1024] = {0};
     struct bu_list script_list;	/* For -e and -f options */
     struct script_rec *srp;
@@ -374,6 +377,8 @@ main(int argc, char *argv[])
     int if_miss(struct application *);
 
     BU_LIST_INIT(&script_list);
+
+    bu_setprogname(argv[0]);
 
     ocname[OVLP_RESOLVE] = "resolve";
     ocname[OVLP_REBUILD_FASTGEN] = "rebuild_fastgen";
@@ -446,6 +451,13 @@ main(int argc, char *argv[])
 		    return 1;
 		}
 		break;
+	    case 'h':
+		if (sscanf(bu_optarg, "%d", &print_ident_flag) != 1) {
+		    (void) fprintf(stderr,
+				   "Illegal header output option specified: '%s'\n", bu_optarg);
+		    return 1;
+		}
+		break;
 	    case '?':
 	    default:
 		printusage();
@@ -466,7 +478,7 @@ main(int argc, char *argv[])
 	if (silent_flag != SILENT_NO)
 	    silent_flag = SILENT_YES;
     }
-    if (silent_flag != SILENT_YES)
+    if (silent_flag != SILENT_YES && print_ident_flag)
 	(void) fputs(brlcad_ident("Natalie's Interactive Ray Tracer"), stdout);
 
     if (use_of_air && (use_of_air != 1)) {

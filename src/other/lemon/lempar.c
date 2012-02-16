@@ -222,13 +222,11 @@ static const char *const yyTokenName[] = {
 };
 #endif /* NDEBUG */
 
-#ifndef NDEBUG
 /* For tracing reduce actions, the names of all rules are required.
 */
 static const char *const yyRuleName[] = {
 %%
 };
-#endif /* NDEBUG */
 
 
 #if YYSTACKDEPTH<=0

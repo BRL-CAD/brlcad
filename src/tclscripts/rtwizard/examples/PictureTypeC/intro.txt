@@ -6,6 +6,6 @@ To change the azimuth, use the View:Azimuth control. The default is 35 degrees. 
 
 You may also use MGED shift-grips to change the view parameters.
 
-You may change the backaground color using the Options:Background Color tool. The default background color is white. You may also change the highlight line color by using the Options:Line Color tool. The default line color is black.
+You may change the background color using the Options:Background Color tool. The default background color is white. You may also change the highlight line color by using the Options:Line Color tool. The default line color is black.
 
 Use the Steps menu to move between steps. They may be done in any order.

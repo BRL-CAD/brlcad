@@ -65,7 +65,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
     fastf_t get_obliq(fastf_t *ray, fastf_t *normal);
     struct bu_vls attr_vls;
     char regionPN[512] = {0};
-    struct bu_attribute_value_pair *avpp;
+    const char *val;
 
     /* quellage */
     finished_segs = finished_segs;
@@ -187,11 +187,11 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 
 	/* format up the attribute strings into a single string */
 	bu_vls_init(&attr_vls);
-	for (BU_AVS_FOR(avpp, &(part->pt_regionp->attr_values))) {
-		if (avpp->value)
-			if (strlen(avpp->value) != 0)
-				bu_vls_printf(&attr_vls, "%s=%s", avpp->name, avpp->value);
-	}
+        for (i = 0; i < a_tab.attrib_use; i++) {
+	   if ((val = bu_avs_get(&part->pt_regionp->attr_values, db5_standard_attribute(db5_standardize_attribute(a_tab.attrib[i])))) != NULL) {
+	       bu_vls_printf(&attr_vls, "%s=%s ", a_tab.attrib[i], val);
+	   }
+        }
 
 	ValTab[VTI_ATTRIBUTES].value.sval = bu_vls_addr(&attr_vls);
 

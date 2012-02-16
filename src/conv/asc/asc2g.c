@@ -1663,9 +1663,9 @@ main(int argc, char *argv[])
 		av[0] = aliases[i];
 		Tcl_CreateAlias(safe_interp, aliases[i], interp, db_name, ac, av);
 	    }
-	    /* add "dbfind" separately */
-	    av[0] = "find";
-	    Tcl_CreateAlias(safe_interp, "dbfind", interp, db_name, ac, av);
+	    /* add "find" separately */
+	    av[0] = "dbfind";
+	    Tcl_CreateAlias(safe_interp, "find", interp, db_name, ac, av);
 	}
 
 	while ((gettclblock(&line,ifp)) >= 0)

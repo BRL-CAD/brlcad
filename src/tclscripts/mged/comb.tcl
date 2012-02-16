@@ -1053,6 +1053,8 @@ proc comb_reset { id } {
 	    set keep 0
 	} elseif { [string compare $key "rgb"] == 0 } {
 	    set keep 0
+	} elseif { [string compare $key "color"] == 0 } {
+	    set keep 0
 	} elseif { [string compare $key "shader"] == 0 } {
 	    set keep 0
 	} elseif { [string compare $key "inherit"] == 0 } {

@@ -447,9 +447,9 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 			int j;
 
 			j = bu_ptbl_locate(&norms, (long *)eu->vu_p->a.magic_p);
-			fprintf(fp, " %ld//%ld", i+1+vert_offset, j+1+norm_offset);
+			fprintf(fp, " %ld//%ld", loc+1+vert_offset, j+1+norm_offset);
 		    } else
-			fprintf(fp, " %ld", i+1+vert_offset);
+			fprintf(fp, " %ld", loc+1+vert_offset);
 		}
 
 		fprintf(fp, "\n");

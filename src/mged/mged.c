@@ -550,6 +550,11 @@ do_tab_expansion()
         input_str_index = 0;
         bu_vls_trunc(&input_str, 0);
         bu_vls_strcat(&input_str, Tcl_GetString(newCommand));
+
+	/* only one match remaining, pad space so we can keep going */
+	if (numExpansions == 1)
+	    bu_vls_strcat(&input_str, " ");
+
         input_str_index = bu_vls_strlen(&input_str);
         bu_log("%s", bu_vls_addr(&input_str));
     } else {

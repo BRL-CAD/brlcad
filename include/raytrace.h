@@ -64,7 +64,7 @@ __BEGIN_DECLS
 /**
  * D E B U G
  *
- * Each type of debugging support is independently controled, by a
+ * Each type of debugging support is independently controlled, by a
  * separate bit in the word RT_G_DEBUG
  *
  * For programs based on the "RT" program, these flags follow the "-x"

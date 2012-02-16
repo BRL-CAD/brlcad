@@ -473,7 +473,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 
 	rt_prep(occlusion_rtip);
 
-	bu_log("rtedge: occlustion prep done.\n");
+	bu_log("rtedge: occlusion prep done.\n");
 
 	/*
 	 * Create a set of application structures for the occlusion

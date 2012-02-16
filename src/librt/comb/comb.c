@@ -987,7 +987,7 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		    return BRLCAD_ERROR;
 		comb->GIFTmater = i;
 	    }
-	} else if (BU_STR_EQUAL(buf, "rgb")) {
+	} else if (db5_standardize_attribute(buf) == ATTR_COLOR) {
 	    if (BU_STR_EQUAL(argv[1], "invalid") || BU_STR_EQUAL(argv[1], "none")) {
 		comb->rgb[0] = comb->rgb[1] =
 		    comb->rgb[2] = 0;
@@ -997,7 +997,7 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		i = sscanf(argv[1], "%u %u %u",
 			   &r, &g, &b);
 		if (i != 3) {
-		    bu_vls_printf(logstr, "adjust rgb %s: not valid rgb 3-tuple\n", argv[1]);
+		    bu_vls_printf(logstr, "adjust %s: not valid rgb 3-tuple\n", argv[1]);
 		    return BRLCAD_ERROR;
 		}
 		comb->rgb[0] = (unsigned char)r;
@@ -1057,6 +1057,10 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	argv += 2;
     }
 
+    /* Make sure the attributes have gotten the message */
+    db5_sync_comb_to_attr(&intern->idb_avs, comb);
+    db5_standardize_avs(&intern->idb_avs);
+    
     return BRLCAD_OK;
 
 not_region:

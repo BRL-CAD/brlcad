@@ -682,7 +682,7 @@ HIDDEN int to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp);
 HIDDEN void to_refresh_all_views(struct tclcad_obj *top);
 HIDDEN void to_refresh_view(struct ged_dm_view *gdvp);
 HIDDEN void to_refresh_handler(void *clientdata);
-HIDDEN void to_autoview_view(struct ged_dm_view *gdvp);
+HIDDEN void to_autoview_view(struct ged_dm_view *gdvp, const char *scale);
 HIDDEN void to_autoview_all_views(struct tclcad_obj *top);
 HIDDEN void to_rt_end_callback_internal(int aborted);
 
@@ -1308,8 +1308,8 @@ to_autoview(struct ged *gedp,
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    if (argc > 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s [scale]", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -1323,7 +1323,10 @@ to_autoview(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    to_autoview_view(gdvp);
+    if (argc > 2)
+	to_autoview_view(gdvp, argv[2]);
+    else
+	to_autoview_view(gdvp, NULL);
 
     return GED_OK;
 }
@@ -9051,15 +9054,20 @@ to_refresh_handler(void *clientdata)
 }
 
 HIDDEN void
-to_autoview_view(struct ged_dm_view *gdvp)
+to_autoview_view(struct ged_dm_view *gdvp, const char *scale)
 {
     int ret;
-    char *av[2];
+    const char *av[3];
 
     gdvp->gdv_gop->go_gedp->ged_gvp = gdvp->gdv_view;
     av[0] = "autoview";
-    av[1] = (char *)0;
-    ret = ged_autoview(gdvp->gdv_gop->go_gedp, 1, (const char **)av);
+    av[1] = scale;
+    av[2] = NULL;
+
+    if (scale)
+	ret = ged_autoview(gdvp->gdv_gop->go_gedp, 2, (const char **)av);
+    else
+	ret = ged_autoview(gdvp->gdv_gop->go_gedp, 2, (const char **)av);
 
     if (ret == GED_OK) {
 	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
@@ -9076,7 +9084,7 @@ to_autoview_all_views(struct tclcad_obj *top)
     struct ged_dm_view *gdvp;
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &top->to_gop->go_head_views.l)) {
-	to_autoview_view(gdvp);
+	to_autoview_view(gdvp, NULL);
     }
 }
 
