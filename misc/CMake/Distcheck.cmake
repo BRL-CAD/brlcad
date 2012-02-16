@@ -8,7 +8,7 @@ macro(DEFINE_DISTCHECK_TARGET)
 
     # Determine how to trigger the build in the distcheck target
     if("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
-      set(DISTCHECK_BUILD_CMD "${CMAKE_COMMAND} -E chdir _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build $(MAKE)")
+      set(DISTCHECK_BUILD_CMD "${CMAKE_COMMAND} -E chdir _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build $(MAKE) > distcheck_compilation_log")
     else("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
       set(DISTCHECK_BUILD_CMD "COMMAND ${CMAKE_COMMAND} -E build _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build")
     endif("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
