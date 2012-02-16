@@ -2921,7 +2921,7 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
 
     if (argc <= 0 || argc > 3) {
 	bu_vls_printf(vls,
-		      "db_tree_parse: tree node does not have 1, 2 or 2 elements: %s\n",
+		      "db_tree_parse: tree node does not have 1, 2 or 3 elements: %s\n",
 		      str);
 	goto out;
     }
