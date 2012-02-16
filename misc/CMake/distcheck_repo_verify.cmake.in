@@ -319,7 +319,7 @@ endif(NOT SVN_EXEC OR NOT EXISTS @CMAKE_SOURCE_DIR@/.svn)
 file(WRITE @CMAKE_BINARY_DIR@/CMakeTmp/distcheck_message "execute_process(COMMAND @CMAKE_COMMAND@ -E echo \"${FINAL_DIST_MESSAGE}\")")
 
 # If we got this far, it worked
-message("Stage 1: Passed")
+message("Source Repository Verification: Passed")
 
 # Local Variables:
 # tab-width: 8

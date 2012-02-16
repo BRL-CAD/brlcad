@@ -1,49 +1,36 @@
-add_custom_target(distcheck
-  COMMAND ${CMAKE_COMMAND} -E echo "Stage 1:  Check files in Source Repository against files specified in Build Logic"
-  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake
-  COMMAND ${CMAKE_COMMAND} -E echo "Stage 2:  Create source tgz, tbz2 and zip archives from toplevel archive."
-  COMMAND ${CPACK_EXEC} --config ${CMAKE_CURRENT_BINARY_DIR}/CPackSourceConfig.cmake
-  COMMAND ${CMAKE_COMMAND} -E echo "Stage 3:  Expand tgz archive and prepare to build using the Debug configuration from archive sources."
-  COMMAND ${CMAKE_COMMAND} -E remove summary run-*.log distcheck_compilation_log
-  COMMAND ${CMAKE_COMMAND} -E remove_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
-  COMMAND ${CMAKE_COMMAND} -E remove_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
-  COMMAND ${CMAKE_COMMAND} -E tar xzf ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
-  COMMAND ${CMAKE_COMMAND} -E make_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
-  COMMAND ${CMAKE_COMMAND} -E make_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
-  COMMAND ${CMAKE_COMMAND} -E chdir _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build ${CMAKE_COMMAND} ../${CPACK_SOURCE_PACKAGE_FILE_NAME}   -DBRLCAD_BUNDLED_LIBS="Bundled" -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/_${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
-  COMMAND ${CMAKE_COMMAND} -E echo "Stage 4:  Compile using source from tgz archive."
+add_custom_target(distcheck-@TARGET_SUFFIX@
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Extracting TGZ archive..."
+  COMMAND ${CMAKE_COMMAND} -E remove distcheck_@TARGET_SUFFIX@.log
+  COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-@TARGET_SUFFIX@
+  COMMAND ${CMAKE_COMMAND} -E make_directory distcheck-@TARGET_SUFFIX@
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-@TARGET_SUFFIX@ ${CMAKE_COMMAND} -E tar xzf ../${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
+  COMMAND ${CMAKE_COMMAND} -E make_directory distcheck-@TARGET_SUFFIX@/build
+  COMMAND ${CMAKE_COMMAND} -E make_directory distcheck-@TARGET_SUFFIX@/install
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Extracting TGZ archive... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Configuring... "
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-@TARGET_SUFFIX@/build ${CMAKE_COMMAND} ../${CPACK_SOURCE_PACKAGE_FILE_NAME} @CMAKE_OPTS@ -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/distcheck-@TARGET_SUFFIX@/install @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Configuring... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Compiling using source from TGZ archive..."
   COMMAND @DISTCHECK_BUILD_CMD@
-  COMMAND ${CMAKE_COMMAND} -E echo "Stage 5:  Run build-directory regression and benchmark testing from tgz archive compilation."
-  COMMAND ${CMAKE_COMMAND} --build _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build --target regress
-  COMMAND TIMEFRAME=1 ${CMAKE_COMMAND} --build _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build --target benchmark
-  COMMAND ${CMAKE_COMMAND} -E echo "Stage 6:  Install from tgz build directory."
-  COMMAND ${CMAKE_COMMAND} --build _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build --target install
-  COMMAND ${CMAKE_COMMAND} -E echo "Stage 7:  Clear tgz archive sources and build directory."
-  COMMAND ${CMAKE_COMMAND} -E remove_directory ${CPACK_SOURCE_PACKAGE_FILE_NAME}
-  COMMAND ${CMAKE_COMMAND} -E remove_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
-  COMMAND ${CMAKE_COMMAND} -E echo "Stage 8:  Run benchmark testing from tgz archive installed build."
-  COMMAND TIMEFRAME=1 _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install/${BIN_DIR}/benchmark run
-  COMMAND _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install/${BIN_DIR}/benchmark clean
-  COMMAND ${CMAKE_COMMAND} -E echo "Stage 9:  Do it all again using the Release build configuration."
-  COMMAND ${CMAKE_COMMAND} -E remove summary run-*.log distcheck_compilation_log
-  COMMAND ${CMAKE_COMMAND} -E remove_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
-  COMMAND ${CMAKE_COMMAND} -E remove_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
-  COMMAND ${CMAKE_COMMAND} -E tar xzf ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
-  COMMAND ${CMAKE_COMMAND} -E make_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
-  COMMAND ${CMAKE_COMMAND} -E make_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
-  COMMAND ${CMAKE_COMMAND} -E chdir _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build ${CMAKE_COMMAND} ../${CPACK_SOURCE_PACKAGE_FILE_NAME} -DBRLCAD_BUNDLED_LIBS="Bundled" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/_${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
-  COMMAND @DISTCHECK_BUILD_CMD@ 
-  COMMAND ${CMAKE_COMMAND} --build _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build --target regress
-  COMMAND TIMEFRAME=1 ${CMAKE_COMMAND} --build _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build --target benchmark
-  COMMAND ${CMAKE_COMMAND} --build _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build --target install
-  COMMAND ${CMAKE_COMMAND} -E remove_directory ${CPACK_SOURCE_PACKAGE_FILE_NAME}
-  COMMAND ${CMAKE_COMMAND} -E remove_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
-  COMMAND TIMEFRAME=1 _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install/${BIN_DIR}/benchmark run
-  COMMAND _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install/${BIN_DIR}/benchmark clean
-  COMMAND ${CMAKE_COMMAND} -E echo "Stage 10: Final Cleanup."
-  COMMAND ${CMAKE_COMMAND} -E remove summary run-*.log distcheck_compilation_log
-  COMMAND ${CMAKE_COMMAND} -E remove_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
-  COMMAND ${CMAKE_COMMAND} -E remove_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
-  # The source repository verification script is responsible for generating this file
-  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_message
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Compiling using source from TGZ archive... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Run build-directory regression and benchmark testing..."
+  COMMAND ${CMAKE_COMMAND} --build distcheck-@TARGET_SUFFIX@/build  --target regress @TARGET_REDIRECT@
+  COMMAND TIMEFRAME=1 ${CMAKE_COMMAND} --build distcheck-@TARGET_SUFFIX@/build --target benchmark @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Run build-directory regression and benchmark testing... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Install from tgz build directory..."
+  COMMAND ${CMAKE_COMMAND} --build distcheck-@TARGET_SUFFIX@/build --target install @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Install from tgz build directory... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Clear tgz archive sources and build directory..."
+  COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME}
+  COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-@TARGET_SUFFIX@/build
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Clear tgz archive sources and build directory... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Run benchmark testing from tgz archive installed build..."
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-@TARGET_SUFFIX@ TIMEFRAME=1 install/${BIN_DIR}/benchmark run @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-@TARGET_SUFFIX@ install/${BIN_DIR}/benchmark clean @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Run benchmark testing from installed build... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Cleanup..."
+  COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-@TARGET_SUFFIX@
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Cleanup... Done."
+  COMMENT "[distcheck-@TARGET_SUFFIX@] Peforming distcheck - @TARGET_SUFFIX@ configuration..."
+  DEPENDS distcheck-source-archives
   )
