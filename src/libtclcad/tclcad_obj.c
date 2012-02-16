@@ -4496,7 +4496,7 @@ to_data_pick(struct ged *gedp,
     point_t dpoint, vpoint;
     register int i;
     struct ged_dm_view *gdvp;
-    fastf_t top_z = 0.0;
+    fastf_t top_z = -MAX_FASTF;
     point_t top_point = VINIT_ZERO;
     size_t top_i = 0;
     size_t top_j = 0;
