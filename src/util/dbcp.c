@@ -102,10 +102,11 @@ main(int argc, char **argv)
     size = 512 * atoi(argv[bu_optind]);
 
     setbuf (stderr, errbuf);
-    if ((buffer = (char *)malloc(size)) == NULL)
-	bu_exit(88, "dbcp: Insufficient buffer memory\n");
+    buffer = (char *)bu_malloc(size, "alloc buffer");
+
     if (pipe (par2chld) < 0 || pipe (chld2par) < 0) {
 	perror("pipe");
+	bu_free(buffer, "free buffer");
 	bu_exit(89, "dbcp: Can't pipe\n");
     }
 
@@ -118,6 +119,7 @@ main(int argc, char **argv)
     switch (pid = fork()) {
 	case -1:
 	    perror("fork");
+	    bu_free(buffer, "free buffer");
 	    bu_exit(99, "dbcp: Can't fork\n");
 
 	case 0:
@@ -238,6 +240,8 @@ main(int argc, char **argv)
 	while (wait(&waitcode) > 0)
 	    ;
     }
+
+    bu_free(buffer, "free buffer");
 
     return exitval;
 }
