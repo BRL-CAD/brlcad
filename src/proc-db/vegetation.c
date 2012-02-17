@@ -874,18 +874,32 @@ int main (int argc, char *argv[]) {
     if (argc > 1) {
 	age = atoi(argv[1]);
     }
+    if (age == 0)
+	age = 1;
+    if (age > UINT32_MAX)
+	age = UINT32_MAX;
+
     printf("Growing for %d years\n", age);
     if (argc > 2) {
 	height = atof(argv[2]);
     }
+    if (height < (SMALL_FASTF * 1000.0))
+	height = (SMALL_FASTF * 1000.0);
+
     printf("Growing to about %f meters in height\n", height / 1000);
     if (argc > 3) {
 	trunkRadius = atof(argv[3]);
     }
+    if (trunkRadius < (SMALL_FASTF * 1000.0))
+	trunkRadius = (SMALL_FASTF * 1000.0);
+
     printf("Growing from a base width of %f meters\n", trunkRadius / 1000);
     if (argc > 4) {
 	branchingRate = atof(argv[4]);
     }
+    if (branchingRate < SMALL_FASTF)
+	branchingRate = SMALL_FASTF;
+
     if (argc > 5) {
 	seed = atol(argv[5]);
     }
