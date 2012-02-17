@@ -57,6 +57,8 @@ genptr_t obuf;
 int
 main(int argc, char **argv)
 {
+    char *in_pat;
+    char *out_pat;
     int m;
     int n;
 
@@ -65,8 +67,16 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    in_cookie = bu_cv_cookie(argv[1]);
-    out_cookie = bu_cv_cookie(argv[2]);
+    in_pat = argv[1];
+    if (BU_STR_EQUAL(in_pat, ""))
+	in_pat = "huc";
+
+    out_pat = argv[2];
+    if (BU_STR_EQUAL(out_pat, ""))
+	out_pat = "nuc";
+
+    in_cookie = bu_cv_cookie(in_pat);
+    out_cookie = bu_cv_cookie(out_pat);
 
     if (argc >= 5) {
 	if ((outfp = fopen(argv[4], "w")) == NULL) {
