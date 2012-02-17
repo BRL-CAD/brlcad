@@ -188,13 +188,25 @@ main(int argc, char *argv[])
 	nr2 = 0;
 
 	while((i=getchar()) != -1) {
+	    int t1idx, t2idx, t3idx;
+
 		if (secureflg) {
 			nr1 = deck[n1]&MASK;
 			nr2 = deck[nr1]&MASK;
 		} else {
 			nr1 = n1;
 		}
-		i = t2[(t3[(t1[(i+nr1)&MASK]+nr2)&MASK]-nr2)&MASK]-nr1;
+		t1idx = (i+nr1)&MASK;
+		if (t1idx >= ROTORSZ)
+		    t1idx = ROTORSZ-1;
+		t3idx = (t1[t1idx]+nr2)&MASK;
+		if (t3idx >= ROTORSZ)
+		    t3idx = ROTORSZ-1;
+		t2idx = (t3[t3idx]-nr2)&MASK;
+		if (t2idx >= ROTORSZ)
+		    t2idx = ROTORSZ-1;
+
+		i = t2[t2idx]-nr1;
 		putchar(i);
 		n1++;
 		if(n1==ROTORSZ) {
