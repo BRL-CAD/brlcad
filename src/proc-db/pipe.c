@@ -721,6 +721,9 @@ main(int argc, char **argv)
 	    done=1;
 	}
     }
+    if (radius < SMALL_FASTF)
+	radius = SMALL_FASTF;
+
     radius=k*radius;
     wall=k*wall;
 

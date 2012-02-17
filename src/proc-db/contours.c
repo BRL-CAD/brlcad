@@ -33,7 +33,7 @@
 
 int x, y, z;
 int npts;
-char name[128];
+char name[128] = {0};
 
 int
 main(int argc, char *argv[])
@@ -50,10 +50,14 @@ main(int argc, char *argv[])
 	    bu_log("Negative # of pts\n");
 	    return -1;
 	}
-	if(npts >= INT_MAX) {
+	if (npts >= INT_MAX) {
 	    bu_log("Too many points\n");
 	    return -1;
 	}
+	if (npts < 0) {
+	    npts = 0;
+	}
+
 	for (i=0; i<npts; i++) {
 	    if (scanf("%d %d", &x, &y) != 2)
 		fprintf(stderr, "bad xy\n");

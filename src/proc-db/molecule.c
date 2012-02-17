@@ -174,6 +174,7 @@ read_data(void)
 		    perror("scanf");
 		(void)make_bond(b_1, b_2);
 		break;
+	    default:
 	    case (4):
 		return;
 	}
