@@ -155,9 +155,15 @@ main(int argc, char **argv)
     if (verbose) bu_debug = BU_DEBUG_COREDUMP;
 
     datafile_basename = argv[bu_optind];
+    if (BU_STR_EQUAL(datafile_basename, ""))
+	datafile_basename = "ssamp-bw";
 
     /* Read spectrum definition */
     snprintf(spectrum_name, 100, "%s.spect", datafile_basename);
+    if (!bu_file_exists(spectrum_name, NULL)){
+	bu_exit(EXIT_FAILURE, "Spectrum file [%s] does not exist\n", spectrum_name);
+    }
+
     spectrum = (struct bn_table *)bn_table_read(spectrum_name);
     if (spectrum == NULL) {
 	bu_exit(EXIT_FAILURE, "ssamp-bw: Unable to read spectrum\n");

@@ -584,6 +584,8 @@ main(int argc, char **argv)
     }
 
     datafile_basename = argv[bu_optind];
+    if (BU_STR_EQUAL(datafile_basename, ""))
+	datafile_basename = "ssampview";
 
     first_command = "doit1 42";
 
@@ -594,6 +596,10 @@ main(int argc, char **argv)
 
     /* Read spectrum definition */
     snprintf(spectrum_name, 100, "%s.spect", datafile_basename);
+    if (!bu_file_exists(spectrum_name, NULL)) {
+	bu_exit(EXIT_FAILURE, "Spectrum file [%s] does not exist\n", spectrum_name);
+    }
+
     spectrum = (struct bn_table *)bn_table_read(spectrum_name);
     if (spectrum == NULL) {
 	bu_exit(EXIT_FAILURE, "Unable to read spectrum\n");
