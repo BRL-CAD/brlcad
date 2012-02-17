@@ -416,8 +416,8 @@ STEPcomplex::STEPread(int id, int addFileId, class InstMgr * instance_set,
 	else // c == '('
 	    in.putback(c);
 	
-	cout << s.chars() << endl;
-	BuildAttrs( s.chars() );
+	cout << s << endl;
+	BuildAttrs(s.c_str());
 	SCLP23(Application_instance)::STEPread(id, addFileId, instance_set, 
 					       in, currSch);
 	
@@ -448,11 +448,11 @@ STEPcomplex::STEPread(int id, int addFileId, class InstMgr * instance_set,
 	    else // c == '('
 		in.putback(c);
 
-	    cout << s.chars() << endl; // diagnostics DAS
+	    cout << s << endl; // diagnostics DAS
 	    
 	    STEPcomplex *stepc = new STEPcomplex( _registry );
 	    AppendEntity(stepc);
-	    stepc->BuildAttrs( s.chars() );
+	    stepc->BuildAttrs(s.c_str());
 	    stepc->SCLP23(Application_instance)::STEPread(id, addFileId, 
 							  instance_set, in,
 							  currSch);

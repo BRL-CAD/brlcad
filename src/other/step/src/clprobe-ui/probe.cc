@@ -1042,7 +1042,7 @@ void Probe::seeSaveComplete(StepEntityEditor *see)
 
     std::string seText;
     see->GetStepEntity()->STEPwrite(seText);
-    entityInstanceList->ReplaceText(seText.chars(), index) ;
+    entityInstanceList->ReplaceText(seText.c_str(), index) ;
 
     entityInstanceList->WriteCmdChar(SAVE_COMPLETE_STATE_CHAR,
 	SAVE_COMPLETE_STATE_COL, index);	// write the state char
@@ -1068,7 +1068,7 @@ void Probe::seeSaveIncomplete(StepEntityEditor *see)
 
     std::string seText;
     see->GetStepEntity()->STEPwrite(seText);
-    entityInstanceList->ReplaceText(seText.chars(), index);
+    entityInstanceList->ReplaceText(seText.c_str(), index);
 
     entityInstanceList->WriteCmdChar(SAVE_INCOMPLETE_STATE_CHAR,
 	SAVE_INCOMPLETE_STATE_COL, index);	// write the state char
@@ -1143,7 +1143,7 @@ void Probe::seeReplicate(StepEntityEditor *see)
 	see = (StepEntityEditor *)dn->SEE();
 
 	seNew->STEPwrite(instanceInfo);
-	int index = entityInstanceList->Append( instanceInfo.chars() );
+	int index = entityInstanceList->Append( instanceInfo.c_str() );
 	mn->ArrayIndex(index);
 	entityInstanceList->WriteCmdChar(NEW_STATE_CHAR, 
 					 NEW_STATE_COL, index);
@@ -1490,7 +1490,7 @@ static const unsigned VertCenter = 14;
 		// write the new instance to the instance display list
       std::string instanceInfo;
 	    newEntity->STEPwrite(instanceInfo);
-	    int index = entityInstanceList->Append( instanceInfo.chars() );
+	    int index = entityInstanceList->Append( instanceInfo.c_str() );
 	    mn->ArrayIndex(index);
 	    entityInstanceList->WriteCmdChar(NEW_STATE_CHAR, 
 					     NEW_STATE_COL, index);
@@ -1711,7 +1711,7 @@ void Probe::WriteInstance(int index)
     MgrNode *mn = instMgr -> GetMgrNode (index);
     
     mn->GetSTEPentity()->STEPwrite(instanceInfo);
-    entityInstanceList->Append( instanceInfo.chars() );
+    entityInstanceList->Append( instanceInfo.c_str() );
     switch(mn->CurrState())
     {
 /*
@@ -2006,7 +2006,7 @@ void Probe::CreateInstanceCmd()
 	    see = (StepEntityEditor *)dn->SEE();
 
 	    se->STEPwrite(instanceInfo);
-	    int index = entityInstanceList->Append( instanceInfo.chars() );
+	    int index = entityInstanceList->Append( instanceInfo.c_str() );
 	    mn->ArrayIndex(index);
 	    entityInstanceList->WriteCmdChar(NEW_STATE_CHAR, 
 					     NEW_STATE_COL, index);
@@ -3079,7 +3079,7 @@ void Probe::sedlReplicate(MgrNode *existMN, int index)
 	StepEntityEditor *see = (StepEntityEditor *)dn->SEE();
 
 	seNew->STEPwrite(instanceInfo);
-	int newIndex = entityInstanceList->Append( instanceInfo.chars() );
+	int newIndex = entityInstanceList->Append( instanceInfo.c_str() );
 	mn->ArrayIndex(newIndex);
 	entityInstanceList->WriteCmdChar(NEW_STATE_CHAR, 
 					 NEW_STATE_COL, newIndex);

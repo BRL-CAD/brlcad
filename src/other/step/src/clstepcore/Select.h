@@ -10,7 +10,7 @@ class Select {
     virtual ~Select();
 
     virtual char * Underlying_typeName const 
-    { return _underlying_typename.chars(); }
+    { return _underlying_typename.c_str(); }
 
 //    const Named_type_ptr Underlying_type() const;
 

@@ -50,38 +50,6 @@ extern struct Hash_Table *TypeDictionary;
 
 extern Probe *dp;
 
-/*
-StepEntityDescriptor *GetStepEntityDescriptor(char *e)
-{
-
-//    EntityDescriptor & entDesc = 
-//	(EntityDescriptor *)HASHfind(EntityDictionary, StrToUpper(e));
-//    return new StepEntityDescriptor(entDesc);
-}
-*/
-
-/*
-Interactor *InsertInteractor (Interactor * i, Interactor * i2, Alignment align)
-{
-    extern World* dp_world;
-
-    Frame* framedInteractor = new Frame(i, 2);
-    Coord x, y;
-
-//    if(i2->IsMapped()){
-	i2->Align(BottomCenter, i->GetShape()->width, i->GetShape()->height, x, y);
-	i2->GetRelative(x, y, dp_world);
-	dp_world->InsertTransient(framedInteractor, i2, x, y, align);
-//    } else {
-//	x = y = 0;
-//	dp_world->InsertTransient(framedInteractor, i2, x, y, align);
-//    }
-    return(framedInteractor);
-}
-
-	//////////////////////////////////
-
-*/
 void RemoveInteractor (Interactor* i, Interactor *i2)
 {
     Frame* framedInteractor = (Frame*) i->Parent();
@@ -90,8 +58,6 @@ void RemoveInteractor (Interactor* i, Interactor *i2)
     framedInteractor->Remove(i);
     delete framedInteractor;
 }
-
-//////////////////////////////////////////////////////////////////////////
 
 Interactor* AddRightScroller (Interactor* grid)
 {
@@ -161,7 +127,6 @@ void EntityDescriptorBlock::Init(const EntityDescriptor *e, ButtonState *typeMes
     // determine the height of the box as the highest of the attribute 
     // box or subtype box.
     int entryCount = max(attrCount, subtypeCount);
-//////////////////
     
     std::string str;
     char endchar;
@@ -180,57 +145,15 @@ void EntityDescriptorBlock::Init(const EntityDescriptor *e, ButtonState *typeMes
 	    str.Append('<');
 	    endchar = '>';
 	}
-/* // for when inverse information is included
-	else if( ad->Inverse() == OPLOG(LTrue) )
-	{
-	    str.Append('(');
-	    endchar = ')';
-	}
-*/
 	std::string tmp;
 	str.Append( ad->AttrExprDefStr(tmp) );
-/* // built by hand
-	str.Append( ad->Name() );
-	str.Append( " : " );
-	if( ad->Optional() == OPLOG(LTrue) )
-	{
-	    str.Append("OPTIONAL ");
-	}
-	str.Append( attrPtr->AttrDesc()->DomainType()->AttrTypeName() );
-*/
 	str.Append( endchar );
 
-////////////////////
-	attrListBrowser->Append(str.chars());
-
-/*
-	attrDefinition = str.chars();
-	const char *attrDefPtr = attrDefinition;
-
-	char attrStr[maxAttrLen + 1];
-	attrStr[0] = 0;
-
-	strncpy(attrStr, attrDefPtr, maxAttrLen);
-	attrStr[maxAttrLen] = 0;
-	attrListBrowser->Append(attrStr);
-	
-	// if the attr def was longer than maxAttrLen continue the definition
-	// on lines following starting 5 spaces in.
-	attrDefPtr = &attrDefPtr[maxAttrLen];
-	while(strlen(attrDefPtr) > 0)
-	{
-	    memset(attrStr, ' ', 5);
-	    memset(attrStr + 5, 0, maxAttrLen - 4);
-	    strncat(attrStr, attrDefPtr, maxAttrLen - 5);
-	    attrListBrowser->Append(attrStr);
-	    attrDefPtr = &attrDefPtr[strlen(attrStr) - 5];
-	}
-*/
+	attrListBrowser->Append(str.c_str());
 
 	attrPtr = (AttrDescLinkNode *)attrPtr->NextNode();
     }
 
-//////////////
     subtypeListBrowser = new StringBrowser(subtypeBS, entryCount, maxSubtypeLen);
     EntityDescLinkNode *subtypePtr = 
 				(EntityDescLinkNode *)subtypeList->GetHead();
@@ -243,9 +166,6 @@ void EntityDescriptorBlock::Init(const EntityDescriptor *e, ButtonState *typeMes
 
 Interactor *EntityDescriptorBlock::Body()
 {
-//    Message *attrsAndSubtypesTitle = new Message("attributes & subtypes");
-//    Message *attrsTitle = new Message("attributes");
-//    Message *subtypesTitle = new Message("subtypes");
     attrSubtypeBox = new HBox(
 		 AddRightScroller(attrListBrowser),
 		 new VBorder,
@@ -264,8 +184,6 @@ Interactor *EntityDescriptorBlock::Body()
     bodyBox = new VBox(
 	    new HBox(
 		     name,
-//		     new HGlue(round(.02*inch), round(.02*inch), 0),
-//		     attrsAndSubtypesTitle,
 		     new HBox(
 			      new HGlue(round(.5*inch), round(.5*inch), hfil),
 			      schemaMessage,
@@ -273,7 +191,6 @@ Interactor *EntityDescriptorBlock::Body()
 			      openCloseBut
 			),
 		     new HGlue(round(.02*inch), round(.02*inch), 0)
-//		     new HGlue(round(.5*inch), round(.5*inch), hfil)
 	    ),
 	    new HBorder,
 	    attrSubtypeBox
@@ -346,26 +263,18 @@ void EntityDescriptorBlock::Update()
 		attrPtr = (AttrDescLinkNode *)attrPtr->NextNode();
 	    }
 	    std::string tmp;
-//	    attrStr = attrPtr->AttrDesc()->AttrExprDefStr(tmp);
-
-//	    attrStr = TypeString(attrPtr->AttrDesc());
 	    std::string tmp2;
 	    strncpy(attrStr,
 		    attrPtr->AttrDesc()->DomainType()->TypeString(tmp2),
 		    BUFSIZ);
 	    attrStr[BUFSIZ-1] = 0;
 
-//	    AttrDescriptorList *attrDescList = ed->ExplicitAttr();
-//	    AttrDescriptor *attrDesc = attrDescList->GetHead();
-
-//	    char * attrStr = attrListBrowser->String(index);
 	    typeMsg->SetValue((char *)attrStr);
 	    cout << "Selected attr: '" << attrStr << "'\n";
 	}
     }
 
     openCloseBS->GetValue(val);
-//	openCloseBS->SetValue(0);
     if(val != lastCloseVal)
     {
 	if(val == 1)
@@ -383,8 +292,6 @@ void EntityDescriptorBlock::Update()
     lastCloseVal = val;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-
 EntityDescBlockNode *
 EntityDescBlockList::PrependNode (EntityDescriptorBlock * edb)
 { 
@@ -398,23 +305,6 @@ EntityDescBlockList::PrependNode (EntityDescriptorBlock * edb)
 
     return node;
 }    
-
-///////////////////////////////////////////////////////////////////////////////
-
-/*
-StepEntityDescriptor::StepEntityDescriptor()
-{ 
-    edbList = new EntityDescBlockList;
-    Scene::Insert(new HBorder(2));
-    entDesc = 0;
-
-    closeBS = new ButtonState(0);
-    closeBS->Attach(this);
-    close = new PushButton("close", closeBS, 1);
-    entDesc = ed;
-
-}
-*/
 
 char * 
 StepEntityDescriptor::LongestAttrInBlock(const EntityDescriptor *entity)
@@ -439,13 +329,6 @@ StepEntityDescriptor::LongestAttrInBlock(const EntityDescriptor *entity)
 	    {
 		attrLen = attrLen + 2;
 	    }
-/*
-	    // for when inverse information is else included
-	    else if( attrPtr->AttrDesc()->Inverse() == OPLOG(LTrue) )
-	    {
-		attrLen = attrLen + 2;
-	    }
-*/
 
 	    if(attrLen > longestLen)
 	    {
@@ -495,7 +378,6 @@ StepEntityDescriptor::FindLongestAttribute()
     }
     return longestAttrStr;
 }
-//////////////////
 
 char * 
 StepEntityDescriptor::LongestSubtNameInBlock(const EntityDescriptor *entity)
@@ -558,7 +440,6 @@ StepEntityDescriptor::FindLongestSubtName()
     }
     return longestSubtypeStr;
 }
-//////////////////
 
 StepEntityDescriptor::StepEntityDescriptor(const EntityDescriptor *ed)
 { 
@@ -580,8 +461,6 @@ StepEntityDescriptor::StepEntityDescriptor(const EntityDescriptor *ed)
 		)
 	);
     
-
-///////////////
     int maxAttrLen = strlen(FindLongestAttribute());
     int len = 5;
     maxAttrLen = max(maxAttrLen, len);
@@ -592,7 +471,6 @@ StepEntityDescriptor::StepEntityDescriptor(const EntityDescriptor *ed)
     strDispBS = new ButtonState(0);
     strDispBS->Attach(this);
     strDisp = new StringDisplay(strDispBS, " ");
-//////////////
     edbList->PrependNode(new EntityDescriptorBlock(ed, strDispBS, maxAttrLen, 
 						   maxSubtypeLen));
 
@@ -628,14 +506,6 @@ StepEntityDescriptor::StepEntityDescriptor(const EntityDescriptor *ed)
 		 );
 }
 
-/*
-StepEntityDescriptor::StepEntityDescriptor(Interactor *i) : (i)
-{
-    edbList = new EntityDescBlockList;
-    Scene::Insert(new HBorder(2));
-}
-*/
-
 void StepEntityDescriptor::Insert(Interactor *i) 
 {
     Scene::Insert(i);
@@ -657,12 +527,9 @@ void StepEntityDescriptor::Update()
     if (val == 1)
     {
 	dp->RemoveSED(this);
-//	RemoveInteractor (this, this);
 	cout << "close entity display" << "\n";
     }
     char *strVal = 0;
-//    strDispBS->GetValue(strVal); // this no longer works with Sun 
-				   // C++ => error. Must assign as below DAS
     void * tmpVoidPtr = 0;
     strDispBS->GetValue(tmpVoidPtr); 
     strVal = (char *) tmpVoidPtr;
@@ -672,18 +539,7 @@ void StepEntityDescriptor::Update()
 	strDisp->Message(strVal);
 }
 
-// boolean i.e. true = 1 and false = 0
 boolean StepEntityDescriptor::IsMapped()
 {
     return (canvas != nil && canvas->status() == Canvas::mapped);
-/* 
-    if(canvas)
-    {
-	// this doesn't work
-	int bool = canvas->window()->is_mapped();
-	return bool;
-    }
-    else
-	return false;
-*/
 }

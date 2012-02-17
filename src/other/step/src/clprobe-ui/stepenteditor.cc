@@ -404,22 +404,6 @@ void seeAttrRow::UndoChanges()
     {
 	std::string tmp(attrVal);
 	attrVal = StrEditorVal(tmp);
-/*
-	if(stepAttr->ptr.S->is_undefined())
-	    attrVal = "$";
-	else
-	{
-	    char *str = attrVal.chars();
-	    while(isspace(*str)) str++;
-	    if( (str[0] == '\\') && (str[1] == '$') )
-	    {
-		str = str + 2;
-		while( isspace(*str) ) str++;
-		if(*str == '\0')
-		    attrVal = "\\$"; // call value \$ a string with a single $
-	    }
-	}
-*/
     }
   // need to do the above assignment to save return val from asStr
   editField->Message(attrVal);
@@ -472,7 +456,7 @@ char *seeAttrRow::StrEditorVal(std::string &s)
 	s = "$";
     else
     {
-	char *str = (char *)s.chars();
+	char *str = (char *)s.c_str();
 	while(isspace(*str)) str++;
 	if(str[0] == '$')
 	{
@@ -482,7 +466,7 @@ char *seeAttrRow::StrEditorVal(std::string &s)
 		s = "\\$"; // call value \$ a string with a single $
 	}
     }
-    return (char *)s.chars();
+    return (char *)s.c_str();
 }
 
 // it was decided that attributes in the Data Probe of type string with value
@@ -514,13 +498,10 @@ char *seeAttrRow::StrAttrAssignVal(const char *s)
 		return 0;
 	    }
 	    else // a string value starting with a $ with following chars.
-//		stepAttr->StrToVal(QuotedString(s), dp->GetInstMgr(), 0);
 		return (char *)s;
-//		return QuotedString(s);
 	}
 	else if(*str == '\0')
 	{ // no value will be absence of a string
-//	    stepAttr->ptr.S->set_undefined();
 	    return "";
 	}
 	else
@@ -558,7 +539,6 @@ char *seeAttrRow::StrAttrAssignVal(const char *s)
 // If you call this function for an attribute which is not of type string it
 // returns -1 otherwise it returns the string value to be assigned which
 // is 0 if the string is meant to not exist, "" if it is meant to exist but
-// contain no chars, or the char * otherwise.
 other possible way of doing the function
 char *seeAttrRow::StrAttrAssignVal(const char *s)
 {
@@ -1275,7 +1255,7 @@ void StepEntityEditor::CreateInsertAttributeEditors()
 		ss.Append(*s);
 	    s++;
 	}
-	label = new seeStringEditor(editorsButSt, ss.chars(), EDIT_WIDTH);
+	label = new seeStringEditor(editorsButSt, ss, EDIT_WIDTH);
     }
     else
 	label = new seeStringEditor(editorsButSt, " ", EDIT_WIDTH);
@@ -1699,7 +1679,7 @@ boolean StepEntityEditor::SaveComplete()
 	    sTmp = ReadComment(ss, sTmp);
 	}
 	if(ss.rep())
-	    stepEnt->AddP21Comment(ss.chars());
+	    stepEnt->AddP21Comment(ss);
     }
 
     if(rowHead){
@@ -1768,7 +1748,7 @@ boolean StepEntityEditor::SaveIncomplete()
 	    sTmp = ReadComment(ss, sTmp);
 	}
 	if(ss.rep())
-	    stepEnt->AddP21Comment(ss.chars());
+	    stepEnt->AddP21Comment(ss);
     }
 
     if(rowHead){
