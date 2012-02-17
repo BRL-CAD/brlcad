@@ -79,12 +79,36 @@ main(int argc, char **argv)
     pl_color(stdout, 255, 255, 255);
 
     while ((n = fread(&scan[0], sizeof(*scan), 512, fp)) > 0) {
+	int ridx, bidx, gidx;
+
+	if (n > 512)
+	    n = 512;
+
 	for (x = 0; x < n; x++) {
-	    bmask = 1 << ((scan[x].blue >> 1) & 7);
-	    if ((bin[ scan[x].red>>1 ][ scan[x].green>>1 ][ scan[x].blue>>4 ] & bmask) == 0) {
+	    ridx = scan[x].red;
+	    if (ridx < 0)
+		ridx = 0;
+	    if (ridx > 255)
+		ridx = 255;
+
+	    gidx = scan[x].green;
+	    if (gidx < 0)
+		gidx = 0;
+	    if (gidx > 255)
+		gidx = 255;
+
+	    bidx = scan[x].blue;
+	    if (bidx < 0)
+		bidx = 0;
+	    if (bidx > 255)
+		bidx = 255;
+
+	    bmask = 1 << ((bidx >> 1) & 7);
+
+	    if ((bin[ ridx>>1 ][ gidx>>1 ][ bidx>>4 ] & bmask) == 0) {
 		/* New color: plot it and mark it */
-		pl_3point(stdout, scan[x].red>>1, scan[x].green>>1, scan[x].blue>>1);
-		bin[ scan[x].red>>1 ][ scan[x].green>>1 ][ scan[x].blue>>4 ] |= bmask;
+		pl_3point(stdout, ridx>>1, gidx>>1, bidx>>1);
+		bin[ ridx>>1 ][ gidx>>1 ][ bidx>>4 ] |= bmask;
 	    }
 	}
     }

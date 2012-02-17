@@ -93,8 +93,15 @@ void dump(FILE *fd)
 	/* produce the ASCII dump */
 	printf(" |");
 	for (i=0, p=buf; i < bytes; ++i, ++p) {
-	    if (isascii(*p) && isprint(*p)) putchar(*p);
-	    else putchar('.');
+	    int c = *p;
+	    if (c < 0)
+		c = 0;
+	    if (c > 255)
+		c = 255;
+	    if (isascii(c) && isprint(c))
+		putchar(c);
+	    else
+		putchar('.');
 	}
 	printf("|\n");
 	addr += DUMPLEN;

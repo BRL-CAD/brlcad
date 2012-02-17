@@ -132,6 +132,9 @@ main (int argc, char **argv)
     }
 
     argument = argv[bu_optind];
+    if (!bu_file_exists(argument, ""))
+	bu_exit(1, "image file [%s] does not exist\n", argument);
+
     if ((stat(argument, &stat_buf) != 0)
 	&& (!grab_number(argument, &nm_bytes)))
     {
