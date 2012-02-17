@@ -791,6 +791,7 @@ namespace eval ArcherCore {
 	method doAutoview {}
 	method doViewCenter {}
 	method doAe {_az _el}
+	method doFlipView {}
 
 	method showViewAxes     {}
 	method showModelAxes    {}
@@ -3374,6 +3375,7 @@ namespace eval ArcherCore {
     }
 }
 
+
 ::itcl::body ArcherCore::doAe {_az _el} {
     if {$mCurrentPaneName == ""} {
 	set pane $mActivePaneName
@@ -3384,7 +3386,21 @@ namespace eval ArcherCore {
 
     $itk_component(ged) pane_ae $pane $_az $_el
 
-    addHistory "ae $_az $_el"
+    addHistory "aet $_az $_el"
+}
+
+
+::itcl::body ArcherCore::doFlipView {} {
+    if {$mCurrentPaneName == ""} {
+	set pane $mActivePaneName
+    } else {
+	set pane $mCurrentPaneName
+    }
+    set mCurrentPaneName ""
+
+    $itk_component(ged) pane_rot $pane -v 0 180 0
+
+    addHistory "rot -v 0 180 0"
 }
 
 
