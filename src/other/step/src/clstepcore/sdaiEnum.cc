@@ -64,13 +64,6 @@ SCLP23(LOGICAL)::SCLP23_NAME(LOGICAL) (int i)
       v =  LTrue ;
 }
 
-/*
-SCLP23(LOGICAL)::SCLP23_NAME(LOGICAL) (const BOOLEAN& boo) 
-{
-    v = boo.asInt();
-}
-*/
-
 SCLP23(LOGICAL)::~SCLP23_NAME(LOGICAL) () 
 {
 }
@@ -110,28 +103,6 @@ SCLP23(LOGICAL)::nullify() // change the receiver to an unset status
     v = 2;
 }
 
-#if 0
-
-SCLP23(LOGICAL)::operator int () const  {
- // anything other than BFalse should return 1 according to Part 23
-  if (v ==  LFalse ) return 0;
-  //#endif
-  else return 1;
-/*
-  switch (v) {
-  case LFalse: return 0;
-  case LTrue: return 1;
-
-  case LUnknown:
-  case LUnset:  // BUnset or anything other than t or f should set error
-		// sdaiVA_NSET i.e. value unset
-  default: return 1;
-}
-*/
-}
-
-#endif
-
 SCLP23(LOGICAL)::operator  Logical () const  {
   switch (v) {
   case  LFalse : return  LFalse ;
@@ -140,8 +111,6 @@ SCLP23(LOGICAL)::operator  Logical () const  {
   case  LUnset :
   default: return  LUnset ;
 }}
-
-
 
 SCLP23(LOGICAL)& 
 SCLP23(LOGICAL)::operator= (const SCLP23(LOGICAL)& t)
@@ -177,7 +146,6 @@ SCLP23(LOGICAL)::set_value (const int i)  {
 int
 SCLP23(LOGICAL)::set_value (const char * n)  {  
     //  assigns the appropriate value based on n
-//    if  ( !n || (!strcmp (n, "")) )  return set_value (ENUM_NULL);
     if  ( !n || (!strcmp (n, "")) ) { nullify(); return asInt(); }
 	
     int i =0;
@@ -189,7 +157,6 @@ SCLP23(LOGICAL)::set_value (const char * n)  {
     {
 	nullify();
 	return v;
-//	return set_value (ENUM_NULL);
     }
     v = i;	
     return v;
@@ -407,28 +374,6 @@ SCLP23(BOOLEAN)::operator= (const  Boolean t)
     v = t;
     return *this;
 }
-
-#if 0
-
-SCLP23(BOOLEAN)::operator int () const  {
- // anything other than BFalse should return 1 according to Part 23
-  switch (v) {
-  case  BFalse : return 0;
-  case  BTrue : return 1;
-  case  BUnset :  // BUnset or anything other than t or f should set 
-		// error sdaiVA_NSET i.e. value unset
-  default: return 1;
-}}
-
-SCLP23(BOOLEAN)::operator  Logical () const  {
-  switch (v) {
-  case  BFalse : return  LFalse ;
-  case  BTrue : return  LTrue ;
-  case  BUnset : return  LUnset ;
-  default: return  LUnknown ;
-}}
-
-#endif
 
 const char * 
 SCLP23(BOOLEAN)::element_at (int n)  const {
@@ -664,15 +609,6 @@ SCLP23(Enum)::ReadEnum(istream& in, ErrorDescriptor *err, int AssignVal,
     return err->severity();
 }
 
-/*
-Severity 
-SCLP23(Enum)::StrToVal (const char * s)
-{
-    put (s);
-    return SEVERITY_NULL;
-}
-*/
-
 Severity 
 SCLP23(Enum)::StrToVal (const char * s, ErrorDescriptor *err, int optional)
 {
@@ -707,12 +643,9 @@ SCLP23(Enum)::STEPread (istream& in, ErrorDescriptor *err, int optional)
 
 const char * 
 SCLP23(Enum)::asStr (std::string &s) const  {
-//    if (v != ENUM_NULL) 
     if (exists()) 
     {
-//	s = elements[v];
 	return const_cast<char *>((s = element_at (v)).c_str());
-//	return s.chars();
     }
     else return "";
 }
@@ -744,11 +677,6 @@ SCLP23(Enum)::STEPwrite (std::string &s) const
     }
     return const_cast<char *>(s.c_str());
 }
-
-//SCLP23(Enum)::SCLP23_NAME(Enum) (const char * const e)
-//:  elements (e)
-//{  
-//}
 
 /******************************************************************
  ** Procedure:  set_elements
@@ -812,69 +740,6 @@ SCLP23(Enum)::EnumValidLevel(const char *value, ErrorDescriptor *err,
     istringstream in((char *)value);
     return EnumValidLevel (in, err, optional, tokenList, needDelims,
 			   clearError);
-/*
-
-    char messageBuf[BUFSIZ];
-    messageBuf[0] = '\0';
-
-    if(attrValue)
-    {
-	int len = strlen (attrValue);
-	char *valstart = new char [len + 1];
-	char *val = valstart;
-
-	int numFound = sscanf(attrValue," %s", val);
-	if(numFound != EOF)
-	{
-	    int i = 0;
-	    if(val [0] == '.')  // strip the delims
-	    {
-
-		val++;
-		char * pos = strchr(val, '.');
-		if (pos) 
-		    *pos = '\0';
-		else
-		{
-		    err->AppendToDetailMsg(
-		    "Missing ending period delimiter for enumerated value.\n");
-		    err->AppendToUserMsg(
-		    "Missing ending period delimiter for enumerated value.\n");
-		    err->GreaterSeverity(SEVERITY_WARNING);
-		}
-	    }
-
-	    std::string tmp;
-	    while((i < no_elements() ) && 
-	    (strcmp( (char *)StrToUpper(val, tmp), element_at (i) ) != 0))
-		++i;
-	    if(no_elements() == i)	// exhausted all the possible values 
-	    {
-		err->GreaterSeverity(SEVERITY_WARNING);
-		sprintf(messageBuf, 
-			"attribute %s: Invalid enumeration value: '%s'",
-			Name(), val);
-		err->AppendToUserMsg(messageBuf);
-		err->AppendToDetailMsg(messageBuf);
-//		DebugDisplay ();
-		return SEVERITY_WARNING;
-	    }
-	    err->GreaterSeverity(SEVERITY_NULL);
-	    return SEVERITY_NULL;
-	}
-	delete [] valstart;
-    }
-    if(optional) 
-    {
-	err->GreaterSeverity(SEVERITY_NULL);
-	return SEVERITY_NULL;
-    }
-    else
-    {
-	err->GreaterSeverity(SEVERITY_INCOMPLETE);
-	return SEVERITY_INCOMPLETE;
-    }
-*/
 }
 
 /******************************************************************
@@ -890,8 +755,6 @@ SCLP23(Enum)::EnumValidLevel(const char *value, ErrorDescriptor *err,
  ******************************************************************/
 int
 SCLP23(Enum)::set_value (const char * n)  {  
-    //  assigns the appropriate value based on n
-//    if  ( !n || (!strcmp (n, "")) )  return set_value (ENUM_NULL);
     if  ( !n || (!strcmp (n, "")) ) { nullify(); return asInt(); }
 	
     int i =0;
@@ -901,7 +764,6 @@ SCLP23(Enum)::set_value (const char * n)  {
 	++i;
     if ( no_elements () == i)  {  //  exhausted all the possible values 
 	return v = no_elements() + 1; // defined as UNSET
-//	return set_value (ENUM_NULL);
     }
     v = i;	
     return v;
@@ -911,12 +773,6 @@ SCLP23(Enum)::set_value (const char * n)  {
 //  set_value is the same function as put
 int
 SCLP23(Enum)::set_value (const int i)  {  
-/*
-    if (i == ENUM_NULL)  {
-	v = ENUM_NULL;
-	return ENUM_NULL;
-    }
-*/
     if (i > no_elements())  {
 	v = no_elements() + 1;
 	return v;
@@ -928,8 +784,6 @@ SCLP23(Enum)::set_value (const int i)  {
 	<< " for " <<  Name () << "\n";
     DebugDisplay ();
     return  no_elements() + 1 ;
-//    return  ENUM_NULL ;
-    
 }
 
 SCLP23(Enum)& 
@@ -1069,17 +923,6 @@ SCLP23(Enum)::STEPread (istream& in, ErrorDescriptor *err, int optional)
 	  if(optional) err->GreaterSeverity(SEVERITY_NULL);
 	  else	       err->GreaterSeverity(SEVERITY_INCOMPLETE);
 	  break;
-	  
-/*
-	default:
-	  set_value (ENUM_NULL);
-		// read didn't know what to do
-	  err->GreaterSeverity(SEVERITY_INPUT_ERROR); 
-	  sprintf(errStr,
-	       "SCLP23(Enum)::STEPread(): warning : poorly delimited %s %s",
-	        Name(), "enumerated value was ignored.");
-	  err->AppendToDetailMsg(errStr);
-*/
       }  
     return err->severity();
 }

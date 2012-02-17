@@ -1,4 +1,3 @@
-
 /*
 * NIST STEP Core Class Library
 * clstepcore/STEPaggregate.cc
@@ -199,23 +198,6 @@ STEPaggregate::ReadValue(istream &in, ErrorDescriptor *err,
 	    // cannot recover so give up and let STEPattribute recover
 	    err->GreaterSeverity(SEVERITY_INPUT_ERROR);
 	    return SEVERITY_INPUT_ERROR;
-/*
-	    // error read until you find a delimiter
-	    std::string tmp;
-	    while(in.good() && !strchr(",)", c) )
-	    {
-		in.get(c);
-		tmp.Append(c);
-	    }
-	    // BUG could overwrite the error message buffer
-	    sprintf(errmsg, "ERROR aggr. elem. followed by \'%s\' garbage.\n",
-		    tmp.chars());
-	    err->AppendToDetailMsg(errmsg);
-	    err->AppendToUserMsg(errmsg);
-	    err->GreaterSeverity(SEVERITY_WARNING);
-	    if(!in.good())
-		return err->severity();
-*/
 	}
     }
     if(c == ')')
@@ -659,23 +641,6 @@ EntityAggregate::ReadValue(istream &in, ErrorDescriptor *err,
 	    // cannot recover so give up and let STEPattribute recover
 	    err->GreaterSeverity(SEVERITY_INPUT_ERROR);
 	    return SEVERITY_INPUT_ERROR;
-/*
-	    // error read until you find a delimiter
-	    std::string tmp;
-	    while(in.good() && !strchr(",)", c) )
-	    {
-		in.get(c);
-		tmp.Append(c);
-	    }
-	    // BUG could overwrite the error message buffer
-	    sprintf(errmsg, "ERROR aggr. elem. followed by \'%s\' garbage.\n",
-		    tmp.chars());
-	    err->AppendToDetailMsg(errmsg);
-	    err->AppendToUserMsg(errmsg);
-	    err->GreaterSeverity(SEVERITY_WARNING);
-	    if(!in.good())
-		return err->severity();
-*/
 	}
     }
     if(c == ')')

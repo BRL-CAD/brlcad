@@ -347,7 +347,6 @@ STEPfile::HeaderConvertToNew(InstMgr& oldinst)
 //append any extra instances from oldinst onto imtmp
     for (int n = oldinst.InstanceCount() - 1; n>=0; --n) 
       {
-/*	  imtmp->Append(oldinst.GetApplication_instance(oldinst[n]),completeSE);*/
 	  imtmp->Append(oldinst.GetApplication_instance (oldinst.GetMgrNode (n)),completeSE);
       }
     
@@ -566,20 +565,12 @@ STEPfile::EntityWfState(char c)
     {
       case wsSaveComplete:
 	return completeSE;
-//	break;
-
       case wsSaveIncomplete:
 	return incompleteSE;
-//	break;
-		
       case wsDelete:
 	return deleteSE;
-//	break;
-
       case wsNew:
 	return newSE;
-//	break;
-
       default:
 	return noStateSE;
     }
@@ -699,16 +690,9 @@ STEPfile::ReadData1(istream& in)
 
     if(_entsNotCreated) 
     {
-	// new
 	sprintf(buf,
 	"STEPfile Reading File: Unable to create %d instances.\n\tIn first pass through DATA section. Check for invalid entity types.\n",
 		_entsNotCreated);
-	// old
-/*
-	sprintf(buf,
-	"STEPfile Reading File: Unable to create %d instances.\n\tIn first pass through DATA section. Check for invalid entity types.\n",
-		_errorCount);
-*/
 	_error.AppendToUserMsg(buf);
 	_error.GreaterSeverity(SEVERITY_WARNING);
     }
@@ -717,308 +701,11 @@ STEPfile::ReadData1(istream& in)
 
     return instance_count;
 }
-
-#if bzpoibujqoiwejsdlfj
-
-int
-STEPfile::ReadData1(istream& in)
-{
-    int endsec = 0;
-    _entsNotCreated = 0;
-
-    _errorCount = 0;  // reset error count
-    _warningCount = 0;  // reset error count
-
-    char c;
-    int instance_count =0;
-    char buf[BUFSIZ];
-    buf[0] = '\0';
-    std::string tmpbuf;
-
-    SCLP23(Application_instance) * obj;
-    stateEnum inst_state; // used if reading working file
-
-    ReadTokenSeparator(in); // also skips white space
-    c = in.peek();
-///    in >> c;
-
-    if(_fileType == WORKING_SESSION)
-    {
-	if(strchr("CIND", c)) // if there is a valid editing state char
-	{
-	    in >> c; // read the editing state char from the stream
-	    inst_state = EntityWfState(c);
-	}
-	else
-	{
-	    cout << "Invalid editing state character: " << c << endl;
-	    cout << "Assigning editing state to be INCOMPLETE\n";
-	    inst_state = incompleteSE;
-	}
-	ReadTokenSeparator(in);
-	c = in.peek();	// read the ENTITY_NAME_DELIM
-	// else the character should be ENTITY_NAME_DELIM
-    }
-    while (c != ENTITY_NAME_DELIM && in.good ()) 
-    {
-	tmpbuf.set_null();
-	SkipInstance(in,tmpbuf);
-	cout << "ERROR: trying to recover from invalid data. skipping: "
-	     << tmpbuf.chars() << endl;
-	ReadTokenSeparator(in);
-    }
-
-    //  PASS 1:  create instances
-    while (c == ENTITY_NAME_DELIM && in.good () && !endsec) 
-    {
-	if( (_fileType == WORKING_SESSION) && (inst_state == deleteSE))
-	    SkipInstance(in, tmpbuf);
-	else
-	    obj =  CreateInstance(in, cout);
-
-	if(obj != ENTITY_NULL) 
-	{
-	    if( obj->Error().severity() < SEVERITY_WARNING )
-		++_errorCount;
-	    else if( obj->Error().severity() < SEVERITY_NULL )
-		++_warningCount;
-	    obj->Error().ClearErrorMsg();	    
-
-	    if(_fileType == WORKING_SESSION)
-		instances().Append( obj, inst_state );
-	    else
-		instances().Append( obj, newSE );
-
-	    ++instance_count;
-	}
-	else 
-	{  
-	    ++_entsNotCreated;
-	    //old
-	    ++_errorCount;   
-	}
-
-	if (_entsNotCreated > _maxErrorCount) 
-	{
-	    _error.AppendToUserMsg("Warning: Too Many Errors in File. Read function aborted.\n");
-	    cerr << Error().UserMsg();
-	    cerr << Error().DetailMsg();
-	    Error().ClearErrorMsg();
-	    Error().severity(SEVERITY_EXIT);
-	    return instance_count;
-	}
-
-	ReadTokenSeparator(in);
-	in >> c;
-
-	if(_fileType == WORKING_SESSION)
-	{
-	    inst_state = noStateSE;
-	    if(strchr("CIND", c)) // if there is a valid char
-	    {
-		inst_state = EntityWfState(c);
-		ReadTokenSeparator(in);
-		in >> c;		// read the ENTITY_NAME_DELIM
-	    }
-	    else if(c == 'E')
-	    {
-		in.putback(c);
-		if(FoundEndSecKywd(in, _error)) 
-		    endsec = 1;
-	    }
-	    if( !endsec && (c != ENTITY_NAME_DELIM) )
-	    {
-		cout << "Invalid editing state character: " << c << endl;
-		cout << "Assigning editing state to be INCOMPLETE\n";
-		ReadTokenSeparator(in);
-		in >> c;		// read the ENTITY_NAME_DELIM
-	    }
-	    // else the character should be ENTITY_NAME_DELIM
-	}
-
-	if(!endsec && (c != ENTITY_NAME_DELIM) )
-	{
-	    in.putback(c);
-	    while( c != ENTITY_NAME_DELIM && in.good () && 
-		   !FoundEndSecKywd(in, _error) )
-	    {
-		tmpbuf.set_null();
-		SkipInstance(in,tmpbuf);
-	       cout << "ERROR: trying to recover from invalid data. skipping: "
-		     << tmpbuf.chars() << endl;
-		ReadTokenSeparator(in);
-	    }
-	    if( c == ENTITY_NAME_DELIM )
-	      in >> c;
-	}
-
-    } // end while loop
-
-    if(_entsNotCreated) 
-    {
-	// new
-	sprintf(buf,
-	"STEPfile Reading File: Unable to create %d instances.\n\tIn first pass through DATA section. Check for invalid entity types.\n",
-		_entsNotCreated);
-	// old
-/*
-	sprintf(buf,
-	"STEPfile Reading File: Unable to create %d instances.\n\tIn first pass through DATA section. Check for invalid entity types.\n",
-		_errorCount);
-*/
-	_error.AppendToUserMsg(buf);
-	_error.GreaterSeverity(SEVERITY_WARNING);
-    }
-    if (!in.good ())
-	_error.AppendToUserMsg ("Error in input file.\n");
-
-    return instance_count;
-}
-#endif
 
 int
 STEPfile::ReadWorkingData1 (istream& in)
 {
     return ReadData1(in);
-
-#ifdef junk
-    _errorCount = 0;  // reset error count
-    _warningCount = 0;  // reset error count
-
-    char c;
-    int instance_count =0;
-    char errbuf[BUFSIZ];
-    std::string tmpbuf;
-    
-    //  PASS 1:  create instances
-    SCLP23(Application_instance) * obj;
-    stateEnum inst_state;
-
-    int endsec = 0;
-    while (!endsec)
-      {
-	  //check for end of file
-	  if (in.eof()) 
-	    {
-		_error.AppendToUserMsg(
-		"Error: in ReadWorkingData1. end of file reached.\n");
-		return instance_count;
-	    }
-
-	  //check error count
-	  if (_errorCount > _maxErrorCount) 
-	    {
-		cerr << 
-		"Warning: Too Many Errors in File. Read function aborted.\n";
-		cerr << Error().UserMsg();
-		cerr << Error().DetailMsg();
-		Error().ClearErrorMsg();
-		Error().severity(SEVERITY_EXIT);
-		return instance_count;
-	    }
-
-	  inst_state = noStateSE;
-	  ReadTokenSeparator(in);
-	  in.get(c);
-	  
-	  inst_state = EntityWfState(c);
-	  if( c == 'E')
-	  {
-	      // "ENDSEC;" expected
-	      in.putback(c);
-	      endsec = 1;
-	      if (_errorCount) 
-	      {
-		  sprintf(errbuf,"%d error(s) in second pass of DATA section.\n",_errorCount);
-		  _error.AppendToUserMsg(errbuf);
-	      }
-	      return instance_count;
-	  }
-
-	  in >> ws;
-	  in >> c;
-	  if( c != ENTITY_NAME_DELIM)
-	  {
-	//      error
-	  }
-
-// fixing above here
-	  switch (c) 
-	    {
-	      case wsSaveComplete:
-		in >> c;
-		if (c == ENTITY_NAME_DELIM) 
-		    inst_state = completeSE;
-		break;
-		
-	      case wsSaveIncomplete:
-		in >> c;
-		if (c == ENTITY_NAME_DELIM) 
-		    inst_state = incompleteSE;
-		break;
-		
-	      case wsDelete:
-		in >> c;
-		if (c == ENTITY_NAME_DELIM) 
-		    inst_state = deleteSE;
-		break;
-
-	      case wsNew:
-		in >> c;
-		if (c == ENTITY_NAME_DELIM) 
-		    inst_state = newSE;
-		break;
-
-	      case 'E':
-		// "ENDSEC;" expected
-		in.putback(c);
-		endsec = 1;
-		if (_errorCount) 
-		  {
-		      sprintf(errbuf,"%d error(s) in second pass of DATA section.\n",_errorCount);
-		      _error.AppendToUserMsg(errbuf);
-		  }
-
-		return instance_count;
-
-	      default:
-		cerr << "Error: in ReadWorkingData1. Unexpected input. \'" <<
-		    c << "\'\n";
-		endsec = 1;
-		return instance_count;
-	    }
-
-	  switch (inst_state)  
-	    {
-	      case  noStateSE:
-	        SkipInstance(in,tmpbuf);
-		cerr << "Error: in ReadWorkingData1.\n\tunexpected character was: " << c << "\n\tattempt to recover, data lost: " << tmpbuf << "\n";
-		break;
-		
-	      case  deleteSE:
-		// things marked for deletion are deleted
-		SkipInstance(in,tmpbuf);
-		break;
-	
-	      default:  // everything else is created
-		obj = CreateInstance (in, cout);
-		if (obj != ENTITY_NULL) 
-		  {
-		      if (obj->Error().severity() < SEVERITY_WARNING) 
-			{ ++_errorCount; }
-		      else if (obj->Error().severity() < SEVERITY_NULL) 
-			{ ++_warningCount; }
-		      instances ().Append(obj, inst_state);
-		      ++instance_count;
-		  }
-		else { ++_errorCount; }
-
-		break;
-	    }
-      }
-    
-    return instance_count;
-#endif
 }
 
 /******************************************************************
@@ -1050,8 +737,6 @@ STEPfile::ReadData2 (istream& in, int useTechCor)
     SCLP23(Application_instance) * obj = ENTITY_NULL;
     std::string cmtStr;
 
-//    ReadTokenSeparator(in, &cmtStr);
-
     int endsec = FoundEndSecKywd(in, _error);
 
     //  PASS 2:  read instances
@@ -1069,15 +754,6 @@ STEPfile::ReadData2 (istream& in, int useTechCor)
 		ReadTokenSeparator( in, &cmtStr );
 		in >> c;	// read the ENTITY_NAME_DELIM
 	    }
-/*
-	    // don't need this error msg for the 2nd pass (it was done on 1st)
-	    else
-	    {
-		cout << "Invalid editing state character: " << c << endl;
-		cout << "Assigning editing state to be INCOMPLETE\n";
-		inst_state = incompleteSE;
-	    }
-*/
 	}
 
 	if(c != ENTITY_NAME_DELIM)
@@ -1164,281 +840,14 @@ STEPfile::ReadData2 (istream& in, int useTechCor)
     if (!in.good ())
 	_error.AppendToUserMsg ("Error in input file.\n");
 
-//    if( in.good() )
-//	in.putback(c);  
     return valid_insts;
 }
 
-#if xpqosdblkxfnvkbybbbbb
-int
-STEPfile::ReadData2 (istream& in)
-{
-    _entsInvalid = 0;
-    _entsIncomplete = 0;
-    _entsWarning = 0;
-
-    int total_instances =0;
-    int valid_insts =0; 	// used for exchange file only
-    stateEnum inst_state; // used if reading working file
-
-    _errorCount = 0;  // reset error count
-    _warningCount = 0;  // reset error count
-
-    char c;
-    char buf[BUFSIZ];
-    buf[0] = '\0';
-    std::string tmpbuf;
-
-    SCLP23(Application_instance) * obj;
-    std::string cmtStr;
-
-    ReadTokenSeparator(in, &cmtStr);
-    in >> c;
-
-    if(_fileType == WORKING_SESSION)
-    {
-	if(strchr("SIND", c)) // if there is a valid char
-	{
-	    inst_state = EntityWfState(c);
-	    ReadTokenSeparator( in, &cmtStr );
-	    in >> c;		// read the ENTITY_NAME_DELIM
-	}
-	else if( c != ENTITY_NAME_DELIM )
-	{
-	    cout << "Invalid editing state character: " << c << endl;
-	    cout << "Assigning editing state to be INCOMPLETE\n";
-	    ReadTokenSeparator( in, &cmtStr );
-	    in >> c;		// read the ENTITY_NAME_DELIM
-	}
-	// else the character should be ENTITY_NAME_DELIM
-    }
-
-    //  PASS 2:  read instances
-    while (c == ENTITY_NAME_DELIM && in.good ()) 
-    {
-	if( (_fileType == WORKING_SESSION) && (inst_state == deleteSE))
-	    SkipInstance(in, tmpbuf);
-	else
-	    obj =  ReadInstance(in, cout, cmtStr);
-
-	cmtStr.set_null();
-	if(obj != ENTITY_NULL) 
-	{
-	    if( obj->Error().severity() < SEVERITY_INCOMPLETE )
-	    {
-		++_entsInvalid;
-		// old
-		++_errorCount;
-	    }
-	    else if( obj->Error().severity() == SEVERITY_INCOMPLETE )
-	    {
-		++_entsIncomplete;
-		++_entsInvalid;
-	    }
-	    else if( obj->Error().severity() == SEVERITY_USERMSG )
-		++_entsWarning;
-	    else // i.e. if severity == SEVERITY_NULL
-		++valid_insts;
-
-	    obj->Error().ClearErrorMsg();	    
-
-	    ++total_instances;
-	}
-	else 
-	{  
-	    ++_entsInvalid;
-	    // old
-	    ++_errorCount;   
-	}
-
-	if (_entsInvalid > _maxErrorCount) 
-	{
-	    _error.AppendToUserMsg("Warning: Too Many Errors in File. Read function aborted.\n");
-	    cerr << Error().UserMsg();
-	    cerr << Error().DetailMsg();
-	    Error().ClearErrorMsg();
-	    Error().severity(SEVERITY_EXIT);
-	    return valid_insts;
-	}
-
-	ReadTokenSeparator(in, &cmtStr);
-	in >> c;
-
-	if(_fileType == WORKING_SESSION)
-	{
-	    inst_state = noStateSE;
-	    if(strchr("SIND", c)) // if there is a valid char
-	    {
-		inst_state = EntityWfState(c);
-		ReadTokenSeparator( in, &cmtStr );
-		in >> c;		// read the ENTITY_NAME_DELIM
-	    }
-	    else if( c != ENTITY_NAME_DELIM )
-	    {
-		cout << "Invalid editing state character: " << c << endl;
-		cout << "Assigning editing state to be INCOMPLETE\n";
-		ReadTokenSeparator( in, &cmtStr );
-		in >> c;		// read the ENTITY_NAME_DELIM
-	    }
-	    // else the character should be ENTITY_NAME_DELIM
-	}
-	while (c != ENTITY_NAME_DELIM && in.good ()) 
-	{
-	    tmpbuf.set_null();
-	    SkipInstance(in,tmpbuf);
-	    cout << "ERROR: trying to recover from invalid data. skipping: "
-		 << tmpbuf.chars() << endl;
-	    ReadTokenSeparator(in);
-	}
-
-    } // end while loop
-
-    if (_entsInvalid)
-    {
-	sprintf(buf,
-      "STEPfile %s %d total instances, %d invalid, %d incomplete, %d %s.\n",
-		"Reading File 2nd pass instance summary:", total_instances, 
-		_entsInvalid, _entsIncomplete, _entsWarning, 
-		"issued warnings");
-//	cout << buf << endl;
-	_error.AppendToUserMsg(buf);
-	_error.AppendToDetailMsg(buf);
-	_error.GreaterSeverity(SEVERITY_WARNING);
-    }
-    if (!in.good ())
-	_error.AppendToUserMsg ("Error in input file.\n");
-
-//    if( in.good() )
-//	in.putback(c);  
-    return valid_insts;
-}
-
-#endif
-#ifdef junk
-// old version 8/23/94
-int
-STEPfile::ReadData2 (istream& in)
-{
-    _errorCount = 0;  // reset error count
-    _warningCount = 0;  // reset error count
-
-    char c;
-    std::string tmpbuf;
-
-    int valid_insts =0; 	// used for exchange file only
-
-    SCLP23(Application_instance) * obj = ENTITY_NULL;
-
-    ReadTokenSeparator(in);
-
-    in >> c ;
-    
-    //  PASS 2:  read data 
-    while (c == ENTITY_NAME_DELIM && in.good ()) 
-      {
-	  obj =  ReadInstance (in, cout);
-	  if (_errorCount > _maxErrorCount) 
-	    {
-		_error.AppendToUserMsg("Warning: Too Many Errors in File. Read function aborted.\n");
-		cerr << Error().UserMsg();
-		cerr << Error().DetailMsg();
-		Error().ClearErrorMsg();
-		Error().severity(SEVERITY_EXIT);
-		return valid_insts;
-	    }
-
-	  if (obj == ENTITY_NULL)
-	    ++_warningCount;  // the object doesn\'t exist
-	  else if (obj->Error().severity() != SEVERITY_NULL) 
-            // there was a problem in the instance
-	    ++_errorCount;
-	  else	//  the instance is ok
-	      ++valid_insts;
-	  
-	  ReadTokenSeparator(in);
-	  in.get (c);
-      }
-    in.putback(c);  
-    return valid_insts;
-}
-#endif
 
 int
 STEPfile::ReadWorkingData2 (istream& in, int useTechCor)
 {
     return ReadData2 (in, useTechCor);
-#ifdef junk
-    _errorCount = 0;  // reset error count
-    _warningCount = 0;  // reset error count
-    
-    char c;
-    std::string tmpbuf;
-    int total_instances =0;
-
-    SCLP23(Application_instance) * obj = ENTITY_NULL;
-
-    //  PASS 2:  read data 
-    int endsec = 0;
-    while (!endsec) 
-      {
-	  //check error count
-	  if (_errorCount > _maxErrorCount) 
-	    {
-		cerr << 
-		"Warning: Too Many Errors in File. Read function aborted.\n";
-		cerr << Error().UserMsg();
-		cerr << Error().DetailMsg();
-		Error().ClearErrorMsg();
-		Error().severity(SEVERITY_EXIT);
-		return total_instances;
-	    }
-
-	  ReadTokenSeparator(in);
-	  in.get(c);
-	  
-	  switch (c) 
-	    {
-	      case wsSaveComplete:
-	      case wsSaveIncomplete:
-	      case wsNew:
-		ReadTokenSeparator(in);
-		//read in the '#'
-		in.get(c);
-		
-		obj = ReadInstance (in, cout);
-		if (obj != ENTITY_NULL)
-		  {
-		      if (obj->Error().severity() < SEVERITY_WARNING) 
-			{ ++_errorCount; }
-		      else if (obj->Error().severity() < SEVERITY_NULL) 
-			{ ++_warningCount; }
-		      ++total_instances;
-		  }
-		else 
-		  { ++_errorCount; }
-		break;
-
-	      case wsDelete:
-		// things marked for deletion are deleted
-		SkipInstance(in,tmpbuf);
-		break;
-		
-	      case 'E':
-		//should be  "ENDSEC;"
-		endsec = 1;
-		in.putback(c);
-		return total_instances;
-
-	      default:
-		tmpbuf.Append ("Error: in ReadWorkingData2.\n\tUnexpected character in input: \'");
-		tmpbuf.Append (c);
-		tmpbuf.Append ("\'.\n");
-		_error.AppendToUserMsg(tmpbuf);
-		return total_instances;
-	    }
-      }
-    return total_instances;
-#endif
 }
 
 /* Looks for the word DATA followed by optional whitespace
@@ -1610,7 +1019,6 @@ STEPfile::CreateInstance(istream& in, ostream &out)
     }
 
     //check for subtype/supertype record
-    //DAS todo
     if (c == '(') 
     {  //  TODO:  implement complex inheritance
 
@@ -1688,7 +1096,6 @@ STEPfile::CreateInstance(istream& in, ostream &out)
 	return ENTITY_NULL;
     }
     obj -> STEPfile_id = fileid;
-//    AppendEntityErrorMsg( &(obj->Error()) );
     
     //  scan values
     SkipInstance(in, tmpbuf);
@@ -1871,8 +1278,6 @@ STEPfile::CreateSubSuperInstance(istream& in, int fileid, ErrorDescriptor &e)
 			      schnm);
 #endif
 
-//    SkipInstance(in, tmpstr);
-
     if ( obj->Error().severity() <= SEVERITY_WARNING ) {
 	// If obj is not legal, record its error info and delete it:
 	e.severity( obj->Error().severity() );
@@ -1974,86 +1379,6 @@ STEPfile::ReadScopeInstances (istream& in)
       }
     return rval;
 }
-
-
-/*
-Severity
-STEPfile::ReadSubSuperInstance (istream& in)
-{
-  std::string tmp;
-  SkipInstance(in, tmp);
-  return SEVERITY_NULL;
-}
-*/
-    
-#ifdef junk
-void
-ReadEntityError(char c, int i, istream& in)
-{
-    char errStr[BUFSIZ];
-    errStr[0] = '\0';
-
-/*    sprintf(errStr, " for instance #%d : %s\n", STEPfile_id, EntityName());*/
-/*    _error.AppendToDetailMsg(errStr);*/
-
-    if ( (i >= 0) && (i < attributes.list_length()))  // i is an attribute 
-    {
-	sprintf(errStr, "  invalid data for type \'%s\'\n", 
-		attributes[i].TypeName()); 
-	_error.AppendToDetailMsg(errStr);
-    }
-    else
-    {
-	sprintf(errStr, "  No more attributes were expected.\n");
-	_error.AppendToDetailMsg(errStr);
-    }
-
-    std::string tmp;
-    STEPwrite (tmp);  // STEPwrite writes to a static buffer inside function
-    sprintf(errStr, 
-	    "  The invalid instance to this point looks like :\n%s\n", 
-	    tmp.chars() );
-    _error.AppendToDetailMsg(errStr);
-    
-    _error.AppendToDetailMsg("  data lost looking for end of entity:");
-
-	//  scan over the rest of the instance and echo it
-//    cerr << "  ERROR Trying to find the end of the ENTITY to recover...\n";
-//    cerr << "  skipping the following input:\n";
-
-    in.clear();
-    int foundEnd = 0;
-    tmp = "";
-
-    // Search until a close paren is found followed by (skipping optional 
-    // whitespace) a semicolon
-    while( in.good() && !foundEnd )
-    {
-	while ( in.good() && (c != ')') )  
-	{
-	    in.get(c);
-	    tmp.Append(c);
-//	    cerr << c;
-	}
-	if(in.good() && (c == ')') )
-	{
-	    in >> ws; // skip whitespace
-	    in.get(c);
-	    tmp.Append(c);
-//	    cerr << c;
-//	    cerr << "\n";
-	    if(c == ';')
-	    {
-		foundEnd = 1;
-	    }
-	}
-    }
-    _error.AppendToDetailMsg( tmp.chars() );
-    sprintf (errStr, "\nfinished reading #%d\n", STEPfile_id);
-    _error.AppendToDetailMsg(errStr);
-    return;
-}
-#endif
 
 /*****************************************************
  description:
@@ -2165,7 +1490,6 @@ STEPfile::ReadInstance(istream& in, ostream& out, std::string &cmtStr,
 	c = in.peek(); // check for semicolon or keyword 'ENDSEC'
 	if(c != 'E')
 	    in >> c; // read the semicolon
-//	  return ENTITY_NULL;
     }
     else
     {
@@ -2291,7 +1615,6 @@ STEPfile::MakeBackupFile()
     char backup_call [2*BUFSIZ];
     char backup_file [BUFSIZ];
 
-//  sprintf (backup_file, "%s.%d", FileName(), ++i);
   sprintf (backup_file, "%s.bak", FileName());
 
   sprintf (backup_call, 
@@ -2300,33 +1623,14 @@ STEPfile::MakeBackupFile()
 	   FileName(),
 	   FileName(), backup_file);
 
-//  if (i > 4)   
-//    sprintf (backup_call + strlen (backup_call), "rm %s.%d ; ", FileName (), i -2);
   strcat (backup_call, "fi");
 
   _error.AppendToDetailMsg ("Making backup file: ");
   _error.AppendToDetailMsg (backup_file);
     _error.AppendToDetailMsg("\n");
     system(backup_call);
-/*
-    strcpy (backup_call, "if (test -f ");
-    strcat (backup_call, FileName());
-    strcat (backup_call, ") then mv ");
-    strcat (backup_call, FileName());
-    strcat (backup_call, " ");
-    strcat (backup_call, FileName());
-    strcat (backup_call, ".bak ; fi ", ++i);
-
-    _error.AppendToDetailMsg("Making backup file: executing system call:\n\t");
-    _error.AppendToDetailMsg(backup_call);
-    _error.AppendToDetailMsg("\n");
-    system(backup_call);
-    */
 }
     
-
-/***************************
-***************************/
 Severity
 STEPfile::WriteExchangeFile(ostream& out, int validate, int clearError, 
 			    int writeComments) 
@@ -2354,8 +1658,6 @@ STEPfile::WriteExchangeFile(ostream& out, int validate, int clearError,
     return rval;
 }
 
-/***************************
-***************************/
 Severity
 STEPfile::WriteExchangeFile(const char* filename, int validate, int clearError,
 			    int writeComments) 
@@ -2383,9 +1685,6 @@ STEPfile::WriteExchangeFile(const char* filename, int validate, int clearError,
     return rval;
 } 
 
-
-/***************************
-***************************/
 Severity
 STEPfile::WriteValuePairsFile(ostream& out, int validate, int clearError, 
 			      int writeComments, int mixedCase) 
@@ -2406,10 +1705,7 @@ STEPfile::WriteValuePairsFile(ostream& out, int validate, int clearError,
 	  }
     }
     
-//    out << FILE_DELIM << "\n";
-//    WriteHeader(out);
     WriteValuePairsData(out, writeComments, mixedCase);
-//    out << END_FILE_DELIM << "\n";
     return rval;
 }
 
@@ -2445,16 +1741,6 @@ STEPfile::HeaderId (const char* name)
 int
 STEPfile::HeaderIdOld (const char* name)
 {
-/*
-    char* nms[5] = 
-      {
-	  "FILE_IDENTIFICATION\0", 
-	  "FILE_DESCRIPTION\0",
-	  "IMP_LEVEL\0",
-	  "CLASSIFICATION\0",
-	  "MAXSIG\0"
-	  };
-*/
     const char* nms[5];
     nms[0] = "FILE_IDENTIFICATION", 
     nms[1] = "FILE_DESCRIPTION";
@@ -2471,9 +1757,6 @@ STEPfile::HeaderIdOld (const char* name)
     return ++_headerId;
 }    
 
-
-/***************************
-***************************/
 void
 STEPfile::WriteHeader(ostream& out) 
 {
@@ -2488,7 +1771,6 @@ STEPfile::WriteHeader(ostream& out)
     int n = _headerInstances->InstanceCount();
     for (int i =0; i < n; ++i) 
       {
-/*	  se = (*_headerInstances)[i]->GetApplication_instance();*/
 	  se = _headerInstances->GetMgrNode (i) ->GetApplication_instance();
 	  if(!(
 	       ( se->StepFileId() == HeaderId("File_Name") ) ||
@@ -2497,8 +1779,6 @@ STEPfile::WriteHeader(ostream& out)
 	    ))
 	      WriteHeaderInstance(
 			_headerInstances->GetMgrNode(i)->GetApplication_instance(), out);
-/*	      WriteHeaderInstance((*_headerInstances)[i] -> GetApplication_instance(),
-				   out );*/
       }
     out << "ENDSEC;\n";
 }
@@ -2558,75 +1838,6 @@ STEPfile::WriteHeaderInstanceFileName (ostream& out)
     WriteHeaderInstance(se, out);
 }
 
-
-/**************************************************
-  DAVE, should this section be deleted now?
-
-    p21DIS_File_name * fn;
-    int fileid = HeaderId("File_Name");
-    MgrNode * mn = _headerInstances->FindFileId(fileid);
-    if (!mn) 
-    {
-	// ERROR: no File_Name instance in _headerInstances
-	// create a File_Name instance
-	(SCLP23(Application_instance)*)fn = HeaderDefaultFileName();
-    }
-    else 
-      {
-	  (SCLP23(Application_instance)*)fn = _headerInstances->GetApplication_instance(mn);
-      }
-
-// Write the values for the FileName instance to the ostream    
-	std::string tmp;
-    out << StrToUpper (fn->EntityName()) << "(";
-
-    // write name
-    //out << "\'" << (char*)fn->name() << "\',";
-    SCLP23(String) * s = new SCLP23(String)((char*)fn->name());
-    s->STEPwrite(out);
-    delete s;
-    out << ",";
-
-    // write time_stamp (as specified in ISO Standard 8601)
-    // output the current system time to the file, using the following format:
-    // example: '1994-04-12 15:27:46'
-    // for Calendar Date, 12 April 1994, 27 minute 46 seconds past 15 hours
-    time_t t = time(NULL);
-    struct tm *timeptr = localtime(&t);
-    char time_buf[26];
-    strftime(time_buf,26,"%Y-%m-%d %H:%M:%S",timeptr);
-    out << '\'' << time_buf << "\',";
-    
-    // write author
-    fn->author().STEPwrite(out);
-    out << ",";
-    
-    // write organization
-    fn->organization().STEPwrite(out);
-    out << ",";
-    
-    // write preprocessor_version
-    s = new SCLP23(String)((char*)fn->preprocessor_version());
-    s->STEPwrite(out);
-    delete s;
-    out << ",";
-    
-    // write originating_system
-    s = new SCLP23(String)((char*)fn->originating_system());
-    s->STEPwrite(out);
-    delete s;
-    out << ",";
-    
-    // write authorization
-    s = new SCLP23(String)((char*)fn->authorization());
-    s->STEPwrite(out);
-    delete s;
-    out << ");\n";
-    
-}
-**************************************************/
-
-
 void
 STEPfile::WriteHeaderInstanceFileDescription (ostream& out) 
 {
@@ -2637,41 +1848,10 @@ STEPfile::WriteHeaderInstanceFileDescription (ostream& out)
       {
 	  // ERROR: no File_Name instance in _headerInstances
 	  // create a File_Name instance
-//	  (s_File_Description*)se = HeaderDefaultFileDescription();
 	  se = (SCLP23(Application_instance)*)HeaderDefaultFileDescription();
       }
 
     WriteHeaderInstance(se, out);
-    
-/**************************************************
-
-   p21DIS_File_description * fd;
-    int fileid = HeaderId("File_Description");
-    MgrNode * mn = _headerInstances->FindFileId(fileid);
-    if (!mn) 
-      {
-	  // ERROR: no File_Description instance in _headerInstances
-	  // create a File_Description instance
-	  (SCLP23(Application_instance)*)fd = HeaderDefaultFileDescription();
-      }
-    else 
-      {
-	  (SCLP23(Application_instance)*)fd = _headerInstances->GetApplication_instance(mn);
-      }
-// Write the values for the FileDescription instance to the ostream    
-    out << StrToUpper (fd->EntityName()) << "(";
-
-    //write description
-    fd->description().STEPwrite(out,&_error,a_16DESCRIPTION);
-    out << ",";
-    
-    //write implementation_level
-    SCLP23(String) *s = new SCLP23(String)((char*)fd->implementation_level());
-    s->STEPwrite(out);
-    delete s;
-    out << ");\n";
-
-**************************************************/    
 }
 
 void
@@ -2684,40 +1864,12 @@ STEPfile::WriteHeaderInstanceFileSchema (ostream& out)
       {
 	  // ERROR: no File_Name instance in _headerInstances
 	  // create a File_Name instance
-//	  (p21DIS_File_schema*)se = HeaderDefaultFileSchema();
 	  se = (SCLP23(Application_instance)*) HeaderDefaultFileSchema();
       }
 
     WriteHeaderInstance(se, out);
 
-/**************************************************    
-
-    p21DIS_File_schema * fs;
-    int fileid = HeaderId("File_Schema");
-    MgrNode * mn = _headerInstances->FindFileId(fileid);
-    if (!mn) 
-      {
-	  // ERROR: no File_Schema instance in _headerInstances
-	  // create a File_Schema instance
-	  (SCLP23(Application_instance)*)fs = HeaderDefaultFileSchema();
-      }
-    else 
-      {
-	  (SCLP23(Application_instance)*)fs = _headerInstances->GetApplication_instance(mn);
-      }
-// Write the values for the FileName instance to the ostream    
-    out << StrToUpper (fs->EntityName()) << "(";
-
-    // write schema_identifiers
-    fs->schema_identifiers().STEPwrite(out);
-    out << ");\n";
-**************************************************/
-
 }
-
-
-/***************************
-***************************/
 
 void
 STEPfile::WriteData(ostream& out, int writeComments) 
@@ -2730,14 +1882,10 @@ STEPfile::WriteData(ostream& out, int writeComments)
     schemaName( currSch );
     int n = instances ().InstanceCount();
     for (int i = 0; i < n; ++i) 
-/*	instances ()[i] -> GetApplication_instance()->STEPwrite(out);*/
 	instances ().GetMgrNode (i)->GetApplication_instance()->STEPwrite(out, currSch, writeComments);
 
     out << "ENDSEC;\n";
 }    
-
-/***************************
-***************************/
 
 void
 STEPfile::WriteValuePairsData(ostream& out, int writeComments, int mixedCase)
@@ -2745,15 +1893,10 @@ STEPfile::WriteValuePairsData(ostream& out, int writeComments, int mixedCase)
     char currSch[BUFSIZ];
     currSch[0] = '\0';
 
-//    out << "DATA;\n";
-
     schemaName( currSch );
     int n = instances ().InstanceCount();
     for (int i = 0; i < n; ++i) 
-/*	instances ()[i] -> GetApplication_instance()->STEPwrite(out);*/
 	instances ().GetMgrNode (i)->GetApplication_instance()->WriteValuePairs(out, currSch, writeComments, mixedCase);
-
-//    out << "ENDSEC;\n";
 }    
 
 Severity 
@@ -2860,12 +2003,10 @@ STEPfile::AppendFile (istream* in, int useTechCor)
 
     // reset the error count so you\'re not counting things twice:
     _errorCount = 0;
-//    delete in; // yikes -- deleted by caller
     istream * in2;
     if (! ((in2 = OpenInputFile ()) && (in2 -> good ())) )
       {  //  if the stream is not readable, there's an error
 	  _error.AppendToUserMsg ("Cannot open file for 2nd pass -- No data read.\n");
-//	  return total_insts;
 	  CloseInputFile(in2);
 	  return SEVERITY_INPUT_ERROR;
       }
@@ -2885,7 +2026,6 @@ STEPfile::AppendFile (istream* in, int useTechCor)
 	  break;
 	  
 	case WORKING_SESSION:
-//	  valid_insts = ReadWorkingData2 (*in2);
 	  valid_insts = ReadData2 (*in2, useTechCor);
 	  break;
       }
@@ -2922,11 +2062,10 @@ STEPfile::AppendFile (istream* in, int useTechCor)
 
     if (in2 -> good()) 
       {
+	  char c; 
 	  ReadTokenSeparator(*in2);
 	  keywd = GetKeyword (*in2,";", _error);
-	  //yank the ";" from the istream
-	  //if (';' == in2->peek()) in2->get();
-	  char c; in2->get(c); if (c == ';') ;
+	  in2->get(c);
       }
     
     if ((strncmp (const_cast<char *>(keywd.c_str()), 
@@ -2943,11 +2082,6 @@ STEPfile::AppendFile (istream* in, int useTechCor)
     return SEVERITY_NULL;
 }
 
-
-
-    
-/***************************
-***************************/
 Severity
 STEPfile::WriteWorkingFile(ostream& out, int clearError, int writeComments)
 {
@@ -2971,8 +2105,6 @@ STEPfile::WriteWorkingFile(ostream& out, int clearError, int writeComments)
     return _error.severity ();
 }
  
-/***************************
-***************************/
 Severity
 STEPfile::WriteWorkingFile(const char* filename, int clearError, 
 			   int writeComments) 
@@ -2987,9 +2119,6 @@ STEPfile::WriteWorkingFile(const char* filename, int clearError,
     return rval;
 }
 
-
-/***************************
-***************************/
 void
 STEPfile::WriteWorkingData(ostream& out, int writeComments) 
 {
@@ -2998,7 +2127,6 @@ STEPfile::WriteWorkingData(ostream& out, int writeComments)
 
     schemaName( currSch );
     out << "DATA;\n";
-//    SCLP23(Application_instance)* se;
     int n = instances ().InstanceCount();
     for (int i = 0; i < n; ++i) {
 	switch (instances ().GetMgrNode (i)->CurrState()) 
@@ -3053,7 +2181,6 @@ STEPfile::AppendEntityErrorMsg(ErrorDescriptor *e)
     if ((sev < SEVERITY_MAX) || (sev > SEVERITY_NULL)) 
       {
 	  //ERROR: something wrong with ErrorDescriptor
-	  //_error.AppendToDetailMsg("Error: in AppendEntityErrorMsg(ErrorDesriptor& e). Incomplete ErrorDescriptor, unable to report error message in SCLP23(Application_instance).\n");
 	  _error.GreaterSeverity(SEVERITY_WARNING);
 	  return SEVERITY_BUG;
       }
@@ -3065,7 +2192,6 @@ STEPfile::AppendEntityErrorMsg(ErrorDescriptor *e)
 
 	default:
 	{
-//	  cerr << e->UserMsg();
 	  cerr << e->DetailMsg();
 	  e->ClearErrorMsg();
 	  

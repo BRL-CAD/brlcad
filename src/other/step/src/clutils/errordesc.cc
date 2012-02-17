@@ -94,55 +94,44 @@ ErrorDescriptor::severity(std::string &s) const
 Severity 
 ErrorDescriptor::GetCorrSeverity(const char *s)
 {
-//    cout << "s is (" << s << ") \n";
     if(s && s[0] != 0)
     {
       std::string s2;
 	StrToUpper(s,s2);
-//	cout << "s after if is (" << s << ") \n" << "s2 is (" << s2.chars() << ")\n";
 	if(!strcmp(s2.c_str(),"SEVERITY_NULL"))
 	{
-//	    cout << "SEVERITY_NULL" << endl;
 	    return SEVERITY_NULL;
 	}
 	if(!strcmp(s2.c_str(),"SEVERITY_USERMSG"))
 	{
-//	    cout << "SEVERITY_USERMSG" << endl;
 	    return SEVERITY_USERMSG;
 	}
 	if(!strcmp(s2.c_str(),"SEVERITY_INCOMPLETE"))
 	{
-//	    cout << "SEVERITY_INCOMPLETE" << endl;
 	    return SEVERITY_INCOMPLETE;
 	}
 	if(!strcmp(s2.c_str(),"SEVERITY_WARNING"))
 	{
-//	    cout << "SEVERITY_WARNING" << endl;
 	    return SEVERITY_WARNING;
 	}
 	if(!strcmp(s2.c_str(),"SEVERITY_INPUT_ERROR"))
 	{
-//	    cout << "SEVERITY_INPUT_ERROR" << endl;
 	    return SEVERITY_INPUT_ERROR;
 	}
 	if(!strcmp(s2.c_str(),"SEVERITY_BUG"))
 	{
-//	    cout << "SEVERITY_BUG" << endl;
 	    return SEVERITY_BUG;
 	}
 	if(!strcmp(s2.c_str(),"SEVERITY_EXIT"))
 	{
-//	    cout << "SEVERITY_EXIT" << endl;
 	    return SEVERITY_EXIT;
 	}
 	if(!strcmp(s2.c_str(),"SEVERITY_DUMP"))
 	{
-//	    cout << "SEVERITY_DUMP" << endl;
 	    return SEVERITY_DUMP;
 	}
 	if(!strcmp(s2.c_str(),"SEVERITY_MAX"))
 	{
-//	    cout << "SEVERITY_MAX" << endl;
 	    return SEVERITY_MAX;
 	}
     }
@@ -161,18 +150,6 @@ ErrorDescriptor::ErrorDescriptor ( Severity s,  DebugLevel d)
     _debug_level = d;
 }
 
-/*
-ErrorDescriptor::ErrorDescriptor ( Severity s,  Enforcement e,  DebugLevel d)
-:     _severity (s), 
-      _enforcement_level (e), 
-      _userMsg (0),
-      _detailMsg (0)
-{
-  if (d  != DEBUG_OFF) 
-    _debug_level = d;
-}
-*/
- 
 const char *
 ErrorDescriptor::UserMsg () const
 {

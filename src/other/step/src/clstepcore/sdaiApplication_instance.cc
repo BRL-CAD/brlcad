@@ -578,36 +578,6 @@ SCLP23(Application_instance)::STEPread_error(char c, int i, istream& in)
 //    cerr << "  ERROR Trying to find the end of the ENTITY to recover...\n";
 //    cerr << "  skipping the following input:\n";
 
-#ifdef OBSOLETE
-    in.clear();
-    int foundEnd = 0;
-    tmp = "";
-
-    // Search until a close paren is found followed by (skipping optional 
-    // whitespace) a semicolon
-    while( in.good() && !foundEnd )
-    {
-	while ( in.good() && (c != ')') )  
-	{
-	    in.get(c);
-	    tmp.Append(c);
-//	    cerr << c;
-	}
-	if(in.good() && (c == ')') )
-	{
-	    in >> ws; // skip whitespace
-	    in.get(c);
-	    tmp.Append(c);
-//	    cerr << c;
-//	    cerr << "\n";
-	    if(c == ';')
-	    {
-		foundEnd = 1;
-	    }
-	}
-    }
-    _error.AppendToDetailMsg( tmp.chars() );
-#endif
     sprintf (errStr, "\nfinished reading #%d\n", STEPfile_id);
     _error.AppendToDetailMsg(errStr);
     return;

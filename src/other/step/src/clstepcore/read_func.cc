@@ -215,49 +215,6 @@ WriteReal(SCLP23(Real) val, ostream &out)
     std::string s;
 
     out << WriteReal(val,s);
-#if 0
-    char rbuf[64];
-
-//        out << form("%.*G", (int) Real_Num_Precision,tmp);
-    // replace the above line with this code so that writing the '.' is
-    // guaranteed for reals. If you use e or E then you get many 
-    // unnecessary trailing zeros. g and G truncates all trailing zeros
-    // to save space but when no non-zero precision exists it also 
-    // truncates the decimal. The decimal is required by Part 21. 
-    // Also use G instead of g since G writes uppercase E (E instead of e 
-    // is also required by Part 21) when scientific notation is used - DAS
-
-    sprintf(rbuf, "%.*G", (int) RealNumPrecision,val);
-    if(!strchr(rbuf, '.'))
-    {
-	if(strchr(rbuf, 'E') || strchr(rbuf, 'e'))
-	{
-	    char *expon = strchr(rbuf, 'E');
-
-	    if( !expon)
-	    {
-		expon = strchr(rbuf, 'e');
-	    }
-	    *expon = '\0';
-	    s = rbuf;
-	    s.Append('.');
-	    s.Append('E');
-	    expon++;
-	    s.Append(expon);
-	}
-	else 
-	{
-	    int rindex = strlen(rbuf);
-	    rbuf[rindex] = '.';
-	    rbuf[rindex+1] = '\0';
-	    s = rbuf;
-	}
-    }
-    else
-      s = rbuf;
-
-    out << (char *)(s.chars());
-#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -785,9 +742,6 @@ FindStartOfInstance(istream& in, std::string&  inst)
 	    in.putback (c);
 	    tmp.STEPread (in, &errs);
 	    inst.append (tmp);
-
-//	    PushPastString(in, tmp, &errs);
-//	    inst.Append( tmp->chars() );
 	    break;
 
 	  case '\0':  // problem in input ?
@@ -824,9 +778,6 @@ SkipInstance(istream& in, std::string&  inst)
 	    in.putback (c);
 	    tmp.STEPread (in, &errs);
 	    inst.append (tmp);
-
-//	    PushPastString(in, tmp, &errs);
-//	    inst.Append( tmp->chars() );
 	    break;
 
 	  case '\0':  // problem in input ?

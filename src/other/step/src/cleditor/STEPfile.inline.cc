@@ -1,4 +1,3 @@
-
 /*
 * NIST STEP Core Class Library
 * cleditor/STEPfile.inline.cc
@@ -52,7 +51,6 @@ STEPfile::STEPfile(Registry& r, InstMgr& i, const char *filename)
     SetFileType(VERSION_CURRENT);
     SetFileIdIncrement(); 
     _currentDir = new DirObj("");
-//    _headerRegistry = new Registry(&s_HeaderSchemaInit);
     _headerRegistry = new Registry(HeaderSchemaInit);
     _headerInstances = new InstMgr;
     if (filename) ReadExchangeFile(filename);
@@ -81,12 +79,6 @@ STEPfile::SetFileType(FileTypeCode ft)
 	  ENTITY_NAME_DELIM = '@';
 	  FILE_DELIM = "STEP;";
 	  END_FILE_DELIM = "ENDSTEP;";
-/*DAS
-	  if (!_headerRegistryOld) 
-	      _headerRegistryOld = 
-			new Registry(& s_Header_Section_Schema_N279Init);
-*/
-
 	  break;
 	case (VERSION_UNKNOWN):
 	case (VERSION_CURRENT):
@@ -159,7 +151,6 @@ STEPfile::AppendExchangeFile (const char* filename, int useTechCor)
     return rval;
 }
 
-/******************************************************/
 Severity
 STEPfile::ReadWorkingFile(const char* filename, int useTechCor) 
 {
@@ -201,9 +192,6 @@ STEPfile::AppendWorkingFile(const char* filename, int useTechCor)
     return rval;
 }
 
-
-
-/******************************************************/
 istream*
 STEPfile::OpenInputFile (const char* filename)
 {
@@ -227,8 +215,6 @@ STEPfile::OpenInputFile (const char* filename)
     if (strcmp(filename, "-") == 0) {
       in = &std::cin;
     } else {
-      //  istream* in = new istream(FileName(), io_readonly, a_useonly);
-      // port 29-Mar-1994 kcm
       in = new ifstream(FileName());
     }
 
@@ -243,7 +229,6 @@ STEPfile::OpenInputFile (const char* filename)
     return in;
 }
 
-/******************************************************/
 void
 STEPfile::CloseInputFile(istream* in)
 {
@@ -251,24 +236,6 @@ STEPfile::CloseInputFile(istream* in)
     delete in;
 }
 
-
-/******************************************************/
-
-/*
-void
-STEPfile::ReadWhiteSpace (istream& in)
-{
-
-  char c = ' ';
-  while ((c == ' ') || (c == '\n') || (c == '\t'))  {
-    in >> c; 
-  }
-  in.putback (c);
-}
-*/
-
-/***************************
-***************************/
 ofstream*
 STEPfile::OpenOutputFile(const char* filename)
 {
@@ -293,8 +260,7 @@ STEPfile::OpenOutputFile(const char* filename)
 
     if (_currentDir->FileExists(TruncFileName(FileName())))
 	MakeBackupFile();
-//    ostream* out  = new ostream(FileName(), io_writeonly, a_create);  
-    // - port 29-Mar-1994 kcm
+
     ofstream* out  = new ofstream(FileName());  
     // default for ostream is writeonly and protections are set to 644 
     if (!out) 
@@ -311,9 +277,6 @@ STEPfile::CloseOutputFile(ostream* out)
     delete out;
 }
 
-
-
-/******************************************************/
 int 
 STEPfile::IncrementFileId (int fileid) 
 { 
@@ -325,9 +288,7 @@ void
 STEPfile::SetFileIdIncrement()
 {
     if (instances ().MaxFileId() < 0) _fileIdIncr = 0;
-    else _fileIdIncr = // (int)((ceil((instances ().MaxFileId() + 99)/1000) + 1) * 1000);
-    		(int)((ceil((double) ((instances ().MaxFileId() + 99)/1000) ) + 1) * 1000);
-    		// FIXME: Is this correct? Why put an integer expression into ceil()?
+    else _fileIdIncr = (int)((ceil((instances().MaxFileId() + 99.0) / 1000.0) + 1.0) * 1000.0);
 }
 
 char *STEPfile::schemaName( char *schName )
@@ -351,7 +312,7 @@ char *STEPfile::schemaName( char *schName )
     if ( n == NULL ) return NULL;
     n->STEPwrite(tmp);
     if ( *tmp.c_str() == '\0' || *tmp.c_str() == '$' ) return NULL;
-    // tmp.chars() returns the string we want plus a beginning and ending
+    // tmp returns the string we want plus a beginning and ending
     // quote mark (').  We remove these below.
     strncpy( schName, tmp.c_str()+1, BUFSIZ-1 );
     // "+1" to remove beginning '.

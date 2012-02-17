@@ -458,18 +458,6 @@ STEPattribute::asStr (std::string& str, const char *currSch) const
     // The attribute has been derived by a subtype's attribute
     if (IsDerived ())  { str = "*"; return const_cast<char *>(str.c_str()); }
 
-/*
-    // The attribute is redefining the type of a parent's attribute so...
-    // If explicitly directed to write the attribute value by the
-    //   redefined attribute then write it - indicated by writeRedefined param.
-    // If not explicitly directed to write value, write asterisk - see Part 21.
-    // got rid of param writeRedefined
-    // see technical corrigendum for Part 21
-    if (!writeRedefined && (aDesc->AttrType() == AttrType_Redefining) )  {
-      str = "*";
-      return str.chars();
-    }
-*/
     // The attribute has been redefined by the attribute pointed 
     // to by _redefAttr so write the redefined value.
     if ( _redefAttr )  {
@@ -499,14 +487,12 @@ STEPattribute::asStr (std::string& str, const char *currSch) const
 	else
 	{
 	    (*(ptr.c))->STEPwrite_reference (str);
-//	    strncpy(attrVal, str.chars(), str.Length()+1);
 	}
 	break;	  
 	
       case BINARY_TYPE:
 	if( !( (ptr.b)->empty() ) )
 	    (ptr.b) -> STEPwrite (str);
-//	    strncpy(attrVal, str.chars(), str.Length()+1);
 	break;
 
       case STRING_TYPE:
@@ -531,7 +517,6 @@ STEPattribute::asStr (std::string& str, const char *currSch) const
       case SELECT_TYPE:
 	  ptr.sh -> STEPwrite ( str, currSch );
 	  return const_cast<char *>(str.c_str());
-//	  strncpy (attrVal, tmp.chars(), BUFSIZ);
 
       case REFERENCE_TYPE:
       case GENERIC_TYPE:
