@@ -79,9 +79,9 @@ screen -X -p 2 title "Release"
 #screen -X -p 3 title "Tk Disabled"
 screen -X focus
 
-screen -X -p 1 exec tail --retry -f distcheck-debug.log
-screen -X -p 2 exec tail --retry -f distcheck-release.log
-#screen -X -p 3 exec tail --retry -f distcheck-no_tk.log
+screen -X -p 1 exec tail --retry --follow=name distcheck-debug.log
+screen -X -p 2 exec tail --retry --follow=name distcheck-release.log
+#screen -X -p 3 exec tail --retry --follow=name distcheck-no_tk.log
 
 screen -X -p 0 exec cmake ../brlcad -DBRLCAD_BUNDLED_LIBS=ON
 
