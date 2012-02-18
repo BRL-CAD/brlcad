@@ -619,7 +619,6 @@ SCHEMAprint( Schema schema, FILES *files, Express model, void *complexCol,
 	     "#define SCLLOGFILE \"scl.log\"\n"
 	     "#endif \n");
 
-    fprintf (libfile, "\nstatic int debug_access_hooks = 0;\n");
     fprintf (libfile, "\n#ifdef PART26\n");
     fprintf (libfile, "\nconst char * sclHostName = CORBA::Orbix.myHost(); // Default is local host\n");
     fprintf (libfile, "#endif\n");
