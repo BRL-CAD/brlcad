@@ -22,14 +22,13 @@ build: build-stamp
 build-stamp:
 	dh_testdir
 
-	cmake -DBRLCAD_ENABLE_OPTIMIZED_BUILD=ON \
-		  -DBRLCAD_ENABLE_ALL_LOCAL_LIBS=ON \
+	cmake -DBRLCAD_BUNDLED_LIBS=ON \
+		  -DBRLCAD_ENABLE_OPTIMIZED_BUILD=ON \
 		  -DBRLCAD_ENABLE_STRICT=OFF \
 		  -DCMAKE_BUILD_TYPE=Release \
 		  -DCMAKE_INSTALL_PREFIX=/usr/brlcad \
 		  -DDATA_DIR=share \
-		  -DMAN_DIR=share/man \
-		  -DBRLCAD_BUNDLED_LIBS=BUNDLED
+		  -DMAN_DIR=share/man
 
 	$(MAKE) $(PARALLEL_OPTIONS)
 
