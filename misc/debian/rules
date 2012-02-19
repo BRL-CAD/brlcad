@@ -6,11 +6,10 @@
 #export DH_VERBOSE=1
 
 # DEB_BUILD_OPTIONS
-ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-        CXXFLAGS += -O0
-else
-        CXXFLAGS += -O2
-endif
+
+export CFLAGS = -mtune=generic
+
+export CXXFLAGS = -mtune=generic
 
 ifneq (,$(findstring parallel,$(DEB_BUILD_OPTIONS)))
     PARALLEL_JOBS = $(shell echo $(DEB_BUILD_OPTIONS) | \
