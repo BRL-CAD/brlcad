@@ -190,7 +190,17 @@ if(${BUILD_TYPE} MATCHES "RELEASE")
 # CHECK_C_FLAG("std=gnu1x")
   CHECK_C_FLAG("std=gnu99")
 else(${BUILD_TYPE} MATCHES "RELEASE")
-  CHECK_C_FLAG("std=gnu89")
+  if(${BUILD_TYPE} MATCHES "DEBUG")
+    CHECK_C_FLAG("std=gnu89")
+  endif(${BUILD_TYPE} MATCHES "DEBUG")
+endif(${BUILD_TYPE} MATCHES "RELEASE")
+
+# Check for the -mtune=generic flag, used by gcc to tell the compiler
+# to try and avoid CPU-specific optimizations.  Release builds are
+# intended to be portable across a given platform architecture.  
+if(${BUILD_TYPE} MATCHES "RELEASE")
+  CHECK_C_FLAG(mtune=generic)
+  CHECK_CXX_FLAG(mtune=generic)
 endif(${BUILD_TYPE} MATCHES "RELEASE")
 
 # also check for c99 conformance regardles since some platform
