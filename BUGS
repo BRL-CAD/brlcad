@@ -15,6 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* yacc 1.9 will not output a header if a path is given to the -o
+  option.  yacc should be run from the binary directory instead of the
+  source directory so that the command may be simply yacc -d -o
+  points_parse.c ${CMAKE_SOURCE_DIRECTORY}/points_parse.y
+
 * TIE seems to be corrupting the application structure during shot().
   see m1151 with ambient occlusion patch (butler).  may also be
   ignoring the onehit flag and returning a hit for segments behind the
