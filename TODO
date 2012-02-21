@@ -272,6 +272,12 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * reimplement benchmark suite in C/C++
 
+* include defaults about the compiler in the benchmark suite output
+  including the compiler name and version at a minimum, plus hopefully
+  describing the CFLAGS that were used too.  ideally would include all
+  of the versioning details (such as described from "gcc -v" if we
+  compiled with gcc) too.
+
 * implement oed+tra/sca/rot functionality consistently in libged as
   translate/scale/rotate with a signature similar to:
 
