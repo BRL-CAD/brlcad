@@ -1,6 +1,7 @@
 # Makefile.am:
 #   Source file for Makefile.in (and hence Makefile)
 #
+ACLOCAL_AMFLAGS = -I ../../../m4
 
 PNGLIB_BASENAME= libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@
 
@@ -46,7 +47,9 @@ endif
 
 nodist_libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES = pnglibconf.h
 
-libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_CPPFLAGS = @LIBPNG_DEFINES@
+#libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_CPPFLAGS = @LIBPNG_DEFINES@
+# support automake 1.7+, no target-specific CPPFLAGS
+AM_CPPFLAGS = @LIBPNG_DEFINES@
 
 libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LDFLAGS = -no-undefined -export-dynamic \
 	-version-number @PNGLIB_MAJOR@@PNGLIB_MINOR@:@PNGLIB_RELEASE@:0
@@ -226,3 +229,5 @@ uninstall-hook:
 	rm -f $(DESTDIR)$(libdir)/libpng.a
 	rm -f $(DESTDIR)$(libdir)/libpng.la
 	rm -f $(DESTDIR)$(libdir)/libpng.dll.a
+
+depends:
