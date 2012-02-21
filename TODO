@@ -1142,11 +1142,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   features to BRL-CAD, and to allow BRL-CAD to incorporate those features
   as an integrated part of interaction environments.  
 
-* SVG renderer.  go straight from 3D model to a 2D vector image for a
-  given view.  similar to the plot/postscript wireframe view saves,
-  this would need to store projected contours (ala rtedge) and filled
-  color regions.
-
 * see if it is possible to use tec/ehy primitives to create a proc-db
   for airfoil/wing shapes.  Interesting possibilities with boolean combinations
   of these primitives, provided their continuity at the ends ensures
@@ -1245,6 +1240,11 @@ CONVERTERS
 
 * implement a g-pdf exporter and/or open source 3D PDF library
   http://developer.techsoft3d.com/adobePDF/index.html
+
+* SVG renderer.  go straight from 3D model to a 2D vector image for a
+  given view.  similar to the plot/postscript wireframe view saves,
+  this would need to store projected contours (ala rtedge) and filled
+  color regions.
 
 * implement a g-sat (Solidworks) exporter and sat-g importer
   http://local.wasp.uwa.edu.au/~pbourke/dataformats/sat/sat.pdf
