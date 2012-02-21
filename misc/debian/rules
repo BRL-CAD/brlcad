@@ -7,10 +7,6 @@
 
 # DEB_BUILD_OPTIONS
 
-export CFLAGS = -mtune=generic
-
-export CXXFLAGS = -mtune=generic
-
 ifneq (,$(findstring parallel,$(DEB_BUILD_OPTIONS)))
     PARALLEL_JOBS = $(shell echo $(DEB_BUILD_OPTIONS) | \
         sed -e 's/.*parallel=\([0-9]\+\).*/\1/')
