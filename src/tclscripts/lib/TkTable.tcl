@@ -441,6 +441,10 @@
 		setTableVal $index "*"
 		$itk_component(table) tag cell select_col $index
 	    }
+
+	    if {$itk_option(-dataCallback) != ""} {
+		catch {$itk_option(-dataCallback)}
+	    }
 	} else {
 	    set mDoBreak 0
 	}
