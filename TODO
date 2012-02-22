@@ -1264,9 +1264,9 @@ CONVERTERS
 * implement a g-xml exporter
   http://en.wikipedia.org/wiki/XML
 
-* implement a ls-dyna importer.  perhaps extract as nmg/bot boundary
-  representation meshes.  lots of great vehicle datasets at
-  http://www.ncac.gwu.edu/vml/models.html
+* implement a ls-dyna "keyword" file format importer.  perhaps extract
+  as nmg/bot boundary representation meshes.  lots of great vehicle
+  datasets at http://www.ncac.gwu.edu/vml/models.html
 
 STEP
 ----
