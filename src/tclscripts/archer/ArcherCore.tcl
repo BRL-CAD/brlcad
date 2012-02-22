@@ -114,6 +114,7 @@ namespace eval ArcherCore {
 	method rebuildTree {}
 	method rsyncTree {_pnode}
 	method syncTree {}
+	method updateTreeDrawLists        {{_cflag 0}}
 	method shootRay {_start _op _target _prep _no_bool _onehit _bot_dflag}
 	method addMouseRayCallback {_callback}
 	method deleteMouseRayCallback {_callback}
@@ -740,7 +741,6 @@ namespace eval ArcherCore {
 	method bot_split2 {_bot}
 
 	# tree commands
-	method updateTreeDrawLists        {{_cflag 0}}
 	method fillTree          {_pnode _ctext _flat {_allow_multiple 0}}
 	method fillTreeColumns   {_cnode _ctext}
 	method isRegion          {_cgdata}
@@ -2087,6 +2087,10 @@ namespace eval ArcherCore {
     }
 }
 
+# ------------------------------------------------------------
+#                     PUBLIC TREE COMMANDS
+# ------------------------------------------------------------
+
 ::itcl::body ArcherCore::rebuildTree {} {
     if {$mNoTree} {
 	return
@@ -2330,6 +2334,49 @@ namespace eval ArcherCore {
     }
 
     updateTreeDrawLists
+}
+
+::itcl::body ArcherCore::updateTreeDrawLists {{_cflag 0}} {
+    if {$mNoTree} {
+	return
+    }
+
+    foreach node $mNodePDrawList {
+	removeTreeNodeTag $node $TREE_PARTIALLY_DISPLAYED_TAG
+    }
+    foreach node $mNodeDrawList {
+	removeTreeNodeTag $node $TREE_FULLY_DISPLAYED_TAG
+    }
+
+    set mNodePDrawList ""
+    set mNodeDrawList ""
+
+    foreach ditem [gedCmd who] {
+	if {$mEnableListView} {
+	    set ditem [regsub {^/} $ditem {}]
+	    set dlist [split $ditem /]
+	    set dlen [llength $dlist]
+	    if {$dlen == 1} {
+		eval lappend mNodeDrawList [lindex [lindex $mText2Node($ditem) 0] 0]
+	    } else {
+		eval lappend mNodePDrawList [lindex [lindex $mText2Node([lindex $dlist 0]) 0] 0]
+	    }
+	} else {
+	    set nodesList [getTreeNodes $ditem $_cflag]
+	    eval lappend mNodePDrawList [lindex $nodesList 0]
+	    eval lappend mNodeDrawList [lindex $nodesList 1]
+	}
+    }
+
+    set mNodePDrawList [lsort -unique $mNodePDrawList]
+    set mNodeDrawList [lsort -unique $mNodeDrawList]
+
+    foreach node $mNodePDrawList {
+	addTreeNodeTag $node $TREE_PARTIALLY_DISPLAYED_TAG
+    }
+    foreach node $mNodeDrawList {
+	addTreeNodeTag $node $TREE_FULLY_DISPLAYED_TAG
+    }
 }
 
 ::itcl::body ArcherCore::shootRay {_start _op _target _prep _no_bool _onehit _bot_dflag} {
@@ -3430,51 +3477,8 @@ namespace eval ArcherCore {
 
 
 # ------------------------------------------------------------
-#                     TREE COMMANDS
+#                     PROTECTED TREE COMMANDS
 # ------------------------------------------------------------
-
-::itcl::body ArcherCore::updateTreeDrawLists {{_cflag 0}} {
-    if {$mNoTree} {
-	return
-    }
-
-    foreach node $mNodePDrawList {
-	removeTreeNodeTag $node $TREE_PARTIALLY_DISPLAYED_TAG
-    }
-    foreach node $mNodeDrawList {
-	removeTreeNodeTag $node $TREE_FULLY_DISPLAYED_TAG
-    }
-
-    set mNodePDrawList ""
-    set mNodeDrawList ""
-
-    foreach ditem [gedCmd who] {
-	if {$mEnableListView} {
-	    set ditem [regsub {^/} $ditem {}]
-	    set dlist [split $ditem /]
-	    set dlen [llength $dlist]
-	    if {$dlen == 1} {
-		eval lappend mNodeDrawList [lindex [lindex $mText2Node($ditem) 0] 0]
-	    } else {
-		eval lappend mNodePDrawList [lindex [lindex $mText2Node([lindex $dlist 0]) 0] 0]
-	    }
-	} else {
-	    set nodesList [getTreeNodes $ditem $_cflag]
-	    eval lappend mNodePDrawList [lindex $nodesList 0]
-	    eval lappend mNodeDrawList [lindex $nodesList 1]
-	}
-    }
-
-    set mNodePDrawList [lsort -unique $mNodePDrawList]
-    set mNodeDrawList [lsort -unique $mNodeDrawList]
-
-    foreach node $mNodePDrawList {
-	addTreeNodeTag $node $TREE_PARTIALLY_DISPLAYED_TAG
-    }
-    foreach node $mNodeDrawList {
-	addTreeNodeTag $node $TREE_FULLY_DISPLAYED_TAG
-    }
-}
 
 ::itcl::body ArcherCore::fillTree {_pnode _ctext _flat {_allow_multiple 0}} {
     global no_tree_decorate
