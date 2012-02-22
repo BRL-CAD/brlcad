@@ -64,10 +64,17 @@ endmacro(BRLCAD_FUNCTION_EXISTS)
 # semicolons.  Add HAVE_*_H define to config header.
 ###
 macro(BRLCAD_INCLUDE_FILE filelist var)
+  if(NOT "${ARGV2}" STREQUAL "")
+    set(CMAKE_REQUIRED_INCLUDES_BKUP ${CMAKE_REQUIRED_INCLUDES})
+    set(CMAKE_REQUIRED_INCLUDES ${ARGV2} ${CMAKE_REQUIRED_INCLUDES})
+  endif(NOT "${ARGV2}" STREQUAL "")
   CHECK_INCLUDE_FILES("${filelist}" ${var})
   if(CONFIG_H_FILE AND ${var})
     file(APPEND ${CONFIG_H_FILE} "#cmakedefine ${var} 1\n")
   endif(CONFIG_H_FILE AND ${var})
+  if(NOT "${ARGV2}" STREQUAL "")
+    set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES_BKUP})
+  endif(NOT "${ARGV2}" STREQUAL "")
 endmacro(BRLCAD_INCLUDE_FILE)
 
 
