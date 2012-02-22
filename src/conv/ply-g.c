@@ -319,11 +319,7 @@ get_double( int type )
 	}
 	switch ( type ) {
 	    case TYPE_CHAR:
-		if ((int)(*buf2) <= CHAR_MAX) {
-		   val = *((char *)buf2);
-                } else {
-		   bu_exit(1, "Invalid char value (%d)!\n", (int)(*((char *)buf2)));
-                }
+		val = *((char *)buf2);
 		break;
 	    case TYPE_UCHAR:
 		val = *((unsigned char *)buf2);
