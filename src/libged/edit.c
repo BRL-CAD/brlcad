@@ -831,9 +831,7 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 
 	GED_DB_GET_INTERNAL(gedp, &intern, d, (fastf_t *)NULL,
 			    &rt_uniresource, GED_ERROR);
-	if (_ged_get_solid_keypoint(gedp, leaf_deltas, &intern,
-				    (const fastf_t *const)gtd.gtd_xform) ==
-	    GED_ERROR) {
+	if (_ged_get_solid_keypoint(gedp, leaf_deltas, &intern, (const fastf_t *)gtd.gtd_xform) == GED_ERROR) {
 	    bu_vls_printf(gedp->ged_result_str, "\nunable to get natural origin"
 			  " of \"%s\"", d->d_namep);
 	    return GED_ERROR;
@@ -1303,7 +1301,7 @@ edit_scale_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
     const vect_t *ref_to_vp = (const vect_t *)cmd->scale.ref_factor.to->vector;
 
     return edit_scale(gedp, from_vp, to_vp, center_vp, ref_from_vp, ref_to_vp,
-		      (const struct db_full_path *const)cmd->scale.objects->object);
+		      (const struct db_full_path *)cmd->scale.objects->object);
 }
 
 
@@ -1439,9 +1437,9 @@ HIDDEN int
 edit_translate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
     return edit_translate(gedp,
-			  (const vect_t *const)cmd->translate.ref_vector.from->vector,
-			  (const vect_t *const)cmd->translate.ref_vector.to->vector,
-			  (const struct db_full_path *const)cmd->translate.objects->object);
+			  (const vect_t *)cmd->translate.ref_vector.from->vector,
+			  (const vect_t *)cmd->translate.ref_vector.to->vector,
+			  (const struct db_full_path *)cmd->translate.objects->object);
 }
 
 

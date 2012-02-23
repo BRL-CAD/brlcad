@@ -220,11 +220,11 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 			bu_log("Could not import %s\n", tree_list[i].tl_tree->tr_l.tl_name);
 			nsoltemp = 0;
 		    }
-		    nsoltemp = tables_sol_number((const matp_t)temp_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
+		    nsoltemp = tables_sol_number((matp_t)temp_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
 		    (void)fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
 		}
 	    } else {
-		nsoltemp = tables_sol_number((const matp_t)old_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
+		nsoltemp = tables_sol_number((matp_t)old_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
 		(void)fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
 		continue;
 	    }
