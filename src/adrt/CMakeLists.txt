@@ -61,7 +61,7 @@ INCLUDE_DIRECTORIES(
   ${X11_INCLUDE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}/../other/togl/src
   )
-if(TOGL_LIBRARIES)
+if(TOGL_LIBRARIES AND BRLCAD_ENABLE_OPENGL)
   ADD_DEFINITIONS(-DTOGL_USE_EXTERNAL_CONFIG_H=1)
   add_library(issttcltk isst_tcltk.c)
   if(WIN32)
@@ -84,8 +84,7 @@ if(TOGL_LIBRARIES)
   endif(WIN32)
   configure_file(isst ${CMAKE_BINARY_DIR}/bin/isst COPYONLY)
   install(PROGRAMS isst DESTINATION bin)
-
-endif(TOGL_LIBRARIES)
+endif(TOGL_LIBRARIES AND BRLCAD_ENABLE_OPENGL)
 
 set(adrt_ignore_files
   isst.h

@@ -17,6 +17,8 @@ set(TCLCAD_LOCAL_INCLUDE_DIRS
 
 BRLCAD_LIB_INCLUDE_DIRS(tclcad TCLCAD_INCLUDE_DIRS TCLCAD_LOCAL_INCLUDE_DIRS)
 
+# Clear libtclcad compile definitions in case of re-configuration
+set(TCLCAD_DEFINES "")
 add_definitions(
   ${C99_FLAG}
   ${XOPEN_DEFINE}
