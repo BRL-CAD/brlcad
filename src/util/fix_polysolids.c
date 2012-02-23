@@ -95,7 +95,7 @@ main(int argc, char *argv[])
     r = BU_LIST_FIRST(nmgregion, &m->r_hd);
     while (1) {
 	struct vertex *verts[5];
-	union record rec2;
+	union record rec2 = {0};
 	int i;
 	size_t ret;
 
