@@ -275,7 +275,7 @@ case $FILE in
 	;;
     *.cmake )
 	echo "$FILE is a CMake build file"
-	mode="sh"
+	mode="cmake"
 	wrap=0
 	commentchar="#"
 	;;
