@@ -460,8 +460,8 @@ region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union t
     first = 1;
 
     do  {
-	char	*op = NULL;
-	int	 op_left = OBUF_SIZE;
+	char *op = obuf;
+	int  op_left = OBUF_SIZE;
 
 	if ( first )  {
 	    (void) snprintf( obuf, OBUF_SIZE-1, "%5d ", nnr+delreg );
