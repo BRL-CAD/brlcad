@@ -343,7 +343,8 @@ main(int ac, char *av[])
     struct bu_vls filename = BU_VLS_INIT_ZERO;
     struct bu_vls pattern = BU_VLS_INIT_ZERO;
     size_t repeat = 0;
-    axes xyz = 0;
+    axes xyz;
+    int xyz_mask = 0;
 
     point_t origin = VINIT_ZERO;
     struct rt_wdb *fp = NULL;
@@ -362,15 +363,15 @@ main(int ac, char *av[])
 	switch (c) {
 	    case 'x':
 	    case 'X':
-		xyz |= XDIR;
+		xyz_mask |= XDIR;
 		break;
 	    case 'y':
 	    case 'Y':
-		xyz |= YDIR;
+		xyz_mask |= YDIR;
 		break;
 	    case 'z':
 	    case 'Z':
-		xyz |= ZDIR;
+		xyz_mask |= ZDIR;
 		break;
 	    case 'o':
 	    case 'O':
@@ -430,9 +431,10 @@ main(int ac, char *av[])
     }
 
     /* no specified axis implies all three */
-    if (xyz == 0) {
-	xyz = XDIR | YDIR | ZDIR;
+    if (xyz_mask == 0) {
+	xyz_mask = XDIR | YDIR | ZDIR;
     }
+    xyz = (axes)xyz_mask;
 
     bu_log("--------------------------------\n");
     bu_log("---  Creating Menger Sponge  ---\n");
