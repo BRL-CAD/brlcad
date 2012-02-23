@@ -17,6 +17,11 @@ set(DM_LOCAL_INCLUDE_DIRS ${PNG_INCLUDE_DIR})
 
 BRLCAD_LIB_INCLUDE_DIRS(dm DM_INCLUDE_DIRS DM_LOCAL_INCLUDE_DIRS)
 
+# clear any previous definition of libdm compile definitions, in case of re-configuration
+set(DM_DEFINES "")
+set(DM_OS_DEFINES "")
+
+# Add the individual OS specific files and definitions
 if(WIN32 AND BRLCAD_ENABLE_OPENGL)
   LIST(APPEND DM_OS_DEFINES DM_WGL IF_WGL)
   set(dmw32_srcs dm-wgl.c)
