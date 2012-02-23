@@ -368,7 +368,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     /* unpack the header */
     ntohd((unsigned char *)&pnts->scale, buf, 1);
     buf += SIZEOF_NETWORK_DOUBLE;
-    pnts->type = ntohs(*(uint16_t *)buf);
+    pnts->type = (rt_pnt_type)ntohs(*(uint16_t *)buf);
     buf += SIZEOF_NETWORK_SHORT;
     pnts->count = ntohl(*(uint32_t *)buf);
     buf += SIZEOF_NETWORK_LONG;
