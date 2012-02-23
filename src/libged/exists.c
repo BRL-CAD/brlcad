@@ -219,13 +219,13 @@ t_lex(char *s, struct exists_data *ed)
 		if (!((op->op_type == UNOP && isoperand(ed)) ||
 		    (op->op_num == LPAREN && *(ed->t_wp+1) == 0))) {
 			ed->t_wp_op = op;
-			return op->op_num;
+			return (enum token)op->op_num;
 		}
 	}
 	if (strlen(*(ed->t_wp)) > 0 && !op && !ed->t_wp_op) {
 	    ed->t_wp_op = findop("-N");
 	    ed->no_op = 1;
-	    return ed->t_wp_op->op_num;
+	    return (enum token)ed->t_wp_op->op_num;
 	} else {
 	    ed->t_wp_op = NULL;
 	}

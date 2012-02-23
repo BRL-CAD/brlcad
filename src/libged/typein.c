@@ -2552,18 +2552,18 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     type = RT_PNT_TYPE_PNT;
     if (hasColor) {
 	/* R G B */
-	type |= RT_PNT_TYPE_COL;
+	type = (rt_pnt_type)((int)type | (int)RT_PNT_TYPE_COL);
 	valuesPerPoint += 3;
     }
     if (hasScale) {
 	/* scale value */
-	type |= RT_PNT_TYPE_SCA;
+	type = (rt_pnt_type)((int)type | (int)RT_PNT_TYPE_SCA);
 	valuesPerPoint += 1;
     }
     if (oriented) {
 	/* vector */
 	valuesPerPoint += ELEMENTS_PER_VECT;
-	type |= RT_PNT_TYPE_NRM;
+	type = (rt_pnt_type)((int)type | (int)RT_PNT_TYPE_NRM);
     }
 
     /* reset argc/argv to be just point data */
