@@ -685,6 +685,7 @@ namespace eval RtWizard {
 		    lappend objs $clean
 		}
 	    }
+	    set objs [lsort $objs]
 	} else {
 	    #
 	    # For the given parent, get its consituents using the 'lt'
