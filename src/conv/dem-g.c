@@ -326,7 +326,7 @@ int read_element(ResultStruct *io_struct)
 	/* fyi element 6 in a B record type is an elevation */
 	field_width = element_attributes[record_type][element][sub_element][2];
 	start_character = element_attributes[record_type][element][sub_element][1];
-	datatype = element_attributes[record_type][element][sub_element][3];
+	datatype = (sub_element_datatype)element_attributes[record_type][element][sub_element][3];
 	(*io_struct).out_datatype = datatype;
     } else {
 	/* when the value to be read is an elevation */

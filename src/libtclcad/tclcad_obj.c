@@ -3379,7 +3379,7 @@ to_data_polygons(struct ged *gedp,
 	    if (sscanf(argv[3], "%d", &op) != 1 || op > gctXor)
 		goto bad;
 
-	    gdpsp->gdps_clip_type = op;
+	    gdpsp->gdps_clip_type = (GedClipType)op;
 
 	    return GED_OK;
 	}
