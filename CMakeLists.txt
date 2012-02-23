@@ -780,8 +780,8 @@ AUTO_option(BRLCAD_BUILD_STATIC_LIBS BUILD_STATIC_LIBS "OFF" "ON")
 # party setup to use.
 include(${CMAKE_SOURCE_DIR}/misc/CMake/Fink_MacPorts.cmake)
 
-# Turn on librtserver build.
-option(BRLCAD_ENABLE_RTSERVER "Enable the librtserver target." ON)
+# Option for librtserver, used to help Java programs interface with librt.
+option(BRLCAD_ENABLE_RTSERVER "Enable the librtserver target." OFF)
 
 # Turn off the brlcad.dll build.
 # It's an expert's setting at the moment.
@@ -1237,12 +1237,12 @@ if(JNI_FOUND AND JAVA_FOUND)
   BRLCAD_INCLUDE_FILE(JavaVM/jni.h HAVE_JAVAVM_JNI_H)
   BRLCAD_INCLUDE_FILE(jni.h HAVE_JNI_H "${JNI_INCLUDE_DIRS}")
   if(NOT HAVE_JNI_H AND NOT HAVE_JAVAVM_JNI_H AND BRLCAD_ENABLE_RTSERVER)
-    set(BRLCAD_ENABLE_RTSERVER OFF CACHE BOOL "RT server disabled due to	unsatisfied Java requirements" FORCE)
+    set(BRLCAD_ENABLE_RTSERVER OFF CACHE BOOL "RT server disabled due to unsatisfied Java requirements" FORCE)
     message("librtserver build requested, but JNI header not found - disabling")
   endif(NOT HAVE_JNI_H AND NOT HAVE_JAVAVM_JNI_H AND BRLCAD_ENABLE_RTSERVER)
 else(JNI_FOUND AND JAVA_FOUND)
   if(BRLCAD_ENABLE_RTSERVER)
-    set(BRLCAD_ENABLE_RTSERVER OFF CACHE BOOL "RT server disabled due to	unsatisfied Java requirements" FORCE)
+    set(BRLCAD_ENABLE_RTSERVER OFF CACHE BOOL "RT server disabled due to unsatisfied Java requirements" FORCE)
     message("librtserver build requested, but Java+JNI not found - disabling")
   endif(BRLCAD_ENABLE_RTSERVER)
 endif(JNI_FOUND AND JAVA_FOUND)
