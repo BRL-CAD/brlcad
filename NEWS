@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2012-02-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* "About BRL-CAD" article translation to Armenian - Karen Mgebrova
 * improved handling of rgb/color attributes by adjust cmd - C. Yapp
 * added a basic SWIG spec file - Erik Greenwald
 * fixed highlighting of related objects in Archer treeview - B. Parker
