@@ -977,7 +977,7 @@ envmap_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *UNUSE
  */
 /* VARARGS */
 int
-mlib_zero()
+mlib_zero(struct application *UNUSED(a), const struct partition *UNUSED(b), struct shadework *UNUSED(c), genptr_t UNUSED(d))
 {
     return 0;
 }
@@ -991,7 +991,7 @@ mlib_zero()
  */
 /* VARARGS */
 int
-mlib_one()
+mlib_one(struct region *UNUSED(a), struct bu_vls *UNUSED(b), genptr_t *UNUSED(c), const struct mfuncs *UNUSED(d), struct rt_i *UNUSED(e))
 {
     return 1;
 }
@@ -1002,7 +1002,12 @@ mlib_one()
  */
 /* VARARGS */
 void
-mlib_void()
+mlib_void(struct region *UNUSED(a), genptr_t UNUSED(b))
+{
+}
+
+static void
+mlib_void2(genptr_t UNUSED(b))
 {
 }
 
@@ -1010,10 +1015,10 @@ struct mfuncs txt_mfuncs[] = {
     {MF_MAGIC,	"texture",	0,	MFI_UV,		0,	txt_setup,	txt_render,	txt_print,	txt_free },
     {MF_MAGIC,	"bwtexture",	0,	MFI_UV,		0,	txt_setup,	bwtxt_render,	txt_print,	txt_free },
     {MF_MAGIC,	"checker",	0,	MFI_UV,		0,	ckr_setup,	ckr_render,	ckr_print,	ckr_free },
-    {MF_MAGIC,	"testmap",	0,	MFI_UV,		0,	mlib_one,	tstm_render,	mlib_void,	mlib_void },
-    {MF_MAGIC,	"fakestar",	0,	0,		0,	mlib_one,	star_render,	mlib_void,	mlib_void },
+    {MF_MAGIC,	"testmap",	0,	MFI_UV,		0,	mlib_one,	tstm_render,	mlib_void,	mlib_void2 },
+    {MF_MAGIC,	"fakestar",	0,	0,		0,	mlib_one,	star_render,	mlib_void,	mlib_void2 },
     {MF_MAGIC,	"bump",		0,	MFI_UV|MFI_NORMAL, 0,	txt_setup,	bmp_render,	txt_print,	txt_free },
-    {MF_MAGIC,	"envmap",	0,	0,		0,	envmap_setup,	mlib_zero,	mlib_void,	mlib_void },
+    {MF_MAGIC,	"envmap",	0,	0,		0,	envmap_setup,	mlib_zero,	mlib_void,	mlib_void2 },
     {0,		(char *)0,	0,	0,		0,	0,		0,		0,		0 }
 };
 
