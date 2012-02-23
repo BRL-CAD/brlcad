@@ -34,6 +34,9 @@ set(LIBWDB_SOURCES
   wdb.c
   )
 
+# Initialize WDB_DEFINES in case of reconfigure
+set(WDB_DEFINES "")
+
 LIST(APPEND WDB_DEFINES "OBJ_BREP=1")
 if(CPP_DLL_DEFINES)
   LIST(APPEND WDB_DEFINES "ON_DLL_IMPORTS")
