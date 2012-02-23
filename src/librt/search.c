@@ -1526,7 +1526,7 @@ option(char *name)
 
     tmp.name = name;
     tmp.flags = 0;
-    tmp.token = 1;
+    tmp.token = N_ABOVE;
     tmp.create = NULL;
     return ((OPTION *)bsearch(&tmp, options, sizeof(options)/sizeof(OPTION), sizeof(OPTION), typecompare));
 }
