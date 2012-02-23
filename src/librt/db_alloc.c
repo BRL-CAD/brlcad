@@ -229,7 +229,7 @@ db_alloc_directory_block(struct resource *resp)
 
     /* Get a BIG block */
     bytes = (size_t)bu_malloc_len_roundup(1024*sizeof(struct directory));
-    dp = (struct directory *)bu_malloc(bytes, "re_directory_blocks from db_alloc_directory_block() " BU_FLSTR);
+    dp = (struct directory *)bu_calloc(1, bytes, "re_directory_blocks from db_alloc_directory_block() " BU_FLSTR);
 
     /* Record storage for later */
     bu_ptbl_ins(&resp->re_directory_blocks, (long *)dp);
