@@ -840,9 +840,9 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			fastf_t magsq_s2m;
 
 			VSET(vertical, 0, 0, 1);
-			VMOVE(startpt, rev->skt->verts[csg->start]);
+			V2MOVE(startpt, rev->skt->verts[csg->start]);
 			startpt[Z] = 0.0;
-			VMOVE(endpt, rev->skt->verts[csg->end]);
+			V2MOVE(endpt, rev->skt->verts[csg->end]);
 			endpt[Z] = 0.0;
 
 			VBLEND2(midpt, 0.5, startpt, 0.5, endpt);
@@ -867,9 +867,9 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 
 			/* save arc center */
 			if (csg->center_is_left) {
-			    VJOIN1(center, midpt, distance, bisector);
+			    V2JOIN1(center, midpt, distance, bisector);
 			} else {
-			    VJOIN1(center, midpt, -distance, bisector);
+			    V2JOIN1(center, midpt, -distance, bisector);
 			}
 		    }
 
