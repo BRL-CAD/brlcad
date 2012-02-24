@@ -39,7 +39,7 @@ changes made.  See document footer for additional details.
 * fixed nirt memory leak and scriptfile off-by-one bug - Sean Morrison
 * d2-c now handles the imaginary part correctly - Erik Greenwald
 * fixed rt* crash when output file cannot be created - Erik Greenwald
-* fixed mged bot editor inoperative bug (3392650) - Tom Browder
+* restored mged BoT editing interface functionality - Tom Browder
 * fixed mged solids/regions cmds core dump bug (3392558) - Tom Browder
 * fixed mged bug setting color via Combination Editor - Nicholas Reed
 * fixed crash during rt -c "ae 35 25" view change - Bob Parker
