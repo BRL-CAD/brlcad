@@ -19,7 +19,7 @@ changes made.  See document footer for additional details.
 * "About BRL-CAD" article translation to Armenian - Karen Mgebrova
 * improved handling of rgb/color attributes by adjust cmd - Cliff Yapp
 * added a basic SWIG spec file - Erik Greenwald
-* fixed highlighting of related objects in Archer treeview - B. Parker
+* fixed referenced object highlighting in archer treeview - Bob Parker
 * fixed error handling input reading failure in burst - Sean Morrison
 * fixed memory double-freeing issue in shp-g - Erik Greenwald
 * added optional scaling parameter to autoview command - Sean Morrison
