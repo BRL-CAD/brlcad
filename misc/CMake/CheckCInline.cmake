@@ -53,31 +53,35 @@ include(CheckCSourceCompiles)
 
 macro(CHECK_C_INLINE)
 
-  foreach(KEYWORD "inline" "__inline__" "__inline")
-    if(NOT DEFINED C_INLINE)
+  if(NOT MSVC)
 
-      string(TOUPPER "HAVE_${KEYWORD}" HAVE_INLINE)
+    foreach(KEYWORD "inline" "__inline__" "__inline")
+      if(NOT DEFINED C_INLINE)
 
-      check_c_source_compiles(
-	"typedef int foo_t; static inline foo_t static_foo() {return 0;}
+	string(TOUPPER "HAVE_${KEYWORD}" HAVE_INLINE)
+
+	check_c_source_compiles(
+	  "typedef int foo_t; static inline foo_t static_foo() {return 0;}
         foo_t foo() {return 0;} int main(int argc, char *argv[]) {return 0;}"
-        ${HAVE_INLINE})
+          ${HAVE_INLINE})
 
-      if(${HAVE_INLINE})
-	set(C_INLINE TRUE)
-	if(NOT ${KEYWORD} MATCHES "inline")
-	  # set inline to something else
-	  add_definitions("-Dinline=${KEYWORD}")
-	endif(NOT ${KEYWORD} MATCHES "inline")
-      endif(${HAVE_INLINE})
+	if(${HAVE_INLINE})
+	  set(C_INLINE TRUE)
+	  if(NOT ${KEYWORD} MATCHES "inline")
+	    # set inline to something else
+	    add_definitions("-Dinline=${KEYWORD}")
+	  endif(NOT ${KEYWORD} MATCHES "inline")
+	endif(${HAVE_INLINE})
 
+      endif(NOT DEFINED C_INLINE)
+    endforeach(KEYWORD)
+
+    if(NOT DEFINED C_INLINE)
+      # unset inline if none were found
+      add_definitions("-Dinline=")
     endif(NOT DEFINED C_INLINE)
-  endforeach(KEYWORD)
 
-  if(NOT DEFINED C_INLINE)
-    # unset inline if none were found
-    add_definitions("-Dinline=")
-  endif(NOT DEFINED C_INLINE)
+  endif(NOT MSVC)
 
 endmacro(CHECK_C_INLINE)
 
