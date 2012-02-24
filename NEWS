@@ -40,7 +40,7 @@ changes made.  See document footer for additional details.
 * d2-c now handles the imaginary part correctly - Erik Greenwald
 * fixed rt* crash when output file cannot be created - Erik Greenwald
 * restored mged BoT editing interface functionality - Tom Browder
-* fixed mged solids/regions cmds core dump bug (3392558) - Tom Browder
+* fixed mged 'solids' and 'regions' command crashes - Tom Browder
 * fixed mged bug setting color via Combination Editor - Nicholas Reed
 * fixed crash during rt -c "ae 35 25" view change - Bob Parker
 * added -r BoT orientation option on the obj-g importer - Nick Reed
