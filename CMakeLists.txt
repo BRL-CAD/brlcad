@@ -1159,6 +1159,9 @@ if(NOT MSVC)
   include(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
 endif(NOT MSVC)
 
+include(${BRLCAD_CMAKE_DIR}/CheckCInline.cmake)
+CHECK_C_INLINE()
+
 # The src/other subdirectory does not share (at least, not universally)
 # certain definitions common to all other directories in BRL-CAD.  Also,
 # we don't want flags that are otherwise global to BRL-CAD to be passed
