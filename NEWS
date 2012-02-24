@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2012-02-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* improved support for the Intel C/C++ compiler (icc) - Sean Morrison
 * Sort top level object alphabetically in rtwizard - Cliff Yapp
 * "About BRL-CAD" article translation to Russian - Ilya
 * "About BRL-CAD" article translation to Armenian - Karen Mgebrova
