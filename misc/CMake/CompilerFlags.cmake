@@ -179,7 +179,7 @@ CHECK_CXX_FLAG(ftemplate-depth-128)
 #     may still output SSE instructions (e.g., for cross-compiling).
 # CHECK_C_FLAG(msse)
 # CHECK_C_FLAG(msse2)
-CHECK_C_FLAG(msse3)
+# CHECK_C_FLAG(msse3)
 
 # Check for c90 support with gnu extensions if we're not building for a 
 # release and c99 support with gnu extensions when we are building for a
