@@ -254,10 +254,20 @@ int main(int argc, char **argv)
     while ((n=read(0, (void *)ibuf, (unsigned)sizeof(ibuf))) > 0) {
 	/* translate */
 	for (p = ibuf, q = &ibuf[n]; p < q; ++p) {
-	    tmp = mapbuf[*p];
-	    if (tmp > 255) { ++clip_high; *p = 255; }
-	    else if (tmp < 0) { ++clip_low; *p = 0; }
-	    else *p = tmp;
+	    long i = *p;
+	    if (i >= MAPBUFLEN)
+		*p = i = MAPBUFLEN;
+
+	    tmp = mapbuf[i];
+	    if (tmp > 255) {
+		++clip_high;
+		*p = 255;
+	    } else if (tmp < 0) {
+		++clip_low;
+		*p = 0;
+	    } else {
+		*p = tmp;
+	    }
 	}
 	/* output */
 	if (write(1, (void *)ibuf, (unsigned)n) != n) {
