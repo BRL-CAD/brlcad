@@ -14,7 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * improved support for the Intel C/C++ compiler (icc) - Sean Morrison
-* Sort top level object alphabetically in rtwizard - Cliff Yapp
+* now sorting top level object alphabetically in rtwizard - Cliff Yapp
 * "About BRL-CAD" article translation to Russian - Ilya
 * "About BRL-CAD" article translation to Armenian - Karen Mgebrova
 * improved handling of rgb/color attributes by adjust cmd - C. Yapp
