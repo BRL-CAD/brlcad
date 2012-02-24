@@ -37,8 +37,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * fix 64b detection across platforms. Fix rhel 32/64 confusion
 
-* test for -msse3 requirement for __SSE.*__ definition
-
 * test new edit command
 
 * hook marching cubes into libged facetize
@@ -51,6 +49,17 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* fix metaball/adjust.. wipes out all metaball values with:
+  adjust metaball 1 1 1
+  just gives usage with:
+  adjust metaball 1 1
+
+* test for -msse3 requirement for __SSE.*__ definition
+
+* improve sse run-time detection so illegal instruction crashes are
+  avoided.  presently, adding -msse* to compilation will result in a
+  crash if that binary is run on non-sse hardware (e.g., Pentium M)
 
 * break cyclic dependency between libdm and libged.  libged should not
   be aware of libdm (screengrab command).  to implement a ged command
