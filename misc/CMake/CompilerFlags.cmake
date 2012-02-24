@@ -198,14 +198,6 @@ else(${BUILD_TYPE} MATCHES "RELEASE")
   endif(${BUILD_TYPE} MATCHES "DEBUG")
 endif(${BUILD_TYPE} MATCHES "RELEASE")
 
-# Check for the -mtune=generic flag, used by gcc to tell the compiler
-# to try and avoid CPU-specific optimizations.  Release builds are
-# intended to be portable across a given platform architecture.  
-if(${BUILD_TYPE} MATCHES "RELEASE")
-  CHECK_C_FLAG(mtune=generic)
-  CHECK_CXX_FLAG(mtune=generic)
-endif(${BUILD_TYPE} MATCHES "RELEASE")
-
 # also check for c99 conformance regardles since some platform
 # environments require it due to c99-specific system headers (e.g.,
 # /System/Library/Frameworks/OpenGL.framework/Headers/gl.h on Mac OS X
