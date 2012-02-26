@@ -1,0 +1,359 @@
+<?xml version="1.0"?>
+<chapter id="wb_BRL-CAD_Overview-it">
+
+  <title>Sommario</title>
+
+  <para>Dal 1979, l&#xFFFD;Army Research Laboratory degli Stati Uniti sviluppa e
+distribuisce il pacchetto di modellizzazione solida geometrica costruttiva
+BRL-CAD, per un vasto campo di applicazioni militari e industriali. Il
+programma include un grande numero strumenti ed utilit&#xFFFD; tra le quali un
+editor geometrico interattivo, librerie per il il raytracing ed il
+framebuffer, capacit&#xFFFD; di rete per il trattamento di immagini e segnali, un
+linguaggio di scripting integrato.</para>
+
+  <bridgehead>Cosa &#xFFFD; il BRL-CAD?</bridgehead>
+
+  <para>E&#xFFFD; dai tardi anni 50 che i computer vengono usati
+nell&#xFFFD;ausilio alla progettazione e allo studio di sistemi di veicoli da
+combattimento. La loro introduzione ha prodotto sia una riduzione del tempo
+e della spesa richiesti per portare un sistema dal tecnigrafo alla
+produzione full-scale, che un incremento dell&#xFFFD;efficienza nelle prove di
+test e valutazione.</para>
+
+  <para>Nel 1979, il Ballistic Research Laboratory
+dell&#xFFFD;Esercito degli Stati Uniti (BRL) (ora U.S. Army Research Laboratory
+[ARL]) espresse il bisogno di avere degli strumenti che potessero essere
+utilizzati nella simulazione computerizzata e l&#xFFFD;analisi ingegneristica di
+sistemi di veicoli da combattimento e ambientali. Non essendo allora
+disponibili dei programmi CAD adeguati alle specifiche richieste, gli
+sviluppatori di software del BRL iniziarono ad assemblare una suite di
+utilities in grado di mostrare interattivamente, editare ed interrogare dei
+modelli geometrici. Tale suite divenne nota come BRL-CAD.</para>
+
+  <para>Oggi, con circa un milione di linee in codice C,
+BRL-CAD &#xFFFD; diventato un potente programma di modellizzazione solida
+geometrica costruttiva (CGS) che &#xFFFD; stato distribuito in licenza ad oltre
+2000 siti in tutto il mondo. Esso include un grande numero strumenti ed
+utilit&#xFFFD; tra le quali un editor geometrico interattivo, librerie per il il
+raytracing ed il framebuffer, capacit&#xFFFD; di rete per il trattamento di
+immagini e segnali, un linguaggio di scripting integrato. Inoltre, BRL-CAD 
+supporta  l'interazione contemporanea attraverso due metodi, uno che si
+avvale della riga di comando ed uno che sfrutta l'interfaccia grafica
+utente (GUI).</para>
+
+  <para>Un particolare punto di forza del pacchetto risiede
+nella sua capacit&#xFFFD; di costruire ed analizzare modelli realistici di oggetti
+complessi utilizzando un insieme relativamente piccolo di "forme
+primitive". A tale fine, queste forme sono manipolate impiegando le
+operazioni logiche booleiane di base quali l'unione, la sottrazione e
+l'intersezione.  Un altro punto di forza  &#xFFFD; la velocit&#xFFFD; di raytracing che &#xFFFD;
+una delle pi&#xFFFD; elevate esistenti. Per finire, gli utilizzatori di BRL-CAD
+possono modellizzare gli oggetti con precisione a partire da scale che
+vanno dalla subatomica alla galattica mantenendo in ogni caso il livello di
+dettaglio richiesto.</para>
+
+  <bridgehead>Perch&#xFFFD; la modellizzazione CGS?</bridgehead>
+
+  <para>Sebbene BRL-CAD sia stato utilizzato in un grande
+numero di svariate applicazioni ingegneristiche e grafiche, lo scopo
+principale del pacchetto continua ad essere quello della (1) analisi
+balistica e (2) dell'analisi elettromagnetica. Di conseguenza, gli
+sviluppatori hanno ritenuto che l'approccio CGS fosse il migliore in
+termini di accuratezza del modello , efficienza di memoria occupata,
+precisione e velocit&#xFFFD; di calcolo.</para>
+
+  <para>Cos&#xFFFD;, mentre la rappresentazione poligonale e dei
+contorni (B-rep) spesso si focalizza sulle superfici degli oggetti, la
+modellizzazione CGS si focalizza sul volume e sul contenuto degli oggetti.
+Questo approccio d&#xFFFD; a BRL-CAD una capacit&#xFFFD; di analisi che non si ferma alla
+superficie degli oggetti, ma li costruisce con materiali reali
+caratterizzati da densit&#xFFFD; e spessore  in modo che l'analista possa studiare
+fenomeni fisici come la penetrazione balistica e termica, di radiazioni, di
+neutroni, ed altri tipi di mezzo.</para>
+
+  <bridgehead>Contenuto del pacchetto</bridgehead>
+
+  <para>Coerentemente alla filosofia UNIX consistente nello
+sviluppare strumenti indipendenti, ciascuno adatto allo scopo di effettuare
+una singola operazione specifica e di metterli insieme collegandoli in un
+pacchetto, BRL-CAD &#xFFFD; una raccolta di librerie, stumenti e utilities che
+funzionano insieme per creare, effettuare il raytracing e  interrogare 
+geometrie, manipolare file e dati. Il flusso di base dei dati nel pacchetto
+&#xFFFD; rappresentato in Figura 1.</para>
+
+<figure>
+  <para>BRL-CAD struttura del flusso dati</para>
+  <mediaobject>
+    <imageobject>
+      <imagedata href="./images/brlcad-overview-data-flow.png"/>
+    </imageobject>
+  </mediaobject>
+</figure>
+
+  <bridgehead>Le librerie</bridgehead>
+
+  <para>Le librerie BRL-CAD (caratterizzate dal prefisso "lib")
+sono state sviluppate principalmente per l'utilizzatore che volesse
+cimentarsi col software e, forse, scrivere il codice per i suoi strumenti.
+Ciascuna libreria ricade in una delle tre categorie: (1) creazione e/o
+editing di geometrie, (2) raytracing delle geometrie, (3) manipolazione di
+immagini. La seguente &#xFFFD; una lista delle principali librerie BRL-CAD con la
+descrizione delle loro funzioni. </para>
+
+  <para>- <emphasis role="bold">libbu</emphasis> &#xFFFD; &#xFFFD; una libreria di utility di base
+(bu) contenente i tipi principali di routines informatiche, incluse quelle
+per la manipolazione di dati (per esempio, la conversione di dati dal
+formato host a network), elaborazione parallela, parsing dei parametri,
+gestione di stringhe a lunghezza variabile, effettuazione di controllo
+degli errori, conversione di grandezze da un'unit&#xFFFD; di misura ad un'altra,
+manipolazione di vettori di bit, esecuzione in modalit&#xFFFD; sicura di routines
+I/O (input/output) parallelo e manutenzione delle tabelle dei simboli.</para>
+
+  <para>- <emphasis role="bold">libbn</emphasis> &#xFFFD; &#xFFFD; una libreria di routines per la
+gestione del calcolo numerico di base (bn), comprendenti la manipolazione
+di vettori 2-D/3-D, matrici e quaternioni; supporto per il plotting 3-D;
+deduzione automatica delle dimensioni di una immagine (le immagini BRL-CAD
+non hanno un header interno con tale informazione; le dimensioni
+dell'immagine sono "intuite" dalla dimensione del file); scomposizione e
+ricostruzione di ondulazioni, eccetera.</para>
+
+  <para>- <emphasis role="bold">libdm</emphasis> &#xFFFD; &#xFFFD; la principale libreria BRL-CAD
+che gestisce il display grafico (dm). Gestisce l'apertura delle finestre
+dul display, la rappresentazione delle geometrie nella finestra grafica
+eccetera.</para>
+
+  <para>- <emphasis role="bold">libfb</emphasis> &#xFFFD; &#xFFFD; la libreria per il framebuffer
+(fb), che gestisce l'apertura di una finestra di framebuffer sulla quale
+effettuare il raytracing.</para>
+
+  <para>- <emphasis role="bold">libmultispectral</emphasis><emphasis role="bold">and liboptical</emphasis> &#xFFFD;
+sono le librerie per lo shading ed il texturing utilizzate dal
+raytracing.</para>
+
+  <para>- <emphasis role="bold">libpkg</emphasis> &#xFFFD; &#xFFFD; una libreria che inplementa il
+meccanismo per il richiamo di una procedura remota (rpc). Questa libreria &#xFFFD;
+un predecessore del sistema attuale rpc. Al contrario del tipico servizio
+rpc UNIX, le applicazioni possono definire dei servizi e gestire le
+richieste senza la necessit&#xFFFD; ricorrere alla configurazione da parte
+dell'amministratore di sistema.</para>
+
+  <para>- <emphasis role="bold">librt</emphasis>&#xFFFD; &#xFFFD; la libreria di supporto alla
+geometria, compresa la rappresentazione numerica delle primitive, il
+supporto al raytracing (rt) e il supporto all'I/O binario per la
+descrizione geometrica CGS.</para>
+
+  <para>- <emphasis role="bold">libz</emphasis> &#xFFFD; &#xFFFD; una libreria per la compressione
+di file di pubblico dominio.</para>
+
+  <para>- <emphasis role="bold">libtcl</emphasis>, <emphasis role="bold">libtk</emphasis>, and <emphasis role="bold">libitcl</emphasis>
+&#xFFFD; sono le librerie necessarie per il linguaggio di script Tcl/Tk.</para>
+
+  <para>- <emphasis role="bold">libpng</emphasis> &#xFFFD; &#xFFFD; una libreria che fornisce il
+"portable network graphics" (png).</para>
+
+  <bridgehead>Strumenti e Utilities</bridgehead>
+
+  <para>Anche dal lato applicazione BRL-CAD offre parecchi di
+strumenti ed untilities. Essi riguardano principalmente (1) la conversione
+geometrica, (2) l'interrogazione delle geometrie, (3) la conversione di
+formati immagine, e (4) la manipolazione di immagine dalla linea di
+comando. La seguente &#xFFFD; una lista dei principali strumenti ed utilit&#xFFFD; di
+BRL-CAD. </para>
+
+  <para>- <emphasis role="bold">MGED</emphasis> (Multiple-Device Geometry Editor) &#xFFFD;
+&#xFFFD; l'editor grafico di BRL-CAD.  (Per una guida dettagliata sia sull'uso di
+MGED che per una lista di tutti i comandi dispodibili, vedi Butler et al.
+[2001].)</para>
+
+  <para>- Strumenti per il raytracing e l'interrogazione
+di oggetti geometrici sottoposti a raytracing.</para>
+
+  <para>- <emphasis role="bold">rt</emphasis> &#xFFFD; &#xFFFD; il programma principale per il
+raytracing e il rendering in BRL-CAD.</para>
+
+  <para>- <emphasis role="bold">nirt</emphasis> &#xFFFD; &#xFFFD; un pacchetto per sparare raggi
+interattivamente e ottenere informazioni sulle entit&#xFFFD; colpite.</para>
+
+  <para>- <emphasis role="bold">remrt</emphasis> &#xFFFD; &#xFFFD; un pacchetto network-distributed
+per il raytracing.</para>
+
+  <para>- Una variet&#xFFFD; di convertitori tra formati
+geometrici differenti tra i quali Euclid, ACAD, AutoCAD DXF, TANKILL,
+Wavefront OBJ, Pro/ENGINEER, JACK (il modellizzatore di risorse umane per
+eseguire studi sul carico di lavore/usabilit&#xFFFD;), Viewpoint Data Lab,
+NASTRAN, Digital Equipment's Object File Format (OFF), Virtual Reality
+Mark-up Language (VRML), Stereo Lithography (STL), dati Cyberware
+Digitizer, e FASTGEN4.</para>
+
+  <para>- <emphasis role="bold">bwish</emphasis> &#xFFFD; &#xFFFD; un interprete Tcl/Tk che
+funziona in una window shell con caratteristiche specifiche precompilate
+che gli permettono l'accesso alle librerie BRL-CAD. Include inoltre altre
+diverse estensioni del linguaggio Tcl.</para>
+
+  <para>- <emphasis role="bold">irprep</emphasis> &#xFFFD; produce l'input al codice PRISM
+(Physically Realistic Infrared Simulation Model).</para>
+
+  <para>- <emphasis role="bold">JOVE</emphasis> (Jonathan's Own Version of Emacs) &#xFFFD;
+&#xFFFD; una implementazione leggera e veloce di Emacs.</para>
+
+  <para>- Applicazioni per la visualizzazione di immagini
+di vari tipi sul framebuffer che permettono di recuperare dati da quel
+framebuffer verso diversi tipi di immagine.</para>
+
+  <para>- Strumenti per la generazione della geometria di
+oggetti comuni come recinzioni, muri e stranezze geometrico matematiche
+(es. la sphereflake mostrata nella Figura 2 della Sezione 4).</para>
+
+  <para>- Programmi per la manipolazione di dati per (1)
+convertire interi (integer) in reali (float), reali in reali doppi (double)
+ecc. (es cv); (2) per eseguire operazioni matematiche su elementi di file
+(es. <emphasis role="bold">imod</emphasis>, <emphasis role="bold">umod</emphasis>, e <emphasis role="bold">dmod</emphasis>); (3) calcolare dati
+statistici relativamente ad elementi di file (es. <emphasis role="bold">istat</emphasis>,
+<emphasis role="bold">ustat</emphasis>, e <emphasis role="bold">dstat</emphasis>); ecc.</para>
+
+  <para>- Utilities per creare script di animazione &#xFFFD;
+tenendo conto dei dati e interpolandoli, permette di produrre l'input del
+programma rt al fine di renderizzare  item multipli per l'animazione.</para>
+
+  <para>- <emphasis role="bold">Utah</emphasis><emphasis role="bold">Raster Tool Kit</emphasis> &#xFFFD; per la
+manipolazione di tutte le immagini basate RLE.</para>
+
+  <para>- Programmi per la manipolazione delle immagini e
+la conversione tra differenti formati. I due tipi principali in BRL-CAD
+sono il <emphasis role="bold">pix</emphasis>(immagini a colori a 24-bit rosso, verde, e blu [RGB]) e
+il <emphasis role="bold">bw</emphasis> (immagini in scala di grigi a 8-bit).  Esistono convertitori
+per diversi formati di immagine tra cui alias, png, ppm, ecc.</para>
+
+  <para>- Programmi per il filtraggio di immagini, che
+producono istogrammi basati sui dati delle immagini ed estraendo rettangoli
+dalle immagini stesse.</para>
+
+  <para>- Strumenti per combinare due immagini fondendole
+insieme. Questi strumenti furono creati prima che fossero disponibili dei
+buoni programmi per l'editing delle immagini. Oggi l'utente utilizza
+direttamente dei pacchetti di video editing.</para>
+
+  <bridgehead>Valutazione delle prestazioni</bridgehead>
+
+  <para>Via via che vengono apportati dei cambiamenti in
+BRL-CAD, gli sviluppatori  ARL processano un set standard di immagini
+pesanti dal punto di vista computazionale  (mostrate in Figura 2) su un
+calcolatore comune al fine di testare e fare un confronto tra le
+prestazioni ottenute. Tra l'altro, queste immagini sono fornite con
+ciascuna distribuzione del pacchetto sorgente in modo che anche gli utenti,
+se lo desiderano,  possano testare le performance delle loro macchine.</para>
+
+  <para>Per eseguire il test di prova tramite queste immagini,
+bisogna lanciare lo script <emphasis>run.sh</emphasis> nella sottocartella "bench",
+presente nell'albero delle cartelle del sorgente.</para>
+
+<!-- need an untitled table with two rows and three columns -->
+<figure>
+  <title>Immagini di prova.</title>
+<table>
+
+<tr>
+
+<td>
+  <mediaobject>
+    <imageobject>
+      <imagedata href="./images/brlcad-overview-benchmark-Moss.jpg"/>
+    </imageobject>
+  </mediaobject>
+</td>
+
+<td>
+  <mediaobject>
+    <imageobject>
+      <imagedata href="./images/brlcad-overview-benchmark-World.jpg"/>
+    </imageobject>
+  </mediaobject>
+</td>
+
+<td>
+  <mediaobject>
+    <imageobject>
+      <imagedata href="./images/brlcad-overview-benchmark-Star.jpg"/>
+    </imageobject>
+  </mediaobject>
+</td>
+
+  <para>Moss</para>
+
+  <para>World</para>
+
+  <para>Star</para>
+
+</tr>
+
+<tr>
+<td>
+  <mediaobject>
+    <imageobject>
+      <imagedata href="./images/brlcad-overview-benchmark-Bldg_391.jpg"/>
+    </imageobject>
+  </mediaobject>
+</td>
+
+<td>
+  <mediaobject>
+    <imageobject>
+      <imagedata href="./images/brlcad-overview-benchmark-M35.jpg"/>
+    </imageobject>
+  </mediaobject>
+</td>
+
+<td>
+  <mediaobject>
+    <imageobject>
+      <imagedata href="./images/brlcad-overview-benchmark-Sphflake.jpg"/>
+    </imageobject>
+  </mediaobject>
+</td>
+
+  <para>Bldg 391</para>
+
+  <para>M35</para>
+
+  <para>Sphflake</para>
+
+</tr>
+
+</table>
+</figure>
+
+  <bridgehead>Ringraziamenti</bridgehead>
+
+  <para>Gli autori intendono ringraziare i membri dell'Advanced Computer Systems
+Team, i quali hanno provvidenzialmente revisionato il peresente documento
+dando molti utili suggerimenti per migliorarne l'accuratezza e la
+presentazione. Al tempo della sua creazione, questo documento fu preparato
+dai membri del team tra cui John Anderson, TraNese Christy, Bob Parker, Ron
+Bowers, e Sean Morrison.</para>
+
+  <para>Gli autori vogliono inoltre esprimere un ringraziamento speciale a Mike
+Muuss, membro del team e autore originale di BRL-CAD, passato a migliore
+vita nell'autunno del 2000. Senza di lui questo lavoro non sarebbe satto
+possibile. La BRL-CAD Tutorial Series &#xFFFD; dedicata alla sua memoria.</para>
+
+<!-- Tom Browder: I'm not sure if the remainder should be here, so I've commented it out for now. -->
+<!--
+  <para>Un ringraziamento speciale a
+    <ulink url="http://sourceforge.net/">
+
+<mediaobject>
+  <imageobject>
+    <imagedata href="./images/sflogo.png"/>
+  </imageobject>
+</mediaobject>
+</ulink>
+</para>
+
+  <mediaobject>
+    <imageobject>
+      <imagedata href="./images/bc2.gif" depth="1" width="1"/>
+    </imageobject>
+  </mediaobject>
+-->
+
+</chapter>
