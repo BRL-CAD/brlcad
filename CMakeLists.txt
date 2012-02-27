@@ -939,21 +939,26 @@ mark_as_advanced(BRLCAD_ENABLE_JOVE)
 # the options accordingly.
 
 # Do we have the environment variable set locally?
-set(APACHE_FOP "$ENV{APACHE_FOP}")
+if(NOT "$ENV{APACHE_FOP}" STREQUAL "")
+  set(APACHE_FOP "$ENV{APACHE_FOP}")
+endif(NOT "$ENV{APACHE_FOP}" STREQUAL "")
 if(NOT APACHE_FOP)
   find_program(APACHE_FOP fop DOC "path to the exec script for Apache FOP")
 endif(NOT APACHE_FOP)
 mark_as_advanced(APACHE_FOP)
-
 # We care about the FOP version, unfortunately - find out what we have.
 if(APACHE_FOP)
-  message("Found APACHE_FOP (${APACHE_FOP}), determining version...")
   execute_process(COMMAND ${APACHE_FOP} -v OUTPUT_VARIABLE APACHE_FOP_INFO ERROR_QUIET)
-  string(REGEX REPLACE "FOP Version ([0-9\\.]*)" "\\1" APACHE_FOP_VERSION "${APACHE_FOP_INFO}")
+  string(REGEX REPLACE "FOP Version ([0-9\\.]*)" "\\1" APACHE_FOP_VERSION_REGEX "${APACHE_FOP_INFO}")
+  if(APACHE_FOP_VERSION_REGEX)
+	  string(STRIP ${APACHE_FOP_VERSION_REGEX} APACHE_FOP_VERSION_REGEX)
+  endif(APACHE_FOP_VERSION_REGEX)
+  if(NOT "${APACHE_FOP_VERSION}" STREQUAL "${APACHE_FOP_VERSION_REGEX}")
+	  message("Found Apache FOP version ${APACHE_FOP_VERSION_REGEX}")
+	  set(APACHE_FOP_VERSION ${APACHE_FOP_VERSION_REGEX} CACHE STRING "Apachae FOP version" FORCE)
+	  mark_as_advanced(APACHE_FOP_VERSION)
+  endif(NOT "${APACHE_FOP_VERSION}" STREQUAL "${APACHE_FOP_VERSION_REGEX}")
 endif(APACHE_FOP)
-if(APACHE_FOP_VERSION)
-  message("  version ${APACHE_FOP_VERSION}")
-endif(APACHE_FOP_VERSION)
 
 # The HTML output is used in the graphical help browsers in MGED and Archer,
 # as well as being the most likely candidate for external viewers. Turn this
@@ -992,12 +997,12 @@ mark_as_advanced(BRLCAD_EXTRADOCS_MAN)
 # present.  Provide an option to disable the PDF output for man pages without
 # disabling the rest of the PDF output - PDF generation for hundreds of man
 # pages can be expensive in time.
-CMAKE_DEPENDENT_option(BRLCAD_EXTRADOCS_PDF "Build PDF output from DocBook documentation" ON "BRLCAD_EXTRADOCS;APACHE_FOP" OFF)
+CMAKE_DEPENDENT_option(BRLCAD_EXTRADOCS_PDF "Build PDF output from DocBook documentation" OFF "BRLCAD_EXTRADOCS;APACHE_FOP" OFF)
 CMAKE_DEPENDENT_option(BRLCAD_EXTRADOCS_PDF_MAN "Build PDF output from DocBook documentation for man pages" ON "BRLCAD_EXTRADOCS_PDF" OFF)
 
 # Don't do it by default, but provide an option to perform validation as part
 # of the DocBook build - sort of a "strict flags" mode for DocBook
-CMAKE_DEPENDENT_option(BRLCAD_EXTRADOCS_VALIDATE "Perform validation for DocBook documentation" ON "BRLCAD_EXTRADOCS:BRLCAD_EXTRADOCS_VALIDATE" OFF)
+CMAKE_DEPENDENT_option(BRLCAD_EXTRADOCS_VALIDATE "Perform validation for DocBook documentation" OFF "BRLCAD_EXTRADOCS" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_VALIDATE)
 
 #----------------------------------------------------------------------
