@@ -969,10 +969,12 @@ set(BRLCAD_EXTRADOCS_ALIASES
   ENABLE_DOCBOOK
   )
 set(BRLCAD_EXTRADOCS_DESCRIPTION "
-The core option that enables and disables bulding of BRL-CAD's DocBook
+The core option that enables and disables building of BRL-CAD's DocBook
 based documentation (includes manuals and man pages for commands, among
 other things.)  Defaults to ON, but only HTML and MAN formats are enabled
-by default - PDF must be enabled separately by use of this option or one 
+by default - PDF must be enabled separately by use of one options
+BRLCAD_EXTRADOCS_PDF or BRLCAD_EXTRADOCS_PDF_MAN below.
+this option or one
 of its aliases.  Note that you may set environment variable APACHE_FOP
 to point to your locally installed fop executable file (which on Linux is
 usually a shell script with 0755 permissions).
@@ -997,6 +999,18 @@ mark_as_advanced(BRLCAD_EXTRADOCS_MAN)
 # present.  Provide an option to disable the PDF output for man pages without
 # disabling the rest of the PDF output - PDF generation for hundreds of man
 # pages can be expensive in time.
+set(BRLCAD_EXTRADOCS_PDF_DESCRIPTION "
+Option that enables building of BRL-CAD's DocBook PDF-based documentation
+(includes manuals and man pages for commands, among
+other things.)  Defaults to OFF.
+Note that you may set environment variable APACHE_FOP
+to point to your locally installed fop executable file (which on Linux is
+usually a shell script with 0755 permissions).
+")
+set(BRLCAD_EXTRADOCS_PDF_MAN_DESCRIPTION "
+Option that enables building of BRL-CAD's DocBook PDF-based documentation
+for man pages only.  Defaults to OFF.
+")
 CMAKE_DEPENDENT_option(BRLCAD_EXTRADOCS_PDF "Build PDF output from DocBook documentation" OFF "BRLCAD_EXTRADOCS;APACHE_FOP" OFF)
 CMAKE_DEPENDENT_option(BRLCAD_EXTRADOCS_PDF_MAN "Build PDF output from DocBook documentation for man pages" ON "BRLCAD_EXTRADOCS_PDF" OFF)
 
