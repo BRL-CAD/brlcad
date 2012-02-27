@@ -972,9 +972,7 @@ set(BRLCAD_EXTRADOCS_DESCRIPTION "
 The core option that enables and disables building of BRL-CAD's DocBook
 based documentation (includes manuals and man pages for commands, among
 other things.)  Defaults to ON, but only HTML and MAN formats are enabled
-by default - PDF must be enabled separately by use of one options
-BRLCAD_EXTRADOCS_PDF or BRLCAD_EXTRADOCS_PDF_MAN below.
-this option or one
+by default - PDF must be enabled separately by use of this option or one
 of its aliases.  Note that you may set environment variable APACHE_FOP
 to point to your locally installed fop executable file (which on Linux is
 usually a shell script with 0755 permissions).
