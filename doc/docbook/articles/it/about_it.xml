@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
 <chapter id="wb_BRL-CAD_Overview-it">
 
   <title>Sommario</title>
@@ -255,67 +255,73 @@ presente nell'albero delle cartelle del sorgente.</para>
 <tr>
 
 <td>
+  <informalfigure>
+  <title>Moss</title>
   <mediaobject>
     <imageobject>
       <imagedata href="./images/brlcad-overview-benchmark-Moss.jpg"/>
     </imageobject>
   </mediaobject>
+  </informalfigure>
 </td>
 
 <td>
+  <informalfigure>
+  <title>World</title>
   <mediaobject>
     <imageobject>
       <imagedata href="./images/brlcad-overview-benchmark-World.jpg"/>
     </imageobject>
   </mediaobject>
+  </informalfigure>
 </td>
 
 <td>
+  <informalfigure>
+  <title>Star</title>
   <mediaobject>
     <imageobject>
       <imagedata href="./images/brlcad-overview-benchmark-Star.jpg"/>
     </imageobject>
   </mediaobject>
+  </informalfigure>
 </td>
-
-  <para>Moss</para>
-
-  <para>World</para>
-
-  <para>Star</para>
 
 </tr>
 
 <tr>
 <td>
+  <informalfigure>
+  <title>Bldg 391</title>
   <mediaobject>
     <imageobject>
       <imagedata href="./images/brlcad-overview-benchmark-Bldg_391.jpg"/>
     </imageobject>
   </mediaobject>
+  </informalfigure>
 </td>
 
 <td>
+  <informalfigure>
+  <title>M35</title>
   <mediaobject>
     <imageobject>
       <imagedata href="./images/brlcad-overview-benchmark-M35.jpg"/>
     </imageobject>
   </mediaobject>
+  </informalfigure>
 </td>
 
 <td>
+  <informalfigure>
+  <title>Sphflake</title>
   <mediaobject>
     <imageobject>
       <imagedata href="./images/brlcad-overview-benchmark-Sphflake.jpg"/>
     </imageobject>
   </mediaobject>
+  </informalfigure>
 </td>
-
-  <para>Bldg 391</para>
-
-  <para>M35</para>
-
-  <para>Sphflake</para>
 
 </tr>
 
