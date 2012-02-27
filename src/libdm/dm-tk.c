@@ -818,6 +818,8 @@ struct dm dm_tk = {
     tk_drawLine3D,
     tk_drawLines3D,
     tk_drawPoint2D,
+    Nu_int0,
+    Nu_int0,
     tk_drawVList,
     tk_drawVList,
     tk_draw,

@@ -96,6 +96,8 @@ struct dm dm_rtgl = {
     rtgl_drawLine3D,
     rtgl_drawLines3D,
     rtgl_drawPoint2D,
+    rtgl_drawPoint3D,
+    rtgl_drawPoints3D,
     rtgl_drawVList,
     rtgl_drawVList,
     rtgl_draw,
@@ -2101,6 +2103,46 @@ rtgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 
     glBegin(GL_POINTS);
     glVertex2f(x, y);
+    glEnd();
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
+rtgl_drawPoint3D(struct dm *dmp, point_t point)
+{
+    if (!dmp || !point)
+	return TCL_ERROR;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("rtgl_drawPoint3D():\n");
+	bu_log("\tdmp: %llu\tpt - %lf %lf %lf\n", (unsigned long long)dmp, V3ARGS(point));
+    }
+
+    glBegin(GL_POINTS);
+    glVertex3dv(point);
+    glEnd();
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
+rtgl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
+{
+    register int i;
+
+    if (!dmp || npoints < 0 || !points)
+	return TCL_ERROR;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("rtgl_drawPoint3D():\n");
+    }
+
+    glBegin(GL_POINTS);
+    for (i = 0; i < npoints; ++i)
+	glVertex3dv(points[i]);
     glEnd();
 
     return TCL_OK;

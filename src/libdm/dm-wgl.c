@@ -1461,6 +1461,46 @@ wgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 
 
 HIDDEN int
+wgl_drawPoint3D(struct dm *dmp, point_t point)
+{
+    if (!dmp || !point)
+	return TCL_ERROR;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("wgl_drawPoint3D():\n");
+	bu_log("\tdmp: %llu\tpt - %lf %lf %lf\n", (unsigned long long)dmp, V3ARGS(point));
+    }
+
+    glBegin(GL_POINTS);
+    glVertex3dv(point);
+    glEnd();
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
+wgl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
+{
+    register int i;
+
+    if (!dmp || npoints < 0 || !points)
+	return TCL_ERROR;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("wgl_drawPoint3D():\n");
+    }
+
+    glBegin(GL_POINTS);
+    for (i = 0; i < npoints; ++i)
+	glVertex3dv(points[i]);
+    glEnd();
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
 wgl_setLineAttr(struct dm *dmp, int width, int style)
 {
     if (dmp->dm_debugLevel)
@@ -1500,7 +1540,7 @@ wgl_setWinBounds(struct dm *dmp, fastf_t w[6])
 
     if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
 			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("ogl_setWinBounds: Couldn't make context current\n");
+	bu_log("wgl_setWinBounds: Couldn't make context current\n");
 	return TCL_ERROR;
     }
 
@@ -2157,6 +2197,8 @@ struct dm dm_wgl = {
     wgl_drawLine3D,
     wgl_drawLines3D,
     wgl_drawPoint2D,
+    wgl_drawPoint3D,
+    wgl_drawPoints3D,
     wgl_drawVList,
     wgl_drawVListHiddenLine,
     wgl_draw,

@@ -515,6 +515,8 @@ struct dm dm_plot = {
     plot_drawLine3D,
     plot_drawLines3D,
     plot_drawPoint2D,
+    Nu_int0,
+    Nu_int0,
     plot_drawVList,
     plot_drawVList,
     plot_draw,
