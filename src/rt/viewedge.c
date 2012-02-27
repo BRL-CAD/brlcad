@@ -690,7 +690,7 @@ view_eol(struct application *ap)
 	    bu_exit(EXIT_FAILURE, "rtedge: error reading from framebuffer.\n");
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
-	for (i=0; i<per_processor_chunk; ++i) {
+	for (i = 0; i < per_processor_chunk; ++i) {
 	    /*
 	     * Is this pixel an edge?
 	     */
