@@ -2,7 +2,7 @@ set(docbook_articles_IT
   about_it.xml
   )
 
-set(docbook_presentations_IT_IMAGES
+set(docbook_articles_IT_IMAGES
   images/brlcad-overview-benchmark-Bldg_391.jpg
   images/brlcad-overview-benchmark-M35.jpg
   images/brlcad-overview-benchmark-Moss.jpg
