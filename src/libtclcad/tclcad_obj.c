@@ -2613,8 +2613,8 @@ to_data_axes(struct ged *gedp,
 	    if (sscanf(argv[3], "%d", &i) != 1)
 		goto bad;
 
-	    if (i)
-		gdasp->gdas_draw = 1;
+	    if (0 <= i && i <= 2)
+		gdasp->gdas_draw = i;
 	    else
 		gdasp->gdas_draw = 0;
 
