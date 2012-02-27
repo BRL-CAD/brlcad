@@ -344,7 +344,7 @@ struct basic_parser_state {
  *  Composition object for dealing with lex/lacc reentrant interface.
  *
  *  Lifetime is only until the parse completion of a single file and
- *  it's includes.
+ *  its includes.
  */
 template<typename PrecisionT,
 	 typename charT=char,
