@@ -66,21 +66,19 @@ macro(CHECK_C_INLINE)
           ${HAVE_INLINE})
 
 	if(${HAVE_INLINE})
-	  set(C_INLINE TRUE)
-	  if(NOT ${KEYWORD} MATCHES "inline")
-	    # set inline to something else
-	    add_definitions("-Dinline=${KEYWORD}")
-	  endif(NOT ${KEYWORD} MATCHES "inline")
+          if(NOT ${KEYWORD} MATCHES "inline")
+            set(C_INLINE "-Dinline=${KEYWORD}" CACHE STRING "C inline" FORCE)
+            add_definitions(${C_INLINE})
+          else(NOT ${KEYWORD} MATCHES "inline")
+            set(C_INLINE "inline" CACHE STRING "C inline" FORCE)
+          endif(NOT ${KEYWORD} MATCHES "inline")
 	endif(${HAVE_INLINE})
-
       endif(NOT DEFINED C_INLINE)
     endforeach(KEYWORD)
 
     if(NOT DEFINED C_INLINE)
-      # unset inline if none were found
-      add_definitions("-Dinline=")
+      set(C_INLINE "unsupported" CACHE STRING "Compiler doesn't support inline" FORCE)
     endif(NOT DEFINED C_INLINE)
-
   endif(NOT MSVC)
 
 endmacro(CHECK_C_INLINE)
