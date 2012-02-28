@@ -31,7 +31,6 @@ Registry::Registry (CF_init initFunct)
 //      NilSTEPentity = new SCLP23(Application_instance);
 
     /* Registry tables aren't always initialized */
-    HASHinitialize();
     primordialSwamp = HASHcreate (1000);
     active_schemas = HASHcreate (10);
     active_types = HASHcreate (100);
