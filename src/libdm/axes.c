@@ -57,6 +57,7 @@ dm_draw_data_axes(struct dm *dmp,
     /* set color */
     DM_SET_FGCOLOR(dmp, gdasp->gdas_color[0], gdasp->gdas_color[1], gdasp->gdas_color[2], 1, 1.0);
 
+#ifdef IF_OGL
     if (gdasp->gdas_draw > 1) {
 	if (dmp->dm_light)
 	    glDisable(GL_LIGHTING);
@@ -70,6 +71,7 @@ dm_draw_data_axes(struct dm *dmp,
 
 	return;
     }
+#endif
 
     points = (point_t *)bu_calloc(npoints, sizeof(point_t), "data axes points");
     halfAxesSize = gdasp->gdas_size * 0.5;
