@@ -162,7 +162,7 @@ if(UNIX)
   if(SEARCH_64BIT)
     set(64BIT_DIRS "/usr/lib64/X11;/usr/lib64;/usr/lib/x86_64-linux-gnu")
   else(SEARCH_64BIT)
-    set(32BIT_DIRS "/usr/lib/X11;/usr/lib")
+    set(32BIT_DIRS "/usr/lib/X11;/usr/lib;/usr/lib/i386-linux-gnu")
   endif(SEARCH_64BIT)
 
   # Candidate directories for headers
