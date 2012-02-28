@@ -49,6 +49,25 @@ add_subdirectory(presentations)
 add_subdirectory(specifications)
 add_subdirectory(system)
 
+# Now that we have all the individual targets listed by the DocBook.cmake
+# macros, define convenience targets
+if(BRLCAD_EXTRADOCS_HTML)
+  get_property(BRLCAD_EXTRADOCS_HTML_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_HTML_TARGETS) 
+  add_custom_target(html DEPENDS ${BRLCAD_EXTRADOCS_HTML_TARGETS})
+endif(BRLCAD_EXTRADOCS_HTML)
+if(BRLCAD_EXTRADOCS_MAN)
+  get_property(BRLCAD_EXTRADOCS_MAN_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_MAN_TARGETS) 
+  add_custom_target(man DEPENDS ${BRLCAD_EXTRADOCS_MAN_TARGETS})
+endif(BRLCAD_EXTRADOCS_MAN)
+if(BRLCAD_EXTRADOCS_PDF)
+  get_property(BRLCAD_EXTRADOCS_PDF_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS) 
+  add_custom_target(pdf DEPENDS ${BRLCAD_EXTRADOCS_PDF_TARGETS})
+endif(BRLCAD_EXTRADOCS_PDF)
+add_custom_target(doc DEPENDS 
+	${BRLCAD_EXTRADOCS_HTML_TARGETS}
+	${BRLCAD_EXTRADOCS_MAN_TARGETS}
+	${BRLCAD_EXTRADOCS_PDF_TARGETS})
+
 CMAKEFILES(README fop.xconf.in log4j.properties resources)
 CMAKEFILES(README.DB_authors_notes)
 CMAKEFILES(css/brlcad.css)
