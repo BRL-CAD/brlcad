@@ -13,6 +13,9 @@
 
 //static char rcsid[] ="$Id: STEPattribute.cc,v 3.0.1.9 1998/02/17 18:12:41 sauderd Exp $";
 
+#include <iomanip>
+#include <sstream>
+#include <string>
 
 #include <read_func.h>
 #include <STEPattribute.h>
@@ -466,26 +469,26 @@ STEPattribute::asStr (std::string& str, const char *currSch) const
 
     if (is_null ())  { str = ""; return const_cast<char *>(str.c_str()); }
 
+    std::ostringstream oss;
+
     switch (NonRefType()) {
       case INTEGER_TYPE:
-	str += (*(ptr.i));
-//	sprintf ( attrVal,"%ld",*(ptr.i));
+	oss << *(ptr.i);
+	str.append(oss.str());
 	break;
 
       case NUMBER_TYPE:
       case REAL_TYPE:
-
-	str.append (*(ptr.r), (int) Real_Num_Precision);
-//	sprintf (attrVal, "%.*G", (int) Real_Num_Precision, *(ptr.r));
+	oss << std::setprecision(Real_Num_Precision) << *(ptr.r);
+	str.append(oss.str());
 	break;	  
 
       case ENTITY_TYPE:
 	// print instance id only if not empty pointer
 	// and has value assigned
-	if ((*(ptr.c) == S_ENTITY_NULL) || (*(ptr.c) == 0))
+	if ((*(ptr.c) == S_ENTITY_NULL) || (*(ptr.c) == 0)) {
 	    break;
-	else
-	{
+	} else {
 	    (*(ptr.c))->STEPwrite_reference (str);
 	}
 	break;	  
