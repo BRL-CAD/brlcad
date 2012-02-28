@@ -137,7 +137,7 @@ public SCLP23_NAME(Enum)  {
   public:
     const char * Name() const;
 
-    SCLP23_NAME(LOGICAL) (char * val =0);
+    SCLP23_NAME(LOGICAL) (const char * val =0);
     SCLP23_NAME(LOGICAL) (Logical state);
     SCLP23_NAME(LOGICAL) (const SCLP23_NAME(LOGICAL)& source);
     SCLP23_NAME(LOGICAL) (int i);

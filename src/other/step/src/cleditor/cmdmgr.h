@@ -93,7 +93,7 @@ class ReplicateLinkNode : public SingleLinkNode {
     ReplicateLinkNode() { _repNode = 0; }
     ~ReplicateLinkNode() { }
 
-    char *ClassName () { return "ReplicateLinkNode"; }
+    const char *ClassName () { return "ReplicateLinkNode"; }
 
     MgrNode *ReplicateNode() { return _repNode; }
     void ReplicateNode(MgrNode *rn) { _repNode = rn; }
@@ -121,7 +121,7 @@ class ReplicateList : public SingleLinkList {
     BOOLEAN Remove(ReplicateLinkNode *rln);
     BOOLEAN Remove(MgrNode *rn);
 
-    char *ClassName () { return "ReplicateList"; }
+    const char *ClassName () { return "ReplicateList"; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////

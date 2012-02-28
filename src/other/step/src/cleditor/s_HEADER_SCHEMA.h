@@ -55,7 +55,7 @@ class s_N279_file_identification  :    public SCLP23(Application_instance) {
 #ifdef __O3DB__
   void oodb_reInit();
 #endif
-	char *Name () { return "File_Identification"; }
+	const char *Name () { return "File_Identification"; }
 	int opcode ()  { return 0 ; } 
 	const SCLP23(String) & file_name() const;
 	void file_name (const char * x);
@@ -86,7 +86,7 @@ class s_N279_imp_level  :    public SCLP23(Application_instance) {
 #ifdef __O3DB__
   void oodb_reInit();
 #endif
-	char *Name () { return "Imp_Level"; }
+	const char *Name () { return "Imp_Level"; }
 	int opcode ()  { return 1 ; } 
 	const SCLP23(String) & implementation_level() const;
 	void implementation_level (const char * x);
@@ -121,7 +121,7 @@ class p21DIS_File_name  :    public SCLP23(Application_instance) {
 #ifdef __O3DB__
   void oodb_reInit();
 #endif
-	char *Name () { return "File_Name"; }
+	const char *Name () { return "File_Name"; }
 	int opcode ()  { return 2 ; } 
 	const SCLP23(String) & name() const;
 	void name (const char * x);
@@ -158,7 +158,7 @@ class p21DIS_File_description  :    public SCLP23(Application_instance) {
 #ifdef __O3DB__
   void oodb_reInit();
 #endif
-	char *Name () { return "File_Description"; }
+	const char *Name () { return "File_Description"; }
 	int opcode ()  { return 3 ; } 
 	StringAggregate & description();
 	void description (StringAggregate & x);
@@ -181,7 +181,7 @@ class s_N279_classification  :    public SCLP23(Application_instance) {
 #ifdef __O3DB__
   void oodb_reInit();
 #endif
-	char *Name () { return "S_Classification"; }
+	const char *Name () { return "S_Classification"; }
 	int opcode ()  { return 4 ; } 
 	const SCLP23(String) & security_classification() const;
 	void security_classification (const char * x);
@@ -202,7 +202,7 @@ class s_N279_file_description  :    public SCLP23(Application_instance) {
 #ifdef __O3DB__
   void oodb_reInit();
 #endif
-	char *Name () { return "S_File_Description"; }
+	const char *Name () { return "S_File_Description"; }
 	int opcode ()  { return 5 ; } 
 	const SCLP23(String) & description() const;
 	void description (const char * x);
@@ -223,7 +223,7 @@ class p21DIS_Maxsig  :    public SCLP23(Application_instance) {
 #ifdef __O3DB__
   void oodb_reInit();
 #endif
-	char *Name () { return "Maxsig"; }
+	const char *Name () { return "Maxsig"; }
 	int opcode ()  { return 6 ; } 
 	SCLP23(Integer)  maximum_significant_digit();
 	void maximum_significant_digit (SCLP23(Integer)  x);
@@ -244,7 +244,7 @@ class p21DIS_Classification  :    public SCLP23(Application_instance) {
 #ifdef __O3DB__
   void oodb_reInit();
 #endif
-	char *Name () { return "Classification"; }
+	const char *Name () { return "Classification"; }
 	int opcode ()  { return 7 ; } 
 	const SCLP23(String) & security_classification() const;
 	void security_classification (const char * x);
@@ -266,7 +266,7 @@ class p21DIS_File_schema  :    public SCLP23(Application_instance) {
 #ifdef __O3DB__
   void oodb_reInit();
 #endif
-	char *Name () { return "File_Schema"; }
+	const char *Name () { return "File_Schema"; }
 	int opcode ()  { return 8 ; } 
 	StringAggregate & schema_identifiers();
 	void schema_identifiers (StringAggregate & x);

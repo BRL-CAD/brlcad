@@ -15,6 +15,8 @@
 
 /* $Id: STEPfile.h,v 3.0.1.6 1998/02/17 18:04:30 sauderd Exp $ */ 
 
+#include <string>
+
 #ifdef __O3DB__
 #include <OpenOODB.h>
 #endif
@@ -97,8 +99,8 @@ class STEPfile
 //file type information
     FileTypeCode _fileType;
     char ENTITY_NAME_DELIM;
-    char* FILE_DELIM;    
-    char* END_FILE_DELIM;
+    std::string FILE_DELIM;    
+    std::string END_FILE_DELIM;
     
 //public member functions
   public:

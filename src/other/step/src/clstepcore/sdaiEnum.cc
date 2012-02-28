@@ -41,7 +41,7 @@ const SCLP23(LOGICAL) SCLP23(UNKNOWN)( LUnknown );
 // class Logical
 ///////////////////////////////////////////////////////////////////////////////
 
-SCLP23(LOGICAL)::SCLP23_NAME(LOGICAL) (char * val)
+SCLP23(LOGICAL)::SCLP23_NAME(LOGICAL) (const char * val)
 {
     set_value (val);
 }

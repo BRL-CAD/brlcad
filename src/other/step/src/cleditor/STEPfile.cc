@@ -2069,10 +2069,10 @@ STEPfile::AppendFile (istream* in, int useTechCor)
       }
     
     if ((strncmp (const_cast<char *>(keywd.c_str()), 
-         END_FILE_DELIM,
+         END_FILE_DELIM.c_str(),
          strlen(const_cast<char *>(keywd.c_str()))) || !(in2 -> good ()))) 
       {  
-	  _error.AppendToUserMsg(END_FILE_DELIM);
+	  _error.AppendToUserMsg(END_FILE_DELIM.c_str());
 	  _error.AppendToUserMsg(" missing at end of file.\n");
 	  CloseInputFile(in2);
 	  return _error.GreaterSeverity(SEVERITY_WARNING); 

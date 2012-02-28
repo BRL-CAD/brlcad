@@ -1921,7 +1921,7 @@ IntNode::STEPwrite(std::string &s, const char *)
     char tmp[BUFSIZ];
     if(value != S_INT_NULL)
     {
-	sprintf(tmp, "%d", value);
+	sprintf(tmp, "%d", (int)value);
 	s = tmp;
     }
     else
