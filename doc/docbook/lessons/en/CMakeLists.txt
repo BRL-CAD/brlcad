@@ -130,8 +130,7 @@ set(docbook_lessons_EN_IMAGES
   images/mged16_radio_structure_3.png
   images/mged16_radio_cutaways.png
   )
-
-DOCBOOK_TO_HTML(lesson docbook_lessons_EN html/lessons/en)
 BRLCAD_ADDDATA(docbook_lessons_EN_IMAGES html/lessons/en/images)
 
-DOCBOOK_TO_PDF(lesson docbook_lessons_EN pdf/lessons/en)
+DOCBOOK_TO_HTML(lesson docbook_lessons_EN html/lessons/en docbook_lessons_EN_IMAGES_cp)
+DOCBOOK_TO_PDF(lesson docbook_lessons_EN pdf/lessons/en docbook_lessons_EN_IMAGES_cp)

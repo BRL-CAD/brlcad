@@ -239,10 +239,10 @@ set(docbook_mann_INTRO
   Introduction.xml
   )
 
-DOCBOOK_TO_HTML(mann docbook_mann_EN html/mann/en)
-DOCBOOK_TO_HTML(mann docbook_mann_INTRO html/mann/en)
-DOCBOOK_TO_MAN(mann docbook_mann_EN n nged man/mann)
+DOCBOOK_TO_HTML(mann docbook_mann_EN html/mann/en "")
+DOCBOOK_TO_HTML(mann docbook_mann_INTRO html/mann/en "")
+DOCBOOK_TO_MAN(mann docbook_mann_EN n nged man/mann "")
 
 if(BRLCAD_EXTRADOCS_PDF_MAN)
-  DOCBOOK_TO_PDF(mann docbook_mann_EN pdf/mann/en)
+  DOCBOOK_TO_PDF(mann docbook_mann_EN pdf/mann/en "")
 endif(BRLCAD_EXTRADOCS_PDF_MAN)

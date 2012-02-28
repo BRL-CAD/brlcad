@@ -59,7 +59,7 @@ set(docbook_books_EN
   BRL-CAD_Tutorial_Series-VolumeIII.xml
   BRL-CAD_Tutorial_Series-VolumeIV.xml
   )
-DOCBOOK_TO_HTML(book docbook_books_EN html/books/en)
+DOCBOOK_TO_HTML(book docbook_books_EN html/books/en docbook_books_EN_IMAGES_cp)
 
 # The PDFs need some special logic to generate custom
 # covers.
@@ -118,7 +118,7 @@ if(BRLCAD_EXTRADOCS_PDF)
     add_custom_command(
       OUTPUT ${outfile}
       COMMAND ${CMAKE_COMMAND} -P ${scriptfile1}
-      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} 
+      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} docbook_books_EN_IMAGES_cp
       )
     set(pdf_outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.pdf)
     set(scriptfile2 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_pdf.cmake)
@@ -126,7 +126,7 @@ if(BRLCAD_EXTRADOCS_PDF)
     add_custom_command(
       OUTPUT ${pdf_outfile}
       COMMAND ${CMAKE_COMMAND} -P ${scriptfile2}
-      DEPENDS ${outfile} ${DOCBOOK_RESOURCE_FILES}
+      DEPENDS ${outfile} ${DOCBOOK_RESOURCE_FILES} docbook_books_EN_IMAGES_cp
       )
     add_custom_target(${targetname} ALL DEPENDS ${pdf_outfile})
     install(FILES ${pdf_outfile} DESTINATION ${DATA_DIR}/pdf/books/en)

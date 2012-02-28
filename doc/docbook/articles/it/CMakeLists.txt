@@ -11,10 +11,10 @@ set(docbook_articles_IT_IMAGES
   images/brlcad-overview-benchmark-World.jpg
   images/brlcad-overview-data-flow.png
   )
-
-DOCBOOK_TO_HTML(article docbook_articles_IT html/articles/it)
 BRLCAD_ADDDATA(docbook_articles_IT_IMAGES html/articles/it/images)
 
+DOCBOOK_TO_HTML(article docbook_articles_IT html/articles/it docbook_articles_IT_IMAGES_cp)
+
 if(BRLCAD_EXTRADOCS_PDF)
-  DOCBOOK_TO_PDF(article docbook_articles_IT pdf/articles/it)
+  DOCBOOK_TO_PDF(article docbook_articles_IT pdf/articles/it docbook_articles_IT_IMAGES_cp)
 endif(BRLCAD_EXTRADOCS_PDF)

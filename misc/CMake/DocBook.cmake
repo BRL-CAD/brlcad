@@ -110,7 +110,7 @@ macro(DB_VALIDATE_TARGET targetname filename_root)
 endmacro(DB_VALIDATE_TARGET)
 
 # HTML output, the format used by BRL-CAD's graphical help systems
-macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
+macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
   if(BRLCAD_EXTRADOCS_HTML)
     set(mk_out_dir ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
     foreach(filename ${${xml_files}})
@@ -125,13 +125,13 @@ macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
 	add_custom_command(
 	  OUTPUT ${outfile}
 	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_XHTML_STYLESHEET}
+	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_XHTML_STYLESHEET} ${deps_list}
 	  )
       else(BRLCAD_EXTRADOCS_VALIDATE)
 	add_custom_command(
 	  OUTPUT ${outfile}
 	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_XHTML_STYLESHEET}
+	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_XHTML_STYLESHEET} ${deps_list}
 	  )
       endif(BRLCAD_EXTRADOCS_VALIDATE)
       add_custom_target(${targetname} ALL DEPENDS ${outfile})
@@ -142,10 +142,10 @@ macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
     endforeach(filename ${${xml_files}})
   endif(BRLCAD_EXTRADOCS_HTML)
   CMAKEFILES(${${xml_files}})
-endmacro(DOCBOOK_TO_HTML targetname_suffix srcfile outfile targetdir)
+endmacro(DOCBOOK_TO_HTML targetname_suffix srcfile outfile targetdir deps_list)
 
 # This macro produces Unix-syle manual or "man" pages
-macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir)
+macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir deps_list)
   if(BRLCAD_EXTRADOCS_MAN)
     set(mk_out_dir ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
     foreach(filename ${${xml_files}})
@@ -160,13 +160,13 @@ macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir)
 	add_custom_command(
 	  OUTPUT ${outfile}
 	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_MAN_STYLESHEET}
+	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_MAN_STYLESHEET} ${deps_list}
 	  )
       else(BRLCAD_EXTRADOCS_VALIDATE)
 	add_custom_command(
 	  OUTPUT ${outfile}
 	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_MAN_STYLESHEET}
+	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_MAN_STYLESHEET} ${deps_list}
 	  )
       endif(BRLCAD_EXTRADOCS_VALIDATE)
       add_custom_target(${targetname} ALL DEPENDS ${outfile})
@@ -177,11 +177,11 @@ macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir)
     endforeach(filename ${${xml_files}})
   endif(BRLCAD_EXTRADOCS_MAN)
   CMAKEFILES(${${xml_files}})
-endmacro(DOCBOOK_TO_MAN targetname_suffix srcfile outfile targetdir)
+endmacro(DOCBOOK_TO_MAN targetname_suffix srcfile outfile targetdir deps_list)
 
 # PDF output is generated in a two stage process - the XML file is first
 # converted to an "FO" file, and the FO file is in turn translated to PDF.
-macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
+macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir deps_list)
   if(BRLCAD_EXTRADOCS_PDF)
     set(mk_out_dir ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
     foreach(filename ${${xml_files}})
@@ -196,13 +196,13 @@ macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 	add_custom_command(
 	  OUTPUT ${outfile}
 	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile1}
-	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_FO_STYLESHEET}
+	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_FO_STYLESHEET} ${deps_list}
 	  )
       else(BRLCAD_EXTRADOCS_VALIDATE)
 	add_custom_command(
 	  OUTPUT ${outfile}
 	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile1}
-	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}	${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_FO_STYLESHEET}
+	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_FO_STYLESHEET} ${deps_list}
 	  )
       endif(BRLCAD_EXTRADOCS_VALIDATE)
       set(pdf_outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.pdf)
@@ -211,7 +211,7 @@ macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
       add_custom_command(
 	OUTPUT ${pdf_outfile}
 	COMMAND ${CMAKE_COMMAND} -P ${scriptfile2}
-	DEPENDS ${outfile} ${DOCBOOK_RESOURCE_FILES}
+	DEPENDS ${outfile} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
 	)
       add_custom_target(${targetname} ALL DEPENDS ${pdf_outfile})
       install(FILES ${pdf_outfile} DESTINATION ${DATA_DIR}/${targetdir})
@@ -221,6 +221,6 @@ macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
     endforeach(filename ${${xml_files}})
   endif(BRLCAD_EXTRADOCS_PDF)
   CMAKEFILES(${${xml_files}})
-endmacro(DOCBOOK_TO_PDF targetname_suffix srcfile outfile targetdir)
+endmacro(DOCBOOK_TO_PDF targetname_suffix srcfile outfile targetdir deps_list)
 
 
