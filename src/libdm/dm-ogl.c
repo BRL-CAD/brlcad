@@ -1922,7 +1922,7 @@ ogl_drawPoint3D(struct dm *dmp, point_t point)
 
     if (dmp->dm_debugLevel) {
 	bu_log("ogl_drawPoint3D():\n");
-	bu_log("\tdmp: %llu\tpt - %lf %lf %lf\n", (unsigned long long)dmp, V3ARGS(point));
+	bu_log("\tdmp: %p\tpt - %lf %lf %lf\n", (void*)dmp, V3ARGS(point));
     }
 
     glBegin(GL_POINTS);
