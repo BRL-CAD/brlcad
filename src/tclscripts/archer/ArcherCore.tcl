@@ -136,6 +136,7 @@ namespace eval ArcherCore {
 	method getLastSelectedDir  {}
 	method refreshDisplay      {}
 	method putString           {_str}
+	method rtcntrl             {args}
 	method setStatusString     {_str}
 
 	# Commands exposed to the user via the command line.
@@ -4540,6 +4541,12 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::putString {_str} {
     $itk_component(cmd) putstring $_str
 }
+
+
+::itcl::body ArcherCore::rtcntrl {args} {
+    eval $itk_component(rtcntrl) $args
+}
+
 
 ::itcl::body ArcherCore::setStatusString {_str} {
     set mStatusStr $_str
