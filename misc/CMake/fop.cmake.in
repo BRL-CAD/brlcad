@@ -13,8 +13,8 @@ endif(APACHE_FOP_VERSION VERSION_LESS 1.0)
 set(ENV{FOP_HYPHENATION_PATH} @FOP_HYP@)
 set(ENV{CLASSPATH} @CMAKE_SOURCE_DIR@/doc/docbook)
 
-# Keep FOP headless on OSX
-set(ENV{FOP_OPTS} "-Djava.awt.headless=true")
+# Keep FOP headless on OSX and specify the log4j config
+set(ENV{FOP_OPTS} "-Djava.awt.headless=true  -Dlog4j.configuration=@CMAKE_SOURCE_DIR@/doc/docbook/log4j.properties")
 
 # Make sure the target directory exists
 execute_process(COMMAND "@CMAKE_COMMAND@" -E make_directory @mk_out_dir@/)

@@ -21,7 +21,6 @@ endif(BRLCAD_EXTRADOCS_MAN)
 if(BRLCAD_EXTRADOCS_PDF)
   set(srcdir ${CMAKE_CURRENT_SOURCE_DIR})
   configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/fop.xconf.in ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf)
-  configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/log4j.properties ${CMAKE_BINARY_DIR}/doc/docbook/log4j.properties COPYONLY)
 endif(BRLCAD_EXTRADOCS_PDF)
 
 # For HTML, MAN and FO (FO is an intermediate file used in the XML->PDF
