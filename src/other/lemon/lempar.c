@@ -222,13 +222,14 @@ static const char *const yyTokenName[] = {
 };
 #endif /* NDEBUG */
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(WIN32)
 /* For tracing reduce actions, the names of all rules are required.
 */
 static const char *const yyRuleName[] = {
 %%
 };
-#endif /* NDEBUG */
+#endif
+
 
 
 #if YYSTACKDEPTH<=0
@@ -554,7 +555,6 @@ static void yy_reduce(
   YYMINORTYPE yygotominor;        /* The LHS of the rule reduced */
   yyStackEntry *yymsp;            /* The top of the parser's stack */
   int yysize;                     /* Amount to pop the stack */
-  int yyRuleNameSize;          /* Amount to pop the stack */
   ParseARG_FETCH;
   yymsp = &yypParser->yystack[yypParser->yyidx];
 #ifndef NDEBUG
@@ -594,12 +594,7 @@ static void yy_reduce(
   */
 %%
   };
-#ifndef NDEBUG
-  yyRuleNameSize = (int)(sizeof(yyRuleName)/sizeof(yyRuleName[0]));
-#else
-  yyRuleNameSize = 0;
-#endif
-  if( yyruleno < yyRuleNameSize) {
+  if( yyruleno < (int)(sizeof(yyRuleName)/sizeof(yyRuleName[0])) ) {
     yygoto = yyRuleInfo[yyruleno].lhs;
     yysize = yyRuleInfo[yyruleno].nrhs;
     yypParser->yyidx -= yysize;
