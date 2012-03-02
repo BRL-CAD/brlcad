@@ -770,7 +770,7 @@ mark_as_advanced(BUILD_SHARED_LIBS)
 # Build static libs by default unless we're debugging. Note: this
 # option will not disable libraries specifically added as STATIC even
 # when OFF.
-AUTO_option(BRLCAD_BUILD_STATIC_LIBS BUILD_STATIC_LIBS "OFF" "ON")
+AUTO_OPTION(BRLCAD_BUILD_STATIC_LIBS BUILD_STATIC_LIBS "OFF" "ON")
 
 
 # On Mac OS X, it is common to have third party package managers 
@@ -803,7 +803,7 @@ manually setting individual variables. Default is \"AUTO\" - 3rd party sources
 are compiled only if they are not detected as being available and functioning 
 as expected.
 ")
-BRLCAD_option(AUTO BRLCAD_BUNDLED_LIBS BRLCAD_BUNDLED_LIBS_ALIASES BRLCAD_BUNDLED_LIBS_DESCRIPTION)
+BRLCAD_OPTION(AUTO BRLCAD_BUNDLED_LIBS BRLCAD_BUNDLED_LIBS_ALIASES BRLCAD_BUNDLED_LIBS_DESCRIPTION)
 set_property(CACHE BRLCAD_BUNDLED_LIBS PROPERTY STRINGS AUTO BUNDLED SYSTEM)
 string(TOUPPER "${BRLCAD_BUNDLED_LIBS}" BRLCAD_BUNDLED_LIBS_UPPER)
 set(BRLCAD_BUNDLED_LIBS "${BRLCAD_BUNDLED_LIBS_UPPER}" CACHE STRING "Build bundled libraries." FORCE)
@@ -905,7 +905,7 @@ Enable support for OpenGL based Display Managers in BRL-CAD.
 Default depends on whether OpenGL is successfully detected - 
 if it is, default is to enable.
 ")
-BRLCAD_option(${OPENGL_FOUND} BRLCAD_ENABLE_OPENGL	BRLCAD_ENABLE_OPENGL_ALIASES BRLCAD_ENABLE_OPENGL_DESCRIPTION)
+BRLCAD_OPTION(${OPENGL_FOUND} BRLCAD_ENABLE_OPENGL	BRLCAD_ENABLE_OPENGL_ALIASES BRLCAD_ENABLE_OPENGL_DESCRIPTION)
 
 # Enable RTGL.  Requires an enabled OpenGL.
 option(BRLCAD_ENABLE_RTGL "Enable experimental RTGL code." OFF)
@@ -977,12 +977,12 @@ of its aliases.  Note that you may set environment variable APACHE_FOP
 to point to your locally installed fop executable file (which on Linux is
 usually a shell script with 0755 permissions).
 ")
-BRLCAD_option(ON BRLCAD_EXTRADOCS BRLCAD_EXTRADOCS_ALIASES BRLCAD_EXTRADOCS_DESCRIPTION)
+BRLCAD_OPTION(ON BRLCAD_EXTRADOCS BRLCAD_EXTRADOCS_ALIASES BRLCAD_EXTRADOCS_DESCRIPTION)
 
 include(CMakeDependentOption)
 
 # By default, always do HTML output if we're doing extradocs output
-CMAKE_DEPENDENT_option(BRLCAD_EXTRADOCS_HTML "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS" OFF)
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_HTML "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_HTML)
 
 # Normally, we'll turn on man page output by default, but there is
@@ -990,7 +990,7 @@ mark_as_advanced(BRLCAD_EXTRADOCS_HTML)
 # files aren't useful and it *seriously* increases the target build 
 # count/build time.  Conditionalize on the CMake MSVC variable NOT 
 # being set.
-CMAKE_DEPENDENT_option(BRLCAD_EXTRADOCS_MAN "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS;NOT MSVC" OFF)
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_MAN "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS;NOT MSVC" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_MAN)
 
 # Don't do PDF by default, and hide the option unless the tools to do it are
@@ -1009,12 +1009,12 @@ set(BRLCAD_EXTRADOCS_PDF_MAN_DESCRIPTION "
 Option that enables building of BRL-CAD's DocBook PDF-based documentation
 for man pages only.  Defaults to OFF.
 ")
-CMAKE_DEPENDENT_option(BRLCAD_EXTRADOCS_PDF "Build PDF output from DocBook documentation" OFF "BRLCAD_EXTRADOCS;APACHE_FOP" OFF)
-CMAKE_DEPENDENT_option(BRLCAD_EXTRADOCS_PDF_MAN "Build PDF output from DocBook documentation for man pages" ON "BRLCAD_EXTRADOCS_PDF" OFF)
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF "Build PDF output from DocBook documentation" OFF "BRLCAD_EXTRADOCS;APACHE_FOP" OFF)
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF_MAN "Build PDF output from DocBook documentation for man pages" ON "BRLCAD_EXTRADOCS_PDF" OFF)
 
 # Don't do it by default, but provide an option to perform validation as part
 # of the DocBook build - sort of a "strict flags" mode for DocBook
-CMAKE_DEPENDENT_option(BRLCAD_EXTRADOCS_VALIDATE "Perform validation for DocBook documentation" OFF "BRLCAD_EXTRADOCS" OFF)
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_VALIDATE "Perform validation for DocBook documentation" OFF "BRLCAD_EXTRADOCS" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_VALIDATE)
 
 #----------------------------------------------------------------------
@@ -1039,7 +1039,7 @@ checking (that in turn help prevent corruption of your data).
 Default is "ON", and should only be disabled for read-only render 
 work where performance is critical.
 ")
-BRLCAD_option(ON BRLCAD_ENABLE_RUNTIME_DEBUG BRLCAD_ENABLE_RUNTIME_DEBUG_ALIASES BRLCAD_ENABLE_RUNTIME_DEBUG_DESCRIPTION)
+BRLCAD_OPTION(ON BRLCAD_ENABLE_RUNTIME_DEBUG BRLCAD_ENABLE_RUNTIME_DEBUG_ALIASES BRLCAD_ENABLE_RUNTIME_DEBUG_DESCRIPTION)
 mark_as_advanced(BRLCAD_ENABLE_RUNTIME_DEBUG)
 if(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
   message("}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
@@ -1070,7 +1070,7 @@ set(BRLCAD_FLAGS_DEBUG_DESCRIPTION "
 Add compiler flags to aid in program debugging.  Default depends on CMake
 build type - defaults to ON for Debug, OFF for Release.
 ")
-AUTO_option(BRLCAD_FLAGS_DEBUG BRLCAD_DEBUG_BUILD "ON" "OFF")
+AUTO_OPTION(BRLCAD_FLAGS_DEBUG BRLCAD_DEBUG_BUILD "ON" "OFF")
 OPTION_ALIASES(BRLCAD_FLAGS_DEBUG BRLCAD_FLAGS_DEBUG_ALIASES "BOOL")
 OPTION_DESCRIPTION(BRLCAD_FLAGS_DEBUG BRLCAD_FLAGS_DEBUG_ALIASES BRLCAD_FLAGS_DEBUG_DESCRIPTION)
 
@@ -1082,7 +1082,7 @@ set(BRLCAD_ENABLE_COMPILER_WARNINGS_ALIASES
 set(BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION "
 Use extra compiler warning flags when compiling C/C++ code.  Defaults to ON.
 ")
-BRLCAD_option(ON BRLCAD_ENABLE_COMPILER_WARNINGS
+BRLCAD_OPTION(ON BRLCAD_ENABLE_COMPILER_WARNINGS
   BRLCAD_ENABLE_COMPILER_WARNINGS_ALIASES
   BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION)
 mark_as_advanced(BRLCAD_ENABLE_COMPILER_WARNINGS)
@@ -1100,7 +1100,7 @@ the default for BRL-CAD source code, and developers should address issues
 discovered by these flags whenever possible rather than disabling strict
 mode.
 ")
-BRLCAD_option(ON BRLCAD_ENABLE_STRICT BRLCAD_ENABLE_STRICT_ALIASES BRLCAD_ENABLE_STRICT_DESCRIPTION)
+BRLCAD_OPTION(ON BRLCAD_ENABLE_STRICT BRLCAD_ENABLE_STRICT_ALIASES BRLCAD_ENABLE_STRICT_DESCRIPTION)
 
 # The full BRL-CAD strict flags are too much for a variety of system
 # C++ headers presently (Dec. 2011) so we don't default to erroring out
@@ -1113,7 +1113,7 @@ if(BRLCAD_ENABLE_STRICT)
 endif(BRLCAD_ENABLE_STRICT)
 
 # Build with compiler optimization flags.  This should normally be on for release builds
-AUTO_option(BRLCAD_FLAGS_OPTIMIZATION BRLCAD_OPTIMIZED_BUILD "OFF" "ON")
+AUTO_OPTION(BRLCAD_FLAGS_OPTIMIZATION BRLCAD_OPTIMIZED_BUILD "OFF" "ON")
 
 # By default, we don't want any error reports at all from src/other
 option(BRLCAD_DISABLE_SRC_OTHER_WARN "Disable warnings for src/other" ON)
