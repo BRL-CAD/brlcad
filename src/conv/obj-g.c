@@ -116,8 +116,8 @@ usage(const char *argv0)
 	   "\t\tto mm.\n"
 	);
 
-    bu_log("  -v\t\tOut verbose user info to stderr. Each occurrance of this option\n"
-	   "\t\tin the option list increases the verbosity level.\n"
+    bu_log("  -v\t\tOut verbose user info to stderr. Each occurrence of this option\n"
+	   "\t\tin the option list increases the verbosity level (two levels currently).\n"
 	   "  -x flag\tSpecify rt debug flag bits (see raytrace.h).\n"
 	   "  -X flag\tSpecify nmg debug flag bits (see nmg.h).\n"
 	);
