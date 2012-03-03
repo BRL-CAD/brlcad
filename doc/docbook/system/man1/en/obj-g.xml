@@ -230,7 +230,7 @@
          Output verbose user information to stderr stream. There are
          different levels of verbose output where higher levels
          increase the amount of output information. Each occurrence of
-         this option in the parameter list increases the verbosity level. A
+         this option in the parameter list increases the verbosity level (two levels currently). A
          large amount of information will be output so redirecting stderr
          to a file is highly recommended. Verbose messages add warning
          and detailed conversion status messages to the default status
