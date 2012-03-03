@@ -1777,11 +1777,13 @@ if(NOT BRLCAD_DISABLE_SUMMARY)
     endforeach()
 
     # if doing pdf show fop exe
-    if(BRLCAD_EXTRADOCS_PDF)
-      message("Apache fop executable..................: ${APACHE_FOP}")
-      message("  version..............................: ${APACHE_FOP_VERSION}")
-    endif(BRLCAD_EXTRADOCS_PDF)
-
+    if ("${setting_array}" STREQUAL SETTINGLIST3)
+      if(BRLCAD_EXTRADOCS_PDF)
+        # array no. 3 only
+        message("Apache fop executable..................: ${APACHE_FOP}")
+        message("  version..............................: ${APACHE_FOP_VERSION}")
+      endif(BRLCAD_EXTRADOCS_PDF)
+    endif("${setting_array}" STREQUAL SETTINGLIST3)
     message("\n")
   endforeach()
 endif(NOT BRLCAD_DISABLE_SUMMARY)
