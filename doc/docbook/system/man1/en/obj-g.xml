@@ -190,7 +190,7 @@
     </varlistentry>
 
     <varlistentry>
-      <term><option>-l <replaceable>bot_orientation</replaceable></option></term>
+      <term><option>-r <replaceable>bot_orientation</replaceable></option></term>
       <listitem>
 	<para>
          Orientation type to use for bot primitives. bot_orientation
