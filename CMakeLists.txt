@@ -1775,9 +1775,15 @@ if(NOT BRLCAD_DISABLE_SUMMARY)
       endwhile(${SETTING_LABEL_LENGTH} GREATER ${CURRENT_LENGTH})
       message("${CURRENT_LABEL}..: ${${setting_label}}")
     endforeach()
+
+    # if doing pdf show fop exe
+    if(BRLCAD_EXTRADOCS_PDF)
+      message("Apache fop executable..................: ${APACHE_FOP}")
+      message("  version..............................: ${APACHE_FOP_VERSION}")
+    endif(BRLCAD_EXTRADOCS_PDF)
+
     message("\n")
   endforeach()
-
 endif(NOT BRLCAD_DISABLE_SUMMARY)
 
 if(NOT IS_SUBBUILD)
