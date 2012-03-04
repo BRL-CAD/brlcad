@@ -87,8 +87,7 @@ geometrie, manipolare file e dati. Il flusso di base dei dati nel pacchetto
     <imageobject role="html">
       <imagedata
         format="PNG"
-        align="center"
-        width="5in"
+        width="6in"
         scalefit="1"
         fileref="../../articles/it/images/brlcad-overview-data-flow.png"
        />
