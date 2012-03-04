@@ -25,7 +25,7 @@ endif(BRLCAD_EXTRADOCS_PDF)
 
 # For HTML, MAN and FO (FO is an intermediate file used in the XML->PDF
 # transformation) we use variables to hold the full stylesheet path. Because
-# BRL-CAD has not (thus far) needed to customize it's FO stylesheets for most
+# BRL-CAD has not (thus far) needed to customize its FO stylesheets for most
 # situations, we used the standard XSL FO stylesheet.  In the case we DO need
 # to customize FO stylesheets (the BRL-CAD manuals in books/en) we have
 # separate CMake logic in books/en/CMakeLists.txt to handle the customization.
