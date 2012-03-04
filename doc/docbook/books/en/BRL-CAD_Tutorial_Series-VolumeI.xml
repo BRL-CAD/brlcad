@@ -76,10 +76,20 @@
       <figure><info><title>BRL-CAD Data Flow Structure</title></info>
 
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align="center" fileref="../../books/en/images/tutorial_series_volI_fig01.png" format="PNG"/>
+	  <imageobject role="html">
+	    <imagedata
+               align="center"
+               fileref="../../books/en/images/tutorial_series_volI_fig01.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata
+               align="center"
+               width="100%"
+               scalefit="1"
+               fileref="../../books/en/images/tutorial_series_volI_fig01.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
+
       </figure>
 
    </chapter>
@@ -256,25 +266,61 @@
 	<para>
 	   To run the benchmark images, run the script run.sh in the "bench" directory of the source directory tree.
 	</para>
-     <table frame="none" pgwide="1"><title>Standard Benchmark Images</title>
+
+     <table frame="none" rowsep="0" colsep="0" pgwide="1">
+
+        <title>Standard Benchmark Images</title>
 
         <tgroup cols="3" align="center">
           <tbody>
             <row>
-	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volI_fig02.png"/></imageobject></inlinemediaobject> </entry>
-	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volI_fig03.png"/></imageobject></inlinemediaobject> </entry>
-	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volI_fig04.png"/></imageobject></inlinemediaobject> </entry>
+	      <entry><inlinemediaobject>
+                <imageobject>
+                  <imagedata
+                      fileref="../../books/en/images/tutorial_series_volI_fig02.png"
+                    />
+                </imageobject>
+              </inlinemediaobject></entry>
+	      <entry><inlinemediaobject>
+                 <imageobject>
+                   <imagedata
+                       fileref="../../books/en/images/tutorial_series_volI_fig03.png"/>
+                 </imageobject>
+              </inlinemediaobject></entry>
+	      <entry><inlinemediaobject>
+                 <imageobject>
+                   <imagedata
+                       fileref="../../books/en/images/tutorial_series_volI_fig04.png"/>
+                 </imageobject>
+              </inlinemediaobject></entry>
             </row>
+
             <row>
               <entry>Moss</entry>
               <entry>World</entry>
               <entry>Star</entry>
             </row>
+
             <row>
-	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volI_fig05.png"/></imageobject></inlinemediaobject> </entry>
-	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volI_fig06.png"/></imageobject></inlinemediaobject> </entry>
-	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volI_fig07.png"/></imageobject></inlinemediaobject> </entry>
+	      <entry><inlinemediaobject>
+                <imageobject>
+                  <imagedata
+                      fileref="../../books/en/images/tutorial_series_volI_fig05.png"/>
+                </imageobject></inlinemediaobject> </entry>
+	      <entry><inlinemediaobject>
+                <imageobject>
+                  <imagedata
+                      fileref="../../books/en/images/tutorial_series_volI_fig06.png"/>
+                </imageobject>
+              </inlinemediaobject> </entry>
+	      <entry><inlinemediaobject>
+                <imageobject>
+                  <imagedata
+                      fileref="../../books/en/images/tutorial_series_volI_fig07.png"/>
+                </imageobject>
+              </inlinemediaobject> </entry>
             </row>
+
             <row>
               <entry>Bldg 391</entry>
               <entry>M35</entry>
