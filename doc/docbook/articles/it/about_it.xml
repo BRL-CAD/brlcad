@@ -89,15 +89,15 @@ geometrie, manipolare file e dati. Il flusso di base dei dati nel pacchetto
         format="PNG"
         width="5in"
         scalefit="1"
-        fileref="./images/brlcad-overview-data-flow.png"
+        fileref="../../articles/it/images/brlcad-overview-data-flow.png"
        />
     </imageobject>
     <imageobject role="fo">
       <imagedata
         format="PNG"
-        width="5in"
+        width="100%"
         scalefit="1"
-        fileref="./images/brlcad-overview-data-flow.png"
+        fileref="../../articles/it/images/brlcad-overview-data-flow.png"
        />
     </imageobject>
   </mediaobject>
@@ -260,178 +260,133 @@ se lo desiderano,  possano testare le performance delle loro macchine.</para>
 bisogna lanciare lo script <emphasis>run.sh</emphasis> nella sottocartella "bench",
 presente nell'albero delle cartelle del sorgente.</para>
 
-<!-- need an untitled table with two rows and three columns and no grid lines at all -->
-<figure>
-  <title>Immagini di prova.</title>
+<!-- need a table with two rows and three columns and no grid lines at all -->
+<table frame="none" rowsep="0" colsep="0" pgwide="1">
 
-<informaltable frame="none" rowsep="0" colsep="0">
+  <title>Immagini di prova</title>
 
-<tr>
+  <tgroup cols="3" align="center">
+    <tbody>
+      <row>
+        <entry><inlinemediaobject>
+          <imageobject role="html">
+            <imagedata
+               format="JPG"
+               scalefit="1"
+               fileref="../../articles/it/images/brlcad-overview-benchmark-Moss.jpg"
+             />
+          </imageobject>
+          <imageobject role="fo">
+            <imagedata
+               format="JPG"
+               scalefit="1"
+               fileref="../../articles/it/images/brlcad-overview-benchmark-Moss.jpg"
+             />
+          </imageobject>
+        </inlinemediaobject></entry>
 
-<td>
-  <informalfigure>
-  <mediaobject>
-    <imageobject role="html">
-      <imagedata
-        format="JPG"
-        width="1in"
-        scalefit="1"
-        fileref="./images/brlcad-overview-benchmark-Moss.jpg"
-       />
-    </imageobject>
-    <imageobject role="fo">
-      <imagedata
-        format="JPG"
-        width="1in"
-        scalefit="1"
-        href="./images/brlcad-overview-benchmark-Moss.jpg"
-      />
-    </imageobject>
-    <formalpara>
-      <title>Moss</title>
-    </formalpara>
-  </mediaobject>
-  </informalfigure>
-</td>
+        <entry><inlinemediaobject>
+          <imageobject role="html">
+            <imagedata
+               format="JPG"
+               scalefit="1"
+               fileref="../../articles/it/images/brlcad-overview-benchmark-World.jpg"
+             />
+          </imageobject>
+          <imageobject role="fo">
+            <imagedata
+               format="JPG"
+               scalefit="1"
+               fileref="../../articles/it/images/brlcad-overview-benchmark-World.jpg"
+             />
+          </imageobject>
+        </inlinemediaobject></entry>
 
-<td>
-  <informalfigure>
-  <mediaobject>
-    <imageobject role="html">
-      <imagedata
-         format="JPG"
-         width="1in"
-         scalefit="1"
-         fileref="./images/brlcad-overview-benchmark-World.jpg"
-       />
-    </imageobject>
-    <imageobject role="fo">
-      <imagedata
-         format="JPG"
-         width="1in"
-         scalefit="1"
-         fileref="./images/brlcad-overview-benchmark-World.jpg"
-       />
-    </imageobject>
-    <formalpara>
-      <title>World</title>
-    </formalpara>
-  </mediaobject>
-  </informalfigure>
-</td>
+        <entry><inlinemediaobject>
+          <imageobject role="html">
+            <imagedata
+               format="JPG"
+               scalefit="1"
+               fileref="../../articles/it/images/brlcad-overview-benchmark-Star.jpg"
+             />
+          </imageobject>
+          <imageobject role="fo">
+            <imagedata
+               format="JPG"
+               scalefit="1"
+               fileref="../../articles/it/images/brlcad-overview-benchmark-Star.jpg"
+             />
+          </imageobject>
+        </inlinemediaobject></entry>
+      </row>
 
-<td>
-  <informalfigure>
-  <mediaobject>
-    <imageobject role="html">
-      <imagedata
-         format="JPG"
-         width="1in"
-         scalefit="1"
-         fileref="./images/brlcad-overview-benchmark-Star.jpg"
-       />
-    </imageobject>
-    <imageobject role="fo">
-      <imagedata
-         format="JPG"
-         width="1in"
-         scalefit="1"
-         fileref="./images/brlcad-overview-benchmark-Star.jpg"
-       />
-    </imageobject>
-  </mediaobject>
-    <formalpara>
-      <title>Star</title>
-    </formalpara>
-  </informalfigure>
-</td>
+      <row>
+        <entry>Moss</entry>
+        <entry>World</entry>
+        <entry>Star</entry>
+      </row>
 
-</tr>
+      <row>
+        <entry><inlinemediaobject>
+          <imageobject role="html">
+            <imagedata
+               format="JPG"
+               scalefit="1"
+               fileref="../../articles/it/images/brlcad-overview-benchmark-Bldg_391.jpg"
+             />
+          </imageobject>
+          <imageobject role="fo">
+            <imagedata
+               format="JPG"
+               scalefit="1"
+               fileref="../../articles/it/images/brlcad-overview-benchmark-Bldg_391.jpg"
+             />
+          </imageobject>
+        </inlinemediaobject></entry>
 
-<tr>
-<td>
-  <informalfigure>
-  <mediaobject>
-    <imageobject role="html">
-      <imagedata
-         format="JPG"
-         width="1in"
-         scalefit="1"
-         fileref="./images/brlcad-overview-benchmark-Bldg_391.jpg"
-       />
-    </imageobject>
-    <imageobject role="fo">
-      <imagedata
-         format="JPG"
-         width="1in"
-         scalefit="1"
-         fileref="./images/brlcad-overview-benchmark-Bldg_391.jpg"
-       />
-    </imageobject>
-    <formalpara>
-      <title>Bldg 391</title>
-    </formalpara>
-  </mediaobject>
-  </informalfigure>
-</td>
+        <entry><inlinemediaobject>
+          <imageobject role="html">
+            <imagedata
+               format="JPG"
+               scalefit="1"
+               fileref="../../articles/it/images/brlcad-overview-benchmark-M35.jpg"
+             />
+          </imageobject>
+          <imageobject role="fo">
+            <imagedata
+               format="JPG"
+               scalefit="1"
+               fileref="../../articles/it/images/brlcad-overview-benchmark-M35.jpg"
+             />
+          </imageobject>
+        </inlinemediaobject></entry>
 
-<td>
-  <informalfigure>
-  <mediaobject>
-    <imageobject role="html">
-      <imagedata
-         format="JPG"
-         width="1in"
-         scalefit="1"
-         fileref="./images/brlcad-overview-benchmark-M35.jpg"
-       />
-    </imageobject>
-    <imageobject role="fo">
-      <imagedata
-         format="JPG"
-         width="1in"
-         scalefit="1"
-         fileref="./images/brlcad-overview-benchmark-M35.jpg"
-       />
-    </imageobject>
-    <formalpara>
-      <title>M35</title>
-    </formalpara>
-  </mediaobject>
-  </informalfigure>
-</td>
+        <entry><inlinemediaobject>
+          <imageobject role="html">
+            <imagedata
+               format="JPG"
+               scalefit="1"
+               fileref="../../articles/it/images/brlcad-overview-benchmark-Sphflake.jpg"
+             />
+          </imageobject>
+          <imageobject role="fo">
+            <imagedata
+               format="JPG"
+               scalefit="1"
+               fileref="../../articles/it/images/brlcad-overview-benchmark-Sphflake.jpg"
+             />
+          </imageobject>
+        </inlinemediaobject></entry>
+      </row>
 
-<td>
-  <informalfigure>
-  <mediaobject>
-    <imageobject role="html">
-      <imagedata
-         format="JPG"
-         width="1in"
-         scalefit="1"
-         fileref="./images/brlcad-overview-benchmark-Sphflake.jpg"
-       />
-    </imageobject>
-    <imageobject role="fo">
-      <imagedata
-         format="JPG"
-         width="1in"
-         scalefit="1"
-         fileref="./images/brlcad-overview-benchmark-Sphflake.jpg"
-       />
-    </imageobject>
-    <formalpara>
-      <title>Sphflake</title>
-    </formalpara>
-  </mediaobject>
-  </informalfigure>
-</td>
-
-</tr>
-
-</informaltable>
-
-</figure>
+      <row>
+        <entry>Bldg 391</entry>
+        <entry>M35</entry>
+        <entry>Sphflake</entry>
+      </row>
+    </tbody>
+  </tgroup>
+</table>
 
   <bridgehead>Ringraziamenti</bridgehead>
 
