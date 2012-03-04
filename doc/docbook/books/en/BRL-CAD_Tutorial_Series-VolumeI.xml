@@ -275,22 +275,45 @@
           <tbody>
             <row>
 	      <entry><inlinemediaobject>
-                <imageobject>
+                <imageobject role="html">
+                  <imagedata
+                      width="2in"
+                      scalefit="1"
+                      fileref="../../books/en/images/tutorial_series_volI_fig02.png"
+                    />
+                </imageobject>
+                <imageobject role="fo">
                   <imagedata
                       fileref="../../books/en/images/tutorial_series_volI_fig02.png"
                     />
                 </imageobject>
               </inlinemediaobject></entry>
 	      <entry><inlinemediaobject>
-                 <imageobject>
+                 <imageobject role="html">
                    <imagedata
-                       fileref="../../books/en/images/tutorial_series_volI_fig03.png"/>
+                      width="2in"
+                      scalefit="1"
+                       fileref="../../books/en/images/tutorial_series_volI_fig03.png"
+                     />
+                 </imageobject>
+                 <imageobject role="fo">
+                   <imagedata
+                       fileref="../../books/en/images/tutorial_series_volI_fig03.png"
+                     />
                  </imageobject>
               </inlinemediaobject></entry>
 	      <entry><inlinemediaobject>
-                 <imageobject>
+                 <imageobject role="html">
                    <imagedata
-                       fileref="../../books/en/images/tutorial_series_volI_fig04.png"/>
+                      width="2in"
+                      scalefit="1"
+                       fileref="../../books/en/images/tutorial_series_volI_fig04.png"
+                     />
+                 </imageobject>
+                 <imageobject role="fo">
+                   <imagedata
+                       fileref="../../books/en/images/tutorial_series_volI_fig04.png"
+                     />
                  </imageobject>
               </inlinemediaobject></entry>
             </row>
@@ -303,22 +326,47 @@
 
             <row>
 	      <entry><inlinemediaobject>
-                <imageobject>
+                <imageobject role="html">
                   <imagedata
-                      fileref="../../books/en/images/tutorial_series_volI_fig05.png"/>
-                </imageobject></inlinemediaobject> </entry>
-	      <entry><inlinemediaobject>
-                <imageobject>
-                  <imagedata
-                      fileref="../../books/en/images/tutorial_series_volI_fig06.png"/>
+                      width="2in"
+                      scalefit="1"
+                      fileref="../../books/en/images/tutorial_series_volI_fig05.png"
+                    />
                 </imageobject>
-              </inlinemediaobject> </entry>
-	      <entry><inlinemediaobject>
-                <imageobject>
+                <imageobject role="fo">
                   <imagedata
-                      fileref="../../books/en/images/tutorial_series_volI_fig07.png"/>
+                      fileref="../../books/en/images/tutorial_series_volI_fig05.png"
+                    />
                 </imageobject>
-              </inlinemediaobject> </entry>
+              </inlinemediaobject></entry>
+	      <entry><inlinemediaobject>
+                <imageobject role="html">
+                  <imagedata
+                      width="2in"
+                      scalefit="1"
+                      fileref="../../books/en/images/tutorial_series_volI_fig06.png"
+                    />
+                </imageobject>
+                <imageobject role="fo">
+                  <imagedata
+                      fileref="../../books/en/images/tutorial_series_volI_fig06.png"
+                    />
+                </imageobject>
+              </inlinemediaobject></entry>
+	      <entry><inlinemediaobject>
+                <imageobject role="html">
+                  <imagedata
+                      width="2in"
+                      scalefit="1"
+                      fileref="../../books/en/images/tutorial_series_volI_fig07.png"
+                    />
+                </imageobject>
+                <imageobject role="fo">
+                  <imagedata
+                      fileref="../../books/en/images/tutorial_series_volI_fig07.png"
+                      />
+                </imageobject>
+              </inlinemediaobject></entry>
             </row>
 
             <row>

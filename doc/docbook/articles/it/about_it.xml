@@ -87,6 +87,7 @@ geometrie, manipolare file e dati. Il flusso di base dei dati nel pacchetto
     <imageobject role="html">
       <imagedata
         format="PNG"
+        align="center"
         width="5in"
         scalefit="1"
         fileref="../../articles/it/images/brlcad-overview-data-flow.png"
@@ -272,6 +273,8 @@ presente nell'albero delle cartelle del sorgente.</para>
           <imageobject role="html">
             <imagedata
                format="JPG"
+               align="center"
+               width="2in"
                scalefit="1"
                fileref="../../articles/it/images/brlcad-overview-benchmark-Moss.jpg"
              />
@@ -289,6 +292,8 @@ presente nell'albero delle cartelle del sorgente.</para>
           <imageobject role="html">
             <imagedata
                format="JPG"
+               align="center"
+               width="2in"
                scalefit="1"
                fileref="../../articles/it/images/brlcad-overview-benchmark-World.jpg"
              />
@@ -306,6 +311,8 @@ presente nell'albero delle cartelle del sorgente.</para>
           <imageobject role="html">
             <imagedata
                format="JPG"
+               align="center"
+               width="2in"
                scalefit="1"
                fileref="../../articles/it/images/brlcad-overview-benchmark-Star.jpg"
              />
@@ -331,6 +338,8 @@ presente nell'albero delle cartelle del sorgente.</para>
           <imageobject role="html">
             <imagedata
                format="JPG"
+               align="center"
+               width="2in"
                scalefit="1"
                fileref="../../articles/it/images/brlcad-overview-benchmark-Bldg_391.jpg"
              />
@@ -348,6 +357,8 @@ presente nell'albero delle cartelle del sorgente.</para>
           <imageobject role="html">
             <imagedata
                format="JPG"
+               align="center"
+               width="2in"
                scalefit="1"
                fileref="../../articles/it/images/brlcad-overview-benchmark-M35.jpg"
              />
@@ -365,6 +376,8 @@ presente nell'albero delle cartelle del sorgente.</para>
           <imageobject role="html">
             <imagedata
                format="JPG"
+               align="center"
+               width="2in"
                scalefit="1"
                fileref="../../articles/it/images/brlcad-overview-benchmark-Sphflake.jpg"
              />
