@@ -325,7 +325,7 @@ static char *tokenToString(CssToken *pToken){
  *---------------------------------------------------------------------------
  */
 static int 
-tokenToReal (CssToken *pToken, int *pLen, double *pVal)
+tokenToReal (const CssToken *pToken, int *pLen, double *pVal)
 {
     char zBuf[100];
     char *zEnd;
@@ -526,7 +526,7 @@ doUrlCmd(CssParse *pParse, CONST char *zArg, int nArg)
  *---------------------------------------------------------------------------
  */
 static CssProperty *
-tokenToProperty (CssParse *pParse, CssToken *pToken)
+tokenToProperty (CssParse *pParse, const CssToken *pToken)
 {
     struct LengthFormat {
         int type;

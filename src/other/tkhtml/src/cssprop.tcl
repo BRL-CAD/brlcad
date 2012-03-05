@@ -186,7 +186,7 @@ proc CodeInfrastructure {} {
         }
 
         static int 
-        Lookup(int nString, const char *zString, int *aTable, HashEntry *aHashTable) 
+        Lookup(int nString, const char *zString, int *aTable, const HashEntry *aHashTable) 
         {
             int t;
 

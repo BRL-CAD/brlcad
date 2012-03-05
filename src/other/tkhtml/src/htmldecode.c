@@ -341,7 +341,7 @@ HtmlEscapeUriComponent(
     )
 {
     char *zRes;
-    unsigned char *zCsr;
+    char *zCsr;
     int nIn;
 
     Tcl_Obj *pData;
@@ -354,8 +354,8 @@ HtmlEscapeUriComponent(
     pData = objv[objc - 1];
     isQuery = (objc == 3);
 
-    zCsr = (unsigned char *)Tcl_GetStringFromObj(pData, &nIn);
-    zRes = allocEscapedComponent(zCsr, nIn, isQuery);
+    zCsr = (char *)Tcl_GetStringFromObj(pData, &nIn);
+    zRes = allocEscapedComponent((const char *)zCsr, nIn, isQuery);
 
     Tcl_SetResult(interp, (char *)zRes, TCL_VOLATILE);
     HtmlFree(zRes);

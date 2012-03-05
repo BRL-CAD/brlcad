@@ -432,7 +432,7 @@ parseSyntaxError (
     int iErrorLength = 0;
 
     iErrorStart = pInput->iInput;
-    eToken = inputGetToken(pInput, &zToken, &nToken);
+    eToken = inputGetToken(pInput, (const char **)&zToken, &nToken);
 
     while (
         eToken != CT_EOF && 
@@ -482,7 +482,7 @@ parseDeclarationError (CssInput *pInput, CssParse *pParse)
     int iErrorLength = 0;
 
     iErrorStart = pInput->iInput;
-    eToken = inputGetToken(pInput, &zToken, &nToken);
+    eToken = inputGetToken(pInput, (const char **)&zToken, &nToken);
 
     while (
         eToken != CT_EOF && 
@@ -788,7 +788,7 @@ static int parseDeclarationBlock(CssInput *pInput, CssParse *pParse){
         ) {
             char *z;
             int n;
-            inputGetToken(pInput, &z, &n);
+            inputGetToken(pInput, (const char **)&z, &n);
             tVal.n = (&z[n] - tVal.z);
             inputNextTokenIgnoreSpace(pInput);
             eToken = inputGetToken(pInput, 0, 0);
@@ -800,7 +800,7 @@ static int parseDeclarationBlock(CssInput *pInput, CssParse *pParse){
             char *z;
             int n;
             inputNextTokenIgnoreSpace(pInput);
-            eToken = inputGetToken(pInput, &z, &n);
+            eToken = inputGetToken(pInput, (const char **)&z, &n);
             if (n != 9 || 0 != strnicmp("important", z, 9)) {
                 goto syntax_error;
             }
@@ -849,7 +849,7 @@ parseMediaList (CssInput *pInput, int *pIsMatch)
         CssTokenType eToken;
         char * zToken;
         int nToken;
-        eToken = inputGetToken(pInput, &zToken, &nToken);
+        eToken = inputGetToken(pInput, (const char **)&zToken, &nToken);
 
         if (eToken != CT_IDENT) return 1;
         if ((nToken == 3 && strnicmp("all", zToken, nToken) == 0) ||
@@ -885,7 +885,7 @@ static int parseAtRule(CssInput *pInput, CssParse *pParse){
     inputNextToken(pInput);
   
     /* According to CSS2.1, white-space after the '@' character is illegal */
-    if (CT_IDENT != inputGetToken(pInput, &zWord, &nWord)) return 1;
+    if (CT_IDENT != inputGetToken(pInput, (const char **)&zWord, &nWord)) return 1;
   
     if (nWord == 6 && strnicmp("import", zWord, nWord) == 0) {
         CssTokenType eToken;
@@ -1113,7 +1113,7 @@ HtmlCssGetNextListItem (const char *zList, int nList, int *pN)
     sInput.nInput = nList;
 
     inputNextTokenIgnoreSpace(&sInput);
-    eFirst = inputGetToken(&sInput, &zRet, &nLen);
+    eFirst = inputGetToken(&sInput, (const char **)&zRet, &nLen);
     *pN = nLen;
     if (eFirst == CT_EOF) {
         return 0;
@@ -1176,9 +1176,9 @@ HtmlCssGetNextCommaListItem (const char *zList, int nList, int *pN)
         *pN = 0;
         return 0;
     }
-    if (inputGetToken(&sInput, &zRet, 0) == CT_COMMA) {
+    if (inputGetToken(&sInput, (const char **)&zRet, 0) == CT_COMMA) {
         inputNextTokenIgnoreSpace(&sInput);
-        inputGetToken(&sInput, &zRet, 0);
+        inputGetToken(&sInput, (const char **)&zRet, 0);
     }
 
     do {
