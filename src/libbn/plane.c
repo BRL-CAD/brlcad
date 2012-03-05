@@ -476,7 +476,7 @@ bn_dist_pt3_line3(fastf_t *dist, fastf_t *pca, const fastf_t *a, const fastf_t *
     fastf_t t;		/* distance along ray of projection of P */
     fastf_t dsq;	/* sqaure of distance from p to line */
 
-    if (bu_debug & BU_DEBUG_MATH)
+    if (UNLIKELY(bu_debug & BU_DEBUG_MATH))
 	bu_log("bn_dist_pt3_line3(a=(%f %f %f), dir=(%f %f %f), p=(%f %f %f)\n" ,
 	       V3ARGS(a), V3ARGS(dir), V3ARGS(p));
 
@@ -484,7 +484,8 @@ bn_dist_pt3_line3(fastf_t *dist, fastf_t *pca, const fastf_t *a, const fastf_t *
 
     /* Check proximity to endpoint A */
     VSUB2(AtoP, p, a);
-    if ((A_P_sq = MAGSQ(AtoP)) < tol->dist_sq) {
+    A_P_sq = MAGSQ(AtoP);
+    if (A_P_sq < tol->dist_sq) {
 	/* P is within the tol->dist radius circle around A */
 	VMOVE(pca, a);
 	*dist = 0.0;
@@ -500,7 +501,8 @@ bn_dist_pt3_line3(fastf_t *dist, fastf_t *pca, const fastf_t *a, const fastf_t *
     t = VDOT(AtoP, unit_dir);
 
     VJOIN1(pca, a, t, unit_dir);
-    if ((dsq = A_P_sq - t*t) < tol->dist_sq) {
+    dsq = A_P_sq - t*t;
+    if (dsq < tol->dist_sq) {
 	/* P is within tolerance of the line */
 	*dist = 0.0;
 	return 1;
@@ -699,9 +701,9 @@ bn_isect_line3_plane(fastf_t *dist,
 
     norm_dist = plane[3] - VDOT(plane, pt);
     slant_factor = VDOT(plane, dir);
-    VMOVE(local_dir, dir)
-	VUNITIZE(local_dir)
-	dot = VDOT(plane, local_dir);
+    VMOVE(local_dir, dir);
+    VUNITIZE(local_dir);
+    dot = VDOT(plane, local_dir);
 
     if (slant_factor < -SMALL_FASTF && dot < -tol->perp) {
 	*dist = norm_dist/slant_factor;
@@ -1395,7 +1397,7 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
     int status;
 
     BN_CK_TOL(tol);
-    if (bu_debug & BU_DEBUG_MATH) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
 	bu_log("bn_isect_lseg3_lseg3() p=(%g, %g, %g), pdir=(%g, %g, %g)\n\t\tq=(%g, %g, %g), qdir=(%g, %g, %g)\n",
 	       V3ARGS(p), V3ARGS(pdir), V3ARGS(q), V3ARGS(qdir));
     }
@@ -1409,7 +1411,7 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
      */
 
     /* sanity check */
-    if (status < -2 || status > 1) {
+    if (UNLIKELY(status < -2 || status > 1)) {
         bu_bomb("bn_isect_lseg3_lseg3() function 'bn_isect_line3_line3' returned an invalid status\n");
     }
 
@@ -1418,7 +1420,7 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
          * therefore line segments do not intersect and are not
          * parallel.
          */
-	if (bu_debug & BU_DEBUG_MATH) {
+	if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
 	    bu_log("bn_isect_lseg3_lseg3(): MISS, line segments do not intersect and are not parallel\n");
 	}
 	return -3; /* missed */
@@ -1426,7 +1428,7 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
 
     if (status == -2) {
         /* infinite lines do not intersect, they are parallel */
-	if (bu_debug & BU_DEBUG_MATH) {
+	if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
 	    bu_log("bn_isect_lseg3_lseg3(): MISS, line segments are parallel, i.e. do not intersect\n");
 	}
 	return -2; /* missed (line segments are parallel) */
@@ -1435,11 +1437,13 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
     pmag = MAGNITUDE(pdir);
     qmag = MAGNITUDE(qdir);
 
-    if (pmag < SMALL_FASTF)
+    if (UNLIKELY(pmag < SMALL_FASTF)) {
 	bu_bomb("bn_isect_lseg3_lseg3(): |p|=0\n");
+    }
 
-    if (qmag < SMALL_FASTF)
+    if (UNLIKELY(qmag < SMALL_FASTF)) {
 	bu_bomb("bn_isect_lseg3_lseg3(): |q|=0\n");
+    }
 
     ptol = tol->dist / pmag;
     qtol = tol->dist / qmag;
@@ -1454,7 +1458,7 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
         dist[1] = dist[1] / qmag;
     }
 
-    if (bu_debug & BU_DEBUG_MATH) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
 	bu_log("ptol=%g, qtol=%g\n", ptol, qtol);
     }
 
@@ -1488,13 +1492,13 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
     if (status == 0) {  /* infinite lines are colinear */
 	/* Lines are colinear */
         if ((dist[0] > 1.0+ptol && dist[1] > 1.0+ptol) || (dist[0] < -ptol && dist[1] < -ptol)) {
-	    if (bu_debug & BU_DEBUG_MATH) {
+	    if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
 	        bu_log("bn_isect_lseg3_lseg3(): MISS, line segments are colinear but not overlapping!\n");
 	    }
             return -1;   /* line segments are colinear but not overlapping */
         }
 
-	if (bu_debug & BU_DEBUG_MATH) {
+	if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
 	    bu_log("bn_isect_lseg3_lseg3(): HIT, line segments are colinear and overlapping!\n");
 	}
 
@@ -1504,19 +1508,19 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
     /* At this point we know the infinite lines intersect and are not colinear */
 
 
-    if (dist[0] <= -ptol || dist[0] >= 1.0+ptol || dist[1] <= -qtol || dist[1] >= 1.0+qtol) {
-        if (bu_debug & BU_DEBUG_MATH) {
+    if (dist[0] < -ptol || dist[0] > 1.0+ptol || dist[1] < -qtol || dist[1] > 1.0+qtol) {
+        if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
 	    bu_log("bn_isect_lseg3_lseg3(): MISS, infinite lines intersect but line segments do not!\n");
         }
         return -3;  /* missed, infinite lines intersect but line segments do not */
     }
 
-    if (bu_debug & BU_DEBUG_MATH) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
 	bu_log("bn_isect_lseg3_lseg3(): HIT, line segments intersect!\n");
     }
 
     /* sanity check */
-    if (dist[0] < 0.0 || dist[0] > 1.0 || dist[1] < 0.0 || dist[1] > 1.0) {
+    if (UNLIKELY(dist[0] < -SMALL_FASTF || dist[0] > 1.0 || dist[1] < -SMALL_FASTF || dist[1] > 1.0)) {
         bu_bomb("bn_isect_lseg3_lseg3(): INTERNAL ERROR, intersect distance values must be in the range 0-1\n");
     }
 
@@ -1592,7 +1596,7 @@ bn_isect_line3_line3(fastf_t *pdist,        /* see above */
     pdir_mag_sq = MAGSQ(pdir);
     qdir_mag_sq = MAGSQ(qdir);
 
-    if ((pdir_mag_sq < tol->dist_sq) || (qdir_mag_sq < tol->dist_sq)) {
+    if (UNLIKELY((pdir_mag_sq < tol->dist_sq) || (qdir_mag_sq < tol->dist_sq))) {
         bu_log("  p0 = %g %g %g\n", V3ARGS(p0));
         bu_log("pdir = %g %g %g\n", V3ARGS(pdir));
         bu_log("  q0 = %g %g %g\n", V3ARGS(q0));
@@ -1639,7 +1643,7 @@ bn_isect_line3_line3(fastf_t *pdist,        /* see above */
     e = VDOT(qdir, w0);
     denominator = pdir_mag_sq * qdir_mag_sq - b * b;
 
-    if (!parallel && colinear) {
+    if (UNLIKELY(!parallel && colinear)) {
         bu_bomb("bn_isect_line3_line3(): logic error, lines colinear but not parallel\n");
     }
 
@@ -1748,7 +1752,7 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
     *t = 0.0;
 
     d_mag_sq = MAGSQ(d);
-    if (NEAR_ZERO(d_mag_sq, tol->dist_sq)) {
+    if (UNLIKELY(NEAR_ZERO(d_mag_sq, tol->dist_sq))) {
         bu_bomb("bn_isect_line_lseg(): ray direction vector zero magnitude\n");
     }
 
@@ -1844,7 +1848,7 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
     dist2 = 0.0; /* sanity */
     code = bn_isect_line3_line3(&dist1, &dist2, p, d, a, ab, tol);
 
-    if (code == 0) {
+    if (UNLIKELY(code == 0)) {
         bu_bomb("bn_isect_line_lseg(): we should have already detected a colinear condition\n");
     }
 
@@ -1891,7 +1895,7 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
             return 2;
         }
 
-        if ((a_to_isect_pt_mag_sq < tol->dist_sq) && (b_to_isect_pt_mag_sq < tol->dist_sq)) {
+        if (UNLIKELY((a_to_isect_pt_mag_sq < tol->dist_sq) && (b_to_isect_pt_mag_sq < tol->dist_sq))) {
             bu_bomb("bn_isect_line_lseg(): this case should already been caught. i.e. zero length line segment\n");
         }
 
@@ -1983,16 +1987,18 @@ bn_distsq_line3_pt3(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
     register fastf_t FdotD;
 
     VSUB2(f, pt, a);
-    if ((FdotD = MAGNITUDE(dir)) <= SMALL_FASTF) {
+    FdotD = MAGNITUDE(dir);
+    if (ZERO(FdotD)) {
 	FdotD = 0.0;
 	goto out;
     }
     FdotD = VDOT(f, dir) / FdotD;
-    if ((FdotD = VDOT(f, f) - FdotD * FdotD) <= SMALL_FASTF) {
+    FdotD = VDOT(f, f) - FdotD * FdotD;
+    if (FdotD < SMALL_FASTF) {
 	FdotD = 0.0;
     }
 out:
-    if (bu_debug & BU_DEBUG_MATH) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
 	bu_log("bn_distsq_line3_pt3() ret=%g\n", FdotD);
     }
     return FdotD;
@@ -2147,9 +2153,7 @@ int bn_isect_pt_lseg(fastf_t *dist,
 /* points for line and intersect */
 
 {
-    vect_t AtoP,
-	BtoP,
-	AtoB,
+    vect_t AtoP, BtoP, AtoB,
 	ABunit;	/* unit vector from A to B */
     fastf_t APprABunit;	/* Mag of projection of AtoP onto ABunit */
     fastf_t distsq;
@@ -2189,7 +2193,7 @@ int bn_isect_pt_lseg(fastf_t *dist,
     /* Distance from the point to the line is within tolerance. */
     *dist = VDOT(AtoP, AtoB) / MAGSQ(AtoB);
 
-    if (*dist > 1.0 || *dist < 0.0)	/* P outside AtoB */
+    if (*dist > 1.0 || *dist < -SMALL_FASTF)	/* P outside AtoB */
 	return -2;
 
     return 3;	/* P on AtoB */
@@ -2337,7 +2341,7 @@ bn_dist_pt3_lseg3(fastf_t *dist,
 
     BN_CK_TOL(tol);
 
-    if (bu_debug & BU_DEBUG_MATH) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
 	bu_log("bn_dist_pt3_lseg3() a=(%g, %g, %g) b=(%g, %g, %g)\n\tp=(%g, %g, %g), tol->dist=%g sq=%g\n",
 	       V3ARGS(a),
 	       V3ARGS(b),
@@ -2350,7 +2354,7 @@ bn_dist_pt3_lseg3(fastf_t *dist,
     if ((P_A_sq = MAGSQ(PtoA)) < tol->dist_sq) {
 	/* P is within the tol->dist radius circle around A */
 	VMOVE(pca, a);
-	if (bu_debug & BU_DEBUG_MATH) bu_log("  at A\n");
+	if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) bu_log("  at A\n");
 	*dist = 0.0;
 	return 1;
     }
@@ -2360,7 +2364,7 @@ bn_dist_pt3_lseg3(fastf_t *dist,
     if ((P_B_sq = MAGSQ(PtoB)) < tol->dist_sq) {
 	/* P is within the tol->dist radius circle around B */
 	VMOVE(pca, b);
-	if (bu_debug & BU_DEBUG_MATH) bu_log("  at B\n");
+	if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) bu_log("  at B\n");
 	*dist = 0.0;
 	return 2;
     }
@@ -2372,14 +2376,14 @@ bn_dist_pt3_lseg3(fastf_t *dist,
      * point p onto the line: point pca
      */
     t = VDOT(PtoA, AtoB) / B_A;
-    if (bu_debug & BU_DEBUG_MATH) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
 	bu_log("bn_dist_pt3_lseg3() B_A=%g, t=%g\n",
 	       B_A, t);
     }
 
-    if (t <= 0) {
+    if (t <= SMALL_FASTF) {
 	/* P is "left" of A */
-	if (bu_debug & BU_DEBUG_MATH) bu_log("  left of A\n");
+	if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) bu_log("  left of A\n");
 	VMOVE(pca, a);
 	*dist = sqrt(P_A_sq);
 	return 3;
@@ -2395,17 +2399,17 @@ bn_dist_pt3_lseg3(fastf_t *dist,
 
 	/* Find distance from PCA to line segment (Pythagorus) */
 	if ((dsq = P_A_sq - t * t) <= tol->dist_sq) {
-	    if (bu_debug & BU_DEBUG_MATH) bu_log("  ON lseg\n");
+	    if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) bu_log("  ON lseg\n");
 	    /* Distance from PCA to lseg is zero, give param instead */
 	    *dist = param_dist;	/* special! */
 	    return 0;
 	}
-	if (bu_debug & BU_DEBUG_MATH) bu_log("  closest to lseg\n");
+	if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) bu_log("  closest to lseg\n");
 	*dist = sqrt(dsq);
 	return 5;
     }
     /* P is "right" of B */
-    if (bu_debug & BU_DEBUG_MATH) bu_log("  right of B\n");
+    if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) bu_log("  right of B\n");
     VMOVE(pca, b);
     *dist = sqrt(P_B_sq);
     return 4;
@@ -2681,16 +2685,16 @@ bn_angle_measure(fastf_t *vec, const fastf_t *x_dir, const fastf_t *y_dir)
     yproj = -VDOT(vec, y_dir);
     gam = atan2(yproj, xproj);	/* -pi..+pi */
     ang = bn_pi + gam;		/* 0..+2pi */
-    if (ang < 0) {
+    if (ang < -SMALL_FASTF) {
 	do {
 	    ang += bn_twopi;
-	} while (ang < 0);
+	} while (ang < -SMALL_FASTF);
     } else if (ang > bn_twopi) {
 	do {
 	    ang -= bn_twopi;
 	} while (ang > bn_twopi);
     }
-    if (ang < 0 || ang > bn_twopi)
+    if (UNLIKELY(ang < -SMALL_FASTF || ang > bn_twopi))
 	bu_bomb("bn_angle_measure() angle out of range\n");
 
     return ang;

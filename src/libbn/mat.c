@@ -847,7 +847,7 @@ bn_mat_fromto(mat_t m, const vect_t from, const vect_t to)
     /* Verify that it worked */
     MAT4X3VEC(test_to, m, unit_from);
     dot = VDOT(unit_to, test_to);
-    if (dot < 0.98 || dot > 1.02) {
+    if (UNLIKELY(dot < 0.98 || dot > 1.02)) {
 	bu_log("bn_mat_fromto() ERROR!  from (%g, %g, %g) to (%g, %g, %g) went to (%g, %g, %g), dot=%g?\n",
 	       V3ARGS(from),
 	       V3ARGS(to),
@@ -1036,7 +1036,7 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
     register fastf_t f;
     register int i;
 
-    if (NEAR_ZERO(MAGSQ(in), SQRT_SMALL_FASTF)) {
+    if (UNLIKELY(NEAR_ZERO(MAGSQ(in), SQRT_SMALL_FASTF))) {
 	bu_log("bn_vec_ortho(): zero magnitude input vector %g %g %g\n", V3ARGS(in));
 	VSETALL(out, 0);
 	return;
@@ -1059,7 +1059,7 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
 	k = Y;
     }
     f = hypot(in[j], in[k]);
-    if (ZERO(f)) {
+    if (UNLIKELY(ZERO(f))) {
 	bu_log("bn_vec_ortho(): zero hypot on %g %g %g\n", V3ARGS(in));
 	VSETALL(out, 0);
 	return;
