@@ -256,7 +256,7 @@ HtmlEncode(clientData, interp, objc, objv)
         }
     }
 
-    Tcl_SetObjResult(interp, Tcl_NewStringObj(zOut, iOut));
+    Tcl_SetObjResult(interp, Tcl_NewStringObj((const char *)zOut, iOut));
     return TCL_OK;
 }
 
