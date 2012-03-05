@@ -3551,7 +3551,7 @@ HtmlCssStyleSheetApply (HtmlTree *pTree, HtmlNode *pNode)
 
         /* If the selector is a match for our node, apply the rule properties */
         nSelectorMatch += 
-                applyRule(pTree, pNode, pRule, aPropDone, 0, &sCreator);
+                applyRule(pTree, pNode, pRule, aPropDone, (char **)0, &sCreator);
 
         if (
             pSelector->isDynamic &&
