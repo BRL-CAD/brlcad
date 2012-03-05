@@ -142,7 +142,8 @@ bn_distsq_pt3_lseg3(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fas
 
     /* Check proximity to endpoint A */
     VSUB2(PtoA, p, a);
-    if ((P_A_sq = MAGSQ(PtoA)) < tol->dist_sq) {
+    P_A_sq = MAGSQ(PtoA);
+    if (P_A_sq < tol->dist_sq) {
 	/* P is within the tol->dist radius circle around A */
 	*dist = 0.0;
 	return 1;
@@ -150,7 +151,8 @@ bn_distsq_pt3_lseg3(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fas
 
     /* Check proximity to endpoint B */
     VSUB2(PtoB, p, b);
-    if ((P_B_sq = MAGSQ(PtoB)) < tol->dist_sq) {
+    P_B_sq = MAGSQ(PtoB);
+    if (P_B_sq < tol->dist_sq) {
 	/* P is within the tol->dist radius circle around B */
 	*dist = 0.0;
 	return 2;
@@ -165,17 +167,18 @@ bn_distsq_pt3_lseg3(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fas
     dot = VDOT(PtoA, AtoB);
     t = dot * dot / B_A_sq;
 
-    if (dot < 0.0 && t > tol->dist_sq) {
+    if (dot < -SMALL_FASTF && t > tol->dist_sq) {
 	/* P is "left" of A */
 	*dist = P_A_sq;
 	return 3;
     }
-    if (t < B_A_sq - tol->dist_sq) {
+    if (t < (B_A_sq - tol->dist_sq)) {
 	/* PCA falls between A and B */
 	register fastf_t dsq;
 
 	/* Find distance from PCA to line segment (Pythagorus) */
-	if ((dsq = P_A_sq - t) <= tol->dist_sq) {
+	dsq = P_A_sq - t;
+	if (dsq < tol->dist_sq) {
 	    /* PCA is on lseg */
 	    *dist = 0.0;
 	    return 0;
@@ -1277,8 +1280,12 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 	    continue;
 
 	/* Ignore OT_BOOLPLACE, etc */
-	if (lu->orientation != OT_SAME && lu->orientation != OT_OPPOSITE)
+	if (lu->orientation != OT_SAME && lu->orientation != OT_OPPOSITE) {
+	    if (lu->orientation != OT_BOOLPLACE) {
+		bu_bomb("nmg_class_pt_fu_except() lu orientation is not OT_SAME, OT_OPPOSITE or OT_BOOLPLACE\n");
+	    }
 	    continue;
+	}
 
 	lu_class = nmg_class_pt_lu(lu, &fpi, in_or_out_only);
 	if (rt_g.NMG_debug & DEBUG_PT_FU)
@@ -1294,13 +1301,20 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 
 	if (lu->orientation == OT_OPPOSITE) {
 	    ot_opposite[lu_class]++;
-	    if (lu_class == NMG_CLASS_AoutB)
+	    if (lu_class == NMG_CLASS_AoutB) {
 		ot_opposite_out++;
+	    }
 	} else if (lu->orientation == OT_SAME) {
 	    ot_same[lu_class]++;
 	    if (lu_class == NMG_CLASS_AinB ||
+		lu_class == NMG_CLASS_AonBshared ||
+		lu_class == NMG_CLASS_AonBanti) {
+#if 0
+	    if (lu_class == NMG_CLASS_AinB ||
 		lu_class == NMG_CLASS_AonBshared)
+#endif
 		ot_same_in++;
+	    }
 	}
     }
 
@@ -1312,7 +1326,10 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 	       ot_opposite[0], ot_opposite[1], ot_opposite[2], ot_opposite[3]);
     }
 
+    if (ot_same_in <= ot_opposite_out) {
+#if 0
     if (ot_same_in == ot_opposite_out) {
+#endif
 	/* All the holes cancel out the solid loops */
 	fu_class = NMG_CLASS_AoutB;
     } else if (ot_same_in > ot_opposite_out) {
