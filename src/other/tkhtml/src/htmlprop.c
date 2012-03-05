@@ -795,8 +795,7 @@ propertyValuesSetFontFamily (HtmlComputedValuesCreator *p, CssProperty *pProp)
 }
 
 static Tcl_Obj*
-propertyValuesObjFontSize(p)
-    HtmlComputedValues *p;
+propertyValuesObjFontSize(HtmlComputedValues *p)
 {
     char zBuf[64];
     int iFontSize = p->fFont->pKey->iFontSize;
@@ -808,8 +807,7 @@ propertyValuesObjFontSize(p)
     return Tcl_NewStringObj(zBuf, -1);
 }
 static Tcl_Obj*
-propertyValuesObjFontStyle(p)
-    HtmlComputedValues *p;
+propertyValuesObjFontStyle(HtmlComputedValues *p)
 {
     if (p->fFont->pKey->isItalic) {
         return Tcl_NewStringObj("italic", -1);
@@ -817,14 +815,12 @@ propertyValuesObjFontStyle(p)
     return Tcl_NewStringObj("normal", -1);
 }
 static Tcl_Obj*
-propertyValuesObjFontFamily(p)
-    HtmlComputedValues *p;
+propertyValuesObjFontFamily(HtmlComputedValues *p)
 {
     return Tcl_NewStringObj(p->fFont->pKey->zFontFamily, -1);
 }
 static Tcl_Obj*
-propertyValuesObjFontWeight(p)
-    HtmlComputedValues *p;
+propertyValuesObjFontWeight(HtmlComputedValues *p)
 {
     if (p->fFont->pKey->isBold) {
         return Tcl_NewStringObj("bold", -1);
@@ -832,14 +828,12 @@ propertyValuesObjFontWeight(p)
     return Tcl_NewStringObj("normal", -1);
 }
 static Tcl_Obj*
-propertyValuesObjContent(p)
-    HtmlComputedValues *p;
+propertyValuesObjContent(HtmlComputedValues *p)
 {
     return Tcl_NewStringObj("", -1);
 }
 static Tcl_Obj*
-propertyValuesObjLineHeight(p)
-    HtmlComputedValues *p;
+propertyValuesObjLineHeight(HtmlComputedValues *p)
 {
     char zBuf[64];
     int iVal = p->iLineHeight;
@@ -854,8 +848,7 @@ propertyValuesObjLineHeight(p)
     return Tcl_NewStringObj(zBuf, -1);
 }
 static Tcl_Obj*
-propertyValuesObjVerticalAlign(p)
-    HtmlComputedValues *p;
+propertyValuesObjVerticalAlign(HtmlComputedValues *p)
 {
     char zBuf[64];
     if (p->eVerticalAlign) {
@@ -2278,8 +2271,7 @@ HtmlComputedValuesSet (HtmlComputedValuesCreator *p, int eProp, CssProperty *pPr
  *---------------------------------------------------------------------------
  */
 static void * 
-allocateNewFont(clientData)
-    ClientData clientData;
+allocateNewFont(ClientData clientData)
 {
     HtmlComputedValuesCreator *p = (HtmlComputedValuesCreator *)clientData;
     HtmlTree *pTree = p->pTree;
@@ -3128,9 +3120,7 @@ HtmlComputedValuesCleanupTables (HtmlTree *pTree)
 }
 
 static Tcl_Obj *
-getPropertyObj(pValues, eProp)
-    HtmlComputedValues *pValues;
-    int eProp;
+getPropertyObj(HtmlComputedValues *pValues, int eProp)
 {
     Tcl_Obj *pValue = 0;
     PropertyDef *pDef;
@@ -3261,10 +3251,11 @@ getPropertyObj(pValues, eProp)
  *---------------------------------------------------------------------------
  */
 int
-HtmlNodeGetProperty(interp, pProp, pValues)
-    Tcl_Interp *interp;                 /* Interpreter to set result in */
-    Tcl_Obj *pProp;                     /* Property name */
-    HtmlComputedValues *pValues;        /* Read value from here */
+HtmlNodeGetProperty(
+    Tcl_Interp *interp,                 /* Interpreter to set result in */
+    Tcl_Obj *pProp,                     /* Property name */
+    HtmlComputedValues *pValues         /* Read value from here */
+    )
 {
     int nProp;
     const char *zProp = Tcl_GetStringFromObj(pProp, &nProp);
@@ -3293,9 +3284,7 @@ HtmlNodeGetProperty(interp, pProp, pValues)
 }
 
 int 
-HtmlNodeProperties(interp, pValues)
-    Tcl_Interp *interp;
-    HtmlComputedValues *pValues;
+HtmlNodeProperties(Tcl_Interp *interp, HtmlComputedValues *pValues)
 {
     int ii;
     Tcl_Obj *pRet = Tcl_NewObj();

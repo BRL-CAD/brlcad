@@ -512,9 +512,10 @@ HtmlHashStats(void * htmlPtr)
  *---------------------------------------------------------------------------
  */
 static Tcl_Obj *
-getScriptHandler(pTree, tag)
-    HtmlTree *pTree;
-    int tag;
+getScriptHandler(
+    HtmlTree *pTree,
+    int tag
+    )
 {
     Tcl_HashEntry *pEntry;
     pEntry = Tcl_FindHashEntry(&pTree->aScriptHandler, (char *)((size_t) tag));
@@ -593,12 +594,13 @@ findEndOfScript (
  *---------------------------------------------------------------------------
  */
 static int 
-executeScript(pTree, pCallback, pAttributes, zScript, nScript)
-    HtmlTree *pTree;
-    Tcl_Obj *pCallback;
-    HtmlAttributes *pAttributes;
-    const char *zScript;
-    int nScript;
+executeScript(
+    HtmlTree *pTree,
+    Tcl_Obj *pCallback,
+    HtmlAttributes *pAttributes,
+    const char *zScript,
+    int nScript
+    )
 {
     Tcl_Obj *pAttr;
     Tcl_Obj *pEval;
@@ -1229,9 +1231,7 @@ HtmlWriteWait (HtmlTree *pTree)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlWriteText(pTree, pText)
-    HtmlTree *pTree;
-    Tcl_Obj *pText;
+HtmlWriteText(HtmlTree *pTree, Tcl_Obj *pText)
 {
     int iInsert = pTree->iWriteInsert;
   

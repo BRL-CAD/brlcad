@@ -362,10 +362,10 @@ stackCompare (const void *pVoidLeft, const void *pVoidRight)
   #define checkStackSort(a,b,c)
 #else
 static void 
-checkStackSort(pTree, aStack, nStack)
-    HtmlTree *pTree;
-    StackCompare *aStack;
-    int nStack;
+checkStackSort(
+    HtmlTree *pTree,
+    StackCompare *aStack,
+    int nStack)
 {
 #if 0
     int ii;
@@ -463,10 +463,11 @@ printf("Stack %d: %s %s\n", iTmp,
  *---------------------------------------------------------------------------
  */
 static int 
-styleNode(pTree, pNode, clientData)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    ClientData clientData;
+styleNode(
+    HtmlTree *pTree,
+    HtmlNode *pNode,
+    ClientData clientData
+    )
 {
     CONST char *zStyle;      /* Value of "style" attribute for node */
     int trashDynamics = (int)((size_t) clientData);
@@ -832,11 +833,12 @@ HtmlStyleApply (HtmlTree *pTree, HtmlNode *pNode)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlStyleSyntaxErrs(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *CONST objv[];             /* List of all arguments */
+HtmlStyleSyntaxErrs(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *CONST objv[]              /* List of all arguments */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     int nSyntaxErrs = 0;

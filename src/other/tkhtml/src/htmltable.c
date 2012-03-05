@@ -309,9 +309,7 @@ tableColWidthSingleSpan (HtmlNode *pNode, int col, int colspan, int row, int row
  *---------------------------------------------------------------------------
  */
 static void
-logWidthsToTable(pData, pObj)
-    TableData *pData;
-    Tcl_Obj *pObj;
+logWidthsToTable(TableData *pData, Tcl_Obj *pObj)
 {
     int *aMinWidth = pData->aMinWidth;
     int *aMaxWidth = pData->aMaxWidth;
@@ -1300,11 +1298,12 @@ tableIterate (
 
 
 static void
-logWidthStage(nStage, pStageLog, nWidth, aWidth)
-    int nStage;
-    Tcl_Obj *pStageLog;
-    int nWidth;
-    int *aWidth;
+logWidthStage(
+    int nStage,
+    Tcl_Obj *pStageLog,
+    int nWidth,
+    int *aWidth
+    )
 {
     int ii;
     if (!pStageLog) return;

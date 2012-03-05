@@ -216,15 +216,16 @@ HtmlImageServerShutdown (HtmlTree *pTree)
  *---------------------------------------------------------------------------
  */
 static void 
-photoputblock(interp, handle, blockPtr, x, y, width, height, compRule)
-    Tcl_Interp *interp;
-    Tk_PhotoHandle handle;
-    Tk_PhotoImageBlock *blockPtr;
-    int x;
-    int y;
-    int width;
-    int height;
-    int compRule;
+photoputblock(
+    Tcl_Interp *interp,
+    Tk_PhotoHandle handle,
+    Tk_PhotoImageBlock *blockPtr,
+    int x,
+    int y,
+    int width,
+    int height,
+    int compRule
+    )
 {
     Tk_PhotoPutBlock(handle, blockPtr, x, y, width, height);
 }
@@ -259,10 +260,11 @@ freeTile (HtmlImage2 *pImage)
 )
 
 static int
-imageChangedCb(pTree, pNode, clientData)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    ClientData clientData;
+imageChangedCb(
+    HtmlTree *pTree,
+    HtmlNode *pNode,
+    ClientData clientData
+    )
 {
     HtmlComputedValues *pV = HtmlNodeComputedValues(pNode);
     HtmlImage2 *pImage = (HtmlImage2 *)clientData;
@@ -283,16 +285,14 @@ imageChangedCb(pTree, pNode, clientData)
     return HTML_WALK_DESCEND;
 }
 
-static void asyncPixmapify(clientData)
-    ClientData clientData;
+static void asyncPixmapify(ClientData clientData)
 {
     HtmlImage2 *pImage = (HtmlImage2 *)clientData;
     HtmlImagePixmap(pImage);
 }
 
 static Tcl_Obj*
-getImageCompressed(pImage)
-    HtmlImage2 *pImage;
+getImageCompressed(HtmlImage2 *pImage)
 {
     if (!pImage->pCompressed) {
         Tcl_Interp *interp = pImage->pImageServer->pTree->interp;
@@ -345,14 +345,15 @@ freeImageCompressed (HtmlImage2 *pImage)
  *---------------------------------------------------------------------------
  */
 static void 
-imageChanged(clientData, x, y, width, height, imgWidth, imgHeight)
-    ClientData clientData;
-    int x;
-    int y;
-    int width;
-    int height;
-    int imgWidth;
-    int imgHeight;
+imageChanged(
+    ClientData clientData,
+    int x,
+    int y,
+    int width,
+    int height,
+    int imgWidth,
+    int imgHeight
+    )
 {
     HtmlImage2 *pImage = (HtmlImage2 *)clientData;
     if (pImage && !pImage->pUnscaled && !pImage->nIgnoreChange) {
@@ -526,8 +527,7 @@ image_unavailable:
  *
  *---------------------------------------------------------------------------
  */
-Tcl_Obj *HtmlImageUnscaledName(pImage)
-    HtmlImage2 *pImage;
+Tcl_Obj *HtmlImageUnscaledName(HtmlImage2 *pImage)
 {
     Tcl_Obj *pRet = pImage->pImageName;
     if (pImage->pUnscaled) {
@@ -659,8 +659,7 @@ HtmlImageScale (
 }
 
 Tk_Image
-HtmlImageImage(pImage)
-    HtmlImage2 *pImage;    /* Image object */
+HtmlImageImage(HtmlImage2 *pImage)
 {
     assert(pImage && (pImage->isValid == 1 || pImage->isValid == 0));
     if (!pImage->isValid) {
@@ -840,10 +839,11 @@ tilesize (HtmlImage2 *pImage, int *pW, int *pH)
 }
 
 Pixmap
-HtmlImageTilePixmap(pImage, pW, pH)
-    HtmlImage2* pImage;
-    int *pW;
-    int *pH;
+HtmlImageTilePixmap(
+    HtmlImage2* pImage,
+    int *pW,
+    int *pH
+    )
 {
     if (HtmlImagePixmap(pImage)) {
         Tk_Window win;
@@ -903,8 +903,7 @@ return_original:
  *---------------------------------------------------------------------------
  */
 Pixmap
-HtmlImagePixmap(pImage)
-    HtmlImage2* pImage;
+HtmlImagePixmap(HtmlImage2 *pImage)
 {
     if (!pImage->pImageServer->pTree->options.imagepixmapify ||
         !pImage->pImageName ||
@@ -1124,10 +1123,11 @@ HtmlImageAlphaChannel (HtmlImage2 *pImage)
  *---------------------------------------------------------------------------
  */
 Tk_Image 
-HtmlImageTile(pImage, pW, pH)
-    HtmlImage2 *pImage;    /* Image object */
-    int *pW;
-    int *pH;
+HtmlImageTile(
+    HtmlImage2 *pImage,    /* Image object */
+    int *pW,
+    int *pH
+    )
 {
     HtmlTree *pTree = pImage->pImageServer->pTree;
     Tcl_Interp *interp = pTree->interp;
@@ -1328,11 +1328,12 @@ HtmlImageServerCount (HtmlTree *pTree)
  */
 #ifndef WIN32
 #include <X11/Xutil.h>
-Tcl_Obj *HtmlXImageToImage(pTree, pXImage, w, h)
-    HtmlTree *pTree;
-    XImage *pXImage;
-    int w;
-    int h;
+Tcl_Obj *HtmlXImageToImage(
+    HtmlTree *pTree,
+    XImage *pXImage,
+    int w,
+    int h
+    )
 {
     Tcl_Interp *interp = pTree->interp;
 
@@ -1421,11 +1422,12 @@ Tcl_Obj *HtmlXImageToImage(pTree, pXImage, w, h)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlImageServerReport(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+HtmlImageServerReport(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
 

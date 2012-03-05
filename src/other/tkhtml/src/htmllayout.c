@@ -2970,9 +2970,10 @@ normalFlowLayoutFixed (LayoutContext *pLayout, BoxContext *pBox, HtmlNode *pNode
  *---------------------------------------------------------------------------
  */
 static void
-appendVerticalMarginsToObj(pObj, pNormal)
-    Tcl_Obj *pObj;
-    NormalFlow *pNormal;
+appendVerticalMarginsToObj(
+    Tcl_Obj *pObj,
+    NormalFlow *pNormal
+    )
 {
     char zBuf[1024];
     sprintf(zBuf, "min=%d max=%d isValid=%d nonegative=%d", 

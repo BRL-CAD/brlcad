@@ -160,8 +160,7 @@ HtmlMarkup (int markup)
  *---------------------------------------------------------------------------
  */
 Html_u8 
-HtmlMarkupFlags(markup)
-    int markup;
+HtmlMarkupFlags(int markup)
 {
     int i = markup-Html_A;
     if (i>=0 && i<HTML_MARKUP_COUNT){
@@ -190,8 +189,7 @@ HtmlMarkupFlags(markup)
  *---------------------------------------------------------------------------
  */
 CONST char *
-HtmlMarkupName(markup)
-    int markup;
+HtmlMarkupName(int markup)
 {
     int i = markup-Html_A;
     if (i>=0 && i<HTML_MARKUP_COUNT){
