@@ -170,10 +170,8 @@ walkChildren(pTree, pNode, xCallback, pContext)
 }
 #endif
 
-static void
-fixNodeProperties(pData, pNode)
-    TableData *pData;
-    HtmlNode *pNode;
+static void 
+fixNodeProperties (TableData *pData, HtmlNode *pNode)
 {
     HtmlElementNode *pElem = (HtmlElementNode *)pNode;
     if (!pElem->pPropertyValues) {
@@ -218,13 +216,7 @@ fixNodeProperties(pData, pNode)
  *---------------------------------------------------------------------------
  */
 static int 
-tableColWidthSingleSpan(pNode, col, colspan, row, rowspan, pContext)
-    HtmlNode *pNode;
-    int col;
-    int colspan;
-    int row;
-    int rowspan;
-    void *pContext;
+tableColWidthSingleSpan (HtmlNode *pNode, int col, int colspan, int row, int rowspan, void *pContext)
 {
     TableData *pData = (TableData *)pContext;
     int *aMinWidth       = pData->aMinWidth;
@@ -376,10 +368,8 @@ logWidthsToTable(pData, pObj)
     Tcl_AppendToObj(pObj, "</table>", -1);
 }
 
-static void
-getReqWidth(pNode, pReq)
-    HtmlNode *pNode;
-    CellReqWidth *pReq;
+static void 
+getReqWidth (HtmlNode *pNode, CellReqWidth *pReq)
 {
     HtmlComputedValues *pV = HtmlNodeComputedValues(pNode);
     if (pV->mask & PROP_MASK_WIDTH) {
@@ -394,14 +384,8 @@ getReqWidth(pNode, pReq)
     }
 }
 
-static void
-logMinMaxWidths(pLayout, pNode, col, colspan, aMinWidth, aMaxWidth)
-    LayoutContext *pLayout;
-    HtmlNode *pNode;
-    int col;
-    int colspan;
-    int *aMinWidth;
-    int *aMaxWidth;
+static void 
+logMinMaxWidths (LayoutContext *pLayout, HtmlNode *pNode, int col, int colspan, int *aMinWidth, int *aMaxWidth)
 {
     LOG {
         int ii;
@@ -464,13 +448,7 @@ logMinMaxWidths(pLayout, pNode, col, colspan, aMinWidth, aMaxWidth)
  *---------------------------------------------------------------------------
  */
 static int 
-tableColWidthMultiSpan(pNode, col, colspan, row, rowspan, pContext)
-    HtmlNode *pNode;
-    int col;
-    int colspan;
-    int row;
-    int rowspan;
-    void *pContext;
+tableColWidthMultiSpan (HtmlNode *pNode, int col, int colspan, int row, int rowspan, void *pContext)
 {
     TableData *pData = (TableData *)pContext;
 
@@ -686,13 +664,7 @@ tableColWidthMultiSpan(pNode, col, colspan, row, rowspan, pContext)
  *---------------------------------------------------------------------------
  */
 static int 
-tableCountCells(pNode, col, colspan, row, rowspan, pContext)
-    HtmlNode *pNode;
-    int col;
-    int colspan;
-    int row;
-    int rowspan;
-    void *pContext;
+tableCountCells (HtmlNode *pNode, int col, int colspan, int row, int rowspan, void *pContext)
 {
     TableData *pData = (TableData *)pContext;
  
@@ -708,10 +680,7 @@ tableCountCells(pNode, col, colspan, row, rowspan, pContext)
 }
 
 static int 
-tableCountRows(pNode, row, pContext)
-    HtmlNode *pNode;
-    int row;
-    void *pContext;
+tableCountRows (HtmlNode *pNode, int row, void *pContext)
 {
     TableData *pData = (TableData *)pContext;
     pData->nRow = row + 1;
@@ -736,10 +705,7 @@ tableCountRows(pNode, row, pContext)
  *---------------------------------------------------------------------------
  */
 static int 
-tableDrawRow(pNode, row, pContext)
-    HtmlNode *pNode;
-    int row;
-    void *pContext;
+tableDrawRow (HtmlNode *pNode, int row, void *pContext)
 {
     TableData *pData = (TableData *)pContext;
     LayoutContext *pLayout = pData->pLayout;
@@ -888,13 +854,7 @@ tableDrawRow(pNode, row, pContext)
  *---------------------------------------------------------------------------
  */
 static int 
-tableDrawCells(pNode, col, colspan, row, rowspan, pContext)
-    HtmlNode *pNode;
-    int col;
-    int colspan;
-    int row;
-    int rowspan;
-    void *pContext;
+tableDrawCells (HtmlNode *pNode, int col, int colspan, int row, int rowspan, void *pContext)
 {
     TableData *pData = (TableData *)pContext;
     BoxContext *pBox;
@@ -1020,11 +980,8 @@ struct RowIterateContext {
 };
 typedef struct RowIterateContext RowIterateContext;
 
-static void
-cellIterate(pTree, pNode, p)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    RowIterateContext *p;
+static void 
+cellIterate (HtmlTree *pTree, HtmlNode *pNode, RowIterateContext *p)
 {
     int nSpan = 1;
     int nRSpan = 1;
@@ -1103,10 +1060,7 @@ cellIterate(pTree, pNode, p)
 }
 
 static int 
-rowIterate(pTree, pNode, p)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    RowIterateContext *p;
+rowIterate (HtmlTree *pTree, HtmlNode *pNode, RowIterateContext *p)
 {
     int k;
     int ii;
@@ -1163,10 +1117,7 @@ rowIterate(pTree, pNode, p)
 }
 
 static void 
-rowGroupIterate(pTree, pNode, p)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    RowIterateContext *p;
+rowGroupIterate (HtmlTree *pTree, HtmlNode *pNode, RowIterateContext *p)
 {
     int ii;
 
@@ -1262,12 +1213,13 @@ rowGroupIterate(pTree, pNode, p)
  *---------------------------------------------------------------------------
  */
 static void 
-tableIterate(pTree, pNode, xCallback, xRowCallback, pContext)
-    HtmlTree *pTree;
-    HtmlNode *pNode;                               /* The <table> node */
-    int (*xCallback)(HtmlNode *, int, int, int, int, void *);  /* Callback */
-    int (*xRowCallback)(HtmlNode *, int, void *);  /* Row Callback */
-    void *pContext;                                /* pContext of callbacks */
+tableIterate (
+    HtmlTree *pTree,
+    HtmlNode *pNode,                               /* The <table> node */
+    int (*xCallback)(HtmlNode *, int, int, int, int, void *),  /* Callback */
+    int (*xRowCallback)(HtmlNode *, int, void *),  /* Row Callback */
+    void *pContext                                /* pContext of callbacks */
+)
 {
     int ii;
   
@@ -1366,10 +1318,11 @@ logWidthStage(nStage, pStageLog, nWidth, aWidth)
 
 
 static void 
-tableCalculateCellWidths(pData, availablewidth, isAuto)
-    TableData *pData;
-    int availablewidth;    /* Total width available for cells */
-    int isAuto;            /* True if the 'width' of the <table> was "auto" */
+tableCalculateCellWidths (
+    TableData *pData,
+    int availablewidth,    /* Total width available for cells */
+    int isAuto            /* True if the 'width' of the <table> was "auto" */
+)
 {
     /* The values of the following variables are set in the "analysis loop"
      * (the first loop below) and thereafter left unchanged.
@@ -1622,9 +1575,8 @@ tableCalculateCellWidths(pData, availablewidth, isAuto)
     }
 }
 
-static int
-tableCalculateMaxWidth(pData)
-    TableData *pData;
+static int 
+tableCalculateMaxWidth (TableData *pData)
 {
     int   *aMaxWidth         = pData->aMaxWidth;
     int   *aMinWidth         = pData->aMinWidth;
@@ -1744,10 +1696,11 @@ tableCalculateMaxWidth(pData)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlTableLayout(pLayout, pBox, pNode)
-    LayoutContext *pLayout;
-    BoxContext *pBox;
-    HtmlNode *pNode;          /* The node to layout */
+HtmlTableLayout (
+    LayoutContext *pLayout,
+    BoxContext *pBox,
+    HtmlNode *pNode          /* The node to layout */
+)
 {
     HtmlTree *pTree = pLayout->pTree;
     HtmlComputedValues *pV = HtmlNodeComputedValues(pNode);

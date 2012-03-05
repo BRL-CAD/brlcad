@@ -155,9 +155,8 @@ struct HtmlImage2 {
  *
  *---------------------------------------------------------------------------
  */
-void
-HtmlImageServerInit(pTree)
-    HtmlTree *pTree;
+void 
+HtmlImageServerInit (HtmlTree *pTree)
 {
     HtmlImageServer *p;
     assert(!pTree->pImageServer);
@@ -184,8 +183,7 @@ HtmlImageServerInit(pTree)
  *---------------------------------------------------------------------------
  */
 void 
-HtmlImageServerShutdown(pTree)
-    HtmlTree *pTree;
+HtmlImageServerShutdown (HtmlTree *pTree)
 {
     HtmlImageServer *p = pTree->pImageServer;
 #ifndef NDEBUG
@@ -231,9 +229,8 @@ photoputblock(interp, handle, blockPtr, x, y, width, height, compRule)
     Tk_PhotoPutBlock(handle, blockPtr, x, y, width, height);
 }
 
-static void
-freeTile(pImage)
-    HtmlImage2 *pImage;
+static void 
+freeTile (HtmlImage2 *pImage)
 {
     HtmlTree *pTree = pImage->pImageServer->pTree;
     int flags = TCL_GLOBAL_ONLY;
@@ -323,9 +320,8 @@ getImageCompressed(pImage)
     return pImage->pCompressed;
 }
 
-static void
-freeImageCompressed(pImage)
-    HtmlImage2 *pImage;
+static void 
+freeImageCompressed (HtmlImage2 *pImage)
 {
     if (pImage->pCompressed) {
         Tcl_DecrRefCount(pImage->pCompressed);
@@ -420,10 +416,8 @@ imageChanged(clientData, x, y, width, height, imgWidth, imgHeight)
  *
  *---------------------------------------------------------------------------
  */
-HtmlImage2* 
-HtmlImageServerGet(p, zUrl)
-    HtmlImageServer *p;
-    const char *zUrl; 
+HtmlImage2 *
+HtmlImageServerGet (HtmlImageServer *p, const char *zUrl) 
 {
     Tcl_Obj *pImageCmd = p->pTree->options.imagecmd;
     Tcl_Interp *interp = p->pTree->interp;
@@ -543,11 +537,12 @@ Tcl_Obj *HtmlImageUnscaledName(pImage)
     return pRet;
 }
 
-void
-HtmlImageSize(pImage, pWidth, pHeight)
-    HtmlImage2 *pImage;    /* Image object */
-    int *pWidth;           /* OUT: Image width */
-    int *pHeight;          /* OUT: Image height */
+void 
+HtmlImageSize (
+    HtmlImage2 *pImage,    /* Image object */
+    int *pWidth,           /* OUT: Image width */
+    int *pHeight          /* OUT: Image height */
+)
 {
     if (pWidth) *pWidth = pImage->width;
     if (pHeight) *pHeight = pImage->height;
@@ -591,11 +586,12 @@ HtmlImageSize(pImage, pWidth, pHeight)
  *---------------------------------------------------------------------------
  */
 HtmlImage2 *
-HtmlImageScale(pImage, pWidth, pHeight, doScale)
-    HtmlImage2 *pImage;    /* Image object */
-    int *pWidth;           /* IN/OUT: Image width */
-    int *pHeight;          /* IN/OUT: Image height */
-    int doScale;           /* True to actually scale image */
+HtmlImageScale (
+    HtmlImage2 *pImage,    /* Image object */
+    int *pWidth,           /* IN/OUT: Image width */
+    int *pHeight,          /* IN/OUT: Image height */
+    int doScale           /* True to actually scale image */
+)
 {
     HtmlImage2 *pUnscaled = pImage->pUnscaled;
     HtmlImage2 *pRet;
@@ -821,10 +817,8 @@ HtmlImageImage(pImage)
  *
  *---------------------------------------------------------------------------
  */
-static int tilesize(pImage, pW, pH)
-    HtmlImage2* pImage;
-    int *pW;
-    int *pH;
+static int 
+tilesize (HtmlImage2 *pImage, int *pW, int *pH)
 {
     int iImageWidth = pImage->width;
     int iImageHeight = pImage->height;
@@ -960,8 +954,7 @@ printf("Pixmapifying - nData = %d\n", nData);
 }
 
 void 
-HtmlImageFree(pImage)
-    HtmlImage2 *pImage;
+HtmlImageFree (HtmlImage2 *pImage)
 {
     if (!pImage) {
         return;
@@ -1029,8 +1022,7 @@ HtmlImageFree(pImage)
 }
 
 void 
-HtmlImageRef(pImage)
-    HtmlImage2 *pImage;
+HtmlImageRef (HtmlImage2 *pImage)
 {
     if (pImage) {
         pImage->nRef++;
@@ -1038,14 +1030,13 @@ HtmlImageRef(pImage)
 }
 
 const char *
-HtmlImageUrl(pImage)
-    HtmlImage2 *pImage;
+HtmlImageUrl (HtmlImage2 *pImage)
 {
     return pImage->zUrl;
 }
 
-void HtmlImageCheck(pImage)
-    HtmlImage2 *pImage;
+void 
+HtmlImageCheck (HtmlImage2 *pImage)
 {
     if (pImage) {
         assert(pImage->isValid == 0 || pImage->isValid == 1);
@@ -1068,8 +1059,7 @@ void HtmlImageCheck(pImage)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlImageAlphaChannel(pImage)
-    HtmlImage2 *pImage;
+HtmlImageAlphaChannel (HtmlImage2 *pImage)
 {
     HtmlImage2 *p = (pImage->pUnscaled ? pImage->pUnscaled : pImage);
     if (p->eAlpha == ALPHA_CHANNEL_UNKNOWN) {
@@ -1246,14 +1236,14 @@ return_original:
  *
  *---------------------------------------------------------------------------
  */
-void HtmlImageServerSuspendGC(pTree)
-    HtmlTree *pTree;
+void 
+HtmlImageServerSuspendGC (HtmlTree *pTree)
 {
     pTree->pImageServer->isSuspendGC = 1;
 }
 
-void HtmlImageServerDoGC(pTree)
-    HtmlTree *pTree;
+void 
+HtmlImageServerDoGC (HtmlTree *pTree)
 {
     if (pTree->pImageServer->isSuspendGC) {
         int nDelete;
@@ -1299,8 +1289,8 @@ void HtmlImageServerDoGC(pTree)
  *
  *---------------------------------------------------------------------------
  */
-int HtmlImageServerCount(pTree)
-    HtmlTree *pTree;
+int 
+HtmlImageServerCount (HtmlTree *pTree)
 {
     int nImage = 0;
     Tcl_HashSearch srch;

@@ -90,11 +90,12 @@ static void treeCloseFosterTree(HtmlTree *);
  *---------------------------------------------------------------------------
  */
 static void 
-explicitCloseCount(pCurrent, eTag, zTag, pNClose)
-    HtmlNode *pCurrent;     /* Node currently being constructed */
-    int eTag;               /* Id of closing tag (i.e. "</p>" -> Html_P) */
-    const char *zTag;       /* Atom of closing tag */
-    int *pNClose;           /* OUT: Number of elements to close */
+explicitCloseCount (
+    HtmlNode *pCurrent,     /* Node currently being constructed */
+    int eTag,               /* Id of closing tag (i.e. "</p>" -> Html_P) */
+    const char *zTag,       /* Atom of closing tag */
+    int *pNClose           /* OUT: Number of elements to close */
+)
 {
     *pNClose = 0;
     if (eTag != Html_HTML && eTag != Html_BODY && eTag != Html_HEAD) {
@@ -119,11 +120,7 @@ explicitCloseCount(pCurrent, eTag, zTag, pNClose)
 }
 
 static void 
-implicitCloseCount(pTree, pCurrent, eTag, pNClose)
-    HtmlTree *pTree;
-    HtmlNode *pCurrent;
-    int eTag;
-    int *pNClose;
+implicitCloseCount (HtmlTree *pTree, HtmlNode *pCurrent, int eTag, int *pNClose)
 {
     int nClose = 0;
 
@@ -177,10 +174,8 @@ geomRequestProc(clientData, widget)
     }
 }
 
-static void
-clearReplacement(pTree, pElem)
-    HtmlTree *pTree;
-    HtmlElementNode *pElem;
+static void 
+clearReplacement (HtmlTree *pTree, HtmlElementNode *pElem)
 {
     HtmlNodeReplacement *p = pElem->pReplacement;
     pElem->pReplacement = 0;
@@ -223,9 +218,7 @@ clearReplacement(pTree, pElem)
 }
 
 int 
-HtmlNodeClearStyle(pTree, pElem)
-    HtmlTree *pTree;
-    HtmlElementNode *pElem;
+HtmlNodeClearStyle (HtmlTree *pTree, HtmlElementNode *pElem)
 {
     if (pElem) {
         HtmlNodeClearGenerated(pTree, pElem);
@@ -243,9 +236,7 @@ HtmlNodeClearStyle(pTree, pElem)
 }
 
 int 
-HtmlNodeDeleteCommand(pTree, pNode)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
+HtmlNodeDeleteCommand (HtmlTree *pTree, HtmlNode *pNode)
 {
     if (pNode->pNodeCmd) {
         Tcl_Obj *pCommand = pNode->pNodeCmd->pCommand;
@@ -276,9 +267,7 @@ HtmlNodeDeleteCommand(pTree, pNode)
  *---------------------------------------------------------------------------
  */
 static void 
-freeNode(pTree, pNode)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
+freeNode (HtmlTree *pTree, HtmlNode *pNode)
 {
     if( pNode ){
         int i;
@@ -330,10 +319,8 @@ freeNode(pTree, pNode)
     }
 }
 
-int
-HtmlNodeClearGenerated(pTree, pElem)
-    HtmlTree *pTree;
-    HtmlElementNode *pElem;
+int 
+HtmlNodeClearGenerated (HtmlTree *pTree, HtmlElementNode *pElem)
 {
     assert(!pElem->pBefore || !HtmlNodeIsText(pElem->pBefore));
     freeNode(pTree, pElem->pBefore);
@@ -399,10 +386,8 @@ nodeGetPreText(pTextNode)
  *
  *---------------------------------------------------------------------------
  */
-static int
-nodeRemoveChild(pElem, pChild)
-    HtmlElementNode *pElem;
-    HtmlNode *pChild;
+static int 
+nodeRemoveChild (HtmlElementNode *pElem, HtmlNode *pChild)
 {
     int eSeen = 0;
     int ii;
@@ -438,9 +423,8 @@ nodeRemoveChild(pElem, pChild)
  *
  *---------------------------------------------------------------------------
  */
-void
-HtmlElementNormalize(pElem)
-    HtmlElementNode *pElem;
+void 
+HtmlElementNormalize (HtmlElementNode *pElem)
 {
     int ii;
     for (ii = 0; ii < (pElem->nChild - 1); ii++) {
@@ -480,9 +464,7 @@ HtmlElementNormalize(pElem)
  *---------------------------------------------------------------------------
  */
 static int 
-nodeHandlerCallbacks(pTree, pNode)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
+nodeHandlerCallbacks (HtmlTree *pTree, HtmlNode *pNode)
 {
     Tcl_HashEntry *pEntry;
     Tcl_Interp *interp = pTree->interp;
@@ -564,8 +546,7 @@ nodeHandlerCallbacks(pTree, pNode)
  *---------------------------------------------------------------------------
  */
 void 
-HtmlFinishNodeHandlers(pTree)
-    HtmlTree *pTree;
+HtmlFinishNodeHandlers (HtmlTree *pTree)
 {
     HtmlNode *p;
     for (p = pTree->state.pCurrent ; p; p = HtmlNodeParent(p)) {
@@ -574,8 +555,8 @@ HtmlFinishNodeHandlers(pTree)
     pTree->state.pCurrent = 0;
 }   
 
-int HtmlNodeIsOrphan(pNode)
-    HtmlNode *pNode;
+int 
+HtmlNodeIsOrphan (HtmlNode *pNode)
 {
     while (pNode && pNode->iNode != HTML_NODE_ORPHAN) {
         pNode = HtmlNodeParent(pNode);
@@ -601,10 +582,8 @@ int HtmlNodeIsOrphan(pNode)
  *
  *---------------------------------------------------------------------------
  */
-static void
-nodeOrphanize(pTree, pNode)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
+static void 
+nodeOrphanize (HtmlTree *pTree, HtmlNode *pNode)
 {
     int eNew;
     assert(
@@ -617,10 +596,8 @@ nodeOrphanize(pTree, pNode)
     Tcl_CreateHashEntry(&pTree->aOrphan, (const char *)pNode, &eNew);
     assert(eNew);
 }
-static void
-nodeDeorphanize(pTree, pNode)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
+static void 
+nodeDeorphanize (HtmlTree *pTree, HtmlNode *pNode)
 {
     Tcl_HashEntry *pEntry;
     assert(pNode->iNode == HTML_NODE_ORPHAN);
@@ -630,10 +607,8 @@ nodeDeorphanize(pTree, pNode)
     Tcl_DeleteHashEntry(pEntry);
 }
 
-int
-HtmlNodeIndexOfChild(pParent, pChild)
-    HtmlNode *pParent;
-    HtmlNode *pChild;
+int 
+HtmlNodeIndexOfChild (HtmlNode *pParent, HtmlNode *pChild)
 {
     int ii;
     for (ii = 0; ii < HtmlNodeNumChildren(pParent); ii++) {
@@ -642,13 +617,8 @@ HtmlNodeIndexOfChild(pParent, pChild)
     return -1;
 }
 
-static void
-nodeInsertChild(pTree, pElem, pBefore, pAfter, pChild)
-    HtmlTree *pTree;
-    HtmlElementNode *pElem;
-    HtmlNode *pBefore;
-    HtmlNode *pAfter;
-    HtmlNode *pChild;
+static void 
+nodeInsertChild (HtmlTree *pTree, HtmlElementNode *pElem, HtmlNode *pBefore, HtmlNode *pAfter, HtmlNode *pChild)
 {
     int n;                  /* Number of bytes to alloc for pNode->apChildren */
     int ii;
@@ -728,11 +698,12 @@ nodeInsertChild(pTree, pElem, pBefore, pAfter, pChild)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlNodeAddChild(pElem, eTag, zTag, pAttributes)
-    HtmlElementNode *pElem;
-    int eTag;
-    const char *zTag;               /* Atom for tag name */
-    HtmlAttributes *pAttributes;
+HtmlNodeAddChild (
+    HtmlElementNode *pElem,
+    int eTag,
+    const char *zTag,               /* Atom for tag name */
+    HtmlAttributes *pAttributes
+)
 {
     int n;                  /* Number of bytes to alloc for pNode->apChildren */
     int r;                  /* Return value */
@@ -763,9 +734,7 @@ HtmlNodeAddChild(pElem, eTag, zTag, pAttributes)
 }
 
 int 
-HtmlNodeAddTextChild(pNode, pTextNode)
-    HtmlNode *pNode;
-    HtmlTextNode *pTextNode;
+HtmlNodeAddTextChild (HtmlNode *pNode, HtmlTextNode *pTextNode)
 {
     int n;             /* Number of bytes to alloc for pNode->apChildren */
     int r;             /* Return value */
@@ -809,11 +778,8 @@ HtmlNodeAddTextChild(pNode, pTextNode)
  *
  *---------------------------------------------------------------------------
  */
-static void
-setNodeAttribute(pNode, zAttrName, zAttrVal)
-    HtmlNode *pNode;
-    const char *zAttrName;
-    const char *zAttrVal;
+static void 
+setNodeAttribute (HtmlNode *pNode, const char *zAttrName, const char *zAttrVal)
 {
     #define MAX_NUM_ATTRIBUTES 100
     char const *azPtr[MAX_NUM_ATTRIBUTES * 2];
@@ -862,10 +828,8 @@ setNodeAttribute(pNode, zAttrName, zAttrVal)
     }
 }
 
-static void
-mergeAttributes(pNode, pAttr)
-    HtmlNode *pNode;
-    HtmlAttributes *pAttr;
+static void 
+mergeAttributes (HtmlNode *pNode, HtmlAttributes *pAttr)
 {
     int ii;
     for (ii = 0; pAttr && ii < pAttr->nAttr; ii++) {
@@ -874,12 +838,8 @@ mergeAttributes(pNode, pAttr)
     HtmlFree(pAttr);
 }
 
-static int
-doAttributeHandler(pTree, pNode, zAttr, zValue) 
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    const char *zAttr;
-    const char *zValue;
+static int 
+doAttributeHandler (HtmlTree *pTree, HtmlNode *pNode, const char *zAttr, const char *zValue)
 {
     int rc = TCL_OK;
     int eType = pNode->eTag;
@@ -902,12 +862,8 @@ doAttributeHandler(pTree, pNode, zAttr, zValue)
     return rc;
 }
 
-static int
-doParseHandler(pTree, eType, pNode, iOffset)
-    HtmlTree *pTree;
-    int eType;
-    HtmlNode *pNode;
-    int iOffset;
+static int 
+doParseHandler (HtmlTree *pTree, int eType, HtmlNode *pNode, int iOffset)
 {
     int rc = TCL_OK;
     Tcl_HashEntry *pEntry;
@@ -960,9 +916,8 @@ doParseHandler(pTree, eType, pNode, iOffset)
  *
  *---------------------------------------------------------------------------
  */
-void
-HtmlInitTree(pTree)
-    HtmlTree *pTree;
+void 
+HtmlInitTree (HtmlTree *pTree)
 {
     if (!pTree->pRoot) {
         /* If pTree->pRoot is NULL, then the first token of the document
@@ -1002,9 +957,7 @@ HtmlInitTree(pTree)
 }
 
 static HtmlNode *
-findFosterParent(pTree, ppTable)
-    HtmlTree *pTree;
-    HtmlNode **ppTable;
+findFosterParent (HtmlTree *pTree, HtmlNode **ppTable)
 {
     HtmlNode *pFosterParent;
     HtmlNode *pTable;
@@ -1024,9 +977,8 @@ findFosterParent(pTree, ppTable)
     return pFosterParent;
 }
 
-static void
-treeCloseFosterTree(pTree)
-    HtmlTree *pTree;
+static void 
+treeCloseFosterTree (HtmlTree *pTree)
 {
     if (pTree->state.pFoster) {
         HtmlNode *pFosterRoot = findFosterParent(pTree, 0);
@@ -1041,10 +993,8 @@ treeCloseFosterTree(pTree)
     }
 }
 
-static void
-treeAddFosterText(pTree, pTextNode)
-    HtmlTree *pTree;
-    HtmlTextNode *pTextNode;
+static void 
+treeAddFosterText (HtmlTree *pTree, HtmlTextNode *pTextNode)
 {
     if (pTree->state.pFoster) {
         HtmlNodeAddTextChild(pTree->state.pFoster, pTextNode);
@@ -1059,12 +1009,13 @@ treeAddFosterText(pTree, pTextNode)
     }
 }
 
-HtmlNode * 
-treeAddFosterElement(pTree, eTag, zTag, pAttr)
-    HtmlTree *pTree;
-    int eTag;
-    const char *zTag;                /* Atom for tag */
-    HtmlAttributes *pAttr;
+HtmlNode *
+treeAddFosterElement (
+    HtmlTree *pTree,
+    int eTag,
+    const char *zTag,                /* Atom for tag */
+    HtmlAttributes *pAttr
+)
 {
     HtmlNode *pFosterParent;
 
@@ -1116,11 +1067,8 @@ treeAddFosterElement(pTree, eTag, zTag, pAttr)
     return pNew;
 }
 
-static void
-treeAddFosterClosingTag(pTree, eTag, zTag)
-    HtmlTree *pTree;
-    int eTag;
-    const char *zTag;
+static void 
+treeAddFosterClosingTag (HtmlTree *pTree, int eTag, const char *zTag)
 {
     HtmlNode *pFosterParent;
     HtmlNode *pFoster;
@@ -1144,10 +1092,7 @@ treeAddFosterClosingTag(pTree, eTag, zTag)
 }
 
 static HtmlNode *
-treeAddTableComponent(pTree, eTag, pAttr)
-    HtmlTree *pTree;
-    int eTag;
-    HtmlAttributes *pAttr;
+treeAddTableComponent (HtmlTree *pTree, int eTag, HtmlAttributes *pAttr)
 {
     HtmlNode *pCurrent = pTree->state.pCurrent;
     HtmlNode *pParent;
@@ -1234,12 +1179,7 @@ treeAddTableComponent(pTree, eTag, pAttr)
  *---------------------------------------------------------------------------
  */
 void 
-HtmlTreeAddElement(pTree, eType, zType, pAttr, iOffset)
-    HtmlTree *pTree;
-    int eType;
-    const char *zType;
-    HtmlAttributes *pAttr;
-    int iOffset;
+HtmlTreeAddElement (HtmlTree *pTree, int eType, const char *zType, HtmlAttributes *pAttr, int iOffset)
 {
     HtmlNode *pCurrent;
     HtmlNode *pHeadNode;
@@ -1405,11 +1345,8 @@ HtmlTreeAddElement(pTree, eType, zType, pAttr, iOffset)
  *
  *---------------------------------------------------------------------------
  */
-void
-HtmlTreeAddText(pTree, pTextNode, iOffset)
-    HtmlTree *pTree;
-    HtmlTextNode *pTextNode;
-    int iOffset;
+void 
+HtmlTreeAddText (HtmlTree *pTree, HtmlTextNode *pTextNode, int iOffset)
 {
     HtmlNode *pCurrent;
     int eCurrentType;
@@ -1463,12 +1400,8 @@ HtmlTreeAddText(pTree, pTextNode, iOffset)
  *
  *---------------------------------------------------------------------------
  */
-void
-HtmlTreeAddClosingTag(pTree, eTag, zTag, iOffset)
-    HtmlTree *pTree;
-    int eTag;
-    const char *zTag;
-    int iOffset;
+void 
+HtmlTreeAddClosingTag (HtmlTree *pTree, int eTag, const char *zTag, int iOffset)
 {
     int nClose;
     int ii;
@@ -1583,8 +1516,8 @@ HtmlWalkTree(pTree, pNode, xCallback, clientData)
  *
  *---------------------------------------------------------------------------
  */
-int HtmlNodeNumChildren(pNode)
-    HtmlNode *pNode;
+int 
+HtmlNodeNumChildren (HtmlNode *pNode)
 {
     if (HtmlNodeIsText(pNode)) return 0;
     return ((HtmlElementNode *)(pNode))->nChild;
@@ -1628,9 +1561,8 @@ HtmlNodeChild(pNode, n)
  *
  *---------------------------------------------------------------------------
  */
-HtmlNode * 
-HtmlNodeBefore(pNode)
-    HtmlNode *pNode;
+HtmlNode *
+HtmlNodeBefore (HtmlNode *pNode)
 {
     if (!HtmlNodeIsText(pNode)) {
         return ((HtmlElementNode *)pNode)->pBefore;
@@ -1666,9 +1598,8 @@ HtmlNodeComputedValues(pNode)
  *
  *---------------------------------------------------------------------------
  */
-HtmlNode * 
-HtmlNodeAfter(pNode)
-    HtmlNode *pNode;
+HtmlNode *
+HtmlNodeAfter (HtmlNode *pNode)
 {
     if (!HtmlNodeIsText(pNode)) {
         return ((HtmlElementNode *)pNode)->pAfter;
@@ -1738,8 +1669,8 @@ CONST char * HtmlNodeTagName(pNode)
  *
  *---------------------------------------------------------------------------
  */
-HtmlNode *HtmlNodeRightSibling(pNode)
-    HtmlNode *pNode;
+HtmlNode *
+HtmlNodeRightSibling (HtmlNode *pNode)
 {
     HtmlElementNode *pParent = (HtmlElementNode *)pNode->pParent;
     if( pParent ){
@@ -1769,8 +1700,8 @@ HtmlNode *HtmlNodeRightSibling(pNode)
  *
  *---------------------------------------------------------------------------
  */
-HtmlNode *HtmlNodeLeftSibling(pNode)
-    HtmlNode *pNode;
+HtmlNode *
+HtmlNodeLeftSibling (HtmlNode *pNode)
 {
     HtmlElementNode *pParent = (HtmlElementNode *)pNode->pParent;
     if( pParent ){
@@ -2120,9 +2051,7 @@ nodeInsertCmd(pNode, objc, objv)
 }
 
 static CssPropertySet *
-nodeGetStyle(pTree, p)
-    HtmlTree *pTree;
-    HtmlNode *p;
+nodeGetStyle (HtmlTree *pTree, HtmlNode *p)
 {
     HtmlElementNode *pElem = HtmlNodeAsElement(p);
     const char *zStyle;
@@ -2939,9 +2868,8 @@ HtmlNodeCommand(pTree, pNode)
  *
  *---------------------------------------------------------------------------
  */
-int HtmlNodeScrollbarDoCallback(pTree, pNode)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
+int 
+HtmlNodeScrollbarDoCallback (HtmlTree *pTree, HtmlNode *pNode)
 {
     HtmlElementNode *pElem = (HtmlElementNode *)pNode;
 
@@ -2988,8 +2916,8 @@ int HtmlNodeScrollbarDoCallback(pTree, pNode)
  *
  *---------------------------------------------------------------------------
  */
-int HtmlTreeClear(pTree)
-    HtmlTree *pTree;
+int 
+HtmlTreeClear (HtmlTree *pTree)
 {
     Tcl_HashEntry *pEntry;
     Tcl_HashSearch search;
@@ -3090,9 +3018,8 @@ HtmlNodeGetPointer(pTree, zCmd)
  * Start of [fragment] parsing code.
  */
 
-static void
-fragmentOrphan(pTree)
-    HtmlTree *pTree;
+static void 
+fragmentOrphan (HtmlTree *pTree)
 {
     HtmlFragmentContext *pFragment = pTree->pFragment;
     HtmlNode *pOrphan = pFragment->pRoot;
@@ -3109,10 +3036,7 @@ fragmentOrphan(pTree)
 }
 
 static void 
-fragmentAddText(pTree, pTextNode, iOffset)
-    HtmlTree *pTree;
-    HtmlTextNode *pTextNode; 
-    int iOffset;
+fragmentAddText (HtmlTree *pTree, HtmlTextNode *pTextNode, int iOffset)
 {
     HtmlFragmentContext *pFragment = pTree->pFragment;
 
@@ -3131,12 +3055,13 @@ fragmentAddText(pTree, pTextNode, iOffset)
 }
 
 static void 
-fragmentAddElement(pTree, eType, zType, pAttributes, iOffset)
-    HtmlTree *pTree;
-    int eType;
-    const char *zType;               /* Atom */
-    HtmlAttributes *pAttributes; 
-    int iOffset;
+fragmentAddElement (
+    HtmlTree *pTree,
+    int eType,
+    const char *zType,               /* Atom */
+    HtmlAttributes *pAttributes,
+    int iOffset
+)
 {
     HtmlElementNode *pElem;
     HtmlFragmentContext *pFragment = pTree->pFragment;
@@ -3196,11 +3121,7 @@ fragmentAddElement(pTree, eType, zType, pAttributes, iOffset)
 }
 
 static void 
-fragmentAddClosingTag(pTree, eType, zType, iOffset)
-    HtmlTree *pTree;
-    int eType;
-    const char *zType;
-    int iOffset;
+fragmentAddClosingTag (HtmlTree *pTree, int eType, const char *zType, int iOffset)
 {
     int nClose;
     int ii;
@@ -3216,10 +3137,8 @@ fragmentAddClosingTag(pTree, eType, zType, iOffset)
     }
 }
 
-void
-HtmlParseFragment(pTree, zHtml)
-    HtmlTree *pTree;
-    const char *zHtml;
+void 
+HtmlParseFragment (HtmlTree *pTree, const char *zHtml)
 {
     HtmlFragmentContext sContext;
 
@@ -3281,9 +3200,8 @@ sequenceCb(pTree, pNode, clientData)
  *
  *---------------------------------------------------------------------------
  */
-void
-HtmlSequenceNodes(pTree)
-    HtmlTree *pTree;
+void 
+HtmlSequenceNodes (HtmlTree *pTree)
 {
     if (!pTree->isSequenceOk) {
         pTree->iNextNode = 0;

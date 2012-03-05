@@ -22,11 +22,8 @@ struct CssDynamic {
     CssDynamic *pNext;
 };
 
-void
-HtmlCssAddDynamic(pElem, pSelector, isSet)
-    HtmlElementNode *pElem;
-    CssSelector *pSelector;
-    int isSet;
+void 
+HtmlCssAddDynamic (HtmlElementNode *pElem, CssSelector *pSelector, int isSet)
 {
     CssDynamic *pNew;
     for (pNew = pElem->pDynamic; pNew ; pNew = pNew->pNext) {
@@ -41,9 +38,8 @@ HtmlCssAddDynamic(pElem, pSelector, isSet)
     pElem->pDynamic = pNew;
 }
 
-void
-HtmlCssFreeDynamics(pElem)
-    HtmlElementNode *pElem;
+void 
+HtmlCssFreeDynamics (HtmlElementNode *pElem)
 {
     CssDynamic *p = pElem->pDynamic;
     while (p) {
@@ -75,9 +71,8 @@ checkDynamicCb(pTree, pNode, clientData)
     return HTML_WALK_DESCEND;
 }
 
-void
-HtmlCssCheckDynamic(pTree)
-    HtmlTree *pTree;
+void 
+HtmlCssCheckDynamic (HtmlTree *pTree)
 {
     if (pTree->cb.pDynamic) {
         HtmlNode *pParent = HtmlNodeParent(pTree->cb.pDynamic);

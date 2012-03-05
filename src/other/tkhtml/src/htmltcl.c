@@ -227,9 +227,8 @@ HtmlLog(HtmlTree *pTree, CONST char *zSubject, CONST char *zFormat, ...) {
  *
  *---------------------------------------------------------------------------
  */
-static void
-doLoadDefaultStyle(pTree)
-    HtmlTree *pTree;
+static void 
+doLoadDefaultStyle (HtmlTree *pTree)
 {
     Tcl_Obj *pObj = pTree->options.defaultstyle;
     Tcl_Obj *pId = Tcl_NewStringObj("agent", 5);
@@ -309,8 +308,7 @@ doSingleScrollCallback(interp, pScript, iOffScreen, iTotal, iPage)
  *---------------------------------------------------------------------------
  */
 static void 
-doScrollCallback(pTree)
-    HtmlTree *pTree;
+doScrollCallback (HtmlTree *pTree)
 {
     Tcl_Interp *interp = pTree->interp;
     Tk_Window win = pTree->tkwin;
@@ -660,8 +658,7 @@ delayCallbackHandler(clientData)
  *---------------------------------------------------------------------------
  */
 void 
-HtmlCallbackForce(pTree)
-    HtmlTree *pTree;
+HtmlCallbackForce (HtmlTree *pTree)
 {
     if (
         (pTree->cb.flags & ~(HTML_DAMAGE|HTML_SCROLL|HTML_NODESCROLL)) && 
@@ -693,10 +690,8 @@ HtmlCallbackForce(pTree)
  *
  *---------------------------------------------------------------------------
  */
-static int
-upgradeRestylePoint(ppRestyle, pNode)
-    HtmlNode **ppRestyle;
-    HtmlNode *pNode;
+static int 
+upgradeRestylePoint (HtmlNode **ppRestyle, HtmlNode *pNode)
 {
     HtmlNode *pA;
     HtmlNode *pB;
@@ -733,17 +728,15 @@ upgradeRestylePoint(ppRestyle, pNode)
     return 1;
 }
 
-static void
-snapshotLayout(pTree)
-    HtmlTree *pTree;
+static void 
+snapshotLayout (HtmlTree *pTree)
 {
     if (pTree->cb.pSnapshot == 0) {
         pTree->cb.pSnapshot = HtmlDrawSnapshot(pTree, 0);
     }
 }
-static void
-snapshotZero(pTree)
-    HtmlTree *pTree;
+static void 
+snapshotZero (HtmlTree *pTree)
 {
     HtmlNodeReplacement *p;
     HtmlDrawSnapshotFree(pTree, pTree->cb.pSnapshot);
@@ -775,9 +768,7 @@ snapshotZero(pTree)
  *---------------------------------------------------------------------------
  */
 void 
-HtmlCallbackRestyle(pTree, pNode)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
+HtmlCallbackRestyle (HtmlTree *pTree, HtmlNode *pNode)
 {
     if (pNode) {
         snapshotLayout(pTree);
@@ -819,9 +810,7 @@ HtmlCallbackRestyle(pTree, pNode)
  *---------------------------------------------------------------------------
  */
 void 
-HtmlCallbackDynamic(pTree, pNode)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
+HtmlCallbackDynamic (HtmlTree *pTree, HtmlNode *pNode)
 {
     if (pNode) {
         if (upgradeRestylePoint(&pTree->cb.pDynamic, pNode)) {
@@ -852,9 +841,7 @@ HtmlCallbackDynamic(pTree, pNode)
  *---------------------------------------------------------------------------
  */
 void 
-HtmlCallbackLayout(pTree, pNode)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
+HtmlCallbackLayout (HtmlTree *pTree, HtmlNode *pNode)
 {
     if (pNode) {
         HtmlNode *p;
@@ -872,18 +859,15 @@ HtmlCallbackLayout(pTree, pNode)
     }
 }
 
-static int setSnapshotId(pTree, pNode)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
+static int 
+setSnapshotId (HtmlTree *pTree, HtmlNode *pNode)
 {
     pNode->iSnapshot = pTree->iLastSnapshotId;
     return HTML_WALK_DESCEND;
 }
 
 void 
-HtmlCallbackDamageNode(pTree, pNode)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
+HtmlCallbackDamageNode (HtmlTree *pTree, HtmlNode *pNode)
 {
     if (pTree->cb.pSnapshot) {
         if (pNode->iSnapshot != pTree->iLastSnapshotId){
@@ -914,12 +898,7 @@ HtmlCallbackDamageNode(pTree, pNode)
  *---------------------------------------------------------------------------
  */
 void 
-HtmlCallbackDamage(pTree, x, y, w, h)
-    HtmlTree *pTree;
-    int x; 
-    int y;
-    int w; 
-    int h;
+HtmlCallbackDamage (HtmlTree *pTree, int x, int y, int w, int h)
 {
     HtmlDamage *pNew;
     HtmlDamage *p;
@@ -988,9 +967,7 @@ HtmlCallbackDamage(pTree, x, y, w, h)
 }
 
 void 
-HtmlCallbackScrollY(pTree, y)
-    HtmlTree *pTree;
-    int y; 
+HtmlCallbackScrollY (HtmlTree *pTree, int y) 
 {
     if (!pTree->cb.flags) {
         Tcl_DoWhenIdle(callbackHandler, (ClientData)pTree);
@@ -1000,9 +977,7 @@ HtmlCallbackScrollY(pTree, y)
 }
 
 void 
-HtmlCallbackScrollX(pTree, x)
-    HtmlTree *pTree;
-    int x; 
+HtmlCallbackScrollX (HtmlTree *pTree, int x) 
 {
     if (!pTree->cb.flags) {
         Tcl_DoWhenIdle(callbackHandler, (ClientData)pTree);
@@ -1261,9 +1236,8 @@ worldChangedCb(pTree, pNode, clientData)
     return HTML_WALK_DESCEND;
 }
 
-void HtmlNodeClearRecursive(pTree, pNode)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
+void 
+HtmlNodeClearRecursive (HtmlTree *pTree, HtmlNode *pNode)
 {
     HtmlWalkTree(pTree, pNode, worldChangedCb, 0);
 }

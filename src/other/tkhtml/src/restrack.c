@@ -289,7 +289,7 @@ ResFree(v1, v2)
  *---------------------------------------------------------------------------
  */
 static void 
-ResDump()
+ResDump (void)
 {
 #if defined(RES_DEBUG) && defined(__GLIBC__)
     Tcl_HashEntry *pEntry;
@@ -366,7 +366,7 @@ static Tcl_HashTable aAllocationType;
  *---------------------------------------------------------------------------
  */
 static void 
-initMallocHash() {
+initMallocHash (void) {
     static int init = 0;
     if (!init) {
         Tcl_InitHashTable(&aMalloc, TCL_STRING_KEYS);
@@ -391,11 +391,12 @@ initMallocHash() {
  *
  *---------------------------------------------------------------------------
  */
-static void
-insertMallocHash(zTopic, p, nBytes) 
-    const char *zTopic;    /* Topic for allocation */
-    char *p;               /* Pointer just allocated by Rt_Alloc()/Realloc() */
-    int nBytes;            /* Number of bytes allocated at p */
+static void 
+insertMallocHash (
+    const char *zTopic,    /* Topic for allocation */
+    char *p,               /* Pointer just allocated by Rt_Alloc()/Realloc() */
+    int nBytes            /* Number of bytes allocated at p */
+)
 {
     int *aData;
     int isNewEntry;
@@ -437,10 +438,11 @@ insertMallocHash(zTopic, p, nBytes)
  *
  *---------------------------------------------------------------------------
  */
-static void
-freeMallocHash(p, nBytes) 
-    char *p;              /* Pointer to remove from db */
-    int nBytes;           /* Number of bytes (previously) allocated at p */
+static void 
+freeMallocHash (
+    char *p,              /* Pointer to remove from db */
+    int nBytes           /* Number of bytes (previously) allocated at p */
+)
 {
     int *aData;
     Tcl_HashEntry *pEntryAllocationType;
@@ -589,9 +591,7 @@ Rt_AllocCommand(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 char *
-Rt_Alloc(zTopic, n)
-    const char *zTopic;
-    int n;
+Rt_Alloc (const char *zTopic, int n)
 {
     int nAlloc = n + 4 * sizeof(int);
     int *z = (int *)ckalloc(nAlloc);
@@ -623,8 +623,7 @@ Rt_Alloc(zTopic, n)
  *---------------------------------------------------------------------------
  */
 void 
-Rt_Free(p)
-    char *p;
+Rt_Free (char *p)
 {
     if (p) {
         int *z = (int *)p;
@@ -653,11 +652,8 @@ Rt_Free(p)
  *
  *---------------------------------------------------------------------------
  */
-char * 
-Rt_Realloc(zTopic, p, n)
-    const char *zTopic;
-    char *p;
-    int n;
+char *
+Rt_Realloc (const char *zTopic, char *p, int n)
 {
     char *pRet = Rt_Alloc(zTopic, n);
     if (p) {

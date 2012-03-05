@@ -194,8 +194,7 @@ static const char *constantToString(int c){
  *--------------------------------------------------------------------------
  */
 static int 
-dequote(z)
-    char *z;
+dequote (char *z)
 {
     int rc = 1;
 
@@ -325,10 +324,8 @@ static char *tokenToString(CssToken *pToken){
  *
  *---------------------------------------------------------------------------
  */
-static int tokenToReal(pToken, pLen, pVal)
-    CssToken *pToken;
-    int *pLen;
-    double *pVal;
+static int 
+tokenToReal (CssToken *pToken, int *pLen, double *pVal)
 {
     char zBuf[100];
     char *zEnd;
@@ -375,10 +372,8 @@ static int tokenToReal(pToken, pLen, pVal)
  *
  *---------------------------------------------------------------------------
  */
-static int
-propertyIsLength(pParse, pProp)
-    CssParse *pParse;
-    CssProperty *pProp;
+static int 
+propertyIsLength (CssParse *pParse, CssProperty *pProp)
 {
     switch (pProp->eType) {
         case CSS_TYPE_EM:
@@ -537,9 +532,7 @@ doUrlCmd(pParse, zArg, nArg)
  *---------------------------------------------------------------------------
  */
 static CssProperty *
-tokenToProperty(pParse, pToken)
-    CssParse *pParse;
-    CssToken *pToken;
+tokenToProperty (CssParse *pParse, CssToken *pToken)
 {
     struct LengthFormat {
         int type;
@@ -802,7 +795,7 @@ HtmlCssPropertyGetString(pProp)
  *--------------------------------------------------------------------------
  */
 static CssPropertySet *
-propertySetNew()
+propertySetNew (void)
 {
     CssPropertySet *p = HtmlNew(CssPropertySet);
     return p;
@@ -825,9 +818,10 @@ propertySetNew()
  *--------------------------------------------------------------------------
  */
 static CssProperty *
-propertySetGet(p, i)
-    CssPropertySet *p;         /* Property set */
-    int i;                     /* Property id (i.e CSS_PROPERTY_WIDTH) */
+propertySetGet (
+    CssPropertySet *p,         /* Property set */
+    int i                     /* Property id (i.e CSS_PROPERTY_WIDTH) */
+)
 {
     int j;
     assert( i<128 && i>=0 );
@@ -856,10 +850,11 @@ propertySetGet(p, i)
  *--------------------------------------------------------------------------
  */
 static void 
-propertySetAdd(p, i, v)
-    CssPropertySet *p;         /* Property set. */
-    int i;                     /* Property id (i.e CSS_PROPERTY_WIDTH). */
-    CssProperty *v;            /* Value for property. */
+propertySetAdd (
+    CssPropertySet *p,         /* Property set. */
+    int i,                     /* Property id (i.e CSS_PROPERTY_WIDTH). */
+    CssProperty *v            /* Value for property. */
+)
 {
     int nBytes;
 
@@ -940,8 +935,8 @@ propertySetFree(CssPropertySet *p){
  *
  *---------------------------------------------------------------------------
  */
-static CssProperty *propertyDup(pProp)
-    CssProperty *pProp;
+static CssProperty *
+propertyDup (CssProperty *pProp)
 {
     CssProperty *pRet;
     const char *z = HtmlCssPropertyGetString(pProp);
@@ -979,11 +974,13 @@ static CssProperty *propertyDup(pProp)
  *
  *---------------------------------------------------------------------------
  */
-static void propertySetAddShortcutBorder(pParse, p, prop, v)
-    CssParse *pParse;
-    CssPropertySet *p;         /* Property set. */
-    int prop;
-    CssToken *v;               /* Value for property. */
+static void 
+propertySetAddShortcutBorder (
+    CssParse *pParse,
+    CssPropertySet *p,         /* Property set. */
+    int prop,
+    CssToken *v               /* Value for property. */
+)
 {
     CONST char *z = v->z;
     CONST char *zEnd = z + v->n;
@@ -1132,9 +1129,8 @@ static void propertySetAddShortcutBorder(pParse, p, prop, v)
  *
  *---------------------------------------------------------------------------
  */
-static void
-propertyTransformBgPosition(pProp)
-    CssProperty *pProp;
+static void 
+propertyTransformBgPosition (CssProperty *pProp)
 {
     if (pProp) {
         double rVal;
@@ -1178,10 +1174,11 @@ propertyTransformBgPosition(pProp)
  *---------------------------------------------------------------------------
  */
 static void 
-shortcutBackground(pParse, p, v)
-    CssParse *pParse;
-    CssPropertySet *p;         /* Property set */
-    CssToken *v;               /* Value for 'background' property */
+shortcutBackground (
+    CssParse *pParse,
+    CssPropertySet *p,         /* Property set */
+    CssToken *v               /* Value for 'background' property */
+)
 {
     CONST char *z= v->z;
     CONST char *zEnd = z + v->n;
@@ -1339,11 +1336,12 @@ error_out:
  *
  *---------------------------------------------------------------------------
  */
-static void
-shortcutListStyle(pParse, p, v)
-    CssParse *pParse;
-    CssPropertySet *p;         /* Property set */
-    CssToken *v;               /* Value for 'list-style' property */
+static void 
+shortcutListStyle (
+    CssParse *pParse,
+    CssPropertySet *p,         /* Property set */
+    CssToken *v               /* Value for 'list-style' property */
+)
 {
     CONST char *z= v->z;
     CONST char *zEnd = z + v->n;
@@ -1417,12 +1415,13 @@ bad_parse:
     if (pType) HtmlFree(pType);
 }
 
-static void
-propertySetAddList(pParse, eProp, p, v)
-    CssParse *pParse;
-    int eProp;
-    CssPropertySet *p;         /* Property set */
-    CssToken *v;               /* Value for 'content' property */
+static void 
+propertySetAddList (
+    CssParse *pParse,
+    int eProp,
+    CssPropertySet *p,         /* Property set */
+    CssToken *v               /* Value for 'content' property */
+)
 {
     CssProperty *pProp;
     CssProperty **apProp;
@@ -1522,10 +1521,11 @@ getNextFontFamily(zList, nList, pzNext)
  *---------------------------------------------------------------------------
  */
 static CssProperty *
-textToFontFamilyProperty(pParse, zText, nText)
-    CssParse *pParse;          /* Parse context */
-    const char *zText;
-    int nText;
+textToFontFamilyProperty (
+    CssParse *pParse,          /* Parse context */
+    const char *zText,
+    int nText
+)
 {
     const char *zFamily = 0;
 
@@ -1566,11 +1566,12 @@ textToFontFamilyProperty(pParse, zText, nText)
  *
  *---------------------------------------------------------------------------
  */
-static void
-propertySetAddFontFamily(pParse, p, v)
-    CssParse *pParse;          /* Parse context */
-    CssPropertySet *p;         /* Property set */
-    CssToken *v;               /* Value for 'background' property */
+static void 
+propertySetAddFontFamily (
+    CssParse *pParse,          /* Parse context */
+    CssPropertySet *p,         /* Property set */
+    CssToken *v               /* Value for 'background' property */
+)
 {
     CssProperty *pProp = textToFontFamilyProperty(pParse, v->z, v->n);
     propertySetAdd(p, CSS_PROPERTY_FONT_FAMILY, pProp);
@@ -1608,11 +1609,12 @@ propertySetAddFontFamily(pParse, p, v)
  *
  *---------------------------------------------------------------------------
  */
-static void
-propertySetAddShortcutFont(pParse, p, v)
-    CssParse *pParse;
-    CssPropertySet *p;         /* Property set */
-    CssToken *v;               /* Value for 'background' property */
+static void 
+propertySetAddShortcutFont (
+    CssParse *pParse,
+    CssPropertySet *p,         /* Property set */
+    CssToken *v               /* Value for 'background' property */
+)
 {
     CONST char *z= v->z;
     CONST char *zEnd = z + v->n;
@@ -1750,11 +1752,8 @@ bad_parse:
  *
  *---------------------------------------------------------------------------
  */
-static int
-tokenToPropertyList(pToken, apProp, nMax) 
-    CssToken *pToken;
-    CssProperty **apProp;
-    int nMax;
+static int 
+tokenToPropertyList (CssToken *pToken, CssProperty **apProp, int nMax)
 {
     CONST char *z= pToken->z;
     CONST char *zEnd = z + pToken->n;
@@ -1801,10 +1800,11 @@ tokenToPropertyList(pToken, apProp, nMax)
  *---------------------------------------------------------------------------
  */
 static void 
-shortcutBackgroundPosition(pParse, p, v)
-    CssParse *pParse;          /* Parse context */
-    CssPropertySet *p;         /* Property set */
-    CssToken *v;               /* Value for 'background' property */
+shortcutBackgroundPosition (
+    CssParse *pParse,          /* Parse context */
+    CssPropertySet *p,         /* Property set */
+    CssToken *v               /* Value for 'background' property */
+)
 {
     int nProp;
     CssProperty *apProp[2];
@@ -1893,10 +1893,12 @@ shortcutBackgroundPosition(pParse, p, v)
  *
  *---------------------------------------------------------------------------
  */
-static void propertySetAddShortcutBorderColor(p, prop, v)
-    CssPropertySet *p;         /* Property set. */
-    int prop;
-    CssToken *v;               /* Value for property. */
+static void 
+propertySetAddShortcutBorderColor (
+    CssPropertySet *p,         /* Property set. */
+    int prop,
+    CssToken *v               /* Value for property. */
+)
 {
     CONST char *z= v->z;
     CONST char *zEnd = z + v->n;
@@ -1987,8 +1989,8 @@ static void propertySetAddShortcutBorderColor(p, prop, v)
  *
  *--------------------------------------------------------------------------
  */
-static void selectorFree(pSelector)
-    CssSelector *pSelector;
+static void 
+selectorFree (CssSelector *pSelector)
 {
     if( !pSelector ) return;
     selectorFree(pSelector->pNext);
@@ -2020,9 +2022,7 @@ static void selectorFree(pSelector)
  */
 #if 0
 static int 
-comparePriority(pLeft, pRight)
-    CssPriority *pLeft;
-    CssPriority *pRight;
+comparePriority (CssPriority *pLeft, CssPriority *pRight)
 {
     int aNormal[3] = {CSS_ORIGIN_AUTHOR, CSS_ORIGIN_USER, CSS_ORIGIN_AGENT};
     int aImportant[3] = {CSS_ORIGIN_USER, CSS_ORIGIN_AUTHOR, CSS_ORIGIN_AGENT};
@@ -2240,11 +2240,7 @@ pTree, n, z, isStyle, origin, pStyleId, pImportCmd, pUrlCmd, pErrorVar, ppStyle)
 }
 
 int 
-HtmlCssSelectorParse(pTree, n, z, ppStyle)
-    HtmlTree *pTree;
-    int n;
-    const char *z;
-    CssStyleSheet **ppStyle;
+HtmlCssSelectorParse (HtmlTree *pTree, int n, const char *z, CssStyleSheet **ppStyle)
 {
     return cssParse(pTree, n, z, 0, 0, 0, 0, 0, 0, ppStyle);
 }
@@ -2379,8 +2375,7 @@ HtmlCssInlineParse(
  *---------------------------------------------------------------------------
  */
 static void 
-ruleFree(pRule)
-    CssRule *pRule;
+ruleFree (CssRule *pRule)
 {
     if (pRule) {
         if (pRule->freeSelector) {
@@ -2393,9 +2388,8 @@ ruleFree(pRule)
     }
 }
 
-static void
-freeRulesList(ppList)
-    CssRule **ppList;
+static void 
+freeRulesList (CssRule **ppList)
 {
     CssRule *pRule = *ppList;
     while (pRule) { 
@@ -2440,8 +2434,7 @@ freeRulesHash(pHash)
  *---------------------------------------------------------------------------
  */
 void 
-HtmlCssStyleSheetFree(pStyle)
-    CssStyleSheet *pStyle;
+HtmlCssStyleSheetFree (CssStyleSheet *pStyle)
 {
     if (pStyle) {
         CssPriority *pPriority;
@@ -2489,12 +2482,13 @@ int HtmlCssStyleSheetSyntaxErrs(CssStyleSheet *pStyle){
  *
  *--------------------------------------------------------------------------
  */
-void
-HtmlCssDeclaration(pParse, pProp, pExpr, isImportant)
-    CssParse *pParse;
-    CssToken *pProp;
-    CssToken *pExpr;
-    int isImportant;         /* True if the !IMPORTANT symbol was seen */
+void 
+HtmlCssDeclaration (
+    CssParse *pParse,
+    CssToken *pProp,
+    CssToken *pExpr,
+    int isImportant         /* True if the !IMPORTANT symbol was seen */
+)
 {
     int prop; 
     CssPropertySet **ppPropertySet;
@@ -2599,11 +2593,13 @@ HtmlCssDeclaration(pParse, pProp, pExpr, isImportant)
  *
  *--------------------------------------------------------------------------
  */
-void HtmlCssSelector(pParse, stype, pAttr, pValue)
-    CssParse *pParse; 
-    int stype;               /* One of the CSS_SELECTOR_TYPE_XXX values */
-    CssToken *pAttr; 
-    CssToken *pValue;
+void 
+HtmlCssSelector (
+    CssParse *pParse,
+    int stype,               /* One of the CSS_SELECTOR_TYPE_XXX values */
+    CssToken *pAttr,
+    CssToken *pValue
+)
 {
     CssSelector *pSelector;
 
@@ -2707,10 +2703,8 @@ ruleCompare(CssRule *pLeft, CssRule *pRight) {
     return res;
 }
 
-static void
-insertRule(ppList, pRule) 
-    CssRule **ppList;
-    CssRule *pRule;
+static void 
+insertRule (CssRule **ppList, CssRule *pRule)
 {
     if (!*ppList || ruleCompare(*ppList, pRule) <= 0) {
         /* If the default list is currently empty, or the rule being
@@ -2760,11 +2754,7 @@ insertRule(ppList, pRule)
 #define FREE_PROPERTYSET 0x00000002
 #define FREE_BOTH        0x00000003
 static void 
-cssSelectorPropertySetPair(pParse, pSelector, pPropertySet, freeWhat)
-    CssParse *pParse;
-    CssSelector *pSelector;
-    CssPropertySet *pPropertySet;
-    unsigned int freeWhat;
+cssSelectorPropertySetPair (CssParse *pParse, CssSelector *pSelector, CssPropertySet *pPropertySet, unsigned int freeWhat)
 {
     int spec = 0;
     CssSelector *pS = 0;
@@ -2922,9 +2912,8 @@ cssSelectorPropertySetPair(pParse, pSelector, pPropertySet, freeWhat)
  *
  *--------------------------------------------------------------------------
  */
-void HtmlCssRule(pParse, success)
-    CssParse *pParse;
-    int success;
+void 
+HtmlCssRule (CssParse *pParse, int success)
 {
     CssSelector *pSelector = pParse->pSelector;
     CssPropertySet *pPropertySet = pParse->pPropertySet;
@@ -3011,10 +3000,8 @@ void HtmlCssRule(pParse, success)
  *
  *--------------------------------------------------------------------------
  */
-static int attrTest(eType, zString, zAttr)
-    u8 eType;
-    const char *zString;
-    const char *zAttr;
+static int 
+attrTest (int eType, const char *zString, const char *zAttr)
 {
     if (!zAttr) {
         return 0;
@@ -3083,10 +3070,7 @@ static int attrTest(eType, zString, zAttr)
 #define N_NUMCHILDREN(x) HtmlNodeNumChildren(x)
 #define N_CHILD(x,y)     HtmlNodeChild(x,y)
 int 
-HtmlCssSelectorTest(pSelector, pNode, dynamic_true)
-    CssSelector *pSelector;
-    HtmlNode *pNode;
-    int dynamic_true;
+HtmlCssSelectorTest (CssSelector *pSelector, HtmlNode *pNode, int dynamic_true)
 {
     CssSelector *p = pSelector;
     HtmlNode *x = pNode;
@@ -3256,8 +3240,7 @@ HtmlCssSelectorTest(pSelector, pNode, dynamic_true)
  *---------------------------------------------------------------------------
  */
 void 
-HtmlCssInlineFree(pPropertySet)
-    CssPropertySet *pPropertySet;
+HtmlCssInlineFree (CssPropertySet *pPropertySet)
 {
     propertySetFree(pPropertySet);
 }
@@ -3274,10 +3257,7 @@ HtmlCssInlineFree(pPropertySet)
  *---------------------------------------------------------------------------
  */
 static void 
-propertySetToPropertyValues(p, aPropDone, pSet)
-    HtmlComputedValuesCreator *p;
-    int *aPropDone;
-    CssPropertySet *pSet;
+propertySetToPropertyValues (HtmlComputedValuesCreator *p, int *aPropDone, CssPropertySet *pSet)
 {
     int i;
     assert(pSet);
@@ -3309,10 +3289,7 @@ propertySetToPropertyValues(p, aPropDone, pSet)
  *---------------------------------------------------------------------------
  */
 static void 
-ruleToPropertyValues(p, aPropDone, pRule)
-    HtmlComputedValuesCreator *p;
-    int *aPropDone;
-    CssRule *pRule;
+ruleToPropertyValues (HtmlComputedValuesCreator *p, int *aPropDone, CssRule *pRule)
 {
     propertySetToPropertyValues(p, aPropDone, pRule->pPropertySet);
 }
@@ -3379,13 +3356,7 @@ overrideToPropertyValues(p, aPropDone, pOverride)
  *--------------------------------------------------------------------------
  */
 static int 
-applyRule(pTree, pNode, pRule, aPropDone, pzIfMatch, pCreator)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    CssRule *pRule;
-    int *aPropDone;
-    char **pzIfMatch;
-    HtmlComputedValuesCreator *pCreator;
+applyRule (HtmlTree *pTree, HtmlNode *pNode, CssRule *pRule, int *aPropDone, char **pzIfMatch, HtmlComputedValuesCreator *pCreator)
 {
     /* Test if the selector matches the node. Variable isMatch is set to
      * true if the selector matches, or false otherwise. 
@@ -3436,9 +3407,7 @@ applyRule(pTree, pNode, pRule, aPropDone, pzIfMatch, pCreator)
  *--------------------------------------------------------------------------
  */
 static CssRule *
-nextRule(apRule, n)
-    CssRule **apRule;
-    int n;
+nextRule (CssRule **apRule, int n)
 {
     CssRule **ppRule = 0;
     CssRule *pRet = 0;
@@ -3480,9 +3449,7 @@ nextRule(apRule, n)
  *--------------------------------------------------------------------------
  */
 void 
-HtmlCssStyleSheetApply(pTree, pNode)
-    HtmlTree *pTree; 
-    HtmlNode *pNode; 
+HtmlCssStyleSheetApply (HtmlTree *pTree, HtmlNode *pNode) 
 {
 
     /* The two hard coded constants mentioned above */
@@ -3647,9 +3614,7 @@ HtmlCssStyleSheetApply(pTree, pNode)
  *--------------------------------------------------------------------------
  */
 static HtmlTextNode *
-generateContentText(pTree, zContent)
-    HtmlTree *pTree;
-    const char *zContent;
+generateContentText (HtmlTree *pTree, const char *zContent)
 {
     HtmlTextNode *pTextNode = HtmlTextNew(strlen(zContent), zContent, 0, 0);
     return pTextNode;
@@ -3668,11 +3633,12 @@ generateContentText(pTree, zContent)
  *--------------------------------------------------------------------------
  */
 static void 
-generatedContent(pTree, pNode, pCssRule, ppNode)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    CssRule *pCssRule;        /* List of rules including :after or :before */
-    HtmlNode **ppNode;
+generatedContent (
+    HtmlTree *pTree,
+    HtmlNode *pNode,
+    CssRule *pCssRule,        /* List of rules including :after or :before */
+    HtmlNode **ppNode
+)
 {
     CssRule *pRule;                                 /* Iterator variable */
     int have = 0;
@@ -3725,10 +3691,8 @@ generatedContent(pTree, pNode, pCssRule, ppNode)
  *
  *--------------------------------------------------------------------------
  */
-void HtmlCssStyleGenerateContent(pTree, pElem, isBefore)
-    HtmlTree *pTree;
-    HtmlElementNode *pElem;
-    int isBefore;
+void 
+HtmlCssStyleGenerateContent (HtmlTree *pTree, HtmlElementNode *pElem, int isBefore)
 {
     CssStyleSheet *pStyle = pTree->pStyle;    /* Stylesheet config */
     HtmlNode *pNode = (HtmlNode *)pElem;
@@ -3753,11 +3717,7 @@ void HtmlCssStyleGenerateContent(pTree, pElem, isBefore)
  *--------------------------------------------------------------------------
  */
 CssProperty *
-HtmlCssPropertiesGet(pProperties, prop, pSheetnum, pSpec)
-    CssProperties * pProperties; 
-    int prop;
-    int *pSheetnum;
-    int *pSpec;
+HtmlCssPropertiesGet (CssProperties *pProperties, int prop, int *pSheetnum, int *pSpec)
 {
     CssProperty *zRet = 0;
     if (pProperties) {
@@ -3791,8 +3751,8 @@ HtmlCssPropertiesGet(pProperties, prop, pSheetnum, pSpec)
  *
  *---------------------------------------------------------------------------
  */
-void HtmlCssSelectorComma(pParse)
-    CssParse *pParse;
+void 
+HtmlCssSelectorComma (CssParse *pParse)
 {
     int n = (pParse->nXtra + 1) * sizeof(CssSelector *);
 
@@ -3823,9 +3783,8 @@ void HtmlCssSelectorComma(pParse)
  *
  *---------------------------------------------------------------------------
  */
-void HtmlCssImport(pParse, pToken)
-    CssParse *pParse;
-    CssToken *pToken;
+void 
+HtmlCssImport (CssParse *pParse, CssToken *pToken)
 {
     Tcl_Obj *pEval = pParse->pImportCmd;
 

@@ -51,8 +51,8 @@ struct CssInput {
 
 
 #if 0
-static void inputPrintToken(pInput)
-    CssInput *pInput;
+static void 
+inputPrintToken (CssInput *pInput)
 {
     switch (pInput->eToken) {
         case CT_SPACE: printf("CT_SPACE"); break;
@@ -111,8 +111,8 @@ static void inputPrintToken(pInput)
  *
  *---------------------------------------------------------------------------
  */
-static int inputDiscardComment(pInput)
-    CssInput *pInput;
+static int 
+inputDiscardComment (CssInput *pInput)
 {
     const char *z = &pInput->zInput[pInput->iInput];
     int n = pInput->nInput - pInput->iInput;
@@ -158,10 +158,12 @@ static int inputDiscardComment(pInput)
  *
  *---------------------------------------------------------------------------
  */
-static CssTokenType inputGetToken(pInput, pzToken, pnToken)
-    CssInput *pInput;
-    const char **pzToken;          /* OUTPUT: Pointer to token */
-    int *pnToken;                  /* OUTPUT: Token length */
+static CssTokenType 
+inputGetToken (
+    CssInput *pInput,
+    const char **pzToken,          /* OUTPUT: Pointer to token */
+    int *pnToken                  /* OUTPUT: Token length */
+)
 {
     if (pzToken) *pzToken = pInput->zToken;
     if (pnToken) *pnToken = pInput->nToken;
@@ -183,8 +185,8 @@ static CssTokenType inputGetToken(pInput, pzToken, pnToken)
  *
  *---------------------------------------------------------------------------
  */
-static int inputNextToken(pInput)
-    CssInput *pInput;
+static int 
+inputNextToken (CssInput *pInput)
 {
     const char *z;
     int n;
@@ -374,8 +376,8 @@ bad_token:
  *
  *---------------------------------------------------------------------------
  */
-static int inputNextTokenIgnoreSpace(pInput)
-    CssInput *pInput;
+static int 
+inputNextTokenIgnoreSpace (CssInput *pInput)
 {
     int rc = inputNextToken(pInput);
     if (rc == 0 && CT_SPACE == inputGetToken(pInput, 0, 0)) {
@@ -413,10 +415,12 @@ static int inputNextTokenIgnoreSpace(pInput)
  *
  *---------------------------------------------------------------------------
  */
-static void parseSyntaxError(pInput, pParse, isStopAtSemiColon)
-    CssInput *pInput;
-    CssParse *pParse;
-    int isStopAtSemiColon;        /* True if error occured parsing an @ rule */
+static void 
+parseSyntaxError (
+    CssInput *pInput,
+    CssParse *pParse,
+    int isStopAtSemiColon        /* True if error occured parsing an @ rule */
+)
 {
     char *zToken;
     int nToken;
@@ -465,9 +469,8 @@ static void parseSyntaxError(pInput, pParse, isStopAtSemiColon)
  *
  *---------------------------------------------------------------------------
  */
-static int parseDeclarationError(pInput, pParse)
-    CssInput *pInput;
-    CssParse *pParse;
+static int 
+parseDeclarationError (CssInput *pInput, CssParse *pParse)
 {
     char *zToken;
     int nToken;
@@ -516,9 +519,8 @@ static int parseDeclarationError(pInput, pParse)
  *
  *---------------------------------------------------------------------------
  */
-static int parseSelector(pInput, pParse)
-    CssInput *pInput;
-    CssParse *pParse;
+static int 
+parseSelector (CssInput *pInput, CssParse *pParse)
 {
 
     while (1) {
@@ -838,9 +840,8 @@ static int parseDeclarationBlock(CssInput *pInput, CssParse *pParse){
  *
  *---------------------------------------------------------------------------
  */
-static int parseMediaList(pInput, pIsMatch)
-    CssInput *pInput;
-    int *pIsMatch;
+static int 
+parseMediaList (CssInput *pInput, int *pIsMatch)
 {
     int media_ok = 0;
 
@@ -980,10 +981,8 @@ static int parseAtRule(CssInput *pInput, CssParse *pParse){
  *
  *---------------------------------------------------------------------------
  */
-void HtmlCssRunParser(zInput, nInput, pParse)
-    const char *zInput;
-    int nInput;
-    CssParse *pParse;
+void 
+HtmlCssRunParser (const char *zInput, int nInput, CssParse *pParse)
 {
     int eToken;
     CssInput sInput;
@@ -1037,10 +1036,8 @@ void HtmlCssRunParser(zInput, nInput, pParse)
  *
  *---------------------------------------------------------------------------
  */
-void HtmlCssRunStyleParser(zInput, nInput, pParse)
-    const char *zInput;
-    int nInput;
-    CssParse *pParse;
+void 
+HtmlCssRunStyleParser (const char *zInput, int nInput, CssParse *pParse)
 {
     CssInput sInput;
     memset(&sInput, 0, sizeof(CssInput));
@@ -1105,10 +1102,7 @@ CssTokenType HtmlCssGetToken(z, n, pLen)
  *---------------------------------------------------------------------------
  */
 const char *
-HtmlCssGetNextListItem(zList, nList, pN)
-    const char *zList;
-    int nList;
-    int *pN;
+HtmlCssGetNextListItem (const char *zList, int nList, int *pN)
 {
     char *zRet;
     int eToken;
@@ -1166,10 +1160,7 @@ HtmlCssGetNextListItem(zList, nList, pN)
  *---------------------------------------------------------------------------
  */
 const char *
-HtmlCssGetNextCommaListItem(zList, nList, pN)
-    const char *zList;
-    int nList;
-    int *pN;
+HtmlCssGetNextCommaListItem (const char *zList, int nList, int *pN)
 {
     char *zRet;
     int eToken;

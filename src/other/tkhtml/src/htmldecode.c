@@ -260,11 +260,8 @@ HtmlEncode(clientData, interp, objc, objv)
     return TCL_OK;
 }
 
-static char * 
-allocEscapedComponent(zInput, nInput, isQuery)
-    const char *zInput;
-    int nInput;
-    int isQuery;
+static char *
+allocEscapedComponent (const char *zInput, int nInput, int isQuery)
 {
     int map[128] = { 
         0, 0, 0, 0, 0, 0, 0, 0,   0, 0, 0, 0, 0, 0, 0, 0,    /* 0   */
@@ -471,9 +468,7 @@ objToUri(pObj)
 }
 
 static char *
-combinePath(zOne, zTwo)
-    const char *zOne;
-    const char *zTwo;
+combinePath (const char *zOne, const char *zTwo)
 {
     char *zRet;
     if (zTwo[0] == '/') {
@@ -504,9 +499,8 @@ combinePath(zOne, zTwo)
     return zRet;
 }
 
-static void
-cleanPath(zPath)
-    char *zPath;
+static void 
+cleanPath (char *zPath)
 {
     int nPath = strlen(zPath);
     int iIn;
@@ -544,12 +538,7 @@ cleanPath(zPath)
 }
 
 static char *
-makeUri(zScheme, zAuthority, zPath, zQuery, zFragment)
-    char const *zScheme;
-    char const *zAuthority;
-    char const *zPath;
-    char const *zQuery;
-    char const *zFragment;
+makeUri (char const *zScheme, char const *zAuthority, char const *zPath, char const *zQuery, char const *zFragment)
 {
     char *zRes;
     int nSpace = 

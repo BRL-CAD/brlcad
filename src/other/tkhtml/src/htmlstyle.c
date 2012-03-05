@@ -42,10 +42,8 @@ static const char rcsid[] = "$Id: htmlstyle.c,v 1.61 2007/12/12 04:50:29 danielk
 #include <assert.h>
 #include <string.h>
 
-void
-HtmlDelScrollbars(pTree, pNode)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
+void 
+HtmlDelScrollbars (HtmlTree *pTree, HtmlNode *pNode)
 {
     HtmlElementNode *pElem = (HtmlElementNode *)pNode;
 
@@ -88,10 +86,8 @@ HtmlDelScrollbars(pTree, pNode)
     }
 }
 
-void
-HtmlDelStackingInfo(pTree, pElem)
-    HtmlTree *pTree;
-    HtmlElementNode *pElem;
+void 
+HtmlDelStackingInfo (HtmlTree *pTree, HtmlElementNode *pElem)
 {
     HtmlNodeStack *pStack = pElem->pStack;
     if (pStack && pStack->pElem == pElem){
@@ -117,8 +113,7 @@ HtmlDelStackingInfo(pTree, pElem)
 #define STACK_AUTO      2
 #define STACK_CONTEXT   3
 static int 
-stackType(p) 
-    HtmlNode *p;
+stackType (HtmlNode *p)
 {
     HtmlComputedValues *pV = HtmlNodeComputedValues(p);
 
@@ -145,10 +140,8 @@ stackType(p)
     return STACK_NONE;
 }
 
-static void
-addStackingInfo(pTree, pElem)
-    HtmlTree *pTree;
-    HtmlElementNode *pElem;
+static void 
+addStackingInfo (HtmlTree *pTree, HtmlElementNode *pElem)
 {
     HtmlNode *pNode = (HtmlNode *)pElem;
     int eStack = stackType(pNode);
@@ -205,11 +198,8 @@ struct StackCompare {
  *
  *---------------------------------------------------------------------------
  */
-static int
-scoreStack(pParentStack, pStack, eStack)
-    HtmlNodeStack *pParentStack;
-    HtmlNodeStack *pStack;
-    int eStack;
+static int 
+scoreStack (HtmlNodeStack *pParentStack, HtmlNodeStack *pStack, int eStack)
 {
     int z;
     if (pStack == pParentStack) {
@@ -229,9 +219,8 @@ scoreStack(pParentStack, pStack, eStack)
          x == x->pStack->pElem && x->pStack->eType == STACK_CONTEXT \
 )
 
-static void setStackingContext(p, ppOut)
-    HtmlElementNode *p;
-    HtmlNodeStack **ppOut;
+static void 
+setStackingContext (HtmlElementNode *p, HtmlNodeStack **ppOut)
 {
     if (p == p->pStack->pElem) {
         HtmlNodeStack *pS = p->pStack;
@@ -242,10 +231,8 @@ static void setStackingContext(p, ppOut)
 }
 
 
-static int
-stackCompare(pVoidLeft, pVoidRight)
-    const void *pVoidLeft;
-    const void *pVoidRight;
+static int 
+stackCompare (const void *pVoidLeft, const void *pVoidRight)
 {
     StackCompare *pLeft = (StackCompare *)pVoidLeft;
     StackCompare *pRight = (StackCompare *)pVoidRight;
@@ -413,9 +400,8 @@ checkStackSort(pTree, aStack, nStack)
  *
  *---------------------------------------------------------------------------
  */
-void
-HtmlRestackNodes(pTree)
-    HtmlTree *pTree;
+void 
+HtmlRestackNodes (HtmlTree *pTree)
 {
     HtmlNodeStack *pStack;
     StackCompare *apTmp;
@@ -567,10 +553,7 @@ struct StyleApply {
 typedef struct StyleApply StyleApply;
 
 static void 
-styleApply(pTree, pNode, p)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    StyleApply *p;
+styleApply (HtmlTree *pTree, HtmlNode *pNode, StyleApply *p)
 {
     int i;
     int doStyle;
@@ -684,10 +667,8 @@ styleApply(pTree, pNode, p)
     }
 }
 
-static void addCounterEntry(p, zName, iValue)
-    StyleApply *p;
-    const char *zName;
-    int iValue;
+static void 
+addCounterEntry (StyleApply *p, const char *zName, int iValue)
 {
     StyleCounter *pCounter;
 
@@ -710,10 +691,8 @@ static void addCounterEntry(p, zName, iValue)
     p->nCounter++;
 }
 
-void
-HtmlStyleHandleCounters(pTree, pComputed)
-    HtmlTree *pTree;
-    HtmlComputedValues *pComputed;
+void 
+HtmlStyleHandleCounters (HtmlTree *pTree, HtmlComputedValues *pComputed)
 {
     StyleApply *p = (StyleApply *)pTree->pStyleApply;
 
@@ -768,11 +747,8 @@ HtmlStyleHandleCounters(pTree, pComputed)
     }
 }
 
-int HtmlStyleCounters(pTree, zName, aValue, nValue)
-    HtmlTree *pTree;
-    const char *zName;
-    int *aValue;
-    int nValue;
+int 
+HtmlStyleCounters (HtmlTree *pTree, const char *zName, int *aValue, int nValue)
 {
     int ii;
     StyleApply *p = (StyleApply *)(pTree->pStyleApply);
@@ -794,9 +770,8 @@ int HtmlStyleCounters(pTree, zName, aValue, nValue)
     return n;
 }
 
-int HtmlStyleCounter(pTree, zName)
-    HtmlTree *pTree;
-    const char *zName;
+int 
+HtmlStyleCounter (HtmlTree *pTree, const char *zName)
 {
     int ii;
     StyleApply *p = (StyleApply *)(pTree->pStyleApply);
@@ -824,9 +799,7 @@ int HtmlStyleCounter(pTree, zName)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlStyleApply(pTree, pNode)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
+HtmlStyleApply (HtmlTree *pTree, HtmlNode *pNode)
 {
     StyleApply sApply;
     int isRoot = ((pNode == pTree->pRoot) ? 1 : 0);
