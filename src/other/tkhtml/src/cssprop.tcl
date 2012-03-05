@@ -170,9 +170,7 @@ proc CodeInfrastructure {} {
          * and 127, inclusive.
          */
         static int 
-        Hash(nString, zString) 
-            int nString;
-            const char *zString;
+        Hash(int nString, const char *zString) 
         {
             unsigned int result = 0;
             const char *string = zString;
@@ -187,12 +185,8 @@ proc CodeInfrastructure {} {
             return (result & 0x000000FF);
         }
 
-        static int
-        Lookup(nString, zString, aTable, aHashTable) 
-            int nString;
-            const char *zString;
-            int *aTable;
-            HashEntry *aHashTable;
+        static int 
+        Lookup(int nString, const char *zString, int *aTable, HashEntry *aHashTable) 
         {
             int t;
 
@@ -296,9 +290,7 @@ proc CodeLookup {prefix entries firstconstant} {
     append ::cssprop_c "\n"
 
     append ::cssprop_c "int\n"
-    append ::cssprop_c "${prefix}Lookup(n, z)\n"
-    append ::cssprop_c "    int n;\n"
-    append ::cssprop_c "    const char *z;\n"
+    append ::cssprop_c "${prefix}Lookup(int n, const char *z)\n"
     append ::cssprop_c "\{\n"
     append ::cssprop_c "    int aTable\[\] = \{\n"
 
