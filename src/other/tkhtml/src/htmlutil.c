@@ -399,8 +399,7 @@ HtmlInstrumentInit(interp)
 
 #else  /* TKHTML_ENABLE_PROFILE */
 void
-HtmlInstrumentInit(interp)
-    Tcl_Interp *interp;
+HtmlInstrumentInit(Tcl_Interp *interp)
 {
     /* No-op */
 }

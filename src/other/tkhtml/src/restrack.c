@@ -175,9 +175,7 @@ static Tcl_HashTable aOutstanding;
  *---------------------------------------------------------------------------
  */
 static void 
-ResAlloc(v1, v2)
-    ClientData v1;
-    ClientData v2;
+ResAlloc(ClientData v1, ClientData v2)
 {
 #if defined(RES_DEBUG) && defined(__GLIBC__)
     int key[2];
@@ -237,9 +235,7 @@ ResAlloc(v1, v2)
  *---------------------------------------------------------------------------
  */
 static void 
-ResFree(v1, v2)
-    ClientData v1;
-    ClientData v2;
+ResFree(ClientData v1, ClientData v2)
 {
 #if defined(RES_DEBUG) && defined(__GLIBC__)
     int key[2];
@@ -498,11 +494,11 @@ freeMallocHash (
  *---------------------------------------------------------------------------
  */
 int 
-HtmlHeapDebug(clientData, interp, objc, objv)
-    ClientData clientData;
-    Tcl_Interp *interp; 
-    int objc;
-    Tcl_Obj * const objv[];
+HtmlHeapDebug(
+    ClientData clientData,
+    Tcl_Interp *interp, 
+    int objc,
+    Tcl_Obj * const objv[])
 {
     Tcl_Obj *pRet = Tcl_NewObj();
     Tcl_HashEntry *pEntry;
@@ -554,11 +550,11 @@ HtmlHeapDebug(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 int 
-Rt_AllocCommand(clientData, interp, objc, objv)
-  ClientData clientData;
-  Tcl_Interp *interp; 
-  int objc;
-  Tcl_Obj * const objv[];
+Rt_AllocCommand(
+  ClientData clientData,
+  Tcl_Interp *interp, 
+  int objc,
+  Tcl_Obj * const objv[])
 {
     int i;
     Tcl_Obj *pRet;

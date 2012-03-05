@@ -932,10 +932,7 @@ getOverlap (HtmlTaggedRegion *pTagged, int iFrom, int iTo)
 
 
 static int
-tagAddRemoveCallback(pTree, pNode, clientData)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    ClientData clientData;
+tagAddRemoveCallback(HtmlTree *pTree, HtmlNode *pNode, ClientData clientData)
 {
     TagOpData *pData = (TagOpData *)clientData;
     HtmlTextNode *pTextNode = HtmlNodeAsText(pNode);
@@ -1059,12 +1056,13 @@ tagAddRemoveCallback(pTree, pNode, clientData)
 }
 
 int 
-HtmlTagAddRemoveCmd(clientData, interp, objc, objv, isAdd)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *CONST objv[];             /* List of all arguments */
-    int isAdd;
+HtmlTagAddRemoveCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *CONST objv[],             /* List of all arguments */
+    int isAdd
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     HtmlNode *pParent;
@@ -1124,11 +1122,12 @@ HtmlTagAddRemoveCmd(clientData, interp, objc, objv, isAdd)
 }
 
 int 
-HtmlTagConfigureCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *CONST objv[];             /* List of all arguments */
+HtmlTagConfigureCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *CONST objv[]              /* List of all arguments */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     Tk_OptionTable otab;
@@ -1175,11 +1174,12 @@ tagDeleteCallback(pTree, pNode, clientData)
 }
 
 int 
-HtmlTagDeleteCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *CONST objv[];             /* List of all arguments */
+HtmlTagDeleteCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *CONST objv[]              /* List of all arguments */
+    )
 {
     const char *zTag;
     Tcl_HashEntry *pEntry;
@@ -1423,11 +1423,12 @@ HtmlTextInvalidate (HtmlTree *pTree)
 }
 
 int
-HtmlTextTextCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *CONST objv[];             /* List of all arguments */
+HtmlTextTextCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *CONST objv[]              /* List of all arguments */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     if (objc != 3) {
@@ -1460,11 +1461,12 @@ HtmlTextTextCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 int
-HtmlTextIndexCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *CONST objv[];             /* List of all arguments */
+HtmlTextIndexCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *CONST objv[]              /* List of all arguments */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     int ii;
@@ -1531,11 +1533,12 @@ HtmlTextIndexCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 int
-HtmlTextOffsetCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *CONST objv[];             /* List of all arguments */
+HtmlTextOffsetCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *CONST objv[]              /* List of all arguments */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     HtmlTextMapping *pMap;
@@ -1598,11 +1601,12 @@ HtmlTextOffsetCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 int
-HtmlTextBboxCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *CONST objv[];             /* List of all arguments */
+HtmlTextBboxCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *CONST objv[]              /* List of all arguments */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     HtmlNode *pFrom;

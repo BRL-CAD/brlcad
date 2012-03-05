@@ -71,29 +71,32 @@ extern struct MyTkIntStubs *tkIntStubsPtr;
 
 #ifndef NDEBUG
 static int 
-allocCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+allocCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return Rt_AllocCommand(0, interp, objc, objv);
 }
 static int 
-heapdebugCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+heapdebugCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlHeapDebug(0, interp, objc, objv);
 }
 static int 
-hashstatsCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+hashstatsCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     Tcl_HashEntry *p;
@@ -355,10 +358,11 @@ doScrollCallback (HtmlTree *pTree)
  */
 #ifndef NDEBUG
 static int
-checkRestylePointCb(pTree, pNode, clientData)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    ClientData clientData;
+checkRestylePointCb(
+    HtmlTree *pTree,
+    HtmlNode *pNode,
+    ClientData clientData
+)
 {
     HtmlNode *pParent;
     HtmlNode *p;
@@ -384,8 +388,7 @@ ok_out:
     return HTML_WALK_DESCEND;
 }
 void
-HtmlCheckRestylePoint(pTree)
-    HtmlTree *pTree;
+HtmlCheckRestylePoint(HtmlTree *pTree)
 {
     HtmlWalkTree(pTree, 0, checkRestylePointCb, 0);
 }
@@ -399,18 +402,15 @@ static void runLayoutEngine(ClientData clientData);
 #if defined(TKHTML_ENABLE_PROFILE)
   #define INSTRUMENTED(name, id)                                             \
     static void real_ ## name (ClientData);                                  \
-    static void name (clientData)                                            \
-      ClientData clientData;                                                 \
+    static void name (ClientData clientData)                                 \
     {                                                                        \
       HtmlTree *p = (HtmlTree *)clientData;                                  \
       HtmlInstrumentCall(p->pInstrumentData, id, real_ ## name, clientData); \
     }                                                                        \
-    static void real_ ## name (clientData)                                   \
-      ClientData clientData;                                                 
+    static void real_ ## name (ClientData clientData)
 #else
   #define INSTRUMENTED(name, id)                                             \
-    static void name (clientData)                                            \
-      ClientData clientData;                                                 
+    static void name (ClientData clientData)
 #endif
 
 INSTRUMENTED(runDynamicStyleEngine, HTML_INSTRUMENT_DYNAMIC_STYLE_ENGINE)
@@ -628,8 +628,7 @@ INSTRUMENTED(callbackHandler, HTML_INSTRUMENT_CALLBACK)
 }
 
 static void
-delayCallbackHandler(clientData)
-    ClientData clientData;
+delayCallbackHandler(ClientData clientData)
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     pTree->delayToken = 0;
@@ -1004,8 +1003,7 @@ HtmlCallbackScrollX (HtmlTree *pTree, int x)
  *---------------------------------------------------------------------------
  */
 static void 
-cleanupHandlerTable(pHash)
-    Tcl_HashTable *pHash;
+cleanupHandlerTable(Tcl_HashTable *pHash)
 {
     Tcl_HashEntry *pEntry;
     Tcl_HashSearch search;
@@ -1036,8 +1034,7 @@ cleanupHandlerTable(pHash)
  *---------------------------------------------------------------------------
  */
 static void 
-deleteWidget(clientData)
-    ClientData clientData;
+deleteWidget(ClientData clientData)
 {
     HtmlDamage *pDamage;
     HtmlTree *pTree = (HtmlTree *)clientData;
@@ -1103,8 +1100,7 @@ deleteWidget(clientData)
  *---------------------------------------------------------------------------
  */
 static void 
-widgetCmdDel(clientData)
-    ClientData clientData;
+widgetCmdDel(ClientData clientData)
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     if( !pTree->isDeleted ){
@@ -1127,9 +1123,9 @@ widgetCmdDel(clientData)
  *---------------------------------------------------------------------------
  */
 static void 
-eventHandler(clientData, pEvent)
-    ClientData clientData;
-    XEvent *pEvent;
+eventHandler(
+    ClientData clientData,
+    XEvent *pEvent)
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
 
@@ -1165,9 +1161,9 @@ eventHandler(clientData, pEvent)
 }
 
 static void 
-docwinEventHandler(clientData, pEvent)
-    ClientData clientData;
-    XEvent *pEvent;
+docwinEventHandler(
+    ClientData clientData,
+    XEvent *pEvent)
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
 
@@ -1210,20 +1206,20 @@ docwinEventHandler(clientData, pEvent)
 }
 
 static int 
-relayoutCb(pTree, pNode, clientData)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    ClientData clientData;
+relayoutCb(
+    HtmlTree *pTree,
+    HtmlNode *pNode,
+    ClientData clientData)
 {
     HtmlCallbackLayout(pTree, pNode);
     return HTML_WALK_DESCEND;
 }
 
 static int 
-worldChangedCb(pTree, pNode, clientData)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    ClientData clientData;
+worldChangedCb(
+    HtmlTree *pTree,
+    HtmlNode *pNode,
+    ClientData clientData)
 {
     if (!HtmlNodeIsText(pNode)) {
         HtmlElementNode *pElem = (HtmlElementNode *)pNode;
@@ -1265,11 +1261,12 @@ HtmlNodeClearRecursive (HtmlTree *pTree, HtmlNode *pNode)
  *---------------------------------------------------------------------------
  */
 static int 
-configureCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *const *objv;              /* List of all arguments */
+configureCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *const *objv               /* List of all arguments */
+    )
 {
     static const char *azModes[] = {"quirks","almost standards","standards",0};
     static const char *azParseModes[] = {"html","xhtml","xml",0};
@@ -1469,11 +1466,12 @@ STRING  (timercmd, "timerCmd", "TimerCmd", ""),
  *
  *---------------------------------------------------------------------------
  */
-static int cgetCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *const *objv;              /* List of all arguments */
+static int cgetCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *const *objv               /* List of all arguments */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     Tcl_Obj *pRet;
@@ -1517,11 +1515,12 @@ static int cgetCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 static int 
-resetCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *const *objv;              /* List of all arguments */
+resetCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *const *objv               /* List of all arguments */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     Tk_Window win = pTree->tkwin;
@@ -1567,11 +1566,12 @@ resetCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 static int 
-relayoutCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *const *objv;              /* List of all arguments */
+relayoutCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *const *objv               /* List of all arguments */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
 
@@ -1621,11 +1621,12 @@ relayoutCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 static int 
-parseCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *const *objv;              /* List of all arguments */
+parseCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *const *objv               /* List of all arguments */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
 
@@ -1726,11 +1727,12 @@ parseCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 static int 
-preloadCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *const *objv;              /* List of all arguments */
+preloadCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *const *objv               /* List of all arguments */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     HtmlImage2 *pImg2 = 0;
@@ -1764,11 +1766,12 @@ preloadCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 static int 
-fragmentCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *const *objv;              /* List of all arguments */
+fragmentCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *const *objv               /* List of all arguments */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     if (objc != 3) {
@@ -1792,11 +1795,11 @@ fragmentCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 static int 
-viewCommon(pTree, isXview, objc, objv)
-    HtmlTree *pTree;
-    int isXview;               /* True for [xview], zero for [yview] */
-    int objc;
-    Tcl_Obj * CONST objv[];
+viewCommon(
+    HtmlTree *pTree,
+    int isXview,               /* True for [xview], zero for [yview] */
+    int objc,
+    Tcl_Obj * CONST objv[])
 {
     Tcl_Interp *interp = pTree->interp;
     Tk_Window win = pTree->tkwin;
@@ -1904,20 +1907,22 @@ viewCommon(pTree, isXview, objc, objv)
  *---------------------------------------------------------------------------
  */
 static int 
-xviewCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *const *objv;              /* List of all arguments */
+xviewCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *const *objv               /* List of all arguments */
+    )
 {
     return viewCommon((HtmlTree *)clientData, 1, objc, objv);
 }
 static int 
-yviewCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *const *objv;              /* List of all arguments */
+yviewCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *const *objv               /* List of all arguments */
+    )
 {
     return viewCommon((HtmlTree *)clientData, 0, objc, objv);
 }
@@ -1940,11 +1945,12 @@ yviewCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 static int 
-writeCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+writeCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     int eChoice;
@@ -2017,11 +2023,12 @@ writeCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 static int 
-handlerCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+handlerCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     int tag;
     Tcl_Obj *pScript;
@@ -2129,11 +2136,12 @@ handlerCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 static int 
-styleCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+styleCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     SwprocConf aConf[5 + 1] = {
         {SWPROC_OPT, "id", "author", 0},      /* -id <style-sheet id> */
@@ -2189,51 +2197,56 @@ styleCmd(clientData, interp, objc, objv)
 }
 
 static int
-tagAddCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+tagAddCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlTagAddRemoveCmd(clientData, interp, objc, objv, HTML_TAG_ADD);
 }
 static int
-tagRemoveCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+tagRemoveCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlTagAddRemoveCmd(clientData, interp, objc, objv, HTML_TAG_REMOVE);
 }
 static int
-tagCfgCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+tagCfgCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlTagConfigureCmd(clientData, interp, objc, objv);
 }
 
 static int
-tagDeleteCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+tagDeleteCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlTagDeleteCmd(clientData, interp, objc, objv);
 }
 
 static int
-callSubCmd(aSub, iIdx, clientData, interp, objc, objv)
-    SubCmd *aSub;
-    int iIdx;
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+callSubCmd( 
+    SubCmd *aSub,
+    int iIdx,
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     int iChoice;
 
@@ -2252,11 +2265,12 @@ callSubCmd(aSub, iIdx, clientData, interp, objc, objv)
 }
 
 static int
-tagCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+tagCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     SubCmd aSub[] = {
         { "add"      , tagAddCmd }, 
@@ -2269,47 +2283,52 @@ tagCmd(clientData, interp, objc, objv)
 }
 
 static int
-textTextCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+textTextCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlTextTextCmd(clientData, interp, objc, objv);
 }
 static int
-textIndexCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+textIndexCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlTextIndexCmd(clientData, interp, objc, objv);
 }
 static int
-textBboxCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+textBboxCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlTextBboxCmd(clientData, interp, objc, objv);
 }
 static int
-textOffsetCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+textOffsetCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlTextOffsetCmd(clientData, interp, objc, objv);
 }
 static int
-textCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+textCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     SubCmd aSub[] = {
         { "text",   textTextCmd },
@@ -2323,22 +2342,24 @@ textCmd(clientData, interp, objc, objv)
 
 
 static int 
-forceCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+forceCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     HtmlCallbackForce((HtmlTree *)clientData);
     return TCL_OK;
 }
 
 static int 
-delayCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+delayCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     int iMilli;
@@ -2389,66 +2410,73 @@ delayCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 static int 
-imageCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+imageCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlLayoutImage(clientData, interp, objc, objv);
 }
 static int 
-nodeCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+nodeCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     HtmlInitTree((HtmlTree *)clientData);
     return HtmlLayoutNode(clientData, interp, objc, objv);
 }
 static int 
-primitivesCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+primitivesCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlLayoutPrimitives(clientData, interp, objc, objv);
 }
 static int 
-imagesCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+imagesCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlImageServerReport(clientData, interp, objc, objv);
 }
 static int 
-searchCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+searchCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlCssSearch(clientData, interp, objc, objv);
 }
 static int 
-styleconfigCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+styleconfigCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlCssStyleConfigDump(clientData, interp, objc, objv);
 }
 static int 
-stylereportCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+stylereportCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlCssStyleReport(clientData, interp, objc, objv);
 }
@@ -2468,11 +2496,12 @@ stylereportCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 static int 
-bboxCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+bboxCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlWidgetBboxCmd(clientData, interp, objc, objv);
 #if 0
@@ -2521,11 +2550,12 @@ bboxCmd(clientData, interp, objc, objv)
  *
  *---------------------------------------------------------------------------
  */
-int widgetCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+int widgetCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     /* The following array defines all the built-in widget commands.  This
      * function just parses the first one or two arguments and vectors control
@@ -2588,11 +2618,12 @@ int widgetCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 static int 
-newWidget(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+newWidget(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     HtmlTree *pTree;
     CONST char *zCmd;
@@ -2705,11 +2736,12 @@ newWidget(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 static int 
-htmlstyleCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+htmlstyleCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     if (objc > 1 && objc != 2 && strcmp(Tcl_GetString(objv[1]), "-quirks")) {
         Tcl_WrongNumArgs(interp, 1, objv, "?-quirks?");
@@ -2741,11 +2773,12 @@ htmlstyleCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 static int 
-htmlVersionCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+htmlVersionCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     if (objc > 1) {
         Tcl_WrongNumArgs(interp, 1, objv, "");
@@ -2757,39 +2790,43 @@ htmlVersionCmd(clientData, interp, objc, objv)
 
 
 static int 
-htmlDecodeCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+htmlDecodeCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlDecode(clientData, interp, objc, objv);
 }
 static int 
-htmlEncodeCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+htmlEncodeCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlEncode(clientData, interp, objc, objv);
 }
 
 static int 
-htmlEscapeCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+htmlEscapeCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlEscapeUriComponent(clientData, interp, objc, objv);
 }
 static int 
-htmlUriCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+htmlUriCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     return HtmlCreateUri(clientData, interp, objc, objv);
 }
@@ -2811,11 +2848,12 @@ htmlUriCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 static int 
-htmlByteOffsetCmd(clientData, interp, objc, objv)
-    ClientData clientData;
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+htmlByteOffsetCmd(
+    ClientData clientData,
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     int iCharOffset;
     int iRet;
@@ -2834,11 +2872,12 @@ htmlByteOffsetCmd(clientData, interp, objc, objv)
     return TCL_OK;
 }
 static int 
-htmlCharOffsetCmd(clientData, interp, objc, objv)
-    ClientData clientData;
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+htmlCharOffsetCmd(
+    ClientData clientData,
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */ 
+    )
 {
     int iByteOffset;
     int iRet;
@@ -2890,8 +2929,7 @@ htmlCharOffsetCmd(clientData, interp, objc, objv)
  *
  *---------------------------------------------------------------------------
  */
-DLL_EXPORT int Tkhtml_Init(interp)
-    Tcl_Interp *interp;
+DLL_EXPORT int Tkhtml_Init(Tcl_Interp *interp)
 {
     int rc;
 
@@ -2957,8 +2995,7 @@ DLL_EXPORT int Tkhtml_Init(interp)
  *
  *---------------------------------------------------------------------------
  */
-DLL_EXPORT int Tkhtml_SafeInit(interp)
-    Tcl_Interp *interp;
+DLL_EXPORT int Tkhtml_SafeInit(Tcl_Interp *interp)
 {
     return Tkhtml_Init(interp);
 }
