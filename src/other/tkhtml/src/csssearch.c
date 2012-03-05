@@ -51,10 +51,7 @@ struct CssSearch {
 typedef struct CssSearch CssSearch;
 
 static int 
-cssSearchCb(pTree, pNode, clientData)
-    HtmlTree *pTree; 
-    HtmlNode *pNode;
-    ClientData clientData;
+cssSearchCb(HtmlTree *pTree, HtmlNode *pNode, ClientData clientData)
 {
     CssSearch *pSearch = (CssSearch *)clientData;
     assert(pSearch->pRuleList);
@@ -145,11 +142,12 @@ HtmlCssSearchShutdown (HtmlTree *pTree)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlCssSearch(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *CONST objv[];             /* List of all arguments */
+HtmlCssSearch(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *CONST objv[]              /* List of all arguments */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     char *zOrig;

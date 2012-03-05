@@ -719,11 +719,12 @@ place_out:
  *---------------------------------------------------------------------------
  */
 void 
-HtmlFloatListLog(pTree, zCaption, zNode, pList)
-    HtmlTree *pTree;
-    CONST char *zCaption;
-    CONST char *zNode;
-    HtmlFloatList *pList;
+HtmlFloatListLog(
+    HtmlTree *pTree,
+    CONST char *zCaption,
+    CONST char *zNode,
+    HtmlFloatList *pList
+    )
 {
     char zBuf[1024];
     FloatListEntry *pCsr;

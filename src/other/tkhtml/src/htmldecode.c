@@ -131,11 +131,12 @@ int read6bits(unsigned char **pzIn){
  *---------------------------------------------------------------------------
  */
 int 
-HtmlDecode(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+HtmlDecode(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */
+    )
 {
     unsigned char *zOut;
     int jj;
@@ -207,11 +208,12 @@ HtmlDecode(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlEncode(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+HtmlEncode(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */
+    )
 {
     int map[128] = { 
         0, 0, 0, 0, 0, 0, 0, 0,   0, 0, 0, 0, 0, 0, 0, 0,    /* 0   */
@@ -331,11 +333,12 @@ allocEscapedComponent (const char *zInput, int nInput, int isQuery)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlEscapeUriComponent(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+HtmlEscapeUriComponent(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */
+    )
 {
     char *zRes;
     unsigned char *zCsr;
@@ -381,8 +384,7 @@ struct Uri {
 #define ISALNUM(x) isalnum((unsigned char)(x))
 
 static Uri *
-objToUri(pObj)
-    Tcl_Obj *pObj;
+objToUri(Tcl_Obj *pObj)
 {
     int nInput;
     char *zInput;
@@ -565,9 +567,7 @@ makeUri (char const *zScheme, char const *zAuthority, char const *zPath, char co
 }
 
 static char *
-uriResolve(pBase, pObjRel)
-    Uri *pBase;
-    Tcl_Obj *pObjRel;
+uriResolve(Uri *pBase, Tcl_Obj *pObjRel)
 {
     char const *zScheme = pBase->zScheme;
     char const *zAuthority = pBase->zAuthority;
@@ -641,11 +641,12 @@ uriResolve(pBase, pObjRel)
  *---------------------------------------------------------------------------
  */
 static int 
-uriObjCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The Uri data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+uriObjCmd(
+    ClientData clientData,             /* The Uri data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */
+    )
 {
     Uri *p;
 
@@ -760,8 +761,9 @@ uriObjCmd(clientData, interp, objc, objv)
 }
 
 static void 
-uriObjDel(clientData)
-    ClientData clientData;             /* The Uri data structure */
+uriObjDel(
+    ClientData clientData              /* The Uri data structure */
+    )
 {
     HtmlFree(clientData);
 }
@@ -783,11 +785,12 @@ uriObjDel(clientData)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlCreateUri(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+HtmlCreateUri(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */
+    )
 {
     static int iUriCounter = 1;
     Uri *p;

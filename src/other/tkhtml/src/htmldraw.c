@@ -546,10 +546,11 @@ sorterInsert (CanvasItemSorter *pSorter, HtmlCanvasItem *pItem, int x, int y, Ov
     pSlot->pOverflow = pOverflow;
 }
 static void
-sorterIterate(pSorter, xFunc, clientData)
-    CanvasItemSorter *pSorter;
-    int (*xFunc)(HtmlCanvasItem *, int, int, Overflow *, ClientData);
-    ClientData clientData;
+sorterIterate(
+    CanvasItemSorter *pSorter,
+    int (*xFunc)(HtmlCanvasItem *, int, int, Overflow *, ClientData),
+    ClientData clientData
+    )
 {
     int ii;
     for (ii = 0; ii < pSorter->nLevel; ii++) {
@@ -1369,11 +1370,12 @@ HtmlDrawWindow (
  *
  *---------------------------------------------------------------------------
  */
-int HtmlLayoutPrimitives(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+int HtmlLayoutPrimitives(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */
+    )
 {
     HtmlCanvasItem *pItem;
     Tcl_Obj *aObj[13];
@@ -1640,15 +1642,15 @@ clearClippingRegion (Display *pDisplay, GC gc)
 }
 
 static int
-fill_quad(pQuery, win, d, xcolor, x1, y1, x2, y2, x3, y3, x4, y4)
-    GetPixmapQuery *pQuery;
-    Tk_Window win;
-    Drawable d;
-    XColor *xcolor;
-    int x1; int y1;
-    int x2; int y2;
-    int x3; int y3;
-    int x4; int y4;
+fill_quad(
+    GetPixmapQuery *pQuery,
+    Tk_Window win,
+    Drawable d,
+    XColor *xcolor,
+    int x1, int y1,
+    int x2, int y2,
+    int x3, int y3,
+    int x4, int y4)
 {
     XPoint points[4];
     Display *display = Tk_Display(win);
@@ -1686,12 +1688,12 @@ fill_quad(pQuery, win, d, xcolor, x1, y1, x2, y2, x3, y3, x4, y4)
 }
 
 static int
-fill_rectangle(win, d, xcolor, x, y, w, h)
-    Tk_Window win;
-    Drawable d;
-    XColor *xcolor;
-    int x; int y;
-    int w; int h;
+fill_rectangle(
+    Tk_Window win,
+    Drawable d,
+    XColor *xcolor,
+    int x, int y,
+    int w, int h)
 {
     if (w > 0 && h > 0){
         Display *display = Tk_Display(win);
@@ -2396,13 +2398,14 @@ drawText (
  *---------------------------------------------------------------------------
  */
 static int    
-searchCanvas(pTree, ymin, ymax, xFunc, clientData, requireOverflow)
-    HtmlTree *pTree;
-    int ymin;                    /* Minimum y coordinate, or INT_MIN */
-    int ymax;                    /* Maximum y coordinate, or INT_MAX */
-    int (*xFunc)(HtmlCanvasItem *, int, int, Overflow *, ClientData);
-    ClientData clientData;
-    int requireOverflow;         /* Boolean. True to pass Overflow* arg */
+searchCanvas(
+    HtmlTree *pTree,
+    int ymin,                    /* Minimum y coordinate, or INT_MIN */
+    int ymax,                    /* Maximum y coordinate, or INT_MAX */
+    int (*xFunc)(HtmlCanvasItem *, int, int, Overflow *, ClientData),
+    ClientData clientData,
+    int requireOverflow          /* Boolean. True to pass Overflow* arg */
+    )
 {
     HtmlCanvasItem *pItem;
     HtmlCanvasItem *pSkip = 0;
@@ -2548,12 +2551,13 @@ search_out:
 }
 
 static int
-sorterCb(pItem, x, y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int x;
-    int y;
-    Overflow *pOverflow;
-    ClientData clientData;
+sorterCb(
+    HtmlCanvasItem *pItem,
+    int x,
+    int y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     CanvasItemSorter *pSorter = (CanvasItemSorter *)clientData;
 
@@ -2596,13 +2600,14 @@ sorterCb(pItem, x, y, pOverflow, clientData)
     return 0;
 }
 static void    
-searchSortedCanvas(pTree, ymin, ymax, pNode, xFunc, clientData)
-    HtmlTree *pTree;
-    int ymin;                    /* Minimum y coordinate, or INT_MIN */
-    int ymax;                    /* Maximum y coordinate, or INT_MAX */
-    HtmlNode *pNode;             /* Node to search subtree of, or NULL */
-    int (*xFunc)(HtmlCanvasItem *, int, int, Overflow *, ClientData);
-    ClientData clientData;
+searchSortedCanvas(
+    HtmlTree *pTree,
+    int ymin,                    /* Minimum y coordinate, or INT_MIN */
+    int ymax,                    /* Maximum y coordinate, or INT_MAX */
+    HtmlNode *pNode,             /* Node to search subtree of, or NULL */
+    int (*xFunc)(HtmlCanvasItem *, int, int, Overflow *, ClientData),
+    ClientData clientData
+    )
 {
     CanvasItemSorter sSorter;
     memset(&sSorter, 0, sizeof(CanvasItemSorter));
@@ -2614,12 +2619,13 @@ searchSortedCanvas(pTree, ymin, ymax, pNode, xFunc, clientData)
 
 
 static int
-snapshotReleaseItemsCb(pItem, x, y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int x;
-    int y;
-    Overflow *pOverflow;
-    ClientData clientData;
+snapshotReleaseItemsCb(
+    HtmlCanvasItem *pItem,
+    int x,
+    int y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     freeCanvasItem((HtmlTree *)clientData, pItem);
     return 0;
@@ -2921,12 +2927,13 @@ pixmapQuerySwitchOverflow (GetPixmapQuery *pQuery, Overflow *pOverflow)
 }
 
 static int
-pixmapQueryCb(pItem, origin_x, origin_y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int origin_x;
-    int origin_y;
-    Overflow *pOverflow;
-    ClientData clientData;
+pixmapQueryCb(
+    HtmlCanvasItem *pItem,
+    int origin_x,
+    int origin_y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     GetPixmapQuery *pQuery = (GetPixmapQuery *)clientData;
 
@@ -3212,11 +3219,12 @@ getPixmap (
  *
  *---------------------------------------------------------------------------
  */
-int HtmlLayoutImage(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+int HtmlLayoutImage(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     Display *pDisplay = Tk_Display(pTree->tkwin);
@@ -3323,12 +3331,13 @@ struct NodeIndexQuery {
  *---------------------------------------------------------------------------
  */
 static int
-layoutNodeIndexCb(pItem, origin_x, origin_y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int origin_x;
-    int origin_y;
-    Overflow *pOverflow;
-    ClientData clientData;
+layoutNodeIndexCb(
+    HtmlCanvasItem *pItem,
+    int origin_x,
+    int origin_y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     CanvasText *pT = &pItem->x.t;
     if (pItem->type == CANVAS_TEXT && pT->iIndex >= 0 && pT->pNode->iNode >= 0){
@@ -3497,12 +3506,13 @@ struct NodeQuery {
 };
 
 static int
-layoutNodeCb(pItem, origin_x, origin_y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int origin_x;
-    int origin_y;
-    Overflow *pOverflow;
-    ClientData clientData;
+layoutNodeCb(
+    HtmlCanvasItem *pItem,
+    int origin_x,
+    int origin_y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     int x, y, w, h;
     NodeQuery *pQuery = (NodeQuery *)clientData;
@@ -3647,11 +3657,12 @@ layoutNodeCmd (HtmlTree *pTree, int x, int y)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlLayoutNode(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+HtmlLayoutNode(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */
+    )
 {
     int x;
     int y;
@@ -3700,12 +3711,13 @@ struct BboxContext {
 typedef struct BboxContext BboxContext;
 
 static int
-bboxCb(pItem, origin_x, origin_y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int origin_x;
-    int origin_y;
-    Overflow *pOverflow;
-    ClientData clientData;
+bboxCb(
+    HtmlCanvasItem *pItem,
+    int origin_x,
+    int origin_y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     BboxContext *p = (BboxContext *)clientData;
     if (pItem->x.generic.pNode && 
@@ -3730,11 +3742,12 @@ bboxCb(pItem, origin_x, origin_y, pOverflow, clientData)
 }
 
 int 
-HtmlWidgetBboxCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+HtmlWidgetBboxCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */
+    )
 {
     int x = 0, y = 0, x2 = -1, y2 = -1;
     HtmlTree *pTree = (HtmlTree *)clientData;
@@ -3816,12 +3829,13 @@ struct PaintNodesQuery {
  *---------------------------------------------------------------------------
  */
 static int
-paintNodesSearchCb(pItem, origin_x, origin_y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int origin_x;
-    int origin_y;
-    Overflow *pOverflow;
-    ClientData clientData;
+paintNodesSearchCb(
+    HtmlCanvasItem *pItem,
+    int origin_x,
+    int origin_y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     PaintNodesQuery *p = (PaintNodesQuery *)clientData;
 
@@ -4021,12 +4035,13 @@ struct ScrollToQuery {
  *---------------------------------------------------------------------------
  */
 static int
-scrollToNodeCb(pItem, origin_x, origin_y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int origin_x;
-    int origin_y;
-    Overflow *pOverflow;
-    ClientData clientData;
+scrollToNodeCb(
+    HtmlCanvasItem *pItem,
+    int origin_x,
+    int origin_y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     int x, y, w, h;
     ScrollToQuery *pQuery = (ScrollToQuery *)clientData;
@@ -4106,12 +4121,13 @@ struct LayoutBboxQuery {
 };
 
 static int
-layoutBboxCb(pItem, origin_x, origin_y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int origin_x;
-    int origin_y;
-    Overflow *pOverflow;
-    ClientData clientData;
+layoutBboxCb(
+    HtmlCanvasItem *pItem,
+    int origin_x,
+    int origin_y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     int x, y, w, h;
     LayoutBboxQuery *pQuery = (LayoutBboxQuery *)clientData;
@@ -4147,12 +4163,13 @@ struct OverflowBox {
 };
 
 static int
-overflowBoxCb(pItem, origin_x, origin_y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int origin_x;
-    int origin_y;
-    Overflow *pOverflow;
-    ClientData clientData;
+overflowBoxCb(
+    HtmlCanvasItem *pItem,
+    int origin_x,
+    int origin_y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     OverflowBox *p = (OverflowBox *)clientData;
     if (p->isFound) return 0;

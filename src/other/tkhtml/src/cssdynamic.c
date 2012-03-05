@@ -52,10 +52,7 @@ HtmlCssFreeDynamics (HtmlElementNode *pElem)
 
 
 static int 
-checkDynamicCb(pTree, pNode, clientData)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    ClientData clientData;
+checkDynamicCb(HtmlTree *pTree, HtmlNode *pNode, ClientData clientData)
 {
     if (!HtmlNodeIsText(pNode)) {
         HtmlElementNode *pElem = (HtmlElementNode *)pNode;
@@ -91,9 +88,7 @@ HtmlCssCheckDynamic (HtmlTree *pTree)
 }
 
 int
-HtmlCssTclNodeDynamics(interp, pNode)
-    Tcl_Interp *interp;
-    HtmlNode *pNode;
+HtmlCssTclNodeDynamics(Tcl_Interp *interp, HtmlNode *pNode)
 {
     Tcl_Obj *pRet = Tcl_NewObj();
     if (!HtmlNodeIsText(pNode)) {

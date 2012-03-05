@@ -422,10 +422,7 @@ propertyIsLength (CssParse *pParse, CssProperty *pProp)
  *---------------------------------------------------------------------------
  */
 static void 
-rgbToColor(zOut, zRgb, nRgb)
-    char *zOut;
-    CONST char *zRgb;
-    int nRgb;
+rgbToColor(char *zOut, CONST char *zRgb, int nRgb)
 {
     CONST char *z = zRgb;
     CONST char *zEnd = zRgb+nRgb;
@@ -493,10 +490,7 @@ rgbToColor(zOut, zRgb, nRgb)
  *---------------------------------------------------------------------------
  */
 static int
-doUrlCmd(pParse, zArg, nArg)
-    CssParse *pParse;
-    CONST char *zArg;
-    int nArg;
+doUrlCmd(CssParse *pParse, CONST char *zArg, int nArg)
 {
     const int eval_flags = TCL_EVAL_DIRECT|TCL_EVAL_GLOBAL;
     char *zCopy = HtmlAlloc("temp", nArg + 1);
@@ -709,10 +703,7 @@ tokenToProperty (CssParse *pParse, CssToken *pToken)
  *---------------------------------------------------------------------------
  */
 static CssProperty *
-textToProperty(pParse, z, n)
-    CssParse *pParse;
-    CONST char *z;
-    int n;
+textToProperty(CssParse *pParse, CONST char *z, int n)
 {
     CssToken token;
     token.n = (n < 0) ? strlen(z): n;
@@ -738,9 +729,7 @@ textToProperty(pParse, z, n)
  *
  *---------------------------------------------------------------------------
  */
-CssProperty *HtmlCssStringToProperty(z, n)
-    CONST char *z; 
-    int n;
+CssProperty *HtmlCssStringToProperty(CONST char *z, int n)
 {
     CssToken sToken;
     if (n<0) {
@@ -765,8 +754,7 @@ CssProperty *HtmlCssStringToProperty(z, n)
  *---------------------------------------------------------------------------
  */
 CONST char *
-HtmlCssPropertyGetString(pProp)
-    CssProperty *pProp;
+HtmlCssPropertyGetString(CssProperty *pProp)
 {
     if (pProp) {
         int eType = pProp->eType;
@@ -1479,10 +1467,7 @@ propertySetAddList (
  *---------------------------------------------------------------------------
  */
 static CONST char *
-getNextFontFamily(zList, nList, pzNext)
-    CONST char *zList;
-    int nList;
-    CONST char **pzNext;
+getNextFontFamily(CONST char *zList, int nList, CONST char **pzNext)
 {
     CssToken token;
     int t;
@@ -2084,11 +2069,7 @@ comparePriority (CssPriority *pLeft, CssPriority *pRight)
  *---------------------------------------------------------------------------
  */
 static CssPriority * 
-newCssPriority(pStyle, origin, pIdTail, important)
-    CssStyleSheet *pStyle;
-    int origin;
-    Tcl_Obj *pIdTail;
-    int important;
+newCssPriority(CssStyleSheet *pStyle, int origin, Tcl_Obj *pIdTail, int important)
 {
     CssPriority *pNew;      /* New list entry */
 
@@ -2154,17 +2135,17 @@ newCssPriority(pStyle, origin, pIdTail, important)
  */
 static int 
 cssParse(
-pTree, n, z, isStyle, origin, pStyleId, pImportCmd, pUrlCmd, pErrorVar, ppStyle)
-    HtmlTree *pTree;
-    int n;                       /* Size of z in bytes */
-    CONST char *z;               /* Text of attribute/document */
-    int isStyle;                 /* True if this is a style attribute */
-    int origin;                  /* CSS_ORIGIN_* value */
-    Tcl_Obj *pStyleId;           /* Second and later parts of stylesheet id */
-    Tcl_Obj *pImportCmd;         /* Command to invoke to process @import */
-    Tcl_Obj *pUrlCmd;            /* Command to invoke to translate url() */
-    Tcl_Obj *pErrorVar;          /* Name of error-log variable */
-    CssStyleSheet **ppStyle;     /* IN/OUT: Stylesheet to append to   */
+    HtmlTree *pTree,
+    int n,                       /* Size of z in bytes */
+    CONST char *z,               /* Text of attribute/document */
+    int isStyle,                 /* True if this is a style attribute */
+    int origin,                  /* CSS_ORIGIN_* value */
+    Tcl_Obj *pStyleId,           /* Second and later parts of stylesheet id */
+    Tcl_Obj *pImportCmd,         /* Command to invoke to process @import */
+    Tcl_Obj *pUrlCmd,            /* Command to invoke to translate url() */
+    Tcl_Obj *pErrorVar,          /* Name of error-log variable */
+    CssStyleSheet **ppStyle      /* IN/OUT: Stylesheet to append to   */
+    )
 {
     CssParse sParse;
     int ii;
@@ -2261,13 +2242,14 @@ HtmlCssSelectorParse (HtmlTree *pTree, int n, const char *z, CssStyleSheet **ppS
  *---------------------------------------------------------------------------
  */
 int 
-HtmlStyleParse(pTree, pStyleText, pId, pImportCmd, pUrlCmd, pErrorVar)
-    HtmlTree *pTree;
-    Tcl_Obj *pStyleText;
-    Tcl_Obj *pId;
-    Tcl_Obj *pImportCmd;
-    Tcl_Obj *pUrlCmd;
-    Tcl_Obj *pErrorVar;
+HtmlStyleParse(
+    HtmlTree *pTree,
+    Tcl_Obj *pStyleText,
+    Tcl_Obj *pId,
+    Tcl_Obj *pImportCmd,
+    Tcl_Obj *pUrlCmd,
+    Tcl_Obj *pErrorVar
+    )
 {
     int origin = 0;
     Tcl_Obj *pStyleId = 0;
@@ -2401,8 +2383,7 @@ freeRulesList (CssRule **ppList)
 }
 
 static void
-freeRulesHash(pHash)
-    Tcl_HashTable *pHash;
+freeRulesHash(Tcl_HashTable *pHash)
 {
     Tcl_HashSearch search;
     Tcl_HashEntry *pEntry;
@@ -3308,10 +3289,11 @@ ruleToPropertyValues (HtmlComputedValuesCreator *p, int *aPropDone, CssRule *pRu
  *---------------------------------------------------------------------------
  */
 static void 
-overrideToPropertyValues(p, aPropDone, pOverride)
-    HtmlComputedValuesCreator *p;
-    int *aPropDone;
-    Tcl_Obj *pOverride;
+overrideToPropertyValues(
+    HtmlComputedValuesCreator *p,
+    int *aPropDone,
+    Tcl_Obj *pOverride
+    )
 {
     Tcl_Obj **apObj = 0;
     int nObj = 0;
@@ -3831,9 +3813,7 @@ HtmlCssImport (CssParse *pParse, CssToken *pToken)
  *---------------------------------------------------------------------------
  */
 void
-HtmlCssSelectorToString(pSelector, pObj)
-    CssSelector *pSelector;
-    Tcl_Obj *pObj;
+HtmlCssSelectorToString(CssSelector *pSelector, Tcl_Obj *pObj)
 {
     char *z = 0;
     if (!pSelector) return;
@@ -3913,10 +3893,7 @@ HtmlCssSelectorToString(pSelector, pObj)
  *---------------------------------------------------------------------------
  */
 static void
-rulelistReport(pRule, pObj, pN)
-    CssRule *pRule;
-    Tcl_Obj *pObj;
-    int *pN;
+rulelistReport(CssRule *pRule, Tcl_Obj *pObj, int *pN)
 {
     CssRule *p;
     for (p = pRule; p; p = p->pNext) {
@@ -3964,11 +3941,12 @@ rulelistReport(pRule, pObj, pN)
  *---------------------------------------------------------------------------
  */
 int
-HtmlCssStyleReport(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+HtmlCssStyleReport(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     CssStyleSheet *pStyle = pTree->pStyle;
@@ -4153,11 +4131,12 @@ ruleQsortCompare(const void *pLeft, const void *pRight)
  *---------------------------------------------------------------------------
  */
 int
-HtmlCssStyleConfigDump(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+HtmlCssStyleConfigDump(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */
+    )
 {
 #define MAX_RULES 8096
     HtmlTree *pTree = (HtmlTree *)clientData;
@@ -4270,10 +4249,7 @@ HtmlCssStyleConfigDump(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlCssInlineQuery(interp, pPropertySet, pArg)
-    Tcl_Interp *interp;
-    CssPropertySet *pPropertySet;
-    Tcl_Obj *pArg;
+HtmlCssInlineQuery(Tcl_Interp *interp, CssPropertySet *pPropertySet, Tcl_Obj *pArg)
 {
     if (pPropertySet) {
         int ii;
