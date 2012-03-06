@@ -909,7 +909,7 @@ new_client_handler(ClientData clientData,
 {
     struct fbserv_listener *fbslp = (struct fbserv_listener *)clientData;
     struct fbserv_obj *fbsp = fbslp->fbsl_fbsp;
-    int fd = fbslp->fbsl_fd;
+    uintptr_t fd = (uintptr_t)fbslp->fbsl_fd;
 
     static struct pkg_switch pswitch[] = {
 	{ MSG_FBOPEN, fbs_rfbopen, "Open Framebuffer", NULL },
@@ -946,7 +946,7 @@ new_client_handler(ClientData clientData,
     };
 
     if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&fd) == TCL_OK)
-	new_client(fbsp, fbs_makeconn(fd, pswitch), chan);
+	new_client(fbsp, fbs_makeconn((int)fd, pswitch), chan);
 }
 #else /* if defined(_WIN32) && !defined(__CYGWIN__) */
 HIDDEN void
