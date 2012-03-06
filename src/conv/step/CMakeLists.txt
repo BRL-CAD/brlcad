@@ -8,6 +8,7 @@ include_directories(${STEP_INCLUDE_DIRS})
 
 # local includes
 include_directories(
+  ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${BRLCAD_SOURCE_DIR}/src/other/step/include
   ${BRLCAD_SOURCE_DIR}/src/other/step/src/clstepcore
@@ -19,51 +20,38 @@ include_directories(
   ${TNT_INCLUDE_DIR}
   )
 
-#set(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/step/data/ap203/203wseds.exp)
+set(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/step/data/ap203/ap203edit.exp)
 
-## read the schema name from a line like 'SCHEMA AUTOMOTIVE_DESIGN;'
-#file(STRINGS ${SCHEMA_FILE} SCHEMA_STATEMENT LIMIT_COUNT 1 REGEX "SCHEMA .*")
-#string(REGEX REPLACE "^SCHEMA \(.*\)\;$" "\\1" SCHEMA_N ${SCHEMA_STATEMENT} )
-#string(TOUPPER ${SCHEMA_N} SCHEMA_NAME) #fedex_plus always uses upper case for file names
+# read the schema name from a line like 'SCHEMA AUTOMOTIVE_DESIGN;'
+file(STRINGS ${SCHEMA_FILE} SCHEMA_STATEMENT LIMIT_COUNT 1 REGEX "SCHEMA .*")
+string(REGEX REPLACE "^SCHEMA \(.*\)\;$" "\\1" SCHEMA_N ${SCHEMA_STATEMENT} )
+string(TOUPPER ${SCHEMA_N} SCHEMA_NAME) #fedex_plus always uses upper case for file names
 
-#set(SCHEMA_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/${SCHEMA_NAME})
-#make_directory(${SCHEMA_OUT_DIR})
-#include_directories(${SCHEMA_OUT_DIR})
+set(SCHEMA_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/${SCHEMA_NAME})
+make_directory(${SCHEMA_OUT_DIR})
+include_directories(${SCHEMA_OUT_DIR})
 
-#set(fedex_srcs
-#	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.cc
-#	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.init.cc
-#	${SCHEMA_OUT_DIR}/SdaiAll.cc
-#	${SCHEMA_OUT_DIR}/compstructs.cc 
-#	${SCHEMA_OUT_DIR}/schema.cc
-#)
-
-#set(FEDEX_OUTPUT 
-#	${fedex_srcs}
-#	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.h
-#	${SCHEMA_OUT_DIR}/Sdaiclasses.h 
-#	${SCHEMA_OUT_DIR}/schema.h
-#	)
-
-#add_custom_command(OUTPUT ${FEDEX_OUTPUT}
-#	COMMAND ${FEDEX_PLUS_EXEC} ARGS ${SCHEMA_FILE}
-#	DEPENDS ${SCHEMA_FILE}
-#	WORKING_DIRECTORY ${SCHEMA_OUT_DIR}
-#	COMMENT "Generating C++ code to express ${SCHEMA_NAME}..."
-#	VERBATIM)
-
-
-# Replace this with above if using fedex_plus to generate these
-# files from the EXPRESS schema.  Be sure to remove these files
-# from the source tree before trying to build with generated
-# files.
 set(fedex_srcs
-  SdaiAll.cc
-  SdaiCONFIG_CONTROL_DESIGN.cc
-  SdaiCONFIG_CONTROL_DESIGN.init.cc
-  compstructs.cc
-  schema.cc
-  )
+	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.cc
+	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.init.cc
+	${SCHEMA_OUT_DIR}/SdaiAll.cc
+	${SCHEMA_OUT_DIR}/compstructs.cc 
+	${SCHEMA_OUT_DIR}/schema.cc
+)
+
+set(FEDEX_OUTPUT 
+	${fedex_srcs}
+	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.h
+	${SCHEMA_OUT_DIR}/Sdaiclasses.h 
+	${SCHEMA_OUT_DIR}/schema.h
+	)
+
+add_custom_command(OUTPUT ${FEDEX_OUTPUT}
+	COMMAND ${FEDEX_PLUS_EXEC} ARGS ${SCHEMA_FILE}
+	DEPENDS ${SCHEMA_FILE}
+	WORKING_DIRECTORY ${SCHEMA_OUT_DIR}
+	COMMENT "Generating C++ code to express ${SCHEMA_NAME}..."
+	VERBATIM)
 
 set(stepg_SOURCES
   ${fedex_srcs}
@@ -268,14 +256,7 @@ set(stepg_SOURCES
   step-g.cpp
   )
 
-set(fedex_hdrs
-  SdaiCONFIG_CONTROL_DESIGN.h
-  Sdaiclasses.h
-  schema.h
-  )
-
 set(stepg_HDRS
-  ${fedex_hdrs}
   AdvancedBrepShapeRepresentation.h
   AdvancedFace.h
   AmountOfSubstanceContextDependentUnit.h
