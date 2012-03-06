@@ -78,7 +78,7 @@
 	<mediaobject>
 	  <imageobject role="html">
 	    <imagedata
-               align="center"
+               width="6in"
                fileref="../../books/en/images/tutorial_series_volI_fig01.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
