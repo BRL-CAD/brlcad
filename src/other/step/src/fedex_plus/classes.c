@@ -2273,7 +2273,7 @@ LIBstructor_print (Entity entity, FILE* file, Schema schema)
 	    else 
 	    {
 		fprintf (file, "    HeadEntity(this); \n");
-		fprintf (file, "#if 0 \n");
+		fprintf (file, "#if 1 \n");
 		fprintf (file, 
        "\t/* Optionally use the following to replace the line following \n");
 		fprintf (file, 
@@ -2285,7 +2285,7 @@ LIBstructor_print (Entity entity, FILE* file, Schema schema)
 		fprintf (file, "    int attrFlags[3]; // e.g. \n");
 		fprintf (file, "    attrFlags[0] = 1; // add parents attrs\n");
 		fprintf (file, 
-		     "    attrFlags[1] = 1; // add parent of parents attrs\n");
+		     "    attrFlags[1] = 0; // add parent of parents attrs\n");
 		fprintf (file, 
     "    attrFlags[2] = 0; // do not add parent of parent of parents attrs\n");
 		fprintf (file, 
@@ -2295,10 +2295,11 @@ LIBstructor_print (Entity entity, FILE* file, Schema schema)
 		fprintf (file, 
 			 "    AppendMultInstance(new %s(this, attrFlags)); \n",
 			 ENTITYget_classname (e));
-		fprintf (file, "#endif \n");
+		fprintf (file, "#else \n");
 
 		fprintf (file, "    AppendMultInstance(new %s(this)); \n", 
 			 ENTITYget_classname (e));
+		fprintf (file, "#endif \n");
 	    
 		if(super_cnt == 2)
 		{
