@@ -47,6 +47,14 @@ endif(BRLCAD_ENABLE_TK AND NOT WIN32)
 
 set_property(GLOBAL PROPERTY DM_DEFINES "${DM_DEFINES}")
 
+# Unfortunately, on Mac OS X the OpenGL headers are not C90
+# compilant - anything pulling them in needs the C99 flag
+get_property(DM_FLAGS GLOBAL PROPERTY DM_FLAGS)
+LIST(APPEND DM_DEFINES "${C99_FLAG}")
+
+set_property(GLOBAL PROPERTY DM_FLAGS "${DM_FLAGS}")
+
+
 set(LIBDM_SRCS
   ${dmx11_srcs}
   ${dmw32_srcs}
@@ -72,11 +80,6 @@ set(LIBDM_SRCS
   scale.c
   tcl.c
   vers.c
-  )
-
-
-add_definitions(
-  ${C99_FLAG}
   )
 
 foreach(xlib ${X11_LIBRARIES})

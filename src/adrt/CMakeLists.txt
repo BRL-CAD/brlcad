@@ -79,11 +79,19 @@ if(TOGL_LIBRARIES AND BRLCAD_ENABLE_OPENGL)
   # BRLCAD_ADDDATA in order for the build dir copy to be updated when it
   # is changed.
   if(WIN32)
-    configure_file(isst.bat ${CMAKE_BINARY_DIR}/bin/isst.bat COPYONLY)
-    install(PROGRAMS isst.bat DESTINATION bin)
+    set(isst_script isst.bat)
+  else(WIN32)
+    set(isst_script isst)
   endif(WIN32)
-  configure_file(isst ${CMAKE_BINARY_DIR}/bin/isst COPYONLY)
-  install(PROGRAMS isst DESTINATION bin)
+  if(NOT CMAKE_CONFIGURATION_TYPES)
+    configure_file(${isst_script} ${CMAKE_BINARY_DIR}/bin/${isst_script} COPYONLY)
+  else(NOT CMAKE_CONFIGURATION_TYPES)
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      configure_file(${isst_script} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/${isst_script} COPY_ONLY)
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  endif(NOT CMAKE_CONFIGURATION_TYPES)
+  install(PROGRAMS ${isst_script} DESTINATION bin)
 endif(TOGL_LIBRARIES AND BRLCAD_ENABLE_OPENGL)
 
 set(adrt_ignore_files

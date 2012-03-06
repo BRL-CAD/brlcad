@@ -578,32 +578,48 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 #---------------------------------------------------------------------
 # Output directories - this is where built library and executable
-# files will be placed after building but prior to install.
-if(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building all libraries.")
-endif(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building all archives.")
-endif(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/${BIN_DIR} CACHE INTERNAL "Single output directory for building all executables.")
-endif(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+# files will be placed after building but prior to install.  The
+# necessary variables change between single and multi configuration
+# build systems, so it is necessary to handle both cases on a
+# conditional basis.
 
-# Take the hint from http://forum.openscenegraph.org/viewtopic.php?t=6926 and
-# make all configurations output to the same directories.  This is necessary
-# for allowing the bu_brlcad_data mechanisms to work in the build directory.
-foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  string(TOUPPER "${CFG_TYPE}" CFG_TYPE)
-  if(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}")
-    set("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}" ${BRLCAD_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} libraries.")
-  endif(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}")
-  if(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}")
-    set("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}" ${BRLCAD_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} archives.")
-  endif(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}")
-  if(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}")
-    set("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}" ${BRLCAD_BINARY_DIR}/${BIN_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} executables.")
-  endif(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}")
-endforeach()
+if(NOT CMAKE_CONFIGURATION_TYPES)
+  # If we're not doing multi-configuration, just set the three main
+  # variables to the correct values.
+  if(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building all libraries.")
+  endif(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+  if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building all archives.")
+  endif(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+  if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/${BIN_DIR} CACHE INTERNAL "Single output directory for building all executables.")
+  endif(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+else(NOT CMAKE_CONFIGURATION_TYPES)
+  # Multi-configuration is more difficult.  Not only do we need to
+  # properly set the output directories, but we also need to
+  # identify the "toplevel" directory for each configuration so
+  # we can place files, documentation, etc. in the correct
+  # relative positions.
+  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+    if(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
+      set("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR}/${CFG_TYPE}/${LIB_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} libraries.")
+    endif(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
+    if(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
+      set("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR}/${CFG_TYPE}/${LIB_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} archives.")
+    endif(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
+    if(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
+      set("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR}/${CFG_TYPE}/${BIN_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} executables.")
+    endif(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
+    if(NOT "CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}")
+      set("CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR}/${CFG_TYPE} CACHE INTERNAL "Toplevel binary dir for ${CFG_TYPE} building.")
+    endif(NOT "CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}")
+    if(NOT "BRLCAD_BINARY_DIR_${CFG_TYPE_UPPER}")
+      set("BRLCAD_BINARY_DIR_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR}/${CFG_TYPE} CACHE INTERNAL "Toplevel binary dir for ${CFG_TYPE} building.")
+    endif(NOT "BRLCAD_BINARY_DIR_${CFG_TYPE_UPPER}")
+  endforeach()
+endif(NOT CMAKE_CONFIGURATION_TYPES)
 
 #---------------------------------------------------------------------
 # We will need a brlcad_config.h.in file to hold all the #cmakedefine
@@ -1966,7 +1982,14 @@ set(toplevel_DOCFILES
   README
   )
 foreach(item ${toplevel_DOCFILES})
-  configure_file(${item} ${CMAKE_BINARY_DIR}/${DATA_DIR}/${item} COPYONLY)
+  if(NOT CMAKE_CONFIGURATION_TYPES)
+    configure_file(${item} ${CMAKE_BINARY_DIR}/${DATA_DIR}/${item} COPYONLY)
+  else(NOT CMAKE_CONFIGURATION_TYPES)
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      configure_file(${item} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${item} COPYONLY)
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  endif(NOT CMAKE_CONFIGURATION_TYPES)
 endforeach(item ${toplevel_DOCFILES})
 install(FILES ${toplevel_DOCFILES} DESTINATION ${DATA_DIR})
 

@@ -38,7 +38,14 @@ include(${BRLCAD_SOURCE_DIR}/misc/CMake/DocBook.cmake)
 
 # For the html files, we need brlcad.css
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/html/css)
-configure_file(css/brlcad.css ${CMAKE_BINARY_DIR}/${DATA_DIR}/html/css/brlcad.css)
+if(NOT CMAKE_CONFIGURATION_TYPES)
+  configure_file(css/brlcad.css ${CMAKE_BINARY_DIR}/${DATA_DIR}/html/css/brlcad.css)
+else(NOT CMAKE_CONFIGURATION_TYPES)
+  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+    configure_file(css/brlcad.css ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/html/css/brlcad.css)
+  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+endif(NOT CMAKE_CONFIGURATION_TYPES)
 install(FILES css/brlcad.css DESTINATION ${DATA_DIR}/html/css)
 
 add_subdirectory(articles)
