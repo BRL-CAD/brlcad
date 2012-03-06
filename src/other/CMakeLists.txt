@@ -186,7 +186,6 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/xmltools/include)
 # up in the same place that the binaries do.
 if(${CMAKE_PROJECT_NAME}_XSLTPROC_BUILD OR ${CMAKE_PROJECT_NAME}_XMLLINT_BUILD)
   foreach(xmltarget xsltproc;xmllint;xml;xslt;exslt)
-    message("the target is: ${xmltarget}")
     set_target_properties(${xmltarget} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${UTILITY_RUNTIME_OUTPUT_DIRECTORY}")
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
