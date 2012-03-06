@@ -1,0 +1,56 @@
+<xsl:stylesheet
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:fo="http://www.w3.org/1999/XSL/Format"
+  xmlns:d="http://docbook.org/ns/docbook"
+  exclude-result-prefixes="d"
+  version='1.0'
+>
+
+  <!-- a stylesheet with common items for fo products -->
+
+  <!-- the base stylesheet (resolved by this name in the xml catalog file) -->
+  <xsl:import href="file:///@CMAKE_BINARY_DIR@/doc/docbook/resources/other/standard/xsl/fo/docbook.xsl"/>
+
+  <!-- common param inputs, etc. -->
+  <xsl:import href="file:///@CMAKE_SOURCE_DIR@/doc/docbook/resources/brlcad/brlcad-common.xsl"/>
+
+  <!-- for itemized lists -->
+  <xsl:template name="itemizedlist.label.markup">
+    <xsl:param name="itemsymbol">bullet</xsl:param>
+    <xsl:choose>
+      <xsl:when test="$itemsymbol='none'"></xsl:when>
+      <xsl:when test="$itemsymbol='disc'">&#x2022;</xsl:when>
+      <xsl:when test="$itemsymbol='bullet'">&#x2022;</xsl:when>
+      <xsl:when test="$itemsymbol='endash'">&#x2013;</xsl:when>
+      <xsl:when test="$itemsymbol='emdash'">&#x2014;</xsl:when>
+      
+      <xsl:when test="$itemsymbol='square'">&#x25A0;</xsl:when>
+      <xsl:when test="$itemsymbol='box'">&#x25A0;</xsl:when>
+      <xsl:when test="$itemsymbol='smallblacksquare'">&#x25AA;</xsl:when>
+      <xsl:when test="$itemsymbol='circle'">&#x25CB;</xsl:when>
+      <xsl:when test="$itemsymbol='opencircle'">&#x25CB;</xsl:when>
+      
+      <xsl:when test="$itemsymbol='whitesquare'">&#x25A1;</xsl:when>
+      <xsl:when test="$itemsymbol='smallwhitesquare'">&#x25AB;</xsl:when>
+      <xsl:when test="$itemsymbol='round'">&#x25CF;</xsl:when>
+      <xsl:when test="$itemsymbol='blackcircle'">&#x25CF;</xsl:when>
+      <xsl:when test="$itemsymbol='whitebullet'">&#x25E6;</xsl:when>
+      
+      <xsl:when test="$itemsymbol='triangle'">&#x2023;</xsl:when>
+      <xsl:when test="$itemsymbol='point'">&#x203A;</xsl:when>
+      <xsl:otherwise>&#x25CF;</xsl:otherwise><!-- bullet -->
+    </xsl:choose>
+  </xsl:template>
+  
+  <!-- define defaults for first three itemized list defaults -->
+  <xsl:template name="next.itemsymbol">
+    <xsl:param name="itemsymbol" select="'default'"/>
+    <xsl:choose>
+      <!-- Change this list if you want to change the order of symbols -->
+      <xsl:when test="$itemsymbol = 'bullet'">whitebullet</xsl:when>
+      <xsl:when test="$itemsymbol = 'whitebullet'">smallblacksquare</xsl:when>
+      <xsl:otherwise>bullet</xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+</xsl:stylesheet>

@@ -5,6 +5,12 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/)
 # DocBook processing from their archives into the build directory
 include(${CMAKE_CURRENT_SOURCE_DIR}/resources/other/expand.cmake)
 
+# Style sheet for XSLT transformation to FO (=> PDf) pages
+if(BRLCAD_EXTRADOCS_PDF)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-fo-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-fo-stylesheet.xsl)
+endif(BRLCAD_EXTRADOCS_PDF)
+
 # Style sheet for XSLT transformation to HTML pages
 if(BRLCAD_EXTRADOCS_HTML)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl.in
@@ -23,15 +29,15 @@ if(BRLCAD_EXTRADOCS_PDF)
   configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/fop.xconf.in ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf)
 endif(BRLCAD_EXTRADOCS_PDF)
 
-# For HTML, MAN and FO (FO is an intermediate file used in the XML->PDF
-# transformation) we use variables to hold the full stylesheet path. Because
-# BRL-CAD has not (thus far) needed to customize its FO stylesheets for most
-# situations, we used the standard XSL FO stylesheet.  In the case we DO need
-# to customize FO stylesheets (the BRL-CAD manuals in books/en) we have
-# separate CMake logic in books/en/CMakeLists.txt to handle the customization.
+# For HTML, MAN and FO (FO is an intermediate file used in the
+# XML->PDF transformation) we use variables to hold the full
+# stylesheet path. In the case we need to further
+# customize FO stylesheets we can have separate CMake logic in
+# appropriate directories to handle the customization (e.g., the
+# BRL-CAD manuals in books/en/CMakeLists.txt).
 set(XSL_XHTML_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl")
 set(XSL_MAN_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-man-stylesheet.xsl")
-set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/other/standard/xsl/fo/docbook.xsl")
+set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-fo-stylesheet.xsl")
 
 # Include CMake macros for DocBook.
 include(${BRLCAD_SOURCE_DIR}/misc/CMake/DocBook.cmake)
