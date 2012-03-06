@@ -144,6 +144,32 @@ the location of this file.
         <!-- <value>ascii-hex</value> -->
       </filterList>
 
+
+        <!-- embedded fonts -->
+        <!--
+
+        This information must exactly match the font specified
+        in the fo file. Otherwise it will use a default font.
+
+        For example,
+        <fo:inline font-family="Arial" font-weight="bold" font-style="normal">
+            Arial-normal-normal font
+        </fo:inline>
+        for the font triplet specified by:
+        <font-triplet name="Arial" style="normal" weight="bold"/>
+
+        If you do not want to embed the font in the pdf document
+        then do not include the "embed-url" attribute.
+        The font will be needed where the document is viewed
+        for it to be displayed properly.
+
+        possible styles: normal | italic | oblique | backslant
+        possible weights: normal | bold | 100 | 200 | 300 | 400
+                          | 500 | 600 | 700 | 800 | 900
+        (normal = 400, bold = 700)
+
+        -->
+
       <fonts>
 
 
@@ -214,32 +240,6 @@ the location of this file.
           embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono-BoldOblique.ttf">
           <font-triplet name="DejaVuLGCSansMono" style="oblique" weight="bold"/>
         </font>
-
-        <!-- embedded fonts -->
-        <!--
-
-        This information must exactly match the font specified
-        in the fo file. Otherwise it will use a default font.
-
-        For example,
-        <fo:inline font-family="Arial" font-weight="bold" font-style="normal">
-            Arial-normal-normal font
-        </fo:inline>
-        for the font triplet specified by:
-        <font-triplet name="Arial" style="normal" weight="bold"/>
-
-        If you do not want to embed the font in the pdf document
-        then do not include the "embed-url" attribute.
-        The font will be needed where the document is viewed
-        for it to be displayed properly.
-
-        possible styles: normal | italic | oblique | backslant
-        possible weights: normal | bold | 100 | 200 | 300 | 400
-                          | 500 | 600 | 700 | 800 | 900
-        (normal = 400, bold = 700)
-
-        -->
-
 
       </fonts>
 
