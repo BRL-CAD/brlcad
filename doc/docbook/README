@@ -183,7 +183,7 @@ in the misc/CMake source directory.  This file tells CMake how
 to run the tool in question.  Examples for msv and rnv are already
 present - see misc/CMake/rnv.cmake.in and misc/CMake/msv.cmake.in
 
-Once the correct file is preent, configure CMake with options
+Once the correct file is present, configure CMake with options
 similar to the following (alter for your specific tool):
 
 cmake .. -DBRLCAD_EXTRADOCS_VALIDATE=ON -DVALIDATE_EXECUTABLE=msv
