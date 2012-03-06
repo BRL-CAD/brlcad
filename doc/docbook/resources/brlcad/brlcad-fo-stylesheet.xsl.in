@@ -14,6 +14,9 @@
   <!-- common param inputs, etc. -->
   <xsl:import href="file:///@CMAKE_SOURCE_DIR@/doc/docbook/resources/brlcad/brlcad-common.xsl"/>
 
+  <!-- font info -->
+  <xsl:import href="file:///@CMAKE_SOURCE_DIR@/doc/docbook/resources/brlcad/brlcad-fonts.xsl"/>
+
   <!-- for itemized lists -->
   <xsl:template name="itemizedlist.label.markup">
     <xsl:param name="itemsymbol">bullet</xsl:param>

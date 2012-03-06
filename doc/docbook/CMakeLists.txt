@@ -5,10 +5,18 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/)
 # DocBook processing from their archives into the build directory
 include(${CMAKE_CURRENT_SOURCE_DIR}/resources/other/expand.cmake)
 
-# Style sheet for XSLT transformation to FO (=> PDf) pages
+# Common stylesheets for all DocBook sources
+if(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_MAN)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-common.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-common.xsl)
+endif(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_MAN)
+
+# Style sheets for XSLT transformation to FO (=> PDf) pages
 if(BRLCAD_EXTRADOCS_PDF)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-fo-stylesheet.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-fo-stylesheet.xsl)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-fonts.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-fonts.xsl)
 endif(BRLCAD_EXTRADOCS_PDF)
 
 # Style sheet for XSLT transformation to HTML pages
