@@ -80,21 +80,6 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libz/CTestTestfile.cmake)
 # Local Copies of Tools
 #---------------------------------------------------------------------------------
 
-# Because we sometimes need to override system versions of tools, it is
-# essential that the variables containing the executable to be run for
-# each of the following tools use full paths - if just the name of the
-# target is used, there is a chance that name is the same as the executable
-# name itself.  In that case, if the system executable is in the path, it
-# will get called instead of resolving to the compiled exectuable associated
-# with the CMake target.  On single configuration systems we can reference
-# specify the full path to the binary directory at CMake configure time, but
-# this isn't possible for multi-configuration path systems like Visual
-# Studio since that path changes at run-time.  To make sure the location of
-# these tools is definitive at CMake time, we have to override the 
-# RUNTIME_OUTPUT_DIRECTORY property and force all configurations to build
-# their local tool binaries in the same location.
-SET(UTILITY_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/util")
-
 # For those wanting to use a system version of the LEMON parser generator
 # from sqlite, remember that the presence of /usr/bin/lemon is not enough.
 # LEMON needs a template file, lempar.c, and by default it needs it in
@@ -180,19 +165,6 @@ BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY_EXECUTABLE(xmllint xmltools "BRLCAD_EXTRADOCS_VALIDATE" xmllint_ALIASES xmllint_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/xmltools/include)
-
-# Because the xml tools need their libraries, we need to make sure that any
-# runtime outputs from those libraries (DLLs on Windows, for example) end
-# up in the same place that the binaries do.
-if(${CMAKE_PROJECT_NAME}_XSLTPROC_BUILD OR ${CMAKE_PROJECT_NAME}_XMLLINT_BUILD)
-  foreach(xmltarget xsltproc;xmllint;xml;xslt;exslt)
-    set_target_properties(${xmltarget} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${UTILITY_RUNTIME_OUTPUT_DIRECTORY}")
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      set_target_properties(${xmltarget} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER} "${UTILITY_RUNTIME_OUTPUT_DIRECTORY}")
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endforeach(xmltarget xsltproc;xmllint;xml;xslt;exslt)
-endif(${CMAKE_PROJECT_NAME}_XSLTPROC_BUILD OR ${CMAKE_PROJECT_NAME}_XMLLINT_BUILD)
 
 #---------------------------------------------------------------------------------
 # Third Party Sources
