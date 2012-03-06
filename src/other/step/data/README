@@ -1,5 +1,18 @@
-data/ap203/README
+Most of the express schema files in this directory were obtained from
+http://www.steptools.com/support/stdev_docs/
 
+ap203edit.exp
+-------------------------------------------------------------------------------
+wg3n916_ap203.exp, the standard version of the ap203 schema, references the
+non-existant type "CONFIG_CONTROL_DESIGN.DERIVED_UNIT" in the function
+"derive_dimensional_exponents." This error prevents the schema from being
+successfully used as an input to fedex_plus.
+
+ap203edit.exp is a corrected version of wg3n916_ap203.exp that removes the
+undefined reference.
+
+203wseds.exp Disclaimer
+-------------------------------------------------------------------------------
 The EXPRESS schema in this directory is based on ISO 10303-203, an
 international standard which is copyrighted by ISO. ISO has granted
 NIST permission to publicly distribute the EXPRESS source from ISO
