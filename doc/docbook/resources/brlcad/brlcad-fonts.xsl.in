@@ -7,7 +7,7 @@
   version="1.0"
 >
 
-  <!-- this is based on the fonts style sheet of courtesy of Dean Nelson
+  <!-- this is based on the fonts style sheet courtesy of Dean Nelson
        <deannelson@aol.com>, 2010-06-28, from the docbook-apps mailing list
 
        Dean's original fonts:
@@ -18,7 +18,7 @@
   <xsl:param name="body.font.master" select="'10.1'"/>
   <xsl:param name="symbol.font.family" select="'DejaVuSansMono'"/>
 
--->
+  -->
 
   <!-- ============= Fonts ==================== -->
 
