@@ -11,14 +11,6 @@ if(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_MAN)
     ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-common.xsl)
 endif(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_MAN)
 
-# Style sheets for XSLT transformation to FO (=> PDf) pages
-if(BRLCAD_EXTRADOCS_PDF)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-fo-stylesheet.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-fo-stylesheet.xsl)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-fonts.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-fonts.xsl)
-endif(BRLCAD_EXTRADOCS_PDF)
-
 # Style sheet for XSLT transformation to HTML pages
 if(BRLCAD_EXTRADOCS_HTML)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl.in
@@ -33,6 +25,10 @@ endif(BRLCAD_EXTRADOCS_MAN)
 
 # If we're doing PDF output, Apache FOP needs a couple of config files set up
 if(BRLCAD_EXTRADOCS_PDF)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-fo-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-fo-stylesheet.xsl)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-fonts.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-fonts.xsl)
   set(srcdir ${CMAKE_CURRENT_SOURCE_DIR})
   configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/fop.xconf.in ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf)
 endif(BRLCAD_EXTRADOCS_PDF)
