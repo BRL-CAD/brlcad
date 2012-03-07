@@ -164,7 +164,7 @@ macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir deps_li
     foreach(filename ${${xml_files}})
       string(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
       set(outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.${manext})
-      set(targetname ${filename_root}_${targetname_suffix}_man${mannum})
+      set(targetname ${filename_root}_${targetname_suffix}_man)
       set(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake)
       set(CURRENT_XSL_STYLESHEET ${XSL_MAN_STYLESHEET})
       configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/${XSLT_EXECUTABLE}.cmake.in ${scriptfile} @ONLY)
