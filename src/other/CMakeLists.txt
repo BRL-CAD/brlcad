@@ -202,6 +202,19 @@ if(${CMAKE_PROJECT_NAME}_XSLTPROC_BUILD OR ${CMAKE_PROJECT_NAME}_XMLLINT_BUILD)
   endforeach(xmltarget xsltproc;xmllint;xml;xslt;exslt)
 endif(${CMAKE_PROJECT_NAME}_XSLTPROC_BUILD OR ${CMAKE_PROJECT_NAME}_XMLLINT_BUILD)
 
+# zlib represents a situation were we need it in both the util dir and its
+# standard build directory, if we're using the local build.
+if(${CMAKE_PROJECT_NAME}_XSLTPROC_BUILD OR ${CMAKE_PROJECT_NAME}_XMLLINT_BUILD)
+  if(BRLCAD_BUILD_ZLIB AND CMAKE_CONFIGURATION_TYPES AND MSVC)
+      add_custom_command(
+        OUTPUT ${UTILITY_RUNTIME_OUTPUT_DIRECTORY}/zlib1.dll
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bin/zlib1d.dll ${UTILITY_RUNTIME_OUTPUT_DIRECTORY}/zlib1.dll
+	DEPENDS zlib
+	)
+      add_custom_target(zlib_cp ALL DEPENDS ${UTILITY_RUNTIME_OUTPUT_DIRECTORY}/zlib1.dll)
+  endif(BRLCAD_BUILD_ZLIB AND CMAKE_CONFIGURATION_TYPES AND MSVC)
+endif(${CMAKE_PROJECT_NAME}_XSLTPROC_BUILD OR ${CMAKE_PROJECT_NAME}_XMLLINT_BUILD)
+
 #---------------------------------------------------------------------------------
 # Third Party Sources
 #---------------------------------------------------------------------------------
