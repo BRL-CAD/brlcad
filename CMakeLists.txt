@@ -1205,8 +1205,12 @@ if(NOT MSVC)
   include(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
 endif(NOT MSVC)
 
+# determine whether the compiler supports an 'inline' keyword variant
 include(${BRLCAD_CMAKE_DIR}/CheckCInline.cmake)
-CHECK_C_INLINE()
+CHECK_C_INLINE(C_INLINE)
+if(NOT C_INLINE STREQUAL "inline")
+  add_definitions("-Dinline=${C_INLINE}")
+endif(NOT C_INLINE STREQUAL "inline")
 
 # The src/other subdirectory does not share (at least, not universally)
 # certain definitions common to all other directories in BRL-CAD.  Also,

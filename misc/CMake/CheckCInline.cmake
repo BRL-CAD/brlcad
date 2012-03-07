@@ -38,48 +38,60 @@
 # if any, is used for inlining C functions.  This check is similar to
 # autoconf's AC_C_INLINE macro.  The macro tests the inline keyword
 # (c99), then __inline__ (c89), and then __inline.  When it finds one
-# that works, it will ADD_DEFINITIONS(-Dinline=${KEYWORD}) and if none
-# work, it will ADD_DEFINITIONS(-Dinline=).
+# that works, it will set the result to -Dinline=${INLINE} and set
+# HAVE_INLINE to ${INLINE}.  If none work, it will set HAVE_INLINE to
+# an empty string.  Individual tests are stored in the cache along
+# with HAVE_INLINE as HAVE_${INLINE}_KEYWORD variables.
 #
 # This implementation is based on a snippet from Jack Kelly on the
 # cmake email list in Sep 2007, firther inspired by autoconf's c.m4.
-#
-# TODO: Don't just set global definitions, let the caller pass a
-# variable.
 #
 ###
 
 include(CheckCSourceCompiles)
 
-macro(CHECK_C_INLINE)
+macro(CHECK_C_INLINE RESULT)
 
-  if(NOT MSVC)
+  if(DEFINED HAVE_INLINE)
+    # return cached result
+    set(${RESULT} "$HAVE_INLINE")
+    return()
+  endif(DEFINED HAVE_INLINE)
 
-    foreach(KEYWORD "inline" "__inline__" "__inline")
-      if(NOT DEFINED C_INLINE)
+  # initialize to empty
+  set(HAVE_INLINE "" CACHE INTERNAL "C compiler does not provide inlining support")
+  set(${RESULT} "")
 
-	string(TOUPPER "HAVE_${KEYWORD}" HAVE_INLINE)
+  # test candidates to find one that works
+  foreach(INLINE "inline" "__inline__" "__inline")
+    string(TOUPPER "HAVE_${INLINE}_KEYWORD" HAVE_INLINE_KEYWORD)
 
-	check_c_source_compiles(
-	  "typedef int foo_t; static inline foo_t static_foo() {return 0;}
-        foo_t foo() {return 0;} int main(int argc, char *argv[]) {return 0;}"
-          ${HAVE_INLINE})
+    set(PRE_CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS}")
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Dinline=${INLINE}")
 
-	if(${HAVE_INLINE})
-          if(NOT ${KEYWORD} MATCHES "inline")
-            set(C_INLINE "-Dinline=${KEYWORD}" CACHE STRING "C inline" FORCE)
-            add_definitions(${C_INLINE})
-          else(NOT ${KEYWORD} MATCHES "inline")
-            set(C_INLINE "inline" CACHE STRING "C inline" FORCE)
-          endif(NOT ${KEYWORD} MATCHES "inline")
-	endif(${HAVE_INLINE})
-      endif(NOT DEFINED C_INLINE)
-    endforeach(KEYWORD)
+    check_c_source_compiles("typedef int foo_t;
+			     static inline foo_t
+			     static_foo() {
+			       return 0;
+			     }
+			     foo_t
+			     foo() {
+			       return 0;
+			     }
+			     int
+			     main(int argc, char *argv[]) {
+			       return 0;
+			     }" ${HAVE_INLINE_KEYWORD})
 
-    if(NOT DEFINED C_INLINE)
-      set(C_INLINE "unsupported" CACHE STRING "Compiler doesn't support inline" FORCE)
-    endif(NOT DEFINED C_INLINE)
-  endif(NOT MSVC)
+    set(CMAKE_REQUIRED_FLAGS "${PRE_CMAKE_REQUIRED_FLAGS}")
+
+    if(${HAVE_INLINE_KEYWORD})
+      set(HAVE_INLINE "${INLINE}" CACHE INTERNAL "C compiler provides inlining support")
+      set(${RESULT} "${INLINE}")
+      break()
+    endif(${HAVE_INLINE_KEYWORD})
+
+  endforeach(INLINE)
 
 endmacro(CHECK_C_INLINE)
 
