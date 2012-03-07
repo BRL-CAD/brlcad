@@ -1,40 +1,45 @@
 if(WIN32)
-  add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/bin/archer ${CMAKE_BINARY_DIR}/bin/archer.bat
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/archer.bat ${CMAKE_BINARY_DIR}/bin/archer.bat
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/archer ${CMAKE_BINARY_DIR}/bin/archer
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/archer.bat ${CMAKE_CURRENT_SOURCE_DIR}/archer.bat
-    )
-  set(archer_cmd_outputs ${CMAKE_BINARY_DIR}/bin/archer ${CMAKE_BINARY_DIR}/bin/archer.bat)
-  install(PROGRAMS archer.bat DESTINATION bin)
-  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+  if(NOT CMAKE_CONFIGURATION_TYPES)
     add_custom_command(
-      OUTPUT ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/archer ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/archer.bat
-      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/archer.bat ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/archer.bat
-      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/archer ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/archer
+      OUTPUT ${CMAKE_BINARY_DIR}/bin/archer ${CMAKE_BINARY_DIR}/bin/archer.bat
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/archer.bat ${CMAKE_BINARY_DIR}/bin/archer.bat
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/archer ${CMAKE_BINARY_DIR}/bin/archer
       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/archer.bat ${CMAKE_CURRENT_SOURCE_DIR}/archer.bat
       )
-    set(archer_cmd_outputs ${archer_cmd_outputs} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/archer ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/archer.bat)
-  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-
+    set(archer_cmd_outputs ${CMAKE_BINARY_DIR}/bin/archer ${CMAKE_BINARY_DIR}/bin/archer.bat)
+  else(NOT CMAKE_CONFIGURATION_TYPES)
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      add_custom_command(
+	OUTPUT ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/archer ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/archer.bat
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/archer.bat ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/archer.bat
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/archer ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/archer
+	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/archer.bat ${CMAKE_CURRENT_SOURCE_DIR}/archer.bat
+	)
+      set(archer_cmd_outputs ${archer_cmd_outputs} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/archer ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/archer.bat)
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  endif(NOT CMAKE_CONFIGURATION_TYPES)
+  install(PROGRAMS archer.bat DESTINATION bin)
   add_custom_target(archer ALL DEPENDS ${archer_cmd_outputs})
 else(WIN32)
-  add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/bin/archer
-    COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/archer ${CMAKE_BINARY_DIR}/bin/archer
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/archer
-    )
-  set(archer_cmd_outputs ${CMAKE_BINARY_DIR}/bin/archer)
-  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+  if(NOT CMAKE_CONFIGURATION_TYPES)
     add_custom_command(
-      OUTPUT ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/archer
-      COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/archer ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/archer
+      OUTPUT ${CMAKE_BINARY_DIR}/bin/archer
+      COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/archer ${CMAKE_BINARY_DIR}/bin/archer
       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/archer
       )
-    set(archer_cmd_outputs ${archer_cmd_outputs} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/archer)
-  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    set(archer_cmd_outputs ${CMAKE_BINARY_DIR}/bin/archer)
+  else(NOT CMAKE_CONFIGURATION_TYPES)
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      add_custom_command(
+	OUTPUT ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/archer
+	COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/archer ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/archer
+	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/archer
+	)
+      set(archer_cmd_outputs ${archer_cmd_outputs} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/archer)
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  endif(NOT CMAKE_CONFIGURATION_TYPES)
   add_custom_target(archer ALL DEPENDS ${archer_cmd_outputs})
 endif(WIN32)
 install(PROGRAMS archer DESTINATION bin)
