@@ -38,10 +38,10 @@
 # if any, is used for inlining C functions.  This check is similar to
 # autoconf's AC_C_INLINE macro.  The macro tests the inline keyword
 # (c99), then __inline__ (c89), and then __inline.  When it finds one
-# that works, it will set the result to -Dinline=${INLINE} and set
-# HAVE_INLINE to ${INLINE}.  If none work, it will set HAVE_INLINE to
-# an empty string.  Individual tests are stored in the cache along
-# with HAVE_INLINE as HAVE_${INLINE}_KEYWORD variables.
+# that works, it will cache it to HAVE_INLINE and return it in the
+# provided RESULT variable.  If none work, it will set HAVE_INLINE and
+# RESULT to an empty string.  Individual tests are also stored in the
+# cache as HAVE_${INLINE}_KEYWORD variables.
 #
 # Common usage:
 #
