@@ -40,8 +40,9 @@
 #  include <sys/sysinfo.h>
 #endif
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
 #  include <sys/types.h>
+#  include <sys/param.h>
 #  include <sys/time.h>
 #  include <sys/resource.h>
 #  include <sys/sysctl.h>
