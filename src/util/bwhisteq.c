@@ -36,8 +36,10 @@
 #include "bu.h"
 
 
-long bin[256];
-unsigned char new[256];
+#define BINSIZE 256
+
+long bin[BINSIZE];
+unsigned char new[BINSIZE];
 
 #define rand01()	((random()&0xffff)/65535.0)
 
@@ -54,7 +56,7 @@ main(int argc, char **argv)
     unsigned char buf[512];
     unsigned char obuf[512];
     unsigned char *bp;
-    int left[256], right[256];
+    int left[BINSIZE], right[BINSIZE];
     double hint, havg;
     long r;
     size_t ret;
@@ -81,13 +83,13 @@ main(int argc, char **argv)
     }
 
     havg = 0.0;
-    for (i = 0; i < 256; i++)
+    for (i = 0; i < BINSIZE; i++)
 	havg += bin[ i ];
-    havg /= 256.0;
+    havg /= (double)BINSIZE;
 
     r = 0;
     hint = 0;
-    for (i = 0; i < 256; i++) {
+    for (i = 0; i < BINSIZE; i++) {
 	left[i] = r;
 	hint += bin[i];
 	while (hint > havg) {
@@ -103,20 +105,27 @@ main(int argc, char **argv)
     }
 
     if (verbose) {
-	for (i = 0; i < 256; i++)
+	for (i = 0; i < BINSIZE; i++)
 	    fprintf(stderr, "new[%d] = %d\n", i, new[i]);
     }
 
     fseek(fp, 0, 0);
     while ((n = fread(buf, 1, 512, fp)) > 0) {
 	for (i = 0; i < n; i++) {
-	    if (left[buf[i]] == right[buf[i]])
-		obuf[i] = left[buf[i]];
+	    long idx = buf[i];
+
+	    if (idx < 0)
+		idx = 0;
+	    if (idx > BINSIZE-1)
+		idx = BINSIZE-1;
+
+	    if (left[idx] == right[idx])
+		obuf[i] = left[idx];
 	    else {
 #ifdef METHOD2
-		obuf[i] = left[buf[i]] + new[buf[i]] * rand01();
+		obuf[i] = left[idx] + new[idx] * rand01();
 #else
-		obuf[i] = new[buf[i]];
+		obuf[i] = new[idx];
 #endif /* Not METHOD2 */
 	    }
 	}
