@@ -100,6 +100,8 @@ main(int argc, char **argv)
 	bu_exit(2, "%s", usage);
     }
     size = 512 * atoi(argv[bu_optind]);
+    if (size > INT_MAX)
+	size = INT_MAX;
 
     setbuf (stderr, errbuf);
     buffer = (char *)bu_malloc(size, "alloc buffer");
