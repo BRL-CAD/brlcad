@@ -9,7 +9,7 @@ set(RTSERVER_INCLUDE_DIRS
 	)
 BRLCAD_LIB_INCLUDE_DIRS(rtserver RTSERVER_INCLUDE_DIRS "")
 
-BRLCAD_ADDLIB(rtserver rtserver.c "librt libbn libbu ${JAVA_AWT_LIBRARY} ${JAVA_JVM_LIBRARY} ${WINSOCK_LIB}")
+BRLCAD_ADDLIB(rtserver rtserver.c "librt libbn libbu ${JAVA_AWT_LIBRARY} ${JAVA_JVM_LIBRARY} ${WINSOCK_LIB} ${ZLIB_LIBRARY}")
 set_target_properties(rtserver PROPERTIES VERSION 19.0.1 SOVERSION 19)
 set_target_properties(rtserver PROPERTIES SUFFIX ".jnilib")
 
