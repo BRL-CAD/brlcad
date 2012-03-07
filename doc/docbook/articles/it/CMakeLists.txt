@@ -3,6 +3,7 @@ set(docbook_articles_IT
   )
 
 set(docbook_articles_IT_IMAGES
+  images/bc2.gif
   images/brlcad-overview-benchmark-Bldg_391.jpg
   images/brlcad-overview-benchmark-M35.jpg
   images/brlcad-overview-benchmark-Moss.jpg
@@ -10,6 +11,7 @@ set(docbook_articles_IT_IMAGES
   images/brlcad-overview-benchmark-Star.jpg
   images/brlcad-overview-benchmark-World.jpg
   images/brlcad-overview-data-flow.png
+  images/sflogo.png
   )
 BRLCAD_ADDDATA(docbook_articles_IT_IMAGES html/articles/it/images)
 
