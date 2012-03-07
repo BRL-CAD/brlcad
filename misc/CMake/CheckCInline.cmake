@@ -43,8 +43,16 @@
 # an empty string.  Individual tests are stored in the cache along
 # with HAVE_INLINE as HAVE_${INLINE}_KEYWORD variables.
 #
-# This implementation is based on a snippet from Jack Kelly on the
-# cmake email list in Sep 2007, firther inspired by autoconf's c.m4.
+# Common usage:
+#
+# CHECK_C_INLINE(C_INLINE)
+# if(NOT C_INLINE STREQUAL "inline")
+#   add_definitions("-Dinline=${C_INLINE}")
+# endif(NOT C_INLINE STREQUAL "inline")
+#
+# This implementation was developed for BRL-CAD, initially motivated
+# by a snippet from Jack Kelly on the CMake mailing list in Sep 2007,
+# and further inspired by GNU Autoconf's c.m4.
 #
 ###
 
