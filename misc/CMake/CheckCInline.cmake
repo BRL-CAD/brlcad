@@ -60,46 +60,48 @@ include(CheckCSourceCompiles)
 
 macro(CHECK_C_INLINE RESULT)
 
-  if(DEFINED HAVE_INLINE)
-    # return cached result
-    set(${RESULT} "$HAVE_INLINE")
-    return()
-  endif(DEFINED HAVE_INLINE)
+  if(NOT DEFINED HAVE_INLINE)
 
   # initialize to empty
-  set(HAVE_INLINE "" CACHE INTERNAL "C compiler does not provide inlining support")
   set(${RESULT} "")
 
   # test candidates to find one that works
   foreach(INLINE "inline" "__inline__" "__inline")
-    string(TOUPPER "HAVE_${INLINE}_KEYWORD" HAVE_INLINE_KEYWORD)
+    if(NOT HAVE_INLINE)
+      string(TOUPPER "HAVE_${INLINE}_KEYWORD" HAVE_INLINE_KEYWORD)
 
-    set(PRE_CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS}")
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Dinline=${INLINE}")
+      set(PRE_CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS}")
+      set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Dinline=${INLINE}")
 
-    check_c_source_compiles("typedef int foo_t;
-			     static inline foo_t
-			     static_foo() {
-			       return 0;
-			     }
-			     foo_t
-			     foo() {
-			       return 0;
-			     }
-			     int
-			     main(int argc, char *argv[]) {
-			       return 0;
-			     }" ${HAVE_INLINE_KEYWORD})
+      check_c_source_compiles("typedef int foo_t;
+			       static inline foo_t
+			       static_foo() {
+			         return 0;
+			       }
+			       foo_t
+			       foo() {
+			         return 0;
+			       }
+			       int
+			       main(int argc, char *argv[]) {
+			         return 0;
+			       }" ${HAVE_INLINE_KEYWORD})
 
-    set(CMAKE_REQUIRED_FLAGS "${PRE_CMAKE_REQUIRED_FLAGS}")
+      set(CMAKE_REQUIRED_FLAGS "${PRE_CMAKE_REQUIRED_FLAGS}")
 
-    if(${HAVE_INLINE_KEYWORD})
-      set(HAVE_INLINE "${INLINE}" CACHE INTERNAL "C compiler provides inlining support")
-      set(${RESULT} "${INLINE}")
-      break()
-    endif(${HAVE_INLINE_KEYWORD})
-
+      if(${HAVE_INLINE_KEYWORD})
+        set(HAVE_INLINE "${INLINE}" CACHE INTERNAL "C compiler provides inlining support")
+      endif(${HAVE_INLINE_KEYWORD})
+    endif(NOT HAVE_INLINE)
   endforeach(INLINE)
+  endif(NOT DEFINED HAVE_INLINE)
+
+  if(NOT DEFINED HAVE_INLINE)
+    set(HAVE_INLINE "" CACHE INTERNAL "C compiler does not provide inlining support")
+  endif(NOT DEFINED HAVE_INLINE)
+
+  # return the final verdict
+  set(${RESULT} ${HAVE_INLINE})
 
 endmacro(CHECK_C_INLINE)
 
