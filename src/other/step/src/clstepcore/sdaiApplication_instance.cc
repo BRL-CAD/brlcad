@@ -832,7 +832,6 @@ ReadEntityRef(istream &in, ErrorDescriptor *err, const char *tokenList,
       case '#':
 	{
 	    int id = -1; 
-	    int n = 0;
 	    in >>  id;
 	    if (in.fail ())  //  there's been an error in input
 	    {

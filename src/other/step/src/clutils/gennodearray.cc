@@ -77,17 +77,10 @@ GenNodeArray::Check (int index)
     GenericNode** newbuf;
 
     if (index >= _bufsize) {
-	int oldBufSize = _bufsize;
         _bufsize = (index+1) * 2;
         newbuf = new GenericNode*[_bufsize];
 
 	memset(newbuf, 0, _bufsize*sizeof(GenericNode*));
-//	memset(newbuf[oldBufSize], 0, 
-//		(_bufsize - oldBufSize)*sizeof(GenericNode*) );
-//        bcopy(_buf, newbuf, _count*sizeof(GenericNode*));
-// Josh L, 5/2/95
-//        memcpy(newbuf, _buf, _count*sizeof(GenericNode*));
-// Dave memcpy is not working since memory areas overlap
         memmove(newbuf, _buf, _count*sizeof(GenericNode*));
 	delete [] _buf;
         _buf = newbuf;

@@ -1817,12 +1817,8 @@ RealNode::asStr(std::string &s)
 const char *
 RealNode::STEPwrite(std::string &s, const char *)
 {
-    char tmp[BUFSIZ];
     if(value != S_REAL_NULL)
     {
-//	sprintf(tmp, "%.15g", value);
-//	sprintf(tmp, "%.*g", Real_Num_Precision, value);
-//	s = tmp;
 	WriteReal(value,s);
     }
     else

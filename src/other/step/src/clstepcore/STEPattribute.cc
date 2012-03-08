@@ -328,17 +328,17 @@ STEPattribute::STEPread (istream& in, InstMgr * instances, int addFileId,
     {
       case INTEGER_TYPE:
   	{
-	    int valAssigned = ReadInteger(*(ptr.i), in, &_error, ",)");
+	    ReadInteger(*(ptr.i), in, &_error, ",)");
 	    return _error.severity();
 	}
       case REAL_TYPE:
   	{
-	    int valAssigned = ReadReal(*(ptr.r), in, &_error, ",)");
+	    ReadReal(*(ptr.r), in, &_error, ",)");
 	    return _error.severity();
 	}
       case NUMBER_TYPE:
   	{
-	    int valAssigned = ReadNumber(*(ptr.r), in, &_error, ",)");
+	    ReadNumber(*(ptr.r), in, &_error, ",)");
 	    return _error.severity();
 	}
       case STRING_TYPE: 

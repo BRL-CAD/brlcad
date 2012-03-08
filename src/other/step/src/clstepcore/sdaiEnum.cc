@@ -614,7 +614,7 @@ SCLP23(Enum)::StrToVal (const char * s, ErrorDescriptor *err, int optional)
 {
     istringstream in ((char *)s); // sz defaults to length of s
 
-    Severity sev = ReadEnum(in, err, 1, 0);
+    ReadEnum(in, err, 1, 0);
     if( (err->severity() == SEVERITY_INCOMPLETE) && optional)
 	err->severity(SEVERITY_NULL);
 
@@ -633,7 +633,7 @@ SCLP23(Enum)::STEPread (const char *s, ErrorDescriptor *err, int optional)
 Severity
 SCLP23(Enum)::STEPread (istream& in, ErrorDescriptor *err, int optional)
 {
-    Severity sev = ReadEnum(in, err, 1, 1);
+    ReadEnum(in, err, 1, 1);
     if( (err->severity() == SEVERITY_INCOMPLETE) && optional)
 	err->severity(SEVERITY_NULL);
 

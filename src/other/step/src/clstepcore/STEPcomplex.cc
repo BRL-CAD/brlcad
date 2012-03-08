@@ -25,7 +25,6 @@ STEPcomplex::STEPcomplex(Registry *registry, const std::string **names,
 : SCLP23(Application_instance)(fileid, 1),  sc(0), head(this), _registry(registry), visited(0)
 {
     char *nms[BUFSIZ];
-    std::string *name;
     int j, k;
 
     // Create a char ** list of names and call Initialize to build all:
@@ -161,7 +160,6 @@ STEPcomplex::~STEPcomplex()
 void 
 STEPcomplex::AssignDerives()
 {
-    const char *nm;
     STEPattribute * a = 0;
     STEPcomplex *scomp1 = head;
     STEPcomplex *scomp2;
@@ -476,11 +474,6 @@ STEPcomplex::BuildAttrs(const char *s )
 	const AttrDescriptorList *attrList;
 	attrList = &( eDesc->ExplicitAttr() );
 
-      //////////////////////////////////////////////
-      // find out how many attrs there are
-      //////////////////////////////////////////////
-	int attrCount = attrList->EntryCount();
-
 	STEPattribute * a = 0;
 
 	AttrDescLinkNode *attrPtr = (AttrDescLinkNode *)attrList->GetHead();
@@ -648,11 +641,7 @@ STEPcomplex::WriteExtMapEntities(ostream& out, const char *currSch)
 const char * 
 STEPcomplex::WriteExtMapEntities(std::string &buf, const char *currSch)
 {
-    char instanceInfo[BUFSIZ];
-    
     std::string tmp;
-//    sprintf(instanceInfo, "%s(", (char *)StrToUpper( EntityName(), tmp ) );
-//    buf.Append(instanceInfo);
 
     buf.append( (char *)StrToUpper(EntityName( currSch ),tmp) );
     buf.append("i");

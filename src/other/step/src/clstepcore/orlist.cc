@@ -50,7 +50,6 @@ void OrList::unmarkAll( EntNode *ents )
      */
 {
     EntList *child;
-    int j;
 
     if ( (child = getChild( choice )) != NULL ) {
 	// choice = the last selected path which we'll now undo.

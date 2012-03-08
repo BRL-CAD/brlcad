@@ -94,7 +94,7 @@ ReadInteger(SCLP23(Integer) &val, istream &in, ErrorDescriptor *err,
 	valAssigned = 1;
 	val = i;
     }
-    Severity s = CheckRemainingInput(in, err, "Integer", tokenList);
+    CheckRemainingInput(in, err, "Integer", tokenList);
     return valAssigned;
 }
 
@@ -356,7 +356,7 @@ ReadReal(SCLP23(Real) &val, istream &in, ErrorDescriptor *err,
     else
       val = S_REAL_NULL;
 
-    Severity s = CheckRemainingInput(in, err, "Real", tokenList);
+    CheckRemainingInput(in, err, "Real", tokenList);
     return valAssigned;
 
 /* old way - much easier but not thorough enough */
@@ -479,7 +479,7 @@ ReadNumber(SCLP23(Real) &val, istream &in, ErrorDescriptor *err,
 	valAssigned = 1;
 	val = d;
     }
-    Severity s = CheckRemainingInput(in, err, "Number", tokenList);
+    CheckRemainingInput(in, err, "Number", tokenList);
     return valAssigned;
 }
 
@@ -1131,7 +1131,6 @@ ReadTokenSeparator(istream& in, std::string *comments)
 {
     char c;
     std::string s; // used if need to read a comment
-    const char *cstr = 0;
 
     if (in.eof()) 
     {

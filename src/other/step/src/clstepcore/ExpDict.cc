@@ -778,21 +778,10 @@ AttrDescriptor::ExpandedTypeName(std::string & s) const
 const char * 
 AttrDescriptor::GenerateExpress (std::string &buf) const
 {
-    char tmp[BUFSIZ];
     std::string sstr;
     buf = AttrExprDefStr(sstr);
     buf.append(";\n");
 
-/*
-//    buf = "";
-    buf.Append(StrToLower(Name(),tmp));
-    buf.Append(" : ");
-    if(_optional == LTrue) {
-	buf.Append("OPTIONAL ");
-    }
-    buf.Append(TypeName());
-    buf.Append(";\n");
-*/
     return const_cast<char *>(buf.c_str());
 }
 
@@ -876,7 +865,6 @@ EnumTypeDescriptor::GenerateExpress (std::string &buf) const
     const char *desc = Description();
     const char *ptr = &(desc[16]);
     int count;
-    Where_rule_ptr wr;
     int i;
     int all_comments = 1;
     
@@ -979,10 +967,8 @@ EntityDescriptor::~EntityDescriptor ()
 const char * 
 EntityDescriptor::GenerateExpress (std::string &buf) const
 {
-    char tmp[BUFSIZ];
     std::string sstr;
     int count;
-    Where_rule_ptr wr;
     int i;
     int all_comments = 1;
 
@@ -1601,7 +1587,6 @@ TypeDescriptor::GenerateExpress (std::string &buf) const
     const char *desc = Description();
     const char *ptr = desc;
     int count;
-    Where_rule_ptr wr;
     int i;
     int all_comments = 1;
     
@@ -1976,7 +1961,6 @@ SelectTypeDescriptor::CanBe (const TypeDescriptor * other) const
 const TypeDescriptor *
 SelectTypeDescriptor::CanBe (const char * other) const
 {
-  const TypeDescriptor * found =0;
   TypeDescItr elements (GetElements()) ;
   const TypeDescriptor * td =0;
 
@@ -1987,7 +1971,6 @@ SelectTypeDescriptor::CanBe (const char * other) const
   // see if other is one of the elements
   while (td = elements.NextTypeDesc ())  {
     if (td -> CanBe (other)) return td;
-//    if (found = (td -> CanBe (other))) return found;
   }
   return 0;
 }
