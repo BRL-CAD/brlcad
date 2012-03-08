@@ -122,19 +122,31 @@ endif(NOT IS_SUBBUILD)
 
 
 #---------------------------------------------------------------------
-# If it exists, load a BRL-CAD_CONFIG.GLOBAL file.  This allows advanced
-# users to specify options they want to always use by default even when
-# doing clean BRL-CAD builds without a CMakeCache.txt file - for example,
-# to always enable all local libs the following line can be added to
-# BRL-CAD_CONFIG.GLOBAL:
+# If it exists, load a BRL-CAD_CONFIG.GLOBAL file.  This allows
+# advanced users to specify options or preferences they want to always
+# use by default even when doing clean BRL-CAD builds without a
+# CMakeCache.txt file - for example, to always enable all local libs
+# the following line can be added to BRL-CAD_CONFIG.GLOBAL:
 #
 # set(BRLCAD_BUNDLED_LIBS "Bundled" CACHE STRING "Enable all local libs")
 
-
-if(EXISTS ${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL)
-  message("Reading ${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL")
+# The user's configuration file can be defined by environment variable
+# "BRLCAD_USER_GLOBAL_CONFIG_FILE" or, in its absence, by a file named
+# "BRL-CAD_CONFIG.GLOBAL" located either above or in the BRL-CAD
+# source directory.
+set(BRLCAD_USER_GLOBAL_CONFIG_FILE "$ENV{BRLCAD_USER_GLOBAL_CONFIG_FILE}")
+if(BRLCAD_USER_GLOBAL_CONFIG_FILE AND EXISTS ${BRLCAD_USER_GLOBAL_CONFIG_FILE})
+  message("Reading user preference file '${BRLCAD_USER_GLOBAL_CONFIG_FILE}'")
+  include(${BRLCAD_USER_GLOBAL_CONFIG_FILE})
+elseif(EXISTS ${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL)
+  message("Reading user preference file '${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL'")
   include(${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL)
-endif(EXISTS ${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL)
+elseif(EXISTS ${BRLCAD_SOURCE_DIR}/BRL-CAD_CONFIG.GLOBAL)
+  message("Reading user preference file '${BRLCAD_SOURCE_DIR}/BRL-CAD_CONFIG.GLOBAL'")
+  include(${BRLCAD_SOURCE_DIR}/BRL-CAD_CONFIG.GLOBAL)
+else(BRLCAD_USER_GLOBAL_CONFIG_FILE AND EXISTS ${BRLCAD_USER_GLOBAL_CONFIG_FILE})
+  message("No user preference file found...")
+endif(BRLCAD_USER_GLOBAL_CONFIG_FILE AND EXISTS ${BRLCAD_USER_GLOBAL_CONFIG_FILE})
 
 # Allow the BRLCAD_ROOT environment variable to set CMAKE_INSTALL_PREFIX
 # but be noisy about it.  This is generally not a good idea.
