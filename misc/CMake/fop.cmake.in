@@ -10,7 +10,8 @@ else(APACHE_FOP_VERSION VERSION_LESS 1.0)
 endif(APACHE_FOP_VERSION VERSION_LESS 1.0)
 
 # FOP uses environment variables - set them.
-set(ENV{FOP_HYPHENATION_PATH} @FOP_HYP@)
+set(ENV{FOP_HYPHENATION_PATH} ${FOP_HYPH})
+
 set(ENV{CLASSPATH} @CMAKE_SOURCE_DIR@/doc/docbook)
 
 # Keep FOP headless on OSX and specify the log4j config
