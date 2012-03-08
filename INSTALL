@@ -117,7 +117,7 @@ distribution if you would like to install into an alternate installation
 location.  That said, if you do desire to install and/or run BRL-CAD from 
 a different location, give it a try...on some platforms it will work.
 
-Something to be aware of - even if a binary distribution IS relocatable, 
+Something to be aware of, even if a binary distribution IS relocatable: 
 it will use its local copies of things like libraries only so long as the
 "final" installed target directory that the build was compiled for
 does not contain a BRL-CAD installation.  Due to the way path logic
@@ -150,7 +150,7 @@ details on how to install from either starting point.
 Starting From a SVN Checkout/Export:
 
 With CMake, there is no longer any difference between building from
-a subversion checkout and a tarball - follow the Source Distribution
+a subversion checkout and a tarball--follow the Source Distribution
 instructions below.
 
 Starting From a Source Distribution:
@@ -165,7 +165,7 @@ to perform a Debug build and install into the /usr/brlcad/dev-X.Y.Z
 directory.   The CMAKE_INSTALL_PREFIX option may be used to change 
 that directory, or a Release build type may be specified to install to 
 /usr/brlcad/rel-X.Y.Z - more on this below.  The
-tradition of non-system installation paths goes back a couple decades
+tradition of non-system installation paths goes back a couple of decades
 and is a convenient means to isolate the BRL-CAD solid modeling 
 system from your system, resolves conflicts, facilitates uninstalls, 
 and simplifies upgrades.  The default configuration is performed by 
