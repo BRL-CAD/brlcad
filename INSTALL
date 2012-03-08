@@ -247,6 +247,23 @@ performance evaluation), enable BRLCAD_ENABLE_OPTIMIZED_BUILD:
 See the CONFIGURATION OPTIONS below for more details on all of the
 possible settings.
 
+You can specify options or preferences you want to always use by
+default.  For example, to always enable all local libs the following
+line can be added to your own configuration file:
+
+  set(BRLCAD_BUNDLED_LIBS "Bundled" CACHE STRING "Enable all local libs")
+
+You can define your own configuration file in one of three ways.  The
+build system will search for the file in this order:
+
+  ${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL
+
+  ${BRLCAD_SOURCE_DIR}/BRL-CAD_CONFIG.GLOBAL
+
+  the file defined in the environment variable "BRLCAD_USER_GLOBAL_CONFIG_FILE"
+
+The build system will use the first file defined that exists.
+
 Once configured, you should be able to succesfully build BRL-CAD via
 make:
 
