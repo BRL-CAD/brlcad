@@ -2128,7 +2128,7 @@ mark_as_advanced(EXECUTABLE_OUTPUT_PATH)
 mark_as_advanced(LIBRARY_OUTPUT_PATH)
 
 # If options have been defined that we are going to document, by now they've
-# been documented.  Make an updated copy of the install file and see whether
+# been documented.  Make an updated copy of the "INSTALL" file and see whether
 # anything has changed - we're not going to overwrite the copy in the src
 # directory (principle of this build is to leave the src dir pristine after
 # configuration and compilation) but check for changes and report if found.
