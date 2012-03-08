@@ -977,8 +977,8 @@ VERSION NUMBERS & COMPATIBILITY
 -------------------------------
 
 The BRL-CAD version number is in the include/conf directory in the
-MAJOR, MINOR, and PATCH files.  The README, ChangeLog, NEWS files as
-well as a variety of documents in the doc/ directory may also make
+MAJOR, MINOR, and PATCH files.  The README, ChangeLog, and NEWS files
+as well as a variety of documents in the doc/ directory may also make
 references to version numbers.  See the MAKING A RELEASE steps listed
 below for a more concise list of what needs to be updated.
 
