@@ -1361,7 +1361,7 @@ TYPEselect_lib_part21 (const Type type, FILE* f, Schema schema)
   fprintf (f, "\n\n// STEP Part 21\n");
   /*  write part 21   */
   fprintf (f, "\nvoid\n%s::STEPwrite_content (ostream& out, const char *"
-	      " currSch) const\n{\n  ", n);
+	      " currSch) const\n{\n  (void)currSch;\n  ", n);
 
 /*  go through the items  */
   LISTdo( SEL_TYPEget_items(type), t, Type )
@@ -1522,9 +1522,9 @@ TYPEselect_lib_part21 (const Type type, FILE* f, Schema schema)
       
   
   /*  Read part 21   */
-  fprintf (f, "\nSeverity\n%s::STEPread_content "
-	   "(istream& in, InstMgr * instances,\n\t\t\tconst char *utype, "
-	   "int addFileId, const char *currSch)\n{\n", n);
+  fprintf (f, "\nSeverity\n%s::STEPread_content (istream& in, InstMgr * instances,\n"
+	  "\t\t\tconst char *utype, int addFileId, const char *currSch)\n{\n"
+	  "  (void)instances;\n  (void)utype;\n  (void)addFileId;\n  (void)currSch;\n  ", n);
 
 /*  go through the items  */
   LISTdo( SEL_TYPEget_items(type), t, Type )
@@ -1636,7 +1636,7 @@ TYPEselect_lib_StrToVal (const Type type, FILE* f, Schema schema)
   /*  read StrToVal_content   */
   fprintf (f, "\nSeverity\n%s::StrToVal_content "
 	   "(const char * str, InstMgr * instances)"
-	   "\n{\n", n);
+	   "\n{\n  (void)str;\n  (void)instances;\n", n);
 
   fprintf (f, "  switch (base_type)  {\n");
   LISTdo( data_members, t, Type )
@@ -1734,7 +1734,7 @@ SELlib_print_protected (const Type type,  FILE* f, const Schema schema)
 
   /*  SELECT::AssignEntity  */
   fprintf (f, "\nconst TypeDescriptor * \n%s::AssignEntity (SCLP23(Application_instance) * se)\n"
-	 "{\n", 
+	 "{\n  (void)se;\n", 
 	   SelectName (TYPEget_name (type))
 	   );
 
