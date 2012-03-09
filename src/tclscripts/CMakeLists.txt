@@ -2,14 +2,12 @@
 
 MACRO(pkgIndex_BUILD name targetdir)
   string(REGEX REPLACE "/" "_" targetprefix ${targetdir})
-  if(NOT CMAKE_CONFIGURATION_TYPES)
     add_custom_command(
       OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl
       COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ampi.tcl ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}
       DEPENDS btclsh ${targetprefix}.sentinel
       )
     set(${name}_pkgIndex_deps ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl)
-  else(NOT CMAKE_CONFIGURATION_TYPES)
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
       add_custom_command(
@@ -20,9 +18,8 @@ MACRO(pkgIndex_BUILD name targetdir)
 	)
       set(${name}_pkgIndex_deps ${${name}_pkgIndex_deps} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}/pkgIndex.tcl)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif(NOT CMAKE_CONFIGURATION_TYPES)
-  install(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl DESTINATION ${DATA_DIR}/${targetdir})
-  add_custom_target(${name}_pkgIndex.tcl ALL DEPENDS ${${name}_pkgIndex_deps})
+   add_custom_target(${name}_pkgIndex.tcl ALL DEPENDS ${${name}_pkgIndex_deps})
+ install(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl DESTINATION ${DATA_DIR}/${targetdir})
   # Maintain a list of all pkgIndex targets for dependency purposes
   set(pkgIndex_target_list ${pkgIndex_target_list} ${name}_pkgIndex.tcl)
   LIST(REMOVE_DUPLICATES pkgIndex_target_list)
@@ -31,14 +28,12 @@ ENDMACRO(pkgIndex_BUILD name targetdir)
 
 MACRO(tclIndex_BUILD name targetdir)
   string(REGEX REPLACE "/" "_" targetprefix ${targetdir})
-  if(NOT CMAKE_CONFIGURATION_TYPES)
     add_custom_command(
       OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex
       COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ami.tcl ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}
       DEPENDS btclsh ${targetprefix}.sentinel
       )
     set(${name}_tclIndex_deps ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex)
-  else(NOT CMAKE_CONFIGURATION_TYPES)
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
       add_custom_command(
@@ -49,9 +44,8 @@ MACRO(tclIndex_BUILD name targetdir)
 	)
       set(${name}_tclIndex_deps ${${name}_tclIndex_deps} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}/tclIndex)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif(NOT CMAKE_CONFIGURATION_TYPES)
-  install(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex DESTINATION ${DATA_DIR}/${targetdir})
   add_custom_target(${name}_tclIndex ALL DEPENDS ${${name}_tclIndex_deps})
+  install(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex DESTINATION ${DATA_DIR}/${targetdir})
   # Maintain a list of all tclIndex targets for dependency purposes
   set(tclIndex_target_list ${tclIndex_target_list} ${name}_tclIndex)
   LIST(REMOVE_DUPLICATES tclIndex_target_list)
