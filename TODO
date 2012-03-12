@@ -122,6 +122,9 @@ comp.r4 ID 5678 material code 5 LOS 75
 * DocBook: create a DB index.xml to generate a doc listing (with
   hot links) for the html and pdf collection
 
+* DocBook source: fix all SEVERE messages for extradocs builds (html
+  and pdf).
+
 * DocBook source: add xsl customizations for figure and table title
   positions, float centering, etc.; add automatic figure, table, and
   other similar references; add separate html and fo image sizing and
