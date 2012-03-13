@@ -1,0 +1,11 @@
+file(GLOB ALL_FILES "@UTILITY_RUNTIME_OUTPUT_DIRECTORY@/*")
+
+foreach(utilfile ${ALL_FILES})
+  if(NOT "${utilfile}" MATCHES "rule$")
+    if(IS_DIRECTORY "${utilfile}")
+      execute_process(COMMAND ${CMAKE_COMMAND} -E remove_directory "${utilfile}")
+    else(IS_DIRECTORY "${utilfile}")
+      execute_process(COMMAND ${CMAKE_COMMAND} -E remove "${utilfile}")
+    endif(IS_DIRECTORY "${utilfile}")
+  endif(NOT "${utilfile}" MATCHES "rule$")
+endforeach(utilfile ${ALL_FILES})
