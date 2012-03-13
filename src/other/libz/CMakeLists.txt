@@ -62,7 +62,7 @@ IF(ENABLE_Z_PREFIX)
 ENDIF(ENABLE_Z_PREFIX)
 
 if(MSVC)
-    set(CMAKE_DEBUG_POSTFIX "d")
+    #set(CMAKE_DEBUG_POSTFIX "d")
     add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
     add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
 endif()

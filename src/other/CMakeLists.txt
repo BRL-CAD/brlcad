@@ -206,12 +206,10 @@ endif(${CMAKE_PROJECT_NAME}_XSLTPROC_BUILD OR ${CMAKE_PROJECT_NAME}_XMLLINT_BUIL
 # standard build directory, if we're using the local build.
 if(${CMAKE_PROJECT_NAME}_XSLTPROC_BUILD OR ${CMAKE_PROJECT_NAME}_XMLLINT_BUILD)
   if(BRLCAD_ZLIB_BUILD AND CMAKE_CONFIGURATION_TYPES AND MSVC)
-      add_custom_command(
-        OUTPUT ${UTILITY_RUNTIME_OUTPUT_DIRECTORY}/zlibd1.dll
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bin/zlibd1.dll ${UTILITY_RUNTIME_OUTPUT_DIRECTORY}/zlibd1.dll
+      add_custom_target(zlib_cp
+	${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bin/zlib1.dll ${UTILITY_RUNTIME_OUTPUT_DIRECTORY}/zlib1.dll
 	DEPENDS zlib
 	)
-      add_custom_target(zlib_cp ALL DEPENDS ${UTILITY_RUNTIME_OUTPUT_DIRECTORY}/zlibd1.dll)
       if(${CMAKE_PROJECT_NAME}_XSLTPROC_BUILD)
         add_dependencies(xsltproc zlib_cp)
       endif(${CMAKE_PROJECT_NAME}_XSLTPROC_BUILD)
