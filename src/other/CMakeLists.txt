@@ -189,9 +189,22 @@ BRLCAD_BUNDLED_LIBS is also AUTO.
 THIRD_PARTY_EXECUTABLE(xmllint xmltools "BRLCAD_EXTRADOCS_VALIDATE" xmllint_ALIASES xmllint_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/xmltools/include)
 
-# Because the xml tools need their libraries, we need to make sure that any
-# runtime outputs from those libraries (DLLs on Windows, for example) end
-# up in the same place that the binaries do.
+# We need to make sure in the case of multi-configuration builds that the util directory
+# contains the libraries and exectuables corresponding to the current configuration.
+# Ideally we could count on the build tool to notice that the version in util does not 
+# correspond to the current proper output, but at least for MSVC experimental evidence 
+# indicates this is not the case.
+if(CMAKE_CONFIGURATION_TYPES)
+configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/util-clean.cmake.in ${BRLCAD_BINARY_DIR}/CMakeTmp/util-clean.cmake @ONLY)
+add_custom_command(
+    OUTPUT ${UTILITY_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}
+    COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_BINARY_DIR}/CMakeTmp/util-clean.cmake
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${UTILITY_RUNTIME_OUTPUT_DIRECTORY}
+    COMMAND ${CMAKE_COMMAND} -E touch ${UTILITY_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}
+)
+add_custom_target(util_dir_prep DEPENDS ${UTILITY_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR})
+endif(CMAKE_CONFIGURATION_TYPES)
+
 if(${CMAKE_PROJECT_NAME}_XSLTPROC_BUILD OR ${CMAKE_PROJECT_NAME}_XMLLINT_BUILD)
   foreach(xmltarget xsltproc;xmllint;xml;xslt;exslt)
     set_target_properties(${xmltarget} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${UTILITY_RUNTIME_OUTPUT_DIRECTORY}")
@@ -199,8 +212,20 @@ if(${CMAKE_PROJECT_NAME}_XSLTPROC_BUILD OR ${CMAKE_PROJECT_NAME}_XMLLINT_BUILD)
       string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
       set_target_properties(${xmltarget} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER} "${UTILITY_RUNTIME_OUTPUT_DIRECTORY}")
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    if(CMAKE_CONFIGURATION_TYPES)
+      add_dependencies(${xmltarget} util_dir_prep)
+    endif(CMAKE_CONFIGURATION_TYPES)
   endforeach(xmltarget xsltproc;xmllint;xml;xslt;exslt)
 endif(${CMAKE_PROJECT_NAME}_XSLTPROC_BUILD OR ${CMAKE_PROJECT_NAME}_XMLLINT_BUILD)
+
+if(${CMAKE_PROJECT_NAME}_RE2C_BUILD AND CMAKE_CONFIGURATION_TYPES)
+  add_dependencies(re2c util_dir_prep)
+endif(${CMAKE_PROJECT_NAME}_RE2C_BUILD AND CMAKE_CONFIGURATION_TYPES)
+
+if(${CMAKE_PROJECT_NAME}_LEMON_BUILD AND CMAKE_CONFIGURATION_TYPES)
+  add_dependencies(lemon util_dir_prep)
+  add_dependencies(lempar_cp util_dir_prep)
+endif(${CMAKE_PROJECT_NAME}_LEMON_BUILD AND CMAKE_CONFIGURATION_TYPES)
 
 # zlib represents a situation were we need it in both the util dir and its
 # standard build directory, if we're using the local build.
