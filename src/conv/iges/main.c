@@ -100,7 +100,7 @@ Suggestions()
     /* categorize the elements in the IGES file as to whether they are
      * CSG, BREP, Trimmed surfaces, Spline surfaces, or drawing elements
      */
-    for (i=0; i<NTYPES; i++) {
+    for (i = 0; i < NTYPES; i++) {
 	if ((typecount[i].type >= 150 && typecount[i].type <= 184) ||
 	    typecount[i].type == 430)
 	    csg += typecount[i].count;
@@ -208,7 +208,7 @@ main(int argc, char *argv [])
     Initstack();	/* Initialize node stack */
 
     identity = (mat_t *)bu_malloc(sizeof(mat_t), "main: identity");
-    for (i=0; i<16; i++) {
+    for (i = 0; i < 16; i++) {
 	if (!(i%5))
 	    (*identity)[i] = 1.0;
 	else

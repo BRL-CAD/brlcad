@@ -56,7 +56,7 @@ Read_vertex_list(int vert_de)
     vertex_list->i_verts = (struct iges_vertex *)bu_calloc(vertex_list->no_of_verts, sizeof(struct iges_vertex) ,
 							   "Read_vertex_list: iges_vertex");
 
-    for (i=0; i<vertex_list->no_of_verts; i++) {
+    for (i = 0; i < vertex_list->no_of_verts; i++) {
 	Readcnv(&vertex_list->i_verts[i].pt[X], "");
 	Readcnv(&vertex_list->i_verts[i].pt[Y], "");
 	Readcnv(&vertex_list->i_verts[i].pt[Z], "");
