@@ -598,6 +598,22 @@ TYPEget_express_type (const Type t)
 
 }
 
+int
+isReferenceType(Class_Of_Type class)
+{
+    if ((class == Class_String_Type)  ||
+	(class == Class_Logical_Type) ||
+	(class == Class_Boolean_Type) ||
+	(class == Class_Real_Type)    ||
+	(class == Class_Integer_Type) ||
+	(class == Class_Enumeration_Type))
+    {
+	return 0;
+    }
+
+    return 1;
+}
+
 /******************************************************************
  ** Procedure:  ATTRsign_access_method
  ** Parameters:  const Variable a --  attribute to print
@@ -666,7 +682,14 @@ ATTRsign_access_methods (Variable a, FILE* file)
     }
     else
     {
-	fprintf (file, "\tconst %s %s() const;\n", ctype, attrnm);
+	if (isReferenceType(class))
+	{
+	    fprintf (file, "\tconst_%s %s() const;\n", ctype, attrnm);
+	}
+	else
+	{
+	    fprintf (file, "\t%s %s() const;\n", ctype, attrnm);
+	}
 	fprintf (file, "\tvoid %s (const %s x);\n\n", attrnm, ctype);
     }
     return;
@@ -721,7 +744,14 @@ ATTRprint_access_methods_get_head (const char * classnm, Variable a,
     }
     else
     {
-	fprintf (file, "\nconst %s \n%s::%s() const\n", ctype, classnm, funcnm);
+	if (isReferenceType(class))
+	{
+	    fprintf (file, "\nconst_%s \n%s::%s() const\n", ctype, classnm, funcnm);
+	}
+	else
+	{
+	    fprintf (file, "\n%s \n%s::%s() const\n", ctype, classnm, funcnm);
+	}
     }
     return;
 }
@@ -3231,6 +3261,9 @@ DASBUG
 	fprintf (files->classes, "typedef %s *  \t%s_ptr;\n", n, n);
 	fprintf (files->classes, "typedef %s_ptr\t%s_var;\n", n, n);
 
+	fprintf (files->classes, "typedef const %s *  \tconst_%sH;\n", n, n);
+	fprintf (files->classes, "typedef const %s *  \tconst_%s_ptr;\n", n, n);
+
 	fprintf (files->classes,
 		 "#define %s__set \tSCLP23(DAObject__set)\n", n);
 
@@ -3382,6 +3415,7 @@ TYPEenum_inc_print (const Type type, FILE* inc)
 	fprintf (inc, "};\n");
 
 	fprintf (inc, "\ntypedef %s * %s_ptr;\n", n, n);
+	fprintf (inc, "\ntypedef const %s * const_%s_ptr;\n", n, n);
 
 
     /*  Print ObjectStore Access Hook function  */
@@ -3405,6 +3439,7 @@ TYPEenum_inc_print (const Type type, FILE* inc)
 	fprintf (inc, "};\n");
 
 	fprintf (inc, "\ntypedef %ss * %ss_ptr;\n", n, n);
+	fprintf (inc, "\ntypedef const %ss * const_%ss_ptr;\n", n, n);
 
 	/* DAS brandnew below */
 
@@ -3669,9 +3704,13 @@ TYPEprint_typedefs (Type t, FILE *classes)
 	    /* Same comment as above. */
 	    strncpy (nm, SelectName (TYPEget_name (t)), BUFSIZ);
 	    fprintf (classes, "class %s;\n", nm);
-	    fprintf (classes, "typedef %s * %s_ptr;\n", nm, nm);
+	    fprintf (classes, "typedef       %s *       %s_ptr;\n", nm, nm);
+	    fprintf (classes, "typedef const %s * const_%s_ptr;\n", nm, nm);
 	    fprintf (classes, "class %ss;\n", nm);
-	    fprintf (classes, "typedef %ss * %ss_ptr;\n", nm, nm);
+	    fprintf (classes, "typedef       %ss *       %ss_ptr;\n", nm, nm);
+	    fprintf (classes, "typedef const %ss * const_%ss_ptr;\n", nm, nm);
+	    fprintf (classes, "typedef       class %ss *       class_%ss_ptr;\n", nm, nm);
+	    fprintf (classes, "typedef const class %ss * const_class_%ss_ptr;\n", nm, nm);
 	}
     } else {
 	if ( TYPEis_aggregate(t) ) {
@@ -3692,8 +3731,10 @@ TYPEprint_typedefs (Type t, FILE *classes)
 	strncpy (nm, ClassName (TYPEget_name (t)), BUFSIZ);
 	fprintf (classes, "typedef %s \t%s;\n", TYPEget_ctype(t), nm);
 	if (TYPEis_aggregate(t) ) {
-	    fprintf (classes, "typedef %s * \t%sH;\n", nm, nm);
-	    fprintf (classes, "typedef %s * \t%s_ptr;\n", nm, nm);
+	    fprintf (classes, "typedef       %s *       %sH;\n", nm, nm);
+	    fprintf (classes, "typedef const %s * const_%sH;\n", nm, nm);
+	    fprintf (classes, "typedef       %s *       %s_ptr;\n", nm, nm);
+	    fprintf (classes, "typedef const %s * const_%s_ptr;\n", nm, nm);
 	    fprintf (classes, "typedef %s_ptr \t%s_var;\n", nm, nm);
 	}
     }
@@ -3888,7 +3929,8 @@ TYPEprint_descriptions (const Type type, FILES* files, Schema schema)
 	fprintf (files->inc, "typedef %s %s;\n", base, nm);
 	printEnumCreateHdr( files->inc, type );
 	printEnumCreateBody( files->lib, type );
-	fprintf (files->inc, "typedef %ss * %ss_ptr;\n", nm, nm);
+	fprintf (files->inc, "typedef       %ss *       %ss_ptr;\n", nm, nm);
+	fprintf (files->inc, "typedef const %ss * const_%ss_ptr;\n", nm, nm);
 	printEnumAggrCrHdr( files->inc, type );
 	printEnumAggrCrBody( files->lib, type );
 	return;

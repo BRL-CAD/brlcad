@@ -50,6 +50,8 @@ class SingleLinkNode;
 
 typedef STEPaggregate * STEPaggregateH;
 typedef STEPaggregate * STEPaggregate_ptr;
+typedef const STEPaggregate * const_STEPaggregateH;
+typedef const STEPaggregate * const_STEPaggregate_ptr;
 typedef STEPaggregate_ptr STEPaggregate_var;
 
 class STEPaggregate :  public SingleLinkList 
@@ -123,6 +125,8 @@ class GenericAggregate  :  public STEPaggregate
 };
 typedef  GenericAggregate * GenericAggregateH;
 typedef  GenericAggregate * GenericAggregate_ptr;
+typedef  const GenericAggregate * const_GenericAggregateH;
+typedef  const GenericAggregate * const_GenericAggregate_ptr;
 typedef  GenericAggregate_ptr GenericAggregate_var;
 
 /******************************************************************************
@@ -147,6 +151,8 @@ class EntityAggregate  :  public  STEPaggregate
 };
 typedef   EntityAggregate * EntityAggregateH;
 typedef   EntityAggregate * EntityAggregate_ptr;
+typedef   const EntityAggregate * const_EntityAggregateH;
+typedef   const EntityAggregate * const_EntityAggregate_ptr;
 typedef   EntityAggregate_ptr EntityAggregate_var;
 
 /******************************************************************
@@ -172,6 +178,8 @@ class SelectAggregate  :  public STEPaggregate
 };
 typedef  SelectAggregate *  SelectAggregateH;
 typedef  SelectAggregate *  SelectAggregate_ptr;
+typedef  const SelectAggregate *  const_SelectAggregateH;
+typedef  const SelectAggregate *  const_SelectAggregate_ptr;
 typedef  SelectAggregate_ptr SelectAggregate_var;
 
 /******************************************************************
@@ -190,6 +198,8 @@ class StringAggregate  :  public STEPaggregate
 };
 typedef  StringAggregate * StringAggregateH;
 typedef  StringAggregate * StringAggregate_ptr;
+typedef  const StringAggregate * const_StringAggregateH;
+typedef  const StringAggregate * const_StringAggregate_ptr;
 typedef  StringAggregate_ptr StringAggregate_var;
 
 
@@ -209,6 +219,8 @@ class BinaryAggregate  :  public STEPaggregate
 };
 typedef  BinaryAggregate * BinaryAggregateH;
 typedef  BinaryAggregate * BinaryAggregate_ptr;
+typedef  const BinaryAggregate * const_BinaryAggregateH;
+typedef  const BinaryAggregate * const_BinaryAggregate_ptr;
 typedef  BinaryAggregate_ptr BinaryAggregate_var;
 
 /******************************************************************
@@ -228,6 +240,8 @@ class EnumAggregate  :  public STEPaggregate
 };
 typedef  EnumAggregate *  EnumAggregateH;
 typedef  EnumAggregate *  EnumAggregate_ptr;
+typedef  const EnumAggregate *  const_EnumAggregateH;
+typedef  const EnumAggregate *  const_EnumAggregate_ptr;
 typedef  EnumAggregate_ptr EnumAggregate_var;
 
 class LOGICALS  : public EnumAggregate  
@@ -241,6 +255,8 @@ class LOGICALS  : public EnumAggregate
 };
 typedef  LOGICALS *  LogicalsH;
 typedef  LOGICALS *  LOGICALS_ptr;
+typedef  const LOGICALS *  const_LogicalsH;
+typedef  const LOGICALS *  const_LOGICALS_ptr;
 typedef  LOGICALS_ptr LOGICALS_var;
 LOGICALS * create_LOGICALS();
 
@@ -257,6 +273,7 @@ class BOOLEANS  : public EnumAggregate
 
 //typedef  BOOLEANS *  BooleansH;
 typedef  BOOLEANS *  BOOLEANS_ptr;
+typedef  const BOOLEANS *  const_BOOLEANS_ptr;
 typedef  BOOLEANS_ptr BOOLEANS_var;
 
 BOOLEANS * create_BOOLEANS();
@@ -273,6 +290,8 @@ class RealAggregate  : public STEPaggregate  {
 };
 typedef  RealAggregate *  RealAggregateH;
 typedef  RealAggregate *  RealAggregate_ptr;
+typedef  const RealAggregate *  const_RealAggregateH;
+typedef  const RealAggregate *  const_RealAggregate_ptr;
 typedef  RealAggregate_ptr RealAggregate_var;
 
 class IntAggregate  : public STEPaggregate  {
@@ -287,6 +306,8 @@ class IntAggregate  : public STEPaggregate  {
 };
 typedef  IntAggregate *  IntAggregateH;
 typedef  IntAggregate *  IntAggregate_ptr;
+typedef  const IntAggregate *  const_IntAggregateH;
+typedef  const IntAggregate *  const_IntAggregate_ptr;
 typedef  IntAggregate_ptr IntAggregate_var;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -316,6 +337,7 @@ class STEPnode :  public SingleLinkNode  {
     virtual void STEPwrite (ostream& out =cout);
 };
 typedef  STEPnode *  STEPnodeH;
+typedef  const STEPnode *  const_STEPnodeH;
 
 /******************************************************************
  ** Class:  GenericNode

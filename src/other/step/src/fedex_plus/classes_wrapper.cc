@@ -347,7 +347,8 @@ SCOPEPrint( Scope scope, FILES *files, Schema schema, Express model,
 
         fprintf (files->inc, "\n};\n"); 
 
-        fprintf (files->inc, "\n\ntypedef SdaiModel_contents_%s * SdaiModel_contents_%s_ptr;\n", SCHEMAget_name(schema), SCHEMAget_name(schema)); 
+        fprintf (files->inc, "\n\ntypedef       SdaiModel_contents_%s *       SdaiModel_contents_%s_ptr;\n", SCHEMAget_name(schema), SCHEMAget_name(schema)); 
+        fprintf (files->inc, "\n\ntypedef const SdaiModel_contents_%s * const_SdaiModel_contents_%s_ptr;\n", SCHEMAget_name(schema), SCHEMAget_name(schema)); 
         fprintf (files->inc, "typedef SdaiModel_contents_%s_ptr SdaiModel_contents_%s_var;\n", SCHEMAget_name(schema), SCHEMAget_name(schema)); 
 
         fprintf (files -> inc,
@@ -438,14 +439,18 @@ PrintModelContentsSchema(Scope scope, FILES* files,Schema schema,
       if  (TYPEis_select (t) ) {
 	/*   do the select aggregates here  */
 	strncpy (nm, SelectName (TYPEget_name (t)), BUFSIZ);
-	fprintf (files->inc, "class %s;\ntypedef %s * %sH;\n", nm, nm, nm);
-	fprintf (files->inc, 
-		 "typedef %s * %s_ptr;\ntypedef %s_ptr %s_var;\n\n",
-		 nm, nm, nm, nm);
-	fprintf (files->inc, "class %ss;\ntypedef %ss * %ssH;\n", nm, nm, nm);
-	fprintf (files->inc, 
-		 "typedef %ss * %ss_ptr;\ntypedef %ss_ptr %ss_var;\n\n",
-		 nm, nm, nm, nm);
+	fprintf (files->inc, "class %s;\n"
+			     "typedef       %s *       %sH;\n"
+			     "typedef const %s * const_%sH;\n", nm, nm, nm);
+	fprintf (files->inc, "typedef       %s *       %s_ptr;\n"
+			     "typedef const %s * const_%s_ptr;\n"
+			     "typedef %s_ptr %s_var;\n\n", nm, nm, nm, nm);
+	fprintf (files->inc, "class %ss;\n"
+			     "typedef       %ss *       %ssH;\n"
+			     "typedef const %ss * const_%ssH;\n", nm, nm, nm);
+	fprintf (files->inc, "typedef       %ss *       %ss_ptr;\n"
+			     "typedef const %ss * const_%ss_ptr;\n"
+			     "typedef %ss_ptr %ss_var;\n\n", nm, nm, nm, nm);
       }
     SCOPEod;
 
