@@ -42,3 +42,5 @@ else(NOT CMAKE_CONFIGURATION_TYPES)
   add_custom_target(lempar_cp ALL DEPENDS ${lempar_cp_outputs})
 endif(NOT CMAKE_CONFIGURATION_TYPES)
 
+add_dependencies(lemon lempar_cp)
+
