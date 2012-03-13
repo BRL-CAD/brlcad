@@ -176,7 +176,7 @@ bn_mat_mul(register mat_t o, register const mat_t a, register const mat_t b)
  * o = i * o
  *
  * A convenience wrapper for bn_mat_mul() to update a matrix in place.
- * The arugment ordering is confusing either way.
+ * The argument ordering is confusing either way.
  */
 void
 bn_mat_mul2(register const mat_t i, register mat_t o)
