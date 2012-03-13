@@ -366,9 +366,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   for function replacements are being respected (e.g., bu_strcmp()
   instead of strcmp()).
 
-* let the cp command take multiple arguments for simultaneously
-  creating multiple named copies
-
 * add support for user-specified sorting for the attr command (case,
   case-insensitive, creation, value, etc)
 
