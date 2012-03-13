@@ -75,10 +75,28 @@ kill box.s
 q
 EOF
 
-$GIGES -o iges_file.iges iges.g box.nmg 2>> iges.log> /dev/null
+# .g to iges:
+# these two commands should produce almost identical output
+$GIGES -o iges_file.iges iges.g box.nmg  2>> iges.log > /dev/null
 $GIGES iges.g box.nmg > iges_stdout.iges 2>> iges.log
 
-$IGESG -o iges_new.g -p iges_file.iges 2>> iges.log
+# convert back to .g
+$IGESG -o iges_new.g -p -N box.nmg iges_file.iges 2>> iges.log
+
+# check round trip back to iges: vertex permutation?
+# these two commands should produce almost identical output
+$GIGES -o iges_file2.iges iges_new.g box.nmg  2>> iges.log > /dev/null
+$GIGES iges_new.g box.nmg > iges_stdout2.iges 2>> iges.log
+
+# these two files should be identical
+#    iges_file.iges
+#    iges_file2.iges
+
+# these two files should be identical
+#    iges_stdout.iges
+#    iges_stdout2.iges
+
+
 
 if [ $? != 0 ] ; then
     echo g-iges/iges-g FAILED
