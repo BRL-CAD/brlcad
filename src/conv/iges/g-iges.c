@@ -81,7 +81,7 @@ extern int comb_to_iges(struct rt_comb_internal *comb, int length, int dependent
 static void
 usage(const char *argv0)
 {
-    bu_log("Usage: %s [-f|t|m] [-v] [-s] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-d dist_tol] [-o output_file] brlcad_db.g object(s)\n", argv0);
+    bu_log("Usage: %s [-f|t|m] [-v] [-s] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-d dist_tol] [-P num_cpus] [-o output_file] brlcad_db.g object(s)\n", argv0);
     bu_log("	options:\n");
     bu_log("		f - convert each region to facetted BREP before output\n");
     bu_log("		t - produce a file of trimmed surfaces (experimental)\n");
@@ -96,6 +96,7 @@ usage(const char *argv0)
     bu_log("		x - librt debug flag\n");
     bu_log("		X - nmg debug flag\n");
     bu_log("		o - file to receive IGES output (or directory when '-m' option is used)\n");
+    bu_log("		P - number of processors to use\n");
     bu_log("	The f and t options are mutually exclusive. If neither is specified, \n");
     bu_log("	the default output is a CSG file to the maximum extent possible\n");
     bu_exit(1, NULL);
@@ -237,35 +238,28 @@ main(int argc, char *argv[])
 		mode = TRIMMED_SURF_MODE;
 		multi_file = 0;
 		break;
-	    case 's':		/* Select NURB output */
-		do_nurbs = 1;
-		break;
-	    case 'a':		/* Absolute tolerance. */
-		ttol.abs = atof(bu_optarg);
-		break;
-	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg);
-		break;
-	    case 'o':		/* Output file name. */
-		output_file = bu_optarg;
-		break;
-	    case 'r':		/* Relative tolerance. */
-		ttol.rel = atof(bu_optarg);
-		break;
-	    case 'd':		/* distance tolerance */
-		tol.dist = atof(bu_optarg);
-		tol.dist_sq = tol.dist * tol.dist;
-		break;
 	    case 'm':		/* multi-file mode */
 		multi_file = 1;
 		mode = TRIMMED_SURF_MODE;
 		break;
+	    case 's':		/* Select NURB output */
+		do_nurbs = 1;
+		break;
 	    case 'v':
 		verbose++;
 		break;
-	    case 'P':
-		ncpu = atoi(bu_optarg);
-		rt_g.debug = 1;
+	    case 'a':		/* Absolute tolerance. */
+		ttol.abs = atof(bu_optarg);
+		break;
+	    case 'r':		/* Relative tolerance. */
+		ttol.rel = atof(bu_optarg);
+		break;
+	    case 'n':		/* Surface normal tolerance. */
+		ttol.norm = atof(bu_optarg);
+		break;
+	    case 'd':		/* distance tolerance */
+		tol.dist = atof(bu_optarg);
+		tol.dist_sq = tol.dist * tol.dist;
 		break;
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
@@ -273,6 +267,13 @@ main(int argc, char *argv[])
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
 		NMG_debug = rt_g.NMG_debug;
+		break;
+            case 'o':		/* Output file name. */
+		output_file = bu_optarg;
+		break;
+	    case 'P':
+		ncpu = atoi(bu_optarg);
+		rt_g.debug = 1;
 		break;
 	    default:
 		usage(argv[0]);
