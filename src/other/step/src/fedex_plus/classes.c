@@ -2404,6 +2404,14 @@ LIBstructor_print (Entity entity, FILE* file, Schema schema)
     /*  LIBcopy_constructor (entity, file);	*/
     entnm = ENTITYget_classname (entity);
     fprintf (file, "%s::%s (%s& e ) \n",entnm,entnm,entnm);
+
+    /* include explicit initialization of base class */
+    if (principalSuper) {
+	fprintf (file, "\t: %s()\n", ENTITYget_classname(principalSuper));
+    } else {
+	fprintf (file, "\t: SCLP23(Application_instance)()\n");
+    }
+
     fprintf (file, "\t{  CopyAs((SCLP23(Application_instance_ptr)) &e);\t}\n");
 
     /*  print destructor  */
