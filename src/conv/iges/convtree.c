@@ -39,13 +39,13 @@ void
 Convtree()
 {
 
-    int conv=0;
-    int tottrees=0;
+    int conv = 0;
+    int tottrees = 0;
     union tree *ptr;
     struct rt_comb_internal *comb;
-    int no_of_assoc=0;
-    int no_of_props=0;
-    int att_de=0;
+    int no_of_assoc = 0;
+    int no_of_props = 0;
+    int att_de = 0;
     struct brlcad_att brl_att;
     int i, j, k;
 
@@ -55,7 +55,7 @@ Convtree()
 
     bu_log("\nConverting boolean tree entities:\n");
 
-    for (i=0; i<totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	/* loop through all entities */
 	if (dir[i]->type != 180)	/* This is not a tree */
 	    continue;
@@ -86,12 +86,12 @@ Convtree()
 
 	/* skip over the associativities */
 	Readint(&no_of_assoc, "");
-	for (k=0; k<no_of_assoc; k++)
+	for (k = 0; k < no_of_assoc; k++)
 	    Readint(&j, "");
 
 	/* get property entity DE's */
 	Readint(&no_of_props, "");
-	for (k=0; k<no_of_props; k++) {
+	for (k = 0; k < no_of_props; k++) {
 	    Readint(&j, "");
 	    if (dir[(j-1)/2]->type == 422 &&
 		dir[(j-1)/2]->referenced == brlcad_att_de) {

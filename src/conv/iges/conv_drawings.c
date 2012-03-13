@@ -35,7 +35,7 @@ struct views_visible
 };
 
 
-static char *default_drawing_name="iges_drawing";
+static char *default_drawing_name = "iges_drawing";
 
 struct bu_list free_hd;
 
@@ -44,7 +44,7 @@ Getstrg(str, id)
     char **str;
     char *id;
 {
-    int i=(-1), length=0, done=0, lencard;
+    int i = (-1), length = 0, done = 0, lencard;
     char num[80];
 
     if (card[counter] == eof) {
@@ -80,7 +80,7 @@ Getstrg(str, id)
 	(*str) = NULL;
     else
 	(*str) = (char *)bu_malloc(sizeof(char) * length + 1, "Getstrg: str");
-    for (i=0; i<length; i++) {
+    for (i = 0; i < length; i++) {
 	if (counter > lencard)
 	    Readrec(++currec);
 	(*str)[i] = card[counter];
@@ -113,7 +113,7 @@ Note_to_vlist(entno, vhead)
     struct bu_list *vhead;
 {
     int entity_type;
-    int nstrings=0;
+    int nstrings = 0;
     int i;
 
     if (!BU_LIST_IS_INITIALIZED(&free_hd)) BU_LIST_INIT(&free_hd);
@@ -126,14 +126,14 @@ Note_to_vlist(entno, vhead)
     }
 
     Readint(&nstrings, "");
-    for (i=0; i<nstrings; i++) {
-	int str_len=0;
-	fastf_t width=0.0, height=0.0;
-	int font_code=1;
+    for (i = 0; i < nstrings; i++) {
+	int str_len = 0;
+	fastf_t width = 0.0, height = 0.0;
+	int font_code = 1;
 	fastf_t slant_ang;
-	fastf_t rot_ang=0.0;
-	int mirror=0;
-	int internal_rot=0;
+	fastf_t rot_ang = 0.0;
+	int mirror = 0;
+	int internal_rot = 0;
 	double local_scale;
 	char one_char[2];
 	point_t loc, tmp;
@@ -181,7 +181,7 @@ Note_to_vlist(entno, vhead)
 	    tmp_x = loc[X];
 	    one_char[1] = '\0';
 
-	    for (j=0; j<str_len; j++) {
+	    for (j = 0; j < str_len; j++) {
 		tmp_x += xdel;
 		tmp_y -= ydel;
 		one_char[0] = str[j];
@@ -215,7 +215,7 @@ Get_plane(pl, entno)
 	return;
     }
 
-    for (i=0; i<4; i++)
+    for (i = 0; i < 4; i++)
 	Readflt(&pl[i], "");
 }
 
@@ -284,7 +284,7 @@ Leader_to_vlist(entno, vhead)
     MAT4X3PNT(tmp, *dir[entno]->rot, v2);
     RT_ADD_VLIST(vhead, tmp, BN_VLIST_LINE_DRAW);
 
-    for (i=1; i<npts; i++) {
+    for (i = 1; i < npts; i++) {
 	Readcnv(&v3[0], "");
 	Readcnv(&v3[1], "");
 	MAT4X3PNT(tmp, *dir[entno]->rot, v3);
@@ -328,7 +328,7 @@ Leader_to_vlist(entno, vhead)
 	    sindel = sin(delta);
 	    RT_ADD_VLIST(vhead, tmp2, BN_VLIST_LINE_MOVE);
 	    VMOVE(tmp, v1);
-	    for (i=0; i<20; i++) {
+	    for (i = 0; i < 20; i++) {
 		rx = tmp[X] - center[X];
 		ry = tmp[Y] - center[Y];
 		tmp[X] = center[X] + rx*cosdel - ry*sindel;
@@ -420,7 +420,7 @@ Draw_entities(struct model *m, int de_list[], int no_of_des, fastf_t x, fastf_t 
     sina = sin(ang);
     cosa = cos(ang);
 
-    for (entno=0; entno<totentities; entno++) {
+    for (entno = 0; entno < totentities; entno++) {
 	int status;
 
 	status = (dir[entno]->status/10000)%100;
@@ -431,10 +431,10 @@ Draw_entities(struct model *m, int de_list[], int no_of_des, fastf_t x, fastf_t 
 
 	if (dir[entno]->view) {
 	    /* this entitiy doesn't always get drawn */
-	    int do_entity=0;
+	    int do_entity = 0;
 
 	    /* look for its view entity on the list */
-	    for (i=0; i<no_of_des; i++) {
+	    for (i = 0; i < no_of_des; i++) {
 		if (dir[entno]->view == de_list[i]) {
 		    /* found it, so we do this entity */
 		    do_entity = 1;
@@ -473,7 +473,7 @@ Draw_entities(struct model *m, int de_list[], int no_of_des, fastf_t x, fastf_t 
 	for (BU_LIST_FOR(vp, bn_vlist, &vhead)) {
 	    int nused = vp->nused;
 
-	    for (i=0; i<nused; i++) {
+	    for (i = 0; i < nused; i++) {
 		point_t tmp_pt;
 
 		/* Model to view transform */
@@ -539,13 +539,13 @@ Get_views_visible(entno)
     vv->de = entno * 2 + 1;
     vv->no_of_views = no_of_views;
     vv->view_de = (int *)bu_calloc(no_of_views, sizeof(int), "Get_views_visible: vv->view_de");
-    for (i=0; i<no_of_views; i++) {
+    for (i = 0; i < no_of_views; i++) {
 	Readint(&vv->view_de[i], "");
 	if (dir[entno]->form == 3)
 	    continue;
 
 	/* skip extra stuff in form 4 */
-	for (j=0; j<4; j++)
+	for (j = 0; j < 4; j++)
 	    Readint(&junk, "");
     }
 
@@ -563,11 +563,11 @@ Do_view(m, view_vis_list, entno, x, y, ang)
     int view_de;
     int entity_type;
     struct views_visible *vv;
-    int vv_count=0;
+    int vv_count = 0;
     int *de_list;			/* list of possible view field entries for this view */
     int no_of_des;			/* length of above list */
     int view_number;
-    fastf_t local_scale=1.0;
+    fastf_t local_scale = 1.0;
     int clip_de[6];
     plane_t clip[6];
     mat_t *xform;
@@ -585,7 +585,7 @@ Do_view(m, view_vis_list, entno, x, y, ang)
     Readint(&view_number, "\tView number: ");
     Readflt(&local_scale, "");
 
-    for (i=0; i<6; i++) {
+    for (i = 0; i < 6; i++) {
 	clip_de[i] = 0;
 	Readint(&clip_de[i], "");
 	clip_de[i] = (clip_de[i] - 1)/2;
@@ -593,12 +593,12 @@ Do_view(m, view_vis_list, entno, x, y, ang)
 
     xform = dir[entno]->rot;
 
-    for (i=0; i<6; i++) {
-	for (j=0; j<4; j++)
+    for (i = 0; i < 6; i++) {
+	for (j = 0; j < 4; j++)
 	    clip[i][j] = 0.0;
     }
 
-    for (i=0; i<6; i++) {
+    for (i = 0; i < 6; i++) {
 	if (clip_de[i])
 	    Get_plane(clip[i], clip_de[i]);
 	else {
@@ -626,9 +626,9 @@ Do_view(m, view_vis_list, entno, x, y, ang)
 	}
     }
 
-    for (i=0; i<BU_PTBL_END(view_vis_list); i++) {
+    for (i = 0; i < BU_PTBL_END(view_vis_list); i++) {
 	vv = (struct views_visible *)BU_PTBL_GET(view_vis_list, i);
-	for (j=0; j<vv->no_of_views; j++) {
+	for (j = 0; j < vv->no_of_views; j++) {
 	    if (vv->view_de[j] == view_de) {
 		vv_count++;
 		break;
@@ -639,10 +639,10 @@ Do_view(m, view_vis_list, entno, x, y, ang)
     no_of_des = vv_count + 1;
     de_list = (int *)bu_calloc(no_of_des, sizeof(int), "Do_view: de_list");
     de_list[0] = view_de;
-    vv_count=0;
-    for (i=0; i<BU_PTBL_END(view_vis_list); i++) {
+    vv_count = 0;
+    for (i = 0; i < BU_PTBL_END(view_vis_list); i++) {
 	vv = (struct views_visible *)BU_PTBL_GET(view_vis_list, i);
-	for (j=0; j<vv->no_of_views; j++) {
+	for (j = 0; j < vv->no_of_views; j++) {
 	    if (vv->view_de[j] == view_de) {
 		vv_count++;
 		de_list[vv_count] = vv->view_de[j];
@@ -682,7 +682,7 @@ Get_drawing(entno, view_vis_list)
     x = (fastf_t *)bu_calloc(no_of_views, sizeof(fastf_t), "Get_drawing: x");
     y = (fastf_t *)bu_calloc(no_of_views, sizeof(fastf_t), "Get_drawing: y");
     ang = (fastf_t *)bu_calloc(no_of_views, sizeof(fastf_t), "Get_drawing: ang");
-    for (i=0; i<no_of_views; i++) {
+    for (i = 0; i < no_of_views; i++) {
 	Readint(&view_entno[i], "");
 	view_entno[i] = (view_entno[i] - 1)/2;
 	Readflt(&x[i], "");
@@ -693,7 +693,7 @@ Get_drawing(entno, view_vis_list)
 	    ang[i] = 0.0;
     }
 
-    for (i=0; i<no_of_views; i++) {
+    for (i = 0; i < no_of_views; i++) {
 	struct model *m;
 	struct nmgregion *r;
 	struct shell *s;
@@ -733,8 +733,8 @@ void
 Conv_drawings()
 {
     int i;
-    int tot_drawings=0;
-    int tot_views=0;
+    int tot_drawings = 0;
+    int tot_views = 0;
     struct views_visible *vv;
     struct model *m;
     struct nmgregion *r;
@@ -745,7 +745,7 @@ Conv_drawings()
 
     bu_ptbl_init(&view_vis_list, 64, " &view_vis_list ");
 
-    for (i=0; i<totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	if (dir[i]->type != 402)
 	    continue;
 
@@ -758,20 +758,20 @@ Conv_drawings()
 
     }
 
-    for (i=0; i<totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	if (dir[i]->type == 404)
 	    tot_drawings++;
     }
 
     if (tot_drawings) {
 	/* Convert each drawing */
-	for (i=0; i<totentities; i++) {
+	for (i = 0; i < totentities; i++) {
 	    if (dir[i]->type == 404)
 		Get_drawing(i, &view_vis_list);
 	}
 
 	/* free views visible list */
-	for (i=0; i<BU_PTBL_END(&view_vis_list); i++) {
+	for (i = 0; i < BU_PTBL_END(&view_vis_list); i++) {
 	    vv = (struct views_visible *)BU_PTBL_GET(&view_vis_list, i);
 	    bu_free((char *)vv->view_de, "Conv_drawings: vv->view_de");
 	    bu_free((char *)vv, "Conv_drawings: vv");
@@ -782,7 +782,7 @@ Conv_drawings()
     bu_log("\nNo drawings entities\n");
 
     /* no drawing entities, so look for view entities */
-    for (i=0; i<totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	if (dir[i]->type == 410)
 	    tot_views++;
     }
@@ -792,7 +792,7 @@ Conv_drawings()
 
 	BU_LIST_INIT(&headp.l);
 	/* Convert each view */
-	for (i=0; i<totentities; i++) {
+	for (i = 0; i < totentities; i++) {
 	    if (dir[i]->type == 410) {
 		m = nmg_mm();
 
@@ -816,7 +816,7 @@ Conv_drawings()
 	(void)mk_lfcomb(fdout, default_drawing_name, &headp, 0)
 
 	    /* free views visible list */
-	    for (i=0; i<BU_PTBL_END(&view_vis_list); i++) {
+	    for (i = 0; i < BU_PTBL_END(&view_vis_list); i++) {
 		vv = (struct views_visible *)BU_PTBL_GET(&view_vis_list, i);
 		bu_free((char *)vv->view_de, "Conv_drawings: vv->view_de");
 		bu_free((char *)vv, "Conv_drawings: vv");
@@ -846,7 +846,7 @@ Conv_drawings()
     }
 
     /* free views visible list */
-    for (i=0; i<BU_PTBL_END(&view_vis_list); i++) {
+    for (i = 0; i < BU_PTBL_END(&view_vis_list); i++) {
 	vv = (struct views_visible *)BU_PTBL_GET(&view_vis_list, i);
 	bu_free((char *)vv->view_de, "Conv_drawings: vv->view_de");
 	bu_free((char *)vv, "Conv_drawings: vv");

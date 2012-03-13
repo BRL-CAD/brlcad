@@ -29,9 +29,9 @@
 int
 planar_nurb(int entityno)
 {
-    int sol_num=0;		/* IGES solid type number */
-    int k1=0, k2=0;		/* Upper index of sums */
-    int m1=0, m2=0;		/* degree */
+    int sol_num = 0;		/* IGES solid type number */
+    int k1 = 0, k2 = 0;		/* Upper index of sums */
+    int m1 = 0, m2 = 0;		/* degree */
 
     if (dir[entityno]->param <= pstart) {
 	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,

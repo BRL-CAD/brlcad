@@ -65,14 +65,14 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 
     edge_uses = (struct iges_edge_use *)bu_calloc(no_of_edges, sizeof(struct iges_edge_use) ,
 						  "Add_nurb_loop_to_face (edge_uses)");
-    for (i=0; i<no_of_edges; i++) {
+    for (i = 0; i < no_of_edges; i++) {
 	Readint(&edge_uses[i].edge_is_vertex, "");
 	Readint(&edge_uses[i].edge_de, "");
 	Readint(&edge_uses[i].index, "");
 	Readint(&edge_uses[i].orient, "");
 	edge_uses[i].root = (struct iges_param_curve *)NULL;
 	Readint(&no_of_param_curves, "");
-	for (j=0; j<no_of_param_curves; j++) {
+	for (j = 0; j < no_of_param_curves; j++) {
 	    struct iges_param_curve *new_crv;
 	    struct iges_param_curve *crv;
 
@@ -95,7 +95,7 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
     verts = (struct vertex **)bu_calloc(no_of_edges, sizeof(struct vertex *) ,
 					"Add_nurb_loop_to_face: vertex_list **");
 
-    for (i=0; i<no_of_edges; i++) {
+    for (i = 0; i < no_of_edges; i++) {
 	struct vertex **v;
 
 	v = Get_vertex(&edge_uses[i]);
@@ -106,7 +106,7 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
     }
 
     fu_ret = nmg_add_loop_to_face(s, fu, verts, no_of_edges, OT_SAME);
-    for (i=0; i<no_of_edges; i++) {
+    for (i = 0; i < no_of_edges; i++) {
 	struct vertex **v;
 
 	v = Get_vertex(&edge_uses[i]);
@@ -135,7 +135,7 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
     }
 
     /* assign geometry to vertices */
-    for (vert_no=0; vert_no < no_of_edges; vert_no++) {
+    for (vert_no = 0; vert_no < no_of_edges; vert_no++) {
 	struct iges_vertex *ivert;
 
 	ivert = Get_iges_vertex(verts[vert_no]);

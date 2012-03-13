@@ -36,7 +36,7 @@
 void
 Readflt(fastf_t *inum, char *id)
 {
-    int i=(-1), done=0, lencard;
+    int i = (-1), done = 0, lencard;
     char num[80];
 
     if (card[counter] == eof) {

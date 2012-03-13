@@ -32,11 +32,11 @@ void
 Convsolids()
 {
 
-    int i, totsolids=0, conv=0;
+    int i, totsolids = 0, conv = 0;
 
     bu_log("\n\nConverting solid entities:\n");
 
-    for (i=0; i<totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	switch (dir[i]->type) {
 	    case 150:
 		totsolids++;

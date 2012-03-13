@@ -115,9 +115,9 @@ Orient_face_loops(fu)
     struct faceuse *fu;
 {
     struct loopuse *lu;
-    struct loopuse *lu_outer=NULL;
+    struct loopuse *lu_outer = NULL;
     struct loop_list *lptr;
-    int orient=OT_SAME;
+    int orient = OT_SAME;
 
     NMG_CK_FACEUSE(fu);
     if (fu->orientation != OT_SAME)

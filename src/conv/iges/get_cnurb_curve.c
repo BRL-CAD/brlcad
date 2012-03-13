@@ -53,12 +53,12 @@ Get_cnurb_curve(int curve_de, int *linear)
 
 	    }
 	    /* Read first point */
-	    for (i=0; i<3; i++)
+	    for (i = 0; i < 3; i++)
 		Readcnv(&pt1[i], "");
 	    MAT4X3PNT(start_pt, *dir[curve]->rot, pt1);
 
 	    /* Read second point */
-	    for (i=0; i<3; i++)
+	    for (i = 0; i < 3; i++)
 		Readcnv(&pt1[i], "");
 	    MAT4X3PNT(end_pt, *dir[curve]->rot, pt1);
 

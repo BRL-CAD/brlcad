@@ -33,7 +33,7 @@ Get_iges_vertex(struct vertex *v)
     while (vert_list) {
 	int vert_no;
 
-	for (vert_no=0; vert_no < vert_list->no_of_verts; vert_no++) {
+	for (vert_no = 0; vert_no < vert_list->no_of_verts; vert_no++) {
 	    if (vert_list->i_verts[vert_no].v == v)
 		return &(vert_list->i_verts[vert_no]);
 	}

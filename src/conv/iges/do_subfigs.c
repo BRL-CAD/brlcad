@@ -35,12 +35,12 @@ Do_subfigs()
 
     BU_LIST_INIT(&head1.l);
 
-    for (i=0; i<totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	int subfigdef_de;
 	int subfigdef_index;
 	int no_of_members;
 	int *members;
-	char *name=NULL;
+	char *name = NULL;
 	struct wmember head2;
 	double mat_scale[3];
 	int non_unit;
@@ -97,7 +97,7 @@ Do_subfigs()
 
 	wmem = mk_addmember(dir[subfigdef_index]->name, &head1.l, NULL, WMOP_UNION);
 	non_unit = 0;
-	for (j=0; j<3; j++) {
+	for (j = 0; j < 3; j++) {
 	    double mag_sq;
 
 	    mat_scale[j] = 1.0;
@@ -116,7 +116,7 @@ Do_subfigs()
 	    bu_log(" row vector magnitudes are %g, %g, and %g\n",
 		   1.0/mat_scale[0], 1.0/mat_scale[1], 1.0/mat_scale[2]);
 	    bn_mat_print("", *dir[i]->rot);
-	    for (j=0; j<11; j++) {
+	    for (j = 0; j < 11; j++) {
 		if ((j+1)%4 == 0)
 		    continue;
 		(*dir[i]->rot)[j] *= mat_scale[0];
@@ -128,11 +128,11 @@ Do_subfigs()
 
 	Readint(&no_of_members, "");	/* get number of members */
 	members = (int *)bu_calloc(no_of_members, sizeof(int), "Do_subfigs: members");
-	for (j=0; j<no_of_members; j++)
+	for (j = 0; j < no_of_members; j++)
 	    Readint(&members[j], "");
 
 	BU_LIST_INIT(&head2.l);
-	for (j=0; j<no_of_members; j++) {
+	for (j = 0; j < no_of_members; j++) {
 	    int idx;
 
 	    idx = (members[j] - 1)/2;
@@ -152,7 +152,7 @@ Do_subfigs()
 	    if (dir[idx]->type == 416) {
 		struct file_list *list_ptr;
 		char *file_name;
-		int found=0;
+		int found = 0;
 
 		/* external reference */
 

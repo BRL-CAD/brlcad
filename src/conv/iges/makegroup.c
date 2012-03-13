@@ -31,14 +31,14 @@ void
 Makegroup()
 {
 
-    int i, j, comblen=0, nurbs=0;
+    int i, j, comblen = 0, nurbs = 0;
     struct wmember head, *wmem;
     fastf_t *flt;
 
     BU_LIST_INIT(&head.l);
 
     /* loop through all entities */
-    for (i=0; i<totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	/* Only consider CSG entities */
 	if ((dir[i]->type > 149 && dir[i]->type < 185) || dir[i]->type == 430) {
 	    /* If not referenced, count it */
@@ -51,14 +51,14 @@ Makegroup()
     if (comblen > 1 || nurbs)	/* We need to make a group */ {
 
 	/* Loop through everything again */
-	for (i=0; i<totentities; i++) {
+	for (i = 0; i < totentities; i++) {
 	    /* Again, only consider CSG entities */
 	    if ((dir[i]->type > 149 && dir[i]->type < 185) || dir[i]->type == 430) {
 		if (!(dir[i]->referenced)) {
 		    /* Make the BRL-CAD member record */
 		    wmem = mk_addmember(dir[i]->name, &head.l, NULL, operator[Union]);
 		    flt = (fastf_t *)dir[i]->rot;
-		    for (j=0; j<16; j++) {
+		    for (j = 0; j < 16; j++) {
 			wmem->wm_mat[j] = (*flt);
 			flt++;
 		    }

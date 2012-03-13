@@ -102,14 +102,14 @@ usage(const char *argv0)
 }
 
 
-int verbose=0;
+int verbose = 0;
 static char *db_name;	/* name of the BRL-CAD database */
 static char *prog_name;	/* name of this program as it was invoked */
-static int multi_file=0;	/* Flag to indicate output of seperate IGES file for each region */
+static int multi_file = 0;	/* Flag to indicate output of seperate IGES file for each region */
 static int NMG_debug;	/* saved arg of -X, for longjmp handling */
-static int scale_error=0;	/* Count indicating how many scaled objects were encountered */
-static int solid_error=0;	/* Count indicating how many solids were not converted */
-static int comb_error=0;	/* Count indicating how many combinations were not converted */
+static int scale_error = 0;	/* Count indicating how many scaled objects were encountered */
+static int solid_error = 0;	/* Count indicating how many solids were not converted */
+static int comb_error = 0;	/* Count indicating how many combinations were not converted */
 static int ncpu = 1;	/* Number of processors */
 static char *output_file = NULL;	/* output filename */
 static FILE *fp_dir = NULL;	/* IGES start, global, and directory sections */
@@ -139,7 +139,7 @@ struct iges_functab
 };
 
 
-struct iges_functab iges_write[ID_MAXIMUM+1]={
+struct iges_functab iges_write[ID_MAXIMUM+1] = {
     {null_to_iges},	/* ID_NULL */
     {tor_to_iges}, 	/* ID_TOR */
     {tgc_to_iges},	/* ID_TGC */
@@ -176,12 +176,12 @@ struct iges_functab iges_write[ID_MAXIMUM+1]={
 
 static int regions_tried = 0;
 static int regions_done = 0;
-int mode=CSG_MODE;	/* indicates which type of IGES file is desired */
+int mode = CSG_MODE;	/* indicates which type of IGES file is desired */
 int solid_is_brep;
 int comb_form;
 char **independent;
-size_t no_of_indeps=0;
-int do_nurbs=0;
+size_t no_of_indeps = 0;
+int do_nurbs = 0;
 
 /*
  * M A I N
@@ -306,14 +306,14 @@ main(int argc, char *argv[])
 	if (output_file == NULL)
 	    fp_dir = stdout;
 	else {
-	    if ((fp_dir=fopen(output_file, "wb")) == NULL) {
+	    if ((fp_dir = fopen(output_file, "wb")) == NULL) {
 		perror(output_file);
 		bu_exit(1, "Cannot open output file: %s\n", output_file);
 	    }
 	}
 
 	/* Open the temporary file for the parameter section */
-	if ((fp_param=bu_temp_file(NULL, 0)) == NULL) {
+	if ((fp_param = bu_temp_file(NULL, 0)) == NULL) {
 	    perror("g-iges");
 	    bu_exit(1, "Cannot open temporary file\n");
 	}
@@ -334,7 +334,7 @@ main(int argc, char *argv[])
     }
 
     /* Count object references */
-/* for (i=1; i<argc; i++) {
+/* for (i = 1; i < argc; i++) {
    dp = db_lookup(DBIP, argv[i], 1);
    db_functree(DBIP, dp, count_refs, 0, NULL);
    }	*/
@@ -360,7 +360,7 @@ main(int argc, char *argv[])
 
 	if (!multi_file) {
 	    /* Now walk the same trees again, but only output groups */
-	    for (i=1; i<(size_t)argc; i++) {
+	    for (i = 1; i < (size_t)argc; i++) {
 		char *ptr;
 
 		ptr = strrchr(argv[i], '/');
@@ -382,7 +382,7 @@ main(int argc, char *argv[])
 	 * as a CSG object, unless there is no IGES equivalent (then the
 	 * solid will be tessellated and output as a BREP object) */
 
-	for (i=1; i<(size_t)argc; i++) {
+	for (i = 1; i < (size_t)argc; i++) {
 	    dp = db_lookup(DBIP, argv[i], 1);
 	    if (!dp) {
 		bu_log("WARNING: Unable to locate %s in %s\n, skipping\n", argv[i], db_name);
@@ -414,7 +414,7 @@ main(int argc, char *argv[])
 	    bu_exit(1, "Cannot seek to start of temporary file\n");
 	}
 
-	while ((i=fread(copy_buffer, 1, CP_BUF_SIZE, fp_param)))
+	while ((i = fread(copy_buffer, 1, CP_BUF_SIZE, fp_param)))
 	    if (fwrite(copy_buffer, 1, i, fp_dir) != i) {
 		perror("g-iges");
 		bu_exit(1, "Error in copying parameter data to %s\n", output_file);
@@ -555,7 +555,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	    else {
 		char *multi_name;
 		size_t len;
-		int unique=0;
+		int unique = 0;
 		char suffix[SUFFIX_LEN+1];
 
 		/* construct a unique file name */
@@ -581,7 +581,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		    }
 
 		    if (suffix[0] > 'z' && len < SUFFIX_LEN) {
-			for (i=0; i<=len; i++)
+			for (i = 0; i <= len; i++)
 			    suffix[i] = 'a';
 		    } else if (suffix[0] > 'z' && len >= SUFFIX_LEN) {
 			bu_log("too many files with the same name (%s)\n", dp->d_namep);
@@ -589,14 +589,14 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		    }
 		    snprintf(multi_name, len, "%s/%s%s.igs", output_file, dp->d_namep, suffix);
 		}
-		if ((fp_dir=fopen(multi_name, "wb")) == NULL) {
+		if ((fp_dir = fopen(multi_name, "wb")) == NULL) {
 		    perror("g-iges");
 		    bu_exit(1, "Cannot open output file: %s\n", multi_name);
 		}
 	    }
 
 	    /* Open the temporary file for the parameter section */
-	    if ((fp_param=bu_temp_file(NULL, 0)) == NULL) {
+	    if ((fp_param = bu_temp_file(NULL, 0)) == NULL) {
 		perror("g-iges");
 		bu_exit(1, "Cannot open temporary file\n");
 	    }
@@ -610,7 +610,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
 	if (mode == FACET_MODE) {
 	    dependent = 1;
-	    for (i=0; i<no_of_indeps; i++) {
+	    for (i = 0; i < no_of_indeps; i++) {
 		if (!bu_strncmp(dp->d_namep, independent[i], NAMESIZE+1)) {
 		    dependent = 0;
 		    break;
@@ -633,7 +633,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		bu_exit(1, "Cannot seek to start of temporary file\n");
 	    }
 
-	    while ((i=fread(copy_buffer, 1, CP_BUF_SIZE, fp_param)))
+	    while ((i = fread(copy_buffer, 1, CP_BUF_SIZE, fp_param)))
 		if (fwrite(copy_buffer, 1, i, fp_dir) != i) {
 		    perror("g-iges");
 		    bu_exit(1, "Error in copying parameter data to %s\n", output_file);
@@ -727,7 +727,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
     struct iges_properties props;
     int comb_len;
     size_t i;
-    int dependent=1;
+    int dependent = 1;
     int *de_pointers;
     int id;
 
@@ -739,7 +739,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
     if (dp->d_uses < 0)
 	return;
 
-    for (i=0; i<no_of_indeps; i++) {
+    for (i = 0; i < no_of_indeps; i++) {
 	if (!bu_strncmp(dp->d_namep, independent[i], NAMESIZE+1)) {
 	    dependent = 0;
 	    break;
@@ -845,7 +845,7 @@ incr_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *tp, genp
     RT_CK_DBI(dbip);
     RT_CK_TREE(tp);
 
-    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+    if ((dp = db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return;
 
     dp->d_nref++;

@@ -27,7 +27,7 @@ Get_outer_brep(ON_Brep* brep, int entityno, int shell_orient)
 {
     int sol_num;		/* IGES solid type number */
     int no_of_faces;		/* Number of faces in shell */
-    int face_count=0;		/* Number of faces actually made */
+    int face_count = 0;		/* Number of faces actually made */
     int *face_de;		/* Directory seqence numbers for faces */
     int *face_orient;		/* Orientation of faces */
     int face;
@@ -72,7 +72,7 @@ Get_outer_shell(r , entityno , shell_orient)
 
     int sol_num;		/* IGES solid type number */
     int no_of_faces;		/* Number of faces in shell */
-    int face_count=0;		/* Number of faces actually made */
+    int face_count = 0;		/* Number of faces actually made */
     int *face_de;		/* Directory seqence numbers for faces */
     int *face_orient;		/* Orientation of faces */
     int face;
@@ -95,14 +95,14 @@ Get_outer_shell(r , entityno , shell_orient)
     face_orient = (int *)bu_calloc(no_of_faces , sizeof(int) , "Get_outer_shell orients");
     fu = (struct faceuse **)bu_calloc(no_of_faces , sizeof(struct faceuse *) , "Get_outer_shell faceuses ");
 
-    for (face=0 ; face<no_of_faces ; face++) {
+    for (face = 0; face < no_of_faces; face++) {
 	Readint(&face_de[face] , "");
 	Readint(&face_orient[face] , "");
     }
 
     s = nmg_msv(r);
 
-    for (face=0 ; face<no_of_faces ; face++) {
+    for (face = 0; face < no_of_faces; face++) {
 	fu[face_count] = Add_face_to_shell(s , (face_de[face]-1)/2 , face_orient[face]);
 	if (fu[face_count] != (struct faceuse *)NULL)
 	    face_count++;

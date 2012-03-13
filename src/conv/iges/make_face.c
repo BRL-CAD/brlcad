@@ -31,9 +31,9 @@ Make_planar_face(struct shell *s, int entityno, int face_orient)
     int sol_num;	/* IGES solid type number */
     int no_of_edges;	/* edge count for this loop */
     int no_of_param_curves;
-    int vert_count=0;	/* Actual number of vertices used to make face */
+    int vert_count = 0;	/* Actual number of vertices used to make face */
     struct iges_edge_use *edge_list;	/* list of edgeuses from iges loop entity */
-    struct faceuse *fu=NULL;	/* NMG face use */
+    struct faceuse *fu = NULL;	/* NMG face use */
     struct loopuse *lu;		/* NMG loop use */
     struct vertex ***verts;	/* list of vertices */
     struct iges_vertex_list *v_list;
@@ -57,7 +57,7 @@ Make_planar_face(struct shell *s, int entityno, int face_orient)
     Readint(&no_of_edges, "");
     edge_list = (struct iges_edge_use *)bu_calloc(no_of_edges, sizeof(struct iges_edge_use) ,
 						  "Make_face (edge_list)");
-    for (i=0; i<no_of_edges; i++) {
+    for (i = 0; i < no_of_edges; i++) {
 	Readint(&edge_list[i].edge_is_vertex, "");
 	Readint(&edge_list[i].edge_de, "");
 	Readint(&edge_list[i].index, "");
@@ -71,7 +71,7 @@ Make_planar_face(struct shell *s, int entityno, int face_orient)
 	}
 	edge_list[i].root = (struct iges_param_curve *)NULL;
 	Readint(&no_of_param_curves, "");
-	for (j=0; j<no_of_param_curves; j++) {
+	for (j = 0; j < no_of_param_curves; j++) {
 	    struct iges_param_curve *new_crv;
 	    struct iges_param_curve *crv;
 
@@ -94,7 +94,7 @@ Make_planar_face(struct shell *s, int entityno, int face_orient)
     verts = (struct vertex ***)bu_calloc(no_of_edges, sizeof(struct vertex **) ,
 					 "Make_face: vertex_list **");
 
-    for (i=0; i<no_of_edges; i++) {
+    for (i = 0; i < no_of_edges; i++) {
 	if (face_orient)
 	    verts[i] = Get_vertex(&edge_list[i]);
 	else
@@ -106,7 +106,7 @@ Make_planar_face(struct shell *s, int entityno, int face_orient)
     done = 0;
     while (!done) {
 	done = 1;
-	for (i=0; i<vert_count; i++) {
+	for (i = 0; i < vert_count; i++) {
 	    k = i + 1;
 	    if (k == vert_count)
 		k = 0;
@@ -115,7 +115,7 @@ Make_planar_face(struct shell *s, int entityno, int face_orient)
 		bu_log("Ignoring zero length edge\n");
 		done = 0;
 		vert_count--;
-		for (j=i; j<vert_count; j++)
+		for (j = i; j < vert_count; j++)
 		    verts[j] = verts[j+1];
 	    }
 	}
@@ -133,7 +133,7 @@ Make_planar_face(struct shell *s, int entityno, int face_orient)
 	/* associate geometry */
 	v_list = vertex_root;
 	while (v_list != NULL) {
-	    for (i=0; i < v_list->no_of_verts; i++) {
+	    for (i = 0; i < v_list->no_of_verts; i++) {
 		if (v_list->i_verts[i].v != NULL && v_list->i_verts[i].v->vg_p == NULL) {
 		    NMG_CK_VERTEX(v_list->i_verts[i].v);
 		    nmg_vertex_gv(v_list->i_verts[i].v ,

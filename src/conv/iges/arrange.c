@@ -31,7 +31,7 @@ Arrange(root)
     struct node *root;
 {
     struct node *Copytree(), *Pop(), *ptr, *ptra, *ptrb, *ptrc, *ptrd, *ptr1, *ptr2;
-    int retval=1;
+    int retval = 1;
 
     ptr = root;
     while (1) {

@@ -34,7 +34,7 @@ Add_face_to_shell(s, entityno, face_orient)
     int outer_loop_flag;	/* Indicates if first loop is an the outer loop */
     int *loop_de;		/* Directory seqence numbers for loops */
     int loop;
-    int planar=0;
+    int planar = 0;
     struct faceuse *fu;			/* NMG face use */
 
     /* Acquiring Data */
@@ -51,7 +51,7 @@ Add_face_to_shell(s, entityno, face_orient)
     Readint(&no_of_loops, "");
     Readint(&outer_loop_flag, "");
     loop_de = (int *)bu_calloc(no_of_loops, sizeof(int), "Get_outer_face loop DE's");
-    for (loop=0; loop<no_of_loops; loop++)
+    for (loop = 0; loop < no_of_loops; loop++)
 	Readint(&loop_de[loop], "");
 
     /* Check that this is a planar surface */
@@ -62,7 +62,7 @@ Add_face_to_shell(s, entityno, face_orient)
 	fu = Make_planar_face(s, (loop_de[0]-1)/2, face_orient);
 	if (!fu)
 	    goto err;
-	for (loop=1; loop<no_of_loops; loop++) {
+	for (loop = 1; loop < no_of_loops; loop++) {
 	    if (!Add_loop_to_face(s, fu, ((loop_de[loop]-1)/2), face_orient))
 		goto err;
 	}
@@ -79,7 +79,7 @@ Add_face_to_shell(s, entityno, face_orient)
 
 	NMG_CK_FACE_G_SNURB(fu->f_p->g.snurb_p);
 
-	for (loop=0; loop<no_of_loops; loop++) {
+	for (loop = 0; loop < no_of_loops; loop++) {
 	    if (!Add_nurb_loop_to_face(s, fu, ((loop_de[loop]-1)/2)))
 		goto err;
 	}

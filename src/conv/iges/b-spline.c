@@ -31,8 +31,8 @@
 #include "raytrace.h"		/* for declaration of bu_calloc() */
 
 
-static fastf_t *knots=(fastf_t *)NULL;
-static int numknots=0;
+static fastf_t *knots = (fastf_t *)NULL;
+static int numknots = 0;
 
 
 /* Set the knot values */
@@ -53,7 +53,7 @@ Knot(int n /* number of values in knot sequence */, fastf_t values[] /* knot val
 
     numknots = n;
 
-    for (i=0; i<n; i++)
+    for (i = 0; i < n; i++)
 	knots[i] = values[i];
 
 }
@@ -71,7 +71,7 @@ Freeknots(void)
 fastf_t
 Basis(int i /* interval number (0 through k) */, int k /* degree of basis function */, fastf_t t /* parameter value */)
 {
-    fastf_t denom1, denom2, retval=0.0;
+    fastf_t denom1, denom2, retval = 0.0;
 
     if ((i+1) > (numknots-1)) {
 	bu_log("Error in evaluation of a B-spline Curve\n");
@@ -109,20 +109,20 @@ B_spline(fastf_t t /* parameter value */,
 	 point_t pt /* Evaluated point on spline */)
 {
 
-    fastf_t tmp, numer[3], denom=0.0;
+    fastf_t tmp, numer[3], denom = 0.0;
     int i, j;
 
-    for (j=0; j<3; j++)
+    for (j = 0; j < 3; j++)
 	numer[j] = 0.0;
 
-    for (i=0; i<=m; i++) {
+    for (i = 0; i <= m; i++) {
 	tmp = weights[i]*Basis(i, k, t);
 	denom += tmp;
-	for (j=0; j<3; j++)
+	for (j = 0; j < 3; j++)
 	    numer[j] += P[i][j]*tmp;
     }
 
-    for (j=0; j<3; j++)
+    for (j = 0; j < 3; j++)
 	pt[j] = numer[j]/denom;
 }
 

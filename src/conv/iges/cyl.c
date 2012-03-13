@@ -25,11 +25,11 @@ int
 cyl(entityno)
     int entityno;
 {
-    fastf_t radius=0.0;
+    fastf_t radius = 0.0;
     point_t base;		/* center point of base */
     vect_t height;
     vect_t hdir;		/* direction in which to grow height */
-    fastf_t scale_height=0.0;
+    fastf_t scale_height = 0.0;
     fastf_t x_1;
     fastf_t y_1;
     fastf_t z_1;

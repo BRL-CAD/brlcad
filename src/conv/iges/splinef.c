@@ -32,10 +32,10 @@ splinef(fastf_t c[4], fastf_t s)
 {
     int i;
     float retval;
-    double stopow=1.0;
+    double stopow = 1.0;
 
     retval = c[0];
-    for (i=1; i<4; i++) {
+    for (i = 1; i < 4; i++) {
 	stopow *= s;
 	if (!ZERO(c[i]))
 	    retval += c[i]*stopow;

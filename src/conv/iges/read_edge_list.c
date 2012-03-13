@@ -56,7 +56,7 @@ Read_edge_list(struct iges_edge_use *edge)
     edge_list->i_edge = (struct iges_edge *)bu_calloc(edge_list->no_of_edges, sizeof(struct iges_edge) ,
 						      "Read_edge_list: iges_edge");
 
-    for (i=0; i<edge_list->no_of_edges; i++) {
+    for (i = 0; i < edge_list->no_of_edges; i++) {
 	Readint(&edge_list->i_edge[i].curve_de, "");
 	Readint(&edge_list->i_edge[i].start_vert_de, "");
 	Readint(&edge_list->i_edge[i].start_vert_index, "");

@@ -24,10 +24,10 @@
 int
 wedge(int entityno)
 {
-    fastf_t xscale=0.0;
-    fastf_t yscale=0.0;
-    fastf_t zscale=0.0;
-    fastf_t txscale=0.0;		/* top xscale */
+    fastf_t xscale = 0.0;
+    fastf_t yscale = 0.0;
+    fastf_t zscale = 0.0;
+    fastf_t txscale = 0.0;		/* top xscale */
     fastf_t x_1, y_1, z_1;		/* first vertex components */
     fastf_t x_2, y_2, z_2;		/* xdir vector components */
     fastf_t x_3, y_3, z_3;		/* zdir vector components */

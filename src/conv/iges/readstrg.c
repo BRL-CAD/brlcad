@@ -37,7 +37,7 @@
 void
 Readstrg(char *id)
 {
-    int i=(-1), length=0, done=0, lencard;
+    int i = (-1), length = 0, done = 0, lencard;
     char num[80];
 
     if (card[counter] == eof) {
@@ -72,7 +72,7 @@ Readstrg(char *id)
     }
     num[++i] = '\0';
     length = atoi(num);
-    for (i=0; i<length; i++) {
+    for (i = 0; i < length; i++) {
 	if (counter > lencard)
 	    Readrec(++currec);
 	if (*id != '\0')

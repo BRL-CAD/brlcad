@@ -25,7 +25,7 @@ void
 Readstart()
 {
 
-    int i=0, done=0;
+    int i = 0, done = 0;
 
     while (!done) {
 	if (Readrec(++i))

@@ -35,7 +35,7 @@ Bubbleup(root)
     struct node *root;
 {
     struct node *Copytree(), *Pop(), *ptr, *ptra, *ptrb, *ptrc, *ptr1, *ptr2;
-    int op, retval=1;
+    int op, retval = 1;
 
     ptr = root;
     while (1) {

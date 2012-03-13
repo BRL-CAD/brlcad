@@ -36,6 +36,7 @@ void Matmult(mat_t a, mat_t b, mat_t c)
 		tmp[i*4+j] += a[i*4+k] * b[k*4+j];
 	}
     }
+
     for (i = 0; i < 4; i++) {
 	for (j = 0; j < 4; j++)
 	    c[i*4+j] = tmp[i*4+j];

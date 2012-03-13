@@ -27,7 +27,7 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
-unsigned char colortab[9][4]={
+unsigned char colortab[9][4] = {
     { 0, 217, 217, 217 },
     { 1, 0, 0, 0 },
     { 2, 255, 0, 0 },
@@ -45,7 +45,7 @@ Docolor()
     int i, j;
     fastf_t a;
 
-    for (i=0; i<totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	/* only set colors for regions, groups, or solid instances */
 	if (dir[i]->type == 180 || dir[i]->type == 184 || dir[i]->type == 430) {
 	    if (dir[i]->colorp > 0) {

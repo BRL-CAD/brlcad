@@ -39,7 +39,7 @@ Readcnv(inum, id)
     char *id;
     fastf_t *inum;
 {
-    int i=(-1), done=0, lencard;
+    int i = (-1), done = 0, lencard;
     char num[80];
 
     if (card[counter] == eof) {

@@ -41,12 +41,12 @@ struct solid_list
 void
 Convassem()
 {
-    int i, j, k, comblen, conv=0, totass=0;
+    int i, j, k, comblen, conv = 0, totass = 0;
     struct solid_list *root, *ptr, *ptr_tmp;
     struct wmember head, *wmem;
-    int no_of_assoc=0;
-    int no_of_props=0;
-    int att_de=0;
+    int no_of_assoc = 0;
+    int no_of_props = 0;
+    int att_de = 0;
     unsigned char *rgb;
     struct brlcad_att brl_att;
     fastf_t *flt;
@@ -57,7 +57,7 @@ Convassem()
     root = NULL;
     BU_LIST_INIT(&head.l);
 
-    for (i=0; i<totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	/* loop through all entities */
 	if (dir[i]->type != 184)	/* This is not a solid assembly */
 	    continue;
@@ -81,7 +81,7 @@ Convassem()
 	Readint(&comblen, "");	/* read number of members in group */
 
 	/* Read pointers to group members */
-	for (j=0; j<comblen; j++) {
+	for (j = 0; j < comblen; j++) {
 	    if (ptr == NULL) {
 		root = (struct solid_list *)bu_malloc(sizeof(struct solid_list),
 						      "Convassem: root");
@@ -110,7 +110,7 @@ Convassem()
 
 	/* Read pointer to transformation matrix for each member */
 	ptr = root;
-	for (j=0; j<comblen; j++) {
+	for (j = 0; j < comblen; j++) {
 	    ptr->matrix = 0;
 
 	    /* Read pointer to a transformation */
@@ -130,12 +130,12 @@ Convassem()
 
 	/* skip over the associativities */
 	Readint(&no_of_assoc, "");
-	for (k=0; k<no_of_assoc; k++)
+	for (k = 0; k < no_of_assoc; k++)
 	    Readint(&j, "");
 
 	/* get property entity DE's */
 	Readint(&no_of_props, "");
-	for (k=0; k<no_of_props; k++) {
+	for (k = 0; k < no_of_props; k++) {
 	    Readint(&j, "");
 	    if (dir[(j-1)/2]->type == 422 &&
 		dir[(j-1)/2]->referenced == brlcad_att_de) {
@@ -150,7 +150,7 @@ Convassem()
 	ptr = root;
 	while (ptr != NULL) {
 	    /* copy the members original transformation matrix */
-	    for (j=0; j<16; j++)
+	    for (j = 0; j < 16; j++)
 		ptr->rot[j] = (*dir[ptr->item]->rot)[j];
 
 	    /* Apply any matrix indicated for this group member */
@@ -159,7 +159,7 @@ Convassem()
 
 	    wmem = mk_addmember(ptr->name, &head.l, NULL, operator[Union]);
 	    flt = (fastf_t *)ptr->rot;
-	    for (j=0; j<16; j++) {
+	    for (j = 0; j < 16; j++) {
 		wmem->wm_mat[j] = (*flt);
 		flt++;
 	    }

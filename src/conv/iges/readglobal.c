@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 /* Conversion Factors (to mm)	*/
-fastf_t cnv[]={
+fastf_t cnv[] = {
 /* default, inch, mm, ?, feet,  miles, meters, kilometers, mils, microns,
    cm, microinches */
     1.0,    25.4, 1.0, 1.0, 304.8, 1609344.0, 1000.0, 1000000.0, 0.0254, 0.001,
@@ -32,7 +32,7 @@ fastf_t cnv[]={
 #define NO_OF_VERSIONS 10
 #define COMMA ','
 
-char *iges_version[NO_OF_VERSIONS]={
+char *iges_version[NO_OF_VERSIONS] = {
     " ",
     "1.0",
     "ANSI Y14.26M - 1981",
@@ -48,7 +48,7 @@ void
 Readglobal(int file_count)
 {
 
-    int field=2, i;
+    int field = 2, i;
     fastf_t a;
     char *name;
 
@@ -60,7 +60,7 @@ Readglobal(int file_count)
 	if (card[counter] != '1' || card[counter+1] != 'H') {
 	    bu_log("Error in new delimiter\n");
 	    bu_log("%s\n", card);
-	    for (i=0; i<counter-1; i++)
+	    for (i = 0; i < counter - 1; i++)
 		bu_log("%c", ' ');
 	    bu_exit(1, "^\n");
 	}
@@ -152,7 +152,7 @@ Readglobal(int file_count)
 	    case 22:	Readstrg("Organization: ");
 		break;
 	    case 23:	Readint(&i, "");
-		if (i<1 || i>=NO_OF_VERSIONS)
+		if (i < 1 || i >= NO_OF_VERSIONS)
 		    bu_log("Unrecognized IGES version\n");
 		else
 		    bu_log("IGES version: %s\n", iges_version[i]);

@@ -71,7 +71,7 @@ Pop()
     union tree *ptr;
 
     if (jtop == (-1))
-	ptr=NULL;
+	ptr = NULL;
     else {
 	ptr = stk[jtop];
 	jtop--;

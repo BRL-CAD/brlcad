@@ -24,7 +24,7 @@
 int
 sphere(int entityno)
 {
-    fastf_t radius=0.0;
+    fastf_t radius = 0.0;
     point_t center;
     fastf_t x;
     fastf_t y;

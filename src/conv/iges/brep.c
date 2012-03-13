@@ -60,7 +60,7 @@ brep(int entityno)
 	void_shell_de = (int *)bu_calloc(num_of_voids, sizeof(int), "BREP: void shell DE's");
 	void_orient = (int *)bu_calloc(num_of_voids, sizeof(int), "BREP: void shell orients");
 	void_shells = (struct shell **)bu_calloc(num_of_voids, sizeof(struct shell *), "BREP: void shell pointers");
-	for (i=0; i<num_of_voids; i++) {
+	for (i = 0; i < num_of_voids; i++) {
 	    Readint(&void_shell_de[i], "");
 	    Readint(&void_orient[i], "");
 	}
@@ -75,12 +75,12 @@ brep(int entityno)
     r = BU_LIST_FIRST(nmgregion, &m->r_hd);
 
     /* Put outer shell in region */
-    if ((s_outer=Get_outer_shell(r, (shell_de - 1)/2)) == (struct shell *)NULL)
+    if ((s_outer = Get_outer_shell(r, (shell_de - 1)/2)) == (struct shell *)NULL)
 	goto err;
 
     /* Put voids in */
-    for (i=0; i<num_of_voids; i++) {
-	if ((void_shells[i]=Add_inner_shell(r, (void_shell_de[i] - 1)/2))
+    for (i = 0; i < num_of_voids; i++) {
+	if ((void_shells[i] = Add_inner_shell(r, (void_shell_de[i] - 1)/2))
 	    == (struct shell *)NULL)
 	    goto err;
     }
@@ -90,14 +90,14 @@ brep(int entityno)
 
     /* orient shells */
     nmg_fix_normals(s_outer, &tol);
-    for (i=0; i<num_of_voids; i++) {
+    for (i = 0; i < num_of_voids; i++) {
 	nmg_fix_normals(void_shells[i], &tol);
 	nmg_invert_shell(void_shells[i]);
     }
 
     if (do_bots) {
 	/* Merge all shells into one */
-	for (i=0; i<num_of_voids; i++)
+	for (i = 0; i < num_of_voids; i++)
 	    nmg_js(s_outer, void_shells[i], &tol);
 
 	/* write out BOT */

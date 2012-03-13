@@ -50,11 +50,11 @@ int
 Recsize()
 {
 
-    int i, j, k=(-1), recl=0, length[NRECS] = {0}, ch;
+    int i, j, k = (-1), recl = 0, length[NRECS] = {0}, ch;
 
-    for (j=0; j<NRECS; j++) {
+    for (j = 0; j < NRECS; j++) {
 	i = 1;
-	while ((ch=getc(fd)) != '\n' && i < NCHAR && ch != EOF)
+	while ((ch = getc(fd)) != '\n' && i < NCHAR && ch != EOF)
 	    i++;
 	if (i == NCHAR) {
 	    recl = 80;
@@ -80,7 +80,7 @@ Recsize()
 	recl = length[1];	/* don't use length[0] */
 
 	/* check for consistent record lengths */
-	for (j=2; j<k; j++) {
+	for (j = 2; j < k; j++) {
 	    if (recl != length[j])
 		return 0;
 	}

@@ -188,9 +188,9 @@ int Record::_reclen = -1;
 void
 Record::calcRecsize(FILE* in)
 {
-    int i, j, k=(-1), recl=0, length[NRECS], ch;
+    int i, j, k = (-1), recl = 0, length[NRECS], ch;
 
-    for (j=0 ; j<NRECS ; j++) {
+    for (j = 0; j < NRECS; j++) {
 	i = 1;
 	while ((ch = fgetc(in)) != '\n' && i < NCHAR && ch != EOF)
 	    i++;
@@ -217,7 +217,7 @@ Record::calcRecsize(FILE* in)
 	recl = length[1];	/* don't use length[0] */
 
 	/* check for consistent record lengths */
-	for (j=2 ; j<k ; j++) {
+	for (j = 2; j < k; j++) {
 	    if (recl != length[j])
 		throw new RecordException("no consistent record lengths");
 	}
@@ -275,7 +275,7 @@ Record::_read() {
 	case 'D': _readDirectory(); break;
 	case 'P': _readParameter(Integer(_field(8))); break;
 	case 'T': break;
-	default: _valid=false;
+	default: _valid = false;
     }
 }
 

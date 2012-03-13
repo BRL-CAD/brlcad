@@ -36,7 +36,7 @@ Readcols(char *id, int cols)
 
     tmp = id;
 
-    for (i=0; i<cols; i++)
+    for (i = 0; i < cols; i++)
 	*tmp++ = card[counter++];
 }
 

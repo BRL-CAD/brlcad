@@ -26,9 +26,9 @@ ell(entityno)
     int entityno;
 {
 
-    fastf_t xscale=0.0;
-    fastf_t yscale=0.0;
-    fastf_t zscale=0.0;
+    fastf_t xscale = 0.0;
+    fastf_t yscale = 0.0;
+    fastf_t zscale = 0.0;
     point_t v;			/* the vertex */
     vect_t xdir;			/* a unit vector */
     vect_t xvec;			/* vector along x-axis */

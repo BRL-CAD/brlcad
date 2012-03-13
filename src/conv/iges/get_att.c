@@ -32,7 +32,7 @@ Get_att()
     int i, j;
     char *str;
 
-    for (i=0; i<totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	/* Look for attribute definitions */
 	if (dir[i]->type == 322) {
 	    /* look for form 0 only */

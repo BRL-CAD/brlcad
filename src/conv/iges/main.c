@@ -31,7 +31,7 @@
 #include "brlcad_version.h"
 
 
-int do_projection=1;
+int do_projection = 1;
 char eor, eof, card[256];
 fastf_t scale, inv_scale, conv_factor;
 int units, counter, pstart, dstart, totentities, dirarraylen;
@@ -39,18 +39,18 @@ FILE *fd;
 struct rt_wdb *fdout;
 char brlcad_file[256];
 int reclen, currec, ntypes;
-int brlcad_att_de=0;
+int brlcad_att_de = 0;
 struct iges_directory **dir;
 struct reglist *regroot;
 struct iges_edge_list *edge_root;
 struct iges_vertex_list *vertex_root;
 struct bn_tol tol;
-char *solid_name=(char *)NULL;
+char *solid_name = (char *)NULL;
 struct file_list iges_list;
 struct file_list *curr_file;
 struct name_list *name_root;
 
-char operator[]={
+char operator[] = {
     ' ',
     'u',
     '+',
@@ -59,30 +59,30 @@ char operator[]={
 mat_t *identity;
 
 
-static int do_splines=0;
-static int do_drawings=0;
-static int trimmed_surf=0;
-int do_bots=1;
+static int do_splines = 0;
+static int do_drawings = 0;
+static int trimmed_surf = 0;
+int do_bots = 1;
 
 static char *iges_file;
 
-static char *msg1=
+static char *msg1 =
 "\nThis IGES file contains solid model entities, but your options do not permit\n\
 converting them to BRL-CAD. You may want to try 'iges-g -o file.g %s' to\n\
 convert the solid model elements\n";
 
-static char *msg2=
+static char *msg2 =
 "\nThis IGES file contains drawing entities, but no solid model entities. You may\n\
 convert the drawing to BRL-CAD by 'iges-g -d -o file.g %s'. Note that the resulting\n\
 BRL-CAD object will be a 2D drawing, not a solid object. You might also try the\n\
 '-3' option to get 3D drawings\n";
 
-static char *msg3=
+static char *msg3 =
 "\nThis IGES file contains spline surfaces, but no solid model entities. All the spline\n\
 surfaces in the IGES file may be combined into a single BRL-CAD spline solid by\n\
 'iges-g -n -o file.g %s'\n";
 
-static char *msg4=
+static char *msg4 =
 "\nThis IGES file contains trimmed surfaces, but no solid model entities.\n\
 Try the '-t' option to convert all the trimmed surfaces into one BRL-CAD solid.\n\
 'iges-g -t -o file.g %s'\n";
@@ -91,11 +91,11 @@ void
 Suggestions()
 {
     int i;
-    int csg=0;
-    int b_rep=0;
-    int splines=0;
-    int tsurfs=0;
-    int drawing=0;
+    int csg = 0;
+    int b_rep = 0;
+    int splines = 0;
+    int tsurfs = 0;
+    int drawing = 0;
 
     /* categorize the elements in the IGES file as to whether they are
      * CSG, BREP, Trimmed surfaces, Spline surfaces, or drawing elements
@@ -105,7 +105,7 @@ Suggestions()
 	    typecount[i].type == 430)
 	    csg += typecount[i].count;
 	else if (typecount[i].type == 186 ||
-		 (typecount[i].type >= 502 && typecount[i].type <=514))
+		 (typecount[i].type >= 502 && typecount[i].type <= 514))
 	    b_rep += typecount[i].count;
 	else if (typecount[i].type == 128)
 	    splines += typecount[i].count;
@@ -137,11 +137,11 @@ main(int argc, char *argv [])
 {
     int i;
     int c;
-    int file_count=0;
-    char *output_file=(char *)NULL;
+    int file_count = 0;
+    char *output_file = (char *)NULL;
 
 
-    while ((c=bu_getopt(argc, argv, "3dntpo:x:X:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "3dntpo:x:X:N:")) != -1) {
 	switch (c) {
 	    case '3':
 		do_drawings = 1;

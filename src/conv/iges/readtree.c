@@ -36,7 +36,7 @@ Readtree(mat_t *matp)
 
     Freestack();
     Readint(&length, "");
-    for (i=0; i<length; i++) {
+    for (i = 0; i < length; i++) {
 	Readint(&op, "");
 	if (op < 0) {
 	    /* This is an operand */

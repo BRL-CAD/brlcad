@@ -133,7 +133,7 @@ Initastack()
 	perror("Initastack");
 	bu_exit(1, NULL);
     }
-    for (i=0; i<stklen; i++)
+    for (i = 0; i < stklen; i++)
 	stk[i] = NULL;
 }
 
@@ -154,7 +154,7 @@ Apush(char *ptr)
 	    perror("Apush");
 	    bu_exit(1, NULL);
 	}
-	for (i=jtop; i<stklen; i++)
+	for (i = jtop; i < stklen; i++)
 	    stk[i] = NULL;
     }
     stk[jtop] = ptr;
@@ -170,7 +170,7 @@ Apop()
     char *ptr;
 
     if (jtop == (-1))
-	ptr=NULL;
+	ptr = NULL;
     else {
 	ptr = stk[jtop];
 	jtop--;
@@ -237,7 +237,7 @@ Spop()
     struct node *ptr;
 
     if (sjtop == (-1))
-	ptr=NULL;
+	ptr = NULL;
     else {
 	ptr = sstk_p[sjtop];
 	sjtop--;

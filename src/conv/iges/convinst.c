@@ -28,15 +28,15 @@ Convinst()
     int i, j, k;
     int type;
     int pointer;
-    int conv=0;
-    int totinst=0;
-    int no_of_assoc=0;
-    int no_of_props=0;
-    int att_de=0;
+    int conv = 0;
+    int totinst = 0;
+    int no_of_assoc = 0;
+    int no_of_props = 0;
+    int att_de = 0;
     struct brlcad_att brl_att;
     mat_t *rot;
 
-    for (i=0; i<totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	if (dir[i]->type != 430) /* This is not an instance */
 	    continue;
 
@@ -62,13 +62,13 @@ Convinst()
 
 	/* skip over the associativities */
 	Readint(&no_of_assoc, "");
-	for (k=0; k<no_of_assoc; k++)
+	for (k = 0; k < no_of_assoc; k++)
 	    Readint(&j, "");
 
 	/* get property entity DE's */
 	att_de = 0;
 	Readint(&no_of_props, "");
-	for (k=0; k<no_of_props; k++) {
+	for (k = 0; k < no_of_props; k++) {
 	    Readint(&j, "");
 	    if (dir[(j-1)/2]->type == 422 &&
 		dir[(j-1)/2]->referenced == brlcad_att_de) {

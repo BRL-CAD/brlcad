@@ -38,7 +38,7 @@ spline(int entityno, struct face_g_snurb **b_patch)
     int sol_num; /* IGES solid type number */
     int n1, n2;
     int i, j, k;
-    int count=0;
+    int count = 0;
     int point_size;
     fastf_t min_knot;
     fastf_t max_wt;
@@ -85,7 +85,10 @@ spline(int entityno, struct face_g_snurb **b_patch)
     (*b_patch) = rt_nurb_new_snurb(
 	m1+1, m2+1,
 	n1+2*m1+1, n2+2*m2+1,
-	k2+1, k1+1, RT_NURB_MAKE_PT_TYPE(point_size, 2, (prop3==0?RT_NURB_PT_RATIONAL:RT_NURB_PT_NONRAT)), (struct resource *)NULL);
+	k2+1, k1+1,
+        RT_NURB_MAKE_PT_TYPE(point_size, 2,
+                             (prop3 == 0 ? RT_NURB_PT_RATIONAL : RT_NURB_PT_NONRAT)),
+        (struct resource *)NULL);
 
     /* U knot vector */
     min_knot = 0.0;
@@ -118,12 +121,12 @@ spline(int entityno, struct face_g_snurb **b_patch)
     /* weights */
     max_wt = 0.0;
     count = 0;
-    for (i=0; i<=k2; i++) {
-	for (j=0; j<= k1; j++) {
+    for (i = 0; i <= k2; i++) {
+	for (j = 0; j <= k1; j++) {
 	    if (point_size == 4) {
-		Readdbl(&(*b_patch)->ctl_points[ count*4 + 3 ], "");
-		if ((*b_patch)->ctl_points[ count*4 + 3 ] > max_wt)
-		    max_wt = (*b_patch)->ctl_points[ count*4 + 3 ];
+		Readdbl(&(*b_patch)->ctl_points[count*4 + 3], "");
+		if ((*b_patch)->ctl_points[count*4 + 3] > max_wt)
+		    max_wt = (*b_patch)->ctl_points[count*4 + 3];
 	    } else {
 		Readdbl(&max_wt, "");
 	    }
@@ -135,9 +138,9 @@ spline(int entityno, struct face_g_snurb **b_patch)
     count = 0;
     for (i = 0; i <= k2; i++) {
 	for (j = 0; j <= k1; j++) {
-	    Readcnv(&(*b_patch)->ctl_points[ count*point_size ], "");
-	    Readcnv(&(*b_patch)->ctl_points[ count*point_size + 1 ], "");
-	    Readcnv(&(*b_patch)->ctl_points[ count*point_size + 2 ], "");
+	    Readcnv(&(*b_patch)->ctl_points[count*point_size], "");
+	    Readcnv(&(*b_patch)->ctl_points[count*point_size + 1], "");
+	    Readcnv(&(*b_patch)->ctl_points[count*point_size + 2], "");
 	    count++;
 	}
     }
@@ -147,8 +150,8 @@ spline(int entityno, struct face_g_snurb **b_patch)
 	count = 0;
 	for (i = 0; i <= k2; i++) {
 	    for (j = 0; j <= k1; j++) {
-		for (k=0; k<3; k++)
-		    (*b_patch)->ctl_points[ count*4 + k ] *= (*b_patch)->ctl_points[ count*4 + 3];
+		for (k = 0; k < 3; k++)
+		    (*b_patch)->ctl_points[count*4 + k] *= (*b_patch)->ctl_points[count*4 + 3];
 		count++;
 	    }
 	}

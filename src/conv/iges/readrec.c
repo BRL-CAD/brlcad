@@ -51,8 +51,8 @@ Readrec(int recno)
     }
     counter = 0;
 
-    for (i=0; i<reclen; i++) {
-	if ((ch=getc(fd)) == EOF)
+    for (i = 0; i < reclen; i++) {
+	if ((ch = getc(fd)) == EOF)
 	    return 1;
 	card[i] = ch;
     }

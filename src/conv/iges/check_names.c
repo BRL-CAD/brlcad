@@ -36,7 +36,7 @@ Add_brl_name(name)
 	namelen = NAMESIZE;
 	name[namelen] = '\0';
     }
-    for (i=0; i<namelen; i++) {
+    for (i = 0; i < namelen; i++) {
 	if (isspace(name[i]) || name[i] == '/')
 	    name[i] = '_';
     }
@@ -74,7 +74,7 @@ Make_unique_brl_name(char *name) {
     }
 
     found_str_end = 0;
-    for (i = 0 ; i < NAMESIZE+1 ; i++) {
+    for (i = 0; i < NAMESIZE + 1; i++) {
         if (name[i] == '\0') {
             found_str_end = 1;
             namelen = i;
@@ -88,7 +88,7 @@ Make_unique_brl_name(char *name) {
     }
 
     /* replace white space */
-    for (i = 0 ; i < namelen ; i++) {
+    for (i = 0; i < namelen; i++) {
         if (isspace(name[i]) || name[i] == '/') {
             name[i] = '_';
         }
@@ -106,7 +106,7 @@ Make_unique_brl_name(char *name) {
         }
         if (name_unique) {
             return Add_brl_name(name);
-        } 
+        }
     }
 
     idx = namelen;
@@ -153,7 +153,7 @@ Make_unique_brl_name(char *name) {
 void
 Skip_field()
 {
-    int done=0;
+    int done = 0;
     int lencard;
 
     if (card[counter] == eof) {
@@ -192,9 +192,9 @@ Get_name(entityno, skip)
 {
     int sol_num;
     int i, j, k;
-    int no_of_assoc=0;
-    int no_of_props=0;
-    int name_de=0;
+    int no_of_assoc = 0;
+    int no_of_props = 0;
+    int name_de = 0;
     char *name;
 
     if (dir[entityno]->param <= pstart) {
@@ -205,17 +205,17 @@ Get_name(entityno, skip)
 
     Readrec(dir[entityno]->param);
     Readint(&sol_num, "");
-    for (i=0; i<skip; i++)
+    for (i = 0; i < skip; i++)
 	Skip_field();
 
     /* skip over the associativities */
     Readint(&no_of_assoc, "");
-    for (k=0; k<no_of_assoc; k++)
+    for (k = 0; k < no_of_assoc; k++)
 	Readint(&j, "");
 
     /* get property entity DE's */
     Readint(&no_of_props, "");
-    for (k=0; k<no_of_props; k++) {
+    for (k = 0; k < no_of_props; k++) {
 	j = 0;
 	Readint(&j, "");
 	if (dir[(j-1)/2]->type == 406 &&
@@ -260,7 +260,7 @@ Get_drawing_name(entityno)
     int no_of_assoc;
     int no_of_props;
     int i, j, k;
-    int name_de=0;
+    int name_de = 0;
     char *name;
 
     if (dir[entityno]->param <= pstart) {
@@ -277,22 +277,22 @@ Get_drawing_name(entityno)
     }
 
     Readint(&no_of_views, "");
-    for (i=0; i<no_of_views; i++) {
-	for (j=0; j<3; j++)
+    for (i = 0; i < no_of_views; i++) {
+	for (j = 0; j < 3; j++)
 	    Skip_field();
     }
 
     Readint(&no_of_annot, "");
-    for (i=0; i<no_of_annot; i++)
+    for (i = 0; i < no_of_annot; i++)
 	Skip_field();
     /* skip over the associativities */
     Readint(&no_of_assoc, "");
-    for (k=0; k<no_of_assoc; k++)
+    for (k = 0; k < no_of_assoc; k++)
 	Readint(&j, "");
 
     /* get property entity DE's */
     Readint(&no_of_props, "");
-    for (k=0; k<no_of_props; k++) {
+    for (k = 0; k < no_of_props; k++) {
 	j = 0;
 	Readint(&j, "");
 	if (dir[(j-1)/2]->type == 406 &&
@@ -334,9 +334,9 @@ Get_csg_name(entityno)
     int i, j, k;
     int num;
     int skip;
-    int no_of_assoc=0;
-    int no_of_props=0;
-    int name_de=0;
+    int no_of_assoc = 0;
+    int no_of_props = 0;
+    int name_de = 0;
     char *name;
 
     if (dir[entityno]->param <= pstart) {
@@ -357,17 +357,17 @@ Get_csg_name(entityno)
 	return;
     }
 
-    for (i=0; i<skip; i++)
+    for (i = 0; i < skip; i++)
 	Skip_field();
 
     /* skip over the associativities */
     Readint(&no_of_assoc, "");
-    for (k=0; k<no_of_assoc; k++)
+    for (k = 0; k < no_of_assoc; k++)
 	Readint(&j, "");
 
     /* get property entity DE's */
     Readint(&no_of_props, "");
-    for (k=0; k<no_of_props; k++) {
+    for (k = 0; k < no_of_props; k++) {
 	j = 0;
 	Readint(&j, "");
 	if (dir[(j-1)/2]->type == 406 &&
@@ -409,9 +409,9 @@ Get_brep_name(entityno)
     int i, j, k;
     int num;
     int skip;
-    int no_of_assoc=0;
-    int no_of_props=0;
-    int name_de=0;
+    int no_of_assoc = 0;
+    int no_of_props = 0;
+    int name_de = 0;
     char *name;
 
     if (dir[entityno]->param <= pstart) {
@@ -431,17 +431,17 @@ Get_brep_name(entityno)
     Readint(&num, "");
     skip = 2*num;
 
-    for (i=0; i<skip; i++)
+    for (i = 0; i < skip; i++)
 	Skip_field();
 
     /* skip over the associativities */
     Readint(&no_of_assoc, "");
-    for (k=0; k<no_of_assoc; k++)
+    for (k = 0; k < no_of_assoc; k++)
 	Readint(&j, "");
 
     /* get property entity DE's */
     Readint(&no_of_props, "");
-    for (k=0; k<no_of_props; k++) {
+    for (k = 0; k < no_of_props; k++) {
 	j = 0;
 	Readint(&j, "");
 	if (dir[(j-1)/2]->type == 406 &&
@@ -518,7 +518,7 @@ Check_names()
     int i;
 
     bu_log("Looking for Name Entities...\n");
-    for (i=0; i < totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	switch (dir[i]->type) {
 	    case 152:
 		Get_name(i, 13);
@@ -570,7 +570,7 @@ Check_names()
 
     bu_log("Assigning names to entities without names...\n");
 
-    for (i=0; i < totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	char tmp_name[NAMESIZE+1];
 
 	if (dir[i]->name == (char *)NULL) {

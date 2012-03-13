@@ -30,8 +30,8 @@
 
 
 /* translations to get knot vectors in first quadrant */
-static fastf_t u_translation=0.0;
-static fastf_t v_translation=0.0;
+static fastf_t u_translation = 0.0;
+static fastf_t v_translation = 0.0;
 
 #define UV_TOL 1.0e-6
 
@@ -78,13 +78,13 @@ Get_nurb_surf(entityno, m)
 	return (struct face_g_snurb *)NULL;
     }
     Readint(&i, "");
-    n_cols = i+1;
+    n_cols = i + 1;
     Readint(&i, "");
-    n_rows = i+1;
+    n_rows = i + 1;
     Readint(&i, "");
-    u_order = i+1;
+    u_order = i + 1;
     Readint (&i, "");
-    v_order = i+1;
+    v_order = i + 1;
     Readint(&i, "");
     Readint(&i, "");
     Readint(&i, "");
@@ -130,11 +130,11 @@ Get_nurb_surf(entityno, m)
     NMG_CK_FACE_G_SNURB(srf);
 
     /* Read knot vectors */
-    for (i=0; i<n_u; i++) {
+    for (i = 0; i < n_u; i++) {
 	Readdbl(&a, "");
 	srf->u.knots[i] = a;
     }
-    for (i=0; i<n_v; i++) {
+    for (i = 0; i < n_v; i++) {
 	Readdbl(&a, "");
 	srf->v.knots[i] = a;
     }
@@ -142,27 +142,27 @@ Get_nurb_surf(entityno, m)
     /* Insure that knot values are non-negative */
     if (srf->v.knots[0] < 0.0) {
 	v_translation = (-srf->v.knots[0]);
-	for (i=0; i<n_v; i++)
+	for (i = 0; i < n_v; i++)
 	    srf->v.knots[i] += v_translation;
     } else
 	v_translation = 0.0;
 
     if (srf->u.knots[0] < 0.0) {
 	u_translation = (-srf->u.knots[0]);
-	for (i=0; i<n_u; i++)
+	for (i = 0; i < n_u; i++)
 	    srf->u.knots[i] += u_translation;
     } else
 	u_translation = 0.0;
 
     /* Read weights */
-    for (i=0; i<n_cols*n_rows; i++) {
+    for (i = 0; i < n_cols*n_rows; i++) {
 	Readdbl(&a, "");
 	if (rational)
 	    srf->ctl_points[i*ncoords + 3] = a;
     }
 
     /* Read control points */
-    for (i=0; i<n_cols*n_rows; i++) {
+    for (i = 0; i < n_cols*n_rows; i++) {
 	Readcnv(&a, "");
 	if (rational)
 	    pt[X] = a*srf->ctl_points[i*ncoords+3];
@@ -210,13 +210,13 @@ Assign_cnurb_to_eu(eu, crv)
     ctl_points = (fastf_t *)bu_calloc(ncoords*crv->c_size, sizeof(fastf_t),
 				      "Assign_cnurb_to_eu: ctl_points");
 
-    for (i=0; i<crv->c_size; i++)
+    for (i = 0; i < crv->c_size; i++)
 	VMOVEN(&ctl_points[i*ncoords], &crv->ctl_points[i*ncoords], ncoords)
 
 	    knots = (fastf_t *)bu_calloc(crv->k.k_size, sizeof(fastf_t),
 					 "Assign_cnurb_to_eu: knots");
 
-    for (i=0; i<crv->k.k_size; i++)
+    for (i = 0; i < crv->k.k_size; i++)
 	knots[i] = crv->k.knots[i];
 
     nmg_edge_g_cnurb(eu, crv->order, crv->k.k_size, knots, crv->c_size,
@@ -256,7 +256,7 @@ Get_cnurb(entity_no)
     }
 
     Readint(&i, "");
-    num_pts = i+1;
+    num_pts = i + 1;
     Readint(&degree, "");
 
     /* properties */
@@ -276,20 +276,20 @@ Get_cnurb(entity_no)
 
     crv = rt_nurb_new_cnurb(degree+1, num_pts+degree+1, num_pts, pt_type);
     /* knot vector */
-    for (i=0; i<num_pts+degree+1; i++) {
+    for (i = 0; i < num_pts+degree+1; i++) {
 	Readdbl(&a, "");
 	crv->k.knots[i] = a;
     }
 
     /* weights */
-    for (i=0; i<num_pts; i++) {
+    for (i = 0; i < num_pts; i++) {
 	Readdbl(&a, "");
 	if (rational)
 	    crv->ctl_points[i*ncoords+2] = a;
     }
 
     /* control points */
-    for (i=0; i<num_pts; i++) {
+    for (i = 0; i < num_pts; i++) {
 	if (dir[entity_no]->status & 500) {
 	    Readdbl(&x, "");
 	    Readdbl(&y, "");
@@ -326,7 +326,7 @@ Assign_vu_geom(vu, u, v, srf)
     point_t uvw;
     hpoint_t pt_on_srf;
     struct vertexuse *vu1;
-    int moved=0;
+    int moved = 0;
 
     NMG_CK_VERTEXUSE(vu);
     NMG_CK_SNURB(srf);
@@ -412,10 +412,10 @@ Add_trim_curve(entity_no, lu, srf)
 	    curve_list = (int *)bu_calloc(curve_count, sizeof(int),
 					  "Add_trim_curve: curve_list");
 
-	    for (i=0; i<curve_count; i++)
+	    for (i = 0; i < curve_count; i++)
 		Readint(&curve_list[i], "");
 
-	    for (i=0; i<curve_count; i++)
+	    for (i = 0; i < curve_count; i++)
 		Add_trim_curve((curve_list[i]-1)/2, lu, srf);
 
 	    bu_free((char *)curve_list, "Add_trim_curve: curve_list");
@@ -476,7 +476,7 @@ Add_trim_curve(entity_no, lu, srf)
 		crv = rt_arc2d_to_cnurb(center, start, end, RT_NURB_PT_UV, &tol);
 
 	    /* apply transformation to control points */
-	    for (i=0; i<crv->c_size; i++) {
+	    for (i = 0; i < crv->c_size; i++) {
 		V2MOVE(pt2, &crv->ctl_points[i*3])
 		    pt2[Z] = z;
 		MAT4X3PNT(pt, *dir[entity_no]->rot, pt2)
@@ -584,10 +584,10 @@ Make_trim_loop(entity_no, orientation, srf, fu)
 	    curve_list = (int *)bu_calloc(curve_count, sizeof(int),
 					  "Make_trim_loop: curve_list");
 
-	    for (i=0; i<curve_count; i++)
+	    for (i = 0; i < curve_count; i++)
 		Readint(&curve_list[i], "");
 
-	    for (i=0; i<curve_count; i++)
+	    for (i = 0; i < curve_count; i++)
 		Add_trim_curve((curve_list[i]-1)/2, lu, srf);
 
 	    bu_free((char *)curve_list, "Make_trim_loop: curve_list");
@@ -784,12 +784,12 @@ Make_default_loop(srf, fu)
     struct edgeuse *eu;
     struct vertexuse *vu;
     fastf_t *knots;
-    fastf_t u=0, v=0;
+    fastf_t u = 0, v = 0;
     fastf_t *ctl_points;
-    int edge_no=0;
+    int edge_no = 0;
     int pt_type;
     int ncoords;
-    int planar=0;
+    int planar = 0;
     int i;
 
     NMG_CK_FACEUSE(fu);
@@ -804,13 +804,13 @@ Make_default_loop(srf, fu)
     lu = nmg_mlv(&fu->l.magic, (struct vertex *)NULL, OT_SAME);
     vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
     eu = nmg_meonvu(vu);
-    for (i=0; i<3; i++)
+    for (i = 0; i < 3; i++)
 	(void)nmg_eusplit((struct vertex *)NULL, eu, 0);
 
 
     /* assign vertex geometry */
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	int u_index=0, v_index=0;
+	int u_index = 0, v_index = 0;
 
 	NMG_CK_EDGEUSE(eu);
 	vu = eu->vu_p;
@@ -935,7 +935,7 @@ trim_surf(entityno, s)
     int entity_type;
     int surf_de;
     int has_outer_boundary, inner_loop_count, outer_loop;
-    int *inner_loop=NULL;
+    int *inner_loop = NULL;
     int i;
     int lu_uv_orient;
 
@@ -968,11 +968,11 @@ trim_surf(entityno, s)
     Readint(&outer_loop, "");
     if (inner_loop_count) {
 	inner_loop = (int *)bu_calloc(inner_loop_count, sizeof(int), "trim_surf: innerloop");
-	for (i=0; i<inner_loop_count; i++)
+	for (i = 0; i < inner_loop_count; i++)
 	    Readint(&inner_loop[i], "");
     }
 
-    if ((srf=Get_nurb_surf((surf_de-1)/2, m)) == (struct face_g_snurb *)NULL) {
+    if ((srf = Get_nurb_surf((surf_de-1)/2, m)) == (struct face_g_snurb *)NULL) {
 	if (inner_loop_count)
 	    bu_free((char *)inner_loop, "trim_surf: inner_loop");
 	return (struct faceuse *)NULL;
@@ -982,7 +982,7 @@ trim_surf(entityno, s)
      * because loop routines insist that face and face geometry
      * must already be assigned
      */
-    for (i=0; i<3; i++)
+    for (i = 0; i < 3; i++)
 	verts[i] = (struct vertex *)NULL;
 
     if (bu_debug & BU_DEBUG_MEM_CHECK) {
@@ -1038,7 +1038,7 @@ trim_surf(entityno, s)
 	nmg_set_lu_orientation(lu, 0);
     }
 
-    for (i=0; i<inner_loop_count; i++) {
+    for (i = 0; i < inner_loop_count; i++) {
 	lu = Make_loop((inner_loop[i]-1)/2, OT_OPPOSITE, surf_de, srf, fu);
 
 	/* These loops must all be OT_OPPOSITE */
@@ -1221,8 +1221,8 @@ adjust_flips(hit_list, ray_dir)
     vect_t ray_dir;
 {
     struct snurb_hit *hit;
-    int enter=0;
-    fastf_t prev_dist=(-MAX_FASTF);
+    int enter = 0;
+    fastf_t prev_dist = (-MAX_FASTF);
 
     for (BU_LIST_FOR(hit, snurb_hit, hit_list)) {
 	fastf_t dot;
@@ -1287,7 +1287,7 @@ Find_uv_in_fu(u_in, v_in, fu)
     }
 
     /* no luck, try a few points along the diagonals of the UV plane */
-    for (i=0; i<10; i++) {
+    for (i = 0; i < 10; i++) {
 	u = umin + (umax - umin)*(double)(i + 1)/11.0;
 	v = vmin + (vmax - vmin)*(double)(i + 1)/11.0;
 
@@ -1299,7 +1299,7 @@ Find_uv_in_fu(u_in, v_in, fu)
     }
 
     /* try other diagonal */
-    for (i=0; i<10; i++) {
+    for (i = 0; i < 10; i++) {
 	u = umin + (umax - umin)*(double)(i + 1)/11.0;
 	v = vmax - (vmax - vmin)*(double)(i + 1)/11.0;
 
@@ -1393,7 +1393,7 @@ void
 Convtrimsurfs()
 {
 
-    int i, convsurf=0, totsurfs=0;
+    int i, convsurf = 0, totsurfs = 0;
     struct model *m;
     struct nmgregion *r;
     struct shell *s;
@@ -1409,7 +1409,7 @@ Convtrimsurfs()
     r = nmg_mrsv(m);
     s = BU_LIST_FIRST(shell, &r->s_hd);
 
-    for (i=0; i<totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	if (dir[i]->type == 144) {
 	    if (RT_G_DEBUG & DEBUG_MEM_FULL)
 		bu_mem_barriercheck();

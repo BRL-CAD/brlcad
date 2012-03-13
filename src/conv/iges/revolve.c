@@ -329,7 +329,7 @@ revolve(int entityno)
 	    VJOIN1(pts[1], pts[0], (-2.0*rmax), startdir);
 	    VJOIN1(pts[2], pts[1], rmax, pdir);
 	    VJOIN1(pts[3], pts[0], rmax, pdir);
-	    for (i=0; i<4; i++) {
+	    for (i = 0; i < 4; i++) {
 		VJOIN1(pts[i+4], pts[i], (hmax-hmin), adir);
 	    }
 	}
@@ -356,7 +356,7 @@ revolve(int entityno)
 	    VJOIN1(pts[2], pts[0], len, enddir);
 
 	    /* Calculate top vertices */
-	    for (i=0; i<4; i++) {
+	    for (i = 0; i < 4; i++) {
 		VJOIN1(pts[i+4], pts[i], (hmax-hmin), adir);
 	    }
 	}

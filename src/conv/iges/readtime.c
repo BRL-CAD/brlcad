@@ -43,7 +43,7 @@
 void
 Readtime(char *id)
 {
-    int i=(-1), length=0, lencard, done=0, year;
+    int i = (-1), length = 0, lencard, done = 0, year;
     char num[80];
     char year_str[5];
 
@@ -81,7 +81,7 @@ Readtime(char *id)
 	bu_log("\tlength of string=%s (should be 13 or 15)\n", num);
     }
 
-    for (i=0; i<length; i++) {
+    for (i = 0; i < length; i++) {
 	if (counter > lencard)
 	    Readrec(++currec);
 	num[i] = card[counter++];

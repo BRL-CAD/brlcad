@@ -36,7 +36,7 @@
 void
 Readname(char **ptr, char *id)
 {
-    int i=(-1), length=0, done=0, lencard;
+    int i = (-1), length = 0, done = 0, lencard;
     char num[80], *ch;
 
 
@@ -74,7 +74,7 @@ Readname(char **ptr, char *id)
     length = atoi(num);
     *ptr = (char *)bu_malloc((length + 1)*sizeof(char), "Readname: name");
     ch = *ptr;
-    for (i=0; i<length; i++) {
+    for (i = 0; i < length; i++) {
 	if (counter > lencard)
 	    Readrec(++currec);
 	ch[i] = card[counter++];

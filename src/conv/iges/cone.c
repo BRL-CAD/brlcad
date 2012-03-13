@@ -24,11 +24,11 @@
 int
 cone(int entityno)
 {
-    fastf_t rad1=0.0;
+    fastf_t rad1 = 0.0;
     fastf_t rad2;
     point_t base;		/* center point of base */
     vect_t hdir;		/* direction in which to grow height */
-    fastf_t scale_height=0.0;
+    fastf_t scale_height = 0.0;
     fastf_t x_1;
     fastf_t y_1;
     fastf_t z_1;

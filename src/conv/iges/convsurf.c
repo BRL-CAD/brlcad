@@ -33,21 +33,21 @@ void
 Convsurfs()
 {
 
-    int i, totsurfs=0, convsurf=0;
+    int i, totsurfs = 0, convsurf = 0;
     struct face_g_snurb **surfs;
     struct face_g_snurb *srf;
 
     bu_log("\n\nConverting NURB entities:\n");
 
     /* First count the number of surfaces */
-    for (i=0; i<totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	if (dir[i]->type == 128)
 	    totsurfs ++;
     }
 
     surfs = (struct face_g_snurb **)bu_calloc(totsurfs+1, sizeof(struct face_g_snurb *), "surfs");
 
-    for (i=0; i<totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	if (dir[i]->type == 128) {
 	    if (spline(i, &srf))
 		surfs[convsurf++] = srf;
