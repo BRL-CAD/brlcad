@@ -13,31 +13,23 @@ add_executable(lemon lemon.c)
 set(lempar_cp_outputs)
 
 if(NOT CMAKE_CONFIGURATION_TYPES)
-  if(NOT UTILITY_RUNTIME_OUTPUT_DIRECTORY)
-    get_target_property(UTILITY_RUNTIME_OUTPUT_DIRECTORY lemon RUNTIME_OUTPUT_DIRECTORY)
-  endif(NOT UTILITY_RUNTIME_OUTPUT_DIRECTORY)
+  get_target_property(LEMPAR_DIR lemon RUNTIME_OUTPUT_DIRECTORY)
   add_custom_command(
-    OUTPUT ${UTILITY_RUNTIME_OUTPUT_DIRECTORY}/lempar.c
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lempar.c ${UTILITY_RUNTIME_OUTPUT_DIRECTORY}/lempar.c
+    OUTPUT ${LEMPAR_DIR}/lempar.c
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lempar.c ${LEMPAR_DIR}/lempar.c
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/lempar.c
     )
-  add_custom_target(lempar_cp ALL DEPENDS ${UTILITY_RUNTIME_OUTPUT_DIRECTORY}/lempar.c)
+  add_custom_target(lempar_cp ALL DEPENDS ${LEMPAR_DIR}/lempar.c)
 else(NOT CMAKE_CONFIGURATION_TYPES)
   foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    if(NOT UTILITY_RUNTIME_OUTPUT_DIRECTORY)
-      get_target_property(UTILITY_RUNTIME_OUTPUT_DIRECTORY lemon RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER})
-      set(reset_util 1)
-    endif(NOT UTILITY_RUNTIME_OUTPUT_DIRECTORY)
+    get_target_property(LEMPAR_DIR lemon RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER})
     add_custom_command(
-      OUTPUT ${UTILITY_RUNTIME_OUTPUT_DIRECTORY}/lempar.c
-      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lempar.c ${UTILITY_RUNTIME_OUTPUT_DIRECTORY}/lempar.c
+      OUTPUT ${LEMPAR_DIR}/lempar.c
+      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lempar.c ${LEMPAR_DIR}/lempar.c
       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/lempar.c
       )
-    set(lempar_cp_outputs ${lempar_cp_outputs} ${UTILITY_RUNTIME_OUTPUT_DIRECTORY}/lempar.c)
-    if(reset_util)
-      set(UTILITY_RUNTIME_OUTPUT_DIRECTORY)
-    endif(reset_util)
+    set(lempar_cp_outputs ${lempar_cp_outputs} ${LEMPAR_DIR}/lempar.c)
   endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   add_custom_target(lempar_cp ALL DEPENDS ${lempar_cp_outputs})
 endif(NOT CMAKE_CONFIGURATION_TYPES)

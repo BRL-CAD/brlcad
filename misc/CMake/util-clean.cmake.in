@@ -1,4 +1,4 @@
-file(GLOB ALL_FILES "@UTILITY_RUNTIME_OUTPUT_DIRECTORY@/*")
+file(GLOB ALL_FILES "@CURRENT_CFG_DIR@/*")
 
 foreach(utilfile ${ALL_FILES})
   if(NOT "${utilfile}" MATCHES "rule$")

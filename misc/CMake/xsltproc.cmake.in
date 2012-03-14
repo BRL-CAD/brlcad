@@ -1,8 +1,24 @@
+if(NOT "@CURRENT_CFG_DIR@" STREQUAL "")
+if(EXISTS "@CURRENT_CFG_DIR@")
+  file(GLOB ALL_FILES "@CURRENT_CFG_DIR@/*")
+  foreach(cfgfile ${ALL_FILES})
+    if(NOT "${cfgfile}" MATCHES "rule$")
+      get_filename_component(CMAKE_CURRENT_CFG "${cfgfile}" NAME)
+    endif(NOT "${cfgfile}" MATCHES "rule$")
+  endforeach(cfgfile ${ALL_FILES})
+endif(EXISTS "@CURRENT_CFG_DIR@")
+endif(NOT "@CURRENT_CFG_DIR@" STREQUAL "")
+
+message("HAVE_CONFIG: ${CMAKE_CURRENT_CFG}")
+set(XSLTPROC_EXECUTABLE "@XSLTPROC_EXECUTABLE@")
+string(REPLACE "@CMAKE_CFG_INTDIR@" "${CMAKE_CURRENT_CFG}" XSLTPROC_EXECUTABLE "${XSLTPROC_EXECUTABLE}")
+message("xsltproc: ${XSLTPROC_EXECUTABLE}")
+
 set(ENV{XML_DEBUG_CATALOG} 1)
 # It is necessary to ensure that the target directory exists *before* calling xsltproc
 # when building in parallel, due to a bug/limitation in xsltproc
 execute_process(COMMAND "@CMAKE_COMMAND@" -E make_directory @mk_out_dir@/)
-execute_process(COMMAND "@XSLTPROC_EXECUTABLE@" -nonet -xinclude -o @outfile@ @CURRENT_XSL_STYLESHEET@ @CMAKE_CURRENT_SOURCE_DIR@/@filename@ RESULT_VARIABLE CMDRESULT)
+execute_process(COMMAND "${XSLTPROC_EXECUTABLE}" -nonet -xinclude -o @outfile@ @CURRENT_XSL_STYLESHEET@ @CMAKE_CURRENT_SOURCE_DIR@/@filename@ RESULT_VARIABLE CMDRESULT)
 if(CMDRESULT)
   message(FATAL_ERROR "xsltproc build failure: ${CMDRESULT}")
 endif(CMDRESULT)
