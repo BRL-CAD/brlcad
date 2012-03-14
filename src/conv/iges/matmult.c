@@ -24,6 +24,24 @@
 
 #include "vmath.h"
 
+/*
+ * FIXME: candidate for refactoring--see src/libbn/mat.c for a substitute
+ *
+ * Used in:
+ *
+ *   convassem.c
+ *   convinst.c
+ *   evalxform.c
+ *   getcurve.c
+ *
+ * Declared in:
+ *
+ *   iges_struct.h
+ *
+ */
+
+#if !defined(USE_BN_MULT_)
+/* a X b => o */
 void Matmult(mat_t a, mat_t b, mat_t c)
 {
     mat_t tmp;
@@ -42,6 +60,7 @@ void Matmult(mat_t a, mat_t b, mat_t c)
 	    c[i*4+j] = tmp[i*4+j];
     }
 }
+#endif /* #if !defined(USE_BN_MULT_) */
 
 
 /*

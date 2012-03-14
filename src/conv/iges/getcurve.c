@@ -641,7 +641,13 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		    MAT_DELTAS(rot1, xc, yc, 0.0);
 		    rot1[1] = (-rot1[1]);
 		    rot1[4] = (-rot1[4]);
+#if defined(USE_BN_MULT_)
+                    /* o <= a X b */
+                    bn_mat_mul(rot2, *(dir[curve]->rot), rot1);
+#else
+                    /* a X b => o */
 		    Matmult(*(dir[curve]->rot), rot1, rot2);
+#endif
 
 		    /* calculate start point */
 		    (*curv_pts) = (struct ptlist *)bu_malloc(sizeof(struct ptlist),

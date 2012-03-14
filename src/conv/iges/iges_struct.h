@@ -292,7 +292,15 @@ extern int Getcurve(int curve, struct ptlist **curv_pts);
 extern void Orient_loops(struct nmgregion *r);
 extern int spline(int entityno, struct face_g_snurb **b_patch);
 extern void Freeknots();
+
+/* temp defs while working on replacing local function Matmult with libbn functions */
+/* #define USE_BN_MULT_ */
+#if defined(USE_BN_MULT_)
+#include "bn.h"
+#else
 extern void Matmult(mat_t a, mat_t b, mat_t c);
+#endif
+
 extern int Extrudcon(int entityno, int curve, vect_t evect);
 extern int Extrudcirc(int entityno, int curve, vect_t evect);
 extern void Read_att(int att_de, struct brlcad_att *att);

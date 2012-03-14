@@ -154,8 +154,15 @@ Convassem()
 		ptr->rot[j] = (*dir[ptr->item]->rot)[j];
 
 	    /* Apply any matrix indicated for this group member */
-	    if (ptr->matrix > (-1))
+	    if (ptr->matrix > (-1)) {
+#if defined(USE_BN_MULT_)
+                /* a <= a X b */
+		bn_mat_mul2(ptr->rot, *(dir[ptr->matrix]->rot));
+#else
+                /* a X b => o */
 		Matmult(ptr->rot, *(dir[ptr->matrix]->rot), ptr->rot);
+#endif
+            }
 
 	    wmem = mk_addmember(ptr->name, &head.l, NULL, operator[Union]);
 	    flt = (fastf_t *)ptr->rot;

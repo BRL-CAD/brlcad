@@ -128,8 +128,14 @@ Convinst()
 		   these matrices need to be combined */
 
 		rot = (mat_t *)bu_malloc(sizeof(mat_t), "Convinst: rot");
+#if defined(USE_BN_MULT_)
+                /* o <= a X b */
+                bn_mat_mul(*rot, *(dir[i]->rot), *(dir[pointer]->rot));
+#else
+                /* a X b => o */
 		Matmult(*(dir[i]->rot), *(dir[pointer]->rot), *rot);
-		dir[i]->rot = rot;
+#endif
+                dir[i]->rot = rot;
 	    }
 	}
 	conv++;
