@@ -85,6 +85,26 @@ else(CMAKE_CONFIGURATION_TYPES)
   set(bin_root "${CMAKE_BINARY_DIR}")
 endif(CMAKE_CONFIGURATION_TYPES)
 
+# Handle script generation in both single and multi configuration setups.  While we're at
+# it, this is a good place to make sure all the directories we'll be needing exist
+# (xsltproc needs the directory to already exist when multiple docs are building in
+# parallel.)
+macro(DB_SCRIPT targetname targetdir executable)
+  if(NOT CMAKE_CONFIGURATION_TYPES)
+    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
+    set(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake)
+    configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/${executable}.cmake.in ${scriptfile} @ONLY)
+  else(NOT CMAKE_CONFIGURATION_TYPES)
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE})
+      file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${CFG_TYPE}/${DATA_DIR}/${targetdir})
+      set(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/${targetname}.cmake)
+      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/${executable}.cmake.in ${scriptfile} @ONLY)
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    set(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${targetname}.cmake)
+  endif(NOT CMAKE_CONFIGURATION_TYPES)
+endmacro(DB_SCRIPT) 
+
 # Macro to define individual validation build targets and generate the script files 
 # used to run the validation step during build
 macro(DB_VALIDATE_TARGET targetname filename_root)
@@ -94,8 +114,7 @@ macro(DB_VALIDATE_TARGET targetname filename_root)
   get_filename_component(path1 ${CMAKE_CURRENT_SOURCE_DIR} PATH)
   get_filename_component(root2 ${path1} NAME)
   set(validate_target ${root2}_${root1}_${filename_root}_validate)
-  set(db_scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}_validate.cmake)
-  set(db_outfile ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.valid)
+  set(db_outfile ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${filename_root}.valid)
   # If we're already set up, no need to do it twice (CMake doesn't like it anyway)
   # Handle this by getting a TARGET_NAME property on the target that we set when 
   # creating the target. If the target doesn't exist yet, the get returns NOTFOUND
@@ -103,10 +122,10 @@ macro(DB_VALIDATE_TARGET targetname filename_root)
   # file has handled - skip it.
   get_target_property(tarprop ${validate_target} TARGET_NAME)
   if("${tarprop}" MATCHES "NOTFOUND")
-    configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/${VALIDATE_EXECUTABLE}.cmake.in ${db_scriptfile} @ONLY)
+    DB_SCRIPT("${validate_target}" "${VALIDATE_EXECUTABLE}")
     add_custom_command(
       OUTPUT ${db_outfile}
-      COMMAND ${CMAKE_COMMAND} -P ${db_scriptfile}
+      COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XMLLINT_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES}
       COMMENT "Validating DocBook source with ${VALIDATE_EXECUTABLE}:"
       )
@@ -118,14 +137,12 @@ endmacro(DB_VALIDATE_TARGET)
 # HTML output, the format used by BRL-CAD's graphical help systems
 macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
   if(BRLCAD_EXTRADOCS_HTML)
-    set(mk_out_dir ${bin_root}/${DATA_DIR}/${targetdir})
     foreach(filename ${${xml_files}})
       string(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
       set(outfile ${bin_root}/${DATA_DIR}/${targetdir}/${filename_root}.html)
       set(targetname ${filename_root}_${targetname_suffix}_html)
-      set(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake)
       set(CURRENT_XSL_STYLESHEET ${XSL_XHTML_STYLESHEET})
-      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/${XSLT_EXECUTABLE}.cmake.in ${scriptfile} @ONLY)
+      DB_SCRIPT("${targetname}" "${targetdir}" "${XSLT_EXECUTABLE}")
       if(BRLCAD_EXTRADOCS_VALIDATE)
 	DB_VALIDATE_TARGET(${targetname} ${filename_root})
 	add_custom_command(
@@ -153,14 +170,12 @@ endmacro(DOCBOOK_TO_HTML targetname_suffix srcfile outfile targetdir deps_list)
 # This macro produces Unix-syle manual or "man" pages
 macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir deps_list)
   if(BRLCAD_EXTRADOCS_MAN)
-    set(mk_out_dir ${bin_root}/${DATA_DIR}/${targetdir})
     foreach(filename ${${xml_files}})
       string(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
       set(outfile ${bin_root}/${DATA_DIR}/${targetdir}/${filename_root}.${manext})
       set(targetname ${filename_root}_${targetname_suffix}_man)
-      set(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake)
       set(CURRENT_XSL_STYLESHEET ${XSL_MAN_STYLESHEET})
-      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/${XSLT_EXECUTABLE}.cmake.in ${scriptfile} @ONLY)
+      DB_SCRIPT("${targetname}" "${targetdir}" "${XSLT_EXECUTABLE}")
       if(BRLCAD_EXTRADOCS_VALIDATE)
 	DB_VALIDATE_TARGET(${targetname} ${filename_root})
 	add_custom_command(
@@ -189,43 +204,42 @@ endmacro(DOCBOOK_TO_MAN targetname_suffix srcfile outfile targetdir deps_list)
 # converted to an "FO" file, and the FO file is in turn translated to PDF.
 macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir deps_list)
   if(BRLCAD_EXTRADOCS_PDF)
-    set(mk_out_dir ${bin_root}/${DATA_DIR}/${targetdir})
     foreach(filename ${${xml_files}})
       string(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
-      set(targetname ${filename_root}_${targetname_suffix}_pdf)
-		if(CMAKE_CONFIGURATION_TYPES)
-		  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR})
-		  set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${filename_root}.fo)
-		else(CMAKE_CONFIGURATION_TYPES)
+      set(targetname ${filename_root}_${targetname_suffix}_fo)
+      if(CMAKE_CONFIGURATION_TYPES)
+	file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR})
+	set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${filename_root}.fo)
+      else(CMAKE_CONFIGURATION_TYPES)
         set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.fo)
-		endif(CMAKE_CONFIGURATION_TYPES)
-      set(scriptfile1 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_fo.cmake)
+      endif(CMAKE_CONFIGURATION_TYPES)
+      set(fo_outfile ${outfile})
       set(CURRENT_XSL_STYLESHEET ${XSL_FO_STYLESHEET})
-      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/${XSLT_EXECUTABLE}.cmake.in ${scriptfile1} @ONLY)
+      DB_SCRIPT("${targetname}" "${targetdir}" "${XSLT_EXECUTABLE}")
       if(BRLCAD_EXTRADOCS_VALIDATE)
 	DB_VALIDATE_TARGET(${targetname} ${filename_root})
 	add_custom_command(
 	  OUTPUT ${outfile}
-	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile1}
+	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
 	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_FO_STYLESHEET} ${deps_list}
 	  )
       else(BRLCAD_EXTRADOCS_VALIDATE)
 	add_custom_command(
 	  OUTPUT ${outfile}
-	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile1}
+	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
 	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_FO_STYLESHEET} ${deps_list}
 	  )
       endif(BRLCAD_EXTRADOCS_VALIDATE)
-      set(pdf_outfile ${bin_root}/${DATA_DIR}/${targetdir}/${filename_root}.pdf)
-      set(scriptfile2 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_pdf.cmake)
-      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/${PDF_CONV_EXECUTABLE}.cmake.in ${scriptfile2} @ONLY)
+      set(targetname ${filename_root}_${targetname_suffix}_pdf)
+      set(outfile ${bin_root}/${DATA_DIR}/${targetdir}/${filename_root}.pdf)
+      DB_SCRIPT("${targetname}_pdf" "${targetdir}" "${PDF_CONV_EXECUTABLE}")
       add_custom_command(
-	OUTPUT ${pdf_outfile}
-	COMMAND ${CMAKE_COMMAND} -P ${scriptfile2}
-	DEPENDS ${outfile} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
+	OUTPUT ${outfile}
+	COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
+	DEPENDS ${fo_outfile} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
 	)
-      add_custom_target(${targetname} ALL DEPENDS ${pdf_outfile})
-      install(FILES ${pdf_outfile} DESTINATION ${DATA_DIR}/${targetdir})
+      add_custom_target(${targetname} ALL DEPENDS ${outfile})
+      install(FILES ${outfile} DESTINATION ${DATA_DIR}/${targetdir})
       get_property(BRLCAD_EXTRADOCS_PDF_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS)
       set(BRLCAD_EXTRADOCS_PDF_TARGETS ${BRLCAD_EXTRADOCS_PDF_TARGETS} ${targetname})
       set_property(GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS "${BRLCAD_EXTRADOCS_PDF_TARGETS}") 

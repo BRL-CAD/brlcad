@@ -104,44 +104,40 @@ set(TUTORIAL_COVER_XSL ${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-Volum
 configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/tutorial-template.xsl.in
   ${CMAKE_CURRENT_BINARY_DIR}/BRL-CAD_Tutorial_Series-VolumeIV.xsl @ONLY)
 
+if(CMAKE_CONFIGURATION_TYPES)
+  set(bin_root "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}")
+else(CMAKE_CONFIGURATION_TYPES)
+  set(bin_root "${CMAKE_BINARY_DIR}")
+endif(CMAKE_CONFIGURATION_TYPES)
 
 if(BRLCAD_EXTRADOCS_PDF)
   set(targetdir pdf/books/en)
-  if(CMAKE_CONFIGURATION_TYPES)
-	 set(mk_out_dir ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${DATA_DIR}/${targetdir})
-  else(CMAKE_CONFIGURATION_TYPES)
-    set(mk_out_dir ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
-  endif(CMAKE_CONFIGURATION_TYPES)
   foreach(filename ${docbook_books_EN})
     string(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
     if(CMAKE_CONFIGURATION_TYPES)
-		set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${filename_root}.fo)
-	 else(CMAKE_CONFIGURATION_TYPES)
+      file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR})
+      set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${filename_root}.fo)
+    else(CMAKE_CONFIGURATION_TYPES)
       set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.fo)
     endif(CMAKE_CONFIGURATION_TYPES)
-    set(targetname ${filename_root}_book_pdf)
-    set(scriptfile1 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_fo.cmake)
+    set(fo_outfile ${outfile})
     set(CURRENT_XSL_STYLESHEET ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.xsl)
-    configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/xsltproc.cmake.in	${scriptfile1} @ONLY)
+    DB_SCRIPT("${filename_root}_book_fo" "${targetdir}" "${XSLT_EXECUTABLE}")
     add_custom_command(
       OUTPUT ${outfile}
-      COMMAND ${CMAKE_COMMAND} -P ${scriptfile1}
+      COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} docbook_books_EN_IMAGES_cp
       )
-    if(CMAKE_CONFIGURATION_TYPES)
-		 set(pdf_outfile ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${DATA_DIR}/${targetdir}/${filename_root}.pdf)
-	 else(CMAKE_CONFIGURATION_TYPES)
-      set(pdf_outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.pdf)
-    endif(CMAKE_CONFIGURATION_TYPES)
-    set(scriptfile2 ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_pdf.cmake)
-    configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/fop.cmake.in ${scriptfile2} @ONLY)
+    set(outfile ${bin_root}/${DATA_DIR}/${targetdir}/${filename_root}.pdf)
+    set(targetname "${filename_root}_book_pdf")
+    DB_SCRIPT("${targetname}" "${targetdir}" "${PDF_CONV_EXECUTABLE}")
     add_custom_command(
-      OUTPUT ${pdf_outfile}
-      COMMAND ${CMAKE_COMMAND} -P ${scriptfile2}
-      DEPENDS ${outfile} ${DOCBOOK_RESOURCE_FILES} docbook_books_EN_IMAGES_cp
+      OUTPUT ${outfile}
+      COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
+      DEPENDS ${fo_outfile} ${DOCBOOK_RESOURCE_FILES} docbook_books_EN_IMAGES_cp
       )
-    add_custom_target(${targetname} ALL DEPENDS ${pdf_outfile})
-    install(FILES ${pdf_outfile} DESTINATION ${DATA_DIR}/pdf/books/en)
+    add_custom_target(${targetname} ALL DEPENDS ${outfile})
+    install(FILES ${outfile} DESTINATION ${DATA_DIR}/pdf/books/en)
     get_property(BRLCAD_EXTRADOCS_PDF_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS)
     set(BRLCAD_EXTRADOCS_PDF_TARGETS ${BRLCAD_EXTRADOCS_PDF_TARGETS} ${targetname})
     set_property(GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS "${BRLCAD_EXTRADOCS_PDF_TARGETS}") 
