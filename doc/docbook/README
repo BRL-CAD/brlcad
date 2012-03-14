@@ -71,9 +71,9 @@ pre-commit hook script.
 CONVERTING MAN FORMAT TO DOCBBOOK
 ---------------------------------
 
-The doclifter program (available in an Ubuntu distribution) can give a
-first-order conversion from the man page format (roff, nroff, triff,
-or groff) to DocBook xml.
+The doclifter program (available in a Debian or Ubuntu distribution)
+can give a first-order conversion from the man page format (roff,
+nroff, troff, or groff) to DocBook xml.
 
 DOCBOOK PROCESSING
 ------------------
