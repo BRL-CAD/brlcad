@@ -25,7 +25,7 @@
 
 #include "bu.h"
 
-
+/* this is for iges-g */
 void
 usage(const char *argv0)
 {
