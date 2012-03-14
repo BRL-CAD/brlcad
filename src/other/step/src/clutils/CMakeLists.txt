@@ -17,11 +17,8 @@ SET(LIBSTEPUTILS_PRIVATE_HDRS
     gennode.h
     gennodelist.h
     scl_char_str_list.h
-    scldir.h
     scl_hash.h
-    stat.h
     Str.h
-    str_list.h
 )
 
 include_directories(

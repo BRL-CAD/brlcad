@@ -1,5 +1,4 @@
 bin_PROGRAMS = \
-	fedex_os \
 	fedex_idl \
 	fedex_plus
 
@@ -10,10 +9,6 @@ AM_CPPFLAGS = \
 
 COMMON = \
 	classes_misc.c
-
-fedex_os_SOURCES = \
-	$(COMMON) \
-	fedex_os.c	
 
 fedex_idl_SOURCES = \
 	$(COMMON) \
@@ -44,7 +39,6 @@ fedex_libs = \
 	${EXPPP} \
 	$(top_builddir)/src/express/fedex.o
 
-fedex_os_LDADD = $(fedex_libs)
 fedex_idl_LDADD = $(fedex_libs)
 fedex_plus_LDADD = $(fedex_libs)
 
@@ -61,6 +55,5 @@ DEPS = \
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
-	$(fedex_os_OBJECTS) \
 	$(fedex_idl_OBJECTS) \
 	$(fedex_plus_OBJECTS)

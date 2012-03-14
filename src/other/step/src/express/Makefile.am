@@ -32,7 +32,6 @@ SRCS = \
 	memory.c \
 	object.c \
 	inithook.c \
-	yyvars.c \
 	express.c \
 	expprint.c
 
@@ -52,10 +51,8 @@ libexpress_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
 libexpress_la_LIBADD = libexpress_nil.la
 
 noinst_HEADERS = \
-	conf.h \
 	exptoks.h \
-	stack.h \
-	y.tok.h
+	stack.h
 
 expparse.h: expparse.y
 express.lo: expparse.h

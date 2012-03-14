@@ -37,14 +37,12 @@ SET(LIBSTEPCORE_PRIVATE_HDRS
     ExpDict.h
     read_func.h
     Registry.h
-    scl_osschema.h
     sdaiApplication_instance.h
     sdaiBinary.h
     sdaiEnum.h
     sdai.h
     sdaiSelect.h
     sdaiString.h
-    Select.h
     SingleLinkList.h
     STEPaggregate.h
     STEPattribute.h

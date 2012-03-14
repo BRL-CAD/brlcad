@@ -29,11 +29,8 @@ noinst_HEADERS = \
 	gennode.h \
 	gennodelist.h \
 	scl_char_str_list.h \
-	scldir.h \
 	scl_hash.h \
-	stat.h \
-	Str.h \
-	str_list.h
+	Str.h
 
 
 EXTRA_DIST = \

@@ -67,7 +67,6 @@ static char rcsid[] = "";
  *
  */
 
-#include "conf.h"
 #include "express/basic.h"
 #include <ctype.h>
 #include <pwd.h>

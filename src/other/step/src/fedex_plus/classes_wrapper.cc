@@ -82,7 +82,6 @@ print_file_header(Express express, FILES* files)
 	fprintf(corbafile,
 	 "// is turned off in the fedex_plus generated file using #ifdef PART26.\n");
 	fprintf(corbafile,"//#include <your-idl-generated-file.hh>\n\n");
-	fprintf(corbafile,"// #include the osdb_SdaiXX.h file that is generated from fedex_os if \n// you plan to use ObjectStore.\n");
 	fprintf(corbafile,"//#include <osdb_SdaiXX-file.h>\n");
 	fclose(corbafile);
     }

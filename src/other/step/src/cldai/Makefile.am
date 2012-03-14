@@ -27,10 +27,6 @@ libstepdai_la_LIBADD = \
 	${LIBSTDCXX}
 
 noinst_HEADERS = \
-	ErrorMap.hh \
-	ErrorRpt.hh \
-	impconv.hh \
-	imptypes.hh \
 	sdaiApplication_instance_set.h \
 	sdaiDaObject.h \
 	sdaiEntity_extent.h \
@@ -38,13 +34,9 @@ noinst_HEADERS = \
 	sdaiModel_contents.h \
 	sdaiModel_contents_list.h \
 	sdaiObject.h \
-	sdaiSession_instance.h \
-	StrUtil.hh
+	sdaiSession_instance.h
 
 EXTRA_DIST = \
-	ErrorMap.cc \
-	ErrorRpt.cc  \
-	StrUtil.cc \
 	CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs

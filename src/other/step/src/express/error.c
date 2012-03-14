@@ -52,7 +52,6 @@ static char rcsid[] = "$Id: error.c,v 1.13 1997/10/23 21:41:44 sauderd Exp $";
  */
 
 #include <stdlib.h>
-#include "conf.h"
 #include <setjmp.h>
 
 #include "signal.h"

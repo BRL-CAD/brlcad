@@ -30,7 +30,6 @@ set(EXPRESS_SOURCES
     memory.c
     object.c
     inithook.c
-    yyvars.c
     express.c
 )
 
@@ -44,7 +43,6 @@ SET(SYMLINK_SOURCES
 )
 
 SET(EXPRESS_PRIVATE_HDRS
-    conf.h
     exptoks.h
     stack.h
 )

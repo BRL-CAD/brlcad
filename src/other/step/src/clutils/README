@@ -41,5 +41,3 @@ a collection of functions implementing hash table operations.
 scl_string.cc, scl_string.h
 Defines SCLstring, a string class similar to the string class proposed
 as part of the C++ language standard.
-
-stat.h

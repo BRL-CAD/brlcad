@@ -3,11 +3,6 @@ set(FEDEX_COMMON_SRCS
     ${SCL_SOURCE_DIR}/src/express/fedex.c
 )
 
-set(fedex_os_SOURCES
-    ${FEDEX_COMMON_SRCS}
-    fedex_os.c
-)
-
 set(fedex_idl_SOURCES
     ${FEDEX_COMMON_SRCS}
     fedex_idl.c
@@ -43,8 +38,6 @@ include_directories(
 add_definitions(
     -DHAVE_CONFIG_H
 )
-
-SCL_ADDEXEC(fedex_os "${fedex_os_SOURCES}" "libexppp express")
 
 SCL_ADDEXEC(fedex_idl "${fedex_idl_SOURCES}" "libexppp express")
 

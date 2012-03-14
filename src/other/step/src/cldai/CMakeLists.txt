@@ -11,10 +11,6 @@ set(LIBSTEPDAI_SRCS
 )
 
 SET(LIBSTEPDAI_PRIVATE_HDRS
-    ErrorMap.hh
-    ErrorRpt.hh
-    impconv.hh
-    imptypes.hh
     sdaiApplication_instance_set.h
     sdaiDaObject.h
     sdaiEntity_extent.h
@@ -23,7 +19,6 @@ SET(LIBSTEPDAI_PRIVATE_HDRS
     sdaiModel_contents_list.h
     sdaiObject.h
     sdaiSession_instance.h
-    StrUtil.hh
 )
 
 include_directories(

@@ -89,8 +89,6 @@
 //#include <InterViews/Std/sys/dir.h>
 //#include <InterViews/Std/sys/stat.h>
 
-#include <scldir.h>
-
 typedef unsigned boolean;
 
 #ifndef nil
