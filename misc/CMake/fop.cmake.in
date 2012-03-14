@@ -1,12 +1,33 @@
+set(mk_out_dir "@mk_out_dir@")
+set(outfile "@outfile@")
+set(pdf_outfile "@pdf_outfile@")
+
+if(NOT "@CURRENT_CFG_DIR@" STREQUAL "")
+  if(EXISTS "@CURRENT_CFG_DIR@")
+    file(GLOB ALL_FILES "@CURRENT_CFG_DIR@/*")
+    foreach(cfgfile ${ALL_FILES})
+      if(NOT "${cfgfile}" MATCHES "rule$")
+	get_filename_component(CMAKE_CURRENT_CFG "${cfgfile}" NAME)
+      endif(NOT "${cfgfile}" MATCHES "rule$")
+    endforeach(cfgfile ${ALL_FILES})
+    string(REPLACE "@CMAKE_CFG_INTDIR@" "${CMAKE_CURRENT_CFG}" mk_out_dir "${mk_out_dir}")
+    string(REPLACE "@CMAKE_CFG_INTDIR@" "${CMAKE_CURRENT_CFG}" outfile "${outfile}")
+    string(REPLACE "@CMAKE_CFG_INTDIR@" "${CMAKE_CURRENT_CFG}" pdf_outfile "${pdf_outfile}")
+  endif(EXISTS "@CURRENT_CFG_DIR@")
+endif(NOT "@CURRENT_CFG_DIR@" STREQUAL "")
+
+get_filename_component(fo_output_dir "${outfile}" PATH)
+execute_process(COMMAND "@CMAKE_COMMAND@" -E make_directory ${fo_output_dir})
+
 # Apache FOP version from parent CMake build system
 set(APACHE_FOP_VERSION @APACHE_FOP_VERSION@)
 
 # fop hyphenation path (fop version >= 1.0)
 # need v2 hphenation
 if(APACHE_FOP_VERSION VERSION_LESS 1.0)
-	#set(FOP_HYPH @CMAKE_BINARY_DIR@/doc/docbook/resources/other/offo-old/binary/fop-hyph.jar)
+  #set(FOP_HYPH @CMAKE_BINARY_DIR@/doc/docbook/resources/other/offo-old/binary/fop-hyph.jar)
 else(APACHE_FOP_VERSION VERSION_LESS 1.0)
-	set(FOP_HYPH @CMAKE_BINARY_DIR@/doc/docbook/resources/other/offo/binary/fop-hyph.jar)
+  set(FOP_HYPH @CMAKE_BINARY_DIR@/doc/docbook/resources/other/offo/binary/fop-hyph.jar)
 endif(APACHE_FOP_VERSION VERSION_LESS 1.0)
 
 # FOP uses environment variables - set them.
@@ -18,13 +39,13 @@ set(ENV{CLASSPATH} @CMAKE_SOURCE_DIR@/doc/docbook)
 set(ENV{FOP_OPTS} "-Djava.awt.headless=true  -Dlog4j.configuration=@CMAKE_SOURCE_DIR@/doc/docbook/log4j.properties")
 
 # Make sure the target directory exists
-execute_process(COMMAND "@CMAKE_COMMAND@" -E make_directory @mk_out_dir@/)
+execute_process(COMMAND "@CMAKE_COMMAND@" -E make_directory ${mk_out_dir})
 
 # Run FOP to actually generate the PDF
-execute_process(COMMAND "@APACHE_FOP@" -c @CMAKE_BINARY_DIR@/doc/docbook/fop.xconf @outfile@ -pdf @pdf_outfile@ RESULT_VARIABLE CMDRESULT)
+execute_process(COMMAND "@APACHE_FOP@" -c @CMAKE_BINARY_DIR@/doc/docbook/fop.xconf ${outfile} -pdf ${pdf_outfile} RESULT_VARIABLE CMDRESULT)
 
 # Fatal error if FOP didn't succeed, so the parent CMake build knows something went wrong and can hault.
 if(CMDRESULT)
-	message(FATAL_ERROR "Apache FOP build failure: ${CMDRESULT}")
+  message(FATAL_ERROR "Apache FOP build failure: ${CMDRESULT}")
 endif(CMDRESULT)
 

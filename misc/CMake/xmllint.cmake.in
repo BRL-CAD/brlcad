@@ -1,5 +1,21 @@
+set(XMLLINT_EXECUTABLE "@XMLLINT_EXECUTABLE@")
+
+if(NOT "@CURRENT_CFG_DIR@" STREQUAL "")
+  if(EXISTS "@CURRENT_CFG_DIR@")
+    file(GLOB ALL_FILES "@CURRENT_CFG_DIR@/*")
+    foreach(cfgfile ${ALL_FILES})
+      if(NOT "${cfgfile}" MATCHES "rule$")
+	get_filename_component(CMAKE_CURRENT_CFG "${cfgfile}" NAME)
+      endif(NOT "${cfgfile}" MATCHES "rule$")
+    endforeach(cfgfile ${ALL_FILES})
+
+    string(REPLACE "@CMAKE_CFG_INTDIR@" "${CMAKE_CURRENT_CFG}" XMLLINT_EXECUTABLE "${XMLLINT_EXECUTABLE}")
+  endif(EXISTS "@CURRENT_CFG_DIR@")
+endif(NOT "@CURRENT_CFG_DIR@" STREQUAL "")
+
+
 execute_process(COMMAND @CMAKE_COMMAND@ -E remove -f @db_outfile@)
-execute_process(COMMAND "@XMLLINT_EXECUTABLE@"  --xinclude --schema @BRLCAD_BINARY_DIR@/doc/docbook/resources/other/docbook-schema/xsd/docbook.xsd --noout --nonet @CMAKE_CURRENT_SOURCE_DIR@/@filename@ RESULT_VARIABLE CMDRESULT)
+execute_process(COMMAND "${XMLLINT_EXECUTABLE}"  --xinclude --schema @BRLCAD_BINARY_DIR@/doc/docbook/resources/other/docbook-schema/xsd/docbook.xsd --noout --nonet @CMAKE_CURRENT_SOURCE_DIR@/@filename@ RESULT_VARIABLE CMDRESULT)
 if(CMDRESULT)
   message(FATAL_ERROR "xmllint failure: ${CMDRESULT}")
 else(CMDRESULT)
