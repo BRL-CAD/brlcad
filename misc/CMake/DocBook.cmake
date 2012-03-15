@@ -95,11 +95,27 @@ macro(DB_SCRIPT targetname targetdir executable)
     set(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake)
     configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/${executable}.cmake.in ${scriptfile} @ONLY)
   else(NOT CMAKE_CONFIGURATION_TYPES)
+    # Multi-configuration is more complex - for each configuration, the
+    # standard variables must reflect the final directory (not the CMAKE_CFG_INTDIR
+    # value used by the build tool) but after generating the config specific
+    # script the values must be restored to the values using CMAKE_CFG_INTDIR
+    # for the generation of flexible build targets.
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE})
       file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${CFG_TYPE}/${DATA_DIR}/${targetdir})
+      # Temporarily store flexible values
+      string(TOUPPER "${executable}" exec_upper)
+      set(outfile_tmp "${outfile}")
+      set(exec_tmp "${${exec_upper}_EXECUTABLE}")
+      # Generate final paths for configure_file
+      string(REPLACE "${CMAKE_CFG_INTDIR}" "${CFG_TYPE}" outfile "${outfile}")
+      string(REPLACE "${CMAKE_CFG_INTDIR}" "${CFG_TYPE}" ${exec_upper}_EXECUTABLE "${${exec_upper}_EXECUTABLE}")
+      string(REPLACE "${CMAKE_CFG_INTDIR}" "${CFG_TYPE}" executable "${executable}")
       set(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/${targetname}.cmake)
       configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/${executable}.cmake.in ${scriptfile} @ONLY)
+      # Restore flexible values
+      set(outfile "${outfile_tmp}")
+      set(${exec_upper}_EXECUTABLE "${exec_tmp}")
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     set(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${targetname}.cmake)
   endif(NOT CMAKE_CONFIGURATION_TYPES)
