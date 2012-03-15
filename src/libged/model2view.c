@@ -32,10 +32,22 @@
 
 #include "./ged_private.h"
 
+/**
+ * M O D E L 2 V I E W
+ * 
+ * Given a point in model space coordinates (in mm) convert it to 
+ * view (screen) coordinates which must be scaled to correspond to
+ * actual screen coordinates. If no input coordinates are supplied,
+ * the model2view matrix is displayed.
+ */
 
 int
 ged_model2view(struct ged *gedp, int argc, const char *argv[])
 {
+    point_t view_pt;
+    point_t model_pt;
+    static const char *usage = "[x y z]";
+
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -49,7 +61,23 @@ ged_model2view(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
+    if (argc != 4) {
+	goto bad;
+    }
+
+    if (sscanf(argv[1], "%lf", &model_pt[X]) != 1 ||
+        sscanf(argv[2], "%lf", &model_pt[Y]) != 1 ||
+        sscanf(argv[3], "%lf", &model_pt[Z]) != 1) {
+	goto bad;
+    }
+
+    MAT4X3PNT(view_pt, gedp->ged_gvp->gv_model2view, model_pt);
+    bn_encode_vect(gedp->ged_result_str, view_pt);
+
+    return GED_OK;
+
+bad:
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 
