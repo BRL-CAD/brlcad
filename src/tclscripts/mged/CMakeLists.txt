@@ -38,6 +38,7 @@ set(mged_TCLSCRIPTS
   garbage_collect.tcl
   get_regions.tcl
   grid.tcl
+  grouper.tcl
   help.tcl
   helpdevel.tcl
   icreate.tcl
