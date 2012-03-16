@@ -520,15 +520,19 @@ set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
 # In the case of CMake, we're usually doing one of several Build
 # Types.  It's very rare to want to NOT specify a build type, so
 # make it a little more work to do so.
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE_MSG)
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE_MSG AND NOT CMAKE_CONFIGURATION_TYPES)
   message("CMake build type not set - performing Debug build.")
   message("* To use optimized settings intended for a package or system install,")
   message("  specify a Release build (on the command line, -DCMAKE_BUILD_TYPE=Release).")
   message("* To force CMake to not set build type, specify -DCMAKE_BUILD_TYPE=NONE")
   set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build Type" FORCE)
   set(CMAKE_BUILD_TYPE_MSG TRUE CACHE INTERNAL "Printed build type info message")
-endif(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE_MSG)
-set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release)
+endif(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE_MSG AND NOT CMAKE_CONFIGURATION_TYPES)
+if(NOT CMAKE_CONFIGURATION_TYPES)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release)
+else(NOT CMAKE_CONFIGURATION_TYPES)
+  mark_as_advanced(CMAKE_BUILD_TYPE)
+endif(NOT CMAKE_CONFIGURATION_TYPES)
 
 if(CMAKE_BUILD_TYPE MATCHES "NONE")
   set(CMAKE_BUILD_TYPE "")
@@ -539,7 +543,7 @@ endif(CMAKE_BUILD_TYPE MATCHES "NONE")
 # CMAKE_INSTALL_PREFIX hasn't been set already, to try and allow
 # parent builds (if any) some control.
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
-  if(NOT WIN32)
+  if(NOT CMAKE_CONFIGURATION_TYPES)
     if("${CMAKE_BUILD_TYPE}" MATCHES "Release")
       set(CMAKE_INSTALL_PREFIX "/usr/brlcad/rel-${BRLCAD_VERSION}")
     elseif("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
@@ -547,7 +551,9 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
     else("${CMAKE_BUILD_TYPE}" MATCHES "Release")
       set(CMAKE_INSTALL_PREFIX "/usr/brlcad")
     endif("${CMAKE_BUILD_TYPE}" MATCHES "Release")
-  endif(NOT WIN32)
+  else(NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_INSTALL_PREFIX "/usr/brlcad/${BRLCAD_VERSION}_${CMAKE_CFG_INTDIR}")
+  endif(NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "BRL-CAD install prefix" FORCE)
   set(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT 0)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
@@ -614,7 +620,11 @@ else(NOT CMAKE_CONFIGURATION_TYPES)
   # properly set the output directories, but we also need to
   # identify the "toplevel" directory for each configuration so
   # we can place files, documentation, etc. in the correct
-  # relative positions.
+  # relative positions.  These directories may not be quite "standard"
+  # for a particular build tool - for example, native VS2010 projects use 
+  # another directory to denote CPU type being compiled for - but CMake only
+  # supports multi-configuration setups having multiple configurations,
+  # not multiple compilers.
   foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
     if(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
@@ -688,6 +698,12 @@ if(NOT BRLCAD_WORD_SIZE MATCHES "AUTO" AND NOT BRLCAD_WORD_SIZE MATCHES "64BIT" 
   message(WARNING "Valid options are AUTO, 32BIT and 64BIT")
   set(BRLCAD_WORD_SIZE "AUTO" CACHE STRING WORD_SIZE_LABEL FORCE)
 endif(NOT BRLCAD_WORD_SIZE MATCHES "AUTO" AND NOT BRLCAD_WORD_SIZE MATCHES "64BIT" AND NOT BRLCAD_WORD_SIZE MATCHES "32BIT")
+# On Windows, we can't set word size at CMake configure time - the
+# compiler chosen at the beginning dictates the result.  Mark as
+# advanced in that situation.
+if(MSVC)
+  mark_as_advanced(BRLCAD_WORD_SIZE)
+endif(MSVC)
 
 # calculate the size of a pointer if we haven't already
 CHECK_TYPE_SIZE("void *" CMAKE_SIZEOF_VOID_P)
@@ -799,7 +815,8 @@ mark_as_advanced(BUILD_SHARED_LIBS)
 
 # Build static libs by default unless we're debugging. Note: this
 # option will not disable libraries specifically added as STATIC even
-# when OFF.
+# when OFF.  For multi-configuration options this option is not 
+# specifically set.
 AUTO_OPTION(BRLCAD_BUILD_STATIC_LIBS BUILD_STATIC_LIBS "OFF" "ON")
 
 
@@ -964,7 +981,7 @@ mark_as_advanced(BRLCAD_ENABLE_JOVE)
 # to the overall build time.  If necesssary BRL-CAD  provides its own 
 # xsltproc (see src/other/xmltools), so the html and man page
 # outputs are always potentially available.  PDF output, on the other hand,
-# needs Apache FOP.  FOP is not a candidate to bundle with BRL-CAD for 
+# needs Apache FOP.  FOP is not a candidate for bundling with BRL-CAD for 
 # a number of reasons, so we simply check to see if it is present and set 
 # the options accordingly.
 
@@ -1090,7 +1107,9 @@ if(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
   file(APPEND  ${CONFIG_H_FILE} "#define NO_DEBUG_CHECKING 1\n")
 endif(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
 
-# Enable debug flags during compilation
+# Enable debug flags during compilation - in multi-configuration
+# setups this is a build-time decision, so the option is only
+# defined it if we're using a single-configuration build tool.
 set(BRLCAD_FLAGS_DEBUG_ALIASES
   ENABLE_DEBUG
   ENABLE_FLAGS_DEBUG
@@ -1100,9 +1119,12 @@ set(BRLCAD_FLAGS_DEBUG_DESCRIPTION "
 Add compiler flags to aid in program debugging.  Default depends on CMake
 build type - defaults to ON for Debug, OFF for Release.
 ")
-AUTO_OPTION(BRLCAD_FLAGS_DEBUG BRLCAD_DEBUG_BUILD "ON" "OFF")
-OPTION_ALIASES(BRLCAD_FLAGS_DEBUG BRLCAD_FLAGS_DEBUG_ALIASES "BOOL")
+if(NOT CMAKE_CONFIGURATION_TYPES)
+  AUTO_OPTION(BRLCAD_FLAGS_DEBUG BRLCAD_DEBUG_BUILD "ON" "OFF")
+  OPTION_ALIASES(BRLCAD_FLAGS_DEBUG BRLCAD_FLAGS_DEBUG_ALIASES "BOOL")
+endif(NOT CMAKE_CONFIGURATION_TYPES)
 OPTION_DESCRIPTION(BRLCAD_FLAGS_DEBUG BRLCAD_FLAGS_DEBUG_ALIASES BRLCAD_FLAGS_DEBUG_DESCRIPTION)
+
 
 # Build with compiler warning flags
 set(BRLCAD_ENABLE_COMPILER_WARNINGS_ALIASES
@@ -1117,9 +1139,10 @@ BRLCAD_OPTION(ON BRLCAD_ENABLE_COMPILER_WARNINGS
   BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION)
 mark_as_advanced(BRLCAD_ENABLE_COMPILER_WARNINGS)
 
-# Enable/disable strict compiler settings - these are limited to libraries that
-# specifically inform the BRLCAD_ADDLIB macro they can be built with STRICT flags.
-
+# Enable/disable strict compiler settings - these are used for building
+# BRL-CAD by default, but not src/other code.  Always used for BRL-CAD
+# code unless the NOSTRICT option is specified when defining a target
+# with BRLCAD_ADDEXEC or BRLCAD_ADDLIB.
 set(BRLCAD_ENABLE_STRICT_ALIASES 
   ENABLE_STRICT
   ENABLE_STRICT_COMPILE
@@ -1131,18 +1154,20 @@ discovered by these flags whenever possible rather than disabling strict
 mode.
 ")
 BRLCAD_OPTION(ON BRLCAD_ENABLE_STRICT BRLCAD_ENABLE_STRICT_ALIASES BRLCAD_ENABLE_STRICT_DESCRIPTION)
+if(BRLCAD_ENABLE_STRICT)
+  mark_as_advanced(BRLCAD_ENABLE_STRICT)
+  file(APPEND  ${CONFIG_H_FILE} "#define STRICT_FLAGS 1\n")
+endif(BRLCAD_ENABLE_STRICT)
 
 # The full BRL-CAD strict flags are too much for a variety of system
 # C++ headers presently (Dec. 2011) so we don't default to erroring out
 # on warnings for C++
 option(BRLCAD_ENABLE_CXX_STRICT "Use strict compiler settings on cxx files in libraries that build with strict" OFF)
-if(BRLCAD_ENABLE_STRICT)
-  mark_as_advanced(BRLCAD_ENABLE_STRICT)
-  mark_as_advanced(BRLCAD_ENABLE_CXX_STRICT)
-  file(APPEND  ${CONFIG_H_FILE} "#define STRICT_FLAGS 1\n")
-endif(BRLCAD_ENABLE_STRICT)
+mark_as_advanced(BRLCAD_ENABLE_CXX_STRICT)
 
-# Build with compiler optimization flags.  This should normally be on for release builds
+# Build with compiler optimization flags.  This should normally be on for
+# release builds.  This option is only used in single configuration builds - 
+# release configurations in multi-configuration tools will use these flags.
 AUTO_OPTION(BRLCAD_FLAGS_OPTIMIZATION BRLCAD_OPTIMIZED_BUILD "OFF" "ON")
 
 # By default, we don't want any error reports at all from src/other
@@ -1685,7 +1710,7 @@ if(NOT BRLCAD_DISABLE_SUMMARY)
   set(CMAKE_ALL_C_FLAGS_LABEL "CFLAGS")
   set(CMAKE_ALL_CXX_FLAGS_LABEL "CXXFLAGS")
   set(CMAKE_ALL_SHARED_LINKER_FLAGS_LABEL "LDFLAGS")
-  set(SETTINGLABELS CMAKE_C_COMPILER CMAKE_CXX_COMPILER CMAKE_ALL_C_FLAGS	CMAKE_ALL_CXX_FLAGS CMAKE_ALL_SHARED_LINKER_FLAGS)
+  set(SETTINGLABELS CMAKE_C_COMPILER CMAKE_CXX_COMPILER CMAKE_ALL_C_FLAGS CMAKE_ALL_CXX_FLAGS CMAKE_ALL_SHARED_LINKER_FLAGS)
   set(SETTING_LABEL_LENGTH 0)
   foreach(setting_label ${SETTINGLABELS})
     string(LENGTH ${${setting_label}_LABEL} CURRENT_LENGTH)
