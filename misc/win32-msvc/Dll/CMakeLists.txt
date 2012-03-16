@@ -108,6 +108,7 @@ target_link_libraries(brlcad
   zlib-static
   openNURBS
   Ws2_32
+  Psapi
   )
 
 set_property(TARGET brlcad PROPERTY LINK_INTERFACE_LIBRARIES "")
