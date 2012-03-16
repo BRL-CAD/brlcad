@@ -620,29 +620,60 @@ else(NOT CMAKE_CONFIGURATION_TYPES)
   # properly set the output directories, but we also need to
   # identify the "toplevel" directory for each configuration so
   # we can place files, documentation, etc. in the correct
-  # relative positions.  These directories may not be quite "standard"
+  # relative positions.  Because files may be placed by CMake
+  # without a build target to put them in their proper relative build
+  # directory position using these paths, we must fully qualify them
+  # without using CMAKE_CFG_INTDIR. 
+  #
+  # We define directories that may not be quite "standard"
   # for a particular build tool - for example, native VS2010 projects use 
   # another directory to denote CPU type being compiled for - but CMake only
   # supports multi-configuration setups having multiple configurations,
-  # not multiple compilers.
-  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    if(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
-      set("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR}/${CFG_TYPE}/${LIB_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} libraries.")
-    endif(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
-    if(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
-      set("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR}/${CFG_TYPE}/${LIB_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} archives.")
-    endif(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
-    if(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
-      set("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR}/${CFG_TYPE}/${BIN_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} executables.")
-    endif(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
-    if(NOT "CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}")
-      set("CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR}/${CFG_TYPE} CACHE INTERNAL "Toplevel binary dir for ${CFG_TYPE} building.")
-    endif(NOT "CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}")
-    if(NOT "BRLCAD_BINARY_DIR_${CFG_TYPE_UPPER}")
-      set("BRLCAD_BINARY_DIR_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR}/${CFG_TYPE} CACHE INTERNAL "Toplevel binary dir for ${CFG_TYPE} building.")
-    endif(NOT "BRLCAD_BINARY_DIR_${CFG_TYPE_UPPER}")
-  endforeach()
+  # not multiple compilers.  
+  #
+  # One additional wrinkle we must watch for here is the case where
+  # a multi-configuration setup uses "." for its internal directory -
+  # if that's the case, we need to just set the various config output
+  # directories to the same value.
+  if(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      if(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
+        set("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR}/${CFG_TYPE}/${LIB_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} libraries.")
+      endif(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
+      if(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
+        set("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR}/${CFG_TYPE}/${LIB_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} archives.")
+      endif(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
+      if(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
+        set("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR}/${CFG_TYPE}/${BIN_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} executables.")
+      endif(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
+      if(NOT "CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}")
+        set("CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR}/${CFG_TYPE} CACHE INTERNAL "Toplevel binary dir for ${CFG_TYPE} building.")
+      endif(NOT "CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}")
+      if(NOT "BRLCAD_BINARY_DIR_${CFG_TYPE_UPPER}")
+        set("BRLCAD_BINARY_DIR_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR}/${CFG_TYPE} CACHE INTERNAL "Toplevel binary dir for ${CFG_TYPE} building.")
+      endif(NOT "BRLCAD_BINARY_DIR_${CFG_TYPE_UPPER}")
+    endforeach()
+  else(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      if(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
+        set("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} libraries.")
+      endif(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
+      if(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
+        set("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR}/${LIB_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} archives.")
+      endif(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
+      if(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
+        set("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR}/${BIN_DIR} CACHE INTERNAL "Single output directory for building ${CFG_TYPE} executables.")
+      endif(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}")
+      if(NOT "CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}")
+        set("CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR} CACHE INTERNAL "Toplevel binary dir for ${CFG_TYPE} building.")
+      endif(NOT "CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}")
+      if(NOT "BRLCAD_BINARY_DIR_${CFG_TYPE_UPPER}")
+        set("BRLCAD_BINARY_DIR_${CFG_TYPE_UPPER}" ${BRLCAD_BINARY_DIR} CACHE INTERNAL "Toplevel binary dir for ${CFG_TYPE} building.")
+      endif(NOT "BRLCAD_BINARY_DIR_${CFG_TYPE_UPPER}")
+    endforeach()
+  endif(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
 endif(NOT CMAKE_CONFIGURATION_TYPES)
 
 #---------------------------------------------------------------------

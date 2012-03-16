@@ -88,13 +88,14 @@ endif(CMAKE_CONFIGURATION_TYPES)
 # Handle script generation in both single and multi configuration setups.  While we're at
 # it, this is a good place to make sure all the directories we'll be needing exist
 # (xsltproc needs the directory to already exist when multiple docs are building in
-# parallel.)
+# parallel.)  If CMAKE_CFG_INTDIR is just the current working directory, then everything
+# is flat even if we are multi-config and we proceed as normal.
 macro(DB_SCRIPT targetname targetdir executable)
-  if(NOT CMAKE_CONFIGURATION_TYPES)
+  if(NOT CMAKE_CONFIGURATION_TYPES OR "${CMAKE_CFG_INTDIR}" STREQUAL ".")
     file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
     set(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake)
     configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/${executable}.cmake.in ${scriptfile} @ONLY)
-  else(NOT CMAKE_CONFIGURATION_TYPES)
+  else(NOT CMAKE_CONFIGURATION_TYPES OR "${CMAKE_CFG_INTDIR}" STREQUAL ".")
     # Multi-configuration is more complex - for each configuration, the
     # standard variables must reflect the final directory (not the CMAKE_CFG_INTDIR
     # value used by the build tool) but after generating the config specific
@@ -118,7 +119,7 @@ macro(DB_SCRIPT targetname targetdir executable)
       set(${exec_upper}_EXECUTABLE "${exec_tmp}")
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     set(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${targetname}.cmake)
-  endif(NOT CMAKE_CONFIGURATION_TYPES)
+  endif(NOT CMAKE_CONFIGURATION_TYPES OR "${CMAKE_CFG_INTDIR}" STREQUAL ".")
 endmacro(DB_SCRIPT) 
 
 # Macro to define individual validation build targets and generate the script files 
