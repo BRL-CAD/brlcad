@@ -3,12 +3,7 @@
 # so for this one directory, go vanilla until we can get a lex/yacc
 # setup that reliably produces code that will work in strict
 # environments
-string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
-if(BUILD_TYPE)
-  set(CMAKE_C_FLAGS_${BUILD_TYPE} "")
-else(BUILD_TYPE)
-  set(CMAKE_C_FLAGS "")
-endif(BUILD_TYPE)
+set(CMAKE_C_FLAGS "")
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}

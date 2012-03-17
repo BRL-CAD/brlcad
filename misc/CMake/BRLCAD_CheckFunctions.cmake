@@ -51,10 +51,13 @@ include(ResolveCompilerPaths)
 # HAVE_* define to config header.
 ###
 macro(BRLCAD_FUNCTION_EXISTS function var)
+  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
+  set(CMAKE_C_FLAGS "")
   CHECK_FUNCTION_EXISTS(${function} ${var})
   if(CONFIG_H_FILE AND ${var})
     file(APPEND ${CONFIG_H_FILE} "#cmakedefine ${var} 1\n")
   endif(CONFIG_H_FILE AND ${var})
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_FUNCTION_EXISTS)
 
 
@@ -64,6 +67,8 @@ endmacro(BRLCAD_FUNCTION_EXISTS)
 # semicolons.  Add HAVE_*_H define to config header.
 ###
 macro(BRLCAD_INCLUDE_FILE filelist var)
+  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
+  set(CMAKE_C_FLAGS "")
   if(NOT "${ARGV2}" STREQUAL "")
     set(CMAKE_REQUIRED_INCLUDES_BKUP ${CMAKE_REQUIRED_INCLUDES})
     set(CMAKE_REQUIRED_INCLUDES ${ARGV2} ${CMAKE_REQUIRED_INCLUDES})
@@ -75,6 +80,7 @@ macro(BRLCAD_INCLUDE_FILE filelist var)
   if(NOT "${ARGV2}" STREQUAL "")
     set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES_BKUP})
   endif(NOT "${ARGV2}" STREQUAL "")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_INCLUDE_FILE)
 
 
@@ -82,10 +88,13 @@ endmacro(BRLCAD_INCLUDE_FILE)
 # Check if a C++ header exists.  Adds HAVE_* define to config header.
 ###
 macro(BRLCAD_INCLUDE_FILE_CXX filename var)
+  set(CMAKE_CXX_FLAGS_TMP "${CMAKE_CXX_FLAGS}")
+  set(CMAKE_CXX_FLAGS "")
   CHECK_INCLUDE_FILE_CXX(${filename} ${var})
   if(CONFIG_H_FILE AND ${var})
     file(APPEND ${CONFIG_H_FILE} "#cmakedefine ${var} 1\n")
   endif(CONFIG_H_FILE AND ${var})
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_TMP}")
 endmacro(BRLCAD_INCLUDE_FILE_CXX)
 
 
@@ -96,6 +105,8 @@ endmacro(BRLCAD_INCLUDE_FILE_CXX)
 # config header.
 ###
 macro(BRLCAD_TYPE_SIZE typename var headers)
+  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
+  set(CMAKE_C_FLAGS "")
   set(CMAKE_EXTRA_INCLUDE_FILES "${headers}")
   CHECK_TYPE_SIZE(${typename} HAVE_${var}_T)
   set(CMAKE_EXTRA_INCLUDE_FILES)
@@ -103,6 +114,7 @@ macro(BRLCAD_TYPE_SIZE typename var headers)
     file(APPEND ${CONFIG_H_FILE} "#define HAVE_${var}_T 1\n")
     file(APPEND ${CONFIG_H_FILE} "#define SIZEOF_${var} ${HAVE_${var}_T}\n")
   endif(CONFIG_H_FILE AND HAVE_${var}_T)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_TYPE_SIZE)
 
 
@@ -112,10 +124,13 @@ endmacro(BRLCAD_TYPE_SIZE)
 # Adds HAVE_* to config header and sets VAR.
 ###
 macro(BRLCAD_STRUCT_MEMBER structname member headers var)
+  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
+  set(CMAKE_C_FLAGS "")
   CHECK_STRUCT_HAS_MEMBER(${structname} ${member} "${headers}" HAVE_${var})
   if(CONFIG_H_FILE AND HAVE_${var})
     file(APPEND ${CONFIG_H_FILE} "#define HAVE_${var} 1\n")
   endif(CONFIG_H_FILE AND HAVE_${var})
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_STRUCT_MEMBER)
 
 
@@ -124,6 +139,8 @@ endmacro(BRLCAD_STRUCT_MEMBER)
 # targetname_LINKOPT variable as advanced if found.
 ###
 macro(BRLCAD_CHECK_LIBRARY targetname lname func)
+  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
+  set(CMAKE_C_FLAGS "")
   if(NOT ${targetname}_LIBRARY)
     CHECK_LIBRARY_EXISTS(${lname} ${func} "" HAVE_${targetname}_${lname})
     if(HAVE_${targetname}_${lname})
@@ -132,6 +149,7 @@ macro(BRLCAD_CHECK_LIBRARY targetname lname func)
       mark_as_advanced(${targetname}_LINKOPT)
     endif(HAVE_${targetname}_${lname})
   endif(NOT ${targetname}_LIBRARY)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_CHECK_LIBRARY lname func)
 
 
@@ -144,6 +162,8 @@ include(CheckCSourceRuns)
 # Undocumented.
 ###
 macro(BRLCAD_CHECK_BASENAME)
+  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
+  set(CMAKE_C_FLAGS "")
   set(BASENAME_SRC "
 #include <libgen.h>
 int main(int argc, char *argv[]) {
@@ -154,6 +174,7 @@ return 0;
   if(HAVE_BASENAME)
     file(APPEND ${CONFIG_H_FILE} "#define HAVE_BASENAME 1\n")
   endif(HAVE_BASENAME)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_CHECK_BASENAME var)
 
 
@@ -161,6 +182,8 @@ endmacro(BRLCAD_CHECK_BASENAME var)
 # Undocumented.
 ###
 macro(BRLCAD_CHECK_DIRNAME)
+  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
+  set(CMAKE_C_FLAGS "")
   set(DIRNAME_SRC "
 #include <libgen.h>
 int main(int argc, char *argv[]) {
@@ -171,6 +194,7 @@ return 0;
   if(HAVE_DIRNAME)
     file(APPEND ${CONFIG_H_FILE} "#define HAVE_DIRNAME 1\n")
   endif(HAVE_DIRNAME)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_CHECK_DIRNAME var)
 
 
@@ -186,10 +210,13 @@ include(CheckCSourceRuns)
 # Based on AC_HEADER_SYS_WAIT
 ###
 macro(BRLCAD_HEADER_SYS_WAIT)
+  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
+  set(CMAKE_C_FLAGS "")
   CHECK_C_SOURCE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c WORKING_SYS_WAIT)
   if(WORKING_SYS_WAIT)
     file(APPEND ${CONFIG_H_FILE} "#define HAVE_SYS_WAIT_H 1\n")
   endif(WORKING_SYS_WAIT)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_HEADER_SYS_WAIT)
 
 ###
@@ -197,6 +224,8 @@ endmacro(BRLCAD_HEADER_SYS_WAIT)
 # Based on AC_FUNC_ALLOCA
 ###
 macro(BRLCAD_ALLOCA)
+  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
+  set(CMAKE_C_FLAGS "")
   CHECK_C_SOURCE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/alloca_header_test.c WORKING_ALLOCA_H)
   if(WORKING_ALLOCA_H)
     file(APPEND ${CONFIG_H_FILE} "#define HAVE_ALLOCA_H 1\n")
@@ -206,6 +235,7 @@ macro(BRLCAD_ALLOCA)
   if(WORKING_ALLOCA)
     file(APPEND ${CONFIG_H_FILE} "#define HAVE_ALLOCA 1\n")
   endif(WORKING_ALLOCA)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_ALLOCA)
 
 
@@ -214,6 +244,8 @@ endmacro(BRLCAD_ALLOCA)
 # Sets -DHAVE_STDINT_H=1 as global preprocessor flag if found.
 ###
 macro(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
+  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
+  set(CMAKE_C_FLAGS "")
   set(CMAKE_REQUIRED_DEFINITIONS_BAK ${CMAKE_REQUIRED_DEFINITIONS})
   CHECK_INCLUDE_file(stdint.h HAVE_STDINT_H)
   if(HAVE_STDINT_H)
@@ -240,6 +272,7 @@ int main(int ac, char *av[])
     file(APPEND ${CONFIG_H_FILE} "#define HAVE_C99_FORMAT_SPECIFIERS 1\n")
   endif(HAVE_C99_FORMAT_SPECIFIERS)
   set(CMAKE_REQUIRED_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS_BAK})
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
 
 # Local Variables:
