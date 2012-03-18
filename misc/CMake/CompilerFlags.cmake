@@ -164,16 +164,19 @@ macro(BRLCAD_CHECK_CXX_FLAG flag)
   endif(${UPPER_FLAG}_COMPILER_FLAG_FOUND)
 endmacro()
 
-# Clear out any CMake-assigned defaults - We're managing
+# Clear out most CMake-assigned defaults - We're managing
 # our own compile flags, and don't (for example) want NDEBUG
 # if we have debugging flags enabled for a Release build.
 # At the same time, pull in any flags that have been set
-# in the environment.
+# in the environment.  The exception currently is the
+# MineSizeRel configuration, which we don't set ourselves
+# explicitly - in that case, leave defaults.
 
 set(CMAKE_C_FLAGS "")
 set(CMAKE_CXX_FLAGS "")
 set(CMAKE_SHARED_LINKER_FLAGS "")
 set(CMAKE_EXE_LINKER_FLAGS "")
+
 if(CMAKE_BUILD_TYPE)
   string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE_UPPER)
   set(CMAKE_C_FLAGS_${BUILD_TYPE_UPPER} "")
@@ -183,18 +186,19 @@ if(CMAKE_BUILD_TYPE)
 endif(CMAKE_BUILD_TYPE)
 
 foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-  set(CMAKE_C_FLAGS_${CFG_TYPE_UPPER} "")
-  set(CMAKE_CXX_FLAGS_${CFG_TYPE_UPPER} "")
-  set(CMAKE_SHARED_LINKER_FLAGS_${CFG_TYPE_UPPER} "")
-  set(CMAKE_EXE_LINKER_FLAGS_${CFG_TYPE_UPPER} "")
+  if(NOT "${CFG_TYPE}" STREQUAL "MinSizeRel")
+    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+    set(CMAKE_C_FLAGS_${CFG_TYPE_UPPER} "")
+    set(CMAKE_CXX_FLAGS_${CFG_TYPE_UPPER} "")
+    set(CMAKE_SHARED_LINKER_FLAGS_${CFG_TYPE_UPPER} "")
+    set(CMAKE_EXE_LINKER_FLAGS_${CFG_TYPE_UPPER} "")
+  endif(NOT "${CFG_TYPE}" STREQUAL "MinSizeRel")
 endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 
-string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
-set(CMAKE_C_FLAGS_${BUILD_TYPE} "$ENV{CFLAGS}")
-set(CMAKE_CXX_FLAGS_${BUILD_TYPE} "$ENV{CXXFLAGS}")
-set(CMAKE_SHARED_LINKER_FLAGS_${BUILD_TYPE} "$ENV{LDFLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS_${BUILD_TYPE} "")
+set(CMAKE_C_FLAGS "$ENV{CFLAGS}")
+set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS}")
+set(CMAKE_SHARED_LINKER_FLAGS "$ENV{LDFLAGS}")
+#set(CMAKE_EXE_LINKER_FLAGS "")
 
 # try to use -pipe to speed up the compiles
 BRLCAD_CHECK_C_FLAG(pipe)
