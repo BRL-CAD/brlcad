@@ -1180,8 +1180,7 @@ option(BRLCAD_ENABLE_CXX_STRICT "Use strict compiler settings on cxx files in li
 mark_as_advanced(BRLCAD_ENABLE_CXX_STRICT)
 
 # Build with compiler optimization flags.  This should normally be on for
-# release builds.  This option is only used in single configuration builds - 
-# release configurations in multi-configuration tools will use these flags.
+# release builds.  
 AUTO_OPTION(BRLCAD_FLAGS_OPTIMIZATION BRLCAD_OPTIMIZED_BUILD "OFF" "ON")
 
 # By default, we don't want any error reports at all from src/other
