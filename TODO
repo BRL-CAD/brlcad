@@ -1507,8 +1507,6 @@ CMAKE
   -- is this needed?  what's not working with make package and 
      make package_source?
 
-* 64 bit Windows build of tkhtml3 - is it CMake, tkhtml, or ??
-
 ODDITIES
 --------
 
