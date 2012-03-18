@@ -81,12 +81,14 @@ if(NOT IS_SUBBUILD)
     CREATE_DISTCHECK(release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_BUNDLED_LIBS=BUNDLED")
 
     add_custom_target(distcheck-std
-      # The source repository verification script is responsible for generating this file
+      # The source repository verification script is responsible for generating these files
+      COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_remove_archives_if_invalid
       COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_message
       DEPENDS distcheck-debug distcheck-release)
 
     add_custom_target(distcheck-full
-      # The source repository verification script is responsible for generating this file
+      # The source repository verification script is responsible for generating these files
+      COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_remove_archives_if_invalid
       COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_message
       DEPENDS ${distcheck_targets})
 
