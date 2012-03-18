@@ -39,6 +39,16 @@ if(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0007 OLD)
 endif(COMMAND CMAKE_POLICY)
 
+# If BRLCAD_BUNDLED_LIBS isn't set to BUNDLED, mention that this might be a good idea.
+if(NOT "@BRLCAD_BUNDLED_LIBS@" STREQUAL "BUNDLED")
+  message(" ")
+  message("Note: - running distcheck with a BRL-CAD configuration that has not enabled")
+  message("        all local src/other libraries.  This will work, but the best level")
+  message("        of build system verification is achieved when BRLCAD_BUNDLED_LIBS is")
+  message("        set to Bundled, activating all src/other CMake build systems.")
+  message(" ")
+endif(NOT "@BRLCAD_BUNDLED_LIBS@" STREQUAL "BUNDLED")
+
 set(NOT_DISTCHECK_READY 0)
 set(CMAKE_BINARY_DIR @CMAKE_BINARY_DIR@)
 
