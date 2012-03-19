@@ -175,6 +175,11 @@ macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
 	  )
       endif(BRLCAD_EXTRADOCS_VALIDATE)
       add_custom_target(${targetname} ALL DEPENDS ${outfile})
+      # CMAKE_CFG_INTDIR can't be used in installation rules:
+      # http://www.cmake.org/Bug/view.php?id=5747
+      if(CMAKE_CONFIGURATION_TYPES)
+        string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" outfile "${outfile}")
+      endif(CMAKE_CONFIGURATION_TYPES)
       install(FILES ${outfile} DESTINATION ${DATA_DIR}/${targetdir})
       get_property(BRLCAD_EXTRADOCS_HTML_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_HTML_TARGETS)
       set(BRLCAD_EXTRADOCS_HTML_TARGETS ${BRLCAD_EXTRADOCS_HTML_TARGETS} ${targetname})
@@ -208,6 +213,11 @@ macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir deps_li
 	  )
       endif(BRLCAD_EXTRADOCS_VALIDATE)
       add_custom_target(${targetname} ALL DEPENDS ${outfile})
+      # CMAKE_CFG_INTDIR can't be used in installation rules:
+      # http://www.cmake.org/Bug/view.php?id=5747
+      if(CMAKE_CONFIGURATION_TYPES)
+        string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" outfile "${outfile}")
+      endif(CMAKE_CONFIGURATION_TYPES)
       install(FILES ${outfile} DESTINATION ${MAN_DIR}/man${mannum})
       get_property(BRLCAD_EXTRADOCS_MAN_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_MAN_TARGETS)
       set(BRLCAD_EXTRADOCS_MAN_TARGETS ${BRLCAD_EXTRADOCS_MAN_TARGETS} ${targetname})
@@ -256,6 +266,11 @@ macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir deps_list)
 	DEPENDS ${fo_outfile} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
 	)
       add_custom_target(${targetname} ALL DEPENDS ${outfile})
+      # CMAKE_CFG_INTDIR can't be used in installation rules:
+      # http://www.cmake.org/Bug/view.php?id=5747
+      if(CMAKE_CONFIGURATION_TYPES)
+        string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" outfile "${outfile}")
+      endif(CMAKE_CONFIGURATION_TYPES)
       install(FILES ${outfile} DESTINATION ${DATA_DIR}/${targetdir})
       get_property(BRLCAD_EXTRADOCS_PDF_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS)
       set(BRLCAD_EXTRADOCS_PDF_TARGETS ${BRLCAD_EXTRADOCS_PDF_TARGETS} ${targetname})

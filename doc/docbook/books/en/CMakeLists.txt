@@ -137,6 +137,11 @@ if(BRLCAD_EXTRADOCS_PDF)
       DEPENDS ${fo_outfile} ${DOCBOOK_RESOURCE_FILES} docbook_books_EN_IMAGES_cp
       )
     add_custom_target(${targetname} ALL DEPENDS ${outfile})
+    # CMAKE_CFG_INTDIR can't be used in installation rules:
+    # http://www.cmake.org/Bug/view.php?id=5747
+    if(CMAKE_CONFIGURATION_TYPES)
+      string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" outfile "${outfile}")
+    endif(CMAKE_CONFIGURATION_TYPES)
     install(FILES ${outfile} DESTINATION ${DATA_DIR}/pdf/books/en)
     get_property(BRLCAD_EXTRADOCS_PDF_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS)
     set(BRLCAD_EXTRADOCS_PDF_TARGETS ${BRLCAD_EXTRADOCS_PDF_TARGETS} ${targetname})
