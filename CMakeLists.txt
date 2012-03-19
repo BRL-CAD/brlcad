@@ -1656,168 +1656,23 @@ configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
 
 # Generate the windows specific file, if needed
 if(WIN32)
-  configure_file(${BRLCAD_SOURCE_DIR}/include/config_win_cmake.h.in	${BRLCAD_BINARY_DIR}/include/config_win_cmake.h)
+  configure_file(${BRLCAD_SOURCE_DIR}/include/config_win_cmake.h.in ${BRLCAD_BINARY_DIR}/include/config_win_cmake.h)
 endif(WIN32)
 
 # *******************************************************************
 # ***              Summarize Results - Stage 9 of 9               ***
 # *******************************************************************
 
-# Now that everything is configured, print a summary of the build settings.  This is a bit complicated, but
-# the basic idea is to print labels, "smart" spacers around those labels to line everything up, and the
-# value of the appropriate build variable.  The convention is to assign the text labeling each value to a
-# variable named <variable_name>_LABEL - this allows a loop to iterate over a list of variables and handle
-# them all, rather than each line needing its own logic.
-
+# Now that everything is configured, print a summary of the build 
+# settings.
 if(NOT BRLCAD_DISABLE_SUMMARY)
-  message("\n")
-  message("------ BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} - ${CMAKE_BUILD_TYPE} Build  ------")
-  message("\n")
-
-  # Directory settings
-
-  set(CMAKE_INSTALL_PREFIX_LABEL "Prefix")
-  set(BIN_DIR_LABEL "Binaries")
-  set(MAN_DIR_LABEL "Manual pages")
-  set(CONF_DIR_LABEL "Configration files")
-  set(DATA_DIR_LABEL "Data resource files")
-  set(PATH_LABELS CMAKE_INSTALL_PREFIX BIN_DIR MAN_DIR CONF_DIR DATA_DIR)
-  set(PATH_LABEL_LENGTH 0)
-  foreach(path_label ${PATH_LABELS})
-    string(LENGTH "${${path_label}_LABEL}" CURRENT_LENGTH)
-    if (${CURRENT_LENGTH} GREATER ${PATH_LABEL_LENGTH})
-      set(PATH_LABEL_LENGTH ${CURRENT_LENGTH})
-    endif()
-  endforeach()
-  foreach(path_label ${PATH_LABELS})
-    set(CURRENT_LABEL ${${path_label}_LABEL})
-    string(LENGTH ${CURRENT_LABEL} CURRENT_LENGTH)
-    while(${PATH_LABEL_LENGTH} GREATER ${CURRENT_LENGTH})
-      set(CURRENT_LABEL " ${CURRENT_LABEL}")
-      string(LENGTH "${CURRENT_LABEL}" CURRENT_LENGTH)
-    endwhile(${PATH_LABEL_LENGTH} GREATER ${CURRENT_LENGTH})
-    if(path_label MATCHES "^CMAKE_INSTALL_PREFIX$")
-      message("${CURRENT_LABEL}: ${${path_label}}")
-    else(path_label MATCHES "^CMAKE_INSTALL_PREFIX$")
-      message("${CURRENT_LABEL}: ${CMAKE_INSTALL_PREFIX}/${${path_label}}")
-    endif(path_label MATCHES "^CMAKE_INSTALL_PREFIX$")
-  endforeach()
-  message("\n")
-
-  # Compiler settings - in this case there are additional "special case" flags that get
-  # added depending on build type - roll all flags into individual variables before printing
-
   include(${BRLCAD_SOURCE_DIR}/misc/CMake/BRLCAD_Summary.cmake)
-
-  # The actual build state (as opposed to the AUTO/BUNDLED/SYSTEM setting) is
-  # not present in the global cache and must be explicitly pulled from
-  # src/other
-  MACRO(GET_STATE_LABEL ITEM)
-    get_directory_property(BRLCAD_BUILD_${ITEM} DIRECTORY src/other DEFINITION BRLCAD_${ITEM}_BUILD)
-    get_directory_property(BRLCAD_${ITEM}_NOTFOUND DIRECTORY src/other DEFINITION BRLCAD_${ITEM}_NOTFOUND)
-    if("${BRLCAD_BUILD_${ITEM}}" STREQUAL "OFF" AND BRLCAD_${ITEM}_NOTFOUND)
-      set(BRLCAD_BUILD_${ITEM} "OFF!")
-    endif("${BRLCAD_BUILD_${ITEM}}" STREQUAL "OFF" AND BRLCAD_${ITEM}_NOTFOUND)
-  ENDMACRO(GET_STATE_LABEL ${ITEM})
-  set(OTHER_ITEM_LIST TCL TK IWIDGETS TKHTML TKPNG TKTABLE PNG REGEX ZLIB TERMLIB UTAHRLE OPENNURBS SCL)
-  foreach(item ${OTHER_ITEM_LIST})
-    GET_STATE_LABEL(${item})
-  endforeach(item ${OTHER_ITEM_LIST})
-  get_directory_property(BRLCAD_BUILD_ITCL DIRECTORY src/other DEFINITION	BRLCAD_ITCL_BUILD)
-  get_directory_property(BRLCAD_BUILD_ITK DIRECTORY src/other DEFINITION BRLCAD_ITK_BUILD)
-  get_directory_property(BRLCAD_ITCL_NOTFOUND DIRECTORY src/other DEFINITION BRLCAD_ITCL_NOTFOUND)
-  get_directory_property(BRLCAD_ITK_NOTFOUND DIRECTORY src/other DEFINITION BRLCAD_ITK_NOTFOUND)
-  if(BRLCAD_BUILD_ITCL AND BRLCAD_BUILD_ITK)
-    set(BRLCAD_BUILD_INCRTCL ON)
-  else(BRLCAD_BUILD_ITCL AND BRLCAD_BUILD_ITK)
-    if(BRLCAD_BUILD_ITCL AND NOT BRLCAD_BUILD_ITK)
-      set(BRLCAD_BUILD_INCRTCL "ON (Itcl only)")
-    endif(BRLCAD_BUILD_ITCL AND NOT BRLCAD_BUILD_ITK)
-    if(BRLCAD_BUILD_ITK AND NOT BRLCAD_BUILD_ITCL)
-      set(BRLCAD_BUILD_INCRTCL "ON (Itk only)")
-    endif(BRLCAD_BUILD_ITK AND NOT BRLCAD_BUILD_ITCL)
-    if(NOT BRLCAD_BUILD_ITCL AND NOT BRLCAD_BUILD_ITK)
-      if(BRLCAD_ITCL_NOTFOUND OR BRLCAD_ITK_NOTFOUND)
-	set(BRLCAD_BUILD_INCRTCL "OFF!")
-      else(BRLCAD_ITCL_NOTFOUND OR BRLCAD_ITK_NOTFOUND)
-	set(BRLCAD_BUILD_INCRTCL "OFF")
-      endif(BRLCAD_ITCL_NOTFOUND OR BRLCAD_ITK_NOTFOUND)
-    endif(NOT BRLCAD_BUILD_ITCL AND NOT BRLCAD_BUILD_ITK)
-  endif(BRLCAD_BUILD_ITCL AND BRLCAD_BUILD_ITK)
-
-  # Build options
-  set(BRLCAD_BUILD_TCL_LABEL "Compile Tcl ")
-  set(BRLCAD_BUILD_TK_LABEL "Compile Tk ")
-  set(BRLCAD_BUILD_INCRTCL_LABEL "Compile Itcl/Itk ")
-  set(BRLCAD_BUILD_IWIDGETS_LABEL "Compile Iwidgets ")
-  set(BRLCAD_BUILD_TKHTML_LABEL "Compile Tkhtml ")
-  set(BRLCAD_BUILD_TKPNG_LABEL "Compile tkpng ")
-  set(BRLCAD_BUILD_TKTABLE_LABEL "Compile Tktable ")
-  set(BRLCAD_BUILD_PNG_LABEL "Compile libpng ")
-  set(BRLCAD_BUILD_REGEX_LABEL "Compile libregex ")
-  set(BRLCAD_BUILD_ZLIB_LABEL "Compile zlib ")
-  set(BRLCAD_BUILD_TERMLIB_LABEL "Compile termlib ")
-  set(BRLCAD_BUILD_UTAHRLE_LABEL "Compile Utah Raster Toolkit ")
-  set(BRLCAD_BUILD_OPENNURBS_LABEL "Compile openNURBS ")
-  set(BRLCAD_BUILD_SCL_LABEL "Compile NIST STEP Class Libraries ")
-  set(BRLCAD_ENABLE_X11_LABEL "X11 support (optional) ")
-  set(BRLCAD_ENABLE_OPENGL_LABEL "OpenGL support (optional) ")
-  set(BRLCAD_ENABLE_RTSERVER_LABEL "librtserver JDK support (optional) ")
-  set(BRLCAD_ENABLE_RUNTIME_DEBUG_LABEL "Enable run-time debugging (optional) ")
-  if(${BRLCAD_WORD_SIZE} MATCHES "AUTO")
-    set(BRLCAD_ARCH_BITSETTING "${CMAKE_WORD_SIZE} (Auto)")
-  else(${BRLCAD_WORD_SIZE} MATCHES "AUTO")
-    set(BRLCAD_ARCH_BITSETTING "${CMAKE_WORD_SIZE}")
-  endif(${BRLCAD_WORD_SIZE} MATCHES "AUTO")
-  set(BRLCAD_ARCH_BITSETTING_LABEL "Build 32/64-bit release ")
-  set(BRLCAD_OPTIMIZED_BUILD_LABEL "Build optimized release ")
-  set(BRLCAD_DEBUG_BUILD_LABEL "Build debuggable release")
-  set(BRLCAD_ENABLE_PROFILING_LABEL "Build profile release ")
-  set(BRLCAD_ENABLE_SMP_LABEL "Build SMP-capable release ")
-  set(BUILD_STATIC_LIBS_LABEL "Build static libraries ")
-  set(BUILD_SHARED_LIBS_LABEL "Build dynamic libraries ")
-  set(BRLCAD_ENABLE_COMPILER_WARNINGS_LABEL "Print verbose compilation warnings ")
-  set(BRLCAD_ENABLE_VERBOSE_PROGRESS_LABEL "Print verbose compilation progress ")
-  set(BRLCAD_INSTALL_EXAMPLE_GEOMETRY_LABEL "Install example geometry models ")
-  if (BRLCAD_EXTRADOCS)
-    if (BRLCAD_EXTRADOCS_PDF)
-      set(BRLCAD_BUILD_DOCBUILD_MSG "ON (man/html/pdf)")
-    else(BRLCAD_EXTRADOCS_PDF)
-      set(BRLCAD_BUILD_DOCBUILD_MSG "ON (man/html only)")
-    endif(BRLCAD_EXTRADOCS_PDF)
-  else (BRLCAD_BUILD_EXTRADOCS)
-    set(BRLCAD_BUILD_DOCBUILD_MSG "OFF")
-  endif (BRLCAD_EXTRADOCS)
-  set(BRLCAD_BUILD_DOCBUILD_MSG_LABEL "Generate extra docs ")
-
-  set(SETTINGLIST1 BRLCAD_BUILD_TCL BRLCAD_BUILD_TK BRLCAD_BUILD_INCRTCL BRLCAD_BUILD_IWIDGETS BRLCAD_BUILD_TKHTML BRLCAD_BUILD_TKPNG BRLCAD_BUILD_TKTABLE BRLCAD_BUILD_PNG BRLCAD_BUILD_REGEX BRLCAD_BUILD_ZLIB BRLCAD_BUILD_TERMLIB BRLCAD_BUILD_UTAHRLE BRLCAD_BUILD_OPENNURBS BRLCAD_BUILD_SCL)
-  set(SETTINGLIST2 BRLCAD_ENABLE_X11 BRLCAD_ENABLE_OPENGL BRLCAD_ENABLE_RTSERVER BRLCAD_ENABLE_RUNTIME_DEBUG )
-  set(SETTINGLIST3 BRLCAD_ARCH_BITSETTING BRLCAD_OPTIMIZED_BUILD
-    BRLCAD_DEBUG_BUILD BRLCAD_ENABLE_PROFILING BRLCAD_ENABLE_SMP BUILD_STATIC_LIBS BUILD_SHARED_LIBS BRLCAD_ENABLE_COMPILER_WARNINGS BRLCAD_ENABLE_VERBOSE_PROGRESS BRLCAD_INSTALL_EXAMPLE_GEOMETRY BRLCAD_BUILD_DOCBUILD_MSG)
-  set(ARRAYLIST SETTINGLIST1 SETTINGLIST2 SETTINGLIST3)
-  set(SETTING_LABEL_LENGTH 0)
-  foreach(setting_array ${ARRAYLIST})
-    foreach(setting_label ${${setting_array}})
-      string(LENGTH ${${setting_label}_LABEL} CURRENT_LENGTH)
-      if (${CURRENT_LENGTH} GREATER ${SETTING_LABEL_LENGTH})
-	set(SETTING_LABEL_LENGTH ${CURRENT_LENGTH})
-      endif()
-    endforeach()
-  endforeach()
-  foreach(setting_array ${ARRAYLIST})
-    foreach(setting_label ${${setting_array}})
-      set(CURRENT_LABEL ${${setting_label}_LABEL})
-      string(LENGTH ${CURRENT_LABEL} CURRENT_LENGTH)
-      while(${SETTING_LABEL_LENGTH} GREATER ${CURRENT_LENGTH})
-	set(CURRENT_LABEL "${CURRENT_LABEL}.")
-	string(LENGTH ${CURRENT_LABEL} CURRENT_LENGTH)
-      endwhile(${SETTING_LABEL_LENGTH} GREATER ${CURRENT_LENGTH})
-      message("${CURRENT_LABEL}..: ${${setting_label}}")
-    endforeach()
-    message("\n")
-  endforeach()
 endif(NOT BRLCAD_DISABLE_SUMMARY)
 
+
+# *******************************************************************
+# ***                      Timestamp Rules                        ***
+# *******************************************************************
 if(NOT IS_SUBBUILD)
   # Set up rules to print a timestamp string during build
   set(BUILD_DELTA_FILE "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_FILE")
