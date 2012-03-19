@@ -82,7 +82,7 @@ foreach(path_label ${PATH_LABELS})
     message("${CURRENT_LABEL}: ${CMAKE_INSTALL_PREFIX}/${${path_label}}")
   endif(path_label MATCHES "^CMAKE_INSTALL_PREFIX$")
 endforeach()
-message("\n")
+message(" ")
 
 
 ###################################################
