@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* idents command is reporting a bogus region count in the region
+  ouptut table listing (first column).
+
 * yacc 1.9 will not output a header if a path is given to the -o
   option.  yacc should be run from the binary directory instead of the
   source directory so that the command may be simply yacc -d -o

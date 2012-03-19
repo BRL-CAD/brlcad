@@ -26,6 +26,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * review and test extensively (post-coverity review)
 
+* investigate and fix the idents command first column bug
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
