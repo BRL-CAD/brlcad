@@ -9067,7 +9067,7 @@ to_autoview_view(struct ged_dm_view *gdvp, const char *scale)
     if (scale)
 	ret = ged_autoview(gdvp->gdv_gop->go_gedp, 2, (const char **)av);
     else
-	ret = ged_autoview(gdvp->gdv_gop->go_gedp, 2, (const char **)av);
+	ret = ged_autoview(gdvp->gdv_gop->go_gedp, 1, (const char **)av);
 
     if (ret == GED_OK) {
 	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
