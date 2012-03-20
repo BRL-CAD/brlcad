@@ -210,7 +210,7 @@ bw_save(int fd, unsigned char *rgb, int size)
      * curves.
      */
     for (i=0;i<bwsize;++i)
-	rgb[i] = (int)((float)rgb[i*3]+(float)rgb[i*3+1]+(float)rgb[i*3+2]/3.0);
+	rgb[i] = (int)(((float)rgb[i*3]+(float)rgb[i*3+1]+(float)rgb[i*3+2])/3.0);
 
     ret = write(fd, rgb, (unsigned)bwsize);
     if (ret != bwsize)
