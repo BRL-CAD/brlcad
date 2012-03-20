@@ -506,6 +506,13 @@ endif(TIME_RESULT MATCHES "^0$")
 BOX_PRINT("*** Configuring BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ***" "*")
 
 #---------------------------------------------------------------------
+# CMake by default provides four different configurations for multi-
+# configuration build tools.  We want only two - Debug and Release.
+if(CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_CONFIGURATION_TYPES Debug Release)
+endif(CMAKE_CONFIGURATION_TYPES)
+
+#---------------------------------------------------------------------
 # We want to check /usr/local by default, so add it
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/local)
 set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
@@ -1124,9 +1131,8 @@ if(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
   file(APPEND  ${CONFIG_H_FILE} "#define NO_DEBUG_CHECKING 1\n")
 endif(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
 
-# Enable debug flags during compilation - in multi-configuration
-# setups this is a build-time decision, so the option is only
-# defined it if we're using a single-configuration build tool.
+# Enable debug flags during compilation - we always want to use these
+# unless explicitly told not to.
 set(BRLCAD_FLAGS_DEBUG_ALIASES
   ENABLE_DEBUG
   ENABLE_FLAGS_DEBUG
@@ -1136,12 +1142,7 @@ set(BRLCAD_FLAGS_DEBUG_DESCRIPTION "
 Add compiler flags to aid in program debugging.  Default depends on CMake
 build type - defaults to ON for Debug, OFF for Release.
 ")
-if(NOT CMAKE_CONFIGURATION_TYPES)
-  AUTO_OPTION(BRLCAD_FLAGS_DEBUG BRLCAD_DEBUG_BUILD "ON" "OFF")
-endif(NOT CMAKE_CONFIGURATION_TYPES)
-OPTION_ALIASES(BRLCAD_FLAGS_DEBUG BRLCAD_FLAGS_DEBUG_ALIASES "BOOL")
-OPTION_DESCRIPTION(BRLCAD_FLAGS_DEBUG BRLCAD_FLAGS_DEBUG_ALIASES BRLCAD_FLAGS_DEBUG_DESCRIPTION)
-
+BRLCAD_OPTION(ON BRLCAD_FLAGS_DEBUG BRLCAD_FLAGS_DEBUG_ALIASES BRLCAD_FLAGS_DEBUG_DESCRIPTION)
 
 # Build with compiler warning flags
 set(BRLCAD_ENABLE_COMPILER_WARNINGS_ALIASES

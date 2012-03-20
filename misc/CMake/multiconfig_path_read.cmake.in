@@ -1,9 +1,19 @@
 file(GLOB ALL_FILES "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/*")
 foreach(foundfile ${ALL_FILES})
-	if(NOT "${foundfile}" MATCHES "rule$")
-		get_filename_component(BUILD_TYPE "${foundfile}" NAME)
-	endif(NOT "${foundfile}" MATCHES "rule$")
+  if(NOT "${foundfile}" MATCHES "rule$")
+    get_filename_component(BUILD_TYPE "${foundfile}" NAME)
+  endif(NOT "${foundfile}" MATCHES "rule$")
 endforeach(foundfile ${ALL_FILES})
+
+# For Debug and Release builds, obey the standard BRL-CAD
+# install directory naming convention
+if("${BUILD_TYPE}" STREQUAL "Debug")
+  set(BUILD_TYPE "dev")
+endif("${BUILD_TYPE}" STREQUAL "Debug")
+if("${BUILD_TYPE}" STREQUAL "Release")
+  set(BUILD_TYPE "rel")
+endif("${BUILD_TYPE}" STREQUAL "Release")
+
 # The installation directory is compiled in, so to that extent at least a build time configuration
 # change that results in a different installation path requires a re-compile.
 set(CMAKE_INSTALL_PREFIX_CFG "@CMAKE_INSTALL_PREFIX_CFG@")

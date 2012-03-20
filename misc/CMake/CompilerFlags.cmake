@@ -168,9 +168,7 @@ endmacro()
 # our own compile flags, and don't (for example) want NDEBUG
 # if we have debugging flags enabled for a Release build.
 # At the same time, pull in any flags that have been set
-# in the environment.  The exception currently is the
-# MineSizeRel configuration, which we don't set ourselves
-# explicitly - in that case, leave defaults.
+# in the environment.  
 
 set(CMAKE_C_FLAGS "")
 set(CMAKE_CXX_FLAGS "")
@@ -186,13 +184,11 @@ if(CMAKE_BUILD_TYPE)
 endif(CMAKE_BUILD_TYPE)
 
 foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  if(NOT "${CFG_TYPE}" STREQUAL "MinSizeRel")
-    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    set(CMAKE_C_FLAGS_${CFG_TYPE_UPPER} "")
-    set(CMAKE_CXX_FLAGS_${CFG_TYPE_UPPER} "")
-    set(CMAKE_SHARED_LINKER_FLAGS_${CFG_TYPE_UPPER} "")
-    set(CMAKE_EXE_LINKER_FLAGS_${CFG_TYPE_UPPER} "")
-  endif(NOT "${CFG_TYPE}" STREQUAL "MinSizeRel")
+  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+  set(CMAKE_C_FLAGS_${CFG_TYPE_UPPER} "")
+  set(CMAKE_CXX_FLAGS_${CFG_TYPE_UPPER} "")
+  set(CMAKE_SHARED_LINKER_FLAGS_${CFG_TYPE_UPPER} "")
+  set(CMAKE_EXE_LINKER_FLAGS_${CFG_TYPE_UPPER} "")
 endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 
 set(CMAKE_C_FLAGS "$ENV{CFLAGS}")
@@ -302,7 +298,7 @@ if(BRLCAD_ENABLE_PROFILING)
 endif(BRLCAD_ENABLE_PROFILING)
 
 # Debugging flags
-if(${BRLCAD_DEBUG_BUILD} MATCHES "ON" OR CMAKE_CONFIGURATION_TYPES)
+if(BRLCAD_FLAGS_DEBUG)
   if(APPLE)
     EXEC_PROGRAM(sw_vers ARGS -productVersion OUTPUT_VARIABLE MACOSX_VERSION)
     if(${MACOSX_VERSION} VERSION_LESS "10.5")
@@ -315,21 +311,17 @@ if(${BRLCAD_DEBUG_BUILD} MATCHES "ON" OR CMAKE_CONFIGURATION_TYPES)
     BRLCAD_CHECK_C_FLAG(ggdb3 "" "" DEBUG_FLAG)
   endif(APPLE)
   BRLCAD_CHECK_C_FLAG(debug "" "" DEBUG_FLAG)
-  if(${CMAKE_BUILD_TYPE} MATCHES "Release")
-    set(debug_config_list "Debug;Release")
-  endif(${CMAKE_BUILD_TYPE} MATCHES "Release")
   if(CMAKE_CONFIGURATION_TYPES)
-    set(debug_config_list "Debug;RelWithDebInfo")
+    set(debug_config_list "${CMAKE_CONFIGURATION_TYPES}")
+  else(CMAKE_CONFIGURATION_TYPES)
+    set(debug_config_list "ALL")
   endif(CMAKE_CONFIGURATION_TYPES)
-  if(NOT debug_config_list)
-    set(debug_config_list "Debug")
-  endif(NOT debug_config_list)
   ADD_NEW_FLAG(C DEBUG_FLAG "${debug_config_list}")
   ADD_NEW_FLAG(CXX DEBUG_FLAG "${debug_config_list}")
   ADD_NEW_FLAG(SHARED_LINKER DEBUG_FLAG "${debug_config_list}")
   ADD_NEW_FLAG(EXE_LINKER DEBUG_FLAG "${debug_config_list}")
   mark_as_advanced(DEBUG_FLAG)
-endif(${BRLCAD_DEBUG_BUILD} MATCHES "ON" OR CMAKE_CONFIGURATION_TYPES)
+endif(BRLCAD_FLAGS_DEBUG)
 
 # Local Variables:
 # tab-width: 8

@@ -173,12 +173,20 @@ if(CMAKE_CONFIGURATION_TYPES)
   endforeach(flag_type ${ALL_FLAG_TYPES})
   message(" ")
   foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    message("Additional Compilation flags used when building with configuration ${CFG_TYPE}:")
-    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+    set(HAVE_EXTRA_FLAGS 0)
     foreach(flag_type ${ALL_FLAG_TYPES})
-      print_flags(${flag_type} "${CMAKE_${flag_type}_FLAGS_${CFG_TYPE_UPPER}}" ${MAX_LINE_LENGTH})
+      if(CMAKE_${flag_type}_FLAGS_${CFG_TYPE_UPPER})
+	set(HAVE_EXTRA_FLAGS 1)
+      endif(CMAKE_${flag_type}_FLAGS_${CFG_TYPE_UPPER})
     endforeach(flag_type ${ALL_FLAG_TYPES})
-    message(" ")
+    if(HAVE_EXTRA_FLAGS)
+      message("Additional Compilation flags used when building with configuration ${CFG_TYPE}:")
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      foreach(flag_type ${ALL_FLAG_TYPES})
+	print_flags(${flag_type} "${CMAKE_${flag_type}_FLAGS_${CFG_TYPE_UPPER}}" ${MAX_LINE_LENGTH})
+      endforeach(flag_type ${ALL_FLAG_TYPES})
+      message(" ")
+    endif(HAVE_EXTRA_FLAGS)
   endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 else(CMAKE_CONFIGURATION_TYPES)
   if(CMAKE_BUILD_TYPE)
@@ -221,7 +229,7 @@ set(BRLCAD_ENABLE_RTSERVER_LABEL "librtserver JDK support (optional) ")
 set(BRLCAD_ENABLE_RUNTIME_DEBUG_LABEL "Enable run-time debugging (optional) ")
 set(BRLCAD_ARCH_BITSETTING_LABEL "Build 32/64-bit release ")
 set(BRLCAD_OPTIMIZED_BUILD_LABEL "Build optimized release ")
-set(BRLCAD_DEBUG_BUILD_LABEL "Build debuggable release")
+set(BRLCAD_FLAGS_DEBUG_LABEL "Build debuggable release")
 set(BRLCAD_ENABLE_PROFILING_LABEL "Build profile release ")
 set(BRLCAD_ENABLE_SMP_LABEL "Build SMP-capable release ")
 set(BUILD_STATIC_LIBS_LABEL "Build static libraries ")
@@ -242,7 +250,7 @@ set(FEATURE_REPORT_ITEMS
 
 set(OTHER_REPORT_ITEMS
     BRLCAD_ARCH_BITSETTING BRLCAD_OPTIMIZED_BUILD 
-    BRLCAD_DEBUG_BUILD BRLCAD_ENABLE_PROFILING
+    BRLCAD_FLAGS_DEBUG BRLCAD_ENABLE_PROFILING
     BRLCAD_ENABLE_SMP BUILD_STATIC_LIBS BUILD_SHARED_LIBS 
     BRLCAD_ENABLE_COMPILER_WARNINGS BRLCAD_ENABLE_VERBOSE_PROGRESS
     BRLCAD_INSTALL_EXAMPLE_GEOMETRY BRLCAD_DOCBOOK_BUILD)
