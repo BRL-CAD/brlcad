@@ -371,6 +371,22 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	return result;
     }
 
+    /* bu_brlcad_root/BRLCAD_DATA_SUBPATH path */
+#ifdef BRLCAD_DATA_SUBPATH
+    snprintf(path, MAXPATHLEN, "%s", BRLCAD_DATA_SUBPATH);
+    lhs = bu_brlcad_root(path, 1);
+    if (lhs) {
+	snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_ROOT common data path  [%s]\n", path);
+	if (find_path(result, lhs, rhs, &searched, where)) {
+	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+		bu_log("Found: BRLCAD_ROOT common data path [%s]\n", result);
+	    }
+	    bu_vls_free(&searched);
+	    return result;
+	}
+    }
+#endif
+
     /* bu_brlcad_root/share/brlcad/VERSION path */
     snprintf(path, (size_t)MAXPATHLEN, "share/brlcad/%s", brlcad_version());
     lhs = bu_brlcad_root(path, 1);
