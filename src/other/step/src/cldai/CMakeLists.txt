@@ -1,24 +1,30 @@
 
 set(LIBSTEPDAI_SRCS
     sdaiApplication_instance_set.cc
-    sdaiSession_instance.cc
-    sdaiObject.cc
+    sdaiBinary.cc
     sdaiDaObject.cc
     sdaiEntity_extent.cc
     sdaiEntity_extent_set.cc
+    sdaiEnum.cc
     sdaiModel_contents.cc
     sdaiModel_contents_list.cc
+    sdaiObject.cc
+    sdaiSession_instance.cc
+    sdaiString.cc
 )
 
 SET(LIBSTEPDAI_PRIVATE_HDRS
     sdaiApplication_instance_set.h
+    sdaiBinary.h
     sdaiDaObject.h
     sdaiEntity_extent.h
     sdaiEntity_extent_set.h
+    sdaiEnum.h
     sdaiModel_contents.h
     sdaiModel_contents_list.h
     sdaiObject.h
     sdaiSession_instance.h
+    sdaiString.h
 )
 
 include_directories(
@@ -31,4 +37,4 @@ add_definitions(
     -DHAVE_CONFIG_H
 )
 
-SCL_ADDLIB(stepdai "${LIBSTEPDAI_SRCS}" "steputils stepcore")
+SCL_ADDLIB(stepdai "${LIBSTEPDAI_SRCS}" "steputils")

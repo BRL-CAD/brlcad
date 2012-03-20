@@ -44,10 +44,7 @@ src/clstepcore/notes.txt
 src/clstepcore/read_func.h
 src/clstepcore/sdai.h
 src/clstepcore/sdaiApplication_instance.h
-src/clstepcore/sdaiBinary.h
-src/clstepcore/sdaiEnum.h
 src/clstepcore/sdaiSelect.h
-src/clstepcore/sdaiString.h
 src/cleditor/README
 src/cleditor/STEPfile.h
 src/cleditor/cmdmgr.h
@@ -62,13 +59,16 @@ src/cleditor/needFunc.h
 src/cleditor/s_HEADER_SCHEMA.h
 src/cleditor/seeinfodefault.h
 src/cldai/sdaiApplication_instance_set.h
+src/cldai/sdaiBinary.h
 src/cldai/sdaiDaObject.h
 src/cldai/sdaiEntity_extent.h
 src/cldai/sdaiEntity_extent_set.h
+src/cldai/sdaiEnum.h
 src/cldai/sdaiModel_contents.h
 src/cldai/sdaiModel_contents_list.h
 src/cldai/sdaiObject.h
 src/cldai/sdaiSession_instance.h
+src/cldai/sdaiString.h
 src/clutils/README
 src/clutils/Str.h
 src/clutils/dirobj.h

@@ -13,10 +13,7 @@ libstepcore_nil_la_SOURCES = \
 	STEPattribute.cc \
 	STEPattribute.inline.cc \
 	sdai.cc \
-	sdaiEnum.cc \
-	sdaiString.cc \
 	sdaiSelect.cc \
-	sdaiBinary.cc \
 	STEPaggregate.cc \
 	STEPundefined.cc \
 	STEPattributeList.cc \
@@ -45,11 +42,8 @@ noinst_HEADERS = \
 	read_func.h \
 	Registry.h \
 	sdaiApplication_instance.h \
-	sdaiBinary.h \
-	sdaiEnum.h \
 	sdai.h \
 	sdaiSelect.h \
-	sdaiString.h \
 	SingleLinkList.h \
 	STEPaggregate.h \
 	STEPattribute.h \
