@@ -24,7 +24,9 @@ INCLUDE_DIRECTORIES(
 
 SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/CMake")
 find_package(LEMON)
-load_macros(LEMON_Utils)
+if(NOT COMMAND LEMON_TARGET)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/LEMON_Util.cmake)
+endif(NOT COMMAND LEMON_TARGET)
 
 LEMON_TARGET(re2cParse parser.yy parser.cc parser_tokens.h)
 

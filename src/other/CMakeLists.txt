@@ -128,7 +128,11 @@ IF("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED" OR "${BRLCAD_LEMON}" MATCHES "BUN
 ENDIF("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED" OR "${BRLCAD_LEMON}" MATCHES "BUNDLED")
 THIRD_PARTY_EXECUTABLE(lemon lemon "" lemon_ALIASES lemon_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/lemon/Makefile)
-load_macros(LEMON_Util)
+# Unless some parent logic has already defined the macro, we need to
+# load LEMON_Util to be able to define LEMON targets.
+if(NOT COMMAND LEMON_TARGET)
+  include(${BRLCAD_CMAKE_DIR}/LEMON_Util.cmake)
+endif(NOT COMMAND LEMON_TARGET)
 
 SET(re2c_ALIASES ENABLE_RE2C)
 SET(re2c_DESCRIPTION "
@@ -139,7 +143,11 @@ BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY_EXECUTABLE(re2c re2c "" re2c_ALIASES re2c_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/re2c/Makefile)
-INCLUDE(${BRLCAD_SOURCE_DIR}/misc/CMake/RE2C_Util.cmake)
+# Unless some parent logic has already defined the macro, we need to
+# load RE2C_Util to be able to define RE2C targets.
+if(NOT COMMAND RE2C_TARGET)
+  INCLUDE(${BRLCAD_SOURCE_DIR}/misc/CMake/RE2C_Util.cmake)
+endif(NOT COMMAND RE2C_TARGET)
 
 # Perplex is set up as a src/other sub-build, but at this time it is
 # entirely a BRL-CAD effort and not distributed or maintained as its
@@ -152,7 +160,11 @@ toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
 BRLCAD_BUNDLED_LIBS is also AUTO.  perplex requires a working re2c.
 ")
 THIRD_PARTY_EXECUTABLE(perplex perplex "" perplex_ALIASES perplex_DESCRIPTION	NOSYS)
-INCLUDE(${BRLCAD_SOURCE_DIR}/misc/CMake/PERPLEX_Util.cmake)
+# Unless some parent logic has already defined the macro, we need to
+# load PERPLEX_Util to be able to define PERPLEX targets.
+if(NOT COMMAND PERPLEX_TARGET)
+  include(${BRLCAD_SOURCE_DIR}/misc/CMake/PERPLEX_Util.cmake)
+endif(NOT COMMAND PERPLEX_TARGET)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/perplex/Makefile)
 
 # libxml and libxslt tools for DocBook processing.  We build just

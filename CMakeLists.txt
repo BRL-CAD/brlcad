@@ -448,11 +448,6 @@ else(IS_SUBBUILD)
   set(CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR};${CMAKE_MODULE_PATH}")
 endif(IS_SUBBUILD)
 
-# There are collections of macro definitions in misc/CMake that
-# don't make sense to load with find_package - define a convenience
-# macro to do what we want in such cases.
-include(${BRLCAD_CMAKE_DIR}/LoadMacros.cmake)
-
 # Load utility macros that will be used throughout the BRL-CAD
 # build logic
 include(${BRLCAD_CMAKE_DIR}/BRLCAD_Options.cmake)
