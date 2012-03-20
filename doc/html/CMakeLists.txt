@@ -2,7 +2,7 @@ set(toplevel_HTML
   bookmarks.html
   toc.html
   )
-BRLCAD_ADDDATA(toplevel_HTML html)
+BRLCAD_ADDDATA(toplevel_HTML ${DOC_DIR}/html)
 
 set(anim_tutorial_HTML
   manuals/Anim_Tutorial/Lee_tux.gif
@@ -47,7 +47,7 @@ set(anim_tutorial_HTML
   manuals/Anim_Tutorial/v_eqn1.gif
   manuals/Anim_Tutorial/v_eqn2.gif
   )
-BRLCAD_ADDDATA(anim_tutorial_HTML html/manuals/Anim_Tutorial)
+BRLCAD_ADDDATA(anim_tutorial_HTML ${DOC_DIR}/html/manuals/Anim_Tutorial)
 
 set(cadwidgets_HTML
   manuals/cadwidgets/Command.html
@@ -64,14 +64,14 @@ set(cadwidgets_HTML
   manuals/cadwidgets/index.html
   manuals/cadwidgets/skeleton.html
   )
-BRLCAD_ADDDATA(cadwidgets_HTML html/manuals/cadwidgets)
+BRLCAD_ADDDATA(cadwidgets_HTML ${DOC_DIR}/html/manuals/cadwidgets)
 
 set(libbu_HTML
   manuals/libbu/cmdhist_obj.html
   manuals/libbu/contents.html
   manuals/libbu/index.html
   )
-BRLCAD_ADDDATA(libbu_HTML html/manuals/libbu)
+BRLCAD_ADDDATA(libbu_HTML ${DOC_DIR}/html/manuals/libbu)
 
 set(libdm_HTML
   manuals/libdm/api.html
@@ -81,7 +81,7 @@ set(libdm_HTML
   manuals/libdm/preface.html
   manuals/libdm/tcl.html
   )
-BRLCAD_ADDDATA(libdm_HTML html/manuals/libdm)
+BRLCAD_ADDDATA(libdm_HTML ${DOC_DIR}/html/manuals/libdm)
 
 set(librt_HTML
   manuals/librt/contents.html
@@ -90,7 +90,7 @@ set(librt_HTML
   manuals/librt/view_obj.html
   manuals/librt/wdb_obj.html
   )
-BRLCAD_ADDDATA(librt_HTML html/manuals/librt)
+BRLCAD_ADDDATA(librt_HTML ${DOC_DIR}/html/manuals/librt)
 
 set(manuals_HTML
   manuals/Install.html
@@ -101,7 +101,7 @@ set(manuals_HTML
   manuals/index.html
   manuals/small-eagleCAD.gif
   )
-BRLCAD_ADDDATA(manuals_HTML html/manuals)
+BRLCAD_ADDDATA(manuals_HTML ${DOC_DIR}/html/manuals)
 
 set(manuals_mged_animmate_HTML
   manuals/mged/animmate/anim_cascade.html
@@ -169,7 +169,7 @@ set(manuals_mged_animmate_HTML
   manuals/mged/animmate/viewget.html
   manuals/mged/animmate/vscript_doc.html
   )
-BRLCAD_ADDDATA(manuals_mged_animmate_HTML html/manuals/mged/animmate)
+BRLCAD_ADDDATA(manuals_mged_animmate_HTML ${DOC_DIR}/html/manuals/mged/animmate)
 
 set(manuals_mged_HTML
   manuals/mged/az_el.gif
@@ -234,9 +234,9 @@ set(manuals_mged_HTML
   manuals/mged/skipped
   manuals/mged/tex-html.tcl
   )
-BRLCAD_ADDDATA(manuals_mged_HTML html/manuals/mged)
+BRLCAD_ADDDATA(manuals_mged_HTML ${DOC_DIR}/html/manuals/mged)
 
-BRLCAD_ADDFILE(manuals/shaders/camo.html html/manuals/shaders)
+BRLCAD_ADDFILE(manuals/shaders/camo.html ${DOC_DIR}/html/manuals/shaders)
 
 set(relnotes_HTML
   ReleaseNotes/email2.0.html
@@ -247,7 +247,7 @@ set(relnotes_HTML
   ReleaseNotes/email5.0.html
   ReleaseNotes/index.html
   )
-BRLCAD_ADDDATA(relnotes_HTML html/ReleaseNotes)
+BRLCAD_ADDDATA(relnotes_HTML ${DOC_DIR}/html/ReleaseNotes)
 
 set(relnotes_5_HTML
   ReleaseNotes/Rel5.0/deprecated.html
@@ -255,7 +255,7 @@ set(relnotes_5_HTML
   ReleaseNotes/Rel5.0/new_cmds.html
   ReleaseNotes/Rel5.0/new_libs.html
   )
-BRLCAD_ADDDATA(relnotes_5_HTML html/ReleaseNotes/Rel5.0)
+BRLCAD_ADDDATA(relnotes_5_HTML ${DOC_DIR}/html/ReleaseNotes/Rel5.0)
 
 set(relnotes_5_summary_HTML
   ReleaseNotes/Rel5.0/Summary/activem.gif
@@ -331,9 +331,9 @@ set(relnotes_5_summary_HTML
   ReleaseNotes/Rel5.0/Summary/tsld018.htm
   ReleaseNotes/Rel5.0/Summary/tsld019.htm
   )
-BRLCAD_ADDDATA(relnotes_5_summary_HTML html/ReleaseNotes/Rel5.0/Summary)
+BRLCAD_ADDDATA(relnotes_5_summary_HTML ${DOC_DIR}/html/ReleaseNotes/Rel5.0/Summary)
 
-BRLCAD_ADDFILE(ReleaseNotes/Rel6.0/index.html html/ReleaseNotes/Rel6.0)
+BRLCAD_ADDFILE(ReleaseNotes/Rel6.0/index.html ${DOC_DIR}/html/ReleaseNotes/Rel6.0)
 
 set(html_ignore_files
   ReleaseNotes/Rel6.0

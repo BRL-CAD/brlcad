@@ -1,4 +1,3 @@
-
 if(BRLCAD_EXTRADOCS)
   add_subdirectory(docbook)
 else(BRLCAD_EXTRADOCS)
@@ -36,6 +35,10 @@ set(documentation_DATA
   irprep.tr
   mater.txt
   matrix.txt
+  )
+BRLCAD_ADDDATA(documentation_DATA ${DOC_DIR})
+
+set(documentation_mged_old_DATA
   mged/a.tex
   mged/adc.ps
   mged/all.tex
@@ -211,7 +214,7 @@ set(documentation_DATA
   tool_categories.txt
   ecosystem.dot
   )
-BRLCAD_ADDDATA(documentation_DATA doc)
+BRLCAD_ADDDATA(documentation_mged_old_DATA ${DOC_DIR}/mged_old)
 
 set(doc_MANS
   bw.5
@@ -222,6 +225,6 @@ set(doc_MANS
 ADD_MAN_PAGES(5 doc_MANS)
 
 CONFIGURE_file(pad_file.xml.in ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml DESTINATION ${DATA_DIR}/doc)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml DESTINATION ${DATA_DIR}/${DOC_DIR})
 
 CMAKEFILES(Makefile.am pad_file.xml.in STARTERS)

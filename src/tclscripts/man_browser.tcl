@@ -65,7 +65,7 @@ package provide ManBrowser 1.0
 #
 ::itcl::configbody ManBrowser::path {
     if {![info exists path] || ![file isdirectory $path]} {
-	set path [file join [bu_brlcad_data "html"] mann en]
+	set path [file join [bu_brlcad_data "doc/html"] mann en]
     }
 }
 

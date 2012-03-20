@@ -311,7 +311,7 @@ endif(NOT MAN_DIR)
 
 # The location in which to install BRL-CAD documentation files
 if(NOT DOC_DIR)
-  set(DOC_DIR ${DATA_DIR}/doc)
+  set(DOC_DIR doc)
 endif(NOT DOC_DIR)
 
 

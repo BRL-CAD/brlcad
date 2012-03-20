@@ -13,7 +13,7 @@ set(docbook_articles_IT_IMAGES
   images/brlcad-overview-data-flow.png
   images/sflogo.png
   )
-BRLCAD_ADDDATA(docbook_articles_IT_IMAGES html/articles/it/images)
+BRLCAD_ADDDATA(docbook_articles_IT_IMAGES ${DOC_DIR}/html/articles/it/images)
 
 DOCBOOK_TO_HTML(article docbook_articles_IT html/articles/it docbook_articles_IT_IMAGES_cp)
 

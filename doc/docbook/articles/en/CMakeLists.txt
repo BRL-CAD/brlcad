@@ -102,7 +102,7 @@ set(docbook_articles_EN_IMAGES
   images/tire_fig13.png
   images/tire_fig14.png
   )
-BRLCAD_ADDDATA(docbook_articles_EN_IMAGES html/articles/en/images)
+BRLCAD_ADDDATA(docbook_articles_EN_IMAGES ${DOC_DIR}/html/articles/en/images)
 
 DOCBOOK_TO_HTML(article docbook_articles_EN html/articles/en docbook_articles_EN_IMAGES_cp)
 

@@ -3,7 +3,6 @@ set(doc_legal
   bdl.txt
   lgpl.txt
   )
-
-install(FILES ${doc_legal} DESTINATION ${DATA_DIR}/doc/legal)
+BRLCAD_ADDDATA(doc_legal ${DOC_DIR}/legal)
 
 CMAKEFILES(Makefile.am bsd.txt bdl.txt lgpl.txt)

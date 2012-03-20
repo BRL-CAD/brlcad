@@ -2142,7 +2142,7 @@ proc Archer::get_html_data {helpfile} {
 
 proc Archer::get_html_man_data {cmdname} {
     global archer_help_data
-    set help_fd [open [file join [bu_brlcad_data "html"] mann en $cmdname.html]]
+    set help_fd [open [file join [bu_brlcad_data "doc/html"] mann en $cmdname.html]]
     set archer_help_data [read $help_fd]
     close $help_fd
 }
@@ -2165,7 +2165,7 @@ proc Archer::html_help_display {me} {
     if {[catch {regexp {(home://blank)(.+)} $origurl match prefix tempurl} msg]} {
 	tk_messageBox -message "html_help_display: regexp failed, msg - $msg"
     }
-    set url [bu_brlcad_data "html"]
+    set url [bu_brlcad_data "doc/html"]
     append url $tempurl
     get_html_data $url
     $htmlviewer reset
@@ -2174,7 +2174,7 @@ proc Archer::html_help_display {me} {
 
 
 proc Archer::mkHelpTkImage {file} {
-    set fullpath [file join [bu_brlcad_data "html"] manuals mged $file]
+    set fullpath [file join [bu_brlcad_data "doc/html"] manuals mged $file]
     set name [image create photo -file $fullpath]
     return [list $name [list image delete $name]]
 }
@@ -2218,8 +2218,8 @@ proc title_node_handler {node} {
     set tlparent [$itk_component(archerHelp) childsite]
 
 
-    if {[file exists [file join [bu_brlcad_data "html"] books en BRL-CAD_Tutorial_Series-VolumeI.html]] &&
-        [file exists [file join [bu_brlcad_data "html"] toc.html]] } {
+    if {[file exists [file join [bu_brlcad_data "doc/html"] books en BRL-CAD_Tutorial_Series-VolumeI.html]] &&
+        [file exists [file join [bu_brlcad_data "doc/html"] toc.html]] } {
 
 	# Table of Contents
 	itk_component add archerHelpToC {
@@ -2232,7 +2232,7 @@ proc title_node_handler {node} {
 	set docstoclist [::hv3::hv3 $docstoc.htmlview -width 250 -requestcmd Archer::html_help_display]
 	set docstochtml [$docstoclist html]
 	$docstochtml configure -parsemode html 
-	set help_fd [lindex [list [file join [bu_brlcad_data "html"] toc.html]] 0]
+	set help_fd [lindex [list [file join [bu_brlcad_data "doc/html"] toc.html]] 0]
 	get_html_data $help_fd
 	$docstochtml parse $archer_help_data
 
@@ -2260,7 +2260,7 @@ proc title_node_handler {node} {
 	set htmlviewer [$hv3htmlviewer html]
 	$htmlviewer configure -parsemode html
 	$htmlviewer configure -imagecmd Archer::mkHelpTkImage
-	set help_fd [lindex [list [file join [bu_brlcad_data "html"] books en BRL-CAD_Tutorial_Series-VolumeI.html]] 0]
+	set help_fd [lindex [list [file join [bu_brlcad_data "doc/html"] books en BRL-CAD_Tutorial_Series-VolumeI.html]] 0]
 	get_html_data $help_fd
 	$htmlviewer parse $archer_help_data
 

@@ -52,9 +52,8 @@ message("\n")
 set(CMAKE_INSTALL_PREFIX_LABEL "Prefix")
 set(BIN_DIR_LABEL "Binaries")
 set(MAN_DIR_LABEL "Manual pages")
-set(CONF_DIR_LABEL "Configration files")
 set(DATA_DIR_LABEL "Data resource files")
-set(PATH_LABELS CMAKE_INSTALL_PREFIX BIN_DIR MAN_DIR CONF_DIR DATA_DIR)
+set(PATH_LABELS CMAKE_INSTALL_PREFIX BIN_DIR MAN_DIR DATA_DIR)
 
 # Initialize length var
 set(PATH_LABEL_LENGTH 0)
