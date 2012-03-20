@@ -1688,6 +1688,23 @@ if(NOT IS_SUBBUILD)
   set(BUILD_DELTA_END "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_END")
   configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/builddelta_start.c.in
     ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c)
+  # The install instructions at the end of the message are tool specific - key
+  # off of generators or build tools.
+  if("${CMAKE_GENERATOR}" MATCHES "Make")
+    set(INSTALL_LINE "Run 'make install' to begin installation into ${CMAKE_INSTALL_PREFIX}")
+    set(BENCHMARK_LINE "Run 'make benchmark' to run the BRL-CAD Benchmark Suite")
+  endif("${CMAKE_GENERATOR}" MATCHES "Make")
+  if("${CMAKE_GENERATOR}" MATCHES "Xcode")
+    set(INSTALL_LINE "Run 'xcodebuild -target install' to begin installation into ${CMAKE_INSTALL_PREFIX}")
+    set(BENCHMARK_LINE "Run 'xcodebuild -target benchmark' to run the BRL-CAD Benchmark Suite")
+  endif("${CMAKE_GENERATOR}" MATCHES "Xcode")
+  if(MSVC)
+    # slightly misuse the lines for MSVC, since we don't usually do the
+    # install/benchmark routine there. (Benchmarks aren't currently supported
+    # in MSVC anyway.)
+    set(INSTALL_LINE "To build, launch Visual Studio and open ${CMAKE_BINARY_DIR}/BRLCAD.sln")
+    set(BENCHMARK_LINE "Build the ALL_BUILD target.  To create an NSIS installer, build the PACKAGE target")
+  endif(MSVC)
   configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/builddelta_end.c.in
     ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c)
   add_executable(printtimestamp ${BRLCAD_CMAKE_DIR}/test_srcs/print_timestamp.c)
