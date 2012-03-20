@@ -1,5 +1,4 @@
 SET(step_ignore_files
-Makefile.am
 AUTHORS
 CMake
 COPYING
@@ -9,11 +8,9 @@ NEWS
 README
 TODO
 config
-configure.ac
 data
 doc
 include
-m4
 misc
 src
 src/express/Changes
