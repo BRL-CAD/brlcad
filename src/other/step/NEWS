@@ -1,6 +1,109 @@
+STEP Class Library  ------  http://github.com/mpictor/StepClassLibrary
+************************************************************************
+Release 0.5 (Feb 23, 2012)
+
+New since v0.4:
+* MSVC and Embarcadero support, along with many warning fixes
+* Experimental Python support
+* Now handles most features of EXPRESS - all included schemas,
+  with the exception of AP209 CD, are parsed without error. Enums are
+  now in their own dictionary. Allow indexing on aggregates, generics,
+  and binaries. 
+* Changes to fedex_plus that improve the generated c++ - use a
+  namespace, break up large static strings, make EXPRESS multiple
+  inheritance work by not printing multiple copies of inherited members.
+  All schemas now compile without error, but there are numerous warnings.
+* Exchange files: handle all comments, fill in some missing attributes.
+* More cleanup of source code, more documentation in scl/doc
+* Special thanks to @davyw and @tpaviot for their large contributions
+  (MSVC and Python, respectively)
+************************************************************************
+Release 0.4 (Nov 13, 2011)
+
+New since v0.3:
+* Improve p21read performance by ~30%
+* Improve fedex_plus performance by ~4300% (!)
+* A variable defined in a LOCAL is not required to have a type label
+  (affected ap242,210e3,209)
+* Enums and entities are allowed to have the same names
+  (affected ap242,210e3,209)
+* Remove the SCLP23 macro
+http://github.com/mpictor/StepClassLibrary/wiki/changelog-v0.4
+************************************************************************
+
+Release 0.3 (Oct 29, 2011)
+
+What's new since v0.2?
+
+* Start using CTest
+* Add a number of schemas, update IFC2X4 to RC3, update AP235 to TC
+* Update the exchange file header schema to edition two; drop support
+  for N279 files
+* In p21read, check that the schema name for the file and library match
+* Fix bug with exchange files that contain strings ending in 'S'
+************************************************************************
+
+Release 0.2 (Oct 1, 2011)
+
+What's new since v0.1?
+
+* Retrieve aggregate type from the underlying type (issue #4)
+* Fix aggregate select types naming convention in fedex_plus (issue #59)
+* Fix several segfaults and double free's in p21read (issue #63)
+* Fix several file read/write bugs in p21read, including
+   *  don't write '$' for empty string
+   *  'abc\S\'def' is a valid string (issue #57)
+* Improve p21read execution time
+* Cleanup many files and delete src/clivfasd (but much more to do!) (issue #66)
+* Add BNF files, schemas, and CAX-IF Part 21 files
+
+For a detailed list of changes, see
+https://github.com/mpictor/StepClassLibrary/wiki/changelog-v0.2
+
+For a list of closed issues, see
+https://github.com/mpictor/StepClassLibrary/issues?state=closed&milestone=2
+
+************************************************************************
+
+Release 0.1 (Sept 2011)
+
+What's new since the SCL 3.2 release in 1998?
+===========
+* CMake build system replaces the configure script, Makefiles, and bash
+  scripts that were used by NIST. CMake is far easier to maintain and is
+  cross-platform.
+* Support for formats that are no longer in the STEP standard
+  (ObjectStore, CORBA) has been disabled.
+* Fix some bugs that were found when testing SCL with modern schemas,
+  including spaces inserted into function names and use of outdated
+  functions
+* Bring SCL closer to alignment with modern coding standards - replace
+  String class with std::string, fix all GCC warnings
+* Builds on Linux, OSX, and Windows; requires mingw on Windows.
+* Add debugging option -d 9 -l nnn -u nnn to fedex_plus. This limits
+  parser debug output to a specified range of lines in the schema.
+
+For a detailed list of changes, see
+https://github.com/mpictor/StepClassLibrary/wiki/changelog-v0.1
+
+For a list of closed issues, see
+https://github.com/mpictor/StepClassLibrary/issues?state=closed&milestone=1
+
+Pre-BRL-CAD changes:
+* Patches from http://www.statik.tu-cottbus.de/fileadmin/project_dth/scl/
+            Jan 2005 - Mar 2006
+* STEP Class Library Release 3.2 February 1998
+* STEP Class Library Release 3.1 October 1997
+* STEP Class Library and Data Probe release 2.1 June 1995
+
+
+************************************************************************
+************************************************************************
+                --Original NEWS file follows--
+************************************************************************
 ************************************************************************
  Updates from http://www.statik.tu-cottbus.de/fileadmin/project_dth/scl/
-			Jan 2005 - Mar 2006
+                        Jan 2005 - Mar 2006
 
 The original SCL source distribution could not be cleanly un-archived 
 on case-insensitive file systems like Windows' NTFS because of a name 
@@ -29,8 +132,8 @@ accepted.
 
 ************************************************************************
 
-	   What's New in the STEP Class Library Release 3.2
-			     February 1998
+           What's New in the STEP Class Library Release 3.2
+                             February 1998
 
 
 mkProbe now prints a usage message showing allowable command line
@@ -122,8 +225,8 @@ comment.
 
 **********************************************************************
 
-	   What's New in the STEP Class Library Release 3.1
-			     October 1997
+           What's New in the STEP Class Library Release 3.1
+                             October 1997
 
 The following is a list of enhancements which are found in the version
 3.1 release of the SCL and Data Probe.  It assumes you are familiar
