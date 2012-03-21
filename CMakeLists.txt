@@ -678,33 +678,46 @@ endif(NOT CMAKE_CONFIGURATION_TYPES)
 # we take care of here:
 
 set(CONFIG_H_FILE "${BRLCAD_BINARY_DIR}/include/brlcad_config.h.in")
-file(WRITE ${CONFIG_H_FILE} "/**** Define statements for CMake ****/\n")
-file(APPEND ${CONFIG_H_FILE} "#ifndef __CONFIG_H__\n")
-file(APPEND ${CONFIG_H_FILE} "#define __CONFIG_H__\n")
+set(CMAKE_CURRENT_PROJECT BRLCAD)
+
+define_property(GLOBAL PROPERTY BRLCAD_CONFIG_H_CONTENTS BRIEF_DOCS "config.h.in contents" FULL_DOCS "config.h.in contents for BRL-CAD project")
+if(NOT COMMAND CONFIG_H_APPEND)
+  macro(CONFIG_H_APPEND PROJECT_NAME NEW_CONTENTS)
+    if(PROJECT_NAME)
+      get_property(${PROJECT_NAME}_CONFIG_H_CONTENTS GLOBAL PROPERTY ${PROJECT_NAME}_CONFIG_H_CONTENTS)
+      set(${PROJECT_NAME}_CONFIG_H_FILE_CONTENTS "${${PROJECT_NAME}_CONFIG_H_CONTENTS}${NEW_CONTENTS}")
+      set_property(GLOBAL PROPERTY ${PROJECT_NAME}_CONFIG_H_CONTENTS "${${PROJECT_NAME}_CONFIG_H_FILE_CONTENTS}")
+    endif(PROJECT_NAME)
+  endmacro(CONFIG_H_APPEND NEW_CONTENTS)
+endif(NOT COMMAND CONFIG_H_APPEND)
+
+CONFIG_H_APPEND(BRLCAD "/**** Define statements for CMake ****/\n")
+CONFIG_H_APPEND(BRLCAD "#ifndef __CONFIG_H__\n")
+CONFIG_H_APPEND(BRLCAD "#define __CONFIG_H__\n")
 
 # If we're building on Windows, start off with the config_win.h file
 if(WIN32)
-  file(APPEND ${CONFIG_H_FILE} "#include \"config_win_cmake.h\"\n")
+  CONFIG_H_APPEND(BRLCAD "#include \"config_win_cmake.h\"\n")
 endif(WIN32)
 
 # Set up some of the define statements for path information and other basics
-file(APPEND ${CONFIG_H_FILE} "#define PACKAGE \"brlcad\"\n")
-file(APPEND ${CONFIG_H_FILE} "#define PACKAGE_BUGREPORT \"http://brlcad.org\"\n")
-file(APPEND ${CONFIG_H_FILE} "#define PACKAGE_NAME \"BRL-CAD\"\n")
-file(APPEND ${CONFIG_H_FILE} "#define PACKAGE_STRING \"BRL-CAD ${BRLCAD_VERSION}\"\n")
-file(APPEND ${CONFIG_H_FILE} "#define PACKAGE_TARNAME \"brlcad\"\n")
-file(APPEND ${CONFIG_H_FILE} "#define BRLCAD_DATA \"${CMAKE_INSTALL_PREFIX}/${DATA_DIR}\"\n")
-file(APPEND ${CONFIG_H_FILE} "#define BRLCAD_DATA_SUBPATH \"${DATA_DIR}\"\n")
-file(APPEND ${CONFIG_H_FILE} "#define BRLCAD_ROOT \"${CMAKE_INSTALL_PREFIX}\"\n")
-file(APPEND ${CONFIG_H_FILE} "#define PACKAGE_VERSION \"${BRLCAD_VERSION}\"\n")
-file(APPEND ${CONFIG_H_FILE} "#define VERSION \"${BRLCAD_VERSION}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define PACKAGE \"brlcad\"\n")
+CONFIG_H_APPEND(BRLCAD "#define PACKAGE_BUGREPORT \"http://brlcad.org\"\n")
+CONFIG_H_APPEND(BRLCAD "#define PACKAGE_NAME \"BRL-CAD\"\n")
+CONFIG_H_APPEND(BRLCAD "#define PACKAGE_STRING \"BRL-CAD ${BRLCAD_VERSION}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define PACKAGE_TARNAME \"brlcad\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DATA \"${CMAKE_INSTALL_PREFIX}/${DATA_DIR}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DATA_SUBPATH \"${DATA_DIR}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_ROOT \"${CMAKE_INSTALL_PREFIX}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define PACKAGE_VERSION \"${BRLCAD_VERSION}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define VERSION \"${BRLCAD_VERSION}\"\n")
 
 # A variety of debugging messages in the code key off of the DEBUG
 # definition - unlike the build flags, this is turned on and off based
 # on the build type.  A "Release" build with debugging compiler flags
 # will still not print debugging messages conditionalized on DEBUG.
 if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-  file(APPEND ${CONFIG_H_FILE} "#define DEBUG 1\n")
+  CONFIG_H_APPEND(BRLCAD "#define DEBUG 1\n")
 endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 
 #----------------------------------------------------------------------
@@ -759,7 +772,7 @@ if(${BRLCAD_WORD_SIZE} MATCHES "AUTO")
 else(${BRLCAD_WORD_SIZE} MATCHES "AUTO")
   set(CMAKE_WORD_SIZE "${BRLCAD_WORD_SIZE}")
 endif(${BRLCAD_WORD_SIZE} MATCHES "AUTO")
-file(APPEND  ${CONFIG_H_FILE} "#define SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}\n")
+CONFIG_H_APPEND(BRLCAD "#define SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}\n")
 
 # Enable/disable 64-bit build settings for MSVC, which is apparently
 # determined at the CMake generator level - need to override other
@@ -1121,14 +1134,14 @@ if(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
   message("in the inevitable event of a user encountering a bug.")
   message("You have been warned.  Proceed at your own risk.")
   message("{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{")
-  file(APPEND  ${CONFIG_H_FILE} "/*Define to not do anything for macros that only bomb on a fatal error. */\n")
-  file(APPEND  ${CONFIG_H_FILE} "#define NO_BOMBING_MACROS 1\n")
-  file(APPEND  ${CONFIG_H_FILE} "/*Define to not perform magic number checking */\n")
-  file(APPEND  ${CONFIG_H_FILE} "#define NO_MAGIC_CHECKING 1\n")
-  file(APPEND  ${CONFIG_H_FILE} "/*Define to not check for divide by zero during ray shots */\n")
-  file(APPEND  ${CONFIG_H_FILE} "#define NO_BADRAY_CHECKING 1\n")
-  file(APPEND  ${CONFIG_H_FILE} "/*Define to not provide run-time debug facilities via rt_g.debug */\n")
-  file(APPEND  ${CONFIG_H_FILE} "#define NO_DEBUG_CHECKING 1\n")
+  CONFIG_H_APPEND(BRLCAD "/*Define to not do anything for macros that only bomb on a fatal error. */\n")
+  CONFIG_H_APPEND(BRLCAD "#define NO_BOMBING_MACROS 1\n")
+  CONFIG_H_APPEND(BRLCAD "/*Define to not perform magic number checking */\n")
+  CONFIG_H_APPEND(BRLCAD "#define NO_MAGIC_CHECKING 1\n")
+  CONFIG_H_APPEND(BRLCAD "/*Define to not check for divide by zero during ray shots */\n")
+  CONFIG_H_APPEND(BRLCAD "#define NO_BADRAY_CHECKING 1\n")
+  CONFIG_H_APPEND(BRLCAD "/*Define to not provide run-time debug facilities via rt_g.debug */\n")
+  CONFIG_H_APPEND(BRLCAD "#define NO_DEBUG_CHECKING 1\n")
 endif(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
 
 # Enable debug flags during compilation - we always want to use these
@@ -1173,7 +1186,7 @@ mode.
 BRLCAD_OPTION(ON BRLCAD_ENABLE_STRICT BRLCAD_ENABLE_STRICT_ALIASES BRLCAD_ENABLE_STRICT_DESCRIPTION)
 if(BRLCAD_ENABLE_STRICT)
   mark_as_advanced(BRLCAD_ENABLE_STRICT)
-  file(APPEND  ${CONFIG_H_FILE} "#define STRICT_FLAGS 1\n")
+  CONFIG_H_APPEND(BRLCAD "#define STRICT_FLAGS 1\n")
 endif(BRLCAD_ENABLE_STRICT)
 
 # The full BRL-CAD strict flags are too much for a variety of system
@@ -1220,7 +1233,7 @@ if(WIN32 AND BRLCAD_ENABLE_SMP)
 endif(WIN32 AND BRLCAD_ENABLE_SMP)
 mark_as_advanced(BRLCAD_ENABLE_SMP)
 if(BRLCAD_ENABLE_SMP)
-  file(APPEND  ${CONFIG_H_FILE} "#define PARALLEL 1\n")
+  CONFIG_H_APPEND(BRLCAD "#define PARALLEL 1\n")
 endif(BRLCAD_ENABLE_SMP)
 
 # *******************************************************************
@@ -1284,7 +1297,7 @@ endif(NOT MSVC)
 # functions (e.g., memcpy), and provides run-time checks on buffer
 # lengths and memory regions.
 if(${BRLCAD_DEBUG_BUILD} MATCHES "ON")
-  file(APPEND  ${CONFIG_H_FILE} "#define _FORTIFY_SOURCE 2\n")
+  CONFIG_H_APPEND(BRLCAD "#define _FORTIFY_SOURCE 2\n")
 endif(${BRLCAD_DEBUG_BUILD} MATCHES "ON")
 
 #CHECK_C_COMPILER_FLAG("Wl,--no-undefined" NO_UNDEFINED_LINKER_FLAG)
@@ -1399,10 +1412,10 @@ BRLCAD_CHECK_LIBRARY(DS ds dsopen)
 # OpenGL graphics
 if(BRLCAD_ENABLE_OPENGL)
   if(OPENGL_INCLUDE_DIR_GL)
-    file(APPEND  ${CONFIG_H_FILE} "#define HAVE_GL_GL_H 1\n")
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_GL_GL_H 1\n")
   endif(OPENGL_INCLUDE_DIR_GL)
   if(OPENGL_INCLUDE_DIR_GLX)
-    file(APPEND  ${CONFIG_H_FILE} "#define HAVE_GL_GLX_H 1\n")
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_GL_GLX_H 1\n")
   endif(OPENGL_INCLUDE_DIR_GLX)
 endif(BRLCAD_ENABLE_OPENGL)
 
@@ -1418,7 +1431,7 @@ BRLCAD_CHECK_LIBRARY(GEN gen basename)
 # Bullet physics library
 FIND_PACKAGE(Bullet)
 if(BULLET_FOUND)
-  file(APPEND ${CONFIG_H_FILE} "#define HAVE_BULLET 1\n")
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_BULLET 1\n")
 endif(BULLET_FOUND)
 mark_as_advanced(BULLET_INCLUDE_DIR)
 
@@ -1451,7 +1464,7 @@ mark_as_advanced(BULLET_INCLUDE_DIR)
 # Because libtclcad, bwish and mged include Tcl headers, we need to define
 # STDC_HEADERS here - the Tcl headers do need the definition.  Just
 # define it - we require C89, so the test itself is not needed.
-file(APPEND ${CONFIG_H_FILE} "#define STDC_HEADERS 1\n")
+CONFIG_H_APPEND(BRLCAD "#define STDC_HEADERS 1\n")
 
 # AC_HEADER_SYS_WAIT
 BRLCAD_HEADER_SYS_WAIT()
@@ -1654,7 +1667,9 @@ add_subdirectory(bench)
 add_subdirectory(regress)
 
 # Now that all the tests are done, configure the brlcad_config.h file:
-file(APPEND ${CONFIG_H_FILE} "#endif /* __CONFIG_H__ */\n")
+CONFIG_H_APPEND(BRLCAD "#endif /* __CONFIG_H__ */\n")
+get_property(CONFIG_H_FILE_CONTENTS GLOBAL PROPERTY ${CMAKE_PROJECT_NAME}_CONFIG_H_CONTENTS)
+file(WRITE ${CONFIG_H_FILE} "${CONFIG_H_FILE_CONTENTS}")
 configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
 
 # Generate the windows specific file, if needed

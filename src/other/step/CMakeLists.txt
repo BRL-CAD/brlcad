@@ -166,10 +166,23 @@ SET(BRLCAD_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "SCL install prefix")
 OPTION(SCL-BUILD_EXPRESS_ONLY "Only build express parser." OFF)
 MARK_AS_ADVANCED(SCL-BUILD_EXPRESS_ONLY)
 
-# Take the scl config file template and copy it to the build directory so CMake
-# scripts can append to it if need be
-configure_file(${SCL_SOURCE_DIR}/include/scl_cf_cmake.h.in ${SCL_BINARY_DIR}/include/scl_cf.h.in COPYONLY)
+# Take the scl config file template as the starting point for 
+# scl_cf.h.in - scripts may need to append to the template, so
+# it is read into memory initially.
 SET(CONFIG_H_FILE ${SCL_BINARY_DIR}/include/scl_cf.h.in)
+set(CMAKE_CURRENT_PROJECT SCL)
+define_property(GLOBAL PROPERTY SCL_CONFIG_H_CONTENTS BRIEF_DOCS "config.h.in contents" FULL_DOCS "config.h.in contents for SCL project")
+if(NOT COMMAND CONFIG_H_APPEND)
+  macro(CONFIG_H_APPEND PROJECT_NAME NEW_CONTENTS)
+    if(PROJECT_NAME)
+      get_property(${PROJECT_NAME}_CONFIG_H_CONTENTS GLOBAL PROPERTY ${PROJECT_NAME}_CONFIG_H_CONTENTS)
+      set(${PROJECT_NAME}_CONFIG_H_FILE_CONTENTS "${${PROJECT_NAME}_CONFIG_H_CONTENTS}${NEW_CONTENTS}")
+      set_property(GLOBAL PROPERTY ${PROJECT_NAME}_CONFIG_H_CONTENTS "${${PROJECT_NAME}_CONFIG_H_FILE_CONTENTS}")
+    endif(PROJECT_NAME)
+  endmacro(CONFIG_H_APPEND NEW_CONTENTS)
+endif(NOT COMMAND CONFIG_H_APPEND)
+file(READ ${SCL_SOURCE_DIR}/include/scl_cf_cmake.h.in CONFIG_H_FILE_CONTENTS)
+CONFIG_H_APPEND(SCL "${CONFIG_H_FILE_CONTENTS}")
 
 INCLUDE(CheckLibraryExists)
 INCLUDE(CheckIncludeFile)
@@ -194,7 +207,9 @@ CHECK_FUNCTION_EXISTS(memmove HAVE_MEMMOVE)
 CHECK_TYPE_SIZE("ssize_t" SSIZE_T)
 
 # Now that all the tests are done, configure the scl_cf.h file:
-configure_file(${SCL_BINARY_DIR}/include/scl_cf.h.in ${SCL_BINARY_DIR}/include/scl_cf.h)
+get_property(CONFIG_H_FILE_CONTENTS GLOBAL PROPERTY SCL_CONFIG_H_CONTENTS)
+file(WRITE ${CONFIG_H_FILE} "${CONFIG_H_FILE_CONTENTS}")
+configure_file(${CONFIG_H_FILE} ${SCL_BINARY_DIR}/include/scl_cf.h)
 
 add_definitions(
   -DHAVE_CONFIG_H
