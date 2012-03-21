@@ -35,8 +35,8 @@ file(WRITE "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/PATH.tmp" "\"${CMAKE_INSTAL
 # contents in cmake_install.cmake.orig file.
 string(REPLACE "----BUILD_TYPE----" "\${BUILD_TYPE}" CMAKE_INSTALL_PREFIX_CFG_ORIG "${CMAKE_INSTALL_PREFIX_CFG_ORIG}")
 if(NOT "${BUILD_TYPE_NEW}" STREQUAL "${BUILD_TYPE}" AND NOT "${CMAKE_INSTALL_PREFIX_CFG_ORIG}" STREQUAL "${CMAKE_INSTALL_PREFIX_CFG}")
-  file(GLOB_RECURSE ALL_CMAKE_INSTALL_FILES_ORIG "*cmake_install.cmake.orig")
-  file(GLOB_RECURSE ALL_CMAKE_INSTALL_FILES "*cmake_install.cmake")
+  file(GLOB_RECURSE ALL_CMAKE_INSTALL_FILES_ORIG "cmake_install.cmake.orig")
+  file(GLOB_RECURSE ALL_CMAKE_INSTALL_FILES "cmake_install.cmake")
   foreach(cmake_install_file ${ALL_CMAKE_INSTALL_FILES})
   	 if(ALL_CMAKE_INSTALL_FILES_ORIG)
 	   file(READ "${cmake_install_file}.orig" OLD_INSTALL_CONTENTS)
