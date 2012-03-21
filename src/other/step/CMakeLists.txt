@@ -62,7 +62,7 @@ SET(SCL_VERSION "${SCL_VERSION_MAJOR}.${SCL_VERSION_MINOR}.${SCL_VERSION_PATCH}"
 
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.
-SET(SCL_CMAKE_DIR "${SCL_SOURCE_DIR}/CMake")
+SET(SCL_CMAKE_DIR "${SCL_SOURCE_DIR}/cmake")
 SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${SCL_CMAKE_DIR}")
 
 INCLUDE(${SCL_CMAKE_DIR}/SCL_Utils.cmake)
