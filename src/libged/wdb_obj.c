@@ -9526,6 +9526,7 @@ static struct bu_cmdtab wdb_newcmds[] = {
     {"edcomb",		(int (*)(void *, int, const char **))ged_edcomb},
     {"edit",		(int (*)(void *, int, const char **))ged_edit},
     {"edmater",		(int (*)(void *, int, const char **))ged_edmater},
+    {"get",		(int (*)(void *, int, const char **))ged_get},
     {"item",		(int (*)(void *, int, const char **))ged_item},
     {"log",		(int (*)(void *, int, const char **))ged_log},
     {"make",		(int (*)(void *, int, const char **))ged_make},
