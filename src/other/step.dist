@@ -79,7 +79,6 @@ src/clutils/gennodelist.h
 src/clutils/scl_char_str_list.h
 src/clutils/scl_hash.h
 src/clSchemas
-src/clivfasd
 src/clprobe-ui
 src/test
 )
