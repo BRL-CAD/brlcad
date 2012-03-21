@@ -712,6 +712,7 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 THIRD_PARTY(scl step "LEMON_EXECUTABLE;PERPLEX_EXECUTABLE;NOT_MSVC"  scl_ALIASES scl_DESCRIPTION NOSYS)
 if(BRLCAD_SCL_BUILD)
   set(FEDEX_PLUS_EXEC fedex_plus CACHE STRING "Fedex plus executable" FORCE)
+  set(FEDEX_PLUS_EXECUTABLE_TARGET fedex_plus CACHE STRING "Fedex plus executable target" FORCE)
   mark_as_advanced(FEDEX_PLUS_EXEC)
 endif(BRLCAD_SCL_BUILD)
 
