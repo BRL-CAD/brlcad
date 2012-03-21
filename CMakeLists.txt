@@ -1139,8 +1139,7 @@ set(BRLCAD_FLAGS_DEBUG_ALIASES
   ENABLE_DEBUG_FLAGS
   )
 set(BRLCAD_FLAGS_DEBUG_DESCRIPTION "
-Add compiler flags to aid in program debugging.  Default depends on CMake
-build type - defaults to ON for Debug, OFF for Release.
+Add compiler flags to aid in program debugging.  Defaults to ON.
 ")
 BRLCAD_OPTION(ON BRLCAD_FLAGS_DEBUG BRLCAD_FLAGS_DEBUG_ALIASES BRLCAD_FLAGS_DEBUG_DESCRIPTION)
 

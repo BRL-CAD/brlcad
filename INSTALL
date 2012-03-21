@@ -396,8 +396,7 @@ Aliases:  ENABLE_RUNTIME_DEBUG, ENABLE_RUN_TIME_DEBUG, ENABLE_RUNTIME_DEBUGGING
 
 --- BRLCAD_FLAGS_DEBUG ---
 
-Add compiler flags to aid in program debugging.  Default depends on CMake
-build type - defaults to ON for Debug, OFF for Release.
+Add compiler flags to aid in program debugging.  Defaults to ON.
 
 Aliases:  ENABLE_DEBUG, ENABLE_FLAGS_DEBUG, ENABLE_DEBUG_FLAGS
 
