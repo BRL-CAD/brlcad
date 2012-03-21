@@ -30,9 +30,10 @@ file(WRITE "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/PATH.tmp" "\"${CMAKE_INSTAL
 # directly.  Only do this if we need to - i.e. we're using a string other 
 # than the build type string itself in the install path.
 #
-# In the event of multiple configuration switches we don't want to keep
-# stacking set commands in the cmake_install.cmake files, so the first
-# time we do this stash the original contents in a .orig file.
+# In the event of multiple configuration switches we need to avoid matching failures
+# due to previous substitutions, so the first time we do this stash the original 
+# contents in cmake_install.cmake.orig file.
+string(REPLACE "----BUILD_TYPE----" "\${BUILD_TYPE}" CMAKE_INSTALL_PREFIX_CFG_ORIG "${CMAKE_INSTALL_PREFIX_CFG_ORIG}")
 if(NOT "${BUILD_TYPE_NEW}" STREQUAL "${BUILD_TYPE}" AND NOT "${CMAKE_INSTALL_PREFIX_CFG_ORIG}" STREQUAL "${CMAKE_INSTALL_PREFIX_CFG}")
   file(GLOB_RECURSE ALL_CMAKE_INSTALL_FILES_ORIG "*cmake_install.cmake.orig")
   file(GLOB_RECURSE ALL_CMAKE_INSTALL_FILES "*cmake_install.cmake")
@@ -43,7 +44,7 @@ if(NOT "${BUILD_TYPE_NEW}" STREQUAL "${BUILD_TYPE}" AND NOT "${CMAKE_INSTALL_PRE
 	   file(READ "${cmake_install_file}" OLD_INSTALL_CONTENTS)
 		file(WRITE "${cmake_install_file}.orig" "\n${OLD_INSTALL_CONTENTS}")
 	 endif(ALL_CMAKE_INSTALL_FILES_ORIG)
-	 file(WRITE "${cmake_install_file}" "set(CMAKE_INSTALL_PREFIX \"${CMAKE_INSTALL_PREFIX_CFG}\")\n")
-	 file(APPEND "${cmake_install_file}" "\n${OLD_INSTALL_CONTENTS}")
+	 string(REPLACE "${CMAKE_INSTALL_PREFIX_CFG_ORIG}" "${CMAKE_INSTALL_PREFIX_CFG}" INSTALL_CONTENTS "${OLD_INSTALL_CONTENTS}")
+	 file(WRITE "${cmake_install_file}" "${INSTALL_CONTENTS}")
   endforeach(cmake_install_file ${ALL_CMAKE_INSTALL_FILES})
 endif(NOT "${BUILD_TYPE_NEW}" STREQUAL "${BUILD_TYPE}" AND NOT "${CMAKE_INSTALL_PREFIX_CFG_ORIG}" STREQUAL "${CMAKE_INSTALL_PREFIX_CFG}")
