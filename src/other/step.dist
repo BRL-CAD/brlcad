@@ -1,6 +1,6 @@
 SET(step_ignore_files
 AUTHORS
-CMake
+cmake
 COPYING
 ChangeLog
 INSTALL
@@ -12,6 +12,10 @@ doc
 include
 misc
 src
+ctest_matrix.cmake
+run_ctest.cmake
+CTestConfig.cmake
+SCL_VERSION.txt
 src/express/Changes
 src/express/README
 src/express/expparse.y
