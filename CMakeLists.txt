@@ -673,9 +673,18 @@ endif(NOT CMAKE_CONFIGURATION_TYPES)
 # statements, which will in turn be used to generate a brlcad_conf.h
 # file.  In autotools this process is handled by autoheader - in the
 # case of CMake we wrap the CHECK_* functions and the creation of the
-# entry in the brlcad_config.h.in file into one step via a macro.  To
-# run this macro, the config.h.in file must first be present, which
-# we take care of here:
+# entry in the brlcad_config.h.in file into one step via a macro.
+#
+# To avoid hitting the disk I/O any harder than necessary, we store
+# the eventual contents of brlcad_config.h.in as a CMake string until
+# it is ready to process.  A global property is needed to hold the
+# contents, because subdirectories (in particular, src/other) may
+# have content to contribute to the top level config.h.in file and
+# the default local variable scope in subdirectories means those
+# changes would not automatically propagate back up.
+#
+# We also allow for multiple projects with this macro, in case
+# subprojects are also managing a config.h.in file of their own.
 
 set(CONFIG_H_FILE "${BRLCAD_BINARY_DIR}/include/brlcad_config.h.in")
 set(CMAKE_CURRENT_PROJECT BRLCAD)
