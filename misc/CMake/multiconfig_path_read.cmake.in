@@ -8,14 +8,42 @@ endforeach(foundfile ${ALL_FILES})
 # For Debug and Release builds, obey the standard BRL-CAD
 # install directory naming convention
 if("${BUILD_TYPE}" STREQUAL "Debug")
-  set(BUILD_TYPE "dev")
+  set(BUILD_TYPE_NEW "dev")
 endif("${BUILD_TYPE}" STREQUAL "Debug")
 if("${BUILD_TYPE}" STREQUAL "Release")
-  set(BUILD_TYPE "rel")
+  set(BUILD_TYPE_NEW "rel")
 endif("${BUILD_TYPE}" STREQUAL "Release")
+if(NOT BUILD_TYPE_NEW)
+  set(BUILD_TYPE_NEW "${BUILD_TYPE}")
+endif(NOT BUILD_TYPE_NEW)
 
 # The installation directory is compiled in, so to that extent at least a build time configuration
 # change that results in a different installation path requires a re-compile.
 set(CMAKE_INSTALL_PREFIX_CFG "@CMAKE_INSTALL_PREFIX_CFG@")
-string(REPLACE "----BUILD_TYPE----" "${BUILD_TYPE}" CMAKE_INSTALL_PREFIX_CFG "${CMAKE_INSTALL_PREFIX_CFG}")
+set(CMAKE_INSTALL_PREFIX_CFG_ORIG "${CMAKE_INSTALL_PREFIX_CFG}")
+string(REPLACE "----BUILD_TYPE----" "${BUILD_TYPE_NEW}" CMAKE_INSTALL_PREFIX_CFG "${CMAKE_INSTALL_PREFIX_CFG}")
 file(WRITE "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/PATH.tmp" "\"${CMAKE_INSTALL_PREFIX_CFG}\"\n")
+
+# We have no way to tell the build tool at build time what string we want
+# it to use for the installation path - it only knows its build configuration
+# type.  Hence, we update the cmake_install.cmake files to let them know 
+# directly.  Only do this if we need to - i.e. we're using a string other 
+# than the build type string itself in the install path.
+#
+# In the event of multiple configuration switches we don't want to keep
+# stacking set commands in the cmake_install.cmake files, so the first
+# time we do this stash the original contents in a .orig file.
+if(NOT "${BUILD_TYPE_NEW}" STREQUAL "${BUILD_TYPE}" AND NOT "${CMAKE_INSTALL_PREFIX_CFG_ORIG}" STREQUAL "${CMAKE_INSTALL_PREFIX_CFG}")
+  file(GLOB_RECURSE ALL_CMAKE_INSTALL_FILES_ORIG "*cmake_install.cmake.orig")
+  file(GLOB_RECURSE ALL_CMAKE_INSTALL_FILES "*cmake_install.cmake")
+  foreach(cmake_install_file ${ALL_CMAKE_INSTALL_FILES})
+  	 if(ALL_CMAKE_INSTALL_FILES_ORIG)
+	   file(READ "${cmake_install_file}.orig" OLD_INSTALL_CONTENTS)
+	 else(ALL_CMAKE_INSTALL_FILES_ORIG)
+	   file(READ "${cmake_install_file}" OLD_INSTALL_CONTENTS)
+		file(WRITE "${cmake_install_file}.orig" "\n${OLD_INSTALL_CONTENTS}")
+	 endif(ALL_CMAKE_INSTALL_FILES_ORIG)
+	 file(WRITE "${cmake_install_file}" "set(CMAKE_INSTALL_PREFIX \"${CMAKE_INSTALL_PREFIX_CFG}\")\n")
+	 file(APPEND "${cmake_install_file}" "\n${OLD_INSTALL_CONTENTS}")
+  endforeach(cmake_install_file ${ALL_CMAKE_INSTALL_FILES})
+endif(NOT "${BUILD_TYPE_NEW}" STREQUAL "${BUILD_TYPE}" AND NOT "${CMAKE_INSTALL_PREFIX_CFG_ORIG}" STREQUAL "${CMAKE_INSTALL_PREFIX_CFG}")

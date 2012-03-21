@@ -1816,6 +1816,12 @@ DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/USER)
 
 # PATH
 if(CMAKE_CONFIGURATION_TYPES)
+
+  # if we have stale cmake_install.cmake.orig files around, clear them now.
+  file(GLOB_RECURSE ALL_CMAKE_INSTALL_FILES_ORIG "*cmake_install.cmake.orig")
+  if(ALL_CMAKE_INSTALL_FILES_ORIG)
+    file(REMOVE ${ALL_CMAKE_INSTALL_FILES_ORIG})
+  endif(ALL_CMAKE_INSTALL_FILES_ORIG)
   # need a build target for this one - install directory may be dependent on configuration, but that won't
   # do for BRL-CAD reporting purposes - must get the fully qualified path at build time.
   string(REPLACE "\${BUILD_TYPE}" "----BUILD_TYPE----" CMAKE_INSTALL_PREFIX_CFG "${CMAKE_INSTALL_PREFIX}")
@@ -1837,10 +1843,13 @@ if(CMAKE_CONFIGURATION_TYPES)
   # To make sure this command runs in time for the source code builds it might impact, we will need to add the output file as a dependency
   # to the first target to run - the timestamp printing.
   add_dependencies(timestamp multiconfig_path)
+
 else(CMAKE_CONFIGURATION_TYPES)
+
   file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp "\"${CMAKE_INSTALL_PREFIX}\"\n")
   execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp ${BRLCAD_BINARY_DIR}/include/conf/PATH)
   execute_process(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp)
+
 endif(CMAKE_CONFIGURATION_TYPES)
 DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/PATH)
 
