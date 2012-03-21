@@ -5444,6 +5444,8 @@ namespace eval ArcherCore {
             error "couldn't find manual page \"$page\""
         }
     }
+    $archerMan center [namespace tail $this]
+    ::update idletasks
     $archerMan activate
 }
 
