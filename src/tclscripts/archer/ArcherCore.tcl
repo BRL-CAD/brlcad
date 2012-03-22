@@ -2706,7 +2706,9 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::initCompSelect {} {
-    doSelectGroup
+    if {$mCompSelectMode != $COMP_SELECT_LIST_MODE} {
+	doSelectGroup
+    }
 
     $itk_component(ged) clear_view_rect_callback_list
     $itk_component(ged) add_view_rect_callback [::itcl::code $this compSelectCallback]
