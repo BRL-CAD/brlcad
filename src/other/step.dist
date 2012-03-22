@@ -58,7 +58,6 @@ src/cleditor/mgrnode.h
 src/cleditor/mgrnodearray.h
 src/cleditor/mgrnodelist.h
 src/cleditor/needFunc.h
-src/cleditor/s_HEADER_SCHEMA.h
 src/cleditor/seeinfodefault.h
 src/cldai/sdaiApplication_instance_set.h
 src/cldai/sdaiBinary.h
