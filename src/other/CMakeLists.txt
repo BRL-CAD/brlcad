@@ -702,6 +702,14 @@ if(NOT MSVC)
 endif(NOT MSVC)
 # STEP Class Libraries
 # Need Lemon/Perplex to build STEP - conditionalize
+
+# Set some options for the SCL build
+set(SCL_PYTHON_GENERATOR OFF)
+set(SCL_ENABLE_TESTING OFF)
+set(SCL_ENABLE_COVERAGE OFF)
+set(IS_SUBBUILD_TMP "${IS_SUBBUILD}")
+set(IS_SUBBUILD ON)
+
 set(scl_ALIASES ENABLE_SCL ENABLE_STEP ENABLE_STEP_CLASS_LIBRARIES)
 set(scl_DESCRIPTION "
 Option for enabling and disabling compilation of the NIST Step Class
@@ -715,6 +723,7 @@ if(BRLCAD_SCL_BUILD)
   set(FEDEX_PLUS_EXECUTABLE_TARGET fedex_plus CACHE STRING "Fedex plus executable target" FORCE)
   mark_as_advanced(FEDEX_PLUS_EXEC)
 endif(BRLCAD_SCL_BUILD)
+set(IS_SUBBUILD "${IS_SUBBUILD_TMP}")
 
 # Clipper polygon clipping library - for now, we're going to use our copy
 add_subdirectory(clipper)

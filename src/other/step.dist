@@ -16,6 +16,8 @@ ctest_matrix.cmake
 run_ctest.cmake
 CTestConfig.cmake
 SCL_VERSION.txt
+src/base
+src/fedex_python
 src/express/Changes
 src/express/README
 src/express/expparse.y
