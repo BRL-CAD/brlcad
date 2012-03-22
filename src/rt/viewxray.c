@@ -116,7 +116,7 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
 	/* force change of 'outputfile' to short circuit libicv for LGT_FLOAT outputs, adds '.los' extension */
 	if (outputfile) {
 	    char buf[BUFSIZ];
-	    int format = guess_file_format(outputfile, buf);
+	    int format = icv_guess_file_format(outputfile, buf);
 	    if (format != ICV_IMAGE_UNKNOWN) {
 		bu_strlcpy(buf, outputfile, BUFSIZ);
 		bu_strlcat(buf, floatfileext, BUFSIZ);
