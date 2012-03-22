@@ -1,0 +1,24 @@
+SCHEMA test_single_inheritance;
+
+TYPE label = STRING;
+END_TYPE;
+
+TYPE length_measure = REAL;
+END_TYPE;
+
+TYPE point = REAL;
+END_TYPE;
+
+ENTITY shape
+SUPERTYPE OF (rectangle);
+    item_name : label;
+    number_of_sides : INTEGER;
+END_ENTITY;
+
+ENTITY rectangle
+SUBTYPE OF (shape);
+    height : length_measure;
+    width : length_measure;
+END_ENTITY;
+
+END_SCHEMA;
