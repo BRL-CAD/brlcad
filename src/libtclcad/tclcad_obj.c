@@ -2518,8 +2518,8 @@ to_data_axes(struct ged *gedp,
 	    if (sscanf(argv[3], "%d", &i) != 1)
 		goto bad;
 
-	    if (i)
-		gdasp->gdas_draw = 1;
+	    if (0 <= i && i <= 2)
+		gdasp->gdas_draw = i;
 	    else
 		gdasp->gdas_draw = 0;
 
@@ -6780,7 +6780,7 @@ to_png(struct ged *gedp,
     png_structp png_p;
     png_infop info_p;
 
-    unsigned char *dbyte0 = NULL, *dbyte1 = NULL, *dbyte2 = NULL, *dbyte3 = NULL;
+    unsigned char *dbyte0 = NULL, *dbyte1 = NULL, *dbyte2 = NULL;
     struct ged_dm_view *gdvp = NULL;
     FILE *fp = NULL;
     unsigned char **rows = NULL;
@@ -6842,17 +6842,15 @@ to_png(struct ged *gedp,
 	found_valid_dm = 1;
 	width = gdvp->gdv_dmp->dm_width;
 	height = gdvp->gdv_dmp->dm_height;
-	bytes_per_pixel = sizeof(GLuint);
+	bytes_per_pixel = 3;
 
 #if defined(DM_WGL)
 	make_ret = wglMakeCurrent(((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->hdc,
 				  ((struct wgl_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->glxc);
 #else
-#  if defined(DM_OGL)
 	make_ret = glXMakeCurrent(((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->dpy,
 				  ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->win,
 				  ((struct ogl_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->glxc);
-#  endif
 #endif
 	if (!make_ret) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: Couldn't make context current\n", argv[0]);
@@ -6866,7 +6864,6 @@ to_png(struct ged *gedp,
 	    unsigned int green_mask = 0x00ff0000;
 	    unsigned int blue_mask = 0x0000ff00;
 #if defined(DM_WGL)
-	    unsigned int alpha_mask = 0x000000ff;
 	    int big_endian, swap_bytes;
 #endif
 	    int bytes_per_line = gdvp->gdv_dmp->dm_width * bytes_per_pixel;
@@ -6883,16 +6880,7 @@ to_png(struct ged *gedp,
 #endif
 
 	    glReadBuffer(GL_FRONT);
-#if defined(DM_WGL)
-	    /* XXX GL_UNSIGNED_INT_8_8_8_8 is currently not
-	     * available on windows.  Need to update when it
-	     * becomes available.
-	     */
-	    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-#else
-	    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, pixels);
-#endif
-
+	    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 	    rows = (unsigned char **)bu_calloc(height, sizeof(unsigned char *), "rows");
 	    idata = (unsigned char *)bu_calloc(height * width, bytes_per_pixel, "png data");
 
@@ -6910,30 +6898,18 @@ to_png(struct ged *gedp,
 		    dbyte0 = rows[j] + k;
 		    dbyte1 = dbyte0 + 1;
 		    dbyte2 = dbyte0 + 2;
-		    dbyte3 = dbyte0 + 3;
 
 		    *dbyte0 = (pixel & red_mask) >> 24;
 		    *dbyte1 = (pixel & green_mask) >> 16;
 		    *dbyte2 = (pixel & blue_mask) >> 8;
 #if defined(DM_WGL)
-		    *dbyte3 = pixel & alpha_mask;
-#else
-		    *dbyte3 = 255;
-#endif
-
-#if defined(DM_WGL)
 		    if (swap_bytes) {
 			unsigned char tmp_byte;
 
-			/* swap byte1 and byte2 */
-			tmp_byte = *dbyte1;
-			*dbyte1 = *dbyte2;
-			*dbyte2 = tmp_byte;
-
-			/* swap byte0 and byte3 */
+			/* swap byte0 and byte2 */
 			tmp_byte = *dbyte0;
-			*dbyte0 = *dbyte3;
-			*dbyte3 = tmp_byte;
+			*dbyte0 = *dbyte2;
+			*dbyte2 = tmp_byte;
 		    }
 #endif
 		}
@@ -6954,7 +6930,7 @@ to_png(struct ged *gedp,
     png_set_filter(png_p, 0, PNG_FILTER_NONE);
     png_set_compression_level(png_p, Z_BEST_COMPRESSION);
     png_set_IHDR(png_p, info_p, width, height, bits_per_channel,
-		 PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
+		 PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
 		 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
     png_set_gAMA(png_p, info_p, 0.5);
     png_write_info(png_p, info_p);

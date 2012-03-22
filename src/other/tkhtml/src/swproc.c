@@ -32,12 +32,12 @@ static const char rcsid[] = "$Id: swproc.c,v 1.6 2006/06/10 12:38:38 danielk1977
  *---------------------------------------------------------------------------
  */
 int 
-SwprocRt(interp, objc, objv, aConf, apObj)
-    Tcl_Interp *interp;               /* Tcl interpreter */
-    int objc;
-    Tcl_Obj *CONST objv[];
-    SwprocConf *aConf;
-    Tcl_Obj **apObj;
+SwprocRt(
+    Tcl_Interp *interp,               /* Tcl interpreter */
+    int objc,
+    Tcl_Obj *CONST objv[],
+    SwprocConf *aConf,
+    Tcl_Obj **apObj)
 {
     SwprocConf *pConf;
     int ii;
@@ -158,9 +158,7 @@ error_out:
  *---------------------------------------------------------------------------
  */
 void 
-SwprocCleanup(apObj, nObj)
-    Tcl_Obj **apObj;
-    int nObj;
+SwprocCleanup(Tcl_Obj **apObj, int nObj)
 {
     int ii;
     for (ii = 0; ii < nObj; ii++) {
@@ -184,11 +182,12 @@ SwprocCleanup(apObj, nObj)
  *---------------------------------------------------------------------------
  */
 static int 
-swproc_rtCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+swproc_rtCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */
+    )
 {
     SwprocConf aConf[2 + 1] = {
         {SWPROC_ARG, "conf", 0, 0},         /* CONFIGURATION */
@@ -323,8 +322,7 @@ swproc_rtCmd(clientData, interp, objc, objv)
  *
  *---------------------------------------------------------------------------
  */
-int SwprocInit(interp)
-    Tcl_Interp *interp;
+int SwprocInit(Tcl_Interp *interp)
 {
     Tcl_CreateObjCommand(interp, "::tkhtml::swproc_rt", swproc_rtCmd, 0, 0);
     Tcl_Eval(interp,

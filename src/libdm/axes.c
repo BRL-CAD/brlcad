@@ -54,13 +54,25 @@ dm_draw_data_axes(struct dm *dmp,
     if (npoints < 1)
 	return;
 
-    points = (point_t *)bu_calloc(npoints, sizeof(point_t), "data axes points");
-
-    /* FIXME: should be using viewSize */
-    halfAxesSize = gdasp->gdas_size * 0.5;
-
     /* set color */
     DM_SET_FGCOLOR(dmp, gdasp->gdas_color[0], gdasp->gdas_color[1], gdasp->gdas_color[2], 1, 1.0);
+
+    if (gdasp->gdas_draw > 1) {
+	if (dmp->dm_light)
+	    glDisable(GL_LIGHTING);
+
+	glPointSize(gdasp->gdas_size);
+	DM_DRAW_POINTS_3D(dmp, gdasp->gdas_num_points, gdasp->gdas_points);
+	glPointSize(1);
+
+	if (dmp->dm_light)
+	    glEnable(GL_LIGHTING);
+
+	return;
+    }
+
+    points = (point_t *)bu_calloc(npoints, sizeof(point_t), "data axes points");
+    halfAxesSize = gdasp->gdas_size * 0.5;
 
     /* set linewidth */
     DM_SET_LINE_ATTR(dmp, gdasp->gdas_line_width, 0);  /* solid lines */

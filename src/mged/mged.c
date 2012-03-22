@@ -1894,7 +1894,7 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
 #endif
     int count;
     struct bu_vls vls;
-    char line[RT_MAXLINE] = {0};
+    char line[RT_MAXLINE+1] = {0};
     Tcl_Obj *save_result;
 
     /* Get data from stdout or stderr */

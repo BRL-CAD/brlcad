@@ -222,7 +222,7 @@ fbserv_new_client_handler(ClientData clientData,
 {
     struct dm_list *dlp = (struct dm_list *)clientData;
     struct dm_list *scdlp;  /* save current dm_list pointer */
-    int fd;
+    uintptr_t fd;
 
     if (dlp == NULL)
 	return;
@@ -233,7 +233,7 @@ fbserv_new_client_handler(ClientData clientData,
     curr_dm_list = dlp;
 
     if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&fd) == TCL_OK)
-	fbserv_new_client(fbserv_makeconn(fd, pkg_switch), chan);
+	fbserv_new_client(fbserv_makeconn((int)fd, pkg_switch), chan);
 
     /* restore */
     curr_dm_list = scdlp;

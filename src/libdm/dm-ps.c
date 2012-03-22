@@ -511,6 +511,8 @@ struct dm dm_ps = {
     ps_drawLine3D,
     ps_drawLines3D,
     ps_drawPoint2D,
+    Nu_int0,
+    Nu_int0,
     ps_drawVList,
     ps_drawVList,
     ps_draw,

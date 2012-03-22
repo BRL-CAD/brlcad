@@ -71,10 +71,8 @@ static HtmlTokenMap *apMap[HTML_MARKUP_HASH_SIZE];
 ** The value returned is an integer between 0 and HTML_MARKUP_HASH_SIZE-1,
 ** inclusive.
 */
-static int
-HtmlHash(htmlPtr, zName)
-    void *htmlPtr;
-    const char *zName;
+static int 
+HtmlHash (void *htmlPtr, const char *zName)
 {
     int h = 0;
     char c;
@@ -94,9 +92,8 @@ HtmlHash(htmlPtr, zName)
 /*
 ** Convert a string to all lower-case letters.
 */
-static void
-ToLower(z)
-    char *z;
+static void 
+ToLower (char *z)
 {
     while (*z) {
         if (isupper(*z))
@@ -106,10 +103,7 @@ ToLower(z)
 }
 
 static int 
-textContent(pTree, pNode, tag)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    int tag;
+textContent (HtmlTree *pTree, HtmlNode *pNode, int tag)
 {
     if (tag == Html_Space || tag == Html_Text) {
         return TAG_OK;
@@ -131,8 +125,7 @@ textContent(pTree, pNode, tag)
  *---------------------------------------------------------------------------
  */
 HtmlTokenMap *
-HtmlMarkup(markup)
-    int markup;
+HtmlMarkup (int markup)
 {
     if (markup == Html_Text || markup == Html_Space) {
         static HtmlTokenMap textmapentry = {
@@ -167,8 +160,7 @@ HtmlMarkup(markup)
  *---------------------------------------------------------------------------
  */
 Html_u8 
-HtmlMarkupFlags(markup)
-    int markup;
+HtmlMarkupFlags(int markup)
 {
     int i = markup-Html_A;
     if (i>=0 && i<HTML_MARKUP_COUNT){
@@ -197,8 +189,7 @@ HtmlMarkupFlags(markup)
  *---------------------------------------------------------------------------
  */
 CONST char *
-HtmlMarkupName(markup)
-    int markup;
+HtmlMarkupName(int markup)
 {
     int i = markup-Html_A;
     if (i>=0 && i<HTML_MARKUP_COUNT){
@@ -230,10 +221,11 @@ HtmlMarkupName(markup)
  *
  *---------------------------------------------------------------------------
  */
-HtmlTokenMap * 
-HtmlHashLookup(htmlPtr, zType)
-    void *htmlPtr;
-    const char *zType;          /* Null terminated tag name. eg. "br" */
+HtmlTokenMap *
+HtmlHashLookup (
+    void *htmlPtr,
+    const char *zType          /* Null terminated tag name. eg. "br" */
+)
 {
     HtmlTokenMap *pMap;         /* For searching the markup name hash table */
     int h;                      /* The hash on zType */
@@ -254,10 +246,8 @@ HtmlHashLookup(htmlPtr, zType)
 
 /* Initialize the escape sequence hash table
 */
-void
-HtmlHashInit(htmlPtr, start)
-    void *htmlPtr;
-    int start;
+void 
+HtmlHashInit (void *htmlPtr, int start)
 {
     static int isInit = 0;
 
@@ -280,11 +270,7 @@ HtmlHashInit(htmlPtr, start)
 
 
 HtmlAttributes *
-HtmlAttributesNew(argc, argv, arglen, doEscape)
-    int argc;
-    char const **argv;
-    int *arglen;
-    int doEscape;
+HtmlAttributesNew (int argc, char const **argv, int *arglen, int doEscape)
 {
     HtmlAttributes *pMarkup = 0;
 
@@ -331,10 +317,8 @@ HtmlAttributesNew(argc, argv, arglen, doEscape)
 /*
 ** Convert a markup name into a type integer
 */
-int
-HtmlNameToType(htmlPtr, zType)
-    void *htmlPtr;
-    char *zType;
+int 
+HtmlNameToType (void *htmlPtr, char *zType)
 {
     HtmlTokenMap *pMap = HtmlHashLookup(htmlPtr, zType);
     return pMap ? pMap->type : Html_Unknown;
@@ -344,9 +328,7 @@ HtmlNameToType(htmlPtr, zType)
 ** Convert a type into a symbolic name
 */
 const char *
-HtmlTypeToName(htmlPtr, eTag)
-    void *htmlPtr;
-    int eTag;
+HtmlTypeToName (void *htmlPtr, int eTag)
 {
     if (eTag >= Html_A && eTag < Html_TypeCount) {
         HtmlTokenMap *pMap = &HtmlMarkupMap[eTag - Html_A];

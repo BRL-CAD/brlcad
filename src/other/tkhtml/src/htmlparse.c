@@ -108,10 +108,7 @@ static char const rcsid[] =
  *---------------------------------------------------------------------------
  */
 static int 
-HtmlFormContent(pTree, pNode, tag)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    int tag;
+HtmlFormContent (HtmlTree *pTree, HtmlNode *pNode, int tag)
 {
     if (tag == Html_TR || tag == Html_TD || tag == Html_TH) {
         return TAG_CLOSE;
@@ -133,10 +130,7 @@ HtmlFormContent(pTree, pNode, tag)
  *---------------------------------------------------------------------------
  */
 static int 
-HtmlPcdataContent(pTree, pNode, tag)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    int tag;
+HtmlPcdataContent (HtmlTree *pTree, HtmlNode *pNode, int tag)
 {
     if (tag == Html_Space || tag == Html_Text) {
         return TAG_PARENT;
@@ -158,10 +152,7 @@ HtmlPcdataContent(pTree, pNode, tag)
  *---------------------------------------------------------------------------
  */
 static int 
-HtmlDlContent(pTree, pNode, tag)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    int tag;
+HtmlDlContent (HtmlTree *pTree, HtmlNode *pNode, int tag)
 {
     if (tag==Html_DD || tag==Html_DT) return TAG_OK;
     if (tag == Html_Text || tag == Html_Space) return TAG_OK;
@@ -183,10 +174,7 @@ HtmlDlContent(pTree, pNode, tag)
  *---------------------------------------------------------------------------
  */
 static int 
-HtmlUlContent(pTree, pNode, tag)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    int tag;
+HtmlUlContent (HtmlTree *pTree, HtmlNode *pNode, int tag)
 {
     if (tag==Html_LI) return TAG_OK;
     if (tag == Html_Text || tag == Html_Space) return TAG_OK;
@@ -194,10 +182,7 @@ HtmlUlContent(pTree, pNode, tag)
 }
 
 static int 
-HtmlHeadContent(pTree, pNode, tag)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    int tag;
+HtmlHeadContent (HtmlTree *pTree, HtmlNode *pNode, int tag)
 {
     if (tag==Html_BODY || tag==Html_FRAMESET) return TAG_CLOSE;
     return TAG_PARENT;
@@ -221,10 +206,7 @@ HtmlHeadContent(pTree, pNode, tag)
  *---------------------------------------------------------------------------
  */
 static int 
-HtmlInlineContent(pTree, pNode, tag)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    int tag;
+HtmlInlineContent (HtmlTree *pTree, HtmlNode *pNode, int tag)
 {
     Html_u8 flags = HtmlMarkupFlags(tag);
     if (tag == Html_Text || tag == Html_Space) return TAG_OK;
@@ -260,10 +242,7 @@ HtmlInlineContent(pTree, pNode, tag)
  *---------------------------------------------------------------------------
  */
 static int 
-HtmlAnchorContent(pTree, pNode, tag)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    int tag;
+HtmlAnchorContent (HtmlTree *pTree, HtmlNode *pNode, int tag)
 {
     /* Html_u8 flags = HtmlMarkupFlags(tag); */
     if (tag == Html_Text || tag == Html_Space) return TAG_OK;
@@ -308,10 +287,7 @@ HtmlAnchorContent(pTree, pNode, tag)
  */
 #if 0
 static int 
-HtmlFlowContent(pTree, pNode, tag)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    int tag;
+HtmlFlowContent (HtmlTree *pTree, HtmlNode *pNode, int tag)
 {
     Html_u8 flags = HtmlMarkupFlags(tag);
     if (tag == Html_Text || tag == Html_Space) return TAG_OK;
@@ -341,10 +317,7 @@ HtmlFlowContent(pTree, pNode, tag)
  */
 #if 0
 static int 
-HtmlColgroupContent(pTree, pNode, tag)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    int tag;
+HtmlColgroupContent (HtmlTree *pTree, HtmlNode *pNode, int tag)
 {
     assert(0);
 }
@@ -375,10 +348,7 @@ HtmlColgroupContent(pTree, pNode, tag)
  *---------------------------------------------------------------------------
  */
 static int 
-HtmlTableContent(pTree, pNode, tag)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    int tag;
+HtmlTableContent (HtmlTree *pTree, HtmlNode *pNode, int tag)
 {
     if (tag == Html_TABLE) return TAG_CLOSE;
     return TAG_OK;
@@ -403,10 +373,7 @@ HtmlTableContent(pTree, pNode, tag)
  */
 #if 0
 static int 
-HtmlTableSectionContent(pTree, pNode, tag)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    int tag;
+HtmlTableSectionContent (HtmlTree *pTree, HtmlNode *pNode, int tag)
 {
     if (tag == Html_Text || tag == Html_Space) return TAG_OK;
     assert(0);
@@ -435,10 +402,7 @@ HtmlTableSectionContent(pTree, pNode, tag)
  *---------------------------------------------------------------------------
  */
 static int 
-HtmlTableRowContent(pTree, pNode, tag)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    int tag;
+HtmlTableRowContent (HtmlTree *pTree, HtmlNode *pNode, int tag)
 {
     if (tag == Html_TR) {
         return TAG_CLOSE;
@@ -461,10 +425,7 @@ HtmlTableRowContent(pTree, pNode, tag)
  *---------------------------------------------------------------------------
  */
 static int 
-HtmlTableCellContent(pTree, pNode, tag)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    int tag;
+HtmlTableCellContent (HtmlTree *pTree, HtmlNode *pNode, int tag)
 {
     if (tag==Html_TH || tag==Html_TD || tag==Html_TR) return TAG_CLOSE;
     return TAG_PARENT;
@@ -484,10 +445,7 @@ HtmlTableCellContent(pTree, pNode, tag)
  *---------------------------------------------------------------------------
  */
 static int 
-HtmlLiContent(pTree, pNode, tag)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    int tag;
+HtmlLiContent (HtmlTree *pTree, HtmlNode *pNode, int tag)
 {
     if (tag==Html_LI || tag==Html_DD || tag==Html_DT) return TAG_CLOSE;
     if (tag == Html_Text || tag == Html_Space) return TAG_OK;
@@ -554,9 +512,10 @@ HtmlHashStats(void * htmlPtr)
  *---------------------------------------------------------------------------
  */
 static Tcl_Obj *
-getScriptHandler(pTree, tag)
-    HtmlTree *pTree;
-    int tag;
+getScriptHandler(
+    HtmlTree *pTree,
+    int tag
+    )
 {
     Tcl_HashEntry *pEntry;
     pEntry = Tcl_FindHashEntry(&pTree->aScriptHandler, (char *)((size_t) tag));
@@ -591,10 +550,11 @@ getScriptHandler(pTree, tag)
  *---------------------------------------------------------------------------
  */
 static int 
-findEndOfScript(eTag, z, pN)
-    int eTag;                 /* Tag type for this block (i.e. Html_Script) */
-    char const *z;            /* Input string */
-    int *pN;                  /* IN/OUT: Current index in z */
+findEndOfScript (
+    int eTag,                 /* Tag type for this block (i.e. Html_Script) */
+    char const *z,            /* Input string */
+    int *pN                  /* IN/OUT: Current index in z */
+)
 {
     char zEnd[64];
     int nEnd;
@@ -634,12 +594,13 @@ findEndOfScript(eTag, z, pN)
  *---------------------------------------------------------------------------
  */
 static int 
-executeScript(pTree, pCallback, pAttributes, zScript, nScript)
-    HtmlTree *pTree;
-    Tcl_Obj *pCallback;
-    HtmlAttributes *pAttributes;
-    const char *zScript;
-    int nScript;
+executeScript(
+    HtmlTree *pTree,
+    Tcl_Obj *pCallback,
+    HtmlAttributes *pAttributes,
+    const char *zScript,
+    int nScript
+    )
 {
     Tcl_Obj *pAttr;
     Tcl_Obj *pEval;
@@ -699,13 +660,14 @@ executeScript(pTree, pCallback, pAttributes, zScript, nScript)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlTokenize(pTree, zText, isFinal, xAddText, xAddElement, xAddClosing)
-    HtmlTree *pTree;             /* The HTML widget doing the parsing */
-    char const *zText;
-    int isFinal;
-    void (*xAddText)(HtmlTree *, HtmlTextNode *, int);
-    void (*xAddElement)(HtmlTree *, int, const char *, HtmlAttributes *, int);
-    void (*xAddClosing)(HtmlTree *, int, const char *, int);
+HtmlTokenize (
+    HtmlTree *pTree,             /* The HTML widget doing the parsing */
+    char const *zText,
+    int isFinal,
+    void (*xAddText)(HtmlTree *, HtmlTextNode *, int),
+    void (*xAddElement)(HtmlTree *, int, const char *, HtmlAttributes *, int),
+    void (*xAddClosing)(HtmlTree *, int, const char *, int)
+)
 {
     char *z;                     /* The input HTML text */
     int c;                       /* The next character of input */
@@ -1110,12 +1072,13 @@ HtmlTokenize(pTree, zText, isFinal, xAddText, xAddElement, xAddClosing)
 /************************** End HTML Tokenizer Code ***************************/
 
 static int 
-tokenizeWrapper(pTree, isFin, xAddText, xAddElement, xAddClosing)
-    HtmlTree *pTree;             /* The HTML widget doing the parsing */
-    int isFin;
-    void (*xAddText)(HtmlTree *, HtmlTextNode *, int);
-    void (*xAddElement)(HtmlTree *, int, const char *, HtmlAttributes *, int);
-    void (*xAddClosing)(HtmlTree *, int, const char *, int);
+tokenizeWrapper (
+    HtmlTree *pTree,             /* The HTML widget doing the parsing */
+    int isFin,
+    void (*xAddText)(HtmlTree *, HtmlTextNode *, int),
+    void (*xAddElement)(HtmlTree *, int, const char *, HtmlAttributes *, int),
+    void (*xAddClosing)(HtmlTree *, int, const char *, int)
+)
 {
     int rc;
     HtmlNode *pCurrent = pTree->state.pCurrent;
@@ -1168,11 +1131,7 @@ tokenizeWrapper(pTree, isFin, xAddText, xAddElement, xAddClosing)
  *---------------------------------------------------------------------------
  */
 void 
-HtmlTokenizerAppend(pTree, zText, nText, isFinal)
-    HtmlTree *pTree;
-    const char *zText;
-    int nText;
-    int isFinal;
+HtmlTokenizerAppend (HtmlTree *pTree, const char *zText, int nText, int isFinal)
 {
     /* TODO: Add a flag to prevent recursive calls to this routine. */
     const char *z = zText;
@@ -1214,10 +1173,8 @@ HtmlTokenizerAppend(pTree, zText, nText, isFinal)
  *
  *---------------------------------------------------------------------------
  */
-char * HtmlMarkupArg(pAttr, zTag, zDefault)
-    HtmlAttributes *pAttr;
-    const char *zTag;
-    char *zDefault;
+char *
+HtmlMarkupArg (HtmlAttributes *pAttr, const char *zTag, char *zDefault)
 {
     int i;
     if (pAttr) {
@@ -1246,8 +1203,7 @@ char * HtmlMarkupArg(pAttr, zTag, zDefault)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlWriteWait(pTree)
-    HtmlTree *pTree;
+HtmlWriteWait (HtmlTree *pTree)
 {
     if (pTree->eWriteState != HTML_WRITE_INHANDLER) {
         char *zErr = "Cannot call [write wait] here";
@@ -1275,9 +1231,7 @@ HtmlWriteWait(pTree)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlWriteText(pTree, pText)
-    HtmlTree *pTree;
-    Tcl_Obj *pText;
+HtmlWriteText(HtmlTree *pTree, Tcl_Obj *pText)
 {
     int iInsert = pTree->iWriteInsert;
   
@@ -1321,8 +1275,7 @@ HtmlWriteText(pTree, pText)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlWriteContinue(pTree)
-    HtmlTree *pTree;
+HtmlWriteContinue (HtmlTree *pTree)
 {
     int eState = pTree->eWriteState;
     if (eState != HTML_WRITE_WAIT && eState != HTML_WRITE_INHANDLERWAIT) {

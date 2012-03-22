@@ -166,17 +166,15 @@ namespace eval RtWizard {
 	global env
 
 	if {$tcl_platform(platform) == "windows"} {
-	    set dir $env(TMP)
+	    set dir $env(TMP)/
 	} else {
 	    set dir "/tmp"
 	}
 
-	set tgi [file join $dir [pid]_ghost.pix]
-	set tfci [file join $dir [pid]_fc.pix]
-	set tmi [file join $dir [pid]_merge.pix]
-	set tbw [ file join $dir [pid]_bw.bw ]
-	set tmod [ file join $dir [pid]_bwmod.bw ]
-	set tbwpix [ file join $dir [pid]_bwpix.pix]
+	set tgi [file join "$dir" [pid]_ghost.pix]
+	set tfci [file join "$dir" [pid]_fc.pix]
+	set tmi [file join "$dir" [pid]_merge.pix]
+	set tbwpix [ file join "$dir" [pid]_bwpix.pix]
 
 	#
 	# Get the background color
@@ -193,34 +191,71 @@ namespace eval RtWizard {
 	#set gamma 12 ; #[$gp getIntensity]
 	set gamma [$gp getIntensity]
 
-	#
-	# Run rt to generate the full-color version of the ghost image
-	#
-	rtCmd $gp $fb $w $h
+	set otype [lindex [split $fb " "] 0]
+	set fbout [join [lreplace [split $fb " "] 0 0] " "]
+	set ext [lindex [split $fbout "."] end]
 
-	catch {exec "$binpath/fb-pix" -F $fb -w $w -n $h > $tgi} junk
+	# make sure none of these files already exist
+	file delete $tgi
+	file delete $tfci
+	file delete $tbwpix
+	file delete $tmi
+	file delete $fbout
 
-	#
-	# Run rt to generate the insert
-	#
-	rtCmd $fp $fb $w $h
-	catch {exec "$binpath/fb-pix" -F $fb -w $w -n $h > $tfci} junk
+	if { $otype == "-o" } {
+	    # Output to file
 
-	#
-	# Convert to ghost image
-	#
-	catch {exec "$binpath/pix-bw" $tgi > $tbw} junk
+	    # Run rt to generate the full-color version of the ghost image
+	    set fb "-o $tgi"
+	    rtCmd $gp "$fb" $w $h
 
-	catch {exec "$binpath/bwmod" -a 4 -d259 -r$gamma -m255 $tbw > $tmod} junk
+	    # Run rt to generate the insert
+	    set fb "-o $tfci"
+	    rtCmd $fp "$fb" $w $h
 
-	catch {exec "$binpath/bw-pix" $tmod $tbwpix} junk
+	    # Convert to ghost image
+	    catch {exec "$binpath/pix-bw" "$tgi" | "$binpath/bwmod" -a 4 -d 259 -r $gamma -m 255 | "$binpath/bw-pix" > "$tbwpix"} junk
+	    catch {exec "$binpath/pixmatte" -e "$tfci" $bgl "$tbwpix" "$tfci" > "$tmi"} junk
 
-	catch {exec "$binpath/pixmatte" -e $tfci $bgl $tbwpix $tfci > $tmi} junk
+	    if { $ext == "png" || $ext == "PNG" } {
+		catch {exec "$binpath/pix-png" -w $w -n $h -o "$fbout" "$tmi"} junk
+	    } else {
+		file copy "$tmi" "$fbout"
+	    }
 
-	#
-	# Finally, put the image to the framebuffer
-	#
-	catch {exec "$binpath/pix-fb" -F $fb -w $w -n $h $tmi} junk
+	    # remove tmp files
+	    if { [file exists $fbout] } {
+		file delete $tgi
+		file delete $tfci
+		file delete $tbwpix
+		file delete $tmi
+	    }
+	} else {
+	    # Output to frame buffer
+
+	    # Run rt to generate the full-color version of the ghost image
+	    rtCmd $gp $fb $w $h
+	    catch {exec "$binpath/fb-pix" -F $fbout -w $w -n $h "$tgi"} junk
+
+	    # Run rt to generate the insert
+	    rtCmd $fp $fb $w $h
+	    catch {exec "$binpath/fb-pix" -F $fbout -w $w -n $h "$tfci"} junk
+
+	    # Convert to ghost image
+	    catch {exec "$binpath/pix-bw" "$tgi" | "$binpath/bwmod" -a 4 -d 259 -r $gamma -m 255 | "$binpath/bw-pix" > "$tbwpix"} junk
+	    catch {exec "$binpath/pixmatte" -e "$tfci" $bgl "$tbwpix" "$tfci" > "$tmi"} junk
+
+	    # Put the image to the framebuffer
+	    catch {exec "$binpath/pix-fb" -F $fbout -w $w -n $h "$tmi"} junk
+
+	    # remove tmp files
+	    if { [file exists $tmi] } {
+		file delete $tgi
+		file delete $tfci
+		file delete $tbwpix
+		file delete $tmi
+	    }
+	}
     }
 
 }; # end namespace

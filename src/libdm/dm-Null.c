@@ -113,6 +113,8 @@ struct dm dm_Null = {
     Nu_int0,
     Nu_int0,
     Nu_int0,
+    Nu_int0,
+    Nu_int0,
     Nu_draw,
     Nu_fg,
     Nu_bg,

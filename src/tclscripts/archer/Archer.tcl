@@ -633,6 +633,7 @@ package provide Archer 1.0
     #    bind $dialog <FocusOut> "raise $dialog"
 
     $dialog center $w
+    $dialog center $w
     ::update
     $dialog activate
 }
@@ -2125,6 +2126,7 @@ package provide Archer 1.0
     pack $itk_component(aboutDialogTabs) -expand yes -fill both
 
     wm geometry $itk_component(aboutDialog) "600x600"
+    $itk_component(aboutDialog) center
 }
 
 
@@ -2271,6 +2273,7 @@ proc title_node_handler {node} {
     } 
 
     wm geometry $itk_component(archerHelp) "1100x800"
+    $itk_component(archerHelp) center
 }
 
 ::itcl::body Archer::buildDisplayPreferences {} {
@@ -2885,7 +2888,9 @@ proc title_node_handler {node} {
 
     # Build manual browser
     ManBrowser $itk_interior.archerMan -parentName Archer
+    $itk_interior.archerMan center
 
+    if {0} {
     buildMouseOverridesDialog
     #    buildInfoDialog mouseOverridesDialog \
 	"Mouse Overrides" $mMouseOverrideInfo \
@@ -2904,6 +2909,7 @@ proc title_node_handler {node} {
 
     #    wm group $itk_component(aboutDialog) [namespace tail $this]
     #    wm group $itk_component(mouseOverridesDialog) [namespace tail $this]
+    }
 }
 
 
@@ -3672,7 +3678,7 @@ proc title_node_handler {node} {
     global tcl_platform
 
     $itk_component(archerHelp) center [namespace tail $this]
-    ::update
+    ::update idletasks
     $itk_component(archerHelp) activate
 
 }

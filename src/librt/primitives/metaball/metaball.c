@@ -781,7 +781,7 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) metaball_count++;
 
     BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE*(1+5*metaball_count) + 3*SIZEOF_NETWORK_LONG;
+    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE*(1+5*metaball_count) + 2*SIZEOF_NETWORK_LONG;
     ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "metaball external");
     if (ep->ext_buf == NULL)
 	bu_bomb("Failed to allocate DB space!\n");

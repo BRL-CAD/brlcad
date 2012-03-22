@@ -1636,6 +1636,8 @@ struct dm dm_X = {
     X_drawLine3D,
     X_drawLines3D,
     X_drawPoint2D,
+    Nu_int0,
+    Nu_int0,
     X_drawVList,
     X_drawVList,
     X_draw,

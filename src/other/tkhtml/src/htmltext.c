@@ -377,9 +377,8 @@ static struct sgEsc *apEscHash[ESC_HASH_SIZE];
 /* Hash a escape sequence name.  The value returned is an integer
 ** between 0 and ESC_HASH_SIZE-1, inclusive.
 */
-static int
-EscHash(zName)
-    const char *zName;
+static int 
+EscHash (const char *zName)
 {
     int h = 0;                         /* The hash value to be returned */
     char c;                            /* The next character in the name
@@ -434,8 +433,8 @@ EscHashStats(void)
 
 /* Initialize the escape sequence hash table
 */
-static void
-EscInit()
+static void 
+EscInit (void)
 {
     int i;                             /* For looping thru the list of escape 
                                         * sequences */
@@ -567,9 +566,10 @@ static char acMsChar[] = {
 #endif
 
 static int 
-translateNumericEscape(z, pI)
-    char *z;
-    int *pI;          /* IN/OUT: Index into string z */
+translateNumericEscape (
+    char *z,
+    int *pI          /* IN/OUT: Index into string z */
+)
 {
     char *zLocal = &z[*pI];
     int base = 10;
@@ -602,9 +602,8 @@ translateNumericEscape(z, pI)
 **      input =    "AT&amp;T &gt MCI"
 **      output =   "AT&T > MCI"
 */
-void
-HtmlTranslateEscapes(z)
-    char *z;
+void 
+HtmlTranslateEscapes (char *z)
 {
     int from;                          /* Read characters from this position
                                         * in z[] */
@@ -721,10 +720,7 @@ HtmlTranslateEscapes(z)
 }
 
 static HtmlWidgetTag *
-getWidgetTag(pTree, zTag, pIsNew)
-    HtmlTree *pTree;
-    const char *zTag;
-    int *pIsNew;
+getWidgetTag (HtmlTree *pTree, const char *zTag, int *pIsNew)
 {
     Tcl_HashEntry *pEntry;
     int isNew;
@@ -763,12 +759,8 @@ getWidgetTag(pTree, zTag, pIsNew)
     return pTag;
 }
 
-static HtmlNode * 
-orderIndexPair(ppA, piA, ppB, piB)
-    HtmlNode **ppA;
-    int *piA;
-    HtmlNode **ppB;
-    int *piB;
+static HtmlNode *
+orderIndexPair (HtmlNode **ppA, int *piA, HtmlNode **ppB, int *piB)
 {
     HtmlNode *pA;
     HtmlNode *pB;
@@ -841,10 +833,8 @@ orderIndexPair(ppA, piA, ppB, piB)
  *
  *---------------------------------------------------------------------------
  */
-static int
-removeTagFromNode(pTextNode, pTag)
-    HtmlTextNode *pTextNode;
-    HtmlWidgetTag *pTag;
+static int 
+removeTagFromNode (HtmlTextNode *pTextNode, HtmlWidgetTag *pTag)
 {
     int eRet = 0;
     HtmlTaggedRegion *pTagged = pTextNode->pTagged;
@@ -873,10 +863,7 @@ removeTagFromNode(pTextNode, pTag)
 }
 
 static HtmlTaggedRegion *
-findTagInNode(pTextNode, pTag, ppPtr)
-    HtmlTextNode *pTextNode;
-    HtmlWidgetTag *pTag;
-    HtmlTaggedRegion ***ppPtr;
+findTagInNode (HtmlTextNode *pTextNode, HtmlWidgetTag *pTag, HtmlTaggedRegion ***ppPtr)
 {
     HtmlTaggedRegion *pTagged;
     HtmlTaggedRegion **pPtr = &pTextNode->pTagged;
@@ -914,11 +901,8 @@ struct TagOpData {
 #define OVERLAP_FROM     4
 #define OVERLAP_TO       5
 #define OVERLAP_EXACT    6
-static int
-getOverlap(pTagged, iFrom, iTo)
-    HtmlTaggedRegion *pTagged;
-    int iFrom;
-    int iTo;
+static int 
+getOverlap (HtmlTaggedRegion *pTagged, int iFrom, int iTo)
 {
     assert(iFrom <= iTo);
     assert(pTagged->iFrom <= pTagged->iTo);
@@ -948,10 +932,7 @@ getOverlap(pTagged, iFrom, iTo)
 
 
 static int
-tagAddRemoveCallback(pTree, pNode, clientData)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    ClientData clientData;
+tagAddRemoveCallback(HtmlTree *pTree, HtmlNode *pNode, ClientData clientData)
 {
     TagOpData *pData = (TagOpData *)clientData;
     HtmlTextNode *pTextNode = HtmlNodeAsText(pNode);
@@ -1075,12 +1056,13 @@ tagAddRemoveCallback(pTree, pNode, clientData)
 }
 
 int 
-HtmlTagAddRemoveCmd(clientData, interp, objc, objv, isAdd)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *CONST objv[];             /* List of all arguments */
-    int isAdd;
+HtmlTagAddRemoveCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *CONST objv[],             /* List of all arguments */
+    int isAdd
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     HtmlNode *pParent;
@@ -1140,11 +1122,12 @@ HtmlTagAddRemoveCmd(clientData, interp, objc, objv, isAdd)
 }
 
 int 
-HtmlTagConfigureCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *CONST objv[];             /* List of all arguments */
+HtmlTagConfigureCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *CONST objv[]              /* List of all arguments */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     Tk_OptionTable otab;
@@ -1191,11 +1174,12 @@ tagDeleteCallback(pTree, pNode, clientData)
 }
 
 int 
-HtmlTagDeleteCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *CONST objv[];             /* List of all arguments */
+HtmlTagDeleteCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *CONST objv[]              /* List of all arguments */
+    )
 {
     const char *zTag;
     Tcl_HashEntry *pEntry;
@@ -1225,9 +1209,8 @@ HtmlTagDeleteCmd(clientData, interp, objc, objv)
     return TCL_OK;
 }
 
-void
-HtmlTagCleanupNode(pTextNode)
-    HtmlTextNode *pTextNode;
+void 
+HtmlTagCleanupNode (HtmlTextNode *pTextNode)
 {
     HtmlTaggedRegion *pTagged = pTextNode->pTagged;
     while (pTagged) {
@@ -1238,9 +1221,8 @@ HtmlTagCleanupNode(pTextNode)
     pTextNode->pTagged = 0;
 }
 
-void
-HtmlTagCleanupTree(pTree)
-    HtmlTree *pTree;
+void 
+HtmlTagCleanupTree (HtmlTree *pTree)
 {
     Tcl_HashEntry *pEntry;
     Tcl_HashSearch search;
@@ -1282,12 +1264,8 @@ struct HtmlTextInit {
 #define SEEN_SPACE 1
 #define SEEN_BLOCK 2
 
-static void
-addTextMapping(pText, pTextNode, iNodeIndex, iStrIndex)
-    HtmlText *pText;
-    HtmlTextNode *pTextNode;
-    int iNodeIndex;
-    int iStrIndex;
+static void 
+addTextMapping (HtmlText *pText, HtmlTextNode *pTextNode, int iNodeIndex, int iStrIndex)
 {
     HtmlTextMapping *p;
     p = (HtmlTextMapping *)HtmlAlloc("HtmlTextMapping",sizeof(HtmlTextMapping));
@@ -1298,11 +1276,8 @@ addTextMapping(pText, pTextNode, iNodeIndex, iStrIndex)
     pText->pMapping = p;
 }
 
-static void
-initHtmlText_TextNode(pTree, pTextNode, pInit)
-    HtmlTree *pTree;
-    HtmlTextNode *pTextNode;
-    HtmlTextInit *pInit;
+static void 
+initHtmlText_TextNode (HtmlTree *pTree, HtmlTextNode *pTextNode, HtmlTextInit *pInit)
 {
     HtmlNode *pNode = &pTextNode->node;
     int isPre = (HtmlNodeComputedValues(pNode)->eWhitespace == CSS_CONST_PRE);
@@ -1360,11 +1335,8 @@ initHtmlText_TextNode(pTree, pTextNode, pInit)
     }
 }
 
-static void
-initHtmlText_Elem(pTree, pElem, pInit)
-    HtmlTree *pTree;
-    HtmlElementNode *pElem;
-    HtmlTextInit *pInit;
+static void 
+initHtmlText_Elem (HtmlTree *pTree, HtmlElementNode *pElem, HtmlTextInit *pInit)
 {
     HtmlNode *pNode = &pElem->node;
     int eDisplay = HtmlNodeComputedValues(pNode)->eDisplay; 
@@ -1416,9 +1388,8 @@ initHtmlText_Elem(pTree, pElem, pInit)
  *
  *---------------------------------------------------------------------------
  */
-static void
-initHtmlText(pTree)
-    HtmlTree *pTree;
+static void 
+initHtmlText (HtmlTree *pTree)
 {
     if (!pTree->pText) {
         HtmlTextInit sInit;
@@ -1434,8 +1405,7 @@ initHtmlText(pTree)
 }
 
 void 
-HtmlTextInvalidate(pTree)
-    HtmlTree *pTree;
+HtmlTextInvalidate (HtmlTree *pTree)
 {
     if (pTree->pText) {
         HtmlText *pText = pTree->pText;
@@ -1453,11 +1423,12 @@ HtmlTextInvalidate(pTree)
 }
 
 int
-HtmlTextTextCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *CONST objv[];             /* List of all arguments */
+HtmlTextTextCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *CONST objv[]              /* List of all arguments */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     if (objc != 3) {
@@ -1490,11 +1461,12 @@ HtmlTextTextCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 int
-HtmlTextIndexCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *CONST objv[];             /* List of all arguments */
+HtmlTextIndexCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *CONST objv[]              /* List of all arguments */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     int ii;
@@ -1561,11 +1533,12 @@ HtmlTextIndexCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 int
-HtmlTextOffsetCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *CONST objv[];             /* List of all arguments */
+HtmlTextOffsetCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *CONST objv[]              /* List of all arguments */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     HtmlTextMapping *pMap;
@@ -1628,11 +1601,12 @@ HtmlTextOffsetCmd(clientData, interp, objc, objv)
  *---------------------------------------------------------------------------
  */
 int
-HtmlTextBboxCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget */
-    Tcl_Interp *interp;                /* The interpreter */
-    int objc;                          /* Number of arguments */
-    Tcl_Obj *CONST objv[];             /* List of all arguments */
+HtmlTextBboxCmd(
+    ClientData clientData,             /* The HTML widget */
+    Tcl_Interp *interp,                /* The interpreter */
+    int objc,                          /* Number of arguments */
+    Tcl_Obj *CONST objv[]              /* List of all arguments */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     HtmlNode *pFrom;
@@ -1834,9 +1808,7 @@ static Tcl_UniChar utf8Read(
  *---------------------------------------------------------------------------
  */
 static int 
-tokenLength(zToken, zEnd)
-    const unsigned char *zToken;
-    const unsigned char *zEnd;
+tokenLength (const unsigned char *zToken, const unsigned char *zEnd)
 {
     Tcl_UniChar iChar = 0;
     const unsigned char *zCsr = zToken;
@@ -1872,13 +1844,14 @@ tokenLength(zToken, zEnd)
  *
  *---------------------------------------------------------------------------
  */
-static void
-populateTextNode(n, z, pText, pnToken, pnText)
-    int n;                     /* Length of input text */
-    char const *z;             /* Input text */
-    HtmlTextNode *pText;       /* OUT: The structure to populate (or NULL) */
-    int *pnToken;              /* OUT: Number of tokens required (or used) */
-    int *pnText;               /* OUT: Bytes of text required (or used) */
+static void 
+populateTextNode (
+    int n,                     /* Length of input text */
+    char const *z,             /* Input text */
+    HtmlTextNode *pText,       /* OUT: The structure to populate (or NULL) */
+    int *pnToken,              /* OUT: Number of tokens required (or used) */
+    int *pnText               /* OUT: Bytes of text required (or used) */
+)
 {
     char const *zCsr = z;
     char const *zStop = &z[n];
@@ -2004,13 +1977,8 @@ populateTextNode(n, z, pText, pnToken, pnText)
     if (pnText) *pnText = nText;
 }
 
-void
-HtmlTextSet(pText, n, z, isTrimEnd, isTrimStart)
-    HtmlTextNode *pText;
-    int n;
-    const char *z;
-    int isTrimEnd;
-    int isTrimStart;
+void 
+HtmlTextSet (HtmlTextNode *pText, int n, const char *z, int isTrimEnd, int isTrimStart)
 {
     char *z2;
     HtmlTextToken *pFinal;
@@ -2093,11 +2061,7 @@ HtmlTextSet(pText, n, z, isTrimEnd, isTrimStart)
 }
 
 HtmlTextNode *
-HtmlTextNew(n, z, isTrimEnd, isTrimStart)
-    int n;
-    const char *z;
-    int isTrimEnd;
-    int isTrimStart;
+HtmlTextNew (int n, const char *z, int isTrimEnd, int isTrimStart)
 {
     HtmlTextNode *pText;
 
@@ -2121,9 +2085,7 @@ HtmlTextNew(n, z, isTrimEnd, isTrimStart)
  */
 #if 0
 static HtmlTextNode *
-HtmlTextCombine(p1, p2)
-    HtmlTextNode *p1;
-    HtmlTextNode *p2;
+HtmlTextCombine (HtmlTextNode *p1, HtmlTextNode *p2)
 {
     /* HtmlTextNode *pNew; */
     return 0;
@@ -2146,33 +2108,28 @@ HtmlTextCombine(p1, p2)
  *---------------------------------------------------------------------------
  */
 void 
-HtmlTextFree(p)
-    HtmlTextNode *p;
+HtmlTextFree (HtmlTextNode *p)
 {
     HtmlFree(p);
 }
 
-void
-HtmlTextIterFirst(pTextNode, pTextIter)
-    HtmlTextNode *pTextNode;
-    HtmlTextIter *pTextIter;
+void 
+HtmlTextIterFirst (HtmlTextNode *pTextNode, HtmlTextIter *pTextIter)
 {
     pTextIter->pTextNode = pTextNode;
     pTextIter->iText = 0;
     pTextIter->iToken = 0;
 }
 
-int
-HtmlTextIterIsValid(pTextIter)
-    HtmlTextIter *pTextIter;
+int 
+HtmlTextIterIsValid (HtmlTextIter *pTextIter)
 {
     HtmlTextToken *p = &pTextIter->pTextNode->aToken[pTextIter->iToken];
     return (p->eType != HTML_TEXT_TOKEN_END) ? 1 : 0;
 }
 
-void
-HtmlTextIterNext(pTextIter)
-    HtmlTextIter *pTextIter;
+void 
+HtmlTextIterNext (HtmlTextIter *pTextIter)
 {
     HtmlTextToken *p = &pTextIter->pTextNode->aToken[pTextIter->iToken];
     int eType = p[0].eType;
@@ -2198,9 +2155,8 @@ HtmlTextIterNext(pTextIter)
     pTextIter->iToken++;
 }
 
-int
-HtmlTextIterIsLast(pTextIter)
-    HtmlTextIter *pTextIter;
+int 
+HtmlTextIterIsLast (HtmlTextIter *pTextIter)
 {
     HtmlTextIter sIter;
     memcpy(&sIter, pTextIter, sizeof(HtmlTextIter));
@@ -2209,8 +2165,7 @@ HtmlTextIterIsLast(pTextIter)
 }
 
 int 
-HtmlTextIterType(pTextIter)
-    HtmlTextIter *pTextIter;
+HtmlTextIterType (HtmlTextIter *pTextIter)
 {
     HtmlTextToken *p = &pTextIter->pTextNode->aToken[pTextIter->iToken];
     if (p->eType == HTML_TEXT_TOKEN_LONGTEXT) return HTML_TEXT_TOKEN_TEXT;
@@ -2218,8 +2173,7 @@ HtmlTextIterType(pTextIter)
 }
 
 int 
-HtmlTextIterLength(pTextIter)
-    HtmlTextIter *pTextIter;
+HtmlTextIterLength (HtmlTextIter *pTextIter)
 {
     HtmlTextToken *p = &pTextIter->pTextNode->aToken[pTextIter->iToken];
     if (p->eType == HTML_TEXT_TOKEN_LONGTEXT) {
@@ -2230,8 +2184,7 @@ HtmlTextIterLength(pTextIter)
 }
 
 const char *
-HtmlTextIterData(pTextIter)
-    HtmlTextIter *pTextIter;
+HtmlTextIterData (HtmlTextIter *pTextIter)
 {
     return (const char *)(&pTextIter->pTextNode->zText[pTextIter->iText]);
 }

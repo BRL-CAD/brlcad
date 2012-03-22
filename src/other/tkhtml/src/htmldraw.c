@@ -379,9 +379,8 @@ static int layoutNodeCb(HtmlCanvasItem *, int, int, Overflow *, ClientData);
  * runs a lot and is very expensive.
  */
 #if 0 && !defined(NDEBUG)
-static void
-CHECK_CANVAS(pCanvas) 
-    HtmlCanvas *pCanvas;
+static void 
+CHECK_CANVAS (HtmlCanvas *pCanvas)
 {
     HtmlCanvasItem *p; 
     HtmlCanvasItem *pPrev = 0; 
@@ -461,13 +460,8 @@ struct CanvasItemSorterSlot {
     Overflow *pOverflow;
 };
 
-static void
-sorterInsert(pSorter, pItem, x, y, pOverflow)
-    CanvasItemSorter *pSorter;
-    HtmlCanvasItem *pItem;
-    int x;
-    int y;
-    Overflow *pOverflow;
+static void 
+sorterInsert (CanvasItemSorter *pSorter, HtmlCanvasItem *pItem, int x, int y, Overflow *pOverflow)
 {
     int z = 0;
     HtmlNode *pNode = 0;
@@ -552,10 +546,11 @@ sorterInsert(pSorter, pItem, x, y, pOverflow)
     pSlot->pOverflow = pOverflow;
 }
 static void
-sorterIterate(pSorter, xFunc, clientData)
-    CanvasItemSorter *pSorter;
-    int (*xFunc)(HtmlCanvasItem *, int, int, Overflow *, ClientData);
-    ClientData clientData;
+sorterIterate(
+    CanvasItemSorter *pSorter,
+    int (*xFunc)(HtmlCanvasItem *, int, int, Overflow *, ClientData),
+    ClientData clientData
+    )
 {
     int ii;
     for (ii = 0; ii < pSorter->nLevel; ii++) {
@@ -567,9 +562,8 @@ sorterIterate(pSorter, xFunc, clientData)
         }
     }
 }
-static void
-sorterReset(pSorter)
-    CanvasItemSorter *pSorter;
+static void 
+sorterReset (CanvasItemSorter *pSorter)
 {
     int ii;
     for (ii = 0; ii < pSorter->nLevel; ii++) {
@@ -581,14 +575,12 @@ sorterReset(pSorter)
 
 
 static HtmlCanvasItem *
-allocateCanvasItem()
+allocateCanvasItem (void)
 {
     return HtmlNew(HtmlCanvasItem);
 }
-static void
-freeCanvasItem(pTree, p)
-    HtmlTree *pTree;
-    HtmlCanvasItem *p;
+static void 
+freeCanvasItem (HtmlTree *pTree, HtmlCanvasItem *p)
 {
     p->nRef--;
     assert(p->nRef >= 0);
@@ -612,9 +604,7 @@ freeCanvasItem(pTree, p)
 
 #if 0
 static int 
-byteToCharOffset(z, iByte)
-    const unsigned char *z;
-    int iByte;
+byteToCharOffset (const unsigned char *z, int iByte)
 {
     int iChar = 0;
     int i;
@@ -624,9 +614,7 @@ byteToCharOffset(z, iByte)
     return iChar;
 }
 static int 
-charToByteOffset(z, iChar)
-    const unsigned char *z;
-    int iChar;
+charToByteOffset (const unsigned char *z, int iChar)
 {
     int i = iChar;
     int iByte;
@@ -637,19 +625,16 @@ charToByteOffset(z, iChar)
 }
 #endif
 
-void
-HtmlDrawCanvasItemRelease(pTree, pItem)
-    HtmlTree *pTree;
-    HtmlCanvasItem *pItem;
+void 
+HtmlDrawCanvasItemRelease (HtmlTree *pTree, HtmlCanvasItem *pItem)
 {
     if (pItem) {
         freeCanvasItem(pTree, pItem);
     }
 }
 
-void
-HtmlDrawCanvasItemReference(pItem)
-    HtmlCanvasItem *pItem;
+void 
+HtmlDrawCanvasItemReference (HtmlCanvasItem *pItem)
 {
     if (pItem) {
         pItem->nRef++;
@@ -657,9 +642,7 @@ HtmlDrawCanvasItemReference(pItem)
 }
 
 static void 
-windowsRepair(pTree, pCanvas)
-    HtmlTree *pTree;
-    HtmlCanvas *pCanvas;
+windowsRepair (HtmlTree *pTree, HtmlCanvas *pCanvas)
 {
     HtmlNodeReplacement *p = pTree->pMapped;
     HtmlNodeReplacement *pPrev = 0;
@@ -736,9 +719,7 @@ windowsRepair(pTree, pCanvas)
  *---------------------------------------------------------------------------
  */
 void 
-HtmlDrawCleanup(pTree, pCanvas)
-    HtmlTree *pTree;
-    HtmlCanvas *pCanvas;
+HtmlDrawCleanup (HtmlTree *pTree, HtmlCanvas *pCanvas)
 {
     HtmlCanvasItem *pItem;
     HtmlCanvasItem *pPrev = 0;
@@ -814,9 +795,8 @@ CHECK_CANVAS(pCanvas);
  *
  *---------------------------------------------------------------------------
  */
-static void linkItem(pCanvas, pItem)
-    HtmlCanvas *pCanvas;
-    HtmlCanvasItem *pItem;
+static void 
+linkItem (HtmlCanvas *pCanvas, HtmlCanvasItem *pItem)
 {
     assert(pItem->pNext == 0);
     if (pCanvas->pFirst) {
@@ -831,8 +811,7 @@ static void linkItem(pCanvas, pItem)
 }
 
 static HtmlFont *
-fontFromNode(pNode)
-    HtmlNode *pNode;
+fontFromNode (HtmlNode *pNode)
 {
     HtmlComputedValues *p = HtmlNodeComputedValues(pNode);
     assert(p);
@@ -840,8 +819,7 @@ fontFromNode(pNode)
 }
 
 static HtmlColor *
-colorFromNode(pNode)
-    HtmlNode *pNode;
+colorFromNode (HtmlNode *pNode)
 {
     HtmlComputedValues *p = HtmlNodeComputedValues(pNode);
     assert(p);
@@ -864,9 +842,8 @@ colorFromNode(pNode)
  *---------------------------------------------------------------------------
  */
 #if 0
-static int
-countPrimitives(pCanvas)
-    HtmlCanvas *pCanvas;
+static int 
+countPrimitives (HtmlCanvas *pCanvas)
 {
     HtmlCanvasItem *p;
     int n = 0;
@@ -881,10 +858,7 @@ countPrimitives(pCanvas)
 #endif
 
 static void 
-movePrimitives(pCanvas, x, y)
-    HtmlCanvas *pCanvas;
-    int x;
-    int y;
+movePrimitives (HtmlCanvas *pCanvas, int x, int y)
 {
     HtmlCanvasItem *p;
 
@@ -904,8 +878,8 @@ movePrimitives(pCanvas, x, y)
     }
 }
 
-void HtmlDrawOrigin(pCanvas)
-    HtmlCanvas *pCanvas;
+void 
+HtmlDrawOrigin (HtmlCanvas *pCanvas)
 {
     HtmlCanvasItem *pItem;
     HtmlCanvasItem *pItem2;
@@ -939,11 +913,8 @@ void HtmlDrawOrigin(pCanvas)
     pCanvas->pLast = pItem2;
 }
 
-void HtmlDrawOverflow(pCanvas, pNode, w, h)
-    HtmlCanvas *pCanvas;
-    HtmlNode *pNode;
-    int w;
-    int h;
+void 
+HtmlDrawOverflow (HtmlCanvas *pCanvas, HtmlNode *pNode, int w, int h)
 {
     HtmlCanvasItem *pLast = pCanvas->pLast;
     HtmlCanvasItem *pItem;
@@ -982,9 +953,8 @@ CHECK_CANVAS(pCanvas);
 CHECK_CANVAS(pCanvas);
 }
 
-void HtmlDrawCopyCanvas(pTo, pFrom)
-    HtmlCanvas *pTo;
-    HtmlCanvas *pFrom;
+void 
+HtmlDrawCopyCanvas (HtmlCanvas *pTo, HtmlCanvas *pFrom)
 {
     assert(!pFrom->pFirst || pFrom->pFirst->type == CANVAS_ORIGIN);
     assert(!pFrom->pFirst || pFrom->pFirst->x.o.nRef == 1);
@@ -1031,12 +1001,8 @@ CHECK_CANVAS(pFrom);
  *
  *---------------------------------------------------------------------------
  */
-void HtmlDrawCanvas(pCanvas, pCanvas2, x, y, pNode)
-    HtmlCanvas *pCanvas;
-    HtmlCanvas *pCanvas2;
-    int x;
-    int y;
-    HtmlNode *pNode;
+void 
+HtmlDrawCanvas (HtmlCanvas *pCanvas, HtmlCanvas *pCanvas2, int x, int y, HtmlNode *pNode)
 {
 CHECK_CANVAS(pCanvas);
 CHECK_CANVAS(pCanvas2);
@@ -1064,8 +1030,7 @@ CHECK_CANVAS(pCanvas);
 
 #if 0
 static HtmlNode *
-itemToNode(pItem)
-    HtmlCanvasItem *pItem;
+itemToNode (HtmlCanvasItem *pItem)
 {
     HtmlNode *pNode = 0;
     switch (pItem->type) {
@@ -1091,14 +1056,7 @@ itemToNode(pItem)
 #define itemToNode(pItem) (pItem->x.generic.pNode)
 
 static HtmlNode *
-itemToBox(pItem, origin_x, origin_y, pX, pY, pW, pH)
-    HtmlCanvasItem *pItem;
-    int origin_x;
-    int origin_y;
-    int *pX;
-    int *pY;
-    int *pW;
-    int *pH;
+itemToBox (HtmlCanvasItem *pItem, int origin_x, int origin_y, int *pX, int *pY, int *pW, int *pH)
 {
     switch (pItem->type) {
         case CANVAS_BOX: {
@@ -1186,16 +1144,7 @@ itemToBox(pItem, origin_x, origin_y, pX, pY, pW, pH)
  *---------------------------------------------------------------------------
  */
 HtmlCanvasItem *
-HtmlDrawBox(pCanvas, x, y, w, h, pNode, flags, size_only, pCandidate)
-    HtmlCanvas *pCanvas;
-    int x;
-    int y;
-    int w;
-    int h;
-    HtmlNode *pNode;
-    int flags;
-    int size_only;
-    HtmlCanvasItem *pCandidate;
+HtmlDrawBox (HtmlCanvas *pCanvas, int x, int y, int w, int h, HtmlNode *pNode, int flags, int size_only, HtmlCanvasItem *pCandidate)
 {
     if (!size_only) {
         int x1, y1, w1, h1;
@@ -1244,15 +1193,7 @@ HtmlDrawBox(pCanvas, x, y, w, h, pNode, flags, size_only, pCandidate)
 }
 
 void 
-HtmlDrawLine(pCanvas, x, w, y_over, y_through, y_under, pNode, size_only)
-    HtmlCanvas *pCanvas;
-    int x;
-    int w;
-    int y_over;
-    int y_through;
-    int y_under;
-    HtmlNode *pNode;
-    int size_only;
+HtmlDrawLine (HtmlCanvas *pCanvas, int x, int w, int y_over, int y_through, int y_under, HtmlNode *pNode, int size_only)
 {
     if (!size_only) {
         HtmlCanvasItem *pItem; 
@@ -1288,16 +1229,8 @@ HtmlDrawLine(pCanvas, x, w, y_over, y_through, y_under, pNode, size_only)
  *
  *---------------------------------------------------------------------------
  */
-void HtmlDrawText(pCanvas, zText, nText, x, y, w, size_only, pNode, iIndex)
-    HtmlCanvas *pCanvas; 
-    const char *zText;
-    int nText;
-    int x;
-    int y;
-    int w;
-    int size_only;
-    HtmlNode *pNode;
-    int iIndex;
+void 
+HtmlDrawText (HtmlCanvas *pCanvas, const char *zText, int nText, int x, int y, int w, int size_only, HtmlNode *pNode, int iIndex)
 {
     HtmlFont *pFont = fontFromNode(pNode);
 
@@ -1332,40 +1265,32 @@ void HtmlDrawText(pCanvas, zText, nText, x, y, w, size_only, pNode, iIndex)
     pCanvas->top = MIN(pCanvas->top, y - pFont->metrics.ascent);
 }
 
-void
-HtmlDrawTextExtend(pCanvas, nChar, nPixel) 
-    HtmlCanvas *pCanvas;
-    int nChar; 
-    int nPixel; 
+void 
+HtmlDrawTextExtend (HtmlCanvas *pCanvas, int nChar, int nPixel) 
 {
     assert(pCanvas && pCanvas->pLast && pCanvas->pLast->type == CANVAS_TEXT);
     pCanvas->pLast->x.t.nText += nChar;
     pCanvas->pLast->x.t.w += nPixel;
 }
 
-int
-HtmlDrawTextLength(pCanvas)
-    HtmlCanvas *pCanvas;
+int 
+HtmlDrawTextLength (HtmlCanvas *pCanvas)
 {
     assert(pCanvas && pCanvas->pLast && pCanvas->pLast->type == CANVAS_TEXT);
     return pCanvas->pLast->x.t.nText;
 }
 
 void 
-HtmlDrawImage(
-        pCanvas, pImage, 
-        x, y, w, h, 
-        pNode,
-        size_only
+HtmlDrawImage (
+    HtmlCanvas *pCanvas,
+    HtmlImage2 *pImage,               /* Image name or NULL */
+    int x,
+    int y,
+    int w,                      /* Width of image */
+    int h,                      /* Height of image */
+    HtmlNode *pNode,
+    int size_only
 )
-    HtmlCanvas *pCanvas;
-    HtmlImage2 *pImage;               /* Image name or NULL */
-    HtmlNode *pNode;
-    int x; 
-    int y;
-    int w;                      /* Width of image */
-    int h;                      /* Height of image */
-    int size_only;
 {
     HtmlImageCheck(pImage);
     if (!size_only) {
@@ -1402,14 +1327,15 @@ HtmlDrawImage(
  *---------------------------------------------------------------------------
  */
 void 
-HtmlDrawWindow(pCanvas, pNode, x, y, w, h, size_only)
-    HtmlCanvas *pCanvas;
-    HtmlNode *pNode;
-    int x; 
-    int y;
-    int w;       /* Width of window */
-    int h;       /* Height of window */
-    int size_only;
+HtmlDrawWindow (
+    HtmlCanvas *pCanvas,
+    HtmlNode *pNode,
+    int x,
+    int y,
+    int w,       /* Width of window */
+    int h,       /* Height of window */
+    int size_only
+)
 {
     if (!size_only) {
         HtmlCanvasItem *pItem; 
@@ -1444,11 +1370,12 @@ HtmlDrawWindow(pCanvas, pNode, x, y, w, h, size_only)
  *
  *---------------------------------------------------------------------------
  */
-int HtmlLayoutPrimitives(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+int HtmlLayoutPrimitives(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */
+    )
 {
     HtmlCanvasItem *pItem;
     Tcl_Obj *aObj[13];
@@ -1585,13 +1512,8 @@ struct GetPixmapQuery {
     Overflow *pOverflowList;
 };
 
-static void
-setClippingDrawable(pQuery, pItem, pDrawable, pX, pY)
-    GetPixmapQuery *pQuery;
-    HtmlCanvasItem *pItem;
-    Drawable *pDrawable;
-    int *pX;
-    int *pY;
+static void 
+setClippingDrawable (GetPixmapQuery *pQuery, HtmlCanvasItem *pItem, Drawable *pDrawable, int *pX, int *pY)
 {
 #if !USE_XLIB_CLIPPING
     Overflow *p = pQuery->pCurrentOverflow;
@@ -1682,11 +1604,8 @@ printf("%s\n", Tcl_GetString(HtmlNodeCommand(pQuery->pTree, p->pItem->pNode)));
 #endif /* if !USE_XLIB_CLIPPING */
 }
 
-static void
-setClippingRegion(pQuery, pDisplay, gc)
-    GetPixmapQuery *pQuery;
-    Display *pDisplay;
-    GC gc;
+static void 
+setClippingRegion (GetPixmapQuery *pQuery, Display *pDisplay, GC gc)
 {
 #if USE_XLIB_CLIPPING
     Overflow *p = pQuery->pCurrentOverflow;
@@ -1714,10 +1633,8 @@ setClippingRegion(pQuery, pDisplay, gc)
 #endif /* if USE_XLIB_CLIPPING */
 }
 
-static void
-clearClippingRegion(pDisplay, gc)
-    Display *pDisplay;
-    GC gc;
+static void 
+clearClippingRegion (Display *pDisplay, GC gc)
 {
 #if USE_XLIB_CLIPPING
     XSetClipMask(pDisplay, gc, None);
@@ -1725,15 +1642,15 @@ clearClippingRegion(pDisplay, gc)
 }
 
 static int
-fill_quad(pQuery, win, d, xcolor, x1, y1, x2, y2, x3, y3, x4, y4)
-    GetPixmapQuery *pQuery;
-    Tk_Window win;
-    Drawable d;
-    XColor *xcolor;
-    int x1; int y1;
-    int x2; int y2;
-    int x3; int y3;
-    int x4; int y4;
+fill_quad(
+    GetPixmapQuery *pQuery,
+    Tk_Window win,
+    Drawable d,
+    XColor *xcolor,
+    int x1, int y1,
+    int x2, int y2,
+    int x3, int y3,
+    int x4, int y4)
 {
     XPoint points[4];
     Display *display = Tk_Display(win);
@@ -1771,12 +1688,12 @@ fill_quad(pQuery, win, d, xcolor, x1, y1, x2, y2, x3, y3, x4, y4)
 }
 
 static int
-fill_rectangle(win, d, xcolor, x, y, w, h)
-    Tk_Window win;
-    Drawable d;
-    XColor *xcolor;
-    int x; int y;
-    int w; int h;
+fill_rectangle(
+    Tk_Window win,
+    Drawable d,
+    XColor *xcolor,
+    int x, int y,
+    int w, int h)
 {
     if (w > 0 && h > 0){
         Display *display = Tk_Display(win);
@@ -1805,16 +1722,20 @@ fill_rectangle(win, d, xcolor, x, y, w, h)
  *
  *---------------------------------------------------------------------------
  */
-static void
-tileimage(
-pQuery, drawable, d_w, d_h, pImage, bg_x, bg_y, bg_w, bg_h, iPosX, iPosY)
-    GetPixmapQuery *pQuery;   /* Clipping region */
-    Drawable drawable;        /* Where to draw */
-    int d_w; int d_h;         /* Total width and height of drawable */
-    HtmlImage2 *pImage;
-    int bg_x; int bg_y;       /* Drawable coords for drawn block */
-    int bg_w; int bg_h;       /* Width and height of drawn block */
-    int iPosX; int iPosY;     /* Origin of image in drawable */
+static void 
+tileimage (
+    GetPixmapQuery *pQuery,   /* Clipping region */
+    Drawable drawable,        /* Where to draw */
+    int d_w,
+    int d_h,         /* Total width and height of drawable */
+    HtmlImage2 *pImage,
+    int bg_x,
+    int bg_y,       /* Drawable coords for drawn block */
+    int bg_w,
+    int bg_h,       /* Width and height of drawn block */
+    int iPosX,
+    int iPosY     /* Origin of image in drawable */
+)
 {
     int x1, y1;
 
@@ -1914,12 +1835,8 @@ pQuery, drawable, d_w, d_h, pImage, bg_x, bg_y, bg_w, bg_h, iPosX, iPosY)
     }
 }
 
-static void
-drawScrollbars(pTree, pItem, origin_x, origin_y)
-    HtmlTree *pTree;
-    HtmlCanvasItem *pItem;
-    int origin_x;
-    int origin_y;
+static void 
+drawScrollbars (HtmlTree *pTree, HtmlCanvasItem *pItem, int origin_x, int origin_y)
 {
     HtmlElementNode *pElem = (HtmlElementNode *)pItem->x.generic.pNode;
     assert(!HtmlNodeIsText(pItem->x.generic.pNode));
@@ -1984,19 +1901,20 @@ drawScrollbars(pTree, pItem, origin_x, origin_y)
  *
  *---------------------------------------------------------------------------
  */
-static Outline* 
-drawBox(pQuery, pItem, pBox, drawable, x, y, w, h, xview, yview, flags)
-    GetPixmapQuery *pQuery;
-    HtmlCanvasItem *pItem;
-    CanvasBox *pBox;
-    Drawable drawable;
-    int x;                 /* X-coord in *pDrawable */
-    int y;                 /* Y-coord in *pDrawable */
-    int w;                 /* Total width of *pDrawable */
-    int h;                 /* Total height of *pDrawable */
-    int xview;             /* X-coord of drawable in viewport */
-    int yview;             /* Y-coord of drawable in viewport */
-    int flags;             /* Combination of DRAWBOX_XXX flags */
+static Outline *
+drawBox (
+    GetPixmapQuery *pQuery,
+    HtmlCanvasItem *pItem,
+    CanvasBox *pBox,
+    Drawable drawable,
+    int x,                 /* X-coord in *pDrawable */
+    int y,                 /* Y-coord in *pDrawable */
+    int w,                 /* Total width of *pDrawable */
+    int h,                 /* Total height of *pDrawable */
+    int xview,             /* X-coord of drawable in viewport */
+    int yview,             /* Y-coord of drawable in viewport */
+    int flags             /* Combination of DRAWBOX_XXX flags */
+)
 {
     HtmlTree *pTree = pQuery->pTree;
     HtmlComputedValues *pV = HtmlNodeComputedValues(pBox->pNode);
@@ -2249,14 +2167,15 @@ drawBox(pQuery, pItem, pBox, drawable, x, y, w, h, xview, yview, flags)
  *---------------------------------------------------------------------------
  */
 static void 
-drawImage(pQuery, pI2, drawable, x, y, w, h)
-    GetPixmapQuery *pQuery;
-    CanvasImage *pI2;
-    Drawable drawable;
-    int x;                 /* X-coord in *pDrawable */
-    int y;                 /* Y-coord in *pDrawable */
-    int w;                 /* Total width of *pDrawable */
-    int h;                 /* Total height of *pDrawable */
+drawImage (
+    GetPixmapQuery *pQuery,
+    CanvasImage *pI2,
+    Drawable drawable,
+    int x,                 /* X-coord in *pDrawable */
+    int y,                 /* Y-coord in *pDrawable */
+    int w,                 /* Total width of *pDrawable */
+    int h                 /* Total height of *pDrawable */
+)
 {
     if (pI2->pImage) {
         int imW;                   /* Image width */
@@ -2291,14 +2210,15 @@ drawImage(pQuery, pI2, drawable, x, y, w, h)
  *---------------------------------------------------------------------------
  */
 static void 
-drawLine(pQuery, pItem, drawable, x, y, w, h)
-    GetPixmapQuery *pQuery;
-    HtmlCanvasItem *pItem;
-    Drawable drawable;
-    int x;                 /* X-coord in *pDrawable */
-    int y;                 /* Y-coord in *pDrawable */
-    int w;                 /* Total width of *pDrawable */
-    int h;                 /* Total height of *pDrawable */
+drawLine (
+    GetPixmapQuery *pQuery,
+    HtmlCanvasItem *pItem,
+    Drawable drawable,
+    int x,                 /* X-coord in *pDrawable */
+    int y,                 /* Y-coord in *pDrawable */
+    int w,                 /* Total width of *pDrawable */
+    int h                 /* Total height of *pDrawable */
+)
 {
     HtmlTree *pTree = pQuery->pTree;
     CanvasLine *pLine = &pItem->x.line;
@@ -2343,13 +2263,14 @@ drawLine(pQuery, pItem, drawable, x, y, w, h)
  *
  *---------------------------------------------------------------------------
  */
-static void
-drawText(pQuery, pItem, drawable, x, y)
-    GetPixmapQuery *pQuery;        /* Pointer to pixmap-query */
-    HtmlCanvasItem *pItem;         /* Text item to draw */
-    Drawable drawable;             /* Drawable to draw on */
-    int x;                         /* X-coord for drawing origin */
-    int y;                         /* Y-coord for drawing origin */
+static void 
+drawText (
+    GetPixmapQuery *pQuery,        /* Pointer to pixmap-query */
+    HtmlCanvasItem *pItem,         /* Text item to draw */
+    Drawable drawable,             /* Drawable to draw on */
+    int x,                         /* X-coord for drawing origin */
+    int y                         /* Y-coord for drawing origin */
+)
 {
     HtmlTree *pTree = pQuery->pTree;
     Display *disp = Tk_Display(pTree->tkwin);
@@ -2477,13 +2398,14 @@ drawText(pQuery, pItem, drawable, x, y)
  *---------------------------------------------------------------------------
  */
 static int    
-searchCanvas(pTree, ymin, ymax, xFunc, clientData, requireOverflow)
-    HtmlTree *pTree;
-    int ymin;                    /* Minimum y coordinate, or INT_MIN */
-    int ymax;                    /* Maximum y coordinate, or INT_MAX */
-    int (*xFunc)(HtmlCanvasItem *, int, int, Overflow *, ClientData);
-    ClientData clientData;
-    int requireOverflow;         /* Boolean. True to pass Overflow* arg */
+searchCanvas(
+    HtmlTree *pTree,
+    int ymin,                    /* Minimum y coordinate, or INT_MIN */
+    int ymax,                    /* Maximum y coordinate, or INT_MAX */
+    int (*xFunc)(HtmlCanvasItem *, int, int, Overflow *, ClientData),
+    ClientData clientData,
+    int requireOverflow          /* Boolean. True to pass Overflow* arg */
+    )
 {
     HtmlCanvasItem *pItem;
     HtmlCanvasItem *pSkip = 0;
@@ -2629,12 +2551,13 @@ search_out:
 }
 
 static int
-sorterCb(pItem, x, y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int x;
-    int y;
-    Overflow *pOverflow;
-    ClientData clientData;
+sorterCb(
+    HtmlCanvasItem *pItem,
+    int x,
+    int y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     CanvasItemSorter *pSorter = (CanvasItemSorter *)clientData;
 
@@ -2677,13 +2600,14 @@ sorterCb(pItem, x, y, pOverflow, clientData)
     return 0;
 }
 static void    
-searchSortedCanvas(pTree, ymin, ymax, pNode, xFunc, clientData)
-    HtmlTree *pTree;
-    int ymin;                    /* Minimum y coordinate, or INT_MIN */
-    int ymax;                    /* Maximum y coordinate, or INT_MAX */
-    HtmlNode *pNode;             /* Node to search subtree of, or NULL */
-    int (*xFunc)(HtmlCanvasItem *, int, int, Overflow *, ClientData);
-    ClientData clientData;
+searchSortedCanvas(
+    HtmlTree *pTree,
+    int ymin,                    /* Minimum y coordinate, or INT_MIN */
+    int ymax,                    /* Maximum y coordinate, or INT_MAX */
+    HtmlNode *pNode,             /* Node to search subtree of, or NULL */
+    int (*xFunc)(HtmlCanvasItem *, int, int, Overflow *, ClientData),
+    ClientData clientData
+    )
 {
     CanvasItemSorter sSorter;
     memset(&sSorter, 0, sizeof(CanvasItemSorter));
@@ -2695,21 +2619,20 @@ searchSortedCanvas(pTree, ymin, ymax, pNode, xFunc, clientData)
 
 
 static int
-snapshotReleaseItemsCb(pItem, x, y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int x;
-    int y;
-    Overflow *pOverflow;
-    ClientData clientData;
+snapshotReleaseItemsCb(
+    HtmlCanvasItem *pItem,
+    int x,
+    int y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     freeCanvasItem((HtmlTree *)clientData, pItem);
     return 0;
 }
 
 HtmlCanvasSnapshot *
-HtmlDrawSnapshot(pTree, isDrawable)
-    HtmlTree *pTree;
-    int isDrawable;
+HtmlDrawSnapshot (HtmlTree *pTree, int isDrawable)
 {
     int ymin = pTree->iScrollY;
     int ymax = ymin + Tk_Height(pTree->tkwin);
@@ -2722,10 +2645,8 @@ HtmlDrawSnapshot(pTree, isDrawable)
     return (HtmlCanvasSnapshot *)p;
 }
 
-static CanvasItemSorterSlot *nextItem(pSorter, piLevel, piItem)
-    CanvasItemSorter *pSorter;
-    int *piLevel;
-    int *piItem;
+static CanvasItemSorterSlot *
+nextItem (CanvasItemSorter *pSorter, int *piLevel, int *piItem)
 {
     CanvasItemSorterSlot *pRet = 0;
     int iLevel = *piLevel;
@@ -2744,14 +2665,8 @@ static CanvasItemSorterSlot *nextItem(pSorter, piLevel, piItem)
     return pRet;
 }
 
-static void damageSlot(pTree, pSlot, pX1, pY1, pX2, pY2, isOld)
-    HtmlTree *pTree;
-    CanvasItemSorterSlot *pSlot;
-    int *pX1;
-    int *pY1;
-    int *pX2;
-    int *pY2;
-    int isOld;
+static void 
+damageSlot (HtmlTree *pTree, CanvasItemSorterSlot *pSlot, int *pX1, int *pY1, int *pX2, int *pY2, int isOld)
 {
     int x;
     int y;
@@ -2773,9 +2688,8 @@ static void damageSlot(pTree, pSlot, pX1, pY1, pX2, pY2, isOld)
     *pY2 = MAX(*pY2, y+h);
 }
 
-static int itemsAreEqual(p1, p2)
-    HtmlCanvasItem *p1;
-    HtmlCanvasItem *p2;
+static int 
+itemsAreEqual (HtmlCanvasItem *p1, HtmlCanvasItem *p2)
 {
     if (p1 == p2) return 1;
     if (p1->type == p2->type) {
@@ -2814,17 +2728,13 @@ static int itemsAreEqual(p1, p2)
 }
 
 HtmlCanvasSnapshot *
-HtmlDrawSnapshotZero(pTree)
-    HtmlTree *pTree;
+HtmlDrawSnapshotZero (HtmlTree *pTree)
 {
     return (HtmlCanvasSnapshot *)HtmlNew(CanvasItemSorter);
 }
 
-void
-HtmlDrawSnapshotDamage(pTree, pSnapshot, ppCurrent)
-    HtmlTree *pTree;
-    HtmlCanvasSnapshot *pSnapshot;
-    HtmlCanvasSnapshot **ppCurrent;
+void 
+HtmlDrawSnapshotDamage (HtmlTree *pTree, HtmlCanvasSnapshot *pSnapshot, HtmlCanvasSnapshot **ppCurrent)
 {
     CanvasItemSorter *pOld = (CanvasItemSorter *)pSnapshot;
     CanvasItemSorter *pNew;
@@ -2918,10 +2828,8 @@ HtmlDrawSnapshotDamage(pTree, pSnapshot, ppCurrent)
     }
 }
 
-void
-HtmlDrawSnapshotFree(pTree, pSnapshot)
-    HtmlTree *pTree;
-    HtmlCanvasSnapshot *pSnapshot;
+void 
+HtmlDrawSnapshotFree (HtmlTree *pTree, HtmlCanvasSnapshot *pSnapshot)
 {
     if (pSnapshot) {
         CanvasItemSorter *p = (CanvasItemSorter *)pSnapshot;
@@ -2933,16 +2841,8 @@ HtmlDrawSnapshotFree(pTree, pSnapshot)
     }
 }
 
-static void
-clipRectangle(pX, pY, pW, pH, x2, y2, w2, h2)
-    int *pX;
-    int *pY;
-    int *pW;
-    int *pH;
-    int x2;
-    int y2;
-    int w2;
-    int h2;
+static void 
+clipRectangle (int *pX, int *pY, int *pW, int *pH, int x2, int y2, int w2, int h2)
 {
     int x1 = *pX;
     int y1 = *pY;
@@ -2955,10 +2855,8 @@ clipRectangle(pX, pY, pW, pH, x2, y2, w2, h2)
     *pH = MIN((y1+h1) - *pY, (y2+h2) - *pY);
 }
 
-static void
-pixmapQuerySwitchOverflow(pQuery, pOverflow)
-    GetPixmapQuery *pQuery;
-    Overflow *pOverflow;
+static void 
+pixmapQuerySwitchOverflow (GetPixmapQuery *pQuery, Overflow *pOverflow)
 {
     if (pOverflow != pQuery->pCurrentOverflow) {
         Overflow *pCurrentOverflow = pQuery->pCurrentOverflow;
@@ -3029,12 +2927,13 @@ pixmapQuerySwitchOverflow(pQuery, pOverflow)
 }
 
 static int
-pixmapQueryCb(pItem, origin_x, origin_y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int origin_x;
-    int origin_y;
-    Overflow *pOverflow;
-    ClientData clientData;
+pixmapQueryCb(
+    HtmlCanvasItem *pItem,
+    int origin_x,
+    int origin_y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     GetPixmapQuery *pQuery = (GetPixmapQuery *)clientData;
 
@@ -3183,13 +3082,14 @@ pixmapQueryCb(pItem, origin_x, origin_y, pOverflow, clientData)
  *---------------------------------------------------------------------------
  */
 static Pixmap 
-getPixmap(pTree, xcanvas, ycanvas, w, h, getwin)
-    HtmlTree *pTree;        /* Pointer to html widget */
-    int xcanvas;            /* top-left canvas x-coord of requested pixmap */
-    int ycanvas;            /* top-left canvas y-coord of requested pixmap */
-    int w;                  /* Required width of pixmap */
-    int h;                  /* Required height of pixmap */
-    int getwin;             /* Boolean. True to add windows to pTree->pMapped */
+getPixmap (
+    HtmlTree *pTree,        /* Pointer to html widget */
+    int xcanvas,            /* top-left canvas x-coord of requested pixmap */
+    int ycanvas,            /* top-left canvas y-coord of requested pixmap */
+    int w,                  /* Required width of pixmap */
+    int h,                  /* Required height of pixmap */
+    int getwin             /* Boolean. True to add windows to pTree->pMapped */
+)
 {
     Pixmap pmap;
     Display *pDisplay;
@@ -3319,11 +3219,12 @@ getPixmap(pTree, xcanvas, ycanvas, w, h, getwin)
  *
  *---------------------------------------------------------------------------
  */
-int HtmlLayoutImage(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+int HtmlLayoutImage(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */
+    )
 {
     HtmlTree *pTree = (HtmlTree *)clientData;
     Display *pDisplay = Tk_Display(pTree->tkwin);
@@ -3380,15 +3281,14 @@ int HtmlLayoutImage(clientData, interp, objc, objv)
  *
  *---------------------------------------------------------------------------
  */
-int HtmlDrawIsEmpty(pCanvas)
-    HtmlCanvas *pCanvas;
+int 
+HtmlDrawIsEmpty (HtmlCanvas *pCanvas)
 {
     return (pCanvas->left==pCanvas->right && pCanvas->top==pCanvas->bottom);
 }
 
 static HtmlNode *
-findFlowNode(pNode)
-    HtmlNode *pNode;
+findFlowNode (HtmlNode *pNode)
 {
     HtmlNode *p;
     for (p = pNode; p; p = HtmlNodeParent(p)) {
@@ -3431,12 +3331,13 @@ struct NodeIndexQuery {
  *---------------------------------------------------------------------------
  */
 static int
-layoutNodeIndexCb(pItem, origin_x, origin_y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int origin_x;
-    int origin_y;
-    Overflow *pOverflow;
-    ClientData clientData;
+layoutNodeIndexCb(
+    HtmlCanvasItem *pItem,
+    int origin_x,
+    int origin_y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     CanvasText *pT = &pItem->x.t;
     if (pItem->type == CANVAS_TEXT && pT->iIndex >= 0 && pT->pNode->iNode >= 0){
@@ -3508,11 +3409,12 @@ layoutNodeIndexCb(pItem, origin_x, origin_y, pOverflow, clientData)
  *
  *---------------------------------------------------------------------------
  */
-static void
-layoutNodeIndexCmd(pTree, x, y)
-    HtmlTree *pTree;        /* Widget tree */
-    int x;                  /* Document (not viewport) X coordinate */
-    int y;                  /* Document (not viewport) Y coordinate */
+static void 
+layoutNodeIndexCmd (
+    HtmlTree *pTree,        /* Widget tree */
+    int x,                  /* Document (not viewport) X coordinate */
+    int y                  /* Document (not viewport) Y coordinate */
+)
 {
     NodeIndexQuery sQuery;
     ClientData cd = (ClientData)&sQuery;
@@ -3577,9 +3479,7 @@ layoutNodeIndexCmd(pTree, x, y)
  *---------------------------------------------------------------------------
  */
 static HtmlNode *
-returnDescNode(pNode1, pNode2)
-    HtmlNode *pNode1;
-    HtmlNode *pNode2;
+returnDescNode (HtmlNode *pNode1, HtmlNode *pNode2)
 {
     HtmlNode *pN;
     for (pN = pNode1; pN && pN != pNode2; pN = HtmlNodeParent(pN));
@@ -3606,12 +3506,13 @@ struct NodeQuery {
 };
 
 static int
-layoutNodeCb(pItem, origin_x, origin_y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int origin_x;
-    int origin_y;
-    Overflow *pOverflow;
-    ClientData clientData;
+layoutNodeCb(
+    HtmlCanvasItem *pItem,
+    int origin_x,
+    int origin_y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     int x, y, w, h;
     NodeQuery *pQuery = (NodeQuery *)clientData;
@@ -3670,10 +3571,8 @@ layoutNodeCb(pItem, origin_x, origin_y, pOverflow, clientData)
     return 0;
 }
 
-static int
-layoutNodeCompare(pVoidLeft, pVoidRight)
-    const void *pVoidLeft;
-    const void *pVoidRight;
+static int 
+layoutNodeCompare (const void *pVoidLeft, const void *pVoidRight)
 {
     HtmlNode *pLeft = *(HtmlNode **)pVoidLeft;
     HtmlNode *pRight = *(HtmlNode **)pVoidRight;
@@ -3707,11 +3606,8 @@ layoutNodeCompare(pVoidLeft, pVoidRight)
  *
  *---------------------------------------------------------------------------
  */
-static void
-layoutNodeCmd(pTree, x, y)
-    HtmlTree *pTree;
-    int x;
-    int y;
+static void 
+layoutNodeCmd (HtmlTree *pTree, int x, int y)
 {
     NodeQuery sQuery;
     memset(&sQuery, 0, sizeof(NodeQuery));
@@ -3761,11 +3657,12 @@ layoutNodeCmd(pTree, x, y)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlLayoutNode(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+HtmlLayoutNode(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */
+    )
 {
     int x;
     int y;
@@ -3814,12 +3711,13 @@ struct BboxContext {
 typedef struct BboxContext BboxContext;
 
 static int
-bboxCb(pItem, origin_x, origin_y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int origin_x;
-    int origin_y;
-    Overflow *pOverflow;
-    ClientData clientData;
+bboxCb(
+    HtmlCanvasItem *pItem,
+    int origin_x,
+    int origin_y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     BboxContext *p = (BboxContext *)clientData;
     if (pItem->x.generic.pNode && 
@@ -3844,11 +3742,12 @@ bboxCb(pItem, origin_x, origin_y, pOverflow, clientData)
 }
 
 int 
-HtmlWidgetBboxCmd(clientData, interp, objc, objv)
-    ClientData clientData;             /* The HTML widget data structure */
-    Tcl_Interp *interp;                /* Current interpreter. */
-    int objc;                          /* Number of arguments. */
-    Tcl_Obj *CONST objv[];             /* Argument strings. */
+HtmlWidgetBboxCmd(
+    ClientData clientData,             /* The HTML widget data structure */
+    Tcl_Interp *interp,                /* Current interpreter. */
+    int objc,                          /* Number of arguments. */
+    Tcl_Obj *CONST objv[]              /* Argument strings. */
+    )
 {
     int x = 0, y = 0, x2 = -1, y2 = -1;
     HtmlTree *pTree = (HtmlTree *)clientData;
@@ -3930,12 +3829,13 @@ struct PaintNodesQuery {
  *---------------------------------------------------------------------------
  */
 static int
-paintNodesSearchCb(pItem, origin_x, origin_y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int origin_x;
-    int origin_y;
-    Overflow *pOverflow;
-    ClientData clientData;
+paintNodesSearchCb(
+    HtmlCanvasItem *pItem,
+    int origin_x,
+    int origin_y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     PaintNodesQuery *p = (PaintNodesQuery *)clientData;
 
@@ -4021,13 +3921,14 @@ paintNodesSearchCb(pItem, origin_x, origin_y, pOverflow, clientData)
  *
  *---------------------------------------------------------------------------
  */
-void
-HtmlWidgetDamageText(pTree, pNodeStart, iIndexStart, pNodeFin, iIndexFin)
-    HtmlTree *pTree;         /* Widget tree */
-    HtmlNode *pNodeStart;    /* First node to repaint */
-    int iIndexStart;         /* First node to repaint */
-    HtmlNode *pNodeFin;      /* Last node to repaint */
-    int iIndexFin;           /* Last node to repaint */
+void 
+HtmlWidgetDamageText (
+    HtmlTree *pTree,         /* Widget tree */
+    HtmlNode *pNodeStart,    /* First node to repaint */
+    int iIndexStart,         /* First node to repaint */
+    HtmlNode *pNodeFin,      /* Last node to repaint */
+    int iIndexFin           /* Last node to repaint */
+)
 {
     PaintNodesQuery sQuery;
     int ymin, ymax;
@@ -4068,19 +3969,18 @@ HtmlWidgetDamageText(pTree, pNodeStart, iIndexStart, pNodeFin, iIndexFin)
     HtmlCallbackDamage(pTree, x, y, w, h);
 }
 
-void
-HtmlWidgetBboxText(
-pTree, pNodeStart, iIndexStart, pNodeFin, iIndexFin, piT, piL, piB, piR
+void 
+HtmlWidgetBboxText (
+    HtmlTree *pTree,         /* Widget tree */
+    HtmlNode *pNodeStart,    /* First node to repaint */
+    int iIndexStart,         /* First node to repaint */
+    HtmlNode *pNodeFin,      /* First node to repaint */
+    int iIndexFin,           /* Last node to repaint */
+    int *piT,
+    int *piL,
+    int *piB,
+    int *piR
 )
-    HtmlTree *pTree;         /* Widget tree */
-    HtmlNode *pNodeStart;    /* First node to repaint */
-    int iIndexStart;         /* First node to repaint */
-    HtmlNode *pNodeFin;      /* First node to repaint */
-    int iIndexFin;           /* Last node to repaint */
-    int *piT;
-    int *piL;
-    int *piB;
-    int *piR;
 {
     PaintNodesQuery sQuery;
     int iNodeStart;
@@ -4135,12 +4035,13 @@ struct ScrollToQuery {
  *---------------------------------------------------------------------------
  */
 static int
-scrollToNodeCb(pItem, origin_x, origin_y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int origin_x;
-    int origin_y;
-    Overflow *pOverflow;
-    ClientData clientData;
+scrollToNodeCb(
+    HtmlCanvasItem *pItem,
+    int origin_x,
+    int origin_y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     int x, y, w, h;
     ScrollToQuery *pQuery = (ScrollToQuery *)clientData;
@@ -4194,10 +4095,8 @@ scrollToNodeCb(pItem, origin_x, origin_y, pOverflow, clientData)
  *
  *---------------------------------------------------------------------------
  */
-int
-HtmlWidgetNodeTop(pTree, pNode)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
+int 
+HtmlWidgetNodeTop (HtmlTree *pTree, HtmlNode *pNode)
 {
     ScrollToQuery sQuery;
 
@@ -4222,12 +4121,13 @@ struct LayoutBboxQuery {
 };
 
 static int
-layoutBboxCb(pItem, origin_x, origin_y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int origin_x;
-    int origin_y;
-    Overflow *pOverflow;
-    ClientData clientData;
+layoutBboxCb(
+    HtmlCanvasItem *pItem,
+    int origin_x,
+    int origin_y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     int x, y, w, h;
     LayoutBboxQuery *pQuery = (LayoutBboxQuery *)clientData;
@@ -4263,12 +4163,13 @@ struct OverflowBox {
 };
 
 static int
-overflowBoxCb(pItem, origin_x, origin_y, pOverflow, clientData)
-    HtmlCanvasItem *pItem;
-    int origin_x;
-    int origin_y;
-    Overflow *pOverflow;
-    ClientData clientData;
+overflowBoxCb(
+    HtmlCanvasItem *pItem,
+    int origin_x,
+    int origin_y,
+    Overflow *pOverflow,
+    ClientData clientData
+    )
 {
     OverflowBox *p = (OverflowBox *)clientData;
     if (p->isFound) return 0;
@@ -4284,13 +4185,7 @@ overflowBoxCb(pItem, origin_x, origin_y, pOverflow, clientData)
 }
 
 void 
-HtmlWidgetOverflowBox(pTree, pNode, pX, pY, pW, pH)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    int *pX;
-    int *pY;
-    int *pW;
-    int *pH;
+HtmlWidgetOverflowBox (HtmlTree *pTree, HtmlNode *pNode, int *pX, int *pY, int *pW, int *pH)
 {
     OverflowBox sOverflowBox;
     memset(&sOverflowBox, 0, sizeof(OverflowBox));
@@ -4304,13 +4199,7 @@ HtmlWidgetOverflowBox(pTree, pNode, pX, pY, pW, pH)
 }
 
 void 
-HtmlWidgetNodeBox(pTree, pNode, pX, pY, pW, pH)
-    HtmlTree *pTree;
-    HtmlNode *pNode;
-    int *pX;
-    int *pY;
-    int *pW;
-    int *pH;
+HtmlWidgetNodeBox (HtmlTree *pTree, HtmlNode *pNode, int *pX, int *pY, int *pW, int *pH)
 {
     HtmlCanvas *pCanvas = &pTree->canvas;
     LayoutBboxQuery sQuery;
@@ -4364,13 +4253,7 @@ HtmlWidgetNodeBox(pTree, pNode, pX, pY, pW, pH)
 }
 
 static void 
-widgetRepair(pTree, x, y, w, h, g)
-    HtmlTree *pTree;
-    int x;
-    int y;
-    int w;
-    int h;
-    int g;
+widgetRepair (HtmlTree *pTree, int x, int y, int w, int h, int g)
 {
     Pixmap pixmap;
     GC gc;
@@ -4409,13 +4292,7 @@ widgetRepair(pTree, x, y, w, h, g)
  *---------------------------------------------------------------------------
  */
 void 
-HtmlWidgetRepair(pTree, x, y, w, h, windowsrepair)
-    HtmlTree *pTree;
-    int x;
-    int y;
-    int w;
-    int h;
-    int windowsrepair;
+HtmlWidgetRepair (HtmlTree *pTree, int x, int y, int w, int h, int windowsrepair)
 {
     /* if( !pTree->options.enablelayout ) return; */
     if (!Tk_IsMapped(pTree->tkwin)) return;
@@ -4443,11 +4320,12 @@ HtmlWidgetRepair(pTree, x, y, w, h, windowsrepair)
  *---------------------------------------------------------------------------
  */
 void 
-HtmlWidgetSetViewport(pTree, scroll_x, scroll_y, force_redraw)
-    HtmlTree *pTree;            /* Tree structure */
-    int scroll_x;               /* New value for pTree->iScrollX */
-    int scroll_y;               /* New value for pTree->iScrollY */
-    int force_redraw;           /* Redraw the entire viewport regardless */
+HtmlWidgetSetViewport (
+    HtmlTree *pTree,            /* Tree structure */
+    int scroll_x,               /* New value for pTree->iScrollX */
+    int scroll_y,               /* New value for pTree->iScrollY */
+    int force_redraw           /* Redraw the entire viewport regardless */
+)
 {
     pTree->iScrollY = scroll_y;
     pTree->iScrollX = scroll_x;
@@ -4492,11 +4370,7 @@ HtmlWidgetSetViewport(pTree, scroll_x, scroll_y, force_redraw)
 }
 
 HtmlCanvasItem *
-HtmlDrawAddMarker(pCanvas, x, y, fixed)
-    HtmlCanvas *pCanvas;
-    int x;
-    int y;
-    int fixed;
+HtmlDrawAddMarker (HtmlCanvas *pCanvas, int x, int y, int fixed)
 {
     HtmlCanvasItem *pItem; 
 CHECK_CANVAS(pCanvas);
@@ -4510,11 +4384,8 @@ CHECK_CANVAS(pCanvas);
     return pItem;
 }
 
-void
-HtmlDrawAddLinebox(pCanvas, x, y) 
-    HtmlCanvas *pCanvas;
-    int x;
-    int y;
+void 
+HtmlDrawAddLinebox (HtmlCanvas *pCanvas, int x, int y)
 {
     HtmlCanvasItem *pItem; 
 CHECK_CANVAS(pCanvas);
@@ -4528,11 +4399,8 @@ CHECK_CANVAS(pCanvas);
     return;
 }
 
-int
-HtmlDrawFindLinebox(pCanvas, pX, pY)
-    HtmlCanvas *pCanvas;
-    int *pX;
-    int *pY;
+int 
+HtmlDrawFindLinebox (HtmlCanvas *pCanvas, int *pX, int *pY)
 {
     int origin_x = 0;
     int origin_y = 0;
@@ -4555,12 +4423,8 @@ HtmlDrawFindLinebox(pCanvas, pX, pY)
     return 0;
 }
 
-int
-HtmlDrawGetMarker(pCanvas, pMarker, pX, pY)
-    HtmlCanvas *pCanvas;
-    HtmlCanvasItem *pMarker;
-    int *pX;
-    int *pY;
+int 
+HtmlDrawGetMarker (HtmlCanvas *pCanvas, HtmlCanvasItem *pMarker, int *pX, int *pY)
 {
     int origin_x = 0;
     int origin_y = 0;

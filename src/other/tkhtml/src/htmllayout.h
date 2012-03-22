@@ -172,8 +172,8 @@ void HtmlLayoutDrawBox(HtmlTree*,HtmlCanvas*,int,int,int,int,HtmlNode*,int,int);
 #define DISPLAY(pV) ((pV) ? (pV)->eDisplay : CSS_CONST_INLINE)
 
 #ifndef NDEBUG
-  static void CHECK_INTEGER_PLAUSIBILITY(x) 
-      int x; 
+  static void 
+CHECK_INTEGER_PLAUSIBILITY (int x) 
   {
       const static int limit = 10000000;
       assert(x < limit);

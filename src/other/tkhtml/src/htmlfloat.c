@@ -104,8 +104,7 @@ struct HtmlFloatList {
 };
 
 static void 
-floatListPrint(pList)
-    HtmlFloatList *pList;
+floatListPrint (HtmlFloatList *pList)
 {
     FloatListEntry *pEntry;
     Tcl_Obj *pObj = Tcl_NewObj();
@@ -150,7 +149,8 @@ floatListPrint(pList)
  *
  *---------------------------------------------------------------------------
  */
-HtmlFloatList *HtmlFloatListNew()
+HtmlFloatList *
+HtmlFloatListNew (void)
 {
     HtmlFloatList *pList = HtmlNew(HtmlFloatList);
 #ifdef DEBUG_FLOAT_LIST
@@ -176,8 +176,7 @@ HtmlFloatList *HtmlFloatListNew()
  *---------------------------------------------------------------------------
  */
 void 
-HtmlFloatListDelete(pList)
-    HtmlFloatList *pList;
+HtmlFloatListDelete (HtmlFloatList *pList)
 {
     if (pList) {
         FloatListEntry *pEntry;
@@ -211,10 +210,8 @@ HtmlFloatListDelete(pList)
  *
  *---------------------------------------------------------------------------
  */
-static 
-void insertListEntry(pList, y)
-    HtmlFloatList *pList;
-    int y;
+static void 
+insertListEntry (HtmlFloatList *pList, int y)
 {
     FloatListEntry *pEntry;
     FloatListEntry *pNew = 0;
@@ -318,12 +315,13 @@ insert_out:
  *---------------------------------------------------------------------------
  */
 void 
-HtmlFloatListAdd(pList, side, x, y1, y2) 
-    HtmlFloatList *pList;
-    int side;             /* FLOAT_LEFT or FLOAT_RIGHT */
-    int x;
-    int y1;
-    int y2;
+HtmlFloatListAdd (
+    HtmlFloatList *pList,
+    int side,             /* FLOAT_LEFT or FLOAT_RIGHT */
+    int x,
+    int y1,
+    int y2
+)
 {
     FloatListEntry *pEntry;
 
@@ -404,10 +402,8 @@ HtmlFloatListAdd(pList, side, x, y1, y2)
  *
  *---------------------------------------------------------------------------
  */
-int
-HtmlFloatListClearTop(pList, y)
-    HtmlFloatList *pList;
-    int y;
+int 
+HtmlFloatListClearTop (HtmlFloatList *pList, int y)
 {
     FloatListEntry *pEntry;
     int ret = y - pList->yorigin;
@@ -451,10 +447,11 @@ HtmlFloatListClearTop(pList, y)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlFloatListClear(pList, clear, y)
-    HtmlFloatList *pList;
-    int clear;         /* CLEAR_LEFT, CLEAR_RIGHT, CLEAR_NONE or CLEAR_BOTH */
-    int y;
+HtmlFloatListClear (
+    HtmlFloatList *pList,
+    int clear,         /* CLEAR_LEFT, CLEAR_RIGHT, CLEAR_NONE or CLEAR_BOTH */
+    int y
+)
 {
     FloatListEntry *pEntry;
     int ret = y - pList->yorigin;
@@ -520,10 +517,7 @@ clear_out:
  *---------------------------------------------------------------------------
  */
 void 
-HtmlFloatListNormalize(pList, x, y)
-    HtmlFloatList *pList; 
-    int x;
-    int y;
+HtmlFloatListNormalize (HtmlFloatList *pList, int x, int y)
 {
     pList->xorigin += x;
     pList->yorigin += y;
@@ -555,12 +549,8 @@ HtmlFloatListNormalize(pList, x, y)
  *
  *---------------------------------------------------------------------------
  */
-void floatListMarginsNormal(pList, y1, y2, pLeft, pRight)
-    HtmlFloatList *pList;
-    int y1;
-    int y2;
-    int *pLeft;
-    int *pRight;
+void 
+floatListMarginsNormal (HtmlFloatList *pList, int y1, int y2, int *pLeft, int *pRight)
 {
     FloatListEntry *pEntry;
 
@@ -623,12 +613,7 @@ void floatListMarginsNormal(pList, y1, y2, pLeft, pRight)
  *---------------------------------------------------------------------------
  */
 void 
-HtmlFloatListMargins(pList, y1, y2, pLeft, pRight)
-    HtmlFloatList *pList;
-    int y1;
-    int y2;
-    int *pLeft;
-    int *pRight;
+HtmlFloatListMargins (HtmlFloatList *pList, int y1, int y2, int *pLeft, int *pRight)
 {
     int y1Normal = y1 - pList->yorigin;
     int y2Normal = y2 - pList->yorigin;
@@ -677,12 +662,7 @@ HtmlFloatListMargins(pList, y1, y2, pLeft, pRight)
  *---------------------------------------------------------------------------
  */
 int 
-HtmlFloatListPlace(pList, parentwidth, width, height, y)
-    HtmlFloatList *pList;
-    int parentwidth;
-    int width;
-    int height;
-    int y;
+HtmlFloatListPlace (HtmlFloatList *pList, int parentwidth, int width, int height, int y)
 {
     int ret = y - pList->yorigin;
 
@@ -739,11 +719,12 @@ place_out:
  *---------------------------------------------------------------------------
  */
 void 
-HtmlFloatListLog(pTree, zCaption, zNode, pList)
-    HtmlTree *pTree;
-    CONST char *zCaption;
-    CONST char *zNode;
-    HtmlFloatList *pList;
+HtmlFloatListLog(
+    HtmlTree *pTree,
+    CONST char *zCaption,
+    CONST char *zNode,
+    HtmlFloatList *pList
+    )
 {
     char zBuf[1024];
     FloatListEntry *pCsr;
@@ -779,11 +760,8 @@ HtmlFloatListLog(pTree, zCaption, zNode, pList)
     Tcl_DecrRefCount(pLog);
 }
 
-int
-HtmlFloatListIsConstant(pList, y, iHeight)
-    HtmlFloatList *pList;
-    int y;
-    int iHeight;
+int 
+HtmlFloatListIsConstant (HtmlFloatList *pList, int y, int iHeight)
 {
     int y1 = y - pList->yorigin;
     int y2 = y1 + iHeight;

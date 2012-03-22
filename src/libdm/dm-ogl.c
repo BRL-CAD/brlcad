@@ -107,6 +107,8 @@ HIDDEN int ogl_drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fa
 HIDDEN int ogl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
 HIDDEN int ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points);
 HIDDEN int ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
+HIDDEN int ogl_drawPoint3D(struct dm *dmp, point_t point);
+HIDDEN int ogl_drawPoints3D(struct dm *dmp, int npoints, point_t *points);
 HIDDEN int ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp);
 HIDDEN int ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp);
 HIDDEN int ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data);
@@ -144,6 +146,8 @@ struct dm dm_ogl = {
     ogl_drawLine3D,
     ogl_drawLines3D,
     ogl_drawPoint2D,
+    ogl_drawPoint3D,
+    ogl_drawPoints3D,
     ogl_drawVList,
     ogl_drawVListHiddenLine,
     ogl_draw,
@@ -1870,6 +1874,46 @@ ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 
     glBegin(GL_POINTS);
     glVertex2f(x, y);
+    glEnd();
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
+ogl_drawPoint3D(struct dm *dmp, point_t point)
+{
+    if (!dmp || !point)
+	return TCL_ERROR;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("ogl_drawPoint3D():\n");
+	bu_log("\tdmp: %llu\tpt - %lf %lf %lf\n", (unsigned long long)dmp, V3ARGS(point));
+    }
+
+    glBegin(GL_POINTS);
+    glVertex3dv(point);
+    glEnd();
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
+ogl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
+{
+    register int i;
+
+    if (!dmp || npoints < 0 || !points)
+	return TCL_ERROR;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("ogl_drawPoint3D():\n");
+    }
+
+    glBegin(GL_POINTS);
+    for (i = 0; i < npoints; ++i)
+	glVertex3dv(points[i]);
     glEnd();
 
     return TCL_OK;
