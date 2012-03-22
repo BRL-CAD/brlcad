@@ -485,6 +485,7 @@ public:
     };
 
     const ON_BrepFace& face;
+    fastf_t dist;
     point_t origin;
     point_t point;
     vect_t normal;
@@ -498,33 +499,42 @@ public:
     // XXX - calculate the dot of the dir with the normal here!
     BBNode const * sbv;
 
-    brep_hit(const ON_BrepFace& f, const point_t orig, const point_t p, const vect_t n, const pt2d_t _uv)
+    brep_hit(const ON_BrepFace& f, const ON_Ray& ray, const point_t p, const vect_t n, const pt2d_t _uv)
 	: face(f), trimmed(false), closeToEdge(false), oob(false), hit(CLEAN_HIT), direction(ENTERING), m_adj_face_index(0), sbv(NULL)
     {
-	VMOVE(origin, orig);
+	vect_t dir;
+	VMOVE(origin, ray.m_origin);
+	VMOVE(point, p);
+	VMOVE(normal, n);
+	VSUB2(dir, point, origin);
+	dist = VDOT(ray.m_dir,dir);
+	move(uv, _uv);
+    }
+
+    brep_hit(const ON_BrepFace& f, fastf_t d, const ON_Ray& ray, const point_t p, const vect_t n, const pt2d_t _uv)
+	: face(f), dist(d), trimmed(false), closeToEdge(false), oob(false), hit(CLEAN_HIT), direction(ENTERING), m_adj_face_index(0), sbv(NULL)
+    {
+	vect_t dir;
+	VMOVE(origin, ray.m_origin);
 	VMOVE(point, p);
 	VMOVE(normal, n);
 	move(uv, _uv);
     }
 
     brep_hit(const brep_hit& h)
-	: face(h.face), trimmed(h.trimmed), closeToEdge(h.closeToEdge), oob(h.oob), hit(CLEAN_HIT), direction(ENTERING), m_adj_face_index(0), sbv(h.sbv)
+	: face(h.face), dist(h.dist), trimmed(h.trimmed), closeToEdge(h.closeToEdge), oob(h.oob), hit(h.hit), direction(h.direction), m_adj_face_index(h.m_adj_face_index), sbv(h.sbv)
     {
 	VMOVE(origin, h.origin);
 	VMOVE(point, h.point);
 	VMOVE(normal, h.normal);
 	move(uv, h.uv);
-	trimmed = h.trimmed;
-	closeToEdge = h.closeToEdge;
-	oob = h.oob;
-	sbv = h.sbv;
-	hit = h.hit;
-	direction = h.direction;
+
     }
 
     brep_hit& operator=(const brep_hit& h)
     {
 	const_cast<ON_BrepFace&>(face) = h.face;
+	dist = h.dist;
 	VMOVE(origin, h.origin);
 	VMOVE(point, h.point);
 	VMOVE(normal, h.normal);
@@ -535,18 +545,19 @@ public:
 	sbv = h.sbv;
 	hit = h.hit;
 	direction = h.direction;
+	m_adj_face_index = h.m_adj_face_index;
 
 	return *this;
     }
 
     bool operator==(const brep_hit& h)
     {
-	return NEAR_ZERO(DIST_PT_PT(point, h.point), BREP_SAME_POINT_TOLERANCE);
+	return NEAR_ZERO(dist - h.dist, BREP_SAME_POINT_TOLERANCE);
     }
 
     bool operator<(const brep_hit& h)
     {
-	return DIST_PT_PT(point, origin) < DIST_PT_PT(h.point, origin);
+	return dist < h.dist;
     }
 };
 
@@ -1163,15 +1174,15 @@ utah_brep_intersect_test(const BBNode* sbv, const ON_BrepFace* face, const ON_Su
 	numhits = utah_newton_4corner_solver(sbv, surf, ray, ouv, t, N, converged, 0);
     }
 
-    for (int i=0;i < numhits;i++) {
-	fastf_t closesttrim;
-	BRNode* trimBR = NULL;
-	int trim_status = ((BBNode*)sbv)->isTrimmed(ouv[i], trimBR, closesttrim);
-	if (converged && (t[i] > 1.e-2)) {
+    if (converged) {
+	for (int i = 0; i < numhits; i++) {
+	    fastf_t closesttrim;
+	    BRNode* trimBR = NULL;
+	    int trim_status = ((BBNode*) sbv)->isTrimmed(ouv[i], trimBR, closesttrim);
 	    if (trim_status != 1) {
 		ON_3dPoint _pt;
 		ON_3dVector _norm(N[i]);
-		_pt = ray.m_origin + (ray.m_dir*t[i]);
+		_pt = ray.m_origin + (ray.m_dir * t[i]);
 		if (face->m_bRev) {
 		    //bu_log("Reversing normal for Face:%d\n", face->m_face_index);
 		    _norm.Reverse();
@@ -1179,7 +1190,8 @@ utah_brep_intersect_test(const BBNode* sbv, const ON_BrepFace* face, const ON_Su
 		hit_count += 1;
 		uv[0] = ouv[i].x;
 		uv[1] = ouv[i].y;
-		brep_hit bh(*face, (const fastf_t*)ray.m_origin, (const fastf_t*)_pt, (const fastf_t*)_norm, uv);
+		brep_hit bh(*face, t[i], ray, (const fastf_t*) _pt,
+		        (const fastf_t*) _norm, uv);
 		bh.trimmed = false;
 		if (trimBR != NULL) {
 		    bh.m_adj_face_index = trimBR->m_adj_face_index;
@@ -1201,11 +1213,10 @@ utah_brep_intersect_test(const BBNode* sbv, const ON_BrepFace* face, const ON_Su
 		hits.push_back(bh);
 		found = BREP_INTERSECT_FOUND;
 	    }
-#if 1
 	    else if (fabs(closesttrim) < BREP_EDGE_MISS_TOLERANCE) {
 		ON_3dPoint _pt;
 		ON_3dVector _norm(N[i]);
-		_pt = ray.m_origin + (ray.m_dir*t[i]);
+		_pt = ray.m_origin + (ray.m_dir * t[i]);
 		if (face->m_bRev) {
 		    //bu_log("Reversing normal for Face:%d\n", face->m_face_index);
 		    _norm.Reverse();
@@ -1213,7 +1224,8 @@ utah_brep_intersect_test(const BBNode* sbv, const ON_BrepFace* face, const ON_Su
 		hit_count += 1;
 		uv[0] = ouv[i].x;
 		uv[1] = ouv[i].y;
-		brep_hit bh(*face, (const fastf_t*)ray.m_origin, (const fastf_t*)_pt, (const fastf_t*)_norm, uv);
+		brep_hit bh(*face, t[i], ray, (const fastf_t*) _pt,
+		        (const fastf_t*) _norm, uv);
 		bh.trimmed = true;
 		bh.closeToEdge = true;
 		if (trimBR != NULL) {
@@ -1230,7 +1242,6 @@ utah_brep_intersect_test(const BBNode* sbv, const ON_BrepFace* face, const ON_Su
 		hits.push_back(bh);
 		found = BREP_INTERSECT_FOUND;
 	    }
-#endif
 	}
     }
     return found;
@@ -1295,7 +1306,7 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 	_pt = ray.m_origin + (ray.m_dir*t);
 	if (face->m_bRev) _norm.Reverse();
 	hit_count += 1;
-	hits.push_back(brep_hit(*face, (const fastf_t*)ray.m_origin, (const fastf_t*)_pt, (const fastf_t*)_norm, uv));
+	hits.push_back(brep_hit(*face, ray, (const fastf_t*)_pt, (const fastf_t*)_norm, uv));
 	hits.back().sbv = sbv;
 	found = BREP_INTERSECT_FOUND;
     }
@@ -1346,7 +1357,7 @@ brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* sur
 	ON_3dVector _norm;
 	surf->EvNormal(uv[0], uv[1], _pt, _norm);
 	if (face->m_bRev) _norm.Reverse();
-	hits.push_back(brep_hit(*face, (const fastf_t*)ray.m_origin, (const fastf_t*)_pt, (const fastf_t*)_norm, uv));
+	hits.push_back(brep_hit(*face, ray, (const fastf_t*)_pt, (const fastf_t*)_norm, uv));
 	hits.back().sbv = sbv;
 
 	if (!sbv->m_u.Includes(uv[0]) || !sbv->m_v.Includes(uv[1])) {
@@ -2080,14 +2091,14 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 #ifdef KODDHIT //ugly debugging hack to raytrace single surface and not worry about odd hits
 		segp->seg_in.hit_dist = diststep + 1.0;
 #else
-		segp->seg_in.hit_dist = DIST_PT_PT(rp->r_pt, in.point);
+		segp->seg_in.hit_dist = in.dist;
 #endif
 		segp->seg_in.hit_surfno = in.face.m_face_index;
 		VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
 
 		VMOVE(segp->seg_out.hit_point, out.point);
 		VMOVE(segp->seg_out.hit_normal, out.normal);
-		segp->seg_out.hit_dist = DIST_PT_PT(rp->r_pt, out.point);
+		segp->seg_out.hit_dist = out.dist;
 		segp->seg_out.hit_surfno = out.face.m_face_index;
 		VSET(segp->seg_out.hit_vpriv, out.uv[0], out.uv[1], 0.0);
 
