@@ -37,11 +37,6 @@ SET(FEDEX_SOURCES
     fedex.c
 )
 
-SET(SYMLINK_SOURCES
-    fedex.c
-    symlink.c
-)
-
 SET(EXPRESS_PRIVATE_HDRS
     exptoks.h
     stack.h
@@ -53,4 +48,3 @@ add_definitions(
 
 SCL_ADDLIB(express "${EXPRESS_SOURCES}" "")
 SCL_ADDEXEC(fedex "${FEDEX_SOURCES}" express)
-SCL_ADDEXEC(symlink "${SYMLINK_SOURCES}" express)
