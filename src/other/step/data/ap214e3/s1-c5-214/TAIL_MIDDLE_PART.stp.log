@@ -1,0 +1,25 @@
+
+STEPcheck v 2.0 (February 21, 2000) for stepcheck_stage_1_2 schema
+
+Copyright ERIM (July 1997)
+
+Checking STEP file: TAIL_MIDDLE_PART.stp
+
+
+Reading Data from TAIL_MIDDLE_PART.stp...
+
+HEADER read:
+
+FIRST PASS complete:  703 instances created.
+  0  ERRORS	  0  WARNINGS
+
+
+SECOND PASS complete:  703 instances valid.
+  0  ERRORS	  0  WARNINGS
+
+Finished reading file.
+
+total violations = 0
+total parse errors = 0
+total parse warnings = 0
+elapsed time : 1.318 seconds
