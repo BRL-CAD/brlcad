@@ -106,7 +106,7 @@ ENDIF(_orig_lang)
 
 #---------------------------------------------------------------------
 # Testing option
-OPTION_WITH_DEFAULT( SCL_ENABLE_TESTING "Enable unittesting framework" ON )
+OPTION_WITH_DEFAULT( SCL_ENABLE_TESTING "Enable unittesting framework" OFF )
 IF(SCL_ENABLE_TESTING)
   if( NOT DEFINED SCL_BUILD_SCHEMAS )
     set( SCL_BUILD_SCHEMAS "ALL" ) #test all schemas, unless otherwise specified
@@ -258,13 +258,12 @@ configure_file(${CONFIG_H_FILE} ${SCL_BINARY_DIR}/include/scl_cf.h)
 # Using 'ver_string' instead of 'scl_version_string.h' is a trick to force the
 # command to always execute when the custom target is built. It works because
 # a file by that name never exists.
-add_custom_target(version_string ALL
-  DEPENDS ver_string )
+add_custom_target(version_string ALL DEPENDS ver_string )
 # creates scl_version_string.h using cmake script
 add_custom_command(OUTPUT ver_string ${CMAKE_CURRENT_BINARY_DIR}/include/scl_version_string.h
-  COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${SCL_SOURCE_DIR}
-  -DBINARY_DIR=${SCL_BINARY_DIR}
-  -P ${SCL_CMAKE_DIR}/scl_version_string.cmake)
+                   COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${SCL_SOURCE_DIR}
+                                            -DBINARY_DIR=${SCL_BINARY_DIR}
+                                            -P ${SCL_CMAKE_DIR}/scl_version_string.cmake)
 # scl_version_string.h is a generated file
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/include/scl_version_string.h
   PROPERTIES GENERATED TRUE
