@@ -258,12 +258,13 @@ configure_file(${CONFIG_H_FILE} ${SCL_BINARY_DIR}/include/scl_cf.h)
 # Using 'ver_string' instead of 'scl_version_string.h' is a trick to force the
 # command to always execute when the custom target is built. It works because
 # a file by that name never exists.
+configure_file(${SCL_CMAKE_DIR}/scl_version_string.cmake ${SCL_BINARY_DIR}/scl_version_string.cmake @ONLY)
 add_custom_target(version_string ALL DEPENDS ver_string )
 # creates scl_version_string.h using cmake script
 add_custom_command(OUTPUT ver_string ${CMAKE_CURRENT_BINARY_DIR}/include/scl_version_string.h
                    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${SCL_SOURCE_DIR}
                                             -DBINARY_DIR=${SCL_BINARY_DIR}
-                                            -P ${SCL_CMAKE_DIR}/scl_version_string.cmake)
+                                            -P ${SCL_BINARY_DIR}/scl_version_string.cmake)
 # scl_version_string.h is a generated file
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/include/scl_version_string.h
   PROPERTIES GENERATED TRUE

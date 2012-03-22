@@ -7,6 +7,8 @@
 
 #scl_version_string.h defines scl_version() which returns a pretty commit description and a build timestamp.
 
+set(IS_SUBBUILD "@IS_SUBBUILD@")
+
 set(VERS_FILE ${SOURCE_DIR}/SCL_VERSION.txt )
 if( EXISTS ${SOURCE_DIR}/.git )
     find_package(Git QUIET)
@@ -14,15 +16,21 @@ if( EXISTS ${SOURCE_DIR}/.git )
         execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags RESULT_VARIABLE res_var OUTPUT_VARIABLE GIT_COMMIT_ID )
         if( NOT ${res_var} EQUAL 0 )
             file( READ ${VERS_FILE} GIT_COMMIT_ID LIMIT 255 )
-            message( WARNING "Git failed (probably no tags in repo). Build will contain revision info from ${VERS_FILE}." )
+	    if(NOT IS_SUBBUILD)
+              message( WARNING "Git failed (probably no tags in repo). Build will contain revision info from ${VERS_FILE}." )
+	    endif(NOT IS_SUBBUILD)
         endif()
     else(GIT_FOUND)
         file( READ ${VERS_FILE} GIT_COMMIT_ID LIMIT 255 )
-        message( WARNING "Git not found. Build will contain revision info from ${VERS_FILE}." )
+	if(NOT IS_SUBBUILD)
+          message( WARNING "Git not found. Build will contain revision info from ${VERS_FILE}." )
+	endif(NOT IS_SUBBUILD)
     endif(GIT_FOUND)
 else()
     file( READ ${VERS_FILE} GIT_COMMIT_ID LIMIT 255 )
-    message( WARNING "Git failed ('.git' not found). Build will contain revision info from ${VERS_FILE}." )
+    if(NOT IS_SUBBUILD)
+      message( WARNING "Git failed ('.git' not found). Build will contain revision info from ${VERS_FILE}." )
+    endif(NOT IS_SUBBUILD)
 endif()
 
 string( REPLACE "\n" "" GIT_COMMIT_ID ${GIT_COMMIT_ID} )
@@ -45,4 +53,6 @@ file(WRITE scl_version_string.h.txt ${vstring} )
 # reduces needless rebuilds
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
                         scl_version_string.h.txt ${BINARY_DIR}/include/scl_version_string.h)
-message("-- scl_version_string.h is up-to-date.")
+if(NOT IS_SUBBUILD)
+  message("-- scl_version_string.h is up-to-date.")
+endif(NOT IS_SUBBUILD)
