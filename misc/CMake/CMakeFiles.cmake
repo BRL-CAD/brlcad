@@ -39,7 +39,7 @@
 # tarball, hence this macro stores its results in files and not
 # variables  It's a no-op in a SUBBUILD.
 macro(CMAKEFILES)
-  if(NOT IS_SUBBUILD)
+  if(NOT BRLCAD_IS_SUBBUILD)
     foreach(ITEM ${ARGN})
       if(NOT ${ITEM} MATCHES "^SHARED$" AND NOT ${ITEM} MATCHES "^STATIC$" AND NOT x${ITEM} MATCHES "^xWIN32$")
 	get_filename_component(ITEM_PATH ${ITEM} PATH)
@@ -79,12 +79,12 @@ macro(CMAKEFILES)
 	endif(NOT ITEM_PATH STREQUAL "")
       endif()
     endforeach(ITEM ${ARGN})
-  endif(NOT IS_SUBBUILD)
+  endif(NOT BRLCAD_IS_SUBBUILD)
 endmacro(CMAKEFILES FILESLIST)
 
 # Routine to tell distcheck to ignore a single item (can be a directory)
 macro(DISTCHECK_IGNORE_ITEM itemtoignore)
-  if(NOT IS_SUBBUILD)
+  if(NOT BRLCAD_IS_SUBBUILD)
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${itemtoignore})
       if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${itemtoignore})
 	file(APPEND ${CMAKE_BINARY_DIR}/cmakedirs.cmake "${CMAKE_CURRENT_SOURCE_DIR}/${itemtoignore}\n")
@@ -94,14 +94,14 @@ macro(DISTCHECK_IGNORE_ITEM itemtoignore)
     else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${itemtoignore})
       message(FATAL_ERROR "Attempting to ignore non-existent file ${itemtoignore}")
     endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${itemtoignore})
-  endif(NOT IS_SUBBUILD)
+  endif(NOT BRLCAD_IS_SUBBUILD)
 endmacro(DISTCHECK_IGNORE_ITEM)
 
 
 # Routine to tell distcheck to ignore a series of items in a directory.  Items may themselves
 # be directories.  Primarily useful when working with src/other dist lists.
 macro(DISTCHECK_IGNORE targetdir filestoignore)
-  if(NOT IS_SUBBUILD)
+  if(NOT BRLCAD_IS_SUBBUILD)
     foreach(ITEM ${${filestoignore}})
       get_filename_component(ITEM_PATH ${ITEM} PATH)
       get_filename_component(ITEM_NAME ${ITEM} NAME)
@@ -139,7 +139,7 @@ macro(DISTCHECK_IGNORE targetdir filestoignore)
 	message(FATAL_ERROR "Attempting to ignore non-existent file ${CMAKE_CURRENT_SOURCE_DIR}/${targetdir}/${ITEM}")
       endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${targetdir}/${ITEM})
     endforeach(ITEM ${${filestoignore}})
-  endif(NOT IS_SUBBUILD)
+  endif(NOT BRLCAD_IS_SUBBUILD)
 endmacro(DISTCHECK_IGNORE)
 
 

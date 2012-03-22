@@ -6,7 +6,7 @@
 # is set up as a cmake.in file - configure_file and include are used to generate
 # and source the final target definition for each case.
 
-if(NOT IS_SUBBUILD)
+if(NOT BRLCAD_IS_SUBBUILD)
   if("${CMAKE_VERBOSE_DISTCHECK}" STREQUAL "")
     set(CMAKE_VERBOSE_DISTCHECK OFF)
   endif("${CMAKE_VERBOSE_DISTCHECK}" STREQUAL "")
@@ -98,4 +98,4 @@ if(NOT IS_SUBBUILD)
       add_custom_target(distcheck DEPENDS distcheck-std)
     endif(full_distcheck)
   endmacro(DEFINE_DISTCHECK_TARGET)
-endif(NOT IS_SUBBUILD)
+endif(NOT BRLCAD_IS_SUBBUILD)
