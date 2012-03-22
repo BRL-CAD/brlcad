@@ -50,7 +50,7 @@ void del_ovlp(overlap *op);
 void init_ovlp(void);
 
 int
-if_hit(struct application *ap, struct partition *part_head, struct seg *finished_segs)
+if_hit(struct application *ap, struct partition *part_head, struct seg *UNUSED(finished_segs))
 {
     char regionPN[512] = {0};
     const char *val;
@@ -67,9 +67,6 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 
     struct bu_vls claimant_list = BU_VLS_INIT_ZERO;	/* Names of the claiming regions */
     struct bu_vls attr_vls = BU_VLS_INIT_ZERO;
-
-    /* quellage */
-    finished_segs = finished_segs;
 
     report(FMT_RAY);
     report(FMT_HEAD);

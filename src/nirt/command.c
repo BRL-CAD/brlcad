@@ -56,12 +56,10 @@ extern int need_prep;
 
 
 void
-bot_minpieces(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
+bot_minpieces(char *buffer, com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
 {
     long new_lvalue;
     int i=0;
-
-    ctp = ctp; /* quell warning */
 
     while (isspace(*(buffer+i)))
 	++i;
@@ -85,12 +83,10 @@ bot_minpieces(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 }
 
 void
-bot_mintie(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
+bot_mintie(char *buffer, com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
 {
     long new_lvalue;
     int i=0;
-
-    ctp = ctp; /* quell warning */
 
     while (isspace(*(buffer+i)))
 	++i;
@@ -660,10 +656,8 @@ cm_libdebug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 }
 
 void
-backout(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
+backout(char *buffer, com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
 {
-    /* quellage */
-    ctp = ctp;
 
     while (isspace(*buffer))
 	++buffer;

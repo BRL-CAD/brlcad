@@ -752,17 +752,13 @@ state_file(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 
 
 void
-dump_state(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
+dump_state(const char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
 {
     char *c;
     static const char fmt_char[] = {'r', 'h', 'p', 'f', 'm', 'o', 'g'};
     FILE *sfPtr;
     int f;
     outitem *oip;		/* Pointer into list of output items */
-
-    /* quellage */
-    buffer = buffer;
-    ctp = ctp;
 
     if ((sfPtr = fopen(sf_name, "wb")) == NULL) {
 	fprintf(stderr, "Cannot open statefile '%s'\n", sf_name);
@@ -804,13 +800,9 @@ dump_state(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 
 
 void
-load_state(char *buffer, com_table *ctp, struct rt_i *rtip)
+load_state(char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *rtip)
 {
     FILE *sfPtr;
-
-    /* quellage */
-    buffer = buffer;
-    ctp = ctp;
 
     if ((sfPtr = fopen(sf_name, "rb")) == NULL) {
 	fprintf(stderr, "Cannot open statefile '%s'\n", sf_name);
