@@ -37,6 +37,7 @@
 #include <stdio.h>
 
 #include "vmath.h"
+#include "icv.h"
 #include "raytrace.h"
 #include "fb.h"
 
@@ -65,6 +66,8 @@ static int xraymiss(register struct application *ap);
 struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
+static char *floatfilename=NULL;
+const char floatfileext[] = ".los";
 
 const char title[] = "RT X-Ray";
 void
@@ -104,17 +107,22 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
 	bu_log("rtxray: Can't do parallel yet, using one CPU\n");
     }
 
-    if ( lightmodel == LGT_BW ) {
-	if ( minus_o )
-	    pixsize = 1;		/* BW file */
-	else
-	    pixsize = 3;		/* Frame buffer */
+    if (lightmodel == LGT_BW) {
+	pixsize = 3; /* use frame buffer size with icv */
+	scanbuf = (unsigned char *)bu_malloc( width*pixsize, "scanline buffer" );
     } else {
 	/* XXX - Floating output uses no buffer */
 	pixsize = 0;
-    }
-    if ( pixsize ) {
-	scanbuf = (unsigned char *)bu_malloc( width*pixsize, "scanline buffer" );
+	/* force change of 'outputfile' to short circuit libicv for LGT_FLOAT outputs, adds '.los' extension */
+	if (outputfile) {
+	    char buf[BUFSIZ];
+	    int format = guess_file_format(outputfile, buf);
+	    if (format != ICV_IMAGE_UNKNOWN) {
+		bu_strlcpy(buf, outputfile, BUFSIZ);
+		bu_strlcat(buf, floatfileext, BUFSIZ);
+		outputfile = floatfilename = bu_strdup(buf);
+	    }
+	}
     }
 
     if ( minus_F || (!minus_o && !minus_F) ) {
@@ -160,10 +168,18 @@ void
 view_eol(struct application *ap)
 {
     size_t i;
-    unsigned char *buf = (unsigned char *)NULL;
 
     if ( lightmodel == LGT_BW ) {
-	if ( outfp != NULL ) {
+
+	if (bif != NULL) {
+	    if (rt_g.rtg_parallel) {
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
+	    }
+	    icv_image_save_writeline(bif, ap->a_y, scanbuf);
+	    if (rt_g.rtg_parallel) {
+		bu_semaphore_release( BU_SEM_SYSCALL );
+	    }
+	} else if ( outfp != NULL ) {
 	    if (rt_g.rtg_parallel) {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 	    }
@@ -174,45 +190,18 @@ view_eol(struct application *ap)
 	    if (rt_g.rtg_parallel) {
 		bu_semaphore_release( BU_SEM_SYSCALL );
 	    }
-	    if ( fbp != FBIO_NULL ) {
-		if (!buf) {
-		    buf = (unsigned char *)bu_malloc(sizeof(RGBpixel)*width, "allocating temporary buffer in viewxray");
-		}
-
-		/* fb_write only accepts RGBpixel arrays, so convert it */
-		for (i=0; i < width; i++) {
-		    buf[i*3+RED] = scanbuf[i];
-		    buf[i*3+GRN] = scanbuf[i];
-		    buf[i*3+BLU] = scanbuf[i];
-		}
-
-		if (rt_g.rtg_parallel) {
-		    bu_semaphore_acquire( BU_SEM_SYSCALL );
-		}
-		fb_write( fbp, 0, ap->a_y, buf, width );
-		if (i < width) {
-		    perror("fwrite");
-		}
-		if (rt_g.rtg_parallel) {
-		    bu_semaphore_release( BU_SEM_SYSCALL );
-		}
-
-		if (buf) {
-		    bu_free(buf, "releasing temporary buffer in viewxray");
-		}
+	}
+	if ( fbp != FBIO_NULL ) {
+	    if (rt_g.rtg_parallel) {
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
 	    }
-	} else {
-	    if ( fbp != FBIO_NULL ) {
-		if (rt_g.rtg_parallel) {
-		    bu_semaphore_acquire( BU_SEM_SYSCALL );
-		}
-		fb_write( fbp, 0, ap->a_y, scanbuf, width );
-		if (rt_g.rtg_parallel) {
-		    bu_semaphore_release( BU_SEM_SYSCALL );
-		}
+	    fb_write( fbp, 0, ap->a_y, scanbuf, width );
+	    if (rt_g.rtg_parallel) {
+		bu_semaphore_release( BU_SEM_SYSCALL );
 	    }
 	}
-	if (fbp == FBIO_NULL && outfp == NULL)
+
+	if (bif == NULL && fbp == FBIO_NULL && outfp == NULL)
 	    bu_log("rtxray: strange, no end of line actions taken.\n");
     }
 }
