@@ -85,7 +85,7 @@ image_flip(unsigned char *buf, int width, int height)
  * I suck. I'll fix this later. Honest.
  */
 int
-guess_file_format(const char *filename, char *trimmedname)
+icv_guess_file_format(const char *filename, char *trimmedname)
 {
     /* look for the FMT: header */
 #define CMP(name) if (!bu_strncmp(filename, #name":", strlen(#name))) {bu_strlcpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return ICV_IMAGE_##name; }
@@ -273,7 +273,7 @@ icv_image_save_open(const char *filename, int format, int width, int height, int
     bif->magic = ICV_IMAGE_FILE_MAGIC;
     if (format == ICV_IMAGE_AUTO || ICV_IMAGE_AUTO_NO_PIX) {
 	char buf[BUFSIZ];
-	bif->format = guess_file_format(filename, buf);
+	bif->format = icv_guess_file_format(filename, buf);
 	if(bif->format == ICV_IMAGE_UNKNOWN) {
 	    if (format == ICV_IMAGE_AUTO_NO_PIX) {
 		return NULL;
