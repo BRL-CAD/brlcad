@@ -13,7 +13,7 @@
 /* $Id: STEPfile.inline.cc,v 3.0.1.4 1997/11/05 22:11:46 sauderd DP3.1 $ */ 
 
 #include <STEPfile.h>
-#include <s_HEADER_SCHEMA.h>
+#include <SdaiHeaderSchema.h>
 #include <STEPaggregate.h>
 
 /* for strrchr */
@@ -299,15 +299,15 @@ char *STEPfile::schemaName( char *schName )
      * schName is unset.
      */
 {
-    p21DIS_File_schema *fs;
+    SdaiFile_schema *fs;
     std::string tmp;
     STEPnode *n;
 
     if ( _headerInstances == NULL ) return NULL;
-    fs = (p21DIS_File_schema *)_headerInstances->GetApplication_instance("File_Schema");
+    fs = (SdaiFile_schema *)_headerInstances->GetApplication_instance("File_Schema");
     if ( fs == ENTITY_NULL ) return NULL;
 
-    n = (STEPnode *)fs->schema_identifiers().GetHead();
+    n = (STEPnode *)fs->schema_identifiers_()->GetHead();
     // (take the first one)
     if ( n == NULL ) return NULL;
     n->STEPwrite(tmp);

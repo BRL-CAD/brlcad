@@ -27,7 +27,7 @@
 #include <sdai.h>
 #include <STEPcomplex.h>
 #include <STEPattribute.h>
-#include <s_HEADER_SCHEMA.h>
+#include <SdaiHeaderSchema.h>
 
 // STEPundefined contains
 // void PushPastString (istream& in, std::string &s, ErrorDescriptor *err)
@@ -217,140 +217,11 @@ STEPfile::ReadHeader (istream& in)
 	cmtStr.clear();
     }
     
-    if (_fileType == VERSION_OLD) {
-      InstMgr * tmp = HeaderConvertToNew(*im);
-      delete im;
-      im = tmp;
-    }
     HeaderVerifyInstances(im);
     HeaderMergeInstances(im);  // handles delete for im
 
     return _error.severity();
 }
-
-
-/***************************
-function:     HeaderConvertToNew
-returns:      (InstMgr*) List of instances of header section entities
-                         which semantically conform to the new version
-                         of the exchange file format.
-parameters:   (InstMgr&) List of instances of header section entities
-                         which semantically conform to the old version
-                         of the exchange file format.
-description:
-   This function converts the instances of the given InstMgr from the 
-   old STEPfile format to the new file format. The InstMgr must
-   contain only instances of header section entities, and those entities 
-   must be numbered in a specific way.
-
-      OLD FORMAT (N279)
-
-   #1=FILE_IDENTIFICATION
-   #2=FILE_DESCRIPTION
-   #3=IMP_LEVEL
-   #4=CLASSIFICATION
-   #5=MAXSIG   
-
-side effects: This function allocates memory for an InstMgr using a
-   call to the new operator.  
-   It also removes some instances from oldinst.
-***************************/
-InstMgr*
-STEPfile::HeaderConvertToNew(InstMgr& oldinst) 
-{
-    InstMgr* imtmp = new InstMgr; 
-    SCLP23(Application_instance)* oldse;
-    
-// FILE_NAME <== (N279)FILE_IDENTIFICATION
-    p21DIS_File_name * fn = 0;
-    oldse = oldinst.GetApplication_instance("N279_File_Identification");
-    if (oldse == ENTITY_NULL) 
-      {
-	  cerr << "Warning: STEPfile::HeaderConvertToNew. Unable to get " <<
-	      "\'File_Identification\' from header instance manager.\n";
-	  fn = (p21DIS_File_name *) HeaderDefaultFileName();
-      }
-    else 
-      {
-	  
-	  s_N279_file_identification * fi;
-	  fi = (s_N279_file_identification*) oldse;
-	  
-	  fn = new p21DIS_File_name;
-	  
-	  fn->name(const_cast<char *>((fi->file_name()).c_str()));     //STRING <- STRING
-	  fn->time_stamp(const_cast<char *>((fi->date()).c_str()));    //STRING <- STRING
-	  //fn->author(fi->author());      
-		//LIST OF STRING <- LIST OF STRING
-	  (fn->author()).ShallowCopy(fi->author());
-		//LIST OF STRING <- LIST OF STRING
-	  (fn->organization()).ShallowCopy(fi->organization());
-	  fn->preprocessor_version(const_cast<char *>((fi->preprocessor_version()).c_str())); //STRING
-	  fn->originating_system(const_cast<char *>((fi->originating_system()).c_str()));     //STRING
-	  fn->authorisation("");         //STRING
-	  fn->STEPfile_id = HeaderId("File_Name");
-
-	  oldinst.Delete(fi);
-      }
-    
-    imtmp->Append(fn, completeSE);
-    
-// FILE_DESCRIPTION <== (N279)FILE_DESCRIPTION & (N279)IMP_LEVEL
-   p21DIS_File_description * fd = new p21DIS_File_description;
-    // Get the (N279) File_Description Instance
-    oldse = oldinst.GetApplication_instance("N279_File_Description");
-    s_N279_file_description * ofd = (s_N279_file_description*)oldse;
-    if (oldse != ENTITY_NULL) 
-      {
-//  DAVE, is there a new way TODO this?
-	  // copy a SCLP23(String) value into a StringAggregate
-	  const char* tmpstr = const_cast<char *>((ofd->description()).c_str());
-	  int l = strlen(tmpstr) + 2;	  
-	  char *str = new char[l];
-	  str[0]='\'';  str[1]='\0';
-	  strncat(str,tmpstr,l);  
-	  strncat(str,"\'",l);
-	  StringNode * sn = new StringNode(str);
-	  fd->description().AddNode(sn);
-	  oldinst.Delete(ofd);
-	  delete [] str;
-      }
-    else 
-      {
-	  StringNode * sn = new StringNode("");
-	  fd->description().AddNode(sn);
-      }
-    
-    // Get the (N279) Imp_Level Instance
-    oldse = oldinst.GetApplication_instance("N279_Imp_Level");
-    s_N279_imp_level * il = (s_N279_imp_level*)oldse;
-    if (oldse != ENTITY_NULL) 
-      {
-	  fd->implementation_level(const_cast<char *>((il->implementation_level()).c_str()));
-	  oldinst.Delete(il);
-      }
-    else 
-      {
-	  fd->implementation_level("");
-      }
-    fd->STEPfile_id = HeaderId("File_Description");
-    imtmp->Append(fd, completeSE);
-
-// FILE_SCHEMA <== default values
-    // There is no entity for the file_schema in the old version
-    // Therefore, the schema_identifiers list is left empty
-    imtmp->Append(HeaderDefaultFileSchema(), completeSE);
-
-
-//append any extra instances from oldinst onto imtmp
-    for (int n = oldinst.InstanceCount() - 1; n>=0; --n) 
-      {
-	  imtmp->Append(oldinst.GetApplication_instance (oldinst.GetMgrNode (n)),completeSE);
-      }
-    
-    return imtmp;    
-}
-
 
 /***************************
 Verify the instances read from the header section of an exchange file.
@@ -410,23 +281,28 @@ STEPfile::HeaderVerifyInstances(InstMgr* im)
 SCLP23(Application_instance)* 
 STEPfile::HeaderDefaultFileName() 
 {
-    p21DIS_File_name * fn = new p21DIS_File_name;
+    SdaiFile_name * fn = new SdaiFile_name;
+    StringAggregate_ptr tmp = new StringAggregate;
 
-    fn->name("");
-    fn->time_stamp("");
-    fn->author().StrToVal("", &_error, 
-			  fn->attributes[2].
-			  aDesc -> DomainType (), 
-			  _headerInstances);
-    fn->organization().StrToVal("", &_error, 
-			       fn->attributes[3].
-				aDesc -> DomainType (), 
-				_headerInstances);
-    fn->preprocessor_version("");
-    fn->originating_system("");
-    fn->authorisation("");
+    fn->name_( "" );
+    fn->time_stamp_( "" );
+    tmp->StrToVal( "", &_error,
+	    fn->attributes[2].
+	    aDesc -> DomainType(),
+	    _headerInstances );
+    fn->author_( tmp );
 
-    fn->STEPfile_id = HeaderId ("File_Name");
+    tmp->StrToVal( "", &_error,
+	    fn->attributes[3].
+	    aDesc -> DomainType(),
+	    _headerInstances );
+    fn->organization_( tmp );
+
+    fn->preprocessor_version_( "" );
+    fn->originating_system_( "" );
+    fn->authorization_( "" );
+
+    fn->STEPfile_id = HeaderId( "File_Name" );
 
     return fn;
 }
@@ -434,9 +310,9 @@ STEPfile::HeaderDefaultFileName()
 SCLP23(Application_instance)* 
 STEPfile::HeaderDefaultFileDescription() 
 {
-   p21DIS_File_description * fd = new p21DIS_File_description;
+   SdaiFile_description * fd = new SdaiFile_description;
     
-    fd->implementation_level("");
+    fd->implementation_level_("");
 
     fd->STEPfile_id = HeaderId ("File_Description");
 
@@ -446,9 +322,9 @@ STEPfile::HeaderDefaultFileDescription()
 SCLP23(Application_instance)*
 STEPfile::HeaderDefaultFileSchema() 
 {
-    p21DIS_File_schema * fs = new p21DIS_File_schema;
+    SdaiFile_schema * fs = new SdaiFile_schema;
     
-    fs->schema_identifiers().StrToVal("", &_error, 
+    fs->schema_identifiers_()->StrToVal("", &_error, 
 				      fs->attributes[0].
 				aDesc -> DomainType (), 
 				      _headerInstances);
@@ -1806,12 +1682,12 @@ STEPfile::WriteHeaderInstanceFileName (ostream& out)
       {
 	  // ERROR: no File_Name instance in _headerInstances
 	  // create a File_Name instance
-//	  (p21DIS_File_name*)se = HeaderDefaultFileName();
+//	  (SdaiFile_name*)se = HeaderDefaultFileName();
 	  se = (SCLP23(Application_instance) *)HeaderDefaultFileName();
       }
 
 //set some of the attribute values at time of output
-    p21DIS_File_name * fn = (p21DIS_File_name*)se;
+    SdaiFile_name * fn = (SdaiFile_name*)se;
 
 /* I'm not sure this is a good idea that Peter did but I'll leave around - DAS
     // write time_stamp (as specified in ISO Standard 8601)
@@ -1825,7 +1701,7 @@ STEPfile::WriteHeaderInstanceFileName (ostream& out)
     strftime(time_buf,26,"%Y-%m-%dT%H:%M:%S",timeptr);
     //s_String  s = fn->time_stamp();
     //strncpy((char*)s,time_buf,27);
-    fn->time_stamp(time_buf);
+    fn->time_stamp_(time_buf);
 
 //output the values to the file
     WriteHeaderInstance(se, out);
