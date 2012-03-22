@@ -76,7 +76,8 @@ enum {
     ICV_IMAGE_RLE,
     ICV_IMAGE_SPM,
     ICV_IMAGE_SUN,
-    ICV_IMAGE_YUV
+    ICV_IMAGE_YUV,
+    ICV_IMAGE_UNKNOWN
 };
 
 
@@ -119,6 +120,8 @@ typedef struct icv_image_file icv_image_file_t;
  */
 #define ICV_IMAGE_FILE_IS_INITIALIZED(_i) (((struct icv_image_file *)(_i) != ICV_IMAGE_FILE_NULL) && LIKELY((_i)->magic == ICV_IMAGE_FILE_MAGIC))
 
+
+ICV_EXPORT extern int guess_file_format(const char *filename, char *trimmedname);
 
 ICV_EXPORT extern struct icv_image_file *icv_image_save_open(const char *filename,
 							  int format,

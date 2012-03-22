@@ -84,7 +84,7 @@ image_flip(unsigned char *buf, int width, int height)
  *
  * I suck. I'll fix this later. Honest.
  */
-HIDDEN int
+int
 guess_file_format(const char *filename, char *trimmedname)
 {
     /* look for the FMT: header */
@@ -101,13 +101,14 @@ guess_file_format(const char *filename, char *trimmedname)
 
     /* and guess based on extension */
 #define CMP(name, ext) if (!bu_strncmp(filename+strlen(filename)-strlen(#name)-1, "."#ext, strlen(#name)+1)) return ICV_IMAGE_##name;
+    CMP(PIX, pix);
     CMP(PNG, png);
     CMP(PPM, ppm);
     CMP(BMP, bmp);
     CMP(BW, bw);
 #undef CMP
     /* defaulting to PIX */
-    return ICV_IMAGE_PIX;
+    return ICV_IMAGE_UNKNOWN;
 }
 
 HIDDEN int
@@ -273,8 +274,13 @@ icv_image_save_open(const char *filename, int format, int width, int height, int
     if (format == ICV_IMAGE_AUTO || ICV_IMAGE_AUTO_NO_PIX) {
 	char buf[BUFSIZ];
 	bif->format = guess_file_format(filename, buf);
-	if(format == ICV_IMAGE_AUTO_NO_PIX && bif->format == ICV_IMAGE_PIX)
-	    return NULL;
+	if(bif->format == ICV_IMAGE_UNKNOWN) {
+	    if (format == ICV_IMAGE_AUTO_NO_PIX) {
+		return NULL;
+	    } else {
+		bif->format = ICV_IMAGE_PIX;
+	    }
+	}
 	bif->filename = bu_strdup(buf);
     } else {
 	bif->format = format;
