@@ -187,7 +187,7 @@ ENDFOREACH()
 # The location in which to install SCL. Need a good Debug location 
 # for Windows.  Only do this if CMAKE_INSTALL_PREFIX hasn't been set
 # already, to try and allow parent builds (if any) some control.
-if(NOT IS_SUBBUILD)
+if(NOT SCL_IS_SUBBUILD)
   IF(NOT WIN32)
     IF (${CMAKE_BUILD_TYPE} MATCHES "Debug")
       SET(SCL_INSTALL_PREFIX "${SCL_SOURCE_DIR}/../scl-install")
@@ -198,7 +198,7 @@ if(NOT IS_SUBBUILD)
   SET( SCL_INSTALL_PREFIX ${SCL_INSTALL_PREFIX} CACHE
     PATH "Install prefix prepended to target to create install location" )
   SET( CMAKE_INSTALL_PREFIX ${SCL_INSTALL_PREFIX} CACHE INTERNAL "Prefix prepended to install directories if target destination is not absolute, immutable" FORCE )
-endif(NOT IS_SUBBUILD)
+endif(NOT SCL_IS_SUBBUILD)
 
 OPTION(SCL_BUILD_EXPRESS_ONLY "Only build express parser." OFF)
 MARK_AS_ADVANCED(SCL_BUILD_EXPRESS_ONLY)
@@ -307,7 +307,7 @@ ADD_SUBDIRECTORY(doc)
 add_custom_target( core )
 add_dependencies( core stepdai check-express stepeditor fedex_plus )
 
-if(NOT IS_SUBBUILD)
+if(NOT SCL_IS_SUBBUILD)
   ###############################################################################
   # SCL Packaging                                                               #
   # $make package                                                               #
@@ -335,4 +335,4 @@ if(NOT IS_SUBBUILD)
   add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
-endif(NOT IS_SUBBUILD)
+endif(NOT SCL_IS_SUBBUILD)
