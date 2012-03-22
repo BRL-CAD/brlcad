@@ -451,6 +451,7 @@ package provide Archer 1.0
 	buildObjEditView
 	buildObjToolView
 	buildSelectTransparencyDialog
+	buildSelectGroupDialog
 
 	# set initial toggle variables
 	set mVPaneToggle3 $mVPaneFraction3
@@ -3636,6 +3637,7 @@ proc title_node_handler {node} {
     bind $itk_component(${_prefix}modesmenu) <<MenuSelect>> [::itcl::code $this modesMenuStatusCB %W]
     bind $itk_component(${_prefix}activepanemenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
     bind $itk_component(${_prefix}comppickmenu) <<MenuSelect>> [::itcl::code $this modesMenuStatusCB %W]
+    bind $itk_component(${_prefix}compselectmenu) <<MenuSelect>> [::itcl::code $this modesMenuStatusCB %W]
     bind $itk_component(${_prefix}helpmenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
 
     bind $itk_component(${_prefix}raytracemenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
@@ -3717,7 +3719,7 @@ proc title_node_handler {node} {
     #    bind $itk_component(aboutDialog) <FocusOut> "raise $itk_component(aboutDialog)"
 
     $itk_component(aboutDialog) center [namespace tail $this]
-    ::update
+    ::update idletasks
     $itk_component(aboutDialog) activate
 }
 
@@ -4909,6 +4911,14 @@ proc title_node_handler {node} {
 		radiobutton bflip -label "Bot Flip" \
 		    -helpstr "Flip the picked object if it's a bot."
 	    }
+	    cascade compselect -label "Comp Select Mode" -menu {
+		radiobutton selectlist -label "List" \
+		    -helpstr "Returns a list of the selected components."
+		radiobutton selectgroupadd -label "Group Add" \
+		    -helpstr "Adds the selected components to a group."
+		radiobutton selectgroupremove -label "Group Remove" \
+		    -helpstr "Remove the selected components from group."
+	    }
 	    checkbutton quad -label "Quad View" \
 		-helpstr "Toggle between single and quad display."
 	    separator sep1
@@ -4980,6 +4990,19 @@ proc title_node_handler {node} {
 	-command [::itcl::code $this initCompPick] \
 	-value $COMP_PICK_BOT_FLIP_MODE \
 	-variable [::itcl::scope mCompPickMode]
+
+    $itk_component(menubar) menuconfigure .modes.compselect.selectlist \
+	-command [::itcl::code $this initCompSelect] \
+	-value $COMP_SELECT_LIST_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(menubar) menuconfigure .modes.compselect.selectgroupadd \
+	-command [::itcl::code $this initCompSelect] \
+	-value $COMP_SELECT_GROUP_ADD_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(menubar) menuconfigure .modes.compselect.selectgroupremove \
+	-command [::itcl::code $this initCompSelect] \
+	-value $COMP_SELECT_GROUP_REMOVE_MODE \
+	-variable [::itcl::scope mCompSelectMode]
 
     $itk_component(menubar) menuconfigure .modes.quad \
 	-command [::itcl::code $this doMultiPane] \
@@ -5201,6 +5224,29 @@ proc title_node_handler {node} {
 	-value $COMP_PICK_BOT_FLIP_MODE \
 	-variable [::itcl::scope mCompPickMode]
 
+    itk_component add ${_prefix}compselectmenu {
+	menu $itk_component(${_prefix}modesmenu).${_prefix}compselectmenu \
+	    -tearoff 0
+    } {
+	keep -background
+    }
+
+    $itk_component(${_prefix}compselectmenu) add radiobutton \
+	-command [::itcl::code $this initCompSelect] \
+	-label "List" \
+	-value $COMP_SELECT_LIST_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(${_prefix}compselectmenu) add radiobutton \
+	-command [::itcl::code $this initCompSelect] \
+	-label "Group Add" \
+	-value $COMP_SELECT_GROUP_ADD_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(${_prefix}compselectmenu) add radiobutton \
+	-command [::itcl::code $this initCompSelect] \
+	-label "Group Remove" \
+	-value $COMP_SELECT_GROUP_REMOVE_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+
     $itk_component(${_prefix}modesmenu) add cascade \
 	-label "Active Pane" \
 	-menu $itk_component(${_prefix}activepanemenu) \
@@ -5208,6 +5254,9 @@ proc title_node_handler {node} {
     $itk_component(${_prefix}modesmenu) add cascade \
 	-label "Comp Pick Mode" \
 	-menu $itk_component(${_prefix}comppickmenu)
+    $itk_component(${_prefix}modesmenu) add cascade \
+	-label "Comp Select Mode" \
+	-menu $itk_component(${_prefix}compselectmenu)
     $itk_component(${_prefix}modesmenu) add checkbutton \
 	-label "Quad View" \
 	-offvalue 0 \

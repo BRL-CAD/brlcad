@@ -80,6 +80,10 @@ namespace eval ArcherCore {
 	common COMP_PICK_BOT_SYNC_MODE 4
 	common COMP_PICK_BOT_FLIP_MODE 5
 
+	common COMP_SELECT_LIST_MODE 0
+	common COMP_SELECT_GROUP_ADD_MODE 1
+	common COMP_SELECT_GROUP_REMOVE_MODE 2
+
 	common LIGHT_MODE_FRONT 1
 	common LIGHT_MODE_FRONT_AND_BACK 2
 	common LIGHT_MODE_FRONT_AND_BACK_DARK 3
@@ -366,6 +370,9 @@ namespace eval ArcherCore {
 	variable mSepCmdPrefix "sepcmd_"
 
 	variable mCompPickMode $COMP_PICK_TREE_SELECT_MODE
+	variable mCompSelectMode $COMP_SELECT_LIST_MODE
+	variable mCompSelectGroup "tmp_group"
+	variable mCompSelectGroupList ""
 
 	variable mZClipBack 100.0
 	variable mZClipBackPref 100.0
@@ -794,6 +801,8 @@ namespace eval ArcherCore {
 	method doAe {_az _el}
 	method doFlipView {}
 
+	method doSelectGroup {}
+
 	method showViewAxes     {}
 	method showModelAxes    {}
 	method showModelAxesTicks {}
@@ -821,6 +830,9 @@ namespace eval ArcherCore {
 	method initCompPick {}
 	method initCompSelect {}
 	method compSelectCallback {_mstring}
+	method compSelectGroupAdd {_plist}
+	method compSelectGroupCommon {_plist}
+	method compSelectGroupRemove {_plist}
 
 	method mrayCallback_cvo {_pane _start _target _partitions}
 	method mrayCallback_pick {_pane _start _target _partitions}
@@ -845,6 +857,7 @@ namespace eval ArcherCore {
 	method addHistory {_cmd}
 
 	# Dialogs Section
+	method buildSelectGroupDialog {}
 	method buildInfoDialog {_name _title _info _size _wrapOption _modality}
 	method buildSaveDialog {}
 	method buildSelectTransparencyDialog {}
@@ -2693,6 +2706,8 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::initCompSelect {} {
+    doSelectGroup
+
     $itk_component(ged) clear_view_rect_callback_list
     $itk_component(ged) add_view_rect_callback [::itcl::code $this compSelectCallback]
     $itk_component(ged) init_view_rect 1
@@ -2700,10 +2715,88 @@ namespace eval ArcherCore {
 
     # The rect lwidth should be a preference
     $itk_component(ged) rect lwidth 1
+
+    # Update the toolbar buttons
+    set mDefaultBindingMode $COMP_SELECT_MODE
 }
 
 ::itcl::body ArcherCore::compSelectCallback {_mstring} {
-    putString $_mstring
+    switch -- $mCompSelectMode \
+	$COMP_SELECT_LIST_MODE {
+	    putString $_mstring
+	} \
+	$COMP_SELECT_GROUP_ADD_MODE {
+	    compSelectGroupAdd $_mstring
+	} \
+	$COMP_SELECT_GROUP_REMOVE_MODE {
+	    compSelectGroupRemove $_mstring
+	}
+}
+
+::itcl::body ArcherCore::compSelectGroupAdd {_plist} {
+    set new_plist [compSelectGroupCommon $_plist]
+    if {$new_plist == ""} {
+	# Nothing to do
+	return
+    }
+
+    eval lappend new_plist $mCompSelectGroupList
+    set new_plist [lsort -unique -dictionary $new_plist]
+    eval group $mCompSelectGroup $new_plist
+
+    putString "$mCompSelectGroup now contains:"
+    putString "\t$new_plist"
+}
+
+##
+# Returns empty string if mCompSelectGroup exists and is not a group (i.e. it's a region).
+# Also sets mCompSelectGroupList to the list of components currently in mCompSelectGroup.
+#
+::itcl::body ArcherCore::compSelectGroupCommon {_plist} {
+    set mCompSelectGroupList ""
+
+    if {[$itk_component(ged) exists $mCompSelectGroup]} {
+	if {([$itk_component(ged) get_type $mCompSelectGroup] != "comb" ||
+	     [$itk_component(ged) get $mCompSelectGroup] == "yes")} {
+	    putString "$mCompSelectGroup is not a group"
+	    return ""
+	}
+
+	set tree [$itk_component(ged) get $mCompSelectGroup tree]
+	if {[llength $tree] > 0} {
+	    set mCompSelectGroupList [getTreeMembers $tree]
+	}
+	$itk_component(ged) kill $mCompSelectGroup
+    }
+
+
+    foreach item $_plist {
+	lappend new_plist [file tail $item]
+    }
+    
+    return [lsort -unique -dictionary $new_plist]
+}
+
+::itcl::body ArcherCore::compSelectGroupRemove {_plist} {
+    set new_plist [compSelectGroupCommon $_plist]
+    if {$new_plist == ""} {
+	# Nothing to do
+	return
+    }
+
+    foreach item $new_plist {
+	set i [lsearch $mCompSelectGroupList $item]
+	if {$i != -1} {
+	    set mCompSelectGroupList [lreplace $mCompSelectGroupList $i $i]
+	}
+    }
+
+    if {[catch {eval group $mCompSelectGroup $mCompSelectGroupList}]} {
+	put $mCompSelectGroup comb tree {}
+    }
+
+    putString "$mCompSelectGroup now contains:"
+    putString "\t$mCompSelectGroupList"
 }
 
 ::itcl::body ArcherCore::mrayCallback_cvo {_pane _start _target _partitions} {
@@ -3093,7 +3186,6 @@ namespace eval ArcherCore {
 	return $_mlist
     }
 
-    puts "ArcherCore::getTreeMembers: faulty tree - $_tlist"
     return $_mlist
 }
 
@@ -3451,6 +3543,14 @@ namespace eval ArcherCore {
     addHistory "rot -v 0 180 0"
 }
 
+::itcl::body ArcherCore::doSelectGroup {} {
+    $itk_component(selGroupDialog) center [namespace tail $this]
+    ::update idletasks
+    set save_name $mCompSelectGroup
+    if {![$itk_component(selGroupDialog) activate]} {
+	set mCompSelectGroup $save_name
+    }
+}
 
 ::itcl::body ArcherCore::showViewAxes {} {
     catch {gedCmd configure -viewAxesEnable $mShowViewAxes}
@@ -5802,6 +5902,51 @@ namespace eval ArcherCore {
 
 
 ################################### Dialogs Section ###################################
+
+::itcl::body ArcherCore::buildSelectGroupDialog {} {
+    itk_component add selGroupDialog {
+	::iwidgets::dialog $itk_interior.selGroupDialog \
+	    -modality application \
+	    -title "Selection Group"
+    } {}
+    $itk_component(selGroupDialog) hide 1
+    $itk_component(selGroupDialog) hide 2
+    $itk_component(selGroupDialog) hide 3
+    $itk_component(selGroupDialog) configure \
+	-thickness 2 \
+	-buttonboxpady 0
+    $itk_component(selGroupDialog) buttonconfigure 0 \
+	-defaultring yes \
+	-defaultringpad 3 \
+	-borderwidth 1 \
+	-pady 0
+
+    # ITCL can be nasty
+    set win [$itk_component(selGroupDialog) component bbox component OK component hull]
+    after idle "$win configure -relief flat"
+
+    set parent [$itk_component(selGroupDialog) childsite]
+    itk_component add selGroupDialogL {
+	::ttk::label $parent.groupL \
+	    -text "Group Name:"
+    } {}
+
+    itk_component add selGroupDialogE {
+	::ttk::entry $parent.groupE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mCompSelectGroup]
+    } {}
+
+    set col 0
+    set row 0
+    grid $itk_component(selGroupDialogL) -row $row -column $col
+    incr col
+    grid $itk_component(selGroupDialogE) -row $row -column $col -sticky ew
+    grid columnconfigure $parent $col -weight 1
+
+    wm geometry $itk_component(selGroupDialog) "275x70"
+    $itk_component(selGroupDialog) center
+}
 
 ::itcl::body ArcherCore::buildInfoDialog {name title info size wrapOption modality} {
     itk_component add $name {
