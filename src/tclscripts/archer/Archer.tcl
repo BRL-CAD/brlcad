@@ -4016,74 +4016,73 @@ proc title_node_handler {node} {
 	    set op ""
 	}
 
-	switch -- $op {
+	switch -- $op \
 	    "Active Pane" {
 		set mStatusStr ""
-	    }
+	    } \
 	    "Quad View" {
 		set mStatusStr "Toggle between single and multiple geometry pane mode"
-	    }
+	    } \
 	    "View Axes" {
 		set mStatusStr "Hide/Show view axes"
-	    }
+	    } \
 	    "Model Axes" {
 		set mStatusStr "Hide/Show model axes"
-	    }
+	    } \
 	    "Ground Plane" {
 		set mStatusStr "Hide/Show ground plane"
-	    }
+	    } \
 	    "Primitive Labels" {
 		set mStatusStr "Hide/Show primitive labels"
-	    }
+	    } \
 	    "Viewing Parameters" {
 		set mStatusStr "Hide/Show viewing parameters"
-	    }
+	    } \
 	    "Scale" {
 		set mStatusStr "Hide/Show view scale"
-	    }
+	    } \
 	    "Lighting" {
 		set mStatusStr "Toggle lighting on/off "
-	    }
+	    } \
 	    "Tree Select" {
 		set mStatusStr "Select the picked object in the hierarchy tree."
-	    }
+	    } \
 	    "Get Object Name" {
 		set mStatusStr "Get the name of the picked object."
-	    }
+	    } \
 	    "Erase Object" {
 		set mStatusStr "Erase the picked object."
-	    }
+	    } \
 	    "Bot Flip" {
 		set mStatusStr "Flip the picked object if it's a bot."
-	    }
+	    } \
 	    "Bot Split" {
 		set mStatusStr "Split the picked object if it's a bot."
-	    }
+	    } \
 	    "Bot Sync" {
 		set mStatusStr "Sync the picked object if it's a bot."
-	    }
-	    "List" {
+	    } \
+	    [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_LIST_MODE] {
 		set mStatusStr "Returns a list of the selected components"
-	    }
-	    "List (Partial)" {
+	    } \
+	    [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_LIST_PARTIAL_MODE] {
 		set mStatusStr "Returns a list of the partially selected components"
-	    }
-	    "Group Add" {
+	    } \
+	    [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_ADD_MODE] {
 		set mStatusStr "Add the selected components to the specified group"
-	    }
-	    "Group Add (Partial)" {
+	    } \
+	    [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_ADD_PARTIAL_MODE] {
 		set mStatusStr "Add the partially selected components to the specified group"
-	    }
-	    "Group Remove" {
-		set mStatusStr "Delete the selected components from the specified group"
-	    }
-	    "Group Remove (Partial)" {
-		set mStatusStr "Delete the partially selected components from the specified group"
-	    }
+	    } \
+	    [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_REMOVE_MODE] {
+		set mStatusStr "Remove the selected components from the specified group"
+	    } \
+	    [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE] {
+		set mStatusStr "Remove the partially selected components from the specified group"
+	    } \
 	    default {
 		set mStatusStr ""
 	    }
-	}
     }
 }
 
@@ -4954,17 +4953,18 @@ proc title_node_handler {node} {
 		    -helpstr "Flip the picked object if it's a bot."
 	    }
 	    cascade compselect -label "Comp Select Mode" -menu {
-		radiobutton selectlist -label "List" \
+
+		radiobutton selectlist -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_LIST_MODE] \
 		    -helpstr "Returns a list of the selected components."
-		radiobutton selectlistp -label "List (Partial)" \
+		radiobutton selectlistp -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_LIST_PARTIAL_MODE] \
 		    -helpstr "Returns a list of the partially selected components."
-		radiobutton selectgroupadd -label "Group Add" \
+		radiobutton selectgroupadd -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_ADD_MODE] \
 		    -helpstr "Adds the selected components to a group."
-		radiobutton selectgroupaddp -label "Group Add (Partial)" \
+		radiobutton selectgroupadd -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_ADD_PARTIAL_MODE] \
 		    -helpstr "Adds the selected components to a group."
-		radiobutton selectgroupremove -label "Group Remove" \
+		radiobutton selectgroupadd -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_REMOVE_MODE] \
 		    -helpstr "Remove the selected components from group."
-		radiobutton selectgroupremovep -label "Group Remove (Partial)" \
+		radiobutton selectgroupadd -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE] \
 		    -helpstr "Remove the selected components from group."
 	    }
 	    checkbutton quad -label "Quad View" \
@@ -5293,32 +5293,32 @@ proc title_node_handler {node} {
 
     $itk_component(${_prefix}compselectmenu) add radiobutton \
 	-command [::itcl::code $this initCompSelect] \
-	-label "List" \
+	-label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_LIST_MODE] \
 	-value $COMP_SELECT_LIST_MODE \
 	-variable [::itcl::scope mCompSelectMode]
     $itk_component(${_prefix}compselectmenu) add radiobutton \
 	-command [::itcl::code $this initCompSelect] \
-	-label "List (Partial)" \
+	-label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_LIST_PARTIAL_MODE] \
 	-value $COMP_SELECT_LIST_PARTIAL_MODE \
 	-variable [::itcl::scope mCompSelectMode]
     $itk_component(${_prefix}compselectmenu) add radiobutton \
 	-command [::itcl::code $this initCompSelect] \
-	-label "Group Add" \
+	-label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_ADD_MODE] \
 	-value $COMP_SELECT_GROUP_ADD_MODE \
 	-variable [::itcl::scope mCompSelectMode]
     $itk_component(${_prefix}compselectmenu) add radiobutton \
 	-command [::itcl::code $this initCompSelect] \
-	-label "Group Add (Partial)" \
+	-label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_ADD_PARTIAL_MODE] \
 	-value $COMP_SELECT_GROUP_ADD_PARTIAL_MODE \
 	-variable [::itcl::scope mCompSelectMode]
     $itk_component(${_prefix}compselectmenu) add radiobutton \
 	-command [::itcl::code $this initCompSelect] \
-	-label "Group Remove" \
+	-label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_REMOVE_MODE] \
 	-value $COMP_SELECT_GROUP_REMOVE_MODE \
 	-variable [::itcl::scope mCompSelectMode]
     $itk_component(${_prefix}compselectmenu) add radiobutton \
 	-command [::itcl::code $this initCompSelect] \
-	-label "Group Remove (Partial)" \
+	-label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE] \
 	-value $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE \
 	-variable [::itcl::scope mCompSelectMode]
 
