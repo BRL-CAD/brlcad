@@ -2758,12 +2758,24 @@ namespace eval ArcherCore {
 	return
     }
 
-    eval lappend new_plist $mCompSelectGroupList
-    set new_plist [lsort -unique -dictionary $new_plist]
-    eval group $mCompSelectGroup $new_plist
+    set add_list {}
+    foreach item $new_plist {
+	set i [lsearch $mCompSelectGroupList $item]
+	if {$i == -1} {
+	    lappend add_list $item
+	}
+    }
 
-    putString "$mCompSelectGroup now contains:"
-    putString "\t$new_plist"
+    if {[llength $add_list] > 0} {
+	eval group $mCompSelectGroup $add_list
+
+	set tree [$itk_component(ged) get $mCompSelectGroup tree]
+	if {[llength $tree] > 0} {
+	    set tlist [getTreeMembers $tree]
+	    putString "$mCompSelectGroup now contains:"
+	    putString "\t$tlist"
+	}
+    }
 }
 
 ##
@@ -2784,10 +2796,9 @@ namespace eval ArcherCore {
 	if {[llength $tree] > 0} {
 	    set mCompSelectGroupList [getTreeMembers $tree]
 	}
-	$itk_component(ged) kill $mCompSelectGroup
     }
 
-
+    set new_plist {}
     foreach item $_plist {
 	lappend new_plist [file tail $item]
     }
@@ -2797,24 +2808,31 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::compSelectGroupRemove {_plist} {
     set new_plist [compSelectGroupCommon $_plist]
-    if {$new_plist == ""} {
+    if {$new_plist == "" || $mCompSelectGroupList == ""} {
 	# Nothing to do
 	return
     }
 
+    set rem_list {}
     foreach item $new_plist {
 	set i [lsearch $mCompSelectGroupList $item]
 	if {$i != -1} {
-	    set mCompSelectGroupList [lreplace $mCompSelectGroupList $i $i]
+	    lappend rem_list $item
 	}
     }
 
-    if {[catch {eval group $mCompSelectGroup $mCompSelectGroupList}]} {
-	put $mCompSelectGroup comb tree {}
-    }
+    if {[llength $rem_list] > 0} {
+	eval rm $mCompSelectGroup $rem_list
 
-    putString "$mCompSelectGroup now contains:"
-    putString "\t$mCompSelectGroupList"
+	set tree [$itk_component(ged) get $mCompSelectGroup tree]
+	if {[llength $tree] > 0} {
+	    set tlist [getTreeMembers $tree]
+	    putString "$mCompSelectGroup now contains:"
+	    putString "\t$tlist"
+	} else {
+	    putString "$mCompSelectGroup is empty"
+	}
+    }
 }
 
 ::itcl::body ArcherCore::mrayCallback_cvo {_pane _start _target _partitions} {
