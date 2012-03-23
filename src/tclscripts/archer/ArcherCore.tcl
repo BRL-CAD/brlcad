@@ -81,8 +81,12 @@ namespace eval ArcherCore {
 	common COMP_PICK_BOT_FLIP_MODE 5
 
 	common COMP_SELECT_LIST_MODE 0
-	common COMP_SELECT_GROUP_ADD_MODE 1
-	common COMP_SELECT_GROUP_REMOVE_MODE 2
+	common COMP_SELECT_LIST_PARTIAL_MODE 1
+	common COMP_SELECT_GROUP_ADD_MODE 2
+	common COMP_SELECT_GROUP_ADD_PARTIAL_MODE 3
+	common COMP_SELECT_GROUP_REMOVE_MODE 4
+	common COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE 5
+	common COMP_SELECT_MODE_NAMES {"List" "List (Partial)" "Group Add" "Group Add (Partial)" "Group Remove" "Group Remove (Partial)"}
 
 	common LIGHT_MODE_FRONT 1
 	common LIGHT_MODE_FRONT_AND_BACK 2
@@ -371,7 +375,9 @@ namespace eval ArcherCore {
 
 	variable mCompPickMode $COMP_PICK_TREE_SELECT_MODE
 	variable mCompSelectMode $COMP_SELECT_LIST_MODE
+	variable mCompSelectModePref ""
 	variable mCompSelectGroup "tmp_group"
+	variable mCompSelectGroupPref ""
 	variable mCompSelectGroupList ""
 
 	variable mZClipBack 100.0
@@ -2706,13 +2712,20 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::initCompSelect {} {
-    if {$mCompSelectMode != $COMP_SELECT_LIST_MODE} {
+    if {$mCompSelectMode != $COMP_SELECT_LIST_MODE &&
+	$mCompSelectMode != $COMP_SELECT_LIST_PARTIAL_MODE} {
 	doSelectGroup
     }
 
     $itk_component(ged) clear_view_rect_callback_list
     $itk_component(ged) add_view_rect_callback [::itcl::code $this compSelectCallback]
-    $itk_component(ged) init_view_rect 1
+    if {$mCompSelectMode == $COMP_SELECT_LIST_PARTIAL_MODE ||
+	$mCompSelectMode == $COMP_SELECT_GROUP_ADD_PARTIAL_MODE ||
+	$mCompSelectMode == $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE} {
+	$itk_component(ged) init_view_rect 1 1
+    } else {
+	$itk_component(ged) init_view_rect 1 0
+    }
     $itk_component(ged) init_button_no_op 2
 
     # The rect lwidth should be a preference
@@ -2724,13 +2737,16 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::compSelectCallback {_mstring} {
     switch -- $mCompSelectMode \
-	$COMP_SELECT_LIST_MODE {
+	$COMP_SELECT_LIST_MODE - \
+	$COMP_SELECT_LIST_PARTIAL_MODE {
 	    putString $_mstring
 	} \
-	$COMP_SELECT_GROUP_ADD_MODE {
+	$COMP_SELECT_GROUP_ADD_MODE - \
+	$COMP_SELECT_GROUP_ADD_PARTIAL_MODE {
 	    compSelectGroupAdd $_mstring
 	} \
-	$COMP_SELECT_GROUP_REMOVE_MODE {
+	$COMP_SELECT_GROUP_REMOVE_MODE - \
+	$COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE {
 	    compSelectGroupRemove $_mstring
 	}
 }

@@ -2537,6 +2537,24 @@ proc title_node_handler {node} {
 	    -textvariable [::itcl::scope mTreeAttrColumnsPref]
     } {}
 
+    itk_component add selGroupL {
+	::ttk::label $itk_component(generalF).selGroupL \
+	    -anchor e \
+	    -text "Selection Group"
+    } {}
+    itk_component add selGroupE {
+	::ttk::entry $itk_component(generalF).selGroupE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mCompSelectGroupPref]
+    } {}
+
+    buildComboBox $itk_component(generalF) \
+	selGroupMode \
+	selgroupmode \
+	mCompSelectModePref \
+	"Comp Select Mode:" \
+	$COMP_SELECT_MODE_NAMES
+
     itk_component add affectedTreeNodesModeCB {
 	::ttk::checkbutton $itk_component(generalF).affectedTreeNodesModeCB \
 	    -text "Highlight Affected Tree/List Nodes" \
@@ -2623,6 +2641,12 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(treeAttrsL) -column 0 -row $i -sticky e
     grid $itk_component(treeAttrsE) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(selGroupL) -column 0 -row $i -sticky e
+    grid $itk_component(selGroupE) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(selGroupModeL) -column 0 -row $i -sticky e
+    grid $itk_component(selGroupModeF) -column 1 -row $i -sticky ew
     incr i
     set i [buildOtherGeneralPreferences $i]
     grid $itk_component(affectedTreeNodesModeCB) \
@@ -3341,7 +3365,7 @@ proc title_node_handler {node} {
 
     pack $itk_component(preferenceTabs) -expand yes -fill both
 
-    wm geometry $itk_component(preferencesDialog) 450x500
+    wm geometry $itk_component(preferencesDialog) 450x580
 }
 
 
@@ -4037,6 +4061,24 @@ proc title_node_handler {node} {
 	    }
 	    "Bot Sync" {
 		set mStatusStr "Sync the picked object if it's a bot."
+	    }
+	    "List" {
+		set mStatusStr "Returns a list of the selected components"
+	    }
+	    "List (Partial)" {
+		set mStatusStr "Returns a list of the partially selected components"
+	    }
+	    "Group Add" {
+		set mStatusStr "Add the selected components to the specified group"
+	    }
+	    "Group Add (Partial)" {
+		set mStatusStr "Add the partially selected components to the specified group"
+	    }
+	    "Group Remove" {
+		set mStatusStr "Delete the selected components from the specified group"
+	    }
+	    "Group Remove (Partial)" {
+		set mStatusStr "Delete the partially selected components from the specified group"
 	    }
 	    default {
 		set mStatusStr ""
@@ -4914,9 +4956,15 @@ proc title_node_handler {node} {
 	    cascade compselect -label "Comp Select Mode" -menu {
 		radiobutton selectlist -label "List" \
 		    -helpstr "Returns a list of the selected components."
+		radiobutton selectlistp -label "List (Partial)" \
+		    -helpstr "Returns a list of the partially selected components."
 		radiobutton selectgroupadd -label "Group Add" \
 		    -helpstr "Adds the selected components to a group."
+		radiobutton selectgroupaddp -label "Group Add (Partial)" \
+		    -helpstr "Adds the selected components to a group."
 		radiobutton selectgroupremove -label "Group Remove" \
+		    -helpstr "Remove the selected components from group."
+		radiobutton selectgroupremovep -label "Group Remove (Partial)" \
 		    -helpstr "Remove the selected components from group."
 	    }
 	    checkbutton quad -label "Quad View" \
@@ -4995,13 +5043,25 @@ proc title_node_handler {node} {
 	-command [::itcl::code $this initCompSelect] \
 	-value $COMP_SELECT_LIST_MODE \
 	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(menubar) menuconfigure .modes.compselect.selectlistp \
+	-command [::itcl::code $this initCompSelect] \
+	-value $COMP_SELECT_LIST_PARTIAL_MODE \
+	-variable [::itcl::scope mCompSelectMode]
     $itk_component(menubar) menuconfigure .modes.compselect.selectgroupadd \
 	-command [::itcl::code $this initCompSelect] \
 	-value $COMP_SELECT_GROUP_ADD_MODE \
 	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(menubar) menuconfigure .modes.compselect.selectgroupaddp \
+	-command [::itcl::code $this initCompSelect] \
+	-value $COMP_SELECT_GROUP_ADD_PARTIAL_MODE \
+	-variable [::itcl::scope mCompSelectMode]
     $itk_component(menubar) menuconfigure .modes.compselect.selectgroupremove \
 	-command [::itcl::code $this initCompSelect] \
 	-value $COMP_SELECT_GROUP_REMOVE_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(menubar) menuconfigure .modes.compselect.selectgroupremovep \
+	-command [::itcl::code $this initCompSelect] \
+	-value $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE \
 	-variable [::itcl::scope mCompSelectMode]
 
     $itk_component(menubar) menuconfigure .modes.quad \
@@ -5238,13 +5298,28 @@ proc title_node_handler {node} {
 	-variable [::itcl::scope mCompSelectMode]
     $itk_component(${_prefix}compselectmenu) add radiobutton \
 	-command [::itcl::code $this initCompSelect] \
+	-label "List (Partial)" \
+	-value $COMP_SELECT_LIST_PARTIAL_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(${_prefix}compselectmenu) add radiobutton \
+	-command [::itcl::code $this initCompSelect] \
 	-label "Group Add" \
 	-value $COMP_SELECT_GROUP_ADD_MODE \
 	-variable [::itcl::scope mCompSelectMode]
     $itk_component(${_prefix}compselectmenu) add radiobutton \
 	-command [::itcl::code $this initCompSelect] \
+	-label "Group Add (Partial)" \
+	-value $COMP_SELECT_GROUP_ADD_PARTIAL_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(${_prefix}compselectmenu) add radiobutton \
+	-command [::itcl::code $this initCompSelect] \
 	-label "Group Remove" \
 	-value $COMP_SELECT_GROUP_REMOVE_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(${_prefix}compselectmenu) add radiobutton \
+	-command [::itcl::code $this initCompSelect] \
+	-label "Group Remove (Partial)" \
+	-value $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE \
 	-variable [::itcl::scope mCompSelectMode]
 
     $itk_component(${_prefix}modesmenu) add cascade \
@@ -7628,6 +7703,16 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
     if {$units != $mDbUnits} {
 	units $mDbUnits
     }
+
+    if {$mCompSelectGroupPref != $mCompSelectGroup} {
+	set mCompSelectGroup $mCompSelectGroupPref
+    }
+
+    # Convert mCompSelectModePref to an integer
+    set cselmodepref [lsearch $COMP_SELECT_MODE_NAMES $mCompSelectModePref]
+    if {$cselmodepref != $mCompSelectMode} {
+	set mCompSelectMode $cselmodepref
+    }
 }
 
 
@@ -8057,6 +8142,10 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
     set mDbUnits [gedCmd units -s]
     set mDoRtEdgePref $mDoRtEdge
     set mDoRtEdgeOverlayPref $mDoRtEdgeOverlay
+    set mCompSelectGroupPref $mCompSelectGroup
+
+    # Convert mCompSelectMode to a string for the preferences panel
+    set mCompSelectModePref [lindex $COMP_SELECT_MODE_NAMES $mCompSelectMode]
 
     set mGridAnchorXPref [lindex $mGridAnchor 0]
     set mGridAnchorYPref [lindex $mGridAnchor 1]
@@ -8212,6 +8301,8 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
     puts $_pfile "set mDoRtEdge $mDoRtEdge"
     puts $_pfile "set mDoRtEdgeOverlay $mDoRtEdgeOverlay"
     puts $_pfile "set mSeparateCommandWindow $mSeparateCommandWindow"
+    puts $_pfile "set mCompSelectGroup $mCompSelectGroup"
+    puts $_pfile "set mCompSelectMode $mCompSelectMode"
 
     puts $_pfile "set mGridAnchor \"$mGridAnchor\""
     puts $_pfile "set mGridColor \"$mGridColor\""
