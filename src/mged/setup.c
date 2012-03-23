@@ -317,6 +317,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"sed_apply", f_sedit_apply, GED_FUNC_PTR_NULL},
     {"sed_reset", f_sedit_reset, GED_FUNC_PTR_NULL},
     {"sedit", f_be_s_edit, GED_FUNC_PTR_NULL},
+    {"select", cmd_ged_plain_wrapper, ged_select},
     {"set_more_default", cmd_set_more_default, GED_FUNC_PTR_NULL},
     {"setview", cmd_setview, GED_FUNC_PTR_NULL},
     {"shaded_mode", cmd_shaded_mode, GED_FUNC_PTR_NULL},
