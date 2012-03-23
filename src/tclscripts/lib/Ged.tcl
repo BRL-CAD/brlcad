@@ -562,7 +562,7 @@ package provide cadwidgets::Ged 1.0
 	method end_poly_rect {_pane {_button 1}}
 	method end_view_measure {_pane _part1_button _part2_button}
 	method end_view_measure_part2 {_pane _button}
-	method end_view_rect {_pane {_button 1}}
+	method end_view_rect {_pane {_button 1} {_pflag 0}}
 	method end_view_rotate {_pane}
 	method end_view_scale {_pane}
 	method end_view_translate {_pane}
@@ -592,7 +592,7 @@ package provide cadwidgets::Ged 1.0
 	method init_view_center {{_button 1}}
 	method init_view_measure {{_button 1} {_part2_button 2}}
 	method init_view_measure_part2 {_button}
-	method init_view_rect {{_button 1}}
+	method init_view_rect {{_button 1} {_pflag 0}}
 	method init_view_rotate {{_button 1}}
 	method init_view_scale {{_button 1}}
 	method init_view_translate {{_button 1}}
@@ -3387,7 +3387,7 @@ package provide cadwidgets::Ged 1.0
     init_button_no_op_prot $_button
 }
 
-::itcl::body cadwidgets::Ged::end_view_rect {_pane {_button 1}} {
+::itcl::body cadwidgets::Ged::end_view_rect {_pane {_button 1} {_pflag 0}} {
     $mGed idle_mode $itk_component($_pane)
 
 #    # Add specific bindings to eliminate bleed through from rectangle mode
@@ -3397,10 +3397,18 @@ package provide cadwidgets::Ged 1.0
 #    }
 
     if {[llength $mViewRectCallbacks] == 0} {
-	tk_messageBox -message [$mGed rselect $itk_component($_pane)]
+	if {$_pflag} {
+	    tk_messageBox -message [$mGed rselect -p $itk_component($_pane)]
+	} else {
+	    tk_messageBox -message [$mGed rselect $itk_component($_pane)]
+	}
     } else {
 	foreach callback $mViewRectCallbacks {
-	    catch {$callback [$mGed rselect $itk_component($_pane)]}
+	    if {$_pflag} {
+		catch {$callback [$mGed rselect $itk_component($_pane) -p]}
+	    } else {
+		catch {$callback [$mGed rselect $itk_component($_pane)]}
+	    }
 	}
     }
 }
@@ -3715,12 +3723,12 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
-::itcl::body cadwidgets::Ged::init_view_rect {{_button 1}} {
+::itcl::body cadwidgets::Ged::init_view_rect {{_button 1} {_pflag 0}} {
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
 	bind $itk_component($dm) <$_button> "$mGed rect_mode $itk_component($dm) %x %y; focus %W; break"
-	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_rect $dm]; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_rect $dm $_button $_pflag]; break"
     }
 }
 
