@@ -345,15 +345,13 @@ eraseAllSubpathsFromSolidList(struct ged *gedp,
     struct solid *sp;
     struct solid *nsp;
 
-    if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
-	(*gedp->ged_free_vlist_callback)(BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist,
-					 BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist -
-					 BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist + 1);
-
     sp = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);
     while (BU_LIST_NOT_HEAD(sp, &gdlp->gdl_headSolid)) {
 	nsp = BU_LIST_PNEXT(solid, sp);
 	if (db_full_path_subset(&sp->s_fullpath, subpath, skip_first)) {
+	    if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
+		(*gedp->ged_free_vlist_callback)(sp->s_dlist, 1);
+
 	    BU_LIST_DEQUEUE(&sp->l);
 	    FREE_SOLID(sp, &_FreeSolid.l);
 	}
