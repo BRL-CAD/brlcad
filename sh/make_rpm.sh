@@ -143,7 +143,7 @@ cp -Rf misc/debian/* $TMPDIR
 
 # compile and install in tmp dir
 cmake -DBRLCAD_BUNDLED_LIBS=ON \
-      -DBRLCAD_ENABLE_OPTIMIZED_BUILD=ON \
+      -DBRLCAD_FLAGS_OPTIMIZATION=ON \
       -DBRLCAD_ENABLE_STRICT=OFF \
       -DBRLCAD_FLAGS_DEBUG=OFF \
       -DCMAKE_BUILD_TYPE=Release \
