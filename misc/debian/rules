@@ -53,7 +53,6 @@ binary-arch: build install
 	dh_installdocs -a
 	dh_installchangelogs -a
 	dh_install -a --list-missing
-	dh_strip -a
 	dh_compress -a
 	dh_fixperms -a
 	dh_makeshlibs -a
