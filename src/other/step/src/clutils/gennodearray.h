@@ -21,9 +21,6 @@
  * Copyright (c) 1990 Stanford University
  */
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 
 #include <string.h>
 #include <memory.h>

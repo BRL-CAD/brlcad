@@ -12,9 +12,6 @@
 ** provided the file written out is called file.out
 */
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 extern void SchemaInit( class Registry & );
 #include <STEPfile.h>
 #include <sdai.h>

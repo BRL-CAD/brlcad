@@ -1813,11 +1813,6 @@ MemberFunctionSign( Entity entity, FILE * file ) {
     /*  destructor: */
     fprintf( file, "	~%s ();\n", entnm );
 
-    /*  Open OODB reconstructor  */
-    fprintf( file, "\n#ifdef __O3DB__\n" );
-    fprintf( file, "\tvoid oodb_reInit();\n" );
-    fprintf( file, "#endif\n\n" );
-
     fprintf( file, "	int opcode ()  { return %d ; } \n",
              entcode++ );
 
@@ -1878,13 +1873,8 @@ MemberFunctionSign( Entity entity, FILE * file ) {
     }
 
     /*  print creation function for class   */
-    fprintf( file, "\n#if defined(__O3DB__)\n" );
-    fprintf( file, "inline SCLP23(Application_instance_ptr) \ncreate_%s () {  return (SCLP23(Application_instance_ptr)) new %s ;  }\n",
-             entnm, entnm );
-    fprintf( file, "#else\n" );
     fprintf( file, "inline %s *\ncreate_%s () {  return  new %s ;  }\n",
              entnm, entnm, entnm );
-    fprintf( file, "#endif\n" );
 
 }
 
@@ -2324,35 +2314,6 @@ LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
 
     entnm = ENTITYget_classname( entity );
     fprintf( file, "%s::~%s () {  }\n", entnm, entnm );
-
-    /*  Open OODB reInit function  */
-    fprintf( file, "\n#ifdef __O3DB__\n" );
-    fprintf( file, "void \n%s::oodb_reInit ()\n{", entnm );
-    fprintf( file, "\teDesc = %s%s%s;\n",
-             SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
-
-    count = attr_count;
-    attr_list = ENTITYget_attributes( entity );
-    index = get_attribute_number( entity );
-
-    LISTdo( attr_list, a, Variable )
-    /*  if the attribute is Explicit, assign the Descriptor  */
-    if( ( ! VARget_inverse( a ) ) && ( ! VARis_derived( a ) ) )  {
-        generate_attribute_name( a, attrnm );
-        /*  1. assign the Descriptor for the STEPattributes */
-        fprintf( file, "\tattributes [%d].aDesc = %s%d%s%s;\n",
-                 index,
-                 ATTR_PREFIX, count,
-                 ( VARis_type_shifter( a ) ? "R" : "" ),
-                 attrnm );
-    }
-    index++,
-          count++;
-    LISTod;
-    fprintf( file, "}\n"
-             "#endif\n\n" );
-
-
 }
 
 /* print the constructor that accepts a SCLP23(Application_instance) as an argument used

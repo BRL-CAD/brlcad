@@ -165,9 +165,6 @@ STEPfile::ReadHeader( istream & in ) {
                 break; //from while loop
             } else { //not userDefined
                 obj = _headerRegistry->ObjCreate( buf );
-#ifdef __O3DB__
-                obj -> persist();
-#endif
             }
 
             //read header instance
@@ -883,11 +880,6 @@ STEPfile::CreateInstance( istream & in, ostream & out ) {
                 delete obj;
                 obj = ENTITY_NULL;
             }
-#ifdef __O3DB__
-            if( obj ) {
-                obj -> persist();
-            }
-#endif
         }
     }
 
@@ -1060,13 +1052,8 @@ STEPfile::CreateSubSuperInstance( istream & in, int fileid, ErrorDescriptor & e 
     entNmArr[enaIndex] = 0;
     schemaName( schnm );
 
-#ifdef __O3DB__
-    obj = new STEPcomplex( _reg, ( const std::string ** )entNmArr, fileid,
-                           schnm );
-#else
     obj = new STEPcomplex( &_reg, ( const std::string ** )entNmArr, fileid,
                            schnm );
-#endif
 
     if( obj->Error().severity() <= SEVERITY_WARNING ) {
         // If obj is not legal, record its error info and delete it:

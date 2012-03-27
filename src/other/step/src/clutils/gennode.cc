@@ -15,9 +15,6 @@
 #include <gennode.h>
 #include <gennodelist.h>
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 //////////////////////////////////////////////////////////////////////////////
 // class GenericNode inline functions that depend on other classes
 //  inline functions

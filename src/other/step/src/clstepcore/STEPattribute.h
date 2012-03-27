@@ -16,9 +16,6 @@
 
 #include <sclprefixes.h>
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 
 #include <stdio.h>
 #include <errordesc.h>

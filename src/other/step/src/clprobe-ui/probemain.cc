@@ -11,9 +11,6 @@
 
 /* $Id: probemain.cc,v 3.0.1.1 1997/11/05 23:01:08 sauderd DP3.1 $ */
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>

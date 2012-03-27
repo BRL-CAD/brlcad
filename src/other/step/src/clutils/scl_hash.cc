@@ -7,9 +7,6 @@
  * also, hcreate/hdestroy routines added to simulate hsearch(3).
  */
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 #include <scl_hash.h>
 #include <stdio.h>
 #include <stdlib.h>

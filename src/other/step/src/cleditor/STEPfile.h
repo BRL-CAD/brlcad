@@ -17,9 +17,6 @@
 
 #include <string>
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 
 /*#include <math.h>*/
 #include <instmgr.h>
@@ -48,17 +45,6 @@ class STEPfile {
     protected:
         //data members
 
-#ifdef __O3DB__
-        InstMgr  * _instances;
-        Registry * _reg;
-
-        InstMgr & instances()  {
-            return *_instances;
-        }
-        Registry & reg() {
-            return *_reg;
-        }
-#else
         InstMgr & _instances;
         Registry & _reg;
 
@@ -68,7 +54,6 @@ class STEPfile {
         Registry & reg() {
             return _reg;
         }
-#endif
         int _fileIdIncr;   //Increment value to be added to FileId Numbers on input
 
 //header information

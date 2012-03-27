@@ -48,10 +48,6 @@ extern const char * SCLversion;
 
 typedef std::string Express_id;
 
-#ifdef __O3DB__
-/*  OpenOODB.h must be the first include file.  */
-#include <OpenOODB.h>
-#endif
 
 //#include <read_func.h>
 

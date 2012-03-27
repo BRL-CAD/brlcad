@@ -21,9 +21,6 @@
 #include <corbaIncludes.h>
 #endif
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 
 #include <sclprefixes.h>
 

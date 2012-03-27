@@ -11,9 +11,6 @@
 
 /* $Id: stepentdescriptor.cc,v 3.0.1.4 1997/11/05 23:01:12 sauderd DP3.1 $ */
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 #include <stdlib.h>
 #include <stdio.h>
 

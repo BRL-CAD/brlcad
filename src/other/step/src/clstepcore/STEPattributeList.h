@@ -15,9 +15,6 @@
 
 /* $Id: STEPattributeList.h,v 3.0.1.3 1997/11/05 21:59:25 sauderd DP3.1 $ */
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 
 //#ifndef _STEPattribute_typedefs
 //#define _STEPattribute_typedefs 1

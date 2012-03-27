@@ -16,11 +16,6 @@ extern ofstream * logStream;
 
 static int debug_access_hooks = 0;
 
-#ifdef PART26
-
-const char * sclHostName = CORBA::Orbix.myHost(); // Default is local host
-#endif
-
 Schema * s_example_schema = 0;
 
 /*  **************  TYPES   */
@@ -126,15 +121,6 @@ SdaiPoly_line::SdaiPoly_line( SdaiPoly_line & e ) {
 }
 SdaiPoly_line::~SdaiPoly_line() {  }
 
-
-#ifdef __O3DB__
-void
-SdaiPoly_line::oodb_reInit() {
-    eDesc = example_schemae_poly_line;
-    attributes [0].aDesc = a_0points;
-}
-#endif
-
 SdaiPoly_line::SdaiPoly_line( SCLP23( Application_instance ) *se, int * addAttrs ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
@@ -198,17 +184,6 @@ SdaiShape::SdaiShape( SdaiShape & e ) {
     CopyAs( ( SCLP23( Application_instance_ptr ) ) &e );
 }
 SdaiShape::~SdaiShape() {  }
-
-
-#ifdef __O3DB__
-void
-SdaiShape::oodb_reInit() {
-    eDesc = example_schemae_shape;
-    attributes [0].aDesc = a_1item_name;
-    attributes [1].aDesc = a_2item_color;
-    attributes [2].aDesc = a_3number_of_sides;
-}
-#endif
 
 SdaiShape::SdaiShape( SCLP23( Application_instance ) *se, int * addAttrs ) {
     /* Set this to point to the head entity. */
@@ -363,15 +338,6 @@ create_SdaiRectangle( os_database * db ) {
 }
 #endif
 
-#ifdef __O3DB__
-void
-SdaiRectangle::oodb_reInit() {
-    eDesc = example_schemae_rectangle;
-    attributes [3].aDesc = a_4height;
-    attributes [4].aDesc = a_5width;
-}
-#endif
-
 SdaiRectangle::SdaiRectangle( SCLP23( Application_instance ) *se, int * addAttrs ) : SdaiShape( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
@@ -450,13 +416,6 @@ SdaiSquare::SdaiSquare( SdaiSquare & e ) {
 }
 SdaiSquare::~SdaiSquare() {  }
 
-#ifdef __O3DB__
-void
-SdaiSquare::oodb_reInit() {
-    eDesc = example_schemae_square;
-}
-#endif
-
 SdaiSquare::SdaiSquare( SCLP23( Application_instance ) *se, int * addAttrs ) : SdaiRectangle( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
@@ -503,16 +462,6 @@ SdaiTriangle::SdaiTriangle( SdaiTriangle & e ) {
     CopyAs( ( SCLP23( Application_instance_ptr ) ) &e );
 }
 SdaiTriangle::~SdaiTriangle() {  }
-
-#ifdef __O3DB__
-void
-SdaiTriangle::oodb_reInit() {
-    eDesc = example_schemae_triangle;
-    attributes [3].aDesc = a_6side1_length;
-    attributes [4].aDesc = a_7side2_length;
-    attributes [5].aDesc = a_8side3_length;
-}
-#endif
 
 SdaiTriangle::SdaiTriangle( SCLP23( Application_instance ) *se, int * addAttrs ) : SdaiShape( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
     /* Set this to point to the head entity. */
@@ -620,14 +569,6 @@ SdaiCircle::SdaiCircle( SdaiCircle & e ) {
 }
 SdaiCircle::~SdaiCircle() {  }
 
-#ifdef __O3DB__
-void
-SdaiCircle::oodb_reInit() {
-    eDesc = example_schemae_circle;
-    attributes [3].aDesc = a_9radius;
-}
-#endif
-
 SdaiCircle::SdaiCircle( SCLP23( Application_instance ) *se, int * addAttrs ) : SdaiShape( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
@@ -690,16 +631,6 @@ SdaiLine::SdaiLine( SdaiLine & e ) {
     CopyAs( ( SCLP23( Application_instance_ptr ) ) &e );
 }
 SdaiLine::~SdaiLine() {  }
-
-
-#ifdef __O3DB__
-void
-SdaiLine::oodb_reInit() {
-    eDesc = example_schemae_line;
-    attributes [0].aDesc = a_10end_point_one;
-    attributes [1].aDesc = a_11end_point_two;
-}
-#endif
 
 SdaiLine::SdaiLine( SCLP23( Application_instance ) *se, int * addAttrs ) {
     /* Set this to point to the head entity. */
@@ -787,16 +718,6 @@ SdaiCartesian_point::SdaiCartesian_point( SdaiCartesian_point & e ) {
     CopyAs( ( SCLP23( Application_instance_ptr ) ) &e );
 }
 SdaiCartesian_point::~SdaiCartesian_point() {  }
-
-#ifdef __O3DB__
-void
-SdaiCartesian_point::oodb_reInit() {
-    eDesc = example_schemae_cartesian_point;
-    attributes [0].aDesc = a_12x;
-    attributes [1].aDesc = a_13y;
-    attributes [2].aDesc = a_14z;
-}
-#endif
 
 SdaiCartesian_point::SdaiCartesian_point( SCLP23( Application_instance ) *se, int * addAttrs ) {
     /* Set this to point to the head entity. */

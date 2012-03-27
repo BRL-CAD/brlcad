@@ -15,9 +15,6 @@
 // this is a default seeinfo that does nothing... thus it is not
 //  dependent on a user interface toolkit
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 
 class MgrNode;
 class DisplayNode;

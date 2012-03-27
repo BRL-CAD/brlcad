@@ -14,9 +14,6 @@
 
 /* $Id: ExpDict.h,v 3.0.1.12 1998/02/17 19:19:15 sauderd DP3.1 $  */
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 
 #include <sdai.h>
 //class SCLP23(Application_instance);
@@ -901,11 +898,7 @@ class AttrDescriptor {
         SCLP23( LOGICAL ) _unique;
         AttrType_Enum _attrType; // former attribute _derived
 
-#ifdef __O3DB__
-        const EntityDescriptor * _owner ;  // the owning entityDescriptor
-#else
         const EntityDescriptor & _owner ;  // the owning entityDescriptor
-#endif
     public:
 
         AttrDescriptor(
@@ -1062,15 +1055,9 @@ class AttrDescriptor {
             _unique.put( uniq );
         }
 
-#ifdef __O3DB__
-        const EntityDescriptor  & Owner() const {
-            return *_owner;
-        }
-#else
         const EntityDescriptor  & Owner() const {
             return _owner;
         }
-#endif
 };
 
 

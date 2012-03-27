@@ -14,9 +14,6 @@
 
 /* $Id: STEPundefined.h,v 3.0.1.2 1997/11/05 21:59:28 sauderd DP3.1 $ */
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 
 #include <errordesc.h>
 #include <string>

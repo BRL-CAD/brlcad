@@ -5,19 +5,8 @@
 // regenerate it.
 /* $Id$  */
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
-
 #ifndef  SCHEMA_H
 #include <schema.h>
-#endif
-
-#ifdef PART26
-#include <corbaIncludes.h>
-// Create a corbaSchema.h file in this directory with a #include in
-// it for your IDL generated schema-specific .hh file.
-#include <corbaSchema.h>
 #endif
 
 /*  **************  TYPES   */
@@ -110,10 +99,6 @@ class SdaiPoly_line  :    public SCLP23( Application_instance ) {
         SdaiPoly_line( SdaiPoly_line & e );
         ~SdaiPoly_line();
 
-#ifdef __O3DB__
-        void oodb_reInit();
-#endif
-
         int opcode()  {
             return 0 ;
         }
@@ -123,17 +108,10 @@ class SdaiPoly_line  :    public SCLP23( Application_instance ) {
 
 };
 
-#ifdef __O3DB__
-inline SCLP23( Application_instance_ptr )
-create_SdaiPoly_line() {
-    return ( SCLP23( Application_instance_ptr ) ) new SdaiPoly_line ;
-}
-#else
 inline SdaiPoly_line *
 create_SdaiPoly_line() {
     return  new SdaiPoly_line ;
 }
-#endif
 
 /////////    END_ENTITY poly_line
 
@@ -157,10 +135,6 @@ class SdaiShape  :    public SCLP23( Application_instance ) {
         SdaiShape( SdaiShape & e );
         ~SdaiShape();
 
-#ifdef __O3DB__
-        void oodb_reInit();
-#endif
-
         int opcode()  {
             return 1 ;
         }
@@ -176,17 +150,10 @@ class SdaiShape  :    public SCLP23( Application_instance ) {
 
 };
 
-#ifdef __O3DB__
-inline SCLP23( Application_instance_ptr )
-create_SdaiShape() {
-    return ( SCLP23( Application_instance_ptr ) ) new SdaiShape ;
-}
-#else
 inline SdaiShape *
 create_SdaiShape() {
     return  new SdaiShape ;
 }
-#endif
 
 /////////    END_ENTITY shape
 
@@ -208,10 +175,6 @@ class SdaiRectangle  :    public SdaiShape  {
         SdaiRectangle( SdaiRectangle & e );
         ~SdaiRectangle();
 
-#ifdef __O3DB__
-        void oodb_reInit();
-#endif
-
         int opcode()  {
             return 2 ;
         }
@@ -226,17 +189,10 @@ class SdaiRectangle  :    public SdaiShape  {
 
 };
 
-#ifdef __O3DB__
-inline SCLP23( Application_instance_ptr )
-create_SdaiRectangle() {
-    return ( SCLP23( Application_instance_ptr ) ) new SdaiRectangle ;
-}
-#else
 inline SdaiRectangle *
 create_SdaiRectangle() {
     return  new SdaiRectangle ;
 }
-#endif
 
 /////////    END_ENTITY rectangle
 
@@ -254,10 +210,6 @@ class SdaiSquare  :    public SdaiRectangle  {
         SdaiSquare( SdaiSquare & e );
         ~SdaiSquare();
 
-#ifdef __O3DB__
-        void oodb_reInit();
-#endif
-
         int opcode()  {
             return 3 ;
         }
@@ -266,17 +218,10 @@ class SdaiSquare  :    public SdaiRectangle  {
 
 };
 
-#ifdef __O3DB__
-inline SCLP23( Application_instance_ptr )
-create_SdaiSquare() {
-    return ( SCLP23( Application_instance_ptr ) ) new SdaiSquare ;
-}
-#else
 inline SdaiSquare *
 create_SdaiSquare() {
     return  new SdaiSquare ;
 }
-#endif
 
 /////////    END_ENTITY square
 
@@ -300,10 +245,6 @@ class SdaiTriangle  :    public SdaiShape  {
         SdaiTriangle( SdaiTriangle & e );
         ~SdaiTriangle();
 
-#ifdef __O3DB__
-        void oodb_reInit();
-#endif
-
         int opcode()  {
             return 4 ;
         }
@@ -321,17 +262,10 @@ class SdaiTriangle  :    public SdaiShape  {
 
 };
 
-#ifdef __O3DB__
-inline SCLP23( Application_instance_ptr )
-create_SdaiTriangle() {
-    return ( SCLP23( Application_instance_ptr ) ) new SdaiTriangle ;
-}
-#else
 inline SdaiTriangle *
 create_SdaiTriangle() {
     return  new SdaiTriangle ;
 }
-#endif
 
 /////////    END_ENTITY triangle
 
@@ -351,10 +285,6 @@ class SdaiCircle  :    public SdaiShape  {
         SdaiCircle( SdaiCircle & e );
         ~SdaiCircle();
 
-#ifdef __O3DB__
-        void oodb_reInit();
-#endif
-
         int opcode()  {
             return 5 ;
         }
@@ -366,17 +296,10 @@ class SdaiCircle  :    public SdaiShape  {
 
 };
 
-#ifdef __O3DB__
-inline SCLP23( Application_instance_ptr )
-create_SdaiCircle() {
-    return ( SCLP23( Application_instance_ptr ) ) new SdaiCircle ;
-}
-#else
 inline SdaiCircle *
 create_SdaiCircle() {
     return  new SdaiCircle ;
 }
-#endif
 
 /////////    END_ENTITY circle
 
@@ -398,10 +321,6 @@ class SdaiLine  :    public SCLP23( Application_instance ) {
         SdaiLine( SdaiLine & e );
         ~SdaiLine();
 
-#ifdef __O3DB__
-        void oodb_reInit();
-#endif
-
         int opcode()  {
             return 6 ;
         }
@@ -414,17 +333,10 @@ class SdaiLine  :    public SCLP23( Application_instance ) {
 
 };
 
-#ifdef __O3DB__
-inline SCLP23( Application_instance_ptr )
-create_SdaiLine() {
-    return ( SCLP23( Application_instance_ptr ) ) new SdaiLine ;
-}
-#else
 inline SdaiLine *
 create_SdaiLine() {
     return  new SdaiLine ;
 }
-#endif
 
 /////////    END_ENTITY line
 
@@ -448,10 +360,6 @@ class SdaiCartesian_point  :    public SCLP23( Application_instance ) {
         SdaiCartesian_point( SdaiCartesian_point & e );
         ~SdaiCartesian_point();
 
-#ifdef __O3DB__
-        void oodb_reInit();
-#endif
-
         int opcode()  {
             return 7 ;
         }
@@ -467,17 +375,10 @@ class SdaiCartesian_point  :    public SCLP23( Application_instance ) {
 
 };
 
-#ifdef __O3DB__
-inline SCLP23( Application_instance_ptr )
-create_SdaiCartesian_point() {
-    return ( SCLP23( Application_instance_ptr ) ) new SdaiCartesian_point ;
-}
-#else
 inline SdaiCartesian_point *
 create_SdaiCartesian_point() {
     return  new SdaiCartesian_point ;
 }
-#endif
 
 /////////    END_ENTITY cartesian_point
 

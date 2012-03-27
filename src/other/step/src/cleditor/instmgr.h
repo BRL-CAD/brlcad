@@ -23,9 +23,6 @@
 /////////////////////
 
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 
 typedef unsigned boolean;
 extern char * EntityClassName( char * );

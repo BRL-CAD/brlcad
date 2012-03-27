@@ -493,12 +493,7 @@ void DirObj::InsertFile( const char * f, int index ) {
         CheckIndex( index );
         spot = &fileList[index];
     }
-#ifdef __O3DB__
-    char * string = new char [strlen( f )];
-    strcpy( string, f );
-#else
     char * string = strdup( f );
-#endif
     *spot = string;
     ++fileCount;
 }

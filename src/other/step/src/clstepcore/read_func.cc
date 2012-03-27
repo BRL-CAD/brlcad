@@ -1,6 +1,3 @@
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 
 #include <errordesc.h>
 #include <stdio.h>

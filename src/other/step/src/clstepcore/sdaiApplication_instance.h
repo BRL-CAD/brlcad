@@ -19,9 +19,6 @@
 
 /* $Id: sdaiApplication_instance.h,v 1.5 1998/02/17 18:29:43 sauderd DP3.1 $ */
 
-//#ifdef __O3DB__
-//#include <OpenOODB.h>
-//#endif
 
 //#include <stdio.h>
 //#include <STEPattributeList.h>

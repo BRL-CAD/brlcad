@@ -8,10 +8,6 @@
 #include <sys/time.h>
 #endif
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
-
 #include <sdai.h>
 
 

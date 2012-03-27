@@ -15,9 +15,6 @@
 
 /* $Id: dispnode.h,v 3.0.1.2 1997/11/05 22:11:39 sauderd DP3.1 $ */
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 
 /*#include <STEPattribute.h>*/
 /*#include <STEPentity.h>*/

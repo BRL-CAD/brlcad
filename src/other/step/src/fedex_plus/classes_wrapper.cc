@@ -99,9 +99,6 @@ print_file_header( Express express, FILES * files ) {
     fprintf( files->incall, "#include <sys/time.h>\n" );
     fprintf( files->incall, "#endif\n" );
 
-    fprintf( files->incall, "#ifdef __O3DB__\n" );
-    fprintf( files->incall, "#include <OpenOODB.h>\n" );
-    fprintf( files->incall, "#endif\n\n" );
     fprintf( files->incall, "#include <sdai.h>\n\n" );
     fprintf( files->incall, "\n#include <Registry.h>\n" );
     fprintf( files->incall, "\n#include <STEPaggregate.h>\n" );
@@ -571,9 +568,6 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
     }
     fprintf( incfile, "/* %cId$  */\n", '\044' );
 
-    fprintf( incfile, "#ifdef __O3DB__\n" );
-    fprintf( incfile, "#include <OpenOODB.h>\n" );
-    fprintf( incfile, "#endif\n\n" );
     fprintf( incfile,
              "#ifndef  SCHEMA_H\n"
              "#include <schema.h>\n"
@@ -890,9 +884,6 @@ EXPRESSPrint( Express express, ComplexCollect & col, FILES * files ) {
     }
     fprintf( incfile, "/* %cId$ */\n", '$' );
 
-    fprintf( incfile, "#ifdef __O3DB__\n" );
-    fprintf( incfile, "#include <OpenOODB.h>\n" );
-    fprintf( incfile, "#endif\n\n" );
     fprintf( incfile, "#include <sdai.h> \n" );
     /*    fprintf (incfile, "#include <schema.h> \n");*/
     /*    fprintf (incfile, "extern void %sInit (Registry & r);\n", schnm);*/

@@ -11,9 +11,6 @@
 
 /* $Id: stepenteditor.cc,v 3.0.1.1 1998/02/17 19:42:07 sauderd DP3.1 $ */
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 
 #include <ctype.h>
 #include <stdio.h>

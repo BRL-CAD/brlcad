@@ -15,9 +15,6 @@
 
 /* $Id: gennodelist.h,v 3.0.1.2 1997/11/05 22:33:48 sauderd DP3.1 $  */
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 
 #include <iostream>
 

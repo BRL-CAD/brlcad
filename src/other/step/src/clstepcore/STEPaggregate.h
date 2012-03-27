@@ -14,9 +14,6 @@
 
 /* $Id: STEPaggregate.h,v 3.0.1.6 1997/11/05 21:59:27 sauderd DP3.1 $ */
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 
 class InstMgr;
 class STEPaggregate;

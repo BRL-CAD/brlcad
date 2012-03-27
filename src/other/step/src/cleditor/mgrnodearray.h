@@ -15,9 +15,6 @@
 
 /* $Id: mgrnodearray.h,v 3.0.1.3 1997/11/05 22:11:38 sauderd DP3.1 $ */
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 
 #include <string.h>
 

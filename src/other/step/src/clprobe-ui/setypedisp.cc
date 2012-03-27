@@ -11,9 +11,6 @@
 
 /* $Id: setypedisp.cc,v 3.0.1.1 1997/11/05 23:01:11 sauderd DP3.1 $ */
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 #include <stdlib.h>
 #include <ctype.h>
 

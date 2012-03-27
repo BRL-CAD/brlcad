@@ -383,12 +383,7 @@ AttrDescriptor::AttrDescriptor(
     : _name( name ), _domainType( domainType ), _optional( optional ),
       _unique( unique ), _attrType( at ),
 
-#ifdef __O3DB__
-      _owner( &owner )
-#else
       _owner( ( EntityDescriptor & )owner )
-#endif
-
 {
 }
 

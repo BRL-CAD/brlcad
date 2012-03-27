@@ -11,10 +11,6 @@
 
 /* $Id: sclfilechooser.cc,v 3.0.1.1 1997/11/05 23:01:13 sauderd DP3.1 $ */
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
-
 #include <IV-2_6/InterViews/adjuster.h>
 #include <IV-2_6/InterViews/border.h>
 #include <IV-2_6/InterViews/box.h>
