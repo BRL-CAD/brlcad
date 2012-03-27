@@ -71,15 +71,6 @@ SCLP23( Application_instance )::~SCLP23_NAME( Application_instance )() {
     */
 }
 
-#ifdef PART26
-//SCLP26(Application_instance_ptr)
-IDL_Application_instance_ptr
-SCLP23( Application_instance )::create_TIE() {
-    cout << "ERROR SCLP23(Application_instance)::create_TIE() called." << endl;
-    return 0;
-}
-#endif
-
 SCLP23( Application_instance ) *
 SCLP23( Application_instance )::Replicate() {
     char errStr[BUFSIZ];

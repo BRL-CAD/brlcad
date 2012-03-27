@@ -38,14 +38,6 @@ SCLP23( DAObject )::~SCLP23_NAME( DAObject )() {
 }
 
 
-#ifdef PART26
-//SCLP26(Application_instance_ptr)
-IDL_Application_instance_ptr
-SCLP23( DAObject )::create_TIE() {
-    cout << "ERROR DAObject::create_TIE() called." << endl;
-    return 0;
-}
-#endif
 
 SCLP23( DAObject_SDAI )::SCLP23_NAME( DAObject_SDAI )() {
 }
@@ -59,15 +51,6 @@ SCLP23(DAObject_SDAI)::SCLP23_NAME(DAObject_SDAI)(const DAObject_SDAI&)
 SCLP23( DAObject_SDAI )::~SCLP23_NAME( DAObject_SDAI )() {
 }
 
-
-#ifdef PART26
-//SCLP26(Application_instance_ptr)
-IDL_Application_instance_ptr
-SCLP23( DAObject_SDAI )::create_TIE() {
-    cout << "ERROR DAObject_SDAI::create_TIE() called." << endl;
-    return 0;
-}
-#endif
 
 /*
  * Copyright (c) 1990, 1991 Stanford University

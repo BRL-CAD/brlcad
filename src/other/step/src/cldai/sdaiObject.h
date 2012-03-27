@@ -18,11 +18,6 @@ class SCLP23_NAME( sdaiObject ) {
 //    static Object_ptr _duplicate(Object_ptr);
 //    static Object_ptr _nil();
 
-#ifdef PART26
-//    virtual SCLP26(Application_instance_ptr) create_TIE();
-        virtual IDL_Application_instance_ptr create_TIE();
-#endif
-
 };
 
 typedef SCLP23_NAME( sdaiObject ) * SCLP23_NAME( sdaiObject_ptr );

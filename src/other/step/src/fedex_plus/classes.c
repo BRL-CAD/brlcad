@@ -44,7 +44,6 @@ LISTempty( Linked_List list ) {
 
 int multiple_inheritance = 1;
 int print_logging = 0;
-int corba_binding = 0;
 int old_accessors = 0;
 
 /* several classes use attr_count for naming attr dictionary entry
@@ -387,9 +386,6 @@ int Handle_FedPlus_Args( int i, char * arg ) {
     if( ( ( char )i == 'l' ) || ( ( char )i == 'L' ) ) {
         print_logging = 1;
     }
-    if( ( ( char )i == 'c' ) || ( ( char )i == 'C' ) ) {
-        corba_binding = 1;
-    }
     return 0;
 }
 
@@ -633,44 +629,15 @@ ATTRsign_access_methods( Variable a, FILE * file ) {
 
     class = TYPEget_type( t );
 
-    if( corba_binding ) {
-        strncpy( ctype, TYPEget_idl_type( t ), BUFSIZ );
+    strncpy( ctype, AccessType( t ), BUFSIZ );
+
+    if( isReferenceType( class ) ) {
+	fprintf( file, "\tconst_%s %s() const;\n", ctype, attrnm );
     } else {
-        strncpy( ctype, AccessType( t ), BUFSIZ );
+	fprintf( file, "\t%s %s() const;\n", ctype, attrnm );
     }
-    if( corba_binding ) {
-        /* string, entity, and aggregate = no const */
-        if( isAggregateType( t ) ) {
-            fprintf( file, "\t%s * %s(", ctype, attrnm );
-        } else {
-            fprintf( file, "\t%s %s(", ctype, attrnm );
-        }
-        fprintf( file,
-                 "CORBA::Environment &IT_env=CORBA::default_environment) " );
-        fprintf( file,
-                 " /* const */ throw (CORBA::SystemException);\n" );
-        if( ( class == Class_Enumeration_Type ) ||
-                ( class == Class_Entity_Type ) ||
-                ( class == Class_Boolean_Type ) ||
-                ( class == Class_Logical_Type ) ) {
-            fprintf( file, "\tvoid %s (%s x", attrnm, ctype );
-        } else if( isAggregateType( t ) ) {
-            fprintf( file, "\tvoid %s (const %s& x", attrnm, ctype );
-        } else {
-            fprintf( file, "\tvoid %s (const %s x", attrnm, ctype );
-        }
-        fprintf( file,
-                 ", CORBA::Environment &IT_env=CORBA::default_environment)" );
-        fprintf( file,
-                 " throw (CORBA::SystemException);\n\n" );
-    } else {
-        if( isReferenceType( class ) ) {
-            fprintf( file, "\tconst_%s %s() const;\n", ctype, attrnm );
-        } else {
-            fprintf( file, "\t%s %s() const;\n", ctype, attrnm );
-        }
-        fprintf( file, "\tvoid %s (const %s x);\n\n", attrnm, ctype );
-    }
+    fprintf( file, "\tvoid %s (const %s x);\n\n", attrnm, ctype );
+
     return;
 }
 
@@ -700,29 +667,14 @@ ATTRprint_access_methods_get_head( const char * classnm, Variable a,
 
     generate_attribute_func_name( a, funcnm );
 
-    if( corba_binding ) {
-        strncpy( ctype, TYPEget_idl_type( t ), BUFSIZ );
+    strncpy( ctype, AccessType( t ), BUFSIZ );
+
+    if( isReferenceType( class ) ) {
+	fprintf( file, "\nconst_%s \n%s::%s() const\n", ctype, classnm, funcnm );
     } else {
-        strncpy( ctype, AccessType( t ), BUFSIZ );
+	fprintf( file, "\n%s \n%s::%s() const\n", ctype, classnm, funcnm );
     }
-    if( corba_binding ) {
-        /* string, entity, and aggregate = no const */
-        if( isAggregateType( t ) ) {
-            fprintf( file, "\n%s * \n%s::%s(", ctype, classnm, funcnm );
-        } else {
-            fprintf( file, "\n%s \n%s::%s(", ctype, classnm, funcnm );
-        }
-        fprintf( file,
-                 "CORBA::Environment &IT_env) " );
-        fprintf( file,
-                 " /* const */ throw (CORBA::SystemException)\n" );
-    } else {
-        if( isReferenceType( class ) ) {
-            fprintf( file, "\nconst_%s \n%s::%s() const\n", ctype, classnm, funcnm );
-        } else {
-            fprintf( file, "\n%s \n%s::%s() const\n", ctype, classnm, funcnm );
-        }
-    }
+
     return;
 }
 
@@ -752,32 +704,9 @@ ATTRprint_access_methods_put_head( CONST char * entnm, Variable a, FILE * file )
 
     generate_attribute_func_name( a, funcnm );
 
-    /* ///////////////////////////////////////////////// */
+    strncpy( ctype, AccessType( t ), BUFSIZ );
+    fprintf( file, "\nvoid \n%s::%s (const %s x)\n\n", entnm, funcnm, ctype );
 
-    if( corba_binding ) {
-        strncpy( ctype, TYPEget_idl_type( t ), BUFSIZ );
-    } else {
-        strncpy( ctype, AccessType( t ), BUFSIZ );
-    }
-    if( corba_binding ) {
-        /* string, entity, and aggregate = no const */
-        if( ( class == Class_Enumeration_Type ) ||
-                ( class == Class_Entity_Type ) ||
-                ( class == Class_Boolean_Type ) ||
-                ( class == Class_Logical_Type ) ) {
-            fprintf( file, "\nvoid \n%s::%s (%s x", entnm, funcnm, ctype );
-        } else if( isAggregateType( t ) ) {
-            fprintf( file, "\nvoid \n%s::%s (const %s& x", entnm, funcnm, ctype );
-        } else {
-            fprintf( file, "\nvoid \n%s::%s (const %s x", entnm, funcnm, ctype );
-        }
-        fprintf( file,
-                 ", CORBA::Environment &IT_env)" );
-        fprintf( file,
-                 " throw (CORBA::SystemException)\n\n" );
-    } else {
-        fprintf( file, "\nvoid \n%s::%s (const %s x)\n\n", entnm, funcnm, ctype );
-    }
     return;
 }
 
@@ -791,460 +720,9 @@ AGGRprint_access_methods( CONST char * entnm, Variable a, FILE * file, Type t,
 
     ATTRprint_access_methods_get_head( entnm, a, file );
     fprintf( file, "{\n" );
-    if( !corba_binding ) {
-        fprintf( file, "    return (%s) &_%s; \n}\n", ctype, attrnm );
-        ATTRprint_access_methods_put_head( entnm, a, file );
-        fprintf( file, "\t{ _%s.ShallowCopy (*x); }\n", attrnm );
-        return;
-    } else {
-        bt = TYPEget_nonaggregate_base_type( t );
-        if( isAggregateType( bt ) ) {
-            strcpy( aggrnode_name, "/* ERROR aggr_of_aggr */" );
-        }
-
-        fprintf( file, "    %s * seq = new %s;\n\n", ctype, ctype );
-
-        fprintf( file, "    int count = _%s.EntryCount();\n", attrnm );
-        fprintf( file, "    seq->length(count);\n\n" );
-
-        fprintf( file, "    int i = 0;\n" );
-        fprintf( file, "    SingleLinkNode *n = _%s.GetHead();\n\n", attrnm );
-
-
-        class = TYPEget_type( bt );
-
-        if( class == Class_Integer_Type ) {
-            fprintf( file, "    while(n)\n" );
-            fprintf( file, "    {\n" );
-
-            fprintf( file, "\t(*seq)[i] = ((IntNode*)n)->value;\n" );
-            fprintf( file, "\tstd::cout << \"returning entity %s, attr _%s: aggr integer element: \" << ((IntNode*)n)->value << std::endl;\n", entnm, attrnm );
-            if( print_logging ) {
-                fprintf( file, "#ifdef SCL_LOGGING\n" );
-                fprintf( file, "\tif(*logStream)\n\t{\n" );
-                fprintf( file,
-                         "\t    logStream->open(SCLLOGFILE,ios::app);\n" );
-                fprintf( file, "\t    *logStream << time(NULL) << \" SDAI returning entity: %s, attr: _%s, aggr integer element: \" << ((IntNode*)n)->value << std::endl;\n", entnm, attrnm );
-                fprintf( file, "\t    logStream->close();\n" );
-                fprintf( file, "\t}\n" );
-                fprintf( file, "#endif\n" );
-            }
-            fprintf( file, "\ti++;\n" );
-            fprintf( file, "\tn = n->NextNode();\n" );
-            fprintf( file, "    }\n" );
-            fprintf( file, "    return seq;\n" );
-            fprintf( file, "}\n" );
-        }
-
-        if( ( class == Class_Number_Type ) || ( class == Class_Real_Type ) ) {
-            fprintf( file, "    while(n)\n" );
-            fprintf( file, "    {\n" );
-
-            fprintf( file, "\t(*seq)[i] = ((RealNode*)n)->value;\n" );
-            fprintf( file, "\tstd::cout << \"returning entity %s, attr _%s: aggr real element: \" << ((RealNode*)n)->value << std::endl;\n", entnm, attrnm );
-
-            if( print_logging ) {
-                fprintf( file, "#ifdef SCL_LOGGING\n" );
-                fprintf( file, "\tif(*logStream)\n\t{\n" );
-                fprintf( file,
-                         "\t    logStream->open(SCLLOGFILE,ios::app);\n" );
-
-                fprintf( file, "\t    *logStream << time(NULL) << \" SDAI returning entity: %s, attr: _%s, aggr real element: \" << ((RealNode*)n)->value << std::endl;\n", entnm, attrnm );
-                fprintf( file, "\t    logStream->close();\n" );
-                fprintf( file, "\t}\n" );
-                fprintf( file, "#endif\n" );
-            }
-
-            fprintf( file, "\ti++;\n" );
-            fprintf( file, "\tn = n->NextNode();\n" );
-            fprintf( file, "    }\n" );
-            fprintf( file, "    return seq;\n" );
-            fprintf( file, "}\n" );
-        }
-
-        if( class == Class_Entity_Type ) {
-            fprintf( file, "    int file_id = 0;\n" );
-            fprintf( file, "    char markerServer[BUFSIZ];\n" );
-            fprintf( file, "    while(n)\n" );
-            fprintf( file, "    {\n" );
-            fprintf( file, "\tfile_id = ((EntityNode*)n)->node->STEPfile_id;\n" );
-            fprintf( file, "\tstd::cout << \"StepFileId: \" << file_id;\n" );
-
-            fprintf( file, "\t// the marker:server is used\n" );
-            fprintf( file, "\tsprintf(markerServer, \"%%d:%%s\", file_id, serverName);\n" );
-            fprintf( file, "\tstd::cout << \" markerServer: \" << markerServer << std::endl;\n" );
-
-            if( print_logging ) {
-                fprintf( file, "#ifdef SCL_LOGGING\n" );
-                fprintf( file, "\tif(*logStream)\n\t{\n" );
-
-                fprintf( file,
-                         "\t    logStream->open(SCLLOGFILE,ios::app);\n" );
-                fprintf( file, "\t    *logStream << time(NULL) << \" SDAI returning entity: %s, attr: _%s, aggr entity element w/file_id: \" << file_id << \" markerServer: \" << markerServer << std::endl;\n", entnm, attrnm );
-                fprintf( file, "\t    logStream->close();\n" );
-                fprintf( file, "\t}\n" );
-                fprintf( file, "#endif\n" );
-            }
-
-            if( TYPEget_name( bt ) ) {
-                strncpy( nm, FirstToUpper( TYPEget_name( bt ) ), BUFSIZ - 1 );
-            }
-            fprintf( file, "\t(*seq)[i] = %s::_bind(markerServer, sclHostName);\n", nm );
-            fprintf( file,
-                     "/*\n\t%s_var x = %s::_bind((const char *)markerServer,"
-                     "sclHostName);\n", nm, nm );
-            fprintf( file,
-                     "\t%s::_duplicate(x);\n\n", nm );
-            fprintf( file, "\t(*seq)[i] = x;\n*/\n" );
-
-            fprintf( file, "\ti++;\n" );
-            fprintf( file, "\tn = n->NextNode();\n" );
-            fprintf( file, "    }\n" );
-            fprintf( file, "    return seq;\n" );
-            fprintf( file, "}\n" );
-        }
-
-        if( ( class == Class_Enumeration_Type ) ||
-                ( class == Class_Logical_Type ) ||
-                ( class == Class_Boolean_Type ) ) {
-            fprintf( file, "    while(n)\n" );
-            fprintf( file, "    {\n" );
-
-            fprintf( file, "\t(*seq)[i] = ((EnumNode*)n)->node->asInt();\n" );
-            fprintf( file, "\tstd::cout << \"returning entity %s, attr _%s: aggr enumeration/Boolean/Logical element: \" << ((EnumNode*)n)->node->element_at( ((EnumNode*)n)->node->asInt() ) << std::endl;\n", entnm, attrnm );
-
-            if( print_logging ) {
-                fprintf( file, "#ifdef SCL_LOGGING\n" );
-                fprintf( file, "\tif(*logStream)\n\t{\n" );
-                fprintf( file,
-                         "\t    logStream->open(SCLLOGFILE,ios::app);\n" );
-                fprintf( file, "\t    *logStream << time(NULL) << \" SDAI returning entity: %s, attr: _%s, aggr enumeration/Boolean/Logical element: \" << ((EnumNode*)n)->node->element_at( ((EnumNode*)n)->node->asInt() ) << std::endl;\n", entnm, attrnm );
-                fprintf( file, "\t    logStream->close();\n" );
-                fprintf( file, "\t}\n" );
-                fprintf( file, "#endif\n" );
-            }
-
-            fprintf( file, "\ti++;\n" );
-            fprintf( file, "\tn = n->NextNode();\n" );
-            fprintf( file, "    }\n" );
-            fprintf( file, "    return seq;\n" );
-            fprintf( file, "}\n" );
-        }
-
-        if( class == Class_Select_Type ) {
-            strcpy( aggrnode_name, "SelectNode" );
-            fprintf( file, "    std::cout << \"ERROR function not implemented: entity %s, attr _%s: aggr select element: \" << std::endl;\n", entnm, attrnm );
-            fprintf( file, "    return 0;\n" );
-            fprintf( file, "}\n" );
-        }
-
-        if( class == Class_String_Type ) {
-            fprintf( file, "    while(n)\n" );
-            fprintf( file, "    {\n" );
-
-            fprintf( file, "\t(*seq)[i] = CORBA::string_dupl( ((StringNode*)n)->value.c_str() );\n" );
-            fprintf( file, "\tstd::cout << \"returning entity %s, attr _%s: aggr string element: \" << ((StringNode*)n)->value << std::endl;\n", entnm, attrnm );
-
-            if( print_logging ) {
-                fprintf( file, "#ifdef SCL_LOGGING\n" );
-                fprintf( file, "\tif(*logStream)\n\t{\n" );
-                fprintf( file,
-                         "\t    logStream->open(SCLLOGFILE,ios::app);\n" );
-                fprintf( file, "\t    *logStream << time(NULL) << \" SDAI returning entity: %s, attr: _%s, aggr string element: \" << ((StringNode*)n)->value << std::endl;\n", entnm, attrnm );
-                fprintf( file, "\t    logStream->close();\n" );
-                fprintf( file, "\t}\n" );
-                fprintf( file, "#endif\n" );
-            }
-
-            fprintf( file, "\ti++;\n" );
-            fprintf( file, "\tn = n->NextNode();\n" );
-            fprintf( file, "    }\n" );
-            fprintf( file, "    return seq;\n" );
-            fprintf( file, "}\n" );
-        }
-        if( class == Class_Binary_Type ) {
-            strcpy( aggrnode_name, "BinaryNode" );
-            fprintf( file, "    std::cout << \"ERROR function not implemented: entity %s, attr _%s: aggr binary element: \" << std::endl;\n", entnm, attrnm );
-            fprintf( file, "    return 0;\n" );
-            fprintf( file, "}\n" );
-        }
-
-        ATTRprint_access_methods_put_head( entnm, a, file );
-
-        bt = TYPEget_nonaggregate_base_type( t );
-        if( isAggregateType( bt ) ) {
-            strcpy( aggrnode_name, "/* ERROR aggr_of_aggr */" );
-        }
-
-        class = TYPEget_type( bt );
-
-        if( class == Class_Integer_Type ) {
-            if( TYPEget_name( bt ) ) {
-                strcpy( nm, "Sdai" );
-                strcat( nm, FirstToUpper( TYPEget_name( bt ) ) );
-            }
-
-            fprintf( file, "\t/* { _%s.ShallowCopy (*x); } */\n", attrnm );
-            fprintf( file, "{\n" );
-            fprintf( file, "    int countx = x.length();\n" );
-            fprintf( file, "    SingleLinkNode *trailn = 0;\n" );
-            fprintf( file, "    SingleLinkNode *n = _%s.GetHead();\n", attrnm );
-            fprintf( file, "    if( countx == 0 )\n" );
-            fprintf( file, "    {\n" );
-            fprintf( file, "\t_%s.Empty();\n", attrnm );
-            fprintf( file, "\treturn;\n" );
-            fprintf( file, "    }\n\n" );
-            fprintf( file, "    int i = 0;\n" );
-            fprintf( file, "    while(i < countx)\n" );
-            fprintf( file, "    {\n" );
-            fprintf( file, "\tif(n == 0)\n" );
-            fprintf( file, "\t{\n" );
-            fprintf( file, "\t    n = _%s.NewNode();\n", attrnm );
-            fprintf( file, "\t    _%s.AppendNode( (IntNode*)n );\n", attrnm );
-            fprintf( file, "\t}\n" );
-            fprintf( file, "\t((IntNode*)n)->value = x[i];\n", nm );
-            fprintf( file, "\tstd::cout << \"Assigning aggr int element: \" << ((IntNode*)n)->value;\n" );
-
-            if( print_logging ) {
-                fprintf( file, "#ifdef SCL_LOGGING\n" );
-                fprintf( file, "\tif(*logStream)\n\t{\n" );
-                fprintf( file,
-                         "\t    logStream->open(SCLLOGFILE,ios::app);\n" );
-                fprintf( file, "\t    *logStream << time(NULL) << \" SDAI assigning entity: %s, attr: _%s, aggr integer element: \" << ((IntNode*)n)->value << std::endl;\n", entnm, attrnm );
-
-                fprintf( file, "\t    logStream->close();\n" );
-                fprintf( file, "\t}\n" );
-                fprintf( file, "#endif\n" );
-            }
-
-            fprintf( file, "\ti++;\n" );
-            fprintf( file, "\ttrailn = n;\n" );
-            fprintf( file, "\tn = n->NextNode();\n" );
-            fprintf( file, "    }\n" );
-            fprintf( file, "/*\n" );
-            fprintf( file, "    if(n)\n" );
-            fprintf( file, "\t_%s.DeleteFollowingNodes((IntNode*)trailn);\n", attrnm );
-            fprintf( file, "*/\n" );
-            fprintf( file, "}\n" );
-        }
-
-        if( ( class == Class_Number_Type ) || ( class == Class_Real_Type ) ) {
-            if( TYPEget_name( bt ) ) {
-                strcpy( nm, "Sdai" );
-                strcat( nm, FirstToUpper( TYPEget_name( bt ) ) );
-            }
-
-            fprintf( file, "\t/* { _%s.ShallowCopy (*x); } */\n", attrnm );
-            fprintf( file, "{\n" );
-            fprintf( file, "    int countx = x.length();\n" );
-            fprintf( file, "    SingleLinkNode *trailn = 0;\n" );
-            fprintf( file, "    SingleLinkNode *n = _%s.GetHead();\n", attrnm );
-            fprintf( file, "    if( countx == 0 )\n" );
-            fprintf( file, "    {\n" );
-            fprintf( file, "\t_%s.Empty();\n", attrnm );
-            fprintf( file, "\treturn;\n" );
-            fprintf( file, "    }\n\n" );
-            fprintf( file, "    int i = 0;\n" );
-            fprintf( file, "    while(i < countx)\n" );
-            fprintf( file, "    {\n" );
-            fprintf( file, "\tif(n == 0)\n" );
-            fprintf( file, "\t{\n" );
-            fprintf( file, "\t    n = _%s.NewNode();\n", attrnm );
-            fprintf( file, "\t    _%s.AppendNode( (RealNode*)n );\n", attrnm );
-            fprintf( file, "\t}\n" );
-            fprintf( file, "\t((RealNode*)n)->value = x[i];\n", nm );
-            fprintf( file, "\tstd::cout << \"Assigning aggr real element: \" << ((RealNode*)n)->value;\n" );
-
-            if( print_logging ) {
-                fprintf( file, "#ifdef SCL_LOGGING\n" );
-                fprintf( file, "\tif(*logStream)\n\t{\n" );
-
-                fprintf( file,
-                         "\t    logStream->open(SCLLOGFILE,ios::app);\n" );
-                fprintf( file, "\t    *logStream << time(NULL) << \" SDAI assigning entity: %s, attr: _%s, aggr real element: \" << ((RealNode*)n)->value << std::endl;\n", entnm, attrnm );
-                fprintf( file, "\t    logStream->close();\n" );
-                fprintf( file, "\t}\n" );
-                fprintf( file, "#endif\n" );
-            }
-
-            fprintf( file, "\ti++;\n" );
-            fprintf( file, "\ttrailn = n;\n" );
-            fprintf( file, "\tn = n->NextNode();\n" );
-            fprintf( file, "    }\n" );
-            fprintf( file, "/*\n" );
-            fprintf( file, "    if(n)\n" );
-            fprintf( file, "\t_%s.DeleteFollowingNodes((RealNode*)trailn);\n", attrnm );
-            fprintf( file, "*/\n" );
-            fprintf( file, "}\n" );
-        }
-
-        if( class == Class_Entity_Type ) {
-            if( TYPEget_name( bt ) ) {
-                strcpy( nm, "Sdai" );
-                strcat( nm, FirstToUpper( TYPEget_name( bt ) ) );
-            }
-
-            fprintf( file, "\t/* { _%s.ShallowCopy (*x); } */\n", attrnm );
-            fprintf( file, "{\n" );
-            fprintf( file, "    int countx = x.length();\n" );
-            fprintf( file, "    SingleLinkNode *trailn = 0;\n" );
-            fprintf( file, "    SingleLinkNode *n = _%s.GetHead();\n", attrnm );
-            fprintf( file, "    if( countx > 0 )\n" );
-            fprintf( file, "    {\n" );
-            fprintf( file, "\tif( n == 0 )\n" );
-            fprintf( file, "\t{\n" );
-            fprintf( file, "\t    n = _%s.NewNode();\n", attrnm );
-            fprintf( file, "\t    _%s.AppendNode( (EntityNode*)n );\n", attrnm );
-            fprintf( file, "\t}\n" );
-            fprintf( file, "    }\n" );
-            fprintf( file, "    else\n" );
-            fprintf( file, "    {\n" );
-            fprintf( file, "\t_%s.Empty();\n", attrnm );
-            fprintf( file, "\treturn;\n" );
-            fprintf( file, "    }\n\n" );
-            fprintf( file, "    int i = 0;\n" );
-            fprintf( file, "    while(i < countx)\n" );
-            fprintf( file, "    {\n" );
-            fprintf( file, "\tif(n == 0)\n" );
-            fprintf( file, "\t{\n" );
-            fprintf( file, "\t    n = _%s.NewNode();\n", attrnm );
-            fprintf( file, "\t    _%s.AppendNode( (EntityNode*)n );\n", attrnm );
-            fprintf( file, "\t}\n" );
-            fprintf( file, "\t((EntityNode*)n)->node = (%s*)DEREF( x[i] );\n", nm );
-            fprintf( file, "\tstd::cout << \"Assigning entity w/StepFileId: \" << ((EntityNode*)n)->node->STEPfile_id;\n" );
-
-            if( print_logging ) {
-                fprintf( file, "#ifdef SCL_LOGGING\n" );
-                fprintf( file, "\tif(*logStream)\n\t{\n" );
-
-                fprintf( file,
-                         "\t    logStream->open(SCLLOGFILE,ios::app);\n" );
-                fprintf( file, "\t    *logStream << time(NULL) << \" SDAI assigning entity: %s, attr: _%s, aggr entity element w/file_id: \" << ((EntityNode*)n)->node->STEPfile_id << std::endl;\n", entnm, attrnm );
-                fprintf( file, "\t    logStream->close();\n" );
-                fprintf( file, "\t}\n" );
-                fprintf( file, "#endif\n" );
-            }
-
-            fprintf( file, "\ti++;\n" );
-            fprintf( file, "\ttrailn = n;\n" );
-            fprintf( file, "\tn = n->NextNode();\n" );
-            fprintf( file, "    }\n" );
-            fprintf( file, "/*\n" );
-            fprintf( file, "    if(n)\n" );
-            fprintf( file, "\t_%s.DeleteFollowingNodes((EntityNode*)trailn);\n", attrnm );
-            fprintf( file, "*/\n" );
-            fprintf( file, "}\n" );
-        }
-
-        if( ( class == Class_Enumeration_Type ) ||
-                ( class == Class_Logical_Type ) ||
-                ( class == Class_Boolean_Type ) ) {
-            if( TYPEget_name( bt ) ) {
-                strcpy( nm, "Sdai" );
-                strcat( nm, FirstToUpper( TYPEget_name( bt ) ) );
-            }
-
-            fprintf( file, "\t/* { _%s.ShallowCopy (*x); } */\n", attrnm );
-            fprintf( file, "{\n" );
-            fprintf( file, "    int countx = x.length();\n" );
-            fprintf( file, "    SingleLinkNode *trailn = 0;\n" );
-            fprintf( file, "    SingleLinkNode *n = _%s.GetHead();\n", attrnm );
-            fprintf( file, "    if( countx == 0 )\n" );
-            fprintf( file, "    {\n" );
-            fprintf( file, "\t_%s.Empty();\n", attrnm );
-            fprintf( file, "\treturn;\n" );
-            fprintf( file, "    }\n\n" );
-            fprintf( file, "    int i = 0;\n" );
-            fprintf( file, "    while(i < countx)\n" );
-            fprintf( file, "    {\n" );
-            fprintf( file, "\tif(n == 0)\n" );
-            fprintf( file, "\t{\n" );
-            fprintf( file, "\t    n = _%s.NewNode();\n", attrnm );
-            fprintf( file, "\t    _%s.AppendNode( (EnumNode*)n );\n", attrnm );
-            fprintf( file, "\t}\n" );
-            fprintf( file, "\t((EnumNode*)n)->node->put( (int)x[i] );\n", nm );
-            fprintf( file, "\tstd::cout << \"Assigning aggr enum element: \" << ((EnumNode*)n)->node->element_at( ((EnumNode*)n)->node->asInt() );\n" );
-
-            if( print_logging ) {
-                fprintf( file, "#ifdef SCL_LOGGING\n" );
-                fprintf( file, "\tif(*logStream)\n\t{\n" );
-                fprintf( file,
-                         "\t    logStream->open(SCLLOGFILE,ios::app);\n" );
-                fprintf( file, "\t    *logStream << time(NULL) << \" SDAI assigning entity: %s, attr: _%s, aggr enumeration/Boolean/Logical element: \" << ((EnumNode*)n)->node->element_at( ((EnumNode*)n)->node->asInt() ) << std::endl;\n", entnm, attrnm );
-                fprintf( file, "\t    logStream->close();\n" );
-                fprintf( file, "\t}\n" );
-                fprintf( file, "#endif\n" );
-            }
-
-            fprintf( file, "\ti++;\n" );
-            fprintf( file, "\ttrailn = n;\n" );
-            fprintf( file, "\tn = n->NextNode();\n" );
-            fprintf( file, "    }\n" );
-            fprintf( file, "/*\n" );
-            fprintf( file, "    if(n)\n" );
-            fprintf( file, "\t_%s.DeleteFollowingNodes((EnumNode*)trailn);\n", attrnm );
-            fprintf( file, "*/\n" );
-            fprintf( file, "}\n" );
-        }
-
-        if( class == Class_Select_Type ) {
-            fprintf( file, "\t{ /*_%s.ShallowCopy (*x); */ }\n", attrnm );
-            strcpy( aggrnode_name, "SelectNode" );
-        }
-
-        if( class == Class_String_Type ) {
-            if( TYPEget_name( bt ) ) {
-                strcpy( nm, "Sdai" );
-                strcat( nm, FirstToUpper( TYPEget_name( bt ) ) );
-            }
-
-            fprintf( file, "\t/* { _%s.ShallowCopy (*x); } */\n", attrnm );
-            fprintf( file, "{\n" );
-            fprintf( file, "    int countx = x.length();\n" );
-            fprintf( file, "    SingleLinkNode *trailn = 0;\n" );
-            fprintf( file, "    SingleLinkNode *n = _%s.GetHead();\n", attrnm );
-            fprintf( file, "    if( countx == 0 )\n" );
-            fprintf( file, "    {\n" );
-            fprintf( file, "\t_%s.Empty();\n", attrnm );
-            fprintf( file, "\treturn;\n" );
-            fprintf( file, "    }\n\n" );
-            fprintf( file, "    int i = 0;\n" );
-            fprintf( file, "    while(i < countx)\n" );
-            fprintf( file, "    {\n" );
-            fprintf( file, "\tif(n == 0)\n" );
-            fprintf( file, "\t{\n" );
-            fprintf( file, "\t    n = _%s.NewNode();\n", attrnm );
-            fprintf( file, "\t    _%s.AppendNode( (StringNode*)n );\n", attrnm );
-            fprintf( file, "\t}\n" );
-            fprintf( file, "\t((StringNode*)n)->value = x[i];\n", nm );
-            fprintf( file, "\tstd::cout << \"Assigning aggr string element: \" << ((StringNode*)n)->value;\n" );
-
-            if( print_logging ) {
-                fprintf( file, "#ifdef SCL_LOGGING\n" );
-                fprintf( file, "\tif(*logStream)\n\t{\n" );
-                fprintf( file,
-                         "\t    logStream->open(SCLLOGFILE,ios::app);\n" );
-                fprintf( file, "\t    *logStream << time(NULL) << \" SDAI assigning entity: %s, attr: _%s, aggr string element: \" << ((StringNode*)n)->value << std::endl;\n", entnm, attrnm );
-                fprintf( file, "\t    logStream->close();\n" );
-                fprintf( file, "\t}\n" );
-                fprintf( file, "#endif\n" );
-            }
-
-            fprintf( file, "\ti++;\n" );
-            fprintf( file, "\ttrailn = n;\n" );
-            fprintf( file, "\tn = n->NextNode();\n" );
-            fprintf( file, "    }\n" );
-            fprintf( file, "/*\n" );
-            fprintf( file, "    if(n)\n" );
-            fprintf( file, "\t_%s.DeleteFollowingNodes((EnumNode*)trailn);\n", attrnm );
-            fprintf( file, "*/\n" );
-            fprintf( file, "}\n" );
-        }
-        if( class == Class_Binary_Type ) {
-            fprintf( file, "\t{ /*_%s.ShallowCopy (*x); */ }\n", attrnm );
-            strcpy( aggrnode_name, "BinaryNode" );
-        }
-    }
+    fprintf( file, "    return (%s) &_%s; \n}\n", ctype, attrnm );
+    ATTRprint_access_methods_put_head( entnm, a, file );
+    fprintf( file, "\t{ _%s.ShallowCopy (*x); }\n", attrnm );
     return;
 }
 
@@ -1283,11 +761,7 @@ ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
     strcpy( membernm, attrnm );
     membernm[0] = toupper( membernm[0] );
     class = TYPEget_type( t );
-    if( corba_binding ) {
-        strncpy( ctype, TYPEget_idl_type( t ), BUFSIZ );
-    } else {
-        strncpy( ctype, AccessType( t ), BUFSIZ );
-    }
+    strncpy( ctype, AccessType( t ), BUFSIZ );
 
     if( isAggregate( a ) ) {
         AGGRprint_access_methods( entnm, a, file, t, ctype, attrnm );
@@ -1318,64 +792,7 @@ ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
             fprintf( file, "    }\n" );
             fprintf( file, "#endif\n" );
         }
-        if( corba_binding ) {
-            if( TYPEget_name( t ) ) {
-                strncpy( nm, FirstToUpper( TYPEget_name( t ) ), BUFSIZ - 1 );
-            }
-
-            fprintf( file, "    if(_%s != 0)\n    {\n", attrnm );
-            fprintf( file, "\ttry\n\t{\n" );
-            fprintf( file,
-                     "\t    const char *hostName = CORBA::Orbix.myHost();\n" );
-            fprintf( file,
-                     "\t    char markerServer[64];\n" );
-            fprintf( file,
-                     "\t    sprintf(markerServer, \"%%d:%%s\", _%s->"
-                     "STEPfile_id, serverName);\n\n", attrnm );
-            fprintf( file,
-                     "\t    std::cout << \"*****\" << markerServer << std::endl;\n\n" );
-            fprintf( file,
-                     "\t    %s_var x = %s::_bind((const char *)markerServer,"
-                     "hostName);\n", nm, nm );
-            fprintf( file,
-                     "\t    %s::_duplicate(x);\n\n", nm );
-            fprintf( file,
-                     "\t    std::cout << std::endl << \"x->_refCount(): \" << x->"
-                     "_refCount();\n" );
-            fprintf( file,
-                     "\t    std::cout << std::endl << \"STEPfile id inside _%s's get "
-                     "function is: \" \n", attrnm );
-            fprintf( file,
-                     "\t\t << _%s->STEPfile_id << std::endl;\n", attrnm );
-            fprintf( file,
-                     "\t    std::cout << \"x's marker name in server's "
-                     "implementation object's attr _%s's get function is: "
-                     "'\" \n", attrnm );
-            fprintf( file,
-                     "\t\t << x->_marker() << \"'\" << std::endl << std::endl;\n" );
-            fprintf( file, "\t    return x;\n\t}\n" );
-            fprintf( file,
-                     "\tcatch (CORBA::SystemException &se) {\n" );
-            fprintf( file,
-                     "\t    std::cerr << \"Unexpected system exception in _%s's "
-                     "get funct: \" << &se;\n", attrnm );
-            fprintf( file,
-                     "\t    throw;\n" );
-            fprintf( file,
-                     "\t}\n\tcatch(...) {\n" );
-            fprintf( file,
-                     "\t    std::cerr << \"Caught Unknown Exception in _%s's get "
-                     "funct!\" << std::endl;\n", attrnm );
-            fprintf( file,
-                     "\t    throw;\n\t}\n" );
-            fprintf( file, "    }\n" );
-            fprintf( file, "    else\n" );
-            fprintf( file, "\tstd::cout << \"nil object ref in attr _%s's put "
-                     "funct\" << std::endl;\n", attrnm );
-            fprintf( file, "    return %s::_nil();\n}\n", nm );
-        } else {
-            fprintf( file, "    return (%s) _%s; \n}\n", ctype, attrnm );
-        }
+	fprintf( file, "    return (%s) _%s; \n}\n", ctype, attrnm );
 
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, "{\n" );
@@ -1385,23 +802,14 @@ ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "\tlogStream->open(SCLLOGFILE,ios::app);\n" );
 
-            if( corba_binding ) {
-                fprintf( file, "\tif(x && !((Sdai%s*)(DEREF(x)) == S_ENTITY_NULL) )\n\t{\n", nm );
-            } else {
-                fprintf( file, "\tif(! (x == S_ENTITY_NULL) )\n\t{\n" );
-            }
+	    fprintf( file, "\tif(! (x == S_ENTITY_NULL) )\n\t{\n" );
 
             fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() assigned: \";\n",
                      entnm, funcnm );
 
-            if( corba_binding )
-                fprintf( file,
-                         "\t    *logStream << \"reference to Sdai%s entity #\" << ((Sdai%s*)(DEREF(x)))->STEPfile_id << std::endl;\n",
-                         nm, nm );
-            else
-                fprintf( file,
-                         "\t    *logStream << \"reference to Sdai%s entity #\" << x->STEPfile_id << std::endl;\n",
-                         nm );
+	    fprintf( file,
+		     "\t    *logStream << \"reference to Sdai%s entity #\" << x->STEPfile_id << std::endl;\n",
+		     nm );
 
             fprintf( file, "\t}\n\telse\n\t{\n" );
             fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() assigned: \";\n",
@@ -1412,18 +820,7 @@ ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
             fprintf( file, "    }\n" );
             fprintf( file, "#endif\n" );
         }
-        if( corba_binding ) {
-            fprintf( file, "\n" );
-            fprintf( file, "    _%s = (Sdai%s*)(DEREF(x)); \n", attrnm, nm );
-            fprintf( file, "    if(_%s)\n    {\n", attrnm );
-            fprintf( file, "\tstd::cout << \"STEPfile id inside _%s's put function is: \"\n", attrnm );
-            fprintf( file, "\t     << _%s->STEPfile_id << std::endl;\n", attrnm );
-            fprintf( file, "    }\n    else\n" );
-            fprintf( file, "\tstd::cout << \"nil object ref in _%s's put funct\" << std::endl;\n", attrnm );
-            fprintf( file, "}\n" );
-        } else {
-            fprintf( file, "    _%s = x; \n}\n", attrnm );
-        }
+	fprintf( file, "    _%s = x; \n}\n", attrnm );
 
         return;
     }
@@ -1450,15 +847,7 @@ ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
             fprintf( file, "    }\n" );
             fprintf( file, "#endif\n" );
         }
-        if( corba_binding ) {
-            if( class == Class_Boolean_Type ) {
-                fprintf( file, "    return (Boolean) _%s;\n}\n", attrnm );
-            } else if( class == Class_Logical_Type ) {
-                fprintf( file, "    return (Logical) _%s;\n}\n", attrnm );
-            }
-        } else {
-            fprintf( file, "    return (%s) _%s;\n}\n", ctype, attrnm );
-        }
+	fprintf( file, "    return (%s) _%s;\n}\n", ctype, attrnm );
 
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, "{\n" );
@@ -1543,11 +932,7 @@ ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
             fprintf( file, "#endif\n" );
 
         }
-        if( corba_binding ) {
-            fprintf( file, "    return CORBA::string_dupl(_%s); \n}\n", attrnm );
-        } else {
-            fprintf( file, "    return (const %s) _%s; \n}\n", ctype, attrnm );
-        }
+	fprintf( file, "    return (const %s) _%s; \n}\n", ctype, attrnm );
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, "{\n" );
         if( print_logging ) {
@@ -1863,14 +1248,7 @@ MemberFunctionSign( Entity entity, FILE * file ) {
         }
     }
 
-    if( corba_binding ) {
-        fprintf( file, "\n//\t%s_ptr create_TIE();\n\tIDL_Application_instance_ptr create_TIE();\n",
-                 ENTITYget_CORBAname( entity ) );
-    }
     fprintf( file, "};\n" );
-    if( corba_binding ) {
-        fprintf( file, "\n// Associate IDL interface generated code with implementation object\nDEF_TIE_%s(%s)\n", ENTITYget_CORBAname( entity ), entnm );
-    }
 
     /*  print creation function for class   */
     fprintf( file, "inline %s *\ncreate_%s () {  return  new %s ;  }\n",
@@ -3225,9 +2603,6 @@ TYPEenum_inc_print( const Type type, FILE * inc ) {
              TYPEget_name( type ) );
 
     /*  print c++ enumerated values for class   */
-    if( corba_binding ) {
-        fprintf( inc, "#ifndef PART26\n" );
-    }
     fprintf( inc, "enum %s {\n", EnumName( TYPEget_name( type ) ) );
 
     LISTdo_links( TYPEget_body( type )->list, link )
@@ -3245,9 +2620,6 @@ TYPEenum_inc_print( const Type type, FILE * inc ) {
     LISTod
 
     fprintf( inc, ",\n\t%s_unset\n};\n", EnumName( TYPEget_name( type ) ) );
-    if( corba_binding ) {
-        fprintf( inc, "#endif\n" );
-    }
 
     /*  print class for enumeration */
     n = TYPEget_ctype( type );

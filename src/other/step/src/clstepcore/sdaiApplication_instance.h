@@ -1,11 +1,6 @@
 #ifndef STEPENTITY_H
 #define STEPENTITY_H 1
 
-//#ifdef PART26
-//#include <CORBA.h>
-//#include <corbaIncludes.h>
-//#endif
-
 /*
 * NIST STEP Core Class Library
 * clstepcore/sdaiApplication_instance.h
@@ -73,45 +68,12 @@ class SCLP23_NAME( Application_instance ) : public SCLP23_NAME( DAObject_SDAI ) 
             return _complex;
         }
 
-#ifdef PART26
-//    virtual P26::Application_instance_ptr create_TIE();
-        virtual IDL_Application_instance_ptr create_TIE();
-#endif
-
-#ifndef PART26
         void StepFileId( int fid ) {
             STEPfile_id = fid;
         }
         int StepFileId() const  {
             return STEPfile_id;
         }
-#else
-        void StepFileId( CORBA::Long fid,
-                         CORBA::Environment & IT_env = CORBA::IT_chooseDefaultEnv() )
-        throw( CORBA::SystemException ) {
-            STEPfile_id = fid;
-        }
-        CORBA::Long StepFileId( CORBA::Environment & IT_env =
-                                    CORBA::IT_chooseDefaultEnv() )
-        throw( CORBA::SystemException ) {
-            return STEPfile_id;
-        }
-
-// The IDL for the following 2 functions
-//    string GetPersistentLabel() raises(SDAIException);
-//    string GetDescription() raises(SDAIException);
-
-//    virtual char * GetPersistentLabel (CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException, SCLP26(SDAIException))
-        virtual char * GetPersistentLabel( CORBA::Environment & IT_env = CORBA::IT_chooseDefaultEnv() ) throw( CORBA::SystemException, SDAIException ) {
-            return 0;
-        }
-
-//    virtual char * GetDescription (CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException, SCLP26(SDAIException))
-        virtual char * GetDescription( CORBA::Environment & IT_env = CORBA::IT_chooseDefaultEnv() ) throw( CORBA::SystemException, SDAIException ) {
-            return 0;
-        }
-
-#endif
 
         void AddP21Comment( std::string & s, int replace = 1 );
         void AddP21Comment( const char * s, int replace = 1 );
@@ -223,30 +185,5 @@ class SCLP23_NAME( Application_instance ) : public SCLP23_NAME( DAObject_SDAI ) 
 // current style of CORBA handles for Part 23
 typedef SCLP23_NAME( Application_instance ) * SCLP23_NAME( Application_instance_ptr );
 typedef SCLP23_NAME( Application_instance_ptr ) SCLP23_NAME( Application_instance_var );
-
-// Everything below has been moved to sdai.h
-/*
-//#ifdef PART26
-//DEF_TIE_P26_IDL_Application_instance(SCLP23_NAME(Application_instance))
-//#endif
-*/
-///////////////////////////////////////////////////////////////////////////////
-
-//extern SCLP23_NAME(Application_instance) NilSTEPentity;
-//#define ENTITY_NULL   &NilSTEPentity
-//#define NULL_ENTITY   &NilSTEPentity
-
-//typedef SCLP23_NAME(Application_instance)* STEPentity_ptr;
-//typedef STEPentity_ptr STEPentity_var;
-
-//typedef SCLP23_NAME(Application_instance)* STEPentityPtr;
-//typedef SCLP23_NAME(Application_instance)* STEPentityH;
-
-//extern SCLP23_NAME(Application_instance) *
-//ReadEntityRef(istream &in, ErrorDescriptor *err, const char *tokenList,
-//        InstMgr * instances, int addFileId);
-
-//typedef  SCLP23_NAME(Application_instance) * (* Creator) () const;
-//typedef  SCLP23_NAME(Application_instance) * (* Creator) () ;
 
 #endif

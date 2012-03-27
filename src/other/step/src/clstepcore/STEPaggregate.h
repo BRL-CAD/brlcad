@@ -17,10 +17,6 @@
 
 class InstMgr;
 class STEPaggregate;
-#ifndef _ODI_OSSG_
-class LOGICAL;
-class BOOLEAN;
-#endif
 class TypeDescriptor;
 
 #include <errordesc.h>

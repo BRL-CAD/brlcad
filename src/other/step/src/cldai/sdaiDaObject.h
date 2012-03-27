@@ -1,22 +1,7 @@
 #ifndef SDAIDAOBJECT_H
 #define SDAIDAOBJECT_H 1
 
-/*
-#include <sclprefixes.h>
-
-#ifdef PART26
-#include <CORBA.h>
-#include <corbaIncludes.h>
-#else
-typedef char* DAObjectID;
-#endif
-
-#include <Object.h>
-*/
-
-#ifndef PART26
 typedef char * SCLP23_NAME( DAObjectID );
-#endif
 
 // interface PID (ISO/DIS 10303-23:1996(E) 5.3.10.1)
 // Also, CORBA POS specification, Section 5.4
@@ -55,7 +40,6 @@ class SCLP23_NAME( PID ) : public SCLP23_NAME( sdaiObject ) {
         SCLP23_NAME( PID )();
         virtual ~SCLP23_NAME( PID )();
 
-#ifndef PART26
         /*
            The Datestore_type attribute shall identify the type of the underlying
            datastore.
@@ -71,25 +55,7 @@ class SCLP23_NAME( PID ) : public SCLP23_NAME( sdaiObject ) {
            This function shall return a string version of the receiver.
          */
         char * get_PIDString();
-#else
-        virtual void datastore_type( const char * x, CORBA::Environment & IT_env = CORBA::IT_chooseDefaultEnv() ) throw( CORBA::SystemException ) {
-            _datastore_type = x;
-        }
-
-        virtual char * datastore_type( CORBA::Environment & IT_env = CORBA::IT_chooseDefaultEnv() ) throw( CORBA::SystemException ) {
-            return CORBA::string_dupl( _datastore_type );
-        }
-
-        virtual char * get_PIDString( CORBA::Environment & IT_env = CORBA::IT_chooseDefaultEnv() ) throw( CORBA::SystemException ) {
-            return CORBA::string_dupl( _pidstring );
-        }
-#endif
-
 };
-
-#ifdef PART26
-//DEF_TIE_PID( SCLP23_NAME(PID) )
-#endif
 
 typedef SCLP23_NAME( PID ) * SCLP23_NAME( PID_ptr );
 typedef SCLP23_NAME( PID_ptr ) SCLP23_NAME( PID_var );
@@ -137,29 +103,13 @@ class SCLP23_NAME( PID_DA ): public SCLP23_NAME( PID ) {
         SCLP23_NAME( PID_DA )();
         virtual ~SCLP23_NAME( PID_DA )();
 
-#ifndef PART26
-        virtual void oid( const SCLP23_NAME( DAObjectID ) x ) {
+        virtual void oid( const SCLP23( DAObjectID ) x ) {
             _oid = x;
         }
-        virtual SCLP23_NAME( DAObjectID ) oid() const {
+        virtual SCLP23( DAObjectID ) oid() const {
             return const_cast<char *>( _oid.c_str() );
         }
-#else
-//    virtual void oid (const SCLP26(DAObjectID) x, CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException)
-        virtual void oid( const DAObjectID x, CORBA::Environment & IT_env = CORBA::IT_chooseDefaultEnv() ) throw( CORBA::SystemException ) {
-            _oid = x;
-        }
-//    virtual SCLP26(DAObjectID) oid (CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException)
-        virtual DAObjectID oid( CORBA::Environment & IT_env = CORBA::IT_chooseDefaultEnv() ) throw( CORBA::SystemException ) {
-            return CORBA::string_dupl( _oid );
-        }
-#endif
-
 };
-
-#ifdef PART26
-//DEF_TIE_PID_DA( SCLP23(PID_DA) )
-#endif
 
 typedef SCLP23_NAME( PID_DA ) * SCLP23_NAME( PID_DA_ptr );
 typedef SCLP23_NAME( PID_DA_ptr ) SCLP23_NAME( PID_DA_var );
@@ -173,10 +123,6 @@ class SCLP23_NAME( PID_SDAI ) : public SCLP23_NAME( PID ) {
     public:
         SCLP23_NAME( String ) _modelid ;
 
-//    static PID_SDAI_ptr _duplicate(PID_SDAI_ptr);
-//    static PID_SDAI_ptr _narrow(SCLP23_NAME(sdaiObject_ptr));
-//    static PID_SDAI_ptr _nil();
-
         // constructor/destructor
         SCLP23_NAME( PID_SDAI )();
         virtual ~SCLP23_NAME( PID_SDAI )();
@@ -187,28 +133,13 @@ class SCLP23_NAME( PID_SDAI ) : public SCLP23_NAME( PID ) {
         // the persistent identifier of the cluster of data for the
         // Model_contents referred to by this PID.
         //
-#ifndef PART26
         virtual void Modelid( const char * x ) {
             _modelid = x;
         }
         virtual char * Modelid() const   {
             return const_cast<char *>( _modelid.c_str() );
         }
-#else
-        virtual void Modelid( const char * x, CORBA::Environment & IT_env = CORBA::IT_chooseDefaultEnv() ) throw( CORBA::SystemException ) {
-            _modelid = x;
-        }
-
-        virtual char * Modelid( CORBA::Environment & IT_env = CORBA::IT_chooseDefaultEnv() ) throw( CORBA::SystemException ) {
-            return CORBA::string_dupl( _modelid );
-        }
-#endif
-
 };
-
-#ifdef PART26
-//DEF_TIE_PID_SDAI( SCLP23(PID_SDAI) )
-#endif
 
 typedef SCLP23_NAME( PID_SDAI ) * SCLP23_NAME( PID_SDAI_ptr );
 typedef SCLP23_NAME( PID_SDAI_ptr ) SCLP23_NAME( PID_SDAI_var );
@@ -235,9 +166,6 @@ class SCLP23_NAME( DAObject ) : public SCLP23_NAME( sdaiObject )
     public:
 
         SCLP23_NAME( String ) _dado_oid;
-//    static DAObject_ptr _duplicate(DAObject_ptr);
-//    static DAObject_ptr _narrow(SCLP23_NAME(sdaiObject_ptr));
-//    static DAObject_ptr _nil();
 
         // dado_same (ISO/DIS 10303-23:1996(E) 5.3.10.5)
         //
@@ -253,22 +181,10 @@ class SCLP23_NAME( DAObject ) : public SCLP23_NAME( sdaiObject )
         SCLP23_NAME( DAObject )();
         virtual ~SCLP23_NAME( DAObject )();
 
-#ifdef PART26
-//    virtual SCLP26(Application_instance_ptr) create_TIE();
-        virtual IDL_Application_instance_ptr create_TIE();
-#endif
-
-#ifndef PART26
-        Boolean dado_same( SCLP23_NAME( DAObject_ptr ) obj ) {
-            // this will make the compiler happy that we used obj
-            strcmp( obj->dado_oid(), dado_oid() );
-            return BUnset;
+        Logical dado_same( SCLP23_NAME( DAObject_ptr ) obj ) {
+	    (void)obj;
+            return LUnknown;
         }
-#else
-        virtual Boolean dado_same( SCLP23_NAME( DAObject_ptr ) obj, CORBA::Environment & IT_env = CORBA::IT_chooseDefaultEnv() ) throw( CORBA::SystemException ) {
-            return BUnset;
-        }
-#endif
 
         // Get persistent label (ISO/DIS 10303-22:1996(E) 10.11.6)
         //
@@ -299,16 +215,9 @@ class SCLP23_NAME( DAObject ) : public SCLP23_NAME( sdaiObject )
                  note that the return value as described in the text above
                  should be a string type.
          */
-#ifndef PART26
-        SCLP23_NAME( DAObjectID ) dado_oid() {
+        SCLP23( DAObjectID ) dado_oid() {
             return const_cast<char *>( _dado_oid.c_str() );
         }
-#else
-//    virtual SCLP26(DAObjectID) dado_oid (CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException)
-        virtual DAObjectID dado_oid( CORBA::Environment & IT_env = CORBA::IT_chooseDefaultEnv() ) throw( CORBA::SystemException ) {
-            return CORBA::string_dupl( _dado_oid );
-        }
-#endif
 
         // dado_pid
         //
@@ -319,15 +228,9 @@ class SCLP23_NAME( DAObject ) : public SCLP23_NAME( sdaiObject )
                  part of interface DAObject in the specification of the
                  Persistent Object Service.
          */
-#ifndef PART26
-        SCLP23_NAME( PID_DA_ptr ) dado_pid() {
+        SCLP23_NAME( PID_DA_ptr ) dado_pid( ) {
             return 0;
         }
-#else
-        virtual SCLP23_NAME( PID_DA_ptr ) dado_pid( CORBA::Environment & IT_env = CORBA::IT_chooseDefaultEnv() ) throw( CORBA::SystemException ) {
-            return 0;
-        }
-#endif
 
         // dado_remove (ISO/DIS 10303-23:1996(E) 5.3.10.5)
         //
@@ -338,13 +241,7 @@ class SCLP23_NAME( DAObject ) : public SCLP23_NAME( sdaiObject )
         //    POS specification description: This deletes the object from the
         // persistent store and deletes the in-memory data object.
         //
-#ifndef PART26
-        void dado_remove()
-        { }
-#else
-        virtual void dado_remove( CORBA::Environment & IT_env = CORBA::IT_chooseDefaultEnv() ) throw( CORBA::SystemException )
-        { }
-#endif
+        void dado_remove() { }
 
         // dado_free (ISO/DIS 10303-23:1996(E) 5.3.10.5)
         //
@@ -358,14 +255,7 @@ class SCLP23_NAME( DAObject ) : public SCLP23_NAME( sdaiObject )
         // referenced. This operation is only a hint and is provided to improve
         // performance and resource usage.
         //
-#ifndef PART26
-        void dado_free()
-        { }
-#else
-        virtual void dado_free( CORBA::Environment & IT_env = CORBA::IT_chooseDefaultEnv() ) throw( CORBA::SystemException )
-        { }
-#endif
-
+        void dado_free() { }
 };
 
 /*
@@ -379,11 +269,6 @@ class SCLP23_NAME( DAObject_SDAI ) : public SCLP23_NAME( DAObject ) {
 //    SCLP23_NAME(DAObject_SDAI)(const SCLP23_NAME(DAObject_SDAI)&);
 
         virtual ~SCLP23_NAME( DAObject_SDAI )();
-
-#ifdef PART26
-//    virtual SCLP26(Application_instance_ptr) create_TIE();
-        virtual IDL_Application_instance_ptr create_TIE();
-#endif
 
         /*
            5.3.10.1.1  Find entity instance SDAI-model

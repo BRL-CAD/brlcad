@@ -13,26 +13,7 @@
 */
 
 /* $Id: sdaiEnum.h,v 1.5 1997/11/05 21:59:14 sauderd DP3.1 $ */
-#if 0
 
-#ifdef PART26
-// Change the name of the include file defining the defs for Bool and Logical
-// inside the file corbaIncludes.h
-#include <corbaIncludes.h>
-#endif
-
-
-#include <sclprefixes.h>
-
-#include <Str.h>
-#include <errordesc.h>
-
-#endif
-
-//#define ENUM_NULL -1
-
-
-//class STEPenumeration  {
 class SCLP23_NAME( Enum )  {
         friend     ostream & operator<< ( ostream &, const SCLP23_NAME( Enum ) & );
     protected:
@@ -101,35 +82,7 @@ class SCLP23_NAME( Enum )  {
 };
 
 
-//struct P23_NAMESPACE {
 
-#ifndef _ODI_OSSG_
-class SCLP23_NAME( LOGICAL );
-class SCLP23_NAME( BOOLEAN );
-#endif
-
-// If NO_BOOLS_LOGS is defined then Boolean and Logical need to be defined
-// elsewhere. Namely they are specified by Part 26 to be defined within the
-// context of CORBA in IDL. That means they need to have code generated for
-// them by the IDL compiler so that they are understood by the compiler in the
-// IDL generated code. Of course that means they can't be defined here. It also
-// means that their definition needs to be included here. That is done by
-// changing the file included above as #include <corbaIncludes.h> Go to that
-// file and change the name of the file included there.
-// If NO_BOOL_LOGS is not defined they will be defined here and must be
-// prefixed with  or  parameterized macro when used. (see
-// clstepcore/sclprefixes.h)
-// If you need Logical and Bool to be prefixed with something else because it
-// is defined in another name space:
-// 1. define NO_BOOLS_LOGS (so they are not defined here)
-// 2. change the definition of the macros defining the parameterized
-//    macros (SCLBOOL, SCLBOOL_H, SCLLOG, and SCLLOG_H) in
-//    clstepcore/sclprefixes.h
-// DAS
-/* #ifndef NO_BOOLS_LOGS */
-/* enum SCLBOOL_H(Boolean) { SCLBOOL_H(BFalse), SCLBOOL_H(BTrue), SCLBOOL_H(BUnset) }; */
-/* enum SCLLOG_H(Logical) { SCLLOG_H(LFalse), SCLLOG_H(LTrue), SCLLOG_H(LUnset), SCLLOG_H(LUnknown) }; */
-/* #endif */
 
 enum Boolean { BFalse, BTrue, BUnset };
 enum Logical { LFalse, LTrue, LUnset, LUnknown };
@@ -146,13 +99,6 @@ class SCLP23_NAME( LOGICAL )  :
         SCLP23_NAME( LOGICAL )( Logical state );
         SCLP23_NAME( LOGICAL )( const SCLP23_NAME( LOGICAL )& source );
         SCLP23_NAME( LOGICAL )( int i );
-
-// this is to avoid a bug? in the ossg utility for ObjectStore
-#ifndef _ODI_OSSG_
-// this causes an error with sun C++ because SCLP23_NAME(BOOLEAN) is not a completely
-// specified type. (this is supposed to be SDAI?) DAS
-//    SCLP23_NAME(LOGICAL) (const SCLP23_NAME(BOOLEAN)& boo);
-#endif
 
         virtual ~SCLP23_NAME( LOGICAL )();
 

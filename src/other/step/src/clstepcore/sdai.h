@@ -32,12 +32,6 @@ extern const char * SCLversion;
 #include <string>
 
 
-#ifdef PART26
-// Change the name of the include file defining the defs for Bool and Logical
-// inside the file corbaIncludes.h
-#include <corbaIncludes.h>
-#endif
-
 
 #include <sclprefixes.h>
 #include <dictdefs.h>
@@ -73,9 +67,7 @@ class STEPattribute;
 #define S_STRING_NULL   ""
 
 #ifndef CC_NO_NESTED_CLASSES
-#ifndef PART26
 struct P23_NAMESPACE {
-#endif // PART26
 #endif // CC_NO_NESTED_CLASSES
 
 //  INTEGER
@@ -98,17 +90,10 @@ struct P23_NAMESPACE {
     // arbitrary choice by me for number DAS
     extern const SCLP23_NAME( Real ) SCLP23_NAME( NUMBER_NULL );
 #else
-#ifdef PART26
-    extern const SCLP23_NAME( Integer ) SCLP23_NAME( INT_NULL );
-    extern const SCLP23_NAME( Real ) SCLP23_NAME( REAL_NULL );
-    // arbitrary choice by me for number DAS
-    extern const SCLP23_NAME( Real ) SCLP23_NAME( NUMBER_NULL );
-#else
     static const SCLP23_NAME( Integer ) SCLP23_NAME( INT_NULL );
     static const SCLP23_NAME( Real ) SCLP23_NAME( REAL_NULL );
     // arbitrary choice by me for number DAS
     static const SCLP23_NAME( Real ) SCLP23_NAME( NUMBER_NULL );
-#endif
 #endif
     /*
     // C++ from values.h DAS PORT
@@ -328,20 +313,8 @@ struct P23_NAMESPACE {
 #include <sdaiModel_contents.h>
 
 #ifndef CC_NO_NESTED_CLASSES
-#ifndef PART26
 }; // end struct P23_NAMESPACE
-#endif // PART26
 #endif // CC_NO_NESTED_CLASSES
-
-#ifdef PART26
-
-//#define SDAI_DEF_TIE_P26_Application_instance(x) DEF_TIE_P26_Application_instance(x)
-
-#define Application_instance_i SCLP23(Application_instance)
-DEF_TIE_IDL_Application_instance( Application_instance_i )
-//DEF_TIE_P26_Application_instance(Application_instance_i)
-//DEF_TIE_IDL_Application_instance(SCLP23(Application_instance))
-#endif
 
 //  ENTITY
 extern SCLP23( Application_instance ) NilSTEPentity;

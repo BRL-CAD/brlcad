@@ -2,12 +2,7 @@
 #include <stddef.h>
 #include <string.h>
 
-//extern "C"
-//{
-//}
-
 #include "complexSupport.h"
-extern int corba_binding;
 
 /*******************************************************************
 ** FedEx parser output module for generating C++  class definitions
@@ -63,24 +58,7 @@ create_builtin_type_defn( FILES * files, char * name ) {
  ******************************************************************/
 
 /*ARGSUSED*/
-void
-print_file_header( Express express, FILES * files ) {
-    FILE * corbafile = 0;
-    /*  create file for user to #include the CORBA-generated header file in. */
-    if( corba_binding ) {
-        if( ( corbafile = fopen( "corbaSchema.h", "w" ) ) == NULL ) {
-            printf( "**Error in print_file_header:  unable to create file ",
-                    "corbaSchema.h ** \n" );
-        }
-        fprintf( corbafile,
-                 "// #include the idl generated .hh C++ file that defines the code that \n" );
-        fprintf( corbafile,
-                 "// is turned off in the fedex_plus generated file using #ifdef PART26.\n" );
-        fprintf( corbafile, "//#include <your-idl-generated-file.hh>\n\n" );
-        fprintf( corbafile, "//#include <osdb_SdaiXX-file.h>\n" );
-        fclose( corbafile );
-    }
-
+void print_file_header( Express express, FILES * files ) {
     /*  open file to record schema source files in to be used in makefile  */
     if( ( ( files -> make ) = fopen( "make_schema", "w" ) ) == NULL ) {
         printf( "**Error in print_file_header:  unable to open file make_schema ** \n" );
@@ -572,13 +550,6 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
              "#ifndef  SCHEMA_H\n"
              "#include <schema.h>\n"
              "#endif\n" );
-    fprintf( incfile,
-             "\n#ifdef PART26\n"
-             "#include <corbaIncludes.h> \n"
-             "// Create a corbaSchema.h file in this directory with a #include in \n"
-             "// it for your IDL generated schema-specific .hh file.\n"
-             "#include <corbaSchema.h> \n"
-             "#endif \n" );
 
     /*    Generate local to SCHEMA.init.cc file  */
     /*    fprintf(incfile,"Schema *%s%s;\n",*/
@@ -612,10 +583,6 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
              "    extern ofstream *logStream;\n"
              "#define SCLLOGFILE \"scl.log\"\n"
              "#endif \n" );
-
-    fprintf( libfile, "\n#ifdef PART26\n" );
-    fprintf( libfile, "\nconst char * sclHostName = CORBA::Orbix.myHost(); // Default is local host\n" );
-    fprintf( libfile, "#endif\n" );
 
     /*  3.  source code to initialize entity registry   */
     /*  prints header of file for input function    */
