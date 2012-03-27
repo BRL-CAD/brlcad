@@ -1,5 +1,5 @@
 #ifndef STACK_H
-#define	STACK_H
+#define STACK_H
 
 /* $Id: stack.h,v 1.3 1993/10/15 18:49:23 libes dec96 $ */
 
@@ -22,7 +22,7 @@
 /* constants */
 /*************/
 
-#define STACK_NULL	(Stack *)NULL
+#define STACK_NULL  (Stack *)NULL
 
 /*****************/
 /* packages used */
@@ -34,7 +34,7 @@
 /* typedefs */
 /************/
 
-typedef Linked_List	Stack;
+typedef Linked_List Stack;
 
 /****************/
 /* modules used */
@@ -60,15 +60,15 @@ typedef Linked_List	Stack;
 #undef INITIALLY
 
 /*******************************/
-/* macro function definitions  */   
+/* macro function definitions  */
 /*******************************/
 
 /* function aliases */
 #define STACKinitialize()
-#define STACKcreate()		LISTcreate()
-#define	STACKpush(stack, item)	LISTadd_first((stack), (item))
-#define STACKpop(stack)		LISTremove_first(stack)
-#define STACKpeek(stack)	LISTpeek_first(stack)
+#define STACKcreate()       LISTcreate()
+#define STACKpush(stack, item)  LISTadd_first((stack), (item))
+#define STACKpop(stack)     LISTremove_first(stack)
+#define STACKpeek(stack)    LISTpeek_first(stack)
 
 /***********************/
 /* function prototypes */

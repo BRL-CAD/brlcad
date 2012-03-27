@@ -14,68 +14,75 @@
 
 #include <SingleLinkList.h>
 
-void 
-SingleLinkList::DeleteFollowingNodes (SingleLinkNode *item)
-{
- if (head) {
-  SingleLinkNode * trailer = 0;
-  SingleLinkNode * leader = head;
-  while (leader) {
-   if (leader == item)  {
-       while(leader)
-       {
-	   if(trailer) trailer->next = leader->next;
-	   else if(leader == head) 
-	   {
-	       head = leader->next;
-	       trailer = head;
-	   }
-	   if(leader == tail) tail = trailer;
-	   delete leader;
-	   leader = trailer->next;
-       }
-   }
-   else {
-    if(trailer)
-     trailer = trailer->NextNode();
-    else trailer = leader;
-    leader = leader->NextNode();
-   }
-  }
- }
+void
+SingleLinkList::DeleteFollowingNodes( SingleLinkNode * item ) {
+    if( head ) {
+        SingleLinkNode * trailer = 0;
+        SingleLinkNode * leader = head;
+        while( leader ) {
+            if( leader == item )  {
+                while( leader ) {
+                    if( trailer ) {
+                        trailer->next = leader->next;
+                    } else if( leader == head ) {
+                        head = leader->next;
+                        trailer = head;
+                    }
+                    if( leader == tail ) {
+                        tail = trailer;
+                    }
+                    delete leader;
+                    leader = trailer->next;
+                }
+            } else {
+                if( trailer ) {
+                    trailer = trailer->NextNode();
+                } else {
+                    trailer = leader;
+                }
+                leader = leader->NextNode();
+            }
+        }
+    }
 }
 
 void
-SingleLinkList::AppendNode (SingleLinkNode * item)  
-{
-    if (head)  {
-	tail -> next = item;
-	tail = item;
+SingleLinkList::AppendNode( SingleLinkNode * item ) {
+    if( head )  {
+        tail -> next = item;
+        tail = item;
+    } else {
+        head = tail = item;
     }
-    else head = tail = item;
     item->owner = this;
 }
 
-void 
-SingleLinkList::DeleteNode (SingleLinkNode * item)
-{
- if (head) {
-  SingleLinkNode * trailer = 0;
-  SingleLinkNode * leader = head;
-  while (leader) {
-   if (leader == item)  {
-    if(trailer) trailer->next = leader->next;
-    leader = leader->next;
-    if(item == head) head = item->next;
-    if(item == tail) tail = trailer;
-    delete item;
-   }
-   else {
-    if(trailer)
-     trailer = trailer->NextNode();
-    else trailer = leader;
-    leader = leader->NextNode();
-   }
-  }
- }
+void
+SingleLinkList::DeleteNode( SingleLinkNode * item ) {
+    if( head ) {
+        SingleLinkNode * trailer = 0;
+        SingleLinkNode * leader = head;
+        while( leader ) {
+            if( leader == item )  {
+                if( trailer ) {
+                    trailer->next = leader->next;
+                }
+                leader = leader->next;
+                if( item == head ) {
+                    head = item->next;
+                }
+                if( item == tail ) {
+                    tail = trailer;
+                }
+                delete item;
+            } else {
+                if( trailer ) {
+                    trailer = trailer->NextNode();
+                } else {
+                    trailer = leader;
+                }
+                leader = leader->NextNode();
+            }
+        }
+    }
 }

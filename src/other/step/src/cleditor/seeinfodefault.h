@@ -13,7 +13,7 @@
 */
 
 // this is a default seeinfo that does nothing... thus it is not
-//	dependent on a user interface toolkit
+//  dependent on a user interface toolkit
 
 #ifdef __O3DB__
 #include <OpenOODB.h>
@@ -27,23 +27,23 @@ class DisplayNodelist;
 
 #include <editordefines.h>
 
-class seeInfo : public DisplayNode
-{
-public:
-    seeInfo(MgrNode *node, 
-	    SCLP23(Application_instance) *se,
-	    DisplayNodeList *dnl, displayStateEnum displaySt = mappedWrite);
+class seeInfo : public DisplayNode {
+    public:
+        seeInfo( MgrNode * node,
+                 SCLP23( Application_instance ) *se,
+                 DisplayNodeList * dnl, displayStateEnum displaySt = mappedWrite );
 
-    void *GetSEE()		{ return see; }
+        void * GetSEE()      {
+            return see;
+        }
 };
 
-inline seeInfo::seeInfo(MgrNode *node, SCLP23(Application_instance) *se,
-		 DisplayNodeList *dnl, displayStateEnum displaySt)
-{
-    mn = node; 
+inline seeInfo::seeInfo( MgrNode * node, SCLP23( Application_instance ) *se,
+                         DisplayNodeList * dnl, displayStateEnum displaySt ) {
+    mn = node;
     see = 0;
-    displayState = displaySt; 
-    dnl->Append(this);
+    displayState = displaySt;
+    dnl->Append( this );
 }
 
 #endif

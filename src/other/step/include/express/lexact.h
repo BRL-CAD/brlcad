@@ -48,76 +48,76 @@
 /* typedefs */
 /************/
 
-#define SCAN_BUFFER_SIZE	1024
-#define SCAN_NESTING_DEPTH	6
-#define SCAN_ESCAPE		'\001'
+#define SCAN_BUFFER_SIZE    1024
+#define SCAN_NESTING_DEPTH  6
+#define SCAN_ESCAPE     '\001'
 
 typedef struct Scan_Buffer {
-	char	text[SCAN_BUFFER_SIZE + 1];
+    char    text[SCAN_BUFFER_SIZE + 1];
 #ifdef keep_nul
-	int	numRead;
+    int numRead;
 #endif
-	char*	savedPos;
-	FILE*	file;
-	char	*filename;
-	Boolean	readEof;
-	int	lineno;
-	int	bol;
+    char  * savedPos;
+    FILE  * file;
+    char  *  filename;
+    Boolean readEof;
+    int lineno;
+    int bol;
 } Scan_Buffer;
 
 /********************/
 /* global variables */
 /********************/
 
-extern Scan_Buffer	SCAN_buffers[SCAN_NESTING_DEPTH];
-extern int		SCAN_current_buffer;
-extern char*		SCANcurrent;
+extern Scan_Buffer  SCAN_buffers[SCAN_NESTING_DEPTH];
+extern int      SCAN_current_buffer;
+extern char    *    SCANcurrent;
 
-extern Error		ERROR_include_file;
-extern Error		ERROR_unmatched_close_comment;
-extern Error		ERROR_unmatched_open_comment;
-extern Error		ERROR_unterminated_string;
-extern Error		ERROR_encoded_string_bad_digit;
-extern Error		ERROR_encoded_string_bad_count;
-extern Error		ERROR_bad_identifier;
-extern Error		ERROR_unexpected_character;
-extern Error		ERROR_nonascii_char;
+extern Error        ERROR_include_file;
+extern Error        ERROR_unmatched_close_comment;
+extern Error        ERROR_unmatched_open_comment;
+extern Error        ERROR_unterminated_string;
+extern Error        ERROR_encoded_string_bad_digit;
+extern Error        ERROR_encoded_string_bad_count;
+extern Error        ERROR_bad_identifier;
+extern Error        ERROR_unexpected_character;
+extern Error        ERROR_nonascii_char;
 
 /******************************/
 /* macro function definitions */
 /******************************/
 
-#define SCANbuffer	SCAN_buffers[SCAN_current_buffer]
-#define SCANbol		SCANbuffer.bol
+#define SCANbuffer  SCAN_buffers[SCAN_current_buffer]
+#define SCANbol     SCANbuffer.bol
 
 #ifdef keep_nul
-# define SCANtext_ready	(SCANbuffer.numRead != 0)
+# define SCANtext_ready (SCANbuffer.numRead != 0)
 #else
-# define SCANtext_ready	(*SCANcurrent != '\0')
+# define SCANtext_ready (*SCANcurrent != '\0')
 #endif
 
 /***********************/
 /* function prototypes */
 /***********************/
 
-extern void	SCANinitialize PROTO((void));
-extern int	SCANprocess_real_literal PROTO((const char *));
-extern int	SCANprocess_integer_literal PROTO((const char *));
-extern int	SCANprocess_binary_literal PROTO((const char *));
-extern int	SCANprocess_logical_literal PROTO((char *));
-extern int	SCANprocess_identifier_or_keyword PROTO((const char *));
-extern int	SCANprocess_string PROTO((const char *));
-extern int	SCANprocess_encoded_string PROTO((const char *));
-extern int	SCANprocess_semicolon PROTO((const char *, int));
-extern void	SCANsave_comment PROTO((const char *));
-extern Boolean	SCANread PROTO((void));
+extern void SCANinitialize PROTO( ( void ) );
+extern int  SCANprocess_real_literal PROTO( ( const char * ) );
+extern int  SCANprocess_integer_literal PROTO( ( const char * ) );
+extern int  SCANprocess_binary_literal PROTO( ( const char * ) );
+extern int  SCANprocess_logical_literal PROTO( ( char * ) );
+extern int  SCANprocess_identifier_or_keyword PROTO( ( const char * ) );
+extern int  SCANprocess_string PROTO( ( const char * ) );
+extern int  SCANprocess_encoded_string PROTO( ( const char * ) );
+extern int  SCANprocess_semicolon PROTO( ( const char *, int ) );
+extern void SCANsave_comment PROTO( ( const char * ) );
+extern Boolean  SCANread PROTO( ( void ) );
 #if macros_bit_the_dust
-extern void	SCANdefine_macro PROTO((char *, char *));
+extern void SCANdefine_macro PROTO( ( char *, char * ) );
 #endif
-extern void	SCANinclude_file PROTO((char *));
-void		SCANlowerize PROTO((char *));
-void		SCANupperize PROTO((char *));
-extern char *	SCANstrdup PROTO((char *));
-extern long	SCANtell PROTO((void));
+extern void SCANinclude_file PROTO( ( char * ) );
+void        SCANlowerize PROTO( ( char * ) );
+void        SCANupperize PROTO( ( char * ) );
+extern char  *  SCANstrdup PROTO( ( char * ) );
+extern long SCANtell PROTO( ( void ) );
 
 #endif /* LEX_ACTIONS_H */

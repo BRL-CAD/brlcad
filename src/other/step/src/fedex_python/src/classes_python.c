@@ -234,9 +234,11 @@ int Handle_FedPlus_Args( int i, char * arg ) {
 }
 
 
-bool is_python_keyword(char * word) {
+bool is_python_keyword( char * word ) {
     bool python_keyword = false;
-    if (strcmp(word,"class")==0) python_keyword = true;
+    if( strcmp( word, "class" ) == 0 ) {
+        python_keyword = true;
+    }
     return python_keyword;
 }
 
@@ -272,9 +274,11 @@ generate_attribute_name( Variable a, char * out ) {
             q++;
         }
     }
-    free(temp);
+    free( temp );
     // python generator : we should prevend an attr name to be a python reserved keyword
-    if (is_python_keyword(out)) strcat(out,"_");  
+    if( is_python_keyword( out ) ) {
+        strcat( out, "_" );
+    }
     return out;
 }
 
@@ -467,32 +471,21 @@ MemberFunctionSign( Entity entity, FILE * file ) {
  ** Status:  ok 12-Apr-1993
  ******************************************************************/
 char *
-GetAttrTypeName(Type t) {
+GetAttrTypeName( Type t ) {
     char * attr_type;
-    if (TYPEis_string(t))
-        {
-            attr_type = "STRING";
-        }
-    else if (TYPEis_logical(t))
-        {
-                attr_type = "LOGICAL";
-        }
-    else if (TYPEis_boolean(t))
-        {
-                attr_type = "BOOLEAN";
-        }
-    else if (TYPEis_real(t))
-        {
-                attr_type = "REAL";
-        }
-    else if (TYPEis_integer(t))
-        {
-                attr_type = "INTEGER";
-        }
-    else
-        {
-            attr_type = TYPEget_name(t);
-        }
+    if( TYPEis_string( t ) ) {
+        attr_type = "STRING";
+    } else if( TYPEis_logical( t ) ) {
+        attr_type = "LOGICAL";
+    } else if( TYPEis_boolean( t ) ) {
+        attr_type = "BOOLEAN";
+    } else if( TYPEis_real( t ) ) {
+        attr_type = "REAL";
+    } else if( TYPEis_integer( t ) ) {
+        attr_type = "INTEGER";
+    } else {
+        attr_type = TYPEget_name( t );
+    }
     return attr_type;
 }
 
@@ -503,23 +496,23 @@ GetAttrTypeName(Type t) {
 */
 
 void
-print_aggregate_type(FILE *file, Type t) {
-    switch(TYPEget_body( t )->type) {
-          case array_:
-            fprintf(file,"ARRAY");
+print_aggregate_type( FILE * file, Type t ) {
+    switch( TYPEget_body( t )->type ) {
+        case array_:
+            fprintf( file, "ARRAY" );
             break;
-          case bag_:
-            fprintf(file,"BAG");
+        case bag_:
+            fprintf( file, "BAG" );
             break;
-          case set_:
-            fprintf(file,"SET");
+        case set_:
+            fprintf( file, "SET" );
             break;
-          case list_:
-            fprintf(file,"LIST");
+        case list_:
+            fprintf( file, "LIST" );
             break;
-          default:
+        default:
             break;
-          }
+    }
 }
 
 /*
@@ -528,46 +521,44 @@ print_aggregate_type(FILE *file, Type t) {
 *
 */
 void
-process_aggregate (FILE *file, Type t) {
-    Expression lower = AGGR_TYPEget_lower_limit(t);
-    char *lower_str = EXPRto_string(lower);
-    Expression upper = AGGR_TYPEget_upper_limit(t);
-    char *upper_str = NULL;
+process_aggregate( FILE * file, Type t ) {
+    Expression lower = AGGR_TYPEget_lower_limit( t );
+    char * lower_str = EXPRto_string( lower );
+    Expression upper = AGGR_TYPEget_upper_limit( t );
+    char * upper_str = NULL;
     Type base_type;
-    if (upper == LITERAL_INFINITY) {
+    if( upper == LITERAL_INFINITY ) {
         upper_str = "None";
+    } else {
+        upper_str = EXPRto_string( upper );
     }
-    else {
-        upper_str = EXPRto_string(upper);
+    switch( TYPEget_body( t )->type ) {
+        case array_:
+            fprintf( file, "ARRAY" );
+            break;
+        case bag_:
+            fprintf( file, "BAG" );
+            break;
+        case set_:
+            fprintf( file, "SET" );
+            break;
+        case list_:
+            fprintf( file, "LIST" );
+            break;
+        default:
+            break;
     }
-    switch(TYPEget_body( t )->type) {
-          case array_:
-            fprintf(file,"ARRAY");
-            break;
-          case bag_:
-            fprintf(file,"BAG");
-            break;
-          case set_:
-            fprintf(file,"SET");
-            break;
-          case list_:
-            fprintf(file,"LIST");
-            break;
-          default:
-            break;
-          }
-          fprintf(file,"(%s,%s,",lower_str,upper_str);
-          //write base type
-          base_type = TYPEget_base_type(t);
-          if (TYPEis_aggregate(base_type)) {
-              process_aggregate(file,base_type);
-              fprintf(file,")"); //close parenthesis
-          }
-          else {
-              char * array_base_type = GetAttrTypeName(TYPEget_base_type(t));
-              //fprintf(file,"%s)",array_base_type);
-              fprintf(file,"'%s')",array_base_type);
-          }
+    fprintf( file, "(%s,%s,", lower_str, upper_str );
+    //write base type
+    base_type = TYPEget_base_type( t );
+    if( TYPEis_aggregate( base_type ) ) {
+        process_aggregate( file, base_type );
+        fprintf( file, ")" ); //close parenthesis
+    } else {
+        char * array_base_type = GetAttrTypeName( TYPEget_base_type( t ) );
+        //fprintf(file,"%s)",array_base_type);
+        fprintf( file, "'%s')", array_base_type );
+    }
 }
 
 void
@@ -586,9 +577,12 @@ LIBdescribe_entity( Entity entity, FILE * file, Schema schema ) {
     /* class name
      need to use new-style classes for properties to work correctly
     so class must inherit from object */
-    if (is_python_keyword(ENTITYget_name(entity))) {fprintf(file,"class %s_(",ENTITYget_name(entity));}
-    else {fprintf(file,"class %s(",ENTITYget_name(entity));}
-    
+    if( is_python_keyword( ENTITYget_name( entity ) ) ) {
+        fprintf( file, "class %s_(", ENTITYget_name( entity ) );
+    } else {
+        fprintf( file, "class %s(", ENTITYget_name( entity ) );
+    }
+
     /*
     * Look for inheritance and super classes
     */
@@ -600,180 +594,180 @@ LIBdescribe_entity( Entity entity, FILE * file, Schema schema ) {
         /*  if there\'s no super class yet,
             or the super class doesn\'t have any attributes
         */
-        if (num_parent > 0) fprintf(file,","); //separator for parent classes names
-        if (is_python_keyword(ENTITYget_name(e))) {fprintf(file,"%s_",ENTITYget_name(e));}
-        else {fprintf(file,"%s",ENTITYget_name(e));}
+        if( num_parent > 0 ) {
+            fprintf( file, "," );    //separator for parent classes names
+        }
+        if( is_python_keyword( ENTITYget_name( e ) ) ) {
+            fprintf( file, "%s_", ENTITYget_name( e ) );
+        } else {
+            fprintf( file, "%s", ENTITYget_name( e ) );
+        }
         num_parent++;
         LISTod;
-    }
-    else {
+    } else {
         //inherit from BaeEntityClass by default, in order to enable decorators
         // as well as advanced __repr__ feature
-        fprintf(file,"BaseEntityClass");
+        fprintf( file, "BaseEntityClass" );
     }
-    fprintf(file,"):\n");
+    fprintf( file, "):\n" );
     /*
     * Write docstrings in a Sphinx compliant manner
     */
-    fprintf(file,"\t'''Entity %s definition.\n",ENTITYget_name(entity));
-    LISTdo(ENTITYget_attributes( entity ), v, Variable)
+    fprintf( file, "\t'''Entity %s definition.\n", ENTITYget_name( entity ) );
+    LISTdo( ENTITYget_attributes( entity ), v, Variable )
     generate_attribute_name( v, attrnm );
     t = VARget_type( v );
-    fprintf(file,"\n\t:param %s\n",attrnm);
-    fprintf(file,"\t:type %s:",attrnm);
+    fprintf( file, "\n\t:param %s\n", attrnm );
+    fprintf( file, "\t:type %s:", attrnm );
     if( TYPEis_aggregate( t ) ) {
-        process_aggregate(file,t);
-        fprintf(file,"\n");
-    }
-    else {
-        fprintf(file,"%s\n",GetAttrTypeName(t));
+        process_aggregate( file, t );
+        fprintf( file, "\n" );
+    } else {
+        fprintf( file, "%s\n", GetAttrTypeName( t ) );
     }
     attr_count_tmp++;
     LISTod
-    fprintf(file,"\t'''\n");
+    fprintf( file, "\t'''\n" );
     /*
     * Before writing constructor, check if this entity has any attribute
     * other wise just a 'pass' statement is enough
     */
     attr_count_tmp = 0;
     num_derived_inverse_attr = 0;
-    LISTdo(ENTITYget_attributes( entity ), v, Variable)
-    if (VARis_derived(v) || VARget_inverse(v)) {
+    LISTdo( ENTITYget_attributes( entity ), v, Variable )
+    if( VARis_derived( v ) || VARget_inverse( v ) ) {
         num_derived_inverse_attr++;
-    }
-    else {
+    } else {
         attr_count_tmp++;
-    }  
+    }
     LISTod
-    if ((attr_count_tmp == 0) && !inheritance) {
-        fprintf(file,"\t# This class does not define any attribute.\n");
-        fprintf(file,"\tpass\n");
+    if( ( attr_count_tmp == 0 ) && !inheritance ) {
+        fprintf( file, "\t# This class does not define any attribute.\n" );
+        fprintf( file, "\tpass\n" );
         generate_constructor = false;
     }
-    if (false) {}
-    else { 
-    /* 
-    * write class constructor
-    */
-    if (generate_constructor) {
-        fprintf(file,"\tdef __init__( self , ");
-    }
-    // if inheritance, first write the inherited parameters
-    list = ENTITYget_supertypes( entity );
-    num_parent = 0;
-    index_attribute = 0;
-    if( ! LISTempty( list ) ) {
-        LISTdo( list, e, Entity )
-            /*  search attribute names for superclass */
-            LISTdo(ENTITYget_attributes( e ), v2, Variable)
-                generate_attribute_name( v2, parent_attrnm );
-                fprintf(file,"%s__%s , ",ENTITYget_name(e),parent_attrnm);
-                index_attribute++;
-            LISTod
-        num_parent++;
-        LISTod;
-    }
-    LISTdo(ENTITYget_attributes( entity ), v, Variable)
-        generate_attribute_name( v, attrnm );
-        if (!VARis_derived(v) && !VARget_inverse(v)) {
-            fprintf(file,"%s,",attrnm);
-        }
-    LISTod
-    // close constructor method
-    if (generate_constructor) fprintf(file," ):\n");
-    /** if inheritance, first init base class **/
-    list = ENTITYget_supertypes( entity );
-    if( ! LISTempty( list ) ) {
-        LISTdo( list, e, Entity )
-        fprintf(file,"\t\t%s.__init__(self , ",ENTITYget_name(e));
-        /*  search and write attribute names for superclass */
-            LISTdo(ENTITYget_attributes( e ), v2, Variable)
-                generate_attribute_name( v2, parent_attrnm );
-                fprintf(file,"%s__%s , ",ENTITYget_name(e),parent_attrnm);
-            LISTod
-        fprintf(file,")\n"); //separator for parent classes names
-        LISTod;
-    }
-    // init variables in constructor
-    LISTdo(ENTITYget_attributes( entity ), v, Variable)
-    generate_attribute_name( v, attrnm );
-    if (!VARis_derived(v) && !VARget_inverse(v)) fprintf(file,"\t\tself.%s = %s\n",attrnm,attrnm);
-    //attr_count_tmp++;
-    LISTod
-    /*
-    * write attributes as python properties
-    */
-    LISTdo( ENTITYget_attributes( entity ), v, Variable )
-    generate_attribute_name( v, attrnm );
-    fprintf(file,"\n\t@apply\n");
-    fprintf(file,"\tdef %s():\n",attrnm);
-    // fget
-    fprintf(file,"\t\tdef fget( self ):\n");
-    if (!VARis_derived(v)) {
-        fprintf(file,"\t\t\treturn self._%s\n",attrnm);
-    }
+    if( false ) {}
     else {
-        // expression initializer
-        char * expression_string = EXPRto_string( v->initializer );
-        fprintf(file,"\t\t\treturn EvalDerivedAttribute(self,'''%s''')\n",expression_string);
-        free( expression_string );
-    }
-    // fset
-    fprintf(file,"\t\tdef fset( self, value ):\n");
-    t = VARget_type( v );
-    
-    attr_type = GetAttrTypeName(t);
-   
-    if (!VARis_derived(v) && !VARget_inverse(v)) {
-        // if the argument is not optional
-        if (!VARget_optional(v)) {
-            fprintf(file, "\t\t# Mandatory argument\n");
-            fprintf(file,"\t\t\tif value==None:\n");
-            fprintf(file,"\t\t\t\traise AssertionError('Argument %s is mantatory and can not be set to None')\n",attrnm);
-            fprintf(file,"\t\t\tif not check_type(value,");
+        /*
+        * write class constructor
+        */
+        if( generate_constructor ) {
+            fprintf( file, "\tdef __init__( self , " );
+        }
+        // if inheritance, first write the inherited parameters
+        list = ENTITYget_supertypes( entity );
+        num_parent = 0;
+        index_attribute = 0;
+        if( ! LISTempty( list ) ) {
+            LISTdo( list, e, Entity )
+            /*  search attribute names for superclass */
+            LISTdo( ENTITYget_attributes( e ), v2, Variable )
+            generate_attribute_name( v2, parent_attrnm );
+            fprintf( file, "%s__%s , ", ENTITYget_name( e ), parent_attrnm );
+            index_attribute++;
+            LISTod
+            num_parent++;
+            LISTod;
+        }
+        LISTdo( ENTITYget_attributes( entity ), v, Variable )
+        generate_attribute_name( v, attrnm );
+        if( !VARis_derived( v ) && !VARget_inverse( v ) ) {
+            fprintf( file, "%s,", attrnm );
+        }
+        LISTod
+        // close constructor method
+        if( generate_constructor ) {
+            fprintf( file, " ):\n" );
+        }
+        /** if inheritance, first init base class **/
+        list = ENTITYget_supertypes( entity );
+        if( ! LISTempty( list ) ) {
+            LISTdo( list, e, Entity )
+            fprintf( file, "\t\t%s.__init__(self , ", ENTITYget_name( e ) );
+            /*  search and write attribute names for superclass */
+            LISTdo( ENTITYget_attributes( e ), v2, Variable )
+            generate_attribute_name( v2, parent_attrnm );
+            fprintf( file, "%s__%s , ", ENTITYget_name( e ), parent_attrnm );
+            LISTod
+            fprintf( file, ")\n" ); //separator for parent classes names
+            LISTod;
+        }
+        // init variables in constructor
+        LISTdo( ENTITYget_attributes( entity ), v, Variable )
+        generate_attribute_name( v, attrnm );
+        if( !VARis_derived( v ) && !VARget_inverse( v ) ) {
+            fprintf( file, "\t\tself.%s = %s\n", attrnm, attrnm );
+        }
+        //attr_count_tmp++;
+        LISTod
+        /*
+        * write attributes as python properties
+        */
+        LISTdo( ENTITYget_attributes( entity ), v, Variable )
+        generate_attribute_name( v, attrnm );
+        fprintf( file, "\n\t@apply\n" );
+        fprintf( file, "\tdef %s():\n", attrnm );
+        // fget
+        fprintf( file, "\t\tdef fget( self ):\n" );
+        if( !VARis_derived( v ) ) {
+            fprintf( file, "\t\t\treturn self._%s\n", attrnm );
+        } else {
+            // expression initializer
+            char * expression_string = EXPRto_string( v->initializer );
+            fprintf( file, "\t\t\treturn EvalDerivedAttribute(self,'''%s''')\n", expression_string );
+            free( expression_string );
+        }
+        // fset
+        fprintf( file, "\t\tdef fset( self, value ):\n" );
+        t = VARget_type( v );
+
+        attr_type = GetAttrTypeName( t );
+
+        if( !VARis_derived( v ) && !VARget_inverse( v ) ) {
+            // if the argument is not optional
+            if( !VARget_optional( v ) ) {
+                fprintf( file, "\t\t# Mandatory argument\n" );
+                fprintf( file, "\t\t\tif value==None:\n" );
+                fprintf( file, "\t\t\t\traise AssertionError('Argument %s is mantatory and can not be set to None')\n", attrnm );
+                fprintf( file, "\t\t\tif not check_type(value," );
+                if( TYPEis_aggregate( t ) ) {
+                    process_aggregate( file, t );
+                    fprintf( file, "):\n" );
+                } else {
+                    fprintf( file, "%s):\n", attr_type );
+                }
+            } else {
+                fprintf( file, "\t\t\tif value != None: # OPTIONAL attribute\n\t" );
+                fprintf( file, "\t\t\tif not check_type(value," );
+                if( TYPEis_aggregate( t ) ) {
+                    process_aggregate( file, t );
+                    fprintf( file, "):\n\t" );
+                } else {
+                    fprintf( file, "%s):\n\t", attr_type );
+                }
+            }
+            // check wether attr_type is aggr or explicit
             if( TYPEis_aggregate( t ) ) {
-                process_aggregate(file,t);
-                fprintf(file,"):\n");
+                fprintf( file, "\t\t\t\tself._%s = ", attrnm );
+                print_aggregate_type( file, t );
+                fprintf( file, "(value)\n" );
+                fprintf( file, "\t\t\telse:\n\t" );
+            } else {
+                fprintf( file, "\t\t\t\tself._%s = %s(value)\n", attrnm, attr_type );
+                fprintf( file, "\t\t\telse:\n\t" );
             }
-            else {
-                fprintf(file,"%s):\n",attr_type);
-            }
+            fprintf( file, "\t\t\tself._%s = value\n", attrnm );
         }
-        else {
-            fprintf(file,"\t\t\tif value != None: # OPTIONAL attribute\n\t");
-            fprintf(file,"\t\t\tif not check_type(value,");
-            if( TYPEis_aggregate( t ) ) {
-                process_aggregate(file,t);
-                fprintf(file,"):\n\t");
-            }
-            else {
-                fprintf(file,"%s):\n\t",attr_type);
-            }
+        // if the attribute is derived, prevent fset to attribute to be set
+        else if( VARis_derived( v ) ) {
+            fprintf( file, "\t\t# DERIVED argument\n" );
+            fprintf( file, "\t\t\traise AssertionError('Argument %s is DERIVED. It is computed and can not be set to any value')\n", attrnm );
+        } else if( VARget_inverse( v ) ) {
+            fprintf( file, "\t\t# INVERSE argument\n" );
+            fprintf( file, "\t\t\traise AssertionError('Argument %s is INVERSE. It is computed and can not be set to any value')\n", attrnm );
         }
-        // check wether attr_type is aggr or explicit
-        if( TYPEis_aggregate( t ) ) {
-             fprintf(file, "\t\t\t\tself._%s = ",attrnm);
-             print_aggregate_type(file,t);
-             fprintf(file,"(value)\n");
-             fprintf(file, "\t\t\telse:\n\t");
-         }
-        else {
-            fprintf(file, "\t\t\t\tself._%s = %s(value)\n",attrnm,attr_type);
-            fprintf(file, "\t\t\telse:\n\t");
-        }
-        fprintf(file,"\t\t\tself._%s = value\n",attrnm);
-    }
-    // if the attribute is derived, prevent fset to attribute to be set
-    else if (VARis_derived(v)){
-        fprintf(file,"\t\t# DERIVED argument\n");
-        fprintf(file,"\t\t\traise AssertionError('Argument %s is DERIVED. It is computed and can not be set to any value')\n",attrnm);
-    }
-    else if (VARget_inverse(v)) {
-        fprintf(file,"\t\t# INVERSE argument\n");
-        fprintf(file,"\t\t\traise AssertionError('Argument %s is INVERSE. It is computed and can not be set to any value')\n",attrnm);
-    }
-    fprintf(file,"\t\treturn property(**locals())\n");
-    LISTod
+        fprintf( file, "\t\treturn property(**locals())\n" );
+        LISTod
     }
 }
 
@@ -783,7 +777,9 @@ get_local_attribute_number( Entity entity ) {
     Linked_List local = ENTITYget_attributes( entity );
     LISTdo( local, a, Variable )
     /*  go to the child's first explicit attribute */
-    if( ( ! VARget_inverse( a ) ) && ( ! VARis_derived( a ) ) ) ++i;
+    if( ( ! VARget_inverse( a ) ) && ( ! VARis_derived( a ) ) ) {
+        ++i;
+    }
     LISTod;
     return i;
 }
@@ -953,30 +949,27 @@ TYPEenum_lib_print( const Type type, FILE * f ) {
     Expression expr;
     char c_enum_ele [BUFSIZ];
     // begin the new enum type
-    if (is_python_keyword(TYPEget_name( type ))) {
+    if( is_python_keyword( TYPEget_name( type ) ) ) {
         fprintf( f, "\n# ENUMERATION TYPE %s_\n", TYPEget_name( type ) );
-    }
-    else {
+    } else {
         fprintf( f, "\n# ENUMERATION TYPE %s\n", TYPEget_name( type ) );
     }
     // first write all the values of the enum
     DICTdo_type_init( ENUM_TYPEget_items( type ), &de, OBJ_ENUM );
     while( 0 != ( expr = ( Expression )DICTdo( &de ) ) ) {
         strncpy( c_enum_ele, EnumCElementName( type, expr ), BUFSIZ );
-        fprintf(f,"if (not '%s' in globals().keys()):\n",EXPget_name(expr));
-        if (is_python_keyword(EXPget_name(expr))) {
-            fprintf(f,"\t%s_ = '%s_'\n",EXPget_name(expr),EXPget_name(expr));
-        }
-        else {
-            fprintf(f,"\t%s = '%s'\n",EXPget_name(expr),EXPget_name(expr));
+        fprintf( f, "if (not '%s' in globals().keys()):\n", EXPget_name( expr ) );
+        if( is_python_keyword( EXPget_name( expr ) ) ) {
+            fprintf( f, "\t%s_ = '%s_'\n", EXPget_name( expr ), EXPget_name( expr ) );
+        } else {
+            fprintf( f, "\t%s = '%s'\n", EXPget_name( expr ), EXPget_name( expr ) );
         }
     }
     // then outputs the enum
-    if (is_python_keyword(TYPEget_name( type ))) {
-        fprintf(f,"%s_ = ENUMERATION(",TYPEget_name( type ));
-    }
-    else {
-        fprintf(f,"%s = ENUMERATION(",TYPEget_name( type ));
+    if( is_python_keyword( TYPEget_name( type ) ) ) {
+        fprintf( f, "%s_ = ENUMERATION(", TYPEget_name( type ) );
+    } else {
+        fprintf( f, "%s = ENUMERATION(", TYPEget_name( type ) );
     }
     /*  set up the dictionary info  */
 
@@ -985,14 +978,13 @@ TYPEenum_lib_print( const Type type, FILE * f ) {
     DICTdo_type_init( ENUM_TYPEget_items( type ), &de, OBJ_ENUM );
     while( 0 != ( expr = ( Expression )DICTdo( &de ) ) ) {
         strncpy( c_enum_ele, EnumCElementName( type, expr ), BUFSIZ );
-        if (is_python_keyword(EXPget_name(expr))) {
-            fprintf(f,"\n\'%s_',",EXPget_name(expr));
-        }
-        else {
-            fprintf(f,"\n\t'%s',",EXPget_name(expr));
+        if( is_python_keyword( EXPget_name( expr ) ) ) {
+            fprintf( f, "\n\'%s_',", EXPget_name( expr ) );
+        } else {
+            fprintf( f, "\n\t'%s',", EXPget_name( expr ) );
         }
     }
-    fprintf(f,"\n\t)\n");
+    fprintf( f, "\n\t)\n" );
 }
 
 
@@ -1238,29 +1230,25 @@ TYPEprint_descriptions( const Type type, FILES * files, Schema schema ) {
     if( TYPEis_enumeration( type ) && ( i = TYPEget_ancestor( type ) ) != NULL ) {
         /* If we're a renamed enum type, just print a few typedef's to the
         // original and some specialized create functions: */
-        strncpy( base, StrToLower(EnumName( TYPEget_name( i ) )), BUFSIZ );
-        strncpy( nm, StrToLower(EnumName( TYPEget_name( type ) )), BUFSIZ );
-        fprintf( files->lib, "%s = %s\n",nm,base );
+        strncpy( base, StrToLower( EnumName( TYPEget_name( i ) ) ), BUFSIZ );
+        strncpy( nm, StrToLower( EnumName( TYPEget_name( type ) ) ), BUFSIZ );
+        fprintf( files->lib, "%s = %s\n", nm, base );
         return;
     }
 
-    if( TYPEget_RefTypeVarNm( type, typename_buf, schema ) ) 
-    {
-        char * output = FundamentalType(type,0);
+    if( TYPEget_RefTypeVarNm( type, typename_buf, schema ) ) {
+        char * output = FundamentalType( type, 0 );
         if( TYPEis_aggregate( type ) ) {
-            fprintf(files->lib, "%s = ",TYPEget_name(type));
-            process_aggregate(files->lib,type);
-            fprintf(files->lib,"\n");
-        }
-        else if(TYPEis_select(type)) {
+            fprintf( files->lib, "%s = ", TYPEget_name( type ) );
+            process_aggregate( files->lib, type );
+            fprintf( files->lib, "\n" );
+        } else if( TYPEis_select( type ) ) {
             TYPEselect_lib_print( type, files -> lib );
+        } else {
+            fprintf( files->lib, "%s = ", TYPEget_name( type ) );
+            fprintf( files->lib, "%s\n", output );
         }
-        else {
-            fprintf(files->lib, "%s = ",TYPEget_name(type));
-            fprintf(files->lib,"%s\n",output);
-        }
-    }
-    else {
+    } else {
         switch( TYPEget_body( type )->type ) {
             case enumeration_:
                 TYPEenum_lib_print( type, files -> lib );

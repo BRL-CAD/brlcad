@@ -26,13 +26,13 @@
 #include <STEPattribute.h>
 
 #include <Sdaiclasses.h>
-extern void SchemaInit (Registry &);
-extern void InitSchemasAndEnts (Registry &);
-#include <SdaiEXAMPLE_SCHEMA.h> 
-extern void SdaiEXAMPLE_SCHEMAInit (Registry & r);
+extern void SchemaInit( Registry & );
+extern void InitSchemasAndEnts( Registry & );
+#include <SdaiEXAMPLE_SCHEMA.h>
+extern void SdaiEXAMPLE_SCHEMAInit( Registry & r );
 
 #include <complexSupport.h>
-ComplexCollect *gencomplex();
+ComplexCollect * gencomplex();
 
-SCLP23(Model_contents_ptr) GetModelContents(char *schemaName);
+SCLP23( Model_contents_ptr ) GetModelContents( char * schemaName );
 #endif

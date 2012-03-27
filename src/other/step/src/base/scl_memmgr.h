@@ -7,8 +7,8 @@
     Platform specific defines
 */
 #if defined(__MSVC__) || defined(__BORLAND__)
-#define THROW_STD_BAD_ALLOC     
-#define THROW_EMPTY             
+#define THROW_STD_BAD_ALLOC
+#define THROW_EMPTY
 #else
 #define THROW_STD_BAD_ALLOC     throw (std::bad_alloc)
 #define THROW_EMPTY             throw ()
@@ -19,10 +19,10 @@
 extern "C" {
 #endif /* __cplusplus */
 
-SCL_BASE_EXPORT void * scl_malloc_fn( unsigned int size, const char *file, const int line );
-SCL_BASE_EXPORT void * scl_calloc_fn( unsigned int count, unsigned int size, const char *file, const int line );
-SCL_BASE_EXPORT void * scl_realloc_fn( void * addr, unsigned int size, const char *file, const int line );
-SCL_BASE_EXPORT void   scl_free_fn( void * addr );
+    SCL_BASE_EXPORT void * scl_malloc_fn( unsigned int size, const char * file, const int line );
+    SCL_BASE_EXPORT void * scl_calloc_fn( unsigned int count, unsigned int size, const char * file, const int line );
+    SCL_BASE_EXPORT void * scl_realloc_fn( void * addr, unsigned int size, const char * file, const int line );
+    SCL_BASE_EXPORT void   scl_free_fn( void * addr );
 
 #ifdef  __cplusplus
 }
@@ -31,7 +31,7 @@ SCL_BASE_EXPORT void   scl_free_fn( void * addr );
 #ifdef __cplusplus
 
 SCL_BASE_EXPORT void * scl_operator_new( size_t size, const char * file, const int line );
-SCL_BASE_EXPORT void   scl_operator_delete( void * addr, const char *file, const int line );
+SCL_BASE_EXPORT void   scl_operator_delete( void * addr, const char * file, const int line );
 SCL_BASE_EXPORT void   scl_operator_delete( void * addr );
 
 #endif /* __cplusplus */
@@ -47,31 +47,31 @@ SCL_BASE_EXPORT void   scl_operator_delete( void * addr );
 
 #include <new>
 
-inline void * operator new( size_t size, const char *file, const int line ) THROW_STD_BAD_ALLOC {
-    return scl_operator_new(size, file, line);
+inline void * operator new( size_t size, const char * file, const int line ) THROW_STD_BAD_ALLOC {
+    return scl_operator_new( size, file, line );
 }
 
-inline void * operator new[]( size_t size, const char *file, const int line ) THROW_STD_BAD_ALLOC {
-    return scl_operator_new(size, file, line);
+inline void * operator new[]( size_t size, const char * file, const int line ) THROW_STD_BAD_ALLOC {
+    return scl_operator_new( size, file, line );
 }
 
-inline void operator delete( void *addr, const char *file, const int line ) THROW_STD_BAD_ALLOC {
-    scl_operator_delete(addr, file, line);
+inline void operator delete( void * addr, const char * file, const int line ) THROW_STD_BAD_ALLOC {
+    scl_operator_delete( addr, file, line );
 }
 
-inline void operator delete[]( void *addr, const char *file, const int line ) THROW_STD_BAD_ALLOC {
-    scl_operator_delete(addr, file, line);
+inline void operator delete[]( void * addr, const char * file, const int line ) THROW_STD_BAD_ALLOC {
+    scl_operator_delete( addr, file, line );
 }
 
 inline void operator delete( void * addr ) THROW_EMPTY {
-    scl_operator_delete(addr);
+    scl_operator_delete( addr );
 }
 
 inline void operator delete[]( void * addr ) THROW_EMPTY {
-    scl_operator_delete(addr);
+    scl_operator_delete( addr );
 }
 
-#define new new(__FILE__, __LINE__) 
+#define new new(__FILE__, __LINE__)
 
 #endif /* __cplusplus */
 

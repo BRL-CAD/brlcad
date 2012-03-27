@@ -1,5 +1,5 @@
 #ifndef BASETYPE_H
-#define	BASETYPE_H
+#define BASETYPE_H
 
 /*
 * NIST STEP Core Class Library
@@ -18,32 +18,32 @@
 #include <OpenOODB.h>
 #endif
 
-//	**************  TYPES of attributes
+//  **************  TYPES of attributes
 
 // IMS, 9 Aug 95: changed values to make these values usable in a bitmask
 
 enum PrimitiveType {
-	sdaiINTEGER     = 0x0001,
-	sdaiREAL        = 0x0002,
-	sdaiBOOLEAN     = 0x0004,
-	sdaiLOGICAL     = 0x0008,
-	sdaiSTRING      = 0x0010,
-	sdaiBINARY      = 0x0020,
-	sdaiENUMERATION = 0x0040,
-	sdaiSELECT      = 0x0080,
-	sdaiINSTANCE    = 0x0100,
-	sdaiAGGR        = 0x0200,
-	sdaiNUMBER      = 0x0400,
+    sdaiINTEGER     = 0x0001,
+    sdaiREAL        = 0x0002,
+    sdaiBOOLEAN     = 0x0004,
+    sdaiLOGICAL     = 0x0008,
+    sdaiSTRING      = 0x0010,
+    sdaiBINARY      = 0x0020,
+    sdaiENUMERATION = 0x0040,
+    sdaiSELECT      = 0x0080,
+    sdaiINSTANCE    = 0x0100,
+    sdaiAGGR        = 0x0200,
+    sdaiNUMBER      = 0x0400,
 // The elements defined below are not part of part 23
 // (IMS: these should not be used as bitmask fields)
-	ARRAY_TYPE,		// DAS
-	BAG_TYPE,		// DAS
-	SET_TYPE,		// DAS
-	LIST_TYPE,		// DAS
-	GENERIC_TYPE,
-	REFERENCE_TYPE,
-	UNKNOWN_TYPE
- };
+    ARRAY_TYPE,     // DAS
+    BAG_TYPE,       // DAS
+    SET_TYPE,       // DAS
+    LIST_TYPE,      // DAS
+    GENERIC_TYPE,
+    REFERENCE_TYPE,
+    UNKNOWN_TYPE
+};
 
 // for backwards compatibility with our previous implementation
 typedef PrimitiveType BASE_TYPE;
@@ -62,13 +62,13 @@ typedef PrimitiveType BASE_TYPE;
 #define NUMBER_TYPE sdaiNUMBER
 
 /* not defined in part 23
-	ARRAY_TYPE,		// DAS
-	BAG_TYPE,		// DAS
-	SET_TYPE,		// DAS
-	LIST_TYPE,		// DAS
-	GENERIC_TYPE,
-	REFERENCE_TYPE,
-	UNKNOWN_TYPE
+    ARRAY_TYPE,     // DAS
+    BAG_TYPE,       // DAS
+    SET_TYPE,       // DAS
+    LIST_TYPE,      // DAS
+    GENERIC_TYPE,
+    REFERENCE_TYPE,
+    UNKNOWN_TYPE
 */
 
-#endif 
+#endif

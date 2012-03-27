@@ -13,7 +13,7 @@
 * and is not subject to copyright.
 */
 
-/* $Id: dirobj.h,v 3.0.1.3 1997/11/05 22:33:45 sauderd DP3.1 $  */ 
+/* $Id: dirobj.h,v 3.0.1.3 1997/11/05 22:33:45 sauderd DP3.1 $  */
 
 #ifdef __O3DB__
 #include <OpenOODB.h>
@@ -22,20 +22,20 @@
 
 /*
  * DirObj - This object contains a list of files in a directory.
- *		Can be used for interpreting a tilde, checking paths etc.
- *	based on InterViews FBDirectory 
- *		Copyright (c) 1987, 1988, 1989 Stanford University from 
- *		/depot/iv/src/libInterViews/filebrowser.c <= notice
- *	I commented it, changed variable and function names, added a
- *	few things, and made it so we can actually use it.
- *		David Sauder
+ *      Can be used for interpreting a tilde, checking paths etc.
+ *  based on InterViews FBDirectory
+ *      Copyright (c) 1987, 1988, 1989 Stanford University from
+ *      /depot/iv/src/libInterViews/filebrowser.c <= notice
+ *  I commented it, changed variable and function names, added a
+ *  few things, and made it so we can actually use it.
+ *      David Sauder
  */
 
 //#include <InterViews/filebrowser.h>
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// These header files are a pain between compilers etc ... and 
+// These header files are a pain between compilers etc ... and
 // I agree they are in a mess.  You will have to CHECK them yourself
 // depending on what you are using -- it works the way it is with g++
 // but you need -I/depot/gnu/lib/g++-include
@@ -52,7 +52,7 @@
 
 ////extern _G_uid_t getuid _G_ARGS((void));
 //#ifdef HAVE_STAT_H
-//#include <stat.h> 
+//#include <stat.h>
 //#endif
 
 #ifdef HAVE_SYSENT_H
@@ -67,7 +67,7 @@
 //#ifdef __GNUC__
 //#include <unistd.h>  // needed to declare getuid() with new GNU 2.3.3
 ////extern _G_uid_t getuid _G_ARGS((void));
-//#include <stat.h> 
+//#include <stat.h>
 
 //#else
 ////#ifdef __OBJECTCENTER__
@@ -80,8 +80,8 @@
 #include <pwd.h>
 //#include <InterViews/Std/os/auth.h>
 //#include <InterViews/Std/os/fs.h>
-	// the below is good for g++
-	// if getting it from /usr/include change to __string_h
+// the below is good for g++
+// if getting it from /usr/include change to __string_h
 #ifndef _std_h
 #include <string.h>
 #endif
@@ -97,42 +97,44 @@ typedef unsigned boolean;
 
 /*****************************************************************************/
 
-class DirObj {       
-public:
-    DirObj(const char* dirName);
-    virtual ~DirObj();
+class DirObj {
+    public:
+        DirObj( const char * dirName );
+        virtual ~DirObj();
 
-    boolean LoadDirectory(const char*);
-    const char* Normalize(const char*);
-    const char* ValidDirectories(const char*);
+        boolean LoadDirectory( const char * );
+        const char * Normalize( const char * );
+        const char * ValidDirectories( const char * );
 
-    int Index(const char*);
-    const char* File(int index);
-	// check for file in the currently loaded directory
-    boolean FileExists(const char* file) { return Index(file) ? 1 : 0;};
-    int Count();
+        int Index( const char * );
+        const char * File( int index );
+        // check for file in the currently loaded directory
+        boolean FileExists( const char * file ) {
+            return Index( file ) ? 1 : 0;
+        };
+        int Count();
 
-    boolean IsADirectory(const char*);
-private:
-    const char* Home(const char* x = nil);
-    const char* ElimDot(const char*);
-    const char* ElimDotDot(const char*);
-    const char* InterpSlashSlash(const char*);
-    const char* InterpTilde(const char*);
-    const char* ExpandTilde(const char*, int);
-    const char* RealPath(const char*);
+        boolean IsADirectory( const char * );
+    private:
+        const char * Home( const char * x = nil );
+        const char * ElimDot( const char * );
+        const char * ElimDotDot( const char * );
+        const char * InterpSlashSlash( const char * );
+        const char * InterpTilde( const char * );
+        const char * ExpandTilde( const char *, int );
+        const char * RealPath( const char * );
 
-    boolean Reset(const char*);
-    void ClearFileList();
-    void CheckIndex(int index);
-    void InsertFile(const char*, int index);
-    void AppendFile(const char*);
-    void RemoveFile(int index);
-    virtual int Position(const char*);
-private:
-    char** fileList;
-    int fileCount;
-    int fileListSize;
+        boolean Reset( const char * );
+        void ClearFileList();
+        void CheckIndex( int index );
+        void InsertFile( const char *, int index );
+        void AppendFile( const char * );
+        void RemoveFile( int index );
+        virtual int Position( const char * );
+    private:
+        char ** fileList;
+        int fileCount;
+        int fileListSize;
 };
 
 //////////////////////////////// Count() //////////////////////////////////////
@@ -141,7 +143,9 @@ private:
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-inline int DirObj::Count () { return fileCount; }
+inline int DirObj::Count() {
+    return fileCount;
+}
 
 //////////////////////////////// AppendFile() /////////////////////////////////
 //
@@ -149,7 +153,9 @@ inline int DirObj::Count () { return fileCount; }
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-inline void DirObj::AppendFile (const char* s) { InsertFile(s, fileCount); }
+inline void DirObj::AppendFile( const char * s ) {
+    InsertFile( s, fileCount );
+}
 
 //////////////////////////////// File() ///////////////////////////////////////
 //
@@ -157,8 +163,8 @@ inline void DirObj::AppendFile (const char* s) { InsertFile(s, fileCount); }
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-inline const char* DirObj::File (int index) { 
-    return (0 <= index && index < fileCount) ? fileList[index] : nil;
+inline const char * DirObj::File( int index ) {
+    return ( 0 <= index && index < fileCount ) ? fileList[index] : nil;
 }
 
 //////////////////////////////// strdup() /////////////////////////////////////
@@ -180,10 +186,10 @@ inline const char* DirObj::File (int index) {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-inline boolean DotSlash (const char* path) {
-    return 
+inline boolean DotSlash( const char * path ) {
+    return
         path[0] != '\0' && path[0] == '.' &&
-        (path[1] == '/' || path[1] == '\0');
+        ( path[1] == '/' || path[1] == '\0' );
 }
 
 //////////////////////////////// DotDotSlash() ////////////////////////////////
@@ -193,11 +199,11 @@ inline boolean DotSlash (const char* path) {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-inline boolean DotDotSlash (const char* path) {
-    return 
+inline boolean DotDotSlash( const char * path ) {
+    return
         path[0] != '\0' && path[1] != '\0' &&
         path[0] == '.' && path[1] == '.' &&
-        (path[2] == '/' || path[2] == '\0');
+        ( path[2] == '/' || path[2] == '\0' );
 }
 
 #endif

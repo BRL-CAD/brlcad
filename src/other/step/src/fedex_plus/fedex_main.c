@@ -79,58 +79,55 @@ static char rcsid[] = "$Id: fedex_main.c,v 3.0.1.3 1997/11/05 23:12:18 sauderd D
 #include "../express/resolve.h"
 
 static void
-fedex_plus_usage()
-{
-        fprintf(stderr,"usage: %s [-s|-S] [-a|-A] [-c|-C] [-l|-L] [-v] [-d #] [-p <object_type>] {-w|-i <warning>} express_file\n",EXPRESSprogram_name);
-	fprintf(stderr,"where\t-s or -S uses only single inheritance in the generated C++ classes\n");
-	fprintf(stderr,"\t-a or -A generates the early bound access functions for entity classes the old way (without an underscore)\n");
-	fprintf(stderr,"\t-c or -C generates C++ classes for use with CORBA (Orbix)\n");
-	fprintf(stderr,"\t-l or -L prints logging code in the generated C++ classes\n");
-	fprintf(stderr,"\t-v produces a version description\n");
-	fprintf(stderr,"\t-d turns on debugging (\"-d 0\" describes this further\n");
-	fprintf(stderr,"\t-p turns on printing when processing certain objects (see below)\n");
-	fprintf(stderr,"\t-w warning enable\n");
-	fprintf(stderr,"\t-i warning ignore\n");
-	fprintf(stderr,"and <warning> is one of:\n");
-	fprintf(stderr,"\tnone\n\tall\n");
-	LISTdo(ERRORwarnings, opt, Error_Warning)
-		fprintf(stderr,"\t%s\n",opt->name);
-	LISTod
-	fprintf(stderr,"and <object_type> is one or more of:\n");
-	fprintf(stderr,"	e	entity\n");
-	fprintf(stderr,"	p	procedure\n");
-	fprintf(stderr,"	r	rule\n");
-	fprintf(stderr,"	f	function\n");
-	fprintf(stderr,"	t	type\n");
-	fprintf(stderr,"	s	schema or file\n");
-	fprintf(stderr,"	#	pass #\n");
-	fprintf(stderr,"	E	everything (all of the above)\n");
-	exit(2);
+fedex_plus_usage() {
+    fprintf( stderr, "usage: %s [-s|-S] [-a|-A] [-c|-C] [-l|-L] [-v] [-d #] [-p <object_type>] {-w|-i <warning>} express_file\n", EXPRESSprogram_name );
+    fprintf( stderr, "where\t-s or -S uses only single inheritance in the generated C++ classes\n" );
+    fprintf( stderr, "\t-a or -A generates the early bound access functions for entity classes the old way (without an underscore)\n" );
+    fprintf( stderr, "\t-c or -C generates C++ classes for use with CORBA (Orbix)\n" );
+    fprintf( stderr, "\t-l or -L prints logging code in the generated C++ classes\n" );
+    fprintf( stderr, "\t-v produces a version description\n" );
+    fprintf( stderr, "\t-d turns on debugging (\"-d 0\" describes this further\n" );
+    fprintf( stderr, "\t-p turns on printing when processing certain objects (see below)\n" );
+    fprintf( stderr, "\t-w warning enable\n" );
+    fprintf( stderr, "\t-i warning ignore\n" );
+    fprintf( stderr, "and <warning> is one of:\n" );
+    fprintf( stderr, "\tnone\n\tall\n" );
+    LISTdo( ERRORwarnings, opt, Error_Warning )
+    fprintf( stderr, "\t%s\n", opt->name );
+    LISTod
+    fprintf( stderr, "and <object_type> is one or more of:\n" );
+    fprintf( stderr, "	e	entity\n" );
+    fprintf( stderr, "	p	procedure\n" );
+    fprintf( stderr, "	r	rule\n" );
+    fprintf( stderr, "	f	function\n" );
+    fprintf( stderr, "	t	type\n" );
+    fprintf( stderr, "	s	schema or file\n" );
+    fprintf( stderr, "	#	pass #\n" );
+    fprintf( stderr, "	E	everything (all of the above)\n" );
+    exit( 2 );
 }
 
-int Handle_FedPlus_Args(int, char *);
-void print_file(Express);
+int Handle_FedPlus_Args( int, char * );
+void print_file( Express );
 
-void resolution_success(void)
-{
-	printf("Resolution successful.  Writing C++ output...\n");
+void resolution_success( void ) {
+    printf( "Resolution successful.  Writing C++ output...\n" );
 }
 
-int success(Express model)
-{
-	printf("Finished writing files.\n");
-	return(0);
+int success( Express model ) {
+    printf( "Finished writing files.\n" );
+    return( 0 );
 }
 
-/* This function is called from main() which is part of the NIST Express 
+/* This function is called from main() which is part of the NIST Express
    Toolkit.  It assigns 2 pointers to functions which are called in main() */
 void
 EXPRESSinit_init() {
-	EXPRESSbackend = print_file;
-	EXPRESSsucceed = success;
-	EXPRESSgetopt = Handle_FedPlus_Args;
-  /* so the function getopt (see man 3 getopt) will not report an error */
-	strcat(EXPRESSgetopt_options, "sSlLcCaA");
-	ERRORusage_function = fedex_plus_usage;
+    EXPRESSbackend = print_file;
+    EXPRESSsucceed = success;
+    EXPRESSgetopt = Handle_FedPlus_Args;
+    /* so the function getopt (see man 3 getopt) will not report an error */
+    strcat( EXPRESSgetopt_options, "sSlLcCaA" );
+    ERRORusage_function = fedex_plus_usage;
 }
 

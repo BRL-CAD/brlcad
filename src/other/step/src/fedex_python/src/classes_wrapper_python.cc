@@ -39,7 +39,7 @@ print_file_header( Express express, FILES * files ) {
     /* prevent RCS from expanding this! */
     //fprintf( files->incall, "import sdai\n" );
     //fprintf( files->incall, "import Registry\n" );
-    
+
     //fprintf( files->incall, "\n#include <STEPaggregate.h>\n" );
     //fprintf( files->incall, "\n#include <STEPundefined.h>\n" );
     //fprintf( files->incall, "\n#include <ExpDict.h>\n" );
@@ -200,15 +200,15 @@ SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
         t->search_id = PROCESSED;
     }
     SCOPEod;
-    
+
     // process each entity. This must be done *before* typedefs are defined
     LISTdo( list, e, Entity );
-      if( e->search_id == CANPROCESS ) {
-          ENTITYPrint( e, files, schema );
-          e->search_id = PROCESSED;
-      }
-    LISTod;   
-    
+    if( e->search_id == CANPROCESS ) {
+        ENTITYPrint( e, files, schema );
+        e->search_id = PROCESSED;
+    }
+    LISTod;
+
     LISTfree( list );
 }
 
@@ -238,7 +238,7 @@ PrintModelContentsSchema( Scope scope, FILES * files, Schema schema,
     ENTITYput_superclass( e ); /*  find supertype to use for single  */
     ENTITYprint_new( e, files, schema, 0 );         /*  inheritance  */
     LISTod;
-    
+
     // Print Entity Classes
     LISTdo( list, e, Entity );
     ENTITYPrint( e, files, schema );
@@ -262,7 +262,7 @@ PrintModelContentsSchema( Scope scope, FILES * files, Schema schema,
                  nm, nm, nm, nm );
     }
     SCOPEod;
-    
+
     /*  build the typedefs  */
     SCOPEdo_types( scope, t, de )
     if( !( TYPEis_select( t ) ) ) {
@@ -280,7 +280,7 @@ PrintModelContentsSchema( Scope scope, FILES * files, Schema schema,
     }
     SCOPEod;
 
-LISTfree( list );
+    LISTfree( list );
 }
 
 
@@ -308,7 +308,7 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
          //*incfile,
          //*schemafile = files->incall,
          // *schemainit = files->initall,
-            *initfile
+         *initfile
          //   *createall = files->create
          ;
     Rule r;
@@ -322,7 +322,7 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
     /*  1.  header file             */
     //sprintf( schnm, "%s%s", SCHEMA_FILE_PREFIX,
     //         StrToUpper( SCHEMAget_name( schema ) ) );
-    sprintf( schnm, "%s", SCHEMAget_name( schema )  );
+    sprintf( schnm, "%s", SCHEMAget_name( schema ) );
     if( suffix == 0 ) {
         sprintf( sufnm, "%s", schnm );
     } else {
@@ -338,13 +338,13 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
         return;
     }
     //fprintf( libfile, "/* %cId$  */ \n", '$' );
-    fprintf(libfile,"from SCL.SCLBase import *\n");
-    fprintf(libfile,"from SCL.SimpleDataTypes import *\n");
-    fprintf(libfile,"from SCL.ConstructedDataTypes import *\n");
-    fprintf(libfile,"from SCL.AggregationDataTypes import *\n");
-    fprintf(libfile,"from SCL.TypeChecker import check_type\n");
-    fprintf(libfile,"from SCL.Expr import *\n");
-    
+    fprintf( libfile, "from SCL.SCLBase import *\n" );
+    fprintf( libfile, "from SCL.SimpleDataTypes import *\n" );
+    fprintf( libfile, "from SCL.ConstructedDataTypes import *\n" );
+    fprintf( libfile, "from SCL.AggregationDataTypes import *\n" );
+    fprintf( libfile, "from SCL.TypeChecker import check_type\n" );
+    fprintf( libfile, "from SCL.Expr import *\n" );
+
     /**********  do the schemas ***********/
 
     /* really, create calls for entity constructors */

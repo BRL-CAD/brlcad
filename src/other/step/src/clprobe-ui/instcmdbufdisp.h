@@ -42,18 +42,18 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 class InstCmdBufDisp : public ListMgrCore {
-public:
-    InstCmdBufDisp(ButtonState* bs, int Rows, int Cols, 
-		const char* Done = mySBDone);
-    ~InstCmdBufDisp(){};
+    public:
+        InstCmdBufDisp( ButtonState * bs, int Rows, int Cols,
+                        const char * Done = mySBDone );
+        ~InstCmdBufDisp() {};
 
-    void AdvanceSelection(int index);
-    virtual void DoCommand(lmCommand lm, int index);
-    virtual void Choose();
-protected:
+        void AdvanceSelection( int index );
+        virtual void DoCommand( lmCommand lm, int index );
+        virtual void Choose();
+    protected:
 
-private:
-    void Init();
+    private:
+        void Init();
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -62,5 +62,5 @@ private:
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-              //////////////////////////////////////////
+//////////////////////////////////////////
 #endif

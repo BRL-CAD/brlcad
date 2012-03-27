@@ -15,58 +15,49 @@
 #include <SingleLinkList.h>
 #include <iostream>
 
-SingleLinkNode * 	
-SingleLinkNode::NextNode ()  const
-{
+SingleLinkNode *
+SingleLinkNode::NextNode()  const {
     return next;
 }
 
-SingleLinkList::SingleLinkList ()  
-  : head (0), tail (0)
-{
+SingleLinkList::SingleLinkList()
+    : head( 0 ), tail( 0 ) {
 }
 
-SingleLinkList::~SingleLinkList ()  
-{
-    Empty ();
+SingleLinkList::~SingleLinkList() {
+    Empty();
 }
 
 void
-SingleLinkList::Empty ()  
-{
+SingleLinkList::Empty() {
     SingleLinkNode * tmp = head;
-    while (tmp)  
-      {
-	  tmp = head -> NextNode ();
-	  delete head;
-	  head = tmp;
-      }
+    while( tmp ) {
+        tmp = head -> NextNode();
+        delete head;
+        head = tmp;
+    }
 }
 
 SingleLinkNode *
-SingleLinkList::NewNode () 
-{
+SingleLinkList::NewNode() {
     //  defined in subtypes
     std::cerr << "\n\n******BUG****** a virtually defined function should \n"
-	 << "be called for SingleLinkList::NewNode()\n\n";
+              << "be called for SingleLinkList::NewNode()\n\n";
     return new SingleLinkNode();
 }
 
 SingleLinkNode *
-SingleLinkList::GetHead () const
-{
-    return (head);
+SingleLinkList::GetHead() const {
+    return ( head );
 }
 
-int SingleLinkList::EntryCount() const
-{
+int SingleLinkList::EntryCount() const {
     int entryCount = 0;
-    SingleLinkNode *entryPtr = head;
+    SingleLinkNode * entryPtr = head;
 
-    while( entryPtr != 0 )
-    {
-	entryPtr = entryPtr->NextNode();
-	entryCount++;
+    while( entryPtr != 0 ) {
+        entryPtr = entryPtr->NextNode();
+        entryCount++;
     }
     return entryCount;
 }

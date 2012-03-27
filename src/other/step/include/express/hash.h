@@ -4,14 +4,14 @@
 /* $Id: hash.h,v 1.6 1997/10/22 16:36:49 sauderd Exp $ */
 
 /************************************************************************
-** Hash_Table:	Hash_Table
-** Description:	
-**	
-**	
+** Hash_Table:  Hash_Table
+** Description:
+**
+**
 ** Largely based on code written by ejp@ausmelb.oz
 **
 ** Constants:
-**	HASH_TABLE_NULL	- the null Hash_Table
+**  HASH_TABLE_NULL - the null Hash_Table
 **
 ************************************************************************/
 
@@ -59,7 +59,7 @@
  *
  * Revision 1.5  91/10/30  08:36:54  silver
  * Express N14 Changes
- * 
+ *
  * Revision 1.6  1991/08/30  16:36:07  libes
  * fixed HASHlist to use state from parameter instead of static
  *
@@ -78,24 +78,24 @@
  *
  * Revision 1.1  90/06/11  17:05:54  clark
  * Initial revision
- * 
+ *
  */
 
-#include "basic.h"	/* get basic definitions */
+#include "basic.h"  /* get basic definitions */
 
 /*************/
 /* constants */
 /*************/
 
-#define HASH_NULL	(Hash_Table)NULL
+#define HASH_NULL   (Hash_Table)NULL
 
-#define SEGMENT_SIZE		256
-#define SEGMENT_SIZE_SHIFT	8	/* log2(SEGMENT_SIZE)	*/
-#define DIRECTORY_SIZE		256
-#define DIRECTORY_SIZE_SHIFT	8	/* log2(DIRECTORY_SIZE)	*/
-#define PRIME1			37
-#define PRIME2			1048583
-#define MAX_LOAD_FACTOR	5
+#define SEGMENT_SIZE        256
+#define SEGMENT_SIZE_SHIFT  8   /* log2(SEGMENT_SIZE)   */
+#define DIRECTORY_SIZE      256
+#define DIRECTORY_SIZE_SHIFT    8   /* log2(DIRECTORY_SIZE) */
+#define PRIME1          37
+#define PRIME2          1048583
+#define MAX_LOAD_FACTOR 5
 
 /*****************/
 /* packages used */
@@ -116,39 +116,39 @@ typedef unsigned long Address;
 /****************/
 
 typedef struct Element_ {
-	char		*key;
-	char		*data;
-	struct Element_	*next;
-	Symbol		*symbol;/* for debugging hash conflicts */
-	char		type;	/* user-supplied type */
-} *Element;
+    char    *    key;
+    char    *    data;
+    struct Element_ * next;
+    Symbol   *   symbol;/* for debugging hash conflicts */
+    char        type;   /* user-supplied type */
+} * Element;
 
-typedef Element *Segment;
+typedef Element * Segment;
 
 typedef struct Hash_Table_ {
 #if 0
-	int 	in_use;		/* If someone is traversing the hash table */
+    int     in_use;     /* If someone is traversing the hash table */
 #endif
-	short	p;		/* Next bucket to be split	*/
-	short	maxp;		/* upper bound on p during expansion	*/
-	long	KeyCount;	/* current # keys	*/
-	short	SegmentCount;	/* current # segments	*/
-	short	MinLoadFactor;
-	short	MaxLoadFactor;
-	Segment	Directory[DIRECTORY_SIZE];
-} *Hash_Table;
+    short   p;      /* Next bucket to be split  */
+    short   maxp;       /* upper bound on p during expansion    */
+    long    KeyCount;   /* current # keys   */
+    short   SegmentCount;   /* current # segments   */
+    short   MinLoadFactor;
+    short   MaxLoadFactor;
+    Segment Directory[DIRECTORY_SIZE];
+} * Hash_Table;
 
 typedef struct {
-	int i;	/* segment index (i think) */
-	int j;	/* key index in segment (ditto) */
-	Element p;	/* usually the next element to be returned */
-	Hash_Table table;
-	char type;
-	Element e;	/* originally thought of as a place for */
-/* the caller of HASHlist to temporarily stash the return value */
-/* to allow the caller (i.e., DICTdo) to be macroized, but now */
-/* conveniently used by HASHlist, which both stores the ultimate */
-/* value here as well as returns it via the return value of HASHlist */
+    int i;  /* segment index (i think) */
+    int j;  /* key index in segment (ditto) */
+    Element p;  /* usually the next element to be returned */
+    Hash_Table table;
+    char type;
+    Element e;  /* originally thought of as a place for */
+    /* the caller of HASHlist to temporarily stash the return value */
+    /* to allow the caller (i.e., DICTdo) to be macroized, but now */
+    /* conveniently used by HASHlist, which both stores the ultimate */
+    /* value here as well as returns it via the return value of HASHlist */
 } HashEntry;
 
 /****************/
@@ -170,42 +170,42 @@ extern struct freelist_head HASH_Element_fl;
 ** Fast arithmetic, relying on powers of 2
 */
 
-/* 
+/*
 The centerline compiler was having problems with MUL and DIV. Where DIV
 was called like this DIV(NewAddress, SEGMENT_SIZE) it is now being called like
-DIV(NewAddress, SEGMENT_SIZE_SHIFT). The compiler was mentioning some kind of 
-problem with ##. I wonder if maybe the precompiler was expanding SEGMENT_SIZE 
+DIV(NewAddress, SEGMENT_SIZE_SHIFT). The compiler was mentioning some kind of
+problem with ##. I wonder if maybe the precompiler was expanding SEGMENT_SIZE
 (which is also defined as a macro) before turning it into SEGMENT_SIZE_SHIFT.
 SEGMENT_SIZE and DIRECTORY_SIZE were used to call these macros. They are both
 defined to be 8 though so it seems these are always being used the same way.
 This change only seems to have affected hash.h and hash.c
 */
-/* #define MUL(x,y)		((x) << (y##_SHIFT)) */
-#define MUL(x,y)		((x) << (y))
-/* #define DIV(x,y)		((x) >> (y##_SHIFT)) */
-#define DIV(x,y)		((x) >> (y))
-#define MOD(x,y)		((x) & ((y)-1))
+/* #define MUL(x,y)     ((x) << (y##_SHIFT)) */
+#define MUL(x,y)        ((x) << (y))
+/* #define DIV(x,y)     ((x) >> (y##_SHIFT)) */
+#define DIV(x,y)        ((x) >> (y))
+#define MOD(x,y)        ((x) & ((y)-1))
 
-#define HASH_Table_new()	(struct Hash_Table_ *)MEM_new(&HASH_Table_fl)
-#define HASH_Table_destroy(x)	MEM_destroy(&HASH_Table_fl,(Freelist *)(Generic)x)
-#define HASH_Element_new()	(struct Element_ *)MEM_new(&HASH_Element_fl)
-#define HASH_Element_destroy(x)	MEM_destroy(&HASH_Element_fl,(Freelist *)(char *)x)
+#define HASH_Table_new()    (struct Hash_Table_ *)MEM_new(&HASH_Table_fl)
+#define HASH_Table_destroy(x)   MEM_destroy(&HASH_Table_fl,(Freelist *)(Generic)x)
+#define HASH_Element_new()  (struct Element_ *)MEM_new(&HASH_Element_fl)
+#define HASH_Element_destroy(x) MEM_destroy(&HASH_Element_fl,(Freelist *)(char *)x)
 
 
 /***********************/
 /* function prototypes */
 /***********************/
 
-extern void	HASHinitialize PROTO((void));
-extern Hash_Table	HASHcreate PROTO((unsigned));
-extern Hash_Table	HASHcopy PROTO((Hash_Table));
-extern void	HASHdestroy PROTO((Hash_Table));
-extern Element	HASHsearch PROTO((Hash_Table, Element, Action));
-extern void	HASHlistinit PROTO((Hash_Table,HashEntry *));
-extern void	HASHlistinit_by_type PROTO((Hash_Table,HashEntry *,char));
-extern Element	HASHlist PROTO((HashEntry *));
+extern void HASHinitialize PROTO( ( void ) );
+extern Hash_Table   HASHcreate PROTO( ( unsigned ) );
+extern Hash_Table   HASHcopy PROTO( ( Hash_Table ) );
+extern void HASHdestroy PROTO( ( Hash_Table ) );
+extern Element  HASHsearch PROTO( ( Hash_Table, Element, Action ) );
+extern void HASHlistinit PROTO( ( Hash_Table, HashEntry * ) );
+extern void HASHlistinit_by_type PROTO( ( Hash_Table, HashEntry *, char ) );
+extern Element  HASHlist PROTO( ( HashEntry * ) );
 #if 0
-extern void	HASHlistend PROTO((HashEntry *));
+extern void HASHlistend PROTO( ( HashEntry * ) );
 #endif
 
 #endif /*HASH_H*/

@@ -71,9 +71,8 @@ static char rcsid[] = "$Id: fedex.c,v 1.20 1997/05/29 19:56:41 sauderd Exp $";
  *
  */
 
-char *FEDEXversion(void)
-{
-	return("V2.11.4-beta CADDETC preval June 8, 1995");
+char * FEDEXversion( void ) {
+    return( "V2.11.4-beta CADDETC preval June 8, 1995" );
 }
 
 #include <getopt.h>
@@ -91,150 +90,189 @@ extern int exp_yydebug;
 char EXPRESSgetopt_options[256] = "Bbd:e:i:w:p:rvz";
 
 static void
-usage()
-{
-        fprintf(stderr,"usage: %s [-v] [-d #] [-p <object_type>] {-w|-i <warning>} express_file\n",EXPRESSprogram_name);
-	fprintf(stderr,"where\t-v produces a version description\n");
-	fprintf(stderr,"\t-d turns on debugging (\"-d 0\" describes this further\n");
-	fprintf(stderr,"\t-p turns on printing when processing certain objects (see below)\n");
-	fprintf(stderr,"\t-w warning enable\n");
-	fprintf(stderr,"\t-i warning ignore\n");
-	fprintf(stderr,"and <warning> is one of:\n");
-	fprintf(stderr,"\tnone\n\tall\n");
-	LISTdo(ERRORwarnings, opt, Error_Warning)
-		fprintf(stderr,"\t%s\n",opt->name);
-	LISTod
-	fprintf(stderr,"and <object_type> is one or more of:\n");
-	fprintf(stderr,"	e	entity\n");
-	fprintf(stderr,"	p	procedure\n");
-	fprintf(stderr,"	r	rule\n");
-	fprintf(stderr,"	f	function\n");
-	fprintf(stderr,"	t	type\n");
-	fprintf(stderr,"	s	schema or file\n");
-	fprintf(stderr,"	#	pass #\n");
-	fprintf(stderr,"	E	everything (all of the above)\n");
-	exit(2);
+usage() {
+    fprintf( stderr, "usage: %s [-v] [-d #] [-p <object_type>] {-w|-i <warning>} express_file\n", EXPRESSprogram_name );
+    fprintf( stderr, "where\t-v produces a version description\n" );
+    fprintf( stderr, "\t-d turns on debugging (\"-d 0\" describes this further\n" );
+    fprintf( stderr, "\t-p turns on printing when processing certain objects (see below)\n" );
+    fprintf( stderr, "\t-w warning enable\n" );
+    fprintf( stderr, "\t-i warning ignore\n" );
+    fprintf( stderr, "and <warning> is one of:\n" );
+    fprintf( stderr, "\tnone\n\tall\n" );
+    LISTdo( ERRORwarnings, opt, Error_Warning )
+    fprintf( stderr, "\t%s\n", opt->name );
+    LISTod
+    fprintf( stderr, "and <object_type> is one or more of:\n" );
+    fprintf( stderr, "	e	entity\n" );
+    fprintf( stderr, "	p	procedure\n" );
+    fprintf( stderr, "	r	rule\n" );
+    fprintf( stderr, "	f	function\n" );
+    fprintf( stderr, "	t	type\n" );
+    fprintf( stderr, "	s	schema or file\n" );
+    fprintf( stderr, "	#	pass #\n" );
+    fprintf( stderr, "	E	everything (all of the above)\n" );
+    exit( 2 );
 }
 
 int
-main(int argc, char** argv)
-{
-	int c;
-	int rc;
-	char *cp;
-	int no_warnings = 1;
-	int resolve = 1;
-	int no_need_to_work = 0;/* TRUE if we can exit gracefully without */
-				/* doing any work */
+main( int argc, char ** argv ) {
+    int c;
+    int rc;
+    char * cp;
+    int no_warnings = 1;
+    int resolve = 1;
+    int no_need_to_work = 0;/* TRUE if we can exit gracefully without */
+    /* doing any work */
 
-	Boolean buffer_messages = False;
-	char *filename = 0;
-	Express model;
+    Boolean buffer_messages = False;
+    char * filename = 0;
+    Express model;
 
-	EXPRESSprogram_name = argv[0];
-	ERRORusage_function = usage;
+    EXPRESSprogram_name = argv[0];
+    ERRORusage_function = usage;
 
-	EXPRESSinit_init();
+    EXPRESSinit_init();
 
-	EXPRESSinitialize();
+    EXPRESSinitialize();
 
-	if (EXPRESSinit_args) (*EXPRESSinit_args)(argc,argv);
-
-    optind = 1;
-    while ((c = getopt(argc,argv,EXPRESSgetopt_options)) != -1)
-	switch (c) {
-	  case 'd':
-	    ERRORdebugging = 1;
-	    switch (atoi(optarg)) {
-	      case 0:
-		fprintf(stderr, "\ndebug codes:\n");
-		fprintf(stderr, "  0 - this help\n");
-		fprintf(stderr, "  1 - basic debugging\n");
-#ifdef debugging
-		fprintf(stderr, "  4 - light malloc debugging\n");
-		fprintf(stderr, "  5 - heavy malloc debugging\n");
-		fprintf(stderr, "  6 - heavy malloc debugging while resolving\n");
-#endif /* debugging*/
-#ifdef YYDEBUG
-		fprintf(stderr, "  8 - set YYDEBUG\n");
-#endif /*YYDEBUG*/
-		break;
-	      case 1:	debug = 1;		break;
-#ifdef debugging
-	      case 4:	malloc_debug(1);	break;
-	      case 5:	malloc_debug(2);	break;
-	      case 6:	malloc_debug_resolve = 1;	break;
-#endif /*debugging*/
-#ifdef YYDEBUG
-	      case 8:	exp_yydebug = 1;		break;
-#endif /* YYDEBUG */
-	    }
-	    break;
-    case 'B':	buffer_messages = True;		break;
-    case 'b':	buffer_messages = False;	break;
-    case 'e':	filename = optarg;		break;
-    case 'r':	resolve = 0;			break;
-    case 'i':
-    case 'w':
-	no_warnings = 0;
-	ERRORset_warning(optarg,c == 'w');
-	break;
-    case 'p':
-	for (cp = optarg;*cp;cp++) {
-	  if (*cp == '#') print_objects_while_running |= OBJ_PASS_BITS;
-	  else if (*cp == 'E') print_objects_while_running = OBJ_ANYTHING_BITS;
-	  else print_objects_while_running |= OBJget_bits(*cp);
-	}
-	break;
-    case 'v':
-	printf("%s %s\n%s\n",EXPRESSprogram_name,FEDEXversion(),EXPRESSversion());
-	no_need_to_work = 1;
-    	break;
-    case 'z':
-	    printf("pid = %d\n",getpid());
-	    pause();/* to allow user to attach debugger and continue */
-	    break;
-    default:
-	rc = 1;
-	if (EXPRESSgetopt) {
-		rc = (*EXPRESSgetopt)(c,optarg);
-	}
-	if (rc == 1) (*ERRORusage_function)();
-	break;
+    if( EXPRESSinit_args ) {
+        ( *EXPRESSinit_args )( argc, argv );
     }
 
-	if (!filename) {
-		filename = argv[optind];
-		if (!filename) {
-			if (no_need_to_work) return(0);
-			else (*ERRORusage_function)();
-		}
-	}
+    optind = 1;
+    while( ( c = getopt( argc, argv, EXPRESSgetopt_options ) ) != -1 )
+        switch( c ) {
+            case 'd':
+                ERRORdebugging = 1;
+                switch( atoi( optarg ) ) {
+                    case 0:
+                        fprintf( stderr, "\ndebug codes:\n" );
+                        fprintf( stderr, "  0 - this help\n" );
+                        fprintf( stderr, "  1 - basic debugging\n" );
+#ifdef debugging
+                        fprintf( stderr, "  4 - light malloc debugging\n" );
+                        fprintf( stderr, "  5 - heavy malloc debugging\n" );
+                        fprintf( stderr, "  6 - heavy malloc debugging while resolving\n" );
+#endif /* debugging*/
+#ifdef YYDEBUG
+                        fprintf( stderr, "  8 - set YYDEBUG\n" );
+#endif /*YYDEBUG*/
+                        break;
+                    case 1:
+                        debug = 1;
+                        break;
+#ifdef debugging
+                    case 4:
+                        malloc_debug( 1 );
+                        break;
+                    case 5:
+                        malloc_debug( 2 );
+                        break;
+                    case 6:
+                        malloc_debug_resolve = 1;
+                        break;
+#endif /*debugging*/
+#ifdef YYDEBUG
+                    case 8:
+                        exp_yydebug = 1;
+                        break;
+#endif /* YYDEBUG */
+                }
+                break;
+            case 'B':
+                buffer_messages = True;
+                break;
+            case 'b':
+                buffer_messages = False;
+                break;
+            case 'e':
+                filename = optarg;
+                break;
+            case 'r':
+                resolve = 0;
+                break;
+            case 'i':
+            case 'w':
+                no_warnings = 0;
+                ERRORset_warning( optarg, c == 'w' );
+                break;
+            case 'p':
+                for( cp = optarg; *cp; cp++ ) {
+                    if( *cp == '#' ) {
+                        print_objects_while_running |= OBJ_PASS_BITS;
+                    } else if( *cp == 'E' ) {
+                        print_objects_while_running = OBJ_ANYTHING_BITS;
+                    } else {
+                        print_objects_while_running |= OBJget_bits( *cp );
+                    }
+                }
+                break;
+            case 'v':
+                printf( "%s %s\n%s\n", EXPRESSprogram_name, FEDEXversion(), EXPRESSversion() );
+                no_need_to_work = 1;
+                break;
+            case 'z':
+                printf( "pid = %d\n", getpid() );
+                pause();/* to allow user to attach debugger and continue */
+                break;
+            default:
+                rc = 1;
+                if( EXPRESSgetopt ) {
+                    rc = ( *EXPRESSgetopt )( c, optarg );
+                }
+                if( rc == 1 ) {
+                    ( *ERRORusage_function )();
+                }
+                break;
+        }
 
-	if (no_warnings) ERRORset_all_warnings(1);
-	ERRORbuffer_messages(buffer_messages);
+    if( !filename ) {
+        filename = argv[optind];
+        if( !filename ) {
+            if( no_need_to_work ) {
+                return( 0 );
+            } else {
+                ( *ERRORusage_function )();
+            }
+        }
+    }
 
-	if (EXPRESSinit_parse) (*EXPRESSinit_parse)();
+    if( no_warnings ) {
+        ERRORset_all_warnings( 1 );
+    }
+    ERRORbuffer_messages( buffer_messages );
 
-	model = EXPRESScreate();
-	EXPRESSparse(model,(FILE *)0,filename);
-	if (ERRORoccurred) return(EXPRESS_fail(model));
+    if( EXPRESSinit_parse ) {
+        ( *EXPRESSinit_parse )();
+    }
+
+    model = EXPRESScreate();
+    EXPRESSparse( model, ( FILE * )0, filename );
+    if( ERRORoccurred ) {
+        return( EXPRESS_fail( model ) );
+    }
 
 #ifdef debugging
-	if (malloc_debug_resolve) {
-		malloc_verify();
-		malloc_debug(2);
-	}
+    if( malloc_debug_resolve ) {
+        malloc_verify();
+        malloc_debug( 2 );
+    }
 #endif /*debugging*/
 
-	if (resolve) {
-		EXPRESSresolve(model);
-		if (ERRORoccurred) return(EXPRESS_fail(model));
-	}
+    if( resolve ) {
+        EXPRESSresolve( model );
+        if( ERRORoccurred ) {
+            return( EXPRESS_fail( model ) );
+        }
+    }
 
-	if (EXPRESSbackend) (*EXPRESSbackend)(model);
+    if( EXPRESSbackend ) {
+        ( *EXPRESSbackend )( model );
+    }
 
-	if (ERRORoccurred) return(EXPRESS_fail(model));
+    if( ERRORoccurred ) {
+        return( EXPRESS_fail( model ) );
+    }
 
-	return(EXPRESS_succeed(model));
+    return( EXPRESS_succeed( model ) );
 }

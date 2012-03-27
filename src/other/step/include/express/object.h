@@ -4,10 +4,10 @@
 /* $Id: object.h,v 1.9 1997/01/21 19:17:11 dar Exp $ */
 
 /************************************************************************
-** Module:	Object
-** Description:	This module implements the Object abstraction.
+** Module:  Object
+** Description: This module implements the Object abstraction.
 ** Constants:
-**	OBJECT_NULL	- the null class
+**  OBJECT_NULL - the null class
 **
 ************************************************************************/
 
@@ -51,13 +51,13 @@
 /* each object has an index - current the index is a mnemonic character */
 /* hence the array is rather sparse, but the extra slop is only a hundred */
 /* or so bytes, so it's nothing to sweat about */
-#define MAX_OBJECT_TYPES	127	/* really could be a LOT less */
+#define MAX_OBJECT_TYPES    127 /* really could be a LOT less */
 
 /*****************/
 /* packages used */
 /*****************/
 
-#include "basic.h"	/* get basic definitions */
+#include "basic.h"  /* get basic definitions */
 #include "symbol.h"
 
 /************/
@@ -69,10 +69,10 @@
 /***************************/
 
 struct Object {
-	struct Symbol_ *(*get_symbol)();
-	char* type;	/* should complete the phrase "X is ..." */
-			/* i.e., "an entity", "a type", "of unknown type" */
-	int bits;	/* a bitwise selector of a type, i.e. OBJ_XX_BITS */
+    struct Symbol_ * ( *get_symbol )();
+    char * type; /* should complete the phrase "X is ..." */
+    /* i.e., "an entity", "a type", "of unknown type" */
+    int bits;   /* a bitwise selector of a type, i.e. OBJ_XX_BITS */
 };
 
 /****************/
@@ -83,30 +83,30 @@ struct Object {
 /* global variables */
 /********************/
 
-extern struct Object *OBJ;
+extern struct Object * OBJ;
 
 /******************************/
 /* macro function definitions */
 /******************************/
 
-#define OBJget_symbol(obj,type) 	(*OBJ[type].get_symbol)(obj)
-#define OBJget_type(_type_)		(OBJ[_type_].type)
-#define OBJget_bits(_type_)		(OBJ[_type_].bits)
-#define OBJtype_is_oneof(_type_,class)	(OBJ[_type_].bits & (class))
-#define OBJget_name(obj,type)		(OBJget_symbol(obj,type)->name)
+#define OBJget_symbol(obj,type)     (*OBJ[type].get_symbol)(obj)
+#define OBJget_type(_type_)     (OBJ[_type_].type)
+#define OBJget_bits(_type_)     (OBJ[_type_].bits)
+#define OBJtype_is_oneof(_type_,class)  (OBJ[_type_].bits & (class))
+#define OBJget_name(obj,type)       (OBJget_symbol(obj,type)->name)
 
 /* for backwards compatibility */
-#define OBJequal(x,y)			((x) == (y))
+#define OBJequal(x,y)           ((x) == (y))
 #define OBJfree(x)
-#define OBJreference(x)			(x)
-#define OBJget_data(obj,type,err)	(obj)
+#define OBJreference(x)         (x)
+#define OBJget_data(obj,type,err)   (obj)
 
 /***********************/
 /* function prototypes */
 /***********************/
 
-extern void	OBJinitialize PROTO((void));
-extern void	OBJcreate PROTO((char,struct Symbol_ *(*)(Generic),char *,int));
-extern Symbol *	UNK_get_symbol PROTO((Generic x));
+extern void OBJinitialize PROTO( ( void ) );
+extern void OBJcreate PROTO( ( char, struct Symbol_ * ( * )( Generic ), char *, int ) );
+extern Symbol * UNK_get_symbol PROTO( ( Generic x ) );
 
 #endif /*OBJECT_H*/

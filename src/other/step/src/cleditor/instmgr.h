@@ -13,13 +13,13 @@
 * and is not subject to copyright.
 */
 
-/* $Id: instmgr.h,v 3.0.1.4 1997/11/05 22:11:42 sauderd DP3.1 $ */ 
+/* $Id: instmgr.h,v 3.0.1.4 1997/11/05 22:11:42 sauderd DP3.1 $ */
 
 ///// future? ////////////////
 // InstMgr can maintain an undo list for the last operation
-//	performed on a node 
+//  performed on a node
 // InstMgr can have a startUndo() and endUndo() so it knows when to
-//	start a new undo list and delete the old undo list. 
+//  start a new undo list and delete the old undo list.
 /////////////////////
 
 
@@ -28,7 +28,7 @@
 #endif
 
 typedef unsigned boolean;
-extern char * EntityClassName ( char *);
+extern char * EntityClassName( char * );
 
 // IT IS VERY IMPORTANT THAT THE ORDER OF THE FOLLOWING INCLUDE FILES
 // BE PRESERVED
@@ -46,76 +46,91 @@ extern char * EntityClassName ( char *);
 
 #include <mgrnodearray.h>
 
-class InstMgr
-{
-protected:
-    int maxFileId;
-    int _ownsInstances; // if true will delete instances inside destructor
+class InstMgr {
+    protected:
+        int maxFileId;
+        int _ownsInstances; // if true will delete instances inside destructor
 
-    MgrNodeArray *master;	// master array of all MgrNodes made up of
-			// complete, incomplete, new, delete MgrNodes lists
-			// this corresponds to the display list object by index
-    MgrNodeArraySorted *sortedMaster;	// master array sorted by fileId
+        MgrNodeArray * master;  // master array of all MgrNodes made up of
+        // complete, incomplete, new, delete MgrNodes lists
+        // this corresponds to the display list object by index
+        MgrNodeArraySorted * sortedMaster;  // master array sorted by fileId
 //    StateList *master; // this will be an sorted array of ptrs to MgrNodes
 
-public:
-    InstMgr(int ownsInstances = 0);
-    virtual ~InstMgr();
+    public:
+        InstMgr( int ownsInstances = 0 );
+        virtual ~InstMgr();
 
 // MASTER LIST OPERATIONS
-    int InstanceCount()   		{ return master->Count(); }
+        int InstanceCount()         {
+            return master->Count();
+        }
 
-    int OwnsInstances() { return _ownsInstances; }
-    void OwnsInstances(int ownsInstances) { _ownsInstances = ownsInstances; }
+        int OwnsInstances() {
+            return _ownsInstances;
+        }
+        void OwnsInstances( int ownsInstances ) {
+            _ownsInstances = ownsInstances;
+        }
 
-    void ClearInstances(); //clears instance lists but doesn't delete instances
-    void DeleteInstances(); // deletes the instances (ignores _ownsInstances)
+        void ClearInstances(); //clears instance lists but doesn't delete instances
+        void DeleteInstances(); // deletes the instances (ignores _ownsInstances)
 
-    Severity VerifyInstances(ErrorDescriptor& e);
+        Severity VerifyInstances( ErrorDescriptor & e );
 
-    // DAS PORT possible BUG two funct's below may create a temp for the cast
-    MgrNode * GetMgrNode(int index)   
-        { return (MgrNode *) *GetGenNode (index); }
-    GenericNode** GetGenNode(int index)   
-	{ return &(*master) [index]; }
+        // DAS PORT possible BUG two funct's below may create a temp for the cast
+        MgrNode * GetMgrNode( int index ) {
+            return ( MgrNode * ) *GetGenNode( index );
+        }
+        GenericNode ** GetGenNode( int index ) {
+            return &( *master ) [index];
+        }
 
-    MgrNode *FindFileId(int fileId);
-	// get the index into display list given a SCLP23(Application_instance)
-	//  called by see initiated functions
-    int GetIndex(SCLP23(Application_instance) *se);
-    int GetIndex(MgrNode *mn);
-    int VerifyEntity(int fileId, const char *expectedType);
+        MgrNode * FindFileId( int fileId );
+        // get the index into display list given a SCLP23(Application_instance)
+        //  called by see initiated functions
+        int GetIndex( SCLP23( Application_instance ) *se );
+        int GetIndex( MgrNode * mn );
+        int VerifyEntity( int fileId, const char * expectedType );
 
 //    void Append(MgrNode *node);
-    MgrNode *Append(SCLP23(Application_instance) *se, stateEnum listState);
-		// deletes node from master list structure 
-    void Delete(MgrNode *node);
-    void Delete(SCLP23(Application_instance) *se);
+        MgrNode * Append( SCLP23( Application_instance ) *se, stateEnum listState );
+        // deletes node from master list structure
+        void Delete( MgrNode * node );
+        void Delete( SCLP23( Application_instance ) *se );
 
-    void ChangeState(MgrNode *node, stateEnum listState);
+        void ChangeState( MgrNode * node, stateEnum listState );
 
-    int MaxFileId()		{ return maxFileId; }
-    int NextFileId()		{ return maxFileId = maxFileId +1; }
-    int EntityKeywordCount(const char* name);
+        int MaxFileId()     {
+            return maxFileId;
+        }
+        int NextFileId()        {
+            return maxFileId = maxFileId + 1;
+        }
+        int EntityKeywordCount( const char * name );
 
-    SCLP23(Application_instance) *GetApplication_instance(int index);
-    SCLP23(Application_instance) *
-			    GetApplication_instance(const char* entityKeyword, 
-						    int starting_index =0);
-    SCLP23(Application_instance) *GetApplication_instance(MgrNode *node) 
-				   { return node->GetApplication_instance(); };
+        SCLP23( Application_instance ) * GetApplication_instance( int index );
+        SCLP23( Application_instance ) *
+        GetApplication_instance( const char * entityKeyword,
+                                 int starting_index = 0 );
+        SCLP23( Application_instance ) * GetApplication_instance( MgrNode * node ) {
+            return node->GetApplication_instance();
+        };
 
-    void *GetSEE(int index);
-    void *GetSEE(MgrNode *node) { return node->SEE(); };
+        void * GetSEE( int index );
+        void * GetSEE( MgrNode * node ) {
+            return node->SEE();
+        };
 
-    void PrintSortedFileIds();
+        void PrintSortedFileIds();
 
-    // OBSOLETE
-    SCLP23(Application_instance) *GetSTEPentity(int index);
-    SCLP23(Application_instance) *GetSTEPentity(const char* entityKeyword, 
-			      int starting_index =0);
-    SCLP23(Application_instance) *GetSTEPentity(MgrNode *node) 
-				{ return node->GetApplication_instance(); };
+        // OBSOLETE
+        SCLP23( Application_instance ) * GetSTEPentity( int index );
+        SCLP23( Application_instance ) * GetSTEPentity( const char * entityKeyword,
+                int starting_index = 0 );
+        SCLP23( Application_instance ) * GetSTEPentity( MgrNode * node ) {
+            return node->GetApplication_instance();
+        };
 
 };
 

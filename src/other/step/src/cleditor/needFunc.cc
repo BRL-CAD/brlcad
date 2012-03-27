@@ -2,7 +2,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function defined as a stub (necessary to use the scl)
-// The purpose of this function is to allow the DisplayNode object to delete 
+// The purpose of this function is to allow the DisplayNode object to delete
 // an object that it knows nothing about.  It was made generic so that the scl
 // could be used with any display toolkit.
 //
@@ -14,7 +14,6 @@
 // To see an example of this function used with the Data Probe look in
 // ../clprobe-ui/StepEntEditor.cc  Look at DeleteSEE() and ~StepEntityEditor().
 ///////////////////////////////////////////////////////////////////////////////
-void DeleteSEE(StepEntityEditor *se)  
-{
+void DeleteSEE( StepEntityEditor * se ) {
     delete se;
 }

@@ -33,123 +33,109 @@
 #define TLD_VSPACE (round(.15*inch))
 #define TLD_HSPACE (round(.15*inch))
 
-class seTypeListDisplay : public Frame 
-{
-public:
-    seTypeListDisplay();
-	// overrule scene's virtual function to do nothing
-    void Insert(Interactor *) { };
+class seTypeListDisplay : public Frame {
+    public:
+        seTypeListDisplay();
+        // overrule scene's virtual function to do nothing
+        void Insert( Interactor * ) { };
 
-    void Update();
+        void Update();
 
 // operations on the list
-    void Browse();
-    virtual void Insert(const char*, int index);
-    virtual void Append(const char*);
-    virtual void Remove(int index);
-    virtual void ReplaceText(const char* s, int index);
+        void Browse();
+        virtual void Insert( const char *, int index );
+        virtual void Append( const char * );
+        virtual void Remove( int index );
+        virtual void ReplaceText( const char * s, int index );
 
-    void Bold(int index);
+        void Bold( int index );
 
-    int Index(const char*);
-    char* String(int);
-    int Count();
-    void Clear();
+        int Index( const char * );
+        char * String( int );
+        int Count();
+        void Clear();
 
-    void Select(int index);
-    void Unselect(int index);
-    void UnselectAll();
-    int Selection(int selindex = 0);
-    int SelectionIndex(int index);
-    int Selections();
-    boolean Selected(int index);
+        void Select( int index );
+        void Unselect( int index );
+        void UnselectAll();
+        int Selection( int selindex = 0 );
+        int SelectionIndex( int index );
+        int Selections();
+        boolean Selected( int index );
 
-private:
-    void CreateButtons();
+    private:
+        void CreateButtons();
 
-private:
-    MyStringBrowser *entityTypeList;
-    ButtonState *entityTypeListButSt;
-    
-    StringEditor2 *searchBuf;
-    ButtonState *searchBufButSt;
-    ButtonState *searchButtonsButSt;
-    MyRadioButton *forwardSearchBut;
-    MyRadioButton *backwardSearchBut;
-    ButtonState *caseButtonButSt;
-    MyCheckBox *caseSearchBut;
+    private:
+        MyStringBrowser * entityTypeList;
+        ButtonState * entityTypeListButSt;
 
-    ButtonState *buttonsButSt;
+        StringEditor2 * searchBuf;
+        ButtonState * searchBufButSt;
+        ButtonState * searchButtonsButSt;
+        MyRadioButton * forwardSearchBut;
+        MyRadioButton * backwardSearchBut;
+        ButtonState * caseButtonButSt;
+        MyCheckBox * caseSearchBut;
 
-    MyPushButton *createBut;
-    MyPushButton *infoBut;
+        ButtonState * buttonsButSt;
+
+        MyPushButton * createBut;
+        MyPushButton * infoBut;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 
-inline void seTypeListDisplay::Browse()
-{
+inline void seTypeListDisplay::Browse() {
     entityTypeList->Browse();
 }
 
-inline void seTypeListDisplay::Bold(int index)
-{
-    entityTypeList->Bold(index);
+inline void seTypeListDisplay::Bold( int index ) {
+    entityTypeList->Bold( index );
 }
 
-inline int seTypeListDisplay::Index(const char* s)
-{
-    return entityTypeList->Index(s);
+inline int seTypeListDisplay::Index( const char * s ) {
+    return entityTypeList->Index( s );
 }
 
-inline char *seTypeListDisplay::String(int index)
-{
-    return entityTypeList->String(index);
+inline char * seTypeListDisplay::String( int index ) {
+    return entityTypeList->String( index );
 }
 
-inline int seTypeListDisplay::Count()
-{
+inline int seTypeListDisplay::Count() {
     return entityTypeList->Count();
 }
 
-inline void seTypeListDisplay::Clear()
-{
+inline void seTypeListDisplay::Clear() {
     entityTypeList->Clear();
 }
 
-inline void seTypeListDisplay::Select(int index)
-{
-    entityTypeList->Select(index);
+inline void seTypeListDisplay::Select( int index ) {
+    entityTypeList->Select( index );
 }
 
-inline void seTypeListDisplay::Unselect(int index)
-{
-    entityTypeList->Unselect(index);
+inline void seTypeListDisplay::Unselect( int index ) {
+    entityTypeList->Unselect( index );
 }
 
-inline void seTypeListDisplay::UnselectAll()
-{
+inline void seTypeListDisplay::UnselectAll() {
     entityTypeList->UnselectAll();
 }
 
-inline int seTypeListDisplay::Selection(int selindex)
-{
-    return entityTypeList->Selection(selindex);
+inline int seTypeListDisplay::Selection( int selindex ) {
+    return entityTypeList->Selection( selindex );
 }
 
-inline int seTypeListDisplay::SelectionIndex(int index)
-{
-    return entityTypeList->SelectionIndex(index);
+inline int seTypeListDisplay::SelectionIndex( int index ) {
+    return entityTypeList->SelectionIndex( index );
 }
 
-inline int seTypeListDisplay::Selections()
-{
+inline int seTypeListDisplay::Selections() {
     return entityTypeList->Selections();
 }
 
-inline boolean seTypeListDisplay::Selected(int index)
-{
-    return entityTypeList->Selected(index);
+inline boolean seTypeListDisplay::Selected( int index ) {
+    return entityTypeList->Selected( index );
 }
 
 #include <IV-2_6/_leave.h>

@@ -1,4 +1,4 @@
-/* 
+/*
  * tests.h
  *
  * Ian Soboroff, NIST
@@ -35,7 +35,7 @@
 
 #include <needFunc.h>
 
-extern void SchemaInit (Registry &);
+extern void SchemaInit( Registry & );
 
 /* STEPentity* Iterator class definition */
 #include <SEarritr.h>

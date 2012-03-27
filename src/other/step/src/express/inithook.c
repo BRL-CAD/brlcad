@@ -2,7 +2,6 @@
 /* or customize other parts of fedex application */
 
 void
-EXPRESSinit_init()
-{
+EXPRESSinit_init() {
 }
 

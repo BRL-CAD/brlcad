@@ -15,13 +15,13 @@
 /* $Id: scl_hash.h,v 3.0.1.2 1997/11/05 22:33:49 sauderd DP3.1 $ */
 
 /************************************************************************
-** Hash_Table:	Hash_Table
-** Description:	
-**	
+** Hash_Table:  Hash_Table
+** Description:
+**
 ** Largely based on code written by ejp@ausmelb.oz
 **
 ** Constants:
-**	HASH_TABLE_NULL	- the null Hash_Table
+**  HASH_TABLE_NULL - the null Hash_Table
 **
 ************************************************************************/
 
@@ -90,56 +90,56 @@
  *
  * Revision 1.2  1992/05/31  08:36:48  libes
  * multiple files
- * 
+ *
  */
 
 typedef enum { HASH_FIND, HASH_INSERT, HASH_DELETE } Action;
 
 struct Element {
-	char		*key;
-	void		*data;
-	struct Element	*next;
-	struct Symbol	*symbol;/* for debugging hash conflicts */
-	char		type;	/* user-supplied type */
+    char    *    key;
+    void    *    data;
+    struct Element * next;
+    struct Symbol  * symbol;/* for debugging hash conflicts */
+    char        type;   /* user-supplied type */
 };
 
 struct Hash_Table {
-	short	p;		/* Next bucket to be split	*/
-	short	maxp;		/* upper bound on p during expansion	*/
-	long	KeyCount;	/* current # keys	*/
-	short	SegmentCount;	/* current # segments	*/
-	short	MinLoadFactor;
-	short	MaxLoadFactor;
-#define DIRECTORY_SIZE		256
-#define DIRECTORY_SIZE_SHIFT	8	/* log2(DIRECTORY_SIZE)	*/
-	struct Element **Directory[DIRECTORY_SIZE];
+    short   p;      /* Next bucket to be split  */
+    short   maxp;       /* upper bound on p during expansion    */
+    long    KeyCount;   /* current # keys   */
+    short   SegmentCount;   /* current # segments   */
+    short   MinLoadFactor;
+    short   MaxLoadFactor;
+#define DIRECTORY_SIZE      256
+#define DIRECTORY_SIZE_SHIFT    8   /* log2(DIRECTORY_SIZE) */
+    struct Element ** Directory[DIRECTORY_SIZE];
 };
 
 typedef struct {
-	int i;	/* segment index (i think) */
-	int j;	/* key index in segment (ditto) */
-	struct Element *p;	/* usually the next element to be returned */
-	struct Hash_Table *table;
-	char type;
-	struct Element *e;	/* originally thought of as a place for */
-/* the caller of HASHlist to temporarily stash the return value */
-/* to allow the caller (i.e., DICTdo) to be macroized, but now */
-/* conveniently used by HASHlist, which both stores the ultimate */
-/* value here as well as returns it via the return value of HASHlist */
+    int i;  /* segment index (i think) */
+    int j;  /* key index in segment (ditto) */
+    struct Element * p; /* usually the next element to be returned */
+    struct Hash_Table * table;
+    char type;
+    struct Element * e; /* originally thought of as a place for */
+    /* the caller of HASHlist to temporarily stash the return value */
+    /* to allow the caller (i.e., DICTdo) to be macroized, but now */
+    /* conveniently used by HASHlist, which both stores the ultimate */
+    /* value here as well as returns it via the return value of HASHlist */
 } HashEntry;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct Hash_Table	*HASHcreate(unsigned);
-void		*HASHfind(struct Hash_Table *,  char *);
-void		HASHinsert(struct Hash_Table *, char *,void *);
-void		HASHdestroy(struct Hash_Table *);
-struct Element	*HASHsearch(struct Hash_Table *,struct Element *, Action);
-void		HASHlistinit(struct Hash_Table *,HashEntry *);
-void		HASHlistinit_by_type(struct Hash_Table *,HashEntry *,char);
-struct Element	*HASHlist(HashEntry *);
+    struct Hash_Table  * HASHcreate( unsigned );
+    void    *    HASHfind( struct Hash_Table *,  char * );
+    void        HASHinsert( struct Hash_Table *, char *, void * );
+    void        HASHdestroy( struct Hash_Table * );
+    struct Element * HASHsearch( struct Hash_Table *, struct Element *, Action );
+    void        HASHlistinit( struct Hash_Table *, HashEntry * );
+    void        HASHlistinit_by_type( struct Hash_Table *, HashEntry *, char );
+    struct Element * HASHlist( HashEntry * );
 
 #ifdef __cplusplus
 }

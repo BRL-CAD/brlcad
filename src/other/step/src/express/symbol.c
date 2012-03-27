@@ -3,10 +3,10 @@ static char rcsid[] = "$Id: symbol.c,v 1.6 1997/01/21 19:19:51 dar Exp $";
 #endif
 
 /************************************************************************
-** Module:	Symbol
-** Description:	This module implements the Symbol abstraction.  
+** Module:  Symbol
+** Description: This module implements the Symbol abstraction.
 ** Constants:
-**	SYMBOL_NULL	- the null Symbol
+**  SYMBOL_NULL - the null Symbol
 **
 ************************************************************************/
 
@@ -39,27 +39,26 @@ static char rcsid[] = "$Id: symbol.c,v 1.6 1997/01/21 19:19:51 dar Exp $";
 struct freelist_head SYMBOL_fl;
 
 /*
-** Procedure:	SYMBOLinitialize
-** Parameters:	-- none --
-** Returns:	void
-** Description:	Initialize the Symbol module
+** Procedure:   SYMBOLinitialize
+** Parameters:  -- none --
+** Returns: void
+** Description: Initialize the Symbol module
 */
 
 void
-SYMBOLinitialize()
-{
-	MEMinitialize(&SYMBOL_fl,sizeof(struct Symbol_),100,100);
+SYMBOLinitialize() {
+    MEMinitialize( &SYMBOL_fl, sizeof( struct Symbol_ ), 100, 100 );
 }
 
 Symbol *
-SYMBOLcreate(name,line,filename)
-char *name;
+SYMBOLcreate( name, line, filename )
+char * name;
 int line;
-char *filename;
+char * filename;
 {
-	Symbol *sym = SYMBOL_new();
-	sym->name = name;
-	sym->line = line;
-	sym->filename = current_filename;
-	return sym;
+    Symbol * sym = SYMBOL_new();
+    sym->name = name;
+    sym->line = line;
+    sym->filename = current_filename;
+    return sym;
 }

@@ -1,5 +1,5 @@
 #ifndef singlelinklist_h
-#define	singlelinklist_h
+#define singlelinklist_h
 
 /*
 * NIST STEP Core Class Library
@@ -20,44 +20,44 @@
 
 class SingleLinkList  {
 
-    // node which represents the value is contained in the subclass
-	//  since it may have different types for different lists
-    
-  protected:
-    
-    class  SingleLinkNode *  head;
-    SingleLinkNode *  tail;
+        // node which represents the value is contained in the subclass
+        //  since it may have different types for different lists
 
-  public:
-    
-    virtual SingleLinkNode *NewNode();
-    virtual void AppendNode (SingleLinkNode *);
-    virtual void DeleteNode (SingleLinkNode *);
+    protected:
 
-    virtual void Empty ();
-    virtual void DeleteFollowingNodes (SingleLinkNode *);
-    virtual SingleLinkNode * GetHead () const;
-    
-    int EntryCount() const;
+        class  SingleLinkNode  * head;
+        SingleLinkNode  * tail;
 
-    SingleLinkList ();
-    virtual ~SingleLinkList ();
+    public:
+
+        virtual SingleLinkNode * NewNode();
+        virtual void AppendNode( SingleLinkNode * );
+        virtual void DeleteNode( SingleLinkNode * );
+
+        virtual void Empty();
+        virtual void DeleteFollowingNodes( SingleLinkNode * );
+        virtual SingleLinkNode * GetHead() const;
+
+        int EntryCount() const;
+
+        SingleLinkList();
+        virtual ~SingleLinkList();
 
 }
 ;
 
 
 class SingleLinkNode {
-    friend class SingleLinkList;
-  protected:
+        friend class SingleLinkList;
+    protected:
 
-  public:
-    SingleLinkList *owner;
-    SingleLinkNode *next;
+    public:
+        SingleLinkList * owner;
+        SingleLinkNode * next;
 
-    virtual SingleLinkNode *NextNode () const;
-    SingleLinkNode() : owner(0), next(0)  { }
-    virtual ~SingleLinkNode() { }
+        virtual SingleLinkNode * NextNode() const;
+        SingleLinkNode() : owner( 0 ), next( 0 )  { }
+        virtual ~SingleLinkNode() { }
 
 };
 

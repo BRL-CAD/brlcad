@@ -1,5 +1,5 @@
-#ifndef	STEPUNDEFINED_H
-#define	STEPUNDEFINED_H
+#ifndef STEPUNDEFINED_H
+#define STEPUNDEFINED_H
 
 /*
 * NIST STEP Core Class Library
@@ -23,28 +23,28 @@
 #include <read_func.h>
 
 class SCLundefined  {
-  protected:
-    std::string val;
-    
-  public:
-//	INPUT
-    virtual Severity StrToVal(const char *s, ErrorDescriptor *err);
-    virtual Severity StrToVal(istream &in, ErrorDescriptor *err);
+    protected:
+        std::string val;
 
-    virtual Severity STEPread(const char *s, ErrorDescriptor *err);
-    virtual Severity STEPread(istream &in, ErrorDescriptor *err);
+    public:
+//  INPUT
+        virtual Severity StrToVal( const char * s, ErrorDescriptor * err );
+        virtual Severity StrToVal( istream & in, ErrorDescriptor * err );
 
-//	OUTPUT
-    virtual const char *asStr(std::string& s) const;
-    virtual const char *STEPwrite(std::string& s);
-    virtual void 	STEPwrite (ostream& out =cout);
+        virtual Severity STEPread( const char * s, ErrorDescriptor * err );
+        virtual Severity STEPread( istream & in, ErrorDescriptor * err );
 
-    int set_null ();
-    int is_null ();
-    SCLundefined& operator= (const SCLundefined&); 
-    SCLundefined& operator= (const char *str); 
-    SCLundefined ();
-    virtual ~SCLundefined ();
+//  OUTPUT
+        virtual const char * asStr( std::string & s ) const;
+        virtual const char * STEPwrite( std::string & s );
+        virtual void    STEPwrite( ostream & out = cout );
+
+        int set_null();
+        int is_null();
+        SCLundefined & operator= ( const SCLundefined & );
+        SCLundefined & operator= ( const char * str );
+        SCLundefined();
+        virtual ~SCLundefined();
 }
 ;
 

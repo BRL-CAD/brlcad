@@ -34,40 +34,43 @@ class HeaderEntityEditor;
 #define HD_MODIFY_ACTION 1
 #define HD_INFO_ACTION 2
 
-class HeaderDisplay : public Frame 
-{
-public:
-    HeaderDisplay(InstMgr *him, Probe *probe, int pinBool = 1);
-    virtual ~HeaderDisplay();
-	// overrule scene's virtual function to do nothing
-    void Insert(Interactor *) { };
+class HeaderDisplay : public Frame {
+    public:
+        HeaderDisplay( InstMgr * him, Probe * probe, int pinBool = 1 );
+        virtual ~HeaderDisplay();
+        // overrule scene's virtual function to do nothing
+        void Insert( Interactor * ) { };
 
-    void Update();
-    virtual int ExecuteCommand(int v);
+        void Update();
+        virtual int ExecuteCommand( int v );
 
-    InstMgr *HeaderIM() { return headerIM; }
-    void HeaderIM(InstMgr *him) { headerIM = him; }
+        InstMgr * HeaderIM() {
+            return headerIM;
+        }
+        void HeaderIM( InstMgr * him ) {
+            headerIM = him;
+        }
 
-    boolean IsMapped ();
+        boolean IsMapped();
 
-private:
-    void CreateButtons(int pinBool);
+    private:
+        void CreateButtons( int pinBool );
 
-protected:
+    protected:
 
-    Probe *dp;
-    InstMgr *headerIM;
-    HeaderEntityEditor *hee1, *hee2, *hee3;
+        Probe * dp;
+        InstMgr * headerIM;
+        HeaderEntityEditor * hee1, *hee2, *hee3;
 
-    ButtonState *buttonsButSt;		// subject set by save & abort buttons
+        ButtonState * buttonsButSt;     // subject set by save & abort buttons
 
-    MyPushButton *saveCompleteBut;	// sets buttonsButSt
-    MyPushButton *saveIncompleteBut;	// sets buttonsButSt
-    MyPushButton *cancelBut;		// sets buttonsButSt
+        MyPushButton * saveCompleteBut; // sets buttonsButSt
+        MyPushButton * saveIncompleteBut;   // sets buttonsButSt
+        MyPushButton * cancelBut;       // sets buttonsButSt
 
-    ButtonState *pinTogButSt;		// subject set by pinTogBut
-    PinCheckBox *pinTogBut;		// toggle pin(stay mapped)/unmap with
-					// save, cancel, and delete buttons
+        ButtonState * pinTogButSt;      // subject set by pinTogBut
+        PinCheckBox * pinTogBut;    // toggle pin(stay mapped)/unmap with
+        // save, cancel, and delete buttons
 };
 
 #include <IV-2_6/_leave.h>

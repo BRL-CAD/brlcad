@@ -29,124 +29,117 @@
 #ifndef HAVE_MEMMOVE
 extern "C"
 {
-void * memmove(void *__s1, const void *__s2, size_t __n);
+    void * memmove( void * __s1, const void * __s2, size_t __n );
 }
 #endif
 
 /*****************************************************************************/
 
-SCLP23(Model_contents__list)::SCLP23_NAME(Model_contents__list) (int defaultSize)
-{
+SCLP23( Model_contents__list )::SCLP23_NAME( Model_contents__list )( int defaultSize ) {
     _bufsize = defaultSize;
-    _buf = new SCLP23(Model_contents_ptr)[_bufsize];
+    _buf = new SCLP23( Model_contents_ptr )[_bufsize];
     _count = 0;
 }
 
-SCLP23(Model_contents__list)::~SCLP23_NAME(Model_contents__list) () 
-{
+SCLP23( Model_contents__list )::~SCLP23_NAME( Model_contents__list )() {
     delete _buf;
 }
 
-void SCLP23(Model_contents__list)::Check (int index) {
+void SCLP23( Model_contents__list )::Check( int index ) {
 
-    SCLP23(Model_contents_ptr)* newbuf;
+    SCLP23( Model_contents_ptr )* newbuf;
 
-    if (index >= _bufsize) {
-        _bufsize = (index+1) * 2;
-        newbuf = new SCLP23(Model_contents_ptr)[_bufsize];
-        memmove(newbuf, _buf, _count*sizeof(SCLP23(Model_contents_ptr)));
+    if( index >= _bufsize ) {
+        _bufsize = ( index + 1 ) * 2;
+        newbuf = new SCLP23( Model_contents_ptr )[_bufsize];
+        memmove( newbuf, _buf, _count * sizeof( SCLP23( Model_contents_ptr ) ) );
         delete _buf;
         _buf = newbuf;
     }
 }
 
-void 
-SCLP23(Model_contents__list)::Insert (SCLP23(Model_contents_ptr) v, int index) {
+void
+SCLP23( Model_contents__list )::Insert( SCLP23( Model_contents_ptr ) v, int index ) {
 
-    SCLP23(Model_contents_ptr)* spot;
-    index = (index < 0) ? _count : index;
+    SCLP23( Model_contents_ptr )* spot;
+    index = ( index < 0 ) ? _count : index;
 
-    if (index < _count) {
-        Check(_count+1);
+    if( index < _count ) {
+        Check( _count + 1 );
         spot = &_buf[index];
-        memmove(spot+1, spot, (_count - index)*sizeof(SCLP23(Model_contents_ptr)));
+        memmove( spot + 1, spot, ( _count - index )*sizeof( SCLP23( Model_contents_ptr ) ) );
 
     } else {
-        Check(index);
+        Check( index );
         spot = &_buf[index];
     }
     *spot = v;
     ++_count;
 }
 
-void SCLP23(Model_contents__list)::Append (SCLP23(Model_contents_ptr) v) {
+void SCLP23( Model_contents__list )::Append( SCLP23( Model_contents_ptr ) v ) {
 
     int index = _count;
-    SCLP23(Model_contents_ptr)* spot;
+    SCLP23( Model_contents_ptr )* spot;
 
-    if (index < _count) {
-        Check(_count+1);
+    if( index < _count ) {
+        Check( _count + 1 );
         spot = &_buf[index];
-        memmove(spot+1, spot, (_count - index)*sizeof(SCLP23(Model_contents_ptr)));
+        memmove( spot + 1, spot, ( _count - index )*sizeof( SCLP23( Model_contents_ptr ) ) );
 
     } else {
-        Check(index);
+        Check( index );
         spot = &_buf[index];
     }
     *spot = v;
     ++_count;
 }
 
-void SCLP23(Model_contents__list)::Remove (int index) {
+void SCLP23( Model_contents__list )::Remove( int index ) {
 
-    if (0 <= index && index < _count) {
+    if( 0 <= index && index < _count ) {
         --_count;
-        SCLP23(Model_contents_ptr)* spot = &_buf[index];
-        memmove(spot, spot+1, (_count - index)*sizeof(SCLP23(Model_contents_ptr)));
+        SCLP23( Model_contents_ptr )* spot = &_buf[index];
+        memmove( spot, spot + 1, ( _count - index )*sizeof( SCLP23( Model_contents_ptr ) ) );
     }
 }
 
-int SCLP23(Model_contents__list)::Index (SCLP23(Model_contents_ptr) v) {
+int SCLP23( Model_contents__list )::Index( SCLP23( Model_contents_ptr ) v ) {
 
-    for (int i = 0; i < _count; ++i) {
-        if (_buf[i] == v) {
+    for( int i = 0; i < _count; ++i ) {
+        if( _buf[i] == v ) {
             return i;
         }
     }
     return -1;
 }
 
-SCLP23(Model_contents_ptr) 
-SCLP23(Model_contents__list)::retrieve(int index)
-{
-    return operator[](index);
+SCLP23( Model_contents_ptr )
+SCLP23( Model_contents__list )::retrieve( int index ) {
+    return operator[]( index );
 }
 
-SCLP23(Model_contents_ptr)& 
-SCLP23(Model_contents__list)::operator[] (int index) 
-{
+SCLP23( Model_contents_ptr ) &
+SCLP23( Model_contents__list )::operator[]( int index ) {
 
-    Check(index);
+    Check( index );
 //    _count = max(_count, index+1);
-    _count = ( (_count > index+1) ? _count : (index+1) );
+    _count = ( ( _count > index + 1 ) ? _count : ( index + 1 ) );
     return _buf[index];
 }
 
-int 
-SCLP23(Model_contents__list)::Count()
-{
-    return _count; 
+int
+SCLP23( Model_contents__list )::Count() {
+    return _count;
 }
 
-int 
-SCLP23(Model_contents__list)::is_empty()
-{
-    return _count; 
+int
+SCLP23( Model_contents__list )::is_empty() {
+    return _count;
 }
 
-void 
-SCLP23(Model_contents__list)::Clear()
-{
-    _count = 0; 
+void
+SCLP23( Model_contents__list )::Clear() {
+    _count = 0;
 }
 

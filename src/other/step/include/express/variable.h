@@ -4,13 +4,13 @@
 /* $Id: variable.h,v 1.10 1997/01/21 19:17:11 dar Exp $ */
 
 /************************************************************************
-** Module:	Variable
-** Description:	This module implements the Variable abstraction.  A
-**	Variable consists of a name, a type, a reference class, and
-**	some flags, e.g. 'optional', 'variable'.  It is used to represent
-**	entity attributes, variables, and formal parameters.
+** Module:  Variable
+** Description: This module implements the Variable abstraction.  A
+**  Variable consists of a name, a type, a reference class, and
+**  some flags, e.g. 'optional', 'variable'.  It is used to represent
+**  entity attributes, variables, and formal parameters.
 ** Constants:
-**	VARIABLE_NULL	- the null variable
+**  VARIABLE_NULL   - the null variable
 **
 ************************************************************************/
 
@@ -51,25 +51,25 @@
 /* constants */
 /*************/
 
-#define VARIABLE_NULL		(Variable)0
+#define VARIABLE_NULL       (Variable)0
 
 /*****************/
 /* packages used */
 /*****************/
 
-#include "expbasic.h"	/* get basic definitions */
-#include "symbol.h"       
+#include "expbasic.h"   /* get basic definitions */
+#include "symbol.h"
 
 /************/
 /* typedefs */
 /************/
 
-typedef struct Variable_ *Variable;
+typedef struct Variable_ * Variable;
 
 /****************/
 /* modules used */
 /****************/
-       
+
 #include "type.h"
 #include "expr.h"
 
@@ -78,26 +78,26 @@ typedef struct Variable_ *Variable;
 /***************************/
 
 struct Variable_ {
-	/* Symbol is inside of 'name' below */
-	Expression name;
-	Type type;
-	Expression initializer;	/* or 'derived' */
-	int		offset;
+    /* Symbol is inside of 'name' below */
+    Expression name;
+    Type type;
+    Expression initializer; /* or 'derived' */
+    int     offset;
 
-	struct {
-		int optional	:1;	/* OPTIONAL keyword */
-		int var		:1;	/* VAR keyword */
-		int constant	:1;	/* from CONSTANT...END_CONSTANT */
-		int unique	:1;	/* appears in UNIQUE list */
-		int parameter	:1;	/* is a formal parameter */
-		int attribute	:1;	/* is an attribute (rule parameters */
-					/* are marked this way, too) */
-	} flags;
+    struct {
+        int optional    : 1; /* OPTIONAL keyword */
+        int var     : 1; /* VAR keyword */
+        int constant    : 1; /* from CONSTANT...END_CONSTANT */
+        int unique  : 1; /* appears in UNIQUE list */
+        int parameter   : 1; /* is a formal parameter */
+        int attribute   : 1; /* is an attribute (rule parameters */
+        /* are marked this way, too) */
+    } flags;
 
 #define query_symbol inverse_symbol
-	Symbol *	inverse_symbol;	/* entity symbol */
-	Variable 	inverse_attribute;	/* attribute related by */
-				/* inverse relationship */
+    Symbol   *  inverse_symbol; /* entity symbol */
+    Variable    inverse_attribute;  /* attribute related by */
+    /* inverse relationship */
 };
 
 /********************/
@@ -110,30 +110,30 @@ extern struct freelist_head VAR_fl;
 /* macro function definitions */
 /******************************/
 
-#define VAR_new()	(struct Variable_ *)MEM_new(&VAR_fl)
-#define VAR_destroy(x)	MEM_destroy(&VAR_fl,(Freelist *)(Generic)x)
+#define VAR_new()   (struct Variable_ *)MEM_new(&VAR_fl)
+#define VAR_destroy(x)  MEM_destroy(&VAR_fl,(Freelist *)(Generic)x)
 
-#define VARget_name(v)			((v)->name)
-#define VARput_name(v,n)		((v)->name = (n))
-#define VARput_offset(v,off)		((v)->offset = (off))
-#define VARget_offset(v)		((v)->offset)
+#define VARget_name(v)          ((v)->name)
+#define VARput_name(v,n)        ((v)->name = (n))
+#define VARput_offset(v,off)        ((v)->offset = (off))
+#define VARget_offset(v)        ((v)->offset)
 
-#define VARget_initializer(v)		((v)->initializer)
-#define VARget_type(v)			((v)->type)
-#define VARget_optional(v)		((v)->flags.optional)
-#define VARget_unique(v)		((v)->flags.unique)
+#define VARget_initializer(v)       ((v)->initializer)
+#define VARget_type(v)          ((v)->type)
+#define VARget_optional(v)      ((v)->flags.optional)
+#define VARget_unique(v)        ((v)->flags.unique)
 
-#define VARis_derived(v)		((v)->initializer != 0)
-#define VARget_inverse(v)		((v)->inverse_attribute)
+#define VARis_derived(v)        ((v)->initializer != 0)
+#define VARget_inverse(v)       ((v)->inverse_attribute)
 /* for backwards compatibility */
-#define VARget_derived		VARis_derived
+#define VARget_derived      VARis_derived
 
 /***********************/
 /* function prototypes */
 /***********************/
 
-extern Variable VARcreate PROTO((Expression, Type));
-extern void VARinitialize PROTO((void));
-extern char *VARget_simple_name PROTO((Variable));
+extern Variable VARcreate PROTO( ( Expression, Type ) );
+extern void VARinitialize PROTO( ( void ) );
+extern char * VARget_simple_name PROTO( ( Variable ) );
 
 #endif    /*  VARIABLE_H  */

@@ -1,13 +1,13 @@
 static char rcsid[] = "$Id: alg.c,v 1.5 1997/01/21 19:19:51 dar Exp $";
 
 /************************************************************************
-** Module:	Algorithm
-** Description:	This module implements the Algorithm abstraction.  An
-**	algorithm can be a procedure, a function, or a rule.  It consists
-**	of a name, a return type (for functions and rules), a list of
-**	formal parameters, and a list of statements (body).
+** Module:  Algorithm
+** Description: This module implements the Algorithm abstraction.  An
+**  algorithm can be a procedure, a function, or a rule.  It consists
+**  of a name, a return type (for functions and rules), a list of
+**  formal parameters, and a list of statements (body).
 ** Constants:
-**	ALGORITHM_NULL	- the null algorithm
+**  ALGORITHM_NULL  - the null algorithm
 **
 ************************************************************************/
 
@@ -49,68 +49,64 @@ struct freelist_head PROC_fl;
 struct freelist_head WHERE_fl;
 
 Scope
-ALGcreate(char type)
-{
-	Scope s = SCOPEcreate(type);
+ALGcreate( char type ) {
+    Scope s = SCOPEcreate( type );
 
-	switch(type) {
-	case OBJ_PROCEDURE:
-		s->u.proc = PROC_new();
-		break;
-	case OBJ_FUNCTION:
-		s->u.func = FUNC_new();
-		break;
-	case OBJ_RULE:
-		s->u.rule = RULE_new();
-		break;
-	}
-	return s;
+    switch( type ) {
+        case OBJ_PROCEDURE:
+            s->u.proc = PROC_new();
+            break;
+        case OBJ_FUNCTION:
+            s->u.func = FUNC_new();
+            break;
+        case OBJ_RULE:
+            s->u.rule = RULE_new();
+            break;
+    }
+    return s;
 }
 
 /*
-** Procedure:	ALGinitialize
-** Parameters:	-- none --
-** Returns:	void
-** Description:	Initialize the Algorithm module.
+** Procedure:   ALGinitialize
+** Parameters:  -- none --
+** Returns: void
+** Description: Initialize the Algorithm module.
 */
 
 Symbol *
-WHERE_get_symbol(Generic w)
-{
-	return(((Where)w)->label);
+WHERE_get_symbol( Generic w ) {
+    return( ( ( Where )w )->label );
 }
 
 void
-ALGinitialize(void)
-{
-	MEMinitialize(&FUNC_fl,sizeof(struct Function_),  100,50);
-	MEMinitialize(&RULE_fl,sizeof(struct Rule_),	  100,50);
-	MEMinitialize(&PROC_fl,sizeof(struct Procedure_), 100,50);
-	MEMinitialize(&WHERE_fl,sizeof(struct Where_),    100,50);
-	OBJcreate(OBJ_RULE,SCOPE_get_symbol,"rule",OBJ_UNUSED_BITS);
-	OBJcreate(OBJ_PROCEDURE,SCOPE_get_symbol,"procedure",OBJ_PROCEDURE_BITS);
-	OBJcreate(OBJ_FUNCTION,SCOPE_get_symbol,"function",OBJ_FUNCTION_BITS);
-	OBJcreate(OBJ_WHERE,WHERE_get_symbol,"where",OBJ_WHERE_BITS);
+ALGinitialize( void ) {
+    MEMinitialize( &FUNC_fl, sizeof( struct Function_ ),  100, 50 );
+    MEMinitialize( &RULE_fl, sizeof( struct Rule_ ),      100, 50 );
+    MEMinitialize( &PROC_fl, sizeof( struct Procedure_ ), 100, 50 );
+    MEMinitialize( &WHERE_fl, sizeof( struct Where_ ),    100, 50 );
+    OBJcreate( OBJ_RULE, SCOPE_get_symbol, "rule", OBJ_UNUSED_BITS );
+    OBJcreate( OBJ_PROCEDURE, SCOPE_get_symbol, "procedure", OBJ_PROCEDURE_BITS );
+    OBJcreate( OBJ_FUNCTION, SCOPE_get_symbol, "function", OBJ_FUNCTION_BITS );
+    OBJcreate( OBJ_WHERE, WHERE_get_symbol, "where", OBJ_WHERE_BITS );
 }
 
 void
-ALGput_full_text(Scope s, int start, int end)
-{
-    switch (s->type) {
-    case OBJ_FUNCTION:
-	s->u.func->text.filename = s->symbol.filename;
-	s->u.func->text.start = start;
-	s->u.func->text.end = end;
-	break;
-    case OBJ_PROCEDURE:
-	s->u.proc->text.filename = s->symbol.filename;
-	s->u.proc->text.start = start;
-	s->u.proc->text.end = end;
-	break;
-    case OBJ_RULE:
-	s->u.rule->text.filename = s->symbol.filename;
-	s->u.rule->text.start = start;
-	s->u.rule->text.end = end;
-	break;
+ALGput_full_text( Scope s, int start, int end ) {
+    switch( s->type ) {
+        case OBJ_FUNCTION:
+            s->u.func->text.filename = s->symbol.filename;
+            s->u.func->text.start = start;
+            s->u.func->text.end = end;
+            break;
+        case OBJ_PROCEDURE:
+            s->u.proc->text.filename = s->symbol.filename;
+            s->u.proc->text.start = start;
+            s->u.proc->text.end = end;
+            break;
+        case OBJ_RULE:
+            s->u.rule->text.filename = s->symbol.filename;
+            s->u.rule->text.start = start;
+            s->u.rule->text.end = end;
+            break;
     }
 }

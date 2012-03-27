@@ -613,7 +613,7 @@ static void addAggrTypedefs( Schema schema, FILE * classes )
             // the only types which had to wait for their underlying type.
             // 2D aggr's and higher only need type GenericAggr defined
             // which is built-in. */
-            printf("in addAggrTypedefs. %s is enum or select.\n",TYPEget_name(t));
+            printf( "in addAggrTypedefs. %s is enum or select.\n", TYPEget_name( t ) );
             //strncpy( nm, ClassName( TYPEget_name( t ) ), BUFSIZ );
             //printf("%s;%s",nm,TYPEget_ctype( t ));
             //if( firsttime ) {

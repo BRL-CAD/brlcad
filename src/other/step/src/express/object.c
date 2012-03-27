@@ -24,43 +24,40 @@ static char rcsid[] = "$Id: object.c,v 1.7 1997/01/21 19:19:51 dar Exp $";
 #include <stdlib.h>
 #include "express/object.h"
 
-struct Object *OBJ;
+struct Object * OBJ;
 
 /*ARGSUSED*/
 Symbol *
-UNK_get_symbol(Generic x)
-{
-	fprintf(stderr,"OBJget_symbol called on object of unknown type\n");
-	ERRORabort(0);
+UNK_get_symbol( Generic x ) {
+    fprintf( stderr, "OBJget_symbol called on object of unknown type\n" );
+    ERRORabort( 0 );
 #if defined(lint) || defined(CENTERLINE)
-	return 0;
+    return 0;
 #endif
 }
 
 /*
-** Procedure:	OBJinitialize
-** Parameters:	-- none --
-** Returns:	void
-** Description:	Initialize the Object module
+** Procedure:   OBJinitialize
+** Parameters:  -- none --
+** Returns: void
+** Description: Initialize the Object module
 */
 
 void
-OBJinitialize()
-{
-	int i;
+OBJinitialize() {
+    int i;
 
-	OBJ = (struct Object *)malloc(MAX_OBJECT_TYPES*sizeof (struct Object));
-	for (i=0;i<MAX_OBJECT_TYPES;i++) {
-		OBJ[i].get_symbol = UNK_get_symbol;
-		OBJ[i].type = "of unknown_type";
-		OBJ[i].bits = 0;
-	}
+    OBJ = ( struct Object * )malloc( MAX_OBJECT_TYPES * sizeof( struct Object ) );
+    for( i = 0; i < MAX_OBJECT_TYPES; i++ ) {
+        OBJ[i].get_symbol = UNK_get_symbol;
+        OBJ[i].type = "of unknown_type";
+        OBJ[i].bits = 0;
+    }
 }
 
 void
-OBJcreate(char type,struct Symbol_ *(*get_symbol)(Generic),char *printable_type,int bits)
-{
-	OBJ[type].get_symbol = get_symbol;
-	OBJ[type].type = printable_type;
-	OBJ[type].bits = bits;
+OBJcreate( char type, struct Symbol_ * ( *get_symbol )( Generic ), char * printable_type, int bits ) {
+    OBJ[type].get_symbol = get_symbol;
+    OBJ[type].type = printable_type;
+    OBJ[type].bits = bits;
 }

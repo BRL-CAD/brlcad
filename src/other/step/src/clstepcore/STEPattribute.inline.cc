@@ -19,28 +19,32 @@
 //  This is needed so that STEPattribute's can be passed as
 //  references to inline functions
 
-STEPattribute::STEPattribute (const STEPattribute& a)
-: aDesc (a.aDesc), _derive (0), _redefAttr (0) {}
+STEPattribute::STEPattribute( const STEPattribute & a )
+    : aDesc( a.aDesc ), _derive( 0 ), _redefAttr( 0 ) {}
 
 //  INTEGER
-STEPattribute::STEPattribute (const class AttrDescriptor& d, SCLP23(Integer) *p)
-: aDesc (&d), _derive (0), _redefAttr (0)
-{ ptr.i = p; }
+STEPattribute::STEPattribute( const class AttrDescriptor & d, SCLP23( Integer ) *p )
+    : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
+    ptr.i = p;
+}
 
 //  BINARY
-STEPattribute::STEPattribute (const class AttrDescriptor& d, SCLP23(Binary) *p)
-: aDesc (&d), _derive (0), _redefAttr (0)
-{ptr.b =p;  }
+STEPattribute::STEPattribute( const class AttrDescriptor & d, SCLP23( Binary ) *p )
+    : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
+    ptr.b = p;
+}
 
 //  STRING
-STEPattribute::STEPattribute (const class AttrDescriptor& d, SCLP23(String) *p)
-: aDesc (&d), _derive (0), _redefAttr (0)
-{ptr.S =p;  }
+STEPattribute::STEPattribute( const class AttrDescriptor & d, SCLP23( String ) *p )
+    : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
+    ptr.S = p;
+}
 
 //  REAL & NUMBER
-STEPattribute::STEPattribute (const class AttrDescriptor& d, SCLP23(Real) *p)
-: aDesc (&d), _derive (0), _redefAttr (0)
-{ ptr.r = p; }
+STEPattribute::STEPattribute( const class AttrDescriptor & d, SCLP23( Real ) *p )
+    : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
+    ptr.r = p;
+}
 
 //  REAL_PTR
 /*STEPattribute::STEPattribute (const class AttrDescriptor& d, real **p)
@@ -48,74 +52,74 @@ STEPattribute::STEPattribute (const class AttrDescriptor& d, SCLP23(Real) *p)
 { ptr.rp = p; }
 */
 //  ENTITY
-STEPattribute::STEPattribute (const class AttrDescriptor& d, 
-			      SCLP23(Application_instance)* *p)
-: aDesc (&d), _derive (0), _redefAttr (0)
-{ ptr.c = p; }
+STEPattribute::STEPattribute( const class AttrDescriptor & d,
+                              SCLP23( Application_instance )* *p )
+    : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
+    ptr.c = p;
+}
 
 //  AGGREGATE
-STEPattribute::STEPattribute (const class AttrDescriptor& d, STEPaggregate *p)
-: aDesc (&d), _derive (0), _redefAttr (0)
-{ ptr.a =  p; }
+STEPattribute::STEPattribute( const class AttrDescriptor & d, STEPaggregate * p )
+    : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
+    ptr.a =  p;
+}
 
 //  ENUMERATION  and Logical
-STEPattribute::STEPattribute (const class AttrDescriptor& d, SCLP23(Enum) *p)
-: aDesc (&d), _derive (0), _redefAttr (0)
-{ ptr.e = p;  }
+STEPattribute::STEPattribute( const class AttrDescriptor & d, SCLP23( Enum ) *p )
+    : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
+    ptr.e = p;
+}
 
 //  SELECT
-STEPattribute::STEPattribute (const class AttrDescriptor& d, 
-			      class SCLP23(Select) *p)
-: aDesc (&d), _derive (0), _redefAttr (0)
-{ ptr.sh = p;  }
+STEPattribute::STEPattribute( const class AttrDescriptor & d,
+                              class SCLP23( Select ) *p )
+    : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
+    ptr.sh = p;
+}
 
 //  UNDEFINED
-STEPattribute::STEPattribute (const class AttrDescriptor& d, SCLundefined *p)
-: aDesc (&d), _derive (0), _redefAttr (0)
-{ ptr.u = p;  }
+STEPattribute::STEPattribute( const class AttrDescriptor & d, SCLundefined * p )
+    : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
+    ptr.u = p;
+}
 
 
 // name is the same even if redefined
-const char * 
-STEPattribute::Name() const
-{
-    return aDesc->Name(); 
+const char *
+STEPattribute::Name() const {
+    return aDesc->Name();
 }
 
-const char * 
-STEPattribute::TypeName() const
-{
-    if ( _redefAttr )  {
-	return _redefAttr->TypeName();
+const char *
+STEPattribute::TypeName() const {
+    if( _redefAttr )  {
+        return _redefAttr->TypeName();
     }
-    return aDesc->TypeName(); 
+    return aDesc->TypeName();
 }
 
-BASE_TYPE 
-STEPattribute::Type() const
-{
-    if ( _redefAttr )  {
-	return _redefAttr->Type();
+BASE_TYPE
+STEPattribute::Type() const {
+    if( _redefAttr )  {
+        return _redefAttr->Type();
     }
-    return aDesc->Type(); 
+    return aDesc->Type();
 }
 
-BASE_TYPE 
-STEPattribute::NonRefType() const
-{
-    if ( _redefAttr )  {
-	return _redefAttr->NonRefType();
+BASE_TYPE
+STEPattribute::NonRefType() const {
+    if( _redefAttr )  {
+        return _redefAttr->NonRefType();
     }
-    return aDesc->NonRefType(); 
+    return aDesc->NonRefType();
 }
 
-BASE_TYPE 
-STEPattribute::BaseType() const
-{
-    if ( _redefAttr )  {
-	return _redefAttr->BaseType();
+BASE_TYPE
+STEPattribute::BaseType() const {
+    if( _redefAttr )  {
+        return _redefAttr->BaseType();
     }
-    return aDesc->BaseType(); 
+    return aDesc->BaseType();
 }
 
 /*
@@ -126,20 +130,18 @@ STEPattribute::ReferentEntity() const
 }
 */
 
-const TypeDescriptor * 
-STEPattribute::ReferentType() const
-{
-    if ( _redefAttr )  {
-	return _redefAttr->ReferentType();
+const TypeDescriptor *
+STEPattribute::ReferentType() const {
+    if( _redefAttr )  {
+        return _redefAttr->ReferentType();
     }
-    return aDesc->ReferentType(); 
+    return aDesc->ReferentType();
 }
 
-int  
-STEPattribute::Nullable() const
-{
-    if ( _redefAttr )  {
-	return _redefAttr->Nullable();
+int
+STEPattribute::Nullable() const {
+    if( _redefAttr )  {
+        return _redefAttr->Nullable();
     }
     return ( aDesc->Optionality().asInt() == LTrue );
 }

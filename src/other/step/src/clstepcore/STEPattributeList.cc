@@ -17,51 +17,45 @@
 
 //#include <stdlib.h>
 
-AttrListNode::AttrListNode(STEPattribute *a)
-{
+AttrListNode::AttrListNode( STEPattribute * a ) {
     attr = a;
 }
 
-AttrListNode::~AttrListNode()
-{
+AttrListNode::~AttrListNode() {
 }
 
 
-STEPattributeList::STEPattributeList()
-{
+STEPattributeList::STEPattributeList() {
 }
 
-STEPattributeList::~STEPattributeList()
-{
+STEPattributeList::~STEPattributeList() {
 }
 
-STEPattribute& STEPattributeList::operator [] (int n)
-{
+STEPattribute & STEPattributeList::operator []( int n ) {
     int x = 0;
-    AttrListNode* a = (AttrListNode *)head;
+    AttrListNode * a = ( AttrListNode * )head;
     int cnt =  EntryCount();
-    if (n < cnt)
-	while (a && (x < n))
-	{
-	    a = (AttrListNode *)(a->next);
-	    x++;
-	}
-    if (a)  return *(a->attr);
+    if( n < cnt )
+        while( a && ( x < n ) ) {
+            a = ( AttrListNode * )( a->next );
+            x++;
+        }
+    if( a ) {
+        return *( a->attr );
+    }
 
-   // else
+    // else
     cerr << "\nERROR in STEP Core library:  " << __FILE__ <<  ":"
-      << __LINE__ << "\n" << _POC_ << "\n\n";
+         << __LINE__ << "\n" << _POC_ << "\n\n";
 }
 
-int STEPattributeList::list_length()
-{
+int STEPattributeList::list_length() {
     return EntryCount();
 }
 
-void STEPattributeList::push(STEPattribute *a)
-{
-    AttrListNode *saln = new AttrListNode(a);
-    AppendNode (saln);
+void STEPattributeList::push( STEPattribute * a ) {
+    AttrListNode * saln = new AttrListNode( a );
+    AppendNode( saln );
 }
 
 
@@ -79,7 +73,7 @@ STEPattributeListNode NilSTEPattributeListNode;
 class init_NilSTEPattributeListNode
 {
 public:
-  inline init_NilSTEPattributeListNode() 
+  inline init_NilSTEPattributeListNode()
   {
     NilSTEPattributeListNode.tl = &NilSTEPattributeListNode;
     NilSTEPattributeListNode.ref = -1;

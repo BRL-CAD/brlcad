@@ -4,11 +4,11 @@
 /* $Id: schema.h,v 1.11 1997/02/25 19:49:01 dar Exp $ */
 
 /************************************************************************
-** Module:	Schema
-** Description:	This module implements the Schema abstraction, which
-**	basically amounts to a named symbol table.
+** Module:  Schema
+** Description: This module implements the Schema abstraction, which
+**  basically amounts to a named symbol table.
 ** Constants:
-**	SCHEMA_NULL	- the null schema
+**  SCHEMA_NULL - the null schema
 **
 ************************************************************************/
 
@@ -56,7 +56,7 @@
 /* packages used */
 /*****************/
 
-#include "expbasic.h"	/* get basic definitions */
+#include "expbasic.h"   /* get basic definitions */
 #include "symbol.h"
 #include "scope.h"
 
@@ -82,34 +82,34 @@
 enum rename_type { use, ref };
 
 typedef struct Rename {
-	struct Symbol_ *schema_sym;
-	Schema schema;
-	struct Symbol_ *old;
-	struct Symbol_ *nnew;
-	Generic object;		/* once object has been looked up */
-	char type;		/* drat, need to remember this */
-			/* once renames have been resolved to avoid */
-			/* looking them up in the dictionary again */
-	enum rename_type rename_type;
-	int userdata;   /* generic for user */
+    struct Symbol_ * schema_sym;
+    Schema schema;
+    struct Symbol_ * old;
+    struct Symbol_ * nnew;
+    Generic object;     /* once object has been looked up */
+    char type;      /* drat, need to remember this */
+    /* once renames have been resolved to avoid */
+    /* looking them up in the dictionary again */
+    enum rename_type rename_type;
+    int userdata;   /* generic for user */
 } Rename;
 
 struct Schema_ {
-	Linked_List rules;
+    Linked_List rules;
 #if 0
-	struct Express_	*express;
+    struct Express_ * express;
 #endif
-	Linked_List reflist;
-	Linked_List uselist;
-	/* dictionarys into which are entered renames for each specific */
-	/* object specified in a rename clause (even if it uses the same */
-	/* name */
-	Dictionary refdict;
-	Dictionary usedict;
-	/* lists of schemas that are fully ref/use'd */
-	/* entries can be 0 if schemas weren't found during RENAMEresolve */
-	Linked_List use_schemas;
-	Linked_List ref_schemas;
+    Linked_List reflist;
+    Linked_List uselist;
+    /* dictionarys into which are entered renames for each specific */
+    /* object specified in a rename clause (even if it uses the same */
+    /* name */
+    Dictionary refdict;
+    Dictionary usedict;
+    /* lists of schemas that are fully ref/use'd */
+    /* entries can be 0 if schemas weren't found during RENAMEresolve */
+    Linked_List use_schemas;
+    Linked_List ref_schemas;
 };
 
 /********************/
@@ -126,38 +126,38 @@ extern int __SCOPE_search_id;
 /* macro function definitions */
 /******************************/
 
-#define SCHEMAget_name(schema)		SCOPEget_name(schema)
-#define SCHEMAget_symbol(schema)	SCOPEget_symbol(schema)
+#define SCHEMAget_name(schema)      SCOPEget_name(schema)
+#define SCHEMAget_symbol(schema)    SCOPEget_symbol(schema)
 
-#define REN_new()	(struct Rename *)MEM_new(&REN_fl)
-#define REN_destroy(x)	MEM_destroy(&REN_fl,(Freelist *)(Generic)x)
-#define SCOPE_new()	(struct Scope_ *)MEM_new(&SCOPE_fl)
-#define SCOPE_destroy(x)	MEM_destroy(&SCOPE_fl,(Freelist *)(Generic)x)
-#define SCHEMA_new()	(struct Schema_ *)MEM_new(&SCHEMA_fl)
-#define SCHEMA_destroy(x)	MEM_destroy(&SCHEMA_fl,(Freelist *)(Generic)x)
+#define REN_new()   (struct Rename *)MEM_new(&REN_fl)
+#define REN_destroy(x)  MEM_destroy(&REN_fl,(Freelist *)(Generic)x)
+#define SCOPE_new() (struct Scope_ *)MEM_new(&SCOPE_fl)
+#define SCOPE_destroy(x)    MEM_destroy(&SCOPE_fl,(Freelist *)(Generic)x)
+#define SCHEMA_new()    (struct Schema_ *)MEM_new(&SCHEMA_fl)
+#define SCHEMA_destroy(x)   MEM_destroy(&SCHEMA_fl,(Freelist *)(Generic)x)
 
 /* the following is simply to make the resulting code easier to read */
 /* otherwise, you'd see "entity->superscope" even when you KNOW */
 /* it is a schema */
-#define ENTITYget_schema(e)		(e)->superscope
+#define ENTITYget_schema(e)     (e)->superscope
 
 /***********************/
 /* function prototypes */
 /***********************/
 
-extern Variable VARfind PROTO((Scope,char *,int));
-extern Schema 	SCHEMAcreate PROTO((void));
-extern void	SCHEMAinitialize PROTO((void));
-extern void	SCHEMAadd_use PROTO((Schema, Symbol*, Symbol*, Symbol*));
-extern void	SCHEMAadd_reference PROTO((Schema, Symbol*, Symbol*, Symbol*));
-extern void	SCHEMAdefine_use PROTO((Schema, Rename*));
-extern void	SCHEMAdefine_reference PROTO((Schema, Rename*));
-extern Generic	SCHEMAfind PROTO((Schema,char *name,int search_refs));
-extern Scope	SCOPEcreate PROTO((char));
-extern Scope	SCOPEcreate_tiny PROTO((char));
-extern Scope	SCOPEcreate_nostab PROTO((char));
-extern Linked_List SCHEMAget_entities_use PROTO((Scope));
-extern Linked_List SCHEMAget_entities_ref PROTO((Scope));
+extern Variable VARfind PROTO( ( Scope, char *, int ) );
+extern Schema   SCHEMAcreate PROTO( ( void ) );
+extern void SCHEMAinitialize PROTO( ( void ) );
+extern void SCHEMAadd_use PROTO( ( Schema, Symbol *, Symbol *, Symbol * ) );
+extern void SCHEMAadd_reference PROTO( ( Schema, Symbol *, Symbol *, Symbol * ) );
+extern void SCHEMAdefine_use PROTO( ( Schema, Rename * ) );
+extern void SCHEMAdefine_reference PROTO( ( Schema, Rename * ) );
+extern Generic  SCHEMAfind PROTO( ( Schema, char * name, int search_refs ) );
+extern Scope    SCOPEcreate PROTO( ( char ) );
+extern Scope    SCOPEcreate_tiny PROTO( ( char ) );
+extern Scope    SCOPEcreate_nostab PROTO( ( char ) );
+extern Linked_List SCHEMAget_entities_use PROTO( ( Scope ) );
+extern Linked_List SCHEMAget_entities_ref PROTO( ( Scope ) );
 
 #endif /*  SCHEMA_H */
 

@@ -13,7 +13,7 @@
 * and is not subject to copyright.
 */
 
-/* $Id: mgrnodearray.h,v 3.0.1.3 1997/11/05 22:11:38 sauderd DP3.1 $ */ 
+/* $Id: mgrnodearray.h,v 3.0.1.3 1997/11/05 22:11:38 sauderd DP3.1 $ */
 
 #ifdef __O3DB__
 #include <OpenOODB.h>
@@ -40,25 +40,28 @@
 // If you delete this object it deletes all of the entries it points to.
 //////////////////////////////////////////////////////////////////////////////
 
-class MgrNodeArray : public GenNodeArray
-{
-public:
-    MgrNodeArray(int defaultSize = ARRAY_DEFAULT_SIZE);
-    ~MgrNodeArray();
+class MgrNodeArray : public GenNodeArray {
+    public:
+        MgrNodeArray( int defaultSize = ARRAY_DEFAULT_SIZE );
+        ~MgrNodeArray();
 
 // REDEFINED functions
-	// need to redefine Append() & Insert(GenericNode *) so they call 
-	//	MgrNodeArray::Insert(GenericNode *, int index);
-    virtual int Insert(GenericNode* gn, int index);
-    virtual void Append(GenericNode* gn)	{ Insert(gn, _count); }
-    virtual int Insert(GenericNode* gn)		{ return Insert(gn, _count); }
-    virtual void Remove(int index);
-    virtual void ClearEntries();
-    virtual void DeleteEntries();
+        // need to redefine Append() & Insert(GenericNode *) so they call
+        //  MgrNodeArray::Insert(GenericNode *, int index);
+        virtual int Insert( GenericNode * gn, int index );
+        virtual void Append( GenericNode * gn )    {
+            Insert( gn, _count );
+        }
+        virtual int Insert( GenericNode * gn )     {
+            return Insert( gn, _count );
+        }
+        virtual void Remove( int index );
+        virtual void ClearEntries();
+        virtual void DeleteEntries();
 
 // ADDED functions
-    virtual int MgrNodeIndex(int fileId);
-    void AssignIndexAddress(int index);
+        virtual int MgrNodeIndex( int fileId );
+        void AssignIndexAddress( int index );
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -70,27 +73,30 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 
 class MgrNodeArraySorted : public GenNodeArray {
-public:
-    MgrNodeArraySorted(int defaultSize = ARRAY_DEFAULT_SIZE);
-    ~MgrNodeArraySorted() { }
+    public:
+        MgrNodeArraySorted( int defaultSize = ARRAY_DEFAULT_SIZE );
+        ~MgrNodeArraySorted() { }
 
 // REDEFINED functions
-    virtual int Index(GenericNode* gn);
-    virtual int Index(GenericNode** gn);
+        virtual int Index( GenericNode * gn );
+        virtual int Index( GenericNode ** gn );
 
-    virtual int Insert(GenericNode* gn);
-    virtual int Insert(GenericNode* gn, int index) 
-	{ cerr << 
-	  "Call MgrNodeArraySorted::Insert() without index argument instead.\n"
-		<< "index argument: " << index << " being ignored.\n";
-	  return Insert(gn); }
-    virtual void Append(GenericNode* gn)		{ Insert(gn); }
-    virtual void ClearEntries();
-    virtual void DeleteEntries();
+        virtual int Insert( GenericNode * gn );
+        virtual int Insert( GenericNode * gn, int index ) {
+            cerr <<
+                 "Call MgrNodeArraySorted::Insert() without index argument instead.\n"
+                 << "index argument: " << index << " being ignored.\n";
+            return Insert( gn );
+        }
+        virtual void Append( GenericNode * gn )        {
+            Insert( gn );
+        }
+        virtual void ClearEntries();
+        virtual void DeleteEntries();
 
 // ADDED functions
-    virtual int MgrNodeIndex(int fileId);
-    int FindInsertPosition (const int fileId);
+        virtual int MgrNodeIndex( int fileId );
+        int FindInsertPosition( const int fileId );
 };
 
 

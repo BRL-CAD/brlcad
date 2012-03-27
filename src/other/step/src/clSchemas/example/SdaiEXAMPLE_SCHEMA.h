@@ -14,441 +14,497 @@
 #endif
 
 #ifdef PART26
-#include <corbaIncludes.h> 
-// Create a corbaSchema.h file in this directory with a #include in 
+#include <corbaIncludes.h>
+// Create a corbaSchema.h file in this directory with a #include in
 // it for your IDL generated schema-specific .hh file.
-#include <corbaSchema.h> 
-#endif 
+#include <corbaSchema.h>
+#endif
 
-/*	**************  TYPES  	*/
+/*  **************  TYPES   */
 
 //////////  ENUMERATION TYPE color
 enum Color {
-	Color__red,
-	Color__green,
-	Color__blue,
-	Color__yellow,
-	Color__orange,
-	Color__white,
-	Color__black,
-	Color__brown,
-	Color_unset
+    Color__red,
+    Color__green,
+    Color__blue,
+    Color__yellow,
+    Color__orange,
+    Color__white,
+    Color__black,
+    Color__brown,
+    Color_unset
 };
 
-class SdaiColor_var  :  public SCLP23(Enum)  {
+class SdaiColor_var  :  public SCLP23( Enum )  {
 
-  protected:
-	EnumTypeDescriptor *type;
+    protected:
+        EnumTypeDescriptor * type;
 
-  public:
-	SdaiColor_var (const char * n =0, EnumTypeDescriptor *et =example_schemat_color);
-	SdaiColor_var (Color e, EnumTypeDescriptor *et =example_schemat_color)
-		: type(et) {  set_value (e);  }
-	~SdaiColor_var () { }
-	SdaiColor_var& operator= (const SdaiColor_var& e)
-		{  set_value (e);  return *this;  }
-	operator Color () const;
+    public:
+        SdaiColor_var( const char * n = 0, EnumTypeDescriptor * et = example_schemat_color );
+        SdaiColor_var( Color e, EnumTypeDescriptor * et = example_schemat_color )
+            : type( et ) {
+            set_value( e );
+        }
+        ~SdaiColor_var() { }
+        SdaiColor_var & operator= ( const SdaiColor_var & e ) {
+            set_value( e );
+            return *this;
+        }
+        operator Color() const;
 
-	inline virtual const char * Name () const
-		{  return type->Name();  }
-	inline virtual int no_elements () const  {  return 8;  }
-	virtual const char * element_at (int n) const;
+        inline virtual const char * Name() const {
+            return type->Name();
+        }
+        inline virtual int no_elements() const  {
+            return 8;
+        }
+        virtual const char * element_at( int n ) const;
 
 };
 
 typedef SdaiColor_var * SdaiColor_var_ptr;
 
-  SCLP23(Enum) * create_SdaiColor_var ();
+SCLP23( Enum ) * create_SdaiColor_var();
 
 class SdaiColor_vars  :  public EnumAggregate  {
 
-  protected:
-    EnumTypeDescriptor *enum_type;
+    protected:
+        EnumTypeDescriptor * enum_type;
 
-  public:
-    SdaiColor_vars( EnumTypeDescriptor * =example_schemat_color);
-    virtual ~SdaiColor_vars();
-    virtual SingleLinkNode * NewNode()
-	{ return new EnumNode (new SdaiColor_var( "", enum_type )); }
+    public:
+        SdaiColor_vars( EnumTypeDescriptor * = example_schemat_color );
+        virtual ~SdaiColor_vars();
+        virtual SingleLinkNode * NewNode() {
+            return new EnumNode( new SdaiColor_var( "", enum_type ) );
+        }
 
 };
 
 typedef SdaiColor_vars * SdaiColor_vars_ptr;
 
-  STEPaggregate * create_SdaiColor_vars ();
+STEPaggregate * create_SdaiColor_vars();
 
 //////////  END ENUMERATION color
 
 
-//	***** Build the SELECT Types  	
+//  ***** Build the SELECT Types
 
-/*	**************  ENTITIES  	*/
+/*  **************  ENTITIES    */
 
-//	***** Print Entity Classes  	
+//  ***** Print Entity Classes
 
-/////////	 ENTITY poly_line
+/////////    ENTITY poly_line
 
-extern AttrDescriptor *a_0points;
+extern AttrDescriptor * a_0points;
 
-class SdaiPoly_line  :    public SCLP23(Application_instance) {
+class SdaiPoly_line  :    public SCLP23( Application_instance ) {
 
-  protected:
-	EntityAggregate _points ;	  //  of  line
+    protected:
+        EntityAggregate _points ;     //  of  line
 
-  public:  
+    public:
 
-	SdaiPoly_line ( ); 
-	SdaiPoly_line (SCLP23(Application_instance) *se, int *addAttrs = 0); 
-	SdaiPoly_line (SdaiPoly_line& e ); 
-	~SdaiPoly_line ();
+        SdaiPoly_line( );
+        SdaiPoly_line( SCLP23( Application_instance ) *se, int * addAttrs = 0 );
+        SdaiPoly_line( SdaiPoly_line & e );
+        ~SdaiPoly_line();
 
 #ifdef __O3DB__
-	void oodb_reInit();
+        void oodb_reInit();
 #endif
 
-	int opcode ()  { return 0 ; } 
-	const EntityAggregate_ptr points_() const;
-	void points_ (const EntityAggregate_ptr x);
+        int opcode()  {
+            return 0 ;
+        }
+        const EntityAggregate_ptr points_() const;
+        void points_( const EntityAggregate_ptr x );
 
 
 };
 
 #ifdef __O3DB__
-inline SCLP23(Application_instance_ptr) 
-create_SdaiPoly_line () {  return (SCLP23(Application_instance_ptr)) new SdaiPoly_line ;  }
+inline SCLP23( Application_instance_ptr )
+create_SdaiPoly_line() {
+    return ( SCLP23( Application_instance_ptr ) ) new SdaiPoly_line ;
+}
 #else
 inline SdaiPoly_line *
-create_SdaiPoly_line () {  return  new SdaiPoly_line ;  }
+create_SdaiPoly_line() {
+    return  new SdaiPoly_line ;
+}
 #endif
 
-/////////	 END_ENTITY poly_line
+/////////    END_ENTITY poly_line
 
 
-/////////	 ENTITY shape
+/////////    ENTITY shape
 
-extern AttrDescriptor *a_1item_name;
-extern AttrDescriptor *a_2item_color;
-extern AttrDescriptor *a_3number_of_sides;
+extern AttrDescriptor * a_1item_name;
+extern AttrDescriptor * a_2item_color;
+extern AttrDescriptor * a_3number_of_sides;
 
-class SdaiShape  :    public SCLP23(Application_instance) {
+class SdaiShape  :    public SCLP23( Application_instance ) {
 
-  protected:
-	SCLP23(String) _item_name ;
-	SdaiColor_var _item_color ;    //  OPTIONAL
-	SCLP23(Integer) _number_of_sides ;
-  public:  
+    protected:
+        SCLP23( String ) _item_name ;
+        SdaiColor_var _item_color ;    //  OPTIONAL
+        SCLP23( Integer ) _number_of_sides ;
+    public:
 
-	SdaiShape ( ); 
-	SdaiShape (SCLP23(Application_instance) *se, int *addAttrs = 0); 
-	SdaiShape (SdaiShape& e ); 
-	~SdaiShape ();
+        SdaiShape( );
+        SdaiShape( SCLP23( Application_instance ) *se, int * addAttrs = 0 );
+        SdaiShape( SdaiShape & e );
+        ~SdaiShape();
 
 #ifdef __O3DB__
-	void oodb_reInit();
+        void oodb_reInit();
 #endif
 
-	int opcode ()  { return 1 ; } 
-	const SdaiLabel item_name_() const;
-	void item_name_ (const SdaiLabel x);
+        int opcode()  {
+            return 1 ;
+        }
+        const SdaiLabel item_name_() const;
+        void item_name_( const SdaiLabel x );
 
-	const SdaiColor_var item_color_() const;
-	void item_color_ (const SdaiColor_var x);
+        const SdaiColor_var item_color_() const;
+        void item_color_( const SdaiColor_var x );
 
-	const SCLP23(Integer) number_of_sides_() const;
-	void number_of_sides_ (const SCLP23(Integer) x);
+        const SCLP23( Integer ) number_of_sides_() const;
+        void number_of_sides_( const SCLP23( Integer ) x );
 
 
 };
 
 #ifdef __O3DB__
-inline SCLP23(Application_instance_ptr) 
-create_SdaiShape () {  return (SCLP23(Application_instance_ptr)) new SdaiShape ;  }
+inline SCLP23( Application_instance_ptr )
+create_SdaiShape() {
+    return ( SCLP23( Application_instance_ptr ) ) new SdaiShape ;
+}
 #else
 inline SdaiShape *
-create_SdaiShape () {  return  new SdaiShape ;  }
+create_SdaiShape() {
+    return  new SdaiShape ;
+}
 #endif
 
-/////////	 END_ENTITY shape
+/////////    END_ENTITY shape
 
 
-/////////	 ENTITY rectangle
+/////////    ENTITY rectangle
 
-extern AttrDescriptor *a_4height;
-extern AttrDescriptor *a_5width;
+extern AttrDescriptor * a_4height;
+extern AttrDescriptor * a_5width;
 
 class SdaiRectangle  :    public SdaiShape  {
- 
-  protected:
-	SCLP23(Real) _height ;
-	SCLP23(Real) _width ;
-  public:  
 
-	SdaiRectangle ( ); 
-	SdaiRectangle (SCLP23(Application_instance) *se, int *addAttrs = 0); 
-	SdaiRectangle (SdaiRectangle& e ); 
-	~SdaiRectangle ();
+    protected:
+        SCLP23( Real ) _height ;
+        SCLP23( Real ) _width ;
+    public:
+
+        SdaiRectangle( );
+        SdaiRectangle( SCLP23( Application_instance ) *se, int * addAttrs = 0 );
+        SdaiRectangle( SdaiRectangle & e );
+        ~SdaiRectangle();
 
 #ifdef __O3DB__
-	void oodb_reInit();
+        void oodb_reInit();
 #endif
 
-	int opcode ()  { return 2 ; } 
-	const SdaiLength_measure height_() const;
-	void height_ (const SdaiLength_measure x);
+        int opcode()  {
+            return 2 ;
+        }
+        const SdaiLength_measure height_() const;
+        void height_( const SdaiLength_measure x );
 
-	const SdaiLength_measure width_() const;
-	void width_ (const SdaiLength_measure x);
+        const SdaiLength_measure width_() const;
+        void width_( const SdaiLength_measure x );
 
-	/* The first parent's access functions are */
-	/* above or covered by inherited functions. */
+        /* The first parent's access functions are */
+        /* above or covered by inherited functions. */
 
 };
 
 #ifdef __O3DB__
-inline SCLP23(Application_instance_ptr) 
-create_SdaiRectangle () {  return (SCLP23(Application_instance_ptr)) new SdaiRectangle ;  }
+inline SCLP23( Application_instance_ptr )
+create_SdaiRectangle() {
+    return ( SCLP23( Application_instance_ptr ) ) new SdaiRectangle ;
+}
 #else
 inline SdaiRectangle *
-create_SdaiRectangle () {  return  new SdaiRectangle ;  }
+create_SdaiRectangle() {
+    return  new SdaiRectangle ;
+}
 #endif
 
-/////////	 END_ENTITY rectangle
+/////////    END_ENTITY rectangle
 
 
-/////////	 ENTITY square
+/////////    ENTITY square
 
 
 class SdaiSquare  :    public SdaiRectangle  {
- 
-  protected:
-  public:  
 
-	SdaiSquare ( ); 
-	SdaiSquare (SCLP23(Application_instance) *se, int *addAttrs = 0); 
-	SdaiSquare (SdaiSquare& e ); 
-	~SdaiSquare ();
+    protected:
+    public:
+
+        SdaiSquare( );
+        SdaiSquare( SCLP23( Application_instance ) *se, int * addAttrs = 0 );
+        SdaiSquare( SdaiSquare & e );
+        ~SdaiSquare();
 
 #ifdef __O3DB__
-	void oodb_reInit();
+        void oodb_reInit();
 #endif
 
-	int opcode ()  { return 3 ; } 
-	/* The first parent's access functions are */
-	/* above or covered by inherited functions. */
+        int opcode()  {
+            return 3 ;
+        }
+        /* The first parent's access functions are */
+        /* above or covered by inherited functions. */
 
 };
 
 #ifdef __O3DB__
-inline SCLP23(Application_instance_ptr) 
-create_SdaiSquare () {  return (SCLP23(Application_instance_ptr)) new SdaiSquare ;  }
+inline SCLP23( Application_instance_ptr )
+create_SdaiSquare() {
+    return ( SCLP23( Application_instance_ptr ) ) new SdaiSquare ;
+}
 #else
 inline SdaiSquare *
-create_SdaiSquare () {  return  new SdaiSquare ;  }
+create_SdaiSquare() {
+    return  new SdaiSquare ;
+}
 #endif
 
-/////////	 END_ENTITY square
+/////////    END_ENTITY square
 
 
-/////////	 ENTITY triangle
+/////////    ENTITY triangle
 
-extern AttrDescriptor *a_6side1_length;
-extern AttrDescriptor *a_7side2_length;
-extern AttrDescriptor *a_8side3_length;
+extern AttrDescriptor * a_6side1_length;
+extern AttrDescriptor * a_7side2_length;
+extern AttrDescriptor * a_8side3_length;
 
 class SdaiTriangle  :    public SdaiShape  {
- 
-  protected:
-	SCLP23(Real) _side1_length ;
-	SCLP23(Real) _side2_length ;
-	SCLP23(Real) _side3_length ;
-  public:  
 
-	SdaiTriangle ( ); 
-	SdaiTriangle (SCLP23(Application_instance) *se, int *addAttrs = 0); 
-	SdaiTriangle (SdaiTriangle& e ); 
-	~SdaiTriangle ();
+    protected:
+        SCLP23( Real ) _side1_length ;
+        SCLP23( Real ) _side2_length ;
+        SCLP23( Real ) _side3_length ;
+    public:
+
+        SdaiTriangle( );
+        SdaiTriangle( SCLP23( Application_instance ) *se, int * addAttrs = 0 );
+        SdaiTriangle( SdaiTriangle & e );
+        ~SdaiTriangle();
 
 #ifdef __O3DB__
-	void oodb_reInit();
+        void oodb_reInit();
 #endif
 
-	int opcode ()  { return 4 ; } 
-	const SdaiLength_measure side1_length_() const;
-	void side1_length_ (const SdaiLength_measure x);
+        int opcode()  {
+            return 4 ;
+        }
+        const SdaiLength_measure side1_length_() const;
+        void side1_length_( const SdaiLength_measure x );
 
-	const SdaiLength_measure side2_length_() const;
-	void side2_length_ (const SdaiLength_measure x);
+        const SdaiLength_measure side2_length_() const;
+        void side2_length_( const SdaiLength_measure x );
 
-	const SdaiLength_measure side3_length_() const;
-	void side3_length_ (const SdaiLength_measure x);
+        const SdaiLength_measure side3_length_() const;
+        void side3_length_( const SdaiLength_measure x );
 
-	/* The first parent's access functions are */
-	/* above or covered by inherited functions. */
+        /* The first parent's access functions are */
+        /* above or covered by inherited functions. */
 
 };
 
 #ifdef __O3DB__
-inline SCLP23(Application_instance_ptr) 
-create_SdaiTriangle () {  return (SCLP23(Application_instance_ptr)) new SdaiTriangle ;  }
+inline SCLP23( Application_instance_ptr )
+create_SdaiTriangle() {
+    return ( SCLP23( Application_instance_ptr ) ) new SdaiTriangle ;
+}
 #else
 inline SdaiTriangle *
-create_SdaiTriangle () {  return  new SdaiTriangle ;  }
+create_SdaiTriangle() {
+    return  new SdaiTriangle ;
+}
 #endif
 
-/////////	 END_ENTITY triangle
+/////////    END_ENTITY triangle
 
 
-/////////	 ENTITY circle
+/////////    ENTITY circle
 
-extern AttrDescriptor *a_9radius;
+extern AttrDescriptor * a_9radius;
 
 class SdaiCircle  :    public SdaiShape  {
- 
-  protected:
-	SCLP23(Real) _radius ;
-  public:  
 
-	SdaiCircle ( ); 
-	SdaiCircle (SCLP23(Application_instance) *se, int *addAttrs = 0); 
-	SdaiCircle (SdaiCircle& e ); 
-	~SdaiCircle ();
+    protected:
+        SCLP23( Real ) _radius ;
+    public:
+
+        SdaiCircle( );
+        SdaiCircle( SCLP23( Application_instance ) *se, int * addAttrs = 0 );
+        SdaiCircle( SdaiCircle & e );
+        ~SdaiCircle();
 
 #ifdef __O3DB__
-	void oodb_reInit();
+        void oodb_reInit();
 #endif
 
-	int opcode ()  { return 5 ; } 
-	const SCLP23(Real) radius_() const;
-	void radius_ (const SCLP23(Real) x);
+        int opcode()  {
+            return 5 ;
+        }
+        const SCLP23( Real ) radius_() const;
+        void radius_( const SCLP23( Real ) x );
 
-	/* The first parent's access functions are */
-	/* above or covered by inherited functions. */
+        /* The first parent's access functions are */
+        /* above or covered by inherited functions. */
 
 };
 
 #ifdef __O3DB__
-inline SCLP23(Application_instance_ptr) 
-create_SdaiCircle () {  return (SCLP23(Application_instance_ptr)) new SdaiCircle ;  }
+inline SCLP23( Application_instance_ptr )
+create_SdaiCircle() {
+    return ( SCLP23( Application_instance_ptr ) ) new SdaiCircle ;
+}
 #else
 inline SdaiCircle *
-create_SdaiCircle () {  return  new SdaiCircle ;  }
+create_SdaiCircle() {
+    return  new SdaiCircle ;
+}
 #endif
 
-/////////	 END_ENTITY circle
+/////////    END_ENTITY circle
 
 
-/////////	 ENTITY line
+/////////    ENTITY line
 
-extern AttrDescriptor *a_10end_point_one;
-extern AttrDescriptor *a_11end_point_two;
+extern AttrDescriptor * a_10end_point_one;
+extern AttrDescriptor * a_11end_point_two;
 
-class SdaiLine  :    public SCLP23(Application_instance) {
+class SdaiLine  :    public SCLP23( Application_instance ) {
 
-  protected:
-	SCLP23(Application_instance_ptr) _end_point_one ;
-	SCLP23(Application_instance_ptr) _end_point_two ;
-  public:  
+    protected:
+        SCLP23( Application_instance_ptr ) _end_point_one ;
+        SCLP23( Application_instance_ptr ) _end_point_two ;
+    public:
 
-	SdaiLine ( ); 
-	SdaiLine (SCLP23(Application_instance) *se, int *addAttrs = 0); 
-	SdaiLine (SdaiLine& e ); 
-	~SdaiLine ();
+        SdaiLine( );
+        SdaiLine( SCLP23( Application_instance ) *se, int * addAttrs = 0 );
+        SdaiLine( SdaiLine & e );
+        ~SdaiLine();
 
 #ifdef __O3DB__
-	void oodb_reInit();
+        void oodb_reInit();
 #endif
 
-	int opcode ()  { return 6 ; } 
-	const SdaiCartesian_point_ptr end_point_one_() const;
-	void end_point_one_ (const SdaiCartesian_point_ptr x);
+        int opcode()  {
+            return 6 ;
+        }
+        const SdaiCartesian_point_ptr end_point_one_() const;
+        void end_point_one_( const SdaiCartesian_point_ptr x );
 
-	const SdaiCartesian_point_ptr end_point_two_() const;
-	void end_point_two_ (const SdaiCartesian_point_ptr x);
+        const SdaiCartesian_point_ptr end_point_two_() const;
+        void end_point_two_( const SdaiCartesian_point_ptr x );
 
 
 };
 
 #ifdef __O3DB__
-inline SCLP23(Application_instance_ptr) 
-create_SdaiLine () {  return (SCLP23(Application_instance_ptr)) new SdaiLine ;  }
+inline SCLP23( Application_instance_ptr )
+create_SdaiLine() {
+    return ( SCLP23( Application_instance_ptr ) ) new SdaiLine ;
+}
 #else
 inline SdaiLine *
-create_SdaiLine () {  return  new SdaiLine ;  }
+create_SdaiLine() {
+    return  new SdaiLine ;
+}
 #endif
 
-/////////	 END_ENTITY line
+/////////    END_ENTITY line
 
 
-/////////	 ENTITY cartesian_point
+/////////    ENTITY cartesian_point
 
-extern AttrDescriptor *a_12x;
-extern AttrDescriptor *a_13y;
-extern AttrDescriptor *a_14z;
+extern AttrDescriptor * a_12x;
+extern AttrDescriptor * a_13y;
+extern AttrDescriptor * a_14z;
 
-class SdaiCartesian_point  :    public SCLP23(Application_instance) {
+class SdaiCartesian_point  :    public SCLP23( Application_instance ) {
 
-  protected:
-	SCLP23(Real) _x ;
-	SCLP23(Real) _y ;
-	SCLP23(Real) _z ;    //  OPTIONAL
-  public:  
+    protected:
+        SCLP23( Real ) _x ;
+        SCLP23( Real ) _y ;
+        SCLP23( Real ) _z ;  //  OPTIONAL
+    public:
 
-	SdaiCartesian_point ( ); 
-	SdaiCartesian_point (SCLP23(Application_instance) *se, int *addAttrs = 0); 
-	SdaiCartesian_point (SdaiCartesian_point& e ); 
-	~SdaiCartesian_point ();
+        SdaiCartesian_point( );
+        SdaiCartesian_point( SCLP23( Application_instance ) *se, int * addAttrs = 0 );
+        SdaiCartesian_point( SdaiCartesian_point & e );
+        ~SdaiCartesian_point();
 
 #ifdef __O3DB__
-	void oodb_reInit();
+        void oodb_reInit();
 #endif
 
-	int opcode ()  { return 7 ; } 
-	const SdaiPoint x_() const;
-	void x_ (const SdaiPoint x);
+        int opcode()  {
+            return 7 ;
+        }
+        const SdaiPoint x_() const;
+        void x_( const SdaiPoint x );
 
-	const SdaiPoint y_() const;
-	void y_ (const SdaiPoint x);
+        const SdaiPoint y_() const;
+        void y_( const SdaiPoint x );
 
-	const SdaiPoint z_() const;
-	void z_ (const SdaiPoint x);
+        const SdaiPoint z_() const;
+        void z_( const SdaiPoint x );
 
 
 };
 
 #ifdef __O3DB__
-inline SCLP23(Application_instance_ptr) 
-create_SdaiCartesian_point () {  return (SCLP23(Application_instance_ptr)) new SdaiCartesian_point ;  }
+inline SCLP23( Application_instance_ptr )
+create_SdaiCartesian_point() {
+    return ( SCLP23( Application_instance_ptr ) ) new SdaiCartesian_point ;
+}
 #else
 inline SdaiCartesian_point *
-create_SdaiCartesian_point () {  return  new SdaiCartesian_point ;  }
+create_SdaiCartesian_point() {
+    return  new SdaiCartesian_point ;
+}
 #endif
 
-/////////	 END_ENTITY cartesian_point
+/////////    END_ENTITY cartesian_point
 
 
-//	***** generate Model related pieces
+//  ***** generate Model related pieces
 
-class SdaiModel_contents_example_schema : public SCLP23(Model_contents) {
+class SdaiModel_contents_example_schema : public SCLP23( Model_contents ) {
 
-  public:
+    public:
 
-    SdaiModel_contents_example_schema();
+        SdaiModel_contents_example_schema();
 
-    SdaiPoly_line__set_var SdaiPoly_line_get_extents();
+        SdaiPoly_line__set_var SdaiPoly_line_get_extents();
 
-    SdaiShape__set_var SdaiShape_get_extents();
+        SdaiShape__set_var SdaiShape_get_extents();
 
-    SdaiRectangle__set_var SdaiRectangle_get_extents();
+        SdaiRectangle__set_var SdaiRectangle_get_extents();
 
-    SdaiSquare__set_var SdaiSquare_get_extents();
+        SdaiSquare__set_var SdaiSquare_get_extents();
 
-    SdaiTriangle__set_var SdaiTriangle_get_extents();
+        SdaiTriangle__set_var SdaiTriangle_get_extents();
 
-    SdaiCircle__set_var SdaiCircle_get_extents();
+        SdaiCircle__set_var SdaiCircle_get_extents();
 
-    SdaiLine__set_var SdaiLine_get_extents();
+        SdaiLine__set_var SdaiLine_get_extents();
 
-    SdaiCartesian_point__set_var SdaiCartesian_point_get_extents();
+        SdaiCartesian_point__set_var SdaiCartesian_point_get_extents();
 
 };
 
@@ -456,6 +512,6 @@ class SdaiModel_contents_example_schema : public SCLP23(Model_contents) {
 typedef SdaiModel_contents_example_schema * SdaiModel_contents_example_schema_ptr;
 typedef SdaiModel_contents_example_schema_ptr SdaiModel_contents_example_schema_var;
 
-SCLP23(Model_contents_ptr) create_SdaiModel_contents_example_schema();
+SCLP23( Model_contents_ptr ) create_SdaiModel_contents_example_schema();
 
 #endif

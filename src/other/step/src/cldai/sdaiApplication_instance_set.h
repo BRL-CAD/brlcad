@@ -32,33 +32,32 @@
 
 //#include <STEPentity.h>
 
-class SCLP23_NAME(Application_instance__set);
-typedef SCLP23_NAME(Application_instance__set) *
-				SCLP23_NAME(Application_instance__set_ptr);
-typedef SCLP23_NAME(Application_instance__set_ptr) 
-				SCLP23_NAME(Application_instance__set_var);
+class SCLP23_NAME( Application_instance__set );
+typedef SCLP23_NAME( Application_instance__set ) *
+SCLP23_NAME( Application_instance__set_ptr );
+typedef SCLP23_NAME( Application_instance__set_ptr )
+SCLP23_NAME( Application_instance__set_var );
 
-class SCLP23_NAME(Application_instance__set) 
-{
-public:
-    SCLP23_NAME(Application_instance__set)(int = 16);
-    ~SCLP23_NAME(Application_instance__set)();
+class SCLP23_NAME( Application_instance__set ) {
+    public:
+        SCLP23_NAME( Application_instance__set )( int = 16 );
+        ~SCLP23_NAME( Application_instance__set )();
 
-    SCLP23_NAME(Application_instance_ptr)& operator[](int index);
-    void Insert(SCLP23_NAME(Application_instance_ptr), int index);
-    void Append(SCLP23_NAME(Application_instance_ptr));
-    void Remove(int index);
-    void Remove(SCLP23_NAME(Application_instance_ptr));
-    int Index(SCLP23_NAME(Application_instance_ptr));
+        SCLP23_NAME( Application_instance_ptr ) & operator[]( int index );
+        void Insert( SCLP23_NAME( Application_instance_ptr ), int index );
+        void Append( SCLP23_NAME( Application_instance_ptr ) );
+        void Remove( int index );
+        void Remove( SCLP23_NAME( Application_instance_ptr ) );
+        int Index( SCLP23_NAME( Application_instance_ptr ) );
 
-    int Count();
-    void Clear();
-private:
-    void Check(int index);
-private:
-    SCLP23_NAME(Application_instance_ptr)* _buf;
-    int _bufsize;
-    int _count;
+        int Count();
+        void Clear();
+    private:
+        void Check( int index );
+    private:
+        SCLP23_NAME( Application_instance_ptr ) * _buf;
+        int _bufsize;
+        int _count;
 };
 
 #endif
