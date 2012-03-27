@@ -887,7 +887,7 @@ LOOPout( struct Loop_ *loop, int level ) {
 
 void
 CASEout( struct Case_Statement_ *c, int level ) {
-    int len;
+    int len = 0;
     char * string;
     int max_indent;
 

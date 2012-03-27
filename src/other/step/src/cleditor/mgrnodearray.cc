@@ -220,7 +220,7 @@ int MgrNodeArraySorted::MgrNodeIndex( int fileId ) {
     }
     int low = 0;
     int high = _count - 1;
-    int mid;
+    int mid = 0;
     int found = 0;
     int curFileId;
 

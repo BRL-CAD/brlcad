@@ -85,7 +85,7 @@ MatchType OrList::matchORs( EntNode * ents )
 {
     int count;
     EntList * child = childList;
-    MatchType retval;
+    MatchType retval = UNKNOWN;
 
     for( count = 0; count < numchildren; count++, child = child->next ) {
 

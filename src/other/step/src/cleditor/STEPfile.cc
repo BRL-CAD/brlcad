@@ -445,7 +445,7 @@ STEPfile::ReadData1( istream & in ) {
     std::string tmpbuf;
 
     SCLP23( Application_instance ) * obj = ENTITY_NULL;
-    stateEnum inst_state; // used if reading working file
+    stateEnum inst_state = noStateSE; // used if reading working file
 
     ErrorDescriptor e;
 
@@ -457,7 +457,6 @@ STEPfile::ReadData1( istream & in ) {
         in >> c;
 
         if( _fileType == WORKING_SESSION ) {
-            inst_state = noStateSE;
             if( strchr( "CIND", c ) ) { // if there is a valid char
                 inst_state = EntityWfState( c );
                 ReadTokenSeparator( in );
@@ -561,7 +560,7 @@ STEPfile::ReadData2( istream & in, int useTechCor ) {
 
     int total_instances = 0;
     int valid_insts = 0;    // used for exchange file only
-    stateEnum inst_state; // used if reading working file
+    stateEnum inst_state = noStateSE; // used if reading working file
 
     _errorCount = 0;  // reset error count
     _warningCount = 0;  // reset error count
@@ -582,7 +581,6 @@ STEPfile::ReadData2( istream & in, int useTechCor ) {
         in >> c;
 
         if( _fileType == WORKING_SESSION ) {
-            inst_state = noStateSE;
             if( strchr( "CIND", c ) ) { // if there is a valid char
                 inst_state = EntityWfState( c );
                 ReadTokenSeparator( in, &cmtStr );

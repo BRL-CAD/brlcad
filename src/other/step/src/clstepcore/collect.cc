@@ -96,7 +96,7 @@ int ComplexCollect::supports( EntNode * ents ) const
  */
 {
     EntNode * node = ents, *nextnode;
-    AndList * alist;
+    AndList * alist = 0;
     ComplexList * clist = clists, *cl = NULL, *current;
     int retval;
     EntList * elist, *next;

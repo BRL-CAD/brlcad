@@ -282,7 +282,7 @@ void ComplexList::addImplicitSubs( Linked_List subs, ComplexCollect * col )
     EntNode node;
     // Temp var - used to check if this already contains certain values.
     int none_yet = TRUE;
-    AndOrList * ao;
+    AndOrList * ao = 0;
     SimpleList * simple;
 
     LISTdo( subs, subEnt, Entity )

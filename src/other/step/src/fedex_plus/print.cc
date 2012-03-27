@@ -53,7 +53,7 @@ ostream & operator << ( ostream & os, MultList & mlist )
  */
 {
     char jointype[7];
-    int k, lastSimple;
+    int k, lastSimple = 0;
     // lastSimple - is the last child simple?  If so, we need to print another
     // line at the end.  If not, the children of last child did already.
     EntList * child = mlist.childList;

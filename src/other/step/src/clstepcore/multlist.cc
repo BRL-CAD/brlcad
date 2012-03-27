@@ -120,7 +120,7 @@ EntList * MultList::copyList( EntList * ent )
  * to the end of our list.
  */
 {
-    EntList * newlist, *child;
+    EntList * newlist = 0, *child;
 
     switch( ent->join ) {
         case SIMPLE:
