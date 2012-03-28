@@ -861,10 +861,16 @@ mark_as_advanced(BUILD_SHARED_LIBS)
 
 # Build static libs by default unless we're debugging. Note: this
 # option will not disable libraries specifically added as STATIC even
-# when OFF.  For multi-configuration options this option is not 
-# specifically set.
-AUTO_OPTION(BRLCAD_BUILD_STATIC_LIBS BUILD_STATIC_LIBS "OFF" "ON")
-
+# when OFF.  For multi-configuration options the build type determination
+# is made at build time, so just default to "ON".
+if(NOT CMAKE_CONFIGURATION_TYPES)
+  AUTO_OPTION(BRLCAD_BUILD_STATIC_LIBS BUILD_STATIC_LIBS "OFF" "ON")
+else(NOT CMAKE_CONFIGURATION_TYPES)
+  if("${BRLCAD_BUILD_STATIC_LIBS}" STREQUAL "")
+    set(BRLCAD_BUILD_STATIC_LIBS ON)
+  endif("${BRLCAD_BUILD_STATIC_LIBS}" STREQUAL "")
+  set(BUILD_STATIC_LIBS "${BRLCAD_BUILD_STATIC_LIBS}")
+endif(NOT CMAKE_CONFIGURATION_TYPES)
 
 # On Mac OS X, it is common to have third party package managers 
 # present for easy software installation (currently we're aware of

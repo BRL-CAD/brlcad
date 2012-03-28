@@ -57,14 +57,11 @@ macro(AUTO_OPTION username varname debug_state release_state)
     set(${varname} ${${username}})
   endif(NOT ${${username}} MATCHES "AUTO")
 
-  # If we we don't understand the build type and have an AUTO setting for the
-  # optimization flags, leave them off
+  # If we we don't understand the build type and have an AUTO setting 
+  # varname is not set.
   if(NOT "${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
     if(NOT ${${username}} MATCHES "AUTO")
       set(${varname} ${${username}})
-    else(NOT ${${username}} MATCHES "AUTO")
-      set(${varname} OFF)
-      set(${username} "OFF (AUTO)" CACHE STRING "auto option" FORCE)
     endif(NOT ${${username}} MATCHES "AUTO")
   endif(NOT "${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 
