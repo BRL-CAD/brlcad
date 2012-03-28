@@ -11,9 +11,6 @@ Various functions for manipulating characters and strings.  Also
 contains the function CheckRemainingInput which checks an input stream
 for errors following a read.
 
-dir.h
-C++ interface to the Unix file system dir structure.
-
 dirobj.cc, dirobj.h
 Defines dirobj, a class for managing directories and interpreting path
 expressions.
@@ -38,6 +35,3 @@ scl_hash.cc, scl_hash.h
 Defines a hash table facility with Hash_Table and Element structs and
 a collection of functions implementing hash table operations.
 
-scl_string.cc, scl_string.h
-Defines SCLstring, a string class similar to the string class proposed
-as part of the C++ language standard.
