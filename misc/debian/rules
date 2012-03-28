@@ -5,6 +5,13 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+# override dpkg-buildflags flags
+CFLAGS =
+CPPFLAGS =
+CXXFLAGS =
+FFLAGS =
+LDFLAGS =
+
 # DEB_BUILD_OPTIONS
 
 ifneq (,$(findstring parallel,$(DEB_BUILD_OPTIONS)))
