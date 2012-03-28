@@ -5133,8 +5133,8 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::pushZClipSettings {} {
-    set mZClipMaxBackPref $mZClipBackMax
-    set mZClipMaxFrontPref $mZClipFrontMax
+    set mZClipBackMaxPref $mZClipBackMax
+    set mZClipFrontMaxPref $mZClipFrontMax
     set mZClipBackPref $mZClipBack
     set mZClipFrontPref $mZClipFront
     updateDisplaySettings
