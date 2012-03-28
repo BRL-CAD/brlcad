@@ -70,7 +70,7 @@ endforeach(path_label ${PATH_LABELS})
 # as needed to the labels to align them properly
 foreach(path_label ${PATH_LABELS})
   set(CURRENT_LABEL ${${path_label}_LABEL})
-  string(LENGTH ${CURRENT_LABEL} CURRENT_LENGTH)
+  string(LENGTH "${CURRENT_LABEL}" CURRENT_LENGTH)
   while(${PATH_LABEL_LENGTH} GREATER ${CURRENT_LENGTH})
     set(CURRENT_LABEL " ${CURRENT_LABEL}")
     string(LENGTH "${CURRENT_LABEL}" CURRENT_LENGTH)
