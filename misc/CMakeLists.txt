@@ -28,7 +28,7 @@ else(NOT CMAKE_CONFIGURATION_TYPES)
   install(PROGRAMS ${CMAKE_BINARY_DIR}/\${BUILD_TYPE}/bin/brlcad-config DESTINATION ${BIN_DIR})
 endif(NOT CMAKE_CONFIGURATION_TYPES)
 
-BRLCAD_ADDFILE(fortran_example.f sample_applications)
+BRLCAD_ADDDATA(fortran_example.f sample_applications)
 ADD_MAN_PAGE(1 brlcad-config.1)
 
 set(density_DATAFILES
@@ -37,8 +37,8 @@ set(density_DATAFILES
   )
 BRLCAD_ADDDATA(density_DATAFILES data)
 
-BRLCAD_ADDFILE(nsis/brlcad.ico icons)
-BRLCAD_ADDFILE(nsis/archer.ico icons)
+BRLCAD_ADDDATA(nsis/brlcad.ico icons)
+BRLCAD_ADDDATA(nsis/archer.ico icons)
 
 find_package(Doxygen)
 if(DOXYGEN_FOUND)

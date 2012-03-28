@@ -12,7 +12,7 @@ set(LIBPKG_SOURCES
   vers.c
   )
 
-BRLCAD_ADDFILE(tpkg.c sample_applications)
+BRLCAD_ADDDATA(tpkg.c sample_applications)
 
 BRLCAD_ADDLIB(libpkg "${LIBPKG_SOURCES}" libbu)
 SET_TARGET_PROPERTIES(libpkg PROPERTIES VERSION 19.0.1 SOVERSION 19)

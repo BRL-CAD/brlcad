@@ -18,7 +18,7 @@ if(NOT MSVC)
 endif(NOT MSVC)
 
 set(rtexample_SRCS rtexample.c)
-BRLCAD_ADDFILE(rtexample.c sample_applications)
+BRLCAD_ADDDATA(rtexample.c sample_applications)
 
 set(reshoot_SRCS reshoot.c)
 

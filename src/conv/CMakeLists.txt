@@ -173,8 +173,8 @@ BRLCAD_ADDEXEC(g-shell-rect g-shell-rect.c "libwdb librt libbu ${M_LIBRARY}")
 
 install(PROGRAMS intaval-g.py DESTINATION bin)
 
-BRLCAD_ADDFILE(g-xxx.c sample_applications)
-BRLCAD_ADDFILE(g-xxx_facets.c sample_applications)
+BRLCAD_ADDDATA(g-xxx.c sample_applications)
+BRLCAD_ADDDATA(g-xxx_facets.c sample_applications)
 
 set(conv_MANS
   asc/g2asc.1
