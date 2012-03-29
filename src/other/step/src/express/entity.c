@@ -123,11 +123,11 @@ int
 ENTITYdeclares_variable( Entity e, Variable v ) {
     LISTdo( e->u.entity->attributes, attr, Variable )
     if( attr == v ) {
-        return True;
+        return true;
     }
     LISTod;
 
-    return False;
+    return false;
 }
 
 static
@@ -416,7 +416,7 @@ ENTITY_copy( Generic dummy1, Generic dummy2 ) {
     dest->mark = source->mark;
 }
 
-Boolean
+bool
 ENTITY_equal( Generic dummy1, Generic dummy2 ) {
     struct Entity * entity1 = ( struct Entity * )dummy1;
     struct Entity * entity2 = ( struct Entity * )dummy2;
@@ -684,25 +684,25 @@ ENTITYdelete_instance( Entity entity, Generic instance ) {
 ** Procedure:   ENTITYhas_supertype
 ** Parameters:  Entity child    - entity to check parentage of
 **      Entity parent   - parent to check for
-** Returns: Boolean     - does child's superclass chain include parent?
+** Returns: bool     - does child's superclass chain include parent?
 ** Description: Look for a certain entity in the supertype graph of an entity.
 */
 
-Boolean
+bool
 ENTITYhas_supertype( Entity child, Entity parent ) {
     LISTdo( child->u.entity->supertypes, entity, Entity )
     if( entity == parent ) {
-        return True;
+        return true;
     }
 #if 0
     if( OBJis_kind_of( entity, Class_Entity ) &&
             ENTITYhas_supertype( entity, parent ) )
 #endif
         if( ENTITYhas_supertype( entity, parent ) ) {
-            return True;
+            return true;
         }
     LISTod;
-    return False;
+    return false;
 }
 
 #if 0
@@ -711,7 +711,7 @@ ENTITYhas_supertype( Entity child, Entity parent ) {
 ** Procedure:   ENTITYget_supertype (by name)
 ** Parameters:  Entity child    - entity to check parentage of
 **      String supername- entity to check for
-** Returns: Boolean     - does child's superclass chain include named entity?
+** Returns: bool     - does child's superclass chain include named entity?
 ** Description: Returns supertype given name and entity (or ENTITY_NULL).
 */
 
@@ -737,7 +737,7 @@ ENTITYget_supertype( Entity child, String supername ) {
 ** Procedure:   ENTITYget_subtype (by name)
 ** Parameters:  Entity child    - entity to check parentage of
 **      String subname  - entity to check for
-** Returns: Boolean     - does child's subclass chain include named entity?
+** Returns: bool     - does child's subclass chain include named entity?
 ** Description: Returns subtype given name and entity (or ENTITY_NULL).
 */
 
@@ -762,11 +762,11 @@ ENTITYget_subtype( Entity child, String subname ) {
 ** Procedure:   ENTITYhas_subtype
 ** Parameters:  Entity parent   - entity to check descendants of
 **      Entity child    - child to check for
-** Returns: Boolean     - does parent's subclass tree include child?
+** Returns: bool     - does parent's subclass tree include child?
 ** Description: Look for a certain entity in the subtype graph of an entity.
 */
 
-Boolean
+bool
 ENTITYhas_subtype( Entity parent, Entity child ) {
     struct Entity * data;
     Error       experrc;
@@ -774,33 +774,33 @@ ENTITYhas_subtype( Entity parent, Entity child ) {
     data = ( struct Entity * )OBJget_data( parent, Class_Entity, &experrc );
     LISTdo( data->subtypes, entity, Entity )
     if( OBJequal( entity, child, &experrc ) ) {
-        return True;
+        return true;
     }
     if( ENTITYhas_subtype( entity, child ) ) {
-        return True;
+        return true;
     }
     LISTod;
-    return False;
+    return false;
 }
 
 /*
 ** Procedure:   ENTITYhas_immediate_supertype
 ** Parameters:  Entity child    - entity to check parentage of
 **      Entity parent   - parent to check for
-** Returns: Boolean     - is parent a direct supertype of child?
+** Returns: bool     - is parent a direct supertype of child?
 ** Description: Check whether an entity has a specific immediate superclass.
 */
 
 #endif
 
-Boolean
+bool
 ENTITYhas_immediate_supertype( Entity child, Entity parent ) {
     LISTdo( child->u.entity->supertypes, entity, Entity )
     if( entity == parent ) {
-        return True;
+        return true;
     }
     LISTod;
-    return False;
+    return false;
 }
 
 #if 0
@@ -809,21 +809,21 @@ ENTITYhas_immediate_supertype( Entity child, Entity parent ) {
 ** Procedure:   ENTITYhas_immediate_subtype
 ** Parameters:  Entity parent   - entity to check children of
 **      Entity child    - child to check for
-** Returns: Boolean     - is child a direct subtype of parent?
+** Returns: bool     - is child a direct subtype of parent?
 ** Description: Check whether an entity has a specific immediate subclass.
 */
 
-Boolean
+bool
 ENTITYhas_immediate_subtype( Entity parent, Entity child ) {
     LISTdo( parent->u.entity->subtypes, entity, Entity )
     if( entity == child ) {
-        return True;
+        return true;
     }
     LISTod;
-    return False;
+    return false;
 }
 
-Boolean
+bool
 ENTITYhas_immediate_subtype( Entity parent, Entity child ) {
     struct Entity * data;
     Error       experrc;
@@ -831,10 +831,10 @@ ENTITYhas_immediate_subtype( Entity parent, Entity child ) {
     data = ( struct Entity * )OBJget_data( parent, Class_Entity, &experrc );
     LISTdo( data->subtypes, entity, Entity )
     if( OBJequal( entity, child, &experrc ) ) {
-        return True;
+        return true;
     }
     LISTod;
-    return False;
+    return false;
 }
 
 /*
@@ -874,12 +874,12 @@ ENTITYget_subtypes( Entity entity ) {
 /*
 ** Procedure:   ENTITY{get,put}_abstract
 ** Parameters:  Entity      entity  - entity to examine
-**      Boolean     abstract    - is entity abstract?
-** Returns: Boolean         - is entity abstract?
+**      bool     abstract    - is entity abstract?
+** Returns: bool         - is entity abstract?
 ** Description: Retrieve/Set whether an entity is abstract.
 */
 
-Boolean
+bool
 ENTITYget_abstract( Entity entity ) {
     struct Entity * data;
     Error       experrc;
@@ -889,7 +889,7 @@ ENTITYget_abstract( Entity entity ) {
 }
 
 void
-ENTITYput_abstract( Entity entity, Boolean abstract ) {
+ENTITYput_abstract( Entity entity, bool abstract ) {
     struct Entity * data;
     Error       experrc;
 
@@ -938,7 +938,7 @@ ENTITY_get_all_attributes( Entity entity, Linked_List result ) {
 #if 0
     LISTdo( entity->attributes, name, char * )
     LISTadd_last( result,
-                  ( Generic )SCOPElookup( entity, name, False, &experrc ) );
+                  ( Generic )SCOPElookup( entity, name, false, &experrc ) );
 #endif
     LISTdo( entity->u.entity->attributes, attr, Generic )
     LISTadd_last( result, attr );
@@ -1033,7 +1033,7 @@ ENTITYget_named_attribute_offset( Entity entity, String name ) {
     LISTdo( entity->u.entity->attributes, attr, Variable )
     if( STRINGequal( VARget_simple_name( attr ), name ) )
         return entity->u.entity->inheritance +
-               /*         VARget_offset(SCOPElookup(entity, name, False));*/
+               /*         VARget_offset(SCOPElookup(entity, name, false));*/
                VARget_offset( ENTITY_find_inherited_attribute( entity, name, 0, 0 ) );
     LISTod;
     offset = 0;
@@ -1139,7 +1139,7 @@ ENTITYget_instances( Entity entity ) {
 /*
 ** Procedure:   ENTITYget_resolved
 ** Parameters:  Entity entity   - entity to examine
-** Returns: Boolean     - has entity been resolved?
+** Returns: bool     - has entity been resolved?
 ** Description: Checks whether references within an entity have been resolved.
 */
 

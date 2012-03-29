@@ -249,7 +249,7 @@ RESOLVEinitialize( void ) {
 /*
 ** Procedure:   EXPresolve
 ** Parameters:  Expression expression   - expression to resolve
-**      Boolean    group_qualified - true if attribute reference that
+**      bool    group_qualified - true if attribute reference that
 **                  will later be group qualified
 **      Scope      scope    - scope in which to resolve
 ** Returns: void
@@ -263,7 +263,7 @@ EXP_resolve( Expression expr, Scope scope, Type typecheck ) {
     Generic x;
     Entity e;
     Type t;
-    int func_args_checked = False;
+    bool func_args_checked = false;
 
     /*  if (expr == EXPRESSION_NULL)
             return;
@@ -327,7 +327,7 @@ EXP_resolve( Expression expr, Scope scope, Type typecheck ) {
                 if( f == FUNC_NVL ) {
                     EXPresolve( ( Expression )LISTget_first( expr->u.funcall.list ), scope, typecheck );
                     EXPresolve( ( Expression )LISTget_second( expr->u.funcall.list ), scope, typecheck );
-                    func_args_checked = True;
+                    func_args_checked = true;
                 }
 
                 /* why is this here?  (snc) */
@@ -407,7 +407,7 @@ EXP_resolve( Expression expr, Scope scope, Type typecheck ) {
                     /* Geez, don't wipe out original type! */
                     expr->return_type = expr->u.variable->type;
                     if( expr->u.variable->flags.attribute ) {
-                        found_self = True;
+                        found_self = true;
                     }
                     resolved_all( expr );
                     break;
@@ -465,7 +465,7 @@ EXP_resolve( Expression expr, Scope scope, Type typecheck ) {
                 /* will be by the time we return, and besides, */
                 /* there's no way this will be accessed if the true */
                 /* entity fails resolution */
-                found_self = True;
+                found_self = true;
                 resolved_all( expr );
             } else {
                 ERRORreport_with_symbol( ERROR_self_is_unknown, &scope->symbol );
@@ -544,7 +544,7 @@ ENTITYresolve_subtype_expression( Expression expr, Entity ent/*was scope*/, Link
                                      expr->symbol.name, sym->line );
             i = RESOLVE_FAILED;
         } else {
-            int found = False;
+            bool found = false;
 
             /* link in to flat list */
             if( !*flat ) {
@@ -553,7 +553,7 @@ ENTITYresolve_subtype_expression( Expression expr, Entity ent/*was scope*/, Link
 
             LISTdo( *flat, sub, Entity )
             if( sub == ent_ref ) {
-                found = True;
+                found = true;
                 break;
             }
             LISTod
@@ -572,7 +572,7 @@ ENTITYresolve_subtype_expression( Expression expr, Entity ent/*was scope*/, Link
             /* complain (IS p. 44) */
             LISTdo( ent_ref->u.entity->supertypes, sup, Entity )
             if( sup == ent ) {
-                found = True;
+                found = true;
                 break;
             }
             LISTod
@@ -1192,10 +1192,10 @@ ENTITYcheck_missing_supertypes( Entity ent ) {
 
     /* Make sure each of my subtypes lists me as a supertype */
     LISTdo( ent->u.entity->subtypes, sub, Entity )
-    found = False;
+    found = false;
     LISTdo( sub->u.entity->supertypes, sup, Entity )
     if( sup == ent ) {
-        found = True;
+        found = true;
         break;
     }
     LISTod;
@@ -1387,7 +1387,7 @@ SCHEMAresolve_pass2( Schema * schema ) {
         while( 0 != ( obj = DICTdo( &de ) ) ) {
             Symbol * sym = OBJget_symbol( obj, DICT_type ), *sym2;
             if( 0 != ( previous = SCHEMA_lookup( schema, SYMBOLget_name( sym ),
-                                                 True, False ) ) ) {
+                                                 true, false ) ) ) {
                 sym2 = OBJget_symbol( previous, DICT_type );
                 ERRORreport_with_symbol( ERROR_shadow_decl,
                                          SYMBOLget_line_number( sym ),
@@ -1475,7 +1475,7 @@ SCHEMAresolve_pass2( Schema * schema ) {
             /*          ENTITY_resolve_failed = 1;*/
             resolve_failed( e );
         } else {
-            int found = False;
+            bool found = false;
 
             LISTadd( e->u.entity->supertypes, ( Generic )ref_entity );
             if( is_resolve_failed( ref_entity ) ) {
@@ -1489,7 +1489,7 @@ SCHEMAresolve_pass2( Schema * schema ) {
 
             LISTdo( ref_entity->u.entity->subtypes, sub, Entity )
             if( sub == e ) {
-                found = True;
+                found = true;
                 break;
             }
             LISTod
@@ -1683,7 +1683,7 @@ SCHEMAresolve_pass2( Schema * schema ) {
             break;
         }
 
-        found_self = False;
+        found_self = false;
         EXPresolve( w->expr, scope, Type_Dont_Care );
         if( need_self && ! found_self ) {
             ERRORreport_with_symbol( ERROR_missing_self,

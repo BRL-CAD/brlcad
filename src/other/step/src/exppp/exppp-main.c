@@ -31,9 +31,9 @@ exppp_usage() {
 
 int Handle_Exppp_Args( int i, char * arg ) {
     if( ( ( char )i == 'a' ) || ( ( char )i == 'A' ) ) {
-        exppp_alphabetize = True;
+        exppp_alphabetize = true;
     } else {
-        exppp_alphabetize = False;
+        exppp_alphabetize = false;
     }
     return 0;
 }

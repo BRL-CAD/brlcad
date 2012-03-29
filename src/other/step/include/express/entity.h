@@ -100,7 +100,7 @@ struct Entity_ {
     Linked_List instances;  /* hook for applications */
     int     mark;   /* usual hack - prevent traversing sub/super */
     /* graph twice */
-    Boolean     abstract;/* is this an abstract supertype? */
+    bool     abstract;/* is this an abstract supertype? */
     Type        type;   /* type pointing back to ourself */
     /* Useful to have when evaluating */
     /* expressions involving entities */
@@ -155,10 +155,10 @@ extern struct Scope_  * ENTITYcopy PROTO( ( struct Scope_ * ) );
 extern Entity       ENTITYfind_inherited_entity PROTO( ( struct Scope_ *, char *, int ) );
 extern Variable     ENTITYfind_inherited_attribute PROTO( ( struct Scope_ *, char *, struct Symbol_ ** ) );
 extern Variable     ENTITYresolve_attr_ref PROTO( ( Entity, Symbol *, Symbol * ) );
-extern Boolean      ENTITYhas_immediate_supertype PROTO( ( Entity, Entity ) );
+extern bool      ENTITYhas_immediate_supertype PROTO( ( Entity, Entity ) );
 extern Variable     ENTITYget_named_attribute PROTO( ( Entity, char * ) );
 extern Linked_List  ENTITYget_all_attributes PROTO( ( Entity ) );
-extern Boolean      ENTITYhas_supertype PROTO( ( Entity, Entity ) );
+extern bool      ENTITYhas_supertype PROTO( ( Entity, Entity ) );
 extern void     ENTITYadd_instance PROTO( ( Entity, Generic ) );
 extern int      ENTITYget_initial_offset PROTO( ( Entity ) );
 extern int      ENTITYdeclares_variable PROTO( ( Entity, struct Variable_ * ) );

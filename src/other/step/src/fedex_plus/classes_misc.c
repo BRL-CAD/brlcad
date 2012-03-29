@@ -22,15 +22,15 @@ extern int multiple_inheritance;
 /*extern int corba_binding; */
 
 static_inline
-Boolean
+bool
 LISTempty( Linked_List list ) {
     if( !list ) {
-        return True;
+        return true;
     }
     if( list->mark->next == list->mark ) {
-        return True;
+        return true;
     }
-    return False;
+    return false;
 }
 
 /******************************************************************

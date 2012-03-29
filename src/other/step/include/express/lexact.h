@@ -60,7 +60,7 @@ typedef struct Scan_Buffer {
     char  * savedPos;
     FILE  * file;
     char  *  filename;
-    Boolean readEof;
+    bool readEof;
     int lineno;
     int bol;
 } Scan_Buffer;
@@ -110,7 +110,7 @@ extern int  SCANprocess_string PROTO( ( const char * ) );
 extern int  SCANprocess_encoded_string PROTO( ( const char * ) );
 extern int  SCANprocess_semicolon PROTO( ( const char *, int ) );
 extern void SCANsave_comment PROTO( ( const char * ) );
-extern Boolean  SCANread PROTO( ( void ) );
+extern bool  SCANread PROTO( ( void ) );
 #if macros_bit_the_dust
 extern void SCANdefine_macro PROTO( ( char *, char * ) );
 #endif

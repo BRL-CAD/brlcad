@@ -31,15 +31,15 @@ static char rcsid[] = "$Id: classes.c,v 3.0.1.11 1997/09/18 21:14:46 sauderd Exp
 char * FundamentalType( const Type t, int report_reftypes );
 
 static_inline
-Boolean
+bool
 LISTempty( Linked_List list ) {
     if( !list ) {
-        return True;
+        return true;
     }
     if( list->mark->next == list->mark ) {
-        return True;
+        return true;
     }
-    return False;
+    return false;
 }
 
 int multiple_inheritance = 1;
@@ -146,7 +146,7 @@ USEREFout( Schema schema, Dictionary refdict, Linked_List reflist, char * type, 
     /* step 2: for each list, print out the renames */
     DICTdo_init( dict, &de );
     while( 0 != ( list = ( Linked_List )DICTdo( &de ) ) ) {
-        int first_time = True;
+        bool first_time = true;
         LISTdo( list, r, struct Rename * )
 
         /* note: SCHEMAget_name(r->schema) equals r->schema->symbol.name) */
@@ -161,7 +161,7 @@ USEREFout( Schema schema, Dictionary refdict, Linked_List reflist, char * type, 
         }
 
         if( first_time ) {
-            first_time = False;
+            first_time = false;
         }
         if( r->type == OBJ_TYPE ) {
             sprintf( td_name, "%s", TYPEtd_name( ( Type )r->object ) );
@@ -1401,7 +1401,7 @@ LIBcopy_constructor( Entity ent, FILE * file ) {
     char * tmp;
 
     String entnm = ENTITYget_classname( ent );
-    Boolean opt;
+    bool opt;
     String StrToLower( String word );
 
     /*mjm7/10/91 copy constructor definition  */

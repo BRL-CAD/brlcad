@@ -232,7 +232,7 @@ SCANpush_buffer( char * filename, FILE * fp ) {
 #else
     *( SCANcurrent = SCANbuffer.text ) = '\0';
 #endif
-    SCANbuffer.readEof = False;
+    SCANbuffer.readEof = false;
     SCANbuffer.file = fp;
     SCANbuffer.filename = current_filename = filename;
 }
@@ -478,17 +478,17 @@ SCANsave_comment( const char * yytext ) {
     last_comment = last_comment;
 }
 
-Boolean
+bool
 SCANread( void ) {
     int     numRead;
-    Boolean done;
+    bool done;
 
     do {
         /* this loop is guaranteed to terminate, since buffer[0] is on yyin */
         while( SCANbuffer.file == NULL ) {
             SCANpop_buffer();
             if( SCANtext_ready ) {
-                return True;
+                return true;
             }
         }
 
@@ -496,7 +496,7 @@ SCANread( void ) {
 
         /* check for more stuff already buffered */
         if( SCANtext_ready ) {
-            return True;
+            return true;
         }
 
         /* check whether we've seen eof on this file */
@@ -504,7 +504,7 @@ SCANread( void ) {
             numRead = fread( SCANbuffer.text, sizeof( char ),
                              SCAN_BUFFER_SIZE, SCANbuffer.file );
             if( numRead < SCAN_BUFFER_SIZE ) {
-                SCANbuffer.readEof = True;
+                SCANbuffer.readEof = true;
             }
 #ifdef keep_nul
             SCANbuffer.numRead = numRead;
@@ -516,7 +516,7 @@ SCANread( void ) {
 
         if( !( done = SCANtext_ready ) ) {
             if( SCAN_current_buffer == 0 ) {
-                done = True;
+                done = true;
                 fclose( SCANbuffer.file ); /* close yyin */
                 SCANbuffer.file = NULL;
             } else {

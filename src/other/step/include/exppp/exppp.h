@@ -6,15 +6,15 @@ extern int exppp_continuation_indent;   /* default nesting indent for */
 extern int exppp_linelength;        /* leave some slop for closing */
 /* parens.  \n is not included in */
 /* this count either */
-extern int exppp_rmpp;          /* if true, create rmpp */
-extern int exppp_alphabetize;       /* if true, alphabetize */
-extern int exppp_terse;         /* don't describe action to stdout */
-extern int exppp_reference_info;    /* if true, add commentary */
+extern bool exppp_rmpp;          /* if true, create rmpp */
+extern bool exppp_alphabetize;       /* if true, alphabetize */
+extern bool exppp_terse;         /* don't describe action to stdout */
+extern bool exppp_reference_info;    /* if true, add commentary */
 /* about where things came from */
-extern int exppp_preserve_comments; /* if true, preserve comments where */
+extern bool exppp_preserve_comments; /* if true, preserve comments where */
 /* possible */
 extern char * exppp_output_filename; /* force output filename */
-extern int exppp_output_filename_reset; /* if true, force output filename */
+extern bool exppp_output_filename_reset; /* if true, force output filename */
 
 void EXPRESSout( Express e );
 

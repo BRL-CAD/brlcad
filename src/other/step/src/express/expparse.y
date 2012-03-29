@@ -133,7 +133,7 @@ YYSTYPE yylval;
     static void	yyerror(const char*, char *string);
     static void	yyerror2(const char*, char CONST *t);
 
-    Boolean		yyeof = False;
+    bool yyeof = false;
 
 #define MAX_SCOPE_DEPTH	20	/* max number of scopes that can be nested */
 
@@ -793,7 +793,7 @@ derived_attribute(A) ::= attribute_decl(B) TOK_COLON attribute_type(C)
 {
     A = VARcreate(B, C);
     A->initializer = D;
-    A->flags.attribute = True;
+    A->flags.attribute = true;
 }
 
 derived_attribute_rep(A) ::= derived_attribute(B).
@@ -937,7 +937,7 @@ explicit_attribute(A) ::= attribute_decl_list(B) TOK_COLON optional(C)
     LISTdo_links (B, attr)
 	v = VARcreate((Expression)attr->data, D);
 	v->flags.optional = C.optional;
-	v->flags.attribute = True;
+	v->flags.attribute = true;
 	attr->data = (Generic)v;
     LISTod;
 
@@ -1129,7 +1129,7 @@ formal_parameter(A) ::= var(B) id_list(C) TOK_COLON parameter_type(D).
     e = EXPcreate_from_symbol(Type_Attribute, tmp);
     v = VARcreate(e, D);
     v->flags.optional = B.var;
-    v->flags.parameter = True;
+    v->flags.parameter = true;
     param->data = (Generic)v;
 
     /* link it in to the current scope's dict */
@@ -1546,7 +1546,7 @@ inverse_attr(A) ::= TOK_IDENTIFIER(B) TOK_COLON set_or_bag_of_entity(C)
         A = VARcreate(e, t);
     }
 
-    A->flags.attribute = True;
+    A->flags.attribute = true;
     A->inverse_symbol = D.symbol;
 }
 
@@ -1950,8 +1950,8 @@ rule_formal_parameter(A) ::= TOK_IDENTIFIER(B).
     SCOPEadd_super(t);
     e = EXPcreate_from_symbol(t, B.symbol);
     A = VARcreate(e, t);
-    A->flags.attribute = True;
-    A->flags.parameter = True;
+    A->flags.attribute = true;
+    A->flags.parameter = true;
 
     /* link it in to the current scope's dict */
     DICTdefine(CURRENT_SCOPE->symbol_table, B.symbol->name, (Generic)A,
@@ -2125,7 +2125,7 @@ statement_rep(A) ::= statement(B) statement_rep(C).
 subsuper_decl(A) ::= /* NULL body */.
 {
     A.subtypes = EXPRESSION_NULL;
-    A.abstract = False;
+    A.abstract = false;
     A.supertypes = LIST_NULL;
 }
 subsuper_decl(A) ::= supertype_decl(B).
@@ -2137,7 +2137,7 @@ subsuper_decl(A) ::= supertype_decl(B).
 subsuper_decl(A) ::= subtype_decl(B).
 {
     A.supertypes = B;
-    A.abstract = False;
+    A.abstract = false;
     A.subtypes = EXPRESSION_NULL;
 }
 subsuper_decl(A) ::= supertype_decl(B) subtype_decl(C).
@@ -2156,19 +2156,19 @@ subtype_decl(A) ::= TOK_SUBTYPE TOK_OF TOK_LEFT_PAREN defined_type_list(B)
 supertype_decl(A) ::= TOK_ABSTRACT TOK_SUPERTYPE.
 {
     A.subtypes = (Expression)0;
-    A.abstract = True;
+    A.abstract = true;
 }
 supertype_decl(A) ::= TOK_SUPERTYPE TOK_OF TOK_LEFT_PAREN
 		      supertype_expression(B) TOK_RIGHT_PAREN.
 {
     A.subtypes = B;
-    A.abstract = False;
+    A.abstract = false;
 }
 supertype_decl(A) ::= TOK_ABSTRACT TOK_SUPERTYPE TOK_OF TOK_LEFT_PAREN
 		      supertype_expression(B) TOK_RIGHT_PAREN.
 {
     A.subtypes = B;
-    A.abstract = True;
+    A.abstract = true;
 }
 
 supertype_expression(A) ::= supertype_factor(B).

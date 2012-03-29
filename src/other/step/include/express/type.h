@@ -342,7 +342,7 @@ extern TypeBody TYPEBODYcreate PROTO( ( enum type_enum ) );
 /*extern Type   TYPEcopy_shallow PROTO((Type));*/
 extern void TYPEinitialize PROTO( ( void ) );
 
-extern Boolean TYPEinherits_from PROTO( ( Type, enum type_enum ) );
+extern bool TYPEinherits_from PROTO( ( Type, enum type_enum ) );
 extern Type TYPEget_nonaggregate_base_type PROTO( ( Type ) );
 
 extern Type TYPEcreate_user_defined_type PROTO( ( Type, Scope, struct Symbol_ * ) );

@@ -101,7 +101,7 @@ extern void ( *EXPRESSbackend ) PROTO( ( Express ) );
 extern char * EXPRESSprogram_name;
 extern char   EXPRESSgetopt_options[];  /* initialized elsewhere */
 extern int ( *EXPRESSgetopt ) PROTO( ( int, char * ) );
-extern int    EXPRESSignore_duplicate_schemas;
+extern bool    EXPRESSignore_duplicate_schemas;
 
 extern Dictionary EXPRESSbuiltins;  /* procedures/functions */
 

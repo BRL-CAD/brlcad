@@ -65,11 +65,11 @@ static char rcsid[] = "$Id: error.c,v 1.13 1997/10/23 21:41:44 sauderd Exp $";
 #endif
 
 
-Boolean __ERROR_buffer_errors = False;
+bool __ERROR_buffer_errors = false;
 char * current_filename = "stdin";
 
 /* flag to remember whether non-warning errors have occurred */
-Boolean ERRORoccurred = False;
+bool ERRORoccurred = false;
 
 
 Error experrc = ERROR_none;
@@ -110,7 +110,7 @@ static int ERROR_with_lines = 0;    /* number of warnings & errors */
 static char * ERROR_string;
 static char * ERROR_string_base;
 
-static char ERROR_unsafe = False;
+static char ERROR_unsafe = false;
 static jmp_buf ERROR_safe_env;
 
 /* message buffer file */
@@ -179,7 +179,7 @@ ERRORcreate_warning( char * name, Error error ) {
 
 void
 ERRORset_warning( char * name, int set ) {
-    int found = False;
+    bool found = false;
 
     if( streq( name, "all" ) ) {
         ERRORset_all_warnings( set );
@@ -188,7 +188,7 @@ ERRORset_warning( char * name, int set ) {
     } else {
         LISTdo( ERRORwarnings, opt, Error_Warning )
         if( streq( opt->name, name ) ) {
-            found = True;
+            found = true;
             LISTdo( opt->errors, err, Error )
             err->enabled = set;
             LISTod
@@ -235,7 +235,7 @@ ERRORset_all_warnings( int set ) {
 /*
 ** Procedure:   ERRORis_enabled
 ** Parameters:  Error error - error to test
-** Returns: Boolean     - is reporting of the error enabled?
+** Returns: bool     - is reporting of the error enabled?
 ** Description: Check whether an error is enabled
 */
 
@@ -278,7 +278,7 @@ va_dcl {
             fprintf( error_file, "ERROR: " );
             vfprintf( error_file, what->message, args );
             fputc( '\n', error_file );
-            ERRORoccurred = True;
+            ERRORoccurred = true;
         } else if( what->severity >= SEVERITY_WARNING ) {
             fprintf( error_file, "WARNING: ", what->severity );
             vfprintf( error_file, what->message, args );
@@ -399,7 +399,7 @@ va_dcl {
                 ERROR_string += strlen( ERROR_string );
                 *ERROR_string++ = '\n';
                 *ERROR_string++ = '\0';
-                ERRORoccurred = True;
+                ERRORoccurred = true;
             } else if( what->severity >= SEVERITY_WARNING ) {
                 sprintf( ERROR_string, "%s:%d: WARNING: ", sym->filename, sym->line );
                 ERROR_string += strlen( ERROR_string );
@@ -423,7 +423,7 @@ va_dcl {
                 fprintf( error_file, "%s:%d: --ERROR: ", sym->filename, sym->line );
                 vfprintf( error_file, what->message, args );
                 fprintf( error_file, "\n" );
-                ERRORoccurred = True;
+                ERRORoccurred = true;
             } else if( what->severity >= SEVERITY_WARNING ) {
                 fprintf( error_file, "%s:%d: WARNING: ", sym->filename, sym->line );
                 ERROR_string += strlen( ERROR_string ) + 1;
@@ -464,13 +464,13 @@ ERRORcreate( char * message, Severity severity ) {
     n = ( struct Error_ * )malloc( sizeof( struct Error_ ) );
     n->message = message;
     n->severity = severity;
-    n->enabled = True;
+    n->enabled = true;
     return n;
 }
 
 /*
 ** Procedure:   ERRORbuffer_messages
-** Parameters:  Boolean flag    - to buffer or not to buffer
+** Parameters:  bool flag    - to buffer or not to buffer
 ** Returns: void
 ** Description: Selects buffering of error messages
 */
@@ -511,7 +511,7 @@ ERROR_start_message_buffer( void ) {
 
 void
 ERROR_flush_message_buffer( void ) {
-    if( __ERROR_buffer_errors == False ) {
+    if( __ERROR_buffer_errors == false ) {
         return;
     }
 
@@ -575,5 +575,5 @@ ERRORsafe( jmp_buf env ) {
 
 void
 ERRORunsafe() {
-    ERROR_unsafe = True;
+    ERROR_unsafe = true;
 }

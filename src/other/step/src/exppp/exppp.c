@@ -8,9 +8,6 @@
 #include <varargs.h>
 #endif
 
-int exppp_output_filename_reset;    /* if true, force output filename */
-/* DAR - moved this from .h file - not sure why was there. */
-
 #include "../express/expbasic.h"
 #include "../express/express.h"
 #include "exppp.h"
@@ -51,8 +48,7 @@ static Error ERROR_select_empty;
 int exppp_nesting_indent = 2;       /* default nesting indent */
 int exppp_continuation_indent = 4;  /* default nesting indent for */
 /* continuation lines */
-int exppp_linelength = 75;      /* leave some slop for closing
-                    /* parens.  \n is not included in */
+int exppp_linelength = 75;      /* leave some slop for closing parens. \n is not included in */
 /* this count either */
 
 int indent2;        /* where continuation lines start */
@@ -76,16 +72,18 @@ char * expheader[] = {
     0
 };
 
-int exppp_alphabetize = False;
+bool exppp_output_filename_reset;    /* if true, force output filename */
 
-int exppp_terse = False;
+bool exppp_alphabetize = false;
 
-int exppp_reference_info = False;   /* if true, add commentary */
+bool exppp_terse = false;
+
+bool exppp_reference_info = false;   /* if true, add commentary */
 /* about where things came from */
 
-int exppp_preserve_comments = False;
+bool exppp_preserve_comments = false;
 
-int exppp_rmpp = True;
+bool exppp_rmpp = true;
 char rmfilename[] = "rmpp";
 FILE * rm;
 
@@ -229,12 +227,12 @@ va_dcl {
 
 void
 exppp_init() {
-    static int first_time = True;
+    static bool first_time = true;
 
     if( !first_time ) {
         return;
     }
-    first_time = False;
+    first_time = false;
 
     ERROR_select_empty = ERRORcreate(
                              "select type %s has no members", SEVERITY_ERROR );
@@ -287,12 +285,12 @@ exppp_ref_info( Symbol * s ) {
 /* normally all non-schema objects start out by printing a newline */
 /* however, this is undesirable when printing out single objects */
 /* use this variable to avoid it */
-static int first_line = True;       /* if first line */
+static bool first_line = true;       /* if first line */
 
 static void
 first_newline() {
     if( first_line ) {
-        first_line = False;
+        first_line = false;
     } else {
         raw( "\n" );
     }
@@ -306,7 +304,7 @@ SCHEMAout( Schema s ) {
     FILE * f;
     int level = 0;
     char ** hp;
-    int described = False;
+    bool described = false;
 
     if( exppp_output_filename_reset ) {
         exppp_output_filename = 0;
@@ -318,7 +316,7 @@ SCHEMAout( Schema s ) {
         /* when there is only a single file, allow user to find */
         /* out what it is */
         exppp_output_filename = filename;
-        exppp_output_filename_reset = True;
+        exppp_output_filename_reset = true;
 
         /* since we have to generate a filename, make sure we don't */
         /* overwrite a valuable file */
@@ -339,7 +337,7 @@ SCHEMAout( Schema s ) {
                 strcat( filename, ".pp" );
                 fprintf( stderr, "%s: writing schema file %s instead\n",
                          EXPRESSprogram_name, filename );
-                described = True;
+                described = true;
             }
         }
         fclose( f );
@@ -366,7 +364,7 @@ SCHEMAout( Schema s ) {
     /*  first_newline();*/
     /*  raw("SCHEMA %s;\n",s->symbol.name);*/
 
-    first_line = False;
+    first_line = false;
     raw( "\nSCHEMA %s;\n", s->symbol.name );
 
     if( s->u.schema->usedict || s->u.schema->use_schemas
@@ -426,7 +424,7 @@ REFout( Dictionary refdict, Linked_List reflist, char * type, int level ) {
     indent2 = level + exppp_continuation_indent;
     DICTdo_init( dict, &de );
     while( 0 != ( list = ( Linked_List )DICTdo( &de ) ) ) {
-        int first_time = True;
+        bool first_time = true;
         LISTdo( list, r, struct Rename * )
         if( first_time ) {
             raw( "%s FROM %s\n", type, r->schema->symbol.name );
@@ -437,7 +435,7 @@ REFout( Dictionary refdict, Linked_List reflist, char * type, int level ) {
 
         if( first_time ) {
             raw( "%*s(", level, "" );
-            first_time = False;
+            first_time = false;
         } else {
             raw( "%*s ", level, "" );
         }
@@ -483,7 +481,7 @@ SCOPErules_out( Scope s, int level ) {
     Rule r;
     DictionaryEntry de;
 
-    if( exppp_alphabetize == False ) {
+    if( exppp_alphabetize == false ) {
         DICTdo_type_init( s->symbol_table, &de, OBJ_RULE );
         while( 0 != ( r = ( Rule )DICTdo( &de ) ) ) {
             RULE_out( r, level );
@@ -511,7 +509,7 @@ SCOPEfuncs_out( Scope s, int level ) {
     Function f;
     DictionaryEntry de;
 
-    if( exppp_alphabetize == False ) {
+    if( exppp_alphabetize == false ) {
         DICTdo_type_init( s->symbol_table, &de, OBJ_FUNCTION );
         while( 0 != ( f = ( Function )DICTdo( &de ) ) ) {
             FUNC_out( f, level );
@@ -539,7 +537,7 @@ SCOPEprocs_out( Scope s, int level ) {
     Procedure p;
     DictionaryEntry de;
 
-    if( exppp_alphabetize == False ) {
+    if( exppp_alphabetize == false ) {
         DICTdo_type_init( s->symbol_table, &de, OBJ_PROCEDURE );
         while( 0 != ( p = ( Procedure )DICTdo( &de ) ) ) {
             PROC_out( p, level );
@@ -622,7 +620,7 @@ RULE_out( Rule r, int level ) {
     first_newline();
     exppp_ref_info( &r->symbol );
 
-    if( exppp_preserve_comments == False ) {
+    if( exppp_preserve_comments == false ) {
         raw( "%*sRULE %s FOR (", level, "", r->symbol.name );
 
         LISTdo( r->u.rule->parameters, p, Variable )
@@ -683,7 +681,7 @@ FUNC_out( Function fn, int level ) {
     first_newline();
     exppp_ref_info( &fn->symbol );
 
-    if( exppp_preserve_comments == False ) {
+    if( exppp_preserve_comments == false ) {
         raw( "%*sFUNCTION %s", level, "", fn->symbol.name );
 
         if( fn->u.func->parameters ) {
@@ -716,7 +714,7 @@ PROC_out( Procedure p, int level ) {
     first_newline();
     exppp_ref_info( &p->symbol );
 
-    if( exppp_preserve_comments == False ) {
+    if( exppp_preserve_comments == false ) {
         raw( "%*sPROCEDURE %s(\n", level, "", p->symbol.name );
 
         ALGargs_out( p->u.proc->parameters, level + strlen( "PROCEDURE     " ) );
@@ -942,7 +940,7 @@ CASEout( struct Case_Statement_ *c, int level ) {
 
 void
 STMT_out( Statement s, int level ) {
-    int first_time = True;
+    bool first_time = true;
 
     if( !s ) {  /* null statement */
         raw( "%*s;\n", level, "" );
@@ -985,7 +983,7 @@ STMT_out( Statement s, int level ) {
             raw( "%*s%s(", level, "", s->symbol.name );
             LISTdo( s->u.proc->parameters, p, Expression )
             if( first_time ) {
-                first_time = False;
+                first_time = false;
             } else {
                 raw( "," );
             }
@@ -1030,7 +1028,7 @@ SCOPEentities_out( Scope s, int level ) {
     Entity e;
     DictionaryEntry de;
 
-    if( exppp_alphabetize == False ) {
+    if( exppp_alphabetize == false ) {
         DICTdo_type_init( s->symbol_table, &de, OBJ_ENTITY );
         while( 0 != ( e = ( Entity )DICTdo( &de ) ) ) {
             ENTITY_out( e, level );
@@ -1072,7 +1070,7 @@ SUBTYPEout( Expression e ) {
 
 void
 ENTITY_out( Entity e, int level ) {
-    int first_time = True;
+    bool first_time = true;
 
     first_newline();
     exppp_ref_info( &e->symbol );
@@ -1101,7 +1099,7 @@ ENTITY_out( Entity e, int level ) {
 
         LISTdo( e->u.entity->supertype_symbols, s, Symbol * )
         if( first_time ) {
-            first_time = False;
+            first_time = false;
         } else {
             raw( ", " );
         }
@@ -1330,7 +1328,7 @@ SCOPEtypes_out( Scope s, int level ) {
     DictionaryEntry de;
     Type t;
 
-    if( exppp_alphabetize == False ) {
+    if( exppp_alphabetize == false ) {
         DICTdo_type_init( s->symbol_table, &de, OBJ_TYPE );
         while( 0 != ( t = ( Type )DICTdo( &de ) ) ) {
             TYPE_out( t, level );
@@ -1393,7 +1391,7 @@ TYPEunique_or_optional_out( TypeBody tb ) {
 
 void
 TYPE_body_out( Type t, int level ) {
-    int first_time = True;
+    bool first_time = true;
 
     Expression expr;
     DictionaryEntry de;
@@ -1500,7 +1498,7 @@ TYPE_body_out( Type t, int level ) {
                 /* start new enum item */
                 if( first_time ) {
                     raw( "%*s(", level, "" );
-                    first_time = False;
+                    first_time = false;
                 } else {
                     raw( "%*s ", level, "" );
                 }
@@ -1522,7 +1520,7 @@ TYPE_body_out( Type t, int level ) {
                 /* start new enum item */
                 if( first_time ) {
                     raw( "%*s(", level, "" );
-                    first_time = False;
+                    first_time = false;
                 } else {
                     raw( "%*s ", level, "" );
                 }
@@ -1542,7 +1540,7 @@ TYPE_body_out( Type t, int level ) {
             /* start new entity */
             if( first_time ) {
                 raw( "%*s(", level, "" );
-                first_time = False;
+                first_time = false;
             } else {
                 raw( "%*s ", level, "" );
             }
@@ -1961,8 +1959,8 @@ EXPRlength( Expression e ) {
 #define BIGBUFSIZ   100000
 static old_curpos;
 static old_lineno;
-static int string_func_in_use = False;
-static int file_func_in_use = False;
+static bool string_func_in_use = false;
+static bool file_func_in_use = false;
 
 /* return 0 if successful */
 static int
@@ -1972,7 +1970,7 @@ prep_buffer( char * buf, int len ) {
         fprintf( stderr, "cannot generate EXPRESS string representations recursively!\n" );
         return 1;
     }
-    string_func_in_use = True;
+    string_func_in_use = true;
 
     exppp_buf = exppp_bufp = buf;
     exppp_buflen = exppp_maxbuflen = len;
@@ -1982,7 +1980,7 @@ prep_buffer( char * buf, int len ) {
     curpos = 1;
     old_lineno = 1;
 
-    first_line = True;
+    first_line = true;
 
     return 0;
 }
@@ -1993,7 +1991,7 @@ finish_buffer() {
     exppp_buf = 0;
     curpos = old_curpos;
     error_sym.line = old_lineno;
-    string_func_in_use = False;
+    string_func_in_use = false;
     return 1 + exppp_maxbuflen - exppp_buflen;
 }
 
@@ -2005,7 +2003,7 @@ prep_string() {
         fprintf( stderr, "cannot generate EXPRESS string representations recursively!\n" );
         return 1;
     }
-    string_func_in_use = True;
+    string_func_in_use = true;
 
     exppp_buf = exppp_bufp = ( char * )malloc( BIGBUFSIZ );
     if( !exppp_buf ) {
@@ -2019,7 +2017,7 @@ prep_string() {
     old_lineno = error_sym.line;
     curpos = 1;
 
-    first_line = True;
+    first_line = true;
 
     return 0;
 }
@@ -2036,7 +2034,7 @@ finish_string() {
     curpos = old_curpos;
     error_sym.line = old_lineno;
 
-    string_func_in_use = False;
+    string_func_in_use = false;
     return b;
 }
 
@@ -2049,7 +2047,7 @@ prep_file() {
     if( file_func_in_use ) {
         fprintf( stderr, "cannot print EXPRESS representations recursively!\n" );
     }
-    file_func_in_use = True;
+    file_func_in_use = true;
 
     /* temporarily change file to stdout and print */
     /* This avoids messing up any printing in progress */
@@ -2061,7 +2059,7 @@ prep_file() {
 static void
 finish_file() {
     exppp_fp = oldfp;       /* reset back to original file */
-    file_func_in_use = False;
+    file_func_in_use = false;
 }
 
 static char * placeholder = "placeholder";

@@ -30,12 +30,12 @@ struct entity_body {
 struct subsuper_decl {
     Expression  subtypes;
     Linked_List supertypes;
-    Boolean     abstract;
+    bool     abstract;
 };
 
 struct subtypes {
     Expression  subtypes;
-    Boolean     abstract;
+    bool     abstract;
 };
 
 struct upper_lower {

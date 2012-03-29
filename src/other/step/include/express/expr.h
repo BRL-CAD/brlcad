@@ -149,7 +149,7 @@ union expr_union {
     char * attribute;   /* inverse .... for 'attr' */
     char * binary;
     int logical;
-    Boolean boolean;
+    bool boolean;
     struct Query_ * query;
     struct Funcall funcall;
 

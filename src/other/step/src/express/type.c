@@ -256,7 +256,7 @@ TYPEBODYcreate( enum type_enum type ) {
 /* may need to be implemented for more types */
 #define TYPE_inherits_from(t,e) ((t) && TYPEinherits_from((t),(e)))
 
-Boolean
+bool
 TYPEinherits_from( Type t, enum type_enum e ) {
     TypeBody tb = t->u.type->body;
 
@@ -267,36 +267,36 @@ TYPEinherits_from( Type t, enum type_enum e ) {
                     tb->type == bag_ ||
                     tb->type == set_ ||
                     tb->type == list_ ) {
-                return True;
+                return true;
             } else {
                 return( TYPE_inherits_from( tb->base, e ) );
             }
         case array_:
-            return( ( tb->type == array_ ) ? True : TYPE_inherits_from( tb->base, e ) );
+            return( ( tb->type == array_ ) ? true : TYPE_inherits_from( tb->base, e ) );
         case bag_:
             return( ( tb->type == bag_ ||
-                      tb->type == set_ ) ? True : TYPE_inherits_from( tb->base, e ) );
+                      tb->type == set_ ) ? true : TYPE_inherits_from( tb->base, e ) );
         case set_:
-            return( ( tb->type == set_ ) ? True : TYPE_inherits_from( tb->base, e ) );
+            return( ( tb->type == set_ ) ? true : TYPE_inherits_from( tb->base, e ) );
         case list_:
-            return( ( tb->type == list_ ) ? True : TYPE_inherits_from( tb->base, e ) );
+            return( ( tb->type == list_ ) ? true : TYPE_inherits_from( tb->base, e ) );
     }
     return ( tb->type == e );
 }
 
 #if 0
 case binary_:
-return( ( t->type == binary_ ) ? True : TYPEinherits_from( t->base, e ) );
+return( ( t->type == binary_ ) ? true : TYPEinherits_from( t->base, e ) );
 case integer_:
-return( ( t->type == integer_ ) ? True : TYPEinherits_from( t->base, e ) );
+return( ( t->type == integer_ ) ? true : TYPEinherits_from( t->base, e ) );
 case real_:
-return( ( t->type == real_ ) ? True : TYPEinherits_from( t->base, e ) );
+return( ( t->type == real_ ) ? true : TYPEinherits_from( t->base, e ) );
 case string_:
-return( ( t->type == string_ ) ? True : TYPEinherits_from( t->base, e ) );
+return( ( t->type == string_ ) ? true : TYPEinherits_from( t->base, e ) );
 case logical_:
-return( ( t->type == logical_ ) ? True : TYPEinherits_from( t->base, e ) );
+return( ( t->type == logical_ ) ? true : TYPEinherits_from( t->base, e ) );
 case boolean_:
-return( ( t->type == boolean_ ) ? True : TYPEinherits_from( t->base, e ) );
+return( ( t->type == boolean_ ) ? true : TYPEinherits_from( t->base, e ) );
 default:
 return( false );
 }
@@ -518,7 +518,7 @@ TYPEget_size( Type type ) {
 ** Description: Determine whether two types are assignment-compatible.
 */
 
-Boolean
+bool
 TYPEcompatible( Type lhs_type, Type rhs_type ) {
     Class   lhs_class;
     Class   rhs_class;
@@ -542,12 +542,12 @@ TYPEcompatible( Type lhs_type, Type rhs_type ) {
             list = COMP_TYPEget_items( rhs_type );
             LISTdo( list, e, Entity )
             if( !ENTITYhas_supertype( e, entity ) ) {
-                return False;
+                return false;
             }
             LISTod;
-            return True;
+            return true;
         } else {
-            return False;
+            return false;
         }
     } else if( CLASSinherits_from( lhs_class, Class_Composed_Type ) ) {
         return OBJequal( rhs_type, lhs_type, &experrc );

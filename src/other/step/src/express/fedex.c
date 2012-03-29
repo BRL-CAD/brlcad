@@ -124,7 +124,7 @@ main( int argc, char ** argv ) {
     int no_need_to_work = 0;/* TRUE if we can exit gracefully without */
     /* doing any work */
 
-    Boolean buffer_messages = False;
+    bool buffer_messages = false;
     char * filename = 0;
     Express model;
 
@@ -180,10 +180,10 @@ main( int argc, char ** argv ) {
                 }
                 break;
             case 'B':
-                buffer_messages = True;
+                buffer_messages = true;
                 break;
             case 'b':
-                buffer_messages = False;
+                buffer_messages = false;
                 break;
             case 'e':
                 filename = optarg;

@@ -64,7 +64,7 @@ typedef enum {
 /***************************/
 
 typedef struct Error_ {
-    Boolean enabled;
+    bool enabled;
     Severity    severity;
     char  * message;
 } * Error;
@@ -82,11 +82,11 @@ typedef struct Error_Warning_ {
 /* global variables */
 /********************/
 
-extern Boolean __ERROR_buffer_errors;
+extern bool __ERROR_buffer_errors;
 extern char * current_filename;
 
 /* flag to remember whether non-warning errors have occurred */
-extern Boolean ERRORoccurred;
+extern bool ERRORoccurred;
 
 
 extern Error experrc;
@@ -122,7 +122,7 @@ static_inline
 void
 ERRORdisable( Error error ) {
     if( error != ERROR_none ) {
-        error->enabled = False;
+        error->enabled = false;
     }
 }
 
@@ -130,19 +130,19 @@ static_inline
 void
 ERRORenable( Error error ) {
     if( error != ERROR_none ) {
-        error->enabled = True;
+        error->enabled = true;
     }
 }
 
 static_inline
-Boolean
+bool
 ERRORis_enabled( Error error ) {
     return error->enabled;
 }
 
 static_inline
 void
-ERRORbuffer_messages( Boolean flag ) {
+ERRORbuffer_messages( bool flag ) {
     extern void ERROR_start_message_buffer( void ),
            ERROR_flush_message_buffer( void );
 
@@ -181,7 +181,7 @@ extern void ERRORreport PROTO( ( Error, ... ) );
 struct Symbol_; /* mention Symbol to avoid warning on following line */
 extern void ERRORreport_with_symbol PROTO( ( Error, struct Symbol_ *, ... ) );
 extern void ERRORreport_with_line PROTO( ( Error, int, ... ) );
-extern void ERRORbuffer_messages PROTO( ( Boolean ) );
+extern void ERRORbuffer_messages PROTO( ( bool ) );
 extern void ERRORflush_messages PROTO( ( void ) );
 
 extern void ERROR_start_message_buffer PROTO( ( void ) );
@@ -196,7 +196,7 @@ extern void ERRORunsafe PROTO( ( void ) );
 #if deprecated
 extern void ERRORdisable PROTO( ( Error ) );
 extern void ERRORenable PROTO( ( Error ) );
-extern Boolean  ERRORis_enabled PROTO( ( Error ) );
+extern bool ERRORis_enabled PROTO( ( Error ) );
 #endif
 
 #endif /* ERROR_H */

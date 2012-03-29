@@ -113,7 +113,7 @@ enum { INITIAL, code, comment, return_end_schema };
 
 extern void	yyerror();
 extern int	yylineno;
-extern Boolean	yyeof;
+extern bool	yyeof;
 static int	nesting_level = 0;
 
 /* can't imagine this will ever be more than 2 or 3 - DEL */
@@ -124,7 +124,7 @@ static_inline
 int
 SCANnextchar(char* buffer)
 {
-    extern Boolean SCANread(void);
+    extern bool SCANread(void);
 #ifdef keep_nul
     static int escaped = 0;
 #endif
@@ -180,7 +180,7 @@ SCAN_lex_init(char *filename, FILE *fp) {
         /* return to initial scan buffer */
         SCAN_current_buffer = 0;
         *(SCANcurrent = SCANbuffer.text) = '\0';
-        SCANbuffer.readEof = False;
+        SCANbuffer.readEof = false;
         SCANbuffer.file = fp;
 	SCANbuffer.filename = (filename ? filename : "");
 	current_filename = SCANbuffer.filename;
