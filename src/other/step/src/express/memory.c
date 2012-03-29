@@ -44,8 +44,7 @@ Now you can say things like:
 #define ALLOC
 #endif /*ALLOC*/
 
-print_freelist( flh )
-struct freelist_head * flh;
+void print_freelist( struct freelist_head * flh )
 {
     Freelist * current;
 

@@ -2774,7 +2774,7 @@ TypeDescription( const Type t ) {
     return buf + 1;
 }
 
-strcat_expr( Expression e, char * buf ) {
+void strcat_expr( Expression e, char * buf ) {
     if( e == LITERAL_INFINITY ) {
         strcat( buf, "?" );
     } else if( e == LITERAL_PI ) {
