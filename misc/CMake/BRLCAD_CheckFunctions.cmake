@@ -198,12 +198,12 @@ return 0;
 endmacro(BRLCAD_CHECK_DIRNAME var)
 
 
-###
-# FIXME: Why are these here?
-###
-include(CheckPrototypeExists)
+# Load local variation on CHECK_C_SOURCE_RUNS that will accept a
+# C file as well as the actual C code - some tests are easier to
+# define in separate files.  This feature has been submitted back
+# to the CMake project, but as of CMake 2.8.7 is not part of the
+# default CHECK_C_SOURCE_RUNS functionality.
 include(CheckCSourceRuns)
-
 
 ###
 # Undocumented.
