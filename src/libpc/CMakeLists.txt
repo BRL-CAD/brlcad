@@ -62,11 +62,8 @@ add_definitions(
 BRLCAD_ADDLIB(libpc "${LIBPC_SOURCES}" libbu ${OPENNURBS_LIBRARY})
 SET_TARGET_PROPERTIES(libpc PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
-#add_executable(solver_test solver_test.cpp)
-#target_link_libraries(solver_test libpc)
-
-#add_executable(vm_test vm_test.cpp)
-#target_link_libraries(vm_test libpc)
+#BRLCAD_ADDEXEC(solver_test solver_test.cpp libpc NO_INSTALL)
+#BRLCAD_ADDEXEC(vm_test vm_test.cpp libpc NO_INSTALL)
 
 set(pc_ignore_files
   NOTES

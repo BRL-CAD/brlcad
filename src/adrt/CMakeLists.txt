@@ -62,7 +62,7 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_BINARY_DIR}/../other/togl/src
   )
 if(TOGL_LIBRARIES AND BRLCAD_ENABLE_OPENGL)
-  ADD_DEFINITIONS(-DTOGL_USE_EXTERNAL_CONFIG_H=1)
+  add_definitions(-DTOGL_USE_EXTERNAL_CONFIG_H=1)
   add_library(issttcltk isst_tcltk.c)
   if(WIN32)
     target_link_libraries(issttcltk librender ${TCL_LIBRARIES} ${TOGL_STUB_LIBRARIES} ${OPENGL_LIBRARIES} opengl32.lib)

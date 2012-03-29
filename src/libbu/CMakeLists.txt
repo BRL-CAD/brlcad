@@ -93,38 +93,20 @@ set(LIBBU_SOURCES
   )
 
 BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT} ${TCL_LIBRARY} ${WINSOCK_LIB} ${PSAPI_LIB} ${M_LIBRARY}")
-SET_TARGET_PROPERTIES(libbu PROPERTIES VERSION 19.0.1 SOVERSION 19)
-if(BRLCAD_BUILD_LOCAL_TCL)
-  ADD_DEPENDENCIES(libbu tcl)
-endif(BRLCAD_BUILD_LOCAL_TCL)
+set_target_properties(libbu PROPERTIES VERSION 19.0.1 SOVERSION 19)
+get_directory_property(BRLCAD_TCL_BUILD DIRECTORY ${BRLCAD_SOURCE_DIR}/src/other DEFINITION BRLCAD_TCL_BUILD)
+if("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
+  add_dependencies(libbu tcl)
+endif("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
 
-
-add_executable(test_basename test_basename.c)
-target_link_libraries(test_basename libbu)
-if(CPP_DLL_DEFINES)
-  SET_PROPERTY(TARGET test_basename APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
-endif(CPP_DLL_DEFINES)
-
-add_executable(test_dirname test_dirname.c)
-target_link_libraries(test_dirname libbu)
-
-add_executable(test_escape test_escape.c)
-target_link_libraries(test_escape libbu)
-
-add_executable(test_progname test_progname.c)
-target_link_libraries(test_progname libbu)
-
-add_executable(test_quote test_quote.c)
-target_link_libraries(test_quote libbu)
-
-add_executable(test_timer test_timer.c)
-target_link_libraries(test_timer libbu)
-
-add_executable(test_vls test_vls.c)
-target_link_libraries(test_vls libbu)
-
-add_executable(test_sscanf test_sscanf.c)
-target_link_libraries(test_sscanf libbu)
+BRLCAD_ADDEXEC(test_basename test_basename.c libbu NO_INSTALL)
+BRLCAD_ADDEXEC(test_dirname test_dirname.c libbu NO_INSTALL)
+BRLCAD_ADDEXEC(test_escape test_escape.c libbu NO_INSTALL)
+BRLCAD_ADDEXEC(test_progname test_progname.c libbu NO_INSTALL)
+BRLCAD_ADDEXEC(test_quote test_quote.c libbu NO_INSTALL)
+BRLCAD_ADDEXEC(test_sscanf test_sscanf.c libbu NO_INSTALL)
+BRLCAD_ADDEXEC(test_timer test_timer.c libbu NO_INSTALL)
+BRLCAD_ADDEXEC(test_vls test_vls.c libbu NO_INSTALL)
 
 set(bu_MAN3
   htond.3

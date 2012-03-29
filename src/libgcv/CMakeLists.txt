@@ -23,10 +23,9 @@ SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 add_subdirectory(wfobj)
 
-add_executable(test_bottess test_bottess.c)
-target_link_libraries(test_bottess libgcv)
+BRLCAD_ADDEXEC(test_bottess test_bottess.c libgcv NO_INSTALL)
 if(CPP_DLL_DEFINES)
-  SET_PROPERTY(TARGET test_basename APPEND PROPERTY COMPILE_DEFINITIONS "BOTTESS_DLL_IMPORTS")
+  SET_PROPERTY(TARGET test_bottess APPEND PROPERTY COMPILE_DEFINITIONS "BOTTESS_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 
 CMAKEFILES(NOTES Makefile.am soup.h tri_intersect.h)

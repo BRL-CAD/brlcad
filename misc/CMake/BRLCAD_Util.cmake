@@ -48,7 +48,6 @@ macro(BOX_PRINT input_string border_string)
   message("${SEPARATOR_STRING}")
 endmacro()
 
-
 #-----------------------------------------------------------------------------
 include(CheckCCompilerFlag)
 CHECK_C_COMPILER_FLAG(-Wno-error NOERROR_FLAG)
@@ -75,102 +74,54 @@ macro(CPP_WARNINGS srcslist)
 endmacro(CPP_WARNINGS)
 
 #-----------------------------------------------------------------------------
-# Convenience macros for handling lists of defines at the directory and target
-# levels - the latter is not needed for BRLCAD_* targets under normal 
-# circumstances and is intended for cases where basic non-installed 
-# add_executable calls are made.
-macro(BRLCAD_ADD_DEF_LISTS)
-  foreach(deflist ${ARGN})
-    get_property(${deflist} GLOBAL PROPERTY ${deflist})
-    set(target_def_list ${target_def_list} ${${deflist}})
-  endforeach(deflist ${ARGN})
-  if(target_def_list)
-    list(REMOVE_DUPLICATES target_def_list)
-  endif(target_def_list)
-  foreach(defitem ${${deflist}})
-    add_definitions(${defitem})
-  endforeach(defitem ${${deflist}})
-endmacro(BRLCAD_ADD_DEF_LISTS)
-
-macro(BRLCAD_TARGET_ADD_DEFS target)
-  get_target_property(TARGET_EXISTING_DEFS ${target} COMPILE_DEFINITIONS)
-  foreach(defitem ${ARGN})
-    set(DEF_EXISTS "-1")
-    if(TARGET_EXISTING_DEFS)
-      list(FIND TARGET_EXISTING_DEFS ${defitem} DEF_EXISTS)
-    endif(TARGET_EXISTING_DEFS)
-    if("${DEF_EXISTS}" STREQUAL "-1")
-      set_property(TARGET ${target} APPEND PROPERTY COMPILE_DEFINITIONS "${defitem}")
-    endif("${DEF_EXISTS}" STREQUAL "-1")
-  endforeach(defitem ${ARGN})
-endmacro(BRLCAD_TARGET_ADD_DEFS)
-
-macro(BRLCAD_TARGET_ADD_DEF_LISTS target)
-  get_target_property(TARGET_EXISTING_DEFS ${target} COMPILE_DEFINITIONS)
-  foreach(deflist ${ARGN})
-    get_property(${deflist} GLOBAL PROPERTY ${deflist})
-    set(target_def_list ${target_def_list} ${${deflist}})
-  endforeach(deflist ${ARGN})
-  if(target_def_list)
-    list(REMOVE_DUPLICATES target_def_list)
-  endif(target_def_list)
-  foreach(defitem ${target_def_list})
-    set(DEF_EXISTS "-1")
-    if(TARGET_EXISTING_DEFS)
-      list(FIND TARGET_EXISTING_DEFS ${defitem} DEF_EXISTS)
-    endif(TARGET_EXISTING_DEFS)
-    if("${DEF_EXISTS}" STREQUAL "-1")
-      set_property(TARGET ${target} APPEND PROPERTY COMPILE_DEFINITIONS "${defitem}")
-    endif("${DEF_EXISTS}" STREQUAL "-1")
-  endforeach(defitem ${${deflist}})
-endmacro(BRLCAD_TARGET_ADD_DEF_LISTS)
-
-macro(BRLCAD_TARGET_ADD_FLAGS target)
-  get_target_property(TARGET_EXISTING_FLAGS ${target} COMPILE_FLAGS)
-  foreach(flagitem ${ARGN})
-    set(FLAG_EXISTS "-1")
-    if(TARGET_EXISTING_FLAGS)
-      list(FIND TARGET_EXISTING_FLAGS ${flagitem} FLAG_EXISTS)
-    endif(TARGET_EXISTING_FLAGS)
-    if("${FLAG_EXISTS}" STREQUAL "-1")
-      set_property(TARGET ${target} APPEND PROPERTY COMPILE_FLAGS "${flagitem}")
-    endif("${FLAG_EXISTS}" STREQUAL "-1")
-  endforeach(flagitem ${ARGN})
-endmacro(BRLCAD_TARGET_ADD_FLAGS)
-
-macro(BRLCAD_TARGET_ADD_FLAG_LISTS target)
-  get_target_property(TARGET_EXISTING_FLAGS ${target} COMPILE_DEFINITIONS)
-  foreach(flaglist ${ARGN})
-    get_property(${flaglist} GLOBAL PROPERTY ${flaglist})
-    set(target_flag_list ${target_flag_list} ${${flaglist}})
-  endforeach(flaglist ${ARGN})
-  if(target_flag_list)
-    list(REMOVE_DUPLICATES target_flag_list)
-  endif(target_flag_list)
-  foreach(flagitem ${target_flag_list})
-    set(FLAG_EXISTS "-1")
-    if(TARGET_EXISTING_FLAGS)
-      list(FIND TARGET_EXISTING_FLAGS ${flagitem} FLAG_EXISTS)
-    endif(TARGET_EXISTING_FLAGS)
-    if("${FLAG_EXISTS}" STREQUAL "-1")
-      set_property(TARGET ${target} APPEND PROPERTY COMPILE_FLAGS "${flagitem}")
-    endif("${FLAG_EXISTS}" STREQUAL "-1")
-  endforeach(flagitem ${${flaglist}})
-endmacro(BRLCAD_TARGET_ADD_FLAG_LISTS)
+# It is sometimes convenient to be able to supply both a filename and a 
+# variable name containing a list of files to a single macro.
+# This routine handles both forms of input - a separate variable is specified
+# that contains the name of the variable holding the list, and in the case
+# where there is no such variable one is prepared.  This way, subsequent
+# macro logic need only deal with a variable holding a list, whatever the
+# original form of the input.
+macro(NORMALIZE_FILE_LIST inlist targetvar)
+ set(havevarname 0)
+  foreach(maybefilename ${inlist})
+    if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename})
+      set(havevarname 1)
+    endif(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename})
+  endforeach(maybefilename ${${targetvar}})
+  if(NOT havevarname)
+    set(FILELIST "${inlist}")
+    set(${targetvar} "FILELIST")
+  else(NOT havevarname)
+    set(${targetvar} "${inlist}")
+  endif(NOT havevarname)
+endmacro(NORMALIZE_FILE_LIST)
 
 #-----------------------------------------------------------------------------
 # Core routines for adding executables and libraries to the build and
 # install lists of CMake
 macro(BRLCAD_ADDEXEC execname srcs libs)
+  # Basic setup
   string(REGEX REPLACE " " ";" srcslist "${srcs}")
   string(REGEX REPLACE " " ";" libslist1 "${libs}")
   string(REGEX REPLACE "-framework;" "-framework " libslist "${libslist1}")
 
+  # Call standard CMake commands
   add_executable(${execname} ${srcslist})
   target_link_libraries(${execname} ${libslist})
 
-  install(TARGETS ${execname} DESTINATION ${BIN_DIR})
+  # Make sure we don't have a non-installed exec target.  If it is to
+  # be installed, call the install function
+  set(EXEC_INSTALL 1)
+  foreach(extraarg ${ARGN})
+    if(${extraarg} MATCHES "NO_INSTALL" AND BRLCAD_ENABLE_STRICT)
+      set(EXEC_INSTALL 0)
+    endif(${extraarg} MATCHES "NO_INSTALL" AND BRLCAD_ENABLE_STRICT)
+  endforeach(extraarg ${ARGN})
+  if(EXEC_INSTALL)
+    install(TARGETS ${execname} DESTINATION ${BIN_DIR})
+  endif(EXEC_INSTALL)
 
+  # Take care of compile flags and definitions
   foreach(libitem ${libslist})
     list(FIND BRLCAD_LIBS ${libitem} FOUNDIT)
     if(NOT ${FOUNDIT} STREQUAL "-1")
@@ -188,15 +139,14 @@ macro(BRLCAD_ADDEXEC execname srcs libs)
       endif(${execname}_FLAGS)
     endif(NOT ${FOUNDIT} STREQUAL "-1")
   endforeach(libitem ${libslist})
-
   foreach(lib_define ${${execname}_DEFINES})
     set_property(TARGET ${execname} APPEND PROPERTY COMPILE_DEFINITIONS "${lib_define}")
   endforeach(lib_define ${${execname}_DEFINES})
-
   foreach(lib_flag ${${execname}_FLAGS})
      set_property(TARGET ${execname} APPEND PROPERTY COMPILE_FLAGS "${lib_flag}")
   endforeach(lib_flag ${${execname}_FLAGS})
 
+  # If this target is marked as incompatible with the strict flags, disable them
   foreach(extraarg ${ARGN})
     if(${extraarg} MATCHES "NOSTRICT" AND BRLCAD_ENABLE_STRICT)
       if(NOERROR_FLAG)
@@ -544,18 +494,7 @@ endmacro(BRLCAD_ADDDATA datalist targetdir)
 
 #-----------------------------------------------------------------------------
 macro(ADD_MAN_PAGES num inmanlist)
- set(havevarname 0)
-  foreach(maybefilename ${inmanlist})
-    if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename})
-      set(havevarname 1)
-    endif(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename})
-  endforeach(maybefilename ${manlist})
-  if(NOT havevarname)
-    set(FILELIST "${inmanlist}")
-    set(manlist "FILELIST")
-  else(NOT havevarname)
-    set(manlist "${${inmanlist}}")
-  endif(NOT havevarname)
+  NORMALIZE_FILE_LIST(${inmanlist} manlist)
   CMAKEFILES(${${manlist}})
   foreach(manpage ${${manlist}})
     if (NOT CMAKE_CONFIGURATION_TYPES)

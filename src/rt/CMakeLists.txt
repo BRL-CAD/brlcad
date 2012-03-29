@@ -129,8 +129,7 @@ if(NOT MSVC)
   set(LIBREMRT_SOURCES ${LIBREMRT_SOURCES} heatgraph.c)
 endif(NOT MSVC)
 
-add_executable(rtexample "${rtexample_SRCS}")
-target_link_libraries(rtexample librt libfb liboptical libicv)
+BRLCAD_ADDEXEC(rtexample "${rtexample_SRCS}" "librt libfb liboptical libicv" NO_INSTALL)
 
 BRLCAD_ADDEXEC(reshoot "${reshoot_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv")
 

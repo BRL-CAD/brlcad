@@ -1,26 +1,13 @@
 # Include directories needed by libpkg users
 set(PKG_EXAMPLE_INCLUDES
-	${CMAKE_CURRENT_SOURCE_DIR}
-	${BU_INCLUDE_DIRS}
-	${PKG_INCLUDE_DIRS}
-	)
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${BU_INCLUDE_DIRS}
+  ${PKG_INCLUDE_DIRS}
+  )
 LIST(REMOVE_DUPLICATES PKG_EXAMPLE_INCLUDES)
 include_directories(${PKG_EXAMPLE_INCLUDES})
 
-BRLCAD_ADD_DEF_LISTS(BU_DEFINES PKG_DEFINES)
-
-add_executable(pkg_test_server server.c)
-target_link_libraries(pkg_test_server libpkg libbu)
-if(CPP_DLL_DEFINES)
-	SET_PROPERTY(TARGET pkg_test_server APPEND PROPERTY COMPILE_DEFINITIONS	"BU_DLL_IMPORTS")
-	SET_PROPERTY(TARGET pkg_test_server APPEND PROPERTY COMPILE_DEFINITIONS	"PKG_DLL_IMPORTS")
-endif(CPP_DLL_DEFINES)
-
-add_executable(pkg_test_client client.c)
-target_link_libraries(pkg_test_client libpkg libbu)
-if(CPP_DLL_DEFINES)
-	SET_PROPERTY(TARGET pkg_test_client APPEND PROPERTY COMPILE_DEFINITIONS	"BU_DLL_IMPORTS")
-	SET_PROPERTY(TARGET pkg_test_client APPEND PROPERTY COMPILE_DEFINITIONS	"PKG_DLL_IMPORTS")
-endif(CPP_DLL_DEFINES)
+BRLCAD_ADDEXEC(pkg_test_server server.c "libbu libpkg" NO_INSTALL)
+BRLCAD_ADDEXEC(pkg_test_client client.c "libbu libpkg" NO_INSTALL)
 
 CMAKEFILES(ntp.h)

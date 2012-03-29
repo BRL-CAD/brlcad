@@ -44,12 +44,7 @@ SET_TARGET_PROPERTIES(libbn PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 ADD_MAN_PAGES(3 libplot3.3)
 
-add_executable(bntester bntester.c)
-target_link_libraries(bntester libbu libbn)
-if(CPP_DLL_DEFINES)
-  SET_PROPERTY(TARGET bntester APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
-  SET_PROPERTY(TARGET bntester APPEND PROPERTY COMPILE_DEFINITIONS "BN_DLL_IMPORTS")
-endif(CPP_DLL_DEFINES)
+BRLCAD_ADDEXEC(bntester bntester.c "libbu libbn" NO_INSTALL)
 
 CMAKEFILES(
   Makefile.am

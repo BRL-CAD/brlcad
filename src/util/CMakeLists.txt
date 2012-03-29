@@ -37,8 +37,7 @@ endif(BRLCAD_ENABLE_X11)
 BRLCAD_ADDDATA(pl-dm.c sample_applications)
 
 if(LIBPC)
-  add_executable(pc_test pc_test.c)
-  target_link_libraries(pc_test libwdb libpc)
+  BRLCAD_ADDEXEC(pc_test pc_test.c "libwdb libpc" NO_INSTALL)
 endif(LIBPC)
 
 BRLCAD_ADDEXEC(alias-pix alias-pix.c libbu)
@@ -170,8 +169,7 @@ BRLCAD_ADDEXEC(yuv-pix yuv-pix.c "libfb libbn libbu")
 
 install(PROGRAMS morphedit.tcl DESTINATION bin)
 
-add_executable(roots_example roots_example.c)
-target_link_libraries(roots_example libbu librt)
+BRLCAD_ADDEXEC(roots_example roots_example.c "libbu librt" NO_INSTALL)
 BRLCAD_ADDDATA(roots_example.c sample_applications)
 
 set(util_MANS

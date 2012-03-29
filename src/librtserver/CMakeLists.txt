@@ -13,6 +13,6 @@ BRLCAD_ADDLIB(rtserver rtserver.c "librt libbn libbu ${JAVA_AWT_LIBRARY} ${JAVA_
 set_target_properties(rtserver PROPERTIES VERSION 19.0.1 SOVERSION 19)
 set_target_properties(rtserver PROPERTIES SUFFIX ".jnilib")
 
-add_executable(rtserverTest rtserverTest.c)
-target_link_libraries(rtserverTest libbu rtserver)
+BRLCAD_ADDEXEC(rtserverTest rtserverTest.c "libbu rtserver" NO_INSTALL)
+
 CMAKEFILES(Makefile.am)
