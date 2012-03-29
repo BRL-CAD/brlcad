@@ -8,6 +8,6 @@ if(HAVE_TERMLIB)
 
   BRLCAD_ADDLIB(libcursor cursor.c "${TERMLIB_LIBRARY}")
   SET_TARGET_PROPERTIES(libcursor PROPERTIES VERSION 19.0.1 SOVERSION 19)
-  ADD_MAN_PAGE(3 libcursor.3)
+  ADD_MAN_PAGES(3 libcursor.3)
   CMAKEFILES(Makefile.am)
 endif(HAVE_TERMLIB)

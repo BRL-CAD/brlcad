@@ -19,7 +19,7 @@ endif(CRYPT_LIBRARY)
 install(TARGETS enigma DESTINATION ${BIN_DIR})
 set_target_properties(enigma PROPERTIES COMPILE_FLAGS "-w")
 
-ADD_MAN_PAGE(1 enigma.1)
+ADD_MAN_PAGES(1 enigma.1)
 set(enigma_ignore_files
   AUTHORS
   COPYING

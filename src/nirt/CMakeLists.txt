@@ -21,7 +21,7 @@ BRLCAD_ADDEXEC(nirt "${NIRT_SRCS}" "librt libfb ${M_LIBRARY}")
 SET_PROPERTY(TARGET nirt APPEND PROPERTY COMPILE_DEFINITIONS "DFLT_SHELL=\"/bin/sh\"")
 
 BRLCAD_ADDEXEC(showshot showshot.c libbn)
-ADD_MAN_PAGE(1 showshot.1)
+ADD_MAN_PAGES(1 showshot.1)
 
 set(nirt_sfiles
   sfiles/csv.nrt

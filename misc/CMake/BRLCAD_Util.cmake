@@ -543,7 +543,19 @@ macro(BRLCAD_ADDDATA inputdata targetdir)
 endmacro(BRLCAD_ADDDATA datalist targetdir)
 
 #-----------------------------------------------------------------------------
-macro(ADD_MAN_PAGES num manlist)
+macro(ADD_MAN_PAGES num inmanlist)
+ set(havevarname 0)
+  foreach(maybefilename ${inmanlist})
+    if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename})
+      set(havevarname 1)
+    endif(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename})
+  endforeach(maybefilename ${manlist})
+  if(NOT havevarname)
+    set(FILELIST "${inmanlist}")
+    set(manlist "FILELIST")
+  else(NOT havevarname)
+    set(manlist "${${inmanlist}}")
+  endif(NOT havevarname)
   CMAKEFILES(${${manlist}})
   foreach(manpage ${${manlist}})
     if (NOT CMAKE_CONFIGURATION_TYPES)
@@ -557,22 +569,6 @@ macro(ADD_MAN_PAGES num manlist)
     install(FILES ${manpage} DESTINATION ${MAN_DIR}/man${num})
   endforeach(manpage ${${manlist}})
 endmacro(ADD_MAN_PAGES num manlist)
-
-
-#-----------------------------------------------------------------------------
-macro(ADD_MAN_PAGE num manfile)
-  CMAKEFILES(${manfile})
-  if (NOT CMAKE_CONFIGURATION_TYPES)
-    configure_file(${manfile} ${CMAKE_BINARY_DIR}/${MAN_DIR}/man${num}/${manfile} COPYONLY)
-  else (NOT CMAKE_CONFIGURATION_TYPES)
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      configure_file(${manfile} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${MAN_DIR}/man${num}/${manfile} COPYONLY)
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif (NOT CMAKE_CONFIGURATION_TYPES)
-  install(FILES ${manfile} DESTINATION ${MAN_DIR}/man${num})
-endmacro(ADD_MAN_PAGE num manfile)
-
 
 # Local Variables:
 # tab-width: 8
