@@ -724,14 +724,6 @@ CONFIG_H_APPEND(BRLCAD "#define BRLCAD_ROOT \"${CMAKE_INSTALL_PREFIX}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_VERSION \"${BRLCAD_VERSION}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define VERSION \"${BRLCAD_VERSION}\"\n")
 
-# A variety of debugging messages in the code key off of the DEBUG
-# definition - unlike the build flags, this is turned on and off based
-# on the build type.  A "Release" build with debugging compiler flags
-# will still not print debugging messages conditionalized on DEBUG.
-if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-  CONFIG_H_APPEND(BRLCAD "#define DEBUG 1\n")
-endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-
 #----------------------------------------------------------------------
 # Decide whether to do a 32 or a 64 bit build.
 
@@ -1178,6 +1170,14 @@ set(BRLCAD_FLAGS_DEBUG_DESCRIPTION "
 Add compiler flags to aid in program debugging.  Defaults to ON.
 ")
 BRLCAD_OPTION(ON BRLCAD_FLAGS_DEBUG BRLCAD_FLAGS_DEBUG_ALIASES BRLCAD_FLAGS_DEBUG_DESCRIPTION)
+
+# A variety of debugging messages in the code key off of the DEBUG
+# definition - set it according to whether we're using debug flags.
+if(BRLCAD_FLAGS_DEBUG)
+  CONFIG_H_APPEND(BRLCAD "#define DEBUG 1\n")
+endif(BRLCAD_FLAGS_DEBUG)
+
+
 
 # Build with compiler warning flags
 set(BRLCAD_ENABLE_COMPILER_WARNINGS_ALIASES
