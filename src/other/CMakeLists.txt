@@ -40,7 +40,7 @@ include_directories(
 file(GLOB dlists "*.dist")
 FOREACH(ITEM ${dlists})
   get_filename_component(dlist ${ITEM} NAME)
-  DISTCHECK_IGNORE_ITEM(${dlist})
+  CMAKEFILES(${dlist})
 ENDFOREACH(ITEM ${dlists})
 
 # At the start, clear the src/other subdirs list so repeated
@@ -198,14 +198,14 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/xmltools/include)
 #---------------------------------------------------------------------------------
 # Ignore the boost subdir - it's only used for the boost headers and is not
 # compiled
-DISTCHECK_IGNORE_ITEM(boost)
+CMAKEFILES(boost)
 
 # The incrtTcl subdirectory isn't directly referenced, but its subdirectories
 # are used - mark incrTcl as ignored
-DISTCHECK_IGNORE_ITEM(incrTcl)
+CMAKEFILES(incrTcl)
 
 # Ignore the osl subdir
-DISTCHECK_IGNORE_ITEM(osl)
+CMAKEFILES(osl)
 
 # libtermlib Library
 #Only on WIN32 will the combination of the build search tests and
@@ -308,7 +308,7 @@ endif(BRLCAD_UTAHRLE_BUILD)
 # will be different here.  Ignore for now, revisit later.
 add_subdirectory(URToolkit)
 include(${CMAKE_CURRENT_SOURCE_DIR}/URToolkit.dist)
-DISTCHECK_IGNORE(URToolkit URToolkit_ignore_files)
+CMAKEFILES_IN_DIR(URToolkit_ignore_files URToolkit)
 
 # Tcl/Tk presents a number of complexities for BRL-CAD and CMake.  BRL-CAD requires
 # far more knowledge of the details of a Tcl/Tk installation than most programs,
@@ -358,7 +358,7 @@ if(BRLCAD_TCL_BUILD)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_TCL_H 1\n")
   CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"\"\n")
   include(${CMAKE_CURRENT_SOURCE_DIR}/tcl.dist)
-  DISTCHECK_IGNORE(tcl tcl_ignore_files)
+  CMAKEFILES_IN_DIR(tcl_ignore_files tcl)
   DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/Makefile)
   DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/man1)
   DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/man3)
@@ -653,12 +653,12 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tkhtml/pkgIndex.tcl)
 DISTCLEAN(${CMAKE_BINARY_DIR}/lib/Tkhtml3.0)
 #add_subdirectory(hv3)
 #include(${CMAKE_CURRENT_SOURCE_DIR}/hv3.dist)
-#DISTCHECK_IGNORE(hv3 hv3_ignore_files)
+#CMAKEFILES_IN_DIR(hv3_ignore_files hv3)
 #add_subdirectory(sqlite3)
 #include(${CMAKE_CURRENT_SOURCE_DIR}/sqlite3.dist)
-#DISTCHECK_IGNORE(sqlite3 sqlite3_ignore_files)
-DISTCHECK_IGNORE_ITEM(hv3)
-DISTCHECK_IGNORE_ITEM(sqlite3)
+#CMAKEFILES_IN_DIR(sqlite3_ignore_files sqlite3)
+CMAKEFILES(hv3)
+CMAKEFILES(sqlite3)
 
 set(tkpng_ALIASES ENABLE_TKPNG)
 set(tkpng_DESCRIPTION "
@@ -727,7 +727,7 @@ endif(BRLCAD_SCL_BUILD)
 # Clipper polygon clipping library - for now, we're going to use our copy
 add_subdirectory(clipper)
 include(${CMAKE_CURRENT_SOURCE_DIR}/clipper.dist)
-DISTCHECK_IGNORE(clipper clipper_ignore_files)
+CMAKEFILES_IN_DIR(clipper_ignore_files clipper)
 DISTCLEAN(${CMAKE_CURRENT_SOURCE_DIR}/clipper/Makefile)
 set(CLIPPER_LIBRARY "clipper" CACHE STRING "Clipper library" FORCE)
 set(CLIPPER_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/clipper" CACHE STRING "Directory containing clipper header" FORCE)
@@ -738,7 +738,7 @@ mark_as_advanced(CLIPPER_INCLUDE_DIR)
 # to build (I think?)
 add_subdirectory(tnt)
 set(TNT_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/tnt" CACHE STRING "Directory containing tnt headers" FORCE)
-DISTCHECK_IGNORE_ITEM(tnt)
+CMAKEFILES(tnt)
 mark_as_advanced(TNT_INCLUDE_DIR)
 
 # jove editor - technically this isn't a library,
@@ -751,14 +751,14 @@ if(BRLCAD_ENABLE_JOVE)
   if(NOT WIN32)
     add_subdirectory(jove)
     include(${CMAKE_CURRENT_SOURCE_DIR}/jove.dist)
-    DISTCHECK_IGNORE(jove jove_ignore_files)
+    CMAKEFILES_IN_DIR(jove_ignore_files jove)
   ELSE(NOT WIN32)
     MESSAGE("jove was requested, but does not build on Windows - disabling")
     set(BRLCAD_ENABLE_JOVE OFF CACHE BOOL "jove disabled on WIN32" FORCE)
-    DISTCHECK_IGNORE_ITEM(jove)
+    CMAKEFILES(jove)
   endif(NOT WIN32)
 ELSE(BRLCAD_ENABLE_JOVE)
-  DISTCHECK_IGNORE_ITEM(jove)
+  CMAKEFILES(jove)
 endif(BRLCAD_ENABLE_JOVE)
 
 if(BRLCAD_ENABLE_OSL)

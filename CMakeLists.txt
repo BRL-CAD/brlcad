@@ -1744,7 +1744,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   endif(MSVC)
   configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/builddelta_end.c.in
     ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c)
-  add_executable(printtimestamp ${BRLCAD_CMAKE_DIR}/test_srcs/print_timestamp.c)
+  add_executable(printtimestamp misc/CMake/test_srcs/print_timestamp.c)
   add_executable(buildtimestart ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c)
   add_executable(buildtimeend ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c)
   add_custom_command(

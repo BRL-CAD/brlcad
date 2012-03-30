@@ -1,6 +1,6 @@
 set(FEDEX_COMMON_SRCS
     classes_misc.c
-    ${SCL_SOURCE_DIR}/src/express/fedex.c
+    ../express/fedex.c
 )
 
 set(fedex_plus_SOURCES

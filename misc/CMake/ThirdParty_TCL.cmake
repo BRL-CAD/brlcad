@@ -333,9 +333,9 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
 	endif(BRLCAD_BUILD_${DEP_UPPER})
       endforeach(dep ${depends})
       include(${CMAKE_CURRENT_SOURCE_DIR}/${PKGNAME_LOWER}.dist)
-      DISTCHECK_IGNORE(${dir} ${PKGNAME_LOWER}_ignore_files)
+      CMAKEFILES_IN_DIR(${PKGNAME_LOWER}_ignore_files ${dir})
     else(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
-      DISTCHECK_IGNORE_ITEM(${dir})
+      CMAKEFILES(${dir})
     endif(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
   endif(${PKGNAME_UPPER}_DISABLE_TEST)
 
@@ -384,9 +384,9 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
 	endif(BRLCAD_BUILD_${DEP_UPPER})
       endforeach(dep ${depends})
       include(${CMAKE_CURRENT_SOURCE_DIR}/${PKGNAME_LOWER}.dist)
-      DISTCHECK_IGNORE(${dir} ${PKGNAME_LOWER}_ignore_files)
+      CMAKEFILES_IN_DIR(${PKGNAME_LOWER}_ignore_files ${dir})
     else(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
-      DISTCHECK_IGNORE_ITEM(${dir})
+      CMAKEFILES(${dir})
     endif(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
   endif(NOT ${PKGNAME_UPPER}_MET_CONDITION)
 

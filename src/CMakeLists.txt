@@ -117,6 +117,5 @@ if(NOT WIN32)
   endforeach(subdir ${non_win32_dirs})
 endif(NOT WIN32)
 
-DISTCHECK_IGNORE_ITEM(README)
-DISTCHECK_IGNORE_ITEM(external)
+CMAKEFILES(README external)
 CMAKEFILES(Makefile.am)

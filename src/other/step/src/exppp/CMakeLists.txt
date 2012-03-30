@@ -3,7 +3,7 @@ set(LIBEXPPP_SOURCES
 )
 
 SET(EXPPP_SOURCES
-    ${SCL_SOURCE_DIR}/src/express/fedex.c
+    ../express/fedex.c
     exppp-main.c
 )
 
