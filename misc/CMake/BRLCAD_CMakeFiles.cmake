@@ -1,4 +1,4 @@
-#               C M A K E F I L E S . C M A K E
+#          B R L C A D _ C M A K E F I L E S . C M A K E
 # BRL-CAD
 #
 # Copyright (c) 2011-2012 United States Government as represented by
