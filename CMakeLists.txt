@@ -253,6 +253,9 @@ if(BRLCAD_PREFIX)
 endif(BRLCAD_PREFIX)
 mark_as_advanced(CMAKE_SYSTEM_IGNORE_PATH) 
 
+# Load general utility routines for BRL-CAD CMake logic
+include(${CMAKE_SOURCE_DIR}/misc/CMake/BRLCAD_Util.cmake)
+
 # Define CMake routines for bookkeeping of build files
 include(${CMAKE_SOURCE_DIR}/misc/CMake/CMakeFiles.cmake)
 
@@ -448,10 +451,10 @@ else(BRLCAD_IS_SUBBUILD)
   set(CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR};${CMAKE_MODULE_PATH}")
 endif(BRLCAD_IS_SUBBUILD)
 
-# Load utility macros that will be used throughout the BRL-CAD
+# Load macros that will be used to define the BRL-CAD
 # build logic
 include(${BRLCAD_CMAKE_DIR}/BRLCAD_Options.cmake)
-include(${BRLCAD_CMAKE_DIR}/BRLCAD_Util.cmake)
+include(${BRLCAD_CMAKE_DIR}/BRLCAD_Targets.cmake)
 include(CheckTypeSize)
 
 #---------------------------------------------------------------------
