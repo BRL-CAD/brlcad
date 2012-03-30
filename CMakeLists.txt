@@ -257,7 +257,7 @@ mark_as_advanced(CMAKE_SYSTEM_IGNORE_PATH)
 include(${CMAKE_SOURCE_DIR}/misc/CMake/BRLCAD_Util.cmake)
 
 # Define CMake routines for bookkeeping of build files
-include(${CMAKE_SOURCE_DIR}/misc/CMake/CMakeFiles.cmake)
+include(${CMAKE_SOURCE_DIR}/misc/CMake/BRLCAD_CMakeFiles.cmake)
 
 #---------------------------------------------------------------------
 # Define the current BRL-CAD version.
