@@ -1,11 +1,12 @@
 # Convenience macros for building pkgIndex.tcl and tclIndex files
 
 MACRO(pkgIndex_BUILD name targetdir)
+  BRLCAD_GET_DIR_LIST_CONTENTS(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" data_target_list)
   string(REGEX REPLACE "/" "_" targetprefix ${targetdir})
     add_custom_command(
       OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl
       COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ampi.tcl ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}
-      DEPENDS btclsh ${targetprefix}.sentinel
+      DEPENDS btclsh ${data_target_list}
       )
     set(${name}_pkgIndex_deps ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl)
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
@@ -14,7 +15,7 @@ MACRO(pkgIndex_BUILD name targetdir)
 	OUTPUT ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}/pkgIndex.tcl
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}/pkgIndex.tcl
-	DEPENDS btclsh ${targetprefix}.sentinel ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl
+	DEPENDS btclsh ${data_target_list} ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl
 	)
       set(${name}_pkgIndex_deps ${${name}_pkgIndex_deps} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}/pkgIndex.tcl)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
@@ -27,11 +28,12 @@ MACRO(pkgIndex_BUILD name targetdir)
 ENDMACRO(pkgIndex_BUILD name targetdir)
 
 MACRO(tclIndex_BUILD name targetdir)
+  BRLCAD_GET_DIR_LIST_CONTENTS(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" data_target_list)
   string(REGEX REPLACE "/" "_" targetprefix ${targetdir})
     add_custom_command(
       OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex
       COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ami.tcl ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}
-      DEPENDS btclsh ${targetprefix}.sentinel
+      DEPENDS btclsh ${data_target_list}
       )
     set(${name}_tclIndex_deps ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex)
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
@@ -40,7 +42,7 @@ MACRO(tclIndex_BUILD name targetdir)
 	OUTPUT ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}/tclIndex
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}/tclIndex
-	DEPENDS btclsh ${targetprefix}.sentinel ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex
+	DEPENDS btclsh ${data_target_list} ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex
 	)
       set(${name}_tclIndex_deps ${${name}_tclIndex_deps} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}/tclIndex)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})

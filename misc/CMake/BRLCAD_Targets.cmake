@@ -328,8 +328,14 @@ endmacro(BRLCAD_LIB_INCLUDE_DIRS)
 # In principle it may be possible to go even further and add rules to copy files in the build
 # dir that are different from their source originals back into the source tree... need to
 # think about complexity/robustness tradeoffs
+
+# Because certain functions (for example, pkgIndex.tcl building) require that files
+# handled by BRLCAD_ADDDATA already be in place when they run, global properties are
+# used to track targets associated with each binary output directory.  Macros to ease
+# adding to and retrieving from these lists are defined below.
+
 macro(BRLCAD_ADDDATA inputdata targetdir)
-  # handle both a list of one or more files and variable holding a list of files - 
+  # Handle both a list of one or more files and variable holding a list of files - 
   # find out what we've got.
   set(havevarname 0)
   foreach(maybefilename ${inputdata})
@@ -340,93 +346,112 @@ macro(BRLCAD_ADDDATA inputdata targetdir)
   if(NOT havevarname)
     set(FILELIST "${inputdata}")
     set(datalist FILELIST)
-    string(REGEX REPLACE "/" "_" targetstr ${inputdata})
-    string(REGEX REPLACE "\\." "_" targetstr ${targetstr})
-    string(LENGTH "${targetstr}" STRLEN)
-    # If we have a lot of files, our build target string may become
-    # absurdly long.  If that looks like it's happening, used the MD5
-    # hash of the filelist to generate a shorter string  It will be
-    # cryptic but the odds are very good it'll be a unique target name
-    # and the string will be short enough, which is what we need.
-    if ("${STRLEN}" GREATER 30)
-      file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS "${targetstr}")
-      execute_process(COMMAND ${CMAKE_COMMAND} -E md5sum ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS OUTPUT_VARIABLE targetname)
-      string(REPLACE " ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS" "" targetname "${targetname}")
-      string(STRIP "${targetname}" targetname)
-      file(REMOVE ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS)
-    else ("${STRLEN}" GREATER 30)
-      set(targetname "${targetstr}")
-    endif ("${STRLEN}" GREATER 30)
+    BRLCAD_TARGET_NAME("${inputdata}" targetname)
   else(NOT havevarname)
     set(targetname "${inputdata}")
     set(datalist "${inputdata}")
   endif(NOT havevarname)
-  if(NOT WIN32)
 
-    # Make sure the directories are in place
-    if(NOT EXISTS "${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}")
+  # Now that the input data and target names are in order, define the custom
+  # commands needed for build directory data copying on this platform (per
+  # symlink test results.)
+
+  if(HAVE_SYMLINK)
+
+    # Make sure the target directory exists (symlinks need the target directory already in place)
+    if(NOT CMAKE_CONFIGURATION_TYPES)
       execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
-    endif(NOT EXISTS "${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}")
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      if(NOT EXISTS "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}")
-	execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir})
-      endif(NOT EXISTS "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}")
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-
-    # Create symlinks
-    foreach(filename ${${datalist}})
-      get_filename_component(ITEM_NAME ${filename} NAME)
-      execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${ITEM_NAME})
-      DISTCLEAN(${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${ITEM_NAME})
+    else(NOT CMAKE_CONFIGURATION_TYPES)
       foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}/${ITEM_NAME})
-	DISTCLEAN(${CMAKE_BINARY_DIR_${CFG_TYPE}}/${DATA_DIR}/${targetdir}/${ITEM_NAME})
+	execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir})
       endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    endif(NOT CMAKE_CONFIGURATION_TYPES)
+
+    # Using symlinks - in this case, the custom command doesn't actually have to
+    # do the work every time the source file changes - once established, the symlink
+    # will behave correctly.  That being the case, we just go ahead and establish the
+    # symlinks in the configure stage.
+    foreach(filename ${${datalist}})
+      get_filename_component(ITEM_NAME ${filename} NAME)
+      if(NOT CMAKE_CONFIGURATION_TYPES)
+	execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${ITEM_NAME})
+      else(NOT CMAKE_CONFIGURATION_TYPES)
+	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+	  execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}/${ITEM_NAME})
+	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      endif(NOT CMAKE_CONFIGURATION_TYPES)
     endforeach(filename ${${datalist}})
 
-    string(REGEX REPLACE "/" "_" targetprefix ${targetdir})
-
+    # The custom command is still necessary - since it depends on the original source files, 
+    # this will be the trigger that tells other commands depending on this data that 
+    # they need to re-run one one of the source files is changed.
     add_custom_command(
-      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.sentinel
-      COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.sentinel
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel
+      COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel
       DEPENDS ${${datalist}}
       )
-    add_custom_target(${targetname}_cp ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.sentinel)
-  else(NOT WIN32)
-    string(REGEX REPLACE "/" "_" targetprefix ${targetdir})
-    set(inputlist)
-    file(COPY ${${datalist}} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      file(COPY ${${datalist}} DESTINATION ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir})
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 
+  else(HAVE_SYMLINK)
+
+    # Prepare full-path input list for scripts - the best we can do is to make build targets that ensure
+    # the latest source direcotry file states are represented at build time.  Developers will have to
+    # handle getting any changes they may make in the build directory copies of files back to the source
+    # directories manually.
+    set(inputlist)
     foreach(filename ${${datalist}})
       set(inputlist ${inputlist} ${CMAKE_CURRENT_SOURCE_DIR}/${filename})
     endforeach(filename ${${datalist}})
 
-    set(${targetprefix}_cmake_contents "set(FILES_TO_COPY \"${inputlist}\")\n")
-    set(${targetprefix}_cmake_contents "${${targetprefix}_cmake_contents} file(COPY \${FILES_TO_COPY} DESTINATION \"${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}\")\n")
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      set(${targetprefix}_cmake_contents "${${targetprefix}_cmake_contents} file(COPY \${FILES_TO_COPY} DESTINATION \"${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}\")\n")
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    # Write out script for copying from source dir to build dir
+    set(${targetname}_cmake_contents "set(FILES_TO_COPY \"${inputlist}\")\n")
+    set(${targetname}_cmake_contents "${${targetname}_cmake_contents}foreach(filename \${FILES_TO_COPY})\n")
+    if(NOT CMAKE_CONFIGURATION_TYPES)
+      set(${targetname}_cmake_contents "${${targetname}_cmake_contents}  file(COPY \${FILES_TO_COPY} DESTINATION \"${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}\")\n")
+    else(NOT CMAKE_CONFIGURATION_TYPES)
+      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+	set(${targetname}_cmake_contents "${${targetname}_cmake_contents}  file(COPY \${FILES_TO_COPY} DESTINATION \"${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}\")\n")
+      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    endif(NOT CMAKE_CONFIGURATION_TYPES)
+    set(${targetname}_cmake_contents "${${targetname}_cmake_contents}endforeach(filename \${CURRENT_FILE_LIST})\n")
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake "${${targetname}_cmake_contents}")
 
-    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.cmake "${${targetprefix}_cmake_contents}")
+    # Define custom command for copying from src to bin.
     add_custom_command(
-      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.sentinel
-      COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.cmake
-      COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.sentinel
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel
+      COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake
+      COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel
       DEPENDS ${${datalist}}
       )
-    add_custom_target(${targetname}_cp ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.sentinel)
-  endif(NOT WIN32)
+  endif(HAVE_SYMLINK)
 
+  # Define the target and add it to this directories list of data targets
+  add_custom_target(${targetname}_cp ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel)
+  BRLCAD_ADD_DIR_LIST_ENTRY(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" ${targetname}_cp)
+
+  # Add outputs to the distclean rules - this is consistent regardless of what type the output
+  # file is, symlink or copy.  Just need to handle the single and multiconfig cases.
+  foreach(filename ${${datalist}})
+    get_filename_component(ITEM_NAME "${filename}" NAME)
+    if(NOT CMAKE_CONFIGURATION_TYPES)
+      DISTCLEAN(${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${ITEM_NAME})
+    else(NOT CMAKE_CONFIGURATION_TYPES)
+      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+	DISTCLEAN(${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}/${ITEM_NAME})
+      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    endif(NOT CMAKE_CONFIGURATION_TYPES)
+  endforeach(filename ${${datalist}})
+
+  # The installation rule relates only to the original source directory copy, and so doesn't
+  # need to explicitly concern itself with configurations.
   foreach(filename ${${datalist}})
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${filename} DESTINATION ${DATA_DIR}/${targetdir})
   endforeach(filename ${${datalist}})
+
+  # Tell distcheck about these particular data files
   CMAKEFILES(${${datalist}})
 endmacro(BRLCAD_ADDDATA datalist targetdir)
 
