@@ -314,25 +314,18 @@ endmacro(BRLCAD_LIB_INCLUDE_DIRS)
 
 
 #-----------------------------------------------------------------------------
-# We attempt here to strike a balance between competing needs.  Ideally, any error messages
-# returned as a consequence of using data while running programs should point the developer
-# back to the version controlled source code, not a copy in the build directory.  However,
-# another design goal is to replicate the install tree layout in the build directory.  On
-# platforms with symbolic links, we can do both by linking the source data files to their
-# locations in the build directory.  On Windows, this is not possible and we have to fall
-# back on an explicit file copy mechanism.  In both cases we have a build target that is
-# triggered if source files are edited in order to allow the build system to take any further
-# actions that may be needed (the current example is re-generating tclIndex and pkgIndex.tcl
+# Data files needed by BRL-CAD need to be both installed and copied into the 
+# correct locations in the build directories to allow executables to run
+# at build time.  Ideally, we would like any error messages returned when 
+# running from the build directory to direct back to the copies of files in
+# the source tree, since those are the ones that should be edited.
+# On platforms that support symlinks, this is possible - build directory
+# "copies" of files are symlinks to the source tree version.  On platforms
+# without symlink support, we are forced to copy the files into place in
+# the build directories.  In both cases we have a build target that is
+# triggered if source files are edited in order to allow the build system 
+# to take further actions (for example, re-generating tclIndex and pkgIndex.tcl
 # files when the source .tcl files change).
-
-# In principle it may be possible to go even further and add rules to copy files in the build
-# dir that are different from their source originals back into the source tree... need to
-# think about complexity/robustness tradeoffs
-
-# Because certain functions (for example, pkgIndex.tcl building) require that files
-# handled by BRLCAD_ADDDATA already be in place when they run, global properties are
-# used to track targets associated with each binary output directory.  Macros to ease
-# adding to and retrieving from these lists are defined below.
 
 macro(BRLCAD_ADDDATA inputdata targetdir)
   # Handle both a list of one or more files and variable holding a list of files - 
