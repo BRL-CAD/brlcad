@@ -50,12 +50,12 @@
  *	  0	error
  */
 int
-cgarbs(cgtype, gp, uniq, svec, dist_tol)
-    int			*cgtype;
-    const struct rt_arb_internal	*gp;
-    int			uniq[8];	/* array of unique pt subscripts */
-    int			svec[11];	/* array of like pt subscripts */
-    const double	dist_tol;	/* distance tolerance */
+cgarbs(int *cgtype,
+       const struct rt_arb_internal *gp,
+       int uniq[8],           /* array of unique pt subscripts */
+       int svec[11],          /* array of like pt subscripts */
+       const double dist_tol  /* distance tolerance */
+       )
 {
     int	i, j;
     int	numuniq, unique, done;
@@ -145,10 +145,17 @@ cgarbs(cgtype, gp, uniq, svec, dist_tol)
  *  Permute the points as directed.
  */
 static void
-arb_mv(pts, gp, p0, p1, p2, p3, p4, p5, p6, p7)
-    point_t	pts[8];
-    const struct rt_arb_internal	*gp;
-    const int		p0, p1, p2, p3, p4, p5, p6, p7;
+arb_mv(point_t pts[8],
+       const struct rt_arb_internal *gp,
+       const int p0,
+       const int p1,
+       const int p2,
+       const int p3,
+       const int p4,
+       const int p5,
+       const int p6,
+       const int p7
+       )
 {
     RT_ARB_CK_MAGIC(gp);
     VMOVE(pts[0], gp->pt[p0]);
@@ -173,16 +180,16 @@ arb_mv(pts, gp, p0, p1, p2, p3, p4, p5, p6, p7)
  *	0	error
  */
 int
-redoarb(pts, gp, uniq, svec, numvec, cgtype)
-    point_t		pts[8];
-    const struct rt_arb_internal	*gp;
-    int		uniq[8];
-    int		svec[11];
-    const int	numvec;
-    const int	cgtype;
+redoarb(point_t pts[8],
+        const struct rt_arb_internal *gp,
+        int uniq[8],
+        int svec[11],
+        const int numvec,
+        const int cgtype
+    )
 {
     int	i, j;
-    int		prod;
+    int	prod;
 
     /* For all the cases that don't require shuffling, duplicate first */
     for (i = 0; i < 8; i++)  {
