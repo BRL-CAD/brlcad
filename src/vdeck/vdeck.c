@@ -1436,7 +1436,7 @@ insert(char *args[], int ct)
 	}
 	if (nomatch)
 	    (void) fprintf(stderr,
-			    "Object \"%s\" not found.\n", args[i]);
+                           "Object \"%s\" not found.\n", args[i]);
     }
     return	curr_ct;
 }
@@ -1478,8 +1478,8 @@ delete(char *args[])
 	    else	++j;
 	if (nomatch)
 	    (void) fprintf(stderr,
-			    "Object \"%s\" not found.\n",
-			    args[i]
+                           "Object \"%s\" not found.\n",
+                           args[i]
 		);
     }
     return curr_ct;
@@ -1610,7 +1610,7 @@ vls_ftoa(struct bu_vls *v, double f, int w, int d)
 
     if (w <= d + 2) {
 	(void) fprintf(stderr,
-			"ftoascii: incorrect format  need w.df  stop"
+                       "ftoascii: incorrect format  need w.df  stop"
 	   );
 	bu_exit(10, NULL);
     }
