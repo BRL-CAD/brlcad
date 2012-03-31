@@ -55,11 +55,11 @@ cgarbs(cgtype, gp, uniq, svec, dist_tol)
     const struct rt_arb_internal	*gp;
     int			uniq[8];	/* array of unique pt subscripts */
     int			svec[11];	/* array of like pt subscripts */
-    const double		dist_tol;	/* distance tolerance */
+    const double	dist_tol;	/* distance tolerance */
 {
     int	i, j;
-    int		numuniq, unique, done;
-    int		si;
+    int	numuniq, unique, done;
+    int	si;
 
     done = NO;		/* done checking for like vectors */
 

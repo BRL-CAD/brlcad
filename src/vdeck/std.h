@@ -54,23 +54,23 @@ typedef char *pointer;		/* generic pointer (void *) */
 /* Useful macros */
 
 /* arbitrary numerical arguments and value: */
-#define Abs( x )	((x) < 0 ? -(x) : (x))
-#define Max( a, b )	((a) > (b) ? (a) : (b))
-#define Min( a, b )	((a) < (b) ? (a) : (b))
+#define Abs(x)	        ((x) < 0 ? -(x) : (x))
+#define Max(a, b)	((a) > (b) ? (a) : (b))
+#define Min(a, b)	((a) < (b) ? (a) : (b))
 
 /* floating-point arguments and value: */
-#define Round( d )	floor( (d) + 0.5 )
+#define Round(d)	floor((d) + 0.5)
 
 /* arbitrary numerical arguments, integer value: */
-#define	Sgn( x )	((x) == 0 ? 0 : (x) > 0 ? 1 : -1)
+#define	Sgn(x)	((x) == 0 ? 0 : (x) > 0 ? 1 : -1)
 
 /* integer (or character) arguments and value: */
 #ifndef	unix
-#  define	toascii( c )	((c) & 0177)	/* map host char set to ASCII */
+#  define	toascii(c)	((c) & 0177)	/* map host char set to ASCII */
 #endif
-#define tohostc( c )	(c)		/* map ASCII to host char set */
-#define tonumber( c )	((c) - '0')	/* convt digit char to number */
-#define todigit( n )	((n) + '0')	/* convt digit number to char */
+#define tohostc(c)	(c)		/* map ASCII to host char set */
+#define tonumber(c)	((c) - '0')	/* convt digit char to number */
+#define todigit(n)	((n) + '0')	/* convt digit number to char */
 
 #endif	/* _VLD_STD_H_ */
 
