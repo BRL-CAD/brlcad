@@ -54,21 +54,21 @@ get_line(char *cp, int buflen, char *title)
     int	c;
     int	count = buflen;
 
-    while ( (c = fgetc(infp)) == '\n' ) /* Skip blank lines.		*/
+    while ((c = fgetc(infp)) == '\n') /* Skip blank lines.		*/
 	;
-    while ( c != EOF && c != '\n' )  {
+    while (c != EOF && c != '\n') {
 	*cp++ = c;
 	count--;
-	if ( count <= 0 )  {
+	if (count <= 0) {
 	    printf("get_line(x%lx, %d) input record overflows buffer for %s\n",
 		   (unsigned long)cp, buflen, title);
 	    break;
 	}
 	c = fgetc(infp);
     }
-    if ( c == EOF )
+    if (c == EOF)
 	return	EOF;
-    while ( count-- > 0 )
+    while (count-- > 0)
 	*cp++ = 0;
     return	c;
 }
@@ -84,7 +84,7 @@ getint(char *cp, int start, size_t len)
     if (len > sizeof(buf))
 	len = sizeof(buf);
 
-    bu_strlcpy( buf, cp+start, len );
+    bu_strlcpy(buf, cp+start, len);
     return atoi(buf);
 }
 
@@ -99,7 +99,7 @@ getdouble(char *cp, int start, size_t len)
     if (len > sizeof(buf))
 	len = sizeof(buf);
 
-    bu_strlcpy( buf, cp+start, len );
+    bu_strlcpy(buf, cp+start, len);
     return atof(buf);
 }
 
@@ -109,8 +109,8 @@ namecvt(int n, char **cp, int c)
 {
     char str[16];
 
-    sprintf( str, "%c%d%.13s", (char)c, n, name_it );
-    *cp = bu_strdup( str );
+    sprintf(str, "%c%d%.13s", (char)c, n, name_it);
+    *cp = bu_strdup(str);
 }
 
 /*
