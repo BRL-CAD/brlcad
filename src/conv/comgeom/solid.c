@@ -84,7 +84,7 @@ int
 getsoldata(double *dp, int num, int solid_num)
 {
     int	cd;
-    double	*fp;
+    double *fp;
     int	i;
     int	j;
 
@@ -100,7 +100,7 @@ getsoldata(double *dp, int num, int solid_num)
 	     * solid type should be blank
 	     */
 	    if ((version==5 && scard[5] != ' ') ||
-		 (version==4 && scard[3] != ' ')) {
+                (version==4 && scard[3] != ' ')) {
 		printf("solid %d (continuation) card %d non-blank\n",
 		       solid_num, cd);
 		return -1;
@@ -134,7 +134,7 @@ int
 getxsoldata(double *dp, int num, int solid_num)
 {
     int	cd;
-    double	*fp;
+    double *fp;
     int	i;
     int	j;
 
@@ -150,7 +150,7 @@ getxsoldata(double *dp, int num, int solid_num)
 	     * solid type should be blank
 	     */
 	    if ((version==5 && scard[5] != ' ') ||
-		 (version==4 && scard[3] != ' ')) {
+                (version==4 && scard[3] != ' ')) {
 		printf("solid %d (continuation) card %d non-blank\n",
 		       solid_num, cd);
 		return -1;
@@ -202,7 +202,7 @@ getsolid(void)
     double	r1, r2;
     vect_t	work;
     double	m1, m2;		/* Magnitude temporaries */
-    char	*name=NULL;
+    char	*name = NULL;
     double	dd[4*6];	/* 4 cards of 6 nums each */
     point_t	tmp[8];		/* 8 vectors of 3 nums each */
     int	ret;

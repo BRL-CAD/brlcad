@@ -34,7 +34,7 @@ endstr(char *str)
     if (!str)
 	return NULL;
 
-    while ( *str != '\0' ) {
+    while (*str != '\0') {
 	str++;
     }
 
@@ -45,8 +45,8 @@ endstr(char *str)
 void
 strappend(char *s, char *t)	/* === */
 {
-    s = endstr( s );
-    while ( (*s++ = *t++) != '\0' );
+    s = endstr(s);
+    while ((*s++ = *t++) != '\0');
     *s = '\0';
 }
 
@@ -55,10 +55,9 @@ maxmin(int *l, int n, int *max, int *min)	/*  === */
 {
     *max = -PADCHR;
     *min =  PADCHR;
-    while ( --n>0 )
-    {
-	if ( *l > *max )	*max = *l;
-	if ( *l < *min )	*min = *l;
+    while (--n>0) {
+	if (*l > *max)	*max = *l;
+	if (*l < *min)	*min = *l;
 	++l;
     }
 }

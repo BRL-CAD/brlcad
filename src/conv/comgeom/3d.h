@@ -186,20 +186,20 @@ union record  {
 	*(a+2) = *(b+2) + c * (*(d+2)) + e * (*(f+2))
 
 /* Return scalar magnitude of vector pointed at by 'a' */
-#define MAGNITUDE(a)	sqrt( MAGSQ( (a) ))
-#define MAGSQ(a)	( *(a)*(*(a)) + *((a)+1)*(*((a)+1)) + *((a)+2)*(*((a)+2)) )
+#define MAGNITUDE(a)	sqrt(MAGSQ((a)))
+#define MAGSQ(a)	(*(a)*(*(a)) + *((a)+1)*(*((a)+1)) + *((a)+2)*(*((a)+2)))
 
 /*
  * Cross product:
  *	12-21, 20-02, 01-10
  *	b1*c2-b2*c1, b2c0-b0c2, b0c1-b1c0
  */
-#define VCROSS( a, b, c)	\
+#define VCROSS(a, b, c)	\
 	*(a+0) = *(b+1) * *(c+2) - *(b+2) * *(c+1);\
 	*(a+1) = *(b+2) * *(c+0) - *(b+0) * *(c+2);\
 	*(a+2) = *(b+0) * *(c+1) - *(b+1) * *(c+0)
 
-#define VPRINT( a, b )	printf("%s (%f, %f, %f)\n", a, (b)[0], (b)[1], (b)[2] )
+#define VPRINT(a, b)	printf("%s (%f, %f, %f)\n", a, (b)[0], (b)[1], (b)[2])
 
 /*
  * Local Variables:
