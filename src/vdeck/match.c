@@ -46,21 +46,18 @@
 int
 match(char *pattern, char *string)
 {
-    do
-    {
-	switch ( pattern[0] )
-	{
-	    case '*': /* Match any string including null string.	*/
-		if ( pattern[1] == NUL || string[0] == NUL )
+    do {
+	switch (pattern[0]) {
+	    case '*': /* Match any string including null string. */
+		if (pattern[1] == NUL || string[0] == NUL)
 		    return	1;
-		while ( string[0] != NUL )
-		{
-		    if ( match( &pattern[1], string ) )
+		while (string[0] != NUL) {
+		    if (match(&pattern[1], string))
 			return	1;
 		    ++string;
 		}
 		return	0;
-	    case '?': /* Match any character.			*/
+	    case '?': /* Match any character. */
 		break;
 	    case '[': /* Match one of the characters in brackets
 			 unless first is a '!', then match
@@ -70,20 +67,18 @@ match(char *pattern, char *string)
 		char	*rgtBracket;
 		static int	negation;
 
-		++pattern; /* Skip over left bracket.		*/
+		++pattern; /* Skip over left bracket. 		*/
 		/* Find matching right bracket.			*/
-		if ( (rgtBracket = strchr( pattern, ']' )) == NULL )
-		{
-		    (void) fprintf( stderr, "Unmatched '['." );
+		if ((rgtBracket = strchr(pattern, ']')) == NULL) {
+		    (void) fprintf(stderr, "Unmatched '['.");
 		    return	0;
 		}
 		/* Check for negation operator.			*/
-		if ( pattern[0] == '!' )
-		{
+		if (pattern[0] == '!') {
 		    ++pattern;
 		    negation = 1;
 		}
-		else	{
+		else {
 		    negation = 0;
 		}
 		/* Traverse pattern inside brackets.		*/
@@ -105,17 +100,13 @@ match(char *pattern, char *string)
 			    break;
 		    }
 		}
-		if ( pattern == rgtBracket )
-		{
-		    if ( ! negation )
-		    {
+		if (pattern == rgtBracket) {
+		    if (!negation) {
 			return	0;
 		    }
 		}
-		else
-		{
-		    if ( negation )
-		    {
+		else {
+		    if (negation) {
 			return	0;
 		    }
 		}
@@ -126,19 +117,17 @@ match(char *pattern, char *string)
 		++pattern;
 		/* WARNING: falls through to default case.	*/
 	    default:  /* Compare characters.			*/
-		if ( pattern[0] != string[0] )
+		if (pattern[0] != string[0])
 		    return	0;
 	}
 	++pattern;
 	++string;
     }
-    while ( pattern[0] != NUL && string[0]  != NUL );
-    if ( (pattern[0] == NUL || pattern[0] == '*' ) && string[0]  == NUL )
-    {
+    while (pattern[0] != NUL && string[0]  != NUL);
+    if ((pattern[0] == NUL || pattern[0] == '*') && string[0]  == NUL) {
 	return	1;
     }
-    else
-    {
+    else {
 	return	0;
     }
 }

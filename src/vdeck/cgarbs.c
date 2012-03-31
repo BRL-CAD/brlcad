@@ -50,7 +50,7 @@
  *	  0	error
  */
 int
-cgarbs( cgtype, gp, uniq, svec, dist_tol )
+cgarbs(cgtype, gp, uniq, svec, dist_tol)
     int			*cgtype;
     const struct rt_arb_internal	*gp;
     int			uniq[8];	/* array of unique pt subscripts */
@@ -66,55 +66,55 @@ cgarbs( cgtype, gp, uniq, svec, dist_tol )
     svec[0] = svec[1] = 0;
     si = 2;
 
-    for (i=0; i<7; i++) {
+    for (i = 0; i < 7; i++) {
 	unique = YES;
 	if (done == NO)
 	    svec[si] = i;
-	for (j=i+1; j<8; j++) {
-	    if ( VNEAR_EQUAL( gp->pt[i], gp->pt[j], dist_tol ) )  {
-		if ( done == NO ) svec[++si] = j;
+	for (j = i + 1; j < 8; j++) {
+	    if (VNEAR_EQUAL(gp->pt[i], gp->pt[j], dist_tol))  {
+		if (done == NO) svec[++si] = j;
 		unique = NO;
 	    }
 	}
-	if ( unique == NO ) {
+	if (unique == NO) {
 	    /* point i not unique */
-	    if ( si > 2 && si < 6 ) {
+	    if (si > 2 && si < 6) {
 		svec[0] = si - 1;
 		if (si == 5 && svec[5] >= 6)
 		    done = YES;
 		si = 6;
 	    }
-	    if ( si > 6 ) {
+	    if (si > 6) {
 		svec[1] = si - 5;
 		done = YES;
 	    }
 	}
     }
-    if ( si > 2 && si < 6 )
+    if (si > 2 && si < 6)
 	svec[0] = si - 1;
-    if ( si > 6 )
+    if (si > 6)
 	svec[1] = si - 5;
-    for (i=1; i<=svec[1]; i++)
+    for (i = 1; i <= svec[1]; i++)
 	svec[svec[0]+1+i] = svec[5+i];
-    for (i=svec[0]+svec[1]+2; i<11; i++)
+    for (i = svec[0]+svec[1]+2; i < 11; i++)
 	svec[i] = -1;
 
     /* find the unique points */
     numuniq = 0;
-    for (j=0; j<8; j++) {
+    for (j = 0; j < 8; j++) {
 	unique = YES;
-	for (i=2; i<svec[0]+svec[1]+2; i++) {
-	    if ( j == svec[i] ) {
+	for (i = 2; i < svec[0]+svec[1]+2; i++) {
+	    if (j == svec[i]) {
 		unique = NO;
 		break;
 	    }
 	}
-	if ( unique == YES )
+	if (unique == YES)
 	    uniq[numuniq++] = j;
     }
 
     /* put comgeom solid typpe into s_cgtype */
-    switch ( numuniq ) {
+    switch (numuniq) {
 	case 8:
 	    *cgtype = 8;  /* ARB8 */
 	    break;
@@ -131,9 +131,9 @@ cgarbs( cgtype, gp, uniq, svec, dist_tol )
 	    *cgtype = 4;	/* ARB4 */
 	    break;
 	default:
-	    (void) fprintf( stderr,
+	    (void) fprintf(stderr,
 			    "cgarbs: bad number of unique vectors (%d)\n",
-			    numuniq );
+			    numuniq);
 	    return 0;
     }
     return numuniq;
@@ -145,20 +145,20 @@ cgarbs( cgtype, gp, uniq, svec, dist_tol )
  *  Permute the points as directed.
  */
 static void
-arb_mv( pts, gp, p0, p1, p2, p3, p4, p5, p6, p7 )
+arb_mv(pts, gp, p0, p1, p2, p3, p4, p5, p6, p7)
     point_t	pts[8];
     const struct rt_arb_internal	*gp;
     const int		p0, p1, p2, p3, p4, p5, p6, p7;
 {
     RT_ARB_CK_MAGIC(gp);
-    VMOVE( pts[0], gp->pt[p0] );
-    VMOVE( pts[1], gp->pt[p1] );
-    VMOVE( pts[2], gp->pt[p2] );
-    VMOVE( pts[3], gp->pt[p3] );
-    VMOVE( pts[4], gp->pt[p4] );
-    VMOVE( pts[5], gp->pt[p5] );
-    VMOVE( pts[6], gp->pt[p6] );
-    VMOVE( pts[7], gp->pt[p7] );
+    VMOVE(pts[0], gp->pt[p0]);
+    VMOVE(pts[1], gp->pt[p1]);
+    VMOVE(pts[2], gp->pt[p2]);
+    VMOVE(pts[3], gp->pt[p3]);
+    VMOVE(pts[4], gp->pt[p4]);
+    VMOVE(pts[5], gp->pt[p5]);
+    VMOVE(pts[6], gp->pt[p6]);
+    VMOVE(pts[7], gp->pt[p7]);
 }
 
 /*
@@ -173,7 +173,7 @@ arb_mv( pts, gp, p0, p1, p2, p3, p4, p5, p6, p7 )
  *	0	error
  */
 int
-redoarb( pts, gp, uniq, svec, numvec, cgtype )
+redoarb(pts, gp, uniq, svec, numvec, cgtype)
     point_t		pts[8];
     const struct rt_arb_internal	*gp;
     int		uniq[8];
@@ -185,18 +185,18 @@ redoarb( pts, gp, uniq, svec, numvec, cgtype )
     int		prod;
 
     /* For all the cases that don't require shuffling, duplicate first */
-    for ( i=0; i<8; i++ )  {
-	VMOVE( pts[i], gp->pt[i] );
+    for (i = 0; i < 8; i++)  {
+	VMOVE(pts[i], gp->pt[i]);
     }
 
     /* cgtype indicates which kind of ARB it is */
-    switch ( cgtype ) {
+    switch (cgtype) {
 	case 8:
 	    break;
 
 	case 7:
 	    /* arb7 vectors: 0 1 2 3 4 5 6 4 */
-	    switch ( svec[2] ) {
+	    switch (svec[2]) {
 		case 0:			/* 0 = 1, 3, or 4 */
 		    if (svec[3] == 1)	arb_mv(pts, gp, 4, 7, 6, 5, 1, 4, 3, 1);
 		    if (svec[3] == 3)	arb_mv(pts, gp, 4, 5, 6, 7, 0, 1, 2, 0);
@@ -224,7 +224,7 @@ redoarb( pts, gp, uniq, svec, numvec, cgtype )
 		    arb_mv(pts, gp, 3, 0, 1, 2, 7, 4, 5, 7);
 		    break;
 		default:
-		    (void) fprintf( stderr, "redoarb: bad arb7\n" );
+		    (void) fprintf(stderr, "redoarb: bad arb7\n");
 		    return 0;
 	    }
 	    break;
@@ -232,9 +232,9 @@ redoarb( pts, gp, uniq, svec, numvec, cgtype )
 	case 6:
 	    /* arb6 vectors:  0 1 2 3 4 4 6 6 */
 	    prod = 1;
-	    for (i=0; i<numvec; i++)
+	    for (i = 0; i < numvec; i++)
 		prod = prod * (uniq[i] + 1);
-	    switch ( prod ) {
+	    switch (prod) {
 		case 24:	/* 0123 unique */
 		    /* 4=7 and 5=6  OR  4=5 and 6=7 */
 		    if (svec[3] == 7)	arb_mv(pts, gp, 3, 0, 1, 2, 4, 4, 5, 5);
@@ -266,7 +266,7 @@ redoarb( pts, gp, uniq, svec, numvec, cgtype )
 		    else	arb_mv(pts, gp, 5, 1, 0, 4, 2, 2, 3, 3);
 		    break;
 		default:
-		    (void) fprintf( stderr, "redoarb: bad arb6\n");
+		    (void) fprintf(stderr, "redoarb: bad arb6\n");
 		    return 0;
 	    }
 	    break;
@@ -274,9 +274,9 @@ redoarb( pts, gp, uniq, svec, numvec, cgtype )
 	case 5:
 	    /* arb5 vectors:  0 1 2 3 4 4 4 4 */
 	    prod = 1;
-	    for (i=2; i<6; i++)
+	    for (i = 2; i < 6; i++)
 		prod = prod * (svec[i] + 1);
-	    switch ( prod ) {
+	    switch (prod) {
 		case 24:	/* 0=1=2=3 */
 		    arb_mv(pts, gp, 4, 5, 6, 7, 0, 0, 0, 0);
 		    break;
@@ -296,7 +296,7 @@ redoarb( pts, gp, uniq, svec, numvec, cgtype )
 		    arb_mv(pts, gp, 3, 2, 6, 7, 0, 0, 0, 0);
 		    break;
 		default:
-		    (void) fprintf( stderr, "redoarb: bad arb5\n" );
+		    (void) fprintf(stderr, "redoarb: bad arb5\n");
 		    return 0;
 	    }
 	    break;
@@ -304,12 +304,12 @@ redoarb( pts, gp, uniq, svec, numvec, cgtype )
 	case 4:
 	    /* arb4 vectors:  0 1 2 0 4 4 4 4 */
 	    j = svec[6];
-	    if ( svec[0] == 2 )	j = svec[4];
+	    if (svec[0] == 2)	j = svec[4];
 	    arb_mv(pts, gp, uniq[0], uniq[1], svec[2], uniq[0], j, j, j, j);
 	    break;
 	default:
-	    (void) fprintf( stderr,
-			    "redoarb: unknown arb type (%d)\n", cgtype );
+	    (void) fprintf(stderr,
+			    "redoarb: unknown arb type (%d)\n", cgtype);
 	    return 0;
     }
     return 1;
