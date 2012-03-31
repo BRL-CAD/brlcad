@@ -1538,7 +1538,7 @@ void
 vls_itoa(struct bu_vls *v, int n, int w)
 {
     int	 c, i, j, sign;
-    char	*s;
+    char *s;
 
     BU_CK_VLS(v);
     bu_vls_strncat(v, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", w);
@@ -1549,16 +1549,16 @@ vls_itoa(struct bu_vls *v, int n, int w)
     do
 	s[i++] = n % 10 + '0';
     while ((n /= 10) > 0);
-    if (sign < 0)	s[i++] = '-';
+    if (sign < 0) s[i++] = '-';
 
-    /* Blank fill array.					*/
-    for (j = i; j < w; j++)	s[j] = ' ';
+    /* Blank fill array. */
+    for (j = i; j < w; j++) s[j] = ' ';
     if (i > w) {
 	s[w-1] = (s[w]-1-'0')*10 + (s[w-1]-'0')  + 'A';
     }
     s[w] = '\0';
 
-    /* Reverse the array.					*/
+    /* Reverse the array. */
     for (i = 0, j = w - 1; i < j; i++, j--) {
 	c    = s[i];
 	s[i] = s[j];
