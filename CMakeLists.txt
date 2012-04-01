@@ -86,7 +86,7 @@ macro(DISTCLEAN)
   endforeach(item ${ARGN})
 endmacro(DISTCLEAN)
 
-# First step - stash the initial CMakeCache.txt file, if it exists, for subsequent
+# Stash the initial CMakeCache.txt file, if it exists, for subsequent
 # comparison
 if(EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
   configure_file(${CMAKE_BINARY_DIR}/CMakeCache.txt ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev COPY_ONLY)
@@ -99,9 +99,9 @@ cmake_minimum_required(VERSION 2.8.4)
 if(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
   CMAKE_POLICY(SET CMP0007 OLD)
-  if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION} VERSION_GREATER 2.8.3)
+  if(${CMAKE_VERSION} VERSION_GREATER 2.8.3)
     CMAKE_POLICY(SET CMP0017 OLD)
-  endif(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION} VERSION_GREATER 2.8.3)
+  endif(${CMAKE_VERSION} VERSION_GREATER 2.8.3)
 endif(COMMAND CMAKE_POLICY)
 
 # set CMake project name
