@@ -394,7 +394,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # in the future an override will need to be added here - probably of the
   # ExternalProject_Add functionality.
 
-  # Override and wrap configure_file.  In the case of a configure_file, we'll
+  # Override and wrap configure_file.  In the case of configure_file, we'll
   # check that the file is part of the source tree and not itself a
   # generated file, but not reject full-path entries since there are quite a
   # few of them.
