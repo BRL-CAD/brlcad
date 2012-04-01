@@ -1902,28 +1902,20 @@ DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/PATH)
 # the internal CMake variable list is too noisy so at the moment this looks
 # like the best alternative we have.
 
-include(${BRLCAD_CMAKE_DIR}/DiffCache.cmake)
-#force CMake to look every time in case of manual removal of COUNT file.
-set(countFile "countFile-NOTFOUND" CACHE STRING "Is there a count file?" FORCE)
-find_file(countFile COUNT PATHS ${BRLCAD_BINARY_DIR}/include/conf)
-if(countFile MATCHES "^countFile-NOTFOUND$")
-  set(buildCounter 0)
-else()
-  file(READ ${countFile} buildCounter_raw)
-  string(STRIP ${buildCounter_raw} buildCounter)
+if(EXISTS ${BRLCAD_BINARY_DIR}/include/conf/COUNT)
+  include(${BRLCAD_CMAKE_DIR}/DiffCache.cmake)
   DIFF_CACHE_file()
   if(INCREMENT_COUNT_FILE)
+    file(READ ${BRLCAD_BINARY_DIR}/include/conf/COUNT buildCounter_raw)
+    string(STRIP ${buildCounter_raw} buildCounter)
     math(EXPR buildCounter "${buildCounter} + 1")
+    file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "${buildCounter}\n")
   endif(INCREMENT_COUNT_FILE)
-endif()
-file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT.tmp "${buildCounter}\n")
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/COUNT.tmp ${BRLCAD_BINARY_DIR}/include/conf/COUNT)
-execute_process(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/COUNT.tmp)
+else(EXISTS ${BRLCAD_BINARY_DIR}/include/conf/COUNT)
+  set(buildCounter 0)
+  file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "${buildCounter}\n")
+endif(EXISTS ${BRLCAD_BINARY_DIR}/include/conf/COUNT)
 DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/COUNT)
-
-# make sure the cache reports this found, to avoid spurious config difference
-find_file(countFile COUNT PATHS ${BRLCAD_BINARY_DIR}/include/conf)
-mark_as_advanced(countFile)
 
 # DATE - Increment this when we increment the COUNT, to avoid triggering
 # excessive relinking (an RFC2822 timestamp changes every second).
