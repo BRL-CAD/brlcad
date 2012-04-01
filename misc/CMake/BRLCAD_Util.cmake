@@ -82,7 +82,7 @@ endmacro(CPP_WARNINGS)
 # macro logic need only deal with a variable holding a list, whatever the
 # original form of the input.
 macro(NORMALIZE_FILE_LIST inlist targetvar)
- set(havevarname 0)
+  set(havevarname 0)
   foreach(maybefilename ${inlist})
     if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename})
       set(havevarname 1)
@@ -171,6 +171,54 @@ macro(BRLCAD_GET_DIR_LIST_CONTENTS list_name dir_in outvar)
   set(${outvar} "${DATA_TARGETS_${currdir_str}}")
 endmacro(BRLCAD_GET_DIR_LIST_CONTENTS)
 
+
+#-----------------------------------------------------------------------------
+# We need a way to tell whether one path is a subpath of another path without
+# relying on regular expressions, since file paths may have characters in them
+# that will trigger regex matching behavior when we don't want it.  (To test,
+# for example, use a build directory name of build++) 
+#
+# The routine below does the check without using regex matching. 
+macro(IS_SUBPATH in_candidate_subpath in_full_path result_var)
+  # Convert paths to lists of directories - regex based
+  # matching won't work reliably, so instead look at each
+  # element compared to its corresponding element in the
+  # other path using string comparison.
+
+  # get the CMake form of the path so we have something consistent
+  # to work on
+  file(TO_CMAKE_PATH "${in_full_path}" full_path)
+  file(TO_CMAKE_PATH "${in_candidate_subpath}" candidate_subpath)
+
+  # check the string lengths - if the "subpath" is longer
+  # than the full path, there's not point in going further
+  string(LENGTH "${full_path}" FULL_LENGTH)
+  string(LENGTH "${candidate_subpath}" SUB_LENGTH)
+  if("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
+    set(${result_var} 0)
+  else("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
+    # OK, maybe it's a subpath - time to actually check 
+    string(REPLACE "/" ";" full_path_list "${full_path}")
+    string(REPLACE "/" ";" candidate_subpath_list "${candidate_subpath}")
+    set(found_difference 0)
+    while(NOT found_difference AND candidate_subpath_list)
+      list(GET full_path_list 0 full_path_element)
+      list(GET candidate_subpath_list 0 subpath_element)
+      if("${full_path_element}" STREQUAL "${subpath_element}")
+	list(REMOVE_AT full_path_list 0)
+	list(REMOVE_AT candidate_subpath_list 0)
+      else("${full_path_element}" STREQUAL "${subpath_element}")
+	set(found_difference 1)
+      endif("${full_path_element}" STREQUAL "${subpath_element}")
+    endwhile(NOT found_difference AND candidate_subpath_list)
+    # Now we know - report the result
+    if(NOT found_difference)
+      set(${result_var} 1)
+    else(NOT found_difference)
+      set(${result_var} 0)
+    endif(NOT found_difference)
+  endif("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
+endmacro(IS_SUBPATH)
 
 
 

@@ -280,9 +280,10 @@ macro(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
   # or cached value will be replaced with the local path.  A feature based disablement
   # of the tool also applies to the cached version.
   if(${upper}_EXECUTABLE)
-    if(NOT "${${upper}_EXECUTABLE}" MATCHES ${CMAKE_BINARY_DIR})
+    IS_SUBPATH("${CMAKE_BINARY_DIR}" "${${upper}_EXECUTABLE}" SUBBUILD_TEST)
+    if("${SUBBUILD_TEST}" STREQUAL "0")
       get_filename_component(FULL_PATH_EXEC ${${upper}_EXECUTABLE} ABSOLUTE)
-      IF ("${FULL_PATH_EXEC}" STREQUAL "${${upper}_EXECUTABLE}")
+      if("${FULL_PATH_EXEC}" STREQUAL "${${upper}_EXECUTABLE}")
 	if(EXISTS ${FULL_PATH_EXEC})
 	  set(EXEC_CACHED ${${upper}_EXECUTABLE})
 	else(EXISTS ${FULL_PATH_EXEC})
@@ -290,8 +291,8 @@ macro(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
 	  # and made a mistake doing so - warn that this might be the case.
 	  message(WARNING "File path ${${upper}_EXECUTABLE} specified for ${upper}_EXECUTABLE does not exist - this path will not override ${lower} executable search results.")
 	endif(EXISTS ${FULL_PATH_EXEC})
-      ENDIF ("${FULL_PATH_EXEC}" STREQUAL "${${upper}_EXECUTABLE}")
-    endif(NOT "${${upper}_EXECUTABLE}" MATCHES ${CMAKE_BINARY_DIR})
+      endif("${FULL_PATH_EXEC}" STREQUAL "${${upper}_EXECUTABLE}")
+    endif("${SUBBUILD_TEST}" STREQUAL "0")
   endif(${upper}_EXECUTABLE)
 
   # Initialize some variables

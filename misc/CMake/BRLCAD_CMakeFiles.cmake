@@ -33,6 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+
 # Define a macro for building lists of files.  Distcheck needs to know what files are "supposed" to be present in order to make
 # sure the source tree is clean prior to building a distribution tarball, hence this macro stores its results in files and not
 # variables  It's a no-op in a SUBBUILD.
@@ -66,16 +67,17 @@ macro(CMAKEFILES)
 	  # the third party build systems at some point in the future, we may have to exclude src/other
 	  # paths from this check.
 	  if(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
-	    if(NOT "${ITEM_PATH}" MATCHES "${CMAKE_BINARY_DIR}")
+		 IS_SUBPATH("${CMAKE_BINARY_DIR}" "${ITEM_PATH}" SUBPATH_TEST)
+		 if("${SUBPATH_TEST}" STREQUAL "0")
 	      if("${ITEM_PATH}" MATCHES "${CMAKE_SOURCE_DIR}")
 	        message(FATAL_ERROR "${ITEM} is listed in ${CMAKE_CURRENT_SOURCE_DIR} using its absolute path.  Please specify the location of this file using a relative path.")
 	      endif("${ITEM_PATH}" MATCHES "${CMAKE_SOURCE_DIR}")
-	    endif(NOT "${ITEM_PATH}" MATCHES "${CMAKE_BINARY_DIR}")
+		 endif("${SUBPATH_TEST}" STREQUAL "0")
 	  endif(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
 	  # Ignore files specified using full paths, since they should be generated files and are not part
 	  # of the source code repository.
 	  get_filename_component(ITEM_ABS_PATH ${ITEM_PATH} ABSOLUTE)
-	  if(NOT ${ITEM_PATH} MATCHES "^${ITEM_ABS_PATH}$")
+	  if(NOT "${ITEM_PATH}" STREQUAL "${ITEM_ABS_PATH}")
 	    if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${ITEM})
 	      message(FATAL_ERROR "Attempting to ignore non-existent file ${ITEM}, in directory ${CMAKE_CURRENT_SOURCE_DIR}")
 	    endif(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${ITEM})
@@ -99,7 +101,7 @@ macro(CMAKEFILES)
 		endif(NOT ${ITEM_NAME} MATCHES "\\.\\.")
 	      endif(NOT ITEM_PATH STREQUAL "")
 	    endwhile(NOT ITEM_PATH STREQUAL "")
-	  endif(NOT ${ITEM_PATH} MATCHES "^${ITEM_ABS_PATH}$")
+	  endif(NOT "${ITEM_PATH}" STREQUAL "${ITEM_ABS_PATH}")
 	else(NOT ITEM_PATH STREQUAL "")
 	  # The easy case - no path specified, so assume the current source directory.
 	  if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${ITEM})

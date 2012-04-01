@@ -403,9 +403,9 @@ if(NOT BRLCAD_IS_SUBBUILD)
     GET_FILENAME_COMPONENT(ITEM_ABS ${file} ABSOLUTE)
     set(TEST_BUILD_PATH "${CMAKE_BINARY_DIR}/")
     set(TEST_SOURCE_PATH "${CMAKE_SOURCE_DIR}/")
-    string(REGEX REPLACE "^${TEST_BUILD_PATH}" "" BUILD_DIR_TRIMMED "${ITEM_ABS}")
+    string(REPLACE "${TEST_BUILD_PATH}" "" BUILD_DIR_TRIMMED "${ITEM_ABS}")
     if(${ITEM_ABS} STREQUAL ${BUILD_DIR_TRIMMED})
-      string(REGEX REPLACE "^${TEST_SOURCE_PATH}" "" SOURCE_DIR_TRIMMED "${ITEM_ABS}")
+      string(REPLACE "${TEST_SOURCE_PATH}" "" SOURCE_DIR_TRIMMED "${ITEM_ABS}")
       if(NOT ${ITEM_ABS} STREQUAL ${SOURCE_DIR_TRIMMED})
 	file(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${ITEM_ABS}\n")
       endif(NOT ${ITEM_ABS} STREQUAL ${SOURCE_DIR_TRIMMED})
@@ -435,7 +435,7 @@ file(REMOVE ${CMAKE_BINARY_DIR}/cmakedirs.cmake)
 if(NOT BRLCAD_IS_SUBBUILD)
   function(message)
     _message(${ARGN})
-    string(REGEX REPLACE ";" ": " msg "${ARGV}")
+    string(REPLACE ";" ": " msg "${ARGV}")
     file(APPEND ${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${msg}\n")
   endfunction(message)
 endif(NOT BRLCAD_IS_SUBBUILD)
@@ -1948,7 +1948,7 @@ BRLCAD_ADDDATA(toplevel_DOCFILES ".")
 if(NOT ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
   set(TEST_BUILD_PATH "${CMAKE_BINARY_DIR}/")
   set(TEST_SOURCE_PATH "${CMAKE_SOURCE_DIR}/")
-  string(REGEX REPLACE "${TEST_SOURCE_PATH}" "" CMAKE_BUILD_DIR_TRIMMED "${TEST_BUILD_PATH}")
+  string(REPLACE "${TEST_SOURCE_PATH}" "" CMAKE_BUILD_DIR_TRIMMED "${TEST_BUILD_PATH}")
   if(NOT ${TEST_BUILD_PATH} STREQUAL ${CMAKE_BUILD_DIR_TRIMMED})
     set(CPACK_IGNORE_BUILD_PATH "${CMAKE_BUILD_DIR_TRIMMED}")
   endif(NOT ${TEST_BUILD_PATH} STREQUAL ${CMAKE_BUILD_DIR_TRIMMED})
@@ -2130,18 +2130,26 @@ DISTCLEAN(${CMAKE_BINARY_DIR}/distclean.sh)
 get_property(CMAKE_DISTCLEAN_TARGET_LIST GLOBAL PROPERTY CMAKE_DISTCLEAN_TARGET_LIST)
 list(REMOVE_DUPLICATES CMAKE_DISTCLEAN_TARGET_LIST)
 configure_file(${BRLCAD_CMAKE_DIR}/distclean.cmake.in	${BRLCAD_BINARY_DIR}/distclean.cmake @ONLY)
-if("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
+if("${CMAKE_GENERATOR}" MATCHES "Make")
   add_custom_target(distclean
     COMMAND ${CMAKE_COMMAND} -E echo "Running make clean..."
     COMMAND ${CMAKE_COMMAND} -E chdir ${BRLCAD_BINARY_DIR} $(MAKE) clean
     COMMAND ${CMAKE_COMMAND} -E echo "Running make clean... done."
     COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_BINARY_DIR}/distclean.cmake
     )
-else("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
+elseif("${CMAKE_GENERATOR}" MATCHES "Ninja")
+	message("gothere")
   add_custom_target(distclean
+    COMMAND ${CMAKE_COMMAND} -E echo "Running make clean..."
+    COMMAND ${CMAKE_COMMAND} -E chdir ${BRLCAD_BINARY_DIR} ninja -t clean
+    COMMAND ${CMAKE_COMMAND} -E echo "Running make clean... done."
     COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_BINARY_DIR}/distclean.cmake
     )
-endif("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
+else("${CMAKE_GENERATOR}" MATCHES "Make")
+  add_custom_target(distclean
+	 COMMAND ${CMAKE_COMMAND} -E echo "Not implemented for generator ${CMAKE_GENERATOR}"
+    )
+endif("${CMAKE_GENERATOR}" MATCHES "Make")
 
 #Done with all really time-consuming steps - do the configure time delta
 if(NOT BRLCAD_IS_SUBBUILD)

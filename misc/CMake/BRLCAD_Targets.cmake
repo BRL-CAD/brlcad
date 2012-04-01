@@ -272,18 +272,18 @@ macro(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
 
     # paths in BRL-CAD build dir
     foreach(inc_path ${${DIR_LIST}})
-      if(${inc_path} MATCHES "^${BRLCAD_BINARY_DIR}")
+      if("${inc_path}" STREQUAL "${BRLCAD_BINARY_DIR}")
 	set(NEW_DIR_LIST ${NEW_DIR_LIST} ${inc_path})
 	list(REMOVE_ITEM ${DIR_LIST} ${inc_path})
-      endif(${inc_path} MATCHES "^${BRLCAD_BINARY_DIR}")
+      endif("${inc_path}" STREQUAL "${BRLCAD_BINARY_DIR}")
     endforeach(inc_path ${${DIR_LIST}})
 
     # paths in BRL-CAD source dir
     foreach(inc_path ${${DIR_LIST}})
-      if(${inc_path} MATCHES "^${BRLCAD_SOURCE_DIR}")
+      if("${inc_path}" STREQUAL "${BRLCAD_SOURCE_DIR}")
 	set(NEW_DIR_LIST ${NEW_DIR_LIST} ${inc_path})
 	list(REMOVE_ITEM ${DIR_LIST} ${inc_path})
-      endif(${inc_path} MATCHES "^${BRLCAD_SOURCE_DIR}")
+      endif("${inc_path}" STREQUAL "${BRLCAD_SOURCE_DIR}")
     endforeach(inc_path ${${DIR_LIST}})
 
     # add anything that might be left
