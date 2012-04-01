@@ -1937,17 +1937,7 @@ set(toplevel_DOCFILES
   NEWS
   README
   )
-foreach(item ${toplevel_DOCFILES})
-  if(NOT CMAKE_CONFIGURATION_TYPES)
-    configure_file(${item} ${CMAKE_BINARY_DIR}/${DATA_DIR}/${item} COPYONLY)
-  else(NOT CMAKE_CONFIGURATION_TYPES)
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      configure_file(${item} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${item} COPYONLY)
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif(NOT CMAKE_CONFIGURATION_TYPES)
-endforeach(item ${toplevel_DOCFILES})
-install(FILES ${toplevel_DOCFILES} DESTINATION ${DATA_DIR})
+BRLCAD_ADDDATA(toplevel_DOCFILES ".")
 
 # We want to ignore an in-source build directory if possible, try to recognize
 # that case and get the appropriate subpath for CPACK.  This isn't workable if
