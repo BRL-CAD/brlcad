@@ -10,12 +10,12 @@ execute_process(COMMAND "@XSLTPROC_EXECUTABLE@" -nonet -xinclude -o "@outfile@" 
 # to move the man page to the right location if xsltproc insists 
 # on putting it in the current directory.
 get_filename_component(output_name "@outfile@" NAME)
-if(EXISTS "@CMAKE_CURRENT_BINARY_DIR@/${output_name}")
-	if(NOT "@CMAKE_CURRENT_BINARY_DIR@/${output_name}" STREQUAL "@outfile@")
-	  execute_process(COMMAND "@CMAKE_COMMAND@" -E copy "@CMAKE_CURRENT_BINARY_DIR@/${output_name}" "@outfile@")
-	  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "@CMAKE_CURRENT_BINARY_DIR@/${output_name}" )
-	endif(NOT "@CMAKE_CURRENT_BINARY_DIR@/${output_name}" STREQUAL "@outfile@")
-endif(EXISTS "@CMAKE_CURRENT_BINARY_DIR@/${output_name}")
+if(NOT "@CMAKE_CURRENT_BINARY_DIR@/${output_name}" STREQUAL "@outfile@")
+  if(EXISTS "@CMAKE_CURRENT_BINARY_DIR@/${output_name}")
+    execute_process(COMMAND "@CMAKE_COMMAND@" -E copy "@CMAKE_CURRENT_BINARY_DIR@/${output_name}" "@outfile@")
+    execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "@CMAKE_CURRENT_BINARY_DIR@/${output_name}" )
+  endif(EXISTS "@CMAKE_CURRENT_BINARY_DIR@/${output_name}")
+endif(NOT "@CMAKE_CURRENT_BINARY_DIR@/${output_name}" STREQUAL "@outfile@")
 if(CMDRESULT)
   message(FATAL_ERROR "xsltproc build failure: ${CMDRESULT}")
 endif(CMDRESULT)
