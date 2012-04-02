@@ -7,10 +7,10 @@
 
 	<!-- the base stylesheet (resolved by this name
 	in the xml catalog file) -->
-	<xsl:import href="file:///@CMAKE_BINARY_DIR@/doc/docbook/resources/other/standard/xsl/xhtml-1_1/docbook.xsl"/>
+	<xsl:import href="file:///@DOCBOOK_BINARY_DIR@/doc/docbook/resources/other/standard/xsl/xhtml-1_1/docbook.xsl"/>
 
 	<!-- common param inputs, etc. -->
-	<xsl:import href="file:///@CMAKE_BINARY_DIR@/doc/docbook/resources/brlcad/brlcad-common.xsl"/>
+	<xsl:import href="file:///@DOCBOOK_BINARY_DIR@/doc/docbook/resources/brlcad/brlcad-common.xsl"/>
 
 	<!-- the BRL-CAD css base for all html -->
 	<xsl:param name="html.stylesheet">../../css/brlcad.css</xsl:param>
@@ -41,7 +41,7 @@
 	<!-- this is a modified header nav template from html/chunk-common.xsl version 1.76.1 -->
 
 	<!--
-	<xsl:import href="/@CMAKE_SOURCE_DIR@/doc/docbook/resources/brlcad/brlcad-xhtml-header-navigation.xsl"/>
+	<xsl:import href="/@DOCBOOK_SOURCE_DIR@/doc/docbook/resources/brlcad/brlcad-xhtml-header-navigation.xsl"/>
 	-->
 
 </xsl:stylesheet>

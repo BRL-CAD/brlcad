@@ -9,13 +9,13 @@
   <!-- a stylesheet with common items for fo products -->
 
   <!-- the base stylesheet (resolved by this name in the xml catalog file) -->
-  <xsl:import href="file:///@CMAKE_BINARY_DIR@/doc/docbook/resources/other/standard/xsl/fo/docbook.xsl"/>
+  <xsl:import href="file:///@DOCBOOK_BINARY_DIR@/doc/docbook/resources/other/standard/xsl/fo/docbook.xsl"/>
 
   <!-- common param inputs, etc. -->
-  <xsl:import href="file:///@CMAKE_BINARY_DIR@/doc/docbook/resources/brlcad/brlcad-common.xsl"/>
+  <xsl:import href="file:///@DOCBOOK_BINARY_DIR@/doc/docbook/resources/brlcad/brlcad-common.xsl"/>
 
   <!-- font info -->
-  <xsl:import href="file:///@CMAKE_BINARY_DIR@/doc/docbook/resources/brlcad/brlcad-fonts.xsl"/>
+  <xsl:import href="file:///@DOCBOOK_BINARY_DIR@/doc/docbook/resources/brlcad/brlcad-fonts.xsl"/>
 
   <!-- for itemized lists -->
   <xsl:template name="itemizedlist.label.markup">

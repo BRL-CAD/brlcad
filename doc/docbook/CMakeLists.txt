@@ -5,6 +5,11 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/)
 # DocBook processing from their archives into the build directory
 include(${CMAKE_CURRENT_SOURCE_DIR}/resources/other/expand.cmake)
 
+# Rework CMake binary and source paths for DocBook templates - if we
+# have spaces in the paths, they will cause a problem.
+string(REPLACE " " "%20" DOCBOOK_BINARY_DIR "${CMAKE_BINARY_DIR}")
+string(REPLACE " " "%20" DOCBOOK_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
+
 # Common stylesheets for all DocBook sources
 if(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_MAN)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-common.xsl.in

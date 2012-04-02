@@ -8,7 +8,7 @@
 
 <!-- use prog 'create-book-covers.pl' -->
 
-<xsl:include href="file://@CMAKE_SOURCE_DIR@/doc/docbook/resources/brlcad/brlcad-gendata.xsl"/>
+<xsl:include href="file://@DOCBOOK_SOURCE_DIR@/doc/docbook/resources/brlcad/brlcad-gendata.xsl"/>
 <!-- original
 <xsl:include href="brlcad-colors-autogen.xsl"/>
 -->
@@ -83,7 +83,7 @@
          text-align="center">
         <fo:block>
           <fo:instream-foreign-object content-width='5in' content-height='auto' text-align='center'>
-            <xi:include href="@BRLCAD_SOURCE_DIR@/doc/docbook/resources/brlcad/images/brlcad-logo-@COVER_COLOR@.svg" parse='xml'>
+            <xi:include href="@DOCBOOK_SOURCE_DIR@/doc/docbook/resources/brlcad/images/brlcad-logo-@COVER_COLOR@.svg" parse='xml'>
               <xi:fallback parse="text">
                 FIXME:  MISSING XINCLUDE CONTENT
               </xi:fallback>
