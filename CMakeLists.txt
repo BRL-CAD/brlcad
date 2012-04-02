@@ -1696,6 +1696,17 @@ get_property(CONFIG_H_FILE_CONTENTS GLOBAL PROPERTY ${CMAKE_PROJECT_NAME}_CONFIG
 file(WRITE ${CONFIG_H_FILE} "${CONFIG_H_FILE_CONTENTS}")
 configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
 
+# Rules for the toplevel documentation files
+set(toplevel_DOCFILES
+  AUTHORS
+  COPYING
+  HACKING
+  INSTALL
+  NEWS
+  README
+  )
+BRLCAD_ADDDATA(toplevel_DOCFILES ".")
+
 # Generate the windows specific file, if needed
 if(WIN32)
   configure_file(${BRLCAD_SOURCE_DIR}/include/config_win_cmake.h.in ${BRLCAD_BINARY_DIR}/include/config_win_cmake.h)
@@ -1928,17 +1939,6 @@ if(INCREMENT_COUNT_FILE OR NOT EXISTS ${BRLCAD_BINARY_DIR}/include/conf/DATE)
   execute_process(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/DATE.tmp)
 endif(INCREMENT_COUNT_FILE OR NOT EXISTS ${BRLCAD_BINARY_DIR}/include/conf/DATE)
 DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/DATE)
-
-# Rules for the toplevel documentation files
-set(toplevel_DOCFILES
-  AUTHORS
-  COPYING
-  HACKING
-  INSTALL
-  NEWS
-  README
-  )
-BRLCAD_ADDDATA(toplevel_DOCFILES ".")
 
 # We want to ignore an in-source build directory if possible, try to recognize
 # that case and get the appropriate subpath for CPACK.  This isn't workable if
