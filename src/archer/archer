@@ -30,7 +30,7 @@
 #    Main for Archer.
 #
 #\
-ARCHER_HOME=`dirname $0`/..
+ARCHER_HOME=`dirname "$0"`/..
 #\
 export ARCHER_HOME
 # restart using bwish \
@@ -38,7 +38,7 @@ WISH="bwish"
 #\
 for ish in bwish bwish_d ; do
 # see if we're installed \
-    if test -f ${ARCHER_HOME}/bin/$ish ; then
+    if test -f "${ARCHER_HOME}/bin/$ish" ; then
 #\
 	WISH="${ARCHER_HOME}/bin/$ish"
 #\
@@ -46,7 +46,7 @@ for ish in bwish bwish_d ; do
 #\
     fi
 # see if we're not installed yet \
-    if test -f ${ARCHER_HOME}/bwish/$ish ; then
+    if test -f "${ARCHER_HOME}/bwish/$ish" ; then
 #\
 	WISH="${ARCHER_HOME}/bwish/$ish"
 #\
@@ -56,7 +56,7 @@ for ish in bwish bwish_d ; do
 #\
 done
 #\
-exec $WISH $0 $@
+exec "$WISH" "$0" "$@"
 
 # If we're running from a build directory but an installed BRL-CAD
 # already exists in the configured install path, all tcl scripts 
