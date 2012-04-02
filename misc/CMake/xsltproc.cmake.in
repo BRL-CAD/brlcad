@@ -2,8 +2,13 @@ set(ENV{XML_DEBUG_CATALOG} 1)
 # It is necessary to ensure that the target directory exists *before* calling xsltproc
 # when building in parallel, due to a bug/limitation in xsltproc
 get_filename_component(output_dir "@outfile@" PATH)
+get_filename_component(output_name "@outfile@" NAME)
 execute_process(COMMAND "@CMAKE_COMMAND@" -E make_directory "${output_dir}/")
 execute_process(COMMAND "@XSLTPROC_EXECUTABLE@" -nonet -xinclude -o "@outfile@" "@CURRENT_XSL_STYLESHEET@" "@CMAKE_CURRENT_SOURCE_DIR@/@filename@" RESULT_VARIABLE CMDRESULT)
+if(EXISTS "@CMAKE_CURRENT_BINARY_DIR@/${output_name}")
+	execute_process(COMMAND "@CMAKE_COMMAND@" -E copy "@CMAKE_CURRENT_BINARY_DIR@/${output_name}" "@outfile@")
+	execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "@CMAKE_CURRENT_BINARY_DIR@/${output_name}" )
+endif(EXISTS "@CMAKE_CURRENT_BINARY_DIR@/${output_name}")
 if(CMDRESULT)
   message(FATAL_ERROR "xsltproc build failure: ${CMDRESULT}")
 endif(CMDRESULT)
