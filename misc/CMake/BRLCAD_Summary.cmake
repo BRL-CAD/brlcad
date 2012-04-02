@@ -394,6 +394,15 @@ else (BRLCAD_EXTRADOCS)
   set(BRLCAD_DOCBOOK_BUILD "OFF")
 endif (BRLCAD_EXTRADOCS)
 
+# In multi-configuration builds, some features are
+# set at build time instead of configure time.
+set(MULTICONFIG_FEATURES "BRLCAD_OPTIMIZED_BUILD")
+if(CMAKE_CONFIGURATION_TYPES)
+  foreach(item ${MULTICONFIG_FEATURES})
+    set(${item} "Build Configuration Dependent")
+  endforeach(item ${MULTICONFIG_FEATURES})
+endif(CMAKE_CONFIGURATION_TYPES)
+
 foreach(item ${OTHER_REPORT_ITEMS})
   message("${${item}_LABEL} ${${item}}")
 endforeach(item ${BUILD_REPORT_ITEMS})
