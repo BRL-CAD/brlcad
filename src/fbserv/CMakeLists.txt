@@ -2,7 +2,7 @@ include_directories(
   ${FB_INCLUDE_DIRS}
   )
 
-BRLCAD_ADDEXEC(fbserv "fbserv.c server.c" libfb)
+BRLCAD_ADDEXEC(fbserv "fbserv.c;server.c" libfb)
 
 ADD_MAN_PAGES(1 fbserv.1)
 CMAKEFILES(Makefile.am)

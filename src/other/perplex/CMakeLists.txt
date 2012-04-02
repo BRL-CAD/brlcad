@@ -25,4 +25,4 @@ set(perplex_sources
   perplex.cpp
   )
 
-BRLCAD_ADDEXEC(perplex "${perplex_sources}" "")
+add_executable(perplex ${perplex_sources})

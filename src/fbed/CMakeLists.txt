@@ -23,7 +23,7 @@ if(HAVE_TERMLIB)
     try.c
     )
 
-  BRLCAD_ADDEXEC(fbed "${fbed_SOURCES}" "libfb libvfont libtermio libcursor ${TERMLIB_LIBRARY}")
+  BRLCAD_ADDEXEC(fbed "${fbed_SOURCES}" "libfb;libvfont;libtermio;libcursor;${TERMLIB_LIBRARY}")
 
   ADD_MAN_PAGES(1 fbed.1)
   CMAKEFILES(ascii.h cursorbits.h extern.h fb_ik.h popup.h std.h try.h)

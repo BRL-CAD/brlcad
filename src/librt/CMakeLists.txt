@@ -268,9 +268,9 @@ BRLCAD_ADDDATA(nurb_example.c sample_applications)
 BRLCAD_ADDDATA(raydebug.tcl sample_applications)
 
 if(MSVC)
-  set(LIBRT_SOURCES ${LIBRT_SOURCES}    timer-nt.c)
+  set(LIBRT_SOURCES ${LIBRT_SOURCES} timer-nt.c)
 else(MSVC)
-  set(LIBRT_SOURCES ${LIBRT_SOURCES}    timer42.c)
+  set(LIBRT_SOURCES ${LIBRT_SOURCES} timer42.c)
 endif(MSVC)
 
 #Initialize RT_DEFINES in case of reconfiguration
@@ -283,7 +283,7 @@ if(CPP_DLL_DEFINES)
 endif(CPP_DLL_DEFINES)
 set_property(GLOBAL PROPERTY RT_DEFINES "${RT_DEFINES}")
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "libbn libbu ${OPENNURBS_LIBRARY} ${REGEX_LIBRARY} ${ZLIB_LIBRARY} ${WINSOCK_LIB} ${RPCRT_LIB}")
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "libbn;libbu;${OPENNURBS_LIBRARY};${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB}")
 if(BUILD_STATIC_LIBS)
   SET_PROPERTY(TARGET librt-static APPEND PROPERTY COMPILE_DEFINITIONS "OBJ_BREP=1")
 endif(BUILD_STATIC_LIBS)

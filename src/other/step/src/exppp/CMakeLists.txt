@@ -19,4 +19,4 @@ add_definitions(
 SCL_ADDLIB(libexppp "${LIBEXPPP_SOURCES}" express)
 set_target_properties(libexppp PROPERTIES PREFIX "")
 
-SCL_ADDEXEC(exppp "${EXPPP_SOURCES}" "libexppp express")
+SCL_ADDEXEC(exppp "${EXPPP_SOURCES}" "libexppp;express")

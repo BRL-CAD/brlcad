@@ -3,7 +3,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
-BRLCAD_ADDEXEC(vdeck "cgarbs.c match.c parsarg.c vdeck.c" "librt ${M_LIBRARY}")
+BRLCAD_ADDEXEC(vdeck "cgarbs.c;match.c;parsarg.c;vdeck.c" "librt;${M_LIBRARY}")
 ADD_MAN_PAGES(1 vdeck.1)
 CMAKEFILES(std.h vextern.h)
 CMAKEFILES(Makefile.am)

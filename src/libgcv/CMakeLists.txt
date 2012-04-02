@@ -18,7 +18,7 @@ set(LIBGCV_SOURCES
   tri_intersect.c
   )
 
-BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt libbu")
+BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libbu")
 SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 add_subdirectory(wfobj)

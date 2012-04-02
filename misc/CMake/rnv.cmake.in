@@ -1,8 +1,8 @@
-execute_process(COMMAND @CMAKE_COMMAND@ -E remove -f @db_outfile@)
-execute_process(COMMAND rnv @BRLCAD_BINARY_DIR@/doc/docbook/resources/other/docbook-schema/rng/docbookxi.rnc @CMAKE_CURRENT_SOURCE_DIR@/@filename@ RESULT_VARIABLE CMDRESULT)
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "@db_outfile@")
+execute_process(COMMAND rnv "@BRLCAD_BINARY_DIR@/doc/docbook/resources/other/docbook-schema/rng/docbookxi.rnc" "@CMAKE_CURRENT_SOURCE_DIR@/@filename@" RESULT_VARIABLE CMDRESULT)
 if(CMDRESULT)
   message(FATAL_ERROR "rnv failure: ${CMDRESULT}")
 else(CMDRESULT)
-  execute_process(COMMAND @CMAKE_COMMAND@ -E touch @db_outfile@)
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@db_outfile@")
 endif(CMDRESULT)
 

@@ -119,9 +119,9 @@ if(NOT WIN32)
 endif(NOT WIN32)
 
 if(NOT WIN32)
-  BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad libged libwdb libdm libtermio ${MGED_EXTRA_LIBS} ${ITCL_LIBRARY} ${ITK_LIBRARY}")
+  BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad;libged;libwdb;libdm;libtermio;${MGED_EXTRA_LIBS};${ITCL_LIBRARY};${ITK_LIBRARY}")
 else(NOT WIN32)
-  BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad libged libwdb libdm ${ITCL_LIBRARY} ${ITK_LIBRARY} ws2_32.lib opengl32.lib")
+  BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad;libged;libwdb;libdm;${ITCL_LIBRARY};${ITK_LIBRARY};ws2_32.lib;opengl32.lib")
 endif(NOT WIN32)
 if(${ITCL_LIBRARY} MATCHES "itcl")
   ADD_DEPENDENCIES(mged itcl)
@@ -142,7 +142,7 @@ foreach(item ${tclIndex_target_list})
   ADD_DEPENDENCIES(mged ${item})
 endforeach(item ${tclIndex_target_list})
 
-BRLCAD_ADDEXEC(cad_boundp cad_boundp.c "libbu ${M_LIBRARY}")
+BRLCAD_ADDEXEC(cad_boundp cad_boundp.c "libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(cad_parea cad_parea.c libbu)
 

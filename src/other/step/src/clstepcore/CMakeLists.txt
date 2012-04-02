@@ -56,7 +56,7 @@ add_definitions(
     -DHAVE_CONFIG_H
 )
 
-SCL_ADDLIB(stepcore "${LIBSTEPCORE_SRCS}" "express steputils stepdai")
+SCL_ADDLIB(stepcore "${LIBSTEPCORE_SRCS}" "express;steputils;stepdai")
 if(APPLE)
    set_target_properties(stepcore PROPERTIES LINK_FLAGS "-flat_namespace -undefined suppress")
 endif(APPLE)

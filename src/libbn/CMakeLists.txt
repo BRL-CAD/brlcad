@@ -44,7 +44,7 @@ SET_TARGET_PROPERTIES(libbn PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 ADD_MAN_PAGES(3 libplot3.3)
 
-BRLCAD_ADDEXEC(bntester bntester.c "libbu libbn" NO_INSTALL)
+BRLCAD_ADDEXEC(bntester bntester.c "libbu;libbn" NO_INSTALL)
 
 CMAKEFILES(
   Makefile.am

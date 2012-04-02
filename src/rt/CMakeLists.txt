@@ -129,49 +129,49 @@ if(NOT MSVC)
   set(LIBREMRT_SOURCES ${LIBREMRT_SOURCES} heatgraph.c)
 endif(NOT MSVC)
 
-BRLCAD_ADDEXEC(rtexample "${rtexample_SRCS}" "librt libfb liboptical libicv" NO_INSTALL)
+BRLCAD_ADDEXEC(rtexample "${rtexample_SRCS}" "librt;libfb;liboptical;libicv" NO_INSTALL)
 
-BRLCAD_ADDEXEC(reshoot "${reshoot_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv")
+BRLCAD_ADDEXEC(reshoot "${reshoot_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv")
 
-BRLCAD_ADDEXEC(rtwalk "${rtwalk_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv ${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtwalk "${rtwalk_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rtshot "${rtshot_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv ${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtshot "${rtshot_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rtregis "${rtregis_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv")
+BRLCAD_ADDEXEC(rtregis "${rtregis_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv")
 
-BRLCAD_ADDEXEC(rtscale "${rtscale_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv ${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtscale "${rtscale_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rt "${rt_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv ${M_LIBRARY}")
+BRLCAD_ADDEXEC(rt "${rt_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rt_bot_faces "${rt_bot_faces_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv ${M_LIBRARY}")
+BRLCAD_ADDEXEC(rt_bot_faces "${rt_bot_faces_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rtarea "${rtarea_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv ${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtarea "${rtarea_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rtcell "${rtcell_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv ${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtcell "${rtcell_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rtcheck "${rtcheck_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv ${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtcheck "${rtcheck_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rtedge "${rtedge_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv ${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtedge "${rtedge_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rtfrac "${rtfrac_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv ${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtfrac "${rtfrac_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rtg3 "${rtg3_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv ${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtg3 "${rtg3_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rthide "${rthide_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv ${M_LIBRARY}")
+BRLCAD_ADDEXEC(rthide "${rthide_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rtpp "${rtpp_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv ${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtpp "${rtpp_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rtrad "${rtrad_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv ${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtrad "${rtrad_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rtrange "${rtrange_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv ${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtrange "${rtrange_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rtray "${rtray_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv ${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtray "${rtray_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rtsil "${rtsil_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv ${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtsil "${rtsil_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rtweight "${rtweight_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv ${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtweight "${rtweight_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rtxray "${rtxray_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical libicv ${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtxray "${rtxray_SRCS}" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
 
 add_library(libremrt STATIC ${LIBREMRT_SOURCES})

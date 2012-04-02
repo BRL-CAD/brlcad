@@ -460,6 +460,6 @@ CMAKEFILES(${stepg_HDRS})
 # FIXME: The fedex files are supposed to be generated, but the SCL stuff isn't
 # quite up to the job yet
 
-BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "libwdb librt libbu steputils stepcore stepdai stepeditor ${OPENNURBS_LIBRARY}")
+BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "libwdb;librt;libbu;steputils;stepcore;stepdai;stepeditor;${OPENNURBS_LIBRARY}")
 
 CMAKEFILES(Makefile.am)

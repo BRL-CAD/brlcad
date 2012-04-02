@@ -50,7 +50,7 @@ set_property(GLOBAL PROPERTY DM_DEFINES "${DM_DEFINES}")
 # Unfortunately, on Mac OS X the OpenGL headers are not C90
 # compilant - anything pulling them in needs the C99 flag
 get_property(DM_FLAGS GLOBAL PROPERTY DM_FLAGS)
-LIST(APPEND DM_DEFINES "${C99_FLAG}")
+list(APPEND DM_DEFINES "${C99_FLAG}")
 
 set_property(GLOBAL PROPERTY DM_FLAGS "${DM_FLAGS}")
 
@@ -82,15 +82,11 @@ set(LIBDM_SRCS
   vers.c
   )
 
-foreach(xlib ${X11_LIBRARIES})
-  set(DM_XLIBS "${DM_XLIBS} ${xlib}")
-endforeach(xlib ${X11_LIBRARIES})
-
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged librt libfb ${DM_XLIBS} ${X11_Xi_LIB} ${DM_TKLIB} ${Carbon_LIBRARIES}")
-SET_TARGET_PROPERTIES(libdm PROPERTIES VERSION 19.0.1 SOVERSION 19)
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${X11_LIBRARIES};${X11_Xi_LIB};${DM_TKLIB};${Carbon_LIBRARIES}")
+set_target_properties(libdm PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
-  ADD_DEPENDENCIES(libdm tk)
+  add_dependencies(libdm tk)
 endif(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
 set(libdm_ignore_files
   dm-wgl.c

@@ -37,11 +37,7 @@
 #-----------------------------------------------------------------------------
 # Core routines for adding executables and libraries to the build and
 # install lists of CMake
-macro(BRLCAD_ADDEXEC execname srcs libs)
-  # Basic setup
-  string(REGEX REPLACE " " ";" srcslist "${srcs}")
-  string(REGEX REPLACE " " ";" libslist1 "${libs}")
-  string(REGEX REPLACE "-framework;" "-framework " libslist "${libslist1}")
+macro(BRLCAD_ADDEXEC execname srcslist libslist)
 
   # Call standard CMake commands
   add_executable(${execname} ${srcslist})
@@ -94,13 +90,13 @@ macro(BRLCAD_ADDEXEC execname srcs libs)
   endforeach(extraarg ${ARGN})
 
   CPP_WARNINGS(srcslist)
-endmacro(BRLCAD_ADDEXEC execname srcs libs)
+endmacro(BRLCAD_ADDEXEC execname srcslist libslist)
 
 
 #-----------------------------------------------------------------------------
 # Library macro handles both shared and static libs, so one "BRLCAD_ADDLIB"
 # statement will cover both automatically
-macro(BRLCAD_ADDLIB libname srcs libs)
+macro(BRLCAD_ADDLIB libname srcslist libslist)
 
   # Add ${libname} to the list of BRL-CAD libraries	
   list(APPEND BRLCAD_LIBS ${libname})
@@ -110,9 +106,6 @@ macro(BRLCAD_ADDLIB libname srcs libs)
   # Define convenience variables and scrub library list	
   string(REGEX REPLACE "lib" "" LOWERCORE "${libname}")
   string(TOUPPER ${LOWERCORE} UPPER_CORE)
-  string(REGEX REPLACE " " ";" srcslist "${srcs}")
-  string(REGEX REPLACE " " ";" libslist1 "${libs}")
-  string(REGEX REPLACE "-framework;" "-framework " libslist "${libslist1}")
 
   # Collect the definitions needed by this library
   # Appending to the list to ensure that any non-template
@@ -163,9 +156,9 @@ macro(BRLCAD_ADDLIB libname srcs libs)
       set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
     endif(CPP_DLL_DEFINES)
 
-    if(NOT ${libs} MATCHES "NONE")
+    if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
       target_link_libraries(${libname} ${libslist})
-    endif(NOT ${libs} MATCHES "NONE")
+    endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
 
     install(TARGETS ${libname} 
       RUNTIME DESTINATION ${BIN_DIR}
@@ -202,9 +195,9 @@ macro(BRLCAD_ADDLIB libname srcs libs)
     add_library(${libname}-static STATIC ${srcslist})
 
     if(NOT MSVC)
-      if(NOT ${libs} MATCHES "NONE")
+      if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
 	target_link_libraries(${libname}-static ${libslist})
-      endif(NOT ${libs} MATCHES "NONE")
+      endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
       set_target_properties(${libname}-static PROPERTIES OUTPUT_NAME "${libname}")
     endif(NOT MSVC)
 
@@ -224,7 +217,7 @@ macro(BRLCAD_ADDLIB libname srcs libs)
 
   mark_as_advanced(BRLCAD_LIBS)
   CPP_WARNINGS(srcslist)
-endmacro(BRLCAD_ADDLIB libname srcs libs)
+endmacro(BRLCAD_ADDLIB libname srcslist libslist)
 
 #-----------------------------------------------------------------------------
 # For situations when a local 3rd party library (say, zlib) has been chosen in 

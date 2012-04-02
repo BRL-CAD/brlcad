@@ -7,7 +7,7 @@ set(PKG_EXAMPLE_INCLUDES
 LIST(REMOVE_DUPLICATES PKG_EXAMPLE_INCLUDES)
 include_directories(${PKG_EXAMPLE_INCLUDES})
 
-BRLCAD_ADDEXEC(pkg_test_server server.c "libbu libpkg" NO_INSTALL)
-BRLCAD_ADDEXEC(pkg_test_client client.c "libbu libpkg" NO_INSTALL)
+BRLCAD_ADDEXEC(pkg_test_server server.c "libbu;libpkg" NO_INSTALL)
+BRLCAD_ADDEXEC(pkg_test_client client.c "libbu;libpkg" NO_INSTALL)
 
 CMAKEFILES(ntp.h)

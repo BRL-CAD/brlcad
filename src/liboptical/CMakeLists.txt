@@ -94,11 +94,9 @@ if(BRLCAD_ENABLE_OSL)
   message("Boost system: ${Boost_SYSTEM_LIBRARY}")
   message("Boost thread: ${Boost_THREAD_LIBRARY}")
 
-  set(OSLRT_LIBS "${OSLEXEC_LIBRARY} ${OSLCOMP_LIBRARY} ${OSLQUERY_LIBRARY} ${OPENIMAGEIO_LIBRARY} ${Boost_LIBRARIES} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY}")
+  set(OSLRT_LIBS ${OSLEXEC_LIBRARY} ${OSLCOMP_LIBRARY} ${OSLQUERY_LIBRARY} ${OPENIMAGEIO_LIBRARY} ${Boost_LIBRARIES} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY})
 
-  string(REGEX REPLACE ";" " " OSLRT_LIBS2 "${OSLRT_LIBS}")
-
-  BRLCAD_ADDLIB(liboslrend "${OSLRT_SOURCES}" "${OSLRT_LIBS2}")
+  BRLCAD_ADDLIB(liboslrend "${OSLRT_SOURCES}" "${OSLRT_LIBS}")
 
   ##########################################
   # Build OSL Shader
@@ -108,11 +106,11 @@ if(BRLCAD_ENABLE_OSL)
   set(LIBOPTICAL_SOURCES ${LIBOPTICAL_SOURCES} sh_osl.cpp)
 
   # Link liboptical with osl-renderer library
-  BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu liboslrend")
+  BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt;libbn;libbu;liboslrend")
 
 else(BRLCAD_ENABLE_OSL)
 
-  BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu")
+  BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt;libbn;libbu")
 
 endif(BRLCAD_ENABLE_OSL)
 

@@ -34,4 +34,4 @@ add_definitions(
     -DHAVE_CONFIG_H
 )
 
-SCL_ADDEXEC(fedex_plus "${fedex_plus_SOURCES}" "libexppp express")
+SCL_ADDEXEC(fedex_plus "${fedex_plus_SOURCES}" "libexppp;express")

@@ -5,7 +5,7 @@ set(BWISH_INCLUDE_DIRS
   ${DM_INCLUDE_DIRS}
   ${TCLCAD_INCLUDE_DIRS}
   )
-LIST(REMOVE_DUPLICATES BWISH_INCLUDE_DIRS)
+list(REMOVE_DUPLICATES BWISH_INCLUDE_DIRS)
 include_directories(${BWISH_INCLUDE_DIRS})
 
 # Until we figure out how to package require instead
@@ -19,10 +19,10 @@ include_directories(
   )
 
 if(WIN32)
-  BRLCAD_ADDEXEC(btclsh "cadAppInit.c consoleMain.c" "libtclcad libged ${ITCL_LIBRARY}")
+  BRLCAD_ADDEXEC(btclsh "cadAppInit.c;consoleMain.c" "libtclcad;libged;${ITCL_LIBRARY}")
   CMAKEFILES(cmd.c input.c main.c tcl.c)
 else(WIN32)
-  BRLCAD_ADDEXEC(btclsh "cmd.c input.c main.c tcl.c" "libbu libtclcad libtermio ${ITCL_LIBRARY}")
+  BRLCAD_ADDEXEC(btclsh "cmd.c;input.c;main.c;tcl.c" "libbu;libtclcad;libtermio;${ITCL_LIBRARY}")
   CMAKEFILES(cadAppInit.c consoleMain.c)
 endif(WIN32)
 
@@ -33,20 +33,20 @@ if(BRLCAD_ENABLE_TK)
     install(TARGETS bwish RUNTIME DESTINATION ${BIN_DIR})
     CMAKEFILES(cmd.c input.c main.c tcl.c)
   else(WIN32)
-    BRLCAD_ADDEXEC(bwish "cmd.c input.c main.c tcl.c" "libtclcad libdm libtermio ${X11_LIBRARIES} ${X11_Xi_LIB} libdm ${ITCL_LIBRARY} ${ITK_LIBRARY}")
+    BRLCAD_ADDEXEC(bwish "cmd.c;input.c;main.c;tcl.c" "libtclcad;libdm;libtermio;${X11_LIBRARIES};${X11_Xi_LIB};libdm;${ITCL_LIBRARY};${ITK_LIBRARY}")
     CMAKEFILES(winMain.c)
   endif(WIN32)
-  SET_TARGET_PROPERTIES(bwish PROPERTIES COMPILE_DEFINITIONS "BWISH=1")
+  set_target_properties(bwish PROPERTIES COMPILE_DEFINITIONS "BWISH=1")
 endif(BRLCAD_ENABLE_TK)
 
 CMAKEFILES(unixMain.c)
 
 if(ITCL_LIBRARY MATCHES "^itcl$")
-  ADD_DEPENDENCIES(btclsh itcl)
+  add_dependencies(btclsh itcl)
 endif(ITCL_LIBRARY MATCHES "^itcl$")
 
 if(ITK_LIBRARY MATCHES "^itk$" AND BRLCAD_ENABLE_TK)
-  ADD_DEPENDENCIES(bwish itcl itk)
+  add_dependencies(bwish itcl itk)
 endif(ITK_LIBRARY MATCHES "^itk$" AND BRLCAD_ENABLE_TK)
 
 CMAKEFILES(Makefile.am)

@@ -96,9 +96,9 @@ set(iges-g_SRCS
   usage.c
   wedge.c
   )
-BRLCAD_ADDEXEC(iges-g "${iges-g_SRCS}" "libwdb librt libbn libbu ${M_LIBRARY}")
+BRLCAD_ADDEXEC(iges-g "${iges-g_SRCS}" "libwdb;librt;libbn;libbu;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(g-iges "g-iges.c iges.c" "librt libbu ${M_LIBRARY}")
+BRLCAD_ADDEXEC(g-iges "g-iges.c;iges.c" "librt;libbu;${M_LIBRARY}")
 
 set(iges_MANS
   g-iges.1

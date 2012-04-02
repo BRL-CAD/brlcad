@@ -30,7 +30,7 @@ set(lgt_SOURCES
   )
 
 if(HAVE_TERMLIB)
-  BRLCAD_ADDEXEC(lgt "${lgt_SOURCES}" "librt libfb libtermio libvfont libcursor ${M_LIBRARY}")
+  BRLCAD_ADDEXEC(lgt "${lgt_SOURCES}" "librt;libfb;libtermio;libvfont;libcursor;${M_LIBRARY}")
   SET_TARGET_PROPERTIES(lgt PROPERTIES COMPILE_DEFINITIONS "BEHIND_ME_TOL=0.05")
 
   ADD_MAN_PAGES(1 lgt.1)

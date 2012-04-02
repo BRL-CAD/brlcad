@@ -17,7 +17,7 @@ set(OBJ_G_SRCS
 	tri_face.c
 )
 
-BRLCAD_ADDEXEC(obj-g "${OBJ_G_SRCS}" "libbu libbn librt libwdb")
+BRLCAD_ADDEXEC(obj-g "${OBJ_G_SRCS}" "libbu;libbn;librt;libwdb")
 
 set(wfobj_ignore_files
 	obj_grammar_decls.h
