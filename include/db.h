@@ -113,7 +113,7 @@ union record  {
 	char	i_units;	/* units */
 /* Values of 0..5 are fixed for file compat with Release 2.3 through 4.5 */
 #define ID_NO_UNIT	0		/* unspecified */
-#define ID_MM_UNIT	1		/* milimeters (preferred) */
+#define ID_MM_UNIT	1		/* millimeters (preferred) */
 #define ID_CM_UNIT	2		/* centimeters */
 #define ID_M_UNIT	3		/* meters */
 #define ID_IN_UNIT	4		/* inches */
@@ -160,8 +160,8 @@ union record  {
 #define HYP	33	/* Hyperboloid of one sheet */
 	char	s_name[NAMESIZE];	/* unique name */
 	short	s_cgtype;		/* COMGEOM solid type */
-#define RPP	1	/* axis-aligned rectangular parallelopiped */
-#define BOX	2	/* arbitrary rectangular parallelopiped */
+#define RPP	1	/* axis-aligned rectangular parallelepiped */
+#define BOX	2	/* arbitrary rectangular parallelepiped */
 #define RAW	3	/* right-angle wedge */
 #define ARB4	4	/* tetrahedron */
 #define ARB5	5	/* pyramid */
@@ -172,7 +172,7 @@ union record  {
 #define ELL1	10	/* another ellipsoid definition */
 #define SPH	11	/* sphere */
 #define RCC	12	/* right circular cylinder */
-#define REC	13	/* right elliptic sylinder */
+#define REC	13	/* right elliptic cylinder */
 #define TRC	14	/* truncated regular cone */
 #define TEC	15	/* truncated elliptic cone */
 #define TOR	16	/* toroid */
