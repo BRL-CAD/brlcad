@@ -591,7 +591,7 @@ TYPEselect_inc_print_vars( const Type type, FILE * f, Linked_List dups ) {
     fprintf( f, "\t//  types in SELECT \n" );
     LISTdo( SEL_TYPEget_items( type ), t, Type )
     fprintf( f, "\t//   %s\t--  %s\n",
-             SEL_ITEMget_enumtype( t ), FundamentalType( t ) );
+             SEL_ITEMget_enumtype( t ), FundamentalType( t, 0 ) );
     LISTod;
 
     LISTdo( data_members, t, Type )
@@ -667,7 +667,7 @@ class.
 *******************/
 void
 TYPEselect_inc_print( const Type type, FILE * f ) {
-    char n[BUFSIZ];   /*  class name  */
+    char n[BUFSIZ];
     char tdnm [BUFSIZ];  /*  TypeDescriptor name  */
     String attrnm;
     Linked_List dups;
@@ -748,7 +748,7 @@ TYPEselect_inc_print( const Type type, FILE * f ) {
         /**  if there are duplicate underlying types  **/
         fprintf( f, "\n\t//  part 7\n" );
         fprintf( f, "\tconst TypeDescriptor *"
-                 "SetUnderlyingType ( const TypeDescriptor * td );\n", n );
+                 "SetUnderlyingType ( const TypeDescriptor * td );\n");
     } else {
         fprintf( f, "\n\t//  part 7 ... NONE\tonly for complex selects...\n" );
     }
@@ -1900,7 +1900,7 @@ TYPEselect_lib_print( const Type type, FILE * f, Schema schema ) {
     LISTdo( SEL_TYPEget_items( type ), t, Type )
     z = FirstToUpper( TYPEget_name( t ) );
     fprintf( f, "Logical %s::Is%s() const\n{\n", n, z );
-    fprintf( f, "   if( !exists() )\n", n );
+    fprintf( f, "   if( !exists() )\n");
     fprintf( f, "      return LUnknown;\n" );
     fprintf( f, "   if( CurrentUnderlyingType () == %s )\n", TYPEtd_name( t ) );
     fprintf( f, "      return LTrue;\n" );

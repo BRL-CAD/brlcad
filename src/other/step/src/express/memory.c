@@ -44,18 +44,6 @@ Now you can say things like:
 #define ALLOC
 #endif /*ALLOC*/
 
-void print_freelist( struct freelist_head * flh )
-{
-    Freelist * current;
-
-    current = flh->freelist;
-    while( current ) {
-        printf( "-> %x", current );
-        current = current->next;
-    }
-    putchar( '\n' );
-}
-
 /* chop up big block into linked list of small blocks */
 Freelist * /* return 0 for failure */
 create_freelist( flh, bytes )

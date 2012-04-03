@@ -1921,8 +1921,8 @@ aggregate_:
             strcat( buffer, ")" );
             break;
         default:
-            sprintf( buffer, "EXPRstring: unknown expression, type %d", TYPEis( e->type ), buffer );
-            fprintf( stderr, buffer );
+            sprintf( buffer, "EXPRstring: unknown expression, type %d", TYPEis( e->type ));
+            fprintf( stderr, "%s", buffer );
     }
 }
 

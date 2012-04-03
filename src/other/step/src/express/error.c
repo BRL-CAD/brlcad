@@ -280,7 +280,7 @@ va_dcl {
             fputc( '\n', error_file );
             ERRORoccurred = true;
         } else if( what->severity >= SEVERITY_WARNING ) {
-            fprintf( error_file, "WARNING: ", what->severity );
+            fprintf( error_file, "WARNING: ");
             vfprintf( error_file, what->message, args );
             fputc( '\n', error_file );
         }
@@ -520,7 +520,7 @@ ERROR_flush_message_buffer( void ) {
         int parent, child;
 
         /* pop off the top of the heap */
-        fprintf( stderr, heap[1].msg );
+        fprintf( stderr, "%s", heap[1].msg );
 
         replace = &heap[ERROR_with_lines--];
 

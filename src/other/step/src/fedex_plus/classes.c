@@ -1131,8 +1131,7 @@ DataMemberPrint( Entity entity, FILE * file, Schema schema ) {
         generate_attribute_name( a, attrnm );
         if( !strcmp( ctype, "SCLundefined" ) ) {
             printf( "WARNING:  in entity %s:\n", ENTITYget_name( entity ) );
-            printf( "\tthe type for attribute  %s is not fully ",
-                    "implemented\n", attrnm );
+            printf( "\tthe type for attribute  %s is not fully implemented\n", attrnm );
         }
         if( TYPEis_entity( VARget_type( a ) ) ) {
             fprintf( file, "\tSCLP23(Application_instance_ptr) _%s ;", attrnm );
@@ -1509,7 +1508,7 @@ get_attribute_number( Entity entity ) {
             return i;
         } else printf( "Internal error:  %s:%d\n"
                            "Attribute %s not found. \n"
-                           , __FILE__, __LINE__, VARget_name( a ) );
+                           , __FILE__, __LINE__, EXPget_name( VARget_name( a ) ) );
     }
 
     LISTod;
@@ -2494,7 +2493,7 @@ ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap ) {
                 fprintf( files->create, ", " );
             }
             uniqRule = EXPRto_string( v->name );
-            fprintf( files->create, uniqRule );
+            fprintf( files->create, "%s", uniqRule );
         }
         LISTod
         fprintf( files->create, ";\\n\");\n" );
