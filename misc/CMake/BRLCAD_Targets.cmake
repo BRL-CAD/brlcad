@@ -416,9 +416,7 @@ macro(BRLCAD_ADDDATA inputdata targetdir)
 
   # The installation rule relates only to the original source directory copy, and so doesn't
   # need to explicitly concern itself with configurations.
-  foreach(filename ${datalist})
-    install(FILES ${filename} DESTINATION ${DATA_DIR}/${targetdir})
-  endforeach(filename ${datalist})
+  install(FILES ${datalist} DESTINATION ${DATA_DIR}/${targetdir})
 
 endmacro(BRLCAD_ADDDATA datalist targetdir)
 
@@ -433,7 +431,7 @@ macro(ADD_MAN_PAGES num inmanlist)
       file(COPY ${fullpath_manlist} DESTINATION "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${MAN_DIR}/man${num}/${manpage}")
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   endif (NOT CMAKE_CONFIGURATION_TYPES)
-  install(FILES "${fullpath_manlist}" DESTINATION ${MAN_DIR}/man${num})
+  install(FILES ${fullpath_manlist} DESTINATION ${MAN_DIR}/man${num})
 endmacro(ADD_MAN_PAGES num fullpath_manlist)
 
 # Local Variables:

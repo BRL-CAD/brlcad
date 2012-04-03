@@ -34,7 +34,7 @@ MACRO(tclIndex_BUILD name targetdir)
     COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ami.tcl ${tclIndex_outdir}
     DEPENDS btclsh ${data_target_list}
     )
-  install(FILES ${pkgIndex_outdir}/tclIndex DESTINATION ${DATA_DIR}/${targetdir})
+  install(FILES ${tclIndex_outdir}/tclIndex DESTINATION ${DATA_DIR}/${targetdir})
   add_custom_target(${name}_tclIndex ALL DEPENDS ${tclIndex_outdir}/tclIndex)
   # Maintain a list of all tclIndex targets for dependency purposes
   set(tclIndex_target_list ${tclIndex_target_list} ${name}_tclIndex)
