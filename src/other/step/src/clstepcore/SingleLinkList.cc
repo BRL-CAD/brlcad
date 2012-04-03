@@ -10,12 +10,9 @@
 * and is not subject to copyright.
 */
 
-/* $Id: SingleLinkList.cc,v 3.0.1.4 1997/11/05 21:59:23 sauderd DP3.1 $ */
-
 #include <SingleLinkList.h>
 
-void
-SingleLinkList::DeleteFollowingNodes( SingleLinkNode * item ) {
+void SingleLinkList::DeleteFollowingNodes( SingleLinkNode * item ) {
     if( head ) {
         SingleLinkNode * trailer = 0;
         SingleLinkNode * leader = head;
@@ -46,8 +43,7 @@ SingleLinkList::DeleteFollowingNodes( SingleLinkNode * item ) {
     }
 }
 
-void
-SingleLinkList::AppendNode( SingleLinkNode * item ) {
+void SingleLinkList::AppendNode( SingleLinkNode * item ) {
     if( head )  {
         tail -> next = item;
         tail = item;
@@ -57,8 +53,7 @@ SingleLinkList::AppendNode( SingleLinkNode * item ) {
     item->owner = this;
 }
 
-void
-SingleLinkList::DeleteNode( SingleLinkNode * item ) {
+void SingleLinkList::DeleteNode( SingleLinkNode * item ) {
     if( head ) {
         SingleLinkNode * trailer = 0;
         SingleLinkNode * leader = head;

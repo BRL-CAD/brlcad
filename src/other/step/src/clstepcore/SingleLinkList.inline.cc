@@ -10,8 +10,6 @@
 * and is not subject to copyright.
 */
 
-/* $Id: SingleLinkList.inline.cc,v 3.0.1.2 1997/11/05 21:59:23 sauderd DP3.1 $ */
-
 #include <SingleLinkList.h>
 #include <iostream>
 
@@ -28,8 +26,7 @@ SingleLinkList::~SingleLinkList() {
     Empty();
 }
 
-void
-SingleLinkList::Empty() {
+void SingleLinkList::Empty() {
     SingleLinkNode * tmp = head;
     while( tmp ) {
         tmp = head -> NextNode();
@@ -38,16 +35,14 @@ SingleLinkList::Empty() {
     }
 }
 
-SingleLinkNode *
-SingleLinkList::NewNode() {
+SingleLinkNode * SingleLinkList::NewNode() {
     //  defined in subtypes
     std::cerr << "\n\n******BUG****** a virtually defined function should \n"
               << "be called for SingleLinkList::NewNode()\n\n";
     return new SingleLinkNode();
 }
 
-SingleLinkNode *
-SingleLinkList::GetHead() const {
+SingleLinkNode * SingleLinkList::GetHead() const {
     return ( head );
 }
 
