@@ -320,10 +320,13 @@ endmacro(BRLCAD_LIB_INCLUDE_DIRS)
 # to take further actions (for example, re-generating tclIndex and pkgIndex.tcl
 # files when the source .tcl files change).
 #
-# A wrinkle that crops up (at least, with MSVC) is file names like INSTALL (our
-# toplevel file documenting installation procedures) conflict with the MSVC target
-# name INSTALL.  Hence, to avoid the (potential) conflict and make the dependencies
-# of the custom commands robust, we need full paths for the dependencies.
+# Because BRLCAD_ADDDATA defines custom commands and specifies the files it is
+# to copy/symlink as dependencies, there is a potential for file names to 
+# conflict with build target names. (This has actually been observed with 
+# MSVC - our file INSTALL in the toplevel source directory conflicts with the
+# MSVC target named INSTALL.)  To avoid conflicts and make the dependencies 
+# of the custom commands robust we supply full file paths as dependencies to
+# the data copying custom commands.  
 
 macro(BRLCAD_ADDDATA inputdata targetdir)
   # Handle both a list of one or more files and variable holding a list of files - 
