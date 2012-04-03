@@ -457,9 +457,7 @@ set(stepg_HDRS
   )
 CMAKEFILES(${stepg_HDRS})
 
-# FIXME: The fedex files are supposed to be generated, but the SCL stuff isn't
-# quite up to the job yet
-
 BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "libwdb;librt;libbu;steputils;stepcore;stepdai;stepeditor;${OPENNURBS_LIBRARY}")
 
+DISTCLEAN(${SCHEMA_OUT_DIR}/make_schema)
 CMAKEFILES(Makefile.am)
