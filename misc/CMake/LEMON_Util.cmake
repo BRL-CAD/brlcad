@@ -88,6 +88,9 @@ macro(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
     # get input name minus path
     get_filename_component(INPUT_NAME "${LemonInput}" NAME)
     set(LEMON_BIN_INPUT ${CMAKE_CURRENT_BINARY_DIR}/${INPUT_NAME})
+    if(NOT "${CMAKE_CURRENT_SOURCE_DIR}/${LemonInput}" STREQUAL "${LEMON_BIN_INPUT}")
+      DISTCLEAN(${LEMON_BIN_INPUT})
+    endif(NOT "${CMAKE_CURRENT_SOURCE_DIR}/${LemonInput}" STREQUAL "${LEMON_BIN_INPUT}")
 
     # names of lemon output files will be based on the name of the input file
     string(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1.c"   LEMON_GEN_SOURCE "${INPUT_NAME}")

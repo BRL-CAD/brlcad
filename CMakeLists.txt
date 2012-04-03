@@ -2076,8 +2076,11 @@ DISTCLEAN(${CMAKE_BINARY_DIR}/configure.new)
 DISTCLEAN(${CMAKE_BINARY_DIR}/INSTALL.new)
 DISTCLEAN(${CMAKE_BINARY_DIR}/include/brlcad_config.h.in)
 foreach(clearpattern ${DISTCLEAN_OUTFILES})
-  DISTCLEAN(${CMAKE_BINARY_DIR}/Makefile)
+  DISTCLEAN(${CMAKE_BINARY_DIR}/${clearpattern})
 endforeach(clearpattern ${DISTCLEAN_OUTFILES})
+if("${CMAKE_GENERATOR}" MATCHES "Ninja")
+  DISTCLEAN(${CMAKE_BINARY_DIR}/.ninja_log)
+endif("${CMAKE_GENERATOR}" MATCHES "Ninja")
 
 # Define a distcheck target.  This performs a variety of tests to determine
 # whether BRL-CAD is in a distribution ready state.  Default to the standard

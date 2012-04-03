@@ -130,6 +130,7 @@ macro(RE2C_TARGET Name Input Output)
 	set(RE2C_${Name}_OUTPUTS ${Output})
 	set(RE2C_${Name}_INPUT ${Input})
 	set(RE2C_${Name}_COMPILE_FLAGS ${RE2C_EXECUTABLE_opts})
+	DISTCLEAN(${Output})
 endmacro(RE2C_TARGET)
 #============================================================
 
