@@ -328,7 +328,7 @@ endmacro(BRLCAD_LIB_INCLUDE_DIRS)
 macro(BRLCAD_ADDDATA inputdata targetdir)
   # Handle both a list of one or more files and variable holding a list of files - 
   # find out what we've got.
-  NORMALIZE_FILE_LIST(${inputdata} datalist targetname)
+  NORMALIZE_FILE_LIST("${inputdata}" datalist fullpath_datalist targetname)
 
   # Now that the input data and target names are in order, define the custom
   # commands needed for build directory data copying on this platform (per
@@ -350,7 +350,7 @@ macro(BRLCAD_ADDDATA inputdata targetdir)
     # do the work every time the source file changes - once established, the symlink
     # will behave correctly.  That being the case, we just go ahead and establish the
     # symlinks in the configure stage.
-    foreach(filename ${${datalist}})
+    foreach(filename ${${fullpath_datalist}})
       get_filename_component(ITEM_NAME ${filename} NAME)
       if(NOT CMAKE_CONFIGURATION_TYPES)
 	execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${filename} ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${ITEM_NAME})
@@ -360,7 +360,7 @@ macro(BRLCAD_ADDDATA inputdata targetdir)
 	  execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${filename} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}/${ITEM_NAME})
 	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       endif(NOT CMAKE_CONFIGURATION_TYPES)
-    endforeach(filename ${${datalist}})
+    endforeach(filename ${${fullpath_datalist}})
 
     # The custom command is still necessary - since it depends on the original source files, 
     # this will be the trigger that tells other commands depending on this data that 
@@ -368,13 +368,13 @@ macro(BRLCAD_ADDDATA inputdata targetdir)
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel
       COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel
-      DEPENDS ${${datalist}}
+      DEPENDS ${${fullpath_datalist}}
       )
 
   else(HAVE_SYMLINK)
 
     # Write out script for copying from source dir to build dir
-    set(${targetname}_cmake_contents "set(FILES_TO_COPY \"${${datalist}}\")\n")
+    set(${targetname}_cmake_contents "set(FILES_TO_COPY \"${${fullpath_datalist}}\")\n")
     set(${targetname}_cmake_contents "${${targetname}_cmake_contents}foreach(filename \${FILES_TO_COPY})\n")
     if(NOT CMAKE_CONFIGURATION_TYPES)
       set(${targetname}_cmake_contents "${${targetname}_cmake_contents}  file(COPY \${FILES_TO_COPY} DESTINATION \"${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}\")\n")
@@ -392,7 +392,7 @@ macro(BRLCAD_ADDDATA inputdata targetdir)
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel
       COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake
       COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel
-      DEPENDS ${${datalist}}
+      DEPENDS ${${fullpath_datalist}}
       )
   endif(HAVE_SYMLINK)
 
@@ -402,7 +402,7 @@ macro(BRLCAD_ADDDATA inputdata targetdir)
 
   # Add outputs to the distclean rules - this is consistent regardless of what type the output
   # file is, symlink or copy.  Just need to handle the single and multiconfig cases.
-  foreach(filename ${${datalist}})
+  foreach(filename ${${fullpath_datalist}})
     get_filename_component(ITEM_NAME "${filename}" NAME)
     if(NOT CMAKE_CONFIGURATION_TYPES)
       DISTCLEAN(${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${ITEM_NAME})
@@ -412,7 +412,7 @@ macro(BRLCAD_ADDDATA inputdata targetdir)
 	DISTCLEAN(${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}/${ITEM_NAME})
       endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     endif(NOT CMAKE_CONFIGURATION_TYPES)
-  endforeach(filename ${${datalist}})
+  endforeach(filename ${${fullpath_datalist}})
 
   # The installation rule relates only to the original source directory copy, and so doesn't
   # need to explicitly concern itself with configurations.
@@ -424,17 +424,17 @@ endmacro(BRLCAD_ADDDATA datalist targetdir)
 
 #-----------------------------------------------------------------------------
 macro(ADD_MAN_PAGES num inmanlist)
-  NORMALIZE_FILE_LIST(${inmanlist} manlist)
+  NORMALIZE_FILE_LIST("${inmanlist}" manlist fullpath_manlist)
   if (NOT CMAKE_CONFIGURATION_TYPES)
-    file(COPY ${${manlist}} DESTINATION ${CMAKE_BINARY_DIR}/${MAN_DIR}/man${num}/${manpage})
+    file(COPY ${${fullpath_manlist}} DESTINATION ${CMAKE_BINARY_DIR}/${MAN_DIR}/man${num}/${manpage})
   else (NOT CMAKE_CONFIGURATION_TYPES)
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      file(COPY ${${manlist}} DESTINATION "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${MAN_DIR}/man${num}/${manpage}")
+      file(COPY ${${fullpath_manlist}} DESTINATION "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${MAN_DIR}/man${num}/${manpage}")
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   endif (NOT CMAKE_CONFIGURATION_TYPES)
-  install(FILES "${${manlist}}" DESTINATION ${MAN_DIR}/man${num})
-endmacro(ADD_MAN_PAGES num manlist)
+  install(FILES "${${fullpath_manlist}}" DESTINATION ${MAN_DIR}/man${num})
+endmacro(ADD_MAN_PAGES num fullpath_manlist)
 
 # Local Variables:
 # tab-width: 8

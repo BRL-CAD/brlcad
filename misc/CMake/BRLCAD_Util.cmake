@@ -81,46 +81,47 @@ endmacro(CPP_WARNINGS)
 # where there is no such variable one is prepared.  This way, subsequent
 # macro logic need only deal with a variable holding a list, whatever the
 # original form of the input.
-macro(NORMALIZE_FILE_LIST inlist targetvar)
+macro(NORMALIZE_FILE_LIST inlist targetvar fullpath_targetvar)
+
+  # First, figure out whether we have list contents or a list name
   set(havevarname 0)
   foreach(maybefilename ${inlist})
     if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename})
       set(havevarname 1)
     endif(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename})
   endforeach(maybefilename ${${targetvar}})
-  set(fullpath_files)
+
+  # Put the list contents in the "list_contents" variable and
+  # generate a target name.
+  set(${targetvar} "list_contents")
   if(NOT havevarname)
-    CMAKEFILES(${inlist})
-    set(fullpath_files)
-    foreach(filename ${inlist})
-      get_filename_component(file_fullpath "${filename}" ABSOLUTE)
-      if(NOT "${filename}" STREQUAL "${file_fullpath}")
-        set(fullpath_files ${fullpath_files} "${CMAKE_CURRENT_SOURCE_DIR}/${filename}")
-      else(NOT "${filename}" STREQUAL "${file_fullpath}")
-        set(fullpath_files ${fullpath_files} "${filename}")
-      endif(NOT "${filename}" STREQUAL "${file_fullpath}")
-    endforeach(filename ${inlist})
-    set(FILELIST "${fullpath_files}")
-    set(${targetvar} "FILELIST")
+    set(list_contents "${inlist}")
     BRLCAD_TARGET_NAME("${inlist}" targetname)
   else(NOT havevarname)
-    CMAKEFILES(${${inlist}})
-    set(fullpath_files)
-    foreach(filename ${${inlist}})
-      get_filename_component(file_fullpath "${filename}" ABSOLUTE)
-      if(NOT "${filename}" STREQUAL "${file_fullpath}")
-        set(fullpath_files ${fullpath_files} "${CMAKE_CURRENT_SOURCE_DIR}/${filename}")
-      else(NOT "${filename}" STREQUAL "${file_fullpath}")
-        set(fullpath_files ${fullpath_files} "${filename}")
-      endif(NOT "${filename}" STREQUAL "${file_fullpath}")
-    endforeach(filename ${${inlist}})
-    set(${inlist} "${fullpath_files}")
-    set(${targetvar} "${inlist}")
+    set(list_contents "${${inlist}}")
     set(targetname "${inlist}")
   endif(NOT havevarname)
-  if(NOT "${ARGV2}" STREQUAL "")
-    set(${ARGV2} "${targetname}")
-  endif(NOT "${ARGV2}" STREQUAL "")
+
+  # Mark the inputs as files to ignore in distcheck
+  CMAKEFILES(${list_contents})
+
+  # For some uses, we need the contents of the input list
+  # with full paths.  Generate a list that we're sure has
+  # full paths, and return that to the second variable.
+  set(fullpath_files)
+  set(${fullpath_targetvar} "fullpath_files")
+  foreach(filename ${list_contents})
+    get_filename_component(file_fullpath "${filename}" ABSOLUTE)
+    set(fullpath_files ${fullpath_files} "${file_fullpath}")
+  endforeach(filename ${list_contents})
+
+  # Some macros will also want a valid build target name
+  # based on the input - if a third input parameter has
+  # been supplied, return the target name using it.
+  if(NOT "${ARGV3}" STREQUAL "")
+    set(${ARGV3} "${targetname}")
+  endif(NOT "${ARGV3}" STREQUAL "")
+
 endmacro(NORMALIZE_FILE_LIST)
 
 #-----------------------------------------------------------------------------
