@@ -425,16 +425,10 @@ endmacro(BRLCAD_ADDDATA datalist targetdir)
 
 #-----------------------------------------------------------------------------
 macro(ADD_MAN_PAGES num inmanlist)
-  NORMALIZE_FILE_LIST("${inmanlist}" manlist fullpath_manlist)
-  if (NOT CMAKE_CONFIGURATION_TYPES)
-    file(COPY ${fullpath_manlist} DESTINATION ${CMAKE_BINARY_DIR}/${MAN_DIR}/man${num}/${manpage})
-  else (NOT CMAKE_CONFIGURATION_TYPES)
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      file(COPY ${fullpath_manlist} DESTINATION "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${MAN_DIR}/man${num}/${manpage}")
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif (NOT CMAKE_CONFIGURATION_TYPES)
-  install(FILES ${fullpath_manlist} DESTINATION ${MAN_DIR}/man${num})
+  string(REPLACE "${DATA_DIR}/" "" R_MAN_DIR "${MAN_DIR}")
+  set(man_target_dir ${R_MAN_DIR}/man${num})
+  message("man_target_dir: ${man_target_dir}")
+  BRLCAD_ADDDATA(${inmanlist} ${man_target_dir})
 endmacro(ADD_MAN_PAGES num fullpath_manlist)
 
 # Local Variables:

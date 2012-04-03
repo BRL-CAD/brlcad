@@ -319,6 +319,16 @@ if(BRLCAD_PREFIX)
 endif(BRLCAD_PREFIX)
 mark_as_advanced(CMAKE_SYSTEM_IGNORE_PATH) 
 
+#---------------------------------------------------------------------
+# For cleaning files as part of the distclean command, CMake needs
+# to be aware of what various generators will (or might) write out
+# in each build directory.
+if("${CMAKE_GENERATOR}" MATCHES "Make")
+  set(DISTCLEAN_OUTFILES Makefile)
+endif("${CMAKE_GENERATOR}" MATCHES "Make")
+if("${CMAKE_GENERATOR}" MATCHES "Ninja")
+  set(DISTCLEAN_OUTFILES build.ninja rules.ninja)
+endif("${CMAKE_GENERATOR}" MATCHES "Ninja")
 
 #---------------------------------------------------------------------
 # By default (as of version 2.8.2) CMake does not provide access to
@@ -365,7 +375,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # Override and wrap add_library.  While we're at it, avoid doubling up
   # on the lib prefix for libraries if the target name is lib<target>
   function(add_library name)
-    get_property(CMAKE_LIBRARY_TARGET_LIST GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST)
     _add_library(${name} ${ARGN})
     CMAKEFILES(${ARGN})
     if(${name} MATCHES "^lib*")
@@ -376,7 +385,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
   # Override and wrap add_executable
   function(add_executable name)
-    get_property(CMAKE_EXEC_TARGET_LIST GLOBAL PROPERTY CMAKE_EXEC_TARGET_LIST)
     _add_executable(${name} ${ARGN})
     CMAKEFILES(${ARGN})
     set_property(GLOBAL APPEND PROPERTY CMAKE_EXEC_TARGET_LIST ${name})
@@ -384,7 +392,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
   # Override and wrap add_custom_target
   function(add_custom_target name)
-    get_property(CMAKE_CUSTOM_TARGET_LIST GLOBAL PROPERTY CMAKE_CUSTOM_TARGET_LIST)
     _add_custom_target(${name} ${ARGN})
     set_property(GLOBAL APPEND PROPERTY CMAKE_CUSTOM_TARGET_LIST ${name})
   endfunction(add_custom_target)
@@ -400,16 +407,16 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # few of them.
   function(configure_file file targetfile)
     _configure_file(${file} ${targetfile} ${ARGN})
-    GET_FILENAME_COMPONENT(ITEM_ABS ${file} ABSOLUTE)
-    set(TEST_BUILD_PATH "${CMAKE_BINARY_DIR}/")
-    set(TEST_SOURCE_PATH "${CMAKE_SOURCE_DIR}/")
-    string(REPLACE "${TEST_BUILD_PATH}" "" BUILD_DIR_TRIMMED "${ITEM_ABS}")
-    if(${ITEM_ABS} STREQUAL ${BUILD_DIR_TRIMMED})
-      string(REPLACE "${TEST_SOURCE_PATH}" "" SOURCE_DIR_TRIMMED "${ITEM_ABS}")
-      if(NOT ${ITEM_ABS} STREQUAL ${SOURCE_DIR_TRIMMED})
-	file(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${ITEM_ABS}\n")
-      endif(NOT ${ITEM_ABS} STREQUAL ${SOURCE_DIR_TRIMMED})
-    endif(${ITEM_ABS} STREQUAL ${BUILD_DIR_TRIMMED})
+    get_filename_component(item_absolute ${file} ABSOLUTE)
+    set(test_build_path "${CMAKE_BINARY_DIR}/")
+    set(test_source_path "${CMAKE_SOURCE_DIR}/")
+    string(REPLACE "${test_build_path}" "" build_dir_trimmed "${item_absolute}")
+    if(${item_absolute} STREQUAL ${build_dir_trimmed})
+      string(REPLACE "${test_source_path}" "" source_dir_trimmed "${item_absolute}")
+      if(NOT ${item_absolute} STREQUAL ${source_dir_trimmed})
+	file(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${item_absolute}\n")
+      endif(NOT ${item_absolute} STREQUAL ${source_dir_trimmed})
+    endif(${item_absolute} STREQUAL ${build_dir_trimmed})
     if(NOT ${targetfile} MATCHES "distclean")
       DISTCLEAN(${targetfile})
     endif(NOT ${targetfile} MATCHES "distclean")
@@ -422,7 +429,9 @@ if(NOT BRLCAD_IS_SUBBUILD)
     file(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${CMAKE_CURRENT_SOURCE_DIR}/${name}/CMakeLists.txt\n")
     DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/${name}/CMakeFiles)
     DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/${name}/cmake_install.cmake)
-    DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/${name}/Makefile)
+    foreach(clearpattern ${DISTCLEAN_OUTFILES})
+      DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/${name}/${clearpattern})
+    endforeach(clearpattern ${DISTCLEAN_OUTFILES})
   endfunction(add_subdirectory)
 
 endif(NOT BRLCAD_IS_SUBBUILD)
@@ -2064,8 +2073,10 @@ DISTCLEAN(${CMAKE_BINARY_DIR}/CMakeFiles)
 DISTCLEAN(${CMAKE_BINARY_DIR}/CMakeTmp)
 DISTCLEAN(${CMAKE_BINARY_DIR}/configure.new)
 DISTCLEAN(${CMAKE_BINARY_DIR}/INSTALL.new)
-DISTCLEAN(${CMAKE_BINARY_DIR}/Makefile)
 DISTCLEAN(${CMAKE_BINARY_DIR}/include/brlcad_config.h.in)
+foreach(clearpattern ${DISTCLEAN_OUTFILES})
+  DISTCLEAN(${CMAKE_BINARY_DIR}/Makefile)
+endforeach(clearpattern ${DISTCLEAN_OUTFILES})
 
 # Define a distcheck target.  This performs a variety of tests to determine
 # whether BRL-CAD is in a distribution ready state.  Default to the standard
@@ -2137,7 +2148,6 @@ if("${CMAKE_GENERATOR}" MATCHES "Make")
     COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_BINARY_DIR}/distclean.cmake
     )
 elseif("${CMAKE_GENERATOR}" MATCHES "Ninja")
-	message("gothere")
   add_custom_target(distclean
     COMMAND ${CMAKE_COMMAND} -E echo "Running make clean..."
     COMMAND ${CMAKE_COMMAND} -E chdir ${BRLCAD_BINARY_DIR} ninja -t clean
