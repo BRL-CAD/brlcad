@@ -3108,6 +3108,7 @@ package provide cadwidgets::Ged 1.0
 
     set mLastMouseRayTarget ""
     refresh_off
+    set save_draw [$mGed $mLastDataType $itk_component($_pane) draw]
     $mGed $mLastDataType $itk_component($_pane) draw 0
 
     # This call returns a point that is either a hit point
@@ -3116,7 +3117,7 @@ package provide cadwidgets::Ged 1.0
     # returned.
     set point [eval pane_mouse_3dpoint $_pane $mLastMousePos 0]
 
-    $mGed $mLastDataType $itk_component($_pane) draw 1
+    $mGed $mLastDataType $itk_component($_pane) draw $save_draw
     set mLastMousePos ""
 
     # If a point has not been selected via the pane_mouse_3dpoint call
