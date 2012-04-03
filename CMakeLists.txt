@@ -2042,7 +2042,6 @@ endif(NOT BRLCAD_IS_SUBBUILD)
 # only, we add CMakeLists.txt (others are handled
 # by add_subdirectory wrapper
 set(toplevel_ignore_files
-  ${toplevel_DOCFILES}
   BUGS
   ChangeLog
   TODO

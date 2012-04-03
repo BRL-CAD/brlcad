@@ -319,24 +319,16 @@ endmacro(BRLCAD_LIB_INCLUDE_DIRS)
 # triggered if source files are edited in order to allow the build system 
 # to take further actions (for example, re-generating tclIndex and pkgIndex.tcl
 # files when the source .tcl files change).
+#
+# A wrinkle that crops up (at least, with MSVC) is file names like INSTALL (our
+# toplevel file documenting installation procedures) conflict with the MSVC target
+# name INSTALL.  Hence, to avoid the (potential) conflict and make the dependencies
+# of the custom commands robust, we need full paths for the dependencies.
 
 macro(BRLCAD_ADDDATA inputdata targetdir)
   # Handle both a list of one or more files and variable holding a list of files - 
   # find out what we've got.
-  set(havevarname 0)
-  foreach(maybefilename ${inputdata})
-    if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename})
-      set(havevarname 1)
-    endif(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename})
-  endforeach(maybefilename ${inputdata})
-  if(NOT havevarname)
-    set(FILELIST "${inputdata}")
-    set(datalist FILELIST)
-    BRLCAD_TARGET_NAME("${inputdata}" targetname)
-  else(NOT havevarname)
-    set(targetname "${inputdata}")
-    set(datalist "${inputdata}")
-  endif(NOT havevarname)
+  NORMALIZE_FILE_LIST(${inputdata} datalist targetname)
 
   # Now that the input data and target names are in order, define the custom
   # commands needed for build directory data copying on this platform (per
@@ -361,11 +353,11 @@ macro(BRLCAD_ADDDATA inputdata targetdir)
     foreach(filename ${${datalist}})
       get_filename_component(ITEM_NAME ${filename} NAME)
       if(NOT CMAKE_CONFIGURATION_TYPES)
-	execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${ITEM_NAME})
+	execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${filename} ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${ITEM_NAME})
       else(NOT CMAKE_CONFIGURATION_TYPES)
 	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	  execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}/${ITEM_NAME})
+	  execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${filename} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/${targetdir}/${ITEM_NAME})
 	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       endif(NOT CMAKE_CONFIGURATION_TYPES)
     endforeach(filename ${${datalist}})
@@ -381,17 +373,8 @@ macro(BRLCAD_ADDDATA inputdata targetdir)
 
   else(HAVE_SYMLINK)
 
-    # Prepare full-path input list for scripts - the best we can do is to make build targets that ensure
-    # the latest source direcotry file states are represented at build time.  Developers will have to
-    # handle getting any changes they may make in the build directory copies of files back to the source
-    # directories manually.
-    set(inputlist)
-    foreach(filename ${${datalist}})
-      set(inputlist ${inputlist} ${CMAKE_CURRENT_SOURCE_DIR}/${filename})
-    endforeach(filename ${${datalist}})
-
     # Write out script for copying from source dir to build dir
-    set(${targetname}_cmake_contents "set(FILES_TO_COPY \"${inputlist}\")\n")
+    set(${targetname}_cmake_contents "set(FILES_TO_COPY \"${${datalist}}\")\n")
     set(${targetname}_cmake_contents "${${targetname}_cmake_contents}foreach(filename \${FILES_TO_COPY})\n")
     if(NOT CMAKE_CONFIGURATION_TYPES)
       set(${targetname}_cmake_contents "${${targetname}_cmake_contents}  file(COPY \${FILES_TO_COPY} DESTINATION \"${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}\")\n")
@@ -434,28 +417,23 @@ macro(BRLCAD_ADDDATA inputdata targetdir)
   # The installation rule relates only to the original source directory copy, and so doesn't
   # need to explicitly concern itself with configurations.
   foreach(filename ${${datalist}})
-    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${filename} DESTINATION ${DATA_DIR}/${targetdir})
+    install(FILES ${filename} DESTINATION ${DATA_DIR}/${targetdir})
   endforeach(filename ${${datalist}})
 
-  # Tell distcheck about these particular data files
-  CMAKEFILES(${${datalist}})
 endmacro(BRLCAD_ADDDATA datalist targetdir)
 
 #-----------------------------------------------------------------------------
 macro(ADD_MAN_PAGES num inmanlist)
   NORMALIZE_FILE_LIST(${inmanlist} manlist)
-  CMAKEFILES(${${manlist}})
-  foreach(manpage ${${manlist}})
-    if (NOT CMAKE_CONFIGURATION_TYPES)
-      configure_file(${manpage} ${CMAKE_BINARY_DIR}/${MAN_DIR}/man${num}/${manpage} COPYONLY)
-    else (NOT CMAKE_CONFIGURATION_TYPES)
-      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-        string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-        configure_file(${manpage} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${MAN_DIR}/man${num}/${manpage} COPYONLY)
-      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    endif (NOT CMAKE_CONFIGURATION_TYPES)
-    install(FILES ${manpage} DESTINATION ${MAN_DIR}/man${num})
-  endforeach(manpage ${${manlist}})
+  if (NOT CMAKE_CONFIGURATION_TYPES)
+    file(COPY ${${manlist}} DESTINATION ${CMAKE_BINARY_DIR}/${MAN_DIR}/man${num}/${manpage})
+  else (NOT CMAKE_CONFIGURATION_TYPES)
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      file(COPY ${${manlist}} DESTINATION "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${MAN_DIR}/man${num}/${manpage}")
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  endif (NOT CMAKE_CONFIGURATION_TYPES)
+  install(FILES "${${manlist}}" DESTINATION ${MAN_DIR}/man${num})
 endmacro(ADD_MAN_PAGES num manlist)
 
 # Local Variables:
