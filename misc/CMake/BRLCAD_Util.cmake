@@ -76,11 +76,12 @@ endmacro(CPP_WARNINGS)
 #-----------------------------------------------------------------------------
 # It is sometimes convenient to be able to supply both a filename and a 
 # variable name containing a list of files to a single macro.
-# This routine handles both forms of input - a separate variable is specified
-# that contains the name of the variable holding the list, and in the case
-# where there is no such variable one is prepared.  This way, subsequent
-# macro logic need only deal with a variable holding a list, whatever the
-# original form of the input.
+# This routine handles both forms of input - separate variables are
+# used to indicate which variable names are supposed to contain the
+# initial list contents and the full path version of that list.  Thus,
+# macros using the normalize macro get the list in a known variable and
+# can use it reliably, regardless of whether inlist contained the actual
+# list contents or a variable.
 macro(NORMALIZE_FILE_LIST inlist targetvar fullpath_targetvar)
 
   # First, figure out whether we have list contents or a list name
@@ -91,29 +92,27 @@ macro(NORMALIZE_FILE_LIST inlist targetvar fullpath_targetvar)
     endif(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename})
   endforeach(maybefilename ${${targetvar}})
 
-  # Put the list contents in the "list_contents" variable and
+  # Put the list contents in the targetvar variable and
   # generate a target name.
-  set(${targetvar} "list_contents")
   if(NOT havevarname)
-    set(list_contents "${inlist}")
+    set(${targetvar} "${inlist}")
     BRLCAD_TARGET_NAME("${inlist}" targetname)
   else(NOT havevarname)
-    set(list_contents "${${inlist}}")
+    set(${targetvar} "${${inlist}}")
     set(targetname "${inlist}")
   endif(NOT havevarname)
 
   # Mark the inputs as files to ignore in distcheck
-  CMAKEFILES(${list_contents})
+  CMAKEFILES(${${targetvar}})
 
   # For some uses, we need the contents of the input list
   # with full paths.  Generate a list that we're sure has
   # full paths, and return that to the second variable.
-  set(fullpath_files)
-  set(${fullpath_targetvar} "fullpath_files")
-  foreach(filename ${list_contents})
+  set(${fullpath_targetvar} "")
+  foreach(filename ${${targetvar}})
     get_filename_component(file_fullpath "${filename}" ABSOLUTE)
-    set(fullpath_files ${fullpath_files} "${file_fullpath}")
-  endforeach(filename ${list_contents})
+    set(${fullpath_targetvar} ${${fullpath_targetvar}} "${file_fullpath}")
+  endforeach(filename ${${targetvar}})
 
   # Some macros will also want a valid build target name
   # based on the input - if a third input parameter has
