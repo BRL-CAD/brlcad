@@ -305,7 +305,7 @@ union record  {
 	short	a_n;			/* # of points per curve */
 	short	a_curlen;		/* # of granules per curve */
 	short	a_totlen;		/* # of granules for ARS */
-	/* Remainder are unused, and exist for ?compatability */
+	/* Remainder are unused, and exist for ?compatibility */
 	short	a_pad;
 	dbfloat_t a_xmax;		/* max x coordinate */
 	dbfloat_t a_xmin;		/* min x coordinate */
