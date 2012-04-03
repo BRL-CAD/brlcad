@@ -76,8 +76,6 @@ if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
   ADD_DEPENDENCIES(libfb tk)
 endif(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
 
-ADD_MAN_PAGES(3 libfb.3)
-
 set(libfb_ignore_files
   dmdfb.h
   if_TEMPLATE.c
