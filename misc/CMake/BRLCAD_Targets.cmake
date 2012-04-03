@@ -427,7 +427,6 @@ endmacro(BRLCAD_ADDDATA datalist targetdir)
 macro(ADD_MAN_PAGES num inmanlist)
   string(REPLACE "${DATA_DIR}/" "" R_MAN_DIR "${MAN_DIR}")
   set(man_target_dir ${R_MAN_DIR}/man${num})
-  message("man_target_dir: ${man_target_dir}")
   BRLCAD_ADDDATA(${inmanlist} ${man_target_dir})
 endmacro(ADD_MAN_PAGES num fullpath_manlist)
 
