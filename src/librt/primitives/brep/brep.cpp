@@ -514,7 +514,6 @@ public:
     brep_hit(const ON_BrepFace& f, fastf_t d, const ON_Ray& ray, const point_t p, const vect_t n, const pt2d_t _uv)
 	: face(f), dist(d), trimmed(false), closeToEdge(false), oob(false), hit(CLEAN_HIT), direction(ENTERING), m_adj_face_index(0), sbv(NULL)
     {
-	vect_t dir;
 	VMOVE(origin, ray.m_origin);
 	VMOVE(point, p);
 	VMOVE(normal, n);
