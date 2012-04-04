@@ -404,19 +404,36 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # Override and wrap configure_file.  In the case of configure_file, we'll
   # check that the file is part of the source tree and not itself a
   # generated file, but not reject full-path entries since there are quite a
-  # few of them.
+  # few of them. This means that, unlike CMAKEFILES's reliance on full vs.
+  # relative path comparisions, generated files supplied to configure_file 
+  # need to have the GENERATED property set in order to reliably tell which
+  # files should be added to the build system's lists.  Not
+  # so critical with not-in-src-dir builds, but makes a big difference
+  # spotting files to avoid when all generated files have source directory
+  # prefixes.
   function(configure_file file targetfile)
     _configure_file(${file} ${targetfile} ${ARGN})
-    get_filename_component(item_absolute ${file} ABSOLUTE)
-    set(test_build_path "${CMAKE_BINARY_DIR}/")
-    set(test_source_path "${CMAKE_SOURCE_DIR}/")
-    string(REPLACE "${test_build_path}" "" build_dir_trimmed "${item_absolute}")
-    if(${item_absolute} STREQUAL ${build_dir_trimmed})
-      string(REPLACE "${test_source_path}" "" source_dir_trimmed "${item_absolute}")
-      if(NOT ${item_absolute} STREQUAL ${source_dir_trimmed})
-	file(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${item_absolute}\n")
-      endif(NOT ${item_absolute} STREQUAL ${source_dir_trimmed})
-    endif(${item_absolute} STREQUAL ${build_dir_trimmed})
+    # Tag output from configure with the GENERATED tag
+    set_source_files_properties(${targetfile} PROPERTIES GENERATED TRUE)
+    # If it's a generated file, don't register it
+    get_property(IS_GENERATED SOURCE ${file} PROPERTY GENERATED)
+    if(NOT IS_GENERATED)
+      get_filename_component(item_absolute ${file} ABSOLUTE)
+      # If we're not in the source dir, we can do some extra checking.
+      if(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+	IS_SUBPATH("${CMAKE_BINARY_DIR}" "${item_absolute}" SUBPATH_TEST)
+      else(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+	set(SUBPATH_TEST "0")
+      endif(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+      if("${SUBPATH_TEST}" STREQUAL "0")
+	IS_SUBPATH("${CMAKE_SOURCE_DIR}" "${item_absolute}" SUBPATH_TEST)
+	if("${SUBPATH_TEST}" STREQUAL "1")
+	  file(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${item_absolute}\n")
+	endif("${SUBPATH_TEST}" STREQUAL "1")
+      else("${SUBPATH_TEST}" STREQUAL "0")
+	message(WARNING "The generated file ${file} is passed to configure_file but does not have the GENERATED source file property set in CMake.  It is HIGHLY recommended that the generated property be set for this file in ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt using a command with the following form:\nset_source_files_properties(<file> PROPERTIES GENERATED TRUE)\n(or in ${CMAKE_SOURCE_DIR}/src/other/CMakeLists.txt for third party components with their own build system.)\n")
+      endif("${SUBPATH_TEST}" STREQUAL "0")
+    endif(NOT IS_GENERATED)
     if(NOT ${targetfile} MATCHES "distclean")
       DISTCLEAN(${targetfile})
     endif(NOT ${targetfile} MATCHES "distclean")
@@ -700,6 +717,8 @@ endif(NOT CMAKE_CONFIGURATION_TYPES)
 # subprojects are also managing a config.h.in file of their own.
 
 set(CONFIG_H_FILE "${BRLCAD_BINARY_DIR}/include/brlcad_config.h.in")
+set_source_files_properties(${CONFIG_H_FILE} PROPERTIES GENERATED TRUE)
+
 set(CMAKE_CURRENT_PROJECT BRLCAD)
 
 define_property(GLOBAL PROPERTY BRLCAD_CONFIG_H_CONTENTS BRIEF_DOCS "config.h.in contents" FULL_DOCS "config.h.in contents for BRL-CAD project")

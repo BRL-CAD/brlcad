@@ -84,6 +84,7 @@ ENDFOREACH(file ${ITK_LIBRARY_FILES})
 
 # Create the pkgIndex.tcl file and configure iwidgets.tcl.
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded ${IWIDGETS_PKGNAME} ${IWIDGETS_PKGVERSION} [list source [file join $dir iwidgets.tcl]]")
+set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl PROPERTIES GENERATED TRUE)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/iwidgets.tcl.in ${CMAKE_CURRENT_BINARY_DIR}/iwidgets.tcl)
 
 # Place files in build directory

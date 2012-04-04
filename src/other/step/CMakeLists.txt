@@ -207,6 +207,7 @@ MARK_AS_ADVANCED(SCL_BUILD_EXPRESS_ONLY)
 # scl_cf.h.in - scripts may need to append to the template, so
 # it is read into memory initially.
 SET(CONFIG_H_FILE ${SCL_BINARY_DIR}/include/scl_cf.h.in)
+set_source_files_properties(${CONFIG_H_FILE} PROPERTIES GENERATED TRUE)
 set(CMAKE_CURRENT_PROJECT SCL)
 define_property(GLOBAL PROPERTY SCL_CONFIG_H_CONTENTS BRIEF_DOCS "config.h.in contents" FULL_DOCS "config.h.in contents for SCL project")
 if(NOT COMMAND CONFIG_H_APPEND)
