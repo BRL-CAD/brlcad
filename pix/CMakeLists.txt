@@ -5,7 +5,7 @@ set(BENCHMARK_PIX
   sphflake.pix
   star.pix
   world.pix
-)
+  )
 
 set(OTHER_PIX
   golf_ball.pix
@@ -14,7 +14,7 @@ set(OTHER_PIX
   lgt3.pix
   mworld.pix
   toilet.pix
-)
+  )
 
 set(PIX_LOG
   bldg391.log
@@ -23,46 +23,14 @@ set(PIX_LOG
   sphflake.log
   star.log
   world.log
-)
+  )
 
 set(SAVEVIEWS
   cube.rt
-)
+  )
 
-file(COPY ${BENCHMARK_PIX} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/pix)
-file(COPY ${PIX_LOG} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/pix)
-install(FILES ${BENCHMARK_PIX} DESTINATION ${DATA_DIR}/pix)
-install(FILES ${PIX_LOG} DESTINATION ${DATA_DIR}/pix)
-# Benchmark scripts don't know where the source directory is, so copy
-# to the binary directory
-foreach(pixfile ${BENCHMARK_PIX})
-	if(NOT CMAKE_CONFIGURATION_TYPES)
-	if(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-	  configure_file(${pixfile} ${CMAKE_BINARY_DIR}/${DATA_DIR}/pix/${pixfile} COPYONLY)
-	  DISTCLEAN(${CMAKE_BINARY_DIR}/${DATA_DIR}/pix/${pixfile})
-	endif(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-	else(NOT CMAKE_CONFIGURATION_TYPES)
-	  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-            string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	    configure_file(${pixfile} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/pix/${pixfile} COPYONLY)
-	    DISTCLEAN(${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/pix/${pixfile})
-	  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-	endif(NOT CMAKE_CONFIGURATION_TYPES)
-endforeach(pixfile ${BENCHMARK_PIX})
-foreach(pixlog ${PIX_LOG})
-	if(NOT CMAKE_CONFIGURATION_TYPES)
-	if(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-	  configure_file(${pixlog} ${CMAKE_BINARY_DIR}/${DATA_DIR}/pix/${pixlog} COPYONLY)
-	  DISTCLEAN(${CMAKE_BINARY_DIR}/${DATA_DIR}/pix/${pixlog})
-	endif(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-	else(NOT CMAKE_CONFIGURATION_TYPES)
-	  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-            string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	    configure_file(${pixlog} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/pix/${pixlog} COPYONLY)
-	    DISTCLEAN(${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DATA_DIR}/pix/${pixlog})
-	  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-	endif(NOT CMAKE_CONFIGURATION_TYPES)
-endforeach(pixlog ${PIX_LOG})
+BRLCAD_ADDDATA(BENCHMARK_PIX pix)
+BRLCAD_ADDDATA(PIX_LOG pix)
 
 CMAKEFILES(${BENCHMARK_PIX})
 CMAKEFILES(${OTHER_PIX})

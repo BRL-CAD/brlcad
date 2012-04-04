@@ -30,9 +30,9 @@ if(SH_EXEC)
 	add_custom_target(benchmark
 		COMMAND ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/benchmark run
 		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake
-		DEPENDS rt pixcmp
+		DEPENDS rt pixcmp BENCHMARK_PIX_cp PIX_LOG_cp
 		)
-	ADD_DEPENDENCIES(benchmark bldg391.g m35.g moss.g sphflake.g star.g world.g)
+	add_dependencies(benchmark bldg391.g m35.g moss.g sphflake.g star.g world.g)
 	add_custom_target(benchmark-clean
 		${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/benchmark clean
 		)
