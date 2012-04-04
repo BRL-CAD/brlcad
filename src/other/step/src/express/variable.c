@@ -117,8 +117,6 @@ VARinitialize() {
 /* for example, if var is named SELF\xxx.yyy, return yyy */
 extern char *
 VARget_simple_name( Variable v ) {
-    char tmp;
-
     Expression e = VARget_name( v );
 
     while( TYPEis_expression( EXPget_type( e ) ) ) {

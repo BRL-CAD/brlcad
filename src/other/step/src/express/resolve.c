@@ -1285,7 +1285,6 @@ void ENTITYresolve_types( Entity e );
 void
 SCOPEresolve_types( Scope s ) {
     Variable var;
-    Type type;
     DictionaryEntry de;
     Generic x;
 

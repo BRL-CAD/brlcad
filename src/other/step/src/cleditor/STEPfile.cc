@@ -1661,7 +1661,6 @@ STEPfile::AppendFile( istream * in, int useTechCor ) {
 
     SetFileIdIncrement();
     int total_insts = 0,  valid_insts = 0;
-    int exchange_file = -1;
 
     ReadTokenSeparator( *in );
     std::string keywd = GetKeyword( *in, "; #", _error );
@@ -1671,18 +1670,15 @@ STEPfile::AppendFile( istream * in, int useTechCor ) {
 
     if( !strncmp( const_cast<char *>( keywd.c_str() ), "ISO-10303-21",
                   strlen( const_cast<char *>( keywd.c_str() ) ) ) ) {
-        exchange_file = 1;
         SetFileType( VERSION_CURRENT );
     } else if( !strncmp( const_cast<char *>( keywd.c_str() ), "STEP",
                          strlen( const_cast<char *>( keywd.c_str() ) ) ) ) {
         _error.AppendToUserMsg( "Reading Old Version of exchange file.\n" );
         _error.GreaterSeverity( SEVERITY_USERMSG );
 
-        exchange_file = 1;
         SetFileType( VERSION_OLD );
     } else if( !strncmp( const_cast<char *>( keywd.c_str() ), "STEP_WORKING_SESSION",
                          strlen( const_cast<char *>( keywd.c_str() ) ) ) ) {
-        exchange_file = 0;
         if( _fileType != WORKING_SESSION ) {
             _error.AppendToUserMsg(
                 "Warning: Reading in file as Working Session file.\n" );

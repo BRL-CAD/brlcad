@@ -298,7 +298,6 @@ EXPresolve_op_dot( Expression expr, Scope scope ) {
 
     /* stuff for dealing with select_ */
     int options = 0;
-    Variable tmp;
     char dt;
     struct Symbol_ *where = NULL;
 
@@ -493,7 +492,6 @@ EXPresolve_op_group( Expression expr, Scope scope ) {
 
     /* stuff for dealing with select_ */
     int options = 0;
-    char dt;
 
     /* op1 is entity expression, op2 is entity */
     /* could be very impossible to determine except */
