@@ -74,6 +74,32 @@ macro(CPP_WARNINGS srcslist)
 endmacro(CPP_WARNINGS)
 
 #-----------------------------------------------------------------------------
+# For situations like file copying, where we sometimes need to autogenerate
+# target names, it is important to make sure we can avoid generating absurdly
+# long names.  To do this, we run candidate names through a length filter
+# and use their MD5 hash if they are too long.
+macro(BRLCAD_TARGET_NAME input_string outputvar)
+  string(REGEX REPLACE "/" "_" targetstr ${input_string})
+  string(REGEX REPLACE "\\." "_" targetstr ${targetstr})
+  string(LENGTH "${targetstr}" STRLEN)
+  # If the input string is longer than 30 characters, generate a 
+  # shorter string using the md5 hash.  It will be cryptic but 
+  # the odds are very good it'll be a unique target name
+  # and the string will be short enough, which is what we need.
+  if ("${STRLEN}" GREATER 30)
+    file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS "${targetstr}")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E md5sum ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS OUTPUT_VARIABLE targetname)
+    string(REPLACE " ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS" "" targetname "${targetname}")
+    string(STRIP "${targetname}" targetname)
+    file(REMOVE ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS)
+    set(${outpvar} ${targetname})
+  else ("${STRLEN}" GREATER 30)
+    set(${outputvar} "${targetstr}")
+  endif ("${STRLEN}" GREATER 30)
+endmacro(BRLCAD_TARGET_NAME)
+
+
+#-----------------------------------------------------------------------------
 # It is sometimes convenient to be able to supply both a filename and a 
 # variable name containing a list of files to a single macro.
 # This routine handles both forms of input - separate variables are
@@ -143,32 +169,6 @@ if(NOT DEFINED HAVE_SYMLINK)
     file(REMOVE ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src)
   endif(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest)
 endif(NOT DEFINED HAVE_SYMLINK)
-
-
-#-----------------------------------------------------------------------------
-# For situations like file copying, where we sometimes need to autogenerate
-# target names, it is important to make sure we can avoid generating absurdly
-# long names.  To do this, we run candidate names through a length filter
-# and use their MD5 hash if they are too long.
-macro(BRLCAD_TARGET_NAME input_string outputvar)
-  string(REGEX REPLACE "/" "_" targetstr ${input_string})
-  string(REGEX REPLACE "\\." "_" targetstr ${targetstr})
-  string(LENGTH "${targetstr}" STRLEN)
-  # If the input string is longer than 30 characters, generate a 
-  # shorter string using the md5 hash.  It will be cryptic but 
-  # the odds are very good it'll be a unique target name
-  # and the string will be short enough, which is what we need.
-  if ("${STRLEN}" GREATER 30)
-    file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS "${targetstr}")
-    execute_process(COMMAND ${CMAKE_COMMAND} -E md5sum ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS OUTPUT_VARIABLE targetname)
-    string(REPLACE " ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS" "" targetname "${targetname}")
-    string(STRIP "${targetname}" targetname)
-    file(REMOVE ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS)
-    set(${outpvar} ${targetname})
-  else ("${STRLEN}" GREATER 30)
-    set(${outputvar} "${targetstr}")
-  endif ("${STRLEN}" GREATER 30)
-endmacro(BRLCAD_TARGET_NAME)
 
 
 #-----------------------------------------------------------------------------
