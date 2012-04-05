@@ -45,11 +45,11 @@ if test ! -f "$TOPSRC/misc/flawfinder" ; then
 fi
 
 HAVE_PYTHON=no
-if test "`env python -V 2>&1 | awk '{print $1}'`" = "xPython" ; then
+if test "x`env python -V 2>&1 | awk '{print $1}'`" = "xPython" ; then
     HAVE_PYTHON=yes
 fi
 
-if test "x$HAVE_PYTHON" = "x" ; then
+if test "x$HAVE_PYTHON" = "xyes" ; then
 
     echo "running flawfinder..."
 
