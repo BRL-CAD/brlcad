@@ -34,7 +34,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # Utility macro for defining individual distcheck targets
   macro(CREATE_DISTCHECK TARGET_SUFFIX CMAKE_OPTS)
     if(NOT "${ARGV2}" STREQUAL "")
-      message("Defing target using custom template ${BRLCAD_CMAKE_DIR}/${ARGV2}")
       set(distcheck_template_file "${BRLCAD_CMAKE_DIR}/${ARGV2}")
     else(NOT "${ARGV2}" STREQUAL "")
       set(distcheck_template_file "${BRLCAD_CMAKE_DIR}/distcheck_target.cmake.in")
