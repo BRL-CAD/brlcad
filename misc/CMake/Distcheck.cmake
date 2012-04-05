@@ -89,8 +89,8 @@ if(NOT BRLCAD_IS_SUBBUILD)
       endif(${ARGV0_UPPER} STREQUAL "FULL")
     endif(${ARGC} EQUAL 1)
 
-    CREATE_DISTCHECK(enableall_debug   "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" "" "" "")
-    CREATE_DISTCHECK(enableall_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_BUNDLED_LIBS=BUNDLED" "" "" "")
+    CREATE_DISTCHECK(enableall_debug   "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+    CREATE_DISTCHECK(enableall_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_BUNDLED_LIBS=BUNDLED" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
 
     add_custom_target(distcheck-std
       # The source repository verification script is responsible for generating these files
