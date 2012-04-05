@@ -1967,20 +1967,6 @@ if(INCREMENT_COUNT_FILE OR NOT EXISTS ${BRLCAD_BINARY_DIR}/include/conf/DATE)
 endif(INCREMENT_COUNT_FILE OR NOT EXISTS ${BRLCAD_BINARY_DIR}/include/conf/DATE)
 DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/DATE)
 
-# We want to ignore an in-source build directory if possible, try to recognize
-# that case and get the appropriate subpath for CPACK.  This isn't workable if
-# the build directory IS the source directory - in such a case the working
-# files of the build are mixed with the sources and an exclusion list is
-# pretty hopeless.
-if(NOT ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
-  set(TEST_BUILD_PATH "${CMAKE_BINARY_DIR}/")
-  set(TEST_SOURCE_PATH "${CMAKE_SOURCE_DIR}/")
-  string(REPLACE "${TEST_SOURCE_PATH}" "" CMAKE_BUILD_DIR_TRIMMED "${TEST_BUILD_PATH}")
-  if(NOT ${TEST_BUILD_PATH} STREQUAL ${CMAKE_BUILD_DIR_TRIMMED})
-    set(CPACK_IGNORE_BUILD_PATH "${CMAKE_BUILD_DIR_TRIMMED}")
-  endif(NOT ${TEST_BUILD_PATH} STREQUAL ${CMAKE_BUILD_DIR_TRIMMED})
-endif(NOT ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
-
 # CPack is used to produce tgz files, RPMS, etc.  If SUBBUILD is enabled this
 # becomes the responsibility of the parent project.
 if(NOT BRLCAD_IS_SUBBUILD)
@@ -2057,9 +2043,9 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
   set(CPACK_SOURCE_GENERATOR TGZ TBZ2 ZIP)
   set(CPACK_SOURCE_PACKAGE_FILE_NAME "brlcad-${BRLCAD_VERSION}")
-  set(CPACK_SOURCE_IGNORE_FILES "\\\\.svn/" "${CPACK_IGNORE_BUILD_PATH}")
+  set(CPACK_SOURCE_IGNORE_FILES "\\\\.svn/")
 
-  CONFIGURE_file("${BRLCAD_CMAKE_DIR}/BRLCAD_CPackOptions.cmake.in"	"${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake" @ONLY)
+  configure_file("${BRLCAD_CMAKE_DIR}/BRLCAD_CPackOptions.cmake.in" "${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake" @ONLY)
   set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake")
 
   include(CPack)
@@ -2104,8 +2090,28 @@ endif("${CMAKE_GENERATOR}" MATCHES "Ninja")
 # whether BRL-CAD is in a distribution ready state.  Default to the standard
 # set of tests - Debug and Release build configurations
 include(${BRLCAD_CMAKE_DIR}/Distcheck.cmake)
+DISTCLEAN(${BRLCAD_BINARY_DIR}/ground_truth.txt)
+DISTCLEAN(${BRLCAD_BINARY_DIR}/svn_files_list.txt)
 # Define some custom distcheck targets for distcheck-full (not run by default)
 CREATE_DISTCHECK(no_tk "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_TK=OFF")
+CREATE_DISTCHECK(autodetect_debug "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=AUTO")
+CREATE_DISTCHECK(autodetect_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_BUNDLED_LIBS=AUTO")
+
+# The in-src-dir test(s) are special, in that their build invocation is
+# different from the other tests.  Prepare accordingly
+if("${CMAKE_GENERATOR}" MATCHES "Make")
+  if(NOT CMAKE_VERBOSE_DISTCHECK)
+    set(TARGET_REDIRECT " >> distcheck-in_src_dir.log ")
+    DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/distcheck-in_src_dir.log)
+  endif(NOT CMAKE_VERBOSE_DISTCHECK)
+  set(DISTCHECK_IN_SRC_BUILD_CMD "${CMAKE_COMMAND} -E chdir distcheck-in_src_dir/${CPACK_SOURCE_PACKAGE_FILE_NAME} $(MAKE) ${TARGET_REDIRECT}")
+else("${CMAKE_GENERATOR}" MATCHES "Make")
+  set(DISTCHECK_IN_SRC_BUILD_CMD "COMMAND ${CMAKE_COMMAND} -E build distcheck-in_src_dir/${CPACK_SOURCE_PACKAGE_FILE_NAME}")
+  set(TARGET_REDIRECT "")
+endif("${CMAKE_GENERATOR}" MATCHES "Make")
+CREATE_DISTCHECK(in_src_dir "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" distcheck_in_src_dir.cmake.in ${DISTCHECK_IN_SRC_BUILD_CMD})
+
+# Now that we're set up and have added the extra targets we want for distcheck-full, define the build targets
 DEFINE_DISTCHECK_TARGET(STD)
 
 # Mark various miscellaneous things as advanced that we don't want in our

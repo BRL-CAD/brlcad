@@ -1,3 +1,15 @@
+set(check_distcheck
+"file(GLOB_RECURSE BUILD_DIR_CONTENTS RELATIVE \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-@TARGET_SUFFIX@/build\" \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-@TARGET_SUFFIX@/build/*\")
+if(BUILD_DIR_CONTENTS)
+  message(\"Files present after distclean in the build directory:\")
+  foreach(filename \${BUILD_DIR_CONTENTS})
+    message(\"\${filename}\")
+  endforeach(filename \${BUILD_DIR_CONTENTS})
+  message(FATAL_ERROR \"distclean failed in ${CMAKE_CURRENT_BINARY_DIR}/distcheck-@TARGET_SUFFIX@/build\")
+endif(BUILD_DIR_CONTENTS)
+")
+file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-@TARGET_SUFFIX@-eval_distclean.cmake "${check_distcheck}")
+
 add_custom_target(distcheck-@TARGET_SUFFIX@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Extracting TGZ archive..."
   COMMAND ${CMAKE_COMMAND} -E remove distcheck_@TARGET_SUFFIX@.log
@@ -20,6 +32,10 @@ add_custom_target(distcheck-@TARGET_SUFFIX@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Install from tgz build directory..."
   COMMAND ${CMAKE_COMMAND} --build distcheck-@TARGET_SUFFIX@/build --target install @TARGET_REDIRECT@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Install from tgz build directory... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Test distclean rule..."
+  COMMAND ${CMAKE_COMMAND} --build distcheck-@TARGET_SUFFIX@/build --target distclean @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-@TARGET_SUFFIX@-eval_distclean.cmake
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Test distclean rule... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Clear tgz archive sources and build directory..."
   COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME}
   COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-@TARGET_SUFFIX@/build

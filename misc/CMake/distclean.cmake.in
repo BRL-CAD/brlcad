@@ -14,6 +14,13 @@ foreach(item ${CMAKE_DISTCLEAN_TARGET_LIST})
     EXEC_PROGRAM(${CMAKE_COMMAND} ARGS -E remove "${item}" OUTPUT_VARIABLE SCRATCH)
   endif(IS_DIRECTORY "${item}")
 endforeach(item ${CMAKE_DISTCLEAN_TARGET_LIST})
+# Clean up after CPack
+if(EXISTS "@BRLCAD_BINARY_DIR@/_CPack_Packages")
+  exec_program(${CMAKE_COMMAND} ARGS -E remove_directory "@BRLCAD_BINARY_DIR@/_CPack_Packages" OUTPUT_VARIABLE SCRATCH)
+endif(EXISTS "@BRLCAD_BINARY_DIR@/_CPack_Packages")
+if(EXISTS "@BRLCAD_BINARY_DIR@/source_archive_contents")
+  exec_program(${CMAKE_COMMAND} ARGS -E remove_directory "@BRLCAD_BINARY_DIR@/source_archive_contents" OUTPUT_VARIABLE SCRATCH)
+endif(EXISTS "@BRLCAD_BINARY_DIR@/source_archive_contents")
 message("Removing CMake-generated files... done.")
 
 # If the find command is available, clear out empty directories too

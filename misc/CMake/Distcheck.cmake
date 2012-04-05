@@ -33,6 +33,12 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
   # Utility macro for defining individual distcheck targets
   macro(CREATE_DISTCHECK TARGET_SUFFIX CMAKE_OPTS)
+    if(NOT "${ARGV2}" STREQUAL "")
+      message("Defing target using custom template ${BRLCAD_CMAKE_DIR}/${ARGV2}")
+      set(distcheck_template_file "${BRLCAD_CMAKE_DIR}/${ARGV2}")
+    else(NOT "${ARGV2}" STREQUAL "")
+      set(distcheck_template_file "${BRLCAD_CMAKE_DIR}/distcheck_target.cmake.in")
+    endif(NOT "${ARGV2}" STREQUAL "")
     # If we've already got a particular distcheck target, don't try to create it again.
     get_target_property(not_in_all distcheck-${TARGET_SUFFIX} EXCLUDE_FROM_ALL)
     if(NOT not_in_all)
@@ -41,18 +47,23 @@ if(NOT BRLCAD_IS_SUBBUILD)
       SET(CMAKE_OPTS ${CMAKE_OPTS})
 
       # Determine how to trigger the build in the distcheck target
-      if("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
+      if(NOT "${ARGV3}" STREQUAL "")
+	set(DISTCHECK_BUILD_CMD "${ARGV3}")
+      else(NOT "${ARGV3}" STREQUAL "")
+      if("${CMAKE_GENERATOR}" MATCHES "Make")
 	if(NOT CMAKE_VERBOSE_DISTCHECK)
 	  set(TARGET_REDIRECT " >> distcheck-${TARGET_SUFFIX}.log ")
+	  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}.log)
 	endif(NOT CMAKE_VERBOSE_DISTCHECK)
-	set(DISTCHECK_BUILD_CMD "${CMAKE_COMMAND} -E chdir  distcheck-${TARGET_SUFFIX}/build $(MAKE) ${TARGET_REDIRECT}")
-      else("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
+	set(DISTCHECK_BUILD_CMD "${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/build $(MAKE) ${TARGET_REDIRECT}")
+      else("${CMAKE_GENERATOR}" MATCHES "Make")
 	set(DISTCHECK_BUILD_CMD "COMMAND ${CMAKE_COMMAND} -E build distcheck-${TARGET_SUFFIX}/build")
 	set(TARGET_REDIRECT "")
-      endif("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
+      endif("${CMAKE_GENERATOR}" MATCHES "Make")
+      endif(NOT "${ARGV3}" STREQUAL "")
 
       # Based on the build command, generate a distcheck target definition from the template
-      configure_file(${BRLCAD_CMAKE_DIR}/distcheck_target.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_target_${TARGET_SUFFIX}.cmake @ONLY)
+      configure_file(${distcheck_template_file} ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_target_${TARGET_SUFFIX}.cmake @ONLY)
       include(${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_target_${TARGET_SUFFIX}.cmake)
 
       # Keep track of the distcheck targets
