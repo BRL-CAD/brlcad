@@ -43,7 +43,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
-. $1/regress/library.sh
+. "$1/regress/library.sh"
 
 F4G="`ensearch fast4-g`"
 if test ! -f "$F4G" ; then
@@ -99,12 +99,12 @@ if test ! -f fastgen_unix.g ; then
 fi
 
 echo "Creating an input file with DOS line-endings"
-if test ! -f $PATH_TO_THIS/fastgen_dos.fast4 ; then
+if test ! -f "$PATH_TO_THIS/fastgen_dos.fast4" ; then
     echo "Unable to find fastgen_dos.fast4"
     exit 1
 fi
 rm -f fastgen_box.fast4
-cp $PATH_TO_THIS/fastgen_dos.fast4 fastgen_box.fast4
+cp "$PATH_TO_THIS/fastgen_dos.fast4" fastgen_box.fast4
 
 rm -f fastgen_dos.g
 echo "\$ $F4G fastgen_box.fast4 fastgen_dos.g"

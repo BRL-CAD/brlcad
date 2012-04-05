@@ -40,7 +40,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
-. $1/regress/library.sh
+. "$1/regress/library.sh"
 
 RT="`ensearch rt`"
 if test ! -f "$RT" ; then
@@ -127,10 +127,10 @@ if [ ! -f moss.pix ] ; then
     echo "raytrace failed to create moss.pix"
     NUMBER_WRONG=-1
 else
-    if [ ! -f $1/regress/mosspix.asc ] ; then
+    if [ ! -f "$1/regress/mosspix.asc" ] ; then
 	echo "No reference file for moss.pix"
     else
-	$A2P < $1/regress/mosspix.asc > moss_ref.pix
+	$A2P < "$1/regress/mosspix.asc" > moss_ref.pix
 	$PIXDIFF moss.pix moss_ref.pix > moss.pix.diff 2> moss-diff.log
 
 	echo -n moss.pix

@@ -40,7 +40,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
-. $1/regress/library.sh
+. "$1/regress/library.sh"
 
 RT="`ensearch rt`"
 if test ! -f "$RT" ; then
@@ -100,7 +100,7 @@ end;
 
 EOF
 
-$A2P < $1/regress/lights_ref.asc  > lights_ref.pix
+$A2P < "$1/regress/lights_ref.asc"  > lights_ref.pix
 $PIXDIFF lights.pix lights_ref.pix > lights_diff.pix 2>> lights.log
 NUMBER_WRONG=`tr , '\012' < lights.log | awk '/many/ {print $1}'`
 echo "lights.pix $NUMBER_WRONG off by many"

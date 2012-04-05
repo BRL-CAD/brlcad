@@ -164,7 +164,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
     if (inputg[0] == '\0') {
 	snprintf(inputg, 255, "%s", gedp->ged_wdbp->dbip->dbi_filename);
     }
-    (void)fprintf(fp, " %s\\\n ", inputg);
+    (void)fprintf(fp, " '%s'\\\n ", inputg);
 
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {

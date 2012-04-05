@@ -40,7 +40,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
-. $1/regress/library.sh
+. "$1/regress/library.sh"
 
 RT="`ensearch rt`"
 if test ! -f "$RT" ; then
@@ -964,11 +964,11 @@ if [ ! -f solids.rt.pix ] ; then
 	echo raytrace failed
 	exit 1
 fi
-if [ ! -f $PATH_TO_THIS/solidspix.asc ] ; then
+if [ ! -f "$PATH_TO_THIS/solidspix.asc" ] ; then
 	echo No reference file for solids.rt.pix
 	exit 1
 fi
-$A2P < $1/regress/solidspix.asc > solids_ref.pix
+$A2P < "$1/regress/solidspix.asc" > solids_ref.pix
 $PIXDIFF solids.rt.pix solids_ref.pix > solids.pix.diff \
     2> solids-diff.log
 

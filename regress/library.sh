@@ -38,8 +38,8 @@
 ARGS="$*"
 ARG0="$0"
 ARG1="$1"
-NAME_OF_THIS=`basename $ARG0`
-PATH_TO_THIS=`dirname $ARG0`
+NAME_OF_THIS=`basename "$ARG0"`
+PATH_TO_THIS=`dirname "$ARG0"`
 THIS="$PATH_TO_THIS/$NAME_OF_THIS"
 export ARGS ARG0 ARG1 NAME_OF_THIS PATH_TO_THIS THIS
 
@@ -50,7 +50,7 @@ export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
 ensearch ( ) {
     ensearch_file="$1"
-    ensearch_dirs="$ARG1/src $PATH_TO_THIS/../src ../src/$1 $ARG1/src/$1 $PATH_TO_THIS/../src/$1 ../bin ../src ../src/util ../src/conv ../src/conv/iges ../src/gtools ../src/rt ../bench"
+    ensearch_dirs="$ARG1/src \"$PATH_TO_THIS/../src\" ../src/$1 $ARG1/src/$1 \"$PATH_TO_THIS/../src/$1\" ../bin ../src ../src/util ../src/conv ../src/conv/iges ../src/gtools ../src/rt ../bench"
 
     if test "x$ensearch_file" = "x" ; then
 	# nothing to do

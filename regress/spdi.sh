@@ -40,7 +40,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
-. $1/regress/library.sh
+. "$1/regress/library.sh"
 
 MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
@@ -121,7 +121,7 @@ start 0; clean;
 end;
 
 EOF
-$ASC2PIX < $1/regress/spdipix.asc > spdi_ref.pix
+$ASC2PIX < "$1/regress/spdipix.asc" > spdi_ref.pix
 $PIXDIFF spdi.pix spdi_ref.pix > spdi_diff.pix 2>> spdi.log
 NUMBER_WRONG=`tr , '\012' < spdi.log | awk '/many/ {print $1}'`
 echo "spdi.pix $NUMBER_WRONG off by many"

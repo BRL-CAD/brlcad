@@ -40,7 +40,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
-. $1/regress/library.sh
+. "$1/regress/library.sh"
 
 MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
@@ -75,7 +75,7 @@ fi
 EAGLECAD=eagleCAD-512x438.pix
 rm -f shaders.rt shaders.g shaders.rt.pix shaders.pixdiff.log shaders.rt.log shaders.log shaders.txt shaders.dat $EAGLECAD shaders.mged
 
-TOP_SRCDIR=$1
+TOP_SRCDIR="$1"
 
 if [ ! -f ebm.bw ] ; then
 	$GENCOLOR -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1
@@ -224341,9 +224341,9 @@ FEFEFD
 FEFEFD
 EOF
 
-export ITCL_LIBRARY=$TOP_SRCDIR/src/other/incrTcl/itcl/library/
-export TCL_LIBRARY=$TOP_SRCDIR/src/other/libtcl/library/
-export BRLCAD_DATA=$TOP_SRCDIR/src
+export ITCL_LIBRARY="$TOP_SRCDIR/src/other/incrTcl/itcl/library/"
+export TCL_LIBRARY="$TOP_SRCDIR/src/other/libtcl/library/"
+export BRLCAD_DATA="$TOP_SRCDIR/src"
 
 cat > shaders.mged <<EOF
 opendb shaders.g y
@@ -224517,10 +224517,10 @@ if [ ! -f shaders.rt.pix ] ; then
 	echo '-> shaders.sh FAILED'
 	exit 1
 else
-	if [ ! -f $TOP_SRCDIR/regress/shaderspix.asc ] ; then
+	if [ ! -f "$TOP_SRCDIR/regress/shaderspix.asc" ] ; then
 		echo No reference file for $TOP_SRCDIR/regress/shaders.rt.pix
 	else
-		$ASC2PIX < $TOP_SRCDIR/regress/shaderspix.asc > shaders_ref.pix
+		$ASC2PIX < "$TOP_SRCDIR/regress/shaderspix.asc" > shaders_ref.pix
 		$PIXDIFF shaders.rt.pix shaders_ref.pix > shaders.rt.diff.pix 2> shaders.rt.pixdiff.log
 
 		NUMBER_WRONG=`tr , '\012' < shaders.rt.pixdiff.log | awk '/many/ {print $1}' | tail -${TAIL_N}1`
