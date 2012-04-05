@@ -71,7 +71,7 @@ Usage: dfft [options] [width (1024)] < doubles > 512logmags\n\
 int main(int argc, char **argv)
 {
     int i, n, c;
-    int L = sizeof(data) / sizeof(*data);
+    int L = 1024;
 
     if (isatty(STDIN_FILENO) || isatty(STDOUT_FILENO)) {
 	bu_exit(1, "%s", usage);
@@ -91,6 +91,10 @@ int main(int argc, char **argv)
 	    case '?':
 	    default:  printf("Unknown argument: %c\n%s\n", c, usage); return EXIT_FAILURE;
 	}
+
+    if (L > MAXFFT) {
+	bu_exit(2, "dfft: can't go over %d\n", MAXFFT);
+    }
 
     /* Calculate Critical Band filter weights */
     if (cflag) {
