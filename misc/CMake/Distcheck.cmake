@@ -31,13 +31,26 @@ if(NOT BRLCAD_IS_SUBBUILD)
     COMMAND ${CPACK_EXEC} --config ${CMAKE_CURRENT_BINARY_DIR}/CPackSourceConfig.cmake
     DEPENDS distcheck-repo-verify)
 
-  # Utility macro for defining individual distcheck targets
-  macro(CREATE_DISTCHECK TARGET_SUFFIX CMAKE_OPTS)
-    if(NOT "${ARGV2}" STREQUAL "")
-      set(distcheck_template_file "${BRLCAD_CMAKE_DIR}/${ARGV2}")
-    else(NOT "${ARGV2}" STREQUAL "")
+  # Utility function for defining individual distcheck targets
+  function(CREATE_DISTCHECK TARGET_SUFFIX CMAKE_OPTS source_dir build_dir install_dir)
+    # Check if a custom template was specified (optional)
+    if(NOT "${ARGV5}" STREQUAL "")
+      set(distcheck_template_file "${BRLCAD_CMAKE_DIR}/${ARGV5}")
+    else(NOT "${ARGV5}" STREQUAL "")
       set(distcheck_template_file "${BRLCAD_CMAKE_DIR}/distcheck_target.cmake.in")
-    endif(NOT "${ARGV2}" STREQUAL "")
+    endif(NOT "${ARGV5}" STREQUAL "")
+
+    # Set defaults for source, build and install dirs if not provided
+    if("${source_dir}" STREQUAL "")
+      set(source_dir ${CPACK_SOURCE_PACKAGE_FILE_NAME})
+    endif("${source_dir}" STREQUAL "")
+    if("${build_dir}" STREQUAL "")
+      set(build_dir "build")
+    endif("${build_dir}" STREQUAL "")
+    if("${install_dir}" STREQUAL "")
+      set(install_dir "install")
+    endif("${install_dir}" STREQUAL "")
+
     # If we've already got a particular distcheck target, don't try to create it again.
     get_target_property(not_in_all distcheck-${TARGET_SUFFIX} EXCLUDE_FROM_ALL)
     if(NOT not_in_all)
@@ -46,24 +59,20 @@ if(NOT BRLCAD_IS_SUBBUILD)
       SET(CMAKE_OPTS ${CMAKE_OPTS})
 
       # Determine how to trigger the build in the distcheck target
-      if(NOT "${ARGV3}" STREQUAL "")
-	set(DISTCHECK_BUILD_CMD "${ARGV3}")
-      else(NOT "${ARGV3}" STREQUAL "")
       if("${CMAKE_GENERATOR}" MATCHES "Make")
 	if(NOT CMAKE_VERBOSE_DISTCHECK)
 	  set(TARGET_REDIRECT " >> distcheck-${TARGET_SUFFIX}.log ")
 	  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}.log)
 	endif(NOT CMAKE_VERBOSE_DISTCHECK)
-	set(DISTCHECK_BUILD_CMD "${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/build $(MAKE) ${TARGET_REDIRECT}")
-	set(DISTCHECK_INSTALL_CMD "${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/build $(MAKE) install ${TARGET_REDIRECT}")
-	set(DISTCHECK_REGRESS_CMD "${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/build $(MAKE) regress ${TARGET_REDIRECT}")
+	set(DISTCHECK_BUILD_CMD "chdir \"distcheck-${TARGET_SUFFIX}/${build_dir}\" $(MAKE) ${TARGET_REDIRECT}")
+	set(DISTCHECK_INSTALL_CMD "chdir \"distcheck-${TARGET_SUFFIX}/${build_dir}\" $(MAKE) install ${TARGET_REDIRECT}")
+	set(DISTCHECK_REGRESS_CMD "chdir \"distcheck-${TARGET_SUFFIX}/${build_dir}\" $(MAKE) regress ${TARGET_REDIRECT}")
       else("${CMAKE_GENERATOR}" MATCHES "Make")
-	set(DISTCHECK_BUILD_CMD "COMMAND ${CMAKE_COMMAND} -E build distcheck-${TARGET_SUFFIX}/build")
-	set(DISTCHECK_INSTALL_CMD "COMMAND ${CMAKE_COMMAND} -E build distcheck-${TARGET_SUFFIX}/build --target install")
-	set(DISTCHECK_REGRESS_CMD "COMMAND ${CMAKE_COMMAND} -E build distcheck-${TARGET_SUFFIX}/build --target regress")
+	set(DISTCHECK_BUILD_CMD "build \"distcheck-${TARGET_SUFFIX}/${build_dir}\"")
+	set(DISTCHECK_INSTALL_CMD "\"build distcheck-${TARGET_SUFFIX}/${build_dir}\" --target install")
+	set(DISTCHECK_REGRESS_CMD "\"build distcheck-${TARGET_SUFFIX}/${build_dir}\" --target regress")
 	set(TARGET_REDIRECT "")
       endif("${CMAKE_GENERATOR}" MATCHES "Make")
-      endif(NOT "${ARGV3}" STREQUAL "")
 
       # Based on the build command, generate a distcheck target definition from the template
       configure_file(${distcheck_template_file} ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_target_${TARGET_SUFFIX}.cmake @ONLY)
@@ -74,7 +83,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     else(NOT not_in_all)
       message(WARNING "Distcheck target distcheck-${TARGET_SUFFIX} already defined, skipping...")
     endif(NOT not_in_all)
-  endmacro(CREATE_DISTCHECK)
+  endfunction(CREATE_DISTCHECK)
 
   # Top level macro for defining the common "standard" cases and lets a CMake build select either
   # the standard Debug + Release or all defined distchecks as the build that is triggered by the
@@ -91,14 +100,14 @@ if(NOT BRLCAD_IS_SUBBUILD)
       endif(${ARGV0_UPPER} STREQUAL "FULL")
     endif(${ARGC} EQUAL 1)
 
-    CREATE_DISTCHECK(debug   "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED")
-    CREATE_DISTCHECK(release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_BUNDLED_LIBS=BUNDLED")
+    CREATE_DISTCHECK(enableall_debug   "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" "" "" "")
+    CREATE_DISTCHECK(enableall_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_BUNDLED_LIBS=BUNDLED" "" "" "")
 
     add_custom_target(distcheck-std
       # The source repository verification script is responsible for generating these files
       COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_remove_archives_if_invalid
       COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_message
-      DEPENDS distcheck-debug distcheck-release)
+      DEPENDS distcheck-enableall_debug distcheck-enableall_release)
 
     add_custom_target(distcheck-full
       # The source repository verification script is responsible for generating these files

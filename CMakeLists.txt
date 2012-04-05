@@ -2086,38 +2086,28 @@ if("${CMAKE_GENERATOR}" MATCHES "Ninja")
   DISTCLEAN(${CMAKE_BINARY_DIR}/.ninja_log)
 endif("${CMAKE_GENERATOR}" MATCHES "Ninja")
 
+# ----------------------------------------------------------------------------
 # Define a distcheck target.  This performs a variety of tests to determine
 # whether BRL-CAD is in a distribution ready state.  Default to the standard
 # set of tests - Debug and Release build configurations
 include(${BRLCAD_CMAKE_DIR}/Distcheck.cmake)
 DISTCLEAN(${BRLCAD_BINARY_DIR}/ground_truth.txt)
 DISTCLEAN(${BRLCAD_BINARY_DIR}/svn_files_list.txt)
-# Define some custom distcheck targets for distcheck-full (not run by default)
-CREATE_DISTCHECK(no_tk "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_TK=OFF")
-CREATE_DISTCHECK(autodetect_debug "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=AUTO")
-CREATE_DISTCHECK(autodetect_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_BUNDLED_LIBS=AUTO")
 
-# The in-src-dir test(s) are special, in that their build invocation is
-# different from the other tests.  Prepare accordingly
-if("${CMAKE_GENERATOR}" MATCHES "Make")
-  if(NOT CMAKE_VERBOSE_DISTCHECK)
-    set(TARGET_REDIRECT " >> distcheck-in_src_dir.log ")
-    DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/distcheck-in_src_dir.log)
-  endif(NOT CMAKE_VERBOSE_DISTCHECK)
-  set(DISTCHECK_IN_SRC_BUILD_CMD "${CMAKE_COMMAND} -E chdir distcheck-in_src_dir/${CPACK_SOURCE_PACKAGE_FILE_NAME} $(MAKE) ${TARGET_REDIRECT}")
-  set(DISTCHECK_IN_SRC_INSTALL_CMD "${CMAKE_COMMAND} -E chdir distcheck-in_src_dir/${CPACK_SOURCE_PACKAGE_FILE_NAME} $(MAKE) install ${TARGET_REDIRECT}")
-  set(DISTCHECK_IN_SRC_REGRESS_CMD "${CMAKE_COMMAND} -E chdir distcheck-in_src_dir/${CPACK_SOURCE_PACKAGE_FILE_NAME} $(MAKE) regress ${TARGET_REDIRECT}")
-else("${CMAKE_GENERATOR}" MATCHES "Make")
-  set(DISTCHECK_IN_SRC_BUILD_CMD "COMMAND ${CMAKE_COMMAND} -E build distcheck-in_src_dir/${CPACK_SOURCE_PACKAGE_FILE_NAME}")
-  set(DISTCHECK_IN_SRC_INSTALL_CMD "COMMAND ${CMAKE_COMMAND} -E build distcheck-in_src_dir/${CPACK_SOURCE_PACKAGE_FILE_NAME} --target install")
-  set(DISTCHECK_IN_SRC_REGRESS_CMD "COMMAND ${CMAKE_COMMAND} -E build distcheck-in_src_dir/${CPACK_SOURCE_PACKAGE_FILE_NAME} --target regress")
-  set(TARGET_REDIRECT "")
-endif("${CMAKE_GENERATOR}" MATCHES "Make")
-CREATE_DISTCHECK(in_src_dir "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" distcheck_in_src_dir.cmake.in ${DISTCHECK_IN_SRC_BUILD_CMD})
+# Define some custom distcheck targets for distcheck-full (not run by default)
+# 
+# CREATE_DISTCHECK(TARGET_SUFFIX CMAKE_OPTS source_dir build_dir install_dir [custom_template])
+
+CREATE_DISTCHECK(no_tk "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_TK=OFF" "" "" "")
+CREATE_DISTCHECK(autodetect_debug "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=AUTO" "" "" "")
+CREATE_DISTCHECK(autodetect_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_BUNDLED_LIBS=AUTO" "" "" "")
+CREATE_DISTCHECK(odd_pathnames "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" "1 Odd_ source dir ++" "1 Odd_ build dir ++" "1 Odd_ install dir ++")
+CREATE_DISTCHECK(in_src_dir "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" "" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "" distcheck_in_src_dir.cmake.in)
 
 # Now that we're set up and have added the extra targets we want for distcheck-full, define the build targets
 DEFINE_DISTCHECK_TARGET(STD)
 
+# ----------------------------------------------------------------------------
 # Mark various miscellaneous things as advanced that we don't want in our
 # default view
 mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
