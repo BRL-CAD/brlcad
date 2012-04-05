@@ -32,7 +32,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     DEPENDS distcheck-repo-verify)
 
   # Utility function for defining individual distcheck targets
-  function(CREATE_DISTCHECK TARGET_SUFFIX CMAKE_OPTS source_dir build_dir install_dir)
+  macro(CREATE_DISTCHECK TARGET_SUFFIX CMAKE_OPTS source_dir build_dir install_dir)
     # Check if a custom template was specified (optional)
     if(NOT "${ARGV5}" STREQUAL "")
       set(distcheck_template_file "${BRLCAD_CMAKE_DIR}/${ARGV5}")
@@ -83,7 +83,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     else(NOT not_in_all)
       message(WARNING "Distcheck target distcheck-${TARGET_SUFFIX} already defined, skipping...")
     endif(NOT not_in_all)
-  endfunction(CREATE_DISTCHECK)
+  endmacro(CREATE_DISTCHECK)
 
   # Top level macro for defining the common "standard" cases and lets a CMake build select either
   # the standard Debug + Release or all defined distchecks as the build that is triggered by the
