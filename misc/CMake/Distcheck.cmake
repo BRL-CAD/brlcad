@@ -40,17 +40,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
       set(distcheck_template_file "${BRLCAD_CMAKE_DIR}/distcheck_target.cmake.in")
     endif(NOT "${ARGV5}" STREQUAL "")
 
-    # Set defaults for source, build and install dirs if not provided
-    if("${source_dir}" STREQUAL "")
-      set(source_dir ${CPACK_SOURCE_PACKAGE_FILE_NAME})
-    endif("${source_dir}" STREQUAL "")
-    if("${build_dir}" STREQUAL "")
-      set(build_dir "build")
-    endif("${build_dir}" STREQUAL "")
-    if("${install_dir}" STREQUAL "")
-      set(install_dir "install")
-    endif("${install_dir}" STREQUAL "")
-
     # If we've already got a particular distcheck target, don't try to create it again.
     get_target_property(not_in_all distcheck-${TARGET_SUFFIX} EXCLUDE_FROM_ALL)
     if(NOT not_in_all)
