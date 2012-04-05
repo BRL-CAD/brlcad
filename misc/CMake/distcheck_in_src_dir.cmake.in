@@ -53,14 +53,14 @@ add_custom_target(distcheck-@TARGET_SUFFIX@
   COMMAND ${CMAKE_COMMAND} -E chdir distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME} ${CMAKE_COMMAND} . @CMAKE_OPTS@ -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/distcheck-@TARGET_SUFFIX@/install @TARGET_REDIRECT@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Configuring... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Compiling using source from TGZ archive..."
-  COMMAND @DISTCHECK_BUILD_CMD@
+  COMMAND @DISTCHECK_IN_SRC_BUILD_CMD@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Compiling using source from TGZ archive... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Run build-directory regression and benchmark testing..."
-  COMMAND ${CMAKE_COMMAND} --build distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME}  --target regress @TARGET_REDIRECT@
+  COMMAND @DISTCHECK_IN_SRC_REGRESS_CMD@
   COMMAND TIMEFRAME=1 ${CMAKE_COMMAND} --build distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME} --target benchmark @TARGET_REDIRECT@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Run build-directory regression and benchmark testing... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Install from tgz build directory..."
-  COMMAND ${CMAKE_COMMAND} --build distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME} --target install @TARGET_REDIRECT@
+  COMMAND @DISTCHECK_IN_SRC_INSTALL_CMD@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Install from tgz build directory... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Test distclean rule..."
   COMMAND ${CMAKE_COMMAND} --build distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME} --target distclean @TARGET_REDIRECT@

@@ -26,11 +26,11 @@ add_custom_target(distcheck-@TARGET_SUFFIX@
   COMMAND @DISTCHECK_BUILD_CMD@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Compiling using source from TGZ archive... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Run build-directory regression and benchmark testing..."
-  COMMAND ${CMAKE_COMMAND} --build distcheck-@TARGET_SUFFIX@/build  --target regress @TARGET_REDIRECT@
+  COMMAND @DISTCHECK_REGRESS_CMD@
   COMMAND TIMEFRAME=1 ${CMAKE_COMMAND} --build distcheck-@TARGET_SUFFIX@/build --target benchmark @TARGET_REDIRECT@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Run build-directory regression and benchmark testing... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Install from tgz build directory..."
-  COMMAND ${CMAKE_COMMAND} --build distcheck-@TARGET_SUFFIX@/build --target install @TARGET_REDIRECT@
+  COMMAND @DISTCHECK_INSTALL_CMD@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Install from tgz build directory... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Test distclean rule..."
   COMMAND ${CMAKE_COMMAND} --build distcheck-@TARGET_SUFFIX@/build --target distclean @TARGET_REDIRECT@
