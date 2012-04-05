@@ -2,7 +2,6 @@
 file(GLOB bench_files RELATIVE "@BRLCAD_BINARY_DIR@/bench" "@BRLCAD_BINARY_DIR@/bench/*")
 if("${bench_files}" MATCHES "pix" OR "${bench_files}" MATCHES "log")
   exec_program(@BRLCAD_BINARY_DIR@/@BIN_DIR@/benchmark "@BRLCAD_BINARY_DIR@/bench" ARGS clobber)
-  file(REMOVE "@BRLCAD_BINARY_DIR@/bench/summary")
 endif("${bench_files}" MATCHES "pix" OR "${bench_files}" MATCHES "log")
 
 # Clear out the files the BRL-CAD build told us to clear

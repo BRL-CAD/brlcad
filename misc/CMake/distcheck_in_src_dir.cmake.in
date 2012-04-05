@@ -63,6 +63,7 @@ add_custom_target(distcheck-@TARGET_SUFFIX@
   COMMAND ${CMAKE_COMMAND} -E @DISTCHECK_INSTALL_CMD@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Install from tgz build directory... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Test distclean rule..."
+  COMMAND ${CMAKE_COMMAND} -E remove -f "distcheck-@TARGET_SUFFIX@/@build_dir@/bench/summary"
   COMMAND ${CMAKE_COMMAND} --build distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME} --target distclean @TARGET_REDIRECT@
   COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-@TARGET_SUFFIX@-finalstat.cmake
   COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-@TARGET_SUFFIX@-eval_status.cmake
