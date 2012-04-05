@@ -1,8 +1,10 @@
 if(NOT MSVC)
   add_subdirectory(step)
 endif(NOT MSVC)
+
 add_subdirectory(iges)
 add_subdirectory(intaval)
+add_subdirectory(vdeck)
 
 set(CONV_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
@@ -16,6 +18,7 @@ set(CONV_INCLUDE_DIRS
   ${TCLCAD_INCLUDE_DIRS}
   ${REGEX_INCLUDE_DIR}
   )
+
 LIST(REMOVE_DUPLICATES CONV_INCLUDE_DIRS)
 include_directories(${CONV_INCLUDE_DIRS})
 

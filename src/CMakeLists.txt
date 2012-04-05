@@ -81,7 +81,6 @@ set(remaining_dirs
   sig
   tab
   util
-  vdeck
   # tclscripts must come before mged and archer, so the
   # target lists are defined when the archer and mged
   # targets are defined
