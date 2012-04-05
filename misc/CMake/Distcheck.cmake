@@ -47,6 +47,11 @@ if(NOT BRLCAD_IS_SUBBUILD)
       SET(TARGET_SUFFIX ${TARGET_SUFFIX})
       SET(CMAKE_OPTS ${CMAKE_OPTS})
 
+      # For configure_file, need to set these as variables not just input parameters
+      set(source_dir "${source_dir}")
+      set(build_dir "${build_dir}")
+      set(install_dir "${install_dir}")
+
       # Determine how to trigger the build in the distcheck target
       if("${CMAKE_GENERATOR}" MATCHES "Make")
 	if(NOT CMAKE_VERBOSE_DISTCHECK)
