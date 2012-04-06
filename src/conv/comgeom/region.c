@@ -218,8 +218,8 @@ getid(void)
     int reg_num;
     int id;
     int air;
-    int mat= -1;
-    int los= -2;
+    int mat = -1;
+    int los = -2;
     char	idcard[132];
 
     while (1) {
