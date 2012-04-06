@@ -245,7 +245,7 @@ getid(void)
 	}
 
 	if (reg_num <= 0) {
-	    printf("\ngetid:  region_id %d encountered, stoping\n", reg_num);
+	    printf("\ngetid:  region_id %d encountered, stopping\n", reg_num);
 	    return;
 	}
 
