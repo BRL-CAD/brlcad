@@ -1,18 +1,18 @@
 set(dir_initial_status_script 
-"file(GLOB_RECURSE SOURCE_ARCHIVE_CONTENTS RELATIVE \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME}\" \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME}/*\")
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/distcheck-@TARGET_SUFFIX@/initial_src_contents.txt \"\${SOURCE_ARCHIVE_CONTENTS}\")")
+"file(GLOB_RECURSE SOURCE_ARCHIVE_CONTENTS RELATIVE \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME}\" \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME}/*\")
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/initial_src_contents.txt \"\${SOURCE_ARCHIVE_CONTENTS}\")")
 
-file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-@TARGET_SUFFIX@-initstat.cmake "${dir_initial_status_script}")
+file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-${TARGET_SUFFIX}-initstat.cmake "${dir_initial_status_script}")
 
 set(final_status_script
-"file(GLOB_RECURSE SOURCE_ARCHIVE_CONTENTS RELATIVE \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME}\" \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME}/*\")
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/distcheck-@TARGET_SUFFIX@/final_src_contents.txt \"\${SOURCE_ARCHIVE_CONTENTS}\")")
+"file(GLOB_RECURSE SOURCE_ARCHIVE_CONTENTS RELATIVE \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME}\" \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME}/*\")
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/final_src_contents.txt \"\${SOURCE_ARCHIVE_CONTENTS}\")")
 
-file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-@TARGET_SUFFIX@-finalstat.cmake "${final_status_script}")
+file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-${TARGET_SUFFIX}-finalstat.cmake "${final_status_script}")
 
 set(compare_status
-"file(READ ${CMAKE_CURRENT_BINARY_DIR}/distcheck-@TARGET_SUFFIX@/initial_src_contents.txt INITIAL_SOURCE_LIST )
-file(READ ${CMAKE_CURRENT_BINARY_DIR}/distcheck-@TARGET_SUFFIX@/final_src_contents.txt FINAL_SOURCE_LIST)
+"file(READ ${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/initial_src_contents.txt INITIAL_SOURCE_LIST )
+file(READ ${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/final_src_contents.txt FINAL_SOURCE_LIST)
 string(STRIP \"\${INITIAL_SOURCE_LIST}\" INITIAL_SOURCE_LIST)
 string(STRIP \"\${FINAL_SOURCE_LIST}\" FINAL_SOURCE_LIST)
 if(NOT \"\${INITIAL_SOURCE_LIST}\" STREQUAL \"\${FINAL_SOURCE_LIST}\")
@@ -34,50 +34,50 @@ if(NOT \"\${INITIAL_SOURCE_LIST}\" STREQUAL \"\${FINAL_SOURCE_LIST}\")
     endforeach(filename \${FINAL_FILES_NOT_IN_INITIAL})
     message(\"\")
   endif(FINAL_FILES_NOT_IN_INITIAL)
-  message(FATAL_ERROR \"distclean failed in ${CMAKE_CURRENT_BINARY_DIR}/distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME}\")
+  message(FATAL_ERROR \"distclean failed in ${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME}\")
 endif(NOT \"\${INITIAL_SOURCE_LIST}\" STREQUAL \"\${FINAL_SOURCE_LIST}\")
 ")
 
-file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-@TARGET_SUFFIX@-eval_status.cmake "${compare_status}")
+file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-${TARGET_SUFFIX}-eval_status.cmake "${compare_status}")
 
-add_custom_target(distcheck-@TARGET_SUFFIX@
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Extracting TGZ archive..."
-  COMMAND ${CMAKE_COMMAND} -E remove distcheck_@TARGET_SUFFIX@.log
-  COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-@TARGET_SUFFIX@
-  COMMAND ${CMAKE_COMMAND} -E make_directory distcheck-@TARGET_SUFFIX@
-  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-@TARGET_SUFFIX@ ${CMAKE_COMMAND} -E tar xzf ../${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
-  COMMAND ${CMAKE_COMMAND} -E make_directory distcheck-@TARGET_SUFFIX@/@install_dir@
-  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-@TARGET_SUFFIX@-initstat.cmake
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Extracting TGZ archive... Done."
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Configuring... "
-  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME} ${CMAKE_COMMAND} . @CMAKE_OPTS@ -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/distcheck-@TARGET_SUFFIX@/@install_dir@ @TARGET_REDIRECT@
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Configuring... Done."
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Compiling using source from TGZ archive..."
-  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME} @DISTCHECK_BUILD_CMD@ @TARGET_REDIRECT@
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Compiling using source from TGZ archive... Done."
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Run build-directory regression and benchmark testing..."
-  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME} @DISTCHECK_REGRESS_CMD@ @TARGET_REDIRECT@
-  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME}/bench ../${BIN_DIR}/benchmark run TIMEFRAME=1 @TARGET_REDIRECT@
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Run build-directory regression and benchmark testing... Done."
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Install from tgz build directory..."
-  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME} @DISTCHECK_INSTALL_CMD@ @TARGET_REDIRECT@
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Install from tgz build directory... Done."
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Test distclean rule..."
-  COMMAND ${CMAKE_COMMAND} -E remove -f "distcheck-@TARGET_SUFFIX@/@build_dir@/bench/summary"
-  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME} ${CMAKE_COMMAND} --build . --target distclean @TARGET_REDIRECT@
-  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-@TARGET_SUFFIX@-finalstat.cmake
-  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-@TARGET_SUFFIX@-eval_status.cmake
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Test distclean rule... Done."
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Clear tgz archive sources and build directory..."
-  COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-@TARGET_SUFFIX@/${CPACK_SOURCE_PACKAGE_FILE_NAME}
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Clear tgz archive sources and build directory... Done."
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Run benchmark testing from tgz archive installed build..."
-  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-@TARGET_SUFFIX@ @install_dir@/${BIN_DIR}/benchmark run TIMEFRAME=1 @TARGET_REDIRECT@
-  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-@TARGET_SUFFIX@ @install_dir@/${BIN_DIR}/benchmark clean @TARGET_REDIRECT@
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Run benchmark testing from installed build... Done."
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Cleanup..."
-  COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-@TARGET_SUFFIX@
-  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-@TARGET_SUFFIX@ - Cleanup... Done."
-  COMMENT "[distcheck-@TARGET_SUFFIX@] Peforming distcheck - @TARGET_SUFFIX@ configuration..."
+add_custom_target(distcheck-${TARGET_SUFFIX}
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Extracting TGZ archive..."
+  COMMAND ${CMAKE_COMMAND} -E remove distcheck_${TARGET_SUFFIX}.log
+  COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-${TARGET_SUFFIX}
+  COMMAND ${CMAKE_COMMAND} -E make_directory distcheck-${TARGET_SUFFIX}
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX} ${CMAKE_COMMAND} -E tar xzf ../${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
+  COMMAND ${CMAKE_COMMAND} -E make_directory distcheck-${TARGET_SUFFIX}/${install_dir}
+  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-${TARGET_SUFFIX}-initstat.cmake
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Extracting TGZ archive... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Configuring... "
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME} ${CMAKE_COMMAND} . @CMAKE_OPTS@ -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${install_dir} @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Configuring... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Compiling using source from TGZ archive..."
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME} @DISTCHECK_BUILD_CMD@ @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Compiling using source from TGZ archive... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Run build-directory regression and benchmark testing..."
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME} @DISTCHECK_REGRESS_CMD@ @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME}/bench ../${BIN_DIR}/benchmark run TIMEFRAME=1 @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Run build-directory regression and benchmark testing... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Install from tgz build directory..."
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME} @DISTCHECK_INSTALL_CMD@ @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Install from tgz build directory... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Test distclean rule..."
+  COMMAND ${CMAKE_COMMAND} -E remove -f "distcheck-${TARGET_SUFFIX}/${build_dir}/bench/summary"
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME} ${CMAKE_COMMAND} --build . --target distclean @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-${TARGET_SUFFIX}-finalstat.cmake
+  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-${TARGET_SUFFIX}-eval_status.cmake
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Test distclean rule... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Clear tgz archive sources and build directory..."
+  COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME}
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Clear tgz archive sources and build directory... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Run benchmark testing from tgz archive installed build..."
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX} ${install_dir}/${BIN_DIR}/benchmark run TIMEFRAME=1 @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX} ${install_dir}/${BIN_DIR}/benchmark clean @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Run benchmark testing from installed build... Done."
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Cleanup..."
+  COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-${TARGET_SUFFIX}
+  COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Cleanup... Done."
+  COMMENT "[distcheck-${TARGET_SUFFIX}] Peforming distcheck - ${TARGET_SUFFIX} configuration..."
   DEPENDS distcheck-source_archives
   )
