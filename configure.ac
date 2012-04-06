@@ -4280,6 +4280,7 @@ AC_CONFIG_FILES([
 	src/conv/iges/Makefile
 	src/conv/intaval/Makefile
 	src/conv/step/Makefile
+	src/conv/vdeck/Makefile
 	src/external/Makefile
 	src/external/Cubit/Makefile
 	src/external/ProEngineer/Makefile
@@ -4391,7 +4392,6 @@ AC_CONFIG_FILES([
 	src/tclscripts/swidgets/scripts/Makefile
 	src/tclscripts/util/Makefile
 	src/util/Makefile
-	src/vdeck/Makefile
 	src/vfont/Makefile
 ])
 

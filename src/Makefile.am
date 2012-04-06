@@ -85,8 +85,7 @@ kitchensink_dirs = \
 	sig \
 	tab \
 	tclscripts \
-	util \
-	vdeck
+	util
 
 #######################
 # put it all together #

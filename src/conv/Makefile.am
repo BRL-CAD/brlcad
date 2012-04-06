@@ -40,12 +40,14 @@ else !ONLY_BENCHMARK
 SUBDIRS = \
 	${IGESDIR} \
 	${INTAVALDIR} \
-	${STEPDIR}
+	${STEPDIR} \
+	vdeck
 
 DIST_SUBDIRS = \
 	iges \
 	intaval \
-	step
+	step \
+	vdeck
 
 bin_PROGRAMS = \
 	3dm-g \
