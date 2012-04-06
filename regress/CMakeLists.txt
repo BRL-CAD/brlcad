@@ -73,7 +73,7 @@ if(SH_EXEC)
     DEPENDS regress-mged regress-moss regress-lights
     regress-solids regress-shaders regress-spdi regress-iges
     regress-weight regress-gqa regress-fastgen regress-bots
-    regress-flawfinder regress-repository regress-red regress-nirt
+    regress-repository regress-red regress-nirt
     regress-vls
     )
 
