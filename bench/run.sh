@@ -52,8 +52,8 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # save the precious args
 ARGS="$*"
-NAME_OF_THIS=`basename $0`
-PATH_TO_THIS=`dirname $0`
+NAME_OF_THIS="`basename \"$0\"`"
+PATH_TO_THIS="`dirname \"$0\"`"
 THIS="$PATH_TO_THIS/$NAME_OF_THIS"
 
 # sanity check
