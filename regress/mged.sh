@@ -1,3 +1,4 @@
+#!/bin/sh
 #                       M G E D . S H
 # BRL-CAD
 #

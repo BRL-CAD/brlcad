@@ -1,3 +1,4 @@
+#!/bin/sh
 #                   R E P O S I T O R Y . S H
 # BRL-CAD
 #

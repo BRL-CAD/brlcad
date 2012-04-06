@@ -1,3 +1,4 @@
+#!/bin/sh
 #                        B O T S . S H
 # BRL-CAD
 #

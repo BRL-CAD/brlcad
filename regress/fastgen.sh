@@ -1,3 +1,4 @@
+#!/bin/sh
 #                     F A S T G E N . S H
 # BRL-CAD
 #

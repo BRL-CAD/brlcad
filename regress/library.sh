@@ -1,3 +1,4 @@
+#!/bin/sh
 #                      L I B R A R Y . S H
 # BRL-CAD
 #
