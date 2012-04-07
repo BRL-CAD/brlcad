@@ -79,13 +79,14 @@ get_line(char *cp, int buflen, char *title)
 int
 getint(char *cp, int start, size_t len)
 {
-    char	buf[128];
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    int result;
 
-    if (len > sizeof(buf))
-	len = sizeof(buf);
+    bu_vls_strncpy(&vls, cp+start, len);
+    result = atoi(vls.vls_str);
+    bu_vls_free(&vls);
 
-    bu_strlcpy(buf, cp+start, len);
-    return atoi(buf);
+    return result;
 }
 
 /*
@@ -94,13 +95,14 @@ getint(char *cp, int start, size_t len)
 double
 getdouble(char *cp, int start, size_t len)
 {
-    char	buf[128];
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    double result;
 
-    if (len > sizeof(buf))
-	len = sizeof(buf);
+    bu_vls_strncpy(&vls, cp+start, len);
+    result = atof(vls.vls_str);
+    bu_vls_free(&vls);
 
-    bu_strlcpy(buf, cp+start, len);
-    return atof(buf);
+    return result;
 }
 
 /*		N A M E C V T	 */
