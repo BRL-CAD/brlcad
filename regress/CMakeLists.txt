@@ -91,7 +91,8 @@ CMAKEFILES(
   fastgen.sh 
   fastgen_dos.fast4 
   flawfinder.sh 
-  gqa.sh 
+  gcv
+  gqa.sh
   iges.sh 
   library.sh 
   lights.sh 
@@ -119,7 +120,6 @@ CMAKEFILES(
   vdeck-comgeom-g.sh
   vls.sh
   weight.sh
-  gcv
   )
 
 set(regress_outfiles
