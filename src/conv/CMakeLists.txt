@@ -207,7 +207,6 @@ ADD_MAN_PAGES(1 conv_MANS)
 
 set(conv_ignore_files
   Formats.csv
-  comgeom/3d.h
   comgeom/try.sh
   dbclean.sh
   dxf/dxf.h

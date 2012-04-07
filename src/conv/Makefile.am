@@ -373,7 +373,6 @@ walk_example_LDADD = ${RT}
 dist_bin_SCRIPTS = intaval-g.py
 
 noinst_HEADERS = \
-	comgeom/3d.h \
 	dxf/dxf.h \
 	patch/patch-g.h \
 	shp/shapelib/shapefil.h
