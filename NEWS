@@ -10,7 +10,7 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2012-02-XX  Release 7.21.X                                     ---
+--- 2012-04-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
 * improved support for the Intel C/C++ compiler (icc) - Sean Morrison
