@@ -9,3 +9,10 @@ pkgIndex_BUILD(swidgets tclscripts/swidgets)
 tclIndex_BUILD(swidgets tclscripts/swidgets)
 
 CMAKEFILES(Makefile.am pkgIndex.tcl tclIndex)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

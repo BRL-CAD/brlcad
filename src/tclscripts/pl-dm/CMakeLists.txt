@@ -9,3 +9,10 @@ tclIndex_BUILD(pl-dm tclscripts/pl-dm)
 
 CMAKEFILES(pkgIndex.tcl tclIndex)
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

@@ -353,3 +353,10 @@ set(html_ignore_files
   manuals/mged/Makefile.am
   )
 CMAKEFILES(${html_ignore_files})
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

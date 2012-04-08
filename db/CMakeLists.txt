@@ -59,3 +59,10 @@ if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
 	BRLCAD_ADDDATA(terra.dsp db)
 endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
 CMAKEFILES(Makefile.am cornell.rt db.php include)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

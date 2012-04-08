@@ -30,3 +30,10 @@ install(FILES brlman.1 DESTINATION ${MAN_DIR}/man1)
 
 CMAKEFILES(brlman.1 brlman.sh.in)
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

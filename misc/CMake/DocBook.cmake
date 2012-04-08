@@ -281,3 +281,10 @@ macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir deps_list)
 endmacro(DOCBOOK_TO_PDF targetname_suffix srcfile outfile targetdir deps_list)
 
 
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

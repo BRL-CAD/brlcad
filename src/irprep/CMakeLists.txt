@@ -32,3 +32,10 @@ set(irprep_MANS
 ADD_MAN_PAGES(1 irprep_MANS)
 CMAKEFILES(pictx.1 pictx.c)
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

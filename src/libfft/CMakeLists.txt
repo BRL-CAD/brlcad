@@ -50,3 +50,10 @@ SET_TARGET_PROPERTIES(libfft PROPERTIES VERSION 19.0.1 SOVERSION 19)
 add_executable(fftest fftest.c)
 target_link_libraries(fftest libfft ${M_LIBRARY})
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

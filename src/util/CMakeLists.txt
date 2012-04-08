@@ -270,3 +270,10 @@ set(util_MANS
 ADD_MAN_PAGES(1 util_MANS)
 CMAKEFILES(bombardier.h morphedit.tcl pldebug.c)
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

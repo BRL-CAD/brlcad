@@ -50,3 +50,10 @@ if(ITK_LIBRARY MATCHES "^itk$" AND BRLCAD_ENABLE_TK)
 endif(ITK_LIBRARY MATCHES "^itk$" AND BRLCAD_ENABLE_TK)
 
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

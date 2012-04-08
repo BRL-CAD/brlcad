@@ -49,3 +49,10 @@ set(lgt_ignore_files
   )
 CMAKEFILES(${lgt_ignore_files})
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

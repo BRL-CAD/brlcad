@@ -25,3 +25,10 @@ pkgIndex_BUILD(rtwizard_lib tclscripts/rtwizard/lib)
 tclIndex_BUILD(rtwizard_lib tclscripts/rtwizard/lib)
 
 CMAKEFILES(Makefile.am pkgIndex.tcl tclIndex)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

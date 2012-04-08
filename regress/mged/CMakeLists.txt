@@ -110,3 +110,10 @@ endforeach(testfile ${MGED_TESTS})
 
 list(SORT MGED_TEST_LIST)
 add_custom_target(regress-mged-cmds DEPENDS ${MGED_TEST_LIST})
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

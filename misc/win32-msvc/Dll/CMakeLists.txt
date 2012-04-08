@@ -120,3 +120,10 @@ install(TARGETS brlcad
   )
 
 install(FILES ${COREINTERFACE_HEADERS} DESTINATION include/brlcad)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

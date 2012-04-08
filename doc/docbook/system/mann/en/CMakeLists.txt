@@ -246,3 +246,10 @@ DOCBOOK_TO_MAN(mann docbook_mann_EN n nged man/mann "")
 if(BRLCAD_EXTRADOCS_PDF_MAN)
   DOCBOOK_TO_PDF(mann docbook_mann_EN pdf/mann/en "")
 endif(BRLCAD_EXTRADOCS_PDF_MAN)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

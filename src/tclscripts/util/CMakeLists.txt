@@ -7,3 +7,10 @@ pkgIndex_BUILD(util tclscripts/util)
 tclIndex_BUILD(util tclscripts/util)
 
 CMAKEFILES(Makefile.am pkgIndex.tcl tclIndex)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

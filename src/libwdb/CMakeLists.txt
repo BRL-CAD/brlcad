@@ -52,3 +52,10 @@ endif(CPP_DLL_DEFINES)
 
 ADD_MAN_PAGES(3 libwdb.3)
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

@@ -97,3 +97,10 @@ endif(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_MAN OR BRLCAD_EXTRADOCS_PDF)
 CMAKEFILES(README fop.xconf.in log4j.properties resources)
 CMAKEFILES(README.DB_authors_notes)
 CMAKEFILES(css/brlcad.css)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

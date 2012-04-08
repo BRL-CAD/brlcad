@@ -17,3 +17,10 @@ BRLCAD_ADDDATA(nonie.r.12 vfont)
 
 CMAKEFILES(vfont.h)
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

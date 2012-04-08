@@ -81,3 +81,10 @@ pkgIndex_BUILD(tclscripts tclscripts)
 tclIndex_BUILD(tclscripts tclscripts)
 
 CMAKEFILES(README Makefile.am pkgIndex.tcl tclIndex hv3_man_browser_test.tcl)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

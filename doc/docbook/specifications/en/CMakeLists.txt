@@ -5,3 +5,10 @@ set(docbook_specifications_EN
 DOCBOOK_TO_HTML(specification docbook_specifications_EN html/specifications/en "")
 
 DOCBOOK_TO_PDF(specification docbook_specifications_EN pdf/specifications/en "")
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

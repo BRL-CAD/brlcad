@@ -15,3 +15,10 @@ set(LIBICV_SOURCES
 BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "libbu;${PNG_LIBRARY}")
 SET_TARGET_PROPERTIES(libicv PROPERTIES VERSION 19.0.1 SOVERSION 19)
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

@@ -40,3 +40,10 @@ if(SH_EXEC)
 		${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/benchmark clobber
 		)
 endif(SH_EXEC)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

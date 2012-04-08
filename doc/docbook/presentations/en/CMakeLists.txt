@@ -13,3 +13,10 @@ BRLCAD_ADDDATA(docbook_presentations_EN_IMAGES ${DOC_DIR}/html/presentations/en/
 
 DOCBOOK_TO_HTML(presentation docbook_presentations_EN html/presentations/en docbook_presentations_EN_IMAGES_cp)
 DOCBOOK_TO_PDF(presentation docbook_presentations_EN pdf/presentations/en docbook_presentations_EN_IMAGES_cp)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

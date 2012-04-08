@@ -12,3 +12,10 @@ if(HAVE_TERMLIB)
   CMAKEFILES(termio_win32.c)
   CMAKEFILES(Makefile.am)
 endif(HAVE_TERMLIB)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

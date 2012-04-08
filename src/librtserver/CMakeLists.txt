@@ -16,3 +16,10 @@ set_target_properties(rtserver PROPERTIES SUFFIX ".jnilib")
 BRLCAD_ADDEXEC(rtserverTest rtserverTest.c "libbu;rtserver" NO_INSTALL)
 
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

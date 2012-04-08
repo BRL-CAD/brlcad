@@ -13,3 +13,10 @@ SET_TARGET_PROPERTIES(liborle PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 ADD_MAN_PAGES(3 liborle.3)
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

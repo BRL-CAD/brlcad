@@ -437,7 +437,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
       DISTCLEAN(${targetfile})
     endif(NOT ${targetfile} MATCHES "distclean")
   endfunction(configure_file)
-  
+
   # Override and wrap add_subdirctory.
   function(add_subdirectory name)
     _add_subdirectory(${name} ${ARGN})
@@ -1078,12 +1078,12 @@ if(APACHE_FOP)
   execute_process(COMMAND ${APACHE_FOP} -v OUTPUT_VARIABLE APACHE_FOP_INFO ERROR_QUIET)
   string(REGEX REPLACE "FOP Version ([0-9\\.]*)" "\\1" APACHE_FOP_VERSION_REGEX "${APACHE_FOP_INFO}")
   if(APACHE_FOP_VERSION_REGEX)
-	  string(STRIP ${APACHE_FOP_VERSION_REGEX} APACHE_FOP_VERSION_REGEX)
+    string(STRIP ${APACHE_FOP_VERSION_REGEX} APACHE_FOP_VERSION_REGEX)
   endif(APACHE_FOP_VERSION_REGEX)
   if(NOT "${APACHE_FOP_VERSION}" STREQUAL "${APACHE_FOP_VERSION_REGEX}")
-	  message("-- Found Apache FOP: version ${APACHE_FOP_VERSION_REGEX}")
-	  set(APACHE_FOP_VERSION ${APACHE_FOP_VERSION_REGEX} CACHE STRING "Apache FOP version" FORCE)
-	  mark_as_advanced(APACHE_FOP_VERSION)
+    message("-- Found Apache FOP: version ${APACHE_FOP_VERSION_REGEX}")
+    set(APACHE_FOP_VERSION ${APACHE_FOP_VERSION_REGEX} CACHE STRING "Apache FOP version" FORCE)
+    mark_as_advanced(APACHE_FOP_VERSION)
   endif(NOT "${APACHE_FOP_VERSION}" STREQUAL "${APACHE_FOP_VERSION_REGEX}")
 endif(APACHE_FOP)
 
@@ -1912,13 +1912,13 @@ if(CMAKE_CONFIGURATION_TYPES)
   endif(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
   file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
   add_custom_command(
-	  OUTPUT "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
-	  COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake"
-	  COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}"
-	  COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake"
-	  COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/PATH.tmp" "${CMAKE_BINARY_DIR}/include/conf/PATH"
-	  COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
-	  )
+    OUTPUT "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
+    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake"
+    COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}"
+    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/PATH.tmp" "${CMAKE_BINARY_DIR}/include/conf/PATH"
+    COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
+    )
   add_custom_target(multiconfig_path DEPENDS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done")
   # To make sure this command runs in time for the source code builds it might impact, we will need to add the output file as a dependency
   # to the first target to run - the timestamp printing.
@@ -2178,7 +2178,7 @@ elseif("${CMAKE_GENERATOR}" MATCHES "Ninja")
     )
 else("${CMAKE_GENERATOR}" MATCHES "Make")
   add_custom_target(distclean
-	 COMMAND ${CMAKE_COMMAND} -E echo "Not implemented for generator ${CMAKE_GENERATOR}"
+    COMMAND ${CMAKE_COMMAND} -E echo "Not implemented for generator ${CMAKE_GENERATOR}"
     )
 endif("${CMAKE_GENERATOR}" MATCHES "Make")
 
@@ -2202,3 +2202,10 @@ if(NOT BRLCAD_IS_SUBBUILD)
 endif(NOT BRLCAD_IS_SUBBUILD)
 
 
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

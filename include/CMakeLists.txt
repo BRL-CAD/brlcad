@@ -108,3 +108,10 @@ CMAKEFILES(${brlcadinclude_wanted})
 CMAKEFILES(${brlcadnoinst_HEADERS})
 CMAKEFILES(${brlcadinclude_misc})
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

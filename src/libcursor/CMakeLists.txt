@@ -11,3 +11,10 @@ if(HAVE_TERMLIB)
   ADD_MAN_PAGES(3 libcursor.3)
   CMAKEFILES(Makefile.am)
 endif(HAVE_TERMLIB)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

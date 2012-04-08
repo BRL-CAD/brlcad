@@ -147,3 +147,10 @@ macro(CMAKEFILES_IN_DIR filestoignore targetdir)
 endmacro(CMAKEFILES_IN_DIR)
 
 
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

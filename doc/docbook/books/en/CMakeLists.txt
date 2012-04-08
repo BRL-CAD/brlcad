@@ -150,3 +150,10 @@ if(BRLCAD_EXTRADOCS_PDF)
 endif(BRLCAD_EXTRADOCS_PDF)
 
 CMAKEFILES(tutorial_series_authors.xml)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

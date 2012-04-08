@@ -16,3 +16,10 @@ set(LIBANALYZE_SOURCES
 BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" libbu)
 SET_TARGET_PROPERTIES(libanalyze PROPERTIES VERSION 19.0.1 SOVERSION 19)
 CMAKEFILES(Makefile.am test_density.c)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

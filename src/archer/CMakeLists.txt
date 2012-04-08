@@ -109,3 +109,10 @@ set(archer_ignore_files
   )
 CMAKEFILES(${archer_ignore_files})
 CMAKEFILES(Makefile.am plugins/Makefile.am plugins/Utility/Makefile.am plugins/Wizards/Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

@@ -263,3 +263,10 @@ set(archer_images
 
 BRLCAD_ADDDATA(archer_images tclscripts/archer/images)
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

@@ -228,3 +228,10 @@ CONFIGURE_file(pad_file.xml.in ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml DESTINATION ${DATA_DIR}/${DOC_DIR})
 
 CMAKEFILES(Makefile.am pad_file.xml.in STARTERS)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

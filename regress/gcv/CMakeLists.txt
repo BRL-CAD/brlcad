@@ -10,3 +10,10 @@ add_custom_command(
 add_custom_target(dem-regress DEPENDS dem-g ${CMAKE_CURRENT_BINARY_DIR}/dem/hawaii-c.done)
 
 CMAKEFILES(dem)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

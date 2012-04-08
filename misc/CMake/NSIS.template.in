@@ -1,4 +1,6 @@
 ; CPack install script designed for a nmake build
+; A customized version of the standard template included
+; with CMake
 
 RequestExecutionLevel user
 

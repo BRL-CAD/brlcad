@@ -111,3 +111,10 @@ if(BRLCAD_EXTRADOCS_PDF)
 endif(BRLCAD_EXTRADOCS_PDF)
 
 CMAKEFILES(images/tire_fig12.svg images/tire_fig13.svg)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

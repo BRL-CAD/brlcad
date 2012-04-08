@@ -461,3 +461,10 @@ BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "libwdb;librt;libbu;steputils;stepcore;
 
 DISTCLEAN(${SCHEMA_OUT_DIR}/make_schema)
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
