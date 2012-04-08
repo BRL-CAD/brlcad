@@ -1,8 +1,8 @@
-.PHONY : regression regress test mged red moss lights solids shaders spdi iges weight gqa fastgen bots flawfinder repository
+.PHONY : regression regress test mged red moss lights solids shaders spdi iges weight gqa fastgen bots flawfinder repository vdeck-comgeom-g
 
 SUBDIRS = mged
 
-regression: clean mged moss lights solids shaders spdi iges weight gqa fastgen bots flawfinder repository
+regression: clean mged moss lights solids shaders spdi iges weight gqa fastgen bots flawfinder repository vdeck-comgeom-g
 	@${ECHO} ---
 	@${ECHO} Regression testing completed.
 
@@ -64,6 +64,10 @@ flawfinder: $(top_srcdir)/regress/flawfinder.sh
 
 repository: $(top_srcdir)/regress/repository.sh
 	-${SH} $(top_srcdir)/regress/repository.sh $(top_srcdir)
+	@${ECHO} +++ $@ test complete.
+
+vdeck-comgeom-g: $(top_srcdir)/regress/vdeck-comgeom-g.sh
+	-${SH} $(top_srcdir)/regress/vdeck-comgeom-g.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
 # these are here because they go in the distribution but are not installed
@@ -183,8 +187,7 @@ CLEANFILES = \
 	weight.mged \
 	weight.out \
 	weight.ref \
-	wgt.out \
-	CMakeLists.txt
+	wgt.out
 
 MOSTLYCLEANFILES = \
 	fastgen.log \
