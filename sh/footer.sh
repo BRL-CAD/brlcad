@@ -228,6 +228,13 @@ case $FILE in
 	wrap=0
 	commentchar="#"
 	;;
+    *.cmake.in )
+	echo "$FILE is a CMake template file"
+	mode="cmake"
+	wrap=0
+	commentchar="#"
+	indentation=2
+	;;
     *.in )
 	echo "$FILE is an Autoconf template file"
 	mode="autoconf"
@@ -278,6 +285,14 @@ case $FILE in
 	mode="cmake"
 	wrap=0
 	commentchar="#"
+	indentation=2
+	;;
+    *CMakeLists.txt )
+	echo "$FILE is a CMake build file"
+	mode="cmake"
+	wrap=0
+	commentchar="#"
+	indentation=2
 	;;
     *.[0-9] )
 	echo "$FILE is a manual page"
