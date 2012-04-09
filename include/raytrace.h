@@ -2441,6 +2441,10 @@ RT_EXPORT extern int rt_gen_circular_grid(struct xrays *ray_bundle,
 RT_EXPORT extern int rt_shootray(struct application *ap);
 /* Shoot a bundle of rays */
 RT_EXPORT extern int rt_shootrays(struct application_bundle *bundle);
+/* Shoot a ray, returning the partition list */
+RT_EXPORT extern struct partition *rt_shootray_simple(struct application *ap,
+						      point_t origin,
+						      vect_t direction);
 /* Get expr tree for object */
 RT_EXPORT extern void rt_free_soltab(struct soltab   *stp);
 RT_EXPORT extern int rt_gettree(struct rt_i *rtip,

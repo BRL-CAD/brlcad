@@ -1895,6 +1895,48 @@ rt_add_res_stats(register struct rt_i *rtip, register struct resource *resp)
     rt_zero_res_stats(resp);
 }
 
+static int
+rt_shootray_simple_hit(struct application *a, struct partition *PartHeadp, struct seg *UNUSED(s))
+{
+    a->a_uptr = (genptr_t)PartHeadp;
+    return 0;
+}
+
+static int
+rt_shootray_simple_miss(struct application *a)
+{
+    a->a_uptr = NULL;
+    return 0;
+}
+
+/**
+ * Shoot a single ray and return the partition list. Handles callback issues.
+ */
+struct partition *
+rt_shootray_simple(struct application *a, point_t origin, vect_t direction)
+{
+    int (*hit)(struct application *, struct partition *, struct seg *);
+    int (*miss)(struct application *);
+    void (*logoverlap)(struct application *, const struct partition *, const struct bu_ptbl *, const struct partition *);
+
+    hit = a->a_hit;
+    miss = a->a_miss;
+    logoverlap = a->a_logoverlap;
+
+    a->a_logoverlap = rt_silent_logoverlap;
+    a->a_hit = rt_shootray_simple_hit;
+    a->a_miss = rt_shootray_simple_miss;
+    VMOVE(a->a_ray.r_pt, origin);
+    VMOVE(a->a_ray.r_dir, direction);
+    rt_shootray(a);
+
+    a->a_hit = hit;
+    a->a_miss = miss;
+    a->a_logoverlap = logoverlap;
+
+    return (struct partition *)a->a_uptr;
+}
+
 
 /** @} */
 /*
