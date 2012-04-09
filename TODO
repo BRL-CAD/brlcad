@@ -24,6 +24,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * fix bottie crash on 32b builds
 
+* investigate bottie '1 unit closer' issue indianlarry saw in frv
+
 * review and test extensively (post-coverity review)
 
 * investigate and fix the idents command first column bug
