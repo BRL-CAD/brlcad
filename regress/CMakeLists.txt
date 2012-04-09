@@ -120,6 +120,8 @@ CMAKEFILES(
   vdeck-comgeom-g.sh
   vls.sh
   weight.sh
+  vdeck-comgeom-g/m35.asc.gz
+  vdeck-comgeom-g/m35.g.gift5.txt
   )
 
 set(regress_outfiles
