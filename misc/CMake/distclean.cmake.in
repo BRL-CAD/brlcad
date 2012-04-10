@@ -45,7 +45,7 @@ set(clear_files "@CMAKE_DISTCLEAN_TARGET_LIST@")
 file(REMOVE_RECURSE ${clear_files})
 # Clean up after CPack
 if(EXISTS "@BRLCAD_BINARY_DIR@/_CPack_Packages")
-  file(REMOVE_RECURSE "@BRLCAD_BINARY_DIR@/_CPackPackages")
+  file(REMOVE_RECURSE "@BRLCAD_BINARY_DIR@/_CPack_Packages")
 endif(EXISTS "@BRLCAD_BINARY_DIR@/_CPack_Packages")
 if(EXISTS "@BRLCAD_BINARY_DIR@/source_archive_contents")
   file(REMOVE_RECURSE "@BRLCAD_BINARY_DIR@/source_archive_contents")
