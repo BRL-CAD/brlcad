@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * fixed field truncation bug in comgeom-g importer - Tom Browder
+* fixed log file clobber bug in the benchmark suite - Cliff Yapp
 * improved support for the Intel C/C++ compiler (icc) - Sean Morrison
 * now sorting top level object alphabetically in rtwizard - Cliff Yapp
 * "About BRL-CAD" article translation to Russian - Ilya
