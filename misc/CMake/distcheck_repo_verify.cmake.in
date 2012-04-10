@@ -252,6 +252,11 @@ if(SVN_FILES_NOT_IN_BUILD OR BUILD_FILES_NOT_IN_SVN)
   message(FATAL_ERROR "Distcheck cannot proceed until the above errors are corrected.")
 endif(SVN_FILES_NOT_IN_BUILD OR BUILD_FILES_NOT_IN_SVN)
 
+# OK, no fatal errors - clean up the text files
+file(REMOVE @CMAKE_BINARY_DIR@/build_files_list.txt)
+file(REMOVE @CMAKE_BINARY_DIR@/svn_files_list.txt)
+file(REMOVE @CMAKE_BINARY_DIR@/ground_truth.txt)
+
 # If we have subversion, we need one type of error message
 if(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
 

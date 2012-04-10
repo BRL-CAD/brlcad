@@ -52,6 +52,10 @@
 # try to catch improperly specified files, but if the build directory 
 # and the source directory are one and the same this will not be 
 # possible.
+
+define_property(GLOBAL PROPERTY CMAKE_IGNORE_FILES BRIEF_DOCS "distcheck ignore files" FULL_DOCS "List of files known to CMake")
+define_property(GLOBAL PROPERTY CMAKE_IGNORE_DIRS BRIEF_DOCS "distcheck ignore dirs" FULL_DOCS "List of directories marked as fully known to CMake")
+
 macro(CMAKEFILES)
   if(NOT BRLCAD_IS_SUBBUILD)
     foreach(ITEM ${ARGN})
@@ -99,11 +103,11 @@ macro(CMAKEFILES)
 	    endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
 	    # Append files and directories to their respective lists.
 	    if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-	      file(APPEND "${CMAKE_BINARY_DIR}/cmakedirs.cmake" "${ITEM_ABS_PATH}/${ITEM_NAME}\n")
+	      set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_DIRS "${ITEM_ABS_PATH}/${ITEM_NAME}")
 	    else(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-	      file(APPEND "${CMAKE_BINARY_DIR}/cmakefiles.cmake" "${ITEM_ABS_PATH}/${ITEM_NAME}\n")
+	      set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${ITEM_ABS_PATH}/${ITEM_NAME}")
 	    endif(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-	    file(APPEND	"${CMAKE_BINARY_DIR}/cmakefiles.cmake" "${ITEM_ABS_PATH}\n")
+	    set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${ITEM_ABS_PATH}")
 	    # Add the parent directories of the specified file or directory as well - 
 	    # the convention is that once at least one file or directory in a path is recorded
 	    # by the build logic, the parent direcories along that path have also been recorded.
@@ -113,7 +117,7 @@ macro(CMAKEFILES)
 	      if(NOT "${ITEM_PATH}" STREQUAL "")
 		get_filename_component(ITEM_ABS_PATH "${ITEM_PATH}" ABSOLUTE)
 		if(NOT "${ITEM_NAME}" STREQUAL "..")
-		  file(APPEND "${CMAKE_BINARY_DIR}/cmakefiles.cmake" "${ITEM_ABS_PATH}\n")
+	          set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${ITEM_ABS_PATH}")
 		endif(NOT "${ITEM_NAME}" STREQUAL "..")
 	      endif(NOT "${ITEM_PATH}" STREQUAL "")
 	    endwhile(NOT "${ITEM_PATH}" STREQUAL "")
@@ -124,9 +128,9 @@ macro(CMAKEFILES)
 	    message(FATAL_ERROR "Attempting to ignore non-existent file ${ITEM}, in directory ${CMAKE_CURRENT_SOURCE_DIR}")
 	  endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
 	  if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-	    file(APPEND	"${CMAKE_BINARY_DIR}/cmakedirs.cmake" "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM_NAME}\n")
+	    set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM_NAME}")
 	  else(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-	    file(APPEND	"${CMAKE_BINARY_DIR}/cmakefiles.cmake" "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM_NAME}\n")
+	    set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM_NAME}")
 	  endif(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
 	endif(NOT "${ITEM_PATH}" STREQUAL "")
       endif(CMAKEFILES_DO_TEST)

@@ -54,7 +54,6 @@ SET(iwidgets_MANS
 	)
 
 foreach(manpage ${iwidgets_MANS})
-  file(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${manfile}\n")
   configure_file(${manpage} ${CMAKE_BINARY_DIR}/${MAN_DIR}/mann/iwidgets_${manpage})
   install(FILES ${CMAKE_BINARY_DIR}/${MAN_DIR}/mann/iwidgets_${manpage} DESTINATION ${MAN_DIR}/mann)
   foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})

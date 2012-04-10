@@ -368,9 +368,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
   mark_as_advanced(CMAKE_CUSTOM_TARGET_LIST)
   mark_as_advanced(CMAKE_EXTERNAL_TARGET_LIST)
 
-  # Need build_files_list to be clear each CMake run	
-  file(WRITE ${CMAKE_BINARY_DIR}/build_files_list.txt "")
-
   # Override and wrap add_library.  While we're at it, avoid doubling up
   # on the lib prefix for libraries if the target name is lib<target>
   function(add_library name)
@@ -427,7 +424,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
       if("${SUBPATH_TEST}" STREQUAL "0")
 	IS_SUBPATH("${CMAKE_SOURCE_DIR}" "${item_absolute}" SUBPATH_TEST)
 	if("${SUBPATH_TEST}" STREQUAL "1")
-	  file(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${item_absolute}\n")
+	  set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${item_absolute}")
 	endif("${SUBPATH_TEST}" STREQUAL "1")
       else("${SUBPATH_TEST}" STREQUAL "0")
 	message(WARNING "The generated file ${file} is passed to configure_file but does not have the GENERATED source file property set in CMake.  It is HIGHLY recommended that the generated property be set for this file in ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt using a command with the following form:\nset_source_files_properties(<file> PROPERTIES GENERATED TRUE)\n(or in ${CMAKE_SOURCE_DIR}/src/other/CMakeLists.txt for third party components with their own build system.)\n")
@@ -441,8 +438,8 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # Override and wrap add_subdirctory.
   function(add_subdirectory name)
     _add_subdirectory(${name} ${ARGN})
-    file(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${CMAKE_CURRENT_SOURCE_DIR}/${name}\n")
-    file(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${CMAKE_CURRENT_SOURCE_DIR}/${name}/CMakeLists.txt\n")
+    set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${name}")
+    set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${name}/CMakeLists.txt")
     DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/${name}/CMakeFiles)
     DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/${name}/cmake_install.cmake)
     foreach(clearpattern ${DISTCLEAN_OUTFILES})
@@ -451,9 +448,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
   endfunction(add_subdirectory)
 
 endif(NOT BRLCAD_IS_SUBBUILD)
-
-file(REMOVE ${CMAKE_BINARY_DIR}/cmakefiles.cmake)
-file(REMOVE ${CMAKE_BINARY_DIR}/cmakedirs.cmake)
 
 # We wrap the message function to also append ALL messages to CMakeOutput.log,
 # as well as printing them on the console output.
@@ -2068,7 +2062,6 @@ set(toplevel_ignore_files
 CMAKEFILES(${toplevel_ignore_files})
 
 # Handle some toplevel distclean listings
-DISTCLEAN(${CMAKE_BINARY_DIR}/build_files_list.txt)
 DISTCLEAN(${CMAKE_BINARY_DIR}/cmakefiles.cmake)
 DISTCLEAN(${CMAKE_BINARY_DIR}/cmakedirs.cmake)
 DISTCLEAN(${CMAKE_BINARY_DIR}/cmake_install.cmake)
@@ -2091,8 +2084,6 @@ endif("${CMAKE_GENERATOR}" MATCHES "Ninja")
 # whether BRL-CAD is in a distribution ready state.  Default to the standard
 # set of tests - Debug and Release build configurations
 include(${BRLCAD_CMAKE_DIR}/Distcheck.cmake)
-DISTCLEAN(${BRLCAD_BINARY_DIR}/ground_truth.txt)
-DISTCLEAN(${BRLCAD_BINARY_DIR}/svn_files_list.txt)
 
 # Define some custom distcheck targets for distcheck-full (not run by default)
 # 
@@ -2201,7 +2192,14 @@ if(NOT BRLCAD_IS_SUBBUILD)
   message("${CONFIG_TIME_MSG_LABEL}..: ${CONFIG_TIME_MSG}")
 endif(NOT BRLCAD_IS_SUBBUILD)
 
-
+# Have touched every file and directory that we are going to touch with the
+# build system - time to write out our lists for future processing.
+get_property(CMAKE_IGNORE_FILES GLOBAL PROPERTY CMAKE_IGNORE_FILES)
+get_property(CMAKE_IGNORE_DIRS GLOBAL PROPERTY CMAKE_IGNORE_DIRS)
+string(REPLACE ";" "\n" CMAKE_IGNORE_FILES "${CMAKE_IGNORE_FILES}")
+string(REPLACE ";" "\n" CMAKE_IGNORE_DIRS "${CMAKE_IGNORE_DIRS}")
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cmakefiles.cmake "${CMAKE_IGNORE_FILES}")
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cmakedirs.cmake "${CMAKE_IGNORE_DIRS}")
 
 # Local Variables:
 # tab-width: 8
