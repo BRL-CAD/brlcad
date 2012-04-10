@@ -22,6 +22,8 @@ include_directories(
 if(LEX_EXECUTABLE AND YACC_EXECUTABLE)
   add_subdirectory(points)
   set(MGED_EXTRA_LIBS libpoints)
+else(LEX_EXECUTABLE AND YACC_EXECUTABLE)
+  CMAKEFILES(points)
 endif(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 
 
