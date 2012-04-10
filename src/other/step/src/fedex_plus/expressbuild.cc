@@ -277,7 +277,7 @@ void ComplexList::addImplicitSubs( Linked_List subs, ComplexCollect * col )
  * list.)  If any are found they are ANDORed with the other subtypes.
  */
 {
-    EntNode node;
+    EntNode node((char *)"");
     // Temp var - used to check if this already contains certain values.
     int none_yet = TRUE;
     AndOrList * ao = 0;
