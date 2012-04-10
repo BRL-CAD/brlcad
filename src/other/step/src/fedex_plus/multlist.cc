@@ -42,6 +42,23 @@ void MultList::setLevel( int l )
     }
 }
 
+int MultList::getMaxLevel()
+{
+    EntList * child = childList;
+    int maxLevel, childLevel;
+
+    maxLevel = level;
+    while( child ) {
+        childLevel = child->getMaxLevel();
+        if (childLevel > maxLevel) {
+            maxLevel = childLevel;
+        }
+        child = child->next;
+    }
+
+    return maxLevel;
+}
+
 int MultList::contains( const char * nm )
 /*
  * Check if one of this's descendants matches nm.

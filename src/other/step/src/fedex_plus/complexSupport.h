@@ -150,6 +150,9 @@ class EntList {
         virtual void setLevel( int l ) {
             level = l;
         }
+        virtual int getMaxLevel() {
+            return level;
+        }
         virtual int contains( const char * ) = 0;
         virtual int hit( const char * ) = 0;
         virtual int isDependent( const char * ) = 0;
@@ -249,6 +252,7 @@ class MultList : public EntList {
         MultList( JoinType j ) : EntList( j ), numchildren( 0 ), childList( 0 ) {}
         ~MultList();
         void setLevel( int );
+        int getMaxLevel();
         int contains( const char * );
         int hit( const char * );
         int isDependent( const char * );
@@ -386,6 +390,9 @@ class ComplexList {
             return dependent;
         }
         void write( ostream & );
+        int getEntListMaxLevel() {
+            return head->getMaxLevel();
+        }
 
     private:
         void addSuper( Entity );
