@@ -28,16 +28,22 @@ Vendor: BRL-CAD Open Source
 Url: http://brlcad.org
 Group: Productivity/Graphics/CAD
 Source0: http://prdownloads.sourceforge.net/brlcad/brlcad-@BRLCAD_VERSION@.tar.gz
-Buildroot: /var/tmp/redhat/BUILD/brlcad-@BRLCAD_VERSION@
+BuildRoot: %{_tmppath}/%{name}-%{version}
+BuildRequires: cmake, make, sed, bison, flex
 
 %description
+BRL-CAD is a powerful cross-platform open source solid modeling system
+that includes interactive geometry editing, high-performance
+ray-tracing for rendering and geometric analysis, image and
+signal-processing tools, a system performance analysis benchmark
+suite, libraries for robust geometric representation, with more than
+25 years of active development.
 
 %prep
 %setup -q
 %build
-./configure CFLAGS="$RPM_OPT_FLAGS"
-
-make -j `/bin/cat /proc/cpuinfo | /bin/grep processor | /usr/bin/tail -n 1 | /usr/bin/cut -d : -f 2 | /bin/sed 's/.*/(&+1)*2-1/' | /usr/bin/bc`
+cmake .
+make
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -47,7 +53,7 @@ make DESTDIR=$RPM_BUILD_ROOT install
 rm -rf $RPM_BUILD_ROOT
 
 %files
-/usr/brlcad
+$RPM_BUILD_ROOT
 
 %changelog
 
