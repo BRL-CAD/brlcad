@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2012-04-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* fixed field truncation bug in comgeom-g importer - Tom Browder
 * improved support for the Intel C/C++ compiler (icc) - Sean Morrison
 * now sorting top level object alphabetically in rtwizard - Cliff Yapp
 * "About BRL-CAD" article translation to Russian - Ilya
