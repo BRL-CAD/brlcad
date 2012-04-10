@@ -101,7 +101,7 @@ void ComplexList::addChildren( EntList * ent )
     EntList * child;
     char * nm;
     EntNode * prev = list, *prev2 = NULL, *newnode;
-    int comp;
+    int comp = 0;
 
     if( ent->multiple() ) {
         child = ( ( MultList * )ent )->childList;
