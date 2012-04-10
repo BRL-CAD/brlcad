@@ -2337,7 +2337,13 @@ refresh(void)
 		    mged_variables->mv_fb_overlay &&
 		    mged_variables->mv_fb_all) {
 		    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
+
+		    if (restore_zbuffer)
+			DM_SET_ZBUFFER(dmp, 1);
 		} else {
+		    if (restore_zbuffer)
+			DM_SET_ZBUFFER(dmp, 1);
+
 		    /* Draw each solid in its proper place on the
 		     * screen by applying zoom, rotation, &
 		     * translation.  Calls DM_LOADMATRIX() and
@@ -2407,9 +2413,6 @@ refresh(void)
 	    }
 
 	    DM_DRAW_END(dmp);
-
-	    if (restore_zbuffer)
-		DM_SET_ZBUFFER(dmp, 1);
 	}
     }
 
