@@ -111,20 +111,19 @@ STEPattribute::StrToVal( const char * s, InstMgr * instances, int addFileId ) {
     }
 
     istringstream in( ( char * )s ); // sz defaults to length of s
-    int valAssigned = 0;
 
     // read in value for attribute
     switch( NonRefType() ) {
         case INTEGER_TYPE: {
-            valAssigned = ReadInteger( *( ptr.i ), s, &_error, 0 );
+            ReadInteger( *( ptr.i ), s, &_error, 0 );
             break;
         }
         case REAL_TYPE: {
-            valAssigned = ReadReal( *( ptr.r ), s, &_error, 0 );
+            ReadReal( *( ptr.r ), s, &_error, 0 );
             break;
         }
         case NUMBER_TYPE: {
-            valAssigned = ReadNumber( *( ptr.r ), s, &_error, 0 );
+            ReadNumber( *( ptr.r ), s, &_error, 0 );
             break;
         }
 

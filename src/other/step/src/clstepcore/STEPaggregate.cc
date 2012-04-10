@@ -114,7 +114,6 @@ STEPaggregate::ReadValue( istream & in, ErrorDescriptor * err,
     }
 
     char c;
-    int validDelims = 1;
 
     in >> ws; // skip white space
 
@@ -128,7 +127,6 @@ STEPaggregate::ReadValue( istream & in, ErrorDescriptor * err,
 
     if( c == '(' ) {
         in.get( c );
-        validDelims = 0; // signal expectation for end paren delim
     } else if( exchangeFileFormat ) {
         // error did not find opening delim
         // cannot recover so give up and let STEPattribute recover
@@ -197,7 +195,6 @@ STEPaggregate::ReadValue( istream & in, ErrorDescriptor * err,
     }
     if( c == ')' ) {
         _null = 0;
-//  validDelims = 1; // expectation for end paren delim is met
     } else { // expectation for end paren delim has not been met
         err->GreaterSeverity( SEVERITY_INPUT_ERROR );
         err->AppendToUserMsg( "Missing close paren for aggregate value" );

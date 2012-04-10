@@ -22,9 +22,8 @@ void print_complex( ComplexCollect & collect, char * filename )
  * recreate this CCollect.
  */
 {
-    ComplexList * cl;
-
 #ifdef COMPLEX_INFO
+    ComplexList * cl;
     if( collect.clists ) {
         // If there's something in this collect, print it out:
         cout << "\nHere's everything:\n";

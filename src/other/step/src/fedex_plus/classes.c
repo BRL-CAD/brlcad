@@ -104,7 +104,6 @@ USEREFout( Schema schema, Dictionary refdict, Linked_List reflist, char * type, 
     DictionaryEntry de;
     struct Rename * r;
     Linked_List list;
-    int level = 6;
     char td_name[BUFSIZ];
     char sch_name[BUFSIZ];
 
@@ -282,10 +281,8 @@ GetAggrElemType( const Type type ) {
 
 const char *
 TYPEget_idl_type( const Type t ) {
-    Class_Of_Type class, class2;
-    Type bt;
+    Class_Of_Type class;
     static char retval [BUFSIZ];
-    char * n;
 
     /*  aggregates are based on their base type
     case TYPE_ARRAY:
@@ -1055,14 +1052,10 @@ ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
 
 void
 ENTITYhead_print( Entity entity, FILE * file, Schema schema ) {
-    char buffer [BUFSIZ];
     char entnm [BUFSIZ];
     char attrnm [BUFSIZ];
-    char * buf = buffer;
-    char * tmp;
     Linked_List list;
     int attr_count_tmp = attr_count;
-    int super_cnt = 0;
     Entity super = 0;
 
     strncpy( entnm, ENTITYget_classname( entity ), BUFSIZ );
@@ -1275,7 +1268,6 @@ LIBdescribe_entity( Entity entity, FILE * file, Schema schema ) {
     Linked_List list;
     int attr_count_tmp = attr_count;
     char attrnm [BUFSIZ];
-    char * tmp;
 
     fprintf( file, "EntityDescriptor *%s%s%s =0;\n",
              SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
@@ -1395,9 +1387,8 @@ LIBcopy_constructor( Entity ent, FILE * file ) {
     Type t;
     char buffer [BUFSIZ],
          attrnm[BUFSIZ],
-         *b = buffer, *n = '\0';
+         *b = buffer;
     int count = attr_count;
-    char * tmp;
 
     String entnm = ENTITYget_classname( ent );
     bool opt;
@@ -1710,7 +1701,6 @@ LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
     /* added for calling parents constructor if there is one */
     char parentnm [BUFSIZ];
     char * parent = 0;
-    Link parentLink = 0;
     Entity parentEntity = 0;
 
     const char * entnm;
@@ -2590,7 +2580,6 @@ CheckEnumSymbol( char * s ) {
  ********************************************************************/
 void
 TYPEenum_inc_print( const Type type, FILE * inc ) {
-    DictionaryEntry de;
     Expression expr;
 
     char tdnm[BUFSIZ],
@@ -2698,7 +2687,6 @@ TYPEenum_lib_print( const Type type, FILE * f ) {
     DictionaryEntry de;
     Expression expr;
     const char * n;   /*  pointer to class name  */
-    char buf [BUFSIZ];
     char c_enum_ele [BUFSIZ];
 
     fprintf( f, "//////////  ENUMERATION TYPE %s\n", TYPEget_ctype( type ) );
@@ -2810,8 +2798,6 @@ strcat_bounds( TypeBody b, char * buf ) {
 }
 
 TypeBody_Description( TypeBody body, char * buf ) {
-    Expression expr;
-    DictionaryEntry de;
     char * s;
     /* I believe it should never go here? DAS
         if(body->type != array_ && body->type != list_)
@@ -2954,7 +2940,6 @@ Type_Description( const Type t, char * buf ) {
  **************************************************************************/
 void
 TYPEprint_typedefs( Type t, FILE * classes ) {
-    Class_Of_Type class;
     char nm [BUFSIZ];
     Type i;
 
@@ -3367,8 +3352,6 @@ TYPEprint_new( const Type type, FILE * create, Schema schema ) {
 
     Type tmpType = TYPEget_head( type );
     Type bodyType = tmpType;
-
-    const char * ctype = TYPEget_ctype( type );
 
     /* define type definition */
     /*  in source - the real definition of the TypeDescriptor   */

@@ -25,9 +25,7 @@ ComplexCollect::ComplexCollect( Express express )
 {
     DictionaryEntry de_sch, de_ent;
     Schema schema;
-    Expression exp;
-    Linked_List subs;
-    ComplexList * cl, *prev = NULL, *nextlist;
+    ComplexList * cl, *prev = NULL;
 
     // Some initializing:
     clists = NULL;
@@ -283,7 +281,6 @@ void ComplexList::addImplicitSubs( Linked_List subs, ComplexCollect * col )
     // Temp var - used to check if this already contains certain values.
     int none_yet = TRUE;
     AndOrList * ao = 0;
-    SimpleList * simple;
 
     LISTdo( subs, subEnt, Entity )
     strcpy( node.name, ENTITYget_name( subEnt ) );

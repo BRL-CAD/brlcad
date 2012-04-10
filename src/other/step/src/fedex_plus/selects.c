@@ -150,7 +150,7 @@ compareOrigTypes( Type a, Type b ) {
  *******************/
 const char *
 utype_member( const Linked_List list, const Type check, int rename ) {
-    static char r [BUFSIZ], *p;
+    static char r [BUFSIZ];
 
     LISTdo( list, t, Type )
     strncpy( r, TYPEget_utype( t ), BUFSIZ );
@@ -247,9 +247,8 @@ of the list.
     RETURNS 1 if true, else 0.
 *******************/
 int
-duplicate_in_express_list( const Linked_List list, const Type check ) {
-    char b [BUFSIZ];
-
+duplicate_in_express_list( const Linked_List list, const Type check )
+{
     if( TYPEis_entity( check ) ) {
         return FALSE;
     }
@@ -566,15 +565,12 @@ TYPEselect_inc_print_vars prints the class 'definition', that is, the objects
 ********************/
 void
 TYPEselect_inc_print_vars( const Type type, FILE * f, Linked_List dups ) {
-    char buffer [BUFSIZ],
-         *buf = buffer;
-    int result, size, j;
+    int size, j;
     Linked_List data_members = SELgetnew_dmlist( type );
     char dmname [BUFSIZ],
          classnm [BUFSIZ],
          tdnm [BUFSIZ];
 
-    buffer[0] = '\0';
     strncpy( classnm, SelectName( TYPEget_name( type ) ), BUFSIZ );
     strncpy( tdnm, TYPEtd_name( type ), BUFSIZ );
     size = strlen( classnm ) + 2; /* for formatting output */
@@ -669,7 +665,6 @@ void
 TYPEselect_inc_print( const Type type, FILE * f ) {
     char n[BUFSIZ];
     char tdnm [BUFSIZ];  /*  TypeDescriptor name  */
-    String attrnm;
     Linked_List dups;
     int dup_result;
     Linked_List attrs;
@@ -798,9 +793,7 @@ void
 TYPEselect_lib_print_part_one( const Type type, FILE * f, Schema schema,
                                Linked_List dups, char * n ) {
 #define schema_name SCHEMAget_name(schema)
-    char var,
-         attrnm[BUFSIZ],
-         tdnm[BUFSIZ],
+    char tdnm[BUFSIZ],
          nm[BUFSIZ];
     int size = strlen( n ) * 2 + 4, j; /* size - for formatting output */
 
@@ -1020,14 +1013,11 @@ TYPEselect_lib_print_part_three( const Type type, FILE * f, Schema schema,
          utype[BUFSIZ],    /*  underlying type name  */
          attrnm [BUFSIZ],  /*  attribute name ->  data member = _attrnm  */
          funcnm[BUFSIZ];   /*  access function name = Attrnm  */
-    Class_Of_Type class;
     Linked_List items = SEL_TYPEget_items( type );
     /* all the items in the select type  */
     Linked_List attrs = SEL_TYPEgetnew_attribute_list( type );
     /*  list of attributes with unique names */
-    Linked_List supers;
-    Entity super,  /*  supertype used for super class with single inheritance  */
-           ent;
+    Entity ent;
     Variable uattr;     /*  attribute in underlying type  */
 
     fprintf( f, "\n\t//  part 3\n" );
@@ -1104,7 +1094,7 @@ TYPEselect_lib_print_part_three( const Type type, FILE * f, Schema schema,
                          StrToUpper( TYPEget_name( t ) ) );
         }
         LISTod;
-        PRINT_BUG_REPORT( f );
+        PRINT_BUG_REPORT
 
         /* If the return type is an enumeration class then you can\'t
             return NULL.  Instead I made the return type the
@@ -1199,8 +1189,7 @@ class.
 void
 TYPEselect_lib_print_part_four( const Type type, FILE * f, Schema schema,
                                 Linked_List dups, char * n ) {
-    char nvar = tolower( n[4] ),
-         x[BUFSIZ];
+    char x[BUFSIZ];
     int firsttime = 1;
 
     fprintf( f, "\n\t//  part 4\n" );
@@ -1373,7 +1362,7 @@ TYPEselect_init_print( const Type type, FILE * f, Schema schema ) {
 
 void
 TYPEselect_lib_part21( const Type type, FILE * f, Schema schema ) {
-    char n[BUFSIZ], *z;   /*  pointers to class name(s)  */
+    char n[BUFSIZ];       /*  pointers to class name(s)  */
     const char * dm;  /*  data member name */
     Linked_List data_members = SELgetnew_dmlist( type );
 
@@ -1647,7 +1636,7 @@ TYPEselect_lib_part21( const Type type, FILE * f, Schema schema ) {
 
 void
 TYPEselect_lib_StrToVal( const Type type, FILE * f, Schema schema ) {
-    char n[BUFSIZ], *z;   /*  pointers to class name  */
+    char n[BUFSIZ];       /*  pointers to class name  */
     Linked_List data_members = SELgetnew_dmlist( type );
     int enum_cnt = 0;
 
