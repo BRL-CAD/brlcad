@@ -76,6 +76,9 @@
 #include "common.h"
 
 /* for sqrt(), sin(), cos(), rint(), etc */
+#ifdef WIN32
+# define _USE_MATH_DEFINES
+#endif
 #include <math.h>
 
 /* for floating point tolerances and other math constants */
