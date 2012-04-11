@@ -133,6 +133,8 @@ void print_file( Express );
 void resolution_success( void );
 void SCHEMAprint( Schema, FILES *, Express, void *, int );
 Type TYPEget_ancestor( Type );
+const char * GetTypeDescriptorName(Type t);
+const char * FundamentalType( const Type t, int report_reftypes );
 
 /*Variable*/
 /*VARis_simple_explicit (Variable a)*/

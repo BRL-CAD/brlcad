@@ -28,8 +28,6 @@ static char rcsid[] = "$Id: classes.c,v 3.0.1.11 1997/09/18 21:14:46 sauderd Exp
 #include <stdlib.h>
 #include "classes.h"
 
-char * FundamentalType( const Type t, int report_reftypes );
-
 static_inline
 bool
 LISTempty( Linked_List list ) {
@@ -61,7 +59,6 @@ int old_accessors = 0;
 static attr_count;  /* number each attr to avoid inter-entity clashes */
 static type_count;  /* number each temporary type for same reason above */
 
-char * FundamentalType( const Type, int );
 extern int any_duplicates_in_select( const Linked_List list );
 extern int unique_types( const Linked_List list );
 extern char * non_unique_types_string( const Type type );

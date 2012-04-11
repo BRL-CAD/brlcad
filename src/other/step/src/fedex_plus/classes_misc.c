@@ -586,7 +586,7 @@ FirstToUpper( const char * word ) {
 /* return fundamental type but as the string which corresponds to */
 /* the appropriate type descriptor */
 /* if report_reftypes is true, report REFERENCE_TYPE when appropriate */
-char *
+const char *
 FundamentalType( const Type t, int report_reftypes ) {
     if( report_reftypes && TYPEget_head( t ) ) {
         return( "REFERENCE_TYPE" );
