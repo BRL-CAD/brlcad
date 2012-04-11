@@ -69,8 +69,8 @@ if(SH_EXEC)
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/nirt.sh ${CMAKE_SOURCE_DIR}
     DEPENDS mged nirt
     )
-  add_custom_target(regress-vdeck-comgeom-g
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/vdeck-comgeom-g.sh ${CMAKE_SOURCE_DIR}
+  add_custom_target(regress-comgeom
+    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/comgeom.sh ${CMAKE_SOURCE_DIR}
     DEPENDS mged asc2g vdeck comgeom-g
     )
   add_custom_target(regress
@@ -78,7 +78,7 @@ if(SH_EXEC)
     regress-solids regress-shaders regress-spdi regress-iges
     regress-weight regress-gqa regress-fastgen regress-bots
     regress-repository regress-red regress-nirt
-    regress-vls regress-vdeck-comgeom-g
+    regress-vls regress-comgeom
     )
 
 endif(SH_EXEC)
@@ -117,11 +117,11 @@ CMAKEFILES(
   spdi.sh 
   spdipix.asc 
   testlib.c
-  vdeck-comgeom-g.sh
+  comgeom.sh
   vls.sh
   weight.sh
-  vdeck-comgeom-g/m35.asc.gz
-  vdeck-comgeom-g/m35.g.gift5.txt
+  comgeom/m35.asc.gz
+  comgeom/m35.g.gift5.txt
   )
 
 set(regress_outfiles

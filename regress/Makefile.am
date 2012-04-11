@@ -1,8 +1,8 @@
-.PHONY : regression regress test mged red moss lights solids shaders spdi iges weight gqa fastgen bots repository vdeck-comgeom-g
+.PHONY : regression regress test mged red moss lights solids shaders spdi iges weight gqa fastgen bots repository comgeom
 
 SUBDIRS = mged
 
-regression: clean mged moss lights solids shaders spdi iges weight gqa fastgen bots repository vdeck-comgeom-g
+regression: clean mged moss lights solids shaders spdi iges weight gqa fastgen bots repository comgeom
 	@${ECHO} ---
 	@${ECHO} Regression testing completed.
 
@@ -66,13 +66,14 @@ repository: $(top_srcdir)/regress/repository.sh
 	-${SH} $(top_srcdir)/regress/repository.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
-vdeck-comgeom-g: $(top_srcdir)/regress/vdeck-comgeom-g.sh
-	-${SH} $(top_srcdir)/regress/vdeck-comgeom-g.sh $(top_srcdir)
+comgeom: $(top_srcdir)/regress/comgeom.sh
+	-${SH} $(top_srcdir)/regress/comgeom.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
 # these are here because they go in the distribution but are not installed
 EXTRA_DIST = \
 	bots.sh \
+	comgeom.sh \
 	dsp.sh \
 	fastgen.sh \
 	fastgen_dos.fast4 \

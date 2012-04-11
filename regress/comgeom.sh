@@ -1,5 +1,5 @@
 #!/bin/sh
-#                V D E C K - C O M G E O M - G . S H
+#                     C O M G E O M . S H
 # BRL-CAD
 #
 # Copyright (c) 2008-2012 United States Government as represented by
@@ -73,7 +73,7 @@ rm -f vdeck.log
 
 # make our starting database
 rm -f m35.g
-$GZIP -d -c $1/regress/vdeck-comgeom-g/m35.asc.gz > m35.asc
+$GZIP -d -c $1/regress/comgeom/m35.asc.gz > m35.asc
 $ASC2G m35.asc m35.g
 
 # using vdeck interactively to convert .g to GIFT
@@ -90,7 +90,7 @@ cat solids     >  m35.cg
 cat regions    >> m35.cg
 cat region_ids >> m35.cg
 
-cmp m35.cg $1/regress/vdeck-comgeom-g/m35.g.gift5.txt
+cmp m35.cg $1/regress/comgeom/m35.g.gift5.txt
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
