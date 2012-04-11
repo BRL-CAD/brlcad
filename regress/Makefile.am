@@ -100,6 +100,7 @@ EXTRA_DIST = \
 	spdi.sh \
 	spdipix.asc \
 	testlib.c \
+	vls.sh \
 	weight.sh \
 	CMakeLists.txt
 
@@ -119,6 +120,7 @@ CLEANFILES = \
 	bots.rn.diff.pix \
 	bots.rs.diff.pix \
 	bots.sync.pix \
+	comgeom-g.log \
 	density_table.txt \
 	dsp.dat \
 	eagleCAD-512x438.pix \
@@ -142,6 +144,9 @@ CLEANFILES = \
 	lights.pix \
 	lights_diff.pix \
 	lights_ref.pix \
+	m35.asc \
+	m35.cg \
+	m35.g \
 	mged.g \
 	mged.log \
 	moss-diff.log \
@@ -154,6 +159,8 @@ CLEANFILES = \
 	moss_ref.pix \
 	overlaps.pl \
 	red.log \
+	region_ids \
+	regions \
 	repository.log \
 	shaders.dat \
 	shaders.g \
@@ -168,6 +175,7 @@ CLEANFILES = \
 	shaders.txt \
 	shaders_ref.pix \
 	solids-diff.log \
+	solids \
 	solids.g \
 	solids.mged \
 	solids.pix.diff \
@@ -182,6 +190,8 @@ CLEANFILES = \
 	spdi_diff.pix \
 	spdi_mged.log \
 	spdi_ref.pix \
+	t.g \
+	vdeck.log \
 	volume.pl \
 	weight.g \
 	weight.mged \
