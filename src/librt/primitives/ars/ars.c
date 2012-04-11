@@ -666,6 +666,8 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 /**
  * R T _ A R S _ B B O X
+ *
+ * TODO:  produces bboxes that are waaay too big.
  */
 int
 rt_ars_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
@@ -721,8 +723,8 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     struct shell *s;
     int ret;
 
-    point_t min, max;
-    if (rt_ars_bbox(ip, &min, &max)) return -1;
+    /*point_t min, max;*/
+    /*if (rt_ars_bbox(ip, &min, &max)) return -1;*/
     
     m = nmg_mm();
     r = BU_LIST_FIRST(nmgregion, &m->r_hd);
@@ -757,8 +759,8 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     rt_bot_ifree(&intern);
 
     /* Use the ars bbox results, rather than the BoT results */
-    VMOVE(stp->st_min, min);
-    VMOVE(stp->st_max, max);
+    /*VMOVE(stp->st_min, min);
+    VMOVE(stp->st_max, max);*/
     
     return ret;
 }
