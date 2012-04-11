@@ -297,6 +297,15 @@ set(regress_outfiles
   spdi.pix
   spdi_ref.pix
   volume.pl
+  comgeom-g.log
+  t.g
+  m35.cg
+  m35.g
+  region_ids
+  solids
+  vdeck.log
+  m35.asc
+  regions
   )
 
 foreach(outfile ${regress_outfiles})
