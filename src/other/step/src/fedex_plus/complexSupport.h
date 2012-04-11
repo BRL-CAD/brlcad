@@ -83,7 +83,9 @@ class EntNode {
         friend class ComplexList;
 
     public:
-        EntNode( char * nm = "" ) : next( 0 ), mark( NOMARK ), multSupers( 0 ) {
+        EntNode( const char * nm = "" ) : next( 0 ), mark( NOMARK ),
+            multSupers( 0 )
+        {
             strcpy( name, nm );
         }
         EntNode( char *[] );  // given a list, create a linked list of EntNodes
