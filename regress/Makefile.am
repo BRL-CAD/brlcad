@@ -1,8 +1,8 @@
-.PHONY : regression regress test mged red moss lights solids shaders spdi iges weight gqa fastgen bots flawfinder repository vdeck-comgeom-g
+.PHONY : regression regress test mged red moss lights solids shaders spdi iges weight gqa fastgen bots repository vdeck-comgeom-g
 
 SUBDIRS = mged
 
-regression: clean mged moss lights solids shaders spdi iges weight gqa fastgen bots flawfinder repository vdeck-comgeom-g
+regression: clean mged moss lights solids shaders spdi iges weight gqa fastgen bots repository vdeck-comgeom-g
 	@${ECHO} ---
 	@${ECHO} Regression testing completed.
 
@@ -58,9 +58,9 @@ bots: $(top_srcdir)/regress/bots.sh
 	-${SH} $(top_srcdir)/regress/bots.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
-flawfinder: $(top_srcdir)/regress/flawfinder.sh
-	-${SH} $(top_srcdir)/regress/flawfinder.sh $(top_srcdir)
-	@${ECHO} +++ $@ test complete.
+#flawfinder: $(top_srcdir)/regress/flawfinder.sh
+#	-${SH} $(top_srcdir)/regress/flawfinder.sh $(top_srcdir)
+#	@${ECHO} +++ $@ test complete.
 
 repository: $(top_srcdir)/regress/repository.sh
 	-${SH} $(top_srcdir)/regress/repository.sh $(top_srcdir)
