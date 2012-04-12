@@ -2147,7 +2147,6 @@ nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
     struct vertexuse *vu1;
     struct vertexuse *vu2;
     struct edgeuse *fu2_eu;	/* use of edge in fu2 */
-    int total_splits = 0;
     int ret = 0;
     struct bu_ptbl eu1_list;
     struct bu_ptbl eu2_list;
@@ -2240,7 +2239,6 @@ nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
     is->mag2 = mag2;
 
     /* Run infinite line containing eu1 through fu2 */
-    total_splits = 1;
     nmg_isect_line2_face2pNEW(is, fu2, fu1, &eu2_list, &eu1_list);
 
     /* If eu1 is a wire, there is no fu1 to run line through. */
@@ -2248,10 +2246,6 @@ nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	/* We are intersecting with ourself */
 	nmg_isect_line2_face2pNEW(is, fu1, fu2, &eu1_list, &eu2_list);
     }
-    if (rt_g.NMG_debug & DEBUG_POLYSECT)
-	bu_log("nmg_isect_edge2p_face2p(): total_splits=%d\n", total_splits);
-
-    if (total_splits <= 0) goto out;
 
     if (rt_g.NMG_debug & DEBUG_FCUT) {
 	bu_log("nmg_isect_edge2p_face2p(eu1=x%x, fu2=x%x) vert_lists C:\n", eu1, fu2);
