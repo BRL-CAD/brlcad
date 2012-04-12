@@ -54,6 +54,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* investigate why the new bbox() routines for ARS and BoT result in
+  bounding boxes that are way too big.
+
 * fix metaball/adjust.. wipes out all metaball values with:
   adjust metaball 1 1 1
   just gives usage with:

@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2012-04-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* fixed ARS bounding box size affecting overlap handling - Cliff Yapp
 * fixed bug in fast4-g importer handling HOLE/WALL cards - Nick Reed
 * fixed field truncation bug in comgeom-g importer - Tom Browder
 * fixed log file clobber bug in the benchmark suite - Cliff Yapp
