@@ -4510,36 +4510,32 @@ re_tabulate:
 		 * Head right to searching for vertexuses
 		 */
 		goto force_isect;
+	    } else if (code < 0) {
+		/* geometry says lines are parallel, so lack of intersection is expected */
+		continue;
 	    }
-	}
+	} else if (code < 0 && hit_v) {
+	    /* geometry says lines are parallel, but we have an intersection */
+	    bu_log("NOTICE: geom/topo mis-match, enlisting topo vu, hit_v=x%x\n", hit_v);
+	    VPRINT("hit_v", hit_v->vg_p->coord);
+	    nmg_pr_eg(&(*eg1)->l.magic, 0);
+	    nmg_pr_eg(&is->on_eg->l.magic, 0);
+	    bu_log(" dist to eg1=%e, dist to on_eg=%e\n",
+		    bn_dist_line3_pt3((*eg1)->e_pt, (*eg1)->e_dir, hit_v->vg_p->coord),
+		    bn_dist_line3_pt3(is->on_eg->e_pt, is->on_eg->e_dir, hit_v->vg_p->coord));
+	    VPRINT("is->pt2d ", is->pt2d);
+	    VPRINT("is->dir2d", is->dir2d);
+	    VPRINT("eg_pt2d ", eg_pt2d);
+	    VPRINT("eg_dir2d ", eg_dir2d);
+	    bu_log(" 3d line isect, code=%d\n",
+		    bn_isect_line3_line3(&dist[0], &dist[1],
+		    is->pt, is->dir,
+		    (*eg1)->e_pt,
+		    (*eg1)->e_dir,
+		    &(is->tol)));
+	    goto force_isect;
+        }
 
-	/* Now compare results of topology and geometry calculations */
-
-	if (code < 0) {
-	    /* Geometry says lines are parallel, no intersection */
-	    if (hit_v) {
-		bu_log("NOTICE: geom/topo mis-match, enlisting topo vu, hit_v=x%x\n", hit_v);
-		VPRINT("hit_v", hit_v->vg_p->coord);
-		nmg_pr_eg(&(*eg1)->l.magic, 0);
-		nmg_pr_eg(&is->on_eg->l.magic, 0);
-		bu_log(" dist to eg1=%e, dist to on_eg=%e\n",
-		       bn_dist_line3_pt3((*eg1)->e_pt, (*eg1)->e_dir, hit_v->vg_p->coord),
-		       bn_dist_line3_pt3(is->on_eg->e_pt, is->on_eg->e_dir, hit_v->vg_p->coord));
-		VPRINT("is->pt2d ", is->pt2d);
-		VPRINT("is->dir2d", is->dir2d);
-		VPRINT("eg_pt2d ", eg_pt2d);
-		VPRINT("eg_dir2d ", eg_dir2d);
-		bu_log(" 3d line isect, code=%d\n",
-		       bn_isect_line3_line3(&dist[0], &dist[1],
-					    is->pt, is->dir,
-					    (*eg1)->e_pt,
-					    (*eg1)->e_dir,
-					    &(is->tol)
-			   ));
-		goto force_isect;
-	    }
-	    continue;
-	}
 	/* Geometry says 2 lines intersect at a point */
 	VJOIN1(hit3d, is->pt, dist[0], is->dir);
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
