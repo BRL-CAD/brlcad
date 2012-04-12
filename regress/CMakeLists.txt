@@ -122,6 +122,7 @@ CMAKEFILES(
   weight.sh
   comgeom/m35.asc.gz
   comgeom/m35.g.gift5.txt
+  nurbs/brep-3dm.tar.bz2
   )
 
 set(regress_outfiles
