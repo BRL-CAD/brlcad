@@ -976,8 +976,6 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
     /* glue all the faces of the new shell together */
     s = BU_LIST_FIRST(shell, &r->s_hd);
     for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
-	if (!fu)
-	    continue;
 	NMG_CK_FACEUSE(fu);
 	if (fu->orientation == OT_SAME)
 	    bu_ptbl_ins(&faces, (long *)fu);
