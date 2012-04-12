@@ -2693,10 +2693,11 @@ make_regions(void)
 	hptr = hole_root;
 	while (hptr && hptr->group * 1000 + hptr->component != ptr1->region_id)
 	    hptr = hptr->next;
-	if (hptr)
+
+	lptr = NULL;
+	if (hptr != NULL) {
 	    lptr = hptr->holes;
-	else
-	    lptr = (struct hole_list *)NULL;
+	}
 
 	splt = compsplt_root;
 	while (splt && splt->ident_to_split != ptr1->region_id)
@@ -2733,6 +2734,11 @@ make_regions(void)
 
 	    /* create new region by subtracting halfspace */
 	    BU_LIST_INIT(&region.l);
+	    lptr = NULL;
+	    if (hptr != NULL) {
+		lptr = hptr->holes;
+	    }
+
 	    if (mk_addmember(solids_name, &region.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
 		bu_log("make_regions: mk_addmember failed to add %s to %s\n", solids_name, ptr1->name);
 
