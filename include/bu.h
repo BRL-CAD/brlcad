@@ -2304,8 +2304,20 @@ typedef struct bu_color bu_color_t;
  * Many of these routines are based on the algorithms in chapter 13 of
  * Thomas H. Cormen, Charles E. Leiserson, and Ronald L. Rivest,
  * "Introduction to Algorithms", MIT Press, Cambridge, MA, 1990.
- * (Note that the third edition was published in 2009 and the book
- * has had significant updates since the first edition.)
+ *
+ * FIXME:  check implementation given the following note:
+ *
+ * Note that the third edition was published in 2009 and the book
+ * has had significant updates since the first edition.  Quoting the
+ * authors in the preface:  "The way we delete a node from binary search
+ * trees (which includes red-black trees) now guarantees that the node
+ * requested for deletion is the node that is actually deleted.  In the
+ * first two editions, in certain cases, some other node would be
+ * deleted, with its contents movings into the node passed to the
+ * deletion procedure.  With our new way to delete nodes, if other
+ * components of a program maintain pointers to nodes in the tree, they
+ * will not mistakenly end up with stale pointers to nodes that have
+ * been deleted."
  *
  * The implementation of balanced binary red-black tree operations
  * provides all the basic dynamic set operations (e.g., insertion,
