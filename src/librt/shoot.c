@@ -1901,11 +1901,11 @@ rt_shootray_simple_hit(struct application *a, struct partition *PartHeadp, struc
     struct partition *p = NULL, *c, *pp;
     for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 	if(p) {
-	    c->pt_forw = malloc(sizeof(struct partition));
+	    c->pt_forw = bu_malloc(sizeof(struct partition), "shootray simple");
 	    c->pt_forw->pt_back = c;
 	    c = c->pt_forw;
 	} else {
-	    c = p = malloc(sizeof(struct partition));
+	    c = p = bu_malloc(sizeof(struct partition), "shootray simple");
 	    c->pt_forw = NULL;
 	    c->pt_back = NULL;
 	}
@@ -1926,6 +1926,9 @@ rt_shootray_simple_miss(struct application *a)
 
 /**
  * Shoot a single ray and return the partition list. Handles callback issues.
+ *
+ * Note that it calls malloc(), therefore should NOT be used if performance
+ * matters.
  */
 struct partition *
 rt_shootray_simple(struct application *a, point_t origin, vect_t direction)
