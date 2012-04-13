@@ -1898,7 +1898,22 @@ rt_add_res_stats(register struct rt_i *rtip, register struct resource *resp)
 static int
 rt_shootray_simple_hit(struct application *a, struct partition *PartHeadp, struct seg *UNUSED(s))
 {
-    a->a_uptr = (genptr_t)PartHeadp;
+    struct partition *p = NULL, *c, *pp;
+    for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
+	if(p) {
+	    c->pt_forw = malloc(sizeof(struct partition));
+	    c->pt_forw->pt_back = c;
+	    c = c->pt_forw;
+	} else {
+	    c = p = malloc(sizeof(struct partition));
+	    c->pt_forw = NULL;
+	    c->pt_back = NULL;
+	}
+	/*
+	c->pt_magic = PARTITION_MAGIC;
+	*/
+    }
+    a->a_uptr = p;
     return 0;
 }
 
