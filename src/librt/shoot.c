@@ -1898,7 +1898,8 @@ rt_add_res_stats(register struct rt_i *rtip, register struct resource *resp)
 static int
 rt_shootray_simple_hit(struct application *a, struct partition *PartHeadp, struct seg *UNUSED(s))
 {
-    struct partition *p = NULL, *c, *pp;
+    struct partition *p = NULL, *c = NULL, *pp;
+
     for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 	if(p) {
 	    c->pt_forw = bu_malloc(sizeof(struct partition), "shootray simple");
