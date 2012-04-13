@@ -336,6 +336,7 @@ void print_edges_table(struct ged *gedp, table_t *table)
     tcol = 0;
     nrow = 0;
     for (i = 0; i < table->nrows; ++i) {
+	int field;
 
         if (tcol == 0) {
           /* need to start a row */
@@ -346,7 +347,7 @@ void print_edges_table(struct ged *gedp, table_t *table)
 
         /* data in sets of two */
         /* field 0 */
-        int field = 0;
+        field = 0;
         /* using sprintf because bu_vls_printf is broken for complex formats */
         sprintf(buf, " %-*.*s",
                 maxwidth[tcol], maxwidth[tcol], table->rows[i].fields[field].buf);
