@@ -121,7 +121,7 @@ CMAKEFILES(
   vls.sh
   weight.sh
   comgeom/m35.asc.gz
-  comgeom/m35.g.gift5.txt
+  comgeom/m35.cg.gz
   nurbs/brep-3dm.tar.bz2
   )
 

@@ -68,7 +68,7 @@ fi
 
 FAILURES=0
 
-echo "testing 'vdeck command..."
+echo "...testing 'vdeck' command..."
 rm -f vdeck.log
 
 # make our starting database
@@ -84,13 +84,17 @@ d
 q
 EOF
 
-# assemble pieces and compare with test version
+# assemble pieces to compare with test version
 rm -f m35.cg
 cat solids     >  m35.cg
 cat regions    >> m35.cg
 cat region_ids >> m35.cg
 
-cmp m35.cg $1/regress/comgeom/m35.g.gift5.txt
+# get test version
+rm -f m35-baseline.cg
+$GZIP -d -c $1/regress/comgeom/m35.cg.gz > m35-baseline.cg
+
+cmp m35.cg m35-baseline.cg
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
@@ -103,6 +107,7 @@ fi
 
 # the part 2 test is simple for now--just convert back and check
 # for a successful exit
+echo "...testing 'comgeom-g' command..."
 rm -f comgeom-g.log
 $COMGEOM m35.cg t.g 1>comgeom-g.log 2> comgeom-g.log
 STATUS=$?
@@ -118,7 +123,7 @@ fi
 if test $FAILURES -eq 0 ; then
     echo "-> vdeck/comgeom-g check succeeded"
     # clean up
-    rm -f vdeck.log comgeom-g.log m35.asc m35.g m35.cg t.g
+    rm -f vdeck.log comgeom-g.log m35.asc m35.g m35.cg m35-baseline.cg t.g
     rm -f solids regions region_ids
 else
     echo "-> vdeck/comgeom-g check FAILED"
