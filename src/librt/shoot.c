@@ -1909,9 +1909,22 @@ rt_shootray_simple_hit(struct application *a, struct partition *PartHeadp, struc
 	    c->pt_forw = NULL;
 	    c->pt_back = NULL;
 	}
-	/*
-	c->pt_magic = PARTITION_MAGIC;
-	*/
+	/* partial deep copy of  the partition */
+	c->pt_magic = pp->pt_magic;
+	c->pt_inseg = NULL;
+	c->pt_inhit = bu_malloc(sizeof(struct hit), "shootray simple inhit");
+	c->pt_inhit->hit_magic = pp->pt_inhit->hit_magic;
+	c->pt_inhit->hit_dist = pp->pt_inhit->hit_dist;
+	c->pt_inhit->hit_surfno = pp->pt_inhit->hit_surfno;
+	c->pt_outseg = NULL;
+	c->pt_outhit = bu_malloc(sizeof(struct hit), "shootray simple inhit");
+	c->pt_outhit->hit_magic = pp->pt_outhit->hit_magic;
+	c->pt_outhit->hit_dist = pp->pt_outhit->hit_dist;
+	c->pt_outhit->hit_surfno = pp->pt_outhit->hit_surfno;
+	c->pt_regionp = pp->pt_regionp;
+	c->pt_inflip = pp->pt_inflip;
+	c->pt_outflip = pp->pt_outflip;
+	c->pt_overlap_reg = NULL;
     }
     a->a_uptr = p;
     return 0;
