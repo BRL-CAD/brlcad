@@ -2302,8 +2302,9 @@ typedef struct bu_color bu_color_t;
  * The data structures and constants for red-black trees.
  *
  * Many of these routines are based on the algorithms in chapter 13 of
- * T. H. Cormen, C. E. Leiserson, and R. L. Rivest, "_Introduction to
- * algorithms", MIT Press, Cambridge, MA, 1990.
+ * Thomas H. Cormen, Charles E. Leiserson, and Ronald L. Rivest,
+ * "Introduction to Algorithms", MIT Press, Cambridge, MA, 1990.
+ * (Note that the third edition was published in 2009.)
  *
  * The implementation of balanced binary red-black tree operations
  * provides all the basic dynamic set operations (e.g., insertion,
