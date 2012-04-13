@@ -1081,9 +1081,13 @@ if(APACHE_FOP)
   endif(NOT "${APACHE_FOP_VERSION}" STREQUAL "${APACHE_FOP_VERSION_REGEX}")
 endif(APACHE_FOP)
 
-# The HTML output is used in the graphical help browsers in MGED and Archer,
-# as well as being the most likely candidate for external viewers. Turn this
-# on unless explicitly instructed otherwise by the user.
+# Toplevel variable that controls all DocBook based documentation.  Key it off
+# of what target level is enabled.
+if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+  set(EXTRADOCS_DEFAULT "ON")
+else(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+  set(EXTRADOCS_DEFAULT "OFF")
+endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
 set(BRLCAD_EXTRADOCS_ALIASES
   ENABLE_DOCS
   ENABLE_EXTRA_DOCS
@@ -1098,11 +1102,14 @@ of its aliases.  Note that you may set environment variable APACHE_FOP
 to point to your locally installed fop executable file (which on Linux is
 usually a shell script with 0755 permissions).
 ")
-BRLCAD_OPTION(ON BRLCAD_EXTRADOCS BRLCAD_EXTRADOCS_ALIASES BRLCAD_EXTRADOCS_DESCRIPTION)
+BRLCAD_OPTION(${EXTRADOCS_DEFAULT} BRLCAD_EXTRADOCS BRLCAD_EXTRADOCS_ALIASES BRLCAD_EXTRADOCS_DESCRIPTION)
 
 include(CMakeDependentOption)
 
-# By default, always do HTML output if we're doing extradocs output
+# The HTML output is used in the graphical help browsers in MGED and Archer,
+# as well as being the most likely candidate for external viewers. Turn this
+# on unless explicitly instructed otherwise by the user or all extra
+# documentation is disabled.
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_HTML "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_HTML)
 
