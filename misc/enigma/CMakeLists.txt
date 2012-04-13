@@ -9,15 +9,19 @@ add_definitions(
   -DBRLCADBUILD
   )
 
-if(CRYPT_LIBRARY)
-  add_executable(enigma enigma.c)
-  target_link_libraries(enigma ${BSD_LIBRARY} ${CRYPT_LIBRARY})
-else(CRYPT_LIBRARY)
-  add_executable(enigma enigma.c crypt.c)
-  target_link_libraries(enigma ${BSD_LIBRARY})
-endif(CRYPT_LIBRARY)
-install(TARGETS enigma DESTINATION ${BIN_DIR})
-set_target_properties(enigma PROPERTIES COMPILE_FLAGS "-w")
+if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+  if(CRYPT_LIBRARY)
+    add_executable(enigma enigma.c)
+    target_link_libraries(enigma ${BSD_LIBRARY} ${CRYPT_LIBRARY})
+  else(CRYPT_LIBRARY)
+    add_executable(enigma enigma.c crypt.c)
+    target_link_libraries(enigma ${BSD_LIBRARY})
+  endif(CRYPT_LIBRARY)
+  install(TARGETS enigma DESTINATION ${BIN_DIR})
+  set_target_properties(enigma PROPERTIES COMPILE_FLAGS "-w")
+else(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+  CMAKEFILES(enigma.c)
+endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
 
 ADD_MAN_PAGES(1 enigma.1)
 set(enigma_ignore_files

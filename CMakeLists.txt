@@ -1702,14 +1702,18 @@ endif(MSVC)
 
 # We've done the toplevel configure steps, now add the subdirectories
 add_subdirectory(src)
-add_subdirectory(db)
 add_subdirectory(include)
-add_subdirectory(doc)
 add_subdirectory(sh)
 add_subdirectory(misc)
-add_subdirectory(pix)
-add_subdirectory(bench)
-add_subdirectory(regress)
+if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+  add_subdirectory(doc)
+  add_subdirectory(pix)
+  add_subdirectory(db)
+  add_subdirectory(bench)
+  add_subdirectory(regress)
+else(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+  CMAKEFILES(doc pix bench regress db)
+endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
 
 # Now that all the tests are done, configure the brlcad_config.h file:
 CONFIG_H_APPEND(BRLCAD "#endif /* __CONFIG_H__ */\n")
