@@ -211,7 +211,7 @@ main(int argc, char *argv[])
 
     fprintf(fpe, "Model: %s\n", argv[0]);
     fprintf(fpe, "Objects:");
-    for (i=1; i<argc; i++)
+    for (i = 1; i < argc; i++)
 	fprintf(fpe, " %s", argv[i]);
     fprintf(fpe, "\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
 	    tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
@@ -220,7 +220,7 @@ main(int argc, char *argv[])
 
     bu_log("Model: %s\n", argv[0]);
     bu_log("Objects:");
-    for (i=1; i<argc; i++)
+    for (i = 1; i < argc; i++)
 	bu_log(" %s", argv[i]);
     bu_log("\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
 	   tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
@@ -237,7 +237,7 @@ main(int argc, char *argv[])
 			(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
     percent = 0;
-    if (regions_tried>0) {
+    if (regions_tried > 0) {
 	percent = ((double)regions_converted * 100) / regions_tried;
 	printf("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
 	       regions_tried, regions_converted, percent);
@@ -562,7 +562,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
      */
 
 
-    if (regions_tried>0) {
+    if (regions_tried > 0) {
 	float npercent, tpercent;
 
 	npercent = (float)(regions_converted * 100) / regions_tried;
