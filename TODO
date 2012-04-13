@@ -22,10 +22,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * test illuminate (e.g. oed) + Z, report of crash (on Windows)
 
-* fix bottie crash on 32b builds
-
-* investigate bottie '1 unit closer' issue indianlarry saw in frv
-
 * review and test extensively (post-coverity review)
 
 * investigate and fix the idents command first column bug
@@ -33,6 +29,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* fix bottie crash on 32b builds
+
+* investigate bottie '1 unit closer' issue indianlarry saw in frv
 
 * check libbu implementation of red-black trees (see note in bu.h
   referencing an error in the Cormen book used as a basis)
