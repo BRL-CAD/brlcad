@@ -63,7 +63,7 @@ if test ! -f "$GNFF" ; then
     exit 1
 fi
 
-FILS='g-nff.log m35.nff m35.asc m35.g'
+FILS='g-nff.err g-nff.log m35.nff m35.asc m35.g'
 
 rm -f $FILS
 
@@ -72,7 +72,7 @@ $GZIP -d -c $1/regress/comgeom/m35.asc.gz > m35.asc
 $ASC2G m35.asc m35.g
 
 # .g to nff:
-$GNFF -o m35.nff m35.g all.g 2>> g-nff.log > /dev/null
+$GNFF -e g-nff.err -o m35.nff m35.g all.g 2> g-nff.log 1>/dev/null
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
