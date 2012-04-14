@@ -131,8 +131,8 @@ CMAKEFILES(
   comgeom.sh
   vls.sh
   weight.sh
-  comgeom/m35.asc.gz
-  comgeom/m35.cg.gz
+  tgms/m35.asc.gz
+  tgms/m35.cg.gz
   )
 
 set(regress_outfiles
