@@ -599,7 +599,7 @@ long int lsplitty=0;
 union tree *
 gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
-    union tree *ret_tree;
+    union tree *ret_tree = TREE_NULL;
     void (*write_region)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
 
     if (!tsp || !curtree || !pathp || !client_data) {
@@ -653,7 +653,7 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     write_region(curtree->tr_d.td_r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color);
 #endif
 
-    return NULL;
+    return ret_tree;
 }
 
 
