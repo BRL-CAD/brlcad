@@ -167,6 +167,9 @@ dot_header(FILE *outfp, const char *label)
 
     fprintf(outfp, "\ndigraph \"BRL-CAD\" {\n");
 
+#if 1
+    fprintf(outfp, "\tlabel=%s\n", bu_vls_encode(&vp, label));
+#else
     /* starting with empty vls */
     fprintf(outfp, "\tBEFORE(1): [%s]\n", bu_vls_addr(&vp));
 
@@ -189,6 +192,7 @@ dot_header(FILE *outfp, const char *label)
     bu_vls_printf(&vp, "test3");
     fprintf(outfp, "\tAFTER(2): [%s]\n", bu_vls_addr(&vp));
     bu_vls_free(&vp);
+#endif
 
     fprintf(outfp, "\tgraph [ rankdir=LR ];\n");
     fprintf(outfp, "\tnode [ style=filled ];\n");
