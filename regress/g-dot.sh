@@ -54,9 +54,9 @@ if test ! -f "$GDOT" ; then
     exit 1
 fi
 
-FILS='g-dot.log g-dot.g g-dot.dot'
+TFILS='g-dot.log g-dot.g g-dot.dot'
 
-rm -f $FILS
+rm -f $TFILS
 
 STATUS=0
 
@@ -64,12 +64,11 @@ $MGED -c 2> g-dot.log <<EOF
 opendb g-dot.g y
 in rpp.s rpp 0 10 0 10 0 10
 r rpp.r u rpp.s
-g all rpp.r
 q
 EOF
 
 # .g to dot:
-$GDOT -o g-dot.dot g-dot.g all 2>> g-dot.log > /dev/null
+$GDOT -o g-dot.dot g-dot.g rpp.r 2>> g-dot.log > /dev/null
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
@@ -81,7 +80,7 @@ fi
 
 if [ X$STATUS = X0 ] ; then
     echo "-> g-dot.sh succeeded"
-    rm -f $FILS
+    rm -f $TFILS
 else
     echo "-> g-dot.sh FAILED"
 fi
