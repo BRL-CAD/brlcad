@@ -135,6 +135,7 @@ CMAKEFILES(
   weight.sh
   )
 
+# list of temporary files
 set(regress_outfiles
   .density
   adj_air.pl
@@ -150,6 +151,7 @@ set(regress_outfiles
   bots.rs.diff.pix
   bots.sph.pix
   bots.sync.pix
+  comgeom-g.log
   core
   density_table.txt
   dsp.dat
@@ -159,9 +161,9 @@ set(regress_outfiles
   fastgen_box.fast4
   fastgen_dos.g
   fastgen_unix.g
+  g-dot.dot
   g-dot.g
   g-dot.log
-  g-dot.dot
   g-nff.g
   g-nff.log
   g-nff.nff
@@ -170,37 +172,40 @@ set(regress_outfiles
   gqa.log
   gqa.mged
   gqa_mged.log
-  iges_file2.iges
-  iges_file.iges
   iges.g
   iges.log
+  iges_file.iges
+  iges_file2.iges
   iges_new.g
-  iges_stdout2.iges
   iges_stdout.iges
+  iges_stdout2.iges
   iges_stdout_new.g
-  lights_diff.pix
   lights.g
   lights.log
   lights.pix
+  lights_diff.pix
   lights_ref.pix
+  m35.asc
+  m35.cg
+  m35.g
   mged.log
-  moss2.pix
-  moss.asc
   moss-diff.log
+  moss-png.log
+  moss.asc
   moss.g
   moss.log
   moss.pix
   moss.pix.diff
   moss.png
+  moss2.pix
   moss_png.diff
-  moss-png.log
   moss_ref.pix
   nirt.g
-  nirt_g.log
   nirt.log
   nirt.mged
   nirt.out
   nirt.ref
+  nirt_g.log
   overlaps.pl
   red.air.empty.out
   red.air.empty.out.new
@@ -241,10 +246,10 @@ set(regress_outfiles
   red.material_id.unsafe.out
   red.material_id.unsafe.out.new
   red.material_id.unsafe.out.test
-  red.name.emptyedit.out
-  red.name.emptyedit.out.new
   red.name.empty.out
   red.name.empty.out.new
+  red.name.emptyedit.out
+  red.name.emptyedit.out.new
   red.name.safe.out
   red.name.safe.out.new
   red.name.safe.out.test
@@ -253,14 +258,6 @@ set(regress_outfiles
   red.name.unsafe.out.test
   red.region.empty.out
   red.region.empty.out.new
-  red.region_id.empty.out
-  red.region_id.empty.out.new
-  red.region_id.safe.out
-  red.region_id.safe.out.new
-  red.region_id.safe.out.test
-  red.region_id.unsafe.out
-  red.region_id.unsafe.out.new
-  red.region_id.unsafe.out.test
   red.region.no.out
   red.region.no.out.new
   red.region.one.out
@@ -269,6 +266,14 @@ set(regress_outfiles
   red.region.yes.out.new
   red.region.zero.out
   red.region.zero.out.new
+  red.region_id.empty.out
+  red.region_id.empty.out.new
+  red.region_id.safe.out
+  red.region_id.safe.out.new
+  red.region_id.safe.out.test
+  red.region_id.unsafe.out
+  red.region_id.unsafe.out.new
+  red.region_id.unsafe.out.test
   red.shader.empty.out
   red.shader.empty.out.new
   red.shader.safe.out
@@ -287,43 +292,39 @@ set(regress_outfiles
   red.tree.unsafe.out.new
   red.virgin.out
   red.virgin.out.new
+  region_ids
+  regions
   shaders.dat
   shaders.g
   shaders.log
   shaders.mged
-  shaders_ref.pix
   shaders.rt
   shaders.rt.diff.pix
   shaders.rt.log
   shaders.rt.pix
   shaders.rt.pixdiff.log
   shaders.txt
+  shaders_ref.pix
+  solids
   solids-diff.log
   solids.g
   solids.log
   solids.mged
   solids.pix.diff
-  solids_ref.pix
   solids.rt
   solids.rt.log
   solids.rt.pix
-  spdi_diff.pix
+  solids_ref.pix
   spdi.g
   spdi.log
   spdi.mged
-  spdi_mged.log
   spdi.pix
+  spdi_diff.pix
+  spdi_mged.log
   spdi_ref.pix
-  volume.pl
-  comgeom-g.log
   t.g
-  m35.cg
-  m35.g
-  region_ids
-  solids
   vdeck.log
-  m35.asc
-  regions
+  volume.pl
   )
 
 foreach(outfile ${regress_outfiles})
