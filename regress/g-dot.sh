@@ -70,10 +70,10 @@ EOF
 
 # .g to dot:
 $GDOT -o g-dot.dot g-dot.g all 2>> g-dot.log > /dev/null
+STATUS=$?
 
-if [ $? != 0 ] ; then
+if [ X$STATUS != X0 ] ; then
     echo g-dot FAILED
-    STATUS=1
 else
     echo g-dot completed successfully
 fi

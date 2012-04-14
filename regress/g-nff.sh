@@ -70,10 +70,10 @@ EOF
 
 # .g to nff:
 $GNFF -o g-nff.nff g-nff.g all 2>> g-nff.log > /dev/null
+STATUS=$?
 
-if [ $? != 0 ] ; then
+if [ X$STATUS != X0 ] ; then
     echo g-nff FAILED
-    STATUS=-1
 else
     echo g-nff completed successfully
 fi
