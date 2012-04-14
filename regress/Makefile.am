@@ -1,8 +1,8 @@
-.PHONY : regression regress test mged red moss lights solids shaders spdi iges weight gqa fastgen bots repository comgeom
+.PHONY : regression regress test mged red moss lights solids shaders spdi iges weight gqa fastgen bots repository comgeom gdot gnff
 
 SUBDIRS = mged
 
-regression: clean mged moss lights solids shaders spdi iges weight gqa fastgen bots repository comgeom
+regression: clean mged moss lights solids shaders spdi iges weight gqa fastgen bots repository comgeom gdot gnff
 	@${ECHO} ---
 	@${ECHO} Regression testing completed.
 
@@ -70,6 +70,14 @@ comgeom: $(top_srcdir)/regress/comgeom.sh
 	-${SH} $(top_srcdir)/regress/comgeom.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
+gdot: $(top_srcdir)/regress/g-dot.sh
+	-${SH} $(top_srcdir)/regress/g-dot.sh $(top_srcdir)
+	@${ECHO} +++ $@ test complete.
+
+gnff: $(top_srcdir)/regress/g-nff.sh
+	-${SH} $(top_srcdir)/regress/g-nff.sh $(top_srcdir)
+	@${ECHO} +++ $@ test complete.
+
 # these are here because they go in the distribution but are not installed
 EXTRA_DIST = \
 	bots.sh \
@@ -78,6 +86,8 @@ EXTRA_DIST = \
 	fastgen.sh \
 	fastgen_dos.fast4 \
 	flawfinder.sh \
+	g-dot.sh \
+	g-nff.sh \
 	gqa.sh \
 	iges.sh \
 	library.sh \
@@ -131,6 +141,8 @@ CLEANFILES = \
 	fastgen_dos.g \
 	fastgen_unix.g \
 	gaps.pl \
+	g-dot.log \
+	g-nff.log \
 	gqa.g \
 	gqa.mged \
 	gqa_mged.log \
