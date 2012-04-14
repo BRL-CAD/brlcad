@@ -117,7 +117,8 @@ CMAKEFILES(
   mosspix.asc 
   nightly.sh 
   nirt.sh
-  red.sh 
+  nurbs/brep-3dm.tar.bz2
+  red.sh
   repository.sh 
   shaders.sh 
   shaderspix.asc 
@@ -132,7 +133,6 @@ CMAKEFILES(
   weight.sh
   comgeom/m35.asc.gz
   comgeom/m35.cg.gz
-  nurbs/brep-3dm.tar.bz2
   )
 
 set(regress_outfiles
