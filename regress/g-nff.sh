@@ -47,29 +47,32 @@ if test ! -f "$MGED" ; then
     echo "Unable to find mged, aborting"
     exit 1
 fi
-
+ASC2G="`ensearch asc2g`"
+if test ! -f "$ASC2G" ; then
+    echo "Unable to find asc2g, aborting"
+    exit 1
+fi
+GZIP="`which gzip`"
+if test ! -f "$GZIP" ; then
+    echo "Unable to find gzip, aborting"
+    exit 1
+fi
 GNFF="`ensearch g-nff`"
 if test ! -f "$GNFF" ; then
     echo "Unable to find 'g-nff', aborting"
     exit 1
 fi
 
-FILS='g-nff.log g-nff.g g-nff.nff'
+FILS='g-nff.log m35.nff m35.asc m35.g'
 
 rm -f $FILS
 
-STATUS=0
-
-$MGED -c 2> g-nff.log <<EOF
-opendb g-nff.g y
-in rpp.s rpp 0 10 0 10 0 10
-r rpp.r u rpp.s
-g all rpp.r
-q
-EOF
+# get known test failure.g file
+$GZIP -d -c $1/regress/comgeom/m35.asc.gz > m35.asc
+$ASC2G m35.asc m35.g
 
 # .g to nff:
-$GNFF -o g-nff.nff g-nff.g all 2>> g-nff.log > /dev/null
+$GNFF -o m35.nff m35.g all.g 2>> g-nff.log > /dev/null
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
