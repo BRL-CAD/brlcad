@@ -164,17 +164,30 @@ dot_header(FILE *outfp, const char *label)
 	    "/*\n"
 	    " * BRL-CAD version %s DOT export\n"
 	    " */\n", brlcad_version());
+
     fprintf(outfp, "\ndigraph \"BRL-CAD\" {\n");
 
-    fprintf(outfp, "\tBEFORE: [%s]\n", bu_vls_addr(&vp));
+    /* starting with empty vls */
+    fprintf(outfp, "\tBEFORE(1): [%s]\n", bu_vls_addr(&vp));
+
+    /* add a chunk */
     bu_vls_printf(&vp, "test1");
-    fprintf(outfp, "\tBEFORE: [%s]\n", bu_vls_addr(&vp));
-    fprintf(outfp, "\tlabel=%s;\n", bu_vls_encode(&vp, label));
+
+    /* show it */
+    fprintf(outfp, "\tBEFORE(2): [%s]\n", bu_vls_addr(&vp));
+
+    fprintf(outfp, "\tlabel=[%s]\n", bu_vls_encode(&vp, label));
+
     bu_vls_printf(&vp, "test2");
-    fprintf(outfp, "\tBEFORE: [%s]\n", bu_vls_addr(&vp));
-    fprintf(outfp, "\tAFTER: [%s]\n", bu_vls_decode(&vp, bu_vls_addr(&vp)));
+    fprintf(outfp, "\tBEFORE(3): [%s]\n", bu_vls_addr(&vp));
+
+    /* FIXME: investigate bu_vls_dcode */
+    /*
+    fprintf(outfp, "\tAFTER(1): [%s]\n", bu_vls_decode(&vp, bu_vls_addr(&vp)));
+    */
+
     bu_vls_printf(&vp, "test3");
-    fprintf(outfp, "\tAFTER: [%s]\n", bu_vls_addr(&vp));
+    fprintf(outfp, "\tAFTER(2): [%s]\n", bu_vls_addr(&vp));
     bu_vls_free(&vp);
 
     fprintf(outfp, "\tgraph [ rankdir=LR ];\n");
