@@ -164,6 +164,7 @@ set(regress_outfiles
   g-dot.dot
   g-dot.g
   g-dot.log
+  g-nff.err
   g-nff.g
   g-nff.log
   g-nff.nff
