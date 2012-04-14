@@ -73,12 +73,21 @@ if(SH_EXEC)
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/comgeom.sh ${CMAKE_SOURCE_DIR}
     DEPENDS mged asc2g vdeck comgeom-g
     )
+  add_custom_target(regress-gnff
+    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/g-nff.sh ${CMAKE_SOURCE_DIR}
+    DEPENDS mged g-nff
+    )
+  add_custom_target(regress-gdot
+    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/g-dot.sh ${CMAKE_SOURCE_DIR}
+    DEPENDS mged g-dot
+    )
+
   add_custom_target(regress
     DEPENDS regress-mged regress-moss regress-lights
     regress-solids regress-shaders regress-spdi regress-iges
     regress-weight regress-gqa regress-fastgen regress-bots
     regress-repository regress-red regress-nirt
-    regress-vls regress-comgeom
+    regress-vls regress-comgeom regress-gnff regress-gdot
     )
 
 endif(SH_EXEC)
@@ -92,6 +101,7 @@ CMAKEFILES(
   fastgen_dos.fast4 
   flawfinder.sh 
   gcv
+  g-nff.sh
   gqa.sh
   iges.sh 
   library.sh 
@@ -140,6 +150,7 @@ set(regress_outfiles
   bots.rs.diff.pix
   bots.sph.pix
   bots.sync.pix
+  core
   density_table.txt
   dsp.dat
   eagleCAD-512x438.pix
@@ -148,6 +159,12 @@ set(regress_outfiles
   fastgen_box.fast4
   fastgen_dos.g
   fastgen_unix.g
+  g-dot.g
+  g-dot.log
+  g-dot.nff
+  g-nff.g
+  g-nff.log
+  g-nff.nff
   gaps.pl
   gqa.g
   gqa.log
