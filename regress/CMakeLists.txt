@@ -95,44 +95,44 @@ endif(SH_EXEC)
 CMAKEFILES(
   Makefile.am
   analyze.asc
-  bots.sh 
+  bots.sh
+  comgeom.sh
   dsp.sh
-  fastgen.sh 
-  fastgen_dos.fast4 
-  flawfinder.sh 
-  gcv
+  fastgen.sh
+  fastgen_dos.fast4
+  flawfinder.sh
   g-nff.sh
+  gcv
   gqa.sh
-  iges.sh 
-  library.sh 
-  lights.sh 
-  lights_ref.asc 
-  main.sh 
-  master_fetch.sh 
-  master_prep.sh 
-  mged 
-  mged.sh 
-  mged_test.sh 
-  moss.sh 
-  mosspix.asc 
-  nightly.sh 
+  iges.sh
+  library.sh
+  lights.sh
+  lights_ref.asc
+  main.sh
+  master_fetch.sh
+  master_prep.sh
+  mged
+  mged.sh
+  mged_test.sh
+  moss.sh
+  mosspix.asc
+  nightly.sh
   nirt.sh
   nurbs/brep-3dm.tar.bz2
   red.sh
-  repository.sh 
-  shaders.sh 
-  shaderspix.asc 
-  slave_build.sh 
-  solids.sh 
-  solidspix.asc 
-  spdi.sh 
-  spdipix.asc 
+  repository.sh
+  shaders.sh
+  shaderspix.asc
+  slave_build.sh
+  solids.sh
+  solidspix.asc
+  spdi.sh
+  spdipix.asc
   testlib.c
-  comgeom.sh
-  vls.sh
-  weight.sh
   tgms/m35.asc.gz
   tgms/m35.cg.gz
+  vls.sh
+  weight.sh
   )
 
 set(regress_outfiles
