@@ -18,7 +18,7 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* g-nff is crashing, fix it; g-dot outputs garbage
+* g-nff is crashing, fix it
 
 * test illuminate (e.g. oed) + Z, report of crash (on Windows)
 
