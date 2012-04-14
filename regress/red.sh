@@ -360,7 +360,7 @@ should_be_different $SAMPLE $REDFILE.new
 cat $REDFILE.new | sed 's/255.255.255//g' > $REDFILE.test
 should_be_same $SAMPLE $REDFILE.test
 
-init "Changing color to safe with comma delimeter" red.color.delim.out
+init "Changing color to safe with comma delimiter" red.color.delim.out
 cat $SAMPLE | sed 's/color.*=.*/color = 255,255,255/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
