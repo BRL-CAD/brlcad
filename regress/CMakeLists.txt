@@ -161,7 +161,7 @@ set(regress_outfiles
   fastgen_unix.g
   g-dot.g
   g-dot.log
-  g-dot.nff
+  g-dot.dot
   g-nff.g
   g-nff.log
   g-nff.nff
