@@ -10,7 +10,6 @@ INTAVALDIR=intaval
 EXTRA_DIST = \
 	CMakeLists.txt \
 	Formats.csv \
-	comgeom/try.sh \
 	dbclean.sh \
 	g-xxx.c \
 	g-xxx_facets.c \
