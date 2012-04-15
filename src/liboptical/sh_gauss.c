@@ -165,6 +165,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	    long sol_id;
 	    struct rt_ell_internal *ell_p;
 	    vect_t v;
+	    int ret;
 
 	    BU_GET(dbint, struct reg_db_internals);
 	    BU_LIST_INIT_MAGIC(&(dbint->l), DBINT_MAGIC);
@@ -175,8 +176,11 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 		mp = (matp_t)bn_mat_identity;
 
 	    /* Get the internal form of this solid & add it to the list */
-	    rt_db_get_internal(&dbint->ip, tp->tr_a.tu_stp->st_dp,
-			       tb->dbip, mp, resp);
+	    ret = rt_db_get_internal(&dbint->ip, tp->tr_a.tu_stp->st_dp, tb->dbip, mp, resp);
+	    if (ret < 0) {
+		bu_log("Failure reading %s object from database.\n", rt_functab[sol_id].ft_name);
+		return;
+	    }
 
 	    RT_CK_DB_INTERNAL(&dbint->ip);
 	    dbint->st_p = tp->tr_a.tu_stp;
