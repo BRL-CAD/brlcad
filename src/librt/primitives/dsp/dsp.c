@@ -4031,7 +4031,9 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    if (lu->orientation != OT_UNSPEC) continue;
 	    nmg_lu_reorient(lu);
 	}
-	nmg_kill_cracks(s);
+	if (!nmg_kill_cracks(s))
+	    return -1;
+
 	for (BU_LIST_FOR(lu, loopuse, &base_fu->lu_hd)) {
 	    nmg_split_touchingloops(lu, tol);
 	}
@@ -4039,7 +4041,9 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    if (lu->orientation != OT_UNSPEC) continue;
 	    nmg_lu_reorient(lu);
 	}
-	nmg_kill_cracks(s);
+	if (!nmg_kill_cracks(s))
+	    return -1;
+
 	for (BU_LIST_FOR(lu, loopuse, &base_fu->lu_hd)) {
 	    nmg_join_touchingloops(lu);
 	}
@@ -4047,7 +4051,8 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    if (lu->orientation != OT_UNSPEC) continue;
 	    nmg_lu_reorient(lu);
 	}
-	nmg_kill_cracks(s);
+	if (!nmg_kill_cracks(s))
+	    return -1;
     }
 
     /* Mark edges as real */
