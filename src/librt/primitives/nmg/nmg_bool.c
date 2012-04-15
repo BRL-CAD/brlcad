@@ -1291,7 +1291,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
         /* left-r != null && right-r == null */
         RT_CK_TREE(tp);
         db_free_tree(tp->tr_b.tb_right, resp);
-        if ( op == NMG_BOOL_ISECT ) {
+        if (op == NMG_BOOL_ISECT) {
             /* OP_INTERSECT '+' */
             RT_CK_TREE(tp);
             db_free_tree(tl, resp);
@@ -1320,7 +1320,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
         /* left-r == null && right-r != null */
         RT_CK_TREE(tp);
         db_free_tree(tp->tr_b.tb_left, resp);
-        if ( op == NMG_BOOL_ADD ) {
+        if (op == NMG_BOOL_ADD) {
             /* OP_UNION 'u' */
             /* copy everything from tr to tp no matter which union type
              * could probably have done a mem-copy
