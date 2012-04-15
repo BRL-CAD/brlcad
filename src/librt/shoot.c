@@ -342,13 +342,15 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 			    break;
 			}
 
-			cutp += nu_stepsize[out_axis];
+			if (cutp != CUTTER_NULL && cutp != ssp->curcut)
+			    cutp += nu_stepsize[out_axis];
 		    } else {
 			if (--(ssp->igrid[out_axis]) < 0) {
 			    cutp = CUTTER_NULL;
 			    break;
 			}
-			cutp -= nu_stepsize[out_axis];
+			if (cutp != CUTTER_NULL && cutp != ssp->curcut)
+			    cutp -= nu_stepsize[out_axis];
 		    }
 
 		    /* Update t advancement value for this axis */
