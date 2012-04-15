@@ -41,7 +41,8 @@
 #include "wdb.h"
 #include "raytrace.h"
 
-#define MESH_FORMAT_VERSION 2
+/* version is a char where is is used below */
+#define MESH_FORMAT_VERSION '2'
 
 
 struct mesh {
