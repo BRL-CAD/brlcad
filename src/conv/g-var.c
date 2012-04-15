@@ -51,7 +51,7 @@ struct mesh {
 };
 
 
-static const char usage[] = "Usage: %s [-v] [-y] [-s scale] [-f] [-o out_file] brlcad_db.h object\n";
+static const char usage[] = "Usage: %s [-v] [-y] [-s scale] [-f] [-o out_file] tgm.g object\n";
 
 static int verbose = 0;
 static int yup = 0;
