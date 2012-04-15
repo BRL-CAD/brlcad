@@ -66,7 +66,7 @@ db_dup_db_tree_state(struct db_tree_state *otsp, const struct db_tree_state *its
 
     if (itsp->ts_attrs.count > 0) {
 	bu_avs_init(&otsp->ts_attrs, itsp->ts_attrs.count, "otsp->ts_attrs");
-	for (i=0; i<(size_t)itsp->ts_attrs.count; i++)
+	for (i = 0; i<(size_t)itsp->ts_attrs.count; i++)
 	    bu_avs_add(&otsp->ts_attrs, itsp->ts_attrs.avp[i].name,
 		       itsp->ts_attrs.avp[i].value);
     } else {
@@ -198,7 +198,7 @@ db_pr_tree_state(const struct db_tree_state *tsp)
     }
     bu_log(" ts_mater.ma_temperature=%g K\n", tsp->ts_mater.ma_temperature);
     bu_log(" ts_mater.ma_shader=%s\n", tsp->ts_mater.ma_shader ? tsp->ts_mater.ma_shader : "");
-    for (i=0; i<(size_t)tsp->ts_attrs.count; i++) {
+    for (i = 0; i < (size_t)tsp->ts_attrs.count; i++) {
 	bu_log("\t%s = %s\n", tsp->ts_attrs.avp[i].name, tsp->ts_attrs.avp[i].value);
     }
     bn_mat_print("ts_mat", tsp->ts_mat);
@@ -2291,7 +2291,7 @@ db_walk_tree(struct db_i *dbip,
     RT_CK_RESOURCE(resp);
 
     /* Walk each of the given path strings */
-    for (i=0; i < argc; i++) {
+    for (i = 0; i < argc; i++) {
 	union tree *curtree;
 	struct db_tree_state ts;
 	struct db_full_path path;
@@ -2390,7 +2390,7 @@ db_walk_tree(struct db_i *dbip,
     /* As a debugging aid, print out the waiting region names */
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	bu_log("%d waiting regions:\n", new_reg_count);
-	for (i=0; i < new_reg_count; i++) {
+	for (i = 0; i < new_reg_count; i++) {
 	    union tree *treep;
 	    struct combined_tree_state *ctsp;
 	    char *str;
@@ -2440,7 +2440,7 @@ db_walk_tree(struct db_i *dbip,
     }
 
     /* Clean up any remaining sub-trees still in reg_trees[] */
-    for (i=0; i < new_reg_count; i++) {
+    for (i = 0; i < new_reg_count; i++) {
 	db_free_tree(reg_trees[i], resp);
     }
     bu_free((char *)reg_trees, "*reg_trees[]");
