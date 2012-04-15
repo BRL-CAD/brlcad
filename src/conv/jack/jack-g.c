@@ -50,7 +50,7 @@ static struct bn_tol	tol;
 
 static const char usage[] = "Usage: %s [-r region] [-g group] [jack_db] [brlcad_db]\n";
 
-extern fastf_t nmg_loop_plane_area(const struct loopuse *lu, plane_t pl );
+extern fastf_t nmg_loop_plane_area(const struct loopuse *lu, plane_t pl);
 
 int	psurf_to_nmg(struct model *m, FILE *fp, char *jfile);
 int	create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name);
@@ -172,10 +172,9 @@ read_psurf_vertices(FILE *fp, struct vlist *vert)
 
     /* Read vertices. */
     for (i = 0; fscanf(fp, "%lf %lf %lf", &x, &y, &z) == 3; i++) {
-	if ( i >= MAX_NUM_PTS )
+        if (i >= MAX_NUM_PTS) {
 	    bomb = 1;
-	else
-	{
+	} else {
 	    vert->pt[3*i+0] = x * 10.;	/* Convert cm to mm. */
 	    vert->pt[3*i+1] = y * 10.;
 	    vert->pt[3*i+2] = z * 10.;
@@ -189,9 +188,9 @@ read_psurf_vertices(FILE *fp, struct vlist *vert)
     if (ret > 0)
 	bu_log("unknown parsing error\n");
 
-    if ( bomb )
+    if (bomb)
     {
-	bu_exit(1, "ERROR: Dataset contains %d data points, code is dimensioned for %d\n", i, MAX_NUM_PTS );
+	bu_exit(1, "ERROR: Dataset contains %d data points, code is dimensioned for %d\n", i, MAX_NUM_PTS);
     }
 
     return i;
@@ -245,10 +244,10 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
     r = nmg_mrsv(m);	/* Make region, empty shell, vertex. */
     s = BU_LIST_FIRST(shell, &r->s_hd);
 
-    while ( (nv = read_psurf_vertices(fp, &vert)) != 0 ) {
+    while ((nv = read_psurf_vertices(fp, &vert)) != 0) {
 	size_t ret;
 
-	while ( (nf = read_psurf_face(fp, lst)) != 0 ) {
+	while ((nf = read_psurf_face(fp, lst)) != 0) {
 
 	    /* Make face out of vertices in lst (ccw ordered). */
 	    for (i = 0; i < nf; i++)
@@ -273,7 +272,7 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 			jfile, i+1);
     }
 
-    nmg_model_vertex_fuse( m, &tol );
+    nmg_model_vertex_fuse(m, &tol);
 
     /* Associate the face geometry. */
     for (i = 0, fail = 0; i < face; i++)
@@ -281,32 +280,32 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 	struct loopuse *lu;
 	plane_t pl;
 
-	lu = BU_LIST_FIRST( loopuse, &outfaceuses[i]->lu_hd );
-	if ( nmg_loop_plane_area( lu, pl ) < 0.0 )
+	lu = BU_LIST_FIRST(loopuse, &outfaceuses[i]->lu_hd);
+	if (nmg_loop_plane_area(lu, pl) < 0.0)
 	{
 	    fail = 1;
-	    nmg_kfu( outfaceuses[i] );
+	    nmg_kfu(outfaceuses[i]);
 	}
 	else
-	    nmg_face_g( outfaceuses[i], pl );
+	    nmg_face_g(outfaceuses[i], pl);
     }
     if (fail)
 	return -1;
 
-    if ( face )
+    if (face)
     {
         int empty_model;
-	empty_model = nmg_kill_zero_length_edgeuses( m );
+	empty_model = nmg_kill_zero_length_edgeuses(m);
 	if (!empty_model) {
 
 	  /* Compute "geometry" for region and shell */
 	  nmg_region_a(r, &tol);
 
-	  nmg_model_break_e_on_v( m, &tol );
-	  empty_model = nmg_kill_zero_length_edgeuses( m );
+	  nmg_model_break_e_on_v(m, &tol);
+	  empty_model = nmg_kill_zero_length_edgeuses(m);
 
 	  /* Glue edges of outward pointing face uses together. */
-	  if (!empty_model) nmg_model_edge_fuse( m, &tol );
+	  if (!empty_model) nmg_model_edge_fuse(m, &tol);
 	}
     }
 
@@ -330,14 +329,14 @@ create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *gr
     sname = bu_malloc(sizeof(reg_name) + 3, "sname");	/* Solid name. */
 
     snprintf(sname, sizeof(reg_name) + 2, "s.%s", reg_name);
-    empty_model = nmg_kill_zero_length_edgeuses( m );
+    empty_model = nmg_kill_zero_length_edgeuses(m);
     if (empty_model) {
 	bu_log("Warning: skipping empty model.");
 	return 0;
     }
-    nmg_rebound( m, &tol );
-    r = BU_LIST_FIRST( nmgregion, &m->r_hd);
-    s = BU_LIST_FIRST( shell, &r->s_hd );
+    nmg_rebound(m, &tol);
+    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
+    s = BU_LIST_FIRST(shell, &r->s_hd);
     mk_bot_from_nmg(fpout, sname,  s);		/* Make BOT object. */
     snprintf(rname, sizeof(reg_name) + 2, "r.%s", reg_name);
     mk_comb1(fpout, rname, sname, 1);	/* Put object in a region. */
