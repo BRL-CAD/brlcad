@@ -58,6 +58,8 @@ main(int argc, char **argv)
     long	errors = 0, skipped = 0;
     struct bn_tol tol;
 
+    bu_setprogname(argv[0]);
+
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;

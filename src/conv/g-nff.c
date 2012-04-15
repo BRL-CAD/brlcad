@@ -91,6 +91,7 @@ main(int argc, char *argv[])
     double percent;
     int i;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
     VSETALL(model_min, MAX_FASTF);

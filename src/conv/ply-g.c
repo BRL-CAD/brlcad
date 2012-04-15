@@ -785,6 +785,8 @@ main( int argc, char *argv[] )
     struct element *elem_ptr;
     int c;
 
+    bu_setprogname(argv[0]);
+
     /* get command line arguments */
     while ((c = bu_getopt(argc, argv, "dvs:")) != -1)
     {

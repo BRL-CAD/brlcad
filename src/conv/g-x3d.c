@@ -355,10 +355,11 @@ writeX3dEnd(FILE *fp_out) {
 int
 main(int argc, char **argv)
 {
-    int		i;
+    int	i;
     int	c;
     struct plate_mode pm;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf( stderr );
 
     the_model = nmg_mm();

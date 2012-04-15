@@ -60,6 +60,8 @@ main(int argc, char **argv)
     char *ifpath;
     char *ofpath;
 
+    bu_setprogname(argv[0]);
+
     if ( argc != 3 )  {
 	printf("Usage: conv-vg2g file.vg file.g\n");
 	return 11;

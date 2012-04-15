@@ -2833,6 +2833,8 @@ main(int argc, char **argv)
     char *plot_file = NULL;
     char *color_file = NULL;
 
+    bu_setprogname(argv[0]);
+
     while ((c=bu_getopt(argc, argv, "qm:o:c:dwx:b:X:C:")) != -1) {
 	switch (c) {
 	    case 'q':	/* quiet mode */

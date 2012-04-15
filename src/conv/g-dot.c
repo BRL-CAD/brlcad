@@ -241,6 +241,8 @@ main(int ac, char *av[])
     /* tracks which objects are already output */
     struct output o = {NULL, BU_PTBL_INIT_ZERO, BU_PTBL_INIT_ZERO, BU_PTBL_INIT_ZERO, BU_PTBL_INIT_ZERO};
 
+    bu_setprogname(argv[0]);
+
     while ((c = bu_getopt(ac, av, "o:")) != -1) {
 	switch (c) {
 	    case 'o':

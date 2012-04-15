@@ -45,6 +45,8 @@ main(int argc, char *argv[])
     const char **av;
     struct ged *gedp;
 
+    bu_setprogname(argv[0]);
+
     bu_optind = 1;
 
     /* Get past command line options. */

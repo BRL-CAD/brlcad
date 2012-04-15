@@ -103,6 +103,8 @@ main(int argc, char **argv)
     fastf_t **curves = NULL;
     fastf_t *ptr = NULL;
 
+    bu_setprogname(argv[0]);
+
     if (argc != 3) {
 	bu_exit(1, "%s", usage);
     }

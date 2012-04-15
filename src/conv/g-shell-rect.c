@@ -1756,6 +1756,8 @@ main(int argc, char **argv)
     fastf_t x_start, y_start, z_start;
     fastf_t bb_area[3];
 
+    bu_setprogname(argv[0]);
+
     bu_debug = BU_DEBUG_COREDUMP;
 
     bu_setlinebuf( stderr );

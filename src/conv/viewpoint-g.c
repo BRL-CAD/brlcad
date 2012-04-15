@@ -92,6 +92,8 @@ main(int argc, char **argv)
     struct faceuse *fu;
     struct wmember reg_head;
 
+    bu_setprogname(argv[0]);
+
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;

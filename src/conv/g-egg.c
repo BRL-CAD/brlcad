@@ -188,6 +188,7 @@ main(int argc, char *argv[])
 
     int i, use_mc = 0, use_bottess = 0;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
     tree_state = rt_initial_tree_state;	/* struct copy */

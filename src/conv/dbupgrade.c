@@ -62,6 +62,8 @@ main(int argc, char **argv)
     int version;
     name[16] = '\0';
 
+    bu_setprogname(argv[0]);
+
     /* this tolerance structure is only used for converting polysolids to BOT's
      * use zero distance to avoid losing any polysolid facets
      */

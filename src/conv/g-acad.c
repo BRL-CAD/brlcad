@@ -483,6 +483,7 @@ main(int argc, char **argv)
     double percent;
     int i;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
     tree_state = rt_initial_tree_state;	/* struct copy */

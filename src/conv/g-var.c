@@ -400,6 +400,7 @@ int main(int argc, char *argv[])
     struct db_i *dbip;
 
     /* setup BRL-CAD environment */
+    bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
     rt_init_resource(&rt_uniresource, 0, NULL);
 

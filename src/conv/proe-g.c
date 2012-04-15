@@ -1031,6 +1031,8 @@ main(int argc, char **argv)
 {
     int c;
 
+    bu_setprogname(argv[0]);
+
     tol.magic = BN_TOL_MAGIC;
 
     /* this value selected as a reasonable compromise between eliminating

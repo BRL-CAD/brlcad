@@ -1110,6 +1110,8 @@ main(int argc, char **argv)
     struct wmember all_head;
     char *nastran_file = "Converted from NASTRAN file (stdin)";
 
+    bu_setprogname(argv[0]);
+
     fpin = stdin;
 
     units = INCHES;

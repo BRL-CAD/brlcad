@@ -610,6 +610,8 @@ main( int argc, char *argv[] )
     int id;
     int c;
 
+    bu_setprogname(argv[0]);
+
     local_tol = 0.0005;
     local_tol_sq = local_tol * local_tol;
     ident = 1000;

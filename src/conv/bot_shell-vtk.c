@@ -378,6 +378,8 @@ main(int argc, char *argv[])
     size_t i;
     int database_index;
 
+    bu_setprogname(argv[0]);
+
     if (debug) {
 	bu_debug = BU_DEBUG_COREDUMP;
     }

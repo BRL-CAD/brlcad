@@ -84,6 +84,7 @@ main(int argc, char *argv[])
       struct rt_db_internal intern;
       struct directory *dp;
     */
+    bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
     /* calculational tolerances

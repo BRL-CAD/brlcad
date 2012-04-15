@@ -3304,6 +3304,8 @@ main(int argc, char **argv)
     struct tm *timep;
     char bot_orientation = RT_BOT_UNORIENTED;
 
+    bu_setprogname(argv[0]);
+
     /* set default conv factor */
     str2mm("m", &conv_factor);
 
