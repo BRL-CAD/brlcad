@@ -2830,8 +2830,8 @@ main(int argc, char **argv)
 {
     int i;
     int c;
-    char *plot_file=NULL;
-    char *color_file=NULL;
+    char *plot_file = NULL;
+    char *color_file = NULL;
 
     while ((c=bu_getopt(argc, argv, "qm:o:c:dwx:b:X:C:")) != -1) {
 	switch (c) {
