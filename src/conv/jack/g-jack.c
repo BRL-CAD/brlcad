@@ -415,6 +415,7 @@ main(int argc, char **argv)
     double		percent;
     struct bu_vls	fig_file = BU_VLS_INIT_ZERO;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
     jack_tree_state = rt_initial_tree_state;	/* struct copy */

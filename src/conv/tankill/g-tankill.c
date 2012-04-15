@@ -392,6 +392,7 @@ main(int argc, char **argv)
     int	c;
     double		percent;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf( stderr );
 
     the_model = nmg_mm();

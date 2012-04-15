@@ -481,10 +481,11 @@ outt:
 int
 main(int argc, char **argv)
 {
-    int		i, j;
+    int	i, j;
     int	c;
-    double		percent;
+    double percent;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
     rt_g.debug = 0;

@@ -131,6 +131,8 @@ main(int argc, char **argv)
     int	c;
     int i;
 
+    bu_setprogname(argv[0]);
+
     fpin = stdin;
     efile = NULL;
     bfile = "euclid.g";

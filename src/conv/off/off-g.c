@@ -203,6 +203,8 @@ int main(int argc, char **argv)
     FILE *fpin;
     struct rt_wdb *fpout;
 
+    bu_setprogname(argv[0]);
+
     tol.magic = BN_TOL_MAGIC;	/* Copied from proc-db/nmgmodel.c */
     tol.dist = 0.01;
     tol.dist_sq = 0.01 * 0.01;

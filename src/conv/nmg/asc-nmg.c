@@ -57,6 +57,8 @@ main(int argc, char **argv)
     FILE		*fpin;
     struct rt_wdb	*fpout;
 
+    bu_setprogname(argv[0]);
+
     /* Get ascii NMG input file name. */
     if (bu_optind >= argc) {
 	afile = "-";

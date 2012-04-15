@@ -423,10 +423,11 @@ csg_comb_func(struct db_i *db, struct directory *dp, genptr_t UNUSED(ptr))
 int
 main(int argc, char **argv)
 {
-    int		i;
+    int	i;
     int	c;
-    double		percent;
+    double percent;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf( stderr );
 
     BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */

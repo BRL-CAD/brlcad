@@ -197,6 +197,7 @@ main(int argc, char *argv[])
     char copy_buffer[CP_BUF_SIZE] = {0};
     struct directory *dp;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
     bu_log("%s", brlcad_ident("BRL-CAD to IGES Translator"));

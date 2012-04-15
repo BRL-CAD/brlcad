@@ -157,6 +157,8 @@ main(int argc, char **argv)
     int group_len[100];
     int all_len=0;
 
+    bu_setprogname(argv[0]);
+
     /* Set defaults */
 
     /* FIXME: These need to be improved */

@@ -592,6 +592,7 @@ main(int argc, char **argv)
     int	c;
     double		percent;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf( stderr );
 
     ttol.magic = RT_TESS_TOL_MAGIC;

@@ -140,6 +140,7 @@ main(int argc, char *argv [])
     int file_count = 0;
     char *output_file = (char *)NULL;
 
+    bu_setprogname(argv[0]);
 
     while ((c = bu_getopt(argc, argv, "3dntpo:x:X:N:")) != -1) {
 	switch (c) {

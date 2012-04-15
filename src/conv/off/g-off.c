@@ -76,6 +76,7 @@ main(int argc, char **argv)
     double		percent;
     int size;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf( stderr );
 
     jack_tree_state = rt_initial_tree_state;	/* struct copy */
