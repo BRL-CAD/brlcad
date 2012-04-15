@@ -1675,7 +1675,7 @@ main(int ac, char *av[])
 
     int encountered_error = 0;
 
-    bu_setprogname(argv[0]);
+    bu_setprogname(av[0]);
 
     /*
      * element_counts[]
