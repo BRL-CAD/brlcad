@@ -162,7 +162,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	case OP_SOLID: {
 	    struct reg_db_internals *dbint;
 	    matp_t mp;
-	    long sol_id;
+	    long sol_id = 0;
 	    struct rt_ell_internal *ell_p;
 	    vect_t v;
 	    int ret;
