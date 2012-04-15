@@ -152,7 +152,7 @@ void write_header(struct db_i *dbip)
 	perror("fwrite");
     len = strlen(dbip->dbi_title);
     /* model name string length */
-    ret = fwrite(&len, sizeof(uint16_t), 1, fp_out);
+    ret = fwrite(&len, sizeof(size_t), 1, fp_out);
     if (ret != 1)
 	perror("fwrite");
     /* model name string */
