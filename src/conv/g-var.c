@@ -237,7 +237,7 @@ void compute_normal(struct rt_bot_internal *bot, int p1, int p2,
 void get_normals(struct rt_bot_internal *bot, float *dest)
 {
     size_t i;
-    for (i=0; i < bot->num_faces; i++) {
+    for (i = 0; i < bot->num_faces; i++) {
 	compute_normal(curr->bot, bot->faces[3*i], bot->faces[3*i+1],
 		       bot->faces[3*i+2], dest);
     }
@@ -299,7 +299,7 @@ void write_mesh_data()
 	    perror("fwrite");
 
 	/* vertex triples */
-	for (i=0; i < curr->bot->num_vertices; i++) {
+	for (i = 0; i < curr->bot->num_vertices; i++) {
 	    get_vertex(curr->bot, i, vec);
 	    ret = fwrite(vec, sizeof(float), 3, fp_out);
 	    if (ret != 1)
@@ -340,7 +340,7 @@ void write_mesh_data()
 	    perror("fwrite");
 	switch (format) {
 	    case 0:
-		for (i=0; i< nface; i++) {
+		for (i = 0; i < nface; i++) {
 		    ind8[0] = curr->bot->faces[3*i];
 		    if (flip_normals) {
 			ind8[1] = curr->bot->faces[3*i+2];
@@ -355,7 +355,7 @@ void write_mesh_data()
 		}
 		break;
 	    case 1:
-		for (i=0; i< nface; i++) {
+		for (i = 0; i < nface; i++) {
 		    ind16[0] = curr->bot->faces[3*i];
 		    if (flip_normals) {
 			ind16[1] = curr->bot->faces[3*i+2];
@@ -370,7 +370,7 @@ void write_mesh_data()
 		}
 		break;
 	    case 2:
-		for (i=0; i< nface; i++) {
+		for (i = 0; i < nface; i++) {
 		    ind32[0] = curr->bot->faces[3*i];
 		    if (flip_normals) {
 			ind32[1] = curr->bot->faces[3*i+2];
