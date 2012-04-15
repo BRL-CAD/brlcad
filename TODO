@@ -18,7 +18,12 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* g-nff is crashing, fix it
+* g-nff is crashing, fix it; more specifically, it is
+  getting a bu_bomb abort with a failed region conversion
+  with supposedly a stack trace to a bu_bom log but
+  no stack trace is printed to the log (getting same error 
+  with g-euclid, g-euclid1, g-iges, g-jack, g-nmg, g-obj, 
+  g-off, g-tankill, g-x3d, g-xxx_facets)
 
 * test illuminate (e.g. oed) + Z, report of crash (on Windows)
 
@@ -30,6 +35,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* g-nff man page is out of sync with g-nff options
+ 
 * investigate bu_vls_encode/decode failures on g-dot.c (see that 
   file for FIXME note); add tests for both functions (note only
   g-dot.c wants to use the functions at the moment)
