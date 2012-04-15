@@ -39,7 +39,7 @@
 
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
-#define VSETIN( a, b )	{\
+#define VSETIN(a, b)	{\
 	(a)[X] = (b)[X]/25.4; \
 	(a)[Y] = (b)[Y]/25.4; \
 	(a)[Z] = (b)[Z]/25.4; \
@@ -75,10 +75,10 @@ int
 main(int argc, char **argv)
 {
     int	c;
-    double		percent;
-    int		i;
+    double percent;
+    int	i;
 
-    bu_setlinebuf( stderr );
+    bu_setlinebuf(stderr);
 
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
@@ -101,7 +101,7 @@ main(int argc, char **argv)
     tol.para = 1 - tol.perp;
 
     /* init resources we might need */
-    rt_init_resource( &rt_uniresource, 0, NULL );
+    rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* make empty NMG model */
     the_model = nmg_mm();
@@ -127,15 +127,15 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
 		break;
 	    case 'D':
 		tol.dist = atof(bu_optarg);
 		tol.dist_sq = tol.dist * tol.dist;
-		rt_pr_tol( &tol );
+		rt_pr_tol(&tol);
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
 		NMG_debug = rt_g.NMG_debug;
 		break;
 	    default:
@@ -158,22 +158,22 @@ main(int argc, char **argv)
 	perror(argv[0]);
 	bu_exit(1, "ERROR: Unable to open geometry file (%s)\n", argv[0]);
     }
-    if ( db_dirbuild( dbip ) ) {
-	bu_exit(1, "db_dirbuild failed\n" );
+    if (db_dirbuild(dbip)) {
+	bu_exit(1, "db_dirbuild failed\n");
     }
 
     BN_CK_TOL(tree_state.ts_tol);
     RT_CK_TESS_TOL(tree_state.ts_ttol);
 
-    if ( verbose ) {
-	bu_log( "Model: %s\n", argv[0] );
-	bu_log( "Objects:" );
-	for ( i=1; i<argc; i++ )
-	    bu_log( " %s", argv[i] );
-	bu_log( "\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
-		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm );
-	bu_log( "Calculational tolerances:\n\tdist = %g mm perp = %g\n",
-		tree_state.ts_tol->dist, tree_state.ts_tol->perp );
+    if (verbose) {
+	bu_log("Model: %s\n", argv[0]);
+	bu_log("Objects:");
+	for (i = 1; i < argc; i++)
+	    bu_log(" %s", argv[i]);
+	bu_log("\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
+		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
+	bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
+		tree_state.ts_tol->dist, tree_state.ts_tol->perp);
     }
 
     /* Walk indicated tree(s).  Each region will be output separately */
@@ -193,19 +193,19 @@ main(int argc, char **argv)
     }
     percent = 0;
 
-    if ( regions_tried > 0 ) {
+    if (regions_tried > 0) {
 	percent = ((double)regions_written * 100) / regions_tried;
-	bu_log( "                  %d triangulated successfully. %g%%\n",
-		regions_written, percent );
+	bu_log("                  %d triangulated successfully. %g%%\n",
+		regions_written, percent);
     }
 
-    bu_log( "%zd triangles written\n", tot_polygons );
+    bu_log("%zd triangles written\n", tot_polygons);
 
-    bu_log( "Tesselation parameters used:\n");
-    bu_log( "  abs  [-a]    %g\n", ttol.abs );
-    bu_log( "  rel  [-r]    %g\n", ttol.rel );
-    bu_log( "  norm [-n]    %g\n", ttol.norm );
-    bu_log( "  dist [-D]    %g\n", tol.dist );
+    bu_log("Tesselation parameters used:\n");
+    bu_log("  abs  [-a]    %g\n", ttol.abs);
+    bu_log("  rel  [-r]    %g\n", ttol.rel);
+    bu_log("  norm [-n]    %g\n", ttol.norm);
+    bu_log("  dist [-D]    %g\n", tol.dist);
 
     /* Release dynamic storage */
     nmg_km(the_model);
@@ -224,63 +224,63 @@ output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     struct vertex *v;
     char *region_name;
 
-    NMG_CK_REGION( r );
+    NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
 
-    region_name = db_path_to_string( pathp );
+    region_name = db_path_to_string(pathp);
 
     m = r->m_p;
-    NMG_CK_MODEL( m );
+    NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model( m, &tol );
+    nmg_triangulate_model(m, &tol);
 
     /* Output triangles */
-    if ( verbose ) {
-	printf( "Convert these triangles to your format for region %s\n", region_name );
+    if (verbose) {
+	printf("Convert these triangles to your format for region %s\n", region_name);
     } else {
-	printf( "Converted %s\n", region_name );
+	printf("Converted %s\n", region_name);
     }
-    for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
+    for (BU_LIST_FOR(s, shell, &r->s_hd))
     {
 	struct faceuse *fu;
 
-	NMG_CK_SHELL( s );
+	NMG_CK_SHELL(s);
 
-	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd))
 	{
 	    struct loopuse *lu;
 	    /* vect_t facet_normal; */
 
-	    NMG_CK_FACEUSE( fu );
+	    NMG_CK_FACEUSE(fu);
 
-	    if ( fu->orientation != OT_SAME )
+	    if (fu->orientation != OT_SAME)
 		continue;
 
 	    /* Grab the face normal if needed */
-	    /* NMG_GET_FU_NORMAL( facet_normal, fu); */
+	    /* NMG_GET_FU_NORMAL(facet_normal, fu); */
 
-	    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
 	    {
 		struct edgeuse *eu;
 
-		NMG_CK_LOOPUSE( lu );
+		NMG_CK_LOOPUSE(lu);
 
-		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		    continue;
 
 		/* loop through the edges in this loop (facet) */
-		if ( verbose ) {
-		    printf( "\tfacet:\n" );
+		if (verbose) {
+		    printf("\tfacet:\n");
 		}
-		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd))
 		{
-		    NMG_CK_EDGEUSE( eu );
+		    NMG_CK_EDGEUSE(eu);
 
 		    v = eu->vu_p->v_p;
-		    NMG_CK_VERTEX( v );
-		    if ( verbose ) {
-			printf( "\t\t(%g %g %g)\n", V3ARGS( v->vg_p->coord ) );
+		    NMG_CK_VERTEX(v);
+		    if (verbose) {
+			printf("\t\t(%g %g %g)\n", V3ARGS(v->vg_p->coord));
 		    }
 		}
 		tot_polygons++;
@@ -288,7 +288,7 @@ output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	}
     }
 
-    bu_free( region_name, "region name" );
+    bu_free(region_name, "region name");
 }
 
 
@@ -299,7 +299,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 	/* try */
 
 	/* Write the facetized region to the output file */
-	output_nmg( r, pathp, tsp->ts_regionid, tsp->ts_gmater );
+	output_nmg(r, pathp, tsp->ts_regionid, tsp->ts_gmater);
 
     } else {
 	/* catch */
@@ -307,8 +307,8 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 	char *sofar;
 
 	sofar = db_path_to_string(pathp);
-	bu_log( "FAILED in triangulator: %s\n", sofar );
-	bu_free( (char *)sofar, "sofar" );
+	bu_log("FAILED in triangulator: %s\n", sofar);
+	bu_free((char *)sofar, "sofar");
 
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before bombing out.
@@ -319,7 +319,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 	nmg_isect2d_final_cleanup();
 
 	/* Get rid of (m)any other intermediate structures */
-	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
+	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
 	    nmg_km(*tsp->ts_m);
 	} else {
 	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
@@ -337,7 +337,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     union tree *ret_tree = TREE_NULL;
 
     /* Begin bomb protection */
-    if ( !BU_SETJUMP ) {
+    if (!BU_SETJUMP) {
 	/* try */
 
 	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
@@ -345,10 +345,10 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
     } else  {
 	/* catch */
-	char *name = db_path_to_string( pathp );
+	char *name = db_path_to_string(pathp);
 
 	/* Error, bail out */
-	bu_log( "conversion of %s FAILED!\n", name );
+	bu_log("conversion of %s FAILED!\n", name);
 
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
@@ -362,13 +362,13 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	db_free_tree(curtree, &rt_uniresource);/* Does an nmg_kr() */
 
 	/* Get rid of (m)any other intermediate structures */
-	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
+	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
 	    nmg_km(*tsp->ts_m);
 	} else {
 	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 	}
 
-	bu_free( name, "db_path_to_string" );
+	bu_free(name, "db_path_to_string");
 	/* Now, make a new, clean model structure for next pass. */
 	*tsp->ts_m = nmg_mm();
     } BU_UNSETJUMP;/* Relinquish the protection */
@@ -412,17 +412,17 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
     regions_tried++;
 
-    if ( verbose )
-	bu_log("Attempting to process region %s\n", db_path_to_string( pathp ));
+    if (verbose)
+	bu_log("Attempting to process region %s\n", db_path_to_string(pathp));
 
     ret_tree= process_boolean(curtree, tsp, pathp);
 
-    if ( ret_tree )
+    if (ret_tree)
 	r = ret_tree->tr_d.td_r;
     else
     {
-	if ( verbose ) {
-	    bu_log( "\tNothing left of this region after Boolean evaluation\n" );
+	if (verbose) {
+	    bu_log("\tNothing left of this region after Boolean evaluation\n");
 	}
 	regions_written++; /* don't count as a failure */
 	r = (struct nmgregion *)NULL;
@@ -437,15 +437,15 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 	int empty_model=0;
 
 	/* Kill cracks */
-	s = BU_LIST_FIRST( shell, &r->s_hd );
-	while ( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+	s = BU_LIST_FIRST(shell, &r->s_hd);
+	while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd))
 	{
 	    struct shell *next_s;
 
-	    next_s = BU_LIST_PNEXT( shell, &s->l );
-	    if ( nmg_kill_cracks( s ) )
+	    next_s = BU_LIST_PNEXT(shell, &s->l);
+	    if (nmg_kill_cracks(s))
 	    {
-		if ( nmg_ks( s ) )
+		if (nmg_ks(s))
 		{
 		    empty_region = 1;
 		    break;
@@ -455,20 +455,18 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 	}
 
 	/* kill zero length edgeuses */
-	if ( !empty_region )
-	{
-	    empty_model = nmg_kill_zero_length_edgeuses( *tsp->ts_m );
+	if (!empty_region) {
+	    empty_model = nmg_kill_zero_length_edgeuses(*tsp->ts_m);
 	}
 
-	if ( !empty_region && !empty_model )
-	{
+	if (!empty_region && !empty_model) {
 	    process_triangulation(r, pathp, tsp);
 
 	    regions_written++;
 	}
 
-	if ( !empty_model )
-	    nmg_kr( r );
+	if (!empty_model)
+	    nmg_kr(r);
     }
 
     /*
