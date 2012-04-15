@@ -126,7 +126,7 @@ bu_vls_decode(struct bu_vls *vp, const char *str)
     }
 
     if (dquote) {
-	/* we got to the end of the input string whilte still inside a
+	/* we got to the end of the input string while still inside a
 	 * double-quote.  have to assume the quote is regular content.
 	 */
 	bu_vls_putc(vp, DQUOTE);
