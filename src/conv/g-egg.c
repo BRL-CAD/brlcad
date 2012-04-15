@@ -186,7 +186,7 @@ main(int argc, char *argv[])
     struct rt_tess_tol ttol;		/* tesselation tolerance in mm */
     struct db_tree_state tree_state;	/* includes tol & model */
 
-    int i, use_mc=0, use_bottess=0;
+    int i, use_mc = 0, use_bottess = 0;
 
     bu_setlinebuf(stderr);
 
