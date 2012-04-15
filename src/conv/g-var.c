@@ -138,9 +138,9 @@ void write_header(struct db_i *dbip)
 
     /* endian */
     if (bu_byteorder() == BU_BIG_ENDIAN) {
-	endian = 1;
+	endian = '1';
     } else {
-	endian = 0;
+	endian = '0';
     }
     ret = fwrite(&endian, 1, 1, fp_out);
     if (ret != 1)
