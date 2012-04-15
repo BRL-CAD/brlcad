@@ -177,7 +177,7 @@ main(int argc, char *argv[])
     }
 
     /* Open output file */
-    if ((fpf=fopen(output_file, "wb+")) == NULL) {
+    if ((fpf = fopen(output_file, "wb+")) == NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Cannot open output file (%s) for writing\n", output_file);
     }
