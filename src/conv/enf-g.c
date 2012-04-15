@@ -603,9 +603,9 @@ main( int argc, char *argv[] )
     char line[MAX_LINE_SIZE];
     char *input_file, *output_file;
     FILE *fd_parts;
-    struct obj_info **top_level_assems=NULL;
-    int top_level_assem_count=0;
-    int curr_top_level=-1;
+    struct obj_info **top_level_assems = NULL;
+    int top_level_assem_count = 0;
+    int curr_top_level = -1;
     fastf_t tmp;
     int id;
     int c;
