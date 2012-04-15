@@ -41,7 +41,7 @@
 #include "wdb.h"
 #include "raytrace.h"
 
-/* version is a char where is is used below */
+/* version is a char where it is used below */
 #define MESH_FORMAT_VERSION '2'
 
 
@@ -147,7 +147,7 @@ void write_header(struct db_i *dbip)
 	perror("fwrite");
 
     /* format version */
-    ret = fwrite(&format_version, 1, 1, fp_out);
+    ret = fwrite(&format_version, sizeof(char), 1, fp_out);
     if (ret != 1)
 	perror("fwrite");
     len = strlen(dbip->dbi_title);
@@ -156,7 +156,7 @@ void write_header(struct db_i *dbip)
     if (ret != 1)
 	perror("fwrite");
     /* model name string */
-    ret = fwrite(dbip->dbi_title, 1, len, fp_out);
+    ret = fwrite(dbip->dbi_title, sizeof(char), len, fp_out);
     if (ret != 1)
 	perror("fwrite");
     /* mesh count */
