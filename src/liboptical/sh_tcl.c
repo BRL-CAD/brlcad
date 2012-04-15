@@ -150,7 +150,8 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 
     for (cpu=0; cpu < MAX_PSW; cpu++) {
 	tcl_sp->tcl_interp[cpu] = Tcl_CreateInterp();
-	Tcl_Init(tcl_sp->tcl_interp[cpu]);
+	if (Tcl_Init(tcl_sp->tcl_interp[cpu]) == TCL_ERROR)
+	    return -1;
     }
 
     /* the shader needs to operate in a coordinate system which stays
