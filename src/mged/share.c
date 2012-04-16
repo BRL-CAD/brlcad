@@ -220,21 +220,21 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 		(argv[1][2] == 'r' || argv[1][2] == 'R'))
 		SHARE_RESOURCE(uflag, _mged_variables, dml_mged_variables, mv_rc, dlp1, dlp2, vls, "share: mged_variables");
 	    else if (argv[1][1] == 'i' || argv[1][1] == 'I') {
+		if (!uflag) {
+		    /* free dlp2's view_state resources if currently not sharing */
+		    if (dlp2->dml_view_state->vs_rc == 1)
+			view_ring_destroy(dlp2);
+		}
+
+		SHARE_RESOURCE(uflag, _view_state, dml_view_state, vs_rc, dlp1, dlp2, vls, "share: view_state");
+
 		if (uflag) {
 		    struct _view_state *ovsp;
-
 		    ovsp = dlp1->dml_view_state;
-		    SHARE_RESOURCE(uflag, _view_state, dml_view_state, vs_rc, dlp1, dlp2, vls, "share: view_state");
 
 		    /* initialize dlp1's view_state */
 		    if (ovsp != dlp1->dml_view_state)
 			view_ring_init(dlp1->dml_view_state, ovsp);
-		} else {
-		    /* free dlp2's view_state resources if currently not sharing */
-		    if (dlp2->dml_view_state->vs_rc == 1)
-			view_ring_destroy(dlp2);
-
-		    SHARE_RESOURCE(uflag, _view_state, dml_view_state, vs_rc, dlp1, dlp2, vls, "share: view_state");
 		}
 	    } else {
 		bu_vls_printf(&vls, "share: resource type '%s' unknown\n", argv[1]);
