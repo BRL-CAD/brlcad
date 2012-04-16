@@ -134,7 +134,7 @@ brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
     surf->GetDomain(0, &umin, &umax);
     to.x = umax + 1;
     ON_Line ray(from, to);
-    int intersections = 0;
+    // int intersections = 0;
     // for (int i = 0; i < face.LoopCount(); i++) {
     // ON_BrepLoop* loop = face.Loop(i);
     // for each trim
@@ -156,7 +156,7 @@ brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
      */
 
     // the point is trimmed if the # of intersections is even and non-zero
-    retVal= (intersections > 0 && (intersections % 2) == 0);
+    // retVal= (intersections > 0 && (intersections % 2) == 0);
 
     return retVal;
 }
