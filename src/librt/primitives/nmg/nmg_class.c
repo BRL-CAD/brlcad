@@ -685,7 +685,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
 		 * short circuit everything.
 		 */
 		class = nmg_class_pt_fu_except(pt, fu, (struct loopuse *)0,
-			(void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 0, tol);
+					       (void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 0, tol);
 		if (class == NMG_CLASS_AonBshared) {
 		    bu_bomb("nmg_class_pt_s(): function nmg_class_pt_fu_except returned AonBshared when it can only return AonBanti\n");
 		}
@@ -876,7 +876,7 @@ class_vu_vs_s(struct vertexuse *vu, struct shell *sB, char **classlist, const st
     if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 	if ((sv = nmg_find_pt_in_shell(sB, pt, tol))) {
 	    bu_log("vu=x%x, v=x%x, sv=x%x, pt=(%g, %g, %g)\n",
-		    vu, vu->v_p, sv, V3ARGS(pt));
+		   vu, vu->v_p, sv, V3ARGS(pt));
 	    bu_bomb("class_vu_vs_s(): logic error, vertex topology not shared properly\n");
 	}
     }
@@ -1603,67 +1603,74 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, char **classlist, const struc
 
     /* loop is collection of edgeuses */
     seen_error = 0;
-retry:
-    in = outside = on = 0;
-    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	/* Classify each edgeuse */
-	class = class_eu_vs_s(eu, s, classlist, tol);
-	switch (class) {
-	    case INSIDE		: ++in;
-		break;
-	    case OUTSIDE	: ++outside;
-		break;
-	    case ON_SURF	: ++on;
-		break;
-	    default		: bu_bomb("class_lu_vs_s(): bad class for edgeuse\n");
+
+    do {
+
+	in = outside = on = 0;
+	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	    /* Classify each edgeuse */
+	    class = class_eu_vs_s(eu, s, classlist, tol);
+	    switch (class) {
+		case INSIDE		: ++in;
+		    break;
+		case OUTSIDE	: ++outside;
+		    break;
+		case ON_SURF	: ++on;
+		    break;
+		default		: bu_bomb("class_lu_vs_s(): bad class for edgeuse\n");
+	    }
 	}
-    }
-
-    if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-	bu_log("class_lu_vs_s: Loopuse edges in:%d on:%d out:%d\n", in, on, outside);
-    }
-
-    if (in > 0 && outside > 0) {
-	FILE *fp;
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-	    char buf[128];
-	    static int num;
-	    long *b;
-	    struct model *m;
-
-	    m = nmg_find_model(lu->up.magic_p);
-	    b = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_pl_lu flag[]");
-	    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-		if (NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p))
-		    nmg_euprint("In:  edgeuse", eu);
-		else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], eu->e_p))
-		    nmg_euprint("Out: edgeuse", eu);
-		else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], eu->e_p))
-		    nmg_euprint("OnShare:  edgeuse", eu);
-		else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AonBanti], eu->e_p))
-		    nmg_euprint("OnAnti:  edgeuse", eu);
-		else
-		    nmg_euprint("BAD: edgeuse", eu);
-	    }
-	    sprintf(buf, "badloop%d.pl", num++);
-	    if ((fp=fopen(buf, "wb")) != NULL) {
-		nmg_pl_lu(fp, lu, b, 255, 255, 255);
-		nmg_pl_s(fp, s);
-		fclose(fp);
-		bu_log("wrote %s\n", buf);
-	    }
-	    nmg_pr_lu(lu, "");
-	    nmg_stash_model_to_file("class.g", nmg_find_model((uint32_t *)lu), "class_ls_vs_s: loop transits plane of shell/face?");
-	    bu_free((char *)b, "nmg_pl_lu flag[]");
+	    bu_log("class_lu_vs_s: Loopuse edges in:%d on:%d out:%d\n", in, on, outside);
 	}
 
-	if (seen_error > 3) {
-	    bu_bomb("class_lu_vs_s(): loop transits plane of shell/face?\n");
+	if (in > 0 && outside > 0) {
+	    FILE *fp;
+
+	    if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
+		char buf[128];
+		static int num;
+		long *b;
+		struct model *m;
+
+		m = nmg_find_model(lu->up.magic_p);
+		b = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_pl_lu flag[]");
+		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		    if (NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p))
+			nmg_euprint("In:  edgeuse", eu);
+		    else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], eu->e_p))
+			nmg_euprint("Out: edgeuse", eu);
+		    else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], eu->e_p))
+			nmg_euprint("OnShare:  edgeuse", eu);
+		    else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AonBanti], eu->e_p))
+			nmg_euprint("OnAnti:  edgeuse", eu);
+		    else
+			nmg_euprint("BAD: edgeuse", eu);
+		}
+		sprintf(buf, "badloop%d.pl", num++);
+		if ((fp=fopen(buf, "wb")) != NULL) {
+		    nmg_pl_lu(fp, lu, b, 255, 255, 255);
+		    nmg_pl_s(fp, s);
+		    fclose(fp);
+		    bu_log("wrote %s\n", buf);
+		}
+		nmg_pr_lu(lu, "");
+		nmg_stash_model_to_file("class.g", nmg_find_model((uint32_t *)lu), "class_ls_vs_s: loop transits plane of shell/face?");
+		bu_free((char *)b, "nmg_pl_lu flag[]");
+	    }
+
+	    if (seen_error > 3) {
+		bu_bomb("class_lu_vs_s(): loop transits plane of shell/face?\n");
+	    }
+	    seen_error++;
+	    continue;
 	}
-	seen_error++;
-	goto retry;
-    }
+
+	/* in <=0 || outside <= 0 so were good */
+	break;
+
+    } while (1);
 
     if (outside > 0) {
 	NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], lu->l_p);
