@@ -2380,14 +2380,12 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
 	    /* OK, so we have to do this one little-by-little */
 	    start_idx = -1;
 	    end_idx = -1;
-	    while (!found_face) {
+
+	    if (!found_face) {
+
 		/* refresh the vertex list */
 		(void)bu_ptbl_reset(&vert_tbl);
 
-		if (end_idx == 0) {
-		    give_up_on_face = 1;
-		    break;
-		}
 		start_idx++;
 		end_idx = start_idx + 1;
 		if (end_idx == loop_size)
@@ -2417,8 +2415,6 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
 		    bu_ptbl_ins(&vert_tbl, (long *)&eu2->vu_p->v_p);
 		    edges_used++;
 		}
-
-		found_face = 1;
 	    }
 
 	    if (give_up_on_face) {
