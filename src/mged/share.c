@@ -48,7 +48,7 @@
 #define RESOURCE_TYPE_RUBBER_BAND	6
 #define RESOURCE_TYPE_VIEW		7
 
-#define SHARE_RESOURCE(uflag, str, resource, rc, dlp1, dlp2, vls, error_msg) { \
+#define SHARE_RESOURCE(uflag, str, resource, rc, dlp1, dlp2, vls, error_msg) do { \
     if (uflag) { \
       struct str *strp; \
 \
@@ -69,7 +69,7 @@
 	  ++dlp1->resource->rc; \
       } \
     } \
-}
+} while (0)
 
 
 extern struct bu_structparse axes_vparse[];
@@ -152,9 +152,9 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 	case 'a':
 	case 'A':
 	    if (argv[1][1] == 'd' || argv[1][1] == 'D')
-		SHARE_RESOURCE(uflag, _adc_state, dml_adc_state, adc_rc, dlp1, dlp2, vls, "share: adc_state")
+		SHARE_RESOURCE(uflag, _adc_state, dml_adc_state, adc_rc, dlp1, dlp2, vls, "share: adc_state");
 		    else if (argv[1][1] == 'x' || argv[1][1] == 'X')
-			SHARE_RESOURCE(uflag, _axes_state, dml_axes_state, ax_rc, dlp1, dlp2, vls, "share: axes_state")
+			SHARE_RESOURCE(uflag, _axes_state, dml_axes_state, ax_rc, dlp1, dlp2, vls, "share: axes_state");
 			    else {
 				bu_vls_printf(&vls, "share: resource type '%s' unknown\n", argv[1]);
 				Tcl_AppendResult(interpreter, bu_vls_addr(&vls), (char *)NULL);
@@ -165,7 +165,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 	    break;
 	case 'c':
 	case 'C':
-	    SHARE_RESOURCE(uflag, _color_scheme, dml_color_scheme, cs_rc, dlp1, dlp2, vls, "share: color_scheme")
+	    SHARE_RESOURCE(uflag, _color_scheme, dml_color_scheme, cs_rc, dlp1, dlp2, vls, "share: color_scheme");
 		break;
 	case 'd':
 	case 'D':
@@ -203,27 +203,27 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 	    break;
 	case 'g':
 	case 'G':
-	    SHARE_RESOURCE(uflag, _grid_state, dml_grid_state, gr_rc, dlp1, dlp2, vls, "share: grid_state")
+	    SHARE_RESOURCE(uflag, _grid_state, dml_grid_state, gr_rc, dlp1, dlp2, vls, "share: grid_state");
 		break;
 	case 'm':
 	case 'M':
-	    SHARE_RESOURCE(uflag, _menu_state, dml_menu_state, ms_rc, dlp1, dlp2, vls, "share: menu_state")
+	    SHARE_RESOURCE(uflag, _menu_state, dml_menu_state, ms_rc, dlp1, dlp2, vls, "share: menu_state");
 		break;
 	case 'r':
 	case 'R':
-	    SHARE_RESOURCE(uflag, _rubber_band, dml_rubber_band, rb_rc, dlp1, dlp2, vls, "share: rubber_band")
+	    SHARE_RESOURCE(uflag, _rubber_band, dml_rubber_band, rb_rc, dlp1, dlp2, vls, "share: rubber_band");
 		break;
 	case 'v':
 	case 'V':
 	    if ((argv[1][1] == 'a' || argv[1][1] == 'A') &&
 		(argv[1][2] == 'r' || argv[1][2] == 'R'))
-		SHARE_RESOURCE(uflag, _mged_variables, dml_mged_variables, mv_rc, dlp1, dlp2, vls, "share: mged_variables")
+		SHARE_RESOURCE(uflag, _mged_variables, dml_mged_variables, mv_rc, dlp1, dlp2, vls, "share: mged_variables");
 		    else if (argv[1][1] == 'i' || argv[1][1] == 'I') {
 			if (uflag) {
 			    struct _view_state *ovsp;
 
 			    ovsp = dlp1->dml_view_state;
-			    SHARE_RESOURCE(uflag, _view_state, dml_view_state, vs_rc, dlp1, dlp2, vls, "share: view_state")
+			    SHARE_RESOURCE(uflag, _view_state, dml_view_state, vs_rc, dlp1, dlp2, vls, "share: view_state");
 
 				/* initialize dlp1's view_state */
 				if (ovsp != dlp1->dml_view_state)
@@ -233,7 +233,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 			    if (dlp2->dml_view_state->vs_rc == 1)
 				view_ring_destroy(dlp2);
 
-			    SHARE_RESOURCE(uflag, _view_state, dml_view_state, vs_rc, dlp1, dlp2, vls, "share: view_state")
+			    SHARE_RESOURCE(uflag, _view_state, dml_view_state, vs_rc, dlp1, dlp2, vls, "share: view_state");
 				}
 		    } else {
 			bu_vls_printf(&vls, "share: resource type '%s' unknown\n", argv[1]);
