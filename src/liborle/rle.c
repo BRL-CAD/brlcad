@@ -569,7 +569,7 @@ rle_decode_ln(register FILE *fp, RLEpixel *scan_buf)
 	lines_to_skip--;
 	return dirty_flag;
     }
-    pp = &(scan_buf[r_setup.h_xpos][RED]); /* Pointer into pixel. */
+    pp = scan_buf[r_setup.h_xpos]; /* Pointer into pixel. */
     while ((*_func_Get_Inst)(fp, &opcode, &datum) != EOF) {
 	switch (opcode) {
 	    case RSkipLinesOp :
