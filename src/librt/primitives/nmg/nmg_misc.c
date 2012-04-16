@@ -2662,6 +2662,11 @@ nmg_dup_shell(struct shell *s, long int ***trans_tbl, const struct bn_tol *tol)
 		    NMG_INDEX_ASSIGN((*trans_tbl), new_fu->f_p, (long *)fu->f_p);
 		}
 	    }
+
+	    /* make sure it's not a face without a loop before proceeding */
+	    if (!new_fu)
+		continue;
+
 	    if (fu->f_p->g.plane_p) {
 		/* Do it this way if you expect to change the normals */
 		plane_t n;
