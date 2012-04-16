@@ -21,11 +21,12 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #include "bu.h"
 
 
-/* Test for reversibility:
+/* Test for bu_vls_encode/bu_vls_decode for reversibility:
  *
  *   1. encode the input string
  *   2. decode the encoded string
@@ -36,18 +37,38 @@ int
 test_quote(const char *str)
 {
     int status = 0;
+    int len_s = str ? strlen(str) : 0;
+    int len_d = 0; /* for length of decoded */
+    int f_wid = 28; /* desired total field width */
     struct bu_vls encoded = BU_VLS_INIT_ZERO;
     struct bu_vls decoded = BU_VLS_INIT_ZERO;
 
     bu_vls_encode(&encoded, str);
-    bu_vls_encode(&decoded, bu_vls_addr(&encoded));
+    bu_vls_decode(&decoded, bu_vls_addr(&encoded)); /* should be same as input string */
 
+    len_d = bu_vls_strlen(&decoded);
+    if (f_wid < len_s)
+        f_wid = len_s + 1;
+    if (f_wid < len_d)
+        f_wid = len_d + 1;
 
     if (BU_STR_EQUAL(str, bu_vls_addr(&decoded))
-        && !BU_STR_EQUAL(str, bu_vls_addr(&encoded))) {
-	printf("%24s -> %28s [PASS]\n", str, bu_vls_addr(&encoded));
+        /* && !BU_STR_EQUAL(str, bu_vls_addr(&encoded)) */
+        ) {
+        if (len_s == 0)
+            len_s = 6;
+	printf("{%*s}%*s -> {%*s}%*s [PASS]\n",
+               len_s, str, f_wid - len_s, " ",
+               len_d, bu_vls_addr(&decoded), f_wid - len_d, " "
+               );
     } else {
-	printf("%24s -> %28s [FAIL]  (should be: %s)\n", str, bu_vls_addr(&encoded), str);
+        if (len_s == 0)
+            len_s = 6;
+	printf("{%*s}%*s -> {%*s}%*s [FAIL]  (should be: {%s})\n",
+               len_s, str, f_wid - len_s, " ",
+               len_d, bu_vls_addr(&decoded), f_wid - len_d, " ",
+               str
+               );
         status = 1;
     }
 
