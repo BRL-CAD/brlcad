@@ -3245,7 +3245,8 @@ RT_EXPORT extern void db_tree_funcleaf(struct db_i		*dbip,
 				       void		(*leaf_func)(),
 				       genptr_t		user_ptr1,
 				       genptr_t		user_ptr2,
-				       genptr_t		user_ptr3);
+				       genptr_t		user_ptr3,
+				       genptr_t		user_ptr4);
 RT_EXPORT extern int db_follow_path(struct db_tree_state *tsp,
 				    struct db_full_path *total_path,
 				    const struct db_full_path *new_path,
