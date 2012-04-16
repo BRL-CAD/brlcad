@@ -4314,7 +4314,6 @@ wdb_concat_cmd(struct rt_wdb *wdbp,
 	       const char *argv[])
 {
     struct db_i *newdbp;
-    int bad = 0;
     struct directory *dp;
     Tcl_HashTable name_tbl;
     Tcl_HashTable used_names_tbl;
@@ -4452,7 +4451,7 @@ wdb_concat_cmd(struct rt_wdb *wdbp,
     Tcl_DeleteHashTable(&name_tbl);
     Tcl_DeleteHashTable(&used_names_tbl);
 
-    return bad ? TCL_ERROR : TCL_OK;
+    return TCL_OK;
 }
 
 
@@ -8006,14 +8005,6 @@ wdb_hide_cmd(struct rt_wdb *wdbp,
 	}
 
 	RT_CK_DIR(dp);
-
-	if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
-	    int no_hide=0;
-
-	    if (no_hide)
-		continue;
-	}
-
 	BU_EXTERNAL_INIT(&ext);
 
 	if (db_get_external(&ext, dp, dbip) < 0) {
@@ -8667,34 +8658,6 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	    Tcl_AppendResult(wdbp->wdb_interp, "Failed to construct a TGC equivalent to ",
 			     nmg_name, "\n", (char *)NULL);
 	    return TCL_OK;
-	}
-    }
-
-    /* see if we can get an arb by simplifying the NMG */
-    if ((do_arb || do_all) && !success && shell_count == 1) {
-	struct rt_arb_internal *arb_int;
-
-	BU_GET(arb_int, struct rt_arb_internal);
-
-	r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-	s = BU_LIST_FIRST(shell, &r->s_hd);
-	nmg_shell_coplanar_face_merge(s, &wdbp->wdb_tol, 1);
-	if (!nmg_kill_cracks(s)) {
-	    (void) nmg_model_edge_fuse(m, &wdbp->wdb_tol);
-	    (void) nmg_edge_g_fuse(&m->magic, &wdbp->wdb_tol);
-	    (void) nmg_unbreak_region_edges(&r->l.magic);
-	    if (nmg_to_arb(m, arb_int)) {
-		new_intern.idb_ptr = (genptr_t)(arb_int);
-		new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-		new_intern.idb_type = ID_ARB8;
-		new_intern.idb_meth = &rt_functab[ID_ARB8];
-		success = 1;
-	    } else if (do_arb) {
-		rt_db_free_internal(&nmg_intern);
-		Tcl_AppendResult(wdbp->wdb_interp, "Failed to construct an ARB equivalent to ",
-				 nmg_name, "\n", (char *)NULL);
-		return TCL_OK;
-	    }
 	}
     }
 
