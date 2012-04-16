@@ -1082,9 +1082,9 @@ get_editor_string(struct bu_vls *editstring)
     	    }
     	}
     	/* if it's not something we know about, assume no terminal - user can arrange for one if needed */
-    }	
+    }
 
-    bu_vls_sprintf(editstring, "%s %s %s %s", terminal?terminal:"(null)", terminal_opt?terminal_opt:"(null)", editor?editor:"(null)", editor_opt?editor_opt:"(null)"); 
+    bu_vls_sprintf(editstring, "%s %s %s %s", terminal?terminal:"(null)", terminal_opt?terminal_opt:"(null)", editor, editor_opt?editor_opt:"(null)");
 
     return 1;
 }
