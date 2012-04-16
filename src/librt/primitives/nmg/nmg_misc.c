@@ -622,7 +622,7 @@ nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, const s
     /* look for voids */
     for (BU_LIST_FOR (void_s, shell, &r->s_hd)) {
 	struct face *void_f;
-	int wrong_void=0;
+	/* int wrong_void=0; */
 	vect_t normal;
 
 	if (void_s == outer_shell)
@@ -731,9 +731,11 @@ nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, const s
 		 }
 		*/
 	    }
+	    /*
 	    if (wrong_void) {
 		continue;
 	    }
+	    */
 
 	    /* This void shell belongs with shell outer_s
 	     * add it to the list of shells */
