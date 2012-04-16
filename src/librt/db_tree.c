@@ -749,7 +749,8 @@ db_tree_funcleaf(
     void (*leaf_func)(),
     genptr_t user_ptr1,
     genptr_t user_ptr2,
-    genptr_t user_ptr3)
+    genptr_t user_ptr3,
+    genptr_t user_ptr4)
 {
     RT_CK_DBI(dbip);
 
@@ -760,14 +761,14 @@ db_tree_funcleaf(
 
     switch (comb_tree->tr_op) {
 	case OP_DB_LEAF:
-	    (*leaf_func)(dbip, comb, comb_tree, user_ptr1, user_ptr2, user_ptr3);
+	    (*leaf_func)(dbip, comb, comb_tree, user_ptr1, user_ptr2, user_ptr3, user_ptr4);
 	    break;
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    db_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_left, leaf_func, user_ptr1, user_ptr2, user_ptr3);
-	    db_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_right, leaf_func, user_ptr1, user_ptr2, user_ptr3);
+	    db_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_left, leaf_func, user_ptr1, user_ptr2, user_ptr3, user_ptr4);
+	    db_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_right, leaf_func, user_ptr1, user_ptr2, user_ptr3, user_ptr4);
 	    break;
 	default:
 	    bu_log("db_tree_funcleaf: bad op %d\n", comb_tree->tr_op);
