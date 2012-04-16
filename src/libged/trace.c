@@ -34,8 +34,10 @@ trace_do(struct db_i *dbip,
 	     union tree *comb_leaf,
 	     genptr_t user_ptr1,
 	     genptr_t user_ptr2,
-	     genptr_t user_ptr3)
+	     genptr_t user_ptr3,
+	     genptr_t user_ptr4)
 {
+    int *verbose;
     int *pathpos;
     matp_t old_xlate;
     mat_t new_xlate;
@@ -51,6 +53,7 @@ trace_do(struct db_i *dbip,
     pathpos = (int *)user_ptr1;
     old_xlate = (matp_t)user_ptr2;
     gtdp = (struct _ged_trace_data *)user_ptr3;
+    verbose = (int *)user_ptr4;
 
     /*
      * In _GED_EVAL_ONLY mode we're collecting the matrices along
@@ -71,7 +74,7 @@ trace_do(struct db_i *dbip,
 	MAT_COPY(new_xlate, old_xlate);
     }
 
-    _ged_trace(nextdp, (*pathpos)+1, new_xlate, gtdp);
+    _ged_trace(nextdp, (*pathpos)+1, new_xlate, gtdp, *verbose);
 }
 
 
@@ -83,7 +86,8 @@ void
 _ged_trace(struct directory *dp,
 	   int pathpos,
 	   const mat_t old_xlate,
-	   struct _ged_trace_data *gtdp)
+	   struct _ged_trace_data *gtdp,
+	   int verbose)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -110,7 +114,7 @@ _ged_trace(struct directory *dp,
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	if (comb->tree)
 	    db_tree_funcleaf(gtdp->gtd_gedp->ged_wdbp->dbip, comb, comb->tree, trace_do,
-			     (genptr_t)&pathpos, (genptr_t)old_xlate, (genptr_t)gtdp);
+			     (genptr_t)&pathpos, (genptr_t)old_xlate, (genptr_t)gtdp, (genptr_t)&verbose);
 
 	rt_db_free_internal(&intern);
 
@@ -166,7 +170,7 @@ _ged_trace(struct directory *dp,
     if (!rt_functab[id].ft_describe ||
 	rt_functab[id].ft_describe(gtdp->gtd_gedp->ged_result_str,
 				   &intern,
-				   1,
+				   verbose,
 				   gtdp->gtd_gedp->ged_wdbp->dbip->dbi_base2local,
 				   &rt_uniresource,
 				   gtdp->gtd_gedp->ged_wdbp->dbip) < 0)

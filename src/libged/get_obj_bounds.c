@@ -215,7 +215,7 @@ get_objpath_mat(struct ged *gedp,
     }
 
     MAT_IDN(gtdp->gtd_xform);
-    _ged_trace(gtdp->gtd_obj[0], 0, bn_mat_identity, gtdp);
+    _ged_trace(gtdp->gtd_obj[0], 0, bn_mat_identity, gtdp, 1);
 
     return GED_OK;
 }

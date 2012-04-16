@@ -65,7 +65,7 @@ edcodes_reg_compare(const void *p1, const void *p2)
 HIDDEN int edcodes_collect_regnames(struct ged *, struct directory *, int);
 
 HIDDEN void
-edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
+edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3, genptr_t UNUSED(user_ptr4))
 {
     int ret;
     int *pathpos;
@@ -124,7 +124,7 @@ edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
     }
 
     if (comb->tree) {
-	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, edcodes_traverse_node, (genptr_t)&pathpos, (genptr_t)gedp, (genptr_t)&status);
+	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, edcodes_traverse_node, (genptr_t)&pathpos, (genptr_t)gedp, (genptr_t)&status, (genptr_t)NULL);
     }
 
     intern.idb_meth->ft_ifree(&intern);

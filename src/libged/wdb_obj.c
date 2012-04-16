@@ -783,7 +783,8 @@ wdb_do_identitize(struct db_i *dbip,
 		  union tree *comb_leaf,
 		  genptr_t UNUSED(user_ptr1),
 		  genptr_t UNUSED(user_ptr2),
-		  genptr_t UNUSED(user_ptr3))
+		  genptr_t UNUSED(user_ptr3),
+		  genptr_t UNUSED(user_ptr4))
 {
     struct directory *dp;
 
@@ -823,7 +824,7 @@ wdb_identitize(struct directory *dp,
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     if (comb->tree) {
 	db_tree_funcleaf(dbip, comb, comb->tree, wdb_do_identitize,
-			 (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
+			 (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
 	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
 	    bu_log("Cannot write modified combination (%s) to database\n", dp->d_namep);
 	    return;
@@ -2556,7 +2557,8 @@ Do_showmats(struct db_i *dbip,
 	    union tree *comb_leaf,
 	    genptr_t user_ptr1,
 	    genptr_t UNUSED(user_ptr2),
-	    genptr_t UNUSED(user_ptr3))
+	    genptr_t UNUSED(user_ptr3),
+	    genptr_t UNUSED(user_ptr4))
 {
     struct showmats_data *smdp;
 
@@ -2637,7 +2639,7 @@ wdb_showmats_cmd(struct rt_wdb *wdbp,
 
 	if (comb->tree)
 	    db_tree_funcleaf(wdbp->dbip, comb, comb->tree, Do_showmats,
-			     (genptr_t)&sm_data, (genptr_t)NULL, (genptr_t)NULL);
+			     (genptr_t)&sm_data, (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
 	rt_db_free_internal(&intern);
 
 	if (!sm_data.smd_count) {
@@ -3181,7 +3183,7 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
 
     MAT_IDN(gtd.gtd_xform);
 
-    _ged_trace(gtd.gtd_obj[0], 0, bn_mat_identity, &gtd);
+    _ged_trace(gtd.gtd_obj[0], 0, bn_mat_identity, &gtd, 1);
 
     if (gtd.gtd_prflag == 0) {
 	/* path not found */
@@ -4575,7 +4577,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    _ged_trace(gtd.gtd_obj[0], 0, start_mat, &gtd);
+    _ged_trace(gtd.gtd_obj[0], 0, start_mat, &gtd, 1);
 
     if (gtd.gtd_prflag == 0) {
 	Tcl_AppendResult(wdbp->wdb_interp, "PATH:  ", (char *)NULL);
@@ -5205,7 +5207,8 @@ wdb_find_ref(struct db_i *UNUSED(dbip),
 	     union tree *comb_leaf,
 	     genptr_t object,
 	     genptr_t comb_name_ptr,
-	     genptr_t user_ptr3)
+	     genptr_t user_ptr3,
+	     genptr_t UNUSED(user_ptr4))
 {
     char *obj_name;
     char *comb_name;
@@ -5542,7 +5545,8 @@ wdb_find_cmd(struct rt_wdb *wdbp,
 				 wdb_find_ref,
 				 (genptr_t)argv[k],
 				 (genptr_t)dp->d_namep,
-				 (genptr_t)wdbp->wdb_interp);
+				 (genptr_t)wdbp->wdb_interp,
+				 (genptr_t)NULL);
 
 	    rt_db_free_internal(&intern);
 	}
@@ -7084,7 +7088,8 @@ Do_copy_membs(struct db_i *dbip,
 	      union tree *comb_leaf,
 	      genptr_t user_ptr1,
 	      genptr_t UNUSED(user_ptr2),
-	      genptr_t user_ptr3)
+	      genptr_t user_ptr3,
+	      genptr_t UNUSED(user_ptr4))
 {
     struct directory *dp;
     struct directory *dp_new;
@@ -7159,7 +7164,7 @@ Copy_comb(struct db_i *dbip,
     /* copy members */
     if (comb->tree)
 	db_tree_funcleaf(dbip, comb, comb->tree, Do_copy_membs,
-			 (genptr_t)xform, (genptr_t)wdbp->wdb_interp, (genptr_t)wdbp);
+			 (genptr_t)xform, (genptr_t)wdbp->wdb_interp, (genptr_t)wdbp, (genptr_t)NULL);
 
     /* Get a use of this object */
     found = RT_DIR_NULL;
@@ -7217,7 +7222,8 @@ Do_ref_incr(struct db_i *dbip,
 	    union tree *comb_leaf,
 	    genptr_t UNUSED(user_ptr1),
 	    genptr_t UNUSED(user_ptr2),
-	    genptr_t UNUSED(user_ptr3))
+	    genptr_t UNUSED(user_ptr3),
+	    genptr_t UNUSED(user_ptr4))
 {
     struct directory *dp;
 
@@ -7296,7 +7302,7 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    if (comb->tree)
 		db_tree_funcleaf(wdbp->dbip, comb, comb->tree, Do_ref_incr,
-				 (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
+				 (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
 	    rt_db_free_internal(&intern);
 	}
     }
@@ -7361,7 +7367,7 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
     }
 
     db_tree_funcleaf(wdbp->dbip, comb, comb->tree, Do_copy_membs,
-		     (genptr_t)xform, (genptr_t)wdbp->wdb_interp, (genptr_t)wdbp);
+		     (genptr_t)xform, (genptr_t)wdbp->wdb_interp, (genptr_t)wdbp, (genptr_t)NULL);
 
     if (rt_db_put_internal(old_dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	Tcl_AppendResult(wdbp->wdb_interp, "rt_db_put_internal failed for ", old_dp->d_namep,

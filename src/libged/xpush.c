@@ -214,7 +214,7 @@ static struct directory *Copy_object(struct ged *gedp, struct directory *dp, mat
  *
  */
 static void
-Do_copy_membs(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t UNUSED(user_ptr3))
+Do_copy_membs(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t UNUSED(user_ptr3), genptr_t UNUSED(user_ptr4))
 {
     struct directory *dp;
     struct directory *dp_new;
@@ -366,7 +366,7 @@ Copy_comb(struct ged *gedp,
     /* copy members */
     if (comb->tree)
 	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, Do_copy_membs,
-			 (genptr_t)xform, (genptr_t)gedp, (genptr_t)0);
+			 (genptr_t)xform, (genptr_t)gedp, (genptr_t)0, (genptr_t)NULL);
 
     /* Get a use of this object */
     found = RT_DIR_NULL;
@@ -423,7 +423,7 @@ Copy_object(struct ged *gedp,
  *
  */
 static void
-Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t UNUSED(user_ptr1), genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3))
+Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t UNUSED(user_ptr1), genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3), genptr_t UNUSED(user_ptr4))
 {
     struct directory *dp;
 
@@ -439,7 +439,7 @@ Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree
 
 static struct directory *Copy_object(struct ged *gedp, struct directory *dp, fastf_t *xform);
 
-static void Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3);
+static void Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3, genptr_t UNUSED(user_ptr4));
 
 
 int
@@ -514,7 +514,7 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    if (comb->tree)
 		db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, Do_ref_incr,
-				 (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
+				 (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
 	    rt_db_free_internal(&intern);
 	}
     }
@@ -579,7 +579,7 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     }
 
     db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, Do_copy_membs,
-		     (genptr_t)xform, (genptr_t)gedp, (genptr_t)0);
+		     (genptr_t)xform, (genptr_t)gedp, (genptr_t)0, (genptr_t)NULL);
 
     if (rt_db_put_internal(old_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal failed for %s\n", old_dp->d_namep);

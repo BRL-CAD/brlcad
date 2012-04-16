@@ -56,7 +56,7 @@ struct push_data {
 
 
 static void
-do_identitize(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3));
+do_identitize(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3), genptr_t UNUSED(user_ptr4));
 
 
 /**
@@ -79,7 +79,7 @@ identitize(struct directory *dp,
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     if (comb->tree) {
 	db_tree_funcleaf(dbip, comb, comb->tree, do_identitize,
-			 (genptr_t)msg, (genptr_t)NULL, (genptr_t)NULL);
+			 (genptr_t)msg, (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
 	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
 	    bu_vls_printf(msg, "Cannot write modified combination (%s) to database\n", dp->d_namep);
 	    return;
@@ -322,7 +322,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 
 
 static void
-do_identitize(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3))
+do_identitize(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3), genptr_t UNUSED(user_ptr4))
 {
     struct directory *dp;
     struct bu_vls *msg = (struct bu_vls *)user_ptr1;

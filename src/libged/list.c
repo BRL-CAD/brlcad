@@ -106,10 +106,13 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     int arg;
     int id;
+    int c;
     int recurse = 0;
+    int verbose = 99;
+    char *terse_parm = "-t";
     char *listeval = "listeval";
     struct rt_db_internal intern;
-    static const char *usage = "[-r] <objects>";
+    static const char *usage = "[-r] [-t] <objects>";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -123,27 +126,38 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc > 1 && BU_STR_EQUAL(argv[1], "-r")) {
-	recurse = 1;
-
-	/* skip past used args */
-	--argc;
-	++argv;
+    bu_optind = 1;      /* re-init bu_getopt() */
+    while ((c = bu_getopt(argc, (char * const *)argv, "rt")) != -1) {
+	switch (c) {
+	    case 'r':
+		recurse = 1;
+		break;
+	    case 't': /* terse */
+		verbose = 0;
+		break;
+	    default:
+		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
+		return GED_ERROR;
+	}
     }
 
-    /* skip past used args */
-    --argc;
-    ++argv;
+    /* skip options processed plus command name */
+    argc -= bu_optind;
+    argv += bu_optind;
 
     for (arg = 0; arg < argc; arg++) {
 	if (recurse) {
-	    char *tmp_argv[3];
+	    char *tmp_argv[3] = {NULL, NULL, NULL};
 
 	    tmp_argv[0] = listeval;
-	    tmp_argv[1] = (char *)argv[arg];
-	    tmp_argv[2] = (char *)NULL;
-
-	    ged_pathsum(gedp, 2, (const char **)tmp_argv);
+	    if (verbose) {
+		tmp_argv[1] = (char *)argv[arg];
+		ged_pathsum(gedp, 2, (const char **)tmp_argv);
+	    } else {
+		tmp_argv[1] = terse_parm;
+		tmp_argv[2] = (char *)argv[arg];
+		ged_pathsum(gedp, 3, (const char **)tmp_argv);
+	    }
 	} else if (strchr(argv[arg], '/')) {
 	    struct db_tree_state ts;
 	    struct db_full_path path;
@@ -168,7 +182,7 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
 
 	    bu_vls_printf(gedp->ged_result_str, "%s:  ", argv[arg]);
 
-	    if (!rt_functab[id].ft_describe || rt_functab[id].ft_describe(gedp->ged_result_str, &intern, 99, gedp->ged_wdbp->dbip->dbi_base2local, &rt_uniresource, gedp->ged_wdbp->dbip) < 0)
+	    if (!rt_functab[id].ft_describe || rt_functab[id].ft_describe(gedp->ged_result_str, &intern, verbose, gedp->ged_wdbp->dbip->dbi_base2local, &rt_uniresource, gedp->ged_wdbp->dbip) < 0)
 		bu_vls_printf(gedp->ged_result_str, "%s: describe error", dp->d_namep);
 
 	    rt_db_free_internal(&intern);
@@ -176,7 +190,7 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
 	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[arg], LOOKUP_NOISY)) == RT_DIR_NULL)
 		continue;
 
-	    _ged_do_list(gedp, dp, 99);	/* very verbose */
+	    _ged_do_list(gedp, dp, verbose);	/* very verbose */
 	}
     }
 

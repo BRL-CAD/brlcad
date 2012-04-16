@@ -39,7 +39,8 @@ find_ref(struct db_i *dbip,
 	 union tree *comb_leaf,
 	 genptr_t object,
 	 genptr_t comb_name_ptr,
-	 genptr_t user_ptr3)
+	 genptr_t user_ptr3,
+	 genptr_t UNUSED(user_ptr4))
 {
     char *obj_name;
     char *comb_name;
@@ -120,7 +121,8 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
 				 find_ref,
 				 (genptr_t)argv[k],
 				 (genptr_t)dp->d_namep,
-				 (genptr_t)gedp);
+				 (genptr_t)gedp,
+				 (genptr_t)NULL);
 
 	    rt_db_free_internal(&intern);
 	}
