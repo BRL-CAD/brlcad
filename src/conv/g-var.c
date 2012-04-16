@@ -340,6 +340,7 @@ void write_mesh_data()
 	if (ret != 1)
 	    perror("fwrite");
 	switch (format) {
+	    default:
 	    case 0:
 		for (i = 0; i < nface; i++) {
 		    ind8[0] = curr->bot->faces[3*i];
@@ -384,8 +385,6 @@ void write_mesh_data()
 		    if (ret != 1)
 			perror("fwrite");
 		}
-		break;
-	    default:
 		break;
 	}
 
