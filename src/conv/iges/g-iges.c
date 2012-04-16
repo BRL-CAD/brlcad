@@ -839,7 +839,7 @@ csg_leaf_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
 
 
 void
-incr_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *tp, genptr_t UNUSED(user_ptr1), genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3))
+incr_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *tp, genptr_t UNUSED(user_ptr1), genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3), genptr_t UNUSED(user_ptr4))
 {
     struct directory *dp;
 
@@ -882,7 +882,7 @@ count_refs(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
     comb_form = 0;
 
     db_tree_funcleaf(dbip, comb, comb->tree, incr_refs,
-		     (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
+		     (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
 
 }
 
