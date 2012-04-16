@@ -836,7 +836,7 @@ public:
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
     int getLeavesBoundingPoint(const ON_3dPoint& pt, std::list<BVNode<BV> *>& out);
-    int isTrimmed(const ON_2dPoint& uv, BRNode* closest, fastf_t &closesttrim);
+    int isTrimmed(const ON_2dPoint& uv, BRNode** closest, fastf_t &closesttrim);
     bool doTrimming() const;
 
     void getTrimsAbove(const ON_2dPoint& uv, std::list<BRNode*>& out_leaves);
@@ -1184,14 +1184,16 @@ BVNode<BV>::getLeavesBoundingPoint(const ON_3dPoint& pt, std::list<BVNode<BV> *>
 
 template<class BV>
 int
-BVNode<BV>::isTrimmed(const ON_2dPoint& uv, BRNode* closest, fastf_t &closesttrim)
+BVNode<BV>::isTrimmed(const ON_2dPoint& uv, BRNode** closest, fastf_t &closesttrim)
 {
     BRNode* br;
     std::list<BRNode*> trims;
 
     closesttrim = -1.0;
     if (m_checkTrim) {
+
 	getTrimsAbove(uv, trims);
+
 	if (trims.empty()) {
 	    return 1;
 	} else {//find closest BB
@@ -1232,14 +1234,16 @@ BVNode<BV>::isTrimmed(const ON_2dPoint& uv, BRNode* closest, fastf_t &closesttri
 		fastf_t v;
 		int trimstatus = br->isTrimmed(uv, v);
 		if (v >= 0.0) {
-		    if (closest == NULL) {
+		    if (closest && *closest == NULL) {
 			currHeight = v;
 			currTrimStatus = trimstatus;
-			closest = br;
+			if (closest)
+			    *closest = br;
 		    } else if (v < currHeight) {
 			currHeight = v;
 			currTrimStatus = trimstatus;
-			closest = br;
+			if (closest)
+			    *closest = br;
 		    }
 		} else {
 		    double dist = fabs(v);
@@ -1254,25 +1258,29 @@ BVNode<BV>::isTrimmed(const ON_2dPoint& uv, BRNode* closest, fastf_t &closesttri
 		    }
 		}
 	    }
-	    if (closest == NULL) {
+	    if (closest && *closest == NULL) {
 		if (verticalTrim) {
 		    closesttrim = vdist;
-		    closest = vclosest;
+		    if (closest)
+			*closest = vclosest;
 		}
 		if ((underTrim) && (!verticalTrim || (udist < closesttrim))) {
 		    closesttrim = udist;
-		    closest = uclosest;
+		    if (closest)
+			*closest = uclosest;
 		}
 		return 1;
 	    } else {
 		closesttrim = currHeight;
 		if ((verticalTrim) && (vdist < closesttrim)) {
 		    closesttrim = vdist;
-		    closest = vclosest;
+		    if (closest)
+			*closest = vclosest;
 		}
 		if ((underTrim) && (udist < closesttrim)) {
 		    closesttrim = udist;
-		    closest = uclosest;
+		    if (closest)
+			*closest = uclosest;
 		}
 		return currTrimStatus;
 	    }

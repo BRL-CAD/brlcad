@@ -1178,7 +1178,7 @@ utah_brep_intersect_test(const BBNode* sbv, const ON_BrepFace* face, const ON_Su
 	for (int i = 0; i < numhits; i++) {
 	    fastf_t closesttrim;
 	    BRNode* trimBR = NULL;
-	    int trim_status = ((BBNode*) sbv)->isTrimmed(ouv[i], trimBR, closesttrim);
+	    int trim_status = ((BBNode*) sbv)->isTrimmed(ouv[i], &trimBR, closesttrim);
 	    if (trim_status != 1) {
 		ON_3dPoint _pt;
 		ON_3dVector _norm(N[i]);
@@ -1194,7 +1194,7 @@ utah_brep_intersect_test(const BBNode* sbv, const ON_BrepFace* face, const ON_Su
 			    (const fastf_t*) _norm, uv);
 		bh.trimmed = false;
 		if (trimBR != NULL) {
-		    bh.m_adj_face_index = btrimBR->m_adj_face_index;
+		    bh.m_adj_face_index = trimBR->m_adj_face_index;
 		} else {
 		    bh.m_adj_face_index = -99;
 		}
@@ -1274,7 +1274,7 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
     if ((sbv->m_u[0] < ouv[0]) && (sbv->m_u[1] > ouv[0]) &&
 	(sbv->m_v[0] < ouv[1]) && (sbv->m_v[1] > ouv[1])) {
 	BRNode* trimBR = NULL;
-	int trim_status = ((BBNode*)sbv)->isTrimmed(ouv, trimBR, closesttrim);
+	int trim_status = ((BBNode*)sbv)->isTrimmed(ouv, &trimBR, closesttrim);
 	if (converged && (t > 1.e-2)) {
 	    if (trim_status != 1) {
 		hit = true;
@@ -1350,7 +1350,7 @@ brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* sur
     }
 
     BRNode* trimBR = NULL;
-    int trim_status = ((BBNode*)sbv)->isTrimmed(uv, trimBR, closesttrim);
+    int trim_status = ((BBNode*)sbv)->isTrimmed(uv, &trimBR, closesttrim);
     if ((found > 0) &&  (trim_status != 1)) {
 	ON_3dPoint _pt;
 	ON_3dVector _norm;
