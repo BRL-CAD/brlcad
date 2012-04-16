@@ -862,7 +862,7 @@ static int
 parse_trans(struct joint *jp, int idx, FILE *fip, struct bu_vls *str)
 {
     union bu_lex_token token;
-    int dirfound=0, upfound = 0, lowfound=0, curfound=0, accfound=0;
+    int dirfound=0, upfound = 0, lowfound=0, curfound=0;
 
     if (joint_debug & DEBUG_J_PARSE) {
 	Tcl_AppendResult(INTERP, "parse_trans: open\n", (char *)NULL);
@@ -906,7 +906,7 @@ parse_trans(struct joint *jp, int idx, FILE *fip, struct bu_vls *str)
 		jp->dirs[idx].upper = tmp;
 		parse_error(str, "parse_trans: lower > upper, exchanging.");
 	    }
-	    if (!accfound) jp->dirs[idx].accepted = 0.0;
+	    jp->dirs[idx].accepted = 0.0;
 	    if (!curfound) jp->dirs[idx].current = 0.0;
 	    jp->dirs[idx].lower *= base2mm;
 	    jp->dirs[idx].upper *= base2mm;
@@ -1020,7 +1020,7 @@ static int
 parse_rots(struct joint *jp, int idx, FILE *fip, struct bu_vls *str)
 {
     union bu_lex_token token;
-    int dirfound=0, upfound = 0, lowfound=0, curfound=0, accfound=0;
+    int dirfound=0, upfound = 0, lowfound=0, curfound=0;
 
     if (joint_debug & DEBUG_J_PARSE) {
 	Tcl_AppendResult(INTERP, "parse_rots: open\n", (char *)NULL);
@@ -1065,9 +1065,8 @@ parse_rots(struct joint *jp, int idx, FILE *fip, struct bu_vls *str)
 		jp->rots[idx].upper = tmp;
 		parse_error(str, "parse_rots: lower > upper, exchanging.");
 	    }
-	    if (!accfound) {
-		jp->rots[idx].accepted = 0.0;
-	    }
+
+	    jp->rots[idx].accepted = 0.0;
 	    if (jp->rots[idx].accepted < jp->rots[idx].lower) {
 		jp->rots[idx].accepted = jp->rots[idx].lower;
 	    }
