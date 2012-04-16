@@ -55,6 +55,7 @@ test_quote(const char *str)
     if (BU_STR_EQUAL(str, bu_vls_addr(&decoded))
         /* && !BU_STR_EQUAL(str, bu_vls_addr(&encoded)) */
         ) {
+        /* a hack for str showing '(null)' in printf if zero length */
         if (len_s == 0)
             len_s = 6;
 	printf("{%*s}%*s -> {%*s}%*s [PASS]\n",
@@ -62,6 +63,7 @@ test_quote(const char *str)
                len_d, bu_vls_addr(&decoded), f_wid - len_d, " "
                );
     } else {
+        /* a hack for str showing '(null)' in printf if zero length */
         if (len_s == 0)
             len_s = 6;
 	printf("{%*s}%*s -> {%*s}%*s [FAIL]  (should be: {%s})\n",
