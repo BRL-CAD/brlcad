@@ -300,6 +300,9 @@ bu_bitv_dup(register const struct bu_bitv *bv)
 {
     struct bu_bitv *bv2;
 
+    if (!bv)
+	return bu_bitv_new(0);
+
     bv2 = bu_bitv_new(bv->nbits);
     bu_bitv_or(bv2, bv);
 
