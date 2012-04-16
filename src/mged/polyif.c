@@ -82,7 +82,6 @@ f_polybinout(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
     struct polygon_header ph;
 #define MAX_VERTS 10000
     vect_t verts[MAX_VERTS];
-    int need_normal = 0;
     struct bu_external obuf;
 
     ph.npts = 0;
@@ -134,7 +133,6 @@ f_polybinout(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 			    ph.npts = 0;
 			    /* Set surface normal (vl_pnt points outward) */
 			    VMOVE(ph.normal, *pt);
-			    need_normal = 0;
 			    break;
 			case BN_VLIST_POLY_MOVE:
 			case BN_VLIST_TRI_MOVE:
@@ -167,12 +165,6 @@ f_polybinout(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 				Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 				bu_vls_free(&tmp_vls);
 				break;
-			    }
-			    if (need_normal) {
-				vect_t e1, e2;
-				VSUB2(e1, verts[0], verts[1]);
-				VSUB2(e2, verts[0], verts[2]);
-				VCROSS(ph.normal, e1, e2);
 			    }
 			    if (bu_struct_export(&obuf, (genptr_t)&ph, polygon_desc) < 0) {
 				Tcl_AppendResult(interp, "header export error\n", (char *)NULL);
