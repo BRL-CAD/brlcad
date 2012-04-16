@@ -1008,14 +1008,18 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     }
 
     /* preserve same old behavior */
-    if (nmatch > 1 && ri == 0) {
-	Tcl_AppendResult(interp, nargv[1], " multiply referenced\n", (char *)NULL);
-	goto bail_out;
-    } else if (ri != 0 && ri != nmatch) {
-	Tcl_AppendResult(interp,
-			 "the reference index must be less than the number of references\n",
-			 (char *)NULL);
-	goto bail_out;
+    if (ri == 0) {
+	if (nmatch > 1) {
+	    Tcl_AppendResult(interp, nargv[1], " multiply referenced\n", (char *)NULL);
+	    goto bail_out;
+	}
+    } else {
+	if (ri >= nmatch) {
+	    Tcl_AppendResult(interp,
+			     "the reference index must be less than the number of references\n",
+			     (char *)NULL);
+	    goto bail_out;
+	}
     }
 
     /* Make the specified solid the illuminated solid */
