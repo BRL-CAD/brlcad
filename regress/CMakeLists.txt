@@ -81,6 +81,10 @@ if(SH_EXEC)
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/g-dot.sh ${CMAKE_SOURCE_DIR}
     DEPENDS mged g-dot
     )
+  add_custom_target(regress-quote
+    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/quote.sh ${CMAKE_SOURCE_DIR}
+    DEPENDS test_quote
+    )
 
   add_custom_target(regress
     DEPENDS regress-mged regress-moss regress-lights
@@ -88,6 +92,7 @@ if(SH_EXEC)
     regress-weight regress-gqa regress-fastgen regress-bots
     regress-repository regress-red regress-nirt
     regress-vls regress-comgeom regress-gnff regress-gdot
+    regress-quote
     )
 
 endif(SH_EXEC)
@@ -119,6 +124,7 @@ CMAKEFILES(
   nightly.sh
   nirt.sh
   nurbs/brep-3dm.tar.bz2
+  quote.sh
   red.sh
   repository.sh
   shaders.sh
