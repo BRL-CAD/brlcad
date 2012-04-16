@@ -124,7 +124,6 @@ CMAKEFILES(
   nightly.sh
   nirt.sh
   nurbs/brep-3dm.tar.bz2
-  quote.sh
   red.sh
   repository.sh
   shaders.sh
