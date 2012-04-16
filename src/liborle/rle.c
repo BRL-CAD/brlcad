@@ -555,7 +555,7 @@ rle_wmap(FILE *fp, RLEColorMap *cmap)
    and 0 if untouched.
 */
 int
-rle_decode_ln(register FILE *fp, RLEpixel (*scan_buf))
+rle_decode_ln(register FILE *fp, RLEpixel *scan_buf)
 {
     static int lines_to_skip = 0;
     static int opcode, datum;
