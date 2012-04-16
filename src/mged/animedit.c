@@ -862,7 +862,7 @@ static int
 parse_trans(struct joint *jp, int idx, FILE *fip, struct bu_vls *str)
 {
     union bu_lex_token token;
-    int dirfound=0, upfound = 0, lowfound=0, curfound=0;
+    int dirfound, upfound, lowfound, curfound;
 
     if (joint_debug & DEBUG_J_PARSE) {
 	Tcl_AppendResult(INTERP, "parse_trans: open\n", (char *)NULL);
@@ -876,6 +876,7 @@ parse_trans(struct joint *jp, int idx, FILE *fip, struct bu_vls *str)
     }
     if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
 
+    dirfound = upfound = lowfound = curfound = 0;
     while (get_token(&token, fip, str, animkeys, animsyms) != EOF) {
 	if (token.type == BU_LEX_IDENT) {
 	    bu_free(token.t_id.value, "unit token");
@@ -907,7 +908,8 @@ parse_trans(struct joint *jp, int idx, FILE *fip, struct bu_vls *str)
 		parse_error(str, "parse_trans: lower > upper, exchanging.");
 	    }
 	    jp->dirs[idx].accepted = 0.0;
-	    if (!curfound) jp->dirs[idx].current = 0.0;
+	    if (!curfound)
+		jp->dirs[idx].current = 0.0;
 	    jp->dirs[idx].lower *= base2mm;
 	    jp->dirs[idx].upper *= base2mm;
 	    jp->dirs[idx].current *= base2mm;
@@ -1020,7 +1022,7 @@ static int
 parse_rots(struct joint *jp, int idx, FILE *fip, struct bu_vls *str)
 {
     union bu_lex_token token;
-    int dirfound=0, upfound = 0, lowfound=0, curfound=0;
+    int dirfound, upfound, lowfound, curfound;
 
     if (joint_debug & DEBUG_J_PARSE) {
 	Tcl_AppendResult(INTERP, "parse_rots: open\n", (char *)NULL);
@@ -1034,6 +1036,7 @@ parse_rots(struct joint *jp, int idx, FILE *fip, struct bu_vls *str)
     }
     if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
 
+    dirfound = upfound = lowfound = curfound = 0;
     while (get_token(&token, fip, str, animkeys, animsyms) != EOF) {
 	if (token.type == BU_LEX_IDENT) {
 	    bu_free(token.t_id.value, "unit token");
@@ -1335,7 +1338,7 @@ static int
 parse_jset(struct hold *hp, FILE *fip, struct bu_vls *str)
 {
     union bu_lex_token token;
-    int jointfound=0, listfound=0, arcfound=0, pathfound=0;
+    int jointfound, listfound, arcfound, pathfound;
 
     if (joint_debug & DEBUG_J_PARSE) {
 	Tcl_AppendResult(INTERP, "parse_jset: open\n", (char *)NULL);
@@ -1343,6 +1346,7 @@ parse_jset(struct hold *hp, FILE *fip, struct bu_vls *str)
 
     if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
 
+    jointfound = listfound = arcfound = pathfound = 0;
     for (;;) {
 	if (get_token(&token, fip, str, animkeys, animsyms) == EOF) {
 	    parse_error(str, "parse_jset: Unexpect EOF getting contents of joint set");
