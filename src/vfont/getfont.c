@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <string.h>
 #include <stdio.h>
 
 #include "fb.h"
@@ -39,8 +40,11 @@ get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
     struct header lochdr;
     static char	fname[FONTNAMESZ];
 
+    /* Initialize vfont */
     font.width = 0;
     font.height = 0;
+    font.offset = 0;
+    memset((void *)font.dir, 0, sizeof(struct dispatch) * 256);
 
     if (fontname == NULL)
 	fontname = FONTNAME;
