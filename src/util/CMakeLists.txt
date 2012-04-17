@@ -36,9 +36,11 @@ endif(BRLCAD_ENABLE_X11)
 
 BRLCAD_ADDDATA(pl-dm.c sample_applications)
 
-if(LIBPC)
+if(LIBPC_DIR)
   BRLCAD_ADDEXEC(pc_test pc_test.c "libwdb;libpc" NO_INSTALL)
-endif(LIBPC)
+else(LIBPC_DIR)
+  CMAKEFILES(pc_test.c)
+endif(LIBPC_DIR)
 
 BRLCAD_ADDEXEC(alias-pix alias-pix.c libbu)
 BRLCAD_ADDEXEC(ap-pix ap-pix.c libbu)
