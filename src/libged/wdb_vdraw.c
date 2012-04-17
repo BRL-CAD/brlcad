@@ -291,6 +291,8 @@ vdraw_insert_tcl(void *clientData, int argc, const char *argv[])
     }
 
     for (i = vp->nused-1; i > idx; i--) {
+	if (i >= BN_VLIST_CHUNK-1)
+	    break;
 	vp->cmd[i] = vp->cmd[i-1];
 	VMOVE(vp->pt[i], vp->pt[i-1]);
     }
@@ -365,7 +367,9 @@ vdraw_delete_tcl(void *clientData, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    for (i = uind; i < (FMIN(vp->nused,BN_VLIST_CHUNK) - 1); i++) {
+    for (i = uind; i < vp->nused - 1; i++) {
+	if (i >= BN_VLIST_CHUNK-1)
+	    break;
 	vp->cmd[i] = vp->cmd[i+1];
 	VMOVE(vp->pt[i], vp->pt[i+1]);
     }
@@ -380,6 +384,8 @@ vdraw_delete_tcl(void *clientData, int argc, const char *argv[])
 	VMOVE(vp->pt[BN_VLIST_CHUNK-1], wp->pt[0]);
 
 	for (i = 0; i < wp->nused - 1; i++) {
+	    if (i >= BN_VLIST_CHUNK-1)
+		break;
 	    wp->cmd[i] = wp->cmd[i+1];
 	    VMOVE(wp->pt[i], wp->pt[i+1]);
 	}
