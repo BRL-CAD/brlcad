@@ -2874,9 +2874,9 @@ RT_EXPORT extern int db5_decode_signed(size_t			*lenp,
 				       const unsigned char	*cp,
 				       int			format);
 
-RT_EXPORT extern int db5_decode_length(size_t			*lenp,
-				       const unsigned char	*cp,
-				       int			format);
+RT_EXPORT extern size_t db5_decode_length(size_t *lenp,
+					  const unsigned char *cp,
+					  int format);
 
 RT_EXPORT extern int db5_select_length_encoding(size_t len);
 

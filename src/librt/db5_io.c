@@ -114,7 +114,7 @@ db5_select_length_encoding(size_t len)
  * Returns -
  * The number of bytes of input that were decoded.
  */
-int
+size_t
 db5_decode_length(size_t *lenp, const unsigned char *cp, int format)
 {
     *lenp = 0;
@@ -355,8 +355,9 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     struct db5_ondisk_header header;
     unsigned char lenbuf[8];
     int count = 0;
-    int used;
+    size_t used;
     size_t want, got;
+    size_t dlen;
     unsigned char *cp;
 
     if (fread((unsigned char *)&header, sizeof header, 1, fp) != 1) {
@@ -382,18 +383,24 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 	    count = 8;
     }
     if (fread(lenbuf, count, 1, fp)  != 1) {
+	perror("fread");
 	bu_log("db5_get_raw_internal_fp(): fread lenbuf error\n");
 	return -2;
     }
 
-    used += db5_decode_length(&rip->object_length, lenbuf, rip->h_object_width);
+    dlen = db5_decode_length(&rip->object_length, lenbuf, rip->h_object_width);
+    if (dlen < 1 || dlen > sizeof(size_t)) {
+	bu_log("db5_get_raw_internal_fp(): Error decoding object length (got %zd)\n", dlen);
+	return -1;
+    }
+    used += dlen;
     if ( rip->object_length > UINTPTR_MAX>>3 ) {
-	bu_log("db5_get_raw_internal_fp() bad length read\n");
+	bu_log("db5_get_raw_internal_fp():  bad length read\n");
 	return -1;
     }
     rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
-    if ((size_t)rip->object_length < sizeof(struct db5_ondisk_header)) {
+    if (rip->object_length < sizeof(struct db5_ondisk_header) || rip->object_length < used) {
 	bu_log("db5_get_raw_internal_fp(): object_length=%ld is too short, database is corrupted\n",
 	       rip->object_length);
 	return -1;
@@ -409,22 +416,18 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     *((struct db5_ondisk_header *)rip->buf) = header;	/* struct copy */
     memcpy(rip->buf+sizeof(header), lenbuf, count);
 
-    if ( (size_t)used > (UINTPTR_MAX - (size_t)rip->buf) ) {
-	bu_log("db5_get_raw_internal_fp(), Pointer advance goes beyond the end of the universe. Aborting.\n");
-	return -1;
-    }
-    cp = rip->buf+used;
-    want = rip->object_length-used;
-    BU_ASSERT_LONG(want, >, 0);
+    cp = rip->buf + used;
+    want = rip->object_length - used;
+
     if ((got = fread(cp, 1, want, fp)) != want) {
-	bu_log("db5_get_raw_internal_fp(), want=%ld, got=%ld, database is too short\n",
+	bu_log("db5_get_raw_internal_fp(): Database is too short, want=%ld, got=%ld\n",
 	       want, got);
 	return -2;
     }
 
     /* Verify trailing magic number */
     if (rip->buf[rip->object_length-1] != DB5HDR_MAGIC2) {
-	bu_log("db5_get_raw_internal_fp() bad magic2 -- database has become corrupted.\n expected x%x, got x%x\n",
+	bu_log("db5_get_raw_internal_fp(): bad magic2 -- database has become corrupted.\n expected x%x, got x%x\n",
 	       DB5HDR_MAGIC2, rip->buf[rip->object_length-1]);
 	return -2;
     }
