@@ -1400,44 +1400,18 @@ f_nnodes(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, 
 	return 0;
     }
 
-    if (doequal && dogreaterthan) {
-	if (node_count >= node_count_target) {
-	    return 1;
-	} else {
-	    return 0;
-	}
-    }
-
-    if (doequal && dolessthan) {
-	if (node_count <= node_count_target) {
-	    return 1;
-	} else {
-	    return 0;
-	}
-    }
-
-    if (dogreaterthan) {
-	if (node_count > node_count_target) {
-	    return 1;
-	} else {
-	    return 0;
-	}
-    }
-
-    if (dolessthan) {
-	if (node_count < node_count_target) {
-	    return 1;
-	} else {
-	    return 0;
-	}
-    }
-
-
     if (doequal) {
 	if (node_count == node_count_target) {
 	    return 1;
-	} else {
-	    return 0;
+	}
+    }
+    if (dolessthan) {
+	if (node_count < node_count_target) {
+	    return 1;
+	}
+    } else if (dogreaterthan) {
+	if (node_count > node_count_target) {
+	    return 1;
 	}
     }
 
