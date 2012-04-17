@@ -466,7 +466,7 @@ main(int argc, char *argv[])
 	fprintf(stderr, "Track: Could not open file %s.\n", *(argv+bu_optind));
 	return 0;
     }
-    num_wheels = -1;
+
     if (one_radius) {
 	while (!feof(stream)) {
 	    count = fscanf(stream, "%*f %*f %*f");
