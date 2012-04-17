@@ -747,6 +747,10 @@ read_ply_data( struct rt_bot_internal *bot )
 
 			    if ( vcount < 3 || vcount > 4) {
 				bu_log( "ignoring face with %d vertices\n", vcount );
+				if (vcount < 0)
+				    vcount = 0;
+				if (vcount > 100)
+				    vcount = 100;
 				for ( idx=0; idx < vcount; idx++ ) {
 				    skip( p->list_type );
 				}
