@@ -2149,7 +2149,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     if (!BU_LIST_IS_INITIALIZED(&rt_g.rtg_vlfree)) {
 	BU_LIST_INIT(&rt_g.rtg_vlfree);
     }
-    for (i=0; i<(size_t)BU_PTBL_END(outer_loop); i++) {
+    for (i=0; outer_loop && i<(size_t)BU_PTBL_END(outer_loop); i++) {
 	genptr_t seg;
 
 	seg = (genptr_t)BU_PTBL_GET(outer_loop, i);
