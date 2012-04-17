@@ -4224,7 +4224,7 @@ nmg_isect_line2_face2pNEW(struct nmg_inter_struct *is, struct faceuse *fu1, stru
     struct edgeuse *eu1;
     struct edgeuse *eu2;
     fastf_t dist[2];
-    int code;
+    int code = 0;
     point_t eg_pt2d;	/* 2D */
     vect_t eg_dir2d;	/* 2D */
     struct loopuse *lu1;
@@ -4510,7 +4510,7 @@ re_tabulate:
 		/* geometry says lines are parallel, so lack of intersection is expected */
 		continue;
 	    }
-	} else if (code < 0 && hit_v) {
+	} else if (code < 0) {
 	    /* geometry says lines are parallel, but we have an intersection */
 	    bu_log("NOTICE: geom/topo mis-match, enlisting topo vu, hit_v=x%x\n", hit_v);
 	    VPRINT("hit_v", hit_v->vg_p->coord);
