@@ -109,11 +109,11 @@ Usage: sun-pix [-b -h -i -P -v -C] [sun.bitmap]\n";
 
 #define NET_LONG_LEN 4 /* # bytes to network long */
 
-unsigned long
+uint32_t
 getlong(char *msgp)
 {
     unsigned char *p = (unsigned char *) msgp;
-    unsigned long u;
+    uint32_t u;
 
     u = *p++; u <<= 8;
     u |= *p++; u <<= 8;
