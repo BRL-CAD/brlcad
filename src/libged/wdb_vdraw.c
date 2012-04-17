@@ -291,8 +291,6 @@ vdraw_insert_tcl(void *clientData, int argc, const char *argv[])
     }
 
     for (i = vp->nused-1; i > idx; i--) {
-	if (i >= BN_VLIST_CHUNK-1)
-	    break;
 	vp->cmd[i] = vp->cmd[i-1];
 	VMOVE(vp->pt[i], vp->pt[i-1]);
     }
