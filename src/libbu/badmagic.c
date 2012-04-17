@@ -31,26 +31,23 @@
 void
 bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line)
 {
-    char buf[MAGICBUFSIZ];
+    char buf[MAGICBUFSIZ] = {'\0'};
 
     if (UNLIKELY(!(ptr))) {
 	snprintf(buf, MAGICBUFSIZ, "ERROR: NULL %s pointer, file %s, line %d\n",
 		 str, file, line);
-	bu_bomb(buf);
-    }
-    if (UNLIKELY(((size_t)(ptr)) & (sizeof(uint32_t)-1))) {
+    } else if (UNLIKELY(((size_t)(ptr)) & (sizeof(uint32_t)-1))) {
 	snprintf(buf, MAGICBUFSIZ, "ERROR: %p mis-aligned %s pointer, file %s, line %d\n",
 		 (void *)ptr, str, file, line);
-	bu_bomb(buf);
-    }
-    if (UNLIKELY(*(ptr) != (uint32_t)(magic))) {
+    } else if (UNLIKELY(*(ptr) != (uint32_t)(magic))) {
 	snprintf(buf, MAGICBUFSIZ, "ERROR: bad pointer %p: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
 		 (void *)ptr,
 		 str, (unsigned long)magic,
 		 bu_identify_magic(*(ptr)), (unsigned long)*(ptr),
 		 file, line);
-	bu_bomb(buf);
     }
+    if (UNLIKELY(buf[0] != '\0'))
+	bu_bomb(buf);
 }
 
 /*
