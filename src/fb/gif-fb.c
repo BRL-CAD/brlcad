@@ -102,8 +102,8 @@ static int g_pixel;		/* global # bits/pixel in image */
 static int pixel;			/* local # bits/pixel in image */
 static int background;		/* color index of screen background */
 static size_t entries;		/* # of global color map entries */
-static RGBpixel *g_cmap;		/* malloc()ed global color map */
-static RGBpixel *cmap;			/* malloc()ed local color map */
+static RGBpixel *g_cmap;		/* bu_malloc()ed global color map */
+static RGBpixel *cmap;			/* bu_malloc()ed local color map */
 /* NOTE:  Relies on R, G, B order and also on RGBpixel being 3 unsigned chars. */
 
 #define GIF_EXTENSION '!'
@@ -151,10 +151,10 @@ Skip(void)					/* skip over raster data */
 
 static int start_row[5] = { 0, 4, 2, 1, 0 };
 static int step[5] = { 8, 8, 4, 2, 1 };
-static int row, col;		/* current pixel coordinates */
+static int row, col;			/* current pixel coordinates */
 static int pass;			/* current pass */
 static int stop;			/* final pass + 1 */
-static unsigned char *pixbuf;		/* malloc()ed scan line buffer */
+static unsigned char *pixbuf = NULL;	/* bu_malloc()ed scan line buffer */
 
 
 static void
@@ -177,15 +177,12 @@ PutPixel(int value)
 	  the bottom of the available frame buffer.
 	*/
 
-	if (fb_write(fbp, 0, ht - row, pixbuf, write_width) < 0
-	    )
+	if (fb_write(fbp, 0, ht - row, pixbuf, write_width) < 0)
 	    Message("Error writing scan line to frame buffer");
 
 	col = left;
 
-	if ((row += step[pass]) >= bottom
-	    && ++pass < stop
-	    )
+	if ((row += step[pass]) >= bottom && ++pass < stop)
 	    row = start_row[pass];
     }
 }
@@ -379,9 +376,7 @@ LZW(void)
 		table[next_code].pfx = w;
 		table[next_code].ext = k;
 
-		if (++next_code == max_code
-		    && chunk_size < 12
-		    ) {
+		if (++next_code == max_code && chunk_size < 12) {
 		    ++chunk_size;
 		    max_code <<= 1;
 		    chunk_mask = max_code - 1;
@@ -555,10 +550,7 @@ main(int argc, char **argv)
 			    Fatal(fbp, "Error reading GIF signature");
 
 			if (bu_strncmp(ver, "87a", 3) != 0)
-			    Message(
-				"GIF version \"%3.3s\" not known, \"87a\" assumed",
-				ver
-				);
+			    Message("GIF version \"%3.3s\" not known, \"87a\" assumed", ver);
 		    }
 		    break;
 	    }
@@ -594,9 +586,7 @@ main(int argc, char **argv)
 	    Message("Screen descriptor byte 6 bit 3 unknown");
 
 	if (desc[6] != 0x00)
-	    Message("Screen descriptor byte 7 = %2.2x unknown",
-		    desc[6]
-		);
+	    Message("Screen descriptor byte 7 = %2.2x unknown", desc[6]);
 
 	if (ign_cr)
 	    cr = 8;		/* override value from GIF file */
@@ -604,11 +594,8 @@ main(int argc, char **argv)
 
     /* Process global color map. */
 
-    if ((g_cmap = (RGBpixel *)malloc(256 * sizeof(RGBpixel))) == NULL
-	|| (cmap = (RGBpixel *)malloc(256 * sizeof(RGBpixel))) == NULL)
-    {
-	Fatal(fbp, "Insufficient memory for color maps");
-    }
+    g_cmap = (RGBpixel *)bu_malloc(256 * sizeof(RGBpixel), "g_cmap");
+    cmap = (RGBpixel *)bu_malloc(256 * sizeof(RGBpixel), "cmap");
 
     entries = (size_t)(1 << g_pixel);
 
@@ -649,9 +636,7 @@ main(int argc, char **argv)
 	   GIF specs for this case are utterly nonsensical. */
 
 	if (verbose)
-	    Message("default global color map has %d grey values",
-		    entries
-		);
+	    Message("default global color map has %d grey values", entries);
 
 	for (i = 0; i < (int)entries; ++i)
 	    g_cmap[i][RED] =
@@ -661,10 +646,7 @@ main(int argc, char **argv)
 
     /* Open frame buffer for unbuffered output. */
 
-    pixbuf = (unsigned char *)malloc(width * sizeof(RGBpixel));
-    if (pixbuf == NULL) {
-	Fatal(fbp, "Insufficient memory for scan line buffer");
-    }
+    pixbuf = (unsigned char *)bu_malloc(width * sizeof(RGBpixel), "pixbuf");
 
     if ((fbp = fb_open(fb_file, width, height)) == FBIO_NULL) {
 	Fatal(fbp, "Couldn't open frame buffer");
@@ -677,14 +659,10 @@ main(int argc, char **argv)
 	ht = fb_getheight(fbp);
 
 	if (wt < width || ht < height)
-	    Message("Frame buffer too small (%dx%d); %dx%d needed",
-		    wt, ht, width, height
-		);
+	    Message("Frame buffer too small (%dx%d); %dx%d needed", wt, ht, width, height);
 
 	if (verbose && (wt > width || ht > height))
-	    Message("Frame buffer (%dx%d) larger than GIF screen",
-		    wt, ht
-		);
+	    Message("Frame buffer (%dx%d) larger than GIF screen", wt, ht);
 
 	write_width = width;
 	if (write_width > wt) write_width = wt;
@@ -750,6 +728,11 @@ main(int argc, char **argv)
 		    Fatal(fbp, "Specified image not found");
 		}
 
+		/* release allocated memory */
+		bu_free(pixbuf, "pixbuf");
+		bu_free(cmap, "cmap");
+		bu_free(g_cmap, "g_cmap");
+
 		bu_exit(EXIT_SUCCESS, NULL);
 
 	    case GIF_EXTENSION: {
@@ -794,22 +777,14 @@ main(int argc, char **argv)
 		pixel = M_bit ? (desc[8] & 0x07) + 1 : g_pixel;
 
 		if (verbose) {
-		    Message("image (%d, %d, %d, %d)",
-			    left, top, right, bottom
-			);
+		    Message("image (%d, %d, %d, %d)", left, top, right, bottom);
 
 		    if (M_bit) {
-			Message(
-			    "local color map provided"
-			    );
-			Message("%d bits per pixel",
-				pixel
-			    );
+			Message("local color map provided");
+			Message("%d bits per pixel", pixel);
 		    }
 
-		    Message(I_bit ? "interlaced"
-			    : "sequential"
-			);
+		    Message(I_bit ? "interlaced" : "sequential");
 		}
 
 		if (left < 0 || right > width || left >= right
@@ -830,10 +805,7 @@ main(int argc, char **argv)
 		    /* Read in local color map. */
 
 		    if (verbose)
-			Message(
-			    "local color map has %d entries",
-			    entries
-			    );
+			Message("local color map has %d entries", entries);
 
 		    if (fread(cmap, 3, entries, gfp) != entries)
 			Fatal(fbp, "Error reading local color map");
