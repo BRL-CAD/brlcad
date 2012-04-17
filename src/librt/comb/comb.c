@@ -190,7 +190,8 @@ rt_comb_v5_serialize(
 	    /* there should be a better way than casting
 	     * 'mi' from ssize_t to size_t
 	     */
-	    ssp->leafp = db5_encode_length(ssp->leafp, (size_t)mi, ssp->wid);
+	    n = (size_t)mi;
+	    ssp->leafp = db5_encode_length(ssp->leafp, n, ssp->wid);
 
 	    /* Encoding of the matrix */
 	    if (mi != (ssize_t)-1) {
