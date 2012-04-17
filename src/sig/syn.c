@@ -72,7 +72,7 @@ Usage: syn samples_per_set [ratio] > doubles\n";
     findex = 0;
     stepsize = 0;
     while (fread(&period, sizeof(period), 1, stdin) == 1) {
-	if (period > 0)
+	if (period > 0 && period < INT_MAX-1)
 	    stepsize = TABSIZE / period;
 	for (i = setsize; i > 0; i--) {
 	    d = sintab[(int)findex];
