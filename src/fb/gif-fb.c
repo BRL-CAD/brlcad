@@ -566,6 +566,15 @@ main(int argc, char **argv)
 
 	width = desc[1] << 8 | desc[0];
 	height = desc[3] << 8 | desc[2];
+	if (width < 0)
+	    width = 0;
+	if (width > INT_MAX-1)
+	    width = INT_MAX-1;
+	if (height < 0)
+	    height = 0;
+	if (height > INT_MAX-1)
+	    height = INT_MAX-1;
+
 	M_bit = (desc[4] & 0x80) != 0;
 	cr = (desc[4] >> 4 & 0x07) + 1;
 	g_pixel = (desc[4] & 0x07) + 1;
