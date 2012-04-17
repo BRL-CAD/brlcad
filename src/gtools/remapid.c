@@ -793,10 +793,11 @@ tankill_reassign(char *db_name)
 	/* just copy the rest of the component */
 	while (coord_no < 3*vertex_count || !in_space) {
 	    ch = fgetc(fd_in);
-
 	    if (ch == EOF) {
 		bu_log("Unexpected EOF while processing ident %d\n", id);
 		bu_exit(EXIT_FAILURE, "Unexpected EOF\n");
+	    } else if (ch < 0 || ch > 128 || !isprint(ch)) {
+		ch = 0;
 	    }
 
 	    if (isspace(ch))
