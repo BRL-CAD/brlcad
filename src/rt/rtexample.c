@@ -99,7 +99,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
     struct soltab *stp;
 
     /* will contain surface curvature information at the entry */
-    struct curvature cur;
+    struct curvature cur = RT_CURVATURE_INIT_ZERO;
 
     /* will contain our hit point coordinate */
     point_t pt;
