@@ -131,7 +131,7 @@ main(int argc, char **argv)
 		break;
 	    default:	/* '?' */
 		usage(argv);
-		bu_exit(1, NULL);
+		return 1;
 	}
     }
 
@@ -139,7 +139,7 @@ main(int argc, char **argv)
 	if ( isatty(fileno(stdin)) ) {
 	    (void) fprintf(stderr, "%s: No input file.\n", argv[0]);
 	    usage(argv);
-	    bu_exit(1, NULL);
+	    return 1;
 	}
 	file_name = "-";
 	fp = stdin;
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 			   "%s: cannot open \"%s\" for reading\n", argv[0],
 			   file_name );
 	    usage(argv);
-	    bu_exit(1, NULL);
+	    return 1;
 	}
     }
 /*
@@ -160,7 +160,7 @@ main(int argc, char **argv)
 
     if (n != 13) {
 	fprintf(stderr, "%s: only %d bytes in header.\n", argv[0], n);
-	bu_exit(1, NULL);
+	return 1;
     }
 
     ScreenWidth = WORD(Header.GH_ScreenWidth);
@@ -170,7 +170,7 @@ main(int argc, char **argv)
     GlobalPixels= (Header.GH_Flags&0x07) + 1;
     if (headers) {
 	fprintf(stderr, "-w%d -n%d\n", ScreenWidth, ScreenHeight);
-	bu_exit(0, NULL);
+	return 0;
     }
 /*
  * In verbose mode, output a message before checking to allow the
@@ -188,7 +188,7 @@ main(int argc, char **argv)
 
     if (Header.GH_EOB) {
 	fprintf(stderr, "%s: missing EOB in header.\n", argv[0]);
-	bu_exit(1, NULL);
+	return 1;
     }
     maxcolors = 1 << GlobalPixels;
 
@@ -200,18 +200,18 @@ main(int argc, char **argv)
 	if (n != 3) {
 	    fprintf(stdout, "%s: only read %d global colors.\n",
 		    argv[0], i);
-	    bu_exit(1, NULL);
+	    return 1;
 	}
     }
 /*
  * Read in the image header.
  */
-    n= fread(&Im, 1, sizeof(Im), fp);
+    n = fread(&Im, 1, sizeof(Im), fp);
 
     if (n != sizeof(Im)) {
 	fprintf(stderr, "%s: only %d bytes in image header.\n",
 		argv[0], n);
-	bu_exit(1, NULL);
+	return 1;
     }
     if (verbose) {
 	fprintf(stderr, "Magic=%c, left=%d, top=%d, Width=%d, Height=%d\n",
@@ -237,7 +237,7 @@ main(int argc, char **argv)
 		fprintf(stdout,
 			"%s: only read %d global colors.\n",
 			argv[0], i);
-		bu_exit(1, NULL);
+		return 1;
 	    }
 	}
     }
@@ -245,7 +245,7 @@ main(int argc, char **argv)
     if (WORD(Im.IH_Width) > 2048) {
 	fprintf(stderr, "%s: Input line greater than internal buffer!\n",
 		argv[0]);
-	bu_exit(1, NULL);
+	return 1;
     }
 
     MinBits = getc(fp) + 1;
