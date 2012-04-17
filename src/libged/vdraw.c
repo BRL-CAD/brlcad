@@ -386,13 +386,15 @@ vdraw_delete(void *data, int argc, const char *argv[])
 	uind -= vp->nused;
     }
 
-    /* The comparison to BN_VLIST_CHUNK is to silence covarity */
+    /* make sure we start in a valid delete range */
     if ((size_t)uind >= vp->nused || uind >= BN_VLIST_CHUNK) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: delete out of range\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
     for (i = (size_t)uind; i < vp->nused - 1; i++) {
+	if (i >= BN_VLIST_CHUNK-1)
+	    break;
 	vp->cmd[i] = vp->cmd[i+1];
 	VMOVE(vp->pt[i], vp->pt[i+1]);
     }
@@ -407,6 +409,8 @@ vdraw_delete(void *data, int argc, const char *argv[])
 	VMOVE(vp->pt[BN_VLIST_CHUNK-1], wp->pt[0]);
 
 	for (i = 0; i < wp->nused - 1; i++) {
+	    if (i >= BN_VLIST_CHUNK-1)
+		break;
 	    wp->cmd[i] = wp->cmd[i+1];
 	    VMOVE(wp->pt[i], wp->pt[i+1]);
 	}
