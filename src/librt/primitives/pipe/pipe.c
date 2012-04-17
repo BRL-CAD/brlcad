@@ -312,7 +312,8 @@ rt_linear_pipe_prep(struct bu_list *head, fastf_t *pt1, fastf_t id1, fastf_t od1
  * Calculate a bounding RPP for a pipe
  */
 int
-rt_pipe_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_pipe_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
+{
     struct rt_pipe_internal *pip;
     struct wdb_pipept *pp1, *pp2, *pp3;
     point_t curr_pt;
@@ -3267,18 +3268,18 @@ rt_pipe_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	fastf_t dist_to_bend;
 	point_t bend_start, bend_end, bend_center;
 
-	VSUB2(n1, curr_pt, pp2->pp_coord);
-	if (VNEAR_ZERO(n1, VUNITIZE_TOL)) {
-	    /* duplicate point, skip to next point */
-	    goto next_pt;
-	}
-
 	if (!pp3) {
 	    /* last segment */
 	    tesselate_pipe_linear(curr_pt, curr_od/2.0, curr_id/2.0,
 				  pp2->pp_coord, pp2->pp_od/2.0, pp2->pp_id/2.0,
 				  arc_segs, sin_del, cos_del, &outer_loop, &inner_loop, r1, r2, s, tol);
 	    break;
+	}
+
+	VSUB2(n1, curr_pt, pp2->pp_coord);
+	if (VNEAR_ZERO(n1, VUNITIZE_TOL)) {
+	    /* duplicate point, skip to next point */
+	    goto next_pt;
 	}
 
 	VSUB2(n2, pp3->pp_coord, pp2->pp_coord);
