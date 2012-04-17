@@ -62,28 +62,23 @@ void addTriangle
 	    if (faces[i * 3 + 1] == b) {
 		if (faces[i * 3 + 2] == c)
 		    return;
-	    }
-	    else if (faces[i * 3 + 1] == c) {
+	    } else if (faces[i * 3 + 1] == c) {
 		if (faces[i * 3 + 2] == b)
 		    return;
 	    }
-	}
-	else if (faces[i * 3] == b) {
+	} else if (faces[i * 3] == b) {
 	    if (faces[i * 3 + 1] == a) {
 		if (faces[i * 3 + 2] == c)
 		    return;
-	    }
-	    else if (faces[i * 3 + 1] == c) {
+	    } else if (faces[i * 3 + 1] == c) {
 		if (faces[i * 3 + 2] == a)
 		    return;
 	    }
-	}
-	else if (faces[i * 3] == c) {
+	} else if (faces[i * 3] == c) {
 	    if (faces[i * 3 + 1] == b) {
 		if (faces[i * 3 + 2] == a)
 		    return;
-	    }
-	    else if (faces[i * 3 + 1] == a) {
+	    } else if (faces[i * 3 + 1] == a) {
 		if (faces[i * 3 + 2] == b)
 		    return;
 	    }
@@ -183,8 +178,7 @@ void writeRectangularBox
     if (translate) {
       VADD2(min, form.pt[0], form.tr_vec);
       VADD2(max, form.pt[1], form.tr_vec);
-    }
-    else {
+    } else {
       VMOVE(min, form.pt[0]);
       VMOVE(max, form.pt[1]);
     }
@@ -216,8 +210,7 @@ void writeSolidBot
 	    vertices[i * 3 + 1] = (form.bot.vertices[i * 3 + 1] + form.tr_vec[1]) * IntavalUnitInMm;
 	    vertices[i * 3 + 2] = (form.bot.vertices[i * 3 + 2] + form.tr_vec[2]) * IntavalUnitInMm;
 	}
-    }
-    else {
+    } else {
 	for(size_t i = 0; i < form.bot.num_vertices; ++i) {
 	    vertices[i * 3]     = form.bot.vertices[i * 3] * IntavalUnitInMm;
 	    vertices[i * 3 + 1] = form.bot.vertices[i * 3 + 1] * IntavalUnitInMm;
@@ -261,8 +254,7 @@ void writeRingModeBox
     if (translate) {
 	for(size_t i = 0; i < form.npts; ++i)
           VADD2(outer[i], form.pt[i], form.tr_vec);
-    }
-    else {
+    } else {
       for(size_t i = 0; i < form.npts; ++i) {
           VMOVE(outer[i], form.pt[i]);
       }
@@ -337,8 +329,7 @@ void writeRingModeBox
 	    VADD2(res, res, s_b_v);
 
 	    VMOVE(inner[i2], res);
-	}
-	else {
+	} else {
           VMOVE(inner[i2], outer[i2]);
         }
     }
@@ -453,8 +444,7 @@ void writePlateBot
 	    vertices[i * 3 + 1] = (form.bot.vertices[i * 3 + 1] + form.tr_vec[1]) * IntavalUnitInMm;
 	    vertices[i * 3 + 2] = (form.bot.vertices[i * 3 + 2] + form.tr_vec[2]) * IntavalUnitInMm;
 	}
-    }
-    else {
+    } else {
 	for(size_t i = 0; i<form.bot.num_vertices; ++i) {
 	    vertices[i * 3]     = form.bot.vertices[i * 3] * IntavalUnitInMm;
 	    vertices[i * 3 + 1] = form.bot.vertices[i * 3 + 1] * IntavalUnitInMm;
@@ -573,8 +563,7 @@ void writeArb8
       VADD2(shuffle[5], form.pt[5], form.tr_vec);
       VADD2(shuffle[6], form.pt[4], form.tr_vec);
       VADD2(shuffle[7], form.pt[2], form.tr_vec);
-    }
-    else {
+    } else {
       VMOVE(shuffle[0], form.pt[0]);
       VMOVE(shuffle[1], form.pt[7]);
       VMOVE(shuffle[2], form.pt[3]);
