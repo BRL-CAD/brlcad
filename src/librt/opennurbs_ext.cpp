@@ -1135,6 +1135,7 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	/* FIXME: this needs to be handled more gracefully */
 	if (!split || !east || !west) {
 	    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)east, (void *)west);
+	    onfree(parent);
 	    return NULL;
 	}
 
@@ -1331,6 +1332,7 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	/* FIXME: this needs to be handled more gracefully */
 	if (!split || !south || !north) {
 	    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)south, (void *)north);
+	    onfree(parent);
 	    return NULL;
 	}
 
