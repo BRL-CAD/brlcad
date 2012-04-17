@@ -109,7 +109,7 @@ Usage: sun-pix [-b -h -i -P -v -C] [sun.bitmap]\n";
 
 #define NET_LONG_LEN 4 /* # bytes to network long */
 
-uint32_t
+static uint32_t
 getlong(char *msgp)
 {
     unsigned char *p = (unsigned char *) msgp;
@@ -122,7 +122,7 @@ getlong(char *msgp)
 }
 
 
-int
+static int
 get_args(int argc, char **argv)
 {
     int c;
@@ -197,7 +197,7 @@ get_args(int argc, char **argv)
 
 #define ESCAPE 128
 
-size_t
+static size_t
 decoderead(unsigned char *buf, int size, int length, FILE *readfp)
 
     /* should be one! */
