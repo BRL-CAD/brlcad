@@ -2,6 +2,8 @@ SET(perplex_ignore_files
     mbo_getopt.h
     parser.y
     perplex.h
+    README.txt
     scanner.re
+    scanner_template.c
     token_type.h
 )

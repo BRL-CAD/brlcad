@@ -106,6 +106,7 @@ CMAKEFILES(
   fastgen.sh
   fastgen_dos.fast4
   flawfinder.sh
+  g-dot.sh
   g-nff.sh
   gcv
   gqa.sh
@@ -124,6 +125,7 @@ CMAKEFILES(
   nightly.sh
   nirt.sh
   nurbs/brep-3dm.tar.bz2
+  quote.sh
   red.sh
   repository.sh
   shaders.sh
