@@ -232,6 +232,7 @@ get_double( int type )
     float val_float;
     double val_double;
     double val = 0.0;
+    double ret = 0.0;
 
     if ( ply_file_type == PLY_ASCII ) {
 	switch ( type ) {
@@ -346,8 +347,12 @@ get_double( int type )
     }
 
     if( val > (DBL_MAX / scale_factor) )
-	    return DBL_MAX;
-    return val*scale_factor;
+	return DBL_MAX;
+
+    /* fake out overflow detection? */
+    ret = val;
+    ret *= scale_factor;
+    return ret;
 }
 
 int
