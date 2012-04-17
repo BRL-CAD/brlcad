@@ -579,6 +579,10 @@ main(int argc, char **argv)
 	cr = (desc[4] >> 4 & 0x07) + 1;
 	g_pixel = (desc[4] & 0x07) + 1;
 	background = desc[5];
+	if (background < 0)
+	    background = 0;
+	if (background > CHAR_MAX)
+	    background = CHAR_MAX;
 
 	if (verbose) {
 	    Message("screen %dx%d", width, height);
