@@ -161,6 +161,7 @@ int main(int argc, char **argv)
     unsigned short *p, *q;
     unsigned int	n;
     unsigned long clip_high, clip_low;
+    int idx;
 
     if (!(progname=strrchr(*argv, '/')))
 	progname = *argv;
@@ -176,9 +177,22 @@ int main(int argc, char **argv)
     while ( (n=fread(iobuf, sizeof(*iobuf), BUFLEN, stdin)) > 0) {
 	/* translate */
 	for (p=iobuf, q= &iobuf[n]; p < q; ++p) {
-	    if (mapbuf[*p] > 65535) { ++clip_high; *p = 65535; }
-	    else if (mapbuf[*p] < -0) { ++clip_low; *p = 0; }
-	    else *p = (unsigned short)mapbuf[*p];
+	    idx = *p;
+	    if (idx < 0)
+		idx = 0;
+	    if (idx > 65535)
+		idx = 65535;
+	    *p = idx;
+
+	    if (mapbuf[*p] > 65535) {
+		++clip_high;
+		*p = 65535;
+	    } else if (mapbuf[*p] < -0) {
+		++clip_low;
+		*p = 0;
+	    } else {
+		*p = (unsigned short)mapbuf[*p];
+	    }
 	}
 	/* output */
 	if (fwrite(iobuf, sizeof(*iobuf), n, stdout) != n) {
