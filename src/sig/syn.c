@@ -68,6 +68,10 @@ Usage: syn samples_per_set [ratio] > doubles\n";
     fprintf(stderr, "init done\n");
 
     setsize = atoi(argv[1]);
+    if (setsize < 0)
+	setsize = 0;
+    if (setsize > INT_MAX-1)
+	setsize = INT_MAX-1;
 
     findex = 0;
     stepsize = 0;
