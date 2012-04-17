@@ -80,7 +80,12 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 	result = fread(buf, size, num, file);
 	if (!result) return result;
 	for (i=0; i<size*num; i++) {
-	    buf[i] = Map[buf[i]];
+	    int idx = buf[i];
+	    if (idx < 0)
+		idx = 0;
+	    if (idx > size*num)
+		idx = size*num;
+	    buf[i] = Map[idx];
 	}
 	return result;
     }
