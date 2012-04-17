@@ -190,9 +190,15 @@ main(int argc, char *argv[])
     while ((n=fread(iobuf, sizeof(*iobuf), BUFLEN, stdin)) > 0) {
 	/* translate */
 	for (j=0; j < n; ++j) {
-	    iobuf[j] = mapbuf[iobuf[j] + 32768];
-	    if (clip_h[j]) clip_high++;
-	    else if (clip_l[j]) clip_low++;
+	    long idx = j;
+	    if (idx < 0)
+		idx = 0;
+	    if (idx > LONG_MAX-1)
+		idx = LONG_MAX-1;
+
+	    iobuf[idx] = mapbuf[iobuf[idx] + 32768];
+	    if (clip_h[idx]) clip_high++;
+	    else if (clip_l[idx]) clip_low++;
 	}
 	/* output */
 	if (fwrite(iobuf, sizeof(*iobuf), n, stdout) != n) {
