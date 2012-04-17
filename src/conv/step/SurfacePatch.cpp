@@ -67,7 +67,7 @@ SurfacePatch::~SurfacePatch() {
 }
 
 bool
-SurfacePatch::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+SurfacePatch::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -81,7 +81,7 @@ SurfacePatch::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (parent_surface == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"parent_surface");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"parent_surface");
 	if (entity != NULL) {
 	    parent_surface = dynamic_cast<BoundedSurface *>(Factory::CreateObject(sw,entity));
 	} else {
@@ -121,7 +121,7 @@ SurfacePatch::Print(int level) {
 }
 
 STEPEntity *
-SurfacePatch::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+SurfacePatch::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	SurfacePatch *object = new SurfacePatch(sw,sse->STEPfile_id);

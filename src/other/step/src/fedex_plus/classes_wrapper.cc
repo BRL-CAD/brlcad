@@ -303,7 +303,7 @@ SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
         // Do the model stuff:
         fprintf( files->inc, "\n//\t***** generate Model related pieces\n" );
         fprintf( files->inc,
-                 "\nclass SdaiModel_contents_%s : public SCLP23(Model_contents) {\n",
+                 "\nclass SdaiModel_contents_%s : public SDAI_Model_contents {\n",
                  SCHEMAget_name( schema ) );
         fprintf( files -> inc, "\n  public:\n" );
         fprintf( files -> inc, "    SdaiModel_contents_%s();\n",
@@ -319,10 +319,10 @@ SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
         fprintf( files->inc, "typedef SdaiModel_contents_%s_ptr SdaiModel_contents_%s_var;\n", SCHEMAget_name( schema ), SCHEMAget_name( schema ) );
 
         fprintf( files -> inc,
-                 "SCLP23(Model_contents_ptr) create_SdaiModel_contents_%s();\n",
+                 "SDAI_Model_contents_ptr create_SdaiModel_contents_%s();\n",
                  SCHEMAget_name( schema ) );
         fprintf( files -> lib,
-                 "\nSCLP23(Model_contents_ptr) create_SdaiModel_contents_%s()\n",
+                 "\nSDAI_Model_contents_ptr create_SdaiModel_contents_%s()\n",
                  SCHEMAget_name( schema ) );
         fprintf( files -> lib, "{ return new SdaiModel_contents_%s ; }\n",
                  SCHEMAget_name( schema ) );
@@ -330,7 +330,7 @@ SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
         fprintf( files -> lib, "\nSdaiModel_contents_%s::SdaiModel_contents_%s()\n",
                  SCHEMAget_name( schema ), SCHEMAget_name( schema ) );
         fprintf( files -> lib,
-                 "{\n    SCLP23(Entity_extent_ptr) eep = (SCLP23(Entity_extent_ptr))0;\n\n" );
+                 "{\n    SDAI_Entity_extent_ptr eep = (SDAI_Entity_extent_ptr)0;\n\n" );
         LISTdo( list, e, Entity );
         MODELPrintConstructorBody( e, files, schema );
         LISTod;
@@ -787,31 +787,31 @@ getMCPrint( Express express, FILE * schema_h, FILE * schema_cc ) {
     Schema schema;
 
     fprintf( schema_h,
-             "\nSCLP23(Model_contents_ptr) GetModelContents(char *schemaName);\n" );
+             "\nSDAI_Model_contents_ptr GetModelContents(char *schemaName);\n" );
     fprintf( schema_cc, "%s%s%s%s",
              "// Generate a function to be called by Model to help it\n",
              "// create the necessary Model_contents without the\n",
              "// dictionary (Registry) handle since it doesn't have a\n",
              "// predetermined way to access to the handle.\n" );
     fprintf( schema_cc,
-             "\nSCLP23(Model_contents_ptr) GetModelContents(char *schemaName)\n{\n" );
+             "\nSDAI_Model_contents_ptr GetModelContents(char *schemaName)\n{\n" );
     DICTdo_type_init( express->symbol_table, &de, OBJ_SCHEMA );
     schema = ( Scope )DICTdo( &de );
     fprintf( schema_cc,
              "    if(!strcmp(schemaName, \"%s\"))\n",
              SCHEMAget_name( schema ) );
     fprintf( schema_cc,
-             "        return (SCLP23(Model_contents_ptr)) new SdaiModel_contents_%s; \n",
+             "        return (SDAI_Model_contents_ptr) new SdaiModel_contents_%s; \n",
              SCHEMAget_name( schema ) );
     while( ( schema = ( Scope )DICTdo( &de ) ) != 0 ) {
         fprintf( schema_cc,
                  "    else if(!strcmp(schemaName, \"%s\"))\n",
                  SCHEMAget_name( schema ) );
         fprintf( schema_cc,
-                 "        return (SCLP23(Model_contents_ptr)) new SdaiModel_contents_%s; \n",
+                 "        return (SDAI_Model_contents_ptr) new SdaiModel_contents_%s; \n",
                  SCHEMAget_name( schema ) );
     }
-    fprintf( schema_cc, "    return (SCLP23(Model_contents_ptr))NULL;\n" );
+    fprintf( schema_cc, "    return (SDAI_Model_contents_ptr)NULL;\n" );
     fprintf( schema_cc, "}\n" );
 }
 

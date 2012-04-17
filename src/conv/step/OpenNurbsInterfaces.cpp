@@ -29,7 +29,7 @@
 #include "opennurbs.h"
 
 #include "sdai.h"
-class SCLP23(Application_instance);
+class SDAI_Application_instance;
 
 /* must come after nist step headers */
 #include "brep.h"

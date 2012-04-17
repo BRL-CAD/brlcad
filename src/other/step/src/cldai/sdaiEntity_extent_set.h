@@ -35,21 +35,21 @@
 //#include <EntityExtent.h>
 */
 
-class SCLP23_NAME( Entity_extent__set ) {
+class SDAI_Entity_extent__set  {
     public:
 
-        SCLP23_NAME( Entity_extent__set )( int = 16 );
-        ~SCLP23_NAME( Entity_extent__set )();
+        SDAI_Entity_extent__set ( int = 16 );
+        ~SDAI_Entity_extent__set ();
 
-        SCLP23_NAME( Entity_extent_ptr ) retrieve( int index );
+        SDAI_Entity_extent_ptr  retrieve( int index );
         int is_empty();
 
-        SCLP23_NAME( Entity_extent_ptr ) & operator[]( int index );
+        SDAI_Entity_extent_ptr  & operator[]( int index );
 
-        void Insert( SCLP23_NAME( Entity_extent_ptr ), int index );
-        void Append( SCLP23_NAME( Entity_extent_ptr ) );
+        void Insert( SDAI_Entity_extent_ptr , int index );
+        void Append( SDAI_Entity_extent_ptr  );
         void Remove( int index );
-        int Index( SCLP23_NAME( Entity_extent_ptr ) );
+        int Index( SDAI_Entity_extent_ptr  );
 
         void Clear();
         int Count();
@@ -57,14 +57,14 @@ class SCLP23_NAME( Entity_extent__set ) {
     private:
         void Check( int index );
     private:
-        SCLP23_NAME( Entity_extent_ptr ) * _buf;
+        SDAI_Entity_extent_ptr  * _buf;
         int _bufsize;
         int _count;
 
 };
 
-typedef SCLP23_NAME( Entity_extent__set ) * SCLP23_NAME( Entity_extent__set_ptr );
-typedef SCLP23_NAME( Entity_extent__set_ptr ) SCLP23_NAME( Entity_extent__set_var );
+typedef SDAI_Entity_extent__set  * SDAI_Entity_extent__set_ptr ;
+typedef SDAI_Entity_extent__set_ptr  SDAI_Entity_extent__set_var ;
 
 /*
 class Entity_extent__set {

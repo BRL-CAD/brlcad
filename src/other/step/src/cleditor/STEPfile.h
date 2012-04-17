@@ -62,7 +62,7 @@ class STEPfile {
 //Registry *_headerUserDefined;
 //    Registry *_headerRegistryOld;
 
-        int _headerId;     //STEPfile_id given to SCLP23(Application_instance) from header section
+        int _headerId;     //STEPfile_id given to SDAI_Application_instance from header section
 
 //file information
         DirObj * _currentDir;
@@ -106,9 +106,9 @@ class STEPfile {
             return _headerRegistry;
         }
 // to create header instances
-        SCLP23( Application_instance ) * HeaderDefaultFileName();
-        SCLP23( Application_instance ) * HeaderDefaultFileDescription();
-        SCLP23( Application_instance ) * HeaderDefaultFileSchema();
+        SDAI_Application_instance  * HeaderDefaultFileName();
+        SDAI_Application_instance  * HeaderDefaultFileDescription();
+        SDAI_Application_instance  * HeaderDefaultFileSchema();
 
 //file information
         const char * FileName() const {
@@ -197,18 +197,18 @@ class STEPfile {
         void ReadRestOfFile( istream & in );
 
         // create instance - used by ReadData1()
-        SCLP23( Application_instance )  * CreateInstance( istream & in, ostream & out );
+        SDAI_Application_instance   * CreateInstance( istream & in, ostream & out );
         // create complex instance - used by CreateInstance()
-        SCLP23( Application_instance ) * CreateSubSuperInstance( istream & in, int fileid,
+        SDAI_Application_instance  * CreateSubSuperInstance( istream & in, int fileid,
                 ErrorDescriptor & );
 
         // read the instance - used by ReadData2()
-        SCLP23( Application_instance ) * ReadInstance( istream & in, ostream & out,
+        SDAI_Application_instance  * ReadInstance( istream & in, ostream & out,
                 std::string & cmtStr, int useTechCor = 1 );
 
         //  reading scopes are still incomplete
         //  these functions are stubs
-        Severity CreateScopeInstances( istream & in, SCLP23( Application_instance_ptr ) ** scopelist );
+        Severity CreateScopeInstances( istream & in, SDAI_Application_instance_ptr  ** scopelist );
         Severity ReadScopeInstances( istream & in );
 //    Severity ReadSubSuperInstance(istream& in);
 
@@ -223,7 +223,7 @@ class STEPfile {
         void CloseOutputFile( ostream * out );
 
         void WriteHeader( ostream & out );
-        void WriteHeaderInstance( SCLP23( Application_instance ) *obj, ostream & out );
+        void WriteHeaderInstance( SDAI_Application_instance  *obj, ostream & out );
         void WriteHeaderInstanceFileName( ostream & out );
         void WriteHeaderInstanceFileDescription( ostream & out );
         void WriteHeaderInstanceFileSchema( ostream & out );

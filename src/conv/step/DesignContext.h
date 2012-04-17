@@ -37,13 +37,13 @@ public:
     DesignContext();
     virtual ~DesignContext();
     DesignContext(STEPWrapper *sw, int step_id);
-    bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
     string DisciplineType();
 
     //static methods
-    static STEPEntity *Create(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* DESIGN_CONTEXT_H_ */

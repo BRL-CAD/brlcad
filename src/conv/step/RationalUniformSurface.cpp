@@ -48,7 +48,7 @@ RationalUniformSurface::~RationalUniformSurface() {
 }
 
 bool
-RationalUniformSurface::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+RationalUniformSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -71,7 +71,7 @@ RationalUniformSurface::Print(int level) {
     RationalBSplineSurface::Print(level+1);
 }
 STEPEntity *
-RationalUniformSurface::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
+RationalUniformSurface::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	RationalUniformSurface *object = new RationalUniformSurface(sw,sse->STEPfile_id);

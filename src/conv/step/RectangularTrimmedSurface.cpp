@@ -61,7 +61,7 @@ RectangularTrimmedSurface::~RectangularTrimmedSurface() {
 }
 
 bool
-RectangularTrimmedSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+RectangularTrimmedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 
     step=sw;
     id = sse->STEPfile_id;
@@ -76,7 +76,7 @@ RectangularTrimmedSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *s
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (basis_surface == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"basis_surface");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"basis_surface");
 	if (entity) {
 	    basis_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw,entity));
 	} else {
@@ -117,7 +117,7 @@ RectangularTrimmedSurface::Print(int level) {
 }
 
 STEPEntity *
-RectangularTrimmedSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+RectangularTrimmedSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	RectangularTrimmedSurface *object = new RectangularTrimmedSurface(sw,sse->STEPfile_id);

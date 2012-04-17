@@ -63,7 +63,7 @@ string ProductDefinitionContextAssociation::ClassName()
     return entityname;
 }
 
-bool ProductDefinitionContextAssociation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+bool ProductDefinitionContextAssociation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
     id = sse->STEPfile_id;
@@ -73,7 +73,7 @@ bool ProductDefinitionContextAssociation::Load(STEPWrapper *sw, SCLP23(Applicati
     sse = step->getEntity(sse, ENTITYNAME);
 
     if (definition == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse, "definition");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "definition");
 	if (entity) { //this attribute is optional
 	    definition = dynamic_cast<ProductDefinition *>(Factory::CreateObject(sw, entity));
 	} else {
@@ -83,7 +83,7 @@ bool ProductDefinitionContextAssociation::Load(STEPWrapper *sw, SCLP23(Applicati
     }
 
     if (frame_of_reference == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse, "frame_of_reference");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "frame_of_reference");
 	if (entity) { //this attribute is optional
 	    frame_of_reference = dynamic_cast<ProductDefinitionContext *>(Factory::CreateObject(sw, entity));
 	} else {
@@ -93,7 +93,7 @@ bool ProductDefinitionContextAssociation::Load(STEPWrapper *sw, SCLP23(Applicati
     }
 
     if (role == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse, "role");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "role");
 	if (entity) { //this attribute is optional
 	    role = dynamic_cast<ProductDefinitionContextRole *>(Factory::CreateObject(sw, entity));
 	} else {
@@ -126,7 +126,7 @@ void ProductDefinitionContextAssociation::Print(int level)
 }
 
 STEPEntity *
-ProductDefinitionContextAssociation::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+ProductDefinitionContextAssociation::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {

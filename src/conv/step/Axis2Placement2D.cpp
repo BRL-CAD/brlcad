@@ -111,7 +111,7 @@ Axis2Placement2D::GetYAxis() {
 }
 
 bool
-Axis2Placement2D::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+Axis2Placement2D::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -125,7 +125,7 @@ Axis2Placement2D::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (ref_direction == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"ref_direction");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"ref_direction");
 	if (entity) {
 	    ref_direction = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
 	} else { // optional so no problem if not here
@@ -153,7 +153,7 @@ Axis2Placement2D::Print(int level) {
 }
 
 STEPEntity *
-Axis2Placement2D::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+Axis2Placement2D::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	Axis2Placement2D *object = new Axis2Placement2D(sw,sse->STEPfile_id);

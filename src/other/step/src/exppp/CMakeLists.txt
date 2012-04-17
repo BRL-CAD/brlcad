@@ -12,10 +12,6 @@ include_directories(
     ${SCL_SOURCE_DIR}/include/exppp
 )
 
-add_definitions(
-    -DHAVE_CONFIG_H
-)
-
 SCL_ADDLIB(libexppp "${LIBEXPPP_SOURCES}" express)
 set_target_properties(libexppp PROPERTIES PREFIX "")
 

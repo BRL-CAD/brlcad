@@ -14,7 +14,7 @@
 
 /* $Id: STEPattribute.h,v 3.0.1.8 1997/11/05 21:59:24 sauderd DP3.1 $ */
 
-#include <sclprefixes.h>
+
 
 
 #include <stdio.h>
@@ -31,13 +31,13 @@
 typedef double real;
 
 class InstMgr;
-class SCLP23( Application_instance );
+class SDAI_Application_instance ;
 class STEPaggregate;
 class SCLundefined;
-//class SCLP23(Enum);
-//class SCLP23(Select);
-//class SCLP23(Binary);
-//class SCLP23(String);
+//class SDAI_Enum;
+//class SDAI_Select;
+//class SDAI_Binary;
+//class SDAI_String;
 
 class TypeDescriptor;
 class AttrDescriptor;
@@ -57,16 +57,16 @@ CheckRemainingInput( istream & in, ErrorDescriptor * err,
                      const char * typeName, // used in error message
                      const char * tokenList ); // e.g. ",)"
 
-extern SCLP23( Application_instance ) *
+extern SDAI_Application_instance  *
 ReadEntityRef( istream & in, ErrorDescriptor * err, const char * tokenList,
                InstMgr * instances, int addFileId );
 
-extern SCLP23( Application_instance ) *
+extern SDAI_Application_instance  *
 ReadEntityRef( const char * s, ErrorDescriptor * err, const char * tokenList,
                InstMgr * instances, int addFileId );
 
 extern Severity
-EntityValidLevel( SCLP23( Application_instance ) *se,
+EntityValidLevel( SDAI_Application_instance  *se,
                   const TypeDescriptor * ed, // entity type that entity se needs
                   // to match. (this must be an
                   // EntityDescriptor)
@@ -83,7 +83,7 @@ EntityValidLevel( const char * attrValue, // string contain entity ref
 ////////////////////
 ////////////////////
 
-extern SCLP23( Application_instance ) * STEPread_reference( const char * s, ErrorDescriptor * err,
+extern SDAI_Application_instance  * STEPread_reference( const char * s, ErrorDescriptor * err,
         InstMgr * instances, int addFileId );
 ////////////////////
 
@@ -100,7 +100,7 @@ PushPastImbedAggr( istream & in, std::string & s, ErrorDescriptor * err );
 extern void
 PushPastAggr1Dim( istream & in, std::string & s, ErrorDescriptor * err );
 
-//extern  Severity ValidateEntityType(SCLP23(Application_instance) *se,
+//extern  Severity ValidateEntityType(SDAI_Application_instance *se,
 //                  const AttrDescriptor *ad,
 //                  ErrorDescriptor *error);
 
@@ -112,7 +112,7 @@ class STEPattribute {
 // Here is the error
 // "../../../src/clstepcore/STEPattribute.h", line 118: internal << AT&T C++ Translator 3.0.2 - ObjectCenter Version 2.1>> error: cannot find friend P23::Application_instance
 // We may want to change the next two lines back at some point? DAS
-//    friend class SCLP23(Application_instance);
+//    friend class SDAI_Application_instance;
 //  protected:
     public:
         ErrorDescriptor _error;
@@ -134,16 +134,16 @@ class STEPattribute {
         // NonRefType() - see below. BASE_TYPE is defined in baseType.h
         // This variable points to an appropriate member variable in the entity
         // class in the generated schema class library (the entity class is
-        // inherited from SCLP23(Application_instance))
+        // inherited from SDAI_Application_instance)
         union  {
-            SCLP23( String ) * S; // STRING_TYPE
-            SCLP23( Integer ) * i; // INTEGER_TYPE (Integer is a long int)
-            SCLP23( Binary ) * b; // BINARY_TYPE
-            SCLP23( Real ) * r; // REAL_TYPE and NUMBER_TYPE (Real is a double)
-            SCLP23( Application_instance ) * * c; // ENTITY_TYPE
+            SDAI_String  * S; // STRING_TYPE
+            SDAI_Integer  * i; // INTEGER_TYPE (Integer is a long int)
+            SDAI_Binary  * b; // BINARY_TYPE
+            SDAI_Real  * r; // REAL_TYPE and NUMBER_TYPE (Real is a double)
+            SDAI_Application_instance  * * c; // ENTITY_TYPE
             STEPaggregate * a;  // AGGREGATE_TYPE
-            SCLP23( Enum ) * e; // ENUM_TYPE, BOOLEAN_TYPE, and LOGICAL_TYPE
-            SCLP23( Select ) * sh; // SELECT_TYPE
+            SDAI_Enum  * e; // ENUM_TYPE, BOOLEAN_TYPE, and LOGICAL_TYPE
+            SDAI_Select  * sh; // SELECT_TYPE
             SCLundefined * u;   // UNKNOWN_TYPE
             void * p;
 
@@ -208,21 +208,21 @@ class STEPattribute {
         ~STEPattribute() {};
 
         //  INTEGER
-        STEPattribute( const class AttrDescriptor & d, SCLP23( Integer ) *p );
+        STEPattribute( const class AttrDescriptor & d, SDAI_Integer  *p );
         //  BINARY
-        STEPattribute( const class AttrDescriptor & d, SCLP23( Binary ) *p );
+        STEPattribute( const class AttrDescriptor & d, SDAI_Binary  *p );
         //  STRING
-        STEPattribute( const class AttrDescriptor & d, SCLP23( String ) *p );
+        STEPattribute( const class AttrDescriptor & d, SDAI_String  *p );
         //  REAL & NUMBER
-        STEPattribute( const class AttrDescriptor & d, SCLP23( Real ) *p );
+        STEPattribute( const class AttrDescriptor & d, SDAI_Real  *p );
         //  ENTITY
-        STEPattribute( const class AttrDescriptor & d, SCLP23( Application_instance )* *p );
+        STEPattribute( const class AttrDescriptor & d, SDAI_Application_instance * *p );
         //  AGGREGATE
         STEPattribute( const class AttrDescriptor & d, STEPaggregate * p );
         //  ENUMERATION  and Logical
-        STEPattribute( const class AttrDescriptor & d, SCLP23( Enum ) *p );
+        STEPattribute( const class AttrDescriptor & d, SDAI_Enum  *p );
         //  SELECT
-        STEPattribute( const class AttrDescriptor & d, SCLP23( Select ) *p );
+        STEPattribute( const class AttrDescriptor & d, SDAI_Select  *p );
         //  UNDEFINED
         STEPattribute( const class AttrDescriptor & d, SCLundefined * p );
 

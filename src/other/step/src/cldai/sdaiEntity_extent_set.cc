@@ -43,39 +43,39 @@ extern "C"
 
 /*****************************************************************************/
 
-SCLP23( Entity_extent__set )::SCLP23_NAME( Entity_extent__set )( int defaultSize ) {
+SDAI_Entity_extent__set ::SDAI_Entity_extent__set ( int defaultSize ) {
     _bufsize = defaultSize;
-    _buf = new SCLP23( Entity_extent_ptr )[_bufsize];
+    _buf = new SDAI_Entity_extent_ptr [_bufsize];
     _count = 0;
 }
 
-SCLP23( Entity_extent__set )::~SCLP23_NAME( Entity_extent__set )() {
+SDAI_Entity_extent__set ::~SDAI_Entity_extent__set () {
     delete _buf;
 }
 
-void SCLP23( Entity_extent__set )::Check( int index ) {
+void SDAI_Entity_extent__set ::Check( int index ) {
 
-    SCLP23( Entity_extent_ptr )* newbuf;
+    SDAI_Entity_extent_ptr * newbuf;
 
     if( index >= _bufsize ) {
         _bufsize = ( index + 1 ) * 2;
-        newbuf = new SCLP23( Entity_extent_ptr )[_bufsize];
-        memmove( newbuf, _buf, _count * sizeof( SCLP23( Entity_extent_ptr ) ) );
+        newbuf = new SDAI_Entity_extent_ptr [_bufsize];
+        memmove( newbuf, _buf, _count * sizeof( SDAI_Entity_extent_ptr  ) );
         delete _buf;
         _buf = newbuf;
     }
 }
 
 void
-SCLP23( Entity_extent__set )::Insert( SCLP23( Entity_extent_ptr ) v, int index ) {
+SDAI_Entity_extent__set ::Insert( SDAI_Entity_extent_ptr  v, int index ) {
 
-    SCLP23( Entity_extent_ptr )* spot;
+    SDAI_Entity_extent_ptr * spot;
     index = ( index < 0 ) ? _count : index;
 
     if( index < _count ) {
         Check( _count + 1 );
         spot = &_buf[index];
-        memmove( spot + 1, spot, ( _count - index )*sizeof( SCLP23( Entity_extent_ptr ) ) );
+        memmove( spot + 1, spot, ( _count - index )*sizeof( SDAI_Entity_extent_ptr  ) );
 
     } else {
         Check( index );
@@ -85,15 +85,15 @@ SCLP23( Entity_extent__set )::Insert( SCLP23( Entity_extent_ptr ) v, int index )
     ++_count;
 }
 
-void SCLP23( Entity_extent__set )::Append( SCLP23( Entity_extent_ptr ) v ) {
+void SDAI_Entity_extent__set ::Append( SDAI_Entity_extent_ptr  v ) {
 
     int index = _count;
-    SCLP23( Entity_extent_ptr )* spot;
+    SDAI_Entity_extent_ptr * spot;
 
     if( index < _count ) {
         Check( _count + 1 );
         spot = &_buf[index];
-        memmove( spot + 1, spot, ( _count - index )*sizeof( SCLP23( Entity_extent_ptr ) ) );
+        memmove( spot + 1, spot, ( _count - index )*sizeof( SDAI_Entity_extent_ptr  ) );
 
     } else {
         Check( index );
@@ -103,16 +103,16 @@ void SCLP23( Entity_extent__set )::Append( SCLP23( Entity_extent_ptr ) v ) {
     ++_count;
 }
 
-void SCLP23( Entity_extent__set )::Remove( int index ) {
+void SDAI_Entity_extent__set ::Remove( int index ) {
 
     if( 0 <= index && index < _count ) {
         --_count;
-        SCLP23( Entity_extent_ptr )* spot = &_buf[index];
-        memmove( spot, spot + 1, ( _count - index )*sizeof( SCLP23( Entity_extent_ptr ) ) );
+        SDAI_Entity_extent_ptr * spot = &_buf[index];
+        memmove( spot, spot + 1, ( _count - index )*sizeof( SDAI_Entity_extent_ptr  ) );
     }
 }
 
-int SCLP23( Entity_extent__set )::Index( SCLP23( Entity_extent_ptr ) v ) {
+int SDAI_Entity_extent__set ::Index( SDAI_Entity_extent_ptr  v ) {
 
     for( int i = 0; i < _count; ++i ) {
         if( _buf[i] == v ) {
@@ -122,12 +122,12 @@ int SCLP23( Entity_extent__set )::Index( SCLP23( Entity_extent_ptr ) v ) {
     return -1;
 }
 
-SCLP23( Entity_extent_ptr )
-SCLP23( Entity_extent__set )::retrieve( int index ) {
+SDAI_Entity_extent_ptr 
+SDAI_Entity_extent__set ::retrieve( int index ) {
     return operator[]( index );
 }
 
-SCLP23( Entity_extent_ptr ) & SCLP23( Entity_extent__set )::operator[]( int index ) {
+SDAI_Entity_extent_ptr  & SDAI_Entity_extent__set ::operator[]( int index ) {
     Check( index );
 //    _count = max(_count, index+1);
     _count = ( ( _count > index + 1 ) ? _count : ( index + 1 ) );
@@ -135,17 +135,17 @@ SCLP23( Entity_extent_ptr ) & SCLP23( Entity_extent__set )::operator[]( int inde
 }
 
 int
-SCLP23( Entity_extent__set )::Count() {
+SDAI_Entity_extent__set ::Count() {
     return _count;
 }
 
 int
-SCLP23( Entity_extent__set )::is_empty() {
+SDAI_Entity_extent__set ::is_empty() {
     return _count;
 }
 
 void
-SCLP23( Entity_extent__set )::Clear() {
+SDAI_Entity_extent__set ::Clear() {
     _count = 0;
 }
 

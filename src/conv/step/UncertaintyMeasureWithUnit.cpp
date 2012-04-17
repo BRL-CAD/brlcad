@@ -49,7 +49,7 @@ UncertaintyMeasureWithUnit::~UncertaintyMeasureWithUnit() {
 }
 
 bool
-UncertaintyMeasureWithUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+UncertaintyMeasureWithUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -82,7 +82,7 @@ UncertaintyMeasureWithUnit::Print(int level) {
     MeasureWithUnit::Print(level+1);
 }
 STEPEntity *
-UncertaintyMeasureWithUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+UncertaintyMeasureWithUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	UncertaintyMeasureWithUnit *object = new UncertaintyMeasureWithUnit(sw,sse->STEPfile_id);

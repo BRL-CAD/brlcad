@@ -47,7 +47,7 @@ VolumeContextDependentUnit::~VolumeContextDependentUnit() {
 }
 
 bool
-VolumeContextDependentUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+VolumeContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -76,7 +76,7 @@ VolumeContextDependentUnit::Print(int level) {
 
 }
 STEPEntity *
-VolumeContextDependentUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+VolumeContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	VolumeContextDependentUnit *object = new VolumeContextDependentUnit(sw,sse->STEPfile_id);

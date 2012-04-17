@@ -13,18 +13,18 @@
 
 /* $Id: sdaiString.h,v 1.4 1997/11/05 21:59:16 sauderd DP3.1 $ */
 
-class SCLP23_NAME( String ) : public std::string {
+class SDAI_String  : public std::string {
     public:
 
         //constructor(s) & destructor
-        SCLP23_NAME( String )( const char * str = 0, int max = 0 ) : std::string( str, max )
+        SDAI_String ( const char * str = 0, int max = 0 ) : std::string( str, max )
         { }
-        SCLP23_NAME( String )( const std::string & s )   : std::string( s ) { }
-        SCLP23_NAME( String )( const SCLP23_NAME( String )& s )  : std::string( s ) { }
-        ~SCLP23_NAME( String )()  {  }
+        SDAI_String ( const std::string & s )   : std::string( s ) { }
+        SDAI_String ( const SDAI_String & s )  : std::string( s ) { }
+        ~SDAI_String ()  {  }
 
 //  operators
-        SCLP23_NAME( String ) & operator= ( const char * s );
+        SDAI_String  & operator= ( const char * s );
 
         // format for STEP
         const char * asStr( std::string & s ) const {

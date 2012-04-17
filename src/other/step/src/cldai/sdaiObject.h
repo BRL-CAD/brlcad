@@ -3,7 +3,7 @@
 #define SDAIOBJECT_H 1
 
 /*
-#include <sclprefixes.h>
+
 */
 /*
    The EXPRESS ENTITY entity_instance from the SDAI_data_type_schema from
@@ -11,17 +11,17 @@
    The class Entity_instance shall be a subtype of the C++ class Object:
 */
 
-class SCLP23_NAME( sdaiObject ) {
+class SDAI_sdaiObject  {
     public:
-        SCLP23_NAME( sdaiObject )();
-        virtual ~SCLP23_NAME( sdaiObject )();
+        SDAI_sdaiObject ();
+        virtual ~SDAI_sdaiObject ();
 //    static Object_ptr _duplicate(Object_ptr);
 //    static Object_ptr _nil();
 
 };
 
-typedef SCLP23_NAME( sdaiObject ) * SCLP23_NAME( sdaiObject_ptr );
-typedef SCLP23_NAME( sdaiObject_ptr ) SCLP23_NAME( sdaiObject_var );
+typedef SDAI_sdaiObject  * SDAI_sdaiObject_ptr ;
+typedef SDAI_sdaiObject_ptr  SDAI_sdaiObject_var ;
 
 /*
    The class Object shall be accessed through the handle types Object_ptr and

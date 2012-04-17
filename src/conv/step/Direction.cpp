@@ -51,7 +51,7 @@ Direction::~Direction() {
 }
 
 bool
-Direction::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+Direction::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -96,7 +96,7 @@ Direction::Print(int level) {
 }
 
 STEPEntity *
-Direction::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+Direction::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	Direction *object = new Direction(sw,sse->STEPfile_id);

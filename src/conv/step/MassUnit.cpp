@@ -47,7 +47,7 @@ MassUnit::~MassUnit() {
 }
 
 bool
-MassUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+MassUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -73,7 +73,7 @@ MassUnit::Print(int level) {
 
 }
 STEPEntity *
-MassUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+MassUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	MassUnit *object = new MassUnit(sw,sse->STEPfile_id);

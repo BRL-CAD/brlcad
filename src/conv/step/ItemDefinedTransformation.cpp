@@ -63,7 +63,7 @@ string ItemDefinedTransformation::ClassName()
     return entityname;
 }
 
-bool ItemDefinedTransformation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+bool ItemDefinedTransformation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
     id = sse->STEPfile_id;
@@ -80,7 +80,7 @@ bool ItemDefinedTransformation::Load(STEPWrapper *sw, SCLP23(Application_instanc
     description = step->getStringAttribute(sse, "description");
 
     if (transform_item_1 == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse, "transform_item_1");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "transform_item_1");
 	if (entity) { //this attribute is optional
 	    transform_item_1 = dynamic_cast<RepresentationItem *>(Factory::CreateObject(sw, entity));
 	} else {
@@ -89,7 +89,7 @@ bool ItemDefinedTransformation::Load(STEPWrapper *sw, SCLP23(Application_instanc
 	}
     }
     if (transform_item_2 == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse, "transform_item_2");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "transform_item_2");
 	if (entity) { //this attribute is optional
 	    transform_item_2 = dynamic_cast<RepresentationItem *>(Factory::CreateObject(sw, entity));
 	} else {
@@ -122,7 +122,7 @@ void ItemDefinedTransformation::Print(int level)
 }
 
 STEPEntity *
-ItemDefinedTransformation::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+ItemDefinedTransformation::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {

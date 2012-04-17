@@ -49,7 +49,7 @@ AdvancedFace::~AdvancedFace() {
 }
 
 bool
-AdvancedFace::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+AdvancedFace::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -70,7 +70,7 @@ AdvancedFace::Print(int level) {
 }
 
 STEPEntity *
-AdvancedFace::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+AdvancedFace::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	AdvancedFace *object = new AdvancedFace(sw,sse->STEPfile_id);

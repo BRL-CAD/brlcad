@@ -27,7 +27,3 @@ SET(exppp_HDRS
   exppp/exppp.h
 )
 install(FILES ${exppp_HDRS} DESTINATION include/exppp)
-
-SET(SCL_noinst_HEADERS
-  sclprefixes.h
-)

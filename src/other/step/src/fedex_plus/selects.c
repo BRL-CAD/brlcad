@@ -24,7 +24,7 @@ extern int multiple_inheritance;
 #include <stdlib.h>
 #include "classes.h"
 
-#define BASE_SELECT "SCLP23(Select)"
+#define BASE_SELECT "SDAI_Select"
 
 #define TYPEis_primitive(t) ( !( TYPEis_entity(t)  || \
                                  TYPEis_select (t) || \
@@ -76,7 +76,7 @@ TYPEget_utype( Type t )  {
       strncpy (b, TYPEget_ctype (t), BUFSIZ-2);
       if (TYPEis_select (t)) strcat (b, "H");
       */
-    return ( TYPEis_entity( t ) ?  "SCLP23(Application_instance_ptr)" : TYPEget_ctype( t ) );
+    return ( TYPEis_entity( t ) ?  "SDAI_Application_instance_ptr" : TYPEget_ctype( t ) );
 }
 
 /*******************
@@ -307,8 +307,8 @@ duplicate_utype_member( const Linked_List list, const Type check ) {
         {
             return TRUE;
         }
-        if( ! strcmp( b, "SCLP23(Integer)" ) &&
-                ( ! strcmp( TYPEget_utype( check ), "SCLP23(Real)" ) ) )
+        if( ! strcmp( b, "SDAI_Integer" ) &&
+                ( ! strcmp( TYPEget_utype( check ), "SDAI_Real" ) ) )
             /*  integer\'s and real\'s are not unique  */
         {
             return TRUE;
@@ -601,8 +601,8 @@ TYPEselect_inc_print_vars( const Type type, FILE * f, Linked_List dups ) {
 
     fprintf( f, "\n  public:\n" );
     fprintf( f,
-             "\tvirtual const TypeDescriptor * AssignEntity (SCLP23(Application_instance) * se);\n"
-             "\tvirtual SCLP23(Select) * NewSelect ();\n"
+             "\tvirtual const TypeDescriptor * AssignEntity (SDAI_Application_instance * se);\n"
+             "\tvirtual SDAI_Select * NewSelect ();\n"
            );
 
     fprintf( f, "\n\tvirtual BASE_TYPE ValueType() const;\n" );
@@ -724,7 +724,7 @@ TYPEselect_inc_print( const Type type, FILE * f ) {
 
     fprintf( f, "\n#ifdef COMPILER_DEFINES_OPERATOR_EQ\n#else\n" );
     fprintf( f, "\t%s& operator =( %s * const & );\n", n, n );
-    fprintf( f, "\tSCLP23(Select)& operator =( const SCLP23(Select)& );\n" );
+    fprintf( f, "\tSDAI_Select& operator =( const SDAI_Select& );\n" );
     /*  fprintf( f, "\t%s& operator =( const %s& );\n", n, n );*/
     fprintf( f, "#endif\n" );
 
@@ -735,8 +735,8 @@ TYPEselect_inc_print( const Type type, FILE * f ) {
     LISTod;
 
     fprintf( f, "\n\t//  part 6 ... UnderlyingTypeName () implemented in"
-             " SCLP23(Select) class ...\n" );
-    /*   fprintf( f, "\tSCLP23(String) UnderlyingTypeName() const;\n" );*/
+             " SDAI_Select class ...\n" );
+    /*   fprintf( f, "\tSDAI_String UnderlyingTypeName() const;\n" );*/
     /*   fprintf( f, "\tconst EntityDescriptor * CurrentUnderlyingType();\n" );*/
 
     if( dup_result ) {
@@ -755,7 +755,7 @@ TYPEselect_inc_print( const Type type, FILE * f ) {
 
     fprintf( f, "};\n" );
 
-    fprintf( f, "\ninline SCLP23(Select) * create_%s () { return new %s; }\n", n, n );
+    fprintf( f, "\ninline SDAI_Select * create_%s () { return new %s; }\n", n, n );
 
     /* DAR - moved from SCOPEPrint() */
     fprintf( f, "typedef       %s *       %sH;\n", n, n );
@@ -1270,7 +1270,7 @@ TYPEselect_lib_print_part_four( const Type type, FILE * f, Schema schema,
     fprintf( f, "   return *this;\n}\n\n" );
 
     /*   fprintf( f, "%s& %s::operator =( const %s& o )\n{\n", n,n,n );*/
-    fprintf( f, "SCLP23(Select)& %s::operator =( const SCLP23(Select)& o )\n{\n", n );
+    fprintf( f, "SDAI_Select& %s::operator =( const SDAI_Select& o )\n{\n", n );
 
     firsttime = 1;
     LISTdo( SEL_TYPEget_items( type ), t, Type )
@@ -1321,7 +1321,7 @@ TYPEselect_lib_print_part_four( const Type type, FILE * f, Schema schema,
 
 #ifdef JNK
     /*  define ShallowCopy because operator= does not always act virtual  */
-    fprintf( f, "SCLP23(Select)& %s::ShallowCopy ( const SCLP23(Select)& o )\n{\n", n );
+    fprintf( f, "SDAI_Select& %s::ShallowCopy ( const SDAI_Select& o )\n{\n", n );
 
     LISTdo( SEL_TYPEget_items( type ), t, Type )
     strncpy( x, TYPEget_name( t ), BUFSIZ );
@@ -1739,7 +1739,7 @@ SELlib_print_protected( const Type type,  FILE * f, const Schema schema ) {
     const char * snm;
 
     /*  SELECT::AssignEntity  */
-    fprintf( f, "\nconst TypeDescriptor * \n%s::AssignEntity (SCLP23(Application_instance) * se)\n"
+    fprintf( f, "\nconst TypeDescriptor * \n%s::AssignEntity (SDAI_Application_instance * se)\n"
              "{\n  (void)se;\n",
              SelectName( TYPEget_name( type ) )
            );
@@ -1789,7 +1789,7 @@ SELlib_print_protected( const Type type,  FILE * f, const Schema schema ) {
 
     /*  SELECT::NewSelect  */
     snm  = SelectName( TYPEget_name( type ) );
-    fprintf( f, "\nSCLP23(Select) * \n%s::NewSelect ()\n{\n", snm );
+    fprintf( f, "\nSDAI_Select * \n%s::NewSelect ()\n{\n", snm );
 
     fprintf( f, "    %s * tmp = new %s();\n", snm, snm );
     fprintf( f, "    return tmp;\n}\n" );
@@ -1898,7 +1898,7 @@ TYPEselect_lib_print( const Type type, FILE * f, Schema schema ) {
 
 #ifdef UNDERLYINGTYPE
     fprintf( f, "\n\t//  part 6\n" );
-    fprintf( f, "SCLP23(String) %s::UnderlyingTypeName() const\n{\n", n );
+    fprintf( f, "SDAI_String %s::UnderlyingTypeName() const\n{\n", n );
     fprintf( f, "   if( exists() )\n" );
     fprintf( f, "   {\n" );
     LISTdo( SEL_TYPEget_items( type ), t, Type )
@@ -1985,7 +1985,7 @@ TYPEselect_print( Type t, FILES * files, Schema schema ) {
         // structor, passing the new sel's typedescriptor to create a hybrid
         // entity - the original select pointing to a new typedesc.   These fns
         // give the user an easy way to create the renamed type properly. */
-        fprintf( inc, "inline SCLP23(Select) *\ncreate_%s ()", nm );
+        fprintf( inc, "inline SDAI_Select *\ncreate_%s ()", nm );
         fprintf( inc, " { return new %s( %s ); }\n\n", nm, tdnm );
         fprintf( inc, "inline STEPaggregate *\ncreate_%ss ()", nm );
         fprintf( inc, " { return new %ss( %s ); }\n\n", nm, tdnm );

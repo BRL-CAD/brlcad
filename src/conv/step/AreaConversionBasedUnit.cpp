@@ -50,7 +50,7 @@ AreaConversionBasedUnit::~AreaConversionBasedUnit() {
 }
 
 bool
-AreaConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+AreaConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -79,7 +79,7 @@ AreaConversionBasedUnit::Print(int level) {
 
 }
 STEPEntity *
-AreaConversionBasedUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+AreaConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	AreaConversionBasedUnit *object = new AreaConversionBasedUnit(sw,sse->STEPfile_id);

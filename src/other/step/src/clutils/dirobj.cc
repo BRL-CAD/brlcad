@@ -42,9 +42,7 @@
 #include <dirobj.h>
 #include <dirent.h>
 
-#ifdef HAVE_CONFIG_H
-# include <scl_cf.h>
-#endif
+#include <scl_cf.h>
 
 /* for getuid() */
 #ifdef HAVE_UNISTD_H

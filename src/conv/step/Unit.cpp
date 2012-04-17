@@ -47,7 +47,7 @@ Unit::~Unit() {
 }
 
 bool
-Unit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+Unit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -60,7 +60,7 @@ Unit::Print(int level) {
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 }
 STEPEntity *
-Unit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+Unit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	Unit *object = new Unit(sw,sse->STEPfile_id);

@@ -60,7 +60,7 @@ EdgeCurve::~EdgeCurve() {
 }
 
 bool
-EdgeCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+EdgeCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -74,7 +74,7 @@ EdgeCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (edge_geometry == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"edge_geometry");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"edge_geometry");
 	if (entity) {
 	    edge_geometry = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
 	    if (edge_geometry != NULL) {
@@ -116,7 +116,7 @@ EdgeCurve::Print(int level) {
 }
 
 STEPEntity *
-EdgeCurve::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+EdgeCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	EdgeCurve *object = new EdgeCurve(sw,sse->STEPfile_id);

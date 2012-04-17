@@ -27,7 +27,7 @@ static int uniqueNames( const char *, const SchRename * );
 Registry::Registry( CF_init initFunct )
     : entity_cnt( 0 ), all_ents_cnt( 0 ), col( 0 ) {
 //    if(NilSTEPentity == 0)
-//      NilSTEPentity = new SCLP23(Application_instance);
+//      NilSTEPentity = new SDAI_Application_instance;
 
     /* Registry tables aren't always initialized */
     primordialSwamp = HASHcreate( 1000 );
@@ -295,11 +295,11 @@ Registry::RemoveClones( const EntityDescriptor & e )
 }
 
 
-SCLP23( Application_instance ) *
+SDAI_Application_instance  *
 Registry::ObjCreate( const char * nm, const char * schnm, int check_case ) const {
     const EntityDescriptor  * entd = FindEntity( nm, schnm, check_case );
     if( entd ) {
-        SCLP23( Application_instance ) *se =
+        SDAI_Application_instance  *se =
             ( ( EntityDescriptor * )entd ) -> NewSTEPentity();
 
         // See comment in previous function.

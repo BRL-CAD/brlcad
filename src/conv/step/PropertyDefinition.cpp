@@ -61,7 +61,7 @@ string PropertyDefinition::ClassName()
     return entityname;
 }
 
-bool PropertyDefinition::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+bool PropertyDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
     id = sse->STEPfile_id;
@@ -75,7 +75,7 @@ bool PropertyDefinition::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse
 
     /*
      if (definition == NULL) {
-     SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"definition");
+     SDAI_Application_instance *entity = step->getEntityAttribute(sse,"definition");
      if (entity) { //this attribute is optional
      definition = dynamic_cast<ShapeRepresentationRelationship *>(Factory::CreateObject(sw,entity));
      } else {
@@ -106,7 +106,7 @@ void PropertyDefinition::Print(int level)
 }
 
 STEPEntity *
-PropertyDefinition::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+PropertyDefinition::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {

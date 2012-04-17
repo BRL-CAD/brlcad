@@ -424,7 +424,7 @@ AttrDescriptor::Deriving() const {
 
 // outdated function
 void
-AttrDescriptor::Derived( SCLP23( LOGICAL ) x ) {
+AttrDescriptor::Derived( SDAI_LOGICAL  x ) {
     if( x.asInt() ) {
         _attrType = AttrType_Deriving;
     } else {

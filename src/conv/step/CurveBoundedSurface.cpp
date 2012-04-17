@@ -53,7 +53,7 @@ CurveBoundedSurface::~CurveBoundedSurface() {
 }
 
 bool
-CurveBoundedSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+CurveBoundedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 
     step=sw;
     id = sse->STEPfile_id;
@@ -68,7 +68,7 @@ CurveBoundedSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (basis_surface == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"basis_surface");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"basis_surface");
 	if (entity) {
 	    basis_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw,entity));
 	} else {
@@ -81,7 +81,7 @@ CurveBoundedSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 	LIST_OF_ENTITIES *l = step->getListOfEntities(sse,"boundaries");
 	LIST_OF_ENTITIES::iterator i;
 	for(i=l->begin();i!=l->end();i++) {
-	    SCLP23(Application_instance) *entity = (*i);
+	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
 		BoundaryCurve *aAF = dynamic_cast<BoundaryCurve *>(Factory::CreateObject(sw,entity));
 
@@ -123,7 +123,7 @@ CurveBoundedSurface::Print(int level) {
 }
 
 STEPEntity *
-CurveBoundedSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+CurveBoundedSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	CurveBoundedSurface *object = new CurveBoundedSurface(sw,sse->STEPfile_id);

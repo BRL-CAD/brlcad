@@ -20,14 +20,14 @@ CheckRemainingInput( istream & in, ErrorDescriptor * err,
                      const char * tokenList ); // e.g. ",)"
 
 
-SCLP23( Binary ) &
-SCLP23( Binary )::operator= ( const char * s ) {
+SDAI_Binary  &
+SDAI_Binary ::operator= ( const char * s ) {
     std::string::operator= ( s );
     return *this;
 }
 
 void
-SCLP23( Binary )::STEPwrite( ostream & out ) const {
+SDAI_Binary ::STEPwrite( ostream & out ) const {
     const char * str = 0;
     if( empty() ) {
         out << "$";
@@ -43,7 +43,7 @@ SCLP23( Binary )::STEPwrite( ostream & out ) const {
 }
 
 const char *
-SCLP23( Binary )::STEPwrite( std::string & s ) const {
+SDAI_Binary ::STEPwrite( std::string & s ) const {
     const char * str = 0;
     if( empty() ) {
 //  s.set_null(); // this would free up space? nope
@@ -61,7 +61,7 @@ SCLP23( Binary )::STEPwrite( std::string & s ) const {
 }
 
 Severity
-SCLP23( Binary )::ReadBinary( istream & in, ErrorDescriptor * err, int AssignVal,
+SDAI_Binary ::ReadBinary( istream & in, ErrorDescriptor * err, int AssignVal,
                               int needDelims ) {
     if( AssignVal ) {
         clear();
@@ -141,7 +141,7 @@ SCLP23( Binary )::ReadBinary( istream & in, ErrorDescriptor * err, int AssignVal
 }
 
 Severity
-SCLP23( Binary )::StrToVal( const char * s, ErrorDescriptor * err ) {
+SDAI_Binary ::StrToVal( const char * s, ErrorDescriptor * err ) {
     istringstream in( ( char * )s ); // sz defaults to length of s
     return ReadBinary( in, err, 1, 0 );
 }
@@ -219,7 +219,7 @@ return b;
 //  delimited by double quotes
 
 Severity
-SCLP23( Binary )::STEPread( istream & in, ErrorDescriptor * err ) {
+SDAI_Binary ::STEPread( istream & in, ErrorDescriptor * err ) {
     return ReadBinary( in, err, 1, 1 );
     /*
         int foundEndQuote = 0; // need so this string is not ok: 'hi''
@@ -259,7 +259,7 @@ SCLP23( Binary )::STEPread( istream & in, ErrorDescriptor * err ) {
 }
 
 Severity
-SCLP23( Binary )::STEPread( const char * s, ErrorDescriptor * err ) {
+SDAI_Binary ::STEPread( const char * s, ErrorDescriptor * err ) {
     istringstream in( ( char * )s );
     return STEPread( in, err );
 }
@@ -285,7 +285,7 @@ SCLP23( Binary )::STEPread( const char * s, ErrorDescriptor * err ) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Severity
-SCLP23( Binary )::BinaryValidLevel( istream & in, ErrorDescriptor * err,
+SDAI_Binary ::BinaryValidLevel( istream & in, ErrorDescriptor * err,
                                     int optional, char * tokenList,
                                     int needDelims, int clearError ) {
     if( clearError ) {
@@ -321,7 +321,7 @@ SCLP23( Binary )::BinaryValidLevel( istream & in, ErrorDescriptor * err,
 }
 
 Severity
-SCLP23( Binary )::BinaryValidLevel( const char * value, ErrorDescriptor * err,
+SDAI_Binary ::BinaryValidLevel( const char * value, ErrorDescriptor * err,
                                     int optional, char * tokenList,
                                     int needDelims, int clearError ) {
     istringstream in( ( char * )value );

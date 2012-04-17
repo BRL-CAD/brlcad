@@ -50,7 +50,7 @@ PlaneAngleConversionBasedUnit::~PlaneAngleConversionBasedUnit() {
 }
 
 bool
-PlaneAngleConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+PlaneAngleConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -79,7 +79,7 @@ PlaneAngleConversionBasedUnit::Print(int level) {
 
 }
 STEPEntity *
-PlaneAngleConversionBasedUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+PlaneAngleConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	PlaneAngleConversionBasedUnit *object = new PlaneAngleConversionBasedUnit(sw,sse->STEPfile_id);

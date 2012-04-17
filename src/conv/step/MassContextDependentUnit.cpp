@@ -47,7 +47,7 @@ MassContextDependentUnit::~MassContextDependentUnit() {
 }
 
 bool
-MassContextDependentUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+MassContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -76,7 +76,7 @@ MassContextDependentUnit::Print(int level) {
 
 }
 STEPEntity *
-MassContextDependentUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+MassContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	MassContextDependentUnit *object = new MassContextDependentUnit(sw,sse->STEPfile_id);

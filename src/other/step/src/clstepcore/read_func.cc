@@ -69,9 +69,9 @@ void IStreamState( istream & in ) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int
-ReadInteger( SCLP23( Integer ) &val, istream & in, ErrorDescriptor * err,
+ReadInteger( SDAI_Integer  &val, istream & in, ErrorDescriptor * err,
              const char * tokenList ) {
-    SCLP23( Integer ) i = 0;
+    SDAI_Integer  i = 0;
     in >> ws;
     in >> i;
 
@@ -92,7 +92,7 @@ ReadInteger( SCLP23( Integer ) &val, istream & in, ErrorDescriptor * err,
 ///////////////////////////////////////////////////////////////////////////////
 
 int
-ReadInteger( SCLP23( Integer ) &val, const char * s, ErrorDescriptor * err,
+ReadInteger( SDAI_Integer  &val, const char * s, ErrorDescriptor * err,
              const char * tokenList ) {
     istringstream in( ( char * )s );
     return ReadInteger( val, in, err, tokenList );
@@ -140,7 +140,7 @@ IntValidLevel( const char * attrValue, ErrorDescriptor * err,
         CheckRemainingInput( in, err, "integer", tokenList );
         return err->severity();
     } else {
-        SCLP23( Integer ) val = 0;
+        SDAI_Integer  val = 0;
         int valAssigned = ReadInteger( val, in, err, tokenList );
         if( !valAssigned && !optional ) {
             err->GreaterSeverity( SEVERITY_INCOMPLETE );
@@ -150,7 +150,7 @@ IntValidLevel( const char * attrValue, ErrorDescriptor * err,
 }
 
 char *
-WriteReal( SCLP23( Real ) val, std::string & s ) {
+WriteReal( SDAI_Real  val, std::string & s ) {
 
     char rbuf[64];
 
@@ -190,7 +190,7 @@ WriteReal( SCLP23( Real ) val, std::string & s ) {
 }
 
 void
-WriteReal( SCLP23( Real ) val, ostream & out ) {
+WriteReal( SDAI_Real  val, ostream & out ) {
     std::string s;
 
     out << WriteReal( val, s );
@@ -223,9 +223,9 @@ WriteReal( SCLP23( Real ) val, ostream & out ) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int
-ReadReal( SCLP23( Real ) &val, istream & in, ErrorDescriptor * err,
+ReadReal( SDAI_Real  &val, istream & in, ErrorDescriptor * err,
           const char * tokenList ) {
-    SCLP23( Real ) d = 0;
+    SDAI_Real  d = 0;
 
     // Read the real's value into a string so we can make sure it is properly
     // formatted. e.g. a decimal point is present. If you use the stream to
@@ -355,7 +355,7 @@ ReadReal( SCLP23( Real ) &val, istream & in, ErrorDescriptor * err,
 ///////////////////////////////////////////////////////////////////////////////
 
 int
-ReadReal( SCLP23( Real ) &val, const char * s, ErrorDescriptor * err,
+ReadReal( SDAI_Real  &val, const char * s, ErrorDescriptor * err,
           const char * tokenList ) {
     istringstream in( ( char * )s );
     return ReadReal( val, in, err, tokenList );
@@ -403,7 +403,7 @@ RealValidLevel( const char * attrValue, ErrorDescriptor * err,
         CheckRemainingInput( in, err, "real", tokenList );
         return err->severity();
     } else {
-        SCLP23( Real ) val = 0;
+        SDAI_Real  val = 0;
         int valAssigned = ReadReal( val, in, err, tokenList );
         if( !valAssigned && !optional ) {
             err->GreaterSeverity( SEVERITY_INCOMPLETE );
@@ -433,9 +433,9 @@ RealValidLevel( const char * attrValue, ErrorDescriptor * err,
 ///////////////////////////////////////////////////////////////////////////////
 
 int
-ReadNumber( SCLP23( Real ) &val, istream & in, ErrorDescriptor * err,
+ReadNumber( SDAI_Real  &val, istream & in, ErrorDescriptor * err,
             const char * tokenList ) {
-    SCLP23( Real ) d = 0;
+    SDAI_Real  d = 0;
     in >> ws;
     in >> d;
 
@@ -455,7 +455,7 @@ ReadNumber( SCLP23( Real ) &val, istream & in, ErrorDescriptor * err,
 ///////////////////////////////////////////////////////////////////////////////
 
 int
-ReadNumber( SCLP23( Real ) &val, const char * s, ErrorDescriptor * err,
+ReadNumber( SDAI_Real  &val, const char * s, ErrorDescriptor * err,
             const char * tokenList ) {
     istringstream in( ( char * )s );
     return ReadNumber( val, in, err, tokenList );
@@ -504,7 +504,7 @@ NumberValidLevel( const char * attrValue, ErrorDescriptor * err,
         CheckRemainingInput( in, err, "number", tokenList );
         return err->severity();
     } else {
-        SCLP23( Real ) val = 0;
+        SDAI_Real  val = 0;
         int valAssigned = ReadNumber( val, in, err, tokenList );
         if( !valAssigned && !optional ) {
             err->GreaterSeverity( SEVERITY_INCOMPLETE );
@@ -670,7 +670,7 @@ Severity
 FindStartOfInstance( istream & in, std::string & inst ) {
     char c = 0;
     ErrorDescriptor errs;
-    SCLP23( String ) tmp;
+    SDAI_String  tmp;
 //    std::string tmp;
 
     while( in.good() ) {
@@ -705,7 +705,7 @@ Severity
 SkipInstance( istream & in, std::string & inst ) {
     char c = 0;
     ErrorDescriptor errs;
-    SCLP23( String ) tmp;
+    SDAI_String  tmp;
 //    std::string tmp;
 
     while( in.good() ) {

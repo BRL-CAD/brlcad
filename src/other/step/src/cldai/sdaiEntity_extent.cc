@@ -4,7 +4,7 @@
 
 #include <sdai.h>
 
-SCLP23( Entity_extent )::SCLP23_NAME( Entity_extent )( )
+SDAI_Entity_extent ::SDAI_Entity_extent ( )
     : _definition( 0 ), _definition_name( 0 ), _owned_by( 0 ) {
     /*
         _definition = 0;
@@ -14,7 +14,7 @@ SCLP23( Entity_extent )::SCLP23_NAME( Entity_extent )( )
 }
 
 /*
-SCLP23(Entity_extent)::SCLP23_NAME(Entity_extent)(const SCLP23(Entity_extent)& ee)
+SDAI_Entity_extent)::SDAI_Entity_extent)(const SCLP23(Entity_extent& ee
 {
 //  {  CopyAs((STEPentityH) &e);    }
     _definition = 0;
@@ -22,54 +22,54 @@ SCLP23(Entity_extent)::SCLP23_NAME(Entity_extent)(const SCLP23(Entity_extent)& e
 }
 */
 
-SCLP23( Entity_extent )::~SCLP23_NAME( Entity_extent )() {
+SDAI_Entity_extent ::~SDAI_Entity_extent () {
     delete _definition_name;
 }
 
 Entity_ptr
-SCLP23( Entity_extent )::definition_() const {
+SDAI_Entity_extent ::definition_() const {
     return _definition;
 }
 
 /*
-const SCLP23(Entity_name)
-SCLP23(Entity_extent)::definition_name_() const
+const SDAI_Entity_name
+SDAI_Entity_extent)::definition_name_( const
 {
     return _definition_name;
 }
 */
 
 void
-SCLP23( Entity_extent )::definition_( const Entity_ptr & ep ) {
+SDAI_Entity_extent ::definition_( const Entity_ptr & ep ) {
     _definition = ep;
 }
 
 void
-SCLP23( Entity_extent )::definition_name_( const SCLP23( Entity_name )& en ) {
+SDAI_Entity_extent ::definition_name_( const SDAI_Entity_name & en ) {
     _definition_name = new char[strlen( en ) + 1];
     strncpy( _definition_name, en, strlen( en ) + 1 );
 }
 
 void
-SCLP23( Entity_extent )::owned_by_( SCLP23_NAME( Model_contents__list_var )& mclv ) {
+SDAI_Entity_extent ::owned_by_( SDAI_Model_contents__list_var & mclv ) {
 //    _owned_by = mcp;
 }
 
-SCLP23( Model_contents__list_var )
-SCLP23( Entity_extent )::owned_by_() const {
-    return ( const SCLP23( Model_contents__list_var ) ) &_owned_by;
+SDAI_Model_contents__list_var 
+SDAI_Entity_extent ::owned_by_() const {
+    return ( const SDAI_Model_contents__list_var  ) &_owned_by;
 }
 
 /*
-SCLP23(DAObject__set_var) instances_()
+SDAI_DAObject__set_var) instances_(
 {
     return &_instances;
 }
 
 const
-SCLP23(DAObject__set_var) instances_() const
+SDAI_DAObject__set_var) instances_( const
 {
-    return (const SCLP23(DAObject__set_var))&_instances;
+    return (const SDAI_DAObject__set_var)&_instances;
 }
 */
 
@@ -92,7 +92,7 @@ SCLP23(DAObject__set_var) instances_() const
 */
 
 void
-SCLP23( Entity_extent )::AddInstance( const SCLP23( DAObject_ptr )& appInst ) {
+SDAI_Entity_extent ::AddInstance( const SDAI_DAObject_ptr & appInst ) {
     _instances.Append( appInst );
 }
 
@@ -114,8 +114,8 @@ SCLP23( Entity_extent )::AddInstance( const SCLP23( DAObject_ptr )& appInst ) {
 
 
 void
-SCLP23( Entity_extent )::RemoveInstance( const SCLP23( DAObject_ptr )& appInst ) {
+SDAI_Entity_extent ::RemoveInstance( const SDAI_DAObject_ptr & appInst ) {
     _instances.Remove( _instances.Index( appInst ) );
 }
 
-/////////    END_ENTITY SCLP23(Entity_extent)
+/////////    END_ENTITY SDAI_Entity_extent

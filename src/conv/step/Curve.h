@@ -60,7 +60,7 @@ public:
 	Curve();
 	virtual ~Curve();
 	virtual curve_type CurveType() { return UNKNOWN_CURVE; };
-	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual const double *PointAtEnd();
 	virtual const double *PointAtStart();
@@ -71,7 +71,7 @@ public:
 	void End(Vertex *v);
 
 	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
 };
 
 #endif /* CURVE_H_ */

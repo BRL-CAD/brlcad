@@ -84,17 +84,17 @@ class InstMgr {
         }
 
         MgrNode * FindFileId( int fileId );
-        // get the index into display list given a SCLP23(Application_instance)
+        // get the index into display list given a SDAI_Application_instance
         //  called by see initiated functions
-        int GetIndex( SCLP23( Application_instance ) *se );
+        int GetIndex( SDAI_Application_instance  *se );
         int GetIndex( MgrNode * mn );
         int VerifyEntity( int fileId, const char * expectedType );
 
 //    void Append(MgrNode *node);
-        MgrNode * Append( SCLP23( Application_instance ) *se, stateEnum listState );
+        MgrNode * Append( SDAI_Application_instance  *se, stateEnum listState );
         // deletes node from master list structure
         void Delete( MgrNode * node );
-        void Delete( SCLP23( Application_instance ) *se );
+        void Delete( SDAI_Application_instance  *se );
 
         void ChangeState( MgrNode * node, stateEnum listState );
 
@@ -106,11 +106,11 @@ class InstMgr {
         }
         int EntityKeywordCount( const char * name );
 
-        SCLP23( Application_instance ) * GetApplication_instance( int index );
-        SCLP23( Application_instance ) *
+        SDAI_Application_instance  * GetApplication_instance( int index );
+        SDAI_Application_instance  *
         GetApplication_instance( const char * entityKeyword,
                                  int starting_index = 0 );
-        SCLP23( Application_instance ) * GetApplication_instance( MgrNode * node ) {
+        SDAI_Application_instance  * GetApplication_instance( MgrNode * node ) {
             return node->GetApplication_instance();
         };
 
@@ -122,10 +122,10 @@ class InstMgr {
         void PrintSortedFileIds();
 
         // OBSOLETE
-        SCLP23( Application_instance ) * GetSTEPentity( int index );
-        SCLP23( Application_instance ) * GetSTEPentity( const char * entityKeyword,
+        SDAI_Application_instance  * GetSTEPentity( int index );
+        SDAI_Application_instance  * GetSTEPentity( const char * entityKeyword,
                 int starting_index = 0 );
-        SCLP23( Application_instance ) * GetSTEPentity( MgrNode * node ) {
+        SDAI_Application_instance  * GetSTEPentity( MgrNode * node ) {
             return node->GetApplication_instance();
         };
 

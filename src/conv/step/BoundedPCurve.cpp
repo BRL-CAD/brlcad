@@ -50,7 +50,7 @@ BoundedPCurve::~BoundedPCurve() {
 }
 
 bool
-BoundedPCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+BoundedPCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -88,7 +88,7 @@ BoundedPCurve::Print(int level) {
 }
 
 STEPEntity *
-BoundedPCurve::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
+BoundedPCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	BoundedPCurve *object = new BoundedPCurve(sw,sse->STEPfile_id);

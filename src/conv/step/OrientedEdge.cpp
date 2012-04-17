@@ -53,7 +53,7 @@ OrientedEdge::~OrientedEdge() {
 }
 
 bool
-OrientedEdge::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+OrientedEdge::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -70,7 +70,7 @@ OrientedEdge::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     orientation = step->getBooleanAttribute(sse,"orientation");
 
     if (edge_element == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"edge_element");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"edge_element");
 	if (entity) {
 	    edge_element = dynamic_cast<Edge *>(Factory::CreateObject(sw,entity));
 	    if (edge_element != NULL) {
@@ -107,7 +107,7 @@ OrientedEdge::Print(int level) {
 }
 
 STEPEntity *
-OrientedEdge::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+OrientedEdge::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	OrientedEdge *object = new OrientedEdge(sw,sse->STEPfile_id);

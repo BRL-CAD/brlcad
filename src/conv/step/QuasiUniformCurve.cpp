@@ -48,7 +48,7 @@ QuasiUniformCurve::~QuasiUniformCurve() {
 }
 
 bool
-QuasiUniformCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+QuasiUniformCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -70,7 +70,7 @@ QuasiUniformCurve::Print(int level) {
     BSplineCurve::Print(level+1);
 }
 STEPEntity *
-QuasiUniformCurve::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
+QuasiUniformCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	QuasiUniformCurve *object = new QuasiUniformCurve(sw,sse->STEPfile_id);

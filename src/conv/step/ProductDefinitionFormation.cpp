@@ -71,7 +71,7 @@ string ProductDefinitionFormation::Description()
     return description;
 }
 
-bool ProductDefinitionFormation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+bool ProductDefinitionFormation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
     id = sse->STEPfile_id;
@@ -84,7 +84,7 @@ bool ProductDefinitionFormation::Load(STEPWrapper *sw, SCLP23(Application_instan
     description = step->getStringAttribute(sse, "description");
 
     if (of_product == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse, "of_product");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "of_product");
 	if (entity) { //this attribute is optional
 	    of_product = dynamic_cast<Product *>(Factory::CreateObject(sw, entity));
 	} else {
@@ -115,7 +115,7 @@ void ProductDefinitionFormation::Print(int level)
 }
 
 STEPEntity *
-ProductDefinitionFormation::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+ProductDefinitionFormation::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {

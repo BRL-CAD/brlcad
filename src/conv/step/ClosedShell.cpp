@@ -47,7 +47,7 @@ ClosedShell::~ClosedShell() {
 }
 
 bool
-ClosedShell::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+ClosedShell::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -73,7 +73,7 @@ ClosedShell::ReverseFaceSet() {
 }
 
 STEPEntity *
-ClosedShell::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+ClosedShell::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	ClosedShell *object = new ClosedShell(sw,sse->STEPfile_id);

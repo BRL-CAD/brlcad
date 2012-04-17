@@ -47,7 +47,7 @@ QuasiUniformSurface::~QuasiUniformSurface() {
 }
 
 bool
-QuasiUniformSurface::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+QuasiUniformSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 
     step=sw;
     id = sse->STEPfile_id;
@@ -68,7 +68,7 @@ QuasiUniformSurface::Print(int level) {
     BSplineSurface::Print(level+1);
 }
 STEPEntity *
-QuasiUniformSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+QuasiUniformSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	QuasiUniformSurface *object = new QuasiUniformSurface(sw,sse->STEPfile_id);

@@ -42,9 +42,5 @@ SET(EXPRESS_PRIVATE_HDRS
     stack.h
 )
 
-add_definitions(
-    -DHAVE_CONFIG_H
-)
-
 SCL_ADDLIB(express "${EXPRESS_SOURCES}" "")
 SCL_ADDEXEC(fedex "${FEDEX_SOURCES}" express)

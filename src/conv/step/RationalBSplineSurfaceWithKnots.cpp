@@ -47,7 +47,7 @@ RationalBSplineSurfaceWithKnots::~RationalBSplineSurfaceWithKnots() {
 }
 
 bool
-RationalBSplineSurfaceWithKnots::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+RationalBSplineSurfaceWithKnots::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -73,7 +73,7 @@ RationalBSplineSurfaceWithKnots::Print(int level) {
     BSplineSurfaceWithKnots::Print(level);
 }
 STEPEntity *
-RationalBSplineSurfaceWithKnots::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
+RationalBSplineSurfaceWithKnots::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	RationalBSplineSurfaceWithKnots *object = new RationalBSplineSurfaceWithKnots(sw,sse->STEPfile_id);

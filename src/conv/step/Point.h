@@ -41,13 +41,13 @@ public:
 	Point();
 	virtual ~Point();
 	Point(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
 	virtual void AddVertex(ON_Brep *brep);
 	virtual const double *Point3d() { return NULL; };
 	virtual void Print(int level);
 
 	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
 };
 
 #endif /* POINT_H_ */

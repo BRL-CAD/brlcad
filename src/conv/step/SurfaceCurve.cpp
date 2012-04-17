@@ -63,7 +63,7 @@ SurfaceCurve::~SurfaceCurve() {
 }
 
 bool
-SurfaceCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+SurfaceCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -77,7 +77,7 @@ SurfaceCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (curve_3d ==NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"curve_3d");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"curve_3d");
 	if (entity) {
 	    curve_3d = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
 	} else {
@@ -90,7 +90,7 @@ SurfaceCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
        LIST_OF_ENTITIES *l = step->getListOfEntities(sse,"associated_geometry");
        LIST_OF_ENTITIES::iterator i;
        for(i=l->begin();i!=l->end();i++) {
-       SCLP23(Application_instance) *entity = (*i);
+       SDAI_Application_instance *entity = (*i);
        if (entity) {
        PCurveOrSurface *aPCOS = (PCurveOrSurface *)Factory::CreateObject(sw,entity);
 
@@ -109,9 +109,9 @@ SurfaceCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	if (attr) {
 	    STEPaggregate *sa = (STEPaggregate *) (attr->ptr.a);
 	    EntityNode *sn = (EntityNode *) sa->GetHead();
-	    SCLP23(Select) *p_or_s;
+	    SDAI_Select *p_or_s;
 	    while (sn != NULL) {
-		p_or_s = (SCLP23(Select) *) sn->node;
+		p_or_s = (SDAI_Select *) sn->node;
 
 		if (p_or_s->CurrentUnderlyingType() == config_control_designt_pcurve_or_surface) {
 		    PCurveOrSurface *aPCOS = new PCurveOrSurface();
@@ -164,7 +164,7 @@ SurfaceCurve::Print(int level) {
 }
 
 STEPEntity *
-SurfaceCurve::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
+SurfaceCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	SurfaceCurve *object = new SurfaceCurve(sw,sse->STEPfile_id);

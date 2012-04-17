@@ -47,7 +47,7 @@ AreaContextDependentUnit::~AreaContextDependentUnit() {
 }
 
 bool
-AreaContextDependentUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+AreaContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -76,7 +76,7 @@ AreaContextDependentUnit::Print(int level) {
 
 }
 STEPEntity *
-AreaContextDependentUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+AreaContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	AreaContextDependentUnit *object = new AreaContextDependentUnit(sw,sse->STEPfile_id);

@@ -79,7 +79,7 @@ TrimmingSelect::IsParameterTrim() {
 }
 
 bool
-TrimmingSelect::Load(STEPWrapper *sw,SCLP23(Select) *sse) {
+TrimmingSelect::Load(STEPWrapper *sw,SDAI_Select *sse) {
     step=sw;
 
     //std::cout << sse->UnderlyingTypeName() << std::endl;
@@ -88,7 +88,7 @@ TrimmingSelect::Load(STEPWrapper *sw,SCLP23(Select) *sse) {
     if ( v->IsCartesian_point()) {
 	SdaiCartesian_point *p = *v;
 	type = CARTESIAN_POINT;
-	cartesian_point = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,(SCLP23(Application_instance) *)p));
+	cartesian_point = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,(SDAI_Application_instance *)p));
     } else if (v->IsParameter_value()) {
 	type = PARAMETER_VALUE;
 	parameter_value = (double)*v;
@@ -108,14 +108,14 @@ TrimmingSelect::Print(int level) {
     }
 }
 STEPEntity *
-TrimmingSelect::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+TrimmingSelect::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	TrimmingSelect *object = new TrimmingSelect(sw,sse->STEPfile_id);
 
 	Factory::AddObject(object);
 
-	if (!object->Load(sw, (SCLP23(Select) *)sse)) {
+	if (!object->Load(sw, (SDAI_Select *)sse)) {
 	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 	    delete object;
 	    return NULL;

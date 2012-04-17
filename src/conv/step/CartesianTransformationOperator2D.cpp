@@ -47,7 +47,7 @@ CartesianTransformationOperator2D::~CartesianTransformationOperator2D() {
 }
 
 bool
-CartesianTransformationOperator2D::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+CartesianTransformationOperator2D::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -69,7 +69,7 @@ CartesianTransformationOperator2D::Print(int level) {
 }
 
 STEPEntity *
-CartesianTransformationOperator2D::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+CartesianTransformationOperator2D::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	CartesianTransformationOperator2D *object = new CartesianTransformationOperator2D(sw,sse->STEPfile_id);

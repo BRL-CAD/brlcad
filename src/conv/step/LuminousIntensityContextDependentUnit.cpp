@@ -47,7 +47,7 @@ LuminousIntensityContextDependentUnit::~LuminousIntensityContextDependentUnit() 
 }
 
 bool
-LuminousIntensityContextDependentUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+LuminousIntensityContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -76,7 +76,7 @@ LuminousIntensityContextDependentUnit::Print(int level) {
 
 }
 STEPEntity *
-LuminousIntensityContextDependentUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+LuminousIntensityContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	LuminousIntensityContextDependentUnit *object = new LuminousIntensityContextDependentUnit(sw,sse->STEPfile_id);

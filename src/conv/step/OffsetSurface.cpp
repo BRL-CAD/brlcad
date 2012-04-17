@@ -53,7 +53,7 @@ OffsetSurface::~OffsetSurface() {
 }
 
 bool
-OffsetSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+OffsetSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 
     step=sw;
     id = sse->STEPfile_id;
@@ -68,7 +68,7 @@ OffsetSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (basis_surface == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"basis_surface");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"basis_surface");
 	if (entity) {
 	    basis_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw,entity));
 	} else {
@@ -99,7 +99,7 @@ OffsetSurface::Print(int level) {
 }
 
 STEPEntity *
-OffsetSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+OffsetSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	OffsetSurface *object = new OffsetSurface(sw,sse->STEPfile_id);

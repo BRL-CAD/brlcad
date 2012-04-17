@@ -50,7 +50,7 @@ LengthConversionBasedUnit::~LengthConversionBasedUnit() {
 }
 
 bool
-LengthConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+LengthConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -79,7 +79,7 @@ LengthConversionBasedUnit::Print(int level) {
 
 }
 STEPEntity *
-LengthConversionBasedUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+LengthConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	LengthConversionBasedUnit *object = new LengthConversionBasedUnit(sw,sse->STEPfile_id);

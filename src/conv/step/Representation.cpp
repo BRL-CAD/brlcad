@@ -132,7 +132,7 @@ Representation::GetSolidAngleConversionFactor() {
 }
 
 
-bool Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
     id = sse->STEPfile_id;
@@ -147,7 +147,7 @@ bool Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
 	LIST_OF_ENTITIES *l = step->getListOfEntities(sse, "items");
 	LIST_OF_ENTITIES::iterator i;
 	for (i = l->begin(); i != l->end(); i++) {
-	    SCLP23(Application_instance) *entity = (*i);
+	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
 		RepresentationItem *aRI = dynamic_cast<RepresentationItem *>(Factory::CreateObject(sw, entity));
 		if (aRI != NULL)
@@ -164,10 +164,10 @@ bool Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
     }
 
     if (context_of_items.empty()) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse, "context_of_items");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "context_of_items");
 	if (entity) {
 	    if (entity->IsComplex()) {
-		SCLP23(Application_instance) *sub_entity = step->getEntity(entity, "Geometric_Representation_Context");
+		SDAI_Application_instance *sub_entity = step->getEntity(entity, "Geometric_Representation_Context");
 		if (sub_entity) {
 		    GeometricRepresentationContext *aGRC = new GeometricRepresentationContext();
 
@@ -251,7 +251,7 @@ Representation::Print(int level) {
 
 
 STEPEntity *
-Representation::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+Representation::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	Representation *object = new Representation(sw, sse->STEPfile_id);

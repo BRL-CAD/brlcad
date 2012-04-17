@@ -47,7 +47,7 @@ SolidAngleContextDependentUnit::~SolidAngleContextDependentUnit() {
 }
 
 bool
-SolidAngleContextDependentUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+SolidAngleContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -76,7 +76,7 @@ SolidAngleContextDependentUnit::Print(int level) {
 
 }
 STEPEntity *
-SolidAngleContextDependentUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+SolidAngleContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	SolidAngleContextDependentUnit *object = new SolidAngleContextDependentUnit(sw,sse->STEPfile_id);

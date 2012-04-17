@@ -50,7 +50,7 @@ VolumeConversionBasedUnit::~VolumeConversionBasedUnit() {
 }
 
 bool
-VolumeConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+VolumeConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -79,7 +79,7 @@ VolumeConversionBasedUnit::Print(int level) {
 
 }
 STEPEntity *
-VolumeConversionBasedUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+VolumeConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	VolumeConversionBasedUnit *object = new VolumeConversionBasedUnit(sw,sse->STEPfile_id);

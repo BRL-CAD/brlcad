@@ -73,7 +73,7 @@ Line::EndPoint(double *p) {
 }
 
 bool
-Line::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+Line::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -87,7 +87,7 @@ Line::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (pnt == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"pnt");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"pnt");
 	if (entity != NULL) {
 	    pnt = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,entity));
 	} else {
@@ -96,7 +96,7 @@ Line::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	}
     }
     if (dir == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"dir");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"dir");
 	if (entity != NULL) {
 	    dir = dynamic_cast<Vector *>(Factory::CreateObject(sw,entity));
 	} else {
@@ -134,7 +134,7 @@ Line::Print(int level) {
     Curve::Print(level+1);
 }
 STEPEntity *
-Line::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
+Line::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	Line *object = new Line(sw,sse->STEPfile_id);

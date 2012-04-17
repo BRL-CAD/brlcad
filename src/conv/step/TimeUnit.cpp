@@ -47,7 +47,7 @@ TimeUnit::~TimeUnit() {
 }
 
 bool
-TimeUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+TimeUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -71,7 +71,7 @@ TimeUnit::Print(int level) {
 
 }
 STEPEntity *
-TimeUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+TimeUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	TimeUnit *object = new TimeUnit(sw,sse->STEPfile_id);

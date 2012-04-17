@@ -48,7 +48,7 @@ RationalUniformCurve::~RationalUniformCurve() {
 }
 
 bool
-RationalUniformCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+RationalUniformCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -70,7 +70,7 @@ RationalUniformCurve::Print(int level) {
     RationalBSplineCurve::Print(level+1);
 }
 STEPEntity *
-RationalUniformCurve::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
+RationalUniformCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	RationalUniformCurve *object = new RationalUniformCurve(sw,sse->STEPfile_id);

@@ -47,7 +47,7 @@ LuminousIntensitySiUnit::~LuminousIntensitySiUnit() {
 }
 
 bool
-LuminousIntensitySiUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+LuminousIntensitySiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -76,7 +76,7 @@ LuminousIntensitySiUnit::Print(int level) {
 
 }
 STEPEntity *
-LuminousIntensitySiUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+LuminousIntensitySiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	LuminousIntensitySiUnit *object = new LuminousIntensitySiUnit(sw,sse->STEPfile_id);

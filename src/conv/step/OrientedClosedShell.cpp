@@ -52,7 +52,7 @@ OrientedClosedShell::~OrientedClosedShell()
 {
 }
 
-bool OrientedClosedShell::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+bool OrientedClosedShell::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
     id = sse->STEPfile_id;
@@ -69,7 +69,7 @@ bool OrientedClosedShell::Load(STEPWrapper *sw, SCLP23(Application_instance) *ss
     orientation = step->getBooleanAttribute(sse, "orientation");
 
     if (closed_shell_element == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse, "closed_shell_element");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "closed_shell_element");
 	if (entity) {
 	    closed_shell_element = dynamic_cast<ClosedShell *>(Factory::CreateObject(sw, entity));
 	    if (closed_shell_element == NULL) {
@@ -107,7 +107,7 @@ void OrientedClosedShell::Print(int level)
     ConnectedFaceSet::Print(level + 1);
 }
 STEPEntity *
-OrientedClosedShell::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+OrientedClosedShell::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {

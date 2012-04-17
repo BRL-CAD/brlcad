@@ -47,7 +47,7 @@ CompositeCurveOnSurface::~CompositeCurveOnSurface() {
 }
 
 bool
-CompositeCurveOnSurface::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+CompositeCurveOnSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -69,7 +69,7 @@ CompositeCurveOnSurface::Print(int level) {
     CompositeCurve::Print(level+1);
 }
 STEPEntity *
-CompositeCurveOnSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+CompositeCurveOnSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	CompositeCurveOnSurface *object = new CompositeCurveOnSurface(sw,sse->STEPfile_id);

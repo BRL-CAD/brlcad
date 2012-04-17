@@ -16,9 +16,9 @@
 
 
 #include <sdai.h>
-//class SCLP23(Application_instance);
+//class SDAI_Application_instance;
 
-typedef  SCLP23( Application_instance ) * ( * Creator )() ;
+typedef  SDAI_Application_instance  * ( * Creator )() ;
 //class StringAggregate;
 
 enum AttrType_Enum {
@@ -696,7 +696,7 @@ typedef Uniqueness_rule__set_ptr Uniqueness_rule__set_var;
 ///////////////////////////////////////////////////////////////////////////////
 
 
-typedef  SCLP23( Model_contents_ptr )( * ModelContentsCreator )() ;
+typedef  SDAI_Model_contents_ptr ( * ModelContentsCreator )() ;
 
 class Schema : public Dictionary_instance {
 
@@ -894,8 +894,8 @@ class AttrDescriptor {
         const char  * _name ;   // the attributes name
         // this defines the domain of the attribute
         const TypeDescriptor * _domainType ;
-        SCLP23( LOGICAL ) _optional;
-        SCLP23( LOGICAL ) _unique;
+        SDAI_LOGICAL  _optional;
+        SDAI_LOGICAL  _unique;
         AttrType_Enum _attrType; // former attribute _derived
 
         const EntityDescriptor & _owner ;  // the owning entityDescriptor
@@ -982,10 +982,10 @@ class AttrDescriptor {
             _domainType = td;
         }
 
-        const SCLP23( LOGICAL ) & Optional() const {
+        const SDAI_LOGICAL  & Optional() const {
             return _optional;
         }
-        void Optional( SCLP23( LOGICAL ) &opt )    {
+        void Optional( SDAI_LOGICAL  &opt )    {
             _optional.put( opt.asInt() );
         }
 
@@ -996,10 +996,10 @@ class AttrDescriptor {
             _optional.put( opt );
         }
 
-        const SCLP23( LOGICAL ) & Unique() const {
+        const SDAI_LOGICAL  & Unique() const {
             return _unique;
         }
-        void Unique( SCLP23( LOGICAL ) uniq )  {
+        void Unique( SDAI_LOGICAL  uniq )  {
             _unique.put( uniq.asInt() );
         }
         void Unique( Logical uniq )  {
@@ -1026,13 +1026,13 @@ class AttrDescriptor {
             return Deriving();
         }
         void Derived( Logical x );    // outdated DAS
-        void Derived( SCLP23( LOGICAL ) x ); // outdated DAS
+        void Derived( SDAI_LOGICAL  x ); // outdated DAS
         void Derived( const char * x ); // outdated DAS
 
-        const SCLP23( LOGICAL ) & Optionality() const {
+        const SDAI_LOGICAL  & Optionality() const {
             return _optional;
         }
-        void Optionality( SCLP23( LOGICAL ) &opt ) {
+        void Optionality( SDAI_LOGICAL  &opt ) {
             _optional.put( opt.asInt() );
         }
         void Optionality( Logical opt )     {
@@ -1042,10 +1042,10 @@ class AttrDescriptor {
             _optional.put( opt );
         }
 
-        const SCLP23( LOGICAL ) & Uniqueness() const  {
+        const SDAI_LOGICAL  & Uniqueness() const  {
             return _unique;
         }
-        void Uniqueness( SCLP23( LOGICAL ) uniq )  {
+        void Uniqueness( SDAI_LOGICAL  uniq )  {
             _unique.put( uniq.asInt() );
         }
         void Uniqueness( Logical uniq )      {
@@ -1467,7 +1467,7 @@ class TypeDescriptor {
         // is USE/REFERENCE'ing us (added to altNames).
 };
 
-typedef  SCLP23( Enum ) * ( * EnumCreator )() ;
+typedef  SDAI_Enum  * ( * EnumCreator )() ;
 
 class EnumTypeDescriptor  :    public TypeDescriptor  {
     public:
@@ -1479,7 +1479,7 @@ class EnumTypeDescriptor  :    public TypeDescriptor  {
             CreateNewEnum = f;
         }
 
-        SCLP23( Enum ) * CreateEnum();
+        SDAI_Enum  * CreateEnum();
 
         EnumTypeDescriptor( ) { }
         EnumTypeDescriptor( const char * nm, PrimitiveType ft,
@@ -1504,8 +1504,8 @@ class EntityDescriptor  :    public TypeDescriptor  {
 
     protected:
 //  const Schema * _originatingSchema;
-        SCLP23( LOGICAL ) _abstractEntity;
-        SCLP23( LOGICAL ) _extMapping;
+        SDAI_LOGICAL  _abstractEntity;
+        SDAI_LOGICAL  _extMapping;
         // does external mapping have to be used to create an instance of
         // us (see STEP Part 21, sect 11.2.5.1)
 
@@ -1520,7 +1520,7 @@ class EntityDescriptor  :    public TypeDescriptor  {
     public:
         Uniqueness_rule__set_var _uniqueness_rules; // initially a null pointer
 
-        // pointer to a function that will create a new instance of a SCLP23(Application_instance)
+        // pointer to a function that will create a new instance of a SDAI_Application_instance
         Creator NewSTEPentity;
 
         EntityDescriptor( );
@@ -1537,16 +1537,16 @@ class EntityDescriptor  :    public TypeDescriptor  {
 
         const char * QualifiedName( std::string & s ) const;
 
-        const SCLP23( LOGICAL ) & AbstractEntity() const {
+        const SDAI_LOGICAL  & AbstractEntity() const {
             return _abstractEntity;
         }
-        const SCLP23( LOGICAL ) & ExtMapping() const   {
+        const SDAI_LOGICAL  & ExtMapping() const   {
             return _extMapping;
         }
-        void AbstractEntity( SCLP23( LOGICAL ) &ae ) {
+        void AbstractEntity( SDAI_LOGICAL  &ae ) {
             _abstractEntity.put( ae.asInt() );
         }
-        void ExtMapping( SCLP23( LOGICAL ) &em ) {
+        void ExtMapping( SDAI_LOGICAL  &em ) {
             _extMapping.put( em.asInt() );
         }
         void AbstractEntity( Logical ae ) {
@@ -1703,9 +1703,9 @@ class AggrTypeDescriptor  :    public TypeDescriptor  {
 
     protected:
 
-        SCLP23( Integer )  _bound1 ;
-        SCLP23( Integer )  _bound2 ;
-        SCLP23( LOGICAL ) _uniqueElements ;
+        SDAI_Integer   _bound1 ;
+        SDAI_Integer   _bound2 ;
+        SDAI_LOGICAL  _uniqueElements ;
         TypeDescriptor * _aggrDomainType ;
         AggregateCreator CreateNewAggr;
 
@@ -1718,7 +1718,7 @@ class AggrTypeDescriptor  :    public TypeDescriptor  {
         STEPaggregate * CreateAggregate();
 
         AggrTypeDescriptor( );
-        AggrTypeDescriptor( SCLP23( Integer ) b1, SCLP23( Integer ) b2,
+        AggrTypeDescriptor( SDAI_Integer  b1, SDAI_Integer  b2,
                             Logical uniqElem,
                             TypeDescriptor * aggrDomType );
         AggrTypeDescriptor( const char * nm, PrimitiveType ft,
@@ -1728,24 +1728,24 @@ class AggrTypeDescriptor  :    public TypeDescriptor  {
         virtual ~AggrTypeDescriptor();
 
 
-        SCLP23( Integer ) & Bound1()          {
+        SDAI_Integer  & Bound1()          {
             return _bound1;
         }
-        void Bound1( SCLP23( Integer )  b1 )   {
+        void Bound1( SDAI_Integer   b1 )   {
             _bound1 = b1;
         }
 
-        SCLP23( Integer ) & Bound2()      {
+        SDAI_Integer  & Bound2()      {
             return _bound2;
         }
-        void Bound2( SCLP23( Integer )  b2 )   {
+        void Bound2( SDAI_Integer   b2 )   {
             _bound2 = b2;
         }
 
-        SCLP23( LOGICAL ) & UniqueElements()   {
+        SDAI_LOGICAL  & UniqueElements()   {
             return _uniqueElements;
         }
-        void UniqueElements( SCLP23( LOGICAL ) &ue ) {
+        void UniqueElements( SDAI_LOGICAL  &ue ) {
             _uniqueElements.put( ue.asInt() );
         }
         void UniqueElements( Logical ue )     {
@@ -1770,7 +1770,7 @@ class AggrTypeDescriptor  :    public TypeDescriptor  {
 class ArrayTypeDescriptor  :    public AggrTypeDescriptor  {
 
     protected:
-        SCLP23( LOGICAL ) _optionalElements ;
+        SDAI_LOGICAL  _optionalElements ;
     public:
 
         ArrayTypeDescriptor( ) : _optionalElements( ( char * )"UNKNOWN_TYPE" ) { }
@@ -1786,10 +1786,10 @@ class ArrayTypeDescriptor  :    public AggrTypeDescriptor  {
         virtual ~ArrayTypeDescriptor() {}
 
 
-        SCLP23( LOGICAL ) & OptionalElements()       {
+        SDAI_LOGICAL  & OptionalElements()       {
             return _optionalElements;
         }
-        void OptionalElements( SCLP23( LOGICAL ) &oe ) {
+        void OptionalElements( SDAI_LOGICAL  &oe ) {
             _optionalElements.put( oe.asInt() );
         }
         void OptionalElements( Logical oe )     {
@@ -1855,7 +1855,7 @@ class BagTypeDescriptor  :    public AggrTypeDescriptor  {
 
 };
 
-typedef  SCLP23( Select ) * ( * SelectCreator )() ;
+typedef  SDAI_Select  * ( * SelectCreator )() ;
 
 class SelectTypeDescriptor  :    public TypeDescriptor  {
 
@@ -1871,7 +1871,7 @@ class SelectTypeDescriptor  :    public TypeDescriptor  {
             CreateNewSelect = f;
         }
 
-        SCLP23( Select ) * CreateSelect();
+        SDAI_Select  * CreateSelect();
 
         SelectTypeDescriptor( int b, const char * nm, PrimitiveType ft,
                               Schema * origSchema,
@@ -1904,8 +1904,8 @@ class SelectTypeDescriptor  :    public TypeDescriptor  {
 class StringTypeDescriptor  :    public TypeDescriptor  {
 
     protected:
-        SCLP23( Integer )  _width ;  //  OPTIONAL
-        SCLP23( LOGICAL ) _fixedSize ;
+        SDAI_Integer   _width ;  //  OPTIONAL
+        SDAI_LOGICAL  _fixedSize ;
     public:
 
         StringTypeDescriptor( ) : _fixedSize( ( char * )"UNKNOWN_TYPE" ) {
@@ -1914,17 +1914,17 @@ class StringTypeDescriptor  :    public TypeDescriptor  {
         virtual ~StringTypeDescriptor() { }
 
 
-        SCLP23( Integer ) Width()     {
+        SDAI_Integer  Width()     {
             return _width;
         }
-        void Width( SCLP23( Integer )  w ) {
+        void Width( SDAI_Integer   w ) {
             _width = w;
         }
 
-        SCLP23( LOGICAL ) & FixedSize()        {
+        SDAI_LOGICAL  & FixedSize()        {
             return _fixedSize;
         }
-        void FixedSize( SCLP23( LOGICAL ) fs ) {
+        void FixedSize( SDAI_LOGICAL  fs ) {
             _fixedSize.put( fs.asInt() );
         }
         void FixedSize( Logical fs ) {
@@ -1935,7 +1935,7 @@ class StringTypeDescriptor  :    public TypeDescriptor  {
 class RealTypeDescriptor  :    public TypeDescriptor  {
 
     protected:
-        SCLP23( Integer )  _precisionSpec ;  //  OPTIONAL
+        SDAI_Integer   _precisionSpec ;  //  OPTIONAL
     public:
 
         RealTypeDescriptor( ) {
@@ -1943,10 +1943,10 @@ class RealTypeDescriptor  :    public TypeDescriptor  {
         }
         virtual ~RealTypeDescriptor() { }
 
-        SCLP23( Integer ) PrecisionSpec()      {
+        SDAI_Integer  PrecisionSpec()      {
             return _precisionSpec;
         }
-        void PrecisionSpec( SCLP23( Integer )  ps ) {
+        void PrecisionSpec( SDAI_Integer   ps ) {
             _precisionSpec = ps;
         }
 };

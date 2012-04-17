@@ -47,7 +47,7 @@ public:
     ApplicationContextElement();
     virtual ~ApplicationContextElement();
     ApplicationContextElement(STEPWrapper *sw, int step_id);
-    bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     string ClassName();
     string Name();
@@ -55,7 +55,7 @@ public:
     virtual void Print(int level);
 
     //static methods
-    static STEPEntity *Create(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* APPLICATION_CONTEXT_ELEMENT_H_ */

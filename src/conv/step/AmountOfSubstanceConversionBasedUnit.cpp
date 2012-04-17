@@ -50,7 +50,7 @@ AmountOfSubstanceConversionBasedUnit::~AmountOfSubstanceConversionBasedUnit() {
 }
 
 bool
-AmountOfSubstanceConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+AmountOfSubstanceConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -79,7 +79,7 @@ AmountOfSubstanceConversionBasedUnit::Print(int level) {
 
 }
 STEPEntity *
-AmountOfSubstanceConversionBasedUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+AmountOfSubstanceConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	AmountOfSubstanceConversionBasedUnit *object = new AmountOfSubstanceConversionBasedUnit(sw,sse->STEPfile_id);

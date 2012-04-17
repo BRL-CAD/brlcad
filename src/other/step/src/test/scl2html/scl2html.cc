@@ -115,7 +115,7 @@ int PrintAttrsHTML( const EntityDescriptor * ent, ofstream & outhtml ) {
         while( attrDesc != 0 ) {
             attrCount++;
             outhtml << "<LI>" << attrDesc->Name() << " : ";
-            if( ( SCLP23( Logical ) )( attrDesc->Optional() ) == SCLLOG( LTrue ) ) {
+            if( ( SDAI_Logical  )( attrDesc->Optional() ) == SCLLOG( LTrue ) ) {
                 outhtml << "optional ";
             }
             PrintAttrTypeWithAnchor( attrDesc->ReferentType(), outhtml );

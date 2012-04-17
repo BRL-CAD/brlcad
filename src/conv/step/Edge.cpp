@@ -54,7 +54,7 @@ Edge::~Edge() {
 }
 
 bool
-Edge::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+Edge::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -68,7 +68,7 @@ Edge::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (edge_start == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"edge_start");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"edge_start");
 	if (entity) {
 	    if (entity->STEPfile_id > 0)
 		edge_start = dynamic_cast<Vertex *>(Factory::CreateObject(sw,entity));
@@ -78,7 +78,7 @@ Edge::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	}
     }
     if (edge_end == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"edge_end");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"edge_end");
 	if (entity) {
 	    if (entity->STEPfile_id > 0)
 		edge_end = dynamic_cast<Vertex *>(Factory::CreateObject(sw,entity));
@@ -104,7 +104,7 @@ Edge::Print(int level) {
 }
 
 STEPEntity *
-Edge::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+Edge::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	Edge *object = new Edge(sw,sse->STEPfile_id);

@@ -45,7 +45,7 @@ Surface::~Surface() {
 }
 
 bool
-Surface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+Surface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -63,7 +63,7 @@ Surface::Print(int level) {
 }
 
 STEPEntity *
-Surface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+Surface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	Surface *object = new Surface(sw,sse->STEPfile_id);

@@ -51,7 +51,7 @@ ManifoldSolidBrep::~ManifoldSolidBrep() {
 }
 
 bool
-ManifoldSolidBrep::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+ManifoldSolidBrep::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -66,7 +66,7 @@ ManifoldSolidBrep::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (outer == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"outer");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"outer");
 	if (entity) {
 	    //outer = dynamic_cast<ClosedShell *>(Factory::CreateTopologicalObject(sw,entity));
 	    outer = dynamic_cast<ClosedShell *>(Factory::CreateObject(sw,entity));
@@ -92,7 +92,7 @@ ManifoldSolidBrep::Print(int level) {
 }
 
 STEPEntity *
-ManifoldSolidBrep::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+ManifoldSolidBrep::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	ManifoldSolidBrep *object = new ManifoldSolidBrep(sw,sse->STEPfile_id);

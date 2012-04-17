@@ -21,9 +21,9 @@ SchemaInit( Registry & reg ) {
 // dictionary (Registry) handle since it doesn't have a
 // predetermined way to access to the handle.
 
-SCLP23( Model_contents_ptr ) GetModelContents( char * schemaName ) {
+SDAI_Model_contents_ptr  GetModelContents( char * schemaName ) {
     if( !strcmp( schemaName, "example_schema" ) ) {
-        return ( SCLP23( Model_contents_ptr ) ) new SdaiModel_contents_example_schema;
+        return ( SDAI_Model_contents_ptr  ) new SdaiModel_contents_example_schema;
     }
 }
 #endif

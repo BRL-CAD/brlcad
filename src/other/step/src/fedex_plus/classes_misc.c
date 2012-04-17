@@ -329,33 +329,33 @@ TYPEget_ctype( const Type t ) {
 
     /*    case TYPE_LOGICAL:    */
     if( class == Class_Logical_Type ) {
-        return ( "SCLP23(LOGICAL)" );
+        return ( "SDAI_LOGICAL" );
     }
 
     /*    case TYPE_BOOLEAN:    */
     if( class == Class_Boolean_Type ) {
-        return ( "SCLP23(BOOLEAN)" );
+        return ( "SDAI_BOOLEAN" );
     }
 
     /*      case TYPE_INTEGER:  */
     if( class == Class_Integer_Type ) {
-        return ( "SCLP23(Integer)" );
+        return ( "SDAI_Integer" );
     }
 
     /*      case TYPE_REAL:
         case TYPE_NUMBER:   */
     if( ( class == Class_Number_Type ) || ( class == Class_Real_Type ) ) {
-        return ( "SCLP23(Real)" )      ;
+        return ( "SDAI_Real" );
     }
 
     /*      case TYPE_STRING:   */
     if( class == Class_String_Type ) {
-        return ( "SCLP23(String)" );
+        return ( "SDAI_String" );
     }
 
     /*      case TYPE_BINARY:   */
     if( class == Class_Binary_Type ) {
-        return ( "SCLP23(Binary)" );
+        return ( "SDAI_Binary" );
     }
 
     /*      case TYPE_ENTITY:   */

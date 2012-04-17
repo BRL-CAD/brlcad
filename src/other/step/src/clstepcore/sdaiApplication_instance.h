@@ -32,10 +32,10 @@
 //class EntityDescriptor;
 
 ///////////////////////////////////////////////////////////////////////////////
-// SCLP23(Application_instance) used to be STEPentity
+// SDAI_Application_instance used to be STEPentity
 
-//class SCLP23_NAME(Application_instance) /* : public SCLP23(DAObject_SDAI) */
-class SCLP23_NAME( Application_instance ) : public SCLP23_NAME( DAObject_SDAI ) {
+//class SDAI_Application_instance) /* : public SCLP23(DAObject_SDAI */
+class SDAI_Application_instance  : public SDAI_DAObject_SDAI  {
     private:
         int _cur;   // provides a built-in way of accessing attributes in order.
 
@@ -48,21 +48,21 @@ class SCLP23_NAME( Application_instance ) : public SCLP23_NAME( DAObject_SDAI ) 
         EntityDescriptor * eDesc;
 
         // head entity for multiple inheritance.  If it is null then this
-        // SCLP23_NAME(Application_instance) is not part of a multiply inherited entity.  If it
-        // points to a SCLP23_NAME(Application_instance) then this SCLP23_NAME(Application_instance) is part of a mi entity
-        // and head points at the root SCLP23_NAME(Application_instance) of the primary inheritance
+        // SDAI_Application_instance is not part of a multiply inherited entity.  If it
+        // points to a SDAI_Application_instance) then this SCLP23_NAME(Application_instance is part of a mi entity
+        // and head points at the root SDAI_Application_instance of the primary inheritance
         // path (the one that is the root of the leaf entity).
-        SCLP23_NAME( Application_instance ) * headMiEntity;
+        SDAI_Application_instance  * headMiEntity;
         // these form a chain of other entity parents for multiple inheritance
-        SCLP23_NAME( Application_instance ) * nextMiEntity;
+        SDAI_Application_instance  * nextMiEntity;
 
     protected:
         int _complex;
 
     public:
-        SCLP23_NAME( Application_instance )();
-        SCLP23_NAME( Application_instance )( int fileid, int complex = 0 );
-        virtual ~SCLP23_NAME( Application_instance )();
+        SDAI_Application_instance ();
+        SDAI_Application_instance ( int fileid, int complex = 0 );
+        virtual ~SDAI_Application_instance ();
 
         int IsComplex() const {
             return _complex;
@@ -108,7 +108,7 @@ class SCLP23_NAME( Application_instance ) : public SCLP23_NAME( DAObject_SDAI ) 
         void ClearAttrError();
 //    void EnforceOptionality(int on = 1);
 
-        virtual SCLP23_NAME( Application_instance ) * Replicate();
+        virtual SDAI_Application_instance  * Replicate();
 
 // ACCESS attributes in order.
         int AttributeCount();
@@ -143,18 +143,18 @@ class SCLP23_NAME( Application_instance ) : public SCLP23_NAME( DAObject_SDAI ) 
             return !( headMiEntity == 0 );
         }
 
-        void HeadEntity( SCLP23_NAME( Application_instance ) *se ) {
+        void HeadEntity( SDAI_Application_instance  *se ) {
             headMiEntity = se;
         }
-        SCLP23_NAME( Application_instance ) * HeadEntity() {
+        SDAI_Application_instance  * HeadEntity() {
             return headMiEntity;
         }
 
-        SCLP23_NAME( Application_instance ) * GetNextMiEntity() {
+        SDAI_Application_instance  * GetNextMiEntity() {
             return nextMiEntity;
         }
-        SCLP23_NAME( Application_instance ) * GetMiEntity( char * EntityName );
-        void AppendMultInstance( SCLP23_NAME( Application_instance ) *se );
+        SDAI_Application_instance  * GetMiEntity( char * EntityName );
+        void AppendMultInstance( SDAI_Application_instance  *se );
 
     protected:
         STEPattribute * GetSTEPattribute( const char * );
@@ -162,7 +162,7 @@ class SCLP23_NAME( Application_instance ) : public SCLP23_NAME( DAObject_SDAI ) 
         STEPattribute * MakeRedefined( STEPattribute * redefiningAttr,
                                        const char * nm );
 
-        virtual void CopyAs( SCLP23_NAME( Application_instance ) * );
+        virtual void CopyAs( SDAI_Application_instance  * );
         void PrependEntityErrMsg();
     public:
         // these functions are going to go away in the future.
@@ -183,7 +183,7 @@ class SCLP23_NAME( Application_instance ) : public SCLP23_NAME( DAObject_SDAI ) 
 ;
 
 // current style of CORBA handles for Part 23
-typedef SCLP23_NAME( Application_instance ) * SCLP23_NAME( Application_instance_ptr );
-typedef SCLP23_NAME( Application_instance_ptr ) SCLP23_NAME( Application_instance_var );
+typedef SDAI_Application_instance  * SDAI_Application_instance_ptr ;
+typedef SDAI_Application_instance_ptr  SDAI_Application_instance_var ;
 
 #endif

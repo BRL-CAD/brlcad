@@ -47,7 +47,7 @@ LengthUnit::~LengthUnit() {
 }
 
 bool
-LengthUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+LengthUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -71,7 +71,7 @@ LengthUnit::Print(int level) {
 
 }
 STEPEntity *
-LengthUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+LengthUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	LengthUnit *object = new LengthUnit(sw,sse->STEPfile_id);

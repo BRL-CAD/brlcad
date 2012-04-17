@@ -51,7 +51,7 @@ public:
     ContextDependentShapeRepresentation();
     virtual ~ContextDependentShapeRepresentation();
     ContextDependentShapeRepresentation(STEPWrapper *sw, int step_id);
-    bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     string ClassName();
     virtual void Print(int level);
@@ -60,7 +60,7 @@ public:
     double GetSolidAngleConversionFactor();
 
     //static methods
-    static STEPEntity *Create(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* CONTEXT_DEPENDENT_SHAPE_REPRESENTATION_H_ */

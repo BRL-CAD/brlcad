@@ -326,13 +326,13 @@ TYPEget_idl_type( const Type t ) {
 
     /*      case TYPE_INTEGER:  */
     if( class == Class_Integer_Type ) {
-        return ( "SCLP23(Integer)" );
+        return ( "SDAI_Integer" );
     }
 
     /*      case TYPE_REAL:
         case TYPE_NUMBER:   */
     if( ( class == Class_Number_Type ) || ( class == Class_Real_Type ) ) {
-        return ( "SCLP23(Real)" );
+        return ( "SDAI_Real" );
     }
 
     /*      case TYPE_STRING:   */
@@ -1071,7 +1071,7 @@ ENTITYhead_print( Entity entity, FILE * file, Schema schema ) {
     fprintf( file, "\nclass %s  :  ", entnm );
 
     /* inherit from either supertype entity class or root class of
-       all - i.e. SCLP23(Application_instance) */
+       all - i.e. SDAI_Application_instance */
 
     if( multiple_inheritance ) {
         list = ENTITYget_supertypes( entity );
@@ -1085,7 +1085,7 @@ ENTITYhead_print( Entity entity, FILE * file, Schema schema ) {
     if( super ) {
         fprintf( file, "  public %s  {\n ", ENTITYget_classname( super ) );
     } else {
-        fprintf( file, "  public SCLP23(Application_instance) {\n" );
+        fprintf( file, "  public SDAI_Application_instance {\n" );
     }
 }
 
@@ -1124,7 +1124,7 @@ DataMemberPrint( Entity entity, FILE * file, Schema schema ) {
             printf( "\tthe type for attribute  %s is not fully implemented\n", attrnm );
         }
         if( TYPEis_entity( VARget_type( a ) ) ) {
-            fprintf( file, "\tSCLP23(Application_instance_ptr) _%s ;", attrnm );
+            fprintf( file, "\tSDAI_Application_instance_ptr _%s ;", attrnm );
         } else {
             fprintf( file, "\t%s _%s ;", ctype, attrnm );
         }
@@ -1181,7 +1181,7 @@ MemberFunctionSign( Entity entity, FILE * file ) {
     /*  constructor:    */
     fprintf( file, "\n	%s ( ); \n", entnm );
 
-    fprintf( file, "\t%s (SCLP23(Application_instance) *se, int *addAttrs = 0); \n", entnm );
+    fprintf( file, "\t%s (SDAI_Application_instance *se, int *addAttrs = 0); \n", entnm );
     /*  copy constructor*/
     fprintf( file, "	%s (%s& e ); \n", entnm, entnm );
     /*  destructor: */
@@ -1461,7 +1461,7 @@ LIBcopy_constructor( Entity ent, FILE * file ) {
         fprintf( file, "\n\t(new STEPattribute(*%s%d%s, %s &_%s));\n",
                  ATTR_PREFIX, count,
                  attrnm,
-                 ( TYPEis_entity( t ) ? "(SCLP23(Application_instance_ptr) *)" : "" ),
+                 ( TYPEis_entity( t ) ? "(SDAI_Application_instance_ptr *)" : "" ),
                  attrnm );
         ++count;
 
@@ -1625,7 +1625,7 @@ LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
                      ATTR_PREFIX, count,
                      ( VARis_type_shifter( a ) ? "R" : "" ),
                      attrnm,
-                     ( TYPEis_entity( t ) ? "(SCLP23(Application_instance_ptr) *)" : "" ),
+                     ( TYPEis_entity( t ) ? "(SDAI_Application_instance_ptr *)" : "" ),
                      attrnm );
             if( first ) {
                 first = 0 ;
@@ -1668,10 +1668,10 @@ LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
     if( principalSuper ) {
         fprintf( file, "\t: %s()\n", ENTITYget_classname( principalSuper ) );
     } else {
-        fprintf( file, "\t: SCLP23(Application_instance)()\n" );
+        fprintf( file, "\t: SDAI_Application_instance()\n" );
     }
 
-    fprintf( file, "\t{  CopyAs((SCLP23(Application_instance_ptr)) &e);\t}\n" );
+    fprintf( file, "\t{  CopyAs((SDAI_Application_instance_ptr) &e);\t}\n" );
 
     /*  print destructor  */
     /*  currently empty, but should check to see if any attributes need
@@ -1681,7 +1681,7 @@ LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
     fprintf( file, "%s::~%s () {  }\n", entnm, entnm );
 }
 
-/* print the constructor that accepts a SCLP23(Application_instance) as an argument used
+/* print the constructor that accepts a SDAI_Application_instance as an argument used
    when building multiply inherited entities.
 */
 
@@ -1724,10 +1724,10 @@ LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
         entnm = ENTITYget_classname( entity );
         /*  constructor definition  */
         if( parent )
-            fprintf( file, "%s::%s (SCLP23(Application_instance) *se, int *addAttrs) : %s(se, (addAttrs ? &addAttrs[1] : 0)) \n", entnm, entnm,
+            fprintf( file, "%s::%s (SDAI_Application_instance *se, int *addAttrs) : %s(se, (addAttrs ? &addAttrs[1] : 0)) \n", entnm, entnm,
                      parentnm );
         else {
-            fprintf( file, "%s::%s( SCLP23(Application_instance) *se, int *addAttrs)\n", entnm, entnm );
+            fprintf( file, "%s::%s( SDAI_Application_instance *se, int *addAttrs)\n", entnm, entnm );
         }
 
         fprintf( file, "{\n" );
@@ -1806,7 +1806,7 @@ LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
                          ATTR_PREFIX, count,
                          ( VARis_type_shifter( a ) ? "R" : "" ),
                          attrnm,
-                         ( TYPEis_entity( t ) ? "(SCLP23(Application_instance_ptr) *)" : "" ),
+                         ( TYPEis_entity( t ) ? "(SDAI_Application_instance_ptr *)" : "" ),
                          attrnm );
 
                 if( first ) {
@@ -2297,7 +2297,7 @@ MODELPrintConstructorBody( Entity entity, FILES * files, Schema schema ) {
 
     n = ENTITYget_classname( entity );
 
-    fprintf( files->lib, "        eep = new SCLP23(Entity_extent);\n" );
+    fprintf( files->lib, "        eep = new SDAI_Entity_extent;\n" );
 
 
     fprintf( files->lib, "    eep->definition_(%s%s%s);\n",
@@ -2503,10 +2503,10 @@ ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap ) {
     fprintf( files->classes, "typedef const %s *  \tconst_%s_ptr;\n", n, n );
 
     fprintf( files->classes,
-             "#define %s__set \tSCLP23(DAObject__set)\n", n );
+             "#define %s__set \tSDAI_DAObject__set\n", n );
 
     fprintf( files->classes,
-             "#define %s__set_var \tSCLP23(DAObject__set_var)\n", n );
+             "#define %s__set_var \tSDAI_DAObject__set_var\n", n );
 
     fprintf( files ->classes, "extern EntityDescriptor \t*%s%s%s;\n",
              SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
@@ -2608,7 +2608,7 @@ TYPEenum_inc_print( const Type type, FILE * inc ) {
 
     /*  print class for enumeration */
     n = TYPEget_ctype( type );
-    fprintf( inc, "\nclass %s  :  public SCLP23(Enum)  {\n", n );
+    fprintf( inc, "\nclass %s  :  public SDAI_Enum  {\n", n );
 
     fprintf( inc, "  protected:\n\tEnumTypeDescriptor *type;\n\n" );
 
@@ -3213,7 +3213,7 @@ printEnumCreateHdr( FILE * inc, const Type type )
 {
     const char * nm = TYPEget_ctype( type );
 
-    fprintf( inc, "  SCLP23(Enum) * create_%s ();\n", nm );
+    fprintf( inc, "  SDAI_Enum * create_%s ();\n", nm );
 }
 
 static void
@@ -3227,7 +3227,7 @@ printEnumCreateBody( FILE * lib, const Type type )
 
     strncpy( tdnm, TYPEtd_name( type ), BUFSIZ );
 
-    fprintf( lib, "\nSCLP23(Enum) * \ncreate_%s () \n{\n", nm );
+    fprintf( lib, "\nSDAI_Enum * \ncreate_%s () \n{\n", nm );
     fprintf( lib, "    return new %s( \"\", %s );\n}\n\n", nm, tdnm );
 }
 

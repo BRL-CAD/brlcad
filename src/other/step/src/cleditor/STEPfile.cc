@@ -90,7 +90,7 @@ STEPfile::ReadHeader( istream & in ) {
     std::string cmtStr;
 
     InstMgr * im = new InstMgr;
-    SCLP23( Application_instance )* obj;
+    SDAI_Application_instance * obj;
     Severity objsev = SEVERITY_NULL;
 
     int endsec = 0;
@@ -141,7 +141,7 @@ STEPfile::ReadHeader( istream & in ) {
             break; //from while-loop
         } else {
             //create and read the header instance
-            // SCLP23(Application_instance)::STEPread now reads the opening parenthesis
+            // SDAI_Application_instance::STEPread now reads the opening parenthesis
 
             //create header instance
             buf[0] = '\0';
@@ -230,7 +230,7 @@ Severity
 STEPfile::HeaderVerifyInstances( InstMgr * im ) {
     int err = 0;
     int fileid;
-    SCLP23( Application_instance )* obj;
+    SDAI_Application_instance * obj;
 
     //check File_Name
     fileid = HeaderId( "File_Name" );
@@ -270,7 +270,7 @@ STEPfile::HeaderVerifyInstances( InstMgr * im ) {
     return SEVERITY_WARNING;
 }
 
-SCLP23( Application_instance ) *
+SDAI_Application_instance  *
 STEPfile::HeaderDefaultFileName() {
     SdaiFile_name * fn = new SdaiFile_name;
     StringAggregate_ptr tmp = new StringAggregate;
@@ -298,7 +298,7 @@ STEPfile::HeaderDefaultFileName() {
     return fn;
 }
 
-SCLP23( Application_instance ) *
+SDAI_Application_instance  *
 STEPfile::HeaderDefaultFileDescription() {
     SdaiFile_description * fd = new SdaiFile_description;
 
@@ -309,7 +309,7 @@ STEPfile::HeaderDefaultFileDescription() {
     return fd;
 }
 
-SCLP23( Application_instance ) *
+SDAI_Application_instance  *
 STEPfile::HeaderDefaultFileSchema() {
     SdaiFile_schema * fs = new SdaiFile_schema;
 
@@ -346,8 +346,8 @@ header section entites. The file id numbers are important.
 ***************************/
 void
 STEPfile::HeaderMergeInstances( InstMgr * im ) {
-    SCLP23( Application_instance )* se = 0;
-    SCLP23( Application_instance )* from = 0;
+    SDAI_Application_instance * se = 0;
+    SDAI_Application_instance * from = 0;
 
     int idnum;
 
@@ -444,7 +444,7 @@ STEPfile::ReadData1( istream & in ) {
     buf[0] = '\0';
     std::string tmpbuf;
 
-    SCLP23( Application_instance ) * obj = ENTITY_NULL;
+    SDAI_Application_instance  * obj = ENTITY_NULL;
     stateEnum inst_state = noStateSE; // used if reading working file
 
     ErrorDescriptor e;
@@ -570,7 +570,7 @@ STEPfile::ReadData2( istream & in, int useTechCor ) {
     buf[0] = '\0';
     std::string tmpbuf;
 
-    SCLP23( Application_instance ) * obj = ENTITY_NULL;
+    SDAI_Application_instance  * obj = ENTITY_NULL;
     std::string cmtStr;
 
     int endsec = FoundEndSecKywd( in, _error );
@@ -680,7 +680,7 @@ STEPfile::ReadWorkingData2( istream & in, int useTechCor ) {
 int
 STEPfile::FindDataSection( istream & in ) {
     ErrorDescriptor errs;
-    SCLP23( String ) tmp;
+    SDAI_String  tmp;
     std::string s; // used if need to read a comment
     char c;
 
@@ -774,7 +774,7 @@ an ENTITY_INSTANCE consists of:
    '#'(int)'=' [SCOPE] SUBSUPER_RECORD ';'
 The '#' is read from the istream before CreateInstance is called.
 ***************************/
-SCLP23( Application_instance ) *
+SDAI_Application_instance  *
 STEPfile::CreateInstance( istream & in, ostream & out ) {
     std::string tmpbuf;
     std::string objnm;
@@ -784,9 +784,9 @@ STEPfile::CreateInstance( istream & in, ostream & out ) {
     schnm[0] = '\0';
 
     int fileid = -1;
-    SCLP23( Application_instance_ptr ) * scopelist = 0;
+    SDAI_Application_instance_ptr  * scopelist = 0;
 
-    SCLP23( Application_instance )* obj;
+    SDAI_Application_instance * obj;
     ErrorDescriptor result;
     // Sent down to CreateSubSuperInstance() to receive error info
 
@@ -913,13 +913,13 @@ STEPfile::CreateInstance( istream & in, ostream & out ) {
     < SEVERITY_BUG: fatal
 **************************************************/
 Severity
-STEPfile::CreateScopeInstances( istream & in, SCLP23( Application_instance_ptr ) ** scopelist ) {
+STEPfile::CreateScopeInstances( istream & in, SDAI_Application_instance_ptr  ** scopelist ) {
     Severity rval = SEVERITY_NULL;
-    SCLP23( Application_instance ) * se;
+    SDAI_Application_instance  * se;
     std::string tmpbuf;
     char c;
     int exportid;
-    SCLP23( Application_instance_ptr ) inscope [BUFSIZ];
+    SDAI_Application_instance_ptr  inscope [BUFSIZ];
     int i = 0;
     std::string keywd;
 
@@ -961,7 +961,7 @@ STEPfile::CreateScopeInstances( istream & in, SCLP23( Application_instance_ptr )
         in.get( c );
     }
     in.putback( c );
-    *scopelist = new SCLP23( Application_instance_ptr ) [i];
+    *scopelist = new SDAI_Application_instance_ptr  [i];
     while( i > 0 ) {
         *scopelist [--i] = inscope [i];
     }
@@ -1006,10 +1006,10 @@ STEPfile::CreateScopeInstances( istream & in, SCLP23( Application_instance_ptr )
     return rval;
 }
 
-SCLP23( Application_instance ) *
+SDAI_Application_instance  *
 STEPfile::CreateSubSuperInstance( istream & in, int fileid, ErrorDescriptor & e ) {
     std::string tmpstr;
-    SCLP23( Application_instance ) * obj = ENTITY_NULL;
+    SDAI_Application_instance  * obj = ENTITY_NULL;
 
     char c;
     char schnm[BUFSIZ];
@@ -1074,7 +1074,7 @@ STEPfile::CreateSubSuperInstance( istream & in, int fileid, ErrorDescriptor & e 
 Severity
 STEPfile::ReadScopeInstances( istream & in ) {
     Severity rval = SEVERITY_NULL;
-    SCLP23( Application_instance ) * se;
+    SDAI_Application_instance  * se;
     std::string tmpbuf;
     char c;
     int exportid;
@@ -1148,14 +1148,14 @@ STEPfile::ReadScopeInstances( istream & in ) {
 
 /*****************************************************
  description:
- This function populates a SCLP23(Application_instance) with the values read from
+ This function populates a SDAI_Application_instance with the values read from
  the istream.
 
  This function must keeps track of error messages encountered when
- reading the SCLP23(Application_instance). It passes SCLP23(Application_instance) error information onto
+ reading the SDAI_Application_instance). It passes SCLP23(Application_instance error information onto
  the STEPfile ErrorDescriptor.
 *****************************************************/
-SCLP23( Application_instance ) *
+SDAI_Application_instance  *
 STEPfile::ReadInstance( istream & in, ostream & out, std::string & cmtStr,
                         int useTechCor ) {
     Severity sev = SEVERITY_NULL;
@@ -1169,7 +1169,7 @@ STEPfile::ReadInstance( istream & in, ostream & out, std::string & cmtStr,
 
     char c;
     int fileid;
-    SCLP23( Application_instance )* obj = ENTITY_NULL;
+    SDAI_Application_instance * obj = ENTITY_NULL;
     int idIncrNum = FileIdIncr();
 
     ReadComment( in, cmtStr );
@@ -1528,7 +1528,7 @@ STEPfile::WriteHeader( ostream & out ) {
     WriteHeaderInstanceFileSchema( out );
 
     // Write the rest of the header instances
-    SCLP23( Application_instance )* se;
+    SDAI_Application_instance * se;
     int n = _headerInstances->InstanceCount();
     for( int i = 0; i < n; ++i ) {
         se = _headerInstances->GetMgrNode( i ) ->GetApplication_instance();
@@ -1546,7 +1546,7 @@ STEPfile::WriteHeader( ostream & out ) {
 /***************************
 ***************************/
 void
-STEPfile::WriteHeaderInstance( SCLP23( Application_instance )* obj, ostream & out ) {
+STEPfile::WriteHeaderInstance( SDAI_Application_instance * obj, ostream & out ) {
     std::string tmp;
     if( obj->P21CommentRep() ) {
         out << obj->P21Comment();
@@ -1567,13 +1567,13 @@ STEPfile::WriteHeaderInstance( SCLP23( Application_instance )* obj, ostream & ou
 void
 STEPfile::WriteHeaderInstanceFileName( ostream & out ) {
 // Get the FileName instance from _headerInstances
-    SCLP23( Application_instance ) *se = 0;
+    SDAI_Application_instance  *se = 0;
     se = _headerInstances->GetApplication_instance( "File_Name" );
     if( se == ENTITY_NULL ) {
         // ERROR: no File_Name instance in _headerInstances
         // create a File_Name instance
 //    (SdaiFile_name*)se = HeaderDefaultFileName();
-        se = ( SCLP23( Application_instance ) * )HeaderDefaultFileName();
+        se = ( SDAI_Application_instance  * )HeaderDefaultFileName();
     }
 
 //set some of the attribute values at time of output
@@ -1600,12 +1600,12 @@ STEPfile::WriteHeaderInstanceFileName( ostream & out ) {
 void
 STEPfile::WriteHeaderInstanceFileDescription( ostream & out ) {
 // Get the FileDescription instance from _headerInstances
-    SCLP23( Application_instance ) *se = 0;
+    SDAI_Application_instance  *se = 0;
     se = _headerInstances->GetApplication_instance( "File_Description" );
     if( se == ENTITY_NULL ) {
         // ERROR: no File_Name instance in _headerInstances
         // create a File_Name instance
-        se = ( SCLP23( Application_instance ) * )HeaderDefaultFileDescription();
+        se = ( SDAI_Application_instance  * )HeaderDefaultFileDescription();
     }
 
     WriteHeaderInstance( se, out );
@@ -1614,12 +1614,12 @@ STEPfile::WriteHeaderInstanceFileDescription( ostream & out ) {
 void
 STEPfile::WriteHeaderInstanceFileSchema( ostream & out ) {
 // Get the FileName instance from _headerInstances
-    SCLP23( Application_instance ) *se = 0;
+    SDAI_Application_instance  *se = 0;
     se = _headerInstances->GetApplication_instance( "File_Schema" );
     if( se == ENTITY_NULL ) {
         // ERROR: no File_Name instance in _headerInstances
         // create a File_Name instance
-        se = ( SCLP23( Application_instance ) * ) HeaderDefaultFileSchema();
+        se = ( SDAI_Application_instance  * ) HeaderDefaultFileSchema();
     }
 
     WriteHeaderInstance( se, out );
@@ -1898,7 +1898,7 @@ STEPfile::WriteWorkingData( ostream & out, int writeComments ) {
  description:
     This function sends messages to 'cerr'
     based on the values in the given ErrorDescriptor (e), which is
-    supposed to be from a SCLP23(Application_instance) object, being manipulated by one
+    supposed to be from a SDAI_Application_instance object, being manipulated by one
     of the STEPfile member functions.
 
     The given error descriptor's messages are then cleared.

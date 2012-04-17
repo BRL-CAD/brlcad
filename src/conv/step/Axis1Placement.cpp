@@ -91,7 +91,7 @@ Axis1Placement::GetYAxis() {
 }
 
 bool
-Axis1Placement::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+Axis1Placement::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -105,7 +105,7 @@ Axis1Placement::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (axis == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"axis");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"axis");
 	if (entity) {
 	    axis = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
 	} else { // optional so no problem if not here
@@ -133,7 +133,7 @@ Axis1Placement::Print(int level) {
 }
 
 STEPEntity *
-Axis1Placement::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+Axis1Placement::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	Axis1Placement *object = new Axis1Placement(sw,sse->STEPfile_id);

@@ -72,7 +72,7 @@ void Factory::Print()
 
 
 STEPEntity *
-Factory::CreateObject(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+Factory::CreateObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     string methodname = sse->EntityName();
     FACTORYMAP &methodmap = GetMap();
@@ -138,7 +138,7 @@ Factory::CreateObject(STEPWrapper *sw, SCLP23(Application_instance) *sse)
 
 
 STEPEntity *
-Factory::CreateCurveObject(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+Factory::CreateCurveObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     string methodname = sse->EntityName();
     FACTORYMAP &methodmap = GetMap();
@@ -209,7 +209,7 @@ Factory::CreateCurveObject(STEPWrapper *sw, SCLP23(Application_instance) *sse)
 
 
 STEPEntity *
-Factory::CreateNamedUnitObject(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     string methodname = sse->EntityName();
     FACTORYMAP &methodmap = GetMap();
@@ -558,7 +558,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SCLP23(Application_instance) *ss
 
 
 STEPEntity *
-Factory::CreateSurfaceObject(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+Factory::CreateSurfaceObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     string methodname = sse->EntityName();
     FACTORYMAP &methodmap = GetMap();
@@ -629,7 +629,7 @@ Factory::CreateSurfaceObject(STEPWrapper *sw, SCLP23(Application_instance) *sse)
 
 
 STEPEntity *
-Factory::CreateShapeRepresentationRelationshipObject(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+Factory::CreateShapeRepresentationRelationshipObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
 	string methodname = sse->EntityName();
 	FACTORYMAP &methodmap = GetMap();
@@ -660,7 +660,7 @@ Factory::CreateShapeRepresentationRelationshipObject(STEPWrapper *sw, SCLP23(App
 }
 
 STEPEntity *
-Factory::CreateRepresentationContext(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+Factory::CreateRepresentationContext(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
 	string methodname = sse->EntityName();
 	FACTORYMAP &methodmap = GetMap();

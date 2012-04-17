@@ -81,7 +81,7 @@ Axis2Placement::GetYAxis() {
 }
 
 bool
-Axis2Placement::Load(STEPWrapper *sw,SCLP23(Select) *sse) {
+Axis2Placement::Load(STEPWrapper *sw,SDAI_Select *sse) {
     step=sw;
 
     if (value == NULL) {
@@ -90,11 +90,11 @@ Axis2Placement::Load(STEPWrapper *sw,SCLP23(Select) *sse) {
 	if ( v->IsAxis2_placement_2d()) {
 	    SdaiAxis2_placement_2d *a2 = *v;
 	    type = Axis2Placement::AXIS2_PLACEMENT_2D;
-	    value = dynamic_cast<Placement *>(Factory::CreateObject(sw,(SCLP23(Application_instance) *)a2));
+	    value = dynamic_cast<Placement *>(Factory::CreateObject(sw,(SDAI_Application_instance *)a2));
 	} else if (v->IsAxis2_placement_3d()) {
 	    SdaiAxis2_placement_3d *a3 = *v;
 	    type = Axis2Placement::AXIS2_PLACEMENT_3D;
-	    value = dynamic_cast<Placement *>(Factory::CreateObject(sw,(SCLP23(Application_instance) *)a3));
+	    value = dynamic_cast<Placement *>(Factory::CreateObject(sw,(SDAI_Application_instance *)a3));
 	} else {
 	    type = Axis2Placement::UNKNOWN;
 	}
@@ -120,14 +120,14 @@ Axis2Placement::Print(int level) {
     }
 }
 STEPEntity *
-Axis2Placement::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+Axis2Placement::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	Axis2Placement *object = new Axis2Placement(sw,sse->STEPfile_id);
 
 	Factory::AddObject(object);
 
-	if (!object->Load(sw, (SCLP23(Select) *)sse)) {
+	if (!object->Load(sw, (SDAI_Select *)sse)) {
 	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 	    delete object;
 	    return NULL;

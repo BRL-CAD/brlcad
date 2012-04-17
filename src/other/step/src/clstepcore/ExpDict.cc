@@ -11,9 +11,7 @@
 */
 
 /* $Id: ExpDict.cc,v 3.0.1.7 1998/02/17 19:19:15 sauderd DP3.1 $  */
-#ifdef HAVE_CONFIG_H
-# include <scl_cf.h>
-#endif
+#include <scl_cf.h>
 
 #include <memory.h>
 #include <math.h>
@@ -804,7 +802,7 @@ EnumTypeDescriptor::EnumTypeDescriptor( const char * nm, PrimitiveType ft,
     : TypeDescriptor( nm, ft, origSchema, d ), CreateNewEnum( f ) {
 }
 
-SCLP23( Enum ) *
+SDAI_Enum  *
 EnumTypeDescriptor::CreateEnum() {
     if( CreateNewEnum ) {
         return CreateNewEnum();
@@ -1833,7 +1831,7 @@ EnumerationTypeDescriptor::EnumerationTypeDescriptor( ) {
 // SelectTypeDescriptor functions
 ///////////////////////////////////////////////////////////////////////////////
 
-SCLP23( Select ) *
+SDAI_Select  *
 SelectTypeDescriptor::CreateSelect() {
     if( CreateNewSelect ) {
         return CreateNewSelect();
@@ -1949,8 +1947,8 @@ AggrTypeDescriptor::AggrTypeDescriptor( ) :
     _aggrDomainType = 0;
 }
 
-AggrTypeDescriptor::AggrTypeDescriptor( SCLP23( Integer ) b1,
-                                        SCLP23( Integer ) b2,
+AggrTypeDescriptor::AggrTypeDescriptor( SDAI_Integer  b1,
+                                        SDAI_Integer  b2,
                                         Logical uniqElem,
                                         TypeDescriptor * aggrDomType )
     : _bound1( b1 ), _bound2( b2 ), _uniqueElements( uniqElem ) {

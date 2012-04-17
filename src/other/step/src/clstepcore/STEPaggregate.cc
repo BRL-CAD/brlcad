@@ -639,7 +639,7 @@ EntityNode::EntityNode() {
 EntityNode::~EntityNode() {
 }
 
-EntityNode::EntityNode( SCLP23( Application_instance ) * e ) : node( e ) {
+EntityNode::EntityNode( SDAI_Application_instance  * e ) : node( e ) {
 }
 
 SingleLinkNode *
@@ -652,9 +652,9 @@ Severity
 EntityNode::StrToVal( const char * s, ErrorDescriptor * err,
                       const TypeDescriptor * elem_type,
                       InstMgr * insts, int addFileId ) {
-    SCLP23( Application_instance ) *se = ReadEntityRef( s, err, ",)", insts,
+    SDAI_Application_instance  *se = ReadEntityRef( s, err, ",)", insts,
                                          addFileId );
-//    SCLP23(Application_instance) *se = ReadEntityRef(s, err, 0, insts,
+//    SDAI_Application_instance *se = ReadEntityRef(s, err, 0, insts,
 //                           addFileId);
     if( se != S_ENTITY_NULL ) {
         ErrorDescriptor error;
@@ -691,7 +691,7 @@ Severity
 EntityNode::STEPread( istream & in, ErrorDescriptor * err,
                       const TypeDescriptor * elem_type,
                       InstMgr * insts, int addFileId ) {
-    SCLP23( Application_instance ) *se = ReadEntityRef( in, err, ",)", insts,
+    SDAI_Application_instance  *se = ReadEntityRef( in, err, ",)", insts,
                                          addFileId );
     if( se != S_ENTITY_NULL ) {
         ErrorDescriptor error;
@@ -893,7 +893,7 @@ SelectAggregate::NewNode() {
 // SelectNode
 ///////////////////////////////////////////////////////////////////////////////
 
-SelectNode::SelectNode( SCLP23( Select ) * s ) :  node( s ) {
+SelectNode::SelectNode( SDAI_Select  * s ) :  node( s ) {
 }
 
 SelectNode::SelectNode() {
@@ -913,7 +913,7 @@ SelectNode::StrToVal( const char * s, ErrorDescriptor * err,
                       const TypeDescriptor * elem_type,
                       InstMgr * insts, int addFileId ) {
     /*
-        SCLP23(Application_instance) *se = ReadEntityRef(s, err, ",)", insts,
+        SDAI_Application_instance) *se = ReadEntityRef(s, err, ",", insts,
                                  addFileId);
         if( se != S_ENTITY_NULL )
         {
@@ -1057,7 +1057,7 @@ StringNode::StringNode( StringNode & sn ) {
 }
 
 StringNode::StringNode( const char * sStr ) {
-    // value is an SCLP23(String) (the memory is copied)
+    // value is an SDAI_String) (the memory is copied
     value = sStr;
 
     /*
@@ -1183,7 +1183,7 @@ BinaryNode::BinaryNode( BinaryNode & bn ) {
 }
 
 BinaryNode::BinaryNode( const char * sStr ) {
-    // value is an SCLP23(Binary) (the memory is copied)
+    // value is an SDAI_Binary) (the memory is copied
     value = sStr;
 }
 
@@ -1304,7 +1304,7 @@ EnumAggregate::NewNode() {
 // EnumNode
 ///////////////////////////////////////////////////////////////////////////////
 
-EnumNode::EnumNode( SCLP23( Enum ) * e ) :  node( e ) {
+EnumNode::EnumNode( SDAI_Enum  * e ) :  node( e ) {
 }
 
 EnumNode::EnumNode() {
@@ -1380,7 +1380,7 @@ EnumNode::StrToVal(const char *s, ErrorDescriptor *err)
     if(1 && sev > SEVERITY_WARNING)
         node -> put (val);
     }
-//SCLP23(Enum)::EnumValidLevel(const char *value, ErrorDescriptor *err,
+//SDAI_Enum::EnumValidLevel(const char *value, ErrorDescriptor *err,
 //              int optional, char *tokenList,
 //              int needDelims, int clearError)
 
@@ -1482,7 +1482,7 @@ LOGICALS::~LOGICALS() {
 //EnumNode *
 SingleLinkNode *
 LOGICALS::NewNode() {
-    return new EnumNode( new SCLP23( LOGICAL ) );
+    return new EnumNode( new SDAI_LOGICAL  );
 }
 
 LOGICALS *
@@ -1503,7 +1503,7 @@ BOOLEANS::~BOOLEANS() {
 //EnumNode *
 SingleLinkNode *
 BOOLEANS::NewNode() {
-    return new EnumNode( new SCLP23( BOOLEAN ) );
+    return new EnumNode( new SDAI_BOOLEAN  );
 }
 
 BOOLEANS *

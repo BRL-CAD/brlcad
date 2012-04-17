@@ -18,7 +18,7 @@
 class GenericNode;
 class DisplayNode;
 #include <sdai.h>
-//class SCLP23(Application_instance);
+//class SDAI_Application_instance;
 
 #include <gennode.h>
 #include <gennodelist.h>
@@ -30,7 +30,7 @@ class InstMgr;
 
 //////////////////////////////////////////////////////////////////////////////
 // class MgrNode
-// If you delete this object, it deletes the SCLP23(Application_instance) it represents,
+// If you delete this object, it deletes the SDAI_Application_instance it represents,
 // the DisplayNode, and removes itself from any list it is in.
 //////////////////////////////////////////////////////////////////////////////
 
@@ -46,8 +46,8 @@ class MgrNode : public GenericNode {
         // every node will be on one of the four lists implemented by these:
         stateEnum currState;
 
-        // SCLP23(Application_instance) this node is representing info for
-        SCLP23( Application_instance ) * se;
+        // SDAI_Application_instance this node is representing info for
+        SDAI_Application_instance  * se;
         // this is the index (in the InstMgr master array) of the ptr to
         //   this node.
         int arrayIndex;
@@ -58,13 +58,13 @@ class MgrNode : public GenericNode {
     public:
         // used for sentinel node on lists of MgrNodes
         MgrNode();
-        MgrNode( SCLP23( Application_instance ) *se );
+        MgrNode( SDAI_Application_instance  *se );
         // 'listState' ==
         //  completeSE - if reading valid exchange file
         //  incompleteSE or completeSE - if reading working session file
         //  newSE - if instance is created by user using editor (probe)
-        MgrNode( SCLP23( Application_instance ) *se, stateEnum listState );
-        MgrNode( SCLP23( Application_instance ) *se, stateEnum listState, MgrNodeList * list );
+        MgrNode( SDAI_Application_instance  *se, stateEnum listState );
+        MgrNode( SDAI_Application_instance  *se, stateEnum listState, MgrNodeList * list );
         virtual ~MgrNode();
 
 // STATE LIST OPERATIONS
@@ -113,7 +113,7 @@ class MgrNode : public GenericNode {
 
 // ACCESS FUNCTIONS
         int GetFileId();
-        SCLP23( Application_instance ) * GetApplication_instance() {
+        SDAI_Application_instance  * GetApplication_instance() {
             return se;
         }
         DisplayNode *& displayNode() {
@@ -127,13 +127,13 @@ class MgrNode : public GenericNode {
         }
 
         // OBSOLETE
-        SCLP23( Application_instance ) * GetSTEPentity()   {
+        SDAI_Application_instance  * GetSTEPentity()   {
             return se;
         }
     protected:
 
     private:
-        void Init( SCLP23( Application_instance ) *s, stateEnum listState, MgrNodeList * list );
+        void Init( SDAI_Application_instance  *s, stateEnum listState, MgrNodeList * list );
 };
 
 //////////////////////////////////////////////////////////////////////////////

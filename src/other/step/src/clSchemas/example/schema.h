@@ -30,5 +30,5 @@ extern void SdaiEXAMPLE_SCHEMAInit( Registry & r );
 #include <complexSupport.h>
 ComplexCollect * gencomplex();
 
-SCLP23( Model_contents_ptr ) GetModelContents( char * schemaName );
+SDAI_Model_contents_ptr  GetModelContents( char * schemaName );
 #endif

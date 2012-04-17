@@ -70,7 +70,7 @@ string ContextDependentShapeRepresentation::ClassName()
     return entityname;
 }
 
-bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
     id = sse->STEPfile_id;
@@ -80,10 +80,10 @@ bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SCLP23(Applicati
     sse = step->getEntity(sse, ENTITYNAME);
 
     if (representation_relation.empty()) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse, "representation_relation");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "representation_relation");
 	if (entity) {
 	    if (entity->IsComplex()) {
-		SCLP23(Application_instance) *sub_entity = step->getEntity(entity, "Representation_Relationship_With_Transformation");
+		SDAI_Application_instance *sub_entity = step->getEntity(entity, "Representation_Relationship_With_Transformation");
 		if (sub_entity) {
 		    RepresentationRelationshipWithTransformation *aRRWT = new RepresentationRelationshipWithTransformation();
 
@@ -128,7 +128,7 @@ bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SCLP23(Applicati
     }
 
     if (represented_product_relation == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse, "represented_product_relation");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "represented_product_relation");
 	if (entity) { //this attribute is optional
 	    represented_product_relation = dynamic_cast<ProductDefinitionShape *>(Factory::CreateObject(sw, entity));
 	} else {
@@ -160,7 +160,7 @@ void ContextDependentShapeRepresentation::Print(int level)
 }
 
 STEPEntity *
-ContextDependentShapeRepresentation::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+ContextDependentShapeRepresentation::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {

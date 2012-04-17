@@ -57,7 +57,7 @@ Polyline::~Polyline() {
 }
 
 bool
-Polyline::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+Polyline::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -74,7 +74,7 @@ Polyline::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	LIST_OF_ENTITIES *l = step->getListOfEntities(sse,"points");
 	LIST_OF_ENTITIES::iterator i;
 	for(i=l->begin();i!=l->end();i++) {
-	    SCLP23(Application_instance) *entity = (*i);
+	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
 		CartesianPoint *aCP = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,entity));
 
@@ -126,7 +126,7 @@ Polyline::Print(int level) {
     }
 }
 STEPEntity *
-Polyline::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+Polyline::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	Polyline *object = new Polyline(sw,sse->STEPfile_id);

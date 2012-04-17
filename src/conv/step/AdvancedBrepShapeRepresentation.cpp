@@ -62,7 +62,7 @@ AdvancedBrepShapeRepresentation::~AdvancedBrepShapeRepresentation() {
 
 
 STEPEntity *
-AdvancedBrepShapeRepresentation::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+AdvancedBrepShapeRepresentation::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	AdvancedBrepShapeRepresentation *object = new AdvancedBrepShapeRepresentation(sw, sse->STEPfile_id);
@@ -82,7 +82,7 @@ AdvancedBrepShapeRepresentation::Create(STEPWrapper *sw, SCLP23(Application_inst
 
 
 bool
-AdvancedBrepShapeRepresentation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+AdvancedBrepShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
     step = sw;
     id = sse->STEPfile_id;
 

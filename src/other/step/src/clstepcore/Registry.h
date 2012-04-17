@@ -85,7 +85,7 @@ class Registry {
             col = c;
         }
 
-        SCLP23( Application_instance ) * ObjCreate( const char * nm, const char * = 0,
+        SDAI_Application_instance  * ObjCreate( const char * nm, const char * = 0,
                 int check_case = 0 ) const;
 };
 

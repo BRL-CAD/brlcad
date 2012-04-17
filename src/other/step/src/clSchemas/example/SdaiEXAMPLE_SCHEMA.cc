@@ -74,7 +74,7 @@ SdaiColor_var::operator Color() const {
 }
 
 
-SCLP23( Enum ) *
+SDAI_Enum  *
 create_SdaiColor_var() {
     return new SdaiColor_var( "", example_schemat_color );
 }
@@ -117,11 +117,11 @@ SdaiPoly_line::SdaiPoly_line( ) {
     attributes.push( a );
 }
 SdaiPoly_line::SdaiPoly_line( SdaiPoly_line & e ) {
-    CopyAs( ( SCLP23( Application_instance_ptr ) ) &e );
+    CopyAs( ( SDAI_Application_instance_ptr  ) &e );
 }
 SdaiPoly_line::~SdaiPoly_line() {  }
 
-SdaiPoly_line::SdaiPoly_line( SCLP23( Application_instance ) *se, int * addAttrs ) {
+SdaiPoly_line::SdaiPoly_line( SDAI_Application_instance  *se, int * addAttrs ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
 
@@ -181,11 +181,11 @@ SdaiShape::SdaiShape( ) {
     attributes.push( a );
 }
 SdaiShape::SdaiShape( SdaiShape & e ) {
-    CopyAs( ( SCLP23( Application_instance_ptr ) ) &e );
+    CopyAs( ( SDAI_Application_instance_ptr  ) &e );
 }
 SdaiShape::~SdaiShape() {  }
 
-SdaiShape::SdaiShape( SCLP23( Application_instance ) *se, int * addAttrs ) {
+SdaiShape::SdaiShape( SDAI_Application_instance  *se, int * addAttrs ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
 
@@ -251,13 +251,13 @@ SdaiShape::item_color_( const SdaiColor_var x )
     _item_color.put( x );
 }
 
-const SCLP23( Integer )
+const SDAI_Integer 
 SdaiShape::number_of_sides_() const {
-    return ( const SCLP23( Integer ) ) _number_of_sides;
+    return ( const SDAI_Integer  ) _number_of_sides;
 }
 
 void
-SdaiShape::number_of_sides_( const SCLP23( Integer ) x )
+SdaiShape::number_of_sides_( const SDAI_Integer  x )
 
 {
     _number_of_sides = x;
@@ -288,7 +288,7 @@ SdaiRectangle::SdaiRectangle( ) {
     attributes.push( a );
 }
 SdaiRectangle::SdaiRectangle( SdaiRectangle & e ) {
-    CopyAs( ( SCLP23( Application_instance_ptr ) ) &e );
+    CopyAs( ( SDAI_Application_instance_ptr  ) &e );
 }
 SdaiRectangle::~SdaiRectangle() {  }
 
@@ -311,7 +311,7 @@ SdaiRectangle_access_hook_in( void * object,
     if( debug_access_hooks ) {
         cout << "SdaiRectangle: non-virtual access function." << endl;
     }
-    SCLP23( Application_instance ) *sent = ( SCLP23( Application_instance ) * )object;
+    SDAI_Application_instance  *sent = ( SDAI_Application_instance  * )object;
     if( debug_access_hooks ) {
         cout << "STEPfile_id: " << sent->STEPfile_id << endl;
     }
@@ -324,21 +324,21 @@ SdaiRectangle_access_hook_in( void * object,
     ent->attributes[4].aDesc = a_5width;
 }
 
-SCLP23( Application_instance_ptr )
+SDAI_Application_instance_ptr 
 create_SdaiRectangle( os_database * db ) {
     if( db ) {
-        SCLP23( DAObject_ptr ) ap = new( db, SdaiRectangle::get_os_typespec() )
+        SDAI_DAObject_ptr  ap = new( db, SdaiRectangle::get_os_typespec() )
         SdaiRectangle;
-        return ( SCLP23( Application_instance_ptr ) ) ap;
-//        return (SCLP23(Application_instance_ptr)) new (db, SdaiRectangle::get_os_typespec())
+        return ( SDAI_Application_instance_ptr  ) ap;
+//        return (SDAI_Application_instance_ptr)) new (db, SdaiRectangle::get_os_typespec()
 //                                   SdaiRectangle;
     } else {
-        return ( SCLP23( Application_instance_ptr ) ) new SdaiRectangle;
+        return ( SDAI_Application_instance_ptr  ) new SdaiRectangle;
     }
 }
 #endif
 
-SdaiRectangle::SdaiRectangle( SCLP23( Application_instance ) *se, int * addAttrs ) : SdaiShape( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
+SdaiRectangle::SdaiRectangle( SDAI_Application_instance  *se, int * addAttrs ) : SdaiShape( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
 
@@ -412,11 +412,11 @@ SdaiSquare::SdaiSquare( ) {
     eDesc = example_schemae_square;
 }
 SdaiSquare::SdaiSquare( SdaiSquare & e ) {
-    CopyAs( ( SCLP23( Application_instance_ptr ) ) &e );
+    CopyAs( ( SDAI_Application_instance_ptr  ) &e );
 }
 SdaiSquare::~SdaiSquare() {  }
 
-SdaiSquare::SdaiSquare( SCLP23( Application_instance ) *se, int * addAttrs ) : SdaiRectangle( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
+SdaiSquare::SdaiSquare( SDAI_Application_instance  *se, int * addAttrs ) : SdaiRectangle( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
 
@@ -459,11 +459,11 @@ SdaiTriangle::SdaiTriangle( ) {
     attributes.push( a );
 }
 SdaiTriangle::SdaiTriangle( SdaiTriangle & e ) {
-    CopyAs( ( SCLP23( Application_instance_ptr ) ) &e );
+    CopyAs( ( SDAI_Application_instance_ptr  ) &e );
 }
 SdaiTriangle::~SdaiTriangle() {  }
 
-SdaiTriangle::SdaiTriangle( SCLP23( Application_instance ) *se, int * addAttrs ) : SdaiShape( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
+SdaiTriangle::SdaiTriangle( SDAI_Application_instance  *se, int * addAttrs ) : SdaiShape( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
 
@@ -565,11 +565,11 @@ SdaiCircle::SdaiCircle( ) {
     attributes.push( a );
 }
 SdaiCircle::SdaiCircle( SdaiCircle & e ) {
-    CopyAs( ( SCLP23( Application_instance_ptr ) ) &e );
+    CopyAs( ( SDAI_Application_instance_ptr  ) &e );
 }
 SdaiCircle::~SdaiCircle() {  }
 
-SdaiCircle::SdaiCircle( SCLP23( Application_instance ) *se, int * addAttrs ) : SdaiShape( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
+SdaiCircle::SdaiCircle( SDAI_Application_instance  *se, int * addAttrs ) : SdaiShape( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
 
@@ -591,13 +591,13 @@ SdaiCircle::SdaiCircle( SCLP23( Application_instance ) *se, int * addAttrs ) : S
     }
 }
 
-const SCLP23( Real )
+const SDAI_Real 
 SdaiCircle::radius_() const {
-    return ( const SCLP23( Real ) ) _radius;
+    return ( const SDAI_Real  ) _radius;
 }
 
 void
-SdaiCircle::radius_( const SCLP23( Real ) x )
+SdaiCircle::radius_( const SDAI_Real  x )
 
 {
     _radius = x;
@@ -619,20 +619,20 @@ SdaiLine::SdaiLine( ) {
 
     eDesc = example_schemae_line;
 
-    STEPattribute * a = new STEPattribute( *a_10end_point_one, ( SCLP23( Application_instance_ptr ) * ) &_end_point_one );
+    STEPattribute * a = new STEPattribute( *a_10end_point_one, ( SDAI_Application_instance_ptr  * ) &_end_point_one );
     a -> set_null();
     attributes.push( a );
 
-    a = new STEPattribute( *a_11end_point_two, ( SCLP23( Application_instance_ptr ) * ) &_end_point_two );
+    a = new STEPattribute( *a_11end_point_two, ( SDAI_Application_instance_ptr  * ) &_end_point_two );
     a -> set_null();
     attributes.push( a );
 }
 SdaiLine::SdaiLine( SdaiLine & e ) {
-    CopyAs( ( SCLP23( Application_instance_ptr ) ) &e );
+    CopyAs( ( SDAI_Application_instance_ptr  ) &e );
 }
 SdaiLine::~SdaiLine() {  }
 
-SdaiLine::SdaiLine( SCLP23( Application_instance ) *se, int * addAttrs ) {
+SdaiLine::SdaiLine( SDAI_Application_instance  *se, int * addAttrs ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
 
@@ -640,7 +640,7 @@ SdaiLine::SdaiLine( SCLP23( Application_instance ) *se, int * addAttrs ) {
 
     eDesc = example_schemae_line;
 
-    STEPattribute * a = new STEPattribute( *a_10end_point_one, ( SCLP23( Application_instance_ptr ) * ) &_end_point_one );
+    STEPattribute * a = new STEPattribute( *a_10end_point_one, ( SDAI_Application_instance_ptr  * ) &_end_point_one );
     a -> set_null();
     /* Put attribute on this class' attributes list so the */
     /*access functions still work. */
@@ -651,7 +651,7 @@ SdaiLine::SdaiLine( SCLP23( Application_instance ) *se, int * addAttrs ) {
         se->attributes.push( a );
     }
 
-    a = new STEPattribute( *a_11end_point_two, ( SCLP23( Application_instance_ptr ) * ) &_end_point_two );
+    a = new STEPattribute( *a_11end_point_two, ( SDAI_Application_instance_ptr  * ) &_end_point_two );
     a -> set_null();
     /* Put attribute on this class' attributes list so the */
     /*access functions still work. */
@@ -715,11 +715,11 @@ SdaiCartesian_point::SdaiCartesian_point( ) {
     attributes.push( a );
 }
 SdaiCartesian_point::SdaiCartesian_point( SdaiCartesian_point & e ) {
-    CopyAs( ( SCLP23( Application_instance_ptr ) ) &e );
+    CopyAs( ( SDAI_Application_instance_ptr  ) &e );
 }
 SdaiCartesian_point::~SdaiCartesian_point() {  }
 
-SdaiCartesian_point::SdaiCartesian_point( SCLP23( Application_instance ) *se, int * addAttrs ) {
+SdaiCartesian_point::SdaiCartesian_point( SDAI_Application_instance  *se, int * addAttrs ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
 
@@ -800,42 +800,42 @@ SdaiCartesian_point::z_( const SdaiPoint x )
 /////////    END_ENTITY cartesian_point
 
 
-SCLP23( Model_contents_ptr ) create_SdaiModel_contents_example_schema() {
+SDAI_Model_contents_ptr  create_SdaiModel_contents_example_schema() {
     return new SdaiModel_contents_example_schema ;
 }
 
 SdaiModel_contents_example_schema::SdaiModel_contents_example_schema() {
-    SCLP23( Entity_extent_ptr ) eep = ( SCLP23( Entity_extent_ptr ) )0;
+    SDAI_Entity_extent_ptr  eep = ( SDAI_Entity_extent_ptr  )0;
 
-    eep = new SCLP23( Entity_extent );
+    eep = new SDAI_Entity_extent ;
     eep->definition_( example_schemae_poly_line );
     _folders.Append( eep );
 
-    eep = new SCLP23( Entity_extent );
+    eep = new SDAI_Entity_extent ;
     eep->definition_( example_schemae_shape );
     _folders.Append( eep );
 
-    eep = new SCLP23( Entity_extent );
+    eep = new SDAI_Entity_extent ;
     eep->definition_( example_schemae_rectangle );
     _folders.Append( eep );
 
-    eep = new SCLP23( Entity_extent );
+    eep = new SDAI_Entity_extent ;
     eep->definition_( example_schemae_square );
     _folders.Append( eep );
 
-    eep = new SCLP23( Entity_extent );
+    eep = new SDAI_Entity_extent ;
     eep->definition_( example_schemae_triangle );
     _folders.Append( eep );
 
-    eep = new SCLP23( Entity_extent );
+    eep = new SDAI_Entity_extent ;
     eep->definition_( example_schemae_circle );
     _folders.Append( eep );
 
-    eep = new SCLP23( Entity_extent );
+    eep = new SDAI_Entity_extent ;
     eep->definition_( example_schemae_line );
     _folders.Append( eep );
 
-    eep = new SCLP23( Entity_extent );
+    eep = new SDAI_Entity_extent ;
     eep->definition_( example_schemae_cartesian_point );
     _folders.Append( eep );
 

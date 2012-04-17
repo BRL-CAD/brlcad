@@ -50,7 +50,7 @@
 #include <BRLCADWrapper.h>
 
 /*
-class SCLP23(Application_instance);
+class SDAI_Application_instance;
 class SDAI_Select;
 class STEPcomplex;
 */
@@ -62,7 +62,7 @@ typedef std::list<LIST_OF_POINTS *> LIST_OF_LIST_OF_POINTS;
 typedef std::list<SurfacePatch *> LIST_OF_PATCHES;
 typedef std::list<LIST_OF_PATCHES *> LIST_OF_LIST_OF_PATCHES;
 typedef std::list<std::string> LIST_OF_STRINGS;
-typedef std::list<SCLP23(Application_instance) *> LIST_OF_ENTITIES;
+typedef std::list<SDAI_Application_instance *> LIST_OF_ENTITIES;
 typedef std::list<SDAI_Select *> LIST_OF_SELECTS;
 typedef std::map<std::string,STEPcomplex *> MAP_OF_SUPERTYPES;
 typedef std::vector<double> VECTOR_OF_REALS;
@@ -80,7 +80,7 @@ private:
     STEPfile  *sfile;
     BRLCADWrapper *dotg;
 
-    void printEntity(SCLP23(Application_instance) *se, int level);
+    void printEntity(SDAI_Application_instance *se, int level);
     void printEntityAggregate(STEPaggregate *sa, int level);
     const char *getBaseType(int type);
 
@@ -90,9 +90,9 @@ public:
 
     bool convert(BRLCADWrapper *dotg);
 
-    SCLP23(Application_instance) *getEntity( int STEPid );
-    SCLP23(Application_instance) *getEntity( int STEPid, const char *name );
-    SCLP23(Application_instance) *getEntity( SCLP23(Application_instance) *, const char *name );
+    SDAI_Application_instance *getEntity( int STEPid );
+    SDAI_Application_instance *getEntity( int STEPid, const char *name );
+    SDAI_Application_instance *getEntity( SDAI_Application_instance *, const char *name );
     std::string getLogicalString( Logical v );
     std::string getBooleanString( Boolean v );
 
@@ -100,7 +100,7 @@ public:
     STEPattribute *getAttribute( int STEPid, const char *name );
     LIST_OF_STRINGS *getAttributes( int STEPid );
     Boolean getBooleanAttribute( int STEPid, const char *name );
-    SCLP23(Application_instance) *getEntityAttribute( int STEPid, const char *name );
+    SDAI_Application_instance *getEntityAttribute( int STEPid, const char *name );
     int getEnumAttribute( int STEPid, const char *name );
     int getIntegerAttribute( int STEPid, const char *name );
     Logical getLogicalAttribute( int STEPid, const char *name );
@@ -109,27 +109,27 @@ public:
     LIST_OF_LIST_OF_POINTS *getListOfListOfPoints( int STEPid, const char *attrName);
     MAP_OF_SUPERTYPES *getMapOfSuperTypes(int STEPid);
     void getSuperTypes(int STEPid, MAP_OF_SUPERTYPES &m);
-    SCLP23(Application_instance) *getSuperType(int STEPid, const char *name);
+    SDAI_Application_instance *getSuperType(int STEPid, const char *name);
     std::string getStringAttribute( int STEPid, const char *name );
 
     // helper functions based on entity instance pointer
-    STEPattribute *getAttribute( SCLP23(Application_instance) *sse, const char *name );
-    LIST_OF_STRINGS *getAttributes( SCLP23(Application_instance) *sse );
-    Boolean getBooleanAttribute( SCLP23(Application_instance) *sse, const char *name );
-    SCLP23(Application_instance) *getEntityAttribute( SCLP23(Application_instance) *sse, const char *name );
-    SCLP23(Select) *getSelectAttribute( SCLP23(Application_instance) *sse, const char *name );
-    int getEnumAttribute( SCLP23(Application_instance) *sse, const char *name );
-    int getIntegerAttribute( SCLP23(Application_instance) *sse, const char *name );
-    Logical getLogicalAttribute( SCLP23(Application_instance) *sse, const char *name );
-    double getRealAttribute( SCLP23(Application_instance) *sse, const char *name );
-    LIST_OF_ENTITIES *getListOfEntities( SCLP23(Application_instance) *sse, const char *name );
-    LIST_OF_SELECTS *getListOfSelects( SCLP23(Application_instance) *sse, const char *name );
-    LIST_OF_LIST_OF_PATCHES *getListOfListOfPatches( SCLP23(Application_instance) *sse, const char *attrName);
-    LIST_OF_LIST_OF_POINTS *getListOfListOfPoints( SCLP23(Application_instance) *sse, const char *attrName);
-    MAP_OF_SUPERTYPES *getMapOfSuperTypes(SCLP23(Application_instance) *sse);
-    void getSuperTypes(SCLP23(Application_instance) *sse, MAP_OF_SUPERTYPES &m);
-    SCLP23(Application_instance) *getSuperType(SCLP23(Application_instance) *sse, const char *name);
-    std::string getStringAttribute( SCLP23(Application_instance) *sse, const char *name );
+    STEPattribute *getAttribute( SDAI_Application_instance *sse, const char *name );
+    LIST_OF_STRINGS *getAttributes( SDAI_Application_instance *sse );
+    Boolean getBooleanAttribute( SDAI_Application_instance *sse, const char *name );
+    SDAI_Application_instance *getEntityAttribute( SDAI_Application_instance *sse, const char *name );
+    SDAI_Select *getSelectAttribute( SDAI_Application_instance *sse, const char *name );
+    int getEnumAttribute( SDAI_Application_instance *sse, const char *name );
+    int getIntegerAttribute( SDAI_Application_instance *sse, const char *name );
+    Logical getLogicalAttribute( SDAI_Application_instance *sse, const char *name );
+    double getRealAttribute( SDAI_Application_instance *sse, const char *name );
+    LIST_OF_ENTITIES *getListOfEntities( SDAI_Application_instance *sse, const char *name );
+    LIST_OF_SELECTS *getListOfSelects( SDAI_Application_instance *sse, const char *name );
+    LIST_OF_LIST_OF_PATCHES *getListOfListOfPatches( SDAI_Application_instance *sse, const char *attrName);
+    LIST_OF_LIST_OF_POINTS *getListOfListOfPoints( SDAI_Application_instance *sse, const char *attrName);
+    MAP_OF_SUPERTYPES *getMapOfSuperTypes(SDAI_Application_instance *sse);
+    void getSuperTypes(SDAI_Application_instance *sse, MAP_OF_SUPERTYPES &m);
+    SDAI_Application_instance *getSuperType(SDAI_Application_instance *sse, const char *name);
+    std::string getStringAttribute( SDAI_Application_instance *sse, const char *name );
 
     bool load(std::string &step_file);
     LIST_OF_PATCHES *parseListOfPatchEntities( const char *in);

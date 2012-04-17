@@ -1,10 +1,10 @@
 #ifndef SDAIMODEL_CONTENTS_H
 #define SDAIMODEL_CONTENTS_H 1
 
-//SCLP23_NAME(Model_contents)
+//SDAI_Model_contents
 
 /*
-   7.3.2  SCLP23_NAME(Model_contents)
+   7.3.2  SDAI_Model_contents
 */
 
 /*
@@ -22,40 +22,40 @@
 //#include <SessionInstance.h>
 */
 
-// The class SCLP23_NAME(Model_contents)_instances shall implement convenience functions by
-// SCLP23_NAME(Model_contents) in this part of ISO 10303
+// The class SDAI_Model_contents_instances shall implement convenience functions by
+// SDAI_Model_contents in this part of ISO 10303
 
-class SCLP23_NAME( Model_contents_instances ) : public SCLP23_NAME( DAObject ) {
+class SDAI_Model_contents_instances  : public SDAI_DAObject  {
     public:
 
-        SCLP23_NAME( DAObject__set ) _instances;
+        SDAI_DAObject__set  _instances;
 
-        SCLP23_NAME( Model_contents_instances )();
-        virtual ~SCLP23_NAME( Model_contents_instances )();
+        SDAI_Model_contents_instances ();
+        virtual ~SDAI_Model_contents_instances ();
 
         // This function shall return the set of DAObjects contained in
         // the receiver.
-        SCLP23_NAME( DAObject__set_var ) contents_() {
+        SDAI_DAObject__set_var  contents_() {
             return &_instances;
         }
-        SCLP23_NAME( DAObject__set_var ) contents_() const {
-            return ( const SCLP23_NAME( DAObject__set_var ) ) &_instances;
+        SDAI_DAObject__set_var  contents_() const {
+            return ( const SDAI_DAObject__set_var  ) &_instances;
         };
 
 };
 
-typedef SCLP23_NAME( Model_contents_instances ) *
-SCLP23_NAME( Model_contents_instances_ptr );
-typedef SCLP23_NAME( Model_contents_instances_ptr )
-SCLP23_NAME( Model_contents_instances_var );
+typedef SDAI_Model_contents_instances  *
+SDAI_Model_contents_instances_ptr ;
+typedef SDAI_Model_contents_instances_ptr 
+SDAI_Model_contents_instances_var ;
 
 // Model_contents_ptr def pushed ahead of #include for Entity_extent
-//class SCLP23_NAME(Model_contents);
-//typedef SCLP23_NAME(Model_contents) SCLP23_NAME(Model_contents_ptr);
+//class SDAI_Model_contents;
+//typedef SDAI_Model_contents) SCLP23_NAME(Model_contents_ptr;
 
-class SCLP23_NAME( Model_contents ) : public SCLP23_NAME( Session_instance ) {
+class SDAI_Model_contents  : public SDAI_Session_instance  {
 
-//friend class SCLP23_NAME(Model);
+//friend class SDAI_Model;
 
         /*
            NOTE -   Model is a friend so that Model may access the contents of
@@ -66,11 +66,11 @@ class SCLP23_NAME( Model_contents ) : public SCLP23_NAME( Session_instance ) {
     public:
 //  protected: // for now
 // contains Application_instances (i.e. STEPentities)
-        SCLP23_NAME( Model_contents_instances ) _instances;
+        SDAI_Model_contents_instances  _instances;
 
-        SCLP23_NAME( Entity_extent__set ) _folders;   // of entity_extent
+        SDAI_Entity_extent__set  _folders;   // of entity_extent
 
-        SCLP23_NAME( Entity_extent__set ) _populated_folders; // of entity_extent
+        SDAI_Entity_extent__set  _populated_folders; // of entity_extent
 
 //  EntityAggregate _instances;   // of Entity_instance
 //  EntityAggregate _folders;     // of entity_extent
@@ -81,34 +81,34 @@ class SCLP23_NAME( Model_contents ) : public SCLP23_NAME( Session_instance ) {
          */
     public: // for now at least
 //  private:
-        SCLP23_NAME( Model_contents )();
-//    SCLP23_NAME(Model_contents)(const SCLP23_NAME(Model_contents)& mc);
-        ~SCLP23_NAME( Model_contents )();
+        SDAI_Model_contents ();
+//    SDAI_Model_contents)(const SCLP23_NAME(Model_contents& mc);
+        ~SDAI_Model_contents ();
         /*
            Access function declarations
            */
     public:
-        SCLP23_NAME( Model_contents_instances_ptr ) instances_();
-        SCLP23_NAME( Model_contents_instances_ptr ) instances_() const;
+        SDAI_Model_contents_instances_ptr  instances_();
+        SDAI_Model_contents_instances_ptr  instances_() const;
 
-        SCLP23_NAME( Entity_extent__set_var ) folders_();
-        SCLP23_NAME( Entity_extent__set_var ) folders_() const;
+        SDAI_Entity_extent__set_var  folders_();
+        SDAI_Entity_extent__set_var  folders_() const;
 
         //Boolean TestFolders() const;
 
-        SCLP23_NAME( Entity_extent__set_var ) populated_folders_() const;
-        SCLP23_NAME( Entity_extent__set_var ) populated_folders_();
+        SDAI_Entity_extent__set_var  populated_folders_() const;
+        SDAI_Entity_extent__set_var  populated_folders_();
         //Boolean TestPopulated_folders() const;
 
-//    static SCLP23_NAME(Model_contents_ptr)
-//              _duplicate(SCLP23_NAME(Model_contents_ptr));
-//    static SCLP23_NAME(Model_contents_ptr) _narrow(Object_ptr);
-//    static SCLP23_NAME(Model_contents_ptr) _nil();
+//    static SDAI_Model_contents_ptr
+//              _duplicate(SDAI_Model_contents_ptr);
+//    static SDAI_Model_contents_ptr) _narrow(Object_ptr;
+//    static SDAI_Model_contents_ptr) _nil(;
 
-        SCLP23_NAME( PID_DA_ptr )
-        get_object_pid( const SCLP23_NAME( DAObject_ptr & d ) ) const;
+        SDAI_PID_DA_ptr 
+        get_object_pid( const SDAI_DAObject_ptr & d  ) const;
 
-        SCLP23_NAME( DAObject_ptr ) lookup( const SCLP23_NAME( PID_DA_ptr & p ) ) const;
+        SDAI_DAObject_ptr  lookup( const SDAI_PID_DA_ptr & p  ) const;
 
         /*
            SDAI operation declarations
@@ -119,11 +119,11 @@ class SCLP23_NAME( Model_contents ) : public SCLP23_NAME( Session_instance ) {
          */
 //  private:
     public: // for now at least
-        SCLP23_NAME( DAObject_ptr )
+        SDAI_DAObject_ptr 
         CreateEntityInstance( const char * Type );
 
         // until we find out what this should really be in the spec
-        void AddInstance( const SCLP23_NAME( DAObject_SDAI_ptr )& appInst );
+        void AddInstance( const SDAI_DAObject_SDAI_ptr & appInst );
 //    void AddInstance(const Entity_instance_ptr& entityHandle);
         //void AddInstance(EntityInstanceH& entityHandle);
         /* Function:
@@ -148,7 +148,7 @@ class SCLP23_NAME( Model_contents ) : public SCLP23_NAME( Session_instance ) {
          */
 
         // until we find out what this should really be in the spec
-        void RemoveInstance( SCLP23_NAME( DAObject_SDAI_ptr )& appInst );
+        void RemoveInstance( SDAI_DAObject_SDAI_ptr & appInst );
 //    void RemoveInstance(Entity_instance_ptr& entityHandle);
         //void RemoveInstance(EntityInstanceH& entityHandle);
         /* Function
@@ -210,7 +210,7 @@ class SCLP23_NAME( Model_contents ) : public SCLP23_NAME( Session_instance ) {
 
 #endif
 
-//    void instances (SCLP23_NAME(Model_contents_instances_ptr) x);
+//    void instances (SDAI_Model_contents_instances_ptr) x;
 //    void folders (Entity_extent__set x);
 //    void populated_folders (Entity_extent__set x);
 

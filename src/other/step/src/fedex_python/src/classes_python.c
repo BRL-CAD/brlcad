@@ -400,7 +400,7 @@ ENTITYhead_print( Entity entity, FILE * file, Schema schema ) {
     fprintf( file, "\nclass %s  :  ", entnm );
 
     /* inherit from either supertype entity class or root class of
-       all - i.e. SCLP23(Application_instance) */
+       all - i.e. SDAI_Application_instance */
 
     if( multiple_inheritance ) {
         list = ENTITYget_supertypes( entity );
@@ -414,7 +414,7 @@ ENTITYhead_print( Entity entity, FILE * file, Schema schema ) {
     if( super ) {
         fprintf( file, "  public %s  {\n ", ENTITYget_classname( super ) );
     } else {
-        fprintf( file, "  public SCLP23(Application_instance) {\n" );
+        fprintf( file, "  public SDAI_Application_instance) {\n" ;
     }
 
 
@@ -825,7 +825,7 @@ LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
 }
 
 /********************/
-/* print the constructor that accepts a SCLP23(Application_instance) as an argument used
+/* print the constructor that accepts a SDAI_Application_instance as an argument used
    when building multiply inherited entities.
 */
 

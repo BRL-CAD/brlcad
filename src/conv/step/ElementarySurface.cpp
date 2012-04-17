@@ -49,7 +49,7 @@ ElementarySurface::~ElementarySurface() {
 }
 
 bool
-ElementarySurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+ElementarySurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -63,7 +63,7 @@ ElementarySurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (position == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"position");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"position");
 	if (entity) {
 	    position = dynamic_cast<Axis2Placement3D *>(Factory::CreateObject(sw,entity));
 	} else {
@@ -86,7 +86,7 @@ ElementarySurface::Print(int level) {
 }
 
 STEPEntity *
-ElementarySurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+ElementarySurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	ElementarySurface *object = new ElementarySurface(sw,sse->STEPfile_id);

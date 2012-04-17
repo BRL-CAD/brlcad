@@ -24,7 +24,7 @@ enum Color {
     Color_unset
 };
 
-class SdaiColor_var  :  public SCLP23( Enum )  {
+class SdaiColor_var  :  public SDAI_Enum   {
 
     protected:
         EnumTypeDescriptor * type;
@@ -54,7 +54,7 @@ class SdaiColor_var  :  public SCLP23( Enum )  {
 
 typedef SdaiColor_var * SdaiColor_var_ptr;
 
-SCLP23( Enum ) * create_SdaiColor_var();
+SDAI_Enum  * create_SdaiColor_var();
 
 class SdaiColor_vars  :  public EnumAggregate  {
 
@@ -87,7 +87,7 @@ STEPaggregate * create_SdaiColor_vars();
 
 extern AttrDescriptor * a_0points;
 
-class SdaiPoly_line  :    public SCLP23( Application_instance ) {
+class SdaiPoly_line  :    public SDAI_Application_instance  {
 
     protected:
         EntityAggregate _points ;     //  of  line
@@ -95,7 +95,7 @@ class SdaiPoly_line  :    public SCLP23( Application_instance ) {
     public:
 
         SdaiPoly_line( );
-        SdaiPoly_line( SCLP23( Application_instance ) *se, int * addAttrs = 0 );
+        SdaiPoly_line( SDAI_Application_instance  *se, int * addAttrs = 0 );
         SdaiPoly_line( SdaiPoly_line & e );
         ~SdaiPoly_line();
 
@@ -122,16 +122,16 @@ extern AttrDescriptor * a_1item_name;
 extern AttrDescriptor * a_2item_color;
 extern AttrDescriptor * a_3number_of_sides;
 
-class SdaiShape  :    public SCLP23( Application_instance ) {
+class SdaiShape  :    public SDAI_Application_instance  {
 
     protected:
-        SCLP23( String ) _item_name ;
+        SDAI_String  _item_name ;
         SdaiColor_var _item_color ;    //  OPTIONAL
-        SCLP23( Integer ) _number_of_sides ;
+        SDAI_Integer  _number_of_sides ;
     public:
 
         SdaiShape( );
-        SdaiShape( SCLP23( Application_instance ) *se, int * addAttrs = 0 );
+        SdaiShape( SDAI_Application_instance  *se, int * addAttrs = 0 );
         SdaiShape( SdaiShape & e );
         ~SdaiShape();
 
@@ -144,8 +144,8 @@ class SdaiShape  :    public SCLP23( Application_instance ) {
         const SdaiColor_var item_color_() const;
         void item_color_( const SdaiColor_var x );
 
-        const SCLP23( Integer ) number_of_sides_() const;
-        void number_of_sides_( const SCLP23( Integer ) x );
+        const SDAI_Integer  number_of_sides_() const;
+        void number_of_sides_( const SDAI_Integer  x );
 
 
 };
@@ -166,12 +166,12 @@ extern AttrDescriptor * a_5width;
 class SdaiRectangle  :    public SdaiShape  {
 
     protected:
-        SCLP23( Real ) _height ;
-        SCLP23( Real ) _width ;
+        SDAI_Real  _height ;
+        SDAI_Real  _width ;
     public:
 
         SdaiRectangle( );
-        SdaiRectangle( SCLP23( Application_instance ) *se, int * addAttrs = 0 );
+        SdaiRectangle( SDAI_Application_instance  *se, int * addAttrs = 0 );
         SdaiRectangle( SdaiRectangle & e );
         ~SdaiRectangle();
 
@@ -206,7 +206,7 @@ class SdaiSquare  :    public SdaiRectangle  {
     public:
 
         SdaiSquare( );
-        SdaiSquare( SCLP23( Application_instance ) *se, int * addAttrs = 0 );
+        SdaiSquare( SDAI_Application_instance  *se, int * addAttrs = 0 );
         SdaiSquare( SdaiSquare & e );
         ~SdaiSquare();
 
@@ -235,13 +235,13 @@ extern AttrDescriptor * a_8side3_length;
 class SdaiTriangle  :    public SdaiShape  {
 
     protected:
-        SCLP23( Real ) _side1_length ;
-        SCLP23( Real ) _side2_length ;
-        SCLP23( Real ) _side3_length ;
+        SDAI_Real  _side1_length ;
+        SDAI_Real  _side2_length ;
+        SDAI_Real  _side3_length ;
     public:
 
         SdaiTriangle( );
-        SdaiTriangle( SCLP23( Application_instance ) *se, int * addAttrs = 0 );
+        SdaiTriangle( SDAI_Application_instance  *se, int * addAttrs = 0 );
         SdaiTriangle( SdaiTriangle & e );
         ~SdaiTriangle();
 
@@ -277,19 +277,19 @@ extern AttrDescriptor * a_9radius;
 class SdaiCircle  :    public SdaiShape  {
 
     protected:
-        SCLP23( Real ) _radius ;
+        SDAI_Real  _radius ;
     public:
 
         SdaiCircle( );
-        SdaiCircle( SCLP23( Application_instance ) *se, int * addAttrs = 0 );
+        SdaiCircle( SDAI_Application_instance  *se, int * addAttrs = 0 );
         SdaiCircle( SdaiCircle & e );
         ~SdaiCircle();
 
         int opcode()  {
             return 5 ;
         }
-        const SCLP23( Real ) radius_() const;
-        void radius_( const SCLP23( Real ) x );
+        const SDAI_Real  radius_() const;
+        void radius_( const SDAI_Real  x );
 
         /* The first parent's access functions are */
         /* above or covered by inherited functions. */
@@ -309,15 +309,15 @@ create_SdaiCircle() {
 extern AttrDescriptor * a_10end_point_one;
 extern AttrDescriptor * a_11end_point_two;
 
-class SdaiLine  :    public SCLP23( Application_instance ) {
+class SdaiLine  :    public SDAI_Application_instance  {
 
     protected:
-        SCLP23( Application_instance_ptr ) _end_point_one ;
-        SCLP23( Application_instance_ptr ) _end_point_two ;
+        SDAI_Application_instance_ptr  _end_point_one ;
+        SDAI_Application_instance_ptr  _end_point_two ;
     public:
 
         SdaiLine( );
-        SdaiLine( SCLP23( Application_instance ) *se, int * addAttrs = 0 );
+        SdaiLine( SDAI_Application_instance  *se, int * addAttrs = 0 );
         SdaiLine( SdaiLine & e );
         ~SdaiLine();
 
@@ -347,16 +347,16 @@ extern AttrDescriptor * a_12x;
 extern AttrDescriptor * a_13y;
 extern AttrDescriptor * a_14z;
 
-class SdaiCartesian_point  :    public SCLP23( Application_instance ) {
+class SdaiCartesian_point  :    public SDAI_Application_instance  {
 
     protected:
-        SCLP23( Real ) _x ;
-        SCLP23( Real ) _y ;
-        SCLP23( Real ) _z ;  //  OPTIONAL
+        SDAI_Real  _x ;
+        SDAI_Real  _y ;
+        SDAI_Real  _z ;  //  OPTIONAL
     public:
 
         SdaiCartesian_point( );
-        SdaiCartesian_point( SCLP23( Application_instance ) *se, int * addAttrs = 0 );
+        SdaiCartesian_point( SDAI_Application_instance  *se, int * addAttrs = 0 );
         SdaiCartesian_point( SdaiCartesian_point & e );
         ~SdaiCartesian_point();
 
@@ -385,7 +385,7 @@ create_SdaiCartesian_point() {
 
 //  ***** generate Model related pieces
 
-class SdaiModel_contents_example_schema : public SCLP23( Model_contents ) {
+class SdaiModel_contents_example_schema : public SDAI_Model_contents  {
 
     public:
 
@@ -413,6 +413,6 @@ class SdaiModel_contents_example_schema : public SCLP23( Model_contents ) {
 typedef SdaiModel_contents_example_schema * SdaiModel_contents_example_schema_ptr;
 typedef SdaiModel_contents_example_schema_ptr SdaiModel_contents_example_schema_var;
 
-SCLP23( Model_contents_ptr ) create_SdaiModel_contents_example_schema();
+SDAI_Model_contents_ptr  create_SdaiModel_contents_example_schema();
 
 #endif

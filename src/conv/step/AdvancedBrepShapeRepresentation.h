@@ -37,7 +37,7 @@
 
 /* interface headers */
 #include "ShapeRepresentation.h"
-#include "sclprefixes.h"
+
 
 
 class AdvancedBrepShapeRepresentation : public ShapeRepresentation
@@ -55,12 +55,12 @@ class AdvancedBrepShapeRepresentation : public ShapeRepresentation
     ON_Brep *GetONBrep();
     virtual bool LoadONBrep(ON_Brep *brep);
 
-    bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     std::string Name() {return name;};
     virtual void Print(int level);
 
     //static methods
-    static STEPEntity *Create(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 

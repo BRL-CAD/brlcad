@@ -58,7 +58,7 @@ CartesianTransformationOperator::~CartesianTransformationOperator() {
 }
 
 bool
-CartesianTransformationOperator::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+CartesianTransformationOperator::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -72,21 +72,21 @@ CartesianTransformationOperator::Load(STEPWrapper *sw,SCLP23(Application_instanc
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (axis1 == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"axis1");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"axis1");
 	if (entity) { //this attribute is optional
 	    axis1 = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
 	}
     }
 
     if (axis2 == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"axis2");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"axis2");
 	if (entity) { // this attribute is optional
 	    axis2 = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
 	}
     }
 
     if (local_origin == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"local_origin");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"local_origin");
 	if (entity) {
 	    local_origin = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,entity));
 	} else {
@@ -129,7 +129,7 @@ CartesianTransformationOperator::Print(int level) {
 }
 
 STEPEntity *
-CartesianTransformationOperator::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+CartesianTransformationOperator::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	CartesianTransformationOperator *object = new CartesianTransformationOperator(sw,sse->STEPfile_id);

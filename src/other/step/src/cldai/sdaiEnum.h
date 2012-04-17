@@ -14,16 +14,16 @@
 
 /* $Id: sdaiEnum.h,v 1.5 1997/11/05 21:59:14 sauderd DP3.1 $ */
 
-class SCLP23_NAME( Enum )  {
-        friend     ostream & operator<< ( ostream &, const SCLP23_NAME( Enum ) & );
+class SDAI_Enum   {
+        friend     ostream & operator<< ( ostream &, const SDAI_Enum  & );
     protected:
         int v;  //  integer value of enumeration instance
         //  mapped to a symbolic value in the elements
 
         virtual int set_value( const char * n );
         virtual int set_value( const int n );
-        SCLP23_NAME( Enum )();
-        virtual ~SCLP23_NAME( Enum )();
+        SDAI_Enum ();
+        virtual ~SDAI_Enum ();
 
     public:
 
@@ -66,8 +66,8 @@ class SCLP23_NAME( Enum )  {
         void set_null() {
             nullify();
         }
-        SCLP23_NAME( Enum ) & operator= ( const int );
-        SCLP23_NAME( Enum ) & operator= ( const SCLP23_NAME( Enum ) & );
+        SDAI_Enum  & operator= ( const int );
+        SDAI_Enum  & operator= ( const SDAI_Enum  & );
 
 //    operator ULong() const { return v; } // return the integer equivalent
 
@@ -90,26 +90,26 @@ enum Logical { LFalse, LTrue, LUnset, LUnknown };
 // old SCL definition
 //enum LOGICAL { sdaiFALSE, sdaiTRUE, sdaiUNKNOWN };
 
-class SCLP23_NAME( LOGICAL )  :
-    public SCLP23_NAME( Enum )  {
+class SDAI_LOGICAL   :
+    public SDAI_Enum   {
     public:
         const char * Name() const;
 
-        SCLP23_NAME( LOGICAL )( const char * val = 0 );
-        SCLP23_NAME( LOGICAL )( Logical state );
-        SCLP23_NAME( LOGICAL )( const SCLP23_NAME( LOGICAL )& source );
-        SCLP23_NAME( LOGICAL )( int i );
+        SDAI_LOGICAL ( const char * val = 0 );
+        SDAI_LOGICAL ( Logical state );
+        SDAI_LOGICAL ( const SDAI_LOGICAL & source );
+        SDAI_LOGICAL ( int i );
 
-        virtual ~SCLP23_NAME( LOGICAL )();
+        virtual ~SDAI_LOGICAL ();
 
         virtual int no_elements() const;
         virtual const char * element_at( int n ) const;
 
 //    operator int () const;
         operator Logical() const;
-        SCLP23_NAME( LOGICAL ) & operator=( const SCLP23_NAME( LOGICAL )& t );
+        SDAI_LOGICAL  & operator=( const SDAI_LOGICAL & t );
 
-        SCLP23_NAME( LOGICAL ) operator==( const SCLP23_NAME( LOGICAL )& t ) const;
+        SDAI_LOGICAL  operator==( const SDAI_LOGICAL & t ) const;
 
         // these 2 are redefined because LUnknown has cardinal value > LUnset
         int exists() const; // return 0 if unset otherwise return 1
@@ -124,36 +124,36 @@ class SCLP23_NAME( LOGICAL )  :
 }
 ;
 
-class SCLP23_NAME( BOOLEAN )  :
-    public SCLP23_NAME( Enum )  {
+class SDAI_BOOLEAN   :
+    public SDAI_Enum   {
     public:
         const char * Name() const;
 
-        SCLP23_NAME( BOOLEAN )( char * val = 0 );
-        SCLP23_NAME( BOOLEAN )( Boolean state );
-        SCLP23_NAME( BOOLEAN )( const SCLP23_NAME( BOOLEAN )& source );
-        SCLP23_NAME( BOOLEAN )( int i );
-        SCLP23_NAME( BOOLEAN )( const SCLP23_NAME( LOGICAL )& val );
-        virtual ~SCLP23_NAME( BOOLEAN )();
+        SDAI_BOOLEAN ( char * val = 0 );
+        SDAI_BOOLEAN ( Boolean state );
+        SDAI_BOOLEAN ( const SDAI_BOOLEAN & source );
+        SDAI_BOOLEAN ( int i );
+        SDAI_BOOLEAN ( const SDAI_LOGICAL & val );
+        virtual ~SDAI_BOOLEAN ();
 
         virtual int no_elements() const;
         virtual const char * element_at( int n ) const;
 
         operator Boolean() const;
-        SCLP23_NAME( BOOLEAN ) & operator=( const SCLP23_NAME( LOGICAL )& t );
+        SDAI_BOOLEAN  & operator=( const SDAI_LOGICAL & t );
 
-        SCLP23_NAME( BOOLEAN ) & operator=( const Boolean t );
+        SDAI_BOOLEAN  & operator=( const Boolean t );
 //    operator int () const;
 //    operator Logical () const;
-        SCLP23_NAME( LOGICAL ) operator==( const SCLP23_NAME( LOGICAL )& t ) const;
+        SDAI_LOGICAL  operator==( const SDAI_LOGICAL & t ) const;
 
 }
 ;
 
-static const SCLP23_NAME( BOOLEAN ) SCLP23_NAME( TRUE );
-static const SCLP23_NAME( BOOLEAN ) SCLP23_NAME( FALSE );
-static const SCLP23_NAME( BOOLEAN ) SCLP23_NAME( UNSET );
-static const SCLP23_NAME( LOGICAL ) SCLP23_NAME( UNKNOWN );
+static const SDAI_BOOLEAN  SDAI_TRUE ;
+static const SDAI_BOOLEAN  SDAI_FALSE ;
+static const SDAI_BOOLEAN  SDAI_UNSET ;
+static const SDAI_LOGICAL  SDAI_UNKNOWN ;
 
 //}; // end struct P23_NAMESPACE
 

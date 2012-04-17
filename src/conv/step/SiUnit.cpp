@@ -172,7 +172,7 @@ SiUnit::GetPrefixFactor() {
 }
 
 bool
-SiUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+SiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -212,7 +212,7 @@ SiUnit::Print(int level) {
 
 }
 STEPEntity *
-SiUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+SiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	SiUnit *object = new SiUnit(sw,sse->STEPfile_id);

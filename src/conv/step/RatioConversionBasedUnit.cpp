@@ -50,7 +50,7 @@ RatioConversionBasedUnit::~RatioConversionBasedUnit() {
 }
 
 bool
-RatioConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+RatioConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -79,7 +79,7 @@ RatioConversionBasedUnit::Print(int level) {
 
 }
 STEPEntity *
-RatioConversionBasedUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+RatioConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	RatioConversionBasedUnit *object = new RatioConversionBasedUnit(sw,sse->STEPfile_id);

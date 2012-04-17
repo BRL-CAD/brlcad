@@ -74,7 +74,7 @@ string ProductDefinition::Description()
     return description;
 }
 
-bool ProductDefinition::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+bool ProductDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
     id = sse->STEPfile_id;
@@ -87,7 +87,7 @@ bool ProductDefinition::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
     description = step->getStringAttribute(sse, "description");
 
     if (formation == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse, "formation");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "formation");
 	if (entity) { //this attribute is optional
 	    formation = dynamic_cast<ProductDefinitionFormation *>(Factory::CreateObject(sw, entity));
 	} else {
@@ -97,7 +97,7 @@ bool ProductDefinition::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
     }
 
     if (frame_of_reference == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse, "frame_of_reference");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "frame_of_reference");
 	if (entity) { //this attribute is optional
 	    frame_of_reference = dynamic_cast<ProductDefinitionContext *>(Factory::CreateObject(sw, entity));
 	} else {
@@ -131,7 +131,7 @@ void ProductDefinition::Print(int level)
 }
 
 STEPEntity *
-ProductDefinition::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+ProductDefinition::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {

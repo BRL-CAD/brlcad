@@ -12,13 +12,13 @@
    7.3.3  Entity extent
 */
 
-class SCLP23_NAME( Entity_extent );
-typedef SCLP23_NAME( Entity_extent ) * SCLP23_NAME( Entity_extent_ptr );
-typedef SCLP23_NAME( Entity_extent_ptr ) SCLP23_NAME( Entity_extent_var );
+class SDAI_Entity_extent ;
+typedef SDAI_Entity_extent  * SDAI_Entity_extent_ptr ;
+typedef SDAI_Entity_extent_ptr  SDAI_Entity_extent_var ;
 
-class SCLP23_NAME( Entity_extent ) : public SCLP23_NAME( Session_instance ) {
+class SDAI_Entity_extent  : public SDAI_Session_instance  {
 
-        friend class SCLP23_NAME( Model_contents );
+        friend class SDAI_Model_contents ;
         /*
            NOTE - The ModelContent class is a friend so that ModelContent may add
            instances to Entity_extent instances.
@@ -27,21 +27,21 @@ class SCLP23_NAME( Entity_extent ) : public SCLP23_NAME( Session_instance ) {
     public: //for now
 //  protected:
         Entity_ptr _definition ;
-        SCLP23_NAME( Entity_name ) _definition_name ;
-        SCLP23_NAME( DAObject__set ) _instances ; //  of  Application_instance
+        SDAI_Entity_name  _definition_name ;
+        SDAI_DAObject__set  _instances ; //  of  Application_instance
 //    Entity_instance__set _instances ;   //  of  entity_instance
 //    EntityAggregate _instances ;    //  of  entity_instance
 // Express in part 22 - INVERSE owned_by : sdai_model_contents FOR folders;
-        SCLP23_NAME( Model_contents__list ) _owned_by ; //  ADDED in Part 22
+        SDAI_Model_contents__list  _owned_by ; //  ADDED in Part 22
 
 //  private:
-        SCLP23_NAME( Entity_extent )();
-//    SCLP23_NAME(Entity_extent)(const SCLP23_NAME(Entity_extent)& ee);
-        ~SCLP23_NAME( Entity_extent )(); // not in part 23
+        SDAI_Entity_extent ();
+//    SDAI_Entity_extent)(const SCLP23_NAME(Entity_extent& ee);
+        ~SDAI_Entity_extent (); // not in part 23
 
     public:
 
-        SCLP23_NAME( Entity_name ) definition_name_() const {
+        SDAI_Entity_name  definition_name_() const {
             return _definition_name;
         }
 
@@ -50,28 +50,28 @@ class SCLP23_NAME( Entity_extent ) : public SCLP23_NAME( Session_instance ) {
 //    const Entity_ptr definition_() const;
 #endif
 
-        SCLP23_NAME( DAObject__set_var ) instances_() {
+        SDAI_DAObject__set_var  instances_() {
             return &_instances;
         }
-        SCLP23_NAME( DAObject__set_var ) instances_() const {
-            return ( const SCLP23_NAME( DAObject__set_var ) )&_instances;
+        SDAI_DAObject__set_var  instances_() const {
+            return ( const SDAI_DAObject__set_var  )&_instances;
         }
 
 // need to implement Model_contents__list
-        SCLP23_NAME( Model_contents__list_var ) owned_by_() const;
+        SDAI_Model_contents__list_var  owned_by_() const;
 
-//    static SCLP23_NAME(Entity_extent_ptr)
-//          _duplicate(SCLP23_NAME(Entity_extent_ptr) eep);
-//    static SCLP23_NAME(Entity_extent_ptr) _narrow(Object_ptr op);
-//    static SCLP23_NAME(Entity_extent_ptr) _nil();
+//    static SDAI_Entity_extent_ptr
+//          _duplicate(SDAI_Entity_extent_ptr) eep;
+//    static SDAI_Entity_extent_ptr) _narrow(Object_ptr op;
+//    static SDAI_Entity_extent_ptr) _nil(;
 
 //  private:
         void definition_( const Entity_ptr & ep );
 #ifdef SDAI_CPP_LATE_BINDING
 //    void definition_(const Entity_ptr& ep);
 #endif
-        void definition_name_( const SCLP23_NAME( Entity_name )& ep );
-        void owned_by_( SCLP23_NAME( Model_contents__list_var )& mcp );
+        void definition_name_( const SDAI_Entity_name & ep );
+        void owned_by_( SDAI_Model_contents__list_var & mcp );
 
         /*
            7.3.3.1  SDAI operation declarations
@@ -80,7 +80,7 @@ class SCLP23_NAME( Entity_extent ) : public SCLP23_NAME( Session_instance ) {
          */
 
         // this is no longer in Part 23
-        void AddInstance( const SCLP23_NAME( DAObject_ptr )& appInst );
+        void AddInstance( const SDAI_DAObject_ptr & appInst );
 
         /*
            Function:
@@ -99,7 +99,7 @@ class SCLP23_NAME( Entity_extent ) : public SCLP23_NAME( Session_instance ) {
          */
 
         // this is no longer in Part 23
-        void RemoveInstance( const SCLP23_NAME( DAObject_ptr )& appInst );
+        void RemoveInstance( const SDAI_DAObject_ptr & appInst );
 
         /*
            7.3.3.1.2  RemoveInstance

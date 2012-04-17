@@ -43,12 +43,12 @@ public:
 	Surface();
 	virtual ~Surface();
 	Surface(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
 	virtual void Print(int level);
 	void SetCurveBounds(ON_BoundingBox *tcbb) {trim_curve_3d_bbox = tcbb;};
 
 	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
 };
 
 #endif /* SURFACE_H_ */

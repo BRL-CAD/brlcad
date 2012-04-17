@@ -26,9 +26,9 @@ class TypeDescriptor;
 #include <STEPundefined.h>
 #include <string>
 
-//class SCLP23(Application_instance);
+//class SDAI_Application_instance;
 //#define   S_ENTITY_NULL   &NilSTEPentity
-//extern SCLP23(Application_instance) NilSTEPentity;
+//extern SDAI_Application_instance NilSTEPentity;
 
 
 #define     AGGR_NULL   &NilSTEPaggregate
@@ -150,7 +150,7 @@ typedef   EntityAggregate_ptr EntityAggregate_var;
 /******************************************************************
  ** Class:  SelectAggregate
  ** Description:  this is a minimal representions for a collection of
- ** SCLP23(Select)
+ ** SDAI_Select
  ******************************************************************/
 class SelectAggregate  :  public STEPaggregate {
     public:
@@ -215,7 +215,7 @@ typedef  BinaryAggregate_ptr BinaryAggregate_var;
 /******************************************************************
  ** Class:  EnumAggregate
  ** Description:  this is a minimal representions for a collection of
- ** SCLP23(Enum)
+ ** SDAI_Enum
  ******************************************************************/
 class EnumAggregate  :  public STEPaggregate {
     public:
@@ -366,7 +366,7 @@ class GenericAggrNode  : public STEPnode {
 
 class EntityNode  : public STEPnode {
     public:
-        SCLP23( Application_instance ) * node;
+        SDAI_Application_instance  * node;
 
 // INPUT
         virtual Severity StrToVal( const char * s, ErrorDescriptor * err,
@@ -388,7 +388,7 @@ class EntityNode  : public STEPnode {
         virtual void    STEPwrite( ostream & out = cout );
 
 //  CONSTRUCTORS
-        EntityNode( SCLP23( Application_instance ) * e );
+        EntityNode( SDAI_Application_instance  * e );
         EntityNode();
         ~EntityNode();
 
@@ -424,13 +424,13 @@ class EntityNode  : public STEPnode {
 /******************************************************************
  ** Class:  SelectNode
  ** Description:  this is a minimal representions for node in lists of
- ** SCLP23(Select)
+ ** SDAI_Select
  ******************************************************************/
 
 class SelectNode  : public STEPnode {
     public:
 
-        SCLP23( Select ) * node;
+        SDAI_Select  * node;
 
     public:
 //  INPUT
@@ -455,7 +455,7 @@ class SelectNode  : public STEPnode {
         virtual void    STEPwrite( ostream & out = cout );
 
 //  CONSTRUCTORS
-        SelectNode( SCLP23( Select ) * s );
+        SelectNode( SDAI_Select  * s );
         SelectNode();
         ~SelectNode();
 
@@ -496,7 +496,7 @@ class SelectNode  : public STEPnode {
 class StringNode  : public STEPnode {
     public:
 
-        SCLP23( String ) value;
+        SDAI_String  value;
 
     public:
 //  INPUT
@@ -531,7 +531,7 @@ class StringNode  : public STEPnode {
 class BinaryNode  : public STEPnode {
     public:
 
-        SCLP23( Binary ) value;
+        SDAI_Binary  value;
 
     public:
 //  INPUT
@@ -559,13 +559,13 @@ class BinaryNode  : public STEPnode {
 /******************************************************************
  ** Class:  EnumNode
  ** Description:  this is a minimal representions for node in lists of
- ** SCLP23(Enum)
+ ** SDAI_Enum
  ******************************************************************/
 
 class EnumNode  : public STEPnode {
     public:
 
-        SCLP23( Enum ) * node;
+        SDAI_Enum  * node;
 
     public:
 //  INPUT
@@ -581,7 +581,7 @@ class EnumNode  : public STEPnode {
         virtual void    STEPwrite( ostream & out = cout );
 
 //  CONSTRUCTORS
-        EnumNode( SCLP23( Enum ) * e );
+        EnumNode( SDAI_Enum  * e );
         EnumNode();
         ~EnumNode();
 
@@ -591,7 +591,7 @@ class EnumNode  : public STEPnode {
 
 class RealNode  : public STEPnode {
     public:
-        SCLP23( Real ) value; // double
+        SDAI_Real  value; // double
 
     public:
 //  INPUT
@@ -616,7 +616,7 @@ class RealNode  : public STEPnode {
 
 class IntNode  : public STEPnode {
     public:
-        SCLP23( Integer ) value; // long int
+        SDAI_Integer  value; // long int
 
     public:
 //  INPUT

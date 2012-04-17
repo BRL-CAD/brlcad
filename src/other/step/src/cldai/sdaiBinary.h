@@ -15,21 +15,21 @@
 
 /* $Id: sdaiBinary.h,v */
 
-class SCLP23_NAME( Binary ) : public std::string {
+class SDAI_Binary  : public std::string {
     public:
 
         //constructor(s) & destructor
-        SCLP23_NAME( Binary )( const char * str = 0, int max = 0 )
+        SDAI_Binary ( const char * str = 0, int max = 0 )
             : std::string( str, max ) { }
 
 //Josh L, 3/28/95
-        SCLP23_NAME( Binary )( const std::string & s )   : std::string( s ) { }
+        SDAI_Binary ( const std::string & s )   : std::string( s ) { }
 
 
-        ~SCLP23_NAME( Binary )()  {  }
+        ~SDAI_Binary ()  {  }
 
         //  operators
-        SCLP23_NAME( Binary ) & operator= ( const char * s );
+        SDAI_Binary  & operator= ( const char * s );
 
         // format for STEP
         const char * asStr() const  {

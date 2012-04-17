@@ -1,8 +1,6 @@
 
 ///////////////////////////////////////////////////////////////////////////////
-#ifdef HAVE_CONFIG_H
-# include <scl_cf.h>
-#endif
+#include <scl_cf.h>
 
 #include <memory.h>
 #include <math.h>

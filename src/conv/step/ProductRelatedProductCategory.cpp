@@ -55,7 +55,7 @@ string ProductRelatedProductCategory::ClassName()
     return entityname;
 }
 
-bool ProductRelatedProductCategory::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+bool ProductRelatedProductCategory::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
     id = sse->STEPfile_id;
@@ -73,7 +73,7 @@ bool ProductRelatedProductCategory::Load(STEPWrapper *sw, SCLP23(Application_ins
 	LIST_OF_ENTITIES *l = step->getListOfEntities(sse, "products");
 	LIST_OF_ENTITIES::iterator i;
 	for (i = l->begin(); i != l->end(); i++) {
-	    SCLP23(Application_instance) *entity = (*i);
+	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
 		Product *aProd = dynamic_cast<Product *>(Factory::CreateObject(sw, entity));
 
@@ -112,7 +112,7 @@ void ProductRelatedProductCategory::Print(int level)
 }
 
 STEPEntity *
-ProductRelatedProductCategory::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+ProductRelatedProductCategory::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {

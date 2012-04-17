@@ -43,12 +43,12 @@ public:
 	virtual ~SweptSurface();
 	SweptSurface(STEPWrapper *sw,int step_id);
 	int GetSweptEdgeONId() { return swept_edge_ON_id; };
-	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual void Print(int level);
 
 	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
 };
 
 #endif /* SWEPT_SURFACE_H_ */

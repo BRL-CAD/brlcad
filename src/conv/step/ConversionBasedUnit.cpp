@@ -68,7 +68,7 @@ ConversionBasedUnit::GetSolidAngleConversionFactor() {
 }
 
 bool
-ConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+ConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -86,7 +86,7 @@ ConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     name = step->getStringAttribute(sse,"name");
 
     if (conversion_factor == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"conversion_factor");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"conversion_factor");
 	if (entity) {
 	    conversion_factor = dynamic_cast<MeasureWithUnit *>(Factory::CreateObject(sw,entity));
 	} else {
@@ -113,7 +113,7 @@ ConversionBasedUnit::Print(int level) {
 
 }
 STEPEntity *
-ConversionBasedUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+ConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	ConversionBasedUnit *object = new ConversionBasedUnit(sw,sse->STEPfile_id);

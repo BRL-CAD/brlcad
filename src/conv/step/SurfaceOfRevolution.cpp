@@ -49,7 +49,7 @@ SurfaceOfRevolution::~SurfaceOfRevolution() {
 }
 
 bool
-SurfaceOfRevolution::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+SurfaceOfRevolution::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -63,7 +63,7 @@ SurfaceOfRevolution::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (axis_position == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"axis_position");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"axis_position");
 	if (entity) {
 	    axis_position = dynamic_cast<Axis1Placement *>(Factory::CreateObject(sw,entity));
 	} else {
@@ -87,7 +87,7 @@ SurfaceOfRevolution::Print(int level) {
 }
 
 STEPEntity *
-SurfaceOfRevolution::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+SurfaceOfRevolution::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	SurfaceOfRevolution *object = new SurfaceOfRevolution(sw,sse->STEPfile_id);

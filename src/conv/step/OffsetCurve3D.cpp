@@ -60,7 +60,7 @@ OffsetCurve3D::~OffsetCurve3D() {
 }
 
 bool
-OffsetCurve3D::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+OffsetCurve3D::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -74,7 +74,7 @@ OffsetCurve3D::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (basis_curve == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"basis_curve");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"basis_curve");
 	if (entity) {
 	    basis_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
 	} else {
@@ -87,7 +87,7 @@ OffsetCurve3D::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     self_intersect = step->getLogicalAttribute(sse,"self_intersect");
 
     if (ref_direction == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"ref_direction");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"ref_direction");
 	if (entity) {
 	    ref_direction = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
 	} else {
@@ -123,7 +123,7 @@ OffsetCurve3D::Print(int level) {
     ref_direction->Print(level+1);
 }
 STEPEntity *
-OffsetCurve3D::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
+OffsetCurve3D::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	OffsetCurve3D *object = new OffsetCurve3D(sw,sse->STEPfile_id);

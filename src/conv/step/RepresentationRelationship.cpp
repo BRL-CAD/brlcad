@@ -63,7 +63,7 @@ string RepresentationRelationship::ClassName()
     return entityname;
 }
 
-bool RepresentationRelationship::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+bool RepresentationRelationship::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
     id = sse->STEPfile_id;
@@ -76,7 +76,7 @@ bool RepresentationRelationship::Load(STEPWrapper *sw, SCLP23(Application_instan
     description = step->getStringAttribute(sse, "description");
 
     if (rep_1 == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse, "rep_1");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "rep_1");
 	if (entity) { //this attribute is optional
 	    rep_1 = dynamic_cast<Representation *>(Factory::CreateObject(sw, entity));
 	} else {
@@ -86,7 +86,7 @@ bool RepresentationRelationship::Load(STEPWrapper *sw, SCLP23(Application_instan
     }
 
     if (rep_2 == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse, "rep_2");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "rep_2");
 	if (entity) { //this attribute is optional
 	    rep_2 = dynamic_cast<Representation *>(Factory::CreateObject(sw, entity));
 	} else {
@@ -119,7 +119,7 @@ void RepresentationRelationship::Print(int level)
 }
 
 STEPEntity *
-RepresentationRelationship::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+RepresentationRelationship::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {

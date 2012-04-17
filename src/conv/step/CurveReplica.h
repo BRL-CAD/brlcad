@@ -44,14 +44,14 @@ public:
 	virtual ~CurveReplica();
 	CurveReplica(STEPWrapper *sw,int step_id);
 	virtual curve_type CurveType() { return CURVE_REPLICA; };
-	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual const double *PointAtEnd();
 	virtual const double *PointAtStart();
 	virtual void Print(int level);
 
 	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
 };
 
 #endif /* CURVEREPLICA_H_ */

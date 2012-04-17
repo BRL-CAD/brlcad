@@ -49,7 +49,7 @@ GeometricRepresentationContext::~GeometricRepresentationContext() {
 }
 
 bool
-GeometricRepresentationContext::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+GeometricRepresentationContext::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -80,7 +80,7 @@ GeometricRepresentationContext::Print(int level) {
     RepresentationContext::Print(level+1);
 }
 STEPEntity *
-GeometricRepresentationContext::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+GeometricRepresentationContext::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	GeometricRepresentationContext *object = new GeometricRepresentationContext(sw,sse->STEPfile_id);

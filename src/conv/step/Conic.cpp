@@ -71,7 +71,7 @@ Conic::GetYAxis() {
 }
 
 bool
-Conic::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+Conic::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -85,7 +85,7 @@ Conic::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (position == NULL) {
-	SCLP23(Select) *select = step->getSelectAttribute(sse,"position");
+	SDAI_Select *select = step->getSelectAttribute(sse,"position");
 	if (select) {
 	    //if (select->CurrentUnderlyingType() == config_control_designt_axis2_placement) {
 	    Axis2Placement *aA2P = new Axis2Placement();
@@ -121,7 +121,7 @@ Conic::Print(int level) {
 }
 
 STEPEntity *
-Conic::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+Conic::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	Conic *object = new Conic(sw,sse->STEPfile_id);

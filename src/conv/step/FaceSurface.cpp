@@ -54,7 +54,7 @@ FaceSurface::~FaceSurface() {
 }
 
 bool
-FaceSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+FaceSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 
     step=sw;
     id = sse->STEPfile_id;
@@ -75,7 +75,7 @@ FaceSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (face_geometry == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"face_geometry");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"face_geometry");
 	if (entity) {
 	    //face_geometry = dynamic_cast<Surface *>(Factory::CreateGeometricRepresentationItemObject(sw,entity));
 	    face_geometry = dynamic_cast<Surface *>(Factory::CreateObject(sw,entity)); //CreateSurfaceObject(sw,entity));
@@ -105,7 +105,7 @@ FaceSurface::Print(int level) {
 }
 
 STEPEntity *
-FaceSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+FaceSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	FaceSurface *object = new FaceSurface(sw,sse->STEPfile_id);

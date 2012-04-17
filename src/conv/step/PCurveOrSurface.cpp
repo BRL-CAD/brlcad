@@ -67,7 +67,7 @@ PCurveOrSurface::~PCurveOrSurface() {
 }
 
 bool
-PCurveOrSurface::Load(STEPWrapper *sw,SCLP23(Select) *sse) {
+PCurveOrSurface::Load(STEPWrapper *sw,SDAI_Select *sse) {
     step=sw;
 
     std::cout << sse->UnderlyingTypeName() << std::endl;
@@ -76,11 +76,11 @@ PCurveOrSurface::Load(STEPWrapper *sw,SCLP23(Select) *sse) {
     if ( v->IsPcurve() ) {
 	type = PCURVE;
 	SdaiPcurve *p = *v;
-	pcurve = dynamic_cast<PCurve *>(Factory::CreateObject(sw,(SCLP23(Application_instance) *)p)); //CreateCurveObject(sw,(SCLP23(Application_instance) *)p));
+	pcurve = dynamic_cast<PCurve *>(Factory::CreateObject(sw,(SDAI_Application_instance *)p)); //CreateCurveObject(sw,(SDAI_Application_instance *)p));
     } else if (v->IsSurface()) {
 	type = SURFACE;
 	SdaiSurface *s = *v;
-	surface = dynamic_cast<Surface *>(Factory::CreateObject(sw,(SCLP23(Application_instance)*)s)); //CreateSurfaceObject(sw,(SCLP23(Application_instance)*)s));
+	surface = dynamic_cast<Surface *>(Factory::CreateObject(sw,(SDAI_Application_instance*)s)); //CreateSurfaceObject(sw,(SDAI_Application_instance*)s));
     }
 
     return true;
@@ -98,14 +98,14 @@ PCurveOrSurface::Print(int level) {
     }
 }
 STEPEntity *
-PCurveOrSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+PCurveOrSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	PCurveOrSurface *object = new PCurveOrSurface(sw,sse->STEPfile_id);
 
 	Factory::AddObject(object);
 
-	if (!object->Load(sw, (SCLP23(Select) *)sse)) {
+	if (!object->Load(sw, (SDAI_Select *)sse)) {
 	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 	    delete object;
 	    return NULL;

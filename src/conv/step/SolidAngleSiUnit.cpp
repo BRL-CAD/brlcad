@@ -47,7 +47,7 @@ SolidAngleSiUnit::~SolidAngleSiUnit() {
 }
 
 bool
-SolidAngleSiUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+SolidAngleSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -76,7 +76,7 @@ SolidAngleSiUnit::Print(int level) {
 
 }
 STEPEntity *
-SolidAngleSiUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+SolidAngleSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	SolidAngleSiUnit *object = new SolidAngleSiUnit(sw,sse->STEPfile_id);

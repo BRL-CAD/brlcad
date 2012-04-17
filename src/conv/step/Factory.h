@@ -36,11 +36,11 @@
 
 /* inteface headers */
 #include "STEPWrapper.h"
-#include "sclprefixes.h"
+
 
 
 class STEPEntity;
-typedef STEPEntity* (*FactoryMethod)(STEPWrapper*,SCLP23(Application_instance)*);
+typedef STEPEntity* (*FactoryMethod)(STEPWrapper*,SDAI_Application_instance*);
 typedef std::map<std::string,FactoryMethod> FACTORYMAP;
 typedef std::vector<STEPEntity *> VECTOR_OF_OBJECTS;
 
@@ -63,16 +63,16 @@ protected:
 	Factory();
 
 private:
-	static STEPEntity *CreateCurveObject(STEPWrapper *sw,SCLP23(Application_instance) *sse);
-	static STEPEntity *CreateSurfaceObject(STEPWrapper *sw,SCLP23(Application_instance) *sse);
-	static STEPEntity *CreateNamedUnitObject(STEPWrapper *sw,SCLP23(Application_instance) *sse);
-	static STEPEntity *CreateShapeRepresentationRelationshipObject(STEPWrapper *sw,SCLP23(Application_instance) *sse);
-	static STEPEntity *CreateRepresentationContext(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	static STEPEntity *CreateCurveObject(STEPWrapper *sw,SDAI_Application_instance *sse);
+	static STEPEntity *CreateSurfaceObject(STEPWrapper *sw,SDAI_Application_instance *sse);
+	static STEPEntity *CreateNamedUnitObject(STEPWrapper *sw,SDAI_Application_instance *sse);
+	static STEPEntity *CreateShapeRepresentationRelationshipObject(STEPWrapper *sw,SDAI_Application_instance *sse);
+	static STEPEntity *CreateRepresentationContext(STEPWrapper *sw,SDAI_Application_instance *sse);
 
 public:
 	static const char *factoryname;
 	virtual ~Factory();
-	static STEPEntity *CreateObject(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	static STEPEntity *CreateObject(STEPWrapper *sw,SDAI_Application_instance *sse);
 	static FACTORYMAP &GetMap();
 	static void Print();
     static std::string RegisterClass(std::string name, FactoryMethod f);

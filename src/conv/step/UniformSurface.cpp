@@ -48,7 +48,7 @@ UniformSurface::~UniformSurface() {
 }
 
 bool
-UniformSurface::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+UniformSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -70,7 +70,7 @@ UniformSurface::Print(int level) {
     BSplineSurface::Print(level+1);
 }
 STEPEntity *
-UniformSurface::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
+UniformSurface::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	UniformSurface *object = new UniformSurface(sw,sse->STEPfile_id);

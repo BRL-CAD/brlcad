@@ -58,7 +58,7 @@ string RepresentationRelationshipWithTransformation::ClassName()
     return entityname;
 }
 
-bool RepresentationRelationshipWithTransformation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+bool RepresentationRelationshipWithTransformation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
     id = sse->STEPfile_id;
@@ -73,15 +73,15 @@ bool RepresentationRelationshipWithTransformation::Load(STEPWrapper *sw, SCLP23(
 
     if (transformation_operator == NULL) {
 	// select-select
-	SCLP23(Select) *select = step->getSelectAttribute(sse, "transformation_operator");
+	SDAI_Select *select = step->getSelectAttribute(sse, "transformation_operator");
 	if (select) {
 	    SdaiTransformation *t = (SdaiTransformation *) select;
 	    if (t->IsItem_defined_transformation()) {
 		SdaiItem_defined_transformation *idt = *t;
-		transformation_operator = dynamic_cast<Transformation*>(Factory::CreateObject(sw, (SCLP23(Application_instance) *) idt));
+		transformation_operator = dynamic_cast<Transformation*>(Factory::CreateObject(sw, (SDAI_Application_instance *) idt));
 	    } else if (t->IsFunctionally_defined_transformation()) {
 		SdaiFunctionally_defined_transformation *fdt = *t;
-		transformation_operator = dynamic_cast<Transformation*>(Factory::CreateObject(sw, (SCLP23(Application_instance) *) fdt));
+		transformation_operator = dynamic_cast<Transformation*>(Factory::CreateObject(sw, (SDAI_Application_instance *) fdt));
 	    } else {
 		std::cerr << CLASSNAME << ": Unknown 'Transformation' type from select." << std::endl;
 		return false;
@@ -109,7 +109,7 @@ void RepresentationRelationshipWithTransformation::Print(int level)
 }
 
 STEPEntity *
-RepresentationRelationshipWithTransformation::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+RepresentationRelationshipWithTransformation::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {

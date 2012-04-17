@@ -47,7 +47,7 @@ IntersectionCurve::~IntersectionCurve() {
 }
 
 bool
-IntersectionCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+IntersectionCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -69,7 +69,7 @@ IntersectionCurve::Print(int level) {
 }
 
 STEPEntity *
-IntersectionCurve::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+IntersectionCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	IntersectionCurve *object = new IntersectionCurve(sw,sse->STEPfile_id);

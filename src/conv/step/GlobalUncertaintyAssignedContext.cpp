@@ -59,7 +59,7 @@ GlobalUncertaintyAssignedContext::~GlobalUncertaintyAssignedContext() {
 }
 
 bool
-GlobalUncertaintyAssignedContext::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+GlobalUncertaintyAssignedContext::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -77,7 +77,7 @@ GlobalUncertaintyAssignedContext::Load(STEPWrapper *sw,SCLP23(Application_instan
 	LIST_OF_ENTITIES *l = step->getListOfEntities(sse,"uncertainty");
 	LIST_OF_ENTITIES::iterator i;
 	for(i=l->begin();i!=l->end();i++) {
-	    SCLP23(Application_instance) *entity = (*i);
+	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
 		UncertaintyMeasureWithUnit *aUMWU = dynamic_cast<UncertaintyMeasureWithUnit *>(Factory::CreateObject(sw,entity));
 
@@ -112,7 +112,7 @@ GlobalUncertaintyAssignedContext::Print(int level) {
     RepresentationContext::Print(level+1);
 }
 STEPEntity *
-GlobalUncertaintyAssignedContext::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+GlobalUncertaintyAssignedContext::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	GlobalUncertaintyAssignedContext *object = new GlobalUncertaintyAssignedContext(sw,sse->STEPfile_id);

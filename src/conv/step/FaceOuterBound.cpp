@@ -48,7 +48,7 @@ FaceOuterBound::~FaceOuterBound() {
 }
 
 bool
-FaceOuterBound::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+FaceOuterBound::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     bool retValue = true;
 
     step=sw;
@@ -71,7 +71,7 @@ FaceOuterBound::Print(int level) {
 }
 
 STEPEntity *
-FaceOuterBound::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+FaceOuterBound::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	FaceOuterBound *object = new FaceOuterBound(sw,sse->STEPfile_id);

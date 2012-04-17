@@ -44,13 +44,13 @@ public:
 	virtual ~Loop();
 	Loop(STEPWrapper *sw,int step_id);
 	virtual ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
-	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual void Print(int level);
 	void SetLoopIndex(int index) { ON_loop_index = index; };
 
 	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
 };
 
 #endif /* LOOP_H_ */

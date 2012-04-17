@@ -47,7 +47,7 @@ BoundedSurfaceCurve::~BoundedSurfaceCurve() {
 }
 
 bool
-BoundedSurfaceCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+BoundedSurfaceCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -86,7 +86,7 @@ BoundedSurfaceCurve::Print(int level) {
 }
 
 STEPEntity *
-BoundedSurfaceCurve::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+BoundedSurfaceCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	BoundedSurfaceCurve *object = new BoundedSurfaceCurve(sw,sse->STEPfile_id);

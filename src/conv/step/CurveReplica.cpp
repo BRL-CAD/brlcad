@@ -54,7 +54,7 @@ CurveReplica::~CurveReplica() {
 }
 
 bool
-CurveReplica::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+CurveReplica::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -68,7 +68,7 @@ CurveReplica::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (parent_curve == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"parent_curve");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"parent_curve");
 	if (entity != NULL) {
 	    parent_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
 	} else {
@@ -78,7 +78,7 @@ CurveReplica::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     }
 
     if (transformation == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"transformation");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"transformation");
 	if (entity != NULL) {
 	    transformation = dynamic_cast<CartesianTransformationOperator *>(Factory::CreateObject(sw,entity));
 	} else {
@@ -119,7 +119,7 @@ CurveReplica::Print(int level) {
 }
 
 STEPEntity *
-CurveReplica::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
+CurveReplica::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	CurveReplica *object = new CurveReplica(sw,sse->STEPfile_id);

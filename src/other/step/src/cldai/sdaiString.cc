@@ -15,14 +15,14 @@
 #include <sstream>
 
 
-SCLP23( String ) &
-SCLP23( String )::operator= ( const char * s ) {
+SDAI_String  &
+SDAI_String ::operator= ( const char * s ) {
     std::string::operator= ( s );
     return *this;
 }
 
 void
-SCLP23( String )::STEPwrite( ostream & out ) const {
+SDAI_String ::STEPwrite( ostream & out ) const {
     const char * str = 0;
 // strings that exist but do not contain any chars should be written as '',
 // not $ --Josh L, 4/28/95
@@ -44,7 +44,7 @@ SCLP23( String )::STEPwrite( ostream & out ) const {
 }
 
 void
-SCLP23( String )::STEPwrite( std::string & s ) const {
+SDAI_String ::STEPwrite( std::string & s ) const {
     const char * str = 0;
 // null strings should be represented by '', not $ --Josh L, 4/28/95
 //    if (is_null ())
@@ -66,7 +66,7 @@ SCLP23( String )::STEPwrite( std::string & s ) const {
 }
 
 Severity
-SCLP23( String )::StrToVal( const char * s ) {
+SDAI_String ::StrToVal( const char * s ) {
     operator= ( s );
     if( ! strcmp( c_str(),  s ) ) {
         return SEVERITY_NULL ;
@@ -78,7 +78,7 @@ SCLP23( String )::StrToVal( const char * s ) {
 //  STEPread reads a string in exchange file format
 //  starting with a single quote
 Severity
-SCLP23( String )::STEPread( istream & in, ErrorDescriptor * err ) {
+SDAI_String ::STEPread( istream & in, ErrorDescriptor * err ) {
     int foundEndQuote = 0; // need so this string is not ok: 'hi''
     clear();  // clear the old string
     char c;
@@ -134,7 +134,7 @@ SCLP23( String )::STEPread( istream & in, ErrorDescriptor * err ) {
 }
 
 Severity
-SCLP23( String )::STEPread( const char * s, ErrorDescriptor * err ) {
+SDAI_String ::STEPread( const char * s, ErrorDescriptor * err ) {
     istringstream in( ( char * )s );
     return STEPread( in, err );
 }

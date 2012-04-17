@@ -61,7 +61,7 @@ DimensionalExponents::~DimensionalExponents() {
 }
 
 bool
-DimensionalExponents::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+DimensionalExponents::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -95,7 +95,7 @@ DimensionalExponents::Print(int level) {
     TAB(level+1); std::cout << "luminous_intensity_exponent:" << luminous_intensity_exponent << std::endl;
 }
 STEPEntity *
-DimensionalExponents::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+DimensionalExponents::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	DimensionalExponents *object = new DimensionalExponents(sw,sse->STEPfile_id);

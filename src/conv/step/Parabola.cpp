@@ -49,7 +49,7 @@ Parabola::~Parabola() {
 }
 
 bool
-Parabola::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+Parabola::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -79,7 +79,7 @@ Parabola::Print(int level) {
     Conic::Print(level+1);
 }
 STEPEntity *
-Parabola::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
+Parabola::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	Parabola *object = new Parabola(sw,sse->STEPfile_id);

@@ -55,7 +55,7 @@ NamedUnit::~NamedUnit() {
 }
 
 bool
-NamedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+NamedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -71,7 +71,7 @@ NamedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (dimensions == NULL) {
-	SCLP23(Application_instance) *se = step->getEntityAttribute(sse,"dimensions");
+	SDAI_Application_instance *se = step->getEntityAttribute(sse,"dimensions");
 	if (se != NULL ) {
 	    if (dimensions == NULL)
 		dimensions = new DimensionalExponents();
@@ -98,7 +98,7 @@ NamedUnit::Print(int level) {
 
 }
 STEPEntity *
-NamedUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+NamedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	NamedUnit *object = new NamedUnit(sw,sse->STEPfile_id);

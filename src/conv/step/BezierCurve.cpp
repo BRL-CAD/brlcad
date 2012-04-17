@@ -48,7 +48,7 @@ BezierCurve::~BezierCurve() {
 }
 
 bool
-BezierCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+BezierCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -72,7 +72,7 @@ BezierCurve::Print(int level) {
 
 }
 STEPEntity *
-BezierCurve::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
+BezierCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	BezierCurve *object = new BezierCurve(sw,sse->STEPfile_id);

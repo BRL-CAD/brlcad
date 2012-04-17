@@ -48,7 +48,7 @@ BezierSurface::~BezierSurface() {
 }
 
 bool
-BezierSurface::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+BezierSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -70,7 +70,7 @@ BezierSurface::Print(int level) {
     BSplineSurface::Print(level+1);
 }
 STEPEntity *
-BezierSurface::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
+BezierSurface::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	BezierSurface *object = new BezierSurface(sw,sse->STEPfile_id);

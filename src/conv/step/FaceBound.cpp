@@ -58,7 +58,7 @@ FaceBound::~FaceBound() {
 }
 
 bool
-FaceBound::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+FaceBound::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -73,7 +73,7 @@ FaceBound::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (bound == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"bound");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"bound");
 	if (entity) {
 	    bound = dynamic_cast<Loop*>(Factory::CreateObject(sw,entity));
 	} else {
@@ -110,7 +110,7 @@ FaceBound::Oriented() {
 }
 
 STEPEntity *
-FaceBound::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+FaceBound::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	FaceBound *object = new FaceBound(sw,sse->STEPfile_id);

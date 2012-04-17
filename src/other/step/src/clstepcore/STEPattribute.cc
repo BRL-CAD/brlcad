@@ -144,7 +144,7 @@ STEPattribute::StrToVal( const char * s, InstMgr * instances, int addFileId ) {
         }
 
         case BINARY_TYPE: {
-            ptr.b->StrToVal( s, &_error ); // call class SCLP23(Binary)::StrToVal()
+            ptr.b->StrToVal( s, &_error ); // call class SDAI_Binary::StrToVal()
             break;
         }
         case STRING_TYPE: {
@@ -326,7 +326,7 @@ STEPattribute::STEPread( istream & in, InstMgr * instances, int addFileId,
             return _error.severity();
         }
         case BINARY_TYPE: {
-            // call class SCLP23(Binary)::STEPread()
+            // call class SDAI_Binary::STEPread()
             ptr.b->STEPread( in, &_error );
             CheckRemainingInput( in, &_error, "binary", ",)" );
             return _error.severity();
@@ -414,7 +414,7 @@ STEPattribute::STEPread( istream & in, InstMgr * instances, int addFileId,
 /*********************************************************************
  ** Procedure:  asStr
  ** Parameters: currSch - used for select type writes.  See commenting
- **             in SCLP23(Select)::STEPwrite().
+ **             in SDAI_Select::STEPwrite().
  ** Returns:
  ** Description:  the value of the attribute is returned as a string.
  ** Side Effects:
@@ -557,7 +557,7 @@ STEPattribute::STEPwrite( ostream & out, const char * currSch ) {
             WriteReal( *( ptr.r ), out );
             /*
                 char rbuf[64];
-                SCLP23(Real) tmp = *(ptr.r);
+                SDAI_Real tmp = *(ptr.r);
 
                     // IMS (6 Jun 95):
                     // Previously, this code was explicitly rounding reals with
@@ -639,7 +639,7 @@ STEPattribute::STEPwrite( ostream & out, const char * currSch ) {
                 _error.GreaterSeverity( SEVERITY_BUG );
                 sprintf( errStr,
                          " Warning: attribute '%s : %s' should be pointing at %s",
-                         Name(), TypeName(), "an SCLP23(String).\n" );
+                         Name(), TypeName(), "an SDAI_String.\n" );
                 _error.AppendToUserMsg( errStr );
                 _error.AppendToDetailMsg( errStr );
             }
@@ -659,7 +659,7 @@ STEPattribute::STEPwrite( ostream & out, const char * currSch ) {
                 _error.GreaterSeverity( SEVERITY_BUG );
                 sprintf( errStr,
                          " Warning: attribute '%s : %s' should be pointing at %s",
-                         Name(), TypeName(), "an SCLP23(Binary).\n" );
+                         Name(), TypeName(), "an SDAI_Binary.\n" );
                 _error.AppendToUserMsg( errStr );
                 _error.AppendToDetailMsg( errStr );
             }
@@ -688,7 +688,7 @@ STEPattribute::STEPwrite( ostream & out, const char * currSch ) {
                 _error.GreaterSeverity( SEVERITY_BUG );
                 sprintf( errStr,
                          " Warning: attribute '%s : %s' should be pointing at %s",
-                         Name(), TypeName(), "a SCLP23(Enum) class.\n" );
+                         Name(), TypeName(), "a SDAI_Enum class.\n" );
                 _error.AppendToUserMsg( errStr );
                 _error.AppendToDetailMsg( errStr );
             }
@@ -707,7 +707,7 @@ STEPattribute::STEPwrite( ostream & out, const char * currSch ) {
                 _error.GreaterSeverity( SEVERITY_BUG );
                 sprintf( errStr,
                          " Warning: attribute '%s : %s' should be pointing at %s",
-                         Name(), TypeName(), "a SCLP23(Select) class.\n" );
+                         Name(), TypeName(), "a SDAI_Select class.\n" );
                 _error.AppendToUserMsg( errStr );
                 _error.AppendToDetailMsg( errStr );
             }
@@ -774,8 +774,8 @@ STEPattribute::ShallowCopy( STEPattribute * sa ) {
     return 1;
 }
 
-// for a string attribute this means, make it not exist i.e. SCLP23(String)
-// will exist in member variable ptr but SCLP23(string) will be told to report
+// for a string attribute this means, make it not exist i.e. SDAI_String
+// will exist in member variable ptr but SDAI_string will be told to report
 // as not containing a value (even a value of no chars).
 
 Severity
@@ -854,7 +854,7 @@ STEPattribute::set_null() {
 }
 
 // For a string value this reports whether the string exists (as reported by
-// SCLP23(String) ) not whether SCLP23(String) contains a null string.
+// SDAI_String ) not whether SDAI_String contains a null string.
 
 int
 STEPattribute::is_null()  const {
@@ -1043,7 +1043,7 @@ ostream & operator<< ( ostream & out, STEPattribute & a ) {
 ///////////////////////////// AddErrorInfo() //////////////////////////////////
 // This adds prepends attribute information to the detailed error msg.  This
 // is intended to add information to the error msgs written by Enumerations,
-// Aggregates, and SCLP23(String)s which don't know they are a STEPattribute
+// Aggregates, and SDAI_Strings which don't know they are a STEPattribute
 // value.
 ///////////////////////////////////////////////////////////////////////////////
 

@@ -15,16 +15,16 @@
 /* $Id: sdaiSelect.h,v 1.5 1997/11/05 21:59:15 sauderd DP3.1 $ */
 
 /**********
-    class definition for the select superclass SCLP23_NAME(Select).
+    class definition for the select superclass SDAI_Select.
 **********/
-class SCLP23_NAME( Select ) {
+class SDAI_Select  {
     protected:
         const SelectTypeDescriptor * _type;
         const TypeDescriptor    *   underlying_type;
         BASE_TYPE           base_type; // used by the subtypes
 
         // it looks like this member, val, is not used anywhere 9/27/96 - DAS
-        SCLP23_NAME( String ) val;
+        SDAI_String  val;
         ErrorDescriptor _error;
 
         const TypeDescriptor * SetUnderlyingType( const TypeDescriptor * );
@@ -36,8 +36,8 @@ class SCLP23_NAME( Select ) {
 
         int IsUnique( const BASE_TYPE bt ) const;
 
-        virtual const TypeDescriptor * AssignEntity( SCLP23_NAME( Application_instance ) * se ) = 0;
-        virtual SCLP23_NAME( Select ) * NewSelect() = 0;
+        virtual const TypeDescriptor * AssignEntity( SDAI_Application_instance  * se ) = 0;
+        virtual SDAI_Select  * NewSelect() = 0;
     public:
         Severity severity() const;
         Severity severity( Severity );
@@ -50,12 +50,12 @@ class SCLP23_NAME( Select ) {
         virtual BASE_TYPE ValueType() const = 0;
 
         // constructors
-        SCLP23_NAME( Select )( const SelectTypeDescriptor * s = 0,
+        SDAI_Select ( const SelectTypeDescriptor * s = 0,
                                const TypeDescriptor * td = 0 );
-        virtual ~SCLP23_NAME( Select )();
+        virtual ~SDAI_Select ();
 
         // from SDAI binding
-        SCLP23_NAME( String ) UnderlyingTypeName() const;
+        SDAI_String  UnderlyingTypeName() const;
         const TypeDescriptor * CurrentUnderlyingType() const;
         bool exists() const;
         void nullify();
@@ -91,14 +91,14 @@ class SCLP23_NAME( Select ) {
                                            int addFileId = 0,
                                            const char * currSch = 0 ) = 0;
 
-        virtual SCLP23_NAME( Select ) & operator =( const SCLP23_NAME( Select ) & ) = 0;
+        virtual SDAI_Select  & operator =( const SDAI_Select  & ) = 0;
 
         int set_null();
         int is_null();
 
 };  /** end class  **/
 
-typedef SCLP23_NAME( Select ) * SCLP23_NAME( Select_ptr ) ;
-typedef SCLP23_NAME( Select_ptr ) SCLP23_NAME( Select_var ) ;
+typedef SDAI_Select  * SDAI_Select_ptr  ;
+typedef SDAI_Select_ptr  SDAI_Select_var  ;
 
 #endif

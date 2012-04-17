@@ -47,7 +47,7 @@ FoundedItem::~FoundedItem() {
 }
 
 bool
-FoundedItem::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+FoundedItem::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -60,7 +60,7 @@ FoundedItem::Print(int level) {
     std::cout << "ID:" << STEPid() << ")" << std::endl;
 }
 STEPEntity *
-FoundedItem::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+FoundedItem::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	FoundedItem *object = new FoundedItem(sw,sse->STEPfile_id);

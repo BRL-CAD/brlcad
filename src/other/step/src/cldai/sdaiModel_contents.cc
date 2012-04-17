@@ -1,90 +1,90 @@
 
 #include <sdai.h>
 
-/////////    SCLP23(Model_contents_instances)
+/////////    SDAI_Model_contents_instances
 
-SCLP23( Model_contents_instances )::SCLP23_NAME( Model_contents_instances )( ) {
+SDAI_Model_contents_instances ::SDAI_Model_contents_instances ( ) {
 }
 
 /*
-SCLP23(Model_contents_instances)::SCLP23_NAME(Model_contents_instances) (const SCLP23(Model_contents_instances)& e )
+SDAI_Model_contents_instances)::SDAI_Model_contents_instances) (const SCLP23(Model_contents_instances& e 
 {
 }
 */
 
-SCLP23( Model_contents_instances )::~SCLP23_NAME( Model_contents_instances )() {
+SDAI_Model_contents_instances ::~SDAI_Model_contents_instances () {
 }
 
-/////////    SCLP23(Model_contents)
+/////////    SDAI_Model_contents
 
-SCLP23( Model_contents )::SCLP23_NAME( Model_contents )( ) {
+SDAI_Model_contents ::SDAI_Model_contents ( ) {
 }
 
 /*
-SCLP23(Model_contents)::SCLP23_NAME(Model_contents) (const SCLP23(Model_contents)& e )
+SDAI_Model_contents)::SDAI_Model_contents) (const SCLP23(Model_contents& e 
 {
 //    CopyAs((STEPentityH) &e);
 }
 */
 
-SCLP23( Model_contents )::~SCLP23_NAME( Model_contents )() {
+SDAI_Model_contents ::~SDAI_Model_contents () {
 }
 
 //    const Entity_instance__set_var instances() const;
 //const SDAIAGGRH(Set, EntityInstanceH) Instances() const;
-SCLP23( Model_contents_instances_ptr )
-SCLP23( Model_contents )::instances_() {
+SDAI_Model_contents_instances_ptr 
+SDAI_Model_contents ::instances_() {
     return &_instances;
 }
 
-SCLP23( Model_contents_instances_ptr )
-SCLP23( Model_contents )::instances_() const {
-    return ( const SCLP23( Model_contents_instances_ptr ) ) &_instances;
+SDAI_Model_contents_instances_ptr 
+SDAI_Model_contents ::instances_() const {
+    return ( const SDAI_Model_contents_instances_ptr  ) &_instances;
 }
 
-SCLP23( Entity_extent__set_var )
-SCLP23( Model_contents )::folders_() {
+SDAI_Entity_extent__set_var 
+SDAI_Model_contents ::folders_() {
     return &_folders;
 }
 
-SCLP23( Entity_extent__set_var )
-SCLP23( Model_contents )::folders_() const {
-    return ( const SCLP23( Entity_extent__set_var ) )&_folders;
+SDAI_Entity_extent__set_var 
+SDAI_Model_contents ::folders_() const {
+    return ( const SDAI_Entity_extent__set_var  )&_folders;
 }
 
-SCLP23( Entity_extent__set_var )
-SCLP23( Model_contents )::populated_folders_() {
+SDAI_Entity_extent__set_var 
+SDAI_Model_contents ::populated_folders_() {
     return &_populated_folders;
 }
 
-SCLP23( Entity_extent__set_var )
-SCLP23( Model_contents )::populated_folders_() const {
-    return ( const SCLP23( Entity_extent__set_var ) )&_populated_folders;
+SDAI_Entity_extent__set_var 
+SDAI_Model_contents ::populated_folders_() const {
+    return ( const SDAI_Entity_extent__set_var  )&_populated_folders;
 }
 
-SCLP23( PID_DA_ptr )
-SCLP23( Model_contents )::get_object_pid( const SCLP23( DAObject_ptr & d ) )
+SDAI_PID_DA_ptr 
+SDAI_Model_contents ::get_object_pid( const SDAI_DAObject_ptr & d  )
 const {
     return 0;
 }
 
-SCLP23( DAObject_ptr )
-SCLP23( Model_contents )::lookup( const SCLP23( PID_DA_ptr & p ) ) const {
+SDAI_DAObject_ptr 
+SDAI_Model_contents ::lookup( const SDAI_PID_DA_ptr & p  ) const {
     return 0;
 }
 
-SCLP23( DAObject_ptr )
-SCLP23( Model_contents )::CreateEntityInstance( const char * Type ) {
+SDAI_DAObject_ptr 
+SDAI_Model_contents ::CreateEntityInstance( const char * Type ) {
     return 0;
 }
 
 void
-SCLP23( Model_contents )::AddInstance( const SCLP23( DAObject_SDAI_ptr )& appInst ) {
+SDAI_Model_contents ::AddInstance( const SDAI_DAObject_SDAI_ptr & appInst ) {
     _instances.contents_()->Append( appInst );
 }
 
 void
-SCLP23( Model_contents )::RemoveInstance( SCLP23( DAObject_SDAI_ptr )& appInst ) {
+SDAI_Model_contents ::RemoveInstance( SDAI_DAObject_SDAI_ptr & appInst ) {
     _instances.contents_()->Remove( _instances.contents_()->Index( appInst ) );
 }
 
@@ -93,19 +93,19 @@ SCLP23( Model_contents )::RemoveInstance( SCLP23( DAObject_SDAI_ptr )& appInst )
 #if 0 // for now
 
 Any_var
-SCLP23( Model_contents )::GetEntity_extent( const std::string & entityName ) {
+SDAI_Model_contents ::GetEntity_extent( const std::string & entityName ) {
 }
 
 const Any_var
-SCLP23( Model_contents )::GetEntity_extent( const std::string & entityName ) const {
+SDAI_Model_contents ::GetEntity_extent( const std::string & entityName ) const {
 }
 
 Any_var
-SCLP23( Model_contents )::GetEntity_extent( const Entity_ptr & ep ) {
+SDAI_Model_contents ::GetEntity_extent( const Entity_ptr & ep ) {
 }
 
 const Any_var
-SCLP23( Model_contents )::GetEntity_extent( const Entity_ptr & ep ) const {
+SDAI_Model_contents ::GetEntity_extent( const Entity_ptr & ep ) const {
 }
 
 #endif
@@ -134,4 +134,4 @@ SCLP23( Model_contents )::GetEntity_extent( const Entity_ptr & ep ) const {
    */
 
 #endif
-////////     END SCLP23(Model_contents)
+////////     END SDAI_Model_contents

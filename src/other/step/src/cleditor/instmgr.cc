@@ -103,7 +103,7 @@ InstMgr::VerifyInstances( ErrorDescriptor & err ) {
 
     int n = InstanceCount();
     MgrNode * mn;
-    SCLP23( Application_instance )* se;
+    SDAI_Application_instance * se;
     enum Severity rval = SEVERITY_NULL;
 
     //for each instance on the list,
@@ -180,7 +180,7 @@ MgrNode * InstMgr::FindFileId( int fileId ) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// get the index into display list given a SCLP23(Application_instance)
+// get the index into display list given a SDAI_Application_instance
 //  called by see initiated functions
 int InstMgr::GetIndex( MgrNode * mn ) {
     return mn->ArrayIndex();
@@ -188,7 +188,7 @@ int InstMgr::GetIndex( MgrNode * mn ) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int InstMgr::GetIndex( SCLP23( Application_instance ) *se ) {
+int InstMgr::GetIndex( SDAI_Application_instance  *se ) {
     int fileId = se->StepFileId();
     return sortedMaster->MgrNodeIndex( fileId );
 }
@@ -212,7 +212,7 @@ int InstMgr::VerifyEntity( int fileId, const char * expectedType ) {
 //   Append instance to the list of instances.  Checks the file id and
 //   sets it if 1) it is not set already or 2) it already exists in the list.
 
-MgrNode * InstMgr::Append( SCLP23( Application_instance ) *se, stateEnum listState ) {
+MgrNode * InstMgr::Append( SDAI_Application_instance  *se, stateEnum listState ) {
     if( debug_level > 3 ) {
         cout << "#" << se->StepFileId() << " append node to InstMgr" << endl;
     }
@@ -272,7 +272,7 @@ void InstMgr::Delete( MgrNode * node ) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void InstMgr::Delete( SCLP23( Application_instance ) *se ) {
+void InstMgr::Delete( SDAI_Application_instance  *se ) {
     Delete( FindFileId( se->StepFileId() ) );
 }
 
@@ -324,7 +324,7 @@ int
 InstMgr::EntityKeywordCount( const char * name ) {
     int count = 0;
     MgrNode * node;
-    SCLP23( Application_instance )* se;
+    SDAI_Application_instance * se;
     int n = InstanceCount();
     for( int j = 0; j < n; ++j ) {
         node = GetMgrNode( j );
@@ -339,7 +339,7 @@ InstMgr::EntityKeywordCount( const char * name ) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-SCLP23( Application_instance ) *
+SDAI_Application_instance  *
 InstMgr::GetApplication_instance( int index ) {
     MgrNode * mn = ( MgrNode * )( *master )[index];
     if( mn ) {
@@ -349,7 +349,7 @@ InstMgr::GetApplication_instance( int index ) {
     }
 }
 
-SCLP23( Application_instance ) *
+SDAI_Application_instance  *
 InstMgr::GetSTEPentity( int index ) {
     MgrNode * mn = ( MgrNode * )( *master )[index];
     if( mn ) {
@@ -371,10 +371,10 @@ InstMgr::GetSTEPentity( int index ) {
     does not wrap around to search indices before the
     starting_index.
 **************************************************/
-SCLP23( Application_instance ) *
+SDAI_Application_instance  *
 InstMgr::GetApplication_instance( const char * entityKeyword, int starting_index ) {
     MgrNode * node;
-    SCLP23( Application_instance ) *se;
+    SDAI_Application_instance  *se;
 
     int count = InstanceCount();
     for( int j = starting_index; j < count; ++j ) {
@@ -388,10 +388,10 @@ InstMgr::GetApplication_instance( const char * entityKeyword, int starting_index
     return ENTITY_NULL;
 }
 
-SCLP23( Application_instance ) *
+SDAI_Application_instance  *
 InstMgr::GetSTEPentity( const char * entityKeyword, int starting_index ) {
     MgrNode * node;
-    SCLP23( Application_instance ) *se;
+    SDAI_Application_instance  *se;
 
     int count = InstanceCount();
     for( int j = starting_index; j < count; ++j ) {

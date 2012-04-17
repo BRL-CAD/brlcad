@@ -62,14 +62,14 @@ public:
 	virtual ~Path();
 	Path(STEPWrapper *sw,int step_id);
 	virtual ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
-	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	bool LoadONTrimmingCurves(ON_Brep *brep);
 	virtual void Print(int level);
 	void SetPathIndex(int index) { ON_path_index = index; };
 	bool ShiftSurfaceSeam(ON_Brep *brep, double *t);
 	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
 };
 
 #endif /* PATH_H_ */

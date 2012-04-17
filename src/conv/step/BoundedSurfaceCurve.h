@@ -40,14 +40,14 @@ public:
 	BoundedSurfaceCurve();
 	virtual ~BoundedSurfaceCurve();
 	BoundedSurfaceCurve(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual const double *PointAtEnd();
 	virtual const double *PointAtStart();
 	virtual void Print(int level);
 
 	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
 };
 
 #endif /* BOUNDEDSURFACECURVE_H_ */

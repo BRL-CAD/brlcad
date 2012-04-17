@@ -60,7 +60,7 @@ CompositeCurve::~CompositeCurve() {
 }
 
 bool
-CompositeCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+CompositeCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -77,7 +77,7 @@ CompositeCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	LIST_OF_ENTITIES *l = step->getListOfEntities(sse,"segments");
 	LIST_OF_ENTITIES::iterator i;
 	for(i=l->begin();i!=l->end();i++) {
-	    SCLP23(Application_instance) *entity = (*i);
+	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
 	    	CompositeCurveSegment *aCCS = dynamic_cast<CompositeCurveSegment *>(Factory::CreateObject(sw,entity));
 
@@ -126,7 +126,7 @@ CompositeCurve::Print(int level) {
     BoundedCurve::Print(level+1);
 }
 STEPEntity *
-CompositeCurve::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+CompositeCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	CompositeCurve *object = new CompositeCurve(sw,sse->STEPfile_id);

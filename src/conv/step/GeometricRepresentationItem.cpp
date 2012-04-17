@@ -47,7 +47,7 @@ GeometricRepresentationItem::~GeometricRepresentationItem() {
 }
 
 bool
-GeometricRepresentationItem::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+GeometricRepresentationItem::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 
     step=sw;
     id = sse->STEPfile_id;
@@ -71,7 +71,7 @@ GeometricRepresentationItem::Print(int level) {
 }
 
 STEPEntity *
-GeometricRepresentationItem::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+GeometricRepresentationItem::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	GeometricRepresentationItem *object = new GeometricRepresentationItem(sw,sse->STEPfile_id);

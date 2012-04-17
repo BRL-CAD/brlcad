@@ -52,7 +52,7 @@ DerivedUnitElement::~DerivedUnitElement() {
 }
 
 bool
-DerivedUnitElement::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+DerivedUnitElement::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -61,7 +61,7 @@ DerivedUnitElement::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (unit == NULL) {
-	SCLP23(Application_instance) *se = step->getEntityAttribute(sse,"unit");
+	SDAI_Application_instance *se = step->getEntityAttribute(sse,"unit");
 
 	if (se != NULL) {
 	    //unit = dynamic_cast<NamedUnit*>(Factory::CreateNamedUnitObject(sw,se));
@@ -91,7 +91,7 @@ DerivedUnitElement::Print(int level) {
     TAB(level+1); std::cout << "exponent:" << exponent << std::endl;
 }
 STEPEntity *
-DerivedUnitElement::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+DerivedUnitElement::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	DerivedUnitElement *object = new DerivedUnitElement(sw,sse->STEPfile_id);

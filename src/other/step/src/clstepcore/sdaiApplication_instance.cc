@@ -20,12 +20,12 @@
 #include <STEPcomplex.h>
 #include <STEPattribute.h>
 
-SCLP23( Application_instance ) NilSTEPentity;
+SDAI_Application_instance  NilSTEPentity;
 
 /******************************************************************
 **    Functions for manipulating entities
 
-**  KNOWN BUGs:  the SCLP23(Application_instance) is not aware of the STEPfile;
+**  KNOWN BUGs:  the SDAI_Application_instance is not aware of the STEPfile;
 **    therefore it can not read comments which may be embedded in the instance.
 **    The following are known problems:
 **    -- does not handle comments embedded in an instance ==> bombs
@@ -33,17 +33,17 @@ SCLP23( Application_instance ) NilSTEPentity;
 **    -- error reporting does not include line number information
 **/
 
-SCLP23( Application_instance )::SCLP23_NAME( Application_instance )()
+SDAI_Application_instance ::SDAI_Application_instance ()
     :  _cur( 0 ), STEPfile_id( 0 ), p21Comment( 0 ), headMiEntity( 0 ), nextMiEntity( 0 ),
        _complex( 0 ) {
 }
 
-SCLP23( Application_instance )::SCLP23_NAME( Application_instance )( int fileid, int complex )
+SDAI_Application_instance ::SDAI_Application_instance ( int fileid, int complex )
     :  _cur( 0 ), STEPfile_id( fileid ), p21Comment( 0 ),
        headMiEntity( 0 ), nextMiEntity( 0 ), _complex( complex ) {
 }
 
-SCLP23( Application_instance )::~SCLP23_NAME( Application_instance )() {
+SDAI_Application_instance ::~SDAI_Application_instance () {
     STEPattribute * next = 0;
     ResetAttributes();
     while( next = NextAttribute() ) {
@@ -59,8 +59,8 @@ SCLP23( Application_instance )::~SCLP23_NAME( Application_instance )() {
     /*
     // this is not necessary since each will call delete on its
     // own nextMiEntity - DAS
-      SCLP23(Application_instance) * nextMI = nextMiEntity;
-      SCLP23(Application_instance) * nextMItrail = 0;
+      SDAI_Application_instance * nextMI = nextMiEntity;
+      SDAI_Application_instance * nextMItrail = 0;
       while(nextMI)
       {
           nextMItrail = nextMI;
@@ -71,14 +71,14 @@ SCLP23( Application_instance )::~SCLP23_NAME( Application_instance )() {
     */
 }
 
-SCLP23( Application_instance ) *
-SCLP23( Application_instance )::Replicate() {
+SDAI_Application_instance  *
+SDAI_Application_instance ::Replicate() {
     char errStr[BUFSIZ];
     if( IsComplex() ) {
         cerr << "STEPcomplex::Replicate() should be called:  " << __FILE__
              <<  __LINE__ << "\n" << _POC_ "\n";
         sprintf( errStr,
-                 "SCLP23(Application_instance)::Replicate(): %s - entity #%d.\n",
+                 "SDAI_Application_instance)::Replicate(: %s - entity #%d.\n",
                  "Programming ERROR - STEPcomplex::Replicate() should be called",
                  STEPfile_id );
         _error.AppendToDetailMsg( errStr );
@@ -86,13 +86,13 @@ SCLP23( Application_instance )::Replicate() {
         _error.GreaterSeverity( SEVERITY_BUG );
         return S_ENTITY_NULL;
     } else {
-        SCLP23( Application_instance ) *seNew = eDesc->NewSTEPentity();
+        SDAI_Application_instance  *seNew = eDesc->NewSTEPentity();
         seNew -> CopyAs( this );
         return seNew;
     }
 }
 
-void SCLP23( Application_instance )::AddP21Comment( const char * s, int replace ) {
+void SDAI_Application_instance ::AddP21Comment( const char * s, int replace ) {
     if( replace ) {
         delete p21Comment;
         p21Comment = 0;
@@ -108,7 +108,7 @@ void SCLP23( Application_instance )::AddP21Comment( const char * s, int replace 
 }
 
 void
-SCLP23( Application_instance )::AddP21Comment( std::string & s, int replace ) {
+SDAI_Application_instance ::AddP21Comment( std::string & s, int replace ) {
     if( replace ) {
         delete p21Comment;
         p21Comment = 0;
@@ -124,12 +124,12 @@ SCLP23( Application_instance )::AddP21Comment( std::string & s, int replace ) {
 }
 
 void
-SCLP23( Application_instance )::STEPwrite_reference( ostream & out ) {
+SDAI_Application_instance ::STEPwrite_reference( ostream & out ) {
     out << "#" << STEPfile_id;
 }
 
 const char *
-SCLP23( Application_instance )::STEPwrite_reference( std::string & buf ) {
+SDAI_Application_instance ::STEPwrite_reference( std::string & buf ) {
     char tmp[64];
     sprintf( tmp, "#%d", STEPfile_id );
     buf = tmp;
@@ -137,12 +137,12 @@ SCLP23( Application_instance )::STEPwrite_reference( std::string & buf ) {
 }
 
 void
-SCLP23( Application_instance )::AppendMultInstance( SCLP23( Application_instance ) *se ) {
+SDAI_Application_instance ::AppendMultInstance( SDAI_Application_instance  *se ) {
     if( nextMiEntity == 0 ) {
         nextMiEntity = se;
     } else {
-        SCLP23( Application_instance ) *link = nextMiEntity;
-        SCLP23( Application_instance ) *linkTrailing = 0;
+        SDAI_Application_instance  *link = nextMiEntity;
+        SDAI_Application_instance  *linkTrailing = 0;
         while( link ) {
             linkTrailing = link;
             link = link->nextMiEntity;
@@ -153,8 +153,8 @@ SCLP23( Application_instance )::AppendMultInstance( SCLP23( Application_instance
 
 // BUG implement this
 
-SCLP23( Application_instance ) *
-SCLP23( Application_instance )::GetMiEntity( char * EntityName ) {
+SDAI_Application_instance  *
+SDAI_Application_instance ::GetMiEntity( char * EntityName ) {
     std::string s1, s2;
 
     const EntityDescLinkNode * edln = 0;
@@ -182,7 +182,7 @@ SCLP23( Application_instance )::GetMiEntity( char * EntityName ) {
 
 
 STEPattribute *
-SCLP23( Application_instance )::GetSTEPattribute( const char * nm ) {
+SDAI_Application_instance ::GetSTEPattribute( const char * nm ) {
     if( !nm ) {
         return 0;
     }
@@ -197,7 +197,7 @@ SCLP23( Application_instance )::GetSTEPattribute( const char * nm ) {
 }
 
 STEPattribute *
-SCLP23( Application_instance )::MakeRedefined( STEPattribute * redefiningAttr, const char * nm ) {
+SDAI_Application_instance ::MakeRedefined( STEPattribute * redefiningAttr, const char * nm ) {
     // find the attribute being redefined
     STEPattribute * a = GetSTEPattribute( nm );
 
@@ -209,7 +209,7 @@ SCLP23( Application_instance )::MakeRedefined( STEPattribute * redefiningAttr, c
 }
 
 STEPattribute *
-SCLP23( Application_instance )::MakeDerived( const char * nm ) {
+SDAI_Application_instance ::MakeDerived( const char * nm ) {
     STEPattribute * a = GetSTEPattribute( nm );
     if( a ) {
         a ->Derive();
@@ -218,7 +218,7 @@ SCLP23( Application_instance )::MakeDerived( const char * nm ) {
 }
 
 void
-SCLP23( Application_instance )::CopyAs( SCLP23( Application_instance ) * other ) {
+SDAI_Application_instance ::CopyAs( SDAI_Application_instance  * other ) {
     int numAttrs = AttributeCount();
     ResetAttributes();
     other -> ResetAttributes();
@@ -234,15 +234,15 @@ SCLP23( Application_instance )::CopyAs( SCLP23( Application_instance ) * other )
 
 
 const char *
-SCLP23( Application_instance )::EntityName( const char * schnm ) const {
+SDAI_Application_instance ::EntityName( const char * schnm ) const {
     return eDesc->Name( schnm );
 }
 
 /*****************************************************************
-  Checks if a given SCLP23(Application_instance) is the same type as this one
+  Checks if a given SDAI_Application_instance is the same type as this one
   ****************************************************************/
 
-const EntityDescriptor * SCLP23( Application_instance )::IsA( const EntityDescriptor * ed ) const {
+const EntityDescriptor * SDAI_Application_instance ::IsA( const EntityDescriptor * ed ) const {
     return ( eDesc->IsA( ed ) );
 }
 
@@ -250,7 +250,7 @@ const EntityDescriptor * SCLP23( Application_instance )::IsA( const EntityDescri
 // Checks the validity of the current attribute values for the entity
  ******************************************************************/
 
-Severity SCLP23( Application_instance )::ValidLevel( ErrorDescriptor * error, InstMgr * im,
+Severity SDAI_Application_instance ::ValidLevel( ErrorDescriptor * error, InstMgr * im,
         int clearError ) {
     ErrorDescriptor err;
     if( clearError ) {
@@ -269,7 +269,7 @@ Severity SCLP23( Application_instance )::ValidLevel( ErrorDescriptor * error, In
 /******************************************************************
     // clears all attr's errors
  ******************************************************************/
-void SCLP23( Application_instance )::ClearAttrError() {
+void SDAI_Application_instance ::ClearAttrError() {
     int n = attributes.list_length();
     for( int i = 0 ; i < n; i++ ) {
         attributes[i].Error().ClearErrorMsg();
@@ -280,7 +280,7 @@ void SCLP23( Application_instance )::ClearAttrError() {
     // clears entity's error and optionally all attr's errors
  ******************************************************************/
 
-void SCLP23( Application_instance )::ClearError( int clearAttrs ) {
+void SDAI_Application_instance ::ClearError( int clearAttrs ) {
     _error.ClearErrorMsg();
     if( clearAttrs ) {
         ClearAttrError();
@@ -291,7 +291,7 @@ void SCLP23( Application_instance )::ClearError( int clearAttrs ) {
  ******************************************************************/
 
 /*
-void SCLP23(Application_instance)::EnforceOptionality(int on)
+void SDAI_Application_instance)::EnforceOptionality(int on
 {
     Enforcement e;
     if(on) e = ENFORCE_OPTIONALITY;
@@ -312,7 +312,7 @@ void SCLP23(Application_instance)::EnforceOptionality(int on)
  ** Status:  stub
  ******************************************************************/
 
-void SCLP23( Application_instance )::beginSTEPwrite( ostream & out ) {
+void SDAI_Application_instance ::beginSTEPwrite( ostream & out ) {
     out << "begin STEPwrite ... \n" ;
     out.flush();
 
@@ -336,7 +336,7 @@ void SCLP23( Application_instance )::beginSTEPwrite( ostream & out ) {
  ******************************************************************/
 
 void
-SCLP23( Application_instance )::STEPwrite( ostream & out, const char * currSch,
+SDAI_Application_instance ::STEPwrite( ostream & out, const char * currSch,
         int writeComments ) {
     std::string tmp;
     if( writeComments && p21Comment && !p21Comment->empty() ) {
@@ -357,13 +357,13 @@ SCLP23( Application_instance )::STEPwrite( ostream & out, const char * currSch,
     out << ");\n";
 }
 
-void SCLP23( Application_instance )::endSTEPwrite( ostream & out ) {
+void SDAI_Application_instance ::endSTEPwrite( ostream & out ) {
     out << "end STEPwrite ... \n" ;
     out.flush();
 }
 
 void
-SCLP23( Application_instance )::WriteValuePairs( ostream & out,
+SDAI_Application_instance ::WriteValuePairs( ostream & out,
         const char * currSch,
         int writeComments, int mixedCase ) {
     /*
@@ -447,7 +447,7 @@ SCLP23( Application_instance )::WriteValuePairs( ostream & out,
  ******************************************************************/
 
 const char *
-SCLP23( Application_instance )::STEPwrite( std::string & buf, const char * currSch ) {
+SDAI_Application_instance ::STEPwrite( std::string & buf, const char * currSch ) {
     buf.clear();
 
     char instanceInfo[BUFSIZ];
@@ -473,7 +473,7 @@ SCLP23( Application_instance )::STEPwrite( std::string & buf, const char * currS
 }
 
 void
-SCLP23( Application_instance )::PrependEntityErrMsg() {
+SDAI_Application_instance ::PrependEntityErrMsg() {
     char errStr[BUFSIZ];
     errStr[0] = '\0';
 
@@ -486,7 +486,7 @@ SCLP23( Application_instance )::PrependEntityErrMsg() {
 }
 
 /******************************************************************
- ** Procedure:  SCLP23(Application_instance)::STEPread_error
+ ** Procedure:  SDAI_Application_instance::STEPread_error
  ** Parameters:  char c --  character which caused error
  **     int i --  index of attribute which caused error
  **     istream& in  --  input stream for recovery
@@ -496,7 +496,7 @@ SCLP23( Application_instance )::PrependEntityErrMsg() {
  **     whitespace between them.
  ******************************************************************/
 void
-SCLP23( Application_instance )::STEPread_error( char c, int i, istream & in ) {
+SDAI_Application_instance ::STEPread_error( char c, int i, istream & in ) {
     char errStr[BUFSIZ];
     errStr[0] = '\0';
 
@@ -559,7 +559,7 @@ SCLP23( Application_instance )::STEPread_error( char c, int i, istream & in ) {
  ******************************************************************/
 
 Severity
-SCLP23( Application_instance )::STEPread( int id,  int idIncr,
+SDAI_Application_instance ::STEPread( int id,  int idIncr,
         InstMgr * instance_set, istream & in,
         const char * currSch, int useTechCor ) {
     STEPfile_id = id;
@@ -745,10 +745,10 @@ SCLP23( Application_instance )::STEPread( int id,  int idIncr,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// read an entity reference and return a pointer to the SCLP23(Application_instance)
+// read an entity reference and return a pointer to the SDAI_Application_instance
 ///////////////////////////////////////////////////////////////////////////////
 
-SCLP23( Application_instance ) *
+SDAI_Application_instance  *
 ReadEntityRef( istream & in, ErrorDescriptor * err, const char * tokenList,
                InstMgr * instances, int addFileId ) {
     char c;
@@ -793,8 +793,8 @@ ReadEntityRef( istream & in, ErrorDescriptor * err, const char * tokenList,
                 }
 
                 //  lookup which object has id as its instance id
-                SCLP23( Application_instance )* inst;
-                /* If there is a ManagerNode it should have a SCLP23(Application_instance) */
+                SDAI_Application_instance * inst;
+                /* If there is a ManagerNode it should have a SDAI_Application_instance */
                 MgrNode * mn = 0;
                 mn = instances->FindFileId( id );
                 if( mn ) {
@@ -837,7 +837,7 @@ ReadEntityRef( istream & in, ErrorDescriptor * err, const char * tokenList,
 // same as above but reads from a const char *
 ///////////////////////////////////////////////////////////////////////////////
 
-SCLP23( Application_instance ) *
+SDAI_Application_instance  *
 ReadEntityRef( const char * s, ErrorDescriptor * err, const char * tokenList,
                InstMgr * instances, int addFileId ) {
     istringstream in( ( char * )s );
@@ -849,7 +849,7 @@ ReadEntityRef( const char * s, ErrorDescriptor * err, const char * tokenList,
 ///////////////////////////////////////////////////////////////////////////////
 
 Severity
-EntityValidLevel( SCLP23( Application_instance ) *se,
+EntityValidLevel( SDAI_Application_instance  *se,
                   const TypeDescriptor * ed, // entity type that entity se needs
                   // to match. (this must be an
                   // EntityDescriptor)
@@ -872,7 +872,7 @@ EntityValidLevel( SCLP23( Application_instance ) *se,
         err->GreaterSeverity( SEVERITY_BUG );
         sprintf( messageBuf,
                  " BUG: EntityValidLevel() called with null pointer %s\n",
-                 "for SCLP23(Application_instance) argument." );
+                 "for SDAI_Application_instance argument.");
         err->AppendToUserMsg( messageBuf );
         err->AppendToDetailMsg( messageBuf );
         cerr << "Internal error:  " << __FILE__ <<  __LINE__
@@ -923,7 +923,7 @@ EntityValidLevel( SCLP23( Application_instance ) *se,
     } else {
         err->GreaterSeverity( SEVERITY_BUG );
         sprintf( messageBuf,
-                 " BUG: EntityValidLevel(): SCLP23(Application_instance) #%d has a %s",
+                 " BUG: EntityValidLevel(): SDAI_Application_instance #%d has a %s",
                  se->STEPfile_id, "missing or invalid EntityDescriptor\n" );
         err->AppendToUserMsg( messageBuf );
         err->AppendToDetailMsg( messageBuf );
@@ -985,7 +985,7 @@ EntityValidLevel( const char * attrValue, // string contain entity ref
     /*
       // the problem with doing this is that it will require having a # in front
       // of the entity ref.
-        SCLP23(Application_instance) se = ReadEntityRef(attrValue, err, 0, im, 0);
+        SDAI_Application_instance) se = ReadEntityRef(attrValue, err, 0, im, 0;
         return EntityValidLevel(se, ed, err);
     */
 
@@ -1007,7 +1007,7 @@ EntityValidLevel( const char * attrValue, // string contain entity ref
         }
         mn = im->FindFileId( fileId );
         if( mn ) {
-            SCLP23( Application_instance ) *se = mn->GetSTEPentity();
+            SDAI_Application_instance  *se = mn->GetSTEPentity();
             return EntityValidLevel( se, ed, err );
         } else {
             sprintf( messageBuf,
@@ -1043,7 +1043,7 @@ EntityValidLevel( const char * attrValue, // string contain entity ref
  ******************************************************************/
 
 STEPattribute *
-SCLP23( Application_instance )::NextAttribute()  {
+SDAI_Application_instance ::NextAttribute()  {
     int i = AttributeCount();
     ++_cur;
     if( i < _cur ) {
@@ -1054,13 +1054,13 @@ SCLP23( Application_instance )::NextAttribute()  {
 }
 
 int
-SCLP23( Application_instance )::AttributeCount()  {
+SDAI_Application_instance ::AttributeCount()  {
     return  attributes.list_length();
 }
 
 #ifdef OBSOLETE
 Severity
-SCLP23( Application_instance )::ReadAttrs( int id, int addFileId,
+SDAI_Application_instance ::ReadAttrs( int id, int addFileId,
         class InstMgr * instance_set, istream & in ) {
     char c = '\0';
     char errStr[BUFSIZ];

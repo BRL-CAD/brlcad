@@ -34,7 +34,7 @@
 /* inteface headers */
 #include "STEPEntity.h"
 #include "STEPWrapper.h"
-#include "sclprefixes.h"
+
 
 
 class RepresentationItem;
@@ -61,11 +61,11 @@ public:
     double GetLengthConversionFactor();
     double GetPlaneAngleConversionFactor();
     double GetSolidAngleConversionFactor();
-    bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual void Print(int level);
 
     //static methods
-    static STEPEntity *Create(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+    static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 

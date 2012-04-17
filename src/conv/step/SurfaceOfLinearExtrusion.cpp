@@ -49,7 +49,7 @@ SurfaceOfLinearExtrusion::~SurfaceOfLinearExtrusion() {
 }
 
 bool
-SurfaceOfLinearExtrusion::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+SurfaceOfLinearExtrusion::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -63,7 +63,7 @@ SurfaceOfLinearExtrusion::Load(STEPWrapper *sw, SCLP23(Application_instance) *ss
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (extrusion_axis == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"extrusion_axis");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"extrusion_axis");
 	if (entity) {
 	    extrusion_axis = dynamic_cast<Vector *>(Factory::CreateObject(sw,entity));
 	} else {
@@ -87,7 +87,7 @@ SurfaceOfLinearExtrusion::Print(int level) {
 }
 
 STEPEntity *
-SurfaceOfLinearExtrusion::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+SurfaceOfLinearExtrusion::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	SurfaceOfLinearExtrusion *object = new SurfaceOfLinearExtrusion(sw,sse->STEPfile_id);

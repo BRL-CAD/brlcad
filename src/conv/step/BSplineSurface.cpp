@@ -86,7 +86,7 @@ BSplineSurface::~BSplineSurface() {
 }
 
 bool
-BSplineSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+BSplineSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 
     step=sw;
     id = sse->STEPfile_id;
@@ -145,7 +145,7 @@ BSplineSurface::Print(int level) {
 }
 
 STEPEntity *
-BSplineSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+BSplineSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	BSplineSurface *object = new BSplineSurface(sw,sse->STEPfile_id);

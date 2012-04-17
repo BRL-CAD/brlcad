@@ -52,7 +52,7 @@ SurfaceReplica::~SurfaceReplica() {
 }
 
 bool
-SurfaceReplica::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+SurfaceReplica::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 
     step=sw;
     id = sse->STEPfile_id;
@@ -67,7 +67,7 @@ SurfaceReplica::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (parent_surface == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"parent_surface");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"parent_surface");
 	if (entity) {
 	    parent_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw,entity));
 	} else {
@@ -76,7 +76,7 @@ SurfaceReplica::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 	}
     }
     if (transformation == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"transformation");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"transformation");
 	if (entity) {
 	    transformation = dynamic_cast<CartesianTransformationOperator3D *>(Factory::CreateObject(sw,entity));
 	} else {
@@ -104,7 +104,7 @@ SurfaceReplica::Print(int level) {
 }
 
 STEPEntity *
-SurfaceReplica::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+SurfaceReplica::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	SurfaceReplica *object = new SurfaceReplica(sw,sse->STEPfile_id);

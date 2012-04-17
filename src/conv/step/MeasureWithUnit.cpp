@@ -96,7 +96,7 @@ MeasureWithUnit::GetSolidAngleConversionFactor() {
 }
 
 bool
-MeasureWithUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+MeasureWithUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -104,7 +104,7 @@ MeasureWithUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     // the actual entity and not a complex/supertype parent
     sse = step->getEntity(sse,ENTITYNAME);
 
-    SCLP23(Select) *select = step->getSelectAttribute(sse,"value_component");
+    SDAI_Select *select = step->getSelectAttribute(sse,"value_component");
     if (select) {
 	if (!value_component.Load(step,select)) {
 	    std::cout << CLASSNAME << ":Error loading MeasureValue." << std::endl;
@@ -121,11 +121,11 @@ MeasureWithUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	    SdaiUnit *u = (SdaiUnit *)select;
 	    if ( u->IsNamed_unit() ) {
 		SdaiNamed_unit *nu = *u;
-		unit_component = dynamic_cast<Unit*>(Factory::CreateObject(sw,(SCLP23(Application_instance) *)nu));
+		unit_component = dynamic_cast<Unit*>(Factory::CreateObject(sw,(SDAI_Application_instance *)nu));
 #ifdef AP203e
 	    } else if (u->IsDerived_unit()) {
 		SdaiDerived_unit *du = *u;
-		unit_component = dynamic_cast<Unit*>(Factory::CreateObject(sw,(SCLP23(Application_instance) *)du));
+		unit_component = dynamic_cast<Unit*>(Factory::CreateObject(sw,(SDAI_Application_instance *)du));
 #endif
 	    } else {
 		std::cerr << CLASSNAME << ": Unknown 'Unit' type from select." << std::endl;
@@ -152,7 +152,7 @@ MeasureWithUnit::Print(int level) {
 }
 
 STEPEntity *
-MeasureWithUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+MeasureWithUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	MeasureWithUnit *object = new MeasureWithUnit(sw,sse->STEPfile_id);

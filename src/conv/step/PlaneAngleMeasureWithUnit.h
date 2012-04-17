@@ -39,11 +39,11 @@ public:
 	PlaneAngleMeasureWithUnit();
 	virtual ~PlaneAngleMeasureWithUnit();
 	PlaneAngleMeasureWithUnit(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
 	virtual void Print(int level);
 
 	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
 };
 
 #endif /* PLANE_ANGLE_MEASURE_WITH_UNIT_H_ */

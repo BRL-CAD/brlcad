@@ -49,7 +49,7 @@ Loop::~Loop() {
 }
 
 bool
-Loop::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+Loop::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -72,7 +72,7 @@ Loop::Print(int level) {
 }
 
 STEPEntity *
-Loop::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+Loop::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	Loop *object = new Loop(sw,sse->STEPfile_id);

@@ -47,7 +47,7 @@ AmountOfSubstanceUnit::~AmountOfSubstanceUnit() {
 }
 
 bool
-AmountOfSubstanceUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+AmountOfSubstanceUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -71,7 +71,7 @@ AmountOfSubstanceUnit::Print(int level) {
 
 }
 STEPEntity *
-AmountOfSubstanceUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+AmountOfSubstanceUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	AmountOfSubstanceUnit *object = new AmountOfSubstanceUnit(sw,sse->STEPfile_id);

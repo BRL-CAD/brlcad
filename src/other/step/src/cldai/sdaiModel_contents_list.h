@@ -1,20 +1,20 @@
 #ifndef SDAIMODEL_CONTENTS_LIST_H
 #define SDAIMODEL_CONTENTS_LIST_H 1
 
-class SCLP23_NAME( Model_contents__list ) {
+class SDAI_Model_contents__list  {
     public:
-        SCLP23_NAME( Model_contents__list )( int = 16 );
-        ~SCLP23_NAME( Model_contents__list )();
+        SDAI_Model_contents__list ( int = 16 );
+        ~SDAI_Model_contents__list ();
 
-        SCLP23_NAME( Model_contents_ptr ) retrieve( int index );
+        SDAI_Model_contents_ptr  retrieve( int index );
         int is_empty();
 
-        SCLP23_NAME( Model_contents_ptr ) & operator[]( int index );
+        SDAI_Model_contents_ptr  & operator[]( int index );
 
-        void Insert( SCLP23_NAME( Model_contents_ptr ), int index );
-        void Append( SCLP23_NAME( Model_contents_ptr ) );
+        void Insert( SDAI_Model_contents_ptr , int index );
+        void Append( SDAI_Model_contents_ptr  );
         void Remove( int index );
-        int Index( SCLP23_NAME( Model_contents_ptr ) );
+        int Index( SDAI_Model_contents_ptr  );
 
         void Clear();
         int Count();
@@ -22,14 +22,14 @@ class SCLP23_NAME( Model_contents__list ) {
     private:
         void Check( int index );
     private:
-        SCLP23_NAME( Model_contents_ptr ) * _buf;
+        SDAI_Model_contents_ptr  * _buf;
         int _bufsize;
         int _count;
 };
 
-typedef SCLP23_NAME( Model_contents__list ) *
-SCLP23_NAME( Model_contents__list_ptr );
-typedef SCLP23_NAME( Model_contents__list_ptr )
-SCLP23_NAME( Model_contents__list_var );
+typedef SDAI_Model_contents__list  *
+SDAI_Model_contents__list_ptr ;
+typedef SDAI_Model_contents__list_ptr 
+SDAI_Model_contents__list_var ;
 
 #endif

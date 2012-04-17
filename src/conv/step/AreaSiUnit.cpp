@@ -47,7 +47,7 @@ AreaSiUnit::~AreaSiUnit() {
 }
 
 bool
-AreaSiUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+AreaSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -75,7 +75,7 @@ AreaSiUnit::Print(int level) {
 
 }
 STEPEntity *
-AreaSiUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+AreaSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	AreaSiUnit *object = new AreaSiUnit(sw,sse->STEPfile_id);

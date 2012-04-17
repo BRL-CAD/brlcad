@@ -52,7 +52,7 @@ Vector::~Vector() {
 }
 
 bool
-Vector::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+Vector::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -66,7 +66,7 @@ Vector::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (orientation == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"orientation");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"orientation");
 	if (entity) {
 	    orientation = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
 	} else { // optional so no problem if not here
@@ -101,7 +101,7 @@ Vector::Print(int level) {
     TAB(level+1);std::cout << "magnitude:" << magnitude << std::endl;
 }
 STEPEntity *
-Vector::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+Vector::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	Vector *object = new Vector(sw,sse->STEPfile_id);

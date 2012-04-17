@@ -50,7 +50,7 @@ ProductContext::~ProductContext()
 {
 }
 
-bool ProductContext::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+bool ProductContext::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
     id = sse->STEPfile_id;
@@ -86,7 +86,7 @@ void ProductContext::Print(int level)
 }
 
 STEPEntity *
-ProductContext::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+ProductContext::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {

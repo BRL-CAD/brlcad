@@ -47,7 +47,7 @@ RationalBezierSurface::~RationalBezierSurface() {
 }
 
 bool
-RationalBezierSurface::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+RationalBezierSurface::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -69,7 +69,7 @@ RationalBezierSurface::Print(int level) {
 
 }
 STEPEntity *
-RationalBezierSurface::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
+RationalBezierSurface::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	RationalBezierSurface *object = new RationalBezierSurface(sw,sse->STEPfile_id);

@@ -47,7 +47,7 @@ PlaneAngleContextDependentUnit::~PlaneAngleContextDependentUnit() {
 }
 
 bool
-PlaneAngleContextDependentUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+PlaneAngleContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -76,7 +76,7 @@ PlaneAngleContextDependentUnit::Print(int level) {
 
 }
 STEPEntity *
-PlaneAngleContextDependentUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+PlaneAngleContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	PlaneAngleContextDependentUnit *object = new PlaneAngleContextDependentUnit(sw,sse->STEPfile_id);

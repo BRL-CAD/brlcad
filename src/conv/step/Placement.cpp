@@ -71,7 +71,7 @@ Placement::GetYAxis() {
 }
 
 bool
-Placement::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+Placement::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -85,7 +85,7 @@ Placement::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (location == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"location");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"location");
 	if (entity) {
 	    location = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,entity));
 	} else {
@@ -104,7 +104,7 @@ Placement::Print(int level) {
 }
 
 STEPEntity *
-Placement::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+Placement::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	Placement *object = new Placement(sw,sse->STEPfile_id);

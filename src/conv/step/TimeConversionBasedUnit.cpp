@@ -50,7 +50,7 @@ TimeConversionBasedUnit::~TimeConversionBasedUnit() {
 }
 
 bool
-TimeConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+TimeConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -79,7 +79,7 @@ TimeConversionBasedUnit::Print(int level) {
 
 }
 STEPEntity *
-TimeConversionBasedUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+TimeConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	TimeConversionBasedUnit *object = new TimeConversionBasedUnit(sw,sse->STEPfile_id);

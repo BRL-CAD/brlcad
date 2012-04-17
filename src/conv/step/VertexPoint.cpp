@@ -50,7 +50,7 @@ VertexPoint::~VertexPoint() {
 }
 
 bool
-VertexPoint::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+VertexPoint::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -69,7 +69,7 @@ VertexPoint::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (vertex_geometry == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"vertex_geometry");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"vertex_geometry");
 	if (entity) {
 	    vertex_geometry = dynamic_cast<Point *>(Factory::CreateObject(sw,entity));
 	} else {
@@ -94,7 +94,7 @@ VertexPoint::Print(int level) {
 }
 
 STEPEntity *
-VertexPoint::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+VertexPoint::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 

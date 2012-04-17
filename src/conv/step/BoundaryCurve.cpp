@@ -47,7 +47,7 @@ BoundaryCurve::~BoundaryCurve() {
 }
 
 bool
-BoundaryCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+BoundaryCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -69,7 +69,7 @@ BoundaryCurve::Print(int level) {
     CompositeCurveOnSurface::Print(level+1);
 }
 STEPEntity *
-BoundaryCurve::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+BoundaryCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	BoundaryCurve *object = new BoundaryCurve(sw,sse->STEPfile_id);

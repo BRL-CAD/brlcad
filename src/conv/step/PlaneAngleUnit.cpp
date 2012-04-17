@@ -47,7 +47,7 @@ PlaneAngleUnit::~PlaneAngleUnit() {
 }
 
 bool
-PlaneAngleUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+PlaneAngleUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -71,7 +71,7 @@ PlaneAngleUnit::Print(int level) {
 
 }
 STEPEntity *
-PlaneAngleUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+PlaneAngleUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	PlaneAngleUnit *object = new PlaneAngleUnit(sw,sse->STEPfile_id);

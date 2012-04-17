@@ -47,7 +47,7 @@ RepresentationContext::~RepresentationContext() {
 }
 
 bool
-RepresentationContext::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+RepresentationContext::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -68,7 +68,7 @@ RepresentationContext::Print(int level) {
 
 }
 STEPEntity *
-RepresentationContext::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+RepresentationContext::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	RepresentationContext *object = new RepresentationContext(sw,sse->STEPfile_id);

@@ -23,25 +23,25 @@ STEPattribute::STEPattribute( const STEPattribute & a )
     : aDesc( a.aDesc ), _derive( 0 ), _redefAttr( 0 ) {}
 
 //  INTEGER
-STEPattribute::STEPattribute( const class AttrDescriptor & d, SCLP23( Integer ) *p )
+STEPattribute::STEPattribute( const class AttrDescriptor & d, SDAI_Integer  *p )
     : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
     ptr.i = p;
 }
 
 //  BINARY
-STEPattribute::STEPattribute( const class AttrDescriptor & d, SCLP23( Binary ) *p )
+STEPattribute::STEPattribute( const class AttrDescriptor & d, SDAI_Binary  *p )
     : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
     ptr.b = p;
 }
 
 //  STRING
-STEPattribute::STEPattribute( const class AttrDescriptor & d, SCLP23( String ) *p )
+STEPattribute::STEPattribute( const class AttrDescriptor & d, SDAI_String  *p )
     : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
     ptr.S = p;
 }
 
 //  REAL & NUMBER
-STEPattribute::STEPattribute( const class AttrDescriptor & d, SCLP23( Real ) *p )
+STEPattribute::STEPattribute( const class AttrDescriptor & d, SDAI_Real  *p )
     : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
     ptr.r = p;
 }
@@ -53,7 +53,7 @@ STEPattribute::STEPattribute( const class AttrDescriptor & d, SCLP23( Real ) *p 
 */
 //  ENTITY
 STEPattribute::STEPattribute( const class AttrDescriptor & d,
-                              SCLP23( Application_instance )* *p )
+                              SDAI_Application_instance * *p )
     : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
     ptr.c = p;
 }
@@ -65,14 +65,14 @@ STEPattribute::STEPattribute( const class AttrDescriptor & d, STEPaggregate * p 
 }
 
 //  ENUMERATION  and Logical
-STEPattribute::STEPattribute( const class AttrDescriptor & d, SCLP23( Enum ) *p )
+STEPattribute::STEPattribute( const class AttrDescriptor & d, SDAI_Enum  *p )
     : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
     ptr.e = p;
 }
 
 //  SELECT
 STEPattribute::STEPattribute( const class AttrDescriptor & d,
-                              class SCLP23( Select ) *p )
+                              class SDAI_Select  *p )
     : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
     ptr.sh = p;
 }

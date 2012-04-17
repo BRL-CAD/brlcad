@@ -47,7 +47,7 @@ RatioSiUnit::~RatioSiUnit() {
 }
 
 bool
-RatioSiUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+RatioSiUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -76,7 +76,7 @@ RatioSiUnit::Print(int level) {
 
 }
 STEPEntity *
-RatioSiUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+RatioSiUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	RatioSiUnit *object = new RatioSiUnit(sw,sse->STEPfile_id);

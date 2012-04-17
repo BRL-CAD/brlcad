@@ -47,7 +47,7 @@ VolumeUnit::~VolumeUnit() {
 }
 
 bool
-VolumeUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+VolumeUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -71,7 +71,7 @@ VolumeUnit::Print(int level) {
 
 }
 STEPEntity *
-VolumeUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+VolumeUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	VolumeUnit *object = new VolumeUnit(sw,sse->STEPfile_id);

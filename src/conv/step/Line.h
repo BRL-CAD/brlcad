@@ -47,7 +47,7 @@ public:
 	virtual curve_type CurveType() { return LINE; };
 	void StartPoint(double *p);
 	void EndPoint(double *p);
-	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 /*TODO: remove
 	virtual const double *PointAtEnd();
@@ -56,7 +56,7 @@ public:
 	virtual void Print(int level);
 
 	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
 };
 
 #endif /* LINE_H_ */

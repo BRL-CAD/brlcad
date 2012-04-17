@@ -50,7 +50,7 @@ VertexLoop::~VertexLoop() {
 }
 
 bool
-VertexLoop::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+VertexLoop::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -64,7 +64,7 @@ VertexLoop::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (loop_vertex == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"loop_vertex");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"loop_vertex");
 	if (entity) {
 	    loop_vertex = dynamic_cast<Vertex *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
 	} else {
@@ -89,7 +89,7 @@ VertexLoop::Print(int level) {
 }
 
 STEPEntity *
-VertexLoop::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+VertexLoop::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	VertexLoop *object = new VertexLoop(sw,sse->STEPfile_id);

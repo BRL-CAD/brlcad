@@ -55,7 +55,7 @@ PCurve::~PCurve() {
 }
 
 bool
-PCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+PCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -69,7 +69,7 @@ PCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (basis_surface == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,
 									"basis_surface");
 	if (entity) {
 	    basis_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw, entity)); // CreateSurfaceObject(sw, entity));
@@ -81,7 +81,7 @@ PCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     }
 
     if (reference_to_curve == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"reference_to_curve");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"reference_to_curve");
 	if (entity) {
 	    reference_to_curve = dynamic_cast<DefinitionalRepresentation*>(Factory::CreateObject(sw, entity));
 	} else {
@@ -119,7 +119,7 @@ PCurve::Print(int level) {
     reference_to_curve->Print(level+1);
 }
 STEPEntity *
-PCurve::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
+PCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	PCurve *object = new PCurve(sw,sse->STEPfile_id);

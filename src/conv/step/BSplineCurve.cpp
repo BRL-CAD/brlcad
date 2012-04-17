@@ -75,7 +75,7 @@ BSplineCurve::~BSplineCurve() {
 }
 
 bool
-BSplineCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+BSplineCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     bool retValue = true;
 
     step=sw;
@@ -94,7 +94,7 @@ BSplineCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	LIST_OF_ENTITIES *l = step->getListOfEntities(sse,"control_points_list");
 	LIST_OF_ENTITIES::iterator i;
 	for(i=l->begin();i!=l->end();i++) {
-	    SCLP23(Application_instance) *entity = (*i);
+	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
 		CartesianPoint *aCP = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,entity));
 
@@ -156,7 +156,7 @@ BSplineCurve::Print(int level) {
 }
 
 STEPEntity *
-BSplineCurve::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+BSplineCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	BSplineCurve *object = new BSplineCurve(sw,sse->STEPfile_id);

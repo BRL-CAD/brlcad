@@ -50,7 +50,7 @@ DerivedUnit::~DerivedUnit() {
 }
 
 bool
-DerivedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+DerivedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -99,7 +99,7 @@ DerivedUnit::Print(int level) {
     Unit::Print(level+1);
 }
 STEPEntity *
-DerivedUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+DerivedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	DerivedUnit *object = new DerivedUnit(sw,sse->STEPfile_id);

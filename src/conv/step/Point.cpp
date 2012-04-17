@@ -48,7 +48,7 @@ Point::~Point() {
 }
 
 bool
-Point::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+Point::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -68,7 +68,7 @@ Point::Print(int level) {
     GeometricRepresentationItem::Print(level+1);
 }
 STEPEntity *
-Point::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+Point::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	Point *object = new Point(sw,sse->STEPfile_id);

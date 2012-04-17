@@ -47,7 +47,7 @@ SolidModel::~SolidModel() {
 }
 
 bool
-SolidModel::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+SolidModel::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -67,7 +67,7 @@ SolidModel::Print(int level) {
 }
 
 STEPEntity *
-SolidModel::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+SolidModel::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	SolidModel *object = new SolidModel(sw,sse->STEPfile_id);

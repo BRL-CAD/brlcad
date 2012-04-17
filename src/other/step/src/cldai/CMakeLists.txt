@@ -33,8 +33,4 @@ include_directories(
     ${SCL_SOURCE_DIR}/src/clutils
 )
 
-add_definitions(
-    -DHAVE_CONFIG_H
-)
-
 SCL_ADDLIB(stepdai "${LIBSTEPDAI_SRCS}" "steputils")

@@ -106,7 +106,7 @@ MeasureValue::GetSolidAngleMeasure() {
 }
 
 bool
-MeasureValue::Load(STEPWrapper *sw,SCLP23(Select) *sse) {
+MeasureValue::Load(STEPWrapper *sw,SDAI_Select *sse) {
     step=sw;
 //	id = sse->STEPfile_id;
 
@@ -199,14 +199,14 @@ MeasureValue::Print(int level) {
     }
 }
 STEPEntity *
-MeasureValue::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+MeasureValue::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	MeasureValue *object = new MeasureValue(sw,sse->STEPfile_id);
 
 	Factory::AddObject(object);
 
-	if (!object->Load(sw, (SCLP23(Select) *)sse)) {
+	if (!object->Load(sw, (SDAI_Select *)sse)) {
 	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 	    delete object;
 	    return NULL;

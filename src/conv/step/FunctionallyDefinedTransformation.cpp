@@ -47,7 +47,7 @@ FunctionallyDefinedTransformation::~FunctionallyDefinedTransformation() {
 }
 
 bool
-FunctionallyDefinedTransformation::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+FunctionallyDefinedTransformation::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 
     step=sw;
     id = sse->STEPfile_id;
@@ -78,7 +78,7 @@ FunctionallyDefinedTransformation::Print(int level) {
 }
 
 STEPEntity *
-FunctionallyDefinedTransformation::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+FunctionallyDefinedTransformation::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	FunctionallyDefinedTransformation *object = new FunctionallyDefinedTransformation(sw,sse->STEPfile_id);

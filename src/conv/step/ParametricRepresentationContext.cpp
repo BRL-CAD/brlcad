@@ -47,7 +47,7 @@ ParametricRepresentationContext::~ParametricRepresentationContext() {
 }
 
 bool
-ParametricRepresentationContext::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+ParametricRepresentationContext::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -71,7 +71,7 @@ ParametricRepresentationContext::Print(int level) {
 
 }
 STEPEntity *
-ParametricRepresentationContext::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+ParametricRepresentationContext::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	ParametricRepresentationContext *object = new ParametricRepresentationContext(sw,sse->STEPfile_id);

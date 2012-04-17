@@ -50,7 +50,7 @@ LuminousIntensityConversionBasedUnit::~LuminousIntensityConversionBasedUnit() {
 }
 
 bool
-LuminousIntensityConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+LuminousIntensityConversionBasedUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -79,7 +79,7 @@ LuminousIntensityConversionBasedUnit::Print(int level) {
 
 }
 STEPEntity *
-LuminousIntensityConversionBasedUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+LuminousIntensityConversionBasedUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	LuminousIntensityConversionBasedUnit *object = new LuminousIntensityConversionBasedUnit(sw,sse->STEPfile_id);

@@ -47,7 +47,7 @@ ThermodynamicTemperatureUnit::~ThermodynamicTemperatureUnit() {
 }
 
 bool
-ThermodynamicTemperatureUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+ThermodynamicTemperatureUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -71,7 +71,7 @@ ThermodynamicTemperatureUnit::Print(int level) {
 
 }
 STEPEntity *
-ThermodynamicTemperatureUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+ThermodynamicTemperatureUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	ThermodynamicTemperatureUnit *object = new ThermodynamicTemperatureUnit(sw,sse->STEPfile_id);

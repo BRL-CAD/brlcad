@@ -78,7 +78,7 @@ TrimmedCurve::~TrimmedCurve() {
 }
 
 bool
-TrimmedCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+TrimmedCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -92,7 +92,7 @@ TrimmedCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
     sse = step->getEntity(sse,ENTITYNAME);
 
     if (basis_curve == NULL) {
-	SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"basis_curve");
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"basis_curve");
 	if (entity) {
 	    basis_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
 	} else {
@@ -105,9 +105,9 @@ TrimmedCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	if (attr) {
 	    STEPaggregate *sa = (STEPaggregate *) (attr->ptr.a);
 	    EntityNode *sn = (EntityNode *) sa->GetHead();
-	    SCLP23(Select) *p;
+	    SDAI_Select *p;
 	    while (sn != NULL) {
-		p = (SCLP23(Select) *) sn->node;
+		p = (SDAI_Select *) sn->node;
 		TrimmingSelect *aTS = new TrimmingSelect();
 
 		trim_1.push_back(aTS);
@@ -126,9 +126,9 @@ TrimmedCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	if (attr) {
 	    STEPaggregate *sa = (STEPaggregate *) (attr->ptr.a);
 	    EntityNode *sn = (EntityNode *) sa->GetHead();
-	    SCLP23(Select) *p;
+	    SDAI_Select *p;
 	    while (sn != NULL) {
-		p = (SCLP23(Select) *) sn->node;
+		p = (SDAI_Select *) sn->node;
 		TrimmingSelect *aTS = new TrimmingSelect();
 
 		trim_2.push_back(aTS);
@@ -179,7 +179,7 @@ TrimmedCurve::Print(int level) {
     TAB(level); std::cout << "master_representation:" << Trimming_preference_string[master_representation] << std::endl;
 }
 STEPEntity *
-TrimmedCurve::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+TrimmedCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	TrimmedCurve *object = new TrimmedCurve(sw,sse->STEPfile_id);

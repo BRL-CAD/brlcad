@@ -47,7 +47,7 @@ ElectricCurrentUnit::~ElectricCurrentUnit() {
 }
 
 bool
-ElectricCurrentUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+ElectricCurrentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -71,7 +71,7 @@ ElectricCurrentUnit::Print(int level) {
 
 }
 STEPEntity *
-ElectricCurrentUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+ElectricCurrentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	ElectricCurrentUnit *object = new ElectricCurrentUnit(sw,sse->STEPfile_id);

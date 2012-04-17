@@ -1,8 +1,8 @@
 #include <sdai.h>
 
-SCLP23( sdaiObject )::SCLP23_NAME( sdaiObject )() {
+SDAI_sdaiObject ::SDAI_sdaiObject () {
 }
 
-SCLP23( sdaiObject )::~SCLP23_NAME( sdaiObject )() {
+SDAI_sdaiObject ::~SDAI_sdaiObject () {
 }
 

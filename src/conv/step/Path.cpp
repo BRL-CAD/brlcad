@@ -90,7 +90,7 @@ Path::isSeam(LIST_OF_ORIENTED_EDGES::iterator i) {
 }
 
 bool
-Path::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+Path::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -107,7 +107,7 @@ Path::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	LIST_OF_ENTITIES *l = step->getListOfEntities(sse, "edge_list");
 	LIST_OF_ENTITIES::iterator i;
 	for (i = l->begin(); i != l->end(); i++) {
-	    SCLP23(Application_instance) *entity = (*i);
+	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
 		OrientedEdge *aOE =dynamic_cast<OrientedEdge *>(Factory::CreateObject(sw, entity));
 		edge_list.push_back(aOE);
@@ -144,7 +144,7 @@ Path::Print(int level) {
 }
 
 STEPEntity *
-Path::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+Path::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	Path *object = new Path(sw,sse->STEPfile_id);

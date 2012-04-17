@@ -70,7 +70,7 @@ SphericalSurface::GetYAxis() {
 
 
 bool
-SphericalSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+SphericalSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -99,7 +99,7 @@ SphericalSurface::Print(int level) {
 }
 
 STEPEntity *
-SphericalSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+SphericalSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	SphericalSurface *object = new SphericalSurface(sw,sse->STEPfile_id);

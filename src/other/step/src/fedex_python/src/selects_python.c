@@ -32,7 +32,7 @@ char * generate_attribute_func_name( Variable a, char * out );
 void ATTRprint_access_methods_get_head( const char * classnm, Variable a, FILE * file );
 void ATTRprint_access_methods_put_head( const char * entnm, Variable a, FILE * file );
 
-#define BASE_SELECT "SCLP23(Select)"
+#define BASE_SELECT "SDAI_Select"
 
 #define TYPEis_primitive(t) ( !( TYPEis_entity(t)  || \
                                  TYPEis_select (t) || \
@@ -272,8 +272,8 @@ duplicate_utype_member( const Linked_List list, const Type check ) {
         {
             return TRUE;
         }
-        if( ! strcmp( b, "SCLP23(Integer)" ) &&
-                ( ! strcmp( TYPEget_utype( check ), "SCLP23(Real)" ) ) )
+        if( ! strcmp( b, "SDAI_Integer)"  &&
+                ( ! strcmp( TYPEget_utype( check ), "SDAI_Real)"  ) )
             /*  integer\'s and real\'s are not unique  */
         {
             return TRUE;

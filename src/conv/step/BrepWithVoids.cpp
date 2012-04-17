@@ -51,7 +51,7 @@ BrepWithVoids::~BrepWithVoids()
     voids.clear();
 }
 
-bool BrepWithVoids::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+bool BrepWithVoids::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
     id = sse->STEPfile_id;
@@ -69,7 +69,7 @@ bool BrepWithVoids::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse)
 	LIST_OF_ENTITIES *l = step->getListOfEntities(sse, "voids");
 	LIST_OF_ENTITIES::iterator i;
 	for (i = l->begin(); i != l->end(); i++) {
-	    SCLP23(Application_instance) *entity = (*i);
+	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
 		OrientedClosedShell *aOCS = dynamic_cast<OrientedClosedShell *>(Factory::CreateObject(sw, entity)); //CreateSurfaceObject(sw,entity));
 
@@ -116,7 +116,7 @@ void BrepWithVoids::Print(int level)
 }
 
 STEPEntity *
-BrepWithVoids::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse)
+BrepWithVoids::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {

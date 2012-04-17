@@ -47,7 +47,7 @@ SeamCurve::~SeamCurve() {
 }
 
 bool
-SeamCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
+SeamCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
     id = sse->STEPfile_id;
 
@@ -69,7 +69,7 @@ SeamCurve::Print(int level) {
 }
 
 STEPEntity *
-SeamCurve::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+SeamCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
     Factory::OBJECTS::iterator i;
     if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
 	SeamCurve *object = new SeamCurve(sw,sse->STEPfile_id);
