@@ -34,7 +34,9 @@
 
 #include "./vegetation.h"
 
-static void ageStructure(structure_t *structure) {
+static void
+ageStructure(structure_t *structure)
+{
     size_t i;
 
     /*
@@ -53,7 +55,9 @@ static void ageStructure(structure_t *structure) {
 }
 
 
-static int getSegmentCount(structure_t *structure, unsigned int minAge, unsigned int maxAge) {
+static int
+getSegmentCount(structure_t *structure, unsigned int minAge, unsigned int maxAge)
+{
     size_t i;
     size_t total;
 
@@ -75,7 +79,9 @@ static int getSegmentCount(structure_t *structure, unsigned int minAge, unsigned
 /* used
  * http://geometryalgorithms.com/Archive/algorithm_0106/algorithm_0106.htm#dist3D_Segment_to_Segment()
  * as reference */
-static float segmentToSegmentDistance(const point_t S1P0, const point_t S1P1, const point_t S2P0, const point_t S2P1) {
+static float
+segmentToSegmentDistance(const point_t S1P0, const point_t S1P1, const point_t S2P0, const point_t S2P1)
+{
     vect_t u;
     vect_t v;
     vect_t w;
@@ -146,7 +152,7 @@ static float segmentToSegmentDistance(const point_t S1P0, const point_t S1P1, co
 	else if ((-d + b) > a)
 	    sN = sD;
 	else {
-	    sN = (-d +  b);
+	    sN = (-d + b);
 	    sD = a;
 	}
     }
@@ -163,7 +169,9 @@ static float segmentToSegmentDistance(const point_t S1P0, const point_t S1P1, co
 }
 
 
-static segmentList_t *findIntersectors(const growthSegment_t * const segment, const structure_t * const structure, const segmentList_t * const exemptList) {
+static segmentList_t *
+findIntersectors(const growthSegment_t * const segment, const structure_t * const structure, const segmentList_t * const exemptList)
+{
     size_t i, j;
     segmentList_t *bigList = NULL;
     segmentList_t *segList = NULL;
@@ -274,7 +282,9 @@ static segmentList_t *findIntersectors(const growthSegment_t * const segment, co
 }
 
 
-static int branchWithProbability(plant_t *plant, structure_t* structure, unsigned int minAge, unsigned int maxAge, double probability) {
+static int
+branchWithProbability(plant_t *plant, structure_t* structure, unsigned int minAge, unsigned int maxAge, double probability)
+{
     size_t i;
     size_t total;
 
@@ -402,7 +412,10 @@ static int branchWithProbability(plant_t *plant, structure_t* structure, unsigne
 
 }
 
-static void branchGrowthPoints(plant_t *plant) {
+
+static void
+branchGrowthPoints(plant_t *plant)
+{
     int totalSegments;
     double segmentProbability;
 
@@ -438,7 +451,9 @@ static void branchGrowthPoints(plant_t *plant) {
 }
 
 
-static void growPlant(plant_t *plant) {
+static void
+growPlant(plant_t *plant)
+{
     size_t i;
     size_t growthSteps;
     size_t retryCount;
@@ -650,7 +665,9 @@ static void growPlant(plant_t *plant) {
 }
 
 
-static plant_t *createPlant(unsigned int age, vect_t position, double radius, vect_t direction, characteristic_t *characteristic) {
+static plant_t *
+createPlant(unsigned int age, vect_t position, double radius, vect_t direction, characteristic_t *characteristic)
+{
     plant_t *plant;
 
     /* List of growth points */
@@ -715,7 +732,9 @@ static plant_t *createPlant(unsigned int age, vect_t position, double radius, ve
 }
 
 
-static int writeStructureToDisk(struct rt_wdb *fp, structure_t *structure, outputCounter_t *oc) {
+static int
+writeStructureToDisk(struct rt_wdb *fp, structure_t *structure, outputCounter_t *oc)
+{
     size_t i;
     vect_t height;
 
@@ -760,7 +779,9 @@ static int writeStructureToDisk(struct rt_wdb *fp, structure_t *structure, outpu
 }
 
 
-static int writePlantToDisk(struct rt_wdb *fp, plant_t *plant) {
+static int
+writePlantToDisk(struct rt_wdb *fp, plant_t *plant)
+{
     outputCounter_t oc;
 
     printf ("Writing a plant at %f %f %f of age %d to disk\n", plant->position[X], plant->position[Y], plant->position[Z], plant->age);
@@ -782,7 +803,9 @@ static int writePlantToDisk(struct rt_wdb *fp, plant_t *plant) {
 }
 
 
-static void destroyPlant(plant_t *plant) {
+static void
+destroyPlant(plant_t *plant)
+{
     size_t i;
 
     /* get rid of the plant structure properly */
@@ -825,7 +848,10 @@ static void destroyPlant(plant_t *plant) {
 
 }
 
-static int invalidCharacteristics(const characteristic_t * const c) {
+
+static int
+invalidCharacteristics(const characteristic_t * const c)
+{
     if (c->totalHeight <= 0.0) {
 	fprintf(stderr, "Need positive plant height\n");
 	return 1;
@@ -852,8 +878,9 @@ static int invalidCharacteristics(const characteristic_t * const c) {
 }
 
 
-int main (int argc, char *argv[]) {
-
+int
+main(int argc, char *argv[])
+{
     struct rt_wdb *fp;
     plant_t *plant;
     characteristic_t c;
@@ -973,6 +1000,7 @@ int main (int argc, char *argv[]) {
     wdb_close(fp);
     return 0;
 }
+
 
 /*
  * Local Variables:
