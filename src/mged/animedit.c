@@ -1808,7 +1808,7 @@ f_jload(int argc, const char *argv[])
 	    hp->effector.path.fp_len = hp->effector.arc.arc_last+1;
 	    hp->effector.path.fp_maxlen = hp->effector.arc.arc_last+1;
 	    hp->effector.path.fp_names = (struct directory **)
-		bu_malloc(sizeof(struct directory **) * hp->effector.path.fp_maxlen,
+		bu_malloc(sizeof(struct directory *) * hp->effector.path.fp_maxlen,
 			  "full path");
 	    for (i=0; i<= hp->effector.arc.arc_last; i++) {
 		dp = hp->effector.path.fp_names[i] =
