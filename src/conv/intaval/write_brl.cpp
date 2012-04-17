@@ -274,9 +274,18 @@ void writeRingModeBox
 
     for(size_t i2 = 0; i2 < form.npts; ++i2) {
 	vect_t a, b, c;
-	VMOVE(c, outer[(i2 - 1) % form.npts])
-	VMOVE(a, outer[i2])
-	VMOVE(b, outer[(i2 + 1) % form.npts])
+
+        VMOVE(a, outer[i2]);
+        if (i2 == 0) {
+          VMOVE(b, outer[i2 + 1]);
+          VMOVE(c, outer[form.npts-1]);
+        } else if (i2 == form.npts-1) {
+          VMOVE(b, outer[0]);
+          VMOVE(c, outer[i2 - 1]);
+        } else {
+          VMOVE(b, outer[i2 + 1]);
+          VMOVE(c, outer[i2 - 1]);
+        }
 
 	vect_t b_v, c_v;
 	VSUB2(b_v, b, a)
