@@ -213,6 +213,10 @@ int main(int argc, char **argv)
 	ret = scanf("%d", &typeout);
 	if (ret == 0)
 	    perror("scanf");
+	if (typeout < 0)
+	    typeout = 0;
+	if (typeout > 1)
+	    typeout = 1;
 
 	/*  Read name of file to write conductivity information  */
 	/*  to for use in PRISM.  */
@@ -309,13 +313,13 @@ int main(int argc, char **argv)
 	{
 	    (void)fprintf(fp3, "\nsecond pass file:  %s\n", spfile);
 	    (void)fprintf(fp3, "material file:  %s\n", filemat);
-	    if (typeout == 0)
-	    {
+	    if (typeout == 0) {
 		(void)fprintf(fp3, "conductivity file for use ");
 		(void)fprintf(fp3, "with PRISM:  %s\n", confile);
 		(void)fprintf(fp3, "  (format is PRISM %d.0)\n", prmrel);
+	    } else if (typeout == 1) {
+		(void)fprintf(fp3, "generic file:  %s\n", genfile);
 	    }
-	    if (typeout == 1) (void)fprintf(fp3, "generic file:  %s\n", genfile);
 	    (void)fflush(fp3);
 	    if (itype == 1) (void)fprintf(fp3, "\taverage length being used\n");
 	    if (itype == 2) (void)fprintf(fp3, "\trms length being used\n");
@@ -1130,8 +1134,9 @@ int main(int argc, char **argv)
 	if (typeout == 0) {
 	    (void)fprintf(stdout, "\tconductivity file created:  %s\n", confile);
 	    (void)fprintf(stdout, "\t  (format is PRISM %d.0)\n", prmrel);
-	} else if (typeout == 1)
+	} else if (typeout == 1) {
 	      (void)printf("\tgeneric file created:  %s\n", genfile);
+	}
 
 	(void)fprintf(stdout, "\tconductivity table file created:  %s\n", tblfile);
 	(void)fprintf(stdout, "\terror file created:  %s\n\n\n", fileerr);
@@ -1148,8 +1153,9 @@ int main(int argc, char **argv)
 	if (typeout == 0) {
 	    (void)fprintf(fp4, "PRISM %d.0 conductivity file, %s, created.\n\n",
 			  prmrel, confile);
-	} else if (typeout == 1)
+	} else if (typeout == 1) {
 	    (void)fprintf(fp4, "Generic file, %s, created.\n\n", genfile);
+	}
 
 	(void)fflush(fp4);
 	for (i=0; i<numreg; i++)
