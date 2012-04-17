@@ -79,7 +79,10 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
 		flags |= _GED_TREE_CFLAG;
 		break;
 	    case 'o':
-		if ((fdout = fopen(bu_optarg, "w+b")) == NULL) {
+		if (fdout)
+		    fclose(fdout);
+		fdout = fopen(bu_optarg, "w+b");
+		if (fdout == NULL) {
 		    bu_vls_printf(gedp->ged_result_str, "Failed to open output file, %d", errno);
 		    return GED_ERROR;
 		}
