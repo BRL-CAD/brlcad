@@ -95,7 +95,11 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 	return -1;
     }
     rewind(dbip->dbi_fp);
-    next = ftell(dbip->dbi_fp);
+    next = (off_t)ftell(dbip->dbi_fp);
+    if (next < 0) {
+	perror("ftell");
+	next = 0;
+    }
 
     here = addr = (off_t)-1;
     totrec = 0;
