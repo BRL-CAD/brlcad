@@ -2944,10 +2944,12 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
     }
 
     /* assign face geometry */
-    for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
-	if (fu->orientation != OT_SAME)
-	    continue;
-	nmg_calc_face_g(fu);
+    if (s) {
+	for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
+	    if (fu->orientation != OT_SAME)
+		continue;
+	    nmg_calc_face_g(fu);
+	}
     }
 
     tol.magic = BN_TOL_MAGIC;
