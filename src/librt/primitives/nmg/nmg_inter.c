@@ -2262,8 +2262,10 @@ nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
     if (vert_list1.end == 0 && vert_list2.end == 0) goto out;
 
     /* Invoke the face cutter to snip and join loops along isect line */
-    is->on_eg = nmg_face_cutjoin(&vert_list1, &vert_list2, mag1, mag2, fu1, fu2, is->pt, is->dir, is->on_eg, &is->tol);
-    ret = 1;		/* face cutter was called. */
+    if (fu1 && fu2) {
+	is->on_eg = nmg_face_cutjoin(&vert_list1, &vert_list2, mag1, mag2, fu1, fu2, is->pt, is->dir, is->on_eg, &is->tol);
+	ret = 1;		/* face cutter was called. */
+    }
 
 out:
     (void)bu_ptbl_free(&vert_list1);
