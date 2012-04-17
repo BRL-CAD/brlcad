@@ -183,6 +183,9 @@ restore_comb(struct ged *gedp, struct directory *dp, const char *oldname)
     const char *av[4];
     char *name;
 
+    if (!gedp || !dp || !oldname)
+	return;
+
     /* get rid of previous comb */
     name = bu_strdup(dp->d_namep);
 
@@ -591,7 +594,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	comb->inherit = 0;
 
     if (put_tree_into_comb(gedp, comb, dp, argv[1], new_name, argv[offset + 4]) == GED_ERROR) {
-	if (comb) {
+	if (comb && dp) {
 	    restore_comb(gedp, dp, saved_name);
 	    bu_vls_printf(gedp->ged_result_str, "%s: \toriginal restored\n", argv[0]);
 	}
