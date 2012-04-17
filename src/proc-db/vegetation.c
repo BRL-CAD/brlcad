@@ -640,8 +640,8 @@ growPlant(plant_t *plant)
 
 	    /* what if there is no structure yet? -- make one */
 	    if (point->structure == NULL) {
-		plant->structure = (structure_t *)bu_calloc(1, sizeof(structure_t), "plant->structure");
-		INIT_STRUCTURE_T(plant->structure);
+		point->structure = (structure_t *)bu_calloc(1, sizeof(structure_t), "point->structure");
+		INIT_STRUCTURE_T(point->structure);
 	    }
 
 	    /* add segment to list of segments for this growth point structure*/
