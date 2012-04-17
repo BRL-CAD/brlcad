@@ -272,7 +272,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		register const union cutter *nu_grid =
 		    curcut->nugn.nu_grid;
 
-		if (ssp->lastcell == CUTTER_NULL) {
+		if (ssp->lastcell == CUTTER_NULL || ssp->lastcell->cut_type != CUT_NUGRIDNODE) {
 		    /* We have just started into this NUgrid.  We must
 		     * find our location and set up the NUgrid traversal
 		     * state variables.
@@ -342,15 +342,17 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 			    break;
 			}
 
-			if (cutp != CUTTER_NULL && cutp != ssp->curcut)
+			if (cutp != CUTTER_NULL && cutp != ssp->curcut) {
 			    cutp += nu_stepsize[out_axis];
+			}
 		    } else {
 			if (--(ssp->igrid[out_axis]) < 0) {
 			    cutp = CUTTER_NULL;
 			    break;
 			}
-			if (cutp != CUTTER_NULL && cutp != ssp->curcut)
+			if (cutp != CUTTER_NULL && cutp != ssp->curcut) {
 			    cutp -= nu_stepsize[out_axis];
+			}
 		    }
 
 		    /* Update t advancement value for this axis */
