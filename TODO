@@ -70,6 +70,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* test tgf-g conversion with "ring-mode" geometry
+
 * investigate why the new bbox() routines for ARS and BoT result in
   bounding boxes that are way too big.
 
