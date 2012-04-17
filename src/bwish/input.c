@@ -113,7 +113,7 @@ HIDDEN void
 inputHandler(ClientData clientData, int UNUSED(mask))
 {
     int count;
-    char ch;
+    int ch;
     long fd;
     char buf[4096];
     int i;
