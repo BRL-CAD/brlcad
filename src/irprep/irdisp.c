@@ -99,8 +99,14 @@ main(void)
 	(void)printf("Enter the number of groups to be raytraced.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%d", &ngrp);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    bu_exit(1, "ERROR: failure to read number of groups\n");
+	}
+	if (ngrp < 0)
+	    ngrp = 0;
+	if (ngrp > INT_MAX-1)
+	    ngrp = INT_MAX-1;
 
 	/*  Read each group & put it in the variable showtherm.  */
 	j = 0;
