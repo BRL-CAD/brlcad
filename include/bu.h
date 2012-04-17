@@ -1015,25 +1015,25 @@ typedef struct bu_list bu_list_t;
  * Boolean test to see if current list element is the head
  */
 #define BU_LIST_IS_HEAD(p, hp)	\
-    (((struct bu_list *)(p)) == (hp))
+    (((struct bu_list *)(p)) == (struct bu_list *)(hp))
 #define BU_LIST_NOT_HEAD(p, hp)	\
-    (((struct bu_list *)(p)) != (hp))
+    (!BU_LIST_IS_HEAD(p, hp))
 
 /**
  * Boolean test to see if previous list element is the head
  */
 #define BU_LIST_PREV_IS_HEAD(p, hp)\
-    (((struct bu_list *)(p))->back == (hp))
+    (((struct bu_list *)(p))->back == (struct bu_list *)(hp))
 #define BU_LIST_PREV_NOT_HEAD(p, hp)\
-    (((struct bu_list *)(p))->back != (hp))
+    (!BU_LIST_PREV_IS_HEAD(p, hp))
 
 /**
  * Boolean test to see if the next list element is the head
  */
 #define BU_LIST_NEXT_IS_HEAD(p, hp)	\
-    (((struct bu_list *)(p))->forw == (hp))
+    (((struct bu_list *)(p))->forw == (struct bu_list *)(hp))
 #define BU_LIST_NEXT_NOT_HEAD(p, hp)	\
-    (((struct bu_list *)(p))->forw != (hp))
+    (!BU_LIST_NEXT_IS_HEAD(p, hp))
 
 #define BU_LIST_EACH(hp, p, type) \
     for ((p)=(type *)BU_LIST_FIRST(bu_list, hp); \
@@ -1073,7 +1073,7 @@ typedef struct bu_list bu_list_t;
  */
 #define BU_LIST_FOR_CIRC(p, structure, hp)	\
     (p)=BU_LIST_PNEXT_CIRC(structure, hp); \
-       (p) && (p) != (hp); \
+       (p) && BU_LIST_NOT_HEAD(p, hp); \
        (p)=BU_LIST_PNEXT_CIRC(structure, p)
 
 /**
