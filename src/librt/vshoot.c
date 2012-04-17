@@ -355,8 +355,10 @@ freeup:
 	    FREE_PT(newpp, ap->a_resource);
 	}
     }
+
     /* Segs can't be freed until after a_hit() has returned */
-    RT_FREE_SEG_LIST(HeadSeg, ap->a_resource);
+    if (HeadSeg)
+	RT_FREE_SEG_LIST(HeadSeg, ap->a_resource);
 
 out:
     bu_free((char *)ary_stp, "*ary_stp[]");
