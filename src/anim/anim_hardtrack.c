@@ -348,7 +348,7 @@ main(int argc, char *argv[])
 	fprintf(stderr, "Anim_hardtrack: Could not open file %s.\n", *(argv+bu_optind));
 	return 0;
     }
-    num_wheels = -1;
+
     if (!ZERO(radius)) {
 	while (!feof(stream)) {
 	    count = fscanf(stream, "%*f %*f %*f");
