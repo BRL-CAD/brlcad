@@ -287,9 +287,9 @@ main(int argc, char **argv)
 	header.ras_maplength = getlong(&inbuf[NET_LONG_LEN*7]);
 
 	if (header.ras_magic != RAS_MAGIC) {
-	    bu_exit(1,
-		    "sun-pix: bad magic number, was x%x, s/b x%x\n",
-		    header.ras_magic, RAS_MAGIC);
+	    bu_log("sun-pix: bad magic number, was x%x, s/b x%x\n",
+		   header.ras_magic, RAS_MAGIC);
+	    return 1;
 	}
 
 	/* Width is rounded up to next multiple of 16 bits */
@@ -314,7 +314,7 @@ main(int argc, char **argv)
 	}
 	if (hflag) {
 	    printf("-w%d -n%d\n", header.ras_width, header.ras_height);
-	    bu_exit (0, NULL);
+	    return 0;
 	}
     } else {
 	/* "pure" bitmap */
@@ -328,8 +328,9 @@ main(int argc, char **argv)
 	case RT_STANDARD:
 	    break;
 	default:
-	    bu_exit(1, "sun-pix:  Unable to process type %d images\n",
-		    header.ras_type);
+	    bu_log("sun-pix:  Unable to process type %d images\n",
+		   header.ras_type);
+	    return 1;
     }
 
     width = header.ras_width;
@@ -368,8 +369,9 @@ main(int argc, char **argv)
 	case 8:
 	    /* 8-bit image */
 	    if (header.ras_maptype != RMT_EQUAL_RGB) {
-		bu_exit(1, "sun-pix:  unable to handle depth=8, maptype = %d.\n",
-			header.ras_maptype);
+		bu_log("sun-pix:  unable to handle depth=8, maptype = %d.\n",
+		       header.ras_maptype);
+		return 1;
 	    }
 	    scanbytes = width;
 	    for (x = 0; x < header.ras_maplength/3; x++) {
@@ -411,8 +413,9 @@ main(int argc, char **argv)
 		for (x=0; x < width; x++) {
 		    cmap_idx = buf[x];
 		    if (cmap_idx >= CMAP_MAX_INDEX) {
-			bu_exit(1, "Warning: Read invalid index %u.\n",
-				(unsigned int)buf[x]);
+			bu_log("Warning: Read invalid index %u.\n",
+			       (unsigned int)buf[x]);
+			return 1;
 		    }
 		    if (pixout) {
 			putchar(Cmap[cmap_idx].CL_red);
@@ -425,8 +428,9 @@ main(int argc, char **argv)
 	    }
 	    break;
 	default:
-	    bu_exit(1, "sun-pix:  unable to handle depth=%d\n",
-		    header.ras_depth);
+	    bu_log("sun-pix:  unable to handle depth=%d\n",
+		   header.ras_depth);
+	    return 1;
     }
 
     return 0;
