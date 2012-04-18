@@ -1,0 +1,57 @@
+<!-- Converted by db4-upgrade version 1.0 -->
+
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="gr">
+
+<refmeta>
+  <refentrytitle>GR</refentrytitle>
+  <manvolnum>nged</manvolnum>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+</refmeta>
+
+<refnamediv xml:id="name">
+  <refname>gr</refname>
+  <refpurpose>Add or remove primitives from a group using a GUI selection box.
+   </refpurpose>
+  <refname>dg</refname>
+  <refpurpose>Exit grouper mode.
+   </refpurpose>
+</refnamediv>
+
+<!-- body begins here -->
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
+    <command>gr</command>    
+       <arg choice="req" rep="norepeat"><replaceable>GroupName</replaceable></arg>
+       <group choice="req" rep="norepeat">
+         <arg choice="plain" rep="norepeat"><replaceable>+</replaceable></arg>
+         <arg choice="plain" rep="norepeat"><replaceable>-</replaceable></arg>
+       </group>
+     </cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+ <para>Allows primitives to be added or removed from a group by selecting
+ them on the MGED display using a selection box. Drawing the selection box
+ (left to right), only primitives completely in the box are selected.
+ Drawing the selection box (right to left), primitives completely and partly
+ in the box are selected. Primitives are identified by the location of their
+ vertices on the display. For example, a portion of a primitive may be
+ within the selection box but if none of its vertices are then it is not
+ considered within the section box. To start grouper use the command
+ 'grouper' or 'gr' and to finish use 'done_grouper' or 'dg'. The center
+ mouse button is used to create the selection box. Primitives in the group
+ will be displayed in yellow.</para>
+</refsection>
+
+<info><corpauthor>BRL-CAD Team</corpauthor></info>
+
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
+  <para>
+    Reports of bugs or problems should be submitted via electronic
+    mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+  </para>
+</refsection>
+</refentry>
+
