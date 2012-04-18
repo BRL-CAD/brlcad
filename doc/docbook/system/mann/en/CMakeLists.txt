@@ -91,6 +91,7 @@ set(docbook_mann_EN
   garbage_collect.xml
   gastank.xml
   gqa.xml
+  gr.xml
   gui.xml
   handle.xml
   help.xml
