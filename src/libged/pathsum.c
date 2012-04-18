@@ -46,7 +46,7 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 
     /* paths */
     static const char *usage2 = 
-	"[-t] {path_start}\n{path_start} may be specified by '/' or space separated components, but not both";
+	"{path_start}\n{path_start} may be specified by '/' or space separated components, but not both";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -82,7 +82,7 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (BU_STR_EQUAL(argv[1], "-t")) {
+    if (BU_STR_EQUAL(argv[1], "-t") && gtd.gtd_flag == _GED_LISTEVAL) {
 	pos_in = 2;
 	verbose = 0;
     } else {
