@@ -243,7 +243,7 @@ main(int argc, char *argv[])
 		printf("%c\n", (char)c);
 	else {
 	    bu_log("loop 'incr' can not be zero.\n");
-	    reuturn 1;
+	    return 1;
 	}
     }
 
