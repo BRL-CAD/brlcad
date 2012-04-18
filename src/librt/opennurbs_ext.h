@@ -991,7 +991,9 @@ BVNode<BV>::intersectedBy(ON_Ray& ray, double* tnear_opt, double* tfar_opt)
 	    if (t1 > tnear) tnear = t1;
 	    if (t2 < tfar) tfar = t2;
 	    if (tnear > tfar) /* box is missed */ untrimmedresult = false;
-	    if (tfar < 0) /* box is behind ray */ untrimmedresult = false;
+	    /* go ahead and solve hits behind us
+	    if (tfar < 0)  untrimmedresult = false;
+	    */
 	}
     }
     if (tnear_opt != NULL && tfar_opt != NULL) { 
