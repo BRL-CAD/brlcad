@@ -66,7 +66,8 @@ main(int argc, char *argv[])
     long int cincr;
 
     if (argc < 3 || argc > 5) {
-	bu_exit(9, "Usage:  loop [-c] start finish [incr] \n -c use for character(char) looping \n");
+	bu_log("Usage:  loop [-c] start finish [incr] \n -c use for character(char) looping \n");
+	return 9;
     }
 
     /* Check if -c is present in comandline argument*/
@@ -75,7 +76,8 @@ main(int argc, char *argv[])
 	if (argv[1][1] == 'c') {
 	    status = CHAR;
 	} else if ((argv[1][1] != '.') && !isdigit(argv[1][1])) {
-	    bu_exit(9, "Usage:  loop [-c] start finish [incr] \n -c use for character(char) looping \n");
+	    bu_log("Usage:  loop [-c] start finish [incr] \n -c use for character(char) looping \n");
+	    return 9;
 	}
     }
 
@@ -92,18 +94,21 @@ main(int argc, char *argv[])
     if (status == REAL) {
 	dstart  = atof(argv[1]);
 	if ((dstart < -DBL_MAX) || (dstart > DBL_MAX)) {
-	    bu_exit(-1, "'start' out of range of double.\n");
+	    bu_log("'start' out of range of double.\n");
+	    return 1;
 	}
 
 	dfinish = atof(argv[2]);
 	if ((dfinish < -DBL_MAX) || (dfinish > DBL_MAX)) {
-	    bu_exit(-1, "'finish' out of range of double.\n");
+	    bu_log("'finish' out of range of double.\n");
+	    reutrn 1;
 	}
 
 	if (argc == 4) {
 	    dincr = atof(argv[3]);
 	    if ((dincr < -DBL_MAX) || (dincr > DBL_MAX)) {
-		bu_exit(-1, "'incr' out of range of double.\n");
+		bu_log("'incr' out of range of double.\n");
+		return 1;
 	    }
 	} else {
 	    if (dstart > dfinish)
@@ -118,8 +123,10 @@ main(int argc, char *argv[])
 	else if (dincr < 0.0)
 	    for (d = dstart; d >= dfinish; d += dincr)
 		printf("%g\n", d);
-	else
-	    bu_exit(-1, "loop 'incr' can not be zero.\n");
+	else {
+	    bu_log("loop 'incr' can not be zero.\n");
+	    return 1;
+	}
 
     } else if (status == INTEGER) {
 	/* print out integer output */
@@ -174,18 +181,21 @@ main(int argc, char *argv[])
 
 	start  = strtol(argv[1],NULL,0);
 	if ((start < INT_MIN) || (start > INT_MAX)) {
-	    bu_exit(-1, "'start' out of range of signed integer.\n");
+	    bu_log("'start' out of range of signed integer.\n");
+	    return 1;
 	}
 
 	finish = strtol(argv[2],NULL,0);
 	if ((finish < INT_MIN) || (finish > INT_MAX)) {
-	    bu_exit(-1, "'finish' out of range of signed integer.\n");
+	    bu_log("'finish' out of range of signed integer.\n");
+	    return 1;
 	}
 
 	if (argc == 4) {
 	    incr = strtol(argv[3],NULL,0);
 	    if ((incr < INT_MIN) || (incr > INT_MAX)) {
-		bu_exit(-1, "'incr' out of range of signed integer.\n");
+		bu_log("'incr' out of range of signed integer.\n");
+		return 1;
 	    }
 	} else {
 	    if (start > finish)
@@ -200,20 +210,24 @@ main(int argc, char *argv[])
 	else if (incr < 0)
 	    for (i = start; i >= finish; i += incr)
 		printf(fmt_string, i);
-	else
-	    bu_exit(-1, "loop 'incr' can not be zero.\n");
+	else {
+	    bu_log("loop 'incr' can not be zero.\n");
+	    return 9;
+	}
     } else {
 	if (argc < 4) {
-	    bu_exit(9, "Usage:  loop [-c] start finish [incr] \n -c use for character(char) looping \n");
+	    bu_log("Usage:  loop [-c] start finish [incr] \n -c use for character(char) looping \n");
+	    return 9;
 	}
 	/* print out character output */
 	cstart = argv[2][0];
 	cfinish = argv[3][0];
-	
+
 	if (argc == 5) {
 	    cincr = strtol(argv[4],NULL,0);
 	    if ((cincr < -UCHAR_MAX) || (cincr > UCHAR_MAX)) {
-		bu_exit(-1, "'incr' out of range of char.\n");
+		bu_log("'incr' out of range of char.\n");
+		return 1;
 	    }
 	} else {
 	    if (cstart > cfinish)
@@ -227,8 +241,10 @@ main(int argc, char *argv[])
 	else if (cincr < 0)
 	    for (c=cstart; c >= cfinish; c +=cincr)
 		printf("%c\n", (char)c);
-	else
-	    bu_exit(-1, "loop 'incr' can not be zero.\n");
+	else {
+	    bu_log("loop 'incr' can not be zero.\n");
+	    reuturn 1;
+	}
     }
 
     return 0;
