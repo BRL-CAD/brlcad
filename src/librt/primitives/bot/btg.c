@@ -119,11 +119,16 @@ struct hitdata_s {
 };
 
 static void *
-hitfunc(struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, struct tie_tri_s *UNUSED(tri), void *ptr)
+hitfunc(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *UNUSED(tri), void *ptr)
 {
     struct hitdata_s *h = (struct hitdata_s *)ptr;
     struct tri_specific *tsp;
     struct hit *hp;
+    fastf_t dn;		/* Direction dot Normal */
+    fastf_t abs_dn;
+    fastf_t alpha, beta;
+    vect_t wxb;		/* vertex - ray_start */
+    vect_t xp;		/* wxb cross ray_dir */
 
     if(h->nhits > (MAXHITS-1)) {
 	bu_log("Too many hits!\n");
@@ -139,6 +144,24 @@ hitfunc(struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, struct tie_tri_s *UN
     hp->hit_dist = id->dist;
     VMOVE(tsp->tri_N, id->norm);
 
+    /* replicate hit_vpriv[] settings from original BOT code, used later to
+     * clean up odd hits, exit before entrance, or dangling entrance in
+     * make_bot_segment(). BOT hits were disappearing from the segment
+     * depending on hit_vpriv[X] uninitialized value.
+     */
+    dn = VDOT(tsp->tri_wn, ray->dir);
+    abs_dn = dn >= 0.0 ? dn : (-dn);
+    VSUB2(wxb, tsp->tri_A, ray->pos);
+    VCROSS(xp, wxb, ray->dir);
+    alpha = VDOT(tsp->tri_CA, xp);
+    if (dn < 0.0) alpha = -alpha;
+    beta = VDOT(tsp->tri_BA, xp);
+    hp->hit_vpriv[X] = VDOT(tsp->tri_N, ray->dir);
+    hp->hit_vpriv[Y] = alpha / abs_dn;
+    hp->hit_vpriv[Z] = beta / abs_dn;
+    hp->hit_surfno = tsp->tri_surfno;
+
+
     /* add hitdist into array and add one to nhits */
     return NULL;	/* continue firing */
 }
@@ -151,6 +174,7 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
     struct hitdata_s hitdata;
     struct tie_id_s id;
     struct tie_ray_s ray;
+    int i;
 
     bot = (struct bot_specific *)stp->st_specific;
     tie = (struct tie_s *)bot->tie;
@@ -158,6 +182,7 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
     hitdata.nhits = 0;
     hitdata.rp = &ap->a_ray;
 
+    /* small backout applied to ray origin */
     VCOMB2(ray.pos, 1.0, rp->r_pt, -1.01, rp->r_dir);
     VMOVE(ray.dir, rp->r_dir);
     ray.depth = ray.kdtree_depth = 0;
@@ -167,6 +192,12 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
     /* use hitfunc to build the hit list */
     if(hitdata.nhits == 0)
 	return 0;
+
+    /* adjust hit distances to initial ray origin */
+    for(i=0;i<hitdata.nhits;i++) {
+	hitdata.hits[i].hit_dist = hitdata.hits[i].hit_dist - 1.01;
+    }
+
 
     return rt_bot_makesegs(hitdata.hits, hitdata.nhits, stp, rp, ap, seghead, NULL);
 }
