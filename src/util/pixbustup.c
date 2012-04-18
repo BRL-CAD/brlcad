@@ -36,34 +36,41 @@
 int infd;
 unsigned char *in1;
 
-static int scanbytes;			/* # of bytes of scanline */
-static int nlines;		/* Number of input lines */
-static int pix_line;		/* Number of pixels/line */
+static size_t scanbytes;		/* # of bytes of scanline */
+static size_t nlines;		/* Number of input lines */
+static size_t pix_line;		/* Number of pixels/line */
 
 static void
 printUsage()
 {
-    bu_exit(1, "Usage: pixbustup basename width [image_offset] [first_number] <input.pix\n");
+    bu_log("Usage: pixbustup basename width [image_offset] [first_number] <input.pix\n");
 }
 
 int
 main(int argc, char **argv)
 {
-    int image_offset;
-    int framenumber;
+    size_t image_offset;
+    size_t framenumber;
     char *base_name;
     char name[128];
 
     if (argc < 3) {
 	printUsage();
+	return 1;
     }
 
     base_name = argv[1];
     nlines = atoi(argv[2]);
 
     if (nlines < 1) {
-	bu_log("Error: need width of at least 1 pixel.");
+	bu_log("ERROR: need width of at least 1 pixel.");
 	printUsage();
+	return 2;
+    }
+    if (nlines > UINT32_MAX) {
+	bu_log("ERROR: not ready to handle images bigger than %ld bytes square.", UINT32_MAX);
+	printUsage();
+	return 3;
     }
 
     pix_line = nlines;	/* Square pictures */
@@ -84,13 +91,13 @@ main(int argc, char **argv)
 	int rwval = read(0, in1, scanbytes);
 	char *ifname;
 
-	if (rwval != scanbytes) {
+	if ((size_t)rwval != scanbytes) {
 	    if (rwval < 0) {
 		perror("pixbustup READ ERROR");
 	    }
 	    break;
 	}
-	snprintf(name, 128, "%s.%d", base_name, framenumber);
+	snprintf(name, 128, "%s.%ld", base_name, (unsigned long)framenumber);
 
 	ifname = bu_realpath(name, NULL);
 	if ((fd=creat(ifname, 0444))<0) {
@@ -101,7 +108,7 @@ main(int argc, char **argv)
 	bu_free(ifname,"ifname alloc from bu_realpath");
 
 	rwval = write(fd, in1, scanbytes);
-	if (rwval != scanbytes) {
+	if ((size_t)rwval != scanbytes) {
 	    if (rwval < 0) {
 		perror("pixbustup WRITE ERROR");
 	    }
