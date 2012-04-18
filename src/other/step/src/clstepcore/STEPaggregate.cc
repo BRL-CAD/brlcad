@@ -24,7 +24,6 @@ const int Real_Num_Precision = REAL_NUM_PRECISION; // from STEPattribute.h
 
 #define STRING_DELIM '\''
 
-static char rcsid[] = "$Id: STEPaggregate.cc,v 3.0.1.7 1997/11/05 21:59:28 sauderd DP3.1 $";
 
 /******************************************************************
 **    Functions for manipulating aggregate attributes

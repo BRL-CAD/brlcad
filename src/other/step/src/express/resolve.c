@@ -1,4 +1,3 @@
-static char rcsid[] = "$Id: resolve.c,v 1.14 1997/01/21 19:19:51 dar Exp $";
 
 /*
  * This software was developed by U.S. Government employees as part of
@@ -1698,15 +1697,6 @@ SCHEMAresolve_pass2( Schema * schema ) {
             return 0;
         } else {
             return 1;
-        }
-    }
-
-    static Type
-    TAGget_type( struct tag * tags, char * name ) {
-        while( 1 ) {
-            if( streq( tags->name, name ) ) {
-                return( tags->type );
-            }
         }
     }
 

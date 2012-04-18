@@ -175,7 +175,6 @@ yywrap()
 /* added for re-initializing parser -snc 22-Apr-1992 */
 void
 SCAN_lex_init(char *filename, FILE *fp) {
-	int i;
 
         /* return to initial scan buffer */
         SCAN_current_buffer = 0;

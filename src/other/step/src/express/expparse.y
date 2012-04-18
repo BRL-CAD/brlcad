@@ -128,10 +128,8 @@ YYSTYPE yylval;
 
     int	yylineno;
 
-    static int	PARSEchunk_start;
 
     static void	yyerror(const char*, char *string);
-    static void	yyerror2(const char*, char CONST *t);
 
     bool yyeof = false;
 
@@ -2481,43 +2479,5 @@ yyerror(const char *yytext, char *string)
     sym.filename = current_filename;
     ERRORreport_with_symbol(ERROR_syntax, &sym, buf,
 	CURRENT_SCOPE_TYPE_PRINTABLE, CURRENT_SCOPE_NAME);
-}
-
-static void
-yyerror2(const char *yytext, char CONST *t) /* token or 0 to indicate no more tokens */
-{
-    char buf[200];
-    Symbol sym;
-    static int first = 1;	/* true if first suggested replacement */
-    static char tokens[4000] = "";/* error message, saying */
-    /* "expecting <token types>" */
-
-    if (t) {	/* subsequent token? */
-	if (first) {
-	    first = 0;
-	} else {
-	    strcat (tokens, " or ");
-	}
-	strcat(tokens, t);
-    } else {
-	strcpy(buf, "syntax error");
-	if (yyeof) {
-	    strcat(buf, " at end of input");
-	} else if (yytext[0] == 0) {
-	    strcat(buf, " at null character");
-	} else if (yytext[0] < 040 || yytext[0] >= 0177) {
-	    sprintf(buf + strlen(buf), " near character 0%o", yytext[0]);
-	} else {
-	    sprintf(buf + strlen(buf), " near `%s'", yytext);
-	}
-
-	if (0 == strlen(tokens)) {
-	    yyerror(yytext, "syntax error");
-	}
-	sym.line = yylineno - (yytext[0] == '\n');
-	sym.filename = current_filename;
-	ERRORreport_with_symbol(ERROR_syntax_expecting, &sym, buf, tokens,
-	    CURRENT_SCOPE_TYPE_PRINTABLE, CURRENT_SCOPE_NAME);
-    }
 }
 }
