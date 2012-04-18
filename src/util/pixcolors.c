@@ -61,14 +61,28 @@ void doit(FILE *fd)
     int bytes;
     int mask, i;
     unsigned long k;
+    int r, g, b;
 
 
     count = 0;
     while ((bytes = fread(pixbuf, 3, PIXELS, fd)) > 0) {
 	for (i = (bytes-1)*3; i >= 0; i -= 3) {
-	    pixel = pixbuf[i] +
-		(pixbuf[i+1] << 8) +
-		(pixbuf[i+2] << 16);
+	    r = pixbuf[i];
+	    g = pixbuf[i+1];
+	    b = pixbuf[i+2];
+	    if (r < 0)
+		r = 0;
+	    if (g < 0)
+		g = 0;
+	    if (b < 0)
+		b = 0;
+	    if (r > UCHAR_MAX)
+		r = UCHAR_MAX;
+	    if (g > UCHAR_MAX)
+		g = UCHAR_MAX;
+	    if (b > UCHAR_MAX)
+		b = UCHAR_MAX;
+	    pixel = r +	(g << 8) + (b << 16);
 
 	    if (!(vals[k=(pixel >> 3)] &
 		   (mask = (1 << (pixel & 0x07))))) {
