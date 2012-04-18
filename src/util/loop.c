@@ -101,7 +101,7 @@ main(int argc, char *argv[])
 	dfinish = atof(argv[2]);
 	if ((dfinish < -DBL_MAX) || (dfinish > DBL_MAX)) {
 	    bu_log("'finish' out of range of double.\n");
-	    reutrn 1;
+	    return 1;
 	}
 
 	if (argc == 4) {
