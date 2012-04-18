@@ -34,7 +34,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // SDAI_Application_instance used to be STEPentity
 
-//class SDAI_Application_instance) /* : public SCLP23(DAObject_SDAI */
 class SDAI_Application_instance  : public SDAI_DAObject_SDAI  {
     private:
         int _cur;   // provides a built-in way of accessing attributes in order.
@@ -106,7 +105,6 @@ class SDAI_Application_instance  : public SDAI_DAObject_SDAI  {
         void ClearError( int clearAttrs = 1 );
         // clears all attr's errors
         void ClearAttrError();
-//    void EnforceOptionality(int on = 1);
 
         virtual SDAI_Application_instance  * Replicate();
 
@@ -135,7 +133,7 @@ class SDAI_Application_instance  : public SDAI_DAObject_SDAI  {
         void     STEPwrite_reference( ostream & out = cout );
         const char * STEPwrite_reference( std::string & buf );
 
-        void beginSTEPwrite( ostream & out = cout ); // writes out the SCOPE section
+        void beginSTEPwrite( ostream & out = cout ); ///< writes out the SCOPE section
         void endSTEPwrite( ostream & out = cout );
 
 // MULTIPLE INHERITANCE
@@ -179,10 +177,8 @@ class SDAI_Application_instance  : public SDAI_DAObject_SDAI  {
             return STEPfile_id;
         }
 
-}
-;
+};
 
-// current style of CORBA handles for Part 23
 typedef SDAI_Application_instance  * SDAI_Application_instance_ptr ;
 typedef SDAI_Application_instance_ptr  SDAI_Application_instance_var ;
 

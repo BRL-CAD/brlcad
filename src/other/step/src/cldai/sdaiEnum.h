@@ -12,18 +12,16 @@
 * and is not subject to copyright.
 */
 
-/* $Id: sdaiEnum.h,v 1.5 1997/11/05 21:59:14 sauderd DP3.1 $ */
-
-class SDAI_Enum   {
-        friend     ostream & operator<< ( ostream &, const SDAI_Enum  & );
+class SDAI_Enum {
+        friend     ostream & operator<< ( ostream &, const SDAI_Enum & );
     protected:
         int v;  //  integer value of enumeration instance
         //  mapped to a symbolic value in the elements
 
         virtual int set_value( const char * n );
         virtual int set_value( const int n );
-        SDAI_Enum ();
-        virtual ~SDAI_Enum ();
+        SDAI_Enum();
+        virtual ~SDAI_Enum();
 
     public:
 
@@ -66,14 +64,11 @@ class SDAI_Enum   {
         void set_null() {
             nullify();
         }
-        SDAI_Enum  & operator= ( const int );
-        SDAI_Enum  & operator= ( const SDAI_Enum  & );
+        SDAI_Enum & operator= ( const int );
+        SDAI_Enum & operator= ( const SDAI_Enum & );
 
-//    operator ULong() const { return v; } // return the integer equivalent
-
-        virtual int exists() const; // return 0 if unset otherwise return 1
-        virtual void nullify(); // change the receiver to an unset status
-        // unset is generated to be 1 greater than last element
+        virtual int exists() const;
+        virtual void nullify();
         void DebugDisplay( ostream & out = cout ) const;
 
     protected:
@@ -83,33 +78,31 @@ class SDAI_Enum   {
 
 
 
+class SDAI_LOGICAL;
+class SDAI_BOOLEAN;
 
 enum Boolean { BFalse, BTrue, BUnset };
 enum Logical { LFalse, LTrue, LUnset, LUnknown };
 
-// old SCL definition
-//enum LOGICAL { sdaiFALSE, sdaiTRUE, sdaiUNKNOWN };
-
-class SDAI_LOGICAL   :
-    public SDAI_Enum   {
+class SDAI_LOGICAL :
+    public SDAI_Enum  {
     public:
         const char * Name() const;
 
-        SDAI_LOGICAL ( const char * val = 0 );
-        SDAI_LOGICAL ( Logical state );
-        SDAI_LOGICAL ( const SDAI_LOGICAL & source );
-        SDAI_LOGICAL ( int i );
+        SDAI_LOGICAL( const char * val = 0 );
+        SDAI_LOGICAL( Logical state );
+        SDAI_LOGICAL( const SDAI_LOGICAL & source );
+        SDAI_LOGICAL( int i );
 
-        virtual ~SDAI_LOGICAL ();
+        virtual ~SDAI_LOGICAL();
 
         virtual int no_elements() const;
         virtual const char * element_at( int n ) const;
 
-//    operator int () const;
         operator Logical() const;
-        SDAI_LOGICAL  & operator=( const SDAI_LOGICAL & t );
+        SDAI_LOGICAL & operator=( const SDAI_LOGICAL & t );
 
-        SDAI_LOGICAL  operator==( const SDAI_LOGICAL & t ) const;
+        SDAI_LOGICAL operator==( const SDAI_LOGICAL & t ) const;
 
         // these 2 are redefined because LUnknown has cardinal value > LUnset
         int exists() const; // return 0 if unset otherwise return 1
@@ -121,40 +114,35 @@ class SDAI_LOGICAL   :
         virtual Severity ReadEnum( istream & in, ErrorDescriptor * err,
                                    int AssignVal = 1, int needDelims = 1 );
 
-}
-;
+};
 
-class SDAI_BOOLEAN   :
-    public SDAI_Enum   {
+class SDAI_BOOLEAN :
+    public SDAI_Enum  {
     public:
         const char * Name() const;
 
-        SDAI_BOOLEAN ( char * val = 0 );
-        SDAI_BOOLEAN ( Boolean state );
-        SDAI_BOOLEAN ( const SDAI_BOOLEAN & source );
-        SDAI_BOOLEAN ( int i );
-        SDAI_BOOLEAN ( const SDAI_LOGICAL & val );
-        virtual ~SDAI_BOOLEAN ();
+        SDAI_BOOLEAN( char * val = 0 );
+        SDAI_BOOLEAN( ::Boolean state );
+        SDAI_BOOLEAN( const SDAI_BOOLEAN & source );
+        SDAI_BOOLEAN( int i );
+        SDAI_BOOLEAN( const SDAI_LOGICAL & val );
+        virtual ~SDAI_BOOLEAN();
 
         virtual int no_elements() const;
         virtual const char * element_at( int n ) const;
 
-        operator Boolean() const;
-        SDAI_BOOLEAN  & operator=( const SDAI_LOGICAL & t );
+        operator ::Boolean() const;
+        SDAI_BOOLEAN & operator=( const SDAI_LOGICAL & t );
 
-        SDAI_BOOLEAN  & operator=( const Boolean t );
-//    operator int () const;
-//    operator Logical () const;
-        SDAI_LOGICAL  operator==( const SDAI_LOGICAL & t ) const;
+        SDAI_BOOLEAN & operator=( const ::Boolean t );
+        SDAI_LOGICAL operator==( const SDAI_LOGICAL & t ) const;
 
-}
-;
+};
 
-static const SDAI_BOOLEAN  SDAI_TRUE ;
-static const SDAI_BOOLEAN  SDAI_FALSE ;
-static const SDAI_BOOLEAN  SDAI_UNSET ;
-static const SDAI_LOGICAL  SDAI_UNKNOWN ;
+static const SDAI_BOOLEAN SDAI_TRUE;
+static const SDAI_BOOLEAN SDAI_FALSE;
+static const SDAI_BOOLEAN SDAI_UNSET;
+static const SDAI_LOGICAL SDAI_UNKNOWN;
 
-//}; // end struct P23_NAMESPACE
 
 #endif

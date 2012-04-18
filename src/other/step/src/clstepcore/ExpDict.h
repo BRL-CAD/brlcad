@@ -12,14 +12,10 @@
 * and is not subject to copyright.
 */
 
-/* $Id: ExpDict.h,v 3.0.1.12 1998/02/17 19:19:15 sauderd DP3.1 $  */
-
 
 #include <sdai.h>
-//class SDAI_Application_instance;
 
 typedef  SDAI_Application_instance  * ( * Creator )() ;
-//class StringAggregate;
 
 enum AttrType_Enum {
     AttrType_Explicit = 0,
@@ -31,51 +27,10 @@ enum AttrType_Enum {
 #include <SingleLinkList.h>
 
 #include <baseType.h>
-//#include <typeDefs.h>
 #include <dictdefs.h>
-//#include <sdaiDefs.h>
 #include <Str.h>
 #include <scl_char_str_list.h>
 
-/*
-**  I tried these variations on the TypeDescriptor to get them to be
-*   initialized globally.  I couldn\'t do it.  They are now initialized
-*   in the Registry constructor (in Registry.inline.cc
-
-extern const TypeDescriptor t_INTEGER_TYPE;
-extern const TypeDescriptor t_REAL_TYPE;
-extern const TypeDescriptor t_NUMBER_TYPE;
-extern const TypeDescriptor t_STRING_TYPE;
-extern const TypeDescriptor t_BINARY_TYPE;
-extern const TypeDescriptor t_BOOLEAN_TYPE;
-extern const TypeDescriptor t_LOGICAL_TYPE;
-
-#define t_INTEGER_TYPE &_t_INTEGER_TYPE
-#define t_REAL_TYPE  &_t_REAL_TYPE
-#define t_NUMBER_TYPE &_t_NUMBER_TYPE
-#define t_STRING_TYPE &_t_STRING_TYPE
-#define t_BINARY_TYPE &_t_BINARY_TYPE
-#define t_BOOLEAN_TYPE &_t_BOOLEAN_TYPE
-#define t_LOGICAL_TYPE &_t_LOGICAL_TYPE
-
-extern const TypeDescriptor * const t_INTEGER_TYPE;
-extern const TypeDescriptor * const t_REAL_TYPE;
-extern const TypeDescriptor * const t_NUMBER_TYPE;
-extern const TypeDescriptor * const t_STRING_TYPE;
-extern const TypeDescriptor * const t_BINARY_TYPE;
-extern const TypeDescriptor * const t_BOOLEAN_TYPE;
-extern const TypeDescriptor * const t_LOGICAL_TYPE;
-*/
-
-/*
-extern const TypeDescriptor *  t_INTEGER_TYPE;
-extern const TypeDescriptor *  t_REAL_TYPE;
-extern const TypeDescriptor *  t_NUMBER_TYPE;
-extern const TypeDescriptor *  t_STRING_TYPE;
-extern const TypeDescriptor *  t_BINARY_TYPE;
-extern const TypeDescriptor *  t_BOOLEAN_TYPE;
-extern const TypeDescriptor *  t_LOGICAL_TYPE;
-*/
 
 // defined and created in Registry.inline.cc
 extern const TypeDescriptor  * t_sdaiINTEGER;
@@ -696,7 +651,7 @@ typedef Uniqueness_rule__set_ptr Uniqueness_rule__set_var;
 ///////////////////////////////////////////////////////////////////////////////
 
 
-typedef  SDAI_Model_contents_ptr ( * ModelContentsCreator )() ;
+typedef  SDAI_Model_contents_ptr( * ModelContentsCreator )() ;
 
 class Schema : public Dictionary_instance {
 

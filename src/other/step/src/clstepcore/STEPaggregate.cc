@@ -24,9 +24,8 @@ const int Real_Num_Precision = REAL_NUM_PRECISION; // from STEPattribute.h
 
 #define STRING_DELIM '\''
 
-
-/******************************************************************
-**    Functions for manipulating aggregate attributes
+/******************************************************************************
+**    \file STEPaggregate.cc Functions for manipulating aggregate attributes
 
 **  KNOWN BUGs:
 **     -- treatment of aggregates of reals or ints is inconsistent with
@@ -37,10 +36,6 @@ const int Real_Num_Precision = REAL_NUM_PRECISION; // from STEPattribute.h
 STEPaggregate NilSTEPaggregate;
 
 
-///////////////////////////////////////////////////////////////////////////////
-// STEPaggregate
-///////////////////////////////////////////////////////////////////////////////
-
 STEPaggregate::STEPaggregate() {
     _null = 1;
 }
@@ -48,8 +43,7 @@ STEPaggregate::STEPaggregate() {
 STEPaggregate::~STEPaggregate() {
 }
 
-STEPaggregate &
-STEPaggregate::ShallowCopy( const STEPaggregate & a ) {
+STEPaggregate & STEPaggregate::ShallowCopy( const STEPaggregate & a ) {
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__
          << "\n" << _POC_ "\n";
     cerr << "function:  STEPaggregate::ShallowCopy \n" << "\n";
@@ -57,8 +51,7 @@ STEPaggregate::ShallowCopy( const STEPaggregate & a ) {
 }
 
 // do not require exchange file format
-Severity
-STEPaggregate::AggrValidLevel( const char * value, ErrorDescriptor * err,
+Severity STEPaggregate::AggrValidLevel( const char * value, ErrorDescriptor * err,
                                const TypeDescriptor * elem_type, InstMgr * insts,
                                int optional, char * tokenList, int addFileId,
                                int clearError ) {
@@ -78,8 +71,7 @@ STEPaggregate::AggrValidLevel( const char * value, ErrorDescriptor * err,
 }
 
 // require exchange file format
-Severity
-STEPaggregate::AggrValidLevel( istream & in, ErrorDescriptor * err,
+Severity STEPaggregate::AggrValidLevel( istream & in, ErrorDescriptor * err,
                                const TypeDescriptor * elem_type, InstMgr * insts,
                                int optional, char * tokenList, int addFileId,
                                int clearError ) {
@@ -202,8 +194,7 @@ STEPaggregate::ReadValue( istream & in, ErrorDescriptor * err,
     return err->severity();
 }
 
-Severity
-STEPaggregate::StrToVal( const char * s, ErrorDescriptor * err,
+Severity STEPaggregate::StrToVal( const char * s, ErrorDescriptor * err,
                          const TypeDescriptor * elem_type, InstMgr * insts,
                          int addFileId ) {
     istringstream in( ( char * )s );
@@ -212,15 +203,13 @@ STEPaggregate::StrToVal( const char * s, ErrorDescriptor * err,
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Severity
-STEPaggregate::STEPread( istream & in, ErrorDescriptor * err,
+Severity STEPaggregate::STEPread( istream & in, ErrorDescriptor * err,
                          const TypeDescriptor * elem_type, InstMgr * insts,
                          int addFileId, const char * currSch ) {
     return ReadValue( in, err, elem_type, insts, addFileId, 1, 1, currSch );
 }
 
-const char *
-STEPaggregate::asStr( std::string & s ) const {
+const char * STEPaggregate::asStr( std::string & s ) const {
     s.clear();
 
     if( !_null ) {
@@ -238,8 +227,7 @@ STEPaggregate::asStr( std::string & s ) const {
     return const_cast<char *>( s.c_str() );
 }
 
-void
-STEPaggregate::STEPwrite( ostream & out, const char * currSch ) const {
+void STEPaggregate::STEPwrite( ostream & out, const char * currSch ) const {
     if( !_null ) {
         out << '(';
         STEPnode * n = ( STEPnode * )head;
@@ -256,21 +244,18 @@ STEPaggregate::STEPwrite( ostream & out, const char * currSch ) const {
     }
 }
 
-SingleLinkNode *
-STEPaggregate::NewNode() {
+SingleLinkNode * STEPaggregate::NewNode() {
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
     cerr << "function:  STEPaggregate::NewNode \n" << _POC_ << "\n";
     return 0;
 }
 
-void
-STEPaggregate::AddNode( SingleLinkNode * n ) {
+void STEPaggregate::AddNode( SingleLinkNode * n ) {
     SingleLinkList::AppendNode( n );
     _null = 0;
 }
 
-void
-STEPaggregate::Empty() {
+void STEPaggregate::Empty() {
     SingleLinkList::Empty();
     _null = 1;
 }
@@ -280,8 +265,7 @@ STEPaggregate::Empty() {
 // STEPnode
 ///////////////////////////////////////////////////////////////////////////////
 
-Severity
-STEPnode::StrToVal( const char * s, ErrorDescriptor * err ) {
+Severity STEPnode::StrToVal( const char * s, ErrorDescriptor * err ) {
     // defined in subtypes
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
     err->AppendToDetailMsg(
@@ -294,8 +278,7 @@ STEPnode::StrToVal( const char * s, ErrorDescriptor * err ) {
     return SEVERITY_BUG;
 }
 
-Severity
-STEPnode::StrToVal( istream & in, ErrorDescriptor * err ) {
+Severity STEPnode::StrToVal( istream & in, ErrorDescriptor * err ) {
     // defined in subtypes
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
     err->AppendToDetailMsg(
@@ -308,8 +291,7 @@ STEPnode::StrToVal( istream & in, ErrorDescriptor * err ) {
     return SEVERITY_BUG;
 }
 
-Severity
-STEPnode::STEPread( const char * s, ErrorDescriptor * err ) {
+Severity STEPnode::STEPread( const char * s, ErrorDescriptor * err ) {
     //  defined in subclasses
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
     cerr << "function:  STEPnode::STEPread called instead of virtual function.\n"
@@ -324,8 +306,7 @@ STEPnode::STEPread( const char * s, ErrorDescriptor * err ) {
     return SEVERITY_BUG;
 }
 
-Severity
-STEPnode::STEPread( istream & in, ErrorDescriptor * err ) {
+Severity STEPnode::STEPread( istream & in, ErrorDescriptor * err ) {
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
     cerr << "function:  STEPnode::STEPread called instead of virtual function.\n"
          << _POC_ << "\n";
@@ -338,8 +319,7 @@ STEPnode::STEPread( istream & in, ErrorDescriptor * err ) {
     return SEVERITY_BUG;
 }
 
-const char *
-STEPnode::asStr( std::string & s ) {
+const char * STEPnode::asStr( std::string & s ) {
     //  defined in subclasses
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
     cerr << "function:  STEPnode::asStr called instead of virtual function.\n"
@@ -348,9 +328,7 @@ STEPnode::asStr( std::string & s ) {
     return "";
 }
 
-const char *
-STEPnode::STEPwrite( std::string & s, const char * currSch )
-/*
+/**
  * NOTE - second argument will contain name of current schema.  We may need
  * this if STEPnode belongs to an aggregate of selects.  If so, each node
  * will be written out by calling STEPwrite on its select, and to write a
@@ -365,16 +343,14 @@ STEPnode::STEPwrite( std::string & s, const char * currSch )
  * selects.  But since currently (3/27/97) the SCL handles 2D+ aggrs using
  * SCLundefined's, this is not implemented.)
  */
-{
+const char * STEPnode::STEPwrite( std::string & s, const char * currSch ) {
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
     cerr << "function:  STEPnode::STEPwrite called instead of virtual function.\n"
          << _POC_ << "\n";
-
     return "";
 }
 
-void
-STEPnode::STEPwrite( ostream & out ) {
+void STEPnode::STEPwrite( ostream & out ) {
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
     cerr << "function:  STEPnode::STEPwrite called instead of virtual function.\n"
          << _POC_ << "\n";
@@ -390,13 +366,11 @@ GenericAggregate::GenericAggregate() {
 GenericAggregate::~GenericAggregate() {
 }
 
-SingleLinkNode *
-GenericAggregate::NewNode() {
+SingleLinkNode * GenericAggregate::NewNode() {
     return new GenericAggrNode();
 }
 
-STEPaggregate &
-GenericAggregate::ShallowCopy( const STEPaggregate & a ) {
+STEPaggregate & GenericAggregate::ShallowCopy( const STEPaggregate & a ) {
     Empty();
 
     SingleLinkNode * next = a.GetHead();
@@ -434,54 +408,39 @@ GenericAggrNode::GenericAggrNode() {
 GenericAggrNode::~GenericAggrNode() {
 }
 
-SingleLinkNode *
-GenericAggrNode::NewNode() {
+SingleLinkNode * GenericAggrNode::NewNode() {
     return new GenericAggrNode();
 }
 
-Severity
-GenericAggrNode::StrToVal( const char * s, ErrorDescriptor * err ) {
+Severity GenericAggrNode::StrToVal( const char * s, ErrorDescriptor * err ) {
     return value.STEPread( s, err );
 }
 
 //TODO
-Severity
-GenericAggrNode::StrToVal( istream & in, ErrorDescriptor * err ) {
+Severity GenericAggrNode::StrToVal( istream & in, ErrorDescriptor * err ) {
     return value.STEPread( in, err );
 }
 
-Severity
-GenericAggrNode::STEPread( const char * s, ErrorDescriptor * err ) {
+Severity GenericAggrNode::STEPread( const char * s, ErrorDescriptor * err ) {
     istringstream in( ( char * ) s );
     return value.STEPread( in, err );
 }
 
-Severity
-GenericAggrNode::STEPread( istream & in, ErrorDescriptor * err ) {
+Severity GenericAggrNode::STEPread( istream & in, ErrorDescriptor * err ) {
     return value.STEPread( in, err );
 }
 
-const char *
-GenericAggrNode::asStr( std::string & s ) {
+const char * GenericAggrNode::asStr( std::string & s ) {
     s.clear();
     value.asStr( s );
     return const_cast<char *>( s.c_str() );
 }
 
-const char *
-GenericAggrNode::STEPwrite( std::string & s, const char * currSch ) {
+const char * GenericAggrNode::STEPwrite( std::string & s, const char * currSch ) {
     return value.STEPwrite( s );
-    /*
-    // CHECK do we write dollar signs for nulls within an aggregate? DAS
-        if(_value)
-        return (const char *)_value;
-        else
-        return "$";
-    */
 }
 
-void
-GenericAggrNode::STEPwrite( ostream & out ) {
+void GenericAggrNode::STEPwrite( ostream & out ) {
     value.STEPwrite( out );
 }
 
@@ -493,14 +452,11 @@ EntityAggregate::EntityAggregate() {
 }
 
 EntityAggregate::~EntityAggregate() {
-//    delete v;
 }
 
 
 // if exchangeFileFormat == 1 then delims are required.
-
-Severity
-EntityAggregate::ReadValue( istream & in, ErrorDescriptor * err,
+Severity EntityAggregate::ReadValue( istream & in, ErrorDescriptor * err,
                             const TypeDescriptor * elem_type, InstMgr * insts,
                             int addFileId, int assignVal,
                             int exchangeFileFormat, const char * ) {
@@ -606,8 +562,7 @@ EntityAggregate::ReadValue( istream & in, ErrorDescriptor * err,
 }
 
 
-STEPaggregate &
-EntityAggregate::ShallowCopy( const STEPaggregate & a ) {
+STEPaggregate & EntityAggregate::ShallowCopy( const STEPaggregate & a ) {
     const EntityNode * tmp = ( const EntityNode * ) a.GetHead();
     while( tmp ) {
         AddNode( new EntityNode( tmp -> node ) );
@@ -623,8 +578,7 @@ EntityAggregate::ShallowCopy( const STEPaggregate & a ) {
 }
 
 
-SingleLinkNode *
-EntityAggregate::NewNode() {
+SingleLinkNode * EntityAggregate::NewNode() {
     return new EntityNode();
 }
 
@@ -641,20 +595,16 @@ EntityNode::~EntityNode() {
 EntityNode::EntityNode( SDAI_Application_instance  * e ) : node( e ) {
 }
 
-SingleLinkNode *
-EntityNode::NewNode() {
+SingleLinkNode * EntityNode::NewNode() {
     return new EntityNode();
 }
 ///////////////////////////////////////////////////////////////////////////////
 
-Severity
-EntityNode::StrToVal( const char * s, ErrorDescriptor * err,
+Severity EntityNode::StrToVal( const char * s, ErrorDescriptor * err,
                       const TypeDescriptor * elem_type,
                       InstMgr * insts, int addFileId ) {
     SDAI_Application_instance  *se = ReadEntityRef( s, err, ",)", insts,
                                          addFileId );
-//    SDAI_Application_instance *se = ReadEntityRef(s, err, 0, insts,
-//                           addFileId);
     if( se != S_ENTITY_NULL ) {
         ErrorDescriptor error;
         if( EntityValidLevel( se, elem_type, &error ) == SEVERITY_NULL ) {
@@ -671,23 +621,20 @@ EntityNode::StrToVal( const char * s, ErrorDescriptor * err,
     return err->severity();
 }
 
-Severity
-EntityNode::StrToVal( istream & in, ErrorDescriptor * err,
+Severity EntityNode::StrToVal( istream & in, ErrorDescriptor * err,
                       const TypeDescriptor * elem_type,
                       InstMgr * insts, int addFileId ) {
     return STEPread( in, err, elem_type, insts, addFileId );
 }
 
-Severity
-EntityNode::STEPread( const char * s, ErrorDescriptor * err,
+Severity EntityNode::STEPread( const char * s, ErrorDescriptor * err,
                       const TypeDescriptor * elem_type,
                       InstMgr * insts, int addFileId ) {
     istringstream in( ( char * )s );
     return STEPread( in, err, elem_type, insts, addFileId );
 }
 
-Severity
-EntityNode::STEPread( istream & in, ErrorDescriptor * err,
+Severity EntityNode::STEPread( istream & in, ErrorDescriptor * err,
                       const TypeDescriptor * elem_type,
                       InstMgr * insts, int addFileId ) {
     SDAI_Application_instance  *se = ReadEntityRef( in, err, ",)", insts,
@@ -709,8 +656,7 @@ EntityNode::STEPread( istream & in, ErrorDescriptor * err,
     return err->severity();
 }
 
-const char *
-EntityNode::asStr( std::string & s ) {
+const char * EntityNode::asStr( std::string & s ) {
     s.clear();
     if( !node || ( node == S_ENTITY_NULL ) ) { //  nothing
         return "";
@@ -722,8 +668,7 @@ EntityNode::asStr( std::string & s ) {
     return const_cast<char *>( s.c_str() );
 }
 
-const char *
-EntityNode::STEPwrite( std::string & s, const char * ) {
+const char * EntityNode::STEPwrite( std::string & s, const char * ) {
     if( !node || ( node == S_ENTITY_NULL ) ) { //  nothing
         s = "$";
         return const_cast<char *>( s.c_str() );
@@ -732,8 +677,7 @@ EntityNode::STEPwrite( std::string & s, const char * ) {
     return const_cast<char *>( s.c_str() );
 }
 
-void
-EntityNode::STEPwrite( ostream & out ) {
+void EntityNode::STEPwrite( ostream & out ) {
     if( !node || ( node == S_ENTITY_NULL ) ) { //  nothing
         out << "$";
     }
@@ -750,14 +694,11 @@ SelectAggregate::SelectAggregate() {
 }
 
 SelectAggregate::~SelectAggregate() {
-//    delete v;
 }
 
 
 // if exchangeFileFormat == 1 then delims are required.
-
-Severity
-SelectAggregate::ReadValue( istream & in, ErrorDescriptor * err,
+Severity SelectAggregate::ReadValue( istream & in, ErrorDescriptor * err,
                             const TypeDescriptor * elem_type, InstMgr * insts,
                             int addFileId, int assignVal,
                             int exchangeFileFormat, const char * currSch ) {
@@ -834,8 +775,6 @@ SelectAggregate::ReadValue( istream & in, ErrorDescriptor * err,
             sprintf( errmsg, "  index:  %d\n", value_cnt );
             errdesc.PrependToDetailMsg( errmsg );
             err->AppendFromErrorArg( &errdesc );
-//      err->AppendToDetailMsg(errdesc.DetailMsg());
-//      err->AppendToUserMsg(errdesc.UserMsg());
         }
         if( assignVal ) {
             AddNode( item );
@@ -865,8 +804,7 @@ SelectAggregate::ReadValue( istream & in, ErrorDescriptor * err,
 }
 
 
-STEPaggregate &
-SelectAggregate::ShallowCopy( const STEPaggregate & a ) {
+STEPaggregate & SelectAggregate::ShallowCopy( const STEPaggregate & a ) {
     const SelectNode * tmp = ( const SelectNode * ) a.GetHead();
     while( tmp ) {
         AddNode( new SelectNode( tmp -> node ) );
@@ -883,8 +821,7 @@ SelectAggregate::ShallowCopy( const STEPaggregate & a ) {
 }
 
 
-SingleLinkNode *
-SelectAggregate::NewNode() {
+SingleLinkNode * SelectAggregate::NewNode() {
     return new SelectNode();
 }
 
@@ -901,36 +838,14 @@ SelectNode::SelectNode() {
 SelectNode::~SelectNode() {
 }
 
-SingleLinkNode *
-SelectNode::NewNode() {
+SingleLinkNode * SelectNode::NewNode() {
     return new SelectNode();
 }
 ///////////////////////////////////////////////////////////////////////////////
 
-Severity
-SelectNode::StrToVal( const char * s, ErrorDescriptor * err,
+Severity SelectNode::StrToVal( const char * s, ErrorDescriptor * err,
                       const TypeDescriptor * elem_type,
                       InstMgr * insts, int addFileId ) {
-    /*
-        SDAI_Application_instance) *se = ReadEntityRef(s, err, ",", insts,
-                                 addFileId);
-        if( se != S_ENTITY_NULL )
-        {
-        ErrorDescriptor error;
-        if(SelectValidLevel(se, elem_type, &error) == SEVERITY_NULL)
-            node = se;
-        else
-        {
-            node = S_ENTITY_NULL;
-            err->AppendToDetailMsg(error.DetailMsg());
-            err->AppendToUserMsg(error.UserMsg());
-            err->GreaterSeverity(error.severity());
-        }
-        }
-        else
-        node = S_ENTITY_NULL;
-    */
-    // KC you will have to decide what to do here
     istringstream in( ( char * )s );
     if( err->severity( node->STEPread( in, err, insts ) ) != SEVERITY_NULL ) {
         err->AppendToDetailMsg( node ->Error() );
@@ -938,23 +853,20 @@ SelectNode::StrToVal( const char * s, ErrorDescriptor * err,
     return err->severity();
 }
 
-Severity
-SelectNode::StrToVal( istream & in, ErrorDescriptor * err,
+Severity SelectNode::StrToVal( istream & in, ErrorDescriptor * err,
                       const TypeDescriptor * elem_type,
                       InstMgr * insts, int addFileId, const char * currSch ) {
     return STEPread( in, err, elem_type, insts, addFileId, currSch );
 }
 
-Severity
-SelectNode::STEPread( const char * s, ErrorDescriptor * err,
+Severity SelectNode::STEPread( const char * s, ErrorDescriptor * err,
                       const TypeDescriptor * elem_type,
                       InstMgr * insts, int addFileId ) {
     istringstream in( ( char * )s );
     return STEPread( in, err, elem_type, insts, addFileId );
 }
 
-Severity
-SelectNode::STEPread( istream & in, ErrorDescriptor * err,
+Severity SelectNode::STEPread( istream & in, ErrorDescriptor * err,
                       const TypeDescriptor * elem_type,
                       InstMgr * insts, int addFileId, const char * currSch ) {
     if( !node )  {
@@ -968,8 +880,7 @@ SelectNode::STEPread( istream & in, ErrorDescriptor * err,
     return err->severity();
 }
 
-const char *
-SelectNode::asStr( std::string & s ) {
+const char * SelectNode::asStr( std::string & s ) {
     s.clear();
     if( !node || ( node->is_null() ) ) {  //  nothing
         return "";
@@ -979,8 +890,7 @@ SelectNode::asStr( std::string & s ) {
     }
 }
 
-const char *
-SelectNode::STEPwrite( std::string & s, const char * currSch ) {
+const char * SelectNode::STEPwrite( std::string & s, const char * currSch ) {
     s.clear();
     if( !node || ( node->is_null() ) ) {  //  nothing
         s = "$";
@@ -990,8 +900,7 @@ SelectNode::STEPwrite( std::string & s, const char * currSch ) {
     return const_cast<char *>( s.c_str() );
 }
 
-void
-SelectNode::STEPwrite( ostream & out ) {
+void SelectNode::STEPwrite( ostream & out ) {
     if( !node || ( node->is_null() ) ) {  //  nothing
         out << "$";
     }
@@ -1003,19 +912,13 @@ SelectNode::STEPwrite( ostream & out ) {
 // StringAggregate
 ///////////////////////////////////////////////////////////////////////////////
 
-/******************************************************************
-STEPaggregate&
-StringAggregate::ShallowCopy (const STEPaggregate&);
-******************************************************************/
-
 StringAggregate::StringAggregate() {
 }
 
 StringAggregate::~StringAggregate() {
 }
 
-STEPaggregate &
-StringAggregate::ShallowCopy( const STEPaggregate & a ) {
+STEPaggregate & StringAggregate::ShallowCopy( const STEPaggregate & a ) {
     Empty();
 
     SingleLinkNode * next = a.GetHead();
@@ -1035,8 +938,7 @@ StringAggregate::ShallowCopy( const STEPaggregate & a ) {
 
 }
 
-SingleLinkNode *
-StringAggregate::NewNode() {
+SingleLinkNode * StringAggregate::NewNode() {
     return new StringNode();
 }
 
@@ -1058,41 +960,32 @@ StringNode::StringNode( StringNode & sn ) {
 StringNode::StringNode( const char * sStr ) {
     // value is an SDAI_String) (the memory is copied
     value = sStr;
-
-    /*
-      // I do not think that you are expecting sStr in exchange file format
-        ErrorDescriptor err;
-        if(value.STEPread(sStr, &err) < SEVERITY_USERMSG)
-        value.set_null();
-    */
 }
 
-SingleLinkNode *
-StringNode::NewNode() {
+SingleLinkNode * StringNode::NewNode() {
     return new StringNode();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// non-whitespace chars following s are considered garbage and is an error.
-// a valid value will still be assigned if it exists before the garbage.
-///////////////////////////////////////////////////////////////////////////////
-
-Severity
-StringNode::StrToVal( const char * s, ErrorDescriptor * err ) {
+/**
+ * non-whitespace chars following s are considered garbage and is an error.
+ * a valid value will still be assigned if it exists before the garbage.
+ */
+Severity StringNode::StrToVal( const char * s, ErrorDescriptor * err ) {
     return STEPread( s, err );
 }
 
-// this function assumes you will check for garbage following input
-
-Severity
-StringNode::StrToVal( istream & in, ErrorDescriptor * err ) {
+/**
+ * this function assumes you will check for garbage following input
+ */
+Severity StringNode::StrToVal( istream & in, ErrorDescriptor * err ) {
     return value.STEPread( in, err );
 }
 
-// non-whitespace chars following s are considered garbage and is an error.
-// a valid value will still be assigned if it exists before the garbage.
-Severity
-StringNode::STEPread( const char * s, ErrorDescriptor * err ) {
+/**
+ * non-whitespace chars following s are considered garbage and is an error.
+ * a valid value will still be assigned if it exists before the garbage.
+ */
+Severity StringNode::STEPread( const char * s, ErrorDescriptor * err ) {
     istringstream in( ( char * )s );
 
     value.STEPread( in, err );
@@ -1100,39 +993,29 @@ StringNode::STEPread( const char * s, ErrorDescriptor * err ) {
     return err->severity();
 }
 
-// this function assumes you will check for garbage following input
-
-Severity
-StringNode::STEPread( istream & in, ErrorDescriptor * err ) {
+/*
+ * this function assumes you will check for garbage following input
+ */
+Severity StringNode::STEPread( istream & in, ErrorDescriptor * err ) {
     return value.STEPread( in, err );
 }
 
-const char *
-StringNode::asStr( std::string & s ) {
-//    return value.asStr(); // this does not put quotes around the value
-
+const char * StringNode::asStr( std::string & s ) {
     value.asStr( s );
     return const_cast<char *>( s.c_str() );
 }
 
-const char *
-StringNode::STEPwrite( std::string & s, const char * ) {
+const char * StringNode::STEPwrite( std::string & s, const char * ) {
     value.STEPwrite( s );
     return const_cast<char *>( s.c_str() );
 }
 
-void
-StringNode::STEPwrite( ostream & out ) {
+void StringNode::STEPwrite( ostream & out ) {
     value.STEPwrite( out );
 }
 ///////////////////////////////////////////////////////////////////////////////
 // BinaryAggregate
 ///////////////////////////////////////////////////////////////////////////////
-
-/******************************************************************
-STEPaggregate&
-BinaryAggregate::ShallowCopy (const STEPaggregate&);
-******************************************************************/
 
 BinaryAggregate::BinaryAggregate() {
 }
@@ -1140,8 +1023,7 @@ BinaryAggregate::BinaryAggregate() {
 BinaryAggregate::~BinaryAggregate() {
 }
 
-STEPaggregate &
-BinaryAggregate::ShallowCopy( const STEPaggregate & a ) {
+STEPaggregate & BinaryAggregate::ShallowCopy( const STEPaggregate & a ) {
     Empty();
 
     SingleLinkNode * next = a.GetHead();
@@ -1161,8 +1043,7 @@ BinaryAggregate::ShallowCopy( const STEPaggregate & a ) {
 
 }
 
-SingleLinkNode *
-BinaryAggregate::NewNode() {
+SingleLinkNode * BinaryAggregate::NewNode() {
     return new BinaryNode();
 }
 
@@ -1182,7 +1063,7 @@ BinaryNode::BinaryNode( BinaryNode & bn ) {
 }
 
 BinaryNode::BinaryNode( const char * sStr ) {
-    // value is an SDAI_Binary) (the memory is copied
+    // value is an SDAI_Binary (the memory is copied)
     value = sStr;
 }
 
@@ -1191,28 +1072,26 @@ BinaryNode::NewNode() {
     return new BinaryNode();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// non-whitespace chars following s are considered garbage and is an error.
-// a valid value will still be assigned if it exists before the garbage.
-///////////////////////////////////////////////////////////////////////////////
-
-Severity
-BinaryNode::StrToVal( const char * s, ErrorDescriptor * err ) {
+/**
+ * non-whitespace chars following s are considered garbage and is an error.
+ * a valid value will still be assigned if it exists before the garbage.
+ */
+Severity BinaryNode::StrToVal( const char * s, ErrorDescriptor * err ) {
     return STEPread( s, err );
 }
 
-// this function assumes you will check for garbage following input
-
-Severity
-BinaryNode::StrToVal( istream & in, ErrorDescriptor * err ) {
+/**
+ * this function assumes you will check for garbage following input
+ */
+Severity BinaryNode::StrToVal( istream & in, ErrorDescriptor * err ) {
     return value.STEPread( in, err );
 }
 
-// non-whitespace chars following s are considered garbage and is an error.
-// a valid value will still be assigned if it exists before the garbage.
-
-Severity
-BinaryNode::STEPread( const char * s, ErrorDescriptor * err ) {
+/**
+ * non-whitespace chars following s are considered garbage and is an error.
+ * a valid value will still be assigned if it exists before the garbage.
+ */
+Severity BinaryNode::STEPread( const char * s, ErrorDescriptor * err ) {
     istringstream in( ( char * )s );
 
     value.STEPread( in, err );
@@ -1220,27 +1099,24 @@ BinaryNode::STEPread( const char * s, ErrorDescriptor * err ) {
     return err->severity();
 }
 
-// this function assumes you will check for garbage following input
-
-Severity
-BinaryNode::STEPread( istream & in, ErrorDescriptor * err ) {
+/**
+ * this function assumes you will check for garbage following input
+ */
+Severity BinaryNode::STEPread( istream & in, ErrorDescriptor * err ) {
     return value.STEPread( in, err );
 }
 
-const char *
-BinaryNode::asStr( std::string & s ) {
+const char * BinaryNode::asStr( std::string & s ) {
     s = value.c_str();
     return const_cast<char *>( s.c_str() );
 }
 
-const char *
-BinaryNode::STEPwrite( std::string & s, const char * ) {
+const char * BinaryNode::STEPwrite( std::string & s, const char * ) {
     value.STEPwrite( s );
     return const_cast<char *>( s.c_str() );
 }
 
-void
-BinaryNode::STEPwrite( ostream & out ) {
+void BinaryNode::STEPwrite( ostream & out ) {
     value.STEPwrite( out );
 }
 
@@ -1249,8 +1125,7 @@ BinaryNode::STEPwrite( ostream & out ) {
 ///////////////////////////////////////////////////////////////////////////////
 
 // COPY
-STEPaggregate &
-EnumAggregate::ShallowCopy( const STEPaggregate & a ) {
+STEPaggregate & EnumAggregate::ShallowCopy( const STEPaggregate & a ) {
     const EnumNode * tmp = ( const EnumNode * ) a.GetHead();
     EnumNode * to;
 
@@ -1278,20 +1153,13 @@ EnumAggregate::~EnumAggregate() {
 }
 
 /******************************************************************
- ** Procedure:  EnumAggregate::NewNode
- ** Parameters:
- ** Returns:  a new EnumNode which is of the correct derived type
- ** Description:  creates a node to put in an list of enumerated values
- **               function is virtual so that the right node will be
- **               created
- ** Side Effects:
+ ** \returns a new EnumNode which is of the correct derived type
+ ** \details  creates a node to put in an list of enumerated values
+ **           function is virtual so that the right node will be
+ **           created
  ** Status:  ok 2/91
  ******************************************************************/
-
-/*EnumNode **/
-
-SingleLinkNode *
-EnumAggregate::NewNode() {
+SingleLinkNode * EnumAggregate::NewNode() {
     //  defined in subclass
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
     cerr << "function:  EnumAggregate::NewNode () called instead of virtual function. \n"
@@ -1312,8 +1180,7 @@ EnumNode::EnumNode() {
 EnumNode::~EnumNode() {
 }
 
-SingleLinkNode *
-EnumNode::NewNode() {
+SingleLinkNode * EnumNode::NewNode() {
     //  defined in subclass
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
     cerr << "function:  EnumNode::NewNode () called instead of virtual function. \n"
@@ -1321,100 +1188,26 @@ EnumNode::NewNode() {
     return 0;
 }
 
-/*
-// insts and addFileId are used for the EntityNode virtual definition of this
-// function
-Severity
-EnumNode::StrToVal(const char *s, ErrorDescriptor *err)
-{
-    char messageBuf[BUFSIZ];
-    messageBuf[0] = '\0';
-
-    Severity sev = SEVERITY_NULL;
-    int len = strlen (s);
-    char *val = new char [len + 1];
-    val[0] = '\0';
-    char *saveForDelete = val;
-
-    int numFound = sscanf((char *)s," %s", val);
-    if(numFound != EOF)
-    {
-    if(val [0] == '.')  // strip the delims
-    {
-        val++;
-        char * pos = strchr(val, '.');
-        if (pos)
-        *pos = '\0';
-        else
-        {
-        sev = SEVERITY_WARNING;
-        err->GreaterSeverity(SEVERITY_WARNING);
-        err->AppendToDetailMsg("Missing matching \'.\' delimiter.\n");
-        }
-    }
-    if(elem_type)
-    {
-        if(elem_type->BaseType() == BOOLEAN_TYPE)
-        {
-        switch(val[0])
-        {
-          case 't':
-          case 'f':
-          case 'T':
-          case 'F':
-            break;
-          default:
-            sev = SEVERITY_WARNING;
-            err->GreaterSeverity(SEVERITY_WARNING);
-            sprintf(messageBuf, "Invalid Boolean value: \'%s\'.\n",
-                val);
-            err->AppendToDetailMsg(messageBuf);
-            break;
-        }
-        }
-    }
-        // assign based on the result of this element (the error descriptor
-        // contains the error level for the whole aggregate).
-//  if(assignVal && sev > SEVERITY_WARNING)
-    if(1 && sev > SEVERITY_WARNING)
-        node -> put (val);
-    }
-//SDAI_Enum::EnumValidLevel(const char *value, ErrorDescriptor *err,
-//              int optional, char *tokenList,
-//              int needDelims, int clearError)
-
-    node->EnumValidLevel((char *)val, err, 0, 0, 0, 0);
-    delete [] saveForDelete;
-
-    // an element being null shouldn't make the aggregate incomplete!!
-    if(err->severity() == SEVERITY_INCOMPLETE)
-    err->severity(SEVERITY_NULL);
-    return err->severity();
-}
-*/
-
-///////////////////////////////////////////////////////////////////////////////
-// non-whitespace chars following s are considered garbage and is an error.
-// a valid value will still be assigned if it exists before the garbage.
-///////////////////////////////////////////////////////////////////////////////
-
-Severity
-EnumNode::StrToVal( const char * s, ErrorDescriptor * err ) {
+/**
+ * non-whitespace chars following s are considered garbage and is an error.
+ * a valid value will still be assigned if it exists before the garbage.
+ */
+Severity EnumNode::StrToVal( const char * s, ErrorDescriptor * err ) {
     return STEPread( s, err );
 }
 
-// this function assumes you will check for garbage following input
-
-Severity
-EnumNode::StrToVal( istream & in, ErrorDescriptor * err ) {
+/**
+ * this function assumes you will check for garbage following input
+ */
+Severity EnumNode::StrToVal( istream & in, ErrorDescriptor * err ) {
     return node->STEPread( in, err );
 }
 
-// non-whitespace chars following s are considered garbage and is an error.
-// a valid value will still be assigned if it exists before the garbage.
-
-Severity
-EnumNode::STEPread( const char * s, ErrorDescriptor * err ) {
+/**
+ * non-whitespace chars following s are considered garbage and is an error.
+ * a valid value will still be assigned if it exists before the garbage.
+ */
+Severity EnumNode::STEPread( const char * s, ErrorDescriptor * err ) {
     istringstream in( ( char * )s ); // sz defaults to length of s
 
     int nullable = 0;
@@ -1423,48 +1216,26 @@ EnumNode::STEPread( const char * s, ErrorDescriptor * err ) {
     return err->severity();
 }
 
-// this function assumes you will check for garbage following input
-
-Severity
-EnumNode::STEPread( istream & in, ErrorDescriptor * err ) {
+/**
+ * this function assumes you will check for garbage following input
+ */
+Severity EnumNode::STEPread( istream & in, ErrorDescriptor * err ) {
     int nullable = 0;
     node->STEPread( in, err,  nullable );
     return err->severity();
 }
 
-const char *
-EnumNode::asStr( std::string & s ) {
+const char * EnumNode::asStr( std::string & s ) {
     node -> asStr( s );
     return const_cast<char *>( s.c_str() );
 }
 
-const char *
-EnumNode::STEPwrite( std::string & s, const char * ) {
+const char * EnumNode::STEPwrite( std::string & s, const char * ) {
     node->STEPwrite( s );
     return const_cast<char *>( s.c_str() );
-
-    /*
-        static char buf[BUFSIZ];
-        buf[0] = '\0';
-
-    //    const char *str = asStr();
-    //    if( (strlen(str) > 0) && (str[0] != '$') )
-
-        if(!(node->is_null()))
-        {
-        buf[0] = '.';
-        buf[1] = '\0';
-    //  strcat(buf, str);
-        strcat(buf, asStr());
-        strcat(buf, ".");
-        }
-        return buf;
-     */
 }
 
-void
-EnumNode::STEPwrite( ostream & out ) {
-//    out << '.' << asStr() << '.';
+void EnumNode::STEPwrite( ostream & out ) {
     node->STEPwrite( out );
 }
 
@@ -1478,14 +1249,11 @@ LOGICALS::LOGICALS() {
 LOGICALS::~LOGICALS() {
 }
 
-//EnumNode *
-SingleLinkNode *
-LOGICALS::NewNode() {
+SingleLinkNode * LOGICALS::NewNode() {
     return new EnumNode( new SDAI_LOGICAL  );
 }
 
-LOGICALS *
-create_LOGICALS() {
+LOGICALS * create_LOGICALS() {
     return new LOGICALS;
 }
 
@@ -1520,14 +1288,12 @@ RealAggregate::RealAggregate() {
 RealAggregate::~RealAggregate() {
 }
 
-SingleLinkNode *
-RealAggregate::NewNode() {
+SingleLinkNode * RealAggregate::NewNode() {
     return new RealNode();
 }
 
 // COPY
-STEPaggregate &
-RealAggregate::ShallowCopy( const STEPaggregate & a ) {
+STEPaggregate & RealAggregate::ShallowCopy( const STEPaggregate & a ) {
     const RealNode * tmp = ( const RealNode * ) a.GetHead();
     RealNode * to;
 
@@ -1555,14 +1321,12 @@ IntAggregate::IntAggregate() {
 IntAggregate::~IntAggregate() {
 }
 
-SingleLinkNode *
-IntAggregate::NewNode() {
+SingleLinkNode * IntAggregate::NewNode() {
     return new IntNode();
 }
 
 // COPY
-STEPaggregate &
-IntAggregate::ShallowCopy( const STEPaggregate & a ) {
+STEPaggregate & IntAggregate::ShallowCopy( const STEPaggregate & a ) {
     const IntNode * tmp = ( const IntNode * ) a.GetHead();
     IntNode * to;
 
@@ -1591,13 +1355,11 @@ RealNode::RealNode() {
 RealNode::~RealNode() {
 }
 
-SingleLinkNode *
-RealNode::NewNode() {
+SingleLinkNode * RealNode::NewNode() {
     return new RealNode();
 }
 
-Severity
-RealNode::StrToVal( const char * s, ErrorDescriptor * err ) {
+Severity RealNode::StrToVal( const char * s, ErrorDescriptor * err ) {
     if( ReadReal( value, s, err, ",)" ) ) { // returns true if value is assigned
         _null = 0;
     } else {
@@ -1607,8 +1369,7 @@ RealNode::StrToVal( const char * s, ErrorDescriptor * err ) {
     return err->severity();
 }
 
-Severity
-RealNode::StrToVal( istream & in, ErrorDescriptor * err ) {
+Severity RealNode::StrToVal( istream & in, ErrorDescriptor * err ) {
     if( ReadReal( value, in, err, ",)" ) ) { // returns true if value is assigned
         _null = 0;
     } else {
@@ -1619,8 +1380,7 @@ RealNode::StrToVal( istream & in, ErrorDescriptor * err ) {
 }
 
 
-Severity
-RealNode::STEPread( const char * s, ErrorDescriptor * err ) {
+Severity RealNode::STEPread( const char * s, ErrorDescriptor * err ) {
     if( ReadReal( value, s, err, ",)" ) ) { // returns true if value is assigned
         _null = 0;
     } else {
@@ -1630,8 +1390,7 @@ RealNode::STEPread( const char * s, ErrorDescriptor * err ) {
     return err->severity();
 }
 
-Severity
-RealNode::STEPread( istream & in, ErrorDescriptor * err ) {
+Severity RealNode::STEPread( istream & in, ErrorDescriptor * err ) {
     if( ReadReal( value, in, err, ",)" ) ) { // returns true if value is assigned
         _null = 0;
     } else {
@@ -1641,14 +1400,12 @@ RealNode::STEPread( istream & in, ErrorDescriptor * err ) {
     return err->severity();
 }
 
-const char *
-RealNode::asStr( std::string & s ) {
+const char * RealNode::asStr( std::string & s ) {
     STEPwrite( s );
     return const_cast<char *>( s.c_str() );
 }
 
-const char *
-RealNode::STEPwrite( std::string & s, const char * ) {
+const char * RealNode::STEPwrite( std::string & s, const char * ) {
     if( value != S_REAL_NULL ) {
         WriteReal( value, s );
     } else {
@@ -1657,8 +1414,7 @@ RealNode::STEPwrite( std::string & s, const char * ) {
     return const_cast<char *>( s.c_str() );
 }
 
-void
-RealNode::STEPwrite( ostream & out ) {
+void RealNode::STEPwrite( ostream & out ) {
     std::string s;
     out << STEPwrite( s );
 }
@@ -1674,13 +1430,11 @@ IntNode::IntNode() {
 IntNode::~IntNode() {
 }
 
-SingleLinkNode *
-IntNode::NewNode() {
+SingleLinkNode * IntNode::NewNode() {
     return new IntNode();
 }
 
-Severity
-IntNode::StrToVal( const char * s, ErrorDescriptor * err ) {
+Severity IntNode::StrToVal( const char * s, ErrorDescriptor * err ) {
     if( ReadInteger( value, s, err, ",)" ) ) { // returns true if value is assigned
         _null = 0;
     } else {
@@ -1690,8 +1444,7 @@ IntNode::StrToVal( const char * s, ErrorDescriptor * err ) {
     return err->severity();
 }
 
-Severity
-IntNode::StrToVal( istream & in, ErrorDescriptor * err ) {
+Severity IntNode::StrToVal( istream & in, ErrorDescriptor * err ) {
     if( ReadInteger( value, in, err, ",)" ) ) { // returns true if value is assigned
         _null = 0;
     } else {
@@ -1701,8 +1454,7 @@ IntNode::StrToVal( istream & in, ErrorDescriptor * err ) {
     return err->severity();
 }
 
-Severity
-IntNode::STEPread( const char * s, ErrorDescriptor * err ) {
+Severity IntNode::STEPread( const char * s, ErrorDescriptor * err ) {
     if( ReadInteger( value, s, err, ",)" ) ) { // returns true if value is assigned
         _null = 0;
     } else {
@@ -1712,8 +1464,7 @@ IntNode::STEPread( const char * s, ErrorDescriptor * err ) {
     return err->severity();
 }
 
-Severity
-IntNode::STEPread( istream & in, ErrorDescriptor * err ) {
+Severity IntNode::STEPread( istream & in, ErrorDescriptor * err ) {
     if( ReadInteger( value, in, err, ",)" ) ) { // returns true if value is assigned
         _null = 0;
     } else {
@@ -1723,14 +1474,12 @@ IntNode::STEPread( istream & in, ErrorDescriptor * err ) {
     return err->severity();
 }
 
-const char *
-IntNode::asStr( std::string & s ) {
+const char * IntNode::asStr( std::string & s ) {
     STEPwrite( s );
     return const_cast<char *>( s.c_str() );
 }
 
-const char *
-IntNode::STEPwrite( std::string & s, const char * ) {
+const char * IntNode::STEPwrite( std::string & s, const char * ) {
     char tmp[BUFSIZ];
     if( value != S_INT_NULL ) {
         sprintf( tmp, "%ld", value );
@@ -1741,8 +1490,7 @@ IntNode::STEPwrite( std::string & s, const char * ) {
     return const_cast<char *>( s.c_str() );
 }
 
-void
-IntNode::STEPwrite( ostream & out ) {
+void IntNode::STEPwrite( ostream & out ) {
     std::string s;
     out << STEPwrite( s );
 }

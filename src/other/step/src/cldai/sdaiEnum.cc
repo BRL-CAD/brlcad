@@ -1,12 +1,9 @@
 
-//#include <Enum.h>
-//#include <Enumeration.h>
-
 #include <sdai.h>
 
 /*
 * NIST STEP Core Class Library
-* clstepcore/Enumeration.cc
+* cldai/sdaiEnum.cc
 * April 1997
 * K. C. Morris
 * David Sauder
@@ -15,45 +12,25 @@
 * and is not subject to copyright.
 */
 
-/* $Id: sdaiEnum.cc,v 1.5 1997/11/05 21:59:14 sauderd DP3.1 $  */
-
-//static char rcsid[] ="$Id: sdaiEnum.cc,v 1.5 1997/11/05 21:59:14 sauderd DP3.1 $";
-
 #include <sstream>
-
-//#ifndef SDAI_TRUE
-//#ifndef SDAI_FALSE
-// Josh L, 3/31/95
-// These constants have to be initialized outside the SDAI struct.  They
-// are initialized here instead of in the header file in order to avoid
-// multiple inclusions when building SCL applications.
-/*
-const SDAI_BOOLEAN) SCLP23(TRUE( BTrue );
-const SDAI_BOOLEAN) SCLP23(FALSE( BFalse );
-const SDAI_BOOLEAN) SCLP23(UNSET( BUnset );
-const SDAI_LOGICAL) SCLP23(UNKNOWN( LUnknown );
-*/
-//#endif
-//#endif
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // class Logical
 ///////////////////////////////////////////////////////////////////////////////
 
-SDAI_LOGICAL ::SDAI_LOGICAL ( const char * val ) {
+SDAI_LOGICAL::SDAI_LOGICAL ( const char * val ) {
     set_value( val );
 }
 
-SDAI_LOGICAL ::SDAI_LOGICAL ( Logical state ) {
+SDAI_LOGICAL::SDAI_LOGICAL ( Logical state ) {
     set_value( state );
 }
 
-SDAI_LOGICAL ::SDAI_LOGICAL ( const SDAI_LOGICAL & source ) {
+SDAI_LOGICAL::SDAI_LOGICAL ( const SDAI_LOGICAL & source ) {
     set_value( source.asInt() );
 }
 
-SDAI_LOGICAL ::SDAI_LOGICAL ( int i ) {
+SDAI_LOGICAL::SDAI_LOGICAL ( int i ) {
     if( i == 0 ) {
         v =  LFalse ;
     } else {
@@ -61,21 +38,18 @@ SDAI_LOGICAL ::SDAI_LOGICAL ( int i ) {
     }
 }
 
-SDAI_LOGICAL ::~SDAI_LOGICAL () {
+SDAI_LOGICAL::~SDAI_LOGICAL () {
 }
 
-const char *
-SDAI_LOGICAL ::Name() const {
+const char * SDAI_LOGICAL::Name() const {
     return "Logical";
 }
 
-int
-SDAI_LOGICAL ::no_elements() const {
+int SDAI_LOGICAL::no_elements() const {
     return 3;
 }
 
-const char *
-SDAI_LOGICAL ::element_at( int n ) const {
+const char * SDAI_LOGICAL::element_at( int n ) const {
     switch( n )  {
         case  LUnknown :
             return "U";
@@ -88,17 +62,15 @@ SDAI_LOGICAL ::element_at( int n ) const {
     }
 }
 
-int
-SDAI_LOGICAL ::exists() const { // return 0 if unset otherwise return 1
+int SDAI_LOGICAL::exists() const { // return 0 if unset otherwise return 1
     return !( v == 2 );
 }
 
-void
-SDAI_LOGICAL ::nullify() { // change the receiver to an unset status
+void SDAI_LOGICAL::nullify() { // change the receiver to an unset status
     v = 2;
 }
 
-SDAI_LOGICAL ::operator  Logical() const  {
+SDAI_LOGICAL::operator  Logical() const  {
     switch( v ) {
         case  LFalse :
             return  LFalse ;
@@ -112,21 +84,19 @@ SDAI_LOGICAL ::operator  Logical() const  {
     }
 }
 
-SDAI_LOGICAL  &
-SDAI_LOGICAL ::operator= ( const SDAI_LOGICAL & t ) {
+SDAI_LOGICAL & SDAI_LOGICAL::operator= ( const SDAI_LOGICAL & t ) {
     set_value( t.asInt() );
     return *this;
 }
 
-SDAI_LOGICAL  SDAI_LOGICAL ::operator ==( const SDAI_LOGICAL & t ) const {
+SDAI_LOGICAL SDAI_LOGICAL::operator ==( const SDAI_LOGICAL & t ) const {
     if( v == t.asInt() ) {
         return  LTrue ;
     }
     return  LFalse ;
 }
 
-int
-SDAI_LOGICAL ::set_value( const int i )  {
+int SDAI_LOGICAL::set_value( const int i )  {
     if( i > no_elements() + 1 )  {
         v = 2;
         return v;
@@ -140,12 +110,9 @@ SDAI_LOGICAL ::set_value( const int i )  {
          << " for " <<  Name() << "\n";
     DebugDisplay();
     return  no_elements() + 1 ;
-//    return  ENUM_NULL ;
-
 }
 
-int
-SDAI_LOGICAL ::set_value( const char * n )  {
+int SDAI_LOGICAL::set_value( const char * n )  {
     //  assigns the appropriate value based on n
     if( !n || ( !strcmp( n, "" ) ) ) {
         nullify();
@@ -164,12 +131,9 @@ SDAI_LOGICAL ::set_value( const char * n )  {
     }
     v = i;
     return v;
-
 }
 
-
-Severity
-SDAI_LOGICAL ::ReadEnum( istream & in, ErrorDescriptor * err, int AssignVal,
+Severity SDAI_LOGICAL::ReadEnum( istream & in, ErrorDescriptor * err, int AssignVal,
                              int needDelims ) {
     if( AssignVal ) {
         set_null();
@@ -292,32 +256,30 @@ SDAI_LOGICAL ::ReadEnum( istream & in, ErrorDescriptor * err, int AssignVal,
 // class BOOLEAN  Jan 97
 ///////////////////////////////////////////////////////////////////////////////
 
-const char *
-SDAI_BOOLEAN ::Name() const {
+const char * SDAI_BOOLEAN::Name() const {
     return "Bool";
 }
 
-SDAI_BOOLEAN ::SDAI_BOOLEAN ( char * val ) {
+SDAI_BOOLEAN::SDAI_BOOLEAN ( char * val ) {
     set_value( val );
 }
 
-SDAI_BOOLEAN ::SDAI_BOOLEAN ( Boolean state ) {
+SDAI_BOOLEAN::SDAI_BOOLEAN ( Boolean state ) {
     set_value( state );
 }
 
-SDAI_BOOLEAN ::SDAI_BOOLEAN ( const SDAI_BOOLEAN & source ) {
+SDAI_BOOLEAN::SDAI_BOOLEAN ( const SDAI_BOOLEAN & source ) {
     set_value( source.asInt() );
 }
 
-SDAI_BOOLEAN ::~SDAI_BOOLEAN () {
+SDAI_BOOLEAN::~SDAI_BOOLEAN () {
 }
 
-int
-SDAI_BOOLEAN ::no_elements() const {
+int SDAI_BOOLEAN::no_elements() const {
     return 2;
 }
 
-SDAI_BOOLEAN ::SDAI_BOOLEAN ( int i ) {
+SDAI_BOOLEAN::SDAI_BOOLEAN ( int i ) {
     if( i == 0 ) {
         v =  BFalse ;
     } else {
@@ -325,7 +287,7 @@ SDAI_BOOLEAN ::SDAI_BOOLEAN ( int i ) {
     }
 }
 
-SDAI_BOOLEAN ::SDAI_BOOLEAN ( const SDAI_LOGICAL & val )  {
+SDAI_BOOLEAN::SDAI_BOOLEAN ( const SDAI_LOGICAL & val )  {
     if( val.asInt() == LUnknown ) {
         // this should set error code sdaiVT_NVLD i.e. Invalid value type.
         v = BUnset;
@@ -334,7 +296,7 @@ SDAI_BOOLEAN ::SDAI_BOOLEAN ( const SDAI_LOGICAL & val )  {
     set_value( val );
 }
 
-SDAI_BOOLEAN ::operator  Boolean() const  {
+SDAI_BOOLEAN::operator  Boolean() const  {
     switch( v ) {
         case  BFalse :
             return  BFalse ;
@@ -346,20 +308,17 @@ SDAI_BOOLEAN ::operator  Boolean() const  {
     }
 }
 
-SDAI_BOOLEAN  &
-SDAI_BOOLEAN ::operator= ( const SDAI_LOGICAL & t ) {
+SDAI_BOOLEAN & SDAI_BOOLEAN::operator= ( const SDAI_LOGICAL & t ) {
     set_value( t.asInt() );
     return *this;
 }
 
-SDAI_BOOLEAN  &
-SDAI_BOOLEAN ::operator= ( const  Boolean t ) {
+SDAI_BOOLEAN & SDAI_BOOLEAN::operator= ( const  Boolean t ) {
     v = t;
     return *this;
 }
 
-const char *
-SDAI_BOOLEAN ::element_at( int n )  const {
+const char * SDAI_BOOLEAN::element_at( int n )  const {
     switch( n )  {
         case  BFalse :
             return "F";
@@ -370,7 +329,7 @@ SDAI_BOOLEAN ::element_at( int n )  const {
     }
 }
 
-SDAI_LOGICAL  SDAI_BOOLEAN ::operator ==( const SDAI_LOGICAL & t ) const {
+SDAI_LOGICAL SDAI_BOOLEAN::operator ==( const SDAI_LOGICAL & t ) const {
     if( v == t.asInt() ) {
         return  LTrue ;
     }
@@ -379,30 +338,26 @@ SDAI_LOGICAL  SDAI_BOOLEAN ::operator ==( const SDAI_LOGICAL & t ) const {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-SDAI_Enum ::SDAI_Enum () {
+SDAI_Enum::SDAI_Enum () {
     v = 0;
 }
 
-SDAI_Enum ::~SDAI_Enum () {
+SDAI_Enum::~SDAI_Enum () {
 }
 
-int
-SDAI_Enum ::put( int val ) {
+int SDAI_Enum::put( int val ) {
     return set_value( val );
 }
 
-int
-SDAI_Enum ::put( const char * n ) {
+int SDAI_Enum::put( const char * n ) {
     return set_value( n );
 }
 
-int
-SDAI_Enum ::exists() const { // return 0 if unset otherwise return 1
+int SDAI_Enum::exists() const { // return 0 if unset otherwise return 1
     return !( v > no_elements() );
 }
 
-void
-SDAI_Enum ::nullify() // change the receiver to an unset status
+void SDAI_Enum::nullify() // change the receiver to an unset status
 // unset is generated to be 1 greater than last element
 {
     set_value( no_elements() + 1 );
@@ -417,8 +372,7 @@ SDAI_Enum ::nullify() // change the receiver to an unset status
  ** Side Effects:
  ** Status:  ok 2/1/91
  ******************************************************************/
-void
-SDAI_Enum ::DebugDisplay( ostream & out ) const {
+void SDAI_Enum::DebugDisplay( ostream & out ) const {
     std::string tmp;
     out << "Current " << Name() << " value: " << endl
         << "  cardinal: " <<  v  << endl
@@ -449,9 +403,7 @@ SDAI_Enum ::DebugDisplay( ostream & out ) const {
 // false => absence of the period delimiters is not an error;
 // true => delimiters must be valid;
 // true or false => non-matching delimiters are flagged as an error
-
-Severity
-SDAI_Enum ::ReadEnum( istream & in, ErrorDescriptor * err, int AssignVal,
+Severity SDAI_Enum::ReadEnum( istream & in, ErrorDescriptor * err, int AssignVal,
                           int needDelims ) {
     if( AssignVal ) {
         set_null();
@@ -570,8 +522,7 @@ SDAI_Enum ::ReadEnum( istream & in, ErrorDescriptor * err, int AssignVal,
     return err->severity();
 }
 
-Severity
-SDAI_Enum ::StrToVal( const char * s, ErrorDescriptor * err, int optional ) {
+Severity SDAI_Enum::StrToVal( const char * s, ErrorDescriptor * err, int optional ) {
     istringstream in( ( char * )s ); // sz defaults to length of s
 
     ReadEnum( in, err, 1, 0 );
@@ -583,15 +534,13 @@ SDAI_Enum ::StrToVal( const char * s, ErrorDescriptor * err, int optional ) {
 }
 
 // reads an enumerated value in STEP file format
-Severity
-SDAI_Enum ::STEPread( const char * s, ErrorDescriptor * err, int optional ) {
+Severity SDAI_Enum::STEPread( const char * s, ErrorDescriptor * err, int optional ) {
     istringstream in( ( char * )s );
     return STEPread( in, err, optional );
 }
 
 // reads an enumerated value in STEP file format
-Severity
-SDAI_Enum ::STEPread( istream & in, ErrorDescriptor * err, int optional ) {
+Severity SDAI_Enum::STEPread( istream & in, ErrorDescriptor * err, int optional ) {
     ReadEnum( in, err, 1, 1 );
     if( ( err->severity() == SEVERITY_INCOMPLETE ) && optional ) {
         err->severity( SEVERITY_NULL );
@@ -600,9 +549,7 @@ SDAI_Enum ::STEPread( istream & in, ErrorDescriptor * err, int optional ) {
     return err->severity();
 }
 
-
-const char *
-SDAI_Enum ::asStr( std::string & s ) const  {
+const char * SDAI_Enum::asStr( std::string & s ) const  {
     if( exists() ) {
         return const_cast<char *>( ( s = element_at( v ) ).c_str() );
     } else {
@@ -610,8 +557,7 @@ SDAI_Enum ::asStr( std::string & s ) const  {
     }
 }
 
-void
-SDAI_Enum ::STEPwrite( ostream & out )  const  {
+void SDAI_Enum::STEPwrite( ostream & out )  const  {
     if( is_null() ) {
         out << '$';
     } else {
@@ -620,8 +566,7 @@ SDAI_Enum ::STEPwrite( ostream & out )  const  {
     }
 }
 
-const char *
-SDAI_Enum ::STEPwrite( std::string & s ) const {
+const char * SDAI_Enum::STEPwrite( std::string & s ) const {
     if( is_null() ) {
         s.clear();
     } else {
@@ -633,22 +578,7 @@ SDAI_Enum ::STEPwrite( std::string & s ) const {
     return const_cast<char *>( s.c_str() );
 }
 
-/******************************************************************
- ** Procedure:  set_elements
- ** Parameters:
- ** Returns:
- ** Description:
- ** Side Effects:
- ** Status:
- ******************************************************************/
-#ifdef OBSOLETE
-void
-SDAI_Enum ::set_elements( const char * const e [] )  {
-    elements = e;
-}
-#endif
-Severity
-SDAI_Enum ::EnumValidLevel( istream & in, ErrorDescriptor * err,
+Severity SDAI_Enum::EnumValidLevel( istream & in, ErrorDescriptor * err,
                                 int optional, char * tokenList,
                                 int needDelims, int clearError ) {
     if( clearError ) {
@@ -685,8 +615,7 @@ SDAI_Enum ::EnumValidLevel( istream & in, ErrorDescriptor * err,
     return err->severity();
 }
 
-Severity
-SDAI_Enum ::EnumValidLevel( const char * value, ErrorDescriptor * err,
+Severity SDAI_Enum::EnumValidLevel( const char * value, ErrorDescriptor * err,
                                 int optional, char * tokenList,
                                 int needDelims, int clearError ) {
     istringstream in( ( char * )value );
@@ -705,8 +634,7 @@ SDAI_Enum ::EnumValidLevel( const char * value, ErrorDescriptor * err,
  ** Side Effects:
  ** Status:  ok 2.91
  ******************************************************************/
-int
-SDAI_Enum ::set_value( const char * n )  {
+int SDAI_Enum::set_value( const char * n )  {
     if( !n || ( !strcmp( n, "" ) ) ) {
         nullify();
         return asInt();
@@ -727,8 +655,7 @@ SDAI_Enum ::set_value( const char * n )  {
 }
 
 //  set_value is the same function as put
-int
-SDAI_Enum ::set_value( const int i )  {
+int SDAI_Enum::set_value( const int i )  {
     if( i > no_elements() )  {
         v = no_elements() + 1;
         return v;
@@ -744,14 +671,12 @@ SDAI_Enum ::set_value( const int i )  {
     return  no_elements() + 1 ;
 }
 
-SDAI_Enum  &
-SDAI_Enum ::operator= ( const int i ) {
+SDAI_Enum & SDAI_Enum::operator= ( const int i ) {
     put( i );
     return *this;
 }
 
-SDAI_Enum  &
-SDAI_Enum ::operator= ( const SDAI_Enum & Senum ) {
+SDAI_Enum & SDAI_Enum::operator= ( const SDAI_Enum & Senum ) {
     put( Senum.asInt() );
     return *this;
 }
@@ -762,113 +687,3 @@ ostream & operator<< ( ostream & out, const SDAI_Enum & a ) {
     return out;
 
 }
-
-
-#ifdef pojoldStrToValNstepRead
-
-Severity
-SDAI_Enum ::StrToVal( const char * s, ErrorDescriptor * err, int optional ) {
-    const char * sPtr = s;
-    while( isspace( *sPtr ) ) {
-        sPtr++;
-    }
-    if( *sPtr == '\0' ) {
-        if( optional ) {
-            err->GreaterSeverity( SEVERITY_NULL );
-            return SEVERITY_NULL;
-        } else {
-            err->GreaterSeverity( SEVERITY_INCOMPLETE );
-            return SEVERITY_INCOMPLETE;
-        }
-    } else if( *sPtr == '.' ) { // look for initial period delimiter
-        return STEPread( sPtr, err );
-    } else {
-        // look for ending period delimiter (an error)
-        char * periodLoc = strchr( sPtr, '.' );
-        if( periodLoc ) {
-            // found an ending period w/out initial period
-            char * tmp = new char[strlen( sPtr ) + 1];
-            strcpy( tmp, sPtr );
-            tmp[periodLoc - sPtr] = '\0'; // write over ending period
-            err->GreaterSeverity( SEVERITY_WARNING );
-            err->AppendToDetailMsg(
-                "Ending period delimiter without initial period delimiter.\n" );
-            err->AppendToUserMsg(
-                "Ending period delimiter without initial period delimiter.\n" );
-            delete [] tmp;
-            if( ValidLevel( sPtr, err, optional ) ) {
-                // remaining value is valid so assign it
-                put( tmp );
-                return SEVERITY_WARNING;
-            } else {
-                err->AppendToDetailMsg( "Invalid Enumerated value.\n" );
-                err->AppendToUserMsg( "Invalid Enumerated value.\n" );
-                return SEVERITY_WARNING;
-            }
-        }
-        // no surrounding delimiters
-        else if( ValidLevel( sPtr, err, optional ) ) {
-            // value is valid so assign it
-            put( sPtr );
-            return SEVERITY_NULL;
-        } else {
-            err->AppendToDetailMsg( "Invalid Enumerated value.\n" );
-            err->AppendToUserMsg( "Invalid Enumerated value.\n" );
-            return SEVERITY_WARNING;
-        }
-    }
-}
-
-
-Severity
-SDAI_Enum ::STEPread( istream & in, ErrorDescriptor * err, int optional ) {
-    char enumValue [BUFSIZ];
-    char c;
-    char errStr[BUFSIZ];
-    errStr[0] = '\0';
-
-    err->severity( SEVERITY_NULL ); // assume ok until error happens
-    in >> c;
-    switch( c ) {
-        case '.':
-            in.getline( enumValue, BUFSIZ, '.' ); // reads but does not store the .
-            /*
-              // gcc 2.3.3 - It does and should read the . It doesn't store it DAS 4/27/93
-                  char * pos = index(enumValue, '.');
-                  if (pos) *pos = '\0';
-                  //  NON-STANDARD (GNUism)  getline should not retrieve .
-                  //  function gcount is unavailable
-            */
-            if( in.fail() ) {
-                err->GreaterSeverity( SEVERITY_WARNING );
-                err->AppendToUserMsg(
-                    "Missing ending period delimiter for enumerated value.\n" );
-                err->AppendToDetailMsg(
-                    "Missing ending period delimiter for enumerated value.\n" );
-            }
-            if( ValidLevel( enumValue, err, optional ) == SEVERITY_NULL ) {
-                set_value( enumValue );
-            } else {
-                err->AppendToDetailMsg( "Invalid enumerated value.\n" );
-                err->GreaterSeverity( SEVERITY_WARNING );
-                set_value( ENUM_NULL );
-            }
-            break;
-
-        case ',':   // for next attribute or next aggregate value?
-        case ')':   // for end of aggregate value?
-        default:
-            in.putback( c );
-            set_value( ENUM_NULL );
-            if( optional ) {
-                err->GreaterSeverity( SEVERITY_NULL );
-            } else {
-                err->GreaterSeverity( SEVERITY_INCOMPLETE );
-            }
-            break;
-    }
-    return err->severity();
-}
-
-#endif
-

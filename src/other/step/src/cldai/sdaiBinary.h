@@ -13,16 +13,13 @@
 * and is not subject to copyright.
 */
 
-/* $Id: sdaiBinary.h,v */
-
-class SDAI_Binary  : public std::string {
+class SDAI_Binary : public std::string {
     public:
 
         //constructor(s) & destructor
         SDAI_Binary ( const char * str = 0, int max = 0 )
             : std::string( str, max ) { }
 
-//Josh L, 3/28/95
         SDAI_Binary ( const std::string & s )   : std::string( s ) { }
 
 

@@ -112,11 +112,6 @@ YYSTYPE yylval;
     /* there's a gross hack sitting around, we might as well */
     /* milk it for all it's worth!  -snc */
 
-    /*SUPPRESS 61*/
-    /* Type current_type;*/	/* pass type placeholder down */
-    /* this allows us to attach a dictionary to it only when */
-    /* we decide we absolutely need one */
-
     Express yyexpresult;	/* hook to everything built by parser */
 
     Symbol *interface_schema;	/* schema of interest in use/ref clauses */

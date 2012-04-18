@@ -10,12 +10,10 @@
 * and is not subject to copyright.
 */
 
-/* $Id: ExpDict.inline.cc,v 3.0.1.5 1997/11/05 21:59:20 sauderd DP3.1 $  */
-
 #include <ExpDict.h>
 
-Dictionary_instance::~Dictionary_instance()
-{}
+Dictionary_instance::~Dictionary_instance() {
+}
 
 
 Schema::Schema( const char * schemaName )
@@ -57,13 +55,11 @@ Interfaced_item::Interfaced_item( const char * foreign_schema )
 Interfaced_item::~Interfaced_item() {
 }
 
-const Express_id
-Interfaced_item::foreign_schema_() {
+const Express_id Interfaced_item::foreign_schema_() {
     return _foreign_schema;
 }
 
-void
-Interfaced_item::foreign_schema_( const Express_id & fs ) {
+void Interfaced_item::foreign_schema_( const Express_id & fs ) {
     _foreign_schema = fs;
 }
 
@@ -147,8 +143,7 @@ Inverse_attributeList::Inverse_attributeList() {
 Inverse_attributeList::~Inverse_attributeList() {
 }
 
-Inverse_attributeLinkNode *
-Inverse_attributeList::AddNode( Inverse_attribute * ad ) {
+Inverse_attributeLinkNode * Inverse_attributeList::AddNode( Inverse_attribute * ad ) {
     Inverse_attributeLinkNode * node = ( Inverse_attributeLinkNode * ) NewNode();
     node->Inverse_attr( ad );
     SingleLinkList::AppendNode( node );
@@ -387,41 +382,38 @@ AttrDescriptor::AttrDescriptor(
 {
 }
 
-AttrDescriptor::~AttrDescriptor()
-{ }
+AttrDescriptor::~AttrDescriptor() {
+}
 
-Logical
-AttrDescriptor::Explicit() const {
+Logical AttrDescriptor::Explicit() const {
     if( _attrType == AttrType_Explicit ) {
         return LTrue;
     }
     return LFalse;
 }
 
-Logical
-AttrDescriptor::Inverse() const {
+Logical AttrDescriptor::Inverse() const {
     if( _attrType == AttrType_Inverse ) {
         return LTrue;
     }
     return LFalse;
 }
 
-Logical
-AttrDescriptor::Redefining() const {
+Logical AttrDescriptor::Redefining() const {
     if( _attrType == AttrType_Redefining ) {
         return LTrue;
     }
     return LFalse;
 }
 
-Logical
-AttrDescriptor::Deriving() const {
+Logical AttrDescriptor::Deriving() const {
     if( _attrType == AttrType_Deriving ) {
         return LTrue;
     }
     return LFalse;
 }
 
+/*
 // outdated function
 void
 AttrDescriptor::Derived( SDAI_LOGICAL  x ) {
@@ -431,6 +423,7 @@ AttrDescriptor::Derived( SDAI_LOGICAL  x ) {
         _attrType = AttrType_Explicit;
     }
 }
+*/
 
 // outdated function
 void

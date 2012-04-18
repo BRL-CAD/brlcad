@@ -9,20 +9,15 @@
 * and is not subject to copyright.
 */
 
-/* $Id: sdaiString.cc,v 1.4 1997/11/05 21:59:17 sauderd DP3.1 $ */
-
 #include <sdai.h>
 #include <sstream>
 
-
-SDAI_String  &
-SDAI_String ::operator= ( const char * s ) {
+SDAI_String & SDAI_String::operator= ( const char * s ) {
     std::string::operator= ( s );
     return *this;
 }
 
-void
-SDAI_String ::STEPwrite( ostream & out ) const {
+void SDAI_String::STEPwrite( ostream & out ) const {
     const char * str = 0;
 // strings that exist but do not contain any chars should be written as '',
 // not $ --Josh L, 4/28/95
@@ -43,8 +38,7 @@ SDAI_String ::STEPwrite( ostream & out ) const {
     }
 }
 
-void
-SDAI_String ::STEPwrite( std::string & s ) const {
+void SDAI_String::STEPwrite( std::string & s ) const {
     const char * str = 0;
 // null strings should be represented by '', not $ --Josh L, 4/28/95
 //    if (is_null ())
@@ -65,8 +59,7 @@ SDAI_String ::STEPwrite( std::string & s ) const {
     }
 }
 
-Severity
-SDAI_String ::StrToVal( const char * s ) {
+Severity SDAI_String::StrToVal( const char * s ) {
     operator= ( s );
     if( ! strcmp( c_str(),  s ) ) {
         return SEVERITY_NULL ;
@@ -75,10 +68,11 @@ SDAI_String ::StrToVal( const char * s ) {
     }
 }
 
-//  STEPread reads a string in exchange file format
-//  starting with a single quote
-Severity
-SDAI_String ::STEPread( istream & in, ErrorDescriptor * err ) {
+/**
+ *  STEPread reads a string in exchange file format
+ *  starting with a single quote
+ */
+Severity SDAI_String::STEPread( istream & in, ErrorDescriptor * err ) {
     int foundEndQuote = 0; // need so this string is not ok: 'hi''
     clear();  // clear the old string
     char c;
@@ -86,11 +80,7 @@ SDAI_String ::STEPread( istream & in, ErrorDescriptor * err ) {
     in >> c;
 
     // remember the current format state to restore the previous settings
-#if defined(__GNUC__) && (__GNUC__ > 2)
     ios_base::fmtflags flags = in.flags();
-#else
-    ios::fmtflags flags = in.flags();
-#endif
     in.unsetf( ios::skipws );
 
     if( c == STRING_DELIM ) {
@@ -133,8 +123,7 @@ SDAI_String ::STEPread( istream & in, ErrorDescriptor * err ) {
     return err -> GreaterSeverity( SEVERITY_INCOMPLETE );
 }
 
-Severity
-SDAI_String ::STEPread( const char * s, ErrorDescriptor * err ) {
+Severity SDAI_String::STEPread( const char * s, ErrorDescriptor * err ) {
     istringstream in( ( char * )s );
     return STEPread( in, err );
 }

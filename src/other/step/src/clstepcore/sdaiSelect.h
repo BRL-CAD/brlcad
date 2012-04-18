@@ -14,9 +14,9 @@
 
 /* $Id: sdaiSelect.h,v 1.5 1997/11/05 21:59:15 sauderd DP3.1 $ */
 
-/**********
-    class definition for the select superclass SDAI_Select.
-**********/
+/**
+ ** \file sdaiSelect.h class definition for the select superclass SDAI_Select.
+ **/
 class SDAI_Select  {
     protected:
         const SelectTypeDescriptor * _type;
