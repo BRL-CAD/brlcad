@@ -136,7 +136,12 @@ _ged_trace(struct directory *dp,
 	}
     } else {
 	for (i = 0; i < gtdp->gtd_objpos; i++) {
-	    if (gtdp->gtd_path[i]->d_addr != gtdp->gtd_obj[i]->d_addr) {
+	    if (gtdp->gtd_path[i]) {
+		if (gtdp->gtd_path[i]->d_addr != gtdp->gtd_obj[i]->d_addr) {
+		    /* not the desired path */
+		    return;
+	    	}
+	    } else {
 		/* not the desired path */
 		return;
 	    }
