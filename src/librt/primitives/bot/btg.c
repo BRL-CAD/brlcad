@@ -175,6 +175,7 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
     struct tie_id_s id;
     struct tie_ray_s ray;
     int i;
+    fastf_t dirlen;
 
     bot = (struct bot_specific *)stp->st_specific;
     tie = (struct tie_s *)bot->tie;
@@ -183,7 +184,8 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
     hitdata.rp = &ap->a_ray;
 
     /* small backout applied to ray origin */
-    VCOMB2(ray.pos, 1.0, rp->r_pt, -1.01, rp->r_dir);
+    dirlen = MAGSQ(rp->r_dir);
+    VSUB2(ray.pos, rp->r_pt, rp->r_dir);	/* step back one dirlen */
     VMOVE(ray.dir, rp->r_dir);
     ray.depth = ray.kdtree_depth = 0;
 
@@ -194,9 +196,8 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
 	return 0;
 
     /* adjust hit distances to initial ray origin */
-    for(i=0;i<hitdata.nhits;i++) {
-	hitdata.hits[i].hit_dist = hitdata.hits[i].hit_dist - 1.01;
-    }
+    for(i=0;i<hitdata.nhits;i++)
+	hitdata.hits[i].hit_dist = hitdata.hits[i].hit_dist - dirlen;
 
 
     return rt_bot_makesegs(hitdata.hits, hitdata.nhits, stp, rp, ap, seghead, NULL);
