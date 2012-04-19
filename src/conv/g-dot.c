@@ -105,7 +105,7 @@ dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
 	    rt_tree_array = NULL;
 	}
 
-	for (i=0; i<actual_count; i++) {
+	for (i = 0; i < actual_count; i++) {
 	    char op;
 
 	    switch (rt_tree_array[i].tl_op) {
