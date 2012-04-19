@@ -48,7 +48,7 @@
 
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
-#define VSETIN( a, b )	{\
+#define VSETIN(a, b)	{\
     (a)[X] = (b)[X]/25.4; \
     (a)[Y] = (b)[Y]/25.4; \
     (a)[Z] = (b)[Z]/25.4; \
@@ -102,25 +102,25 @@ static unsigned int	tot_polygons = 0;
 
 
 static int
-find_closest_color( float color[3] )
+find_closest_color(float color[3])
 {
     int icolor[3];
     int i;
     int dist_sq;
     int color_num;
 
-    VSCALE( icolor, color, 255 );
+    VSCALE(icolor, color, 255);
 
     color_num = 0;
-    dist_sq = MAGSQ( icolor );
+    dist_sq = MAGSQ(icolor);
 
-    for ( i=1; i<256; i++ ) {
+    for (i = 1; i < 256; i++) {
 	int tmp_dist;
 	int diff[3];
 
-	VSUB2( diff, icolor, &rgb[i*3] );
-	tmp_dist = MAGSQ( diff );
-	if ( tmp_dist < dist_sq ) {
+	VSUB2(diff, icolor, &rgb[i*3]);
+	tmp_dist = MAGSQ(diff);
+	if (tmp_dist < dist_sq) {
 	    dist_sq = tmp_dist;
 	    color_num = i;
 	}
@@ -131,7 +131,7 @@ find_closest_color( float color[3] )
 
 
 static void
-nmg_to_dxf( struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float color[3] )
+nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float color[3])
 {
     struct model *m;
     struct shell *s;
@@ -143,40 +143,40 @@ nmg_to_dxf( struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(re
     int color_num;
     int do_triangulate=0;
 
-    NMG_CK_REGION( r );
+    NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
 
-    region_name = db_path_to_string( pathp );
+    region_name = db_path_to_string(pathp);
 
     m = r->m_p;
-    NMG_CK_MODEL( m );
+    NMG_CK_MODEL(m);
 
     /* Count triangles */
-    for ( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
+    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	struct faceuse *fu;
 
-	NMG_CK_SHELL( s );
+	NMG_CK_SHELL(s);
 
-	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
+	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	    struct loopuse *lu;
 	    int vert_count=0;
 
-	    NMG_CK_FACEUSE( fu );
+	    NMG_CK_FACEUSE(fu);
 
-	    if ( fu->orientation != OT_SAME )
+	    if (fu->orientation != OT_SAME)
 		continue;
 
-	    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
+	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		struct edgeuse *eu;
 
-		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		    continue;
 
-		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
+		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 		    vert_count++;
 		}
 
-		if ( vert_count > 3 ) {
+		if (vert_count > 3) {
 		    do_triangulate = 1;
 		    goto triangulate;
 		}
@@ -187,23 +187,23 @@ nmg_to_dxf( struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(re
     }
 
  triangulate:
-    if ( do_triangulate ) {
+    if (do_triangulate) {
 	/* triangulate model */
-	nmg_triangulate_model( m, &tol );
+	nmg_triangulate_model(m, &tol);
 
 	/* Count triangles */
 	tri_count = 0;
-	for ( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
+	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    struct faceuse *fu;
 
-	    for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
+	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 		struct loopuse *lu;
 
-		if ( fu->orientation != OT_SAME )
+		if (fu->orientation != OT_SAME)
 		    continue;
 
-		for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
-		    if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 			continue;
 
 		    tri_count++;
@@ -212,95 +212,95 @@ nmg_to_dxf( struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(re
 	}
     }
 
-    nmg_vertex_tabulate( &verts, &r->l.magic );
+    nmg_vertex_tabulate(&verts, &r->l.magic);
 
-    color_num = find_closest_color( color );
+    color_num = find_closest_color(color);
 
-    if ( polyface_mesh ) {
+    if (polyface_mesh) {
 	size_t i;
 
 
-	fprintf( fp, "0\nPOLYLINE\n8\n%s\n62\n%d\n70\n64\n71\n%lu\n72\n%d\n",
-		 region_name, color_num, (unsigned long)BU_PTBL_LEN( &verts), tri_count );
-	for ( i=0; i<BU_PTBL_LEN( &verts ); i++ ) {
-	    fprintf( fp, "0\nVERTEX\n8\n%s\n", region_name );
-	    v = (struct vertex *)BU_PTBL_GET( &verts, i );
-	    NMG_CK_VERTEX( v );
-	    if ( inches ) {
-		fprintf( fp, "10\n%f\n20\n%f\n30\n%f\n70\n192\n", V3ARGSIN( v->vg_p->coord ) );
+	fprintf(fp, "0\nPOLYLINE\n8\n%s\n62\n%d\n70\n64\n71\n%lu\n72\n%d\n",
+		 region_name, color_num, (unsigned long)BU_PTBL_LEN(&verts), tri_count);
+	for (i = 0; i < BU_PTBL_LEN(&verts); i++) {
+	    fprintf(fp, "0\nVERTEX\n8\n%s\n", region_name);
+	    v = (struct vertex *)BU_PTBL_GET(&verts, i);
+	    NMG_CK_VERTEX(v);
+	    if (inches) {
+		fprintf(fp, "10\n%f\n20\n%f\n30\n%f\n70\n192\n", V3ARGSIN(v->vg_p->coord));
 	    } else {
-		fprintf( fp, "10\n%f\n20\n%f\n30\n%f\n70\n192\n", V3ARGS( v->vg_p->coord ) );
+		fprintf(fp, "10\n%f\n20\n%f\n30\n%f\n70\n192\n", V3ARGS(v->vg_p->coord));
 	    }
 	}
     }
 
     /* Check triangles */
-    for ( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
+    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	struct faceuse *fu;
 
-	NMG_CK_SHELL( s );
+	NMG_CK_SHELL(s);
 
-	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
+	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	    struct loopuse *lu;
 
-	    NMG_CK_FACEUSE( fu );
+	    NMG_CK_FACEUSE(fu);
 
-	    if ( fu->orientation != OT_SAME )
+	    if (fu->orientation != OT_SAME)
 		continue;
 
-	    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
+	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		struct edgeuse *eu;
 		int vert_count=0;
 
-		NMG_CK_LOOPUSE( lu );
+		NMG_CK_LOOPUSE(lu);
 
-		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		    continue;
 
-		if ( polyface_mesh ) {
-		    fprintf( fp, "0\nVERTEX\n8\n%s\n70\n128\n10\n0.0\n20\n0.0\n30\n0.0\n",
-			     region_name );
+		if (polyface_mesh) {
+		    fprintf(fp, "0\nVERTEX\n8\n%s\n70\n128\n10\n0.0\n20\n0.0\n30\n0.0\n",
+			     region_name);
 		} else {
-		    fprintf( fp, "0\n3DFACE\n8\n%s\n62\n%d\n", region_name, color_num );
+		    fprintf(fp, "0\n3DFACE\n8\n%s\n62\n%d\n", region_name, color_num);
 		}
 
 		/* check vertex numbers for each triangle */
-		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
-		    NMG_CK_EDGEUSE( eu );
+		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		    NMG_CK_EDGEUSE(eu);
 
 		    vert_count++;
 
 		    v = eu->vu_p->v_p;
-		    NMG_CK_VERTEX( v );
+		    NMG_CK_VERTEX(v);
 
-		    if ( polyface_mesh ) {
-			fprintf( fp, "%d\n%d\n",
-				 vert_count+70, bu_ptbl_locate( &verts, (long *)v ) + 1 );
+		    if (polyface_mesh) {
+			fprintf(fp, "%d\n%d\n",
+				 vert_count+70, bu_ptbl_locate(&verts, (long *)v) + 1);
 		    } else {
-			if ( inches ) {
-			    fprintf( fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
+			if (inches) {
+			    fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
 				     10 + vert_count - 1,
 				     v->vg_p->coord[X] / 25.4,
 				     20 + vert_count - 1,
 				     v->vg_p->coord[Y] / 25.4,
 				     30 + vert_count -1,
-				     v->vg_p->coord[Z] / 25.4 );
+				     v->vg_p->coord[Z] / 25.4);
 			} else {
-			    fprintf( fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
+			    fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
 				     10 + vert_count - 1,
 				     v->vg_p->coord[X],
 				     20 + vert_count - 1,
 				     v->vg_p->coord[Y],
 				     30 + vert_count -1,
-				     v->vg_p->coord[Z] );
+				     v->vg_p->coord[Z]);
 			}
 		    }
 		}
-		if ( vert_count > 3 ) {
-		    bu_free( region_name, "region name" );
-		    bu_log( "lu %p has %d vertices!\n", (void *)lu, vert_count );
+		if (vert_count > 3) {
+		    bu_free(region_name, "region name");
+		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
 		    bu_exit(1, "ERROR: LU is not a triangle\n");
-		} else if ( vert_count < 3 ) {
+		} else if (vert_count < 3) {
 		    continue;
 		} else {
 		    /* repeat the last vertex for the benefit of codes
@@ -308,24 +308,24 @@ nmg_to_dxf( struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(re
 		     * 3DFACES as requiring a fourth vertex even when
 		     * only three are input.
 		     */
-		    if ( !polyface_mesh ) {
+		    if (!polyface_mesh) {
 			vert_count++;
-			if ( inches ) {
-			    fprintf( fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
+			if (inches) {
+			    fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
 				     10 + vert_count - 1,
 				     v->vg_p->coord[X] / 25.4,
 				     20 + vert_count - 1,
 				     v->vg_p->coord[Y] / 25.4,
 				     30 + vert_count -1,
-				     v->vg_p->coord[Z] / 25.4 );
+				     v->vg_p->coord[Z] / 25.4);
 			} else {
-			    fprintf( fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
+			    fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
 				     10 + vert_count - 1,
 				     v->vg_p->coord[X],
 				     20 + vert_count - 1,
 				     v->vg_p->coord[Y],
 				     30 + vert_count -1,
-				     v->vg_p->coord[Z] );
+				     v->vg_p->coord[Z]);
 			}
 		    }
 		}
@@ -336,11 +336,11 @@ nmg_to_dxf( struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(re
 	}
     }
 
-    bu_ptbl_free( &verts );
-    bu_free( region_name, "region name" );
+    bu_ptbl_free(&verts);
+    bu_free(region_name, "region name");
 
-    if ( polyface_mesh ) {
-	fprintf( fp, "0\nSEQEND\n" );
+    if (polyface_mesh) {
+	fprintf(fp, "0\nSEQEND\n");
     }
 
 }
@@ -352,11 +352,11 @@ union tree *get_layer(struct db_tree_state *tsp, const struct db_full_path *path
     int color_num;
 
     layer_name = db_path_to_string(pathp);
-    color_num = find_closest_color( tsp->ts_mater.ma_color );
+    color_num = find_closest_color(tsp->ts_mater.ma_color);
 
-    fprintf( fp, "0\nLAYER\n2\n%s\n62\n%d\n", layer_name, color_num );
+    fprintf(fp, "0\nLAYER\n2\n%s\n62\n%d\n", layer_name, color_num);
 
-    bu_free( layer_name, "layer name" );
+    bu_free(layer_name, "layer name");
 
     return (union tree *)NULL;
 }
@@ -390,7 +390,7 @@ main(int argc, char *argv[])
     double		percent;
     int		i;
 
-    bu_setlinebuf( stderr );
+    bu_setlinebuf(stderr);
 
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
@@ -413,9 +413,9 @@ main(int argc, char *argv[])
     tol.para = 1 - tol.perp;
 
     /* init resources we might need */
-    rt_init_resource( &rt_uniresource, 0, NULL );
+    rt_init_resource(&rt_uniresource, 0, NULL);
 
-    BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:n:o:pr:vx:D:P:X:i")) != -1) {
@@ -441,19 +441,19 @@ main(int argc, char *argv[])
 		verbose++;
 		break;
 	    case 'P':
-		ncpu = atoi( bu_optarg );
+		ncpu = atoi(bu_optarg);
 		rt_g.debug = 1;	/* NOTE: enabling DEBUG_ALLRAYS to get core dumps */
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
 		break;
 	    case 'D':
 		tol.dist = atof(bu_optarg);
 		tol.dist_sq = tol.dist * tol.dist;
-		rt_pr_tol( &tol );
+		rt_pr_tol(&tol);
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
 		NMG_debug = rt_g.NMG_debug;
 		break;
 	    case 'i':
@@ -479,7 +479,7 @@ main(int argc, char *argv[])
     } else {
 	/* Open output file */
 	if ((fp=fopen(output_file, "w+b")) == NULL) {
-	    perror( argv[0] );
+	    perror(argv[0]);
 	    bu_exit(1, " Cannot open output file (%s) for writing\n", output_file);
 	}
     }
@@ -492,22 +492,22 @@ main(int argc, char *argv[])
 	bu_exit(1, "Unable to open geometry file (%s) for reading\n", argv[0]);
     }
 
-    if ( db_dirbuild( dbip ) ) {
-	bu_exit(1, "db_dirbuild failed\n" );
+    if (db_dirbuild(dbip)) {
+	bu_exit(1, "db_dirbuild failed\n");
     }
 
     BN_CK_TOL(tree_state.ts_tol);
     RT_CK_TESS_TOL(tree_state.ts_ttol);
 
-    if ( verbose ) {
-	bu_log( "Model: %s\n", argv[0] );
-	bu_log( "Objects:" );
-	for ( i=1; i<argc; i++ )
-	    bu_log( " %s", argv[i] );
-	bu_log( "\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
-		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm );
-	bu_log( "Calculational tolerances:\n\tdist = %g mm perp = %g\n",
-		tree_state.ts_tol->dist, tree_state.ts_tol->perp );
+    if (verbose) {
+	bu_log("Model: %s\n", argv[0]);
+	bu_log("Objects:");
+	for (i = 1; i < argc; i++)
+	    bu_log(" %s", argv[i]);
+	bu_log("\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
+		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
+	bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
+		tree_state.ts_tol->dist, tree_state.ts_tol->perp);
     }
 
     /* output DXF header and start of TABLES section */
@@ -516,16 +516,16 @@ main(int argc, char *argv[])
 	    argv[argc-1]);
 
     /* Walk indicated tree(s) just for layer names to put in TABLES section */
-    (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-			1,			/* ncpu */
-			&tree_state,
-			0,			/* take all regions */
-			get_layer,
-			NULL,
-			(genptr_t)NULL);	/* in librt/nmg_bool.c */
+    (void)db_walk_tree(dbip, argc-1, (const char **)(argv+1),
+                       1,			/* ncpu */
+                       &tree_state,
+                       0,			/* take all regions */
+                       get_layer,
+                       NULL,
+                       (genptr_t)NULL);	/* in librt/nmg_bool.c */
 
     /* end of layers section, start of ENTOTIES SECTION */
-    fprintf( fp, "0\nENDTAB\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n" );
+    fprintf(fp, "0\nENDTAB\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n");
 
     /* Walk indicated tree(s).  Each region will be output separately */
     tree_state = rt_initial_tree_state;	/* struct copy */
@@ -545,24 +545,24 @@ main(int argc, char *argv[])
     percent = 0;
     if (regions_tried>0) {
 	percent = ((double)regions_converted * 100) / regions_tried;
-	if ( verbose )
+	if (verbose)
 	    bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
 		   regions_tried, regions_converted, percent);
     }
     percent = 0;
 
-    if ( regions_tried > 0 ) {
+    if (regions_tried > 0) {
 	percent = ((double)regions_written * 100) / regions_tried;
-	if ( verbose )
-	    bu_log( "                  %d triangulated successfully. %g%%\n",
-		    regions_written, percent );
+	if (verbose)
+	    bu_log("                  %d triangulated successfully. %g%%\n",
+		    regions_written, percent);
     }
 
-    bu_log( "%ld triangles written\n", (long int)tot_polygons );
+    bu_log("%ld triangles written\n", (long int)tot_polygons);
 
-    fprintf( fp, "0\nENDSEC\n0\nEOF\n" );
+    fprintf(fp, "0\nENDSEC\n0\nEOF\n");
 
-    if ( output_file ) {
+    if (output_file) {
 	fclose(fp);
     }
 
