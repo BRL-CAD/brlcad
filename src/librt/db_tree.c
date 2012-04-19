@@ -22,7 +22,7 @@
 /** @file librt/db_tree.c
  *
  * Includes parallel tree walker routine.  Also includes routines to
- * return a matrix givne a name or path.
+ * return a matrix given a name or path.
  *
  */
 
@@ -1558,9 +1558,9 @@ db_free_tree(union tree *tp, struct resource *resp)
 
 
 /**
- * Re-balance this node to make it left heavy.  Unions operators will
+ * Re-balance this node to make it left heavy.  Union operators will
  * be moved to left side.  when finished "tp" MUST still point to top
- * node od this subtree.
+ * node of this subtree.
  */
 void
 db_left_hvy_node(union tree *tp)
@@ -2539,7 +2539,7 @@ db_apply_anims(struct db_full_path *pathp, struct directory *dp, mat_t stack, ma
 		   i, j);
 	}
 
-	for (; i>=0 && j>=0; i--, j--) {
+	for (; i >= 0 && j >= 0; i--, j--) {
 	    if (anp->an_path.fp_names[i] != pathp->fp_names[j]) {
 		if (RT_G_DEBUG & DEBUG_ANIM) {
 		    bu_log("%s != %s\n",
@@ -2583,7 +2583,7 @@ db_region_mat(
 	bu_log("db_region_mat: db_string_to_path(%s) error\n", name);
 	return -1;
     }
-    if (! db_path_to_mat(dbip, &full_path, region_to_model, 0, resp)) {
+    if (!db_path_to_mat(dbip, &full_path, region_to_model, 0, resp)) {
 	/* bad thing */
 	bu_log("db_region_mat: db_path_to_mat(%s) error", name);
 	return -2;
