@@ -83,6 +83,7 @@ if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   # -Wformat=2 (after bu_fopen_uniq() is obsolete)
   BRLCAD_CHECK_C_FLAG(pedantic)
   BRLCAD_CHECK_CXX_FLAG(pedantic)
+
   # The Wall warnings are too verbose with Visual C++
   if(NOT MSVC)
     BRLCAD_CHECK_C_FLAG(Wall)
@@ -91,19 +92,29 @@ if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
     BRLCAD_CHECK_C_FLAG(W4)
     BRLCAD_CHECK_CXX_FLAG(W4)
   endif(NOT MSVC)
+
   BRLCAD_CHECK_C_FLAG(Wextra)
-  BRLCAD_CHECK_C_FLAG(Wundef)
-  BRLCAD_CHECK_C_FLAG(Wfloat-equal)
-  BRLCAD_CHECK_C_FLAG(Wshadow)
-  BRLCAD_CHECK_C_FLAG(Winline)
   BRLCAD_CHECK_CXX_FLAG(Wextra)
+
+  BRLCAD_CHECK_C_FLAG(Wundef)
   BRLCAD_CHECK_CXX_FLAG(Wundef)
+
+  BRLCAD_CHECK_C_FLAG(Wfloat-equal)
   BRLCAD_CHECK_CXX_FLAG(Wfloat-equal)
+
+  BRLCAD_CHECK_C_FLAG(Wshadow)
   BRLCAD_CHECK_CXX_FLAG(Wshadow)
+
+  BRLCAD_CHECK_C_FLAG(Winline)
   BRLCAD_CHECK_CXX_FLAG(Winline)
+
   # Need this for tcl.h
   BRLCAD_CHECK_C_FLAG(Wno-long-long) 
-  BRLCAD_CHECK_CXX_FLAG(Wno-long-long) 
+  BRLCAD_CHECK_CXX_FLAG(Wno-long-long)
+
+  # Need this for X11 headers using variadic macros
+  BRLCAD_CHECK_C_FLAG(Wno-variadic-macros)
+  BRLCAD_CHECK_CXX_FLAG(Wno-variadic-macros)
 endif(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
 
 if(BRLCAD_ENABLE_STRICT)
