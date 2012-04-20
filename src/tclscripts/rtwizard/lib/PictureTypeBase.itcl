@@ -271,7 +271,7 @@ namespace eval RtWizard {
 	    set cmd [list [file join [bu_brlcad_root bin] rt] -M -R $otype $fbout -w $width \
 			 -n $height -V $ar -A 0.9 -p $perspective \
 			 -C [lindex $bg 0]/[lindex $bg 1]/[lindex $bg 2] \
-			 $::RtWizard::dbFile]
+			 $::RtWizard::wizard_state(dbFile)]
 	    foreach obj $objects {
 		lappend cmd $obj
 	    }
@@ -351,7 +351,7 @@ namespace eval RtWizard {
 				  -c "set bg=[lindex $nl 0],[lindex $nl 1],[lindex $nl 2]" \
 				  -c "set om=$occMode" \
 				  -c "set oo=\"$occObjects\"" \
-				  $::RtWizard::dbFile]
+				  $::RtWizard::wizard_state(dbFile)]
 		 } else {
 
 		     set cmd [list rtedge -M -R -F $fb -w $width \
@@ -359,7 +359,7 @@ namespace eval RtWizard {
 				  -c "$fgMode" \
 				  -c "set bg=[lindex $nl 0],[lindex $nl 1],[lindex $nl 2]" \
 				  -c "set ov=$overlay" \
-				  $::RtWizard::dbFile]
+				  $::RtWizard::wizard_state(dbFile)]
 		 }
 
 		 #

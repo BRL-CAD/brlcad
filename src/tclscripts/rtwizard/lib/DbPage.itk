@@ -267,7 +267,7 @@ namespace eval RtWizard {
     # onOK - called when the OK button is called
     #
     itcl::body DbPage::onOK {} {
-	set ::RtWizard::dbFile [getDbFile]
+	set ::RtWizard::wizard_state(dbFile) [getDbFile]
 	$::wizardInstance select exp
     }
 
