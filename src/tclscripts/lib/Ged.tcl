@@ -2994,17 +2994,23 @@ package provide cadwidgets::Ged 1.0
 
 
 ::itcl::body cadwidgets::Ged::begin_data_poly_circ {} {
-    # Nothing for now
+    foreach callback $mBeginDataPolygonCallbacks {
+	catch {$callback}
+    }
 }
 
 
 ::itcl::body cadwidgets::Ged::begin_data_poly_cont {} {
-    # Nothing for now
+    foreach callback $mBeginDataPolygonCallbacks {
+	catch {$callback}
+    }
 }
 
 
 ::itcl::body cadwidgets::Ged::begin_data_poly_ell {} {
-    # Nothing for now
+    foreach callback $mBeginDataPolygonCallbacks {
+	catch {$callback}
+    }
 }
 
 
@@ -3634,7 +3640,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_poly_circ $dm]; $mGed poly_circ_mode $itk_component($dm) %x %y; focus %W; break"
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_poly_circ]; $mGed poly_circ_mode $itk_component($dm) %x %y; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_data_poly_circ $dm]; break"
     }
 }
@@ -3644,7 +3650,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_poly_cont $dm]; $mGed poly_cont_build $itk_component($dm) %x %y; focus %W; break"
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_poly_cont]; $mGed poly_cont_build $itk_component($dm) %x %y; focus %W; break"
 	bind $itk_component($dm) <Shift-$_button> "[::itcl::code $this end_data_poly_cont $dm]; break"
 	bind $itk_component($dm) <ButtonRelease> ""
 	bind $itk_component($dm) <ButtonRelease-$_button> ""
@@ -3656,7 +3662,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_poly_ell $dm]; $mGed poly_ell_mode $itk_component($dm) %x %y; focus %W; break"
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_poly_ell]; $mGed poly_ell_mode $itk_component($dm) %x %y; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_data_poly_ell $dm]; break"
     }
 }
