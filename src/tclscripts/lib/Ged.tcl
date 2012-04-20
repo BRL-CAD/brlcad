@@ -586,7 +586,7 @@ package provide cadwidgets::Ged 1.0
 	method init_poly_circ {{_button 1}}
 	method init_poly_cont {{_button 1}}
 	method init_poly_ell {{_button 1}}
-	method init_poly_rect {{_button 1}}
+	method init_poly_rect {{_button 1} {_sflag 0}}
 	method init_prepend_pipept {_obj {_button 1} {_callback {}}}
 	method init_view_bindings {{_type default}}
 	method init_view_center {{_button 1}}
@@ -3647,11 +3647,11 @@ package provide cadwidgets::Ged 1.0
 }
 
 
-::itcl::body cadwidgets::Ged::init_poly_rect {{_button 1}} {
+::itcl::body cadwidgets::Ged::init_poly_rect {{_button 1} {_sflag 0}} {
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "$mGed poly_rect_mode $itk_component($dm) %x %y; focus %W; break"
+	bind $itk_component($dm) <$_button> "$mGed poly_rect_mode $itk_component($dm) %x %y $_sflag; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_poly_rect $dm]; break"
     }
 }
