@@ -1009,7 +1009,7 @@ static struct to_cmdtab to_cmds[] = {
     {"poly_cont_build",	"x y", TO_UNLIMITED, to_poly_cont_build, GED_FUNC_PTR_NULL},
     {"poly_cont_build_end",	"y", TO_UNLIMITED, to_poly_cont_build_end, GED_FUNC_PTR_NULL},
     {"poly_ell_mode",	"x y", TO_UNLIMITED, to_poly_ell_mode, GED_FUNC_PTR_NULL},
-    {"poly_rect_mode",	"x y", TO_UNLIMITED, to_poly_rect_mode, GED_FUNC_PTR_NULL},
+    {"poly_rect_mode",	"x y [s]", TO_UNLIMITED, to_poly_rect_mode, GED_FUNC_PTR_NULL},
     {"pov",	"center quat scale eye_pos perspective", 7, to_view_func_plus, ged_pmat},
     {"prcolor",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_prcolor},
     {"prefix",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_prefix},
@@ -7291,6 +7291,25 @@ to_mouse_poly_rect(struct ged *gedp,
     fx = x * inv_width * 2.0 - 1.0;
     fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
 
+    if (gdvp->gdv_view->gv_mode == TCLCAD_POLY_SQUARE_MODE) {
+	fastf_t dx, dy;
+
+	dx = fx - gdpsp->gdps_prev_point[X];
+	dy = fy - gdpsp->gdps_prev_point[Y];
+
+	if (fabs(dx) > fabs(dy)) {
+	    if (dy < 0.0)
+		fy = gdpsp->gdps_prev_point[Y] - fabs(dx);
+	    else
+		fy = gdpsp->gdps_prev_point[Y] + fabs(dx);
+	} else {
+	    if (dx < 0.0)
+		fx = gdpsp->gdps_prev_point[X] - fabs(dy);
+	    else
+		fx = gdpsp->gdps_prev_point[X] + fabs(dy);
+	}
+    }
+
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, gdpsp->gdps_prev_point);
     bu_vls_printf(&plist, "{ {%lf %lf %lf} ",  V3ARGS(m_pt));
 
@@ -9212,6 +9231,7 @@ to_poly_rect_mode(struct ged *gedp,
     int ac;
     char *av[5];
     int x, y;
+    int sflag;
     fastf_t fx, fy;
     fastf_t inv_width;
     fastf_t inv_height;
@@ -9231,7 +9251,7 @@ to_poly_rect_mode(struct ged *gedp,
 	return GED_HELP;
     }
 
-    if (argc != 4) {
+    if (argc < 4 || 5 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -9265,9 +9285,21 @@ to_poly_rect_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    if (argc == 4)
+	sflag = 0;
+    else {
+	if (sscanf(argv[4], "%d", &sflag) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return GED_ERROR;
+	}
+    }
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = TCLCAD_POLY_RECTANGLE_MODE;
+
+    if (sflag)
+	gdvp->gdv_view->gv_mode = TCLCAD_POLY_SQUARE_MODE;
+    else
+	gdvp->gdv_view->gv_mode = TCLCAD_POLY_RECTANGLE_MODE;
 
     inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
     inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
