@@ -20,8 +20,7 @@ include_directories(
   ${TNT_INCLUDE_DIR}
   )
 
-#set(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/step/data/ap203edit.exp)
-set(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/step/data/203wseds/203wseds.exp)
+set(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/step/data/ap203edit.exp)
 
 # read the schema name from a line like 'SCHEMA AUTOMOTIVE_DESIGN;'
 file(STRINGS ${SCHEMA_FILE} SCHEMA_STATEMENT LIMIT_COUNT 1 REGEX "SCHEMA .*")
