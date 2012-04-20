@@ -1,5 +1,6 @@
 set(util_TCLSCRIPTS
   expand_int_ranges.tcl
+  getopt.tcl
   luniq.tcl
   )
 BRLCAD_ADDDATA(util_TCLSCRIPTS tclscripts/util)

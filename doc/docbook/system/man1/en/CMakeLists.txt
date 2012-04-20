@@ -10,6 +10,7 @@ set(docbook_man1_EN
   rtarea.xml
   rtcheck.xml
   rtedge.xml
+  rtwizard.xml
   tire.xml
   )
 
