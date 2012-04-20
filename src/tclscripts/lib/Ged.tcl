@@ -548,6 +548,10 @@ package provide cadwidgets::Ged 1.0
 	method begin_data_move {_pane _x _y}
 	method begin_data_move_object {_pane _x _y}
 	method begin_data_move_point {_pane _x _y}
+	method begin_data_poly_circ {}
+	method begin_data_poly_cont {}
+	method begin_data_poly_ell {}
+	method begin_data_poly_rect {}
 	method begin_view_measure {_pane _part1_button _part1_button _x _y}
 	method begin_view_measure_part2 {_pane _button _x _y}
 	method default_views {}
@@ -555,11 +559,11 @@ package provide cadwidgets::Ged 1.0
 	method end_data_arrow {_pane}
 	method end_data_line {_pane}
 	method end_data_move {_pane}
-	method end_poly_move {_pane}
-	method end_poly_circ {_pane {_button 1}}
-	method end_poly_cont {_pane {_button 1}}
-	method end_poly_ell {_pane {_button 1}}
-	method end_poly_rect {_pane {_button 1}}
+	method end_data_poly_move {_pane}
+	method end_data_poly_circ {_pane {_button 1}}
+	method end_data_poly_cont {_pane {_button 1}}
+	method end_data_poly_ell {_pane {_button 1}}
+	method end_data_poly_rect {_pane {_button 1}}
 	method end_view_measure {_pane _part1_button _part2_button}
 	method end_view_measure_part2 {_pane _button}
 	method end_view_rect {_pane {_button 1} {_pflag 0}}
@@ -582,11 +586,11 @@ package provide cadwidgets::Ged 1.0
 	method init_data_move_object {{_button 1}}
 	method init_data_move_point {{_button 1}}
 	method init_data_pick {{_button 1}}
+	method init_data_poly_circ {{_button 1}}
+	method init_data_poly_cont {{_button 1}}
+	method init_data_poly_ell {{_button 1}}
+	method init_data_poly_rect {{_button 1} {_sflag 0}}
 	method init_find_pipept {_obj {_button 1} {_callback {}}}
-	method init_poly_circ {{_button 1}}
-	method init_poly_cont {{_button 1}}
-	method init_poly_ell {{_button 1}}
-	method init_poly_rect {{_button 1} {_sflag 0}}
 	method init_prepend_pipept {_obj {_button 1} {_callback {}}}
 	method init_view_bindings {{_type default}}
 	method init_view_center {{_button 1}}
@@ -641,9 +645,13 @@ package provide cadwidgets::Ged 1.0
 	method clear_data_label_callback_list {}
 	method delete_data_label_callback {_callback}
 
-	method add_data_polygon_callback {_callback}
-	method clear_data_polygon_callback_list {}
-	method delete_data_polygon_callback {_callback}
+	method add_begin_data_polygon_callback {_callback}
+	method clear_begin_data_polygon_callback_list {}
+	method delete_begin_data_polygon_callback {_callback}
+
+	method add_end_data_polygon_callback {_callback}
+	method clear_end_data_polygon_callback_list {}
+	method delete_end_data_polygon_callback {_callback}
 
 	method add_view_measure_callback {_callback}
 	method clear_view_measure_callback_list {}
@@ -700,7 +708,8 @@ package provide cadwidgets::Ged 1.0
 	variable mViewMeasureCallbacks ""
 	variable mViewRectCallbacks ""
 
-	variable mDataPolygonCallbacks ""
+	variable mBeginDataPolygonCallbacks ""
+	variable mEndDataPolygonCallbacks ""
 	variable mPolyCircCallbacks ""
 	variable mPolyContCallbacks ""
 	variable mPolyEllCallbacks ""
@@ -2984,6 +2993,28 @@ package provide cadwidgets::Ged 1.0
 }
 
 
+::itcl::body cadwidgets::Ged::begin_data_poly_circ {} {
+    # Nothing for now
+}
+
+
+::itcl::body cadwidgets::Ged::begin_data_poly_cont {} {
+    # Nothing for now
+}
+
+
+::itcl::body cadwidgets::Ged::begin_data_poly_ell {} {
+    # Nothing for now
+}
+
+
+::itcl::body cadwidgets::Ged::begin_data_poly_rect {} {
+    foreach callback $mBeginDataPolygonCallbacks {
+	catch {$callback}
+    }
+}
+
+
 ::itcl::body cadwidgets::Ged::begin_view_measure {_pane _part1_button _part2_button _x _y} {
     measure_line_erase
 
@@ -3097,7 +3128,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     if {$mLastDataType == "data_polygons" || $mLastDataType == "sdata_polygons"} {
-	end_poly_move $_pane
+	end_data_poly_move $_pane
 	return
     }
 
@@ -3164,7 +3195,7 @@ package provide cadwidgets::Ged 1.0
 
 
 
-::itcl::body cadwidgets::Ged::end_poly_move {_pane} {
+::itcl::body cadwidgets::Ged::end_data_poly_move {_pane} {
     if {$itk_option(-gridSnap)} {
 	# First, get the data point being moved.
 	set point [eval $mGed data_polygons $itk_component($_pane) get_point $mLastDataIndex]
@@ -3182,13 +3213,13 @@ package provide cadwidgets::Ged 1.0
 	eval $mGed data_polygons $itk_component($_pane) replace_point $mLastDataIndex [list $point]
     }
 
-    foreach callback $mDataPolygonCallbacks {
+    foreach callback $mEndDataPolygonCallbacks {
 	catch {$callback $mLastDataIndex}
     }
 }
 
 
-::itcl::body cadwidgets::Ged::end_poly_circ {_pane {_button 1}} {
+::itcl::body cadwidgets::Ged::end_data_poly_circ {_pane {_button 1}} {
     $mGed idle_mode $itk_component($_pane)
 
     if {$itk_option(-gridSnap)} {
@@ -3208,13 +3239,13 @@ package provide cadwidgets::Ged 1.0
 	$mGed data_polygons $itk_component($_pane) clip
     }
 
-    foreach callback $mDataPolygonCallbacks {
+    foreach callback $mEndDataPolygonCallbacks {
 	catch {$callback $mLastDataIndex}
     }
 }
 
 
-::itcl::body cadwidgets::Ged::end_poly_cont {_pane {_button 1}} {
+::itcl::body cadwidgets::Ged::end_data_poly_cont {_pane {_button 1}} {
     $mGed idle_mode $itk_component($_pane)
 
     set mpos [$mGed get_prev_mouse $itk_component($_pane)]
@@ -3235,13 +3266,13 @@ package provide cadwidgets::Ged 1.0
 	$mGed data_polygons $itk_component($_pane) clip
     }
 
-    foreach callback $mDataPolygonCallbacks {
+    foreach callback $mEndDataPolygonCallbacks {
 	catch {$callback $mLastDataIndex}
     }
 }
 
 
-::itcl::body cadwidgets::Ged::end_poly_ell {_pane {_button 1}} {
+::itcl::body cadwidgets::Ged::end_data_poly_ell {_pane {_button 1}} {
     $mGed idle_mode $itk_component($_pane)
 
     if {$itk_option(-gridSnap)} {
@@ -3261,13 +3292,13 @@ package provide cadwidgets::Ged 1.0
 	$mGed data_polygons $itk_component($_pane) clip
     }
 
-    foreach callback $mDataPolygonCallbacks {
+    foreach callback $mEndDataPolygonCallbacks {
 	catch {$callback $mLastDataIndex}
     }
 }
 
 
-::itcl::body cadwidgets::Ged::end_poly_rect {_pane {_button 1}} {
+::itcl::body cadwidgets::Ged::end_data_poly_rect {_pane {_button 1}} {
     $mGed idle_mode $itk_component($_pane)
 
     if {$itk_option(-gridSnap)} {
@@ -3287,7 +3318,7 @@ package provide cadwidgets::Ged 1.0
 	$mGed data_polygons $itk_component($_pane) clip
     }
 
-    foreach callback $mDataPolygonCallbacks {
+    foreach callback $mEndDataPolygonCallbacks {
 	catch {$callback $mLastDataIndex}
     }
 }
@@ -3598,6 +3629,49 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
+
+::itcl::body cadwidgets::Ged::init_data_poly_circ {{_button 1}} {
+    measure_line_erase
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_poly_circ $dm]; $mGed poly_circ_mode $itk_component($dm) %x %y; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_data_poly_circ $dm]; break"
+    }
+}
+
+
+::itcl::body cadwidgets::Ged::init_data_poly_cont {{_button 1}} {
+    measure_line_erase
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_poly_cont $dm]; $mGed poly_cont_build $itk_component($dm) %x %y; focus %W; break"
+	bind $itk_component($dm) <Shift-$_button> "[::itcl::code $this end_data_poly_cont $dm]; break"
+	bind $itk_component($dm) <ButtonRelease> ""
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
+}
+
+
+::itcl::body cadwidgets::Ged::init_data_poly_ell {{_button 1}} {
+    measure_line_erase
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_poly_ell $dm]; $mGed poly_ell_mode $itk_component($dm) %x %y; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_data_poly_ell $dm]; break"
+    }
+}
+
+
+::itcl::body cadwidgets::Ged::init_data_poly_rect {{_button 1} {_sflag 0}} {
+    measure_line_erase
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_poly_rect]; $mGed poly_rect_mode $itk_component($dm) %x %y $_sflag; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_data_poly_rect $dm]; break"
+    }
+}
+
+
 ::itcl::body cadwidgets::Ged::init_find_pipept {_obj {_button 1} {_callback {}}} {
     measure_line_erase
 
@@ -3606,48 +3680,6 @@ package provide cadwidgets::Ged 1.0
     foreach dm {ur ul ll lr} {
 	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_find_pipept $dm $_obj %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> ""
-    }
-}
-
-
-::itcl::body cadwidgets::Ged::init_poly_circ {{_button 1}} {
-    measure_line_erase
-
-    foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "$mGed poly_circ_mode $itk_component($dm) %x %y; focus %W; break"
-	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_poly_circ $dm]; break"
-    }
-}
-
-
-::itcl::body cadwidgets::Ged::init_poly_cont {{_button 1}} {
-    measure_line_erase
-
-    foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "$mGed poly_cont_build $itk_component($dm) %x %y; focus %W; break"
-	bind $itk_component($dm) <Shift-$_button> "[::itcl::code $this end_poly_cont $dm]; break"
-	bind $itk_component($dm) <ButtonRelease> ""
-	bind $itk_component($dm) <ButtonRelease-$_button> ""
-    }
-}
-
-
-::itcl::body cadwidgets::Ged::init_poly_ell {{_button 1}} {
-    measure_line_erase
-
-    foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "$mGed poly_ell_mode $itk_component($dm) %x %y; focus %W; break"
-	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_poly_ell $dm]; break"
-    }
-}
-
-
-::itcl::body cadwidgets::Ged::init_poly_rect {{_button 1} {_sflag 0}} {
-    measure_line_erase
-
-    foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "$mGed poly_rect_mode $itk_component($dm) %x %y $_sflag; focus %W; break"
-	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_poly_rect $dm]; break"
     }
 }
 
@@ -3662,6 +3694,7 @@ package provide cadwidgets::Ged 1.0
 	bind $itk_component($dm) <ButtonRelease-$_button> ""
     }
 }
+
 
 ::itcl::body cadwidgets::Ged::init_view_bindings {{_type default}} {
     global tcl_platform
@@ -4229,23 +4262,43 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
-::itcl::body cadwidgets::Ged::add_data_polygon_callback {_callback} {
-    set i [lsearch $mDataPolygonCallbacks $_callback]
+::itcl::body cadwidgets::Ged::add_begin_data_polygon_callback {_callback} {
+    set i [lsearch $mBeginDataPolygonCallbacks $_callback]
 
     # Add if not already in list
     if {$i == -1} {
-	lappend mDataPolygonCallbacks $_callback
+	lappend mBeginDataPolygonCallbacks $_callback
     }
 }
 
-::itcl::body cadwidgets::Ged::clear_data_polygon_callback_list {} {
-    set mDataPolygonCallbacks {}
+::itcl::body cadwidgets::Ged::clear_begin_data_polygon_callback_list {} {
+    set mBeginDataPolygonCallbacks {}
 }
 
-::itcl::body cadwidgets::Ged::delete_data_polygon_callback {_callback} {
-    set i [lsearch $mDataPolygonCallbacks $_callback]
+::itcl::body cadwidgets::Ged::delete_begin_data_polygon_callback {_callback} {
+    set i [lsearch $mBeginDataPolygonCallbacks $_callback]
     if {$i != -1} {
-	set mDataPolygonCallbacks [lreplace $mDataPolygonCallbacks $i $i]
+	set mBeginDataPolygonCallbacks [lreplace $mBeginDataPolygonCallbacks $i $i]
+    }
+}
+
+::itcl::body cadwidgets::Ged::add_end_data_polygon_callback {_callback} {
+    set i [lsearch $mEndDataPolygonCallbacks $_callback]
+
+    # Add if not already in list
+    if {$i == -1} {
+	lappend mEndDataPolygonCallbacks $_callback
+    }
+}
+
+::itcl::body cadwidgets::Ged::clear_end_data_polygon_callback_list {} {
+    set mEndDataPolygonCallbacks {}
+}
+
+::itcl::body cadwidgets::Ged::delete_end_data_polygon_callback {_callback} {
+    set i [lsearch $mEndDataPolygonCallbacks $_callback]
+    if {$i != -1} {
+	set mEndDataPolygonCallbacks [lreplace $mEndDataPolygonCallbacks $i $i]
     }
 }
 
