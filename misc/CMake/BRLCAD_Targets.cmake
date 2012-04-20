@@ -152,6 +152,11 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   if(BUILD_SHARED_LIBS)
     add_library(${libname} SHARED ${srcslist})
 
+    # Make sure we don't end up with outputs named liblib...
+    if(${libname} MATCHES "^lib*")
+      set_target_properties(${libname} PROPERTIES PREFIX "")
+    endif(${libname} MATCHES "^lib*")
+
     if(CPP_DLL_DEFINES)
       set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
     endif(CPP_DLL_DEFINES)
@@ -193,6 +198,11 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   # respect standard naming conventions.)
   if(BUILD_STATIC_LIBS)
     add_library(${libname}-static STATIC ${srcslist})
+
+    # Make sure we don't end up with outputs named liblib...
+    if(${libname}-static MATCHES "^lib*")
+      set_target_properties(${libname}-static PROPERTIES PREFIX "")
+    endif(${libname}-static MATCHES "^lib*")
 
     if(NOT MSVC)
       if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
