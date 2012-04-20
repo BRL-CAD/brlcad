@@ -641,10 +641,6 @@ package provide cadwidgets::Ged 1.0
 	method clear_data_label_callback_list {}
 	method delete_data_label_callback {_callback}
 
-	method add_data_move_callback {_callback}
-	method clear_data_move_callback_list {}
-	method delete_data_move_callback {_callback}
-
 	method add_data_polygon_callback {_callback}
 	method clear_data_polygon_callback_list {}
 	method delete_data_polygon_callback {_callback}
@@ -695,7 +691,6 @@ package provide cadwidgets::Ged 1.0
 	variable mBeginDataLineCallbacks ""
 	variable mBeginDataMoveCallbacks ""
 	variable mDataLabelCallbacks ""
-	variable mDataMoveCallbacks ""
 	variable mDataPointCallback ""
 	variable mEndDataArrowCallbacks ""
 	variable mEndDataLineCallbacks ""
@@ -4231,26 +4226,6 @@ package provide cadwidgets::Ged 1.0
     set i [lsearch $mDataLabelCallbacks $_callback]
     if {$i != -1} {
 	set mDataLabelCallbacks [lreplace $mDataLabelCallbacks $i $i]
-    }
-}
-
-::itcl::body cadwidgets::Ged::add_data_move_callback {_callback} {
-    set i [lsearch $mDataMoveCallbacks $_callback]
-
-    # Add if not already in list
-    if {$i == -1} {
-	lappend mDataMoveCallbacks $_callback
-    }
-}
-
-::itcl::body cadwidgets::Ged::clear_data_move_callback_list {} {
-    set mDataMoveCallbacks {}
-}
-
-::itcl::body cadwidgets::Ged::delete_data_move_callback {_callback} {
-    set i [lsearch $mDataMoveCallbacks $_callback]
-    if {$i != -1} {
-	set mDataMoveCallbacks [lreplace $mDataMoveCallbacks $i $i]
     }
 }
 
