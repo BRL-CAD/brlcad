@@ -68,7 +68,7 @@ fi
 
 FAILURES=0
 
-TFILS='vdeck.log m35.g m35-baseline.cg m35.cg comgeom-g.log solids regions region_ids'
+TFILS='vdeck.log m35.g m35-baseline.cg m35.cg t.g comgeom-g.log solids regions region_ids'
 
 echo "...testing 'vdeck' command..."
 
@@ -78,6 +78,7 @@ rm -f $TFILS
 $GZIP -d -c $1/regress/tgms/m35.asc.gz > m35.asc
 $ASC2G m35.asc m35.g
 
+# get our
 # using vdeck interactively to convert .g to GIFT
 #(following example in red.sh and mged test)
 $VDECK m35.g >> vdeck.log 2>&1 <<EOF
@@ -105,10 +106,10 @@ else
     echo "vdeck test succeeded (1 of 2)"
 fi
 
-# the part 2 test is simple for now--just convert back and check
-# for a successful exit
+# the part 2 test checks for a known (but corrected) failure to
+# convert ars solids
 echo "...testing 'comgeom-g' command..."
-$COMGEOM m35.cg t.g 1>comgeom-g.log 2> comgeom-g.log
+$COMGEOM $1/regress/tgms/ars.cg t.g 1>comgeom-g.log 2> comgeom-g.log
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
