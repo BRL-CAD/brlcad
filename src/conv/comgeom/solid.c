@@ -305,13 +305,13 @@ getsolid(void)
 	}
 	if ((ret = mk_ars(outfp, name, ncurves, pts_per_curve, curve)) < 0) {
 	    printf("mk_ars(%s) failed\n", name);
-	    /* Need to free memory; 'ret' is returned below */
+	    /* Need to free memory ONLY if mk_ars fails; 'ret' is returned below */
+            for (i = 0; i < ncurves; i++) {
+                printf("DEBUG: freeing curve %d\n", i);
+	        bu_free((char *)curve[i], "curve[i]");
+            }
+            bu_free((char **)curve, "curve");
 	}
-
-	for (i = 0; i < ncurves; i++) {
-	    bu_free((char *)curve[i], "curve[i]");
-	}
-	bu_free((char *)curve, "curve");
 	bu_free(name, "name");
 	return ret;
     }
