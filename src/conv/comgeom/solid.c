@@ -953,7 +953,7 @@ read_arbn(char *name)
 
 		/* See if point is outside arb */
 		for (m = 0; m < nface; m++) {
-		    if (i==m || j==m || k==m)  continue;
+		    if (i == m || j == m || k == m)  continue;
 		    if (VDOT(pt, eqn[m]) - eqn[m][W] > DIST_TOL)
 			goto next_k;
 		}
