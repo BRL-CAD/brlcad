@@ -136,6 +136,7 @@ CMAKEFILES(
   spdi.sh
   spdipix.asc
   testlib.c
+  tgms/cgtest.cg
   tgms/m35.asc.gz
   tgms/m35.cg.gz
   vls.sh

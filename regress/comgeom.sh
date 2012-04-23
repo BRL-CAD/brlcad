@@ -106,10 +106,11 @@ else
     echo "vdeck test succeeded (1 of 2)"
 fi
 
-# the part 2 test checks for a known (but corrected) failure to
-# convert ars solids
+# the part 2 test checks for a known (but corrected) failures to
+# convert ars solids, it also check all solid types recognized
+# by vdeck
 echo "...testing 'comgeom-g' command..."
-$COMGEOM $1/regress/tgms/ars.cg t.g 1>comgeom-g.log 2> comgeom-g.log
+$COMGEOM $1/regress/tgms/cgtest.cg t.g 1>comgeom-g.log 2> comgeom-g.log
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
