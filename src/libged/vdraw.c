@@ -687,8 +687,8 @@ vdraw_vlist(void *data, int argc, const char *argv[])
     static const char *usage = "list\n\tdelete name";
 
     /* must be needing help */
-    if (argc < 3 || argv > 4) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argc>0?argv[0]:"vdraw", argv>1?argv[1]:"vlist", usage);
+    if (argc < 3 || argc > 4) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argc>0?argv[0]:"vdraw", argc>1?argv[1]:"vlist", usage);
 	return GED_HELP;
     }
 
