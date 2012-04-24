@@ -70,6 +70,15 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* work on vdeck/comgeom-g converters needed:
+  - primitives recognized by comgeom-g but not vdeck:
+      ehy, epa, eto, rhc, rpc
+  - primitives recognized by comgeom-g (but not vdeck) but 
+    with possible equivalent versions in BRL-CAD:
+      haf (half), rvw (right vertical wedge), raw (arb8), wed (DoE name 
+      for 'raw'), wir (pipe), arw (arbitrary wedge [ERIM?])
+  - generate new comgeom-g tests with tgms from old GIFT docs
+
 * test tgf-g conversion with "ring-mode" geometry
 
 * investigate why the new bbox() routines for ARS and BoT result in
