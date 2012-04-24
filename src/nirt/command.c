@@ -167,6 +167,7 @@ sh_esc(char *buffer)
     int ret;
     static char *shell = "";
     static char *last_cmd = "";
+    char *rshell = NULL;
 
     while (isspace(*buffer)) {
 	++buffer;
@@ -189,9 +190,15 @@ sh_esc(char *buffer)
 	    shell = "cmd.exe";
 #endif
 	}
-	ret = system(shell);
+
+	/* sanitize path to shell */
+	rshell = bu_realpath(shell, NULL);
+
+	ret = system(rshell);
 	if (ret == -1)
 	    perror("system");
+
+	bu_free(rshell, "free realpath");
     }
 }
 
