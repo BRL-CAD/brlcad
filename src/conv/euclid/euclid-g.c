@@ -59,7 +59,7 @@ struct vlist {
     struct vertex	*vt[MAX_PTS_PER_FACE];
 };
 
-void euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout);
+int euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout);
 int find_vert(struct vlist *vert, int nv, fastf_t x, fastf_t y, fastf_t z);
 int store_vert(struct vlist *vert, int *nv, fastf_t x, fastf_t y, fastf_t z);
 int read_euclid_face(int *lst, int *ni, FILE *fp, struct vlist *vert, int *nv);
@@ -130,6 +130,7 @@ main(int argc, char **argv)
     char		title[BRLCAD_TITLE_LENGTH];	/* BRL-CAD database title */
     int	c;
     int i;
+    int ret;
 
     bu_setprogname(argv[0]);
 
@@ -218,11 +219,11 @@ main(int argc, char **argv)
     for ( i=0; i<11; i++ )
 	bu_ptbl_init( &groups[i], 64, " &groups[i] ");
 
-    euclid_to_brlcad(fpin, fpout);
+    ret = euclid_to_brlcad(fpin, fpout);
 
     fclose(fpin);
     wdb_close(fpout);
-    return 0;
+    return ret;
 }
 
 /*
@@ -381,26 +382,31 @@ build_groups(struct rt_wdb *fpout)
  *		A, B, C, D are the facet's plane equation coefficients and
  *		<A B C> is an outward pointing surface normal.
  */
-void
+int
 euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
 {
     char	str[80] = {0};
     int	reg_id = -1;
 
     /* skip first string in file (what is it??) */
-    if ( fscanf( fpin, "%80s", str ) == EOF )
-	bu_exit(1, "Failed on first attempt to read input" );
+    if ( fscanf( fpin, "%80s", str ) == EOF ) {
+	bu_log("ERROR: Failed on first attempt to read input" );
+	return 1;
+    }
 
     /* Id of first region. */
     if (fscanf(fpin, "%d", &reg_id) != 1) {
-	bu_exit(1, "euclid_to_brlcad: no region id\n");
+	bu_log("euclid_to_brlcad: no region id\n");
+	return 2;
     }
 
     if(reg_id <= -INT_MAX) {
-      bu_exit(-1, "Magnitude of negative region_id too large.\n");
+	bu_log("ERROR: Magnitude of negative region_id too large.\n");
+	return 3;
     }
     if(reg_id >= INT_MAX) {
-      bu_exit(-1, "region_id too large.\n");
+	bu_log("region_id too large.\n");
+	return 4;
     }
 
     /* Convert each region to an individual nmg. */
@@ -411,6 +417,8 @@ euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
 
     /* Build groups based on idents */
     build_groups( fpout );
+
+    return 0;
 }
 
 /* Kill the cracks in region's next shell.
