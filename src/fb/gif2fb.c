@@ -260,7 +260,7 @@ main(int argc, char **argv)
 	lineNumber = offs[lineIdx];
 	lineInc= lace[lineIdx];
     } else {
-	lineIdx = sizeof(lace)-1;
+	lineIdx = (sizeof(lace)/sizeof(lace[0]))-1;
 	lineNumber = 0;
 	lineInc = 1;
     }
@@ -296,6 +296,8 @@ main(int argc, char **argv)
 	lineNumber += lineInc;
 	if (lineNumber >= ih_height) {
 	  ++lineIdx;
+	  if (lineIdx > (int)(sizeof(lace)/sizeof(lace[0]))-1)
+	      lineIdx = (sizeof(lace)/sizeof(lace[0]))-1;
 	  lineInc = lace[lineIdx];
 	  lineNumber = offs[lineIdx];
 	}
