@@ -293,8 +293,8 @@ main(int argc, char **argv)
 	}
 
 	/* Width is rounded up to next multiple of 16 bits */
-	if ( ((double)header.ras_width*(double)(header.ras_depth))>=(double)(LONG_MAX-1) ) {
-	    bu_log("Image size invalid\n");
+	if (header.ras_width*15 > (LONG_MAX-1) / header.ras_depth) {
+	    bu_log("Image width too big\n");
 	    return -1;
 	}
 	nbits = header.ras_width * header.ras_depth;
