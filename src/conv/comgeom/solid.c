@@ -307,7 +307,6 @@ getsolid(void)
 	    printf("mk_ars(%s) failed\n", name);
 	    /* Need to free memory ONLY if mk_ars fails; 'ret' is returned below */
             for (i = 0; i < ncurves; i++) {
-                printf("DEBUG: freeing curve %d\n", i);
 	        bu_free((char *)curve[i], "curve[i]");
             }
             bu_free((char **)curve, "curve");
@@ -1020,7 +1019,7 @@ read_arbn(char *name)
 void
 eat(int count)
 {
-    char	lbuf[132];
+    char lbuf[132];
     int	i;
 
     for (i = 0; i < count; i++) {
