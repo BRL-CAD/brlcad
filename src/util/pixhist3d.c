@@ -88,6 +88,7 @@ if (idx > MAX_INDEX) { \
     while ((n = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), fp)) > 0) {
 	unsigned char *bp;
 	int i;
+	long r, g, b;
 
 	CHECK_INDEX(ibuf[RED]);
 	CHECK_INDEX(ibuf[GRN]);
@@ -95,9 +96,27 @@ if (idx > MAX_INDEX) { \
 
 	bp = &ibuf[0];
 	for (i = n/3; i > 0; i--, bp += 3) {
- 	    rxb[ bp[RED] ][ bp[BLU] ]++;
- 	    rxg[ bp[RED] ][ bp[GRN] ]++;
- 	    bxg[ bp[BLU] ][ bp[GRN] ]++;
+	    r = bp[RED];
+	    g = bp[GRN];
+	    b = bp[BLU];
+
+	    /* sanitize no-op */
+	    if (UNLIKELY(r < 0))
+		r = 0;
+	    if (UNLIKELY(r > 255))
+		r = 255;
+	    if (UNLIKELY(g < 0))
+		g = 0;
+	    if (UNLIKELY(g > 255))
+		g = 255;
+	    if (UNLIKELY(b < 0))
+		b = 0;
+	    if (UNLIKELY(b > 255))
+		b = 255;
+
+ 	    rxb[ r ][ b ]++;
+ 	    rxg[ r ][ g ]++;
+ 	    bxg[ b ][ g ]++;
 	}
     }
 
