@@ -42,7 +42,7 @@
 #define MULT 2
 #define ABS 3
 #define POW 4
-#define BUFLEN (8192*2)	/* usually 2 pages of memory, 16KB */
+#define BUFLEN 65536
 
 
 char *progname = "(noname)";
@@ -50,9 +50,9 @@ char *progname = "(noname)";
 int numop = 0;		/* number of operations */
 int op[256];		/* operations */
 double val[256];		/* arguments to operations */
-short mapbuf[65536];		/* translation buffer/lookup table */
-unsigned char clip_h[65536];	/* map of values which clip high */
-unsigned char clip_l[65536];	/* map of values which clip low */
+short mapbuf[BUFLEN];		/* translation buffer/lookup table */
+unsigned char clip_h[BUFLEN];	/* map of values which clip high */
+unsigned char clip_l[BUFLEN];	/* map of values which clip low */
 
 
 int
@@ -191,14 +191,23 @@ main(int argc, char *argv[])
 	/* translate */
 	for (j=0; j < n; ++j) {
 	    long idx = j;
+	    long mdx;
 	    if (idx < 0)
 		idx = 0;
-	    if (idx > LONG_MAX-1)
-		idx = LONG_MAX-1;
+	    if (idx > BUFLEN-1)
+		idx = BUFLEN-1;
+	    mdx = iobuf[idx] + 32768;
+	    if (mdx < 0)
+		mdx = 0;
+	    if (mdx > BUFLEN-1)
+		mdx = BUFLEN-1;
 
-	    iobuf[idx] = mapbuf[iobuf[idx] + 32768];
-	    if (clip_h[idx]) clip_high++;
-	    else if (clip_l[idx]) clip_low++;
+	    iobuf[idx] = mapbuf[mdx];
+
+	    if (clip_h[idx])
+		clip_high++;
+	    else if (clip_l[idx])
+		clip_low++;
 	}
 	/* output */
 	if (fwrite(iobuf, sizeof(*iobuf), n, stdout) != n) {
