@@ -122,7 +122,15 @@ main(int argc, char **argv)
     if (argc == 14) {
 	scanlen = atoi(argv[3]);
 	xnum = atoi(argv[4]);
+	if (xnum < 0.0)
+	    xnum = 0.0;
+	if (xnum > INT_MAX)
+	    xnum = INT_MAX;
 	ynum = atoi(argv[5]);
+	if (ynum < 0.0)
+	    ynum = 0.0;
+	if (ynum > INT_MAX)
+	    ynum = INT_MAX;
 	ulx = atoi(argv[6]);
 	uly = atoi(argv[7]);
 	urx = atoi(argv[8]);
