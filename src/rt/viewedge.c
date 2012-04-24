@@ -455,6 +455,9 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	    bu_exit(EXIT_FAILURE, "rtedge: could not open database.\n");
 	RT_CK_DBI(dbip);
 
+	if (db_dirbuild(dbip) < 0)
+	    bu_exit(EXIT_FAILURE, "rtedge: could not read database.\n");
+
 	occlusion_rtip = rt_new_rti(dbip); /* clones dbip */
 
 	for (i=0; i < MAX_PSW; i++) {
