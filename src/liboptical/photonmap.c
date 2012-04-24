@@ -1235,7 +1235,7 @@ LoadFile(char *pmfile)
 	}
 
 	ret = fread(&I1, sizeof(int), 1, FH);
-	if (ret != 1 || I1 < 0) {
+	if (ret != 1 || I1 < 0 || I1 > INT_MAX) {
  	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (l1)\n");
 	    return 0;
