@@ -65,7 +65,7 @@ int width = 64;				/* Linked with TCL */
 int height = 64;				/* Linked with TCL */
 int nwave = 2;				/* Linked with TCL */
 
-char *datafile_basename = "mtherm";
+char *datafile_basename = NULL;
 char spectrum_name[100];
 
 FBIO *fbp;
@@ -578,9 +578,6 @@ main(int argc, char **argv)
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
 	bu_exit(1, NULL);
-    }
-
-    if (argc > 1 && BU_STR_EQUAL(argv[1], "-t")) {
     }
 
     datafile_basename = bu_realpath(argv[bu_optind], NULL);;
