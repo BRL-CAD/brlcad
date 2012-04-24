@@ -183,11 +183,17 @@ int main(int argc, char **argv)
 	    i = *p + 32768;
 	    if (i < 0)
 		i = 0;
-	    if (i > INT_MAX-1)
-		i = INT_MAX-1;
+	    if (i > (int)(sizeof(mapbuf)/sizeof(mapbuf[0]))-1)
+		i = (int)(sizeof(mapbuf)/sizeof(mapbuf[0]))-1;
 
-	    if (mapbuf[i] > 32767) { ++clip_high; *p = 32767; }
-	    else if (mapbuf[i] < -32768) { ++clip_low; *p = -32768; }
+	    if (mapbuf[i] > 32767) {
+		++clip_high;
+		*p = 32767;
+	    } else if (mapbuf[i] < -32768) {
+		++clip_low;
+		*p = -32768;
+	    }
+
 	    else *p = (short)mapbuf[i];
 	}
 	/* output */
