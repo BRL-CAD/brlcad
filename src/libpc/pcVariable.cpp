@@ -79,7 +79,9 @@ Variable<int>::Variable(std::string vid, int vvalue) :
 template<>
 Variable<double>::Variable(std::string vid, double vvalue) :
     VariableAbstract(vid),
-    value(vvalue)
+    value(vvalue),
+    vcopy_(vvalue),
+    D()
 {
     double min, max;
     VariableAbstract::type = VAR_DBL;
