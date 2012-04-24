@@ -190,12 +190,13 @@ main(int ac, char *av[])
 
     /* Open the files */
 
-    if ( (in1 = fopen(av[next_arg], "r"))  == (FILE *)NULL) {
+    in1 = fopen(av[next_arg], "r");
+    if (!in1) {
 	perror(av[next_arg]);
 	return -1;
     }
 
-    if(stat(av[next_arg], &sb)) {
+    if(fstat(fileno(in1), &sb)) {
 	perror(av[next_arg]);
 	fclose(in1);
 	return -1;
@@ -206,14 +207,25 @@ main(int ac, char *av[])
 
     next_arg++;
 
-    if (stat(av[next_arg], &sb) ||
-	(in2 = fopen(av[next_arg], "r"))  == (FILE *)NULL) {
+    in2 = fopen(av[next_arg], "r");
+    if (!in2) {
 	perror(av[next_arg]);
+	fclose(in1);
 	return -1;
     }
 
-    if ((size_t)sb.st_size != count)
+    if (fstat(fileno(in2), &sb)) {
+	perror(av[next_arg]);
+	fclose(in1);
+	fclose(in2);
+	return -1;
+    }
+
+    if ((size_t)sb.st_size != count) {
+	fclose(in1);
+	fclose(in2);
 	bu_exit(EXIT_FAILURE, "**** ERROR **** file size mis-match\n");
+    }
 
     buf2 = bu_malloc((size_t)sb.st_size, "buf2");
 
