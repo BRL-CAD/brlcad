@@ -131,14 +131,16 @@ main (int argc, char **argv)
 	print_usage();
     }
 
-    argument = argv[bu_optind];
+    argument = bu_realpath(argv[bu_optind], NULL);
     if (!bu_file_exists(argument, NULL))
+	bu_free(argument, "argument realpath");
 	bu_exit(1, "image file [%s] does not exist\n", argument);
 
     if ((stat(argument, &stat_buf) != 0)
 	&& (!grab_number(argument, &nm_bytes)))
     {
 	bu_log("Cannot find file '%s'\n", argument);
+	bu_free(argument, "argument realpath");
 	print_usage();
     }
 
@@ -156,6 +158,9 @@ main (int argc, char **argv)
 		bytes_per_pixel = pixel_size(argument);
 	}
     }
+
+    bu_free(argument, "argument realpath");
+
     if (bytes_per_pixel == -1)
 	bytes_per_pixel = DFLT_PIXEL_SIZE;
 
