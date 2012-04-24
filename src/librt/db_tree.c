@@ -2284,12 +2284,12 @@ db_walk_tree(struct db_i *dbip,
     RT_CK_DBTS(init_state);
     RT_CHECK_DBI(dbip);
 
-    if (init_state->ts_rtip == NULL && ncpu == 1) {
+    if (init_state->ts_rtip == NULL || ncpu == 1) {
 	resp = &rt_uniresource;
     } else {
 	RT_CK_RTI(init_state->ts_rtip);
 	resp = (struct resource *)BU_PTBL_GET(&init_state->ts_rtip->rti_resources, 0);
-	if (resp == NULL && ncpu == 1) {
+	if (resp == NULL) {
 	    resp = &rt_uniresource;
 	}
     }
