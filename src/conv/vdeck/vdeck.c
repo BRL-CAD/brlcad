@@ -1243,6 +1243,10 @@ deck(char *prefix)
 
     /* Save space for number of solids and regions.			*/
     savsol = ftell(solfp);
+    if (savsol < 0) {
+	perror("ftell");
+    }
+
     blank_fill(solfp, 10);
     ewrite(solfp, LF, 1);
 
@@ -1291,7 +1295,9 @@ deck(char *prefix)
     }
 
     /* Go back, and add number of solids and regions on second card. */
-    fseek(solfp, savsol, 0);
+    if (solfp >= 0)
+	fseek(solfp, savsol, 0);
+
     itoa(nns, buff, 5);
     ewrite(solfp, buff, 5);
     itoa(nnr, buff, 5);
