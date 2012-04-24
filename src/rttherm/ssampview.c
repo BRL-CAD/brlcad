@@ -583,13 +583,14 @@ main(int argc, char **argv)
     if (argc > 1 && BU_STR_EQUAL(argv[1], "-t")) {
     }
 
-    datafile_basename = argv[bu_optind];
+    datafile_basename = bu_realpath(argv[bu_optind], NULL);;
     if (BU_STR_EQUAL(datafile_basename, ""))
-	datafile_basename = "ssampview";
+	datafile_basename = bu_strdup("ssampview");
 
     first_command = "doit1 42";
 
     if ((fbp = fb_open(NULL, width, height)) == FBIO_NULL) {
+	bu_free(datafile_basename, "datafile_basename realpath");
 	bu_exit(EXIT_FAILURE, "Unable to open fb\n");
     }
     fb_view(fbp, width/2, height/2, fb_getwidth(fbp)/width, fb_getheight(fbp)/height);
@@ -597,11 +598,13 @@ main(int argc, char **argv)
     /* Read spectrum definition */
     snprintf(spectrum_name, 100, "%s.spect", datafile_basename);
     if (!bu_file_exists(spectrum_name, NULL)) {
+	bu_free(datafile_basename, "datafile_basename realpath");
 	bu_exit(EXIT_FAILURE, "Spectrum file [%s] does not exist\n", spectrum_name);
     }
 
     spectrum = (struct bn_table *)bn_table_read(spectrum_name);
     if (spectrum == NULL) {
+	bu_free(datafile_basename, "datafile_basename realpath");
 	bu_exit(EXIT_FAILURE, "Unable to read spectrum\n");
     }
     BN_CK_TABLE(spectrum);
@@ -615,7 +618,10 @@ main(int argc, char **argv)
 
     /* Allocate and read 2-D spectrum array */
     data = bn_tabdata_binary_read(datafile_basename, width*height, spectrum);
-    if (!data) bu_exit(EXIT_FAILURE, "bn_tabdata_binary_read() of datafile_basename failed\n");
+    bu_free(datafile_basename, "datafile_basename realpath");
+    if (!data) {
+	bu_exit(EXIT_FAILURE, "bn_tabdata_binary_read() of datafile_basename failed\n");
+    }
 
     /* Allocate framebuffer image buffer */
     pixels = (unsigned char *)bu_malloc(width * height * 3, "pixels[]");
