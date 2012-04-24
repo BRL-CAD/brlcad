@@ -686,14 +686,9 @@ vdraw_vlist(void *data, int argc, const char *argv[])
     struct vd_curve *rcp, *rcp2;
     static const char *usage = "list\n\tdelete name";
 
-    if (argc < 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return GED_ERROR;
-    }
-
-    /* must be wanting help */
-    if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
+    /* must be needing help */
+    if (argc < 3 || argv > 4) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argc>0?argv[0]:"vdraw", argv>1?argv[1]:"vlist", usage);
 	return GED_HELP;
     }
 
@@ -706,10 +701,6 @@ vdraw_vlist(void *data, int argc, const char *argv[])
 
 	    return GED_OK;
 	case 'd':
-	    if (argc < 3) {
-		bu_vls_printf(gedp->ged_result_str, "%s %s: need name of vlist to delete", argv[0], argv[1]);
-		return GED_ERROR;
-	    }
 	    rcp2 = (struct vd_curve *)NULL;
 	    for (BU_LIST_FOR(rcp, vd_curve, &gedp->ged_gdp->gd_headVDraw)) {
 		if (!bu_strncmp(rcp->vdc_name, argv[3], RT_VDRW_MAXNAME)) {
