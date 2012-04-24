@@ -498,7 +498,9 @@ compose(union tree *left_tree, union tree *right_tree, unsigned long int face_st
     }
     bu_log("endsolid /right\n");
     return left_tree;
-    /* group component stuff?
+
+#if 0
+    /* FIXME: group component stuff?
      * obj1, vert, ind, col, facestatus1, facestatus2
      * obj2, vert, ind, col, facestatus3, facestatus3 ??
      */
@@ -519,6 +521,7 @@ compose(union tree *left_tree, union tree *right_tree, unsigned long int face_st
     free_soup(r);
     bu_free(right_tree, "union tree");
     return left_tree;
+#endif
 }
 
 
