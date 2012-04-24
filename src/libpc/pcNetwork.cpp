@@ -30,13 +30,16 @@
 
 /** Default Constructor */
 template<class T>
-BinaryNetwork<T>::BinaryNetwork() : v(), e()
+BinaryNetwork<T>::BinaryNetwork()
+  : v(), e()
 {
 }
 
 
 template<class T>
-BinaryNetwork<T>::BinaryNetwork(std::vector<Variable<T> *> V, std::vector<Constraint *> C) {
+BinaryNetwork<T>::BinaryNetwork(std::vector<Variable<T> *> V, std::vector<Constraint *> C)
+ : v(), e()
+{
     typename std::vector<Variable<T> *>::iterator i = V.begin();
     typename std::vector<Constraint *>::iterator j = C.begin();
 
@@ -55,6 +58,7 @@ BinaryNetwork<T>::BinaryNetwork(std::vector<Variable<T> *> V, std::vector<Constr
 /** BinaryNetwork construction from VCSet */
 template<class T>
 BinaryNetwork<T>::BinaryNetwork(VCSet & vcset)
+ : v(), e()
 {
     std::list<VariableAbstract *>::iterator i;
     std::list<Constraint *>::iterator j;
