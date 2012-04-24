@@ -40,7 +40,7 @@ bu_cv_cookie(const char *in)			/* input format */
     if (UNLIKELY(strlen(in) > 4 || strlen(in) < 1)) return 0;
 
     collector = 0;
-    for (p=in, val = *p; val>0 && val<CHAR_MAX && isdigit(valp); ++p, val = *p)
+    for (p=in, val = *p; val>0 && val<CHAR_MAX && isdigit(val); ++p, val = *p)
 	collector = collector*10 + (val - '0');
 
     if (collector > 255) {
