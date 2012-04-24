@@ -192,6 +192,9 @@ bn_unif_double_fill(struct bn_unif *p)
     register long test, work_seed;
     register int i;
 
+    if (!p)
+	return 0.0;
+
     /*
      * Gauss and uniform structures have the same format for the
      * first part (gauss is an extention of uniform) so that a gauss
@@ -200,8 +203,7 @@ bn_unif_double_fill(struct bn_unif *p)
      * rather than two.  It also means that the user can pull
      * uniform numbers from a guass structure when the user wants.
      */
-    if (!p || (p->magic != BN_UNIF_MAGIC &&
-	       p->magic != BN_GAUSS_MAGIC)) {
+    if (p->magic != BN_UNIF_MAGIC && p->magic != BN_GAUSS_MAGIC) {
 	BN_CK_UNIF(p);
     }
 
@@ -227,6 +229,9 @@ bn_unif_double_fill(struct bn_unif *p)
 void
 bn_unif_free(struct bn_unif *p)
 {
+    if (!p)
+	return;
+
     bu_free(p->msr_doubles, "msr double table");
     bu_free(p->msr_longs, "msr long table");
     p->magic = 0;
@@ -314,6 +319,9 @@ bn_gauss_fill(struct bn_gauss *p)
 {
     register int i;
     /* register */ double v1, v2, r, fac;
+
+    if (!p)
+	return 0.0;
 
     BN_CK_GAUSS(p);
 
