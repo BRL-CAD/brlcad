@@ -1185,13 +1185,15 @@ write_vertex_list(struct nmgregion *r,
 	v = (struct vertex *)BU_PTBL_GET(vtab, i);
 	NMG_CK_VERTEX(v);
 	vg = v->vg_p;
-	if (!vg)
+	if (!vg) {
 	    bu_log("No geometry for vertex %p #%d in table\n", v, i);
-	NMG_CK_VERTEX_G(vg);
-	bu_vls_printf(&str, ", %g, %g, %g",
-		      vg->coord[X],
-		      vg->coord[Y],
-		      vg->coord[Z]);
+	} else {
+	    NMG_CK_VERTEX_G(vg);
+	    bu_vls_printf(&str, ", %g, %g, %g",
+			  vg->coord[X],
+			  vg->coord[Y],
+			  vg->coord[Z]);
+	}
     }
     bu_vls_strcat(&str, ";");
 
