@@ -36,10 +36,12 @@ bu_cv_cookie(const char *in)			/* input format */
 
     if (UNLIKELY(!in)) return 0;
     if (UNLIKELY(!*in)) return 0;
-
+    if (UNLIKELY(strlen(in) > 4 || strlen(in) < 1)) return 0;
 
     collector = 0;
-    for (p=in; *p && isdigit(*p); ++p) collector = collector*10 + (*p - '0');
+    for (p=in; *p && isdigit(*p); ++p)
+	collector = collector*10 + (*p - '0');
+
     if (collector > 255) {
 	collector = 255;
     } else if (collector == 0) {

@@ -70,10 +70,18 @@ main(int argc, char **argv)
     in_pat = argv[1];
     if (BU_STR_EQUAL(in_pat, ""))
 	in_pat = "huc";
+    if (strlen(in_pat) > 4 || strlen(in_pat) < 1) {
+	fprintf(stderr, "cv: unrecognized input pattern\n");
+	return 1;
+    }
 
     out_pat = argv[2];
     if (BU_STR_EQUAL(out_pat, ""))
 	out_pat = "nuc";
+    if (strlen(out_pat) > 4 || strlen(out_pat) < 1) {
+	fprintf(stderr, "cv: unrecognized output pattern\n");
+	return 1;
+    }
 
     in_cookie = bu_cv_cookie(in_pat);
     out_cookie = bu_cv_cookie(out_pat);
