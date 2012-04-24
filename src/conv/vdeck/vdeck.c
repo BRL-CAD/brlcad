@@ -1295,7 +1295,7 @@ deck(char *prefix)
     }
 
     /* Go back, and add number of solids and regions on second card. */
-    if (solfp >= 0)
+    if (savsol >= 0)
 	fseek(solfp, savsol, 0);
 
     itoa(nns, buff, 5);
