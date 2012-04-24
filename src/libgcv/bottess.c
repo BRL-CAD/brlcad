@@ -463,7 +463,7 @@ split_faces(union tree *left_tree, union tree *right_tree, const struct bn_tol *
 
 
 union tree *
-compose(union tree *left_tree, union tree *right_tree, unsigned long int face_status1, unsigned long int UNUSED(face_status2), unsigned long int face_status3)
+compose(union tree *left_tree, union tree *right_tree, unsigned long int UNUSED(face_status1), unsigned long int UNUSED(face_status2), unsigned long int UNUSED(face_status3))
 {
     struct soup_s *l, *r;
     int i;
