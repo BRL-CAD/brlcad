@@ -345,16 +345,16 @@ namespace eval RtWizard {
 		     #
 		     set occObjects [$occObjsPage getObjects]
 
-		     set cmd [list rtedge -M -R -F $fb -w $width \
+		     set cmd [list [file join [bu_brlcad_root bin] rtedge] -M -R -F $fb -w $width \
 				  -n $height -V $ar -A 0.9 -p $perspective \
 				  -c "$fgMode" \
 				  -c "set bg=[lindex $nl 0],[lindex $nl 1],[lindex $nl 2]" \
 				  -c "set om=$occMode" \
-				  -c "set oo=\"$occObjects\"" \
+				  -c "set oo=$occObjects" \
 				  $::RtWizard::wizard_state(dbFile)]
 		 } else {
 
-		     set cmd [list rtedge -M -R -F $fb -w $width \
+		     set cmd [list [file join [bu_brlcad_root bin] rtedge] -M -R -F $fb -w $width \
 				  -n $height -V $ar -A 0.9 \
 				  -c "$fgMode" \
 				  -c "set bg=[lindex $nl 0],[lindex $nl 1],[lindex $nl 2]" \
