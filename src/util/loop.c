@@ -65,6 +65,8 @@ main(int argc, char *argv[])
     unsigned long int cstart, cfinish;
     long int cincr;
 
+    int oneone;
+
     if (argc < 3 || argc > 5) {
 	bu_log("Usage:  loop [-c] start finish [incr] \n -c use for character(char) looping \n");
 	return 9;
@@ -73,9 +75,15 @@ main(int argc, char *argv[])
     /* Check if -c is present in comandline argument*/
 
     if (argv[1][0] == '-') {
-	if (argv[1][1] == 'c') {
+	oneone = argv[1][1];
+	if (oneone < 0)
+	    oneone = 0;
+	if (oneone > CHAR_MAX)
+	    oneone = CHAR_MAX;
+
+	if (oneone == 'c') {
 	    status = CHAR;
-	} else if ((argv[1][1] != '.') && !isdigit(argv[1][1])) {
+	} else if ((oneone != '.') && !isdigit(oneone)) {
 	    bu_log("Usage:  loop [-c] start finish [incr] \n -c use for character(char) looping \n");
 	    return 9;
 	}
