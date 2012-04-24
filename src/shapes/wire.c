@@ -49,7 +49,8 @@ main(int argc, char *argv[])
     /* START # 1 */
     struct rt_wdb *fpw;			/* File to be created. */
     char filemged[26] = {0};		/* Mged file name. */
-    double numseg;			/* Number of segments. */
+    double numseg = -1.0;		/* Number of segments. */
+    double scanseg;
     double strtpt[MAXWIRESEG][3];	/* Start point of segment. */
     double endpt[MAXWIRESEG][3];	/* End point of segment. */
     double strtrad[MAXWIRESEG];		/* Radius at starting point of segment. */
@@ -155,27 +156,30 @@ main(int argc, char *argv[])
     (void)printf("Enter the number of segments (maximum of %d).\n\t",
 		 MAXWIRESEG);
     (void)fflush(stdout);
-    ret = scanf("%lf", &numseg);
+    ret = scanf("%lf", &scanseg);
     if (ret == 0) {
 	perror("scanf");
-	numseg = MAXWIRESEG;
+	scanseg = MAXWIRESEG;
     }
 
     /* Check that the number of segments is less than or equal to the */
     /* maximum. */
-    while (numseg > MAXWIRESEG) {
-	(void)printf("The maximum number of segments is %d.  Enter the\n",
+    while (scanseg > MAXWIRESEG && scanseg < 0.0) {
+	(void)printf("The maximum number of segments is %d.  Enter the\nnumber of segments.\n\t",
 		     MAXWIRESEG);
-	(void)printf("number of segments.\n\t");
 	(void)fflush(stdout);
-	ret = scanf("%lf", &numseg);
+	ret = scanf("%lf", &scanseg);
 	if (ret == 0) {
 	    perror("scanf");
-	    numseg = MAXWIRESEG;
+	    scanseg = MAXWIRESEG;
 	}
     }
-    if (numseg < 1)
-	numseg = 1;
+
+    /* sanitize user-provided/taintable inputs */
+    if (scanseg < 1.0)
+	numseg = 1.0;
+    if (scanseg > (float)MAXWIRESEG)
+	numseg = (float)MAXWIRESEG;
 
     /* Enter starting & ending points of segments & radi. */
     for (i=0; i<numseg; i++) {
