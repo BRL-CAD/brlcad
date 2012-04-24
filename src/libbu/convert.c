@@ -33,14 +33,15 @@ bu_cv_cookie(const char *in)			/* input format */
     const char *p;
     int collector;
     int result = 0x0000;	/* zero/one channel, Net, unsigned, char, clip */
+    int val;
 
     if (UNLIKELY(!in)) return 0;
     if (UNLIKELY(!*in)) return 0;
     if (UNLIKELY(strlen(in) > 4 || strlen(in) < 1)) return 0;
 
     collector = 0;
-    for (p=in; *p && isdigit(*p); ++p)
-	collector = collector*10 + (*p - '0');
+    for (p=in, val = *p; val>0 && val<CHAR_MAX && isdigit(valp); ++p, val = *p)
+	collector = collector*10 + (val - '0');
 
     if (collector > 255) {
 	collector = 255;
