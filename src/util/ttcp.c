@@ -499,22 +499,22 @@ main(int argc, char **argv)
 		nbuf = atoi(&argv[0][2]);
 		if(nbuf < 0) {
 		  printf("Negative buffer count.\n");
-		  exit(-1);
+		  return -1;
 		}
 		if(nbuf >= INT_MAX) {
 		  printf("Too many buffers specified.\n");
-		  exit(-1);
+		  return -1;
 		}
 		break;
 	    case 'l':
 		buflen = atoi(&argv[0][2]);
 		if(buflen <= 0) {
 		  printf("Invalid buffer length.\n");
-		  exit(-1);
+		  return -1;
 		}
 		if(buflen >= INT_MAX) {
 		  printf("Buffer length too large.\n");
-		  exit(-1);
+		  return -1;
 		}
 		break;
 	    case 's':
