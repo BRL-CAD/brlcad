@@ -563,14 +563,22 @@ static void yy_reduce(
   yyStackEntry *yymsp;            /* The top of the parser's stack */
   int yysize;                     /* Amount to pop the stack */
   ParseARG_FETCH;
+
   yymsp = &yypParser->yystack[yypParser->yyidx];
+
+  if( yyruleno>=0
+      && yyruleno<(int)(sizeof(yyRuleName)/sizeof(yyRuleName[0]))-1 ){
 #ifndef NDEBUG
-  if( yyTraceFILE && yyruleno>=0 
-        && yyruleno<(int)(sizeof(yyRuleName)/sizeof(yyRuleName[0])) ){
-    fprintf(yyTraceFILE, "%sReduce [%s].\n", yyTracePrompt,
-      yyRuleName[yyruleno]);
-  }
+    if (yyTraceFILE) {
+      fprintf(yyTraceFILE, "%sReduce [%s].\n", yyTracePrompt,
+              yyRuleName[yyruleno]);
+    }
 #endif /* NDEBUG */
+  } else {
+    /* invalid rule number range */
+    return;
+  }
+
 
   /* Silence complaints from purify about yygotominor being uninitialized
   ** in some cases when it is copied into the stack after the following
