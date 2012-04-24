@@ -86,62 +86,57 @@ bu_open_mapped_file(const char *name, const char *appl)
 	    fd = open(real_path, O_RDONLY | O_BINARY);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 
-	    /* If file vanished from disk, mapped copy should still OK */
-	    if (fd < 0) {
-		/* It is safe to reuse mp */
-		mp->uses++;
-
-		bu_semaphore_release(BU_SEM_MAPPEDFILE);
-		if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
-		    bu_pr_mapped_file("open_reused", mp);
-
-		return mp;
-	    }
+	    /* If file didn't vanish from disk, make sure it's the same file */
+	    if (fd >= 0) {
 
 #ifdef HAVE_SYS_STAT_H
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    ret = fstat(fd, &sb);
-	    bu_semaphore_release(BU_SEM_SYSCALL);
-
-	    if (ret < 0) {
-		/* odd, open worked but fstat failed */
-
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		(void)close(fd);
+		ret = fstat(fd, &sb);
 		bu_semaphore_release(BU_SEM_SYSCALL);
-		fd = -1;
 
-		/* It is safe to reuse mp */
-		mp->uses++;
+		if (ret < 0) {
+		    /* odd, open worked but fstat failed.  assume it
+		     * vanished from disk and the mapped copy is still
+		     * OK.
+		     */
 
-		bu_semaphore_release(BU_SEM_MAPPEDFILE);
-		if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
-		    bu_pr_mapped_file("open_reused", mp);
-
-		return mp;
-	    }
-	    if ((size_t)sb.st_size != mp->buflen) {
-		bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n", real_path, (long)mp->buflen, (long)sb.st_size);
-		/* mp doesn't reflect the file any longer.  Invalidate. */
-		mp->appl = "__STALE__";
-		/* Can't invalidate old copy, it may still be in use. */
-		break;
-	    }
-	    if ((long)sb.st_mtime != mp->modtime) {
-		bu_log("bu_open_mapped_file(%s) WARNING: File modified since last mapped, opening new version.\n", real_path);
-		/* mp doesn't reflect the file any longer.  Invalidate. */
-		mp->appl = "__STALE__";
-		/* Can't invalidate old copy, it may still be in use. */
-		break;
-	    }
-	    /* To be completely safe, should check st_dev and st_inum */
+		    bu_semaphore_acquire(BU_SEM_SYSCALL);
+		    (void)close(fd);
+		    bu_semaphore_release(BU_SEM_SYSCALL);
+		    fd = -1;
+		}
+		if ((size_t)sb.st_size != mp->buflen) {
+		    bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n", real_path, (long)mp->buflen, (long)sb.st_size);
+		    /* mp doesn't reflect the file any longer.  Invalidate. */
+		    mp->appl = "__STALE__";
+		    /* Can't invalidate old copy, it may still be in use. */
+		    break;
+		}
+		if ((long)sb.st_mtime != mp->modtime) {
+		    bu_log("bu_open_mapped_file(%s) WARNING: File modified since last mapped, opening new version.\n", real_path);
+		    /* mp doesn't reflect the file any longer.  Invalidate. */
+		    mp->appl = "__STALE__";
+		    /* Can't invalidate old copy, it may still be in use. */
+		    break;
+		}
+		/* To be completely safe, should check st_dev and st_inum */
 #endif
+	    }
 
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    (void)close(fd);
-	    bu_semaphore_release(BU_SEM_SYSCALL);
-	    fd = -1;
+	    /* It is safe to reuse mp */
+	    mp->uses++;
+
+	    bu_semaphore_release(BU_SEM_MAPPEDFILE);
+	    if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
+		bu_pr_mapped_file("open_reused", mp);
+
+	    return mp;
 	}
+
+	/* It is safe to reuse mp */
+	mp->uses++;
+	return mp;
+
     }
     /* done iterating over mapped file list */
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
