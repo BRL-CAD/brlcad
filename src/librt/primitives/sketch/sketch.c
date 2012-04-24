@@ -2015,8 +2015,10 @@ rt_copy_sketch(const struct rt_sketch_internal *sketch_ip)
 
     if (out->vert_count)
 	out->verts = (point2d_t *)bu_calloc(out->vert_count, sizeof(point2d_t), "out->verts");
-    for (i=0; i<out->vert_count; i++)
+
+    for (i=0; sketch_ip->verts && i<out->vert_count; i++) {
 	V2MOVE(out->verts[i], sketch_ip->verts[i]);
+    }
 
     crv_out = &out->curve;
     if (crv_out)
