@@ -1839,8 +1839,17 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 #ifdef TRY_STDIN_INPUT_HACK
 	/* Process everything in buf */
 	for (idx = 0, ch = buf[idx]; idx < count; ch = buf[++idx]) {
+	    int c = ch;
+
+	    /* explicit input sanitization */
+	    if (c < 0)
+		c = 0;
+	    if (c > CHAR_MAX)
+		c = CHAR_MAX;
+	    if (!isascii(c))
+		continue;
 #endif
-	    mged_process_char(ch);
+	    mged_process_char(c);
 #ifdef TRY_STDIN_INPUT_HACK
 	}
     }
