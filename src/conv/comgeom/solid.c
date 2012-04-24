@@ -59,16 +59,16 @@ extern void col_pr(char *str);
 extern int read_arbn(char *name);
 
 extern struct rt_wdb	*outfp;
-extern int	version;
-extern int	verbose;
+extern int version;
+extern int verbose;
 
-extern double	getdouble(char *cp, int start, int len);
-extern int	sol_total, sol_work;
+extern double getdouble(char *cp, int start, int len);
+extern int    sol_total, sol_work;
 
-char	scard[132];			/* Solid card buffer area */
+char scard[132];			/* Solid card buffer area */
 
-void	trim_trail_spaces(char *cp);
-void	eat(int count);
+void trim_trail_spaces(char *cp);
+void eat(int count);
 
 /*
  *			G E T S O L D A T A
@@ -99,8 +99,8 @@ getsoldata(double *dp, int num, int solid_num)
 	    /* continuation card
 	     * solid type should be blank
 	     */
-	    if ((version==5 && scard[5] != ' ') ||
-                (version==4 && scard[3] != ' ')) {
+	    if ((version == 5 && scard[5] != ' ') ||
+                (version == 4 && scard[3] != ' ')) {
 		printf("solid %d (continuation) card %d non-blank\n",
 		       solid_num, cd);
 		return -1;
@@ -149,8 +149,8 @@ getxsoldata(double *dp, int num, int solid_num)
 	    /* continuation card
 	     * solid type should be blank
 	     */
-	    if ((version==5 && scard[5] != ' ') ||
-                (version==4 && scard[3] != ' ')) {
+	    if ((version == 5 && scard[5] != ' ') ||
+                (version == 4 && scard[3] != ' ')) {
 		printf("solid %d (continuation) card %d non-blank\n",
 		       solid_num, cd);
 		return -1;
@@ -163,7 +163,7 @@ getxsoldata(double *dp, int num, int solid_num)
 	    j = 6;
 
 	for (i = 0; i < j; i++) {
-	    *fp++ = getdouble(scard, 10+i*10, 10);
+	    *fp++ = getdouble(scard, 10 + i * 10, 10);
 	}
 	num -= j;
     }
@@ -176,7 +176,7 @@ getxsoldata(double *dp, int num, int solid_num)
 void
 trim_trail_spaces(char *cp)
 {
-    char	*ep;
+    char *ep;
 
     ep = cp + strlen(cp) - 1;
     while (ep >= cp) {
