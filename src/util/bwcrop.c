@@ -189,6 +189,7 @@ main(int argc, char **argv)
 	else
 	    return 1;
     } else {
+	float xval, yval;
 	unsigned long len;
 	/* Get info */
 	printf("Scanline length in input file: ");
@@ -200,28 +201,37 @@ main(int argc, char **argv)
 	    bu_exit(4, "bwcrop: scanlen = %zu, don't be ridiculous\n", scanlen);
 	}
 	printf("Line Length and Number of scan lines (in new file)?: ");
-	ret = scanf("%f%f", &xnum, &ynum);
-	if (ret != 1)
+	ret = scanf("%f%f", &xval, &yval);
+	if (ret != 2) {
 	    perror("scanf");
+	}
+	if (xval > 0 && xval < INT_MAX-1)
+	    xnum = xval;
+	else
+	    return 1;
+	if (yval > 0 && yval < INT_MAX-1)
+	    ynum = yval;
+	else
+	    return 1;
 
 	printf("Upper left corner in input file (x, y)?: ");
 	ret = scanf("%f%f", &ulx, &uly);
-	if (ret != 1)
+	if (ret != 2)
 	    perror("scanf");
 
 	printf("Upper right corner (x, y)?: ");
 	ret = scanf("%f%f", &urx, &ury);
-	if (ret != 1)
+	if (ret != 2)
 	    perror("scanf");
 
 	printf("Lower right (x, y)?: ");
 	ret = scanf("%f%f", &lrx, &lry);
-	if (ret != 1)
+	if (ret != 2)
 	    perror("scanf");
 
 	printf("Lower left (x, y)?: ");
 	ret = scanf("%f%f", &llx, &lly);
-	if (ret != 1)
+	if (ret != 2)
 	    perror("scanf");
     }
 
