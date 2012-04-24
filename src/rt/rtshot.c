@@ -124,10 +124,6 @@ main(int argc, char **argv)
 	    break;
 	case 'n':
 	    num_rings = atoi(argv[1]);
-	    if(num_rings < 1 || num_rings > 100000 /* XXX arbitrary large number */) {
-		bu_log("Invalid number of rings: %d\n", num_rings);
-		return 1;
-	    }
 	    argc -= 2;
 	    argv += 2;
 	    break;
@@ -292,12 +288,15 @@ main(int argc, char **argv)
 
     if (set_dir + set_pt + set_at != 2) goto err;
 
-    if (num_rings != 0 || rays_per_ring != 0) {
-	if (num_rings <= 0 || rays_per_ring <= 0 || bundle_radius <= 0.0) {
-	    fprintf(stderr, "Must have all of \"-R\", \"-n\", and \"-c\" set\n");
-	    goto err;
-	}
+    /* explicit input sanitization */
+    if (num_rings <= 0 || rays_per_ring <= 0 || bundle_radius <= 0.0) {
+	fprintf(stderr, "Must have all of \"-R\", \"-n\", and \"-c\" set\n");
+	goto err;
     }
+    if (num_rings > INT_MAX)
+	num_rings = INT_MAX;
+    if (rays_per_ring > INT_MAX)
+	rays_per_ring = INT_MAX;
 
     /* Load database */
     title_file = argv[0];
