@@ -4376,7 +4376,7 @@ dgo_tree_cmd(struct dg_obj *dgop,
 		cflag = 1;
 		break;
 	    case 'o':
-		if (fdout != NULL) {
+		if (fdout) {
 		    bu_log("Warning - output file already specified");
 		    break;
 		}
@@ -4390,7 +4390,7 @@ dgo_tree_cmd(struct dg_obj *dgop,
 		displayDepth = atoi(bu_optarg);
 		if (displayDepth < 0) {
 		    bu_log("Negative number supplied as depth - unsupported.");
-		    if(fdout != NULL)
+		    if (fdout)
 			fclose(fdout);
 		    return TCL_ERROR;
 		}
@@ -4398,7 +4398,8 @@ dgo_tree_cmd(struct dg_obj *dgop,
 	    case '?':
 	    default:
 		bu_log("ERROR: unexpected tree option\n");
-		fclose(fdout);
+		if (fdout)
+		    fclose(fdout);
 		return TCL_ERROR;
 		break;
 	}
@@ -4437,7 +4438,7 @@ dgo_tree_cmd(struct dg_obj *dgop,
 	buffer = NULL;
     }
 
-    if (fdout != NULL) {
+    if (fdout) {
 	fprintf(fdout, "%s", Tcl_GetStringResult(dgop->interp));
 	Tcl_ResetResult(dgop->interp);
 	fclose(fdout);
