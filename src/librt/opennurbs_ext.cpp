@@ -1497,6 +1497,7 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	//return surfaceBBox(localsurf, true, corners, normals, u, v);
 	//parent->addChild(subdivideSurface(localsurf, u, v, frames, corners, normals, 0));
 	((ON_Surface *)localsurf)->ClearBoundingBox();
+	onfree(parent);
 	return subdivideSurface(localsurf, u, v, frames, corners, normals, 0, depthLimit);
     }
     delete [] spanu;
