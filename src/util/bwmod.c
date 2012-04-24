@@ -255,6 +255,8 @@ int main(int argc, char **argv)
 	/* translate */
 	for (p = ibuf, q = &ibuf[n]; p < q; ++p) {
 	    long i = *p;
+	    if (i < 0)
+		i = 0;
 	    if (i >= MAPBUFLEN)
 		*p = i = MAPBUFLEN;
 
