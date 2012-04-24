@@ -301,6 +301,36 @@ main(int argc, char **argv)
 	nbits = (nbits + 15) & ~15;
 	header.ras_width = nbits / header.ras_depth;
 
+	/* sanitize header, basic bounds checks */
+	if (header.ras_width < 0)
+	    header.ras_width = 0;
+	if (header.ras_width > INT_MAX-1)
+	    header.ras_width = INT_MAX-1;
+	if (header.ras_height < 0)
+	    header.ras_height = 0;
+	if (header.ras_height > INT_MAX-1)
+	    header.ras_height = INT_MAX-1;
+	if (header.ras_depth < 0)
+	    header.ras_depth = 0;
+	if (header.ras_depth > 256)
+	    header.ras_depth = 256;
+	if (header.ras_length < 0)
+	    header.ras_length = 0;
+	if (header.ras_length > INT_MAX-1)
+	    header.ras_length = INT_MAX-1;
+	if (header.ras_type < 0)
+	    header.ras_type = 0;
+	if (header.ras_type > RT_EXPERIMENTAL-1)
+	    header.ras_type = 0;
+	if (header.ras_maptype < 0)
+	    header.ras_maptype = 0;
+	if (header.ras_maptype > 10)
+	    header.ras_maptype = 10;
+	if (header.ras_maplength < 0)
+	    header.ras_maplength = 0;
+	if (header.ras_maplength > INT_MAX-1)
+	    header.ras_maplegnth = INT_MAX-1;
+
 	if (verbose) {
 	    fprintf(stderr,
 		    "ras_width = %d, ras_height = %d\nras_depth = %d, ras_length = %d\n",
