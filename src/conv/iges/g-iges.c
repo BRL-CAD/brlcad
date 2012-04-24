@@ -567,7 +567,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		bu_strlcpy(suffix, "a", sizeof(suffix));
 		suffix[0]--;
 		while (!unique) {
-		    if (!access(multi_name, R_OK)) {
+		    if (bu_file_readable(multi_name)) {
 			unique = 1;
 			break;
 		    }
