@@ -2345,7 +2345,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *UNUSED(se
     struct partition *pp;
     struct hit *hitp;
     struct soltab *stp;
-    struct curvature cur;
+    struct curvature cur = RT_CURVATURE_INIT_ZERO;
 
     double enterpt[3];	/*  Point where ray enters.  */
     double distance;	/*  Distance between where point enters  */
