@@ -68,7 +68,7 @@ fi
 
 FAILURES=0
 
-TFILS='vdeck.log m35.g m35-baseline.cg m35.cg t.g comgeom-g.log solids regions region_ids'
+TFILS='vdeck.log m35.asc m35.g m35-baseline.cg m35.cg t.g comgeom-g.log solids regions region_ids'
 
 echo "...testing 'vdeck' command..."
 
@@ -110,7 +110,7 @@ fi
 # convert ars solids, it also check all solid types recognized
 # by vdeck
 echo "...testing 'comgeom-g' command..."
-$COMGEOM $1/regress/tgms/cgtest.cg t.g 1>comgeom-g.log 2> comgeom-g.log
+$COMGEOM $1/regress/tgms/cgtest.cg t.g 1>>comgeom-g.log 2>> comgeom-g.log
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
@@ -118,7 +118,14 @@ if [ X$STATUS != X0 ] ; then
     FAILURES="`expr $FAILURES + 1`"
     export FAILURES
 else
-    echo "comgeom-g test succeeded (2 of 2)"
+    ERR=`grep error comgeom-g.log`
+    if test "x$ERR" = "x" ; then
+        echo "comgeom-g test succeeded (2 of 2)"
+    else
+        echo "comgeom-g errors, see  'comgeom-g.log'"
+        FAILURES="`expr $FAILURES + 1`"
+        export FAILURES
+    fi
 fi
 
 if test $FAILURES -eq 0 ; then
@@ -127,6 +134,7 @@ if test $FAILURES -eq 0 ; then
     rm $TFILS
 else
     echo "-> vdeck/comgeom-g check FAILED"
+    echo "   See 'comgeom-g.log'"
 fi
 
 exit $FAILED
