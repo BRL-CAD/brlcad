@@ -54,8 +54,23 @@ int STEPattributeList::list_length() {
 }
 
 void STEPattributeList::push( STEPattribute * a ) {
-    AttrListNode * saln = new AttrListNode( a );
-    AppendNode( saln );
+    bool push = true;
+
+    // if the attribute already exists in the list, we don't push it
+    // TODO: does it break anything?
+    AttrListNode * a2 = ( AttrListNode * )head;
+    while( a2 && push ) {
+        if( *a == *( a2 -> attr ) ) {
+            push = false;
+            break;
+        }
+        a2 = ( AttrListNode * )( a2->next );
+    }
+
+    if( push ) {
+        AttrListNode * saln = new AttrListNode( a );
+        AppendNode( saln );
+    }
 }
 
 

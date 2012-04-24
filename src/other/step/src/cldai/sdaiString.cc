@@ -19,11 +19,8 @@ SDAI_String & SDAI_String::operator= ( const char * s ) {
 
 void SDAI_String::STEPwrite( ostream & out ) const {
     const char * str = 0;
-// strings that exist but do not contain any chars should be written as '',
-// not $ --Josh L, 4/28/95
-//    if (is_null ())
     if( empty() ) {
-        out << "$";
+        out << "\'\'";
     } else {
         out << "\'";
         str = c_str();
@@ -40,11 +37,8 @@ void SDAI_String::STEPwrite( ostream & out ) const {
 
 void SDAI_String::STEPwrite( std::string & s ) const {
     const char * str = 0;
-// null strings should be represented by '', not $ --Josh L, 4/28/95
-//    if (is_null ())
     if( empty() ) {
-//  s.set_null(); // this would free up space? nope
-        s = "$";
+        s = "\'\'";
     } else {
         s = "\'";
         str = c_str();

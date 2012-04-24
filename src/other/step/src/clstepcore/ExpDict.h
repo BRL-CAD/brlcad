@@ -538,7 +538,7 @@ class Global_rule : public Dictionary_instance {
             return _parent_schema;
         }
         const char * rule_text_() {
-            return const_cast<char *>( _rule_text.c_str() );
+            return _rule_text.c_str();
         }
 
         void name_( Express_id & n ) {
@@ -1558,7 +1558,7 @@ class EntityDescriptor  :    public TypeDescriptor  {
             _supertype_stmt = s;
         }
         const char * Supertype_Stmt() {
-            return const_cast<char *>( _supertype_stmt.c_str() );
+            return _supertype_stmt.c_str();
         }
         std::string & supertype_stmt_() {
             return _supertype_stmt;

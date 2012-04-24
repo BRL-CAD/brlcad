@@ -791,20 +791,8 @@ int STEPattribute::is_null()  const {
     }
 }
 
-/******************************************************************
- ** Procedure:  operator ==
- ** Parameters:  STEPattribute & a1 and a2
- ** Returns:  int -- if 0 => not equal
- ** Description:  evaluates the equality of two attributes
- ** Side Effects:  none
- ** Status:  stub -- needs alot of work
- ******************************************************************/
-int operator == ( STEPattribute & a1, STEPattribute & a2 ) {
-    cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__
-         << "\n" << _POC_ "\n";
-    if( a1.aDesc->NonRefType() == a2.aDesc->NonRefType() )
-        ;
-    return 0;
+bool operator == ( STEPattribute & a1, STEPattribute & a2 ) {
+    return a1.aDesc == a2.aDesc;
 }
 
 
