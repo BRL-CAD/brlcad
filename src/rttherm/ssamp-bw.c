@@ -44,7 +44,7 @@ int width = 64;
 int height = 64;
 int nwave = 2;
 
-char *datafile_basename = "mtherm";
+char *datafile_basename = NULL;
 char spectrum_name[100];
 
 struct bn_tabdata *data;		/* a big array */
@@ -154,18 +154,20 @@ main(int argc, char **argv)
 
     if (verbose) bu_debug = BU_DEBUG_COREDUMP;
 
-    datafile_basename = argv[bu_optind];
+    datafile_basename = bu_realpath(argv[bu_optind], NULL);
     if (BU_STR_EQUAL(datafile_basename, ""))
-	datafile_basename = "ssamp-bw";
+	datafile_basename = bu_strdup("ssamp-bw");
 
     /* Read spectrum definition */
     snprintf(spectrum_name, 100, "%s.spect", datafile_basename);
     if (!bu_file_exists(spectrum_name, NULL)){
+	bu_free(datafile_basename, "datafile_basename realpath");
 	bu_exit(EXIT_FAILURE, "Spectrum file [%s] does not exist\n", spectrum_name);
     }
 
     spectrum = (struct bn_table *)bn_table_read(spectrum_name);
     if (spectrum == NULL) {
+	bu_free(datafile_basename, "datafile_basename realpath");
 	bu_exit(EXIT_FAILURE, "ssamp-bw: Unable to read spectrum\n");
     }
     BN_CK_TABLE(spectrum);
@@ -174,7 +176,10 @@ main(int argc, char **argv)
 
     /* Allocate and read 2-D spectral samples array */
     data = bn_tabdata_binary_read(datafile_basename, width*height, spectrum);
-    if (!data) bu_exit(EXIT_FAILURE, "bn_tabdata_binary_read() of datafile_basename failed\n");
+    bu_free(datafile_basename, "datafile_basename realpath");
+    if (!data) {
+	bu_exit(EXIT_FAILURE, "bn_tabdata_binary_read() of datafile_basename failed\n");
+    }
 
     if (lower_wavelen <= 0) lower_wavelen = spectrum->x[0];
     if (upper_wavelen <= 0) upper_wavelen = spectrum->x[spectrum->nx];
