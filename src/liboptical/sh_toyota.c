@@ -1826,7 +1826,7 @@ absorp_coeff(fastf_t lambda, char *material)
     char mfile[80];
     fastf_t a, l,
 	absorp, absorp_h, absorp_l, lambda_h, lambda_l;
-    fastf_t abso1, lamb1, lamb2;
+    fastf_t abso1, lamb1, lamb2, lambrat;
     FILE *fp;
     int n;
 
@@ -1864,7 +1864,8 @@ absorp_coeff(fastf_t lambda, char *material)
     abso1 = absorp_h - absorp_l;
     lamb1 = lambda - lambda_l;
     lamb2 = lambda_h - lambda_l;
-    absorp = abso1 * lamb1 / lamb2;
+    lambrat = lamb1 / lamb2;
+    absorp = abso1 * lambrat;
     absorp += absorp_l;
     return absorp;
 }
