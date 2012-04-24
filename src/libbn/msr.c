@@ -128,6 +128,9 @@ bn_unif_long_fill(struct bn_unif *p)
     register long test, work_seed;
     register int i;
 
+    if (!p)
+	return 1;
+
     /*
      * Gauss and uniform structures have the same format for the
      * first part (gauss is an extention of uniform) so that a gauss
@@ -136,8 +139,7 @@ bn_unif_long_fill(struct bn_unif *p)
      * rather than two.  It also means that the user can pull
      * uniform numbers from a guass structure when the user wants.
      */
-    if (!p || (p->magic != BN_UNIF_MAGIC &&
-	       p->magic != BN_GAUSS_MAGIC)) {
+    if (p->magic != BN_UNIF_MAGIC && p->magic != BN_GAUSS_MAGIC) {
 	BN_CK_UNIF(p);
     }
 
