@@ -329,7 +329,7 @@ main(int argc, char **argv)
 	if (header.ras_maplength < 0)
 	    header.ras_maplength = 0;
 	if (header.ras_maplength > INT_MAX-1)
-	    header.ras_maplegnth = INT_MAX-1;
+	    header.ras_maplength = INT_MAX-1;
 
 	if (verbose) {
 	    fprintf(stderr,
