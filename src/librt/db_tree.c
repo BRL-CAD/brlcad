@@ -2147,13 +2147,14 @@ _db_walk_dispatcher(int cpu, genptr_t arg)
 
     DB_CK_WPS(wps);
 
-    if (wps->rtip == NULL && cpu == 0) {
+    if (wps->rtip == NULL || cpu == 0) {
 	resp = &rt_uniresource;
     } else {
 	RT_CK_RTI(wps->rtip);
 
 	resp = (struct resource *)BU_PTBL_GET(&wps->rtip->rti_resources, cpu);
-	if (resp == NULL && cpu == 0) resp = &rt_uniresource;
+	if (resp == NULL)
+	    resp = &rt_uniresource;
     }
     RT_CK_RESOURCE(resp);
 
