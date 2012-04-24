@@ -15,7 +15,7 @@
 // Local function prototypes:
 static void writeheader( ostream &, int );
 
-void print_complex( ComplexCollect & collect, char * filename )
+void print_complex( ComplexCollect & collect, const char * filename )
 /*
  * Standalone function called from fedex_plus.  Takes a ComplexCollect
  * and writes its contents to a file (filename) which can be used to
@@ -35,7 +35,7 @@ void print_complex( ComplexCollect & collect, char * filename )
     collect.write( filename );
 }
 
-void ComplexCollect::write( char * fname )
+void ComplexCollect::write( const char * fname )
 /*
  * Generates C++ code in os which may be compiled and run to create a
  * ComplexCollect structure.  Functions are called to write out the

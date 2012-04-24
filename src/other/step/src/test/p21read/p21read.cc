@@ -34,7 +34,7 @@ int main( int argc, char * argv[] ) {
     Registry  registry( SchemaInit );
     InstMgr   instance_list;
     STEPfile  sfile( registry, instance_list );
-    char   *  flnm;
+    const char   *  flnm;
 
     cout << "\nEXAMPLE :  load file ..." << endl;
     if( argc >= 2 ) {

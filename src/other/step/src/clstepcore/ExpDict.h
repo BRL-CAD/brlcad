@@ -1728,14 +1728,14 @@ class ArrayTypeDescriptor  :    public AggrTypeDescriptor  {
         SDAI_LOGICAL  _optionalElements ;
     public:
 
-        ArrayTypeDescriptor( ) : _optionalElements( ( char * )"UNKNOWN_TYPE" ) { }
+        ArrayTypeDescriptor( ) : _optionalElements( "UNKNOWN_TYPE" ) { }
         ArrayTypeDescriptor( Logical optElem ) : _optionalElements( optElem )
         { }
         ArrayTypeDescriptor( const char * nm, PrimitiveType ft,
                              Schema * origSchema, const char * d,
                              AggregateCreator f = 0 )
             : AggrTypeDescriptor( nm, ft, origSchema, d, f ),
-              _optionalElements( ( char * )"UNKNOWN_TYPE" )
+              _optionalElements( "UNKNOWN_TYPE" )
         { }
 
         virtual ~ArrayTypeDescriptor() {}
@@ -1863,7 +1863,7 @@ class StringTypeDescriptor  :    public TypeDescriptor  {
         SDAI_LOGICAL  _fixedSize ;
     public:
 
-        StringTypeDescriptor( ) : _fixedSize( ( char * )"UNKNOWN_TYPE" ) {
+        StringTypeDescriptor( ) : _fixedSize( "UNKNOWN_TYPE" ) {
             _width = 0;
         }
         virtual ~StringTypeDescriptor() { }
