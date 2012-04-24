@@ -79,11 +79,11 @@ main(int argc, char **argv)
 	oheight = atoi(argv[5]);
     }
 
-    if(iwidth <= 0 || iwidth > INT_MAX || iheight <= 0 || iheight > INT_MAX ) {
+    if (nbytes <= 0 || nbytes > INT_MAX || iwidth <= 0 || iwidth > INT_MAX || iheight <= 0 || iheight > INT_MAX ) {
 	bu_log("Input size of range: %ldx%ld\n", (long int)iwidth, (long int)iheight);
 	return EXIT_FAILURE;
     }
-    if(owidth <= 0 || owidth > INT_MAX || oheight <= 0 || oheight > INT_MAX ) {
+    if (owidth <= 0 || owidth > INT_MAX || oheight <= 0 || oheight > INT_MAX ) {
 	bu_log("Output size of range: %ldx%ld\n", (long int)owidth, (long int)oheight);
 	return EXIT_FAILURE;
     }
