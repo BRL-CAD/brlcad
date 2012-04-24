@@ -4682,7 +4682,7 @@ to_data_pick(struct ged *gedp,
 	    maxY = vpoint[Y] + tol;
 	    if (minX < vx && vx < maxX &&
 		minY < vy && vy < maxY) {
-		if (!found_top || top_z < vpoint[Z]) {
+		if (top_z < vpoint[Z]) {
 		    top_z = vpoint[Z];
 		    top_data_str = data_lines_str;
 		    top_i = i;
