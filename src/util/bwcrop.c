@@ -109,6 +109,8 @@ main(int argc, char **argv)
     char value;
     size_t ret;
 
+    int atoival;
+
     if (argc < 3) {
 	bu_exit(1, "%s", usage);
     }
@@ -120,25 +122,72 @@ main(int argc, char **argv)
     }
 
     if (argc == 14) {
-	scanlen = atoi(argv[3]);
-	xnum = atoi(argv[4]);
-	if (xnum < 0.0)
-	    xnum = 0.0;
-	if (xnum > INT_MAX)
-	    xnum = INT_MAX;
-	ynum = atoi(argv[5]);
-	if (ynum < 0.0)
-	    ynum = 0.0;
-	if (ynum > INT_MAX)
-	    ynum = INT_MAX;
-	ulx = atoi(argv[6]);
-	uly = atoi(argv[7]);
-	urx = atoi(argv[8]);
-	ury = atoi(argv[9]);
-	lrx = atoi(argv[10]);
-	lry = atoi(argv[11]);
-	llx = atoi(argv[12]);
-	lly = atoi(argv[13]);
+	if (argv[3])
+	    scanlen = atoi(argv[3]);
+	else
+	    return 1;
+
+	if (argv[4]) {
+	    atoival = atoi(argv[4]);
+	    if (atoival < 0)
+		atoival = 0;
+	    if (atoival > INT_MAX-1)
+		atoival = INT_MAX-1;
+	    xnum = atoival;
+	} else {
+	    return 1;
+	}
+
+	if (argv[5]) {
+	    atoival = atoi(argv[5]);
+	    if (atoival < 0)
+		atoival = 0;
+	    if (atoival > INT_MAX-1)
+		atoival = INT_MAX-1;
+	    ynum = atoival;
+	} else {
+	    return 1;
+	}
+
+	if (argv[6])
+	    ulx = atoi(argv[6]);
+	else
+	    return 1;
+
+	if (argv[7])
+	    uly = atoi(argv[7]);
+	else
+	    return 1;
+
+	if (argv[8])
+	    urx = atoi(argv[8]);
+	else
+	    return 1;
+
+	if (argv[9])
+	    ury = atoi(argv[9]);
+	else
+	    return 1;
+
+	if (argv[10])
+	    lrx = atoi(argv[10]);
+	else
+	    return 1;
+
+	if (argv[11])
+	    lry = atoi(argv[11]);
+	else
+	    return 1;
+
+	if (argv[12])
+	    llx = atoi(argv[12]);
+	else
+	    return 1;
+
+	if (argv[13])
+	    lly = atoi(argv[13]);
+	else
+	    return 1;
     } else {
 	unsigned long len;
 	/* Get info */
@@ -187,6 +236,14 @@ main(int argc, char **argv)
 	fprintf(stderr, "bwcrop: Recompile me or use a smarter algorithm.\n");
     }
 
+    /* sanitize */
+    if (ynum < 0.0 || ynum > INT_MAX-1) {
+	bu_log("ynum out of range: %d\n", ynum);
+	fclose(ifp);
+	fclose(ofp);
+	return -1;
+    }
+
     /* Move all points */
     for (row = 0; row < ynum; row++) {
 	/* calculate left point of row */
@@ -196,7 +253,7 @@ main(int argc, char **argv)
 	x2 = ((urx-lrx)/(ynum-1)) * row + lrx;
 	y2 = ((ury-lry)/(ynum-1)) * row + lry;
 
-	if(xnum < 0 || xnum > INT_MAX) {
+	if (xnum < 0 || xnum > INT_MAX) {
 	    bu_log("xnum out of range: %d\n", xnum);
 	    fclose(ifp);
 	    fclose(ofp);
