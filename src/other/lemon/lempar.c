@@ -567,7 +567,7 @@ static void yy_reduce(
   yymsp = &yypParser->yystack[yypParser->yyidx];
 
   if( yyruleno>=0
-      && yyruleno<(int)(sizeof(yyRuleName)/sizeof(yyRuleName[0]))-1 ){
+      && yyruleno<(int)(sizeof(yyRuleName)/sizeof(yyRuleName[0]))){
 #ifndef NDEBUG
     if (yyTraceFILE) {
       fprintf(yyTraceFILE, "%sReduce [%s].\n", yyTracePrompt,
