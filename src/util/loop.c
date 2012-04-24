@@ -223,6 +223,12 @@ main(int argc, char *argv[])
 	cstart = argv[2][0];
 	cfinish = argv[3][0];
 
+	/* reserve the max value so we can bounds check */
+	if (cstart > ULONG_MAX-1)
+	    cstart = ULONG_MAX-1;
+	if (cfinish > ULONG_MAX-1)
+	    cfinish = ULONG_MAX-1;
+
 	if (argc == 5) {
 	    cincr = strtol(argv[4],NULL,0);
 	    if ((cincr < -UCHAR_MAX) || (cincr > UCHAR_MAX)) {
