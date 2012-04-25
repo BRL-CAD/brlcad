@@ -39,7 +39,7 @@
 
 #include "bu.h"
 
-extern FILE	*infp;
+extern FILE *infp;
 
 extern char name_it[16];		/* argv[3] */
 
