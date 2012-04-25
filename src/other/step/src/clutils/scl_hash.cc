@@ -109,7 +109,7 @@ HASHcreate( unsigned count ) {
     count = DIV( i, SEGMENT_SIZE );
 
     table = ( Hash_TableP ) HASH_Table_new();
-    table->SegmentCount = table->p = ( short )( table->KeyCount = 0 );
+    table->SegmentCount = table->p = table->KeyCount = 0;
     /*
     ** First initialize directory to 0\'s
     ** DIRECTORY_SIZE must be same as in header

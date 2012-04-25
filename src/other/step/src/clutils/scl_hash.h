@@ -104,12 +104,12 @@ struct Element {
 };
 
 struct Hash_Table {
-    short   p;      /* Next bucket to be split  */
-    short   maxp;       /* upper bound on p during expansion    */
-    long    KeyCount;   /* current # keys   */
-    short   SegmentCount;   /* current # segments   */
-    short   MinLoadFactor;
-    short   MaxLoadFactor;
+    unsigned int   p;      /* Next bucket to be split  */
+    unsigned int   maxp;       /* upper bound on p during expansion    */
+    unsigned int   KeyCount;   /* current # keys   */
+    unsigned int   SegmentCount;   /* current # segments   */
+    unsigned int   MinLoadFactor;
+    unsigned int   MaxLoadFactor;
 #define DIRECTORY_SIZE      256
 #define DIRECTORY_SIZE_SHIFT    8   /* log2(DIRECTORY_SIZE) */
     struct Element ** Directory[DIRECTORY_SIZE];
