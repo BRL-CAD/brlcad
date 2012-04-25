@@ -832,7 +832,10 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 	return 0;
 
     bu_avs_init_empty(&avs);
-    db5_get_attributes(dbip, &avs, dp);
+    if (db5_get_attributes(dbip, &avs, dp) < 0) {
+      bu_avs_free(&avs);
+      return 0;
+    }
     avpp = avs.avp;
 
     /* Check all attributes for a match to the requested attribute.
