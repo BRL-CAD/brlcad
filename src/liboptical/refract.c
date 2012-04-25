@@ -395,6 +395,8 @@ rr_render(register struct application *ap,
 
 #ifdef RT_MULTISPECTRAL
     sub_ap.a_spectrum = BN_TABDATA_NULL;
+    bn_tabdata_copy(ms_reflect_color, background);
+    bn_tabdata_constval(ms_reflect_color, 0.0);
 #endif
 
     /*
