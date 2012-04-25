@@ -1,25 +1,13 @@
 #ifndef COMPLEXSUP_H
 #define COMPLEXSUP_H
 
-#ifdef HAVE_MEMCPY
-# ifdef __CLCC__
-void * memcpy( void *, const void *, int );
-# endif
-#endif
-
 #include <iostream>
 #include <fstream>
 using namespace std;
 
 extern "C"
 {
-//#include <stddef.h>
-//#include <string.h>
-//#include <stdio.h>
-//#include <stdlib.h>
 #include <string.h>
-//#include <ctype.h>
-//extern char *   strncpy(char *, const char *, size_t);
 #include "classes.h"
 #include "../express/express.h"
 #include "../exppp/exppp.h"

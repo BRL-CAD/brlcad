@@ -27,7 +27,7 @@ const int Real_Num_Precision = REAL_NUM_PRECISION; // from STEPattribute.h
 /******************************************************************************
 **    \file STEPaggregate.cc Functions for manipulating aggregate attributes
 
-**  KNOWN BUGs:
+**  FIXME KNOWN BUGs:
 **     -- treatment of aggregates of reals or ints is inconsistent with
 **        other aggregates (there's no classes for these)
 **     -- no two- dimensional aggregates are implemented
@@ -794,7 +794,6 @@ Severity SelectAggregate::ReadValue( istream & in, ErrorDescriptor * err,
     }
     if( c == ')' ) {
         _null = 0;
-//  validDelims = 1; // expectation for end paren delim is met
     } else { // expectation for end paren delim has not been met
         err->GreaterSeverity( SEVERITY_INPUT_ERROR );
         err->AppendToUserMsg( "Missing close paren for aggregate value" );

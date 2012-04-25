@@ -53,7 +53,6 @@ static char rcsid[] = "$Id: lexact.c,v 1.10 1997/09/24 20:05:38 dar Exp $";
 
 #include <stdlib.h>
 #include <ctype.h>
-/*#include <strings.h>*/
 #include "express/lexact.h"
 #include "string.h"
 #include "express/linklist.h"
@@ -88,10 +87,6 @@ extern int      yylineno;
 #define SCAN_COMMENT_LENGTH 256
 static char     last_comment_[256] = "";
 static char   *  last_comment = 0;
-
-#if 0
-static Hash_Table   macros;
-#endif
 
 /* keyword lookup table */
 
@@ -264,14 +259,6 @@ SCANinitialize( void ) {
         /* not "unknown", but certainly won't be looked up by type! */
     }
 
-#if 0
-    /* init macro table, destroy old one if any */
-    if( macros ) {
-        HASHdestroy( macros );
-    }
-    macros = HASHcreate( 16 );
-#endif
-
     /* set up errors on first time through */
     if( ERROR_include_file == ERROR_none ) {
         ERROR_include_file =
@@ -361,42 +348,17 @@ SCANprocess_identifier_or_keyword( const char * yytext ) {
                 return k->token;
         }
     }
-
     /* now we have an identifier token */
-#if 0
-    /* if macro invocation */
-    /*    SCANpush_buffer(); */
-    /*    strcpy(SCANbuffer.text, macro_expansion); */
-    /*    return yylex(); */
-    /* else */
-    element.key = test_string;
-    if( ( found = HASHsearch( macros, &element, HASH_FIND ) ) != NULL ) {
-        free( test_string );
-        SCANpush_buffer();
-        STRINGcopy_into( SCANbuffer.text, found->data );
-        return yylex();
+    yylval.symbol = SYMBOLcreate( test_string, yylineno, current_filename );
+    if( k ) {
+        /* built-in function/procedure */
+        return( k->token );
     } else {
-#endif
-
-        yylval.symbol = SYMBOLcreate( test_string, yylineno, current_filename );
-        if( k ) {
-            /* built-in function/procedure */
-            return( k->token );
-        } else {
-            /* plain identifier */
-            /* translate back to lower-case */
-            SCANlowerize( test_string );
-            return TOK_IDENTIFIER;
-        }
-#if 0
-        return ( k ? k->token : TOK_IDENTIFIER );
-#endif
-
-
-
-#if 0
+        /* plain identifier */
+        /* translate back to lower-case */
+        SCANlowerize( test_string );
+        return TOK_IDENTIFIER;
     }
-#endif
 }
 
 int

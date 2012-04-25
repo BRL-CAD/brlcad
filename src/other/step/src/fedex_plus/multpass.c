@@ -122,22 +122,10 @@ void print_schemas_separate( Express express, void * complexCol, FILES * files )
     while( ( schema = ( Scope )DICTdo( &de ) ) != 0 ) {
         fprintf( files->create,
                  "\t//////////////// USE statements\n" );
-#if 0
-        str = REFto_string( schema->u.schema->usedict, schema->u.schema->uselist, "USE", 0 );
-        fprintf( files->create,
-                 "\t/*\n%s\n\t*/\n", str );
-        free( str );
-#endif
         USEREFout( schema, schema->u.schema->usedict, schema->u.schema->use_schemas, "USE", files->create );
 
         fprintf( files->create,
                  "\t//////////////// REFERENCE statements\n" );
-#if 0
-        str = REFto_string( schema->u.schema->refdict, schema->u.schema->reflist, "REFERENCE", 0 );
-        fprintf( files->create,
-                 "\t/*\n%s\n\t*/\n", str );
-        free( str );
-#endif
         USEREFout( schema, schema->u.schema->refdict, schema->u.schema->ref_schemas, "REFERENCE", files->create );
     }
     /*****************

@@ -50,7 +50,6 @@ N350 ( August 31, 1993 ) of ISO 10303 TC184/SC4/WG7.
 #define SCHEMA_FILE_PREFIX  "Sdai"
 #define TYPE_PREFIX   "Sdai"
 #define ENTITYCLASS_PREFIX  TYPE_PREFIX
-/*#define ENUM_PREFIX   "SDAI_"*/
 #define ENUM_PREFIX ""
 
 #define move(b)     (b = (b + strlen(b)))
@@ -137,11 +136,9 @@ const char * GetTypeDescriptorName(Type t);
 const char * FundamentalType( const Type t, int report_reftypes );
 
 /*Variable*/
-/*VARis_simple_explicit (Variable a)*/
 #define VARis_simple_explicit(a)  (!VARis_type_shifter(a))
 
 /*Variable*/
-/*VARis_simple_derived (Variable a)*/
 #define VARis_simple_derived(a)  (!VARis_overrider(a))
 
 /* Added for multiple schema support: */

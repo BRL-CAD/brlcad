@@ -33,8 +33,6 @@ void
 create_builtin_type_decl( FILES * files, char * name ) {
     fprintf( files->incall, "extern TypeDescriptor *%s%s_TYPE;\n",
              TD_PREFIX, name );
-    /*  fprintf(files->initall,"TypeDescriptor *%s%s_TYPE;\n",*/
-    /*      TD_PREFIX,name);*/
 }
 
 void
@@ -113,30 +111,6 @@ void print_file_header( Express express, FILES * files ) {
     files -> classes = FILEcreate( "Sdaiclasses.h" );
     fprintf( files->classes, "/* %cId$  */ \n", '$' );
     fprintf( files->classes, "#include <schema.h>\n" );
-
-    /* create built-in types */
-    /*  no need to generate
-        create_builtin_type_decl(files,"INTEGER");
-        create_builtin_type_decl(files,"REAL");
-        create_builtin_type_decl(files,"STRING");
-        create_builtin_type_decl(files,"BINARY");
-        create_builtin_type_decl(files,"BOOLEAN");
-        create_builtin_type_decl(files,"LOGICAL");
-        create_builtin_type_decl(files,"NUMBER");
-        create_builtin_type_decl(files,"GENERIC");
-    */
-    /* create built-in types */
-    /*  no need to generate
-        create_builtin_type_defn(files,"INTEGER");
-        create_builtin_type_defn(files,"REAL");
-        create_builtin_type_defn(files,"STRING");
-        create_builtin_type_defn(files,"BINARY");
-        create_builtin_type_defn(files,"BOOLEAN");
-        create_builtin_type_defn(files,"LOGICAL");
-        create_builtin_type_defn(files,"NUMBER");
-        create_builtin_type_defn(files,"GENERIC");
-    */
-
 }
 
 /******************************************************************
@@ -197,10 +171,6 @@ SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
 
         fprintf( files -> lib, "\nSchema *%s%s =0;\n",
                  SCHEMA_PREFIX, SCHEMAget_name( schema ) );
-
-        /* Not sure why needed - DAR
-            fprintf (files -> inc, "\nclass SdaiModel_contents_%s;\n",
-             SCHEMAget_name(schema)); */
 
         /* Do \'new\'s for types descriptors (in SdaiAll.cc (files->create)),
            and the externs typedefs, and incomplete descriptors (in Sdai-
@@ -353,21 +323,7 @@ SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
     sprintf( nm, "%s%s", SCHEMA_PREFIX, SCHEMAget_name( s ) );
     fprintf( files->inc, "//	\t include definitions for %s \n", nm );
     fprintf( files->inc, "#include <%s.h> \n", nm );
-#if 0
-    l = SCOPEget_imports( s );
-    fprintf( files -> inc, "/*  the following are *assumed* in the express schema  */\n" );
-    LISTdo( l, s, Schema )
-    fprintf( files -> inc, "/*  include definitions for %s  */\n",
-             nm = ClassName( SCHEMAget_name( s ) ) );
-    /*            fprintf (files -> inc, "#include <%s.h> \n", nm);*/
     LISTod;
-#endif
-
-    LISTod;
-#endif
-
-#if 0
-    use_ref( schema, model, files );
 #endif
 }
 
@@ -455,46 +411,10 @@ PrintModelContentsSchema( Scope scope, FILES * files, Schema schema,
     sprintf( nm, "%s%s", SCHEMA_PREFIX, SCHEMAget_name( s ) );
     fprintf( files->inc, "//	\t include definitions for %s \n", nm );
     fprintf( files->inc, "#include <%s.h> \n", nm );
-#if 0
-    l = SCOPEget_imports( s );
-    fprintf( files -> inc, "/*  the following are *assumed* in the express schema  */\n" );
-    LISTdo( l, s, Schema )
-    fprintf( files -> inc, "/*  include definitions for %s  */\n",
-             nm = ClassName( SCHEMAget_name( s ) ) );
-    /*            fprintf (files -> inc, "#include <%s.h> \n", nm);*/
-    LISTod;
-#endif
-
     LISTod;
 #endif
 
 }
-
-#if 0
-/* simulate USE/REFERENCE by creating links */
-/* assignments have to be done after all initializations above */
-void
-use_ref( Schema schema, Express model, FILES * files ) {
-    DictionaryEntry de;
-    Rename * r;
-
-    DICTdo_init( schema->u.schema->usedict, &de );
-    while( 0 != ( r = ( Rename * )DICTdo( &de ) ) ) {
-
-    }
-
-    DICTdo_init( schema->u.schema->refdict, &de );
-    while( 0 != ( r = ( Rename * )DICTdo( &de ) ) ) {
-
-    }
-
-    LISTdo( schema->u.schema->uselist, r, Rename * )
-    LISTod
-
-    LISTdo( schema->u.schema->reflist, r, Rename * )
-    LISTod
-}
-#endif
 
 /******************************************************************
  ** Procedure:  SCHEMAprint
@@ -550,13 +470,6 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
              "#ifndef  SCHEMA_H\n"
              "#include <schema.h>\n"
              "#endif\n" );
-
-    /*    Generate local to SCHEMA.init.cc file  */
-    /*    fprintf(incfile,"Schema *%s%s;\n",*/
-    /*      SCHEMA_PREFIX,SCHEMAget_name(schema));*/
-
-    /*    fprintf (incfile, "extern void %sInit (Registry & r);\n", schnm);*/
-    /*    fprintf (incfile, "extern void SchemaInit (Registry & r);\n");*/
 
     np = fnm + strlen( fnm ) - 1; /*  point to end of constant part of string  */
 
@@ -638,10 +551,8 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
                 tmpstr_size = strlen( RULEto_string( r ) ) * 2;
                 tmpstr = ( char * )malloc( sizeof( char ) * tmpstr_size );
                 tmpstr[0] = '\0';
-                /*      printf("malloc'd: %d\n",tmpstr_size);*/
             }
-            /*
-            */
+
             fprintf( createall,
                      "\tgr = new Global_rule(\"%s\",%s%s,\"%s\");\n",
                      r->symbol.name,
@@ -651,9 +562,6 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
                      "\t%s%s->AddGlobal_rule(gr);\n",
                      SCHEMA_PREFIX, SCHEMAget_name( schema ) );
             fprintf( createall, "/*\n%s\n*/\n", RULEto_string( r ) );
-#if 0
-            fprintf( createall, "/*\n\"%s\"\n*/\n", format_for_stringout( RULEto_string( r ), tmpstr ) );
-#endif
         }
         /**************/
         /* add FUNCTIONs to Schema dictionary entry */
@@ -665,19 +573,14 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
                 }
                 tmpstr_size = strlen( FUNCto_string( f ) ) * 2;
                 tmpstr = ( char * )malloc( sizeof( char ) * tmpstr_size );
-                /*      printf("malloc'd: %d\n",tmpstr_size);*/
             }
-            /*      printf("tmpstr: %d\nfunc: %d\n",tmpstr_size,strlen(FUNCto_string(f)) );*/
+
             fprintf( createall,
                      "#ifndef MSWIN\n\t%s%s->AddFunction(\"%s\");\n#endif\n",
                      SCHEMA_PREFIX, SCHEMAget_name( schema ),
                      format_for_stringout( FUNCto_string( f ), tmpstr ) );
             fprintf( createall, "/*\n%s\n*/\n", FUNCto_string( f ) );
-#if 0
-            fprintf( createall, "/*\n\"%s\"\n*/\n", format_for_stringout( FUNCto_string( f ), tmpstr ) );
-#endif
         }
-        /*  if(tmpstr_size > 0) free(tmpstr); */
 
         /* add PROCEDUREs to Schema dictionary entry */
         DICTdo_type_init( schema->symbol_table, &de, OBJ_PROCEDURE );
@@ -752,10 +655,6 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
     SCOPEPrint( schema, files, schema, model, ( ComplexCollect * )complexCol,
                 suffix );
 
-#if 0
-    /* create calls for connecting sub/supertypes */
-    STypePrint( schema, files, schema );
-#endif
 
     /**********  close the files    ***********/
     FILEclose( libfile );
@@ -852,8 +751,6 @@ EXPRESSPrint( Express express, ComplexCollect & col, FILES * files ) {
     fprintf( incfile, "/* %cId$ */\n", '$' );
 
     fprintf( incfile, "#include <sdai.h> \n" );
-    /*    fprintf (incfile, "#include <schema.h> \n");*/
-    /*    fprintf (incfile, "extern void %sInit (Registry & r);\n", schnm);*/
 
     np = fnm + strlen( fnm ) - 1; /*  point to end of constant part of string  */
 

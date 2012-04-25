@@ -12,8 +12,6 @@
 * and is not subject to copyright.
 */
 
-/* $Id: STEPaggregate.h,v 3.0.1.6 1997/11/05 21:59:27 sauderd DP3.1 $ */
-
 
 class InstMgr;
 class STEPaggregate;
@@ -25,11 +23,6 @@ class TypeDescriptor;
 #include <sdai.h>
 #include <STEPundefined.h>
 #include <string>
-
-//class SDAI_Application_instance;
-//#define   S_ENTITY_NULL   &NilSTEPentity
-//extern SDAI_Application_instance NilSTEPentity;
-
 
 #define     AGGR_NULL   &NilSTEPaggregate
 extern STEPaggregate NilSTEPaggregate;
@@ -82,9 +75,6 @@ class STEPaggregate :  public SingleLinkList {
 // OUTPUT
         virtual const char * asStr( std::string & s ) const;
         virtual void STEPwrite( ostream & out = cout, const char * = 0 ) const;
-
-//    SingleLinkNode * GetHead () const
-//  { return (STEPnode *) SingleLinkList::GetHead(); }
 
         virtual SingleLinkNode * NewNode();
         void AddNode( SingleLinkNode * );
@@ -244,7 +234,6 @@ class BOOLEANS  : public EnumAggregate {
         virtual ~BOOLEANS();
 };
 
-//typedef  BOOLEANS *  BooleansH;
 typedef  BOOLEANS  * BOOLEANS_ptr;
 typedef  const BOOLEANS  * const_BOOLEANS_ptr;
 typedef  BOOLEANS_ptr BOOLEANS_var;

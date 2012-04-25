@@ -1997,7 +1997,7 @@ print_typechain( FILE * f, const Type t, char * buf, Schema schema ) {
  ** Status:  ok 1/15/91
  ******************************************************************/
 void
-ENTITYincode_print( Entity entity, FILE * file, Schema schema ) { /*  ,FILES *files) */
+ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
 #define entity_name ENTITYget_name(entity)
 #define schema_name SCHEMAget_name(schema)
     const char * cn = ENTITYget_classname( entity );
@@ -2453,7 +2453,7 @@ ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap ) {
         }
 
         /*
-        DASBUG
+        FIXME DASBUG
          * take care of qualified attribute names like SELF\entity.attrname
          * add parent entity to the uniqueness rule
          * change EntityDescriptor::generate_express() to generate the UNIQUE clause
@@ -2592,9 +2592,6 @@ TYPEenum_inc_print( const Type type, FILE * inc ) {
     ++cnt;
     fprintf( inc, "\t%s", EnumCElementName( type, expr ) );
 
-    /*        printf( "WARNING: truncating values %s%s in the .h file.\n\n",
-                  "that will be used to print the enumeration ",
-                  TYPEget_name (type));*/
     LISTod
 
     fprintf( inc, ",\n\t%s_unset\n};\n", EnumName( TYPEget_name( type ) ) );
@@ -2789,13 +2786,7 @@ strcat_bounds( TypeBody b, char * buf ) {
 
 TypeBody_Description( TypeBody body, char * buf ) {
     char * s;
-    /* I believe it should never go here? DAS
-        if(body->type != array_ && body->type != list_)
-        {
-            if (body->flags.unique) strcat(buf," UNIQUE");
-            if (body->flags.optional)   strcat(buf," OPTIONAL");
-        }
-    */
+
     switch( body->type ) {
         case integer_:
             strcat( buf, " INTEGER" );

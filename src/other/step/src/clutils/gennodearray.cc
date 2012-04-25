@@ -41,12 +41,6 @@ GenNodeArray::GenNodeArray( int defaultSize ) {
 }
 
 GenNodeArray::~GenNodeArray() {
-
-//    int i;
-    // this is dangerous because several things point at these nodes
-    // also whatever is derived from this thing might do this
-//    for(i = 0; i < _count; i++)
-//  delete _buf[i];
     delete [] _buf;
 }
 
@@ -85,10 +79,6 @@ GenNodeArray::Insert( GenericNode * gn, int index ) {
     if( index < _count ) {
         Check( _count + 1 );
         spot = ( const GenericNode ** )&_buf[index];
-//        bcopy(spot, spot+1, (_count - index)*sizeof(GenericNode*));
-// Josh L, 5/2/95
-//        memcpy(spot+1, spot, (_count - index)*sizeof(GenericNode*));
-// Dave memcpy is not working since memory areas overlap
         memmove( spot + 1, spot, ( _count - index )*sizeof( GenericNode * ) );
 
     } else {
@@ -105,18 +95,12 @@ GenNodeArray::Remove( int index ) {
     if( 0 <= index && index < _count ) {
         --_count;
         const GenericNode ** spot = ( const GenericNode ** )&_buf[index];
-//        bcopy(spot+1, spot, (_count - index)*sizeof(GenericNode*));
-// Josh L, 5/2/95
-//        memcpy(spot, spot+1, (_count - index)*sizeof(GenericNode*));
-// Dave memcpy is not working since memory areas overlap
         memmove( spot, spot + 1, ( _count - index )*sizeof( GenericNode * ) );
         _buf[_count] = 0;
     }
 }
 
 void GenNodeArray::ClearEntries() {
-//    if(debug_level >= PrintFunctionTrace)
-//  cout << "GenNodeArray::Clear()\n";
     int i;
     for( i = 0 ; i < _count; i++ ) {
         _buf[i] = 0;
@@ -125,8 +109,6 @@ void GenNodeArray::ClearEntries() {
 }
 
 void GenNodeArray::DeleteEntries() {
-//    if(debug_level >= PrintFunctionTrace)
-//  cout << "GenNodeArray::DeleteEntries()\n";
     int i;
     for( i = 0 ; i < _count; i++ ) {
         delete( _buf[i] );
@@ -136,8 +118,6 @@ void GenNodeArray::DeleteEntries() {
 
 
 int GenNodeArray::Index( GenericNode * gn ) {
-//    if(debug_level >= PrintFunctionTrace)
-//  cout << "GenNodeArray::Index()\n";
     for( int i = 0; i < _count; ++i ) {
         if( _buf[i] == gn ) {
             return i;
