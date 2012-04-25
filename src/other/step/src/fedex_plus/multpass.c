@@ -354,7 +354,6 @@ static int checkEnts( Schema schema )
  * repeated.)
  */
 {
-    Entity super;
     DictionaryEntry de;
     int retval = FALSE, ignore = 0;
 
