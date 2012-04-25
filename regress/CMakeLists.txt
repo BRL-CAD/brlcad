@@ -137,6 +137,8 @@ CMAKEFILES(
   spdipix.asc
   testlib.c
   tgms/cgtest.cg
+  tgms/comgeom-tgt-1-v4-documented.cg
+  tgms/comgeom-tgt-1-v4.cg
   tgms/m35.asc.gz
   tgms/m35.cg.gz
   vls.sh
