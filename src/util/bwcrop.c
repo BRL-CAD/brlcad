@@ -205,14 +205,20 @@ main(int argc, char **argv)
 	if (ret != 2) {
 	    perror("scanf");
 	}
-	if (xval > 0 && xval < INT_MAX-1)
-	    xnum = xval;
-	else
-	    return 1;
-	if (yval > 0 && yval < INT_MAX-1)
-	    ynum = yval;
-	else
-	    return 1;
+
+	/* sanitize */
+	if (xval < 1)
+	    xval = 1;
+	if (xval > INT_MAX-1)
+	    xval = INT_MAX-1;
+	xnum = xval;
+
+	/* sanitize */
+	if (yval < 1)
+	    yval = 1;
+	if (yval > INT_MAX-1)
+	    yval = INT_MAX-1;
+	ynum = yval;
 
 	printf("Upper left corner in input file (x, y)?: ");
 	ret = scanf("%f%f", &ulx, &uly);
@@ -246,14 +252,6 @@ main(int argc, char **argv)
 	fprintf(stderr, "bwcrop: Recompile me or use a smarter algorithm.\n");
     }
 
-    /* sanitize */
-    if (ynum < 0.0 || ynum > INT_MAX-1) {
-	bu_log("ynum out of range: %d\n", ynum);
-	fclose(ifp);
-	fclose(ofp);
-	return -1;
-    }
-
     /* Move all points */
     for (row = 0; row < ynum; row++) {
 	/* calculate left point of row */
@@ -263,12 +261,6 @@ main(int argc, char **argv)
 	x2 = ((urx-lrx)/(ynum-1)) * row + lrx;
 	y2 = ((ury-lry)/(ynum-1)) * row + lry;
 
-	if (xnum < 0 || xnum > INT_MAX) {
-	    bu_log("xnum out of range: %d\n", xnum);
-	    fclose(ifp);
-	    fclose(ofp);
-	    return -1;
-	}
 	for (col = 0; col < xnum; col++) {
 	    /* calculate point along row */
 	    x = ((x2-x1)/(xnum-1)) * col + x1;
