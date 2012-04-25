@@ -467,7 +467,8 @@ rt_comb_export5(
  * -1 FAIL
  */
 int
-rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)
+rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
+                const mat_t mat, const struct db_i *dbip, struct resource *resp)
 {
     struct rt_comb_internal *comb;
     unsigned char *cp;
@@ -564,7 +565,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
 
 	/* use a second bu_ptbl to help build a balanced tree
 	 * 1 - pick off pairs of pointers from tbl1
-	 * 2 - make a small tree thats unions the pair
+	 * 2 - make a small tree that unions the pair
 	 * 3 - insert that tree into tbl2
 	 * 4 - insert any leftover pointer from tbl1 into tbl2
 	 * 5 - swap tbl1 and tbl2
@@ -635,7 +636,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
     }
     sp = &stack[0];
 
-    for (ius=0; ius < rpn_len; ius++, exprp++) {
+    for (ius = 0; ius < rpn_len; ius++, exprp++) {
 	union tree *tp;
 	size_t mi;
 
