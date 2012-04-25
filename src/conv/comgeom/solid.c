@@ -225,7 +225,7 @@ getsolid(void)
 	    bu_strlcpy(given_solid_num, scard+0, sizeof(given_solid_num));
 	    given_solid_num[3] = '\0';
 	    bu_strlcpy(solid_type, scard+3, sizeof(solid_type));
-	    solid_type[7] = '\0';
+	    solid_type[4] = '\0';
 	    break;
 	case 1:
 	    /* DoE/MORSE version, believed to be original MAGIC format */
