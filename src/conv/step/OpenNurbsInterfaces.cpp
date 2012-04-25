@@ -1324,7 +1324,7 @@ Path::ShiftSurfaceSeam(ON_Brep *brep, double *t)
 	    double tmin, tmax;
 	    curve->GetDomain(&tmin, &tmax);
 
-	    if (((tmin < 0.0) && (tmax > 0.0)) && ((tmin > smin)) || (tmax < smax)) {
+	    if (((tmin < 0.0) && (tmax > 0.0)) && ((tmin > smin) || (tmax < smax))) {
 		if (tmin < ang_min)
 		    ang_min = tmin;
 	    }
