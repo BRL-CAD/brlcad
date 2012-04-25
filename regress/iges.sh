@@ -82,34 +82,44 @@ EOF
 # these two commands should produce almost identical output
 $GIGES -o iges_file.iges iges.g box.nmg  2>> iges.log > /dev/null
 if [ $? != 0 ] ; then
-    echo "g-iges (1) FAILED"
+    echo "...g-iges (1) FAILED"
     STATUS=1
+else
+    echo "...g-iges (1) succeeded"
 fi
 
 $GIGES iges.g box.nmg > iges_stdout.iges 2>> iges.log
 if [ $? != 0 ] ; then
-    echo "g-iges (2) FAILED"
+    echo "...g-iges (2) FAILED"
     STATUS=1
+else
+    echo "...g-iges (2) succeeded"
 fi
 
 # convert back to .g
 $IGESG -o iges_new.g -p -N box.nmg iges_file.iges 2>> iges.log
 if [ $? != 0 ] ; then
-    echo "iges-g (1) FAILED"
+    echo "...iges-g (1) FAILED"
     STATUS=1
+else
+    echo "...iges-g (1) succeeded"
 fi
 
 # check round trip back to iges: vertex permutation?
 # these two commands should produce almost identical output
 $GIGES -o iges_file2.iges iges_new.g box.nmg  2>> iges.log > /dev/null
 if [ $? != 0 ] ; then
-    echo "g-iges (3) FAILED"
+    echo "...g-iges (3) FAILED"
     STATUS=1
+else
+    echo "...g-iges (3) succeeded"
 fi
 $GIGES iges_new.g box.nmg > iges_stdout2.iges 2>> iges.log
 if [ $? != 0 ] ; then
-    echo "g-iges (4) FAILED"
+    echo "...g-iges (4) FAILED"
     STATUS=1
+else
+    echo "...g-iges (4) succeeded"
 fi
 
 # these two files should be identical
@@ -122,8 +132,10 @@ fi
 
 $IGESG -o iges_stdout_new.g -p iges_stdout.iges 2>> iges.log
 if [ $? != 0 ] ; then
-    echo "iges-g (2) FAILED"
+    echo "...iges-g (2) FAILED"
     STATUS=1
+else
+    echo "...iges-g (2) succeeded"
 fi
 
 # check one other TGM known to have a conversion failure which should be graceful
@@ -141,12 +153,15 @@ fi
 # make our starting database
 $GZIP -d -c $1/regress/tgms/m35.asc.gz > m35.asc
 $ASC2G m35.asc m35.g
-# and test it
-$GIGES -o iges_file3.iges m35.g r516 2>> iges.log > /dev/null
+# and test it (note it should work with the '-f' option, but fail
+# without any options)
+$GIGES -f -o iges_file3.iges m35.g r516 2>> iges.log > /dev/null
 
 if [ $? != 0 ] ; then
-    echo "g-iges (5) FAILED"
+    echo "...g-iges (5) FAILED"
     STATUS=1
+else
+    echo "...g-iges (5) succeeded"
 fi
 
 #=====================
