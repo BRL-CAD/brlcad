@@ -103,26 +103,47 @@ if [ X$STATUS != X0 ] ; then
     FAILURES="`expr $FAILURES + 1`"
     export FAILURES
 else
-    echo "vdeck test succeeded (1 of 2)"
+    echo "vdeck test succeeded (1 of 3)"
 fi
 
 # the part 2 test checks for a known (but corrected) failures to
-# convert ars solids, it also check all solid types recognized
+# convert ars solids, it also checks all solid types recognized
 # by vdeck
-echo "...testing 'comgeom-g' command..."
+echo "...testing 'comgeom-g' command (GIFT v5)..."
 $COMGEOM $1/regress/tgms/cgtest.cg t.g 1>>comgeom-g.log 2>> comgeom-g.log
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
-    echo "comgeom-g converted errors: $STATUS"
+    echo "comgeom-g conversion errors: $STATUS"
     FAILURES="`expr $FAILURES + 1`"
     export FAILURES
 else
     ERR=`grep error comgeom-g.log`
     if test "x$ERR" = "x" ; then
-        echo "comgeom-g test succeeded (2 of 2)"
+        echo "comgeom-g v5 test succeeded (2 of 3)"
     else
-        echo "comgeom-g errors, see  'comgeom-g.log'"
+        echo "comgeom-g v5 errors, see  'comgeom-g.log'"
+        FAILURES="`expr $FAILURES + 1`"
+        export FAILURES
+    fi
+fi
+
+# the part 3 test checks comgeom-g against a GIFT v4 tgm
+echo "...testing 'comgeom-g' command (GIFT v4)..."
+rm t.g
+$COMGEOM -v4 $1/regress/tgms/comgeom-tgt-1-v4.cg t.g 1>>comgeom-g.log 2>> comgeom-g.log
+STATUS=$?
+
+if [ X$STATUS != X0 ] ; then
+    echo "comgeom-g conversion errors: $STATUS"
+    FAILURES="`expr $FAILURES + 1`"
+    export FAILURES
+else
+    ERR=`grep error comgeom-g.log`
+    if test "x$ERR" = "x" ; then
+        echo "comgeom-g v4 test succeeded (3 of 3)"
+    else
+        echo "comgeom-g v4 errors, see  'comgeom-g.log'"
         FAILURES="`expr $FAILURES + 1`"
         export FAILURES
     fi
