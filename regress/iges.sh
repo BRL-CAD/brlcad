@@ -60,7 +60,10 @@ if test ! -f "$MGED" ; then
     exit 1
 fi
 
-rm -f iges.log iges.g iges_file.iges iges_stdout_new.g iges_new.g iges_stdout.iges iges_file.iges
+TFILS='iges.log iges.g iges_file.iges iges_stdout_new.g iges_new.g iges_stdout.iges iges_file.iges'
+TFILS="$TFILS iges_file2.iges iges_file3.iges m35.asc m35.g"
+
+rm -f $TFILS
 
 STATUS=0
 
@@ -78,15 +81,36 @@ EOF
 # .g to iges:
 # these two commands should produce almost identical output
 $GIGES -o iges_file.iges iges.g box.nmg  2>> iges.log > /dev/null
+if [ $? != 0 ] ; then
+    echo "g-iges (1) FAILED"
+    STATUS=1
+fi
+
 $GIGES iges.g box.nmg > iges_stdout.iges 2>> iges.log
+if [ $? != 0 ] ; then
+    echo "g-iges (2) FAILED"
+    STATUS=1
+fi
 
 # convert back to .g
 $IGESG -o iges_new.g -p -N box.nmg iges_file.iges 2>> iges.log
+if [ $? != 0 ] ; then
+    echo "iges-g (1) FAILED"
+    STATUS=1
+fi
 
 # check round trip back to iges: vertex permutation?
 # these two commands should produce almost identical output
 $GIGES -o iges_file2.iges iges_new.g box.nmg  2>> iges.log > /dev/null
+if [ $? != 0 ] ; then
+    echo "g-iges (3) FAILED"
+    STATUS=1
+fi
 $GIGES iges_new.g box.nmg > iges_stdout2.iges 2>> iges.log
+if [ $? != 0 ] ; then
+    echo "g-iges (4) FAILED"
+    STATUS=1
+fi
 
 # these two files should be identical
 #    iges_file.iges
@@ -96,30 +120,43 @@ $GIGES iges_new.g box.nmg > iges_stdout2.iges 2>> iges.log
 #    iges_stdout.iges
 #    iges_stdout2.iges
 
-
-
-if [ $? != 0 ] ; then
-    echo g-iges/iges-g FAILED
-    STATUS=-1
-else
-    echo g-iges/iges-g completed successfully
-fi
-
-
 $IGESG -o iges_stdout_new.g -p iges_stdout.iges 2>> iges.log
-
 if [ $? != 0 ] ; then
-    echo g-iges/iges-g FAILED
-    STATUS=-1
-else
-    echo g-iges/iges-g completed successfully
+    echo "iges-g (2) FAILED"
+    STATUS=1
 fi
 
+# check one other TGM known to have a conversion failure which should be graceful
+ASC2G="`ensearch asc2g`"
+if test ! -f "$ASC2G" ; then
+    echo "Unable to find asc2g, aborting"
+    exit 1
+fi
+GZIP="`which gzip`"
+if test ! -f "$GZIP" ; then
+    echo "Unable to find gzip, aborting"
+    exit 1
+fi
 
+# make our starting database
+$GZIP -d -c $1/regress/tgms/m35.asc.gz > m35.asc
+$ASC2G m35.asc m35.g
+# and test it
+$GIGES -o iges_file3.iges m35.g r516 2>> iges.log > /dev/null
+
+if [ $? != 0 ] ; then
+    echo "g-iges (5) FAILED"
+    STATUS=1
+fi
+
+#=====================
+# output final results
 if [ X$STATUS = X0 ] ; then
     echo "-> iges.sh succeeded"
+    rm -f $TFILS
 else
     echo "-> iges.sh FAILED"
+    echo "   See files: $TFILS"
 fi
 
 exit $STATUS
