@@ -1,7 +1,7 @@
 /*                          D 2 - C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -72,7 +72,7 @@ main(int argc, char *argv[])
 
     while (1) {
 	nr = fread(real, sizeof(double), 1024, rfp);
-	ni = fread(real, sizeof(double), 1024, ifp);
+	ni = fread(imag, sizeof(double), 1024, ifp);
 	if (nr <= 0 && ni <= 0)
 	    break;
 
