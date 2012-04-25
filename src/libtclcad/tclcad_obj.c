@@ -60,6 +60,7 @@
 #include "obj.h"
 
 #include "ged.h"
+#include "dm-Null.h"
 
 #ifdef DM_X
 #  ifdef WITH_TK
@@ -8316,6 +8317,9 @@ to_new_view(struct ged *gedp,
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
+
+    if (BU_STR_EQUAL(argv[2], "nu"))
+	type = DM_TYPE_NULL;
 
     /* find display manager type */
 #ifdef DM_X
