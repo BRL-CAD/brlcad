@@ -83,7 +83,7 @@ usage(const char *argv0)
 {
     bu_log("Usage: %s [-f|t|m] [-v] [-s] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-d dist_tol] [-P num_cpus] [-o output_file] brlcad_db.g object(s)\n", argv0);
     bu_log("	options:\n");
-    bu_log("		f - convert each region to facetted BREP before output\n");
+    bu_log("		f - convert each region to faceted BREP before output\n");
     bu_log("		t - produce a file of trimmed surfaces (experimental)\n");
     bu_log("		m - produces a seperate IGES file for each region, \n");
     bu_log("			implies -t, -o gives directory for output IGES file\n");
