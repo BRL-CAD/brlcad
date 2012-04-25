@@ -156,7 +156,6 @@ void
 SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
             ComplexCollect * col, int cnt ) {
     Linked_List list = SCOPEget_entities_superclass_order( scope );
-    char nm[BUFSIZ], base[BUFSIZ];
     DictionaryEntry de;
     Type i;
     int redefs = 0, index = 0;
@@ -442,7 +441,6 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
            *makefile = files->make,
             *initfile,
             *createall = files->create;
-    char * str = 0;
     Rule r;
     Function f;
     Procedure p;
