@@ -576,7 +576,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 	while (1) {
 	    struct bu_ptbl *tmp;
 
-	    for (ius=0; ius<BU_PTBL_LEN(tbl1); ius += 2) {
+	    for (ius = 0; ius < BU_PTBL_LEN(tbl1); ius += 2) {
 		union tree *tp1, *tp2, *unionp;
 		size_t j;
 
