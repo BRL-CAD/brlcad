@@ -66,13 +66,16 @@ bu_cv_cookie(const char *in)			/* input format */
 	/* could be 'signed' or 'short' */
 	const char *p2;
 	p2 = p+1;
-	if (*p2 && (islower(*p2) || isdigit(*p2))) {
+	val = *p2;
+	if (*p2 && val>0 && val<CHAR_MAX && (islower(val) || isdigit(val))) {
 	    result |= CV_SIGNED_MASK;
 	    ++p;
 	}
     }
 
-    if (!*p) return 0;
+    if (!*p)
+	return 0;
+
     switch (*p) {
 	case 'c':
 	case '8':
