@@ -417,7 +417,9 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
     struct db_i *dbip;
     size_t i, j;
     int sessionid=0;
-    const char *attrs[] = {(const char *)"muves_comp", (const char *)NULL };
+    const char *attrs[] = {(const char *)"muves_comp",
+			   (const char *)"ORCA_Comp",
+			   (const char *)NULL };
 
     /* clean up any prior geometry data */
     if ( rts_geometry ) {
@@ -619,6 +621,9 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 	double inObl, outObl;
 	double dot;
 	int regionIndex;
+	int matrixSize;
+	int i;
+	matp_t inv_mat;
 
 	/* fill in the data for this hit */
 	RT_HIT_NORMAL( enterNormal, pp->pt_inhit,
@@ -691,6 +696,28 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 	/* write the aircode number to the buffer */
 	*(uint32_t *)buffer = htonl(rp->reg_aircode);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
+
+	/* check for MUVEStoORCA matrix */
+	entry = Tcl_FindHashEntry( (Tcl_HashTable *)ap->a_rt_i->Orca_hash_tbl,
+				   (const char *)((long int)rp->reg_bit) );
+	if ( !entry ) {
+		matrixSize = 0;
+		inv_mat = (matp_t)NULL;
+	} else {
+		matrixSize = ELEMENTS_PER_PLANE;
+		inv_mat = (matp_t)Tcl_GetHashValue( entry );
+	}
+
+	/* write the MUVEStoORCA matrix size (zero if none) */
+	*(uint32_t *)buffer = htonl(matrixSize);
+	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
+
+	/* write the MUVEStoORCA matrix elements (if any) */
+	for ( i = 0; i < matrixSize*matrixSize; ++i ) {
+		double value = (double)inv_mat[i];
+		htond(buffer, (unsigned char *)&value, 1);
+		bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE);
+	}
 
 	if ( verbose ) {
 	    fprintf( stderr, "\tentrance at dist=%g, hit region %s (id = %d)\n",
