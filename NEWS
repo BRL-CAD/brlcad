@@ -10,16 +10,38 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2011-11-XX  Release 7.21.X                                     ---
+--- 2012-04-30  Release 7.20.6                                     ---
 ----------------------------------------------------------------------
-
-* improved performance of boolean evaluations - Richard Weiss
-* improved boolean evaluation converting to polygons - Richard Weiss
-* ported the obj-g geometry importer to Windows - Nicholas Reed
-* improved import robustness and parsing of OBJ geometry files
-	- Nicholas Reed, Richard Weiss, Mike Tegtmeyer
-* added new physics 'simulate' command to mged/archer - Abhijit Nandy
-
+* Added MUVEStoORCA matrix support to librtserver - Jim Hunt (50300)
+* fixed BOT raytracing mistakes when using TIE - Keith Bowman (50164)
+* fixed ARS bounding box size affecting overlap handling - Cliff Yapp (49980)
+* Improvements to NURBS raytracing - Keith Bowman (49782, 50167)
+* fixed raytracing crash in 64 bit Windows - Cliff Yapp (49616)
+* fixed MGED's manual page viewer on 64 bit Windows - Cliff Yapp (49613)
+* fixed intermittent segmentation fault in MGED - Richard Weiss (49612)
+* now sorting top level object alphabetically in rtwizard - Cliff Yapp (49520)
+* improved handling of rgb/color attributes by adjust cmd - Cliff Yapp (49414)
+* fixed referenced object highlighting in archer treeview - Bob Parker (49254)
+* added optional scaling parameter to autoview command - Sean Morrison (49134)
+* fixed extrude object bug rendering at near right angles - Bob Parker (49092)
+* added -h option to nirt to suppress header printing - Cliff Yapp (49086)
+* fixed nirt attribute reporting for specified attributes - Cliff Yapp (49083)
+* fixed ebm/dsp/vol/hf corruption on 64-bit big endian - Sean Morrison (49066)
+* improved tab-completion behavior for mged and archer - Sean Morrison (49007)
+* improved table output formatting for 'analyze' command - Tom Browder (48901)
+* modified rtweight to handle incorrect lines - Tom Browder (48844)
+* fixed crash in coil when using -S and -l options - Cliff Yapp (48470)
+* d2-c now handles the imaginary part correctly - Erik Greenwald (48233)
+* handle path-containing spaces in animation commands - Sean Morrision (48195)
+* fix rt crash with ambSlow=1 option - Sean Morrision (47971)
+* fixed pipe crash during tessellation - Sean Morrision (47723)
+* fixed crash adding extrusion with null sketch name - Bob Parker (47698)
+* fixed crash during rt -c "ae 35 25" view change - Bob Parker (47695)
+* fixed mged bug setting color via Combination Editor - Nicholas Reed (47656)
+* reid command now reports the highest region ID set - Carl Moore (47484)
+* batch script shortcuts now set PATH on Windows - Sean Morrison (47483)
+* fixed attribute handling bug affecting v4 geometry - Daniel Rossberg (47473)
+* fixed g-obj error when exporting facets - Christopher Pitts (47458)
 
 ----------------------------------------------------------------------
 --- 2011-10-30  Release 7.20.4                                     ---
