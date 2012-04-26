@@ -693,6 +693,10 @@ GetTypeDescriptorName( Type t ) {
         case number_:
         case generic_:
             return "TypeDescriptor";
+        default:
+            fprintf(stderr, "GetTypeDescriptor: can't handle unknown type %d\n",
+                    TYPEget_body(t)->type);
+            abort();
     }
 }
 

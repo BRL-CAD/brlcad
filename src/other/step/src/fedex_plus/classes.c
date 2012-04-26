@@ -1882,6 +1882,8 @@ TYPEis_builtin( const Type t ) {
         case number_:
         case logical_:
             return 1;
+        default:
+            break;
     }
     return 0;
 }

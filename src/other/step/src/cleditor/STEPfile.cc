@@ -1761,12 +1761,13 @@ STEPfile::AppendFile( istream * in, int useTechCor ) {
         case VERSION_CURRENT:
         case VERSION_OLD:
         case VERSION_UNKNOWN:
-            valid_insts = ReadData2( *in2, useTechCor );
-            break;
-
         case WORKING_SESSION:
             valid_insts = ReadData2( *in2, useTechCor );
             break;
+        default:
+            _error.AppendToUserMsg( "STEPfile::AppendFile: STEP file version set to unrecognized value.\n" );
+            CloseInputFile( in2 );
+            return  SEVERITY_BUG;
     }
 
     //check for "ENDSEC;"

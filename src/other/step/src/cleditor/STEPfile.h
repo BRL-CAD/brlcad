@@ -33,12 +33,10 @@
 #define READ_INCOMPLETE  20
 
 enum  FileTypeCode {
-    TYPE_UNKNOWN    = -2,
     VERSION_OLD     = -1,
     VERSION_UNKNOWN =  0,
     VERSION_CURRENT =  1,
-    WORKING_SESSION =  2,
-    OLD_WORKING_SESSION =  3
+    WORKING_SESSION =  2
 };
 
 class STEPfile {

@@ -498,6 +498,10 @@ STEPcomplex::BuildAttrs( const char * s ) {
                         a = new STEPattribute( *ad,  aggrD->CreateAggregate() );
                         break;
                     }
+                    default:
+                        _error.AppendToDetailMsg( "STEPcomplex::BuildAttrs: Found attribute of unknown type. Creating default attribute.\n" );
+                        _error.GreaterSeverity( SEVERITY_WARNING );
+                        a = new STEPattribute();
                 }
 
                 a -> set_null();
