@@ -486,7 +486,17 @@ main(int ac, char *av[])
     /* If hard clamping the length, have to check some things and maybe clamp some values */
 
     if (!ZERO(overall_length)) {
-	bu_log("Caution:  Length clamping overrides other specified values - if supplied values are\ninconsistent with specified length, they will be overriden in this order:\n\nWhen Shrinking:  pitch, number of turns, wire diameter\nWhen Expanding:  number of turns, pitch\n\nCurrently, this override order is independent of whether the value is supplied by the user or calculated\ninternally - i.e. there is no preference for protecting user specified properties.\nAlso, length clamping will NOT override explicit section specification with -S\n");
+ 	bu_log("NOTE:  Length clamping overrides other specified values. If supplied values are\n"
+ 	       "inconsistent with specified length, they will be overriden in this order:\n\n"
+ 	       "When Shrinking:  pitch, number of turns, wire diameter\n"
+ 	       "When Expanding:  number of turns, pitch\n\n");
+ 
+ 	/* broken up for c90 and readability */
+ 	bu_log("Currently, this override order is independent of whether the value is supplied\n"
+ 	       "by the user or calculated internally.  That is, there is no preference for \n"
+ 	       "protecting user specified properties.  Moreover, length clamping will NOT \n"
+ 	       "override explicit section specification with -S\n");
+
         if (coil_data) {
 	if (start_cap_type != 0 || end_cap_type != 0) {
 	    bu_log("Note:  At this time only uncapped coils are allowed when length is constrained.\n");
