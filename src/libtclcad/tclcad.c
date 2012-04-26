@@ -44,10 +44,13 @@
 
 /* Private headers */
 #include "brlcad_version.h"
+#include "tclcad_private.h"
 
 
 /* defined in cmdhist_obj.c */
 extern int Cho_Init(Tcl_Interp *interp);
+
+int tclcad_initialized = 0;
 
 
 static int
@@ -73,6 +76,11 @@ tclcad_register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
 int
 Tclcad_Init(Tcl_Interp *interp)
 {
+    if (tclcad_initialized)
+	return TCL_OK;
+
+    tclcad_initialized = 1;
+
     if (Tcl_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }

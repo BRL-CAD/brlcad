@@ -90,6 +90,8 @@
 #  include "dm-wgl.h"
 #endif /* DM_WGL */
 
+/* Private headers */
+#include "tclcad_private.h"
 
 #define TO_MAX_RT_ARGS 64
 #define TO_UNLIMITED -1
@@ -1143,6 +1145,11 @@ static struct to_cmdtab to_cmds[] = {
 int
 Go_Init(Tcl_Interp *interp)
 {
+    if (tclcad_initialized)
+	return TCL_OK;
+
+    tclcad_initialized = 1;
+
     /*XXX Use of brlcad_interp is temporary */
     brlcad_interp = interp;
 
