@@ -1860,13 +1860,13 @@ absorp_coeff(fastf_t lambda, char *material)
 
     fclose(fp);
 
-    abso1 = absorp_h - absorp_l;
-    /* double to avoid coverity overflow warning */
+    /* double casts to avoid coverity overflow warning */
+    abso1 = (double)absorp_h - (double)absorp_l;
     lamb1 = (double)lambda - (double)lambda_l;
-    lamb2 = lambda_h - lambda_l;
-    lambrat = lamb1 / lamb2;
-    absorp = abso1 * lambrat;
-    absorp += absorp_l;
+    lamb2 = (double)lambda_h - (double)lambda_l;
+    lambrat = (double)lamb1 / (double)lamb2;
+    absorp = (double)abso1 * (double)lambrat;
+    absorp += (double)absorp_l;
     return absorp;
 }
 
