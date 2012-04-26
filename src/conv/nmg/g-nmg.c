@@ -297,6 +297,7 @@ csg_comb_func(struct db_i *db, struct directory *dp, genptr_t UNUSED(ptr))
     if (dp->d_uses < 0)
 	return;
 
+    /* check if already written */
     dp->d_uses = -1;
 
     if (dp->d_flags & RT_DIR_REGION) {
