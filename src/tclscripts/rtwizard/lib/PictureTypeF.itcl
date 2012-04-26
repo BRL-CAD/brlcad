@@ -200,18 +200,20 @@ namespace eval RtWizard {
 	#set gamma 12 ; #[$gp getIntensity]
 	set gamma [$gp getIntensity]
 
+	set otype [lindex [split $fb " "] 0]
+	set fbout [join [lreplace [split $fb " "] 0 0] " "]
+
 	#
 	# Run rt to generate the full-color version of the ghost image
 	#
 	rtCmd $gp $fb $w $h
-
-	catch {exec "$binpath/fb-pix" -F $fb -w $w -n $h > $tgi} junk
+	catch {exec "$binpath/fb-pix" $otype $fbout -w $w -n $h > $tgi} junk
 
 	#
 	# Run rt to generate the insert
 	#
 	rtCmd $fp $fb $w $h
-	catch {exec "$binpath/fb-pix" -F $fb -w $w -n $h > $tfci} junk
+	catch {exec "$binpath/fb-pix" $otype $fbout -w $w -n $h > $tfci} junk
 
 	#
 	# Convert to ghost image
@@ -227,7 +229,7 @@ namespace eval RtWizard {
 	#
 	# Put the image to the framebuffer
 	#
-	catch {exec "$binpath/pix-fb" -F $fb -w $w -n $h $tmi} junk
+	catch {exec "$binpath/pix-fb" $otype $fbout -w $w -n $h $tmi} junk
 
 	#
 	# Finally! Run rtedge

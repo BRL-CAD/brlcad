@@ -335,6 +335,9 @@ namespace eval RtWizard {
 		     set fgMode [list set fg=[lindex $l 0],[lindex $l 1],[lindex $l 2]]
 		 }
 
+		 set otype [lindex [split $fb " "] 0]
+		 set fbout [join [lreplace [split $fb " "] 0 0] " "]
+
 		 #
 		 # Assemble the rtedge command - note that it is a
 		 # full-blown script.
@@ -345,7 +348,7 @@ namespace eval RtWizard {
 		     #
 		     set occObjects [$occObjsPage getObjects]
 
-		     set cmd [list [file join [bu_brlcad_root bin] rtedge] -M -R -F $fb -w $width \
+		     set cmd [list [file join [bu_brlcad_root bin] rtedge] -M -R $otype $fbout -w $width \
 				  -n $height -V $ar -A 0.9 -p $perspective \
 				  -c "$fgMode" \
 				  -c "set bg=[lindex $nl 0],[lindex $nl 1],[lindex $nl 2]" \
@@ -354,7 +357,7 @@ namespace eval RtWizard {
 				  $::RtWizard::wizard_state(dbFile)]
 		 } else {
 
-		     set cmd [list [file join [bu_brlcad_root bin] rtedge] -M -R -F $fb -w $width \
+		     set cmd [list [file join [bu_brlcad_root bin] rtedge] -M -R $otype $fbout -w $width \
 				  -n $height -V $ar -A 0.9 \
 				  -c "$fgMode" \
 				  -c "set bg=[lindex $nl 0],[lindex $nl 1],[lindex $nl 2]" \
