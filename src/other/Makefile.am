@@ -61,20 +61,6 @@ else !BUILD_TERMLIB
 TERMLIBDIR=
 endif
 
-if BUILD_DOCS
-if BUILD_TKHTML
-if WITH_TK
-TKHTMLDIR=tkhtml
-else
-TKHTMLDIR=
-endif
-else
-TKHTMLDIR=
-endif
-else
-TKHTMLDIR=
-endif
-
 #if BUILD_TOGL
 #if WITH_TK
 #TOGLDIR=togl
@@ -175,6 +161,7 @@ EXTRA_DIST = \
 	boost \
 	togl \
 	hv3 \
+	tkhtml \
 	CMakeLists.txt \
 	itcl.dist \
 	itk.dist \
@@ -232,7 +219,6 @@ DIST_SUBDIRS = \
 	tcl \
 	tk \
 	tkpng \
-	tkhtml \
 	tktable \
 	tnt
 

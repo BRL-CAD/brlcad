@@ -304,9 +304,6 @@ BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [auto])
 # force enable/disable building of iwidgets
 BC_ARG_ENABLE([build_iwidgets], [iwidgets-install], [Install the included iwidgets], [auto])
 
-# tkhtml
-BC_ARG_ENABLE([build_tkhtml], [tkhtml-build], [Build the included tkhtml], [yes])
-
 # tkpng
 BC_ARG_ENABLE([build_tkpng], [tkpng-build], [Build the included tkpng], [auto])
 
@@ -509,9 +506,6 @@ BC_ARG_ALIAS([build_itcl], [incrtcl-build])
 BC_ARG_ALIAS([build_iwidgets], [iwidgets])
 BC_ARG_ALIAS([build_iwidgets], [iwidgets-build])
 
-# aliases to force building tkhtml (help uses tkhtml-build)
-BC_ARG_ALIAS([build_tkhtml], [tkhtml])
-
 # aliases to force building tktable (help uses tktable-build)
 BC_ARG_ALIAS([build_tktable], [tktable])
 
@@ -675,9 +669,6 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_iwidgets_set" = "xno" ; then
 		bc_build_iwidgets="$set_everything"
 	fi
-	if test "x$bc_build_tkhtml" = "xno" ; then
-		bc_build_tkhtml="$set_everything"
-	fi
 	if test "x$bc_build_tkpng_set" = "xno" ; then
 		bc_build_tkpng="$set_everything"
 	fi
@@ -808,9 +799,6 @@ AC_MSG_RESULT($bc_build_itcl)
 AC_MSG_CHECKING(whether to install the iwidgets library)
 AC_MSG_RESULT($bc_build_iwidgets)
 
-AC_MSG_CHECKING(whether to build the tkhtml library)
-AC_MSG_RESULT($bc_build_tkhtml)
-
 AC_MSG_CHECKING(whether to build the tktable library)
 AC_MSG_RESULT($bc_build_tktable)
 
@@ -939,14 +927,6 @@ if test "x$bc_build_progress" != "xyes" ; then
     if test "x$LIBTOOL" != "x" ; then
 	LIBTOOL="$LIBTOOL --silent"
     fi
-fi
-
-# xsltproc is needed for docbook processing, fop is needed for pdf generation
-xsltproc_works=no
-#fop_works=no
-if test "x$bc_build_docs" != "xno" ; then
-    AC_PATH_PROG(XSLTPROC, xsltproc)
-#    AC_PATH_PROG(APACHEFOP, fop)
 fi
 
 dnl Libtool may need AR so try to find it
@@ -3197,17 +3177,6 @@ AC_DEFINE_UNQUOTED([IWIDGETS_VERSION], "$IWIDGETS_VERSION", "Version of iWidgets
 AC_SUBST(IWIDGETS_VERSION)
 
 
-dnl *** tkhtml ***
-dnl figure out whether we need to build tkhtml
-AC_MSG_CHECKING(whether to build tkhtml)
-if test ! "x$bc_build_tkhtml" = "xno" ; then
-    build_brlcad_tkhtml=yes
-    AC_MSG_RESULT(yes)
-else
-    build_brlcad_tkhtml=no
-    AC_MSG_RESULT(no)
-fi
-
 dnl *** tktable ***
 dnl figure out whether we need to build tktable
 TKTABLE_VERSION="2.10"
@@ -3788,42 +3757,6 @@ if test "x$dials_and_buttons" = "xyes" ; then
 fi
 AC_MSG_RESULT($dials_and_buttons)
 
-
-dnl *** Docbook functionality ***
-docbook_processing=no
-docbook_pdf_processing=no
-if test "x$bc_build_docs" != "xno" ; then
-    if test "x$bc_build_docs" = "xyes" ; then
-	if test "x$XSLTPROC" = "x" ; then
-	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	    AC_MSG_WARN([Extra documentation is enabled but xsltproc was not found])
-	    AC_MSG_ERROR([*** Don't know how to generate documentation without xsltproc ***])
-	fi
-    fi
-fi
-
-# test for this outside of bc_build_docs so vars get set properly
-if test "x$XSLTPROC" = "x" ; then
-    XSLTPROC=:
-else
-    if test "x$APACHEFOP" = "x" ; then
-	docbook_processing="yes (man/html only)"
-	docbook_pdf_processing="no"
-	APACHEFOP=:
-    else
-        docbook_processing="yes (man/html/pdf)"
-	docbook_pdf_processing="yes"
-	# set FOP_OPTS to avoid dock bounce on osX
-	APACHEFOP="FOP_OPTS=-Djava.awt.headless=true $APACHEFOP"
-    fi
-fi
-AC_SUBST(XSLTPROC)
-AC_SUBST(APACHEFOP)
-AC_MSG_CHECKING(for Docbook processing functionality)
-AC_MSG_RESULT($docbook_processing)
-AC_MSG_CHECKING(for Docbook pdf generation functionality)
-AC_MSG_RESULT($docbook_pdf_processing)
-
 # XXX nasty temp hack for backwards cake compatibility. code needs to be fixed.
 if test "x$host_os" = "xirix6.5" ; then
     # XXX the code that relies on this will be going away, but until then..
@@ -3869,7 +3802,6 @@ AM_CONDITIONAL(BUILD_TK, [test "x$build_brlcad_tk" = "xyes"])
 AM_CONDITIONAL(BUILD_ITCL, [test "x$build_brlcad_itcl" = "xyes"])
 AM_CONDITIONAL(BUILD_ITK, [test "x$build_brlcad_itk" = "xyes"])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
-AM_CONDITIONAL(BUILD_TKHTML, [test "x$build_brlcad_tkhtml" = "xyes"])
 AM_CONDITIONAL(BUILD_TKTABLE, [test "x$build_brlcad_tktable" = "xyes"])
 AM_CONDITIONAL(BUILD_TKPNG, [test "x$build_brlcad_tkpng" = "xyes"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
@@ -3899,8 +3831,6 @@ AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
 AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
 
-AM_CONDITIONAL(BUILD_DOCS, [test "x$docbook_processing" != "xno"])
-AM_CONDITIONAL(BUILD_PDF_DOCS, [test "x$docbook_pdf_processing" != "xno"])
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
@@ -4152,17 +4082,6 @@ if test "x$build_brlcad_step" = "xyes" ; then
     AC_CONFIG_SUBDIRS([src/other/step])
 fi
 
-dnl configure tkhtml
-if test "x$build_brlcad_tkhtml" = "xyes" ; then
-    ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
-    # this is a hack to all tkhtml to see when the tk headers are in odd
-    # places. it seems to ignore the CPPFLAGS in it's configure phase.
-    if test ! "x$TKINCDIR" = "x" ; then
-	    ac_configure_args="$ac_configure_args --with-tkinclude=$TKINCDIR"
-    fi
-    AC_CONFIG_SUBDIRS([src/other/tkhtml])
-fi
-
 dnl configure tktable
 if test "x$build_brlcad_tktable" = "xyes" ; then
     ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
@@ -4180,9 +4099,6 @@ AC_CONFIG_FILES([
 	db/Makefile
 	db/include/Makefile
 	doc/Makefile
-	doc/docbook/DBPATH.pm
-	doc/docbook/Makefile
-	doc/docbook/fop.xconf
 	doc/html/Makefile
 	doc/html/ReleaseNotes/Makefile
 	doc/html/ReleaseNotes/Rel5.0/Makefile
@@ -4455,7 +4371,6 @@ AC_MSG_RESULT([Build Tcl ............................: $build_brlcad_tcl])
 AC_MSG_RESULT([Build Tk .............................: $build_brlcad_tk])
 AC_MSG_RESULT([Build Itcl/Itk .......................: $build_brlcad_itcl])
 AC_MSG_RESULT([Build IWidgets .......................: $build_brlcad_iwidgets])
-AC_MSG_RESULT([Build tkhtml .........................: $build_brlcad_tkhtml])
 AC_MSG_RESULT([Build tkpng ..........................: $build_brlcad_tkpng])
 AC_MSG_RESULT([Build libpng .........................: $build_brlcad_png])
 AC_MSG_RESULT([Build libregex .......................: $build_brlcad_regex])
@@ -4484,7 +4399,6 @@ AC_MSG_RESULT([])
 AC_MSG_RESULT([Only build benchmark suite ...........: $bc_only_benchmark])
 AC_MSG_RESULT([Only build librtserver ...............: $bc_only_rts])
 AC_MSG_RESULT([Install example geometry models ......: $bc_install_geometry])
-AC_MSG_RESULT([Install extra docs ...................: $docbook_processing])
 AC_MSG_RESULT([])
 if test "x$time_elapsed" != "xunknown" ; then
 AC_MSG_RESULT([Elapsed configuration time ...........: $time_elapsed])

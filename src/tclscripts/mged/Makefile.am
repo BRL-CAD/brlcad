@@ -2,14 +2,7 @@
 this_dir = tclscripts/mged
 tcldir = $(BRLCAD_DATA)/$(this_dir)
 
-if BUILD_DOCS
-doc_scripts = man.tcl
-else
-doc_scripts =
-endif
-
 scripties = \
-	$(doc_scripts) \
 	accel.tcl \
 	adc.tcl \
 	anim.tcl \
