@@ -57,7 +57,7 @@
 
 /* Local information */
 struct toyota_specific {
-    fastf_t lambda;		/* Wavelength of light (nm).		*/
+    fastf_t wavelength;		/* Wavelength of light (nm).		*/
     fastf_t alpha, beta;	/* Coefficients of turbidity.		*/
     int weather;	/* CLEAR_SKY, MEDIUM_SKY, OVERCAST_SKY */
     fastf_t sun_sang;	/* Solid angle of sun from ground.	*/
@@ -1861,17 +1861,9 @@ absorp_coeff(fastf_t lambda, char *material)
     fclose(fp);
 
     abso1 = absorp_h - absorp_l;
-
-    if (lambda > lambda_l)
-	lamb1 = lambda - lambda_l;
-    else
-	lamb1 = lambda_l - lambda;
-
-    if (lambda_h > lambda_l)
-	lamb2 = lambda_h - lambda_l;
-    else
-	lamb2 = lambda_l - lambda_h;
-
+    /* double to avoid coverity overflow warning */
+    lamb1 = (double)lambda - (double)lambda_l;
+    lamb2 = lambda_h - lambda_l;
     lambrat = lamb1 / lamb2;
     absorp = abso1 * lambrat;
     absorp += absorp_l;
@@ -2320,7 +2312,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 
     swp->sw_color[0] = swp->sw_color[1] = swp->sw_color[2] = 0;
 
-    ts->lambda = 450;	/* XXX nm */
+    ts->wavelength = 450;	/* XXX nm */
 
     i_refl = 0.;
     /* Consider effects of light source (>1 doesn't make sense really). */
@@ -2356,9 +2348,9 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 	/* Direct sunlight contribution. */
 	direct_sunlight =
 	    1./M_PI
-	    * reflectance(ts->lambda, acos(i_dot_n)*bn_radtodeg,
+	    * reflectance(ts->wavelength, acos(i_dot_n)*bn_radtodeg,
 			  ts->refl, ts->refl_lines)
-	    * sun_radiance(ts->lambda, ts->alpha, ts->beta,
+	    * sun_radiance(ts->wavelength, ts->alpha, ts->beta,
 			   sun_alt, ts->sun_sang)
 	    * sun_dot_n
 	    * ts->sun_sang;
@@ -2371,7 +2363,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 	    pdv_3line(stdout, swp->sw_hit.hit_point, work);
 	}
 	t_vl = 0; /* XXX Was uninitialized variable */
-	refl_radiance = skylight_spectral_dist(ts->lambda,
+	refl_radiance = skylight_spectral_dist(ts->wavelength,
 					       ts->Zenith, Reflected, Sun, ts->weather, t_vl);
 
 	/* Regularly reflected light contribution. */
@@ -2380,7 +2372,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 	i_refl +=
 	    direct_sunlight
 	    + specular_light
-	    + background_light(ts->lambda, ts, Reflected, Sun,
+	    + background_light(ts->wavelength, ts, Reflected, Sun,
 			       t_vl, swp);
 
 	/* Regularly transmitted light contribution. */
@@ -2402,14 +2394,14 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 		    -cos(theta), swp->sw_hit.hit_normal);
 	    VUNITIZE(Transmitted);
 	    trans_radiance = skylight_spectral_dist(
-		ts->lambda, ts->Zenith, Transmitted,
+		ts->wavelength, ts->Zenith, Transmitted,
 		Sun, ts->weather, t_vl);
 
 	    dist = 1;	/* XXX what distance to use? */
 	    transmitted_light =
 		(1 - f)
 		* trans_radiance
-		* exp(-absorp_coeff(ts->lambda, ts->material)
+		* exp(-absorp_coeff(ts->wavelength, ts->material)
 		      /* NEED THIS STILL! */		      * dist);
 	    i_refl += transmitted_light;
 	}
@@ -2418,7 +2410,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 
 	/* WHERE DOES THIS GO??  NOT HERE.  SO WHERE DOES i_refl GO THEN. */
 	/* Convert wavelength and radiance into RGB triple. */
-	lambda_to_rgb(ts->lambda, i_refl, swp->sw_color);
+	lambda_to_rgb(ts->wavelength, i_refl, swp->sw_color);
     }
 
     /* Turn off colorview()'s handling of reflect/refract */
