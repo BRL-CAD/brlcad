@@ -210,7 +210,7 @@ void print_edges_table(struct ged *gedp, table_t *table)
 
 */
 
-    int i; //j, k
+    int i; 
     int tcol, nd, nrow, nrows;
     int maxwidth[] = {0, 0, 0,
                       0, 0, 0,
