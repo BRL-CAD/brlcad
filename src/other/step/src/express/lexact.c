@@ -1,4 +1,4 @@
-static char rcsid[] = "$Id: lexact.c,v 1.10 1997/09/24 20:05:38 dar Exp $";
+
 
 /*
  * This software was developed by U.S. Government employees as part of

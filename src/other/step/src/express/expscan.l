@@ -1,4 +1,3 @@
-static char rcsid[] = "$Id: expscan.l,v 1.12 1997/05/29 20:17:34 sauderd Exp $";
 
 /*
  * Lex source for Fed-X lexical analyzer.

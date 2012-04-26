@@ -1,4 +1,4 @@
-static char rcsid[] = "$Id: hash.c,v 1.8 1997/10/22 16:36:49 sauderd Exp $";
+
 
 /*
  * Dynamic hashing, after CACM April 1988 pp 446-457, by Per-Ake Larson.

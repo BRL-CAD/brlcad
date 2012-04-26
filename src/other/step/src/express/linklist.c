@@ -1,4 +1,4 @@
-static char rcsid[] = "$Id: linklist.c,v 1.3 1997/01/21 19:19:51 dar Exp $";
+
 
 /*
  * This work was supported by the United States Government, and is

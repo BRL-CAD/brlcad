@@ -1,4 +1,4 @@
-static char rcsid[] = "$Id: fedex.c,v 1.20 1997/05/29 19:56:41 sauderd Exp $";
+
 
 /************************************************************************
 ** Driver for Fed-X Express parser.

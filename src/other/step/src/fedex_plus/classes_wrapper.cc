@@ -68,8 +68,6 @@ void print_file_header( Express express, FILES * files ) {
     of input Express source */
     files -> incall = FILEcreate( "schema.h" );
 
-    /* prevent RCS from expanding this! */
-    fprintf( files->incall, "/* %cId$ */\n", '$' );
 
     fprintf( files->incall, "#ifdef SCL_LOGGING\n" );
     fprintf( files->incall, "#include <sys/time.h>\n" );
@@ -88,7 +86,6 @@ void print_file_header( Express express, FILES * files ) {
     fprintf( files->incall, "extern void InitSchemasAndEnts (Registry &);\n" );
 
     files -> initall = FILEcreate( "schema.cc" );
-    fprintf( files->initall, "/* %cId$  */ \n", '\044' );
     fprintf( files->initall, "#include <schema.h>\n" );
     fprintf( files-> initall, "class Registry;\n" );
 
@@ -101,7 +98,6 @@ void print_file_header( Express express, FILES * files ) {
     // entities in the express file.  (They must all be in separate function
     // called first by SchemaInit() so that all entities will exist
     files -> create = FILEcreate( "SdaiAll.cc" );
-    fprintf( files->create, "/* %cId$  */ \n", '\044' );
     fprintf( files->create, "#include <schema.h>\n" );
     fprintf( files->create, "\nvoid\nInitSchemasAndEnts (Registry & reg)\n{\n" );
 
@@ -109,7 +105,6 @@ void print_file_header( Express express, FILES * files ) {
     // allow all the .h files to reference all .h's.  We can then have e.g.,
     // entX from schemaA have attribute attr1 = entY from schemaB.
     files -> classes = FILEcreate( "Sdaiclasses.h" );
-    fprintf( files->classes, "/* %cId$  */ \n", '$' );
     fprintf( files->classes, "#include <schema.h>\n" );
 }
 
@@ -462,7 +457,6 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
     if( !( incfile = ( files -> inc ) = FILEcreate( fnm ) ) ) {
         return;
     }
-    fprintf( incfile, "/* %cId$  */\n", '\044' );
 
     fprintf( incfile,
              "#ifndef  SCHEMA_H\n"
@@ -476,7 +470,6 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
     if( !( libfile = ( files -> lib ) = FILEcreate( fnm ) ) ) {
         return;
     }
-    fprintf( libfile, "/* %cId$  */ \n", '$' );
 #ifdef SCHEMA_HANDLING
     sprintf( np, "h" );
     fprintf( libfile, "#ifndef  %s\n", StrToConstant( sufnm ) );
@@ -506,8 +499,6 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
         if( !( initfile = ( files -> init ) = FILEcreate( fnm ) ) ) {
             return;
         }
-        /* prevent RCS from expanding this! */
-        fprintf( initfile, "/* $Id%c */\n", '$' );
 #ifdef SCHEMA_HANDLING
         if( suffix == 0 ) {
             fprintf( initfile, "#include <%s.h>\n", schnm );
@@ -746,7 +737,6 @@ EXPRESSPrint( Express express, ComplexCollect & col, FILES * files ) {
     if( !( incfile = ( files -> inc ) = FILEcreate( fnm ) ) ) {
         return;
     }
-    fprintf( incfile, "/* %cId$ */\n", '$' );
 
     fprintf( incfile, "#include <sdai.h> \n" );
 
@@ -757,7 +747,6 @@ EXPRESSPrint( Express express, ComplexCollect & col, FILES * files ) {
     if( !( libfile = ( files -> lib ) = FILEcreate( fnm ) ) ) {
         return;
     }
-    fprintf( libfile, "/* %cId$ */\n", '$' );
     fprintf( libfile, "#include <%s.h> n", schnm );
 
     /*  3.  source code to initialize entity registry   */
@@ -767,7 +756,6 @@ EXPRESSPrint( Express express, ComplexCollect & col, FILES * files ) {
     if( !( initfile = ( files -> init ) = FILEcreate( fnm ) ) ) {
         return;
     }
-    fprintf( initfile, "/* $Id%d */\n", '$' );
     fprintf( initfile, "#include <%s.h>\n\n", schnm );
     fprintf( initfile, "void \n%sInit (Registry& reg)\n{\n", schnm );
 

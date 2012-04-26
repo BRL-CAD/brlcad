@@ -10,12 +10,8 @@
 * and is not subject to copyright.
 */
 
-/* $Id: sdaiApplication_instance.cc,v 1.5 1998/02/17 18:56:53 sauderd DP3.1 $ */
-
-//static char rcsid[] ="$Id: sdaiApplication_instance.cc,v 1.5 1998/02/17 18:56:53 sauderd DP3.1 $";
 
 #include <sdai.h>
-//#include <STEPentity.h>
 #include <instmgr.h>
 #include <STEPcomplex.h>
 #include <STEPattribute.h>
