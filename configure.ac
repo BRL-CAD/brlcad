@@ -943,10 +943,10 @@ fi
 
 # xsltproc is needed for docbook processing, fop is needed for pdf generation
 xsltproc_works=no
-fop_works=no
+#fop_works=no
 if test "x$bc_build_docs" != "xno" ; then
     AC_PATH_PROG(XSLTPROC, xsltproc)
-    AC_PATH_PROG(APACHEFOP, fop)
+#    AC_PATH_PROG(APACHEFOP, fop)
 fi
 
 dnl Libtool may need AR so try to find it
