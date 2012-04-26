@@ -979,7 +979,7 @@ analyze_tor(struct ged *gedp, const struct rt_db_internal *ip)
                        );
 
 #if 0
-    OR Vol = %.8f (%.8f gal) Surface Area = %.8f\n",
+    /*OR Vol = %.8f (%.8f gal) Surface Area = %.8f\n",*/
 
     bu_vls_printf(gedp->ged_result_str, "TOR Vol = %.8f (%.8f gal) Surface Area = %.8f\n",
 		  vol*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
