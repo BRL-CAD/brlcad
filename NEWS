@@ -12,6 +12,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 --- 2012-04-30  Release 7.20.6                                     ---
 ----------------------------------------------------------------------
+* Updated libpng to version 1.5.10 - Cliff Yapp (50319)
 * Added MUVEStoORCA matrix support to librtserver - Jim Hunt (50300)
 * fixed BOT raytracing mistakes when using TIE - Keith Bowman (50164)
 * fixed ARS bounding box size affecting overlap handling - Cliff Yapp (49980)

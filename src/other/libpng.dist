@@ -5,6 +5,7 @@ INSTALL
 LICENSE
 README
 TODO
+arm
 autogen.sh
 configure.ac
 contrib
@@ -18,11 +19,11 @@ pngbar.jpg
 pngbar.png
 pngnow.png
 pngtest.png
+pngusr.dfa
 projects
 scripts
 test-pngtest.sh
 libpng-manual.txt
-pngvalid.c
 test-pngvalid-full.sh
 test-pngvalid-simple.sh
 Makefile.am
