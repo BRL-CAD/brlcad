@@ -809,7 +809,7 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
     comb = (struct rt_comb_internal *)intern->idb_ptr;
     RT_CK_COMB(comb);
 
-    if (item==0) {
+    if (item == 0) {
 	/* Print out the whole combination. */
 
 	bu_vls_printf(logstr, "comb region ");
@@ -929,7 +929,7 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 
     while (argc >= 2) {
 	/* Force to lower case */
-	for (i=0; i<1023 && argv[0][i]!='\0'; i++) {
+	for (i = 0; i < 1023 && argv[0][i] != '\0'; i++) {
 	    buf[i] = tolower(argv[0][i]);
 	}
 	buf[i] = '\0';
