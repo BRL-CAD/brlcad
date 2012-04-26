@@ -346,12 +346,8 @@ get_double( int type )
 	}
     }
 
-    if( val > (DBL_MAX / scale_factor) )
-	return DBL_MAX;
-
-    /* fake out overflow detection? */
-    ret = val;
-    ret *= scale_factor;
+    /* casts for coverity overflow clarity */
+    ret = (double)val * (double)scale_factor;
     return ret;
 }
 
