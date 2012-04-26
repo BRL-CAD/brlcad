@@ -10,8 +10,6 @@
 * and is not subject to copyright.
 */
 
-/* $Id: instmgr.cc,v 3.0.1.5 1997/11/05 22:11:42 sauderd DP3.1 $ */
-
 //////////////////////////////////////////////////////////////////////////////
 //
 // InstMgr member functions
@@ -19,7 +17,6 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <sdai.h>
-//#include <STEPentity.h>
 #include <instmgr.h>
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -188,7 +185,7 @@ int InstMgr::GetIndex( MgrNode * mn ) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int InstMgr::GetIndex( SDAI_Application_instance  *se ) {
+int InstMgr::GetIndex( SDAI_Application_instance * se ) {
     int fileId = se->StepFileId();
     return sortedMaster->MgrNodeIndex( fileId );
 }
@@ -212,7 +209,7 @@ int InstMgr::VerifyEntity( int fileId, const char * expectedType ) {
 //   Append instance to the list of instances.  Checks the file id and
 //   sets it if 1) it is not set already or 2) it already exists in the list.
 
-MgrNode * InstMgr::Append( SDAI_Application_instance  *se, stateEnum listState ) {
+MgrNode * InstMgr::Append( SDAI_Application_instance * se, stateEnum listState ) {
     if( debug_level > 3 ) {
         cout << "#" << se->StepFileId() << " append node to InstMgr" << endl;
     }
@@ -223,14 +220,15 @@ MgrNode * InstMgr::Append( SDAI_Application_instance  *se, stateEnum listState )
         se->StepFileId( NextFileId() );    // assign a file id
     }
 
-    if( mn = FindFileId( se->StepFileId() ) ) // if id already in list
+    mn = FindFileId( se->StepFileId() );
+    if( mn ) { // if id already in list
         // and it's because instance is already in list
         if( GetApplication_instance( mn ) == se ) {
             return 0;    // return 0 or mn?
         } else {
             se->StepFileId( NextFileId() );    // otherwise assign a new file id
         }
-
+    }
     // update the maxFileId if needed
     if( se->StepFileId() > MaxFileId() ) {
         maxFileId = se->StepFileId();
@@ -272,7 +270,7 @@ void InstMgr::Delete( MgrNode * node ) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void InstMgr::Delete( SDAI_Application_instance  *se ) {
+void InstMgr::Delete( SDAI_Application_instance * se ) {
     Delete( FindFileId( se->StepFileId() ) );
 }
 
@@ -339,7 +337,7 @@ InstMgr::EntityKeywordCount( const char * name ) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-SDAI_Application_instance  *
+SDAI_Application_instance *
 InstMgr::GetApplication_instance( int index ) {
     MgrNode * mn = ( MgrNode * )( *master )[index];
     if( mn ) {
@@ -349,7 +347,7 @@ InstMgr::GetApplication_instance( int index ) {
     }
 }
 
-SDAI_Application_instance  *
+SDAI_Application_instance *
 InstMgr::GetSTEPentity( int index ) {
     MgrNode * mn = ( MgrNode * )( *master )[index];
     if( mn ) {
@@ -371,10 +369,10 @@ InstMgr::GetSTEPentity( int index ) {
     does not wrap around to search indices before the
     starting_index.
 **************************************************/
-SDAI_Application_instance  *
+SDAI_Application_instance *
 InstMgr::GetApplication_instance( const char * entityKeyword, int starting_index ) {
     MgrNode * node;
-    SDAI_Application_instance  *se;
+    SDAI_Application_instance * se;
 
     int count = InstanceCount();
     for( int j = starting_index; j < count; ++j ) {
@@ -388,10 +386,10 @@ InstMgr::GetApplication_instance( const char * entityKeyword, int starting_index
     return ENTITY_NULL;
 }
 
-SDAI_Application_instance  *
+SDAI_Application_instance *
 InstMgr::GetSTEPentity( const char * entityKeyword, int starting_index ) {
     MgrNode * node;
-    SDAI_Application_instance  *se;
+    SDAI_Application_instance * se;
 
     int count = InstanceCount();
     for( int j = starting_index; j < count; ++j ) {

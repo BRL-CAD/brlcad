@@ -1083,13 +1083,14 @@ EntityDescriptor::QualifiedName( std::string & s ) const {
     EntityDescItr edi( _supertypes );
 
     int count = 1;
-    const EntityDescriptor * ed = 0;
-    while( ed = edi.NextEntityDesc() ) {
+    const EntityDescriptor * ed = edi.NextEntityDesc();
+    while( ed ) {
         if( count > 1 ) {
             s.append( "&" );
         }
         s.append( ed->Name() );
         count++;
+        ed = edi.NextEntityDesc();
     }
     if( count > 1 ) {
         s.append( "&" );
@@ -1853,16 +1854,17 @@ const TypeDescriptor *
 SelectTypeDescriptor::CanBe( const TypeDescriptor * other ) const {
 //  const TypeDescriptor * found =0;
     TypeDescItr elements( GetElements() ) ;
-    const TypeDescriptor * td = 0;
+    const TypeDescriptor * td = elements.NextTypeDesc();
 
     if( this == other ) {
         return other;
     }
-    while( td = elements.NextTypeDesc() )  {
+    while( td )  {
 //    if (found = (td -> CanBe (other))) return found;
         if( td -> CanBe( other ) ) {
             return td;
         }
+        td = elements.NextTypeDesc();
     }
     return 0;
 }
@@ -1911,9 +1913,9 @@ SelectTypeDescriptor::CanBe( const char * other ) const {
 const TypeDescriptor *
 SelectTypeDescriptor::CanBeSet( const char * other, const char * schNm ) const {
     TypeDescItr elements( GetElements() ) ;
-    const TypeDescriptor * td = 0;
+    const TypeDescriptor * td = elements.NextTypeDesc();
 
-    while( td = elements.NextTypeDesc() ) {
+    while( td ) {
         if( td->Type() == REFERENCE_TYPE && td->NonRefType() == sdaiSELECT ) {
             // Just look at this level, don't look at my items (see intro).
             if( td->CurrName( other, schNm ) ) {
@@ -1922,6 +1924,7 @@ SelectTypeDescriptor::CanBeSet( const char * other, const char * schNm ) const {
         } else if( td->CanBeSet( other, schNm ) ) {
             return td;
         }
+        td = elements.NextTypeDesc();
     }
     return 0;
 }

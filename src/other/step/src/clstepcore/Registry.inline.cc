@@ -9,8 +9,6 @@
 * and is not subject to copyright.
 */
 
-/* $Id: Registry.inline.cc,v 3.0.1.9 1997/11/05 21:59:19 sauderd DP3.1 $  */
-
 #include <ExpDict.h>
 #include <Registry.h>
 
@@ -71,7 +69,6 @@ Registry::Registry( CF_init initFunct )
     HASHlistinit( active_schemas, &cur_schema );
 }
 
-/* inline */
 Registry::~Registry() {
     HASHdestroy( primordialSwamp );
     HASHdestroy( active_schemas );
@@ -79,8 +76,7 @@ Registry::~Registry() {
     delete col;
 }
 
-void
-Registry::DeleteContents() {
+void Registry::DeleteContents() {
     // entities first
     HASHlistinit( primordialSwamp, &cur_entity );
     while( HASHlist( &cur_entity ) ) {
@@ -94,11 +90,9 @@ Registry::DeleteContents() {
     }
 
     // types
-
 }
 
-/* inline */ const EntityDescriptor *
-Registry::FindEntity( const char * e, const char * schNm, int check_case ) const
+const EntityDescriptor * Registry::FindEntity( const char * e, const char * schNm, int check_case ) const
 /*
  * schNm refers to the current schema.  This will have a value if we are
  * reading from a Part 21 file (using a STEPfile object), and the file
@@ -148,8 +142,7 @@ Registry::FindEntity( const char * e, const char * schNm, int check_case ) const
     return entd;
 }
 
-/* inline */ const Schema *
-Registry::FindSchema( const char * n, int check_case ) const {
+const Schema * Registry::FindSchema( const char * n, int check_case ) const {
     if( check_case ) {
         return ( const Schema * ) HASHfind( active_schemas, ( char * ) n );
     }
@@ -158,8 +151,7 @@ Registry::FindSchema( const char * n, int check_case ) const {
                                         ( char * )PrettyTmpName( n ) );
 }
 
-/* inline */ const TypeDescriptor *
-Registry::FindType( const char * n, int check_case ) const {
+const TypeDescriptor * Registry::FindType( const char * n, int check_case ) const {
     if( check_case ) {
         return ( const TypeDescriptor * ) HASHfind( active_types, ( char * ) n );
     }
@@ -167,21 +159,18 @@ Registry::FindType( const char * n, int check_case ) const {
             ( char * )PrettyTmpName( n ) );
 }
 
-/* inline */ void
-Registry::ResetTypes() {
+void Registry::ResetTypes() {
     HASHlistinit( active_types, &cur_type );
 }
 
-/* inline */ const TypeDescriptor *
-Registry::NextType() {
+const TypeDescriptor * Registry::NextType() {
     if( 0 == HASHlist( &cur_type ) ) {
         return 0;
     }
     return ( const TypeDescriptor * ) cur_type.e->data;
 }
 
-/* inline */ void
-Registry::AddEntity( const EntityDescriptor & e ) {
+void Registry::AddEntity( const EntityDescriptor & e ) {
     HASHinsert( primordialSwamp, ( char * ) e.Name(), ( EntityDescriptor * ) &e );
     ++entity_cnt;
     ++all_ents_cnt;
@@ -189,18 +178,15 @@ Registry::AddEntity( const EntityDescriptor & e ) {
 }
 
 
-/* inline */ void
-Registry::AddSchema( const Schema & d ) {
+void Registry::AddSchema( const Schema & d ) {
     HASHinsert( active_schemas, ( char * ) d.Name(), ( Schema * ) &d );
 }
 
-/* inline */ void
-Registry::AddType( const TypeDescriptor & d ) {
+void Registry::AddType( const TypeDescriptor & d ) {
     HASHinsert( active_types, ( char * ) d.Name(), ( TypeDescriptor * ) &d );
 }
 
-/* inline */ void
-Registry::AddClones( const EntityDescriptor & e )
+void Registry::AddClones( const EntityDescriptor & e )
 /*
  * Purpose is to insert e into the registry hashed according to all its
  * alternate names (the names it was renamed with when other schemas USEd
@@ -232,8 +218,7 @@ uniqueNames( const char * entnm, const SchRename * altlist )
     const SchRename * alt = altlist;
 
     while( alt ) {
-        if( !( alt->next
-                && alt->next->choice( alt->objName() )
+        if( !( ( alt->next && alt->next->choice( alt->objName() ) )
                 || !StrCmpIns( alt->objName(), entnm ) ) ) {
             // alt has a unique alternate name if it's not reused by a later
             // alt.  alt->next->choice() returns 1 if one of the later alts
@@ -250,8 +235,7 @@ uniqueNames( const char * entnm, const SchRename * altlist )
     return cnt;
 }
 
-/* inline */ void
-Registry::RemoveEntity( const char * n ) {
+void Registry::RemoveEntity( const char * n ) {
     const EntityDescriptor * e = FindEntity( n );
     struct Element tmp;
 
@@ -263,22 +247,19 @@ Registry::RemoveEntity( const char * n ) {
 
 }
 
-/* inline */ void
-Registry::RemoveSchema( const char * n ) {
+void Registry::RemoveSchema( const char * n ) {
     struct Element tmp;
     tmp.key = ( char * ) n;
     HASHsearch( active_schemas, &tmp, HASH_DELETE );
 }
 
-/* inline */ void
-Registry::RemoveType( const char * n ) {
+void Registry::RemoveType( const char * n ) {
     struct Element tmp;
     tmp.key = ( char * ) n;
     HASHsearch( active_types, &tmp, HASH_DELETE );
 }
 
-/* inline */ void
-Registry::RemoveClones( const EntityDescriptor & e )
+void Registry::RemoveClones( const EntityDescriptor & e )
 /*
  * Remove all the "clones", or rename values of e.
  */
@@ -317,32 +298,27 @@ Registry::ObjCreate( const char * nm, const char * schnm, int check_case ) const
 }
 
 
-/* inline */ int
-Registry::GetEntityCnt() {
+int Registry::GetEntityCnt() {
     return entity_cnt;
 }
 
-/* inline */ void
-Registry::ResetEntities() {
+void Registry::ResetEntities() {
     HASHlistinit( primordialSwamp, &cur_entity );
 
 }
 
-/* inline */ const EntityDescriptor *
-Registry::NextEntity() {
+const EntityDescriptor * Registry::NextEntity() {
     if( 0 == HASHlist( &cur_entity ) ) {
         return 0;
     }
     return ( const EntityDescriptor * ) cur_entity.e->data;
 }
 
-/* inline */ void
-Registry::ResetSchemas() {
+void Registry::ResetSchemas() {
     HASHlistinit( active_schemas, &cur_schema );
 }
 
-/* inline */ const Schema *
-Registry::NextSchema() {
+const Schema * Registry::NextSchema() {
     if( 0 == HASHlist( &cur_schema ) ) {
         return 0;
     }

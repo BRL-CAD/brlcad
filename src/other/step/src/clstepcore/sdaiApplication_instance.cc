@@ -16,7 +16,7 @@
 #include <STEPcomplex.h>
 #include <STEPattribute.h>
 
-SDAI_Application_instance  NilSTEPentity;
+SDAI_Application_instance NilSTEPentity;
 
 /******************************************************************
 **    Functions for manipulating entities
@@ -29,21 +29,22 @@ SDAI_Application_instance  NilSTEPentity;
 **    -- error reporting does not include line number information
 **/
 
-SDAI_Application_instance ::SDAI_Application_instance ()
+SDAI_Application_instance::SDAI_Application_instance()
     :  _cur( 0 ), STEPfile_id( 0 ), p21Comment( 0 ), headMiEntity( 0 ), nextMiEntity( 0 ),
        _complex( 0 ) {
 }
 
-SDAI_Application_instance ::SDAI_Application_instance ( int fileid, int complex )
+SDAI_Application_instance::SDAI_Application_instance( int fileid, int complex )
     :  _cur( 0 ), STEPfile_id( fileid ), p21Comment( 0 ),
        headMiEntity( 0 ), nextMiEntity( 0 ), _complex( complex ) {
 }
 
-SDAI_Application_instance ::~SDAI_Application_instance () {
-    STEPattribute * next = 0;
+SDAI_Application_instance::~SDAI_Application_instance() {
     ResetAttributes();
-    while( next = NextAttribute() ) {
+    STEPattribute * next = NextAttribute();
+    while( next ) {
         delete next;
+        next = NextAttribute();
     }
 
     if( MultipleInheritance() ) {
@@ -67,14 +68,13 @@ SDAI_Application_instance ::~SDAI_Application_instance () {
     */
 }
 
-SDAI_Application_instance  *
-SDAI_Application_instance ::Replicate() {
+SDAI_Application_instance * SDAI_Application_instance::Replicate() {
     char errStr[BUFSIZ];
     if( IsComplex() ) {
         cerr << "STEPcomplex::Replicate() should be called:  " << __FILE__
              <<  __LINE__ << "\n" << _POC_ "\n";
         sprintf( errStr,
-                 "SDAI_Application_instance)::Replicate(: %s - entity #%d.\n",
+                 "SDAI_Application_instance::Replicate(): %s - entity #%d.\n",
                  "Programming ERROR - STEPcomplex::Replicate() should be called",
                  STEPfile_id );
         _error.AppendToDetailMsg( errStr );
@@ -82,13 +82,13 @@ SDAI_Application_instance ::Replicate() {
         _error.GreaterSeverity( SEVERITY_BUG );
         return S_ENTITY_NULL;
     } else {
-        SDAI_Application_instance  *seNew = eDesc->NewSTEPentity();
+        SDAI_Application_instance * seNew = eDesc->NewSTEPentity();
         seNew -> CopyAs( this );
         return seNew;
     }
 }
 
-void SDAI_Application_instance ::AddP21Comment( const char * s, int replace ) {
+void SDAI_Application_instance::AddP21Comment( const char * s, int replace ) {
     if( replace ) {
         delete p21Comment;
         p21Comment = 0;
@@ -103,8 +103,7 @@ void SDAI_Application_instance ::AddP21Comment( const char * s, int replace ) {
     }
 }
 
-void
-SDAI_Application_instance ::AddP21Comment( std::string & s, int replace ) {
+void SDAI_Application_instance::AddP21Comment( std::string & s, int replace ) {
     if( replace ) {
         delete p21Comment;
         p21Comment = 0;
@@ -119,26 +118,23 @@ SDAI_Application_instance ::AddP21Comment( std::string & s, int replace ) {
     }
 }
 
-void
-SDAI_Application_instance ::STEPwrite_reference( ostream & out ) {
+void SDAI_Application_instance::STEPwrite_reference( ostream & out ) {
     out << "#" << STEPfile_id;
 }
 
-const char *
-SDAI_Application_instance ::STEPwrite_reference( std::string & buf ) {
+const char * SDAI_Application_instance::STEPwrite_reference( std::string & buf ) {
     char tmp[64];
     sprintf( tmp, "#%d", STEPfile_id );
     buf = tmp;
     return const_cast<char *>( buf.c_str() );
 }
 
-void
-SDAI_Application_instance ::AppendMultInstance( SDAI_Application_instance  *se ) {
+void SDAI_Application_instance::AppendMultInstance( SDAI_Application_instance * se ) {
     if( nextMiEntity == 0 ) {
         nextMiEntity = se;
     } else {
-        SDAI_Application_instance  *link = nextMiEntity;
-        SDAI_Application_instance  *linkTrailing = 0;
+        SDAI_Application_instance * link = nextMiEntity;
+        SDAI_Application_instance * linkTrailing = 0;
         while( link ) {
             linkTrailing = link;
             link = link->nextMiEntity;
@@ -149,8 +145,7 @@ SDAI_Application_instance ::AppendMultInstance( SDAI_Application_instance  *se )
 
 // BUG implement this
 
-SDAI_Application_instance  *
-SDAI_Application_instance ::GetMiEntity( char * EntityName ) {
+SDAI_Application_instance * SDAI_Application_instance::GetMiEntity( char * EntityName ) {
     std::string s1, s2;
 
     const EntityDescLinkNode * edln = 0;
@@ -177,8 +172,7 @@ SDAI_Application_instance ::GetMiEntity( char * EntityName ) {
 
 
 
-STEPattribute *
-SDAI_Application_instance ::GetSTEPattribute( const char * nm ) {
+STEPattribute * SDAI_Application_instance::GetSTEPattribute( const char * nm ) {
     if( !nm ) {
         return 0;
     }
@@ -192,8 +186,7 @@ SDAI_Application_instance ::GetSTEPattribute( const char * nm ) {
     return a;
 }
 
-STEPattribute *
-SDAI_Application_instance ::MakeRedefined( STEPattribute * redefiningAttr, const char * nm ) {
+STEPattribute * SDAI_Application_instance::MakeRedefined( STEPattribute * redefiningAttr, const char * nm ) {
     // find the attribute being redefined
     STEPattribute * a = GetSTEPattribute( nm );
 
@@ -204,8 +197,7 @@ SDAI_Application_instance ::MakeRedefined( STEPattribute * redefiningAttr, const
     return a;
 }
 
-STEPattribute *
-SDAI_Application_instance ::MakeDerived( const char * nm ) {
+STEPattribute * SDAI_Application_instance::MakeDerived( const char * nm ) {
     STEPattribute * a = GetSTEPattribute( nm );
     if( a ) {
         a ->Derive();
@@ -213,8 +205,7 @@ SDAI_Application_instance ::MakeDerived( const char * nm ) {
     return a;
 }
 
-void
-SDAI_Application_instance ::CopyAs( SDAI_Application_instance  * other ) {
+void SDAI_Application_instance::CopyAs( SDAI_Application_instance * other ) {
     int numAttrs = AttributeCount();
     ResetAttributes();
     other -> ResetAttributes();
@@ -229,8 +220,7 @@ SDAI_Application_instance ::CopyAs( SDAI_Application_instance  * other ) {
 }
 
 
-const char *
-SDAI_Application_instance ::EntityName( const char * schnm ) const {
+const char * SDAI_Application_instance::EntityName( const char * schnm ) const {
     return eDesc->Name( schnm );
 }
 
@@ -238,7 +228,7 @@ SDAI_Application_instance ::EntityName( const char * schnm ) const {
   Checks if a given SDAI_Application_instance is the same type as this one
   ****************************************************************/
 
-const EntityDescriptor * SDAI_Application_instance ::IsA( const EntityDescriptor * ed ) const {
+const EntityDescriptor * SDAI_Application_instance::IsA( const EntityDescriptor * ed ) const {
     return ( eDesc->IsA( ed ) );
 }
 
@@ -246,7 +236,7 @@ const EntityDescriptor * SDAI_Application_instance ::IsA( const EntityDescriptor
 // Checks the validity of the current attribute values for the entity
  ******************************************************************/
 
-Severity SDAI_Application_instance ::ValidLevel( ErrorDescriptor * error, InstMgr * im,
+Severity SDAI_Application_instance::ValidLevel( ErrorDescriptor * error, InstMgr * im,
         int clearError ) {
     ErrorDescriptor err;
     if( clearError ) {
@@ -265,7 +255,7 @@ Severity SDAI_Application_instance ::ValidLevel( ErrorDescriptor * error, InstMg
 /******************************************************************
     // clears all attr's errors
  ******************************************************************/
-void SDAI_Application_instance ::ClearAttrError() {
+void SDAI_Application_instance::ClearAttrError() {
     int n = attributes.list_length();
     for( int i = 0 ; i < n; i++ ) {
         attributes[i].Error().ClearErrorMsg();
@@ -276,7 +266,7 @@ void SDAI_Application_instance ::ClearAttrError() {
     // clears entity's error and optionally all attr's errors
  ******************************************************************/
 
-void SDAI_Application_instance ::ClearError( int clearAttrs ) {
+void SDAI_Application_instance::ClearError( int clearAttrs ) {
     _error.ClearErrorMsg();
     if( clearAttrs ) {
         ClearAttrError();
@@ -308,7 +298,7 @@ void SDAI_Application_instance)::EnforceOptionality(int on
  ** Status:  stub
  ******************************************************************/
 
-void SDAI_Application_instance ::beginSTEPwrite( ostream & out ) {
+void SDAI_Application_instance::beginSTEPwrite( ostream & out ) {
     out << "begin STEPwrite ... \n" ;
     out.flush();
 
@@ -331,8 +321,7 @@ void SDAI_Application_instance ::beginSTEPwrite( ostream & out ) {
  **
  ******************************************************************/
 
-void
-SDAI_Application_instance ::STEPwrite( ostream & out, const char * currSch,
+void SDAI_Application_instance::STEPwrite( ostream & out, const char * currSch,
         int writeComments ) {
     std::string tmp;
     if( writeComments && p21Comment && !p21Comment->empty() ) {
@@ -353,13 +342,12 @@ SDAI_Application_instance ::STEPwrite( ostream & out, const char * currSch,
     out << ");\n";
 }
 
-void SDAI_Application_instance ::endSTEPwrite( ostream & out ) {
+void SDAI_Application_instance::endSTEPwrite( ostream & out ) {
     out << "end STEPwrite ... \n" ;
     out.flush();
 }
 
-void
-SDAI_Application_instance ::WriteValuePairs( ostream & out,
+void SDAI_Application_instance::WriteValuePairs( ostream & out,
         const char * currSch,
         int writeComments, int mixedCase ) {
     /*
@@ -442,8 +430,7 @@ SDAI_Application_instance ::WriteValuePairs( ostream & out,
  **
  ******************************************************************/
 
-const char *
-SDAI_Application_instance ::STEPwrite( std::string & buf, const char * currSch ) {
+const char * SDAI_Application_instance::STEPwrite( std::string & buf, const char * currSch ) {
     buf.clear();
 
     char instanceInfo[BUFSIZ];
@@ -468,8 +455,7 @@ SDAI_Application_instance ::STEPwrite( std::string & buf, const char * currSch )
     return const_cast<char *>( buf.c_str() );
 }
 
-void
-SDAI_Application_instance ::PrependEntityErrMsg() {
+void SDAI_Application_instance::PrependEntityErrMsg() {
     char errStr[BUFSIZ];
     errStr[0] = '\0';
 
@@ -491,8 +477,7 @@ SDAI_Application_instance ::PrependEntityErrMsg() {
  **     instance. i.e. a close quote followed by a semicolon optionally having
  **     whitespace between them.
  ******************************************************************/
-void
-SDAI_Application_instance ::STEPread_error( char c, int i, istream & in ) {
+void SDAI_Application_instance::STEPread_error( char c, int i, istream & in ) {
     char errStr[BUFSIZ];
     errStr[0] = '\0';
 
@@ -554,8 +539,7 @@ SDAI_Application_instance ::STEPread_error( char c, int i, istream & in ) {
  ** Status:
  ******************************************************************/
 
-Severity
-SDAI_Application_instance ::STEPread( int id,  int idIncr,
+Severity SDAI_Application_instance::STEPread( int id,  int idIncr,
         InstMgr * instance_set, istream & in,
         const char * currSch, int useTechCor ) {
     STEPfile_id = id;
@@ -744,8 +728,7 @@ SDAI_Application_instance ::STEPread( int id,  int idIncr,
 // read an entity reference and return a pointer to the SDAI_Application_instance
 ///////////////////////////////////////////////////////////////////////////////
 
-SDAI_Application_instance  *
-ReadEntityRef( istream & in, ErrorDescriptor * err, const char * tokenList,
+SDAI_Application_instance * ReadEntityRef( istream & in, ErrorDescriptor * err, const char * tokenList,
                InstMgr * instances, int addFileId ) {
     char c;
     char errStr[BUFSIZ];
@@ -833,8 +816,7 @@ ReadEntityRef( istream & in, ErrorDescriptor * err, const char * tokenList,
 // same as above but reads from a const char *
 ///////////////////////////////////////////////////////////////////////////////
 
-SDAI_Application_instance  *
-ReadEntityRef( const char * s, ErrorDescriptor * err, const char * tokenList,
+SDAI_Application_instance * ReadEntityRef( const char * s, ErrorDescriptor * err, const char * tokenList,
                InstMgr * instances, int addFileId ) {
     istringstream in( ( char * )s );
     return ReadEntityRef( in, err, tokenList, instances, addFileId );
@@ -844,8 +826,7 @@ ReadEntityRef( const char * s, ErrorDescriptor * err, const char * tokenList,
 // return SEVERITY_NULL if se's entity type matches the supplied entity type
 ///////////////////////////////////////////////////////////////////////////////
 
-Severity
-EntityValidLevel( SDAI_Application_instance  *se,
+Severity EntityValidLevel( SDAI_Application_instance * se,
                   const TypeDescriptor * ed, // entity type that entity se needs
                   // to match. (this must be an
                   // EntityDescriptor)
@@ -1003,7 +984,7 @@ EntityValidLevel( const char * attrValue, // string contain entity ref
         }
         mn = im->FindFileId( fileId );
         if( mn ) {
-            SDAI_Application_instance  *se = mn->GetSTEPentity();
+            SDAI_Application_instance * se = mn->GetSTEPentity();
             return EntityValidLevel( se, ed, err );
         } else {
             sprintf( messageBuf,
@@ -1038,8 +1019,7 @@ EntityValidLevel( const char * attrValue, // string contain entity ref
  ** Status:  untested 7/31/90
  ******************************************************************/
 
-STEPattribute *
-SDAI_Application_instance ::NextAttribute()  {
+STEPattribute * SDAI_Application_instance::NextAttribute()  {
     int i = AttributeCount();
     ++_cur;
     if( i < _cur ) {
@@ -1049,14 +1029,12 @@ SDAI_Application_instance ::NextAttribute()  {
 
 }
 
-int
-SDAI_Application_instance ::AttributeCount()  {
+int SDAI_Application_instance::AttributeCount()  {
     return  attributes.list_length();
 }
 
 #ifdef OBSOLETE
-Severity
-SDAI_Application_instance ::ReadAttrs( int id, int addFileId,
+Severity SDAI_Application_instance::ReadAttrs( int id, int addFileId,
         class InstMgr * instance_set, istream & in ) {
     char c = '\0';
     char errStr[BUFSIZ];

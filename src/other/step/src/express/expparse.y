@@ -1315,7 +1315,8 @@ generic_type(A) ::= TOK_GENERIC TOK_COLON TOK_IDENTIFIER(B).
 
     SCOPEadd_super(A);
 
-    if (g->tag = TYPEcreate_user_defined_tag(A, CURRENT_SCOPE, B.symbol)) {
+    g->tag = TYPEcreate_user_defined_tag(A, CURRENT_SCOPE, B.symbol);
+    if (g->tag) {
         SCOPEadd_super(g->tag);
     }
 }

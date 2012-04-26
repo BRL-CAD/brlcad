@@ -218,7 +218,8 @@ const char * STEPaggregate::asStr( std::string & s ) const {
         std::string tmp;
         while( n ) {
             s.append( n->STEPwrite( tmp ) );
-            if( n = ( STEPnode * ) n -> NextNode() ) {
+            n = ( STEPnode * ) n -> NextNode();
+            if( n ) {
                 s.append( "," );
             }
         }
@@ -234,7 +235,8 @@ void STEPaggregate::STEPwrite( ostream & out, const char * currSch ) const {
         std::string s;
         while( n ) {
             out << n->STEPwrite( s, currSch );
-            if( n = ( STEPnode * )( n -> NextNode() ) ) {
+            n = ( STEPnode * ) n -> NextNode();
+            if( n ) {
                 out <<  ',';
             }
         }
