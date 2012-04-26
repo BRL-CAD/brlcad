@@ -897,7 +897,15 @@ endif(NOT CMAKE_CONFIGURATION_TYPES)
 include(${BRLCAD_CMAKE_DIR}/Fink_MacPorts.cmake)
 
 # Option for librtserver, used to help Java programs interface with librt.
-option(BRLCAD_ENABLE_RTSERVER "Enable the librtserver target." OFF)
+# Find Java and JNI, and conditionalize the default setting on Java's
+# availability
+FIND_PACKAGE(Java)
+FIND_PACKAGE(JNI)
+if(JNI_FOUND AND JAVA_FOUND)
+  option(BRLCAD_ENABLE_RTSERVER "Enable the librtserver target." ON)
+else(JNI_FOUND AND JAVA_FOUND)
+  option(BRLCAD_ENABLE_RTSERVER "Enable the librtserver target." OFF)
+endif(JNI_FOUND AND JAVA_FOUND)
 
 # Turn off the brlcad.dll build.
 # It's an expert's setting at the moment.
@@ -1402,10 +1410,7 @@ endif(APPLE)
 FIND_LIBRARY(CRYPT_LIBRARY NAMES crypt)
 mark_as_advanced(CRYPT_LIBRARY)
 
-# Find Java and JNI - conditionalize the include settings on
-# the success of the find_package calls.
-FIND_PACKAGE(Java)
-FIND_PACKAGE(JNI)
+# Do some extra Java related checks.
 if(JNI_FOUND AND JAVA_FOUND)
   BRLCAD_INCLUDE_FILE(JavaVM/jni.h HAVE_JAVAVM_JNI_H)
   BRLCAD_INCLUDE_FILE(jni.h HAVE_JNI_H "${JNI_INCLUDE_DIRS}")
