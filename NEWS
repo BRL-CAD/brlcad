@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2012-04-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* upgraded libpng to 1.5.10 - Cliff Yapp
 * removed obsolete 'syn' multi sine synthesis tool - Sean Morrison
 * fixed memory corruption in vegetation generator tool - Sean Morrison
 * fixed ARS bounding box size affecting overlap handling - Cliff Yapp
@@ -37,7 +38,6 @@ changes made.  See document footer for additional details.
 * improved tab-completion behavior for mged and archer - Sean Morrison
 * fixed pervasive string handling memory leak - Tom Browder
 * improved table output formatting for 'analyze' command - Tom Browder
-* upgraded libpng to 1.5.7 - Cliff Yapp
 * fixed rtweight to handle incorrect lines - Tom Browder
 * fixed crash in anim_cascade animation tool - Nick Reed
 * fixed bug in gif2fb processing non-interlaced images - Sean Morrison
