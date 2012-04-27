@@ -26,10 +26,17 @@ ENDMACRO(GED_ADD_CMD)
 # verification (sh/cmakecheck.sh) will fail on dist-hook.
 if(BULLET_FOUND)
   GED_ADD_CMD(LIBGED_SIM_SOURCES BULLET_INCLUDE_DIR BULLET_LIBRARIES)
-  set(SIM_SRCS simulate/simphysics.cpp simulate/simulate.c simulate/simcollisionalgo.cpp simulate/simutils.h simulate/simutils.c simulate/simrt.c simulate/simrt.h)
+  set(SIM_SRCS 
+    simulate/simphysics.cpp 
+    simulate/simulate.c
+    simulate/simcollisionalgo.cpp 
+    simulate/simutils.c 
+    simulate/simrt.c
+    )
+  CMAKEFILES(simulate/simrt.h simulate/simutils.h)
 else(BULLET_FOUND)
   set(SIM_SRCS "")
-  set(ged_ignore_files simulate/simphysics.cpp simulate/simulate.c simulate/simcollisionalgo.cpp simulate/simcollisionalgo.h simulate/simutils.h simulate/simutils.c simulate/simrt.c simulate/simrt.h)
+  set(ged_ignore_files simulate/simphysics.cpp simulate/simulate.c simulate/simcollisionalgo.cpp simulate/simcollisionalgo.h simulate/simutils.c simulate/simrt.c simulate/simrt.h simulate/simutils.h)
 endif(BULLET_FOUND)
 
 set(LIBGED_SOURCES
