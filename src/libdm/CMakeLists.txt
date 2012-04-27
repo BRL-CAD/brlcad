@@ -49,11 +49,9 @@ set_property(GLOBAL PROPERTY DM_DEFINES "${DM_DEFINES}")
 
 # Unfortunately, on Mac OS X the OpenGL headers are not C90
 # compilant - anything pulling them in needs the C99 flag
-get_property(DM_FLAGS GLOBAL PROPERTY DM_FLAGS)
-list(APPEND DM_DEFINES "${C99_FLAG}")
-
-set_property(GLOBAL PROPERTY DM_FLAGS "${DM_FLAGS}")
-
+get_property(DM_C_FLAGS GLOBAL PROPERTY DM_C_FLAGS)
+list(APPEND DM_C_DEFINES "${C99_FLAG}")
+set_property(GLOBAL PROPERTY DM_C_FLAGS "${DM_C_FLAGS}")
 
 set(LIBDM_SRCS
   ${dmx11_srcs}
