@@ -36,7 +36,7 @@
 
 # Determine whether a list of source files contains all C, all C++, or
 # mixed source types.
-macro(SRCS_LANG sourceslist resultvar)
+macro(SRCS_LANG sourceslist resultvar targetname)
   # Check whether we have a mixed C/C++ library or just a single language.
   # If the former, different compilation flag management is needed.
   set(has_C 0)
@@ -45,17 +45,16 @@ macro(SRCS_LANG sourceslist resultvar)
     get_property(file_language SOURCE ${srcfile} PROPERTY LANGUAGE)
     if(NOT file_language)
       get_filename_component(srcfile_ext ${srcfile} EXT)
-      if(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp")
+      if(${srcfile_ext} MATCHES ".cxx$" OR ${srcfile_ext} MATCHES ".cpp$" OR ${srcfile_ext} MATCHES ".cc$")
         set(has_CXX 1)
 	set(file_language CXX)
-      endif(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp")
-      if(${srcfile_ext} STREQUAL ".c")
+      elseif(${srcfile_ext} STREQUAL ".c")
         set(has_C 1)
 	set(file_language C)
-      endif(${srcfile_ext} STREQUAL ".c")
+      endif(${srcfile_ext} MATCHES ".cxx$" OR ${srcfile_ext} MATCHES ".cpp$" OR ${srcfile_ext} MATCHES ".cc$")
     endif(NOT file_language)
     if(NOT file_language)
-       message("WARNING - file ${srcfile} listed in the ${libname} sources list does not appear to be a C or C++ file.")
+      message("WARNING - file ${srcfile} listed in the ${targetname} sources list does not appear to be a C or C++ file.")
     endif(NOT file_language)
   endforeach(srcfile ${sourceslist})
   set(${resultvar} "UNKNOWN")
@@ -121,25 +120,51 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
       if(${execname}_DEFINES)
 	list(REMOVE_DUPLICATES ${execname}_DEFINES)
       endif(${execname}_DEFINES)
-      get_property(${ITEM_UPPER_CORE}_FLAGS GLOBAL PROPERTY ${ITEM_UPPER_CORE}_FLAGS)
-      list(APPEND ${execname}_FLAGS ${${ITEM_UPPER_CORE}_FLAGS})
-      if(${execname}_FLAGS)
-	list(REMOVE_DUPLICATES ${execname}_FLAGS)
-      endif(${execname}_FLAGS)
     endif(NOT ${FOUNDIT} STREQUAL "-1")
   endforeach(libitem ${libslist})
   foreach(lib_define ${${execname}_DEFINES})
     set_property(TARGET ${execname} APPEND PROPERTY COMPILE_DEFINITIONS "${lib_define}")
   endforeach(lib_define ${${execname}_DEFINES})
-  foreach(lib_flag ${${execname}_FLAGS})
-     set_property(TARGET ${execname} APPEND PROPERTY COMPILE_FLAGS "${lib_flag}")
-  endforeach(lib_flag ${${execname}_FLAGS})
+  # Need flags as well as definitions
+  set(FLAG_LANGUAGES C CXX)
+  foreach(lang ${FLAG_LANGUAGES})
+    get_property(${UPPER_CORE}_${lang}_FLAGS GLOBAL PROPERTY ${UPPER_CORE}_${lang}_FLAGS)
+    foreach(libitem ${libslist})
+      list(FIND BRLCAD_LIBS ${libitem} FOUNDIT)
+      if(NOT ${FOUNDIT} STREQUAL "-1")
+	string(REGEX REPLACE "lib" "" ITEMCORE "${libitem}")
+	string(TOUPPER ${ITEMCORE} ITEM_UPPER_CORE)
+	get_property(${ITEM_UPPER_CORE}_${lang}_FLAGS GLOBAL PROPERTY ${ITEM_UPPER_CORE}_${lang}_FLAGS)
+	list(APPEND ${UPPER_CORE}_${lang}_FLAGS ${${ITEM_UPPER_CORE}_${lang}_FLAGS})
+      endif(NOT ${FOUNDIT} STREQUAL "-1")
+    endforeach(libitem ${libslist})
+    if(${UPPER_CORE}_${lang}_FLAGS)
+      list(REMOVE_DUPLICATES ${UPPER_CORE}_${lang}_FLAGS)
+    endif(${UPPER_CORE}_${lang}_FLAGS)
+    set_property(GLOBAL PROPERTY ${UPPER_CORE}_${lang}_FLAGS "${${UPPER_CORE}_${lang}_FLAGS}")
+    mark_as_advanced(${UPPER_CORE}_${lang}_FLAGS)
+  endforeach(lang ${FLAG_LANGUAGES})
 
+  # Find out if we have C, C++, or both
+  SRCS_LANG("${srcslist}" exec_type ${execname})
+
+  # If we have a mixed language exec, pass on the flags to
+  # the source files - otherwise, use the target.
+  if(${exec_type} STREQUAL "MIXED")
+    message("${execname} : MIXED")
+    FLAGS_TO_FILES("${srcslist}" ${UPPER_CORE})
+  else(${exec_type} STREQUAL "MIXED")
+    # All one language - we can apply the flags to the target
+    foreach(lib_flag ${${UPPER_CORE}_${exec_type}_FLAGS})
+      set_property(TARGET ${execname} APPEND PROPERTY COMPILE_FLAGS "${lib_flag}")
+    endforeach(lib_flag ${${UPPER_CORE}_${exec_type}_FLAGS})
+  endif(${exec_type} STREQUAL "MIXED")
+  
   # If this target is marked as incompatible with the strict flags, disable them
   foreach(extraarg ${ARGN})
     if(${extraarg} MATCHES "NOSTRICT" AND BRLCAD_ENABLE_STRICT)
       if(NOERROR_FLAG)
-	set_target_properties(${execname} PROPERTIES COMPILE_FLAGS "-Wno-error")
+	set_property(TARGET ${execname} APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
       endif(NOERROR_FLAG)
     endif(${extraarg} MATCHES "NOSTRICT" AND BRLCAD_ENABLE_STRICT)
   endforeach(extraarg ${ARGN})
@@ -206,7 +231,15 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   endforeach(lang ${FLAG_LANGUAGES})
 
   # Find out if we have C, C++, or both
-  SRCS_LANG("${srcslist}" lib_type)
+  SRCS_LANG("${srcslist}" lib_type ${libname})
+
+  # If we have a mixed language library, go ahead and pass on the flags to
+  # the source files - we don't need the targets defined since the flags
+  # will be managed per-source-file.
+  if(${lib_type} STREQUAL "MIXED")
+    message("${libname}: MIXED")
+    FLAGS_TO_FILES("${srcslist}" ${UPPER_CORE})
+  endif(${lib_type} STREQUAL "MIXED")
 
   # Handle "shared" libraries (with MSVC, these would be dynamic libraries)
   if(BUILD_SHARED_LIBS)
@@ -234,14 +267,13 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
       set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${lib_define}")
     endforeach(lib_define ${${UPPER_CORE}_DEFINES})
 
-    # Need extra care handling compilation flags, since they may be source language specific
+    # If we haven't already taken care of the flags on a per-file basis,
+    # apply them to the target now that we have one.
     if(NOT ${lib_type} STREQUAL "MIXED")
       # All one language - we can apply the flags to the target
       foreach(lib_flag ${${UPPER_CORE}_${lib_type}_FLAGS})
 	set_property(TARGET ${libname} APPEND PROPERTY COMPILE_FLAGS "${lib_flag}")
       endforeach(lib_flag ${${UPPER_CORE}_${lib_type}_FLAGS})
-    else(NOT ${lib_type} STREQUAL "MIXED")
-      FLAGS_TO_FILES("${srcslist}" ${UPPER_CORE})
     endif(NOT ${lib_type} STREQUAL "MIXED")
 
     foreach(extraarg ${ARGN})
@@ -281,6 +313,20 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
       RUNTIME DESTINATION ${BIN_DIR}
       LIBRARY DESTINATION ${LIB_DIR}
       ARCHIVE DESTINATION ${LIB_DIR})
+
+    foreach(lib_define ${${UPPER_CORE}_DEFINES})
+      set_property(TARGET ${libname}-static APPEND PROPERTY COMPILE_DEFINITIONS "${lib_define}")
+    endforeach(lib_define ${${UPPER_CORE}_DEFINES})
+
+    # If we haven't already taken care of the flags on a per-file basis,
+    # apply them to the target now that we have one.
+    if(NOT ${lib_type} STREQUAL "MIXED")
+      # All one language - we can apply the flags to the target
+      foreach(lib_flag ${${UPPER_CORE}_${lib_type}_FLAGS})
+	set_property(TARGET ${libname}-static APPEND PROPERTY COMPILE_FLAGS "${lib_flag}")
+      endforeach(lib_flag ${${UPPER_CORE}_${lib_type}_FLAGS})
+    endif(NOT ${lib_type} STREQUAL "MIXED")
+
 
     foreach(extraarg ${ARGN})
       if(${extraarg} MATCHES "NOSTRICT" AND BRLCAD_ENABLE_STRICT)
