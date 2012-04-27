@@ -1542,15 +1542,13 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
     double width, height;
     double ratio = 5.0;
     localsurf->GetSurfaceSize(&width, &height);
-    if ((((width/height < ratio) && (width/height > 1.0/ratio))
-	 && isFlat(localsurf, frames, normals, corners, u, v)
-	 && isStraight(localsurf, frames, normals, corners, u, v)) || (divDepth >= depthLimit)) { //BREP_MAX_FT_DEPTH))) {
+    if (((width/height < ratio) && (width/height > 1.0/ratio) && isFlat(frames))
+	 || (divDepth >= depthLimit)) { //BREP_MAX_FT_DEPTH))) {
 	return surfaceBBox(localsurf, true, corners, normals, u, v);
     } else {
-	fastf_t uflat = isFlatU(localsurf, frames, normals, corners, u, v);
-	fastf_t vflat = isFlatV(localsurf, frames, normals, corners, u, v);
-	bool isUFlat = uflat >= BREP_SURFACE_FLATNESS;
-	bool isVFlat = vflat >= BREP_SURFACE_FLATNESS;
+	bool isUFlat = isFlatU(frames);
+	bool isVFlat = isFlatV(frames);
+
 	BBNode* parent = (divDepth == 0) ? initialBBox(ctree, localsurf, m_face, u, v) :
 	    surfaceBBox(localsurf, false, corners, normals, u, v);
 	BBNode* quads[4];
@@ -2212,188 +2210,52 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #define SE 4
 
 bool
-SurfaceTree::isFlat(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *UNUSED(m_normals), ON_3dPoint *UNUSED(corners), const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
+SurfaceTree::isFlat(ON_Plane *frames)
 {
-    /*
-      ON_3dVector normals[8];
-      for (int i = 0; i < 4; i++) {
-      normals[i] = m_normals[i];
-      }
 
-      for (int i = 4; i < 8; i++) {
-      normals[i] = m_normals[i+1];
-      }
-
-      double product = 1.0;
-
-      double ax[4] VEC_ALIGN;
-      double ay[4] VEC_ALIGN;
-      double az[4] VEC_ALIGN;
-
-      double bx[4] VEC_ALIGN;
-      double by[4] VEC_ALIGN;
-      double bz[4] VEC_ALIGN;
-
-      distribute(4, normals, ax, ay, az);
-      distribute(4, &normals[1], bx, by, bz);
-
-      // how to get the normals in here?
-      {
-      dvec<4> xa(ax);
-      dvec<4> ya(ay);
-      dvec<4> za(az);
-      dvec<4> xb(bx);
-      dvec<4> yb(by);
-      dvec<4> zb(bz);
-      dvec<4> dots = xa * xb + ya * yb + za * zb;
-      product *= dots.foldr(1, dvec<4>::mul());
-      if (product < 0.0) return false;
-      }
-      // try the next set of normals
-      {
-      distribute(3, &normals[4], ax, ay, az);
-      distribute(3, &normals[5], bx, by, bz);
-      dvec<4> xa(ax);
-      dvec<4> xb(bx);
-      dvec<4> ya(ay);
-      dvec<4> yb(by);
-      dvec<4> za(az);
-      dvec<4> zb(bz);
-      dvec<4> dots = xa * xb + ya * yb + za * zb;
-      product *= dots.foldr(1, dvec<4>::mul(), 3);
-      }
-      return product >= BREP_SURFACE_FLATNESS;
-    */
-
-    double Ndot = frames[0].zaxis * frames[1].zaxis;
-    Ndot = Ndot * (frames[0].zaxis * frames[2].zaxis);
-    Ndot = Ndot * (frames[0].zaxis * frames[3].zaxis);
-    Ndot = Ndot * (frames[0].zaxis * frames[4].zaxis);
-    Ndot = Ndot * (frames[0].zaxis * frames[5].zaxis);
-    Ndot = Ndot * (frames[0].zaxis * frames[6].zaxis);
-    Ndot = Ndot * (frames[0].zaxis * frames[7].zaxis);
-    Ndot = Ndot * (frames[0].zaxis * frames[8].zaxis);
-    Ndot = Ndot * (frames[1].zaxis * frames[2].zaxis);
-    Ndot = Ndot * (frames[1].zaxis * frames[3].zaxis);
-    Ndot = Ndot * (frames[1].zaxis * frames[4].zaxis);
-    Ndot = Ndot * (frames[1].zaxis * frames[5].zaxis);
-    Ndot = Ndot * (frames[1].zaxis * frames[6].zaxis);
-    Ndot = Ndot * (frames[1].zaxis * frames[7].zaxis);
-    Ndot = Ndot * (frames[1].zaxis * frames[8].zaxis);
-    Ndot = Ndot * (frames[2].zaxis * frames[3].zaxis);
-    Ndot = Ndot * (frames[2].zaxis * frames[4].zaxis);
-    Ndot = Ndot * (frames[2].zaxis * frames[5].zaxis);
-    Ndot = Ndot * (frames[2].zaxis * frames[6].zaxis);
-    Ndot = Ndot * (frames[2].zaxis * frames[7].zaxis);
-    Ndot = Ndot * (frames[2].zaxis * frames[8].zaxis);
-    Ndot = Ndot * (frames[3].zaxis * frames[4].zaxis);
-    Ndot = Ndot * (frames[3].zaxis * frames[5].zaxis);
-    Ndot = Ndot * (frames[3].zaxis * frames[6].zaxis);
-    Ndot = Ndot * (frames[3].zaxis * frames[7].zaxis);
-    Ndot = Ndot * (frames[3].zaxis * frames[8].zaxis);
-    Ndot = Ndot * (frames[4].zaxis * frames[5].zaxis);
-    Ndot = Ndot * (frames[4].zaxis * frames[6].zaxis);
-    Ndot = Ndot * (frames[4].zaxis * frames[7].zaxis);
-    Ndot = Ndot * (frames[4].zaxis * frames[8].zaxis);
-    Ndot = Ndot * (frames[5].zaxis * frames[6].zaxis);
-    Ndot = Ndot * (frames[5].zaxis * frames[7].zaxis);
-    Ndot = Ndot * (frames[5].zaxis * frames[8].zaxis);
-    Ndot = Ndot * (frames[6].zaxis * frames[7].zaxis);
-    Ndot = Ndot * (frames[6].zaxis * frames[8].zaxis);
-    Ndot = Ndot * (frames[7].zaxis * frames[8].zaxis);
-
-    return (fabs(Ndot) >= BREP_SURFACE_FLATNESS); // && fabs(uvdot) >= BREP_SURFACE_FLATNESS;
-
+    return ( isFlatU(frames) && isFlatV(frames) );
 }
 
 
-bool
-SurfaceTree::isStraight(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *UNUSED(m_normals), ON_3dPoint *UNUSED(corners), const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
+bool SurfaceTree::isFlatU(ON_Plane *frames)
 {
-    double Xdot = frames[0].xaxis * frames[1].xaxis;
-    Xdot = Xdot * (frames[0].xaxis * frames[2].xaxis);
-    Xdot = Xdot * (frames[0].xaxis * frames[3].xaxis);
-    Xdot = Xdot * (frames[0].xaxis * frames[4].xaxis);
-    Xdot = Xdot * (frames[0].xaxis * frames[5].xaxis);
-    Xdot = Xdot * (frames[0].xaxis * frames[6].xaxis);
-    Xdot = Xdot * (frames[0].xaxis * frames[7].xaxis);
-    Xdot = Xdot * (frames[0].xaxis * frames[8].xaxis);
-    Xdot = Xdot * (frames[1].xaxis * frames[2].xaxis);
-    Xdot = Xdot * (frames[1].xaxis * frames[3].xaxis);
-    Xdot = Xdot * (frames[1].xaxis * frames[4].xaxis);
-    Xdot = Xdot * (frames[1].xaxis * frames[5].xaxis);
-    Xdot = Xdot * (frames[1].xaxis * frames[6].xaxis);
-    Xdot = Xdot * (frames[1].xaxis * frames[7].xaxis);
-    Xdot = Xdot * (frames[1].xaxis * frames[8].xaxis);
-    Xdot = Xdot * (frames[2].xaxis * frames[3].xaxis);
-    Xdot = Xdot * (frames[2].xaxis * frames[4].xaxis);
-    Xdot = Xdot * (frames[2].xaxis * frames[5].xaxis);
-    Xdot = Xdot * (frames[2].xaxis * frames[6].xaxis);
-    Xdot = Xdot * (frames[2].xaxis * frames[7].xaxis);
-    Xdot = Xdot * (frames[2].xaxis * frames[8].xaxis);
-    Xdot = Xdot * (frames[3].xaxis * frames[4].xaxis);
-    Xdot = Xdot * (frames[3].xaxis * frames[5].xaxis);
-    Xdot = Xdot * (frames[3].xaxis * frames[6].xaxis);
-    Xdot = Xdot * (frames[3].xaxis * frames[7].xaxis);
-    Xdot = Xdot * (frames[3].xaxis * frames[8].xaxis);
-    Xdot = Xdot * (frames[4].xaxis * frames[5].xaxis);
-    Xdot = Xdot * (frames[4].xaxis * frames[6].xaxis);
-    Xdot = Xdot * (frames[4].xaxis * frames[7].xaxis);
-    Xdot = Xdot * (frames[4].xaxis * frames[8].xaxis);
-    Xdot = Xdot * (frames[5].xaxis * frames[6].xaxis);
-    Xdot = Xdot * (frames[5].xaxis * frames[7].xaxis);
-    Xdot = Xdot * (frames[5].xaxis * frames[8].xaxis);
-    Xdot = Xdot * (frames[6].xaxis * frames[7].xaxis);
-    Xdot = Xdot * (frames[6].xaxis * frames[8].xaxis);
-    Xdot = Xdot * (frames[7].xaxis * frames[8].xaxis);
+    // check surface normals in U direction
+    if ((frames[0].zaxis * frames[1].zaxis < BREP_SURFACE_FLATNESS)
+	    || (frames[2].zaxis * frames[3].zaxis < BREP_SURFACE_FLATNESS)
+	    || (frames[5].zaxis * frames[7].zaxis < BREP_SURFACE_FLATNESS)
+	    || (frames[6].zaxis * frames[8].zaxis < BREP_SURFACE_FLATNESS)) {
+	return false;
+    }
 
-    return (fabs(Xdot) >= BREP_SURFACE_STRAIGHTNESS);
+    // check for twist within plane
+    if ((frames[0].xaxis * frames[1].xaxis < BREP_SURFACE_FLATNESS)
+	    || (frames[2].xaxis * frames[3].xaxis < BREP_SURFACE_FLATNESS)
+	    || (frames[5].xaxis * frames[7].xaxis < BREP_SURFACE_FLATNESS)
+	    || (frames[6].xaxis * frames[8].xaxis < BREP_SURFACE_FLATNESS)) {
+	return false;
+    }
+
+    return true;
 }
 
 
-fastf_t
-SurfaceTree::isFlatU(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *m_normals, ON_3dPoint *UNUSED(corners), const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
+bool SurfaceTree::isFlatV(ON_Plane *frames)
 {
-    fastf_t product = 1.0;
-    product *= m_normals[0]*m_normals[1];
-    product *= m_normals[2]*m_normals[3];
-    product *= m_normals[5]*m_normals[7];
-    product *= m_normals[6]*m_normals[8];
+    if ((frames[0].zaxis * frames[3].zaxis < BREP_SURFACE_FLATNESS)
+	    || (frames[1].zaxis * frames[2].zaxis < BREP_SURFACE_FLATNESS)
+	    || (frames[5].zaxis * frames[6].zaxis < BREP_SURFACE_FLATNESS)
+	    || (frames[7].zaxis * frames[8].zaxis < BREP_SURFACE_FLATNESS)) {
+	return false;
+    }
 
-    double Xdot = frames[0].xaxis * frames[1].xaxis;
-    Xdot = Xdot * (frames[2].xaxis * frames[3].xaxis);
-    Xdot = Xdot * (frames[5].xaxis * frames[7].xaxis);
-    Xdot = Xdot * (frames[6].xaxis * frames[8].xaxis);
+    if ((frames[0].xaxis * frames[3].xaxis < BREP_SURFACE_FLATNESS)
+	    || (frames[1].xaxis * frames[2].xaxis < BREP_SURFACE_FLATNESS)
+	    || (frames[5].xaxis * frames[6].xaxis < BREP_SURFACE_FLATNESS)
+	    || (frames[7].xaxis * frames[8].xaxis < BREP_SURFACE_FLATNESS)) {
+	return false;
+    }
 
-    double Ndot = frames[0].zaxis * frames[1].zaxis;
-    Ndot = Ndot * (frames[2].zaxis * frames[3].zaxis);
-    Ndot = Ndot * (frames[5].zaxis * frames[7].zaxis);
-    Ndot = Ndot * (frames[6].zaxis * frames[8].zaxis);
-
-    return product*fabs(Ndot*Xdot);
-}
-
-
-fastf_t
-SurfaceTree::isFlatV(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *m_normals, ON_3dPoint *UNUSED(corners), const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
-{
-    fastf_t product = 1.0;
-    product *= m_normals[0]*m_normals[3];
-    product *= m_normals[1]*m_normals[2];
-    product *= m_normals[5]*m_normals[6];
-    product *= m_normals[7]*m_normals[8];
-
-    double Xdot = frames[0].xaxis * frames[3].xaxis;
-    Xdot = Xdot * (frames[1].xaxis * frames[2].xaxis);
-    Xdot = Xdot * (frames[5].xaxis * frames[6].xaxis);
-    Xdot = Xdot * (frames[7].xaxis * frames[8].xaxis);
-
-    double Ndot = frames[0].zaxis * frames[3].zaxis;
-    Ndot = Ndot * (frames[1].zaxis * frames[2].zaxis);
-    Ndot = Ndot * (frames[5].zaxis * frames[6].zaxis);
-    Ndot = Ndot * (frames[7].zaxis * frames[8].zaxis);
-
-    return product*fabs(Ndot*Xdot);
+    return true;
 }
 
 
