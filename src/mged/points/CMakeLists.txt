@@ -18,8 +18,8 @@ LEX_TARGET(MGEDPointsScanner points_scan.l
 ADD_LEX_YACC_DEPENDENCY(MGEDPointsScanner MGEDPointsParser)
 
 set(MGED_POINTS_SRCS
-  ${YACC_MGEDPointsParser_OUTPUTS}
-  ${LEX_MGEDPointsScanner_OUTPUTS}
+  ${CMAKE_CURRENT_BINARY_DIR}/points_parse.c
+  ${CMAKE_CURRENT_BINARY_DIR}/points_scan.c
   count.c
   process.c
   main.c
