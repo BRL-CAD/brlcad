@@ -1371,12 +1371,10 @@ wgl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	}
 
 	if (xstart + count <= ifp->if_width) {
-	    /* "Fast path" case for writes of less than one scanline.
-	     * The assumption is that there will be a lot of short
-	     * writes, and it's best just to ignore the backbuffer
-	     */
 	    wgl_xmit_scanlines(ifp, ybase, 1, xstart, count);
-	    if (WGL(ifp)->copy_flag) {
+	    if (SGI(ifp)->mi_doublebuffer) {
+		SwapBuffers(WGL(ifp)->hdc);
+	    } else if (WGL(ifp)->copy_flag) {
 		/* repaint one scanline from backbuffer */
 		backbuffer_to_screen(ifp, ybase);
 	    }
