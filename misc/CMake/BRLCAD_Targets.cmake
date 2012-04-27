@@ -151,7 +151,6 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
   # If we have a mixed language exec, pass on the flags to
   # the source files - otherwise, use the target.
   if(${exec_type} STREQUAL "MIXED")
-    message("${execname} : MIXED")
     FLAGS_TO_FILES("${srcslist}" ${UPPER_CORE})
   else(${exec_type} STREQUAL "MIXED")
     # All one language - we can apply the flags to the target
@@ -237,7 +236,6 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   # the source files - we don't need the targets defined since the flags
   # will be managed per-source-file.
   if(${lib_type} STREQUAL "MIXED")
-    message("${libname}: MIXED")
     FLAGS_TO_FILES("${srcslist}" ${UPPER_CORE})
   endif(${lib_type} STREQUAL "MIXED")
 
