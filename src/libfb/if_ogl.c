@@ -2004,7 +2004,9 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 
 	if (xstart + count < (size_t)ifp->if_width) {
 	    ogl_xmit_scanlines(ifp, ybase, 1, xstart, count);
-	    if (OGL(ifp)->copy_flag) {
+	    if (SGI(ifp)->mi_doublebuffer) {
+		glXSwapBuffers(OGL(ifp)->dispp, OGL(ifp)->wind);
+	    } else if (OGL(ifp)->copy_flag) {
 		/* repaint one scanline from backbuffer */
 		backbuffer_to_screen(ifp, ybase);
 	    }
