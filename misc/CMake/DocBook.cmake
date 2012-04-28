@@ -79,11 +79,18 @@ else(NOT DEFINED PDF_CONF_EXECUTABLE)
   endif(NOT EXISTS ${BRLCAD_SOURCE_DIR}/misc/CMake/${PDF_CONF_EXECUTABLE}.cmake.in)
 endif(NOT DEFINED PDF_CONV_EXECUTABLE)
 
+# Get our root path
 if(CMAKE_CONFIGURATION_TYPES)
   set(bin_root "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}")
 else(CMAKE_CONFIGURATION_TYPES)
   set(bin_root "${CMAKE_BINARY_DIR}")
 endif(CMAKE_CONFIGURATION_TYPES)
+
+# xsltproc is finicky about slashes in names - do some
+# sanity scrubbing of the full root path string in 
+# preparation for generating DocBook scripts
+string(REGEX REPLACE "/+" "/" bin_root "${bin_root}")
+string(REGEX REPLACE "/$" "" bin_root "${bin_root}")
 
 # Handle script generation in both single and multi configuration setups.  While we're at
 # it, this is a good place to make sure all the directories we'll be needing exist
