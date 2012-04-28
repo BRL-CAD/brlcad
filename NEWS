@@ -10,8 +10,10 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2012-04-27  Release 7.20.6                                     ---
+--- 2012-04-30  Release 7.20.6                                     ---
 ----------------------------------------------------------------------
+
+* fixed type F picture generation with rtwizard - Bob Parker
 * Improvements to NURBS raytracing - Keith Bowman 
 * Updated libpng to version 1.5.10 - Cliff Yapp
 * Added MUVEStoORCA matrix support to librtserver - Jim Hunt
