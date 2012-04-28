@@ -36,11 +36,10 @@
 	Return 0 if no input or error.
 */
 int
-empty(int fd)
+empty(int UNUSED(fd))
 {
     /* On most machines we aren't supporting the mouse, so no need to
        not block on keyboard input. */
-    fd = fd; /* quell warning */
     return 0;
 }
 
