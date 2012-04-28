@@ -35,7 +35,7 @@
  * sneaky way.  this technique was taken from the University of
  * Kentucky's Aggregate Magic Algorithms collection.
  */
-static inline unsigned int
+static unsigned int
 count_ones32(register unsigned int x)
 {
     x -= ((x >> 1) & 0x55555555);
@@ -53,7 +53,7 @@ count_ones32(register unsigned int x)
  * this technique was taken from the University of Kentucky's
  * Aggregate Magic Algorithms collection.
  */
-static inline unsigned int
+static unsigned int
 floor_ilog2(register unsigned int x)
 {
     x |= (x >> 1);
@@ -70,7 +70,7 @@ floor_ilog2(register unsigned int x)
  * users should not call this directly, instead calling the
  * BU_BITV_SHIFT macro instead.
  */
-inline unsigned int
+unsigned int
 bu_bitv_shift()
 {
     return floor_ilog2(sizeof(bitv_t)*8);

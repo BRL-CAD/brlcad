@@ -74,7 +74,7 @@
 /* isblank appears to be obsolete in newer ctype.h files so use
  * fnblank instead when looking for the "blank" character class.
  */
-static inline int
+static int
 fnblank(int c)
 {
 #ifdef isblank
@@ -85,77 +85,77 @@ fnblank(int c)
 }
 
 
-static inline int
+static int
 fnalnum(int c)
 {
     return isalnum(c);
 }
 
 
-static inline int
+static int
 fnalpha(int c)
 {
     return isalpha(c);
 }
 
 
-static inline int
+static int
 fncntrl(int c)
 {
     return iscntrl(c);
 }
 
 
-static inline int
+static int
 fndigit(int c)
 {
     return isdigit(c);
 }
 
 
-static inline int
+static int
 fngraph(int c)
 {
     return isgraph(c);
 }
 
 
-static inline int
+static int
 fnlower(int c)
 {
     return islower(c);
 }
 
 
-static inline int
+static int
 fnprint(int c)
 {
     return isprint(c);
 }
 
 
-static inline int
+static int
 fnpunct(int c)
 {
     return ispunct(c);
 }
 
 
-static inline int
+static int
 fnspace(int c)
 {
     return isspace(c);
 }
 
 
-static inline int
+static int
 fnupper(int c)
 {
     return isupper(c);
 }
 
 
-static inline int
+static int
 fnxdigit(int c)
 {
     return isxdigit(c);

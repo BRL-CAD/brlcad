@@ -23,7 +23,7 @@
 #include "bu.h"
 
 
-inline bu_endian_t
+bu_endian_t
 bu_byteorder()
 {
     const union bob {
