@@ -194,6 +194,9 @@ SC_TCL_LINK_LIBS()
 # Add the Threading library, if we're using it
 SET(TCL_LINK_LIBS ${TCL_LINK_LIBS} ${TCL_THREADS_LIB})
 
+# Same for the math library
+SET(TCL_LINK_LIBS ${TCL_LINK_LIBS} ${M_LIBRARY})
+
 # TODO - look over SC_ENABLE_SHARED, SC_CONFIG_CFLAGS and SC_ENABLE_SYMBOLS
 # need to decide how much of that logic is needed.  Clearly we need SOME
 # of it.
