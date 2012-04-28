@@ -319,15 +319,12 @@ CMAKE_DEPENDENT_OPTION(TK_ENABLE_XSS "Use XScreenSaver" ON "TK_SYSTEM_GRAPHICS S
 #--------------------------------------------------------------------
 IF(NOT WIN32)
   find_package(Freetype)
-  IF(APPLE)
-    find_library(FONTCONFIG_LIBRARY fontconfig)
-    MARK_AS_ADVANCED(FONTCONFIG_LIBRARY)
-  ENDIF(APPLE)
+  find_package(Fontconfig)
   IF(NOT FREETYPE_FOUND)
     SET(FREETYPE_LIBRARIES "")
   ENDIF(NOT FREETYPE_FOUND)
 ENDIF(NOT WIN32)
-CMAKE_DEPENDENT_OPTION(TK_ENABLE_XFT "Use freetype/fontconfig/xft" ON "TK_SYSTEM_GRAPHICS STREQUAL x11;FREETYPE_FOUND;${X11_Xft_FOUND}" OFF)
+CMAKE_DEPENDENT_OPTION(TK_ENABLE_XFT "Use freetype/fontconfig/xft" ON "TK_SYSTEM_GRAPHICS STREQUAL x11;FREETYPE_FOUND;FONTCONFIG_FOUND;${X11_Xft_FOUND}" OFF)
 
 #----------------------------------------------------------------------------
 # signed/unsigned char - does the Tcl code still need this? See
@@ -752,7 +749,7 @@ SET_PROPERTY(TARGET tkstub APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
 
 add_library(tk ${TK_SRCS})
 IF(WIN32)
-  target_link_libraries(tk tkstub ${TCL_STUB_LIBRARY} ${TCL_THREADS_LIB} ${X11_TK_LIBS} ${FREETYPE_LIBRARIES} ${FONTCONFIG_LIBRARY})
+  target_link_libraries(tk tkstub ${TCL_STUB_LIBRARY} ${TCL_THREADS_LIB} ${X11_TK_LIBS} ${FREETYPE_LIBRARIES} ${FONTCONFIG_LIBRARIES})
 ELSE(WIN32)
   target_link_libraries(tk tkstub ${TCL_STUB_LIBRARY} ${TCL_THREADS_LIB} ${CoreFoundation_LIBRARIES} ${CARBON_FRAMEWORK} ${COCOA_FRAMEWORK} ${IOKit_LIBRARIES} ${X11_TK_LIBS} ${FREETYPE_LIBRARIES} ${FONTCONFIG_LIBRARY})
 ENDIF(WIN32)
