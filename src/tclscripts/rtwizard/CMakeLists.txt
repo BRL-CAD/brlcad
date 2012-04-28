@@ -3,10 +3,12 @@ add_subdirectory(lib)
 if(HAVE_SYMLINK)
   if(NOT CMAKE_CONFIGURATION_TYPES)
     execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.tcl ${CMAKE_BINARY_DIR}/${BIN_DIR}/rtwizard)
+    set(rtwizard_cmd_outputs ${CMAKE_BINARY_DIR}/${BIN_DIR}/rtwizard)
   else(NOT CMAKE_CONFIGURATION_TYPES)
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
       execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.tcl ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard)
+      set(rtwizard_cmd_outputs ${rtwizard_cmd_outputs} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   endif(NOT CMAKE_CONFIGURATION_TYPES)
 else(HAVE_SYMLINK)
@@ -35,6 +37,7 @@ else(HAVE_SYMLINK)
 endif(HAVE_SYMLINK)
 
 install(PROGRAMS rtwizard.tcl DESTINATION ${BIN_DIR} RENAME rtwizard)
+DISTCLEAN(${rtwizard_cmd_outputs})
 
 set(rtwizard_TCLSCRIPTS
   RaytraceWizard.tcl

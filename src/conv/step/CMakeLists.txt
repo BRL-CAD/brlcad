@@ -29,6 +29,7 @@ string(TOUPPER ${SCHEMA_N} SCHEMA_NAME) #fedex_plus always uses upper case for f
 
 set(SCHEMA_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/${SCHEMA_NAME})
 make_directory(${SCHEMA_OUT_DIR})
+DISTCLEAN(${SCHEMA_OUT_DIR})
 include_directories(${SCHEMA_OUT_DIR})
 
 set(fedex_srcs

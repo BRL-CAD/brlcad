@@ -34,6 +34,7 @@ else(HAVE_SYMLINK)
 endif(HAVE_SYMLINK)
 add_custom_target(archer ALL DEPENDS ${archer_cmd_outputs})
 install(PROGRAMS archer DESTINATION bin)
+DISTCLEAN(${archer_cmd_outputs})
 
 # archer depends on the creation/installation of all the
 # tclscripts.
