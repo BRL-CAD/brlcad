@@ -234,9 +234,8 @@ close_Output_Device(int frame)
 
 
 static void
-intr_sig(int sig)
+intr_sig(int UNUSED(sig))
 {
-    sig = sig;
     (void) signal(SIGINT, intr_sig);
     return;
 }

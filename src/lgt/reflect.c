@@ -498,16 +498,15 @@ render_Scan(int cpu, void *UNUSED(data))
 
 /*ARGSUSED*/
 static int
-f_R_Miss(struct application *ap)
+f_R_Miss(struct application *UNUSED(ap))
 {
-    ap = ap;
     prnt_Scroll("Missed model.\n");
     return 0;
 }
 
 
 static int
-f_Region(struct application *ap, struct partition *pt_headp, struct seg *unused)
+f_Region(struct application *ap, struct partition *pt_headp, struct seg *UNUSED(unused))
 {
     struct partition *pp;
     struct region *regp;
@@ -515,8 +514,6 @@ f_Region(struct application *ap, struct partition *pt_headp, struct seg *unused)
     struct xray *rp;
     struct hit *ihitp;
     point_t normal;
-
-    unused = unused; /* quell warning */
 
     Get_Partition(ap, pp, pt_headp, "f_Region");
     regp = pp->pt_regionp;
@@ -581,14 +578,12 @@ f_HL_Miss(struct application *ap)
 
 
 static int
-f_HL_Hit(struct application *ap, struct partition *pt_headp, struct seg *unused)
+f_HL_Hit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED(unused))
 {
     struct partition *pp;
     struct soltab *stp;
     struct hit *ihitp;
     point_t normal;
-
-    unused = unused; /* quell warning */
 
     Get_Partition(ap, pp, pt_headp, "f_HL_Hit");
     stp = pp->pt_inseg->seg_stp;
@@ -702,7 +697,7 @@ getMaMID(struct mater_info *map, int *id)
 
 */
 static int
-f_Model(struct application *ap, struct partition *pt_headp, struct seg *unused)
+f_Model(struct application *ap, struct partition *pt_headp, struct seg *UNUSED(unused))
 {
     struct partition *pp;
     Mat_Db_Entry loc_entry;
@@ -713,8 +708,6 @@ f_Model(struct application *ap, struct partition *pt_headp, struct seg *unused)
     int material_id;
     fastf_t rgb_coefs[3];
     vect_t normal;
-
-    unused = unused; /* quell warning */
 
     Get_Partition(ap, pp, pt_headp, "f_Model");
     stp = pp->pt_inseg->seg_stp;
@@ -1315,13 +1308,11 @@ f_Lit(struct application *ap)
   struct partition *pt_headp, struct seg *unused)
 */
 static int
-f_Probe(struct application *ap, struct partition *pt_headp, struct seg *unused)
+f_Probe(struct application *ap, struct partition *pt_headp, struct seg *UNUSED(unused))
 {
     struct partition *pp;
     struct hit *hitp;
     struct soltab *stp;
-
-    unused = unused; /* quell warning */
 
     if (RT_G_DEBUG & DEBUG_RGB)
 	bu_log("f_Probe()\n");
@@ -1417,12 +1408,10 @@ refract(fastf_t *v_1, fastf_t *norml, fastf_t ri_1, fastf_t ri_2, fastf_t *v_2)
   "ap->a_diverge".
 */
 static int
-f_Shadow(struct application *ap, struct partition *pt_headp, struct seg * unused)
+f_Shadow(struct application *ap, struct partition *pt_headp, struct seg * UNUSED(unused))
 {
     struct partition *pp;
     Mat_Db_Entry *entry;
-
-    unused = unused; /* quell warning */
 
     Get_Partition(ap, pp, pt_headp, "f_Shadow");
     if (RT_G_DEBUG & DEBUG_SHADOW) {
@@ -1640,9 +1629,8 @@ cons_Vector(fastf_t *vec, fastf_t azim, fastf_t elev)
   void abort_RT(int sig)
 */
 void
-abort_RT(int sig)
+abort_RT(int UNUSED(sig))
 {
-    sig = sig; /* quell warning */
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     (void) signal(SIGINT, abort_RT);
     (void) fb_flush(fbiop);
@@ -2084,12 +2072,10 @@ gauss_Wgt_Func(fastf_t R)
 
 
 static int
-f_Overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp)
+f_Overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *UNUSED(hp))
 {
     point_t pt;
     fastf_t depth = pp->pt_outhit->hit_dist-pp->pt_inhit->hit_dist;
-
-    hp = hp; /* quell warning */
 
     if (depth < OVERLAPTOL)
 	return 1;
@@ -2112,15 +2098,8 @@ f_Overlap(struct application *ap, struct partition *pp, struct region *reg1, str
 
 
 static int
-f_NulOverlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp)
+f_NulOverlap(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct region *UNUSED(reg1), struct region *UNUSED(reg2), struct partition *UNUSED(hp))
 {
-    /* quell warnings */
-    ap = ap;
-    pp = pp;
-    reg1 = reg1;
-    reg2 = reg2;
-    hp = hp;
-
     return 1;
 }
 
