@@ -584,13 +584,12 @@ linear_interpolate(struct chan *chp, fastf_t *times)
  * multiplying the time by a constant.
  */
 HIDDEN void
-rate_interpolate(struct chan *chp, fastf_t *times)
+rate_interpolate(struct chan *chp, fastf_t *UNUSED(times))
 {
     int t;		/* output time index */
     double ival;
     double rate;
 
-    times = times; /* quell warning */
     if (chp->c_ilen != 2) {
 	bu_log("rate_interpolate:  only 2 points (ival & rate) may be specified\n");
 	return;
@@ -608,14 +607,13 @@ rate_interpolate(struct chan *chp, fastf_t *times)
  *
  */
 HIDDEN void
-accel_interpolate(struct chan *chp, fastf_t *times)
+accel_interpolate(struct chan *chp, fastf_t *UNUSED(times))
 {
     int t;		/* output time index */
     double ival;
     double mul;
     double scale;
 
-    times = times; /* quell warning */
     if (chp->c_ilen != 2) {
 	bu_log("accel_interpolate:  only 2 points (ival & mul) may be specified\n");
 	return;
