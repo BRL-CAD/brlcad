@@ -511,7 +511,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     return retval;
 }
 
-void
+inline void
 rt_metaball_norm_internal(vect_t *n, point_t *p, struct rt_metaball_internal *mb)
 {
     struct wdb_metaballpt *mbpt;
