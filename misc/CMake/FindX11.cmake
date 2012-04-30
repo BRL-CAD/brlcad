@@ -157,7 +157,11 @@ if(UNIX)
   set(CMAKE_FIND_FRAMEWORK NEVER)
 
 
-  # See whether we're looking for 32 or 64 bit libraries
+  # See whether we're looking for 32 or 64 bit libraries,
+  # and organize our search directories accordingly.  The
+  # common convention is to use lib64 for 64 bit versions of
+  # libraries, but some distributions (notably archlinux) 
+  # use lib32 for 32 bit and lib for 64 bit.
   get_property(SEARCH_64BIT GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
   if(SEARCH_64BIT)
     set(64BIT_DIRS "/usr/lib64/X11;/usr/lib64;/usr/lib/x86_64-linux-gnu")
