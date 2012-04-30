@@ -1,3 +1,39 @@
+2012-04-30 15:10  starseeker
+
+	* [r50370] src/other/libz/CMakeLists.txt:
+	  Add workaround for MSVC2010 64 bit and zlib from trunk r49887
+
+2012-04-30 15:06  starseeker
+
+	* [r50369] src/other/step/src/express/CMakeLists.txt,
+	  src/other/step/src/express/expprint.c:
+	  Remove this file - removed in trunk, not needed, causing build
+	  issue on mac for release build.
+
+2012-04-30 14:35  starseeker
+
+	* [r50368] src/other/CMakeLists.txt:
+	  Don't use numbers for bools
+
+2012-04-30 14:08  starseeker
+
+	* [r50367] CMakeLists.txt:
+	  Correct typo.
+
+2012-04-28 16:32  starseeker
+
+	* [r50354] NEWS, src/libfb/if_ogl.c, src/libfb/if_wgl.c,
+	  src/tclscripts/rtwizard/lib/FbPage.itk:
+	  Merge rtwizard fix to STABLE
+
+2012-04-27 16:53  starseeker
+
+	* [r50349] ChangeLog, NEWS, README, include/conf/PATCH:
+	  Up version numbers, cleanup NEWS, put relevant portion of STABLE
+	  changlog in place. Not sure this will ever actually get tagged
+	  for a release, but this revision of STABLE is exhibiting the
+	  desired behavior on Linux.
+
 2012-04-27 15:39  starseeker
 
 	* [r50345] src/librt/opennurbs_ext.cpp, src/librt/opennurbs_ext.h:
