@@ -85,11 +85,11 @@ THIRD_PARTY(zlib libz)
 #Only on WIN32 will the combination of the build search tests and
 #libtermlib fail to find a valid term, so set variables accordingly
 IF(NOT WIN32)
-	SET(HAVE_TERMLIB 1 CACHE BOOL "Have some termlib" FORCE)
+	SET(HAVE_TERMLIB ON CACHE BOOL "Have some termlib" FORCE)
 ELSE(NOT WIN32)
 	SET(BRLCAD_TERMLIB_BUILD "System" CACHE STRING "Disable libtermlib build on WIN32." FORCE)
 	MARK_AS_ADVANCED(BRLCAD_TERMLIB_BUILD)
-	SET(HAVE_TERMLIB 0 CACHE BOOL "Have some termlib" FORCE)
+	SET(HAVE_TERMLIB OFF CACHE BOOL "Have some termlib" FORCE)
 ENDIF(NOT WIN32)
 MARK_AS_ADVANCED(HAVE_TERMLIB)
 
