@@ -1444,14 +1444,14 @@ if(NOT WIN32)
   mark_as_advanced(M_LIBRARY)
 endif(NOT WIN32)
 
-# socket library
+# network socket library (linux, bsd)
 BRLCAD_CHECK_LIBRARY(SOCKET socket socket)
 
-# network socket library
-BRLCAD_CHECK_LIBRARY(NS nsl gethostbyaddr)
+# network socket library (solaris)
+BRLCAD_CHECK_LIBRARY(NSL nsl gethostbyaddr)
 
-# network library
-BRLCAD_CHECK_LIBRARY(NETWORK_SOCKET network socket)
+# network socket library (haiku, beos)
+BRLCAD_CHECK_LIBRARY(NETWORK network socket)
 
 # malloc library
 BRLCAD_CHECK_LIBRARY(MALLOC c mallopt)
