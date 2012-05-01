@@ -1432,12 +1432,6 @@ if(BRLCAD_ENABLE_X11)
   BRLCAD_INCLUDE_FILE(X11/Xlib.h HAVE_X11_XLIB_H)
 endif(BRLCAD_ENABLE_X11)
 
-# On SunOS with Sun Studio we need sunmath
-CHECK_LIBRARY_EXISTS(sunmath ieee_flags "" HAVE_SUNMATH_LIBRARY)
-if(HAVE_SUNMATH_LIBRARY)
-  set(SUN_MATH_LIB "-lsunmath")
-endif(HAVE_SUNMATH_LIBRARY)
-
 # math library
 BRLCAD_CHECK_LIBRARY(M m cos)
 
