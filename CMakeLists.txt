@@ -1454,9 +1454,6 @@ BRLCAD_CHECK_LIBRARY(DL dl dlopen)
 # Solaris lexer library
 BRLCAD_CHECK_LIBRARY(SOLARIS_LEXER l yyless)
 
-# IRIX libgen library
-BRLCAD_CHECK_LIBRARY(GEN gen basename)
-
 # Bullet physics library
 FIND_PACKAGE(Bullet)
 if(BULLET_FOUND)
