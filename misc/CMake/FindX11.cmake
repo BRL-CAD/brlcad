@@ -168,11 +168,21 @@ if(UNIX)
     if(EXISTS "/usr/lib32")
       set(64BIT_DIRS ${64BIT_DIRS} /usr/lib/X11 /usr/lib)
     endif(EXISTS "/usr/lib32")
+    # If there are no explicit word size lib dirs, assume we want to
+    # check /usr/lib
+    if(NOT EXISTS "/usr/lib32" AND NOT EXISTS "/usr/lib64")
+      set(64BIT_DIRS ${64BIT_DIRS} /usr/lib)
+    endif(NOT EXISTS "/usr/lib32" AND NOT EXISTS "/usr/lib64")
   else(SEARCH_64BIT)
     set(32BIT_DIRS "/usr/lib32/X11;/usr/lib32;/usr/lib/i386-linux-gnu")
     if(EXISTS "/usr/lib64")
       set(32BIT_DIRS ${32BIT_DIRS} /usr/lib/X11 /usr/lib)
     endif(EXISTS "/usr/lib64")
+    # If there are no explicit word size lib dirs, assume we want to
+    # check /usr/lib
+    if(NOT EXISTS "/usr/lib32" AND NOT EXISTS "/usr/lib64")
+      set(32BIT_DIRS ${32BIT_DIRS} /usr/lib)
+    endif(NOT EXISTS "/usr/lib32" AND NOT EXISTS "/usr/lib64")
   endif(SEARCH_64BIT)
 
   # Candidate directories for headers
