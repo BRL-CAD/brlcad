@@ -163,7 +163,7 @@ BRLCAD_ADDEXEC(texturescale texturescale.c "libfb;libbn;libbu;${M_LIBRARY}")
 #FIXME - Need to look at pcattcp port to Windows - ttcp should be
 #maintained and ported
 if(NOT WIN32)
-  BRLCAD_ADDEXEC(ttcp ttcp.c libbu)
+  BRLCAD_ADDEXEC(ttcp ttcp.c "${SOCKET_LIBRARY};${NSL_LIBRARY};${NETWORK_LIBRARY}")
 endif(NOT WIN32)
 BRLCAD_ADDEXEC(wavelet wavelet.c "libfb;libbn;libbu")
 BRLCAD_ADDEXEC(xyz-pl xyz-pl.c "libbn;libbu")
