@@ -89,10 +89,7 @@
 fd_set	select_list;			/* master copy */
 int	max_fd;
 
-static  void	main_loop(void);
-static	void	comm_error(char *str);
-static	void	init_syslog(void);
-static	void	setup_socket(int fd);
+
 static	int	use_syslog;	/* error messages to stderr if 0 */
 
 static	char	*framebuffer = NULL;	/* frame buffer name */
@@ -216,6 +213,42 @@ sigalarm(int UNUSED(code))
 }
 #endif
 
+
+static void
+setup_socket(int fd)
+{
+    int	on = 1;
+
+#ifdef SO_KEEPALIVE
+    if ( setsockopt( fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0 ) {
+#  ifdef HAVE_SYSLOG_H
+	syslog( LOG_WARNING, "setsockopt (SO_KEEPALIVE): %s", strerror(errno) );
+#  endif
+    }
+#endif
+#ifdef SO_RCVBUF
+    /* try to set our buffers up larger */
+    {
+	int	m = 0;
+	int	n = 0;
+	int	val;
+	int	size;
+
+	for ( size = 256; size > 16; size /= 2 )  {
+	    val = size * 1024;
+	    m = setsockopt( fd, SOL_SOCKET, SO_RCVBUF,
+			    (char *)&val, sizeof(val) );
+	    val = size * 1024;
+	    n = setsockopt( fd, SOL_SOCKET, SO_SNDBUF,
+			    (char *)&val, sizeof(val) );
+	    if ( m >= 0 && n >= 0 )  break;
+	}
+	if ( m < 0 || n < 0 )  perror("fbserv setsockopt()");
+    }
+#endif
+}
+
+
 /*
  *			N E W _ C L I E N T
  */
@@ -254,6 +287,123 @@ drop_client(int sub)
     pkg_close( clients[sub] );
     clients[sub] = PKC_NULL;
 }
+
+
+/*
+ *			C O M M _ E R R O R
+ *
+ *  Communication error.  An error occured on the PKG link.
+ *  It may be local, or it may be between us and the client we are serving.
+ *  We send a copy to syslog or stderr.
+ *  Don't send one down the wire, this can cause loops.
+ */
+static void
+comm_error(char *str)
+{
+#if defined(HAVE_SYSLOG_H)
+    if ( use_syslog ) {
+	syslog( LOG_ERR, "%s", str );
+    } else {
+	fprintf( stderr, "%s", str );
+    }
+#else
+    fprintf( stderr, "%s", str );
+#endif
+    if (verbose) {
+	fprintf( stderr, "%s", str );
+    }
+}
+
+/*
+ *			M A I N _ L O O P
+ *
+ *  Loop forever handling clients as they come and go.
+ *  Access to the framebuffer may be interleaved, if the user
+ *  wants it that way.
+ */
+static void
+main_loop(void)
+{
+    int	nopens = 0;
+    int	ncloses = 0;
+
+    while ( !fb_server_got_fb_free ) {
+	fd_set infds;
+	struct timeval tv;
+	int	i;
+
+	infds = select_list;	/* struct copy */
+
+#ifdef _WIN32
+	tv.tv_sec = 0L;
+	tv.tv_usec = 250L;
+#else
+	tv.tv_sec = 60L;
+	tv.tv_usec = 0L;
+#endif
+	if ((select( max_fd+1, &infds, (fd_set *)0, (fd_set *)0, (void *)&tv ) == 0)) {
+	    /* Process fb events while waiting for client */
+	    /*printf("select timeout waiting for client\n");*/
+	    if (fb_server_fbp) {
+		if (fb_poll(fb_server_fbp)) {
+		    return;
+		}
+	    }
+	    continue;
+	}
+	/* Handle any events from the framebuffer */
+	if (fb_server_fbp && fb_server_fbp->if_selfd > 0 && FD_ISSET(fb_server_fbp->if_selfd, &infds)) {
+	    fb_poll(fb_server_fbp);
+	}
+
+	/* Accept any new client connections */
+	if (netfd > 0 && FD_ISSET(netfd, &infds)) {
+	    new_client( pkg_getclient( netfd, fb_server_pkg_switch, comm_error, 0 ) );
+	    nopens++;
+	}
+
+	/* Process arrivals from existing clients */
+	/* First, pull the data out of the kernel buffers */
+	for (i = MAX_CLIENTS-1; i >= 0; i--) {
+	    if (clients[i] == NULL )  continue;
+	    if (pkg_process( clients[i] ) < 0) {
+		fprintf(stderr, "pkg_process error encountered (1)\n");
+	    }
+	    if (! FD_ISSET( clients[i]->pkc_fd, &infds )) continue;
+	    if (pkg_suckin( clients[i] ) <= 0) {
+		/* Probably EOF */
+		drop_client( i );
+		ncloses++;
+		continue;
+	    }
+	}
+	/* Second, process all the finished ones that we just got */
+	for (i = MAX_CLIENTS-1; i >= 0; i--) {
+	    if (clients[i] == NULL )  continue;
+	    if (pkg_process( clients[i] ) < 0) {
+		fprintf(stderr, "pkg_process error encountered (2)\n");
+	    }
+	}
+	if (once_only && nopens > 1 && ncloses > 1)
+	    return;
+    }
+}
+
+
+static void
+init_syslog(void)
+{
+#ifdef HAVE_SYSLOG_H
+    use_syslog = 1;
+
+#  if defined(LOG_NOWAIT) && defined(LOG_DAEMON)
+    openlog( "fbserv", LOG_PID|LOG_NOWAIT, LOG_DAEMON );	/* 4.3 style */
+#  else
+    openlog( "fbserv", LOG_PID );				/* 4.2 style */
+#  endif
+#endif
+}
+
 
 /*
  *			M A I N
@@ -395,152 +545,6 @@ main(int argc, char **argv)
     return 2;
 }
 
-/*
- *			M A I N _ L O O P
- *
- *  Loop forever handling clients as they come and go.
- *  Access to the framebuffer may be interleaved, if the user
- *  wants it that way.
- */
-static void
-main_loop(void)
-{
-    int	nopens = 0;
-    int	ncloses = 0;
-
-    while ( !fb_server_got_fb_free ) {
-	fd_set infds;
-	struct timeval tv;
-	int	i;
-
-	infds = select_list;	/* struct copy */
-
-#ifdef _WIN32
-	tv.tv_sec = 0L;
-	tv.tv_usec = 250L;
-#else
-	tv.tv_sec = 60L;
-	tv.tv_usec = 0L;
-#endif
-	if ((select( max_fd+1, &infds, (fd_set *)0, (fd_set *)0, (void *)&tv ) == 0)) {
-	    /* Process fb events while waiting for client */
-	    /*printf("select timeout waiting for client\n");*/
-	    if (fb_server_fbp) {
-		if (fb_poll(fb_server_fbp)) {
-		    return;
-		}
-	    }
-	    continue;
-	}
-	/* Handle any events from the framebuffer */
-	if (fb_server_fbp && fb_server_fbp->if_selfd > 0 && FD_ISSET(fb_server_fbp->if_selfd, &infds)) {
-	    fb_poll(fb_server_fbp);
-	}
-
-	/* Accept any new client connections */
-	if (netfd > 0 && FD_ISSET(netfd, &infds)) {
-	    new_client( pkg_getclient( netfd, fb_server_pkg_switch, comm_error, 0 ) );
-	    nopens++;
-	}
-
-	/* Process arrivals from existing clients */
-	/* First, pull the data out of the kernel buffers */
-	for (i = MAX_CLIENTS-1; i >= 0; i--) {
-	    if (clients[i] == NULL )  continue;
-	    if (pkg_process( clients[i] ) < 0) {
-		fprintf(stderr, "pkg_process error encountered (1)\n");
-	    }
-	    if (! FD_ISSET( clients[i]->pkc_fd, &infds )) continue;
-	    if (pkg_suckin( clients[i] ) <= 0) {
-		/* Probably EOF */
-		drop_client( i );
-		ncloses++;
-		continue;
-	    }
-	}
-	/* Second, process all the finished ones that we just got */
-	for (i = MAX_CLIENTS-1; i >= 0; i--) {
-	    if (clients[i] == NULL )  continue;
-	    if (pkg_process( clients[i] ) < 0) {
-		fprintf(stderr, "pkg_process error encountered (2)\n");
-	    }
-	}
-	if (once_only && nopens > 1 && ncloses > 1)
-	    return;
-    }
-}
-
-#ifndef _WIN32
-static void
-init_syslog(void)
-{
-    use_syslog = 1;
-#if defined(LOG_NOWAIT) && defined(LOG_DAEMON)
-    openlog( "fbserv", LOG_PID|LOG_NOWAIT, LOG_DAEMON );	/* 4.3 style */
-#else
-    openlog( "fbserv", LOG_PID );				/* 4.2 style */
-#endif
-}
-#endif
-
-static void
-setup_socket(int fd)
-{
-    int	on = 1;
-
-#ifdef SO_KEEPALIVE
-    if ( setsockopt( fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0 ) {
-#  ifdef HAVE_SYSLOG_H
-	syslog( LOG_WARNING, "setsockopt (SO_KEEPALIVE): %s", strerror(errno) );
-#  endif
-    }
-#endif
-#ifdef SO_RCVBUF
-    /* try to set our buffers up larger */
-    {
-	int	m = 0;
-	int	n = 0;
-	int	val;
-	int	size;
-
-	for ( size = 256; size > 16; size /= 2 )  {
-	    val = size * 1024;
-	    m = setsockopt( fd, SOL_SOCKET, SO_RCVBUF,
-			    (char *)&val, sizeof(val) );
-	    val = size * 1024;
-	    n = setsockopt( fd, SOL_SOCKET, SO_SNDBUF,
-			    (char *)&val, sizeof(val) );
-	    if ( m >= 0 && n >= 0 )  break;
-	}
-	if ( m < 0 || n < 0 )  perror("fbserv setsockopt()");
-    }
-#endif
-}
-
-/*
- *			C O M M _ E R R O R
- *
- *  Communication error.  An error occured on the PKG link.
- *  It may be local, or it may be between us and the client we are serving.
- *  We send a copy to syslog or stderr.
- *  Don't send one down the wire, this can cause loops.
- */
-static void
-comm_error(char *str)
-{
-#if defined(HAVE_SYSLOG_H)
-    if ( use_syslog ) {
-	syslog( LOG_ERR, "%s", str );
-    } else {
-	fprintf( stderr, "%s", str );
-    }
-#else
-    fprintf( stderr, "%s", str );
-#endif
-    if (verbose) {
-	fprintf( stderr, "%s", str );
-    }
-}
 
 #ifndef _WIN32
 /*
