@@ -1451,9 +1451,6 @@ BRLCAD_CHECK_LIBRARY(MALLOC malloc mallopt)
 # dynamic link library
 BRLCAD_CHECK_LIBRARY(DL dl dlopen)
 
-# SGI graphics library
-BRLCAD_CHECK_LIBRARY(SGIGL gl gconfig)
-
 # Solaris lexer library
 BRLCAD_CHECK_LIBRARY(SOLARIS_LEXER l yyless)
 
