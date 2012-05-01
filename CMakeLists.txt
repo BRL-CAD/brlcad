@@ -1438,11 +1438,8 @@ if(HAVE_SUNMATH_LIBRARY)
   set(SUN_MATH_LIB "-lsunmath")
 endif(HAVE_SUNMATH_LIBRARY)
 
-# m library is not needed on Windows
-if(NOT WIN32)
-  BRLCAD_CHECK_LIBRARY(M m cos)
-  mark_as_advanced(M_LIBRARY)
-endif(NOT WIN32)
+# math library
+BRLCAD_CHECK_LIBRARY(M m cos)
 
 # network socket library (linux, bsd)
 BRLCAD_CHECK_LIBRARY(SOCKET socket socket)
