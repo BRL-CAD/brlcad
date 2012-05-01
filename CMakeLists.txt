@@ -1457,14 +1457,8 @@ BRLCAD_CHECK_LIBRARY(NETWORK_SOCKET network socket)
 BRLCAD_CHECK_LIBRARY(MALLOC c mallopt)
 BRLCAD_CHECK_LIBRARY(MALLOC malloc mallopt)
 
-# mx library
-BRLCAD_CHECK_LIBRARY(MX mx matherr)
-
 # dynamic link library
-BRLCAD_CHECK_LIBRARY(DLOPEN dl dlopen)
-
-# SGI generic SCI library
-BRLCAD_CHECK_LIBRARY(DS ds dsopen)
+BRLCAD_CHECK_LIBRARY(DL dl dlopen)
 
 # OpenGL graphics
 if(BRLCAD_ENABLE_OPENGL)
