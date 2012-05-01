@@ -85,6 +85,7 @@
 #include <stdlib.h>
 #include "express/variable.h"
 #include "express/object.h"
+char * opcode_print(Op_Code o);
 
 struct freelist_head VAR_fl;
 

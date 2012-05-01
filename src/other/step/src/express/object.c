@@ -31,9 +31,7 @@ Symbol *
 UNK_get_symbol( Generic x ) {
     fprintf( stderr, "OBJget_symbol called on object of unknown type\n" );
     ERRORabort( 0 );
-#if defined(lint) || defined(CENTERLINE)
     return 0;
-#endif
 }
 
 /*

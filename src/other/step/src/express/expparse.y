@@ -119,6 +119,8 @@ YYSTYPE yylval;
     /* differentiated from other schemas parsed earlier */
     Linked_List PARSEnew_schemas;
 
+    void SCANskip_to_end_schema(perplex_t scanner);
+
     int	yylineno;
 
 

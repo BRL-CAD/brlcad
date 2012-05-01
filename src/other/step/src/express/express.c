@@ -238,6 +238,7 @@ static Error ERROR_tilde_expansion_failed;
 static Error ERROR_schema_not_in_own_schema_file;
 
 extern Linked_List PARSEnew_schemas;
+void SCOPEinitialize(void);
 
 static Express PARSERrun PROTO( ( char *, FILE * ) );
 

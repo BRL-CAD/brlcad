@@ -1714,7 +1714,7 @@ SCHEMAresolve_pass2( Schema * schema ) {
 
     struct tag *
     TAGcreate_tags() {
-        extern tag_count;
+        extern int tag_count;
 
         return( ( struct tag * )calloc( tag_count, sizeof( struct tag ) ) );
     }

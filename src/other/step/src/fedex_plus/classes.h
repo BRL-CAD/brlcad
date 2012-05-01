@@ -88,7 +88,7 @@ struct EntityTag_ {
 Entity ENTITYget_superclass( Entity entity );
 Entity ENTITYput_superclass( Entity entity );
 int ENTITYhas_explicit_attributes( Entity e );
-Linked_List ENTITYget_first_attribs( Entity entity, Linked_List result );
+void ENTITYget_first_attribs( Entity entity, Linked_List result );
 
 typedef struct SelectTag_ * SelectTag;
 struct SelectTag_ {

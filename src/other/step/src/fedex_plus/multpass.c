@@ -37,6 +37,8 @@
 #define FALSE 0
 #define TRUE  1
 
+int isAggregateType (const Type t);
+
 /* Local function prototypes: */
 static void initializeMarks( Express );
 static void unsetObjs( Schema );

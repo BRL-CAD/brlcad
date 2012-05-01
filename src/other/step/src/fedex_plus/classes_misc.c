@@ -774,8 +774,7 @@ ENTITYget_superclass( Entity entity ) {
     return ( tag ? tag -> superclass : 0 );
 }
 
-Linked_List
-ENTITYget_first_attribs( Entity entity, Linked_List result ) {
+void ENTITYget_first_attribs( Entity entity, Linked_List result ) {
     Linked_List supers;
 
     LISTdo( ENTITYget_attributes( entity ), attr, Generic )

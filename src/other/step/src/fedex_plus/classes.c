@@ -27,6 +27,10 @@ N350 ( August 31, 1993 ) of ISO 10303 TC184/SC4/WG7.
 #include <stdlib.h>
 #include "classes.h"
 
+int isAggregateType( const Type t );
+int isAggregate( Variable a );
+Variable VARis_type_shifter( Variable a );
+
 static_inline
 bool
 LISTempty( Linked_List list ) {
@@ -55,8 +59,8 @@ int old_accessors = 0;
    ENTITYincode_print (Entity entity, FILE* file,Schema schema)
    DAS
  */
-static attr_count;  /* number each attr to avoid inter-entity clashes */
-static type_count;  /* number each temporary type for same reason above */
+static int attr_count;  /* number each attr to avoid inter-entity clashes */
+static int type_count;  /* number each temporary type for same reason above */
 
 extern int any_duplicates_in_select( const Linked_List list );
 extern int unique_types( const Linked_List list );
@@ -65,6 +69,8 @@ static void printEnumCreateHdr( FILE *, const Type );
 static void printEnumCreateBody( FILE *, const Type );
 static void printEnumAggrCrHdr( FILE *, const Type );
 static void printEnumAggrCrBody( FILE *, const Type );
+int TYPEget_RefTypeVarNm( const Type t, char * buf, Schema schema );
+void TypeBody_Description(TypeBody body, char *buf);
 
 /*
 Turn the string into a new string that will be printed the same as the
@@ -2783,6 +2789,7 @@ strcat_bounds( TypeBody b, char * buf ) {
     strcat( buf, "]" );
 }
 
+void
 TypeBody_Description( TypeBody body, char * buf ) {
     char * s;
 
