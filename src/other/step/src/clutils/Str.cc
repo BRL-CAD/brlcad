@@ -1,4 +1,3 @@
-
 /*
 * NIST Utils Class Library
 * clutils/Str.cc
@@ -9,8 +8,6 @@
 * Development of this software was funded by the United States Government,
 * and is not subject to copyright.
 */
-
-/* $Id: Str.cc,v 3.0.1.3 1997/11/05 22:33:52 sauderd DP3.1 $  */
 
 #include <Str.h>
 #include <sstream>
@@ -25,8 +22,7 @@
  ** Status:  complete
  ******************************************************************/
 
-char
-ToLower( const char c ) {
+char ToLower( const char c ) {
     if( isupper( c ) ) {
         return ( tolower( c ) );
     } else {
@@ -35,8 +31,7 @@ ToLower( const char c ) {
 
 }
 
-char
-ToUpper( const char c ) {
+char ToUpper( const char c ) {
     if( islower( c ) ) {
         return ( toupper( c ) );
     } else {
@@ -44,12 +39,8 @@ ToUpper( const char c ) {
     }
 }
 
-char *
-StrToLower( const char * strOld, char * strNew )
-/*
- * Place in strNew a lowercase version of strOld.
- */
-{
+// Place in strNew a lowercase version of strOld.
+char * StrToLower( const char * strOld, char * strNew ) {
     int i = 0;
 
     while( strOld[i] != '\0' ) {
@@ -60,11 +51,9 @@ StrToLower( const char * strOld, char * strNew )
     return strNew;
 }
 
-const char *
-StrToLower( const char * word, std::string & s ) {
+const char * StrToLower( const char * word, std::string & s ) {
     char newword [BUFSIZ];
     int i = 0;
-//    char ToLower (char c);
 
     while( word [i] != '\0' ) {
         newword [i] = ToLower( word [i] );
@@ -75,27 +64,22 @@ StrToLower( const char * word, std::string & s ) {
     return const_cast<char *>( s.c_str() );
 }
 
-const char *
-StrToUpper( const char * word, std::string & s ) {
+const char * StrToUpper( const char * word, std::string & s ) {
     char newword [BUFSIZ];
     int i = 0;
-//    char ToUpper (char c);
 
     while( word [i] != '\0' ) {
         newword [i] = ToUpper( word [i] );
         ++i;
-
     }
     newword [i] = '\0';
     s = newword;
     return const_cast<char *>( s.c_str() );
 }
 
-const char *
-StrToConstant( const char * word, std::string & s ) {
+const char * StrToConstant( const char * word, std::string & s ) {
     char newword [BUFSIZ];
     int i = 0;
-//    char ToUpper (char c);
 
     while( word [i] != '\0' ) {
         if( word [i] == '/' || word [i] == '.' ) {
@@ -104,24 +88,36 @@ StrToConstant( const char * word, std::string & s ) {
             newword [i] = ToUpper( word [i] );
         }
         ++i;
-
     }
     newword [i] = '\0';
     s = newword;
     return const_cast<char *>( s.c_str() );
 }
 
-/******************************************************************
- ** Procedure:  PrettyName (char * oldname)
- ** Parameters:  oldname
- ** Returns:  a new capitalized name
- ** Description:  creates a new name with first character's in caps
- ** Side Effects:  PrettyNewName allocates memory for the new name
-                   PrettyTmpName returns new name in a static buffer
+/**************************************************************//**
+ ** \fn  StrCmpIns (const char * str1, const char * str2)
+ ** \returns  Comparison result
+ ** Compares two strings case insensitive (lowercase).
+ ** Returns < 0  when str1 less then str2
+ **         == 0 when str1 equals str2
+ **         > 0  when str1 greater then str2
+ ******************************************************************/
+int StrCmpIns( const char * str1, const char * str2 ) {
+    char c1, c2;
+    while ((c1 = tolower(*str1)) == (c2 = tolower(*str2)) && c1 != '\0') {
+        str1++;
+        str2++;
+    }
+    return c1 - c2;
+}
+
+/**************************************************************//**
+ ** \fn  PrettyTmpName (char * oldname)
+ ** \returns  a new capitalized name in a static buffer
+ ** Capitalizes first char of word, rest is lowercase. Removes '_'.
  ** Status:   OK  7-Oct-1992 kcm
  ******************************************************************/
-const char *
-PrettyTmpName( const char * oldname ) {
+const char * PrettyTmpName( const char * oldname ) {
     int i = 0;
     static char newname [BUFSIZ];
     newname [0] = '\0';
@@ -135,36 +131,22 @@ PrettyTmpName( const char * oldname ) {
             ++i;
         }
     }
-
     newname [0] = ToUpper( oldname [0] );
     newname [i] = '\0';
     return newname;
 }
 
-char *
-PrettyNewName( const char * oldname ) {
-
+/**************************************************************//**
+ ** \fn  PrettyNewName (char * oldname)
+ ** \returns  a new capitalized name
+ ** Capitalizes first char of word, rest is lowercase. Removes '_'.
+ ** Side Effects:  allocates memory for the new name
+ ** Status:   OK  7-Oct-1992 kcm
+ ******************************************************************/
+char * PrettyNewName( const char * oldname ) {
     char * name = new char [strlen( oldname ) + 1];
     strcpy( name, PrettyTmpName( oldname ) );
     return name;
-}
-
-int
-StrCmpIns( const char * strA, const char * strB )
-/*
- * An insensitive string compare function.  Used most often to compare
- * names of objects where case is not known and not significant.
- *
- * NOTE - cygnus does not define strcmpi/stricmp.  I'm sure there's a nifty
- * way to add preprocessor commands to check if it exists, and if so to
- * use it, but I didn't bother.
- */
-{
-    char str1[BUFSIZ], str2[BUFSIZ];
-
-    strncpy( str1, PrettyTmpName( strA ), BUFSIZ - 1 );
-    strncpy( str2, PrettyTmpName( strB ), BUFSIZ - 1 );
-    return ( strcmp( str1, str2 ) );
 }
 
 // This function is used to check an input stream following a read.  It writes

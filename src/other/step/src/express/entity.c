@@ -515,13 +515,11 @@ ENTITYget_attribute_offset( Entity entity, Variable attribute ) {
 ** Notes:   If the entity has no attribute with the given name,
 **      -1 is returned.
 */
-
-int
-ENTITYget_named_attribute_offset( Entity entity, String name ) {
+int ENTITYget_named_attribute_offset( Entity entity, char * name ) {
     int         offset, value;
 
     LISTdo( entity->u.entity->attributes, attr, Variable )
-    if( STRINGequal( VARget_simple_name( attr ), name ) )
+    if( streq( VARget_simple_name( attr ), name ) )
         return entity->u.entity->inheritance +
                /*         VARget_offset(SCOPElookup(entity, name, false));*/
                VARget_offset( ENTITY_find_inherited_attribute( entity, name, 0, 0 ) );

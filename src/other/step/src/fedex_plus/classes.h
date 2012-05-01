@@ -98,7 +98,6 @@ struct SelectTag_ {
 };
 
 char * format_for_stringout( char * orig_buf, char * return_buf );
-#define String  const char *
 const char   *  CheckWord( const char * );
 const char   *  StrToLower( const char * );
 const char   *  StrToUpper( const char * );

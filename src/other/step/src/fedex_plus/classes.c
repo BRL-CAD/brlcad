@@ -390,29 +390,27 @@ int Handle_FedPlus_Args( int i, char * arg ) {
  ** Side Effects:
  ** Status:  complete 8/5/93
  ******************************************************************/
-char *
-generate_attribute_name( Variable a, char * out ) {
+char * generate_attribute_name( Variable a, char * out ) {
     char * temp, *p, *q;
-    int j;
+    int i;
 
     temp = EXPRto_string( VARget_name( a ) );
-    p = temp;
-    if( ! strncmp( StrToLower( p ), "self\\", 5 ) ) {
-        p = p + 5;
+    p = StrToLower( temp );
+    if( ! strncmp( p, "self\\", 5 ) ) {
+        p += 5;
     }
     /*  copy p to out  */
     /* DAR - fixed so that '\n's removed */
-    for( j = 0, q = out; *p != '\0' && j < BUFSIZ; p++ ) {
+    for( i = 0, q = out; *p != '\0' && i < BUFSIZ; p++ ) {
         /* copy p to out, 1 char at time.  Skip \n's and spaces, convert
-         * '.' to '_', and convert to lowercase.
-         */
+         *  '.' to '_', and convert to lowercase. */
         if( ( *p != '\n' ) && ( *p != ' ' ) ) {
             if( *p == '.' ) {
                 *q = '_';
             } else {
-                *q = tolower( *p );
+                *q = *p;
             }
-            j++;
+            i++;
             q++;
         }
     }
@@ -491,9 +489,7 @@ generate_dict_attr_name( Variable a, char * out ) {
  ** Side Effects:
  ** Status:  new 1/24/91
  ******************************************************************/
-
-String
-TYPEget_express_type( const Type t ) {
+char * TYPEget_express_type( const Type t ) {
     Class_Of_Type class;
     Type bt;
     char retval [BUFSIZ];
@@ -1382,9 +1378,9 @@ LIBcopy_constructor( Entity ent, FILE * file ) {
          *b = buffer;
     int count = attr_count;
 
-    String entnm = ENTITYget_classname( ent );
+    char * entnm = ENTITYget_classname( ent );
     bool opt;
-    String StrToLower( String word );
+    const char * StrToLower( const char * word );
 
     /*mjm7/10/91 copy constructor definition  */
     fprintf( file, "\t%s::%s(%s& e ) \n", entnm, entnm, entnm );

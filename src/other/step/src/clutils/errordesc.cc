@@ -82,31 +82,31 @@ ErrorDescriptor::GetCorrSeverity( const char * s ) {
     if( s && s[0] != 0 ) {
         std::string s2;
         StrToUpper( s, s2 );
-        if( !strcmp( s2.c_str(), "SEVERITY_NULL" ) ) {
+        if( !s2.compare( "SEVERITY_NULL" ) ) {
             return SEVERITY_NULL;
         }
-        if( !strcmp( s2.c_str(), "SEVERITY_USERMSG" ) ) {
+        if( !s2.compare( "SEVERITY_USERMSG" ) ) {
             return SEVERITY_USERMSG;
         }
-        if( !strcmp( s2.c_str(), "SEVERITY_INCOMPLETE" ) ) {
+        if( !s2.compare( "SEVERITY_INCOMPLETE" ) ) {
             return SEVERITY_INCOMPLETE;
         }
-        if( !strcmp( s2.c_str(), "SEVERITY_WARNING" ) ) {
+        if( !s2.compare( "SEVERITY_WARNING" ) ) {
             return SEVERITY_WARNING;
         }
-        if( !strcmp( s2.c_str(), "SEVERITY_INPUT_ERROR" ) ) {
+        if( !s2.compare( "SEVERITY_INPUT_ERROR" ) ) {
             return SEVERITY_INPUT_ERROR;
         }
-        if( !strcmp( s2.c_str(), "SEVERITY_BUG" ) ) {
+        if( !s2.compare( "SEVERITY_BUG" ) ) {
             return SEVERITY_BUG;
         }
-        if( !strcmp( s2.c_str(), "SEVERITY_EXIT" ) ) {
+        if( !s2.compare( "SEVERITY_EXIT" ) ) {
             return SEVERITY_EXIT;
         }
-        if( !strcmp( s2.c_str(), "SEVERITY_DUMP" ) ) {
+        if( !s2.compare( "SEVERITY_DUMP" ) ) {
             return SEVERITY_DUMP;
         }
-        if( !strcmp( s2.c_str(), "SEVERITY_MAX" ) ) {
+        if( !s2.compare( "SEVERITY_MAX" ) ) {
             return SEVERITY_MAX;
         }
     }
