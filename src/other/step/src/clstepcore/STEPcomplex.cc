@@ -4,6 +4,7 @@
 #include <STEPcomplex.h>
 #include <complexSupport.h>
 #include <STEPattribute.h>
+#include <sstream>
 
 extern const char *
 ReadStdKeyword( istream & in, std::string & buf, int skipInitWS );
@@ -536,7 +537,6 @@ STEPcomplex::STEPread_error( char c, int index, istream & in ) {
 // in the standard that the entity parts of a complex entity must be printed in
 // alphabetical order.  The nodes are sorted alphabetically according to their
 // original names but not according to their renamed names (DAR 6/5/97).
-
 void
 STEPcomplex::STEPwrite( ostream & out, const char * currSch, int writeComment ) {
     if( writeComment && p21Comment && !p21Comment->empty() ) {
@@ -551,27 +551,13 @@ const char *
 STEPcomplex::STEPwrite( std::string & buf, const char * currSch ) {
     buf.clear();
 
-    buf.append( "#" );
-    buf.append( ( char * )STEPfile_id );
-    buf.append( "=" );
-    buf.append( "(" );
-    /*
-        char instanceInfo[BUFSIZ];
-        sprintf(instanceInfo, "#%d=", STEPfile_id );
-    */
-    /*
-        strstream ss;
-        ss << "#" << STEPfile_id << "=(";
-        WriteExtMapEntities(ss, currSch);
-        ss << ");";
-        ss << ends;
+    stringstream ss;
+    ss << "#" << STEPfile_id << "=(";
+    WriteExtMapEntities( ss, currSch );
+    ss << ");";
+    ss << ends;
 
-        char *tmpstr = ss.str();
-        buf.Append(tmpstr);
-        delete tmpstr;
-    */
-    WriteExtMapEntities( buf, currSch );
-    buf.append( ");" );
+    buf.append( ss.str() );
 
     return const_cast<char *>( buf.c_str() );
 }
