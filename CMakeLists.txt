@@ -1457,16 +1457,6 @@ BRLCAD_CHECK_LIBRARY(MALLOC malloc mallopt)
 # dynamic link library
 BRLCAD_CHECK_LIBRARY(DL dl dlopen)
 
-# OpenGL graphics
-if(BRLCAD_ENABLE_OPENGL)
-  if(OPENGL_INCLUDE_DIR_GL)
-    CONFIG_H_APPEND(BRLCAD "#define HAVE_GL_GL_H 1\n")
-  endif(OPENGL_INCLUDE_DIR_GL)
-  if(OPENGL_INCLUDE_DIR_GLX)
-    CONFIG_H_APPEND(BRLCAD "#define HAVE_GL_GLX_H 1\n")
-  endif(OPENGL_INCLUDE_DIR_GLX)
-endif(BRLCAD_ENABLE_OPENGL)
-
 # SGI graphics library
 BRLCAD_CHECK_LIBRARY(SGIGL gl gconfig)
 
@@ -1586,6 +1576,16 @@ BRLCAD_INCLUDE_FILE_CXX(limits HAVE_LIMITS)
 # Other special-case tests that need custom macros
 BRLCAD_CHECK_BASENAME()
 BRLCAD_CHECK_DIRNAME()
+
+# OpenGL headers
+if(BRLCAD_ENABLE_OPENGL)
+  if(OPENGL_INCLUDE_DIR_GL)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_GL_GL_H 1\n")
+  endif(OPENGL_INCLUDE_DIR_GL)
+  if(OPENGL_INCLUDE_DIR_GLX)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_GL_GLX_H 1\n")
+  endif(OPENGL_INCLUDE_DIR_GLX)
+endif(BRLCAD_ENABLE_OPENGL)
 
 
 # *******************************************************************
