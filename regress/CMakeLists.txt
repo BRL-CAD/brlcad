@@ -98,7 +98,6 @@ if(SH_EXEC)
 endif(SH_EXEC)
 
 CMAKEFILES(
-  Makefile.am
   analyze.asc
   bots.sh
   comgeom.sh

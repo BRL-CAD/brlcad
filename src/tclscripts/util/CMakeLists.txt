@@ -7,7 +7,7 @@ BRLCAD_ADDDATA(util_TCLSCRIPTS tclscripts/util)
 pkgIndex_BUILD(util tclscripts/util)
 tclIndex_BUILD(util tclscripts/util)
 
-CMAKEFILES(Makefile.am pkgIndex.tcl tclIndex)
+CMAKEFILES(pkgIndex.tcl tclIndex)
 
 # Local Variables:
 # tab-width: 8

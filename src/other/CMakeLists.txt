@@ -796,8 +796,6 @@ if(BRLCAD_ENABLE_OSL)
   add_subdirectory(osl)
 endif(BRLCAD_ENABLE_OSL)
 
-CMAKEFILES(Makefile.am)
-
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -25,8 +25,6 @@ add_definitions(
 BRLCAD_ADDLIB(libsysv "${LIBSYSV_SOURCES}" "${TCL_LIBRARY}")
 SET_TARGET_PROPERTIES(libsysv PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
-CMAKEFILES(Makefile.am)
-
 # Local Variables:
 # tab-width: 8
 # mode: cmake

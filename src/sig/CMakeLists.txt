@@ -41,7 +41,6 @@ BRLCAD_ADDEXEC(u-d u-d.c libbu)
 BRLCAD_ADDEXEC(u-f u-f.c libbu)
 BRLCAD_ADDEXEC(umod umod.c "libbu;${M_LIBRARY}")
 BRLCAD_ADDEXEC(ustats ustats.c "libbu;${M_LIBRARY}")
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

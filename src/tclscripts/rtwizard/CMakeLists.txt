@@ -105,7 +105,6 @@ set(PictureTypeF_DATA
 BRLCAD_ADDDATA(PictureTypeF_DATA tclscripts/rtwizard/examples/PictureTypeF)
 
 CMAKEFILES(examples pkgIndex.tcl tclIndex)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

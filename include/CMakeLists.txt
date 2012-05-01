@@ -107,7 +107,6 @@ CMAKEFILES(${brlcadinclude_required})
 CMAKEFILES(${brlcadinclude_wanted})
 CMAKEFILES(${brlcadnoinst_HEADERS})
 CMAKEFILES(${brlcadinclude_misc})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

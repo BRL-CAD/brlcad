@@ -48,7 +48,6 @@ set(lgt_ignore_files
   tree.h
   )
 CMAKEFILES(${lgt_ignore_files})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

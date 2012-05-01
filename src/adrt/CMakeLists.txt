@@ -104,7 +104,6 @@ set(adrt_ignore_files
   tienet.h
   )
 CMAKEFILES(${adrt_ignore_files})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

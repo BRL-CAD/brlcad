@@ -24,7 +24,7 @@ set(bench_MANS
   pixcmp.1
 )
 ADD_MAN_PAGES(1 bench_MANS)
-CMAKEFILES(lgt.sh run.sh try.sh viewdiff.sh Makefile.am)
+CMAKEFILES(lgt.sh run.sh try.sh viewdiff.sh)
 
 if(SH_EXEC)
 	add_custom_target(benchmark

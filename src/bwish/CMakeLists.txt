@@ -59,8 +59,6 @@ if(ITK_LIBRARY MATCHES "^itk$" AND BRLCAD_ENABLE_TK)
   add_dependencies(bwish itcl itk)
 endif(ITK_LIBRARY MATCHES "^itk$" AND BRLCAD_ENABLE_TK)
 
-CMAKEFILES(Makefile.am)
-
 # Local Variables:
 # tab-width: 8
 # mode: cmake

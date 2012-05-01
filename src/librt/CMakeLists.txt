@@ -299,7 +299,6 @@ if(CPP_DLL_DEFINES)
 endif(CPP_DLL_DEFINES)
 
 install(FILES librt.3 DESTINATION ${MAN_DIR}/man3)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

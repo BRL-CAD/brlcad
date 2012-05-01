@@ -119,7 +119,6 @@ set(bu_ignore_files
   uce-dirent.h
   )
 CMAKEFILES(${bu_ignore_files})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

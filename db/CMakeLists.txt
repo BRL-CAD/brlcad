@@ -58,7 +58,7 @@ SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${BUILT_MODELS}
 if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
 	BRLCAD_ADDDATA(terra.dsp db)
 endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
-CMAKEFILES(Makefile.am cornell.rt db.php include)
+CMAKEFILES(cornell.rt db.php include)
 
 # Local Variables:
 # tab-width: 8

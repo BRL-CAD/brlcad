@@ -461,7 +461,6 @@ CMAKEFILES(${stepg_HDRS})
 BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "libwdb;librt;libbu;steputils;stepcore;stepdai;stepeditor;${OPENNURBS_LIBRARY}")
 
 DISTCLEAN(${SCHEMA_OUT_DIR}/make_schema)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

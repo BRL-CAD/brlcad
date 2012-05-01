@@ -33,7 +33,6 @@ set(enigma_ignore_files
   README
   configure.ac
   crypt.c
-  Makefile.am
   )
 CMAKEFILES(${enigma_ignore_files})
 

@@ -100,7 +100,6 @@ set(archer_ignore_files
   plugins/Wizards/tirewizard
   )
 CMAKEFILES(${archer_ignore_files})
-CMAKEFILES(Makefile.am plugins/Makefile.am plugins/Utility/Makefile.am plugins/Wizards/Makefile.am)
 
 # Local Variables:
 # tab-width: 8

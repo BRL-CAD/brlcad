@@ -7,7 +7,6 @@ include_directories(
 BRLCAD_ADDEXEC(canonize "canonize.c;canonlib.c" libfb)
 ADD_MAN_PAGES(1 canonize.1)
 CMAKEFILES(canon.h chore.h)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

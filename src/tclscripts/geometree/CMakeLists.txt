@@ -7,7 +7,6 @@ pkgIndex_BUILD(geometree tclscripts/geometree)
 tclIndex_BUILD(geometree tclscripts/geometree)
 
 CMAKEFILES(pkgIndex.tcl tclIndex)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

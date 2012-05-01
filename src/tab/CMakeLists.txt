@@ -28,7 +28,6 @@ set(tab_MANS
   )
 ADD_MAN_PAGES(1 tab_MANS)
 CMAKEFILES(script.l tokens.h)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8
