@@ -1014,9 +1014,9 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	    goto bail_out;
 	}
     } else {
-	if (ri >= nmatch) {
+	if (ri > nmatch) {
 	    Tcl_AppendResult(interp,
-			     "the reference index must be less than the number of references\n",
+			     "the reference index must not be greater than the number of references\n",
 			     (char *)NULL);
 	    goto bail_out;
 	}
