@@ -524,8 +524,7 @@ EXTRA_DIST = \
 	tclconfig/README.txt \
 	tclconfig/tcl.m4 \
 	CMakeLists.txt \
-	CMake/FindTCL.cmake \
-	CMake/FindX11.cmake
+	CMake
 
 .PHONY: all binaries clean depend distclean doc install libraries test
 
