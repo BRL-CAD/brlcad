@@ -819,8 +819,6 @@ EnumTypeDescriptor::GenerateExpress( std::string & buf ) const {
     buf.append( " = ENUMERATION OF \n  (" );
     const char * desc = Description();
     const char * ptr = &( desc[16] );
-    int count;
-    int i;
     int all_comments = 1;
 
     while( *ptr != '\0' ) {
@@ -837,8 +835,8 @@ EnumTypeDescriptor::GenerateExpress( std::string & buf ) const {
 ///////////////
     // count is # of WHERE rules
     if( _where_rules != 0 ) {
-        count = _where_rules->Count();
-        for( i = 0; i < count; i++ ) { // print out each UNIQUE rule
+        int count = _where_rules->Count();
+        for( int i = 0; i < count; i++ ) { // print out each UNIQUE rule
             if( !( *( _where_rules ) )[i]->_label.size() ) {
                 all_comments = 0;
             }
@@ -850,7 +848,7 @@ EnumTypeDescriptor::GenerateExpress( std::string & buf ) const {
             buf.append( "  WHERE\n" );
         }
 
-        for( i = 0; i < count; i++ ) { // print out each WHERE rule
+        for( int i = 0; i < count; i++ ) { // print out each WHERE rule
             if( !( *( _where_rules ) )[i]->_comment.empty() ) {
                 buf.append( "    " );
                 buf.append( ( *( _where_rules ) )[i]->comment_() );
@@ -1513,8 +1511,6 @@ TypeDescriptor::GenerateExpress( std::string & buf ) const {
     buf.append( " = " );
     const char * desc = Description();
     const char * ptr = desc;
-    int count;
-    int i;
     int all_comments = 1;
 
     while( *ptr != '\0' ) {
@@ -1533,8 +1529,8 @@ TypeDescriptor::GenerateExpress( std::string & buf ) const {
 ///////////////
     // count is # of WHERE rules
     if( _where_rules != 0 ) {
-        count = _where_rules->Count();
-        for( i = 0; i < count; i++ ) { // print out each UNIQUE rule
+        int count = _where_rules->Count();
+        for( int i = 0; i < count; i++ ) { // print out each UNIQUE rule
             if( !( *( _where_rules ) )[i]->_label.size() ) {
                 all_comments = 0;
             }
@@ -1546,7 +1542,7 @@ TypeDescriptor::GenerateExpress( std::string & buf ) const {
             buf.append( "    WHERE\n" );
         }
 
-        for( i = 0; i < count; i++ ) { // print out each WHERE rule
+        for( int i = 0; i < count; i++ ) { // print out each WHERE rule
             if( !( *( _where_rules ) )[i]->_comment.empty() ) {
                 buf.append( "    " );
                 buf.append( ( *( _where_rules ) )[i]->comment_() );

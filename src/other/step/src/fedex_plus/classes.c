@@ -1296,7 +1296,6 @@ LIBmemberFunctionPrint( Entity entity, FILE * file ) {
     /* added for calling multiple_inheritance */
     Linked_List parent_attr_list;
     Linked_List parent_list;
-    Entity super = 0;
     int super_cnt = 0;
 
     strncpy( entnm, ENTITYget_classname( entity ), BUFSIZ ); /*  assign entnm */
@@ -1323,7 +1322,6 @@ LIBmemberFunctionPrint( Entity entity, FILE * file ) {
                 or the super class doesn\'t have any attributes
             */
 
-            super = e;
             super_cnt++;
             if( super_cnt == 1 ) {
                 /* ignore the 1st parent */
@@ -1385,7 +1383,6 @@ LIBcopy_constructor( Entity ent, FILE * file ) {
     int count = attr_count;
 
     char * entnm = ENTITYget_classname( ent );
-    bool opt;
     const char * StrToLower( const char * word );
 
     /*mjm7/10/91 copy constructor definition  */
@@ -1400,7 +1397,6 @@ LIBcopy_constructor( Entity ent, FILE * file ) {
         generate_attribute_name( a, attrnm );
         t = VARget_type( a );
         class = TYPEget_type( t );
-        opt = VARget_optional( a );
 
         /*  1. initialize everything to NULL (even if not optional)  */
 
@@ -1523,7 +1519,6 @@ LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
     char attrnm [BUFSIZ];
 
     Linked_List list;
-    Entity super = 0;
     int super_cnt = 0;
     Entity principalSuper = 0;
 
@@ -1547,7 +1542,6 @@ LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
             */
             fprintf( file, "\t/*  parent: %s  */\n", ENTITYget_classname( e ) );
 
-            super = e;
             super_cnt++;
             if( super_cnt == 1 ) {
                 /* ignore the 1st parent */
@@ -1688,7 +1682,6 @@ LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
     char attrnm [BUFSIZ];
 
     Linked_List list;
-    Entity super = 0;
     int super_cnt = 0;
 
     /* added for calling parents constructor if there is one */
@@ -1740,7 +1733,6 @@ LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
                 */
             fprintf( file, "\t/*  parent: %s  */\n", ENTITYget_classname( e ) );
 
-            super = e;
             super_cnt++;
             if( super_cnt == 1 ) {
                 /* ignore the 1st parent */
