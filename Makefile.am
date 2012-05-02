@@ -98,11 +98,7 @@ EXTRA_DIST = \
 	BUGS \
 	CMakeLists.txt \
 	ChangeLog \
-	HACKING.cmake \
-	INSTALL.cmake \
-	README.cmake \
 	TODO \
-	TODO.cmake \
 	autogen.sh \
 	configure.cmake.sh \
 	libtool
