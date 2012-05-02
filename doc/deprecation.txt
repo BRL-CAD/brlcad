@@ -16,8 +16,9 @@ a) during a major release (e.g. going from 7.*.* to 8.*.*)
 
 b) during a minor release provided the change was publicly announced
    as deprecated beforehand AND sufficient deprecation warning was
-   given via either i) three minor releases included the deprecation
-   notice, and ii) at least three months passed since deprecation
+   given via i) two minor releases included the deprecation notice,
+   and ii) at least three months (90 days) have passed since the
+   deprecation was announced
 
 c) during a minor release provided there still exists an equivalent
    alternative interface that will not impose an undue burden on users
@@ -34,6 +35,15 @@ as needed.
 Where feasible, interfaces should be visibly marked as deprecated
 either during compile-time with #warning pre-processor declarations or
 during run-time with print statements.
+
+Example: Say we decided during 7.50.3 development to remove
+rt_shootray() from our API without a replacement that would qualify as
+"minimally impacting".  We'd annotate the deprecation here, mark the
+function as DEPRECATED in the API header, and post the 7.50.4 release.
+The soonest that function could be removed would be in the 7.54.0
+release during 7.53 development.  It could NOT be removed in 7.54.2
+since it's a patch version, prior to the 7.54 release line, nor even
+during 7.54.0 if less than 90 days had passed since 7.50.6 was posted.
 
 The items listed below are interfaces that are deprecated or obsolete,
 categorized by the release in which the change was made.  If the
