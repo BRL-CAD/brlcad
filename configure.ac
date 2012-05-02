@@ -314,9 +314,6 @@ BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit]
 # force enable/disable building of openNURBS
 BC_ARG_ENABLE([build_opennurbs], [opennurbs-build], [Build the included openNURBS library], [auto])
 
-# force enable/disable building of NIST STEP Class Libraries
-BC_ARG_ENABLE([build_step], [step-build], [Build the included STEP Class Libraries], [no])
-
 # force enable/disable building of termlib
 BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib library], [auto])
 
@@ -500,12 +497,6 @@ BC_ARG_ALIAS([build_opennurbs], [libopennurbs])
 BC_ARG_ALIAS([build_opennurbs], [libopennurbs-build])
 BC_ARG_ALIAS([build_opennurbs], [open-nurbs])
 BC_ARG_ALIAS([build_opennurbs], [open-nurbs-build])
-
-# aliases to force building NIST STEP Class Libraries (help uses step-build)
-BC_ARG_ALIAS([build_step], [step])
-BC_ARG_ALIAS([build_step], [steplibs])
-BC_ARG_ALIAS([build_step], [libstep-build])
-BC_ARG_ALIAS([build_step], [libstep])
 
 # aliases to force building tcl (help uses tcl-build)
 BC_ARG_ALIAS([build_tcl], [tcl])
@@ -820,9 +811,6 @@ AC_MSG_RESULT($bc_build_urt)
 
 AC_MSG_CHECKING(whether to build the openNURBS library)
 AC_MSG_RESULT($bc_build_opennurbs)
-
-AC_MSG_CHECKING(whether to build the NIST Step Class libraries)
-AC_MSG_RESULT($bc_build_step)
 
 AC_MSG_CHECKING(whether to build the Tcl library)
 AC_MSG_RESULT($bc_build_tcl)
@@ -2374,68 +2362,6 @@ dnl *********************************
 
 BC_CONFIGURE_STAGE([services], [8 of 9])
 
-dnl *** check for bison/yacc or flex/lex ***
-# scanner and parser are optionally needed for mged and other tools
-# that utilize a parser.  if both are found, provide a make var so we
-# can conditionally compile the parsers.
-build_parsers=no
-if test "x$ac_cv_prog_LEX" != "x" ; then
-    if test "x$ac_cv_prog_YACC" != "x" ; then
-	# we have both
-	build_parsers=yes
-    else
-	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_WARN([A YACC-style parser was not found so dependant portions of the package])
-	AC_MSG_WARN([(various MGED commands and STEP conversion support) will be disabled.])
-	AC_MSG_NOTICE([Installation of GNU Bison or Yacc before continuing is recommended.])
-	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	sleep 5
-    fi
-else
-    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-    if test "x$ac_cv_prog_YACC" != "x" ; then
-	AC_MSG_WARN([A LEX-style scanner was not found so dependant portions of the package])
-	AC_MSG_WARN([(various MGED commands and STEP conversion support) will be disabled.])
-	AC_MSG_NOTICE([Installation of GNU Flex or Lex before continuing is recommended.])
-    else
-	AC_MSG_WARN([Neither a YACC-style parser or a LEX-style scanner was found.])
-	AC_MSG_WARN([Dependant portions of the package will be disabled.])
-	AC_MSG_NOTICE([Installation of Bison/Yacc and Flex/Lex before continuing is recommended.])
-    fi
-    AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-    sleep 5
-fi
-#if test "x$build_parsers" = "xyes" ; then
-     # test for modern features in lex
-     #echo "%option reentrant bison-bridge" >> lex.l
-     #echo "%%" >> lex.l
-     #$LEX lex.l > /dev/null 2>&1
-     #ret=$?
-     #rm -f lex.l
-     #if test "x${ret}" != "x0" ; then
-	#build_parsers=no
-	#AC_MSG_WARN([The LEX-style scanner found does not support features required by])
-	#AC_MSG_WARN([BRL-CAD's LEX code.  Various MGED commands and geometry conversion])
-	#AC_MSG_WARN([routines will be disabled.])
-	#AC_MSG_NOTICE([Installation of a modern GNU Flex before continuing is recommended.])
-     #fi
-#fi
-
-AC_MSG_CHECKING([whether we have the essentials to make parsers])
-if test "x$build_parsers" = "xyes" ; then
-    AC_MSG_RESULT(yes)
-    AC_DEFINE(BC_WITH_PARSERS, 1, [Define to enable compilation of parsers])
-else
-    AC_MSG_RESULT(no)
-    if test "x$bc_build_step" = "xyes" ; then
-	AC_MSG_NOTICE([STEP was enabled, but no system lexer/parser was found])
-	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_NOTICE([Try adding --disable-step-build])
-	AC_MSG_ERROR([*** Building STEP support was enabled, yet no system lexer/parser was found ***])
-    fi
-    bc_build_step="no"
-fi
-
 dnl *** libpng ***
 png_works=no
 AC_MSG_CHECKING(for portable network graphics functionality)
@@ -2763,25 +2689,6 @@ else
 fi
 AC_SUBST(OPENNURBS)
 AC_SUBST(OPENNURBS_CPPFLAGS)
-
-dnl *** NIST STEP Class Libraries ***
-dnl figure out whether we need to build NIST STEP Class Libraries
-STEP_VERSION="3.2.0"
-AC_SUBST(STEP_VERSION)
-AC_MSG_CHECKING(whether to build NIST Step Class Libraries)
-STEP_CPPFLAGS='-I${top_srcdir}/src/other/step/include -I${top_srcdir}/src/other/step/src/cleditor -I${top_srcdir}/src/other/step/src/clstepcore -I${top_srcdir}/src/other/step/src/clutils -I${top_srcdir}/src/other/step/src/cldai -I${top_srcdir}/src/other/step/src/test'
-if test ! "x$bc_build_step" = "xno" ; then
-    STEP=""
-    build_brlcad_step=yes
-    AC_MSG_RESULT(no)
-else
-    build_brlcad_step=no
-    STEP=""
-    AC_MSG_RESULT(no)
-fi
-AC_SUBST(STEP)
-AC_SUBST(STEP_CPPFLAGS)
-
 
 dnl *** Tcl ***
 dnl See if libtcl seems to work
@@ -3909,7 +3816,6 @@ AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_OPENNURBS, [test "x$build_brlcad_opennurbs" = "xyes"])
 AM_CONDITIONAL(BUILD_BOOST, [test "x$ac_cv_header_limits" = "xyes" && test "x$ac_cv_header_istream" = "xyes"])
-AM_CONDITIONAL(BUILD_STEP, [test "x$build_brlcad_step" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_TNT, [test "x$build_brlcad_tnt" = "xyes"])
 AM_CONDITIONAL(BUILD_JOVE, [test "x$build_brlcad_jove" = "xyes"])
@@ -4019,18 +3925,6 @@ TIE='${top_builddir}/src/adrt/libtie.la'
 WDB='${top_builddir}/src/libwdb/libwdb.la'
 BRLCAD='${top_builddir}/src/libbrlcad.la'
 
-STEPCORE='${top_builddir}/src/other/step/src/clstepcore/libstepcore.la'
-STEPDAI='${top_builddir}/src/other/step/src/cldai/libstepdai.la'
-STEPEDITOR='${top_builddir}/src/other/step/src/cleditor/libstepeditor.la'
-STEPUTILS='${top_builddir}/src/other/step/src/clutils/libsteputils.la'
-STEPEXPRESS='${top_builddir}/src/other/step/src/express/libexpress.la'
-STEPEXPPP='${top_builddir}/src/other/step/src/exppp/libexppp.la'
-STEP_LIBS="${STEPCORE} ${STEPDAI} ${STEPEDITOR} ${STEPUTILS} ${STEPEXPRESS}"
-STEP_FEDEX='${top_builddir}/src/other/step/src/express/fedex'
-STEP_FEDEX_PLUS='${top_builddir}/src/other/step/src/fedex_plus/fedex_plus'
-STEP_EXPPP='${top_builddir}/src/other/step/src/exppp/exppp'
-STEP_AP203='${top_srcdir}/src/other/step/data/ap203/203wseds.exp'
-
 ORLE_LIBS=
 PKG_LIBS="${LIBSOCKET} ${LIBNSL} ${LIBNETWORK}"
 SYSV_LIBS=
@@ -4086,18 +3980,6 @@ AC_SUBST(TERMIO)
 AC_SUBST(TIE)
 AC_SUBST(WDB)
 AC_SUBST(BRLCAD)
-
-AC_SUBST(STEPCORE)
-AC_SUBST(STEPDAI)
-AC_SUBST(STEPEDITOR)
-AC_SUBST(STEPUTILS)
-AC_SUBST(STEPEXPRESS)
-AC_SUBST(STEPEXPPP)
-AC_SUBST(STEP_LIBS)
-AC_SUBST(STEP_FEDEX)
-AC_SUBST(STEP_FEDEX_PLUS)
-AC_SUBST(STEP_EXPPP)
-AC_SUBST(STEP_AP203)
 
 AC_SUBST(ANALYZE_LIBS)
 AC_SUBST(BN_LIBS)
@@ -4491,7 +4373,6 @@ AC_MSG_RESULT([Build termlib ........................: $build_brlcad_termlib])
 AC_MSG_RESULT([Build Utah Raster Toolkit.............: $build_brlcad_urt])
 AC_MSG_RESULT([Build Template Numerical Toolkit......: $build_brlcad_tnt])
 AC_MSG_RESULT([Build openNURBS.......................: $build_brlcad_opennurbs])
-AC_MSG_RESULT([Build NIST STEP Class Libraries.......: $build_brlcad_step])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([X11 support (optional)................: $build_against_x11])
 AC_MSG_RESULT([OpenGL support (optional).............: $build_against_opengl])

@@ -1,9 +1,3 @@
-if BUILD_STEP
-STEPDIR=step
-else !BUILD_STEP
-STEPDIR=
-endif
-
 IGESDIR=iges
 INTAVALDIR=intaval
 
@@ -39,14 +33,15 @@ else !ONLY_BENCHMARK
 SUBDIRS = \
 	${IGESDIR} \
 	${INTAVALDIR} \
-	${STEPDIR} \
 	vdeck
 
 DIST_SUBDIRS = \
 	iges \
 	intaval \
-	step \
 	vdeck
+
+EXTRA_DIST = \
+	step
 
 bin_PROGRAMS = \
 	3dm-g \
