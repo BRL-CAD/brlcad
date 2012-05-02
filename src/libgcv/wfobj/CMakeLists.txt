@@ -30,7 +30,6 @@ set(wfobj_ignore_files
 	tri_face.h
 	)
 CMAKEFILES(${wfobj_ignore_files})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8
