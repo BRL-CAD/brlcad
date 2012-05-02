@@ -4303,7 +4303,6 @@ AC_CONFIG_FILES([
 	src/libfb/Makefile
 	src/libfft/Makefile
 	src/libgcv/Makefile
-	src/libgcv/wfobj/Makefile
 	src/libged/Makefile
 	src/libicv/Makefile
 	src/libmultispectral/Makefile
