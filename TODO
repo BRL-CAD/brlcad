@@ -70,6 +70,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* make sure we can run db_dirbuild() multiple times without creating
+  duplicate entries.
+
 * work on vdeck/comgeom-g converters needed:
   - primitives recognized by comgeom-g but not vdeck:
       ehy, epa, eto, rhc, rpc
