@@ -215,8 +215,8 @@ EXTRA_DIST = \
 	tktable.dist \
 	togl.dist \
 	URToolkit.dist \
-	xsltproc \
-	xsltproc.dist
+	xmltools \
+	xmltools.dist
 
 # FIXME: need to only traverse tcl/tk if configured
 DIST_SUBDIRS = \

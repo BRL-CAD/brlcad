@@ -396,7 +396,7 @@ DEPRECATION NOTICE:
   This script along with the rest of the GNU Autotools build system is
   a deprecated interface (see doc/deprecation.txt for details) subject
   to removal in a future release of BRL-CAD and may not result in a
-  complete a build.
+  complete build.
 
   Please read INSTALL for new build instructions.
 "
