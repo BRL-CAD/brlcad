@@ -43,6 +43,7 @@ set(mged_TCLSCRIPTS
   helpdevel.tcl
   icreate.tcl
   illum.tcl
+  lc.tcl
   lgt_mat.tcl
   list.tcl
   make_solid.tcl
