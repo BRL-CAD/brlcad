@@ -47,6 +47,7 @@ foreach(pkgfile ${pkgconfig_DATA})
 endforeach(pkgfile ${pkgconfig_DATA})
 
 CMAKEFILES(${pkgconfig_DATA})
+CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

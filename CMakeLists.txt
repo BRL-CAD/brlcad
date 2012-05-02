@@ -2046,7 +2046,11 @@ if(NOT BRLCAD_IS_SUBBUILD)
     BUGS
     ChangeLog
     TODO
-    configure
+    autogen.sh
+    configure.ac
+    configure.cmake.sh
+    m4
+    Makefile.am
     CMakeLists.txt
     )
   CMAKEFILES(${toplevel_ignore_files})
@@ -2126,11 +2130,11 @@ file(READ ${BRLCAD_CMAKE_DIR}/configure_suffix.sh CONFIG_SUFFIX)
 file(APPEND ${CMAKE_BINARY_DIR}/configure.new "${CONFIG_SUFFIX}")
 # Compare
 execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
-  ${BRLCAD_SOURCE_DIR}/configure ${BRLCAD_BINARY_DIR}/configure.new
+  ${BRLCAD_SOURCE_DIR}/configure.cmake.sh ${BRLCAD_BINARY_DIR}/configure.new
   RESULT_VARIABLE IS_CONFIG_SH_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
   DIFF_ERROR)
 if(IS_CONFIG_SH_DIFFERENT)
-  message(WARNING "\n${BRLCAD_SOURCE_DIR}/configure is out of date. An updated version has been generated at ${BRLCAD_BINARY_DIR}/configure.new\nTo clear this warning, replace ${BRLCAD_SOURCE_DIR}/configure with ${BRLCAD_BINARY_DIR}/configure.new\n")
+  message(WARNING "\n${BRLCAD_SOURCE_DIR}/configure.cmake.sh is out of date. An updated version has been generated at ${BRLCAD_BINARY_DIR}/configure.new\nTo clear this warning, replace ${BRLCAD_SOURCE_DIR}/configure.cmake.sh with ${BRLCAD_BINARY_DIR}/configure.new\n")
 endif(IS_CONFIG_SH_DIFFERENT)
 
 

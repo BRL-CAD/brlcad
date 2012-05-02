@@ -223,6 +223,7 @@ set(conv_ignore_files
   walk_example.c
   )
 CMAKEFILES(${conv_ignore_files})
+CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

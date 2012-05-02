@@ -118,6 +118,7 @@ set(fb_MANS
   )
 ADD_MAN_PAGES(1 fb_MANS)
 CMAKEFILES(fbthreadtest.c)
+CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

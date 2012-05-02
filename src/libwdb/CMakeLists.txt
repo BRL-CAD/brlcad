@@ -51,6 +51,7 @@ if(CPP_DLL_DEFINES)
 endif(CPP_DLL_DEFINES)
 
 ADD_MAN_PAGES(3 libwdb.3)
+CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

@@ -5,7 +5,7 @@ set(doc_legal
   )
 BRLCAD_ADDDATA(doc_legal ${DOC_DIR}/legal)
 
-CMAKEFILES(bsd.txt bdl.txt lgpl.txt)
+CMAKEFILES(Makefile.am bsd.txt bdl.txt lgpl.txt)
 
 # Local Variables:
 # tab-width: 8

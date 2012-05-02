@@ -85,6 +85,7 @@ set(pc_ignore_files
   vm_test.cpp
   )
 CMAKEFILES(${pc_ignore_files})
+CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

@@ -38,6 +38,7 @@ set(gtools_ignore_files
   beset/population.h
   )
 CMAKEFILES(${gtools_ignore_files})
+CMAKEFILES(Makefile.am beset/Makefile.am)
 
 # Local Variables:
 # tab-width: 8

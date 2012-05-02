@@ -19,6 +19,7 @@ BRLCAD_ADDEXEC(rtsrv rtsrv.c "libremrt;liboptical;libpkg;libicv")
 SET_TARGET_PROPERTIES(rtsrv PROPERTIES COMPILE_DEFINITIONS "RTSRV")
 
 CMAKEFILES(ihost.h protocol.h)
+CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

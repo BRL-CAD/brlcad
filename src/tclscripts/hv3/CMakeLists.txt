@@ -22,6 +22,7 @@ set(hv3_ignore_files
   tclIndex
   )
 CMAKEFILES(${hv3_ignore_files})
+CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

@@ -8,7 +8,7 @@ set(swidgets_scripts_TCLSCRIPTS
 BRLCAD_ADDDATA(swidgets_scripts_TCLSCRIPTS tclscripts/swidgets/scripts)
 tclIndex_BUILD(swidgets_scripts tclscripts/swidgets/scripts)
 
-CMAKEFILES(tclIndex)
+CMAKEFILES(Makefile.am tclIndex)
 
 # Local Variables:
 # tab-width: 8

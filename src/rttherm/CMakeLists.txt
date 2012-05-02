@@ -25,6 +25,7 @@ set(rttherm_MANS
 ADD_MAN_PAGES(1 rttherm_MANS)
 
 CMAKEFILES(pixtest.c ssampview.tcl std_day_1km.dat test.sh)
+CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

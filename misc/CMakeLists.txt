@@ -71,9 +71,11 @@ set(misc_ignore_files
   debian
   doxygen_structure
   flawfinder
+  libtool.m4
   macosx
   nsis
   win32-msvc
+  Makefile.am
   )
 CMAKEFILES(${misc_ignore_files})
 

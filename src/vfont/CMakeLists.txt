@@ -16,6 +16,7 @@ BRLCAD_ADDDATA(fix.6r vfont)
 BRLCAD_ADDDATA(nonie.r.12 vfont)
 
 CMAKEFILES(vfont.h)
+CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

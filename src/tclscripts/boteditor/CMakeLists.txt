@@ -4,6 +4,7 @@ set(boteditor_TCLSCRIPTS
   botTools.tcl
   )
 BRLCAD_ADDDATA(boteditor_TCLSCRIPTS tclscripts/boteditor)
+CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

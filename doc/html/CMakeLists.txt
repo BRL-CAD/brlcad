@@ -340,6 +340,17 @@ set(html_ignore_files
   manuals/mged/animmate
   manuals/shaders
   manuals/small-eagleCAD.ico
+  Makefile.am
+  ReleaseNotes/Makefile.am
+  ReleaseNotes/Rel5.0/Makefile.am
+  ReleaseNotes/Rel5.0/Summary/Makefile.am
+  manuals/Makefile.am
+  manuals/Anim_Tutorial/Makefile.am
+  manuals/cadwidgets/Makefile.am
+  manuals/libbu/Makefile.am
+  manuals/libdm/Makefile.am
+  manuals/librt/Makefile.am
+  manuals/mged/Makefile.am
   )
 CMAKEFILES(${html_ignore_files})
 

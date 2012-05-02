@@ -47,6 +47,7 @@ ADD_MAN_PAGES(3 libplot3.3)
 BRLCAD_ADDEXEC(bntester bntester.c "libbu;libbn" NO_INSTALL)
 
 CMAKEFILES(
+  Makefile.am
   README
   bntester.dat
   ulp.c

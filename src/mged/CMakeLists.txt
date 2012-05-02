@@ -182,6 +182,7 @@ set(mged_ignore_files
   titles.h
   )
 CMAKEFILES(${mged_ignore_files})
+CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8
