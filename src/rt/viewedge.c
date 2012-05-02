@@ -456,6 +456,11 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	RT_CK_DBI(dbip);
 
 #if 0
+	/* FIXME: calling this when db_open()'s mapped file doesn't
+	 * fail will cause duplicate directory entries.  need to make
+	 * sure db_dirbuild rebuilds from scratch or only updates
+	 * existing entries when they exist.
+	 */
 	if (db_dirbuild(dbip) < 0)
 	    bu_exit(EXIT_FAILURE, "rtedge: could not read database.\n");
 #endif
