@@ -824,6 +824,12 @@ if(MSVC)
 endif(MSVC)
 
 # Based on what we are doing, we may need to constrain our search paths
+#
+# NOTE: Ideally we would set a matching property for 32 bit paths
+# on systems that default to 64 bit - as of 2.8.8 CMake doesn't yet
+# support FIND_LIBRARY_USE_LIB32_PATHS.  There is a bug report on the
+# topic here: http://www.cmake.org/Bug/view.php?id=11260 
+#
 if(${CMAKE_WORD_SIZE} MATCHES "32BIT")
   set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS OFF)
 else(${CMAKE_WORD_SIZE} MATCHES "32BIT")
