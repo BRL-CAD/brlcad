@@ -3042,11 +3042,35 @@ RT_EXPORT extern void db_conversions(struct db_i *,
 RT_EXPORT extern int db_v4_get_units_code(const char *str);
 
 /* db5_scan.c */
+
+/**
+ * A generic routine to determine the type of the database, (v4 or v5)
+ * and to invoke the appropriate db_scan()-like routine to build the
+ * in-memory directory.
+ *
+ * It is the caller's responsibility to close the database in case of
+ * error.
+ *
+ * Called from rt_dirbuild() and other places directly where a
+ * raytrace instance is not required.
+ *
+ * Returns -
+ * 0 OK
+ * -1 failure
+ */
 RT_EXPORT extern int db_dirbuild(struct db_i *dbip);
 RT_EXPORT extern struct directory *db5_diradd(struct db_i *dbip,
 					      const struct db5_raw_internal *rip,
 					      off_t laddr,
 					      genptr_t client_data);
+
+/**
+ * Scan a v5 database, sending each object off to a handler.
+ *
+ * Returns -
+ * 0 Success
+ * -1 Fatal Error
+ */
 RT_EXPORT extern int db5_scan(struct db_i *dbip,
 			      void (*handler)(struct db_i *,
 					      const struct db5_raw_internal *,

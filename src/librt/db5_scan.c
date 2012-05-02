@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup db5 */
-/** @{ */
-/** @file librt/db5_scan.c
- *
- * Scan a v5 database, sending each object off to a handler.
- *
- */
 
 #include "common.h"
 
@@ -38,13 +31,6 @@
 #include "raytrace.h"
 
 
-/**
- * D B 5 _ S C A N
- *
- * Returns -
- * 0 Success
- * -1 Fatal Error
- */
 int
 db5_scan(
     struct db_i *dbip,
@@ -281,9 +267,7 @@ db5_diradd(struct db_i *dbip,
 }
 
 
-/**
- * D B 5 _ D I R A D D _ H A N D L E R
- *
+/*
  * In support of db5_scan, add a named entry to the directory.
  */
 HIDDEN void
@@ -316,22 +300,6 @@ db5_diradd_handler(
 }
 
 
-/**
- * D B _ D I R B U I L D
- *
- * A generic routine to determine the type of the database, (v4 or v5)
- * and to invoke the appropriate db_scan()-like routine to build the
- * in-memory directory.
- *
- * It is the caller's responsibility to close the database in case of
- * error.
- *
- * Called from rt_dirbuild(), and g_submodel.c
- *
- * Returns -
- * 0 OK
- * -1 failure
- */
 int
 db_dirbuild(struct db_i *dbip)
 {
@@ -479,7 +447,6 @@ db_version(struct db_i *dbip)
 }
 
 
-/** @} */
 /*
  * Local Variables:
  * mode: C
