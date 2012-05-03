@@ -2921,6 +2921,7 @@ void
 TYPEprint_typedefs( Type t, FILE * classes ) {
     char nm [BUFSIZ];
     Type i;
+    bool aggrNot1d = true;
 
     /* Print the typedef statement (poss also a forward class def: */
     if( TYPEis_enumeration( t ) ) {
@@ -2962,24 +2963,25 @@ TYPEprint_typedefs( Type t, FILE * classes ) {
                 // loop at the end (in multpass.c).  2d aggrs (or higher), how-
                 // ever, can be processed now - they only require GenericAggr
                 // for their definition here. */
-                goto externln;
+                aggrNot1d = false;
             }
         }
-        /* At this point, we'll print typedefs for types which are redefined
-        // fundamental types and their aggregates, and for 2D aggregates(aggre-
-        // gates of aggregates) of enum's and selects. */
-        strncpy( nm, ClassName( TYPEget_name( t ) ), BUFSIZ );
-        fprintf( classes, "typedef %s \t%s;\n", TYPEget_ctype( t ), nm );
-        if( TYPEis_aggregate( t ) ) {
-            fprintf( classes, "typedef       %s *       %sH;\n", nm, nm );
-            fprintf( classes, "typedef const %s * const_%sH;\n", nm, nm );
-            fprintf( classes, "typedef       %s *       %s_ptr;\n", nm, nm );
-            fprintf( classes, "typedef const %s * const_%s_ptr;\n", nm, nm );
-            fprintf( classes, "typedef %s_ptr \t%s_var;\n", nm, nm );
+        if( aggrNot1d ) {
+            /* At this point, we'll print typedefs for types which are redefined
+            // fundamental types and their aggregates, and for 2D aggregates(aggre-
+            // gates of aggregates) of enum's and selects. */
+            strncpy( nm, ClassName( TYPEget_name( t ) ), BUFSIZ );
+            fprintf( classes, "typedef %s \t%s;\n", TYPEget_ctype( t ), nm );
+            if( TYPEis_aggregate( t ) ) {
+                fprintf( classes, "typedef       %s *       %sH;\n", nm, nm );
+                fprintf( classes, "typedef const %s * const_%sH;\n", nm, nm );
+                fprintf( classes, "typedef       %s *       %s_ptr;\n", nm, nm );
+                fprintf( classes, "typedef const %s * const_%s_ptr;\n", nm, nm );
+                fprintf( classes, "typedef %s_ptr \t%s_var;\n", nm, nm );
+            }
         }
     }
 
-externln:
     /* Print the extern statement: */
     strncpy( nm, TYPEtd_name( t ), BUFSIZ );
     fprintf( classes, "extern %s \t*%s;\n", GetTypeDescriptorName( t ), nm );

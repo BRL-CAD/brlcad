@@ -178,13 +178,10 @@ HASHlist( HashEntry * he ) {
                    setting it to he->e) and begin looking for a new value
                    for he->p
                  */
-retry:
+                while( he->p && he->type != '*' && he->type != he->p->type ) {
+                    he->p = he->p->next;
+                }
                 if( he->p ) {
-                    if( ( he->type != '*' ) &&
-                            ( he->type != he->p->type ) ) {
-                        he->p = he->p->next;
-                        goto retry;
-                    }
                     if( he->e ) {
                         return( he->e );
                     }
