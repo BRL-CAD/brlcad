@@ -320,7 +320,7 @@ STEPcomplex::STEPread( int id, int addFileId, class InstMgr * instance_set,
                         instance_set, in,
                         currSch );
             else {
-                cout << "ERROR: complex entity part \"" << typeNm.c_str()
+                cout << "ERROR: complex entity part \"" << typeNm
                      << "\" does not exist.\n";
                 _error.AppendToDetailMsg(
                     "Complex entity part of instance does not exist.\n" );
@@ -539,7 +539,7 @@ STEPcomplex::STEPread_error( char c, int index, istream & in ) {
 void
 STEPcomplex::STEPwrite( ostream & out, const char * currSch, int writeComment ) {
     if( writeComment && p21Comment && !p21Comment->empty() ) {
-        out << p21Comment->c_str();
+        out << p21Comment;
     }
     out << "#" << STEPfile_id << "=(";
     WriteExtMapEntities( out, currSch );

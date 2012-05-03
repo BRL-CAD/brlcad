@@ -475,10 +475,10 @@ Schema::GenerateUseRefExpress( ostream & out ) const {
                     }
                     if( !( ( *( is->explicit_items_() ) )[k]->original_id_().size() ) ) {
                         // not renamed
-                        out << ( *( is->explicit_items_() ) )[k]->new_id_().c_str();
+                        out << ( *( is->explicit_items_() ) )[k]->new_id_();
                     } else { // renamed
-                        out << ( *( is->explicit_items_() ) )[k]->original_id_().c_str();
-                        out << " AS " << ( *( is->explicit_items_() ) )[k]->new_id_().c_str();
+                        out << ( *( is->explicit_items_() ) )[k]->original_id_();
+                        out << " AS " << ( *( is->explicit_items_() ) )[k]->new_id_();
                     }
                 }
                 out << ");" << endl;
@@ -515,11 +515,11 @@ Schema::GenerateUseRefExpress( ostream & out ) const {
                     }
                     if( ( !( *( is->explicit_items_() ) )[k]->original_id_().size() ) ) {
                         // not renamed
-                        out << ( *( is->explicit_items_() ) )[k]->new_id_().c_str();
+                        out << ( *( is->explicit_items_() ) )[k]->new_id_();
                     } else { // renamed
-                        out << ( *( is->explicit_items_() ) )[k]->original_id_().c_str();
+                        out << ( *( is->explicit_items_() ) )[k]->original_id_();
                         out << " AS "
-                            << ( *( is->explicit_items_() ) )[k]->new_id_().c_str();
+                            << ( *( is->explicit_items_() ) )[k]->new_id_();
                     }
                 }
                 out << ");" << endl;
@@ -922,7 +922,7 @@ EntityDescriptor::GenerateExpress( std::string & buf ) const {
     if( strlen( _supertype_stmt.c_str() ) > 0 ) {
         buf.append( "\n  " );
     }
-    buf.append( _supertype_stmt.c_str() );
+    buf.append( _supertype_stmt );
 
     const EntityDescriptor * ed = 0;
     /*

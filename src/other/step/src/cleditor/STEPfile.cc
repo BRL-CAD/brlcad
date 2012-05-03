@@ -480,7 +480,7 @@ STEPfile::ReadData1( istream & in ) {
                 tmpbuf.clear();
                 FindStartOfInstance( in, tmpbuf );
                 cout << "ERROR: trying to recover from invalid data. skipping: "
-                     << tmpbuf.c_str() << endl;
+                     << tmpbuf << endl;
                 in >> c;
                 ReadTokenSeparator( in );
             }
@@ -599,7 +599,7 @@ STEPfile::ReadData2( istream & in, int useTechCor ) {
                 tmpbuf.clear();
                 FindStartOfInstance( in, tmpbuf );
                 cout << "ERROR: trying to recover from invalid data. skipping: "
-                     << tmpbuf.c_str() << endl;
+                     << tmpbuf << endl;
                 in >> c;
                 ReadTokenSeparator( in, &cmtStr );
             }
@@ -859,7 +859,7 @@ STEPfile::CreateInstance( istream & in, ostream & out ) {
             SkipInstance( in, tmpbuf );
             out << "WARNING: instance #" << fileid
                 << " User Defined Entity in DATA section ignored.\n"
-                << "\tData lost: \'!" << objnm.c_str() << "\': " << tmpbuf
+                << "\tData lost: \'!" << objnm << "\': " << tmpbuf
                 << endl;
             return ENTITY_NULL;
         } else {
@@ -886,7 +886,7 @@ STEPfile::CreateInstance( istream & in, ostream & out ) {
 
     if( obj == ENTITY_NULL ) {
         SkipInstance( in, tmpbuf );
-        out << "ERROR: instance #" << fileid << " \'" << objnm.c_str()
+        out << "ERROR: instance #" << fileid << " \'" << objnm
             << "\': " << result.UserMsg()
             << ".\n\tData lost: " << tmpbuf << "\n\n";
         return ENTITY_NULL;
@@ -1280,7 +1280,7 @@ STEPfile::ReadInstance( istream & in, ostream & out, std::string & cmtStr,
             SkipInstance( in, tmpbuf );
             out << "WARNING: #" << fileid <<
                 ". Ignoring User defined entity.\n\tdata lost: !"
-                << objnm.c_str() << tmpbuf << "\n";
+                << objnm << tmpbuf << "\n";
             ++_warningCount;
             return ENTITY_NULL;
         }
