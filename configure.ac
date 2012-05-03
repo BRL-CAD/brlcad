@@ -4060,11 +4060,6 @@ fi
 dnl configure enigma
 AC_CONFIG_SUBDIRS([misc/enigma])
 
-dnl configure step
-if test "x$build_brlcad_step" = "xyes" ; then
-    AC_CONFIG_SUBDIRS([src/other/step])
-fi
-
 dnl configure tkhtml
 if test "x$build_brlcad_tkhtml" = "xyes" ; then
     ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
@@ -4161,7 +4156,6 @@ AC_CONFIG_FILES([
 	src/conv/Makefile
 	src/conv/iges/Makefile
 	src/conv/intaval/Makefile
-	src/conv/step/Makefile
 	src/conv/vdeck/Makefile
 	src/external/Makefile
 	src/external/Cubit/Makefile
