@@ -86,6 +86,13 @@ generation.
 Redhat/Fedora
 -------------
 
+Development packages needed to build on Redhat/Fedora platforms:
+libXext-devel
+libXi-devel
+freetype-devel
+fontconfig-devel
+
+
 To determine what particular version of Redhat or Fedora you are
 using, check these files:
 
@@ -111,3 +118,4 @@ If you happen to be installing on a ppc64 Linux system, the binaries
 may not resolve correctly without being installed first.  Be sure to
 install before testing applications (i.e., even before running the
 benchmark or "make test").
+
