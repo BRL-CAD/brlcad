@@ -12,7 +12,7 @@ ENDMACRO()
 
 MACRO(SCL_ADDEXEC execname srcslist libslist)
   add_executable(${execname} ${srcslist})
-  target_link_libraries(${execname} ${libslist} ${STDCXX_LINKLIB})
+  target_link_libraries(${execname} ${libslist} ${STDCXX_LIBRARIES})
   INSTALL(TARGETS ${execname} DESTINATION bin)
   # Enable extra compiler flags if local executables and/or global options dictate
   SET(LOCAL_COMPILE_FLAGS "")

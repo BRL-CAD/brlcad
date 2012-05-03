@@ -94,7 +94,7 @@ SET_SOURCE_FILES_PROPERTIES(bootstrap/scanner.cc PROPERTIES OBJECT_DEPENDS ${LEM
 add_executable(re2c_bootstrap ${re2c_bootstrap_SRCS})
 
 # Need to link against stl library with some compilers.
-target_link_libraries(re2c_bootstrap "${STDCXX_LINKLIB}")
+target_link_libraries(re2c_bootstrap "${STDCXX_LIBRARIES}")
 
 if(TARGET_RUNTIME_OUTPUT_DIRECTORY)
   set_target_properties(re2c_bootstrap PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TARGET_RUNTIME_OUTPUT_DIRECTORY}")
@@ -121,7 +121,7 @@ SET(re2c_SRCS
 add_executable(re2c ${re2c_SRCS})
 
 # Need to link against stl library with some compilers.
-target_link_libraries(re2c "${STDCXX_LINKLIB}")
+target_link_libraries(re2c "${STDCXX_LIBRARIES}")
 
 configure_file(README.in ${CMAKE_CURRENT_BINARY_DIR}/README)
 configure_file(run_tests.sh.in ${CMAKE_CURRENT_BINARY_DIR}/run_tests.sh @ONLY)

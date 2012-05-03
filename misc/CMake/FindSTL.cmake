@@ -36,20 +36,20 @@
 # In some situations, it is necessary to explicitly link the C++ STL
 # library.  Traditional find_library searches won't work in all cases,
 # so an alternative approach is required.  By default stdc++ is searched
-# for, but this can be changed by setting the STDCXX_LINKLIB variable.
-# If already set, this routine will test the contents of STDCXX_LINKLIB.
-# STDCXX_LINKLIB will be set to the empty string if the test fails.
+# for, but this can be changed by setting the STDCXX_LIBRARIES variable.
+# If already set, this routine will test the contents of STDCXX_LIBRARIES.
+# STDCXX_LIBRARIES will be set to the empty string if the test fails.
 #
-#  STDCXX_LINKLIB - Contains linker args for using STL library.
+#  STDCXX_LIBRARIES - Contains linker args for using STL library.
 #
 #=============================================================================
 
-if(NOT STDCXX_LINKLIB)
-  set(STDCXX_LINKLIB "-lstdc++")
-endif(NOT STDCXX_LINKLIB)
+if(NOT STDCXX_LIBRARIES)
+  set(STDCXX_LIBRARIES "-lstdc++")
+endif(NOT STDCXX_LIBRARIES)
 
 set(CMAKE_REQUIRED_LIBRARIES_BAK "${CMAKE_REQUIRED_LIBRARIES}")
-set(CMAKE_REQUIRED_LIBRARIES "${STDCXX_LINKLIB}")
+set(CMAKE_REQUIRED_LIBRARIES "${STDCXX_LIBRARIES}")
 
 set(stl_test_src "
 int
@@ -65,15 +65,15 @@ CHECK_C_SOURCE_RUNS("${stl_test_src}" STL_LIB_TEST)
 SET(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES_BAK}")
 
 if("${STL_LIB_TEST}" EQUAL 1)
-  set(STDCXX_LINKLIB "${STDCXX_LINKLIB}" CACHE STRING "STL found" FORCE)
+  set(STDCXX_LIBRARIES "${STDCXX_LIBRARIES}" CACHE STRING "STL found" FORCE)
 else("${STL_LIB_TEST}" EQUAL 1)
-  set(STDCXX_LINKLIB "" CACHE STRING "STL not found" FORCE)
+  set(STDCXX_LIBRARIES "" CACHE STRING "STL not found" FORCE)
 endif("${STL_LIB_TEST}" EQUAL 1)
-mark_as_advanced(STDCXX_LINKLIB)
+mark_as_advanced(STDCXX_LIBRARIES)
 
 # handle the QUIETLY and REQUIRED arguments 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(STL DEFAULT_MSG STDCXX_LINKLIB)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(STL DEFAULT_MSG STDCXX_LIBRARIES)
 
 
 # Local Variables:
