@@ -93,16 +93,19 @@
  * mark macros as extensions else they may emit "ISO C forbids
  * braced-groups within expressions" warnings.
  */
+#if defined(__extension__) && GCC_PREREQ(4, 6) && !GCC_PREREQ(4, 7)
 
-#if defined(FD_SET) && defined(__FD_SET)
-#  undef FD_SET
-#  define FD_SET(x, y) __extension__ __FD_SET((x), (y))
-#endif
+#  if defined(FD_SET) && defined(__FD_SET)
+#    undef FD_SET
+#    define FD_SET(x, y) __extension__ __FD_SET((x), (y))
+#  endif
 
-#if defined(FD_ISSET) && defined(__FD_ISSET)
-#  undef FD_ISSET
-#  define FD_ISSET(x, y) __extension__ __FD_ISSET((x), (y))
-#endif
+#  if defined(FD_ISSET) && defined(__FD_ISSET)
+#    undef FD_ISSET
+#    define FD_ISSET(x, y) __extension__ __FD_ISSET((x), (y))
+#  endif
+
+#endif /* __extension__ */
 
 
 /* XXX is this really necessary?  the _read() and _write()
