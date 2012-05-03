@@ -51,100 +51,250 @@ struct _ged_rt_client_data {
 };
 
 
-int
-ged_rt(struct ged *gedp, int argc, const char *argv[])
+void
+_ged_rt_write(struct ged *gedp,
+	      FILE *fp,
+	      vect_t eye_model)
 {
-    char **vp;
-    int i;
-    int units_supplied = 0;
-    char pstring[32];
-    int args;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    size_t i;
+    quat_t quat;
+    struct solid *sp;
 
-    const char *bin;
-    char rt[256] = {0};
+    (void)fprintf(fp, "viewsize %.15e;\n", gedp->ged_gvp->gv_size);
+    quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
+    (void)fprintf(fp, "orientation %.15e %.15e %.15e %.15e;\n", V4ARGS(quat));
+    (void)fprintf(fp, "eye_pt %.15e %.15e %.15e;\n",
+		  eye_model[X], eye_model[Y], eye_model[Z]);
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    (void)fprintf(fp, "start 0; clean;\n");
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-    args = argc + 7 + 2 + ged_count_tops(gedp);
-    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
-
-    bin = bu_brlcad_root("bin", 1);
-    if (bin) {
-#ifdef _WIN32
-	snprintf(rt, 256, "\"%s/%s\"", bin, argv[0]);
-#else
-	snprintf(rt, 256, "%s/%s", bin, argv[0]);
-#endif
-    }
-
-    vp = &gedp->ged_gdp->gd_rt_cmd[0];
-    *vp++ = rt;
-    *vp++ = "-M";
-
-    if (gedp->ged_gvp->gv_perspective > 0) {
-	(void)sprintf(pstring, "-p%g", gedp->ged_gvp->gv_perspective);
-	*vp++ = pstring;
-    }
-
-    for (i = 1; i < argc; i++) {
-	if (argv[i][0] == '-' && argv[i][1] == 'u' &&
-	    BU_STR_EQUAL(argv[1], "-u")) {
-	    units_supplied=1;
-	} else if (argv[i][0] == '-' && argv[i][1] == '-' &&
-		   argv[i][2] == '\0') {
-	    ++i;
-	    break;
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    for (i = 0; i < sp->s_fullpath.fp_len; i++) {
+		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
+	    }
 	}
-	*vp++ = (char *)argv[i];
+
+	gdlp = next_gdlp;
     }
 
-    /* default to local units when not specified on command line */
-    if (!units_supplied) {
-	*vp++ = "-u";
-	*vp++ = "model";
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    for (i = 0; i < sp->s_fullpath.fp_len; i++) {
+		if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & RT_DIR_USED)) {
+		    struct animate *anp;
+		    for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp;
+			 anp=anp->an_forw) {
+			db_write_anim(fp, anp);
+		    }
+		    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags |= RT_DIR_USED;
+		}
+	    }
+	}
+
+	gdlp = next_gdlp;
     }
 
-    /* XXX why is this different for win32 only? */
-#ifdef _WIN32
-    {
-	char buf[512];
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-	snprintf(buf, 512, "\"%s\"", gedp->ged_wdbp->dbip->dbi_filename);
-	*vp++ = buf;
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    for (i = 0; i < sp->s_fullpath.fp_len; i++) {
+		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
+	    }
+	}
+
+	gdlp = next_gdlp;
+    }
+    (void)fprintf(fp, "end;\n");
+}
+
+
+void
+_ged_rt_set_eye_model(struct ged *gedp,
+		      vect_t eye_model)
+{
+    if (gedp->ged_gvp->gv_zclip || gedp->ged_gvp->gv_perspective > 0) {
+	vect_t temp;
+
+	VSET(temp, 0.0, 0.0, 1.0);
+	MAT4X3PNT(eye_model, gedp->ged_gvp->gv_view2model, temp);
+    } else {
+	/* not doing zclipping, so back out of geometry */
+	struct ged_display_list *gdlp;
+	struct ged_display_list *next_gdlp;
+	struct solid *sp;
+	int i;
+	vect_t direction;
+	vect_t extremum[2];
+	vect_t minus, plus;    /* vers of this solid's bounding box */
+
+	VSET(eye_model, -gedp->ged_gvp->gv_center[MDX],
+	     -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
+
+	for (i = 0; i < 3; ++i) {
+	    extremum[0][i] = INFINITY;
+	    extremum[1][i] = -INFINITY;
+	}
+
+	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+		minus[X] = sp->s_center[X] - sp->s_size;
+		minus[Y] = sp->s_center[Y] - sp->s_size;
+		minus[Z] = sp->s_center[Z] - sp->s_size;
+		VMIN(extremum[0], minus);
+		plus[X] = sp->s_center[X] + sp->s_size;
+		plus[Y] = sp->s_center[Y] + sp->s_size;
+		plus[Z] = sp->s_center[Z] + sp->s_size;
+		VMAX(extremum[1], plus);
+	    }
+
+	    gdlp = next_gdlp;
+	}
+
+	VMOVEN(direction, gedp->ged_gvp->gv_rotation + 8, 3);
+	for (i = 0; i < 3; ++i)
+	    if (NEAR_ZERO(direction[i], 1e-10))
+		direction[i] = 0.0;
+	if ((eye_model[X] >= extremum[0][X]) &&
+	    (eye_model[X] <= extremum[1][X]) &&
+	    (eye_model[Y] >= extremum[0][Y]) &&
+	    (eye_model[Y] <= extremum[1][Y]) &&
+	    (eye_model[Z] >= extremum[0][Z]) &&
+	    (eye_model[Z] <= extremum[1][Z])) {
+	    double t_in;
+	    vect_t diag;
+
+	    VSUB2(diag, extremum[1], extremum[0]);
+	    t_in = MAGNITUDE(diag);
+	    VJOIN1(eye_model, eye_model, t_in, direction);
+	}
+    }
+}
+
+
+void
+_ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
+{
+    struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
+    struct ged_run_rt *run_rtp;
+#ifndef _WIN32
+    int count = 0;
+#else
+    DWORD count = 0;
+#endif
+    int read_failed = 0;
+    char line[RT_MAXLINE+1] = {0};
+
+    if (drcdp == (struct _ged_rt_client_data *)NULL ||
+	drcdp->gedp == (struct ged *)NULL ||
+	drcdp->rrtp == (struct ged_run_rt *)NULL ||
+	brlcad_interp == (Tcl_Interp *)NULL)
+	return;
+
+    run_rtp = drcdp->rrtp;
+
+    /* Get data from rt */
+#ifndef _WIN32
+    count = read((int)run_rtp->fd, line, RT_MAXLINE);
+    if (count <= 0) {
+	read_failed = 1;
     }
 #else
-    *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
+    if (Tcl_Eof(run_rtp->chan) ||
+	(!ReadFile(run_rtp->fd, line, RT_MAXLINE, &count, 0))) {
+	read_failed = 1;
+    }
 #endif
 
-    /*
-     * Now that we've grabbed all the options, if no args remain,
-     * append the names of all stuff currently displayed.
-     * Otherwise, simply append the remaining args.
-     */
-    if (i == argc) {
-	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, vp, &gedp->ged_gdp->gd_rt_cmd[args]);
-    } else {
-	while (i < argc)
-	    *vp++ = (char *)argv[i++];
-	*vp = 0;
-	vp = &gedp->ged_gdp->gd_rt_cmd[0];
-	while (*vp)
-	    bu_vls_printf(gedp->ged_result_str, "%s ", *vp++);
-
-	bu_vls_printf(gedp->ged_result_str, "\n");
+    /* sanity clamping */
+    if (count < 0) {
+	perror("READ ERROR");
+	count = 0;
+    } else if (count > RT_MAXLINE) {
+	count = RT_MAXLINE;
     }
-    (void)_ged_run_rt(gedp);
-    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
-    gedp->ged_gdp->gd_rt_cmd = NULL;
 
-    return GED_OK;
+    if (read_failed) {
+	int aborted;
+
+	/* was it aborted? */
+#ifndef _WIN32
+	int rpid;
+	int retcode = 0;
+
+	Tcl_DeleteFileHandler(run_rtp->fd);
+	close(run_rtp->fd);
+
+	/* wait for the forked process */
+	while ((rpid = wait(&retcode)) != run_rtp->pid && rpid != -1);
+
+	aborted = run_rtp->aborted;
+#else
+	DWORD retcode = 0;
+	Tcl_DeleteChannelHandler(run_rtp->chan,
+				 _ged_rt_output_handler,
+				 (ClientData)drcdp);
+	Tcl_Close(brlcad_interp, run_rtp->chan);
+
+	/* wait for the forked process
+	 * either EOF has been sent or there was a read error.
+	 * there is no need to block indefinately
+	 */
+	WaitForSingleObject(run_rtp->hProcess, 120);
+	/* !!! need to observe implications of being non-infinate
+	 * WaitForSingleObject(run_rtp->hProcess, INFINITE);
+	 */
+
+	if (GetLastError() == ERROR_PROCESS_ABORTED) {
+	    run_rtp->aborted = 1;
+	}
+
+	GetExitCodeProcess(run_rtp->hProcess, &retcode);
+	/* may be useful to try pr_wait_status() here */
+
+	aborted = run_rtp->aborted;
+#endif
+
+	if (aborted)
+	    bu_log("Raytrace aborted.\n");
+	else if (retcode)
+	    bu_log("Raytrace failed.\n");
+	else
+	    bu_log("Raytrace complete.\n");
+
+	if (drcdp->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
+	    drcdp->gedp->ged_gdp->gd_rtCmdNotify(aborted);
+
+	/* free run_rtp */
+	BU_LIST_DEQUEUE(&run_rtp->l);
+	bu_free((genptr_t)run_rtp, "_ged_rt_output_handler: run_rtp");
+
+	bu_free((genptr_t)drcdp, "_ged_rt_output_handler: drcdp");
+
+	return;
+    }
+
+    /* for feelgoodedness */
+    line[count] = '\0';
+
+    /* handle (i.e., probably log to stderr) the resulting line */
+    if (drcdp->gedp->ged_output_handler != (void (*)())0)
+	drcdp->gedp->ged_output_handler(drcdp->gedp, line);
+    else
+	bu_vls_printf(drcdp->gedp->ged_result_str, "%s", line);
 }
 
 
@@ -313,187 +463,6 @@ _ged_run_rt(struct ged *gedp)
 }
 
 
-void
-_ged_rt_write(struct ged *gedp,
-	      FILE *fp,
-	      vect_t eye_model)
-{
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
-    size_t i;
-    quat_t quat;
-    struct solid *sp;
-
-    (void)fprintf(fp, "viewsize %.15e;\n", gedp->ged_gvp->gv_size);
-    quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
-    (void)fprintf(fp, "orientation %.15e %.15e %.15e %.15e;\n", V4ARGS(quat));
-    (void)fprintf(fp, "eye_pt %.15e %.15e %.15e;\n",
-		  eye_model[X], eye_model[Y], eye_model[Z]);
-
-    (void)fprintf(fp, "start 0; clean;\n");
-
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    for (i = 0; i < sp->s_fullpath.fp_len; i++) {
-		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
-	    }
-	}
-
-	gdlp = next_gdlp;
-    }
-
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    for (i = 0; i < sp->s_fullpath.fp_len; i++) {
-		if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & RT_DIR_USED)) {
-		    struct animate *anp;
-		    for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp;
-			 anp=anp->an_forw) {
-			db_write_anim(fp, anp);
-		    }
-		    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags |= RT_DIR_USED;
-		}
-	    }
-	}
-
-	gdlp = next_gdlp;
-    }
-
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    for (i = 0; i < sp->s_fullpath.fp_len; i++) {
-		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
-	    }
-	}
-
-	gdlp = next_gdlp;
-    }
-    (void)fprintf(fp, "end;\n");
-}
-
-
-void
-_ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
-{
-    struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
-    struct ged_run_rt *run_rtp;
-#ifndef _WIN32
-    int count = 0;
-#else
-    DWORD count = 0;
-#endif
-    int read_failed = 0;
-    char line[RT_MAXLINE+1] = {0};
-
-    if (drcdp == (struct _ged_rt_client_data *)NULL ||
-	drcdp->gedp == (struct ged *)NULL ||
-	drcdp->rrtp == (struct ged_run_rt *)NULL ||
-	brlcad_interp == (Tcl_Interp *)NULL)
-	return;
-
-    run_rtp = drcdp->rrtp;
-
-    /* Get data from rt */
-#ifndef _WIN32
-    count = read((int)run_rtp->fd, line, RT_MAXLINE);
-    if (count <= 0) {
-	read_failed = 1;
-    }
-#else
-    if (Tcl_Eof(run_rtp->chan) ||
-	(!ReadFile(run_rtp->fd, line, RT_MAXLINE, &count, 0))) {
-	read_failed = 1;
-    }
-#endif
-
-    /* sanity clamping */
-    if (count < 0) {
-	perror("READ ERROR");
-	count = 0;
-    } else if (count > RT_MAXLINE) {
-	count = RT_MAXLINE;
-    }
-
-    if (read_failed) {
-	int aborted;
-
-	/* was it aborted? */
-#ifndef _WIN32
-	int rpid;
-	int retcode = 0;
-
-	Tcl_DeleteFileHandler(run_rtp->fd);
-	close(run_rtp->fd);
-
-	/* wait for the forked process */
-	while ((rpid = wait(&retcode)) != run_rtp->pid && rpid != -1);
-
-	aborted = run_rtp->aborted;
-#else
-	DWORD retcode = 0;
-	Tcl_DeleteChannelHandler(run_rtp->chan,
-				 _ged_rt_output_handler,
-				 (ClientData)drcdp);
-	Tcl_Close(brlcad_interp, run_rtp->chan);
-
-	/* wait for the forked process
-	 * either EOF has been sent or there was a read error.
-	 * there is no need to block indefinately
-	 */
-	WaitForSingleObject(run_rtp->hProcess, 120);
-	/* !!! need to observe implications of being non-infinate
-	 * WaitForSingleObject(run_rtp->hProcess, INFINITE);
-	 */
-
-	if (GetLastError() == ERROR_PROCESS_ABORTED) {
-	    run_rtp->aborted = 1;
-	}
-
-	GetExitCodeProcess(run_rtp->hProcess, &retcode);
-	/* may be useful to try pr_wait_status() here */
-
-	aborted = run_rtp->aborted;
-#endif
-
-	if (aborted)
-	    bu_log("Raytrace aborted.\n");
-	else if (retcode)
-	    bu_log("Raytrace failed.\n");
-	else
-	    bu_log("Raytrace complete.\n");
-
-	if (drcdp->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
-	    drcdp->gedp->ged_gdp->gd_rtCmdNotify(aborted);
-
-	/* free run_rtp */
-	BU_LIST_DEQUEUE(&run_rtp->l);
-	bu_free((genptr_t)run_rtp, "_ged_rt_output_handler: run_rtp");
-
-	bu_free((genptr_t)drcdp, "_ged_rt_output_handler: drcdp");
-
-	return;
-    }
-
-    /* for feelgoodedness */
-    line[count] = '\0';
-
-    /* handle (i.e., probably log to stderr) the resulting line */
-    if (drcdp->gedp->ged_output_handler != (void (*)())0)
-	drcdp->gedp->ged_output_handler(drcdp->gedp, line);
-    else
-	bu_vls_printf(drcdp->gedp->ged_result_str, "%s", line);
-}
-
-
 /**
  *
  */
@@ -540,69 +509,100 @@ ged_build_tops(struct ged *gedp, char **start, char **end)
 }
 
 
-void
-_ged_rt_set_eye_model(struct ged *gedp,
-		      vect_t eye_model)
+int
+ged_rt(struct ged *gedp, int argc, const char *argv[])
 {
-    if (gedp->ged_gvp->gv_zclip || gedp->ged_gvp->gv_perspective > 0) {
-	vect_t temp;
+    char **vp;
+    int i;
+    int units_supplied = 0;
+    char pstring[32];
+    int args;
 
-	VSET(temp, 0.0, 0.0, 1.0);
-	MAT4X3PNT(eye_model, gedp->ged_gvp->gv_view2model, temp);
-    } else {
-	/* not doing zclipping, so back out of geometry */
-	struct ged_display_list *gdlp;
-	struct ged_display_list *next_gdlp;
-	struct solid *sp;
-	int i;
-	vect_t direction;
-	vect_t extremum[2];
-	vect_t minus, plus;    /* vers of this solid's bounding box */
+    const char *bin;
+    char rt[256] = {0};
 
-	VSET(eye_model, -gedp->ged_gvp->gv_center[MDX],
-	     -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
-	for (i = 0; i < 3; ++i) {
-	    extremum[0][i] = INFINITY;
-	    extremum[1][i] = -INFINITY;
-	}
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
-	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+    args = argc + 7 + 2 + ged_count_tops(gedp);
+    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-		minus[X] = sp->s_center[X] - sp->s_size;
-		minus[Y] = sp->s_center[Y] - sp->s_size;
-		minus[Z] = sp->s_center[Z] - sp->s_size;
-		VMIN(extremum[0], minus);
-		plus[X] = sp->s_center[X] + sp->s_size;
-		plus[Y] = sp->s_center[Y] + sp->s_size;
-		plus[Z] = sp->s_center[Z] + sp->s_size;
-		VMAX(extremum[1], plus);
-	    }
-
-	    gdlp = next_gdlp;
-	}
-
-	VMOVEN(direction, gedp->ged_gvp->gv_rotation + 8, 3);
-	for (i = 0; i < 3; ++i)
-	    if (NEAR_ZERO(direction[i], 1e-10))
-		direction[i] = 0.0;
-	if ((eye_model[X] >= extremum[0][X]) &&
-	    (eye_model[X] <= extremum[1][X]) &&
-	    (eye_model[Y] >= extremum[0][Y]) &&
-	    (eye_model[Y] <= extremum[1][Y]) &&
-	    (eye_model[Z] >= extremum[0][Z]) &&
-	    (eye_model[Z] <= extremum[1][Z])) {
-	    double t_in;
-	    vect_t diag;
-
-	    VSUB2(diag, extremum[1], extremum[0]);
-	    t_in = MAGNITUDE(diag);
-	    VJOIN1(eye_model, eye_model, t_in, direction);
-	}
+    bin = bu_brlcad_root("bin", 1);
+    if (bin) {
+#ifdef _WIN32
+	snprintf(rt, 256, "\"%s/%s\"", bin, argv[0]);
+#else
+	snprintf(rt, 256, "%s/%s", bin, argv[0]);
+#endif
     }
+
+    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+    *vp++ = rt;
+    *vp++ = "-M";
+
+    if (gedp->ged_gvp->gv_perspective > 0) {
+	(void)sprintf(pstring, "-p%g", gedp->ged_gvp->gv_perspective);
+	*vp++ = pstring;
+    }
+
+    for (i = 1; i < argc; i++) {
+	if (argv[i][0] == '-' && argv[i][1] == 'u' &&
+	    BU_STR_EQUAL(argv[1], "-u")) {
+	    units_supplied=1;
+	} else if (argv[i][0] == '-' && argv[i][1] == '-' &&
+		   argv[i][2] == '\0') {
+	    ++i;
+	    break;
+	}
+	*vp++ = (char *)argv[i];
+    }
+
+    /* default to local units when not specified on command line */
+    if (!units_supplied) {
+	*vp++ = "-u";
+	*vp++ = "model";
+    }
+
+    /* XXX why is this different for win32 only? */
+#ifdef _WIN32
+    {
+	char buf[512];
+
+	snprintf(buf, 512, "\"%s\"", gedp->ged_wdbp->dbip->dbi_filename);
+	*vp++ = buf;
+    }
+#else
+    *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
+#endif
+
+    /*
+     * Now that we've grabbed all the options, if no args remain,
+     * append the names of all stuff currently displayed.
+     * Otherwise, simply append the remaining args.
+     */
+    if (i == argc) {
+	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
+	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, vp, &gedp->ged_gdp->gd_rt_cmd[args]);
+    } else {
+	while (i < argc)
+	    *vp++ = (char *)argv[i++];
+	*vp = 0;
+	vp = &gedp->ged_gdp->gd_rt_cmd[0];
+	while (*vp)
+	    bu_vls_printf(gedp->ged_result_str, "%s ", *vp++);
+
+	bu_vls_printf(gedp->ged_result_str, "\n");
+    }
+    (void)_ged_run_rt(gedp);
+    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
+    gedp->ged_gdp->gd_rt_cmd = NULL;
+
+    return GED_OK;
 }
 
 
