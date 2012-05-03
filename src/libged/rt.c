@@ -62,10 +62,10 @@ _ged_rt_write(struct ged *gedp,
     quat_t quat;
     struct solid *sp;
 
-    (void)fprintf(fp, "viewsize %.15e;\n", gedp->ged_gvp->gv_size);
+    (void)fprintf(fp, "viewsize %.14e;\n", gedp->ged_gvp->gv_size);
     quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
-    (void)fprintf(fp, "orientation %.15e %.15e %.15e %.15e;\n", V4ARGS(quat));
-    (void)fprintf(fp, "eye_pt %.15e %.15e %.15e;\n",
+    (void)fprintf(fp, "orientation %.14e %.14e %.14e %.14e;\n", V4ARGS(quat));
+    (void)fprintf(fp, "eye_pt %.14e %.14e %.14e;\n",
 		  eye_model[X], eye_model[Y], eye_model[Z]);
 
     (void)fprintf(fp, "start 0; clean;\n");
