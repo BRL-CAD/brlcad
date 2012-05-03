@@ -149,8 +149,11 @@ CLEANFILES = \
 	iges.g \
 	iges.log \
 	iges_file.iges \
+	iges_file2.iges \
+	iges_file3.iges \
 	iges_new.g \
 	iges_stdout.iges \
+	iges_stdout2.iges \
 	iges_stdout_new.g \
 	lights.asc \
 	lights.g \
@@ -160,6 +163,7 @@ CLEANFILES = \
 	m35.asc \
 	m35.cg \
 	m35.g \
+	m35-baseline.cg \
 	mged.g \
 	mged.log \
 	moss-diff.log \
