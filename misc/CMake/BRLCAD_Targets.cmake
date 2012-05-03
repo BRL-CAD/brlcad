@@ -370,41 +370,43 @@ endmacro(BRLCAD_ADDLIB libname srcslist libslist)
 #     or BRLCAD_BINARY_DIR paths, they are appended.
 # 4.  Any remaining paths are appended.
 macro(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
-  if(${DIR_LIST})
-    set(ORDERED_ELEMENTS ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${BRLCAD_BINARY_DIR}/include ${BRLCAD_SOURCE_DIR}/include)
-    set(NEW_DIR_LIST "")
-    list(REMOVE_DUPLICATES ${DIR_LIST})
-    foreach(element ${ORDERED_ELEMENTS})
-      set(DEF_EXISTS "-1")
-      list(FIND ${DIR_LIST} ${element} DEF_EXISTS)
-      if(NOT "${DEF_EXISTS}" STREQUAL "-1")
-	set(NEW_DIR_LIST ${NEW_DIR_LIST} ${element})
-	list(REMOVE_ITEM ${DIR_LIST} ${element})
-      endif(NOT "${DEF_EXISTS}" STREQUAL "-1")
-    endforeach(element ${ORDERED_ELEMENTS})
+	if(${DIR_LIST})
+		set(ORDERED_ELEMENTS ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${BRLCAD_BINARY_DIR}/include ${BRLCAD_SOURCE_DIR}/include)
+		set(NEW_DIR_LIST "")
+		foreach(element ${ORDERED_ELEMENTS})
+			set(DEF_EXISTS "-1")
+			list(FIND ${DIR_LIST} ${element} DEF_EXISTS)
+			if(NOT "${DEF_EXISTS}" STREQUAL "-1")
+				set(NEW_DIR_LIST ${NEW_DIR_LIST} ${element})
+				list(REMOVE_ITEM ${DIR_LIST} ${element})
+			endif(NOT "${DEF_EXISTS}" STREQUAL "-1")
+		endforeach(element ${ORDERED_ELEMENTS})
 
-    # paths in BRL-CAD build dir
-    foreach(inc_path ${${DIR_LIST}})
-      if("${inc_path}" STREQUAL "${BRLCAD_BINARY_DIR}")
-	set(NEW_DIR_LIST ${NEW_DIR_LIST} ${inc_path})
-	list(REMOVE_ITEM ${DIR_LIST} ${inc_path})
-      endif("${inc_path}" STREQUAL "${BRLCAD_BINARY_DIR}")
-    endforeach(inc_path ${${DIR_LIST}})
+		# paths in BRL-CAD build dir
+		foreach(inc_path ${${DIR_LIST}})
+			if("${inc_path}" MATCHES "${BRLCAD_BINARY_DIR}")
+				set(NEW_DIR_LIST ${NEW_DIR_LIST} ${inc_path})
+				list(REMOVE_ITEM ${DIR_LIST} ${inc_path})
+			endif("${inc_path}" MATCHES "${BRLCAD_BINARY_DIR}")
+		endforeach(inc_path ${${DIR_LIST}})
 
-    # paths in BRL-CAD source dir
-    foreach(inc_path ${${DIR_LIST}})
-      if("${inc_path}" STREQUAL "${BRLCAD_SOURCE_DIR}")
-	set(NEW_DIR_LIST ${NEW_DIR_LIST} ${inc_path})
-	list(REMOVE_ITEM ${DIR_LIST} ${inc_path})
-      endif("${inc_path}" STREQUAL "${BRLCAD_SOURCE_DIR}")
-    endforeach(inc_path ${${DIR_LIST}})
+		# paths in BRL-CAD source dir
+		foreach(inc_path ${${DIR_LIST}})
+			if("${inc_path}" MATCHES "${BRLCAD_SOURCE_DIR}")
+				set(NEW_DIR_LIST ${NEW_DIR_LIST} ${inc_path})
+				list(REMOVE_ITEM ${DIR_LIST} ${inc_path})
+			endif("${inc_path}" MATCHES "${BRLCAD_SOURCE_DIR}")
+		endforeach(inc_path ${${DIR_LIST}})
 
-    # add anything that might be left
-    set(NEW_DIR_LIST ${NEW_DIR_LIST} ${${DIR_LIST}})
+		# add anything that might be left
+		set(NEW_DIR_LIST ${NEW_DIR_LIST} ${${DIR_LIST}})
+	
+	   # remove any duplicates	
+		list(REMOVE_DUPLICATES NEW_DIR_LIST)
 
-    # put the results into DIR_LIST
-    set(${DIR_LIST} ${NEW_DIR_LIST})
-  endif(${DIR_LIST})
+		# put the results into DIR_LIST
+		set(${DIR_LIST} ${NEW_DIR_LIST})
+	endif(${DIR_LIST})
 endmacro(BRLCAD_SORT_INCLUDE_DIRS)
 
 
