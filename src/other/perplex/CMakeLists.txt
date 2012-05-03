@@ -27,6 +27,7 @@ set(perplex_sources
 
 add_executable(perplex ${perplex_sources})
 
-# FIXME: need to link against stl library with some compilers.
-# assuming libstdc++ but not portable, need to test for it.
-target_link_libraries(perplex stdc++)
+# Need to link against stl library with some compilers.
+if(STDCXX_LINKLIB)
+  target_link_libraries(perplex "${STDCXX_LINKLIB}")
+endif(STDCXX_LINKLIB)
