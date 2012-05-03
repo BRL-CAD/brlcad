@@ -62,6 +62,15 @@ _ged_rt_write(struct ged *gedp,
     quat_t quat;
     struct solid *sp;
 
+    /* Double-precision IEEE floating point only guarantees 15-17
+     * digits of precision; single-precision only 6-9 significant
+     * decimal digits.  Using a %.15e precision specifier makes our
+     * printed value dip into unreliable territory (1+15 digits).
+     * Looking through our history, %.14e seems to be safe as the
+     * value prior to printing quaternions was %.9e, although anything
+     * from 9->14 "should" be safe as it's above our calculation
+     * tolerance and above single-precision capability.
+     */
     (void)fprintf(fp, "viewsize %.14e;\n", gedp->ged_gvp->gv_size);
     quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
     (void)fprintf(fp, "orientation %.14e %.14e %.14e %.14e;\n", V4ARGS(quat));
