@@ -2318,7 +2318,7 @@ ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap ) {
     const char * n;
     Linked_List wheres;
     char * whereRule, *whereRule_formatted = NULL;
-    int whereRule_formatted_size = 0;
+    size_t whereRule_formatted_size = 0;
     char * ptr, *ptr2;
     char * uniqRule, *uniqRule_formatted;
     Linked_List uniqs;
@@ -3326,7 +3326,7 @@ void
 TYPEprint_new( const Type type, FILE * create, Schema schema ) {
     Linked_List wheres;
     char * whereRule, *whereRule_formatted = NULL;
-    int whereRule_formatted_size = 0;
+    size_t whereRule_formatted_size = 0;
     char * ptr, *ptr2;
 
     Type tmpType = TYPEget_head( type );

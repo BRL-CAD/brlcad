@@ -95,7 +95,7 @@ HASHinsert( Hash_TableP t, char * s, void * data ) {
 
 Hash_TableP
 HASHcreate( unsigned count ) {
-    int     i;
+    unsigned int i;
     Hash_TableP table;
 
     /*
