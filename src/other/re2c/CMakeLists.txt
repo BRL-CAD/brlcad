@@ -92,6 +92,11 @@ SET(re2c_bootstrap_SRCS
 SET_SOURCE_FILES_PROPERTIES(bootstrap/scanner.cc PROPERTIES OBJECT_DEPENDS ${LEMON_re2cParse_OUTPUT_HEADER})
 
 add_executable(re2c_bootstrap ${re2c_bootstrap_SRCS})
+
+# FIXME: need to link against stl library with some compilers.
+# assuming libstdc++ but not portable, need to test for it.
+target_link_libraries(re2c_bootstrap stdc++)
+
 if(TARGET_RUNTIME_OUTPUT_DIRECTORY)
   set_target_properties(re2c_bootstrap PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TARGET_RUNTIME_OUTPUT_DIRECTORY}")
   foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
@@ -115,6 +120,10 @@ SET(re2c_SRCS
   )
 
 add_executable(re2c ${re2c_SRCS})
+
+# FIXME: need to link against stl library with some compilers.
+# assuming libstdc++ but not portable, need to test for it.
+target_link_libraries(re2c stdc++)
 
 configure_file(README.in ${CMAKE_CURRENT_BINARY_DIR}/README)
 configure_file(run_tests.sh.in ${CMAKE_CURRENT_BINARY_DIR}/run_tests.sh @ONLY)
