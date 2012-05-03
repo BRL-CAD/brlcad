@@ -50,20 +50,12 @@ create_builtin_type_defn( FILES * files, char * name ) {
  ** Returns:
  ** Description:  handles file related tasks that need to be done once
  ** at the beginning of processing.
- ** In this case the files make_schema and schema.h are initiated
- ** Side Effects:  prints opening line of make_schema file
+ ** In this case the file schema.h is initiated
  ** Status:  ok 1/15/91
  ******************************************************************/
 
 /*ARGSUSED*/
 void print_file_header( Express express, FILES * files ) {
-    /*  open file to record schema source files in to be used in makefile  */
-    if( ( ( files -> make ) = fopen( "make_schema", "w" ) ) == NULL ) {
-        printf( "**Error in print_file_header:  unable to open file make_schema ** \n" );
-    }
-    fprintf( files -> make, "OFILES = schema.o SdaiAll.o compstructs.o" );
-
-
     /*  open file which unifies all schema specific header files
     of input Express source */
     files -> incall = FILEcreate( "schema.h" );
@@ -114,15 +106,12 @@ void print_file_header( Express express, FILES * files ) {
  **     FILE*        file   - file on which to print trailer
  ** Returns:
  ** Description:  handles cleaning up things at end of processing
- ** Side Effects:  closes make_schema file
  ** Status:  ok 1/15/91
  ******************************************************************/
 
 /*ARGSUSED*/
 void
 print_file_trailer( Express express, FILES * files ) {
-    fprintf( files->make, "\n" );
-    fclose( files->make );
     FILEclose( files->incall );
     FILEclose( files->initall );
     fprintf( files->create, "}\n\n" );
@@ -433,7 +422,6 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
          *incfile,
          *schemafile = files->incall,
           *schemainit = files->initall,
-           *makefile = files->make,
             *initfile,
             *createall = files->create;
     Rule r;
@@ -603,19 +591,6 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
 
     /**********  record in files relating to entire input   ***********/
 
-    /*  add source files to list for makefile   */
-    fprintf( makefile, "\\\n\t%s.o ", sufnm );
-    if( schema->search_id == PROCESSED ) {
-        /* if this is our last pass through schema */
-        fprintf( makefile, "\\\n\t%s.init.o ", schnm );
-    }
-    /* the following messes things up when it generates the extra select .h and
-       .cc files. */
-    /*
-        fprintf (makefile, "\n#\t%s.init.o \\",schnm);
-        fprintf (makefile, "\n#\tosdb_%s.o ",schnm);
-    */
-
     /*  add to schema's include and initialization file */
     fprintf( schemafile, "#include <%s.h> \n", sufnm );
     if( schema->search_id == PROCESSED ) {
@@ -623,20 +598,6 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
         fprintf( schemainit, "\t extern void %sInit (Registry & r);\n", schnm );
         fprintf( schemainit, "\t %sInit (reg); \n", schnm );
     }
-
-    /**********  make an explicit makefile rule for the schema  ***********/
-    /*  replaced by list of source files (above) used with a general rule
-    in the makefile.  the code is here in case it is needed later   */
-
-    /*    fprintf (makefile, " \n%s.o:  %s.cc\n", schnm);
-    //    fprintf (makefile, "\techo  \"compiling %s.cc\" \n", schnm);
-    //    fprintf (makefile, "\tCC -I$(INCLUDE) -c %s.cc -L$(LIBS)\n", schnm);
-    //    fclose (makefile);
-    //    if ((makefile = fopen ("makefull", "a")) == NULL) {
-    //  printf ("**Error in SCHEMAprint:  unable to open file sources ** \n");
-    //  return;
-    //    }
-    */
 
     /**********  do the schemas ***********/
 
@@ -723,7 +684,6 @@ EXPRESSPrint( Express express, ComplexCollect & col, FILES * files ) {
     FILE * incfile;
     FILE * schemafile = files -> incall;
     FILE * schemainit = files -> initall;
-    FILE * makefile = files -> make;
     FILE * initfile;
     /* new */
     Schema schema;
@@ -761,29 +721,11 @@ EXPRESSPrint( Express express, ComplexCollect & col, FILES * files ) {
 
     /**********  record in files relating to entire input   ***********/
 
-    /*  add source files to list for makefile   */
-    fprintf( makefile, "\\\n	%s.o   ", schnm );
-    fprintf( makefile, "\\\n	%s.init.o   ", schnm );
-
     /*  add to schema's include and initialization file */
     fprintf( schemafile, "#include <%s.h>\n\n", schnm );
     fprintf( schemafile, "extern void %sInit (Registry & r);\n", schnm );
     fprintf( schemainit, "\t extern void %sInit (Registry & r);\n", schnm );
     fprintf( schemainit, "\t %sInit (reg);\n", schnm );
-
-    /**********  make an explicit makefile rule for the schema  ***********/
-    /*  replaced by list of source files (above) used with a general rule
-    in the makefile.  the code is here in case it is needed later   */
-
-    /*    fprintf (makefile, " \n%s.o:  %s.cc\n", schnm, schnm);
-    //    fprintf (makefile, "\techo  \"compiling %s.cc\" \n", schnm);
-    //    fprintf (makefile, "\tCC -I$(INCLUDE) -c %s.cc -L$(LIBS)\n", schnm);
-    //    fclose (makefile);
-    //    if ((makefile = fopen ("makefull", "a")) == NULL) {
-    //  printf ("**Error in SCHEMAprint:  unable to open file sources ** \n");
-    //  return;
-    //    }
-    */
 
     /**********  do all schemas ***********/
     DICTdo_init( express->symbol_table, &de );

@@ -60,7 +60,6 @@ typedef  struct file_holder  {
     FILE * lib;     /*  library file  */
     FILE * incall;  /*  include file for collecting all include files  */
     FILE * initall; /*  for registering all entities from all schemas  */
-    FILE * make;    /*  for indicating schema source files in makefile  */
     FILE * code;
     FILE * init;    /*  contains function to initialize program
                 to use schema's entities */
