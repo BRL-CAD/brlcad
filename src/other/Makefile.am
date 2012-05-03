@@ -173,7 +173,6 @@ EXTRA_DIST = \
 	jove.dist \
 	lemon \
 	lemon.dist \
-	libpng \
 	libpng.dist \
 	libregex.dist \
 	libtermlib.dist \
@@ -218,6 +217,7 @@ DIST_SUBDIRS = \
 	incrTcl \
 	iwidgets \
 	jove \
+	libpng \
 	libregex \
 	libtermlib \
 	libutahrle \
