@@ -199,7 +199,7 @@ class SimpleList : public EntList {
         friend ostream & operator<< ( ostream &, SimpleList & );
 
     public:
-        SimpleList( const char * n ) : I_marked( NOMARK ), EntList( SIMPLE ) {
+        SimpleList( const char * n ) : EntList( SIMPLE ), I_marked( NOMARK ) {
             strcpy( name, n );
         }
         ~SimpleList() {}
@@ -313,7 +313,7 @@ class AndList : public JoinList {
 
 class OrList : public MultList {
     public:
-        OrList() : MultList( OR ), choice( -1 ), choiceCount( 0 ) {}
+        OrList() : MultList( OR ), choice( -1 ), choice1( -2 ), choiceCount( 0 ) {}
         ~OrList() {}
         int hit( const char * );
         MatchType matchORs( EntNode * );
@@ -326,6 +326,7 @@ class OrList : public MultList {
         }
         void reset() {
             choice = -1;
+            choice1 = -2;
             choiceCount = 0;
             MultList::reset();
         }
@@ -345,7 +346,7 @@ class ComplexList {
         friend ostream & operator<< ( ostream &, ComplexList & );
 
     public:
-        ComplexList( AndList * alist = NULL ) : head( alist ), list( 0 ), next( 0 ),
+        ComplexList( AndList * alist = NULL ) : list( 0 ), head( alist ), next( 0 ),
             abstract( 0 ), dependent( 0 ),
             multSupers( 0 ) {}
         ComplexList( Entity, ComplexCollect * );

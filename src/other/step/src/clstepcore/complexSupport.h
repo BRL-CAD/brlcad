@@ -330,6 +330,7 @@ class OrList : public MultList {
         }
         void reset() {
             choice = -1;
+            choice1 = -2;
             choiceCount = 0;
             MultList::reset();
         }
