@@ -12,31 +12,13 @@
 * and is not subject to copyright.
 */
 
-/* $Id: sdaiApplication_instance.h,v 1.5 1998/02/17 18:29:43 sauderd DP3.1 $ */
-
-
-//#include <stdio.h>
-//#include <STEPattributeList.h>
-
-//#include <EntityInstance.h>
-
-//#include <sdai.h>
-
-//class STEPattributeList;
-//class STEPattribute;
-
-//#include <ctype.h>
-//#include <Str.h>
-
-//class InstMgr;
-//class EntityDescriptor;
 
 ///////////////////////////////////////////////////////////////////////////////
 // SDAI_Application_instance used to be STEPentity
 
 class SDAI_Application_instance  : public SDAI_DAObject_SDAI  {
     private:
-        int _cur;   // provides a built-in way of accessing attributes in order.
+        int _cur;        // provides a built-in way of accessing attributes in order.
 
     public:
         STEPattributeList attributes;
@@ -46,13 +28,15 @@ class SDAI_Application_instance  : public SDAI_DAObject_SDAI  {
         // registry additions
         EntityDescriptor * eDesc;
 
-        // head entity for multiple inheritance.  If it is null then this
-        // SDAI_Application_instance is not part of a multiply inherited entity.  If it
-        // points to a SDAI_Application_instance) then this SCLP23_NAME(Application_instance is part of a mi entity
-        // and head points at the root SDAI_Application_instance of the primary inheritance
-        // path (the one that is the root of the leaf entity).
+        /**
+        ** head entity for multiple inheritance.  If it is null then this
+        ** SDAI_Application_instance is not part of a multiply inherited entity.  If it
+        ** points to a SDAI_Application_instance then this SDAI_Application_instance is part of a mi entity
+        ** and head points at the root SDAI_Application_instance of the primary inheritance
+        ** path (the one that is the root of the leaf entity).
+        */
         SDAI_Application_instance  * headMiEntity;
-        // these form a chain of other entity parents for multiple inheritance
+        /// these form a chain of other entity parents for multiple inheritance
         SDAI_Application_instance  * nextMiEntity;
 
     protected:
@@ -111,7 +95,7 @@ class SDAI_Application_instance  : public SDAI_DAObject_SDAI  {
 // ACCESS attributes in order.
         int AttributeCount();
         STEPattribute * NextAttribute();
-        void ResetAttributes()      {
+        void ResetAttributes() {
             _cur = 0;
         }
 
@@ -130,7 +114,7 @@ class SDAI_Application_instance  : public SDAI_DAObject_SDAI  {
         void WriteValuePairs( ostream & out, const char * currSch = NULL,
                               int writeComments = 1, int mixedCase = 1 );
 
-        void     STEPwrite_reference( ostream & out = cout );
+        void         STEPwrite_reference( ostream & out = cout );
         const char * STEPwrite_reference( std::string & buf );
 
         void beginSTEPwrite( ostream & out = cout ); ///< writes out the SCOPE section

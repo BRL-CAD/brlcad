@@ -13,9 +13,7 @@
 * and is not subject to copyright.
 */
 
-/* $Id: instmgr.h,v 3.0.1.4 1997/11/05 22:11:42 sauderd DP3.1 $ */
-
-///// future? ////////////////
+///// future? TODO? ////////////////
 // InstMgr can maintain an undo list for the last operation
 //  performed on a node
 // InstMgr can have a startUndo() and endUndo() so it knows when to
@@ -32,7 +30,6 @@ extern char * EntityClassName( char * );
 
 #include <gennode.h>
 #include <gennodelist.h>
-//#include <gennode.inline.h>
 #include <gennodearray.h>
 
 #include <mgrnode.h>

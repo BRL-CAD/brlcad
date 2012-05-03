@@ -10,19 +10,12 @@
 * and is not subject to copyright.
 */
 
-/* $Id: STEPfile.inline.cc,v 3.0.1.4 1997/11/05 22:11:46 sauderd DP3.1 $ */
-
 #include <STEPfile.h>
 #include <SdaiHeaderSchema.h>
 #include <STEPaggregate.h>
 
-/* for strrchr */
 #include <cstring>
 
-//#ifdef __GNUG__
-//#ifdef __SUNCPLUSPLUS__
-//#ifdef __OBJECTCENTER__
-//#ifdef __xlC__
 extern "C" {
     double  ceil( double );
 }
@@ -65,8 +58,7 @@ STEPfile::~STEPfile() {
     delete _headerInstances;
 }
 
-int
-STEPfile::SetFileType( FileTypeCode ft ) {
+int STEPfile::SetFileType( FileTypeCode ft ) {
     FileType( ft );
 
     switch( _fileType ) {
@@ -98,8 +90,7 @@ STEPfile::SetFileType( FileTypeCode ft ) {
 
 
 /******************************************************/
-const char *
-STEPfile::TruncFileName( const char * filename ) const {
+const char * STEPfile::TruncFileName( const char * filename ) const {
     const char * tmp = strrchr( filename, '/' );
     if( tmp ) {
         return tmp++;
@@ -111,8 +102,7 @@ STEPfile::TruncFileName( const char * filename ) const {
 
 
 /******************************************************/
-Severity
-STEPfile::ReadExchangeFile( const char * filename, int useTechCor ) {
+Severity STEPfile::ReadExchangeFile( const char * filename, int useTechCor ) {
     _error.ClearErrorMsg();
     _errorCount = 0;
     istream * in = OpenInputFile( filename );
@@ -131,8 +121,7 @@ STEPfile::ReadExchangeFile( const char * filename, int useTechCor ) {
     return rval;
 }
 
-Severity
-STEPfile::AppendExchangeFile( const char * filename, int useTechCor ) {
+Severity STEPfile::AppendExchangeFile( const char * filename, int useTechCor ) {
     _error.ClearErrorMsg();
     _errorCount = 0;
     istream * in = OpenInputFile( filename );
@@ -145,8 +134,7 @@ STEPfile::AppendExchangeFile( const char * filename, int useTechCor ) {
     return rval;
 }
 
-Severity
-STEPfile::ReadWorkingFile( const char * filename, int useTechCor ) {
+Severity STEPfile::ReadWorkingFile( const char * filename, int useTechCor ) {
     _error.ClearErrorMsg();
     _errorCount = 0;
     istream * in = OpenInputFile( filename );
@@ -166,8 +154,7 @@ STEPfile::ReadWorkingFile( const char * filename, int useTechCor ) {
 }
 
 
-Severity
-STEPfile::AppendWorkingFile( const char * filename, int useTechCor ) {
+Severity STEPfile::AppendWorkingFile( const char * filename, int useTechCor ) {
     _error.ClearErrorMsg();
     _errorCount = 0;
     istream * in = OpenInputFile( filename );
@@ -182,8 +169,7 @@ STEPfile::AppendWorkingFile( const char * filename, int useTechCor ) {
     return rval;
 }
 
-istream *
-STEPfile::OpenInputFile( const char * filename ) {
+istream * STEPfile::OpenInputFile( const char * filename ) {
     //  if there's no filename to use, fail
     if( !( strcmp( filename, "" ) || strcmp( FileName(), "" ) ) ) {
         _error.AppendToUserMsg( "Unable to open file for input. No current file name.\n" );
@@ -218,15 +204,13 @@ STEPfile::OpenInputFile( const char * filename ) {
     return in;
 }
 
-void
-STEPfile::CloseInputFile( istream * in ) {
+void STEPfile::CloseInputFile( istream * in ) {
     if( in && *in != std::cin ) {
         delete in;
     }
 }
 
-ofstream *
-STEPfile::OpenOutputFile( const char * filename ) {
+ofstream * STEPfile::OpenOutputFile( const char * filename ) {
     if( !filename ) {
         if( !FileName() ) {
             _error.AppendToUserMsg( "No current file name.\n" );
@@ -254,19 +238,16 @@ STEPfile::OpenOutputFile( const char * filename ) {
     return out;
 }
 
-void
-STEPfile::CloseOutputFile( ostream * out ) {
+void STEPfile::CloseOutputFile( ostream * out ) {
     delete out;
 }
 
-int
-STEPfile::IncrementFileId( int fileid ) {
+int STEPfile::IncrementFileId( int fileid ) {
     return ( fileid + FileIdIncr() );
 }
 
 
-void
-STEPfile::SetFileIdIncrement() {
+void STEPfile::SetFileIdIncrement() {
     if( instances().MaxFileId() < 0 ) {
         _fileIdIncr = 0;
     } else {

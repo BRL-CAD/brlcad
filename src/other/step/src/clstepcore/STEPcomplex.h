@@ -5,7 +5,6 @@
 #include <sdai.h>
 #include <baseType.h>
 #include <ExpDict.h>
-//#include <STEPentity.h>
 #include <Registry.h>
 
 class STEPcomplex : public SDAI_Application_instance  {
@@ -26,11 +25,6 @@ class STEPcomplex : public SDAI_Application_instance  {
         int EntityExists( const char * name, const char * currSch = 0 );
         STEPcomplex * EntityPart( const char * name, const char * currSch = 0 );
 
-        /*
-            // page 241 Stroustrup
-            STEPcomplex &operator[](const char *name);
-            STEPcomplex &operator[](const int index);
-        */
 
         virtual const EntityDescriptor * IsA( const EntityDescriptor * ) const;
 

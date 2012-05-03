@@ -29,10 +29,10 @@ typedef void ( * CF_init )( Registry & ); //  pointer to creation initialization
 
 class Registry {
     protected:
-        HashTable primordialSwamp;  //  dictionary of EntityDescriptors
-        HashTable active_schemas;   //  dictionary of Schemas
-        HashTable active_types; //  dictionary of TypeDescriptors
-        ComplexCollect * col;       //  struct containing all complex entity info
+        HashTable primordialSwamp;    //  dictionary of EntityDescriptors
+        HashTable active_schemas;     //  dictionary of Schemas
+        HashTable active_types;       //  dictionary of TypeDescriptors
+        ComplexCollect * col;         //  struct containing all complex entity info
 
         int entity_cnt,
             all_ents_cnt;
@@ -64,8 +64,8 @@ class Registry {
         void    RemoveSchema( const char * );
         void    RemoveType( const char * );
 
-        int     GetEntityCnt();
-        int     GetFullEntCnt() {
+        int    GetEntityCnt();
+        int    GetFullEntCnt() {
             return all_ents_cnt;
         }
 
@@ -73,7 +73,7 @@ class Registry {
         const EntityDescriptor   *  NextEntity();
 
         void    ResetSchemas();
-        const Schema  * NextSchema();
+        const Schema   *  NextSchema();
 
         void        ResetTypes();
         const TypeDescriptor    *   NextType();
@@ -85,8 +85,8 @@ class Registry {
             col = c;
         }
 
-        SDAI_Application_instance  * ObjCreate( const char * nm, const char * = 0,
-                int check_case = 0 ) const;
+        SDAI_Application_instance * ObjCreate( const char * nm, const char * = 0,
+                                               int check_case = 0 ) const;
 };
 
 #endif  /*  _REGISTRY_H  */

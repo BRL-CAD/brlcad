@@ -9,14 +9,11 @@
 * and is not subject to copyright.
 */
 
-/* $Id: STEPaggregate.cc,v 3.0.1.7 1997/11/05 21:59:28 sauderd DP3.1 $ */
-
 #include <stdio.h>
 
 #include <read_func.h>
 #include <STEPaggregate.h>
 #include <STEPattribute.h>
-//#include <STEPentity.h>
 #include <instmgr.h>
 #include <ExpDict.h>
 

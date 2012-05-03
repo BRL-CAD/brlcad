@@ -16,7 +16,6 @@
 /* constants */
 /*************/
 
-/*#define NULL          0*/
 #define HASH_NULL       (Hash_TableP)NULL
 
 #define SEGMENT_SIZE        256
@@ -24,9 +23,6 @@
 #define PRIME1          37
 #define PRIME2          1048583
 #define MAX_LOAD_FACTOR 5
-
-/*void *malloc(unsigned);*/
-/*void *calloc(unsigned,unsigned);*/
 
 /************/
 /* typedefs */
@@ -46,13 +42,9 @@ typedef unsigned long Address;
 #define DIV(x,y)        ((x) >> (y##_SHIFT))
 #define MOD(x,y)        ((x) & ((y)-1))
 
-/*#define HASH_Table_new()  malloc(sizeof(struct Hash_Table))*/
-#define HASH_Table_new()    new Hash_Table
-/*#define HASH_Table_destroy(x) free((char *) x)*/
+#define HASH_Table_new()        new Hash_Table
 #define HASH_Table_destroy(x)   delete x
-/*#define HASH_Element_new()    malloc(sizeof(struct Element))*/
-#define HASH_Element_new()  new Element
-/*#define HASH_Element_destroy(x)   free((char *) x)*/
+#define HASH_Element_new()      new Element
 #define HASH_Element_destroy(x) delete x
 
 typedef struct Element * ElementP;
@@ -86,7 +78,7 @@ HASHinsert( Hash_TableP t, char * s, void * data ) {
 
     e.key = s;
     e.data = data;
-    e.symbol = 0; /*  initialize to 0 - 25-Apr-1994 - kcm */
+    e.symbol = 0;
     e2 = HASHsearch( t, &e, HASH_INSERT );
     if( e2 ) {
         printf( "Redeclaration of %s\n", s );
@@ -120,9 +112,7 @@ HASHcreate( unsigned count ) {
     /*
     ** Allocate initial 'i' segments of buckets
     */
-    for( i = 0; i < count; i++ )
-        /*  table->Directory[i] = (struct Element **) calloc(SEGMENT_SIZE,sizeof(struct Element));*/
-    {
+    for( i = 0; i < count; i++ ) {
         table->Directory[i] = new struct Element * [SEGMENT_SIZE];
         for( int h = 0; h < SEGMENT_SIZE; h++ ) { // initialize to NULL
             table->Directory[i][h] = 0;
@@ -155,7 +145,7 @@ HASHlistinit( Hash_TableP table, HashEntry * he ) {
     he->p = 0;
     he->table = table;
     he->type = '*';
-    he->e = 0; /*  initialize to 0 - 25-Apr-1994 - kcm  */
+    he->e = 0;
 }
 
 void
@@ -164,7 +154,7 @@ HASHlistinit_by_type( Hash_TableP table, HashEntry * he, char type ) {
     he->p = 0;
     he->table = table;
     he->type = type;
-    he->e = 0; /*  initialize to 0 - 25-Apr-1994 - kcm  */
+    he->e = 0;
 }
 
 /* provide a way to step through the hash */
@@ -338,15 +328,13 @@ HASHhash( char * Key, Hash_TableP table ) {
     /*
     ** Convert string to integer
     */
-    /*SUPPRESS 112*/
-    while( *k )
-        /*SUPPRESS 8*/ { /*SUPPRESS 112*/
+    while( *k ) {
         h = h * PRIME1 ^ ( *k++ - ' ' );
     }
     h %= PRIME2;
     address = MOD( h, table->maxp );
     if( address < table->p ) {
-        address = MOD( h, ( table->maxp << 1 ) );    /* h % (2*table->maxp)	*/
+        address = MOD( h, ( table->maxp << 1 ) );    /* h % (2*table->maxp) */
     }
     return( address );
 }
@@ -373,9 +361,7 @@ HASHexpand_table( Hash_TableP table ) {
         NewAddress = table->maxp + table->p;
         NewSegmentDir = ( int ) DIV( NewAddress, SEGMENT_SIZE );
         NewSegmentIndex = ( int ) MOD( NewAddress, SEGMENT_SIZE );
-        if( NewSegmentIndex == 0 )
-            /*    table->Directory[NewSegmentDir] = (struct Element **) calloc(SEGMENT_SIZE,sizeof(struct Element));*/
-        {
+        if( NewSegmentIndex == 0 ) {
             table->Directory[NewSegmentDir] = new struct Element * [SEGMENT_SIZE];
             for( int h = 0; h < SEGMENT_SIZE; h++ ) { // initialize to NULL
                 table->Directory[NewSegmentDir][h] = 0;
@@ -388,7 +374,7 @@ HASHexpand_table( Hash_TableP table ) {
         */
         table->p++;
         if( table->p == table->maxp ) {
-            table->maxp <<= 1;  /* table->maxp *= 2 */
+            table->maxp <<= 1;
             table->p = 0;
         }
         table->SegmentCount++;

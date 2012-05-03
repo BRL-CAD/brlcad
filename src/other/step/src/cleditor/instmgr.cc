@@ -66,16 +66,12 @@ InstMgr::~InstMgr() {
 ///////////////////////////////////////////////////////////////////////////////
 
 void InstMgr::ClearInstances() {
-//    delete master;
-//    master = new MgrNodeArray();
     master->ClearEntries();
     sortedMaster->ClearEntries();
     maxFileId = -1;
 }
 
 void InstMgr::DeleteInstances() {
-//    delete master;
-//    master = new MgrNodeArray();
     master->DeleteEntries();
     sortedMaster->ClearEntries();
     maxFileId = -1;

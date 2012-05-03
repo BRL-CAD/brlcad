@@ -10,8 +10,6 @@
 * and is not subject to copyright.
 */
 
-/* $Id: STEPattribute.inline.cc,v 3.0.1.7 1997/11/05 21:59:25 sauderd DP3.1 $ */
-
 #include <STEPattribute.h>
 #include <sdai.h>
 #include <ExpDict.h>
@@ -46,11 +44,6 @@ STEPattribute::STEPattribute( const class AttrDescriptor & d, SDAI_Real  *p )
     ptr.r = p;
 }
 
-//  REAL_PTR
-/*STEPattribute::STEPattribute (const class AttrDescriptor& d, real **p)
-: aDesc (&d), _derive (0), _redefAttr (0)
-{ ptr.rp = p; }
-*/
 //  ENTITY
 STEPattribute::STEPattribute( const class AttrDescriptor & d,
                               SDAI_Application_instance * *p )
@@ -121,14 +114,6 @@ STEPattribute::BaseType() const {
     }
     return aDesc->BaseType();
 }
-
-/*
-const EntityDescriptor *
-STEPattribute::ReferentEntity() const
-{
-    return aDesc->ReferentEntity();
-}
-*/
 
 const TypeDescriptor *
 STEPattribute::ReferentType() const {

@@ -13,8 +13,6 @@
 * and is not subject to copyright.
 */
 
-/* $Id: STEPfile.h,v 3.0.1.6 1998/02/17 18:04:30 sauderd Exp $ */
-
 #include <string>
 
 
@@ -57,8 +55,6 @@ class STEPfile {
 //header information
         InstMgr * _headerInstances;
         Registry * _headerRegistry;
-//Registry *_headerUserDefined;
-//    Registry *_headerRegistryOld;
 
         int _headerId;     //STEPfile_id given to SDAI_Application_instance from header section
 
@@ -72,11 +68,11 @@ class STEPfile {
         // new errors
         int _entsNotCreated; // num entities not created in first pass
         int _entsInvalid;    // num entities that had invalid attr values
-        int _entsIncomplete; // num entities that had missing attr values
-        // (includes entities that had invalid values
-        // for required attrs)
-        int _entsWarning; // num entities that may have had problems
-        // with attrs - reported as an attr user msg
+        int _entsIncomplete; /* num entities that had missing attr values
+                                  (includes entities that had invalid values
+                                  for required attrs)*/
+        int _entsWarning;    /*   num entities that may have had problems
+                                  with attrs - reported as an attr user msg */
 
         // old errors
         int _errorCount;
