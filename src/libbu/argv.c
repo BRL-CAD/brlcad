@@ -32,6 +32,7 @@ bu_argv_from_string(char *argv[], size_t lim, char *lp)
     size_t argc = 0; /* number of words seen */
     size_t skip = 0;
     int quoted = 0;
+    int escaped = 0;
 
     if (UNLIKELY(!argv)) {
 	/* do this instead of crashing */
@@ -61,19 +62,51 @@ bu_argv_from_string(char *argv[], size_t lim, char *lp)
 
     for (; *lp != '\0'; lp++) {
 
+	if (*lp == '\\') {
+	    char *cp = lp;
+
+	    /* Shift everything to the left (i.e. stomp on the escape character) */
+	    while (*cp != '\0') {
+		*cp = *(cp+1);
+		cp++;
+	    }
+
+	    /* mark the next character as escaped */
+	    escaped = 1;
+
+	    /* remember the loops lp++ */
+	    lp--;
+
+	    continue;
+	}
+
 	if (*lp == '"') {
 	    if (!quoted) {
+		char *cp = lp;
+
 		/* start collecting quoted string */
 		quoted = 1;
 
-		/* skip past the quote character */
-		argv[argc] = lp + 1;
+		if (!escaped) {
+		    /* Shift everything to the left (i.e. stomp on the quote character) */
+		    while (*cp != '\0') {
+			*cp = *(cp+1);
+			cp++;
+		    }
+
+		    /* remember the loops lp++ */
+		    lp--;
+		}
+
 		continue;
 	    }
 
 	    /* end qoute */
 	    quoted = 0;
-	    *lp++ = '\0';
+	    if (escaped)
+		lp++;
+	    else
+		*lp++ = '\0';
 
 	    /* skip leading whitespace */
 	    while (*lp != '\0' && isspace(*lp)) {
@@ -85,6 +118,8 @@ bu_argv_from_string(char *argv[], size_t lim, char *lp)
 	    skip = 0;
 	    goto nextword;
 	}
+
+	escaped = 0;
 
 	/* skip over current word */
 	if (quoted || !isspace(*lp))
@@ -119,6 +154,7 @@ bu_argv_from_string(char *argv[], size_t lim, char *lp)
     /* always NULL-terminate the array */
     argc++;
     argv[argc] = (char *)NULL;
+
     return argc;
 }
 
