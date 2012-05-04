@@ -710,8 +710,9 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 	prefixed_name = BU_VLS_INIT_ZERO,
 	prefixed_reg_name = BU_VLS_INIT_ZERO,
 	prefixed_normal_name = BU_VLS_INIT_ZERO;
-    vect_t scaled_normal;
-    point_t from, to;
+    vect_t scaled_normal = VINIT_ZERO;
+    point_t from = VINIT_ZERO;
+    point_t to = VINIT_ZERO;
 
     for (i=0; i<rb->num_bt_manifolds; i++) {
 
