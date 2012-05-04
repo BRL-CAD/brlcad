@@ -75,7 +75,7 @@ echo "...testing 'vdeck' command..."
 rm -f $TFILS
 
 # make our starting database
-$GZIP -d -c $1/regress/tgms/m35.asc.gz > m35.asc
+$GZIP -d -c "$1/regress/tgms/m35.asc.gz" > m35.asc
 $ASC2G m35.asc m35.g
 
 # get our
@@ -93,7 +93,7 @@ cat regions    >> m35.cg
 cat region_ids >> m35.cg
 
 # get test version
-$GZIP -d -c $1/regress/tgms/m35.cg.gz > m35-baseline.cg
+$GZIP -d -c "$1/regress/tgms/m35.cg.gz" > m35-baseline.cg
 
 cmp m35.cg m35-baseline.cg
 STATUS=$?
@@ -110,7 +110,7 @@ fi
 # convert ars solids, it also checks all solid types recognized
 # by vdeck
 echo "...testing 'comgeom-g' command (GIFT v5)..."
-$COMGEOM $1/regress/tgms/cgtest.cg t.g 1>>comgeom-g.log 2>> comgeom-g.log
+$COMGEOM "$1/regress/tgms/cgtest.cg" t.g 1>>comgeom-g.log 2>> comgeom-g.log
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
@@ -131,7 +131,7 @@ fi
 # the part 3 test checks comgeom-g against a GIFT v4 tgm
 echo "...testing 'comgeom-g' command (GIFT v4)..."
 rm t.g
-$COMGEOM -v4 $1/regress/tgms/comgeom-tgt-1-v4.cg t.g 1>>comgeom-g.log 2>> comgeom-g.log
+$COMGEOM -v4 "$1/regress/tgms/comgeom-tgt-1-v4.cg" t.g 1>>comgeom-g.log 2>> comgeom-g.log
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
