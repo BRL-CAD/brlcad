@@ -448,9 +448,9 @@ namespace eval RtWizard {
 	#
 	#
 	if {$tcl_platform(platform) == "windows"} {
-	    set fbType "/dev/wgl"
+	    set fbType "/dev/wglsp"
 	} else {
-	    set fbType "/dev/ogl"
+	    set fbType "/dev/oglsp"
 	}
 	#
 	#
