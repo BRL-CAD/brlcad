@@ -6241,7 +6241,7 @@ sedit(void)
 	    {
 		struct rt_ars_internal *ars=
 		    (struct rt_ars_internal *)es_int.idb_ptr;
-		point_t new_pt;
+		point_t new_pt = VINIT_ZERO;
 		vect_t diff;
 
 		RT_ARS_CK_MAGIC(ars);
@@ -6294,7 +6294,7 @@ sedit(void)
 	    {
 		struct rt_ars_internal *ars=
 		    (struct rt_ars_internal *)es_int.idb_ptr;
-		point_t new_pt;
+		point_t new_pt = VINIT_ZERO;
 		vect_t diff;
 
 		RT_ARS_CK_MAGIC(ars);
@@ -6347,7 +6347,7 @@ sedit(void)
 	    {
 		struct rt_ars_internal *ars=
 		    (struct rt_ars_internal *)es_int.idb_ptr;
-		point_t new_pt;
+		point_t new_pt = VINIT_ZERO;
 
 		RT_ARS_CK_MAGIC(ars);
 
@@ -6394,7 +6394,7 @@ sedit(void)
 	    {
 		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
 		int vert;
-		point_t new_pt;
+		point_t new_pt = VINIT_ZERO;
 
 		RT_BOT_CK_MAGIC(bot);
 
@@ -6439,7 +6439,7 @@ sedit(void)
 		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
 		int v1, v2;
 		vect_t diff;
-		point_t new_pt;
+		point_t new_pt = VINIT_ZERO;
 
 		RT_BOT_CK_MAGIC(bot);
 
@@ -6482,7 +6482,7 @@ sedit(void)
 	    {
 		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
 		int v1, v2, v3;
-		point_t new_pt;
+		point_t new_pt = VINIT_ZERO;
 		vect_t diff;
 
 		RT_BOT_CK_MAGIC(bot);
