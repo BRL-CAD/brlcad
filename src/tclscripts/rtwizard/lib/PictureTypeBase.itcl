@@ -353,7 +353,7 @@ namespace eval RtWizard {
 				  -c "$fgMode" \
 				  -c "set bg=[lindex $nl 0],[lindex $nl 1],[lindex $nl 2]" \
 				  -c "set om=$occMode" \
-				  -c "set oo=$occObjects" \
+				  -c "set oo=\\\"$occObjects\\\"" \
 				  $::RtWizard::wizard_state(dbFile)]
 		 } else {
 
