@@ -416,6 +416,7 @@ mark_as_advanced(TCL_ENABLE_LOAD)
 mark_as_advanced(TCL_OPTIMIZED)
 mark_as_advanced(TCL_THREADS)
 mark_as_advanced(TCL_TIMEZONE_DATA)
+mark_as_advanced(M_LIBRARY)
 
 # Depending on the Tcl/Tk results, look for packages required by BRL-CAD.  If
 # building local Tcl/Tk, go ahead and enable all the packages as well - otherwise,
