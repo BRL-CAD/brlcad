@@ -245,7 +245,7 @@ where it is disabled. Windows does not support the termlib API.)
 ")
 THIRD_PARTY(termlib libtermlib "HAVE_TERMLIB;BRLCAD_LEVEL2" termlib_ALIASES termlib_DESCRIPTION)
 if(BRLCAD_TERMLIB_BUILD)
-  set(HAVE_TERMCAP_H 1 CACHE BOOL "src/other termlib is on" FORCE)
+  set(HAVE_TERMCAP_H ON CACHE BOOL "src/other termlib is on" FORCE)
   mark_as_advanced(HAVE_TERMCAP_H)
 endif(BRLCAD_TERMLIB_BUILD)
 
