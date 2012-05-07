@@ -115,6 +115,7 @@ set(docbook_mann_EN
   l.xml
   l_muves.xml
   labelvert.xml
+  lc.xml
   listeval.xml
   lm.xml
   loadtk.xml
