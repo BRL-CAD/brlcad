@@ -123,6 +123,7 @@ set(docbook_mann_EN
   ls.xml
   make.xml
   make_bb.xml
+  make_pnts.xml
   mater.xml
   matpick.xml
   memprint.xml
