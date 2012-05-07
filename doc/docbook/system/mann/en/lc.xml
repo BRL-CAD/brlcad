@@ -1,0 +1,101 @@
+<!-- Converted by db4-upgrade version 1.0 -->
+
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="lc">
+
+<refmeta>
+  <refentrytitle>LC</refentrytitle>
+  <manvolnum>nged</manvolnum>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+</refmeta>
+
+<refnamediv xml:id="name">
+  <refname>lc</refname>
+  <refpurpose>Lists codes (ie region attributes) 'region_id', 'material_id' and 'los' within a group or combination.
+   </refpurpose>
+</refnamediv>
+
+<!-- body begins here -->
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
+    <command>lc</command>    
+       <arg choice="opt" rep="norepeat">-d</arg>
+       <arg choice="opt" rep="norepeat">-z</arg>
+       <group choice="opt" rep="norepeat">
+         <arg choice="plain" rep="norepeat">-2</arg>
+         <arg choice="plain" rep="norepeat">-3</arg>
+         <arg choice="plain" rep="norepeat">-4</arg>
+       </group>
+       <group choice="opt" rep="norepeat">
+         <arg choice="plain" rep="norepeat">-f</arg>
+         <group choice="req" rep="norepeat">
+           <arg choice="plain" rep="norepeat"><replaceable>FileName</replaceable></arg>
+         </group>
+       </group>
+       <arg choice="req" rep="norepeat"><replaceable>GroupName</replaceable></arg>
+     </cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+ <para>The 'lc' command lists a set of codes (ie attributes) of regions
+ within a group/combination. The attributes listed are 'region_id',
+ 'material_id' and 'los' followed by 'region name'. If an attribute
+ is unset, it is reported as '--'. By default, the list is sorted in
+ ascending (a-z) order by 'region_id'. Sorting can be performed on
+ any column in ascending or descending (z-a) order. Duplicate
+ 'region_id' can be listed within a group/combination. Output can also
+ be saved to a file.</para>
+</refsection>
+
+  <refsection xml:id="options"><info><title>OPTIONS</title></info>
+  <variablelist remap="TP">
+    <varlistentry>
+      <term><option>-d</option></term>
+      <listitem>
+        <para>
+          Specifies duplicate 'region_id' should be listed.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-z</option></term>
+      <listitem>
+        <para>
+          Specifies descending (z-a) sort order.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-2</option></term>
+      <term><option>-3</option></term>
+      <term><option>-4</option></term>
+      <listitem>
+        <para>
+          Specifies sort column 2, 3 or 4.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-f FileName</option></term>
+      <listitem>
+        <para>
+          Identifies output should be to a file and specifies the file name.
+          If the path is not included as part of the 'FileName' the path will
+          be the 'current directory'.
+        </para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+</refsection>
+
+<info><corpauthor>BRL-CAD Team</corpauthor></info>
+
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
+  <para>
+    Reports of bugs or problems should be submitted via electronic
+    mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+  </para>
+</refsection>
+</refentry>
+
