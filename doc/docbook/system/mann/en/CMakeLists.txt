@@ -245,6 +245,15 @@ DOCBOOK_TO_HTML(mann docbook_mann_EN html/mann/en "")
 DOCBOOK_TO_HTML(mann docbook_mann_INTRO html/mann/en "")
 DOCBOOK_TO_MAN(mann docbook_mann_EN n nged man/mann "")
 
+# Some DocBook man pages may generate multiple output files, if they
+# describe more than one command.  Those files need to be listed and
+# handled.
+set(mann_extra_outputs
+  dg.nged
+  )
+DOCBOOK_EXTRA_OUTPUT(mann_extra_outputs man/mann)
+
+
 if(BRLCAD_EXTRADOCS_PDF_MAN)
   DOCBOOK_TO_PDF(mann docbook_mann_EN pdf/mann/en "")
 endif(BRLCAD_EXTRADOCS_PDF_MAN)
