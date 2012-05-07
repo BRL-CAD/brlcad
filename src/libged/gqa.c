@@ -2403,8 +2403,10 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
      * that the user wants included in the ray trace.
      */
     for (; arg_count < argc; arg_count++) {
-	if (rt_gettree(rtip, argv[arg_count]) < 0)
+	if (rt_gettree(rtip, argv[arg_count]) < 0) {
 	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[arg_count]);
+	    return GED_ERROR;
+	}
     }
 
     /* Initialize all the per-CPU memory resources.  The number of
