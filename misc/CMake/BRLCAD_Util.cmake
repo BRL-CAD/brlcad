@@ -205,7 +205,12 @@ endmacro(BRLCAD_GET_DIR_LIST_CONTENTS)
 # that will trigger regex matching behavior when we don't want it.  (To test,
 # for example, use a build directory name of build++) 
 #
-# The routine below does the check without using regex matching. 
+# Sets ${result_var} to 1 if the candidate subpath is actually a subpath of
+# the supplied "full" path, otherwise sets it to 0.
+#
+# The routine below does the check without using regex matching, in order to
+# handle path names that contain characters that would be interpreted as active
+# in a regex string. 
 macro(IS_SUBPATH in_candidate_subpath in_full_path result_var)
   # Convert paths to lists of directories - regex based
   # matching won't work reliably, so instead look at each
@@ -247,6 +252,39 @@ macro(IS_SUBPATH in_candidate_subpath in_full_path result_var)
   endif("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
 endmacro(IS_SUBPATH)
 
+#-----------------------------------------------------------------------------
+# Determine whether a list of source files contains all C, all C++, or
+# mixed source types.
+macro(SRCS_LANG sourceslist resultvar targetname)
+  # Check whether we have a mixed C/C++ library or just a single language.
+  # If the former, different compilation flag management is needed.
+  set(has_C 0)
+  set(has_CXX 0)
+  foreach(srcfile ${sourceslist})
+    get_property(file_language SOURCE ${srcfile} PROPERTY LANGUAGE)
+    if(NOT file_language)
+      get_filename_component(srcfile_ext ${srcfile} EXT)
+      if(${srcfile_ext} MATCHES ".cxx$" OR ${srcfile_ext} MATCHES ".cpp$" OR ${srcfile_ext} MATCHES ".cc$")
+        set(has_CXX 1)
+        set(file_language CXX)
+      elseif(${srcfile_ext} STREQUAL ".c")
+        set(has_C 1)
+        set(file_language C)
+      endif(${srcfile_ext} MATCHES ".cxx$" OR ${srcfile_ext} MATCHES ".cpp$" OR ${srcfile_ext} MATCHES ".cc$")
+    endif(NOT file_language)
+    if(NOT file_language)
+      message("WARNING - file ${srcfile} listed in the ${targetname} sources list does not appear to be a C or C++ file.")
+    endif(NOT file_language)
+  endforeach(srcfile ${sourceslist})
+  set(${resultvar} "UNKNOWN")
+  if(has_C AND has_CXX)
+    set(${resultvar} "MIXED")
+  elseif(has_C AND NOT has_CXX)
+    set(${resultvar} "C")
+  elseif(NOT has_C AND has_CXX)
+    set(${resultvar} "CXX")
+  endif(has_C AND has_CXX)
+endmacro(SRCS_LANG)
 
 
 # Local Variables:

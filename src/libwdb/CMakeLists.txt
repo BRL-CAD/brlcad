@@ -34,12 +34,16 @@ set(LIBWDB_SOURCES
   wdb.c
   )
 
-get_property(WDB_DEFINES GLOBAL PROPERTY WDB_DEFINES)
-LIST(APPEND WDB_DEFINES "OBJ_BREP=1")
+# Initialize libwdb_DEFINES in case of reconfiguration
+set(libwdb_DEFINES "")
+
+# Set libwdb compile definitions
+get_property(libwdb_DEFINES GLOBAL PROPERTY libwdb_DEFINES)
+LIST(APPEND libwdb_DEFINES "OBJ_BREP=1")
 if(CPP_DLL_DEFINES)
-  LIST(APPEND WDB_DEFINES "ON_DLL_IMPORTS")
+  LIST(APPEND libwdb_DEFINES "ON_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
-set_property(GLOBAL PROPERTY WDB_DEFINES "${WDB_DEFINES}")
+set_property(GLOBAL PROPERTY libwdb_DEFINES "${libwdb_DEFINES}")
 
 BRLCAD_ADDLIB(libwdb "${LIBWDB_SOURCES}" "librt;libbn;libbu;libsysv;${OPENNURBS_LIBRARY};${REGEX_LIBRARY};${ZLIB_LIBRARY}")
 set_target_properties(libwdb PROPERTIES VERSION 19.0.1 SOVERSION 19)

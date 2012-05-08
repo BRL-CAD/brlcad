@@ -57,7 +57,6 @@ if(BRLCAD_ENABLE_RTGL)
 endif(BRLCAD_ENABLE_RTGL)
 
 add_definitions(
-  ${MGED_DEFINES}
   ${C99_FLAG}
   )
 

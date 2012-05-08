@@ -273,15 +273,16 @@ else(MSVC)
   set(LIBRT_SOURCES ${LIBRT_SOURCES} timer42.c)
 endif(MSVC)
 
-#Initialize RT_DEFINES in case of reconfiguration
-set(RT_DEFINES "")
+# Initialize librt_DEFINES in case of reconfiguration
+set(librt_DEFINES "")
 
-get_property(RT_DEFINES GLOBAL PROPERTY RT_DEFINES)
-list(APPEND RT_DEFINES "OBJ_BREP=1")
+# Set librt compile definitions
+get_property(librt_DEFINES GLOBAL PROPERTY librt_DEFINES)
+list(APPEND librt_DEFINES "OBJ_BREP=1")
 if(CPP_DLL_DEFINES)
-  list(APPEND RT_DEFINES "ON_DLL_IMPORTS")
+  list(APPEND librt_DEFINES "ON_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
-set_property(GLOBAL PROPERTY RT_DEFINES "${RT_DEFINES}")
+set_property(GLOBAL PROPERTY librt_DEFINES "${librt_DEFINES}")
 
 BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "libbn;libbu;${OPENNURBS_LIBRARY};${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 if(BUILD_STATIC_LIBS)
