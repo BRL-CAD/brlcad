@@ -134,7 +134,7 @@ extern "C" {
     void    *    HASHfind( struct Hash_Table *,  char * );
     void        HASHinsert( struct Hash_Table *, char *, void * );
     void        HASHdestroy( struct Hash_Table * );
-    struct Element * HASHsearch( struct Hash_Table *, struct Element *, Action );
+    struct Element * HASHsearch( struct Hash_Table *, const struct Element *, Action );
     void        HASHlistinit( struct Hash_Table *, HashEntry * );
     void        HASHlistinit_by_type( struct Hash_Table *, HashEntry *, char );
     struct Element * HASHlist( HashEntry * );

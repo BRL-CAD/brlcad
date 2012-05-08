@@ -234,7 +234,7 @@ HASHdestroy( Hash_TableP table ) {
 }
 
 struct Element *
-HASHsearch( Hash_TableP table, struct Element * item, Action action ) {
+HASHsearch( Hash_TableP table, const struct Element * item, Action action ) {
     Address h;
     struct Element ** CurrentSegment;
     int     SegmentIndex;
