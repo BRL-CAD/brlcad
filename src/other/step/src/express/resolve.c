@@ -245,6 +245,40 @@ RESOLVEinitialize( void ) {
 #endif
 }
 
+/**
+** Retrieve the aggregate type from the underlying types of the select type t_select
+** \param t_select the select type to retrieve the aggregate type from
+** \param t_agg the current aggregate type
+** \return the aggregate type
+*/
+Type TYPE_retrieve_aggregate( Type t_select, Type t_agg ) {
+    if( TYPEis_select( t_select ) ) {
+        // parse the underlying types
+        LISTdo_links( t_select->u.type->body->list, link )
+        // the current underlying type
+        Type t = ( Type ) link->data;
+        if( TYPEis_select( t ) ) {
+            t_agg = TYPE_retrieve_aggregate( t, t_agg );
+        } else if( TYPEis_aggregate( t ) ) {
+            if( t_agg ) {
+                if( t_agg != t->u.type->body->base ) {
+                    // 2 underlying types do not have to the same base
+                    return 0;
+                }
+            } else {
+                t_agg = t->u.type->body->base;
+            }
+        } else {
+            // the underlying type is neither a select nor an aggregate
+            return 0;
+        }
+
+        LISTod;
+    }
+
+    return t_agg;
+}
+
 /*
 ** Procedure:   EXPresolve
 ** Parameters:  Expression expression   - expression to resolve
@@ -482,6 +516,14 @@ EXP_resolve( Expression expr, Scope scope, Type typecheck ) {
             }
             if( TYPEis_aggregate( expr->return_type ) ) {
                 t = expr->u.query->aggregate->return_type->u.type->body->base;
+            } else if( TYPEis_select( expr->return_type ) ) {
+                // retrieve the common aggregate type
+                t = TYPE_retrieve_aggregate( expr->return_type, 0 );
+                if( !t ) {
+                    ERRORreport_with_symbol( ERROR_query_requires_aggregate, &expr->u.query->aggregate->symbol );
+                    resolve_failed( expr );
+                    break;
+                }
             } else if( TYPEis_runtime( expr->return_type ) ) {
                 t = Type_Runtime;
             } else {
