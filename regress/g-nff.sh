@@ -68,7 +68,7 @@ FILS='g-nff.err g-nff.log g-nff.m35.nff g-nff.m35.asc g-nff.m35.g'
 rm -f $FILS
 
 # get known test failure.g file
-$GZIP -d -c $1/regress/tgms/m35.asc.gz > g-nff.m35.asc
+$GZIP -d -c "$1/regress/tgms/m35.asc.gz" > g-nff.m35.asc
 $ASC2G g-nff.m35.asc g-nff.m35.g
 
 # .g to nff:

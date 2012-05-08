@@ -61,7 +61,7 @@ if test ! -f "$MGED" ; then
 fi
 
 TFILS='iges.log iges.g iges_file.iges iges_stdout_new.g iges_new.g iges_stdout.iges iges_file.iges'
-TFILS="$TFILS iges_file2.iges iges_file3.iges m35.asc m35.g"
+TFILS="$TFILS iges_file2.iges iges_file3.iges iges.m35.asc iges.m35.g"
 
 rm -f $TFILS
 
@@ -151,11 +151,11 @@ if test ! -f "$GZIP" ; then
 fi
 
 # make our starting database
-$GZIP -d -c $1/regress/tgms/m35.asc.gz > m35.asc
-$ASC2G m35.asc m35.g
+$GZIP -d -c "$1/regress/tgms/m35.asc.gz" > iges.m35.asc
+$ASC2G iges.m35.asc iges.m35.g
 # and test it (note it should work with the '-f' option, but fail
 # without any options)
-$GIGES -f -o iges_file3.iges m35.g r516 2>> iges.log > /dev/null
+$GIGES -f -o iges_file3.iges iges.m35.g r516 2>> iges.log > /dev/null
 
 if [ $? != 0 ] ; then
     echo "...g-iges (5) FAILED"
@@ -168,7 +168,6 @@ fi
 # output final results
 if [ X$STATUS = X0 ] ; then
     echo "-> iges.sh succeeded"
-    rm -f $TFILS
 else
     echo "-> iges.sh FAILED"
     echo "   See files: $TFILS"

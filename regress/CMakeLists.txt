@@ -193,10 +193,13 @@ set(regress_outfiles
   iges.log
   iges_file.iges
   iges_file2.iges
+  iges_file3.iges
   iges_new.g
   iges_stdout.iges
   iges_stdout2.iges
   iges_stdout_new.g
+  iges.m35.asc
+  iges.m35.g
   lights.g
   lights.log
   lights.pix
