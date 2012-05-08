@@ -68,34 +68,34 @@ fi
 
 FAILURES=0
 
-TFILS='vdeck.log m35_comgeom.asc m35_comgeom.g m35_comgeom-baseline.cg m35_comgeom.cg t.g comgeom-g.log solids regions region_ids'
+TFILS='vdeck.log comgeom.m35.asc comgeom.m35.g comgeom.m35-baseline.cg comgeom.m35.cg comgeom.t-v5.g comgeom.t-v4.g comgeom-g.log solids regions region_ids'
 
 echo "...testing 'vdeck' command..."
 
 rm -f $TFILS
 
 # make our starting database
-$GZIP -d -c "$1/regress/tgms/m35.asc.gz" > m35_comgeom.asc
-$ASC2G m35_comgeom.asc m35_comgeom.g
+$GZIP -d -c "$1/regress/tgms/m35.asc.gz" > comgeom.m35.asc
+$ASC2G comgeom.m35.asc comgeom.m35.g
 
 # get our
 # using vdeck interactively to convert .g to GIFT
 #(following example in red.sh and mged test)
-$VDECK m35_comgeom.g >> vdeck.log 2>&1 <<EOF
+$VDECK comgeom.m35.g >> vdeck.log 2>&1 <<EOF
 i all.g
 d
 q
 EOF
 
 # assemble pieces to compare with test version
-cat solids     >  m35_comgeom.cg
-cat regions    >> m35_comgeom.cg
-cat region_ids >> m35_comgeom.cg
+cat solids     >  comgeom.m35.cg
+cat regions    >> comgeom.m35.cg
+cat region_ids >> comgeom.m35.cg
 
 # get test version
-$GZIP -d -c "$1/regress/tgms/m35.cg.gz" > m35_comgeom-baseline.cg
+$GZIP -d -c "$1/regress/tgms/m35.cg.gz" > comgeom.m35-baseline.cg
 
-cmp m35_comgeom.cg m35_comgeom-baseline.cg
+cmp comgeom.m35.cg comgeom.m35-baseline.cg
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
@@ -110,7 +110,7 @@ fi
 # convert ars solids, it also checks all solid types recognized
 # by vdeck
 echo "...testing 'comgeom-g' command (GIFT v5)..."
-$COMGEOM "$1/regress/tgms/cgtest.cg" t.g 1>>comgeom-g.log 2>> comgeom-g.log
+$COMGEOM "$1/regress/tgms/cgtest.cg" comgeom.t-v5.g 1>>comgeom-g.log 2>> comgeom-g.log
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
@@ -130,8 +130,7 @@ fi
 
 # the part 3 test checks comgeom-g against a GIFT v4 tgm
 echo "...testing 'comgeom-g' command (GIFT v4)..."
-rm t.g
-$COMGEOM -v4 "$1/regress/tgms/comgeom-tgt-1-v4.cg" t.g 1>>comgeom-g.log 2>> comgeom-g.log
+$COMGEOM -v4 "$1/regress/tgms/comgeom-tgt-1-v4.cg" comgeom.t-v4.g 1>>comgeom-g.log 2>> comgeom-g.log
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
@@ -151,8 +150,6 @@ fi
 
 if test $FAILURES -eq 0 ; then
     echo "-> vdeck/comgeom-g check succeeded"
-    # clean up
-    rm $TFILS
 else
     echo "-> vdeck/comgeom-g check FAILED"
     echo "   See 'comgeom-g.log'"

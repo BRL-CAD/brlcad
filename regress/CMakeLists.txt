@@ -162,6 +162,12 @@ set(regress_outfiles
   bots.sph.pix
   bots.sync.pix
   comgeom-g.log
+  comgeom.m35.asc
+  comgeom.m35-baseline.cg
+  comgeom.m35.cg
+  comgeom.m35.g
+  comgeom.t-v4.g
+  comgeom.t-v5.g
   core
   density_table.txt
   dsp.dat
@@ -175,9 +181,10 @@ set(regress_outfiles
   g-dot.g
   g-dot.log
   g-nff.err
-  g-nff.g
   g-nff.log
-  g-nff.nff
+  g-nff.m35.asc
+  g-nff.m35.g
+  g-nff.m35.nff
   gaps.pl
   gqa.g
   gqa.log
@@ -196,9 +203,6 @@ set(regress_outfiles
   lights.pix
   lights_diff.pix
   lights_ref.pix
-  m35.asc
-  m35.cg
-  m35.g
   mged.log
   moss-diff.log
   moss-png.log
