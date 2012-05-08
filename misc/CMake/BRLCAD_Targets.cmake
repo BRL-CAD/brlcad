@@ -383,9 +383,9 @@ macro(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
     endforeach(element ${ORDERED_ELEMENTS})
 
     # paths in BRL-CAD build dir
-    string(REPLACE "+" "PLUS" BRLCAD_BINARY_DIR_REGEX "${BRLCAD_BINARY_DIR}")
+    string(REGEX REPLACE "[^a-zA-Z0-9]" "_" BRLCAD_BINARY_DIR_REGEX "${BRLCAD_BINARY_DIR}")
     foreach(inc_path ${${DIR_LIST}})
-      string(REPLACE "+" "PLUS" inc_path_regex "${inc_path}")
+      string(REGEX REPLACE "[^a-zA-Z0-9]" "_" inc_path_regex "${inc_path}")
       if("${inc_path_regex}" MATCHES "${BRLCAD_BINARY_DIR_REGEX}")
 	set(NEW_DIR_LIST ${NEW_DIR_LIST} ${inc_path})
 	list(REMOVE_ITEM ${DIR_LIST} ${inc_path})
@@ -393,9 +393,9 @@ macro(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
     endforeach(inc_path ${${DIR_LIST}})
 
     # paths in BRL-CAD source dir
-    string(REPLACE "+" "PLUS" BRLCAD_SOURCE_DIR_REGEX "${BRLCAD_SOURCE_DIR}")
+    string(REGEX REPLACE "[^a-zA-Z0-9]" "_" BRLCAD_SOURCE_DIR_REGEX "${BRLCAD_SOURCE_DIR}")
     foreach(inc_path ${${DIR_LIST}})
-      string(REPLACE "+" "PLUS" inc_path_regex "${inc_path}")
+      string(REGEX REPLACE "[^a-zA-Z0-9]" "_" inc_path_regex "${inc_path}")
       if("${inc_path_regex}" MATCHES "${BRLCAD_SOURCE_DIR_REGEX}")
 	set(NEW_DIR_LIST ${NEW_DIR_LIST} ${inc_path})
 	list(REMOVE_ITEM ${DIR_LIST} ${inc_path})
