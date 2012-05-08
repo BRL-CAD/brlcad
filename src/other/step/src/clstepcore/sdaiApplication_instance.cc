@@ -30,13 +30,12 @@ SDAI_Application_instance NilSTEPentity;
 **/
 
 SDAI_Application_instance::SDAI_Application_instance()
-    :  _cur( 0 ), STEPfile_id( 0 ), p21Comment( 0 ), headMiEntity( 0 ), nextMiEntity( 0 ),
+    :  _cur( 0 ), STEPfile_id( 0 ), headMiEntity( 0 ), nextMiEntity( 0 ),
        _complex( 0 ) {
 }
 
 SDAI_Application_instance::SDAI_Application_instance( int fileid, int complex )
-    :  _cur( 0 ), STEPfile_id( fileid ), p21Comment( 0 ),
-       headMiEntity( 0 ), nextMiEntity( 0 ), _complex( complex ) {
+    :  _cur( 0 ), STEPfile_id( fileid ), headMiEntity( 0 ), nextMiEntity( 0 ), _complex( complex ) {
 }
 
 SDAI_Application_instance::~SDAI_Application_instance() {
@@ -50,8 +49,6 @@ SDAI_Application_instance::~SDAI_Application_instance() {
     if( MultipleInheritance() ) {
         delete nextMiEntity;
     }
-
-    delete p21Comment;
 
     /*
     // this is not necessary since each will call delete on its
@@ -88,34 +85,20 @@ SDAI_Application_instance * SDAI_Application_instance::Replicate() {
     }
 }
 
-void SDAI_Application_instance::AddP21Comment( const char * s, int replace ) {
+void SDAI_Application_instance::AddP21Comment( const char * s, bool replace ) {
     if( replace ) {
-        delete p21Comment;
-        p21Comment = 0;
+        p21Comment.clear();
     }
-    if( s ) {
-        if( !p21Comment ) {
-            p21Comment = new std::string( "" );
-        } else {
-            p21Comment->clear();
-        }
-        p21Comment->append( s );
+    if (s) {
+        p21Comment += s;
     }
 }
 
-void SDAI_Application_instance::AddP21Comment( std::string & s, int replace ) {
+void SDAI_Application_instance::AddP21Comment( const std::string & s, bool replace ) {
     if( replace ) {
-        delete p21Comment;
-        p21Comment = 0;
+        p21Comment.clear();
     }
-    if( !s.empty() ) {
-        if( !p21Comment ) {
-            p21Comment = new std::string( "" );
-        } else {
-            p21Comment->clear();
-        }
-        p21Comment->append( const_cast<char *>( s.c_str() ) );
-    }
+    p21Comment += s;
 }
 
 void SDAI_Application_instance::STEPwrite_reference( ostream & out ) {
@@ -324,8 +307,8 @@ void SDAI_Application_instance::beginSTEPwrite( ostream & out ) {
 void SDAI_Application_instance::STEPwrite( ostream & out, const char * currSch,
         int writeComments ) {
     std::string tmp;
-    if( writeComments && p21Comment && !p21Comment->empty() ) {
-        out << p21Comment->c_str();
+    if( writeComments && !p21Comment.empty() ) {
+        out << p21Comment;
     }
     out << "#" << STEPfile_id << "=" << StrToUpper( EntityName( currSch ), tmp )
         << "(";
@@ -392,8 +375,8 @@ void SDAI_Application_instance::WriteValuePairs( ostream & out,
 //    out << eDesc->QualifiedName(s) << endl;
 
     std::string tmp, tmp2;
-    if( writeComments && p21Comment && !p21Comment->empty() ) {
-        out << p21Comment->c_str();
+    if( writeComments && !p21Comment.empty() ) {
+        out << p21Comment;
     }
     if( mixedCase ) {
         out << "#" << STEPfile_id << " "

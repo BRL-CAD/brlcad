@@ -22,9 +22,9 @@ class SDAI_Application_instance  : public SDAI_DAObject_SDAI  {
 
     public:
         STEPattributeList attributes;
-        int           STEPfile_id;
+        int               STEPfile_id;
         ErrorDescriptor   _error;
-        std::string    *   p21Comment;
+        std::string       p21Comment;
         // registry additions
         EntityDescriptor * eDesc;
 
@@ -35,9 +35,9 @@ class SDAI_Application_instance  : public SDAI_DAObject_SDAI  {
         ** and head points at the root SDAI_Application_instance of the primary inheritance
         ** path (the one that is the root of the leaf entity).
         */
-        SDAI_Application_instance  * headMiEntity;
+        SDAI_Application_instance * headMiEntity;
         /// these form a chain of other entity parents for multiple inheritance
-        SDAI_Application_instance  * nextMiEntity;
+        SDAI_Application_instance * nextMiEntity;
 
     protected:
         int _complex;
@@ -58,22 +58,14 @@ class SDAI_Application_instance  : public SDAI_DAObject_SDAI  {
             return STEPfile_id;
         }
 
-        void AddP21Comment( std::string & s, int replace = 1 );
-        void AddP21Comment( const char * s, int replace = 1 );
+        void AddP21Comment( const std::string & s, bool replace = true );
+        void AddP21Comment( const char * s, bool replace = true );
         void DeleteP21Comment() {
-            delete p21Comment;
-            p21Comment = 0;
+            p21Comment = "";
         }
 
-        // guaranteed a string (may be null string)
-        const char * P21Comment() {
-            return ( p21Comment ? const_cast<char *>( p21Comment->c_str() ) : "" );
-        }
-        // returns null if no comment exists
-        // Note: Jul-24-2011, confirm that we want to change p21Comment->rep() to
-        // const_cast<char *>(p21Comment->c_str())
-        const char * P21CommentRep() {
-            return ( p21Comment ? const_cast<char *>( p21Comment->c_str() ) : 0 );
+        std::string P21Comment() const {
+            return p21Comment;
         }
 
         const char * EntityName( const char * schnm = NULL ) const;

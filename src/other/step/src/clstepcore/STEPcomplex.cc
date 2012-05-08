@@ -538,7 +538,7 @@ STEPcomplex::STEPread_error( char c, int index, istream & in ) {
 // original names but not according to their renamed names (DAR 6/5/97).
 void
 STEPcomplex::STEPwrite( ostream & out, const char * currSch, int writeComment ) {
-    if( writeComment && p21Comment && !p21Comment->empty() ) {
+    if( writeComment && !p21Comment.empty() ) {
         out << p21Comment;
     }
     out << "#" << STEPfile_id << "=(";
