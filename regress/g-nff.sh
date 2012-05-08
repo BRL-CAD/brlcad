@@ -63,16 +63,16 @@ if test ! -f "$GNFF" ; then
     exit 1
 fi
 
-FILS='g-nff.err g-nff.log m35.nff m35.asc m35.g'
+FILS='g-nff.err g-nff.log m35_gnff.nff m35_gnff.asc m35_gnff.g'
 
 rm -f $FILS
 
 # get known test failure.g file
-$GZIP -d -c $1/regress/tgms/m35.asc.gz > m35.asc
-$ASC2G m35.asc m35.g
+$GZIP -d -c $1/regress/tgms/m35.asc.gz > m35_gnff.asc
+$ASC2G m35_gnff.asc m35_gnff.g
 
 # .g to nff:
-$GNFF -e g-nff.err -o m35.nff m35.g r516 2> g-nff.log 1>/dev/null
+$GNFF -e g-nff.err -o m35_gnff.nff m35_gnff.g r516 2> g-nff.log 1>/dev/null
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then

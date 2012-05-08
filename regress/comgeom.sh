@@ -68,34 +68,34 @@ fi
 
 FAILURES=0
 
-TFILS='vdeck.log m35.asc m35.g m35-baseline.cg m35.cg t.g comgeom-g.log solids regions region_ids'
+TFILS='vdeck.log m35_comgeom.asc m35_comgeom.g m35_comgeom-baseline.cg m35_comgeom.cg t.g comgeom-g.log solids regions region_ids'
 
 echo "...testing 'vdeck' command..."
 
 rm -f $TFILS
 
 # make our starting database
-$GZIP -d -c "$1/regress/tgms/m35.asc.gz" > m35.asc
-$ASC2G m35.asc m35.g
+$GZIP -d -c "$1/regress/tgms/m35.asc.gz" > m35_comgeom.asc
+$ASC2G m35_comgeom.asc m35_comgeom.g
 
 # get our
 # using vdeck interactively to convert .g to GIFT
 #(following example in red.sh and mged test)
-$VDECK m35.g >> vdeck.log 2>&1 <<EOF
+$VDECK m35_comgeom.g >> vdeck.log 2>&1 <<EOF
 i all.g
 d
 q
 EOF
 
 # assemble pieces to compare with test version
-cat solids     >  m35.cg
-cat regions    >> m35.cg
-cat region_ids >> m35.cg
+cat solids     >  m35_comgeom.cg
+cat regions    >> m35_comgeom.cg
+cat region_ids >> m35_comgeom.cg
 
 # get test version
-$GZIP -d -c "$1/regress/tgms/m35.cg.gz" > m35-baseline.cg
+$GZIP -d -c "$1/regress/tgms/m35.cg.gz" > m35_comgeom-baseline.cg
 
-cmp m35.cg m35-baseline.cg
+cmp m35_comgeom.cg m35_comgeom-baseline.cg
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
