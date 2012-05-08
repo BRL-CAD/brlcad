@@ -15,6 +15,7 @@ changes made.  See document footer for additional details.
 
 * added initial documentation for make_pnts command - Richard Weiss
 * fixed gqa crash when specified objects didn't exist - Richard Weiss
+* rtedge and rtwizard support multiple occlusion objects - Bob Parker
 * upgraded libpng to 1.5.10 - Cliff Yapp
 * removed obsolete 'syn' multi sine synthesis tool - Sean Morrison
 * fixed memory corruption in vegetation generator tool - Sean Morrison
