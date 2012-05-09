@@ -238,6 +238,9 @@ package provide cadwidgets::Ged 1.0
 	method m2v_point {args}
 	method make {args}
 	method make_bb {name args}
+	method get_fbserv {_fbtype _w _n}
+	method make_image_local {_bgcolor _ecolor _necolor _occmode _gamma _color_objects _ghost_objects _edge_objects}
+	method make_image {_port _w _n _viewsize _orientation _eye_pt _bgcolor _ecolor _necolor _occmode _gamma _color_objects _ghost_objects _edge_objects}
 	method make_name {args}
 	method make_pnts {args}
 	method match {args}
@@ -719,6 +722,9 @@ package provide cadwidgets::Ged 1.0
 	variable mRayCurrWho ""
 	variable mRayLastWho ""
 	variable mRayNeedGettrees 1
+
+#	variable mLastPort -1
+	variable mLastPort 999
 
 	method init_button_no_op_prot {{_button 1}}
 	method measure_line_erase {}
@@ -1590,6 +1596,258 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::make_bb {name args} {
     eval $mGed make_bb $name $args
 }
+
+
+::itcl::body cadwidgets::Ged::get_fbserv {_fbtype _w _n} {
+    incr mLastPort
+    set port $mLastPort
+
+    set binpath [bu_brlcad_root "bin"]
+
+    # This doesn't work (i.e. the "&" causes exec to always succeed, even when the command fails)
+    while {[catch {exec [file join $binpath fbserv] -w $_w -n $_n $port $_fbtype &} pid]} {
+	    puts $pid
+	    incr port
+    }
+
+    return "$pid $port"
+}
+
+
+::itcl::body cadwidgets::Ged::make_image_local {_bgcolor _ecolor _necolor _occmode _gamma _color_objects _ghost_objects _edge_objects} {
+    global tcl_platform
+
+    set wparams [win_size]
+    set w [lindex $wparams 0]
+    set n [lindex $wparams 1]
+
+    set vparams [regsub -all ";" [$mGed get_eyemodel $itk_component($itk_option(-pane))] ""]
+    set vdata [split $vparams "\n"]
+    set viewsize [lindex [lindex $vdata 0] 1]
+    set orientation [lrange [lindex $vdata 1] 1 end]
+    set eye_pt [lrange [lindex $vdata 2] 1 end]
+
+    set port [listen]
+    if {$port < 0} {
+	set port [listen 0]
+    }
+
+    set fbs_list [get_fbserv /dev/mem $w $n]
+    set fbs_pid [lindex $fbs_list 0]
+    set fbs_port [lindex $fbs_list 1]
+
+    make_image $fbs_port $w $n $viewsize $orientation $eye_pt \
+	$_bgcolor $_ecolor $_necolor $_occmode $_gamma $_color_objects $_ghost_objects $_edge_objects
+
+    set binpath [bu_brlcad_root "bin"]
+    catch {exec [file join $binpath fb-fb] $fbs_port $port &}
+
+    if {$tcl_platform(platform) == "windows"} {
+	set kill_cmd [auto_execok taskkill]
+    } else {
+	set kill_cmd [auto_execok kill]
+    }
+
+    if {$kill_cmd != ""} {
+	# Give it time to copy the image from the inmem framebuffer
+	after 3000 exec $kill_cmd $fbs_pid
+    }
+
+    return
+}
+
+#
+# Not yet handling perspective.
+#
+::itcl::body cadwidgets::Ged::make_image {_port _w _n _viewsize _orientation _eye_pt _bgcolor _ecolor _necolor _occmode _gamma _color_objects _ghost_objects _edge_objects} {
+    global tcl_platform
+    global env
+
+    set dbfile [opendb]
+
+    if {$dbfile == ""} {
+	return "make_image: no database is open"
+    }
+
+    set ar [ expr $_w.0 / $_n.0 ]
+
+    if {$tcl_platform(platform) == "windows"} {
+	if {[catch {set dir $env(TMP)}]} {
+	    return "make_image: env(TMP) does not exist"
+	}
+    } else {
+	set dir "/tmp"
+
+	if {![file exists $dir]} {
+	    return "make_image: $dir does not exist"
+	}
+    }
+
+    set pid [pid]
+    set tgi [file join $dir $pid\_ghost.pix]
+    set tfci [file join $dir $pid\_fc.pix]
+    set tgfci [file join $dir $pid\_ghostfc.pix]
+    set tmi [file join $dir $pid\_merge.pix]
+    set tmi2 [file join $dir $pid\_merge2.pix]
+    set tbw [file join $dir $pid\_bw.bw]
+    set tmod [file join $dir $pid\_bwmod.bw]
+    set tbwpix [file join $dir $pid\_bwpix.pix]
+
+    set binpath [bu_brlcad_root "bin"]
+
+    if {[llength $_color_objects]} {
+	set have_color_objects 1
+	set cmd [list [file join $binpath rt] -w $_w -n $_n \
+		     -o $tfci \
+		     -V $ar \
+		     -R \
+		     -A 0.9 \
+		     -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
+		     -c [list viewsize $_viewsize] \
+		     -c [eval list orientation $_orientation] \
+		     -c [eval list eye_pt $_eye_pt] \
+		     $dbfile]
+
+	foreach obj $_color_objects {
+	    lappend cmd $obj
+	}
+
+	#
+	# Run rt to generate the color insert
+	#
+	catch {eval exec $cmd}
+
+	# Put the image into the framebuffer
+	catch {eval exec [file join $binpath pix-fb] -w $_w -n $_n -F $_port $tfci}
+    } else {
+	set have_color_objects 0
+
+	# Put a blank image into the framebuffer
+	catch {exec [file join $binpath fbclear] -F $_port [lindex $_bgcolor 0] [lindex $_bgcolor 1] [lindex $_bgcolor 2]}
+	catch {exec [file join $binpath fb-pix] -w $_w -n $_n -F $_port $tfci}
+    }
+
+
+    set occlude_objects [lsort -unique [concat $_color_objects $_ghost_objects]]
+
+    if {[llength $_ghost_objects]} {
+	set have_ghost_objects 1
+	set cmd [list [file join $binpath rt] -w $_w -n $_n \
+		     -o $tgi \
+		     -V $ar \
+		     -R \
+		     -A 0.9 \
+		     -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
+		     -c [list viewsize $_viewsize] \
+		     -c [eval list orientation $_orientation] \
+		     -c [eval list eye_pt $_eye_pt] \
+		     $dbfile]
+
+	foreach obj $_ghost_objects {
+	    lappend cmd $obj
+	}
+
+	#
+	# Run rt to generate the full-color version of the ghost image
+	#
+	catch {eval exec $cmd}
+
+	set cmd [list [file join $binpath rt] -w $_w -n $_n \
+		     -o $tgfci \
+		     -V $ar \
+		     -R \
+		     -A 0.9 \
+		     -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
+		     -c [list viewsize $_viewsize] \
+		     -c [eval list orientation $_orientation] \
+		     -c [eval list eye_pt $_eye_pt] \
+		     $dbfile]
+
+	foreach obj $occlude_objects {
+	    lappend cmd $obj
+	}
+
+	#
+	# Run rt to generate the full-color version of the occlude_objects (i.e. color and ghost)
+	#
+	catch {eval exec $cmd}
+
+	#
+	# Convert to ghost image
+	#
+	catch {exec [file join $binpath pix-bw] $tgi > $tbw}
+	catch {exec [file join $binpath bwmod] -a 4 -d259 -r$_gamma -m255 $tbw > $tmod}
+	catch {exec [file join $binpath bw-pix] $tmod $tbwpix}
+
+	set bgl "=[lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2]"
+	catch {exec [file join $binpath pixmatte] -e $tfci $bgl $tbwpix $tfci > $tmi}
+	catch {exec [file join $binpath pixmatte] -e $tgfci $bgl $tfci $tmi > $tmi2}
+
+	# Put the image into the framebuffer
+	catch {exec [file join $binpath pix-fb] -w $_w -n $_n -F $_port $tmi2}
+    } else {
+	set have_ghost_objects 0
+    }
+
+    if {[llength $_edge_objects]} {
+	set have_edge_objects 1
+
+	if {[llength $_ecolor] != 3} {
+	    set fgMode [list set rc=1]
+	} else {
+	    set r [lindex $_ecolor 0]
+	    set g [lindex $_ecolor 1]
+	    set b [lindex $_ecolor 2]
+	    if {![string is digit $r] || $r > 255 ||
+		![string is digit $g] || $g > 255 ||
+		![string is digit $b] || $b > 255} {
+		set fgMode [list set rc=1]
+	    } else {
+		set fgMode [list set fg=[lindex $_ecolor 0],[lindex $_ecolor 1],[lindex $_ecolor 2]]
+	    }
+	}
+
+	if {[llength $occlude_objects]} {
+	    set coMode "-c {set om=$_occmode} -c {set oo=\\\"$occlude_objects\\\"}"
+	    set bgMode [list set bg=[lindex $_necolor 0],[lindex $_necolor 1],[lindex $_necolor 2]]
+	} else {
+	    set coMode "-c {set ov=1}"
+	    set bgMode [list set bg=[lindex $_bgcolor 0],[lindex $_bgcolor 1],[lindex $_bgcolor 2]]
+	}
+
+	set cmd [concat [file join $binpath rtedge] -w $_w -n $_n \
+		     -F $_port \
+		     -V $ar \
+		     -R \
+		     -A 0.9 \
+		     -c [list $fgMode] \
+		     -c [list $bgMode] \
+		     $coMode \
+		     -c [list [list viewsize $_viewsize]] \
+		     -c [list [eval list orientation $_orientation]] \
+		     -c [list [eval list eye_pt $_eye_pt]] \
+				   $dbfile]
+
+	foreach obj $_edge_objects {
+	    lappend cmd $obj
+	}
+
+	#
+	# Run rtedge to generate the full-color version of the ghost image
+	#
+	catch {eval exec $cmd}
+    }
+
+    catch {file delete -force $tgi}
+    catch {file delete -force $tfci}
+    catch {file delete -force $tgfci}
+    catch {file delete -force $tmi}
+    catch {file delete -force $tmi2}
+    catch {file delete -force $tbw}
+    catch {file delete -force $tmod}
+    catch {file delete -force $tbwpix}
+}
+
 
 ::itcl::body cadwidgets::Ged::make_name {args} {
     eval $mGed make_name $args
@@ -2854,6 +3112,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::who {args} {
     eval $mGed who $args
+}
+
+::itcl::body cadwidgets::Ged::win_size {args} {
+    eval pane_win_size $itk_option(-pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::wmater {args} {
