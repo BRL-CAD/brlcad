@@ -151,7 +151,6 @@ wrap( va_alist )
 va_dcl {
     char * fmt;
 #endif
-    FILE * f = exppp_fp ? exppp_fp : stdout;
     char * p;
     char buf[10000];
     int len;
@@ -200,7 +199,6 @@ raw( va_alist )
 va_dcl {
     char * fmt;
 #endif
-    FILE * f = exppp_fp ? exppp_fp : stdout;
     char * p;
     char buf[10000];
     int len;
@@ -887,7 +885,6 @@ void LOOPout( struct Loop_ *loop, int level ) {
 void
 CASEout( struct Case_Statement_ *c, int level ) {
     int len = 0;
-    char * string;
     int max_indent;
 
     raw( "%*sCASE ", level, "" );
