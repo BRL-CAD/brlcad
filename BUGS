@@ -102,7 +102,12 @@ Recent Bugs
   to read in a script that uses gets on stdin.  it just hangs until
   muliple sigint's are received.
 
-* menu invocation seems to be broken again (ArchLinux)
+* invoking mged from a system menu seems to be broken.  reported by a
+  reliable ArchLinux user.  probably exhibits cross-platform on KDE,
+  GNOME, or XFCE (but original environment is unknown).  the bug is
+  undoubtedly related to mged's interactive and stdin/stdout input
+  detection where mged thinks it's being scripted (beginning on or
+  about mged.c:1150)
 
 * Report of copy/paste not working with Tk on Windows Vista - does
   work on Windows XP.
