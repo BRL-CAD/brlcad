@@ -909,8 +909,7 @@ EntityDescriptor::~EntityDescriptor() {
     delete _uniqueness_rules;
 }
 
-const char *
-EntityDescriptor::GenerateExpress( std::string & buf ) const {
+const char * EntityDescriptor::GenerateExpress( std::string & buf ) const {
     std::string sstr;
     int count;
     int i;
@@ -925,26 +924,6 @@ EntityDescriptor::GenerateExpress( std::string & buf ) const {
     buf.append( _supertype_stmt );
 
     const EntityDescriptor * ed = 0;
-    /*
-        EntityDescItr edi_sub(_subtypes);
-        edi_sub.ResetItr();
-        ed = edi_sub.NextEntityDesc();
-        int subtypes = 0;
-        if(ed) {
-        buf.Append("\n  SUPERTYPE OF (ONEOF(");
-        buf.Append(StrToLower(ed->Name(),sstr));
-        subtypes = 1;
-        }
-        ed = edi_sub.NextEntityDesc();
-        while (ed) {
-        buf.Append(",\n\t\t");
-        buf.Append(StrToLower(ed->Name(),sstr));
-        ed = edi_sub.NextEntityDesc();
-        }
-        if(subtypes) {
-        buf.Append("))");
-        }
-    */
 
     EntityDescItr edi_super( _supertypes );
     edi_super.ResetItr();
