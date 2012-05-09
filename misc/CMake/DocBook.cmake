@@ -291,9 +291,9 @@ endmacro(DOCBOOK_TO_PDF targetname_suffix srcfile outfile targetdir deps_list)
 # we need to get those files too.
 macro(DOCBOOK_EXTRA_OUTPUT output_files targetdir)
   foreach(filename ${${output_files}})
-    set(outfile ${bin_root}/${DATA_DIR}/${targetdir}/${filename})
-    install(FILES ${outfile} DESTINATION ${targetdir})
-    set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${outfile})
+    set(outfile "${bin_root}/${DATA_DIR}/${targetdir}/${filename}")
+    install(FILES "${outfile}" DESTINATION ${targetdir})
+    set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${outfile}")
   endforeach(filename ${${output_files}})
 endmacro(DOCBOOK_EXTRA_OUTPUT )
 
