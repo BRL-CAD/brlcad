@@ -28,9 +28,6 @@ Recent Bugs
   ignoring the onehit flag and returning a hit for segments behind the
   ray?  return value from shot() seems wrong.
 
-* report that running "attach X" and trying to draw something causes
-  mged -c to crash.  verified in quick testing.
-
 * src/librt/primitives/bot/g_bot_include.c:rt_bot_bbox() routine isn't
   calculating the bbox correctly
 
