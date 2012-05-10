@@ -53,11 +53,12 @@ set(CMAKE_REQUIRED_LIBRARIES "${STDCXX_LIBRARIES}")
 
 set(stl_test_src "
 int
-main()
+main(int ac, char *av[])
 {
-  int i;
-  i = 1;
-  return 0;
+  if (av)
+    return 0;
+  else
+    return ac-ac;
 }
 ")
 CHECK_C_SOURCE_RUNS("${stl_test_src}" STL_LIB_TEST)
