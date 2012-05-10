@@ -4953,6 +4953,10 @@ to_init_default_bindings(struct ged_dm_view *gdvp)
 		  &gdvp->gdv_name);
 
     /* Rotate Mode */
+    bu_vls_printf(&bindings, "bind %V <Control-ButtonRelease-1> {%V idle_mode %V; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &current_top->to_gop->go_name,
+		  &gdvp->gdv_name);
     bu_vls_printf(&bindings, "bind %V <Control-ButtonPress-1> {%V rotate_mode %V %%x %%y; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -4967,6 +4971,10 @@ to_init_default_bindings(struct ged_dm_view *gdvp)
 		  &gdvp->gdv_name);
 
     /* Translate Mode */
+    bu_vls_printf(&bindings, "bind %V <Shift-ButtonRelease-1> {%V idle_mode %V; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &current_top->to_gop->go_name,
+		  &gdvp->gdv_name);
     bu_vls_printf(&bindings, "bind %V <Shift-ButtonPress-1> {%V translate_mode %V %%x %%y; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -4981,6 +4989,10 @@ to_init_default_bindings(struct ged_dm_view *gdvp)
 		  &gdvp->gdv_name);
 
     /* Scale Mode */
+    bu_vls_printf(&bindings, "bind %V <Control-Shift-ButtonRelease-1> {%V idle_mode %V; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &current_top->to_gop->go_name,
+		  &gdvp->gdv_name);
     bu_vls_printf(&bindings, "bind %V <Control-Shift-ButtonPress-1> {%V scale_mode %V %%x %%y; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -4995,6 +5007,10 @@ to_init_default_bindings(struct ged_dm_view *gdvp)
 		  &gdvp->gdv_name);
 
     /* Constrained Rotate Mode */
+    bu_vls_printf(&bindings, "bind %V <Control-Lock-ButtonRelease-1> {%V idle_mode %V; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &current_top->to_gop->go_name,
+		  &gdvp->gdv_name);
     bu_vls_printf(&bindings, "bind %V <Control-Lock-ButtonPress-1> {%V constrain_rmode %V x %%x %%y; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
@@ -5009,6 +5025,10 @@ to_init_default_bindings(struct ged_dm_view *gdvp)
 		  &gdvp->gdv_name);
 
     /* Constrained Translate Mode */
+    bu_vls_printf(&bindings, "bind %V <Shift-Lock-ButtonRelease-1> {%V idle_mode %V; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &current_top->to_gop->go_name,
+		  &gdvp->gdv_name);
     bu_vls_printf(&bindings, "bind %V <Shift-Lock-ButtonPress-1> {%V constrain_tmode %V x %%x %%y; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
