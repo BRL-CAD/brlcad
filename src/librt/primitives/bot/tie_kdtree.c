@@ -254,8 +254,8 @@ tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 *triverts)
     return t >= d ? 1 : 0;
 }
 
-static void
-find_split_fast(struct tie_kdtree_s *node, TIE_3 *cmin, TIE_3 *cmax, unsigned int *split)
+static unsigned int
+find_split_fast(struct tie_kdtree_s *node, TIE_3 *cmin, TIE_3 *cmax)
 {
     /**********************
      * MID-SPLIT ALGORITHM *
@@ -273,27 +273,29 @@ find_split_fast(struct tie_kdtree_s *node, TIE_3 *cmin, TIE_3 *cmax, unsigned in
 	cmax[0].v[0] = center[0].v[0];
 	cmin[1].v[0] = center[0].v[0];
 	node->axis = center[0].v[0];
-	*split = 0;
-    } else if (vec.v[1] >= vec.v[0] && vec.v[1] >= vec.v[2]) {
+	return 0;
+    } 
+
+    if (vec.v[1] >= vec.v[0] && vec.v[1] >= vec.v[2]) {
 	cmax[0].v[1] = center[0].v[1];
 	cmin[1].v[1] = center[0].v[1];
 	node->axis = center[0].v[1];
-	*split = 1;
-    } else {
-	cmax[0].v[2] = center[0].v[2];
-	cmin[1].v[2] = center[0].v[2];
-	node->axis = center[0].v[2];
-	*split = 2;
+	return 1;
     }
+
+    cmax[0].v[2] = center[0].v[2];
+    cmin[1].v[2] = center[0].v[2];
+    node->axis = center[0].v[2];
+    return 2;
 }
 
-static void
-find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TIE_3 *cmax, unsigned int *split)
+static unsigned int
+find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TIE_3 *cmax)
 {
     /****************************************
      * Justin's Aggressive KD-Tree Algorithm *
      *****************************************/
-    unsigned int slice[3][MAX_SLICES+MIN_SLICES], gap[3][2], active, split_slice = 0;
+    unsigned int slice[3][MAX_SLICES+MIN_SLICES], gap[3][2], active, split_slice = 0, split;
     unsigned int side[3][MAX_SLICES+MIN_SLICES][2], i, j, d, s, n, k, smax[3], smin, slice_num;
     tfloat coef[3][MAX_SLICES+MIN_SLICES], split_coef, beg, end, d_min = 0.0, d_max = 0.0;
     struct tie_tri_s *tri;
@@ -479,7 +481,7 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
      * triangles lack any sort of coherent structure.
      */
     if ((tfloat)(gap[d][1] - gap[d][0]) / (tfloat)slice_num > MIN_SPAN && node_gd->tri_num > 500) {
-	*split = d;
+	split = d;
 	if (abs(gap[d][0] - slice_num/2) < abs(gap[d][1] - slice_num/2)) {
 	    /* choose gap[d][0] as splitting plane */
 	    split_coef = ((tfloat)gap[d][0] / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
@@ -503,14 +505,14 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
 		slice[d][k] += fabs(coef[d][k]-0.5) * SCALE_COEF * smax[d];
 
 	/* Choose the slice with the graphs minima as the splitting plane. */
-	*split = 0;
+	split = 0;
 	smin = tie->tri_num;
 	split_coef = 0.5;
 	for (d = 0; d < 3; d++) {
 	    for (k = 0; k < slice_num; k++) {
 		if (slice[d][k] < smin) {
 		    split_coef = coef[d][k];
-		    *split = d;
+		    split = d;
 		    split_slice = k;
 		    smin = slice[d][k];
 		}
@@ -525,9 +527,9 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
 	 * will give better results than the algorithm naively picking the first of the
 	 * the slices forming these irregular, short followed by a long box, splits.
 	 */
-	if (smax[*split] == 0) {
+	if (smax[split] == 0) {
 	    split_slice = slice_num / 2;
-	    split_coef = coef[*split][split_slice];
+	    split_coef = coef[split][split_slice];
 	}
     }
 
@@ -537,9 +539,9 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
      * doing.  In other words, if one of the children have the same number of triangles
      * as the parent does then stop.
      */
-    if (side[*split][split_slice][0] == node_gd->tri_num || side[*split][split_slice][1] == node_gd->tri_num) {
+    if (side[split][split_slice][0] == node_gd->tri_num || side[split][split_slice][1] == node_gd->tri_num) {
 	tie->stat += node_gd->tri_num;
-	return;
+	return split;
     }
 
     /* Based on the winner, construct the two child nodes */
@@ -549,9 +551,10 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
     VMOVE(cmin[1].v, min.v);
     VMOVE(cmax[1].v, max.v);
 
-    cmax[0].v[*split] = min.v[*split]*(1.0-split_coef) + max.v[*split]*split_coef;
-    cmin[1].v[*split] = cmax[0].v[*split];
-    node->axis = cmax[0].v[*split];
+    cmax[0].v[split] = min.v[split]*(1.0-split_coef) + max.v[split]*split_coef;
+    cmin[1].v[split] = cmax[0].v[split];
+    node->axis = cmax[0].v[split];
+    return split;
 }
 
 static void
@@ -579,9 +582,9 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
     }
 
     if (tie->kdmethod == TIE_KDTREE_FAST)
-	find_split_fast(node, &cmin[0], &cmax[0], &split);
+	split = find_split_fast(node, &cmin[0], &cmax[0]);
     else if (tie->kdmethod == TIE_KDTREE_OPTIMAL)
-	find_split_optimal(tie, node, &cmin[0], &cmax[0], &split);
+	split = find_split_optimal(tie, node, &cmin[0], &cmax[0]);
     else
 	bu_bomb("Illegal tie kdtree method\n");
 
