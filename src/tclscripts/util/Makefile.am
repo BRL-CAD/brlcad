@@ -4,6 +4,7 @@ tcldir = $(BRLCAD_DATA)/$(this_dir)
 
 scripties = \
 	expand_int_ranges.tcl \
+	getopt.tcl \
 	luniq.tcl
 
 BUILT_SOURCES = \
