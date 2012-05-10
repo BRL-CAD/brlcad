@@ -87,8 +87,6 @@ Tclcad_Init(Tcl_Interp *interp)
     if (tclcad_initialized(0))
 	return TCL_OK;
 
-    (void)tclcad_initialized(1);
-
     if (Tcl_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
@@ -107,7 +105,7 @@ Tclcad_Init(Tcl_Interp *interp)
       bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
       return TCL_ERROR;
     }
-   
+
 #ifdef HAVE_TK
     /* Initialize [incr Tk] */
     if (Tcl_Eval(interp, "package require Itk") != TCL_OK) {
@@ -162,6 +160,8 @@ Tclcad_Init(Tcl_Interp *interp)
     Cho_Init(interp);
 
     Tcl_PkgProvide(interp,  "Tclcad", (ClientData)brlcad_version());
+
+    (void)tclcad_initialized(1);
 
     return TCL_OK;
 }

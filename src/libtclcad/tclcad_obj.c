@@ -1148,8 +1148,6 @@ Go_Init(Tcl_Interp *interp)
     if (tclcad_initialized(0))
 	return TCL_OK;
 
-    (void)tclcad_initialized(1);
-
     /*XXX Use of brlcad_interp is temporary */
     brlcad_interp = interp;
 
@@ -1158,6 +1156,8 @@ Go_Init(Tcl_Interp *interp)
 			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
     bu_semaphore_reinit(GED_SEM_LAST);
+
+    (void)tclcad_initialized(1);
 
     return TCL_OK;
 }
