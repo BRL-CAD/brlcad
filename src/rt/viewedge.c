@@ -582,9 +582,6 @@ view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
 {
     int i;
 
-    if (outputfile)
-	bif = icv_image_save_open(outputfile, ICV_IMAGE_AUTO, width, height, 3);
-
     /*
      * Per_processor_chuck specifies the number of pixels rendered per
      * each pass of a worker. By making this value equal to the width
