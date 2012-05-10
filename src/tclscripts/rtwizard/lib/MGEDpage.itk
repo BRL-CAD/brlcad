@@ -386,7 +386,7 @@ namespace eval RtWizard {
 	# Create the hierarchy browser
 	#
 	itk_component add hier {
-	    hierarchy $itk_component(hierFrame).#auto \
+	    iwidgets::hierarchy $itk_component(hierFrame).#auto \
 		-querycommand  "[itcl::code $this getChildren] %n " \
 		-selectcommand "[itcl::code $this selectNode] %n %s " \
 		-alwaysquery 0 \
@@ -1045,7 +1045,7 @@ namespace eval RtWizard {
 	# Build the current size indicator
 	#
 	itk_component add sizeLabel {
-	    labeledwidget $cs.scl \
+	    iwidgets::labeledwidget $cs.scl \
 		-labeltext "Current Size:" \
 		-labelpos "w"
 	} {
@@ -1073,7 +1073,7 @@ namespace eval RtWizard {
 	# Build the entry field for the size.
 	#
 	itk_component add sizeEntry {
-	    entryfield $cs.sze \
+	    iwidgets::entryfield $cs.sze \
 		-labeltext "Desired Size:" \
 		-labelpos w \
 		-width 10\
@@ -1343,7 +1343,7 @@ namespace eval RtWizard {
 	# Build the radiobox
 	#
 	itk_component add occModeRB {
-	    radiobox $cs.rb \
+	    iwidgets::radiobox $cs.rb \
 		-labeltext "Select the Occlusion Mode:" \
 		-labelpos "nw" \
 		-ipady 10

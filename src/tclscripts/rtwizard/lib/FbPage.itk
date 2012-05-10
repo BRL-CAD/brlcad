@@ -1,7 +1,7 @@
 #                      F B P A G E . I T K
 # BRL-CAD
 #
-# Copyright (c) 2004-2011 United States Government as represented by
+# Copyright (c) 2004-2012 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -448,9 +448,9 @@ namespace eval RtWizard {
 	#
 	#
 	if {$tcl_platform(platform) == "windows"} {
-	    set fbType "/dev/wgl"
+	    set fbType "/dev/wglsp"
 	} else {
-	    set fbType "/dev/ogl"
+	    set fbType "/dev/oglsp"
 	}
 	#
 	#
