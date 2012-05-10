@@ -798,6 +798,29 @@ utah_pushBack(const ON_Surface* surf, ON_2dPoint &uv)
 }
 
 
+void
+utah_pushBack(const BBNode* sbv, ON_2dPoint &uv)
+{
+    double t0, t1;
+
+    t0 = sbv->m_u.m_t[0];
+    t1 = sbv->m_u.m_t[1];
+    if (uv.x < t0 - BREP_EDGE_MISS_TOLERANCE) {
+	uv.x = t0 + ROOT_TOL;;
+    } else if (uv.x >= t1 + BREP_EDGE_MISS_TOLERANCE) {
+	uv.x = t1 - ROOT_TOL;
+    }
+
+    t0 = sbv->m_v.m_t[0];
+    t1 = sbv->m_v.m_t[1];
+    if (uv.y < t0 - BREP_EDGE_MISS_TOLERANCE) {
+	uv.y = t0 + ROOT_TOL;;
+    } else if (uv.y >= t1 + BREP_EDGE_MISS_TOLERANCE) {
+	uv.y = t1 - ROOT_TOL;
+    }
+}
+
+
 int
 utah_newton_solver_test(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged, ON_2dPoint* suv, int count, int iu, int iv)
 {
@@ -808,6 +831,7 @@ utah_newton_solver_test(const BBNode* sbv, const ON_Surface* surf, const ON_Ray&
     double rootdist, oldrootdist;
     double J, invdetJ;
     double du, dv;
+    double cdu, cdv;
 
     ON_3dVector p1, p2;
     double p1d = 0, p2d = 0;
@@ -816,6 +840,7 @@ utah_newton_solver_test(const BBNode* sbv, const ON_Surface* surf, const ON_Ray&
 
     ON_3dPoint S;
     ON_3dVector Su, Sv;
+    //ON_3dVector Suu, Suv, Svv;
 
     ON_2dPoint uv;
 
@@ -824,6 +849,7 @@ utah_newton_solver_test(const BBNode* sbv, const ON_Surface* surf, const ON_Ray&
 
     ON_2dPoint uv0(uv);
     surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
+    //surf->Ev2Der( uv.x, uv.y, S, Su, Sv, Suu, Suv, Svv);
 
     utah_F(S, p1, p1d, p2, p2d, f, g);
     rootdist = fabs(f) + fabs(g);
@@ -855,10 +881,30 @@ utah_newton_solver_test(const BBNode* sbv, const ON_Surface* surf, const ON_Ray&
 
 	du = invdetJ * (j22 * f - j12 * g);
 	dv = invdetJ * (j11 * g - j21 * f);
+
+
+	if (i==0) {
+	    cdu = du;
+	    cdv = dv;
+	} else {
+	    int sgnd = (du > 0) - (du < 0);
+	    int sgncd = (cdu > 0) - (cdu < 0);
+	    if ((sgnd != sgncd) && (fabs(du) > fabs(cdu))) {
+		du = sgnd * 0.75 * fabs(cdu);
+	    }
+	    sgnd = (dv > 0) - (dv < 0);
+	    sgncd = (cdv > 0) - (cdv < 0);
+	    if ((sgnd != sgncd) && (fabs(dv) > fabs(cdv))) {
+		dv = sgnd * 0.75 * fabs(cdv);
+	    }
+	    cdu = du;
+	    cdv = dv;
+	}
+
 	uv.x -= du;
 	uv.y -= dv;
 
-	utah_pushBack(surf, uv);
+	utah_pushBack(sbv, uv);
 
 	surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
 	utah_F(S, p1, p1d, p2, p2d, f, g);
@@ -870,7 +916,7 @@ utah_newton_solver_test(const BBNode* sbv, const ON_Surface* surf, const ON_Ray&
 	    uv.x += du;
 	    uv.y += dv;
 
-	    utah_pushBack(surf, uv);
+	    utah_pushBack(sbv, uv);
 
 	    surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
 	    utah_F(S, p1, p1d, p2, p2d, f, g);
@@ -878,7 +924,7 @@ utah_newton_solver_test(const BBNode* sbv, const ON_Surface* surf, const ON_Ray&
 	    rootdist = fabs(f) + fabs(g);
 	}
 
-	if (oldrootdist < rootdist) {
+	if (oldrootdist <= rootdist) {
 	    if (errantcount > 3) {
 		return intersects;
 	    } else {
