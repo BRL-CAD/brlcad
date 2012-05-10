@@ -528,11 +528,17 @@ implementation.
 
 Code Conventions:
 
-Globals variables, global structures, and other public data containers
-are highly discouraged - globals are often the easy way around a hard
-coding problem but more often complicate refactoring and restructuring
-in the future.  Try to find another solution unless there is a very
-compelling and good reason for their use.
+Globals variables, structures, classes, and other public data
+containers are highly discouraged within application code.  Do not add
+any new globals to existing libraries.  Globals are often a quick
+solution to some deeper coding problem.  However, they carry
+significant maintenance costs, introduce (spaghetti) code complexity,
+make multi-threading support more costly, pollute public API
+(symbol-wise at a minimum), increase security risks, are error-prone
+to use, and usually complicate refactoring and code restructuring in
+the future.  Using static variables (whether function- or
+static/file-scoped) is a viable alternative.  Restructuring the logic
+to not be stateful is even better.
 
 Functions should always specify a return type, including functions
 that return int or void.  ANSI C prototypes should be used to declare
