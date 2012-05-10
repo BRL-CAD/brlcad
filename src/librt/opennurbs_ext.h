@@ -78,7 +78,7 @@ bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 #define BREP_MAX_LN_DEPTH 20
 #define SIGN(x) ((x) >= 0 ? 1 : -1)
 /* Surface flatness parameter, Abert says between 0.8-0.9 */
-#define BREP_SURFACE_FLATNESS 0.90
+#define BREP_SURFACE_FLATNESS 0.85
 #define BREP_SURFACE_STRAIGHTNESS 0.75
 /* Max newton iterations when finding closest point */
 #define BREP_MAX_FCP_ITERATIONS 50
@@ -515,7 +515,7 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
     point_t A, B;
     double Ta, Tb;
 
-    if (m_start[X] < u) {
+    if (m_start[X] < m_end[X]) {
 	VMOVE(A, m_start);
 	VMOVE(B, m_end);
 	Ta = m_t[0];
@@ -542,7 +542,7 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
     ON_3dPoint p;
 
     /* Use quick binary subdivision until derivatives at end points in 'u' are within 5 percent */
-    while (du > 0.05) {
+    while (!NEAR_ZERO(dU, tol) && !NEAR_ZERO(dT, tol)) {
     	guess = Ta + dT/2;
     	p = m_trim->PointAt(guess);
 
@@ -564,6 +564,7 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
     	}
     	dT = Tb - Ta;
     	du = fabs(Tan_end.x - Tan_start.x);
+    	dU = B[X] - A[X];
     }
 
     dU = B[X] - A[X];
@@ -609,7 +610,7 @@ BANode<BA>::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
     point_t A, B;
     double Ta, Tb;
 
-    if (m_start[Y] < v) {
+    if (m_start[Y] < m_end[Y]) {
 	VMOVE(A, m_start);
 	VMOVE(B, m_end);
 	Ta = m_t[0];
@@ -636,7 +637,7 @@ BANode<BA>::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
     ON_3dPoint p;
 
     /* Use quick binary subdivision until derivatives at end points in 'u' are within 5 percent */
-    while (dv > 0.05) {
+    while (!NEAR_ZERO(dV, tol) && !NEAR_ZERO(dT, tol)) {
     	guess = Ta + dT/2;
     	p = m_trim->PointAt(guess);
     	if (p[Y] < v) {
@@ -650,6 +651,7 @@ BANode<BA>::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
     	}
     	dT = Tb - Ta;
     	dv = fabs(Tan_end.y - Tan_start.y);
+    	dV = B[Y] - A[Y];
     }
 
     dV = B[Y] - A[Y];
@@ -1188,7 +1190,7 @@ BVNode<BV>::isTrimmed(const ON_2dPoint& uv, BRNode* closest, fastf_t &closesttri
 		br = dynamic_cast<BRNode*>(*i);
 
 		/* skip if trim below */
-		if (br->m_node.m_max[1] < uv[Y])
+		if (br->m_node.m_max[1] + BREP_EDGE_MISS_TOLERANCE < uv[Y])
 		    continue;
 
 		if (br->m_Vertical) {
@@ -1442,6 +1444,7 @@ public:
 
 private:
     bool isFlat(ON_Plane frames[]);
+    bool isStraight(ON_Plane frames[]);
     bool isFlatU(ON_Plane frames[]);
     bool isFlatV(ON_Plane frames[]);
     BBNode* subdivideSurfaceByKnots(const ON_Surface *localsurf, const ON_Interval& u, const ON_Interval& v, ON_Plane frames[], ON_3dPoint corners[], ON_3dVector normals[], int depth, int depthLimit);
