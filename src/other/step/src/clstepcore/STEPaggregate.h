@@ -12,7 +12,6 @@
 * and is not subject to copyright.
 */
 
-
 class InstMgr;
 class STEPaggregate;
 class TypeDescriptor;
@@ -27,7 +26,6 @@ class TypeDescriptor;
 #define     AGGR_NULL   &NilSTEPaggregate
 extern STEPaggregate NilSTEPaggregate;
 
-//typedef unsigned short BOOLEAN;
 class SingleLinkNode;
 
 
@@ -87,10 +85,10 @@ class STEPaggregate :  public SingleLinkList {
         virtual STEPaggregate & ShallowCopy( const STEPaggregate & );
 };
 
-/******************************************************************
- ** Class:  GenericAggregate
- ** Description:  This class supports LIST OF:
- ** SELECT_TYPE, BINARY_TYPE, GENERIC_TYPE, ENUM_TYPE, UNKNOWN_TYPE type
+/****************************************************************//**
+ ** \class GenericAggregate
+ ** This class supports LIST OF:
+ **    SELECT_TYPE, BINARY_TYPE, GENERIC_TYPE, ENUM_TYPE, UNKNOWN_TYPE type
  ******************************************************************/
 class GenericAggregate  :  public STEPaggregate {
     public:
@@ -130,10 +128,9 @@ typedef   const EntityAggregate * const_EntityAggregateH;
 typedef   const EntityAggregate * const_EntityAggregate_ptr;
 typedef   EntityAggregate_ptr EntityAggregate_var;
 
-/******************************************************************
- ** Class:  SelectAggregate
- ** Description:  this is a minimal representions for a collection of
- ** SDAI_Select
+/****************************************************************//**
+ ** \class SelectAggregate
+ ** This is a minimal represention for a collection of SDAI_Select
  ******************************************************************/
 class SelectAggregate  :  public STEPaggregate {
     public:
@@ -155,10 +152,10 @@ typedef  const SelectAggregate  * const_SelectAggregateH;
 typedef  const SelectAggregate  * const_SelectAggregate_ptr;
 typedef  SelectAggregate_ptr SelectAggregate_var;
 
-/******************************************************************
- ** Class:  StringAggregate
- ** Description:  This class supports LIST OF STRING type
- ******************************************************************/
+/****************************************************************//**
+** \class StringAggregate
+** This class supports LIST OF STRING type
+******************************************************************/
 class StringAggregate  :  public STEPaggregate {
     public:
         virtual SingleLinkNode * NewNode();
@@ -174,10 +171,10 @@ typedef  const StringAggregate * const_StringAggregate_ptr;
 typedef  StringAggregate_ptr StringAggregate_var;
 
 
-/******************************************************************
- ** Class:  BinaryAggregate
- ** Description:  This class supports LIST OF BINARY type
- ******************************************************************/
+/****************************************************************//**
+** \class BinaryAggregate
+** This class supports LIST OF BINARY type
+******************************************************************/
 class BinaryAggregate  :  public STEPaggregate {
     public:
         virtual SingleLinkNode * NewNode();
@@ -192,11 +189,10 @@ typedef  const BinaryAggregate * const_BinaryAggregateH;
 typedef  const BinaryAggregate * const_BinaryAggregate_ptr;
 typedef  BinaryAggregate_ptr BinaryAggregate_var;
 
-/******************************************************************
- ** Class:  EnumAggregate
- ** Description:  this is a minimal representions for a collection of
- ** SDAI_Enum
- ******************************************************************/
+/**************************************************************//**
+** \class EnumAggregate
+** This is a minimal representions for a collection ofSDAI_Enum
+******************************************************************/
 class EnumAggregate  :  public STEPaggregate {
     public:
         virtual SingleLinkNode * NewNode();
@@ -272,10 +268,6 @@ typedef  IntAggregate_ptr IntAggregate_var;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
-
 class STEPnode :  public SingleLinkNode  {
     protected:
         int _null;
@@ -300,13 +292,13 @@ class STEPnode :  public SingleLinkNode  {
         virtual const char * STEPwrite( std::string & s, const char * = 0 );
         virtual void STEPwrite( ostream & out = cout );
 };
+
+/**************************************************************//**
+** \class GenericAggregate
+** This class is for the Nodes of GenericAggregates
+******************************************************************/
 typedef  STEPnode  * STEPnodeH;
 typedef  const STEPnode  * const_STEPnodeH;
-
-/******************************************************************
- ** Class:  GenericNode
- ** Description:  This class is for the Nodes of GenericAggregates
- ******************************************************************/
 class GenericAggrNode  : public STEPnode {
     public:
         SCLundefined value;
@@ -389,11 +381,10 @@ class EntityNode  : public STEPnode {
 
 ///////////////////////////////////////////////////////////////////////////
 
-/******************************************************************
- ** Class:  SelectNode
- ** Description:  this is a minimal representions for node in lists of
- ** SDAI_Select
- ******************************************************************/
+/**************************************************************//**
+** \class SelectNode
+** This is a minimal representions for node in lists of SDAI_Select
+******************************************************************/
 class SelectNode  : public STEPnode {
     public:
         SDAI_Select  * node;
@@ -449,12 +440,10 @@ class SelectNode  : public STEPnode {
         }
 };
 
-///////////////////////////////////////////////////////////////////////////
-
-/******************************************************************
- ** Class:  StringNode
- ** Description:  This class is for the Nodes of StringAggregates
- ******************************************************************/
+/**************************************************************//**
+** \class StringNode
+** This class is for the Nodes of StringAggregates
+******************************************************************/
 class StringNode  : public STEPnode {
     public:
         SDAI_String  value;
@@ -509,11 +498,10 @@ class BinaryNode  : public STEPnode {
         virtual SingleLinkNode   *  NewNode();
 };
 
-/******************************************************************
- ** Class:  EnumNode
- ** Description:  this is a minimal representions for node in lists of
- ** SDAI_Enum
- ******************************************************************/
+/**************************************************************//**
+** \class EnumNode
+** This is a minimal representions for node in lists of SDAI_Enum
+******************************************************************/
 class EnumNode  : public STEPnode {
     public:
         SDAI_Enum  * node;
@@ -582,7 +570,7 @@ class IntNode  : public STEPnode {
 };
 
 /******************************************************************
- ** The following classes are currently stubs
+ **   FIXME The following classes are currently stubs
  **
 **/
 /*

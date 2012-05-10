@@ -1,3 +1,4 @@
+
 /*
 * NIST STEP Core Class Library
 * clstepcore/STEPaggregate.cc
@@ -21,9 +22,9 @@ const int Real_Num_Precision = REAL_NUM_PRECISION; // from STEPattribute.h
 
 #define STRING_DELIM '\''
 
+
 /******************************************************************************
 **    \file STEPaggregate.cc Functions for manipulating aggregate attributes
-
 **  FIXME KNOWN BUGs:
 **     -- treatment of aggregates of reals or ints is inconsistent with
 **        other aggregates (there's no classes for these)
@@ -47,7 +48,7 @@ STEPaggregate & STEPaggregate::ShallowCopy( const STEPaggregate & a ) {
     return *this;
 }
 
-// do not require exchange file format
+/// do not require exchange file format
 Severity STEPaggregate::AggrValidLevel( const char * value, ErrorDescriptor * err,
                                const TypeDescriptor * elem_type, InstMgr * insts,
                                int optional, char * tokenList, int addFileId,
@@ -67,7 +68,7 @@ Severity STEPaggregate::AggrValidLevel( const char * value, ErrorDescriptor * er
     return err->severity();
 }
 
-// require exchange file format
+/// require exchange file format
 Severity STEPaggregate::AggrValidLevel( istream & in, ErrorDescriptor * err,
                                const TypeDescriptor * elem_type, InstMgr * insts,
                                int optional, char * tokenList, int addFileId,
@@ -85,10 +86,9 @@ Severity STEPaggregate::AggrValidLevel( istream & in, ErrorDescriptor * err,
     return err->severity();
 }
 
-// if exchangeFileFormat == 1 then paren delims are required.
+/// if exchangeFileFormat == 1 then paren delims are required.
 
-Severity
-STEPaggregate::ReadValue( istream & in, ErrorDescriptor * err,
+Severity STEPaggregate::ReadValue( istream & in, ErrorDescriptor * err,
                           const TypeDescriptor * elem_type, InstMgr * insts,
                           int addFileId, int assignVal, int exchangeFileFormat,
                           const char * ) {
@@ -454,7 +454,7 @@ EntityAggregate::~EntityAggregate() {
 }
 
 
-// if exchangeFileFormat == 1 then delims are required.
+/// if exchangeFileFormat == 1 then delims are required.
 Severity EntityAggregate::ReadValue( istream & in, ErrorDescriptor * err,
                             const TypeDescriptor * elem_type, InstMgr * insts,
                             int addFileId, int assignVal,
@@ -551,7 +551,6 @@ Severity EntityAggregate::ReadValue( istream & in, ErrorDescriptor * err,
     }
     if( c == ')' ) {
         _null = 0;
-//  validDelims = 1; // expectation for end paren delim is met
     } else { // expectation for end paren delim has not been met
         err->GreaterSeverity( SEVERITY_INPUT_ERROR );
         err->AppendToUserMsg( "Missing close paren for aggregate value" );
@@ -651,7 +650,6 @@ Severity EntityNode::STEPread( istream & in, ErrorDescriptor * err,
     } else {
         node = S_ENTITY_NULL;
     }
-//    CheckRemainingInput(in, err, "enumeration", ",)");
     return err->severity();
 }
 
@@ -696,7 +694,7 @@ SelectAggregate::~SelectAggregate() {
 }
 
 
-// if exchangeFileFormat == 1 then delims are required.
+/// if exchangeFileFormat == 1 then delims are required.
 Severity SelectAggregate::ReadValue( istream & in, ErrorDescriptor * err,
                             const TypeDescriptor * elem_type, InstMgr * insts,
                             int addFileId, int assignVal,
@@ -1122,7 +1120,7 @@ void BinaryNode::STEPwrite( ostream & out ) {
 // EnumAggregate
 ///////////////////////////////////////////////////////////////////////////////
 
-// COPY
+/// COPY
 STEPaggregate & EnumAggregate::ShallowCopy( const STEPaggregate & a ) {
     const EnumNode * tmp = ( const EnumNode * ) a.GetHead();
     EnumNode * to;
@@ -1178,8 +1176,8 @@ EnumNode::EnumNode() {
 EnumNode::~EnumNode() {
 }
 
+///  defined in subclass
 SingleLinkNode * EnumNode::NewNode() {
-    //  defined in subclass
     cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n" ;
     cerr << "function:  EnumNode::NewNode () called instead of virtual function. \n"
          << _POC_ << "\n";
@@ -1376,7 +1374,6 @@ Severity RealNode::StrToVal( istream & in, ErrorDescriptor * err ) {
     }
     return err->severity();
 }
-
 
 Severity RealNode::STEPread( const char * s, ErrorDescriptor * err ) {
     if( ReadReal( value, s, err, ",)" ) ) { // returns true if value is assigned

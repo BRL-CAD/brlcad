@@ -1,5 +1,5 @@
 /*****************************************************************************
- * trynext.cc                                                                *
+ * \file trynext.cc                                                          *
  *                                                                           *
  * Description: Contains the tryNext() functions for the EntList descen-     *
  *              dants.  Their purpose is to search for additional branches   *
@@ -17,8 +17,7 @@
 static EntList * firstCandidate( EntList * );
 static EntList * nextCandidate( EntList * );
 
-MatchType MultList::tryNext( EntNode * ents )
-/*
+/**
  * Loops backwards through the children of this, recursively searching for
  * alternate solutions (i.e., OR's which have alternate paths we haven't
  * tried yet).  We loop through all MultList type children which may have
@@ -28,7 +27,7 @@ MatchType MultList::tryNext( EntNode * ents )
  * (reasons discussed in notes, 10/17).  This function is the tryNext()
  * for AND and ANDOR; the OR version is redefined.
  */
-{
+MatchType MultList::tryNext( EntNode * ents ) {
     MatchType retval;
     EntList * child = getLast();
 
@@ -59,13 +58,12 @@ MatchType MultList::tryNext( EntNode * ents )
     return NOMORE;
 }
 
-static EntList * firstCandidate( EntList * child )
-/*
+/**
  * Finds an EntList from child's list which may have an OR with more
  * choices below it.  The acceptable choices are described in commenting
  * below.
  */
-{
+static EntList * firstCandidate( EntList * child ) {
     EntList * ent = child->lastNot( SIMPLE );
 
     while( ent != NULL ) {
@@ -80,11 +78,10 @@ static EntList * firstCandidate( EntList * child )
     return ent;
 }
 
-static EntList * nextCandidate( EntList * child )
-/*
+/**
  * Same as prev function, searches forwards from ent after child.
  */
-{
+static EntList * nextCandidate( EntList * child ) {
     EntList * ent = child->nextNot( SIMPLE );
 
     while( ent != NULL ) {
@@ -96,13 +93,12 @@ static EntList * nextCandidate( EntList * child )
     return ent;
 }
 
-MatchType OrList::tryNext( EntNode * ents )
-/*
+/**
  * Tries out the next choice of this.  Basic algorithm is to first recurse
  * to check for other solutions in the descendants of the current choice,
  * and then to try our next choice.
  */
-{
+MatchType OrList::tryNext( EntNode * ents ) {
     MatchType retval;
     EntList * child;
 

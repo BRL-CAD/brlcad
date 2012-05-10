@@ -1,5 +1,6 @@
 /*****************************************************************************
  * multlist.cc                                                               *
+ * \class MultList                                                           *
  *                                                                           *
  * Description: MultList is a class type derived from EntList which is the   *
  *              parent class to the compound list types, AND, OR and ANDOR.  *
@@ -14,11 +15,10 @@
 
 #include "complexSupport.h"
 
-MultList::~MultList()
-/*
+/**
  * Deletes the childList of this, before this is deleted.
  */
-{
+MultList::~MultList() {
     EntList * child = childList, *cnext;
 
     while( child ) {
@@ -28,12 +28,11 @@ MultList::~MultList()
     }
 }
 
-void MultList::setLevel( int l )
-/*
+/**
  * Sets this's level, and tells all its children to set their level to our
  * level +1.
  */
-{
+void MultList::setLevel( int l ) {
     EntList * child = childList;
 
     level = l;
@@ -42,11 +41,10 @@ void MultList::setLevel( int l )
     }
 }
 
-int MultList::contains( char * nm )
-/*
+/**
  * Check if one of this's descendants matches nm.
  */
-{
+int MultList::contains( char * nm ) {
     EntList * child = childList;
 
     while( child ) {
@@ -58,13 +56,11 @@ int MultList::contains( char * nm )
     return FALSE;
 }
 
-int MultList::hit( char * nm )
-/*
+/**
  * Check if one of our descendants matches nm.
  */
-{
+int MultList::hit( char * nm ) {
     EntList * child = childList;
-
     while( child ) {
         if( child->viable > UNSATISFIED && child->hit( nm ) ) {
             // For most child->join types ruling out UNSATs just saves us
@@ -79,11 +75,10 @@ int MultList::hit( char * nm )
     return FALSE;
 }
 
-EntList * MultList::getChild( int num )
-/*
+/**
  * Returns a pointer to the num'th child of MultList.
  */
-{
+EntList * MultList::getChild( int num ) {
     EntList * child = childList;
     int j;
 
@@ -91,17 +86,17 @@ EntList * MultList::getChild( int num )
         // Check for error situations (shouldn't normally occur):
         return NULL;
     }
-    for( j = 0; j < num; j++, child = child->next )
+    for( j = 0; j < num; j++, child = child->next ) {
         ;
+    }
     return child;
 }
 
-void MultList::appendList( EntList * ent )
-/*
+/**
  * Appends a new entry into this's childList.  The siblings of ent (ent->
  * next ...) are automatically also appended.
  */
-{
+void MultList::appendList( EntList * ent ) {
     EntList * eprev;
 
     if( numchildren == 0 ) {
@@ -114,12 +109,11 @@ void MultList::appendList( EntList * ent )
     numchildren += ent->siblings();
 }
 
-EntList * MultList::copyList( EntList * ent )
-/*
+/**
  * Makes a copy of ent (and its children if it's a MultList) and appends it
  * to the end of our list.
  */
-{
+EntList * MultList::copyList( EntList * ent ) {
     EntList * newlist = 0, *child;
 
     switch( ent->join ) {
@@ -148,13 +142,12 @@ EntList * MultList::copyList( EntList * ent )
     return newlist;
 }
 
-void MultList::unmarkAll( EntNode * ents )
-/*
+/**
  * Unmarks all nodes of ents marked by any of the descendants of this.
  * This function is invoked by AndList and AndOrList.  It is redefined for
  * OrList.
  */
-{
+void MultList::unmarkAll( EntNode * ents ) {
     EntList * child = childList;
 
     while( child != NULL ) {
@@ -163,12 +156,11 @@ void MultList::unmarkAll( EntNode * ents )
     }
 }
 
-void MultList::reset()
-/*
+/**
  * Resets this to default values.  Iterates through child list, calling
  * each child's reset function.
  */
-{
+void MultList::reset() {
     EntList * child;
 
     viable = UNKNOWN;
@@ -177,8 +169,7 @@ void MultList::reset()
     }
 }
 
-void JoinList::setViableVal( EntNode * ents )
-/*
+/**
  * Sets this's viable value based on the value of its children.  This is
  * called at the end of matchNonOR() and matchOR() to determine the result
  * of the matching.  Since matchNonOR() is always called first and it
@@ -188,7 +179,7 @@ void JoinList::setViableVal( EntNode * ents )
  * children which are UNSATISFIED and return UNSAT if found, we don't
  * worry about coming across them down here.
  */
-{
+void JoinList::setViableVal( EntNode * ents ) {
     EntList * child = childList;
 
     viable = UNKNOWN;
@@ -213,13 +204,12 @@ void JoinList::setViableVal( EntNode * ents )
     }
 }
 
-int JoinList::acceptChoice( EntNode * ents )
-/*
+/**
  * Accept the path we're a part of:  Mark all nodes of ents we can.  Mark
  * value will = mark (either MARK or ORMARK).  Return TRUE if we mark any-
  * thing; FALSE otherwise.
  */
-{
+int JoinList::acceptChoice( EntNode * ents ) {
     EntList * child;
     int result = FALSE;
 
@@ -244,13 +234,12 @@ int JoinList::acceptChoice( EntNode * ents )
     return result;
 }
 
-int MultList::prevKnown( EntList * desc )
-/*
+/**
  * Specialized function to test that none of the children prior to desc
  * (a pointer to one of the EntLists of childList) have viable = UNKNOWN.
  * Used in MatchNonORs() (see).
  */
-{
+int MultList::prevKnown( EntList * desc ) {
     EntList * child = childList;
 
     while( child != NULL && child != desc ) {

@@ -13,12 +13,11 @@
 
 #include "complexSupport.h"
 
-void ComplexCollect::insert( ComplexList * c )
-/*
+/**
  * Inserts a new ComplexList to our list.  The ComplexLists are ordered by
  * supertype name.  Increments count.
  */
-{
+void ComplexCollect::insert( ComplexList * c ) {
     ComplexList * prev = NULL, *cl = clists;
 
     while( cl && *cl < *c ) {
@@ -38,8 +37,7 @@ void ComplexCollect::insert( ComplexList * c )
     count++;
 }
 
-void ComplexCollect::remove( ComplexList * c )
-/*
+/**
  * Removes the ComplexList whose supertype name = supername.  "Removing"
  * deletes the list and removes it from this, but does not delete its
  * subtype structure.  This is done when a subtype of other supertypes
@@ -47,7 +45,7 @@ void ComplexCollect::remove( ComplexList * c )
  * be able to find it, and now that all its supers have accessed it, we
  * remove it from the Collect.
  */
-{
+void ComplexCollect::remove( ComplexList * c ) {
     ComplexList * cl = clists, *prev = NULL;
 
     while( cl && *cl < *c ) {
@@ -69,11 +67,10 @@ void ComplexCollect::remove( ComplexList * c )
     count--;
 }
 
-ComplexList * ComplexCollect::find( char * name )
-/*
+/**
  * Searches for and returns the ComplexList whose supertype name = name.
  */
-{
+ComplexList * ComplexCollect::find( char * name ) {
     ComplexList * cl = clists;
 
     while( cl && *cl < name ) {
@@ -85,8 +82,7 @@ ComplexList * ComplexCollect::find( char * name )
     return NULL;
 }
 
-int ComplexCollect::supports( EntNode * ents ) const
-/*
+/**
  * Determines if the parent schema supports the instantiation of a complex
  * type consisting of the the entities named in ents.  Does so by attempt-
  * ing to match ents against the ComplexLists in clists.  If one of the
@@ -94,7 +90,7 @@ int ComplexCollect::supports( EntNode * ents ) const
  * should be included in >1 CList.  A more complicated algorithm is applied
  * to match it, as described in the commenting.
  */
-{
+int ComplexCollect::supports( EntNode * ents ) const {
     EntNode * node = ents, *nextnode;
     AndList * alist = 0;
     ComplexList * clist = clists, *cl = NULL, *current;

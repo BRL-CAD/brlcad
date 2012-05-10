@@ -13,15 +13,14 @@
 
 #include "complexSupport.h"
 
-EntNode::EntNode( const char ** names )
-/*
+/**
  * Given a list of entity names, creates a sorted linked list of EntNodes
  * corresponding to the list.  A name which = "*" is a dummy trailer
  * implying the list has been completed.  This function first builds the
  * list, then sets this to the first element, and then deletes the first
  * element.  This ensures that `this' points to the start of the list.
  */
-{
+EntNode::EntNode( const char ** names ) {
     int j = 1, comp;
     EntNode * prev, *prev2 = NULL, // prev2 - the one before prev
                      *newnode, *firstnode;
@@ -67,11 +66,10 @@ EntNode::EntNode( const char ** names )
     delete firstnode;
 }
 
-EntNode & EntNode::operator= ( EntNode & ent )
-/*
+/**
  * Copies all of ent's values here.
  */
-{
+EntNode & EntNode::operator= ( EntNode & ent ) {
     Name( ent.name );
     setmark( ent.mark );
     multSuprs( ent.multSupers );
@@ -79,11 +77,10 @@ EntNode & EntNode::operator= ( EntNode & ent )
     return *this;
 }
 
-void EntNode::markAll( MarkType stamp )
-/*
+/**
  * Marks/unmarks all the nodes in this's list (default is to mark).
  */
-{
+void EntNode::markAll( MarkType stamp ) {
     EntNode * node = this;
 
     while( node != NULL ) {
@@ -92,11 +89,10 @@ void EntNode::markAll( MarkType stamp )
     }
 }
 
-int EntNode::allMarked()
-/*
+/**
  * Returns TRUE if this and all nodes following it are marked.
  */
-{
+int EntNode::allMarked() {
     EntNode * node = this;
 
     while( node != NULL ) {
@@ -108,11 +104,10 @@ int EntNode::allMarked()
     return TRUE;
 }
 
-int EntNode::unmarkedCount()
-/*
+/**
  * Returns the number of unmarked nodes in this's list.
  */
-{
+int EntNode::unmarkedCount() {
     int count = 0;
     EntNode * node = this;
 
@@ -125,12 +120,11 @@ int EntNode::unmarkedCount()
     return count;
 }
 
-EntNode * EntNode::lastSmaller( EntNode * ent )
-/*
+/**
  * Starting from `this', search for the last node (along our next's) which
  * alphabetically precedes ent.
  */
-{
+EntNode * EntNode::lastSmaller( EntNode * ent ) {
     EntNode * eptr = next, *prev = this;
 
     if( *this > *ent ) {
@@ -143,8 +137,7 @@ EntNode * EntNode::lastSmaller( EntNode * ent )
     return prev;
 }
 
-void EntNode::sort( EntNode ** first )
-/*
+/**
  * Check if our nodes are in order.  If not, re-sort.  The earlier part of
  * the list has been sorted but not necessarily the remainder.  This algo-
  * rithm sorts our nodes in chunks, and is fairly efficient when we know
@@ -153,7 +146,7 @@ void EntNode::sort( EntNode ** first )
  * few of the nodes.  The nodes at first were in order; only the renamed
  * ones may be out of place.)
  */
-{
+void EntNode::sort( EntNode ** first ) {
     EntNode * eptr1, *eptr2, *temp1, *temp2;
 
     while( next && *this > *next ) {

@@ -1,5 +1,5 @@
 /*****************************************************************************
- * match-ors.cc                                                              *
+ * \file match-ors.cc                                                        *
  *                                                                           *
  * Description: Contains the matchORs() functions for the EntList descen-    *
  *              dants.  The matchORs() of AndOrList and AndList recursively  *
@@ -15,8 +15,7 @@
 
 #include "complexSupport.h"
 
-MatchType AndOrList::matchORs( EntNode * ents )
-/*
+/**
  * Loops through descendants of this, invoking their matchOR functions.
  * Returns the status of how well this's OR descendants match the nodes of
  * ents.  We only check our children whose viable values = UNKNOWN.  This
@@ -25,7 +24,7 @@ MatchType AndOrList::matchORs( EntNode * ents )
  * OR descendants we didn't test.  Thus, UNKNOWN tells us that this child
  * is an OR, or has an OR somewhere beneath it which we must process now.
  */
-{
+MatchType AndOrList::matchORs( EntNode * ents ) {
     EntList * child = childList->firstWanted( UNKNOWN );
 
     while( child != NULL ) {
@@ -46,14 +45,13 @@ MatchType AndOrList::matchORs( EntNode * ents )
     return viable;
 }
 
-MatchType AndList::matchORs( EntNode * ents )
-/*
+/**
  * Loops through the descendants of this with viable val = UNKNOWN, invo-
  * king their matchOR functions.  Returns the status of how well this's OR
  * descendants match the nodes of ents.  We only take UNKNOWN's because
  * they will lead us to OR's, as explained in AndOrList::matchORs().
  */
-{
+MatchType AndList::matchORs( EntNode * ents ) {
     EntList * child = childList->firstWanted( UNKNOWN );
 
     while( child != NULL ) {
@@ -73,8 +71,7 @@ MatchType AndList::matchORs( EntNode * ents )
     return viable;
 }
 
-MatchType OrList::matchORs( EntNode * ents )
-/*
+/**
  * Checks the branches of an OrList to search for a match to the nodes of
  * ents.  This function searches this's children and marks all the viable
  * paths, or paths which mark off at least some of the remaining nodes of
@@ -82,7 +79,7 @@ MatchType OrList::matchORs( EntNode * ents )
  * retain the info that these were only conditionally marked.  Also, if a
  * MATCHALL solution was found, that is returned immediately.
  */
-{
+MatchType OrList::matchORs( EntNode * ents ) {
     int count;
     EntList * child = childList;
     MatchType retval = UNKNOWN;

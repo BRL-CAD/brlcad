@@ -12,11 +12,10 @@
 // Local function prototypes:
 static char * joinText( JoinType, char * );
 
-ostream & operator << ( ostream & os, ComplexList & clist )
-/*
+/**
  * Prints out a ComplexList, by iterating through its children.
  */
-{
+ostream & operator << ( ostream & os, ComplexList & clist ) {
     os << "ComplexList - \"" << *( SimpleList * )clist.head->childList
        << "\" supertype\n";
     // head->childList will call << for head's 1st child.  We know by def
@@ -25,11 +24,10 @@ ostream & operator << ( ostream & os, ComplexList & clist )
     return os;
 }
 
-ostream & operator << ( ostream & os, EntList & list )
-/*
+/**
  * Prints out an EntList.  Calls appropriate function based on JoinType.
  */
-{
+ostream & operator << ( ostream & os, EntList & list ) {
     if( list.join == SIMPLE ) {
         os << *( SimpleList * )&list;
     } else {
@@ -38,20 +36,18 @@ ostream & operator << ( ostream & os, EntList & list )
     return os;
 }
 
-ostream & operator << ( ostream & os, SimpleList & slist )
-/*
+/**
  * Prints out a SimpleList.
  */
-{
+ostream & operator << ( ostream & os, SimpleList & slist ) {
     os << slist.name;
     return os;
 }
 
-ostream & operator << ( ostream & os, MultList & mlist )
-/*
+/**
  * Prints out a MultList.
  */
-{
+ostream & operator << ( ostream & os, MultList & mlist ) {
     char jointype[7];
     int k, lastSimple = 0;
     // lastSimple - is the last child simple?  If so, we need to print another
@@ -90,11 +86,10 @@ ostream & operator << ( ostream & os, MultList & mlist )
     return os;
 }
 
-static char * joinText( JoinType j, char * buf )
-/*
+/**
  * Copies and returns the string equivalent of a JoinType.
  */
-{
+static char * joinText( JoinType j, char * buf ) {
     switch( j ) {
         case SIMPLE:
             strcpy( buf, "SIMPLE" );

@@ -206,14 +206,10 @@ TypeDescriptor::TypeDescriptor
   const char * d )
     :  _name( nm ), altNames( 0 ), _fundamentalType( ft ),
        _originatingSchema( origSchema ), _referentType( 0 ), _description( d ),
-       _where_rules( 0 )
-
-{
+       _where_rules( 0 ) {
 }
 
-const char *
-TypeDescriptor::Name( const char * schnm ) const
-/*
+/**
  * Determines the current name of this.  Normally, this is simply _name.
  * If "schnm" is set to a value, however, then this function becomes a
  * request for our name when referenced by schnm.  (This will be diff from
@@ -223,7 +219,7 @@ TypeDescriptor::Name( const char * schnm ) const
  * and returns the new name if found.  (See header comments to function
  * SchRename::rename().)
  */
-{
+const char * TypeDescriptor::Name( const char * schnm ) const {
     if( schnm == NULL ) {
         return _name;
     }
@@ -235,13 +231,11 @@ TypeDescriptor::Name( const char * schnm ) const
     return _name;
 }
 
-const char *
-TypeDescriptor::BaseTypeName()  const {
+const char * TypeDescriptor::BaseTypeName()  const {
     return BaseTypeDescriptor() ?  BaseTypeDescriptor() -> Name() : 0;
 }
 
-const TypeDescriptor *
-TypeDescriptor::BaseTypeIsA( const TypeDescriptor * td ) const {
+const TypeDescriptor * TypeDescriptor::BaseTypeIsA( const TypeDescriptor * td ) const {
     switch( NonRefType() ) {
         case AGGREGATE_TYPE:
             return AggrElemTypeDescriptor() -> IsA( td );
@@ -250,12 +244,9 @@ TypeDescriptor::BaseTypeIsA( const TypeDescriptor * td ) const {
         default:
             return IsA( td );
     }
-
 }
 
-int
-TypeDescriptor::CurrName( const char * other, const char * schNm ) const
-/*
+/**
  * Check if our "current" name = other.  CurrName may be different from
  * _name if schNm tells us the current schema is a different one from the
  * one in which we're defined.  If so, we may have an alternate name for
@@ -263,7 +254,7 @@ TypeDescriptor::CurrName( const char * other, const char * schNm ) const
  * case if schNm USEs or REFERENCEs type and renames it in the process
  * (e.g., "USE (X as Y)".
  */
-{
+int TypeDescriptor::CurrName( const char * other, const char * schNm ) const {
     if( !schNm || *schNm == '\0' ) {
         // If there's no current schema, accept any possible name of this.
         // (I.e., accept its actual name or any substitute):
@@ -280,35 +271,29 @@ TypeDescriptor::CurrName( const char * other, const char * schNm ) const
     }
 }
 
-int
-TypeDescriptor::PossName( const char * nm ) const
-/*
- * return TRUE if nm is either our name or one of the possible alternates.
+/**
+ * return true if nm is either our name or one of the possible alternates.
  */
-{
+int TypeDescriptor::PossName( const char * nm ) const {
     return ( OurName( nm ) || AltName( nm ) );
 }
 
-int
-TypeDescriptor::OurName( const char * nm ) const {
+int TypeDescriptor::OurName( const char * nm ) const {
     return !StrCmpIns( nm, _name );
 }
 
-int
-TypeDescriptor::AltName( const char * nm ) const {
+int TypeDescriptor::AltName( const char * nm ) const {
     if( altNames ) {
         return ( altNames->choice( nm ) );
     }
     return 0;
 }
 
-void
-TypeDescriptor::addAltName( const char * schnm, const char * newnm )
-/*
+/**
  * Creates a SchRename consisting of schnm & newnm.  Places it in alphabe-
  * tical order in this's altNames list.
  */
-{
+void TypeDescriptor::addAltName( const char * schnm, const char * newnm ) {
     SchRename * newpair = new SchRename( schnm, newnm ),
     *node = ( SchRename * )altNames, *prev = NULL;
 
@@ -327,13 +312,11 @@ TypeDescriptor::addAltName( const char * schnm, const char * newnm )
     }
 }
 
-int
-SchRename::choice( const char * nm ) const
-/*
+/**
  * See if nm = one of our choices (either ours or that of a SchRename
  * later in the list.
  */
-{
+int SchRename::choice( const char * nm ) const {
     if( !StrCmpIns( nm, newName ) ) {
         return 1;
     }
@@ -343,16 +326,14 @@ SchRename::choice( const char * nm ) const
     return 0;
 }
 
-char *
-SchRename::rename( const char * schnm, char * newnm ) const
-/*
+/**
  * Check if this SchRename represents the rename of its owning TypeDesc for
  * schema schnm.  (This will be the case if schnm = schName.)  If so, the
  * new name is returned and copied into newnm.  If not, ::rename is called
  * on next.  Thus, this function will tell us if this or any later SchRe-
  * name in this list provide a new name for TypeDesc for schema schnm.
  */
-{
+char * SchRename::rename( const char * schnm, char * newnm ) const {
     if( !StrCmpIns( schnm, schName ) ) {
         strcpy( newnm, newName );
         return newnm;
@@ -367,19 +348,11 @@ SchRename::rename( const char * schnm, char * newnm ) const
 // AttrDescriptor functions
 ///////////////////////////////////////////////////////////////////////////////
 
-AttrDescriptor::AttrDescriptor(
-    const char * name,      // i.e. char *
-    const TypeDescriptor * domainType,
-    Logical optional,   // i.e. F U or T
-    Logical unique,     // i.e. F U or T
-    AttrType_Enum at, // AttrType_Explicit,AttrType_Inverse,
-    // AttrType_Deriving,AttrType_Redefining
-    const EntityDescriptor & owner )
+AttrDescriptor::AttrDescriptor( const char * name, const TypeDescriptor * domainType,
+                                Logical optional, Logical unique, AttrType_Enum at,
+                                const EntityDescriptor & owner )
     : _name( name ), _domainType( domainType ), _optional( optional ),
-      _unique( unique ), _attrType( at ),
-
-      _owner( ( EntityDescriptor & )owner )
-{
+      _unique( unique ), _attrType( at ), _owner( ( EntityDescriptor & )owner ) {
 }
 
 AttrDescriptor::~AttrDescriptor() {
@@ -413,47 +386,8 @@ Logical AttrDescriptor::Deriving() const {
     return LFalse;
 }
 
-/*
-// outdated function
-void
-AttrDescriptor::Derived( SDAI_LOGICAL  x ) {
-    if( x.asInt() ) {
-        _attrType = AttrType_Deriving;
-    } else {
-        _attrType = AttrType_Explicit;
-    }
-}
-*/
-
-// outdated function
-void
-AttrDescriptor::Derived( Logical x ) {
-    if( x == LTrue ) {
-        _attrType = AttrType_Deriving;
-    } else {
-        _attrType = AttrType_Explicit;
-    }
-}
-
-// outdated function
-void
-AttrDescriptor::Derived( const char * x ) {
-    if( !strcmp( x, "LTrue" ) || !strcmp( x, "T" ) ) {
-        _attrType = AttrType_Deriving;
-    } else {
-        _attrType = AttrType_Explicit;
-    }
-}
-
-
-Derived_attribute::Derived_attribute(
-    const char * name,      // i.e. char *
-    const TypeDescriptor * domainType,
-    Logical optional,   // i.e. F U or T
-    Logical unique,     // i.e. F U or T
-    AttrType_Enum at, // AttrType_Explicit,AttrType_Inverse,
-    // AttrType_Deriving,AttrType_Redefining
-    const EntityDescriptor & owner )
+Derived_attribute::Derived_attribute( const char * name, const TypeDescriptor * domainType,
+                                      Logical optional, Logical unique, AttrType_Enum at, const EntityDescriptor & owner )
     : AttrDescriptor( name, domainType, optional, unique, at, owner ) {
     _initializer = ( const char * )0;
 }

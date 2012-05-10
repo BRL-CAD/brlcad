@@ -12,10 +12,7 @@
 * and is not subject to copyright.
 */
 
-/* $Id: Registry.h,v 3.0.1.7 1997/11/05 21:59:19 sauderd DP3.1 $  */
-
 #include <sdai.h>
-//#include <STEPentity.h>
 #include <errordesc.h>
 #include <scl_hash.h>
 #include <Str.h>

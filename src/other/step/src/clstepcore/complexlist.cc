@@ -12,11 +12,10 @@
 
 #include "complexSupport.h"
 
-ComplexList::~ComplexList()
-/*
+/**
  * Destructor for ComplexList.
  */
-{
+ComplexList::~ComplexList() {
     if( next ) {
         delete next;
     }
@@ -24,28 +23,26 @@ ComplexList::~ComplexList()
     delete list;
 }
 
-void ComplexList::remove()
-/*
+/**
  * Delete myself but don't take my sublist too.  Done when a ComplexList
  * was temporarily created to represent a complex structure which later
  * became a subtype of other supertypes.  After being incorporated into
  * the supertypes' ComplexLists, this temp one can be deleted.  Its sub-
  * structure, however, cannot be deleted since it's still being used.
  */
-{
+void ComplexList::remove() {
     head = NULL;
     // Only the overall AND will be deleted.
     delete this;
 }
 
-int ComplexList::toplevel( const char * name )
-/*
+/**
  * Returns TRUE if name is already contained at the top level of our
  * EntList hierarchy.  By top level, we mean the level under head.  This
  * is a highly specialized function which is used during the building of
  * a temporary CList to test entities which are subtypes of >1 supertype.
  */
-{
+int ComplexList::toplevel( const char * name ) {
     EntList * slist = head->childList;
 
     while( slist ) {
@@ -60,8 +57,7 @@ int ComplexList::toplevel( const char * name )
     return FALSE;
 }
 
-void ComplexList::buildList()
-/*
+/**
  * Constructs this's list member.  Contains an alphabetically-ordered
  * linked list of EntNodes corresponding to all the leaf nodes in this.
  * Used as a quick method of determining if this *may* allow a complex
@@ -69,7 +65,7 @@ void ComplexList::buildList()
  * entity which contains an entity which is not contained in list, this
  * ComplexList certainly can't support it.
  */
-{
+void ComplexList::buildList() {
     EntList * sibling = head->childList->next;
     // sibling = the first EntList (below the overall AND) after the supertype.
 
@@ -92,12 +88,11 @@ void ComplexList::buildList()
 
 }
 
-void ComplexList::addChildren( EntList * ent )
-/*
+/**
  * Recursive function to add all the SimpleList descendents of ent into
  * this's list.
  */
-{
+void ComplexList::addChildren( EntList * ent ) {
     EntList * child;
     char * nm;
     EntNode * prev = list, *prev2 = NULL, *newnode;
@@ -134,15 +129,14 @@ void ComplexList::addChildren( EntList * ent )
     }
 }
 
-int ComplexList::contains( EntNode * ents )
-/*
+/**
  * Does a simple search to determine if this contains all the nodes of an
  * EntNode list.  If not, there's no way this will match ents.  If so,
  * we'll have to run matches() (below) to check more closely.  This func-
  * tion is simplified greatly because both EntNodes are ordered alphabeti-
  * cally.
  */
-{
+int ComplexList::contains( EntNode * ents ) {
     EntNode * ours = list, *theirs = ents;
 
     while( theirs != NULL ) {
@@ -162,14 +156,13 @@ int ComplexList::contains( EntNode * ents )
     return TRUE;
 }
 
-int ComplexList::matches( EntNode * ents )
-/*
+/**
  * Receives as input an EntNode list, corresponding to a user request to
  * instantiate the corresponding complex type.  Returns TRUE if such a list
  * can be instantiated based on the list of EntLists which were generated
  * when the schema was read; FALSE otherwise.
  */
-{
+int ComplexList::matches( EntNode * ents ) {
     MatchType retval, otherChoices = NEWCHOICE;
     int result = FALSE;
 
@@ -215,8 +208,7 @@ int ComplexList::matches( EntNode * ents )
     return result;
 }
 
-int ComplexList::hitMultNodes( EntNode * ents )
-/*
+/**
  * This function has a specialized application.  If the user wants to
  * instantiate a complex type containing an entity with >1 supertype (call
  * it C), we temporarily join all the ComplexLists together corresponding
@@ -229,7 +221,7 @@ int ComplexList::hitMultNodes( EntNode * ents )
  * valid.  (This function is actually slightly more complicated because it
  * also deals with the possibility that >1 entities like C exist.)
  */
-{
+int ComplexList::hitMultNodes( EntNode * ents ) {
     EntNode * node;
     EntList * child;
 

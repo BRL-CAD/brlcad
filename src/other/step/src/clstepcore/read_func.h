@@ -11,46 +11,35 @@ extern void PrintErrorState( ErrorDescriptor & err );
 // print istream error information for debugging purposes
 extern void IStreamState( istream & in );
 
-extern int
-ReadInteger( SDAI_Integer  &val, istream & in, ErrorDescriptor * err,
+extern int ReadInteger( SDAI_Integer  &val, istream & in, ErrorDescriptor * err,
              const char * tokenList );
 
-extern int
-ReadInteger( SDAI_Integer  &val, const char * s, ErrorDescriptor * err,
+extern int ReadInteger( SDAI_Integer  &val, const char * s, ErrorDescriptor * err,
              const char * tokenList );
 
-extern Severity
-IntValidLevel( const char * attrValue, ErrorDescriptor * err,
+extern Severity IntValidLevel( const char * attrValue, ErrorDescriptor * err,
                int clearError, int optional, const char * tokenList );
 
-extern char *
-WriteReal( SDAI_Real  val, std::string & s );
+extern char * WriteReal( SDAI_Real  val, std::string & s );
 
-extern void
-WriteReal( SDAI_Real  val, ostream & out );
+extern void WriteReal( SDAI_Real  val, ostream & out );
 
-extern int
-ReadReal( SDAI_Real  &val, istream & in, ErrorDescriptor * err,
+extern int ReadReal( SDAI_Real  &val, istream & in, ErrorDescriptor * err,
           const char * tokenList );
 
-extern int
-ReadReal( SDAI_Real  &val, const char * s, ErrorDescriptor * err,
+extern int ReadReal( SDAI_Real  &val, const char * s, ErrorDescriptor * err,
           const char * tokenList );
 
-extern Severity
-RealValidLevel( const char * attrValue, ErrorDescriptor * err,
+extern Severity RealValidLevel( const char * attrValue, ErrorDescriptor * err,
                 int clearError, int optional, const char * tokenList );
 
-extern int
-ReadNumber( SDAI_Real  &val, istream & in, ErrorDescriptor * err,
+extern int ReadNumber( SDAI_Real  &val, istream & in, ErrorDescriptor * err,
             const char * tokenList );
 
-extern int
-ReadNumber( SDAI_Real  &val, const char * s, ErrorDescriptor * err,
+extern int ReadNumber( SDAI_Real  &val, const char * s, ErrorDescriptor * err,
             const char * tokenList );
 
-extern Severity
-NumberValidLevel( const char * attrValue, ErrorDescriptor * err,
+extern Severity NumberValidLevel( const char * attrValue, ErrorDescriptor * err,
                   int clearError, int optional, const char * tokenList );
 
 
@@ -58,36 +47,27 @@ NumberValidLevel( const char * attrValue, ErrorDescriptor * err,
 
 extern int   QuoteInString( istream & in );
 
-extern void
-PushPastString( istream & in, std::string & s, ErrorDescriptor * err );
+extern void PushPastString( istream & in, std::string & s, ErrorDescriptor * err );
 
-extern void
-PushPastImbedAggr( istream & in, std::string & s, ErrorDescriptor * err );
+extern void PushPastImbedAggr( istream & in, std::string & s, ErrorDescriptor * err );
 
-extern void
-PushPastAggr1Dim( istream & in, std::string & s, ErrorDescriptor * err );
+extern void PushPastAggr1Dim( istream & in, std::string & s, ErrorDescriptor * err );
 
 ////////////////////
 
-extern Severity
-FindStartOfInstance( istream & in, std::string & inst );
+extern Severity FindStartOfInstance( istream & in, std::string & inst );
 
 //  used for instances that aren\'t valid - reads to next \';\'
-extern Severity
-SkipInstance( istream & in, std::string & inst );
+extern Severity SkipInstance( istream & in, std::string & inst );
 
-extern const char *
-SkipSimpleRecord( istream & in, std::string & buf, ErrorDescriptor * err );
+extern const char * SkipSimpleRecord( istream & in, std::string & buf, ErrorDescriptor * err );
 
 // this includes entity names
-extern const char *
-ReadStdKeyword( istream & in, std::string & buf, int skipInitWS = 1 );
+extern const char * ReadStdKeyword( istream & in, std::string & buf, int skipInitWS = 1 );
 
-extern const char *
-GetKeyword( istream & in, const char * delims, ErrorDescriptor & err );
+extern const char * GetKeyword( istream & in, const char * delims, ErrorDescriptor & err );
 
-extern int
-FoundEndSecKywd( istream & in, ErrorDescriptor & err );
+extern int FoundEndSecKywd( istream & in, ErrorDescriptor & err );
 
 extern const char * ReadComment( std::string & ss, const char * s );
 

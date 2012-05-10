@@ -10,56 +10,15 @@
 * and is not subject to copyright.
 */
 
-/* $Id: ExpDict.cc,v 3.0.1.7 1998/02/17 19:19:15 sauderd DP3.1 $  */
 #include <scl_cf.h>
 
 #include <memory.h>
 #include <math.h>
 #include <stdio.h>
 
-// to help ObjectCenter
-#ifndef HAVE_MEMMOVE
-extern "C"
-{
-    void * memmove( void * __s1, const void * __s2, size_t __n );
-}
-#endif
-
 #include <ExpDict.h>
 #include <STEPaggregate.h>
 
-/*
-const TypeDescriptor * const t_INTEGER_TYPE = & TypeDescriptor
-                       ("INTEGER",     // Name
-               INTEGER_TYPE, // FundamentalType
-               "INTEGER");   // Description
-extern const TypeDescriptor _t_INTEGER_TYPE
-                       ("INTEGER",     // Name
-               INTEGER_TYPE, // FundamentalType
-               "INTEGER");   // Description
-               */
-/*const TypeDescriptor * const t_INTEGER_TYPE = &_t_INTEGER_TYPE;*/
-
-/*extern const TypeDescriptor _t_REAL_TYPE ("REAL", REAL_TYPE, "Real");*/
-/*const TypeDescriptor * const t_REAL_TYPE = &_t_REAL_TYPE;*/
-
-/*extern const TypeDescriptor _t_STRING_TYPE ("STRING", STRING_TYPE, "String");*/
-/*const TypeDescriptor * const t_STRING_TYPE = &_t_STRING_TYPE;*/
-
-/*extern const TypeDescriptor _t_BINARY_TYPE ("BINARY", BINARY_TYPE, "Binary") ;*/
-/*const TypeDescriptor * const t_BINARY_TYPE = &_t_BINARY_TYPE;*/
-
-/*extern const TypeDescriptor _t_BOOLEAN_TYPE ("BOOLEAN", BOOLEAN_TYPE, "Boolean") ;*/
-/*const TypeDescriptor * const t_BOOLEAN_TYPE = &_t_BOOLEAN_TYPE;*/
-
-/*extern const TypeDescriptor _t_LOGICAL_TYPE ("LOGICAL", LOGICAL_TYPE, "Logical") ;*/
-/*const TypeDescriptor * const t_LOGICAL_TYPE = &_t_LOGICAL_TYPE;*/
-
-/*extern const TypeDescriptor _t_NUMBER_TYPE ("NUMBER", NUMBER_TYPE, "Number") ;*/
-/*const TypeDescriptor * const t_NUMBER_TYPE = &_t_NUMBER_TYPE;*/
-
-/*extern const TypeDescriptor _t_GENERIC_TYPE ("GENERIC", GENERIC_TYPE, "Generic") ;*/
-/*const TypeDescriptor * const t_GENERIC_TYPE = &_t_GENERIC_TYPE;*/
 
 Explicit_item_id__set::Explicit_item_id__set( int defaultSize ) {
     _bufsize = defaultSize;
@@ -136,18 +95,15 @@ int Explicit_item_id__set::Index( Explicit_item_id_ptr v ) {
 
 Explicit_item_id_ptr & Explicit_item_id__set::operator[]( int index ) {
     Check( index );
-//    _count = max(_count, index+1);
     _count = ( ( _count > index + 1 ) ? _count : ( index + 1 ) );
     return _buf[index];
 }
 
-int
-Explicit_item_id__set::Count() {
+int Explicit_item_id__set::Count() {
     return _count;
 }
 
-void
-Explicit_item_id__set::Clear() {
+void Explicit_item_id__set::Clear() {
     _count = 0;
 }
 
@@ -228,18 +184,15 @@ int Implicit_item_id__set::Index( Implicit_item_id_ptr v ) {
 
 Implicit_item_id_ptr & Implicit_item_id__set::operator[]( int index ) {
     Check( index );
-//    _count = max(_count, index+1);
     _count = ( ( _count > index + 1 ) ? _count : ( index + 1 ) );
     return _buf[index];
 }
 
-int
-Implicit_item_id__set::Count() {
+int Implicit_item_id__set::Count() {
     return _count;
 }
 
-void
-Implicit_item_id__set::Clear() {
+void Implicit_item_id__set::Clear() {
     _count = 0;
 }
 
@@ -320,18 +273,15 @@ int Interface_spec__set::Index( Interface_spec_ptr v ) {
 
 Interface_spec_ptr & Interface_spec__set::operator[]( int index ) {
     Check( index );
-//    _count = max(_count, index+1);
     _count = ( ( _count > index + 1 ) ? _count : ( index + 1 ) );
     return _buf[index];
 }
 
-int
-Interface_spec__set::Count() {
+int Interface_spec__set::Count() {
     return _count;
 }
 
-void
-Interface_spec__set::Clear() {
+void Interface_spec__set::Clear() {
     _count = 0;
 }
 
@@ -342,7 +292,7 @@ Interface_spec::Interface_spec()
       _implicit_items( 0 ), _all_objects( 0 ) {
 }
 
-// not tested
+/// not tested
 Interface_spec::Interface_spec( Interface_spec & is ) {
     _explicit_items = new Explicit_item_id__set;
     int count = is._explicit_items->Count();
@@ -370,38 +320,33 @@ Interface_spec::~Interface_spec() {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void
-Schema::AddFunction( const char * f ) {
+void Schema::AddFunction( const char * f ) {
     if( _function_list == 0 ) {
         _function_list = new scl_char_str__list;
     }
     _function_list->Append( ( char * )f );
 }
 
-void
-Schema::AddGlobal_rule( Global_rule_ptr gr ) {
+void Schema::AddGlobal_rule( Global_rule_ptr gr ) {
     if( _global_rules == 0 ) {
         _global_rules = new Global_rule__set;
     }
     _global_rules->Append( gr );
 }
 
-// not implemented
-void
-Schema::global_rules_( Global_rule__set_var & grs ) {
+/// not implemented
+void Schema::global_rules_( Global_rule__set_var & grs ) {
 }
 
-void
-Schema::AddProcedure( const char * p ) {
+void Schema::AddProcedure( const char * p ) {
     if( _procedure_list == 0 ) {
         _procedure_list = new scl_char_str__list;
     }
     _procedure_list->Append( ( char * )p );
 }
 
-// the whole schema
-void
-Schema::GenerateExpress( ostream & out ) const {
+/// the whole schema
+void Schema::GenerateExpress( ostream & out ) const {
     std::string tmp;
     out << endl << "(* Generating: " << Name() << " *)" << endl;
     out << endl << "SCHEMA " << StrToLower( Name(), tmp ) << ";" << endl;
@@ -439,9 +384,8 @@ Schema::GenerateExpress( ostream & out ) const {
     out << endl << "END_SCHEMA;" << endl;
 }
 
-// USE, REFERENCE definitions
-void
-Schema::GenerateUseRefExpress( ostream & out ) const {
+/// USE, REFERENCE definitions
+void Schema::GenerateUseRefExpress( ostream & out ) const {
     int i, k;
     int intf_count;
     int count;
@@ -458,8 +402,6 @@ Schema::GenerateUseRefExpress( ostream & out ) const {
 
             // count is # of USE items in interface
             count = is->explicit_items_()->Count();
-
-            //Explicit_item_id__set_var eiis = is->explicit_items_();
 
             if( count > 0 ) {
                 out << endl << "    USE FROM "
@@ -532,9 +474,8 @@ Schema::GenerateUseRefExpress( ostream & out ) const {
     }
 }
 
-// TYPE definitions
-void
-Schema::GenerateTypesExpress( ostream & out ) const {
+/// TYPE definitions
+void Schema::GenerateTypesExpress( ostream & out ) const {
     TypeDescItr tdi( _typeList );
     tdi.ResetItr();
     std::string tmp;
@@ -546,9 +487,8 @@ Schema::GenerateTypesExpress( ostream & out ) const {
     }
 }
 
-// Entity definitions
-void
-Schema::GenerateEntitiesExpress( ostream & out ) const {
+/// Entity definitions
+void Schema::GenerateEntitiesExpress( ostream & out ) const {
     EntityDescItr edi( _entList );
     edi.ResetItr();
     std::string tmp;
@@ -594,8 +534,7 @@ IntAggregate * create_IntAggregate() {
     return new IntAggregate;
 }
 
-const EntityDescriptor *
-EntityDescItr::NextEntityDesc() {
+const EntityDescriptor * EntityDescItr::NextEntityDesc() {
     if( cur ) {
         const EntityDescriptor * ed = cur->EntityDesc();
         cur = ( EntityDescLinkNode * )( cur->NextNode() );
@@ -604,8 +543,7 @@ EntityDescItr::NextEntityDesc() {
     return 0;
 }
 
-const AttrDescriptor *
-AttrDescItr::NextAttrDesc() {
+const AttrDescriptor * AttrDescItr::NextAttrDesc() {
     if( cur ) {
         const AttrDescriptor * ad = cur->AttrDesc();
         cur = ( AttrDescLinkNode * )( cur->NextNode() );
@@ -614,8 +552,7 @@ AttrDescItr::NextAttrDesc() {
     return 0;
 }
 
-const Inverse_attribute *
-InverseAItr::NextInverse_attribute() {
+const Inverse_attribute * InverseAItr::NextInverse_attribute() {
     if( cur ) {
         const Inverse_attribute * ia = cur->Inverse_attr();
         cur = ( Inverse_attributeLinkNode * )( cur->NextNode() );
@@ -624,8 +561,7 @@ InverseAItr::NextInverse_attribute() {
     return 0;
 }
 
-const TypeDescriptor *
-TypeDescItr::NextTypeDesc() {
+const TypeDescriptor * TypeDescItr::NextTypeDesc() {
     if( cur ) {
         const TypeDescriptor * td = cur->TypeDesc();
         cur = ( TypeDescLinkNode * )( cur->NextNode() );
@@ -638,8 +574,7 @@ TypeDescItr::NextTypeDesc() {
 // AttrDescriptor functions
 ///////////////////////////////////////////////////////////////////////////////
 
-const char *
-AttrDescriptor::AttrExprDefStr( std::string & s ) const {
+const char * AttrDescriptor::AttrExprDefStr( std::string & s ) const {
     std::string buf;
 
     s = Name();
@@ -653,37 +588,32 @@ AttrDescriptor::AttrExprDefStr( std::string & s ) const {
     return const_cast<char *>( s.c_str() );
 }
 
-PrimitiveType
-AttrDescriptor::BaseType() const {
+PrimitiveType AttrDescriptor::BaseType() const {
     if( _domainType ) {
         return _domainType->BaseType();
     }
     return UNKNOWN_TYPE;
 }
 
-int
-AttrDescriptor::IsAggrType() const {
+int AttrDescriptor::IsAggrType() const {
     return ReferentType()->IsAggrType();
 }
 
-PrimitiveType
-AttrDescriptor::AggrElemType() const {
+PrimitiveType AttrDescriptor::AggrElemType() const {
     if( IsAggrType() ) {
         return ReferentType()->AggrElemType();
     }
     return UNKNOWN_TYPE;
 }
 
-const TypeDescriptor *
-AttrDescriptor::AggrElemTypeDescriptor() const {
+const TypeDescriptor * AttrDescriptor::AggrElemTypeDescriptor() const {
     if( IsAggrType() ) {
         return ReferentType()->AggrElemTypeDescriptor();
     }
     return 0;
 }
 
-const TypeDescriptor *
-AttrDescriptor::NonRefTypeDescriptor() const {
+const TypeDescriptor * AttrDescriptor::NonRefTypeDescriptor() const {
     if( _domainType ) {
         return _domainType->NonRefTypeDescriptor();
     }
@@ -706,10 +636,11 @@ AttrDescriptor::Type() const {
     return UNKNOWN_TYPE;
 }
 
-// right side of attr def
-// NOTE this returns a \'const char * \' instead of an std::string
-const char *
-AttrDescriptor::TypeName() const {
+/**
+ * right side of attr def
+ * NOTE this returns a \'const char * \' instead of an std::string
+ */
+const char * AttrDescriptor::TypeName() const {
     std::string buf;
 
     if( _domainType ) {
@@ -719,7 +650,7 @@ AttrDescriptor::TypeName() const {
     }
 }
 
-// an expanded right side of attr def
+/// an expanded right side of attr def
 const char *
 AttrDescriptor::ExpandedTypeName( std::string & s ) const {
     s.clear();
@@ -734,12 +665,10 @@ AttrDescriptor::ExpandedTypeName( std::string & s ) const {
     }
 }
 
-const char *
-AttrDescriptor::GenerateExpress( std::string & buf ) const {
+const char * AttrDescriptor::GenerateExpress( std::string & buf ) const {
     std::string sstr;
     buf = AttrExprDefStr( sstr );
     buf.append( ";\n" );
-
     return const_cast<char *>( buf.c_str() );
 }
 
@@ -747,8 +676,7 @@ AttrDescriptor::GenerateExpress( std::string & buf ) const {
 // Derived_attribute functions
 ///////////////////////////////////////////////////////////////////////////////
 
-const char *
-Derived_attribute::AttrExprDefStr( std::string & s ) const {
+const char * Derived_attribute::AttrExprDefStr( std::string & s ) const {
     std::string buf;
 
     s.clear();
@@ -757,10 +685,6 @@ Derived_attribute::AttrExprDefStr( std::string & s ) const {
     }
     s.append( Name() );
     s.append( " : " );
-    /*
-      if(_optional.asInt() == LTrue)
-        s.append( "OPTIONAL ");
-    */
     if( DomainType() ) {
         s.append( DomainType()->AttrTypeName( buf ) );
     }
@@ -802,8 +726,7 @@ EnumTypeDescriptor::EnumTypeDescriptor( const char * nm, PrimitiveType ft,
     : TypeDescriptor( nm, ft, origSchema, d ), CreateNewEnum( f ) {
 }
 
-SDAI_Enum  *
-EnumTypeDescriptor::CreateEnum() {
+SDAI_Enum * EnumTypeDescriptor::CreateEnum() {
     if( CreateNewEnum ) {
         return CreateNewEnum();
     } else {
@@ -811,8 +734,7 @@ EnumTypeDescriptor::CreateEnum() {
     }
 }
 
-const char *
-EnumTypeDescriptor::GenerateExpress( std::string & buf ) const {
+const char * EnumTypeDescriptor::GenerateExpress( std::string & buf ) const {
     char tmp[BUFSIZ];
     buf = "TYPE ";
     buf.append( StrToLower( Name(), tmp ) );
@@ -871,13 +793,6 @@ EnumTypeDescriptor::GenerateExpress( std::string & buf ) const {
 EntityDescriptor::EntityDescriptor( )
     : _abstractEntity( LUnknown ), _extMapping( LUnknown ),
       _uniqueness_rules( ( Uniqueness_rule__set_var )0 ), NewSTEPentity( 0 ) {
-//    _derivedAttr = new StringAggregate;
-    /*
-        _subtypes = 0;
-        _supertypes = 0;
-        _explicitAttr = 0;
-        _inverseAttr = 0;
-    */
 }
 
 EntityDescriptor::EntityDescriptor( const char * name, // i.e. char *
@@ -885,24 +800,10 @@ EntityDescriptor::EntityDescriptor( const char * name, // i.e. char *
                                     Logical abstractEntity, // F U or T
                                     Logical extMapping,
                                     Creator f
-                                    /*
-                                                        EntityDescriptorList *subtypes,
-                                                        EntityDescriptorList *supertypes,
-                                                        AttrDescriptorList *explicitAttr,
-                                                        StringAggregate *derivedAttr,
-                                                        Inverse_attributeList *inverseAttr
-                                    */
                                   )
     : TypeDescriptor( name, ENTITY_TYPE, origSchema, name ),
       _abstractEntity( abstractEntity ), _extMapping( extMapping ),
       _uniqueness_rules( ( Uniqueness_rule__set_var )0 ), NewSTEPentity( f ) {
-    /*
-        _subtypes = subtypes;
-        _supertypes = supertypes;
-        _explicitAttr = explicitAttr;
-        _derivedAttr = derivedAttr;
-        _inverseAttr = inverseAttr;
-    */
 }
 
 EntityDescriptor::~EntityDescriptor() {
@@ -1054,8 +955,7 @@ const char * EntityDescriptor::GenerateExpress( std::string & buf ) const {
     return const_cast<char *>( buf.c_str() );
 }
 
-const char *
-EntityDescriptor::QualifiedName( std::string & s ) const {
+const char * EntityDescriptor::QualifiedName( std::string & s ) const {
     s.clear();
     EntityDescItr edi( _supertypes );
 
@@ -1076,8 +976,7 @@ EntityDescriptor::QualifiedName( std::string & s ) const {
     return const_cast<char *>( s.c_str() );
 }
 
-const TypeDescriptor *
-EntityDescriptor::IsA( const TypeDescriptor * td ) const {
+const TypeDescriptor * EntityDescriptor::IsA( const TypeDescriptor * td ) const {
     if( td -> NonRefType() == ENTITY_TYPE ) {
         return IsA( ( EntityDescriptor * ) td );
     } else {
@@ -1085,8 +984,7 @@ EntityDescriptor::IsA( const TypeDescriptor * td ) const {
     }
 }
 
-const EntityDescriptor *
-EntityDescriptor::IsA( const EntityDescriptor * other )  const {
+const EntityDescriptor * EntityDescriptor::IsA( const EntityDescriptor * other )  const {
     const EntityDescriptor * found = 0;
     const EntityDescLinkNode * link = ( const EntityDescLinkNode * )( GetSupertypes().GetHead() );
 
@@ -1101,30 +999,6 @@ EntityDescriptor::IsA( const EntityDescriptor * other )  const {
     return found;
 }
 
-/*
-EntityDescriptor::FindLongestAttribute()
-{
-    AttrDescLinkNode *attrPtr =
-          (AttrDescLinkNode *)(ed->ExplicitAttr().GetHead());
-    while( attrPtr != 0)
-    {
-    if(attrPtr->AttrDesc()->IsEntityType())
-        maxAttrLen = max(maxAttrLen,
-            (strlen(attrPtr->AttrDesc()->EntityType()->Name()) +
-              strlen(attrPtr->AttrDesc()->Name()) + 3
-             )
-            );
-    else
-        maxAttrLen = max(maxAttrLen,
-          (strlen(attrPtr->AttrDesc()->DomainType()->NameOrDescription()) +
-           strlen(attrPtr->AttrDesc()->Name()) + 3
-          )
-            );
-    attrPtr = (AttrDescLinkNode *)attrPtr->NextNode();
-    }
-}
-*/
-
 Type_or_rule::Type_or_rule() {
 }
 
@@ -1134,11 +1008,9 @@ Type_or_rule::Type_or_rule( const Type_or_rule & tor ) {
 Type_or_rule::~Type_or_rule() {
 }
 
-
 Where_rule::Where_rule() {
     _type_or_rule = 0;
 }
-
 
 Where_rule::Where_rule( const Where_rule & wr ) {
     _label = wr._label;
@@ -1225,18 +1097,15 @@ int Where_rule__list::Index( Where_rule_ptr v ) {
 
 Where_rule_ptr & Where_rule__list::operator[]( int index ) {
     Check( index );
-//    _count = max(_count, index+1);
     _count = ( ( _count > index + 1 ) ? _count : ( index + 1 ) );
     return _buf[index];
 }
 
-int
-Where_rule__list::Count() {
+int Where_rule__list::Count() {
     return _count;
 }
 
-void
-Where_rule__list::Clear() {
+void Where_rule__list::Clear() {
     _count = 0;
 }
 
@@ -1333,18 +1202,15 @@ int Uniqueness_rule__set::Index( Uniqueness_rule_ptr v ) {
 
 Uniqueness_rule_ptr & Uniqueness_rule__set::operator[]( int index ) {
     Check( index );
-//    _count = max(_count, index+1);
     _count = ( ( _count > index + 1 ) ? _count : ( index + 1 ) );
     return _buf[index];
 }
 
-int
-Uniqueness_rule__set::Count() {
+int Uniqueness_rule__set::Count() {
     return _count;
 }
 
-void
-Uniqueness_rule__set::Clear() {
+void Uniqueness_rule__set::Clear() {
     _count = 0;
 }
 
@@ -1359,7 +1225,7 @@ Global_rule::Global_rule( const char * n, Schema_ptr parent_sch, const char * rt
       _rule_text( rt ) {
 }
 
-// not fully implemented
+/// not fully implemented
 Global_rule::Global_rule( Global_rule & gr ) {
     _name = gr._name;
     _parent_schema = gr._parent_schema;
@@ -1370,12 +1236,10 @@ Global_rule::~Global_rule() {
     delete _where_rules;
 }
 
-void
-Global_rule::entities_( const Entity__set_var & e ) {
+void Global_rule::entities_( const Entity__set_var & e ) {
 }
 
-void
-Global_rule::where_rules_( const Where_rule__list_var & wrl ) {
+void Global_rule::where_rules_( const Where_rule__list_var & wrl ) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1455,18 +1319,15 @@ int Global_rule__set::Index( Global_rule_ptr v ) {
 
 Global_rule_ptr & Global_rule__set::operator[]( int index ) {
     Check( index );
-//    _count = max(_count, index+1);
     _count = ( ( _count > index + 1 ) ? _count : ( index + 1 ) );
     return _buf[index];
 }
 
-int
-Global_rule__set::Count() {
+int Global_rule__set::Count() {
     return _count;
 }
 
-void
-Global_rule__set::Clear() {
+void Global_rule__set::Clear() {
     _count = 0;
 }
 
@@ -1475,15 +1336,13 @@ Global_rule__set::Clear() {
 // TypeDescriptor functions
 ///////////////////////////////////////////////////////////////////////////////
 
-const char *
-TypeDescriptor::AttrTypeName( std::string & buf, const char * schnm ) const {
+const char * TypeDescriptor::AttrTypeName( std::string & buf, const char * schnm ) const {
     std::string sstr;
     buf = Name( schnm ) ? StrToLower( Name( schnm ), sstr ) : _description;
     return const_cast<char *>( buf.c_str() );
 }
 
-const char *
-TypeDescriptor::GenerateExpress( std::string & buf ) const {
+const char * TypeDescriptor::GenerateExpress( std::string & buf ) const {
     char tmp[BUFSIZ];
     buf = "TYPE ";
     buf.append( StrToLower( Name(), tmp ) );
@@ -1535,20 +1394,16 @@ TypeDescriptor::GenerateExpress( std::string & buf ) const {
 
     buf.append( "END_TYPE;\n" );
     return const_cast<char *>( buf.c_str() );
-
-//    buf.append(Description());
-//    buf.append("\nEND_TYPE;\n");
 }
 
-///////////////////////////////////////////////////////////////////////
-// This is a fully expanded description of the type.
-// This returns a string like the _description member variable
-// except it is more thorough of a description where possible
-// e.g. if the description contains a TYPE name it will also
-// be explained.
-///////////////////////////////////////////////////////////////////////
-const char *
-TypeDescriptor::TypeString( std::string & s ) const {
+/**
+ * This is a fully expanded description of the type.
+ * This returns a string like the _description member variable
+ * except it is more thorough of a description where possible
+ * e.g. if the description contains a TYPE name it will also
+ * be explained.
+ */
+const char * TypeDescriptor::TypeString( std::string & s ) const {
     switch( Type() ) {
         case REFERENCE_TYPE:
             if( Name() ) {
@@ -1693,18 +1548,16 @@ TypeDescriptor::IsA( const char * other ) const  {
     return ( ReferentType() ? ReferentType() -> IsA( other ) : 0 );
 }
 
-///////////////////////////////////////////////////////////////////////
-// the first PrimitiveType that is not REFERENCE_TYPE (the first
-// TypeDescriptor *_referentType that does not have REFERENCE_TYPE
-// for it's fundamentalType variable).  This would return the same
-// as BaseType() for fundamental types.  An aggregate type
-// would return AGGREGATE_TYPE then you could find out the type of
-// an element by calling AggrElemType().  Select types
-// would work the same?
-///////////////////////////////////////////////////////////////////////
-
-PrimitiveType
-TypeDescriptor::NonRefType() const {
+/**
+ * the first PrimitiveType that is not REFERENCE_TYPE (the first
+ * TypeDescriptor *_referentType that does not have REFERENCE_TYPE
+ * for it's fundamentalType variable).  This would return the same
+ * as BaseType() for fundamental types.  An aggregate type
+ * would return AGGREGATE_TYPE then you could find out the type of
+ * an element by calling AggrElemType().  Select types
+ * would work the same?
+ */
+PrimitiveType TypeDescriptor::NonRefType() const {
     const TypeDescriptor * td = NonRefTypeDescriptor();
     if( td ) {
         return td->FundamentalType();
@@ -1713,8 +1566,7 @@ TypeDescriptor::NonRefType() const {
 }
 
 
-const TypeDescriptor *
-TypeDescriptor::NonRefTypeDescriptor() const {
+const TypeDescriptor * TypeDescriptor::NonRefTypeDescriptor() const {
     const TypeDescriptor * td = this;
 
     while( td->ReferentType() ) {
@@ -1727,11 +1579,7 @@ TypeDescriptor::NonRefTypeDescriptor() const {
     return td;
 }
 
-///////////////////////////////////////////////////////////////////////
-// This returns the PrimitiveType of the first non-aggregate element of
-// an aggregate
-///////////////////////////////////////////////////////////////////////
-
+/// This returns the PrimitiveType of the first non-aggregate element of an aggregate
 int TypeDescriptor::IsAggrType() const {
     switch( NonRefType() ) {
         case AGGREGATE_TYPE:
@@ -1746,8 +1594,7 @@ int TypeDescriptor::IsAggrType() const {
     }
 }
 
-PrimitiveType
-TypeDescriptor::AggrElemType() const {
+PrimitiveType TypeDescriptor::AggrElemType() const {
     const TypeDescriptor * aggrElemTD = AggrElemTypeDescriptor();
     if( aggrElemTD ) {
         return aggrElemTD->Type();
@@ -1765,19 +1612,17 @@ TypeDescriptor::AggrElemTypeDescriptor() const {
     return aggrElemTD;
 }
 
-////////////////////////////////////////////////////////////
-// This is the underlying type of this type. For instance:
-// TYPE count = INTEGER;
-// TYPE ref_count = count;
-// TYPE count_set = SET OF ref_count;
-//  each of the above will generate a TypeDescriptor and for
-//  each one, PrimitiveType BaseType() will return INTEGER_TYPE
-//  TypeDescriptor *BaseTypeDescriptor() returns the TypeDescriptor
-//  for Integer
-////////////////////////////////////////////////////////////
-
-PrimitiveType
-TypeDescriptor::BaseType() const {
+/**
+ * This is the underlying type of this type. For instance:
+ * TYPE count = INTEGER;
+ * TYPE ref_count = count;
+ * TYPE count_set = SET OF ref_count;
+ *  each of the above will generate a TypeDescriptor and for
+ *  each one, PrimitiveType BaseType() will return INTEGER_TYPE
+ *  TypeDescriptor *BaseTypeDescriptor() returns the TypeDescriptor
+ *  for Integer
+ */
+PrimitiveType TypeDescriptor::BaseType() const {
     const TypeDescriptor * td = BaseTypeDescriptor();
     if( td ) {
         return td->FundamentalType();
@@ -1786,8 +1631,7 @@ TypeDescriptor::BaseType() const {
     }
 }
 
-const TypeDescriptor *
-TypeDescriptor::BaseTypeDescriptor() const {
+const TypeDescriptor * TypeDescriptor::BaseTypeDescriptor() const {
     const TypeDescriptor * td = this;
 
     while( td -> ReferentType() ) {
@@ -1795,20 +1639,23 @@ TypeDescriptor::BaseTypeDescriptor() const {
     }
     return td;
 }
-#ifdef NOT_YET
-///////////////////////////////////////////////////////////////////////////////
-// EnumerationTypeDescriptor functions
-///////////////////////////////////////////////////////////////////////////////
-EnumerationTypeDescriptor::EnumerationTypeDescriptor( ) {
-    _elements = new StringAggregate;
-}
-#endif
+
+/** FIXME
+ * #ifdef NOT_YET
+    ///////////////////////////////////////////////////////////////////////////////
+    // EnumerationTypeDescriptor functions
+    ///////////////////////////////////////////////////////////////////////////////
+    EnumerationTypeDescriptor::EnumerationTypeDescriptor( ) {
+        _elements = new StringAggregate;
+    }
+ * #endif
+ */
+
 ///////////////////////////////////////////////////////////////////////////////
 // SelectTypeDescriptor functions
 ///////////////////////////////////////////////////////////////////////////////
 
-SDAI_Select  *
-SelectTypeDescriptor::CreateSelect() {
+SDAI_Select * SelectTypeDescriptor::CreateSelect() {
     if( CreateNewSelect ) {
         return CreateNewSelect();
     } else {
@@ -1816,26 +1663,23 @@ SelectTypeDescriptor::CreateSelect() {
     }
 }
 
-const TypeDescriptor *
-SelectTypeDescriptor::IsA( const TypeDescriptor * other ) const {
+const TypeDescriptor * SelectTypeDescriptor::IsA( const TypeDescriptor * other ) const {
     return TypeDescriptor::IsA( other );
 }
 
-// returns the td among the choices of tds describing elements of this select
-// type but only at this unexpanded level. The td ultimately describing the
-// type may be an element of a td for a select that is returned.
-
-const TypeDescriptor *
-SelectTypeDescriptor::CanBe( const TypeDescriptor * other ) const {
-//  const TypeDescriptor * found =0;
-    TypeDescItr elements( GetElements() ) ;
-    const TypeDescriptor * td = elements.NextTypeDesc();
-
+/**
+ * returns the td among the choices of tds describing elements of this select
+ * type but only at this unexpanded level. The td ultimately describing the
+ * type may be an element of a td for a select that is returned.
+ */
+const TypeDescriptor * SelectTypeDescriptor::CanBe( const TypeDescriptor * other ) const {
     if( this == other ) {
         return other;
     }
+
+    TypeDescItr elements( GetElements() ) ;
+    const TypeDescriptor * td = elements.NextTypeDesc();
     while( td )  {
-//    if (found = (td -> CanBe (other))) return found;
         if( td -> CanBe( other ) ) {
             return td;
         }
@@ -1844,12 +1688,12 @@ SelectTypeDescriptor::CanBe( const TypeDescriptor * other ) const {
     return 0;
 }
 
-// returns the td among the choices of tds describing elements of this select
-// type but only at this unexpanded level. The td ultimately describing the
-// type may be an element of a td for a select that is returned.
-
-const TypeDescriptor *
-SelectTypeDescriptor::CanBe( const char * other ) const {
+/**
+ * returns the td among the choices of tds describing elements of this select
+ * type but only at this unexpanded level. The td ultimately describing the
+ * type may be an element of a td for a select that is returned.
+ */
+const TypeDescriptor * SelectTypeDescriptor::CanBe( const char * other ) const {
     TypeDescItr elements( GetElements() ) ;
     const TypeDescriptor * td = 0;
 
@@ -1867,26 +1711,26 @@ SelectTypeDescriptor::CanBe( const char * other ) const {
     return 0;
 }
 
-// A modified CanBe, used to determine if "other", a string we have just read,
-// is a possible type-choice of this.  (I.e., our select "CanBeSet" to this
-// choice.)  This deals with the following issue, based on the Tech Corrigendum
-// to Part 21:  Say our select ("selP") has an item which is itself a select
-// ("selQ").  Say it has another select item which is a redefinition of another
-// select ("TYPE selR = selS;").  According to the T.C., if selP is set to one
-// of the members of selQ, "selQ(...)" may not appear in the instantiation.
-// If, however, selP is set to a member of selR, "selR(...)" must appear first.
-// The code below checks if "other" = one of our possible choices.  If one of
-// our choices is a select like selQ, we recurse to see if other matches a
-// member of selQ (and don't look for "selQ").  If we have a choice like selR,
-// we check if other = "selR", but do not look at selR's members.  This func-
-// tion also takes into account schNm, the name of the current schema.  If
-// schNm does not = the schema in which this type was declared, it's possible
-// that it should be referred to with a different name.  This would be the case
-// if schNm = a schema which USEs or REFERENCEs this and renames it (e.g., "USE
-// from XX (A as B)").
-
-const TypeDescriptor *
-SelectTypeDescriptor::CanBeSet( const char * other, const char * schNm ) const {
+/**
+ * A modified CanBe, used to determine if "other", a string we have just read,
+ * is a possible type-choice of this.  (I.e., our select "CanBeSet" to this
+ * choice.)  This deals with the following issue, based on the Tech Corrigendum
+ * to Part 21:  Say our select ("selP") has an item which is itself a select
+ * ("selQ").  Say it has another select item which is a redefinition of another
+ * select ("TYPE selR = selS;").  According to the T.C., if selP is set to one
+ * of the members of selQ, "selQ(...)" may not appear in the instantiation.
+ * If, however, selP is set to a member of selR, "selR(...)" must appear first.
+ * The code below checks if "other" = one of our possible choices.  If one of
+ * our choices is a select like selQ, we recurse to see if other matches a
+ * member of selQ (and don't look for "selQ").  If we have a choice like selR,
+ * we check if other = "selR", but do not look at selR's members.  This func-
+ * tion also takes into account schNm, the name of the current schema.  If
+ * schNm does not = the schema in which this type was declared, it's possible
+ * that it should be referred to with a different name.  This would be the case
+ * if schNm = a schema which USEs or REFERENCEs this and renames it (e.g., "USE
+ * from XX (A as B)").
+ */
+const TypeDescriptor * SelectTypeDescriptor::CanBeSet( const char * other, const char * schNm ) const {
     TypeDescItr elements( GetElements() ) ;
     const TypeDescriptor * td = elements.NextTypeDesc();
 
@@ -1908,8 +1752,7 @@ SelectTypeDescriptor::CanBeSet( const char * other, const char * schNm ) const {
 // AggrTypeDescriptor functions
 ///////////////////////////////////////////////////////////////////////////////
 
-STEPaggregate *
-AggrTypeDescriptor::CreateAggregate() {
+STEPaggregate * AggrTypeDescriptor::CreateAggregate() {
     if( CreateNewAggr ) {
         return CreateNewAggr();
     } else {

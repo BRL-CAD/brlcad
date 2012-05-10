@@ -24,10 +24,7 @@ static int uniqueNames( const char *, const SchRename * );
 
 Registry::Registry( CF_init initFunct )
     : col( 0 ), entity_cnt( 0 ), all_ents_cnt( 0 ) {
-//    if(NilSTEPentity == 0)
-//      NilSTEPentity = new SDAI_Application_instance;
 
-    /* Registry tables aren't always initialized */
     primordialSwamp = HASHcreate( 1000 );
     active_schemas = HASHcreate( 10 );
     active_types = HASHcreate( 100 );
@@ -61,11 +58,9 @@ Registry::Registry( CF_init initFunct )
                                        0, // Originating Schema
                                        "Number" );
 
-    /*    t_GENERIC_TYPE = new TypeDescriptor("GENERIC", GENERIC_TYPE, "Generic");*/
-
     initFunct( *this );
     HASHlistinit( active_types, &cur_type );
-    HASHlistinit( primordialSwamp, &cur_entity ); // initialize cur\'s
+    HASHlistinit( primordialSwamp, &cur_entity ); // initialize cur's
     HASHlistinit( active_schemas, &cur_schema );
 }
 
@@ -92,8 +87,7 @@ void Registry::DeleteContents() {
     // types
 }
 
-const EntityDescriptor * Registry::FindEntity( const char * e, const char * schNm, int check_case ) const
-/*
+/**
  * schNm refers to the current schema.  This will have a value if we are
  * reading from a Part 21 file (using a STEPfile object), and the file
  * declares a schema name in the File_Schema section of the Header.  (If
@@ -102,7 +96,7 @@ const EntityDescriptor * Registry::FindEntity( const char * e, const char * schN
  * entity A from schema Y and renames it to B, X should only refer to A as
  * B.  Thus, if schNm here = "X", only e="B" would be valid but not e="A".
  */
-{
+const EntityDescriptor * Registry::FindEntity( const char * e, const char * schNm, int check_case ) const {
     const EntityDescriptor * entd;
     const SchRename * altlist;
     char schformat[BUFSIZ], altName[BUFSIZ];
@@ -186,15 +180,14 @@ void Registry::AddType( const TypeDescriptor & d ) {
     HASHinsert( active_types, ( char * ) d.Name(), ( TypeDescriptor * ) &d );
 }
 
-void Registry::AddClones( const EntityDescriptor & e )
-/*
+/**
  * Purpose is to insert e into the registry hashed according to all its
  * alternate names (the names it was renamed with when other schemas USEd
  * or REFERENCEd it).  This will make these names available to the Registry
  * so that if we comes across one of them in a Part 21 file, we'll recog-
  * nize it.
  */
-{
+void Registry::AddClones( const EntityDescriptor & e ) {
     const SchRename * alts = e.AltNameList();
 
     while( alts ) {
@@ -205,15 +198,13 @@ void Registry::AddClones( const EntityDescriptor & e )
     all_ents_cnt += uniqueNames( e.Name(), e.AltNameList() );
 }
 
-static int
-uniqueNames( const char * entnm, const SchRename * altlist )
-/*
+/**
  * Returns the number of unique names in an entity's _altname list.  If
  * schema B uses ent xx from schema A and renames it to yy, and schema C
  * does the same (or if C simply uses yy from B), altlist will contain 2
  * entries with the same alt name.
  */
-{
+static int uniqueNames( const char * entnm, const SchRename * altlist ) {
     int cnt = 0;
     const SchRename * alt = altlist;
 
@@ -259,11 +250,10 @@ void Registry::RemoveType( const char * n ) {
     HASHsearch( active_types, &tmp, HASH_DELETE );
 }
 
-void Registry::RemoveClones( const EntityDescriptor & e )
-/*
+/**
  * Remove all the "clones", or rename values of e.
  */
-{
+void Registry::RemoveClones( const EntityDescriptor & e ) {
     const SchRename * alts = e.AltNameList();
     struct Element * tmp;
 
@@ -276,11 +266,10 @@ void Registry::RemoveClones( const EntityDescriptor & e )
 }
 
 
-SDAI_Application_instance  *
-Registry::ObjCreate( const char * nm, const char * schnm, int check_case ) const {
+SDAI_Application_instance * Registry::ObjCreate( const char * nm, const char * schnm, int check_case ) const {
     const EntityDescriptor  * entd = FindEntity( nm, schnm, check_case );
     if( entd ) {
-        SDAI_Application_instance  *se =
+        SDAI_Application_instance * se =
             ( ( EntityDescriptor * )entd ) -> NewSTEPentity();
 
         // See comment in previous function.

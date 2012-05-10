@@ -1,5 +1,5 @@
 /*****************************************************************************
- * non-ors.cc                                                                *
+ * \file non-ors.cc                                                          *
  *                                                                           *
  * Description: Contains the matchNonORs() functions for the EntList descen- *
  *              dants.  matchNonORs() functions loop through the EntList     *
@@ -12,14 +12,13 @@
 
 #include "complexSupport.h"
 
-MatchType SimpleList::matchNonORs( EntNode * ents )
-/*
+/**
  * Checks if we match the nodes of ents.  If only one unmarked is left
  * and we match it, return MATCHALL.  More likely, we'll return one of the
  * other return values.  (See descript of MatchType values in complex-
  * Support.h.)
  */
-{
+MatchType SimpleList::matchNonORs( EntNode * ents ) {
     EntNode * eptr = ents;
     int comp;
 
@@ -67,15 +66,14 @@ MatchType SimpleList::matchNonORs( EntNode * ents )
     return UNSATISFIED;
 }
 
-MatchType AndOrList::matchNonORs( EntNode * ents )
-/*
+/**
  * Loop through the children of this matching as many of the nodes of ents
  * as we can.  We skip all OrList descendants.  Those are processed later
  * only after all the non-conditional descendants, so that when we start
  * processing them we'll be able to tell which OR choices are viable, and
  * which are unnec.
  */
-{
+MatchType AndOrList::matchNonORs( EntNode * ents ) {
     EntList * child = childList->firstNot( OR );
     MatchType retval;
 
@@ -120,12 +118,11 @@ MatchType AndOrList::matchNonORs( EntNode * ents )
     return viable;
 }
 
-MatchType AndList::matchNonORs( EntNode * ents )
-/*
+/**
  * Checks if the AndList contains the set of nodes in ents.  Skip OrList
  * descendants.
  */
-{
+MatchType AndList::matchNonORs( EntNode * ents ) {
     EntList * child = childList->firstNot( OR );
 
     while( child != NULL ) {

@@ -26,9 +26,11 @@
 // in aggregate real handling (STEPaggregate.cc)  -- IMS 6 Jun 95
 const int Real_Num_Precision = REAL_NUM_PRECISION;
 
-/******************************************************************
+/**************************************************************//**
+** \class STEPattribute
 **    Functions for manipulating attribute
-**  KNOWN BUGS:
+**
+**  FIXME KNOWN BUGS:
 **    -- error reporting does not include line number information
 **    -- null attributes are only handled through the attribute pointer class
 **       direct access of a null attribute will not indicate whether the
@@ -43,10 +45,7 @@ const int Real_Num_Precision = REAL_NUM_PRECISION;
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-/******************************************************************
-// the value of the attribute is assigned from the supplied string
- ******************************************************************/
-
+/// the value of the attribute is assigned from the supplied string
 Severity STEPattribute::StrToVal( const char * s, InstMgr * instances, int addFileId ) {
     if( RedefiningAttr() )  {
         return RedefiningAttr()->StrToVal( s, instances, addFileId );
@@ -178,21 +177,23 @@ Severity STEPattribute::StrToVal( const char * s, InstMgr * instances, int addFi
 }
 
 
-/******************************************************************
- ** Procedure:  STEPread
- ** Returns:  Severity, which indicates success, or failure
- **         value >= SEVERITY_WARNING means program can continue parsing input,
- **         value <= SEVERITY_INPUT_ERROR  is fatal read error
- ** Description:  the value of the attribute is read from istream
- **               the format expected is STEP exchange file
- **          modified to accept '$' as value for OPTIONAL ATTRIBUTE,
- **             (since this function is used for reading files in both
- **              formats, the function accepts either '$' (new format),
- **              or nothing (old format)) 31-Jul-1992
- ******************************************************************/
-// does not read the delimiter separating individual attributes (i.e. ',') or
-// the delim separating the last attribute from the end of the entity (')').
-
+/**************************************************************//**
+** \fn STEPread
+** \brief Reads attribute value from in, formatted as P21 file.
+** The value of the attribute is read from istream. The format
+** expected is STEP exchange file.
+**
+** Accepts '$' or nothing as value for OPTIONAL ATTRIBUTE, since
+** this function is used for reading files in both old an new
+** formats.
+**
+** Does not read the delimiter separating individual attributes (i.e. ',') or
+** the delim separating the last attribute from the end of the entity (')').
+**
+** \returns  Severity, which indicates success or failure
+**         value >= SEVERITY_WARNING means program can continue parsing input,
+**         value <= SEVERITY_INPUT_ERROR  is fatal read error
+******************************************************************/
 Severity STEPattribute::STEPread( istream & in, InstMgr * instances, int addFileId,
                          const char * currSch ) {
     char errStr[BUFSIZ];
@@ -351,13 +352,10 @@ Severity STEPattribute::STEPread( istream & in, InstMgr * instances, int addFile
     }
 }
 
-/*********************************************************************
- ** Procedure:  asStr
- ** Parameters: currSch - used for select type writes.  See commenting
- **             in SDAI_Select::STEPwrite().
- ** Returns:
- ** Description:  the value of the attribute is returned as a string.
- ** Side Effects:
+/*****************************************************************//**
+ ** \fn asStr
+ ** \param currSch - used for select type writes.  See commenting in SDAI_Select::STEPwrite().
+ ** \returns the value of the attribute
  ** Status:  complete 3/91
  *********************************************************************/
 const char * STEPattribute::asStr( std::string & str, const char * currSch ) const {
@@ -446,7 +444,7 @@ const char * STEPattribute::asStr( std::string & str, const char * currSch ) con
     return const_cast<char *>( str.c_str() );
 }
 
-/*
+/**
  * The value of the attribute is printed to the output stream specified by out.
  * The output is in physical file format.
  */
@@ -750,7 +748,6 @@ int STEPattribute::is_null()  const {
             return ( *( ptr.c ) == S_ENTITY_NULL );
 
         case STRING_TYPE:
-            //ptr.S->clear();
             return ptr.S->empty();
 
         case BINARY_TYPE:
@@ -785,18 +782,23 @@ int STEPattribute::is_null()  const {
     }
 }
 
+/**************************************************************//**
+** evaluates the equality of two attributes
+** Side Effects:  none
+** \return bool -- if false => not equal
+******************************************************************/
 bool operator == ( STEPattribute & a1, STEPattribute & a2 ) {
     return a1.aDesc == a2.aDesc;
 }
 
 
 
-///////////////////////////////////////////////////////////////////////////////
-// returns the severity level that the parameter attrValue would pass if it
-// was the value for this attribute.
-// *note* for string values - (attrValue = 0) => string value does not exist,
-//        attrValue exists it is valid.
-///////////////////////////////////////////////////////////////////////////////
+/**************************************************************//**
+ * \returns the severity level that the parameter attrValue would pass if it
+ * was the value for this attribute.
+ * *note* for string values - (attrValue = 0) => string value does not exist,
+ *       attrValue exists it is valid.
+******************************************************************/
 Severity STEPattribute::ValidLevel( const char * attrValue, ErrorDescriptor * error, InstMgr * im, int clearError ) {
     if( clearError ) {
         ClearErrorMsg();
@@ -883,26 +885,22 @@ Severity STEPattribute::ValidLevel( const char * attrValue, ErrorDescriptor * er
     }
 }
 
-/******************************************************************
- ** Procedure:  operator <<
- ** Parameters:  ostream & out -- output stream
- **              STEPattribute & a -- attribute to output
- ** Returns:  ostream &
- ** Description:  overloads the output operator to print an attribute
- ******************************************************************/
+/**************************************************************//**
+** \param out -- output stream
+** \param a -- attribute to output
+** Description:  overloads the output operator to print an attribute
+******************************************************************/
 ostream & operator<< ( ostream & out, STEPattribute & a ) {
     a.STEPwrite( out );
     return out;
-
 }
 
-
-///////////////////////////// AddErrorInfo() //////////////////////////////////
-// This adds prepends attribute information to the detailed error msg.  This
-// is intended to add information to the error msgs written by Enumerations,
-// Aggregates, and SDAI_Strings which don't know they are a STEPattribute
-// value.
-///////////////////////////////////////////////////////////////////////////////
+/**************************************************************//**
+* This prepends attribute information to the detailed error msg.  This
+* is intended to add information to the error msgs written by Enumerations,
+* Aggregates, and SDAI_Strings which don't know they are a STEPattribute
+* value.
+******************************************************************/
 void STEPattribute::AddErrorInfo() {
     char errStr[BUFSIZ];
     errStr[0] = '\0';
@@ -922,11 +920,11 @@ void STEPattribute::AddErrorInfo() {
     }
 }
 
-/**
- * this function reads until it hits eof or one of the StopChars.
- * if it hits one of StopChars it puts it back.
- * RETURNS: the last char it read.
- */
+/**************************************************************//**
+* this function reads until it hits eof or one of the StopChars.
+* if it hits one of StopChars it puts it back.
+* RETURNS: the last char it read.
+******************************************************************/
 char STEPattribute::SkipBadAttr( istream & in, char * StopChars ) {
     ios_base::fmtflags flbuf = in.flags();
     in.unsetf( ios::skipws ); // turn skipping whitespace off

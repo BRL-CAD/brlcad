@@ -12,8 +12,7 @@
 
 #include "complexSupport.h"
 
-int OrList::hit( char * nm )
-/*
+/**
  * Check if we matched nm.  We have two possibilities here:  If we have a
  * choice selected, we only check the selected choice.  Say we're an OR
  * between SimpleLists C and D, and nm = C.  If choice = D, we can't check
@@ -25,7 +24,7 @@ int OrList::hit( char * nm )
  * context of a sub w/ >1 super, in which case we build a combo-CList and
  * may need to check if all sub-CLists matched the multi-sub, C.)
  */
-{
+int OrList::hit( char * nm ) {
     EntList * child = getChild( choice );
 
     if( child ) {
@@ -44,11 +43,10 @@ int OrList::hit( char * nm )
     return FALSE;
 }
 
-void OrList::unmarkAll( EntNode * ents )
-/*
+/**
  * Unmarks all the nodes of ents marked by the descendants of this.
  */
-{
+void OrList::unmarkAll( EntNode * ents ) {
     EntList * child;
 
     if( ( child = getChild( choice ) ) != NULL ) {
@@ -57,14 +55,13 @@ void OrList::unmarkAll( EntNode * ents )
     }
 }
 
-int OrList::acceptChoice( EntNode * ents )
-/*
+/**
  * Accepts the first choice of our childList which marks any unmarked
  * nodes.  If none of our current choices mark anything, choice is set to
  * LISTEND.  If choice was set to LISTEND before calling aC(), we reset
  * choice to choice1, and search again.
  */
-{
+int OrList::acceptChoice( EntNode * ents ) {
     EntList * child;
 
     if( choice == LISTEND ) {

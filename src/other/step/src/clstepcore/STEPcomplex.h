@@ -12,7 +12,7 @@ class STEPcomplex : public SDAI_Application_instance  {
         STEPcomplex * sc;
         STEPcomplex * head;
         Registry * _registry;
-        int visited; // used when reading (or as you wish?)
+        int visited; ///< used when reading (or as you wish?)
 
     public:
         STEPcomplex( Registry * registry, int fileid );
