@@ -166,33 +166,49 @@ macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
       set(outfile ${bin_root}/${DATA_DIR}/${DOC_DIR}/${targetdir}/${filename_root}.html)
       set(targetname ${filename_root}_${targetname_suffix}_html)
       set(CURRENT_XSL_STYLESHEET ${XSL_XHTML_STYLESHEET})
+
+      # If we have extra outputs, need to handle them now
+      set(EXTRAS)
+      get_property(EXTRA_OUTPUTS SOURCE ${filename} PROPERTY EXTRA_HTML_OUTPUTS)
+      foreach(extra_out ${EXTRA_OUTPUTS})
+	set(EXTRAS ${EXTRAS} ${bin_root}/${DATA_DIR}/${DOC_DIR}/${targetdir}/${extra_out})
+      endforeach(extra_out ${EXTRA_OUTPUTS})
+     
+      # Generate the script that will be used to run the XSLT executable 
       DB_SCRIPT("${targetname}" "${targetdir}" "${XSLT_EXECUTABLE}")
+
       if(BRLCAD_EXTRADOCS_VALIDATE)
 	DB_VALIDATE_TARGET(${targetname} ${filename_root})
 	add_custom_command(
-	  OUTPUT ${outfile}
+	  OUTPUT ${outfile} ${EXTRAS}
 	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
 	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_XHTML_STYLESHEET} ${deps_list}
 	  )
       else(BRLCAD_EXTRADOCS_VALIDATE)
 	add_custom_command(
-	  OUTPUT ${outfile}
+	  OUTPUT ${outfile} ${EXTRAS}
 	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
 	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_XHTML_STYLESHEET} ${deps_list}
 	  )
       endif(BRLCAD_EXTRADOCS_VALIDATE)
       add_custom_target(${targetname} ALL DEPENDS ${outfile})
+
       # CMAKE_CFG_INTDIR can't be used in installation rules:
       # http://www.cmake.org/Bug/view.php?id=5747
       if(CMAKE_CONFIGURATION_TYPES)
         string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" outfile "${outfile}")
+	if(EXTRAS)
+	  string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" EXTRAS "${EXTRAS}")
+	endif(EXTRAS)
       endif(CMAKE_CONFIGURATION_TYPES)
-      install(FILES ${outfile} DESTINATION ${DATA_DIR}/${DOC_DIR}/${targetdir})
+      install(FILES ${outfile} ${EXTRAS} DESTINATION ${DATA_DIR}/${DOC_DIR}/${targetdir})
+
       get_property(BRLCAD_EXTRADOCS_HTML_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_HTML_TARGETS)
       set(BRLCAD_EXTRADOCS_HTML_TARGETS ${BRLCAD_EXTRADOCS_HTML_TARGETS} ${targetname})
       set_property(GLOBAL PROPERTY BRLCAD_EXTRADOCS_HTML_TARGETS "${BRLCAD_EXTRADOCS_HTML_TARGETS}")
     endforeach(filename ${${xml_files}})
   endif(BRLCAD_EXTRADOCS_HTML)
+
   CMAKEFILES(${${xml_files}})
 endmacro(DOCBOOK_TO_HTML targetname_suffix srcfile outfile targetdir deps_list)
 
@@ -204,33 +220,51 @@ macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir deps_li
       set(outfile ${bin_root}/${DATA_DIR}/${targetdir}/${filename_root}.${manext})
       set(targetname ${filename_root}_${targetname_suffix}_man)
       set(CURRENT_XSL_STYLESHEET ${XSL_MAN_STYLESHEET})
+
+      # If we have more outputs than the default, they need to be handled here.
+      set(EXTRAS)
+      get_property(EXTRA_OUTPUTS SOURCE ${filename} PROPERTY EXTRA_MAN_OUTPUTS)
+      foreach(extra_out ${EXTRA_OUTPUTS})
+	set(EXTRAS ${EXTRAS} ${bin_root}/${DATA_DIR}/${targetdir}/${extra_out})
+      endforeach(extra_out ${EXTRA_OUTPUTS})
+ 
+      # Generate the script that will be used to run the XSLT executable
       DB_SCRIPT("${targetname}" "${targetdir}" "${XSLT_EXECUTABLE}")
+
       if(BRLCAD_EXTRADOCS_VALIDATE)
 	DB_VALIDATE_TARGET(${targetname} ${filename_root})
 	add_custom_command(
-	  OUTPUT ${outfile}
+	  OUTPUT ${outfile} ${EXTRAS}
 	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
 	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_MAN_STYLESHEET} ${deps_list}
 	  )
       else(BRLCAD_EXTRADOCS_VALIDATE)
 	add_custom_command(
-	  OUTPUT ${outfile}
+	  OUTPUT ${outfile} ${EXTRAS}
 	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
 	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_MAN_STYLESHEET} ${deps_list}
 	  )
       endif(BRLCAD_EXTRADOCS_VALIDATE)
       add_custom_target(${targetname} ALL DEPENDS ${outfile})
+
       # CMAKE_CFG_INTDIR can't be used in installation rules:
       # http://www.cmake.org/Bug/view.php?id=5747
       if(CMAKE_CONFIGURATION_TYPES)
         string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" outfile "${outfile}")
+	if(EXTRAS)
+	  string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" EXTRAS "${EXTRAS}")
+	endif(EXTRAS)
       endif(CMAKE_CONFIGURATION_TYPES)
-      install(FILES ${outfile} DESTINATION ${MAN_DIR}/man${mannum})
+      install(FILES ${outfile} ${EXTRAS} DESTINATION ${MAN_DIR}/man${mannum})
+
+      # Add the current build target to the list of man page targets
       get_property(BRLCAD_EXTRADOCS_MAN_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_MAN_TARGETS)
       set(BRLCAD_EXTRADOCS_MAN_TARGETS ${BRLCAD_EXTRADOCS_MAN_TARGETS} ${targetname})
       set_property(GLOBAL PROPERTY BRLCAD_EXTRADOCS_MAN_TARGETS "${BRLCAD_EXTRADOCS_MAN_TARGETS}")
+
     endforeach(filename ${${xml_files}})
   endif(BRLCAD_EXTRADOCS_MAN)
+  # Mark files for distcheck
   CMAKEFILES(${${xml_files}})
 endmacro(DOCBOOK_TO_MAN targetname_suffix srcfile outfile targetdir deps_list)
 
@@ -286,17 +320,6 @@ macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir deps_list)
   endif(BRLCAD_EXTRADOCS_PDF)
   CMAKEFILES(${${xml_files}})
 endmacro(DOCBOOK_TO_PDF targetname_suffix srcfile outfile targetdir deps_list)
-
-# If a DocBook command produces more than one output file (can happen with man pages)
-# we need to get those files too.
-macro(DOCBOOK_EXTRA_OUTPUT output_files targetdir)
-  foreach(filename ${${output_files}})
-    set(outfile "${bin_root}/${DATA_DIR}/${targetdir}/${filename}")
-    install(FILES "${outfile}" DESTINATION ${targetdir})
-    set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${outfile}")
-  endforeach(filename ${${output_files}})
-endmacro(DOCBOOK_EXTRA_OUTPUT )
-
 
 # Local Variables:
 # tab-width: 8
