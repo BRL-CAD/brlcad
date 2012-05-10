@@ -28,7 +28,7 @@
 
 __BEGIN_DECLS
 
-extern int tclcad_initialized;
+extern int tclcad_initialized(int setit);
 
 __END_DECLS
 

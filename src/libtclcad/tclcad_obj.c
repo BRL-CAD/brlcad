@@ -1145,10 +1145,10 @@ static struct to_cmdtab to_cmds[] = {
 int
 Go_Init(Tcl_Interp *interp)
 {
-    if (tclcad_initialized)
+    if (tclcad_initialized(0))
 	return TCL_OK;
 
-    tclcad_initialized = 1;
+    (void)tclcad_initialized(1);
 
     /*XXX Use of brlcad_interp is temporary */
     brlcad_interp = interp;
