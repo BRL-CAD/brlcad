@@ -1,4 +1,5 @@
 
+
 /*
  * This software was developed by U.S. Government employees as part of
  * their official duties and is not subject to copyright.
@@ -100,11 +101,9 @@ static Error ERROR_redecl_no_such_attribute;
 static Error ERROR_redecl_no_such_supertype;
 static Error ERROR_missing_self;
 
-static Type self = 0;   /* always points to current value of SELF */
-/* or 0 if none */
+static Type self = 0;   /**< always points to current value of SELF or 0 if none */
 
-static int found_self;  /* remember whether we've seen a SELF in a */
-/* WHERE clause */
+static bool found_self;  /**< remember whether we've seen a SELF in a WHERE clause */
 
 /***********************/
 /* function prototypes */
@@ -114,15 +113,8 @@ static int WHEREresolve PROTO( ( Linked_List, Scope, int ) );
 extern void VAR_resolve_expressions PROTO( ( Variable, Entity ) );
 extern void VAR_resolve_types PROTO( ( Variable, Entity ) );
 
-/*
-** Procedure:   RESOLVEinitialize
-** Parameters:  -- none --
-** Returns: void
-** Description: Initialize the Fed-X second pass.
-*/
-
-void
-RESOLVEinitialize( void ) {
+/** Initialize the Fed-X second pass. */
+void RESOLVEinitialize( void ) {
     ERROR_undefined = ERRORcreate(
                           "Reference to undefined object %s.", SEVERITY_ERROR );
 
@@ -279,18 +271,15 @@ Type TYPE_retrieve_aggregate( Type t_select, Type t_agg ) {
     return t_agg;
 }
 
-/*
-** Procedure:   EXPresolve
-** Parameters:  Expression expression   - expression to resolve
-**      bool    group_qualified - true if attribute reference that
-**                  will later be group qualified
-**      Scope      scope    - scope in which to resolve
-** Returns: void
-** Description: Resolve all references in an expression.
+/**
+** \param expr expression to resolve
+** \param scope scope in which to resolve
+** \param typecheck type to verify against (?)
+**
+** Resolve all references in an expression.
+** \note the macro 'EXPresolve' calls this function after checking if expr is already resolved
 */
-
-void
-EXP_resolve( Expression expr, Scope scope, Type typecheck ) {
+void EXP_resolve( Expression expr, Scope scope, Type typecheck ) {
     Function f = 0;
     Symbol * sym;
     Generic x;
@@ -556,8 +545,7 @@ EXP_resolve( Expression expr, Scope scope, Type typecheck ) {
     }
 }
 
-int
-ENTITYresolve_subtype_expression( Expression expr, Entity ent/*was scope*/, Linked_List * flat ) {
+int ENTITYresolve_subtype_expression( Expression expr, Entity ent/*was scope*/, Linked_List * flat ) {
     Entity ent_ref;
     int i = UNRESOLVED;
 
@@ -629,16 +617,13 @@ ENTITYresolve_subtype_expression( Expression expr, Entity ent/*was scope*/, Link
     return( i );
 }
 
-/*
-** Procedure:   TYPEresolve
-** Parameters:  Type  type  - type to resolve
-**      Scope scope - scope in which to resolve
-** Returns: returns true type
-** Description: Resolve all references in a type.
+/**
+** \param typeaddr type to resolve
+** \returns true type
+**
+** Resolve all references in a type.
 */
-
-void
-TYPE_resolve( Type * typeaddr /*, Scope scope*/ ) {
+void TYPE_resolve( Type * typeaddr /*, Scope scope*/ ) {
     Type type = *typeaddr;
     Type ref_type;
     TypeBody body = type->u.type->body;
@@ -720,16 +705,13 @@ TYPE_resolve( Type * typeaddr /*, Scope scope*/ ) {
     return;
 }
 
-/*
-** Procedure:   VARresolve
-** Parameters:  Variable variable   - variable to resolve
-**      Scope    scope      - scope in which to resolve
-** Returns: void
-** Description: Resolve all references in a variable definition.
+/**
+** \param v variable to resolve
+** \param entity entity in which to resolve
+**
+** Resolve all references in a variable definition.
 */
-
-void
-VAR_resolve_expressions( Variable v, Entity entity /* was scope */ ) {
+void VAR_resolve_expressions( Variable v, Entity entity /* was scope */ ) {
     EXPresolve( v->name, entity, Type_Dont_Care ); /* new!! */
 
     if( v->initializer ) {
@@ -741,8 +723,13 @@ VAR_resolve_expressions( Variable v, Entity entity /* was scope */ ) {
     }
 }
 
-void
-VAR_resolve_types( Variable v, Entity entity /* was scope */ ) {
+/**
+** \param v variable to resolve
+** \param entity entity in which to resolve
+**
+** Resolve all references in a variable definition.
+*/
+void VAR_resolve_types( Variable v, Entity entity /* was scope */ ) {
     int failed = 0;
 
     TYPEresolve( &v->type, entity );
@@ -788,41 +775,34 @@ VAR_resolve_types( Variable v, Entity entity /* was scope */ ) {
 #endif
 }
 
-/*
-** Procedure:   STMTresolve
-** Parameters:  Statement statement - statement to resolve
-**      Scope     scope     - scope in which to resolve
-** Returns: void
-** Description: Resolve all references in a statement.
+/**
+** \param statement statement to resolve
+** \param scope scope in which to resolve
+**
+** Resolve all references in a statement.
 */
-
 void STMTresolve( Statement statement, Scope scope );
 
-void
-STMTlist_resolve( Linked_List list, Scope scope ) {
+void STMTlist_resolve( Linked_List list, Scope scope ) {
     LISTdo( list, s, Statement )
     STMTresolve( s, scope );
     LISTod;
 }
 
-/*
-** Procedure:   CASE_ITresolve
-** Parameters:  Case_Item   item    - case item to resolve
-**      Scope       scope   - scope in which to resolve
-** Returns: void
-** Description: Resolve all references in a case item
+/**
+** \param item case item to resolve
+** \param scope scope in which to resolve
+**
+** Resolve all references in a case item
 */
-
-void
-CASE_ITresolve( Case_Item item, Scope scope, Type type ) {
+void CASE_ITresolve( Case_Item item, Scope scope, Type type ) {
     LISTdo( item->labels, e, Expression )
     EXPresolve( e, scope, type );
     LISTod;
     STMTresolve( item->action, scope );
 }
 
-void
-STMTresolve( Statement statement, Scope scope ) {
+void STMTresolve( Statement statement, Scope scope ) {
     Type type;
     Scope proc;
 
@@ -909,8 +889,7 @@ STMTresolve( Statement statement, Scope scope ) {
     }
 }
 
-void
-ALGresolve_expressions_statements( Scope s, Linked_List statements ) {
+void ALGresolve_expressions_statements( Scope s, Linked_List statements ) {
     int status = 0;
 
     if( print_objects_while_running & OBJ_ALGORITHM_BITS &
@@ -925,9 +904,7 @@ ALGresolve_expressions_statements( Scope s, Linked_List statements ) {
     s->symbol.resolved = status;
 }
 
-static
-Variable
-ENTITY_get_local_attribute( Entity e, char * name ) {
+static Variable ENTITY_get_local_attribute( Entity e, char * name ) {
     LISTdo( e->u.entity->attributes, a, Variable )
     if( streq( VARget_simple_name( a ), name ) ) {
         return a;
@@ -936,8 +913,7 @@ ENTITY_get_local_attribute( Entity e, char * name ) {
     return 0;
 }
 
-void
-ENTITYresolve_expressions( Entity e ) {
+void ENTITYresolve_expressions( Entity e ) {
     Variable v;
     int status = 0;
     DictionaryEntry de;
@@ -1019,216 +995,9 @@ ENTITYresolve_expressions( Entity e ) {
     e->symbol.resolved = status;
 }
 
-#if 0
-/*
-** Procedure:   ENTITYresolve
-** Parameters:  Entity entity   - entity to resolve
-** Returns: void
-** Description: Resolve all references in an entity definition.
-*/
-
-void
-ENTITYresolve_pass1( Entity entity ) {
-
-    static depth = 0;
 
 
-    Entity ref_entity;
-    Qualified_Attr * ref;
-    Symbol * sym;
-    int i;
-    Generic attr;   /* really an attribute, but easier to type it this way */
-
-    if( is_not_resolvable( entity ) ) {
-        return;
-    }
-    if( is_resolved_pass1( entity ) ) {
-        return;
-    }
-
-    /* prevent things like our supertype trying to resolve us */
-    /* when we resolve our subtypes */
-    resolve_in_progress( entity );
-
-    /*printf("ENTITYresolve_pass1 (%s): depth = %d\n",entity->symbol.name,++depth);*/
-
-    if( print_entities_while_running ) {
-        fprintf( stdout, "pass1: %s\n", entity->symbol.name );
-    }
-
-    /*
-     * for each supertype, find the entity it refs to
-     */
-
-    /* for convenience, parser leaves these as symbols */
-    /* convert to entities */
-    LISTdo_links( entity->u.entity->supertypes, link )
-    sym = ( Symbol * )link->data;
-    ref_entity = ( Entity )SCOPEfind( entity->superscope, sym->name );
-    if( !ref_entity ) {
-        ERRORreport_with_symbol( ERROR_unknown_supertype, sym, sym->name, entity->symbol.name );
-        resolve_failed( entity );
-    } else if( DICT_type != OBJ_ENTITY ) {
-        Symbol * newsym = OBJget_symbol( ref_entity, DICT_type );
-        ERRORreport_with_symbol( ERROR_supertype_resolve, sym, sym->name, newsym->line );
-        resolve_failed( entity );
-    } else {
-        /* replace symbol with true entity */
-        link->data = ( Generic )ref_entity;
-    }
-    LISTod;
-
-#if 0
-    /*
-     * for each subtype, find the entity it refs to.
-     * this is a little more complicated than for supertypes, because
-     * of the subtype expression jazz.
-     */
-    /*printf("EXPresolve_subtype_expression(%s)\n",entity->symbol.name);*/
-
-    i = EXPresolve_subtype_expression( entity->u.entity->subtype_expression, entity, &entity->u.entity->subtypes );
-    if( i & RESOLVE_FAILED ) {
-        resolve_failed( entity );
-    }
-#endif
-
-
-    /* at this point we need the sub/supertypes to continue, so give up */
-    /* if we had earlier problems */
-
-    if( is_resolve_failed( entity ) ) {
-        printf( "ENTITYresolve_pass1 (middle): return from depth = %d\n", depth-- );
-        return;
-    }
-
-    /*
-     * resolve all local attributes of this entity
-     */
-    LISTdo( entity->u.entity->attributes, attr, Variable )
-    /*printf("VARresolve(%s)\n",attr->name->symbol.name);*/
-    VARresolve( attr, entity );
-    LISTod;
-
-    /*
-     * resolve the 'unique' list
-     */
-
-    /* these are lists of lists */
-    /* the sublists are: label, ref'd_attr, ref'd attr, ref'd attr, etc. */
-    /* where ref'd_attrs are either simple ids or SELF\entity.attr */
-    /* where "entity" represents a supertype (only, I believe) */
-
-    LISTdo( entity->u.entity->unique, unique, Linked_List )
-    i = 0;
-    LISTdo_links( unique, reflink )
-    /* skip first which is always the label (or NULL if no label) */
-    i++;
-    if( i == 1 ) {
-        continue;
-    }
-    ref = ( Qualified_Attr * )reflink->data;
-
-    /* following code should be abstracted out into something like GROUP_REFresolve */
-
-
-    if( ref->entity ) {
-        /* use entity provided in group reference */
-
-        ref_entity = ENTITYfind_inherited_attribute( entity, ref->entity->name );
-        if( !ref_entity ) {
-            ERRORreport_with_symbol( ERROR_unknown_supertype, ref->entity,
-                                     ref->entity->name, entity->symbol.name );
-            resolve_failed( entity );
-            continue;
-        }
-        attr = DICTlookup( ref_entity->symbol_table, ref->attribute->name );
-        if( !attr ) {
-            ERRORreport_with_symbol( ERROR_unknown_attr_in_entity, ref->attribute->line,
-                                     ref->attribute->name, ref_entity->symbol.name );
-            resolve_failed( entity );
-        }
-    } else {
-        /* no entity provided, look through sub/super chain */
-        attr = ( Generic )ENTITYfind_attribute( entity, entity->symbol.name );
-        if( !ref_entity ) {
-            ERRORreport_with_symbol( ERROR_unknown_attr_in_entity, ref->entity->line,
-                                     ref->attribute->name, entity->symbol.name );
-            resolve_failed( entity );
-        }
-    }
-    QUAL_ATTR_destroy( ref );
-    reflink->data = attr;
-    LISTod;
-    LISTod;
-
-    /*  printf("ENTITYresolve_pass1 (bottom): return from depth = %d\n",depth--);*/
-    if( !is_resolve_failed( entity ) ) {
-        resolved_pass1( entity );
-    }
-    return;
-}
-
-void
-ENTITYresolve_pass2( Entity e ) {
-    int count;
-    char * attr_name;
-
-    /*  if (is_resolved_pass2(e)) return;*/
-    if( is_not_resolvable( e ) ) {
-        return;
-    }
-
-    if( print_entities_while_running ) {
-        fprintf( stdout, "pass2: %s\n", e->symbol.name );
-    }
-
-    count = 0;
-    LISTdo( e->u.entity->supertypes, sup, Entity )
-    /*  if (OBJget_class(sup) == Class_Entity) {*/
-    ENTITYresolve_pass2( sup );
-    count += ENTITYget_size( sup );
-#if no_longer_necessary
-    if( !ENTITYhas_immediate_subtype( sup, e ) ) {
-        ERRORreport_with_symbol( ERROR_missing_subtype,
-                                 sup->symbol.line,
-                                 e->symbol.name,
-                                 sup->symbol.name );
-    }
-    /* supertypes are no longer treated as superscopes, but are */
-    /* searched directly by scopefind */
-    SCOPEadd_superscope( e, sup );
-#endif
-    LISTod;
-    ENTITYput_inheritance_count( e, count );
-
-    LISTdo( e->u.entity->subtypes, sub, Entity )
-    if( !ENTITYhas_immediate_supertype( sub, e ) ) {
-        ERRORreport_with_symbol( ERROR_missing_supertype,
-                                 sub->symbol.line,
-                                 e->symbol.name,
-                                 sub->symbol.name );
-    }
-    LISTod;
-    /*}*/
-
-    LISTdo( e->u.entity->attributes, attr, Variable )
-    attr_name = attr->name->symbol.name;
-    LISTdo( e->u.entity->supertypes, sup, Entity )
-    if( ENTITYget_named_attribute( sup, attr_name ) ) {
-        ERRORreport_with_symbol( ERROR_overloaded_attribute,
-                                 attr->name->symbol.line,
-                                 attr_name,
-                                 sup->symbol.name );
-    }
-    LISTod;
-    LISTod;
-
-    resolved_all( e );
-}
-#endif
-
-void
-ENTITYcheck_missing_supertypes( Entity ent ) {
+void ENTITYcheck_missing_supertypes( Entity ent ) {
     int found;
 
     /* Make sure each of my subtypes lists me as a supertype */
@@ -1247,9 +1016,8 @@ ENTITYcheck_missing_supertypes( Entity ent ) {
     LISTod;
 }
 
-/* calculate number of attributes inheritance, following up superclass chain */
-void
-ENTITYcalculate_inheritance( Entity e ) {
+/** calculate number of attributes inheritance, following up superclass chain */
+void ENTITYcalculate_inheritance( Entity e ) {
     e->u.entity->inheritance = 0;
 
     LISTdo( e->u.entity->supertypes, super, Entity )
@@ -1260,9 +1028,8 @@ ENTITYcalculate_inheritance( Entity e ) {
     LISTod
 }
 
-/* returns 1 if entity is involved in circularity, else 0 */
-int
-ENTITY_check_subsuper_cyclicity( Entity e, Entity enew ) {
+/** returns 1 if entity is involved in circularity, else 0 */
+int ENTITY_check_subsuper_cyclicity( Entity e, Entity enew ) {
     /* just check subtypes - this implicitly checks supertypes */
     /* as well */
     LISTdo( enew->u.entity->subtypes, sub, Entity )
@@ -1282,15 +1049,13 @@ ENTITY_check_subsuper_cyclicity( Entity e, Entity enew ) {
     return 0;
 }
 
-void
-ENTITYcheck_subsuper_cyclicity( Entity e ) {
+void ENTITYcheck_subsuper_cyclicity( Entity e ) {
     __SCOPE_search_id++;
     ( void ) ENTITY_check_subsuper_cyclicity( e, e );
 }
 
-/* returns 1 if select type is involved in circularity, else 0 */
-int
-TYPE_check_select_cyclicity( TypeBody tb, Type tnew ) {
+/** returns 1 if select type is involved in circularity, else 0 */
+int TYPE_check_select_cyclicity( TypeBody tb, Type tnew ) {
     LISTdo( tnew->u.type->body->list, item, Type )
     if( item->u.type->body->type == select_ ) {
         if( tb == item->u.type->body ) {
@@ -1312,8 +1077,7 @@ TYPE_check_select_cyclicity( TypeBody tb, Type tnew ) {
     return 0;
 }
 
-void
-TYPEcheck_select_cyclicity( Type t ) {
+void TYPEcheck_select_cyclicity( Type t ) {
     if( t->u.type->body->type == select_ ) {
         __SCOPE_search_id++;
         ( void ) TYPE_check_select_cyclicity( t->u.type->body, t );
@@ -1323,8 +1087,7 @@ TYPEcheck_select_cyclicity( Type t ) {
 void ENTITYresolve_types( Entity e );
 
 /* also resolves inheritance counts and sub/super consistency */
-void
-SCOPEresolve_types( Scope s ) {
+void SCOPEresolve_types( Scope s ) {
     Variable var;
     DictionaryEntry de;
     Generic x;
@@ -1385,379 +1148,314 @@ SCOPEresolve_types( Scope s ) {
     }
 }
 
-#if 0
-static
-int
-SCHEMAresolve_pass1( Schema * schema/*, Dictionary schemas*/ ) {
+
+
+/********************************new****************************************/
+
+void SCOPEresolve_subsupers( Scope scope ) {
     DictionaryEntry de;
-    Entity e;
-
-    /*printf("USE/REFresolve(%s)\n",schema->symbol.name);*/
-
-    resolve_in_progress( schema );
-
-    /* old way built a list of entities, diddled with it, and then */
-    /* destroyed the list.  New way is to read the dictionary while */
-    /* we diddle, thus avoiding building the list */
-    DICTdo_type_init( schema->symbol_table, &de, OBJ_ENTITY );
-    while( 0 != ( e = ( Entity )DICTdo( &de ) ) ) {
-        ENTITYresolve_pass1( e );
-        if( is_resolve_failed( e ) ) {
-            resolve_failed( schema );
-        }
-    }
-
-    resolved_pass1( schema );
-    return( schema->symbol.resolved );
-};
-
-void
-SCHEMAresolve_pass2( Schema * schema ) {
-    DictionaryEntry de;
-    Generic previous;
+    Generic x;
+    char type;
+    Symbol * sym;
     Type t;
-    Scope scope;
 
+    if( print_objects_while_running & OBJ_SCOPE_BITS &
+            OBJget_bits( scope->type ) ) {
+        fprintf( stdout, "pass %d: %s (%s)\n", EXPRESSpass,
+                 scope->symbol.name, OBJget_type( scope->type ) );
+    }
+
+    DICTdo_init( scope->symbol_table, &de );
+    while( 0 != ( x = DICTdo( &de ) ) ) {
+        switch( type = DICT_type ) {
+            case OBJ_ENTITY:
+                ENTITYresolve_supertypes( ( Entity )x );
+                ENTITYresolve_subtypes( ( Entity )x );
+                break;
+            case OBJ_FUNCTION:
+            case OBJ_PROCEDURE:
+            case OBJ_RULE:
+                SCOPEresolve_subsupers( ( Scope )x );
+                break;
+            case OBJ_TYPE:
+                t = ( Type )x;
+                TYPEresolve( &t, scope );
+                break;
+            default:
+                /* ignored everything else */
+                break;
+        }
+        sym = OBJget_symbol( x, type );
+        if( is_resolve_failed_raw( sym ) ) {
+            resolve_failed( scope );
+        }
+    }
+}
+
+/** for each supertype, find the entity it refs to */
+static void ENTITYresolve_supertypes( Entity e ) {
+    Entity ref_entity;
+
+    if( print_objects_while_running & OBJ_ENTITY_BITS ) {
+        fprintf( stdout, "pass %d: %s (entity)\n", EXPRESSpass,
+                 e->symbol.name );
+    }
+
+    if( e->u.entity->supertype_symbols ) {
+        e->u.entity->supertypes = LISTcreate();
+    }
 #if 0
-    /* Don't think this can happen anymore - at least not at the schema level */
-    if( ERRORis_enabled( ERROR_shadow_decl ) ) {
-        Generic obj;
-
-        DICTdo_init( schema->symbol_table, &de );
-        while( 0 != ( obj = DICTdo( &de ) ) ) {
-            Symbol * sym = OBJget_symbol( obj, DICT_type ), *sym2;
-            if( 0 != ( previous = SCHEMA_lookup( schema, SYMBOLget_name( sym ),
-                                                 true, false ) ) ) {
-                sym2 = OBJget_symbol( previous, DICT_type );
-                ERRORreport_with_symbol( ERROR_shadow_decl,
-                                         SYMBOLget_line_number( sym ),
-                                         SYMBOLget_name( sym ),
-                                         SYMBOLget_line_number( sym2 ) );
-            }
-        }
+    if( e->u.entity->supertype_symbols && !e->u.entity->supertypes ) {
+        e->u.entity->supertypes = LISTcreate();
     }
 #endif
-#endif
 
+    LISTdo( e->u.entity->supertype_symbols, sym, Symbol * )
+    ref_entity = ( Entity )SCOPEfind( e->superscope, sym->name, SCOPE_FIND_ENTITY );
+    if( !ref_entity ) {
+        ERRORreport_with_symbol( ERROR_unknown_supertype, sym, sym->name, e->symbol.name );
+        /*          ENTITY_resolve_failed = 1;*/
+        resolve_failed( e );
+    } else if( DICT_type != OBJ_ENTITY ) {
+        Symbol * newsym = OBJget_symbol( ref_entity, DICT_type );
+        ERRORreport_with_symbol( ERROR_supertype_resolve, sym, sym->name, newsym->line );
+        /*          ENTITY_resolve_failed = 1;*/
+        resolve_failed( e );
+    } else {
+        bool found = false;
 
-    /********************************new****************************************/
-
-    void
-    SCOPEresolve_subsupers( Scope scope ) {
-        DictionaryEntry de;
-        Generic x;
-        char type;
-        Symbol * sym;
-        Type t;
-
-        if( print_objects_while_running & OBJ_SCOPE_BITS &
-                OBJget_bits( scope->type ) ) {
-            fprintf( stdout, "pass %d: %s (%s)\n", EXPRESSpass,
-                     scope->symbol.name, OBJget_type( scope->type ) );
-        }
-
-        DICTdo_init( scope->symbol_table, &de );
-        while( 0 != ( x = DICTdo( &de ) ) ) {
-            switch( type = DICT_type ) {
-                case OBJ_ENTITY:
-                    ENTITYresolve_supertypes( ( Entity )x );
-                    ENTITYresolve_subtypes( ( Entity )x );
-                    break;
-                case OBJ_FUNCTION:
-                case OBJ_PROCEDURE:
-                case OBJ_RULE:
-                    SCOPEresolve_subsupers( ( Scope )x );
-                    break;
-                case OBJ_TYPE:
-                    t = ( Type )x;
-                    TYPEresolve( &t, scope );
-                    break;
-                default:
-                    /* ignored everything else */
-                    break;
-            }
-            sym = OBJget_symbol( x, type );
-            if( is_resolve_failed_raw( sym ) ) {
-                resolve_failed( scope );
-            }
-        }
-    }
-
-    /* for each supertype, find the entity it refs to */
-    static
-    void
-    ENTITYresolve_supertypes( Entity e ) {
-        Entity ref_entity;
-
-        if( print_objects_while_running & OBJ_ENTITY_BITS ) {
-            fprintf( stdout, "pass %d: %s (entity)\n", EXPRESSpass,
-                     e->symbol.name );
-        }
-
-        if( e->u.entity->supertype_symbols ) {
-            e->u.entity->supertypes = LISTcreate();
-        }
-#if 0
-        if( e->u.entity->supertype_symbols && !e->u.entity->supertypes ) {
-            e->u.entity->supertypes = LISTcreate();
-        }
-#endif
-
-        LISTdo( e->u.entity->supertype_symbols, sym, Symbol * )
-        ref_entity = ( Entity )SCOPEfind( e->superscope, sym->name, SCOPE_FIND_ENTITY );
-        if( !ref_entity ) {
-            ERRORreport_with_symbol( ERROR_unknown_supertype, sym, sym->name, e->symbol.name );
-            /*          ENTITY_resolve_failed = 1;*/
-            resolve_failed( e );
-        } else if( DICT_type != OBJ_ENTITY ) {
-            Symbol * newsym = OBJget_symbol( ref_entity, DICT_type );
-            ERRORreport_with_symbol( ERROR_supertype_resolve, sym, sym->name, newsym->line );
-            /*          ENTITY_resolve_failed = 1;*/
-            resolve_failed( e );
-        } else {
-            bool found = false;
-
-            LISTadd( e->u.entity->supertypes, ( Generic )ref_entity );
-            if( is_resolve_failed( ref_entity ) ) {
-                resolve_failed( e );
-            }
-
-            /* If the user said there was a supertype relationship but */
-            /* did not mentioned the reverse subtype relationship */
-            /* force it to be explicitly known by listing this entity */
-            /* in the ref'd entity's subtype list */
-
-            LISTdo( ref_entity->u.entity->subtypes, sub, Entity )
-            if( sub == e ) {
-                found = true;
-                break;
-            }
-            LISTod
-            if( !found ) {
-                if( !ref_entity->u.entity->subtypes ) {
-                    ref_entity->u.entity->subtypes = LISTcreate();
-                }
-                LISTadd_last( ref_entity->u.entity->subtypes, ( Generic )e );
-            }
-        }
-        LISTod;
-    }
-
-    static void
-    ENTITYresolve_subtypes( Entity e ) {
-        int i;
-
-        if( print_objects_while_running & OBJ_ENTITY_BITS ) {
-            fprintf( stdout, "pass %d: %s (entity)\n", EXPRESSpass,
-                     e->symbol.name );
-        }
-
-        i = ENTITYresolve_subtype_expression( e->u.entity->subtype_expression, e, &e->u.entity->subtypes );
-        if( i & RESOLVE_FAILED ) {
+        LISTadd( e->u.entity->supertypes, ( Generic )ref_entity );
+        if( is_resolve_failed( ref_entity ) ) {
             resolve_failed( e );
         }
-    }
 
-    void
-    ENTITYresolve_types( Entity e ) {
-        int i;
-        Qualified_Attr * ref;
-        Variable attr;
-        int failed = 0;
+        /* If the user said there was a supertype relationship but */
+        /* did not mentioned the reverse subtype relationship */
+        /* force it to be explicitly known by listing this entity */
+        /* in the ref'd entity's subtype list */
 
-        if( print_objects_while_running & OBJ_ENTITY_BITS ) {
-            fprintf( stdout, "pass %d: %s (entity)\n", EXPRESSpass,
-                     e->symbol.name );
+        LISTdo( ref_entity->u.entity->subtypes, sub, Entity )
+        if( sub == e ) {
+            found = true;
+            break;
         }
-
-        LISTdo( e->u.entity->attributes, attr, Variable )
-        /* resolve in context of superscope to allow "X : X;" */
-        VARresolve_types( attr, e );
-        failed |= is_resolve_failed( attr->name );
-        LISTod;
-
-        /*
-         * resolve the 'unique' list
-         */
-
-        /* these are lists of lists */
-        /* the sublists are: label, ref'd_attr, ref'd attr, ref'd attr, etc. */
-        /* where ref'd_attrs are either simple ids or SELF\entity.attr */
-        /* where "entity" represents a supertype (only, I believe) */
-
-        LISTdo( e->u.entity->unique, unique, Linked_List )
-        i = 0;
-        LISTdo_links( unique, reflink )
-        /* skip first which is always the label (or NULL if no label) */
-        i++;
-        if( i == 1 ) {
-            continue;
-        }
-        ref = ( Qualified_Attr * )reflink->data;
-
-        attr = ENTITYresolve_attr_ref( e, ref->entity, ref->attribute );
-        if( !attr ) {
-            /*      ERRORreport_with_symbol(ERROR_unknown_attr_in_entity,*/
-            /*                  ref->attribute, ref->attribute->name,*/
-            /*                  e->symbol.name);*/
-            failed = RESOLVE_FAILED;
-            continue;
-        }
-
-        QUAL_ATTR_destroy( ref );
-        reflink->data = ( Generic )attr;
-
-        if( ENTITYdeclares_variable( e, attr ) ) {
-            attr->flags.unique = 1;
-        }
-
-        LISTod;
-        LISTod;
-
-        /* don't wipe out any previous failure stat */
-        e->symbol.resolved |= failed;
-    }
-
-    /* resolve all expressions in type definitions */
-    static
-    void
-    TYPEresolve_expressions( Type t, Scope s ) {
-        TypeBody body;
-
-        /* meaning of self in a type declaration refers to the type itself, so */
-        /* temporary redirect "self" to ourselves to allow this */
-        Type self_old = self;
-        self = t;
-
-        /* recurse through base types */
-        for( ;; t = body->base ) {
-            if( t->where ) {
-                ( void )WHEREresolve( t->where, s, 1 );
+        LISTod
+        if( !found ) {
+            if( !ref_entity->u.entity->subtypes ) {
+                ref_entity->u.entity->subtypes = LISTcreate();
             }
-
-            /* reached an indirect type definition, resolved elsewhere */
-            if( t->u.type->head ) {
-                break;
-            }
-
-            if( !TYPEis_aggregate( t ) ) {
-                break;
-            }
-
-            body = t->u.type->body;
-            if( body->upper ) {
-                EXPresolve( body->upper, s, Type_Dont_Care );
-            }
-            if( body->lower ) {
-                EXPresolve( body->lower, s, Type_Dont_Care );
-            }
-            if( body->precision ) {
-                EXPresolve( body->precision, s, Type_Dont_Care );
-            }
-        }
-
-        self = self_old;
-    }
-
-    void
-    SCOPEresolve_expressions_statements( Scope s ) {
-        DictionaryEntry de;
-        Generic x;
-        Variable v;
-
-        if( print_objects_while_running & OBJ_SCOPE_BITS &
-                OBJget_bits( s->type ) ) {
-            fprintf( stdout, "pass %d: %s (%s)\n", EXPRESSpass,
-                     s->symbol.name, OBJget_type( s->type ) );
-        }
-
-        DICTdo_init( s->symbol_table, &de );
-        while( 0 != ( x = DICTdo( &de ) ) ) {
-            switch( DICT_type ) {
-                case OBJ_SCHEMA:
-                    if( is_not_resolvable( ( Schema )x ) ) {
-                        break;
-                    }
-                    SCOPEresolve_expressions_statements( ( Scope )x );
-                    break;
-                case OBJ_ENTITY:
-                    ENTITYresolve_expressions( ( Entity )x );
-                    break;
-                case OBJ_FUNCTION:
-                    ALGresolve_expressions_statements( ( Scope )x, ( ( Scope )x )->u.func->body );
-                    break;
-                case OBJ_PROCEDURE:
-                    ALGresolve_expressions_statements( ( Scope )x, ( ( Scope )x )->u.proc->body );
-                    break;
-                case OBJ_RULE:
-                    ALGresolve_expressions_statements( ( Scope )x, ( ( Scope )x )->u.rule->body );
-
-                    WHEREresolve( RULEget_where( ( Scope )x ), ( Scope )x, 0 );
-                    break;
-                case OBJ_VARIABLE:
-                    v = ( Variable )x;
-                    TYPEresolve_expressions( v->type, s );
-                    if( v->initializer ) {
-                        EXPresolve( v->initializer, s, v->type );
-                    }
-                    break;
-                case OBJ_TYPE:
-                    TYPEresolve_expressions( ( Type )x, s );
-                    break;
-                default:
-                    /* ignored everything else */
-                    break;
-            }
+            LISTadd_last( ref_entity->u.entity->subtypes, ( Generic )e );
         }
     }
+    LISTod;
+}
 
-    static int
-    WHEREresolve( Linked_List list, Scope scope, int need_self ) {
-        int status = 0;
+static void ENTITYresolve_subtypes( Entity e ) {
+    int i;
 
-        LISTdo( list, w, Where )
-        /* check if we've been here before */
-        /* i'm not sure why, but it happens */
-        status |= w->label->resolved;
-        if( w->label->resolved & ( RESOLVED | RESOLVE_FAILED ) ) {
+    if( print_objects_while_running & OBJ_ENTITY_BITS ) {
+        fprintf( stdout, "pass %d: %s (entity)\n", EXPRESSpass,
+                 e->symbol.name );
+    }
+
+    i = ENTITYresolve_subtype_expression( e->u.entity->subtype_expression, e, &e->u.entity->subtypes );
+    if( i & RESOLVE_FAILED ) {
+        resolve_failed( e );
+    }
+}
+
+void ENTITYresolve_types( Entity e ) {
+    int i;
+    Qualified_Attr * ref;
+    Variable attr;
+    int failed = 0;
+
+    if( print_objects_while_running & OBJ_ENTITY_BITS ) {
+        fprintf( stdout, "pass %d: %s (entity)\n", EXPRESSpass,
+                 e->symbol.name );
+    }
+
+    LISTdo( e->u.entity->attributes, attr, Variable )
+    /* resolve in context of superscope to allow "X : X;" */
+    VARresolve_types( attr, e );
+    failed |= is_resolve_failed( attr->name );
+    LISTod;
+
+    /*
+     * resolve the 'unique' list
+     */
+
+    /* these are lists of lists */
+    /* the sublists are: label, ref'd_attr, ref'd attr, ref'd attr, etc. */
+    /* where ref'd_attrs are either simple ids or SELF\entity.attr */
+    /* where "entity" represents a supertype (only, I believe) */
+
+    LISTdo( e->u.entity->unique, unique, Linked_List )
+    i = 0;
+    LISTdo_links( unique, reflink )
+    /* skip first which is always the label (or NULL if no label) */
+    i++;
+    if( i == 1 ) {
+        continue;
+    }
+    ref = ( Qualified_Attr * )reflink->data;
+
+    attr = ENTITYresolve_attr_ref( e, ref->entity, ref->attribute );
+    if( !attr ) {
+        /*      ERRORreport_with_symbol(ERROR_unknown_attr_in_entity,*/
+        /*                  ref->attribute, ref->attribute->name,*/
+        /*                  e->symbol.name);*/
+        failed = RESOLVE_FAILED;
+        continue;
+    }
+
+    QUAL_ATTR_destroy( ref );
+    reflink->data = ( Generic )attr;
+
+    if( ENTITYdeclares_variable( e, attr ) ) {
+        attr->flags.unique = 1;
+    }
+
+    LISTod;
+    LISTod;
+
+    /* don't wipe out any previous failure stat */
+    e->symbol.resolved |= failed;
+}
+
+/** resolve all expressions in type definitions */
+static void TYPEresolve_expressions( Type t, Scope s ) {
+    TypeBody body;
+
+    /* meaning of self in a type declaration refers to the type itself, so */
+    /* temporary redirect "self" to ourselves to allow this */
+    Type self_old = self;
+    self = t;
+
+    /* recurse through base types */
+    for( ;; t = body->base ) {
+        if( t->where ) {
+            ( void )WHEREresolve( t->where, s, 1 );
+        }
+
+        /* reached an indirect type definition, resolved elsewhere */
+        if( t->u.type->head ) {
             break;
         }
 
-        found_self = false;
-        EXPresolve( w->expr, scope, Type_Dont_Care );
-        if( need_self && ! found_self ) {
-            ERRORreport_with_symbol( ERROR_missing_self,
-                                     w->label,
-                                     w->label->name );
-            w->label->resolved = RESOLVE_FAILED;
-        } else {
-            w->label->resolved = RESOLVED;
+        if( !TYPEis_aggregate( t ) ) {
+            break;
         }
-        status |= w->label->resolved;
-        LISTod
-        if( status == RESOLVE_FAILED ) {
-            return 0;
-        } else {
-            return 1;
+
+        body = t->u.type->body;
+        if( body->upper ) {
+            EXPresolve( body->upper, s, Type_Dont_Care );
+        }
+        if( body->lower ) {
+            EXPresolve( body->lower, s, Type_Dont_Care );
+        }
+        if( body->precision ) {
+            EXPresolve( body->precision, s, Type_Dont_Care );
         }
     }
 
-    /* should only be called on types known to be tagged! */
-    static char *
-    TYPEget_tagname( Type type ) {
-        for( ; type; type = type->u.type->body->base ) {
-            if( type->u.type->body->tag ) {
-                return type->u.type->body->tag->symbol.name;
-            }
+    self = self_old;
+}
+
+void SCOPEresolve_expressions_statements( Scope s ) {
+    DictionaryEntry de;
+    Generic x;
+    Variable v;
+
+    if( print_objects_while_running & OBJ_SCOPE_BITS &
+            OBJget_bits( s->type ) ) {
+        fprintf( stdout, "pass %d: %s (%s)\n", EXPRESSpass,
+                 s->symbol.name, OBJget_type( s->type ) );
+    }
+
+    DICTdo_init( s->symbol_table, &de );
+    while( 0 != ( x = DICTdo( &de ) ) ) {
+        switch( DICT_type ) {
+            case OBJ_SCHEMA:
+                if( is_not_resolvable( ( Schema )x ) ) {
+                    break;
+                }
+                SCOPEresolve_expressions_statements( ( Scope )x );
+                break;
+            case OBJ_ENTITY:
+                ENTITYresolve_expressions( ( Entity )x );
+                break;
+            case OBJ_FUNCTION:
+                ALGresolve_expressions_statements( ( Scope )x, ( ( Scope )x )->u.func->body );
+                break;
+            case OBJ_PROCEDURE:
+                ALGresolve_expressions_statements( ( Scope )x, ( ( Scope )x )->u.proc->body );
+                break;
+            case OBJ_RULE:
+                ALGresolve_expressions_statements( ( Scope )x, ( ( Scope )x )->u.rule->body );
+
+                WHEREresolve( RULEget_where( ( Scope )x ), ( Scope )x, 0 );
+                break;
+            case OBJ_VARIABLE:
+                v = ( Variable )x;
+                TYPEresolve_expressions( v->type, s );
+                if( v->initializer ) {
+                    EXPresolve( v->initializer, s, v->type );
+                }
+                break;
+            case OBJ_TYPE:
+                TYPEresolve_expressions( ( Type )x, s );
+                break;
+            default:
+                /* ignored everything else */
+                break;
         }
-        /* can't happen */
+    }
+}
+
+static int WHEREresolve( Linked_List list, Scope scope, int need_self ) {
+    int status = 0;
+
+    LISTdo( list, w, Where )
+    /* check if we've been here before */
+    /* i'm not sure why, but it happens */
+    status |= w->label->resolved;
+    if( w->label->resolved & ( RESOLVED | RESOLVE_FAILED ) ) {
+        break;
+    }
+
+    found_self = false;
+    EXPresolve( w->expr, scope, Type_Dont_Care );
+    if( need_self && ! found_self ) {
+        ERRORreport_with_symbol( ERROR_missing_self,
+                                 w->label,
+                                 w->label->name );
+        w->label->resolved = RESOLVE_FAILED;
+    } else {
+        w->label->resolved = RESOLVED;
+    }
+    status |= w->label->resolved;
+    LISTod
+    if( status == RESOLVE_FAILED ) {
         return 0;
+    } else {
+        return 1;
     }
+}
 
-    struct tag *
-    TAGcreate_tags() {
-        extern int tag_count;
-
-        return( ( struct tag * )calloc( tag_count, sizeof( struct tag ) ) );
+/* should only be called on types known to be tagged! */
+static char * TYPEget_tagname( Type type ) {
+    for( ; type; type = type->u.type->body->base ) {
+        if( type->u.type->body->tag ) {
+            return type->u.type->body->tag->symbol.name;
+        }
     }
+    /* can't happen */
+    return 0;
+}
 
+struct tag * TAGcreate_tags() {
+    extern int tag_count;
+
+    return( ( struct tag * )calloc( tag_count, sizeof( struct tag ) ) );
+}

@@ -1,10 +1,8 @@
 #ifndef ALGORITHM_H
 #define ALGORITHM_H
 
-/* $Id: alg.h,v 1.4 1997/01/21 19:17:11 dar Exp $ */
-
-/************************************************************************
-** Module:  Algorithm
+/** **********************************************************************
+** Module:  Algorithm \file alg.h
 ** Description: This module implements the Algorithm abstraction.  An
 **  algorithm can be a procedure, a function, or a rule.  It consists
 **  of a name, a return type (for functions and rules), a list of
@@ -61,37 +59,38 @@ typedef struct Where_ * Where;
 /* hidden type definitions */
 /***************************/
 
-/* each formal tag has one of these structs allocated to it */
-/* As each (real) call is resolved, the tag->type is temporarily borrowed */
+/** each formal tag has one of these structs allocated to it
+ * As each (real) call is resolved, the tag->type is temporarily borrowed
+ */
 struct tag {
     char * name;
     Type type;
 };
 
-/* location of fulltext of algorithm in source file */
+/** location of fulltext of algorithm in source file */
 struct FullText {
     char * filename;
     int start, end;
 };
 
-/* 'parameters' are lists of lists of (type) expressions */
+/** 'parameters' are lists of lists of (type) expressions */
 struct Procedure_ {
-    int pcount; /* # of parameters */
-    int tag_count;  /* # of different parameter tags */
+    int pcount; /**< # of parameters */
+    int tag_count;  /**< # of different parameter tags */
     Linked_List parameters;
     Linked_List body;
     struct FullText text;
-    int builtin;    /* builtin if true */
+    int builtin;    /**< builtin if true */
 };
 
 struct Function_ {
-    int pcount; /* # of parameters */
-    int tag_count;  /* # of different parameter/return value tags */
+    int pcount; /**< # of parameters */
+    int tag_count;  /**< # of different parameter/return value tags */
     Linked_List parameters;
     Linked_List body;
     Type return_type;
     struct FullText text;
-    int builtin;    /* builtin if true */
+    int builtin;    /**< builtin if true */
 };
 
 struct Rule_ {
@@ -100,7 +99,7 @@ struct Rule_ {
     struct FullText text;
 };
 
-/* define a where clause */
+/** define a where clause */
 struct Where_ {
     Symbol   *   label;
     Expression  expr;
@@ -155,9 +154,6 @@ extern struct freelist_head WHERE_fl;
 #define FUNCget_return_type(f)  ((f)->u.func->return_type)
 #define RULEget_where(r)    ((r)->where)
 #define RULEput_where(r,w)  ((r)->where = (w))
-/*
-#define RULEget_where_clause(r) ((r)->u.rule->where)
-*/
 #define WHEREget_label(w)   ((w)->label)
 #define WHEREget_expression(w)  ((w)->expr)
 

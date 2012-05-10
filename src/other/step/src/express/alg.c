@@ -1,7 +1,8 @@
 
-/************************************************************************
-** Module:  Algorithm
-** Description: This module implements the Algorithm abstraction.  An
+
+/** **********************************************************************
+** Module:  Algorithm \file alg.c
+** This module implements the Algorithm abstraction.  An
 **  algorithm can be a procedure, a function, or a rule.  It consists
 **  of a name, a return type (for functions and rules), a list of
 **  formal parameters, and a list of statements (body).
@@ -47,8 +48,7 @@ struct freelist_head RULE_fl;
 struct freelist_head PROC_fl;
 struct freelist_head WHERE_fl;
 
-Scope
-ALGcreate( char type ) {
+Scope ALGcreate( char type ) {
     Scope s = SCOPEcreate( type );
 
     switch( type ) {
@@ -72,13 +72,12 @@ ALGcreate( char type ) {
 ** Description: Initialize the Algorithm module.
 */
 
-Symbol *
-WHERE_get_symbol( Generic w ) {
+Symbol * WHERE_get_symbol( Generic w ) {
     return( ( ( Where )w )->label );
 }
 
-void
-ALGinitialize( void ) {
+/** Initialize the Algorithm module. */
+void ALGinitialize( void ) {
     MEMinitialize( &FUNC_fl, sizeof( struct Function_ ),  100, 50 );
     MEMinitialize( &RULE_fl, sizeof( struct Rule_ ),      100, 50 );
     MEMinitialize( &PROC_fl, sizeof( struct Procedure_ ), 100, 50 );
@@ -89,8 +88,7 @@ ALGinitialize( void ) {
     OBJcreate( OBJ_WHERE, WHERE_get_symbol, "where", OBJ_WHERE_BITS );
 }
 
-void
-ALGput_full_text( Scope s, int start, int end ) {
+void ALGput_full_text( Scope s, int start, int end ) {
     switch( s->type ) {
         case OBJ_FUNCTION:
             s->u.func->text.filename = s->symbol.filename;

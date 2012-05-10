@@ -1,10 +1,8 @@
 #ifndef ERROR_H
 #define ERROR_H
 
-/* $Id: error.h,v 1.8 1997/01/21 19:16:55 dar Exp $ */
-
-/************************************************************************
-** Module:  Error
+/** **********************************************************************
+** Module:  Error \file error.h
 ** Description: This module implements the ERROR abstraction.
 ************************************************************************/
 
@@ -31,7 +29,7 @@
  */
 
 #include "basic.h"  /* get basic definitions */
-#include "setjmp.h"
+#include <setjmp.h>
 
 /*************/
 /* constants */
@@ -118,31 +116,23 @@ extern void ( *ERRORusage_function )( void );
 /* Inline functions */
 /********************/
 
-static_inline
-void
-ERRORdisable( Error error ) {
+static_inline void ERRORdisable( Error error ) {
     if( error != ERROR_none ) {
         error->enabled = false;
     }
 }
 
-static_inline
-void
-ERRORenable( Error error ) {
+static_inline void ERRORenable( Error error ) {
     if( error != ERROR_none ) {
         error->enabled = true;
     }
 }
 
-static_inline
-bool
-ERRORis_enabled( Error error ) {
+static_inline bool ERRORis_enabled( Error error ) {
     return error->enabled;
 }
 
-static_inline
-void
-ERRORbuffer_messages( bool flag ) {
+static_inline void ERRORbuffer_messages( bool flag ) {
     extern void ERROR_start_message_buffer( void ),
            ERROR_flush_message_buffer( void );
 
@@ -154,9 +144,7 @@ ERRORbuffer_messages( bool flag ) {
     }
 }
 
-static_inline
-void
-ERRORflush_messages( void ) {
+static_inline void ERRORflush_messages( void ) {
     extern void ERROR_start_message_buffer( void ),
            ERROR_flush_message_buffer( void );
 
@@ -176,8 +164,6 @@ extern void ERRORnospace PROTO( ( void ) );
 extern void ERRORabort PROTO( ( int ) );
 extern Error    ERRORcreate PROTO( ( char *, Severity ) );
 extern void ERRORreport PROTO( ( Error, ... ) );
-/*SUPPRESS 652*/  /* 1.? */
-/*SUPPRESS 842*/  /* 4.0.2 */
 struct Symbol_; /* mention Symbol to avoid warning on following line */
 extern void ERRORreport_with_symbol PROTO( ( Error, struct Symbol_ *, ... ) );
 extern void ERRORreport_with_line PROTO( ( Error, int, ... ) );
@@ -192,11 +178,5 @@ extern void ERRORset_warning PROTO( ( char *, int ) );
 extern void ERRORset_all_warnings PROTO( ( int ) );
 extern void ERRORsafe PROTO( ( jmp_buf env ) );
 extern void ERRORunsafe PROTO( ( void ) );
-
-#if deprecated
-extern void ERRORdisable PROTO( ( Error ) );
-extern void ERRORenable PROTO( ( Error ) );
-extern bool ERRORis_enabled PROTO( ( Error ) );
-#endif
 
 #endif /* ERROR_H */

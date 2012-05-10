@@ -15,10 +15,11 @@ for the STEP Standard Data Access Interface as defined in document
 N350 ( August 31, 1993 ) of ISO 10303 TC184/SC4/WG7.
 *******************************************************************/
 
-/******************************************************************
+/**************************************************************//**
+ * \file classes.c
 ***  The functions in this file generate the C++ code for ENTITY **
 ***  classes, TYPEs, and TypeDescriptors.                       ***
- **                             **/
+ **                                                             **/
 
 
 /* this is used to add new dictionary calls */
@@ -31,9 +32,7 @@ int isAggregateType( const Type t );
 int isAggregate( Variable a );
 Variable VARis_type_shifter( Variable a );
 
-static_inline
-bool
-LISTempty( Linked_List list ) {
+static_inline bool LISTempty( Linked_List list ) {
     if( !list ) {
         return true;
     }
@@ -47,20 +46,20 @@ int multiple_inheritance = 1;
 int print_logging = 0;
 int old_accessors = 0;
 
-/* several classes use attr_count for naming attr dictionary entry
-   variables.  All but the last function generating code for a particular
-   entity increment a copy of it for naming each attr in the entity.
-   Here are the functions:
-   ENTITYhead_print (Entity entity, FILE* file,Schema schema)
-   LIBdescribe_entity (Entity entity, FILE* file, Schema schema)
-   LIBcopy_constructor (Entity ent, FILE* file)
-   LIBstructor_print (Entity entity, FILE* file, Schema schema)
-   LIBstructor_print_w_args (Entity entity, FILE* file, Schema schema)
-   ENTITYincode_print (Entity entity, FILE* file,Schema schema)
-   DAS
- */
-static int attr_count;  /* number each attr to avoid inter-entity clashes */
-static int type_count;  /* number each temporary type for same reason above */
+static int attr_count;  /**< number each attr to avoid inter-entity clashes
+                            several classes use attr_count for naming attr dictionary entry
+                            variables.  All but the last function generating code for a particular
+                            entity increment a copy of it for naming each attr in the entity.
+                            Here are the functions:
+                            ENTITYhead_print (Entity entity, FILE* file,Schema schema)
+                            LIBdescribe_entity (Entity entity, FILE* file, Schema schema)
+                            LIBcopy_constructor (Entity ent, FILE* file)
+                            LIBstructor_print (Entity entity, FILE* file, Schema schema)
+                            LIBstructor_print_w_args (Entity entity, FILE* file, Schema schema)
+                            ENTITYincode_print (Entity entity, FILES* files,Schema schema)
+                            DAS
+                        */
+static int type_count;  ///< number each temporary type for same reason as \sa attr_count
 
 extern int any_duplicates_in_select( const Linked_List list );
 extern int unique_types( const Linked_List list );
@@ -72,12 +71,14 @@ static void printEnumAggrCrBody( FILE *, const Type );
 int TYPEget_RefTypeVarNm( const Type t, char * buf, Schema schema );
 void TypeBody_Description(TypeBody body, char *buf);
 
-/*
-Turn the string into a new string that will be printed the same as the
-original string. That is, turn backslash into a quoted backslash and
-turn \n into "\n" (i.e. 2 chars).
-*/
-
+/**
+ * Turn the string into a new string that will be printed the same as the
+ * original string. That is, turn backslash into a quoted backslash and
+ * turn \n into "\n" (i.e. 2 chars).
+ *
+ * Mostly replaced by format_for_std_stringout, below. This function is
+ * still used in one place in ENTITYincode_print().
+ */
 char * format_for_stringout( char * orig_buf, char * return_buf ) {
     char * optr  = orig_buf;
     char * rptr  = return_buf;
@@ -100,8 +101,7 @@ char * format_for_stringout( char * orig_buf, char * return_buf ) {
     return return_buf;
 }
 
-void
-USEREFout( Schema schema, Dictionary refdict, Linked_List reflist, char * type, FILE * file ) {
+void USEREFout( Schema schema, Dictionary refdict, Linked_List reflist, char * type, FILE * file ) {
     Dictionary dict;
     DictionaryEntry de;
     struct Rename * r;
@@ -208,8 +208,7 @@ USEREFout( Schema schema, Dictionary refdict, Linked_List reflist, char * type, 
     HASHdestroy( dict );
 }
 
-const char *
-IdlEntityTypeName( Type t ) {
+const char * IdlEntityTypeName( Type t ) {
     static char name [BUFSIZ];
     strcpy( name, TYPE_PREFIX );
     if( TYPEget_name( t ) ) {
@@ -220,8 +219,7 @@ IdlEntityTypeName( Type t ) {
     return name;
 }
 
-const char *
-GetAggrElemType( const Type type ) {
+const char * GetAggrElemType( const Type type ) {
     Class_Of_Type class;
     Type bt;
     static char retval [BUFSIZ];
@@ -281,8 +279,7 @@ GetAggrElemType( const Type type ) {
     return retval;
 }
 
-const char *
-TYPEget_idl_type( const Type t ) {
+const char * TYPEget_idl_type( const Type t ) {
     Class_Of_Type class;
     static char retval [BUFSIZ];
 
@@ -388,7 +385,7 @@ int Handle_FedPlus_Args( int i, char * arg ) {
     return 0;
 }
 
-/******************************************************************
+/**************************************************************//**
  ** Procedure:  generate_attribute_name
  ** Parameters:  Variable a, an Express attribute; char *out, the C++ name
  ** Description:  converts an Express name into the corresponding C++ name
@@ -425,8 +422,7 @@ char * generate_attribute_name( Variable a, char * out ) {
     return out;
 }
 
-char *
-generate_attribute_func_name( Variable a, char * out ) {
+char * generate_attribute_func_name( Variable a, char * out ) {
     generate_attribute_name( a, out );
     strncpy( out, CheckWord( StrToLower( out ) ), BUFSIZ );
     if( old_accessors ) {
@@ -437,9 +433,10 @@ generate_attribute_func_name( Variable a, char * out ) {
     return out;
 }
 
-/******************************************************************
- ** Procedure:  generate_dict_attr_name
- ** Parameters:  Variable a, an Express attribute; char *out, the C++ name
+/**************************************************************//**
+ ** \fn  generate_dict_attr_name
+ ** \param a, an Express attribute
+ ** \param out, the C++ name
  ** Description:  converts an Express name into the corresponding SCL
  **       dictionary name.  The difference between this and the
  **           generate_attribute_name() function is that for derived
@@ -457,8 +454,7 @@ generate_attribute_func_name( Variable a, char * out ) {
  ** Side Effects:
  ** Status:  complete 8/5/93
  ******************************************************************/
-char *
-generate_dict_attr_name( Variable a, char * out ) {
+char * generate_dict_attr_name( Variable a, char * out ) {
     char * temp, *p, *q;
     int j;
 
@@ -484,7 +480,7 @@ generate_dict_attr_name( Variable a, char * out ) {
     return out;
 }
 
-/******************************************************************
+/**************************************************************//**
  ** Procedure:  TYPEget_express_type (const Type t)
  ** Parameters:  const Type t --  type for attribute
  ** Returns:  a string which is the type as it would appear in Express
@@ -586,8 +582,7 @@ char * TYPEget_express_type( const Type t ) {
 
 }
 
-int
-isReferenceType( Class_Of_Type class ) {
+int isReferenceType( Class_Of_Type class ) {
     if( ( class == Class_String_Type )  ||
             ( class == Class_Logical_Type ) ||
             ( class == Class_Boolean_Type ) ||
@@ -600,7 +595,7 @@ isReferenceType( Class_Of_Type class ) {
     return 1;
 }
 
-/******************************************************************
+/**************************************************************//**
  ** Procedure:  ATTRsign_access_method
  ** Parameters:  const Variable a --  attribute to print
                                       access method signature for
@@ -613,9 +608,7 @@ isReferenceType( Class_Of_Type class ) {
  ** Side Effects:
  ** Status:  complete 17-Feb-1992
  ******************************************************************/
-
-void
-ATTRsign_access_methods( Variable a, FILE * file ) {
+void ATTRsign_access_methods( Variable a, FILE * file ) {
 
     Type t = VARget_type( a );
     Class_Of_Type class;
@@ -638,7 +631,7 @@ ATTRsign_access_methods( Variable a, FILE * file ) {
     return;
 }
 
-/******************************************************************
+/**************************************************************//**
  ** Procedure:  ATTRprint_access_methods_get_head
  ** Parameters:  const Variable a --  attribute to find the type for
  ** FILE* file  --  file being written
@@ -654,8 +647,7 @@ ATTRsign_access_methods( Variable a, FILE * file ) {
  ** Side Effects:
  ** Status:  complete 7/15/93       by DDH
  ******************************************************************/
-void
-ATTRprint_access_methods_get_head( const char * classnm, Variable a,
+void ATTRprint_access_methods_get_head( const char * classnm, Variable a,
                                    FILE * file ) {
     Type t = VARget_type( a );
     Class_Of_Type class = TYPEget_type( t );
@@ -675,7 +667,7 @@ ATTRprint_access_methods_get_head( const char * classnm, Variable a,
     return;
 }
 
-/******************************************************************
+/**************************************************************//**
  ** Procedure:  ATTRprint_access_methods_put_head
  ** Parameters:  const Variable a --  attribute to find the type for
  ** FILE* file  --  file being written to
@@ -691,8 +683,7 @@ ATTRprint_access_methods_get_head( const char * classnm, Variable a,
  ** Side Effects:
  ** Status:  complete 7/15/93       by DDH
  ******************************************************************/
-void
-ATTRprint_access_methods_put_head( CONST char * entnm, Variable a, FILE * file ) {
+void ATTRprint_access_methods_put_head( CONST char * entnm, Variable a, FILE * file ) {
 
     Type t = VARget_type( a );
     char ctype [BUFSIZ];
@@ -706,8 +697,7 @@ ATTRprint_access_methods_put_head( CONST char * entnm, Variable a, FILE * file )
     return;
 }
 
-void
-AGGRprint_access_methods( CONST char * entnm, Variable a, FILE * file, Type t,
+void AGGRprint_access_methods( CONST char * entnm, Variable a, FILE * file, Type t,
                           char * ctype, char * attrnm ) {
     ATTRprint_access_methods_get_head( entnm, a, file );
     fprintf( file, "{\n" );
@@ -717,7 +707,7 @@ AGGRprint_access_methods( CONST char * entnm, Variable a, FILE * file, Type t,
     return;
 }
 
-/******************************************************************
+/**************************************************************//**
  ** Procedure:  ATTRprint_access_method
  ** Parameters:  const Variable a --  attribute to find the type for
  ** FILE* file  --  file being written to
@@ -730,8 +720,7 @@ AGGRprint_access_methods( CONST char * entnm, Variable a, FILE * file, Type t,
  **     updated 17-Feb-1992 to print to library file instead of header
  ** updated 15-July-1993 to call the get/put head functions by DDH
  ******************************************************************/
-void
-ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
+void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
     Type t = VARget_type( a );
     Class_Of_Type class;
     char ctype [BUFSIZ];  /*  type of data member  */
@@ -1031,21 +1020,14 @@ ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
 /******************************************************************
 **      Entity Generation                */
 
-/******************************************************************
- ** Procedure:  ENTITYhead_print
- ** Parameters:  const Entity entity
- **   FILE* file  --  file being written to
- ** Returns:
- ** Description:  prints the beginning of the entity class definition for the
- **               c++ code and the declaration of extern attr descriptors for
- **       the registry.  In the .h file
- ** Side Effects:  generates c++ code
- ** Status:  good 1/15/91
- **          added registry things 12-Apr-1993
- ******************************************************************/
-
-void
-ENTITYhead_print( Entity entity, FILE * file, Schema schema ) {
+/**
+ * print entity descriptors and attrdescriptors to the namespace in files->names
+ * hopefully this file can be safely included everywhere, eliminating use of 'extern'
+ *
+ * Nov 2011 - MAP - This function was split out of ENTITYhead_print to enable
+ *                  use of a separate header with a namespace.
+ */
+void ENTITYhead_print( Entity entity, FILE * file, Schema schema ) {
     char entnm [BUFSIZ];
     char attrnm [BUFSIZ];
     Linked_List list;
@@ -1086,7 +1068,7 @@ ENTITYhead_print( Entity entity, FILE * file, Schema schema ) {
     }
 }
 
-/******************************************************************
+/**************************************************************//**
  ** Procedure:  DataMemberPrint
  ** Parameters:  const Entity entity  --  entity being processed
  **   FILE* file  --  file being written to
@@ -1096,9 +1078,7 @@ ENTITYhead_print( Entity entity, FILE * file, Schema schema ) {
  ** Side Effects:  generates c++ code
  ** Status:  ok 1/15/91
  ******************************************************************/
-
-void
-DataMemberPrint( Entity entity, FILE * file, Schema schema ) {
+void DataMemberPrint( Entity entity, FILE * file, Schema schema ) {
     Linked_List attr_list;
     char entnm [BUFSIZ];
     char attrnm [BUFSIZ];
@@ -1142,7 +1122,7 @@ DataMemberPrint( Entity entity, FILE * file, Schema schema ) {
     LISTod;
 }
 
-/******************************************************************
+/**************************************************************//**
  ** Procedure:  MemberFunctionSign
  ** Parameters:  Entity *entity --  entity being processed
  **     FILE* file  --  file being written to
@@ -1156,9 +1136,7 @@ DataMemberPrint( Entity entity, FILE * file, Schema schema ) {
  **  updated 17-Feb-1992 to print only the signature
              and not the function definitions
  ******************************************************************/
-
-void
-MemberFunctionSign( Entity entity, FILE * file ) {
+void MemberFunctionSign( Entity entity, FILE * file ) {
 
     Linked_List attr_list;
     static int entcode = 0;
@@ -1242,7 +1220,7 @@ MemberFunctionSign( Entity entity, FILE * file ) {
 
 }
 
-/******************************************************************
+/**************************************************************//**
  ** Procedure:    LIBdescribe_entity (entity, file, schema)
  ** Parameters:  Entity entity --  entity being processed
  **     FILE* file  --  file being written to
@@ -1257,8 +1235,7 @@ MemberFunctionSign( Entity entity, FILE * file ) {
  ** Side Effects:  prints c++ code to a file
  ** Status:  ok 12-Apr-1993
  ******************************************************************/
-void
-LIBdescribe_entity( Entity entity, FILE * file, Schema schema ) {
+void LIBdescribe_entity( Entity entity, FILE * file, Schema schema ) {
     Linked_List list;
     int attr_count_tmp = attr_count;
     char attrnm [BUFSIZ];
@@ -1277,7 +1254,7 @@ LIBdescribe_entity( Entity entity, FILE * file, Schema schema ) {
 
 }
 
-/******************************************************************
+/**************************************************************//**
  ** Procedure:  LIBmemberFunctionPrint
  ** Parameters:  Entity *entity --  entity being processed
  **     FILE* file  --  file being written to
@@ -1287,8 +1264,7 @@ LIBdescribe_entity( Entity entity, FILE * file, Schema schema ) {
  ** Side Effects:  prints c++ code to a file
  ** Status:  ok 17-Feb-1992
  ******************************************************************/
-void
-LIBmemberFunctionPrint( Entity entity, FILE * file ) {
+void LIBmemberFunctionPrint( Entity entity, FILE * file ) {
 
     Linked_List attr_list;
     char entnm [BUFSIZ];
@@ -1347,7 +1323,7 @@ LIBmemberFunctionPrint( Entity entity, FILE * file ) {
     }
 }
 
-/******************************************************************
+/**************************************************************//**
  ** Procedure:  ENTITYinc_print
  ** Parameters:  Entity *entity --  entity being processed
  **     FILE* file  --  file being written to
@@ -1356,15 +1332,13 @@ LIBmemberFunctionPrint( Entity entity, FILE * file ) {
  ** Side Effects:  prints segment of the c++ .h file
  ** Status:  ok 1/15/91
  ******************************************************************/
-
-void
-ENTITYinc_print( Entity entity, FILE * file, Schema schema ) {
+void ENTITYinc_print( Entity entity, FILE * file, Schema schema ) {
     ENTITYhead_print( entity, file, schema );
     DataMemberPrint( entity, file, schema );
     MemberFunctionSign( entity, file );
 }
 
-/******************************************************************
+/**************************************************************//**
  ** Procedure:  LIBcopy_constructor
  ** Parameters:
  ** Returns:
@@ -1372,8 +1346,7 @@ ENTITYinc_print( Entity entity, FILE * file, Schema schema ) {
  ** Side Effects:
  ** Status:  not used 17-Feb-1992
  ******************************************************************/
-void
-LIBcopy_constructor( Entity ent, FILE * file ) {
+void LIBcopy_constructor( Entity ent, FILE * file ) {
     Linked_List attr_list;
     Class_Of_Type class;
     Type t;
@@ -1463,8 +1436,7 @@ LIBcopy_constructor( Entity ent, FILE * file ) {
     fprintf( file, " }\n" );
 }
 
-int
-get_attribute_number( Entity entity ) {
+int get_attribute_number( Entity entity ) {
     int i = 0;
     int found = 0;
     Linked_List local, complete;
@@ -1496,7 +1468,7 @@ get_attribute_number( Entity entity ) {
     return -1;
 }
 
-/******************************************************************
+/**************************************************************//**
  ** Procedure:  LIBstructor_print
  ** Parameters:  Entity *entity --  entity being processed
  **     FILE* file  --  file being written to
@@ -1512,8 +1484,7 @@ get_attribute_number( Entity entity ) {
  ** Changes: Modified STEPattribute constructors to take fewer arguments
  **     21-Dec-1992 -kcm
  ******************************************************************/
-void
-LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
+void LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
     Linked_List attr_list;
     Type t;
     char attrnm [BUFSIZ];
@@ -1671,12 +1642,12 @@ LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
     fprintf( file, "%s::~%s () {  }\n", entnm, entnm );
 }
 
-/* print the constructor that accepts a SDAI_Application_instance as an argument used
+/********************/
+/** print the constructor that accepts a SDAI_Application_instance as an argument used
    when building multiply inherited entities.
+   \sa LIBstructor_print()
 */
-
-void
-LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
+void LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
     Linked_List attr_list;
     Type t;
     char attrnm [BUFSIZ];
@@ -1843,7 +1814,7 @@ LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
 
 }
 
-/******************************************************************
+/**************************************************************//**
  ** Procedure:  ENTITYlib_print
  ** Parameters:  Entity *entity --  entity being processed
  **     FILE* file  --  file being written to
@@ -1854,9 +1825,7 @@ LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
  ** Side Effects:  generates code segment for c++ library file
  ** Status:  ok 1/15/91
  ******************************************************************/
-
-void
-ENTITYlib_print( Entity entity, FILE * file, Schema schema ) {
+void ENTITYlib_print( Entity entity, FILE * file, Schema schema ) {
     LIBdescribe_entity( entity, file, schema );
     LIBstructor_print( entity, file, schema );
     if( multiple_inheritance ) {
@@ -1865,9 +1834,8 @@ ENTITYlib_print( Entity entity, FILE * file, Schema schema ) {
     LIBmemberFunctionPrint( entity, file );
 }
 
-/* return 1 if types are predefined by us */
-int
-TYPEis_builtin( const Type t ) {
+/** return 1 if types are predefined by us */
+int TYPEis_builtin( const Type t ) {
     switch( TYPEget_body( t )->type ) { /* dunno if correct*/
         case integer_:
         case real_:
@@ -1883,7 +1851,7 @@ TYPEis_builtin( const Type t ) {
     return 0;
 }
 
-/* go down through a type'sbase type chain,
+/** go down through a type'sbase type chain,
    Make and print new TypeDescriptors for each type with no name.
 
    This function should only be called for types that don't have an
@@ -1910,8 +1878,7 @@ TYPEis_builtin( const Type t ) {
         that can be referenced to refer to the type that was created for
     Type t.
 */
-void
-print_typechain( FILE * f, const Type t, char * buf, Schema schema ) {
+void print_typechain( FILE * f, const Type t, char * buf, Schema schema ) {
     /* if we've been called, current type has no name */
     /* nor is it a built-in type */
     /* the type_count variable is there for debugging purposes  */
@@ -1983,7 +1950,7 @@ print_typechain( FILE * f, const Type t, char * buf, Schema schema ) {
     sprintf( buf, "%s%d", TD_PREFIX, count );
 }
 
-/******************************************************************
+/**************************************************************//**
  ** Procedure:  ENTITYincode_print
  ** Parameters:  Entity *entity --  entity being processed
  **     FILE* file  --  file being written to
@@ -1993,8 +1960,7 @@ print_typechain( FILE * f, const Type t, char * buf, Schema schema ) {
  ** Side Effects:
  ** Status:  ok 1/15/91
  ******************************************************************/
-void
-ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
+void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
 #define entity_name ENTITYget_name(entity)
 #define schema_name SCHEMAget_name(schema)
     const char * cn = ENTITYget_classname( entity );
@@ -2247,7 +2213,7 @@ ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
 #undef schema_name
 }
 
-/******************************************************************
+/**************************************************************//**
  ** Procedure:  ENTITYPrint
  ** Parameters:  Entity *entity --  entity being processed
  **     FILE* file  --  file being written to
@@ -2257,10 +2223,7 @@ ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
  ** Side Effects:  generates code in 3 files
  ** Status:  complete 1/15/91
  ******************************************************************/
-
-
-void
-ENTITYPrint( Entity entity, FILES * files, Schema schema ) {
+void ENTITYPrint( Entity entity, FILES * files, Schema schema ) {
 
     char * n = ENTITYget_name( entity );
     DEBUG( "Entering ENTITYPrint for %s\n", n );
@@ -2280,8 +2243,7 @@ ENTITYPrint( Entity entity, FILES * files, Schema schema ) {
     DEBUG( "DONE ENTITYPrint\n" )    ;
 }
 
-void
-MODELPrintConstructorBody( Entity entity, FILES * files, Schema schema ) {
+void MODELPrintConstructorBody( Entity entity, FILES * files, Schema schema ) {
     const char * n;
     DEBUG( "Entering MODELPrintConstructorBody for %s\n", n );
 
@@ -2295,8 +2257,7 @@ MODELPrintConstructorBody( Entity entity, FILES * files, Schema schema ) {
     fprintf( files->lib, "    _folders.Append(eep);\n\n" );
 }
 
-void
-MODELPrint( Entity entity, FILES * files, Schema schema, int index ) {
+void MODELPrint( Entity entity, FILES * files, Schema schema, int index ) {
 
     const char * n;
     DEBUG( "Entering MODELPrint for %s\n", n );
@@ -2310,11 +2271,13 @@ MODELPrint( Entity entity, FILES * files, Schema schema, int index ) {
     DEBUG( "DONE MODELPrint\n" )    ;
 }
 
-/* print in include file: class forward prototype, class typedefs, and
-   extern EntityDescriptor.  `externMap' = 1 if entity must be instantiated
-   with external mapping (see Part 21, sect 11.2.5.1).  */
-void
-ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap ) {
+/** print in include file: class forward prototype, class typedefs, and
+ *   extern EntityDescriptor.  `externMap' = 1 if entity must be instantiated
+ *   with external mapping (see Part 21, sect 11.2.5.1).
+ *  Nov 2011 - MAP - print EntityDescriptor in namespace file, modify other
+ *   generated code to use namespace
+ */
+void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap ) {
     const char * n;
     Linked_List wheres;
     char * whereRule, *whereRule_formatted = NULL;
@@ -2503,8 +2466,7 @@ ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap ) {
 
 }
 
-void
-MODELprint_new( Entity entity, FILES * files, Schema schema ) {
+void MODELprint_new( Entity entity, FILES * files, Schema schema ) {
     const char * n;
 
     n = ENTITYget_classname( entity );
@@ -2530,8 +2492,7 @@ MODELprint_new( Entity entity, FILES * files, Schema schema ) {
  ** - Changed to match CD2 Part 23, 1/14/97 DAS
  ** Change Date: 5/22/91  CD
  ******************************************************************/
-const char *
-EnumCElementName( Type type, Expression expr )  {
+const char * EnumCElementName( Type type, Expression expr )  {
 
     static char buf [BUFSIZ];
     sprintf( buf, "%s__",
@@ -2541,8 +2502,7 @@ EnumCElementName( Type type, Expression expr )  {
     return buf;
 }
 
-char *
-CheckEnumSymbol( char * s ) {
+char * CheckEnumSymbol( char * s ) {
 
     static char b [BUFSIZ];
     if( strcmp( s, "sdaiTRUE" )
@@ -2560,13 +2520,12 @@ CheckEnumSymbol( char * s ) {
     }
 }
 
-/*********************************************************************
+/**************************************************************//**
  ** Procedure:   TYPEenum_inc_print
  ** Description: Writes enum type descriptors and classes.
  ** Change Date:
  ********************************************************************/
-void
-TYPEenum_inc_print( const Type type, FILE * inc ) {
+void TYPEenum_inc_print( const Type type, FILE * inc ) {
     Expression expr;
 
     char tdnm[BUFSIZ],
@@ -2666,8 +2625,7 @@ TYPEenum_inc_print( const Type type, FILE * inc ) {
     fprintf( inc, "\n//////////  END ENUMERATION %s\n\n", TYPEget_name( type ) );
 }
 
-void
-TYPEenum_lib_print( const Type type, FILE * f ) {
+void TYPEenum_lib_print( const Type type, FILE * f ) {
     DictionaryEntry de;
     Expression expr;
     const char * n;   /*  pointer to class name  */
@@ -2726,10 +2684,11 @@ TYPEenum_lib_print( const Type type, FILE * f ) {
 
 void Type_Description( const Type, char * );
 
-/* return printable version of entire type definition */
-/* return it in static buffer */
-char *
-TypeDescription( const Type t ) {
+/**
+ * return printable version of entire type definition
+ * return it in static buffer
+ */
+char * TypeDescription( const Type t ) {
     static char buf[4000];
 
     buf[0] = '\0';
@@ -2767,9 +2726,8 @@ void strcat_expr( Expression e, char * buf ) {
     }
 }
 
-/* print t's bounds to end of buf */
-void
-strcat_bounds( TypeBody b, char * buf ) {
+/// print t's bounds to end of buf
+void strcat_bounds( TypeBody b, char * buf ) {
     if( !b->upper ) {
         return;
     }
@@ -2781,8 +2739,7 @@ strcat_bounds( TypeBody b, char * buf ) {
     strcat( buf, "]" );
 }
 
-void
-TypeBody_Description( TypeBody body, char * buf ) {
+void TypeBody_Description( TypeBody body, char * buf ) {
     char * s;
 
     switch( body->type ) {
@@ -2893,8 +2850,7 @@ TypeBody_Description( TypeBody body, char * buf ) {
     }
 }
 
-void
-Type_Description( const Type t, char * buf ) {
+void Type_Description( const Type t, char * buf ) {
     if( TYPEget_name( t ) ) {
         strcat( buf, " " );
         strcat( buf, TYPEget_name( t ) );
@@ -2903,7 +2859,7 @@ Type_Description( const Type t, char * buf ) {
     }
 }
 
-/**************************************************************************
+/** ************************************************************************
  ** Procedure:  TYPEprint_typedefs
  ** Parameters:  const Type type
  ** Returns:
@@ -2917,8 +2873,7 @@ Type_Description( const Type t, char * buf ) {
  ** Side Effects:
  ** Status:  16-Mar-1993 kcm; updated 04-Feb-1997 dar
  **************************************************************************/
-void
-TYPEprint_typedefs( Type t, FILE * classes ) {
+void TYPEprint_typedefs( Type t, FILE * classes ) {
     char nm [BUFSIZ];
     Type i;
     bool aggrNot1d = true;
@@ -2987,11 +2942,10 @@ TYPEprint_typedefs( Type t, FILE * classes ) {
     fprintf( classes, "extern %s \t*%s;\n", GetTypeDescriptorName( t ), nm );
 }
 
-/* return 1 if it is a multidimensional aggregate at the level passed in
+/** return 1 if it is a multidimensional aggregate at the level passed in
    otherwise return 0;  If it refers to a type that is a multidimensional
    aggregate 0 is still returned. */
-int
-isMultiDimAggregateType( const Type t ) {
+int isMultiDimAggregateType( const Type t ) {
     if( TYPEget_body( t )->base )
         if( isAggregateType( TYPEget_body( t )->base ) ) {
             return 1;
@@ -2999,7 +2953,7 @@ isMultiDimAggregateType( const Type t ) {
     return 0;
 }
 
-/* Get the TypeDescriptor variable name that t's TypeDescriptor references (if
+/** Get the TypeDescriptor variable name that t's TypeDescriptor references (if
    possible).
    pass space in through buf, buff will be filled in with the name of the
    TypeDescriptor (TD) that needs to be referenced by the TD that is
@@ -3108,7 +3062,7 @@ int TYPEget_RefTypeVarNm( const Type t, char * buf, Schema schema ) {
 }
 
 
-/*****
+/** **
    print stuff for types that are declared in Express TYPE statements... i.e.
    extern descriptor declaration in .h file - MOVED BY DAR to TYPEprint_type-
        defs - in order to print all the Sdaiclasses.h stuff in fedex_plus's
@@ -3118,8 +3072,7 @@ int TYPEget_RefTypeVarNm( const Type t, char * buf, Schema schema ) {
        TYPEprint_init() (below) which is done in fedex_plus's 1st pass only.)
 *****/
 
-void
-TYPEprint_descriptions( const Type type, FILES * files, Schema schema ) {
+void TYPEprint_descriptions( const Type type, FILES * files, Schema schema ) {
     char tdnm [BUFSIZ],
          typename_buf [MAX_LEN],
          base [BUFSIZ],
@@ -3186,25 +3139,20 @@ TYPEprint_descriptions( const Type type, FILES * files, Schema schema ) {
     }
 }
 
-
-static void
-printEnumCreateHdr( FILE * inc, const Type type )
-/*
+/**
  * Prints a bunch of lines for enumeration creation functions (i.e., "cre-
  * ate_SdaiEnum1()").  Since this is done both for an enum and for "copies"
  * of it (when "TYPE enum2 = enum1"), I placed this code in a separate fn.
  */
+static void printEnumCreateHdr( FILE * inc, const Type type )
 {
     const char * nm = TYPEget_ctype( type );
 
     fprintf( inc, "  SDAI_Enum * create_%s ();\n", nm );
 }
 
-static void
-printEnumCreateBody( FILE * lib, const Type type )
-/*
- * See header comment above by printEnumCreateHdr.
- */
+/// See header comment above by printEnumCreateHdr.
+static void printEnumCreateBody( FILE * lib, const Type type )
 {
     const char * nm = TYPEget_ctype( type );
     char tdnm[BUFSIZ];
@@ -3215,20 +3163,15 @@ printEnumCreateBody( FILE * lib, const Type type )
     fprintf( lib, "    return new %s( \"\", %s );\n}\n\n", nm, tdnm );
 }
 
-static void
-printEnumAggrCrHdr( FILE * inc, const Type type )
-/*
- * Similar to printEnumCreateHdr above for the enum aggregate.
- */
+/// Similar to printEnumCreateHdr above for the enum aggregate.
+static void printEnumAggrCrHdr( FILE * inc, const Type type )
 {
     const char * n = TYPEget_ctype( type );
     /*    const char *n = ClassName( TYPEget_name(type) ));*/
-
     fprintf( inc, "  STEPaggregate * create_%ss ();\n", n );
 }
 
-static void
-printEnumAggrCrBody( FILE * lib, const Type type ) {
+static void printEnumAggrCrBody( FILE * lib, const Type type ) {
     const char * n = TYPEget_ctype( type );
     char tdnm[BUFSIZ];
 
@@ -3238,8 +3181,7 @@ printEnumAggrCrBody( FILE * lib, const Type type ) {
     fprintf( lib, "    return new %ss( %s );\n}\n", n, tdnm );
 }
 
-void
-TYPEprint_init( const Type type, FILE * ifile, Schema schema ) {
+void TYPEprint_init( const Type type, FILE * ifile, Schema schema ) {
     char tdnm [BUFSIZ];
     char typename_buf[MAX_LEN];
 
@@ -3305,11 +3247,10 @@ TYPEprint_init( const Type type, FILE * ifile, Schema schema ) {
     fprintf( ifile, "\treg.AddType (*%s);\n", tdnm );
 }
 
-/* print name, fundamental type, and description initialization function
+/** print name, fundamental type, and description initialization function
    calls */
 
-void
-TYPEprint_nm_ft_desc( Schema schema, const Type type, FILE * f, char * endChars ) {
+void TYPEprint_nm_ft_desc( Schema schema, const Type type, FILE * f, char * endChars ) {
 
     fprintf( f, "\t\t  \"%s\",\t// Name\n",
              PrettyTmpName( TYPEget_name( type ) ) );
@@ -3321,11 +3262,10 @@ TYPEprint_nm_ft_desc( Schema schema, const Type type, FILE * f, char * endChars 
              TypeDescription( type ), endChars );
 }
 
-/* new space for a variable of type TypeDescriptor (or subtype).  This
-   function is called for Types that have an Express name. */
-
-void
-TYPEprint_new( const Type type, FILE * create, Schema schema ) {
+/** new space for a variable of type TypeDescriptor (or subtype).  This
+ *  function is called for Types that have an Express name.
+ */
+void TYPEprint_new( const Type type, FILE * create, Schema schema ) {
     Linked_List wheres;
     char * whereRule, *whereRule_formatted = NULL;
     size_t whereRule_formatted_size = 0;

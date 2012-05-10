@@ -1,10 +1,8 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-/* $Id: object.h,v 1.9 1997/01/21 19:17:11 dar Exp $ */
-
-/************************************************************************
-** Module:  Object
+/** **********************************************************************
+** Module:  Object \file object.h
 ** Description: This module implements the Object abstraction.
 ** Constants:
 **  OBJECT_NULL - the null class

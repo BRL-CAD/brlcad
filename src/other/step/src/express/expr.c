@@ -1,7 +1,8 @@
 
-/************************************************************************
-** Module:  Expression
-** Description: This module implements the Expression abstraction.  Several
+
+/** **********************************************************************
+** Module:  Expression \file expr.c
+** This module implements the Expression abstraction.  Several
 **  types of expressions are supported: identifiers, literals,
 **  operations (arithmetic, logical, array indexing, etc.), and
 **  function calls.  Every expression is marked with a type.
@@ -100,9 +101,7 @@ static Error ERROR_enum_no_such_item;
 static Error ERROR_group_ref_no_such_entity;
 static Error ERROR_group_ref_unexpected_type;
 
-static_inline
-int
-OPget_number_of_operands( Op_Code op ) {
+static_inline int OPget_number_of_operands( Op_Code op ) {
     if( ( op == OP_NEGATE ) || ( op == OP_NOT ) ) {
         return 1;
     } else if( op == OP_SUBCOMPONENT ) {
@@ -112,8 +111,7 @@ OPget_number_of_operands( Op_Code op ) {
     }
 }
 
-Expression
-EXPcreate( Type type ) {
+Expression EXPcreate( Type type ) {
     Expression e;
     e = EXP_new();
     SYMBOLset( e );
@@ -122,10 +120,11 @@ EXPcreate( Type type ) {
     return( e );
 }
 
-/* use this when the return_type is the same as the type */
-/* For example, for constant integers */
-Expression
-EXPcreate_simple( Type type ) {
+/**
+ * use this when the return_type is the same as the type
+ * For example, for constant integers
+ */
+Expression EXPcreate_simple( Type type ) {
     Expression e;
     e = EXP_new();
     SYMBOLset( e );
@@ -133,8 +132,7 @@ EXPcreate_simple( Type type ) {
     return( e );
 }
 
-Expression
-EXPcreate_from_symbol( Type type, Symbol * symbol ) {
+Expression EXPcreate_from_symbol( Type type, Symbol * symbol ) {
     Expression e;
     e = EXP_new();
     e->type = type;
@@ -143,20 +141,12 @@ EXPcreate_from_symbol( Type type, Symbol * symbol ) {
     return e;
 }
 
-Symbol *
-EXP_get_symbol( Generic e ) {
+Symbol * EXP_get_symbol( Generic e ) {
     return( &( ( Expression )e )->symbol );
 }
 
-/*
-** Procedure:   EXPinitialize
-** Parameters:  -- none --
-** Returns: void
-** Description: Initialize the Expression module.
-*/
-
-void
-EXPinitialize( void ) {
+/** Description: Initialize the Expression module. */
+void EXPinitialize( void ) {
     MEMinitialize( &EXP_fl, sizeof( struct Expression_ ), 500, 200 );
     MEMinitialize( &OP_fl, sizeof( struct Op_Subexpression ), 500, 100 );
     MEMinitialize( &QUERY_fl, sizeof( struct Query_ ), 50, 10 );
@@ -234,11 +224,12 @@ EXPinitialize( void ) {
     EXPop_init();
 }
 
-/* search id is a parameter to avoid colliding with ENTITYfind... */
-/* there will be no ambiguities, since we're looking at (and marking) */
-/* only types, and it's marking only entities */
-static int
-EXP_resolve_op_dot_fuzzy( Type selection, Symbol ref, Variable * v, char * dt,
+/**
+ * \param s_id the search id, a parameter to avoid colliding with ENTITYfind...
+ * there will be no ambiguities, since we're looking at (and marking)
+ * only types, and it's marking only entities
+ */
+static int EXP_resolve_op_dot_fuzzy( Type selection, Symbol ref, Variable * v, char * dt,
                           struct Symbol_ ** where, int s_id ) {
     Variable tmp;
     int options = 0;
@@ -287,8 +278,7 @@ EXP_resolve_op_dot_fuzzy( Type selection, Symbol ref, Variable * v, char * dt,
     }
 }
 
-Type
-EXPresolve_op_dot( Expression expr, Scope scope ) {
+Type EXPresolve_op_dot( Expression expr, Scope scope ) {
     Expression op1 = expr->e.op1;
     Expression op2 = expr->e.op2;
     Variable v;
@@ -431,11 +421,12 @@ EXPresolve_op_dot( Expression expr, Scope scope ) {
     }
 }
 
-/* search id is a parameter to avoid colliding with ENTITYfind... */
-/* there will be no ambiguities, since we're looking at (and marking) */
-/* only types, and it's marking only entities */
-static int
-EXP_resolve_op_group_fuzzy( Type selection, Symbol ref, Entity * e,
+/**
+ * \param s_id the search id, a parameter to avoid colliding with ENTITYfind...
+ * there will be no ambiguities, since we're looking at (and marking)
+ * only types, and it's marking only entities
+ */
+static int EXP_resolve_op_group_fuzzy( Type selection, Symbol ref, Entity * e,
                             int s_id ) {
     Entity tmp;
     int options = 0;
@@ -481,8 +472,7 @@ EXP_resolve_op_group_fuzzy( Type selection, Symbol ref, Entity * e,
     }
 }
 
-Type
-EXPresolve_op_group( Expression expr, Scope scope ) {
+Type EXPresolve_op_group( Expression expr, Scope scope ) {
     Expression op1 = expr->e.op1;
     Expression op2 = expr->e.op2;
     Entity ent_ref = ENTITY_NULL;
@@ -581,8 +571,7 @@ EXPresolve_op_group( Expression expr, Scope scope ) {
     }
 }
 
-Type
-EXPresolve_op_relational( Expression e, Scope s ) {
+Type EXPresolve_op_relational( Expression e, Scope s ) {
     Type t = 0;
     int failed = 0;
     Type op1type;
@@ -625,8 +614,7 @@ EXPresolve_op_relational( Expression e, Scope s ) {
     return( Type_Logical );
 }
 
-void
-EXPresolve_op_default( Expression e, Scope s ) {
+void EXPresolve_op_default( Expression e, Scope s ) {
     int failed = 0;
 
     switch( OPget_number_of_operands( e->e.op_code ) ) {
@@ -646,22 +634,19 @@ EXPresolve_op_default( Expression e, Scope s ) {
 }
 
 /*ARGSUSED*/
-Type
-EXPresolve_op_unknown( Expression e, Scope s ) {
+Type EXPresolve_op_unknown( Expression e, Scope s ) {
     ERRORreport( ERROR_internal_unrecognized_op_in_EXPresolve );
     return Type_Bad;
 }
 
 typedef Type Resolve_expr_func PROTO( ( Expression , Scope ) );
 
-Type
-EXPresolve_op_logical( Expression e, Scope s ) {
+Type EXPresolve_op_logical( Expression e, Scope s ) {
     EXPresolve_op_default( e, s );
     return( Type_Logical );
 }
 
-Type
-EXPresolve_op_array_like( Expression e, Scope s ) {
+Type EXPresolve_op_array_like( Expression e, Scope s ) {
     Type op1type;
 
     EXPresolve_op_default( e, s );
@@ -679,21 +664,18 @@ EXPresolve_op_array_like( Expression e, Scope s ) {
     }
 }
 
-Type
-EXPresolve_op_entity_constructor( Expression e, Scope s ) {
+Type EXPresolve_op_entity_constructor( Expression e, Scope s ) {
     EXPresolve_op_default( e, s );
     /* perhaps should return Type_Runtime? */
     return Type_Entity;
 }
 
-Type
-EXPresolve_op_int_div_like( Expression e, Scope s ) {
+Type EXPresolve_op_int_div_like( Expression e, Scope s ) {
     EXPresolve_op_default( e, s );
     return Type_Integer;
 }
 
-Type
-EXPresolve_op_plus_like( Expression e, Scope s ) {
+Type EXPresolve_op_plus_like( Expression e, Scope s ) {
     /* i.e., Integer or Real */
     EXPresolve_op_default( e, s );
     if( is_resolve_failed( e ) ) {
@@ -722,19 +704,17 @@ EXPresolve_op_plus_like( Expression e, Scope s ) {
     return Type_Integer;
 }
 
-Type
-EXPresolve_op_unary_minus( Expression e, Scope s ) {
+Type EXPresolve_op_unary_minus( Expression e, Scope s ) {
     EXPresolve_op_default( e, s );
     return e->e.op1->return_type;
 }
 
-/*
-resolve_func:   resolves an expression of this type
-type_func:  returns final type of expression of this type
-        avoids resolution if possible
-*/
-void
-EXPop_create( int token_number, char * string, Resolve_expr_func * resolve_func ) {
+/**
+ * \param resolve_func   resolves an expression of this type
+ * \param type_func  returns final type of expression of this type
+ * avoids resolution if possible
+ */
+void EXPop_create( int token_number, char * string, Resolve_expr_func * resolve_func ) {
     EXPop_table[token_number].token = string;
     EXPop_table[token_number].resolve = resolve_func;
 }
@@ -771,101 +751,16 @@ void EXPop_init() {
     EXPop_create( OP_UNKNOWN, "UNKNOWN OP",   EXPresolve_op_unknown );
 }
 
-#if 0
 
-/*
-** Procedure:   EXPput_type
-** Parameters:  Expression expression   - expression to modify
-**      Type       type     - the new type for the expression
-** Returns: void
-** Description: Set the type of an expression.
-**
-** Notes:   This call should actually be unnecessary: the type of
-**  an expression should be uniquely determined by its definition.
-**  While this is currently true in the case of literals, there are
-**  no rules in place for deriving the type from, for example, the
-**  return type of a function or an operator together with its
-**  operands.
+/**
+** \param op operation
+** \param operand1 - first operand
+** \param operand2 - second operand
+** \param operand3 - third operand
+** \returns Ternary_Expression  - the expression created
+** Create a ternary operation Expression.
 */
-
-void
-EXPput_type( Expression expression, Type type ) {
-    Type    data;
-    Error   experrc;
-
-    data = ( Type )OBJget_data( expression, Class_Expression, &experrc );
-    OBJfree( *data, &experrc );
-    *data = OBJreference( type );
-}
-
-/*
-** Procedure:   EXPget_type
-** Parameters:  Expression expression   - expression to examine
-** Returns: Type            - the type of the expression
-** Description: Retrieve the type of an expression.
-*/
-
-Type
-EXPget_type( Expression expression ) {
-    Type    data;
-    Error   experrc;
-
-    data = ( Type )OBJget_data( expression, Class_Expression, &experrc );
-    return OBJreference( *data );
-}
-
-
-/*
-** Procedure:   EXPresolve_qualification
-** Parameters:  Expression expression   - qualified identifier to resolve
-**      Scope      scope    - scope in which to resolve
-**      Error*     experrc      - buffer for error code
-** Returns: Symbol          - the symbol referenced by the expression
-** Description: Retrieves the symbol definition referenced by a (possibly
-**  qualified) identifier.
-*/
-
-Symbol
-EXPresolve_qualification( Expression expression, Scope scope, Error * experrc ) {
-    String  name;
-
-    if( expression == EXPRESSION_NULL ) {
-        return SYMBOL_NULL;
-    }
-    if( OBJis_kind_of( expression, Class_Identifier ) ) {
-        name = SYMBOLget_name( IDENTget_identifier( expression ) );
-        return SCOPElookup( scope, name, true, experrc );
-    } else if( OBJis_kind_of( expression, Class_Binary_Expression ) &&
-               ( BIN_EXPget_operator( expression ) == OP_DOT ) ) {
-        scope =
-            ( Scope )EXPresolve_qualification( BIN_EXPget_first_operand( expression ),
-                                               scope, experrc );
-        if( *experrc != ERROR_none ) {
-            return SYMBOL_NULL;
-        }
-        return EXPresolve_qualification( BIN_EXPget_second_operand( expression ),
-                                         scope, experrc );
-    } else {
-        *experrc = ERROR_bad_qualification;
-        return SYMBOL_NULL;
-    }
-}
-
-#endif
-
-/*
-** Procedure:   TERN_EXPcreate
-** Parameters:  Op_Code    op       - operation
-**      Expression operand1 - first operand
-**      Expression operand2 - second operand
-**      Expression operand3 - third operand
-**      Error*     experrc      - buffer for error code
-** Returns: Ternary_Expression  - the expression created
-** Description: Create a ternary operation Expression.
-*/
-
-Expression
-TERN_EXPcreate( Op_Code op, Expression operand1, Expression operand2, Expression operand3 ) {
+Expression TERN_EXPcreate( Op_Code op, Expression operand1, Expression operand2, Expression operand3 ) {
     Expression e = EXPcreate( Type_Expression );
 
     e->e.op_code = op;
@@ -874,47 +769,16 @@ TERN_EXPcreate( Op_Code op, Expression operand1, Expression operand2, Expression
     e->e.op3 = operand3;
     return e;
 }
-#if 0
 
-/*
-** Procedure:   TERN_EXPget_second/third_operand
-** Parameters:  Ternary_Expression expression   - expression to examine
-** Returns: Expression          - the second/third operand
-** Description: Retrieve the second/third operand from a binary expression.
+/**
+** \fn BIN_EXPcreate
+** \param op       operation
+** \param operand1 - first operand
+** \param operand2 - second operand
+** \returns Binary_Expression   - the expression created
+** Create a binary operation Expression.
 */
-
-Expression
-TERN_EXPget_second_operand( Ternary_Expression expression ) {
-    struct Ternary_Expression * data;
-    Error   experrc;
-
-    data = ( struct Ternary_Expression )OBJget_data( expression, Class_Binary_Expression, &experrc );
-    return OBJreference( data->op2 );
-}
-
-Expression
-TERN_EXPget_third_operand( Ternary_Expression expression ) {
-    struct Ternary_Expression * data;
-    Error   experrc;
-
-    data = ( struct Ternary_Expression )OBJget_data( expression, Class_Binary_Expression, &experrc );
-    return OBJreference( data->op3 );
-}
-
-#endif /*0*/
-
-/*
-** Procedure:   BIN_EXPcreate
-** Parameters:  Op_Code    op       - operation
-**      Expression operand1 - first operand
-**      Expression operand2 - second operand
-**      Error*     experrc      - buffer for error code
-** Returns: Binary_Expression   - the expression created
-** Description: Create a binary operation Expression.
-*/
-
-Expression
-BIN_EXPcreate( Op_Code op, Expression operand1, Expression operand2 ) {
+Expression BIN_EXPcreate( Op_Code op, Expression operand1, Expression operand2 ) {
     Expression e = EXPcreate( Type_Expression );
 
     e->e.op_code = op;
@@ -923,36 +787,13 @@ BIN_EXPcreate( Op_Code op, Expression operand1, Expression operand2 ) {
     return e;
 }
 
-#if 0
-
-/*
-** Procedure:   BIN_EXPget_second_operand
-** Parameters:  Binary_Expression expression    - expression to examine
-** Returns: Expression          - the second operand
-** Description: Retrieve the second operand from a binary expression.
+/**
+** \param op operation
+** \param operand  operand
+** \returns the expression created
+** Create a unary operation Expression.
 */
-
-Expression
-BIN_EXPget_second_operand( Binary_Expression expression ) {
-    Expression * data;
-    Error   experrc;
-
-    data = ( Expression * )OBJget_data( expression, Class_Binary_Expression, &experrc );
-    return OBJreference( *data );
-}
-
-#endif /*0*/
-/*
-** Procedure:   UN_EXPcreate
-** Parameters:  Op_Code    op       - operation
-**      Expression operand  - operand
-**      Error*     experrc      - buffer for error code
-** Returns: Unary_Expression    - the expression created
-** Description: Create a unary operation Expression.
-*/
-
-Expression
-UN_EXPcreate( Op_Code op, Expression operand ) {
+Expression UN_EXPcreate( Op_Code op, Expression operand ) {
     Expression e = EXPcreate( Type_Expression );
 
     e->e.op_code = op;
@@ -960,435 +801,15 @@ UN_EXPcreate( Op_Code op, Expression operand ) {
     return e;
 }
 
-#if 0
 
-/*
-** Procedure:   ONEOFcreate
-** Parameters:  Linked_List selections  - list of selections for oneof()
-**      Error*      experrc - buffer for error code
-** Returns: One_Of_Expression   - the oneof expression created
-** Description: Create a oneof() Expression.
+/**
+** \param local local identifier for source elements
+** \param aggregate source aggregate to query
+** \returns the query expression created
+** Create a query Expression.
+** NOTE Dec 2011 - MP - function description did not match actual params. Had to guess.
 */
-
-One_Of_Expression
-ONEOFcreate( Linked_List selections, Error * experrc ) {
-    One_Of_Expression   result;
-    Linked_List data;
-
-    *experrc = ERROR_none;
-    result = OBJcreate( Class_One_Of_Expression, experrc );
-    data = ( Linked_List )OBJget_data( result, Class_One_Of_Expression, experrc );
-    *data = OBJreference( selections );
-    return result;
-}
-
-/*
-** Procedure:   ONEOFput_selections
-** Parameters:  One_Of_Expression expression    - expression to modify
-**      Linked_List       selections    - list of selection Expressions
-** Returns: void
-** Description: Set the selections for a oneof() expression.
-*/
-
-void
-ONEOFput_selections( One_Of_Expression expression, Linked_List selections ) {
-    Linked_List data;
-    Error       experrc;
-
-    data = ( Linked_List )OBJget_data( expression, Class_One_Of_Expression, &experrc );
-    OBJfree( *data, &experrc );
-    *data = OBJreference( selections );
-}
-
-/*
-** Procedure:   ONEOFget_selections
-** Parameters:  One_Of_Expression expression    - expression to modify
-** Returns: Linked_List         - list of selection Expressions
-** Description: Retrieve the selections from a oneof() expression.
-*/
-
-Linked_List
-ONEOFget_selections( One_Of_Expression expression ) {
-    Linked_List data;
-    Error       experrc;
-
-    data = ( Linked_List )OBJget_data( expression, Class_One_Of_Expression, &experrc );
-    return *data;
-}
-
-/*
-** Procedure:   FCALLcreate
-** Parameters:  Function    function    - function called by expression
-**      Linked_List parameters  - parameters to function call
-**      Error*      experrc - buffer for error code
-** Returns: Function_Call       - the function call created
-** Description: Create a function call Expression.
-*/
-
-Function_Call
-FCALLcreate( Function function, Linked_List parameters, Error * experrc ) {
-    Function_Call   result;
-    Algorithm   *   data;
-
-    *experrc = ERROR_none;
-    result = OBJcreate( Class_Function_Call, experrc );
-    data = ( Algorithm * )OBJget_data( result, Class_Function_Call, experrc );
-    *data = OBJreference( function );
-    ONEOFput_selections( result, parameters );
-    return result;
-}
-
-/*
-** Procedure:   FCALLput_algorithm
-** Parameters:  Function_Call expression - expression to modify
-**      Function      function   - function called by expression
-** Returns: void
-** Description: Set the algorithm for a function call expression.
-*/
-
-void
-FCALLput_algorithm( Function_Call expression, Function function ) {
-    Algorithm * data;
-    Error   experrc;
-
-    data = ( Algorithm * )OBJget_data( expression, Class_Function_Call, &experrc );
-    if( *data == ALGORITHM_NULL ) {
-        *data = OBJreference( function );
-    } else {
-        OBJbecome( *data, function, &experrc );
-    }
-}
-
-/*
-** Procedure:   FCALLput_parameters
-** Parameters:  Function_Call expression - expression to modify
-**      Linked_List   parameters - list of actual parameter Expressions.
-** Returns: void
-** Description: Set the actual parameters to a function call expression.
-**
-** Notes:   The actual parameter list is not verified against the
-**      formal parameters list of the called algorithm.
-*/
-
-/* this function is implemented as a macro in expression.h */
-
-/*
-** Procedure:   FCALLget_algorithm
-** Parameters:  Function_Call expression    - function call to examine
-** Returns: Function            - the algorithm called in the
-**                        expression
-** Description: Retrieve the algorithm called by a function call expression.
-*/
-
-Function
-FCALLget_algorithm( Function_Call expression ) {
-    Algorithm * data;
-    Error   experrc;
-
-    data = ( Algorithm * )OBJget_data( expression, Class_Function_Call, &experrc );
-    return OBJreference( *data );
-}
-
-/*
-** Procedure:   FCALLget_parameters
-** Parameters:  Function_Call  expression   - expression to examine
-** Returns: Linked_List of Expression   - list of actual parameters
-** Description: Retrieve the actual parameters from a function call expression.
-*/
-
-/* this function is defined as a macro in expression.h */
-
-/*
-** Procedure:   IDENTcreate
-** Parameters:  Symbol ident    - identifier referenced by expression
-**      Error* experrc  - buffer for error code
-** Returns: Identifier  - the identifier expression created
-** Description: Create a simple identifier Expression.
-*/
-
-Identifier
-IDENTcreate( Symbol ident, Error * experrc ) {
-    Identifier  result;
-    Variable    data;
-
-    *experrc = ERROR_none;
-    result = OBJcreate( Class_Identifier, experrc );
-    data = ( Variable )OBJget_data( result, Class_Identifier, experrc );
-    *data = OBJreference( ident );
-    return result;
-}
-
-/*
-** Procedure:   IDENTput_identifier
-** Parameters:  Identifier expression   - expression to modify
-**      Symbol     identifier   - the name of the identifier
-** Returns: void
-** Description: Set the name of an identifier expression.
-*/
-
-void
-IDENTput_identifier( Identifier expression, Symbol identifier ) {
-    Variable    data;
-    Error   experrc;
-
-    data = ( Variable )OBJget_data( expression, Class_Identifier, &experrc );
-    OBJfree( *data, &experrc );
-    *data = OBJreference( identifier );
-}
-
-/*
-** Procedure:   IDENTget_identifier
-** Parameters:  Identifier expression   - expression to examine
-** Returns: Symbol          - the identifier represented by
-**                    the expression
-** Description: Retrieve the identifier of an identifier expression.
-*/
-
-Symbol
-IDENTget_identifier( Identifier expression ) {
-    Variable    data;
-    Error   experrc;
-
-    data = ( Variable )OBJget_data( expression, Class_Identifier, &experrc );
-    return OBJreference( *data );
-}
-
-/*
-** Procedure:   AGGR_LITcreate
-** Parameters:  Type        type    - type of aggregate literal
-**      Linked_List value   - value of aggregate literal
-**      Error*      experrc - buffer for error code
-** Returns: Aggregate_Literal   - the literal created
-** Description: Create an aggregate literal Expression.
-*/
-
-Aggregate_Literal
-AGGR_LITcreate( Type type, Linked_List value, Error * experrc ) {
-    Aggregate_Literal   result;
-    Linked_List data;
-
-    *experrc = ERROR_none;
-    result = OBJcreate( Class_Aggregate_Literal, experrc );
-    EXPput_type( result, OBJreference( type ) );
-    data = ( Linked_List )OBJget_data( result, Class_Aggregate_Literal, experrc );
-    *data = OBJreference( value );
-    return result;
-}
-
-/*
-** Procedure:   INT_LITcreate
-** Parameters:  Integer value   - value of integer literal
-**      Error*  experrc - buffer for error code
-** Returns: Integer_Literal - the literal created
-** Description: Create an integer literal Expression.
-*/
-
-Integer_Literal
-INT_LITcreate( Integer value, Error * experrc ) {
-    Integer_Literal result;
-    Integer    *    data;
-
-    *experrc = ERROR_none;
-    result = OBJcreate( Class_Integer_Literal, experrc );
-    EXPput_type( result, OBJreference( TYPE_INTEGER ) );
-    data = ( Integer * )OBJget_data( result, Class_Integer_Literal, experrc );
-    *data = value;
-    return result;
-}
-
-/*
-** Procedure:   LOG_LITcreate
-** Parameters:  Logical value   - value of logical literal
-**      Error*  experrc - buffer for error code
-** Returns: Logical_Literal - the literal created
-** Description: Create a logical literal Expression.
-*/
-
-Logical_Literal
-LOG_LITcreate( Logical value, Error * experrc ) {
-    Logical_Literal result;
-    Logical    *    data;
-
-    *experrc = ERROR_none;
-    result = OBJcreate( Class_Logical_Literal, experrc );
-    EXPput_type( result, OBJreference( TYPE_LOGICAL ) );
-    data = ( Logical * )OBJget_data( result, Class_Logical_Literal, experrc );
-    *data = value;
-    return result;
-}
-
-/*
-** Procedure:   REAL_LITcreate
-** Parameters:  Real    value   - value of real literal
-**      Error*  experrc - buffer for error code
-** Returns: Real_Literal    - the literal created
-** Description: Create a real literal Expression.
-*/
-
-Real_Literal
-REAL_LITcreate( Real value, Error * experrc ) {
-    Real_Literal    result;
-    Real    *   data;
-
-    *experrc = ERROR_none;
-    result = OBJcreate( Class_Real_Literal, experrc );
-    EXPput_type( result, OBJreference( TYPE_REAL ) );
-    data = ( Real * )OBJget_data( result, Class_Real_Literal, experrc );
-    *data = value;
-    return result;
-}
-
-/*
-** Procedure:   STR_LITcreate
-** Parameters:  String value    - value of string literal
-**      Error* experrc  - buffer for error code
-** Returns: String_Literal  - the literal created
-** Description: Create a string literal Expression.
-*/
-
-String_Literal
-STR_LITcreate( String value, Error * experrc ) {
-    String_Literal  result;
-    String   *  data;
-
-    *experrc = ERROR_none;
-    result = OBJcreate( Class_String_Literal, experrc );
-    EXPput_type( result, OBJreference( TYPE_STRING ) );
-    data = ( String * )OBJget_data( result, Class_String_Literal, experrc );
-    *data = STRINGcopy( value );
-    return result;
-}
-/*
-** Procedure:   BIN_LITcreate
-** Parameters:  Binary value    - value of binary literal
-**      Error* experrc  - buffer for error code
-** Returns: Binary_Literal  - the literal created
-** Description: Create a string literal Expression.
-*/
-
-Binary_Literal
-BIN_LITcreate( Binary value, Error * experrc ) {
-    Binary_Literal  result;
-    Binary   *  data;
-
-    *experrc = ERROR_none;
-    result = OBJcreate( Class_Binary_Literal, experrc );
-    EXPput_type( result, OBJreference( TYPE_BINARY ) );
-    data = ( Binary * )OBJget_data( result, Class_Binary_Literal, experrc );
-    *data = STRINGcopy( value );
-    return result;
-}
-
-/*
-** Procedure:   AGGR_LITget_value
-** Parameters:  Aggregate_Literal literal   - literal to examine
-**      Error*            experrc       - buffer for error code
-** Returns: Linked_List         - the literal's value
-** Description: Retrieve the value of an aggregate literal.
-*/
-
-Linked_List
-AGGR_LITget_value( Aggregate_Literal literal, Error * experrc ) {
-    Linked_List data;
-
-    data = ( Linked_List )OBJget_data( literal, Class_Aggregate_Literal, experrc );
-    return OBJcopy( *data, experrc );
-}
-
-/*
-** Procedure:   INT_LITget_value
-** Parameters:  Integer_Literal literal - literal to examine
-**      Error*          experrc - buffer for error code
-** Returns: Integer         - the literal's value
-** Description: Retrieve the value of an integer literal.
-*/
-
-Integer
-INT_LITget_value( Integer_Literal literal, Error * experrc ) {
-    Integer  *  data;
-
-    data = ( Integer * )OBJget_data( literal, Class_Integer_Literal, experrc );
-    return *data;
-}
-
-/*
-** Procedure:   LOG_LITget_value
-** Parameters:  Logical_Literal literal - literal to examine
-**      Error*          experrc - buffer for error code
-** Returns: Logical         - the literal's value
-** Description: Retrieve the value of a logical literal.
-*/
-
-Logical
-LOG_LITget_value( Logical_Literal literal, Error * experrc ) {
-    Logical  *  data;
-
-    data = ( Logical * )OBJget_data( literal, Class_Logical_Literal, experrc );
-    return *data;
-}
-
-/*
-** Procedure:   REAL_LITget_value
-** Parameters:  Real_Literal literal    - literal to examine
-**      Error*       experrc    - buffer for error code
-** Returns: Real            - the literal's value
-** Description: Retrieve the value of a real literal.
-*/
-
-Real
-REAL_LITget_value( Real_Literal literal, Error * experrc ) {
-    Real  * data;
-
-    data = ( Real * )OBJget_data( literal, Class_Real_Literal, experrc );
-    return *data;
-}
-
-/*
-** Procedure:   STR_LITget_value
-** Parameters:  String_Literal literal  - literal to examine
-**      Error*       experrc    - buffer for error code
-** Returns: String          - the literal's value
-** Description: Retrieve the value of a string literal.
-*/
-
-String
-STR_LITget_value( String_Literal literal, Error * experrc ) {
-    String * data;
-
-    data = ( String * )OBJget_data( literal, Class_String_Literal, experrc );
-    return STRINGcopy( *data );
-}
-
-/*
-** Procedure:   BIN_LITget_value
-** Parameters:  Binary_Literal literal  - literal to examine
-**      Error*       experrc    - buffer for error code
-** Returns: Binary          - the literal's value
-** Description: Retrieve the value of a binary literal.
-*/
-
-Binary
-BIN_LITget_value( Binary_Literal literal, Error * experrc ) {
-    String * data;
-
-    data = ( String * )OBJget_data( literal, Class_Binary_Literal, experrc );
-    return STRINGcopy( *data );
-}
-
-#endif
-
-/*
-** Procedure:   QUERYcreate
-** Parameters:  String     ident    - local identifier for source elements
-**      Expression source   - source aggregate to query
-**      Expression discriminant - discriminating expression for query
-**      Error*     experrc      - buffer for error code
-** Returns: Query           - the query expression created
-** Description: Create a query Expression.
-*/
-
-Expression
-QUERYcreate( Symbol * local, Expression aggregate ) {
+Expression QUERYcreate( Symbol * local, Expression aggregate ) {
     Expression e = EXPcreate_from_symbol( Type_Query, local );
     Scope s = SCOPEcreate_tiny( OBJ_QUERY );
     Expression e2 = EXPcreate_from_symbol( Type_Attribute, local );
@@ -1403,78 +824,13 @@ QUERYcreate( Symbol * local, Expression aggregate ) {
     return e;
 }
 
-#if 0
-
-/*
-** Procedure:   QUERYget_variable
-** Parameters:  Query expression    - query expression to examine
-** Returns: Variable        - the local variable for the query
-** Description: Retrieve the variable used locally within the query to
-**  iterate over the contents of the source aggregate.
+/**
+** \param expression  expression to evaluate
+** \param experrc buffer for error code
+** \returns value of expression
+** Compute the value of an integer expression.
 */
-
-Variable
-QUERYget_variable( Query expression ) {
-    struct Query  * data;
-    Error       experrc;
-
-    data = ( struct Query * )OBJget_data( expression, Class_Query, &experrc );
-    return OBJreference( data->identifier );
-}
-
-/*
-** Procedure:   QUERYget_source
-** Parameters:  Query expression    - query expression to examine
-** Returns: Expression      - the source set for the query
-** Description: Retrieve the aggregate examined by a query expression.
-*/
-
-Expression
-QUERYget_source( Query expression ) {
-    struct Query  * data;
-    Error       experrc;
-
-    data = ( struct Query * )OBJget_data( expression, Class_Query, &experrc );
-    return OBJreference( data->fromSet );
-}
-
-/*
-** Procedure:   QUERYget_discriminant
-** Parameters:  Query expression    - query expression to examine
-** Returns: Expression      - the discriminant for the query
-** Description: Retrieve a query's discriminant expression.
-*/
-
-Expression
-QUERYget_discriminant( Query expression ) {
-    struct Query  * data;
-    Error       experrc;
-
-    data = ( struct Query * )OBJget_data( expression, Class_Query, &experrc );
-    return OBJreference( data->discriminant );
-}
-
-/*
-** Procedure:   OPget_number_of_operands
-** Parameters:  Op_Code operation   - the opcode to query
-** Returns: int         - number of operands required
-** Description: Determine the number of operands required by an operator.
-*/
-
-/* this function is inlined in expression.h */
-
-#endif
-
-/*
-** Procedure:   EXPget_integer_value
-** Parameters:  Expression  expression  - expression to evaluate
-**      Error*      experrc - buffer for error code
-** Returns: int         - value of expression
-** Description: Compute the value of an integer expression.
-*/
-
-int
-EXPget_integer_value( Expression expression ) {
+int EXPget_integer_value( Expression expression ) {
     experrc = ERROR_none;
     if( expression == EXPRESSION_NULL ) {
         return 0;
@@ -1487,8 +843,7 @@ EXPget_integer_value( Expression expression ) {
     }
 }
 
-char *
-opcode_print( Op_Code o ) {
+char * opcode_print( Op_Code o ) {
     switch( o ) {
         case OP_AND:
             return( "OP_AND" );

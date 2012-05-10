@@ -1,7 +1,8 @@
 
-/************************************************************************
-** Module:  Entity
-** Description: This module is used to represent Express entity definitions.
+
+/** **********************************************************************
+** Module:  Entity \file entity.c
+** This module is used to represent Express entity definitions.
 **  An entity definition consists of a name, a set of attributes, a
 **  collection of uniqueness sets, a specification of the entity's
 **  position in a class hierarchy (i.e., sub- and supertypes), and
@@ -117,9 +118,8 @@
 struct freelist_head ENTITY_fl;
 int ENTITY_MARK = 0;
 
-/* returns true if variable is declared (or redeclared) directly by entity */
-int
-ENTITYdeclares_variable( Entity e, Variable v ) {
+/** returns true if variable is declared (or redeclared) directly by entity */
+int ENTITYdeclares_variable( Entity e, Variable v ) {
     LISTdo( e->u.entity->attributes, attr, Variable )
     if( attr == v ) {
         return true;
@@ -129,9 +129,7 @@ ENTITYdeclares_variable( Entity e, Variable v ) {
     return false;
 }
 
-static
-Entity
-ENTITY_find_inherited_entity( Entity entity, char * name, int down ) {
+static Entity ENTITY_find_inherited_entity( Entity entity, char * name, int down ) {
     Entity result;
 
     /* avoid searching scopes that we've already searched */
@@ -175,8 +173,7 @@ ENTITY_find_inherited_entity( Entity entity, char * name, int down ) {
     return 0;
 }
 
-struct Scope_ *
-ENTITYfind_inherited_entity( struct Scope_ *entity, char * name, int down ) {
+struct Scope_ * ENTITYfind_inherited_entity( struct Scope_ *entity, char * name, int down ) {
     if( streq( name, entity->symbol.name ) ) {
         return( entity );
     }
@@ -185,9 +182,8 @@ ENTITYfind_inherited_entity( struct Scope_ *entity, char * name, int down ) {
     return ENTITY_find_inherited_entity( entity, name, down );
 }
 
-/* find a (possibly inherited) attribute */
-Variable
-ENTITY_find_inherited_attribute( Entity entity, char * name, int * down, struct Symbol_ ** where ) {
+/** find a (possibly inherited) attribute */
+Variable ENTITY_find_inherited_attribute( Entity entity, char * name, int * down, struct Symbol_ ** where ) {
     Variable result;
 
     /* avoid searching scopes that we've already searched */
@@ -232,8 +228,7 @@ ENTITY_find_inherited_attribute( Entity entity, char * name, int * down, struct 
     return 0;
 }
 
-Variable
-ENTITYfind_inherited_attribute( struct Scope_ *entity, char * name,
+Variable ENTITYfind_inherited_attribute( struct Scope_ *entity, char * name,
                                 struct Symbol_ ** down_sym ) {
     extern int __SCOPE_search_id;
     int down_flag = 0;
@@ -246,10 +241,10 @@ ENTITYfind_inherited_attribute( struct Scope_ *entity, char * name,
     }
 }
 
-/* resolve a (possibly group-qualified) attribute ref. *
-/* report errors as appropriate */
-Variable
-ENTITYresolve_attr_ref( Entity e, Symbol * grp_ref, Symbol * attr_ref ) {
+/** resolve a (possibly group-qualified) attribute ref.
+ * report errors as appropriate
+ */
+Variable ENTITYresolve_attr_ref( Entity e, Symbol * grp_ref, Symbol * attr_ref ) {
     extern Error ERROR_unknown_supertype;
     extern Error ERROR_unknown_attr_in_entity;
     Entity ref_entity;
@@ -288,17 +283,14 @@ ENTITYresolve_attr_ref( Entity e, Symbol * grp_ref, Symbol * attr_ref ) {
     return attr;
 }
 
-/*
-** Procedure:   ENTITY_create/free/copy/equal
-** Description: These are the low-level defining functions for Class_Entity
+/**
+** low-level function for type Entity
 **
-** Notes:   The attribute list of a new entity is defined as an
+** \note The attribute list of a new entity is defined as an
 **  empty list; all other aspects of the entity are initially
 **  undefined (i.e., have appropriate NULL values).
 */
-
-Entity
-ENTITYcreate( Symbol * sym ) {
+Entity ENTITYcreate( Symbol * sym ) {
     Scope s = SCOPEcreate( OBJ_ENTITY );
 
     s->u.entity = ENTITY_new();
@@ -312,40 +304,30 @@ ENTITYcreate( Symbol * sym ) {
     return( s );
 }
 
-/* currently, this is only used by USEresolve */
-Entity
-ENTITYcopy( Entity e ) {
+/**
+ * currently, this is only used by USEresolve
+ * low-level function for type Entity
+ */
+Entity ENTITYcopy( Entity e ) {
     /* for now, do a totally shallow copy */
-
     Entity e2 = SCOPE_new();
     *e2 = *e;
     return e2;
 }
 
-/*
-** Procedure:   ENTITYinitialize
-** Parameters:  -- none --
-** Returns: void
-** Description: Initialize the Entity module.
-*/
-
-void
-ENTITYinitialize() {
+/** Initialize the Entity module. */
+void ENTITYinitialize() {
     MEMinitialize( &ENTITY_fl, sizeof( struct Entity_ ), 500, 100 );
     OBJcreate( OBJ_ENTITY, SCOPE_get_symbol, "entity",
                OBJ_ENTITY_BITS );
 }
 
-/*
-** Procedure:   ENTITYadd_attribute
-** Parameters:  Entity   entity     - entity to modify
-**      Variable attribute  - attribute to add
-** Returns: void
-** Description: Add an attribute to an entity.
+/**
+** \param entity entity to modify
+** \param attr attribute to add
+** Add an attribute to an entity.
 */
-
-void
-ENTITYadd_attribute( Entity entity, Variable attr ) {
+void ENTITYadd_attribute( Entity entity, Variable attr ) {
     int rc;
 
     if( attr->name->type->u.type->body->type != op_ ) {
@@ -364,32 +346,25 @@ ENTITYadd_attribute( Entity entity, Variable attr ) {
     }
 }
 
-/*
-** Procedure:   ENTITYadd_instance
-** Parameters:  Entity  entity      - entity to modify
-**      Generic instance    - new instance
-** Returns: void
-** Description: Add an item to the instance list of an entity.
+/**
+** \param entity entity to modify
+** \param instance new instance
+** Add an item to the instance list of an entity.
 */
-
-void
-ENTITYadd_instance( Entity entity, Generic instance ) {
+void ENTITYadd_instance( Entity entity, Generic instance ) {
     if( entity->u.entity->instances == LIST_NULL ) {
         entity->u.entity->instances = LISTcreate();
     }
     LISTadd( entity->u.entity->instances, instance );
 }
 
-/*
-** Procedure:   ENTITYhas_supertype
-** Parameters:  Entity child    - entity to check parentage of
-**      Entity parent   - parent to check for
-** Returns: bool     - does child's superclass chain include parent?
-** Description: Look for a certain entity in the supertype graph of an entity.
+/**
+** \param child entity to check parentage of
+** \param parent parent to check for
+** \return does child's superclass chain include parent?
+** Look for a certain entity in the supertype graph of an entity.
 */
-
-bool
-ENTITYhas_supertype( Entity child, Entity parent ) {
+bool ENTITYhas_supertype( Entity child, Entity parent ) {
     LISTdo( child->u.entity->supertypes, entity, Entity )
     if( entity == parent ) {
         return true;
@@ -401,8 +376,13 @@ ENTITYhas_supertype( Entity child, Entity parent ) {
     return false;
 }
 
-bool
-ENTITYhas_immediate_supertype( Entity child, Entity parent ) {
+/**
+** \param child entity to check parentage of
+** \param parent parent to check for
+** \return is parent a direct supertype of child?
+** Check whether an entity has a specific immediate superclass.
+*/
+bool ENTITYhas_immediate_supertype( Entity child, Entity parent ) {
     LISTdo( child->u.entity->supertypes, entity, Entity )
     if( entity == parent ) {
         return true;
@@ -411,20 +391,8 @@ ENTITYhas_immediate_supertype( Entity child, Entity parent ) {
     return false;
 }
 
-/*
-** Procedure:   ENTITYget_all_attributes
-** Parameters:  Entity      entity  - entity to examine
-** Returns: Linked_List of Variable - all attributes of this entity
-** Description: Retrieve the attribute list of an entity.
-**
-** Notes:   If an entity has neither defines nor inherits any
-**      attributes, this call returns an empty list.  Note
-**      that this is distinct from the constant LIST_NULL.
-*/
-
-static
-void
-ENTITY_get_all_attributes( Entity entity, Linked_List result ) {
+/// called by ENTITYget_all_attributes(). \sa ENTITYget_all_attributes
+static void ENTITY_get_all_attributes( Entity entity, Linked_List result ) {
     LISTdo( entity->u.entity->supertypes, super, Entity )
     /*  if (OBJis_kind_of(super, Class_Entity))*/
     ENTITY_get_all_attributes( super, result );
@@ -435,27 +403,34 @@ ENTITY_get_all_attributes( Entity entity, Linked_List result ) {
     LISTod;
 }
 
-Linked_List
-ENTITYget_all_attributes( Entity entity ) {
+/**
+ ** \param entity  - entity to examine
+ ** \return all attributes of this entity
+ **
+ ** Retrieve the attribute list of an entity.
+ ** \sa ENTITY_get_all_attributes
+ **
+ ** Notes:   If an entity has neither defines nor inherits any
+ **      attributes, this call returns an empty list.  Note
+ **      that this is distinct from the constant LIST_NULL.
+ */
+Linked_List ENTITYget_all_attributes( Entity entity ) {
     Linked_List result = LISTcreate();
 
     ENTITY_get_all_attributes( entity, result );
     return result;
 }
 
-/*
-** Procedure:   ENTITYget_named_attribute
-** Parameters:  Entity  entity  - entity to examine
-**      String  name    - name of attribute to retrieve
-** Returns: Variable    - the named attribute of this entity
-** Description: Retrieve an entity attribute by name.
+/**
+** \param entity  - entity to examine
+** \param  name    - name of attribute to retrieve
+** \return the named attribute of this entity
+** Retrieve an entity attribute by name.
 **
 ** Notes:   If the entity has no attribute with the given name,
 **  VARIABLE_NULL is returned.
 */
-
-Variable
-ENTITYget_named_attribute( Entity entity, char * name ) {
+Variable ENTITYget_named_attribute( Entity entity, char * name ) {
     Variable attribute;
 
     LISTdo( entity->u.entity->attributes, attr, Variable )
@@ -473,19 +448,16 @@ ENTITYget_named_attribute( Entity entity, char * name ) {
     return 0;
 }
 
-/*
-** Procedure:   ENTITYget_attribute_offset
-** Parameters:  Entity   entity     - entity to examine
-**      Variable attribute  - attribute to retrieve offset for
-** Returns: int         - offset to given attribute
-** Description: Retrieve offset to an entity attribute.
+/**
+** \param entity entity to examine
+** \param attribute attribute to retrieve offset for
+** \return offset to given attribute
+** Retrieve offset to an entity attribute.
 **
 ** Notes:   If the entity does not include the attribute, -1
 **  is returned.
 */
-
-int
-ENTITYget_attribute_offset( Entity entity, Variable attribute ) {
+int ENTITYget_attribute_offset( Entity entity, Variable attribute ) {
     int         offset, value;
 
     LISTdo( entity->u.entity->attributes, attr, Variable )
@@ -505,12 +477,11 @@ ENTITYget_attribute_offset( Entity entity, Variable attribute ) {
     return -1;
 }
 
-/*
-** Procedure:   ENTITYget_named_attribute_offset
-** Parameters:  Entity  entity  - entity to examine
-**      String  name    - name of attribute to retrieve
-** Returns: int     - offset to named attribute of this entity
-** Description: Retrieve offset to an entity attribute by name.
+/**
+** \param entity entity to examine
+** \param name name of attribute to retrieve
+** \return offset to named attribute of this entity
+** Retrieve offset to an entity attribute by name.
 **
 ** Notes:   If the entity has no attribute with the given name,
 **      -1 is returned.
@@ -536,14 +507,11 @@ int ENTITYget_named_attribute_offset( Entity entity, char * name ) {
     return -1;
 }
 
-/*
-** Procedure:   ENTITYget_initial_offset
-** Parameters:  Entity entity   - entity to examine
-** Returns: int     - number of inherited attributes
-** Description: Retrieve the initial offset to an entity's local frame.
+/**
+** \param entity entity to examine
+** \return number of inherited attributes
+** Retrieve the initial offset to an entity's local frame.
 */
-
-int
-ENTITYget_initial_offset( Entity entity ) {
+int ENTITYget_initial_offset( Entity entity ) {
     return entity->u.entity->inheritance;
 }

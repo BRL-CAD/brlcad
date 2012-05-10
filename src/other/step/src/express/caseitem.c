@@ -1,7 +1,8 @@
 
-/************************************************************************
-** Module:  Case_Item
-** Description: This module implements the Case_Item abstraction.  A
+
+/** **********************************************************************
+** Module:  Case_Item \file caseitem.c
+** This module implements the Case_Item abstraction.  A
 **  case item represents a single branch in a case statement; it
 **  thus consists of a list of labels and a statement to execute
 **  when one of the labels matches the selector.
@@ -32,32 +33,23 @@
 
 struct freelist_head CASE_IT_fl;
 
-/*
-** Procedure:   CASE_ITinitialize
-** Parameters:  -- none --
-** Returns: void
-** Description: Initialize the Case Item module.
-*/
-
+/** Initialize the Case Item module. */
 void
 CASE_ITinitialize( void ) {
     MEMinitialize( &CASE_IT_fl, sizeof( struct Case_Item_ ), 500, 100 );
 }
 
-/*
-** Procedure:   CASE_ITcreate
-** Parameters:  Linked_List labels  - list of Expressions for case labels
-**      Statement   statement   - statement associated with this branch
-**      Error*      experrc - buffer for error code
-** Returns: Case_Item       - the case item created
-** Description: Create and return a new case item.
+/**
+** \param labels list of Expressions for case labels
+** \param statement statement associated with this branch
+** \return the case item created
 **
-** Notes:   If the 'labels' parameter is LIST_NULL, a case item
-**      matching in the default case is created.
+** Create and return a new case item.
+**
+** \note If the 'labels' parameter is LIST_NULL, a case item
+** matching in the default case is created.
 */
-
-Case_Item
-CASE_ITcreate( Linked_List labels, Statement statement ) {
+Case_Item CASE_ITcreate( Linked_List labels, Statement statement ) {
     struct Case_Item_ *s = CASE_IT_new();
 
     s->labels = labels;

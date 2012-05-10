@@ -1,7 +1,8 @@
 
-/************************************************************************
-** Module:  Schema
-** Description: This module implements the Schema abstraction, which
+
+/** **********************************************************************
+** Module:  Schema \file schema.c
+** This module implements the Schema abstraction, which
 **  basically amounts to a named symbol table.
 ** Constants:
 **  SCHEMA_NULL - the null schema
@@ -55,94 +56,64 @@ struct freelist_head SCHEMA_fl;
 
 int __SCOPE_search_id = 0;
 
-Symbol *
-RENAME_get_symbol( Generic r ) {
+Symbol * RENAME_get_symbol( Generic r ) {
     return( ( ( Rename * )r )->old );
 }
 
-/*
-** Procedure:   SCHEMAinitialize
-** Parameters:  -- none --
-** Returns: void
-** Description: Initialize the Schema module.
-*/
-
-void
-SCHEMAinitialize( void ) {
+/** Initialize the Schema module. */
+void SCHEMAinitialize( void ) {
     OBJcreate( OBJ_RENAME, RENAME_get_symbol, "rename clause", OBJ_UNUSED_BITS );
     MEMinitialize( &REN_fl, sizeof( struct Rename ), 30, 30 );
     MEMinitialize( &SCHEMA_fl, sizeof( struct Schema_ ), 40, 20 );
 }
 
-/*
-** Procedure:   SCOPEcreate
-** Parameters:  Scope  scope    - next higher scope
-**      Error* experrc  - buffer for error code
-** Returns: Scope       - the scope created
-** Description: Create and return an empty scope inside a parent scope.
-*/
-
-Scope
-SCOPEcreate( char type ) {
+/** Create and return an empty scope inside a parent scope. */
+Scope SCOPEcreate( char type ) {
     Scope d = SCOPE_new();
     d->symbol_table = DICTcreate( 50 );
     d->type = type;
     return d;
 }
 
-Scope
-SCOPEcreate_tiny( char type ) {
+Scope SCOPEcreate_tiny( char type ) {
     Scope d = SCOPE_new();
     d->symbol_table = DICTcreate( 1 );
     d->type = type;
     return d;
 }
 
-/* create a scope without a symbol table */
-/* used for simple types */
-Scope
-SCOPEcreate_nostab( char type ) {
+/**
+ * create a scope without a symbol table
+ * used for simple types
+ */
+Scope SCOPEcreate_nostab( char type ) {
     Scope d = SCOPE_new();
     d->type = type;
     return d;
 }
 
-/*
-** Procedure:   SCHEMAcreate
-** Parameters:  String name - name of schema to create
-**      Scope  scope    - local scope for schema
-**      Error* experrc  - buffer for error code
-** Returns: Schema      - the schema created
-** Description: Create and return a schema as specified.
-*/
-
-Schema
-SCHEMAcreate( void ) {
+/** Create and return a schema. */
+Schema SCHEMAcreate( void ) {
     Scope s = SCOPEcreate( OBJ_SCHEMA );
     s->u.schema = SCHEMA_new();
     return s;
 }
 
-/*
-** Procedure:   SCHEMAget_name
-** Parameters:  Schema schema   - schema to examine
-** Returns: String      - schema name
-** Description: Retrieve the name of a schema.
-*/
-
-/* this function is implemented as a macro in schema.h */
-
-/*
-** Procedure:   SCHEMAdump
-** Parameters:  Schema schema   - schema to dump
-**      FILE*  file - file to dump to
-** Returns: void
-** Description: Dump a schema to a file.
-**
-** Notes:   This function is provided for debugging purposes.
+/**  SCHEMAget_name
+** \param  schema schema to examine
+** \return  schema name
+** Retrieve the name of a schema.
+** \note This function is implemented as a macro in schema.h
 */
 
 #if 0
+/** \fn SCHEMAdump
+** \param schema schema to dump
+** \param file file to dump to
+** Dump a schema to a file.
+** \note This function is provided for debugging purposes.
+*/
+
 void
 SCHEMAdump( Schema schema, FILE * file ) {
     fprintf( file, "SCHEMA %s:\n", SCHEMAget_name( schema ) );
@@ -157,8 +128,7 @@ SYMBOLprint( Symbol * s ) {
 }
 #endif
 
-void
-SCHEMAadd_reference( Schema cur_schema, Symbol * ref_schema, Symbol * old, Symbol * nnew ) {
+void SCHEMAadd_reference( Schema cur_schema, Symbol * ref_schema, Symbol * old, Symbol * nnew ) {
     Rename * r = REN_new();
     r->schema_sym = ref_schema;
     r->old = old;
@@ -171,8 +141,7 @@ SCHEMAadd_reference( Schema cur_schema, Symbol * ref_schema, Symbol * old, Symbo
     LISTadd( cur_schema->u.schema->reflist, ( Generic )r );
 }
 
-void
-SCHEMAadd_use( Schema cur_schema, Symbol * ref_schema, Symbol * old, Symbol * nnew ) {
+void SCHEMAadd_use( Schema cur_schema, Symbol * ref_schema, Symbol * old, Symbol * nnew ) {
     Rename * r = REN_new();
     r->schema_sym = ref_schema;
     r->old = old;
@@ -185,8 +154,7 @@ SCHEMAadd_use( Schema cur_schema, Symbol * ref_schema, Symbol * old, Symbol * nn
     LISTadd( cur_schema->u.schema->uselist, ( Generic )r );
 }
 
-void
-SCHEMAdefine_reference( Schema schema, Rename * r ) {
+void SCHEMAdefine_reference( Schema schema, Rename * r ) {
     Rename * old = 0;
     char * name = ( r->nnew ? r->nnew : r->old )->name;
 
@@ -201,8 +169,7 @@ SCHEMAdefine_reference( Schema schema, Rename * r ) {
     }
 }
 
-void
-SCHEMAdefine_use( Schema schema, Rename * r ) {
+void SCHEMAdefine_use( Schema schema, Rename * r ) {
     Rename * old = 0;
     char * name = ( r->nnew ? r->nnew : r->old )->name;
 
@@ -217,8 +184,7 @@ SCHEMAdefine_use( Schema schema, Rename * r ) {
     }
 }
 
-static void
-SCHEMA_get_entities_use( Scope scope, Linked_List result ) {
+static void SCHEMA_get_entities_use( Scope scope, Linked_List result ) {
     DictionaryEntry de;
     Rename * rename;
 
@@ -242,9 +208,8 @@ SCHEMA_get_entities_use( Scope scope, Linked_List result ) {
     }
 }
 
-/* return use'd entities */
-Linked_List
-SCHEMAget_entities_use( Scope scope ) {
+/** return use'd entities */
+Linked_List SCHEMAget_entities_use( Scope scope ) {
     Linked_List result = LISTcreate();
 
     __SCOPE_search_id++;
@@ -254,10 +219,8 @@ SCHEMAget_entities_use( Scope scope ) {
     return( result );
 }
 
-/* return ref'd entities */
-static
-void
-SCHEMA_get_entities_ref( Scope scope, Linked_List result ) {
+/** return ref'd entities */
+static void SCHEMA_get_entities_ref( Scope scope, Linked_List result ) {
     Rename * rename;
     DictionaryEntry de;
 
@@ -283,9 +246,8 @@ SCHEMA_get_entities_ref( Scope scope, Linked_List result ) {
     }
 }
 
-/* return ref'd entities */
-Linked_List
-SCHEMAget_entities_ref( Scope scope ) {
+/** return ref'd entities */
+Linked_List SCHEMAget_entities_ref( Scope scope ) {
     Linked_List result = LISTcreate();
 
     __SCOPE_search_id++;
@@ -296,10 +258,11 @@ SCHEMAget_entities_ref( Scope scope ) {
     return( result );
 }
 
-/* look up an attribute reference */
-/* if strict false, anything can be returned, not just attributes */
-Variable
-VARfind( Scope scope, char * name, int strict ) {
+/**
+ * look up an attribute reference
+ * if strict false, anything can be returned, not just attributes
+ */
+Variable VARfind( Scope scope, char * name, int strict ) {
     Variable result;
 
     /* first look up locally */
@@ -329,37 +292,3 @@ VARfind( Scope scope, char * name, int strict ) {
     }
     return 0;
 }
-
-#if 0
-/* look up an attribute reference */
-/* if strict false, anything can be returned, not just attributes */
-Variable
-VARfind( Scope scope, char * name, int strict ) {
-    Variable result;
-
-    /* first look up locally */
-    result = ( Variable )DICTlookup( scope->symbol_table, name );
-    if( result ) {
-        if( strict && ( DICT_type != OBJ_VARIABLE ) ) {
-            printf( "press ^C now to trap to debugger\n" );
-            pause();
-        }
-        return result;
-    }
-    switch( scope->type ) {
-        case OBJ_ENTITY:
-            LISTdo( scope->u.entity->supertypes, e, Entity )
-            result = VARfind( e, name, strict );
-            if( result ) {
-                return( result );
-            }
-            LISTod;
-            break;
-        case OBJ_INCREMENT:
-        case OBJ_QUERY:
-        case OBJ_ALIAS:
-            return( VARfind( scope->superscope, name, strict ) );
-    }
-    return 0;
-}
-#endif
