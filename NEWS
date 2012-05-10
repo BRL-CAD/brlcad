@@ -19,6 +19,7 @@ changes made.  See document footer for additional details.
 * rtedge and rtwizard support multiple occlusion objects - Bob Parker
 * fixed mged matrix edit bug selecting the last matrix - Bob Parker
 * added 'lc' command to mged for listing region codes - Richard Weiss
+* fixed rtedge/rtwizard edge overlay rendering bug - Bob Parker
 * upgraded libpng to 1.5.10 - Cliff Yapp
 * removed obsolete 'syn' multi sine synthesis tool - Sean Morrison
 * fixed memory corruption in vegetation generator tool - Sean Morrison
