@@ -1145,7 +1145,7 @@ static struct to_cmdtab to_cmds[] = {
 int
 Go_Init(Tcl_Interp *interp)
 {
-    if (tclcad_initialized(0))
+    if (library_initialized(0))
 	return TCL_OK;
 
     /*XXX Use of brlcad_interp is temporary */
@@ -1157,7 +1157,7 @@ Go_Init(Tcl_Interp *interp)
 
     bu_semaphore_reinit(GED_SEM_LAST);
 
-    (void)tclcad_initialized(1);
+    (void)library_initialized(1);
 
     return TCL_OK;
 }

@@ -1,7 +1,7 @@
 /*                   T C L C A D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,13 @@
 
 __BEGIN_DECLS
 
-extern int tclcad_initialized(int setit);
+/**
+ * function returns truthfully whether the library has been
+ * initialized.  calling this routine with setit true considers the
+ * library henceforth initialized.  there is presently no way to unset
+ * or reset initialization.
+ */
+extern int library_initialized(int setit);
 
 __END_DECLS
 

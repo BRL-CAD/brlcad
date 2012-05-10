@@ -50,8 +50,9 @@
 /* defined in cmdhist_obj.c */
 extern int Cho_Init(Tcl_Interp *interp);
 
+
 int
-tclcad_initialized(int setit)
+library_initialized(int setit)
 {
     static int initialized = 0;
     if (setit)
@@ -84,7 +85,7 @@ tclcad_register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
 int
 Tclcad_Init(Tcl_Interp *interp)
 {
-    if (tclcad_initialized(0))
+    if (library_initialized(0))
 	return TCL_OK;
 
     if (Tcl_Init(interp) == TCL_ERROR) {
@@ -161,7 +162,7 @@ Tclcad_Init(Tcl_Interp *interp)
 
     Tcl_PkgProvide(interp,  "Tclcad", (ClientData)brlcad_version());
 
-    (void)tclcad_initialized(1);
+    (void)library_initialized(1);
 
     return TCL_OK;
 }
