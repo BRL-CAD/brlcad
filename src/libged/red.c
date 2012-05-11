@@ -729,7 +729,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 
 
 int
-ged_red(struct ged *gedp, int argc, const char *argv[])
+ged_red(struct ged *gedp, int argc, const char **argv)
 {
     FILE *fp;
     int c, counter;
@@ -738,7 +738,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp, *tmp_dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
-    static const char *usage = "comb";
+    static const char *usage = "{[ region | combination | group ]}";
     const char *editstring = NULL;
     const char *av[3];
     struct bu_vls comb_name = BU_VLS_INIT_ZERO;
@@ -749,9 +749,23 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc < 2) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", "red", usage);
+	return GED_HELP;
+    }
+
+    if (argc > 4) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", "red", usage);
+	return GED_ERROR;
+    }
+
     bu_optind = 1;
     /* First, grab the editstring off of the argv list */
-    while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != -1) {
+    while ((c = bu_getopt(argc, (char **)argv, "E:")) != -1) {
 	switch (c) {
 	    case 'E' :
 		editstring = bu_optarg;
@@ -765,20 +779,6 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 
     argc -= bu_optind - 1;
     argv += bu_optind - 1;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc <= 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", "red", usage);
-	return GED_HELP;
-    }
-
-    if (argc != 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", "red", usage);
-	return GED_ERROR;
-    }
 
     dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
 
@@ -798,13 +798,14 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	     * object names.
 	     */
 	    bu_vls_sprintf(&temp_name, "%s_red%d", dp->d_namep, counter);
-	    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), LOOKUP_QUIET) == RT_DIR_NULL)
+	    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), LOOKUP_QUIET) == RT_DIR_NULL) {
 		have_tmp_name = 1;
-	    else
+	    } else {
 		counter++;
+	    }
 	}
 	if (!(dp->d_flags & RT_DIR_COMB)) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: %s must be a combination to use this command\n", argv[0], argv[1]);
+	    bu_vls_printf(gedp->ged_result_str, "%s must be a region, combination or group\n", argv[1]);
 	    bu_vls_free(&comb_name);
 	    bu_vls_free(&temp_name);
 	    return GED_ERROR;
@@ -823,8 +824,8 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     /* Make a file for the text editor, stash name in _ged_tmpfil */
     fp = bu_temp_file(_ged_tmpfil, MAXPATHLEN);
     if (fp == (FILE *)0) {
-	bu_vls_printf(gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
-	bu_vls_printf(gedp->ged_result_str, "%s: unable to create %s\n", argv[0], _ged_tmpfil);
+	bu_vls_printf(gedp->ged_result_str, "Unable to edit %s\n", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "Unable to create %s\n", _ged_tmpfil);
 	bu_vls_free(&comb_name);
 	bu_vls_free(&temp_name);
 	return GED_ERROR;
@@ -832,7 +833,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 
     /* Write the combination components to the file */
     if (write_comb(gedp, comb, argv[1])) {
-	bu_vls_printf(gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "Unable to edit %s\n", argv[1]);
 	(void)fclose(fp);
 	goto cleanup;
     }
@@ -848,7 +849,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	 */
 
 	if (gedp->ged_wdbp->dbip->dbi_read_only) {
-	    bu_vls_printf(gedp->ged_result_str, "%s:  Database is READ-ONLY.\nNo changes were made.\n", *argv);
+	    bu_vls_printf(gedp->ged_result_str, "Database is READ-ONLY.\nNo changes were made.\n");
 	    goto cleanup;
 	}
 
@@ -865,7 +866,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		goto cleanup;
 	    }
 
-	    if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_COMB, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
+	    if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, dp->d_flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
 		goto cleanup;
 	    }
@@ -895,7 +896,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 
 	    /* Something went wrong - kill the temporary comb */
 
-	    bu_vls_printf(gedp->ged_result_str, "%s: Error in edited region, no changes made\n", *argv);
+	    bu_vls_printf(gedp->ged_result_str, "Problem in edited region, no changes made\n");
 
 	    av[0] = "kill";
 	    av[1] = bu_vls_addr(&temp_name);
@@ -920,7 +921,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 			(void)ged_kill(gedp, 2, (const char **)av);
 		    } else {
 			/* not forced, can't overwrite destination, can't proceed */
-			bu_vls_printf(gedp->ged_result_str, "%s: Error - %s already exists\n", *argv, bu_vls_addr(&final_name));
+			bu_vls_printf(gedp->ged_result_str, "%s already exists\n", bu_vls_addr(&final_name));
 			goto cleanup;
 		    }
 		}
@@ -929,7 +930,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 
 	/* if we ended up with an empty final name, print an error message and head for cleanup */
 	if (strlen(bu_vls_addr(&final_name)) == 0) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: Error - no target name supplied\n", *argv);
+	    bu_vls_printf(gedp->ged_result_str, "Problem reading target name\n");
 	    goto cleanup;
 	}
 
