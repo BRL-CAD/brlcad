@@ -5165,6 +5165,12 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::attr {args} {
+    set arg0 [lindex $args 0]
+    set ac [llength $args]
+    if {$arg0 == "get" || $arg0 == "show"} {
+	return [eval gedCmd attr $args]
+    }
+
     eval gedWrapper attr 0 0 1 2 $args
 }
 
