@@ -38,6 +38,8 @@
 # }
 # set argv2 [getopt::getopt $argv]
 
+package provide GetOpt 1.0
+
 namespace eval getopt {
         # list of option vars (keys are long option names)
         variable optlist

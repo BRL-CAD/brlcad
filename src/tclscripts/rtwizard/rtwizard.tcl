@@ -66,7 +66,7 @@ namespace eval RtWizard {}
 # an associative array named wizard_state in the RtWizard
 # namespace to hold the key information - have getopt place the
 # results of its parsing directly in that array
-source [file join [bu_brlcad_data "tclscripts"] util getopt.tcl]
+package require GetOpt
 getopt::init {
         {verbose v {::verbose}}
         {gui gui  {::use_gui}}
@@ -89,7 +89,14 @@ getopt::init {
 }
 
 # Perform the actual option parsing
-set argv2 [getopt::getopt $argv]
+if {[info exists argv]} {
+  set argv2 [getopt::getopt $argv]
+}
+if {[info exists argc]} {
+  set argc2 $argc
+} else {
+  set argc2 0
+}
 
 # During development, force default behavior (comment the following out to work on new code)
 #set ::use_gui 1
@@ -195,18 +202,18 @@ if {[info exists ::have_picture_type] && ![info exists ::use_gui]} {
 # If we're launching without enough arguments to fully specify an rtwizard 
 # run, a gui run has been specifically requested, or we've got arguments 
 # that aren't understood, go graphical
-if {$argc == 0 || "$argv2" != "" || [info exists ::use_gui]} {
+if {$argc2 == 0 || "$argv2" != "" || [info exists ::use_gui]} {
    # Have to do these loads until we get "package require tclcad" and "package require dm" 
    # working - bwish loads them for us by default, but since rtwizard may be either
    # graphical or command line we need to start with btclsh
    load [file join [bu_brlcad_root "lib"] libtclcad[info sharedlibextension]]
    load [file join [bu_brlcad_root "lib"] libdm[info sharedlibextension]]
    # Now, load the actual Raytrace Wizard GUI
-   source [file join [bu_brlcad_data "tclscripts"] rtwizard RaytraceWizard.tcl]
-   exit
+   package require RaytraceWizard
+   if {[info exists argv]} {exit}
 } else {
 
-puts "rtwizard arguments: $argv"
+if {[info exists argv]} {puts "rtwizard arguments: $argv"}
 if {[info exists ::verbose]} {puts "rtwizard verbose ON"}
 
 }

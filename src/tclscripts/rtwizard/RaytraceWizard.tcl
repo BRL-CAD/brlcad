@@ -21,6 +21,7 @@
 #
 # This is the main script for the RaytraceWizard.
 #
+package provide RaytraceWizard 1.0
 
 #
 # Extend Autopath
@@ -251,7 +252,6 @@ namespace eval RaytraceWizard {
 if {[info exists argv]} {
     RaytraceWizard::main $argv
 }
-
 
 # Local Variables:
 # mode: Tcl
