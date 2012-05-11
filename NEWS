@@ -20,6 +20,7 @@ changes made.  See document footer for additional details.
 * fixed mged matrix edit bug selecting the last matrix - Bob Parker
 * added 'lc' command to mged for listing region codes - Richard Weiss
 * fixed rtedge/rtwizard edge overlay rendering bug - Bob Parker
+* fixed 'open: Permission denied' rtedge output file bug - Cliff Yapp
 * upgraded libpng to 1.5.10 - Cliff Yapp
 * fixed memory leaks in the comgeom-g geometry importer - Tom Browder
 * removed obsolete 'syn' multi sine synthesis tool - Sean Morrison
