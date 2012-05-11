@@ -16,6 +16,7 @@ set(lib_TCLSCRIPTS
 	ModelAxesControl.tcl
 	QuadDisplay.tcl
 	RtControl.tcl
+	RtImage.tcl
 	Splash.tcl
 	Table.tcl
 	TableView.tcl
