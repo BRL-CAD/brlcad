@@ -51,6 +51,7 @@ TABLE OF CONTENTS
   Naming a Source Release
   Naming a Binary Release
   Making a Release
+  Patching a Release
   Getting Help
 
 
@@ -992,10 +993,12 @@ Starting with release 7.0.0, BRL-CAD has adopted a three-digit version
 number convention for identifying and tracking future releases.  This
 number follows a common convention where the three numbers represent:
 
-	{MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}
+    {MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}
 
 All "development" builds use an odd number for the minor version.  All
-"release" builds use an even number for the minor version.
+"release" builds use an even number for the minor version.  Patched versions should include a release count:
+
+    {MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}[-{RELEASE_COUNT}]
 
 The MAJOR_VERSION should only increment when it is deemed that a
 significant amount of major changes have accumulated, new features
@@ -1015,6 +1018,11 @@ necessary.  Every public maintenance release should increment the
 patch version.  Every development version modification that is
 backwards incompatible in some manner should increment the patch
 version number.
+
+If it becomes necessary to update a posted release, use and increment
+the RELEASE_COUNT.  The first posted release is implicitly the "-0"
+release count (e.g., 7.10.2 is implicitly 7.10.2-0) with subsequent
+updated releases incrementing the count (e.g., 7.10.2-1).
 
 
 NAMING A SOURCE RELEASE
@@ -1048,14 +1056,15 @@ the following format should be used as the filename convention:
   BRL-CAD_{VERSION}[_{OS}][_{VENDOR}][_{CPU}][_{NOTE}].{EXTENSION}
 
 Notably, the filename should use 'BRL-CAD' instead of 'brlcad' for the
-name, it should delimit sections of the filename with underscores
-instead of spaces or dashes, and should always include the version
-number and an extension for the file type.  The optional
-_{OS}_{VENDOR}_{CPU} portion is a reverse (and simplified version) of
-the GNU autotools config.guess canonical host triplet identifier.
+name unless technically problematic, it should delimit sections of the
+filename with underscores instead of spaces, dots, or dashes, and
+should always include the version number and an extension for the file
+type.  The optional _{OS}_{VENDOR}_{CPU} portion is a reverse (and
+simplified version) of the GNU autotools config.guess canonical host
+triplet identifier.
 
 VERSION is the usual version triplet described above under the section
-entitled VERSION NUMBERS & COMPATIBILITY.  Example: 7.12.4
+entitled VERSION NUMBERS & COMPATIBILITY.  Example: 7.12.4 or 7.10.2-1
 
 OS is an optional identifier for the target operating system for
 binary distributions.  It should only be used if the file extension is
@@ -1354,6 +1363,35 @@ Multiple platform major release:
       copyboy@cadcam-insider.com
 
 14) Sit back and enjoy a beverage for a job well done.
+
+
+PATCHING A RELEASE
+------------------
+
+Should it become necessary to patch a release that has already been
+posted and announced, the mechanism is to post patch files for the
+source release and update the uploaded release notes README file.
+
+Example: stop_rt_crashing-0.patch and fix_fbserv-1.patch
+
+It's expected that all patch files are independent and will be applied
+sequentially.  They should be consistently and incrementally numbered.
+Users should be instructed in the release notes README to download and
+apply all available patch files.
+
+For binary releases, it's recommended to just "move on" and let issues
+become resolved in the next release unless there's a critical security
+or significant data corruption issue involved.  If it becomes
+necessary to repost a release, use the RELEASE_COUNT file name
+convention described in VERSION NUMBERS & COMPATIBILITY.
+
+Example:  BRL-CAD-7.12.2.dmg is superseded by BRL-CAD-7.12.2-1.dmg
+
+Patched binary releases may be moved to the hidden attic folder if
+critical, though not necessary or recommended.  They are preserved for
+historic record and should never be deleted once announced.  Releases
+not yet been announced may be updated within two days of being posted
+without involving a patch.
 
 
 GETTING HELP
