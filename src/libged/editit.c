@@ -66,7 +66,7 @@ _ged_editit(char *editstring, const char *filename)
 
     /* convert the edit string into pieces suitable for arguments to execlp */
 
-    avtmp = (char **)bu_malloc(sizeof(char *)*5, "ged_editit: editstring args");
+    avtmp = (char **)bu_calloc(5, sizeof(char *), "ged_editit: editstring args");
     bu_argv_from_string(avtmp, 4, editstring);
 
     if (avtmp[0] && !BU_STR_EQUAL(avtmp[0], "(null)"))

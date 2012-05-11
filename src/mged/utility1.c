@@ -233,11 +233,10 @@ f_red(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 {
     const char **av;
     struct bu_vls editstring;
-    int i;
 
     CHECK_DBI_NULL;
 
-    if (argc < 2) {
+    if (argc != 2) {
 	Tcl_Eval(interpreter, "help red");
 	return TCL_ERROR;
     }
@@ -245,18 +244,19 @@ f_red(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
-    av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_red: av");
+    av = (const char **)bu_calloc(4, sizeof(char *), "f_red: av");
+
     av[0] = argv[0];
     av[1] = "-E";
     av[2] = bu_vls_addr(&editstring);
-    argc += 2;
-    for (i = 3; i < argc; ++i) {
-	av[i] = argv[i-2];
-    }
-    av[argc] = NULL;
+    av[3] = argv[1];
 
-    ged_red(gedp, argc + 1, (const char **)av);
-   
+    if ( ged_red(gedp, 4, (const char **)av) == GED_ERROR ) {
+	Tcl_AppendResult(interpreter, "Error: ", bu_vls_addr(gedp->ged_result_str), (char *)NULL);
+    } else {
+	Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), (char *)NULL);
+    }
+
     bu_vls_free(&editstring); 
     bu_free((genptr_t)av, "f_red: av");
     return TCL_OK;
