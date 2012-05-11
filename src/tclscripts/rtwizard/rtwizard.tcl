@@ -68,24 +68,32 @@ namespace eval RtWizard {}
 # results of its parsing directly in that array
 package require GetOpt
 getopt::init {
-        {verbose v {::verbose}}
-        {gui gui  {::use_gui}}
-        {no-gui no-gui  {::disable_gui}}
-        {g-file   i  {::have_gfile RtWizard::wizard_state(dbFile)}}
-        {output   o  {::output RtWizard::wizard_state(output_filename)}}
-        {full-color-objects  c  {::have_full_color_objs RtWizard::wizard_state(color_objlist) ...}}
-        {background-color background-color {::have_fc_bg_color RtWizard::wizard_state(fc_bg_color)}}
-        {ghost-objects  g  {::have_ghost_objs RtWizard::wizard_state(ghost_objlist) ...}}
-        {ghosting-intensity ghosting-intensity {::have_ghosting_intensity RtWizard::wizard_state(ghosting_intensity)}}
-        {edge-objects  e  {::have_edge_objs RtWizard::wizard_state(edge_objlist) ...}}
-        {line-color line-color {::have_line_color RtWizard::wizard_state(line_color)}}
-        {non-line-color non-line-color {::have_non_line_color RtWizard::wizard_state(non_line_color)}}
-        {occlusion occlusion {::have_occlusion_setting RtWizard::wizard_state(occlusion_setting)}}
-        {type t {::have_picture_type RtWizard::wizard_state(picture_type)}}
-        {matrix M {::have_matrix RtWizard::wizard_state(matrix)}}
-        {azimuth a  {::have_azimuth RtWizard::wizard_state(azimuth)}}
-        {elevation e {::have_elevation RtWizard::wizard_state(elevation)}}
-        {cpus P  {::have_cpu_cnt RtWizard::wizard_state(cpus_use)}}
+        # GUI controls
+        {gui 			""  	{::use_gui}}
+        {no-gui 		""  	{::disable_gui}}
+	# Input/output files and framebuffers
+        {g-file   		i  	{::have_gfile RtWizard::wizard_state(dbFile)}}
+        {output   		o  	{::output RtWizard::wizard_state(output_filename)}}
+        {framebuffer_type 	F  	{::framebuffer_type RtWizard::wizard_state(framebuffer_type)}}
+        {width 			w	{::have_width RtWizard::wizard_state(width)}}
+        {height 		n 	{::have_nlines RtWizard::wizard_state(nlines)}}
+	# Objects to raytrace
+        {color-objects		c	{::have_full_color_objs RtWizard::wizard_state(color_objlist) ...}}
+        {ghost-objects		g	{::have_ghost_objs RtWizard::wizard_state(ghost_objlist) ...}}
+        {edge-objects		e	{::have_edge_objs RtWizard::wizard_state(edge_objlist) ...}}
+	# Settings
+        {background-color 	"" 	{::have_bg_color RtWizard::wizard_state(bg_color)}}
+        {ghosting-intensity 	G	{::have_ghosting_intensity RtWizard::wizard_state(ghosting_intensity)}}
+        {edge-color		""	{::have_line_color RtWizard::wizard_state(e_color)}}
+        {non-edge-color 	"" 	{::have_non_line_color RtWizard::wizard_state(ne_color)}}
+        {occlusion 		O 	{::have_occlusion_mode RtWizard::wizard_state(occmode)}}
+	# Image type
+        {type 			t 	{::have_picture_type RtWizard::wizard_state(picture_type)}}
+	# View
+        {azimuth 		a  	{::have_azimuth RtWizard::wizard_state(init_azimuth)}}
+        {elevation 		l 	{::have_elevation RtWizard::wizard_state(init_elevation)}}
+        {twist 			"" 	{::have_twist RtWizard::wizard_state(init_twist)}}
+        {zoom 			z 	{::have_zoom RtWizard::wizard_state(zoom)}}
 }
 
 # Perform the actual option parsing
@@ -97,9 +105,6 @@ if {[info exists argc]} {
 } else {
   set argc2 0
 }
-
-# During development, force default behavior (comment the following out to work on new code)
-#set ::use_gui 1
 
 # If we have both gui and no-gui specified, use gui
 if {[info exists ::use_gui] && [info exists ::disable_gui]} {
@@ -199,6 +204,61 @@ if {[info exists ::have_picture_type] && ![info exists ::use_gui]} {
   }
 }
 
+# OK, we've collected all the info we can from the inputs.  Make sure all the key
+# variables are initialized to sane defaults.  The viewsize and eye_pt defaults are determined from
+# the drawing of the objects into the display manager.
+# Initial orientation
+if {![info exists RtWizard::wizard_state(init_azimuth)]} { set RtWizard::wizard_state(init_azimuth) 35 }
+if {![info exists RtWizard::wizard_state(init_elevation)]} { set RtWizard::wizard_state(init_elevation) 25 }
+if {![info exists RtWizard::wizard_state(init_twist)]} { set RtWizard::wizard_state(init_twist) 0 }
+# Initial zoom
+if {![info exists RtWizard::wizard_state(zoom)]} { set RtWizard::wizard_state(zoom) 1 }
+# Background color
+if {![info exists RtWizard::wizard_state(bg_color)]} { set RtWizard::wizard_state(bg_color) {255 255 255} }
+# Edge lines color
+if {![info exists RtWizard::wizard_state(e_color)]} { set RtWizard::wizard_state(e_color) {0 0 0} }
+# Edge not-lines color
+if {![info exists RtWizard::wizard_state(ne_color)]} { set RtWizard::wizard_state(ne_color) {0 0 0} }
+# Occlusion mode
+if {![info exists RtWizard::wizard_state(occmode)]} { set RtWizard::wizard_state(occmode) 1 }
+# Ghost intensity
+if {![info exists RtWizard::wizard_state(ghosting_intensity)]} { set RtWizard::wizard_state(ghosting_intensity) 12 }
+# Pix width
+if {![info exists RtWizard::wizard_state(width)]} { set RtWizard::wizard_state(width) 512 }
+# Pix height (number of scan lines) 
+if {![info exists RtWizard::wizard_state(nlines)]} { set RtWizard::wizard_state(nlines) 512 }
+
+
+# If we haven't been told what .g file to use, we're going to have to go graphical
+if {![info exists RtWizard::wizard_state(dbFile)]} {
+   if {![info exists ::disable_gui]} {
+    set ::use_gui 1
+   } else {
+    puts "Error - please specify Geometry Database (.g) file."
+    if {[info exists argv]} {exit}
+   }
+}
+
+# We can set a lot of defaults, but not the objects to draw - if we don't have *something* specified,
+# we have to go graphical.
+if {![info exists RtWizard::wizard_state(color_objlist)] && ![info exists RtWizard::wizard_state(edge_objlist)] && ![info exists RtWizard::wizard_state(ghost_objlist)]} {
+   if {![info exists ::disable_gui]} {
+    set ::use_gui 1
+   } else {
+    puts "Error - please specify one or more objects for at least one of color, ghost, or edge rendering modes."
+    if {[info exists argv]} {exit}
+   }
+}
+
+# Now that we have made our gui determination based on the variables, initialize any lists that aren't
+# initialized for the objects
+# Color objects
+if {![info exists RtWizard::wizard_state(color_objlist)]} { set RtWizard::wizard_state(color_objlist) {} }
+# Edge objects
+if {![info exists RtWizard::wizard_state(edge_objlist)]} { set RtWizard::wizard_state(edge_objlist) {} }
+# Ghost objects
+if {![info exists RtWizard::wizard_state(ghost_objlist)]} { set RtWizard::wizard_state(ghost_objlist) {} }
+
 # If we're launching without enough arguments to fully specify an rtwizard 
 # run, a gui run has been specifically requested, or we've got arguments 
 # that aren't understood, go graphical
@@ -213,8 +273,69 @@ if {$argc2 == 0 || "$argv2" != "" || [info exists ::use_gui]} {
    if {[info exists argv]} {exit}
 } else {
 
-if {[info exists argv]} {puts "rtwizard arguments: $argv"}
-if {[info exists ::verbose]} {puts "rtwizard verbose ON"}
+   if {![info exists RtWizard::wizard_state(output_filename)] && ![info exists RtWizard::wizard_state(framebuffer_type)]} {
+      puts "Warning - no output file or framebuffer specified - using file rtwizard.pix for output."
+      set RtWizard::wizard_state(output_filename) rtwizard.pix
+   }
+
+   package require cadwidgets::RtImage
+   set db [go_open db db $::RtWizard::wizard_state(dbFile)]
+   db new_view v1 nu
+
+   # Get an in-memory framebuffer to hold the intermediate image stages
+   if {![info exists RtWizard::wizard_state(framebuffer_type)]} {
+      set RtWizard::wizard_state(framebuffer_type) /dev/mem
+   }
+   set fbserv_port 12
+   catch {exec [file join [bu_brlcad_root bin] fbserv] -w $RtWizard::wizard_state(width) -n $RtWizard::wizard_state(nlines) $fbserv_port $RtWizard::wizard_state(framebuffer_type) &} pid
+   set fbserv_pid $pid
+   if {[llength $RtWizard::wizard_state(color_objlist)]} {
+      foreach item $RtWizard::wizard_state(color_objlist) {
+	db draw $item 
+      }
+   } 
+   if {[llength $RtWizard::wizard_state(edge_objlist)]} {
+      foreach item $RtWizard::wizard_state(edge_objlist) {
+	db draw $item 
+      }
+   } 
+   if {[llength $RtWizard::wizard_state(ghost_objlist)]} {
+      foreach item $RtWizard::wizard_state(ghost_objlist) {
+	db draw $item 
+      }
+   } 
+   db autoview v1
+   db aet v1 $RtWizard::wizard_state(init_azimuth) $RtWizard::wizard_state(init_elevation) $RtWizard::wizard_state(init_twist)
+   db zoom v1 $RtWizard::wizard_state(zoom)
+   set view_info [regsub -all ";" [db get_eyemodel v1] ""]
+   set vdata [split $view_info "\n"]
+   set viewsize [lindex [lindex $vdata 0] 1]
+   set orientation [lrange [lindex $vdata 1] 1 end]
+   set eye_pt [lrange [lindex $vdata 2] 1 end]
+   ::cadwidgets::rtimage $::RtWizard::wizard_state(dbFile) $fbserv_port \
+			$RtWizard::wizard_state(width) $RtWizard::wizard_state(nlines) \
+			$viewsize $orientation $eye_pt \
+			$RtWizard::wizard_state(bg_color) $RtWizard::wizard_state(e_color) $RtWizard::wizard_state(ne_color)\
+			$RtWizard::wizard_state(occmode) $RtWizard::wizard_state(ghosting_intensity) \
+			$RtWizard::wizard_state(color_objlist) \
+			$RtWizard::wizard_state(ghost_objlist) \
+			$RtWizard::wizard_state(edge_objlist)
+		
+   if {[info exists RtWizard::wizard_state(output_filename)]} {	
+      exec [file join [bu_brlcad_root bin] fb-pix] -w $RtWizard::wizard_state(width) -n $RtWizard::wizard_state(nlines) -F $fbserv_port $RtWizard::wizard_state(output_filename) > junk  
+   }
+
+   if {$RtWizard::wizard_state(framebuffer_type) == "/dev/mem"} {
+       if {$tcl_platform(platform) == "windows"} {
+	   set kill_cmd [auto_execok taskkill]
+       } else {
+	   set kill_cmd [auto_execok kill]
+       }
+
+       if {$kill_cmd != ""} {
+	   exec $kill_cmd $fbserv_pid
+       }
+   }
 
 }
 
