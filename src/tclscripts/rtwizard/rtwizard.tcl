@@ -72,28 +72,28 @@ getopt::init {
         {gui 			""  	{::use_gui}}
         {no-gui 		""  	{::disable_gui}}
 	# Input/output files and framebuffers
-        {g-file   		i  	{::have_gfile RtWizard::wizard_state(dbFile)}}
-        {output   		o  	{::output RtWizard::wizard_state(output_filename)}}
-        {framebuffer_type 	F  	{::framebuffer_type RtWizard::wizard_state(framebuffer_type)}}
-        {width 			w	{::have_width RtWizard::wizard_state(width)}}
-        {height 		n 	{::have_nlines RtWizard::wizard_state(nlines)}}
+        {g-file   		i  	{::have_gfile ::RtWizard::wizard_state(dbFile)}}
+        {output   		o  	{::output ::RtWizard::wizard_state(output_filename)}}
+        {framebuffer_type 	F  	{::framebuffer_type ::RtWizard::wizard_state(framebuffer_type)}}
+        {width 			w	{::have_width ::RtWizard::wizard_state(width)}}
+        {height 		n 	{::have_nlines ::RtWizard::wizard_state(nlines)}}
 	# Objects to raytrace
-        {color-objects		c	{::have_full_color_objs RtWizard::wizard_state(color_objlist) ...}}
-        {ghost-objects		g	{::have_ghost_objs RtWizard::wizard_state(ghost_objlist) ...}}
-        {edge-objects		e	{::have_edge_objs RtWizard::wizard_state(edge_objlist) ...}}
+        {color-objects		c	{::have_full_color_objs ::RtWizard::wizard_state(color_objlist) ...}}
+        {ghost-objects		g	{::have_ghost_objs ::RtWizard::wizard_state(ghost_objlist) ...}}
+        {edge-objects		e	{::have_edge_objs ::RtWizard::wizard_state(edge_objlist) ...}}
 	# Settings
-        {background-color 	"" 	{::have_bg_color RtWizard::wizard_state(bg_color)}}
-        {ghosting-intensity 	G	{::have_ghosting_intensity RtWizard::wizard_state(ghosting_intensity)}}
-        {edge-color		""	{::have_line_color RtWizard::wizard_state(e_color)}}
-        {non-edge-color 	"" 	{::have_non_line_color RtWizard::wizard_state(ne_color)}}
-        {occlusion 		O 	{::have_occlusion_mode RtWizard::wizard_state(occmode)}}
+        {background-color 	"" 	{::have_bg_color ::RtWizard::wizard_state(bg_color)}}
+        {ghosting-intensity 	G	{::have_ghosting_intensity ::RtWizard::wizard_state(ghosting_intensity)}}
+        {edge-color		""	{::have_line_color ::RtWizard::wizard_state(e_color)}}
+        {non-edge-color 	"" 	{::have_non_line_color ::RtWizard::wizard_state(ne_color)}}
+        {occlusion 		O 	{::have_occlusion_mode ::RtWizard::wizard_state(occmode)}}
 	# Image type
-        {type 			t 	{::have_picture_type RtWizard::wizard_state(picture_type)}}
+        {type 			t 	{::have_picture_type ::RtWizard::wizard_state(picture_type)}}
 	# View
-        {azimuth 		a  	{::have_azimuth RtWizard::wizard_state(init_azimuth)}}
-        {elevation 		l 	{::have_elevation RtWizard::wizard_state(init_elevation)}}
-        {twist 			"" 	{::have_twist RtWizard::wizard_state(init_twist)}}
-        {zoom 			z 	{::have_zoom RtWizard::wizard_state(zoom)}}
+        {azimuth 		a  	{::have_azimuth ::RtWizard::wizard_state(init_azimuth)}}
+        {elevation 		l 	{::have_elevation ::RtWizard::wizard_state(init_elevation)}}
+        {twist 			"" 	{::have_twist ::RtWizard::wizard_state(init_twist)}}
+        {zoom 			z 	{::have_zoom ::RtWizard::wizard_state(zoom)}}
 }
 
 # Perform the actual option parsing
@@ -262,7 +262,7 @@ if {![info exists RtWizard::wizard_state(ghost_objlist)]} { set RtWizard::wizard
 # If we're launching without enough arguments to fully specify an rtwizard 
 # run, a gui run has been specifically requested, or we've got arguments 
 # that aren't understood, go graphical
-if {$argc2 == 0 || "$argv2" != "" || [info exists ::use_gui]} {
+if {[info exists ::use_gui]} {
    # Have to do these loads until we get "package require tclcad" and "package require dm" 
    # working - bwish loads them for us by default, but since rtwizard may be either
    # graphical or command line we need to start with btclsh
