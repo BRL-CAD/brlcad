@@ -186,7 +186,6 @@ set(docbook_mann_EN
   rrt.xml
   rt.xml
   rtcheck.xml
-  rtwizard.xml
   savekey.xml
   saveview.xml
   sca.xml
