@@ -334,8 +334,14 @@ if {[info exists ::use_gui]} {
 } else {
 
    if {![info exists RtWizard::wizard_state(output_filename)] && ![info exists RtWizard::wizard_state(framebuffer_type)]} {
-      puts "Warning - no output file or framebuffer specified - using file rtwizard.pix for output."
-      set RtWizard::wizard_state(output_filename) rtwizard.pix
+     set RtWizard::wizard_state(output_filename) rtwizard.pix
+     if {![file exists $::RtWizard::wizard_state(output_filename)]} {
+        puts "Warning - no output file or framebuffer specified - using file rtwizard.pix for output."
+     }
+   }
+   if {[file exists $::RtWizard::wizard_state(output_filename)]} {
+      puts "Error - cannot create output file, $::RtWizard::wizard_state(output_filename) alread exists."
+      if {[info exists argv]} {exit}
    }
 
    package require cadwidgets::RtImage
@@ -381,7 +387,7 @@ if {[info exists ::use_gui]} {
 			$RtWizard::wizard_state(ghost_objlist) \
 			$RtWizard::wizard_state(edge_objlist)
 		
-   if {[info exists RtWizard::wizard_state(output_filename)]} {
+   if {[info exists ::RtWizard::wizard_state(output_filename)]} {
       if {[file extension $::RtWizard::wizard_state(output_filename)] == ".pix"} {
          exec [file join [bu_brlcad_root bin] fb-pix] -w $RtWizard::wizard_state(width) -n $RtWizard::wizard_state(nlines) -F $fbserv_port $RtWizard::wizard_state(output_filename) > junk
       }
