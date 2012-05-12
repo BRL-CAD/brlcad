@@ -112,6 +112,66 @@ if {[info exists ::use_gui] && [info exists ::disable_gui]} {
    unset ::disable_gui
 }
 
+# There are three common possibilities for inputs specified without an option flag - the
+# Geometry Database, the output filename and one or more full color components (i.e. the
+# standard rt paradigm.)  It isn't possible to fully generalize handling of unspecified
+# options, but there are a few cases we can support for convenience.
+
+# See if any of the residual arguments after getopt identify a .g file that exists
+if {[info exists argv2]} {
+   set possible_incorrect_g_name 0
+   set residualArgs {}
+   foreach item $argv2 {
+     if {[file extension $item] == ".g"} {
+	 if {![info exists ::RtWizard::wizard_state(dbFile)]} {
+	    if {[file exists $item]} {
+	      set ::RtWizard::wizard_state(dbFile) $item
+	    } else {
+	      set possible_incorrect_g_name $item
+	    }
+	 }
+     } else {
+       lappend residualArgs $item
+     }
+   }
+   if {![info exists ::RtWizard::wizard_state(dbFile)] && $possible_incorrect_g_name} {
+      puts "Error: $possible_incorrect_g_name appears to specify a .g file, but file is not found."
+      if {[info exists argv]} {exit}
+   }
+   set argv2 $residualArgs
+}
+
+# If it looks like we have a .pix or .png filename, use it for output
+if {[info exists argv2]} {
+   set residualArgs {}
+   foreach item $argv2 {
+     if {[file extension $item] == ".pix" || [file extension $item] == ".png"} {
+	 if {![info exists ::RtWizard::wizard_state(output_filename)]} {
+	    set ::RtWizard::wizard_state(output_filename) $item
+	 } else {
+	    puts "Note - $item potentially specifies an output file, but $::RtWizard::wizard_state(output_filename) is already set as the output file."
+            lappend residualArgs $item
+	 }
+     } else {
+       lappend residualArgs $item
+     }
+   }
+   set argv2 $residualArgs
+}
+
+# If we still have something left, assume full color objects are being specified.  May be an incorrect
+# assumption, but after the parsing already done they're either object names or garbage and we may as
+# well fail after trying them.
+
+if {[info exists argv2]} {
+    if {![info exists ::RtWizard::wizard_state(color_objlist)]} {
+       set ::RtWizard::wizard_state(color_objlist) {}
+    }
+    foreach item $argv2 {
+       lappend ::RtWizard::wizard_state(color_objlist) $item
+    }
+}
+
 # If we have an explicit picture type, check whether we satisfy the minimum
 # data input for that type.
 if {[info exists ::have_picture_type] && ![info exists ::use_gui]} {
@@ -321,8 +381,13 @@ if {[info exists ::use_gui]} {
 			$RtWizard::wizard_state(ghost_objlist) \
 			$RtWizard::wizard_state(edge_objlist)
 		
-   if {[info exists RtWizard::wizard_state(output_filename)]} {	
-      exec [file join [bu_brlcad_root bin] fb-pix] -w $RtWizard::wizard_state(width) -n $RtWizard::wizard_state(nlines) -F $fbserv_port $RtWizard::wizard_state(output_filename) > junk  
+   if {[info exists RtWizard::wizard_state(output_filename)]} {
+      if {[file extension $::RtWizard::wizard_state(output_filename)] == ".pix"} {
+         exec [file join [bu_brlcad_root bin] fb-pix] -w $RtWizard::wizard_state(width) -n $RtWizard::wizard_state(nlines) -F $fbserv_port $RtWizard::wizard_state(output_filename) > junk
+      }
+      if {[file extension $::RtWizard::wizard_state(output_filename)] == ".png"} {
+         exec [file join [bu_brlcad_root bin] fb-png] -w $RtWizard::wizard_state(width) -n $RtWizard::wizard_state(nlines) -F $fbserv_port $RtWizard::wizard_state(output_filename) > junk
+      }
    }
 
    if {$RtWizard::wizard_state(framebuffer_type) == "/dev/mem"} {
