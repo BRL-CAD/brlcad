@@ -43,6 +43,7 @@
 
 #include "raytrace.h"
 #include "rtgeom.h"
+#include "wdb.h"
 
 #define fastf_t double
 
@@ -50,6 +51,7 @@
 extern "C" {
 #endif
     RT_EXPORT extern int brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
+    RT_EXPORT extern int brep_conversion(struct rt_db_internal* intern, ON_Brep** brep);
 #ifdef __cplusplus
 }
 #endif
@@ -1749,6 +1751,22 @@ plot_usage(struct bu_vls *vls)
     bu_vls_printf(vls, "\tplot F [index] - plot specific BREP 'face'\n");
 }
 
+int
+brep_conversion(struct rt_db_internal* intern, ON_Brep** brep)
+{
+    *brep = ON_Brep::New();
+    struct bn_tol tol;
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = 0.0005;
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = SMALL_FASTF;
+    tol.para = 1.0 - tol.perp;
+    if(intern->idb_meth->ft_brep == NULL) {
+	return -1;
+    }
+    intern->idb_meth->ft_brep(brep, intern, &tol);
+    return 0;
+}
 
 int
 brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag)
