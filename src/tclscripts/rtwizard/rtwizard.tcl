@@ -72,7 +72,7 @@ getopt::init {
         {gui 			""  	{::use_gui}}
         {no-gui 		""  	{::disable_gui}}
 	# Input/output files and framebuffers
-        {g-file   		i  	{::have_gfile ::RtWizard::wizard_state(dbFile)}}
+        {input	 		i  	{::have_gfile ::RtWizard::wizard_state(dbFile)}}
         {output   		o  	{::output ::RtWizard::wizard_state(output_filename)}}
         {framebuffer_type 	F  	{::framebuffer_type ::RtWizard::wizard_state(framebuffer_type)}}
         {width 			w	{::have_width ::RtWizard::wizard_state(width)}}
@@ -164,11 +164,13 @@ if {[info exists argv2]} {
 # well fail after trying them.
 
 if {[info exists argv2]} {
-    if {![info exists ::RtWizard::wizard_state(color_objlist)]} {
-       set ::RtWizard::wizard_state(color_objlist) {}
-    }
-    foreach item $argv2 {
-       lappend ::RtWizard::wizard_state(color_objlist) $item
+    if {[string length $argv2]} {
+      if {![info exists ::RtWizard::wizard_state(color_objlist)]} {
+         set ::RtWizard::wizard_state(color_objlist) {}
+      }
+      foreach item $argv2 {
+         lappend ::RtWizard::wizard_state(color_objlist) $item
+      }
     }
 }
 
@@ -264,6 +266,27 @@ if {[info exists ::have_picture_type] && ![info exists ::use_gui]} {
   }
 }
 
+# We can set a lot of defaults, but not the objects to draw - if we don't have *something* specified,
+# we have to go graphical.
+if {![info exists ::RtWizard::wizard_state(color_objlist)] && ![info exists ::RtWizard::wizard_state(line_objlist)] && ![info exists ::RtWizard::wizard_state(ghost_objlist)]} {
+   if {![info exists ::disable_gui]} {
+    set ::use_gui 1
+   } else {
+    puts "Error - please specify one or more objects for at least one of color, ghost, or line rendering modes."
+    if {[info exists argv]} {exit}
+   }
+}
+
+# If we haven't been told what .g file to use, we're going to have to go graphical
+if {![info exists ::RtWizard::wizard_state(dbFile)]} {
+   if {![info exists ::disable_gui]} {
+    set ::use_gui 1
+   } else {
+    puts "Error - please specify Geometry Database (.g) file."
+    if {[info exists argv]} {exit}
+   }
+}
+
 # OK, we've collected all the info we can from the inputs.  Make sure all the key
 # variables are initialized to sane defaults.  The viewsize and eye_pt defaults are determined from
 # the drawing of the objects into the display manager.
@@ -287,31 +310,6 @@ if {![info exists ::RtWizard::wizard_state(ghosting_intensity)]} { set ::RtWizar
 if {![info exists ::RtWizard::wizard_state(width)]} { set ::RtWizard::wizard_state(width) 512 }
 # Pix height (number of scan lines) 
 if {![info exists ::RtWizard::wizard_state(scanlines)]} { set ::RtWizard::wizard_state(scanlines) 512 }
-
-
-# If we haven't been told what .g file to use, we're going to have to go graphical
-if {![info exists ::RtWizard::wizard_state(dbFile)]} {
-   if {![info exists ::disable_gui]} {
-    set ::use_gui 1
-   } else {
-    puts "Error - please specify Geometry Database (.g) file."
-    if {[info exists argv]} {exit}
-   }
-}
-
-# We can set a lot of defaults, but not the objects to draw - if we don't have *something* specified,
-# we have to go graphical.
-if {![info exists ::RtWizard::wizard_state(color_objlist)] && ![info exists ::RtWizard::wizard_state(line_objlist)] && ![info exists ::RtWizard::wizard_state(ghost_objlist)]} {
-   if {![info exists ::disable_gui]} {
-    set ::use_gui 1
-   } else {
-    puts "Error - please specify one or more objects for at least one of color, ghost, or line rendering modes."
-    if {[info exists argv]} {exit}
-   }
-}
-
-# Now that we have made our gui determination based on the variables, initialize any lists that aren't
-# initialized for the objects
 # Color objects
 if {![info exists ::RtWizard::wizard_state(color_objlist)]} { set ::RtWizard::wizard_state(color_objlist) {} }
 # Edge objects
@@ -392,11 +390,11 @@ if {[info exists ::use_gui]} {
    if {[info exists ::RtWizard::wizard_state(output_filename)]} {
       set output_generated 0
       if {[file extension $::RtWizard::wizard_state(output_filename)] == ".png"} {
-         exec [file join [bu_brlcad_root bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $fbserv_port $::RtWizard::wizard_state(output_filename) > junk
+         exec [file join [bu_brlcad_root bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $fbserv_port $::RtWizard::wizard_state(output_filename)
          set output_generated 1
       }
       if {!$output_generated} {
-         exec [file join [bu_brlcad_root bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $fbserv_port $::RtWizard::wizard_state(output_filename) > junk
+         exec [file join [bu_brlcad_root bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $fbserv_port $::RtWizard::wizard_state(output_filename)
          set output_generated 1
       }
 
