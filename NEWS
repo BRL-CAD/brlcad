@@ -28,6 +28,7 @@ changes made.  See document footer for additional details.
 * fixed memory leaks in the comgeom-g geometry importer - Tom Browder
 * fixed comgeom-g bug importing ARS primitive objects - Tom Brower
 * added new command-line invocation support to rtwizard -  Cliff Yapp
+* fixed TIE BoT mesh disappearing object raytrace bug  - Keith Bowman
 * improved nurbs raytracing when shooting from inside - Keith Bowman
 * added 'draw'/'e' -m1 option for shading BoTs in mged - Richard Weiss
 * expanded docs on mged listeval and 'l' list commands - Richard Weiss
