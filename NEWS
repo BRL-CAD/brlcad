@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * added support to rtwizard for writing out .png files - Cliff Yapp
+* fixed region demotion bug in the mged 'red' command - Richard Weiss
 * added implicit conversion support to 'brep' command - Wu Jianbang
 * improved NURBS raytracing grazing hit & edge behavior - Keith Bowman
 * added initial documentation for make_pnts command - Richard Weiss
