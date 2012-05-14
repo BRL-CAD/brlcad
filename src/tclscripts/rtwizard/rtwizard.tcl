@@ -76,22 +76,22 @@ getopt::init {
         {output   		o  	{::output ::RtWizard::wizard_state(output_filename)}}
         {framebuffer_type 	F  	{::framebuffer_type ::RtWizard::wizard_state(framebuffer_type)}}
         {width 			w	{::have_width ::RtWizard::wizard_state(width)}}
-        {height 		n 	{::have_nlines ::RtWizard::wizard_state(nlines)}}
+        {height 		n 	{::have_scanlines ::RtWizard::wizard_state(scanlines)}}
 	# Objects to raytrace
         {color-objects		c	{::have_full_color_objs ::RtWizard::wizard_state(color_objlist) ...}}
         {ghost-objects		g	{::have_ghost_objs ::RtWizard::wizard_state(ghost_objlist) ...}}
-        {edge-objects		e	{::have_edge_objs ::RtWizard::wizard_state(edge_objlist) ...}}
+        {line-objects		l	{::have_line_objs ::RtWizard::wizard_state(line_objlist) ...}}
 	# Settings
         {background-color 	C 	{::have_bg_color ::RtWizard::wizard_state(bg_color)}}
         {ghosting-intensity 	G	{::have_ghosting_intensity ::RtWizard::wizard_state(ghosting_intensity)}}
-        {edge-color		""	{::have_line_color ::RtWizard::wizard_state(e_color)}}
-        {non-edge-color 	"" 	{::have_non_line_color ::RtWizard::wizard_state(ne_color)}}
+        {line-color		""	{::have_line_color ::RtWizard::wizard_state(e_color)}}
+        {non-line-color 	"" 	{::have_non_line_color ::RtWizard::wizard_state(ne_color)}}
         {occlusion 		O 	{::have_occlusion_mode ::RtWizard::wizard_state(occmode)}}
 	# Image type
         {type 			t 	{::have_picture_type ::RtWizard::wizard_state(picture_type)}}
 	# View
         {azimuth 		a  	{::have_azimuth ::RtWizard::wizard_state(init_azimuth)}}
-        {elevation 		l 	{::have_elevation ::RtWizard::wizard_state(init_elevation)}}
+        {elevation 		e 	{::have_elevation ::RtWizard::wizard_state(init_elevation)}}
         {twist 			"" 	{::have_twist ::RtWizard::wizard_state(init_twist)}}
         {zoom 			z 	{::have_zoom ::RtWizard::wizard_state(zoom)}}
 }
@@ -190,10 +190,10 @@ if {[info exists ::have_picture_type] && ![info exists ::use_gui]} {
         }
     B   -
     2	{
-          if {![info exists ::RtWizard::wizard_state(edge_objlist)]} {
+          if {![info exists ::RtWizard::wizard_state(line_objlist)]} {
              if ([info exists ::disable_gui]) {
-               puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no edge objects listed"
-               puts "Please specify edge objects using the -e option\n"
+               puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no line objects listed"
+               puts "Please specify line objects using the -e option\n"
                exit
              } else {
                set ::use_gui 1
@@ -204,13 +204,13 @@ if {[info exists ::have_picture_type] && ![info exists ::use_gui]} {
     D   -
     3	-
     4	{
-          if {![info exists ::RtWizard::wizard_state(color_objlist)] || ![info exists ::RtWizard::wizard_state(edge_objlist)]} {
+          if {![info exists ::RtWizard::wizard_state(color_objlist)] || ![info exists ::RtWizard::wizard_state(line_objlist)]} {
             if (![info exists ::disable_gui]) {
                set ::use_gui 1
             } else {
-              if {![info exists ::RtWizard::wizard_state(edge_objlist)]} {
-                puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no edge objects listed"
-                puts "Please specify edge objects using the -e option\n"
+              if {![info exists ::RtWizard::wizard_state(line_objlist)]} {
+                puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no line objects listed"
+                puts "Please specify line objects using the -e option\n"
               }
               if {![info exists ::RtWizard::wizard_state(color_objlist)]} {
                 puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no color objects listed"
@@ -240,7 +240,7 @@ if {[info exists ::have_picture_type] && ![info exists ::use_gui]} {
         }
     F   -
     6	{
-          if {![info exists ::RtWizard::wizard_state(color_objlist)] || ![info exists ::RtWizard::wizard_state(edge_objlist)] || ![info exists ::RtWizard::wizard_state(ghost_objlist)]} {
+          if {![info exists ::RtWizard::wizard_state(color_objlist)] || ![info exists ::RtWizard::wizard_state(line_objlist)] || ![info exists ::RtWizard::wizard_state(ghost_objlist)]} {
             if (![info exists ::disable_gui]) {
                set ::use_gui 1
             } else {
@@ -252,9 +252,9 @@ if {[info exists ::have_picture_type] && ![info exists ::use_gui]} {
                 puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no color objects listed"
                 puts "Please specify full color objects using the -c option\n"
               }
-              if {![info exists ::RtWizard::wizard_state(edge_objlist)]} {
-                puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no edge objects listed"
-                puts "Please specify edge objects using the -e option\n"
+              if {![info exists ::RtWizard::wizard_state(line_objlist)]} {
+                puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no line objects listed"
+                puts "Please specify line objects using the -e option\n"
               }
              exit
             }
@@ -286,7 +286,7 @@ if {![info exists ::RtWizard::wizard_state(ghosting_intensity)]} { set ::RtWizar
 # Pix width
 if {![info exists ::RtWizard::wizard_state(width)]} { set ::RtWizard::wizard_state(width) 512 }
 # Pix height (number of scan lines) 
-if {![info exists ::RtWizard::wizard_state(nlines)]} { set ::RtWizard::wizard_state(nlines) 512 }
+if {![info exists ::RtWizard::wizard_state(scanlines)]} { set ::RtWizard::wizard_state(scanlines) 512 }
 
 
 # If we haven't been told what .g file to use, we're going to have to go graphical
@@ -301,11 +301,11 @@ if {![info exists ::RtWizard::wizard_state(dbFile)]} {
 
 # We can set a lot of defaults, but not the objects to draw - if we don't have *something* specified,
 # we have to go graphical.
-if {![info exists ::RtWizard::wizard_state(color_objlist)] && ![info exists ::RtWizard::wizard_state(edge_objlist)] && ![info exists ::RtWizard::wizard_state(ghost_objlist)]} {
+if {![info exists ::RtWizard::wizard_state(color_objlist)] && ![info exists ::RtWizard::wizard_state(line_objlist)] && ![info exists ::RtWizard::wizard_state(ghost_objlist)]} {
    if {![info exists ::disable_gui]} {
     set ::use_gui 1
    } else {
-    puts "Error - please specify one or more objects for at least one of color, ghost, or edge rendering modes."
+    puts "Error - please specify one or more objects for at least one of color, ghost, or line rendering modes."
     if {[info exists argv]} {exit}
    }
 }
@@ -315,7 +315,7 @@ if {![info exists ::RtWizard::wizard_state(color_objlist)] && ![info exists ::Rt
 # Color objects
 if {![info exists ::RtWizard::wizard_state(color_objlist)]} { set ::RtWizard::wizard_state(color_objlist) {} }
 # Edge objects
-if {![info exists ::RtWizard::wizard_state(edge_objlist)]} { set ::RtWizard::wizard_state(edge_objlist) {} }
+if {![info exists ::RtWizard::wizard_state(line_objlist)]} { set ::RtWizard::wizard_state(line_objlist) {} }
 # Ghost objects
 if {![info exists ::RtWizard::wizard_state(ghost_objlist)]} { set ::RtWizard::wizard_state(ghost_objlist) {} }
 
@@ -355,15 +355,15 @@ if {[info exists ::use_gui]} {
       set ::RtWizard::wizard_state(framebuffer_type) /dev/mem
    }
    set fbserv_port 12
-   catch {exec [file join [bu_brlcad_root bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(nlines) $fbserv_port $::RtWizard::wizard_state(framebuffer_type) &} pid
+   catch {exec [file join [bu_brlcad_root bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $fbserv_port $::RtWizard::wizard_state(framebuffer_type) &} pid
    set fbserv_pid $pid
    if {[llength $::RtWizard::wizard_state(color_objlist)]} {
       foreach item $::RtWizard::wizard_state(color_objlist) {
 	db draw $item 
       }
    } 
-   if {[llength $::RtWizard::wizard_state(edge_objlist)]} {
-      foreach item $::RtWizard::wizard_state(edge_objlist) {
+   if {[llength $::RtWizard::wizard_state(line_objlist)]} {
+      foreach item $::RtWizard::wizard_state(line_objlist) {
 	db draw $item 
       }
    } 
@@ -381,20 +381,20 @@ if {[info exists ::use_gui]} {
    set orientation [lrange [lindex $vdata 1] 1 end]
    set eye_pt [lrange [lindex $vdata 2] 1 end]
    ::cadwidgets::rtimage $::RtWizard::wizard_state(dbFile) $fbserv_port \
-			$::RtWizard::wizard_state(width) $::RtWizard::wizard_state(nlines) \
+			$::RtWizard::wizard_state(width) $::RtWizard::wizard_state(scanlines) \
 			$viewsize $orientation $eye_pt \
 			$::RtWizard::wizard_state(bg_color) $::RtWizard::wizard_state(e_color) $::RtWizard::wizard_state(ne_color)\
 			$::RtWizard::wizard_state(occmode) $::RtWizard::wizard_state(ghosting_intensity) \
 			$::RtWizard::wizard_state(color_objlist) \
 			$::RtWizard::wizard_state(ghost_objlist) \
-			$::RtWizard::wizard_state(edge_objlist)
+			$::RtWizard::wizard_state(line_objlist)
 		
    if {[info exists ::RtWizard::wizard_state(output_filename)]} {
       if {[file extension $::RtWizard::wizard_state(output_filename)] == ".pix"} {
-         exec [file join [bu_brlcad_root bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(nlines) -F $fbserv_port $::RtWizard::wizard_state(output_filename) > junk
+         exec [file join [bu_brlcad_root bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $fbserv_port $::RtWizard::wizard_state(output_filename) > junk
       }
       if {[file extension $::RtWizard::wizard_state(output_filename)] == ".png"} {
-         exec [file join [bu_brlcad_root bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(nlines) -F $fbserv_port $::RtWizard::wizard_state(output_filename) > junk
+         exec [file join [bu_brlcad_root bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $fbserv_port $::RtWizard::wizard_state(output_filename) > junk
       }
    }
 
