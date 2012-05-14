@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2012-04-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* added implicit conversion support to 'brep' command - Wu Jianbang
 * improved NURBS raytracing grazing hit & edge behavior - Keith Bowman
 * added initial documentation for make_pnts command - Richard Weiss
 * fixed gqa crash when specified objects didn't exist - Richard Weiss
