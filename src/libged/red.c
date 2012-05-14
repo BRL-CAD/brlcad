@@ -738,7 +738,7 @@ ged_red(struct ged *gedp, int argc, const char **argv)
     struct directory *dp, *tmp_dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
-    static const char *usage = "{[ region | combination | group ]}";
+    static const char *usage = "{combination}";
     const char *editstring = NULL;
     const char *av[3];
     struct bu_vls comb_name = BU_VLS_INIT_ZERO;
@@ -805,7 +805,7 @@ ged_red(struct ged *gedp, int argc, const char **argv)
 	    }
 	}
 	if (!(dp->d_flags & RT_DIR_COMB)) {
-	    bu_vls_printf(gedp->ged_result_str, "%s must be a region, combination or group\n", argv[1]);
+	    bu_vls_printf(gedp->ged_result_str, "%s must be a combination\n", argv[1]);
 	    bu_vls_free(&comb_name);
 	    bu_vls_free(&temp_name);
 	    return GED_ERROR;
