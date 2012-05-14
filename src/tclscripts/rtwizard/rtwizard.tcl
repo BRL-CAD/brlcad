@@ -390,12 +390,16 @@ if {[info exists ::use_gui]} {
 			$::RtWizard::wizard_state(line_objlist)
 		
    if {[info exists ::RtWizard::wizard_state(output_filename)]} {
-      if {[file extension $::RtWizard::wizard_state(output_filename)] == ".pix"} {
-         exec [file join [bu_brlcad_root bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $fbserv_port $::RtWizard::wizard_state(output_filename) > junk
-      }
+      set output_generated 0
       if {[file extension $::RtWizard::wizard_state(output_filename)] == ".png"} {
          exec [file join [bu_brlcad_root bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $fbserv_port $::RtWizard::wizard_state(output_filename) > junk
+         set output_generated 1
       }
+      if {!$output_generated} {
+         exec [file join [bu_brlcad_root bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $fbserv_port $::RtWizard::wizard_state(output_filename) > junk
+         set output_generated 1
+      }
+
    }
 
    if {$::RtWizard::wizard_state(framebuffer_type) == "/dev/mem"} {
