@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* add regression test for 'red' command unsetting the region flag
+
 * quickly verify cross-platform that mged -c + attach X + draw doesn't
   crash.
 
