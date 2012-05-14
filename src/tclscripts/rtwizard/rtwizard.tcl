@@ -82,7 +82,7 @@ getopt::init {
         {ghost-objects		g	{::have_ghost_objs ::RtWizard::wizard_state(ghost_objlist) ...}}
         {edge-objects		e	{::have_edge_objs ::RtWizard::wizard_state(edge_objlist) ...}}
 	# Settings
-        {background-color 	"" 	{::have_bg_color ::RtWizard::wizard_state(bg_color)}}
+        {background-color 	C 	{::have_bg_color ::RtWizard::wizard_state(bg_color)}}
         {ghosting-intensity 	G	{::have_ghosting_intensity ::RtWizard::wizard_state(ghosting_intensity)}}
         {edge-color		""	{::have_line_color ::RtWizard::wizard_state(e_color)}}
         {non-edge-color 	"" 	{::have_non_line_color ::RtWizard::wizard_state(ne_color)}}
