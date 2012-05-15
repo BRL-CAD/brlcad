@@ -20,8 +20,6 @@
 
 const int Real_Num_Precision = REAL_NUM_PRECISION; // from STEPattribute.h
 
-#define STRING_DELIM '\''
-
 
 /******************************************************************************
 **    \file STEPaggregate.cc Functions for manipulating aggregate attributes

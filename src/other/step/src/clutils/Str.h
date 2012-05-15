@@ -13,9 +13,6 @@
 * and is not subject to copyright.
 */
 
-/* $Id: Str.h,v 3.0.1.3 1997/11/05 22:33:52 sauderd DP3.1 $  */
-
-
 #include <ctype.h>
 
 //#include <std.h> // not found in CenterLine C++
@@ -26,6 +23,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errordesc.h>
+
+#ifndef STRING_DELIM
+#define STRING_DELIM '\''
+#endif
 
 char         ToLower( const char c );
 char         ToUpper( const char c );

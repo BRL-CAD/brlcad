@@ -1,9 +1,9 @@
 
-#include <errordesc.h>
 #include <stdio.h>
-#include <sdai.h>
-#include <read_func.h>
-#include <STEPattribute.h>
+#include "errordesc.h"
+#include "sdai.h"
+#include "read_func.h"
+#include "STEPattribute.h"
 
 const int RealNumPrecision = REAL_NUM_PRECISION;
 
