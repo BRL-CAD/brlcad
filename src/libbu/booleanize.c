@@ -66,7 +66,7 @@ bu_str_true(const char *str)
 
     /* variant of "0" (e.g., 000) */
     val = strtol(newstr, &endptr, 10);
-    if (val == 0 && errno != EINVAL && endptr == '\0') {
+    if (val == 0 && errno != EINVAL && *endptr == '\0') {
 	bu_vls_free(&vls);
 	return 0;
     }
