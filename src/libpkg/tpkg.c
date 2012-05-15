@@ -276,7 +276,7 @@ run_client(const char *server, int port, const char *file)
 
     /* send the file data to the server */
     while (!feof(fp) && !ferror(fp)) {
-	bytes = fread(buffer, 1, 2048, fp);
+	bytes = fread(buffer, 1, TPKG_BUFSIZE, fp);
 	bu_log("Read %ld bytes from %s\n", bytes, file);
 
 	if (bytes > 0) {
