@@ -630,20 +630,20 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
  ** Side Effects:  generates code
  ** Status:  24-Feb-1992 new -kcm
  ******************************************************************/
-void
-getMCPrint( Express express, FILE * schema_h, FILE * schema_cc ) {
+void getMCPrint( Express express, FILE * schema_h, FILE * schema_cc ) {
     DictionaryEntry de;
     Schema schema;
 
     fprintf( schema_h,
              "\nSDAI_Model_contents_ptr GetModelContents(char *schemaName);\n" );
+    fprintf( schema_cc, "/*    Generated at %s:%d.    */\n\n", __FILE__, __LINE__ );
     fprintf( schema_cc, "%s%s%s%s",
              "// Generate a function to be called by Model to help it\n",
              "// create the necessary Model_contents without the\n",
              "// dictionary (Registry) handle since it doesn't have a\n",
              "// predetermined way to access to the handle.\n" );
     fprintf( schema_cc,
-             "\nSDAI_Model_contents_ptr GetModelContents(char *schemaName)\n{\n" );
+             "\nSDAI_Model_contents_ptr GetModelContents(char *schemaName) {\n" );
     DICTdo_type_init( express->symbol_table, &de, OBJ_SCHEMA );
     schema = ( Scope )DICTdo( &de );
     fprintf( schema_cc,
@@ -660,8 +660,7 @@ getMCPrint( Express express, FILE * schema_h, FILE * schema_cc ) {
                  "        return (SDAI_Model_contents_ptr) new SdaiModel_contents_%s; \n",
                  SCHEMAget_name( schema ) );
     }
-    fprintf( schema_cc, "    return (SDAI_Model_contents_ptr)NULL;\n" );
-    fprintf( schema_cc, "}\n" );
+    fprintf( schema_cc, "    else return (SDAI_Model_contents_ptr) 0;\n}\n" );
 }
 
 /******************************************************************

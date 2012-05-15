@@ -44,7 +44,7 @@ Severity  SDAI_Select::severity( Severity s ) {
     return _error.severity( s );
 }
 
-const char * SDAI_Select::Error() {
+std::string SDAI_Select::Error() {
     return _error.DetailMsg();
 }
 

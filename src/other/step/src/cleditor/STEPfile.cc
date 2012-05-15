@@ -857,7 +857,7 @@ SDAI_Application_instance * STEPfile::CreateInstance( istream & in, ostream & ou
                 // Common causes of error is that obj is an abstract supertype
                 // or that it can only be instantiated using external mapping.
                 // If neither are the case, create a generic message.
-                if( *obj->Error().UserMsg() != '\0' ) {
+                if( !obj->Error().UserMsg().empty() ) {
                     result.UserMsg( obj->Error().UserMsg() );
                 } else {
                     result.UserMsg( "Could not create ENTITY" );

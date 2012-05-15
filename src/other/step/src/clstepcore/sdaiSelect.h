@@ -39,7 +39,7 @@ class SDAI_Select  {
     public:
         Severity severity() const;
         Severity severity( Severity );
-        const char * Error();
+	std::string Error();
         void Error( const char * );
         // clears select's error
         void ClearError();

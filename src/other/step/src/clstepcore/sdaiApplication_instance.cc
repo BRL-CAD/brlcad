@@ -618,9 +618,8 @@ Severity SDAI_Application_instance::STEPread( int id,  int idIncr,
                 _error.GreaterSeverity( severe );
                 sprintf( errStr, "  %s :  ", attributes[i].Name() );
                 _error.AppendToDetailMsg( errStr ); // add attr name
-                _error.AppendToDetailMsg( ( char * ) // add attr error
-                                          attributes[i].Error().DetailMsg() );
-                _error.AppendToUserMsg( ( char * )attributes[i].Error().UserMsg() );
+                _error.AppendToDetailMsg( attributes[i].Error().DetailMsg() );  // add attr error
+                _error.AppendToUserMsg( attributes[i].Error().UserMsg() );
             }
         }
 
