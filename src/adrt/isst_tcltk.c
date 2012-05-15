@@ -621,8 +621,12 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
     return TCL_OK;
 }
 
+/* this function needs to be Isst_Init() for fbsd and mac, but may need to be
+ * Issttcltk_Init on other platforms (I'm looking at you, windows). Needs more
+ * investigation.
+ */
 int
-Issttcltk_Init(Tcl_Interp *interp)
+Isst_Init(Tcl_Interp *interp)
 {
     if (Tcl_PkgProvide(interp, "isst", "0.1") != TCL_OK) {
         return TCL_ERROR;
