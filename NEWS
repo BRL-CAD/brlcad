@@ -13,6 +13,8 @@ changes made.  See document footer for additional details.
 --- 2012-04-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* support for implicit to boundary representation geometry conversion
+	- Cliff Yapp, Wu Jianbang, Sean Morrison
 * added support to rtwizard for writing out .png files - Cliff Yapp
 * fixed region demotion bug in the mged 'red' command - Richard Weiss
 * added implicit conversion support to 'brep' command - Wu Jianbang
