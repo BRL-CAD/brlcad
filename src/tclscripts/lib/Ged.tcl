@@ -1626,7 +1626,7 @@ package provide cadwidgets::Ged 1.0
     set viewsize [lindex [lindex $vdata 0] 1]
     set orientation [lrange [lindex $vdata 1] 1 end]
     set eye_pt [lrange [lindex $vdata 2] 1 end]
-    set perspective [$mGed perspective]
+    set perspective [$mGed perspective $itk_component($itk_option(-pane))]
 
     set port [listen]
     if {$port < 0} {
@@ -1651,7 +1651,7 @@ package provide cadwidgets::Ged 1.0
 
     if {$kill_cmd != ""} {
 	# Give it time to copy the image from the inmem framebuffer
-#	after 3000 exec $kill_cmd $fbs_pid
+	after 3000 exec $kill_cmd $fbs_pid
     }
 
     return
