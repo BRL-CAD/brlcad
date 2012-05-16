@@ -69,6 +69,7 @@ changes made.  See document footer for additional details.
 * restored mged BoT editing interface functionality - Tom Browder
 * fixed mged 'solids' and 'regions' command crashes - Tom Browder
 * fixed mged bug setting color via Combination Editor - Nicholas Reed
+* fixed xyz orientation bug in anim_keyread & anim_orient - Nick Reed
 * fixed crash during rt -c "ae 35 25" view change - Bob Parker
 * added -r BoT orientation option on the obj-g importer - Nick Reed
 * added ambient occlusion shading method to rt - Lee Butler
