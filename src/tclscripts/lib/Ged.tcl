@@ -240,7 +240,7 @@ package provide cadwidgets::Ged 1.0
 	method make_bb {name args}
 	method get_fbserv {_fbtype _w _n}
 	method make_image_local {_bgcolor _ecolor _necolor _occmode _gamma _color_objects _ghost_objects _edge_objects}
-	method make_image {_port _w _n _viewsize _orientation _eye_pt _bgcolor _ecolor _necolor _occmode _gamma _color_objects _ghost_objects _edge_objects}
+	method make_image {_port _w _n _viewsize _orientation _eye_pt _perspective _bgcolor _ecolor _necolor _occmode _gamma _color_objects _ghost_objects _edge_objects}
 	method make_name {args}
 	method make_pnts {args}
 	method match {args}
@@ -1626,6 +1626,7 @@ package provide cadwidgets::Ged 1.0
     set viewsize [lindex [lindex $vdata 0] 1]
     set orientation [lrange [lindex $vdata 1] 1 end]
     set eye_pt [lrange [lindex $vdata 2] 1 end]
+    set perspective [$mGed perspective]
 
     set port [listen]
     if {$port < 0} {
@@ -1636,7 +1637,7 @@ package provide cadwidgets::Ged 1.0
     set fbs_pid [lindex $fbs_list 0]
     set fbs_port [lindex $fbs_list 1]
 
-    make_image $fbs_port $w $n $viewsize $orientation $eye_pt \
+    make_image $fbs_port $w $n $viewsize $orientation $eye_pt $perspective \
 	$_bgcolor $_ecolor $_necolor $_occmode $_gamma $_color_objects $_ghost_objects $_edge_objects
 
     set binpath [bu_brlcad_root "bin"]
@@ -1650,7 +1651,7 @@ package provide cadwidgets::Ged 1.0
 
     if {$kill_cmd != ""} {
 	# Give it time to copy the image from the inmem framebuffer
-	after 3000 exec $kill_cmd $fbs_pid
+#	after 3000 exec $kill_cmd $fbs_pid
     }
 
     return
@@ -1659,7 +1660,7 @@ package provide cadwidgets::Ged 1.0
 #
 # Not yet handling perspective.
 #
-::itcl::body cadwidgets::Ged::make_image {_port _w _n _viewsize _orientation _eye_pt _bgcolor _ecolor _necolor _occmode _gamma _color_objects _ghost_objects _edge_objects} {
+::itcl::body cadwidgets::Ged::make_image {_port _w _n _viewsize _orientation _eye_pt _perspective _bgcolor _ecolor _necolor _occmode _gamma _color_objects _ghost_objects _edge_objects} {
     global tcl_platform
     global env
 
@@ -1669,7 +1670,7 @@ package provide cadwidgets::Ged 1.0
 	return "make_image: no database is open"
     }
 
-    return [cadwidgets::rtimage $dbfile $_port $_w $_n $_viewsize $_orientation $_eye_pt \
+    return [cadwidgets::rtimage $dbfile $_port $_w $_n $_viewsize $_orientation $_eye_pt $_perspective \
 		$_bgcolor $_ecolor $_necolor $_occmode $_gamma $_color_objects $_ghost_objects $_edge_objects]
 }
 

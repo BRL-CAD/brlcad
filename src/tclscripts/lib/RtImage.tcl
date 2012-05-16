@@ -32,6 +32,7 @@ proc rtimage {_dbfile
 	      _viewsize
 	      _orientation
 	      _eye_pt
+	      _perspective
 	      _bgcolor
 	      _ecolor
 	      _necolor
@@ -72,10 +73,11 @@ proc rtimage {_dbfile
     if {[llength $_color_objects]} {
 	set have_color_objects 1
 	set cmd [list [file join $binpath rt] -w $_w -n $_n \
-		     -o $tfci \
+		     -F $_port \
 		     -V $ar \
 		     -R \
 		     -A 0.9 \
+		     -p $_perspective \
 		     -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
 		     -c [list viewsize $_viewsize] \
 		     -c [eval list orientation $_orientation] \
@@ -91,8 +93,64 @@ proc rtimage {_dbfile
 	#
 	catch {eval exec $cmd}
 
-	# Put the image into the framebuffer
+	# Look for color objects that also get edges
+	if {[llength $_edge_objects] && [llength $_ecolor] == 3} {
+
+	    set r [lindex $_ecolor 0]
+	    set g [lindex $_ecolor 1]
+	    set b [lindex $_ecolor 2]
+
+	    if {[string is digit $r] && $r <= 255 ||
+		[string is digit $g] && $g <= 255 ||
+		[string is digit $b] && $b <= 255} {
+
+		set fgMode [list set fg=[lindex $_ecolor 0],[lindex $_ecolor 1],[lindex $_ecolor 2]]
+
+		set ce_objects {}
+		set cne_objects {}
+		foreach cobj $_color_objects {
+		    set i [lsearch $_edge_objects $cobj]
+		    if {$i != -1} {
+			lappend ce_objects $cobj
+		    } else {
+			lappend ne_objects $cobj
+		    }
+		}
+
+		if {[llength $ce_objects]} {
+		    set coMode "-c {set ov=1}"
+		    set bgMode [list set bg=[lindex $_bgcolor 0],[lindex $_bgcolor 1],[lindex $_bgcolor 2]]
+
+		    set cmd [concat [file join $binpath rtedge] -w $_w -n $_n \
+				 -F $_port \
+				 -V $ar \
+				 -R \
+				 -A 0.9 \
+				 -p $_perspective \
+				 -c [list $fgMode] \
+				 -c [list $bgMode] \
+				 $coMode \
+				 -c [list [list viewsize $_viewsize]] \
+				 -c [list [eval list orientation $_orientation]] \
+				 -c [list [eval list eye_pt $_eye_pt]] \
+				 $_dbfile]
+
+		    foreach obj $ce_objects {
+			lappend cmd $obj
+		    }
+		}
+
+		#
+		# Run rtedge to generate the full-color with edges
+		#
+		catch {eval exec $cmd}
+
+	    }
+	}
+
+	# Pull the image from the framebuffer
 	catch {eval exec [file join $binpath pix-fb] -w $_w -n $_n -F $_port $tfci}
+
     } else {
 	set have_color_objects 0
 
@@ -131,6 +189,7 @@ proc rtimage {_dbfile
 		     -V $ar \
 		     -R \
 		     -A 0.9 \
+		     -p $_perspective \
 		     -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
 		     -c [list viewsize $_viewsize] \
 		     -c [eval list orientation $_orientation] \
@@ -194,6 +253,7 @@ proc rtimage {_dbfile
 		     -V $ar \
 		     -R \
 		     -A 0.9 \
+		     -p $_perspective \
 		     -c [list $fgMode] \
 		     -c [list $bgMode] \
 		     $coMode \
