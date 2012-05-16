@@ -68,6 +68,7 @@ changes made.  See document footer for additional details.
 * fixed rt* crash when output file cannot be created - Erik Greenwald
 * restored mged BoT editing interface functionality - Tom Browder
 * fixed mged 'solids' and 'regions' command crashes - Tom Browder
+* fixed orientation bug in mged 'ypr' rotation command - Nick Reed
 * fixed mged bug setting color via Combination Editor - Nicholas Reed
 * fixed xyz orientation bug in anim_keyread & anim_orient - Nick Reed
 * fixed crash during rt -c "ae 35 25" view change - Bob Parker
