@@ -380,7 +380,7 @@ if {[info exists ::use_gui]} {
    set eye_pt [lrange [lindex $vdata 2] 1 end]
    ::cadwidgets::rtimage $::RtWizard::wizard_state(dbFile) $fbserv_port \
 			$::RtWizard::wizard_state(width) $::RtWizard::wizard_state(scanlines) \
-			$viewsize $orientation $eye_pt \
+			$viewsize $orientation $eye_pt 0\
 			$::RtWizard::wizard_state(bg_color) $::RtWizard::wizard_state(e_color) $::RtWizard::wizard_state(ne_color)\
 			$::RtWizard::wizard_state(occmode) $::RtWizard::wizard_state(ghosting_intensity) \
 			$::RtWizard::wizard_state(color_objlist) \
