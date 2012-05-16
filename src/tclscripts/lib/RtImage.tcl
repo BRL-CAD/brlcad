@@ -148,17 +148,15 @@ proc rtimage {_dbfile
 	    }
 	}
 
-	# Pull the image from the framebuffer
-	catch {eval exec [file join $binpath pix-fb] -w $_w -n $_n -F $_port $tfci}
-
     } else {
 	set have_color_objects 0
 
 	# Put a blank image into the framebuffer
 	catch {exec [file join $binpath fbclear] -F $_port [lindex $_bgcolor 0] [lindex $_bgcolor 1] [lindex $_bgcolor 2]}
-	catch {exec [file join $binpath fb-pix] -w $_w -n $_n -F $_port $tfci}
     }
 
+    # Pull the image from the framebuffer
+    catch {exec [file join $binpath fb-pix] -w $_w -n $_n -F $_port $tfci}
 
     set occlude_objects [lsort -unique [concat $_color_objects $_ghost_objects]]
 
@@ -169,6 +167,7 @@ proc rtimage {_dbfile
 		     -V $ar \
 		     -R \
 		     -A 0.9 \
+		     -p $_perspective \
 		     -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
 		     -c [list viewsize $_viewsize] \
 		     -c [eval list orientation $_orientation] \
