@@ -4,6 +4,7 @@ noinst_LTLIBRARIES = libbu_nil.la
 
 noinst_PROGRAMS = \
 	test_basename \
+	test_booleanize \
 	test_dirname \
 	test_escape \
 	test_progname \
@@ -99,6 +100,10 @@ libbu_la_LIBADD = \
 	libbu_nil.la \
 	${BU_LIBS}
 
+test_booleanize_SOURCES = test_booleanize.c
+test_booleanize_LDADD = \
+	libbu.la
+	${BU_LIBS}
 test_timer_SOURCES = test_timer.c
 test_timer_LDADD = \
 	libbu.la \

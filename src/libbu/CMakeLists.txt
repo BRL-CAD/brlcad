@@ -100,6 +100,7 @@ if("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
 endif("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
 
 BRLCAD_ADDEXEC(test_basename test_basename.c libbu NO_INSTALL)
+BRLCAD_ADDEXEC(test_booleanize test_booleanize.c libbu NO_INSTALL)
 BRLCAD_ADDEXEC(test_dirname test_dirname.c libbu NO_INSTALL)
 BRLCAD_ADDEXEC(test_escape test_escape.c libbu NO_INSTALL)
 BRLCAD_ADDEXEC(test_progname test_progname.c libbu NO_INSTALL)

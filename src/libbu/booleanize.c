@@ -93,7 +93,7 @@ bu_str_true(const char *str)
 
     /* variant of "1" (e.g., 001) */
     val = strtol(newstr, &endptr, 10);
-    if (val == 1 && errno != EINVAL && endptr == '\0') {
+    if (val == 1 && errno != EINVAL && *endptr == '\0') {
 	bu_vls_free(&vls);
 	return 1;
     }
