@@ -337,6 +337,12 @@ and geometry database processing libraries into one library.
 FILESYSTEM ORGANIZATION
 -----------------------
 
+BRL-CAD has a STABLE branch in SVN that should always compile and run
+with expected behavior on all supported platforms.  Contrary to
+STABLE, the SVN trunk is generally expected to compile but more
+flexibility is allowed for resolution of cross-platform build issues
+and on-going development.
+
 Included below is a sample (not comprehensive) of how some of the
 sources are organized in the source distribution.  For the directories
 under src/, see the src/README file for more details on subdirectories
@@ -785,17 +791,6 @@ int the_answer()
 TESTING
 -------
 
-The need for a more formal testing plan has become more of a pressing
-issue as the size of BRL-CAD continues to grow.  As such, more
-importance on various forms of testing is becoming necessary.
-
-While specific plans for unit and black box testing are not yet
-finalized, the Corredor Automation Test Suite will be used to assist
-in performing cross-platform build tests, regression tests, and
-various integration and operability tests.  The suite's home is at:
-
-  http://sourceforge.net/projects/corredor/
-
 A debug build may be specified via:
 
    cmake ../brlcad -DCMAKE_BUILD_TYPE=Debug
@@ -816,21 +811,19 @@ To perform a run of the test suite:
 
   make regress
 
-To add tests to the test suite look at regress/weight.sh for an mged
-command example and regress/vls.sh for a utility function example.
-Each test gets added to the automatic execution list by creating two
-target entries in the ./regress/CMakeLists.txt: one for running the
-test individually (e.g., make regress-weight) and one for running it
-with all the other tests (make regress).  Also added are the
-dependencies of the tests on binary executable rtweight and test_vls,
-respectively.  Note also that each added file in the regress directory
-must be added to the list in CMAKEFILES at the bottom of file
-./regress/CMakeLists.txt
- 
+To add tests, look at regress/weight.sh for an mged command example
+and regress/vls.sh for a utility function example.  Each test gets
+added to the automatic execution list by creating two target entries
+in the ./regress/CMakeLists.txt: one for running the test individually
+(e.g., make regress-weight) and one for running it with all the other
+tests (make regress).  Also added are the dependencies of the tests on
+binary executable rtweight and test_vls, respectively.  Note also that
+each added file in the regress directory must be added to the list in
+CMAKEFILES at the bottom of file ./regress/CMakeLists.txt
 
-Note that individual programs may be tested after a build without
-installing. Typically binaries will be found in the bin/ subdirectory
-of the toplevel build directory, e.g.:
+Individual programs may be tested after a build without installing by
+running them from the build directory.  Typically, binaries will be
+found in the bin/ subdirectory of the toplevel build directory, e.g.:
 
   ./bin/mged
 
@@ -892,12 +885,6 @@ only.
 
 COMMIT ACCESS
 -------------
-
-BRL-CAD has a STABLE branch in SVN that should always compile and run
-with expected behavior on all supported platforms.  Contrary to
-STABLE, the SVN trunk is generally expected to compile but more
-flexibility is allowed for resolution of cross-platform build issues
-and on-going development.
 
 Commit access is evaluated on a person-to-person basis at the
 discretion of existing contributors, but generally readily granted so
