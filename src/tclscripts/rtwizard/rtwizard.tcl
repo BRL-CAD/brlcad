@@ -94,6 +94,8 @@ getopt::init {
         {elevation 		e 	{::have_elevation ::RtWizard::wizard_state(init_elevation)}}
         {twist 			"" 	{::have_twist ::RtWizard::wizard_state(init_twist)}}
         {zoom 			z 	{::have_zoom ::RtWizard::wizard_state(zoom)}}
+        # Debugging info
+	{verbose		v 	{::RtWizard::wizard_state(verbose)}}
 }
 
 # Perform the actual option parsing
@@ -317,6 +319,14 @@ if {![info exists ::RtWizard::wizard_state(line_objlist)]} { set ::RtWizard::wiz
 # Ghost objects
 if {![info exists ::RtWizard::wizard_state(ghost_objlist)]} { set ::RtWizard::wizard_state(ghost_objlist) {} }
 
+# Load the package that lets us output images
+package require cadwidgets::RtImage
+
+# Set verbosity if not already set
+if {![info exists ::RtWizard::wizard_state(verbose)]} {
+    set ::RtWizard::wizard_state(verbose) 0 
+}
+
 # If we're launching without enough arguments to fully specify an rtwizard 
 # run, a gui run has been specifically requested, or we've got arguments 
 # that aren't understood, go graphical
@@ -344,7 +354,6 @@ if {[info exists ::use_gui]} {
      }
    }
 
-   package require cadwidgets::RtImage
    set db [go_open db db $::RtWizard::wizard_state(dbFile)]
    db new_view v1 nu
 
@@ -352,7 +361,14 @@ if {[info exists ::use_gui]} {
    if {![info exists ::RtWizard::wizard_state(framebuffer_type)]} {
       set ::RtWizard::wizard_state(framebuffer_type) /dev/mem
    }
-   set fbserv_port 12
+
+   # We need a port number for the fbserv.
+   set fbserv_port 0
+   while { ! [catch {exec [file join [bu_brlcad_root bin] fbclear] -F $fbserv_port } error ] } {
+        if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $fbserv_port is already in use."}
+	incr fbserv_port
+   }
+
    catch {exec [file join [bu_brlcad_root bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $fbserv_port $::RtWizard::wizard_state(framebuffer_type) &} pid
    set fbserv_pid $pid
    if {[llength $::RtWizard::wizard_state(color_objlist)]} {
