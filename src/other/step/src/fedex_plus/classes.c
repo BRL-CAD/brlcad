@@ -1123,6 +1123,44 @@ void DataMemberPrint( Entity entity, FILE * file, Schema schema ) {
 }
 
 /**************************************************************//**
+ ** Procedure:  collectAttributes
+ ** Parameters:  Linked_List curList  --  current list to store the
+ **  attributes
+ **   Entity curEntity -- current Entity being processed
+ **   int flagParent -- flag control
+ ** Returns:
+ ** Description:  Retrieve the list of inherited attributes of an
+ ** entity
+ ******************************************************************/
+enum CollectType { ALL, ALL_BUT_FIRST, FIRST_ONLY };
+
+void collectAttributes( Linked_List curList, Entity curEntity, enum CollectType collect ) {
+    Linked_List parent_list = ENTITYget_supertypes( curEntity );
+
+    if( ! LISTempty( parent_list ) ) {
+        Link first = LINKnext( parent_list -> mark );
+
+        if ( collect == FIRST_ONLY ) {
+            collectAttributes( curList, first , ALL );
+        } else {
+            if ( collect == ALL_BUT_FIRST ) {
+                // remove first parent before proceeding
+                parent_list -> mark -> next = LINKnext( first );
+                LINK_destroy( first );
+            }
+            // collect attributes for all parents
+            LISTdo( parent_list, e, Entity )
+                collectAttributes( curList, e, ALL );
+            LISTod
+        }
+    }
+    // parse the attributes of the parent and add to the current list
+    LISTdo( ENTITYget_attributes( curEntity ), a, Variable )
+        LISTadd_first( curList, ( Generic ) a );
+    LISTod
+}
+
+/**************************************************************//**
  ** Procedure:  MemberFunctionSign
  ** Parameters:  Entity *entity --  entity being processed
  **     FILE* file  --  file being written to
