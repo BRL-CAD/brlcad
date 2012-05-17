@@ -8753,15 +8753,11 @@ to_png(struct ged *gedp,
 	}
 
 	{
-	    unsigned int pixel;
-	    unsigned int red_mask = 0xff000000;
-	    unsigned int green_mask = 0x00ff0000;
-	    unsigned int blue_mask = 0x0000ff00;
 #if defined(DM_WGL)
 	    int big_endian, swap_bytes;
 #endif
 	    int bytes_per_line = gdvp->gdv_dmp->dm_width * bytes_per_pixel;
-	    GLuint *pixels = bu_calloc(width * height, bytes_per_pixel, "pixels");
+	    unsigned char *pixels = (unsigned char *)bu_calloc(width * height, bytes_per_pixel, "pixels");
 
 #if defined(DM_WGL)
 	    if ((bu_byteorder() == BU_BIG_ENDIAN))
@@ -8780,22 +8776,20 @@ to_png(struct ged *gedp,
 
 	    for (i = 0, j = 0; i < height; ++i, ++j) {
 		/* irow points to the current scanline in pixels */
-		irow = (unsigned char *)(((unsigned char *)pixels) + ((height-i-1)*bytes_per_line));
+		irow = (unsigned char *)(pixels + ((height-i-1)*bytes_per_line));
 
 		/* rows[j] points to the current scanline in pixels */
 		rows[j] = (unsigned char *)(idata + ((height-i-1)*bytes_per_line));
 
 		/* for each pixel in current scanline of ximage_p */
 		for (k = 0; k < bytes_per_line; k += bytes_per_pixel) {
-		    pixel = *((unsigned int *)(irow + k));
-
 		    dbyte0 = rows[j] + k;
 		    dbyte1 = dbyte0 + 1;
 		    dbyte2 = dbyte0 + 2;
 
-		    *dbyte0 = (pixel & red_mask) >> 24;
-		    *dbyte1 = (pixel & green_mask) >> 16;
-		    *dbyte2 = (pixel & blue_mask) >> 8;
+		    *dbyte0 = *(irow + k);
+		    *dbyte1 = *(irow + k + 1);
+		    *dbyte2 = *(irow + k + 2);
 #if defined(DM_WGL)
 		    if (swap_bytes) {
 			unsigned char tmp_byte;
