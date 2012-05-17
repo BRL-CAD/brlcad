@@ -4,6 +4,7 @@
 #include "sdai.h"
 #include "read_func.h"
 #include "STEPattribute.h"
+#include "Str.h"
 
 const int RealNumPrecision = REAL_NUM_PRECISION;
 
@@ -458,41 +459,7 @@ Severity NumberValidLevel( const char * attrValue, ErrorDescriptor * err,
 
 /// assign 's' so that it contains an exchange file format string read from 'in'.
 void PushPastString( istream & in, std::string & s, ErrorDescriptor * err ) {
-    in >> ws; // skip whitespace
-
-    if ( in.peek() == STRING_DELIM ) {
-        int lastAppended = in.get();
-        s += lastAppended;
-
-        int numDelims = 0;
-        while ( in.good() ) {
-            if ( in.peek() == STRING_DELIM ) {
-                numDelims++;
-            } else if ( numDelims % 2 != 0 ) {
-                // Found non-delim char following odd number of inner delims.
-                // Most recently appended delim was unescaped and terminates string,
-                // so we break rather than append the next non-delim char.
-                break;
-            }
-            lastAppended = in.get();
-            s += lastAppended;
-        }
-
-        if ( lastAppended != STRING_DELIM ||
-             ( lastAppended == STRING_DELIM && numDelims % 2 == 0 ) )
-        {
-            // Last appended was non-delimiter, or was the opening delimiter
-            // or an escaped delimiter. Add closing delim and log error.
-            char messageBuf[BUFSIZ];
-            messageBuf[0] = '\0';
-
-            err->GreaterSeverity( SEVERITY_INPUT_ERROR );
-            sprintf( messageBuf, "Unterminated string value.\n" );
-            err->AppendToDetailMsg( messageBuf );
-
-            s += STRING_DELIM;
-        }
-    }
+    s += GetLiteralStr( in, err );
 }
 
 /**

@@ -574,23 +574,6 @@ Severity SDAI_Application_instance::STEPread( int id,  int idIncr,
                     _error.AppendToUserMsg(
                         "Since using pre-technical corrigendum... missing asterisk for redefined attr. " );
                 }
-                /*
-                        if( ! ( (c == ',') || (c == ')') ) )
-                        { // input is not a delimiter - an error
-                            PrependEntityErrMsg();
-
-                            _error.AppendToDetailMsg(
-                            "Delimiter expected after redefined asterisk attribute encoding (since using pre-technical corregendum.\n");
-                            CheckRemainingInput(in, &_error, "ENTITY", ",)");
-                            if(!in.good())
-                              return _error.severity();
-                            if(_error.severity() <= SEVERITY_INPUT_ERROR)
-                            {
-                //          STEPread_error(c,i,in);
-                            return _error.severity();
-                            }
-                        }
-                */
             } else { // using technical corrigendum
                 // should be nothing to do except loop again unless...
                 // if at end need to have read the closing paren.

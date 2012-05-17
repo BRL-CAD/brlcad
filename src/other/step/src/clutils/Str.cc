@@ -9,8 +9,9 @@
 * and is not subject to copyright.
 */
 
-#include <Str.h>
+#include "Str.h"
 #include <sstream>
+#include <string>
 
 /******************************************************************
  ** Procedure:  string functions
@@ -109,6 +110,65 @@ int StrCmpIns( const char * str1, const char * str2 ) {
         str2++;
     }
     return c1 - c2;
+}
+
+/**
+ * Test if a string ends with the given suffix.
+ */
+bool StrEndsWith( const std::string &s, const char * suf ) {
+    if ( suf == NULL ) {
+        return false;
+    }
+    std::string suffix = suf;
+    size_t sLen = s.length();
+    size_t suffixLen = suffix.length();
+    if ( sLen < suffixLen ) {
+        return false;
+    }
+    if ( s.substr( sLen - suffixLen ).compare( suffix ) == 0 ) {
+        return true;
+    }
+    return false;
+}
+
+/**
+ *  Extract the next delimited string from the istream.
+ */
+std::string GetLiteralStr( istream & in, ErrorDescriptor * err ) {
+    std::string s;
+    in >> std::ws; // skip whitespace
+
+    if ( in.good() && in.peek() == STRING_DELIM ) {
+        s += in.get();
+        bool allDelimsEscaped = true;
+        while ( in.good() ) {
+            if ( in.peek() == STRING_DELIM ) {
+                // A delimiter closes the string unless it's followed by another
+                // delimiter, in which case it's escaped. \S\ starts an ISO
+                // 8859 character escape sequence, so we ignore delimiters
+                // prefixed with \S\.
+                if ( !StrEndsWith( s, "\\S\\" ) ) {
+                    allDelimsEscaped = !allDelimsEscaped;
+                }
+            } else if ( !allDelimsEscaped ) {
+                // Found normal char after unescaped delim, so last delim
+                // that was appended terminated the string.
+                break;
+            }
+            if ( !in.eof() ) {
+                s += in.get();
+            }
+        }
+        if ( allDelimsEscaped ) {
+            // Any delimiters found after the opening delimiter were escaped,
+            // so the string is unclosed.
+            // non-recoverable error
+            err->AppendToDetailMsg( "Missing closing quote on string value.\n" );
+            err->AppendToUserMsg( "Missing closing quote on string value.\n" );
+            err->GreaterSeverity( SEVERITY_INPUT_ERROR );
+        }
+    }
+    return s;
 }
 
 /**************************************************************//**
