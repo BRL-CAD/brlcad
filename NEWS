@@ -15,7 +15,7 @@ changes made.  See document footer for additional details.
 
 * support for implicit to boundary representation geometry conversion
 	- Cliff Yapp, Wu Jianbang, Sean Morrison
-* added support to rtwizard for writing out .png files - Cliff Yapp
+* added rtwizard support for writing .png - Cliff Yapp, Richard Weiss
 * fixed region demotion bug in the mged 'red' command - Richard Weiss
 * added implicit conversion support to 'brep' command - Wu Jianbang
 * improved NURBS raytracing grazing hit & edge behavior - Keith Bowman
