@@ -27,7 +27,8 @@ changes made.  See document footer for additional details.
 * fixed rtedge/rtwizard edge overlay rendering bug - Bob Parker
 * fixed 'open: Permission denied' rtedge output file bug - Cliff Yapp
 * upgraded libpng to 1.5.10 - Cliff Yapp
-* fixed memory leaks in the comgeom-g geometry importer - Tom Browder
+* fixed various memory leaks in the comgeom-g geometry importer
+	- Tom Browder, Nick Reed
 * fixed comgeom-g bug importing ARS primitive objects - Tom Brower
 * added new command-line invocation support to rtwizard -  Cliff Yapp
 * fixed BoT mesh hit offset and vanish TIE render bugs  - Keith Bowman
