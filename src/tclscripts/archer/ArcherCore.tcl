@@ -380,6 +380,9 @@ namespace eval ArcherCore {
 	variable mCompSelectGroupPref ""
 	variable mCompSelectGroupList ""
 
+	variable mPerspective 0
+	variable mPerspectivePref 0
+
 	variable mZClipBack 100.0
 	variable mZClipBackPref 100.0
 	variable mZClipFront 100.0
@@ -565,10 +568,12 @@ namespace eval ArcherCore {
 	method launchRtApp {_app _size}
 
 	method updateDisplaySettings {}
+	method updatePerspective {_unused}
 	method updateZClipPlanes {_unused}
 	method calculateZClipMax {}
 	method calculateZClipBackMax {}
 	method calculateZClipFrontMax {}
+	method pushPerspectiveSettings {}
 	method pushZClipSettings {}
 
 	method shootRay_doit {_start _op _target _prep _no_bool _onehit _bot_dflag _objects}
@@ -5100,7 +5105,19 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::updateDisplaySettings {} {
+    $itk_component(ged) refresh_off
+
     updateZClipPlanes 0
+    updatePerspective 0
+    doLighting
+    gedCmd dlist_on $mDisplayListMode
+
+    $itk_component(ged) refresh_on
+    $itk_component(ged) refresh_all
+}
+
+::itcl::body ArcherCore::updatePerspective {_unused} {
+    $itk_component(ged) perspective_all $mPerspectivePref
 }
 
 ::itcl::body ArcherCore::updateZClipPlanes {_unused} {
@@ -5132,12 +5149,17 @@ namespace eval ArcherCore {
     updateZClipPlanes 0
 }
 
+::itcl::body ArcherCore::pushPerspectiveSettings {} {
+    set mPerspectivePref $mPerspective
+    updatePerspective 0
+}
+
 ::itcl::body ArcherCore::pushZClipSettings {} {
     set mZClipBackMaxPref $mZClipBackMax
     set mZClipFrontMaxPref $mZClipFrontMax
     set mZClipBackPref $mZClipBack
     set mZClipFrontPref $mZClipFront
-    updateDisplaySettings
+    updateZClipPlanes 0
 }
 
 ::itcl::body ArcherCore::shootRay_doit {_start _op _target _prep _no_bool _onehit _bot_dflag _objects} {

@@ -499,6 +499,7 @@ package provide Archer 1.0
     Load ""
 
     if {!$mViewOnly} {
+	pushPerspectiveSettings
 	pushZClipSettings
     }
 
@@ -2288,6 +2289,22 @@ proc title_node_handler {node} {
 
     set parent $itk_component(displayF)
 
+    itk_component add perspectiveL {
+	::ttk::label $parent.perspectiveL \
+	    -anchor se \
+	    -text "Perspective Angle:"
+    } {}
+    itk_component add perspectiveS {
+	::scale $parent.perspectiveS \
+	    -showvalue 1 \
+	    -orient horizontal \
+	    -from 0.0 \
+	    -to 175.0 \
+	    -resolution 5 \
+	    -variable [::itcl::scope mPerspectivePref] \
+	    -command [::itcl::code $this updatePerspective]
+    }
+
     itk_component add zclipFrontL {
 	::ttk::label $parent.zclipFrontL \
 	    -anchor se \
@@ -2422,6 +2439,9 @@ proc title_node_handler {node} {
     grid columnconfigure $itk_component(lightModeF) 0 -weight 1
 
     set i 0
+    grid $itk_component(perspectiveL) -column 0 -row $i -sticky se
+    grid $itk_component(perspectiveS) -column 1 -row $i -sticky ew
+    incr i
     grid $itk_component(zclipBackL) -column 0 -row $i -sticky se
     grid $itk_component(zclipBackS) -column 1 -row $i -sticky ew
     incr i
@@ -7511,11 +7531,13 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
 
 ::itcl::body Archer::applyDisplayPreferences {} {
     updateDisplaySettings
-    doLighting
 }
 
 
 ::itcl::body Archer::applyDisplayPreferencesIfDiff {} {
+    set rflag 0
+    $itk_component(ged) refresh_off
+
     if {$mZClipBackMaxPref != $mZClipBackMax ||
 	$mZClipFrontMaxPref != $mZClipFrontMax ||
 	$mZClipBackPref != $mZClipBack ||
@@ -7524,17 +7546,32 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
 	set mZClipFrontMax $mZClipFrontMaxPref
 	set mZClipBack $mZClipBackPref
 	set mZClipFront $mZClipFrontPref
-	updateDisplaySettings
+
+	updateZClipPlanes 0
+	set rflag 1
+    }
+
+    if {$mPerspectivePref != $mPerspective} {
+	set mPerspective $mPerspectivePref
+	updatePerspective 0
+	set rflag 1
     }
 
     if {$mLightingModePref != $mLightingMode} {
 	set mLightingMode $mLightingModePref
 	doLighting
+	set rflag 1
     }
 
     if {$mDisplayListModePref != $mDisplayListMode} {
 	set mDisplayListMode $mDisplayListModePref
 	gedCmd dlist_on $mDisplayListMode
+	set rflag 1
+    }
+
+    $itk_component(ged) refresh_on
+    if {$rflag} {
+	$itk_component(ged) refresh_all
     }
 }
 
@@ -8107,17 +8144,33 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
 
 
 ::itcl::body Archer::cancelPreferences {} {
+    set rflag 0
+    $itk_component(ged) refresh_off
 
     # Handling special case for zclip prefences (i.e. put zclip planes back where they were)
     if {$mZClipBackMaxPref != $mZClipBackMax ||
 	$mZClipFrontMaxPref != $mZClipFrontMax ||
 	$mZClipBackPref != $mZClipBack ||
 	$mZClipFrontPref != $mZClipFront} {
+
 	set mZClipBackMaxPref $mZClipBackMax
 	set mZClipFrontMaxPref $mZClipFrontMax
 	set mZClipBackPref $mZClipBack
 	set mZClipFrontPref $mZClipFront
-	updateDisplaySettings
+
+	updateZClipPlanes 0
+	set rflag 1
+    }
+
+    if {$mPerspectivePref != $mPerspective} {
+	set mPerspectivePref $mPerspective
+	updatePerspective 0
+	set rflag 1
+    }
+
+    $itk_component(ged) refresh_on
+    if {$rflag} {
+	$itk_component(ged) refresh_all
     }
 }
 
@@ -8182,6 +8235,8 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
     set mModelAxesTickMajorLengthPref $mModelAxesTickMajorLength
     set mModelAxesTickColorPref $mModelAxesTickColor
     set mModelAxesTickMajorColorPref $mModelAxesTickMajorColor
+
+    set mPerspectivePref $mPerspective
 
     set mZClipBackMaxPref $mZClipBackMax
     set mZClipFrontMaxPref $mZClipFrontMax
@@ -8337,6 +8392,7 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
     puts $_pfile "set mModelAxesTickMajorColor \"$mModelAxesTickMajorColor\""
 
     puts $_pfile "set mLastSelectedDir \"$mLastSelectedDir\""
+    puts $_pfile "set mPerspective $mPerspective"
     puts $_pfile "set mZClipBackMax $mZClipBackMax"
     puts $_pfile "set mZClipFrontMax $mZClipFrontMax"
     puts $_pfile "set mZClipBack $mZClipBack"
