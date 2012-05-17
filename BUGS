@@ -288,9 +288,6 @@ Recent Bugs
   on freebsd using xfce and metacity (single display, 1680x1050 res).
   dm shows up just fine.
 
-* wireframe is failing to draw when framebuffer is displayed (underlay
-  or overlay) in mged.  problem is specific to dm-ogl (dm-x is fine).
-
 * g2asc of a v4 is apparently writing out the wrong s_cgtypes and
   otherwise parsing v4 .g files incorrectly
 
@@ -303,9 +300,6 @@ Recent Bugs
 
 * rt is consuming 100% CPU in fb_close() on a lingering ogl
   framebuffer waiting to close.  needs to sleep or select for a while.
-
-* report of mged being locked up on startup taking full cpu, works
-  fine with with -c with X dm.
 
 * MGED File->Preferences->Fonts results in error "named font "button
   _font" doesn't exist on Linux.
