@@ -292,6 +292,8 @@ if {![info exists ::RtWizard::wizard_state(dbFile)]} {
 # OK, we've collected all the info we can from the inputs.  Make sure all the key
 # variables are initialized to sane defaults.  The viewsize and eye_pt defaults are determined from
 # the drawing of the objects into the display manager.
+# Geometry Database
+if {![info exists ::RtWizard::wizard_state(dbFile)]} { set ::RtWizard::wizard_state(dbFile) "" }
 # Initial orientation
 if {![info exists ::RtWizard::wizard_state(init_azimuth)]} { set ::RtWizard::wizard_state(init_azimuth) 35 }
 if {![info exists ::RtWizard::wizard_state(init_elevation)]} { set ::RtWizard::wizard_state(init_elevation) 25 }
@@ -328,8 +330,7 @@ if {![info exists ::RtWizard::wizard_state(verbose)]} {
 }
 
 # If we're launching without enough arguments to fully specify an rtwizard 
-# run, a gui run has been specifically requested, or we've got arguments 
-# that aren't understood, go graphical
+# run or a gui run has been specifically requested, go graphical
 if {[info exists ::use_gui]} {
    # Have to do these loads until we get "package require tclcad" and "package require dm" 
    # working - bwish loads them for us by default, but since rtwizard may be either
