@@ -87,6 +87,7 @@ changes made.  See document footer for additional details.
 * added 'l' list command to archer so 'g' expands args - Bob Parker
 * added length parameter documentation for 'coil' command - Cliff Yapp
 * improved performance of boolean evaluations - Richard Weiss
+* added support for braces around shader parameters - Nick Reed
 * improved boolean evaluation converting to polygons - Richard Weiss
 * ported the obj-g geometry importer to Windows - Nicholas Reed
 * improved import robustness and parsing of OBJ geometry files
