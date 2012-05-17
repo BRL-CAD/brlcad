@@ -30,8 +30,7 @@ automatic_test(const char *input)
     char buf_input[1000], buf_aux[1000];
     int buf_len, check, res, ans;
 
-    if(input)
-    {
+    if (input) {
         bu_strlcpy(buf_input, input, strlen(input)+1);
 
         buf_len = strlen(buf_input);
@@ -51,42 +50,40 @@ automatic_test(const char *input)
         res = bu_str_true(buf_input);
 
         /* empty/'n'/'N' as first character for buf_input string */
-        if((buf_len == 0) || (buf_input[0] == 'n') || (buf_input[0] == 'N') ||
+        if ((buf_len == 0) || (buf_input[0] == 'n') || (buf_input[0] == 'N') ||
             (strcmp(buf_input, "(null)") == 0)) {
             ans = 0;
             check = (res == ans);
-        }
-
-        /* true value comes from here on */
-
-        /* 'y'/'Y' as first character/"1" or variants of 1 for buf_input string  */
-        else
-            if((buf_input[0] == 'y') || (buf_input[0] == 'Y') || (atol(buf_input) == 1)) {
+        } else {
+            /* true value comes from here on */
+            /* 'y'/'Y' as first character/"1" or variants of 1 for buf_input string  */
+            if ((buf_input[0] == 'y') || (buf_input[0] == 'Y') || (atol(buf_input) == 1)) {
                 ans = 1;
                 check = (res == ans);
-            }
-            else 
+            } else {
                 /* "0" or variants of 0 */
-                if((buf_input[0] == '0') && (atol(buf_input) == 0)) {
+                if ((buf_input[0] == '0') && (atol(buf_input) == 0)) {
                     ans = 0;
                     check = (res == ans);
-                }
-                else {
+                } else {
                     ans = (int)buf_input[0];
                     check = (res == ans);
                 }
+            }
+        }
     }
 
-    if(!input) {
+    if (!input) {
         ans = 0;
         res = bu_str_true(NULL);
         check = (res == ans);
     }
 
-    if(check)
+    if (check) {
         printf("%24s -> %d [PASSED]\n", buf_input, res);
-    else
+    } else {
         printf("%24s -> %d (should be: %d) [FAIL]\n", buf_input, res, ans);
+    }
 }
 
 
@@ -116,11 +113,11 @@ int main(int ac, char *av[])
 
     /*  user tests */
     if (ac > 1) {
-      printf("Enter a string:\n");
-      bu_fgets(input, 1000, stdin);
-    if (strlen(input) > 0)
-      input[strlen(input)-1] = '\0';
-      automatic_test(input);
+        printf("Enter a string:\n");
+        bu_fgets(input, 1000, stdin);
+        if (strlen(input) > 0)
+            input[strlen(input)-1] = '\0';
+        automatic_test(input);
     }
 
     printf("%s: testing complete\n", av[0]);
