@@ -72,6 +72,7 @@ changes made.  See document footer for additional details.
 * fixed mged bug setting color via Combination Editor - Nicholas Reed
 * fixed numerous xyz/ypr orientation bugs in anim tools - Nick Reed
 * fixed keypoint vertex bug when editing extrude objects - Nick Reed
+* fixed eto error converting hyp objects with asc2g tool - Nick Reed
 * fixed crash during rt -c "ae 35 25" view change - Bob Parker
 * added -r BoT orientation option on the obj-g importer - Nick Reed
 * added ambient occlusion shading method to rt - Lee Butler
