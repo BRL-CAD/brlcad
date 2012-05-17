@@ -93,6 +93,7 @@ changes made.  See document footer for additional details.
 * improved import robustness and parsing of OBJ geometry files
 	- Nicholas Reed, Richard Weiss, Mike Tegtmeyer
 * added new physics 'simulate' command to mged/archer - Abhijit Nandy
+* added 'bb' bounding box command usage within mged - Tom Browder
 
 
 ----------------------------------------------------------------------
