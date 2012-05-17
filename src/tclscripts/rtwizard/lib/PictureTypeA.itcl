@@ -61,6 +61,7 @@ namespace eval RtWizard {
 	    #
 	    method activate {}
 	    method deactivate {}
+	    method rtimage {w h}
 	    method preview {}
 	    method fullSize {}
 	}
@@ -112,69 +113,9 @@ namespace eval RtWizard {
     }
 
     #
-    # preview - generates a 1/4 size preview image, limited to on-screen
+    # rtimage - generates a picture.
     #
-    itcl::body PictureTypeA::preview { } {
-	#
-	# get height and width
-	#
-	set w [$::fbp getWidth]
-	set w2 [ expr $w / 2 ]
-
-	set h [$::fbp getHeight]
-	set h2 [ expr $h / 2 ]
-
-	#
-	# get a framebuffer
-	#
-	set fb [$::fbp getFrameBuffer $w2 $h2 true]
-
-	#
-	# Get the view info
-	#
-	set viewPage [$::exp getViewPage]
-	set viewInfo [$viewPage getEyeModel]
-	set view_info [regsub -all ";" $viewInfo ""]
-	set vdata [split $view_info "\n"]
-	set viewsize [lindex [lindex $vdata 0] 1]
-	set orientation [lrange [lindex $vdata 1] 1 end]
-	set eye_pt [lrange [lindex $vdata 2] 1 end]
-
-	#
-	# Get the background color
-	#
-        set objPage $fcp
-	set bgHex [$objPage getBackgroundColor]
-	set bg [hexToRGB $bgHex]
-
-        #
-        # Get the object list, the file is global
-        #
-        set color_objects [$objPage getObjects]
-            
-        # Get the perspective angle
-        #
-        set perspective [$viewPage getPerspective]
-
-        ::cadwidgets::rtimage $::RtWizard::wizard_state(dbFile) $fb \
-            $w2 $h2 \
-            $viewsize $orientation $eye_pt $perspective\
-            $bg "" ""\
-            "" "" \
-            $color_objects \
-            "" \
-            "" 
-    }
-
-    #
-    # fullSize - generates a fullSize picture.
-    #
-    itcl::body PictureTypeA::fullSize { } {
-	#
-	# get height and width
-	#
-	set w [$::fbp getWidth]
-	set h [$::fbp getHeight]
+    itcl::body PictureTypeA::rtimage {w h} {
 
 	#
 	# get a framebuffer
@@ -247,6 +188,36 @@ namespace eval RtWizard {
 	       }
  	   }
         }
+    }
+
+
+    #
+    # preview - generates a 1/4 size preview image, limited to on-screen
+    #
+    itcl::body PictureTypeA::preview { } {
+	#
+	# get height and width
+	#
+	set w [$::fbp getWidth]
+	set w2 [ expr $w / 2 ]
+
+	set h [$::fbp getHeight]
+	set h2 [ expr $h / 2 ]
+
+	rtimage $w2 $h2
+    }
+
+    #
+    # fullSize - generates a fullSize picture.
+    #
+    itcl::body PictureTypeA::fullSize { } {
+	#
+	# get height and width
+	#
+	set w [$::fbp getWidth]
+	set h [$::fbp getHeight]
+
+	rtimage $w $h
     }
 
 

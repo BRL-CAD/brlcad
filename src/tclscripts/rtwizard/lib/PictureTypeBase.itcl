@@ -78,6 +78,7 @@ namespace eval RtWizard {
 	    # These methods generate pictures. They query the
 	    # individual pages for the information they need.
 	    #
+	    method rtimage {w h}
 	    method preview {}
 	    method fullSize {}
 	}
@@ -198,6 +199,15 @@ namespace eval RtWizard {
     #
     itcl::body PictureTypeBase::deactivate { } {
 	append msg "PictureTypeBase::deactivate called" \
+	    " - should be overloaded by derived class."
+	error $msg
+    }
+
+    #
+    # rtimage - responsible for generating the actual image
+    #
+    itcl::body PictureTypeBase::rtimage {w h} {
+	append msg "PictureTypeBase::rtimage called" \
 	    " - should be overloaded by derived class."
 	error $msg
     }
