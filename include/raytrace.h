@@ -5336,7 +5336,7 @@ RT_EXPORT extern int db5_standardize_attribute(const char *attr);
  * PRIVATE: this is new API and should be considered private for the
  * time being.
  */
-RT_EXPORT extern void db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_value_set *avs, const char *name);
+RT_EXPORT extern void db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_value_set *avs, struct directory *dp);
 /**
  * PRIVATE: this is new API and should be considered private for the
  * time being.
