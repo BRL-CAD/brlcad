@@ -1764,7 +1764,7 @@ bu_shader_to_list(const char *in, struct bu_vls *vls)
 	    return 0;
 	}
 
-	if (shader_name_len == 6 && !bu_strnasecmp(shader, "envmap", 6)) {
+	if (shader_name_len == 6 && !bu_strncasecmp(shader, "envmap", 6)) {
 	    bu_vls_strcat(vls, "envmap {");
 	    if (bu_shader_to_list(iptr, vls)) {
 		bu_free(copy, BU_FLSTR);
