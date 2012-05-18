@@ -8745,6 +8745,7 @@ to_pix(struct ged *gedp,
 
     pixels = (unsigned char *)bu_calloc(width * height, bytes_per_pixel, "pixels");
     glReadBuffer(GL_FRONT);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 
     for (i = 0; i < height; ++i) {
@@ -8855,6 +8856,7 @@ to_png(struct ged *gedp,
 
     pixels = (unsigned char *)bu_calloc(width * height, bytes_per_pixel, "pixels");
     glReadBuffer(GL_FRONT);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
     rows = (unsigned char **)bu_calloc(height, sizeof(unsigned char *), "rows");
 
