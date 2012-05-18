@@ -93,6 +93,7 @@ getopt::init {
         {azimuth 		a  	{::have_azimuth ::RtWizard::wizard_state(init_azimuth)}}
         {elevation 		e 	{::have_elevation ::RtWizard::wizard_state(init_elevation)}}
         {twist 			"" 	{::have_twist ::RtWizard::wizard_state(init_twist)}}
+	{perspective		P	{::have_perspective ::RtWizard::wizard_state(perspective)}}
         {zoom 			z 	{::have_zoom ::RtWizard::wizard_state(zoom)}}
         # Debugging info
 	{verbose		v 	{::RtWizard::wizard_state(verbose)}}
@@ -107,6 +108,8 @@ if {[info exists argc]} {
 } else {
   set argc2 0
 }
+
+puts $::RtWizard::wizard_state(zoom)
 
 # If we have both gui and no-gui specified, use gui
 if {[info exists ::use_gui] && [info exists ::disable_gui]} {
@@ -300,6 +303,8 @@ if {![info exists ::RtWizard::wizard_state(init_elevation)]} { set ::RtWizard::w
 if {![info exists ::RtWizard::wizard_state(init_twist)]} { set ::RtWizard::wizard_state(init_twist) 0 }
 # Initial zoom
 if {![info exists ::RtWizard::wizard_state(zoom)]} { set ::RtWizard::wizard_state(zoom) 1 }
+# Initial perspective
+if {![info exists ::RtWizard::wizard_state(perspective)]} { set ::RtWizard::wizard_state(perspective) 0 }
 # Background color
 if {![info exists ::RtWizard::wizard_state(bg_color)]} { set ::RtWizard::wizard_state(bg_color) {255 255 255} }
 # Edge lines color
@@ -397,7 +402,7 @@ if {[info exists ::use_gui]} {
    set eye_pt [lrange [lindex $vdata 2] 1 end]
    ::cadwidgets::rtimage $::RtWizard::wizard_state(dbFile) $fbserv_port \
 			$::RtWizard::wizard_state(width) $::RtWizard::wizard_state(scanlines) \
-			$viewsize $orientation $eye_pt 0\
+			$viewsize $orientation $eye_pt $::RtWizard::wizard_state(perspective) \
 			$::RtWizard::wizard_state(bg_color) $::RtWizard::wizard_state(e_color) $::RtWizard::wizard_state(ne_color)\
 			$::RtWizard::wizard_state(occmode) $::RtWizard::wizard_state(ghosting_intensity) \
 			$::RtWizard::wizard_state(color_objlist) \
