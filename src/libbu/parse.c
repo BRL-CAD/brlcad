@@ -1719,7 +1719,7 @@ bu_shader_to_list(const char *in, struct bu_vls *vls)
 
 	shader_name_len = iptr - shader;
 
-	if (BU_STR_EQUIV(shader, "stack")) {
+	if (shader_name_len == 5 && !bu_strncmp(shader, "stack", 5)) {
 
 	    /* stack shader, loop through all shaders in stack */
 	    int done=0;
@@ -1763,8 +1763,8 @@ bu_shader_to_list(const char *in, struct bu_vls *vls)
 	    bu_free(copy, BU_FLSTR);
 	    return 0;
 	}
-
-	if (BU_STR_EQUIV(shader, "envmap")) {
+	
+	if (shader_name_len == 6 && !bu_strncmp(shader, "envmap", 6)) {
 	    bu_vls_strcat(vls, "envmap {");
 	    if (bu_shader_to_list(iptr, vls)) {
 		bu_free(copy, BU_FLSTR);
