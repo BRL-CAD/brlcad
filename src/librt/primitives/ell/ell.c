@@ -1764,6 +1764,25 @@ ell_angle(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
 }
 
 
+/**
+ * R T _ E L L _ V O L U M E
+ *
+ * Computes volume of a ellipsoid.
+ */
+void
+rt_ell_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    fastf_t mag_a, mag_b, mag_c;
+    struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+
+    mag_a = MAGNITUDE(eip->a);
+    mag_b = MAGNITUDE(eip->b);
+    mag_c = MAGNITUDE(eip->c);
+    *volume = (4.0/3.0) * M_PI * mag_a*mag_b*mag_c;
+}
+
+
 /** @} */
 /*
  * Local Variables:
