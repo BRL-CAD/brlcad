@@ -109,8 +109,6 @@ if {[info exists argc]} {
   set argc2 0
 }
 
-puts $::RtWizard::wizard_state(zoom)
-
 # If we have both gui and no-gui specified, use gui
 if {[info exists ::use_gui] && [info exists ::disable_gui]} {
    puts "Warning - both -gui and -no-gui supplied - enabling gui"
