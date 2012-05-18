@@ -8683,7 +8683,7 @@ to_pix(struct ged *gedp,
     unsigned char *scanline;
     unsigned char *pixels;
     static int bytes_per_pixel = 3;
-    int i = 0, j = 0;
+    int i = 0;
     int width = 0;
     int height = 0;
     int make_ret = 0;
@@ -8747,8 +8747,8 @@ to_pix(struct ged *gedp,
     glReadBuffer(GL_FRONT);
     glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 
-    for (i = 0, j = 0; i < height; ++i, ++j) {
-	scanline = (unsigned char *)(pixels + (j*bytes_per_line));
+    for (i = 0; i < height; ++i) {
+	scanline = (unsigned char *)(pixels + (i*bytes_per_line));
 
 	if (fwrite((char *)scanline, bytes_per_line, 1, fp) != 1) {
 	    perror("fwrite");
@@ -8779,7 +8779,7 @@ to_png(struct ged *gedp,
     unsigned char *pixels;
     static int bytes_per_pixel = 3;
     static int bits_per_channel = 8;  /* bits per color channel */
-    int i = 0, j = 0;
+    int i = 0;
     int width = 0;
     int height = 0;
     int make_ret = 0;
@@ -8858,8 +8858,8 @@ to_png(struct ged *gedp,
     glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
     rows = (unsigned char **)bu_calloc(height, sizeof(unsigned char *), "rows");
 
-    for (i = 0, j = 0; i < height; ++i, ++j)
-	rows[j] = (unsigned char *)(pixels + ((height-i-1)*bytes_per_line));
+    for (i = 0; i < height; ++i)
+	rows[i] = (unsigned char *)(pixels + ((height-i-1)*bytes_per_line));
 
     png_init_io(png_p, fp);
     png_set_filter(png_p, 0, PNG_FILTER_NONE);
