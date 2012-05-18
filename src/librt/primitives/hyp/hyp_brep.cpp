@@ -166,7 +166,7 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 
 	    VPROJECT(eip->hyp_A, eip->hyp_Hi, proj_ah, proj_ax);
 	    VSET(cvpt, ctrlpt.x * MAGNITUDE(proj_ax)/eip->hyp_b, ctrlpt.y, ctrlpt.z);
-	    factor = VDOT(eip->hyp_A, eip->hyp_Hi)>0 ? -1.0 : 1.0;
+	    factor = VDOT(eip->hyp_A, eip->hyp_Hi)>0 ? 1.0 : -1.0;
 	    cvpt[2] += factor*cvpt[0]/MAGNITUDE(proj_ax)*MAGNITUDE(proj_ah) + 0.5*MAGNITUDE(eip->hyp_Hi)*ctrlpt.w;
 
 	    //Rotate
