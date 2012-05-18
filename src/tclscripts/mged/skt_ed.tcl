@@ -1299,7 +1299,7 @@ class Sketch_editor {
 	set e [lindex $VL $index2]
 	set ex [lindex $e 0]
 	set ey [lindex $e 1]
-	set radius [dist $sx $sy $ex $ey]
+	set radius [::dist $sx $sy $ex $ey]
 	set new_seg [Sketch_carc \#auto $this $itk_component(canvas) "S $index1 E $index2 R $radius L 0 O 0"]
 	lappend segments ::Sketch_editor::$new_seg
 	set needs_saving 1
@@ -1363,7 +1363,7 @@ class Sketch_editor {
 	    set orient 0
 	}
 
-	set radius [dist $s(0) $s(1) $cx $cy]
+	set radius [::dist $s(0) $s(1) $cx $cy]
 	$segment set_vars R $radius L $center_is_left O $orient
 	redraw_segs
     }
@@ -1412,7 +1412,7 @@ class Sketch_editor {
 	    } else {
 		set orient 0
 	    }
-	    set radius [dist $s(0) $s(1) $cx $cy]
+	    set radius [::dist $s(0) $s(1) $cx $cy]
 	    $segment set_vars R $radius L $center_is_left O $orient
 	} else {
 	    set s_list [lindex $VL $index1]
@@ -1421,7 +1421,7 @@ class Sketch_editor {
 	    set e_list [lindex $VL $index2]
 	    set e(0) [lindex $e_list 0]
 	    set e(1) [lindex $e_list 1]
-	    set min_radius [expr {[dist $s(0) $s(1) $e(0) $e(1)] / 2.0}]
+	    set min_radius [expr {[::dist $s(0) $s(1) $e(0) $e(1)] / 2.0}]
 	    if { $radius < $min_radius } {
 		tk_messageBox -icon error -title "Radius Too Small" -type ok \
 		    -message "Radius of $radius is too small, minimum is $min_radius"
@@ -1756,7 +1756,7 @@ class Sketch_carc {
 	    }
 	    set normalx [expr $ex - $sx]
 	    set normaly [expr $ey - $sy]
-	    set len [dist $sx $sy $ex $ey]
+	    set len [::dist $sx $sy $ex $ey]
 	    if { [catch {expr 1.0 / $len} one_over_len] } {
 		return "0 0"
 	    }
@@ -1770,7 +1770,7 @@ class Sketch_carc {
 	    if { $vertex == $start_index } {
 		set normalx [expr $sx - $cx]
 		set normaly [expr $sy - $cy]
-		set len [dist $sx $sy $cx $cy]
+		set len [::dist $sx $sy $cx $cy]
 		if { [catch {expr 1.0 / $len} one_over_len] } {
 		    return "0 0"
 		}
@@ -1784,7 +1784,7 @@ class Sketch_carc {
 	    } else {
 		set normalx [expr $ex - $cx]
 		set normaly [expr $ey - $cy]
-		set len [dist $ex $ey $cx $cy]
+		set len [::dist $ex $ey $cx $cy]
 		if { [catch {expr 1.0 / $len} one_over_len] } {
 		    return "0 0"
 		}
@@ -1826,7 +1826,7 @@ class Sketch_carc {
 	    set sy [expr {-$myscale * [lindex $start 1]}]
 	    set ex [expr {$myscale * [lindex $end 0]}]
 	    set ey [expr {-$myscale * [lindex $end 1]}]
-	    set tmp_radius [dist $sx $sy $ex $ey]
+	    set tmp_radius [::dist $sx $sy $ex $ey]
 	    return $tmp_radius
 	}
     }
@@ -1873,7 +1873,7 @@ class Sketch_carc {
 
 	if { $radius < 0.0 } {
 	    # full circle
-	    set tmp_radius [dist $sx $sy $ex $ey]
+	    set tmp_radius [::dist $sx $sy $ex $ey]
 	    $editor set_radius $tmp_radius
 	    set x1 [expr {$ex - $tmp_radius}]
 	    set y1 [expr {$ey - $tmp_radius}]
