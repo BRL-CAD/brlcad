@@ -508,6 +508,12 @@ HIDDEN int to_paint_rect_area(struct ged *gedp,
 			      const char *usage,
 			      int maxargs);
 #if defined(DM_OGL) || defined(DM_WGL)
+HIDDEN int to_pix(struct ged *gedp,
+		  int argc,
+		  const char *argv[],
+		  ged_func_ptr func,
+		  const char *usage,
+		  int maxargs);
 HIDDEN int to_png(struct ged *gedp,
 		  int argc,
 		  const char *argv[],
@@ -1005,6 +1011,7 @@ static struct to_cmdtab to_cmds[] = {
     {"pmat",	"[mat]", 3, to_view_func, ged_pmat},
     {"pmodel2view",	"vname", 2, to_view_func, ged_pmodel2view},
 #if defined(DM_OGL) || defined(DM_WGL)
+    {"pix",	"file", TO_UNLIMITED, to_pix, GED_FUNC_PTR_NULL},
     {"png",	"file", TO_UNLIMITED, to_png, GED_FUNC_PTR_NULL},
 #endif
     {"pngwf",	"[options] file.png", 16, to_view_func, ged_png},
@@ -8664,28 +8671,23 @@ to_paint_rect_area(struct ged *gedp,
 
 #if defined(DM_OGL) || defined(DM_WGL)
 HIDDEN int
-to_png(struct ged *gedp,
+to_pix(struct ged *gedp,
        int argc,
        const char *argv[],
        ged_func_ptr UNUSED(func),
        const char *usage,
        int UNUSED(maxargs))
 {
-    png_structp png_p;
-    png_infop info_p;
-
-    unsigned char *dbyte0 = NULL, *dbyte1 = NULL, *dbyte2 = NULL;
     struct ged_dm_view *gdvp = NULL;
     FILE *fp = NULL;
-    unsigned char **rows = NULL;
-    unsigned char *idata = NULL;
-    unsigned char *irow = NULL;
-    int bytes_per_pixel = 0;
-    int bits_per_channel = 8;  /* bits per color channel */
-    int i = 0, j = 0, k = 0;
+    unsigned char *scanline;
+    unsigned char *pixels;
+    static int bytes_per_pixel = 3;
+    int i = 0, j = 0;
     int width = 0;
     int height = 0;
-    int found_valid_dm = 0;
+    int make_ret = 0;
+    int bytes_per_line;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -8710,6 +8712,109 @@ to_png(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    if (gdvp->gdv_dmp->dm_type != DM_TYPE_WGL && gdvp->gdv_dmp->dm_type != DM_TYPE_OGL) {
+	bu_vls_printf(gedp->ged_result_str, "%s: not yet supported for this display manager (i.e. must be OpenGl based)", argv[0]);
+	return GED_OK;
+    }
+
+    bytes_per_line = gdvp->gdv_dmp->dm_width * bytes_per_pixel;
+
+    if ((fp = fopen(argv[2], "wb")) == NULL) {
+	bu_vls_printf(gedp->ged_result_str,
+		      "%s: cannot open \"%s\" for writing.",
+		      argv[0], argv[2]);
+	return GED_ERROR;
+    }
+
+    width = gdvp->gdv_dmp->dm_width;
+    height = gdvp->gdv_dmp->dm_height;
+
+#if defined(DM_WGL)
+    make_ret = wglMakeCurrent(((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->hdc,
+			      ((struct wgl_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->glxc);
+#else
+    make_ret = glXMakeCurrent(((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->dpy,
+			      ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->win,
+			      ((struct ogl_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->glxc);
+#endif
+    if (!make_ret) {
+	bu_vls_printf(gedp->ged_result_str, "%s: Couldn't make context current\n", argv[0]);
+	fclose(fp);
+	return GED_ERROR;
+    }
+
+    pixels = (unsigned char *)bu_calloc(width * height, bytes_per_pixel, "pixels");
+    glReadBuffer(GL_FRONT);
+    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+
+    for (i = 0, j = 0; i < height; ++i, ++j) {
+	scanline = (unsigned char *)(pixels + (j*bytes_per_line));
+
+	if (fwrite((char *)scanline, bytes_per_line, 1, fp) != 1) {
+	    perror("fwrite");
+	    break;
+	}
+    }
+
+    bu_free(pixels, "pixels");
+    fclose(fp);
+
+    return GED_OK;
+}
+
+
+HIDDEN int
+to_png(struct ged *gedp,
+       int argc,
+       const char *argv[],
+       ged_func_ptr UNUSED(func),
+       const char *usage,
+       int UNUSED(maxargs))
+{
+    png_structp png_p;
+    png_infop info_p;
+    struct ged_dm_view *gdvp = NULL;
+    FILE *fp = NULL;
+    unsigned char **rows = NULL;
+    unsigned char *pixels;
+    static int bytes_per_pixel = 3;
+    static int bits_per_channel = 8;  /* bits per color channel */
+    int i = 0, j = 0;
+    int width = 0;
+    int height = 0;
+    int make_ret = 0;
+    int bytes_per_line;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
+	return GED_ERROR;
+    }
+
+    if (gdvp->gdv_dmp->dm_type != DM_TYPE_WGL && gdvp->gdv_dmp->dm_type != DM_TYPE_OGL) {
+	bu_vls_printf(gedp->ged_result_str, "%s: not yet supported for this display manager (i.e. must be OpenGl based)", argv[0]);
+	return GED_OK;
+    }
+
+    bytes_per_line = gdvp->gdv_dmp->dm_width * bytes_per_pixel;
+
     if ((fp = fopen(argv[2], "wb")) == NULL) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "%s: cannot open \"%s\" for writing.",
@@ -8731,88 +8836,30 @@ to_png(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (gdvp->gdv_dmp->dm_type == DM_TYPE_WGL || gdvp->gdv_dmp->dm_type == DM_TYPE_OGL) {
-	int make_ret = 0;
-	found_valid_dm = 1;
-	width = gdvp->gdv_dmp->dm_width;
-	height = gdvp->gdv_dmp->dm_height;
-	bytes_per_pixel = 3;
+    width = gdvp->gdv_dmp->dm_width;
+    height = gdvp->gdv_dmp->dm_height;
 
 #if defined(DM_WGL)
-	make_ret = wglMakeCurrent(((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->hdc,
-				  ((struct wgl_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->glxc);
+    make_ret = wglMakeCurrent(((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->hdc,
+			      ((struct wgl_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->glxc);
 #else
-	make_ret = glXMakeCurrent(((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->dpy,
-				  ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->win,
-				  ((struct ogl_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->glxc);
+    make_ret = glXMakeCurrent(((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->dpy,
+			      ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->win,
+			      ((struct ogl_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->glxc);
 #endif
-	if (!make_ret) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: Couldn't make context current\n", argv[0]);
-	    fclose(fp);
-	    return GED_ERROR;
-	}
-
-	{
-#if defined(DM_WGL)
-	    int big_endian, swap_bytes;
-#endif
-	    int bytes_per_line = gdvp->gdv_dmp->dm_width * bytes_per_pixel;
-	    unsigned char *pixels = (unsigned char *)bu_calloc(width * height, bytes_per_pixel, "pixels");
-
-#if defined(DM_WGL)
-	    if ((bu_byteorder() == BU_BIG_ENDIAN))
-		big_endian = 1;
-	    else
-		big_endian = 0;
-
-	    /* WTF */
-	    swap_bytes = !big_endian;
-#endif
-
-	    glReadBuffer(GL_FRONT);
-	    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-	    rows = (unsigned char **)bu_calloc(height, sizeof(unsigned char *), "rows");
-	    idata = (unsigned char *)bu_calloc(height * width, bytes_per_pixel, "png data");
-
-	    for (i = 0, j = 0; i < height; ++i, ++j) {
-		/* irow points to the current scanline in pixels */
-		irow = (unsigned char *)(pixels + ((height-i-1)*bytes_per_line));
-
-		/* rows[j] points to the current scanline in pixels */
-		rows[j] = (unsigned char *)(idata + ((height-i-1)*bytes_per_line));
-
-		/* for each pixel in current scanline of ximage_p */
-		for (k = 0; k < bytes_per_line; k += bytes_per_pixel) {
-		    dbyte0 = rows[j] + k;
-		    dbyte1 = dbyte0 + 1;
-		    dbyte2 = dbyte0 + 2;
-
-		    *dbyte0 = *(irow + k);
-		    *dbyte1 = *(irow + k + 1);
-		    *dbyte2 = *(irow + k + 2);
-#if defined(DM_WGL)
-		    if (swap_bytes) {
-			unsigned char tmp_byte;
-
-			/* swap byte0 and byte2 */
-			tmp_byte = *dbyte0;
-			*dbyte0 = *dbyte2;
-			*dbyte2 = tmp_byte;
-		    }
-#endif
-		}
-	    }
-
-	    bu_free(pixels, "pixels");
-	}
-    }
-
-    if (!found_valid_dm) {
-	bu_vls_printf(gedp->ged_result_str, "%s: not yet supported for this display manager.", argv[0]);
+    if (!make_ret) {
+	bu_vls_printf(gedp->ged_result_str, "%s: Couldn't make context current\n", argv[0]);
 	fclose(fp);
 	return GED_ERROR;
     }
 
+    pixels = (unsigned char *)bu_calloc(width * height, bytes_per_pixel, "pixels");
+    glReadBuffer(GL_FRONT);
+    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    rows = (unsigned char **)bu_calloc(height, sizeof(unsigned char *), "rows");
+
+    for (i = 0, j = 0; i < height; ++i, ++j)
+	rows[j] = (unsigned char *)(pixels + ((height-i-1)*bytes_per_line));
 
     png_init_io(png_p, fp);
     png_set_filter(png_p, 0, PNG_FILTER_NONE);
@@ -8826,7 +8873,7 @@ to_png(struct ged *gedp,
     png_write_end(png_p, NULL);
 
     bu_free(rows, "rows");
-    bu_free(idata, "image data");
+    bu_free(pixels, "pixels");
     fclose(fp);
 
     return GED_OK;
