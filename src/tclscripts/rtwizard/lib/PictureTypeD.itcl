@@ -161,6 +161,7 @@ namespace eval RtWizard {
         #
         # Get the background color
         #
+        set objPage $fp
         set bgHex [$objPage getBackgroundColor]
         set bg [hexToRGB $bgHex]
 
@@ -173,6 +174,7 @@ namespace eval RtWizard {
         #
         # Get the object lists, the file is global
         #
+        set objPage $lp
         set line_objects [$objPage getObjects]
 	set objPage $fp
         set color_objects [$objPage getObjects]
