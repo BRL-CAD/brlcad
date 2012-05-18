@@ -410,6 +410,7 @@ package provide cadwidgets::Ged 1.0
 	method paths {args}
 	method perspective {args}
 	method perspective_all {args}
+	method pix {args}
 	method pix2fb {args}
 	method plot {args}
 	method pmat {args}
@@ -2395,6 +2396,10 @@ package provide cadwidgets::Ged 1.0
     foreach dm {ur ul ll lr} {
 	eval $mGed perspective $itk_component($dm) $args
     }
+}
+
+::itcl::body cadwidgets::Ged::pix {args} {
+    eval $mGed pix $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::pix2fb {args} {
