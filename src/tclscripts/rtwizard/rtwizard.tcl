@@ -102,6 +102,8 @@ getopt::init {
 
 # Perform the actual option parsing
 if {[info exists argv]} {
+  # Handle specifications of framebuffer devices like -F/dev/ogl for rt compatibility
+  set argv [regsub -all { -F/} $argv { -F /}]
   set argv2 [getopt::getopt $argv]
   set argv ""
 }
