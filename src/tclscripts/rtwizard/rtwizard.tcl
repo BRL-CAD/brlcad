@@ -102,6 +102,7 @@ getopt::init {
 # Perform the actual option parsing
 if {[info exists argv]} {
   set argv2 [getopt::getopt $argv]
+  set argv ""
 }
 if {[info exists argc]} {
   set argc2 $argc
