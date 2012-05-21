@@ -95,6 +95,7 @@ getopt::init {
         {twist 			"" 	{::have_twist ::RtWizard::wizard_state(init_twist)}}
 	{perspective		P	{::have_perspective ::RtWizard::wizard_state(perspective)}}
         {zoom 			z 	{::have_zoom ::RtWizard::wizard_state(zoom)}}
+	{center			""	{::have_center ::RtWizard::wizard_state(x_center) ::RtWizard::wizard_state(y_center) ::RtWizard::wizard_state(z_center)}}
         # Debugging info
 	{verbose		v 	{::RtWizard::wizard_state(verbose)}}
 }
@@ -292,7 +293,7 @@ if {![info exists ::RtWizard::wizard_state(dbFile)]} {
 }
 
 # OK, we've collected all the info we can from the inputs.  Make sure all the key
-# variables are initialized to sane defaults.  The viewsize and eye_pt defaults are determined from
+# variables are initialized to sane defaults.  The viewsize, eye_pt and center defaults are determined from
 # the drawing of the objects into the display manager.
 # Geometry Database
 if {![info exists ::RtWizard::wizard_state(dbFile)]} { set ::RtWizard::wizard_state(dbFile) "" }
@@ -395,6 +396,9 @@ if {[info exists ::use_gui]} {
    db aet v1 $::RtWizard::wizard_state(init_azimuth) $::RtWizard::wizard_state(init_elevation) $::RtWizard::wizard_state(init_twist)
    db zoom v1 $::RtWizard::wizard_state(zoom)
    db perspective v1 $::RtWizard::wizard_state(perspective)
+   if {[info exists ::RtWizard::wizard_state(x_center)] && [info exists ::RtWizard::wizard_state(y_center)] && [info exists ::RtWizard::wizard_state(z_center)]} {
+      db center v1 $::RtWizard::wizard_state(x_center) $::RtWizard::wizard_state(y_center) $::RtWizard::wizard_state(z_center)
+   }
    set view_info [regsub -all ";" [db get_eyemodel v1] ""]
    set vdata [split $view_info "\n"]
    set viewsize [lindex [lindex $vdata 0] 1]
