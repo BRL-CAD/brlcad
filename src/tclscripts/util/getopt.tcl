@@ -110,7 +110,9 @@ proc getopt::expandOptNames {argv} {
 }
 
 proc getopt::isShortOpt {o} {
-        return [regexp {^-[a-zA-Z0-9]+} $o]
+	set is_short 0
+	if {[regexp {^-[a-zA-Z0-9]+} $o] && ![regexp {^-[0-9]+} $o]} {set is_short 1}
+        return $is_short
 }
 
 proc getopt::isLongOpt {o} {
