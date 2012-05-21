@@ -85,6 +85,15 @@ if(SH_EXEC)
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/quote.sh ${CMAKE_SOURCE_DIR}
     DEPENDS test_quote
     )
+  add_custom_target(regress-rtwizard
+    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/rtwizard.sh ${CMAKE_SOURCE_DIR}
+    DEPENDS btclsh rt rtedge fbclear fbserv pix-fb fb-pix pix-bw bw-pix 
+    pixmatte asc2g asc2pix pixdiff util_tclIndex util_pkgIndex.tcl
+    rtwizard_lib_tclIndex rtwizard_lib_pkgIndex.tcl rtwizard_tclIndex
+    rtwizard_pkgIndex.tcl rtwizard_TCLSCRIPTS_cp lib_tclIndex
+    lib_pkgIndex.tcl
+    )
+
 
   add_custom_target(regress
     DEPENDS regress-mged regress-moss regress-lights
@@ -127,6 +136,8 @@ CMAKEFILES(
   quote.sh
   red.sh
   repository.sh
+  rtwizard
+  rtwizard.sh
   shaders.sh
   shaderspix.asc
   slave_build.sh
@@ -311,6 +322,12 @@ set(regress_outfiles
   red.virgin.out.new
   region_ids
   regions
+  rtwizard.m35.g
+  rtwizard_test1.diff.pix
+  rtwizard_test1.pix
+  rtwizard_test1.pixdiff.log
+  rtwizard_test1_ref.asc
+  rtwizard_test1_ref.pix
   shaders.dat
   shaders.g
   shaders.log
