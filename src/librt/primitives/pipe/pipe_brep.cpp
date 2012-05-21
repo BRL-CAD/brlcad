@@ -146,6 +146,20 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pip);
 
+    curp = BU_LIST_FIRST(wdb_pipept, &pip->pipe_segs_head);
+    while (!(BU_LIST_NEXT_IS_HEAD(&curp->l, &pip->pipe_segs_head))) {
+	vect_t delta;
+	nextp = BU_LIST_NEXT(wdb_pipept, &curp->l);
+	VSUB2(delta, curp->pp_coord, nextp->pp_coord);
+	if (VNEAR_ZERO(delta, RT_LEN_TOL)) {
+	    prevp = curp;
+	    curp = BU_LIST_NEXT(wdb_pipept, &curp->l);
+	    BU_LIST_DEQUEUE(&prevp->l);
+	} else {
+	    curp = BU_LIST_NEXT(wdb_pipept, &curp->l);
+	}
+    }
+
     if (BU_LIST_IS_EMPTY(&pip->pipe_segs_head)) return;
     prevp = BU_LIST_FIRST(wdb_pipept, &pip->pipe_segs_head);
     curp = BU_LIST_NEXT(wdb_pipept, &prevp->l);
