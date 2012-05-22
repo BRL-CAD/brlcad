@@ -3264,7 +3264,7 @@ to_extract_contours_av(struct ged *gedp, struct ged_dm_view *gdvp, ged_polygon *
 	    point_t pt;
 
 	    if (sscanf(point_av[k], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3) {
-		bu_vls_printf(gedp->ged_result_str, "contour %llu, point %llu: bad data point - %s\n",
+		bu_vls_printf(gedp->ged_result_str, "contour %zu, point %zu: bad data point - %s\n",
 			      j, k, point_av[k]);
 		Tcl_Free((char *)point_av);
 		return GED_ERROR;
@@ -3364,7 +3364,7 @@ to_data_polygons(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "target_poly")) {
 	if (argc == 3) {
-	    bu_vls_printf(gedp->ged_result_str, "%llu", gdpsp->gdps_target_polygon_i);
+	    bu_vls_printf(gedp->ged_result_str, "%zu", gdpsp->gdps_target_polygon_i);
 	    return GED_OK;
 	}
 
@@ -4606,7 +4606,7 @@ to_data_pick(struct ged *gedp,
     }
 
     if (found_top) {
-	bu_vls_printf(gedp->ged_result_str, "%s {%llu %llu %llu} {%lf %lf %lf}",
+	bu_vls_printf(gedp->ged_result_str, "%s {%zu %zu %zu} {%lf %lf %lf}",
 		      top_data_str, top_i, top_j, top_k, V3ARGS(top_point));
 	return GED_OK;
     }
@@ -4674,7 +4674,7 @@ to_data_pick(struct ged *gedp,
     }
 
     if (found_top) {
-	bu_vls_printf(gedp->ged_result_str, "%s %llu {{%s} {%lf %lf %lf}}",
+	bu_vls_printf(gedp->ged_result_str, "%s %zu {{%s} {%lf %lf %lf}}",
 		      top_data_str, top_i, top_data_label, V3ARGS(top_point));
 	return GED_OK;
     }
@@ -7009,7 +7009,7 @@ to_mouse_poly_circ(struct ged *gedp,
     }
 
     bu_vls_printf(&plist, " }");
-    bu_vls_printf(&i_vls, "%llu", gdpsp->gdps_curr_polygon_i);
+    bu_vls_printf(&i_vls, "%zu", gdpsp->gdps_curr_polygon_i);
 
     gedp->ged_gvp = gdvp->gdv_view;
     ac = 5;
@@ -7102,8 +7102,8 @@ to_mouse_poly_cont(struct ged *gedp,
 	struct bu_vls k_vls = BU_VLS_INIT_ZERO;
 	struct bu_vls plist = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&i_vls, "%llu", gdpsp->gdps_curr_polygon_i);
-	bu_vls_printf(&k_vls, "%llu", gdpsp->gdps_curr_point_i);
+	bu_vls_printf(&i_vls, "%zu", gdpsp->gdps_curr_polygon_i);
+	bu_vls_printf(&k_vls, "%zu", gdpsp->gdps_curr_point_i);
 	bu_vls_printf(&plist, "%lf %lf %lf", V3ARGS(m_pt));
 
 	ac = 7;
@@ -7240,7 +7240,7 @@ to_mouse_poly_ell(struct ged *gedp,
     }
 
     bu_vls_printf(&plist, " }");
-    bu_vls_printf(&i_vls, "%llu", gdpsp->gdps_curr_polygon_i);
+    bu_vls_printf(&i_vls, "%zu", gdpsp->gdps_curr_polygon_i);
 
     gedp->ged_gvp = gdvp->gdv_view;
     ac = 5;
@@ -7360,7 +7360,7 @@ to_mouse_poly_rect(struct ged *gedp,
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
     bu_vls_printf(&plist, "{%lf %lf %lf} }",  V3ARGS(m_pt));
 
-    bu_vls_printf(&i_vls, "%llu", gdpsp->gdps_curr_polygon_i);
+    bu_vls_printf(&i_vls, "%zu", gdpsp->gdps_curr_polygon_i);
 
     gedp->ged_gvp = gdvp->gdv_view;
     ac = 5;
@@ -9106,8 +9106,8 @@ to_poly_cont_build(struct ged *gedp,
 	struct bu_vls k_vls = BU_VLS_INIT_ZERO;
 	struct bu_vls plist = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&i_vls, "%llu", gdpsp->gdps_curr_polygon_i);
-	bu_vls_printf(&k_vls, "%llu", gdpsp->gdps_curr_point_i);
+	bu_vls_printf(&i_vls, "%zu", gdpsp->gdps_curr_polygon_i);
+	bu_vls_printf(&k_vls, "%zu", gdpsp->gdps_curr_point_i);
 	bu_vls_printf(&plist, "%lf %lf %lf", V3ARGS(m_pt));
 
 	ac = 7;
