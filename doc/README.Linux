@@ -63,8 +63,14 @@ All three of those have implicit dependencies on other packages.
 You will also want to make sure that you have the X11 development
 headers installed:
 
-apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev
+  apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev
 
+Other development packages needed to build on Debian-based platforms:
+  
+  for building the Tcl/Tk libraries:  libxft-dev
+  
+  for OpenGL: freeglut3-dev
+  
 Note there is a supported Debian package generation script in file
 'sh/make_deb.sh' which can function only on a Debian or Ubuntu system.
 It can be used like so:
@@ -87,6 +93,7 @@ Redhat/Fedora
 -------------
 
 Development packages needed to build on Redhat/Fedora platforms:
+
 libXext-devel
 libXi-devel
 freetype-devel
