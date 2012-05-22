@@ -71,7 +71,7 @@ make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, O
 	startoutercurves->Append(curve);
     }
     ON_BrepFace *newouterface = (*b)->NewRuledFace(startedge, false, endedge, false);
-    (*b)->FlipFace(*newouterface);
+    if (newouterface != NULL) (*b)->FlipFace(*newouterface);
 
     if (startinnercurves->Count() > 0) {
 	int c3ind = (*b)->AddEdgeCurve(ON_Curve::Cast(*(startinnercurves[0])));
@@ -110,12 +110,13 @@ make_curved_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, O
     ON_BrepFace *face = (*b)->NewFace(*revsurf);
     (*b)->FlipFace(*face);
 
-    revsurf = ON_RevSurface::New();
-    revsurf->m_curve = *startinnercurves[0];
-    revsurf->m_axis = *revaxis;
-    revsurf->m_angle = ON_Interval(2*ON_PI - angle, 2*ON_PI);
-    (void)(*b)->NewFace(*revsurf);
-
+    if (startinnercurves->Count() > 0) {
+	revsurf = ON_RevSurface::New();
+	revsurf->m_curve = *startinnercurves[0];
+	revsurf->m_axis = *revaxis;
+	revsurf->m_angle = ON_Interval(2*ON_PI - angle, 2*ON_PI);
+	(void)(*b)->NewFace(*revsurf);
+    }
 }
 
 
@@ -146,6 +147,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pip);
 
+    // delete duplicated points
     curp = BU_LIST_FIRST(wdb_pipept, &pip->pipe_segs_head);
     while (!(BU_LIST_NEXT_IS_HEAD(&curp->l, &pip->pipe_segs_head))) {
 	vect_t delta;
@@ -160,6 +162,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	}
     }
 
+    // make the first plane surface
     if (BU_LIST_IS_EMPTY(&pip->pipe_segs_head)) return;
     prevp = BU_LIST_FIRST(wdb_pipept, &pip->pipe_segs_head);
     curp = BU_LIST_NEXT(wdb_pipept, &prevp->l);
