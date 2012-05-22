@@ -596,9 +596,10 @@ TYPEselect_inc_print_vars( const Type type, FILE * f, Linked_List dups ) {
              SEL_ITEMget_enumtype( t ), FundamentalType( t, 0 ) );
     LISTod;
 
-    LISTdo( data_members, t, Type )
-    strncpy( dmname, SEL_ITEMget_dmname( t ), BUFSIZ );
-    fprintf( f, "\t   %s _%s;\n", TYPEget_utype( t ), dmname );
+    LISTdo( data_members, t, Type ) {
+        strncpy( dmname, SEL_ITEMget_dmname( t ), BUFSIZ );
+        fprintf( f, "\t   %s _%s;\n", TYPEget_utype( t ), dmname );
+    }
     LISTod;
 
     /*   fprintf( f, "  \t}  ;" );*/
@@ -769,21 +770,21 @@ TYPEselect_inc_print( const Type type, FILE * f ) {
     fprintf( f, "typedef %s_ptr %s_var;\n\n", n, n );
 
     /*  print things for aggregate class  */
-    fprintf( f, "\nclass %ss : public SelectAggregate {\n", n );
+    fprintf( f, "\nclass %s_agg : public SelectAggregate {\n", n );
     fprintf( f, "  protected:\n" );
     fprintf( f, "    SelectTypeDescriptor *sel_type;\n\n" );
     fprintf( f, "  public:\n" );
-    fprintf( f, "    %ss( SelectTypeDescriptor * =%s );\n", n, tdnm );
-    fprintf( f, "    ~%ss();\n", n );
+    fprintf( f, "    %s_agg( SelectTypeDescriptor * =%s );\n", n, tdnm );
+    fprintf( f, "    ~%s_agg();\n", n );
     fprintf( f, "    virtual SingleLinkNode * NewNode()\n" );
     fprintf( f, "\t { return new SelectNode (new %s( sel_type )); }\n", n );
     fprintf( f, "};\n" );
 
     /* DAS creation function for select aggregate class */
-    fprintf( f, "inline STEPaggregate * create_%ss () { return new %ss; }\n",
+    fprintf( f, "inline STEPaggregate * create_%s_agg () { return new %s_agg; }\n",
              n, n );
 
-    fprintf( f, "typedef %ss_ptr %ss_var;\n", n, n );
+    fprintf( f, "typedef %s_agg_ptr %s_agg_var;\n", n, n );
 
     fprintf( f, "\n/////  END SELECT TYPE %s\n\n", TYPEget_name( type ) );
 
@@ -917,9 +918,9 @@ TYPEselect_lib_print_part_one( const Type type, FILE * f, Schema schema,
     fprintf( f, "%s::~%s()\n{\n", n, n );
     fprintf( f, "}\n\n" );
 
-    fprintf( f, "%ss::%ss( SelectTypeDescriptor *s)\n"
+    fprintf( f, "%s_agg::%s_agg( SelectTypeDescriptor *s)\n"
              "  : SelectAggregate(), sel_type(s)\n{\n}\n\n", n, n );
-    fprintf( f, "%ss::~%ss() { }\n\n", n, n );
+    fprintf( f, "%s_agg::~%s_agg() { }\n\n", n, n );
 #undef schema_name
 }
 
@@ -2010,8 +2011,8 @@ TYPEselect_print( Type t, FILES * files, Schema schema ) {
         // give the user an easy way to create the renamed type properly. */
         fprintf( inc, "inline SDAI_Select *\ncreate_%s ()", nm );
         fprintf( inc, " { return new %s( %s ); }\n\n", nm, tdnm );
-        fprintf( inc, "inline STEPaggregate *\ncreate_%ss ()", nm );
-        fprintf( inc, " { return new %ss( %s ); }\n\n", nm, tdnm );
+        fprintf( inc, "inline STEPaggregate *\ncreate_%s_agg ()", nm );
+        fprintf( inc, " { return new %s_agg( %s ); }\n\n", nm, tdnm );
         return;
     }
 

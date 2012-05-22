@@ -2637,22 +2637,22 @@ void TYPEenum_inc_print( const Type type, FILE * inc ) {
     /* DAS brandnew above */
 
     /*  print things for aggregate class  */
-    sprintf( enumAggrNm, "%ss", n );
+    sprintf( enumAggrNm, "%s_agg", n );
 
-    fprintf( inc, "\nclass %ss  :  public EnumAggregate  {\n", n );
+    fprintf( inc, "\nclass %s_agg  :  public EnumAggregate  {\n", n );
 
     fprintf( inc, "  protected:\n    EnumTypeDescriptor *enum_type;\n\n" );
     fprintf( inc, "  public:\n" );
-    fprintf( inc, "    %ss( EnumTypeDescriptor * =%s);\n", n, tdnm );
-    fprintf( inc, "    virtual ~%ss();\n", n );
+    fprintf( inc, "    %s_agg( EnumTypeDescriptor * =%s);\n", n, tdnm );
+    fprintf( inc, "    virtual ~%s_agg();\n", n );
     fprintf( inc, "    virtual SingleLinkNode * NewNode()\n" );
-    fprintf( inc, "\t{ return new EnumNode (new %s( \"\", enum_type )); }"
+    fprintf( inc, "        { return new EnumNode (new %s( \"\", enum_type )); }"
              "\n", n );
 
     fprintf( inc, "};\n" );
 
-    fprintf( inc, "\ntypedef %ss * %ss_ptr;\n", n, n );
-    fprintf( inc, "\ntypedef const %ss * const_%ss_ptr;\n", n, n );
+    fprintf( inc, "\ntypedef %s_agg * %s_agg_ptr;\n", n, n );
+    fprintf( inc, "\ntypedef const %s_agg * const_%s_agg_ptr;\n", n, n );
 
     /* DAS brandnew below */
 
@@ -2711,9 +2711,9 @@ void TYPEenum_lib_print( const Type type, FILE * f ) {
 
     /* print the enum aggregate functions */
 
-    fprintf( f, "\n%ss::%ss( EnumTypeDescriptor *et )\n", n, n );
+    fprintf( f, "\n%s_agg::%s_agg( EnumTypeDescriptor *et )\n", n, n );
     fprintf( f, "    : enum_type(et)\n{\n}\n\n" );
-    fprintf( f, "%ss::~%ss()\n{\n}\n", n, n );
+    fprintf( f, "%s_agg::~%s_agg()\n{\n}\n", n, n );
 
     printEnumAggrCrBody( f, type );
 
@@ -2932,20 +2932,20 @@ void TYPEprint_typedefs( Type t, FILE * classes ) {
             // classes file - after all the actual enum's.  They must be
             // printed last since they depend on the others.) */
             strncpy( nm, TYPEget_ctype( t ), BUFSIZ );
-            fprintf( classes, "class %ss;\n", nm );
+            fprintf( classes, "class %s_agg;\n", nm );
         }
     } else if( TYPEis_select( t ) ) {
         if( !TYPEget_head( t ) ) {
             /* Same comment as above. */
             strncpy( nm, SelectName( TYPEget_name( t ) ), BUFSIZ );
             fprintf( classes, "class %s;\n", nm );
-            fprintf( classes, "typedef       %s *       %s_ptr;\n", nm, nm );
+            fprintf( classes, "typedef %s * %s_ptr;\n", nm, nm );
             fprintf( classes, "typedef const %s * const_%s_ptr;\n", nm, nm );
-            fprintf( classes, "class %ss;\n", nm );
-            fprintf( classes, "typedef       %ss *       %ss_ptr;\n", nm, nm );
-            fprintf( classes, "typedef const %ss * const_%ss_ptr;\n", nm, nm );
-            fprintf( classes, "typedef       class %ss *       class_%ss_ptr;\n", nm, nm );
-            fprintf( classes, "typedef const class %ss * const_class_%ss_ptr;\n", nm, nm );
+            fprintf( classes, "class %s_agg;\n", nm );
+            fprintf( classes, "typedef %s_agg * %s_agg_ptr;\n", nm, nm );
+            fprintf( classes, "typedef const %s_agg * const_%s_agg_ptr;\n", nm, nm );
+            fprintf( classes, "typedef       class %s_agg *       class_%s_agg_ptr;\n", nm, nm );
+            fprintf( classes, "typedef const class %s_agg * const_class_%s_agg_ptr;\n", nm, nm );
         }
     } else {
         if( TYPEis_aggregate( t ) ) {
@@ -3150,8 +3150,8 @@ void TYPEprint_descriptions( const Type type, FILES * files, Schema schema ) {
         fprintf( files->inc, "typedef %s %s;\n", base, nm );
         printEnumCreateHdr( files->inc, type );
         printEnumCreateBody( files->lib, type );
-        fprintf( files->inc, "typedef       %ss *       %ss_ptr;\n", nm, nm );
-        fprintf( files->inc, "typedef const %ss * const_%ss_ptr;\n", nm, nm );
+        fprintf( files->inc, "typedef       %s_agg *       %s_agg_ptr;\n", nm, nm );
+        fprintf( files->inc, "typedef const %s_agg * const_%s_agg_ptr;\n", nm, nm );
         printEnumAggrCrHdr( files->inc, type );
         printEnumAggrCrBody( files->lib, type );
         return;
@@ -3207,7 +3207,7 @@ static void printEnumAggrCrHdr( FILE * inc, const Type type )
 {
     const char * n = TYPEget_ctype( type );
     /*    const char *n = ClassName( TYPEget_name(type) ));*/
-    fprintf( inc, "  STEPaggregate * create_%ss ();\n", n );
+    fprintf( inc, "  STEPaggregate * create_%s_agg ();\n", n );
 }
 
 static void printEnumAggrCrBody( FILE * lib, const Type type ) {
@@ -3216,8 +3216,8 @@ static void printEnumAggrCrBody( FILE * lib, const Type type ) {
 
     strncpy( tdnm, TYPEtd_name( type ), BUFSIZ );
 
-    fprintf( lib, "\nSTEPaggregate * \ncreate_%ss ()\n{\n", n );
-    fprintf( lib, "    return new %ss( %s );\n}\n", n, tdnm );
+    fprintf( lib, "\nSTEPaggregate * \ncreate_%s_agg ()\n{\n", n );
+    fprintf( lib, "    return new %s_agg( %s );\n}\n", n, tdnm );
 }
 
 void TYPEprint_init( const Type type, FILE * ifile, Schema schema ) {

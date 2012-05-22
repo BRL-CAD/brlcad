@@ -339,23 +339,24 @@ PrintModelContentsSchema( Scope scope, FILES * files, Schema schema,
     /*  fill in the values for the type descriptors */
     /*  and print the enumerations  */
     fprintf( files->inc, "\n//\t***** Describe the Other Types  \t\n" );
-    SCOPEdo_types( scope, t, de )
-    TYPEprint_descriptions( t, files, schema );
-    if( TYPEis_select( t ) ) {
-        /*   do the select aggregates here  */
-        strncpy( nm, SelectName( TYPEget_name( t ) ), BUFSIZ );
-        fprintf( files->inc, "class %s;\n"
-                 "typedef       %s *       %sH;\n"
-                 "typedef const %s * const_%sH;\n", nm, nm, nm );
-        fprintf( files->inc, "typedef       %s *       %s_ptr;\n"
-                 "typedef const %s * const_%s_ptr;\n"
-                 "typedef %s_ptr %s_var;\n\n", nm, nm, nm, nm );
-        fprintf( files->inc, "class %ss;\n"
-                 "typedef       %ss *       %ssH;\n"
-                 "typedef const %ss * const_%ssH;\n", nm, nm, nm );
-        fprintf( files->inc, "typedef       %ss *       %ss_ptr;\n"
-                 "typedef const %ss * const_%ss_ptr;\n"
-                 "typedef %ss_ptr %ss_var;\n\n", nm, nm, nm, nm );
+    SCOPEdo_types( scope, t, de ) {
+        TYPEprint_descriptions( t, files, schema );
+        if( TYPEis_select( t ) ) {
+            /*   do the select aggregates here  */
+            strncpy( nm, SelectName( TYPEget_name( t ) ), BUFSIZ );
+            fprintf( files->inc, "class %s;\n"
+                     "typedef       %s *       %sH;\n"
+                     "typedef const %s * const_%sH;\n", nm, nm, nm );
+            fprintf( files->inc, "typedef       %s *       %s_ptr;\n"
+                     "typedef const %s * const_%s_ptr;\n"
+                     "typedef %s_ptr %s_var;\n\n", nm, nm, nm, nm );
+            fprintf( files->inc, "class %s_agg;\n"
+                     "typedef       %s_agg *       %s_aggH;\n"
+                     "typedef const %s_agg * const_%s_aggH;\n", nm, nm, nm );
+            fprintf( files->inc, "typedef       %s_agg *       %s_agg_ptr;\n"
+                     "typedef const %s_agg * const_%s_agg_ptr;\n"
+                     "typedef %s_agg_ptr %s_agg_var;\n\n", nm, nm, nm, nm );
+        }
     }
     SCOPEod;
 

@@ -606,16 +606,16 @@ static void addRenameTypedefs( Schema schema, FILE * classes )
         if( TYPEis_enumeration( t ) ) {
             strncpy( nm, TYPEget_ctype( t ), BUFSIZ - 1 );
             strncpy( basenm, TYPEget_ctype( i ), BUFSIZ - 1 );
-            fprintf( classes, "typedef %ss\t%ss;\n", basenm, nm );
+            fprintf( classes, "typedef %s_agg\t%s_agg;\n", basenm, nm );
         } else {
             strncpy( nm, SelectName( TYPEget_name( t ) ), BUFSIZ - 1 );
             strncpy( basenm, SelectName( TYPEget_name( i ) ), BUFSIZ - 1 );
             fprintf( classes, "typedef %s %s;\n", basenm, nm );
             fprintf( classes, "typedef       %s *       %s_ptr;\n", nm, nm );
             fprintf( classes, "typedef const %s * const_%s_ptr;\n", nm, nm );
-            fprintf( classes, "typedef %ss %ss;\n", basenm, nm );
-            fprintf( classes, "typedef       %ss *       %ss_ptr;\n", nm, nm );
-            fprintf( classes, "typedef const %ss * const_%ss_ptr;\n", nm, nm );
+            fprintf( classes, "typedef %s_agg %s_agg;\n", basenm, nm );
+            fprintf( classes, "typedef       %s_agg *       %s_agg_ptr;\n", nm, nm );
+            fprintf( classes, "typedef const %s_agg * const_%s_agg_ptr;\n", nm, nm );
         }
     }
     SCOPEod

@@ -298,7 +298,7 @@ TYPEget_ctype( const Type t ) {
                     strcpy (retval, ClassName (TYPEget_name (bt)));
             */
             strcpy( retval, TYPEget_ctype( bt ) );
-            strcat( retval, "s" );
+            strcat( retval, "_agg" );
             return ( retval );
         }
 
