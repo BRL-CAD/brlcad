@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* make sure mged's sketch editor works (particularly for circles)
+
 * bump library versions to 20.  been 19 for way too long, not
   following proper library versioning compatibility numbering.
 
