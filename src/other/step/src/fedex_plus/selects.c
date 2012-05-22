@@ -1053,20 +1053,18 @@ TYPEselect_lib_print_part_three( const Type type, FILE * f, Schema schema,
 
         {
             /*  for the select items which have the current attribute  */
-
-            /* if ( !multiple_inheritance ) { */
-            if( !memberOfEntPrimary( ent, uattr ) ) {
-                /* If multiple inheritance is not supported, we must addi-
-                   tionally check that uattr is a member of the entity's
-                   primary inheritance path (i.e., the entity, its first
-                   supertype, the super's first super, etc).  The above
-                   `if' is commented out, because currently mult inher is
-                   not supported to the extent of handling accessor func-
-                   tions for non-primary supertypes. */
-                continue;
+            if( !multiple_inheritance ) {
+                if( !memberOfEntPrimary( ent, uattr ) ) {
+                    /* If multiple inheritance is not supported, we must addi-
+                    tionally check that uattr is a member of the entity's
+                    primary inheritance path (i.e., the entity, its first
+                    supertype, the super's first super, etc).  The above
+                    `if' is commented out, because currently mult inher is
+                    not supported to the extent of handling accessor func-
+                    tions for non-primary supertypes. */
+                    continue;
+                }
             }
-            /* } */
-
             if( ! VARis_derived( uattr ) )  {
 
                 if( !strcmp( utype, TYPEget_ctype( VARget_type( uattr ) ) ) )  {
@@ -1078,6 +1076,13 @@ TYPEselect_lib_print_part_three( const Type type, FILE * f, Schema schema,
 
                     /*  if the underlying type is that item\'s type
                     call the underlying_item\'s member function  */
+                    // if it is the same attribute
+                    if( VARis_overrider( ENT_TYPEget_entity( t ), uattr ) ) {
+                        // update attribute_func_name because is has been overrid
+                        generate_attribute_func_name( uattr, funcnm );
+                    } else {
+                        generate_attribute_func_name( a, funcnm );
+                    }
                     fprintf( f,
                              "  if( CurrentUnderlyingType () == %s ) \n\t//  %s\n",
                              TYPEtd_name( t ), StrToUpper( TYPEget_name( t ) ) );
@@ -1150,12 +1155,12 @@ TYPEselect_lib_print_part_three( const Type type, FILE * f, Schema schema,
         {
             /*  for the select items which have the current attribute  */
 
-            /* if ( !multiple_inheritance ) { */
-            if( !memberOfEntPrimary( ent, uattr ) ) {
-                /* See note for similar code segment in 1st part of fn. */
-                continue;
+            if( !multiple_inheritance ) {
+                if( !memberOfEntPrimary( ent, uattr ) ) {
+                    /* See note for similar code segment in 1st part of fn. */
+                    continue;
+                }
             }
-            /* } */
 
             if( ! VARis_derived( uattr ) )  {
 
@@ -1166,19 +1171,31 @@ TYPEselect_lib_print_part_three( const Type type, FILE * f, Schema schema,
 
                     /*  if the underlying type is that item\'s type
                         call the underlying_item\'s member function  */
+                    // if it is the same attribute
+                    if( VARis_overrider( ENT_TYPEget_entity( t ), uattr ) ) {
+                        // update attribute_func_name because is has been overrid
+                        generate_attribute_func_name( uattr, funcnm );
+                    } else {
+                        generate_attribute_func_name( a, funcnm );
+                    }
+
                     strncpy( uent, TYPEget_ctype( t ), BUFSIZ );
                     fprintf( f,
                              "  if( CurrentUnderlyingType () == %s ) \n\t//  %s\n",
                              TYPEtd_name( t ), StrToUpper( TYPEget_name( t ) ) );
                     fprintf( f, "\t{  ((%s) _%s) ->%s( x );\n\t  return;\n\t}\n",
                              uent, SEL_ITEMget_dmname( t ),  funcnm );
-                } else   /*  warning printed above  */
+                } else {
+                    /*  warning printed above  */
                     fprintf( f, "  //  for %s  attribute access function"
                              " has a different argument type\n",
                              SEL_ITEMget_enumtype( t ) );
-            } else /*  derived attributes  */
+                }
+            } else {
+                /*  derived attributes  */
                 fprintf( f, "  //  for %s  attribute is derived\n",
                          SEL_ITEMget_enumtype( t ) );
+            }
         }
         LISTod;
         PRINT_SELECTBUG_WARNING( f );

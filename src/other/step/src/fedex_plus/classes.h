@@ -139,6 +139,8 @@ const char * FundamentalType( const Type t, int report_reftypes );
 /*Variable*/
 #define VARis_simple_derived(a)  (!VARis_overrider(a))
 
+Variable VARis_overrider( Entity e, Variable a );
+
 /* Added for multiple schema support: */
 void print_schemas_separate( Express, void *, FILES * );
 void getMCPrint( Express, FILE *, FILE * );

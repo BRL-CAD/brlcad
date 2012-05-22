@@ -1069,6 +1069,45 @@ void ENTITYhead_print( Entity entity, FILE * file, Schema schema ) {
 }
 
 /**************************************************************//**
+ ** Procedure:  DataMemberPrintAttr
+ ** Parameters:  Entity entity  --  entity being processed
+ **              Variable a -- attribute being processed
+ **              FILE* file  --  file being written to
+ ** Returns:
+ ** Description:  prints out the current attribute for an entity's c++ class
+ **               definition
+ ******************************************************************/
+void DataMemberPrintAttr( Entity entity, Variable a, FILE * file ) {
+    char attrnm [BUFSIZ];
+    const char * ctype, * etype;
+    if( VARget_initializer( a ) == EXPRESSION_NULL ) {
+        ctype = TYPEget_ctype( VARget_type( a ) );
+        generate_attribute_name( a, attrnm );
+        if( !strcmp( ctype, "SCLundefined" ) ) {
+            printf( "WARNING:  in entity %s:\n", ENTITYget_name( entity ) );
+            printf( "        the type for attribute  %s is not fully implemented\n", attrnm );
+        }
+        if( TYPEis_entity( VARget_type( a ) ) ) {
+            fprintf( file, "        SDAI_Application_instance_ptr _%s ;", attrnm );
+        } else {
+            fprintf( file, "        %s _%s ;", ctype, attrnm );
+        }
+        if( VARget_optional( a ) ) {
+            fprintf( file, "    //  OPTIONAL" );
+        }
+        if( isAggregate( a ) )        {
+            /*  if it's a named type, comment the type  */
+            if( ( etype = TYPEget_name
+                          ( TYPEget_nonaggregate_base_type( VARget_type( a ) ) ) ) ) {
+                fprintf( file, "          //  of  %s\n", etype );
+            }
+        }
+
+        fprintf( file, "\n" );
+    }
+}
+
+/**************************************************************//**
  ** Procedure:  DataMemberPrint
  ** Parameters:  const Entity entity  --  entity being processed
  **   FILE* file  --  file being written to
@@ -1078,48 +1117,27 @@ void ENTITYhead_print( Entity entity, FILE * file, Schema schema ) {
  ** Side Effects:  generates c++ code
  ** Status:  ok 1/15/91
  ******************************************************************/
-void DataMemberPrint( Entity entity, FILE * file, Schema schema ) {
+void DataMemberPrint( Entity entity, Linked_List neededAttr, FILE * file, Schema schema ) {
     Linked_List attr_list;
     char entnm [BUFSIZ];
-    char attrnm [BUFSIZ];
-
-    const char * ctype, * etype;
-
     strncpy( entnm, ENTITYget_classname( entity ), BUFSIZ ); /*  assign entnm  */
 
     /*  print list of attributes in the protected access area   */
-
     fprintf( file, "  protected:\n" );
 
     attr_list = ENTITYget_attributes( entity );
-    LISTdo( attr_list, a, Variable )
-    if( VARget_initializer( a ) == EXPRESSION_NULL ) {
-        ctype = TYPEget_ctype( VARget_type( a ) );
-        generate_attribute_name( a, attrnm );
-        if( !strcmp( ctype, "SCLundefined" ) ) {
-            printf( "WARNING:  in entity %s:\n", ENTITYget_name( entity ) );
-            printf( "\tthe type for attribute  %s is not fully implemented\n", attrnm );
-        }
-        if( TYPEis_entity( VARget_type( a ) ) ) {
-            fprintf( file, "\tSDAI_Application_instance_ptr _%s ;", attrnm );
-        } else {
-            fprintf( file, "\t%s _%s ;", ctype, attrnm );
-        }
-        if( VARget_optional( a ) ) {
-            fprintf( file, "    //  OPTIONAL" );
-        }
-        if( isAggregate( a ) )        {
-            /*  if it's a named type, comment the type  */
-            etype = TYPEget_name ( TYPEget_nonaggregate_base_type( VARget_type( a ) ) );
-            if( etype ) {
-                fprintf( file, "\t  //  of  %s\n", etype );
-            }
-        }
-
-        fprintf( file, "\n" );
+    LISTdo( attr_list, attr, Variable ) {
+        DataMemberPrintAttr( entity, attr, file );
     }
-
     LISTod;
+
+    // add attributes for parent attributes not inherited through C++ inheritance.
+    if( multiple_inheritance ) {
+        LISTdo( neededAttr, attr, Variable ) {
+            DataMemberPrintAttr( entity, attr, file );
+        }
+        LISTod;
+    }
 }
 
 /**************************************************************//**
@@ -1134,30 +1152,32 @@ void DataMemberPrint( Entity entity, FILE * file, Schema schema ) {
  ******************************************************************/
 enum CollectType { ALL, ALL_BUT_FIRST, FIRST_ONLY };
 
-void collectAttributes( Linked_List curList, Entity curEntity, enum CollectType collect ) {
+static void collectAttributes( Linked_List curList, const Entity curEntity, enum CollectType collect ) {
     Linked_List parent_list = ENTITYget_supertypes( curEntity );
 
     if( ! LISTempty( parent_list ) ) {
-        Link first = LINKnext( parent_list -> mark );
-
-        if ( collect == FIRST_ONLY ) {
-            collectAttributes( curList, first , ALL );
-        } else {
-            if ( collect == ALL_BUT_FIRST ) {
-                // remove first parent before proceeding
-                parent_list -> mark -> next = LINKnext( first );
-                LINK_destroy( first );
+        if( collect != FIRST_ONLY ) {
+            // collect attributes from parents and their supertypes
+            LISTdo( parent_list, e, Entity ) {
+                if ( collect == ALL_BUT_FIRST ) {
+                    // skip first and collect from the rest
+                    collect = ALL;
+                } else {
+                    // collect attributes of this parent and its supertypes
+                    collectAttributes( curList, e, ALL );
+                }
             }
-            // collect attributes for all parents
-            LISTdo( parent_list, e, Entity )
-                collectAttributes( curList, e, ALL );
-            LISTod
+            LISTod;
+        } else {
+            // collect attributes of only first parent and its supertypes
+            collectAttributes( curList, ( Entity ) LISTpeek_first( parent_list ), ALL );
         }
     }
-    // parse the attributes of the parent and add to the current list
-    LISTdo( ENTITYget_attributes( curEntity ), a, Variable )
-        LISTadd_first( curList, ( Generic ) a );
-    LISTod
+    // prepend this entity's attributes to the result list
+    LISTdo( ENTITYget_attributes( curEntity ), attr, Variable ) {
+        LISTadd_first( curList, ( Generic ) attr );
+    }
+    LISTod;
 }
 
 /**************************************************************//**
@@ -1174,17 +1194,11 @@ void collectAttributes( Linked_List curList, Entity curEntity, enum CollectType 
  **  updated 17-Feb-1992 to print only the signature
              and not the function definitions
  ******************************************************************/
-void MemberFunctionSign( Entity entity, FILE * file ) {
+void MemberFunctionSign( Entity entity, Linked_List neededAttr, FILE * file ) {
 
     Linked_List attr_list;
     static int entcode = 0;
     char entnm [BUFSIZ];
-
-    /* added for calling multiple_inheritance */
-    Linked_List parent_attr_list;
-    Linked_List parent_list;
-    Entity super = 0;
-    int super_cnt = 0;
 
     strncpy( entnm, ENTITYget_classname( entity ), BUFSIZ ); /*  assign entnm  */
 
@@ -1192,70 +1206,46 @@ void MemberFunctionSign( Entity entity, FILE * file ) {
 
     /*  put in member functions which belong to all entities    */
     /*  constructor:    */
-    fprintf( file, "\n	%s ( ); \n", entnm );
+    fprintf( file, "\n        %s ( ); \n", entnm );
 
-    fprintf( file, "\t%s (SDAI_Application_instance *se, int *addAttrs = 0); \n", entnm );
+    fprintf( file, "        %s (SDAI_Application_instance *se, int *addAttrs = 0); \n", entnm );
     /*  copy constructor*/
-    fprintf( file, "	%s (%s& e ); \n", entnm, entnm );
+    fprintf( file, "        %s (%s& e ); \n", entnm, entnm );
     /*  destructor: */
-    fprintf( file, "	~%s ();\n", entnm );
+    fprintf( file, "        ~%s ();\n", entnm );
 
-    fprintf( file, "	int opcode ()  { return %d ; } \n",
+    fprintf( file, "        int opcode ()  { return %d ; } \n",
              entcode++ );
 
     /*  print signature of access functions for attributes      */
     attr_list = ENTITYget_attributes( entity );
-    LISTdo( attr_list, a, Variable )
-    if( VARget_initializer( a ) == EXPRESSION_NULL ) {
+    LISTdo( attr_list, a, Variable ) {
+        if( VARget_initializer( a ) == EXPRESSION_NULL ) {
 
-        /*  retrieval  and  assignment  */
-        ATTRsign_access_methods( a, file );
-    }
-
-    LISTod;
-
-    if( multiple_inheritance ) {
-        /* could print out access functions for parent attributes not
-           inherited through C++ inheritance. */
-        parent_list = ENTITYget_supertypes( entity );
-        if( ! LISTempty( parent_list ) ) {
-
-            LISTdo( parent_list, e, Entity )
-            /*  if there\'s no super class yet,
-                or the super class doesn\'t have any attributes
-            */
-
-            super = e;
-            super_cnt++;
-            if( super_cnt == 1 ) {
-                /* ignore the 1st parent */
-                fprintf( file,
-                         "\t/* The first parent's access functions are */\n%s\n",
-                         "\t/* above or covered by inherited functions. */" );
-            } else {
-                fprintf( file, "\n#if 0\n" );
-
-                parent_attr_list = ENTITYget_attributes( e );
-                LISTdo( parent_attr_list, a2, Variable )
-                /*  do for EXPLICIT, REDEFINED, and INVERSE attributes - but not DERIVED */
-                if( ! VARis_derived( a2 ) )  {
-
-                    /*  retrieval  and  assignment   */
-                    ATTRsign_access_methods( a2, file );
-                }
-                LISTod;
-                fprintf( file, "\n#endif\n" );
-            }
-            LISTod;
+            /*  retrieval  and  assignment  */
+            ATTRsign_access_methods( a, file );
         }
     }
+    LISTod;
 
+    /* //////////////// */
+    if( multiple_inheritance ) {
+        // add the EXPRESS inherited attributes which are non
+        // inherited in C++
+        LISTdo( neededAttr, attr, Variable ) {
+            if( ! VARis_derived( attr ) && ! VARis_overrider( entity, attr ) ) {
+                ATTRsign_access_methods( attr, file );
+            }
+        }
+        LISTod;
+
+    }
+    /* //////////////// */
     fprintf( file, "};\n" );
 
     /*  print creation function for class   */
     fprintf( file, "inline %s *\ncreate_%s () {  return  new %s ;  }\n",
              entnm, entnm, entnm );
-
 }
 
 /**************************************************************//**
@@ -1302,19 +1292,17 @@ void LIBdescribe_entity( Entity entity, FILE * file, Schema schema ) {
  ** Side Effects:  prints c++ code to a file
  ** Status:  ok 17-Feb-1992
  ******************************************************************/
-void LIBmemberFunctionPrint( Entity entity, FILE * file ) {
+void LIBmemberFunctionPrint( Entity entity, Linked_List neededAttr, FILE * file ) {
 
     Linked_List attr_list;
     char entnm [BUFSIZ];
 
-    /* added for calling multiple_inheritance */
-    Linked_List parent_attr_list;
-    Linked_List parent_list;
-    int super_cnt = 0;
-
     strncpy( entnm, ENTITYget_classname( entity ), BUFSIZ ); /*  assign entnm */
 
-    /*  print access functions for attributes   */
+    /*  1. put in member functions which belong to all entities */
+    /*  the common function are still in the class definition 17-Feb-1992 */
+
+    /*  2. print access functions for attributes    */
     attr_list = ENTITYget_attributes( entity );
     LISTdo( attr_list, a, Variable )
     /*  do for EXPLICIT, REDEFINED, and INVERSE attributes - but not DERIVED */
@@ -1324,41 +1312,17 @@ void LIBmemberFunctionPrint( Entity entity, FILE * file ) {
         ATTRprint_access_methods( entnm, a, file );
     }
     LISTod;
-
+    /* //////////////// */
     if( multiple_inheritance ) {
-        /* could print out access functions for parent attributes not
-           inherited through C++ inheritance. */
-        parent_list = ENTITYget_supertypes( entity );
-        if( ! LISTempty( parent_list ) ) {
-
-            LISTdo( parent_list, e, Entity )
-            /*  if there\'s no super class yet,
-                or the super class doesn\'t have any attributes
-            */
-
-            super_cnt++;
-            if( super_cnt == 1 ) {
-                /* ignore the 1st parent */
-                fprintf( file,
-                         "\t/* The first parent's access functions are */\n%s\n",
-                         "\t/* above or covered by inherited functions. */" );
-            } else {
-                fprintf( file, "\n#if 0\n" );
-
-                parent_attr_list = ENTITYget_attributes( e );
-                LISTdo( parent_attr_list, a2, Variable )
-                /*  do for EXPLICIT, REDEFINED, and INVERSE attributes - but not DERIVED */
-                if( ! VARis_derived( a2 ) )  {
-
-                    /*  retrieval  and  assignment   */
-                    ATTRprint_access_methods( entnm, a2, file );
-                }
-                LISTod;
-                fprintf( file, "\n#endif\n" );
+        LISTdo( neededAttr, attr, Variable ) {
+            if( ! VARis_derived( attr ) && ! VARis_overrider( entity, attr ) ) {
+                ATTRprint_access_methods( entnm, attr, file );
             }
-            LISTod;
         }
+        LISTod;
     }
+    /* //////////////// */
+
 }
 
 /**************************************************************//**
@@ -1370,10 +1334,10 @@ void LIBmemberFunctionPrint( Entity entity, FILE * file ) {
  ** Side Effects:  prints segment of the c++ .h file
  ** Status:  ok 1/15/91
  ******************************************************************/
-void ENTITYinc_print( Entity entity, FILE * file, Schema schema ) {
+void ENTITYinc_print( Entity entity, Linked_List neededAttr, FILE * file, Schema schema ) {
     ENTITYhead_print( entity, file, schema );
-    DataMemberPrint( entity, file, schema );
-    MemberFunctionSign( entity, file );
+    DataMemberPrint( entity, neededAttr, file, schema );
+    MemberFunctionSign( entity, neededAttr, file );
 }
 
 /**************************************************************//**
@@ -1863,13 +1827,13 @@ void LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
  ** Side Effects:  generates code segment for c++ library file
  ** Status:  ok 1/15/91
  ******************************************************************/
-void ENTITYlib_print( Entity entity, FILE * file, Schema schema ) {
+void ENTITYlib_print( Entity entity, Linked_List neededAttr, FILE * file, Schema schema ) {
     LIBdescribe_entity( entity, file, schema );
     LIBstructor_print( entity, file, schema );
     if( multiple_inheritance ) {
         LIBstructor_print_w_args( entity, file, schema );
     }
-    LIBmemberFunctionPrint( entity, file );
+    LIBmemberFunctionPrint( entity, neededAttr, file );
 }
 
 /** return 1 if types are predefined by us */
@@ -2251,6 +2215,17 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
 #undef schema_name
 }
 
+static bool listContainsVar( Linked_List l, Variable v ) {
+    const char *vName = VARget_simple_name( v );
+    LISTdo( l, curr, Variable ) {
+	if ( streq( vName, VARget_simple_name( curr ) ) ) {
+	    return true;
+	}
+    }
+    LISTod;
+    return false;
+}
+
 /**************************************************************//**
  ** Procedure:  ENTITYPrint
  ** Parameters:  Entity *entity --  entity being processed
@@ -2262,16 +2237,41 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
  ** Status:  complete 1/15/91
  ******************************************************************/
 void ENTITYPrint( Entity entity, FILES * files, Schema schema ) {
-
     char * n = ENTITYget_name( entity );
+    Linked_List remaining = LISTcreate();
+
     DEBUG( "Entering ENTITYPrint for %s\n", n );
 
+    if( multiple_inheritance ) {
+        Linked_List existing = LISTcreate();
+        Linked_List required = LISTcreate();
+
+        // create list of attr inherited from the parents in C++
+        collectAttributes( existing, entity, FIRST_ONLY );
+
+        // create list of attr that have to be inherited in EXPRESS
+        collectAttributes( required, entity, ALL_BUT_FIRST );
+
+        // build list of unique attr that are required but havn't been
+        // inherited
+        LISTdo( required, attr, Variable ) {
+            if( !listContainsVar( existing, attr ) &&
+                !listContainsVar( remaining, attr ) )
+            {
+                LISTadd_first( remaining, ( Generic ) attr );
+            }
+        }
+        LISTod;
+        LIST_destroy( existing );
+        LIST_destroy( required );
+    }
+
     fprintf( files->inc, "\n/////////\t ENTITY %s\n\n", n );
-    ENTITYinc_print( entity, files -> inc, schema );
+    ENTITYinc_print( entity, remaining, files -> inc, schema );
     fprintf( files->inc, "\n/////////\t END_ENTITY %s\n\n", n );
 
     fprintf( files->lib, "\n/////////\t ENTITY %s\n\n", n );
-    ENTITYlib_print( entity, files -> lib, schema );
+    ENTITYlib_print( entity, remaining, files -> lib, schema );
     fprintf( files->lib, "\n/////////\t END_ENTITY %s\n\n", n );
 
     fprintf( files->init, "\n/////////\t ENTITY %s\n\n", n );
@@ -2279,6 +2279,7 @@ void ENTITYPrint( Entity entity, FILES * files, Schema schema ) {
     fprintf( files->init, "/////////\t END_ENTITY %s\n", n );
 
     DEBUG( "DONE ENTITYPrint\n" )    ;
+    LIST_destroy( remaining );
 }
 
 void MODELPrintConstructorBody( Entity entity, FILES * files, Schema schema ) {
