@@ -3295,6 +3295,8 @@ package provide cadwidgets::Ged 1.0
     foreach callback $mEndDataMoveCallbacks {
 	catch {$callback $mLastDataType}
     }
+
+    set mLastDataIndex ""
     refresh_on
     refresh_all
 }
@@ -3322,6 +3324,8 @@ package provide cadwidgets::Ged 1.0
     foreach callback $mEndDataPolygonCallbacks {
 	catch {$callback $mLastDataIndex}
     }
+
+    set mLastDataIndex ""
 }
 
 
