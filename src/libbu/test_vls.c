@@ -189,6 +189,9 @@ main(int ac, char *av[])
     /* from "two-character length modifiers" */
     fails += test_vls("%ld %lld", 123, -123);
 
+    /* unsigned variant */
+    fails += test_vls("%lu %llu", 123, 123);
+
     /* ======================================================== */
     /* EXPECTED FAILURES ONLY BELOW HERE                           */
     /* ======================================================== */
