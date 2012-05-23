@@ -46,7 +46,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 TEST=vls
 TESTSCRIPT=$TEST.sh
 TESTEXE=test_vls
-TESTLOG=${TEST}.log
+TESTLOG=${TEST}_test.log
 TESTCMD="`ensearch $TESTEXE`"
 if test ! -f "$TESTCMD" ; then
     echo "Unable to find $TESTEXE, aborting"
@@ -54,7 +54,7 @@ if test ! -f "$TESTCMD" ; then
 fi
 
 # another file for test output
-ERRLOG=vls_test.stderr
+ERRLOG=${TEST}_test.stderr
 
 rm -f $TESTLOG $ERRLOG
 
