@@ -1465,7 +1465,7 @@ to_axes(struct ged *gedp,
 	if (argc == 4) {
 	    int i;
 
-	    if (sscanf(argv[3], "%d", &i) != 1)
+	    if (bu_sscanf(argv[3], "%d", &i) != 1)
 		goto bad;
 
 	    if (i)
@@ -1489,7 +1489,7 @@ to_axes(struct ged *gedp,
 	if (argc == 4) {
 	    fastf_t size;
 
-	    if (sscanf(argv[3], "%lf", &size) != 1)
+	    if (bu_sscanf(argv[3], "%lf", &size) != 1)
 		goto bad;
 
 	    gasp->gas_axes_size = size;
@@ -1511,9 +1511,9 @@ to_axes(struct ged *gedp,
 	if (argc == 6) {
 	    fastf_t x, y, z;
 
-	    if (sscanf(argv[3], "%lf", &x) != 1 ||
-		sscanf(argv[4], "%lf", &y) != 1 ||
-		sscanf(argv[5], "%lf", &z) != 1)
+	    if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
+		bu_sscanf(argv[4], "%lf", &y) != 1 ||
+		bu_sscanf(argv[5], "%lf", &z) != 1)
 		goto bad;
 
 	    VSET(gasp->gas_axes_pos, x, y, z);
@@ -1536,9 +1536,9 @@ to_axes(struct ged *gedp,
 	    int r, g, b;
 
 	    /* set background color */
-	    if (sscanf(argv[3], "%d", &r) != 1 ||
-		sscanf(argv[4], "%d", &g) != 1 ||
-		sscanf(argv[5], "%d", &b) != 1)
+	    if (bu_sscanf(argv[3], "%d", &r) != 1 ||
+		bu_sscanf(argv[4], "%d", &g) != 1 ||
+		bu_sscanf(argv[5], "%d", &b) != 1)
 		goto bad;
 
 	    /* validate color */
@@ -1567,9 +1567,9 @@ to_axes(struct ged *gedp,
 	    int r, g, b;
 
 	    /* set background color */
-	    if (sscanf(argv[3], "%d", &r) != 1 ||
-		sscanf(argv[4], "%d", &g) != 1 ||
-		sscanf(argv[5], "%d", &b) != 1)
+	    if (bu_sscanf(argv[3], "%d", &r) != 1 ||
+		bu_sscanf(argv[4], "%d", &g) != 1 ||
+		bu_sscanf(argv[5], "%d", &b) != 1)
 		goto bad;
 
 	    /* validate color */
@@ -1596,7 +1596,7 @@ to_axes(struct ged *gedp,
 	if (argc == 4) {
 	    int line_width;
 
-	    if (sscanf(argv[3], "%d", &line_width) != 1)
+	    if (bu_sscanf(argv[3], "%d", &line_width) != 1)
 		goto bad;
 
 	    gasp->gas_line_width = line_width;
@@ -1617,7 +1617,7 @@ to_axes(struct ged *gedp,
 	if (argc == 4) {
 	    int i;
 
-	    if (sscanf(argv[3], "%d", &i) != 1)
+	    if (bu_sscanf(argv[3], "%d", &i) != 1)
 		goto bad;
 
 	    if (i)
@@ -1643,9 +1643,9 @@ to_axes(struct ged *gedp,
 	    int r, g, b;
 
 	    /* set background color */
-	    if (sscanf(argv[3], "%d", &r) != 1 ||
-		sscanf(argv[4], "%d", &g) != 1 ||
-		sscanf(argv[5], "%d", &b) != 1)
+	    if (bu_sscanf(argv[3], "%d", &r) != 1 ||
+		bu_sscanf(argv[4], "%d", &g) != 1 ||
+		bu_sscanf(argv[5], "%d", &b) != 1)
 		goto bad;
 
 	    /* validate color */
@@ -1672,7 +1672,7 @@ to_axes(struct ged *gedp,
 	if (argc == 4) {
 	    int i;
 
-	    if (sscanf(argv[3], "%d", &i) != 1)
+	    if (bu_sscanf(argv[3], "%d", &i) != 1)
 		goto bad;
 
 	    if (i)
@@ -1696,7 +1696,7 @@ to_axes(struct ged *gedp,
 	if (argc == 4) {
 	    int tick_interval;
 
-	    if (sscanf(argv[3], "%d", &tick_interval) != 1)
+	    if (bu_sscanf(argv[3], "%d", &tick_interval) != 1)
 		goto bad;
 
 	    gasp->gas_tick_interval = tick_interval;
@@ -1717,7 +1717,7 @@ to_axes(struct ged *gedp,
 	if (argc == 4) {
 	    int tick_length;
 
-	    if (sscanf(argv[3], "%d", &tick_length) != 1)
+	    if (bu_sscanf(argv[3], "%d", &tick_length) != 1)
 		goto bad;
 
 	    gasp->gas_tick_length = tick_length;
@@ -1740,9 +1740,9 @@ to_axes(struct ged *gedp,
 	    int r, g, b;
 
 	    /* set background color */
-	    if (sscanf(argv[3], "%d", &r) != 1 ||
-		sscanf(argv[4], "%d", &g) != 1 ||
-		sscanf(argv[5], "%d", &b) != 1)
+	    if (bu_sscanf(argv[3], "%d", &r) != 1 ||
+		bu_sscanf(argv[4], "%d", &g) != 1 ||
+		bu_sscanf(argv[5], "%d", &b) != 1)
 		goto bad;
 
 	    /* validate color */
@@ -1769,7 +1769,7 @@ to_axes(struct ged *gedp,
 	if (argc == 4) {
 	    int tick_major_length;
 
-	    if (sscanf(argv[3], "%d", &tick_major_length) != 1)
+	    if (bu_sscanf(argv[3], "%d", &tick_major_length) != 1)
 		goto bad;
 
 	    gasp->gas_tick_major_length = tick_major_length;
@@ -1790,7 +1790,7 @@ to_axes(struct ged *gedp,
 	if (argc == 4) {
 	    int ticks_per_major;
 
-	    if (sscanf(argv[3], "%d", &ticks_per_major) != 1)
+	    if (bu_sscanf(argv[3], "%d", &ticks_per_major) != 1)
 		goto bad;
 
 	    gasp->gas_ticks_per_major = ticks_per_major;
@@ -1811,7 +1811,7 @@ to_axes(struct ged *gedp,
 	if (argc == 4) {
 	    int tick_threshold;
 
-	    if (sscanf(argv[3], "%d", &tick_threshold) != 1)
+	    if (bu_sscanf(argv[3], "%d", &tick_threshold) != 1)
 		goto bad;
 
 	    if (tick_threshold < 1)
@@ -1835,7 +1835,7 @@ to_axes(struct ged *gedp,
 	if (argc == 4) {
 	    int i;
 
-	    if (sscanf(argv[3], "%d", &i) != 1)
+	    if (bu_sscanf(argv[3], "%d", &i) != 1)
 		goto bad;
 
 	    if (i)
@@ -1916,9 +1916,9 @@ to_bg(struct ged *gedp,
     }
 
     /* set background color */
-    if (sscanf(argv[2], "%d", &r) != 1 ||
-	sscanf(argv[3], "%d", &g) != 1 ||
-	sscanf(argv[4], "%d", &b) != 1)
+    if (bu_sscanf(argv[2], "%d", &r) != 1 ||
+	bu_sscanf(argv[3], "%d", &g) != 1 ||
+	bu_sscanf(argv[4], "%d", &b) != 1)
 	goto bad_color;
 
     /* validate color */
@@ -2009,7 +2009,7 @@ to_bounds(struct ged *gedp,
     }
 
     /* set window bounds */
-    if (sscanf(argv[2], "%lf %lf %lf %lf %lf %lf",
+    if (bu_sscanf(argv[2], "%lf %lf %lf %lf %lf %lf",
 	       &bounds[0], &bounds[1],
 	       &bounds[2], &bounds[3],
 	       &bounds[4], &bounds[5]) != 6) {
@@ -2139,8 +2139,8 @@ to_constrain_rmode(struct ged *gedp,
 	return GED_OK;
     }
 
-    if (sscanf(argv[3], "%lf", &x) != 1 ||
-	sscanf(argv[4], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
+	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -2203,8 +2203,8 @@ to_constrain_tmode(struct ged *gedp,
 	return GED_OK;
     }
 
-    if (sscanf(argv[3], "%lf", &x) != 1 ||
-	sscanf(argv[4], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
+	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -2398,7 +2398,7 @@ to_data_arrows(struct ged *gedp,
 	if (argc == 4) {
 	    int i;
 
-	    if (sscanf(argv[3], "%d", &i) != 1)
+	    if (bu_sscanf(argv[3], "%d", &i) != 1)
 		goto bad;
 
 	    if (i)
@@ -2424,9 +2424,9 @@ to_data_arrows(struct ged *gedp,
 	    int r, g, b;
 
 	    /* set background color */
-	    if (sscanf(argv[3], "%d", &r) != 1 ||
-		sscanf(argv[4], "%d", &g) != 1 ||
-		sscanf(argv[5], "%d", &b) != 1)
+	    if (bu_sscanf(argv[3], "%d", &r) != 1 ||
+		bu_sscanf(argv[4], "%d", &g) != 1 ||
+		bu_sscanf(argv[5], "%d", &b) != 1)
 		goto bad;
 
 	    /* validate color */
@@ -2453,7 +2453,7 @@ to_data_arrows(struct ged *gedp,
 	if (argc == 4) {
 	    int line_width;
 
-	    if (sscanf(argv[3], "%d", &line_width) != 1)
+	    if (bu_sscanf(argv[3], "%d", &line_width) != 1)
 		goto bad;
 
 	    gdasp->gdas_line_width = line_width;
@@ -2506,7 +2506,7 @@ to_data_arrows(struct ged *gedp,
 	    gdasp->gdas_num_points = ac;
 	    gdasp->gdas_points = (point_t *)bu_calloc(ac, sizeof(point_t), "data points");
 	    for (i = 0; i < ac; ++i) {
-		if (sscanf(av[i], "%lf %lf %lf",
+		if (bu_sscanf(av[i], "%lf %lf %lf",
 			   &gdasp->gdas_points[i][X],
 			   &gdasp->gdas_points[i][Y],
 			   &gdasp->gdas_points[i][Z]) != 3) {
@@ -2538,7 +2538,7 @@ to_data_arrows(struct ged *gedp,
 	if (argc == 4) {
 	    int tip_length;
 
-	    if (sscanf(argv[3], "%d", &tip_length) != 1)
+	    if (bu_sscanf(argv[3], "%d", &tip_length) != 1)
 		goto bad;
 
 	    gdasp->gdas_tip_length = tip_length;
@@ -2559,7 +2559,7 @@ to_data_arrows(struct ged *gedp,
 	if (argc == 4) {
 	    int tip_width;
 
-	    if (sscanf(argv[3], "%d", &tip_width) != 1)
+	    if (bu_sscanf(argv[3], "%d", &tip_width) != 1)
 		goto bad;
 
 	    gdasp->gdas_tip_width = tip_width;
@@ -2625,7 +2625,7 @@ to_data_axes(struct ged *gedp,
 	if (argc == 4) {
 	    int i;
 
-	    if (sscanf(argv[3], "%d", &i) != 1)
+	    if (bu_sscanf(argv[3], "%d", &i) != 1)
 		goto bad;
 
 	    if (0 <= i && i <= 2)
@@ -2651,9 +2651,9 @@ to_data_axes(struct ged *gedp,
 	    int r, g, b;
 
 	    /* set background color */
-	    if (sscanf(argv[3], "%d", &r) != 1 ||
-		sscanf(argv[4], "%d", &g) != 1 ||
-		sscanf(argv[5], "%d", &b) != 1)
+	    if (bu_sscanf(argv[3], "%d", &r) != 1 ||
+		bu_sscanf(argv[4], "%d", &g) != 1 ||
+		bu_sscanf(argv[5], "%d", &b) != 1)
 		goto bad;
 
 	    /* validate color */
@@ -2680,7 +2680,7 @@ to_data_axes(struct ged *gedp,
 	if (argc == 4) {
 	    int line_width;
 
-	    if (sscanf(argv[3], "%d", &line_width) != 1)
+	    if (bu_sscanf(argv[3], "%d", &line_width) != 1)
 		goto bad;
 
 	    gdasp->gdas_line_width = line_width;
@@ -2701,7 +2701,7 @@ to_data_axes(struct ged *gedp,
 	if (argc == 4) {
 	    fastf_t size;
 
-	    if (sscanf(argv[3], "%lf", &size) != 1)
+	    if (bu_sscanf(argv[3], "%lf", &size) != 1)
 		goto bad;
 
 	    gdasp->gdas_size = size;
@@ -2749,7 +2749,7 @@ to_data_axes(struct ged *gedp,
 	    gdasp->gdas_num_points = ac;
 	    gdasp->gdas_points = (point_t *)bu_calloc(ac, sizeof(point_t), "data points");
 	    for (i = 0; i < ac; ++i) {
-		if (sscanf(av[i], "%lf %lf %lf",
+		if (bu_sscanf(av[i], "%lf %lf %lf",
 			   &gdasp->gdas_points[i][X],
 			   &gdasp->gdas_points[i][Y],
 			   &gdasp->gdas_points[i][Z]) != 3) {
@@ -2826,7 +2826,7 @@ to_data_labels(struct ged *gedp,
 	if (argc == 4) {
 	    int i;
 
-	    if (sscanf(argv[3], "%d", &i) != 1)
+	    if (bu_sscanf(argv[3], "%d", &i) != 1)
 		goto bad;
 
 	    if (i)
@@ -2852,9 +2852,9 @@ to_data_labels(struct ged *gedp,
 	    int r, g, b;
 
 	    /* set background color */
-	    if (sscanf(argv[3], "%d", &r) != 1 ||
-		sscanf(argv[4], "%d", &g) != 1 ||
-		sscanf(argv[5], "%d", &b) != 1)
+	    if (bu_sscanf(argv[3], "%d", &r) != 1 ||
+		bu_sscanf(argv[4], "%d", &g) != 1 ||
+		bu_sscanf(argv[5], "%d", &b) != 1)
 		goto bad;
 
 	    /* validate color */
@@ -2949,7 +2949,7 @@ to_data_labels(struct ged *gedp,
 		    return GED_ERROR;
 		}
 
-		if (sscanf(sub_av[1], "%lf %lf %lf",
+		if (bu_sscanf(sub_av[1], "%lf %lf %lf",
 			   &gdlsp->gdls_points[i][X],
 			   &gdlsp->gdls_points[i][Y],
 			   &gdlsp->gdls_points[i][Z]) != 3) {
@@ -2987,7 +2987,7 @@ to_data_labels(struct ged *gedp,
 	if (argc == 4) {
 	    int size;
 
-	    if (sscanf(argv[3], "%d", &size) != 1)
+	    if (bu_sscanf(argv[3], "%d", &size) != 1)
 		goto bad;
 
 	    gdlsp->gdls_size = size;
@@ -3054,7 +3054,7 @@ to_data_lines(struct ged *gedp,
 	if (argc == 4) {
 	    int i;
 
-	    if (sscanf(argv[3], "%d", &i) != 1)
+	    if (bu_sscanf(argv[3], "%d", &i) != 1)
 		goto bad;
 
 	    if (i)
@@ -3080,9 +3080,9 @@ to_data_lines(struct ged *gedp,
 	    int r, g, b;
 
 	    /* set background color */
-	    if (sscanf(argv[3], "%d", &r) != 1 ||
-		sscanf(argv[4], "%d", &g) != 1 ||
-		sscanf(argv[5], "%d", &b) != 1)
+	    if (bu_sscanf(argv[3], "%d", &r) != 1 ||
+		bu_sscanf(argv[4], "%d", &g) != 1 ||
+		bu_sscanf(argv[5], "%d", &b) != 1)
 		goto bad;
 
 	    /* validate color */
@@ -3109,7 +3109,7 @@ to_data_lines(struct ged *gedp,
 	if (argc == 4) {
 	    int line_width;
 
-	    if (sscanf(argv[3], "%d", &line_width) != 1)
+	    if (bu_sscanf(argv[3], "%d", &line_width) != 1)
 		goto bad;
 
 	    gdlsp->gdls_line_width = line_width;
@@ -3162,7 +3162,7 @@ to_data_lines(struct ged *gedp,
 	    gdlsp->gdls_num_points = ac;
 	    gdlsp->gdls_points = (point_t *)bu_calloc(ac, sizeof(point_t), "data points");
 	    for (i = 0; i < ac; ++i) {
-		if (sscanf(av[i], "%lf %lf %lf",
+		if (bu_sscanf(av[i], "%lf %lf %lf",
 			   &gdlsp->gdls_points[i][X],
 			   &gdlsp->gdls_points[i][Y],
 			   &gdlsp->gdls_points[i][Z]) != 3) {
@@ -3263,7 +3263,7 @@ to_extract_contours_av(struct ged *gedp, struct ged_dm_view *gdvp, ged_polygon *
 	for (k = 0; k < point_ac; ++k) {
 	    point_t pt;
 
-	    if (sscanf(point_av[k], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3) {
+	    if (bu_sscanf(point_av[k], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3) {
 		bu_vls_printf(gedp->ged_result_str, "contour %zu, point %zu: bad data point - %s\n",
 			      j, k, point_av[k]);
 		Tcl_Free((char *)point_av);
@@ -3371,7 +3371,7 @@ to_data_polygons(struct ged *gedp,
 	if (argc == 4) {
 	    size_t i;
 
-	    if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 || i > gdpsp->gdps_polygons.gp_num_polygons)
+	    if (bu_sscanf(argv[3], "%zu", &i) != 1 || i > gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
 	    gdpsp->gdps_target_polygon_i = i;
@@ -3391,7 +3391,7 @@ to_data_polygons(struct ged *gedp,
 	if (argc == 4) {
 	    int op;
 
-	    if (sscanf(argv[3], "%d", &op) != 1 || op > gctXor)
+	    if (bu_sscanf(argv[3], "%d", &op) != 1 || op > gctXor)
 		goto bad;
 
 	    gdpsp->gdps_clip_type = (GedClipType)op;
@@ -3411,7 +3411,7 @@ to_data_polygons(struct ged *gedp,
 	if (argc == 4) {
 	    int i;
 
-	    if (sscanf(argv[3], "%d", &i) != 1)
+	    if (bu_sscanf(argv[3], "%d", &i) != 1)
 		goto bad;
 
 	    if (i)
@@ -3435,7 +3435,7 @@ to_data_polygons(struct ged *gedp,
 
 	if (argc == 4) {
 	    /* Get the color for polygon i */
-	    if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+	    if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
@@ -3448,14 +3448,14 @@ to_data_polygons(struct ged *gedp,
 	if (argc == 7) {
 	    int r, g, b;
 
-	    if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+	    if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
 	    /* set background color */
-	    if (sscanf(argv[4], "%d", &r) != 1 ||
-		sscanf(argv[5], "%d", &g) != 1 ||
-		sscanf(argv[6], "%d", &b) != 1)
+	    if (bu_sscanf(argv[4], "%d", &r) != 1 ||
+		bu_sscanf(argv[5], "%d", &g) != 1 ||
+		bu_sscanf(argv[6], "%d", &b) != 1)
 		goto bad;
 
 	    /* validate color */
@@ -3492,9 +3492,9 @@ to_data_polygons(struct ged *gedp,
 	    int r, g, b;
 
 	    /* set background color */
-	    if (sscanf(argv[3], "%d", &r) != 1 ||
-		sscanf(argv[4], "%d", &g) != 1 ||
-		sscanf(argv[5], "%d", &b) != 1)
+	    if (bu_sscanf(argv[3], "%d", &r) != 1 ||
+		bu_sscanf(argv[4], "%d", &g) != 1 ||
+		bu_sscanf(argv[5], "%d", &b) != 1)
 		goto bad;
 
 	    /* validate color */
@@ -3527,7 +3527,7 @@ to_data_polygons(struct ged *gedp,
 
 	if (argc == 4) {
 	    /* Get the line width for polygon i */
-	    if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+	    if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
@@ -3539,11 +3539,11 @@ to_data_polygons(struct ged *gedp,
 	if (argc == 5) {
 	    int line_width;
 
-	    if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+	    if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
-	    if (sscanf(argv[4], "%d", &line_width) != 1)
+	    if (bu_sscanf(argv[4], "%d", &line_width) != 1)
 		goto bad;
 
 	    if (line_width < 0)
@@ -3573,7 +3573,7 @@ to_data_polygons(struct ged *gedp,
 	if (argc == 4) {
 	    int line_width;
 
-	    if (sscanf(argv[3], "%d", &line_width) != 1)
+	    if (bu_sscanf(argv[3], "%d", &line_width) != 1)
 		goto bad;
 
 	    if (line_width < 0)
@@ -3603,7 +3603,7 @@ to_data_polygons(struct ged *gedp,
 
 	if (argc == 4) {
 	    /* Get the line style for polygon i */
-	    if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+	    if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
@@ -3615,11 +3615,11 @@ to_data_polygons(struct ged *gedp,
 	if (argc == 5) {
 	    int line_style;
 
-	    if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+	    if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
-	    if (sscanf(argv[4], "%d", &line_style) != 1)
+	    if (bu_sscanf(argv[4], "%d", &line_style) != 1)
 		goto bad;
 
 
@@ -3650,7 +3650,7 @@ to_data_polygons(struct ged *gedp,
 	if (argc == 4) {
 	    int line_style;
 
-	    if (sscanf(argv[3], "%d", &line_style) != 1)
+	    if (bu_sscanf(argv[3], "%d", &line_style) != 1)
 		goto bad;
 
 	    if (line_style <= 0)
@@ -3732,14 +3732,14 @@ to_data_polygons(struct ged *gedp,
 	    goto bad;
 
 	if (argc > 3) {
-	    if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+	    if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 	} else
 	    i = gdpsp->gdps_target_polygon_i;
 
 	if (argc > 4) {
-	    if (sscanf(argv[4], "%llu", (long long unsigned *)&j) != 1 ||
+	    if (bu_sscanf(argv[4], "%zu", &j) != 1 ||
 		j >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 	} else
@@ -3747,7 +3747,7 @@ to_data_polygons(struct ged *gedp,
 
 	if (argc != 6)
 	    op = gdpsp->gdps_clip_type;
-	else if (sscanf(argv[5], "%d", &op) != 1 || op > gctXor)
+	else if (bu_sscanf(argv[5], "%d", &op) != 1 || op > gctXor)
 	    goto bad;
 
 	gpp = ged_clip_polygon((GedClipType)op,
@@ -3796,12 +3796,12 @@ to_data_polygons(struct ged *gedp,
 	if (argc != 5)
 	    goto bad;
 
-	if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+	if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
 	if ((ret = ged_export_polygon(gedp, gdpsp, i, argv[4])) != GED_OK)
-	    bu_vls_printf(gedp->ged_result_str, "%s: failed to export polygon %llu to %s", argv[0], i, argv[4]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: failed to export polygon %zu to %s", argv[0], i, argv[4]);
 
 	return ret;
     }
@@ -3924,7 +3924,7 @@ to_data_polygons(struct ged *gedp,
 	if (argc != 5)
 	    goto bad;
 
-	if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+	if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
@@ -3963,15 +3963,15 @@ to_data_polygons(struct ged *gedp,
 	if (argc != 6)
 	    goto bad;
 
-	if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+	if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
-	if (sscanf(argv[4], "%llu", (long long unsigned *)&j) != 1 ||
+	if (bu_sscanf(argv[4], "%zu", &j) != 1 ||
 	    j >= gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours)
 	    goto bad;
 
-	if (sscanf(argv[5], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3)
+	if (bu_sscanf(argv[5], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3)
 	    goto bad;
 
 	k = gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points;
@@ -3994,15 +3994,15 @@ to_data_polygons(struct ged *gedp,
 	if (argc != 6)
 	    goto bad;
 
-	if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+	if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
-	if (sscanf(argv[4], "%llu", (long long unsigned *)&j) != 1 ||
+	if (bu_sscanf(argv[4], "%zu", &j) != 1 ||
 	    j >= gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours)
 	    goto bad;
 
-	if (sscanf(argv[5], "%llu", (long long unsigned *)&k) != 1 ||
+	if (bu_sscanf(argv[5], "%zu", &k) != 1 ||
 	    k >= gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points)
 	    goto bad;
 
@@ -4021,19 +4021,19 @@ to_data_polygons(struct ged *gedp,
 	if (argc != 7)
 	    goto bad;
 
-	if (sscanf(argv[3], "%llu", (long long unsigned *)&i) != 1 ||
+	if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
-	if (sscanf(argv[4], "%llu", (long long unsigned *)&j) != 1 ||
+	if (bu_sscanf(argv[4], "%zu", &j) != 1 ||
 	    j >= gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours)
 	    goto bad;
 
-	if (sscanf(argv[5], "%llu", (long long unsigned *)&k) != 1 ||
+	if (bu_sscanf(argv[5], "%zu", &k) != 1 ||
 	    k >= gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points)
 	    goto bad;
 
-	if (sscanf(argv[6], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3)
+	if (bu_sscanf(argv[6], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3)
 	    goto bad;
 
 	VMOVE(gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k], pt);
@@ -4089,17 +4089,17 @@ to_data_move(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[3], "%d", &dindex) != 1 || dindex < 0)
+    if (bu_sscanf(argv[3], "%d", &dindex) != 1 || dindex < 0)
 	goto bad;
 
     if (argc == 5) {
-	if (sscanf(argv[4], "%d %d", &mx, &my) != 2)
+	if (bu_sscanf(argv[4], "%d %d", &mx, &my) != 2)
 	    goto bad;
     } else {
-	if (sscanf(argv[4], "%d", &mx) != 1)
+	if (bu_sscanf(argv[4], "%d", &mx) != 1)
 	    goto bad;
 
-	if (sscanf(argv[5], "%d", &my) != 1)
+	if (bu_sscanf(argv[5], "%d", &my) != 1)
 	    goto bad;
     }
 
@@ -4113,7 +4113,7 @@ to_data_move(struct ged *gedp,
 	size_t i, j, k;
 	ged_data_polygon_state *gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
-	if (sscanf(argv[3], "%llu %llu %llu", (long long unsigned *)&i, (long long unsigned *)&j, (long long unsigned *)&k) != 3)
+	if (bu_sscanf(argv[3], "%zu %zu %zu", &i, &j, &k) != 3)
 	    goto bad;
 
 	/* Silently ignore */
@@ -4429,8 +4429,8 @@ to_data_move_object_mode(struct ged *gedp,
 
     gedp->ged_gvp = gdvp->gdv_view;
 
-    if (sscanf(argv[2], "%d", &x) != 1 ||
-	sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
+	bu_sscanf(argv[3], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -4481,8 +4481,8 @@ to_data_move_point_mode(struct ged *gedp,
 
     gedp->ged_gvp = gdvp->gdv_view;
 
-    if (sscanf(argv[2], "%d", &x) != 1 ||
-	sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
+	bu_sscanf(argv[3], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -4555,13 +4555,13 @@ to_data_pick(struct ged *gedp,
     }
 
     if (argc == 3) {
-	if (sscanf(argv[2], "%d %d", &mx, &my) != 2)
+	if (bu_sscanf(argv[2], "%d %d", &mx, &my) != 2)
 	    goto bad;
     } else {
-	if (sscanf(argv[2], "%d", &mx) != 1)
+	if (bu_sscanf(argv[2], "%d", &mx) != 1)
 	    goto bad;
 
-	if (sscanf(argv[3], "%d", &my) != 1)
+	if (bu_sscanf(argv[3], "%d", &my) != 1)
 	    goto bad;
     }
 
@@ -4740,7 +4740,7 @@ to_data_pick(struct ged *gedp,
     }
 
     if (found_top) {
-	bu_vls_printf(gedp->ged_result_str, "%s %d {%lf %lf %lf}",
+	bu_vls_printf(gedp->ged_result_str, "%s %zu {%lf %lf %lf}",
 		      top_data_str, top_i, V3ARGS(top_point));
 	return GED_OK;
     }
@@ -4804,7 +4804,7 @@ to_data_pick(struct ged *gedp,
     }
 
     if (found_top) {
-	bu_vls_printf(gedp->ged_result_str, "%s %d {%lf %lf %lf}",
+	bu_vls_printf(gedp->ged_result_str, "%s %zu {%lf %lf %lf}",
 		      top_data_str, top_i, V3ARGS(top_point));
 	return GED_OK;
     }
@@ -4868,7 +4868,7 @@ to_data_pick(struct ged *gedp,
     }
 
     if (found_top)
-	bu_vls_printf(gedp->ged_result_str, "%s %d {%lf %lf %lf}",
+	bu_vls_printf(gedp->ged_result_str, "%s %zu {%lf %lf %lf}",
 		      top_data_str, top_i, V3ARGS(top_point));
 
     return GED_OK;
@@ -5145,7 +5145,7 @@ to_dlist_on(struct ged *gedp,
     }
 
     /* Set dlist_on state */
-    if (sscanf(argv[1], "%d", &on) != 1) {
+    if (bu_sscanf(argv[1], "%d", &on) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_ERROR;
     }
@@ -5198,7 +5198,7 @@ to_fontsize(struct ged *gedp,
     }
 
     /* set background color */
-    if (sscanf(argv[2], "%d", &fontsize) != 1)
+    if (bu_sscanf(argv[2], "%d", &fontsize) != 1)
 	goto bad_fontsize;
 
     if (DM_VALID_FONT_SIZE(fontsize) || fontsize == 0) {
@@ -5370,7 +5370,7 @@ to_faceplate(struct ged *gedp,
 		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_view->gv_center_dot.gos_draw);
 		return GED_OK;
 	    } else if (argc == 5) {
-		if (sscanf(argv[4], "%d", &i) != 1)
+		if (bu_sscanf(argv[4], "%d", &i) != 1)
 		    goto bad;
 
 		if (i)
@@ -5390,9 +5390,9 @@ to_faceplate(struct ged *gedp,
 	    } else if (argc == 7) {
 		int r, g, b;
 
-		if (sscanf(argv[4], "%d", &r) != 1 ||
-		    sscanf(argv[5], "%d", &g) != 1 ||
-		    sscanf(argv[6], "%d", &b) != 1)
+		if (bu_sscanf(argv[4], "%d", &r) != 1 ||
+		    bu_sscanf(argv[5], "%d", &g) != 1 ||
+		    bu_sscanf(argv[6], "%d", &b) != 1)
 		    goto bad;
 
 		VSET(gdvp->gdv_view->gv_center_dot.gos_line_color, r, g, b);
@@ -5410,7 +5410,7 @@ to_faceplate(struct ged *gedp,
 		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_view->gv_prim_labels.gos_draw);
 		return GED_OK;
 	    } else if (argc == 5) {
-		if (sscanf(argv[4], "%d", &i) != 1)
+		if (bu_sscanf(argv[4], "%d", &i) != 1)
 		    goto bad;
 
 		if (i)
@@ -5430,9 +5430,9 @@ to_faceplate(struct ged *gedp,
 	    } else if (argc == 7) {
 		int r, g, b;
 
-		if (sscanf(argv[4], "%d", &r) != 1 ||
-		    sscanf(argv[5], "%d", &g) != 1 ||
-		    sscanf(argv[6], "%d", &b) != 1)
+		if (bu_sscanf(argv[4], "%d", &r) != 1 ||
+		    bu_sscanf(argv[5], "%d", &g) != 1 ||
+		    bu_sscanf(argv[6], "%d", &b) != 1)
 		    goto bad;
 
 		VSET(gdvp->gdv_view->gv_prim_labels.gos_text_color, r, g, b);
@@ -5450,7 +5450,7 @@ to_faceplate(struct ged *gedp,
 		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_view->gv_view_params.gos_draw);
 		return GED_OK;
 	    } else if (argc == 5) {
-		if (sscanf(argv[4], "%d", &i) != 1)
+		if (bu_sscanf(argv[4], "%d", &i) != 1)
 		    goto bad;
 
 		if (i)
@@ -5470,9 +5470,9 @@ to_faceplate(struct ged *gedp,
 	    } else if (argc == 7) {
 		int r, g, b;
 
-		if (sscanf(argv[4], "%d", &r) != 1 ||
-		    sscanf(argv[5], "%d", &g) != 1 ||
-		    sscanf(argv[6], "%d", &b) != 1)
+		if (bu_sscanf(argv[4], "%d", &r) != 1 ||
+		    bu_sscanf(argv[5], "%d", &g) != 1 ||
+		    bu_sscanf(argv[6], "%d", &b) != 1)
 		    goto bad;
 
 		VSET(gdvp->gdv_view->gv_view_params.gos_text_color, r, g, b);
@@ -5490,7 +5490,7 @@ to_faceplate(struct ged *gedp,
 		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_view->gv_view_scale.gos_draw);
 		return GED_OK;
 	    } else if (argc == 5) {
-		if (sscanf(argv[4], "%d", &i) != 1)
+		if (bu_sscanf(argv[4], "%d", &i) != 1)
 		    goto bad;
 
 		if (i)
@@ -5510,9 +5510,9 @@ to_faceplate(struct ged *gedp,
 	    } else if (argc == 7) {
 		int r, g, b;
 
-		if (sscanf(argv[4], "%d", &r) != 1 ||
-		    sscanf(argv[5], "%d", &g) != 1 ||
-		    sscanf(argv[6], "%d", &b) != 1)
+		if (bu_sscanf(argv[4], "%d", &r) != 1 ||
+		    bu_sscanf(argv[5], "%d", &g) != 1 ||
+		    bu_sscanf(argv[6], "%d", &b) != 1)
 		    goto bad;
 
 		VSET(gdvp->gdv_view->gv_view_scale.gos_line_color, r, g, b);
@@ -5549,7 +5549,7 @@ to_handle_expose(struct ged *gedp,
     }
 
     if (argc != 3 ||
-	sscanf(argv[2], "%d", &count) != 1) {
+	bu_sscanf(argv[2], "%d", &count) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s, argv[2] - %s", argv[0], usage, argv[2]);
 	return GED_ERROR;
     }
@@ -5720,7 +5720,7 @@ to_light(struct ged *gedp,
     }
 
     /* set light flag */
-    if (sscanf(argv[2], "%d", &light) != 1) {
+    if (bu_sscanf(argv[2], "%d", &light) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -5806,7 +5806,7 @@ to_listen(struct ged *gedp,
     if (argc == 3) {
 	int port;
 
-	if (sscanf(argv[2], "%d", &port) != 1) {
+	if (bu_sscanf(argv[2], "%d", &port) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "listen: bad value - %s\n", argv[2]);
 	    return GED_ERROR;
 	}
@@ -5994,8 +5994,8 @@ to_mouse_append_pipept_common(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf", &x) != 1 ||
-	sscanf(argv[4], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
+	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -6080,8 +6080,8 @@ to_mouse_constrain_rot(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf", &x) != 1 ||
-	sscanf(argv[4], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
+	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -6189,8 +6189,8 @@ to_mouse_constrain_trans(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf", &x) != 1 ||
-	sscanf(argv[4], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
+	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -6294,8 +6294,8 @@ to_mouse_find_pipept(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf", &x) != 1 ||
-	sscanf(argv[4], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
+	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -6365,8 +6365,8 @@ to_mouse_move_arb_edge(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[4], "%lf", &x) != 1 ||
-	sscanf(argv[5], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
+	bu_sscanf(argv[5], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -6461,8 +6461,8 @@ to_mouse_move_arb_face(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[4], "%lf", &x) != 1 ||
-	sscanf(argv[5], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
+	bu_sscanf(argv[5], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -6557,8 +6557,8 @@ to_mouse_move_pipept(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[4], "%lf", &x) != 1 ||
-	sscanf(argv[5], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
+	bu_sscanf(argv[5], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -6654,8 +6654,8 @@ to_mouse_orotate(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf", &x) != 1 ||
-	sscanf(argv[4], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
+	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -6751,8 +6751,8 @@ to_mouse_oscale(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf", &x) != 1 ||
-	sscanf(argv[4], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
+	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -6848,8 +6848,8 @@ to_mouse_otranslate(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf", &x) != 1 ||
-	sscanf(argv[4], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
+	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -6956,8 +6956,8 @@ to_mouse_poly_circ(struct ged *gedp,
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
-    if (sscanf(argv[2], "%d", &x) != 1 ||
-	sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
+	bu_sscanf(argv[3], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -7078,8 +7078,8 @@ to_mouse_poly_cont(struct ged *gedp,
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
-    if (sscanf(argv[2], "%d", &x) != 1 ||
-	sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
+	bu_sscanf(argv[3], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -7178,8 +7178,8 @@ to_mouse_poly_ell(struct ged *gedp,
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
-    if (sscanf(argv[2], "%d", &x) != 1 ||
-	sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
+	bu_sscanf(argv[3], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -7311,8 +7311,8 @@ to_mouse_poly_rect(struct ged *gedp,
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
-    if (sscanf(argv[2], "%d", &x) != 1 ||
-	sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
+	bu_sscanf(argv[3], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -7432,8 +7432,8 @@ to_mouse_rect(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%d", &x) != 1 ||
-	sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
+	bu_sscanf(argv[3], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -7501,8 +7501,8 @@ to_mouse_rot(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf", &x) != 1 ||
-	sscanf(argv[3], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[2], "%lf", &x) != 1 ||
+	bu_sscanf(argv[3], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -7591,8 +7591,8 @@ to_mouse_rotate_arb_face(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[5], "%lf", &x) != 1 ||
-	sscanf(argv[6], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[5], "%lf", &x) != 1 ||
+	bu_sscanf(argv[6], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -7684,8 +7684,8 @@ to_mouse_scale(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf", &x) != 1 ||
-	sscanf(argv[3], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[2], "%lf", &x) != 1 ||
+	bu_sscanf(argv[3], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -7778,8 +7778,8 @@ to_mouse_protate(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[4], "%lf", &x) != 1 ||
-	sscanf(argv[5], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
+	bu_sscanf(argv[5], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -7870,8 +7870,8 @@ to_mouse_pscale(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[4], "%lf", &x) != 1 ||
-	sscanf(argv[5], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
+	bu_sscanf(argv[5], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -7967,8 +7967,8 @@ to_mouse_ptranslate(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[4], "%lf", &x) != 1 ||
-	sscanf(argv[5], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
+	bu_sscanf(argv[5], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -8061,8 +8061,8 @@ to_mouse_trans(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf", &x) != 1 ||
-	sscanf(argv[3], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[2], "%lf", &x) != 1 ||
+	bu_sscanf(argv[3], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -8185,8 +8185,8 @@ to_move_arb_edge_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[4], "%lf", &x) != 1 ||
-	sscanf(argv[5], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
+	bu_sscanf(argv[5], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -8243,8 +8243,8 @@ to_move_arb_face_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[4], "%lf", &x) != 1 ||
-	sscanf(argv[5], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
+	bu_sscanf(argv[5], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -8301,8 +8301,8 @@ to_move_pipept_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[4], "%lf", &x) != 1 ||
-	sscanf(argv[5], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
+	bu_sscanf(argv[5], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -8494,8 +8494,8 @@ to_orotate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf", &x) != 1 ||
-	sscanf(argv[4], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
+	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -8551,8 +8551,8 @@ to_oscale_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf", &x) != 1 ||
-	sscanf(argv[4], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
+	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -8608,8 +8608,8 @@ to_otranslate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf", &x) != 1 ||
-	sscanf(argv[4], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
+	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -8941,8 +8941,8 @@ to_poly_circ_mode(struct ged *gedp,
 
     gedp->ged_gvp = gdvp->gdv_view;
 
-    if (sscanf(argv[2], "%d", &x) != 1 ||
-	sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
+	bu_sscanf(argv[3], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -9050,8 +9050,8 @@ to_poly_cont_build(struct ged *gedp,
 
     gedp->ged_gvp = gdvp->gdv_view;
 
-    if (sscanf(argv[2], "%d", &x) != 1 ||
-	sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
+	bu_sscanf(argv[3], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -9241,8 +9241,8 @@ to_poly_ell_mode(struct ged *gedp,
 
     gedp->ged_gvp = gdvp->gdv_view;
 
-    if (sscanf(argv[2], "%d", &x) != 1 ||
-	sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
+	bu_sscanf(argv[3], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -9353,8 +9353,8 @@ to_poly_rect_mode(struct ged *gedp,
 
     gedp->ged_gvp = gdvp->gdv_view;
 
-    if (sscanf(argv[2], "%d", &x) != 1 ||
-	sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
+	bu_sscanf(argv[3], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -9362,7 +9362,7 @@ to_poly_rect_mode(struct ged *gedp,
     if (argc == 4)
 	sflag = 0;
     else {
-	if (sscanf(argv[4], "%d", &sflag) != 1) {
+	if (bu_sscanf(argv[4], "%d", &sflag) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
@@ -9495,8 +9495,8 @@ to_rect_mode(struct ged *gedp,
 
     gedp->ged_gvp = gdvp->gdv_view;
 
-    if (sscanf(argv[2], "%d", &x) != 1 ||
-	sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
+	bu_sscanf(argv[3], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -9635,7 +9635,7 @@ to_refresh_on(struct ged *gedp,
     }
 
     /* Set refresh_on state */
-    if (sscanf(argv[1], "%d", &on) != 1) {
+    if (bu_sscanf(argv[1], "%d", &on) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_ERROR;
     }
@@ -9682,8 +9682,8 @@ to_rotate_arb_face_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[5], "%lf", &x) != 1 ||
-	sscanf(argv[6], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[5], "%lf", &x) != 1 ||
+	bu_sscanf(argv[6], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -9741,8 +9741,8 @@ to_rotate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf", &x) != 1 ||
-	sscanf(argv[3], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[2], "%lf", &x) != 1 ||
+	bu_sscanf(argv[3], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -9904,8 +9904,8 @@ to_protate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[4], "%lf", &x) != 1 ||
-	sscanf(argv[5], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
+	bu_sscanf(argv[5], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -9962,8 +9962,8 @@ to_pscale_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[4], "%lf", &x) != 1 ||
-	sscanf(argv[5], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
+	bu_sscanf(argv[5], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -10020,8 +10020,8 @@ to_ptranslate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[4], "%lf", &x) != 1 ||
-	sscanf(argv[5], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
+	bu_sscanf(argv[5], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -10078,8 +10078,8 @@ to_scale_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf", &x) != 1 ||
-	sscanf(argv[3], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[2], "%lf", &x) != 1 ||
+	bu_sscanf(argv[3], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -10138,8 +10138,8 @@ to_screen2model(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf", &x) != 1 ||
-	sscanf(argv[3], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[2], "%lf", &x) != 1 ||
+	bu_sscanf(argv[3], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -10196,8 +10196,8 @@ to_screen2view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf", &x) != 1 ||
-	sscanf(argv[3], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[2], "%lf", &x) != 1 ||
+	bu_sscanf(argv[3], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -10307,7 +10307,7 @@ to_set_fb_mode(struct ged *gedp,
     }
 
     /* Set fb mode */
-    if (sscanf(argv[2], "%d", &mode) != 1) {
+    if (bu_sscanf(argv[2], "%d", &mode) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "set_fb_mode: bad value - %s\n", argv[2]);
 	return GED_ERROR;
     }
@@ -10358,8 +10358,8 @@ to_snap_view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf", &vx) != 1 ||
-	sscanf(argv[3], "%lf", &vy) != 1) {
+    if (bu_sscanf(argv[2], "%lf", &vx) != 1 ||
+	bu_sscanf(argv[3], "%lf", &vy) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -10412,8 +10412,8 @@ to_translate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf", &x) != 1 ||
-	sscanf(argv[3], "%lf", &y) != 1) {
+    if (bu_sscanf(argv[2], "%lf", &x) != 1 ||
+	bu_sscanf(argv[3], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -10475,7 +10475,7 @@ to_transparency(struct ged *gedp,
 
     /* set transparency flag */
     if (argc == 3) {
-	if (sscanf(argv[2], "%d", &transparency) != 1) {
+	if (bu_sscanf(argv[2], "%d", &transparency) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: invalid transparency value - %s", argv[2]);
 	    return GED_ERROR;
 	}
@@ -10610,19 +10610,19 @@ to_view_win_size(struct ged *gedp,
     }
 
     if (argc == 3) {
-	if (sscanf(argv[2], "%d", &width) != 1) {
+	if (bu_sscanf(argv[2], "%d", &width) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad size %s", argv[0], argv[2]);
 	    return GED_ERROR;
 	}
 
 	height = width;
     } else {
-	if (sscanf(argv[2], "%d", &width) != 1) {
+	if (bu_sscanf(argv[2], "%d", &width) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad width %s", argv[0], argv[2]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[3], "%d", &height) != 1) {
+	if (bu_sscanf(argv[3], "%d", &height) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad height %s", argv[0], argv[3]);
 	    return GED_ERROR;
 	}
@@ -10676,7 +10676,7 @@ to_view2screen(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf %lf", &view[X], &view[Y]) != 2) {
+    if (bu_sscanf(argv[2], "%lf %lf", &view[X], &view[Y]) != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -10800,8 +10800,8 @@ to_vslew(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf", &xpos1) != 1 ||
-	sscanf(argv[3], "%lf", &ypos1) != 1) {
+    if (bu_sscanf(argv[2], "%lf", &xpos1) != 1 ||
+	bu_sscanf(argv[3], "%lf", &ypos1) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -10883,7 +10883,7 @@ to_zbuffer(struct ged *gedp,
     }
 
     /* set zbuffer flag */
-    if (sscanf(argv[2], "%d", &zbuffer) != 1) {
+    if (bu_sscanf(argv[2], "%d", &zbuffer) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -10941,7 +10941,7 @@ to_zclip(struct ged *gedp,
     }
 
     /* set zclip flag */
-    if (sscanf(argv[2], "%d", &zclip) != 1) {
+    if (bu_sscanf(argv[2], "%d", &zclip) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
