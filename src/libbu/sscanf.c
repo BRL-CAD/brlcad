@@ -242,7 +242,11 @@ again:
 #ifndef HAVE_C99_FORMAT_SPECIFIERS
 	    /* Assume MSVC, where equivalent of %z[ouxX] is %I[ouxX]. */
 	    bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
+#if defined(SIZEOF_SIZE_T) && SIZEOF_SIZE_T == 8
 	    bu_vls_putc(&partFmt, 'I');
+#else
+	    bu_vls_putc(&partFmt, 'l');
+#endif
 #endif
 	    flags |= SIZET;
 	    goto again;
