@@ -51,7 +51,7 @@ automatic_test(const char *input)
 
         /* empty/'n'/'N' as first character for buf_input string */
         if ((buf_len == 0) || (buf_input[0] == 'n') || (buf_input[0] == 'N') ||
-            (strcmp(buf_input, "(null)") == 0)) {
+            (bu_strcmp(buf_input, "(null)") == 0)) {
             ans = 0;
             check = (res == ans);
         } else {
