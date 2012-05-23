@@ -38,38 +38,45 @@ test_quote(const char *str)
 {
     int status = 0;
     int len_s = str ? strlen(str) : 0;
-    int len_d = 0; /* for length of decoded */
+    int len_d = 0;  /* for length of decoded     */
+    int len_e = 0;  /* for length of encoded     */
     int f_wid = 28; /* desired total field width */
     struct bu_vls encoded = BU_VLS_INIT_ZERO;
     struct bu_vls decoded = BU_VLS_INIT_ZERO;
 
-    bu_vls_encode(&encoded, str);
-    bu_vls_decode(&decoded, bu_vls_addr(&encoded)); /* should be same as input string */
+    (void)bu_vls_encode(&encoded, str);
+    (void)bu_vls_decode(&decoded, bu_vls_addr(&encoded)); /* should be same as input string */
 
     len_d = bu_vls_strlen(&decoded);
+    len_e = bu_vls_strlen(&encoded);
+
     if (f_wid < len_s)
         f_wid = len_s + 1;
     if (f_wid < len_d)
         f_wid = len_d + 1;
+    if (f_wid < len_e)
+        f_wid = len_e + 1;
+
+    /* a hack for str showing '(null)' in printf if zero length */
+    if (len_s == 0)
+        len_s = 6;
 
     if (BU_STR_EQUAL(str, bu_vls_addr(&decoded))
         /* && !BU_STR_EQUAL(str, bu_vls_addr(&encoded)) */
         ) {
-        /* a hack for str showing '(null)' in printf if zero length */
-        if (len_s == 0)
-            len_s = 6;
 	printf("{%*s}%*s -> {%*s}%*s [PASS]\n",
                len_s, str, f_wid - len_s, " ",
                len_d, bu_vls_addr(&decoded), f_wid - len_d, " "
                );
     } else {
-        /* a hack for str showing '(null)' in printf if zero length */
-        if (len_s == 0)
-            len_s = 6;
 	printf("{%*s}%*s -> {%*s}%*s [FAIL]  (should be: {%s})\n",
                len_s, str, f_wid - len_s, " ",
                len_d, bu_vls_addr(&decoded), f_wid - len_d, " ",
                str
+               );
+        printf("{%*s}%*s -> {%*s}%*s <- encoded\n",
+               len_s, " ", f_wid - len_s, " ",
+               len_e, bu_vls_addr(&encoded), f_wid - len_d, " "
                );
         status = 1;
     }

@@ -635,7 +635,6 @@ bu_vls_putc(struct bu_vls *vp, int c)
     vp->vls_str[vp->vls_offset + vp->vls_len] = '\0'; /* force null termination */
 }
 
-
 void
 bu_vls_trimspace(struct bu_vls *vp)
 {
@@ -676,11 +675,11 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 #define PRECISION 0x0200
 
 /* groups */
-#define SHORTINTMODS   (SHORTINT & SHHRTINT)
-#define LONGINTMODS    (LONG_INT & LLONGINT)
-#define ALL_INTMODS    (SHORTINTMODS & LONGINTMODS)
-#define ALL_DOUBLEMODS (LONGDBLE)
-#define ALL_LENGTHMODS (ALL_INTMODS & ALL_DOUBLEMODS)
+#define SHORTINTMODS        (SHORTINT & SHHRTINT)
+#define LONGINTMODS         (LONG_INT & LLONGINT)
+#define ALL_INTMODS         (SHORTINTMODS & LONGINTMODS)
+#define ALL_DOUBLEMODS      (LONGDBLE)
+#define ALL_LENGTHMODS      (ALL_INTMODS & ALL_DOUBLEMODS)
 
     /* variables reset for each fmt specifier */
     int flags;
@@ -693,7 +692,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
     char buf[BUFSIZ] = {0};
 
     struct bu_vls fbuf = BU_VLS_INIT_ZERO; /* % format buffer */
-    const char *fbufp = NULL;
+    const char *fbufp  = NULL;
 
     if (UNLIKELY(!vls || !fmt || fmt[0] == '\0')) {
 	/* nothing to print to or from */
@@ -754,16 +753,6 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
                 } else {
 		    left_justify = 1;
                 }
-	    } else if (*ep == 'l' || *ep == 'U' || *ep == 'O') {
-                /* clear all length modifiers first */
-		flags ^= ALL_LENGTHMODS;
-		if (flags & LONG_INT) {
-                    /* 'l' can be doubled, this step recognizes that */
-		    flags |= LLONGINT;
-		} else {
-                    /* set the new flag */
-		    flags |= LONG_INT;
-		}
 	    } else if (*ep == '*') {
                 /* the first occurrence is the field width, but the
                    second occurrence is the precision specifier */
@@ -775,22 +764,34 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    precision = va_arg(ap, int);
 		    flags |= PRECISION;
                 }
-	    } else if (*ep == 'h') {
-                /* clear all length modifiers first */
-		flags ^= ALL_LENGTHMODS;
-		if (flags & SHORTINT) {
-                    /* 'h' can be doubled, this step recognizes that */
-		    flags |= SHHRTINT;
-		} else {
-                    /* set the new flag */
-		    flags |= SHORTINT;
-		}
 	    } else if (*ep == 'j') {
 		flags |= INTMAX_T;
 	    } else if (*ep == 't') {
-		flags |= PTRDIFFT;
+	        flags |= PTRDIFFT;
 	    } else if (*ep == 'z') {
 		flags |= SIZETINT;
+                /* all length or combined length-type modifiers below here */
+            } else if (*ep == 'l') {
+                /* 'l' can be doubled */
+                /* clear all length modifiers AFTER we check for the first 'l' */
+		if (flags & LONG_INT) {
+                    flags ^= ALL_LENGTHMODS;
+		    flags |= LLONGINT;
+                    assert(sizeof(long long) >= 8);
+		} else {
+                    flags ^= ALL_LENGTHMODS;
+		    flags |= LONG_INT;
+		}
+	    } else if (*ep == 'h') {
+                /* 'h' can be doubled */
+                /* clear all length modifiers AFTER we check for the first 'h' */
+		if (flags & SHORTINT) {
+                    flags ^= ALL_LENGTHMODS;
+		    flags |= SHHRTINT;
+		} else {
+                    flags ^= ALL_LENGTHMODS;
+		    flags |= SHORTINT;
+		}
 	    } else if (*ep == 'L') {
                 /* a length modifier for doubles */
                 /* clear all length modifiers first */
@@ -798,7 +799,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
                 /* set the new flag */
                 flags |= LONGDBLE;
 	    } else
-		/* Anything else must be the end of the fmt specifier */
+		/* Anything else must be the end of the fmt specifier (the type )*/
 		break;
 	}
 
@@ -865,7 +866,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	}
 #endif
 
-	/* Grab parameter from arg list, and print it */
+	/* Grab type parameter from arg list, and print it */
 	switch (*ep) {
 	    case 's':
 		{
@@ -935,7 +936,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			bu_vls_vlscat(vls, &tmpstr);
 
                         bu_vls_free(&tmpstr);
-		    }  else  {
+		    } else {
                         /* handle an empty string */
                         /* FIXME: should we trunc to precision if > fieldlen? */
                         if (flags & FIELDLEN) {
@@ -976,7 +977,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			} else {
 			    bu_vls_vlscat(vls, vp);
 			}
-		    }  else  {
+		    } else {
 			if (flags & FIELDLEN)
 			    bu_vls_strncat(vls, "(null)", (size_t)fieldlen);
 			else
@@ -1006,7 +1007,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	    case 'u':
 	    case 'x':
 	    case 'X':
-		if (flags & LONG_INT) {
+                if (flags & LONG_INT) {
 		    /* Unsigned long int */
 		    unsigned long l;
 
@@ -1057,7 +1058,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    /* Regular unsigned int */
 		    unsigned int j;
 
-		    j = (unsigned int)va_arg(ap, unsigned int);
+		    j = va_arg(ap, unsigned int);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, j);
 		    else
@@ -1067,7 +1068,12 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		break;
 	    case 'd':
 	    case 'i':
-		if (flags & LONG_INT) {
+                if (1) {
+                  fprintf(stderr, "DEBUG:\n");
+                  fprintf(stderr, "  ep    = '%c'\n", *ep);
+                  fprintf(stderr, "  fbufp = '%s'\n", fbufp);
+                }
+                if (flags & LONG_INT) {
 		    /* Long int */
 		    long l;
 
@@ -1078,16 +1084,17 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			snprintf(buf, BUFSIZ, fbufp, l);
 		} else if (flags & LLONGINT) {
 		    /* Long long int */
-		    long long ll;
+                    long long ll;
 
 		    ll = va_arg(ap, long long);
 		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbufp, fieldlen, ll);
+                        snprintf(buf, BUFSIZ, fbufp, fieldlen, ll);
 		    else
 			snprintf(buf, BUFSIZ, fbufp, ll);
 		} else if (flags & SHORTINT || flags & SHHRTINT) {
 		    /* short int */
 		    short int sh;
+
 		    sh = (short int)va_arg(ap, int);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, sh);
@@ -1095,6 +1102,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			snprintf(buf, BUFSIZ, fbufp, sh);
 		} else if (flags & INTMAX_T) {
 		    intmax_t im;
+
 		    im = va_arg(ap, intmax_t);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, im);
@@ -1102,6 +1110,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			snprintf(buf, BUFSIZ, fbufp, im);
 		} else if (flags & PTRDIFFT) {
 		    ptrdiff_t pd;
+
 		    pd = va_arg(ap, ptrdiff_t);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, pd);
@@ -1109,7 +1118,8 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			snprintf(buf, BUFSIZ, fbufp, pd);
 		} else if (flags & SIZETINT) {
 		    size_t st;
-		    st = va_arg(ap, size_t);
+
+                    st = va_arg(ap, size_t);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, st);
 		    else
@@ -1142,8 +1152,9 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	    case '%':
 		bu_vls_putc(vls, '%');
 		break;
-	    default:  /* Something weird, maybe %c */
-		{
+	    default:
+                {
+                    /* Something weird, maybe %c */
 		    int j;
 
 		    /* We hope, whatever it is, it fits in an int and the resulting
