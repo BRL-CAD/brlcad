@@ -225,8 +225,9 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 	}
     }
 
-
-    const ON_Line& revaxis = ON_Line(ON_3dPoint(rip->v3d), ON_3dPoint(rip->axis3d));
+    vect_t endpoint;
+    VADD2(endpoint, rip->v3d, rip->axis3d);
+    const ON_Line& revaxis = ON_Line(ON_3dPoint(rip->v3d), ON_3dPoint(endpoint));
 
     FindLoops(b, &revaxis);
 
