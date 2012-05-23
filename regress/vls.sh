@@ -54,7 +54,7 @@ if test ! -f "$TESTCMD" ; then
 fi
 
 # another file for test output
-ERRLOG=vsl_test.stderr
+ERRLOG=vls_test.stderr
 
 rm -f $TESTLOG $ERRLOG
 
