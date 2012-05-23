@@ -1000,7 +1000,6 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     update_view_ring_entries $id d
 
-    # the whole menu has either submenus or groups of radio button groups
     menu .$id.menubar.settings -title "Settings" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.settings add cascade -label "Mouse Behavior" -underline 0\
 	-menu .$id.menubar.settings.mouse_behavior

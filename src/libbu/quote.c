@@ -29,44 +29,6 @@ static const char SPACE = ' ';
 static const char DQUOTE = '"';
 static const char ESCAPE = '\\';
 
-/* known failure cases (round trip):
-
-{\}         -> {}         [FAIL]  (should be: {\})
-{\\}        -> {\}        [FAIL]  (should be: {\\})
-{\hello}    -> {hello}    [FAIL]  (should be: {\hello})
-{\hello"}   -> {hello"}   [FAIL]  (should be: {\hello"})
-{hello\\}   -> {hello\}   [FAIL]  (should be: {hello\\})
-
-*/
-
-/* current description from bu.h: */
-/**
- * given an input string, wrap the string in double quotes if there is
- * a space and append it to the provided bu_vls.  escape any existing
- * double quotes.
- *
- * TODO: consider a specifiable quote character and octal encoding
- * instead of double quote wrapping.  perhaps specifiable encode type:
- *   BU_ENCODE_QUOTE
- *   BU_ENCODE_OCTAL
- *   BU_ENCODE_XML
- *
- * the behavior of this routine is subject to change but should remain
- * a reversible operation when used in conjunction with
- * bu_vls_decode().
- *
- * returns a pointer to the encoded string (i.e., the substring held
- * within the bu_vls)
- */
-
-/*
-
-I think the intent is to take a string and encode it so it can be used
-in a printf statement (except that doesn't explain why the space is
-escaped).  If that is the case, then we would escape ''' and '"' and '\'
-characters but only if they.
-
-*/
 
 const char *
 bu_vls_encode(struct bu_vls *vp, const char *str)
@@ -95,11 +57,10 @@ bu_vls_encode(struct bu_vls *vp, const char *str)
 	for (; *str != '\0'; str++) {
 	    if (*str == DQUOTE) {
 		bu_vls_putc(vp, ESCAPE);
-	    } else if (*str == SPACE) {
-		bu_vls_putc(vp, ESCAPE);
 	    }
 	    bu_vls_putc(vp, *str);
 	}
+	bu_vls_putc(vp, DQUOTE);
     }
 
     return bu_vls_addr(vp) + skip;
