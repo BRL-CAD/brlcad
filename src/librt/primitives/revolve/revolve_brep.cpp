@@ -159,7 +159,9 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 
     //  Find plane in 3 space corresponding to the sketch.
 
-    plane_origin = ON_3dPoint(eip->V);
+    vect_t startpoint;
+    VADD2(startpoint, rip->v3d, rip->r);
+    plane_origin = ON_3dPoint(startpoint);
     plane_x_dir = ON_3dVector(eip->u_vec);
     plane_y_dir = ON_3dVector(eip->v_vec);
     const ON_Plane* sketch_plane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
