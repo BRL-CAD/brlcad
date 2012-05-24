@@ -750,14 +750,14 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
                   precision  = 0;
                   have_digit = 0;
                 } else if (have_digit) {
-		    /* FIXME: ERROR condition?: invalid format string
+                    /* FIXME: ERROR condition?: invalid format string
                        (e.g., '%7.8-f') */
-                    /* seems as if the man page is indefinite here,
+                    /* seems as if the intf man page is indefinite here,
                        looks like the '-' is passed through and
                        appears in output */
                     ;
                 } else {
-		    left_justify = 1;
+                    left_justify = 1;
                 }
 	    } else if (*ep == '*') {
                 /* the first occurrence is the field width, but the
