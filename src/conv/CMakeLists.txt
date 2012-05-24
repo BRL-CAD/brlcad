@@ -4,6 +4,7 @@ endif(NOT MSVC)
 
 add_subdirectory(iges)
 add_subdirectory(intaval)
+add_subdirectory(raw)
 add_subdirectory(vdeck)
 
 set(CONV_INCLUDE_DIRS

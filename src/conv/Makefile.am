@@ -1,5 +1,6 @@
 IGESDIR=iges
 INTAVALDIR=intaval
+RAWDIR=raw
 
 EXTRA_DIST = \
 	CMakeLists.txt \
@@ -33,11 +34,13 @@ else !ONLY_BENCHMARK
 SUBDIRS = \
 	${IGESDIR} \
 	${INTAVALDIR} \
+	${RAWDIR} \
 	vdeck
 
 DIST_SUBDIRS = \
 	iges \
 	intaval \
+	raw \
 	vdeck
 
 EXTRA_DIST = \
