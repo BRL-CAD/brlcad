@@ -759,16 +759,6 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
                 } else {
 		    left_justify = 1;
                 }
-	    } else if (*ep == 'l') {
-                /* clear all length modifiers first */
-		flags ^= ALL_LENGTHMODS;
-		if (flags & LONG_INT) {
-                    /* 'l' can be doubled, this step recognizes that */
-		    flags |= LLONGINT;
-		} else {
-                    /* set the new flag */
-		    flags |= LONG_INT;
-		}
 	    } else if (*ep == '*') {
                 /* the first occurrence is the field width, but the
                    second occurrence is the precision specifier */
@@ -780,6 +770,23 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    precision = va_arg(ap, int);
 		    flags |= PRECISION;
                 }
+	    } else if (*ep == 'j') {
+		flags |= INTMAX_T;
+	    } else if (*ep == 't') {
+		flags |= PTRDIFFT;
+	    } else if (*ep == 'z') {
+		flags |= SIZETINT;
+                /* all length modifiers below here */
+	    } else if (*ep == 'l') {
+                /* clear all length modifiers first */
+		flags ^= ALL_LENGTHMODS;
+		if (flags & LONG_INT) {
+                    /* 'l' can be doubled, this step recognizes that */
+		    flags |= LLONGINT;
+		} else {
+                    /* set the new flag */
+		    flags |= LONG_INT;
+		}
 	    } else if (*ep == 'h') {
                 /* clear all length modifiers first */
 		flags ^= ALL_LENGTHMODS;
@@ -790,12 +797,6 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
                     /* set the new flag */
 		    flags |= SHORTINT;
 		}
-	    } else if (*ep == 'j') {
-		flags |= INTMAX_T;
-	    } else if (*ep == 't') {
-		flags |= PTRDIFFT;
-	    } else if (*ep == 'z') {
-		flags |= SIZETINT;
 	    } else if (*ep == 'L') {
                 /* a length modifier for doubles */
                 /* clear all length modifiers first */
