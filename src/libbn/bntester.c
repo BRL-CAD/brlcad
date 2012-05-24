@@ -180,7 +180,7 @@ main(int argc, char **argv)
 
     /* set initial values in tol structure */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1.0 - tol.perp;

@@ -549,7 +549,7 @@ bn_dist_line3_line3(fastf_t *dist, const fastf_t *p1, const fastf_t *d1, const f
     if (tol->dist > 0.0)
 	tol_dist = tol->dist;
     else
-	tol_dist = 0.0005;
+	tol_dist = BN_TOL_DIST;
 
     if (tol->dist_sq > 0.0)
 	tol_dist_sq = tol->dist_sq;

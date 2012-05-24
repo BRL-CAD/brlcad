@@ -137,6 +137,11 @@ struct bn_tol {
 #define BN_TOL_IS_INITIALIZED(_p) (((struct bn_tol *)(_p) != (struct bn_tol *)0) && LIKELY((_p)->magic == BN_TOL_MAGIC))
 
 /**
+ * replaces the hard coded tolerance value
+ */
+#define BN_TOL_DIST 0.0005
+
+/**
  * returns truthfully whether a given dot-product of two unspecified
  * vectors are within a specified parallel tolerance.
  */

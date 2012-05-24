@@ -574,7 +574,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	vect_t dir, c;
 	int i;
 	static const struct bn_tol tol = {
-	    BN_TOL_MAGIC, 0.0005, 0.0005*0.0005, 1e-6, 1-1e-6
+	    BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
 	};
 	if (argc != 5) {
 	    bu_vls_printf(&result,
@@ -614,7 +614,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	vect_t dir, c;
 	int i;
 	static const struct bn_tol tol = {
-	    BN_TOL_MAGIC, 0.0005, 0.0005*0.0005, 1e-6, 1-1e-6
+	    BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
 	};
 
 	if (argc != 5) {
