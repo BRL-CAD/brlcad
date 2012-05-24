@@ -32,9 +32,9 @@
 int
 test_vls(const char *fmt, ...)
 {
-    int status = 0;
+    int status        = 0;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
-    char output[80] = {0};
+    char output[80]   = {0};
     char buffer[1024] = {0};
     va_list ap;
 
@@ -46,7 +46,6 @@ test_vls(const char *fmt, ...)
     va_start(ap, fmt);
     /* use BRL-CAD bu_vls version for comparison */
     bu_vls_vprintf(&vls, fmt, ap);
-
     va_end(ap);
 
     snprintf(output, sizeof(output), "%-24s -> '%s'", fmt, bu_vls_addr(&vls));
@@ -69,6 +68,7 @@ main(int ac, char *av[])
 {
     int fails    = 0; /* track unexpected failures */
     int expfails = 0; /* track expected failures */
+
     int f = 0;
     int p = 0;
     const char *word = "Lawyer";
@@ -187,13 +187,28 @@ main(int ac, char *av[])
     fails += test_vls("%f %F", 1.23, -3.21);
 
     /* from "two-character length modifiers" */
+    fails += test_vls("%ld %lld", 123, -123LL);
+
+    /* unsigned variant */
+    fails += test_vls("%lu %llu", 123, 123ULL);
+
+    /* from "two-character length modifiers" */
     fails += test_vls("%ld %lld", 123, -123);
 
     /* unsigned variant */
     fails += test_vls("%lu %llu", 123, 123);
 
+    /* misc */
+    fails += test_vls("%hd %hhd", 123, -123);
+
+    fails += test_vls("% d % d", 123, -123);
+
+    fails += test_vls("% 05d % d", 123, -123);
+
+    fails += test_vls("%'d", 123000);
+
     /* ======================================================== */
-    /* EXPECTED FAILURES ONLY BELOW HERE                           */
+    /* EXPECTED FAILURES ONLY BELOW HERE                        */
     /* ======================================================== */
     /* EXPECTED FAILURES:
      *
