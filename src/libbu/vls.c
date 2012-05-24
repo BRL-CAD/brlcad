@@ -819,7 +819,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	    left_justify = 1;
 	}
 
-	/* Copy off the entire format string */
+	/* Copy off this entire format string specifier */
 	len = ep-sp+1;
 
 	/* intentionally avoid bu_strlcpy here since the source field
