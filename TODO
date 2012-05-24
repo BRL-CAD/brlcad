@@ -41,8 +41,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * investigate and fix the idents command first column bug
 
-* fix vls regress test failure (%lld fails on 32b fbsd and linux)
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
