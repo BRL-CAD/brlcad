@@ -752,7 +752,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
                 } else if (have_digit) {
                     /* FIXME: ERROR condition?: invalid format string
                        (e.g., '%7.8-f') */
-                    /* seems as if the intf man page is indefinite here,
+                    /* seems as if the fprintf man page is indefinite here,
                        looks like the '-' is passed through and
                        appears in output */
                     ;
