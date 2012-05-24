@@ -1067,56 +1067,46 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	    case 'i':
 		if (flags & LONG_INT) {
 		    /* Long int */
-		    long l;
-
-		    l = va_arg(ap, long);
+		    long l = va_arg(ap, long);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, l);
 		    else
 			snprintf(buf, BUFSIZ, fbufp, l);
 		} else if (flags & LLONGINT) {
 		    /* Long long int */
-		    long long ll;
-
-		    ll = va_arg(ap, long long);
+		    long long ll = va_arg(ap, long long);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, ll);
 		    else
 			snprintf(buf, BUFSIZ, fbufp, ll);
 		} else if (flags & SHORTINT || flags & SHHRTINT) {
 		    /* short int */
-		    short int sh;
-		    sh = (short int)va_arg(ap, int);
+		    short int sh = (short int)va_arg(ap, int);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, sh);
 		    else
 			snprintf(buf, BUFSIZ, fbufp, sh);
 		} else if (flags & INTMAX_T) {
-		    intmax_t im;
-		    im = va_arg(ap, intmax_t);
+		    intmax_t im = va_arg(ap, intmax_t);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, im);
 		    else
 			snprintf(buf, BUFSIZ, fbufp, im);
 		} else if (flags & PTRDIFFT) {
-		    ptrdiff_t pd;
-		    pd = va_arg(ap, ptrdiff_t);
+		    ptrdiff_t pd = va_arg(ap, ptrdiff_t);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, pd);
 		    else
 			snprintf(buf, BUFSIZ, fbufp, pd);
 		} else if (flags & SIZETINT) {
-		    size_t st;
-		    st = va_arg(ap, size_t);
+		    size_t st = va_arg(ap, size_t);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, st);
 		    else
 			snprintf(buf, BUFSIZ, fbufp, st);
 		} else {
 		    /* Regular int */
-		    int j;
-
-		    j = va_arg(ap, int);
+		    int j = va_arg(ap, int);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, j);
 		    else
@@ -1128,8 +1118,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	    case 'p':
 		/* all pointer == "void *" */
 		{
-		    void *vp;
-		    vp = (void *)va_arg(ap, void *);
+		    void *vp = (void *)va_arg(ap, void *);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, vp);
 		    else
@@ -1143,12 +1132,9 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	    default:
 		{
                     /* Something weird, maybe %c */
-		    int j;
-
 		    /* We hope, whatever it is, it fits in an int and the resulting
 		       stringlet is smaller than sizeof(buf) bytes */
-
-		    j = va_arg(ap, int);
+		    int j = va_arg(ap, int);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, j);
 		    else
