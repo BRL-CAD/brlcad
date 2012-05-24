@@ -666,9 +666,9 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 /* integer length modifiers */
 #define LONG_INT  0x0004
 #define LLONGINT  0x0008
-/* double length modifiers  */
+/* double length modifiers */
 #define LONGDBLE  0x0010
-/* other integer length modifiers  */
+/* other integer length modifiers */
 #define INTMAX_T  0x0020
 #define PTRDIFFT  0x0040
 #define SIZETINT  0x0080
