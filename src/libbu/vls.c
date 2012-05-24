@@ -691,6 +691,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
     int precision       =  0;
 
     char buf[BUFSIZ] = {0};
+    char c;
 
     struct bu_vls fbuf = BU_VLS_INIT_ZERO; /* % format buffer */
     const char *fbufp  = NULL;
@@ -728,21 +729,22 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
         ep = sp;
 	while (*ep) {
-	    ++ep;
-	    if (*ep == ' '
-                || *ep == '#'
-                || *ep == '+'
-                || *ep == '.'
-                || *ep == '\''
-                || isdigit(*ep)) {
-                if (*ep == '.') {
+            ++ep;
+            c = *ep;
+            if (c == ' '
+                || c == '#'
+                || c == '+'
+                || c == '.'
+                || c == '\''
+                || isdigit(c)) {
+                if (c == '.') {
                     have_dot = 1;
-                } else if (isdigit(*ep)) {
+                } else if (isdigit(c)) {
                     /* set flag for later error checks */
                     have_digit = 1;
                 }
 		continue;
-	    } else if (*ep == '-') {
+	    } else if (c == '-') {
                 /* the first occurrence before a dot is the
                  left-justify flag, but the occurrence AFTER a dot is
                  taken to be zero precision */
@@ -759,7 +761,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
                 } else {
                     left_justify = 1;
                 }
-	    } else if (*ep == '*') {
+	    } else if (c == '*') {
                 /* the first occurrence is the field width, but the
                    second occurrence is the precision specifier */
                 if (!have_dot) {
@@ -771,13 +773,13 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    flags |= PRECISION;
                 }
                 /* all length modifiers below here */
-	    } else if (*ep == 'j') {
+	    } else if (c == 'j') {
 		flags |= INTMAX_T;
-	    } else if (*ep == 't') {
+	    } else if (c == 't') {
 		flags |= PTRDIFFT;
-	    } else if (*ep == 'z') {
+	    } else if (c == 'z') {
 		flags |= SIZETINT;
-	    } else if (*ep == 'l') {
+	    } else if (c == 'l') {
                 /* 'l' can be doubled */
                 /* clear all length modifiers AFTER we check for the
                    first 'l' */
@@ -788,7 +790,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
                     flags ^= ALL_LENGTHMODS;
                     flags |= LONG_INT;
 		}
-	    } else if (*ep == 'h') {
+	    } else if (c == 'h') {
                 /* 'h' can be doubled */
                 /* clear all length modifiers AFTER we check for the
                    first 'h' */
@@ -799,7 +801,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
                     flags ^= ALL_LENGTHMODS;
 		    flags |= SHORTINT;
 		}
-	    } else if (*ep == 'L') {
+	    } else if (c == 'L') {
                 /* a length modifier for doubles */
                 /* clear all length modifiers first */
                 flags ^= ALL_LENGTHMODS;
@@ -875,7 +877,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 	/* use type specifier to grab parameter appropriately from arg
            list, and print it correctly */
-	switch (*ep) {
+	switch (c) {
 	    case 's':
 		{
                     /* variables used to determine final effects of
