@@ -676,11 +676,11 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 #define PRECISION 0x0200
 
 /* groups */
-#define SHORTINTMODS   (SHORTINT & SHHRTINT)
-#define LONGINTMODS    (LONG_INT & LLONGINT)
-#define ALL_INTMODS    (SHORTINTMODS & LONGINTMODS)
+#define SHORTINTMODS   (SHORTINT | SHHRTINT)
+#define LONGINTMODS    (LONG_INT | LLONGINT)
+#define ALL_INTMODS    (SHORTINTMODS | LONGINTMODS)
 #define ALL_DOUBLEMODS (LONGDBLE)
-#define ALL_LENGTHMODS (ALL_INTMODS & ALL_DOUBLEMODS)
+#define ALL_LENGTHMODS (ALL_INTMODS | ALL_DOUBLEMODS)
 
     /* variables reset for each fmt specifier */
     int flags;
