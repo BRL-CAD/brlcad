@@ -668,17 +668,19 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 #define LLONGINT  0x0008
 /* double length modifiers  */
 #define LONGDBLE  0x0010
+/* other integer length modifiers  */
+#define INTMAX_T  0x0020
+#define PTRDIFFT  0x0040
+#define SIZETINT  0x0080
 /* misc */
-#define FIELDLEN  0x0020
-#define INTMAX_T  0x0040
-#define PTRDIFFT  0x0080
-#define SIZETINT  0x0100
+#define FIELDLEN  0x0100
 #define PRECISION 0x0200
 
 /* groups */
+#define MISCINTMODS    (INTMAX_T | PTRDIFFT | SIZETINT)
 #define SHORTINTMODS   (SHORTINT | SHHRTINT)
 #define LONGINTMODS    (LONG_INT | LLONGINT)
-#define ALL_INTMODS    (SHORTINTMODS | LONGINTMODS)
+#define ALL_INTMODS    (SHORTINTMODS | LONGINTMODS | MISCINTMODS)
 #define ALL_DOUBLEMODS (LONGDBLE)
 #define ALL_LENGTHMODS (ALL_INTMODS | ALL_DOUBLEMODS)
 
