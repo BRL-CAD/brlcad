@@ -1002,9 +1002,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
             case 'F':
 		/* All floating point ==> "double" */
 		{
-		    double d;
-
-		    d = va_arg(ap, double);
+		    double d = va_arg(ap, double);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, d);
 		    else
@@ -1018,56 +1016,46 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	    case 'X':
 		if (flags & LONG_INT) {
 		    /* Unsigned long int */
-		    unsigned long l;
-
-		    l = va_arg(ap, unsigned long);
+		    unsigned long l = va_arg(ap, unsigned long);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, l);
 		    else
 			snprintf(buf, BUFSIZ, fbufp, l);
 		} else if (flags & LLONGINT) {
 		    /* Unsigned long long int */
-		    unsigned long long ll;
-
-		    ll = va_arg(ap, unsigned long long);
+		    unsigned long long ll = va_arg(ap, unsigned long long);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, ll);
 		    else
 			snprintf(buf, BUFSIZ, fbufp, ll);
 		} else if (flags & SHORTINT || flags & SHHRTINT) {
 		    /* unsigned short int */
-		    unsigned short int sh;
-		    sh = (unsigned short int)va_arg(ap, int);
+		    unsigned short int sh = (unsigned short int)va_arg(ap, int);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, sh);
 		    else
 			snprintf(buf, BUFSIZ, fbufp, sh);
 		} else if (flags & INTMAX_T) {
-		    intmax_t im;
-		    im = va_arg(ap, intmax_t);
+		    intmax_t im = va_arg(ap, intmax_t);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, im);
 		    else
 			snprintf(buf, BUFSIZ, fbufp, im);
 		} else if (flags & PTRDIFFT) {
-		    ptrdiff_t pd;
-		    pd = va_arg(ap, ptrdiff_t);
+		    ptrdiff_t pd = va_arg(ap, ptrdiff_t);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, pd);
 		    else
 			snprintf(buf, BUFSIZ, fbufp, pd);
 		} else if (flags & SIZETINT) {
-		    size_t st;
-		    st = va_arg(ap, size_t);
+		    size_t st = va_arg(ap, size_t);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, st);
 		    else
 			snprintf(buf, BUFSIZ, fbufp, st);
 		} else {
 		    /* Regular unsigned int */
-		    unsigned int j;
-
-		    j = (unsigned int)va_arg(ap, unsigned int);
+		    unsigned int j = (unsigned int)va_arg(ap, unsigned int);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, fieldlen, j);
 		    else
