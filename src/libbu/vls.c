@@ -944,7 +944,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			bu_vls_vlscat(vls, &tmpstr);
 
                         bu_vls_free(&tmpstr);
-		    }  else  {
+		    } else {
                         /* handle an empty string */
                         /* FIXME: should we trunc to precision if > fieldlen? */
                         if (flags & FIELDLEN) {
@@ -985,7 +985,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			} else {
 			    bu_vls_vlscat(vls, vp);
 			}
-		    }  else  {
+		    } else {
 			if (flags & FIELDLEN)
 			    bu_vls_strncat(vls, "(null)", (size_t)fieldlen);
 			else
