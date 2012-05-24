@@ -186,7 +186,8 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 		if (csg->radius < 0) {
 		    ON_3dPoint cntrpt = (*b)->m_V[csg->end].Point();
 		    ON_3dPoint edgept = (*b)->m_V[csg->start].Point();
-		    ON_Circle* c3dcirc = new ON_Circle(cntrpt, cntrpt.DistanceTo(edgept));
+		    ON_Plane* cplane = new ON_Plane(cntrpt, plane_x_dir, plane_y_dir);
+		    ON_Circle* c3dcirc = new ON_Circle(*cplane, cntrpt.DistanceTo(edgept));
 		    ON_Curve* c3d = new ON_ArcCurve((const ON_Circle)*c3dcirc);
 		    c3d->SetDomain(0.0, 1.0);
 		    (*b)->m_C3.Append(c3d);
