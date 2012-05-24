@@ -850,8 +850,8 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			    || *fp == '+'
 			    || *fp == '.'
 			    || *fp == '-'
-			    || *fp == '*')
-			{
+			    || *fp == ' '
+			    || *fp == '*') {
 			    continue;
 			}
 			if (*fp == 'z') {
