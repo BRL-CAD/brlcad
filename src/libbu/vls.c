@@ -622,7 +622,6 @@ bu_vls_gets(struct bu_vls *vp, FILE *fp)
     return endlen;
 }
 
-
 void
 bu_vls_putc(struct bu_vls *vp, int c)
 {
@@ -634,7 +633,6 @@ bu_vls_putc(struct bu_vls *vp, int c)
     vp->vls_str[vp->vls_offset + vp->vls_len++] = (char)c;
     vp->vls_str[vp->vls_offset + vp->vls_len] = '\0'; /* force null termination */
 }
-
 
 void
 bu_vls_trimspace(struct bu_vls *vp)
@@ -685,12 +683,12 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 #define ALL_LENGTHMODS (ALL_INTMODS | ALL_DOUBLEMODS)
 
     /* variables reset for each fmt specifier */
-    int flags;
-    int fieldlen     = -1;
-    int left_justify =  0;
-    int have_dot     =  0;
-    int have_digit   =  0;
-    int precision    =  0;
+    int fieldlen        = -1;
+    int flags           =  0;
+    int have_digit      =  0;
+    int have_dot        =  0;
+    int left_justify    =  0;
+    int precision       =  0;
 
     char buf[BUFSIZ] = {0};
 
@@ -721,12 +719,12 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 	/* Saw a percent sign, now need to find end of fmt specifier */
         /* All gets reset for this fmt specifier */
-	flags        =  0;
-        fieldlen     = -1;
-        left_justify =  0;
-        have_dot     =  0;
-        have_digit   =  0;
-        precision    =  0;
+        fieldlen        = -1;
+        flags           =  0;
+        have_digit      =  0;
+        have_dot        =  0;
+        left_justify    =  0;
+        precision       =  0;
 
         ep = sp;
 	while (*ep) {
