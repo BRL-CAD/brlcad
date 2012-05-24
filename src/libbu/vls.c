@@ -770,13 +770,13 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    precision = va_arg(ap, int);
 		    flags |= PRECISION;
                 }
+                /* all length modifiers below here */
 	    } else if (*ep == 'j') {
 		flags |= INTMAX_T;
 	    } else if (*ep == 't') {
 		flags |= PTRDIFFT;
 	    } else if (*ep == 'z') {
 		flags |= SIZETINT;
-                /* all length modifiers below here */
 	    } else if (*ep == 'l') {
                 /* clear all length modifiers first */
 		flags ^= ALL_LENGTHMODS;
