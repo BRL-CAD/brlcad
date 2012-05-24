@@ -86,15 +86,15 @@ ComplexList * ComplexCollect::find( char * name ) {
  * Determines if the parent schema supports the instantiation of a complex
  * type consisting of the the entities named in ents.  Does so by attempt-
  * ing to match ents against the ComplexLists in clists.  If one of the
- * nodes of ents has multSupers set to TRUE (it has >1 supertype), it
+ * nodes of ents has multSupers set to true (it has >1 supertype), it
  * should be included in >1 CList.  A more complicated algorithm is applied
  * to match it, as described in the commenting.
  */
-int ComplexCollect::supports( EntNode * ents ) const {
+bool ComplexCollect::supports( EntNode * ents ) const {
     EntNode * node = ents, *nextnode;
     AndList * alist = 0;
     ComplexList * clist = clists, *cl = NULL, *current;
-    int retval;
+    bool retval;
     EntList * elist, *next;
 
     // Loop through the nodes of ents.  If 1+ of them have >1 supertype, build
@@ -137,15 +137,15 @@ int ComplexCollect::supports( EntNode * ents ) const {
         // which had mult supers.  Simply go through each CList separately:
         while( clist != NULL ) {
             if( clist->matches( ents ) ) {
-                return TRUE;
+                return true;
             }
             clist = clist->next;
         }
         // Went through whole list without match:
-        return FALSE;
+        return false;
     } else {
         // Use cl to test that the conditions of all supertypes are met:
-        cl->multSupers = TRUE;
+        cl->multSupers = true;
         cl->buildList();
         retval = cl->matches( ents );
 

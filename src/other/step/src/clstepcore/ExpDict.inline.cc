@@ -254,7 +254,7 @@ const TypeDescriptor * TypeDescriptor::BaseTypeIsA( const TypeDescriptor * td ) 
  * case if schNm USEs or REFERENCEs type and renames it in the process
  * (e.g., "USE (X as Y)".
  */
-int TypeDescriptor::CurrName( const char * other, const char * schNm ) const {
+bool TypeDescriptor::CurrName( const char * other, const char * schNm ) const {
     if( !schNm || *schNm == '\0' ) {
         // If there's no current schema, accept any possible name of this.
         // (I.e., accept its actual name or any substitute):
@@ -274,19 +274,19 @@ int TypeDescriptor::CurrName( const char * other, const char * schNm ) const {
 /**
  * return true if nm is either our name or one of the possible alternates.
  */
-int TypeDescriptor::PossName( const char * nm ) const {
+bool TypeDescriptor::PossName( const char * nm ) const {
     return ( OurName( nm ) || AltName( nm ) );
 }
 
-int TypeDescriptor::OurName( const char * nm ) const {
+bool TypeDescriptor::OurName( const char * nm ) const {
     return !StrCmpIns( nm, _name );
 }
 
-int TypeDescriptor::AltName( const char * nm ) const {
+bool TypeDescriptor::AltName( const char * nm ) const {
     if( altNames ) {
         return ( altNames->choice( nm ) );
     }
-    return 0;
+    return false;
 }
 
 /**
@@ -316,14 +316,14 @@ void TypeDescriptor::addAltName( const char * schnm, const char * newnm ) {
  * See if nm = one of our choices (either ours or that of a SchRename
  * later in the list.
  */
-int SchRename::choice( const char * nm ) const {
+bool SchRename::choice( const char * nm ) const {
     if( !StrCmpIns( nm, newName ) ) {
-        return 1;
+        return true;
     }
     if( next ) {
         return ( next->choice( nm ) );
     }
-    return 0;
+    return false;
 }
 
 /**

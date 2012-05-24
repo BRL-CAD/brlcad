@@ -19,8 +19,6 @@
 using namespace std;
 #include "Str.h"
 
-#define FALSE     0
-#define TRUE      1
 #define LISTEND 999
 /** \def LISTEND
  * signifies that an OrList has gone beyond its last viable choice
@@ -93,13 +91,13 @@ class EntNode {
         operator const char * () {
             return name;
         }
-        int operator== ( EntNode & ent ) {
+        bool operator== ( EntNode & ent ) {
             return ( strcmp( name, ent.name ) == 0 );
         }
-        int operator< ( EntNode & ent ) {
+        bool operator< ( EntNode & ent ) {
             return ( strcmp( name, ent.name ) < 0 );
         }
-        int operator> ( EntNode & ent ) {
+        bool operator> ( EntNode & ent ) {
             return ( strcmp( name, ent.name ) > 0 );
         }
         EntNode & operator= ( EntNode & ent );
@@ -116,12 +114,12 @@ class EntNode {
         void unmarkAll() {
             markAll( NOMARK );
         }
-        int  marked( MarkType base = ORMARK ) {
+        bool  marked( MarkType base = ORMARK ) {
             return ( mark >= base );
         }
-        int  allMarked();  ///< returns true if all nodes in list are marked
+        bool  allMarked();  ///< returns true if all nodes in list are marked
         int  unmarkedCount();
-        int  multSuprs() {
+        bool  multSuprs() {
             return multSupers;
         }
         void multSuprs( int j ) {
@@ -134,7 +132,7 @@ class EntNode {
     private:
         MarkType mark;
         char name[BUFSIZ];
-        int multSupers;  ///< do I correspond to an entity with >1 supertype?
+        bool multSupers;  ///< do I correspond to an entity with >1 supertype?
         EntNode * lastSmaller( EntNode * ); ///< used by ::sort()
 };
 
@@ -157,12 +155,12 @@ class EntList {
         virtual void setLevel( int l ) {
             level = l;
         }
-        virtual int contains( char * ) = 0;
-        virtual int hit( char * ) = 0;
+        virtual bool contains( char * ) = 0;
+        virtual bool hit( char * ) = 0;
         virtual MatchType matchNonORs( EntNode * ) {
             return UNKNOWN;
         }
-        virtual int acceptChoice( EntNode * ) = 0;
+        virtual bool acceptChoice( EntNode * ) = 0;
         virtual void unmarkAll( EntNode * ) = 0;
         virtual void reset() {
             viable = UNKNOWN;
@@ -223,14 +221,14 @@ class SimpleList : public EntList {
         const char * Name() {
             return name;
         }
-        int contains( char * nm ) {
+        bool contains( char * nm ) {
             return *this == nm;
         }
-        int hit( char * nm ) {
+        bool hit( char * nm ) {
             return *this == nm;
         }
         MatchType matchNonORs( EntNode * );
-        int acceptChoice( EntNode * );
+        bool acceptChoice( EntNode * );
         void unmarkAll( EntNode * );
         void reset() {
             viable = UNKNOWN;
@@ -257,8 +255,8 @@ class MultList : public EntList {
             childList( 0 ) {}
         ~MultList();
         void setLevel( int );
-        int contains( char * );
-        int hit( char * );
+        bool contains( char * );
+        bool hit( char * );
         void appendList( EntList * );
         EntList * copyList( EntList * );
         virtual MatchType matchORs( EntNode * ) = 0;
@@ -273,7 +271,7 @@ class MultList : public EntList {
             return ( getChild( numchildren - 1 ) );
         }
         void unmarkAll( EntNode * );
-        int prevKnown( EntList * );
+        bool prevKnown( EntList * );
         void reset();
 
     protected:
@@ -297,7 +295,7 @@ class JoinList : public MultList {
         JoinList( JoinType j ) : MultList( j ) {}
         ~JoinList() {}
         void setViableVal( EntNode * );
-        int acceptChoice( EntNode * );
+        bool acceptChoice( EntNode * );
 };
 
 class AndOrList : public JoinList {
@@ -325,12 +323,12 @@ class OrList : public MultList {
     public:
         OrList() : MultList( OR ), choice( -1 ), choice1( -1 ), choiceCount( 0 ) {}
         ~OrList() {}
-        int hit( char * );
+        bool hit( char * );
         MatchType matchORs( EntNode * );
         MatchType tryNext( EntNode * );
         void unmarkAll( EntNode * );
-        int acceptChoice( EntNode * );
-        int acceptNextChoice( EntNode * ents ) {
+        bool acceptChoice( EntNode * );
+        bool acceptNextChoice( EntNode * ents ) {
             choice++;
             return ( acceptChoice( ents ) );
         }
@@ -379,9 +377,9 @@ class ComplexList {
          * Based on knowledge that ComplexList always created by ANDing supertype
          * with subtypes.
          */
-        int toplevel( const char * );
-        int contains( EntNode * );
-        int matches( EntNode * );
+        bool toplevel( const char * );
+        bool contains( EntNode * );
+        bool matches( EntNode * );
 
         EntNode * list; /**< List of all entities contained in this complex type,
                     *   regardless of how.  (Used as a quick way of determining
@@ -395,10 +393,10 @@ class ComplexList {
 
     private:
         void addChildren( EntList * );
-        int hitMultNodes( EntNode * );
+        bool hitMultNodes( EntNode * );
         int abstract;   ///< is our supertype abstract?
         int dependent;  ///< is our supertype also a subtype of other supertype(s)?
-        int multSupers; ///< am I a combo-CList created to test a subtype which has >1 supertypes?
+        bool multSupers; ///< am I a combo-CList created to test a subtype which has >1 supertypes?
 };
 
 /// The collection of all the ComplexLists defined by the current schema.
@@ -413,7 +411,7 @@ class ComplexCollect {
         void insert( ComplexList * );
         void remove( ComplexList * ); ///< Remove this list but don't delete its hierarchy structure, because it's used elsewhere.
         ComplexList * find( char * );
-        int supports( EntNode * ) const;
+        bool supports( EntNode * ) const;
 
         ComplexList * clists;
 

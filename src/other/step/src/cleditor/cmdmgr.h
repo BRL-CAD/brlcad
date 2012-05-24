@@ -12,12 +12,8 @@
 * and is not subject to copyright.
 */
 
-/* $Id: cmdmgr.h,v 3.0.1.2 1997/11/05 22:11:41 sauderd DP3.1 $ */
-
-
 #include <gennode.h>
 #include <gennodelist.h>
-//#include <gennode.inline.h>
 #include <gennodearray.h>
 
 #include <editordefines.h>
@@ -26,8 +22,6 @@
 #include <dispnode.h>
 #include <dispnodelist.h>
 #include <SingleLinkList.h>
-
-typedef unsigned short BOOLEAN;
 
 //#define NUM_CMDMGR_CMDS 9
 // this is the number of columns that contain cmds (as opposed
@@ -115,7 +109,7 @@ class ReplicateList : public SingleLinkList {
             return new ReplicateLinkNode;
         }
 
-        BOOLEAN IsOnList( MgrNode * mn );
+        bool IsOnList( MgrNode * mn );
         ReplicateLinkNode * FindNode( MgrNode * mn );
 
         ReplicateLinkNode * AddNode( MgrNode * rn ) {
@@ -125,8 +119,8 @@ class ReplicateList : public SingleLinkList {
             return node;
         }
 
-        BOOLEAN Remove( ReplicateLinkNode * rln );
-        BOOLEAN Remove( MgrNode * rn );
+        bool Remove( ReplicateLinkNode * rln );
+        bool Remove( MgrNode * rn );
 
         const char * ClassName() {
             return "ReplicateList";
@@ -195,14 +189,8 @@ class CmdMgr {
                      ( mn->DisplayState() == mappedView ) ) ?
                    mn->ChangeList( closeList ) : 0;
         }
-        /*
-        //  { if(mn->DisplayState() == mappedWrite ||
-        //       mn->DisplayState() == mappedView)
-        //       return mn->ChangeList(closeList);
-        //    else return 0;
-        //  }
-        */
-        int ReplicateCmdList( MgrNode * mn );
+
+        void ReplicateCmdList( MgrNode * mn );
 
         void ClearInstances();
     protected:

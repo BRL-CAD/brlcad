@@ -37,24 +37,24 @@ void ComplexList::remove() {
 }
 
 /**
- * Returns TRUE if name is already contained at the top level of our
+ * Returns true if name is already contained at the top level of our
  * EntList hierarchy.  By top level, we mean the level under head.  This
  * is a highly specialized function which is used during the building of
  * a temporary CList to test entities which are subtypes of >1 supertype.
  */
-int ComplexList::toplevel( const char * name ) {
+bool ComplexList::toplevel( const char * name ) {
     EntList * slist = head->childList;
 
     while( slist ) {
         if( *( SimpleList * )slist == name ) {
-            return TRUE;
+            return true;
         }
         slist = slist->next;
         if( slist ) {
             slist = slist->next;
         }
     }
-    return FALSE;
+    return false;
 }
 
 /**
@@ -136,7 +136,7 @@ void ComplexList::addChildren( EntList * ent ) {
  * tion is simplified greatly because both EntNodes are ordered alphabeti-
  * cally.
  */
-int ComplexList::contains( EntNode * ents ) {
+bool ComplexList::contains( EntNode * ents ) {
     EntNode * ours = list, *theirs = ents;
 
     while( theirs != NULL ) {
@@ -146,37 +146,37 @@ int ComplexList::contains( EntNode * ents ) {
         if( ours == NULL || *ours > *theirs ) {
             // If either of these occured, we couldn't find one of ours which
             // matched the current "theirs".
-            return FALSE;
+            return false;
         }
         theirs = theirs->next;
         ours = ours->next;
     }
     // At this point we must have matched them all.  (We may have extra, but
     // there's nothing wrong with that.)
-    return TRUE;
+    return true;
 }
 
 /**
  * Receives as input an EntNode list, corresponding to a user request to
- * instantiate the corresponding complex type.  Returns TRUE if such a list
+ * instantiate the corresponding complex type.  Returns true if such a list
  * can be instantiated based on the list of EntLists which were generated
- * when the schema was read; FALSE otherwise.
+ * when the schema was read; false otherwise.
  */
-int ComplexList::matches( EntNode * ents ) {
+bool ComplexList::matches( EntNode * ents ) {
     MatchType retval, otherChoices = NEWCHOICE;
-    int result = FALSE;
+    int result = false;
 
     // First check if this ComplexList at least contains all the nodes of ents.
     // If it does, we'll search in detail.  If not, we're done.
     if( ! contains( ents ) ) {
-        return FALSE;
+        return false;
     }
 
     // Now start a thorough search through this ComplexList:
     if( ( retval = head->matchNonORs( ents ) ) == MATCHALL ) {
-        result = TRUE;
+        result = true;
     } else if( retval != UNKNOWN ) {
-        result = FALSE;
+        result = false;
         // UNKNOWN is the return val if there are ORs matchNonORs can't
         // analyze.  Unless we got a MATCHALL already, that's our only hope.
     } else {
@@ -185,7 +185,7 @@ int ComplexList::matches( EntNode * ents ) {
             // hitMultNodes() checks that in case we're a combo-CList (see
             // CColect->supports()) we have a legal choice (see comments in
             // hitMultNodes()).
-            result = TRUE;
+            result = true;
         } else if( retval >= MATCHSOME ) {
             // We have a partial answer.  Check if other solutions exist (i.e.,
             // if there are OR's with other choices):
@@ -193,7 +193,7 @@ int ComplexList::matches( EntNode * ents ) {
                 otherChoices = head->tryNext( ents );
                 if( otherChoices == MATCHALL ) {
                     if( hitMultNodes( ents ) ) {
-                        result = TRUE;
+                        result = true;
                     } else {
                         otherChoices = NEWCHOICE;
                     }
@@ -221,7 +221,7 @@ int ComplexList::matches( EntNode * ents ) {
  * valid.  (This function is actually slightly more complicated because it
  * also deals with the possibility that >1 entities like C exist.)
  */
-int ComplexList::hitMultNodes( EntNode * ents ) {
+bool ComplexList::hitMultNodes( EntNode * ents ) {
     EntNode * node;
     EntList * child;
 
@@ -229,7 +229,7 @@ int ComplexList::hitMultNodes( EntNode * ents ) {
     // we have nothing to check for.  (CList::matches() routinely checks for
     // hitMultNodes in case we're a combo.)
     if( !multSupers ) {
-        return TRUE;
+        return true;
     }
 
     for( node = ents; node != NULL; node = node->next ) {
@@ -245,7 +245,7 @@ int ComplexList::hitMultNodes( EntNode * ents ) {
                 // below.
                 if( child->contains( node->name ) ) {
                     if( ! child->hit( node->name ) ) {
-                        return FALSE;
+                        return false;
                     }
                 }
                 child = child->next;
@@ -257,6 +257,6 @@ int ComplexList::hitMultNodes( EntNode * ents ) {
             }
         }
     }
-    return TRUE;
+    return true;
     // If we got here, we didn't find any unmatched complex subtypes.
 }

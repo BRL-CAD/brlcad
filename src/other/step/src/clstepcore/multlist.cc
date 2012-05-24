@@ -44,22 +44,22 @@ void MultList::setLevel( int l ) {
 /**
  * Check if one of this's descendants matches nm.
  */
-int MultList::contains( char * nm ) {
+bool MultList::contains( char * nm ) {
     EntList * child = childList;
 
     while( child ) {
         if( child->contains( nm ) ) {
-            return TRUE;
+            return true;
         }
         child = child->next;
     }
-    return FALSE;
+    return false;
 }
 
 /**
  * Check if one of our descendants matches nm.
  */
-int MultList::hit( char * nm ) {
+bool MultList::hit( char * nm ) {
     EntList * child = childList;
     while( child ) {
         if( child->viable > UNSATISFIED && child->hit( nm ) ) {
@@ -68,11 +68,11 @@ int MultList::hit( char * nm ) {
             // thing.  If child->join = AND, we must skip child.  One of its
             // children may "hit" nm, but it wouldn't be valid because overall
             // child is an UNSAT.
-            return TRUE;
+            return true;
         }
         child = child->next;
     }
-    return FALSE;
+    return false;
 }
 
 /**
@@ -206,12 +206,12 @@ void JoinList::setViableVal( EntNode * ents ) {
 
 /**
  * Accept the path we're a part of:  Mark all nodes of ents we can.  Mark
- * value will = mark (either MARK or ORMARK).  Return TRUE if we mark any-
- * thing; FALSE otherwise.
+ * value will = mark (either MARK or ORMARK).  Return true if we mark any-
+ * thing; false otherwise.
  */
-int JoinList::acceptChoice( EntNode * ents ) {
+bool JoinList::acceptChoice( EntNode * ents ) {
     EntList * child;
-    int result = FALSE;
+    int result = false;
 
     for( child = childList; child != NULL; child = child->next ) {
         if( child->viable >= MATCHSOME ) {
@@ -227,7 +227,7 @@ int JoinList::acceptChoice( EntNode * ents ) {
             // MATCHSOME'd when we originally went through the hierarchy.)
             result = child->acceptChoice( ents ) || result;
             // (NOTE - must run acceptChoice() first in above line.  If result
-            // were TRUE and we ||'ed it with acceptChoice(), aC() would never
+            // were true and we ||'ed it with acceptChoice(), aC() would never
             // be run.)
         }
     }
@@ -239,14 +239,14 @@ int JoinList::acceptChoice( EntNode * ents ) {
  * (a pointer to one of the EntLists of childList) have viable = UNKNOWN.
  * Used in MatchNonORs() (see).
  */
-int MultList::prevKnown( EntList * desc ) {
+bool MultList::prevKnown( EntList * desc ) {
     EntList * child = childList;
 
     while( child != NULL && child != desc ) {
         if( child->viable == UNKNOWN ) {
-            return FALSE;
+            return false;
         }
         child = child->next;
     }
-    return TRUE;
+    return true;
 }

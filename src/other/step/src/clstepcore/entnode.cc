@@ -90,18 +90,18 @@ void EntNode::markAll( MarkType stamp ) {
 }
 
 /**
- * Returns TRUE if this and all nodes following it are marked.
+ * Returns true if this and all nodes following it are marked.
  */
-int EntNode::allMarked() {
+bool EntNode::allMarked() {
     EntNode * node = this;
 
     while( node != NULL ) {
         if( node->mark == NOMARK ) {
-            return FALSE;
+            return false;
         }
         node = node->next;
     }
-    return TRUE;
+    return true;
 }
 
 /**

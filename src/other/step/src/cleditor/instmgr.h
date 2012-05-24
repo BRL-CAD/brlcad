@@ -22,7 +22,6 @@
 
 
 
-typedef unsigned boolean;
 extern char * EntityClassName( char * );
 
 // IT IS VERY IMPORTANT THAT THE ORDER OF THE FOLLOWING INCLUDE FILES

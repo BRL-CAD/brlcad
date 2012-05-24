@@ -1135,7 +1135,7 @@ class SchRename {
         int operator< ( SchRename & schrnm ) {
             return ( strcmp( schName, schrnm.schName ) < 0 );
         }
-        int choice( const char * nm ) const;
+        bool choice( const char * nm ) const;
         // is nm one of our possible choices?
         char * rename( const char * schm, char * newnm ) const;
         // given a schema name, returns new object name if exists
@@ -1282,9 +1282,9 @@ class TypeDescriptor {
     protected:
         // Functions used to check the current name of the type (may
         // != _name if altNames has diff name for current schema).
-        int PossName( const char * ) const;
-        int OurName( const char * ) const;
-        int AltName( const char * ) const;
+        bool PossName( const char * ) const;
+        bool OurName( const char * ) const;
+        bool AltName( const char * ) const;
 
     public:
 
@@ -1416,7 +1416,7 @@ class TypeDescriptor {
                 const char * schNm = 0 ) const {
             return ( CurrName( n, schNm ) ? this : 0 );
         }
-        int CurrName( const char *, const char * = 0 ) const;
+        bool CurrName( const char *, const char * = 0 ) const;
         void addAltName( const char * schnm, const char * newnm );
         // Adds an additional name, newnm, to be use when schema schnm
         // is USE/REFERENCE'ing us (added to altNames).

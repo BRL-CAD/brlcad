@@ -109,10 +109,10 @@ void SimpleList::unmarkAll( EntNode * ents ) {
 /**
  * Marks whichever node we can mark.  We assume there is a match because
  * this function is only called by a parent MultList if its child had a
- * viable val of MATCHSOME.  Return TRUE if we mark a previously unmarked
- * node; otherwise FALSE.
+ * viable val of MATCHSOME.  Return true if we mark a previously unmarked
+ * node; otherwise false.
  */
-int SimpleList::acceptChoice( EntNode * ents ) {
+bool SimpleList::acceptChoice( EntNode * ents ) {
     EntNode * eptr = ents;
     int comp;
 
@@ -123,15 +123,15 @@ int SimpleList::acceptChoice( EntNode * ents ) {
                 I_marked = ORMARK;
                 // Remember that we're the one who marked this.  (Nec. in case
                 // we have to unmark later to try out another OR branch.)
-                return TRUE;
+                return true;
             }
-            return FALSE;  // we didn't mark
+            return false;  // we didn't mark
         }
         if( comp < 0 ) {
             // We're beyond name in the ents list.  No more checking to do.
-            return FALSE;
+            return false;
         }
         eptr = eptr->next;
     }
-    return FALSE;
+    return false;
 }

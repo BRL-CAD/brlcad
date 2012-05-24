@@ -10,8 +10,6 @@
 * and is not subject to copyright.
 */
 
-/* $Id: cmdmgr.cc,v 3.0.1.2 1997/11/05 22:11:41 sauderd DP3.1 $ */
-
 #include <cmdmgr.h>
 
 
@@ -27,61 +25,45 @@ ReplicateLinkNode * ReplicateList::FindNode( MgrNode * mn ) {
     return 0;
 }
 
-BOOLEAN ReplicateList::IsOnList( MgrNode * mn ) {
+bool ReplicateList::IsOnList( MgrNode * mn ) {
     return ( FindNode( mn ) != 0 );
-    /*
-        ReplicateLinkNode *rln = (ReplicateLinkNode *)GetHead();
-        int numEntries = EntryCount();
-        int found = 0;
-        while(numEntries--)
-        {
-        if(rln->ReplicateNode() == mn)
-        {
-            found = 1;
-            numEntries = 0;
-        }
-        rln = (ReplicateLinkNode *)rln->NextNode();
-        }
-        return found;
-    */
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // returns true if it could delete the node
 ///////////////////////////////////////////////////////////////////////////////
-BOOLEAN ReplicateList::Remove( ReplicateLinkNode * rln ) {
+bool ReplicateList::Remove( ReplicateLinkNode * rln ) {
     ReplicateLinkNode * rnFollow = ( ReplicateLinkNode * )GetHead();
     if( !rnFollow || !rln ) {
-        return 0;
+        return false;
     } else {
         if( rnFollow == rln ) {
             head = rln->NextNode();
             delete rln;
-            return 1;
+            return true;
         } else {
             ReplicateLinkNode * rn = ( ReplicateLinkNode * )rnFollow->NextNode();
             while( rn ) {
                 if( rn == rln ) {
                     rnFollow->next = ( SingleLinkNode * )rln->NextNode();
                     delete rln;
-                    return 1;
+                    return true;
                 }
                 rnFollow = rn;
                 rn = ( ReplicateLinkNode * )rn->NextNode();
             } // end while(rn)
         } // end else
     } // end else
-    return 0;
+    return false;
 }
 
-BOOLEAN ReplicateList::Remove( MgrNode * rn ) {
+bool ReplicateList::Remove( MgrNode * rn ) {
     return Remove( FindNode( rn ) );
 }
 
 CmdMgr::CmdMgr() {
     completeList = new MgrNodeList( completeSE );
     incompleteList = new MgrNodeList( incompleteSE );
-//    newList = new MgrNodeList(newSE);
     deleteList = new MgrNodeList( deleteSE );
 
     mappedWriteList = new DisplayNodeList( mappedWrite );
@@ -90,29 +72,11 @@ CmdMgr::CmdMgr() {
     replicateList = new ReplicateList();
 }
 
-int CmdMgr::ReplicateCmdList( MgrNode * mn ) {
+void CmdMgr::ReplicateCmdList( MgrNode * mn ) {
     if( !( replicateList->IsOnList( mn ) ) ) {
         replicateList->AddNode( mn );
     }
-    return 1;
 }
-
-/*
-void CmdMgr::ModifyCmdList(MgrNode *mn)
-{
-    mn->ChangeList(mappedWriteList);
-}
-
-void CmdMgr::ViewCmdList(MgrNode *mn)
-{
-    mn->ChangeList(mappedViewList);
-}
-
-void CmdMgr::CloseCmdList(MgrNode *mn)
-{
-    mn->ChangeList(closeList);
-}
-*/
 
 void CmdMgr::ClearInstances() {
     completeList->ClearEntries();
@@ -121,9 +85,8 @@ void CmdMgr::ClearInstances() {
     deleteList->ClearEntries();
     replicateList->Empty();
 
-//    newList->ClearEntries();
 }
-// searches current list for fileId
+/// searches current list for fileId
 MgrNode * CmdMgr::StateFindFileId( stateEnum s, int fileId ) {
     switch( s ) {
         case completeSE:
