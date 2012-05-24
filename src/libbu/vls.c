@@ -780,23 +780,25 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	    } else if (*ep == 'z') {
 		flags |= SIZETINT;
 	    } else if (*ep == 'l') {
-                /* clear all length modifiers first */
-		flags ^= ALL_LENGTHMODS;
+                /* 'l' can be doubled */
+                /* clear all length modifiers AFTER we check for the
+                   first 'l' */
 		if (flags & LONG_INT) {
-                    /* 'l' can be doubled, this step recognizes that */
-		    flags |= LLONGINT;
+                    flags ^= ALL_LENGTHMODS;
+                    flags |= LLONGINT;
 		} else {
-                    /* set the new flag */
-		    flags |= LONG_INT;
+                    flags ^= ALL_LENGTHMODS;
+                    flags |= LONG_INT;
 		}
 	    } else if (*ep == 'h') {
-                /* clear all length modifiers first */
-		flags ^= ALL_LENGTHMODS;
+                /* 'h' can be doubled */
+                /* clear all length modifiers AFTER we check for the
+                   first 'h' */
 		if (flags & SHORTINT) {
-                    /* 'h' can be doubled, this step recognizes that */
+                    flags ^= ALL_LENGTHMODS;
 		    flags |= SHHRTINT;
 		} else {
-                    /* set the new flag */
+                    flags ^= ALL_LENGTHMODS;
 		    flags |= SHORTINT;
 		}
 	    } else if (*ep == 'L') {
