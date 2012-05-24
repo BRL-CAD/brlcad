@@ -693,7 +693,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
     char buf[BUFSIZ] = {0};
 
     struct bu_vls fbuf = BU_VLS_INIT_ZERO; /* % format buffer */
-    const char *fbufp = NULL;
+    const char *fbufp  = NULL;
 
     if (UNLIKELY(!vls || !fmt || fmt[0] == '\0')) {
 	/* nothing to print to or from */
@@ -717,8 +717,8 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	if (*sp == '\0')
 	    break;
 
-	/* Saw a percent sign, now need to find end of fmt specifier */
-        /* All gets reset for this fmt specifier */
+        /* Saw a percent sign, now need to find end of fmt specifier */
+        /* All flags get reset for this fmt specifier */
         fieldlen        = -1;
         flags           =  0;
         have_digit      =  0;
