@@ -728,9 +728,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
         precision       =  0;
 
         ep = sp;
-	while (*ep) {
-            ++ep;
-            c = *ep;
+	while ((c = *(++ep))) {
             if (c == ' '
                 || c == '#'
                 || c == '+'
