@@ -3,7 +3,7 @@
 
 /*
 * NIST STEP Editor Class Library
-* cleditor/schemaheader.cc
+* cleditor/seeinfodefault.h
 * April 1997
 * David Sauder
 * K. C. Morris

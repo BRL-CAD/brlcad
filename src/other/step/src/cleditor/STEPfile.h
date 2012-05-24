@@ -172,13 +172,11 @@ class STEPfile {
 
         Severity ReadHeader( istream & in );
 
-        InstMgr * HeaderConvertToNew( InstMgr & oldinst );
         Severity HeaderVerifyInstances( InstMgr * im );
         void HeaderMergeInstances( InstMgr * im );
 
         int HeaderId( int increment = 1 );
         int HeaderId( const char * nm = "\0" );
-        int HeaderIdOld( const char * nm = "\0" );
 
         int ReadData1( istream & in ); // first pass to create instances
         // second pass to read instances

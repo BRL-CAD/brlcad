@@ -1,17 +1,14 @@
-/*
-* NIST STEP Core Class Library
-* cleditor/STEPfile.cc
-* February, 1994
-* Peter Carr
-* K. C. Morris
-* David Sauder
+/** \file STEPfile.cc
+ * NIST STEP Core Class Library
+ * cleditor/STEPfile.cc
+ * February, 1994
+ * Peter Carr
+ * K. C. Morris
+ * David Sauder
 
-* Development of this software was funded by the United States Government,
-* and is not subject to copyright.
-*/
+ * Development of this software was funded by the United States Government,
+ * and is not subject to copyright.
 
-
-/********************************************************************
  TODO LIST:
  - ReadHeader doesn't merge the information from more than one instance
    of the same entity type name. i.e. it doesn't merge info from multiple files
@@ -21,7 +18,11 @@
    doesn't keep track of the incomplete instances, it just puts them on the
    list according to the symbol which precedes them in the working session
    file
-**********************************************************************/
+*/
+#include <iostream>
+#include <iterator>
+#include <algorithm>
+
 #include <STEPfile.h>
 #include <sdai.h>
 #include <STEPcomplex.h>
@@ -74,7 +75,6 @@ returns:      Severity
 parameters:   (istream&) The input stream from which the file is read.
 description:
    This function reads in the header section of an exchange file. It
-   can read it in either version (N279) or (Part 21, July 1992). It
    parses the header section, popluates the _headerInstances, and
    returns an error descriptor.
    It expects to find the "HEADER;" symbol at the beginning of the
@@ -144,8 +144,10 @@ Severity STEPfile::ReadHeader( istream & in ) {
             //create header instance
             buf[0] = '\0';
             if( _fileType == VERSION_OLD ) {
-                strcpy( buf, "N279_" );
-                strncat( buf, const_cast<char *>( keywd.c_str() ), BUFSIZ - 7 );
+                _error.AppendToDetailMsg( "N279 header detected. Files this old are no longer supported.\n" );
+                _error.GreaterSeverity( SEVERITY_EXIT );
+                delete im;
+                return SEVERITY_EXIT;
             } else {
                 strncpy( buf, const_cast<char *>( keywd.c_str() ), BUFSIZ );
             }
@@ -172,21 +174,14 @@ Severity STEPfile::ReadHeader( istream & in ) {
                 cerr << "Unable to create header section entity: \'" <<
                      keywd << "\'.\n\tdata lost: " << strbuf << "\n";
                 _error.GreaterSeverity( SEVERITY_WARNING );
-            } else //not ENTITY_NULL
+            } else { //not ENTITY_NULL
                 //read the header instance
-            {
+
                 //check obj's Error Descriptor
                 objsev = AppendEntityErrorMsg( &( obj->Error() ) );
 
                 //set file_id to reflect the appropriate Header Section Entity
-                switch( _fileType ) {
-                    case VERSION_OLD:
-                        fileid = HeaderIdOld( const_cast<char *>( keywd.c_str() ) );
-                        break;
-                    default:
-                        fileid = HeaderId( const_cast<char *>( keywd.c_str() ) );
-                        break;
-                }
+                fileid = HeaderId( const_cast<char *>( keywd.c_str() ) );
 
                 //read the values from the istream
                 objsev = obj->STEPread( fileid, 0, ( InstMgr * )0, in );
@@ -306,11 +301,13 @@ SDAI_Application_instance * STEPfile::HeaderDefaultFileDescription() {
 
 SDAI_Application_instance * STEPfile::HeaderDefaultFileSchema() {
     SdaiFile_schema * fs = new SdaiFile_schema;
+    StringAggregate_ptr tmp = new StringAggregate;
 
-    fs->schema_identifiers_()->StrToVal( "", &_error,
-                                         fs->attributes[0].
-                                         aDesc -> DomainType(),
-                                         _headerInstances );
+    tmp->StrToVal( "", &_error,
+                   fs->attributes[0].
+                   aDesc -> DomainType(),
+                   _headerInstances );
+    fs->schema_identifiers_( tmp );
 
     fs->STEPfile_id = HeaderId( "File_Schema" );
 
@@ -1300,7 +1297,7 @@ SDAI_Application_instance * STEPfile::ReadInstance( istream & in, ostream & out,
         case SEVERITY_BUG:
 
         case SEVERITY_INCOMPLETE:
-            if( ( _fileType == VERSION_CURRENT ) || ( _fileType == VERSION_OLD ) ) {
+            if( ( _fileType == VERSION_CURRENT ) ) {
                 cerr << "ERROR in EXCHANGE FILE: incomplete instance #"
                      << obj -> STEPfile_id << ".\n";
                 if( _fileType != WORKING_SESSION ) {
@@ -1461,14 +1458,17 @@ The header section entities must be numbered in the following manner:
 #3=FILE_SCHEMA
 ***************************/
 int STEPfile::HeaderId( const char * name ) {
-    std::string tmp;
-    if( !( strcmp( ( char * )StrToUpper( name, tmp ), "FILE_DESCRIPTION" ) ) ) {
+    std::string tmp = name;
+
+    std::transform( tmp.begin(), tmp.end(), tmp.begin(), ::toupper );
+
+    if( tmp == "FILE_DESCRIPTION" ) {
         return 1;
     }
-    if( !( strcmp( ( char * )StrToUpper( name, tmp ), "FILE_NAME" ) ) ) {
+    if( tmp == "FILE_NAME" ) {
         return 2;
     }
-    if( !( strcmp( ( char * )StrToUpper( name, tmp ), "FILE_SCHEMA" ) ) ) {
+    if( tmp == "FILE_SCHEMA" ) {
         return 3;
     }
     return ++_headerId;
@@ -1476,23 +1476,6 @@ int STEPfile::HeaderId( const char * name ) {
 
 /***************************
 ***************************/
-int STEPfile::HeaderIdOld( const char * name ) {
-    const char * nms[5];
-    nms[0] = "FILE_IDENTIFICATION";
-    nms[1] = "FILE_DESCRIPTION";
-    nms[2] = "IMP_LEVEL";
-    nms[3] = "CLASSIFICATION";
-    nms[4] = "MAXSIG";
-
-    std::string tmp;
-    for( int i = 0; i < 5; ++i ) {
-        if( !strcmp( ( char * )StrToUpper( name, tmp ), nms[i] ) ) {
-            return ++i;
-        }
-    }
-    return ++_headerId;
-}
-
 void STEPfile::WriteHeader( ostream & out ) {
     out << "HEADER;\n";
 
@@ -1572,7 +1555,6 @@ void STEPfile::WriteHeaderInstanceFileDescription( ostream & out ) {
         // create a File_Name instance
         se = ( SDAI_Application_instance * )HeaderDefaultFileDescription();
     }
-
     WriteHeaderInstance( se, out );
 }
 
@@ -1630,12 +1612,6 @@ Severity STEPfile::AppendFile( istream * in, int useTechCor ) {
     if( !strncmp( const_cast<char *>( keywd.c_str() ), "ISO-10303-21",
                   strlen( const_cast<char *>( keywd.c_str() ) ) ) ) {
         SetFileType( VERSION_CURRENT );
-    } else if( !strncmp( const_cast<char *>( keywd.c_str() ), "STEP",
-                         strlen( const_cast<char *>( keywd.c_str() ) ) ) ) {
-        _error.AppendToUserMsg( "Reading Old Version of exchange file.\n" );
-        _error.GreaterSeverity( SEVERITY_USERMSG );
-
-        SetFileType( VERSION_OLD );
     } else if( !strncmp( const_cast<char *>( keywd.c_str() ), "STEP_WORKING_SESSION",
                          strlen( const_cast<char *>( keywd.c_str() ) ) ) ) {
         if( _fileType != WORKING_SESSION ) {
@@ -1644,13 +1620,11 @@ Severity STEPfile::AppendFile( istream * in, int useTechCor ) {
             _error.GreaterSeverity( SEVERITY_WARNING );
         }
         SetFileType( WORKING_SESSION );
-    }
-
-    else {
+    } else {
         sprintf( errbuf,
                  "Faulty input at beginning of file. \"ISO-10303-21;\" or"
-                 " \"STEP;\" or \"STEP_WORKING_SESSION;\" expected. File "
-                 "not read: %s\n", ( ( strcmp( FileName(), "-" ) == 0 ) ? "standard input" : FileName() ) );
+                 " \"STEP_WORKING_SESSION;\" expected. File not read: %s\n",
+                 ( ( strcmp( FileName(), "-" ) == 0 ) ? "standard input" : FileName() ) );
         _error.AppendToUserMsg( errbuf );
         _error.GreaterSeverity( SEVERITY_INPUT_ERROR );
         return SEVERITY_INPUT_ERROR;
@@ -1718,7 +1692,6 @@ Severity STEPfile::AppendFile( istream * in, int useTechCor ) {
 
     switch( _fileType ) {
         case VERSION_CURRENT:
-        case VERSION_OLD:
         case VERSION_UNKNOWN:
         case WORKING_SESSION:
             valid_insts = ReadData2( *in2, useTechCor );
