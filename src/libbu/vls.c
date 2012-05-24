@@ -759,7 +759,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
                 } else {
 		    left_justify = 1;
                 }
-	    } else if (*ep == 'l' || *ep == 'U' || *ep == 'O') {
+	    } else if (*ep == 'l') {
                 /* clear all length modifiers first */
 		flags ^= ALL_LENGTHMODS;
 		if (flags & LONG_INT) {
