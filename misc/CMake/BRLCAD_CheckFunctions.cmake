@@ -104,16 +104,28 @@ endmacro(BRLCAD_INCLUDE_FILE_CXX)
 # header list may be specified.  Adds HAVE_ and SIZEOF_ defines to
 # config header.
 ###
-macro(BRLCAD_TYPE_SIZE typename var headers)
+macro(BRLCAD_TYPE_SIZE typename headers)
   set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
   set(CMAKE_C_FLAGS "")
+  set(CMAKE_EXTRA_INCLUDE_FILES_BAK "${CMAKE_EXTRA_INCLUDE_FILES}")
   set(CMAKE_EXTRA_INCLUDE_FILES "${headers}")
-  CHECK_TYPE_SIZE(${typename} HAVE_${var}_T)
-  set(CMAKE_EXTRA_INCLUDE_FILES)
-  if(CONFIG_H_FILE AND HAVE_${var}_T)
-    CONFIG_H_APPEND(BRLCAD "#define HAVE_${var}_T 1\n")
-    CONFIG_H_APPEND(BRLCAD "#define SIZEOF_${var}_T ${HAVE_${var}_T}\n")
-  endif(CONFIG_H_FILE AND HAVE_${var}_T)
+  # Generate a variable name from the type - need to make sure
+  # we end up with a valid variable string.
+  string(REGEX REPLACE "[^a-zA-Z0-9]" "_" var ${typename})
+  string(TOUPPER "${var}" var)
+  # Proceed with type check.  To make sure checks are re-run when
+  # re-testing the same type with different headers, create a test 
+  # variable incorporating both the typename and the headers string
+  string(REGEX REPLACE "[^a-zA-Z0-9]" "_" testvar "HAVE_${typename}${headers}")
+  string(TOUPPER "${testvar}" testvar)
+  CHECK_TYPE_SIZE(${typename} ${testvar})
+  set(CMAKE_EXTRA_INCLUDE_FILES "${CMAKE_EXTRA_INCLUDE_FILES_BAK}")
+  # Produce config.h lines as appropriate
+  if(CONFIG_H_FILE AND ${testvar})
+  message("var: ${var} testvar: ${testvar}: ${${testvar}}")
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_${var} 1\n")
+    CONFIG_H_APPEND(BRLCAD "#define SIZEOF_${var} ${${testvar}}\n")
+  endif(CONFIG_H_FILE AND ${testvar})
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_TYPE_SIZE)
 
@@ -155,8 +167,12 @@ endmacro(BRLCAD_CHECK_LIBRARY lname func)
 
 # Special purpose macros
 
+# Load local variation on CHECK_C_SOURCE_RUNS that will accept a
+# C file as well as the actual C code - some tests are easier to
+# define in separate files.  This feature has been submitted back
+# to the CMake project, but as of CMake 2.8.7 is not part of the
+# default CHECK_C_SOURCE_RUNS functionality.
 include(CheckCSourceRuns)
-
 
 ###
 # Undocumented.
@@ -177,7 +193,6 @@ return 0;
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_CHECK_BASENAME var)
 
-
 ###
 # Undocumented.
 ###
@@ -196,14 +211,6 @@ return 0;
   endif(HAVE_DIRNAME)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_CHECK_DIRNAME var)
-
-
-# Load local variation on CHECK_C_SOURCE_RUNS that will accept a
-# C file as well as the actual C code - some tests are easier to
-# define in separate files.  This feature has been submitted back
-# to the CMake project, but as of CMake 2.8.7 is not part of the
-# default CHECK_C_SOURCE_RUNS functionality.
-include(CheckCSourceRuns)
 
 ###
 # Undocumented.
