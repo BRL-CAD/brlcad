@@ -735,9 +735,9 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
                 || *ep == '.'
                 || *ep == '\''
                 || isdigit(*ep)) {
-                if (*ep == '.')
+                if (*ep == '.') {
                     have_dot = 1;
-                if (isdigit(*ep)) {
+                } else if (isdigit(*ep)) {
                     /* set flag for later error checks */
                     have_digit = 1;
                 }
