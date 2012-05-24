@@ -812,7 +812,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	}
 
 	/* libc left-justifies if there's a '-' char, even if the
-	 * value is already negative so no need to check current value
+	 * value is already negative, so no need to check current value
 	 * of left_justify.
 	 */
 	if (fieldlen < 0) {
@@ -1152,8 +1152,9 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	    case '%':
 		bu_vls_putc(vls, '%');
 		break;
-	    default:  /* Something weird, maybe %c */
+	    default:
 		{
+                    /* Something weird, maybe %c */
 		    int j;
 
 		    /* We hope, whatever it is, it fits in an int and the resulting
