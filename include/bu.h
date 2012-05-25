@@ -5062,7 +5062,7 @@ BU_EXPORT extern void bu_vls_trimspace(struct bu_vls *vp);
  * %V is a pointer to a (struct bu_vls *) string.
  *
  * This routine appends to the given vls similar to how vprintf
- * appends to stdout (see bu_vls_vsprintf for overwriting the vls).
+ * appends to stdout (see bu_vls_printf for overwriting the vls).
  */
 BU_EXPORT extern void bu_vls_vprintf(struct bu_vls *vls,
 				     const char *fmt,
