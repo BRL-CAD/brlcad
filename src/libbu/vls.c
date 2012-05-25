@@ -650,6 +650,49 @@ bu_vls_trimspace(struct bu_vls *vp)
 	bu_vls_nibble(vp, 1);
 }
 
+static int _is_format_conversion_specifier(const char c);
+static
+int
+_is_format_conversion_specifier(const char c)
+{
+    /* from 'man sprintf' */
+    switch (c) {
+        case 'd':
+        case 'i':
+        case 'o':
+        case 'u':
+        case 'x':
+        case 'X':
+        case 'e':
+        case 'E':
+        case 'f':
+        case 'F':
+        case 'g':
+        case 'G':
+        case 'a':
+        case 'A':
+        case 'c':
+        case 's':
+        case 'p':
+        case 'n':
+        case 'm': /* glibc extension */
+        case '%':
+        case 'V': /* bu_vls extension */
+
+        /* obsolete: */
+        case 'C': /* (Not in C99, but in SUSv2.)  Synonym for lc.  Don't use. */
+        case 'D': /* libc4--don't use */
+        case 'O': /* libc5--don't use */
+        case 'S': /* (Not in C99, but in SUSv2.)  Synonym for lc.  Don't use. */
+        case 'U': /* libc5--don't use */
+            return 1;
+            break;
+        default:
+            return 0;
+            break;
+    }
+}
+
 void
 bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 {
