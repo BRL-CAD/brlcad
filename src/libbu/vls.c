@@ -650,6 +650,55 @@ bu_vls_trimspace(struct bu_vls *vp)
 	bu_vls_nibble(vp, 1);
 }
 
+#if 0 /* comment out temporarily to prevent unused warning/error */
+static int _is_format_flag(const char c);
+static
+int
+_is_format_flag(const char c)
+{
+    /* from 'man sprintf' */
+    switch (c) {
+        /* defined in C standard; */
+        case '#':
+        case '0':
+        case '-':
+        case ' ':
+        case '+':
+        case '\'': /* SUSv2 */
+        case 'I':  /* glibc 2.2 */
+            return 1;
+            break;
+        default:
+            return 0;
+            break;
+    }
+}
+
+static int _is_format_length_modifier(const char c);
+static
+int
+_is_format_length_modifier(const char c)
+{
+    /* from 'man sprintf' */
+    switch (c) {
+        /* defined in C standard; */
+        case 'h': /* can be doubled: 'hh' */
+        case 'l': /* can be doubled: 'll' */
+        case 'L':
+        case 'j':
+        case 'z':
+        case 't':
+
+        /* obsolete */
+        case 'q': /* 4.4BSD and libc5 only--don't use */
+            return 1;
+            break;
+        default:
+            return 0;
+            break;
+    }
+}
+
 static int _is_format_conversion_specifier(const char c);
 static
 int
@@ -692,6 +741,7 @@ _is_format_conversion_specifier(const char c)
             break;
     }
 }
+#endif
 
 void
 bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
