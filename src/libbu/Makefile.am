@@ -11,7 +11,8 @@ noinst_PROGRAMS = \
 	test_quote \
 	test_timer \
 	test_vls \
-	test_sscanf
+	test_sscanf \
+	test_bitv
 
 libbu_nil_la_SOURCES = \
 	argv.c \
@@ -102,8 +103,14 @@ libbu_la_LIBADD = \
 
 test_booleanize_SOURCES = test_booleanize.c
 test_booleanize_LDADD = \
-	libbu.la
+	libbu.la \
 	${BU_LIBS}
+
+test_bitv_SOURCES = test_bitv.c
+test_bitv_LDADD = \
+	libbu.la \
+	${BU_LIBS}
+
 test_timer_SOURCES = test_timer.c
 test_timer_LDADD = \
 	libbu.la \
