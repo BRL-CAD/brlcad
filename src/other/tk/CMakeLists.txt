@@ -324,7 +324,7 @@ IF(NOT WIN32)
     SET(FREETYPE_LIBRARIES "")
   ENDIF(NOT FREETYPE_FOUND)
 ENDIF(NOT WIN32)
-CMAKE_DEPENDENT_OPTION(TK_ENABLE_XFT "Use freetype/fontconfig/xft" ON "TK_SYSTEM_GRAPHICS STREQUAL x11;FREETYPE_FOUND;FONTCONFIG_FOUND;${X11_Xft_FOUND}" OFF)
+CMAKE_DEPENDENT_OPTION(TK_ENABLE_XFT "Use freetype/fontconfig/xft" ON "TK_SYSTEM_GRAPHICS STREQUAL x11;FREETYPE_FOUND;FONTCONFIG_FOUND;X11_Xft_FOUND" OFF)
 
 #----------------------------------------------------------------------------
 # signed/unsigned char - does the Tcl code still need this? See
