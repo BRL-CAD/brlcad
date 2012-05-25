@@ -122,7 +122,6 @@ macro(BRLCAD_TYPE_SIZE typename headers)
   set(CMAKE_EXTRA_INCLUDE_FILES "${CMAKE_EXTRA_INCLUDE_FILES_BAK}")
   # Produce config.h lines as appropriate
   if(CONFIG_H_FILE AND ${testvar})
-  message("var: ${var} testvar: ${testvar}: ${${testvar}}")
     CONFIG_H_APPEND(BRLCAD "#define HAVE_${var} 1\n")
     CONFIG_H_APPEND(BRLCAD "#define SIZEOF_${var} ${${testvar}}\n")
   endif(CONFIG_H_FILE AND ${testvar})
