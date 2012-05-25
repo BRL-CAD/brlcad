@@ -970,6 +970,9 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	/* use type specifier to grab parameter appropriately from arg
            list, and print it correctly */
 	switch (c) {
+	    case 'S': /* XXX - DEPRECATED [7.14] */
+		printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%ls instead\n");
+		/* fall through */
 	    case 's':
 		{
                     /* variables used to determine final effects of
@@ -1049,9 +1052,6 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    }
 		}
 		break;
-	    case 'S': /* XXX - DEPRECATED [7.14] */
-		printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
-		/* fall through */
 	    case 'V':
 		{
 		    struct bu_vls *vp;
