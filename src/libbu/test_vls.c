@@ -50,8 +50,7 @@ test_vls(const char *fmt, ...)
 
     snprintf(output, sizeof(output), "%-24s -> '%s'", fmt, bu_vls_addr(&vls));
     if (BU_STR_EQUAL(buffer, bu_vls_addr(&vls))
-	&& strlen(buffer) == bu_vls_strlen(&vls))
-    {
+	&& strlen(buffer) == bu_vls_strlen(&vls)) {
 	printf("%-*s[PASS]\n", 60, output);
     } else {
 	printf("%-*s[FAIL]  (should be: '%s')\n", 60, output, buffer);
@@ -198,14 +197,25 @@ main(int ac, char *av[])
     /* unsigned variant */
     fails += test_vls("%lu %llu", 123, 123);
 
-    /* misc */
     fails += test_vls("%hd %hhd", 123, -123);
 
+    /* misc */
     fails += test_vls("% d % d", 123, -123);
 
     fails += test_vls("% 05d % d", 123, -123);
 
     fails += test_vls("%'d", 123000);
+
+    fails += test_vls("%c", 'r');
+
+    /* obsolete but usable */
+    fails += test_vls("%S", (wchar_t *)"hello");
+
+/*
+    fails += test_vls("%qd %qd", 123, -123);
+*/
+
+    /* other */
 
     /* ======================================================== */
     /* EXPECTED FAILURES ONLY BELOW HERE                        */
@@ -224,18 +234,30 @@ main(int ac, char *av[])
      *
      */
 
+/* uncomment if using expected failures */
+/* #define EXP_FAILS */
+
     printf("\nExpected failures (don't use in production code):\n");
 
+#if defined (EXP_FAILS)
+    /* obsolete - expected failures */
+    expfails += test_vls("%C", 'N');
+    expfails += test_vls("%D %D", 123, -123);
+    expfails += test_vls("%O %O", 123, -123);
+    expfails += test_vls("%U %U", 123, -123);
+#else
     printf("  NONE AT THIS TIME\n");
+#endif
 
     /* report results */
     fprintf(stderr, "%d", expfails);
+
 
     printf("\n%s: testing complete\n", av[0]);
 
     if (fails != 0) {
       /* as long as fails is < 127 the STATUS will be the number of unexpected failures */
-      return fails;
+        return fails;
     }
 
     return 0;
