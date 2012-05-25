@@ -56,7 +56,7 @@ test_bu_hex_to_bitv(char *inp, char *res , int errno)
 	return 0;
     }
 
-    if(!strcmp((char*)res_bitv->bits, res)) {
+    if(!bu_strcmp((char*)res_bitv->bits, res)) {
 	printf("\nbu_hex_to_bitv PASSED Input:%s Output:%s", inp, (char*)res_bitv->bits);
 	pass = 1 ;
     } else {
@@ -79,11 +79,11 @@ test_bu_bitv_to_hex(char *inp , char *res , int length)
 
     a = bu_vls_vlsinit();
     res_bitv = bu_bitv_new(length);
-    strcpy((char*)res_bitv->bits, inp);
+    bu_strcpy((char*)res_bitv->bits, inp);
 
     bu_bitv_to_hex(a, res_bitv);
   
-    if(!strcmp(a->vls_str, res)) {
+    if(!bu_strcmp(a->vls_str, res)) {
 	printf("\nbu_bitv_to_hex PASSED Input:%5s Output:%9s", inp, res);
 	pass = 1 ;
     } else {
@@ -109,7 +109,7 @@ test_bu_bitv_vls(char *inp , char *exp)
     res_bitv = bu_hex_to_bitv(inp);
     bu_bitv_vls(a, res_bitv);
 
-    if(!strcmp(a->vls_str, exp)) {
+    if(!bu_strcmp(a->vls_str, exp)) {
 	printf("\nbu_bitv_vls test PASSED Input:%s Output:%s", inp, (char *)a->vls_str);
 	pass = 1;
     } else {
@@ -142,7 +142,7 @@ test_bu_bitv_or(char *inp1 , char *inp2 , char *exp)
     bu_bitv_vls(a, res_bitv1);
     bu_bitv_vls(b, result);
 
-    if(!strcmp(a->vls_str, b->vls_str)) {
+    if(!bu_strcmp(a->vls_str, b->vls_str)) {
 	printf("\nbu_bitv_or test PASSED Input1:%s Input2:%s Output:%s", inp1, inp2, exp);
 	pass = 1;
     } else {
@@ -176,7 +176,7 @@ test_bu_bitv_and(char *inp1 , char *inp2 , char *exp)
     bu_bitv_vls(a,res_bitv1);
     bu_bitv_vls(b,result);
 	
-    if(!strcmp(a->vls_str , b->vls_str)) {
+    if(!bu_strcmp(a->vls_str , b->vls_str)) {
 	printf("\nbu_bitv_and test PASSED Input1:%s Input2:%s Output:%s", inp1, inp2, exp);
 	pass = 1;
     } else {
