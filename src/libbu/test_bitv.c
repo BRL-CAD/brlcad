@@ -79,7 +79,12 @@ test_bu_bitv_to_hex(char *inp , char *res , int length)
 
     a = bu_vls_vlsinit();
     res_bitv = bu_bitv_new(length);
-    strcpy((char*)res_bitv->bits, inp);
+
+    /* accessing the bits array directly as a char* is not safe since
+     * there's no bounds checking and assumes implementation is
+     * contiguous memory.
+     */
+    bu_strlcpy((char*)res_bitv->bits, inp, length/8);
 
     bu_bitv_to_hex(a, res_bitv);
 
