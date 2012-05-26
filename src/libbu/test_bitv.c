@@ -79,7 +79,7 @@ test_bu_bitv_to_hex(char *inp , char *res , int length)
 
     a = bu_vls_vlsinit();
     res_bitv = bu_bitv_new(length);
-    bu_strcpy((char*)res_bitv->bits, inp);
+    strcpy((char*)res_bitv->bits, inp);
 
     bu_bitv_to_hex(a, res_bitv);
   
