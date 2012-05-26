@@ -45,6 +45,15 @@ release during 7.53 development.  It could NOT be removed in 7.54.2
 since it's a patch version, prior to the 7.54 release line, nor even
 during 7.54.0 if less than 90 days had passed since 7.50.6 was posted.
 
+When it is finally removed, remove its entry in the DEPRECATED section
+and move it to the OBSOLETE section under the version entry in which
+it was removed.  Make sure the entry has a reference to the version
+in which the item was first classified as deprecated.  See the %S
+entry for an example.
+
+DEPRECATED/OBSOLETE Items
+-------------------------
+
 The items listed below are interfaces that are deprecated or obsolete,
 categorized by the release in which the change was made.  If the
 change involved a rename/removal of a routine, both the original and
