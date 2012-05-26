@@ -209,8 +209,9 @@ main(int ac, char *av[])
     fails += test_vls("%c", 'r');
 
     /* obsolete but usable */
+/*
     fails += test_vls("%S", (wchar_t *)"hello");
-
+*/
 /*
     fails += test_vls("%qd %qd", 123, -123);
 */
