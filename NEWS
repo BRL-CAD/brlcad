@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2012-04-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* removed obsolete bu_vls %S format specifier - Tom Browder
 * support for implicit to boundary representation geometry conversion
 	- Cliff Yapp, Wu Jianbang, Sean Morrison
 * added rtwizard support for writing out .png images
