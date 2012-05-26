@@ -227,7 +227,7 @@ main(int argc, char **argv)
      */
     static struct rt_i *rtip;
 
-    /* optional parameter to rt_dirbuild() what can be used to capture
+    /* optional parameter to rt_dirbuild() that can be used to capture
      * a title if the geometry database has one set.
      */
     char title[1024] = {0};
@@ -270,7 +270,7 @@ main(int argc, char **argv)
 
     /* This next call gets the database ready for ray tracing.  This
      * causes some values to be precomputed, sets up space
-     * partitioning, computes boudning volumes, etc.
+     * partitioning, computes bounding volumes, etc.
      */
     rt_prep_parallel(rtip, 1);
 
