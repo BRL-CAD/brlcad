@@ -683,9 +683,6 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 		    }
 		}
 		break;
-	    case 'S': /* XXX - DEPRECATED [7.14] */
-		printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
-		/* fall through */
 	    case 'V':
 		{
 		    struct bu_vls *vls = (struct bu_vls *)loc;
@@ -999,9 +996,6 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 	    else
 		bu_vls_printf(vp, "%s", (char *)loc);
 	    break;
-	case 'S': /* XXX - DEPRECATED [7.14] */
-	    printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
-	    /* fall through */
 	case 'V':
 	    {
 		struct bu_vls *vls = (struct bu_vls *)loc;
@@ -1131,9 +1125,6 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		    bu_log("\t%s=\"%s\"\n", sdp->sp_name,
 			   (char *)loc);
 		break;
-	    case 'S': /* XXX - DEPRECATED [7.14] */
-		printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
-		/* fall through */
 	    case 'V':
 		{
 		    struct bu_vls *vls = (struct bu_vls *)loc;
@@ -1338,9 +1329,6 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		    bu_vls_free(&tmpstr);
 		}
 		break;
-	    case 'S': /* XXX - DEPRECATED [7.14] */
-		printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
-		/* fall through */
 	    case 'V':
 		{
 		    struct bu_vls *vls_p = (struct bu_vls *)loc;
@@ -1462,9 +1450,6 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		    bu_vls_printf(vls_out, "\t%s=\"%s\"\n", sdp->sp_name,
 				  (char *)loc);
 		break;
-	    case 'S': /* XXX - DEPRECATED [7.14] */
-		printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
-		/* fall through */
 	    case 'V':
 		{
 		    struct bu_vls *vls = (struct bu_vls *)loc;
@@ -2209,7 +2194,6 @@ bu_structparse_get_terse_form(struct bu_vls *logstr, const struct bu_structparse
 	/* These types are specified by lengths, e.g. %80s */
 	if (BU_STR_EQUAL(sp->sp_fmt, "%c") ||
 	    BU_STR_EQUAL(sp->sp_fmt, "%s") ||
-	    BU_STR_EQUAL(sp->sp_fmt, "%S") || /* XXX - DEPRECATED [7.14] */
 	    BU_STR_EQUAL(sp->sp_fmt, "%V")) {
 	    if (sp->sp_count > 1) {
 		/* Make them all look like %###s */
@@ -2301,9 +2285,6 @@ bu_structparse_argv(struct bu_vls *logstr,
 			bu_vls_printf(logstr, "%s %c ", sdp->sp_name, *loc);
 		    }
 		    break;
-		case 'S': /* XXX - DEPRECATED [7.14] */
-		    printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
-		    /* fall through */
 		case 'V':
 		    {
 			/* copy the string to a bu_vls (string of
