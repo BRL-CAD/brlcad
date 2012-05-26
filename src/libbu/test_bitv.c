@@ -29,10 +29,10 @@
 #include "bu.h"
 
 
-unsigned int 
+unsigned int
 power(unsigned int base , int exponent)
 {
-    int i ; 
+    int i ;
     unsigned int product = 1;
 
     for (i = 0; i < exponent; i++) {
@@ -43,14 +43,14 @@ power(unsigned int base , int exponent)
 }
 
 
-int 
+int
 test_bu_hex_to_bitv(char *inp, char *res , int errno)
 {
     struct bu_bitv *res_bitv ;
     int pass;
 
     res_bitv = bu_hex_to_bitv(inp);
-   
+
     if (errno == 1 && res_bitv == NULL) {
 	printf("\nbu_hex_to_bitv PASSED Input:%s Output:%s", inp, res);
 	return 0;
@@ -70,7 +70,7 @@ test_bu_hex_to_bitv(char *inp, char *res , int errno)
 }
 
 
-int 
+int
 test_bu_bitv_to_hex(char *inp , char *res , int length)
 {
     struct bu_vls *a;
@@ -82,7 +82,7 @@ test_bu_bitv_to_hex(char *inp , char *res , int length)
     strcpy((char*)res_bitv->bits, inp);
 
     bu_bitv_to_hex(a, res_bitv);
-  
+
     if (!bu_strcmp(a->vls_str, res)) {
 	printf("\nbu_bitv_to_hex PASSED Input:%5s Output:%9s", inp, res);
 	pass = 1 ;
@@ -97,8 +97,8 @@ test_bu_bitv_to_hex(char *inp , char *res , int length)
     return pass;
 }
 
-	
-int 
+
+int
 test_bu_bitv_vls(char *inp , char *exp)
 {
     struct bu_vls *a;
@@ -116,15 +116,15 @@ test_bu_bitv_vls(char *inp , char *exp)
 	printf("\nbu_bitv_vls FAILED for Input:%s Expected:%s", inp, exp);
 	pass = 0;
     }
-	
+
     bu_vls_free(a);
     bu_bitv_free(res_bitv);
 
     return pass;
-}	
+}
 
 
-int 
+int
 test_bu_bitv_or(char *inp1 , char *inp2 , char *exp)
 {
     struct bu_bitv *res_bitv , *res_bitv1 , *result;
@@ -154,11 +154,11 @@ test_bu_bitv_or(char *inp1 , char *inp2 , char *exp)
     bu_bitv_free(res_bitv1);
     bu_bitv_free(result);
 
-    return pass;	
+    return pass;
 }
 
 
-int 
+int
 test_bu_bitv_and(char *inp1 , char *inp2 , char *exp)
 {
     struct bu_bitv *res_bitv , *res_bitv1 , *result;
@@ -171,11 +171,11 @@ test_bu_bitv_and(char *inp1 , char *inp2 , char *exp)
     res_bitv1 = bu_hex_to_bitv(inp1);
     res_bitv  = bu_hex_to_bitv(inp2);
     result    = bu_hex_to_bitv(exp);
- 
+
     bu_bitv_and(res_bitv1,res_bitv);
     bu_bitv_vls(a,res_bitv1);
     bu_bitv_vls(b,result);
-	
+
     if (!bu_strcmp(a->vls_str , b->vls_str)) {
 	printf("\nbu_bitv_and test PASSED Input1:%s Input2:%s Output:%s", inp1, inp2, exp);
 	pass = 1;
@@ -188,15 +188,15 @@ test_bu_bitv_and(char *inp1 , char *inp2 , char *exp)
     bu_bitv_free(res_bitv1);
     bu_bitv_free(result);
 
-    return pass;	
+    return pass;
 }
 
 
-int 
+int
 main(int ac , char **av)
 {
     int res , pass = 1;
-    
+
     /* unused variables generate warnings, and sometimes warnings are treated as errors*/
     if (ac) {};
     if (av) {};
@@ -213,7 +213,7 @@ main(int ac , char **av)
     }
 
     printf("\n\n");
-                        
+
     /*testing bu_hex_to_bitv*/
     printf("Testing bu_hex_to_bitv...");
     test_bu_hex_to_bitv("33323130", "0123", 0);

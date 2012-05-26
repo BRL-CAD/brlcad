@@ -54,7 +54,7 @@ test_vls(const char *fmt, ...)
 	printf("%-*s[PASS]\n", 60, output);
     } else {
 	printf("%-*s[FAIL]  (should be: '%s')\n", 60, output, buffer);
-        status = 1;
+	status = 1;
     }
 
     bu_vls_free(&vls);
@@ -257,7 +257,7 @@ main(int ac, char *av[])
 
     if (fails != 0) {
       /* as long as fails is < 127 the STATUS will be the number of unexpected failures */
-        return fails;
+	return fails;
     }
 
     return 0;
