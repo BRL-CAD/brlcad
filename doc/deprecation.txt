@@ -198,7 +198,6 @@ include/raytrace.h
 	DIR_* -> RT_DIR_* [deprecated 7.14]
 include/bu.h
         bu_fopen_uniq -> fopen [deprecated 7.14]
-	%S format specifier -> %V format specifier for bu_vls [deprecated 7.14]
 mged
 	tops -g -u -> now default behavior [deprecated 7.14]
 	-n option -> -c option [deprecated 7.14]
@@ -235,6 +234,11 @@ include/raytrace.h
 ************
 * OBSOLETE *
 ************
+
+7.22.0
+------
+include/bu.h
+	%S format specifier -> %V format specifier for bu_vls [deprecated 7.14]
 
 7.20.2
 ------
