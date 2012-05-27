@@ -87,6 +87,7 @@ set(LIBBU_SOURCES
   vfont.c
   vlb.c
   vls.c
+  vls_vprintf.c
   whereis.c
   which.c
   xdr.c
@@ -119,6 +120,7 @@ ADD_MAN_PAGES(3 bu_MAN3)
 set(bu_ignore_files
   rb_internals.h
   uce-dirent.h
+  vls_internals.h
   )
 CMAKEFILES(${bu_ignore_files})
 CMAKEFILES(Makefile.am)

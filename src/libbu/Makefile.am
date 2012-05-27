@@ -91,6 +91,7 @@ libbu_nil_la_SOURCES = \
 	vfont.c \
 	vlb.c \
 	vls.c \
+	vls_vprintf.c \
 	whereis.c \
 	which.c \
 	xdr.c
@@ -152,7 +153,8 @@ test_sscanf_LDADD = \
 	${BU_LIBS}
 
 noinst_HEADERS = \
-	rb_internals.h
+	rb_internals.h \
+	vls_internals
 
 man_MANS = \
 	htond.3 \
