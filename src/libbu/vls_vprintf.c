@@ -89,10 +89,9 @@ static void reset_vflags(vflags_t *f)
 }
 
 #if 0 /* comment out temporarily to prevent unused warning/error */
-static int _is_format_flag(const char c);
-static
-int
-_is_format_flag(const char c)
+static int is_format_flag(const char c);
+static int
+is_format_flag(const char c)
 {
     /* from 'man sprintf' */
     switch (c) {
@@ -112,10 +111,9 @@ _is_format_flag(const char c)
     }
 }
 
-static int _is_format_length_modifier(const char c);
-static
-int
-_is_format_length_modifier(const char c)
+static int is_format_length_modifier(const char c);
+static int
+is_format_length_modifier(const char c)
 {
     /* from 'man sprintf' */
     switch (c) {
@@ -137,10 +135,9 @@ _is_format_length_modifier(const char c)
     }
 }
 
-static int _is_format_conversion_specifier(const char c);
-static
-int
-_is_format_conversion_specifier(const char c)
+static int is_format_conversion_specifier(const char c);
+static int
+is_format_conversion_specifier(const char c)
 {
     /* from 'man sprintf' */
     switch (c) {
@@ -186,7 +183,7 @@ _is_format_conversion_specifier(const char c)
 The bu_vls_vprintf function aims to adhere to the following
 specifications:
 
-  1.  First, follow the UNIX man page at
+  1.  First, follow the POSIX man page at
       "http://www.unix.com/man-page/POSIX/3/printf/" regarding the
       definition of a format specifier.
 
@@ -197,6 +194,11 @@ specifications:
 
   3.  The subset [2] shall be the "valid" flags, length modifers, and
       conversion specifiers ("parts") accepted by this function.
+      Those are defined in the following local functions:
+
+        is_format_flag
+        is_format_length_modifier
+        is_format_conversion_specifier
 
   4.  Parts known to be defined outside subset [3] shall generate a
       message stating such invalidity and giving a suitable
@@ -207,6 +209,12 @@ specifications:
   5.  Parts seen by this function but not defined above shall be
       deemed "unknown" and result in a suitable message followed by a
       bu_bomb.
+
+  6.  Library users of this function receiving "unknown" messages
+      while attempting to use valid parts according to their O/S and
+      compiler need to contact the BRL-CAD developers to resolve the
+      issue.  Resolution should normally result in assigning the
+      "unknown" part to one of the categories described in [4].
 
 */
 
