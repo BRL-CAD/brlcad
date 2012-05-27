@@ -64,6 +64,29 @@ static const int PRECISION = 0x0200;
 
 /* private structs */
 
+typedef struct
+vprintf_flags
+{
+    int fieldlen;
+    int flags;
+    int have_digit;
+    int have_dot;
+    int left_justify;
+    int precision;
+} vflags_t;
+
+/* private structs */
+
+static void reset_vflags(vflags_t *f);
+static void reset_vflags(vflags_t *f)
+{
+    f->fieldlen     = -1;
+    f->flags        =  0;
+    f->have_digit   =  0;
+    f->have_dot     =  0;
+    f->left_justify =  0;
+    f->precision    =  0;
+}
 
 #if 0 /* comment out temporarily to prevent unused warning/error */
 static int _is_format_flag(const char c);
@@ -157,28 +180,6 @@ _is_format_conversion_specifier(const char c)
     }
 }
 #endif
-
-typedef struct
-vprintf_flags
-{
-    int fieldlen;
-    int flags;
-    int have_digit;
-    int have_dot;
-    int left_justify;
-    int precision;
-} vflags_t;
-
-static void reset_vflags(vflags_t *f);
-static void reset_vflags(vflags_t *f)
-{
-    f->fieldlen     = -1;
-    f->flags        =  0;
-    f->have_digit   =  0;
-    f->have_dot     =  0;
-    f->left_justify =  0;
-    f->precision    =  0;
-}
 
 void
 bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
