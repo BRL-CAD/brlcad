@@ -38,6 +38,33 @@
 
 /* private constants */
 
+/* bit flags for fmt specifier attributes */
+/* short (char) length modifiers */
+static const int SHORTINT =  0x0001;
+static const int SHHRTINT =  0x0002;
+/* integer length modifiers */
+static const int LONG_INT =  0x0004;
+static const int LLONGINT =  0x0008;
+/* double length modifiers */
+static const int LONGDBLE =  0x0010;
+/* other integer length modifiers */
+static const int INTMAX_T =  0x0020;
+static const int PTRDIFFT =  0x0040;
+static const int SIZETINT =  0x0080;
+/* misc */
+static const int FIELDLEN =  0x0100;
+static const int PRECISION = 0x0200;
+/* groups */
+#define MISCINTMODS    (INTMAX_T | PTRDIFFT | SIZETINT)
+#define SHORTINTMODS   (SHORTINT | SHHRTINT)
+#define LONGINTMODS    (LONG_INT | LLONGINT)
+#define ALL_INTMODS    (SHORTINTMODS | LONGINTMODS | MISCINTMODS)
+#define ALL_DOUBLEMODS (LONGDBLE)
+#define ALL_LENGTHMODS (ALL_INTMODS | ALL_DOUBLEMODS)
+
+/* private structs */
+
+
 #if 0 /* comment out temporarily to prevent unused warning/error */
 static int _is_format_flag(const char c);
 static
@@ -159,30 +186,6 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
     const char *sp; /* start pointer */
     const char *ep; /* end pointer */
     int len;
-
-    /* bit flags for fmt specifier attributes */
-    /* short (char) length modifiers */
-    const int SHORTINT =  0x0001;
-    const int SHHRTINT =  0x0002;
-    /* integer length modifiers */
-    const int LONG_INT =  0x0004;
-    const int LLONGINT =  0x0008;
-    /* double length modifiers */
-    const int LONGDBLE =  0x0010;
-    /* other integer length modifiers */
-    const int INTMAX_T =  0x0020;
-    const int PTRDIFFT =  0x0040;
-    const int SIZETINT =  0x0080;
-    /* misc */
-    const int FIELDLEN =  0x0100;
-    const int PRECISION = 0x0200;
-    /* groups */
-    const int MISCINTMODS    = (INTMAX_T | PTRDIFFT | SIZETINT);
-    const int SHORTINTMODS   = (SHORTINT | SHHRTINT);
-    const int LONGINTMODS    = (LONG_INT | LLONGINT);
-    const int ALL_INTMODS    = (SHORTINTMODS | LONGINTMODS | MISCINTMODS);
-    const int ALL_DOUBLEMODS = (LONGDBLE);
-    const int ALL_LENGTHMODS = (ALL_INTMODS | ALL_DOUBLEMODS);
 
     /* flag variables are reset for each fmt specifier */
     vflags_t f;
