@@ -181,6 +181,35 @@ _is_format_conversion_specifier(const char c)
 }
 #endif
 
+/*
+
+The bu_vls_vprintf function aims to adhere to the following
+specifications:
+
+  1.  First, follow the UNIX man page at
+      "http://www.unix.com/man-page/POSIX/3/printf/" regarding the
+      definition of a format specifier.
+
+  2.  Then modify [1] to accomodate a compatible subset of parts
+      applicable to a wide range of standard C libraries including
+      GNU/Linux, Windows, FreeBSD, and others as differences are
+      brought to our attention.
+
+  3.  The subset [2] shall be the "valid" flags, length modifers, and
+      conversion specifiers ("parts") accepted by this function.
+
+  4.  Parts known to be defined outside subset [3] shall generate a
+      message stating such invalidity and giving a suitable
+      alternative if possible (such parts will be called "obsolete");
+      otherwise, the part shall be said to be "unsupported."  Any part
+      of either category will then generate a bu_bomb.
+
+  5.  Parts seen by this function but not defined above shall be
+      deemed "unknown" and result in a suitable message followed by a
+      bu_bomb.
+
+*/
+
 void
 bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 {
