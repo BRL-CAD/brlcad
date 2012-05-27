@@ -176,7 +176,7 @@ kill_obj(char *name)
 int
 compare_external(struct directory *dp1, struct directory *dp2)
 {
-    int kill = 0;
+    int killit = 0;
     struct bu_external ext1, ext2;
 
     if (db_get_external(&ext1, dp1, dbip1)) {
@@ -190,15 +190,15 @@ compare_external(struct directory *dp1, struct directory *dp2)
 
     if (ext1.ext_nbytes != ext2.ext_nbytes) {
 	printf("Byte counts are different on %s (%ld != %ld)\n", dp1->d_namep, (long int)ext1.ext_nbytes, (long int)ext2.ext_nbytes);
-	kill = 1;
+	killit = 1;
     }
 
     if (memcmp((void *)ext1.ext_buf, (void *)ext2.ext_buf, ext1.ext_nbytes)) {
 	printf("Byte value(s) are different on %s (has no Tcl list representation)\n", dp1->d_namep);
-	kill = 1;
+	killit = 1;
     }
 
-    if (kill) {
+    if (killit) {
 	if (mode == HUMAN) {
 	    printf("kill %s and import it from %s\n", dp1->d_namep, dbip1->dbi_filename);
 	} else {
