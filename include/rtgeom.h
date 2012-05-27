@@ -83,10 +83,10 @@ struct rt_tgc_internal {
  */
 struct rt_ell_internal  {
     uint32_t magic;
-    point_t	v;
-    vect_t	a;
-    vect_t	b;
-    vect_t	c;
+    point_t	v;      /**< @brief center point */
+    vect_t	a;      /**< @brief axis a radial length */
+    vect_t	b;      /**< @brief axis b radial length */
+    vect_t	c;      /**< @brief axis c radial length */
 };
 #define RT_ELL_CK_MAGIC(_p)	BU_CKMAG(_p, RT_ELL_INTERNAL_MAGIC, "rt_ell_internal")
 
