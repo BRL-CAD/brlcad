@@ -69,7 +69,7 @@ Other development packages needed to build on Debian-based platforms:
   
   for building the Tcl/Tk libraries:  libfontconfig-dev
   
-  for OpenGL: libglu1-mesa-dev freeglut3-dev
+  for OpenGL: libglu1-mesa-dev
   
 Note there is a supported Debian package generation script in file
 'sh/make_deb.sh' which can function only on a Debian or Ubuntu system.
