@@ -75,7 +75,7 @@ vprintf_flags
     int precision;
 } vflags_t;
 
-/* private structs */
+/* private functions */
 
 static void reset_vflags(vflags_t *f);
 static void reset_vflags(vflags_t *f)
