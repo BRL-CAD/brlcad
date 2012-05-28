@@ -1783,6 +1783,20 @@ rt_ell_volume(fastf_t *volume, const struct rt_db_internal *ip)
 }
 
 
+/**
+ * R T _ E L L _ C E N T R O I D
+ *
+ * Computes centroid of an ellipsoid
+ */
+void
+rt_ell_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+    VMOVE(*cent,eip->v);
+}
+
+
 /** @} */
 /*
  * Local Variables:
