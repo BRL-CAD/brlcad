@@ -407,6 +407,7 @@ files=0
 count=0
 nmg_count=0
 bot_count=0
+brep_count=0
 $ECHO "%s" "-=-"
 begin=`elapsed` # start elapsed runtime timer
 while test $# -gt 0 ; do
@@ -525,16 +526,50 @@ EOF
 	    bot=extl
 	fi
 
+	# start the limit timer, same as above.
+	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep brep | grep "${obj}.brep2" | awk '{print $2}'`" != "x" && `touch "./${obj}.brep2.extl"` && kill -9 `ps auxwww | grep "$work" | grep brep | grep "${obj}.brep2" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+        spid=$!
+
+	# convert Brep
+	brep=fail
+	cmd="$GED -c "$work" brep \"${obj}\" \"${obj}.brep2\""
+	$VERBOSE_ECHO "\$ $cmd"
+	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
+
+	# stop the limit timer, same as above.
+	for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
+	    # must kill sleep children first or they can continue running orphaned
+	    kill $pid >/dev/null 2>&1
+	    wait $pid >/dev/null 2>&1
+	done
+	# must wait in order to suppress kill messages
+	kill -9 $spid >/dev/null 2>&1
+	wait $spid >/dev/null 2>&1
+
+	$VERBOSE_ECHO "$output"
+	real_brep="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
+
+	# verify Brep
+	found=`$SGED -c "$work" search . -name \"${obj}.brep2\" 2>&1 | grep -v Using`
+	if test "x$found" = "x${object}.brep2" ; then
+	    brep=pass
+	    brep_count=`expr $brep_count + 1`
+	fi
+	if [ -e "./${obj}.brep2.extl" ] ; then
+            `rm "./${obj}.brep2.extl"`
+	    brep=extl
+	fi
+
 	# print result for this object
 	status=fail
-	if test "x$nmg" = "xpass" && test "x$bot" = "xpass" ; then
+	if test "x$nmg" = "xpass" && test "x$bot" = "xpass" && test "x$brep" = "xpass" ; then
 	    status=ok
 	fi
 
 	count=`expr $count + 1`
 
-	$ECHO "%-4s\tnmg: %s %ss\tbot: %s %ss %6.0fs %*s%.0f %s:%s" \
-               \"$status\" \"$nmg\" \"$real_nmg\" \"$bot\" \"$real_bot\" \"$SECONDS\" \
+	$ECHO "%-4s\tnmg: %s %ss\tbot: %s %ss\tbrep: %s %ss %6.0fs %*s%.0f %s:%s" \
+               \"$status\" \"$nmg\" \"$real_nmg\" \"$bot\" \"$real_bot\" \"$brep\" \"$real_brep\" \"$SECONDS\" \
                \"`expr 7 - $count : '.*'`\" \"#\" $count \"$file\" \"$object\"
 
     done
@@ -558,15 +593,18 @@ $ECHO "%s" "-=-"
 elp=`echo $begin $end | awk '{print $2-$1}'`
 nmg_fail=`echo $nmg_count $count | awk '{print $2-$1}'`
 bot_fail=`echo $bot_count $count | awk '{print $2-$1}'`
+brep_fail=`echo $brep_count $count | awk '{print $2-$1}'`
 if test $count -eq 0 ; then
     nmg_percent=0
     bot_percent=0
+    brep_percent=0
     rate=0
     avg=0
 else
     nmg_percent=`echo $nmg_count $count | awk '{print ($1/$2)*100.0}'`
     bot_percent=`echo $bot_count $count | awk '{print ($1/$2)*100.0}'`
-    rate=`echo $nmg_count $bot_count $count | awk '{print ($1+$2)/($3+$3)*100.0}'`
+    brep_percent=`echo $brep_count $count | awk '{print ($1/$2)*100.0}'`
+    rate=`echo $nmg_count $bot_count $brep_count $count | awk '{print ($1+$2+$3)/($4+$4+$4)*100.0}'`
     avg=`echo $elp $count | awk '{print $1/$2}'`
 fi
 
@@ -578,9 +616,10 @@ $ECHO "Summary:"
 $ECHO
 $ECHO "   Files:  %.0f" $files
 $ECHO " Objects:  %.0f" $count
-$ECHO "Failures:  %.0f NMG, %.0f BoT" $nmg_fail $bot_fail
+$ECHO "Failures:  %.0f NMG, %.0f BoT, %.0f Brep" $nmg_fail $bot_fail $brep_fail
 $ECHO "NMG conversion:  %.1f%%  (%.0f of %.0f objects)" $nmg_percent $nmg_count $count
 $ECHO "BoT conversion:  %.1f%%  (%.0f of %.0f objects)" $bot_percent $bot_count $count
+$ECHO "Brep conversion:  %.1f%%  (%.0f of %.0f objects)" $brep_percent $brep_count $count
 $ECHO "  Success rate:  %.1f%%" $rate
 $ECHO
 $ECHO "Elapsed:  %.0f seconds" $elp
