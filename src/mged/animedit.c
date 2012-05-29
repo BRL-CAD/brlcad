@@ -2015,8 +2015,18 @@ hold_point_location(fastf_t *loc, struct hold_point *hp)
 		MAT4X3PNT(loc, mat, hp->point);
 		return 1;
 	    }
-
-	    if (rt_db_get_internal(&intern, hp->path.fp_names[hp->path.fp_len-1], dbip, NULL, &rt_uniresource) < 0)
+        /* there is a bug where f_jhold is passing a hold struct
+         * with NULL fields when using MGED's "joint holds" command.
+         * In particular, hp->path.fp_names can end up NULL,
+         * this prints an error message instead of crashing MGED.
+         */
+        if (!hp->path.fp_names) {
+        Tcl_AppendResult(INTERP, "hold_eval: null pointer!  ",
+                hp->path.fp_names,
+                " not found!\n", (char *)NULL);
+        return 0;
+        }
+	    if (rt_db_get_internal(&intern, hp->path.fp_names[hp->path.fp_maxlen-1], dbip, NULL, &rt_uniresource) < 0)
 		return 0;
 
 	    RT_CK_DB_INTERNAL(&intern);
