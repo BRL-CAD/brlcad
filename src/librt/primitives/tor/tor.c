@@ -1681,6 +1681,19 @@ rt_tor_volume(fastf_t *vol, const struct rt_db_internal *ip)
 }
 
 
+/**
+ * R T _ T O R _ C E N T R O I D
+ *
+ */
+void
+rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
+    VMOVE(*cent,tip->v);
+}
+
+
 /*
  * Local Variables:
  * mode: C
