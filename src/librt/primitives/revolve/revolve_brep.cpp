@@ -280,7 +280,6 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 	VADD2(end_plane_origin, end_plane_origin, &R[12]);
 	VEC3X3MAT(end_plane_x_dir, plane_x_dir, R);
 	VEC3X3MAT(end_plane_y_dir, plane_y_dir, R);
-	const ON_Plane* end_sketch_plane = new ON_Plane(ON_3dVector(end_plane_origin), ON_3dVector(end_plane_x_dir), ON_3dVector(end_plane_y_dir));
 
 	// Create the start and end surface with rt_sketch_brep()
 	struct rt_sketch_internal sketch;
