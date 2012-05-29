@@ -106,8 +106,8 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
     /* Validate that |A|, |B|, and |C| are nearly equal */
-    if (fabs(magsq_a - magsq_b) > 0.0001
-	|| fabs(magsq_a - magsq_c) > 0.0001) {
+    if (!EQUAL(magsq_a, magsq_b)
+	|| !EQUAL(magsq_a, magsq_c)) {
 	return 1;		/* ELL, not SPH */
     }
 
