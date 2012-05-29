@@ -79,7 +79,6 @@ int f_jreject(int argc, const char *argv[]);
 int f_jsave(int argc, const char *argv[]);
 int f_jhold(int argc, const char *argv[]);
 int f_jsolve(int argc, char *argv[]);
-int f_jtest(int argc, const char *argv[]);
 
 static struct funtab joint_tab[] = {
     {"joint ", "", "Joint command table",
@@ -108,8 +107,6 @@ static struct funtab joint_tab[] = {
      f_jsave, 2, 2, FALSE},
     {"solve", "constraint", "Solve a or all constraints",
      f_jsolve, 1, FUNTAB_UNLIMITED, FALSE},
-    {"test", "file_name", "test use of bu_lex routine.",
-     f_jtest, 2, 2, FALSE},
     {"unload", "", "Unload any joint/constrants that have been loaded",
      f_junload, 1, 1, FALSE},
     {NULL, NULL, NULL,
