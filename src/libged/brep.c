@@ -127,6 +127,8 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	ret = brep_conversion(&intern, brep);
 	if (ret == -1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s doesn't have a brep-conversion function yet.", solid_name);
+	} else if (*brep == NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "%s cannot be converted to brep correctly.", solid_name);
 	} else {
 	    ret = mk_brep(gedp->ged_wdbp, bname, *brep);
 	    if (ret == 0) {
