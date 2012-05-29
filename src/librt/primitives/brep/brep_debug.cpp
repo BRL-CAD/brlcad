@@ -1757,7 +1757,7 @@ brep_conversion(struct rt_db_internal* intern, ON_Brep** brep)
     *brep = ON_Brep::New();
     struct bn_tol tol;
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = SMALL_FASTF;
     tol.para = 1.0 - tol.perp;

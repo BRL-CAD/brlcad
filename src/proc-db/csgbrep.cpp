@@ -89,7 +89,7 @@ main(int argc, char** argv)
 
     bn_tol tol;
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = SMALL_FASTF;
     tol.para = 1.0 - tol.perp;
@@ -500,6 +500,8 @@ main(int argc, char** argv)
     revolve.magic = RT_REVOLVE_INTERNAL_MAGIC;
     VSET(revolve.v3d, -2000.0, 0.0, 0.0);
     VSET(revolve.axis3d, 0.0, 1.0, 0.0);
+    VSET(revolve.r, 100.0, 0.0, 100.0);
+    revolve.ang = 1.0;
     BU_VLS_INIT(&revolve.sketch_name);
     bu_vls_strcat(&revolve.sketch_name, "sketch");
     revolve.skt = &skt;
