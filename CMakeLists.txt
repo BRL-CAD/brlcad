@@ -494,6 +494,24 @@ if(_orig_lang)
 endif(_orig_lang)
 
 #---------------------------------------------------------------------
+# Package creation with CMake depends on the value of umask - if permissions
+# are such that temporary files are created without permissions needed for
+# generated packages, the resulting packages may behave badly when installed.
+# In particular, RPM packages may improperly reset permissions on core
+# directories such as /usr.
+IF(NOT WIN32)
+  exec_program(umask OUTPUT_VARIABLE umask_curr)
+  string(STRIP "${umask_curr}" umask_curr)
+  if (NOT "${umask_curr}" MATCHES "0+22")
+    message(" ")
+    message(WARNING "umask is set to ${umask_curr} - this setting is not recommended if one of the goals of this build is to generate packages. Use 'umask 022' for improved package behavior.")
+    if(SLEEP_EXEC)
+      execute_process(COMMAND ${SLEEP_EXEC} 1)
+    endif(SLEEP_EXEC)
+  endif (NOT "${umask_curr}" MATCHES "0+22")
+ENDIF(NOT WIN32)
+
+#---------------------------------------------------------------------
 # Unfortunately, CMake doesn't give you variables with current day,
 # month, etc.  There are several possible approaches to this, but most
 # (e.g. the date command) are not cross platform. We build a small C
@@ -1996,6 +2014,17 @@ if(NOT BRLCAD_IS_SUBBUILD)
     find_program(RPMBUILD_EXEC rpmbuild)
     mark_as_advanced(RPMBUILD_EXEC)
     if(RPMBUILD_EXEC)
+      # Since RPM packages present a particular problem with bad umask
+      # settings and RPM package building is enabled, raise the issue again
+      # with a longer wait time.
+      if (NOT "${umask_curr}" MATCHES "0+22")
+	message(" ")
+	message(WARNING "umask is set to ${umask_curr} and RPM package building is enabled - this is not a 'standard' umask setting for BRL-CAD RPM packages.  Double check that these umask permissions will have the desired results when installed - RPM packages can impact permissions on system directories such as /usr\nIf the umask settings need to be changed, it is recommended that the build directory be cleared and cmake re-run after the umask setting has been changed.")
+	if(SLEEP_EXEC)
+	  execute_process(COMMAND ${SLEEP_EXEC} 5)
+	endif(SLEEP_EXEC)
+      endif (NOT "${umask_curr}" MATCHES "0+22")
+
       set(CPACK_GENERATOR ${CPACK_GENERATOR} RPM)
       set(CPACK_RPM_PACKAGE_LICENSE "LGPL 2.1")
       set(CPACK_RPM_PACKAGE_GROUP "Applications/Engineering")
