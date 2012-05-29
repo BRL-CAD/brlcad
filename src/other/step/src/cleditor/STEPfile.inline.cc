@@ -255,44 +255,48 @@ void STEPfile::SetFileIdIncrement() {
     }
 }
 
-char * STEPfile::schemaName( char * schName )
-/*
+/**
  * Returns the schema name from the file schema header section (or the 1st
  * one if more than one exists).  Copies this value into schName.  If there
  * is no header section or no value for file schema, NULL is returned and
  * schName is unset.
  */
-{
+std::string STEPfile::schemaName() {
     SdaiFile_schema * fs;
-    std::string tmp;
+    std::string schName;
     STEPnode * n;
 
     if( _headerInstances == NULL ) {
-        return NULL;
+        return schName;
     }
     fs = ( SdaiFile_schema * )_headerInstances->GetApplication_instance( "File_Schema" );
     if( fs == ENTITY_NULL ) {
-        return NULL;
+        return schName;
     }
 
     n = ( STEPnode * )fs->schema_identifiers_()->GetHead();
     // (take the first one)
     if( n == NULL ) {
-        return NULL;
+        return schName;
     }
-    n->STEPwrite( tmp );
-    if( *tmp.c_str() == '\0' || *tmp.c_str() == '$' ) {
-        return NULL;
+    n->STEPwrite( schName );
+    if( schName.empty() || schName[0] == '$' ) {
+        schName.clear();
+        return schName;
+    } else if( schName[0] == '\0' ) {
+        //probably never - it seems that putting null in std::string takes effort
+        _error.AppendToUserMsg( "In STEPfile::schemaName: schName contains \\0 - it should be empty." );
+        _error.GreaterSeverity( SEVERITY_WARNING );
+        schName.clear();
+        return schName;
     }
-    // tmp returns the string we want plus a beginning and ending
-    // quote mark (').  We remove these below.
-    strncpy( schName, tmp.c_str() + 1, BUFSIZ - 1 );
-    // "+1" to remove beginning '.
-    if( *( schName + strlen( schName ) - 1 ) == '\'' ) {
-        // Remove trailing '.  This condition checks that it wasn't removed
-        // already.  That may have happend if strncpy had truncated schName
-        // (it were >= BUFSIZ).
-        *( schName + strlen( schName ) - 1 ) = '\0';
+    if( schName[ schName.length() - 1 ] == '\'' ) {
+        schName = schName.substr( 1, schName.length() - 2 );
+    } else {
+        _error.AppendToUserMsg( "In STEPfile::schemaName: schName was truncated." );
+        _error.GreaterSeverity( SEVERITY_WARNING );
+
+        schName = schName.substr( 1, schName.length() - 1 );
     }
     return schName;
 }

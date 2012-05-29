@@ -765,8 +765,7 @@ SDAI_Application_instance * STEPfile::CreateInstance( istream & in, ostream & ou
     std::string objnm;
 
     char c;
-    char schnm[BUFSIZ];
-    schnm[0] = '\0';
+    std::string schnm;
 
     int fileid = -1;
     SDAI_Application_instance_ptr * scopelist = 0;
@@ -845,8 +844,8 @@ SDAI_Application_instance * STEPfile::CreateInstance( istream & in, ostream & ou
                 << endl;
             return ENTITY_NULL;
         } else {
-            schemaName( schnm );
-            obj = reg().ObjCreate( objnm.c_str(), schnm );
+            schnm = schemaName();
+            obj = reg().ObjCreate( objnm.c_str(), schnm.c_str() );
             if( obj == ENTITY_NULL ) {
                 // This will be the case if objnm does not exist in the reg.
                 result.UserMsg( "Unknown ENTITY type" );
@@ -992,8 +991,7 @@ SDAI_Application_instance * STEPfile::CreateSubSuperInstance( istream & in, int 
     SDAI_Application_instance * obj = ENTITY_NULL;
 
     char c;
-    char schnm[BUFSIZ];
-    schnm[0] = '\0';
+    std::string schnm;
 
     std::string buf; // used to hold the simple record that is read
     ErrorDescriptor err; // used to catch error msgs
@@ -1028,10 +1026,9 @@ SDAI_Application_instance * STEPfile::CreateSubSuperInstance( istream & in, int 
         }
     }
     entNmArr[enaIndex] = 0;
-    schemaName( schnm );
+    schnm = schemaName();
 
-    obj = new STEPcomplex( &_reg, ( const std::string ** )entNmArr, fileid,
-                           schnm );
+    obj = new STEPcomplex( &_reg, ( const std::string ** )entNmArr, fileid, schnm.c_str() );
 
     if( obj->Error().severity() <= SEVERITY_WARNING ) {
         // If obj is not legal, record its error info and delete it:
@@ -1141,8 +1138,7 @@ SDAI_Application_instance * STEPfile::ReadInstance( istream & in, ostream & out,
     std::string tmpbuf;
     char errbuf[BUFSIZ];
     errbuf[0] = '\0';
-    char currSch[BUFSIZ];
-    currSch[0] = '\0';
+    std::string currSch;
     std::string objnm;
 
     char c;
@@ -1213,12 +1209,12 @@ SDAI_Application_instance * STEPfile::ReadInstance( istream & in, ostream & out,
         in.putback( c );
     }
 
-    schemaName( currSch );
+    currSch = schemaName();
 
     //check for subtype/supertype record
     if( c == '(' ) {
         // TODO
-        sev = obj->STEPread( fileid, idIncrNum, &instances(), in, currSch,
+        sev = obj->STEPread( fileid, idIncrNum, &instances(), in, currSch.c_str(),
                              useTechCor );
 
         ReadTokenSeparator( in, &cmtStr );
@@ -1265,7 +1261,7 @@ SDAI_Application_instance * STEPfile::ReadInstance( istream & in, ostream & out,
         // NOTE: this function is called for all FileTypes
         // (WORKING_SESSION included)
 
-        sev = obj->STEPread( fileid, idIncrNum, &instances(), in, currSch,
+        sev = obj->STEPread( fileid, idIncrNum, &instances(), in, currSch.c_str(),
                              useTechCor );
 
         ReadTokenSeparator( in, &cmtStr );
@@ -1571,28 +1567,22 @@ void STEPfile::WriteHeaderInstanceFileSchema( ostream & out ) {
 }
 
 void STEPfile::WriteData( ostream & out, int writeComments ) {
-    char currSch[BUFSIZ];
-    currSch[0] = '\0';
-
+    std::string currSch = schemaName();
     out << "DATA;\n";
 
-    schemaName( currSch );
     int n = instances().InstanceCount();
     for( int i = 0; i < n; ++i ) {
-        instances().GetMgrNode( i )->GetApplication_instance()->STEPwrite( out, currSch, writeComments );
+        instances().GetMgrNode( i )->GetApplication_instance()->STEPwrite( out, currSch.c_str(), writeComments );
     }
 
     out << "ENDSEC;\n";
 }
 
 void STEPfile::WriteValuePairsData( ostream & out, int writeComments, int mixedCase ) {
-    char currSch[BUFSIZ];
-    currSch[0] = '\0';
-
-    schemaName( currSch );
+    std::string currSch = schemaName();
     int n = instances().InstanceCount();
     for( int i = 0; i < n; ++i ) {
-        instances().GetMgrNode( i )->GetApplication_instance()->WriteValuePairs( out, currSch, writeComments, mixedCase );
+        instances().GetMgrNode( i )->GetApplication_instance()->WriteValuePairs( out, currSch.c_str(), writeComments, mixedCase );
     }
 }
 
@@ -1787,33 +1777,31 @@ Severity STEPfile::WriteWorkingFile( const char * filename, int clearError,
 }
 
 void STEPfile::WriteWorkingData( ostream & out, int writeComments ) {
-    char currSch[BUFSIZ];
-    currSch[0] = '\0';
-
-    schemaName( currSch );
+    std::string currSch = schemaName();
     out << "DATA;\n";
     int n = instances().InstanceCount();
+
     for( int i = 0; i < n; ++i ) {
         switch( instances().GetMgrNode( i )->CurrState() ) {
             case deleteSE:
                 out << wsDelete;
                 instances().GetMgrNode( i )->GetApplication_instance()->
-                STEPwrite( out, currSch, writeComments );
+                STEPwrite( out, currSch.c_str(), writeComments );
                 break;
             case completeSE:
                 out << wsSaveComplete;
                 instances().GetMgrNode( i )->GetApplication_instance()->
-                STEPwrite( out, currSch, writeComments );
+                STEPwrite( out, currSch.c_str(), writeComments );
                 break;
             case incompleteSE:
                 out << wsSaveIncomplete;
                 instances().GetMgrNode( i )->GetApplication_instance()->
-                STEPwrite( out, currSch, writeComments );
+                STEPwrite( out, currSch.c_str(), writeComments );
                 break;
             case newSE:
                 out << wsNew;
                 instances().GetMgrNode( i )->GetApplication_instance()->
-                STEPwrite( out, currSch, writeComments );
+                STEPwrite( out, currSch.c_str(), writeComments );
                 break;
             case noStateSE:
                 _error.AppendToUserMsg( "no state information for this node\n" );
