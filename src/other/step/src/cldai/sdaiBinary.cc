@@ -12,10 +12,6 @@
 #include <sstream>
 #include <sdai.h>
 
-extern Severity CheckRemainingInput( istream & in, ErrorDescriptor * err,
-                     const char * typeName, // used in error message
-                     const char * tokenList ); // e.g. ",)"
-
 SDAI_Binary  & SDAI_Binary::operator= ( const char * s ) {
     std::string::operator= ( s );
     return *this;

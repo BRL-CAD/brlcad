@@ -40,10 +40,6 @@ class EntityDescriptor;
 
 extern int SetErrOnNull( const char * attrValue, ErrorDescriptor * error );
 
-extern Severity CheckRemainingInput( istream & in, ErrorDescriptor * err,
-                     const char * typeName, // used in error message
-                     const char * tokenList ); // e.g. ",)"
-
 extern SDAI_Application_instance * ReadEntityRef( istream & in, ErrorDescriptor * err, const char * tokenList,
         InstMgr * instances, int addFileId );
 
