@@ -25,11 +25,8 @@
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "bu.h"
-
-#include "./vls_internals.h"
 
 /* Test against sprintf */
 int
@@ -75,7 +72,7 @@ main(int ac, char *av[])
     int p = 0;
     const char *word = "Lawyer";
 
-    printf("Testing bu_vls_vprintf...\n");
+    printf("Testing vls...\n");
 
     /* ======================================================== */
     /* TESTS EXPECTED TO PASS
@@ -83,7 +80,6 @@ main(int ac, char *av[])
      *   (see expected failures section below)
      */
     /* ======================================================== */
-
     /* various types */
     printf("An empty string (\"\"):\n");
     fails += test_vls("");

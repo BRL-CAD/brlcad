@@ -108,7 +108,7 @@ BRLCAD_ADDEXEC(test_progname test_progname.c libbu NO_INSTALL)
 BRLCAD_ADDEXEC(test_quote test_quote.c libbu NO_INSTALL)
 BRLCAD_ADDEXEC(test_sscanf test_sscanf.c libbu NO_INSTALL)
 BRLCAD_ADDEXEC(test_timer test_timer.c libbu NO_INSTALL)
-BRLCAD_ADDEXEC(test_vls test_vls.c libbu NO_INSTALL)
+BRLCAD_ADDEXEC(test_vls_vprintf test_vls_vprintf.c libbu NO_INSTALL)
 BRLCAD_ADDEXEC(test_bitv test_bitv.c libbu NO_INSTALL)
 
 set(bu_MAN3

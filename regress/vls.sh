@@ -43,9 +43,9 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-TEST=vls_vprintf
+TEST=vls
 TESTSCRIPT=$TEST.sh
-TESTEXE=test_vls_vprintf
+TESTEXE=test_vls
 TESTLOG=${TEST}_test.log
 TESTCMD="`ensearch $TESTEXE`"
 if test ! -f "$TESTCMD" ; then

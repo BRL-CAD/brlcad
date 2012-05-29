@@ -10,7 +10,7 @@ noinst_PROGRAMS = \
 	test_progname \
 	test_quote \
 	test_timer \
-	test_vls \
+	test_vls_vprintf \
 	test_sscanf \
 	test_bitv
 
@@ -142,7 +142,7 @@ test_quote_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
-test_vls_SOURCES = test_vls.c
+test_vls_vprintf_SOURCES = test_vls_vprintf.c
 test_vls_LDADD = \
 	libbu.la \
 	${BU_LIBS}
