@@ -1797,6 +1797,82 @@ rt_ell_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 
+/**
+ * E L L _ O B L Used to calculate surface area for Oblate spheroids
+ */
+HIDDEN void
+ell_obl(fastf_t a, fastf_t c, fastf_t *ell_sfa)
+{
+    fastf_t e, e2, a2, c2;
+    a2 = a * a;
+    c2 = c * c;
+    e2 = 1.0 - (c2 / a2);
+    e = sqrt(e2);
+    *ell_sfa = (2.0 * M_PI * a2) + (M_PI * (c2 / e) * log((1.0 + e) / (1.0 - e)));
+}
+
+
+/**
+ * E L L _ P R O Used to calculate surface area for Prolate spheroids
+ */
+HIDDEN void
+ell_pro(fastf_t a, fastf_t c, fastf_t *ell_sfa)
+{
+    fastf_t e, e2, a2, c2;
+    a2 = a * a;
+    c2 = c * c;
+    e2 = 1.0 - (a2 / c2);
+    e = sqrt(e2);
+    *ell_sfa = (2.0 * M_PI * a2) + (2.0 * M_PI * ((a * c) / e) * asin(e));
+}
+
+
+/*
+* R T _ E L L _ S F A
+*
+* Used to calculate and return surface area of an ellipsoid
+*/
+int
+rt_ell_sfa(struct rt_db_internal *ip, fastf_t *ell_sfa)
+{
+    fastf_t mag_a, mag_b, mag_c;
+
+    struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+
+    mag_a = MAGNITUDE(eip->a);
+    mag_b = MAGNITUDE(eip->b);
+    mag_c = MAGNITUDE(eip->c);
+
+    if (!(fabs(mag_a - mag_c) > 0.0001)) {
+	if (!(fabs(mag_a - mag_b) > 0.0001)) {
+	    *ell_sfa = 4.0 * M_PI * mag_a * mag_a; /* Sphere */
+	} else if (mag_b < mag_a) {
+	    ell_obl(mag_a, mag_b, ell_sfa); /* Oblate with A=C, and A<B */
+	} else if (mag_b > mag_a) {
+	    ell_pro(mag_a, mag_b, ell_sfa); /* Prolate with A=C, and A>B */
+	}
+    } else if (!(fabs(mag_a - mag_b) > 0.0001)) {
+	if (mag_c < mag_a) {
+	    ell_obl(mag_a, mag_c, ell_sfa); /* Oblate with A=B, and A>C */
+	} else if (mag_c > mag_a) {
+	    ell_pro(mag_a, mag_c, ell_sfa); /* Prolate with A=B, and A<C */
+	}
+    } else if (!(fabs(mag_b - mag_c) > 0.0001)) {
+	if (mag_a < mag_b) {
+	    ell_obl(mag_b, mag_a, ell_sfa); /* Oblate with B=C, and B>A */
+	} else if (mag_a > mag_b) {
+	    ell_pro(mag_b, mag_a, ell_sfa); /* Prolate with B=C, and B<A */
+	}
+    } else {
+	return 1; /* a != b != c Triaxial Ellipsoid, function can't solve */
+    }
+
+    return 0; /* OK */
+
+}
+
+
 /** @} */
 /*
  * Local Variables:
