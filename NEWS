@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2012-04-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* fixed bug where small raytraces were being rotated - Erik Greenwald
 * ios-icon.sh script added for generating IOS icons - Erik Greenwald
 * support for implicit to boundary representation geometry conversion
 	- Cliff Yapp, Wu Jianbang, Sean Morrison
