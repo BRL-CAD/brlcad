@@ -93,7 +93,7 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     VADD2(eto_endvertex, eip->eto_V, eip->eto_N);
     ON_3dPoint eto_vertex_pt = ON_3dPoint(eip->eto_V);
     ON_3dPoint eto_endvertex_pt = ON_3dPoint(eto_endvertex);
-    ON_Line revaxis = ON_Line(eto_vertex_pt, eto_endvertex);
+    ON_Line revaxis = ON_Line(eto_vertex_pt, eto_endvertex_pt);
     ON_RevSurface* eto_surf = ON_RevSurface::New();
     eto_surf->m_curve = &ellcurve;
     eto_surf->m_axis = revaxis;
