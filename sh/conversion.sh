@@ -527,12 +527,12 @@ EOF
 	fi
 
 	# start the limit timer, same as above.
-	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep brep | grep "${obj}.brep2" | awk '{print $2}'`" != "x" && `touch "./${obj}.brep2.extl"` && kill -9 `ps auxwww | grep "$work" | grep brep | grep "${obj}.brep2" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'`" != "x" && `touch "./${obj}.brep.extl"` && kill -9 `ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
         spid=$!
 
 	# convert Brep
 	brep=fail
-	cmd="$GED -c "$work" brep \"${obj}\" \"${obj}.brep2\""
+	cmd="$GED -c "$work" brep \"${obj}\" \"${obj}.brep\""
 	$VERBOSE_ECHO "\$ $cmd"
 	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
 
@@ -550,13 +550,13 @@ EOF
 	real_brep="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
 	# verify Brep
-	found=`$SGED -c "$work" search . -name \"${obj}.brep2\" 2>&1 | grep -v Using`
-	if test "x$found" = "x${object}.brep2" ; then
+	found=`$SGED -c "$work" search . -name \"${obj}.brep\" 2>&1 | grep -v Using`
+	if test "x$found" = "x${object}.brep" ; then
 	    brep=pass
 	    brep_count=`expr $brep_count + 1`
 	fi
-	if [ -e "./${obj}.brep2.extl" ] ; then
-            `rm "./${obj}.brep2.extl"`
+	if [ -e "./${obj}.brep.extl" ] ; then
+            `rm "./${obj}.brep.extl"`
 	    brep=extl
 	fi
 
