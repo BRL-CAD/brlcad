@@ -185,8 +185,7 @@ rt_ell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
 
     /* Try a shortcut - if this is a sphere, the calculation simpifies */
     /* Check whether |A|, |B|, and |C| are nearly equal */
-    if (!(fabs(magsq_a - magsq_b) > 0.0001
-		|| fabs(magsq_a - magsq_c) > 0.0001)) {
+    if (EQUAL(magsq_a, magsq_b) && EQUAL(magsq_a, magsq_c)) {
 	fastf_t sph_rad = sqrt(magsq_a);
 	(*min)[X] = eip->v[X] - sph_rad;
 	(*max)[X] = eip->v[X] + sph_rad;
@@ -1844,21 +1843,21 @@ rt_ell_sfa(struct rt_db_internal *ip, fastf_t *ell_sfa)
     mag_b = MAGNITUDE(eip->b);
     mag_c = MAGNITUDE(eip->c);
 
-    if (!(fabs(mag_a - mag_c) > 0.0001)) {
-	if (!(fabs(mag_a - mag_b) > 0.0001)) {
+    if (EQUAL(mag_a, mag_c)) {
+	if (EQUAL(mag_a, mag_b)) {
 	    *ell_sfa = 4.0 * M_PI * mag_a * mag_a; /* Sphere */
 	} else if (mag_b < mag_a) {
 	    ell_obl(mag_a, mag_b, ell_sfa); /* Oblate with A=C, and A<B */
 	} else if (mag_b > mag_a) {
 	    ell_pro(mag_a, mag_b, ell_sfa); /* Prolate with A=C, and A>B */
 	}
-    } else if (!(fabs(mag_a - mag_b) > 0.0001)) {
+    } else if (EQUAL(mag_a, mag_b)) {
 	if (mag_c < mag_a) {
 	    ell_obl(mag_a, mag_c, ell_sfa); /* Oblate with A=B, and A>C */
 	} else if (mag_c > mag_a) {
 	    ell_pro(mag_a, mag_c, ell_sfa); /* Prolate with A=B, and A<C */
 	}
-    } else if (!(fabs(mag_b - mag_c) > 0.0001)) {
+    } else if (EQUAL(mag_b, mag_c)) {
 	if (mag_a < mag_b) {
 	    ell_obl(mag_b, mag_a, ell_sfa); /* Oblate with B=C, and B>A */
 	} else if (mag_a > mag_b) {
