@@ -70,7 +70,7 @@ bu_fgets(char *s, int size, FILE *stream)
 	    break;
 	}
 
-	/* chech for CR */
+	/* check for CR */
 	if (c == '\r') {
 
 	    /* check for CR/LF combination */

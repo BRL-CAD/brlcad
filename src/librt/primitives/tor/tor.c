@@ -1668,6 +1668,19 @@ rt_tor_surface_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
+/**
+ * R T _ T O R _ V O L U M E
+ *
+ */
+void
+rt_tor_volume(fastf_t *vol, const struct rt_db_internal *ip)
+{
+    struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
+    *vol = 2.0 * M_PI * M_PI * (tip->r_h * tip->r_h) * tip->r_a;
+}
+
+
 /*
  * Local Variables:
  * mode: C
