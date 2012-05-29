@@ -316,7 +316,7 @@ view_pixel(struct application *ap)
 
 		if (bif != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
-		    icv_image_save_writepixel(bif, ap->a_y, ap->a_x, p);
+		    icv_image_save_writepixel(bif, ap->a_x, ap->a_y, p);
 		    bu_semaphore_release(BU_SEM_SYSCALL);
 		} else if (outfp != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
