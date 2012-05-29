@@ -7,6 +7,7 @@ set(sh_SCRIPTS
   cray.sh
   facetall.sh
   indent.sh
+  ios-icons.sh
   news2tracker.sh
   pixinfo.sh
   pixread.sh
