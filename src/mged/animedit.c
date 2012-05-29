@@ -1843,11 +1843,7 @@ f_jload(int argc, const char *argv[])
     if (!no_mesh) (void) f_jmesh(0, 0);
     return CMD_OK;
 }
-int
-f_jtest(int UNUSED(argc), const char *UNUSED(argv[]))
-{
-    return CMD_OK;
-}
+
 int
 f_jsave(int argc, const char *argv[])
 {
