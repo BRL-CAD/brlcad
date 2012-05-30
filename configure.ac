@@ -4156,6 +4156,7 @@ AC_CONFIG_FILES([
 	src/conv/Makefile
 	src/conv/iges/Makefile
 	src/conv/intaval/Makefile
+	src/conv/raw/Makefile
 	src/conv/vdeck/Makefile
 	src/external/Makefile
 	src/external/Cubit/Makefile
