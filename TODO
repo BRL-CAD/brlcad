@@ -80,6 +80,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* migrate the mged 'joint' command to libged
+
 * add support to rt tools and gtools for specifying az/el in radians
   or degrees, propagate throughout mged commands that take angles too.
   probably best implemented as a general libbn string to val function.

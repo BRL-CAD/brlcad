@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged 'joint' hold command isn't working. looks like the fp_names
+  book-keeping is fuxored or the db_lookup is returning NULL (or isn't
+  yet performed).
+
 * idents command is reporting a bogus region count in the region
   ouptut table listing (first column).
 
