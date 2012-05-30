@@ -106,7 +106,7 @@ YYSTYPE yylval;
     /* way then with the 'help' of yacc. */
     /* Set it to -1 to indicate that tags cannot be defined, */
     /* only used (outside of formal parameter list, i.e. for */
-    /* return types and local variables).  Hey, as long as */
+    /* return types).  Hey, as long as */
     /* there's a gross hack sitting around, we might as well */
     /* milk it for all it's worth!  -snc */
 
@@ -1669,7 +1669,17 @@ local_body(A) ::= local_variable(B) local_body.
     A = B;
 }
 
-local_decl ::= TOK_LOCAL local_body TOK_END_LOCAL semicolon.
+local_decl ::= TOK_LOCAL allow_generic_types local_body TOK_END_LOCAL semicolon disallow_generic_types.
+
+allow_generic_types ::= /* subroutine */.
+{
+    tag_count = 0; /* don't signal an error if we find a generic_type */
+}
+
+disallow_generic_types ::= /* subroutine */.
+{
+    tag_count = -1; /* signal an error if we find a generic_type */
+}
 
 defined_type(A) ::= TOK_IDENTIFIER(B).
 {
