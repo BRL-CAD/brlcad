@@ -149,7 +149,7 @@ test_quote_LDADD = \
 	${BU_LIBS}
 
 test_vls_vprintf_SOURCES = test_vls_vprintf.c
-test_vls_LDADD = \
+test_vls_vprintf_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
