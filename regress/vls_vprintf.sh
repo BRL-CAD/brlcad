@@ -1,5 +1,5 @@
 #!/bin/sh
-#                          V L S . S H
+#                    V L S _ V P R I N T F . S H
 # BRL-CAD
 #
 # Copyright (c) 2010-2012 United States Government as represented by
