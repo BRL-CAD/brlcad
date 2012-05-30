@@ -160,7 +160,7 @@ test_sscanf_LDADD = \
 
 noinst_HEADERS = \
 	rb_internals.h \
-	vls_internals
+	vls_internals.h
 
 man_MANS = \
 	htond.3 \
