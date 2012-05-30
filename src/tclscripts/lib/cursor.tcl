@@ -49,7 +49,10 @@ proc SetWaitCursor {_w} {
     }
 
     $_w configure -cursor watch
-    ::update idletasks
+
+    # This is broken on Windows
+    #::update idletasks
+    ::update
 }
 
 # PROCEDURE: SetNormalCursor
