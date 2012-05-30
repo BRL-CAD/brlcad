@@ -153,14 +153,19 @@ compareOrigTypes( Type a, Type b ) {
 const char *
 utype_member( const Linked_List list, const Type check, int rename ) {
     static char r [BUFSIZ];
+    bool checkIsEntity = TYPEis_entity( check );
 
-    LISTdo( list, t, Type )
-    strncpy( r, TYPEget_utype( t ), BUFSIZ );
-    if( strcmp( r, TYPEget_utype( check ) ) == 0 ) {
-        return r;
-    }
-    if( rename && compareOrigTypes( check, t ) ) {
-        return r;
+    LISTdo( list, t, Type ) {
+        if( TYPEis_entity( t ) && checkIsEntity ) {
+            return "SDAI_Application_instance_ptr";
+        }
+        /* string returned by TYPEget_utype isn't necessarily static so we
+         * need to copy between calls
+         * */
+        strncpy( r, TYPEget_ctype( t ), BUFSIZ );
+        if( strcmp( r, TYPEget_ctype( check ) ) == 0 || ( rename && compareOrigTypes( check, t ) ) ) {
+            return r;
+        }
     }
     LISTod;
     return 0;
