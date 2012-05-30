@@ -35,7 +35,7 @@
 int
 test_vls(const char *fmt, ...)
 {
-    int status        = 0;
+    int status        = 0; /* okay */
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     char output[80]   = {0};
     char buffer[1024] = {0};
@@ -66,6 +66,44 @@ test_vls(const char *fmt, ...)
 }
 
 int
+check_format_chars()
+{
+  int status = 0; /* assume okay */
+  int i, flags;
+  vflags_t f;
+
+  for (i = 0; i < 255; ++i) {
+    unsigned char c = (unsigned char)i;
+    if (!isprint(c))
+      continue;
+    flags = format_part_status(c);
+    if (flags & VP_VALID) {
+      /* we need a valid part handler */
+      int vp_part = flags & VP_PARTS;
+
+      /* for the moment we only have one such handler */
+      if (vp_part ^ VP_LENGTH_MOD) /* same as !(vp_part & VP_LENGTH_MOD) */
+        continue;
+
+      if (!handle_format_part(vp_part, &f, c, VP_NOPRINT)) {
+        /* tell user */
+        printf("Unhandled valid char '%c'                                    [FAIL]\n", c);
+        status = 1;
+      }
+    } else if (flags & VP_OBSOLETE) {
+      /* we need an obsolete part handler */
+      if (!handle_obsolete_format_char(c, VP_NOPRINT)) {
+        /* tell user */
+        printf("Unhandled obsolete char '%c'                                 [FAIL]\n", c);
+        status = 1;
+      }
+    }
+  }
+
+  return status;
+}
+
+int
 main(int ac, char *av[])
 {
     int fails    = 0; /* track unexpected failures */
@@ -83,6 +121,14 @@ main(int ac, char *av[])
      *   (see expected failures section below)
      */
     /* ======================================================== */
+
+    /* first check that we handle all known format chars */
+    printf("\n");
+    printf("Testing format char handlers...\n\n");
+    fails += check_format_chars();
+
+    printf("\n");
+    printf("Testing format conversions ...\n\n");
 
     /* various types */
     printf("An empty string (\"\"):\n");
