@@ -5,6 +5,7 @@ noinst_LTLIBRARIES = libbu_nil.la
 noinst_PROGRAMS = \
 	test_basename \
 	test_booleanize \
+	test_ctype \
 	test_dirname \
 	test_escape \
 	test_progname \
@@ -109,6 +110,11 @@ test_booleanize_LDADD = \
 
 test_bitv_SOURCES = test_bitv.c
 test_bitv_LDADD = \
+	libbu.la \
+	${BU_LIBS}
+
+test_ctype_SOURCES = test_ctype.c
+test_ctype_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
