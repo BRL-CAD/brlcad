@@ -471,11 +471,6 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	    } else {
 		/* Anything else must be the end of the fmt specifier
 		   (i.e., the conversion specifier)*/
-#if defined(USE_NEW_VP_FUNCS)
-		if (format_part_status(c) == (VP_OBSOLETE | VP_CONVERSION_SPEC)) {
-		    handle_obsolete_format_char(c, VP_PRINT);
-		}
-#endif
 		break;
 	    }
 	}
@@ -809,7 +804,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		if (format_part_status(c) & VP_UNKNOWN) {
 		    fprintf(stderr, "ERROR: Unknown format character '%c'.\n", c);
 		} else if (format_part_status(c) & VP_OBSOLETE) {
-		    fprintf(stderr, "ERROR: Obsolete format character '%c'.\n", c);
+		    handle_obsolete_format_char(c, VP_PRINT);
 		} else {
 		    fprintf(stderr, "Unknown format character '%c'.\n", c);
 		    bu_bomb("ERROR: Shouldn't get here.\n");
