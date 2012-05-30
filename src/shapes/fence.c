@@ -972,7 +972,6 @@ int generateMesh(struct rt_wdb *fp, char *meshname, fastf_t *startposition, fast
     point_t tempposition;
     vect_t incrementvector;
 
-    struct wmember *matrixextractor;
     struct wmember meshmembers;
     struct wmember meshregionmembers;
 
@@ -1010,37 +1009,39 @@ int generateMesh(struct rt_wdb *fp, char *meshname, fastf_t *startposition, fast
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Mesh will require [%d] basic mesh wire-pairs to reach width [%f]\n", count2, width);
 
 	for (count=0, step=0.0; step <= width; step += (double) MAGNITUDE(incrementvector), count++) {
+	    struct wmember *wiremember;
 
-	    matrixextractor=mk_addmember(wireName, &meshmembers.l, NULL, WMOP_UNION);
-	    if (matrixextractor != NULL) {
-		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building mesh combination: wire [%d] of [%d]\n", count+1, count2);
-	    } else {
+	    wiremember=mk_addmember(wireName, &meshmembers.l, NULL, WMOP_UNION);
+	    if (wiremember == NULL) {
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh:mk_addmember wireName[%s], count2[%d] FAILED\n", wireName, count);
 		errors++;
+		continue;
 	    }
-	    matrixextractor->wm_mat[3]  = dx;
-	    matrixextractor->wm_mat[7]  = dy;
-	    matrixextractor->wm_mat[11] = dz;
+	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building mesh combination: wire [%d] of [%d]\n", count+1, count2);
 
-	    matrixextractor=mk_addmember(wireName, &meshregionmembers.l, NULL, WMOP_UNION);
-	    if (matrixextractor != NULL) {
-		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building mesh region: wire [%d] of [%d]\n", count+1, count2);
-	    } else {
+	    wiremember->wm_mat[3]  = dx;
+	    wiremember->wm_mat[7]  = dy;
+	    wiremember->wm_mat[11] = dz;
+
+	    wiremember=mk_addmember(wireName, &meshregionmembers.l, NULL, WMOP_UNION);
+	    if (wiremember == NULL) {
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh:mk_addmember wireName[%s], count2[%d] FAILED (region)\n", wireName, count);
 		errors++;
-		return errors;
+		continue;
 	    }
-	    matrixextractor->wm_mat[3]  = dx;
-	    matrixextractor->wm_mat[7]  = dy;
-	    matrixextractor->wm_mat[11] = dz;
+	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building mesh region: wire [%d] of [%d]\n", count+1, count2);
+
+	    wiremember->wm_mat[3]  = dx;
+	    wiremember->wm_mat[7]  = dy;
+	    wiremember->wm_mat[11] = dz;
 
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh: dx[%f], dy[%f], dz[%f]\n", dx, dy, dz);
 
 	    dx+=incrementvector[0];
 	    dy+=incrementvector[1];
 	    dz+=incrementvector[2];
-	    if (debug) printMatrix(DEFAULT_DEBUG_OUTPUT, "generateMesh: matrixextractor->wm_mat", matrixextractor->wm_mat);
-	    else if (verbose) printMatrix(DEFAULT_VERBOSE_OUTPUT, "Translation matrix for mesh wire-pairs", matrixextractor->wm_mat);
+	    if (debug) printMatrix(DEFAULT_DEBUG_OUTPUT, "generateMesh: wiremember->wm_mat", wiremember->wm_mat);
+	    else if (verbose) printMatrix(DEFAULT_VERBOSE_OUTPUT, "Translation matrix for mesh wire-pairs", wiremember->wm_mat);
 	}
 
 	if (mk_lcomb (fp, meshname, &meshmembers, 0, NULL, NULL, NULL, 0)==0) {
@@ -1105,9 +1106,6 @@ int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *
     struct wmember wiremembers;
     struct wmember basicmeshregionmembers;
     struct wmember wireregionmembers;
-    struct wmember *matrixextractor;
-
-    matrixextractor = (struct wmember *) bu_calloc(1, sizeof(struct wmember), "wmember");
 
     BU_LIST_INIT(&basicmeshmembers.l);
     BU_LIST_INIT(&wiremembers.l);
@@ -1166,37 +1164,38 @@ int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *
     if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire will require [%d] basic mesh pieces to reach height [%f]\n", count2, height);
 
     for (count=0, dx=0, dy=0, dz=0, step=0.0; step <= height; step += (double) MAGNITUDE(incrementvector), count++) {
-
-	matrixextractor=mk_addmember(segmentName, &wiremembers.l, NULL, WMOP_UNION);
-	if (matrixextractor != NULL) {
-	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building base wire combination: piece [%d] of [%d]\n", count+1, count2);
-	} else {
+	struct wmember *wiremember;
+	wiremember=mk_addmember(segmentName, &wiremembers.l, NULL, WMOP_UNION);
+	if (wiremember == NULL) {
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:mk_addmember wirename[%s], count2[%d] FAILED\n", wirename, count);
 	    errors++;
-	    return errors;
+	    continue;
 	}
-	matrixextractor->wm_mat[3]  = dx;
-	matrixextractor->wm_mat[7]  = dy;
-	matrixextractor->wm_mat[11] = dz;
 
-	matrixextractor=mk_addmember(segmentName, &wireregionmembers.l, NULL, WMOP_UNION);
-	if (matrixextractor != NULL) {
-	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building base wire region: piece [%d] of [%d]\n", count+1, count2);
-	} else {
+	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building base wire combination: piece [%d] of [%d]\n", count+1, count2);
+
+	wiremember->wm_mat[3]  = dx;
+	wiremember->wm_mat[7]  = dy;
+	wiremember->wm_mat[11] = dz;
+
+	wiremember=mk_addmember(segmentName, &wireregionmembers.l, NULL, WMOP_UNION);
+	if (wiremember == NULL) {
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:mk_addmember wirename[%s], count2[%d] FAILED (region)\n", wirename, count);
 	    errors++;
+	    continue;
 	}
-	matrixextractor->wm_mat[3]  = dx;
-	matrixextractor->wm_mat[7]  = dy;
-	matrixextractor->wm_mat[11] = dz;
+	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building base wire region: piece [%d] of [%d]\n", count+1, count2);
+	wiremember->wm_mat[3]  = dx;
+	wiremember->wm_mat[7]  = dy;
+	wiremember->wm_mat[11] = dz;
 
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire: dx[%f], dy[%f], dz[%f]\n", dx, dy, dz);
 
 	dx+=incrementvector[0];
 	dy+=incrementvector[1];
 	dz+=incrementvector[2];
-	if (debug) printMatrix(DEFAULT_DEBUG_OUTPUT, "generateWire: matrixextractor->wm_mat", matrixextractor->wm_mat);
-	else if (verbose) printMatrix(DEFAULT_VERBOSE_OUTPUT, "Translation matrix of wire segments", matrixextractor->wm_mat);
+	if (debug) printMatrix(DEFAULT_DEBUG_OUTPUT, "generateWire: wiremember->wm_mat", wiremember->wm_mat);
+	else if (verbose) printMatrix(DEFAULT_VERBOSE_OUTPUT, "Translation matrix of wire segments", wiremember->wm_mat);
     }
 
     if (mk_lcomb (fp, wirename, &wiremembers, 0, NULL, NULL, NULL, 0)==0) {
@@ -1212,8 +1211,6 @@ int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:mk_lcomb wirename[%s] FAILED (region)\n", getPrePostName(NULL, wirename, DEFAULT_REGIONSUFFIX));
 	errors++;
     }
-
-    bu_free(matrixextractor, "matrixextractor");
 
     return errors;
 }
