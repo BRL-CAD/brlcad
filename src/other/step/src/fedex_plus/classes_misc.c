@@ -39,62 +39,6 @@ LISTempty( Linked_List list ) {
 
 
 /******************************************************************
- ** Procedure:  CheckWord
- ** Description: if word is a reserved word, it is capitalized
- ** Parameters:  word -- string to be checked
- ** Returns:  altered word if word is reserved;  otherwise the original word
- ** Side Effects:  the word is altered in memory
- ** Status:  started 12/1
- ******************************************************************/
-const char *
-CheckWord( const char * word ) {
-#ifdef NOT_USING_SDAI_BINDING
-    /*  obsolete with proposed c++ binding  */
-
-    static char * reserved_words [] = {
-        "application_marker",  "asm",   "attributes", "auto",
-        "break",    "case", "char", "class",    "const",    "continue",
-        "default",  "delete",   "do",   "double",
-        "else", "enum", "extern",
-        "float",    "for",  "friend",   "goto", "handle",
-        "if",   "inline",   "instance_id",  "int",  "long",
-        "new",  "nullable", "opcode",  "operator",  "overload",
-        "private",  "protected",    "public",   "register", "return",
-        "shared",   "short",    "sizeof",   "static",   "struct",   "switch",
-        "this",     "template", "type", "typedef",  "type_name",
-        "union",    "unsigned",
-        "val",  "virtual",  "void", "volatile"
-    };
-    int nwords = ( sizeof reserved_words / sizeof reserved_words[0] );
-    int cond,
-        i,
-        low = 0,
-        high = nwords - 1;
-
-    /*  word is obviously not in list, if it is longer than any of the words in the list  */
-    if( strlen( word ) > 12 ) {
-        return ( word );
-    }
-
-    while( low <= high ) {
-        i = ( low + high ) / 2;
-        if( ( cond = strcmp( word, reserved_words [i] ) ) < 0 ) {
-            high = i - 1;
-        } else if( cond > 0 ) {
-            low = i + 1;
-        } else { /*  word is a reserved word, capitalize it  */
-            printf( "** warning: reserved word  %s  ", word );
-            *( word + 0 ) = toupper( *( word + 0 ) );
-            printf( "is changed to  %s **\n", word );
-
-        }
-    }
-#endif
-    return ( word );
-
-}
-
-/******************************************************************
  ** Procedure:  string functions
  ** Description:  These functions take a character or a string and return
  ** a temporary copy of the string with the function applied to it.
