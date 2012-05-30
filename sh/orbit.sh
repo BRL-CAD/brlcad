@@ -70,8 +70,8 @@ mkdir -p orbit.$$
 for frame in `jot 360 0`
 do
     echo "Frame $frame (`echo $frame*100/360 | bc`%)"
-    rt -o orbit.$$/orbit.$frame.png -w$WIDTH -n$HEIGHT -e$ELEVATION $* 2>/dev/null
-done && ffmpeg -o orbit.$$.mp4 orbit.$$/*png && rm -rf orbit.$$
+    rt -o orbit.$$/orbit.$frame.png -w$WIDTH -n$HEIGHT -a $frame -e$ELEVATION $* 2>/dev/null
+done && ffmpeg -i orbit.$$/orbit.%d.png orbit.$$.mp4 && rm -rf orbit.$$
 
 exit 0
 
